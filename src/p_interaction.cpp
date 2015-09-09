@@ -184,7 +184,6 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker, int dmgf
 	const char *message;
 	const char *messagename;
 	char gendermessage[1024];
-	bool friendly;
 	int  gender;
 
 	// No obituaries for non-players, voodoo dolls or when not wanted
@@ -196,8 +195,6 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker, int dmgf
 	// Treat voodoo dolls as unknown deaths
 	if (inflictor && inflictor->player && inflictor->player->mo != inflictor)
 		MeansOfDeath = NAME_None;
-
-	friendly = (self->player != attacker->player && self->IsTeammate(attacker));
 
 	mod = MeansOfDeath;
 	message = NULL;
@@ -266,7 +263,7 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker, int dmgf
 
 	if (message == NULL && attacker != NULL && attacker->player != NULL)
 	{
-		if (friendly)
+		if (self->player != attacker->player && self->IsTeammate(attacker))
 		{
 			self = attacker;
 			gender = self->player->userinfo.GetGender();

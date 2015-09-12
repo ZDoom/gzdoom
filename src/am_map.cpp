@@ -2323,21 +2323,50 @@ bool AM_isTriggerBoundary (line_t& line)
 
 bool AM_isLockSpecial (int special, int* args)
 {
-	return special == Door_LockedRaise ||
-		 special == ACS_LockedExecute ||
-		 special == ACS_LockedExecuteDoor ||
-		 (special == Door_Animated && args[3] != 0) ||
-		 (special == Generic_Door && args[4] != 0);
+	return special == Door_LockedRaise
+		 || special == ACS_LockedExecute
+		 || special == ACS_LockedExecuteDoor
+		 || (special == Door_Animated && args[3] != 0)
+		 || (special == Generic_Door && args[4] != 0)
+		 || (special == FS_Execute && args[2] != 0);
 }
 
 bool AM_isLockBoundary (line_t &line, int *lockptr = NULL)
 {
+	if (lockptr == NULL)
+	{
+		static int sink;
+		lockptr = &sink;
+	}
+
+	if (line.locknumber)
+	{
+		*lockptr = line.locknumber;
+		return true;
+	}
+
 	int special;
 	int *args;
 	bool result = AM_checkSpecialBoundary(line, &AM_isLockSpecial, &special, &args);
 
-	if (lockptr && result)
-		*lockptr = (special==Door_LockedRaise || special==Door_Animated) ? args[3] : args[4];
+	if (result)
+	{
+		switch (special)
+		{
+		case FS_Execute:
+			*lockptr = args[2];
+			break;
+
+		case Door_Animated:
+		case Door_LockedRaise:
+			*lockptr = args[3];
+			break;
+
+		default:
+			*lockptr = args[4];
+			break;
+		}
+	}
 
 	return result;
 }
@@ -2389,18 +2418,7 @@ void AM_drawWalls (bool allmap)
 					AM_drawMline(&l, AMColors.SecretWallColor);
 			    else
 					AM_drawMline(&l, AMColors.WallColor);
-			} 
-			else if (lines[i].locknumber > 0 && AMColors.displayLocks) 
-			{ // [Dusk] specials w/ locknumbers
-				lock = lines[i].locknumber;
-				color = P_GetMapColorForLock(lock);
-				
-				AMColor c;
-				if (color >= 0)	c.FromRGB(RPART(color), GPART(color), BPART(color));
-				else c = AMColors[AMColors.LockedColor];
-				
-				AM_drawMline (&l, c);
-			} 
+			}
 			else if (AM_isTeleportBoundary(lines[i]) && AMColors.isValid(AMColors.IntraTeleportColor))
 			{ // intra-level teleporters
 				AM_drawMline(&l, AMColors.IntraTeleportColor);

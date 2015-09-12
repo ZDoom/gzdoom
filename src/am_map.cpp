@@ -2247,7 +2247,7 @@ bool AM_checkSectorActions (sector_t *sector, bool (*function)(int, int *), int 
 // [TP] Check whether there's a boundary on the provided line for a special that satisfies the provided function.
 // It's a boundary if the line can activate the special or the line's bordering sectors can activate it.
 // If found, specialptr and argsptr will be filled with special and args if given.
-bool AM_checkSpecialBoundary (line_t &line, bool (*function)(int, int*), int *specialptr = NULL, int **argsptr = NULL)
+bool AM_checkSpecialBoundary (line_t &line, bool (*function)(int, int *), int *specialptr = NULL, int **argsptr = NULL)
 {
 	if (specialptr == NULL)
 	{
@@ -2257,7 +2257,7 @@ bool AM_checkSpecialBoundary (line_t &line, bool (*function)(int, int*), int *sp
 
 	if (argsptr == NULL)
 	{
-		static int* sink;
+		static int *sink;
 		argsptr = &sink;
 	}
 
@@ -2279,7 +2279,7 @@ bool AM_checkSpecialBoundary (line_t &line, bool (*function)(int, int*), int *sp
 	return (line.backsector && AM_checkSectorActions(line.backsector, function, specialptr, argsptr, false));
 }
 
-bool AM_isTeleportSpecial (int special, int*)
+bool AM_isTeleportSpecial (int special, int *)
 {
 	return (special == Teleport ||
 		special == Teleport_NoFog ||
@@ -2287,12 +2287,12 @@ bool AM_isTeleportSpecial (int special, int*)
 		special == Teleport_Line);
 }
 
-bool AM_isTeleportBoundary (line_t& line)
+bool AM_isTeleportBoundary (line_t &line)
 {
 	return AM_checkSpecialBoundary(line, &AM_isTeleportSpecial);
 }
 
-bool AM_isExitSpecial (int special, int*)
+bool AM_isExitSpecial (int special, int *)
 {
 	return (special == Teleport_NewMap ||
 		 special == Teleport_EndGame ||
@@ -2305,7 +2305,7 @@ bool AM_isExitBoundary (line_t& line)
 	return AM_checkSpecialBoundary(line, &AM_isExitSpecial);
 }
 
-bool AM_isTriggerSpecial (int special, int*)
+bool AM_isTriggerSpecial (int special, int *)
 {
 	return special != 0
 		&& special != Door_Open
@@ -2316,7 +2316,7 @@ bool AM_isTriggerSpecial (int special, int*)
 		&& special != Generic_Door;
 }
 
-bool AM_isTriggerBoundary (line_t& line)
+bool AM_isTriggerBoundary (line_t &line)
 {
 	return AM_checkSpecialBoundary(line, &AM_isTriggerSpecial);
 }

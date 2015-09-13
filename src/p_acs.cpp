@@ -1417,7 +1417,7 @@ FBehavior *FBehavior::StaticLoadModule (int lumpnum, FileReader *fr, int len)
 	else
 	{
 		delete behavior;
-		Printf(TEXTCOLOR_RED "%s: invalid ACS module", Wads.GetLumpFullName(lumpnum));
+		Printf(TEXTCOLOR_RED "%s: invalid ACS module\n", Wads.GetLumpFullName(lumpnum));
 		return NULL;
 	}
 }

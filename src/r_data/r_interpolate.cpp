@@ -866,11 +866,9 @@ void DPolyobjInterpolation::Serialize(FArchive &arc)
 //==========================================================================
 
 DPSpriteInterpolation::DPSpriteInterpolation(pspdef_t *_psp, int _player, int _position)
-: nfsx(0), nfsy(0), ofsx(0), ofsy(0)
+: psp(_psp), player(_player), position(_position),
+  ofsx(0), ofsy(0), nfsx(0), nfsy(0)
 {
-	psp = _psp;
-	player = _player;
-	position = _position;
 	UpdateInterpolation ();
 	interpolator.AddInterpolation(this);
 }

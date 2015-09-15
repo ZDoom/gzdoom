@@ -1303,6 +1303,7 @@ OptionMenu "CompatibilityOptions"
 	Option "Find shortest textures like Doom",			"compat_SHORTTEX", "YesNo"
 	Option "Use buggier stair building",				"compat_stairs", "YesNo"
 	Option "Use Doom's floor motion behavior",			"compat_floormove", "YesNo"
+	Option "Use Doom's point-on-line algorithm",		"compat_pointonline", "YesNo"
 	
 	StaticText " "
 	StaticText "Physics Behavior",1

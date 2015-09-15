@@ -240,7 +240,10 @@ fixed_t P_AproxDistance (fixed_t dx, fixed_t dy);
 
 inline int P_PointOnLineSide (fixed_t x, fixed_t y, const line_t *line)
 {
-	return DMulScale32 (y-line->v1->y, line->dx, line->v1->x-x, line->dy) > 0;
+	const SDWORD result = DMulScale32 (y-line->v1->y, line->dx, line->v1->x-x, line->dy);
+	return (compatflags2 & COMPATF2_POINTONLINE)
+		? result >= 0
+		: result > 0;
 }
 
 //==========================================================================
@@ -254,7 +257,10 @@ inline int P_PointOnLineSide (fixed_t x, fixed_t y, const line_t *line)
 
 inline int P_PointOnDivlineSide (fixed_t x, fixed_t y, const divline_t *line)
 {
-	return DMulScale32 (y-line->y, line->dx, line->x-x, line->dy) > 0;
+	const SDWORD result = DMulScale32 (y-line->y, line->dx, line->x-x, line->dy);
+	return (compatflags2 & COMPATF2_POINTONLINE)
+		? result >= 0
+		: result > 0;
 }
 
 //==========================================================================

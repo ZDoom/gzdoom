@@ -340,6 +340,7 @@ enum
 	COMPATF2_BADANGLES		= 1 << 0,	// It is impossible to face directly NSEW.
 	COMPATF2_FLOORMOVE		= 1 << 1,	// Use the same floor motion behavior as Doom.
 	COMPATF2_SOUNDCUTOFF	= 1 << 2,	// Cut off sounds when an actor vanishes instead of making it owner-less
+	COMPATF2_POINTONLINE	= 1 << 3,	// Use original but buggy P_PointOnLineSide() and P_PointOnDivlineSide()
 };
 
 // Emulate old bugs for select maps. These are not exposed by a cvar

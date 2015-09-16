@@ -75,6 +75,7 @@
 #include "actorptrselect.h"
 #include "farchive.h"
 #include "decallib.h"
+#include "version.h"
 
 #include "g_shared/a_pickups.h"
 
@@ -9357,6 +9358,10 @@ scriptwait:
 			}
 			break;
 
+		case PCD_CONSOLECOMMAND:
+			Printf (TEXTCOLOR_RED GAMENAME " doesn't support execution of console commands from scripts\n");
+			sp -= 3;
+			break;
  		}
  	}
 

@@ -5111,6 +5111,28 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetFloatSpeed)
 	ref->FloatSpeed = speed;
 }
 
+//==========================================================================
+//
+// A_SetPainThreshold
+//
+//==========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetPainThreshold)
+{
+	ACTION_PARAM_START(2);
+	ACTION_PARAM_INT(threshold, 0);
+	ACTION_PARAM_INT(ptr, 1);
+
+	AActor *ref = COPY_AAPTR(self, ptr);
+
+	if (!ref)
+	{
+		ACTION_SET_RESULT(false);
+		return;
+	}
+
+	ref->PainThreshold = threshold;
+}
+
 //===========================================================================
 //
 // Common A_Damage handler

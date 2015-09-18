@@ -771,7 +771,7 @@ bool FMODSoundRenderer::Init()
 	}
 #endif
 
-#ifndef _WIN32
+#if !defined _WIN32 && !defined __APPLE__
 	// Try to load SDL output plugin
 	result = Sys->setPluginPath(progdir);	// Should we really look for it in the program directory?
 	result = Sys->loadPlugin("liboutput_sdl.so", &OutputPlugin);

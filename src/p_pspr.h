@@ -26,6 +26,7 @@
 // Basic data types.
 // Needs fixed point, and BAM angles.
 #include "tables.h"
+#include "r_data/r_interpolate.h"
 #include "thingdef/thingdef.h"
 
 #define WEAPONBOTTOM			128*FRACUNIT
@@ -71,6 +72,11 @@ struct pspdef_t
 	int			sprite;
 	int			frame;
 	bool		processPending; // true: waiting for periodic processing on this tick
+
+	TObjPtr<DInterpolation>	interpolation;
+	DInterpolation			*SetInterpolation(int player, int position);
+	void					UpdateInterpolation(int player);
+	void					StopInterpolation();
 };
 
 class FArchive;

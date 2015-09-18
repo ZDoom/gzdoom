@@ -297,6 +297,11 @@ static void CopyPlayer (player_t *dst, player_t *src, const char *name)
 	{
 		dst->mo->player = dst;
 	}
+	// Fix the psprite interpolation pointers too.
+	for (int i = 0; i < NUMPSPRITES; i++)
+	{
+		dst->psprites[i].UpdateInterpolation(dst - players);
+	}
 	// These 2 variables may not be overwritten.
 	dst->attackdown = attackdown;
 	dst->usedown = usedown;

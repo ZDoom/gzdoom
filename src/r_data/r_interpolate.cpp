@@ -157,41 +157,11 @@ public:
 //
 //==========================================================================
 
-class DPSpriteInterpolation : public DInterpolation
-{
-	DECLARE_CLASS(DPSpriteInterpolation, DInterpolation)
-
-	pspdef_t *psp;
-	int player, position;
-	fixed_t oldx, oldy;
-	fixed_t bakx, baky;
-	fixed_t ofsx, ofsy;
-	fixed_t nfsx, nfsy;
-
-public:
-
-	DPSpriteInterpolation() {}
-	DPSpriteInterpolation(pspdef_t *psp, int player, int position);
-	void UpdatePointer(int player);
-	void Destroy();
-	void UpdateInterpolation();
-	void Restore();
-	void Interpolate(fixed_t smoothratio);
-	void Serialize(FArchive &arc);
-};
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
 IMPLEMENT_ABSTRACT_CLASS(DInterpolation)
 IMPLEMENT_CLASS(DSectorPlaneInterpolation)
 IMPLEMENT_CLASS(DSectorScrollInterpolation)
 IMPLEMENT_CLASS(DWallScrollInterpolation)
 IMPLEMENT_CLASS(DPolyobjInterpolation)
-IMPLEMENT_CLASS(DPSpriteInterpolation)
 
 //==========================================================================
 //
@@ -658,6 +628,7 @@ void DSectorScrollInterpolation::Serialize(FArchive &arc)
 	arc << sector << ceiling << oldx << oldy;
 }
 
+
 //==========================================================================
 //
 //
@@ -853,113 +824,6 @@ void DPolyobjInterpolation::Serialize(FArchive &arc)
 	if (arc.IsLoading()) bakverts.Resize(oldverts.Size());
 }
 
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-DPSpriteInterpolation::DPSpriteInterpolation(pspdef_t *_psp, int _player, int _position)
-: psp(_psp), player(_player), position(_position),
-  ofsx(0), ofsy(0), nfsx(0), nfsy(0)
-{
-	UpdateInterpolation ();
-	interpolator.AddInterpolation(this);
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void DPSpriteInterpolation::UpdatePointer(int _player)
-{
-	player = _player;
-	psp = &players[player].psprites[position];
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void DPSpriteInterpolation::Destroy()
-{
-	psp->interpolation = NULL;
-	Super::Destroy();
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void DPSpriteInterpolation::UpdateInterpolation()
-{
-	if ( position == ps_weapon )
-		P_BobWeapon( &players[player], psp, &ofsx, &ofsy );
-
-	oldx = psp->sx + ofsx;
-	oldy = psp->sy + ofsy;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void DPSpriteInterpolation::Restore()
-{
-	psp->sx = bakx - nfsx;
-	psp->sy = baky - nfsy;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void DPSpriteInterpolation::Interpolate(fixed_t smoothratio)
-{
-	if ( position == ps_weapon )
-		P_BobWeapon( &players[player], psp, &nfsx, &nfsy );
-
-	bakx = psp->sx + nfsx;
-	baky = psp->sy + nfsy;
-
-	psp->sx = oldx + FixedMul(bakx - oldx, smoothratio) - nfsx;
-	psp->sy = oldy + FixedMul(baky - oldy, smoothratio) - nfsy;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void DPSpriteInterpolation::Serialize(FArchive &arc)
-{
-	Super::Serialize(arc);
-	arc << player << position << oldx << oldy << ofsx << ofsy;
-	UpdatePointer(player);
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
 
 //==========================================================================
 //
@@ -1080,62 +944,6 @@ void FPolyObj::StopInterpolation()
 	}
 }
 
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-DInterpolation *pspdef_t::SetInterpolation(int player, int position)
-{
-	if (interpolation == NULL)
-	{
-		interpolation = new DPSpriteInterpolation(this, player, position);
-	}
-	interpolation->AddRef();
-	GC::WriteBarrier(interpolation);
-	return interpolation;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void pspdef_t::UpdateInterpolation(int player)
-{
-	if (interpolation != NULL)
-	{
-		barrier_cast<DPSpriteInterpolation *>(interpolation)->UpdatePointer(player);
-	}
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void pspdef_t::StopInterpolation()
-{
-	if (interpolation != NULL)
-	{
-		interpolation->DelRef();
-	}
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
 
 ADD_STAT (interpolations)
 {
@@ -1143,3 +951,5 @@ ADD_STAT (interpolations)
 	out.Format ("%d interpolations", interpolator.CountInterpolations ());
 	return out;
 }
+
+

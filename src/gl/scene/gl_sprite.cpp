@@ -230,7 +230,7 @@ void GLSprite::Draw(int pass)
 		Vector v3;
 		Vector v4;
 
-		if (drawWithXYBillboard)
+		if (drawWithXYBillboard || (actor != NULL && (actor->renderflags & RF_ROLLSPRITE)))
 		{
 			// Rotate the sprite about the vector starting at the center of the sprite
 			// triangle strip and with direction orthogonal to where the player is looking
@@ -244,6 +244,14 @@ void GLSprite::Draw(int pass)
 			mat.MakeIdentity();
 			mat.Translate(xcenter, zcenter, ycenter);
 			mat.Rotate(-sin(angleRad), 0, cos(angleRad), -GLRenderer->mAngles.Pitch);
+			if (drawWithXYBillboard)
+			{ // [fgsfds] Rotate the sprite about a vector perpendicular to the sight vector
+				mat.Rotate(-sin(angleRad), 0, cos(angleRad), -GLRenderer->mAngles.Pitch);
+			}
+			if (actor != NULL && actor->renderflags & RF_ROLLSPRITE)
+			{
+				mat.Rotate(cos(angleRad), 0, sin(angleRad), 360.0 * (1.0 - ((actor->roll >> 16) / (float)(65536))));
+			}
 			mat.Translate(-xcenter, -zcenter, -ycenter);
 			v1 = mat * Vector(x1, z1, y1);
 			v2 = mat * Vector(x2, z1, y2);

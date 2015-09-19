@@ -1104,32 +1104,11 @@ void P_MovePsprites (player_t *player)
 			P_CheckWeaponZoom (player);
 		}
 	}
-
-	psp = &player->psprites[0];
-	for (i = 0; i < NUMPSPRITES; i++, psp++)
-	{
-		if (psp->state == NULL)
-		{
-			if (psp->interpolation != NULL)
-			{
-				player->pspinterp[i] = NULL;
-				psp->StopInterpolation();
-			}
-		}
-		else if (psp->interpolation == NULL)
-		{
-			player->pspinterp[i] = psp->SetInterpolation(player - players, i);
-		}
-	}
 }
 
 FArchive &operator<< (FArchive &arc, pspdef_t &def)
 {
 	arc << def.state << def.tics << def.sx << def.sy
 		<< def.sprite << def.frame;
-
-		if (SaveVersion >= 4525)
-			arc << def.interpolation;
-
 	return arc;
 }

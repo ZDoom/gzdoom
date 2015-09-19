@@ -1726,15 +1726,6 @@ void G_DoPlayerPop(int playernum)
 		players[playernum].mo = NULL;
 		players[playernum].camera = NULL;
 	}
-	// Now's the ideal time to remove his psprite interpolations.
-	for (int ii = 0; ii < NUMPSPRITES; ii++)
-	{
-		if (players[playernum].psprites[ii].interpolation != NULL)
-		{
-			players[playernum].psprites[ii].StopInterpolation();
-			players[playernum].pspinterp[ii] = NULL;
-		}
-	}
 	// [RH] Let the scripts know the player left
 	FBehavior::StaticStartTypedScripts(SCRIPT_Disconnect, NULL, true, playernum);
 }

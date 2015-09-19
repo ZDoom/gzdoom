@@ -15,6 +15,7 @@
 #include "gstrings.h"
 #include "a_action.h"
 #include "thingdef/thingdef.h"
+#include "v_text.h"
 
 #define MAX_RANDOMSPAWNERS_RECURSION 32 // Should be largely more than enough, honestly.
 static FRandom pr_randomspawn("RandomSpawn");
@@ -118,6 +119,7 @@ class ARandomSpawner : public AActor
 				}
 				else
 				{
+					Printf(TEXTCOLOR_RED "Unknown item class %s to drop from a random spawner\n", di->Name.GetChars());
 					Species = NAME_None;
 				}
 			}

@@ -7274,9 +7274,9 @@ int DLevelScript::RunScript ()
 			sp--;
 			break;
 
-		case PCD_DROP:
 		case PCD_SETRESULTVALUE:
 			resultValue = STACK(1);
+		case PCD_DROP: //fall through.
 			sp--;
 			break;
 

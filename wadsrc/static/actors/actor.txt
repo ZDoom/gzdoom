@@ -257,7 +257,7 @@ ACTOR Actor native //: Thinker
 	action native A_JumpIfInTargetInventory(class<Inventory> itemtype, int amount, state label, int forward_ptr = AAPTR_DEFAULT);
 	action native A_GiveToTarget(class<Inventory> itemtype, int amount = 0, int forward_ptr = AAPTR_DEFAULT);
 	action native A_TakeFromTarget(class<Inventory> itemtype, int amount = 0, int flags = 0, int forward_ptr = AAPTR_DEFAULT);
-	action native A_RadiusGive(class<Inventory> itemtype, int distance, int flags, int amount = 0, class<Actor> filter = "None", name species = "None");
+	action native A_RadiusGive(class<Inventory> itemtype, int distance, int flags, int amount = 0, class<Actor> filter = "None", name species = "None", int mindist = 0);
 	action native A_CountdownArg(int argnum, state targstate = "");
 	action native A_CustomMeleeAttack(int damage = 0, sound meleesound = "", sound misssound = "", name damagetype = "none", bool bleed = true);
 	action native A_CustomComboAttack(class<Actor> missiletype, float spawnheight, int damage, sound meleesound = "", name damagetype = "none", bool bleed = true);

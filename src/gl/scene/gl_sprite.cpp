@@ -223,6 +223,9 @@ void GLSprite::Draw(int pass)
 		const bool drawWithXYBillboard = ( (particle && gl_billboard_particles) || (!(actor && actor->renderflags & RF_FORCEYBILLBOARD)
 		                                   //&& GLRenderer->mViewActor != NULL
 		                                   && (gl_billboard_mode == 1 || (actor && actor->renderflags & RF_FORCEXYBILLBOARD ))) );
+		// [Nash] has +ROLLSPRITE
+		const bool drawRollSpriteActor = (actor != NULL && actor->renderflags & RF_ROLLSPRITE);
+
 		gl_RenderState.Apply();
 
 		Vector v1;
@@ -230,7 +233,8 @@ void GLSprite::Draw(int pass)
 		Vector v3;
 		Vector v4;
 
-		if (drawWithXYBillboard)
+		// [Nash] check for special sprite drawing modes
+		if (drawWithXYBillboard || drawRollSpriteActor)
 		{
 			// Rotate the sprite about the vector starting at the center of the sprite
 			// triangle strip and with direction orthogonal to where the player is looking
@@ -243,13 +247,23 @@ void GLSprite::Draw(int pass)
 			Matrix3x4 mat;
 			mat.MakeIdentity();
 			mat.Translate(xcenter, zcenter, ycenter);
-			mat.Rotate(-sin(angleRad), 0, cos(angleRad), -GLRenderer->mAngles.Pitch);
+
+			// [Nash] XY Billboard
+			if (drawWithXYBillboard)
+				mat.Rotate(-sin(angleRad), 0, cos(angleRad), -GLRenderer->mAngles.Pitch);
+
+			// [fgsfds] Rotate the sprite about the sight vector (roll) 
+			if (drawRollSpriteActor)
+				mat.Rotate(cos(angleRad), 0, sin(angleRad), 360.0 * (1.0 - ((actor->roll >> 16) / (float)(65536))));
+
 			mat.Translate(-xcenter, -zcenter, -ycenter);
 			v1 = mat * Vector(x1, z1, y1);
 			v2 = mat * Vector(x2, z1, y2);
 			v3 = mat * Vector(x1, z2, y1);
 			v4 = mat * Vector(x2, z2, y2);
 		}
+
+		// [Nash] just draw the sprite normally
 		else
 		{
 			v1 = Vector(x1, z1, y1);

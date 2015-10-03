@@ -362,6 +362,8 @@ Const Int WARPF_ABSOLUTEPOSITION = 0x400;
 Const Int WARPF_BOB = 0x800;
 Const Int WARPF_MOVEPTR = 0x1000;
 Const Int WARPF_USETID = 0x2000;
+Const Int WARPF_COPYVELOCITY = 0x4000;
+Const Int WARPF_COPYPITCH = 0x8000;
 
 // flags for A_SetPitch/SetAngle/SetRoll
 const int SPF_FORCECLAMP = 1;

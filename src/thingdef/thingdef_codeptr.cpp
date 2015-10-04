@@ -5879,10 +5879,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckBlock)
 		return;
 	}
 
-	bool blockTest = P_TestMobjLocation(mobj);
-
 	//Nothing to block it so skip the rest.
-	if (blockTest) return;
+	if (P_TestMobjLocation(mobj)) return;
 
 	if (mobj->BlockingMobj)
 	{
@@ -5902,7 +5900,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckBlock)
 		return;
 
 	//[MC] Easiest way to tell if an actor is blocking it, use the pointers.
-	if (!blockTest && (mobj->BlockingMobj || (!(flags & CBF_NOLINES) && mobj->BlockingLine != NULL)))
+	if (mobj->BlockingMobj || (!(flags & CBF_NOLINES) && mobj->BlockingLine != NULL))
 	{
 		ACTION_JUMP(block);
 	}

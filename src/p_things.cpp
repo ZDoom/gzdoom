@@ -694,13 +694,15 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 	fixed_t	oldz = caller->z;
 	zofs += FixedMul(reference->height, heightoffset);
 	
-	const fixed_t rad = FixedMul(radiusoffset, reference->radius);
-	const angle_t fineangle = angle >> ANGLETOFINESHIFT;
 
 	if (!(flags & WARPF_ABSOLUTEANGLE))
 	{
 		angle += (flags & WARPF_USECALLERANGLE) ? caller->angle : reference->angle;
 	}
+
+	const fixed_t rad = FixedMul(radiusoffset, reference->radius);
+	const angle_t fineangle = angle >> ANGLETOFINESHIFT;
+
 	if (!(flags & WARPF_ABSOLUTEPOSITION))
 	{
 		if (!(flags & WARPF_ABSOLUTEOFFSET))

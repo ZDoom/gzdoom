@@ -482,5 +482,17 @@ enum
 	QF_WAVE =			1 << 5,
 };
 
+// Flags for A_CheckBlock
+// These flags only affect the calling actor('s pointer), not the ones being searched.
+enum 
+{
+	CBF_NOLINES			= 1 << 0,	//Don't check actors.
+	CBF_SETTARGET		= 1 << 1,	//Sets the caller/pointer's target to the actor blocking it. Actors only.
+	CBF_SETMASTER		= 1 << 2,	//^ but with master.
+	CBF_SETTRACER		= 1 << 3,	//^ but with tracer.
+	CBF_SETONPTR		= 1 << 4,	//Sets the pointer change on the actor doing the checking instead of self.
+};
+
 // This is only here to provide one global variable for testing.
 native int testglobalvar;
+

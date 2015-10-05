@@ -233,8 +233,15 @@ void GLSprite::Draw(int pass)
 		Vector v3;
 		Vector v4;
 
+		// [fgsfds] check sprite type mask
+		DWORD spritetype = (DWORD)-1;
+		if (actor != NULL) spritetype = actor->renderflags & RF_SPRITETYPEMASK;
+
+		// [Nash] is a flat sprite
+		const bool isFlatSprite = (spritetype == RF_WALLSPRITE || spritetype == RF_CEILSPRITE || spritetype == RF_FLOORSPRITE);
+
 		// [Nash] check for special sprite drawing modes
-		if (drawWithXYBillboard || drawRollSpriteActor)
+		if (drawWithXYBillboard || drawRollSpriteActor || isFlatSprite)
 		{
 			// Rotate the sprite about the vector starting at the center of the sprite
 			// triangle strip and with direction orthogonal to where the player is looking
@@ -244,18 +251,47 @@ void GLSprite::Draw(int pass)
 			float zcenter = (z1 + z2)*0.5;
 			float angleRad = DEG2RAD(270. - float(GLRenderer->mAngles.Yaw));
 
+			// [fgsfds] calculate yaw vectors
+			float yawvecX, yawvecY;
+			if (isFlatSprite)
+			{
+				yawvecX = FIXED2FLOAT(finecosine[actor->angle >> ANGLETOFINESHIFT]);
+				yawvecY = FIXED2FLOAT(finesine[actor->angle >> ANGLETOFINESHIFT]);
+			}
+
 			Matrix3x4 mat;
 			mat.MakeIdentity();
 			mat.Translate(xcenter, zcenter, ycenter);
 
 			// [Nash] XY Billboard
 			if (drawWithXYBillboard)
+			{
 				mat.Rotate(-sin(angleRad), 0, cos(angleRad), -GLRenderer->mAngles.Pitch);
+			}
 
 			// [fgsfds] Rotate the sprite about the sight vector (roll) 
 			if (drawRollSpriteActor)
+			{
+				/* [Nash] these don't work correctly even in GLOOME so I'm disabling these for now
+				if (spritetype == RF_WALLSPRITE)
+				{
+					mat.Rotate(yawvecX, yawvecY, 0, 360.0 * (1.0 - ((actor->roll >> 16) / (float)(65536))));
+				}
+				if (spritetype == RF_FLOORSPRITE || spritetype == RF_CEILSPRITE)
+				{
+					mat.Rotate(yawvecX, 0, yawvecY, 360.f * (1.f - ((actor->roll >> 16) / (float)(65536))));
+				}
+				*/
 				mat.Rotate(cos(angleRad), 0, sin(angleRad), 360.0 * (1.0 - ((actor->roll >> 16) / (float)(65536))));
+			}
 
+			// [fgsfds] rotate the sprite so it faces upwards/downwards
+			if (spritetype == RF_FLOORSPRITE || spritetype == RF_CEILSPRITE)
+			{
+				mat.Rotate(-yawvecY, 0, yawvecX, -90.f);
+			}
+
+			// apply the transform
 			mat.Translate(-xcenter, -zcenter, -ycenter);
 			v1 = mat * Vector(x1, z1, y1);
 			v2 = mat * Vector(x2, z1, y2);
@@ -595,14 +631,25 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 	
 
 	x = FIXED2FLOAT(thingx);
-	z = FIXED2FLOAT(thingz-thing->floorclip);
 	y = FIXED2FLOAT(thingy);
 
-	// [RH] Make floatbobbing a renderer-only effect.
-	if (thing->flags2 & MF2_FLOATBOB)
+	// sprite adjustment
+	DWORD spritetype = thing->renderflags & RF_SPRITETYPEMASK;
+	switch (spritetype)
 	{
-		float fz = FIXED2FLOAT(thing->GetBobOffset(r_TicFrac));
-		z += fz;
+		case RF_FLOORSPRITE:
+		case RF_CEILSPRITE:
+			z = FIXED2FLOAT(thingz);
+			break;
+		default:
+			// [RH] Make floatbobbing a renderer-only effect.
+			z = FIXED2FLOAT(thingz - thing->floorclip);
+			if (thing->flags2 & MF2_FLOATBOB)
+			{
+				float fz = FIXED2FLOAT(thing->GetBobOffset(r_TicFrac));
+				z += fz;
+			}
+			break;
 	}
 	
 	modelframe = gl_FindModelFrame(RUNTIME_TYPE(thing), spritenum, thing->frame, !!(thing->flags & MF_DROPPED));
@@ -650,7 +697,7 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 
 		float viewvecX;
 		float viewvecY;
-		switch (thing->renderflags & RF_SPRITETYPEMASK)
+		switch (spritetype)
 		{
 		case RF_FACESPRITE:
 			viewvecX = GLRenderer->mViewVector.X;
@@ -663,6 +710,8 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 			break;
 
 		case RF_WALLSPRITE:
+		case RF_FLOORSPRITE:
+		case RF_CEILSPRITE:
 			viewvecX = FIXED2FLOAT(finecosine[thing->angle >> ANGLETOFINESHIFT]);
 			viewvecY = FIXED2FLOAT(finesine[thing->angle >> ANGLETOFINESHIFT]);
 

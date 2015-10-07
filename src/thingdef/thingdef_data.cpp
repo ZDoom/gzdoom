@@ -265,6 +265,10 @@ static FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG(RF, INVISIBLE, AActor, renderflags),
 	DEFINE_FLAG(RF, FORCEYBILLBOARD, AActor, renderflags),
 	DEFINE_FLAG(RF, FORCEXYBILLBOARD, AActor, renderflags),
+	DEFINE_FLAG(RF, ROLLSPRITE, AActor, renderflags), // [marrub] roll the sprite billboard 
+	// [fgsfds] Flat sprites
+	DEFINE_FLAG(RF, FLATSPRITE, AActor, renderflags),
+	DEFINE_FLAG(RF, WALLSPRITE, AActor, renderflags),
 
 	// Bounce flags
 	DEFINE_FLAG2(BOUNCE_Walls, BOUNCEONWALLS, AActor, BounceFlags),
@@ -675,4 +679,3 @@ void InitThingdef()
 		qsort(&variables[0], variables.Size(), sizeof(variables[0]), varcmp);
 	}
 }
-

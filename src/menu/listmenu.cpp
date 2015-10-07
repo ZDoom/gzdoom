@@ -385,6 +385,11 @@ FListMenuItemStaticPatch::FListMenuItemStaticPatch(int x, int y, FTextureID patc
 	
 void FListMenuItemStaticPatch::Drawer(bool selected)
 {
+	if (!mTexture.Exists())
+	{
+		return;
+	}
+
 	int x = mXpos;
 	FTexture *tex = TexMan(mTexture);
 	if (mYpos >= 0)

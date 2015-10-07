@@ -5846,3 +5846,62 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetRipMax)
 	self->RipLevelMax = max;
 }
 
+/*===========================================================================
+A_CheckBlock
+(state block, int flags, int ptr)
+
+Checks if something is blocking the actor('s pointer) 'ptr'.
+
+The SET pointer flags only affect the caller, not the pointer.
+===========================================================================*/
+enum CBF
+{
+	CBF_NOLINES			= 1 << 0,	//Don't check actors.
+	CBF_SETTARGET		= 1 << 1,	//Sets the caller/pointer's target to the actor blocking it. Actors only.
+	CBF_SETMASTER		= 1 << 2,	//^ but with master.
+	CBF_SETTRACER		= 1 << 3,	//^ but with tracer.
+	CBF_SETONPTR		= 1 << 4,	//Sets the pointer change on the actor doing the checking instead of self.
+};
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckBlock)
+{
+	ACTION_PARAM_START(3);
+	ACTION_PARAM_STATE(block, 0);
+	ACTION_PARAM_INT(flags, 1);
+	ACTION_PARAM_INT(ptr, 2);
+
+	AActor *mobj = COPY_AAPTR(self, ptr);
+
+	ACTION_SET_RESULT(false);
+	//Needs at least one state jump to work. 
+	if (!mobj)
+	{
+		return;
+	}
+
+	//Nothing to block it so skip the rest.
+	if (P_TestMobjLocation(mobj)) return;
+
+	if (mobj->BlockingMobj)
+	{
+		AActor *setter = (flags & CBF_SETONPTR) ? mobj : self;
+		if (setter)
+		{
+			if (flags & CBF_SETTARGET)	setter->target = mobj->BlockingMobj;
+			if (flags & CBF_SETMASTER)	setter->master = mobj->BlockingMobj;
+			if (flags & CBF_SETTRACER)	setter->tracer = mobj->BlockingMobj;
+		}
+	}
+
+	//[MC] If modders don't want jumping, but just getting the pointer, only abort at
+	//this point. I.e. A_CheckBlock("",CBF_SETTRACER) is like having CBF_NOLINES.
+	//It gets the mobj blocking, if any, and doesn't jump at all.
+	if (!block)
+		return;
+
+	//[MC] Easiest way to tell if an actor is blocking it, use the pointers.
+	if (mobj->BlockingMobj || (!(flags & CBF_NOLINES) && mobj->BlockingLine != NULL))
+	{
+		ACTION_JUMP(block);
+	}
+}

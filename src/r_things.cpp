@@ -331,6 +331,10 @@ bool R_ClipSpriteColumnWithPortals (fixed_t x, fixed_t y, vissprite_t* spr)
 		if (seg->CurrentPortalUniq != CurrentPortalUniq)
 			continue;
 
+		// I don't know what makes this happen (some old top-down portal code or possibly skybox code? something adds null lines...)
+		// crashes at the first frame of the first map of Action2.wad
+		if (!seg->curline) continue;
+
 		line_t* line = seg->curline->linedef;
 		// divline? wtf, anyway, divlines aren't supposed to be drawn. But I definitely saw NULL linedefs in drawsegs.
 		if (!line) continue;

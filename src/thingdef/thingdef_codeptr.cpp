@@ -660,18 +660,20 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInsideMeleeRange)
 //==========================================================================
 void DoJumpIfCloser(AActor *target, DECLARE_PARAMINFO)
 {
-	ACTION_PARAM_START(2);
+	ACTION_PARAM_START(3);
 	ACTION_PARAM_FIXED(dist, 0);
 	ACTION_PARAM_STATE(jump, 1);
+	ACTION_PARAM_BOOL(noz, 2);
 
 	ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
 
 	// No target - no jump
-	if (target != NULL && P_AproxDistance(self->x-target->x, self->y-target->y) < dist &&
-		( (self->z > target->z && self->z - (target->z + target->height) < dist) || 
-		  (self->z <=target->z && target->z - (self->z + self->height) < dist) 
-		)
-	   )
+	if (!target)
+		return;
+	if (P_AproxDistance(self->x-target->x, self->y-target->y) < dist &&
+		(noz || 
+		((self->z > target->z && self->z - (target->z + target->height) < dist) ||
+		(self->z <= target->z && target->z - (self->z + self->height) < dist))))
 	{
 		ACTION_JUMP(jump);
 	}

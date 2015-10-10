@@ -212,9 +212,9 @@ ACTOR Actor native //: Thinker
 	action native A_CustomBulletAttack(float spread_xy, float spread_z, int	numbullets, int damageperbullet, class<Actor> pufftype = "BulletPuff", float range = 0, int flags = 0, int ptr = AAPTR_TARGET);
 	action native A_CustomRailgun(int damage, int spawnofs_xy = 0, color color1 = "", color color2 = "", int flags = 0, bool aim = false, float maxdiff = 0, class<Actor> pufftype = "BulletPuff", float spread_xy = 0, float spread_z = 0, float range = 0, int duration = 0, float sparsity = 1.0, float driftspeed = 1.0, class<Actor> spawnclass = "none", float spawnofs_z = 0, int spiraloffset = 270);
 	action native A_JumpIfHealthLower(int health, state label, int ptr_selector = AAPTR_DEFAULT);
-	action native A_JumpIfCloser(float distance, state label);
-	action native A_JumpIfTracerCloser(float distance, state label);
-	action native A_JumpIfMasterCloser(float distance, state label);
+	action native A_JumpIfCloser(float distance, state label, bool noz = false);
+	action native A_JumpIfTracerCloser(float distance, state label, bool noz = false);
+	action native A_JumpIfMasterCloser(float distance, state label, bool noz = false);
 	action native A_JumpIfTargetOutsideMeleeRange(state label);
 	action native A_JumpIfTargetInsideMeleeRange(state label);
 	action native A_JumpIfInventory(class<Inventory> itemtype, int itemamount, state label, int owner = AAPTR_DEFAULT);

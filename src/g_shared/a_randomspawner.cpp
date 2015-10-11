@@ -29,7 +29,7 @@ static bool IsMonster(const FDropItem *di)
 		return false;
 	}
 
-	return GetDefaultByType(pclass)->flags3 & MF3_ISMONSTER;
+	return 0 != (GetDefaultByType(pclass)->flags3 & MF3_ISMONSTER);
 }
 
 class ARandomSpawner : public AActor

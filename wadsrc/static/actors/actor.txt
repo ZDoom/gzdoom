@@ -305,6 +305,7 @@ ACTOR Actor native //: Thinker
 	action native A_DropItem(class<Actor> item, int dropamount = -1, int chance = 256);
 	action native A_SetSpeed(float speed, int ptr = AAPTR_DEFAULT);
 	action native A_SetFloatSpeed(float speed, int ptr = AAPTR_DEFAULT);
+	action native A_SetPainThreshold(int threshold, int ptr = AAPTR_DEFAULT);
 	action native A_DamageSelf(int amount, name damagetype = "none", int flags = 0, class<Actor> filter = "None", name species = "None");
 	action native A_DamageTarget(int amount, name damagetype = "none", int flags = 0, class<Actor> filter = "None", name species = "None");
 	action native A_DamageMaster(int amount, name damagetype = "none", int flags = 0, class<Actor> filter = "None", name species = "None");

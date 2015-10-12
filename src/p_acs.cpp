@@ -5761,9 +5761,9 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 					return 0;
 				}
 
-				DWORD actorMask = MF_SHOOTABLE;
+				ActorFlags actorMask = MF_SHOOTABLE;
 				if (argCount >= 6) {
-					actorMask = args[5];
+					actorMask = ActorFlags::FromInt(args[5]);
 				}
 
 				DWORD wallMask = ML_BLOCKEVERYTHING | ML_BLOCKHITSCAN;

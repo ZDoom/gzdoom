@@ -75,7 +75,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffCheck)
 			{
 				pmo->angle = R_PointToAngle2 (pmo->x, pmo->y, linetarget->x, linetarget->y);
 				if (((linetarget->player && (!linetarget->IsTeammate (pmo) || level.teamdamage != 0))|| linetarget->flags3&MF3_ISMONSTER)
-					&& (!(linetarget->flags2&(MF2_DORMANT+MF2_INVULNERABLE))))
+					&& (!(linetarget->flags2&(MF2_DORMANT|MF2_INVULNERABLE))))
 				{
 					newLife = player->health+(damage>>3);
 					newLife = newLife > max ? max : newLife;

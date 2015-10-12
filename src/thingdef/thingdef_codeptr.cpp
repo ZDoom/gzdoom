@@ -1014,7 +1014,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomMissile)
                 	targ=owner;
                 	missile->target=owner;
 					// automatic handling of seeker missiles
-					if (self->flags & missile->flags2 & MF2_SEEKERMISSILE)
+					if ((self->flags & MF_STEALTH) && (missile->flags2 & MF2_SEEKERMISSILE))
 					{
 						missile->tracer=self->tracer;
 					}
@@ -3414,7 +3414,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
 	lof_data.Flags = flags;
 	lof_data.BadActor = false;
 
-	Trace(x1, y1, z1, sec, vx, vy, vz, range, 0xFFFFFFFF, ML_BLOCKEVERYTHING, self, trace, 0,
+	Trace(x1, y1, z1, sec, vx, vy, vz, range, ActorFlags::FromInt(0xFFFFFFFF), ML_BLOCKEVERYTHING, self, trace, 0,
 		CheckLOFTraceFunc, &lof_data);
 
 	if (trace.HitType == TRACE_HitActor ||

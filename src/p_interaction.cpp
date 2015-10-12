@@ -1516,7 +1516,7 @@ dopain:
 	{
 		if (source == target->target)
 		{
-			target->threshold = BASETHRESHOLD;
+			target->threshold = target->DefThreshold; //BASETHRESHOLD is no longer used here.
 			if (target->state == target->SpawnState && target->SeeState != NULL)
 			{
 				target->SetState (target->SeeState);
@@ -1537,7 +1537,7 @@ dopain:
 				target->lastenemy = target->target; // remember last enemy - killough
 			}
 			target->target = source;
-			target->threshold = BASETHRESHOLD;
+			target->threshold = target->DefThreshold;
 			if (target->state == target->SpawnState && target->SeeState != NULL)
 			{
 				target->SetState (target->SeeState);

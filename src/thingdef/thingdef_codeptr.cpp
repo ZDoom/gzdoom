@@ -1014,7 +1014,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomMissile)
                 	targ=owner;
                 	missile->target=owner;
 					// automatic handling of seeker missiles
-					if ((self->flags & MF_STEALTH) && (missile->flags2 & MF2_SEEKERMISSILE))
+					if (self->flags2 & missile->flags2 & MF2_SEEKERMISSILE)
 					{
 						missile->tracer=self->tracer;
 					}

@@ -87,7 +87,8 @@ inline int GetSafeBlockY(long long blocky)
 #define PLAYERMISSILERANGE	(8192*FRACUNIT)	// [RH] New MISSILERANGE for players
 
 // follow a player exlusively for 3 seconds
-#define BASETHRESHOLD	100
+// No longer used.
+// #define BASETHRESHOLD	100
 
 
 //

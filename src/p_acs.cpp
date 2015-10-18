@@ -3365,6 +3365,14 @@ int DLevelScript::DoSpawn (int type, fixed_t x, fixed_t y, fixed_t z, int tid, i
 
 	if (info != NULL)
 	{
+		info = info->GetReplacement ();
+
+		if ((GetDefaultByType (info)->flags3 & MF3_ISMONSTER) &&
+			((dmflags & DF_NO_MONSTERS) || (level.flags2 & LEVEL2_NOMONSTERS)))
+		{
+			return 0;
+		}
+
 		actor = Spawn (info, x, y, z, ALLOW_REPLACE);
 		if (actor != NULL)
 		{

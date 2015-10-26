@@ -65,6 +65,8 @@ void FRenderState::Reset()
 {
 	mTextureEnabled = true;
 	mBrightmapEnabled = mFogEnabled = mGlowEnabled = mLightEnabled = false;
+	mColorMask[0] = mColorMask[1] = mColorMask[2] = mColorMask[3] = true;
+	currentColorMask[0] = currentColorMask[1] = currentColorMask[2] = currentColorMask[3] = true;
 	ffTextureEnabled = ffFogEnabled = false;
 	mSpecialEffect = ffSpecialEffect = EFF_NONE;
 	mFogColor.d = ffFogColor.d = -1;
@@ -300,6 +302,8 @@ void FRenderState::Apply(bool forcenoshader)
 		}
 	}
 
+	ApplyColorMask();
+
 	if (forcenoshader || !ApplyShader())
 	{
 		GLRenderer->mShaderManager->SetActiveShader(NULL);
@@ -364,3 +368,17 @@ void FRenderState::Apply(bool forcenoshader)
 
 }
 
+void FRenderState::ApplyColorMask()
+{
+	if ((mColorMask[0] != currentColorMask[0]) ||
+		(mColorMask[1] != currentColorMask[1]) ||
+		(mColorMask[2] != currentColorMask[2]) ||
+		(mColorMask[3] != currentColorMask[3]))
+	{
+		glColorMask(mColorMask[0], mColorMask[1], mColorMask[2], mColorMask[3]);
+		currentColorMask[0] = mColorMask[0];
+		currentColorMask[1] = mColorMask[1];
+		currentColorMask[2] = mColorMask[2];
+		currentColorMask[3] = mColorMask[3];
+	}
+}

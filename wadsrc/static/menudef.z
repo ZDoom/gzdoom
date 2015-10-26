@@ -140,6 +140,15 @@ OptionValue "FuzzStyle"
 	//5, "Jagged fuzz" I can't see any difference between this and 4 so it's disabled for now.
 }
 
+OptionValue VRMode
+{
+	0, "Normal"
+	1, "Green/Magenta"
+	2, "Red/Cyan"
+	5, "Left Eye"
+	6, "Right Eye"
+}
+
 OptionMenu "GLTextureGLOptions"
 {
 	Title "TEXTURE OPTIONS"
@@ -190,6 +199,7 @@ OptionMenu "GLPrefOptions"
 	Slider "Ambient light level",		gl_light_ambient,				1.0, 255.0, 5.0
 	Option "Rendering quality",			gl_render_precise,				"Precision"
 	Option "Use vertex buffer",			gl_usevbo,						"VBOModes"
+	Option "Stereo 3D VR",				vr_mode, 						"VRMode"
 }
 
 OptionMenu "GLShaderOptions"

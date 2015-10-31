@@ -13,20 +13,16 @@ namespace s3d {
 /* virtual */
 VSMatrix ShiftedEyePose::GetProjection(FLOATTYPE fov, FLOATTYPE aspectRatio, FLOATTYPE fovRatio) const
 {
-	// Lifted from gl_scene.cpp FGLRenderer::SetProjection()
-	FLOATTYPE fovy = 2 * RAD2DEG(atan(tan(DEG2RAD(fov) / 2) / fovRatio));
 	double zNear = 5.0;
 	double zFar = 65536.0;
 
 	// For stereo 3D, use asymmetric frustum shift in projection matrix
 	// Q: shouldn't shift vary with roll angle, at least for desktop display?
 	// A: No. (lab) roll is not measured on desktop display (yet)
-	double frustumShift = zNear * shift / vr_screendist; // meters cancel
+	double frustumShift = zNear * shift / vr_screendist; // meters cancel, leaving doom units
 	// double frustumShift = 0; // Turning off shift for debugging
-	double fH = tan(DEG2RAD(fovy/2)) * zNear;
+	double fH = zNear * tan(DEG2RAD(fov) / 2) / fovRatio;
 	double fW = fH * aspectRatio;
-	// Emulate glFrustum command:
-	// glFrustum(-fW - frustumShift, fW - frustumShift, -fH, fH, zNear, zFar);
 	double left = -fW - frustumShift;
 	double right = fW - frustumShift;
 	double bottom = -fH;

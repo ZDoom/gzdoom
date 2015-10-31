@@ -1,7 +1,7 @@
 #ifndef GL_STEREO3D_SCOPED_COLOR_MASK_H_
 #define GL_STEREO3D_SCOPED_COLOR_MASK_H_
 
-#include "gl/glew.h"
+#include "gl/system/gl_system.h"
 
 /**
 * Temporarily change color mask
@@ -10,28 +10,15 @@ class ScopedColorMask
 {
 public:
 	ScopedColorMask(GLboolean r, GLboolean g, GLboolean b, GLboolean a) 
-		: isPushed(false)
 	{
-		setColorMask(r, g, b, a);
-	}
-	~ScopedColorMask() {
-		revert();
-	}
-	void setColorMask(GLboolean r, GLboolean g, GLboolean b, GLboolean a) {
-		if (!isPushed) {
-			glPushAttrib(GL_COLOR_BUFFER_BIT);
-			isPushed = true;
-		}
+		glGetBooleanv(GL_COLOR_WRITEMASK, saved);
 		glColorMask(r, g, b, a);
 	}
-	void revert() {
-		if (isPushed) {
-			glPopAttrib();
-			isPushed = false;
-		}
+	~ScopedColorMask() {
+		glColorMask(saved[0], saved[1], saved[2], saved[3]);
 	}
 private:
-	bool isPushed;
+	GLboolean saved[4];
 };
 
 

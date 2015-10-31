@@ -2,7 +2,7 @@
 #define GL_STEREO3D_H_
 
 #include <vector>
-#include "gl/system/gl_system.h"
+#include "gl/data/gl_matrix.h"
 
 
 /* stereoscopic 3D API */
@@ -24,9 +24,9 @@ class EyePose
 public:
 	EyePose() {}
 	virtual ~EyePose() {}
-	virtual void GetProjection(float fov, float aspectRatio, float fovRatio, GLdouble outMatrix[4][4]) const;
+	virtual void GetProjection(FLOATTYPE fov, FLOATTYPE aspectRatio, FLOATTYPE fovRatio, FLOATTYPE outMatrix[4][4]) const;
 	virtual Viewport GetViewport(const Viewport& fullViewport) const;
-	virtual void GetViewShift(float yaw, float outViewShift[3]) const;
+	virtual void GetViewShift(FLOATTYPE yaw, FLOATTYPE outViewShift[3]) const;
 	virtual void SetUp() const {};
 	virtual void TearDown() const {};
 };

@@ -5,6 +5,7 @@
 #include "v_video.h"
 #include "vectors.h"
 #include "r_renderer.h"
+#include "gl/data/gl_matrix.h"
 
 struct particle_t;
 class FCanvasTexture;
@@ -120,6 +121,7 @@ public:
 	void Flush() {}
 
 	void SetProjection(float fov, float ratio, float fovratio);
+	void SetProjection(FLOATTYPE matrix[4][4]); // raw matrix input from stereo 3d modes
 	void SetViewMatrix(fixed_t viewx, fixed_t viewy, fixed_t viewz, bool mirror, bool planemirror);
 	void ProcessScene(bool toscreen = false);
 

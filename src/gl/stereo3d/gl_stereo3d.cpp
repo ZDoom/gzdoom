@@ -6,24 +6,23 @@ namespace s3d {
 
 
 /* virtual */
-void EyePose::GetProjection(float fov, float aspectRatio, float fovRatio, GLdouble m[4][4]) const
+void EyePose::GetProjection(FLOATTYPE fov, FLOATTYPE aspectRatio, FLOATTYPE fovRatio, FLOATTYPE m[4][4]) const
 {
 	// Lifted from gl_scene.cpp FGLRenderer::SetProjection()
-	float fovy = 2 * RAD2DEG(atan(tan(DEG2RAD(fov) / 2) / fovRatio));
-	const double zNear = 5.0;
-	const double zFar = 65536.0;
+	double fovy = 2 * RAD2DEG(atan(tan(DEG2RAD(fov) / 2) / fovRatio));
+	const FLOATTYPE zNear = 5.0;
+	const FLOATTYPE zFar = 65536.0;
 
-	double sine, cotangent, deltaZ;
 	double radians = fovy / 2 * M_PI / 180;
 
-	deltaZ = zFar - zNear;
-	sine = sin(radians);
+	FLOATTYPE deltaZ = zFar - zNear;
+	double sine = sin(radians);
 	if ((deltaZ == 0) || (sine == 0) || (aspectRatio == 0)) {
 		return;
 	}
-	cotangent = cos(radians) / sine;
+	FLOATTYPE cotangent = FLOATTYPE(cos(radians) / sine);
 
-	memset(m, 0, 16*sizeof(GLdouble));
+	memset(m, 0, 16*sizeof(FLOATTYPE));
 	m[0][0] = cotangent / aspectRatio;
 	m[1][1] = cotangent;
 	m[2][2] = -(zFar + zNear) / deltaZ;
@@ -40,7 +39,7 @@ Viewport EyePose::GetViewport(const Viewport& fullViewport) const
 
 
 /* virtual */
-void EyePose::GetViewShift(float yaw, float outViewShift[3]) const
+void EyePose::GetViewShift(FLOATTYPE yaw, FLOATTYPE outViewShift[3]) const
 {
 	// pass-through for Mono view
 	outViewShift[0] = 0;

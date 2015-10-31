@@ -56,6 +56,7 @@
 #include "gl/utility/gl_clock.h"
 #include "gl/utility/gl_templates.h"
 #include "gl/shaders/gl_shader.h"
+#include "gl/stereo3d/scoped_color_mask.h"
 
 FDrawInfo * gl_drawinfo;
 
@@ -1009,31 +1010,33 @@ void FDrawInfo::SetupFloodStencil(wallseg * ws)
 	int recursion = GLPortal::GetRecursion();
 
 	// Create stencil 
-	glStencilFunc(GL_EQUAL,recursion,~0);		// create stencil
-	glStencilOp(GL_KEEP,GL_KEEP,GL_INCR);		// increment stencil of valid pixels
-	glColorMask(0,0,0,0);						// don't write to the graphics buffer
-	gl_RenderState.EnableTexture(false);
-	gl_RenderState.ResetColor();
-	glEnable(GL_DEPTH_TEST);
-	glDepthMask(true);
+	glStencilFunc(GL_EQUAL, recursion, ~0);		// create stencil
+	glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);		// increment stencil of valid pixels
+	{
+		// Use revertible color mask, to avoid stomping on anaglyph 3D state
+		ScopedColorMask colorMask(0, 0, 0, 0); // glColorMask(0, 0, 0, 0);						// don't write to the graphics buffer
+		gl_RenderState.EnableTexture(false);
+		gl_RenderState.ResetColor();
+		glEnable(GL_DEPTH_TEST);
+		glDepthMask(true);
 
-	gl_RenderState.Apply();
-	FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-	ptr->Set(ws->x1, ws->z1, ws->y1, 0, 0);
-	ptr++;
-	ptr->Set(ws->x1, ws->z2, ws->y1, 0, 0);
-	ptr++;
-	ptr->Set(ws->x2, ws->z2, ws->y2, 0, 0);
-	ptr++;
-	ptr->Set(ws->x2, ws->z1, ws->y2, 0, 0);
-	ptr++;
-	GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_FAN);
+		gl_RenderState.Apply();
+		FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
+		ptr->Set(ws->x1, ws->z1, ws->y1, 0, 0);
+		ptr++;
+		ptr->Set(ws->x1, ws->z2, ws->y1, 0, 0);
+		ptr++;
+		ptr->Set(ws->x2, ws->z2, ws->y2, 0, 0);
+		ptr++;
+		ptr->Set(ws->x2, ws->z1, ws->y2, 0, 0);
+		ptr++;
+		GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_FAN);
 
 
-	glStencilFunc(GL_EQUAL,recursion+1,~0);		// draw sky into stencil
-	glStencilOp(GL_KEEP,GL_KEEP,GL_KEEP);		// this stage doesn't modify the stencil
+		glStencilFunc(GL_EQUAL, recursion + 1, ~0);		// draw sky into stencil
+		glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);		// this stage doesn't modify the stencil
 
-	glColorMask(1,1,1,1);						// don't write to the graphics buffer
+	} // glColorMask(1, 1, 1, 1);						// don't write to the graphics buffer
 	gl_RenderState.EnableTexture(true);
 	glDisable(GL_DEPTH_TEST);
 	glDepthMask(false);
@@ -1045,26 +1048,28 @@ void FDrawInfo::ClearFloodStencil(wallseg * ws)
 
 	glStencilOp(GL_KEEP,GL_KEEP,GL_DECR);
 	gl_RenderState.EnableTexture(false);
-	glColorMask(0,0,0,0);						// don't write to the graphics buffer
-	gl_RenderState.ResetColor();
+	{
+		// Use revertible color mask, to avoid stomping on anaglyph 3D state
+		ScopedColorMask colorMask(0, 0, 0, 0); // glColorMask(0,0,0,0);						// don't write to the graphics buffer
+		gl_RenderState.ResetColor();
 
-	gl_RenderState.Apply();
-	FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-	ptr->Set(ws->x1, ws->z1, ws->y1, 0, 0);
-	ptr++;
-	ptr->Set(ws->x1, ws->z2, ws->y1, 0, 0);
-	ptr++;
-	ptr->Set(ws->x2, ws->z2, ws->y2, 0, 0);
-	ptr++;
-	ptr->Set(ws->x2, ws->z1, ws->y2, 0, 0);
-	ptr++;
-	GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_FAN);
+		gl_RenderState.Apply();
+		FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
+		ptr->Set(ws->x1, ws->z1, ws->y1, 0, 0);
+		ptr++;
+		ptr->Set(ws->x1, ws->z2, ws->y1, 0, 0);
+		ptr++;
+		ptr->Set(ws->x2, ws->z2, ws->y2, 0, 0);
+		ptr++;
+		ptr->Set(ws->x2, ws->z1, ws->y2, 0, 0);
+		ptr++;
+		GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_FAN);
 
-	// restore old stencil op.
-	glStencilOp(GL_KEEP,GL_KEEP,GL_KEEP);
-	glStencilFunc(GL_EQUAL,recursion,~0);
-	gl_RenderState.EnableTexture(true);
-	glColorMask(1,1,1,1);
+		// restore old stencil op.
+		glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+		glStencilFunc(GL_EQUAL, recursion, ~0);
+		gl_RenderState.EnableTexture(true);
+	} // glColorMask(1, 1, 1, 1);
 	glEnable(GL_DEPTH_TEST);
 	glDepthMask(true);
 }

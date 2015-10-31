@@ -33,10 +33,11 @@ const Stereo3DMode& Stereo3DMode::getCurrentMode()
 	case 2:
 		setCurrentMode(RedCyan::getInstance(vr_ipd));
 		break;
-	case 3:
+	// TODO: missing indices 3, 4 for not-yet-implemented side-by-side modes, to match values from GZ3Doom
+	case 5:
 		setCurrentMode(LeftEyeView::getInstance(vr_ipd));
 		break;
-	case 4:
+	case 6:
 		setCurrentMode(RightEyeView::getInstance(vr_ipd));
 		break;
 	case 0:

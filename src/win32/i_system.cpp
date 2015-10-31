@@ -291,7 +291,7 @@ static void I_SelectTimer()
 
 unsigned int I_MSTime()
 {
-	// assert(basetime != 0);
+	assert(basetime != 0);
 	return timeGetTime() - basetime;
 }
 

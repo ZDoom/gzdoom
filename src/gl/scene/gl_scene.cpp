@@ -840,6 +840,7 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 
 		ProcessScene(toscreen);
 		EndDrawScene(viewsector);
+		(*eye)->TearDown();
 	}
 	stereo3dMode.TearDown();
 

@@ -826,7 +826,7 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 		// Stereo mode specific perspective projection
 		(*eye)->GetProjection(fov, ratio, fovratio, projectionMatrix);
 		SetProjection(projectionMatrix);
-		SetProjection(fov, ratio, fovratio);	// switch to perspective mode and set up clipper
+		// SetProjection(fov, ratio, fovratio);	// switch to perspective mode and set up clipper
 		SetViewAngle(viewangle);
 		// Stereo mode specific viewpoint adjustment - temporarily shifts global viewx, viewy, viewz
 		(*eye)->GetViewShift(GLRenderer->mAngles.Yaw, viewShift);
@@ -839,6 +839,7 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 		clipper.SafeAddClipRangeRealAngles(viewangle + a1, viewangle - a1);
 
 		ProcessScene(toscreen);
+		EndDrawScene(viewsector);
 	}
 	stereo3dMode.TearDown();
 
@@ -910,7 +911,6 @@ void FGLRenderer::RenderView (player_t* player)
 	GLRenderer->mLightCount = ((it.Next()) != NULL);
 
 	sector_t * viewsector = RenderViewpoint(player->camera, NULL, FieldOfView * 360.0f / FINEANGLES, ratio, fovratio, true, true);
-	EndDrawScene(viewsector);
 
 	All.Unclock();
 }

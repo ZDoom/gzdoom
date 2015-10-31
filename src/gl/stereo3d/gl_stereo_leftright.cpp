@@ -11,7 +11,7 @@ namespace s3d {
 
 
 /* virtual */
-void ShiftedEyePose::GetProjection(FLOATTYPE fov, FLOATTYPE aspectRatio, FLOATTYPE fovRatio, FLOATTYPE m[4][4]) const
+VSMatrix ShiftedEyePose::GetProjection(FLOATTYPE fov, FLOATTYPE aspectRatio, FLOATTYPE fovRatio) const
 {
 	// Lifted from gl_scene.cpp FGLRenderer::SetProjection()
 	FLOATTYPE fovy = 2 * RAD2DEG(atan(tan(DEG2RAD(fov) / 2) / fovRatio));
@@ -20,10 +20,10 @@ void ShiftedEyePose::GetProjection(FLOATTYPE fov, FLOATTYPE aspectRatio, FLOATTY
 
 	// For stereo 3D, use asymmetric frustum shift in projection matrix
 	// Q: shouldn't shift vary with roll angle, at least for desktop display?
-	// A: (lab) roll is not measured on desktop display (yet)
+	// A: No. (lab) roll is not measured on desktop display (yet)
 	double frustumShift = zNear * shift / vr_screendist; // meters cancel
 	// double frustumShift = 0; // Turning off shift for debugging
-	double fH = tan(fovy / 360 * M_PI) * zNear;
+	double fH = tan(DEG2RAD(fovy/2)) * zNear;
 	double fW = fH * aspectRatio;
 	// Emulate glFrustum command:
 	// glFrustum(-fW - frustumShift, fW - frustumShift, -fH, fH, zNear, zFar);
@@ -31,19 +31,10 @@ void ShiftedEyePose::GetProjection(FLOATTYPE fov, FLOATTYPE aspectRatio, FLOATTY
 	double right = fW - frustumShift;
 	double bottom = -fH;
 	double top = fH;
-	double deltaZ = zFar - zNear;
 
-	memset(m, 0, 16 * sizeof(FLOATTYPE)); // set all elements to zero, cleverly
-
-	// https://www.opengl.org/sdk/docs/man2/xhtml/glFrustum.xml
-	m[0][0] = 2 * zNear / (right - left);
-	m[1][1] = 2 * zNear / (top - bottom);
-	m[2][2] = -(zFar + zNear) / deltaZ;
-	m[2][3] = -1;
-	m[3][2] = -2 * zNear * zFar / deltaZ;
-	// m[3][3] = 0; // redundant
-	// m[2][1] = (top + bottom) / (top - bottom); // zero for the cases I know of...
-	m[2][0] = (right + left) / (right - left); // asymmetric shift is in this term
+	VSMatrix result(1);
+	result.frustum(left, right, bottom, top, zNear, zFar);
+	return result;
 }
 
 

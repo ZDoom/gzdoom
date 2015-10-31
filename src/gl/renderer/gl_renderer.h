@@ -121,7 +121,7 @@ public:
 	void Flush() {}
 
 	void SetProjection(float fov, float ratio, float fovratio);
-	void SetProjection(FLOATTYPE matrix[4][4]); // raw matrix input from stereo 3d modes
+	void SetProjection(VSMatrix matrix); // raw matrix input from stereo 3d modes
 	void SetViewMatrix(fixed_t viewx, fixed_t viewy, fixed_t viewz, bool mirror, bool planemirror);
 	void ProcessScene(bool toscreen = false);
 

@@ -24,7 +24,7 @@ class EyePose
 public:
 	EyePose() {}
 	virtual ~EyePose() {}
-	virtual void GetProjection(FLOATTYPE fov, FLOATTYPE aspectRatio, FLOATTYPE fovRatio, FLOATTYPE outMatrix[4][4]) const;
+	virtual VSMatrix GetProjection(FLOATTYPE fov, FLOATTYPE aspectRatio, FLOATTYPE fovRatio) const;
 	virtual Viewport GetViewport(const Viewport& fullViewport) const;
 	virtual void GetViewShift(FLOATTYPE yaw, FLOATTYPE outViewShift[3]) const;
 	virtual void SetUp() const {};

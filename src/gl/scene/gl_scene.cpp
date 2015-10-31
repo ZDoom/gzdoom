@@ -257,9 +257,10 @@ void FGLRenderer::SetProjection(float fov, float ratio, float fovratio)
 }
 
 // raw matrix input from stereo 3d modes
-void FGLRenderer::SetProjection(FLOATTYPE matrix[4][4])
+void FGLRenderer::SetProjection(VSMatrix matrix)
 {
-	gl_RenderState.mProjectionMatrix.loadMatrix(&matrix[0][0]);
+	gl_RenderState.mProjectionMatrix.loadIdentity();
+	gl_RenderState.mProjectionMatrix.multMatrix(matrix);
 	gl_RenderState.Set2DMode(false);
 }
 
@@ -812,7 +813,6 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 	retval = viewsector;
 
 	// Render (potentially) multiple views for stereo 3d
-	FLOATTYPE projectionMatrix[4][4];
 	float viewShift[3];
 	const s3d::Stereo3DMode& stereo3dMode = s3d::Stereo3DMode::getCurrentMode();
 	stereo3dMode.SetUp();
@@ -824,8 +824,7 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 		SetViewport(bounds);
 		mCurrentFoV = fov;
 		// Stereo mode specific perspective projection
-		(*eye)->GetProjection(fov, ratio, fovratio, projectionMatrix);
-		SetProjection(projectionMatrix);
+		SetProjection( (*eye)->GetProjection(fov, ratio, fovratio) );
 		// SetProjection(fov, ratio, fovratio);	// switch to perspective mode and set up clipper
 		SetViewAngle(viewangle);
 		// Stereo mode specific viewpoint adjustment - temporarily shifts global viewx, viewy, viewz

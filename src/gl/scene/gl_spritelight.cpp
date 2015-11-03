@@ -75,7 +75,7 @@ void gl_SetDynSpriteLight(AActor *self, fixed_t x, fixed_t y, fixed_t z, subsect
 	while (node)
 	{
 		light=node->lightsource;
-		if (!light->owned || light->target == NULL || light->target->IsVisibleToPlayer())
+		//if (!light->owned || light->target == NULL || light->target->IsVisibleToPlayer())
 		{
 			if (!(light->flags2&MF2_DORMANT) &&
 				(!(light->flags4&MF4_DONTLIGHTSELF) || light->target != self))

@@ -1236,7 +1236,7 @@ void FParser::SF_ObjFlag(void)
 		t_return.type = svt_int;  
 		if (mo && flagnum<26)
 		{
-			t_return.value.i = !!(mo->flags & (1 << flagnum));
+			t_return.value.i = !!(mo->flags & ActorFlags::FromInt(1 << flagnum));
 		}
 		else t_return.value.i = 0;
 	}

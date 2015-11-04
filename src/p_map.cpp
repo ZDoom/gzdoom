@@ -3912,7 +3912,7 @@ AActor *P_LineAttack(AActor *t1, angle_t angle, fixed_t distance,
 //==========================================================================
 
 AActor *P_LinePickActor(AActor *t1, angle_t angle, fixed_t distance, int pitch,
-						DWORD actorMask, DWORD wallMask)
+						ActorFlags actorMask, DWORD wallMask)
 {
 	fixed_t vx, vy, vz, shootz;
 	

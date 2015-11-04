@@ -2353,7 +2353,16 @@ static void P_LoopSidedefs (bool firstloop)
 		// instead of as part of another loop
 		if (line->frontsector == line->backsector)
 		{
-			right = DWORD(line->sidedef[!sidetemp[i].b.lineside] - sides);
+			const side_t* const rightside = line->sidedef[!sidetemp[i].b.lineside];
+
+			if (NULL == rightside)
+			{
+				// There is no right side!
+				if (firstloop) Printf ("Line %d's right edge is unconnected\n", linemap[unsigned(line-lines)]);
+				continue;
+			}
+
+			right = DWORD(rightside - sides);
 		}
 		else
 		{

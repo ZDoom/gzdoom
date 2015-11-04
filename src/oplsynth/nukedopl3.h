@@ -1,5 +1,5 @@
 /*
-*  Copyright (C) 2013-2014 Nuke.YKT
+*  Copyright (C) 2013-2015 Nuke.YKT(Alexey Khokholov)
 *
 *  This library is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU Lesser General Public
@@ -27,7 +27,7 @@
 			OPL2 ROMs.
 */
 
-//version 1.5
+//version 1.6
 
 #include "opl.h"
 #include "muslib.h"
@@ -116,7 +116,7 @@ static const Bit8u mt[16] = { 1, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 20, 24, 24,
 // ksl table
 //
 
-static const Bit8u kslrom[16] = { 0, 64, 80, 90, 96, 102, 106, 110, 112, 116, 118, 120, 122, 124, 126, 127 };
+static const Bit8u kslrom[16] = { 0, 32, 40, 45, 48, 51, 53, 55, 56, 58, 59, 60, 61, 62, 63, 64 };
 
 static const Bit8u kslshift[4] = { 8, 1, 2, 0 };
 
@@ -133,7 +133,7 @@ static const Bit8s vibsgn_table[8] = { 1, 1, 1, 1, -1, -1, -1, -1 };
 
 static const Bit8u eg_incstep[3][4][8] = {
 	{ { 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0, 0, 0, 0 } },
-	{ { 0, 1, 0, 1, 0, 1, 0, 1 }, { 1, 1, 0, 1, 0, 1, 0, 1 }, { 1, 1, 0, 1, 1, 1, 0, 1 }, { 1, 1, 1, 1, 1, 1, 0, 1 } },
+	{ { 0, 1, 0, 1, 0, 1, 0, 1 }, { 0, 1, 0, 1, 1, 1, 0, 1 }, { 0, 1, 1, 1, 0, 1, 1, 1 }, { 0, 1, 1, 1, 1, 1, 1, 1 } },
 	{ { 1, 1, 1, 1, 1, 1, 1, 1 }, { 2, 2, 1, 1, 1, 1, 1, 1 }, { 2, 2, 1, 1, 2, 2, 1, 1 }, { 2, 2, 2, 2, 2, 2, 1, 1 } }
 };
 
@@ -149,8 +149,8 @@ static const Bit8s eg_incsh[16] = {
 // address decoding
 //
 
-static const Bit8s ad_slot[0x20] = { 0, 2, 4, 1, 3, 5, -1, -1, 6, 8, 10, 7, 9, 11, -1, -1, 12, 14, 16, 13, 15, 17, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
-
+static const Bit8s ad_slot[0x20] = { 0, 1, 2, 3, 4, 5, -1, -1, 6, 7, 8, 9, 10, 11, -1, -1, 12, 13, 14, 15, 16, 17, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+static const Bit8u ch_slot[18] = { 0, 1, 2, 6, 7, 8, 12, 13, 14, 18, 19, 20, 24, 25, 26, 30, 31, 32 };
 
 struct opl_chip;
 struct opl_slot;
@@ -167,7 +167,6 @@ struct opl_slot {
 	Bit16s eg_out;
 	Bit8u eg_inc;
 	Bit8u eg_gen;
-	Bit8u eg_gennext;
 	Bit8u eg_rate;
 	Bit8u eg_ksl;
 	Bit8u *trem;
@@ -217,6 +216,8 @@ struct opl_chip {
 	Bit8u tremdir;
 	Bit32u noise;
 	Bit16s zeromod;
+	Bit32s mixbuff[2];
+	Bit8u FullPan;
 };
 
 

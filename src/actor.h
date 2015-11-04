@@ -373,6 +373,7 @@ enum ActorFlag7
 	MF7_NODECAL			= 0x00040000,	// [ZK] Forces puff to have no impact decal
 	MF7_FORCEDECAL		= 0x00080000,	// [ZK] Forces puff's decal to override the weapon's.
 	MF7_LAXTELEFRAGDMG	= 0x00100000,	// [MC] Telefrag damage can be reduced.
+	MF7_ICESHATTER		= 0x00200000,	// [MC] Shatters ice corpses regardless of damagetype.
 };
 
 // --- mobj.renderflags ---

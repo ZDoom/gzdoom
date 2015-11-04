@@ -3365,6 +3365,14 @@ int DLevelScript::DoSpawn (int type, fixed_t x, fixed_t y, fixed_t z, int tid, i
 
 	if (info != NULL)
 	{
+		info = info->GetReplacement ();
+
+		if ((GetDefaultByType (info)->flags3 & MF3_ISMONSTER) &&
+			((dmflags & DF_NO_MONSTERS) || (level.flags2 & LEVEL2_NOMONSTERS)))
+		{
+			return 0;
+		}
+
 		actor = Spawn (info, x, y, z, ALLOW_REPLACE);
 		if (actor != NULL)
 		{
@@ -5761,9 +5769,9 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 					return 0;
 				}
 
-				DWORD actorMask = MF_SHOOTABLE;
+				ActorFlags actorMask = MF_SHOOTABLE;
 				if (argCount >= 6) {
-					actorMask = args[5];
+					actorMask = ActorFlags::FromInt(args[5]);
 				}
 
 				DWORD wallMask = ML_BLOCKEVERYTHING | ML_BLOCKHITSCAN;
@@ -5864,6 +5872,8 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			const char *statename = argCount > 6 ? FBehavior::StaticLookupString(args[6]) : "";
 			bool exact = argCount > 7 ? !!args[7] : false;
 			fixed_t heightoffset = argCount > 8 ? args[8] : 0;
+			fixed_t radiusoffset = argCount > 9 ? args[9] : 0;
+			fixed_t pitch = argCount > 10 ? args[10] : 0;
 
 			FState *state = argCount > 6 ? activator->GetClass()->ActorInfo->FindStateByString(statename, exact) : 0;
 
@@ -5881,7 +5891,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			if (!reference)
 				return false;
 
-			if (P_Thing_Warp(activator, reference, xofs, yofs, zofs, angle, flags, heightoffset))
+			if (P_Thing_Warp(activator, reference, xofs, yofs, zofs, angle, flags, heightoffset, radiusoffset, pitch))
 			{
 				if (state && argCount > 6)
 				{

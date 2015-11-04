@@ -137,6 +137,7 @@ extern bool ConWindowHidden;
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 CVAR (String, queryiwad_key, "shift", CVAR_GLOBALCONFIG|CVAR_ARCHIVE);
+CVAR (Bool, con_debugoutput, false, 0);
 
 double PerfToSec, PerfToMillisec;
 UINT TimerPeriod;
@@ -1053,6 +1054,31 @@ static TArray<FString> bufferedConsoleStuff;
 
 void I_PrintStr(const char *cp)
 {
+	if (con_debugoutput)
+	{
+		// Strip out any color escape sequences before writing to debug output
+		char * copy = new char[strlen(cp)+1];
+		const char * srcp = cp;
+		char * dstp = copy;
+
+		while (*srcp != 0)
+		{
+			if (*srcp!=0x1c && *srcp!=0x1d && *srcp!=0x1e && *srcp!=0x1f)
+			{
+				*dstp++=*srcp++;
+			}
+			else
+			{
+				if (srcp[1]!=0) srcp+=2;
+				else break;
+			}
+		}
+		*dstp=0;
+
+		OutputDebugStringA(copy);
+		delete [] copy;
+	}
+
 	if (ConWindowHidden)
 	{
 		bufferedConsoleStuff.Push(cp);

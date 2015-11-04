@@ -6467,25 +6467,25 @@ void PrintMiscActorInfo(AActor *query)
 
 		Printf("%s @ %p has the following flags:\n   flags: %x", query->GetTag(), query, query->flags.GetValue());
 		for (flagi = 0; flagi <= 31; flagi++)
-			if (query->flags & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags));
+			if (query->flags & ActorFlags::FromInt(1<<flagi)) Printf(" %s", FLAG_NAME(1<<flagi, flags));
 		Printf("\n   flags2: %x", query->flags2.GetValue());
 		for (flagi = 0; flagi <= 31; flagi++)
-			if (query->flags2 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags2));
+			if (query->flags2 & ActorFlags2::FromInt(1<<flagi)) Printf(" %s", FLAG_NAME(1<<flagi, flags2));
 		Printf("\n   flags3: %x", query->flags3.GetValue());
 		for (flagi = 0; flagi <= 31; flagi++)
-			if (query->flags3 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags3));
+			if (query->flags3 & ActorFlags3::FromInt(1<<flagi)) Printf(" %s", FLAG_NAME(1<<flagi, flags3));
 		Printf("\n   flags4: %x", query->flags4.GetValue());
 		for (flagi = 0; flagi <= 31; flagi++)
-			if (query->flags4 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags4));
+			if (query->flags4 & ActorFlags4::FromInt(1<<flagi)) Printf(" %s", FLAG_NAME(1<<flagi, flags4));
 		Printf("\n   flags5: %x", query->flags5.GetValue());
 		for (flagi = 0; flagi <= 31; flagi++)
-			if (query->flags5 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags5));
+			if (query->flags5 & ActorFlags5::FromInt(1<<flagi)) Printf(" %s", FLAG_NAME(1<<flagi, flags5));
 		Printf("\n   flags6: %x", query->flags6.GetValue());
 		for (flagi = 0; flagi <= 31; flagi++)
-			if (query->flags6 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags6));
+			if (query->flags6 & ActorFlags6::FromInt(1<<flagi)) Printf(" %s", FLAG_NAME(1<<flagi, flags6));
 		Printf("\n   flags7: %x", query->flags7.GetValue());
 		for (flagi = 0; flagi <= 31; flagi++)
-			if (query->flags7 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags7));
+			if (query->flags7 & ActorFlags7::FromInt(1<<flagi)) Printf(" %s", FLAG_NAME(1<<flagi, flags7));
 		Printf("\nBounce flags: %x\nBounce factors: f:%f, w:%f", 
 			query->BounceFlags.GetValue(), FIXED2FLOAT(query->bouncefactor),
 			FIXED2FLOAT(query->wallbouncefactor));

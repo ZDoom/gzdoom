@@ -784,7 +784,7 @@ static int PatchThing (int thingy)
 	bool hadStyle = false;
 	FStateDefinitions statedef;
 	bool patchedStates = false;
-	int oldflags;
+	ActorFlags oldflags;
 	const PClass *type;
 	SWORD *ednum, dummyed;
 
@@ -1139,28 +1139,28 @@ static int PatchThing (int thingy)
 				}
 				if (vchanged[1])
 				{
-					info->flags2 = ActorFlags2::FromInt (value[1]);
-					if (info->flags2 & 0x00000004)	// old BOUNCE1
+					if (value[1] & 0x00000004)	// old BOUNCE1
 					{ 	
-						info->flags2 &= ActorFlags2::FromInt (~4);
+						value[1] &= ~0x00000004;
 						info->BounceFlags = BOUNCE_DoomCompat;
 					}
 					// Damage types that once were flags but now are not
-					if (info->flags2 & 0x20000000)
+					if (value[1] & 0x20000000)
 					{
 						info->DamageType = NAME_Ice;
-						info->flags2 &= ActorFlags2::FromInt (~0x20000000);
+						value[1] &= ~0x20000000;
 					}
-					if (info->flags2 & 0x10000)
+					if (value[1] & 0x10000000)
 					{
 						info->DamageType = NAME_Fire;
-						info->flags2 &= ActorFlags2::FromInt (~0x10000);
+						value[1] &= ~0x10000000;
 					}
-					if (info->flags2 & 1)
+					if (value[1] & 0x00000001)
 					{
 						info->gravity = FRACUNIT/4;
-						info->flags2 &= ActorFlags2::FromInt (~1);
+						value[1] &= ~0x00000001;
 					}
+					info->flags2 = ActorFlags2::FromInt (value[1]);
 				}
 				if (vchanged[2])
 				{

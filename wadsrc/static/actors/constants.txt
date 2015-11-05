@@ -513,6 +513,13 @@ enum
 	CBF_SETONPTR		= 1 << 4,	//Sets the pointer change on the actor doing the checking instead of self.
 };
 
+// Wander Flags
+enum
+{
+	WF_NORANDOMTURN	=	1,
+	WF_DONTANGLE =		2,
+};
+
 // This is only here to provide one global variable for testing.
 native int testglobalvar;
 

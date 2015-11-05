@@ -176,7 +176,7 @@ ACTOR Actor native //: Thinker
 	action native A_SkullPop(class<Actor> skulltype = "BloodySkull");
 	action native A_CheckPlayerDone();
 
-	action native A_Wander();
+	action native A_Wander(int flags = 0);
 	action native A_Look2();
 	action native A_TossGib();
 	action native A_SentinelBob();

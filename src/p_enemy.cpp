@@ -1799,7 +1799,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Look)
 			}
 			else
 			{
-				CALL_ACTION(A_Wander, self);
+				A_Wander(self);
 			}
 		}
 		else
@@ -1957,7 +1957,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_LookEx)
                         }
                         else
                         {
-                            CALL_ACTION(A_Wander, self);
+                            A_Wander(self);
                         }
                     }
                 }
@@ -2054,7 +2054,27 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ClearLastHeard)
 // A_Wander
 //
 //==========================================================================
-DEFINE_ACTION_FUNCTION(AActor, A_Wander)
+enum WFFlags
+{
+	WF_NORANDOMTURN	=	1,
+	WF_DONTANGLE =		2,
+};
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Wander)
+{
+	ACTION_PARAM_START(1);
+	ACTION_PARAM_INT(flags, 0);
+	
+	A_Wander(self, flags);
+}
+
+// [MC] I had to move this out from within A_Wander in order to allow flags to 
+// pass into it. That meant replacing the CALL_ACTION(A_Wander) functions with
+// just straight up defining A_Wander in order to compile. Looking around though,
+// actors from the games themselves just do a straight A_Chase call itself so
+// I saw no harm in it.
+
+void A_Wander(AActor *self, int flags)
 {
 	// [RH] Strife probably clears this flag somewhere, but I couldn't find where.
 	// This seems as good a place as any.
@@ -2073,27 +2093,29 @@ DEFINE_ACTION_FUNCTION(AActor, A_Wander)
 	}
 
 	// turn towards movement direction if not there yet
-	if (self->movedir < DI_NODIR)
+	if (!(flags & WF_DONTANGLE) && (self->movedir < DI_NODIR))
 	{
-		self->angle &= (angle_t)(7<<29);
+		self->angle &= (angle_t)(7 << 29);
 		int delta = self->angle - (self->movedir << 29);
 		if (delta > 0)
 		{
-			self->angle -= ANG90/2;
+			self->angle -= ANG90 / 2;
 		}
 		else if (delta < 0)
 		{
-			self->angle += ANG90/2;
+			self->angle += ANG90 / 2;
 		}
 	}
 
-	if (--self->movecount < 0 || !P_Move (self))
+	if (self->movecount >= 0)
+		self->movecount--;
+
+	if ((!(flags & WF_NORANDOMTURN) && self->movecount < 0) || !P_Move(self))
 	{
-		P_RandomChaseDir (self);
+		P_RandomChaseDir(self);
 		self->movecount += 5;
 	}
 }
-
 
 //==========================================================================
 //
@@ -2309,7 +2331,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 				//CALL_ACTION(A_Look, actor);
 				if (actor->target == NULL)
 				{
-					if (!dontmove) CALL_ACTION(A_Wander, actor);
+					if (!dontmove) A_Wander(actor);
 					actor->flags &= ~MF_INCHASE;
 					return;
 				}

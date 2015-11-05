@@ -2163,7 +2163,19 @@ nosee:
 //=============================================================================
 #define CLASS_BOSS_STRAFE_RANGE	64*10*FRACUNIT
 
-void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missilestate, bool playactive, bool nightmarefast, bool dontmove)
+enum ChaseFlags
+{
+	CHF_FASTCHASE = 1,
+	CHF_NOPLAYACTIVE = 2,
+	CHF_NIGHTMAREFAST = 4,
+	CHF_RESURRECT = 8,
+	CHF_DONTMOVE = 16,
+	CHF_NORANDOMTURN = 32,
+	CHF_DONTANGLE = 64,
+	CHF_NOPOSTATTACKTURN = 128,
+};
+
+void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missilestate, bool playactive, bool nightmarefast, bool dontmove, int flags)
 {
 	int delta;
 
@@ -2225,7 +2237,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 	{
 		A_FaceTarget(actor);
 	}
-	else if (actor->movedir < 8)
+	else if (!(flags & CHF_DONTANGLE) && actor->movedir < 8)
 	{
 		actor->angle &= (angle_t)(7<<29);
 		delta = actor->angle - (actor->movedir << 29);
@@ -2315,7 +2327,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 	if (actor->flags & MF_JUSTATTACKED)
 	{
 		actor->flags &= ~MF_JUSTATTACKED;
-		if (!actor->isFast() && !dontmove)
+		if (!actor->isFast() && !dontmove && !(flags & CHF_NOPOSTATTACKTURN))
 		{
 			P_NewChaseDir (actor);
 		}
@@ -2485,7 +2497,9 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 		FTextureID oldFloor = actor->floorpic;
 
 		// chase towards player
-		if (--actor->movecount < 0 || !P_Move (actor))
+		if (actor->movecount >= 0)
+			actor->movecount--;
+		if (((!(flags & CHF_NORANDOMTURN)) && (actor->movecount < 0)) || !P_Move(actor))
 		{
 			P_NewChaseDir (actor);
 		}
@@ -2662,15 +2676,6 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 //
 //==========================================================================
 
-enum ChaseFlags
-{
-	CHF_FASTCHASE = 1,
-	CHF_NOPLAYACTIVE = 2,
-	CHF_NIGHTMAREFAST = 4,
-	CHF_RESURRECT = 8,
-	CHF_DONTMOVE = 16,
-};
-
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Chase)
 {
 	ACTION_PARAM_START(3);
@@ -2683,23 +2688,23 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Chase)
 		if (flags & CHF_RESURRECT && P_CheckForResurrection(self, false)) return;
 		
 		A_DoChase(self, !!(flags&CHF_FASTCHASE), melee, missile, !(flags&CHF_NOPLAYACTIVE), 
-					!!(flags&CHF_NIGHTMAREFAST), !!(flags&CHF_DONTMOVE));
+					!!(flags&CHF_NIGHTMAREFAST), !!(flags&CHF_DONTMOVE), flags);
 	}
 	else // this is the old default A_Chase
 	{
-		A_DoChase (self, false, self->MeleeState, self->MissileState, true, gameinfo.nightmarefast, false);
+		A_DoChase (self, false, self->MeleeState, self->MissileState, true, gameinfo.nightmarefast, false, flags);
 	}
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_FastChase)
 {
-	A_DoChase (self, true, self->MeleeState, self->MissileState, true, true, false);
+	A_DoChase (self, true, self->MeleeState, self->MissileState, true, true, false, 0);
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_VileChase)
 {
 	if (!P_CheckForResurrection(self, true))
-		A_DoChase (self, false, self->MeleeState, self->MissileState, true, gameinfo.nightmarefast, false);
+		A_DoChase(self, false, self->MeleeState, self->MissileState, true, gameinfo.nightmarefast, false, 0);
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ExtChase)
@@ -2713,13 +2718,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ExtChase)
 	// Now that A_Chase can handle state label parameters, this function has become rather useless...
 	A_DoChase(self, false,
 		domelee ? self->MeleeState:NULL, domissile ? self->MissileState:NULL,
-		playactive, nightmarefast, false);
+		playactive, nightmarefast, false, 0);
 }
 
 // for internal use
 void A_Chase(AActor *self)
 {
-	A_DoChase (self, false, self->MeleeState, self->MissileState, true, gameinfo.nightmarefast, false);
+	A_DoChase(self, false, self->MeleeState, self->MissileState, true, gameinfo.nightmarefast, false, 0);
 }
 
 //=============================================================================

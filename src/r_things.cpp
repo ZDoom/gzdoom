@@ -322,11 +322,8 @@ nextpost:
 //
 bool R_ClipSpriteColumnWithPortals (fixed_t x, fixed_t y, vissprite_t* spr)
 {
-	size_t numdrawsegs = ds_p-firstdrawseg;
-	for (int i = (int)numdrawsegs-1; i >= 0; i--)
+	for (drawseg_t* seg = ds_p; seg-- > firstdrawseg; ) // copied code from killough below
 	{
-		drawseg_t* seg = &firstdrawseg[i];
-
 		// ignore segs from other portals
 		if (seg->CurrentPortalUniq != CurrentPortalUniq)
 			continue;

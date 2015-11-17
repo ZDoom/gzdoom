@@ -4154,7 +4154,7 @@ bool DLevelScript::DoCheckActorTexture(int tid, AActor *activator, int string, b
 			{ // This is the highest solid floor beneath our feet
 				secpic = *ff->top.texture;
 			}
-			else if (ff->flags & FF_SWIMMABLE &&
+			else if (!(ff->flags & FF_SOLID) &&
 				tex == TexMan[*ff->top.texture] &&
 				z <= ff->top.plane->ZatPoint(actor->x, actor->y) &&
 				z >= ff->bottom.plane->ZatPoint(actor->x, actor->y))
@@ -4184,7 +4184,7 @@ bool DLevelScript::DoCheckActorTexture(int tid, AActor *activator, int string, b
 			{ // This is the lowest solid ceiling above our eyes
 				secpic = *ff->top.texture;
 			}
-			else if (ff->flags & FF_SWIMMABLE &&
+			else if (!(ff->flags & FF_SOLID) &&
 				tex == TexMan[*ff->bottom.texture] &&
 				z <= ff->top.plane->ZatPoint(actor->X(), actor->Y()) &&
 				z >= ff->bottom.plane->ZatPoint(actor->X(), actor->Y()))

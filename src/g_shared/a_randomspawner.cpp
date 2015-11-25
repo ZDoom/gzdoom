@@ -15,9 +15,22 @@
 #include "gstrings.h"
 #include "a_action.h"
 #include "thingdef/thingdef.h"
+#include "v_text.h"
 
 #define MAX_RANDOMSPAWNERS_RECURSION 32 // Should be largely more than enough, honestly.
 static FRandom pr_randomspawn("RandomSpawn");
+
+static bool IsMonster(const FDropItem *di)
+{
+	const PClass *pclass = PClass::FindClass(di->Name);
+
+	if (NULL == pclass)
+	{
+		return false;
+	}
+
+	return 0 != (GetDefaultByType(pclass)->flags3 & MF3_ISMONSTER);
+}
 
 class ARandomSpawner : public AActor
 {
@@ -41,7 +54,7 @@ class ARandomSpawner : public AActor
 			{
 				if (di->Name != NAME_None)
 				{
-					if (!nomonsters || !(GetDefaultByType(PClass::FindClass(di->Name))->flags3 & MF3_ISMONSTER))
+					if (!nomonsters || !IsMonster(di))
 					{
 						if (di->amount < 0) di->amount = 1; // default value is -1, we need a positive value.
 						n += di->amount; // this is how we can weight the list.
@@ -62,7 +75,7 @@ class ARandomSpawner : public AActor
 			while (n > -1 && di != NULL)
 			{
 				if (di->Name != NAME_None &&
-					(!nomonsters || !(GetDefaultByType(PClass::FindClass(di->Name))->flags3 & MF3_ISMONSTER)))
+					(!nomonsters || !IsMonster(di)))
 				{
 					n -= di->amount;
 					if ((di->Next != NULL) && (n > -1))
@@ -106,6 +119,7 @@ class ARandomSpawner : public AActor
 				}
 				else
 				{
+					Printf(TEXTCOLOR_RED "Unknown item class %s to drop from a random spawner\n", di->Name.GetChars());
 					Species = NAME_None;
 				}
 			}

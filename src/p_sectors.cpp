@@ -806,12 +806,15 @@ ASkyViewpoint *sector_t::GetSkyBox(int which)
 {
 	if (which == floor)
 	{
-		return FloorSkyBox != NULL ? FloorSkyBox : (MoreFlags & SECF_NOFLOORSKYBOX)? (ASkyViewpoint*)NULL : level.DefaultSkybox;
+		if (FloorSkyBox != NULL) return FloorSkyBox;
+		if (MoreFlags & SECF_NOFLOORSKYBOX) return NULL;
 	}
 	else
 	{
-		return CeilingSkyBox != NULL ? CeilingSkyBox : (MoreFlags & SECF_NOCEILINGSKYBOX)? (ASkyViewpoint*)NULL : level.DefaultSkybox;
+		if (CeilingSkyBox != NULL) return CeilingSkyBox;
+		if (MoreFlags & SECF_NOCEILINGSKYBOX) return NULL;
 	}
+	return level.DefaultSkybox;
 }
 
 

@@ -5931,3 +5931,54 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckBlock)
 		ACTION_JUMP(block);
 	}
 }
+
+//===========================================================================
+//
+// A_FaceVelocity(angle offset, bool pitch, ptr)
+//
+// Sets the actor('s pointer) to face the direction of travel.
+//===========================================================================
+enum FVFlags
+{
+	FVF_NOPITCH =			1 << 0,
+	FVF_INTERPOLATE =		1 << 1,
+	FVF_NOANGLE =			1 << 2,
+	FVF_RESETPITCH =		1 << 3,
+};
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceVelocity)
+{
+	ACTION_PARAM_START(3);
+	ACTION_PARAM_FIXED(offset, 0)
+	ACTION_PARAM_INT(flags, 1);
+	ACTION_PARAM_INT(ptr, 2);
+
+	AActor *mobj = COPY_AAPTR(self, ptr);
+
+	//Need an actor.
+	if (!mobj || ((flags & FVF_NOPITCH) && (flags & FVF_NOANGLE)))
+	{
+		ACTION_SET_RESULT(false);
+		return;
+	}
+	
+	//Don't bother calculating this if we don't have any horizontal movement.
+	if (!(flags & FVF_NOANGLE) && (mobj->velx != 0 || mobj->vely != 0))
+	{
+		fixed_t vx = mobj->x + mobj->velx, vy = mobj->y + mobj->vely;
+		angle_t angle = R_PointToAngle2(mobj->x, mobj->y, vx, vy) + offset;
+		mobj->SetAngle(angle, !!(flags & FVF_INTERPOLATE));
+	}
+
+	if (!(flags & FVF_NOPITCH))
+	{
+		//Reset pitch to 0 if specified.
+		if (mobj->velz == 0 && (flags & FVF_RESETPITCH))
+			mobj->pitch = 0;
+		else
+		{
+			FVector2 velocity(mobj->velx, mobj->vely);
+			fixed_t pitch = R_PointToAngle2(0, 0, (fixed_t)velocity.Length(), mobj->velz);
+			mobj->SetPitch(-pitch, !!(flags & FVF_INTERPOLATE));
+		}
+	}
+}

@@ -5943,7 +5943,6 @@ enum FVFlags
 	FVF_NOPITCH =			1 << 0,
 	FVF_INTERPOLATE =		1 << 1,
 	FVF_NOANGLE =			1 << 2,
-	FVF_RESETPITCH =		1 << 3,
 };
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceVelocity)
 {
@@ -5966,9 +5965,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceVelocity)
 	//Don't bother calculating this if we don't have any horizontal movement.
 	if (!(flags & FVF_NOANGLE) && (mobj->velx != 0 || mobj->vely != 0))
 	{
-		const fixed_t vx = mobj->velx + mobj->x, vy = mobj->vely + mobj->y;
 		angle_t current = mobj->angle; 
-		const angle_t angle = R_PointToAngle2(mobj->x, mobj->y, vx, vy);
+		const angle_t angle = R_PointToAngle2(0, 0, mobj->velx, mobj->vely);
 		//Done because using anglelimit directly causes a signed/unsigned mismatch.
 		const angle_t limit = anglelimit; 
 
@@ -6029,20 +6027,17 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceVelocity)
 					max = MIN(plimit, (pitch - current));
 					current += max;
 				}
-				if ((mobj->velz != 0) || (flags & FVF_RESETPITCH))
-					mobj->SetPitch(current, !!(flags & FVF_INTERPOLATE));
+				mobj->SetPitch(current, !!(flags & FVF_INTERPOLATE));
 			}
 			else
 			{
-				if ((mobj->velz != 0) || (flags & FVF_RESETPITCH))
-					mobj->SetPitch(pitch, !!(flags & FVF_INTERPOLATE));
+				mobj->SetPitch(pitch, !!(flags & FVF_INTERPOLATE));
 			}
 			
 		}
 		else
 		{
-			if ((mobj->velz != 0) || (flags & FVF_RESETPITCH))
-				mobj->SetPitch(pitch, !!(flags & FVF_INTERPOLATE));
+			mobj->SetPitch(pitch, !!(flags & FVF_INTERPOLATE));
 		}
 	}
 }

@@ -5947,10 +5947,12 @@ enum FVFlags
 };
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceVelocity)
 {
-	ACTION_PARAM_START(3);
-	ACTION_PARAM_FIXED(offset, 0)
-	ACTION_PARAM_INT(flags, 1);
-	ACTION_PARAM_INT(ptr, 2);
+	ACTION_PARAM_START(5);
+	ACTION_PARAM_ANGLE(offset, 0);
+	ACTION_PARAM_ANGLE(anglelimit, 1);
+	ACTION_PARAM_ANGLE(pitchlimit, 2);
+	ACTION_PARAM_INT(flags, 3);
+	ACTION_PARAM_INT(ptr, 4);
 
 	AActor *mobj = COPY_AAPTR(self, ptr);
 
@@ -5964,21 +5966,83 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceVelocity)
 	//Don't bother calculating this if we don't have any horizontal movement.
 	if (!(flags & FVF_NOANGLE) && (mobj->velx != 0 || mobj->vely != 0))
 	{
-		fixed_t vx = mobj->x + mobj->velx, vy = mobj->y + mobj->vely;
-		angle_t angle = R_PointToAngle2(mobj->x, mobj->y, vx, vy) + offset;
-		mobj->SetAngle(angle, !!(flags & FVF_INTERPOLATE));
+		const fixed_t vx = mobj->velx + mobj->x, vy = mobj->vely + mobj->y;
+		angle_t current = mobj->angle; 
+		const angle_t angle = R_PointToAngle2(mobj->x, mobj->y, vx, vy);
+		//Done because using anglelimit directly causes a signed/unsigned mismatch.
+		const angle_t limit = anglelimit; 
+
+		//Code borrowed from A_Face*.
+		if (limit > 0 && (absangle(current - angle) > limit))
+		{
+			if (current < angle)
+			{
+				// [MC] This may appear backwards, but I assure any who
+				// reads this, it works.
+				if (current - angle > ANGLE_180)
+					current += limit + offset;
+				else
+					current -= limit + offset;
+				mobj->SetAngle(current, !!(flags & FVF_INTERPOLATE));
+			}
+			else if (current > angle)
+			{
+				if (angle - current > ANGLE_180)
+					current -= limit + offset;
+				else
+					current += limit + offset;
+				mobj->SetAngle(current, !!(flags & FVF_INTERPOLATE));
+			}
+			else
+				mobj->SetAngle(angle + ANGLE_180 + offset, !!(flags & FVF_INTERPOLATE));
+			
+		}
+		else
+			mobj->SetAngle(angle + offset, !!(flags & FVF_INTERPOLATE));
 	}
 
 	if (!(flags & FVF_NOPITCH))
 	{
-		//Reset pitch to 0 if specified.
-		if (mobj->velz == 0 && (flags & FVF_RESETPITCH))
-			mobj->pitch = 0;
+		fixed_t current = mobj->pitch;
+		const FVector2 velocity(mobj->velx, mobj->vely);
+		const fixed_t pitch = R_PointToAngle2(0, 0, (fixed_t)velocity.Length(), -mobj->velz);
+		if (pitchlimit > 0)
+		{
+			// [MC] angle_t for pitchlimit was required because otherwise
+			// we would wind up with less than desirable turn rates that didn't
+			// match that of A_SetPitch. We want consistency. Also, I didn't know
+			// of a better way to convert from angle_t to fixed_t properly so I
+			// used this instead.
+			fixed_t plimit = fixed_t(pitchlimit);
+			
+			if (abs(current - pitch) > plimit)
+			{
+				fixed_t max = 0;
+				
+				if (current > pitch)
+				{
+					max = MIN(plimit, (current - pitch));
+					current -= max;
+				}
+				else //if (current > pitch)
+				{
+					max = MIN(plimit, (pitch - current));
+					current += max;
+				}
+				if ((mobj->velz != 0) || (flags & FVF_RESETPITCH))
+					mobj->SetPitch(current, !!(flags & FVF_INTERPOLATE));
+			}
+			else
+			{
+				if ((mobj->velz != 0) || (flags & FVF_RESETPITCH))
+					mobj->SetPitch(pitch, !!(flags & FVF_INTERPOLATE));
+			}
+			
+		}
 		else
 		{
-			FVector2 velocity(mobj->velx, mobj->vely);
-			fixed_t pitch = R_PointToAngle2(0, 0, (fixed_t)velocity.Length(), mobj->velz);
-			mobj->SetPitch(-pitch, !!(flags & FVF_INTERPOLATE));
+			if ((mobj->velz != 0) || (flags & FVF_RESETPITCH))
+				mobj->SetPitch(pitch, !!(flags & FVF_INTERPOLATE));
 		}
 	}
 }

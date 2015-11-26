@@ -5028,6 +5028,31 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusGive)
 	ACTION_SET_RESULT(given);
 }
 
+//===========================================================================
+//
+// A_CheckSpecies
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckSpecies)
+{
+	ACTION_PARAM_START(3);
+	ACTION_PARAM_STATE(jump, 0);
+	ACTION_PARAM_NAME(species, 1);
+	ACTION_PARAM_INT(ptr, 2);
+
+	AActor *mobj = COPY_AAPTR(self, ptr);
+
+	ACTION_SET_RESULT(false);
+	//Needs at least one state jump to work. 
+	if (!mobj)
+	{
+		return;
+	}
+
+	if (jump && mobj->GetSpecies() == species)
+		ACTION_JUMP(jump);
+}
+
 
 //==========================================================================
 //

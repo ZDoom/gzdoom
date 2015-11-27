@@ -44,7 +44,7 @@ ACTOR Macil1
 	Death:
 		LEAD E 2 A_FaceTarget
 		LEAD F 2 BRIGHT A_ShootGun
-		LEAD E 2 A_SentinelRefire
+		LEAD E 1 A_SentinelRefire
 		Loop
 	Pain:
 		LEAD Y 3
@@ -80,7 +80,7 @@ ACTOR Macil2 : Macil1
 		LEAD K 3
 		LEAD L 3 A_NoBlocking
 		LEAD MNOPQRSTUV 3
-		LEAD W 4 Bright A_SpawnItemEx("AlienSpectre4", 0, 0, 0, 0, 0, random[spectrespawn](0,255)*0.0078125, 0, SXF_NOCHECKPOSITION)
+		LEAD W 3 A_SpawnItemEx("AlienSpectre4", 0, 0, 0, 0, 0, random[spectrespawn](0,255)*0.0078125, 0, SXF_NOCHECKPOSITION)
 		LEAD X -1
 		Stop
 	}

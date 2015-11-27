@@ -254,7 +254,7 @@ void R_InitTextureMapping ()
 void R_SetVisibility (float vis)
 {
 	// Allow negative visibilities, just for novelty's sake
-	//vis = clamp (vis, -204.7f, 204.7f);
+	vis = clamp (vis, -204.7f, 204.7f);	// (205 and larger do not work in 5:4 aspect ratio)
 
 	CurrentVisibility = vis;
 

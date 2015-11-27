@@ -2991,7 +2991,7 @@ FUNC(LS_SendToCommunicator)
 			FString msg;
 			msg.Format("TXT_COMM%d", arg2);
 			const char *str = GStrings[msg];
-			if (msg != NULL)
+			if (str != NULL)
 			{
 				Printf (PRINT_CHAT, "%s\n", str);
 			}

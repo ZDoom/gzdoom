@@ -24,6 +24,7 @@
 #include "i_music.h"
 #include "s_sound.h"
 #include "files.h"
+#include "wildmidi/wildmidi_lib.h"
 
 void I_InitMusicWin32 ();
 void I_ShutdownMusicWin32 ();
@@ -216,6 +217,24 @@ protected:
 #ifdef _WIN32
 	static const char EventName[];
 #endif
+};
+
+class WildMidiMIDIDevice : public PseudoMIDIDevice
+{
+public:
+	WildMidiMIDIDevice();
+	~WildMidiMIDIDevice();
+
+	int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
+	bool Preprocess(MIDIStreamer *song, bool looping);
+	bool IsOpen() const;
+
+protected:
+
+	midi *mMidi;
+	bool mLoop;
+
+	static bool FillStream(SoundStream *stream, void *buff, int len, void *userdata);
 };
 
 

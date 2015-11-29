@@ -83,6 +83,7 @@ void FMapInfoParser::ParseSkill ()
 	skill.FriendlyHealth = FRACUNIT;
 	skill.NoPain = false;
 	skill.ArmorFactor = FRACUNIT;
+	skill.Infighting = 0;
 
 	sc.MustGetString();
 	skill.Name = sc.String;
@@ -266,6 +267,14 @@ void FMapInfoParser::ParseSkill ()
 			sc.MustGetFloat();
 			skill.ArmorFactor = FLOAT2FIXED(sc.Float);
 		}
+		else if (sc.Compare("NoInfighting"))
+		{
+			skill.Infighting = LEVEL2_NOINFIGHTING;
+		}
+		else if (sc.Compare("TotalInfighting"))
+		{
+			skill.Infighting = LEVEL2_TOTALINFIGHTING;
+		}
 		else if (sc.Compare("DefaultSkill"))
 		{
 			if (DefaultSkill >= 0)
@@ -384,6 +393,14 @@ int G_SkillProperty(ESkillProperty prop)
 
 		case SKILLP_ArmorFactor:
 			return AllSkills[gameskill].ArmorFactor;
+
+		case SKILLP_Infight:
+			// This property also needs to consider the level flags for the same info.
+			if (level.flags2 & LEVEL2_TOTALINFIGHTING) return 1;
+			if (level.flags2 & LEVEL2_NOINFIGHTING) return -1;	
+			if (AllSkills[gameskill].Infighting == LEVEL2_TOTALINFIGHTING) return 1;
+			if (AllSkills[gameskill].Infighting == LEVEL2_NOINFIGHTING) return -1;
+			return infighting;
 		}
 	}
 	return 0;

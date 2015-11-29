@@ -565,6 +565,7 @@ enum ESkillProperty
 	SKILLP_ArmorFactor,
 	SKILLP_EasyKey,
 	SKILLP_SlowMonsters,
+	SKILLP_Infight,
 };
 int G_SkillProperty(ESkillProperty prop);
 const char * G_SkillName();
@@ -602,6 +603,7 @@ struct FSkillInfo
 	fixed_t MonsterHealth;
 	fixed_t FriendlyHealth;
 	bool NoPain;
+	int Infighting;
 	fixed_t ArmorFactor;
 
 	FSkillInfo() {}

@@ -1441,7 +1441,7 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 	sector_t * realback;
 
 #ifdef _DEBUG
-	if (seg->linedef-lines==4)
+	if (seg->linedef-lines==5835)
 	{
 		int a = 0;
 	}

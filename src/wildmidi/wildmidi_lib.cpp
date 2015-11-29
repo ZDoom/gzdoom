@@ -1299,7 +1299,7 @@ static int load_sample(struct _patch *sample_patch) {
 }
 
 static struct _patch *
-get_patch_data(struct _mdi *mdi, unsigned short patchid) {
+get_patch_data(unsigned short patchid) {
 	struct _patch *search_patch;
 
 	_WM_Lock(&patch_lock);
@@ -1320,7 +1320,7 @@ get_patch_data(struct _mdi *mdi, unsigned short patchid) {
 	}
 	if ((patchid >> 8) != 0) {
 		_WM_Unlock(&patch_lock);
-		return (get_patch_data(mdi, patchid & 0x00FF));
+		return (get_patch_data(patchid & 0x00FF));
 	}
 	_WM_Unlock(&patch_lock);
 	return NULL;
@@ -1336,7 +1336,7 @@ static void load_patch(struct _mdi *mdi, unsigned short patchid) {
 		}
 	}
 
-	tmp_patch = get_patch_data(mdi, patchid);
+	tmp_patch = get_patch_data(patchid);
 	if (tmp_patch == NULL) {
 		return;
 	}
@@ -1530,8 +1530,7 @@ static void do_note_on(struct _mdi *mdi, struct _event_data *data) {
 		}
 		freq = freq_table[(note % 12) * 100] >> (10 - (note / 12));
 	} else {
-		patch = get_patch_data(mdi,
-				((mdi->channel[ch].bank << 8) | note | 0x80));
+		patch = get_patch_data(((mdi->channel[ch].bank << 8) | note | 0x80));
 		if (patch == NULL) {
 			return;
 		}
@@ -1920,8 +1919,7 @@ static void do_patch(struct _mdi *mdi, struct _event_data *data) {
 	unsigned char ch = data->channel;
 	MIDI_EVENT_DEBUG(__FUNCTION__,ch);
 	if (!mdi->channel[ch].isdrum) {
-		mdi->channel[ch].patch = get_patch_data(mdi,
-				(unsigned short)(((mdi->channel[ch].bank << 8) | data->data)));
+		mdi->channel[ch].patch = get_patch_data((unsigned short)(((mdi->channel[ch].bank << 8) | data->data)));
 	} else {
 		mdi->channel[ch].bank = (unsigned char)data->data;
 	}
@@ -1986,7 +1984,7 @@ static void do_sysex_roland_drum_track(struct _mdi *mdi,
 		mdi->channel[ch].patch = NULL;
 	} else {
 		mdi->channel[ch].isdrum = 0;
-		mdi->channel[ch].patch = get_patch_data(mdi, 0);
+		mdi->channel[ch].patch = get_patch_data(0);
 	}
 }
 
@@ -1995,7 +1993,7 @@ static void do_sysex_roland_reset(struct _mdi *mdi, struct _event_data *data) {
 	for (i = 0; i < 16; i++) {
 		mdi->channel[i].bank = 0;
 		if (i != 9) {
-			mdi->channel[i].patch = get_patch_data(mdi, 0);
+			mdi->channel[i].patch = get_patch_data(0);
 		} else {
 			mdi->channel[i].patch = NULL;
 		}
@@ -2181,7 +2179,7 @@ static int midi_setup_patch(struct _mdi *mdi, unsigned char channel,
 		mdi->channel[channel].bank = patch;
 	} else {
 		load_patch(mdi, ((mdi->channel[channel].bank << 8) | patch));
-		mdi->channel[channel].patch = get_patch_data(mdi,
+		mdi->channel[channel].patch = get_patch_data(
 				((mdi->channel[channel].bank << 8) | patch));
 	}
 	return 0;
@@ -2614,7 +2612,7 @@ WM_ParseNewMidi(unsigned char *midi_data, unsigned int midi_size) {
 						unsigned long int tmp_decay_samples = 0;
 						struct _patch *tmp_patch = NULL;
 						if (mdi->channel[current_event_ch].isdrum) {
-							tmp_patch = get_patch_data(mdi,
+							tmp_patch = get_patch_data(
 									((mdi->channel[current_event_ch].bank << 8)
 											| tracks[i][0] | 0x80));
 						/*	if (tmp_patch == NULL)
@@ -2919,7 +2917,7 @@ WM_ParseNewMidi(unsigned char *midi_data, unsigned int midi_size) {
 						struct _patch *tmp_patch = NULL;
 
 						if (mdi->channel[current_event_ch].isdrum) {
-							tmp_patch = get_patch_data(mdi,
+							tmp_patch = get_patch_data(
 									((mdi->channel[current_event_ch].bank << 8)
 											| tracks[i][0] | 0x80));
 						/*	if (tmp_patch == NULL)

@@ -432,7 +432,7 @@ WORD FDecalLib::GetDecalID (FScanner &sc)
 		unsigned long num = strtoul (sc.String, NULL, 10);
 		if (num < 1 || num > 65535)
 		{
-			sc.MustGetStringName ("Decal ID must be between 1 and 65535");
+			sc.ScriptError ("Decal ID must be between 1 and 65535");
 		}
 		return (WORD)num;
 	}

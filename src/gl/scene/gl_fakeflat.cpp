@@ -227,7 +227,7 @@ sector_t * gl_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool bac
 
 	if (in_area==area_above)
 	{
-		if (sec->heightsec->MoreFlags&SECF_FAKEFLOORONLY || sec->GetTexture(sector_t::ceiling)==skyflatnum) in_area=area_normal;
+		if (sec->heightsec->MoreFlags&SECF_FAKEFLOORONLY /*|| sec->GetTexture(sector_t::ceiling)==skyflatnum*/) in_area=area_normal;
 	}
 
 	int diffTex = (sec->heightsec->MoreFlags & SECF_CLIPFAKEPLANES);

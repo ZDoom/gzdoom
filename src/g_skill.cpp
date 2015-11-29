@@ -401,6 +401,9 @@ int G_SkillProperty(ESkillProperty prop)
 		case SKILLP_ArmorFactor:
 			return AllSkills[gameskill].ArmorFactor;
 
+		case SKILLP_HealthFactor:
+			return AllSkills[gameskill].HealthFactor;
+
 		case SKILLP_Infight:
 			// This property also needs to consider the level flags for the same info.
 			if (level.flags2 & LEVEL2_TOTALINFIGHTING) return 1;

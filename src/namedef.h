@@ -396,6 +396,7 @@ xx(Roll)
 xx(Scale)
 xx(ScaleX)
 xx(ScaleY)
+xx(Floatbobphase)
 
 xx(Blocking)
 xx(Blockmonsters)

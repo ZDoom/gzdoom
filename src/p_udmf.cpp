@@ -474,6 +474,7 @@ public:
 		th->RenderStyle = STYLE_Count;
 		th->alpha = -1;
 		th->health = 1;
+		th->FloatbobPhase = -1;
 		sc.MustGetToken('{');
 		while (!sc.CheckToken('}'))
 		{
@@ -629,6 +630,11 @@ public:
 			case NAME_Countsecret:
 				CHECK_N(Zd | Zdt | Va)
 				Flag(th->flags, MTF_SECRET, key); 
+				break;
+
+			case NAME_Floatbobphase:
+				CHECK_N(Zd | Zdt)
+				th->FloatbobPhase = CheckInt(key);
 				break;
 
 			case NAME_Renderstyle:

@@ -237,6 +237,7 @@ Note: All <bool> fields default to false unless mentioned otherwise.
 	  scalex = <float>;         // Vertical scaling on thing. Default = 0 (ignored).
 	  scaley = <float>;         // Horizontal scaling on thing. Default = 0 (ignored).
 	  scale = <float>;        	// Vertical and horizontal scaling on thing. Default = 0 (ignored).
+	  floatbobphase = <int>;	// Sets the thing's floatbobphase. Valid phase values are 0-63. Default = -1 (use actor class default).
 
       * Note about arg0str
 

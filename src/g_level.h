@@ -563,6 +563,7 @@ enum ESkillProperty
 	SKILLP_FriendlyHealth,
 	SKILLP_NoPain,
 	SKILLP_ArmorFactor,
+	SKILLP_HealthFactor,
 	SKILLP_EasyKey,
 	SKILLP_SlowMonsters,
 	SKILLP_Infight,
@@ -605,6 +606,7 @@ struct FSkillInfo
 	bool NoPain;
 	int Infighting;
 	fixed_t ArmorFactor;
+	fixed_t HealthFactor;
 
 	FSkillInfo() {}
 	FSkillInfo(const FSkillInfo &other)

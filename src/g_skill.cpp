@@ -84,6 +84,7 @@ void FMapInfoParser::ParseSkill ()
 	skill.NoPain = false;
 	skill.ArmorFactor = FRACUNIT;
 	skill.Infighting = 0;
+	skill.HealthFactor = FRACUNIT;
 
 	sc.MustGetString();
 	skill.Name = sc.String;
@@ -266,6 +267,12 @@ void FMapInfoParser::ParseSkill ()
 			ParseAssign();
 			sc.MustGetFloat();
 			skill.ArmorFactor = FLOAT2FIXED(sc.Float);
+		}
+		else if (sc.Compare("HealthFactor"))
+		{
+			ParseAssign();
+			sc.MustGetFloat();
+			skill.HealthFactor = FLOAT2FIXED(sc.Float);
 		}
 		else if (sc.Compare("NoInfighting"))
 		{

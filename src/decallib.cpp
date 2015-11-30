@@ -608,6 +608,7 @@ void FDecalLib::ParseGenerator (FScanner &sc)
 	// Get name of generator (actor)
 	sc.MustGetString ();
 	optional = sc.Compare("optional");
+	if (optional) sc.MustGetString();
 
 	type = PClass::FindClass (sc.String);
 	if (type == NULL || type->ActorInfo == NULL)
@@ -626,7 +627,7 @@ void FDecalLib::ParseGenerator (FScanner &sc)
 		decal = ScanTreeForName (sc.String, Root);
 		if (decal == NULL)
 		{
-			sc.ScriptError ("%s has not been defined.", sc.String);
+			if (!optional) sc.ScriptError ("%s has not been defined.", sc.String);
 		}
 	}
 	if (type != NULL)

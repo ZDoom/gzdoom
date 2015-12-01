@@ -557,14 +557,13 @@ static DUMB_IT_SIGDATA *it_s3m_load_sigdata(DUMBFILE *f, int * cwtv)
 		return NULL;
 	}
 
-	sigdata->global_volume = dumbfile_getc(f) * 16 / 11;
-	if ( !sigdata->global_volume || sigdata->global_volume > 93 ) sigdata->global_volume = 93;
+	sigdata->global_volume = dumbfile_getc(f);
+	if ( !sigdata->global_volume || sigdata->global_volume > 64 ) sigdata->global_volume = 64;
 	sigdata->speed = dumbfile_getc(f);
 	if (sigdata->speed == 0) sigdata->speed = 6; // Should we? What about tempo?
 	sigdata->tempo = dumbfile_getc(f);
 	master_volume = dumbfile_getc(f); // 7 bits; +128 for stereo
-	//what do we do with master_volume? it's not the same as mixing volume...
-	sigdata->mixing_volume = 48;
+	sigdata->mixing_volume = master_volume & 127;
 
 	if (master_volume & 128) sigdata->flags |= IT_STEREO;
 

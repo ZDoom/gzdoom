@@ -178,7 +178,7 @@ static int readbits(int bitwidth, readblock_crap * crap)
 /** WARNING - do we even need to pass `right`? */
 /** WARNING - why bother memsetting at all? The whole array is written... */
 // if we do memset, dumb_silence() would be neater...
-static int decompress8(DUMBFILE *f, signed char *data, int len, int it215)
+static int decompress8(DUMBFILE *f, signed char *data, int len, int it215, int stereo)
 {
 	int blocklen, blockpos;
 	byte bitwidth;
@@ -188,7 +188,8 @@ static int decompress8(DUMBFILE *f, signed char *data, int len, int it215)
 
 	memset(&crap, 0, sizeof(crap));
 
-	memset(data, 0, len * sizeof(*data));
+	for (blocklen = 0, blockpos = 0; blocklen < len; blocklen++, blockpos += 1 + stereo)
+		data[ blockpos ] = 0;
 
 	while (len > 0) {
 		//Read a block of compressed data:
@@ -254,6 +255,7 @@ static int decompress8(DUMBFILE *f, signed char *data, int len, int it215)
 			 * code. Yay, better compression :D
 			 */
 			*data++ = it215 ? d2 : d1;
+			data += stereo;
 			len--;
 			blockpos++;
 		}
@@ -264,7 +266,7 @@ static int decompress8(DUMBFILE *f, signed char *data, int len, int it215)
 
 
 
-static int decompress16(DUMBFILE *f, short *data, int len, int it215)
+static int decompress16(DUMBFILE *f, short *data, int len, int it215, int stereo)
 {
 	int blocklen, blockpos;
 	byte bitwidth;
@@ -274,7 +276,8 @@ static int decompress16(DUMBFILE *f, short *data, int len, int it215)
 
 	memset(&crap, 0, sizeof(crap));
 
-	memset(data, 0, len * sizeof(*data));
+	for ( blocklen = 0, blockpos = 0; blocklen < len; blocklen++, blockpos += 1 + stereo )
+		data[ blockpos ] = 0;
 
 	while (len > 0) {
 		//Read a block of compressed data:
@@ -339,6 +342,7 @@ static int decompress16(DUMBFILE *f, short *data, int len, int it215)
 			 * code. Yay, better compression :D
 			 */
 			*data++ = it215 ? d2 : d1;
+			data += stereo;
 			len--;
 			blockpos++;
 		}
@@ -721,21 +725,22 @@ static int32 it_read_sample_data(int cmwt, IT_SAMPLE *sample, unsigned char conv
 	} else if (sample->flags & 8) {
 		/* If the sample is packed, then we must unpack it. */
 
-		/** WARNING - unresolved business here... test with ModPlug? */
+		/* Behavior as defined by greasemonkey's munch.py and observed by XMPlay and OpenMPT */
 
-		if (sample->flags & IT_SAMPLE_STEREO)
-			//exit(37); // TODO: if this ever happens, maybe sample->length should be doubled below?
-			return -1;
-
-/*
-//#ifndef STEREO_SAMPLES_COUNT_AS_TWO
-		ASSERT(!(sample->flags & IT_SAMPLE_STEREO));
-//#endif
-*/
-		if (sample->flags & IT_SAMPLE_16BIT)
-			decompress16(f, sample->data, datasize, ((cmwt >= 0x215) && (convert & 4)));
-		else
-			decompress8(f, sample->data, datasize, ((cmwt >= 0x215) && (convert & 4)));
+		if (sample->flags & IT_SAMPLE_STEREO) {
+			if (sample->flags & IT_SAMPLE_16BIT) {
+				decompress16(f, (short *) sample->data, datasize >> 1, ((cmwt >= 0x215) && (convert & 4)), 1);
+				decompress16(f, (short *) sample->data + 1, datasize >> 1, ((cmwt >= 0x215) && (convert & 4)), 1);
+			} else {
+				decompress8(f, (signed char *) sample->data, datasize >> 1, ((cmwt >= 0x215) && (convert & 4)), 1);
+				decompress8(f, (signed char *) sample->data + 1, datasize >> 1, ((cmwt >= 0x215) && (convert & 4)), 1);
+			}
+		} else {
+			if (sample->flags & IT_SAMPLE_16BIT)
+				decompress16(f, (short *) sample->data, datasize, ((cmwt >= 0x215) && (convert & 4)), 0);
+			else
+				decompress8(f, (signed char *) sample->data, datasize, ((cmwt >= 0x215) && (convert & 4)), 0);
+		}
  	} else if (sample->flags & IT_SAMPLE_16BIT) {
 		if (sample->flags & IT_SAMPLE_STEREO) {
 			if (convert & 2) {

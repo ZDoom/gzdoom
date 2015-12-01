@@ -118,7 +118,7 @@ static int it_mod_read_pattern(IT_PATTERN *pattern, DUMBFILE *f, int n_channels,
 
 
 
-static int it_mod_read_sample_header(IT_SAMPLE *sample, DUMBFILE *f)
+static int it_mod_read_sample_header(IT_SAMPLE *sample, DUMBFILE *f, int stk)
 {
 	int finetune, loop_start, loop_length;
 
@@ -141,7 +141,8 @@ assumed not to be an instrument name, and is probably a message.
 /** Each  finetune step changes  the note 1/8th  of  a  semitone. */
 	sample->global_volume = 64;
 	sample->default_volume = dumbfile_getc(f); // Should we be setting global_volume to this instead?
-	loop_start = dumbfile_mgetw(f) << 1;
+	loop_start = dumbfile_mgetw(f);
+	if ( !stk ) loop_start <<= 1;
 	loop_length = dumbfile_mgetw(f) << 1;
 	if ( loop_length > 2 && loop_start + loop_length > sample->length && loop_start / 2 + loop_length <= sample->length )
 		loop_start /= 2;
@@ -596,7 +597,7 @@ static DUMB_IT_SIGDATA *it_mod_load_sigdata(DUMBFILE *f, int rstrict)
 		sigdata->sample[i].data = NULL;
 
 	for (i = 0; i < sigdata->n_samples; i++) {
-		if (it_mod_read_sample_header(&sigdata->sample[i], f)) {
+		if (it_mod_read_sample_header(&sigdata->sample[i], f, sigdata->n_samples == 15)) {
 			_dumb_it_unload_sigdata(sigdata);
 			dumbfile_close(f);
 			return NULL;

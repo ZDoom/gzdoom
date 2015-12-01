@@ -1,0 +1,113 @@
+/*  _______         ____    __         ___    ___
+ * \    _  \       \    /  \  /       \   \  /   /       '   '  '
+ *  |  | \  \       |  |    ||         |   \/   |         .      .
+ *  |  |  |  |      |  |    ||         ||\  /|  |
+ *  |  |  |  |      |  |    ||         || \/ |  |         '  '  '
+ *  |  |  |  |      |  |    ||         ||    |  |         .      .
+ *  |  |_/  /        \  \__//          ||    |  |
+ * /_______/ynamic    \____/niversal  /__\  /____\usic   /|  .  . ibliotheque
+ *                                                      /  \
+ *                                                     / .  \
+ * fnptr.txt - Function pointer explanation.          / / \  \
+ *                                                   | <  /   \_
+ *                                                   |  \/ /\   /
+ *                                                    \_  /  > /
+ *                                                      | \ / /
+ *                                                      |  ' /
+ *                                                       \__/
+ */
+
+
+C allows you to create and use function pointers. A function pointer is a
+variable that points to a function, and you can use it to call that function.
+Why is this useful?
+
+Function pointers can be passed as parameters. As an example, here's a
+function from Allegro:
+
+   void create_light_table(COLOR_MAP *table, const PALETTE pal, int r, g, b,
+                                                  void (*callback)(int pos));
+
+Don't worry about the syntax just yet, but the last parameter, 'callback', is
+a pointer to a function that takes an int parameter. create_light_table() can
+take some time to complete its work, and you may want to display a progress
+indicator. So you write a function to draw the progress indicator, and then,
+for 'callback', you specify a pointer to your function. This will enable
+create_light_table() to call your function at intervals during its
+processing. (If you don't want to use the callback, you can pass NULL, but
+this only works because create_light_table() checks actively for NULL. You
+can't always specify NULL when you want nothing to happen.)
+
+There are many other uses. In addition to using function pointers as
+parameters, Allegro has some global function pointers you can set to point to
+your functions. Function pointers can also be used in structs, and this is
+where DUMB makes the most use of them.
+
+So how are they used?
+
+   void bar(void) { ... }    /* Here's a function */
+   void (*foo)(void) = &bar; /* Take a pointer */
+   (*foo)();                 /* Call the function */
+
+   char *baz(float a) { ... }          /* Here's another function */
+   char *(*foobarbaz)(float a) = &baz; /* Take a pointer */
+   char *rv = (*foobarbaz)(0.1);       /* Call the function */
+
+In both these cases, note how the statement for calling the pointed-to
+function (third line) resembles the definition of the function pointer
+(second line). This is true of any variable in C, and can lead to some truly
+obfuscated definitions if you are that way inclined. Such definitions can be
+clarified with typedefs, but before you use those, it is important you
+understand how the above statements work. I speak from experience: function
+pointer notation looks random and scary, until you understand why it's the
+way it is; then it makes perfect sense.
+
+(It is actually permissible to omit the & when taking a pointer and to write
+e.g. foobarbaz(0.1) instead of (*foobarbaz)(0.1). However, I recommend not
+doing this, since the syntax for using the pointer no longer resembles the
+definition. Writing e.g. (*foobarbaz)(0.1) also makes a clear distinction
+between function pointer calls and ordinary function calls, which makes code
+more readable.)
+
+Note that function pointers have the return value and parameter list
+specified. A function pointer can only point to a function with a matching
+return value and matching parameters. (You can break this rule by casting the
+pointer explicitly, but there is no situation where doing so is portable to
+all computers, and I strongly advise against it unless you're writing system
+code. If you're not sure whether you're writing system code or not, then
+you're not.)
+
+The parameter names need not match (although the types must). If you wish to
+rename a parameter in your function, you do not have to change the function
+pointer accordingly. In fact, when you define a function pointer, you don't
+even have to specify the names of parameters if you don't want to. I normally
+do so for clarity.
+
+It is possible to typedef a function pointer. In order to typedef a function
+pointer, you start by declaring the pointer as a variable:
+
+   void (*myfunc)(void);
+
+Then you write 'typedef' before it and replace the variable name, which is
+myfunc, with the type name (this rule can be applied to any variable when you
+want to use typedef):
+
+   typedef void (*MYTYPE)(void);
+
+Now 'MYTYPE' represents a pointer to a function with no parameters and no
+return value. The following two lines are completely equivalent:
+
+   MYTYPE myfunc;
+   void (*myfunc)(void);
+
+Note that we use MYTYPE without an asterisk (*), since it is already a
+pointer.
+
+That's it. If you feel anything should be explained better here, or if you
+feel something should be added, please don't hesitate to let me know!
+
+
+Ben Davis
+entheh@users.sf.net
+IRC EFnet #dumb
+See readme.txt for details on using IRC.

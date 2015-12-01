@@ -1,0 +1,141 @@
+al_duh_get_volume()
+
+* [23:25:12] <Mahogny> I prefer an API datagram :)
+
+* Create a glossary of terms like 'render', 'sigrenderer', etc.?
+
+* Consider the order in which stuff appears in dumb.h, and dumb.txt?
+
+
+PROPOSED CHANGE OF TERMINOLOGY:
+
+Current situation:
+
+   A DUH comprises a number of "signals". A signal is an entity capable of
+   producing a stream of audio. When a signal is called upon to generate
+   sound, it may in turn call upon any other signals in the DUH and use the
+   sound from those in generating its own.
+
+   There are a number of "sigtypes", including 'SAMP' (a sample) and 'SEQU'
+   (a sequence). Every signal in a DUH must be of one of these known types.
+   Every sigtype is characterised by a four-byte identifier and the
+   following function prototypes:
+
+      typedef void signal_t;
+      typedef void sampinfo_t;
+
+      signal_t *load_signal(DUH *duh, DUMBFILE *file);
+      sampinfo_t *start_samples(DUH *duh, signal_t *signal, int n_channels, long pos);
+      void set_parameter(sampinfo_t *sampinfo, unsigned char id, long value);
+      long render_samples(sampinfo_t *sampinfo, float volume, float delta, long size, sample_t **samples);
+      void end_samples(sampinfo_t *sampinfo);
+      void unload_signal(signal_t *signal);
+
+   When a signal in a DUH needs to be loaded, DUMB's core first checks the
+   identifier. If it is unknown, load_duh() fails. Each known sigtype will
+   have pointers to the above functions, so DUMB's core will then call the
+   load_signal() function. This loads the "signal", which could consist of
+   sample data, or sequence data (like the patterns in a music module).
+   (There's ambiguity here; we use the word "signal" for the whole entity
+   and also for the specific data that distinguish it from other signals of
+   the same sigtype.)
+
+   Once a signal is in memory, it can be used to generate sound. Its
+   start_samples() function is called for that, and a "sampinfo" block is
+   returned; this will contain the current position and any necessary state
+   information. render_samples() generates sound, and end_samples() destroys
+   the sampinfo block.
+
+   DUMB's support for existing file formats is implemented as follows. First
+   a signal_t is constructed manually by reading the file. Then the special
+   make_duh() function is called. This creates a DUH struct with just one
+   signal in it, the one we just created. We provide all the above
+   functions, except load_signal(), since that has been bypassed. DUMB's
+   core now has our start_samples() etc. function for generating the sound,
+   and it has our unload_signal() function for getting the file out of
+   memory when we're done.
+
+   It is possible with some sigtypes to adjust their sound using
+   "parameters". set_parameter() is called for this. An example would be
+   changing the cut-off frequency for a signal that acts as a filter. I plan
+   to add a second version of this function that takes a pointer. This would
+   be used when manipulating DUHs in code; an example is when installing a
+   callback function for a music module file. It couldn't be used by a file
+   on disk.
+
+This terminology is far from intuitive. Here are some proposals:
+
+- The things DUHs are made of can still be called "signals".
+- The types of signal can still be called "sigtypes" ("signal types").
+- The signal-specific data can be called the "sigdata" ("signal data").
+- The sampinfo block can be renamed to a "sigrenderer" ("signal renderer").
+- The parameters can be called "sigparams" ("signal parameters").
+
+This way we have some consistency between different parts of the library;
+the API for rendering a DUH as a whole uses the term "renderer". We also
+have a full name and an abbreviation for each term.
+
+Any advances on this?
+
+---
+
+Todo/Wishlist:
+
+* MOD/XM loading - change the effect memory system; it isn't robust when it
+                   comes to remembering stuff from one pattern to the next.
+* --- IMPORTANT --- Put link to IT in docs: http://www.noisemusic.org/it/
+* --- IMPORTANT --- Twist the sample decompression algorithm around, since
+                    it was derived from a GPL'd algorithm. We don't want
+                    to have to put it under GPL! :) ... or, find out that it
+                    wasn't originally written under the GPL and then credit
+                    the bloke who wrote it :)
+* MMX resamplers and downsamplers
+* Ability to load *.it, *.xm directly into DUH structs (IT done)
+* Ability to embed IT compressed samples... no, it's copyrighted. Let's do
+    our own :)
+* Ability to embed ITs themselves (? not sure how useful that is)
+* Remove cit.c
+* Check all return values. I think the Winamp plug-in needs looking at...
+* resample.c - it seems x*y is safe if 0<=x<=65535 and -32768<=y<=32768 or
+               vice versa. Check this is true on all compilers. If so, make
+			   use of it to gain more accuracy.
+* DUMB_IDs should always be long or always be int...
+* Decide whether the load_signal function really needs the DUH parameter...
+* Allow for DUH modularity; different pieces share samples etc.
+
+* Fix makefile so it can manage without alld - or put note in the FAQ that
+  ppl must build alld
+* Arrange to detect file types by extension (probably not by content though)
+* Change aldmbd to aldmd in makefiles to maintain 8.3 compatibility
+* Put dumb_resampling_quality and dumb_it_max_to_mix in howto.txt
+* More info in howto.txt, in particular that install_sound() is needed...
+* Add a sanity check for restart_position?
+* Note in docs to let entheh know if you release a game using DUMB
+
+
+STUFF TO FIX FOR THE FIRST RELEASE
+==================================
+
+General
+-------
+* Naming is a bit confusing sometimes...
+* What to do about ASSERT() and TRACE() - they were hacked in when
+  the lib was split from Allegro, and they need replacing.
+* Add some constants to dumb.h (DUMB_VERSION_STR etc.)
+
+entheh
+------
+* Update docs, write more docs (a lot to do here!)
+* Go through, eliminate warnings, resolve some "/** WARNING" comments
+  (they used to be #warning but Bob complained :)
+* Program it to calculate the length of IT and S3M files (currently
+  always set to 10 minutes IIRC)
+
+Bob
+---
+* dumb_resample() now has a volume parameter, so there are some extra
+  floating-point multiply ops that could possibly be optimised.
+
+tjaden
+------
+* Test on Linux when it's all ready plz :)

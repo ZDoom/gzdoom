@@ -1,0 +1,281 @@
+/*  _______         ____    __         ___    ___
+ * \    _  \       \    /  \  /       \   \  /   /       '   '  '
+ *  |  | \  \       |  |    ||         |   \/   |         .      .
+ *  |  |  |  |      |  |    ||         ||\  /|  |
+ *  |  |  |  |      |  |    ||         || \/ |  |         '  '  '
+ *  |  |  |  |      |  |    ||         ||    |  |         .      .
+ *  |  |_/  /        \  \__//          ||    |  |
+ * /_______/ynamic    \____/niversal  /__\  /____\usic   /|  .  . ibliotheque
+ *                                                      /  \
+ *                                                     / .  \
+ * deprec.txt - Deprecated functions, why they        / / \  \
+ *              were deprecated, and what to do      | <  /   \_
+ *              instead.                             |  \/ /\   /
+ *                                                    \_  /  > /
+ *                                                      | \ / /
+ *                                                      |  ' /
+ *                                                       \__/
+ */
+
+
+**********************************************
+*** How the functions have been deprecated ***
+**********************************************
+
+
+   GCC 3.1 and later provide a very useful attribute. The following:
+
+      __attribute__((__deprecated__))
+
+   when written alongside a function prototype, variable declaration or type
+   definition, will result in a warning from GCC if any such part of the API
+   is used. The warning will even tell you where the declaration is, and I
+   have inserted comments by all the deprecated declarations, telling you
+   what to do.
+
+   Unfortunately, GCC 2.x and 3.0.x and MSVC do not have any means to
+   deprecate things. The approach I have taken with these compilers is to
+   avoid prototyping the deprecated parts of the API. This means you will get
+   warnings and errors, and they won't be very helpful. If your program
+   compiles, you may get strange crashes when you run it, since the compiler
+   needs the declarations in order to make sure function calls are carried
+   out correctly.
+
+   If you would like the deprecated parts of the API to be declared, you can
+   compile with the -DDUMB_DECLARE_DEPRECATED switch for GCC, or the
+   -D"DUMB_DECLARE_DEPRECATED" switch for MSVC. This will be accepted by
+   GCC 3.x but is unnecessary. Use this switch with other people's projects
+   if necessary, but please make the effort to update your own projects to
+   use the new API, as the deprecated parts may be removed in the future.
+
+   The rest of this file explains why some parts of the API were deprecated,
+   and how to adapt your code.
+
+
+**************************************
+*** What happened to DUH_RENDERER? ***
+**************************************
+
+
+   The DUH_RENDERER struct was designed for rendering audio to an end-user
+   format - 8-bit or 16-bit, signed or unsigned, with stereo samples
+   interleaved. In order for it to do this, it was built on top of the
+   hitherto undocumented DUH_SIGRENDERER struct, which rendered audio in
+   DUMB's internal 32-bit signed format with channels (left/right) stored
+   separately. The DUH_RENDERER struct contained a pointer to a
+   DUH_SIGRENDERER struct, along with some other data like the position and
+   number of channels.
+
+   There were then some developments in the API. The DUH_SIGRENDERER struct
+   also stored the position and the number of channels, so I decided to write
+   functions for returning these. Suddenly there was no need to store them in
+   the DUH_RENDERER struct. Before long, the DUH_RENDERER struct contained
+   nothing but a pointer to a DUH_SIGRENDERER.
+
+   I decided it would be a good idea to unify the structs. After all, there
+   really is no difference between the data stored in each, and it would be
+   easy to make duh_render(DUH_RENDERER *dr, ...) and
+   duh_render_signal(DUH_SIGRENDERER *sr, ...) work on the same type of
+   struct. (Note that duh_render_signal() is now deprecated too; see the next
+   section.) It took some deliberation, but I decided I didn't want functions
+   to be #defined (it prevents you from using these names for member
+   functions in C++ classes), and that meant they had to be defined
+   somewhere. Defining redundant functions is a source of bloat, inefficiency
+   and general inelegance. After weighing things up, I decided it was better
+   to deprecate the redundant functions and have people begin to use the more
+   efficient versions, and eventually the redundant functions will be able to
+   be removed.
+
+   So why did I choose to keep the more complicated name, DUH_SIGRENDERER?
+   The reason has to do with what DUMB will become in the future. Signals are
+   an inherent part of the DUH struct and how .duh files will be constructed.
+   It will be possible to have multiple signals in a single DUH struct, and
+   you will be able to choose which one you want to play (this is the 'sig'
+   parameter passed to duh_start_sigrenderer()). But don't hold your breath;
+   we still have a long way to go before .duh files will start to appear...
+
+
+typedef DUH_SIGRENDERER DUH_RENDERER;
+
+   Wherever you are using DUH_RENDERER in your program, simply replace it
+   with DUH_SIGRENDERER. An automated (case-sensitive!) search and replace
+   operation should get this done.
+
+
+DUH_RENDERER *duh_start_renderer(DUH *duh, int n_channels, long pos);
+
+   Use duh_start_sigrenderer() instead. It takes an extra parameter, 'sig',
+   which comes after 'duh' and before 'n_channels'; pass 0 for this. So an
+   example would be, replace:
+
+      sr = duh_start_renderer(duh, 2, 0);
+
+   with:
+
+      sr = duh_start_sigrenderer(duh, 0, 2, 0);
+
+
+int duh_renderer_get_n_channels(DUH_RENDERER *dr);
+long duh_renderer_get_position(DUH_RENDERER *dr);
+void duh_end_renderer(DUH_RENDERER *dr);
+
+   These are easy enough to fix; all you have to do is replace 'renderer'
+   with 'sigrenderer'. So the new functions are:
+
+      int duh_sigrenderer_get_n_channels(DUH_SIGRENDERER *sigrenderer);
+      long duh_sigrenderer_get_position(DUH_SIGRENDERER *sigrenderer);
+      void duh_end_sigrenderer(DUH_SIGRENDERER *sigrenderer);
+
+
+Note that duh_render() has NOT been deprecated. It now uses DUH_SIGRENDERER
+instead of DUH_RENDERER, but its functionality is unchanged. You do not have
+to change calls to this function in any way.
+
+
+DUH_RENDERER *duh_renderer_encapsulate_sigrenderer(DUH_SIGRENDERER *sr);
+DUH_SIGRENDERER *duh_renderer_get_sigrenderer(DUH_RENDERER *dr);
+DUH_SIGRENDERER *duh_renderer_decompose_to_sigrenderer(DUH_RENDERER *dr);
+
+   These functions did not exist in the last release of DUMB, so you are
+   probably not using them, but they are included here for completeness. All
+   you have to do here is unwrap the function, since the structs have been
+   unified. So, for instance, replace:
+
+      duh_renderer_encapsulate_sigrenderer(my_sigrenderer)
+
+   with:
+
+      my_sigrenderer
+
+   Simple!
+
+
+AL_DUH_PLAYER *al_duh_encapsulate_renderer(DUH_RENDERER *dr,
+                                       float volume, long bufsize, int freq);
+DUH_RENDERER *al_duh_get_renderer(AL_DUH_PLAYER *dp);
+DUH_RENDERER *al_duh_decompose_to_renderer(AL_DUH_PLAYER *dp);
+
+   Again, these functions were not in the last release, so you probably
+   aren't using them. Nevertheless, the fix is simple as always: simply
+   replace 'renderer' with 'sigrenderer'. So the new functions are:
+
+      AL_DUH_PLAYER *al_duh_encapsulate_sigrenderer(DUH_SIGRENDERER *sr,
+                                       float volume, long bufsize, int freq);
+      DUH_SIGRENDERER *al_duh_get_sigrenderer(AL_DUH_PLAYER *dp);
+      DUH_SIGRENDERER *al_duh_decompose_to_sigrenderer(AL_DUH_PLAYER *dp);
+
+
+*********************
+*** Miscellaneous ***
+*********************
+
+
+long duh_render_signal(DUH_SIGRENDERER *sigrenderer,
+                       float volume, float delta,
+                       long size, sample_t **samples);
+
+   This function used to return samples in DUMB's internal format. This
+   format consisted of 32-bit integers whose 'normal range' was -0x8000 to
+   0x7FFF (any samples outside this range would have to be clipped when sent
+   to the sound card).
+
+   DUMB's internal format has changed. DUMB still uses 32-bit integers, but
+   now the normal range is -0x800000 to 0x7FFFFF. The lowest eight bits are
+   discarded at the final stage by duh_render() when you ask for 16-bit
+   output. A new function, duh_sigrenderer_get_samples(), will return samples
+   in DUMB's new internal format. It takes exactly the same parameters, so
+   all you have to do to the call itself is change the name; however, you
+   will most likely have to change your code to account for the new
+   normalised range.
+
+   duh_render_signal() will still be able to give you the samples in DUMB's
+   old internal format, but it is inefficient. You should change your code as
+   soon as possible.
+
+
+typedef void (*DUH_SIGRENDERER_CALLBACK)(void *data, sample_t **samples,
+                                         int n_channels, long length);
+
+void duh_sigrenderer_set_callback(DUH_SIGRENDERER *sigrenderer,
+                              DUH_SIGRENDERER_CALLBACK callback, void *data);
+
+   This callback was intended to allow you to analyse the output. It was by
+   no means intended to let you modify the output. For this reason, the names
+   have been changed to DUH_SIGRENDERER_ANALYSER_CALLBACK and
+   duh_sigrenderer_set_analyser_callback, and the 'samples' parameter to your
+   callback should now be specified as follows:
+
+      const sample_t *const *samples
+
+   The first 'const' indicates that you must not modify the samples. The
+   second indicates that you must not modify the pointers to each channel.
+
+   There is a second reason why this change was necessary, and it is the one
+   described further up for duh_render_signal()'s entry: the format in which
+   the samples themselves are stored has changed. They are 256 times as
+   large, with a normal range from -0x800000 to 0x7FFFFF. You will most
+   likely need to change your code to account for this.
+
+   If you try to call the old function, it will print a message to stderr
+   directing you to this file, and it will not install the callback. You
+   shouldn't be able to get this far without a compiler warning (or, if you
+   don't have GCC 3.1 or later, some compiler errors).
+
+   If you wanted to use this callback to apply a DSP effect, don't worry;
+   there is a better way of doing this. It is undocumented, so contact me
+   and I shall try to help. Contact details are at the bottom of this file.
+
+   For reference, here are the new definitions:
+
+   typedef void (*DUH_SIGRENDERER_ANALYSER_CALLBACK)(void *data,
+                const sample_t *const *samples, int n_channels, long length);
+
+   void duh_sigrenderer_set_analyser_callback(DUH_SIGRENDERER *sigrenderer,
+                     DUH_SIGRENDERER_ANALYSER_CALLBACK callback, void *data);
+
+
+int dumb_resampling_quality;
+
+   This variable has changed meaning. It used to hold a value from 0 to 4,
+   whose meaning was as follows:
+
+        0   - aliasing
+       1,2  - linear interpolation
+        3   - quadratic interpolation
+        4   - cubic interpolation
+
+       0,1  - always use a straightforward interpolation algorithm
+      2,3,4 - when decimating (increasing the pitch), use a linear average
+              algorithm designed to reduce frequencies that would otherwise
+              reflect off the Nyquist
+
+   Now the variable only holds values from 0 to 2, and these values have
+   preprocessor constants associated with them. The somewhat inappropriate
+   quadratic interpolation has been removed. The linear average algorithm has
+   also been removed, and may or may not come back; there are probably more
+   efficient ways of achieving the same effect, which I shall be
+   investigating in the future.
+
+   This change will have hardly any noticeable effect on existing programs.
+   Levels 2, 3 and 4 used considerably more processor time because of the
+   linear average algorithm. Likewise, Level 2 in the new scheme (cubic) uses
+   considerably more processor time than Levels 1 and 0, and Levels 3 and 4
+   will behave identically to Level 2.
+
+
+******************
+*** Conclusion ***
+******************
+
+
+"I conclude that... DUMB is the bestest music player in the world because...
+Complete this sentence in fifteen words or fewer... D'OH!"
+
+The preceding conclusion formerly appeared in dumb.txt, and is deprecated
+because it's lame.
+
+
+Ben Davis
+entheh@users.sf.net
+IRC EFnet #dumb
+See readme.txt for details on using IRC.

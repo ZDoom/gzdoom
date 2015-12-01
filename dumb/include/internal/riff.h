@@ -1,14 +1,11 @@
 #ifndef RIFF_H
 #define RIFF_H
 
-struct riff;
-
 struct riff_chunk
 {
 	unsigned type;
-    int32 offset;
+	void * data;
 	unsigned size;
-    struct riff * nested;
 };
 
 struct riff
@@ -18,7 +15,7 @@ struct riff
 	struct riff_chunk * chunks;
 };
 
-struct riff * riff_parse( DUMBFILE * f, int32 offset, int32 size, unsigned proper );
+struct riff * riff_parse( unsigned char *, unsigned size, unsigned proper );
 void riff_free( struct riff * );
 
 #endif

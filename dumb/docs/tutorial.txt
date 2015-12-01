@@ -1,0 +1,94 @@
+/*  _______         ____    __         ___    ___
+ * \    _  \       \    /  \  /       \   \  /   /       '   '  '
+ *  |  | \  \       |  |    ||         |   \/   |         .      .
+ *  |  |  |  |      |  |    ||         ||\  /|  |
+ *  |  |  |  |      |  |    ||         || \/ |  |         '  '  '
+ *  |  |  |  |      |  |    ||         ||    |  |         .      .
+ *  |  |_/  /        \  \__//          ||    |  |
+ * /_______/ynamic    \____/niversal  /__\  /____\usic   /|  .  . ibliotheque
+ *                                                      /  \
+ *                                                     / .  \
+ * tutorial.txt - DUMB Programmers' Tutorial.         / / \  \
+ *                                                   | <  /   \_
+ * See readme.txt for general information on         |  \/ /\   /
+ * DUMB and how to set it up.                         \_  /  > /
+ *                                                      | \ / /
+ *                                                      |  ' /
+ *                                                       \__/
+ */
+
+
+********************
+*** Introduction ***
+********************
+
+
+Welcome to the DUMB Programmers' Tutorial!
+
+In order to follow this tutorial, you should already have set Allegro and
+DUMB up on your system, including DUMB's support for Allegro and the example
+programs. If you have not done so, see readme.txt for details.
+
+You will also need some IT files. If you would like to compose your own, then
+first I must offer a word of warning: not everyone is capable of composing
+music. Do not assume you will be able to learn the art. By all means have a
+go; if you can learn to play tunes on the computer keyboard, you're well on
+the way to being a composer!
+
+The best program for the job is Impulse Tracker itself, available from:
+
+http://www.noisemusic.org/it/
+
+This is a DOS program. Users of DOS-incapable operating systems may like to
+try ModPlug Tracker, but should be aware that it does not support all
+combinations of effects correctly, and some IT files will sound wrong. If you
+use a different operating system, or if you know of a better IT editor for
+Windows, please give me some links so I can put them here!
+
+ModPlug Tracker is available from: http://www.modplug.com/
+
+If you would like to download IT files composed by other people, check the
+following sites:
+
+http://www.modplug.com/
+http://www.traxinspace.com/
+
+Once again, if you know of more sites where IT files are available for
+download, please let me know.
+
+Once you've got some IT files, we're ready to begin!
+
+Note that support for S3M files has very recently been added to DUMB, but it
+is bound to be faulty. I recommend you use IT files in preference until later
+releases of DUMB.
+
+
+******************
+*** Try It Out ***
+******************
+
+
+We'll start simply by running one of the example programs.
+
+Find playit.exe, in the dumb/examples folder. Choose an IT file, and pass it
+to playit.exe. In DOS, you can do this by typing 'playit' followed by the
+name of the IT file. In Windows, you can drag the IT file and drop it on
+playit.exe.
+
+You should now hear the music play back. If not, make sure your speakers are
+on and volume is not turned down. Try one of Allegro's example programs. If
+you are using DJGPP under Windows, consider using a Windows compiler instead.
+If you cannot get it working, see readme.txt for details on seeking help with
+DUMB.
+
+When you are satisfied, press any key to stop the music and return to the
+operating system.
+
+
+*************************
+*** How Does It Work? ***
+*************************
+
+
+Now load playit.c into your favourite editor. Here is an explanation of what
+it does:

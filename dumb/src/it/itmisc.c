@@ -21,8 +21,6 @@
 #include "internal/it.h"
 
 
-int dumb_it_default_panning_separation = 25;
-
 
 DUMB_IT_SIGDATA *DUMBEXPORT duh_get_it_sigdata(DUH *duh)
 {

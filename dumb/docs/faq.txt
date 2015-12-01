@@ -1,0 +1,264 @@
+TO DO: add question regarding set_close_button_callback vs set_window_close_hook
+TO DO: add question regarding mixing of DJGPP and MinGW object files
+
+/*  _______         ____    __         ___    ___
+ * \    _  \       \    /  \  /       \   \  /   /       '   '  '
+ *  |  | \  \       |  |    ||         |   \/   |         .      .
+ *  |  |  |  |      |  |    ||         ||\  /|  |
+ *  |  |  |  |      |  |    ||         || \/ |  |         '  '  '
+ *  |  |  |  |      |  |    ||         ||    |  |         .      .
+ *  |  |_/  /        \  \__//          ||    |  |
+ * /_______/ynamic    \____/niversal  /__\  /____\usic   /|  .  . ibliotheque
+ *                                                      /  \
+ *                                                     / .  \
+ * faq.txt - Frequently Asked Questions.              / / \  \
+ *                                                   | <  /   \_
+ * This file covers some of the common problems      |  \/ /\   /
+ * and misconceptions people have with DUMB. If       \_  /  > /
+ * your problem is not covered here, please             | \ / /
+ * contact me. I'll do my best to help - but            |  ' /
+ * don't be offended if I just direct you to the         \__/
+ * manual!
+ */
+
+
+*****************************************************************************
+* I get a lot of strange warnings and errors when I compile my projects     *
+* with this release of DUMB. They work with older versions! What happened?  *
+*****************************************************************************
+
+   Some parts of DUMB's API have been deprecated. See docs/deprec.txt for
+   full details, including an explanation as to why your compiler warnings
+   and errors are so unfriendly, and information on how to fix each warning
+   or error.
+
+
+*****************************************************************************
+* When I try to compile DUMB with Allegro, it complains that it cannot find *
+* 'internal/alconfig.h'! What's wrong?                                      *
+*****************************************************************************
+
+   In Allegro 4.0.1, and quite likely some other versions of Allegro, the
+   msvcmake batch file does not install Allegro properly. I believe this was
+   fixed in Allegro 4.0.2, but don't take my word for it. Some include files
+   are neglected, including alconfig.h. The fix is quite easy; you need to
+   copy all of Allegro's include files to your compiler's directory. The
+   following should do this for you (alter it accordingly depending on where
+   MSVC and Allegro are installed):
+
+      cd\progra~1\msvc\include
+      xcopy/s \allegro\include\*.*
+
+   You can safely tell it to overwrite all files.
+
+
+*****************************************************************************
+* When I build a project that uses DUMB, I get an error that it doesn't     *
+* find -laldmbd! What's wrong?                                              *
+*****************************************************************************
+
+   See the notes for DUMB v0.8 in release.txt; the existence of libaldmbd.a
+   in DUMB v0.7 was due to a mistake in the makefiles. It should be
+   libaldmd.a, in order to maintain DOS compatibility. All subsequent
+   releases get it right, but you will have to change your project files to
+   allow for the change. If this is someone else's project, please let them
+   know that it needs changing.
+
+
+*****************************************************************************
+* When I build a project that uses DUMB, I get some linker errors about     *
+* _free, _malloc, etc. already being defined in LIBC.lib! What's wrong?     *
+*****************************************************************************
+
+   MSVC offers three different implementations of the standard libraries.
+   When you link statically with a library, you have to use the same
+   implementation that the library uses. You need the multithreaded DLL
+   implementation, which you can select by passing /MD when you compile (not
+   when you link). See howto.txt for details.
+
+
+*****************************************************************************
+* I created an IT file with Impulse Tracker, but DUMB won't play it! Why?   *
+*****************************************************************************
+
+   You probably created some patterns but didn't give any information on the
+   order in which they should be played. Impulse Tracker will also fail to
+   play your music if you press F5. Press F11 and you will have an
+   opportunity to create an order list, required for playback.
+
+
+*****************************************************************************
+* I created an IT file with ModPlug Tracker and I have it fading out at the *
+* end. Why won't it loop when I play it with DUMB?                          *
+*****************************************************************************
+
+   It loops at zero volume. This is what Impulse Tracker itself does. Fix the
+   IT file by setting the global volume explicitly (Vxx in the effects
+   column), either at the start, or right at the end before looping. Also see
+   the next two questions.
+
+
+*****************************************************************************
+* My module plays too loud and distorts badly with DUMB! What can I do?     *
+*****************************************************************************
+
+   This problem is most often caused by ModPlug Tracker, which has a complete
+   lack of regard for the playback volume of the original tracker. See the
+   next question for DUMB's official position with regard to ModPlug Tracker.
+   If you wrote your module with ModPlug Tracker, please try loading it with
+   the original tracker and see if it distorts there too. If it does, reduce
+   the volume. If not, then it's a problem with DUMB; please let me know.
+
+   If for whatever reason you cannot modify the module file itself, you can
+   make it sound better by reducing the volume passed to al_start_duh().
+
+
+*****************************************************************************
+* I created a music module with ModPlug Tracker, and DUMB doesn't play it   *
+* right!                                                                    *
+*****************************************************************************
+
+   DUMB cannot and will not support ModPlug Tracker. Please see
+   docs/modplug.txt for details. The original trackers, which DUMB is
+   designed to mimic as closely as possible, are listed in readme.txt.
+   If you find DUMB plays your module differently from the original tracker,
+   then please contact me.
+
+
+*****************************************************************************
+* My program crashes as soon as I try to load anything with DUMB!           *
+*****************************************************************************
+
+   Please take my advice and use the debugging build of DUMB, not the
+   optimised build. Then you'll probably find it aborts instead of crashing.
+   In this case you probably forgot to register a DUMBFILE system; this is
+   necessary for loading stand-alone files, though not for loading Allegro
+   datafiles with embedded music. Follow the instructions in docs/howto.txt
+   carefully and you shouldn't have this problem.
+
+   If DUMB crashes with a specific music module, please let me know.
+
+
+*****************************************************************************
+* I want to use the stdio file access functions to load stand-alone music   *
+* files, but I also want to load datafiles containing music files. The docs *
+* say I shouldn't call both dumb_register_stdfiles() and                    *
+* dumb_register_packfiles(). What shall I do?                               *
+*****************************************************************************
+
+   When you register a DUMBFILE system, it only applies to files opened with
+   dumbfile_open(), i.e. separate files. When a file is embedded in a
+   datafile, dumbfile_open_ex() is used to read it, enabling it to use
+   PACKFILEs regardless of which DUMBFILE system is registered. In short, you
+   do not need to call dumb_register_packfiles() in order to load datafiles
+   with embedded music. See the section on "Sequential File Input" in
+   docs/dumb.txt if you're interested in how all this works.
+
+
+*****************************************************************************
+* I want to read a specific object in a datafile using Allegro's            *
+* "demo.dat#MY_MUSIC" syntax. Why won't it work?                            *
+*****************************************************************************
+
+   Did you call dumb_register_packfiles(), or did you call
+   dumb_register_stdfiles()? It will only work if you use the former.
+
+
+*****************************************************************************
+* My program runs, but no music plays! What am I doing wrong?               *
+*****************************************************************************
+
+   There are a number of possible causes for this. The most likely reason is
+   that you aren't calling al_poll_duh(); see docs/howto.txt for further
+   information.
+
+   Other possible causes are as follows:
+
+   - The speakers are turned down (duh)
+   - The volume of some system mixer is turned down
+   - Another program is using the sound card (not a problem for most modern
+     systems)
+   - You didn't initialise Allegro's sound system; see install_sound() in
+     Allegro's docs
+   - Allegro's drivers don't work on your system and chosen platform
+
+   In order to narrow down the cause, consider the following:
+
+   - Do you get any other sound from your program?
+   - Do other Allegro+DUMB programs generate sound?
+   - Do other Allegro programs generate sound?
+   - Do other non-Allegro programs generate sound?
+   - Does your program fail only on a specific platform (e.g. DOS but not
+     Windows)?
+
+   This problem is highly system-specific; please try hard to solve it by
+   yourself before contacting me. However, if you think this problem could
+   affect other people, please let me know what the problem is and how you
+   fixed it, if you did. Be as specific as possible.
+
+
+*****************************************************************************
+* The music stutters! What can I do?                                        *
+*****************************************************************************
+
+   If you have an older computer, it may not be able to cope with the load.
+   Try reducing quality options; look up dumb_resampling_quality and
+   dumb_it_max_to_mix in docs/dumb.txt, and consider changing the frequency
+   you pass to al_start_duh().
+
+   Stuttering may not be caused by excessive load. To find out, try
+   increasing the buffer size passed to al_start_duh(). Beware of making it
+   too big though; older systems will freeze periodically if it's too big,
+   because they render larger chunks less frequently. The timing of callbacks
+   will also be less accurate, if you are using those.
+
+   If you're using the 'dumbplay' example, you can control these parameters
+   by editing dumb.ini.
+
+
+*****************************************************************************
+* Why does DUMB use so much processor time compared with other players?     *
+*****************************************************************************
+
+   This should be less so in this release than in previous releases; the
+   resampling and filtering algorithms have been optimised.
+
+   By default, DUMB uses the most expensive resampling quality option. I've
+   found on an AthlonXP 1800+ and on a Pentium 233 that it typically uses
+   about twice as much processor time as the least expensive option.
+
+   Try setting dumb_resampling_quality to DUMB_RQ_ALIASING or DUMB_RQ_LINEAR.
+   See dumb.txt for more information. If you're using the example programs,
+   you can control this variable by editing dumb.ini.
+
+   DUMB uses 32-bit ints for mixing. Some players use 16-bit ints, and are
+   therefore marginally faster (not much!) and lower quality. So you can't
+   expect DUMB to beat these players. Furthermore, DUMB is currently written
+   entirely in C. GCC does an impressive job on the C code, but that's not to
+   say some custom-written assembly language couldn't beat it ...
+
+
+*****************************************************************************
+* Why does DUMB generate so much background noise?                          *
+*****************************************************************************
+
+   You're probably using the DOS build on a system with bad Sound Blaster
+   compatibility (most Windows XP systems fall in this category). This would
+   mean DUMB could only access an 8-bit driver. The Windows build will almost
+   certainly give better results. Your DOS binary will still give good
+   results on systems with better compatibility (like my Windows 98 system).
+
+
+*****************************************************************************
+* I e-mailed you and you replied with "RTFM"! What does that mean?          *
+*****************************************************************************
+
+   Read The Manual. If it's a specific problem, I'll probably be kind and
+   tell you where to look in the manual. However, if I get the impression you
+   haven't even looked for a solution in the manual, expect no mercy ...
+
+
+Ben Davis
+entheh@users.sf.net
+IRC EFnet #dumb
+See readme.txt for details on using IRC.

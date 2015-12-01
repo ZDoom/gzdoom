@@ -1,0 +1,1699 @@
+/*  _______         ____    __         ___    ___
+ * \    _  \       \    /  \  /       \   \  /   /       '   '  '
+ *  |  | \  \       |  |    ||         |   \/   |         .      .
+ *  |  |  |  |      |  |    ||         ||\  /|  |
+ *  |  |  |  |      |  |    ||         || \/ |  |         '  '  '
+ *  |  |  |  |      |  |    ||         ||    |  |         .      .
+ *  |  |_/  /        \  \__//          ||    |  |
+ * /_______/ynamic    \____/niversal  /__\  /____\usic   /|  .  . ibliotheque
+ *                                                      /  \
+ *                                                     / .  \
+ * dumb.txt - DUMB library reference.                 / / \  \
+ *                                                   | <  /   \_
+ * See readme.txt for general information on         |  \/ /\   /
+ * DUMB and how to set it up.                         \_  /  > /
+ *                                                      | \ / /
+ * If you are new to DUMB, see howto.txt.               |  ' /
+ *                                                       \__/
+ */
+
+
+***********************************
+*** Include Files and Libraries ***
+***********************************
+
+
+dumb.h
+
+   Include this if you only want the core DUMB library functions. You will
+   be able to load music files and render them into memory buffers at your
+   own pace. The core library is completely portable, and as such does not
+   access hardware; you must relay the sound data to the sound card yourself.
+   A stdio file input module is available, but you must actively register it
+   if you wish to use it (see dumb_register_stdfiles()); if you do not
+   register it, it will not be linked into your executable. You must register
+   it, or a DUMBFILE module of your own, in order to load stand-alone music
+   files.
+
+   Optimised: -ldumb   or  /link dumb.lib
+   Debugging: -ldumbd  or  /link dumbd.lib
+
+
+aldumb.h
+
+   Include this if you wish to use DUMB with Allegro. This will provide you
+   with functions to play DUHs back through Allegro's audio streams and embed
+   music files in Allegro datafiles. A file input module using Allegro's
+   packfiles is provided; you have a choice between this and the stdio
+   module (or provide one of your own). You will be able to load datafiles
+   containing music files no matter which file input module you register, or
+   even if you register no file input module. However, you must register a
+   file input module in order to load stand-alone files.
+
+   Optimised: -laldmb -ldumb -lalleg  or  /link aldmb.lib alleg.lib dumb.lib
+   Debugging: -laldmd -ldumbd -lalld  or  /link aldmd.lib alld.lib dumbd.lib
+
+   aldmb or aldmd must be linked in first, so the symbols can be resolved
+   when linking in the other two libraries.
+
+
+***************************
+*** Version Information ***
+***************************
+
+
+#define DUMB_MAJOR_VERSION
+#define DUMB_MINOR_VERSION
+#define DUMB_REVISION_VERSION
+
+   Numeric constants representing this version of DUMB. If this were version
+   1.0, DUMB_MAJOR_VERSION would be 1 and DUMB_MINOR_VERSION would be 0.
+   DUMB_REVISION_VERSION will be 0 on any significant releases, and will be
+   incremented as releases with bugfixes and minor features are made.
+
+   Typical usage:
+
+      #if DUMB_MAJOR_VERSION < 1
+      #error This add-on requires DUMB v1.0 or higher. Please upgrade.
+      #endif
+
+
+#define DUMB_VERSION
+
+   A numeric constant which appears in the format MMmmrr when displayed in
+   decimal (M for major, m for minor, r for revision). This is most useful
+   for comparing version numbers; it has little other practical use.
+
+   Typical usage:
+
+      #if DUMB_VERSION < 801
+      #error This game requires DUMB v0.8.1 or higher. Please upgrade.
+      #endif
+
+      #if DUMB_VERSION < 10002
+      #error This game requires DUMB v1.0.2 or higher. Please upgrade.
+      #endif
+
+
+#define DUMB_VERSION_STR
+
+   String constant representing this version of DUMB. If this were Version
+   1.0, DUMB_VERSION_STR would be "1.0". DUMB_REVISION_VERSION will only
+   appear on the end if it is nonzero; then DUMB_VERSION_STR might be
+   "1.0.1".
+
+
+#define DUMB_NAME
+
+   A string identifying DUMB and its version. If this were Version 1.0,
+   DUMB_NAME might be "DUMB v1.0". This constant is suitable for use in your
+   Credits screen if you wish to acknowledge the use of DUMB there.
+
+
+#define DUMB_YEAR
+#define DUMB_MONTH
+#define DUMB_DAY
+
+   Numeric constants representing the year, month and day of this release of
+   DUMB. All four digits are included in the year. Please note that
+   DUMB_MONTH and DUMB_DAY were inadvertently swapped in the v0.8 release.
+
+
+#define DUMB_YEAR_STR4
+#define DUMB_YEAR_STR2
+#define DUMB_MONTH_STR2
+#define DUMB_MONTH_STR1
+#define DUMB_DAY_STR2
+#define DUMB_DAY_STR1
+
+   String constants representing the year, month and day of this release of
+   DUMB. DUMB_MONTH_STR2 and DUMB_DAY_STR2 include a leading zero if the
+   month or day respectively are less than ten; the STR1 variations do not.
+   DUMB_YEAR_STR2 contains only the two rightmost digits of the year, while
+   DUMB_YEAR_STR4 contains all four. I recommend using DUMB_YEAR_STR4,
+   especially so soon after the turn of the century (indeed the millennium).
+   However, it is a matter of personal preference which you use.
+
+   Please note that the month and day were inadvertently swapped in the v0.8
+   release.
+
+
+#define DUMB_DATE
+
+   A numeric constant that appears in the form yyyymmdd when displayed in
+   decimal. This is most useful for comparing release dates; it has little
+   other practical use.
+
+   WARNING: The month and day were inadvertently swapped in the v0.8 release.
+            Please do not compare this constant against any date in 2002. In
+            any case, DUMB_VERSION is probably more useful for this purpose.
+
+
+#define DUMB_DATE_STR
+
+   The date as a string. The format is "d.m.yyyy", with dots used as
+   separators, the day written first, four digits for the year, and no
+   leading zeros on the day or month. This is my preferred format. If you
+   don't like it, you can construct your own format using the other
+   constants. For example, "mm/dd/yy" could be constructed as follows:
+
+      DUMB_MONTH_STR2 "/" DUMB_DAY_STR2 "/" DUMB_YEAR_STR2
+
+   Please note that the month and day were inadvertently swapped in the v0.8
+   release.
+
+
+*************************
+*** Basic Sample Type ***
+*************************
+
+
+typedef int sample_t;
+
+   DUMB works internally with 32-bit integer samples, with a 'normal range'
+   from -0x800000 to 0x7FFFFF (as of DUMB v0.9.2; previously they ranged from
+   -0x8000 to 0x7FFF). Any samples that exceed this range will eventually be
+   clipped, and could cause integer overflow in extreme cases.
+
+
+***********************************
+*** Library Clean-up Management ***
+***********************************
+
+
+int dumb_atexit(void (*proc)(void));
+
+   Registers a function to be called at the end of your program. You can
+   register multiple functions to be called, and the one you register last
+   will be called first. If you try to register the same function twice, the
+   second attempt will have no effect.
+
+   See fnptr.txt for help with function pointers.
+
+   You must call dumb_exit() before exiting your program for this to work
+   properly. The library itself registers functions with dumb_atexit(), so it
+   is important to call dumb_exit() even if you do not use dumb_atexit()
+   yourself.
+
+   This function will return zero on success. It will return zero when
+   trying to install the same function twice. If it fails through lack of
+   memory, it will return nonzero. Generally you can ignore the return code;
+   in the worst case some memory will not be freed at the end. If it is
+   crucial that your function be called (e.g. to shut down some hardware or
+   save critical data), then you should call your function manually at the
+   end of the program instead of registering it here - or use the stdlib
+   function atexit(), guaranteed under ANSI C to succeed for at least 32
+   functions.
+
+
+void dumb_exit(void);
+
+   You should call this before exiting your program if you have used any part
+   of DUMB in the program. Some parts of DUMB will allocate memory, and this
+   function will free it all up.
+
+   More specifically, this function will call any functions that have been
+   registered with dumb_atexit(). If a part of DUMB needs shutting down, the
+   shutdown procedure will have been registered in this way.
+
+   dumb_exit() will, of course, also call any functions you registered with
+   dumb_atexit() yourself.
+
+   After a call to dumb_exit(), the list of functions is erased. If you are
+   not ready to exit your program, you can start using DUMB anew as if your
+   program had just started. (Note that not everything will be reset in
+   practice - dumb_resampling_quality will retain whatever you set it to, for
+   example, though you should not assume it will.)
+
+   If you only need to call dumb_exit() once at the end of the program, you
+   can use the following to register dumb_exit() with stdlib.h atexit():
+
+      #include <stdlib.h>
+
+      atexit(&dumb_exit);
+
+   Then dumb_exit() will be called for you when your program exits. This is
+   the recommended method, since it will ensure clean-up even if your program
+   aborts. You should only call dumb_exit() manually if you need to shut DUMB
+   down prematurely, or if atexit() is unavailable for one reason or another.
+
+
+*****************************
+*** Sequential File Input ***
+*****************************
+
+
+   DUMB provides a strictly sequential file input system which uses the
+   DUMBFILE struct. "Strictly sequential" means you cannot seek backwards.
+   However, the system will keep track of how many bytes you have read,
+   enabling you to seek forwards. DUMBFILEs provide a convenient error
+   detection system, so you do not have to check the return value from every
+   function call in the way you do with the ANSI C functions.
+
+   Note that DUMBFILEs cannot be used for output, nor can they be used
+   portably for text files.
+
+   If an error occurs when reading data from a DUMBFILE, the DUMBFILE will
+   become inoperative. All subsequent activities on the DUMBFILE will return
+   error codes without attempting to read from the file. The position in the
+   file will also be forgotten. You can find out if this has happened at any
+   stage with the dumbfile_error() function. You are still required to close
+   the DUMBFILE, and the return value from dumbfile_close() will tell you if
+   an error has occurred.
+
+   This system allows you to input large chunks of your file, neither
+   checking every return value nor wasting time accessing a file that has
+   already experienced an error. However, before you allocate an amount of
+   memory or read in a quantity of data depending on previous input from the
+   file, you should always check that such input was valid. In particular you
+   should avoid passing zero or negative numbers to malloc(), and avoid
+   passing negative numbers to dumbfile_skip() and dumbfile_getnc().
+
+   DUMBFILEs can be hooked. In other words, you can specify your own
+   functions to do the work of reading from a file. While DUMB contains two
+   modules for this purpose, it does not set them up for you automatically.
+   In most cases you must register one of these modules yourself, or provide
+   your own module. See register_dumbfile_system(), dumb_register_stdfiles()
+   and dumb_register_packfiles().
+
+
+void register_dumbfile_system(DUMBFILE_SYSTEM *dfs);
+
+   Use this function to register a set of functions for use by the DUMBFILEs
+   (a DUMBFILE system). The DUMBFILE_SYSTEM struct contains the following
+   fields:
+
+      void *(*open)(const char *filename);
+      int (*skip)(void *f, long n);
+      int (*getc)(void *f);
+      long (*getnc)(char *ptr, long n, void *f);
+      void (*close)(void *f);
+
+   See fnptr.txt for help with function pointers such as these.
+
+   Your 'open' function should open the file specified and return a pointer
+   to a struct representing the open file. This pointer will be passed to
+   your other functions as 'f'. Your 'close' function should close the file
+   and free all memory pointed to by 'f'. Note that the 'close' operation
+   should never be able to fail; if you are calling a function with a return
+   value, you can generally ignore it.
+
+   Your 'getc' function should read one byte from the file and return its
+   value in the range 0 to 255. If an error occurs, you should return -1. Do
+   not worry about remembering that an error has occurred; DUMB will do that
+   for you.
+
+   'skip' is for skipping parts of the file, and should skip n bytes,
+   returning 0 on success or any other number on failure. 'getnc' should read
+   n bytes from the file, store them at 'ptr', and return the number of bytes
+   read (n on success, fewer on failure). However, these two functions are
+   optional, and you should only provide them if the operations can be done
+   more efficiently than with repeated calls to your 'getc' function. If this
+   is not the case, specify NULL for 'skip', 'getnc' or both, and DUMB will
+   use your 'getc' function to do the work.
+
+   Once you have written all your functions, you need to create a
+   DUMBFILE_SYSTEM struct to hold them, and pass its pointer to
+   register_dumbfile_system().
+
+   The DUMBFILE_SYSTEM struct must be permanent. In other words, it must be
+   either global or static, and you should not modify it later. DUMB will not
+   make its own copy.
+
+   You will most likely create your own struct to represent the open file,
+   but do not be tempted to specify that struct in the function prototypes
+   and pacify the compiler warnings by casting your function pointers. There
+   exist computer systems where a (void *) pointer and a (MY_STRUCT *)
+   pointer are represented differently in memory, and a cast of such a
+   pointer causes a tangible conversion to take place. If you cast the
+   function pointers, the computer cannot know when such a conversion is
+   necessary. Instead, use the following structure:
+
+      int myskip(void *f, long n)
+      {
+         FILE *file = f;
+         /* Do some stuff with 'file' */
+         return something;
+      }
+
+   If you need examples, have a look at the two existing DUMBFILE systems in
+   dumb/src/core/stdfile.c and dumb/src/allegro/packfile.c.
+
+
+DUMBFILE *dumbfile_open(const char *filename);
+
+   Open the specified file for input. You must pass the DUMBFILE pointer
+   whenever you wish to operate on this file. When you have finished with the
+   file, you must pass it to dumbfile_close().
+
+   Before you use this function, make sure you have registered a DUMBFILE
+   system. See register_dumbfile_system(), dumb_register_stdfiles() and
+   dumb_register_packfiles().
+
+   You must check the return value from this function. If it is NULL, the
+   file could not be opened, and you must not pass the DUMBFILE to any other
+   function. The debugging library will abort if you get this wrong; the
+   optimised library will act weird.
+
+
+DUMBFILE *dumbfile_open_ex(void *file, DUMBFILE_SYSTEM *dfs);
+
+   This function is provided for more specialised use. You should create a
+   DUMBFILE_SYSTEM specially for the purpose. Its 'open' field is irrelevant;
+   for neatness, set it to NULL, unless you are using this DUMBFILE_SYSTEM
+   with register_dumbfile_system() as well.
+
+   When you have called this function, the DUMBFILE struct it returned can be
+   used as normal. The specified DUMBFILE_SYSTEM will be used for all input,
+   with 'file' passed to your 'skip', 'getc' and 'getnc' functions as 'f'.
+   This can be used, for example, to read from an already open file.
+
+   Note that the position will always be initialised to 0 for this DUMBFILE.
+   This means for example that offsets in the file do not need adjusting when
+   embedding data in a larger file.
+
+   There are two ways to use this function. If you want 'file' to persist
+   after using a DUMBFILE returned by this function, you should make sure the
+   'close' field in the DUMBFILE is set to NULL. When the DUMBFILE is closed,
+   'file' will be left alone, and you can and should deal with it yourself
+   when the DUMBFILE has been closed.
+
+   Alternatively, you can provide a 'close' function to get rid of 'file' for
+   you when the DUMBFILE is closed. If you do this, you should not otherwise
+   use 'file' after a call to this function.
+
+   If dumbfile_open_ex() has to return NULL, owing to lack of memory, then
+   your 'close' function will be called if provided. In other words, if you
+   have provided a 'close' function, then you no longer need to worry about
+   'file' whether this function succeeds or not.
+
+   See dumb/src/helpers/stdfile.c and dumb/src/allegro/packfile.c for
+   examples of how to use this function. Neither provides a 'close' function,
+   so I hope my explanation here will suffice. If not, please feel free to
+   contact me so I can make the explanation clearer and help you do what you
+   want to do. Contact details are at the end of this file.
+
+
+long dumbfile_pos(DUMBFILE *f);
+
+   Returns the number of bytes read from the DUMBFILE (or skipped) since it
+   was opened, or -1 if an error has occurred while reading.
+
+
+int dumbfile_skip(DUMBFILE *f, long n);
+
+   Skips n bytes of the specified DUMBFILE. Returns zero on success.
+
+
+int dumbfile_getc(DUMBFILE *f);
+
+   Reads one byte from the DUMBFILE and returns it in unsigned format (from 0
+   to 255). If an error occurs, or occurred before, this function returns -1.
+
+
+int dumbfile_igetw(DUMBFILE *f);
+
+   Reads two bytes from the DUMBFILE and combines them into a word ranging
+   from 0 to 65535. The first byte read is the least significant byte, as
+   with Intel processors. This function returns -1 on error.
+
+
+int dumbfile_mgetw(DUMBFILE *f);
+
+   Reads two bytes from the DUMBFILE and combines them into a word ranging
+   from 0 to 65535. The first byte read is the most significant byte, as
+   with the Apple Macintosh. This function returns -1 on error.
+
+
+long dumbfile_igetl(DUMBFILE *f);
+
+   Reads four bytes from the DUMBFILE and combines them into a long integer
+   ranging from -2147483648 to 2147483647. The first byte read is the least
+   significant byte, as with Intel processors. This function returns -1 on
+   error, but -1 is also a valid return value. After a call to this function,
+   you can use dumbfile_error() to find out if an error occurred.
+
+
+long dumbfile_mgetl(DUMBFILE *f);
+
+   Reads four bytes from the DUMBFILE and combines them into a long integer
+   ranging from -2147483648 to 2147483647. The first byte read is the most
+   significant byte, as with the Apple Macintosh. This function returns -1 on
+   error, but -1 is also a valid return value. After a call to this function,
+   you can use dumbfile_error() to find out if an error occurred.
+
+
+unsigned long dumbfile_cgetul(DUMBFILE *f);
+
+   Reads an unsigned (nonnegative) integer from the DUMBFILE. The integer is
+   stored in a condensed format where smaller numbers use less space:
+
+           0 to 127         1 byte
+         128 to 16383       2 bytes
+       16384 to 2097151     3 bytes
+     2097152 to 268435455   4 bytes
+   268435456 to 4294967295  5 bytes
+
+   This format is the same as that used for the times between notes in MIDI
+   files.
+
+   If an error occurs, this function returns (unsigned long)(-1), but that
+   may be a valid return value. After a call to this function, you can use
+   dumbfile_error() to find out if an error occurred.
+
+
+signed long dumbfile_cgetsl(DUMBFILE *f);
+
+   Reads a signed integer from the DUMBFILE. The integer is stored in a
+   condensed format where numbers closer to zero use less space:
+
+           -64 to 63          1 byte
+         -8192 to 8191        2 bytes
+      -1048576 to 1048575     3 bytes
+    -134217728 to 134217727   4 bytes
+   -2147483648 to 2147483647  5 bytes
+
+   If an error occurs, this function returns -1, but -1 is also a valid
+   return value. After a call to this function, you can use dumbfile_error()
+   to find out if an error occurred.
+
+
+long dumbfile_getnc(char *ptr, long n, DUMBFILE *f);
+
+   Reads n bytes from the DUMBFILE and stores them at 'ptr'. Note that the
+   pointer is to a series of chars. You may also use this function to read in
+   a series of signed chars or unsigned chars (which are both officially
+   distinct types from char), but do not use this to read ints, structs or
+   any other data type from the file. Integers must be read one at a time
+   using dumbfile_igetl(), dumbfile_cgetul(), etc. To load a struct in, you
+   must read each field separately using an appropriate function for each
+   one. For complicated data types, you can simplify this process by writing
+   a function for each struct.
+
+   dumbfile_getnc() returns the number of bytes successfully read, which will
+   be less than n if an error occurs, and may be as low as zero. If
+   dumbfile_getnc() returns -1, that means an error occurred on this DUMBFILE
+   earlier, before this function was called.
+
+
+int dumbfile_error(DUMBFILE *f);
+
+   This function returns -1 if an error has occurred with the specified
+   DUMBFILE, or 0 if all is well.
+
+
+int dumbfile_close(DUMBFILE *f);
+
+   This function closes the DUMBFILE, after which the pointer will be
+   invalid. dumbfile_close() returns the value that dumbfile_error() would
+   have returned, which is -1 if an error occurred while reading or 0
+   otherwise. Regardless of the return value, the file will always be closed
+   properly.
+
+
+*******************************
+*** stdio File Input Module ***
+*******************************
+
+
+void dumb_register_stdfiles(void);
+
+   This function registers the stdio file input module for use by DUMBFILEs.
+   FILE structs and their corresponding functions, as defined by the ANSI C
+   header stdio.h, will be used internally for all DUMBFILE input (unless
+   opened with dumbfile_open_ex()).
+
+   This must be called before dumbfile_open() is used, or else an alternative
+   system must be registered (see register_dumbfile_system() and
+   dumb_register_packfiles()).
+
+
+DUMBFILE *dumbfile_open_stdfile(FILE *p);
+
+   If you have a stdio FILE struct representing an open file, you can call
+   this if you wish to read from it using a DUMBFILE. This is useful when you
+   need to pass a DUMBFILE struct to a library function, to read an embedded
+   music file for example. When you close the DUMBFILE, you can continue
+   using the FILE struct to read what follows the embedded data.
+
+
+********************************
+*** Memory File Input Module ***
+********************************
+
+
+DUMBFILE *dumbfile_open_memory(const char *data, long size);
+
+   This function is useful if you have an image of a music file in memory.
+   You might have such an image if you use dat2s to encode a datafile
+   directly into the executable. Pass a pointer to the start of the memory,
+   and the size of the image to make sure DUMB doesn't overrun the buffer.
+   The resulting DUMBFILE will feed the contents of the image to you.
+
+   Note that the pointer is of type 'char *'. Files are series of chars, and
+   interpreting them directly as anything else isn't portable.
+
+
+**********************
+*** DUH Management ***
+**********************
+
+
+void unload_duh(DUH *duh);
+
+   Removes a DUH from memory. You must call this for all DUHs you load,
+   making sure they're not playing at the time.
+
+
+long duh_get_length(DUH *duh);
+
+   Returns the length of a DUH; 65536 represents one second. This value is
+   calculated when the DUH is created, and this function simply lifts it from
+   the struct. It may not truly correspond to the time for which the DUH will
+   generate sound. For module files, it will represent the point at which the
+   module first loops (or, in the case of some XM and MOD files, freezes).
+   Any add-ons to DUMB will provide their own code for calculating this.
+
+   The algorithm for calculating the length of a module file can be fooled,
+   but only by very deliberate methods. In the early days, when modules could
+   only be played by their editors and had to be exported to .wav or similar
+   in order to be used elsewhere, musicians would sometimes make the player
+   think it was looping when it wasn't in order to prevent their music from
+   being exported properly. If the length of a module seems a lot less than
+   it should be, the module is probably protected in this way.
+
+   Getting around this protection reliably would be extremely difficult, but
+   after considering it for a while I decided it would be better not to. The
+   musician has a right to protect his or her music in this way, and I have
+   no interest in actively breaking that protection.
+
+   (On the other hand, some musicians were just showing off!)
+
+
+***********************************
+*** IT, XM, S3M and MOD Support ***
+***********************************
+
+
+int dumb_it_max_to_mix;
+
+   Specifies the maximum number of samples DUMB will mix at any one time. The
+   default number is 64. Regardless of this value, all samples will continue
+   to be processed up to an internal maximum of 256 (roughly speaking; in
+   fact it will process one sample for each channel plus up to 192 extra
+   samples that are continuing to play owing to Impulse Tracker's New Note
+   Actions), and samples that have been cut will sound again as soon as the
+   congestion clears. Samples are given priority according to their final
+   volume after all factors affecting the volume of a sample have been
+   considered.
+
+   If you play two or more modules at once, this value represents the
+   maximum number of samples for each one. You will have to reduce it further
+   if your computer cannot keep up.
+
+   Despite the name, this variable controls XM, S3M and MOD files as well as
+   IT files.
+
+
+DUMB_IT_SIGDATA *duh_get_it_sigdata(DUH *duh);
+
+   This function attempts to retrieve the DUMB_IT_SIGDATA struct from a DUH.
+   This struct will exist for any IT, XM, S3M or MOD file, and you can use it
+   to obtain or override module-specific information. If 'duh' is NULL, or if
+   the DUH you pass contains something other than a music module, then this
+   function will return NULL (which can safely be passed to any other
+   function).
+
+
+DUMB_IT_SIGRENDERER *duh_get_it_sigrenderer(DUH_SIGRENDERER *sigrenderer);
+
+   This function attempts to retrieve the DUMB_IT_SIGRENDERER struct from a
+   DUH_SIGRENDERER. This struct will exist for any currently playing IT, XM,
+   S3M or MOD file, and you can use it to obtain or override information
+   specific to module playback. If 'sigrenderer' is NULL, or if the
+   DUH_SIGRENDERER you pass is rendering something other than a music module,
+   then this function will return NULL (which can safely be passed to any
+   other function).
+
+
+DUH_SIGRENDERER *dumb_it_start_at_order
+                                  (DUH *duh, int n_channels, int startorder);
+
+   This function, given a DUH containing an IT, XM, S3M or MOD file, will
+   start playing it at the specified order. If the DUH does not contain a
+   module, this function will fail and return NULL.
+
+   Note that starting at an arbitrary order may result in missing notes or
+   other playback oddities. It should be used primarily for modules that
+   contain multiple songs that start on different orders. If you wish just to
+   start some music in the middle, consider using duh_start_sigrenderer() or
+   al_start_duh() with the pos parameter set appropriately.
+
+
+void dumb_it_set_loop_callback(DUMB_IT_SIGRENDERER *sigrenderer,
+                               int (*callback)(void *data), void *data);
+
+   Installs a callback which will be called every time the module loops. You
+   can pass any data pointer you like, and it will be passed to the callback
+   for you. DUMB considers a file to loop when it reaches the end, or when a
+   'Jump to order' effect (Bxx in both IT/S3M and XM/MOD) jumps to the same
+   order or a preceding order. This can result in the loop callback being
+   called when the module isn't really looping, but this only happens if the
+   module has a very deliberate design. See duh_get_length() for further
+   musings on this subject.
+
+   If your callback returns nonzero, the music will stop abruptly. Samples
+   will be cut, and the main program will be notified that the
+   DUH_SIGRENDERER has ended.
+
+   Alternatively, if you pass the DUMB_IT_SIGRENDERER for 'data', or
+   otherwise arrange for it to be available to the callback, then you can
+   call:
+
+      dumb_it_sr_set_speed(sigrenderer, 0);
+
+   from inside the callback, and this will cause the music to freeze but
+   samples will be able to continue playing. The xm_speed_zero callback will
+   NOT be called in this case (see below for information on this callback).
+   Note also that setting the speed in this way will work equally for IT and
+   S3M files, even though a 'speed zero' effect can only exist in XM and MOD
+   files. Beware when using this method; samples might not fade at all!
+
+   A helper callback, dumb_it_callback_terminate(), is provided; installing
+   this will cause the music to terminate when it tries to loop for the first
+   time.
+
+   Pass NULL to remove the callback function; the module will then loop as
+   normal.
+
+
+void dumb_it_set_xm_speed_zero_callback(DUMB_IT_SIGRENDERER *sigrenderer,
+                                    int (*callback)(void *data), void *data);
+
+   Installs a callback which is in many ways similar to the loop callback
+   (see dumb_it_set_loop_callback()). This callback will be called whenever
+   an F00 effect is encountered in a MOD or XM file, setting the speed to
+   zero. If the callback returns nonzero, the music will terminate. If not,
+   any currently playing samples will continue to play. You can pass any data
+   pointer you like to this function, and it will be passed to your callback
+   for you.
+
+   The helper callback, dumb_it_callback_terminate(), will also work here;
+   installing it will cause the music to terminate as soon as an F00 effect
+   is encountered.
+
+   Pass NULL to remove the callback function.
+
+
+void dumb_it_set_midi_callback(DUMB_IT_SIGRENDERER *sigrenderer,
+                int (*callback)(void *data, int channel, unsigned char byte),
+                void *data);
+
+   Installs a callback function which will be called whenever MIDI data are
+   generated by an IT file. (No other module formats are capable of
+   generating MIDI data, so your callback will never be called.)
+
+   Zxx macros will generate MIDI data. These are most often used to set the
+   parameters for IT's low-pass resonant filters, and DUMB will handle these
+   messages by itself by default. See Impulse Tracker's documentation for
+   the MIDI messages that control filters. However, Zxx macros can be used
+   to send any kind of MIDI data.
+
+   If you wish to interpret MIDI messages yourself, you can use this
+   callback. Note that the only MIDI messages generated by DUMB at present
+   are from Zxx macros; there are no messages for note start, stop, or
+   anything else.
+
+   If you return 1 from this callback, DUMB will subsequently ignore the byte
+   of MIDI data. You can use this to prevent Zxx macros from controlling the
+   filters, useful if they were intended to do something else. Note that this
+   is NOT an effective way to disable filters, since instruments can have
+   filter envelopes and initial filter parameters. DUMB provides no means to
+   disable filters, as any IT file that uses them will sound wrong without
+   them. If you want lower processor consumption, use a different piece of
+   music.
+
+   A helper callback, dumb_it_callback_midi_block(), is provided for blocking
+   all MIDI messages and making Zxx macros do nothing.
+
+   Pass NULL to remove the callback.
+
+
+int dumb_it_callback_terminate(void *data);
+
+   This is a helper callback that can be installed with both
+   dumb_it_set_loop_callback() and dumb_it_set_xm_speed_zero_callback(). In
+   each case it will cause the music to terminate abruptly.
+
+
+int dumb_it_callback_midi_block(void *data, int channel, unsigned char byte);
+
+   This helper callback, for use with dumb_it_set_midi_callback(), will
+   absorb all MIDI messages, returning 1 to prevent DUMB from interpreting
+   them itself.
+
+
+DUH *dumb_load_it(const char *filename);
+
+   Loads the specified Impulse Tracker file, encapsulating it in a DUH
+   struct. Once the file is loaded, it can be treated exactly the same as any
+   other DUH in memory. If this fails it will return NULL, but you can safely
+   pass this NULL value to DUMB's other functions, so you do not need to
+   check the return value explicitly.
+
+
+DUH *dumb_read_it(DUMBFILE *f);
+
+   Reads an Impulse Tracker file from an already open DUMBFILE. This leaves
+   the DUMBFILE open, but the DUMBFILE may not be positioned at the end of
+   the IT data. If you are embedding an IT in another file, you are advised
+   to store the size of the IT file and make up for it at the end using
+   dumbfile_pos().
+
+   Otherwise, this function is identical to dumb_load_it().
+
+   WARNING: The behaviour of this function is undefined if you pass a
+            DUMBFILE from which data have already been read; it is likely not
+            to work. This oversight will be fixed in future releases.
+
+
+DUH *dumb_load_xm(const char *filename);
+
+   Loads the specified Fast Tracker II file, encapsulating it in a DUH
+   struct. Once the file is loaded, it can be treated exactly the same as any
+   other DUH in memory. If this fails it will return NULL, but you can safely
+   pass this NULL value to DUMB's other functions, so you do not need to
+   check the return value explicitly.
+
+
+DUH *dumb_read_xm(DUMBFILE *f);
+
+   Reads a Fast Tracker II file from an already open DUMBFILE. This leaves
+   the DUMBFILE open, but the DUMBFILE may not be positioned at the end of
+   the XM data. If you are embedding an XM in another file, you are advised
+   to store the size of the XM file and make up for it at the end using
+   dumbfile_pos().
+
+   Otherwise, this function is identical to dumb_load_xm().
+
+   WARNING: The behaviour of this function is undefined if you pass a
+            DUMBFILE from which data have already been read; it is likely not
+            to work. This oversight will be fixed in future releases.
+
+
+DUH *dumb_load_s3m(const char *filename);
+
+   Loads the specified Scream Tracker 3 file, encapsulating it in a DUH
+   struct. Once the file is loaded, it can be treated exactly the same as any
+   other DUH in memory. If this fails it will return NULL, but you can safely
+   pass this NULL value to DUMB's other functions, so you do not need to
+   check the return value explicitly.
+
+
+DUH *dumb_read_s3m(DUMBFILE *f);
+
+   Reads a Scream Tracker 3 file from an already open DUMBFILE. This leaves
+   the DUMBFILE open, but the DUMBFILE may not be positioned at the end of
+   the S3M data. If you are embedding an S3M in another file, you are advised
+   to store the size of the S3M file and make up for it at the end using
+   dumbfile_pos().
+
+   Otherwise, this function is identical to dumb_load_s3m().
+
+   WARNING: The behaviour of this function is undefined if you pass a
+            DUMBFILE from which data have already been read; it is likely not
+            to work. This oversight will be fixed in future releases.
+
+
+DUH *dumb_load_mod(const char *filename);
+
+   Loads the specified Amiga module file, encapsulating it in a DUH struct.
+   Once the file is loaded, it can be treated exactly the same as any other
+   DUH in memory. If this fails it will return NULL, but you can safely pass
+   this NULL value to DUMB's other functions, so you do not need to check the
+   return value explicitly.
+
+
+DUH *dumb_read_mod(DUMBFILE *f);
+
+   Reads an Amiga module file from an already open DUMBFILE. This leaves the
+   DUMBFILE open, but the DUMBFILE may not be positioned at the end of the
+   MOD data. If you are embedding a MOD in another file, you are advised to
+   store the size of the MOD file and make up for it at the end using
+   dumbfile_pos().
+
+   Otherwise, this function is identical to dumb_load_mod().
+
+   WARNING: The behaviour of this function is undefined if you pass a
+            DUMBFILE from which data have already been read; it is likely not
+            to work. This oversight will be fixed in future releases.
+
+
+int dumb_it_sd_get_n_orders(DUMB_IT_SIGDATA *sd);
+
+   This function returns the number of orders in the module.
+
+
+int dumb_it_sd_get_initial_global_volume(DUMB_IT_SIGDATA *sd);
+void dumb_it_sd_set_initial_global_volume(DUMB_IT_SIGDATA *sd, int gv);
+
+   These functions obtain and set the initial global volume for the module.
+   This value ranges from 0 to 128 inclusive. The module can set the global
+   volume itself during playback, so your change may not last throughout the
+   playback.
+
+
+int dumb_it_sd_get_mixing_volume(DUMB_IT_SIGDATA *sd);
+void dumb_it_sd_set_mixing_volume(DUMB_IT_SIGDATA *sd, int mv);
+
+   These functions obtain and set the mixing volume for the module. This
+   value ranges from 0 to 128 inclusive, and does not change during playback.
+   IT files have the mixing volume stored in them; for other formats it is
+   set to 48 on loading.
+
+
+int dumb_it_sd_get_initial_speed(DUMB_IT_SIGDATA *sd);
+void dumb_it_sd_set_initial_speed(DUMB_IT_SIGDATA *sd, int speed);
+int dumb_it_sd_get_initial_tempo(DUMB_IT_SIGDATA *sd);
+void dumb_it_sd_set_initial_tempo(DUMB_IT_SIGDATA *sd, int tempo);
+
+   These functions obtain and set the initial speed and tempo for the module.
+   During module playback, everything happens on a tick. If a beat is 24
+   ticks, then the tempo is measured in beats per second. The speed is then
+   the number of ticks per row. With a speed of 6, a beat is then four rows.
+
+   Modules can set these values during playback, so your change may not last
+   throughout the playback. MOD files have to set the speed and tempo on the
+   first row if they want anything other than the default 6/125, so your
+   change may not be noticed at all!
+
+
+int dumb_it_sd_get_initial_channel_volume(DUMB_IT_SIGDATA *sd, int channel);
+void dumb_it_sd_set_initial_channel_volume(DUMB_IT_SIGDATA *sd, int channel,
+                                                                 int volume);
+
+   These functions obtain and set the initial volume for the specified
+   channel. The channel parameter is 0-based (contrary to the display in most
+   trackers so be careful), and can range from 0 to DUMB_IT_N_CHANNELS - 1,
+   i.e. from 0 to 63.
+
+   Modules can set their channel volumes during playback, so your changes may
+   not last throughout the playback.
+
+
+int dumb_it_sr_get_current_order(DUMB_IT_SIGRENDERER *sr);
+int dumb_it_sr_get_current_row(DUMB_IT_SIGRENDERER *sr);
+
+   These functions return the current order and row of playback. Both are
+   0-based. If the DUMB_IT_SIGRENDERER is invalid, or has been terminated
+   by a callback (see dumb_it_set_loop_callback() and
+   dumb_it_set_xm_speed_zero_callback()), these functions will both return
+   -1.
+
+
+int dumb_it_sr_get_global_volume(DUMB_IT_SIGRENDERER *sr);
+void dumb_it_sr_set_global_volume(DUMB_IT_SIGRENDERER *sr, int gv);
+
+   These functions obtain and set the current global volume for the module.
+   This value ranges from 0 to 128 inclusive. The module can set the global
+   volume itself during playback, so your change may not last.
+
+
+int dumb_it_sr_get_tempo(DUMB_IT_SIGRENDERER *sr);
+void dumb_it_sr_set_tempo(DUMB_IT_SIGRENDERER *sr, int tempo);
+int dumb_it_sr_get_speed(DUMB_IT_SIGRENDERER *sr);
+void dumb_it_sr_set_speed(DUMB_IT_SIGRENDERER *sr, int speed);
+
+   These functions obtain and set the current speed and tempo of the module.
+   See the dumb_it_sd_*() equivalents of these functions for details on what
+   the speed and tempo mean.
+
+   Modules can set these values during playback, so your change may not last.
+
+
+int dumb_it_sr_get_channel_volume(DUMB_IT_SIGRENDERER *sr, int channel);
+void dumb_it_sr_set_channel_volume(DUMB_IT_SIGRENDERER *sr, int channel,
+                                                                 int volume);
+
+   These functions obtain and set the current volume for the specified
+   channel. The channel parameter is 0-based (contrary to the display in most
+   trackers so be careful), and can range from 0 to DUMB_IT_N_CHANNELS - 1,
+   i.e. from 0 to 63.
+
+   Modules can set their channel volumes during playback, so your changes may
+   not last.
+
+
+void dumb_it_sr_get_channel_state(DUMB_IT_SIGRENDERER *sr, int channel,
+                                               DUMB_IT_CHANNEL_STATE *state);
+
+   Returns the current playback state of the given channel. If you pass a
+   channel in the range 0 to DUMB_IT_N_CHANNELS-1 (0 to 63), you will get the
+   state of the most recently played note on that physical channel, if it is
+   still playing. For MOD, S3M and XM files, that's all there is to it.
+
+   IT files can have more than one note playing on a single channel, courtesy
+   of New Note Actions. This function also lets you query all the notes that
+   have been forced into the background and are still playing. For this, set
+   'channel' to a value from DUMB_IT_N_CHANNELS to DUMB_IT_TOTAL_CHANNELS-1.
+   DUMB_IT_TOTAL_CHANNELS is defined as follows:
+
+      #define DUMB_IT_TOTAL_CHANNELS \
+                                (DUMB_IT_N_CHANNELS + DUMB_IT_N_NNA_CHANNELS)
+
+   Querying these background channels for MOD, S3M and XM files will not do
+   any harm; the function will report that these channels are inactive. For
+   all files, be sure not to query any channel numbers greater than or equal
+   to DUMB_IT_TOTAL_CHANNELS.
+
+   You must provide a pointer to a preallocated DUMB_IT_CHANNEL_STATE struct.
+   The easiest way to do this is as follows:
+
+      DUMB_IT_CHANNEL_STATE state;
+      dumb_it_sr_get_channel_state(sr, channel, &state);
+
+   or:
+
+      DUMB_IT_CHANNEL_STATE state[IT_TOTAL_CHANNELS];
+      dumb_it_sr_get_channel_state(sr, channel, &state[channel]);
+
+   This struct contains the following fields:
+
+          int channel;
+          int sample;
+          int freq;
+          float volume;
+          unsigned char pan;
+          signed char subpan;
+          unsigned char filter_cutoff;
+          unsigned char filter_subcutoff;
+          unsigned char filter_resonance;
+
+   The first field to check is 'sample'; if this is 0, then the channel is
+   inactive and the other fields are undefined. Otherwise, it is the index of
+   the currently playing sample, and is 1-based.
+
+   The channel number is returned, 0-based. This will be the same as the
+   channel number you passed, unless you are querying a background channel in
+   which case it will represent the channel the note originated on.
+
+   The freq field is the current playback frequency, taking into account all
+   phenomena such as slides, vibrato and arpeggio.
+
+   The volume field ranges from 0.0f to 1.0f. In practical terms, it will
+   rarely reach 1.0f; if it does, the module is probably clipping a lot. This
+   takes mixing volume into account, along with all the other volume
+   phenomena in the IT file. The only one it doesn't take into account is the
+   one you pass to duh_render() or duh_sigrenderer_get_samples(), or the one
+   you passed to al_start_duh() (these are in fact the same thing).
+
+   The pan field ranges from 0 to 64 for a normally panned sample, but will
+   be 100 if the sample is playing using IT's surround mode where the right-
+   hand channel is inverted. If you want a more accurate pan reading, use one
+   of the following to get one:
+
+      int scaled_pan = ((int)state.pan << 8) + state.subpan;
+      float float_pan = state.pan + state.subpan / 256.0f;
+
+   The first will give a scaled value ranging (strictly) from 0 to 64*256.
+   The second will give a floating-point value whose scale corresponds to
+   that of the pan field. These results will only be valid if surround mode
+   is off, so you should check that pan <= 64 before using the above
+   expressions. At the time of writing, pitch-pan separation and panning
+   envelopes take advantage of the extra accuracy offered by subpan.
+
+   Note that subpan is signed. This means applications that only look at the
+   pan field will get an unbiased reading.
+
+   The filter cut-off and resonance both range from 0 to 127. If the cut-off
+   is 127 and the resonance is 0, then no filters are applied. These
+   parameters only ever change from the default values for IT files.
+
+   While IT allows you to set 127 different filter cut-off levels in the
+   patterns and as a default value per instrument, it also allows you to
+   create a filter envelope, which will result in an actual cut-off somewhere
+   between 0 and the first-mentioned value. By the time this has been
+   calculated, the actual cut-off may lie in between two levels on the
+   original scale. If this is the case, filter_subcutoff will be nonzero and
+   you can combine it with filter_cutoff. Typically you will want to use one
+   of the following:
+
+      int scaled_cutoff = ((int)state.filter_cutoff << 8) +
+                                state.filter_subcutoff;
+
+      float float_cutoff = state.filter_cutoff +
+                           state.filter_subcutoff / 256.0f;
+
+   The first will give you a scaled value whose maximum is 127*256. The
+   second will give you a floating-point value whose scale corresponds to the
+   scale used by filter_cutoff. These match the expressions given further up
+   for pan and subpan, but in this case, filter_subcutoff is unsigned.
+
+   Note that filter_subcutoff will always be zero if filter_cutoff is 127, so
+   you need not check it if you simply wish to determine whether filters are
+   being applied.
+
+
+*******************************
+*** DUH Rendering Functions ***
+*******************************
+
+
+   Use these functions to generate samples from a DUH. First you call
+   duh_start_sigrenderer() with the DUH, the number of channels you want and
+   the position at which you want to start. Then you use duh_render() or
+   duh_sigrenderer_get_samples() to generate the samples. You can call these
+   functions as many times as you like, and they will generate as many or as
+   few samples as you require. When you have finished, call
+   duh_end_sigrenderer().
+
+
+DUH_SIGRENDERER *duh_start_sigrenderer
+                               (DUH *duh, int sig, int n_channels, long pos);
+
+   Starts a DUH_SIGRENDERER off. This is the struct you can use to get
+   samples from a DUH. This function does not generate any samples; you must
+   pass the struct to duh_render() or duh_sigrenderer_get_samples() for that.
+   When you have finished with it, you must pass it to duh_end_sigrenderer().
+   You can use as many DUH_SIGRENDERER structs as you like at the same time.
+
+   Set sig to 0 for now. Currently, n_channels can only be 1 or 2, for
+   monaural and stereo sound respectively. The debugging library will cause
+   your program to abort if you pass anything else. Future versions will be
+   enhanced to support more channels as soon as someone needs them.
+
+   When specifying the position, 0 represents the start of the DUH, and 65536
+   represents one second. Unlike most other music systems, DUMB will always
+   make sure every note is there right from the start (assuming you aren't
+   using any broken add-ons). In other words, you can start a DUH at a point
+   halfway through a long note, and you will still hear the long note.
+
+
+void duh_sigrenderer_set_analyser_callback(DUH_SIGRENDERER *sigrenderer,
+                     DUH_SIGRENDERER_ANALYSER_CALLBACK callback, void *data);
+
+   Installs a callback function which will be called every time the given
+   sigrenderer is used to generate some samples. This can be used to create
+   an oscilloscope or spectrum analyser. DUH_SIGRENDERER_ANALYSER_CALLBACK is
+   defined as follows:
+
+      typedef void (*DUH_SIGRENDERER_ANALYSER_CALLBACK)(void *data,
+                const sample_t *const *samples, int n_channels, long length);
+
+   If the above confuses you, see fnptr.txt. As for the 'samples' parameter,
+   the first 'const' says that the samples are read-only; the second says
+   that each channel's sample pointer is also read-only. If you don't
+   understand this, don't worry about it.
+
+   Beware: your callback function may occasionally be called with
+   samples == NULL. This means the main program has decided to skip through
+   the music without generating any data (see duh_sigrenderer_get_samples()).
+   You should handle this case elegantly, typically by returning immediately,
+   but you may wish to make a note of the fact that the music is being
+   skipped, for whatever reason.
+
+   Beware again: if the main program ever calls duh_sigrenderer_get_samples()
+   on a buffer that isn't all silence, this callback function will be passed
+   the existing buffer after mixing, and thus it will include the original
+   data. This will not be an issue if you stick to duh_render(), which always
+   starts with a buffer filled with silence.
+
+   The samples array is two-dimensional. Refer to it as follows:
+
+      samples[channel_number][sample_position]
+
+   where 0 <= channel_number < n_channels,
+     and 0 <= sample_position < length.
+
+   In addition you can pass any 'data' pointer you like to
+   duh_sigrenderer_set_analyser_callback(), and this pointer will be relayed
+   to your callback function each time.
+
+   To remove the callback function, pass NULL to
+   duh_sigrenderer_set_analyser_callback().
+
+
+int duh_sigrenderer_get_n_channels(DUH_SIGRENDERER *sigrenderer);
+
+   Tells you how many channels a DUH_SIGRENDERER is set up to generate, or 0
+   if it is invalid (perhaps owing to lack of memory). This will be 1 for
+   monaural sound or 2 for stereo, in this release.
+
+
+long duh_sigrenderer_get_position(DUH_SIGRENDERER *sigrenderer);
+
+   Tells you what position a DUH_SIGRENDERER is up to, or -1 if it is invalid
+   (perhaps owing to lack of memory). As usual, 65536 is one second.
+
+
+long duh_sigrenderer_get_samples(DUH_SIGRENDERER *sigrenderer,
+                                 float volume, float delta,
+                                 long size, sample_t **samples);
+
+   Generates some samples in DUMB's internal 32-bit format (see sample_t; see
+   also duh_render()). The samples buffer is a two-dimensional array, and can
+   be allocated with create_sample_buffer(); see
+   duh_sigrenderer_set_analyser_callback() for details.
+   duh_sigrenderer_get_samples() mixes sample data with what's already in the
+   buffer, so you have to call dumb_silence() first.
+
+   The volume is a float. 1.0f is the pseudo-maximum. If you pass 1.0f, any
+   properly designed DUH will play nice and loud, but will not clip. You can
+   pass a greater volume if you like, but be prepared for the possibility of
+   distortion due to integer overflow. Of course you can pass smaller values
+   to play the DUH more quietly, and this will also resolve clipping issues
+   in badly designed DUHs.
+
+   Use delta to control the speed of the output signal. If you pass 1.0f, the
+   resultant signal will be suitable for a 65536-Hz sampling rate (which
+   isn't a commonly used rate). The most common sampling rates are 11025 Hz,
+   22050 Hz, 44100 Hz and 48000 Hz. You can work out the required delta value
+   as follows:
+
+      delta = 65536.0f / sampling_rate;
+
+   If you then increase this value, the DUH will speed up and increase in
+   pitch. If you decrease it, the DUH will slow down and decrease in pitch.
+
+   This function will attempt to render 'size' samples. In most cases it will
+   succeed. However, if the end of the DUH is reached, it may render fewer.
+   The number of samples rendered will be returned. Therefore, if the return
+   value is less than the value of 'size' passed, you know the DUH has
+   finished. It is safe to continue calling duh_sigrenderer_get_samples() if
+   you wish, and it will continually return 0.
+
+   If the DUH_SIGRENDERER is a null pointer, this function will generate
+   precisely 0 samples. If you pass NULL for 'samples', the function will
+   behave exactly the same as if you provided a sample buffer, except the
+   samples won't be stored anywhere and the function will execute very
+   quickly. This can be used to skip ahead in the audio.
+
+
+long duh_render(DUH_SIGRENDERER *sigrenderer,
+                int bits, int unsign,
+                float volume, float delta,
+                long size, void *sptr);
+
+   Generates some samples and converts them to an 8-bit or 16-bit format (see
+   also duh_sigrenderer_get_samples()). Pass the DUH_SIGRENDERER as returned
+   by duh_start_sigrenderer(). Pass the number of bits, which should be 8 or
+   16. If unsign is nonzero, the samples will be unsigned (centred on 0x80 or
+   0x8000 for 8 bits and 16 bits respectively). If unsign is zero, the
+   samples will be signed.
+
+   Allegro's audio streams always take unsigned samples. 8-bit .wav files
+   always take unsigned samples. 16-bit .wav files always take signed
+   samples.
+
+   The volume and delta parameters work the same as for
+   duh_sigrenderer_get_samples().
+
+   This function will attempt to render 'size' samples. In most cases it will
+   succeed. However, if the end of the DUH is reached, it may render fewer.
+   The number of samples rendered will be returned. Therefore, if the return
+   value is less than the value of 'size' passed, you know the DUH has
+   finished. It is safe to continue calling duh_render() if you wish, and it
+   will continually return 0. However, if you wish to do this, you will
+   probably have to fill the rest of the buffer with silence, which is 0 for
+   signed, 0x80 for 8-bit unsigned or 0x8000 for 16-bit unsigned.
+
+   The samples will be placed at sptr. Use an array of chars for 8 bits or an
+   array of shorts for 16 bits. Stereo samples will be interleaved, left
+   first. Your array should contain at least (size * n_channels) elements of
+   the appropriate bit resolution.
+
+   From an aesthetic standpoint if nothing else, it is wise to use the C
+   qualifiers 'signed' or 'unsigned' depending on whether the samples are
+   signed or unsigned. This is also convenient if you wish to process the
+   samples further yourself.
+
+   If the DUH_SIGRENDERER is a null pointer, this function will generate
+   precisely 0 samples. Unlike with duh_sigrenderer_get_samples(), you must
+   specify a sample buffer.
+
+
+void duh_end_sigrenderer(DUH_SIGRENDERER *dr);
+
+   Terminates a DUH_SIGRENDERER. Be sure to call this when you've finished
+   with one. You can safely pass a null pointer.
+
+
+********************************
+*** Allegro Packfile Support ***
+********************************
+
+
+void dumb_register_packfiles(void);
+
+   This function registers the Allegro PACKFILE input module for use by
+   DUMBFILEs. PACKFILE structs and their corresponding functions, as defined
+   by Allegro's header file allegro.h, will be used internally for all
+   DUMBFILE input (unless opened with dumbfile_open_ex()).
+
+   This must be called before dumbfile_open() is used, or else an alternative
+   system must be registered (see register_dumbfile_system() and
+   dumb_register_stdfiles()). Note that you don't have to call this function
+   in order to load datafiles that contain music.
+
+
+DUMBFILE *dumbfile_open_packfile(PACKFILE *p);
+
+   If you have an Allegro PACKFILE struct representing an open file, you can
+   call this if you wish to read from it using a DUMBFILE. This is useful
+   when you need to pass a DUMBFILE struct to a library function, to read an
+   embedded music file for example. When you close the DUMBFILE, you can
+   continue using the PACKFILE struct to read what follows the embedded data.
+
+
+DUMBFILE *dumbfile_from_packfile(PACKFILE *p);
+
+   This function is the same as dumbfile_open_packfile(), except it will
+   check if p is NULL, and arrange for pack_fclose() to be called on the
+   PACKFILE when you close the DUMBFILE. It can be seen as a function for
+   converting a PACKFILE to a DUMBFILE, but it will only work for a PACKFILE
+   you obtained with pack_fopen(), not pack_fopen_chunk(). If this function
+   fails, which may happen if memory is short, then the PACKFILE will be
+   closed immediately, so you need not worry about potential memory leaks or
+   files being left open when this happens.
+
+   The following is typical usage, and will open the compressed file foo.bin:
+
+      DUMBFILE *f = dumbfile_from_packfile(pack_fopen("foo.bin",
+                                                      F_READ_PACKED));
+
+   This differs from calling dumb_register_packfiles() and dumbfile_open() in
+   that the latter will only read uncompressed files (and is thus a method
+   suitable for reading music modules).
+
+
+***********************************************
+*** Allegro Datafile Registration Functions ***
+***********************************************
+
+
+void dumb_register_dat_it(long type);
+
+   If you wish to embed an IT file in an Allegro datafile, it is recommended
+   that you use "IT  " for the type. The grabber will have a box for the type
+   when you insert a new object. The grabber will treat the IT file as binary
+   data, which means the datafile will contain an exact copy of the IT file
+   on disk.
+
+   You must then call dumb_register_dat_it(DUMB_DAT_IT) in your program
+   before you load the datafile. Once you've done this, you'll be able to
+   access the DUH using the usual datafile[n].dat notation. You do not need
+   to call unload_duh() on this DUH; unload_datafile() will do that for you.
+
+   If you are using a different type for whatever reason, you can use
+   Allegro's DAT_ID() macro for encoding it and passing it to this function.
+   For example:
+
+      dumb_register_dat_it(DAT_ID('B','L','A','H'));
+
+   Assuming you used the recommended type, the following example iterates
+   through all the ITs in disan.dat:
+
+      DATAFILE *dat;
+      int n;
+
+      dumb_register_dat_it();
+      dat = load_datafile("disan.dat");
+
+      for (n = 0; dat[n].type != DAT_END; n++) {
+         if (dat[n].type == DUMB_DAT_IT) {
+            DUH *duh = dat[n].dat;
+            /* Insert code here to play 'duh' or whatever you want to do. */
+         }
+      }
+
+      unload_datafile(dat);
+
+
+void dumb_register_dat_xm(long type);
+
+   Inserting an XM file in an Allegro datafile is the same as inserting an IT
+   file, except that the recommended type is "XM  ", the registration
+   function is dumb_register_dat_xm(), and the macro DUMB_DAT_XM is provided
+   for the type. The intuitive process of substituting XM for IT in the above
+   method will work.
+
+
+void dumb_register_dat_s3m(long type);
+
+   Inserting an S3M file in an Allegro datafile is the same as inserting an
+   IT file, except that the recommended type is "S3M ", the registration
+   function is dumb_register_dat_s3m(), and the macro DUMB_DAT_S3M is
+   provided for the type. The intuitive process of substituting S3M for IT in
+   the above method will work.
+
+
+void dumb_register_dat_mod(long type);
+
+   Inserting a MOD file in an Allegro datafile is the same as inserting an IT
+   file, except that the recommended type is "MOD ", the registration
+   function is dumb_register_dat_mod(), and the macro DUMB_DAT_MOD is
+   provided for the type. The intuitive process of substituting MOD for IT in
+   the above method will work.
+
+
+****************************************
+*** Sample Buffer Allocation Helpers ***
+****************************************
+
+
+   Many parts of DUMB require sample buffers allocated in a special way. A
+   pointer to one looks like this:
+
+      sample_t **samples;
+
+   and it can be indexed as follows:
+
+      samples[channel_number][sample_position]
+
+   where 0 <= channel_number < n_channels
+     and 0 <= sample_position < length.
+
+   The following helpers will allocate and deallocate such buffers for you.
+   They will not initialise them, and DUMB always writes into these buffers
+   by adding to what's already there, so you will generally have to call
+   dumb_silence() too.
+
+
+sample_t **create_sample_buffer(int n_channels, long length);
+
+   This will allocate a sample buffer to hold the specified number of samples
+   for the specified number of channels. Don't forget to check the return
+   value!
+
+   You will generally have to initialise the buffer by calling
+   dumb_silence(); the channels will be stored consecutively in memory, so
+   the following technique is officially supported:
+
+      dumb_silence(samples[0], n_channels * length);
+
+   See dumb_silence() for general information on what this function does.
+
+
+void destroy_sample_buffer(sample_t **samples);
+
+   This function does the obvious: it frees up a sample buffer when you've
+   finished with it. It is safe to pass a null pointer to this function.
+
+
+************************
+*** Silencing Helper ***
+************************
+
+
+void dumb_silence(sample_t *samples, long length);
+
+   This function simply stores 'length' samples' worth of silence in the
+   array. It is typically used straight after allocating a sample buffer with
+   create_sample_buffer().
+
+
+**************************
+*** Resampling Helpers ***
+**************************
+
+
+   Please forgive the odd section name; it has to do with DUMB's internal
+   structure and the fact that the resampling algorithm is there not just for
+   use in rendering module files but for use anywhere that a waveform needs
+   resampling. Unfortunately DUMB's resampling algorithm is not ready to be
+   documented and used yet. However, one thing can be documented, and that's
+   the global variable controlling the resampling quality.
+
+   (Ironically, even this variable has changed! See deprec.txt for
+   information on what it used to do.)
+
+
+int dumb_resampling_quality;
+
+   Allows you to control the quality of all resampling that takes place. This
+   may be set to any DUMB_RQ_* constant (except DUMB_RQ_N_LEVELS). Higher
+   values will sound better, but lower values will use up less processor
+   time. You may compare any two DUMB_RQ_* constants or values using the
+   integer inequalities <, <=, > and >=; higher numbers represent higher-
+   quality algorithms.
+
+   #define DUMB_RQ_ALIASING
+
+      |     --___         'Aliasing' has very noticeable and usually unwanted
+      |__---     __       overtones. It will occasionally produce acceptable
+      |            ___--  results for noisy (impure) samples (or for cheap
+                          speakers!), but usually you will want to pay for
+      the extra processor time, which isn't much, and go for linear
+      interpolation.
+
+   #define DUMB_RQ_LINEAR
+
+      |  __          Linear interpolation is a pretty good algorithm in most
+      | /  \  /\     cases. When resampling down a few octaves, however, you
+      |/    \/  \__  may begin to notice unwanted high frequencies. You can
+                     reduce these by switching to cubic interpolation, but it
+      will cost you some processor time.
+
+   #define DUMB_RQ_CUBIC
+
+      Cubic interpolation looks like a smooth curve to the eye, and will
+      produce good results in most cases. At present this is the highest
+      quality offered by DUMB, and also the default. While this may seem
+      extravagant, GCC 3.x and an AthlonXP handle it quite well - and the
+      general trend is for processors to get better!
+
+   #define DUMB_RQ_N_LEVELS
+
+      This represents the number of resampling quality levels DUMB provides.
+      Values of dumb_resampling_quality from 0 to DUMB_RQ_N_LEVELS - 1 are
+      valid. You can use this constant if you wish to offer the resampling
+      quality as an option for the user.
+
+
+*************************************
+*** Allegro DUH Playing Functions ***
+*************************************
+
+
+   The functions in this section allow you to play back a DUH through
+   Allegro's sound system. You must call Allegro's install_sound() function
+   before you use them.
+
+
+AL_DUH_PLAYER *al_start_duh(DUH *duh, int n_channels, long pos,
+                            float volume, long bufsize, int freq);
+
+   Starts playing the specified DUH.
+
+   An AL_DUH_PLAYER represents one instance of the DUH playing. If you wish,
+   you can have two or more AL_DUH_PLAYERs going at the same time, for the
+   same DUH or for different ones. Each uses one of Allegro's audio streams
+   and hence one voice. The voice will be given priority 255 initially, so a
+   build-up of sound effects will not cause your music streams to cut off (as
+   long as you don't give all your sound effects priority 255!). You can
+   change the priority of a stream with al_duh_set_priority(). See Allegro's
+   documentation for more information on how voice priorities work.
+
+   At present, n_channels can either be 1 or 2 for monaural or stereo
+   respectively. If you use the debugging library, your program will abort if
+   other values are passed; otherwise weird things will happen.
+
+   The DUH will start playing from position 'pos'. 0 represents the start of
+   the DUH, and 65536 represents one second. Unlike other music systems, DUMB
+   will always make sure every note is there right from the start. In other
+   words, you can start a DUH at a point halfway through a long note, and you
+   will still hear the long note.
+
+   The volume is a float. 1.0f is the pseudo-maximum. If you pass 1.0f, any
+   properly designed DUH file will play nice and loud, but will not clip. You
+   can pass a greater volume if you like, but be prepared for clipping to
+   occur. Of course you can pass smaller values to play the DUH more quietly,
+   and this will also resolve clipping issues in badly designed DUH files.
+
+   You will need to pass the AL_DUH_PLAYER to other functions when you need
+   to stop or pause the DUH, change its volume, or otherwise modify the way
+   it is playing. You will also need to pass it to al_poll_duh() at regular
+   intervals; if the sound is choppy, try calling al_poll_duh() more often.
+
+   'bufsize' is the number of samples that will be rendered at once. 1024 is
+   a suitable value for most purposes. The greater this is, the less often
+   you will have to call al_poll_duh() - but when al_poll_duh() decides to
+   fill the buffer, it will take longer doing so. If your game exhibits
+   regular brief freezes, try reducing the buffer size. If the sound is
+   choppy, however, you may have to increase it.
+
+   'freq' specifies the sampling frequency at which the DUH should be
+   rendered. At present there is no (official and portable) way of knowing
+   the frequency at which Allegro is mixing - but if you do know that
+   frequency, passing it here will give the highest quality sound. If you
+   reduce it, the DUH will sound less crisp but use less processor time.
+
+   When you have finished, you must pass the AL_DUH_PLAYER to al_stop_duh()
+   to free up memory. Do not destroy the DUH beforehand.
+
+   There is no real need to check the return value from this function. The
+   other functions can be called safely with null pointers, so if there is a
+   problem, your music will simply not play.
+
+
+void al_stop_duh(AL_DUH_PLAYER *dp);
+
+   This will stop an AL_DUH_PLAYER. You must call this when you have finished
+   with it, before destroying the DUH. The pointer will no longer be valid on
+   return from this function.
+
+
+void al_pause_duh(AL_DUH_PLAYER *dp);
+
+   This will pause an AL_DUH_PLAYER. Use al_resume_duh() when you want it to
+   continue. You can safely call al_poll_duh() while the music is paused, and
+   it will do nothing.
+
+
+void al_resume_duh(AL_DUH_PLAYER *dp);
+
+   Causes a paused AL_DUH_PLAYER to resume playing (see al_pause_duh()).
+
+
+void al_duh_set_priority(AL_DUH_PLAYER *dp, int priority);
+
+   This will set the priority of the audio stream underlying an
+   AL_DUH_PLAYER. The priority is an integer ranging from 0 to 255. When
+   too many samples play at the same time, those with lower priorities will
+   be cut. 128 is the usual default with Allegro, but DUMB overrides the
+   default for all AL_DUH_PLAYER structs: they will be set up initially with
+   priority 255, so your music won't be cut (unless you play too many other
+   streams or samples with priority 255). See Allegro's documentation for
+   more information on priorities.
+
+
+void al_duh_set_volume(AL_DUH_PLAYER *dp, float volume);
+
+   This will set the volume of an AL_DUH_PLAYER. See al_start_duh() for
+   details on the volume parameter.
+
+
+int al_poll_duh(AL_DUH_PLAYER *dp);
+
+   An AL_DUH_PLAYER is not interrupt-driven. That means it will not play by
+   itself. You must keep it alive from your main program. Call this function
+   at regular intervals. If the sound crackles, try calling it more often.
+   (There is nothing you can do if Windows decides to play with the hard
+   disk; that will make your sound crackle no matter what you do.)
+
+   Normally this function will return zero. However, if it returns nonzero,
+   that means the AL_DUH_PLAYER will not generate any more sound. Indeed the
+   underlying audio stream and DUH_SIGRENDERER have been destroyed. When this
+   happens, you can call al_stop_duh() whenever you wish - but you do not
+   have to. Note that this function will wait two buffers' worth of samples
+   before taking this action, allowing Allegro to mix the trailing sound
+   before the audio stream is destroyed. This is an attempt to make sure your
+   music does not get cut off prematurely, and it should work when using
+   Allegro's mixer (the only option on DOS, the default on Linux as far as I
+   know, but not the default on Windows). That said, if you immediately call
+   Allegro's remove_sound() or exit your program, the music may get cut off.
+   If you are using another mixer and experience problems, let me know (but I
+   don't guarantee to be able to come up with an elegant solution, i.e. it
+   might not get fixed).
+
+   In case you were wondering, it is not safe on all platforms to call
+   al_poll_duh() from an interrupt context (that means an Allegro timer
+   handler). Not only is no part of DUMB locked in memory, but many parts of
+   DUMB allocate and free their memory on a call-by-call basis! Remember that
+   any disk access that occurs in interrupt context is likely to crash the
+   machine; this is explained more fully in howto.txt. This limitation only
+   applies to DOS at present, and is due to the fact that the DOS file access
+   functions are not re-entrant.
+
+   Multitasking systems are generally safe. If you are sure you don't want to
+   target DOS, you can call al_poll_duh() from inside a timer handler, but I
+   recommend including a construction like the following!
+
+      #ifdef ALLEGRO_DOS
+      #error calling al_poll_duh() from a timer handler will not work in DOS!
+      #endif
+
+   Furthermore, if you call al_poll_duh() from inside a timer handler, you
+   must use a semaphore or other threading mechanism to make sure it is not
+   executing when you call al_stop_duh(). If you don't know what a semaphore
+   is, for Heaven's sake follow my advice and call al_poll_duh() from your
+   main loop!
+
+
+long al_duh_get_position(AL_DUH_PLAYER *dp);
+
+   Tells you what position an AL_DUH_PLAYER is up to, or -1 if it is invalid
+   (perhaps owing to lack of memory). As usual, 65536 is one second. Note
+   that this is a whole number, whereas a fractional part is stored
+   internally; the sample will not be continuous if you terminate the
+   AL_DUH_PLAYER and then reinitiate it with the same position. Furthermore,
+   note that Allegro will not have mixed in all the sound up to this point;
+   if you wait for this to reach a certain position and then terminate the
+   AL_DUH_PLAYER, the sound will cut off too early. Please contact me if you
+   need to get around this.
+
+
+AL_DUH_PLAYER *al_duh_encapsulate_sigrenderer
+        (DUH_SIGRENDERER *sigrenderer, float volume, long bufsize, int freq);
+
+   If you have a DUH_SIGRENDERER, and would like to start playing music from
+   it through an Allegro audio stream, use this function. Beware that it may
+   return NULL, in which case you will have to call duh_end_sigrenderer()
+   yourself instead of relying on the encapsulating AL_DUH_PLAYER to do it
+   for you.
+
+
+DUH_SIGRENDERER *al_duh_get_sigrenderer(AL_DUH_PLAYER *dp);
+
+   This returns the DUH_SIGRENDERER contained in an AL_DUH_PLAYER, useful for
+   controlling playback, installing callbacks, etc.
+
+
+DUH_SIGRENDERER *al_duh_decompose_to_sigrenderer(AL_DUH_PLAYER *dp);
+
+   This destroys an AL_DUH_PLAYER, but preserves the DUH_SIGRENDERER it
+   contains, and returns it to you. You can then continue rendering samples
+   from the DUH_SIGRENDERER and do whatever you like with them.
+
+
+*********************
+*** Thread Safety ***
+*********************
+
+
+The following points should pretty much sum up the essence of DUMB's thread
+safety. If I haven't covered the one thing you'd like to do, please don't
+hesitate to ask about it.
+
+DOs:
+
+- You may load and use multiple DUHs in separate threads.
+
+- You may change dumb_resampling_quality and dumb_it_max_to_mix while another
+  thread is generating samples.
+
+DON'Ts:
+
+- You may not generate samples from the same DUH in multiple threads, even if
+  you are using separate DUH_RENDERERs (separate AL_DUH_PLAYERS).
+
+
+******************
+*** Conclusion ***
+******************
+
+
+"DUMB is the bestest music player in the world because ..."
+
+Complete this sentence in fifteen words or fewer and receive a free copy of
+DUMB! (Your Internet Service Provider may issue charges for your connection,
+required for download of the Product. Your electricity supplier may issue
+charges for the electricity consumed in writing the Product to a Permanent
+Storage Device. You may have been charged for a Permanent Storage Device on
+which to store the Product.)
+
+
+Ben Davis
+entheh@users.sf.net
+IRC EFnet #dumb
+See readme.txt for details on using IRC.

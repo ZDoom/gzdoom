@@ -33,14 +33,17 @@ void DUMBEXPORT register_dumbfile_system(const DUMBFILE_SYSTEM *dfs)
 	ASSERT(dfs->open);
 	ASSERT(dfs->getc);
 	ASSERT(dfs->close);
-    ASSERT(dfs->seek);
-    ASSERT(dfs->get_size);
 	the_dfs = dfs;
 }
 
 
 
-#include "internal/dumbfile.h"
+struct DUMBFILE
+{
+	const DUMBFILE_SYSTEM *dfs;
+	void *file;
+	int32 pos;
+};
 
 
 
@@ -50,7 +53,7 @@ DUMBFILE *DUMBEXPORT dumbfile_open(const char *filename)
 
 	ASSERT(the_dfs);
 
-	f = (DUMBFILE *) malloc(sizeof(*f));
+	f = malloc(sizeof(*f));
 
 	if (!f)
 		return NULL;
@@ -79,7 +82,7 @@ DUMBFILE *DUMBEXPORT dumbfile_open_ex(void *file, const DUMBFILE_SYSTEM *dfs)
 	ASSERT(dfs->getc);
 	ASSERT(file);
 
-	f = (DUMBFILE *) malloc(sizeof(*f));
+	f = malloc(sizeof(*f));
 
 	if (!f) {
 		if (dfs->close)
@@ -106,7 +109,7 @@ int32 DUMBEXPORT dumbfile_pos(DUMBFILE *f)
 
 
 
-int DUMBEXPORT dumbfile_skip(DUMBFILE *f, long n)
+int DUMBEXPORT dumbfile_skip(DUMBFILE *f, int32 n)
 {
 	int rv;
 
@@ -368,26 +371,6 @@ int32 DUMBEXPORT dumbfile_getnc(char *ptr, int32 n, DUMBFILE *f)
 	f->pos += rv;
 
 	return rv;
-}
-
-
-
-int DUMBEXPORT dumbfile_seek(DUMBFILE *f, long n, int origin)
-{
-    switch ( origin )
-    {
-    case DFS_SEEK_CUR: n += f->pos; break;
-    case DFS_SEEK_END: n += (*f->dfs->get_size)(f->file); break;
-    }
-    f->pos = n;
-    return (*f->dfs->seek)(f->file, n);
-}
-
-
-
-int32 DUMBEXPORT dumbfile_get_size(DUMBFILE *f)
-{
-    return (*f->dfs->get_size)(f->file);
 }
 
 

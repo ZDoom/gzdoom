@@ -15,11 +15,11 @@
  * In order to find a good trade-off between            | \ / /
  * speed and accuracy in this code, some tests          |  ' /
  * were carried out regarding the behaviour of           \__/
- * long long ints with gcc. The following code
+ * int32 int32 ints with gcc. The following code
  * was tested:
  *
  * int a, b, c;
- * c = ((long long)a * b) >> 16;
+ * c = ((int32 int32)a * b) >> 16;
  *
  * DJGPP GCC Version 3.0.3 generated the following assembly language code for
  * the multiplication and scaling, leaving the 32-bit result in EAX.
@@ -35,7 +35,7 @@
  * more cycles, so this method is unsuitable for use in the low-quality
  * resamplers.
  *
- * Since "long long" is a gcc-specific extension, we use LONG_LONG instead,
+ * Since "int32 int32" is a gcc-specific extension, we use LONG_LONG instead,
  * defined in dumb.h. We may investigate later what code MSVC generates, but
  * if it seems too slow then we suggest you use a good compiler.
  *
@@ -44,9 +44,6 @@
 
 #include <math.h>
 #include "dumb.h"
-
-#include "internal/resampler.h"
-#include "internal/mulsc.h"
 
 
 
@@ -73,57 +70,22 @@
  * specification doesn't override it. The following values are valid:
  *
  *  0 - DUMB_RQ_ALIASING - fastest
- *  1 - DUMB_RQ_BLEP     - nicer than aliasing, but slower
- *  2 - DUMB_RQ_LINEAR
- *  3 - DUMB_RQ_BLAM     - band-limited linear interpolation, nice but slower
- *  4 - DUMB_RQ_CUBIC
- *  5 - DUMB_RQ_FIR      - nicest
+ *  1 - DUMB_RQ_LINEAR
+ *  2 - DUMB_RQ_CUBIC    - nicest
  *
- * Values outside the range 0-4 will behave the same as the nearest
+ * Values outside the range 0-2 will behave the same as the nearest
  * value within the range.
  */
 int dumb_resampling_quality = DUMB_RQ_CUBIC;
 
 
 
-/* From xs_Float.h ==============================================*/
-#if __BIG_ENDIAN__
-	#define _xs_iman_				1
-#else
-	#define _xs_iman_				0
-#endif //BigEndian_
+//#define MULSC(a, b) ((int)((LONG_LONG)(a) * (b) >> 16))
+//#define MULSC(a, b) ((a) * ((b) >> 2) >> 14)
+#define MULSCV(a, b) ((int)((LONG_LONG)(a) * (b) >> 32))
+#define MULSC(a, b) ((int)((LONG_LONG)((a) << 4) * ((b) << 12) >> 32))
+#define MULSC16(a, b) ((int)((LONG_LONG)((a) << 12) * ((b) << 12) >> 32))
 
-#ifdef __GNUC__
-#define finline inline
-#else
-#define finline __forceinline
-#endif
-
-union _xs_doubleints
-{
-	double val;
-	unsigned int ival[2];
-};
-
-static const double _xs_doublemagic			= (6755399441055744.0); 	//2^52 * 1.5,  uses limited precisicion to floor
-static const double _xs_doublemagicroundeps	= (.5f-(1.5e-8));			//almost .5f = .5f - 1e^(number of exp bit)
-
-static finline int xs_CRoundToInt(double val)
-{
-	union _xs_doubleints uval;
-	val += _xs_doublemagic;
-	uval.val = val;
-	return uval.ival[_xs_iman_];
-}
-static finline int xs_FloorToInt(double val)
-{
-	union _xs_doubleints uval;
-	val -= _xs_doublemagicroundeps;
-	val += _xs_doublemagic;
-	uval.val = val;
-	return uval.ival[_xs_iman_];
-}
-/* Not from xs_Float.h ==========================================*/
 
 
 /* Executes the content 'iterator' times.
@@ -150,6 +112,9 @@ static finline int xs_FloorToInt(double val)
 	} \
 }
 #else
+/* [RH] Unrolling this makes the object code ~2.5x larger with
+ * marginal, if any, improvement in performance.
+ */
 #define LOOP4(iterator, CONTENT) \
 { \
 	while ( (iterator)-- ) \
@@ -158,6 +123,8 @@ static finline int xs_FloorToInt(double val)
 	} \
 }
 #endif
+
+
 
 #define PASTERAW(a, b) a ## b /* This does not expand macros in b ... */
 #define PASTE(a, b) PASTERAW(a, b) /* ... but b is expanded during this substitution. */
@@ -194,19 +161,17 @@ static finline int xs_FloorToInt(double val)
 
 static short cubicA0[1025], cubicA1[1025];
 
-void _dumb_init_cubic(void)
+static void init_cubic(void)
 {
 	unsigned int t; /* 3*1024*1024*1024 is within range if it's unsigned */
 	static int done = 0;
 	if (done) return;
+	done = 1;
 	for (t = 0; t < 1025; t++) {
 		/* int casts to pacify warnings about negating unsigned values */
 		cubicA0[t] = -(int)(  t*t*t >> 17) + (int)(  t*t >> 6) - (int)(t << 3);
-		cubicA1[t] =  (int)(3*t*t*t >> 17) - (int)(5*t*t >> 7) + (int)(1 << 14);
+		cubicA1[t] =  (int)(3*t*t*t >> 17) - (int)(5*t*t >> 7)                 + (int)(1 << 14);
 	}
-	resampler_init();
-
-	done = 1;
 }
 
 
@@ -224,15 +189,22 @@ void _dumb_init_cubic(void)
 
 #define SRCTYPE sample_t
 #define SRCBITS 24
-#define ALIAS(x, vol) MULSC(x, vol)
+#define ALIAS(x) (x >> 8)
 #define LINEAR(x0, x1) (x0 + MULSC(x1 - x0, subpos))
+/*
+#define SET_CUBIC_COEFFICIENTS(x0, x1, x2, x3) { \
+	a = (3 * (x1 - x2) + (x3 - x0)) >> 1; \
+	b = ((x2 << 2) + (x0 << 1) - (5 * x1 + x3)) >> 1; \
+	c = (x2 - x0) >> 1; \
+}
+#define CUBIC(d) MULSC(MULSC(MULSC(MULSC(a, subpos) + b, subpos) + c, subpos) + d, vol)
+*/
 #define CUBIC(x0, x1, x2, x3) ( \
 	MULSC(x0, cubicA0[subpos >> 6] << 2) + \
 	MULSC(x1, cubicA1[subpos >> 6] << 2) + \
 	MULSC(x2, cubicA1[1 + (subpos >> 6 ^ 1023)] << 2) + \
 	MULSC(x3, cubicA0[1 + (subpos >> 6 ^ 1023)] << 2))
 #define CUBICVOL(x, vol) MULSC(x, vol)
-#define FIR(x) (x >> 8)
 #include "resample.inc"
 
 /* Undefine the simplified macros. */
@@ -253,30 +225,44 @@ void _dumb_init_cubic(void)
 #define SUFFIX _16
 #define SRCTYPE short
 #define SRCBITS 16
-#define ALIAS(x, vol) (x * vol >> 8)
+#define ALIAS(x) (x)
 #define LINEAR(x0, x1) ((x0 << 8) + MULSC16(x1 - x0, subpos))
+/*
+#define SET_CUBIC_COEFFICIENTS(x0, x1, x2, x3) { \
+	a = (3 * (x1 - x2) + (x3 - x0)) << 7; \
+	b = ((x2 << 2) + (x0 << 1) - (5 * x1 + x3)) << 7; \
+	c = (x2 - x0) << 7; \
+}
+#define CUBIC(d) MULSC(MULSC(MULSC(MULSC(a, subpos) + b, subpos) + c, subpos) + (d << 8), vol)
+*/
 #define CUBIC(x0, x1, x2, x3) ( \
 	x0 * cubicA0[subpos >> 6] + \
 	x1 * cubicA1[subpos >> 6] + \
 	x2 * cubicA1[1 + (subpos >> 6 ^ 1023)] + \
 	x3 * cubicA0[1 + (subpos >> 6 ^ 1023)])
-#define CUBICVOL(x, vol) MULSCV((x), ((vol) << 10))
-#define FIR(x) (x)
+#define CUBICVOL(x, vol) (int)((LONG_LONG)(x) * (vol << 10) >> 32)
 #include "resample.inc"
 
 /* Create resamplers for 8-bit source samples. */
 #define SUFFIX _8
 #define SRCTYPE signed char
 #define SRCBITS 8
-#define ALIAS(x, vol) (x * vol)
+#define ALIAS(x) (x << 8)
 #define LINEAR(x0, x1) ((x0 << 16) + (x1 - x0) * subpos)
+/*
+#define SET_CUBIC_COEFFICIENTS(x0, x1, x2, x3) { \
+	a = 3 * (x1 - x2) + (x3 - x0); \
+	b = ((x2 << 2) + (x0 << 1) - (5 * x1 + x3)) << 15; \
+	c = (x2 - x0) << 15; \
+}
+#define CUBIC(d) MULSC(MULSC(MULSC((a * subpos >> 1) + b, subpos) + c, subpos) + (d << 16), vol)
+*/
 #define CUBIC(x0, x1, x2, x3) (( \
 	x0 * cubicA0[subpos >> 6] + \
 	x1 * cubicA1[subpos >> 6] + \
 	x2 * cubicA1[1 + (subpos >> 6 ^ 1023)] + \
 	x3 * cubicA0[1 + (subpos >> 6 ^ 1023)]) << 6)
-#define CUBICVOL(x, vol) MULSCV((x), ((vol) << 12))
-#define FIR(x) (x << 8)
+#define CUBICVOL(x, vol) (int)((LONG_LONG)(x) * (vol << 12) >> 32)
 #include "resample.inc"
 
 

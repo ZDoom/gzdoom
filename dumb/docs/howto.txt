@@ -1,0 +1,845 @@
+/*  _______         ____    __         ___    ___
+ * \    _  \       \    /  \  /       \   \  /   /       '   '  '
+ *  |  | \  \       |  |    ||         |   \/   |         .      .
+ *  |  |  |  |      |  |    ||         ||\  /|  |
+ *  |  |  |  |      |  |    ||         || \/ |  |         '  '  '
+ *  |  |  |  |      |  |    ||         ||    |  |         .      .
+ *  |  |_/  /        \  \__//          ||    |  |
+ * /_______/ynamic    \____/niversal  /__\  /____\usic   /|  .  . ibliotheque
+ *                                                      /  \
+ *                                                     / .  \
+ * howto.txt - How To Use DUMB.                       / / \  \
+ *                                                   | <  /   \_
+ * See readme.txt for general information on         |  \/ /\   /
+ * DUMB and how to set it up.                         \_  /  > /
+ *                                                      | \ / /
+ *                                                      |  ' /
+ *                                                       \__/
+ */
+
+
+********************
+*** Introduction ***
+********************
+
+
+Welcome to the DUMB How-To! It is assumed here that you have already set DUMB
+up on your system, with or without Allegro. If not, please see readme.txt.
+
+
+*********************************
+*** Adding music to your game ***
+*********************************
+
+
+These instructions will help you add a piece of music to your game, assuming
+your music is stored in a stand-alone IT, XM, S3M or MOD file. If you wish to
+use a different method (such as putting the music file in an Allegro
+datafile), please follow these instructions first, test your program, and
+then follow the instructions further down for adapting your code.
+
+
+1. You need to include DUMB's header file. If you have Allegro, add the
+   following line to the top of your source file (or at the top of each file
+   where you wish to use DUMB):
+
+      #include <aldumb.h>
+
+   If you do not have Allegro or do not wish to use it, use dumb.h instead.
+
+
+2. You need to link with DUMB's library file or files. If you are compiling
+   with GCC from a command line on any platform, you need to add the
+   following to the command line:
+
+      If you are using Allegro: -laldmd -ldumbd
+      If you are not using Allegro: -ldumbd
+
+   If you are using MSVC from the command line:
+
+      If you are using Allegro: /link aldmd.lib dumbd.lib
+      If you are not using Allegro: /link dumbd.lib
+
+   With MSVC, you must also add /MD to the command line when compiling (not
+   when linking).
+
+   Note that -laldmd or aldmd.lib must PRECEDE alleg.lib, -lalleg_s,
+   `allegro-config --libs`, or whatever you are already using to link with
+   Allegro. For MSVC users, the /MD flag selects the multithreaded DLL
+   implementation of the standard libraries; since DUMB is statically linked,
+   you have to use the same library DUMB uses. You would also need this flag
+   to link statically with Allegro; if you already have it, there's no need
+   to put it twice.
+
+   (If anyone would like to contribute instructions for doing the above using
+   MSVC's IDE, please contact me. Contact details are at the end of this
+   file.)
+
+   If you are using RHIDE, go to Options -> Libraries. You will need to type
+   'aldmd' and 'dumbd' in two boxes, making sure 'aldmd' comes above whatever
+   you are using to link with Allegro (or just put 'dumbd' if you are not
+   using Allegro). Make sure the box next to each of these libraries is
+   checked.
+
+   The above are the debugging libraries. It is VERY HIGHLY RECOMMENDED that
+   you use the debugging libraries at first. The reason is as follows.
+   Although DUMB is supposedly robust against corrupt music files and things
+   like lack of memory, it will NOT tolerate programmer error. If you write
+   faulty code, DUMB will probably crash rather than returning an error code
+   for you. However, the debugging libraries will abort in many cases,
+   enabling you to find out what the cause is.
+
+   Once your program is up and running reliably, you can replace 'aldmd' with
+   'aldmb' and 'dumbd' with 'dumb'. Don't forget to do this, or DUMB will be
+   a lot slower than it should be!
+
+
+3. As you use DUMB, it may claim system resources (memory in particular). You
+   will need to arrange for these resources to be freed at the end. Doing so
+   is very easy. Simply write the following line at the top of your main
+   function, but below allegro_init() if you are using Allegro:
+
+      atexit(&dumb_exit);
+
+   This arranges for the function dumb_exit() to be called when your program
+   exits; you do not need to call dumb_exit() yourself. This method is
+   preferable to calling dumb_exit() manually, as it will free resources even
+   if your program aborts unexpectedly.
+
+   If you are happy with this, please skip ahead to Step 4. If you are
+   interested in alternative methods, read on, but read on carefully.
+
+   In fact it mostly doesn't matter where you put the above atexit() line,
+   provided it gets called only once, and before you do anything with DUMB.
+   If you are using DUMB with Allegro, it is recommended that you write the
+   functions in this order:
+
+      allegro_init();
+      atexit(&dumb_exit);
+
+   And then you must NOT call allegro_exit() yourself (because it has to be
+   called after dumb_exit()). Alternatively, if you prefer not to use
+   atexit() (or you cannot), you will have to do the following before
+   exiting:
+
+      dumb_exit();
+      allegro_exit();
+
+
+4. DUMB does not automatically do any of its own file input. You have to tell
+   it how to read files. Don't worry, it's easy. Simply call the following
+   function near the beginning of your program, after your atexit() call:
+
+      dumb_register_stdfiles();
+
+   This tells DUMB to use ordinary stdio FILE structs for reading and writing
+   files. If you are using Allegro and would rather DUMB used PACKFILEs, call
+   the following function INSTEAD:
+
+      dumb_register_packfiles();
+
+   In the latter case, DUMB will be affected by any password you set with
+   packfile_password() in the same way that other PACKFILEs are.
+
+   Note that the procedure for loading datafiles with embedded music is
+   independent of these two functions; even if you will be loading datafiles,
+   you can use either of these functions. If you are loading datafiles, your
+   executable might be slightly smaller if you use dumb_register_packfiles().
+   On the other hand, dumb_register_stdfiles() will probably be faster. If
+   you are only ever going to load datafiles and never stand-alone files, you
+   can actually leave this step out; but I would recommend you put this in,
+   test your code with a stand-alone file, then follow the instructions in
+   the next section in order to adapt your code to use the datafile (you will
+   be reminded that you can remove the function call).
+
+
+5. If you are using Allegro, you'll have to initialise Allegro's sound
+   system. In most cases the following line will do the job:
+
+      install_sound(DIGI_AUTODETECT, MIDI_NONE, NULL);
+
+   You may like to initialise a MIDI driver though; see Allegro's docs for
+   details. Put this line after allegro_init().
+
+
+6. All pieces of music are stored in memory in DUH structs. To handle these,
+   you must define pointers to them. Such pointers look like this:
+
+      DUH *myduh;
+
+   You can of course replace 'myduh' with anything you like. If you are
+   unfamiliar with pointers, please see ptr.txt. It is very important that
+   you understand these if you wish to use DUMB correctly.
+
+   You do not have direct access to the contents of a DUH struct, so do not
+   try. DUMB's functions provide everything you need; if you disagree, please
+   let me know and I shall see what I can do. Contact details are at the end
+   of this file.
+
+   Given the above definition, you can load a piece of music using one of the
+   following lines, depending on what file format you want to load:
+
+      myduh = dumb_load_it("a_one.it");
+      myduh = dumb_load_xm("a_two.xm");
+      myduh = dumb_load_s3m("a_one_two.s3m");
+      myduh = dumb_load_mod("three_four.mod");
+
+   Obviously you can use relative or absolute paths as normal. You should
+   always use forward slash (/), not backslash (\), when coding in C and
+   similar languages.
+
+   Every piece of music you load must be unloaded when you've finished with
+   it. When you type the above line in, it is good practice to type the
+   following line in at the same time, but put it at the end of the program:
+
+      unload_duh(myduh);
+
+   You will now be able to use the DUH struct anywhere in between the two
+   lines you just added. There is no need to check the return value; if the
+   DUH failed to load for one reason or another (this could be due to lack of
+   memory as well as the file not being there), then DUMB will do nothing -
+   safely.
+
+
+7. From this step onwards, it will be assumed you're using Allegro. If not,
+   please read these steps anyway, and then see the section entitled
+   "Rendering music into a buffer". You will have to write your own playback
+   code using whatever sound output system is available. Alternatively you
+   may like to write data to a file (especially if you have a file that
+   consumes a lot of processor time), but beware that any streaming audio
+   format is likely to be substantially larger than the module file you
+   generate it from, and formats like MP3 will be lower quality. You might
+   not be able to hear the difference between the MP3 and the original, but
+   many people can and don't like it, so please consider them. I'm one of
+   them. If you really want to use a lossy compression format, I highly
+   recommend Ogg Vorbis:
+
+      http://www.vorbis.com/
+
+   But I digress.
+
+   In order to play the DUH you loaded, you need to define a pointer to an
+   AL_DUH_PLAYER struct:
+
+      AL_DUH_PLAYER *dp;
+
+   Two of the functions you will need are prototyped as follows:
+
+      AL_DUH_PLAYER *al_start_duh(DUH *duh, int n_channels, long pos,
+                                  float volume, long bufsize, int freq);
+
+      void al_stop_duh(AL_DUH_PLAYER *dp);
+
+   As you can see, al_start_duh() returns a pointer to an AL_DUH_PLAYER
+   struct when you call it. You then pass this pointer to all the other
+   functions. Again, if it is a NULL pointer for whatever reason (usually
+   lack of memory), DUMB will safely do nothing. When you call al_stop_duh(),
+   the pointer becomes invalid and you should not use it again; if there's
+   any risk of the pointer being used again, it is wise to set it to NULL at
+   this point. You can reassign the variable with a new call to
+   al_start_duh() of course.
+
+   Set 'n_channels' to 1 or 2 for mono or stereo respectively. Note that this
+   parameter has nothing to do with the number of samples that can play at
+   once in a music module. Set 'pos' to 0 to play from the beginning; each
+   time you add 65536, you will have advanced one second into the piece. As a
+   general rule, set the volume to 1.0f and adjust it later if the music is
+   too loud or too quiet - but see Allegro's set_volume_per_voice() function
+   first.
+
+   'bufsize' can generally be set to 4096. If your music stutters, try
+   increasing it; if your game freezes periodically, try reducing it. Find a
+   happy medium. Set 'freq' to 48000 for the best quality, though 44100 will
+   do in most cases. 22050 will be fine for a lot of music, though 11025 may
+   sound muffled. You can choose any other value, higher, lower or in
+   between. If your music stutters, and increasing 'bufsize' doesn't fix it,
+   try reducing this value.
+
+   Once you have put in a call to al_start_duh(), it is good practice to
+   insert the call to al_stop_duh() at the same time. You must call
+   al_stop_duh() before the DUH is unloaded (unload_duh(), Step 6 above).
+
+   Don't get impetuous, your program is not ready yet! Proceed to Step 8.
+
+
+8. DUMB does not play music in the background for you; if you were expecting
+   it to do so, please see the explanation at the end of this step. For your
+   music to be played, you have to call another function at regular
+   intervals. Here is its prototype:
+
+      int al_poll_duh(AL_DUH_PLAYER *dp);
+
+   Do NOT call this function from inside a timer function unless you really
+   know what you are doing. The reasons why this is bad are explained
+   further down. You should call it from your main program.
+
+   Simply writing the following line will be sufficient in general, if you
+   have a variable 'dp' that points to your AL_DUH_PLAYER struct.
+
+      al_poll_duh(dp);
+
+   As a general rule, calling this once for each logic update will do the
+   trick. If, however, you are executing time-consuming algorithms such as
+   software 3D rendering, you may wish to insert calls to this function in
+   the middle of those algorithms. You cannot call this function too often
+   (within reason); if it has nothing to do it will return immediately.
+
+   Exactly how often you need to call the function depends on the values for
+   'bufsize' and 'freq' that you passed to al_start_duh():
+
+      n = freq / bufsize;
+
+   You have to call al_poll_duh() at least n times a second. Do not hesitate
+   to call it more often for safety; if the sound stutters, you may need to
+   do just that. (Or you may need to increase the buffer size or reduce the
+   quality settings; the only way to find out is to try.)
+
+   For now, don't worry about al_poll_duh()'s return value. As soon as you
+   need it, it will be explained.
+
+   If you are happy, please skip to Step 9. If you were expecting DUMB to
+   play your music in the background, please read on.
+
+   The natural way to play music in the background on most operating systems
+   nowadays is to use threads. DOS was not built with multithreading in mind,
+   and its system operations (notably disk access) assume they will only be
+   used from a single thread.
+
+   Interrupts are the next best thing to threads. A DOS hardware interrupt
+   could be triggered at any moment, and a handler function will be called.
+   This is how Allegro's timer functions work. Unfortunately, what you can do
+   inside an interrupt handler is very limited. For one thing, all code and
+   data used by the handler must be locked in memory; if not, it could get
+   written to disk (virtual memory). If the main program was accessing the
+   disk when it got interrupted, the system would then die a horrible death.
+   This precludes the possibility of allocating extra memory inside the
+   handler, and DUMB does a lot of that in al_poll_duh().
+
+   Given DUMB's architecture, which cannot change for reasons which will
+   become apparent in future versions, this renders it impossible to come up
+   with a portable solution for making DUMB play music in the background.
+   Having said that, if you wish to write your own wrapper for al_poll_duh()
+   and use it in a thread, there is nothing stopping you. If you do do this,
+   you will have to be very careful when stopping the music; see the
+   description of al_poll_duh() in dumb.txt for more information.
+
+   So why not kill DOS? It is all too common a practice among programmers to
+   quote the phrase, "DOS is as dead as the dodo." Despite being a decidedly
+   derisible demonstation of the dreary device of alliteration, it shows a
+   distinct lack of experience. Many embedded systems still use DOS because
+   it provides hardware access capabilities and real-time possibilities
+   unparalleled by any current multitasking operating system. For an argument
+   closer to home, I used to use RHIDE for DOS before I switched to Linux,
+   and I have not found a single Freeware Windows IDE that measures up to
+   RHIDE. I'm sure many people are in the same boat, and really appreciate
+   DUMB's DOS port.
+
+   We will not be removing DOS support from DUMB. Any blind suggestions to do
+   so will be met with fiery flames. You have been warned.
+
+
+9. Test your program!
+
+   If you have trouble, check through the above steps to make sure you didn't
+   miss one out. Refer to faq.txt to see if your problem is addressed there.
+   If you still have trouble, contact me; details are at the end of this
+   file.
+
+
+**********************************
+*** Controlling music playback ***
+**********************************
+
+
+Here I describe some common operations you may wish to perform. The method
+for doing so will seem a bit strange sometimes, as will the names of the
+structs. However, there is a reason behind everything. If you would like to
+do more exotic things, or better understand some of the methods used here,
+then see dumb.txt, which covers everything from the ground up.
+
+
+To control playback quality:
+
+   #define DUMB_RQ_ALIASING
+   #define DUMB_RQ_LINEAR
+   #define DUMB_RQ_CUBIC
+   #define DUMB_RQ_N_LEVELS
+   extern int dumb_resampling_quality;
+   extern int dumb_it_max_to_mix;
+
+   Please note that dumb_resampling_quality has changed in DUMB v0.9.2. See
+   deprec.txt for more details on the change.
+
+   dumb_resampling_quality can be set to any of the DUMB_RQ_* constants
+   (except DUMB_RQ_N_LEVELS; see below). Resampling is the term given to the
+   process of adjusting a sample's pitch (in this context).
+   dumb_resampling_quality defaults to DUMB_RQ_CUBIC, which sounds nice but
+   takes a lot of processor power. Try reducing it if you have an older
+   computer or if you are trying to mix an insane number of samples (or
+   both!). See dumb.txt for details on what the different values actually do.
+
+   If you wish to give this option to your user, you can use
+   DUMB_RQ_N_LEVELS. All the values from 0 to DUMB_RQ_N_LEVELS - 1 will be
+   valid resampling levels. If a value outside this range is chosen, it is
+   not the end of the world; DUMB will behave as if you had chosen the value
+   at whichever extreme you went beyond.
+
+   dumb_it_max_to_mix, defaulting to 64, is the maximum number of samples
+   DUMB will ever mix together when playing an IT, XM, S3M or MOD file.
+   Unlike many other music systems, DUMB will still keep track of all samples
+   (up to a fixed maximum of 256 of them, roughly speaking), and then will
+   just render as many of them as this variable permits, starting with the
+   loudest ones. When samples are cut or come back in, the exact timings will
+   not generally be predictable - but nor will they be important.
+
+   dumb_it_max_to_mix applies to each currently playing module file
+   independently. So if you set it to 64, but render two modules
+   simultaneously, DUMB could end up mixing up to 128 samples.
+
+
+To pause and resume playback, set the volume, get the current playback
+position, or get the length of time a DUH will play for before either looping
+or freezing (effect F00 in XM and MOD files, which means no new notes will be
+played but any existing notes will continue):
+
+   void al_pause_duh(AL_DUH_PLAYER *dp);
+   void al_resume_duh(AL_DUH_PLAYER *dp);
+   void al_duh_set_volume(AL_DUH_PLAYER *dp, float volume);
+   long al_duh_get_position(AL_DUH_PLAYER *dp);
+
+   long duh_get_length(DUH *duh);
+
+   These functions are pretty self-explanatory. The volume passed to
+   al_duh_set_volume() and the position returned by al_duh_get_position() are
+   in the same units as those you passed to al_start_duh(). The length
+   returned by duh_get_length() is in the same units as the aforementioned
+   position; see dumb.txt for more information on this function. Be careful
+   with al_duh_get_position(); it will return a position slightly ahead of
+   what you can hear, because the system has to keep ahead slightly to avoid
+   stuttering.
+
+
+To prevent the music from looping and/or freezing:
+
+   DUH_SIGRENDERER *al_duh_get_sigrenderer(AL_DUH_PLAYER *dp);
+   DUMB_IT_SIGRENDERER *duh_get_it_sigrenderer(DUH_SIGRENDERER *sigrenderer);
+
+   void dumb_it_set_loop_callback(DUMB_IT_SIGRENDERER *sigrenderer,
+      int (*callback)(void *data), void *data);
+   void dumb_it_set_xm_speed_zero_callback(DUMB_IT_SIGRENDERER *sigrenderer,
+      int (*callback)(void *data), void *data);
+
+   int dumb_it_callback_terminate(void *data);
+
+   If you are unfamiliar with function pointers, please see fnptr.txt.
+
+   Note that these functions apply to IT, XM, S3M and MOD files - not just to
+   IT files. This holds true throughout DUMB, for all functions with "it" in
+   the name. The xm_speed_zero event can only occur with XM and MOD files.
+
+   The first two functions will return a pointer to a struct contained by the
+   struct you pass. This system is necessary to ensure that these operations
+   are possible when not using Allegro. Typically you would write the
+   following code:
+
+   {
+      DUH_SIGRENDERER *sr = al_duh_get_sigrenderer(dp);
+      DUMB_IT_SIGRENDERER *itsr = duh_get_it_sigrenderer(sigrenderer);
+      dumb_it_set_loop_callback(itsr, &dumb_it_callback_terminate, NULL);
+      dumb_it_set_xm_speed_zero_callback
+                               (itsr, &dumb_it_callback_terminate, NULL);
+   }
+
+   Once you have done this, the return value of al_poll_duh() becomes
+   significant. It will be 0 as long as the music is playing. When the music
+   stops, al_poll_duh() will return nonzero. You can call al_stop_duh() and
+   do something else as soon as you wish, but calling al_poll_duh() some more
+   will not do any harm.
+
+   al_poll_duh() will also return 1 if the music could not be loaded, or if
+   memory was short when trying to play it, or if it was a quirky music file
+   with no music in it (technically one with an empty order list). This
+   happens regardless of whether or not you execute the above code to disable
+   looping. Normally you shouldn't need to worry about this.
+
+   To undo the above and make DUMB loop or freeze again, pass NULL instead of
+   &dumb_it_callback_terminate. If you would like to fade on looping, or loop
+   a finite number of times, or display a message when looping, or whatever,
+   you will have to write your own callback function. In this case, please
+   see dumb.txt.
+
+   Note that the above code can safely be applied for a DUH that doesn't
+   contain a music module but contains some other kind of music.
+   duh_get_it_sigrenderer() will return NULL, and the code will do nothing.
+
+
+To analyse the audio as it's generated:
+
+   typedef int sample_t;
+
+   typedef void (*DUH_SIGRENDERER_ANALYSER_CALLBACK)(void *data,
+                const sample_t *const *samples, int n_channels, long length);
+
+   void duh_sigrenderer_set_analyser_callback(DUH_SIGRENDERER *sigrenderer,
+                     DUH_SIGRENDERER_ANALYSER_CALLBACK callback, void *data);
+
+   If the above confuses you, see fnptr.txt. These functions, along with
+   al_duh_get_sigrenderer() from the last section, enable you to register a
+   callback function. Every time some samples are generated, they will be
+   passed to this function. This enables you to display an oscilloscope or
+   spectrum analyser, for example.
+
+   Beware: your callback function may occasionally be called with
+   samples == NULL. This means the main program has decided to skip through
+   the music without generating any data. You should handle this case
+   elegantly, typically by returning immediately, but you may wish to make a
+   note of the fact that the music is being skipped, for whatever reason.
+
+   Beware again: if the main program ever calls duh_sigrenderer_get_samples()
+   on a buffer that isn't all silence, this callback function will be passed
+   the existing buffer after mixing, and thus it will include the original
+   data. This will not be an issue if you stick to duh_render(), which always
+   starts with a buffer filled with silence.
+
+   The samples array is two-dimensional. Refer to it as follows:
+
+      samples[channel_number][sample_position]
+
+   where 0 <= channel_number < n_channels,
+     and 0 <= sample_position < length.
+
+   In addition you can pass any 'data' pointer you like to
+   duh_sigrenderer_set_analyser_callback(), and this pointer will be relayed
+   to your callback function each time.
+
+   To remove the callback function, pass NULL to
+   duh_sigrenderer_set_analyser_callback().
+
+
+Everything below this point assumes some knowledge of how a music module is
+constructed. If you do not have this knowledge, talk to whoever is writing
+music for you, or download a tracking program and play with it (see
+readme.txt).
+
+
+To start playing an IT, XM, S3M or MOD from an arbitrary order number (the
+default being 0, the beginning of the song), use the following:
+
+   DUH_SIGRENDERER *dumb_it_start_at_order
+                                  (DUH *duh, int n_channels, int startorder);
+   AL_DUH_PLAYER *al_duh_encapsulate_sigrenderer
+        (DUH_SIGRENDERER *sigrenderer, float volume, long bufsize, int freq);
+
+   The usage of these functions is as follows:
+
+   {
+      DUH_SIGRENDERER *sr = dumb_it_start_at_order
+                                               (duh, n_channels, startorder);
+      dp = al_duh_encapsulate_sigrenderer(sr, volume, bufsize, freq);
+   }
+
+   Replace 'dp' with whatever your AL_DUH_PLAYER pointer is. You also need
+   to insert suitable values for n_channels, startorder, volume, bufsize and
+   freq. These have the same meaning as those passed to al_start_duh().
+
+   WARNING: after passing a pointer to an "encapsulate" function, do not use
+            that pointer again. (More specifically, do not use it again if
+            the function returns NULL, because the function will have
+            destroyed the pointer if this happens, to help prevent memory
+            leaks.) There will be a "get" function with which you can obtain
+            the original pointer if it is still valid, or NULL otherwise.
+
+   The above functions will fail (safely) if you try to use them with a DUH
+   that contains a different type of music.
+
+   Notice that there is no 'pos' parameter. If you would like to skip through
+   the music, you can use this function:
+
+   long duh_sigrenderer_get_samples(
+      DUH_SIGRENDERER *sigrenderer,
+      float volume, float delta,
+      long size, sample_t **samples
+   );
+
+   Pass 0 for volume and NULL for samples, and this function will skip
+   through the music nice and quickly. So insert the following between the
+   two above statements:
+
+      duh_sigrenderer_get_samples(sr, 0, 65536.0f / freq, pos, NULL);
+
+   Substitute for 'freq' and 'pos'. An explanation of the 'delta' parameter
+   can be found further down in this file.
+
+   Finally, note that duh_get_length() is only meaningful when you start
+   playing music from order 0.
+
+
+If an IT file contains Zxx effects, DUMB will generate MIDI messages, which
+will control the low-pass resonant filters unless the IT file actively
+specifies something else. In rare cases this may not be what the Zxx effects
+were intended to do; if this is the case, you can block the MIDI messages as
+follows. Note that this does NOT mean filters are disabled; if an instrument
+specifies initial cut-off and resonance values, or has a filter envelope,
+then filters will be applied. It only makes sense to use this procedure at
+the beginning of playback.
+
+   void dumb_it_set_midi_callback(DUMB_IT_SIGRENDERER *sigrenderer,
+      int (*callback)(void *data, int channel, unsigned char byte),
+      void *data);
+
+   int dumb_it_callback_midi_block(void *data, int channel,
+                                   unsigned char byte);
+
+   Using some functions described in the previous section, we arrive at the
+   following code:
+
+   {
+      DUH_SIGRENDERER *sr = al_duh_get_sigrenderer(dp);
+      DUMB_IT_SIGRENDERER *itsr = duh_get_it_sigrenderer(sigrenderer);
+      dumb_it_set_midi_callback(itsr, &dumb_it_callback_midi_block, NULL);
+   }
+
+DUMB offers no way of disabling filters completely. Disabling filters is not
+recommended as a means to reduce processor usage, as it will completely
+damage any piece of music that uses the filters. If you want lower processor
+consumption, use a piece of music that does not use filters.
+
+
+Finally, DUMB offers a myriad of functions for querying and adjusting
+module playback. Those beginning with "dumb_it_sd" operate on the
+DUMB_IT_SIGDATA struct, which represents the piece of music before it starts
+to play. Those beginning with "dumb_it_sr" operate on the DUMB_IT_SIGRENDERER
+struct, which represents a currently playing instance of the music. Note that
+duh_get_length(), described above, becomes meaningless after some of these
+functions are used.
+
+The method for getting a DUMB_IT_SIGRENDERER struct has already been given,
+but the function prototypes are repeated here for convenience:
+
+   DUH_SIGRENDERER *al_duh_get_sigrenderer(AL_DUH_PLAYER *dp);
+   DUMB_IT_SIGRENDERER *duh_get_it_sigrenderer(DUH_SIGRENDERER *sigrenderer);
+
+Getting a DUMB_IT_SIGDATA struct is simpler:
+
+   DUMB_IT_SIGDATA *duh_get_it_sigdata(DUH *duh);
+
+For a list of dumb_it_sd_*() and dumb_it_sr_*() functions, please see
+dumb.txt. These functions are new, and may not provide exactly what you need;
+if not, please let me know.
+
+
+**************************************************
+*** Embedding music files in Allegro datafiles ***
+**************************************************
+
+
+In this section it is assumed you are already reasonably familiar with how
+Allegro datafiles are used. If not, please refer to Allegro's documentation.
+At the time of writing, the documentation you need is off the beaten track,
+so to speak, in allegro/tools/grabber.txt.
+
+To add a piece of music to a datafile, you need to create an object of type
+"IT  ", "XM  ", "S3M " or "MOD " (note the spaces used as padding, although
+you do not need to type these into the grabber). Then grab the piece of music
+in. The grabber will treat it as a binary object. Save the datafile as usual.
+
+
+To use a piece of music you added to the datafile, follow these steps:
+
+
+1. Before loading the datafile, call one or more of these functions,
+   depending on which music format or formats you'd like to support:
+
+      dumb_register_dat_it(DUMB_DAT_IT);
+      dumb_register_dat_xm(DUMB_DAT_XM);
+      dumb_register_dat_s3m(DUMB_DAT_S3M);
+      dumb_register_dat_mod(DUMB_DAT_MOD);
+
+   Remember, do not call multiple functions unless you want to support
+   multiple formats. Calling more functions will add unused code to your
+   executable.
+
+   It is important that you make call these before loading the datafile,
+   since they tell Allegro how to load the respective files straight from
+   datafiles in the future. They will not help Allegro interpret any module
+   files that have already been loaded as binary objects (but if you really
+   need to interpret a module that has been loaded in this fashion, have a
+   look at dumbfile_open_memory() in dumb.txt).
+
+   If for whatever reason your music objects are identified by a different
+   type in the datafile, you can tell DUMB what that type is by changing the
+   parameter to the registration function above. Use Allegro's DAT_ID()
+   macro, e.g. DAT_ID('B','L','A','H'). This is not really recommended
+   though, since it would prevent a hypothetical grabber plug-in from being
+   able to play your music files. Use the above types if possible.
+
+
+2. Whenever you need a pointer to a DUH struct, simply use the 'dat' field.
+   Do this in the same way you would for a pointer to a BITMAP struct or
+   anything else. If it makes you feel more comfortable, you can extract the
+   pointer in advance:
+
+      DATAFILE *dat = load_datafile("smurf.dat");
+      if (!dat) abort(); /* There are much nicer ways of handling failure! */
+      DUH *myduh = (DUH *)dat[GAME_MUSIC].dat;
+
+   Note that the explicit (DUH *) cast is only necessary for C++, not for C.
+   However, it does no harm.
+
+   Be sure that you do NOT call unload_duh() for anything stored in the
+   datafile. These DUHs will be freed when you call unload_datafile(), and
+   freeing them twice is practically guaranteed to crash your program.
+
+
+3. If you only ever load music as part of a datafile, and you never load any
+   stand-alone music files, you do not need to register a file input system
+   for DUMB to use. If you followed the instructions for the first section
+   you will have one of these two lines in your program:
+
+      dumb_register_stdfiles();
+      dumb_register_packfiles();
+
+   You can safely delete this line - but only if you never load any
+   stand-alone music files. The debugging library will bale you out if you
+   delete it when you shouldn't; the optimised library won't.
+
+
+*************************************
+*** Rendering music into a buffer ***
+*************************************
+
+
+NOTE: much of the API formerly described in this section has been deprecated,
+      and you will need to alter your code. See deprec.txt for details. If
+      you are reading this section for the first time, you can ignore this
+      note.
+
+Rendering to a buffer is similar to playing using an AL_DUH_PLAYER. However,
+you must use a DUH_SIGRENDERER struct instead. Here are the functions:
+
+   DUH_SIGRENDERER *duh_start_sigrenderer
+                               (DUH *duh, int sig, int n_channels, long pos);
+
+   int duh_sigrenderer_get_n_channels(DUH_SIGRENDERER *sigrenderer);
+   long duh_sigrenderer_get_position(DUH_SIGRENDERER *sigrenderer);
+
+   long duh_sigrenderer_get_samples(DUH_SIGRENDERER *sigrenderer,
+                   float volume, float delta, long size, sample_t **samples);
+
+   long duh_render(DUH_SIGRENDERER *sigrenderer,
+     int bits, int unsign, float volume, float delta, long size, void *sptr);
+
+   void duh_end_sigrenderer(DUH_SIGRENDERER *sigrenderer);
+
+The parameters to duh_start_sigrenderer() have the same meanings as those to
+al_start_duh(). However, note that the volume is not set at this stage. You
+pass the desired volume each time you want to render a block. The 'sig'
+parameter should be set to 0 for now.
+
+Notice that there are two rendering functions. duh_sigrenderer_get_samples()
+will generate samples in the internal 32-bit format, with a normal range from
+-0x800000 to 0x7FFFFF and with each channel in a separate array; duh_render()
+will convert to 8 or 16 bits, signed or unsigned, with stereo samples
+interleaved, left first.
+
+When you call duh_render(), pass 8 or 16 for 'bits'. If you pass 8, 'sptr' is
+expected to be an array of chars. If you pass 16, 'sptr' is expected to be an
+array of shorts. Endianness therefore depends on the platform, and you should
+not try to interpret 16-bit wave data as an array of chars (unless you're
+writing highly system-specific code anyway). Because DUMB renders internally
+with 32 bits, there is no significant speed increase in rendering an 8-bit
+stream.
+
+If you are rendering in stereo, make sure your 'sptr' array is twice as big!
+
+If you set 'unsign' to a nonzero value, then the samples generated will be
+centred on 0x80 or 0x8000, suitably stored in an array of unsigned chars or
+unsigned shorts. If 'unsign' is zero, the samples will be centred on 0,
+suitably stored in an array of signed chars or signed shorts. Note that 8-bit
+WAV files are unsigned while 16-bit WAV files are signed. This convention was
+used by the SoundBlaster 16 when receiving samples to be sent to the
+speakers. If you wish to write 16-bit sample data to a WAV file, don't use
+fwrite(); instead, take the shorts one at a time, split them up into chars as
+follows, and write the chars to the file.
+
+   short sptr[n];
+   char lsb = (char)sptr[n];
+   char msb = (char)(sptr[n] >> 8);
+
+For a 16-bit WAV file, write the LSB (less significant byte) first.
+
+The following applies equally to duh_render() and
+duh_sigrenderer_get_samples(), except where otherwise stated.
+
+If you set 'delta' to 1.0f, the sound generated will be suitable for playback
+at 65536 Hz. Increasing 'delta' causes the wave to speed up, given a constant
+sampling rate for playback. Supposing you want to vary the playback sampling
+rate but keep the pitch constant, here's the equation for 'delta':
+
+   delta = 65536.0f / sampling_rate;
+
+'size' is the number of samples you want rendered. For duh_render(), they
+will be rendered into an array which you pass as 'sptr'. Note that stereo
+samples count as one; so if you set n_channels to 2, your array must contain
+(2 * size) elements.
+
+For duh_sigrenderer_get_samples() you will have to use the following
+functions:
+
+   sample_t **create_sample_buffer(int n_channels, long length);
+   void destroy_sample_buffer(sample_t **samples);
+
+   void dumb_silence(sample_t *samples, long length);
+
+create_sample_buffer() allocates the channels sequentially in memory, so the
+following technique is valid:
+
+   sample_t **samples = create_sample_buffer(n_channels, length);
+   dumb_silence(samples[0], n_channels * length);
+
+It is necessary to fill the buffer with silence like this because
+duh_sigrenderer_get_samples() mixes what it renders with the existing
+contents of the buffer.
+
+The return values from duh_render() and duh_sigrenderer_get_samples() tell
+you how many samples were actually generated. In most cases, this will be the
+same as the 'size' parameter. However, if you reach the end of the DUH (which
+will happen if you disable looping or freezing as described further up), this
+function will return less. When that happens, you can assume the stream has
+finished. In the case of duh_render(), the remainder of the array will not
+have been initialised, so you either have to initialise it yourself or avoid
+using it.
+
+If for whatever reason duh_start_sigrenderer() returns NULL, then
+duh_render() and duh_sigrenderer_get_samples() will generate exactly 0
+samples, duh_sigrenderer_get_n_channels() will return 0,
+duh_sigrenderer_get_position() will return -1, and duh_end_sigrenderer() will
+safely do nothing.
+
+
+*********************
+*** Miscellaneous ***
+*********************
+
+
+Please see dumb.txt for an API reference and for information on thread safety
+with DUMB. The API reference has been stripped down, since some functions and
+variables are subject to change. If something does not appear in dumb.txt,
+please do not use it.
+
+
+******************
+*** Conclusion ***
+******************
+
+
+If you have any difficulties, or if you use DUMB successfully, please don't
+hesitate to contact me (see below).
+
+Enjoy!
+
+
+Ben Davis
+entheh@users.sf.net
+IRC EFnet #dumb
+See readme.txt for details on using IRC.

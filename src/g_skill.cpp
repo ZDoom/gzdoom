@@ -490,7 +490,9 @@ FSkillInfo &FSkillInfo::operator=(const FSkillInfo &other)
 	MonsterHealth = other.MonsterHealth;
 	FriendlyHealth = other.FriendlyHealth;
 	NoPain = other.NoPain;
+	Infighting = other.Infighting;
 	ArmorFactor = other.ArmorFactor;
+	HealthFactor = other.HealthFactor;
 	return *this;
 }
 

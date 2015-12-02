@@ -938,10 +938,7 @@ static bool CanAttackHurt(AActor *victim, AActor *shooter)
 	// to harm / be harmed by anything.
 	if (!victim->player && !shooter->player)
 	{
-		int infight;
-		if (level.flags2 & LEVEL2_TOTALINFIGHTING) infight = 1;
-		else if (level.flags2 & LEVEL2_NOINFIGHTING) infight = -1;
-		else infight = infighting;
+		int infight = G_SkillProperty(SKILLP_Infight);
 
 		if (infight < 0)
 		{

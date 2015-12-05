@@ -238,7 +238,7 @@ void GLSprite::Draw(int pass)
 		if (actor != NULL) spritetype = actor->renderflags & RF_SPRITETYPEMASK;
 
 		// [Nash] is a flat sprite
-		const bool isFlatSprite = (spritetype == RF_WALLSPRITE || spritetype == RF_FLATSPRITE);
+		const bool isFlatSprite = (spritetype == RF_WALLSPRITE || spritetype == RF_FLATSPRITE || spritetype == RF_PITCHFLATSPRITE);
 
 		// [Nash] check for special sprite drawing modes
 		if (drawWithXYBillboard || drawRollSpriteActor || isFlatSprite)
@@ -272,7 +272,11 @@ void GLSprite::Draw(int pass)
 			// 3D floors later... if possible.
 
 			// Here we need some form of priority in order to work.
-			if (spritetype == RF_FLATSPRITE)
+			if (spritetype == RF_PITCHFLATSPRITE)
+			{
+				mat.Rotate(-yawvecY, 0, yawvecX, -360.0 * (1.0 - (((angle_t)actor->pitch >> 16) / (float)(65536))));
+			}
+			else if (spritetype == RF_FLATSPRITE)
 			{ // [fgsfds] rotate the sprite so it faces upwards/downwards
 				mat.Rotate(-yawvecY, 0, yawvecX, -90.f);
 			}
@@ -637,18 +641,19 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 	DWORD spritetype = thing->renderflags & RF_SPRITETYPEMASK;
 	switch (spritetype)
 	{
+	case RF_PITCHFLATSPRITE:
 	case RF_FLATSPRITE:
 			z = FIXED2FLOAT(thingz);
 			break;
-		default:
-			// [RH] Make floatbobbing a renderer-only effect.
-			z = FIXED2FLOAT(thingz - thing->floorclip);
-			if (thing->flags2 & MF2_FLOATBOB)
-			{
-				float fz = FIXED2FLOAT(thing->GetBobOffset(r_TicFrac));
-				z += fz;
-			}
-			break;
+	default:
+		// [RH] Make floatbobbing a renderer-only effect.
+		z = FIXED2FLOAT(thingz - thing->floorclip);
+		if (thing->flags2 & MF2_FLOATBOB)
+		{
+			float fz = FIXED2FLOAT(thing->GetBobOffset(r_TicFrac));
+			z += fz;
+		}
+		break;
 	}
 	
 	modelframe = gl_FindModelFrame(RUNTIME_TYPE(thing), spritenum, thing->frame, !!(thing->flags & MF_DROPPED));
@@ -710,6 +715,7 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 
 		case RF_WALLSPRITE:
 		case RF_FLATSPRITE:
+		case RF_PITCHFLATSPRITE:
 			viewvecX = FIXED2FLOAT(finecosine[thing->angle >> ANGLETOFINESHIFT]);
 			viewvecY = FIXED2FLOAT(finesine[thing->angle >> ANGLETOFINESHIFT]);
 

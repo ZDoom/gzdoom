@@ -403,6 +403,7 @@ enum ActorRenderFlag
 	RF_WALLSPRITE		= 0x1000,	// Wall sprite
 	RF_FLATSPRITE		= 0x2000,	// Floor sprite
 	RF_VOXELSPRITE		= 0x3000,	// Voxel object
+	RF_PITCHFLATSPRITE  = 0x4000,	// [MC] OpenGL only: tilt the sprite up and down based on pitch.
 	RF_INVISIBLE		= 0x8000,	// Don't bother drawing this actor
 
 	RF_FORCEYBILLBOARD		= 0x10000,	// [BB] OpenGL only: draw with y axis billboard, i.e. anchored to the floor (overrides gl_billboard_mode setting)

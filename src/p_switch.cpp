@@ -177,10 +177,47 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno)
 
 	if ((TexMan.FindSwitch(side->GetTexture(side_t::top))) != NULL)
 	{
+
+		// Check 3D floors on back side
+		{
+			sector_t * back = line->sidedef[1 - sideno]->sector;
+			for (unsigned i = 0; i < back->e->XFloor.ffloors.Size(); i++)
+			{
+				F3DFloor *rover = back->e->XFloor.ffloors[i];
+				if (!(rover->flags & FF_EXISTS)) continue;
+				if (!(rover->flags & FF_UPPERTEXTURE)) continue;
+
+				if (user->z > rover->top.plane->ZatPoint(checkx, checky) ||
+					user->z + user->height < rover->bottom.plane->ZatPoint(checkx, checky))
+					continue;
+
+				// This 3D floor depicts a switch texture in front of the player's eyes
+				return true;
+			}
+		}
+
 		return (user->z + user->height > open.top);
 	}
 	else if ((TexMan.FindSwitch(side->GetTexture(side_t::bottom))) != NULL)
 	{
+		// Check 3D floors on back side
+		{
+			sector_t * back = line->sidedef[1 - sideno]->sector;
+			for (unsigned i = 0; i < back->e->XFloor.ffloors.Size(); i++)
+			{
+				F3DFloor *rover = back->e->XFloor.ffloors[i];
+				if (!(rover->flags & FF_EXISTS)) continue;
+				if (!(rover->flags & FF_LOWERTEXTURE)) continue;
+
+				if (user->z > rover->top.plane->ZatPoint(checkx, checky) ||
+					user->z + user->height < rover->bottom.plane->ZatPoint(checkx, checky))
+					continue;
+
+				// This 3D floor depicts a switch texture in front of the player's eyes
+				return true;
+			}
+		}
+
 		return (user->z < open.bottom);
 	}
 	else if ((flags & ML_3DMIDTEX) || (TexMan.FindSwitch(side->GetTexture(side_t::mid))) != NULL)

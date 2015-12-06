@@ -27,7 +27,8 @@ II. Implementation Semantics
 II.A : Storage and Retrieval of Data
 ------------------------------------
 
-No changes.
+Any TEXTMAP lump in the described namespaces must be encoded in ISO 8859-1 which
+as of this writing is the only character encoding supported by ZDoom.
 
 -----------------------------------
 II.B : Storage Within Archive Files

@@ -5893,6 +5893,103 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetRipMax)
 	self->RipLevelMax = max;
 }
 
+//==========================================================================
+//
+// A_CheckProximity(jump, classname, distance, count, flags, ptr)
+//
+// Checks to see if a certain actor class is close to the 
+// actor/pointer within distance, in numbers.
+//==========================================================================
+enum CPXFflags
+{
+	CPXF_ANCESTOR =			1,
+	CPXF_LESSOREQUAL =		1 << 1,
+	CPXF_NOZ =				1 << 2,
+	CPXF_COUNTDEAD =		1 << 3,
+	CPXF_DEADONLY =			1 << 4,
+	CPXF_EXACT =			1 << 5,
+};
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckProximity)
+{
+	ACTION_PARAM_START(6);
+	ACTION_PARAM_STATE(jump, 0);
+	ACTION_PARAM_CLASS(classname, 1);
+	ACTION_PARAM_FIXED(distance, 2);
+	ACTION_PARAM_INT(count, 3);
+	ACTION_PARAM_INT(flags, 4);
+	ACTION_PARAM_INT(ptr, 5);
+
+	ACTION_SET_RESULT(false); //No inventory chain results please.
+	AActor *ref = COPY_AAPTR(self, ptr);
+
+	//We need these to check out.
+	if (!ref || !jump || !classname || distance <= 0)
+		return;
+
+	int counter = 0;
+	bool result = false;
+
+	TThinkerIterator<AActor> it;
+	AActor * mo;
+
+	//[MC] Process of elimination, I think, will get through this as quickly and 
+	//efficiently as possible. 
+	while ((mo = it.Next()))
+	{
+		if (mo == ref) //Don't count self.
+			continue;
+
+		//Check inheritance for the classname. Taken partly from CheckClass DECORATE function.
+		if (flags & CPXF_ANCESTOR)
+		{
+			if (!(mo->GetClass()->IsAncestorOf(classname)))
+				continue;
+		}
+		//Otherwise, just check for the regular class name.
+		else if (classname != mo->GetClass())
+			continue;
+
+		//Make sure it's in range and respect the desire for Z or not.
+		if (P_AproxDistance(ref->x - mo->x, ref->y - mo->y) < distance &&
+			((flags & CPXF_NOZ) ||
+			((ref->z > mo->z && ref->z - (mo->z + mo->height) < distance) ||
+			(ref->z <= mo->z && mo->z - (ref->z + ref->height) < distance))))
+		{
+			if (mo->flags6 & MF6_KILLED)
+			{
+				if (!(flags & (CPXF_COUNTDEAD | CPXF_DEADONLY)))
+					continue;
+				counter++;
+			}
+			else
+			{
+				if (flags & CPXF_DEADONLY)
+					continue;
+				counter++;
+			}
+
+			//Abort if the number of matching classes nearby is greater, we have obviously succeeded in our goal.
+			if (counter > count)
+			{
+				result = (flags & (CPXF_LESSOREQUAL | CPXF_EXACT)) ? false : true;
+				break;
+			}
+		}
+	}
+
+	if (counter == count)
+		result = true;
+	else if (counter < count)
+		result = !!((flags & CPXF_LESSOREQUAL) && !(flags & CPXF_EXACT));
+
+
+
+	if (result)
+	{
+		ACTION_JUMP(jump);
+	}
+}
+
 /*===========================================================================
 A_CheckBlock
 (state block, int flags, int ptr)

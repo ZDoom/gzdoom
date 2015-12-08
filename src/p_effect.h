@@ -83,6 +83,7 @@ particle_t *JitterParticle (int ttl);
 particle_t *JitterParticle (int ttl, float drift);
 
 void P_ThinkParticles (void);
+void P_SpawnParticle(fixed_t x, fixed_t y, fixed_t z, fixed_t velx, fixed_t vely, fixed_t velz, PalEntry color, bool fullbright, BYTE startalpha, BYTE lifetime, BYTE size, int fadestep, fixed_t accelx, fixed_t accely, fixed_t accelz);
 void P_InitEffects (void);
 void P_RunEffects (void);
 

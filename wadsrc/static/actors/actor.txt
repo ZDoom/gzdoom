@@ -337,6 +337,7 @@ ACTOR Actor native //: Thinker
 	action native A_SetRipperLevel(int level);
 	action native A_SetRipMin(int min);
 	action native A_SetRipMax(int max);
+	action native A_CheckProximity(state jump, class<Actor> classname, float distance, int count = 1, int flags = 0, int ptr = AAPTR_DEFAULT);
 	action native A_CheckBlock(state block, int flags = 0, int ptr = AAPTR_DEFAULT);
 	action native A_CheckSightOrRange(float distance, state label, bool two_dimension = false);
 	action native A_CheckRange(float distance, state label, bool two_dimension = false);

@@ -1414,6 +1414,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
 	ACTION_PARAM_FIXED(LifeSteal, 5);
 	ACTION_PARAM_INT(lifestealmax, 6);
 	ACTION_PARAM_CLASS(armorbonustype, 7);
+	ACTION_PARAM_SOUND(MeleeSound, 8);
+	ACTION_PARAM_SOUND(MissSound, 9);
 
 	if (!self->player) return;
 
@@ -1443,7 +1445,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
 
 	P_LineAttack (self, angle, Range, pitch, Damage, NAME_Melee, PuffType, puffFlags, &linetarget, &actualdamage);
 
-	if (linetarget)
+	if (!linetarget)
+	{
+		if (MissSound) S_Sound(self, CHAN_WEAPON, MissSound, 1, ATTN_NORM);
+	}
+	else
 	{
 		if (LifeSteal && !(linetarget->flags5 & MF5_DONTDRAIN))
 		{
@@ -1474,7 +1480,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
 
 		if (weapon != NULL)
 		{
-			S_Sound (self, CHAN_WEAPON, weapon->AttackSound, 1, ATTN_NORM);
+			if (MeleeSound) S_Sound(self, CHAN_WEAPON, MeleeSound, 1, ATTN_NORM);
+			else			S_Sound (self, CHAN_WEAPON, weapon->AttackSound, 1, ATTN_NORM);
 		}
 
 		if (!(flags & CPF_NOTURN))
@@ -4884,17 +4891,19 @@ enum RadiusGiveFlags
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusGive)
 {
-	ACTION_PARAM_START(6);
+	ACTION_PARAM_START(7);
 	ACTION_PARAM_CLASS(item, 0);
 	ACTION_PARAM_FIXED(distance, 1);
 	ACTION_PARAM_INT(flags, 2);
 	ACTION_PARAM_INT(amount, 3);
 	ACTION_PARAM_CLASS(filter, 4);
 	ACTION_PARAM_NAME(species, 5);
+	ACTION_PARAM_FIXED(mindist, 6);
 
 	// We need a valid item, valid targets, and a valid range
-	if (item == NULL || (flags & RGF_MASK) == 0 || !flags || distance <= 0)
+	if (item == NULL || (flags & RGF_MASK) == 0 || !flags || distance <= 0 || mindist >= distance)
 	{
+		ACTION_SET_RESULT(false);
 		return;
 	}
 	
@@ -4903,9 +4912,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusGive)
 		amount = 1;
 	}
 	FBlockThingsIterator it(FBoundingBox(self->x, self->y, distance));
-	double distsquared = double(distance) * double(distance);
 
 	AActor *thing;
+	bool given = false;
 	while ((thing = it.Next()))
 	{
 		//[MC] Check for a filter, species, and the related exfilter/expecies/either flag(s).
@@ -4950,7 +4959,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusGive)
 		bool corpsePass = !!((flags & RGF_CORPSES) && thing->flags & MF_CORPSE);
 		bool killedPass = !!((flags & RGF_KILLED) && thing->flags6 & MF6_KILLED);
 		bool monsterPass = !!((flags & RGF_MONSTERS) && thing->flags3 & MF3_ISMONSTER);
-		bool objectPass = !!((flags & RGF_OBJECTS) && ((thing->flags & MF_SHOOTABLE) || (thing->flags6 & MF6_VULNERABLE)));
+		bool objectPass = !!((flags & RGF_OBJECTS) && (thing->player == NULL) && (!(thing->flags3 & MF3_ISMONSTER))
+											&& ((thing->flags & MF_SHOOTABLE) || (thing->flags6 & MF6_VULNERABLE)));
 		bool playerPass = !!((flags & RGF_PLAYERS) && (thing->player != NULL) && (thing->player->mo == thing));
 		bool voodooPass = !!((flags & RGF_VOODOO) && (thing->player != NULL) && (thing->player->mo != thing));
 		//Self calls priority over the rest of this.
@@ -4973,20 +4983,26 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusGive)
 
 		if (selfPass || monsterPass || corpsePass || killedPass || itemPass || objectPass || missilePass || playerPass || voodooPass)
 		{
+
 			if (flags & RGF_CUBE)
 			{ // check if inside a cube
-				if (fabs((double)thing->x - self->x) > (double)distance ||
-					fabs((double)thing->y - self->y) > (double)distance ||
-					fabs((double)(thing->z + thing->height / 2) - (self->z + self->height / 2)) > (double)distance)
+				double dx = fabs((double)(thing->x - self->x));
+				double dy = fabs((double)(thing->y - self->y));
+				double dz = fabs((double)(thing->z + thing->height / 2) - (self->z + self->height / 2));
+				double dist = (double)distance;
+				double min = (double)mindist;
+				if ((dx > dist || dy > dist || dz > dist) || (min && (dx < min && dy < min && dz < min)))
 				{
 					continue;
 				}
 			}
 			else
 			{ // check if inside a sphere
+				double distsquared = double(distance) * double(distance);
+				double minsquared = double(mindist) * double(mindist);
 				TVector3<double> tpos(thing->x, thing->y, thing->z + thing->height / 2);
 				TVector3<double> spos(self->x, self->y, self->z + self->height / 2);
-				if ((tpos - spos).LengthSquared() > distsquared)
+				if ((tpos - spos).LengthSquared() > distsquared || (minsquared && ((tpos - spos).LengthSquared() < minsquared)))
 				{
 					continue;
 				}
@@ -5009,9 +5025,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusGive)
 				{
 					gift->Destroy();
 				}
+				else
+				{
+					given = true;
+				}
 			}
 		}
 	}
+	ACTION_SET_RESULT(given);
 }
 
 
@@ -5870,6 +5891,103 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetRipMax)
 	ACTION_PARAM_START(1);
 	ACTION_PARAM_INT(max, 0);
 	self->RipLevelMax = max;
+}
+
+//==========================================================================
+//
+// A_CheckProximity(jump, classname, distance, count, flags, ptr)
+//
+// Checks to see if a certain actor class is close to the 
+// actor/pointer within distance, in numbers.
+//==========================================================================
+enum CPXFflags
+{
+	CPXF_ANCESTOR =			1,
+	CPXF_LESSOREQUAL =		1 << 1,
+	CPXF_NOZ =				1 << 2,
+	CPXF_COUNTDEAD =		1 << 3,
+	CPXF_DEADONLY =			1 << 4,
+	CPXF_EXACT =			1 << 5,
+};
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckProximity)
+{
+	ACTION_PARAM_START(6);
+	ACTION_PARAM_STATE(jump, 0);
+	ACTION_PARAM_CLASS(classname, 1);
+	ACTION_PARAM_FIXED(distance, 2);
+	ACTION_PARAM_INT(count, 3);
+	ACTION_PARAM_INT(flags, 4);
+	ACTION_PARAM_INT(ptr, 5);
+
+	ACTION_SET_RESULT(false); //No inventory chain results please.
+	AActor *ref = COPY_AAPTR(self, ptr);
+
+	//We need these to check out.
+	if (!ref || !jump || !classname || distance <= 0)
+		return;
+
+	int counter = 0;
+	bool result = false;
+
+	TThinkerIterator<AActor> it;
+	AActor * mo;
+
+	//[MC] Process of elimination, I think, will get through this as quickly and 
+	//efficiently as possible. 
+	while ((mo = it.Next()))
+	{
+		if (mo == ref) //Don't count self.
+			continue;
+
+		//Check inheritance for the classname. Taken partly from CheckClass DECORATE function.
+		if (flags & CPXF_ANCESTOR)
+		{
+			if (!(mo->GetClass()->IsAncestorOf(classname)))
+				continue;
+		}
+		//Otherwise, just check for the regular class name.
+		else if (classname != mo->GetClass())
+			continue;
+
+		//Make sure it's in range and respect the desire for Z or not.
+		if (P_AproxDistance(ref->x - mo->x, ref->y - mo->y) < distance &&
+			((flags & CPXF_NOZ) ||
+			((ref->z > mo->z && ref->z - (mo->z + mo->height) < distance) ||
+			(ref->z <= mo->z && mo->z - (ref->z + ref->height) < distance))))
+		{
+			if (mo->flags6 & MF6_KILLED)
+			{
+				if (!(flags & (CPXF_COUNTDEAD | CPXF_DEADONLY)))
+					continue;
+				counter++;
+			}
+			else
+			{
+				if (flags & CPXF_DEADONLY)
+					continue;
+				counter++;
+			}
+
+			//Abort if the number of matching classes nearby is greater, we have obviously succeeded in our goal.
+			if (counter > count)
+			{
+				result = (flags & (CPXF_LESSOREQUAL | CPXF_EXACT)) ? false : true;
+				break;
+			}
+		}
+	}
+
+	if (counter == count)
+		result = true;
+	else if (counter < count)
+		result = !!((flags & CPXF_LESSOREQUAL) && !(flags & CPXF_EXACT));
+
+
+
+	if (result)
+	{
+		ACTION_JUMP(jump);
+	}
 }
 
 /*===========================================================================

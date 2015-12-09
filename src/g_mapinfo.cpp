@@ -1077,15 +1077,8 @@ DEFINE_MAP_OPTION(PrecacheTextures, true)
 	do
 	{
 		parse.sc.MustGetString();
-		FTextureID tex = TexMan.CheckForTexture(parse.sc.String, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_TryAny|FTextureManager::TEXMAN_ReturnFirst);
-		if (!tex.isValid())
-		{
-			parse.sc.ScriptMessage("Unknown texture \"%s\"", parse.sc.String);
-		}
-		else
-		{
-			info->PrecacheTextures.Push(tex);
-		}
+		//the texture manager is not initialized here so all we can do is store the texture's name.
+		info->PrecacheTextures.Push(parse.sc.String);
 	} while (parse.sc.CheckString(","));
 }
 

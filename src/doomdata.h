@@ -365,6 +365,7 @@ struct FMapThing
 	short		pitch;
 	short		roll;
 	DWORD		RenderStyle;
+	int			FloatbobPhase;
 };
 
 

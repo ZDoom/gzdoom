@@ -56,6 +56,7 @@
 #include "p_3dmidtex.h"
 #include "d_net.h"
 #include "d_event.h"
+#include "gstrings.h"
 #include "r_data/colormaps.h"
 
 #define FUNC(a) static int a (line_t *ln, AActor *it, bool backSide, \
@@ -1599,6 +1600,11 @@ FUNC(LS_Thing_Move)		// [BC]
 	return P_Thing_Move (arg0, it, arg1, arg2 ? false : true);
 }
 
+enum
+{
+	TRANSLATION_ICE = 0x100007
+};
+
 FUNC(LS_Thing_SetTranslation)
 // Thing_SetTranslation (tid, range)
 {
@@ -1614,6 +1620,10 @@ FUNC(LS_Thing_SetTranslation)
 	else if (arg1 >= 1 && arg1 < MAX_ACS_TRANSLATIONS)
 	{
 		range = TRANSLATION(TRANSLATION_LevelScripted, (arg1-1));
+	}
+	else if (arg1 == TRANSLATION_ICE)
+	{
+		range = TRANSLATION(TRANSLATION_Standard, 7);
 	}
 	else
 	{
@@ -2985,13 +2995,14 @@ FUNC(LS_SendToCommunicator)
 		{
 			S_StopSound (CHAN_VOICE);
 			S_Sound (CHAN_VOICE, name, 1, ATTN_NORM);
-			if (arg2 == 0)
+
+			// Get the message from the LANGUAGE lump.
+			FString msg;
+			msg.Format("TXT_COMM%d", arg2);
+			const char *str = GStrings[msg];
+			if (str != NULL)
 			{
-				Printf (PRINT_CHAT, "Incoming Message\n");
-			}
-			else if (arg2 == 1)
-			{
-				Printf (PRINT_CHAT, "Incoming Message from BlackBird\n");
+				Printf (PRINT_CHAT, "%s\n", str);
 			}
 		}
 		return true;

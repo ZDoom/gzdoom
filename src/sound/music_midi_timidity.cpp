@@ -713,11 +713,11 @@ BOOL SafeTerminateProcess(HANDLE hProcess, UINT uExitCode)
 
 	if ( hRT )
 	{
-		// Must wait process to terminate to guarantee that it has exited...
-		WaitForSingleObject(hProcess, INFINITE);
-
+		// Must wait for process to terminate to guarantee that it has exited...
+		DWORD res = WaitForSingleObject(hProcess, 1000);
 		CloseHandle(hRT);
-		bSuccess = TRUE;
+		bSuccess = (res == WAIT_OBJECT_0);
+		dwErr = WAIT_TIMEOUT;
 	}
 
 	if ( !bSuccess )

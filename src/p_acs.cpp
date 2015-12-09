@@ -133,6 +133,16 @@ enum
 	ARMORINFO_ACTUALSAVEAMOUNT,
 };
 
+// PickActor
+// [JP] I've renamed these flags to something else to avoid confusion with the other PAF_ flags
+enum
+{
+//	PAF_FORCETID,
+//	PAF_RETURNTID
+	PICKAF_FORCETID = 1,
+	PICKAF_RETURNTID = 2,
+};
+
 struct CallReturn
 {
 	CallReturn(int pc, ScriptFunction *func, FBehavior *module, SDWORD *locals, ACSLocalArrays *arrays, bool discard, unsigned int runaway)
@@ -5305,6 +5315,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args, const 
 			ClipRectWidth = argCount > 2 ? args[2] : 0;
 			ClipRectHeight = argCount > 3 ? args[3] : 0;
 			WrapWidth = argCount > 4 ? args[4] : 0;
+			HandleAspect = argCount > 5 ? !!args[5] : true;
 			break;
 
 		case ACSF_SetHUDWrapWidth:
@@ -5779,11 +5790,10 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 					wallMask = args[6];
 				}
 
-				bool forceTID = 0;
+				int flags = 0;
 				if (argCount >= 8)
 				{
-					if (args[7] != 0)
-						forceTID = 1;
+					flags = args[7];
 				}
 
 				AActor* pickedActor = P_LinePickActor(actor, args[1] << 16, args[3], args[2] << 16, actorMask, wallMask);
@@ -5791,14 +5801,18 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 					return 0;
 				}
 
-				if (!(forceTID) && (args[4] == 0) && (pickedActor->tid == 0))
+				if (!(flags & PICKAF_FORCETID) && (args[4] == 0) && (pickedActor->tid == 0))
 					return 0;
 
-				if ((pickedActor->tid == 0) || (forceTID))
+				if ((pickedActor->tid == 0) || (flags & PICKAF_FORCETID))
 				{
 					pickedActor->RemoveFromHash();
 					pickedActor->tid = args[4];
 					pickedActor->AddToHash();
+				}
+				if (flags & PICKAF_RETURNTID)
+				{
+					return pickedActor->tid;
 				}
 				return 1;
 			}
@@ -5905,6 +5919,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 		default:
 			break;
 	}
+
 
 	return 0;
 }
@@ -7841,7 +7856,7 @@ scriptwait:
 						}
 						break;
 					}
-					msg->SetClipRect(ClipRectLeft, ClipRectTop, ClipRectWidth, ClipRectHeight);
+					msg->SetClipRect(ClipRectLeft, ClipRectTop, ClipRectWidth, ClipRectHeight, HandleAspect);
 					if (WrapWidth != 0)
 					{
 						msg->SetWrapWidth(WrapWidth);
@@ -9453,6 +9468,7 @@ DLevelScript::DLevelScript (AActor *who, line_t *where, int num, const ScriptPtr
 	activefont = SmallFont;
 	hudwidth = hudheight = 0;
 	ClipRectLeft = ClipRectTop = ClipRectWidth = ClipRectHeight = WrapWidth = 0;
+	HandleAspect = true;
 	state = SCRIPT_Running;
 
 	// Hexen waited one second before executing any open scripts. I didn't realize

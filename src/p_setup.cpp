@@ -1758,6 +1758,7 @@ void P_LoadThings (MapData * map)
 		mti[i].RenderStyle = STYLE_Count;
 		mti[i].alpha = -1;
 		mti[i].health = 1;
+		mti[i].FloatbobPhase = -1;
 		flags &= ~MTF_SKILLMASK;
 		mti[i].flags = (short)((flags & 0xf) | 0x7e0);
 		if (gameinfo.gametype == GAME_Strife)
@@ -1842,6 +1843,7 @@ void P_LoadThings2 (MapData * map)
 		mti[i].RenderStyle = STYLE_Count;
 		mti[i].alpha = -1;
 		mti[i].health = 1;
+		mti[i].FloatbobPhase = -1;
 	}
 	delete[] mtp;
 }

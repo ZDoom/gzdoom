@@ -49,7 +49,7 @@
 #include <errno.h>
 #include <stdarg.h>
 #include <signal.h>
-#if !defined(__APPLE__)
+#if !defined(__APPLE__) && !defined(__FreeBSD__)
 #include <malloc.h>
 #endif
 #include <time.h>

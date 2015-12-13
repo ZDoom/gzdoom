@@ -703,6 +703,30 @@ FState *AWeapon::GetZoomState ()
 	return FindState(NAME_Zoom);
 }
 
+//===========================================================================
+//
+// AWeapon :: GetUserState
+//
+//===========================================================================
+
+FState *AWeapon::GetUserState(int state)
+{
+	switch (state)
+	{
+	case 4:
+		return FindState(NAME_User4);
+	case 3:
+		return FindState(NAME_User3);
+	case 2:
+		return FindState(NAME_User2);
+	case 1:
+		return FindState(NAME_User1);
+	default:
+		return NULL;
+	}
+}
+
+
 /* Weapon giver ***********************************************************/
 
 IMPLEMENT_CLASS(AWeaponGiver)

@@ -95,7 +95,8 @@ void P_SetPsprite (player_t *player, int position, FState *state, bool nofunctio
 
 	if (position == ps_weapon && !nofunction)
 	{ // A_WeaponReady will re-set these as needed
-		player->WeaponState &= ~(WF_WEAPONREADY | WF_WEAPONREADYALT | WF_WEAPONBOBBING | WF_WEAPONSWITCHOK | WF_WEAPONRELOADOK | WF_WEAPONZOOMOK);
+		player->WeaponState &= ~(WF_WEAPONREADY | WF_WEAPONREADYALT | WF_WEAPONBOBBING | WF_WEAPONSWITCHOK | WF_WEAPONRELOADOK | WF_WEAPONZOOMOK |
+								WF_USER1OK | WF_USER2OK | WF_USER3OK | WF_USER4OK);
 	}
 
 	psp = &player->psprites[position];
@@ -349,6 +350,34 @@ void P_ZoomWeapon (player_t *player, FState *state)
 		P_SetPsprite (player, ps_weapon, state);
 }
 
+//-------------------------------------------------------------------------- -
+//
+// PROC P_UserStateWeapon
+//
+//---------------------------------------------------------------------------
+
+void P_UserStateWeapon(player_t *player, FState *state, int userstate)
+{
+	if (!userstate)
+		return;
+
+	AWeapon *weapon;
+	if (player->Bot == NULL && bot_observer)
+		return;
+
+	weapon = player->ReadyWeapon;
+	if (weapon == NULL)
+		return;
+
+	if (state == NULL)
+	{
+		state = weapon->GetUserState(userstate);
+	}
+	if (state != NULL)
+		P_SetPsprite(player, ps_weapon, state);
+}
+
+
 //---------------------------------------------------------------------------
 //
 // PROC P_DropWeapon
@@ -573,10 +602,21 @@ void DoReadyWeaponToReload (AActor *self)
 
 void DoReadyWeaponToZoom (AActor *self)
 {
-	// Prepare for reload action.
+	// Prepare for zoom action.
 	player_t *player;
 	if (self && (player = self->player))
 		player->WeaponState |= WF_WEAPONZOOMOK;
+	return;
+}
+
+void DoReadyWeaponToUser(AActor *self, int userStates)
+{
+	// Prepare for user state action.
+	player_t *player;
+	if (self && (player = self->player) && userStates)
+	{
+		player->WeaponState |= userStates;
+	}
 	return;
 }
 
@@ -588,18 +628,23 @@ void DoReadyWeapon(AActor *self)
 	DoReadyWeaponToSwitch(self);
 	DoReadyWeaponToReload(self);
 	DoReadyWeaponToZoom(self);
+	DoReadyWeaponToUser(self, (WF_USER1OK + WF_USER2OK + WF_USER3OK + WF_USER4OK));
 }
 
 enum EWRF_Options
 {
-	WRF_NoBob = 1,
-	WRF_NoSwitch = 2,
-	WRF_NoPrimary = 4,
-	WRF_NoSecondary = 8,
+	WRF_NoBob			= 1,
+	WRF_NoSwitch		= 1 << 1,
+	WRF_NoPrimary		= 1 << 2,
+	WRF_NoSecondary		= 1 << 3,
 	WRF_NoFire = WRF_NoPrimary + WRF_NoSecondary,
-	WRF_AllowReload = 16,
-	WRF_AllowZoom = 32,
-	WRF_DisableSwitch = 64,
+	WRF_AllowReload		= 1 << 4,
+	WRF_AllowZoom		= 1 << 5,
+	WRF_DisableSwitch	= 1 << 6,
+	WRF_User1			= 1 << 7,
+	WRF_User2			= 1 << 8,
+	WRF_User3			= 1 << 9,
+	WRF_User4			= 1 << 10,
 };
 
 DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_WeaponReady)
@@ -613,6 +658,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_WeaponReady)
 	if ((paramflags & WRF_AllowReload))				DoReadyWeaponToReload(self);
 	if ((paramflags & WRF_AllowZoom))				DoReadyWeaponToZoom(self);
 
+	int userStates = 0;
+	if (paramflags & WRF_User1)	userStates |= WF_USER1OK;
+	if (paramflags & WRF_User2)	userStates |= WF_USER2OK;
+	if (paramflags & WRF_User3)	userStates |= WF_USER3OK;
+	if (paramflags & WRF_User4)	userStates |= WF_USER4OK;
+	if (userStates)									DoReadyWeaponToUser(self, userStates);
+	
 	DoReadyWeaponDisableSwitch(self, paramflags & WRF_DisableSwitch);
 }
 
@@ -729,6 +781,40 @@ void P_CheckWeaponZoom (player_t *player)
 	if ((player->WeaponState & WF_WEAPONZOOMOK) && (player->cmd.ucmd.buttons & BT_ZOOM))
 	{
 		P_ZoomWeapon (player, NULL);
+	}
+}
+
+//---------------------------------------------------------------------------
+//
+// PROC P_CheckWeaponUserState
+//
+// The player can use the weapon's user state functionalities.
+//
+//---------------------------------------------------------------------------
+
+void P_CheckWeaponUserState(player_t *player)
+{
+	AWeapon *weapon = player->ReadyWeapon;
+
+	if (weapon == NULL)
+		return;
+
+	// Check for user state(s).
+	if ((player->WeaponState & WF_USER1OK) && (player->cmd.ucmd.buttons & BT_USER1))
+	{
+		P_UserStateWeapon(player, NULL, 1);
+	}
+	else if ((player->WeaponState & WF_USER2OK) && (player->cmd.ucmd.buttons & BT_USER2))
+	{
+		P_UserStateWeapon(player, NULL, 2);
+	}
+	else if ((player->WeaponState & WF_USER3OK) && (player->cmd.ucmd.buttons & BT_USER3))
+	{
+		P_UserStateWeapon(player, NULL, 3);
+	}
+	else if ((player->WeaponState & WF_USER4OK) && (player->cmd.ucmd.buttons & BT_USER4))
+	{
+		P_UserStateWeapon(player, NULL, 4);
 	}
 }
 
@@ -1102,6 +1188,10 @@ void P_MovePsprites (player_t *player)
 		if (player->WeaponState & WF_WEAPONZOOMOK)
 		{
 			P_CheckWeaponZoom (player);
+		}
+		if (player->WeaponState & (WF_USER1OK | WF_USER2OK | WF_USER3OK | WF_USER4OK))
+		{
+			P_CheckWeaponUserState(player);
 		}
 	}
 }

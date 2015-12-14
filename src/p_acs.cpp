@@ -4442,7 +4442,6 @@ enum EACSFunctions
 	ACSF_GetActorRoll,
 	ACSF_QuakeEx,
 	ACSF_Warp,					// 92
-	ACSF_GetAspectRatio,
 	
 	/* Zandronum's - these must be skipped when we reach 99!
 	-100:ResetMap(0),
@@ -5916,9 +5915,6 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			}
 			return false;
 		}
-
-		case ACSF_GetAspectRatio:
-			return CheckRatio(screen->GetWidth(), screen->GetHeight());
 
 		default:
 			break;

@@ -409,7 +409,7 @@ public:
 	int			lastkilltime;			// [RH] For multikills
 	BYTE		multicount;
 	BYTE		spreecount;				// [RH] Keep track of killing sprees
-	BYTE		WeaponState;
+	WORD		WeaponState;
 
 	AWeapon	   *ReadyWeapon;
 	AWeapon	   *PendingWeapon;			// WP_NOCHANGE if not changing

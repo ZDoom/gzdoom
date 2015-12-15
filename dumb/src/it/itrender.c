@@ -4244,6 +4244,10 @@ static int process_tick(DUMB_IT_SIGRENDERER *sigrenderer)
 				*/
 #endif
 				bit_array_set(sigrenderer->played, sigrenderer->order * 256 + sigrenderer->row);
+				if (sigrenderer->looped == 0) {
+					timekeeping_array_push(sigrenderer->row_timekeeper, sigrenderer->order * 256 + sigrenderer->row, sigrenderer->time_played);
+				}
+				timekeeping_array_bump(sigrenderer->row_timekeeper, sigrenderer->order * 256 + sigrenderer->row);
 				{
 					int n;
 					for (n = 0; n < DUMB_IT_N_CHANNELS; n++)
@@ -4412,13 +4416,6 @@ static int process_tick(DUMB_IT_SIGRENDERER *sigrenderer)
 					sigrenderer->row = 0;
 				}
 			}
-
-#ifdef BIT_ARRAY_BULLSHIT
-			if (sigrenderer->looped == 0) {
-				timekeeping_array_push(sigrenderer->row_timekeeper, sigrenderer->order * 256 + sigrenderer->row, sigrenderer->time_played);
-			}
-			timekeeping_array_bump(sigrenderer->row_timekeeper, sigrenderer->order * 256 + sigrenderer->row);
-#endif
 
 			if (!(sigdata->flags & IT_WAS_A_669))
 				reset_effects(sigrenderer);
@@ -5510,7 +5507,7 @@ static int32 it_sigrenderer_get_samples(
 	int dt;
 	int32 todo;
 	int ret;
-	LONG_LONG t;
+	LONG_LONG time_left, t;
 
 	if (sigrenderer->order < 0) return 0; // problematic
 
@@ -5523,7 +5520,8 @@ static int32 it_sigrenderer_get_samples(
 	if (!samples) volume = 0;
 
 	for (;;) {
-		todo = (int32)((((LONG_LONG)sigrenderer->time_left << 16) | sigrenderer->sub_time_left) / dt);
+		time_left = ((LONG_LONG)sigrenderer->time_left << 16) | sigrenderer->sub_time_left;
+		todo = (long)(time_left / dt);
 
 		if (todo >= size)
 			break;
@@ -5538,7 +5536,7 @@ static int32 it_sigrenderer_get_samples(
 		sigrenderer->time_left += (int32)(t >> 16);
 
 #ifdef BIT_ARRAY_BULLSHIT
-		sigrenderer->time_played += (LONG_LONG)todo * dt;
+		sigrenderer->time_played += time_left;
 #endif
 
 		ret = process_tick(sigrenderer);

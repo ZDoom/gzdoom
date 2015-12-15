@@ -118,7 +118,6 @@
     <ClCompile Include="..\..\src\helpers\sampbuf.c" />
     <ClCompile Include="..\..\src\helpers\silence.c" />
     <ClCompile Include="..\..\src\helpers\stdfile.c" />
-    <ClCompile Include="..\..\src\helpers\tarray.c" />
     <ClCompile Include="..\..\src\it\itmisc.c" />
     <ClCompile Include="..\..\src\it\itorder.c" />
     <ClCompile Include="..\..\src\it\itrender.c" />
@@ -210,7 +209,6 @@
     <ClInclude Include="..\..\include\internal\lpc.h" />
     <ClInclude Include="..\..\include\internal\riff.h" />
     <ClInclude Include="..\..\include\internal\stack_alloc.h" />
-    <ClInclude Include="..\..\include\internal\tarray.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -606,10 +606,6 @@ typedef void (*DUH_SIGRENDERER_GET_CURRENT_SAMPLE)(
 	sample_t *samples
 );
 
-typedef int32 (*DUH_SIGRENDERER_GET_POSITION)(
-	sigrenderer_t *sigrenderer
-);
-
 typedef void (*DUH_END_SIGRENDERER)(sigrenderer_t *sigrenderer);
 
 typedef void (*DUH_UNLOAD_SIGDATA)(sigdata_t *sigdata);
@@ -625,7 +621,6 @@ typedef struct DUH_SIGTYPE_DESC
 	DUH_SIGRENDERER_SET_SIGPARAM       sigrenderer_set_sigparam;
 	DUH_SIGRENDERER_GENERATE_SAMPLES   sigrenderer_generate_samples;
 	DUH_SIGRENDERER_GET_CURRENT_SAMPLE sigrenderer_get_current_sample;
-	DUH_SIGRENDERER_GET_POSITION       sigrenderer_get_position;
 	DUH_END_SIGRENDERER                end_sigrenderer;
 	DUH_UNLOAD_SIGDATA                 unload_sigdata;
 }

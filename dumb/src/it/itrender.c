@@ -353,8 +353,6 @@ static DUMB_IT_SIGRENDERER *dup_sigrenderer(DUMB_IT_SIGRENDERER *src, int n_chan
 #ifdef BIT_ARRAY_BULLSHIT
 	dst->played = bit_array_dup(src->played);
 
-	dst->looped = src->looped;
-	dst->time_played = src->time_played;
 	dst->row_timekeeper = timekeeping_array_dup(src->row_timekeeper);
 #endif
 

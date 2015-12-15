@@ -628,7 +628,7 @@ void DoReadyWeapon(AActor *self)
 	DoReadyWeaponToSwitch(self);
 	DoReadyWeaponToReload(self);
 	DoReadyWeaponToZoom(self);
-	DoReadyWeaponToUser(self, (WF_USER1OK + WF_USER2OK + WF_USER3OK + WF_USER4OK));
+	DoReadyWeaponToUser(self, (WF_USER1OK | WF_USER2OK | WF_USER3OK | WF_USER4OK));
 }
 
 enum EWRF_Options

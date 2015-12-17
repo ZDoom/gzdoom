@@ -4261,6 +4261,7 @@ enum T_Flags
 	TF_USEACTORFOG =	0x00000100, // Use the actor's TeleFogSourceType and TeleFogDestType fogs.
 	TF_NOJUMP =			0x00000200, // Don't jump after teleporting.
 	TF_OVERRIDE =		0x00000400, // Ignore NOTELEPORT.
+	TF_SENSITIVEZ =		0x00000800, // Fail if the actor wouldn't fit in the position (for Z).
 };
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Teleport)
@@ -4323,6 +4324,19 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Teleport)
 		return;
 	}
 
+	// [MC] By default, the function adjusts the actor's Z if it's below the floor or above the ceiling.
+	// This can be an issue as actors designed to maintain specific z positions wind up teleporting
+	// anyway when they should not, such as a floor rising above or ceiling lowering below the position
+	// of the spot.
+	if (Flags & TF_SENSITIVEZ)
+	{
+		fixed_t posz = (Flags & TF_USESPOTZ) ? spot->z : spot->floorz;
+		if ((posz + ref->height > spot->ceilingz) || (posz < spot->floorz))
+		{
+			ACTION_SET_RESULT(false);
+			return;
+		}
+	}
 	fixed_t prevX = ref->x;
 	fixed_t prevY = ref->y;
 	fixed_t prevZ = ref->z;
@@ -4378,10 +4392,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Teleport)
 			
 		}
 		
-		if (Flags & TF_USESPOTZ)
-			ref->z = spot->z;
-		else
-			ref->z = ref->floorz;
+		ref->z = (Flags & TF_USESPOTZ) ? spot->z : spot->floorz;
 
 		if (!(Flags & TF_KEEPANGLE))
 			ref->angle = spot->angle;

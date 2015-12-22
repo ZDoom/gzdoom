@@ -1264,7 +1264,7 @@ static int UseInventory (AActor *activator, const char *type)
 //
 //============================================================================
 
-static int CheckInventory (AActor *activator, const char *type)
+static int CheckInventory (AActor *activator, const char *type, bool max)
 {
 	if (activator == NULL || type == NULL)
 		return 0;
@@ -1275,11 +1275,26 @@ static int CheckInventory (AActor *activator, const char *type)
 	}
 	else if (stricmp (type, "Health") == 0)
 	{
+		if (max)
+		{
+			if (activator->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
+				return static_cast<APlayerPawn *>(activator)->MaxHealth;
+			else
+				return activator->SpawnHealth();
+		}
 		return activator->health;
 	}
 
 	const PClass *info = PClass::FindClass (type);
 	AInventory *item = activator->FindInventory (info);
+
+	if (max)
+	{
+		if (item)
+			return item->MaxAmount;
+		else
+			return ((AInventory *)GetDefaultByType (info))->MaxAmount;
+	}
 	return item ? item->Amount : 0;
 }
 
@@ -4442,6 +4457,7 @@ enum EACSFunctions
 	ACSF_GetActorRoll,
 	ACSF_QuakeEx,
 	ACSF_Warp,					// 92
+	ACSF_GetMaxInventory,
 	
 	/* Zandronum's - these must be skipped when we reach 99!
 	-100:ResetMap(0),
@@ -5915,6 +5931,13 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			}
 			return false;
 		}
+		case ACSF_GetMaxInventory:
+			actor = SingleActorFromTID(args[0], activator);
+			if (actor != NULL)
+			{
+				return CheckInventory(actor, FBehavior::StaticLookupString(args[1]), true);
+			}
+			break;
 
 		default:
 			break;
@@ -8339,17 +8362,17 @@ scriptwait:
 			break;
 
 		case PCD_CHECKINVENTORY:
-			STACK(1) = CheckInventory (activator, FBehavior::StaticLookupString (STACK(1)));
+			STACK(1) = CheckInventory (activator, FBehavior::StaticLookupString (STACK(1)), false);
 			break;
 
 		case PCD_CHECKACTORINVENTORY:
 			STACK(2) = CheckInventory (SingleActorFromTID(STACK(2), NULL),
-										FBehavior::StaticLookupString (STACK(1)));
+										FBehavior::StaticLookupString (STACK(1)), false);
 			sp--;
 			break;
 
 		case PCD_CHECKINVENTORYDIRECT:
-			PushToStack (CheckInventory (activator, FBehavior::StaticLookupString (TAGSTR(uallong(pc[0])))));
+			PushToStack (CheckInventory (activator, FBehavior::StaticLookupString (TAGSTR(uallong(pc[0]))), false));
 			pc += 1;
 			break;
 

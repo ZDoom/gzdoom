@@ -474,6 +474,7 @@ public:
 		th->RenderStyle = STYLE_Count;
 		th->alpha = -1;
 		th->health = 1;
+		th->FloatbobPhase = -1;
 		sc.MustGetToken('{');
 		while (!sc.CheckToken('}'))
 		{
@@ -631,6 +632,11 @@ public:
 				Flag(th->flags, MTF_SECRET, key); 
 				break;
 
+			case NAME_Floatbobphase:
+				CHECK_N(Zd | Zdt)
+				th->FloatbobPhase = CheckInt(key);
+				break;
+
 			case NAME_Renderstyle:
 				{
 				FName style = CheckString(key);
@@ -779,7 +785,7 @@ public:
 		bool strifetrans = false;
 		bool strifetrans2 = false;
 		FString arg0str, arg1str;
-		int lineid;	// forZDoomTranslated namespace
+		int lineid = -1;	// forZDoomTranslated namespace
 		FString tagstring;
 
 		memset(ld, 0, sizeof(*ld));
@@ -1076,7 +1082,7 @@ public:
 			maplinedef_t mld;
 			memset(&mld, 0, sizeof(mld));
 			mld.special = ld->special;
-			mld.tag = lineid;
+			mld.tag = ld->args[0];
 			P_TranslateLineDef(ld, &mld);
 			ld->flags = saved | (ld->flags&(ML_MONSTERSCANACTIVATE|ML_REPEAT_SPECIAL|ML_FIRSTSIDEONLY));
 		}

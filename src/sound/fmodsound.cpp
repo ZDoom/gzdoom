@@ -44,7 +44,7 @@ extern HWND Window;
 #define FALSE 0
 #define TRUE 1
 #endif
-#ifdef __APPLE__
+#if defined(__FreeBSD__) || defined(__APPLE__)
 #include <stdlib.h>
 #elif __sun
 #include <alloca.h>
@@ -771,7 +771,7 @@ bool FMODSoundRenderer::Init()
 	}
 #endif
 
-#ifndef _WIN32
+#if !defined _WIN32 && !defined __APPLE__
 	// Try to load SDL output plugin
 	result = Sys->setPluginPath(progdir);	// Should we really look for it in the program directory?
 	result = Sys->loadPlugin("liboutput_sdl.so", &OutputPlugin);

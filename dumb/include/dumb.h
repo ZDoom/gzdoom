@@ -36,24 +36,24 @@
 #endif
 
 
-#define DUMB_MAJOR_VERSION    0
-#define DUMB_MINOR_VERSION    9
-#define DUMB_REVISION_VERSION 3
+#define DUMB_MAJOR_VERSION    1
+#define DUMB_MINOR_VERSION    0
+#define DUMB_REVISION_VERSION 0
 
 #define DUMB_VERSION (DUMB_MAJOR_VERSION*10000 + DUMB_MINOR_VERSION*100 + DUMB_REVISION_VERSION)
 
-#define DUMB_VERSION_STR "0.9.3"
+#define DUMB_VERSION_STR "1.0.0"
 
 #define DUMB_NAME "DUMB v" DUMB_VERSION_STR
 
-#define DUMB_YEAR  2005
-#define DUMB_MONTH 8
-#define DUMB_DAY   7
+#define DUMB_YEAR  2015
+#define DUMB_MONTH 1
+#define DUMB_DAY   17
 
-#define DUMB_YEAR_STR2  "05"
-#define DUMB_YEAR_STR4  "2005"
-#define DUMB_MONTH_STR1 "8"
-#define DUMB_DAY_STR1   "7"
+#define DUMB_YEAR_STR2  "15"
+#define DUMB_YEAR_STR4  "2015"
+#define DUMB_MONTH_STR1 "1"
+#define DUMB_DAY_STR1   "17"
 
 #if DUMB_MONTH < 10
 #define DUMB_MONTH_STR2 "0" DUMB_MONTH_STR1
@@ -606,10 +606,6 @@ typedef void (*DUH_SIGRENDERER_GET_CURRENT_SAMPLE)(
 	sample_t *samples
 );
 
-typedef int32 (*DUH_SIGRENDERER_GET_POSITION)(
-	sigrenderer_t *sigrenderer
-);
-
 typedef void (*DUH_END_SIGRENDERER)(sigrenderer_t *sigrenderer);
 
 typedef void (*DUH_UNLOAD_SIGDATA)(sigdata_t *sigdata);
@@ -625,7 +621,6 @@ typedef struct DUH_SIGTYPE_DESC
 	DUH_SIGRENDERER_SET_SIGPARAM       sigrenderer_set_sigparam;
 	DUH_SIGRENDERER_GENERATE_SAMPLES   sigrenderer_generate_samples;
 	DUH_SIGRENDERER_GET_CURRENT_SAMPLE sigrenderer_get_current_sample;
-	DUH_SIGRENDERER_GET_POSITION       sigrenderer_get_position;
 	DUH_END_SIGRENDERER                end_sigrenderer;
 	DUH_UNLOAD_SIGDATA                 unload_sigdata;
 }

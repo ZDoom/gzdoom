@@ -30,9 +30,9 @@ ACTOR Fatso
 	Missile:
 		FATT G 20 A_FatRaise
 		FATT H 10 BRIGHT A_FatAttack1
-		FATT IG 5
+		FATT IG 5 A_FaceTarget
 		FATT H 10 BRIGHT A_FatAttack2
-		FATT IG 5
+		FATT IG 5 A_FaceTarget
 		FATT H 10 BRIGHT A_FatAttack3
 		FATT IG 5
 		Goto See

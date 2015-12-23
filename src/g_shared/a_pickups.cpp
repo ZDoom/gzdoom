@@ -236,10 +236,12 @@ bool P_GiveBody (AActor *actor, int num, int max)
 				return true;
 			}
 		}
-		else
+		else if (num > 0)
 		{
 			if (player->health < max)
 			{
+				num = FixedMul(num, G_SkillProperty(SKILLP_HealthFactor));
+				if (num < 1) num = 1;
 				player->health += num;
 				if (player->health > max)
 				{
@@ -680,6 +682,7 @@ AInventory *AInventory::CreateCopy (AActor *other)
 {
 	AInventory *copy;
 
+	Amount = MIN(Amount, MaxAmount);
 	if (GoAway ())
 	{
 		copy = static_cast<AInventory *>(Spawn (GetClass(), 0, 0, 0, NO_REPLACE));

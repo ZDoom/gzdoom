@@ -1349,7 +1349,7 @@ FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener
     alSourcei(source, AL_LOOPING, (chanflags&SNDF_LOOP) ? AL_TRUE : AL_FALSE);
 
     alSourcef(source, AL_MAX_GAIN, SfxVolume);
-    alSourcef(source, AL_GAIN, SfxVolume);
+    alSourcef(source, AL_GAIN, SfxVolume*vol);
 
     if(EnvSlot)
     {

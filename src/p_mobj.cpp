@@ -4917,6 +4917,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	mobj->SpawnPoint[2] = mthing->z;
 	mobj->SpawnAngle = mthing->angle;
 	mobj->SpawnFlags = mthing->flags;
+	if (mthing->FloatbobPhase >= 0 && mthing->FloatbobPhase < 64) mobj->FloatBobPhase = mthing->FloatbobPhase;
 	if (mthing->gravity < 0) mobj->gravity = -mthing->gravity;
 	else if (mthing->gravity > 0) mobj->gravity = FixedMul(mobj->gravity, mthing->gravity);
 	else mobj->flags &= ~MF_NOGRAVITY;
@@ -5923,7 +5924,7 @@ AActor *P_SpawnPlayerMissile (AActor *source, const PClass *type, angle_t angle)
 
 AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 							  const PClass *type, angle_t angle, AActor **pLineTarget, AActor **pMissileActor,
-							  bool nofreeaim)
+							  bool nofreeaim, bool noautoaim)
 {
 	static const int angdiff[3] = { -1<<26, 1<<26, 0 };
 	angle_t an = angle;
@@ -5936,7 +5937,7 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 	{
 		return NULL;
 	}
-	if (source->player && source->player->ReadyWeapon && (source->player->ReadyWeapon->WeaponFlags & WIF_NOAUTOAIM))
+	if (source->player && source->player->ReadyWeapon && ((source->player->ReadyWeapon->WeaponFlags & WIF_NOAUTOAIM) || noautoaim))
 	{
 		// Keep exactly the same angle and pitch as the player's own aim
 		an = angle;
@@ -6467,25 +6468,25 @@ void PrintMiscActorInfo(AActor *query)
 
 		Printf("%s @ %p has the following flags:\n   flags: %x", query->GetTag(), query, query->flags.GetValue());
 		for (flagi = 0; flagi <= 31; flagi++)
-			if (query->flags & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags));
+			if (query->flags & ActorFlags::FromInt(1<<flagi)) Printf(" %s", FLAG_NAME(1<<flagi, flags));
 		Printf("\n   flags2: %x", query->flags2.GetValue());
 		for (flagi = 0; flagi <= 31; flagi++)
-			if (query->flags2 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags2));
+			if (query->flags2 & ActorFlags2::FromInt(1<<flagi)) Printf(" %s", FLAG_NAME(1<<flagi, flags2));
 		Printf("\n   flags3: %x", query->flags3.GetValue());
 		for (flagi = 0; flagi <= 31; flagi++)
-			if (query->flags3 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags3));
+			if (query->flags3 & ActorFlags3::FromInt(1<<flagi)) Printf(" %s", FLAG_NAME(1<<flagi, flags3));
 		Printf("\n   flags4: %x", query->flags4.GetValue());
 		for (flagi = 0; flagi <= 31; flagi++)
-			if (query->flags4 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags4));
+			if (query->flags4 & ActorFlags4::FromInt(1<<flagi)) Printf(" %s", FLAG_NAME(1<<flagi, flags4));
 		Printf("\n   flags5: %x", query->flags5.GetValue());
 		for (flagi = 0; flagi <= 31; flagi++)
-			if (query->flags5 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags5));
+			if (query->flags5 & ActorFlags5::FromInt(1<<flagi)) Printf(" %s", FLAG_NAME(1<<flagi, flags5));
 		Printf("\n   flags6: %x", query->flags6.GetValue());
 		for (flagi = 0; flagi <= 31; flagi++)
-			if (query->flags6 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags6));
+			if (query->flags6 & ActorFlags6::FromInt(1<<flagi)) Printf(" %s", FLAG_NAME(1<<flagi, flags6));
 		Printf("\n   flags7: %x", query->flags7.GetValue());
 		for (flagi = 0; flagi <= 31; flagi++)
-			if (query->flags7 & 1<<flagi) Printf(" %s", FLAG_NAME(1<<flagi, flags7));
+			if (query->flags7 & ActorFlags7::FromInt(1<<flagi)) Printf(" %s", FLAG_NAME(1<<flagi, flags7));
 		Printf("\nBounce flags: %x\nBounce factors: f:%f, w:%f", 
 			query->BounceFlags.GetValue(), FIXED2FLOAT(query->bouncefactor),
 			FIXED2FLOAT(query->wallbouncefactor));

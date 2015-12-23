@@ -145,6 +145,7 @@ static FCompatOption Options[] =
 	{ "badangles",				COMPATF2_BADANGLES, SLOT_COMPAT2 },
 	{ "floormove",				COMPATF2_FLOORMOVE, SLOT_COMPAT2 },
 	{ "soundcutoff",			COMPATF2_SOUNDCUTOFF, SLOT_COMPAT2 },
+	{ "pointonline",			COMPATF2_POINTONLINE, SLOT_COMPAT2 },
 
 	{ NULL, 0, 0 }
 };

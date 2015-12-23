@@ -698,6 +698,13 @@ void G_DoCompleted (void)
 
 	gameaction = ga_nothing;
 
+	if (   gamestate == GS_DEMOSCREEN
+		|| gamestate == GS_FULLCONSOLE
+		|| gamestate == GS_STARTUP)
+	{
+		return;
+	}
+
 	if (gamestate == GS_TITLELEVEL)
 	{
 		level.MapName = nextlevel;

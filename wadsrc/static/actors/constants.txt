@@ -188,6 +188,7 @@ const int CPF_STEALARMOR = 32;
 // Flags for A_CustomMissile
 const int FPF_AIMATANGLE = 1;
 const int FPF_TRANSFERTRANSLATION = 2;
+const int FPF_NOAUTOAIM = 4;
 
 // Flags for A_Teleport
 enum
@@ -361,6 +362,8 @@ Const Int WARPF_ABSOLUTEPOSITION = 0x400;
 Const Int WARPF_BOB = 0x800;
 Const Int WARPF_MOVEPTR = 0x1000;
 Const Int WARPF_USETID = 0x2000;
+Const Int WARPF_COPYVELOCITY = 0x4000;
+Const Int WARPF_COPYPITCH = 0x8000;
 
 // flags for A_SetPitch/SetAngle/SetRoll
 const int SPF_FORCECLAMP = 1;
@@ -481,5 +484,28 @@ enum
 	QF_WAVE =			1 << 5,
 };
 
+// A_CheckProximity flags
+enum
+{
+	CPXF_ANCESTOR			= 1,
+	CPXF_LESSOREQUAL		= 1 << 1,
+	CPXF_NOZ				= 1 << 2,
+	CPXF_COUNTDEAD			= 1 << 3,
+	CPXF_DEADONLY			= 1 << 4,
+	CPXF_EXACT				= 1 << 5,
+};
+
+// Flags for A_CheckBlock
+// These flags only affect the calling actor('s pointer), not the ones being searched.
+enum 
+{
+	CBF_NOLINES			= 1 << 0,	//Don't check actors.
+	CBF_SETTARGET		= 1 << 1,	//Sets the caller/pointer's target to the actor blocking it. Actors only.
+	CBF_SETMASTER		= 1 << 2,	//^ but with master.
+	CBF_SETTRACER		= 1 << 3,	//^ but with tracer.
+	CBF_SETONPTR		= 1 << 4,	//Sets the pointer change on the actor doing the checking instead of self.
+};
+
 // This is only here to provide one global variable for testing.
 native int testglobalvar;
+

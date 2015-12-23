@@ -2375,6 +2375,16 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 		}
 	}
 
+	FName *aliasp = MusicAliases.CheckKey(musicname);
+	if (aliasp != NULL) 
+	{
+		if (*aliasp == NAME_None)
+		{
+			return true;	// flagged to be ignored
+		}
+		musicname = aliasp->GetChars();
+	}
+
 	if (!mus_playing.name.IsEmpty() &&
 		mus_playing.handle != NULL &&
 		stricmp (mus_playing.name, musicname) == 0 &&
@@ -2413,16 +2423,8 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 		int length = 0;
 		int device = MDEV_DEFAULT;
 		MusInfo *handle = NULL;
-		FName musicasname = musicname;
 
-		FName *aliasp = MusicAliases.CheckKey(musicasname);
-		if (aliasp != NULL) 
-		{
-			musicname = (musicasname = *aliasp).GetChars();
-			if (musicasname == NAME_None) return true;
-		}
-
-		int *devp = MidiDevices.CheckKey(musicasname);
+		int *devp = MidiDevices.CheckKey(musicname);
 		if (devp != NULL) device = *devp;
 
 		// Strip off any leading file:// component.

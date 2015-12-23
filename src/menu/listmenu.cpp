@@ -385,6 +385,11 @@ FListMenuItemStaticPatch::FListMenuItemStaticPatch(int x, int y, FTextureID patc
 	
 void FListMenuItemStaticPatch::Drawer(bool selected)
 {
+	if (!mTexture.Exists())
+	{
+		return;
+	}
+
 	int x = mXpos;
 	FTexture *tex = TexMan(mTexture);
 	if (mYpos >= 0)
@@ -486,7 +491,7 @@ bool FListMenuItemSelectable::MouseEvent(int type, int x, int y)
 {
 	if (type == DMenu::MOUSE_Release)
 	{
-		if (DMenu::CurrentMenu->MenuEvent(MKEY_Enter, true))
+		if (NULL != DMenu::CurrentMenu && DMenu::CurrentMenu->MenuEvent(MKEY_Enter, true))
 		{
 			return true;
 		}

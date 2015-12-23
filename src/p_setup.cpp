@@ -1758,6 +1758,7 @@ void P_LoadThings (MapData * map)
 		mti[i].RenderStyle = STYLE_Count;
 		mti[i].alpha = -1;
 		mti[i].health = 1;
+		mti[i].FloatbobPhase = -1;
 		flags &= ~MTF_SKILLMASK;
 		mti[i].flags = (short)((flags & 0xf) | 0x7e0);
 		if (gameinfo.gametype == GAME_Strife)
@@ -1842,6 +1843,7 @@ void P_LoadThings2 (MapData * map)
 		mti[i].RenderStyle = STYLE_Count;
 		mti[i].alpha = -1;
 		mti[i].health = 1;
+		mti[i].FloatbobPhase = -1;
 	}
 	delete[] mtp;
 }
@@ -2353,7 +2355,16 @@ static void P_LoopSidedefs (bool firstloop)
 		// instead of as part of another loop
 		if (line->frontsector == line->backsector)
 		{
-			right = DWORD(line->sidedef[!sidetemp[i].b.lineside] - sides);
+			const side_t* const rightside = line->sidedef[!sidetemp[i].b.lineside];
+
+			if (NULL == rightside)
+			{
+				// There is no right side!
+				if (firstloop) Printf ("Line %d's right edge is unconnected\n", linemap[unsigned(line-lines)]);
+				continue;
+			}
+
+			right = DWORD(rightside - sides);
 		}
 		else
 		{

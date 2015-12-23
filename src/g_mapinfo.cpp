@@ -1077,15 +1077,8 @@ DEFINE_MAP_OPTION(PrecacheTextures, true)
 	do
 	{
 		parse.sc.MustGetString();
-		FTextureID tex = TexMan.CheckForTexture(parse.sc.String, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_TryAny|FTextureManager::TEXMAN_ReturnFirst);
-		if (!tex.isValid())
-		{
-			parse.sc.ScriptMessage("Unknown texture \"%s\"", parse.sc.String);
-		}
-		else
-		{
-			info->PrecacheTextures.Push(tex);
-		}
+		//the texture manager is not initialized here so all we can do is store the texture's name.
+		info->PrecacheTextures.Push(parse.sc.String);
 	} while (parse.sc.CheckString(","));
 }
 
@@ -1333,6 +1326,7 @@ MapFlagHandlers[] =
 	{ "compat_badangles",				MITYPE_COMPATFLAG, 0, COMPATF2_BADANGLES },
 	{ "compat_floormove",				MITYPE_COMPATFLAG, 0, COMPATF2_FLOORMOVE },
 	{ "compat_soundcutoff",				MITYPE_COMPATFLAG, 0, COMPATF2_SOUNDCUTOFF },
+	{ "compat_pointonline",				MITYPE_COMPATFLAG, 0, COMPATF2_POINTONLINE },
 	{ "cd_start_track",					MITYPE_EATNEXT,	0, 0 },
 	{ "cd_end1_track",					MITYPE_EATNEXT,	0, 0 },
 	{ "cd_end2_track",					MITYPE_EATNEXT,	0, 0 },

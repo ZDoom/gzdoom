@@ -377,6 +377,8 @@ enum
 	SECF_UNDERWATERMASK	= 32+64,
 	SECF_DRAWN			= 128,	// sector has been drawn at least once
 	SECF_HIDDEN			= 256,	// Do not draw on textured automap
+	SECF_NOFLOORSKYBOX	= 512,	// force use of regular sky 
+	SECF_NOCEILINGSKYBOX	= 1024,	// force use of regular sky 
 };
 
 enum
@@ -489,6 +491,8 @@ struct sector_t
 
 	DInterpolation *SetInterpolation(int position, bool attach);
 	void StopInterpolation(int position);
+
+	ASkyViewpoint *GetSkyBox(int which);
 
 	enum
 	{

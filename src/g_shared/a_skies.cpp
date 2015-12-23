@@ -186,10 +186,12 @@ void ASkyPicker::PostBeginPlay ()
 		if (0 == (args[1] & 2))
 		{
 			Sector->CeilingSkyBox = box;
+			if (box == NULL) Sector->MoreFlags |= SECF_NOCEILINGSKYBOX;	// sector should ignore the level's default skybox
 		}
 		if (0 == (args[1] & 1))
 		{
 			Sector->FloorSkyBox = box;
+			if (box == NULL) Sector->MoreFlags |= SECF_NOFLOORSKYBOX;	// sector should ignore the level's default skybox
 		}
 	}
 	Destroy ();

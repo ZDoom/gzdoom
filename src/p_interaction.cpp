@@ -184,7 +184,6 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker, int dmgf
 	const char *message;
 	const char *messagename;
 	char gendermessage[1024];
-	bool friendly;
 	int  gender;
 
 	// No obituaries for non-players, voodoo dolls or when not wanted
@@ -196,8 +195,6 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker, int dmgf
 	// Treat voodoo dolls as unknown deaths
 	if (inflictor && inflictor->player && inflictor->player->mo != inflictor)
 		MeansOfDeath = NAME_None;
-
-	friendly = (self->player != attacker->player && self->IsTeammate(attacker));
 
 	mod = MeansOfDeath;
 	message = NULL;
@@ -266,7 +263,7 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker, int dmgf
 
 	if (message == NULL && attacker != NULL && attacker->player != NULL)
 	{
-		if (friendly)
+		if (self->player != attacker->player && self->IsTeammate(attacker))
 		{
 			self = attacker;
 			gender = self->player->userinfo.GetGender();
@@ -973,7 +970,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 	}
 	if (target->health <= 0)
 	{
-		if (inflictor && mod == NAME_Ice)
+		if (inflictor && mod == NAME_Ice && !(inflictor->flags7 & MF7_ICESHATTER))
 		{
 			return -1;
 		}
@@ -1642,10 +1639,8 @@ bool AActor::OkayToSwitchTarget (AActor *other)
 	
 	int infight;
 	if (flags5 & MF5_NOINFIGHTING) infight=-1;	
-	else if (level.flags2 & LEVEL2_TOTALINFIGHTING) infight=1;
-	else if (level.flags2 & LEVEL2_NOINFIGHTING) infight=-1;	
-	else infight = infighting;
-	
+	else infight = G_SkillProperty(SKILLP_Infight);
+
 	if (infight < 0 &&	other->player == NULL && !IsHostile (other))
 	{
 		return false;	// infighting off: Non-friendlies don't target other non-friendlies

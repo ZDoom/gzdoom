@@ -368,8 +368,7 @@ bool FConfigFile::DeleteCurrentSection()
 			LastSectionPtr = &sec->Next;
 		}
 
-		CurrentSection->~FConfigSection();
-		delete[] (char *)CurrentSection;
+		delete CurrentSection;
 
 		CurrentSection = sec->Next;
 		return CurrentSection != NULL;

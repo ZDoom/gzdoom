@@ -46,7 +46,11 @@
 
 CUSTOM_CVAR(Int, gl_texture_hqresize, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
+#ifdef _MSC_VER
+	if (self < 0 || self > 9)
+#else
 	if (self < 0 || self > 6)
+#endif
 		self = 0;
 	GLRenderer->FlushTextures();
 }

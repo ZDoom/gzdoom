@@ -40,13 +40,11 @@
 #include "gl/textures/gl_texture.h"
 #include "c_cvars.h"
 #include "gl/hqnx/hqx.h"
-#ifdef _MSC_VER
 #include "gl/hqnx_asm/hqnx_asm.h"
-#endif
 
 CUSTOM_CVAR(Int, gl_texture_hqresize, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
-	if (self < 0 || self > 6)
+	if (self < 0 || self > 9)
 		self = 0;
 	GLRenderer->FlushTextures();
 }
@@ -182,8 +180,6 @@ static unsigned char *scaleNxHelper( void (*scaleNxFunction) ( uint32* , uint32*
 	return newBuffer;
 }
 
-// [BB] hqnx scaling is only supported with the MS compiler.
-#ifdef _MSC_VER
 static unsigned char *hqNxAsmHelper( void (*hqNxFunction) ( int*, unsigned char*, int, int, int ),
 							  const int N,
 							  unsigned char *inputBuffer,
@@ -212,7 +208,6 @@ static unsigned char *hqNxAsmHelper( void (*hqNxFunction) ( int*, unsigned char*
 	delete[] inputBuffer;
 	return newBuffer;
 }
-#endif
 
 static unsigned char *hqNxHelper( void (*hqNxFunction) ( unsigned*, unsigned*, int, int ),
 							  const int N,
@@ -281,13 +276,12 @@ unsigned char *gl_CreateUpsampledTextureBuffer ( const FTexture *inputTexture, u
 		outWidth = inWidth;
 		outHeight = inHeight;
 		int type = gl_texture_hqresize;
-#ifdef _MSC_VER
+
 		// ASM-hqNx does not preserve the alpha channel so fall back to C-version for such textures
 		if (!hasAlpha && type > 3 && type <= 6)
 		{
 			type += 3;
 		}
-#endif
 
 		switch (type)
 		{
@@ -303,14 +297,12 @@ unsigned char *gl_CreateUpsampledTextureBuffer ( const FTexture *inputTexture, u
 			return hqNxHelper( &hq3x_32, 3, inputBuffer, inWidth, inHeight, outWidth, outHeight );
 		case 6:
 			return hqNxHelper( &hq4x_32, 4, inputBuffer, inWidth, inHeight, outWidth, outHeight );
-#ifdef _MSC_VER
 		case 7:
 			return hqNxAsmHelper( &HQnX_asm::hq2x_32, 2, inputBuffer, inWidth, inHeight, outWidth, outHeight );
 		case 8:
 			return hqNxAsmHelper( &HQnX_asm::hq3x_32, 3, inputBuffer, inWidth, inHeight, outWidth, outHeight );
 		case 9:
 			return hqNxAsmHelper( &HQnX_asm::hq4x_32, 4, inputBuffer, inWidth, inHeight, outWidth, outHeight );
-#endif
 		}
 	}
 	return inputBuffer;

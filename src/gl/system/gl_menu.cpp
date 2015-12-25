@@ -57,7 +57,7 @@ CUSTOM_CVAR (Float, vid_contrast, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 // when they are actually valid.
 void gl_SetupMenu()
 {
-#ifndef _MSC_VER
+#ifndef HAVE_MMX
 	FOptionValues **opt = OptionValues.CheckKey("HqResizeModes");
 	if (opt != NULL) 
 	{

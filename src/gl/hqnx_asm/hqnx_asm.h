@@ -21,7 +21,9 @@
 #ifndef __HQNX_H__
 #define __HQNX_H__
 
+#ifdef _MSC_VER
 #pragma warning(disable:4799)
+#endif // _MSC_VER
 
 #include "hqnx_asm_Image.h"
 

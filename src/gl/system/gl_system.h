@@ -93,9 +93,6 @@ inline T max( T a, T b) { return (((a)>(b)) ? (a) : (b)); }
 #define __cdecl
 #define _access(a,b)	access(a,b)
 #endif
-#ifndef _WIN32
-#include <SDL.h>
-#endif
 
 
 #ifdef LoadMenu

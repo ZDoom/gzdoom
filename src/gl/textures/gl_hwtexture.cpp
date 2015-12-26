@@ -338,7 +338,7 @@ void FHardwareTexture::Clean(bool all)
 		DeleteTexture(glTexID_Translated[i].glTexID);
 	}
 	glTexID_Translated.Clear();
-	if (glDepthID != 0) glDeleteRenderbuffers(1, &glDepthID);
+	if (glDepthID != 0) glDeleteRenderbuffersEXT(1, &glDepthID);
 }
 
 //===========================================================================
@@ -439,11 +439,11 @@ int FHardwareTexture::GetDepthBuffer()
 	{
 		if (glDepthID == 0)
 		{
-			glGenRenderbuffers(1, &glDepthID);
-			glBindRenderbuffer(GL_RENDERBUFFER, glDepthID);
-			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, 
+			glGenRenderbuffersEXT(1, &glDepthID);
+			glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, glDepthID);
+			glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_DEPTH24_STENCIL8_EXT,
 				GetTexDimension(texwidth), GetTexDimension(texheight));
-			glBindRenderbuffer(GL_RENDERBUFFER, 0);
+			glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, 0);
 		}
 		return glDepthID;
 	}
@@ -461,8 +461,9 @@ void FHardwareTexture::BindToFrameBuffer()
 {
 	if (gl.flags & RFL_FRAMEBUFFER)
 	{
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, glTexID[0], 0);
-		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, GetDepthBuffer()); 
+		glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, glTexID[0], 0);
+		glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, GetDepthBuffer());
+		glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, GetDepthBuffer());
 	}
 }
 

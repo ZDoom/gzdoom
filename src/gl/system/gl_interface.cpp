@@ -172,7 +172,7 @@ void gl_LoadExtensions()
 		gl.flags|=RFL_MAP_BUFFER_RANGE;
 	}
 
-	if (gl.flags & RFL_GL_30)
+	if (gl.flags & RFL_GL_30 || CheckExtension("GL_EXT_framebuffer_object"))
 	{
 		gl.flags|=RFL_FRAMEBUFFER;
 	}

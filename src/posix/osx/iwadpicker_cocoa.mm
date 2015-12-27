@@ -462,19 +462,13 @@ static void RestartWithParameters(const char* iwadPath, NSString* parameters)
 	[pool release];
 }
 
-void I_SetMainWindowVisible(bool visible);
-
 // Simple wrapper so we can call this from outside.
 int I_PickIWad_Cocoa (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 {
 	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
 
-	I_SetMainWindowVisible(false);
-
 	IWADPicker *picker = [IWADPicker alloc];
 	int ret = [picker pickIWad:wads num:numwads showWindow:showwin defaultWad:defaultiwad];
-
-	I_SetMainWindowVisible(true);
 
 	NSString* parametersToAppend = [picker commandLineParameters];
 	osx_additional_parameters = [parametersToAppend UTF8String];

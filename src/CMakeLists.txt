@@ -592,7 +592,6 @@ set( PLAT_POSIX_SOURCES
 	posix/i_cd.cpp
 	posix/i_movie.cpp
 	posix/i_steam.cpp
-	posix/i_system.cpp
 	posix/st_start.cpp )
 set( PLAT_SDL_SOURCES
 	posix/sdl/crashcatcher.c
@@ -601,6 +600,7 @@ set( PLAT_SDL_SOURCES
 	posix/sdl/i_input.cpp
 	posix/sdl/i_joystick.cpp
 	posix/sdl/i_main.cpp
+	posix/sdl/i_system.cpp
 	posix/sdl/i_timer.cpp
 	posix/sdl/sdlvideo.cpp )
 set( PLAT_OSX_SOURCES
@@ -611,6 +611,7 @@ set( PLAT_COCOA_SOURCES
 	posix/cocoa/i_input.mm
 	posix/cocoa/i_joystick.cpp
 	posix/cocoa/i_main.mm
+	posix/cocoa/i_system.mm
 	posix/cocoa/i_timer.cpp
 	posix/cocoa/i_video.mm )
 

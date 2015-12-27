@@ -561,10 +561,7 @@ void CocoaVideo::SetWindowVisible(bool visible)
 
 static bool HasModernFullscreenAPI()
 {
-	// The following value shoud be equal to NSAppKitVersionNumber10_6
-	// and it's hard-coded in order to build on earlier SDKs
-
-	return NSAppKitVersionNumber >= 1038;
+	return NSAppKitVersionNumber >= AppKit10_6;
 }
 
 void CocoaVideo::SetStyleMask(const NSUInteger styleMask)

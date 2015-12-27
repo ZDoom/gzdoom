@@ -50,12 +50,18 @@ struct RenderBufferOptions
 extern RenderBufferOptions rbOpts;
 
 
+// Version of AppKit framework we are interested in
+// The following values are needed to build with earlier SDKs
+
+#define AppKit10_4  824
+#define AppKit10_5  949
+#define AppKit10_6 1038
+#define AppKit10_7 1138
+
+
 inline bool I_IsHiDPISupported()
 {
-	// The following value shoud be equal to NSAppKitVersionNumber10_7
-	// and it's hard-coded in order to build on earlier SDKs
-	
-	return NSAppKitVersionNumber >= 1138;
+	return NSAppKitVersionNumber >= AppKit10_7;
 }
 
 void I_ProcessEvent(NSEvent* event);

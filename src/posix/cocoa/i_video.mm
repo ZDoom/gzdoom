@@ -567,6 +567,8 @@ void CocoaVideo::SetWindowVisible(bool visible)
 		{
 			[video->m_window orderOut:nil];
 		}
+
+		I_SetNativeMouse(!visible);
 	}
 }
 
@@ -1248,5 +1250,4 @@ NSSize I_GetContentViewSize(const NSWindow* const window)
 void I_SetMainWindowVisible(bool visible)
 {
 	CocoaVideo::SetWindowVisible(visible);
-	I_SetNativeMouse(!visible);
 }

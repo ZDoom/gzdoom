@@ -394,6 +394,7 @@ enum EMidiDevice
 	MDEV_TIMIDITY = 3,
 	MDEV_FLUIDSYNTH = 4,
 	MDEV_GUS = 5,
+	MDEV_WILDMIDI = 6,
 };
 
 typedef TMap<FName, FName> MusicAliasMap;

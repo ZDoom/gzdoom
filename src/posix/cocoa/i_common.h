@@ -31,6 +31,9 @@
  **
  */
 
+#ifndef COCOA_I_COMMON_INCLUDED
+#define COCOA_I_COMMON_INCLUDED
+
 #import <AppKit/AppKit.h>
 
 
@@ -174,3 +177,5 @@ typedef NSInteger NSApplicationActivationPolicy;
 @end
 
 #endif // prior to 10.7
+
+#endif // COCOA_I_COMMON_INCLUDED

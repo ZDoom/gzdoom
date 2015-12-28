@@ -62,6 +62,11 @@ extern RenderBufferOptions rbOpts;
 #define AppKit10_7 1138
 
 
+@interface NSWindow(ExitAppOnClose)
+- (void)exitAppOnClose;
+@end
+
+
 inline bool I_IsHiDPISupported()
 {
 	return NSAppKitVersionNumber >= AppKit10_7;

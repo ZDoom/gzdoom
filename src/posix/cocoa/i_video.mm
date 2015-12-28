@@ -58,6 +58,18 @@
 #undef Class
 
 
+@implementation NSWindow(ExitAppOnClose)
+
+- (void)exitAppOnClose
+{
+	NSButton* closeButton = [self standardWindowButton:NSWindowCloseButton];
+	[closeButton setAction:@selector(terminate:)];
+	[closeButton setTarget:NSApp];
+}
+
+@end
+
+
 EXTERN_CVAR(Bool, ticker   )
 EXTERN_CVAR(Bool, vid_vsync)
 EXTERN_CVAR(Bool, vid_hidpi)
@@ -659,10 +671,7 @@ void CocoaVideo::SetWindowedMode(const int width, const int height)
 
 	[m_window setContentSize:windowSize];
 	[m_window center];
-
-	NSButton* closeButton = [m_window standardWindowButton:NSWindowCloseButton];
-	[closeButton setAction:@selector(terminate:)];
-	[closeButton setTarget:NSApp];
+	[m_window exitAppOnClose];
 }
 
 void CocoaVideo::SetMode(const int width, const int height, const bool fullscreen, const bool hiDPI)

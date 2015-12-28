@@ -4261,8 +4261,8 @@ WildMidi_GetInfo(midi * handle) {
 
 WM_SYMBOL int WildMidi_Shutdown(void) {
 	if (!WM_Initialized) {
-		_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_NOT_INIT, NULL, 0);
-		return -1;
+		// No error if trying to shut down an uninitialized device.
+		return 0;
 	}
 	while (first_handle) {
 		/* closes open handle and rotates the handles list. */

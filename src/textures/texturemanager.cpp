@@ -1246,7 +1246,8 @@ void FTextureManager::PrecacheLevel (void)
 
 	for (unsigned i = 0; i < level.info->PrecacheTextures.Size(); i++)
 	{
-		hitlist[level.info->PrecacheTextures[i].GetIndex()] |= FTextureManager::HIT_Wall;
+		FTextureID tex = TexMan.CheckForTexture(level.info->PrecacheTextures[i], FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_TryAny|FTextureManager::TEXMAN_ReturnFirst);
+		if (tex.Exists()) hitlist[tex.GetIndex()] |= FTextureManager::HIT_Wall;
 	}
 
 	for (int i = cnt - 1; i >= 0; i--)

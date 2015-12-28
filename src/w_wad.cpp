@@ -184,6 +184,7 @@ void FWadCollection::InitMultipleFiles (TArray<FString> &filenames)
 	}
 	RenameNerve();
 	RenameSprites();
+	FixMacHexen();
 
 	// [RH] Set up hash table
 	FirstLumpIndex = new DWORD[NumLumps];
@@ -952,6 +953,41 @@ void FWadCollection::RenameNerve ()
 			LumpInfo[i].lump->Name[5] = '0';
 			LumpInfo[i].lump->Name[4] = 'L';
 			LumpInfo[i].lump->dwName = MAKE_ID('L', 'E', 'V', 'E');
+		}
+	}
+}
+
+//==========================================================================
+//
+// FixMacHexen
+//
+// Rename unused high resolution font lumps because they are incorrectly
+// treated as extended characters
+//
+//==========================================================================
+
+void FWadCollection::FixMacHexen()
+{
+	if (GAME_Hexen != gameinfo.gametype)
+	{
+		return;
+	}
+
+	for (int i = GetFirstLump(IWAD_FILENUM), last = GetLastLump(IWAD_FILENUM); i <= last; ++i)
+	{
+		assert(IWAD_FILENUM == LumpInfo[i].wadnum);
+
+		FResourceLump* const lump = LumpInfo[i].lump;
+		char* const name = lump->Name;
+
+		// Unwanted lumps are named like FONTA??1
+
+		if (8 == strlen(name)
+			&& MAKE_ID('F', 'O', 'N', 'T') == lump->dwName
+			&& 'A' == name[4] && '1' == name[7]
+			&& isdigit(name[5]) && isdigit(name[6]))
+		{
+			name[0] = '\0';
 		}
 	}
 }

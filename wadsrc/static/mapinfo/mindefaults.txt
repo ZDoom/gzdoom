@@ -56,4 +56,12 @@ gameinfo
 	statscreen_enteringpatch = "WIENTER"
 }
 
+DoomEdNums
+{
+  4001 = "$Player5Start"
+  4002 = "$Player6Start"
+  4003 = "$Player7Start"
+  4004 = "$Player8Start"
+}
+
 include "mapinfo/common.txt"

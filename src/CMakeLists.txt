@@ -1138,7 +1138,6 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	timidity/timidity.cpp
 	wildmidi/file_io.cpp
 	wildmidi/gus_pat.cpp
-	wildmidi/lock.cpp
 	wildmidi/reverb.cpp
 	wildmidi/wildmidi_lib.cpp
 	wildmidi/wm_error.cpp

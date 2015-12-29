@@ -60,9 +60,6 @@
 #define IS_ABSOLUTE_PATH(f)	(IS_DIR_SEPARATOR((f)[0]) || HAS_DRIVE_SPEC((f)))
 
 
-// Why is this shit even being used...? :(
-#define __builtin_expect(a, b) a
-
 /*
  * =========================
  * Global Data and Data Structs
@@ -1459,15 +1456,15 @@ static inline unsigned long int get_inc(struct _mdi *mdi, struct _note *nte) {
 	signed long int note_f;
 	unsigned long int freq;
 
-	if (__builtin_expect((nte->patch->note != 0), 0)) {
+	if (nte->patch->note != 0) {
 		note_f = nte->patch->note * 100;
 	} else {
 		note_f = (nte->noteid & 0x7f) * 100;
 	}
 	note_f += mdi->channel[ch].pitch_adjust;
-	if (__builtin_expect((note_f < 0), 0)) {
+	if (note_f < 0) {
 		note_f = 0;
-	} else if (__builtin_expect((note_f > 12700), 0)) {
+	} else if (note_f > 12700) {
 		note_f = 12700;
 	}
 	freq = freq_table[(note_f % 1200)] >> (10 - (note_f / 1200));
@@ -3202,7 +3199,7 @@ static int *WM_Mix_Linear(midi * handle, int * buffer, unsigned long int count)
 	do {
 		note_data = mdi->note;
 		left_mix = right_mix = 0;
-		if (__builtin_expect((note_data != NULL), 1)) {
+		if (note_data != NULL) {
 			while (note_data) {
 				/*
 				 * ===================
@@ -3231,44 +3228,38 @@ static int *WM_Mix_Linear(midi * handle, int * buffer, unsigned long int count)
 				 * ========================
 				 */
 				note_data->sample_pos += note_data->sample_inc;
-				if (__builtin_expect(
-						(note_data->sample_pos > note_data->sample->loop_end),
-						0)) {
+				if (note_data->sample_pos > note_data->sample->loop_end) {
 					if (note_data->modes & SAMPLE_LOOP) {
 						note_data->sample_pos =
 								note_data->sample->loop_start
 										+ ((note_data->sample_pos
 												- note_data->sample->loop_start)
 												% note_data->sample->loop_size);
-					} else if (__builtin_expect(
-							(note_data->sample_pos
-									>= note_data->sample->data_length),
-							0)) {
-						if (__builtin_expect((note_data->replay == NULL), 1)) {
+					} else if (note_data->sample_pos >= note_data->sample->data_length) {
+						if (note_data->replay == NULL) {
 							goto KILL_NOTE;
 						}
 						goto RESTART_NOTE;
 					}
 				}
 
-				if (__builtin_expect((note_data->env_inc == 0), 0)) {
+				if (note_data->env_inc == 0) {
 					note_data = note_data->next;
 					continue;
 				}
 
 				note_data->env_level += note_data->env_inc;
-				if (__builtin_expect((note_data->env_level > 4194304), 0)) {
+				if (note_data->env_level > 4194304) {
 					note_data->env_level =
 							note_data->sample->env_target[note_data->env];
 				}
-				if (__builtin_expect(
-						((note_data->env_inc < 0)
-								&& (note_data->env_level
-										> note_data->sample->env_target[note_data->env]))
-						|| ((note_data->env_inc > 0)
-								&& (note_data->env_level
-										< note_data->sample->env_target[note_data->env])),
-						1)) {
+				if  (((note_data->env_inc < 0)
+							&& (note_data->env_level
+									> note_data->sample->env_target[note_data->env]))
+					|| ((note_data->env_inc > 0)
+							&& (note_data->env_level
+									< note_data->sample->env_target[note_data->env])))
+					{
 					note_data = note_data->next;
 					continue;
 				}
@@ -3304,7 +3295,7 @@ static int *WM_Mix_Linear(midi * handle, int * buffer, unsigned long int count)
 					}
 					break;
 				case 5:
-					if (__builtin_expect((note_data->env_level == 0), 1)) {
+					if (note_data->env_level == 0) {
 						goto KILL_NOTE;
 					}
 					/* sample release */
@@ -3314,7 +3305,7 @@ static int *WM_Mix_Linear(midi * handle, int * buffer, unsigned long int count)
 					note_data = note_data->next;
 					continue;
 				case 6:
-					if (__builtin_expect((note_data->replay != NULL), 1)) {
+					if (note_data->replay != NULL) {
 						RESTART_NOTE: note_data->active = 0;
 						{
 							struct _note *prev_note = NULL;
@@ -3409,7 +3400,7 @@ static int *WM_Mix_Gauss(midi * handle, int * buffer, unsigned long int count)
 	do {
 		note_data = mdi->note;
 		left_mix = right_mix = 0;
-		if (__builtin_expect((note_data != NULL), 1)) {
+		if (note_data != NULL) {
 			while (note_data) {
 				/*
 				 * ===================
@@ -3471,44 +3462,40 @@ static int *WM_Mix_Gauss(midi * handle, int * buffer, unsigned long int count)
 				 * ========================
 				 */
 				note_data->sample_pos += note_data->sample_inc;
-				if (__builtin_expect(
-						(note_data->sample_pos > note_data->sample->loop_end),
-						0)) {
+				if (note_data->sample_pos > note_data->sample->loop_end)
+				{
 					if (note_data->modes & SAMPLE_LOOP) {
 						note_data->sample_pos =
 								note_data->sample->loop_start
 										+ ((note_data->sample_pos
 												- note_data->sample->loop_start)
 												% note_data->sample->loop_size);
-					} else if (__builtin_expect(
-							(note_data->sample_pos
-									>= note_data->sample->data_length),
-							0)) {
-						if (__builtin_expect((note_data->replay == NULL), 1)) {
+					} else if (note_data->sample_pos >= note_data->sample->data_length) {
+						if (note_data->replay == NULL) {
 							goto KILL_NOTE;
 						}
 						goto RESTART_NOTE;
 					}
 				}
 
-				if (__builtin_expect((note_data->env_inc == 0), 0)) {
+				if (note_data->env_inc == 0) {
 					note_data = note_data->next;
 					continue;
 				}
 
 				note_data->env_level += note_data->env_inc;
-				if (__builtin_expect((note_data->env_level > 4194304), 0)) {
+				if (note_data->env_level > 4194304) {
 					note_data->env_level =
 							note_data->sample->env_target[note_data->env];
 				}
-				if (__builtin_expect(
+				if (
 						((note_data->env_inc < 0)
 								&& (note_data->env_level
 										> note_data->sample->env_target[note_data->env]))
 						|| ((note_data->env_inc > 0)
 								&& (note_data->env_level
-										< note_data->sample->env_target[note_data->env])),
-						1)) {
+										< note_data->sample->env_target[note_data->env]))
+						) {
 					note_data = note_data->next;
 					continue;
 				}
@@ -3544,7 +3531,7 @@ static int *WM_Mix_Gauss(midi * handle, int * buffer, unsigned long int count)
 					}
 					break;
 				case 5:
-					if (__builtin_expect((note_data->env_level == 0), 1)) {
+					if (note_data->env_level == 0) {
 						goto KILL_NOTE;
 					}
 					/* sample release */
@@ -3554,7 +3541,7 @@ static int *WM_Mix_Gauss(midi * handle, int * buffer, unsigned long int count)
 					note_data = note_data->next;
 					continue;
 				case 6:
-					if (__builtin_expect((note_data->replay != NULL), 1)) {
+					if (note_data->replay != NULL) {
 						RESTART_NOTE: note_data->active = 0;
 						{
 							struct _note *prev_note = NULL;
@@ -3671,7 +3658,7 @@ static int WM_DoGetOutput(midi * handle, char * buffer,
 	out_buffer = tmp_buffer;
 
 	do {
-		if (__builtin_expect((!mdi->samples_to_mix), 0)) {
+		if (!mdi->samples_to_mix) {
 			while ((!mdi->samples_to_mix) && (event->do_event)) {
 				event->do_event(mdi, &event->event_data);
 				event++;
@@ -3692,7 +3679,7 @@ static int WM_DoGetOutput(midi * handle, char * buffer,
 				}
 			}
 		}
-		if (__builtin_expect((mdi->samples_to_mix > (size >> 2)), 1)) {
+		if (mdi->samples_to_mix > (size >> 2)) {
 			real_samples_to_mix = size >> 2;
 		} else {
 			real_samples_to_mix = mdi->samples_to_mix;
@@ -4016,7 +4003,7 @@ WM_SYMBOL int WildMidi_FastSeek(midi * handle, unsigned long int *sample_pos) {
 	_WM_reset_reverb(mdi->reverb);
 
 	while (count) {
-		if (__builtin_expect((!mdi->samples_to_mix), 0)) {
+		if (!mdi->samples_to_mix) {
 			while ((!mdi->samples_to_mix) && (event->do_event)) {
 				event->do_event(mdi, &event->event_data);
 				event++;
@@ -4034,7 +4021,7 @@ WM_SYMBOL int WildMidi_FastSeek(midi * handle, unsigned long int *sample_pos) {
 			}
 		}
 
-		if (__builtin_expect((mdi->samples_to_mix > count), 0)) {
+		if (mdi->samples_to_mix > count) {
 			real_samples_to_mix = count;
 		} else {
 			real_samples_to_mix = mdi->samples_to_mix;
@@ -4066,24 +4053,24 @@ WM_SYMBOL int WildMidi_FastSeek(midi * handle, unsigned long int *sample_pos) {
 }
 
 WM_SYMBOL int WildMidi_GetOutput(midi * handle, char *buffer, unsigned long int size) {
-	if (__builtin_expect((!WM_Initialized), 0)) {
+	if (!WM_Initialized) {
 		_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_NOT_INIT, NULL, 0);
 		return -1;
 	}
-	if (__builtin_expect((handle == NULL), 0)) {
+	if (handle == NULL) {
 		_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_INVALID_ARG, "(NULL handle)",
 				0);
 		return -1;
 	}
-	if (__builtin_expect((buffer == NULL), 0)) {
+	if (buffer == NULL) {
 		_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_INVALID_ARG,
 				"(NULL buffer pointer)", 0);
 		return -1;
 	}
-	if (__builtin_expect((size == 0), 0)) {
+	if (size == 0) {
 		return 0;
 	}
-	if (__builtin_expect((!!(size % 4)), 0)) {
+	if (!!(size % 4)) {
 		_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_INVALID_ARG,
 				"(size not a multiple of 4)", 0);
 		return -1;

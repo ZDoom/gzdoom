@@ -34,7 +34,6 @@
 
 CVAR(String, midi_config, CONFIG_FILE, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Int, midi_voices, 32, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR(Bool, midi_timiditylike, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(String, gus_patchdir, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Bool, midi_dmxgus, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Int, gus_memsize, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
@@ -377,7 +376,7 @@ static int read_config_file(const char *name, bool ismain)
 				delete fp;
 				return -2;
 			}
-			bank->tone[i].note = bank->tone[i].amp = bank->tone[i].pan =
+			bank->tone[i].note = bank->tone[i].pan =
 				bank->tone[i].fontbank = bank->tone[i].fontpreset =
 				bank->tone[i].fontnote = bank->tone[i].strip_loop = 
 				bank->tone[i].strip_envelope = bank->tone[i].strip_tail = -1;
@@ -415,14 +414,7 @@ static int read_config_file(const char *name, bool ismain)
 				*cp++ = 0;
 				if (!strcmp(w[j], "amp"))
 				{
-					k = atoi(cp);
-					if ((k < 0 || k > MAX_AMPLIFICATION) || (*cp < '0' || *cp > '9'))
-					{
-						Printf("%s: line %d: amplification must be between  0 and %d\n", name, line, MAX_AMPLIFICATION);
-						delete fp;
-						return -2;
-					}
-					bank->tone[i].amp = k;
+					/* Ignored */
 				}
 				else if (!strcmp(w[j], "note"))
 				{
@@ -676,7 +668,7 @@ int LoadDMXGUS()
 			continue;
 
 		int val = k % 128;
-		bank->tone[val].note = bank->tone[val].amp = bank->tone[val].pan =
+		bank->tone[val].note = bank->tone[val].pan =
 			bank->tone[val].fontbank = bank->tone[val].fontpreset =
 			bank->tone[val].fontnote = bank->tone[val].strip_loop = 
 			bank->tone[val].strip_envelope = bank->tone[val].strip_tail = -1;

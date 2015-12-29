@@ -55,10 +55,6 @@ config.h
    volume level of FMOD's built-in MIDI player. */
 #define FINAL_MIX_SCALE				0.5
 
-/* This value is used instead when midi_timiditylike is turned on,
-   because TiMidity++ is louder than a GUS. */
-#define FINAL_MIX_TIMIDITY_SCALE	0.3
-
 /* How many bits to use for the fractional part of sample positions.
    This affects tonal accuracy. The entire position counter must fit
    in 32 bits, so with FRACTION_BITS equal to 12, the maximum size of
@@ -211,9 +207,6 @@ enum
 	PATCH_SUSTAIN			= (1<<5),
 	PATCH_NO_SRELEASE		= (1<<6),
 	PATCH_FAST_REL			= (1<<7),
-
-	PATCH_T_NO_ENVELOPE		= (1<<8),
-	PATCH_T_NO_LOOP			= (1<<9)
 };
 
 struct Sample
@@ -239,8 +232,6 @@ struct Sample
 			short release_vol;
 		} sf2;
 	} envelope;
-	float
-		volume;
 	sample_t *data;
 	SDWORD 
 		tremolo_sweep_increment, tremolo_phase_increment,
@@ -316,11 +307,12 @@ struct Instrument
 struct ToneBankElement
 {
 	ToneBankElement() :
-		note(0), amp(0), pan(0), strip_loop(0), strip_envelope(0), strip_tail(0)
+		note(0), pan(0), strip_loop(0), strip_envelope(0), strip_tail(0)
 	{}
 
 	FString name;
-	int note, amp, pan, fontbank, fontpreset, fontnote, strip_loop, strip_envelope, strip_tail;
+	int note, pan, fontbank, fontpreset, fontnote;
+	SBYTE strip_loop, strip_envelope, strip_tail;
 };
 
 /* A hack to delay instrument loading until after reading the entire MIDI file. */
@@ -608,8 +600,6 @@ const double log_of_2 = 0.69314718055994529;
 
 #define calc_gf1_amp(x)	(pow(2.0,((x)*16.0 - 16.0)))			// Actual GUS equation
 #define cb_to_amp(x)	(pow(10.0, (x) * (1 / -200.0)))			// centibels to amp
-#define db_to_amp(x)	(pow(10.0, (x) * (1 / -20.0)))			// decibels to map
-#define timidityxx_perceived_vol(x)		(pow((x), 1.66096404744))
 
 /*
 timidity.h

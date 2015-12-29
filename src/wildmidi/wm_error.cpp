@@ -67,18 +67,18 @@ void _WM_ERROR(const char * func, unsigned int lne, int wmerno,
 
 	if (wmfor != NULL) {
 		if (error != 0) {
-			Printf(TEXTCOLOR_RED "\rlibWildMidi(%s:%u): ERROR %s %s (%s)\n", func,
+			Printf(TEXTCOLOR_RED "libWildMidi(%s:%u): ERROR %s %s (%s)\n", func,
 					lne, errors[wmerno], wmfor, strerror(error));
 		} else {
-			Printf(TEXTCOLOR_RED "\rlibWildMidi(%s:%u): ERROR %s %s\n", func, lne,
+			Printf(TEXTCOLOR_RED "libWildMidi(%s:%u): ERROR %s %s\n", func, lne,
 					errors[wmerno], wmfor);
 		}
 	} else {
 		if (error != 0) {
-			Printf(TEXTCOLOR_RED "\rlibWildMidi(%s:%u): ERROR %s (%s)\n", func, lne,
+			Printf(TEXTCOLOR_RED "libWildMidi(%s:%u): ERROR %s (%s)\n", func, lne,
 					errors[wmerno], strerror(error));
 		} else {
-			Printf(TEXTCOLOR_RED "\rlibWildMidi(%s:%u): ERROR %s\n", func, lne,
+			Printf(TEXTCOLOR_RED "libWildMidi(%s:%u): ERROR %s\n", func, lne,
 					errors[wmerno]);
 		}
 	}

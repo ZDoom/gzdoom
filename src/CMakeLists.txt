@@ -1175,12 +1175,12 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	sound/music_midistream.cpp
 	sound/music_midi_base.cpp
 	sound/music_midi_timidity.cpp
-	sound/music_midi_wildmidi.cpp
 	sound/music_mus_opl.cpp
 	sound/music_stream.cpp
 	sound/music_fluidsynth_mididevice.cpp
 	sound/music_softsynth_mididevice.cpp
 	sound/music_timidity_mididevice.cpp
+	sound/music_wildmidi_mididevice.cpp
 	sound/music_win_mididevice.cpp
 	sound/oalsound.cpp
 	sound/sndfile_decoder.cpp

@@ -294,7 +294,7 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype) const
 		return new TimidityPPMIDIDevice;
 
 	case MDEV_WILDMIDI:
-		return new WildMidiMIDIDevice;
+		return new WildMIDIDevice;
 
 	default:
 		return NULL;

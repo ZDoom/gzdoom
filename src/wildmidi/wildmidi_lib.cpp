@@ -182,7 +182,7 @@ struct _mdi {
 	unsigned long int patch_count;
 	signed short int amp;
 
-	signed long int *mix_buffer;
+	signed int *mix_buffer;
 	unsigned long int mix_buffer_size;
 
 	struct _rvb *reverb;
@@ -3203,325 +3203,468 @@ _end:	free(sysex_store);
 	return NULL;
 }
 
-static int WM_GetOutput_Linear(midi * handle, char * buffer,
-		unsigned long int size) {
-	unsigned long int buffer_used = 0;
-	unsigned long int i;
-	struct _mdi *mdi = (struct _mdi *) handle;
-	unsigned long int real_samples_to_mix = 0;
+static int *WM_Mix_Linear(midi * handle, int * buffer, unsigned long int count)
+{
+	struct _mdi *mdi = (struct _mdi *)handle;
 	unsigned long int data_pos;
-	signed long int premix, left_mix, right_mix;
-	signed long int vol_mul;
+	signed int premix, left_mix, right_mix;
+	signed int vol_mul;
 	struct _note *note_data = NULL;
-	unsigned long int count;
-	struct _event *event = mdi->current_event;
-	signed long int *tmp_buffer;
-	signed long int *out_buffer;
-
-	_WM_Lock(&mdi->lock);
-
-	buffer_used = 0;
-	memset(buffer, 0, size);
-
-	if ( (size / 2) > mdi->mix_buffer_size) {
-		if ( (size / 2) <= ( mdi->mix_buffer_size * 2 )) {
-			mdi->mix_buffer_size += MEM_CHUNK;
-		} else {
-			mdi->mix_buffer_size = size / 2;
-		}
-		mdi->mix_buffer = (long*)realloc(mdi->mix_buffer, mdi->mix_buffer_size * sizeof(signed long int));
-	}
-
-	tmp_buffer = mdi->mix_buffer;
-
-	memset(tmp_buffer, 0, ((size / 2) * sizeof(signed long int)));
-	out_buffer = tmp_buffer;
 
 	do {
-		if (__builtin_expect((!mdi->samples_to_mix), 0)) {
-			while ((!mdi->samples_to_mix) && (event->do_event)) {
-				event->do_event(mdi, &event->event_data);
-				event++;
-				mdi->samples_to_mix = event->samples_to_next;
-				mdi->current_event = event;
-			}
+		note_data = mdi->note;
+		left_mix = right_mix = 0;
+		if (__builtin_expect((note_data != NULL), 1)) {
+			while (note_data) {
+				/*
+				 * ===================
+				 * resample the sample
+				 * ===================
+				 */
+				data_pos = note_data->sample_pos >> FPBITS;
+				vol_mul = ((note_data->vol_lvl
+						* (note_data->env_level >> 12)) >> FPBITS);
 
-			if (!mdi->samples_to_mix) {
-				if (mdi->info.current_sample
-						>= mdi->info.approx_total_samples) {
-					break;
-				} else if ((mdi->info.approx_total_samples
-						- mdi->info.current_sample) > (size >> 2)) {
-					mdi->samples_to_mix = size >> 2;
-				} else {
-					mdi->samples_to_mix = mdi->info.approx_total_samples
-							- mdi->info.current_sample;
-				}
-			}
-		}
-		if (__builtin_expect((mdi->samples_to_mix > (size >> 2)), 1)) {
-			real_samples_to_mix = size >> 2;
-		} else {
-			real_samples_to_mix = mdi->samples_to_mix;
-			if (real_samples_to_mix == 0) {
-				continue;
-			}
-		}
+				premix = (note_data->sample->data[data_pos]
+						+ ((note_data->sample->data[data_pos + 1]
+								- note_data->sample->data[data_pos])
+								* (signed long int) (note_data->sample_pos
+										& FPMASK)>> FPBITS)) * vol_mul
+						/ 1024;
 
-		/* do mixing here */
-		count = real_samples_to_mix;
-		do {
-			note_data = mdi->note;
-			left_mix = right_mix = 0;
-			if (__builtin_expect((note_data != NULL), 1)) {
-				while (note_data) {
-					/*
-					 * ===================
-					 * resample the sample
-					 * ===================
-					 */
-					data_pos = note_data->sample_pos >> FPBITS;
-					vol_mul = ((note_data->vol_lvl
-							* (note_data->env_level >> 12)) >> FPBITS);
+				left_mix += premix
+						* mdi->channel[note_data->noteid >> 8].left_adjust;
+				right_mix += premix
+						* mdi->channel[note_data->noteid >> 8].right_adjust;
 
-					premix = (note_data->sample->data[data_pos]
-							+ ((note_data->sample->data[data_pos + 1]
-									- note_data->sample->data[data_pos])
-									* (signed long int) (note_data->sample_pos
-											& FPMASK)>> FPBITS)) * vol_mul
-							/ 1024;
-
-					left_mix += premix
-							* mdi->channel[note_data->noteid >> 8].left_adjust;
-					right_mix += premix
-							* mdi->channel[note_data->noteid >> 8].right_adjust;
-
-					/*
-					 * ========================
-					 * sample position checking
-					 * ========================
-					 */
-					note_data->sample_pos += note_data->sample_inc;
-					if (__builtin_expect(
-							(note_data->sample_pos > note_data->sample->loop_end),
+				/*
+				 * ========================
+				 * sample position checking
+				 * ========================
+				 */
+				note_data->sample_pos += note_data->sample_inc;
+				if (__builtin_expect(
+						(note_data->sample_pos > note_data->sample->loop_end),
+						0)) {
+					if (note_data->modes & SAMPLE_LOOP) {
+						note_data->sample_pos =
+								note_data->sample->loop_start
+										+ ((note_data->sample_pos
+												- note_data->sample->loop_start)
+												% note_data->sample->loop_size);
+					} else if (__builtin_expect(
+							(note_data->sample_pos
+									>= note_data->sample->data_length),
 							0)) {
-						if (note_data->modes & SAMPLE_LOOP) {
-							note_data->sample_pos =
-									note_data->sample->loop_start
-											+ ((note_data->sample_pos
-													- note_data->sample->loop_start)
-													% note_data->sample->loop_size);
-						} else if (__builtin_expect(
-								(note_data->sample_pos
-										>= note_data->sample->data_length),
-								0)) {
-							if (__builtin_expect((note_data->replay == NULL), 1)) {
-								goto KILL_NOTE;
-							}
-							goto RESTART_NOTE;
-						}
-					}
-
-					if (__builtin_expect((note_data->env_inc == 0), 0)) {
-						note_data = note_data->next;
-						continue;
-					}
-
-					note_data->env_level += note_data->env_inc;
-					if (__builtin_expect((note_data->env_level > 4194304), 0)) {
-						note_data->env_level =
-								note_data->sample->env_target[note_data->env];
-					}
-					if (__builtin_expect(
-							((note_data->env_inc < 0)
-									&& (note_data->env_level
-											> note_data->sample->env_target[note_data->env]))
-							|| ((note_data->env_inc > 0)
-									&& (note_data->env_level
-											< note_data->sample->env_target[note_data->env])),
-							1)) {
-						note_data = note_data->next;
-						continue;
-					}
-
-					note_data->env_level =
-							note_data->sample->env_target[note_data->env];
-					switch (note_data->env) {
-					case 0:
-#if 0
-						if (!(note_data->modes & SAMPLE_ENVELOPE)) {
-							note_data->env_inc = 0;
-							note_data = note_data->next;
-							continue;
-						}
-#endif
-						break;
-					case 2:
-						if (note_data->modes & SAMPLE_SUSTAIN) {
-							note_data->env_inc = 0;
-							note_data = note_data->next;
-							continue;
-						} else if (note_data->modes & SAMPLE_CLAMPED) {
-							note_data->env = 5;
-							if (note_data->env_level
-									> note_data->sample->env_target[5]) {
-								note_data->env_inc =
-										-note_data->sample->env_rate[5];
-							} else {
-								note_data->env_inc =
-										note_data->sample->env_rate[5];
-							}
-							continue;
-						}
-						break;
-					case 5:
-						if (__builtin_expect((note_data->env_level == 0), 1)) {
+						if (__builtin_expect((note_data->replay == NULL), 1)) {
 							goto KILL_NOTE;
 						}
-						/* sample release */
-						if (note_data->modes & SAMPLE_LOOP)
-							note_data->modes ^= SAMPLE_LOOP;
-						note_data->env_inc = 0;
-						note_data = note_data->next;
-						continue;
-					case 6:
-						if (__builtin_expect((note_data->replay != NULL), 1)) {
-							RESTART_NOTE: note_data->active = 0;
-							{
-								struct _note *prev_note = NULL;
-								struct _note *nte_array = mdi->note;
-
-								if (nte_array != note_data) {
-									do {
-										prev_note = nte_array;
-										nte_array = nte_array->next;
-									} while (nte_array != note_data);
-								}
-								if (prev_note) {
-									prev_note->next = note_data->replay;
-								} else {
-									mdi->note = note_data->replay;
-								}
-								note_data->replay->next = note_data->next;
-								note_data = note_data->replay;
-								note_data->active = 1;
-							}
-						} else {
-							KILL_NOTE: note_data->active = 0;
-							{
-								struct _note *prev_note = NULL;
-								struct _note *nte_array = mdi->note;
-
-								if (nte_array != note_data) {
-									do {
-										prev_note = nte_array;
-										nte_array = nte_array->next;
-									} while ((nte_array != note_data)
-											&& (nte_array));
-								}
-								if (prev_note) {
-									prev_note->next = note_data->next;
-								} else {
-									mdi->note = note_data->next;
-								}
-								note_data = note_data->next;
-							}
-						}
-						continue;
+						goto RESTART_NOTE;
 					}
-					note_data->env++;
+				}
 
-					if (note_data->is_off == 1) {
-						do_note_off_extra(note_data);
-					}
-
-					if (note_data->env_level
-							> note_data->sample->env_target[note_data->env]) {
-						note_data->env_inc =
-								-note_data->sample->env_rate[note_data->env];
-					} else {
-						note_data->env_inc =
-								note_data->sample->env_rate[note_data->env];
-					}
+				if (__builtin_expect((note_data->env_inc == 0), 0)) {
 					note_data = note_data->next;
 					continue;
 				}
 
-				/*
-				 * =========================
-				 * mix the channels together
-				 * =========================
-				 */
-				left_mix /= 1024;
-				right_mix /= 1024;
+				note_data->env_level += note_data->env_inc;
+				if (__builtin_expect((note_data->env_level > 4194304), 0)) {
+					note_data->env_level =
+							note_data->sample->env_target[note_data->env];
+				}
+				if (__builtin_expect(
+						((note_data->env_inc < 0)
+								&& (note_data->env_level
+										> note_data->sample->env_target[note_data->env]))
+						|| ((note_data->env_inc > 0)
+								&& (note_data->env_level
+										< note_data->sample->env_target[note_data->env])),
+						1)) {
+					note_data = note_data->next;
+					continue;
+				}
+
+				note_data->env_level =
+						note_data->sample->env_target[note_data->env];
+				switch (note_data->env) {
+				case 0:
+#if 0
+					if (!(note_data->modes & SAMPLE_ENVELOPE)) {
+						note_data->env_inc = 0;
+						note_data = note_data->next;
+						continue;
+					}
+#endif
+					break;
+				case 2:
+					if (note_data->modes & SAMPLE_SUSTAIN) {
+						note_data->env_inc = 0;
+						note_data = note_data->next;
+						continue;
+					} else if (note_data->modes & SAMPLE_CLAMPED) {
+						note_data->env = 5;
+						if (note_data->env_level
+								> note_data->sample->env_target[5]) {
+							note_data->env_inc =
+									-note_data->sample->env_rate[5];
+						} else {
+							note_data->env_inc =
+									note_data->sample->env_rate[5];
+						}
+						continue;
+					}
+					break;
+				case 5:
+					if (__builtin_expect((note_data->env_level == 0), 1)) {
+						goto KILL_NOTE;
+					}
+					/* sample release */
+					if (note_data->modes & SAMPLE_LOOP)
+						note_data->modes ^= SAMPLE_LOOP;
+					note_data->env_inc = 0;
+					note_data = note_data->next;
+					continue;
+				case 6:
+					if (__builtin_expect((note_data->replay != NULL), 1)) {
+						RESTART_NOTE: note_data->active = 0;
+						{
+							struct _note *prev_note = NULL;
+							struct _note *nte_array = mdi->note;
+
+							if (nte_array != note_data) {
+								do {
+									prev_note = nte_array;
+									nte_array = nte_array->next;
+								} while (nte_array != note_data);
+							}
+							if (prev_note) {
+								prev_note->next = note_data->replay;
+							} else {
+								mdi->note = note_data->replay;
+							}
+							note_data->replay->next = note_data->next;
+							note_data = note_data->replay;
+							note_data->active = 1;
+						}
+					} else {
+						KILL_NOTE: note_data->active = 0;
+						{
+							struct _note *prev_note = NULL;
+							struct _note *nte_array = mdi->note;
+
+							if (nte_array != note_data) {
+								do {
+									prev_note = nte_array;
+									nte_array = nte_array->next;
+								} while ((nte_array != note_data)
+										&& (nte_array));
+							}
+							if (prev_note) {
+								prev_note->next = note_data->next;
+							} else {
+								mdi->note = note_data->next;
+							}
+							note_data = note_data->next;
+						}
+					}
+					continue;
+				}
+				note_data->env++;
+
+				if (note_data->is_off == 1) {
+					do_note_off_extra(note_data);
+				}
+
+				if (note_data->env_level
+						> note_data->sample->env_target[note_data->env]) {
+					note_data->env_inc =
+							-note_data->sample->env_rate[note_data->env];
+				} else {
+					note_data->env_inc =
+							note_data->sample->env_rate[note_data->env];
+				}
+				note_data = note_data->next;
+				continue;
 			}
 
-			*tmp_buffer++ = left_mix;
-			*tmp_buffer++ = right_mix;
-		} while (--count);
-
-		buffer_used += real_samples_to_mix * 4;
-		size -= (real_samples_to_mix << 2);
-		mdi->info.current_sample += real_samples_to_mix;
-		mdi->samples_to_mix -= real_samples_to_mix;
-	} while (size);
-
-	tmp_buffer = out_buffer;
-
-	if (mdi->info.mixer_options & WM_MO_REVERB) {
-		_WM_do_reverb(mdi->reverb, tmp_buffer, (buffer_used / 2));
-	}
-
-	for (i = 0; i < buffer_used; i += 4) {
-		left_mix = *tmp_buffer++;
-		right_mix = *tmp_buffer++;
-
-		if (left_mix > 32767) {
-			left_mix = 32767;
-		} else if (left_mix < -32768) {
-			left_mix = -32768;
+			/*
+			 * =========================
+			 * mix the channels together
+			 * =========================
+			 */
+			left_mix /= 1024;
+			right_mix /= 1024;
 		}
 
-		if (right_mix > 32767) {
-			right_mix = 32767;
-		} else if (right_mix < -32768) {
-			right_mix = -32768;
-		}
-
-		/*
-		 * ===================
-		 * Write to the buffer
-		 * ===================
-		 */
-		(*buffer++) = left_mix & 0xff;
-		(*buffer++) = ((left_mix >> 8) & 0x7f) | ((left_mix >> 24) & 0x80);
-		(*buffer++) = right_mix & 0xff;
-		(*buffer++) = ((right_mix >> 8) & 0x7f) | ((right_mix >> 24) & 0x80);
-	}
-
-	_WM_Unlock(&mdi->lock);
-	return buffer_used;
+		*buffer++ = left_mix;
+		*buffer++ = right_mix;
+	} while (--count);
+	return buffer;
 }
 
-static int WM_GetOutput_Gauss(midi * handle, char * buffer,
-		unsigned long int size) {
-	unsigned long int buffer_used = 0;
-	unsigned long int i;
-	struct _mdi *mdi = (struct _mdi *) handle;
-	unsigned long int real_samples_to_mix = 0;
+static int *WM_Mix_Gauss(midi * handle, int * buffer, unsigned long int count)
+{
+	if (!gauss_table) init_gauss();
+
+	struct _mdi *mdi = (struct _mdi *)handle;
 	unsigned long int data_pos;
-	signed long int premix, left_mix, right_mix;
-	signed long int vol_mul;
+	signed int premix, left_mix, right_mix;
+	signed int vol_mul;
 	struct _note *note_data = NULL;
-	unsigned long int count;
 	signed short int *sptr;
 	double y, xd;
 	double *gptr, *gend;
 	int left, right, temp_n;
 	int ii, jj;
+
+	do {
+		note_data = mdi->note;
+		left_mix = right_mix = 0;
+		if (__builtin_expect((note_data != NULL), 1)) {
+			while (note_data) {
+				/*
+				 * ===================
+				 * resample the sample
+				 * ===================
+				 */
+				data_pos = note_data->sample_pos >> FPBITS;
+				vol_mul = ((note_data->vol_lvl
+						* (note_data->env_level >> 12)) >> FPBITS);
+
+				/* check to see if we're near one of the ends */
+				left = data_pos;
+				right = (note_data->sample->data_length >> FPBITS) - left
+						- 1;
+				temp_n = (right << 1) - 1;
+				if (temp_n <= 0)
+					temp_n = 1;
+				if (temp_n > (left << 1) + 1)
+					temp_n = (left << 1) + 1;
+
+				/* use Newton if we can't fill the window */
+				if (temp_n < gauss_n) {
+					xd = note_data->sample_pos & FPMASK;
+					xd /= (1L << FPBITS);
+					xd += temp_n >> 1;
+					y = 0;
+					sptr = note_data->sample->data
+							+ (note_data->sample_pos >> FPBITS)
+							- (temp_n >> 1);
+					for (ii = temp_n; ii;) {
+						for (jj = 0; jj <= ii; jj++)
+							y += sptr[jj] * newt_coeffs[ii][jj];
+						y *= xd - --ii;
+					}
+					y += *sptr;
+				} else { /* otherwise, use Gauss as usual */
+					y = 0;
+					gptr = &gauss_table[(note_data->sample_pos & FPMASK) *
+							     (gauss_n + 1)];
+					gend = gptr + gauss_n;
+					sptr = note_data->sample->data
+							+ (note_data->sample_pos >> FPBITS)
+							- (gauss_n >> 1);
+					do {
+						y += *(sptr++) * *(gptr++);
+					} while (gptr <= gend);
+				}
+
+				premix = (long) (y * vol_mul / 1024);
+
+				left_mix += premix
+						* mdi->channel[note_data->noteid >> 8].left_adjust;
+				right_mix += premix
+						* mdi->channel[note_data->noteid >> 8].right_adjust;
+
+				/*
+				 * ========================
+				 * sample position checking
+				 * ========================
+				 */
+				note_data->sample_pos += note_data->sample_inc;
+				if (__builtin_expect(
+						(note_data->sample_pos > note_data->sample->loop_end),
+						0)) {
+					if (note_data->modes & SAMPLE_LOOP) {
+						note_data->sample_pos =
+								note_data->sample->loop_start
+										+ ((note_data->sample_pos
+												- note_data->sample->loop_start)
+												% note_data->sample->loop_size);
+					} else if (__builtin_expect(
+							(note_data->sample_pos
+									>= note_data->sample->data_length),
+							0)) {
+						if (__builtin_expect((note_data->replay == NULL), 1)) {
+							goto KILL_NOTE;
+						}
+						goto RESTART_NOTE;
+					}
+				}
+
+				if (__builtin_expect((note_data->env_inc == 0), 0)) {
+					note_data = note_data->next;
+					continue;
+				}
+
+				note_data->env_level += note_data->env_inc;
+				if (__builtin_expect((note_data->env_level > 4194304), 0)) {
+					note_data->env_level =
+							note_data->sample->env_target[note_data->env];
+				}
+				if (__builtin_expect(
+						((note_data->env_inc < 0)
+								&& (note_data->env_level
+										> note_data->sample->env_target[note_data->env]))
+						|| ((note_data->env_inc > 0)
+								&& (note_data->env_level
+										< note_data->sample->env_target[note_data->env])),
+						1)) {
+					note_data = note_data->next;
+					continue;
+				}
+
+				note_data->env_level =
+						note_data->sample->env_target[note_data->env];
+				switch (note_data->env) {
+				case 0:
+#if 0
+					if (!(note_data->modes & SAMPLE_ENVELOPE)) {
+						note_data->env_inc = 0;
+						note_data = note_data->next;
+						continue;
+					}
+#endif
+					break;
+				case 2:
+					if (note_data->modes & SAMPLE_SUSTAIN) {
+						note_data->env_inc = 0;
+						note_data = note_data->next;
+						continue;
+					} else if (note_data->modes & SAMPLE_CLAMPED) {
+						note_data->env = 5;
+						if (note_data->env_level
+								> note_data->sample->env_target[5]) {
+							note_data->env_inc =
+									-note_data->sample->env_rate[5];
+						} else {
+							note_data->env_inc =
+									note_data->sample->env_rate[5];
+						}
+						continue;
+					}
+					break;
+				case 5:
+					if (__builtin_expect((note_data->env_level == 0), 1)) {
+						goto KILL_NOTE;
+					}
+					/* sample release */
+					if (note_data->modes & SAMPLE_LOOP)
+						note_data->modes ^= SAMPLE_LOOP;
+					note_data->env_inc = 0;
+					note_data = note_data->next;
+					continue;
+				case 6:
+					if (__builtin_expect((note_data->replay != NULL), 1)) {
+						RESTART_NOTE: note_data->active = 0;
+						{
+							struct _note *prev_note = NULL;
+							struct _note *nte_array = mdi->note;
+
+							if (nte_array != note_data) {
+								do {
+									prev_note = nte_array;
+									nte_array = nte_array->next;
+								} while (nte_array != note_data);
+							}
+							if (prev_note) {
+								prev_note->next = note_data->replay;
+							} else {
+								mdi->note = note_data->replay;
+							}
+							note_data->replay->next = note_data->next;
+							note_data = note_data->replay;
+							note_data->active = 1;
+						}
+					} else {
+						KILL_NOTE: note_data->active = 0;
+						{
+							struct _note *prev_note = NULL;
+							struct _note *nte_array = mdi->note;
+
+							if (nte_array != note_data) {
+								do {
+									prev_note = nte_array;
+									nte_array = nte_array->next;
+								} while ((nte_array != note_data)
+										&& (nte_array));
+							}
+							if (prev_note) {
+								prev_note->next = note_data->next;
+							} else {
+								mdi->note = note_data->next;
+							}
+							note_data = note_data->next;
+						}
+					}
+					continue;
+				}
+				note_data->env++;
+
+				if (note_data->is_off == 1) {
+					do_note_off_extra(note_data);
+				}
+
+				if (note_data->env_level
+						> note_data->sample->env_target[note_data->env]) {
+					note_data->env_inc =
+							-note_data->sample->env_rate[note_data->env];
+				} else {
+					note_data->env_inc =
+							note_data->sample->env_rate[note_data->env];
+				}
+				note_data = note_data->next;
+				continue;
+			}
+
+			/*
+			 * =========================
+			 * mix the channels together
+			 * =========================
+			 */
+			left_mix /= 1024;
+			right_mix /= 1024;
+		}
+
+		*buffer++ = left_mix;
+		*buffer++ = right_mix;
+	} while (--count);
+	return buffer;
+}
+
+int *WM_Mix(midi *handle, int *buffer, unsigned long count)
+{
+	if (((struct _mdi *)handle)->info.mixer_options & WM_MO_ENHANCED_RESAMPLING)
+	{
+		return WM_Mix_Gauss(handle, buffer, count);
+	}
+	else
+	{
+		return WM_Mix_Linear(handle, buffer, count);
+	}
+}
+
+static int WM_DoGetOutput(midi * handle, char * buffer,
+		unsigned long int size) {
+	unsigned long int buffer_used = 0;
+	unsigned long int i;
+	struct _mdi *mdi = (struct _mdi *) handle;
+	unsigned long int real_samples_to_mix = 0;
 	struct _event *event = mdi->current_event;
-	signed long int *tmp_buffer;
-	signed long int *out_buffer;
+	signed int *tmp_buffer;
+	signed int *out_buffer;
+	signed int left_mix, right_mix;
 
 	_WM_Lock(&mdi->lock);
 
@@ -3533,7 +3676,7 @@ static int WM_GetOutput_Gauss(midi * handle, char * buffer,
 		} else {
 			mdi->mix_buffer_size = size / 2;
 		}
-		mdi->mix_buffer = (long*)realloc(mdi->mix_buffer, mdi->mix_buffer_size * sizeof(signed long int));
+		mdi->mix_buffer = (int*)realloc(mdi->mix_buffer, mdi->mix_buffer_size * sizeof(signed int));
 	}
 	tmp_buffer = mdi->mix_buffer;
 	memset(tmp_buffer, 0, ((size / 2) * sizeof(signed long int)));
@@ -3571,229 +3714,7 @@ static int WM_GetOutput_Gauss(midi * handle, char * buffer,
 		}
 
 		/* do mixing here */
-		count = real_samples_to_mix;
-		do {
-			note_data = mdi->note;
-			left_mix = right_mix = 0;
-			if (__builtin_expect((note_data != NULL), 1)) {
-				while (note_data) {
-					/*
-					 * ===================
-					 * resample the sample
-					 * ===================
-					 */
-					data_pos = note_data->sample_pos >> FPBITS;
-					vol_mul = ((note_data->vol_lvl
-							* (note_data->env_level >> 12)) >> FPBITS);
-
-					/* check to see if we're near one of the ends */
-					left = data_pos;
-					right = (note_data->sample->data_length >> FPBITS) - left
-							- 1;
-					temp_n = (right << 1) - 1;
-					if (temp_n <= 0)
-						temp_n = 1;
-					if (temp_n > (left << 1) + 1)
-						temp_n = (left << 1) + 1;
-
-					/* use Newton if we can't fill the window */
-					if (temp_n < gauss_n) {
-						xd = note_data->sample_pos & FPMASK;
-						xd /= (1L << FPBITS);
-						xd += temp_n >> 1;
-						y = 0;
-						sptr = note_data->sample->data
-								+ (note_data->sample_pos >> FPBITS)
-								- (temp_n >> 1);
-						for (ii = temp_n; ii;) {
-							for (jj = 0; jj <= ii; jj++)
-								y += sptr[jj] * newt_coeffs[ii][jj];
-							y *= xd - --ii;
-						}
-						y += *sptr;
-					} else { /* otherwise, use Gauss as usual */
-						y = 0;
-						gptr = &gauss_table[(note_data->sample_pos & FPMASK) *
-								     (gauss_n + 1)];
-						gend = gptr + gauss_n;
-						sptr = note_data->sample->data
-								+ (note_data->sample_pos >> FPBITS)
-								- (gauss_n >> 1);
-						do {
-							y += *(sptr++) * *(gptr++);
-						} while (gptr <= gend);
-					}
-
-					premix = (long) (y * vol_mul / 1024);
-
-					left_mix += premix
-							* mdi->channel[note_data->noteid >> 8].left_adjust;
-					right_mix += premix
-							* mdi->channel[note_data->noteid >> 8].right_adjust;
-
-					/*
-					 * ========================
-					 * sample position checking
-					 * ========================
-					 */
-					note_data->sample_pos += note_data->sample_inc;
-					if (__builtin_expect(
-							(note_data->sample_pos > note_data->sample->loop_end),
-							0)) {
-						if (note_data->modes & SAMPLE_LOOP) {
-							note_data->sample_pos =
-									note_data->sample->loop_start
-											+ ((note_data->sample_pos
-													- note_data->sample->loop_start)
-													% note_data->sample->loop_size);
-						} else if (__builtin_expect(
-								(note_data->sample_pos
-										>= note_data->sample->data_length),
-								0)) {
-							if (__builtin_expect((note_data->replay == NULL), 1)) {
-								goto KILL_NOTE;
-							}
-							goto RESTART_NOTE;
-						}
-					}
-
-					if (__builtin_expect((note_data->env_inc == 0), 0)) {
-						note_data = note_data->next;
-						continue;
-					}
-
-					note_data->env_level += note_data->env_inc;
-					if (__builtin_expect((note_data->env_level > 4194304), 0)) {
-						note_data->env_level =
-								note_data->sample->env_target[note_data->env];
-					}
-					if (__builtin_expect(
-							((note_data->env_inc < 0)
-									&& (note_data->env_level
-											> note_data->sample->env_target[note_data->env]))
-							|| ((note_data->env_inc > 0)
-									&& (note_data->env_level
-											< note_data->sample->env_target[note_data->env])),
-							1)) {
-						note_data = note_data->next;
-						continue;
-					}
-
-					note_data->env_level =
-							note_data->sample->env_target[note_data->env];
-					switch (note_data->env) {
-					case 0:
-#if 0
-						if (!(note_data->modes & SAMPLE_ENVELOPE)) {
-							note_data->env_inc = 0;
-							note_data = note_data->next;
-							continue;
-						}
-#endif
-						break;
-					case 2:
-						if (note_data->modes & SAMPLE_SUSTAIN) {
-							note_data->env_inc = 0;
-							note_data = note_data->next;
-							continue;
-						} else if (note_data->modes & SAMPLE_CLAMPED) {
-							note_data->env = 5;
-							if (note_data->env_level
-									> note_data->sample->env_target[5]) {
-								note_data->env_inc =
-										-note_data->sample->env_rate[5];
-							} else {
-								note_data->env_inc =
-										note_data->sample->env_rate[5];
-							}
-							continue;
-						}
-						break;
-					case 5:
-						if (__builtin_expect((note_data->env_level == 0), 1)) {
-							goto KILL_NOTE;
-						}
-						/* sample release */
-						if (note_data->modes & SAMPLE_LOOP)
-							note_data->modes ^= SAMPLE_LOOP;
-						note_data->env_inc = 0;
-						note_data = note_data->next;
-						continue;
-					case 6:
-						if (__builtin_expect((note_data->replay != NULL), 1)) {
-							RESTART_NOTE: note_data->active = 0;
-							{
-								struct _note *prev_note = NULL;
-								struct _note *nte_array = mdi->note;
-
-								if (nte_array != note_data) {
-									do {
-										prev_note = nte_array;
-										nte_array = nte_array->next;
-									} while (nte_array != note_data);
-								}
-								if (prev_note) {
-									prev_note->next = note_data->replay;
-								} else {
-									mdi->note = note_data->replay;
-								}
-								note_data->replay->next = note_data->next;
-								note_data = note_data->replay;
-								note_data->active = 1;
-							}
-						} else {
-							KILL_NOTE: note_data->active = 0;
-							{
-								struct _note *prev_note = NULL;
-								struct _note *nte_array = mdi->note;
-
-								if (nte_array != note_data) {
-									do {
-										prev_note = nte_array;
-										nte_array = nte_array->next;
-									} while ((nte_array != note_data)
-											&& (nte_array));
-								}
-								if (prev_note) {
-									prev_note->next = note_data->next;
-								} else {
-									mdi->note = note_data->next;
-								}
-								note_data = note_data->next;
-							}
-						}
-						continue;
-					}
-					note_data->env++;
-
-					if (note_data->is_off == 1) {
-						do_note_off_extra(note_data);
-					}
-
-					if (note_data->env_level
-							> note_data->sample->env_target[note_data->env]) {
-						note_data->env_inc =
-								-note_data->sample->env_rate[note_data->env];
-					} else {
-						note_data->env_inc =
-								note_data->sample->env_rate[note_data->env];
-					}
-					note_data = note_data->next;
-					continue;
-				}
-
-				/*
-				 * =========================
-				 * mix the channels together
-				 * =========================
-				 */
-				left_mix /= 1024;
-				right_mix /= 1024;
-			}
-
-			*tmp_buffer++ = left_mix;
-			*tmp_buffer++ = right_mix;
-		} while (--count);
+		tmp_buffer = WM_Mix(handle, tmp_buffer, real_samples_to_mix);
 
 		buffer_used += real_samples_to_mix * 4;
 		size -= (real_samples_to_mix << 2);
@@ -3828,10 +3749,9 @@ static int WM_GetOutput_Gauss(midi * handle, char * buffer,
 		 * Write to the buffer
 		 * ===================
 		 */
-		(*buffer++) = left_mix & 0xff;
-		(*buffer++) = ((left_mix >> 8) & 0x7f) | ((left_mix >> 24) & 0x80);
-		(*buffer++) = right_mix & 0xff;
-		(*buffer++) = ((right_mix >> 8) & 0x7f) | ((right_mix >> 24) & 0x80);
+		((short *)buffer)[0] = (short)left_mix;
+		((short *)buffer)[1] = (short)right_mix;
+		buffer += 4;
 	}
 	_WM_Unlock(&mdi->lock);
 	return buffer_used;
@@ -3890,6 +3810,11 @@ WM_SYMBOL int WildMidi_Init(const char * config_file, unsigned short int rate,
 	WM_Initialized = 1;
 
 	return 0;
+}
+
+WM_SYMBOL int WildMidi_GetSampleRate(void)
+{
+	return _WM_SampleRate;
 }
 
 WM_SYMBOL int WildMidi_MasterVolume(unsigned char master_volume) {
@@ -4032,6 +3957,23 @@ WildMidi_OpenBuffer(unsigned char *midibuffer, unsigned long int size) {
 	return ret;
 }
 
+midi *WildMidi_NewMidi() {
+	midi * ret = NULL;
+
+	if (!WM_Initialized) {
+		_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_NOT_INIT, NULL, 0);
+		return NULL;
+	}
+	ret = Init_MDI();
+	if (ret) {
+		if (add_handle(ret) != 0) {
+			WildMidi_Close(ret);
+			ret = NULL;
+		}
+	}
+	return ret;
+}
+
 WM_SYMBOL int WildMidi_FastSeek(midi * handle, unsigned long int *sample_pos) {
 	struct _mdi *mdi;
 	struct _event *event;
@@ -4158,11 +4100,7 @@ WM_SYMBOL int WildMidi_GetOutput(midi * handle, char *buffer, unsigned long int 
 				"(size not a multiple of 4)", 0);
 		return -1;
 	}
-	if (((struct _mdi *) handle)->info.mixer_options & WM_MO_ENHANCED_RESAMPLING) {
-		if (!gauss_table) init_gauss();
-		return WM_GetOutput_Gauss(handle, buffer, size);
-	}
-	return WM_GetOutput_Linear(handle, buffer, size);
+	return WM_DoGetOutput(handle, buffer, size);
 }
 
 WM_SYMBOL int WildMidi_SetOption(midi * handle, unsigned short int options,
@@ -4285,4 +4223,111 @@ WM_SYMBOL int WildMidi_Shutdown(void) {
 	WM_Initialized = 0;
 
 	return 0;
+}
+
+WildMidi_Renderer::WildMidi_Renderer()
+{
+	handle = WildMidi_NewMidi();
+}
+
+WildMidi_Renderer::~WildMidi_Renderer()
+{
+	WildMidi_Close((midi *)handle);
+}
+
+void WildMidi_Renderer::ShortEvent(int status, int parm1, int parm2)
+{
+	_mdi *mdi = (_mdi *)handle;
+	_event_data ev;
+
+	ev.channel = status & 0x0F;
+	switch ((status & 0xF0) >> 4)	// command
+	{
+	case 0x8:
+		ev.data = (parm1 << 8) | parm2;
+		do_note_off(mdi, &ev);
+		break;
+
+	case 0x9:
+		ev.data = (parm1 << 8) | parm2;
+		do_note_on(mdi, &ev);
+		break;
+
+	case 0xA:
+		ev.data = (parm1 << 8) | parm2;
+		do_aftertouch(mdi, &ev);
+		break;
+
+	case 0xC:
+		ev.data = parm1;
+		do_patch(mdi, &ev);
+		break;
+
+	case 0xD:
+		ev.data = parm1;
+		do_channel_pressure(mdi, &ev);
+		break;
+
+	case 0xE:
+		ev.data = parm1 | (parm2 << 7);
+		do_pitch(mdi, &ev);
+		break;
+
+	case 0xB:	// Controllers
+		ev.data = parm2;
+		switch (parm1)
+		{
+		case 0:		do_control_bank_select(mdi, &ev);				break;
+		case 6:		do_control_data_entry_course(mdi, &ev);			break;	// [sic]
+		case 7:		do_control_channel_volume(mdi, &ev);			break;
+		case 8:		do_control_channel_balance(mdi, &ev);			break;
+		case 10:	do_control_channel_pan(mdi, &ev);				break;
+		case 11:	do_control_channel_expression(mdi, &ev);		break;
+		case 38:	do_control_data_entry_fine(mdi, &ev);			break;
+		case 64:	do_control_channel_hold(mdi, &ev);				break;
+		case 96:	do_control_data_increment(mdi, &ev);			break;
+		case 97:	do_control_data_decrement(mdi, &ev);			break;
+		case 98:
+		case 99:	do_control_non_registered_param(mdi, &ev);		break;
+		case 100:	do_control_registered_param_fine(mdi, &ev);		break;
+		case 101:	do_control_registered_param_course(mdi, &ev);	break;	// [sic]
+		case 120:	do_control_channel_sound_off(mdi, &ev);			break;
+		case 121:	do_control_channel_controllers_off(mdi, &ev);	break;
+		case 123:	do_control_channel_notes_off(mdi, &ev);			break;
+		}
+	}
+}
+
+void WildMidi_Renderer::LongEvent(const char *data, int len)
+{
+}
+
+void WildMidi_Renderer::ComputeOutput(float *fbuffer, int len)
+{
+	_mdi *mdi = (_mdi *)handle;
+	int *buffer = (int *)fbuffer;
+	int *newbuf = WM_Mix(handle, buffer, len);
+//	assert(newbuf - buffer == len);
+	if (mdi->info.mixer_options & WM_MO_REVERB) {
+		_WM_do_reverb(mdi->reverb, buffer, len * 2);
+	}
+	for (; buffer < newbuf; ++buffer)
+	{
+		*(float *)buffer = (float)*buffer / 32768.f;
+	}
+}
+
+void WildMidi_Renderer::LoadInstrument(int bank, int percussion, int instr)
+{
+	load_patch((_mdi *)handle, (bank << 8) | instr | (percussion ? 0x80 : 0));
+}
+
+int WildMidi_Renderer::GetVoiceCount()
+{
+	int count = 0;
+	for (_note *note_data = ((_mdi *)handle)->note; note_data != NULL; note_data = note_data->next)
+	{
+		count++;
+	}
+	return count;
 }

@@ -1608,6 +1608,9 @@ OptionMenu AdvSoundOptions
 	Option "Reverb", "timidity_reverb", "OnOff"
 	Option "Chorus", "timidity_chorus", "OnOff"
 	Slider "Relative volume",	"timidity_mastervolume", 0, 4, 0.2, 1
+	StaticText " "
+	StaticText "WildMidi",	1
+	TextField "WildMidi config file", "wildmidi_config"
 }
 
 /*=======================================

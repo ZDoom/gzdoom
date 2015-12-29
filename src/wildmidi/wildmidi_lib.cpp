@@ -3403,115 +3403,10 @@ static int *WM_Mix_Linear(midi * handle, int * buffer, unsigned long int count)
 	return buffer;
 }
 
-static int WM_GetOutput_Linear(midi * handle, char * buffer,
-		unsigned long int size) {
-	unsigned long int buffer_used = 0;
-	unsigned long int i;
-	struct _mdi *mdi = (struct _mdi *) handle;
-	unsigned long int real_samples_to_mix = 0;
-	struct _event *event = mdi->current_event;
-	int *tmp_buffer;
-	int *out_buffer;
-	int left_mix, right_mix;
-
-	_WM_Lock(&mdi->lock);
-
-	buffer_used = 0;
-	memset(buffer, 0, size);
-
-	if ( (size / 2) > mdi->mix_buffer_size) {
-		if ( (size / 2) <= ( mdi->mix_buffer_size * 2 )) {
-			mdi->mix_buffer_size += MEM_CHUNK;
-		} else {
-			mdi->mix_buffer_size = size / 2;
-		}
-		mdi->mix_buffer = (int*)realloc(mdi->mix_buffer, mdi->mix_buffer_size * sizeof(signed int));
-	}
-
-	tmp_buffer = mdi->mix_buffer;
-
-	memset(tmp_buffer, 0, ((size / 2) * sizeof(signed long int)));
-	out_buffer = tmp_buffer;
-
-	do {
-		if (__builtin_expect((!mdi->samples_to_mix), 0)) {
-			while ((!mdi->samples_to_mix) && (event->do_event)) {
-				event->do_event(mdi, &event->event_data);
-				event++;
-				mdi->samples_to_mix = event->samples_to_next;
-				mdi->current_event = event;
-			}
-
-			if (!mdi->samples_to_mix) {
-				if (mdi->info.current_sample
-						>= mdi->info.approx_total_samples) {
-					break;
-				} else if ((mdi->info.approx_total_samples
-						- mdi->info.current_sample) > (size >> 2)) {
-					mdi->samples_to_mix = size >> 2;
-				} else {
-					mdi->samples_to_mix = mdi->info.approx_total_samples
-							- mdi->info.current_sample;
-				}
-			}
-		}
-		if (__builtin_expect((mdi->samples_to_mix > (size >> 2)), 1)) {
-			real_samples_to_mix = size >> 2;
-		} else {
-			real_samples_to_mix = mdi->samples_to_mix;
-			if (real_samples_to_mix == 0) {
-				continue;
-			}
-		}
-
-		/* do mixing here */
-		tmp_buffer = WM_Mix_Linear(handle, tmp_buffer, real_samples_to_mix);
-
-		buffer_used += real_samples_to_mix * 4;
-		size -= (real_samples_to_mix << 2);
-		mdi->info.current_sample += real_samples_to_mix;
-		mdi->samples_to_mix -= real_samples_to_mix;
-	} while (size);
-
-	tmp_buffer = out_buffer;
-
-	if (mdi->info.mixer_options & WM_MO_REVERB) {
-		_WM_do_reverb(mdi->reverb, tmp_buffer, (buffer_used / 2));
-	}
-
-	for (i = 0; i < buffer_used; i += 4) {
-		left_mix = *tmp_buffer++;
-		right_mix = *tmp_buffer++;
-
-		if (left_mix > 32767) {
-			left_mix = 32767;
-		} else if (left_mix < -32768) {
-			left_mix = -32768;
-		}
-
-		if (right_mix > 32767) {
-			right_mix = 32767;
-		} else if (right_mix < -32768) {
-			right_mix = -32768;
-		}
-
-		/*
-		 * ===================
-		 * Write to the buffer
-		 * ===================
-		 */
-		(*buffer++) = left_mix & 0xff;
-		(*buffer++) = ((left_mix >> 8) & 0x7f) | ((left_mix >> 24) & 0x80);
-		(*buffer++) = right_mix & 0xff;
-		(*buffer++) = ((right_mix >> 8) & 0x7f) | ((right_mix >> 24) & 0x80);
-	}
-
-	_WM_Unlock(&mdi->lock);
-	return buffer_used;
-}
-
 static int *WM_Mix_Gauss(midi * handle, int * buffer, unsigned long int count)
 {
+	if (!gauss_table) init_gauss();
+
 	struct _mdi *mdi = (struct _mdi *)handle;
 	unsigned long int data_pos;
 	signed int premix, left_mix, right_mix;
@@ -3748,7 +3643,7 @@ static int *WM_Mix_Gauss(midi * handle, int * buffer, unsigned long int count)
 	return buffer;
 }
 
-static int WM_GetOutput_Gauss(midi * handle, char * buffer,
+static int WM_DoGetOutput(midi * handle, char * buffer,
 		unsigned long int size) {
 	unsigned long int buffer_used = 0;
 	unsigned long int i;
@@ -3807,7 +3702,14 @@ static int WM_GetOutput_Gauss(midi * handle, char * buffer,
 		}
 
 		/* do mixing here */
-		tmp_buffer = WM_Mix_Gauss(handle, tmp_buffer, real_samples_to_mix);
+		if (mdi->info.mixer_options & WM_MO_ENHANCED_RESAMPLING)
+		{
+			tmp_buffer = WM_Mix_Gauss(handle, tmp_buffer, real_samples_to_mix);
+		}
+		else
+		{
+			tmp_buffer = WM_Mix_Linear(handle, tmp_buffer, real_samples_to_mix);
+		}
 
 		buffer_used += real_samples_to_mix * 4;
 		size -= (real_samples_to_mix << 2);
@@ -4172,11 +4074,7 @@ WM_SYMBOL int WildMidi_GetOutput(midi * handle, char *buffer, unsigned long int 
 				"(size not a multiple of 4)", 0);
 		return -1;
 	}
-	if (((struct _mdi *) handle)->info.mixer_options & WM_MO_ENHANCED_RESAMPLING) {
-		if (!gauss_table) init_gauss();
-		return WM_GetOutput_Gauss(handle, buffer, size);
-	}
-	return WM_GetOutput_Linear(handle, buffer, size);
+	return WM_DoGetOutput(handle, buffer, size);
 }
 
 WM_SYMBOL int WildMidi_SetOption(midi * handle, unsigned short int options,

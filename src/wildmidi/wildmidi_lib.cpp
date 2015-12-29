@@ -645,7 +645,7 @@ static int WM_LoadConfig(const char *config_file) {
 	char **line_tokens = NULL;
 	int token_count = 0;
 
-	config_buffer = (char *) _WM_BufferFile(config_file, &config_size);
+	config_buffer = (char *) _WM_BufferFile(config_file, &config_size, true);
 	if (!config_buffer) {
 		WM_FreePatches();
 		return -1;

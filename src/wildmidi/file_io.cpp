@@ -38,18 +38,56 @@
 #include "../files.h"
 #include "wm_error.h"
 #include "file_io.h"
+#include "pathexpander.h"
+#include "cmdlib.h"
 
-unsigned char *_WM_BufferFile(const char *filename, unsigned long int *size) 
+static PathExpander wmPathExpander;
+
+unsigned char *_WM_BufferFile(const char *filename, unsigned long int *size, bool ismain) 
 {
-	FileReader file;
+	FileReader *fp;
+	int lumpnum;
 
-	if (!file.Open(filename))
+	if (ismain)
+	{
+		wmPathExpander.openmode = PathExpander::OM_FILEORLUMP;
+		wmPathExpander.clearPathlist();
+#ifdef _WIN32
+		wmPathExpander.addToPathlist("C:\\TIMIDITY");
+		wmPathExpander.addToPathlist("\\TIMIDITY");
+		wmPathExpander.addToPathlist(progdir);
+#else
+		wmPathExpander.addToPathlist("/usr/local/lib/timidity");
+		wmPathExpander.addToPathlist("/etc/timidity");
+		wmPathExpander.addToPathlist("/etc");
+#endif
+	}
+
+	if (!(fp = wmPathExpander.openFileReader(filename, &lumpnum)))
+		return NULL;
+
+	if (ismain)
+	{
+		if (lumpnum > 0)
+		{
+			wmPathExpander.openmode = PathExpander::OM_LUMP;
+			wmPathExpander.clearPathlist();	// when reading from a PK3 we don't want to use any external path
+		}
+		else
+		{
+			wmPathExpander.openmode = PathExpander::OM_FILE;
+		}
+	}
+
+
+
+	if (fp == NULL)
 	{
 		_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_LOAD, filename, errno);
 		return NULL;
 	}
 
-	long fsize = file.GetLength();
+	long fsize = fp->GetLength();
 
 	if (fsize > WM_MAXFILESIZE) 
 	{
@@ -66,7 +104,8 @@ unsigned char *_WM_BufferFile(const char *filename, unsigned long int *size)
 		return NULL;
 	}
 
-	file.Read(data, fsize);
+	fp->Read(data, fsize);
+	delete fp;
 	data[fsize] = 0;
 	*size = fsize;
 	return data;

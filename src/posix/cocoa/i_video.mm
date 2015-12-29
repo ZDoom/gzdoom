@@ -47,6 +47,7 @@
 #include "m_argv.h"
 #include "r_renderer.h"
 #include "r_swrenderer.h"
+#include "st_console.h"
 #include "stats.h"
 #include "textures.h"
 #include "v_palette.h"
@@ -445,6 +446,8 @@ CocoaVideo::CocoaVideo(const int multisample)
 	[[glView openGLContext] makeCurrentContext];
 
 	[m_window setContentView:glView];
+
+	FConsoleWindow::GetInstance().Show(false);
 }
 
 void CocoaVideo::StartModeIterator(const int bits, const bool fullscreen)

@@ -45,6 +45,7 @@
 #include "gameconfigfile.h"
 #include "i_sound.h"
 #include "i_system.h"
+#include "st_console.h"
 #include "v_text.h"
 #include "x86.h"
 
@@ -184,6 +185,8 @@ void I_SetIWADInfo()
 
 void I_PrintStr(const char* const message)
 {
+	FConsoleWindow::GetInstance().AddText(message);
+
 	// Strip out any color escape sequences before writing to output
 	char* const copy = new char[strlen(message) + 1];
 	const char* srcp = message;

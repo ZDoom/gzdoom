@@ -29,7 +29,6 @@
 #ifdef _WIN32
 #include <windows.h>
 #else
-#define _GNU_SOURCE
 #include <unistd.h>
 #endif
 

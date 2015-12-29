@@ -2918,6 +2918,45 @@ void WildMidi_Renderer::ShortEvent(int status, int parm1, int parm2)
 
 void WildMidi_Renderer::LongEvent(const char *data, int len)
 {
+	// Check for Roland SysEx
+	if (len >= 11 &&			// Must be at least 11 bytes
+		data[len-1] == 0xF7 &&	// SysEx end
+		data[0] == 0xF0 &&		// SysEx
+		data[1] == 0x41 &&		// Roland
+		data[2] == 0x10 &&		// Device ID, defaults to 0x10
+		data[3] == 0x42 &&		// Model ID, 0x42 indicates a GS synth
+		data[4] == 0x12 &&		// The other end is sending data to us
+		data[5] == 0x40)		// We only care about addresses with this first byte
+	{
+		// Calculate checksum
+		int cksum = 0;
+		for (int i = 5; i < len - 2; ++i)
+		{
+			cksum += data[i];
+		}
+		cksum = 128 - (cksum & 0x7F);
+		if (data[len-2] == cksum)
+		{ // Check destination address
+			if (((data[6] & 0xF0) == 0x10) && data[7] == 0x15)
+			{ // Roland drum track setting
+				int sysex_ch = data[6] & 0x0F;
+				if (sysex_ch == 0)
+				{
+					sysex_ch = 9;
+				}
+				else if (sysex_ch <= 9)
+				{
+					sysex_ch -= 1;
+				}
+				_event_data ev = { sysex_ch, data[8] };
+				do_sysex_roland_drum_track((_mdi *)handle, &ev);
+			}
+			else if (data[6] == 0x00 && data[7] == 0x7F && data[8] == 0x00)
+			{ // Roland GS reset
+				do_sysex_roland_reset((_mdi *)handle, NULL);
+			}
+		}
+	}
 }
 
 void WildMidi_Renderer::ComputeOutput(float *fbuffer, int len)

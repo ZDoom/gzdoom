@@ -915,6 +915,7 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	nodebuild_extract.cpp
 	nodebuild_gl.cpp
 	nodebuild_utility.cpp
+	pathexpander.cpp
 	p_3dfloors.cpp
 	p_3dmidtex.cpp
 	p_acs.cpp

@@ -21,6 +21,7 @@
 #define TIMIDITY_H
 
 #include "doomtype.h"
+#include "pathexpander.h"
 
 class FileReader;
 
@@ -172,16 +173,7 @@ extern __inline__ double pow_x87_inline(double x,double y)
 common.h
 */
 
-#define OM_FILEORLUMP 0
-#define OM_LUMP 1
-#define OM_FILE 2
-
-extern void add_to_pathlist(const char *s);
-extern void clear_pathlist();
 extern void *safe_malloc(size_t count);
-
-FileReader *open_filereader(const char *name, int open, int *plumpnum);
-extern int openmode;
 
 /*
 controls.h
@@ -627,6 +619,7 @@ int LoadConfig(const char *filename);
 int LoadDMXGUS();
 extern int LoadConfig();
 extern void FreeAll();
+extern PathExpander pathExpander;
 
 extern ToneBank *tonebank[MAXBANK];
 extern ToneBank *drumset[MAXBANK];

@@ -42,10 +42,10 @@ CVAR(Int, gus_memsize, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 namespace Timidity
 {
 
+PathExpander pathExpander;
 ToneBank *tonebank[MAXBANK], *drumset[MAXBANK];
 
 static FString def_instr_name;
-int openmode = OM_FILEORLUMP;
 
 static int read_config_file(const char *name, bool ismain)
 {
@@ -62,21 +62,21 @@ static int read_config_file(const char *name, bool ismain)
 		return (-1);
 	}
 
-	if (ismain) openmode = OM_FILEORLUMP;
+	if (ismain) pathExpander.openmode = PathExpander::OM_FILEORLUMP;
 
-	if (!(fp = open_filereader(name, openmode, &lumpnum)))
+	if (!(fp = pathExpander.openFileReader(name, &lumpnum)))
 		return -1;
 
 	if (ismain)
 	{
 		if (lumpnum > 0)
 		{
-			openmode = OM_LUMP;
-			clear_pathlist();	// when reading from a PK3 we won't want to use any external path
+			pathExpander.openmode = PathExpander::OM_LUMP;
+			pathExpander.clearPathlist();	// when reading from a PK3 we don't want to use any external path
 		}
 		else
 		{
-			openmode = OM_FILE;
+			pathExpander.openmode = PathExpander::OM_FILE;
 		}
 	}
 
@@ -288,7 +288,7 @@ static int read_config_file(const char *name, bool ismain)
 				return -2;
 			}
 			for (i = 1; i < words; i++)
-				add_to_pathlist(w[i]);
+				pathExpander.addToPathlist(w[i]);
 		}
 		else if (!strcmp(w[0], "source"))
 		{
@@ -532,15 +532,15 @@ int LoadConfig(const char *filename)
 	 *			  file itself since that file should contain any other directory
 	 *			  that needs to be added to the search path.
 	 */
-	clear_pathlist();
+	pathExpander.clearPathlist();
 #ifdef _WIN32
-	add_to_pathlist("C:\\TIMIDITY");
-	add_to_pathlist("\\TIMIDITY");
-	add_to_pathlist(progdir);
+	pathExpander.addToPathlist("C:\\TIMIDITY");
+	pathExpander.addToPathlist("\\TIMIDITY");
+	pathExpander.addToPathlist(progdir);
 #else
-	add_to_pathlist("/usr/local/lib/timidity");
-	add_to_pathlist("/etc/timidity");
-	add_to_pathlist("/etc");
+	pathExpander.addToPathlist("/usr/local/lib/timidity");
+	pathExpander.addToPathlist("/etc/timidity");
+	pathExpander.addToPathlist("/etc");
 #endif
 
 	/* Some functions get aggravated if not even the standard banks are available. */
@@ -579,10 +579,10 @@ int LoadDMXGUS()
 	if (ultradir.IsNotEmpty())
 	{
 		ultradir += "/midi";
-		add_to_pathlist(ultradir.GetChars());
+		pathExpander.addToPathlist(ultradir.GetChars());
 	}
 	// Load DMXGUS lump and patches from gus_patchdir
-	add_to_pathlist(gus_patchdir);
+	pathExpander.addToPathlist(gus_patchdir);
 
 	char readbuffer[1024];
 	long size = data.GetLength();

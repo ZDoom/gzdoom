@@ -159,12 +159,12 @@ static Instrument *load_instrument(Renderer *song, const char *name, int percuss
 	if (!name) return 0;
 
 	/* Open patch file */
-	if ((fp = open_filereader(name, openmode, NULL)) == NULL)
+	if ((fp = pathExpander.openFileReader(name, NULL)) == NULL)
 	{
 		/* Try with various extensions */
 		FString tmp = name;
 		tmp += ".pat";
-		if ((fp = open_filereader(tmp, openmode, NULL)) == NULL)
+		if ((fp = pathExpander.openFileReader(tmp, NULL)) == NULL)
 		{
 #ifdef __unix__			// Windows isn't case-sensitive.
 			tmp.ToUpper();

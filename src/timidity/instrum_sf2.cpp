@@ -1502,7 +1502,7 @@ void SFFile::ApplyGeneratorsToRegion(SFGenComposite *gen, SFSample *sfsamp, Rend
 
 void SFFile::LoadSample(SFSample *sample)
 {
-	FileReader *fp = open_filereader(Filename, openmode, NULL);
+	FileReader *fp = pathExpander.openFileReader(Filename, NULL);
 	DWORD i;
 
 	if (fp == NULL)

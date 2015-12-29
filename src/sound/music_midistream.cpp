@@ -240,6 +240,7 @@ EMidiDevice MIDIStreamer::SelectMIDIDevice(EMidiDevice device)
 #ifdef HAVE_FLUIDSYNTH
 	case -5:		return MDEV_FLUIDSYNTH;
 #endif
+	case -6:		return MDEV_WILDMIDI;
 	default:
 		#ifdef _WIN32
 					return MDEV_MMAPI;
@@ -291,6 +292,9 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype) const
 
 	case MDEV_TIMIDITY:
 		return new TimidityPPMIDIDevice;
+
+	case MDEV_WILDMIDI:
+		return new WildMIDIDevice;
 
 	default:
 		return NULL;

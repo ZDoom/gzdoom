@@ -11,9 +11,9 @@ static DWORD	nummididevices;
 static bool		nummididevicesset;
 
 #ifdef HAVE_FLUIDSYNTH
-#define NUM_DEF_DEVICES 5
+#define NUM_DEF_DEVICES 6
 #else
-#define NUM_DEF_DEVICES 4
+#define NUM_DEF_DEVICES 5
 #endif
 
 static void AddDefaultMidiDevices(FOptionValues *opt)
@@ -33,8 +33,10 @@ static void AddDefaultMidiDevices(FOptionValues *opt)
 	pair[p+1].Value = -3.0;
 	pair[p+2].Text = "TiMidity++";
 	pair[p+2].Value = -2.0;
-	pair[p+3].Text = "Sound System";
-	pair[p+3].Value = -1.0;
+	pair[p+3].Text = "WildMidi";
+	pair[p+3].Value = -6.0;
+	pair[p+4].Text = "Sound System";
+	pair[p+4].Value = -1.0;
 
 }
 
@@ -70,7 +72,7 @@ CUSTOM_CVAR (Int, snd_mididevice, -1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	if (!nummididevicesset)
 		return;
 
-	if ((self >= (signed)nummididevices) || (self < -5))
+	if ((self >= (signed)nummididevices) || (self < -6))
 	{
 		Printf ("ID out of range. Using default device.\n");
 		self = 0;
@@ -196,8 +198,8 @@ CCMD (snd_listmididevices)
 
 CUSTOM_CVAR(Int, snd_mididevice, -1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
-	if (self < -5)
-		self = -5;
+	if (self < -6)
+		self = -6;
 	else if (self > -1)
 		self = -1;
 	else
@@ -211,6 +213,7 @@ void I_BuildMIDIMenuList (FOptionValues *opt)
 
 CCMD (snd_listmididevices)
 {
+	Printf("%s-6. WildMidi\n", -6 == snd_mididevice ? TEXTCOLOR_BOLD : "");
 #ifdef HAVE_FLUIDSYNTH
 	Printf("%s-5. FluidSynth\n", -5 == snd_mididevice ? TEXTCOLOR_BOLD : "");
 #endif

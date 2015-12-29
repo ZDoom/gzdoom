@@ -189,6 +189,7 @@ void I_ShutdownMusic(void)
 		assert (currSong == NULL);
 	}
 	Timidity::FreeAll();
+	WildMidi_Shutdown();
 #ifdef _WIN32
 	I_ShutdownMusicWin32();
 #endif // _WIN32

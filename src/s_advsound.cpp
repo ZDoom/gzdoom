@@ -1372,6 +1372,7 @@ static void S_AddSNDINFO (int lump)
 				else if (sc.Compare("default")) MidiDevices[nm] = MDEV_DEFAULT;
 				else if (sc.Compare("fluidsynth")) MidiDevices[nm] = MDEV_FLUIDSYNTH;
 				else if (sc.Compare("gus")) MidiDevices[nm] = MDEV_GUS;
+				else if (sc.Compare("wildmidi")) MidiDevices[nm] = MDEV_WILDMIDI;
 				else sc.ScriptError("Unknown MIDI device %s\n", sc.String);
 				}
 				break;

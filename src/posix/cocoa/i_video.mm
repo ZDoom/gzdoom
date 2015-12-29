@@ -1219,7 +1219,7 @@ bool I_SetCursor(FTexture* cursorpic)
 		// Create image from representation and set it as cursor
 
 		NSData* imageData = [bitmapImageRep representationUsingType:NSPNGFileType
-														 properties:nil];
+														 properties:[NSDictionary dictionary]];
 		NSImage* cursorImage = [[NSImage alloc] initWithData:imageData];
 
 		cursor = [[NSCursor alloc] initWithImage:cursorImage

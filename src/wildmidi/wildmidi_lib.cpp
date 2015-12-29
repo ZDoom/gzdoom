@@ -573,13 +573,15 @@ static inline int wm_isdigit(int c) {
 }
 
 #define TOKEN_CNT_INC 8
-static char** WM_LC_Tokenize_Line(char *line_data) {
+static char** WM_LC_Tokenize_Line(char *line_data) 
+{
 	int line_length = strlen(line_data);
 	int token_data_length = 0;
 	int line_ofs = 0;
 	int token_start = 0;
 	char **token_data = NULL;
 	int token_count = 0;
+	bool in_quotes = false;
 
 	if (line_length == 0)
 		return NULL;
@@ -589,8 +591,11 @@ static char** WM_LC_Tokenize_Line(char *line_data) {
 		if (line_data[line_ofs] == '#') {
 			break;
 		}
-
-		if ((line_data[line_ofs] == ' ') || (line_data[line_ofs] == '\t')) {
+		if (line_data[line_ofs] == '"')
+		{
+			in_quotes = !in_quotes;
+		}
+		else if (!in_quotes && ((line_data[line_ofs] == ' ') || (line_data[line_ofs] == '\t'))) {
 			/* whitespace means we aren't in a token */
 			if (token_start) {
 				token_start = 0;

@@ -198,8 +198,8 @@ CCMD (snd_listmididevices)
 
 CUSTOM_CVAR(Int, snd_mididevice, -1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
-	if (self < -5)
-		self = -5;
+	if (self < -6)
+		self = -6;
 	else if (self > -1)
 		self = -1;
 	else

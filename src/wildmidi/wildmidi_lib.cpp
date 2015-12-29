@@ -43,18 +43,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-/*
-#ifdef _WIN32
-#include <windows.h>
-#include <tchar.h>
-*/
-#undef strcasecmp
-#define strcasecmp _stricmp
-#undef strncasecmp
-#define strncasecmp _strnicmp
-
-
-
 #include "common.h"
 #include "wm_error.h"
 #include "file_io.h"
@@ -71,9 +59,6 @@
 #endif
 #define IS_ABSOLUTE_PATH(f)	(IS_DIR_SEPARATOR((f)[0]) || HAS_DRIVE_SPEC((f)))
 
-
-// Why is this shit even being used...? :(
-#define __builtin_expect(a, b) a
 
 /*
  * =========================
@@ -699,7 +684,7 @@ static int WM_LoadConfig(const char *config_file) {
 			if (config_ptr != line_start_ptr) {
 				line_tokens = WM_LC_Tokenize_Line(&config_buffer[line_start_ptr]);
 				if (line_tokens) {
-					if (strcasecmp(line_tokens[0], "dir") == 0) {
+					if (stricmp(line_tokens[0], "dir") == 0) {
 						free(config_dir);
 						if (!line_tokens[1]) {
 							_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_INVALID_ARG,
@@ -724,7 +709,7 @@ static int WM_LoadConfig(const char *config_file) {
 							config_dir[strlen(config_dir) + 1] = '\0';
 							config_dir[strlen(config_dir)] = '/';
 						}
-					} else if (strcasecmp(line_tokens[0], "source") == 0) {
+					} else if (stricmp(line_tokens[0], "source") == 0) {
 						char *new_config = NULL;
 						if (!line_tokens[1]) {
 							_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_INVALID_ARG,
@@ -772,7 +757,7 @@ static int WM_LoadConfig(const char *config_file) {
 							return -1;
 						}
 						free(new_config);
-					} else if (strcasecmp(line_tokens[0], "bank") == 0) {
+					} else if (stricmp(line_tokens[0], "bank") == 0) {
 						if (!line_tokens[1] || !wm_isdigit(line_tokens[1][0])) {
 							_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_INVALID_ARG,
 									"(syntax error in bank line)", 0);
@@ -785,7 +770,7 @@ static int WM_LoadConfig(const char *config_file) {
 							return -1;
 						}
 						patchid = (atoi(line_tokens[1]) & 0xFF) << 8;
-					} else if (strcasecmp(line_tokens[0], "drumset") == 0) {
+					} else if (stricmp(line_tokens[0], "drumset") == 0) {
 						if (!line_tokens[1] || !wm_isdigit(line_tokens[1][0])) {
 							_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_INVALID_ARG,
 									"(syntax error in drumset line)", 0);
@@ -798,7 +783,7 @@ static int WM_LoadConfig(const char *config_file) {
 							return -1;
 						}
 						patchid = ((atoi(line_tokens[1]) & 0xFF) << 8) | 0x80;
-					} else if (strcasecmp(line_tokens[0], "reverb_room_width") == 0) {
+					} else if (stricmp(line_tokens[0], "reverb_room_width") == 0) {
 						if (!line_tokens[1] || !wm_isdigit(line_tokens[1][0])) {
 							_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_INVALID_ARG,
 									"(syntax error in reverb_room_width line)",
@@ -823,7 +808,7 @@ static int WM_LoadConfig(const char *config_file) {
 									0);
 							reverb_room_width = 100.0f;
 						}
-					} else if (strcasecmp(line_tokens[0], "reverb_room_length") == 0) {
+					} else if (stricmp(line_tokens[0], "reverb_room_length") == 0) {
 						if (!line_tokens[1] || !wm_isdigit(line_tokens[1][0])) {
 							_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_INVALID_ARG,
 									"(syntax error in reverb_room_length line)",
@@ -848,7 +833,7 @@ static int WM_LoadConfig(const char *config_file) {
 									0);
 							reverb_room_length = 100.0f;
 						}
-					} else if (strcasecmp(line_tokens[0], "reverb_listener_posx") == 0) {
+					} else if (stricmp(line_tokens[0], "reverb_listener_posx") == 0) {
 						if (!line_tokens[1] || !wm_isdigit(line_tokens[1][0])) {
 							_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_INVALID_ARG,
 									"(syntax error in reverb_listen_posx line)",
@@ -869,7 +854,7 @@ static int WM_LoadConfig(const char *config_file) {
 									0);
 							reverb_listen_posx = reverb_room_width / 2.0f;
 						}
-					} else if (strcasecmp(line_tokens[0],
+					} else if (stricmp(line_tokens[0],
 							"reverb_listener_posy") == 0) {
 						if (!line_tokens[1] || !wm_isdigit(line_tokens[1][0])) {
 							_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_INVALID_ARG,
@@ -891,13 +876,13 @@ static int WM_LoadConfig(const char *config_file) {
 									0);
 							reverb_listen_posy = reverb_room_length * 0.75f;
 						}
-					} else if (strcasecmp(line_tokens[0],
+					} else if (stricmp(line_tokens[0],
 							"guspat_editor_author_cant_read_so_fix_release_time_for_me")
 							== 0) {
 						fix_release = 1;
-					} else if (strcasecmp(line_tokens[0], "auto_amp") == 0) {
+					} else if (stricmp(line_tokens[0], "auto_amp") == 0) {
 						auto_amp = 1;
-					} else if (strcasecmp(line_tokens[0], "auto_amp_with_amp")
+					} else if (stricmp(line_tokens[0], "auto_amp_with_amp")
 							== 0) {
 						auto_amp = 1;
 						auto_amp_with_amp = 1;
@@ -1038,7 +1023,7 @@ static int WM_LoadConfig(const char *config_file) {
 								return -1;
 							}
 						}
-						if (strncasecmp(
+						if (strnicmp(
 								&tmp_patch->filename[strlen(tmp_patch->filename)
 										- 4], ".pat", 4) != 0) {
 							strcat(tmp_patch->filename, ".pat");
@@ -1054,7 +1039,7 @@ static int WM_LoadConfig(const char *config_file) {
 
 						token_count = 0;
 						while (line_tokens[token_count]) {
-							if (strncasecmp(line_tokens[token_count], "amp=", 4)
+							if (strnicmp(line_tokens[token_count], "amp=", 4)
 									== 0) {
 								if (!wm_isdigit(line_tokens[token_count][4])) {
 									_WM_ERROR(__FUNCTION__, __LINE__,
@@ -1065,7 +1050,7 @@ static int WM_LoadConfig(const char *config_file) {
 											&line_tokens[token_count][4]) << 10)
 											/ 100;
 								}
-							} else if (strncasecmp(line_tokens[token_count],
+							} else if (strnicmp(line_tokens[token_count],
 									"note=", 5) == 0) {
 								if (!wm_isdigit(line_tokens[token_count][5])) {
 									_WM_ERROR(__FUNCTION__, __LINE__,
@@ -1075,7 +1060,7 @@ static int WM_LoadConfig(const char *config_file) {
 									tmp_patch->note = atoi(
 											&line_tokens[token_count][5]);
 								}
-							} else if (strncasecmp(line_tokens[token_count],
+							} else if (strnicmp(line_tokens[token_count],
 									"env_time", 8) == 0) {
 								if ((!wm_isdigit(line_tokens[token_count][8]))
 										|| (!wm_isdigit(
@@ -1110,7 +1095,7 @@ static int WM_LoadConfig(const char *config_file) {
 										}
 									}
 								}
-							} else if (strncasecmp(line_tokens[token_count],
+							} else if (strnicmp(line_tokens[token_count],
 									"env_level", 9) == 0) {
 								if ((!wm_isdigit(line_tokens[token_count][9]))
 										|| (!wm_isdigit(
@@ -1144,16 +1129,16 @@ static int WM_LoadConfig(const char *config_file) {
 										}
 									}
 								}
-							} else if (strcasecmp(line_tokens[token_count],
+							} else if (stricmp(line_tokens[token_count],
 									"keep=loop") == 0) {
 								tmp_patch->keep |= SAMPLE_LOOP;
-							} else if (strcasecmp(line_tokens[token_count],
+							} else if (stricmp(line_tokens[token_count],
 									"keep=env") == 0) {
 								tmp_patch->keep |= SAMPLE_ENVELOPE;
-							} else if (strcasecmp(line_tokens[token_count],
+							} else if (stricmp(line_tokens[token_count],
 									"remove=sustain") == 0) {
 								tmp_patch->remove |= SAMPLE_SUSTAIN;
-							} else if (strcasecmp(line_tokens[token_count],
+							} else if (stricmp(line_tokens[token_count],
 									"remove=clamped") == 0) {
 								tmp_patch->remove |= SAMPLE_CLAMPED;
 							}
@@ -1471,15 +1456,15 @@ static inline unsigned long int get_inc(struct _mdi *mdi, struct _note *nte) {
 	signed long int note_f;
 	unsigned long int freq;
 
-	if (__builtin_expect((nte->patch->note != 0), 0)) {
+	if (nte->patch->note != 0) {
 		note_f = nte->patch->note * 100;
 	} else {
 		note_f = (nte->noteid & 0x7f) * 100;
 	}
 	note_f += mdi->channel[ch].pitch_adjust;
-	if (__builtin_expect((note_f < 0), 0)) {
+	if (note_f < 0) {
 		note_f = 0;
-	} else if (__builtin_expect((note_f > 12700), 0)) {
+	} else if (note_f > 12700) {
 		note_f = 12700;
 	}
 	freq = freq_table[(note_f % 1200)] >> (10 - (note_f / 1200));
@@ -1695,7 +1680,7 @@ static void do_control_channel_balance(struct _mdi *mdi,
 static void do_control_channel_pan(struct _mdi *mdi, struct _event_data *data) {
 	unsigned char ch = data->channel;
 
-	mdi->channel[ch].pan = signed char(data->data - 64);
+	mdi->channel[ch].pan = (signed char)(data->data - 64);
 	do_pan_adjust(mdi, ch);
 }
 
@@ -3214,7 +3199,7 @@ static int *WM_Mix_Linear(midi * handle, int * buffer, unsigned long int count)
 	do {
 		note_data = mdi->note;
 		left_mix = right_mix = 0;
-		if (__builtin_expect((note_data != NULL), 1)) {
+		if (note_data != NULL) {
 			while (note_data) {
 				/*
 				 * ===================
@@ -3243,44 +3228,38 @@ static int *WM_Mix_Linear(midi * handle, int * buffer, unsigned long int count)
 				 * ========================
 				 */
 				note_data->sample_pos += note_data->sample_inc;
-				if (__builtin_expect(
-						(note_data->sample_pos > note_data->sample->loop_end),
-						0)) {
+				if (note_data->sample_pos > note_data->sample->loop_end) {
 					if (note_data->modes & SAMPLE_LOOP) {
 						note_data->sample_pos =
 								note_data->sample->loop_start
 										+ ((note_data->sample_pos
 												- note_data->sample->loop_start)
 												% note_data->sample->loop_size);
-					} else if (__builtin_expect(
-							(note_data->sample_pos
-									>= note_data->sample->data_length),
-							0)) {
-						if (__builtin_expect((note_data->replay == NULL), 1)) {
+					} else if (note_data->sample_pos >= note_data->sample->data_length) {
+						if (note_data->replay == NULL) {
 							goto KILL_NOTE;
 						}
 						goto RESTART_NOTE;
 					}
 				}
 
-				if (__builtin_expect((note_data->env_inc == 0), 0)) {
+				if (note_data->env_inc == 0) {
 					note_data = note_data->next;
 					continue;
 				}
 
 				note_data->env_level += note_data->env_inc;
-				if (__builtin_expect((note_data->env_level > 4194304), 0)) {
+				if (note_data->env_level > 4194304) {
 					note_data->env_level =
 							note_data->sample->env_target[note_data->env];
 				}
-				if (__builtin_expect(
-						((note_data->env_inc < 0)
-								&& (note_data->env_level
-										> note_data->sample->env_target[note_data->env]))
-						|| ((note_data->env_inc > 0)
-								&& (note_data->env_level
-										< note_data->sample->env_target[note_data->env])),
-						1)) {
+				if  (((note_data->env_inc < 0)
+							&& (note_data->env_level
+									> note_data->sample->env_target[note_data->env]))
+					|| ((note_data->env_inc > 0)
+							&& (note_data->env_level
+									< note_data->sample->env_target[note_data->env])))
+					{
 					note_data = note_data->next;
 					continue;
 				}
@@ -3316,7 +3295,7 @@ static int *WM_Mix_Linear(midi * handle, int * buffer, unsigned long int count)
 					}
 					break;
 				case 5:
-					if (__builtin_expect((note_data->env_level == 0), 1)) {
+					if (note_data->env_level == 0) {
 						goto KILL_NOTE;
 					}
 					/* sample release */
@@ -3326,7 +3305,7 @@ static int *WM_Mix_Linear(midi * handle, int * buffer, unsigned long int count)
 					note_data = note_data->next;
 					continue;
 				case 6:
-					if (__builtin_expect((note_data->replay != NULL), 1)) {
+					if (note_data->replay != NULL) {
 						RESTART_NOTE: note_data->active = 0;
 						{
 							struct _note *prev_note = NULL;
@@ -3421,7 +3400,7 @@ static int *WM_Mix_Gauss(midi * handle, int * buffer, unsigned long int count)
 	do {
 		note_data = mdi->note;
 		left_mix = right_mix = 0;
-		if (__builtin_expect((note_data != NULL), 1)) {
+		if (note_data != NULL) {
 			while (note_data) {
 				/*
 				 * ===================
@@ -3483,44 +3462,40 @@ static int *WM_Mix_Gauss(midi * handle, int * buffer, unsigned long int count)
 				 * ========================
 				 */
 				note_data->sample_pos += note_data->sample_inc;
-				if (__builtin_expect(
-						(note_data->sample_pos > note_data->sample->loop_end),
-						0)) {
+				if (note_data->sample_pos > note_data->sample->loop_end)
+				{
 					if (note_data->modes & SAMPLE_LOOP) {
 						note_data->sample_pos =
 								note_data->sample->loop_start
 										+ ((note_data->sample_pos
 												- note_data->sample->loop_start)
 												% note_data->sample->loop_size);
-					} else if (__builtin_expect(
-							(note_data->sample_pos
-									>= note_data->sample->data_length),
-							0)) {
-						if (__builtin_expect((note_data->replay == NULL), 1)) {
+					} else if (note_data->sample_pos >= note_data->sample->data_length) {
+						if (note_data->replay == NULL) {
 							goto KILL_NOTE;
 						}
 						goto RESTART_NOTE;
 					}
 				}
 
-				if (__builtin_expect((note_data->env_inc == 0), 0)) {
+				if (note_data->env_inc == 0) {
 					note_data = note_data->next;
 					continue;
 				}
 
 				note_data->env_level += note_data->env_inc;
-				if (__builtin_expect((note_data->env_level > 4194304), 0)) {
+				if (note_data->env_level > 4194304) {
 					note_data->env_level =
 							note_data->sample->env_target[note_data->env];
 				}
-				if (__builtin_expect(
+				if (
 						((note_data->env_inc < 0)
 								&& (note_data->env_level
 										> note_data->sample->env_target[note_data->env]))
 						|| ((note_data->env_inc > 0)
 								&& (note_data->env_level
-										< note_data->sample->env_target[note_data->env])),
-						1)) {
+										< note_data->sample->env_target[note_data->env]))
+						) {
 					note_data = note_data->next;
 					continue;
 				}
@@ -3556,7 +3531,7 @@ static int *WM_Mix_Gauss(midi * handle, int * buffer, unsigned long int count)
 					}
 					break;
 				case 5:
-					if (__builtin_expect((note_data->env_level == 0), 1)) {
+					if (note_data->env_level == 0) {
 						goto KILL_NOTE;
 					}
 					/* sample release */
@@ -3566,7 +3541,7 @@ static int *WM_Mix_Gauss(midi * handle, int * buffer, unsigned long int count)
 					note_data = note_data->next;
 					continue;
 				case 6:
-					if (__builtin_expect((note_data->replay != NULL), 1)) {
+					if (note_data->replay != NULL) {
 						RESTART_NOTE: note_data->active = 0;
 						{
 							struct _note *prev_note = NULL;
@@ -3683,7 +3658,7 @@ static int WM_DoGetOutput(midi * handle, char * buffer,
 	out_buffer = tmp_buffer;
 
 	do {
-		if (__builtin_expect((!mdi->samples_to_mix), 0)) {
+		if (!mdi->samples_to_mix) {
 			while ((!mdi->samples_to_mix) && (event->do_event)) {
 				event->do_event(mdi, &event->event_data);
 				event++;
@@ -3704,7 +3679,7 @@ static int WM_DoGetOutput(midi * handle, char * buffer,
 				}
 			}
 		}
-		if (__builtin_expect((mdi->samples_to_mix > (size >> 2)), 1)) {
+		if (mdi->samples_to_mix > (size >> 2)) {
 			real_samples_to_mix = size >> 2;
 		} else {
 			real_samples_to_mix = mdi->samples_to_mix;
@@ -4028,7 +4003,7 @@ WM_SYMBOL int WildMidi_FastSeek(midi * handle, unsigned long int *sample_pos) {
 	_WM_reset_reverb(mdi->reverb);
 
 	while (count) {
-		if (__builtin_expect((!mdi->samples_to_mix), 0)) {
+		if (!mdi->samples_to_mix) {
 			while ((!mdi->samples_to_mix) && (event->do_event)) {
 				event->do_event(mdi, &event->event_data);
 				event++;
@@ -4046,7 +4021,7 @@ WM_SYMBOL int WildMidi_FastSeek(midi * handle, unsigned long int *sample_pos) {
 			}
 		}
 
-		if (__builtin_expect((mdi->samples_to_mix > count), 0)) {
+		if (mdi->samples_to_mix > count) {
 			real_samples_to_mix = count;
 		} else {
 			real_samples_to_mix = mdi->samples_to_mix;
@@ -4078,24 +4053,24 @@ WM_SYMBOL int WildMidi_FastSeek(midi * handle, unsigned long int *sample_pos) {
 }
 
 WM_SYMBOL int WildMidi_GetOutput(midi * handle, char *buffer, unsigned long int size) {
-	if (__builtin_expect((!WM_Initialized), 0)) {
+	if (!WM_Initialized) {
 		_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_NOT_INIT, NULL, 0);
 		return -1;
 	}
-	if (__builtin_expect((handle == NULL), 0)) {
+	if (handle == NULL) {
 		_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_INVALID_ARG, "(NULL handle)",
 				0);
 		return -1;
 	}
-	if (__builtin_expect((buffer == NULL), 0)) {
+	if (buffer == NULL) {
 		_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_INVALID_ARG,
 				"(NULL buffer pointer)", 0);
 		return -1;
 	}
-	if (__builtin_expect((size == 0), 0)) {
+	if (size == 0) {
 		return 0;
 	}
-	if (__builtin_expect((!!(size % 4)), 0)) {
+	if (!!(size % 4)) {
 		_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_INVALID_ARG,
 				"(size not a multiple of 4)", 0);
 		return -1;

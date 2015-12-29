@@ -219,25 +219,6 @@ protected:
 #endif
 };
 
-class WildMidiMIDIDevice : public PseudoMIDIDevice
-{
-public:
-	WildMidiMIDIDevice();
-	~WildMidiMIDIDevice();
-
-	int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
-	bool Preprocess(MIDIStreamer *song, bool looping);
-	bool IsOpen() const;
-
-protected:
-
-	midi *mMidi;
-	bool mLoop;
-
-	static bool FillStream(SoundStream *stream, void *buff, int len, void *userdata);
-};
-
-
 // Base class for software synthesizer MIDI output devices ------------------
 
 class SoftSynthMIDIDevice : public MIDIDevice
@@ -348,6 +329,26 @@ public:
 
 protected:
 	FILE *File;
+};
+
+// WildMidi implementation of a MIDI device ---------------------------------
+
+class WildMIDIDevice : public SoftSynthMIDIDevice
+{
+public:
+	WildMIDIDevice();
+	~WildMIDIDevice();
+
+	int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
+	void PrecacheInstruments(const WORD *instruments, int count);
+	FString GetStats();
+
+protected:
+	WildMidi_Renderer *Renderer;
+
+	void HandleEvent(int status, int parm1, int parm2);
+	void HandleLongEvent(const BYTE *data, int len);
+	void ComputeOutput(float *buffer, int len);
 };
 
 // FluidSynth implementation of a MIDI device -------------------------------

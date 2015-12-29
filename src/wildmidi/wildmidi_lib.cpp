@@ -3643,6 +3643,18 @@ static int *WM_Mix_Gauss(midi * handle, int * buffer, unsigned long int count)
 	return buffer;
 }
 
+int *WM_Mix(midi *handle, int *buffer, unsigned long count)
+{
+	if (((struct _mdi *)handle)->info.mixer_options & WM_MO_ENHANCED_RESAMPLING)
+	{
+		return WM_Mix_Gauss(handle, buffer, count);
+	}
+	else
+	{
+		return WM_Mix_Linear(handle, buffer, count);
+	}
+}
+
 static int WM_DoGetOutput(midi * handle, char * buffer,
 		unsigned long int size) {
 	unsigned long int buffer_used = 0;
@@ -3702,14 +3714,7 @@ static int WM_DoGetOutput(midi * handle, char * buffer,
 		}
 
 		/* do mixing here */
-		if (mdi->info.mixer_options & WM_MO_ENHANCED_RESAMPLING)
-		{
-			tmp_buffer = WM_Mix_Gauss(handle, tmp_buffer, real_samples_to_mix);
-		}
-		else
-		{
-			tmp_buffer = WM_Mix_Linear(handle, tmp_buffer, real_samples_to_mix);
-		}
+		tmp_buffer = WM_Mix(handle, tmp_buffer, real_samples_to_mix);
 
 		buffer_used += real_samples_to_mix * 4;
 		size -= (real_samples_to_mix << 2);
@@ -3805,6 +3810,11 @@ WM_SYMBOL int WildMidi_Init(const char * config_file, unsigned short int rate,
 	WM_Initialized = 1;
 
 	return 0;
+}
+
+WM_SYMBOL int WildMidi_GetSampleRate(void)
+{
+	return _WM_SampleRate;
 }
 
 WM_SYMBOL int WildMidi_MasterVolume(unsigned char master_volume) {
@@ -3944,6 +3954,23 @@ WildMidi_OpenBuffer(unsigned char *midibuffer, unsigned long int size) {
 		}
 	}
 
+	return ret;
+}
+
+midi *WildMidi_NewMidi() {
+	midi * ret = NULL;
+
+	if (!WM_Initialized) {
+		_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_NOT_INIT, NULL, 0);
+		return NULL;
+	}
+	ret = Init_MDI();
+	if (ret) {
+		if (add_handle(ret) != 0) {
+			WildMidi_Close(ret);
+			ret = NULL;
+		}
+	}
 	return ret;
 }
 
@@ -4196,4 +4223,111 @@ WM_SYMBOL int WildMidi_Shutdown(void) {
 	WM_Initialized = 0;
 
 	return 0;
+}
+
+WildMidi_Renderer::WildMidi_Renderer()
+{
+	handle = WildMidi_NewMidi();
+}
+
+WildMidi_Renderer::~WildMidi_Renderer()
+{
+	WildMidi_Close((midi *)handle);
+}
+
+void WildMidi_Renderer::ShortEvent(int status, int parm1, int parm2)
+{
+	_mdi *mdi = (_mdi *)handle;
+	_event_data ev;
+
+	ev.channel = status & 0x0F;
+	switch ((status & 0xF0) >> 4)	// command
+	{
+	case 0x8:
+		ev.data = (parm1 << 8) | parm2;
+		do_note_off(mdi, &ev);
+		break;
+
+	case 0x9:
+		ev.data = (parm1 << 8) | parm2;
+		do_note_on(mdi, &ev);
+		break;
+
+	case 0xA:
+		ev.data = (parm1 << 8) | parm2;
+		do_aftertouch(mdi, &ev);
+		break;
+
+	case 0xC:
+		ev.data = parm1;
+		do_patch(mdi, &ev);
+		break;
+
+	case 0xD:
+		ev.data = parm1;
+		do_channel_pressure(mdi, &ev);
+		break;
+
+	case 0xE:
+		ev.data = parm1 | (parm2 << 7);
+		do_pitch(mdi, &ev);
+		break;
+
+	case 0xB:	// Controllers
+		ev.data = parm2;
+		switch (parm1)
+		{
+		case 0:		do_control_bank_select(mdi, &ev);				break;
+		case 6:		do_control_data_entry_course(mdi, &ev);			break;	// [sic]
+		case 7:		do_control_channel_volume(mdi, &ev);			break;
+		case 8:		do_control_channel_balance(mdi, &ev);			break;
+		case 10:	do_control_channel_pan(mdi, &ev);				break;
+		case 11:	do_control_channel_expression(mdi, &ev);		break;
+		case 38:	do_control_data_entry_fine(mdi, &ev);			break;
+		case 64:	do_control_channel_hold(mdi, &ev);				break;
+		case 96:	do_control_data_increment(mdi, &ev);			break;
+		case 97:	do_control_data_decrement(mdi, &ev);			break;
+		case 98:
+		case 99:	do_control_non_registered_param(mdi, &ev);		break;
+		case 100:	do_control_registered_param_fine(mdi, &ev);		break;
+		case 101:	do_control_registered_param_course(mdi, &ev);	break;	// [sic]
+		case 120:	do_control_channel_sound_off(mdi, &ev);			break;
+		case 121:	do_control_channel_controllers_off(mdi, &ev);	break;
+		case 123:	do_control_channel_notes_off(mdi, &ev);			break;
+		}
+	}
+}
+
+void WildMidi_Renderer::LongEvent(const char *data, int len)
+{
+}
+
+void WildMidi_Renderer::ComputeOutput(float *fbuffer, int len)
+{
+	_mdi *mdi = (_mdi *)handle;
+	int *buffer = (int *)fbuffer;
+	int *newbuf = WM_Mix(handle, buffer, len);
+//	assert(newbuf - buffer == len);
+	if (mdi->info.mixer_options & WM_MO_REVERB) {
+		_WM_do_reverb(mdi->reverb, buffer, len * 2);
+	}
+	for (; buffer < newbuf; ++buffer)
+	{
+		*(float *)buffer = (float)*buffer / 32768.f;
+	}
+}
+
+void WildMidi_Renderer::LoadInstrument(int bank, int percussion, int instr)
+{
+	load_patch((_mdi *)handle, (bank << 8) | instr | (percussion ? 0x80 : 0));
+}
+
+int WildMidi_Renderer::GetVoiceCount()
+{
+	int count = 0;
+	for (_note *note_data = ((_mdi *)handle)->note; note_data != NULL; note_data = note_data->next)
+	{
+		count++;
+	}
+	return count;
 }

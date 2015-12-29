@@ -64,12 +64,28 @@ WM_SYMBOL struct _WM_Info * WildMidi_GetInfo (midi * handle);
 WM_SYMBOL int WildMidi_FastSeek (midi * handle, unsigned long int *sample_pos);
 WM_SYMBOL int WildMidi_Close (midi * handle);
 WM_SYMBOL int WildMidi_Shutdown (void);
+WM_SYMBOL int WildMidi_GetSampleRate (void);
 
 /*
 #if defined(__cplusplus)
 }
 #endif
 */
+
+class WildMidi_Renderer
+{
+public:
+	WildMidi_Renderer();
+	~WildMidi_Renderer();
+
+	void ShortEvent(int status, int parm1, int parm2);
+	void LongEvent(const char *data, int len);
+	void ComputeOutput(float *buffer, int len);
+	void LoadInstrument(int bank, int percussion, int instr);
+	int GetVoiceCount();
+private:
+	void *handle;
+};
 
 #endif /* WILDMIDI_LIB_H */
 

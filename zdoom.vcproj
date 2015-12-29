@@ -2554,10 +2554,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\sound\music_midi_wildmidi.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\src\sound\music_midistream.cpp"
 				>
 			</File>
@@ -2595,6 +2591,10 @@
 			</File>
 			<File
 				RelativePath=".\src\sound\music_timidity_mididevice.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\sound\music_wildmidi_mididevice.cpp"
 				>
 			</File>
 			<File

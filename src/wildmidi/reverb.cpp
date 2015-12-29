@@ -269,23 +269,23 @@ _WM_init_reverb(int rate, float room_x, float room_y, float listen_x,
 			double a1 = -2 * cs;
 			double a2 = 1 - (alpha / A);
 
-			rtn_rvb->coeff[j][i][0] = (signed long int) ((b0 / a0) * 1024.0);
-			rtn_rvb->coeff[j][i][1] = (signed long int) ((b1 / a0) * 1024.0);
-			rtn_rvb->coeff[j][i][2] = (signed long int) ((b2 / a0) * 1024.0);
-			rtn_rvb->coeff[j][i][3] = (signed long int) ((a1 / a0) * 1024.0);
-			rtn_rvb->coeff[j][i][4] = (signed long int) ((a2 / a0) * 1024.0);
+			rtn_rvb->coeff[j][i][0] = (signed int) ((b0 / a0) * 1024.0);
+			rtn_rvb->coeff[j][i][1] = (signed int) ((b1 / a0) * 1024.0);
+			rtn_rvb->coeff[j][i][2] = (signed int) ((b2 / a0) * 1024.0);
+			rtn_rvb->coeff[j][i][3] = (signed int) ((a1 / a0) * 1024.0);
+			rtn_rvb->coeff[j][i][4] = (signed int) ((a2 / a0) * 1024.0);
 		}
 	}
 
 	/* init the reverb buffers */
 	rtn_rvb->l_buf_size = (int) ((float) rate * (MAXL_DST / 340.29));
-	rtn_rvb->l_buf = (long*)malloc(
-			sizeof(signed long int) * (rtn_rvb->l_buf_size + 1));
+	rtn_rvb->l_buf = (int*)malloc(
+			sizeof(signed int) * (rtn_rvb->l_buf_size + 1));
 	rtn_rvb->l_out = 0;
 
 	rtn_rvb->r_buf_size = (int) ((float) rate * (MAXR_DST / 340.29));
-	rtn_rvb->r_buf = (long*)malloc(
-			sizeof(signed long int) * (rtn_rvb->r_buf_size + 1));
+	rtn_rvb->r_buf = (int*)malloc(
+			sizeof(signed int) * (rtn_rvb->r_buf_size + 1));
 	rtn_rvb->r_out = 0;
 
 	for (i = 0; i < 4; i++) {
@@ -313,17 +313,17 @@ void _WM_free_reverb(struct _rvb *rvb) {
 	free(rvb);
 }
 
-void _WM_do_reverb(struct _rvb *rvb, signed long int *buffer, int size) {
+void _WM_do_reverb(struct _rvb *rvb, signed int *buffer, int size) {
 	int i, j, k;
-	signed long int l_buf_flt = 0;
-	signed long int r_buf_flt = 0;
-	signed long int l_rfl = 0;
-	signed long int r_rfl = 0;
+	signed int l_buf_flt = 0;
+	signed int r_buf_flt = 0;
+	signed int l_rfl = 0;
+	signed int r_rfl = 0;
 	int vol_div = 64;
 
 	for (i = 0; i < size; i += 2) {
-		signed long int tmp_l_val = 0;
-		signed long int tmp_r_val = 0;
+		signed int tmp_l_val = 0;
+		signed int tmp_r_val = 0;
 		/*
 		 add the initial reflections
 		 from each speaker, 4 to go the left, 4 go to the right buffers

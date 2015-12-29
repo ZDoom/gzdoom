@@ -3744,10 +3744,9 @@ static int WM_DoGetOutput(midi * handle, char * buffer,
 		 * Write to the buffer
 		 * ===================
 		 */
-		(*buffer++) = left_mix & 0xff;
-		(*buffer++) = ((left_mix >> 8) & 0x7f) | ((left_mix >> 24) & 0x80);
-		(*buffer++) = right_mix & 0xff;
-		(*buffer++) = ((right_mix >> 8) & 0x7f) | ((right_mix >> 24) & 0x80);
+		((short *)buffer)[0] = (short)left_mix;
+		((short *)buffer)[1] = (short)right_mix;
+		buffer += 4;
 	}
 	_WM_Unlock(&mdi->lock);
 	return buffer_used;

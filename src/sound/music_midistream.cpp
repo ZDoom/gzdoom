@@ -1196,9 +1196,15 @@ void MIDIStreamer::CreateSMF(TArray<BYTE> &file, int looplimit)
 					len--;
 					file.Push(MIDI_SYSEX);
 					WriteVarLen(file, len);
-					memcpy(&file[file.Reserve(len - 1)], bytes, len);
-					running_status = 255;
+					memcpy(&file[file.Reserve(len)], bytes + 1, len);
 				}
+				else
+				{
+					file.Push(MIDI_SYSEXEND);
+					WriteVarLen(file, len);
+					memcpy(&file[file.Reserve(len)], bytes, len);
+				}
+				running_status = 255;
 			}
 			else if (MEVT_EVENTTYPE(event[2]) == 0)
 			{

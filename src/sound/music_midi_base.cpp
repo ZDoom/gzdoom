@@ -168,6 +168,7 @@ CCMD (snd_listmididevices)
 	MIDIOUTCAPS caps;
 	MMRESULT res;
 
+	PrintMidiDevice (-6, "WildMidi", MOD_SWSYNTH, 0);
 #ifdef HAVE_FLUIDSYNTH
 	PrintMidiDevice (-5, "FluidSynth", MOD_SWSYNTH, 0);
 #endif

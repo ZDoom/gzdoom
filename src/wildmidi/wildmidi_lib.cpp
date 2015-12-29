@@ -43,18 +43,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-/*
-#ifdef _WIN32
-#include <windows.h>
-#include <tchar.h>
-#undef strcasecmp
-#define strcasecmp _stricmp
-#undef strncasecmp
-#define strncasecmp _strnicmp
-*/
-
-
-
 #include "common.h"
 #include "wm_error.h"
 #include "file_io.h"

@@ -108,6 +108,7 @@ FConsoleWindow::FConsoleWindow()
 						  backing:NSBackingStoreBuffered
 							defer:NO];
 	[m_window setMinSize:[m_window frame].size];
+	[m_window setShowsResizeIndicator:NO];
 	[m_window setTitle:title];
 	[m_window center];
 	[m_window exitAppOnClose];

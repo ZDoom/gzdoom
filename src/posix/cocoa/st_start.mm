@@ -31,6 +31,8 @@
  **
  */
 
+#include <unistd.h>
+
 #import <Foundation/NSRunLoop.h>
 
 #include "c_cvars.h"

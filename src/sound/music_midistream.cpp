@@ -628,6 +628,21 @@ void MIDIStreamer::FluidSettingStr(const char *setting, const char *value)
 
 //==========================================================================
 //
+// MIDIDeviceStreamer :: WildMidiSetOption
+//
+//==========================================================================
+
+void MIDIStreamer::WildMidiSetOption(int opt, int set)
+{
+	if (MIDI != NULL)
+	{
+		MIDI->WildMidiSetOption(opt, set);
+	}
+}
+
+
+//==========================================================================
+//
 // MIDIStreamer :: OutputVolume
 //
 // Signals the buffer filler to send volume change events on all channels.
@@ -1196,9 +1211,15 @@ void MIDIStreamer::CreateSMF(TArray<BYTE> &file, int looplimit)
 					len--;
 					file.Push(MIDI_SYSEX);
 					WriteVarLen(file, len);
-					memcpy(&file[file.Reserve(len - 1)], bytes, len);
-					running_status = 255;
+					memcpy(&file[file.Reserve(len)], bytes + 1, len);
 				}
+				else
+				{
+					file.Push(MIDI_SYSEXEND);
+					WriteVarLen(file, len);
+					memcpy(&file[file.Reserve(len)], bytes, len);
+				}
+				running_status = 255;
 			}
 			else if (MEVT_EVENTTYPE(event[2]) == 0)
 			{
@@ -1513,6 +1534,16 @@ void MIDIDevice::FluidSettingNum(const char *setting, double value)
 //==========================================================================
 
 void MIDIDevice::FluidSettingStr(const char *setting, const char *value)
+{
+}
+
+//==========================================================================
+//
+// MIDIDevice :: WildMidiSetOption
+//
+//==========================================================================
+
+void MIDIDevice::WildMidiSetOption(int opt, int set)
 {
 }
 

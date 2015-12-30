@@ -1604,7 +1604,6 @@ OptionMenu AdvSoundOptions
 	StaticText "GUS Emulation",	1
 	TextField "GUS config file", "midi_config"
 	Slider "MIDI voices",	"midi_voices", 16, 256, 4, 0
-	Option "Emulate TiMidity", "midi_timiditylike", "OnOff"
 	Option "Read DMXGUS lumps", "midi_dmxgus", "OnOff"
 	Option "GUS memory size", "gus_memsize", "GusMemory"
 	StaticText " "
@@ -1620,6 +1619,10 @@ OptionMenu AdvSoundOptions
 	Option "Reverb", "timidity_reverb", "OnOff"
 	Option "Chorus", "timidity_chorus", "OnOff"
 	Slider "Relative volume",	"timidity_mastervolume", 0, 4, 0.2, 1
+	StaticText " "
+	StaticText "WildMidi",	1
+	TextField "WildMidi config file", "wildmidi_config"
+	Option "Reverb", "wildmidi_reverb", "OnOff"
 }
 
 /*=======================================

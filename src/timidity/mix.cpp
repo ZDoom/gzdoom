@@ -29,8 +29,6 @@
 #include "templates.h"
 #include "c_cvars.h"
 
-EXTERN_CVAR(Bool, midi_timiditylike)
-
 namespace Timidity
 {
 
@@ -78,16 +76,7 @@ void GF1Envelope::Init(Renderer *song, Voice *v)
 
 void GF1Envelope::Release(Voice *v)
 {
-	if (midi_timiditylike)
-	{
-		if (!(v->sample->modes & PATCH_T_NO_ENVELOPE))
-		{
-			stage = GF1_RELEASE;
-			Recompute(v);
-		}
-		// else ... loop was already turned off by the caller
-	}
-	else if (!(v->sample->modes & PATCH_NO_SRELEASE) || (v->sample->modes & PATCH_FAST_REL))
+	if (!(v->sample->modes & PATCH_NO_SRELEASE) || (v->sample->modes & PATCH_FAST_REL))
 	{
 		/* ramp out to minimum volume with rate from final release stage */
 		stage = GF1_RELEASEC+1;
@@ -119,23 +108,11 @@ bool GF1Envelope::Recompute(Voice *v)
 		bUpdating = false;
 		v->status &= ~(VOICE_SUSTAINING | VOICE_LPE);
 		v->status |= VOICE_RELEASING;
-		if (midi_timiditylike)
-		{ /* kill the voice ... or not */
-			if (volume <= 0)
-			{
-				v->status |= VOICE_STOPPING;
-			}
-			return 1;
-		}
-		else
-		{ /* play sampled release */
-		}
+		/* play sampled release */
 		return 0;
 	}
 
-	if (newstage == GF1_RELEASE && !(v->status & VOICE_RELEASING) &&
-		((!midi_timiditylike && (v->sample->modes & PATCH_SUSTAIN)) ||
-		 (midi_timiditylike && !(v->sample->modes & PATCH_T_NO_ENVELOPE))))
+	if (newstage == GF1_RELEASE && !(v->status & VOICE_RELEASING) && (v->sample->modes & PATCH_SUSTAIN))
 	{
 		v->status |= VOICE_SUSTAINING;
 		/* Freeze envelope until note turns off. Trumpets want this. */
@@ -161,10 +138,6 @@ bool GF1Envelope::Recompute(Voice *v)
 
 bool GF1Envelope::Update(Voice *v)
 {
-	if (midi_timiditylike && (v->sample->modes & PATCH_T_NO_ENVELOPE))
-	{
-		return 0;
-	}
 	volume += increment;
 	if (((increment < 0) && (volume <= target)) || ((increment > 0) && (volume >= target)))
 	{
@@ -182,36 +155,14 @@ void GF1Envelope::ApplyToAmp(Voice *v)
 	double env_vol = v->attenuation;
 	double final_amp;
 
-	if (midi_timiditylike)
-	{
-		final_amp = v->sample->volume * FINAL_MIX_TIMIDITY_SCALE;
-		if (v->tremolo_phase_increment != 0)
-		{
-			env_vol *= v->tremolo_volume;
-		}
-		if (!(v->sample->modes & PATCH_T_NO_ENVELOPE))
-		{
-			if (stage > GF1_ATTACK)
-			{
-				env_vol *= pow(2.0, volume * (6.0 / (1 << 30)) - 6.0);
-			}
-			else
-			{
-				env_vol *= volume / float(1 << 30);
-			}
-		}
+	final_amp = FINAL_MIX_SCALE;
+	if (v->tremolo_phase_increment != 0)
+	{ // [RH] FIXME: This is wrong. Tremolo should offset the
+	  // envelope volume, not scale it.
+		env_vol *= v->tremolo_volume;
 	}
-	else
-	{
-		final_amp = FINAL_MIX_SCALE;
-		if (v->tremolo_phase_increment != 0)
-		{ // [RH] FIXME: This is wrong. Tremolo should offset the
-		  // envelope volume, not scale it.
-			env_vol *= v->tremolo_volume;
-		}
-		env_vol *= volume / float(1 << 30);
-		env_vol = calc_gf1_amp(env_vol);
-	}
+	env_vol *= volume / float(1 << 30);
+	env_vol = calc_gf1_amp(env_vol);
 	env_vol *= final_amp;
 	v->left_mix = float(env_vol * v->left_offset);
 	v->right_mix = float(env_vol * v->right_offset);

@@ -102,6 +102,7 @@ public:
 	virtual void FluidSettingInt(const char *setting, int value);
 	virtual void FluidSettingNum(const char *setting, double value);
 	virtual void FluidSettingStr(const char *setting, const char *value);
+	virtual void WildMidiSetOption(int opt, int set);
 	virtual bool Preprocess(MIDIStreamer *song, bool looping);
 	virtual FString GetStats();
 };
@@ -349,6 +350,7 @@ protected:
 	void HandleEvent(int status, int parm1, int parm2);
 	void HandleLongEvent(const BYTE *data, int len);
 	void ComputeOutput(float *buffer, int len);
+	void WildMidiSetOption(int opt, int set);
 };
 
 // FluidSynth implementation of a MIDI device -------------------------------
@@ -447,6 +449,7 @@ public:
 	void FluidSettingInt(const char *setting, int value);
 	void FluidSettingNum(const char *setting, double value);
 	void FluidSettingStr(const char *setting, const char *value);
+	void WildMidiSetOption(int opt, int set);
 	void CreateSMF(TArray<BYTE> &file, int looplimit=0);
 
 protected:
@@ -566,7 +569,7 @@ protected:
 	struct TrackInfo;
 
 	void ProcessInitialMetaEvents ();
-	DWORD *SendCommand (DWORD *event, TrackInfo *track, DWORD delay);
+	DWORD *SendCommand (DWORD *event, TrackInfo *track, DWORD delay, ptrdiff_t room, bool &sysex_noroom);
 	TrackInfo *FindNextDue ();
 
 	BYTE *MusHeader;

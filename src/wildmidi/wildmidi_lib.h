@@ -56,12 +56,7 @@ typedef void midi;
 WM_SYMBOL const char * WildMidi_GetString (unsigned short int info);
 WM_SYMBOL int WildMidi_Init (const char * config_file, unsigned short int rate, unsigned short int options);
 WM_SYMBOL int WildMidi_MasterVolume (unsigned char master_volume);
-WM_SYMBOL midi * WildMidi_Open (const char *midifile);
-WM_SYMBOL midi * WildMidi_OpenBuffer (unsigned char *midibuffer, unsigned long int size);
-WM_SYMBOL int WildMidi_GetOutput (midi * handle, char * buffer, unsigned long int size);
 WM_SYMBOL int WildMidi_SetOption (midi * handle, unsigned short int options, unsigned short int setting);
-WM_SYMBOL struct _WM_Info * WildMidi_GetInfo (midi * handle);
-WM_SYMBOL int WildMidi_FastSeek (midi * handle, unsigned long int *sample_pos);
 WM_SYMBOL int WildMidi_Close (midi * handle);
 WM_SYMBOL int WildMidi_Shutdown (void);
 WM_SYMBOL int WildMidi_GetSampleRate (void);
@@ -79,10 +74,11 @@ public:
 	~WildMidi_Renderer();
 
 	void ShortEvent(int status, int parm1, int parm2);
-	void LongEvent(const char *data, int len);
+	void LongEvent(const unsigned char *data, int len);
 	void ComputeOutput(float *buffer, int len);
 	void LoadInstrument(int bank, int percussion, int instr);
 	int GetVoiceCount();
+	void SetOption(int opt, int set);
 private:
 	void *handle;
 };

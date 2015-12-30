@@ -104,7 +104,7 @@ FConsoleWindow::FConsoleWindow()
 	NSString* const title = [NSString stringWithFormat:@"%s %s - Console", GAMESIG, GetVersionString()];
 
 	[m_window initWithContentRect:initialRect
-						styleMask:NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask
+						styleMask:NSTitledWindowMask | NSClosableWindowMask | NSResizableWindowMask
 						  backing:NSBackingStoreBuffered
 							defer:NO];
 	[m_window setMinSize:[m_window frame].size];
@@ -185,9 +185,6 @@ void FConsoleWindow::ShowFatalError(const char* const message)
 	AddText(PalEntry(255,   0,   0), "\nExecution could not continue.\n");
 	AddText(PalEntry(255, 255, 170), message);
 	AddText("\n");
-
-	// It's impossible to restore minimized window in modal loop
-	[m_window setStyleMask:[m_window styleMask] & ~NSMiniaturizableWindowMask];
 
 	[NSApp runModalForWindow:m_window];
 }

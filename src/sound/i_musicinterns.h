@@ -566,7 +566,7 @@ protected:
 	struct TrackInfo;
 
 	void ProcessInitialMetaEvents ();
-	DWORD *SendCommand (DWORD *event, TrackInfo *track, DWORD delay);
+	DWORD *SendCommand (DWORD *event, TrackInfo *track, DWORD delay, ptrdiff_t room, bool &sysex_noroom);
 	TrackInfo *FindNextDue ();
 
 	BYTE *MusHeader;

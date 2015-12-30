@@ -74,7 +74,7 @@ public:
 	~WildMidi_Renderer();
 
 	void ShortEvent(int status, int parm1, int parm2);
-	void LongEvent(const char *data, int len);
+	void LongEvent(const unsigned char *data, int len);
 	void ComputeOutput(float *buffer, int len);
 	void LoadInstrument(int bank, int percussion, int instr);
 	int GetVoiceCount();

@@ -162,7 +162,7 @@ struct _mdi {
 		patch_count = 0;
 		amp = 0;
 		mix_buffer = NULL;
-		mix_buffer_size = NULL;
+		mix_buffer_size = 0;
 		reverb = NULL;
 	}
 
@@ -2926,7 +2926,7 @@ void WildMidi_Renderer::ShortEvent(int status, int parm1, int parm2)
 	}
 }
 
-void WildMidi_Renderer::LongEvent(const char *data, int len)
+void WildMidi_Renderer::LongEvent(const unsigned char *data, int len)
 {
 	// Check for Roland SysEx
 	if (len >= 11 &&			// Must be at least 11 bytes
@@ -2949,7 +2949,7 @@ void WildMidi_Renderer::LongEvent(const char *data, int len)
 		{ // Check destination address
 			if (((data[6] & 0xF0) == 0x10) && data[7] == 0x15)
 			{ // Roland drum track setting
-				int sysex_ch = data[6] & 0x0F;
+				unsigned char sysex_ch = data[6] & 0x0F;
 				if (sysex_ch == 0)
 				{
 					sysex_ch = 9;
@@ -2958,7 +2958,7 @@ void WildMidi_Renderer::LongEvent(const char *data, int len)
 				{
 					sysex_ch -= 1;
 				}
-				_event_data ev = { sysex_ch, data[8] };
+				_event_data ev = { sysex_ch, static_cast<unsigned long>(data[8]) };
 				do_sysex_roland_drum_track((_mdi *)handle, &ev);
 			}
 			else if (data[6] == 0x00 && data[7] == 0x7F && data[8] == 0x00)

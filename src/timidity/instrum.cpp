@@ -168,7 +168,7 @@ static Instrument *load_instrument(Renderer *song, const char *name, int percuss
 		{
 #ifdef __unix__			// Windows isn't case-sensitive.
 			tmp.ToUpper();
-			if ((fp = open_filereader(tmp, openmode, NULL)) == NULL)
+			if ((fp = pathExpander.openFileReader(tmp, NULL)) == NULL)
 #endif
 			{
 				noluck = true;

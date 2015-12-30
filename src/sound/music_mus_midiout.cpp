@@ -233,7 +233,7 @@ void MUSSong2::Precache()
 		{
 			for (int b = 0; b < numbanks; b++)
 			{
-				work[j++] = val | used[k++];
+				work[j++] = val | (used[k++] << 7);
 			}
 		}
 		else

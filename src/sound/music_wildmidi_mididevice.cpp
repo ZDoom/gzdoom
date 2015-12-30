@@ -193,7 +193,7 @@ void WildMIDIDevice::HandleEvent(int status, int parm1, int parm2)
 
 void WildMIDIDevice::HandleLongEvent(const BYTE *data, int len)
 {
-	Renderer->LongEvent((const char *)data, len);
+	Renderer->LongEvent(data, len);
 }
 
 //==========================================================================

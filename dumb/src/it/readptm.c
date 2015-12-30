@@ -439,6 +439,7 @@ static DUMB_IT_SIGDATA *it_ptm_load_sigdata(DUMBFILE *f)
 	}
 
     if (dumbfile_seek(f, 352, DFS_SEEK_SET)) {
+		free(component);
 		_dumb_it_unload_sigdata(sigdata);
 		return NULL;
 	}
@@ -451,12 +452,14 @@ static DUMB_IT_SIGDATA *it_ptm_load_sigdata(DUMBFILE *f)
 	}
 
     if (dumbfile_seek(f, 608, DFS_SEEK_SET)) {
+		free(component);
 		_dumb_it_unload_sigdata(sigdata);
 		return NULL;
 	}
 
 	for (n = 0; n < sigdata->n_samples; n++) {
 		if (it_ptm_read_sample_header(&sigdata->sample[n], &component[n_components].offset, f)) {
+			free(component);
 			_dumb_it_unload_sigdata(sigdata);
 			return NULL;
 		}

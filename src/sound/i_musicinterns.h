@@ -24,6 +24,7 @@
 #include "i_music.h"
 #include "s_sound.h"
 #include "files.h"
+#include "wildmidi/wildmidi_lib.h"
 
 void I_InitMusicWin32 ();
 void I_ShutdownMusicWin32 ();
@@ -101,6 +102,7 @@ public:
 	virtual void FluidSettingInt(const char *setting, int value);
 	virtual void FluidSettingNum(const char *setting, double value);
 	virtual void FluidSettingStr(const char *setting, const char *value);
+	virtual void WildMidiSetOption(int opt, int set);
 	virtual bool Preprocess(MIDIStreamer *song, bool looping);
 	virtual FString GetStats();
 };
@@ -218,7 +220,6 @@ protected:
 #endif
 };
 
-
 // Base class for software synthesizer MIDI output devices ------------------
 
 class SoftSynthMIDIDevice : public MIDIDevice
@@ -331,6 +332,27 @@ protected:
 	FILE *File;
 };
 
+// WildMidi implementation of a MIDI device ---------------------------------
+
+class WildMIDIDevice : public SoftSynthMIDIDevice
+{
+public:
+	WildMIDIDevice();
+	~WildMIDIDevice();
+
+	int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
+	void PrecacheInstruments(const WORD *instruments, int count);
+	FString GetStats();
+
+protected:
+	WildMidi_Renderer *Renderer;
+
+	void HandleEvent(int status, int parm1, int parm2);
+	void HandleLongEvent(const BYTE *data, int len);
+	void ComputeOutput(float *buffer, int len);
+	void WildMidiSetOption(int opt, int set);
+};
+
 // FluidSynth implementation of a MIDI device -------------------------------
 
 #ifdef HAVE_FLUIDSYNTH
@@ -427,6 +449,7 @@ public:
 	void FluidSettingInt(const char *setting, int value);
 	void FluidSettingNum(const char *setting, double value);
 	void FluidSettingStr(const char *setting, const char *value);
+	void WildMidiSetOption(int opt, int set);
 	void CreateSMF(TArray<BYTE> &file, int looplimit=0);
 
 protected:
@@ -546,7 +569,7 @@ protected:
 	struct TrackInfo;
 
 	void ProcessInitialMetaEvents ();
-	DWORD *SendCommand (DWORD *event, TrackInfo *track, DWORD delay);
+	DWORD *SendCommand (DWORD *event, TrackInfo *track, DWORD delay, ptrdiff_t room, bool &sysex_noroom);
 	TrackInfo *FindNextDue ();
 
 	BYTE *MusHeader;

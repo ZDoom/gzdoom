@@ -1197,6 +1197,7 @@ static DUMB_IT_SIGDATA *it_xm_load_sigdata(DUMBFILE *f, int * version)
 
 		sigdata->instrument = malloc(sigdata->n_instruments * sizeof(*sigdata->instrument));
 		if (!sigdata->instrument) {
+			free(roguebytes);
 			_dumb_it_unload_sigdata(sigdata);
 			return NULL;
 		}

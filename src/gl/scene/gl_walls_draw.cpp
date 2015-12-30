@@ -322,6 +322,11 @@ void GLWall::RenderTranslucentWall()
 	// and until that changes I won't fix this code for the new blending modes!
 	bool isadditive = RenderStyle == STYLE_Add;
 
+	if (gl_fixedcolormap == CM_DEFAULT && gl_lights && (gl.flags & RFL_BUFFER_STORAGE))
+	{
+		SetupLights();
+	}
+
 	if (!transparent) gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_threshold);
 	else gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 	if (isadditive) gl_RenderState.BlendFunc(GL_SRC_ALPHA,GL_ONE);

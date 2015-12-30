@@ -628,6 +628,21 @@ void MIDIStreamer::FluidSettingStr(const char *setting, const char *value)
 
 //==========================================================================
 //
+// MIDIDeviceStreamer :: WildMidiSetOption
+//
+//==========================================================================
+
+void MIDIStreamer::WildMidiSetOption(int opt, int set)
+{
+	if (MIDI != NULL)
+	{
+		MIDI->WildMidiSetOption(opt, set);
+	}
+}
+
+
+//==========================================================================
+//
 // MIDIStreamer :: OutputVolume
 //
 // Signals the buffer filler to send volume change events on all channels.
@@ -1519,6 +1534,16 @@ void MIDIDevice::FluidSettingNum(const char *setting, double value)
 //==========================================================================
 
 void MIDIDevice::FluidSettingStr(const char *setting, const char *value)
+{
+}
+
+//==========================================================================
+//
+// MIDIDevice :: WildMidiSetOption
+//
+//==========================================================================
+
+void MIDIDevice::WildMidiSetOption(int opt, int set)
 {
 }
 

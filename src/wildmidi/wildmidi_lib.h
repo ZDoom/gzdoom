@@ -78,6 +78,7 @@ public:
 	void ComputeOutput(float *buffer, int len);
 	void LoadInstrument(int bank, int percussion, int instr);
 	int GetVoiceCount();
+	void SetOption(int opt, int set);
 private:
 	void *handle;
 };

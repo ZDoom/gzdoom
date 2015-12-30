@@ -2718,6 +2718,16 @@ midi *WildMidi_NewMidi() {
 			ret = NULL;
 		}
 	}
+
+	if ((((_mdi*)ret)->reverb = _WM_init_reverb(_WM_SampleRate, reverb_room_width,
+			reverb_room_length, reverb_listen_posx, reverb_listen_posy))
+			== NULL) {
+		_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_MEM, "to init reverb", 0);
+		WildMidi_Close(ret);
+		ret = NULL;
+	}
+
+
 	return ret;
 }
 
@@ -2987,4 +2997,9 @@ int WildMidi_Renderer::GetVoiceCount()
 		count++;
 	}
 	return count;
+}
+
+void WildMidi_Renderer::SetOption(int opt, int set)
+{
+	WildMidi_SetOption((_mdi*)handle, (unsigned short)opt, (unsigned short)set);
 }

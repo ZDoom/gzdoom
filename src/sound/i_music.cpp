@@ -286,6 +286,10 @@ void MusInfo::FluidSettingStr(const char *, const char *)
 {
 }
 
+void MusInfo::WildMidiSetOption(int opt, int set)
+{
+}
+
 FString MusInfo::GetStats()
 {
 	return "No stats available for this song";

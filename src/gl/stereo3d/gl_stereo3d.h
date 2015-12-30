@@ -2,6 +2,7 @@
 #define GL_STEREO3D_H_
 
 #include <vector>
+#include <cstring> // needed for memcpy on linux, which is needed by VSMatrix copy ctor
 #include "gl/data/gl_matrix.h"
 
 

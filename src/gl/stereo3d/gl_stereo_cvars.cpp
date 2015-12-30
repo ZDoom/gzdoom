@@ -14,7 +14,7 @@ CVAR(Float, vr_hunits_per_meter, 41.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG) // MET
 namespace s3d {
 
 // Initialize static member
-Stereo3DMode const * Stereo3DMode::currentStereo3DMode = nullptr;
+Stereo3DMode const * Stereo3DMode::currentStereo3DMode = 0; // "nullptr" not resolved on linux (presumably not C++11)
 
 /* static */
 void Stereo3DMode::setCurrentMode(const Stereo3DMode& mode) {

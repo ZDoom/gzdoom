@@ -228,18 +228,18 @@ void MUSSong2::Precache()
 			val = instr - 100 + (1 << 14);
 		}
 
-		BYTE moreparam = used[k++];
-		if (moreparam == 1)
+		int numbanks = used[k++];
+		if (numbanks > 0)
 		{
-			BYTE bank = used[k++];
-			val |= (bank << 7);
+			for (int b = 0; b < numbanks; b++)
+			{
+				work[j++] = val | used[k++];
+			}
 		}
-		else if (moreparam > 0)
+		else
 		{
-			// No information if this is even valid. Print a message so it can be investigated later
-			Printf("Unknown instrument data found in music\n");
+			work[j++] = val;
 		}
-		work[j++] = val;
 	}
 	MIDI->PrecacheInstruments(&work[0], j);
 }

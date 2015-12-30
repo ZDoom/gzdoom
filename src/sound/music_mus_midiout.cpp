@@ -43,6 +43,7 @@
 #include "doomdef.h"
 #include "m_swap.h"
 #include "files.h"
+#include "s_sound.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -211,20 +212,34 @@ bool MUSSong2::CheckDone()
 void MUSSong2::Precache()
 {
 	WORD *work = (WORD *)alloca(MusHeader->NumInstruments * sizeof(WORD));
-	const WORD *used = (WORD *)MusHeader + sizeof(MUSHeader) / sizeof(WORD);
-	int i, j;
+	const BYTE *used = (BYTE *)MusHeader + sizeof(MUSHeader) / sizeof(BYTE);
+	int i, j, k;
 
-	for (i = j = 0; i < MusHeader->NumInstruments; ++i)
+	for (i = j = k = 0; i < MusHeader->NumInstruments; ++i)
 	{
-		WORD instr = LittleShort(used[i]);
+		BYTE instr = used[k++];
+		WORD val;
 		if (instr < 128)
 		{
-			work[j++] = instr;
+			val = instr;
 		}
-		else if (used[i] >= 135 && used[i] <= 181)
+		else if (instr >= 135 && instr <= 181)
 		{ // Percussions are 100-based, not 128-based, eh?
-			work[j++] = instr - 100 + (1 << 14);
+			val = instr - 100 + (1 << 14);
 		}
+
+		BYTE moreparam = used[k++];
+		if (moreparam == 1)
+		{
+			BYTE bank = used[k++];
+			val |= (bank << 7);
+		}
+		else if (moreparam > 0)
+		{
+			// No information if this is even valid. Print a message so it can be investigated later
+			Printf("Unknown instrument data found in music\n");
+		}
+		work[j++] = val;
 	}
 	MIDI->PrecacheInstruments(&work[0], j);
 }

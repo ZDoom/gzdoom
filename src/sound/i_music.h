@@ -43,7 +43,8 @@ struct FOptionValues;
 //	MUSIC I/O
 //
 void I_InitMusic ();
-void I_ShutdownMusic ();
+void I_ShutdownMusic (bool onexit = false);
+void I_ShutdownMusicExit ();
 void I_BuildMIDIMenuList (FOptionValues *);
 void I_UpdateMusic ();
 
@@ -81,6 +82,7 @@ public:
 	virtual void FluidSettingInt(const char *setting, int value);			// FluidSynth settings
 	virtual void FluidSettingNum(const char *setting, double value);		// "
 	virtual void FluidSettingStr(const char *setting, const char *value);	// "
+	virtual void WildMidiSetOption(int opt, int set);
 
 	void Start(bool loop, float rel_vol = -1.f, int subsong = 0);
 

@@ -943,6 +943,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\src\pathexpander.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\src\po_man.cpp"
 				>
 			</File>
@@ -1477,6 +1481,10 @@
 			</File>
 			<File
 				RelativePath=".\src\parsecontext.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\pathexpander.h"
 				>
 			</File>
 			<File
@@ -2812,10 +2820,6 @@
 						>
 					</File>
 					<File
-						RelativePath=".\src\wildmidi\lock.h"
-						>
-					</File>
-					<File
 						RelativePath=".\src\wildmidi\reverb.h"
 						>
 					</File>
@@ -2837,10 +2841,6 @@
 					</File>
 					<File
 						RelativePath=".\src\wildmidi\gus_pat.cpp"
-						>
-					</File>
-					<File
-						RelativePath=".\src\wildmidi\lock.cpp"
 						>
 					</File>
 					<File

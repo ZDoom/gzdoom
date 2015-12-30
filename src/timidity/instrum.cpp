@@ -142,7 +142,7 @@ static void reverse_data(sample_t *sp, int ls, int le)
 
 	TODO: do reverse loops right */
 static Instrument *load_instrument(Renderer *song, const char *name, int percussion,
-					int panning, int amp, int note_to_use,
+					int panning, int note_to_use,
 					int strip_loop, int strip_envelope,
 					int strip_tail)
 {
@@ -159,16 +159,16 @@ static Instrument *load_instrument(Renderer *song, const char *name, int percuss
 	if (!name) return 0;
 
 	/* Open patch file */
-	if ((fp = open_filereader(name, openmode, NULL)) == NULL)
+	if ((fp = pathExpander.openFileReader(name, NULL)) == NULL)
 	{
 		/* Try with various extensions */
 		FString tmp = name;
 		tmp += ".pat";
-		if ((fp = open_filereader(tmp, openmode, NULL)) == NULL)
+		if ((fp = pathExpander.openFileReader(tmp, NULL)) == NULL)
 		{
 #ifdef __unix__			// Windows isn't case-sensitive.
 			tmp.ToUpper();
-			if ((fp = open_filereader(tmp, openmode, NULL)) == NULL)
+			if ((fp = pathExpander.openFileReader(tmp, NULL)) == NULL)
 #endif
 			{
 				noluck = true;
@@ -372,7 +372,6 @@ fail:
 			{
 				sp->modes &= ~(PATCH_SUSTAIN | PATCH_LOOPEN | PATCH_BIDIR | PATCH_BACKWARD);
 			}
-			sp->modes |= PATCH_T_NO_LOOP;
 		}
 
 		if (strip_envelope == 1)
@@ -398,37 +397,6 @@ fail:
 					patch_data.EnvelopeOffset[k] = patch_data.EnvelopeOffset[0];
 				}
 			}
-			sp->modes |= PATCH_T_NO_ENVELOPE;
-		}
-		else if (strip_envelope != 0)
-		{
-			/* Have to make a guess. */
-			if (!(sp->modes & (PATCH_LOOPEN | PATCH_BIDIR | PATCH_BACKWARD)))
-			{
-				/* No loop? Then what's there to sustain? No envelope needed either... */
-				sp->modes |= PATCH_T_NO_ENVELOPE;
-				cmsg(CMSG_INFO, VERB_DEBUG, " - No loop, removing sustain and envelope\n");
-			}
-			else if (memcmp(patch_data.EnvelopeRate, "??????", 6) == 0 || patch_data.EnvelopeOffset[GF1_RELEASEC] >= 100) 
-			{
-				/* Envelope rates all maxed out? Envelope end at a high "offset"?
-				   That's a weird envelope. Take it out. */
-				sp->modes |= PATCH_T_NO_ENVELOPE;
-				cmsg(CMSG_INFO, VERB_DEBUG, " - Weirdness, removing envelope\n");
-			}
-			else if (!(sp->modes & PATCH_SUSTAIN))
-			{
-				/* No sustain? Then no envelope.  I don't know if this is
-				   justified, but patches without sustain usually don't need the
-				   envelope either... at least the Gravis ones. They're mostly
-				   drums.  I think. */
-				sp->modes |= PATCH_T_NO_ENVELOPE;
-				cmsg(CMSG_INFO, VERB_DEBUG, " - No sustain, removing envelope\n");
-			}
-		}
-		if (!(sp->modes & PATCH_NO_SRELEASE))
-		{ // TiMidity thinks that this is an envelope enable flag.
-			sp->modes |= PATCH_T_NO_ENVELOPE;
 		}
 
 		for (j = 0; j < 6; j++)
@@ -468,29 +436,6 @@ fail:
 
 			sp->modes &= ~PATCH_BACKWARD;
 			sp->modes |= PATCH_LOOPEN; /* just in case */
-		}
-
-		if (amp != -1)
-		{
-			sp->volume = (amp) / 100.f;
-		}
-		else
-		{
-			/* Try to determine a volume scaling factor for the sample.
-			   This is a very crude adjustment, but things sound more
-			   balanced with it. Still, this should be a runtime option.
-			   (This is ignored unless midi_timiditylike is turned on.) */
-			int i;
-			sample_t maxamp = 0, a;
-			sample_t *tmp;
-			for (i = sp->data_length, tmp = sp->data; i; --i)
-			{
-				a = fabsf(*tmp++);
-				if (a > maxamp)
-					maxamp = a;
-			}
-			sp->volume = 1 / maxamp;
-			cmsg(CMSG_INFO, VERB_DEBUG, " * volume comp: %f\n", sp->volume);
 		}
 
 		/* Then fractional samples */
@@ -653,7 +598,6 @@ static int fill_bank(Renderer *song, int dr, int b)
 					ip = load_instrument(song, bank->tone[i].name, 
 						(dr) ? 1 : 0,
 						bank->tone[i].pan,
-						bank->tone[i].amp,
 						(bank->tone[i].note != -1) ? bank->tone[i].note : ((dr) ? i : -1),
 						(bank->tone[i].strip_loop != -1) ? bank->tone[i].strip_loop : ((dr) ? 1 : -1),
 						(bank->tone[i].strip_envelope != -1) ? bank->tone[i].strip_envelope : ((dr) ? 1 : -1),
@@ -731,7 +675,7 @@ void free_instruments()
 int Renderer::set_default_instrument(const char *name)
 {
 	Instrument *ip;
-	if ((ip = load_instrument(this, name, 0, -1, -1, -1, 0, 0, 0)) == NULL)
+	if ((ip = load_instrument(this, name, 0, -1, -1, 0, 0, 0)) == NULL)
 	{
 		return -1;
 	}

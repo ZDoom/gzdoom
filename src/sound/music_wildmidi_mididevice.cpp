@@ -61,6 +61,17 @@ static FString CurrentConfig;
 
 CVAR(String, wildmidi_config, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Int, wildmidi_frequency, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Bool, wildmidi_reverb, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	if (currSong != NULL)
+		currSong->WildMidiSetOption(WM_MO_REVERB, *self? WM_MO_REVERB:0);
+}
+
+CUSTOM_CVAR(Bool, wildmidi_enhanced_resampling, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	if (currSong != NULL)
+		currSong->WildMidiSetOption(WM_MO_ENHANCED_RESAMPLING, *self? WM_MO_ENHANCED_RESAMPLING:0);
+}
 
 // CODE --------------------------------------------------------------------
 
@@ -90,7 +101,7 @@ WildMIDIDevice::WildMIDIDevice()
 			WildMidi_Shutdown();
 			CurrentConfig = "";
 		}
-		if (!WildMidi_Init(wildmidi_config, SampleRate, WM_MO_ENHANCED_RESAMPLING))
+		if (!WildMidi_Init(wildmidi_config, SampleRate, 0))
 		{
 			CurrentConfig = wildmidi_config;
 		}
@@ -98,6 +109,10 @@ WildMIDIDevice::WildMIDIDevice()
 	if (CurrentConfig.IsNotEmpty())
 	{
 		Renderer = new WildMidi_Renderer();
+		int flags = 0;
+		if (wildmidi_enhanced_resampling) flags |= WM_MO_ENHANCED_RESAMPLING;
+		if (wildmidi_reverb) flags |= WM_MO_REVERB;
+		Renderer->SetOption(WM_MO_ENHANCED_RESAMPLING | WM_MO_REVERB, flags);
 	}
 }
 
@@ -178,7 +193,7 @@ void WildMIDIDevice::HandleEvent(int status, int parm1, int parm2)
 
 void WildMIDIDevice::HandleLongEvent(const BYTE *data, int len)
 {
-	Renderer->LongEvent((const char *)data, len);
+	Renderer->LongEvent(data, len);
 }
 
 //==========================================================================
@@ -203,4 +218,15 @@ FString WildMIDIDevice::GetStats()
 	FString out;
 	out.Format("%3d voices", Renderer->GetVoiceCount());
 	return out;
+}
+
+//==========================================================================
+//
+// WildMIDIDevice :: GetStats
+//
+//==========================================================================
+
+void WildMIDIDevice::WildMidiSetOption(int opt, int set)
+{
+	Renderer->SetOption(opt, set);
 }

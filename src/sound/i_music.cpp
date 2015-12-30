@@ -162,7 +162,7 @@ void I_InitMusic (void)
 	if (!setatterm)
 	{
 		setatterm = true;
-		atterm (I_ShutdownMusic);
+		atterm (I_ShutdownMusicExit);
 	
 #ifndef _WIN32
 		signal (SIGCHLD, ChildSigHandler);
@@ -178,7 +178,7 @@ void I_InitMusic (void)
 //
 //==========================================================================
 
-void I_ShutdownMusic(void)
+void I_ShutdownMusic(bool onexit)
 {
 	if (MusicDown)
 		return;
@@ -189,10 +189,15 @@ void I_ShutdownMusic(void)
 		assert (currSong == NULL);
 	}
 	Timidity::FreeAll();
-	WildMidi_Shutdown();
+	if (onexit) WildMidi_Shutdown();
 #ifdef _WIN32
 	I_ShutdownMusicWin32();
 #endif // _WIN32
+}
+
+void I_ShutdownMusicExit()
+{
+	I_ShutdownMusic(true);
 }
 
 
@@ -278,6 +283,10 @@ void MusInfo::FluidSettingNum(const char *, double)
 }
 
 void MusInfo::FluidSettingStr(const char *, const char *)
+{
+}
+
+void MusInfo::WildMidiSetOption(int opt, int set)
 {
 }
 

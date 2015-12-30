@@ -322,7 +322,12 @@ DWORD *MIDISong2::MakeEvents(DWORD *events, DWORD *max_event_p, DWORD max_time)
 			// Play all events for this tick.
 			do
 			{
-				DWORD *new_events = SendCommand(events, TrackDue, time);
+				bool sysex_noroom = false;
+				DWORD *new_events = SendCommand(events, TrackDue, time, max_event_p - events, sysex_noroom);
+				if (sysex_noroom)
+				{
+					return events;
+				}
 				TrackDue = FindNextDue();
 				if (new_events != events)
 				{
@@ -366,11 +371,14 @@ void MIDISong2::AdvanceTracks(DWORD time)
 //
 //==========================================================================
 
-DWORD *MIDISong2::SendCommand (DWORD *events, TrackInfo *track, DWORD delay)
+DWORD *MIDISong2::SendCommand (DWORD *events, TrackInfo *track, DWORD delay, ptrdiff_t room, bool &sysex_noroom)
 {
 	DWORD len;
 	BYTE event, data1 = 0, data2 = 0;
 	int i;
+
+	sysex_noroom = false;
+	size_t start_p = track->TrackP;
 
 	CHECK_FINISHED
 	event = track->TrackBegin[track->TrackP++];
@@ -588,13 +596,44 @@ DWORD *MIDISong2::SendCommand (DWORD *events, TrackInfo *track, DWORD delay)
 	}
 	else
 	{
-		// Skip SysEx events just because I don't want to bother with them.
-		// The old MIDI player ignored them too, so this won't break
-		// anything that played before.
+		// SysEx events could potentially not have enough room in the buffer...
 		if (event == MIDI_SYSEX || event == MIDI_SYSEXEND)
 		{
-			len = track->ReadVarLen ();
-			track->TrackP += len;
+			len = track->ReadVarLen();
+			if (len >= (MAX_EVENTS-1)*3*4)
+			{ // This message will never fit. Throw it away.
+				track->TrackP += len;
+			}
+			else if (len + 12 >= (size_t)room * 4)
+			{ // Not enough room left in this buffer. Backup and wait for the next one.
+				track->TrackP = start_p;
+				sysex_noroom = true;
+				return events;
+			}
+			else
+			{
+				events[0] = delay;
+				events[1] = 0;
+				BYTE *msg = (BYTE *)&events[3];
+				if (event == MIDI_SYSEX)
+				{ // Need to add the SysEx marker to the message.
+					events[2] = (MEVT_LONGMSG << 24) | (len + 1);
+					*msg++ = MIDI_SYSEX;
+				}
+				else
+				{
+					events[2] = (MEVT_LONGMSG << 24) | len;
+				}
+				memcpy(msg, &track->TrackBegin[track->TrackP], len);
+				msg += len;
+				// Must pad with 0
+				while ((size_t)msg & 3)
+				{
+					*msg++ = 0;
+				}
+				events = (DWORD *)msg;
+				track->TrackP += len;
+			}
 		}
 		else if (event == MIDI_META)
 		{

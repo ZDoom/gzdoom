@@ -74,10 +74,10 @@ FileReader *PathExpander::openFileReader(const char *name, int *plumpnum)
 	current_filename = name;
 	FixPathSeperator(current_filename);
 
-	int lumpnum = Wads.CheckNumForFullName(current_filename);
 
 	if (openmode != OM_FILE)
 	{
+		int lumpnum = Wads.CheckNumForFullName(current_filename);
 		if (lumpnum >= 0)
 		{
 			fp = Wads.ReopenLumpNum(lumpnum);

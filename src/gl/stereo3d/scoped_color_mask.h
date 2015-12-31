@@ -44,16 +44,18 @@
 class ScopedColorMask
 {
 public:
-	ScopedColorMask(GLboolean r, GLboolean g, GLboolean b, GLboolean a) 
+	ScopedColorMask(bool r, bool g, bool b, bool a) 
 	{
-		glGetBooleanv(GL_COLOR_WRITEMASK, saved);
-		glColorMask(r, g, b, a);
+		gl_RenderState.GetColorMask(saved[0], saved[1], saved[2], saved[3]);
+		gl_RenderState.SetColorMask(r, g, b, a);
+		gl_RenderState.ApplyColorMask();
 	}
 	~ScopedColorMask() {
-		glColorMask(saved[0], saved[1], saved[2], saved[3]);
+		gl_RenderState.SetColorMask(saved[0], saved[1], saved[2], saved[3]);
+		gl_RenderState.ApplyColorMask();
 	}
 private:
-	GLboolean saved[4];
+	bool saved[4];
 };
 
 

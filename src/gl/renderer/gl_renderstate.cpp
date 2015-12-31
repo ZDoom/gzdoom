@@ -70,6 +70,8 @@ void FRenderState::Reset()
 {
 	mTextureEnabled = true;
 	mBrightmapEnabled = mFogEnabled = mGlowEnabled = false;
+	mColorMask[0] = mColorMask[1] = mColorMask[2] = mColorMask[3] = true;
+	currentColorMask[0] = currentColorMask[1] = currentColorMask[2] = currentColorMask[3] = true;
 	mFogColor.d = -1;
 	mTextureMode = -1;
 	mLightIndex = -1;
@@ -257,6 +259,8 @@ void FRenderState::Apply()
 		}
 	}
 
+	ApplyColorMask();
+
 	if (mVertexBuffer != mCurrentVertexBuffer)
 	{
 		if (mVertexBuffer == NULL) glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -267,6 +271,21 @@ void FRenderState::Apply()
 }
 
 
+
+void FRenderState::ApplyColorMask()
+{
+	if ((mColorMask[0] != currentColorMask[0]) ||
+		(mColorMask[1] != currentColorMask[1]) ||
+		(mColorMask[2] != currentColorMask[2]) ||
+		(mColorMask[3] != currentColorMask[3]))
+	{
+		glColorMask(mColorMask[0], mColorMask[1], mColorMask[2], mColorMask[3]);
+		currentColorMask[0] = mColorMask[0];
+		currentColorMask[1] = mColorMask[1];
+		currentColorMask[2] = mColorMask[2];
+		currentColorMask[3] = mColorMask[3];
+	}
+}
 
 void FRenderState::ApplyMatrices()
 {

@@ -47,6 +47,8 @@ class FRenderState
 	bool mFogEnabled;
 	bool mGlowEnabled;
 	bool mBrightmapEnabled;
+	bool mColorMask[4];
+	bool currentColorMask[4];
 	int mLightIndex;
 	int mSpecialEffect;
 	int mTextureMode;
@@ -116,6 +118,7 @@ public:
 	}
 
 	void Apply();
+	void ApplyColorMask();
 	void ApplyMatrices();
 	void ApplyLightIndex(int index);
 
@@ -172,6 +175,28 @@ public:
 	{
 		mColor.Set(1,1,1,1);
 		mDesaturation = 0;
+	}
+
+	void GetColorMask(bool& r, bool &g, bool& b, bool& a) const
+	{
+		r = mColorMask[0];
+		g = mColorMask[1];
+		b = mColorMask[2];
+		a = mColorMask[3];
+	}
+
+	void SetColorMask(bool r, bool g, bool b, bool a)
+	{
+		mColorMask[0] = r;
+		mColorMask[1] = g;
+		mColorMask[2] = b;
+		mColorMask[3] = a;
+	}
+
+	void ResetColorMask()
+	{
+		for (int i = 0; i < 4; ++i)
+			mColorMask[i] = true;
 	}
 
 	void SetTextureMode(int mode)

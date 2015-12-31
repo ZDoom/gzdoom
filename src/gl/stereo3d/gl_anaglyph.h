@@ -39,6 +39,7 @@
 #include "gl_stereo3d.h"
 #include "gl_stereo_leftright.h"
 #include "gl/system/gl_system.h"
+#include "gl/renderer/gl_renderstate.h"
 
 
 namespace s3d {
@@ -50,9 +51,9 @@ public:
 	ColorMask(bool r, bool g, bool b) : r(r), g(g), b(b) {}
 	ColorMask inverse() const { return ColorMask(!r, !g, !b); }
 
-	GLboolean r;
-	GLboolean g;
-	GLboolean b;
+	bool r;
+	bool g;
+	bool b;
 };
 
 
@@ -60,8 +61,14 @@ class AnaglyphLeftPose : public LeftEyePose
 {
 public:
 	AnaglyphLeftPose(const ColorMask& colorMask, float ipd) : LeftEyePose(ipd), colorMask(colorMask) {}
-	virtual void SetUp() const { glColorMask(colorMask.r, colorMask.g, colorMask.b, true); }
-	virtual void TearDown() const { glColorMask(1,1,1,1); }
+	virtual void SetUp() const { 
+		gl_RenderState.SetColorMask(colorMask.r, colorMask.g, colorMask.b, true);
+		gl_RenderState.ApplyColorMask();
+	}
+	virtual void TearDown() const { 
+		gl_RenderState.ResetColorMask();
+		gl_RenderState.ApplyColorMask();
+	}
 private:
 	ColorMask colorMask;
 };
@@ -70,8 +77,14 @@ class AnaglyphRightPose : public RightEyePose
 {
 public:
 	AnaglyphRightPose(const ColorMask& colorMask, float ipd) : RightEyePose(ipd), colorMask(colorMask) {}
-	virtual void SetUp() const { glColorMask(colorMask.r, colorMask.g, colorMask.b, true); }
-	virtual void TearDown() const { glColorMask(1,1,1,1); }
+	virtual void SetUp() const { 
+		gl_RenderState.SetColorMask(colorMask.r, colorMask.g, colorMask.b, true);
+		gl_RenderState.ApplyColorMask();
+	}
+	virtual void TearDown() const { 
+		gl_RenderState.ResetColorMask();
+		gl_RenderState.ApplyColorMask();
+	}
 private:
 	ColorMask colorMask;
 };

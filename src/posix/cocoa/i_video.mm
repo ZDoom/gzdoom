@@ -420,7 +420,7 @@ CocoaVideo::CocoaVideo(const int multisample)
 	attributes[i++] = NSOpenGLPFAStencilSize;
 	attributes[i++] = NSOpenGLPixelFormatAttribute(8);
 
-	if (!vid_autoswitch)
+	if (NSAppKitVersionNumber >= AppKit10_5 && !vid_autoswitch)
 	{
 		attributes[i++] = NSOpenGLPFAAllowOfflineRenderers;
 	}

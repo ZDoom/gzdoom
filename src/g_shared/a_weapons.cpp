@@ -683,47 +683,13 @@ FState *AWeapon::GetAltAtkState (bool hold)
 
 //===========================================================================
 //
-// AWeapon :: GetRelState
+// AWeapon :: GetStateForButtonName
 //
 //===========================================================================
 
-FState *AWeapon::GetRelState ()
+FState *AWeapon::GetStateForButtonName (FName button)
 {
-	return FindState(NAME_Reload);
-}
-
-//===========================================================================
-//
-// AWeapon :: GetZoomState
-//
-//===========================================================================
-
-FState *AWeapon::GetZoomState ()
-{
-	return FindState(NAME_Zoom);
-}
-
-//===========================================================================
-//
-// AWeapon :: GetUserState
-//
-//===========================================================================
-
-FState *AWeapon::GetUserState(int state)
-{
-	switch (state)
-	{
-	case 4:
-		return FindState(NAME_User4);
-	case 3:
-		return FindState(NAME_User3);
-	case 2:
-		return FindState(NAME_User2);
-	case 1:
-		return FindState(NAME_User1);
-	default:
-		return NULL;
-	}
+	return FindState(button);
 }
 
 

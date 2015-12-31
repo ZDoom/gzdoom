@@ -305,9 +305,7 @@ public:
 	virtual FState *GetReadyState ();
 	virtual FState *GetAtkState (bool hold);
 	virtual FState *GetAltAtkState (bool hold);
-	virtual FState *GetRelState ();
-	virtual FState *GetZoomState ();
-	virtual FState *GetUserState(int state);
+	virtual FState *GetStateForButtonName (FName button);
 
 	virtual void PostMorphWeapon ();
 	virtual void EndPowerup ();

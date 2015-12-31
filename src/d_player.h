@@ -225,7 +225,7 @@ enum
 	WF_USER2OK			= 1 << 9,
 	WF_USER3OK			= 1 << 10,
 	WF_USER4OK			= 1 << 11,
-};	
+};
 
 #define WPIECE1		1
 #define WPIECE2		2

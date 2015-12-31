@@ -223,9 +223,16 @@ void MUSSong2::Precache()
 		{
 			val = instr;
 		}
-		else if (instr >= 135 && instr <= 181)
+		else if (instr >= 135 && instr <= 188)
 		{ // Percussions are 100-based, not 128-based, eh?
 			val = instr - 100 + (1 << 14);
+		}
+		else
+		{
+			// skip it.
+			val = used[k++];
+			k += val;
+			continue;
 		}
 
 		int numbanks = used[k++];

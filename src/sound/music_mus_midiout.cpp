@@ -211,11 +211,11 @@ bool MUSSong2::CheckDone()
 
 void MUSSong2::Precache()
 {
-	WORD *work = (WORD *)alloca(MusHeader->NumInstruments * sizeof(WORD));
+	TArray<WORD> work(MusHeader->NumInstruments);
 	const BYTE *used = (BYTE *)MusHeader + sizeof(MUSHeader) / sizeof(BYTE);
-	int i, j, k;
+	int i, k;
 
-	for (i = j = k = 0; i < MusHeader->NumInstruments; ++i)
+	for (i = k = 0; i < MusHeader->NumInstruments; ++i)
 	{
 		BYTE instr = used[k++];
 		WORD val;
@@ -240,15 +240,15 @@ void MUSSong2::Precache()
 		{
 			for (int b = 0; b < numbanks; b++)
 			{
-				work[j++] = val | (used[k++] << 7);
+				work.Push(val | (used[k++] << 7));
 			}
 		}
 		else
 		{
-			work[j++] = val;
+			work.Push(val);
 		}
 	}
-	MIDI->PrecacheInstruments(&work[0], j);
+	MIDI->PrecacheInstruments(&work[0], work.Size());
 }
 
 //==========================================================================

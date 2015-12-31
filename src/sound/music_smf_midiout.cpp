@@ -102,8 +102,8 @@ char MIDI_CommonLengths[15] = { 0, 1, 2, 1, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0 };
 //
 //==========================================================================
 
-MIDISong2::MIDISong2 (FileReader &reader, EMidiDevice type)
-: MIDIStreamer(type), MusHeader(0), Tracks(0)
+MIDISong2::MIDISong2 (FileReader &reader, EMidiDevice type, const char *args)
+: MIDIStreamer(type, args), MusHeader(0), Tracks(0)
 {
 	int p;
 	int i;

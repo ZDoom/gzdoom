@@ -89,12 +89,12 @@ static const BYTE StaticMIDIhead[] =
 //
 //==========================================================================
 
-MIDIStreamer::MIDIStreamer(EMidiDevice type)
+MIDIStreamer::MIDIStreamer(EMidiDevice type, const char *args)
 :
 #ifdef _WIN32
   PlayerThread(0), ExitEvent(0), BufferDoneEvent(0),
 #endif
-  MIDI(0), Division(0), InitialTempo(500000), DeviceType(type)
+  MIDI(0), Division(0), InitialTempo(500000), DeviceType(type), Args(args)
 {
 #ifdef _WIN32
 	BufferDoneEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
@@ -269,19 +269,19 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype) const
 
 #ifdef HAVE_FLUIDSYNTH
 	case MDEV_FLUIDSYNTH:
-		return new FluidSynthMIDIDevice;
+		return new FluidSynthMIDIDevice(Args);
 #endif
 
 	case MDEV_SNDSYS:
 		return new SndSysMIDIDevice;
 
 	case MDEV_GUS:
-		return new TimidityMIDIDevice;
+		return new TimidityMIDIDevice(Args);
 
 	case MDEV_OPL:
 		try
 		{
-			return new OPLMIDIDevice;
+			return new OPLMIDIDevice(Args);
 		}
 		catch (CRecoverableError &err)
 		{
@@ -291,10 +291,10 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype) const
 		}
 
 	case MDEV_TIMIDITY:
-		return new TimidityPPMIDIDevice;
+		return new TimidityPPMIDIDevice(Args);
 
 	case MDEV_WILDMIDI:
-		return new WildMIDIDevice;
+		return new WildMIDIDevice(Args);
 
 	default:
 		return NULL;

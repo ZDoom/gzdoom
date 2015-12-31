@@ -20,16 +20,25 @@ CUSTOM_CVAR (Int, opl_numchips, 2, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	}
 }
 
-CVAR(Int, opl_core, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR(Int, opl_core, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+int current_opl_core;
 
-OPLMUSSong::OPLMUSSong (FileReader &reader)
+// Get OPL core override from $mididevice
+void OPL_SetCore(const char *args)
+{
+	current_opl_core = opl_core;
+	if (args != NULL && *args >= '0' && *args < '4') current_opl_core = *args - '0';
+}
+
+OPLMUSSong::OPLMUSSong (FileReader &reader, const char *args)
 {
 	int samples = int(OPL_SAMPLE_RATE / 14);
 
+	OPL_SetCore(args);
 	Music = new OPLmusicFile (&reader);
 
 	m_Stream = GSnd->CreateStream (FillStream, samples*4,
-		(opl_core == 0 ? SoundStream::Mono : 0) | SoundStream::Float, int(OPL_SAMPLE_RATE), this);
+		(current_opl_core == 0 ? SoundStream::Mono : 0) | SoundStream::Float, int(OPL_SAMPLE_RATE), this);
 	if (m_Stream == NULL)
 	{
 		Printf (PRINT_BOLD, "Could not create music stream.\n");

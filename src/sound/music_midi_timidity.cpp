@@ -72,7 +72,7 @@ CUSTOM_CVAR (Int, timidity_frequency, 22050, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 //
 //==========================================================================
 
-TimidityPPMIDIDevice::TimidityPPMIDIDevice()
+TimidityPPMIDIDevice::TimidityPPMIDIDevice(const char *args)
 	: DiskName("zmid"),
 #ifdef _WIN32
 	  ReadWavePipe(INVALID_HANDLE_VALUE), WriteWavePipe(INVALID_HANDLE_VALUE),
@@ -85,7 +85,13 @@ TimidityPPMIDIDevice::TimidityPPMIDIDevice()
 #ifndef _WIN32
 	WavePipe[0] = WavePipe[1] = -1;
 #endif
-	
+
+	if (args == NULL || *args == 0) args = timidity_exe;
+
+	CommandLine.Format("%s %s -EFchorus=%s -EFreverb=%s -s%d ",
+		args, *timidity_extargs,
+		*timidity_chorus, *timidity_reverb, *timidity_frequency);
+
 	if (DiskName == NULL)
 	{
 		Printf(PRINT_BOLD, "Could not create temp music file\n");
@@ -186,10 +192,6 @@ int TimidityPPMIDIDevice::Open(void (*callback)(unsigned int, void *, DWORD, DWO
 
 	Validated = true;
 #endif // WIN32
-
-	CommandLine.Format("%s %s -EFchorus=%s -EFreverb=%s -s%d ",
-		*timidity_exe, *timidity_extargs,
-		*timidity_chorus, *timidity_reverb, *timidity_frequency);
 
 	pipeSize = (timidity_pipe * timidity_frequency / 1000)
 		<< (timidity_stereo + !timidity_8bit);

@@ -683,25 +683,15 @@ FState *AWeapon::GetAltAtkState (bool hold)
 
 //===========================================================================
 //
-// AWeapon :: GetRelState
+// AWeapon :: GetStateForButtonName
 //
 //===========================================================================
 
-FState *AWeapon::GetRelState ()
+FState *AWeapon::GetStateForButtonName (FName button)
 {
-	return FindState(NAME_Reload);
+	return FindState(button);
 }
 
-//===========================================================================
-//
-// AWeapon :: GetZoomState
-//
-//===========================================================================
-
-FState *AWeapon::GetZoomState ()
-{
-	return FindState(NAME_Zoom);
-}
 
 /* Weapon giver ***********************************************************/
 

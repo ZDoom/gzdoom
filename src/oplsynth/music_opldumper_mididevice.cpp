@@ -262,6 +262,7 @@ protected:
 //==========================================================================
 
 OPLDumperMIDIDevice::OPLDumperMIDIDevice(const char *filename)
+	: OPLMIDIDevice(NULL)
 {
 	// Replace the standard OPL device with a disk writer.
 	delete io;

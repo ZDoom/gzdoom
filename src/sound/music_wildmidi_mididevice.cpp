@@ -81,7 +81,7 @@ CUSTOM_CVAR(Bool, wildmidi_enhanced_resampling, true, CVAR_ARCHIVE | CVAR_GLOBAL
 //
 //==========================================================================
 
-WildMIDIDevice::WildMIDIDevice()
+WildMIDIDevice::WildMIDIDevice(const char *args)
 {
 	Renderer = NULL;
 
@@ -94,16 +94,18 @@ WildMIDIDevice::WildMIDIDevice()
 		SampleRate = clamp(SampleRate, 11025, 65535);
 	}
 
-	if (CurrentConfig.CompareNoCase(wildmidi_config) != 0 || SampleRate != WildMidi_GetSampleRate())
+	if (args == NULL || *args == 0) args = wildmidi_config;
+
+	if (CurrentConfig.CompareNoCase(args) != 0 || SampleRate != WildMidi_GetSampleRate())
 	{
 		if (CurrentConfig.IsNotEmpty())
 		{
 			WildMidi_Shutdown();
 			CurrentConfig = "";
 		}
-		if (!WildMidi_Init(wildmidi_config, SampleRate, 0))
+		if (!WildMidi_Init(args, SampleRate, 0))
 		{
-			CurrentConfig = wildmidi_config;
+			CurrentConfig = args;
 		}
 	}
 	if (CurrentConfig.IsNotEmpty())

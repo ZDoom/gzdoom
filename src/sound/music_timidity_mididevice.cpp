@@ -86,10 +86,10 @@ struct FmtChunk
 //
 //==========================================================================
 
-TimidityMIDIDevice::TimidityMIDIDevice()
+TimidityMIDIDevice::TimidityMIDIDevice(const char *args)
 {
 	Renderer = NULL;
-	Renderer = new Timidity::Renderer((float)SampleRate);
+	Renderer = new Timidity::Renderer((float)SampleRate, args);
 }
 
 //==========================================================================
@@ -245,6 +245,7 @@ FString TimidityMIDIDevice::GetStats()
 //==========================================================================
 
 TimidityWaveWriterMIDIDevice::TimidityWaveWriterMIDIDevice(const char *filename, int rate)
+	:TimidityMIDIDevice(NULL)
 {
 	File = fopen(filename, "wb");
 	if (File != NULL)

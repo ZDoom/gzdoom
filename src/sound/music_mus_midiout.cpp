@@ -93,8 +93,8 @@ static const BYTE CtrlTranslate[15] =
 //
 //==========================================================================
 
-MUSSong2::MUSSong2 (FileReader &reader, EMidiDevice type)
-: MIDIStreamer(type), MusHeader(0), MusBuffer(0)
+MUSSong2::MUSSong2 (FileReader &reader, EMidiDevice type, const char *args)
+: MIDIStreamer(type, args), MusHeader(0), MusBuffer(0)
 {
 #ifdef _WIN32
 	if (ExitEvent == NULL)

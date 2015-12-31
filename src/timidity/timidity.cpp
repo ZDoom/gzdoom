@@ -678,8 +678,9 @@ int LoadDMXGUS()
 	return 0;
 }
 
-Renderer::Renderer(float sample_rate)
+Renderer::Renderer(float sample_rate, const char *args)
 {
+	// 'args' should be used to load a custom config or DMXGUS, but since setup currently requires a snd_reset call, this will need some refactoring first
 	rate = sample_rate;
 	patches = NULL;
 	resample_buffer_size = 0;

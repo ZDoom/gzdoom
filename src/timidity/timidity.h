@@ -630,7 +630,7 @@ struct Renderer
 	int voices;
 	int lost_notes, cut_notes;
 
-	Renderer(float sample_rate);
+	Renderer(float sample_rate, const char *args);
 	~Renderer();
 
 	void HandleEvent(int status, int parm1, int parm2);

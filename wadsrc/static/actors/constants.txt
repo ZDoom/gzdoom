@@ -133,7 +133,6 @@ const int WRF_USER1 = 128;
 const int WRF_USER2 = 256;
 const int WRF_USER3 = 512;
 const int WRF_USER4 = 1024;
-const int WRF_ALLUSER = WRF_USER1 | WRF_USER2 | WRF_USER3 | WRF_USER4;
 
 // Morph constants
 const int MRF_ADDSTAMINA = 1;

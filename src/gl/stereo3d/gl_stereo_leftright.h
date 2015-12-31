@@ -80,7 +80,7 @@ class LeftEyeView : public Stereo3DMode
 public:
 	static const LeftEyeView& getInstance(FLOATTYPE ipd);
 
-	LeftEyeView(FLOATTYPE ipd) : eye(ipd) { eye_ptrs.push_back(&eye); }
+	LeftEyeView(FLOATTYPE ipd) : eye(ipd) { eye_ptrs.Push(&eye); }
 	FLOATTYPE getIpd() const { return eye.getIpd(); }
 	void setIpd(FLOATTYPE ipd) { eye.setIpd(ipd); }
 protected:
@@ -93,7 +93,7 @@ class RightEyeView : public Stereo3DMode
 public:
 	static const RightEyeView& getInstance(FLOATTYPE ipd);
 
-	RightEyeView(FLOATTYPE ipd) : eye(ipd) { eye_ptrs.push_back(&eye); }
+	RightEyeView(FLOATTYPE ipd) : eye(ipd) { eye_ptrs.Push(&eye); }
 	FLOATTYPE getIpd() const { return eye.getIpd(); }
 	void setIpd(FLOATTYPE ipd) { eye.setIpd(ipd); }
 protected:

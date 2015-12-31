@@ -36,8 +36,8 @@
 #ifndef GL_STEREO3D_H_
 #define GL_STEREO3D_H_
 
-#include <vector>
 #include <cstring> // needed for memcpy on linux, which is needed by VSMatrix copy ctor
+#include "tarray.h"
 #include "gl/data/gl_matrix.h"
 
 
@@ -72,23 +72,20 @@ public:
 class Stereo3DMode
 {
 public:
-	/* const_iterator cycles through the various eye viewpoints */
-	typedef std::vector<const EyePose *>::const_iterator const_iterator;
-
 	/* static methods for managing the selected stereoscopic view state */
 	static const Stereo3DMode& getCurrentMode();
 
 	Stereo3DMode();
 	virtual ~Stereo3DMode();
-	/* const_iterator cycles through the various eye viewpoints */
-	virtual const_iterator begin() const { return eye_ptrs.begin(); }
-	virtual const_iterator end() const { return eye_ptrs.end(); }
+	virtual int eye_count() const { return eye_ptrs.Size(); }
+	virtual const EyePose * getEyePose(int ix) const { return eye_ptrs(ix); }
+
 	/* hooks for setup and cleanup operations for each stereo mode */
 	virtual void SetUp() const {};
 	virtual void TearDown() const {};
 
 protected:
-	std::vector<const EyePose *> eye_ptrs;
+	TArray<const EyePose *> eye_ptrs;
 
 private:
 	static Stereo3DMode const * currentStereo3DMode;
@@ -105,7 +102,7 @@ public:
 	static const MonoView& getInstance();
 
 protected:
-	MonoView() { eye_ptrs.push_back(&centralEye); }
+	MonoView() { eye_ptrs.Push(&centralEye); }
 	EyePose centralEye;
 };
 

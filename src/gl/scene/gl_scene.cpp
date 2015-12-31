@@ -816,19 +816,19 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 	float viewShift[3];
 	const s3d::Stereo3DMode& stereo3dMode = s3d::Stereo3DMode::getCurrentMode();
 	stereo3dMode.SetUp();
-	s3d::Stereo3DMode::const_iterator eye;
-	for (eye = stereo3dMode.begin(); eye != stereo3dMode.end(); ++eye)
+	for (int eye_ix = 0; eye_ix < stereo3dMode.eye_count(); ++eye_ix)
 	{
-		(*eye)->SetUp();
+		const s3d::EyePose * eye = stereo3dMode.getEyePose(eye_ix);
+		eye->SetUp();
 		// TODO: stereo specific viewport - needed when implementing side-by-side modes etc.
 		SetViewport(bounds);
 		mCurrentFoV = fov;
 		// Stereo mode specific perspective projection
-		SetProjection( (*eye)->GetProjection(fov, ratio, fovratio) );
+		SetProjection( eye->GetProjection(fov, ratio, fovratio) );
 		// SetProjection(fov, ratio, fovratio);	// switch to perspective mode and set up clipper
 		SetViewAngle(viewangle);
 		// Stereo mode specific viewpoint adjustment - temporarily shifts global viewx, viewy, viewz
-		(*eye)->GetViewShift(GLRenderer->mAngles.Yaw, viewShift);
+		eye->GetViewShift(GLRenderer->mAngles.Yaw, viewShift);
 		s3d::ScopedViewShifter viewShifter(viewShift);
 		SetViewMatrix(viewx, viewy, viewz, false, false);
 		gl_RenderState.ApplyMatrices();
@@ -839,7 +839,7 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 
 		ProcessScene(toscreen);
 		EndDrawScene(viewsector);
-		(*eye)->TearDown();
+		eye->TearDown();
 	}
 	stereo3dMode.TearDown();
 

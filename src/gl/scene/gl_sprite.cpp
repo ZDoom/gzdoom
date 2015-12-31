@@ -274,7 +274,10 @@ void GLSprite::Draw(int pass)
 			// Here we need some form of priority in order to work.
 			if (spritetype == RF_PITCHFLATSPRITE)
 			{
-				mat.Rotate(-yawvecY, 0, yawvecX, -360.0 * (1.0 - (((angle_t)actor->pitch >> 16) / (float)(65536))));
+				angle_t pitchDegrees = 360.0 * (1.0 + (((angle_t)actor->pitch >> 16) / (float)(65536)));
+				fixed_t rollDegrees = 360.0 * (1.0 - ((actor->roll >> 16) / (float)(65536)));
+				mat.Rotate(-yawvecY, 0, yawvecX, pitchDegrees); 
+				mat.Rotate(yawvecX, 0, yawvecY, rollDegrees);
 			}
 			else if (spritetype == RF_FLATSPRITE)
 			{ // [fgsfds] rotate the sprite so it faces upwards/downwards

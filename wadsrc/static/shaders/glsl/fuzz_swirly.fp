@@ -1,8 +1,7 @@
 //created by Evil Space Tomato
 
-vec4 ProcessTexel()
+vec4 ProcessTexel(vec2 texCoord)
 {
-	vec2 texCoord = vTexCoord.st;
 	vec4 basicColor = getTexel(texCoord);
 
 	float texX = sin(texCoord.x * 100.0 + uTimer*5.0);

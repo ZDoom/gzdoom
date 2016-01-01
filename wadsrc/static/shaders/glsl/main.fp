@@ -21,9 +21,10 @@ out vec4 FragColor;
 
 uniform sampler2D tex;
 
+vec2 ProcessCoordinate();
 vec4 Process(vec4 color);
-vec4 ProcessTexel();
-vec4 ProcessLight(vec4 color);
+vec4 ProcessTexel(vec2 coord);
+vec4 ProcessLight(vec2 coord, vec4 color);
 
 
 //===========================================================================
@@ -171,7 +172,7 @@ vec4 getLightColor(vec2 coord, float fogdist, float fogfactor)
 	color = min(color, 1.0);
 
 	//
-	// apply brightmaps (or other light manipulation by custom shaders.
+	// apply brightmaps (or other light manipulation by custom shaders.)
 	//
 	color = ProcessLight(coord, color);
 

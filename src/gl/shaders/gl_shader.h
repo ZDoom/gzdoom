@@ -121,6 +121,7 @@ struct FShaderDefinition
 	FName mName;
 	FString mSourceFile;
 	bool mNoLightShader;
+	bool mNoCoordinateShader;
 	bool mCoreLump;
 	bool bRequireAlphaTest;
 	TArray<FString> mTextureUnitNames;
@@ -128,6 +129,7 @@ struct FShaderDefinition
 
 	FShaderDefinition()
 	{
+		mNoCoordinateShader = false;
 		mNoLightShader = false;
 		mCoreLump = false;
 		bRequireAlphaTest = false;

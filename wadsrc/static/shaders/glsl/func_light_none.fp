@@ -1,5 +1,5 @@
 
-vec4 ProcessLight(vec4 color)
+vec4 ProcessLight(vec2 coord, vec4 color)
 {
 	return color;
 }

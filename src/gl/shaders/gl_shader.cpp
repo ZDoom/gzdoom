@@ -411,9 +411,9 @@ unsigned int FShaderManager::GetShaderIndex(FName coord, FName tex, FName lite)
 			return i;
 		}
 	}
-	for (unsigned int i = 0; i < CoordinateShaders.Size(); i++)
+	for (unsigned int k = 0; k < CoordinateShaders.Size(); k++)
 	{
-		if (CoordinateShaders[i]->mName == coord)
+		if (CoordinateShaders[k]->mName == coord)
 		{
 
 			for (unsigned int i = 0; i < TexelShaders.Size(); i++)
@@ -434,18 +434,18 @@ unsigned int FShaderManager::GetShaderIndex(FName coord, FName tex, FName lite)
 					unsigned int ndx = mShaders.Reserve(1);
 					FShaderContainer *cont = &mShaders[ndx];
 
-					shname << CoordinateShaders[i]->mName << "::" << TexelShaders[i]->mName << "::" << LightShaders[j]->mName;
+					shname << CoordinateShaders[k]->mName << "::" << TexelShaders[i]->mName << "::" << LightShaders[j]->mName;
 					DPrintf("Compiling shader %s\n", shname);
 
 					cont->mCoordinateName = coord;
 					cont->mTexelName = tex;
 					cont->mLightName = lite;
 					cont->mShader = cont->mShaderNAT = NULL;
-					cont->mShader = Compile(shname, CoordinateShaders[i], TexelShaders[i], LightShaders[j], true);
+					cont->mShader = Compile(shname, CoordinateShaders[k], TexelShaders[i], LightShaders[j], true);
 
 					if (!TexelShaders[i]->bRequireAlphaTest)
 					{
-						cont->mShaderNAT = Compile(shname, CoordinateShaders[i], TexelShaders[i], LightShaders[j], false);
+						cont->mShaderNAT = Compile(shname, CoordinateShaders[k], TexelShaders[i], LightShaders[j], false);
 					}
 					return ndx;
 				}
@@ -681,6 +681,7 @@ void gl_ParseHardwareShader(FScanner &sc, int deflump)
 			def->mName = nm;
 			def->mCoreLump = false;
 			def->mNoLightShader = true;
+			def->mNoCoordinateShader = false;
 			def->mSourceFile = maplumpname;
 			TexelShaders.Push(def);
 		}
@@ -690,6 +691,7 @@ void gl_ParseHardwareShader(FScanner &sc, int deflump)
 			def->mName = nm;
 			def->mCoreLump = false;
 			def->mNoLightShader = true;
+			def->mNoCoordinateShader = false;
 			def->mSourceFile = maplumpname;
 		}
 		tex->gl_info.texelFunction = nm;
@@ -758,9 +760,13 @@ void gl_ParseShaderDef(FScanner &sc, int functiontype)
 			}
 		}
 	}
-	else if (sc.Compare("nolightshader"))
+	else if (sc.Compare("nolightfunction"))
 	{
 		def->mNoLightShader = true;
+	}
+	else if (sc.Compare("nocoordinatefunction"))
+	{
+		def->mNoCoordinateShader = true;
 	}
 	else if (sc.Compare("requirealphatest"))
 	{

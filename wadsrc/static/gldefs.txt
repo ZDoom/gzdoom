@@ -41,6 +41,7 @@ TexelFunction "No Texture"
 {
 	source "shaders/glsl/func_texel_notexture.fp", corelump
 	noLightFunction
+	noCoordinateFunction
 }
 
 TexelFunction "Fuzz Jagged"

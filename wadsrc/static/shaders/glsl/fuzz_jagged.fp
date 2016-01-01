@@ -1,9 +1,7 @@
 //created by Evil Space Tomato
 
-vec4 ProcessTexel()
+vec4 ProcessTexel(vec2 texCoord)
 {
-	vec2 texCoord = vTexCoord.st;
-
 	vec2 texSplat;
 	const float pi = 3.14159265358979323846;
 	texSplat.x = texCoord.x + mod(sin(pi * 2.0 * (texCoord.y + uTimer * 2.0)),0.1) * 0.1;

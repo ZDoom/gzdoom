@@ -223,6 +223,9 @@ void GLSprite::Draw(int pass)
 		const bool drawWithXYBillboard = ( (particle && gl_billboard_particles) || (!(actor && actor->renderflags & RF_FORCEYBILLBOARD)
 		                                   //&& GLRenderer->mViewActor != NULL
 		                                   && (gl_billboard_mode == 1 || (actor && actor->renderflags & RF_FORCEXYBILLBOARD ))) );
+		// [Nash] has +ROLLSPRITE
+		const bool drawRollSpriteActor = (actor != NULL && actor->renderflags & RF_ROLLSPRITE);
+
 		gl_RenderState.Apply();
 
 		Vector v1;
@@ -230,7 +233,15 @@ void GLSprite::Draw(int pass)
 		Vector v3;
 		Vector v4;
 
-		if (drawWithXYBillboard)
+		// [fgsfds] check sprite type mask
+		DWORD spritetype = (DWORD)-1;
+		if (actor != NULL) spritetype = actor->renderflags & RF_SPRITETYPEMASK;
+
+		// [Nash] is a flat sprite
+		const bool isFlatSprite = (spritetype == RF_WALLSPRITE || spritetype == RF_FLATSPRITE || spritetype == RF_PITCHFLATSPRITE);
+
+		// [Nash] check for special sprite drawing modes
+		if (drawWithXYBillboard || drawRollSpriteActor || isFlatSprite)
 		{
 			// Rotate the sprite about the vector starting at the center of the sprite
 			// triangle strip and with direction orthogonal to where the player is looking
@@ -240,16 +251,62 @@ void GLSprite::Draw(int pass)
 			float zcenter = (z1 + z2)*0.5;
 			float angleRad = DEG2RAD(270. - float(GLRenderer->mAngles.Yaw));
 
+			// [fgsfds] calculate yaw vectors
+			float yawvecX, yawvecY;
+			if (isFlatSprite)
+			{
+				yawvecX = FIXED2FLOAT(finecosine[actor->angle >> ANGLETOFINESHIFT]);
+				yawvecY = FIXED2FLOAT(finesine[actor->angle >> ANGLETOFINESHIFT]);
+			}
+
 			Matrix3x4 mat;
 			mat.MakeIdentity();
 			mat.Translate(xcenter, zcenter, ycenter);
-			mat.Rotate(-sin(angleRad), 0, cos(angleRad), -GLRenderer->mAngles.Pitch);
+
+			// [MC] This is the only thing that I changed in Nash's submission which 
+			// was constantly applying roll to everything. That was wrong. Flat sprites
+			// with roll literally look like paper thing space ships trying to swerve.
+			// However, it does well with wall sprites.
+			// Also, renamed FLOORSPRITE to FLATSPRITE because that's technically incorrect.
+			// I plan on adding proper FLOORSPRITEs which can actually curve along sloped
+			// 3D floors later... if possible.
+
+			// Here we need some form of priority in order to work.
+			if (spritetype == RF_PITCHFLATSPRITE)
+			{
+				angle_t pitchDegrees = 360.0 * (1.0 + (((angle_t)actor->pitch >> 16) / (float)(65536)));
+				fixed_t rollDegrees = 360.0 * (1.0 - ((actor->roll >> 16) / (float)(65536)));
+				mat.Rotate(-yawvecY, 0, yawvecX, pitchDegrees); 
+				mat.Rotate(yawvecX, 0, yawvecY, rollDegrees);
+			}
+			else if (spritetype == RF_FLATSPRITE)
+			{ // [fgsfds] rotate the sprite so it faces upwards/downwards
+				mat.Rotate(-yawvecY, 0, yawvecX, -90.f);
+			}
+			// [fgsfds] Rotate the sprite about the sight vector (roll) 
+			else if (spritetype == RF_WALLSPRITE)
+			{
+				mat.Rotate(yawvecX, yawvecY, 0, 360.0 * (1.0 - ((actor->roll >> 16) / (float)(65536))));
+			}
+			else if (drawRollSpriteActor)
+			{
+				mat.Rotate(cos(angleRad), 0, sin(angleRad), 360.0 * (1.0 - ((actor->roll >> 16) / (float)(65536))));
+			}
+			// [Nash] XY Billboard
+			else if (drawWithXYBillboard)
+			{
+				mat.Rotate(-sin(angleRad), 0, cos(angleRad), -GLRenderer->mAngles.Pitch);
+			}			
+
+			// apply the transform
 			mat.Translate(-xcenter, -zcenter, -ycenter);
 			v1 = mat * Vector(x1, z1, y1);
 			v2 = mat * Vector(x2, z1, y2);
 			v3 = mat * Vector(x1, z2, y1);
 			v4 = mat * Vector(x2, z2, y2);
 		}
+
+		// [Nash] just draw the sprite normally
 		else
 		{
 			v1 = Vector(x1, z1, y1);
@@ -581,14 +638,25 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 	
 
 	x = FIXED2FLOAT(thingx);
-	z = FIXED2FLOAT(thingz-thing->floorclip);
 	y = FIXED2FLOAT(thingy);
 
-	// [RH] Make floatbobbing a renderer-only effect.
-	if (thing->flags2 & MF2_FLOATBOB)
+	// sprite adjustment
+	DWORD spritetype = thing->renderflags & RF_SPRITETYPEMASK;
+	switch (spritetype)
 	{
-		float fz = FIXED2FLOAT(thing->GetBobOffset(r_TicFrac));
-		z += fz;
+	case RF_PITCHFLATSPRITE:
+	case RF_FLATSPRITE:
+			z = FIXED2FLOAT(thingz);
+			break;
+	default:
+		// [RH] Make floatbobbing a renderer-only effect.
+		z = FIXED2FLOAT(thingz - thing->floorclip);
+		if (thing->flags2 & MF2_FLOATBOB)
+		{
+			float fz = FIXED2FLOAT(thing->GetBobOffset(r_TicFrac));
+			z += fz;
+		}
+		break;
 	}
 	
 	modelframe = gl_FindModelFrame(RUNTIME_TYPE(thing), spritenum, thing->frame, !!(thing->flags & MF_DROPPED));
@@ -636,7 +704,7 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 
 		float viewvecX;
 		float viewvecY;
-		switch (thing->renderflags & RF_SPRITETYPEMASK)
+		switch (spritetype)
 		{
 		case RF_FACESPRITE:
 			viewvecX = GLRenderer->mViewVector.X;
@@ -649,6 +717,8 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 			break;
 
 		case RF_WALLSPRITE:
+		case RF_FLATSPRITE:
+		case RF_PITCHFLATSPRITE:
 			viewvecX = FIXED2FLOAT(finecosine[thing->angle >> ANGLETOFINESHIFT]);
 			viewvecY = FIXED2FLOAT(finesine[thing->angle >> ANGLETOFINESHIFT]);
 
@@ -970,6 +1040,5 @@ void GLSprite::ProcessParticle (particle_t *particle, sector_t *sector)//, int s
 	PutSprite(hw_styleflags != STYLEHW_Solid);
 	rendered_sprites++;
 }
-
 
 

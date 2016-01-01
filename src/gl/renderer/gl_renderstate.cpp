@@ -302,7 +302,7 @@ void FRenderState::Apply(bool forcenoshader)
 		}
 	}
 
-	ApplyColorMask();
+	//ApplyColorMask(); I don't think this is needed.
 
 	if (forcenoshader || !ApplyShader())
 	{

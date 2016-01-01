@@ -797,14 +797,15 @@ again:
 					tex->gl_info.bNoExpand = true;
 					goto again;
 				}
-				if (tex->gl_info.Brightmap != NULL &&
-					(tex->GetWidth() != tex->gl_info.Brightmap->GetWidth() ||
-					tex->GetHeight() != tex->gl_info.Brightmap->GetHeight())
-					)
+				for (unsigned i = 0; i < tex->gl_info.mLayers.Size(); i++)
 				{
-					// do not expand if the brightmap's size differs.
-					tex->gl_info.bNoExpand = true;
-					goto again;
+					if (tex->GetWidth() != tex->gl_info.mLayers[i].mTexture->GetWidth() ||
+						tex->GetHeight() != tex->gl_info.mLayers[i].mTexture->GetHeight())
+					{
+						// do not expand if any layer's size differs - this means that the expanded textures can't be placed correctly.
+						tex->gl_info.bNoExpand = true;
+						goto again;
+					}
 				}
 			}
 			gltex = new FMaterial(tex, expand);

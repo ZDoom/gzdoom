@@ -90,6 +90,28 @@ public:
 	}
 };
 
+class FBufferedUniform2f
+{
+	float mBuffer[2];
+	int mIndex;
+
+public:
+	void Init(GLuint hShader, const GLchar *name)
+	{
+		mIndex = glGetUniformLocation(hShader, name);
+		memset(mBuffer, 0, sizeof(mBuffer));
+	}
+
+	void Set(const float *newvalue)
+	{
+		if (memcmp(newvalue, mBuffer, sizeof(mBuffer)))
+		{
+			memcpy(mBuffer, newvalue, sizeof(mBuffer));
+			glUniform2fv(mIndex, 1, newvalue);
+		}
+	}
+};
+
 class FBufferedUniform4f
 {
 	float mBuffer[4];

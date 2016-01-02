@@ -3983,6 +3983,29 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetAngle)
 	}
 	ref->SetAngle(angle, !!(flags & SPF_INTERPOLATE));
 }
+//===========================================================================
+//
+// A_SetFlatAngle
+//
+// Set actor's flat angle (in degrees).
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetFlatAngle)
+{
+	ACTION_PARAM_START(2);
+	ACTION_PARAM_ANGLE(flatangle, 0);
+	ACTION_PARAM_INT(ptr, 1);
+
+	AActor *ref = COPY_AAPTR(self, ptr);
+
+	if (!ref)
+	{
+		ACTION_SET_RESULT(false);
+		return;
+	}
+	
+	ref->flatangle = flatangle;
+}
 
 //===========================================================================
 //

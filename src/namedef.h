@@ -301,6 +301,7 @@ xx(Sqrt)
 xx(CheckClass)
 xx(IsPointerEqual)
 xx(Pick)
+xx(FlatAngle)
 
 // Various actor names which are used internally
 xx(MapSpot)

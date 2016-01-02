@@ -875,7 +875,7 @@ public:
 // NOTE: The first member variable *must* be x.
 	fixed_t	 		x,y,z;
 	AActor			*snext, **sprev;	// links in sector (if needed)
-	angle_t			angle;
+	angle_t			angle, flatangle;
 	WORD			sprite;				// used to find patch_t and flip value
 	BYTE			frame;				// sprite frame to draw
 	fixed_t			scaleX, scaleY;		// Scaling values; FRACUNIT is normal size

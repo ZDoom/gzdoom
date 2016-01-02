@@ -83,8 +83,8 @@ static FRandom pr_gunshot ("GunShot");
 
 static const FGenericButtons ButtonChecks[] =
 {
-	{ WRF_AllowReload,	WF_WEAPONZOOMOK,	BT_ZOOM,	NAME_Zoom },
-	{ WRF_AllowZoom,	WF_WEAPONRELOADOK,	BT_RELOAD,	NAME_Reload },
+	{ WRF_AllowZoom,	WF_WEAPONZOOMOK,	BT_ZOOM,	NAME_Zoom },
+	{ WRF_AllowReload,	WF_WEAPONRELOADOK,	BT_RELOAD,	NAME_Reload },
 	{ WRF_AllowUser1,	WF_USER1OK,			BT_USER1,	NAME_User1 },
 	{ WRF_AllowUser2,	WF_USER2OK,			BT_USER2,	NAME_User2 },
 	{ WRF_AllowUser3,	WF_USER3OK,			BT_USER3,	NAME_User3 },

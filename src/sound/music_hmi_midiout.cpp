@@ -128,8 +128,8 @@ extern char MIDI_CommonLengths[15];
 //
 //==========================================================================
 
-HMISong::HMISong (FileReader &reader, EMidiDevice type)
-: MIDIStreamer(type), MusHeader(0), Tracks(0)
+HMISong::HMISong (FileReader &reader, EMidiDevice type, const char *args)
+: MIDIStreamer(type, args), MusHeader(0), Tracks(0)
 {
 #ifdef _WIN32
 	if (ExitEvent == NULL)

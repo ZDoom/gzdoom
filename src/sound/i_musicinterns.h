@@ -185,7 +185,7 @@ public:
 class TimidityPPMIDIDevice : public PseudoMIDIDevice
 {
 public:
-	TimidityPPMIDIDevice();
+	TimidityPPMIDIDevice(const char *args);
 	~TimidityPPMIDIDevice();
 
 	int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
@@ -270,7 +270,7 @@ protected:
 class OPLMIDIDevice : public SoftSynthMIDIDevice, protected OPLmusicBlock
 {
 public:
-	OPLMIDIDevice();
+	OPLMIDIDevice(const char *args);
 	int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
 	void Close();
 	int GetTechnology() const;
@@ -303,7 +303,7 @@ namespace Timidity { struct Renderer; }
 class TimidityMIDIDevice : public SoftSynthMIDIDevice
 {
 public:
-	TimidityMIDIDevice();
+	TimidityMIDIDevice(const char *args);
 	~TimidityMIDIDevice();
 
 	int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
@@ -337,7 +337,7 @@ protected:
 class WildMIDIDevice : public SoftSynthMIDIDevice
 {
 public:
-	WildMIDIDevice();
+	WildMIDIDevice(const char *args);
 	~WildMIDIDevice();
 
 	int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
@@ -366,7 +366,7 @@ struct fluid_synth_t;
 class FluidSynthMIDIDevice : public SoftSynthMIDIDevice
 {
 public:
-	FluidSynthMIDIDevice();
+	FluidSynthMIDIDevice(const char *args);
 	~FluidSynthMIDIDevice();
 
 	int Open(void (*callback)(unsigned int, void *, DWORD, DWORD), void *userdata);
@@ -431,7 +431,7 @@ protected:
 class MIDIStreamer : public MusInfo
 {
 public:
-	MIDIStreamer(EMidiDevice type);
+	MIDIStreamer(EMidiDevice type, const char *args);
 	~MIDIStreamer();
 
 	void MusicVolumeChanged();
@@ -517,6 +517,7 @@ protected:
 	bool CallbackIsThreaded;
 	int LoopLimit;
 	FString DumpFilename;
+	FString Args;
 };
 
 // MUS file played with a MIDI stream ---------------------------------------
@@ -524,7 +525,7 @@ protected:
 class MUSSong2 : public MIDIStreamer
 {
 public:
-	MUSSong2(FileReader &reader, EMidiDevice type);
+	MUSSong2(FileReader &reader, EMidiDevice type, const char *args);
 	~MUSSong2();
 
 	MusInfo *GetOPLDumper(const char *filename);
@@ -550,7 +551,7 @@ protected:
 class MIDISong2 : public MIDIStreamer
 {
 public:
-	MIDISong2(FileReader &reader, EMidiDevice type);
+	MIDISong2(FileReader &reader, EMidiDevice type, const char *args);
 	~MIDISong2();
 
 	MusInfo *GetOPLDumper(const char *filename);
@@ -607,7 +608,7 @@ protected:
 class HMISong : public MIDIStreamer
 {
 public:
-	HMISong(FileReader &reader, EMidiDevice type);
+	HMISong(FileReader &reader, EMidiDevice type, const char *args);
 	~HMISong();
 
 	MusInfo *GetOPLDumper(const char *filename);
@@ -650,7 +651,7 @@ protected:
 class XMISong : public MIDIStreamer
 {
 public:
-	XMISong(FileReader &reader, EMidiDevice type);
+	XMISong(FileReader &reader, EMidiDevice type, const char *args);
 	~XMISong();
 
 	MusInfo *GetOPLDumper(const char *filename);
@@ -713,7 +714,7 @@ protected:
 class OPLMUSSong : public StreamSong
 {
 public:
-	OPLMUSSong (FileReader &reader);
+	OPLMUSSong (FileReader &reader, const char *args);
 	~OPLMUSSong ();
 	void Play (bool looping, int subsong);
 	bool IsPlaying ();

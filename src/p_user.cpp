@@ -3043,6 +3043,12 @@ void player_t::Serialize (FArchive &arc)
 		WeaponState = ((cheats >> 14) & 1) | ((cheats & (0x37 << 24)) >> (24 - 1));
 		cheats &= ~((1 << 14) | (0x37 << 24));
 	}
+	if (SaveVersion < 4527)
+	{
+		BYTE oldWeaponState;
+		arc << oldWeaponState;
+		WeaponState = oldWeaponState;
+	}
 	else
 	{
 		arc << WeaponState;

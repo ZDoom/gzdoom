@@ -129,6 +129,10 @@ const int WRF_NOFIRE = WRF_NOPRIMARY | WRF_NOSECONDARY;
 const int WRF_ALLOWRELOAD = 16;
 const int WRF_ALLOWZOOM = 32;
 const int WRF_DISABLESWITCH = 64;
+const int WRF_ALLOWUSER1 = 128;
+const int WRF_ALLOWUSER2 = 256;
+const int WRF_ALLOWUSER3 = 512;
+const int WRF_ALLOWUSER4 = 1024;
 
 // Morph constants
 const int MRF_ADDSTAMINA = 1;

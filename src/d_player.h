@@ -221,7 +221,11 @@ enum
 	WF_WEAPONRELOADOK	= 1 << 5,		// [XA] Okay to reload this weapon.
 	WF_WEAPONZOOMOK		= 1 << 6,		// [XA] Okay to use weapon zoom function.
 	WF_REFIRESWITCHOK	= 1 << 7,		// Mirror WF_WEAPONSWITCHOK for A_ReFire
-};	
+	WF_USER1OK			= 1 << 8,		// [MC] Allow pushing of custom state buttons 1-4
+	WF_USER2OK			= 1 << 9,
+	WF_USER3OK			= 1 << 10,
+	WF_USER4OK			= 1 << 11,
+};
 
 #define WPIECE1		1
 #define WPIECE2		2
@@ -405,7 +409,7 @@ public:
 	int			lastkilltime;			// [RH] For multikills
 	BYTE		multicount;
 	BYTE		spreecount;				// [RH] Keep track of killing sprees
-	BYTE		WeaponState;
+	WORD		WeaponState;
 
 	AWeapon	   *ReadyWeapon;
 	AWeapon	   *PendingWeapon;			// WP_NOCHANGE if not changing

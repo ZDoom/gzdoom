@@ -53,7 +53,8 @@ void I_SetMusicVolume (float volume);
 
 // Registers a song handle to song data.
 class MusInfo;
-MusInfo *I_RegisterSong (FileReader *reader, int device);
+struct MidiDeviceSetting;
+MusInfo *I_RegisterSong (FileReader *reader, MidiDeviceSetting *device);
 MusInfo *I_RegisterCDSong (int track, int cdid = 0);
 MusInfo *I_RegisterURLSong (const char *url);
 

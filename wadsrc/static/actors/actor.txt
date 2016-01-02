@@ -38,6 +38,7 @@ ACTOR Actor native //: Thinker
 	// Variables must be native.
 	native fixed_t alpha;
 	native angle_t angle;
+	native angle_t flatangle;
 	native int args[5];
 	native fixed_t ceilingz;
 	native fixed_t floorz;
@@ -290,6 +291,7 @@ ACTOR Actor native //: Thinker
 	action native A_PigPain ();
 	action native A_MonsterRefire(int chance, state label);
 	action native A_SetAngle(float angle = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
+	action native A_SetFlatAngle(float flatangle = 0, int ptr = AAPTR_DEFAULT);
 	action native A_SetPitch(float pitch, int flags = 0, int ptr = AAPTR_DEFAULT);
 	action native A_SetRoll(float roll, int flags = 0, int ptr = AAPTR_DEFAULT);
 	action native A_ScaleVelocity(float scale, int ptr = AAPTR_DEFAULT);

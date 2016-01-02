@@ -252,11 +252,13 @@ void GLSprite::Draw(int pass)
 			float angleRad = DEG2RAD(270. - float(GLRenderer->mAngles.Yaw));
 
 			// [fgsfds] calculate yaw vectors
-			float yawvecX, yawvecY;
+			float yawvecX, yawvecY, FlatAngle;
+			
 			if (isFlatSprite)
 			{
 				yawvecX = FIXED2FLOAT(finecosine[actor->angle >> ANGLETOFINESHIFT]);
 				yawvecY = FIXED2FLOAT(finesine[actor->angle >> ANGLETOFINESHIFT]);
+				FlatAngle = FIXED2FLOAT((actor->flatangle)/180);
 			}
 
 			Matrix3x4 mat;
@@ -276,7 +278,8 @@ void GLSprite::Draw(int pass)
 			{
 				angle_t pitchDegrees = 360.0 * (1.0 + (((angle_t)actor->pitch >> 16) / (float)(65536)));
 				fixed_t rollDegrees = 360.0 * (1.0 - ((actor->roll >> 16) / (float)(65536)));
-				mat.Rotate(-yawvecY, 0, yawvecX, pitchDegrees); 
+				mat.Rotate(0, 1, 0, -FlatAngle);
+				mat.Rotate(-yawvecY, 0, yawvecX, pitchDegrees);
 				mat.Rotate(yawvecX, 0, yawvecY, rollDegrees);
 			}
 			else if (spritetype == RF_FLATSPRITE)
@@ -286,7 +289,8 @@ void GLSprite::Draw(int pass)
 			// [fgsfds] Rotate the sprite about the sight vector (roll) 
 			else if (spritetype == RF_WALLSPRITE)
 			{
-				mat.Rotate(yawvecX, yawvecY, 0, 360.0 * (1.0 - ((actor->roll >> 16) / (float)(65536))));
+				mat.Rotate(yawvecX, 0, yawvecY, 360.0 * (1.0 - ((actor->roll >> 16) / (float)(65536))));
+				mat.Rotate(0, 1, 0, -FlatAngle);
 			}
 			else if (drawRollSpriteActor)
 			{

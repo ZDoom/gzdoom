@@ -913,6 +913,7 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 		mViewActor=camera;
 	}
 
+	// 'viewsector' will not survive the rendering so it cannot be used anymore below.
 	retval = viewsector;
 
 	// Render (potentially) multiple views for stereo 3d
@@ -942,7 +943,7 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 		clipper.SafeAddClipRangeRealAngles(viewangle+a1, viewangle-a1);
 
 		ProcessScene(toscreen);
-		EndDrawScene(viewsector);
+		if (mainview) EndDrawScene(retval);	// do not call this for camera textures.
 		eye->TearDown();
 	}
 	stereo3dMode.TearDown();

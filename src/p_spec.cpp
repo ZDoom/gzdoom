@@ -1125,10 +1125,11 @@ void P_SpawnPortal(line_t *line, int sectortag, int plane, int alpha)
 			lines[i].args[2] == plane &&
 			lines[i].args[3] == 1)
 		{
-			fixed_t x1 = (line->v1->x + line->v2->x) >> 1;
-			fixed_t y1 = (line->v1->y + line->v2->y) >> 1;
-			fixed_t x2 = (lines[i].v1->x + lines[i].v2->x) >> 1;
-			fixed_t y2 = (lines[i].v1->y + lines[i].v2->y) >> 1;
+			// beware of overflows.
+			fixed_t x1 = fixed_t((SQWORD(line->v1->x) + SQWORD(line->v2->x)) >> 1);
+			fixed_t y1 = fixed_t((SQWORD(line->v1->y) + SQWORD(line->v2->y)) >> 1);
+			fixed_t x2 = fixed_t((SQWORD(lines[i].v1->x) + SQWORD(lines[i].v2->x)) >> 1);
+			fixed_t y2 = fixed_t((SQWORD(lines[i].v1->y) + SQWORD(lines[i].v2->y)) >> 1);
 			fixed_t alpha = Scale (lines[i].args[4], OPAQUE, 255);
 
 			AStackPoint *anchor = Spawn<AStackPoint>(x1, y1, 0, NO_REPLACE);
@@ -1155,7 +1156,7 @@ void P_SpawnPortal(line_t *line, int sectortag, int plane, int alpha)
 				// This must be done here to ensure that it gets done only after the portal is set up
 				if (lines[j].special == Sector_SetPortal &&
 					lines[j].args[1] == 1 &&
-					lines[j].args[2] == plane &&
+					(lines[j].args[2] == plane || lines[j].args[2] == 3) &&
 					lines[j].args[3] == sectortag)
 				{
 					if (lines[j].args[0] == 0)

@@ -81,7 +81,7 @@ struct MapinfoEdMapItem
 {
 	FName classname;	// DECORATE is read after MAPINFO so we do not have the actual classes available here yet.
 	short special;
-	bool argsdefined;
+	signed char argsdefined;
 	int args[5];
 	// These are for error reporting. We must store the file information because it's no longer available when these items get resolved.
 	FString filename;
@@ -181,14 +181,14 @@ void FMapInfoParser::ParseDoomEdNums()
 				editem.special = -1;
 			}
 			memset(editem.args, 0, sizeof(editem.args));
-			editem.argsdefined = false;
+			editem.argsdefined = 0;
 
 			int minargs = 0;
 			int maxargs = 5;
 			FString specialname;
 			if (sc.CheckString(","))
 			{
-				editem.argsdefined = true; // mark args as used - if this is done we need to prevent assignment of map args in P_SpawnMapThing.
+				editem.argsdefined = 5; // mark args as used - if this is done we need to prevent assignment of map args in P_SpawnMapThing.
 				if (editem.special < 0) editem.special = 0;
 				if (!sc.CheckNumber())
 				{
@@ -221,7 +221,14 @@ void FMapInfoParser::ParseDoomEdNums()
 					editem.args[i] = sc.Number;
 					i++;
 					if (!sc.CheckString(",")) break;
+					// special check for the ambient sounds which combine the arg being set here with the ones on the mapthing.
+					if (sc.CheckString("+"))
+					{
+						editem.argsdefined = i;
+						break;
+					}
 					sc.MustGetNumber();
+
 				}
 				if (specialname.IsNotEmpty() && (i < minargs || i > maxargs))
 				{

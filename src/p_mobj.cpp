@@ -4674,10 +4674,10 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	}
 
 	// copy args to mapthing so that we have them in one place for the rest of this function	
-	if (mentry->ArgsDefined)
+	if (mentry->ArgsDefined > 0)
 	{
 		if (mentry->Type!= NULL) mthing->special = mentry->Special;
-		memcpy(mthing->args, mentry->Args, sizeof(mthing->args));
+		memcpy(mthing->args, mentry->Args, sizeof(mthing->args[0]) * mentry->ArgsDefined);
 	}
 
 	int pnum = -1;

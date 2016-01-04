@@ -57,7 +57,9 @@ public:
 	// Returns a random number in the range [0,mod)
 	int operator() (int mod)
 	{
-		return GenRand32() % mod;
+		return (0 == mod)
+			? 0
+			: (GenRand32() % mod);
 	}
 
 	// Returns rand# - rand#

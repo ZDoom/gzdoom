@@ -1299,6 +1299,7 @@ public:
 		sec->prevsec = -1;	// stair retriggering until build completes
 		sec->heightsec = NULL;	// sector used to get floor and ceiling height
 		sec->sectornum = index;
+		sec->damageinterval = 32;
 		if (floordrop) sec->Flags = SECF_FLOORDROP;
 		// killough 3/7/98: end changes
 
@@ -1522,6 +1523,23 @@ public:
 				case NAME_ceilingplane_d:
 					cplaneflags |= 8;
 					cp[3] = CheckFloat(key);
+					break;
+
+				case NAME_damageamount:
+					sec->damageamount = CheckInt(key);
+					break;
+
+				case NAME_damagetype:
+					sec->damagetype = CheckString(key);
+					break;
+
+				case NAME_damageinterval:
+					sec->damageinterval = CheckInt(key);
+					if (sec->damageinterval < 1) sec->damageinterval = 1;
+					break;
+
+				case NAME_leakiness:
+					sec->leakydamage = CheckInt(key);
 					break;
 
 				case NAME_MoreIds:

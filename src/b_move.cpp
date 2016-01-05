@@ -357,7 +357,7 @@ bool FCajunMaster::IsDangerous (sector_t *sec)
 	int special;
 
 	return
-		   sec->damage
+		   sec->damageamount
 		|| sec->special & DAMAGE_MASK
 		|| (special = sec->special & 0xff, special == dLight_Strobe_Hurt)
 		|| special == dDamage_Hellslime
@@ -367,6 +367,7 @@ bool FCajunMaster::IsDangerous (sector_t *sec)
 		|| special == dDamage_LavaWimpy
 		|| special == dDamage_LavaHefty
 		|| special == dScroll_EastLavaDamage
+		|| special == hDamage_Sludge
 		|| special == sLight_Strobe_Hurt
 		|| special == Damage_InstantDeath
 		|| special == sDamage_SuperHellslime;

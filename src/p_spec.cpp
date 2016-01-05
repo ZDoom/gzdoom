@@ -566,24 +566,11 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 	}
 
 	// [RH] Apply any customizable damage
-	if (sector->damage)
+	if (sector->damageamount != 0)
 	{
-		if (sector->damage < 20)
+		if (level.time % sector->damageinterval == 0 && (ironfeet == NULL || pr_playerinspecialsector() < sector->leakydamage))
 		{
-			if (ironfeet == NULL && !(level.time&0x1f))
-				P_DamageMobj (player->mo, NULL, NULL, sector->damage, MODtoDamageType (sector->mod));
-		}
-		else if (sector->damage < 50)
-		{
-			if ((ironfeet == NULL || (pr_playerinspecialsector()<5))
-				 && !(level.time&0x1f))
-			{
-				P_DamageMobj (player->mo, NULL, NULL, sector->damage, MODtoDamageType (sector->mod));
-			}
-		}
-		else
-		{
-			P_DamageMobj (player->mo, NULL, NULL, sector->damage, MODtoDamageType (sector->mod));
+			P_DamageMobj (player->mo, NULL, NULL, sector->damageamount, sector->damagetype);
 		}
 	}
 
@@ -1450,8 +1437,24 @@ void P_SpawnSpecials (void)
 					FSectorTagIterator itr(lines[i].args[0]);
 					while ((s = itr.Next()) >= 0)
 					{
-						sectors[s].damage = damage;
-						sectors[s].mod = 0;//MOD_UNKNOWN;
+						sector_t *sec = &sectors[s];
+						sec->damageamount = damage;
+						sec->damagetype = NAME_None;
+						if (sec->damageamount < 20)
+						{
+							sec->leakydamage = 0;
+							sec->damageinterval = 32;
+						}
+						else if (sec->damageamount < 50)
+						{
+							sec->leakydamage = 5;
+							sec->damageinterval = 32;
+						}
+						else
+						{
+							sec->leakydamage = 256;
+							sec->damageinterval = 1;
+						}
 					}
 				}
 				break;

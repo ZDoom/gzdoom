@@ -2246,7 +2246,7 @@ FUNC(LS_PointPush_SetForce)
 }
 
 FUNC(LS_Sector_SetDamage)
-// Sector_SetDamage (tag, amount, mod)
+// Sector_SetDamage (tag, amount, mod, interval, leaky)
 {
 	// The sector still stores the mod in its old format because
 	// adding an FName to the sector_t structure might cause
@@ -2257,8 +2257,28 @@ FUNC(LS_Sector_SetDamage)
 	int secnum;
 	while ((secnum = itr.Next()) >= 0)
 	{
-		sectors[secnum].damage = arg1;
-		sectors[secnum].mod = arg2;
+		if (arg3 <= 0)	// emulate old and hacky method to handle leakiness.
+		{
+			if (arg1 < 20)
+			{
+				arg4 = 0;
+				arg3 = 32;
+			}
+			else if (arg1 < 50)
+			{
+				arg4 = 5;
+				arg3 = 32;
+			}
+			else
+			{
+				arg4 = 256;
+				arg3 = 1;
+			}
+		}
+		sectors[secnum].damageamount = (short)arg1;
+		sectors[secnum].damagetype = MODtoDamageType(arg2);
+		sectors[secnum].damageinterval = (short)arg3;
+		sectors[secnum].leakydamage = (short)arg4;
 	}
 	return true;
 }

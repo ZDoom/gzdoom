@@ -506,6 +506,10 @@ xx(floorplane_a)
 xx(floorplane_b)
 xx(floorplane_c)
 xx(floorplane_d)
+xx(damageamount)
+xx(damagetype)
+xx(damageinterval)
+xx(leakiness)
 
 // USDF keywords
 xx(Amount)

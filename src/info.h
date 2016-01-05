@@ -283,7 +283,7 @@ struct FDoomEdEntry
 {
 	const PClass *Type;
 	short Special;
-	bool ArgsDefined;
+	signed char ArgsDefined;
 	int Args[5];
 };
 

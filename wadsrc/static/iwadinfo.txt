@@ -370,6 +370,7 @@ Names
 	"doom.wad"
 	"doom1.wad"
 	"heretic.wad"
+	"hereticsr.wad"
 	"heretic1.wad"
 	"hexen.wad"
 	"hexdd.wad"

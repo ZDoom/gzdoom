@@ -1418,9 +1418,11 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 	fixed_t ffh2;
 	sector_t * realfront;
 	sector_t * realback;
+	sector_t * segfront;
+	sector_t * segback;
 
 #ifdef _DEBUG
-	if (seg->linedef-lines==5835)
+	if (seg->linedef-lines==904)
 	{
 		int a = 0;
 	}
@@ -1433,14 +1435,16 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 	if ((seg->sidedef->Flags & WALLF_POLYOBJ) && seg->backsector)
 	{
 		// Textures on 2-sided polyobjects are aligned to the actual seg's sectors
-		realfront = seg->frontsector;
-		realback = seg->backsector;
+		segfront = realfront = seg->frontsector;
+		segback = realback = seg->backsector;
 	}
 	else
 	{
 		// Need these for aligning the textures
 		realfront = &sectors[frontsector->sectornum];
 		realback = backsector ? &sectors[backsector->sectornum] : NULL;
+		segfront = frontsector;
+		segback = backsector;
 	}
 
 	if (seg->sidedef == seg->linedef->sidedef[0])
@@ -1521,27 +1525,27 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 	// Save a little time (up to 0.3 ms per frame ;) )
 	if (frontsector->floorplane.a | frontsector->floorplane.b)
 	{
-		ffh1 = frontsector->floorplane.ZatPoint(v1);
-		ffh2 = frontsector->floorplane.ZatPoint(v2);
+		ffh1 = segfront->floorplane.ZatPoint(v1);
+		ffh2 = segfront->floorplane.ZatPoint(v2);
 		zfloor[0] = FIXED2FLOAT(ffh1);
 		zfloor[1] = FIXED2FLOAT(ffh2);
 	}
 	else
 	{
-		ffh1 = ffh2 = -frontsector->floorplane.d;
+		ffh1 = ffh2 = -segfront->floorplane.d;
 		zfloor[0] = zfloor[1] = FIXED2FLOAT(ffh2);
 	}
 
-	if (frontsector->ceilingplane.a | frontsector->ceilingplane.b)
+	if (segfront->ceilingplane.a | segfront->ceilingplane.b)
 	{
-		fch1 = frontsector->ceilingplane.ZatPoint(v1);
-		fch2 = frontsector->ceilingplane.ZatPoint(v2);
+		fch1 = segfront->ceilingplane.ZatPoint(v1);
+		fch2 = segfront->ceilingplane.ZatPoint(v2);
 		zceil[0] = FIXED2FLOAT(fch1);
 		zceil[1] = FIXED2FLOAT(fch2);
 	}
 	else
 	{
-		fch1 = fch2 = frontsector->ceilingplane.d;
+		fch1 = fch2 = segfront->ceilingplane.d;
 		zceil[0] = zceil[1] = FIXED2FLOAT(fch2);
 	}
 
@@ -1577,24 +1581,24 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 		fixed_t bfh1;
 		fixed_t bfh2;
 
-		if (backsector->floorplane.a | backsector->floorplane.b)
+		if (segback->floorplane.a | segback->floorplane.b)
 		{
-			bfh1 = backsector->floorplane.ZatPoint(v1);
-			bfh2 = backsector->floorplane.ZatPoint(v2);
+			bfh1 = segback->floorplane.ZatPoint(v1);
+			bfh2 = segback->floorplane.ZatPoint(v2);
 		}
 		else
 		{
-			bfh1 = bfh2 = -backsector->floorplane.d;
+			bfh1 = bfh2 = -segback->floorplane.d;
 		}
 
-		if (backsector->ceilingplane.a | backsector->ceilingplane.b)
+		if (segback->ceilingplane.a | segback->ceilingplane.b)
 		{
-			bch1 = backsector->ceilingplane.ZatPoint(v1);
-			bch2 = backsector->ceilingplane.ZatPoint(v2);
+			bch1 = segback->ceilingplane.ZatPoint(v1);
+			bch2 = segback->ceilingplane.ZatPoint(v2);
 		}
 		else
 		{
-			bch1 = bch2 = backsector->ceilingplane.d;
+			bch1 = bch2 = segback->ceilingplane.d;
 		}
 
 		SkyTop(seg, frontsector, backsector, v1, v2);
@@ -1623,25 +1627,28 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 						realfront->GetPlaneTexZ(sector_t::ceiling), realback->GetPlaneTexZ(sector_t::ceiling),
 						fch1, fch2, bch1a, bch2a, 0);
 				}
-				else if ((frontsector->ceilingplane.a | frontsector->ceilingplane.b |
-					backsector->ceilingplane.a | backsector->ceilingplane.b) &&
-					frontsector->GetTexture(sector_t::ceiling) != skyflatnum &&
-					backsector->GetTexture(sector_t::ceiling) != skyflatnum)
-				{
-					gltexture = FMaterial::ValidateTexture(frontsector->GetTexture(sector_t::ceiling), false, true);
-					if (gltexture)
-					{
-						DoTexture(RENDERWALL_TOP, seg, (seg->linedef->flags & (ML_DONTPEGTOP)) == 0,
-							realfront->GetPlaneTexZ(sector_t::ceiling), realback->GetPlaneTexZ(sector_t::ceiling),
-							fch1, fch2, bch1a, bch2a, 0);
-					}
-				}
 				else if (!(seg->sidedef->Flags & WALLF_POLYOBJ))
 				{
-					// skip processing if the back is a malformed subsector
-					if (seg->PartnerSeg != NULL && !(seg->PartnerSeg->Subsector->hacked & 4))
+					if ((frontsector->ceilingplane.a | frontsector->ceilingplane.b |
+						backsector->ceilingplane.a | backsector->ceilingplane.b) &&
+						frontsector->GetTexture(sector_t::ceiling) != skyflatnum &&
+						backsector->GetTexture(sector_t::ceiling) != skyflatnum)
 					{
-						gl_drawinfo->AddUpperMissingTexture(seg->sidedef, sub, bch1a);
+						gltexture = FMaterial::ValidateTexture(frontsector->GetTexture(sector_t::ceiling), false, true);
+						if (gltexture)
+						{
+							DoTexture(RENDERWALL_TOP, seg, (seg->linedef->flags & (ML_DONTPEGTOP)) == 0,
+								realfront->GetPlaneTexZ(sector_t::ceiling), realback->GetPlaneTexZ(sector_t::ceiling),
+								fch1, fch2, bch1a, bch2a, 0);
+						}
+					}
+					else
+					{
+						// skip processing if the back is a malformed subsector
+						if (seg->PartnerSeg != NULL && !(seg->PartnerSeg->Subsector->hacked & 4))
+						{
+							gl_drawinfo->AddUpperMissingTexture(seg->sidedef, sub, bch1a);
+						}
 					}
 				}
 			}
@@ -1692,29 +1699,31 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 					realfront->GetPlaneTexZ(sector_t::floor) - realback->GetPlaneTexZ(sector_t::ceiling) :
 					realfront->GetPlaneTexZ(sector_t::floor) - realfront->GetPlaneTexZ(sector_t::ceiling));
 			}
-			else if ((frontsector->floorplane.a | frontsector->floorplane.b |
-				backsector->floorplane.a | backsector->floorplane.b) &&
-				frontsector->GetTexture(sector_t::floor) != skyflatnum &&
-				backsector->GetTexture(sector_t::floor) != skyflatnum)
+			else if (!(seg->sidedef->Flags & WALLF_POLYOBJ))
 			{
-				// render it anyway with the sector's floor texture. With a background sky
-				// there are ugly holes otherwise and slopes are simply not precise enough
-				// to mach in any case.
-				gltexture = FMaterial::ValidateTexture(frontsector->GetTexture(sector_t::floor), false, true);
-				if (gltexture)
+				if ((frontsector->floorplane.a | frontsector->floorplane.b |
+					backsector->floorplane.a | backsector->floorplane.b) &&
+					frontsector->GetTexture(sector_t::floor) != skyflatnum &&
+					backsector->GetTexture(sector_t::floor) != skyflatnum)
 				{
-					DoTexture(RENDERWALL_BOTTOM, seg, (seg->linedef->flags & ML_DONTPEGBOTTOM) > 0,
-						realback->GetPlaneTexZ(sector_t::floor), realfront->GetPlaneTexZ(sector_t::floor),
-						bfh1, bfh2, ffh1, ffh2, realfront->GetPlaneTexZ(sector_t::floor) - realfront->GetPlaneTexZ(sector_t::ceiling));
+					// render it anyway with the sector's floor texture. With a background sky
+					// there are ugly holes otherwise and slopes are simply not precise enough
+					// to mach in any case.
+					gltexture = FMaterial::ValidateTexture(frontsector->GetTexture(sector_t::floor), false, true);
+					if (gltexture)
+					{
+						DoTexture(RENDERWALL_BOTTOM, seg, (seg->linedef->flags & ML_DONTPEGBOTTOM) > 0,
+							realback->GetPlaneTexZ(sector_t::floor), realfront->GetPlaneTexZ(sector_t::floor),
+							bfh1, bfh2, ffh1, ffh2, realfront->GetPlaneTexZ(sector_t::floor) - realfront->GetPlaneTexZ(sector_t::ceiling));
+					}
 				}
-			}
-			else if (backsector->GetTexture(sector_t::floor) != skyflatnum &&
-				!(seg->sidedef->Flags & WALLF_POLYOBJ))
-			{
-				// skip processing if the back is a malformed subsector
-				if (seg->PartnerSeg != NULL && !(seg->PartnerSeg->Subsector->hacked & 4))
+				else if (backsector->GetTexture(sector_t::floor) != skyflatnum)
 				{
-					gl_drawinfo->AddLowerMissingTexture(seg->sidedef, sub, bfh1);
+					// skip processing if the back is a malformed subsector
+					if (seg->PartnerSeg != NULL && !(seg->PartnerSeg->Subsector->hacked & 4))
+					{
+						gl_drawinfo->AddLowerMissingTexture(seg->sidedef, sub, bfh1);
+					}
 				}
 			}
 		}

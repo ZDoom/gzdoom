@@ -1300,7 +1300,6 @@ public:
 		sec->heightsec = NULL;	// sector used to get floor and ceiling height
 		sec->sectornum = index;
 		sec->damageinterval = 32;
-		sec->leakydamage = 5;
 		if (floordrop) sec->Flags = SECF_FLOORDROP;
 		// killough 3/7/98: end changes
 

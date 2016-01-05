@@ -2276,7 +2276,7 @@ FUNC(LS_Sector_SetDamage)
 			}
 		}
 		sectors[secnum].damageamount = (short)arg1;
-		sectors[secnum].damagemod = (short)arg2;
+		sectors[secnum].damagetype = MODtoDamageType(arg2);
 		sectors[secnum].damageinterval = (short)arg3;
 		sectors[secnum].leakydamage = (short)arg4;
 	}

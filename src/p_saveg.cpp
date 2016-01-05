@@ -369,15 +369,18 @@ void P_SerializeWorld (FArchive &arc)
 			<< sec->heightsec
 			<< sec->bottommap << sec->midmap << sec->topmap
 			<< sec->gravity
-			<< sec->damageamount
-			<< sec->damagemod;
+			<< sec->damageamount;
 		if (SaveVersion >= 4528)
 		{
 			arc << sec->damageinterval
-				<< sec->leakydamage;
+				<< sec->leakydamage
+				<< sec->damagetype;
 		}
 		else
 		{
+			short damagemod;
+			arc << damagemod;
+			sec->damagetype = MODtoDamageType(damagemod);
 			if (sec->damageamount < 20)
 			{
 				sec->leakydamage = 0;

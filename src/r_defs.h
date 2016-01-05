@@ -710,8 +710,8 @@ struct sector_t
 	struct msecnode_t *touching_thinglist;				// phares 3/14/98
 
 	float gravity;			// [RH] Sector gravity (1.0 is normal)
+	FNameNoInit damagetype;		// [RH] Means-of-death for applied damage
 	short damageamount;			// [RH] Damage to do while standing on floor
-	short damagemod;		// [RH] Means-of-death for applied damage
 	short damageinterval;	// Interval for damage application
 	short leakydamage;		// chance of leaking through radiation suit
 

@@ -468,6 +468,10 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 				{
 					G_ExitLevel(0, false);
 				}
+				if (sector->Flags & SECF_DMGTERRAINFX)
+				{
+					P_HitWater(player->mo, sector, INT_MIN, INT_MIN, INT_MIN, false, true, true);
+				}
 			}
 		}
 	}

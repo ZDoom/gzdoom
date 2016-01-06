@@ -5320,7 +5320,7 @@ int P_GetThingFloorType (AActor *thing)
 // Returns true if hit liquid and splashed, false if not.
 //---------------------------------------------------------------------------
 
-bool P_HitWater (AActor * thing, sector_t * sec, fixed_t x, fixed_t y, fixed_t z, bool checkabove, bool alert)
+bool P_HitWater (AActor * thing, sector_t * sec, fixed_t x, fixed_t y, fixed_t z, bool checkabove, bool alert, bool force)
 {
 	if (thing->flags3 & MF3_DONTSPLASH)
 		return false;
@@ -5362,24 +5362,27 @@ bool P_HitWater (AActor * thing, sector_t * sec, fixed_t x, fixed_t y, fixed_t z
 	}
 #endif
 
-	for(unsigned int i=0;i<sec->e->XFloor.ffloors.Size();i++)
-	{		
-		F3DFloor * rover = sec->e->XFloor.ffloors[i];
-		if (!(rover->flags & FF_EXISTS)) continue;
-		fixed_t planez = rover->top.plane->ZatPoint(x, y);
-		if (z > planez - FRACUNIT/2 && z < planez + FRACUNIT/2)	// allow minor imprecisions
+	if (!force)
+	{
+		for (unsigned int i = 0; i<sec->e->XFloor.ffloors.Size(); i++)
 		{
-			if (rover->flags & (FF_SOLID|FF_SWIMMABLE) )
+			F3DFloor * rover = sec->e->XFloor.ffloors[i];
+			if (!(rover->flags & FF_EXISTS)) continue;
+			fixed_t planez = rover->top.plane->ZatPoint(x, y);
+			if (z > planez - FRACUNIT / 2 && z < planez + FRACUNIT / 2)	// allow minor imprecisions
 			{
-				terrainnum = TerrainTypes[*rover->top.texture];
-				goto foundone;
+				if (rover->flags & (FF_SOLID | FF_SWIMMABLE))
+				{
+					terrainnum = TerrainTypes[*rover->top.texture];
+					goto foundone;
+				}
 			}
+			planez = rover->bottom.plane->ZatPoint(x, y);
+			if (planez < z && !(planez < thing->floorz)) return false;
 		}
-		planez = rover->bottom.plane->ZatPoint(x, y);
-		if (planez < z && !(planez < thing->floorz)) return false;
 	}
 	hsec = sec->GetHeightSec();
-	if (hsec == NULL || !(hsec->MoreFlags & SECF_CLIPFAKEPLANES))
+	if (force || hsec == NULL || !(hsec->MoreFlags & SECF_CLIPFAKEPLANES))
 	{
 		terrainnum = TerrainTypes[sec->GetTexture(sector_t::floor)];
 	}
@@ -5403,7 +5406,7 @@ foundone:
 
 	// Don't splash for living things with small vertical velocities.
 	// There are levels where the constant splashing from the monsters gets extremely annoying
-	if ((thing->flags3&MF3_ISMONSTER || thing->player) && thing->velz >= -6*FRACUNIT)
+	if (((thing->flags3&MF3_ISMONSTER || thing->player) && thing->velz >= -6*FRACUNIT) && !force)
 		return Terrains[terrainnum].IsLiquid;
 
 	splash = &Splashes[splashnum];

@@ -363,6 +363,7 @@ player_t &player_t::operator=(const player_t &p)
 	bonuscount = p.bonuscount;
 	hazardcount = p.hazardcount;
 	hazardtype = p.hazardtype;
+	hazardinterval = p.hazardinterval;
 	poisoncount = p.poisoncount;
 	poisontype = p.poisontype;
 	poisonpaintype = p.poisonpaintype;
@@ -2599,7 +2600,7 @@ void P_PlayerThink (player_t *player)
 		if (player->hazardcount)
 		{
 			player->hazardcount--;
-			if (!(level.time & 31) && player->hazardcount > 16*TICRATE)
+			if (!(level.time % player->hazardinterval) && player->hazardcount > 16*TICRATE)
 				P_DamageMobj (player->mo, NULL, NULL, 5, player->hazardtype);
 		}
 
@@ -3015,7 +3016,8 @@ void player_t::Serialize (FArchive &arc)
 		<< oldbuttons;
 	if (SaveVersion >= 4929)
 	{
-		arc << hazardtype;
+		arc << hazardtype
+			<< hazardinterval;
 	}
 	bool IsBot = false;
 	if (SaveVersion >= 4514)

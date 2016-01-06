@@ -453,14 +453,15 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 		}
 
 		if (sector->Flags & SECF_ENDGODMODE) player->cheats &= ~CF_GODMODE;
-		if (level.time % sector->damageinterval == 0 && (ironfeet == NULL || pr_playerinspecialsector() < sector->leakydamage))
+		if ((ironfeet == NULL || pr_playerinspecialsector() < sector->leakydamage))
 		{
 			if (sector->Flags & SECF_HAZARD)
 			{
 				player->hazardcount += sector->damageamount;
 				player->hazardtype = sector->damagetype;
+				player->hazardinterval = sector->damageinterval;
 			}
-			else
+			else if (level.time % sector->damageinterval == 0)
 			{
 				P_DamageMobj(player->mo, NULL, NULL, sector->damageamount, sector->damagetype);
 				if ((sector->Flags & SECF_ENDLEVEL) && player->health <= 10 && (!deathmatch || !(dmflags & DF_NO_EXIT)))
@@ -1232,7 +1233,7 @@ void P_InitSectorSpecial(sector_t *sector, int special, bool nothinkers)
 		break;
 
 	case sDamage_Hellslime:
-		P_SetupSectorDamage(sector, 2, 1, 0, NAME_Slime, SECF_HAZARD);
+		P_SetupSectorDamage(sector, 2, 32, 0, NAME_Slime, SECF_HAZARD);
 		break;
 
 	case Damage_InstantDeath:
@@ -1241,7 +1242,7 @@ void P_InitSectorSpecial(sector_t *sector, int special, bool nothinkers)
 		break;
 
 	case sDamage_SuperHellslime:
-		P_SetupSectorDamage(sector, 4, 1, 0, NAME_Slime, SECF_HAZARD);
+		P_SetupSectorDamage(sector, 4, 32, 0, NAME_Slime, SECF_HAZARD);
 		break;
 
 	case Sector_Hidden:

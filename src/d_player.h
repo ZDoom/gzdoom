@@ -422,6 +422,7 @@ public:
 	int			killcount, itemcount, secretcount;		// for intermission
 	int			damagecount, bonuscount;// for screen flashing
 	int			hazardcount;			// for delayed Strife damage
+	FName		hazardtype;				// Damage type of last hazardous damage encounter.
 	int			poisoncount;			// screen flash for poison damage
 	FName		poisontype;				// type of poison damage to apply
 	FName		poisonpaintype;			// type of Pain state to enter for poison damage

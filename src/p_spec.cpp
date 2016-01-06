@@ -458,6 +458,7 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 			if (sector->Flags & SECF_HAZARD)
 			{
 				player->hazardcount += sector->damageamount;
+				player->hazardtype = sector->damagetype;
 			}
 			else
 			{
@@ -1231,7 +1232,7 @@ void P_InitSectorSpecial(sector_t *sector, int special, bool nothinkers)
 		break;
 
 	case sDamage_Hellslime:
-		P_SetupSectorDamage(sector, 2, 1, 0, NAME_None, SECF_HAZARD);
+		P_SetupSectorDamage(sector, 2, 1, 0, NAME_Slime, SECF_HAZARD);
 		break;
 
 	case Damage_InstantDeath:
@@ -1240,7 +1241,7 @@ void P_InitSectorSpecial(sector_t *sector, int special, bool nothinkers)
 		break;
 
 	case sDamage_SuperHellslime:
-		P_SetupSectorDamage(sector, 4, 1, 0, NAME_None, SECF_HAZARD);
+		P_SetupSectorDamage(sector, 4, 1, 0, NAME_Slime, SECF_HAZARD);
 		break;
 
 	case Sector_Hidden:

@@ -413,8 +413,12 @@ void P_SerializeWorld (FArchive &arc)
 			if (sec->special & SECRET_MASK)
 			{
 				sec->Flags |= SECF_SECRET;
-				sec->special &= ~SECRET_MASK;
 			}
+			if (sec->special & FRICTION_MASK)
+			{
+				sec->Flags |= SECF_FRICTION;
+			}
+			sec->special &= ~(SECRET_MASK|FRICTION_MASK);
 		}
 		arc	<< sec->interpolations[0]
 			<< sec->interpolations[1]

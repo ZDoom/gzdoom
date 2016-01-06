@@ -355,6 +355,7 @@ enum
 	SECF_NOFALLINGDAMAGE= 2,	// No falling damage in this sector
 	SECF_FLOORDROP		= 4,	// all actors standing on this floor will remain on it when it lowers very fast.
 	SECF_NORESPAWN		= 8,	// players can not respawn in this sector
+	SECF_FRICTION		= 16,	// sector has friction enabled
 
 
 	SECF_WASSECRET		= 1 << 30,	// a secret that was discovered

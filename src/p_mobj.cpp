@@ -3452,7 +3452,7 @@ void AActor::Tick ()
 
 				if (player != NULL)
 				{
-					int scrolltype = sec->special & 0xff;
+					int scrolltype = sec->special;
 
 					if (scrolltype >= Scroll_North_Slow &&
 						scrolltype <= Scroll_SouthWest_Fast)
@@ -4424,7 +4424,7 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 		( gameaction != ga_worlddone ) &&
 		( p->mo != NULL ) && 
 		( !(p->mo->Sector->Flags & SECF_NORESPAWN) ) &&
-		( (p->mo->Sector->special & 255) != Damage_InstantDeath ))
+		( p->mo->Sector->damageamount < TELEFRAG_DAMAGE ))
 	{
 		spawn_x = p->mo->x;
 		spawn_y = p->mo->y;

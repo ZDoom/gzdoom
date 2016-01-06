@@ -4048,7 +4048,7 @@ void P_SetupLevel (const char *lumpname, int position)
 		{
 			if (mo->flags & MF_COUNTKILL)
 			{
-				if (mo->Sector->special == dDamage_End)
+				if (mo->Sector->damageamount > 0 && (mo->Sector->Flags & (SECF_ENDGODMODE|SECF_ENDLEVEL)) == (SECF_ENDGODMODE|SECF_ENDLEVEL))
 				{
 					mo->ClearCounters();
 				}

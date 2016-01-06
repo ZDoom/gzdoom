@@ -143,7 +143,7 @@ void DCeiling::Tick ()
 			// movers with texture change, change the texture then get removed
 			case genCeilingChgT:
 			case genCeilingChg0:
-				m_Sector->special = m_NewSpecial;
+				m_Sector->xspecial = m_NewSpecial;
 				// fall through
 			case genCeilingChg:
 				m_Sector->SetTexture(sector_t::ceiling, m_Texture);
@@ -176,7 +176,7 @@ void DCeiling::Tick ()
 			// then remove the active ceiling
 			case genCeilingChgT:
 			case genCeilingChg0:
-				m_Sector->special = m_NewSpecial;
+				m_Sector->xspecial = m_NewSpecial;
 				// fall through
 			case genCeilingChg:
 				m_Sector->SetTexture(sector_t::ceiling, m_Texture);
@@ -440,7 +440,7 @@ DCeiling *DCeiling::Create(sector_t *sec, DCeiling::ECeiling type, line_t *line,
 						ceiling->m_Type = genCeilingChg0;
 						break;
 					case 2:		// type is copied
-						ceiling->m_NewSpecial = sec->special;
+						ceiling->m_NewSpecial = sec->xspecial;
 						ceiling->m_Type = genCeilingChgT;
 						break;
 					case 3:		// type is left alone
@@ -459,7 +459,7 @@ DCeiling *DCeiling::Create(sector_t *sec, DCeiling::ECeiling type, line_t *line,
 					ceiling->m_Type = genCeilingChg0;
 					break;
 				case 2:		// type is copied
-					ceiling->m_NewSpecial = line->frontsector->special;
+					ceiling->m_NewSpecial = line->frontsector->xspecial;
 					ceiling->m_Type = genCeilingChgT;
 					break;
 				case 3:		// type is left alone

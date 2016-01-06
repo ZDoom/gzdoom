@@ -368,8 +368,17 @@ void P_SerializeWorld (FArchive &arc)
 			<< sec->planes[sector_t::ceiling]
 			<< sec->heightsec
 			<< sec->bottommap << sec->midmap << sec->topmap
-			<< sec->gravity
-			<< sec->damageamount;
+			<< sec->gravity;
+		if (SaveVersion >= 4529)
+		{
+			arc << sec->damageamount;
+		}
+		else
+		{
+			short dmg;
+			arc << dmg;
+			sec->damageamount = dmg;
+		}
 		if (SaveVersion >= 4528)
 		{
 			arc << sec->damageinterval

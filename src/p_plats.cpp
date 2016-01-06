@@ -283,7 +283,7 @@ bool EV_DoPlat (int tag, line_t *line, DPlat::EPlatType type, int height,
 			if (line)
 				sec->SetTexture(sector_t::floor, line->sidedef[0]->sector->GetTexture(sector_t::floor));
 			if (change == 1)
-				sec->special = 0;	// Stop damage and other stuff, if any
+				sec->xspecial = 0;	// Stop damage and other stuff, if any
 		}
 
 		switch (type)
@@ -295,7 +295,7 @@ bool EV_DoPlat (int tag, line_t *line, DPlat::EPlatType type, int height,
 			plat->m_Low = sec->floorplane.d;
 			plat->m_Status = DPlat::up;
 			plat->PlayPlatSound ("Floor");
-			sec->special = 0;		// NO MORE DAMAGE, IF APPLICABLE
+			sec->xspecial = 0;		// NO MORE DAMAGE, IF APPLICABLE
 			break;
 
 		case DPlat::platUpByValue:

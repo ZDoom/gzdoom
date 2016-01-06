@@ -49,7 +49,7 @@ sector_t *sector_t::NextSpecialSector (int type, sector_t *nogood) const
 
 		if (NULL != (tsec = getNextSector (ln, this)) &&
 			tsec != nogood &&
-			(tsec->special & 0x00ff) == type)
+			tsec->special == type)
 		{
 			return tsec;
 		}

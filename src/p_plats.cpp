@@ -72,6 +72,8 @@ void DPlat::Serialize (FArchive &arc)
 
 void DPlat::PlayPlatSound (const char *sound)
 {
+	if (m_Sector->Flags & SECF_SILENTMOVE) return;
+
 	if (m_Sector->seqType >= 0)
 	{
 		SN_StartSequence (m_Sector, CHAN_FLOOR, m_Sector->seqType, SEQ_PLATFORM, 0);

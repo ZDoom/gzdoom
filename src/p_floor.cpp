@@ -55,6 +55,8 @@ inline FArchive &operator<< (FArchive &arc, DFloor::EFloor &type)
 
 static void StartFloorSound (sector_t *sec)
 {
+	if (sec->Flags & SECF_SILENTMOVE) return;
+
 	if (sec->seqType >= 0)
 	{
 		SN_StartSequence (sec, CHAN_FLOOR, sec->seqType, SEQ_PLATFORM, 0);

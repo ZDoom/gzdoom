@@ -198,17 +198,20 @@ DPillar::DPillar (sector_t *sector, EPillar type, fixed_t speed,
 		m_FloorSpeed = Scale (speed, floordist, ceilingdist);
 	}
 
-	if (sector->seqType >= 0)
+	if (!(m_Sector->Flags & SECF_SILENTMOVE))
 	{
-		SN_StartSequence (sector, CHAN_FLOOR, sector->seqType, SEQ_PLATFORM, 0);
-	}
-	else if (sector->SeqName != NAME_None)
-	{
-		SN_StartSequence (sector, CHAN_FLOOR, sector->SeqName, 0);
-	}
-	else
-	{
-		SN_StartSequence (sector, CHAN_FLOOR, "Floor", 0);
+		if (sector->seqType >= 0)
+		{
+			SN_StartSequence(sector, CHAN_FLOOR, sector->seqType, SEQ_PLATFORM, 0);
+		}
+		else if (sector->SeqName != NAME_None)
+		{
+			SN_StartSequence(sector, CHAN_FLOOR, sector->SeqName, 0);
+		}
+		else
+		{
+			SN_StartSequence(sector, CHAN_FLOOR, "Floor", 0);
+		}
 	}
 }
 

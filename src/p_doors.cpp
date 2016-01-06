@@ -250,6 +250,8 @@ void DDoor::DoorSound(bool raise, DSeqNode *curseq) const
 
 	choice = !raise;
 
+	if (m_Sector->Flags & SECF_SILENTMOVE) return;
+
 	if (m_Speed >= FRACUNIT*8)
 	{
 		choice += 2;

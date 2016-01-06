@@ -1372,6 +1372,8 @@ void P_SpawnSpecials (void)
 
 		P_InitSectorSpecial(sector, sector->special, false);
 	}
+
+	// Here is the place to handle EDF for sectors.
 	
 	// Init other misc stuff
 

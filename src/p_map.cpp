@@ -630,7 +630,7 @@ int P_GetFriction(const AActor *mo, int *frictionfactor)
 				}
 			}
 
-			if (!(sec->special & FRICTION_MASK) &&
+			if (!(sec->Flags & SECF_FRICTION) &&
 				Terrains[TerrainTypes[sec->GetTexture(sector_t::floor)]].Friction == 0)
 			{
 				continue;

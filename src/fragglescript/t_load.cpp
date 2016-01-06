@@ -87,7 +87,6 @@ DEFINE_MAP_OPTION(fs_nocheckposition, false)
 {
 	FFsOptions *opt = info->GetOptData<FFsOptions>("fragglescript");
 
-	parse.ParseAssign();
 	if (parse.CheckAssign())
 	{
 		parse.sc.MustGetNumber();

@@ -250,6 +250,8 @@ void DDoor::DoorSound(bool raise, DSeqNode *curseq) const
 
 	choice = !raise;
 
+	if (m_Sector->Flags & SECF_SILENTMOVE) return;
+
 	if (m_Speed >= FRACUNIT*8)
 	{
 		choice += 2;
@@ -511,8 +513,6 @@ void P_SpawnDoorCloseIn30 (sector_t *sec)
 	fixed_t height;
 	DDoor *door = new DDoor (sec);
 
-	sec->special = 0;
-
 	door->m_Sector = sec;
 	door->m_Direction = 0;
 	door->m_Type = DDoor::doorRaise;
@@ -533,7 +533,6 @@ void P_SpawnDoorCloseIn30 (sector_t *sec)
 
 void P_SpawnDoorRaiseIn5Mins (sector_t *sec)
 {
-	sec->special = 0;
 	new DDoor (sec, DDoor::doorRaiseIn5Mins, 2*FRACUNIT, TICRATE*30/7, 0);
 }
 

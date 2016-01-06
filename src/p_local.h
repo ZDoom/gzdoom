@@ -508,7 +508,7 @@ void	P_TraceBleed (int damage, AActor *target, angle_t angle, int pitch);
 void	P_TraceBleed (int damage, AActor *target, AActor *missile);		// missile version
 void	P_TraceBleed (int damage, AActor *target);		// random direction version
 bool	P_HitFloor (AActor *thing);
-bool	P_HitWater (AActor *thing, sector_t *sec, fixed_t splashx = FIXED_MIN, fixed_t splashy = FIXED_MIN, fixed_t splashz=FIXED_MIN, bool checkabove = false, bool alert = true);
+bool	P_HitWater (AActor *thing, sector_t *sec, fixed_t splashx = FIXED_MIN, fixed_t splashy = FIXED_MIN, fixed_t splashz=FIXED_MIN, bool checkabove = false, bool alert = true, bool force = false);
 void	P_CheckSplash(AActor *self, fixed_t distance);
 void	P_RailAttack (AActor *source, int damage, int offset_xy, fixed_t offset_z = 0, int color1 = 0, int color2 = 0, double maxdiff = 0, int flags = 0, const PClass *puff = NULL, angle_t angleoffset = 0, angle_t pitchoffset = 0, fixed_t distance = 8192*FRACUNIT, int duration = 0, double sparsity = 1.0, double drift = 1.0, const PClass *spawnclass = NULL, int SpiralOffset = 270);	// [RH] Shoot a railgun
 

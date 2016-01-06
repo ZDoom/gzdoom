@@ -49,7 +49,7 @@ sector_t *sector_t::NextSpecialSector (int type, sector_t *nogood) const
 
 		if (NULL != (tsec = getNextSector (ln, this)) &&
 			tsec != nogood &&
-			(tsec->special & 0x00ff) == type)
+			tsec->special == type)
 		{
 			return tsec;
 		}
@@ -841,6 +841,60 @@ sector_t *sector_t::GetHeightSec() const
 	}
 	return heightsec;
 }
+
+
+void sector_t::GetSpecial(secspecial_t *spec)
+{
+	spec->special = special;
+	spec->damageamount = damageamount;
+	spec->damagetype = damagetype;
+	spec->damageinterval = damageinterval;
+	spec->leakydamage = leakydamage;
+	spec->Flags = Flags & SECF_SPECIALFLAGS;
+}
+
+void sector_t::SetSpecial(const secspecial_t *spec)
+{
+	special = spec->special;
+	damageamount = spec->damageamount;
+	damagetype = spec->damagetype;
+	damageinterval = spec->damageinterval;
+	leakydamage = spec->leakydamage;
+	Flags = (Flags & ~SECF_SPECIALFLAGS) | (spec->Flags & SECF_SPECIALFLAGS);
+}
+
+void sector_t::TransferSpecial(sector_t *model)
+{
+	special = model->special;
+	damageamount = model->damageamount;
+	damagetype = model->damagetype;
+	damageinterval = model->damageinterval;
+	leakydamage = model->leakydamage;
+	Flags = (Flags&~SECF_SPECIALFLAGS) | (model->Flags & SECF_SPECIALFLAGS);
+}
+
+FArchive &operator<< (FArchive &arc, secspecial_t &p)
+{
+	if (SaveVersion < 4529)
+	{
+		short special;
+		arc << special;
+		sector_t sec;
+		P_InitSectorSpecial(&sec, special, true);
+		sec.GetSpecial(&p);
+	}
+	else
+	{
+		arc << p.special
+			<< p.damageamount
+			<< p.damagetype
+			<< p.damageinterval
+			<< p.leakydamage
+			<< p.Flags;
+	}
+	return arc;
+}
+
 
 
 bool secplane_t::CopyPlaneIfValid (secplane_t *dest, const secplane_t *opp) const

@@ -367,7 +367,8 @@ enum
 	SECF_SECRET			= 1 << 31,	// a secret sector
 
 	SECF_DAMAGEFLAGS = SECF_ENDGODMODE|SECF_ENDLEVEL|SECF_DMGTERRAINFX|SECF_HAZARD,
-	SECF_NOMODIFY = SECF_SECRET|SECF_WASSECRET	// not modifiable by Sector_ChangeFlags
+	SECF_NOMODIFY = SECF_SECRET|SECF_WASSECRET,	// not modifiable by Sector_ChangeFlags
+	SECF_SPECIALFLAGS = SECF_DAMAGEFLAGS|SECF_FRICTION|SECF_PUSH,	// these flags originate from 'special and must be transferrable by floor thinkers
 };
 
 enum
@@ -439,6 +440,23 @@ struct FTransform
 	// base values
 	fixed_t base_angle, base_yoffs;
 };
+
+struct secspecial_t
+{
+	FNameNoInit damagetype;		// [RH] Means-of-death for applied damage
+	int damageamount;			// [RH] Damage to do while standing on floor
+	short special;
+	short damageinterval;	// Interval for damage application
+	short leakydamage;		// chance of leaking through radiation suit
+	int Flags;
+
+	void Clear()
+	{
+		memset(this, 0, sizeof(*this));
+	}
+};
+
+FArchive &operator<< (FArchive &arc, secspecial_t &p);
 
 struct sector_t
 {
@@ -670,6 +688,20 @@ struct sector_t
 		Flags &= ~SECF_SECRET;
 	}
 
+	void ClearSpecial()
+	{
+		// clears all variables that originate from 'special'. Used for sector type transferring thinkers
+		special = 0;
+		damageamount = 0;
+		damageinterval = 0;
+		damagetype = NAME_None;
+		leakydamage = 0;
+		Flags &= ~SECF_SPECIALFLAGS;
+	}
+
+	void TransferSpecial(sector_t *model);
+	void GetSpecial(secspecial_t *spec);
+	void SetSpecial(const secspecial_t *spec);
 	bool PlaneMoving(int pos);
 
 

@@ -4424,7 +4424,7 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 		( gameaction != ga_worlddone ) &&
 		( p->mo != NULL ) && 
 		( !(p->mo->Sector->Flags & SECF_NORESPAWN) ) &&
-		( p->mo->Sector->damageamount < TELEFRAG_DAMAGE ))
+		( p->mo->Sector->damageamount < TELEFRAG_DAMAGE ))	// this really should be a bit smarter...
 	{
 		spawn_x = p->mo->x;
 		spawn_y = p->mo->y;

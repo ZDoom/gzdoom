@@ -674,7 +674,7 @@ protected:
 
 	// [RH] Need these for BOOM-ish transferring ceilings
 	FTextureID	m_Texture;
-	int			m_NewSpecial;
+	secspecial_t m_NewSpecial;
 
 	// ID
 	int 		m_Tag;
@@ -761,7 +761,7 @@ protected:
 	int 		m_Crush;
 	bool		m_Hexencrush;
 	int 		m_Direction;
-	int 		m_NewSpecial;
+	secspecial_t m_NewSpecial;
 	FTextureID	m_Texture;
 	fixed_t 	m_FloorDestDist;
 	fixed_t 	m_Speed;

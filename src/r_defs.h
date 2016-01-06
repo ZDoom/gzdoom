@@ -358,11 +358,15 @@ enum
 	SECF_FRICTION		= 16,	// sector has friction enabled
 	SECF_PUSH			= 32,	// pushers enabled
 	SECF_SILENTMOVE		= 64,	// Sector movement makes mo sound (Eternity got this so this may be useful for an extended cross-port standard.) 
-
+	SECF_DMGTERRAINFX	= 128,	// spawns terrain splash when inflicting damage
+	SECF_ENDGODMODE		= 256,	// getting damaged by this sector ends god mode
+	SECF_ENDLEVEL		= 512,	// ends level when health goes below 10
+	SECF_HAZARD			= 1024,	// Change to Strife's delayed damage handling.
 
 	SECF_WASSECRET		= 1 << 30,	// a secret that was discovered
 	SECF_SECRET			= 1 << 31,	// a secret sector
 
+	SECF_DAMAGEFLAGS = SECF_ENDGODMODE|SECF_ENDLEVEL|SECF_DMGTERRAINFX|SECF_HAZARD,
 	SECF_NOMODIFY = SECF_SECRET|SECF_WASSECRET	// not modifiable by Sector_ChangeFlags
 };
 

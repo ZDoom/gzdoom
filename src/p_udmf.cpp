@@ -1542,6 +1542,14 @@ public:
 					sec->leakydamage = CheckInt(key);
 					break;
 
+				case NAME_damageterraineffect:
+					Flag(sec->Flags, SECF_DMGTERRAINFX, key);
+					break;
+
+				case NAME_damagehazard:
+					Flag(sec->Flags, SECF_HAZARD, key);
+					break;
+
 				case NAME_MoreIds:
 					// delay parsing of the tag string until parsing of the sector is complete
 					// This ensures that the ID is always the first tag in the list.
@@ -1566,6 +1574,16 @@ public:
 			{
 				if (sc.Number != 0)	tagManager.AddSectorTag(index, sc.Number);
 			}
+		}
+
+		if (sec->damageamount == 0)
+		{
+			// If no damage is set, clear all other related properties so that they do not interfere
+			// with other means of setting them.
+			sec->damagetype = NAME_None;
+			sec->damageinterval = 0;
+			sec->leakydamage = 0;
+			sec->Flags &= ~SECF_DAMAGEFLAGS;
 		}
 		
 		// Reset the planes to their defaults if not all of the plane equation's parameters were found.

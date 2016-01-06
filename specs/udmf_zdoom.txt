@@ -204,10 +204,15 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       hidden = <bool>;                // if true this sector will not be drawn on the textured automap.
       waterzone = <bool>;             // Sector is under water and swimmable
       moreids = <string>;             // Additional sector IDs/tags, specified as a space separated list of numbers (e.g. "2 666 1003 4505")
-      damageamount = <int>;           // Amount of damage inflicted by this sector, default = 0
+      damageamount = <int>;           // Amount of damage inflicted by this sector, default = 0. If this is 0, all other damage properties will be ignored.
+                                      // Setting damage through these properties will override any damage set through 'special'.
+                                      // Setting damageamount to a negative value will create a healing sector.
       damagetype = <string>;          // Damage type for sector damage, Default = "None". (generic damage)
       damageinterval = <int>;         // Interval in tics between damage application, default = 32.
       leakiness = <int>;              // Probability of leaking through radiation suit (0 = never, 256 = always), default = 0.
+      damageterraineffect = <bool>;   // Will spawn a terrain splash when damage is inflicted. Default = false.
+      damagehazard = <bool>;          // Changes damage model to Strife's delayed damage for the given sector. Default = false.
+	  
       
       * Note about dropactors
 

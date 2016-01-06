@@ -410,19 +410,8 @@ void P_SerializeWorld (FArchive &arc)
 			short secretsector;
 			arc << secretsector;
 			if (secretsector) sec->Flags |= SECF_WASSECRET;
-			if (sec->special & SECRET_MASK)
-			{
-				sec->Flags |= SECF_SECRET;
-			}
-			if (sec->special & FRICTION_MASK)
-			{
-				sec->Flags |= SECF_FRICTION;
-			}
-			if (sec->special & PUSH_MASK)
-			{
-				sec->Flags |= SECF_PUSH;
-			}
 			sec->special &= ~(SECRET_MASK|FRICTION_MASK|PUSH_MASK);
+			P_InitSectorSpecial(sec, sec->special, true);
 		}
 		arc	<< sec->interpolations[0]
 			<< sec->interpolations[1]

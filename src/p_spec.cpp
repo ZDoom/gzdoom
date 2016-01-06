@@ -1197,7 +1197,11 @@ void P_SpawnSpecials (void)
 		{
 			sector->Flags |= SECF_FRICTION;
 		}
-		sector->special &= ~(SECRET_MASK|FRICTION_MASK);
+		if (sector->special & PUSH_MASK)
+		{
+			sector->Flags |= SECF_PUSH;
+		}
+		sector->special &= ~(SECRET_MASK|FRICTION_MASK|PUSH_MASK);
 
 		switch (sector->special & 0xff)
 		{
@@ -2184,7 +2188,7 @@ void DPusher::Tick ()
 	// Be sure the special sector type is still turned on. If so, proceed.
 	// Else, bail out; the sector type has been changed on us.
 
-	if (!(sec->special & PUSH_MASK))
+	if (!(sec->Flags & SECF_PUSH))
 		return;
 
 	// For constant pushers (wind/current) there are 3 situations:

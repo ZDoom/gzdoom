@@ -176,12 +176,10 @@ typedef enum {
 
 // [RH] Equivalents for BOOM's generalized sector types
 
-#ifndef SECRET_MASK
 #define DAMAGE_MASK		0x0300
 #define SECRET_MASK		0x0400
 #define FRICTION_MASK	0x0800
 #define PUSH_MASK		0x1000
-#endif
 
 struct line_t;
 class AActor;

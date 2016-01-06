@@ -354,7 +354,7 @@ void P_SerializeWorld (FArchive &arc)
 			short tag;
 			arc << tag;
 		}
-		arc	<< sec->soundtraversed
+		arc << sec->soundtraversed
 			<< sec->seqType
 			<< sec->friction
 			<< sec->movefactor
@@ -369,9 +369,36 @@ void P_SerializeWorld (FArchive &arc)
 			<< sec->heightsec
 			<< sec->bottommap << sec->midmap << sec->topmap
 			<< sec->gravity
-			<< sec->damage
-			<< sec->mod
-			<< sec->SoundTarget
+			<< sec->damageamount;
+		if (SaveVersion >= 4528)
+		{
+			arc << sec->damageinterval
+				<< sec->leakydamage
+				<< sec->damagetype;
+		}
+		else
+		{
+			short damagemod;
+			arc << damagemod;
+			sec->damagetype = MODtoDamageType(damagemod);
+			if (sec->damageamount < 20)
+			{
+				sec->leakydamage = 0;
+				sec->damageinterval = 32;
+			}
+			else if (sec->damageamount < 50)
+			{
+				sec->leakydamage = 5;
+				sec->damageinterval = 32;
+			}
+			else
+			{
+				sec->leakydamage = 256;
+				sec->damageinterval = 1;
+			}
+		}
+
+		arc	<< sec->SoundTarget
 			<< sec->SecActTarget
 			<< sec->sky
 			<< sec->MoreFlags

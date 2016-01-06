@@ -1567,8 +1567,6 @@ public:
 				if (sc.Number != 0)	tagManager.AddSectorTag(index, sc.Number);
 			}
 		}
-
-		sec->secretsector = !!(sec->special&SECRET_MASK);
 		
 		// Reset the planes to their defaults if not all of the plane equation's parameters were found.
 		if (fplaneflags != 15)

@@ -398,15 +398,25 @@ void P_SerializeWorld (FArchive &arc)
 			}
 		}
 
-		arc	<< sec->SoundTarget
+		arc << sec->SoundTarget
 			<< sec->SecActTarget
 			<< sec->sky
 			<< sec->MoreFlags
 			<< sec->Flags
 			<< sec->FloorSkyBox << sec->CeilingSkyBox
-			<< sec->ZoneNumber
-			<< sec->secretsector
-			<< sec->interpolations[0]
+			<< sec->ZoneNumber;
+		if (SaveVersion < 4529)
+		{
+			short secretsector;
+			arc << secretsector;
+			if (secretsector) sec->Flags |= SECF_WASSECRET;
+			if (sec->special & SECRET_MASK)
+			{
+				sec->Flags |= SECF_SECRET;
+				sec->special &= ~SECRET_MASK;
+			}
+		}
+		arc	<< sec->interpolations[0]
 			<< sec->interpolations[1]
 			<< sec->interpolations[2]
 			<< sec->interpolations[3]

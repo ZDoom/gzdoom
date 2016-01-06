@@ -437,7 +437,7 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 		}
 	}
 
-	int special = sector->special & ~SECRET_MASK;
+	int special = sector->special;
 
 	// Has hit ground.
 	AInventory *ironfeet;
@@ -574,9 +574,9 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 		}
 	}
 
-	if (sector->special & SECRET_MASK)
+	if (sector->isSecret())
 	{
-		sector->special &= ~SECRET_MASK;
+		sector->ClearSecret();
 		P_GiveSecret(player->mo, true, true, int(sector - sectors));
 	}
 }
@@ -1189,7 +1189,11 @@ void P_SpawnSpecials (void)
 
 		// [RH] All secret sectors are marked with a BOOM-ish bitfield
 		if (sector->special & SECRET_MASK)
+		{
+			sector->Flags |= SECF_SECRET | SECF_WASSECRET;
+			sector->special &= ~SECRET_MASK;
 			level.total_secrets++;
+		}
 
 		switch (sector->special & 0xff)
 		{

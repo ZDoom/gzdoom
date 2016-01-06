@@ -632,7 +632,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CheckTerrain)
 	{
 		if ((sec->special & 0xFF) == Damage_InstantDeath)
 		{
-			P_DamageMobj (self, NULL, NULL, 999, NAME_None);
+			P_DamageMobj (self, NULL, NULL, 999, NAME_InstantDeath);
 		}
 		else if ((sec->special & 0xFF) == Scroll_StrifeCurrent)
 		{

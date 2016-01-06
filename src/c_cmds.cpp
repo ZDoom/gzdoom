@@ -1106,11 +1106,8 @@ static void PrintSecretString(const char *string, bool thislevel)
 				if (*string == ';') string++;
 				if (thislevel && secnum >= 0 && secnum < numsectors)
 				{
-					if (sectors[secnum].secretsector)
-					{
-						if ((sectors[secnum].special & SECRET_MASK)) colstr = TEXTCOLOR_RED;
-						else colstr = TEXTCOLOR_GREEN;
-					}
+					if (sectors[secnum].isSecret()) colstr = TEXTCOLOR_RED;
+					else if (sectors[secnum].wasSecret()) colstr = TEXTCOLOR_GREEN;
 					else colstr = TEXTCOLOR_ORANGE;
 				}
 			}

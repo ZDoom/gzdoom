@@ -125,11 +125,11 @@ define Unsupported (0)
 356 = 0, Polyobj_RotateLeft(0)
 357 = 0, Polyobj_OR_RotateLeft(0)
 
-// Eternity's linked portals, vertical link version (floor-to-ceiling)
-358 = 0,	Unsupported() // "Portal_LinkedCeiling"
-359 = 0,	Unsupported() // "Portal_LinkedFloor"
-360 = 0,	Unsupported() // "Portal_LinkedAnchorLine"
-361 = 0,	Unsupported() // "Portal_LinkedAnchorLineFloor"
+// Eternity's linked portals, vertical link version (floor-to-ceiling) (NOTE: Type needs changing!)
+358 = 0,	Sector_SetPortal(tag, 0, 1, 1, 0) // "Portal_AnchoredCeiling"
+359 = 0,	Sector_SetPortal(tag, 0, 0, 1, 0) // "Portal_AnchoredFloor"
+360 = 0,	Sector_SetPortal(tag, 0, 1, 0, 0) // "Portal_AnchorLine"
+361 = 0,	Sector_SetPortal(tag, 0, 0, 0, 0) // "Portal_AnchorLineFloor"
 
 // Even more parameterized linedefs
 362 = 0, Pillar_Build(0)

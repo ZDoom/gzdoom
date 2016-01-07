@@ -319,6 +319,7 @@ void FGLRenderer::DrawTexture(FTexture *img, DCanvas::DrawParms &parms)
 		parms.colorOverlay = 0;
 	}
 
+	gl_SetRenderStyle(parms.style, !parms.masked, false);
 	if (!img->bHasCanvas)
 	{
 		int translation = 0;
@@ -330,7 +331,6 @@ void FGLRenderer::DrawTexture(FTexture *img, DCanvas::DrawParms &parms)
 				if (pal) translation = -pal->GetIndex();
 			}
 		}
-		gl_SetRenderStyle(parms.style, !parms.masked, false);
 		gl_RenderState.SetMaterial(gltex, CLAMP_XY_NOMIP, translation, 0, !!(parms.style.Flags & STYLEF_RedIsAlpha));
 
 		u1 = gltex->GetUL();

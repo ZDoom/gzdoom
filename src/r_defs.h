@@ -392,6 +392,20 @@ enum
 	SECF_NOFALLINGDAMAGE= 2,	// No falling damage in this sector
 	SECF_FLOORDROP		= 4,	// all actors standing on this floor will remain on it when it lowers very fast.
 	SECF_NORESPAWN		= 8,	// players can not respawn in this sector
+	SECF_FRICTION		= 16,	// sector has friction enabled
+	SECF_PUSH			= 32,	// pushers enabled
+	SECF_SILENTMOVE		= 64,	// Sector movement makes mo sound (Eternity got this so this may be useful for an extended cross-port standard.) 
+	SECF_DMGTERRAINFX	= 128,	// spawns terrain splash when inflicting damage
+	SECF_ENDGODMODE		= 256,	// getting damaged by this sector ends god mode
+	SECF_ENDLEVEL		= 512,	// ends level when health goes below 10
+	SECF_HAZARD			= 1024,	// Change to Strife's delayed damage handling.
+
+	SECF_WASSECRET		= 1 << 30,	// a secret that was discovered
+	SECF_SECRET			= 1 << 31,	// a secret sector
+
+	SECF_DAMAGEFLAGS = SECF_ENDGODMODE|SECF_ENDLEVEL|SECF_DMGTERRAINFX|SECF_HAZARD,
+	SECF_NOMODIFY = SECF_SECRET|SECF_WASSECRET,	// not modifiable by Sector_ChangeFlags
+	SECF_SPECIALFLAGS = SECF_DAMAGEFLAGS|SECF_FRICTION|SECF_PUSH,	// these flags originate from 'special and must be transferrable by floor thinkers
 };
 
 enum
@@ -465,6 +479,23 @@ struct FTransform
 	// base values
 	fixed_t base_angle, base_yoffs;
 };
+
+struct secspecial_t
+{
+	FNameNoInit damagetype;		// [RH] Means-of-death for applied damage
+	int damageamount;			// [RH] Damage to do while standing on floor
+	short special;
+	short damageinterval;	// Interval for damage application
+	short leakydamage;		// chance of leaking through radiation suit
+	int Flags;
+
+	void Clear()
+	{
+		memset(this, 0, sizeof(*this));
+	}
+};
+
+FArchive &operator<< (FArchive &arc, secspecial_t &p);
 
 struct sector_t
 {
@@ -695,7 +726,35 @@ struct sector_t
 		return pos == floor? floorplane:ceilingplane;
 	}
 
+	bool isSecret() const
+	{
+		return !!(Flags & SECF_SECRET);
+	}
 
+	bool wasSecret() const
+	{
+		return !!(Flags & SECF_WASSECRET);
+	}
+
+	void ClearSecret()
+	{
+		Flags &= ~SECF_SECRET;
+	}
+
+	void ClearSpecial()
+	{
+		// clears all variables that originate from 'special'. Used for sector type transferring thinkers
+		special = 0;
+		damageamount = 0;
+		damageinterval = 0;
+		damagetype = NAME_None;
+		leakydamage = 0;
+		Flags &= ~SECF_SPECIALFLAGS;
+	}
+
+	void TransferSpecial(sector_t *model);
+	void GetSpecial(secspecial_t *spec);
+	void SetSpecial(const secspecial_t *spec);
 	bool PlaneMoving(int pos);
 
 
@@ -764,7 +823,7 @@ struct sector_t
 
 	float gravity;			// [RH] Sector gravity (1.0 is normal)
 	FNameNoInit damagetype;		// [RH] Means-of-death for applied damage
-	short damageamount;			// [RH] Damage to do while standing on floor
+	int damageamount;			// [RH] Damage to do while standing on floor
 	short damageinterval;	// Interval for damage application
 	short leakydamage;		// chance of leaking through radiation suit
 
@@ -782,7 +841,6 @@ struct sector_t
 	// regular sky.
 	TObjPtr<ASkyViewpoint> FloorSkyBox, CeilingSkyBox;
 
-	short						secretsector;		//jff 2/16/98 remembers if sector WAS secret (automap)
 	int							sectornum;			// for comparing sector copies
 
 	extsector_t	*				e;		// This stores data that requires construction/destruction. Such data must not be copied by R_FakeFlat.

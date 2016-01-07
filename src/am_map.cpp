@@ -2071,17 +2071,17 @@ static bool AM_CheckSecret(line_t *line)
 	{
 		if (line->frontsector != NULL)
 		{
-			if (line->frontsector->secretsector)
+			if (line->frontsector->wasSecret())
 			{
-				if (am_map_secrets!=0 && !(line->frontsector->special&SECRET_MASK)) return true;
+				if (am_map_secrets!=0 && !line->frontsector->isSecret()) return true;
 				if (am_map_secrets==2 && !(line->flags & ML_SECRET)) return true;
 			}
 		}
 		if (line->backsector != NULL)
 		{
-			if (line->backsector->secretsector)
+			if (line->backsector->wasSecret())
 			{
-				if (am_map_secrets!=0 && !(line->backsector->special&SECRET_MASK)) return true;
+				if (am_map_secrets!=0 && !line->backsector->isSecret()) return true;
 				if (am_map_secrets==2 && !(line->flags & ML_SECRET)) return true;
 			}
 		}

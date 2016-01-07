@@ -368,8 +368,17 @@ void P_SerializeWorld (FArchive &arc)
 			<< sec->planes[sector_t::ceiling]
 			<< sec->heightsec
 			<< sec->bottommap << sec->midmap << sec->topmap
-			<< sec->gravity
-			<< sec->damageamount;
+			<< sec->gravity;
+		if (SaveVersion >= 4529)
+		{
+			arc << sec->damageamount;
+		}
+		else
+		{
+			short dmg;
+			arc << dmg;
+			sec->damageamount = dmg;
+		}
 		if (SaveVersion >= 4528)
 		{
 			arc << sec->damageinterval
@@ -398,15 +407,22 @@ void P_SerializeWorld (FArchive &arc)
 			}
 		}
 
-		arc	<< sec->SoundTarget
+		arc << sec->SoundTarget
 			<< sec->SecActTarget
 			<< sec->sky
 			<< sec->MoreFlags
 			<< sec->Flags
 			<< sec->FloorSkyBox << sec->CeilingSkyBox
-			<< sec->ZoneNumber
-			<< sec->secretsector
-			<< sec->interpolations[0]
+			<< sec->ZoneNumber;
+		if (SaveVersion < 4529)
+		{
+			short secretsector;
+			arc << secretsector;
+			if (secretsector) sec->Flags |= SECF_WASSECRET;
+			sec->special &= ~(SECRET_MASK|FRICTION_MASK|PUSH_MASK);
+			P_InitSectorSpecial(sec, sec->special, true);
+		}
+		arc	<< sec->interpolations[0]
 			<< sec->interpolations[1]
 			<< sec->interpolations[2]
 			<< sec->interpolations[3]

@@ -345,8 +345,7 @@ void P_PlayerOnSpecial3DFloor(player_t* player)
 		}
 
 		// Apply sector specials
-		if (rover->model->special || rover->model->damageamount)
-			P_PlayerInSpecialSector(player, rover->model);
+		P_PlayerInSpecialSector(player, rover->model);
 
 		// Apply flat specials (using the ceiling!)
 		P_PlayerOnSpecialFlat(

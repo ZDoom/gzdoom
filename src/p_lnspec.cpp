@@ -1945,6 +1945,9 @@ FUNC(LS_Sector_ChangeFlags)
 
 	rtn = false;
 	FSectorTagIterator itr(arg0);
+	// exclude protected flags
+	arg1 &= ~SECF_NOMODIFY;
+	arg2 &= ~SECF_NOMODIFY;
 	while ((secNum = itr.Next()) >= 0)
 	{
 		sectors[secNum].Flags = (sectors[secNum].Flags | arg1) & ~arg2;

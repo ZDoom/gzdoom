@@ -200,6 +200,7 @@ public:
 		{
 			text = (*opt)->mValues[Selection].Text;
 		}
+		if (*text == '$') text = GStrings(text + 1);
 		screen->DrawText (SmallFont, OptionSettings.mFontColorValue, indent + CURSORSPACE, y, 
 			text, DTA_CleanNoMove_1, true, DTA_ColorOverlay, overlay, TAG_DONE);
 		return indent;

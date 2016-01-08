@@ -8,11 +8,18 @@
 
 define Unsupported (0)
 
+enum
+{
+	Init_EDFSector = 253,
+	Init_EDFLine = 254
+}
+
 // The tag for such a line is actually a key to find, in an ExtraData lump 
 // indicated for the current level by the EMAPINFO lump, what line special
 // to actually use. This is how parameterized linedefs are used by Eternity
-// in the Doom format. "xlating" this would thus be quite complicated...
-270 = 0,	Unsupported() // "ExtraDataSpecial"
+// in the Doom format.
+
+270 = 0,	Static_Init(tag, Init_EDFLine) // "ExtraDataSpecial"
 
 // These two are standard MBF specials, no need to redefine them, they're in xlat/doom.txt
 // 271 = 0,		Static_Init (tag, Init_TransferSky, 0)
@@ -62,6 +69,7 @@ define Unsupported (0)
 // Hexen format is incomplete; and Quasar wants to use ZDoom-compatible special values for UDMF.
 // The translation here is for the odd EDF that specifies them as numbers.
 
+/*
 300 = 0, Door_Raise(0)
 301 = 0, Door_Open(0)
 302 = 0, Door_Close(0)
@@ -106,6 +114,7 @@ define Unsupported (0)
 341 = 0, Stairs_BuildDownDoom(0)
 342 = 0, Stairs_BuildUpDoomSync(0)
 343 = 0, Stairs_BuildDownDoomSync(0)
+*/
 
 // Two-way portals are not supported yet either
 344 = 0,	Unsupported() // "Portal_TwowayCeiling"
@@ -185,6 +194,8 @@ define Unsupported (0)
 398 = 0, Thing_Spawn(0) 
 399 = 0, Thing_SpawnNoFog(0) 
 400 = 0, Teleport_EndGame(0) 
+
+401 = 0, Static_Init(tag, Init_EDFSector)
 
 402 = 0, Thing_Projectile(0)
 403 = 0, Thing_ProjectileGravity(0)

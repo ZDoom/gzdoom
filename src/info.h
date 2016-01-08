@@ -313,6 +313,7 @@ enum ESpecialMapthings
 	SMT_CopyCeilingPlane,
 	SMT_VertexFloorZ,
 	SMT_VertexCeilingZ,
+	SMT_EDFThing,
 
 };
 

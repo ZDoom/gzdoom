@@ -30,6 +30,8 @@
 ** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **---------------------------------------------------------------------------
 **
+** This code was written based on the documentation in the Eternity Wiki
+**
 */
 
 #include "w_wad.h"
@@ -42,6 +44,8 @@
 #include "info.h"
 #include "p_lnspec.h"
 #include "p_setup.h"
+#include "p_tags.h"
+#include "r_data/colormaps.h"
 
 
 struct FEdfOptions : public FOptionalMapinfoData
@@ -116,22 +120,23 @@ struct EDFSector
 	int damageamount;
 	int damageinterval;
 	FNameNoInit damagetype;
+	FNameNoInit floorterrain;
 
-	// These do not represent any of ZDoom's features. They are maintained like this so that the Add and Remove versions work as intended.
+	DWORD color;
+
 	DWORD damageflags;
 	DWORD damageflagsAdd;
 	DWORD damageflagsRemove;
 
-	// floorterrain (Type TBD)
-
 	// ceilingterrain is ignored
-	// colormaptop/mid/bottom need to be translated into color values (the colormap implementation in Eternity is not the same as in Boom!)
+	// colormaptop//bottom cannot be used because ZDoom has no corresponding properties.
 
 	FTransform planexform[2];
 	DWORD portalflags[2];
 	fixed_t overlayalpha[2];
 };
 
+static FString EDFMap;
 static TMap<int, EDFLinedef> EDFLines;
 static TMap<int, EDFSector> EDFSectors;
 static TMap<int, EDFMapthing> EDFThings;
@@ -139,14 +144,15 @@ static TMap<int, EDFMapthing> EDFThings;
 
 static void parseLinedef(FScanner &sc)
 {
+	EDFLinedef ld;
+	bool argsset = false;
+
+	memset(&ld, 0, sizeof(ld));
+	ld.alpha = FRACUNIT;
+
 	sc.MustGetStringName("{");
 	while (!sc.CheckString("}"))
 	{
-		EDFLinedef ld;
-		bool argsset = false;
-
-		memset(&ld, 0, sizeof(ld));
-		ld.alpha = FRACUNIT;
 		sc.MustGetString();
 		if (sc.Compare("recordnum"))
 		{
@@ -173,7 +179,7 @@ static void parseLinedef(FScanner &sc)
 			{
 				// Oh joy, this is going to be fun...
 				// Here we cannot do anything because we need the tag to make this work. 
-				// For now just store a negative number.
+				// For now just store a negative number and resolve this later.
 				ld.special = -sc.Number;
 			}
 			else
@@ -187,11 +193,12 @@ static void parseLinedef(FScanner &sc)
 			sc.CheckString("=");
 			sc.MustGetStringName("{");
 			int c = 0;
-			while (!sc.CheckString("}"))
+			while (true)
 			{
 				sc.MustGetNumber();
 				ld.args[c++] = sc.Number;
-
+				if (sc.CheckString("}")) break;
+				sc.MustGetStringName(",");
 			}
 			argsset = true;
 		}
@@ -201,13 +208,14 @@ static void parseLinedef(FScanner &sc)
 			sc.MustGetFloat();
 			ld.alpha = FLOAT2FIXED(sc.Float);
 		}
-		else if (sc.Compare("options"))
+		else if (sc.Compare("extflags"))
 		{
 			// these are needed to build the proper activation mask out of the possible flags which do not match ZDoom 1:1.
 			DWORD actmethod = 0;
 			DWORD acttype = 0;
 			do
 			{
+				sc.CheckString("=");
 				sc.MustGetString();
 				for (const char *tok = strtok(sc.String, ",+ \t"); tok != NULL; tok = strtok(NULL, ",+ \t"))
 				{
@@ -235,29 +243,33 @@ static void parseLinedef(FScanner &sc)
 		{
 			sc.ScriptError("Unknown property '%s'", sc.String);
 		}
-		if (ld.tag == 0) ld.tag = ld.id;	// urgh...
-		if (ld.special < 0)	// translate numeric specials.
-		{
-			line_t line;
-			maplinedef_t mld;
-			mld.special = -ld.special;
-			mld.tag = ld.tag;
-			P_TranslateLineDef(&line, &mld);
-			ld.special = line.special;
-			if (!argsset) memcpy(ld.args, line.args, sizeof(ld.args));
-		}
 	}
+	if (ld.tag == 0) ld.tag = ld.id;	// urgh...
+	if (ld.special < 0)	// translate numeric specials.
+	{
+		line_t line;
+		maplinedef_t mld;
+		mld.special = -ld.special;
+		mld.tag = ld.tag;
+		P_TranslateLineDef(&line, &mld);
+		ld.special = line.special;
+		ld.activation = line.activation;
+		ld.flags = (ld.flags & ~(ML_REPEAT_SPECIAL | ML_FIRSTSIDEONLY)) | (line.flags & (ML_REPEAT_SPECIAL | ML_FIRSTSIDEONLY));
+		if (!argsset) memcpy(ld.args, line.args, sizeof(ld.args));
+	}
+	EDFLines[ld.recordnum] = ld;
 }
 
 static void parseSector(FScanner &sc)
 {
+	EDFSector sec;
+
+	memset(&sec, 0, sizeof(sec));
+	sec.overlayalpha[sector_t::floor] = sec.overlayalpha[sector_t::ceiling] = FRACUNIT;
+
 	sc.MustGetStringName("{");
 	while (!sc.CheckString("}"))
 	{
-		EDFSector sec;
-
-		memset(&sec, 0, sizeof(sec));
-		sec.overlayalpha[sector_t::floor] = sec.overlayalpha[sector_t::ceiling] = FRACUNIT;
 		sc.MustGetString();
 		if (sc.Compare("recordnum"))
 		{
@@ -288,6 +300,7 @@ static void parseSector(FScanner &sc)
 			{
 				flagvar = &sec.flags;
 			}
+			sc.CheckString("=");
 			do
 			{
 				sc.MustGetString();
@@ -337,6 +350,7 @@ static void parseSector(FScanner &sc)
 			{
 				flagvar = &sec.damageflags;
 			}
+			sc.CheckString("=");
 			do
 			{
 				sc.MustGetString();
@@ -355,7 +369,8 @@ static void parseSector(FScanner &sc)
 		{
 			sc.CheckString("=");
 			sc.MustGetString();
-			// ZDoom does not implement this yet.
+			sec.floorterrain = sc.String;	// Todo: ZDoom does not implement this yet.
+			
 		}
 		else if (sc.Compare("floorangle"))
 		{
@@ -393,17 +408,23 @@ static void parseSector(FScanner &sc)
 			sc.MustGetFloat();
 			sec.planexform[sector_t::ceiling].yoffs = FLOAT2FIXED(sc.Float);
 		}
-		else if (sc.Compare("colormaptop") || sc.Compare("colormapbottom"))
+		else if (sc.Compare("colormaptop") || sc.Compare("colormapbottom") || sc.Compare("ceilingterrain"))
 		{
 			sc.CheckString("=");
 			sc.MustGetString();
-			// not implemented by ZDoom
+			// these properties are not implemented by ZDoom
 		}
 		else if (sc.Compare("colormapmid"))
 		{
 			sc.CheckString("=");
 			sc.MustGetString();
-			// the colormap should be analyzed and converted into an RGB color value.
+			// Eternity is based on SMMU and uses colormaps differently than all other ports.
+			// The only solution here is to convert the colormap to an RGB value and set it as the sector's color.
+			DWORD cmap = R_ColormapNumForName(sc.String);
+			if (cmap != 0)
+			{
+				sec.color = R_BlendForColormap(cmap) & 0xff000000;
+			}
 		}
 		else if (sc.Compare("overlayalpha"))
 		{
@@ -411,12 +432,16 @@ static void parseSector(FScanner &sc)
 			sc.MustGetString();
 			if (sc.Compare("floor"))
 			{
-				sc.MustGetFloat();
+				sc.MustGetNumber();
+				if (sc.CheckString("%")) sc.Float = sc.Number / 100.f;
+				else sc.Float = sc.Number / 255.f;
 				sec.overlayalpha[sector_t::floor] = FLOAT2FIXED(sc.Float);
 			}
 			else if (sc.Compare("ceiling"))
 			{
 				sc.MustGetFloat();
+				if (sc.CheckString("%")) sc.Float = sc.Number / 100.f;
+				else sc.Float = sc.Number / 255.f;
 				sec.overlayalpha[sector_t::floor] = FLOAT2FIXED(sc.Float);
 			}
 		}
@@ -429,6 +454,7 @@ static void parseSector(FScanner &sc)
 			else if (sc.Compare("ceiling")) dest = sector_t::ceiling;
 			else sc.ScriptError("Unknown portal type '%s'", sc.String);
 
+			sc.CheckString("=");
 			do
 			{
 				sc.MustGetString();
@@ -450,17 +476,19 @@ static void parseSector(FScanner &sc)
 			sc.ScriptError("Unknown property '%s'", sc.String);
 		}
 	}
+	EDFSectors[sec.recordnum] = sec;
 }
 
 static void parseMapthing(FScanner &sc)
 {
+	EDFMapthing mt;
+
+	memset(&mt, 0, sizeof(mt));
+	mt.flags |= MTF_SINGLE | MTF_COOPERATIVE | MTF_DEATHMATCH;	// EDF uses inverse logic, like Doom.exe
+
 	sc.MustGetStringName("{");
 	while (!sc.CheckString("}"))
 	{
-		EDFMapthing mt;
-
-		memset(&mt, 0, sizeof(mt));
-		mt.flags |= MTF_SINGLE | MTF_COOPERATIVE | MTF_DEATHMATCH;	// EDF uses inverse logic, like Doom.exe
 		sc.MustGetString();
 		if (sc.Compare("recordnum"))
 		{
@@ -505,7 +533,8 @@ static void parseMapthing(FScanner &sc)
 				}
 				else
 				{
-					 //Let's hope not something internal to Eternity...
+					// Let's hope this isn't an internal Eternity name.
+					// If so, a name mapping needs to be defined...
 					sc.ScriptError("Unknown type '%s'", sc.String);
 				}
 
@@ -531,6 +560,7 @@ static void parseMapthing(FScanner &sc)
 		}
 		else if (sc.Compare("options"))
 		{
+			sc.CheckString("=");
 			do
 			{
 				sc.MustGetString();
@@ -554,54 +584,98 @@ static void parseMapthing(FScanner &sc)
 			sc.ScriptError("Unknown property '%s'", sc.String);
 		}
 	}
+	EDFThings[mt.recordnum] = mt;
 }
 
-void loadEDF()
+void InitEDF()
 {
 	FString filename;
 	FScanner sc;
 
-	EDFLines.Clear();
-	EDFSectors.Clear();
-	EDFThings.Clear();
-
-	const char *arg = Args->CheckValue("-edf");
-
-	if (arg != NULL) filename = arg;
-	else
+	if (EDFMap.CompareNoCase(level.MapName) != 0)
 	{
-		FEdfOptions *opt = level.info->GetOptData<FEdfOptions>("EDF", false);
-		if (opt != NULL)
-		{
-			filename = opt->edfName;
-		}
-	}
+		EDFLines.Clear();
+		EDFSectors.Clear();
+		EDFThings.Clear();
+		EDFMap = level.MapName;
 
-	if (filename.IsEmpty()) return;
-	int lump = Wads.CheckNumForFullName(filename, true, ns_global);
-	if (lump == -1) return;
-	sc.OpenLumpNum(lump);
+		const char *arg = Args->CheckValue("-edf");
 
-	sc.SetCMode(true);
-	while (sc.GetString())
-	{
-		if (sc.Compare("linedef"))
-		{
-			parseLinedef(sc);
-		}
-		else if (sc.Compare("mapthing"))
-		{
-			parseMapthing(sc);
-		}
-		else if (sc.Compare("sector"))
-		{
-			parseSector(sc);
-		}
+		if (arg != NULL) filename = arg;
 		else
 		{
-			sc.ScriptError("Unknown keyword '%s'", sc.String);
+			FEdfOptions *opt = level.info->GetOptData<FEdfOptions>("EDF", false);
+			if (opt != NULL)
+			{
+				filename = opt->edfName;
+			}
+		}
+
+		if (filename.IsEmpty()) return;
+		int lump = Wads.CheckNumForFullName(filename, true, ns_global);
+		if (lump == -1) return;
+		sc.OpenLumpNum(lump);
+
+		sc.SetCMode(true);
+		while (sc.GetString())
+		{
+			if (sc.Compare("linedef"))
+			{
+				parseLinedef(sc);
+			}
+			else if (sc.Compare("mapthing"))
+			{
+				parseMapthing(sc);
+			}
+			else if (sc.Compare("sector"))
+			{
+				parseSector(sc);
+			}
+			else
+			{
+				sc.ScriptError("Unknown keyword '%s'", sc.String);
+			}
 		}
 	}
-
-
 }
+
+void ProcessEDFMapthing(FMapThing *mt, int recordnum)
+{
+	InitEDF();
+
+	EDFMapthing *emt = EDFThings.CheckKey(recordnum);
+	if (emt == NULL)
+	{
+		Printf("EDF Mapthing record %d not found\n", recordnum);
+		mt->EdNum = 0;
+		return;
+	}
+	mt->thingid = emt->tid;
+	mt->EdNum = emt->type;
+	mt->info = DoomEdMap.CheckKey(mt->EdNum);
+	mt->z = emt->height;
+	memcpy(mt->args, emt->args, sizeof(mt->args));
+	mt->SkillFilter = emt->skillfilter;
+	mt->flags = emt->flags;
+}
+
+void ProcessEDFLinedef(line_t *ld, int recordnum)
+{
+	InitEDF();
+
+	EDFLinedef *eld = EDFLines.CheckKey(recordnum);
+	if (eld == NULL)
+	{
+		Printf("EDF Linedef record %d not found\n", recordnum);
+		ld->special = 0;
+		return;
+	}
+	const DWORD fmask = ML_REPEAT_SPECIAL | ML_FIRSTSIDEONLY | ML_ADDTRANS | ML_BLOCKEVERYTHING | ML_ZONEBOUNDARY | ML_CLIP_MIDTEX;
+	ld->special = eld->special;
+	ld->activation = eld->activation;
+	ld->flags = (ld->flags&~fmask) | eld->flags;
+	ld->Alpha = eld->alpha;
+	memcpy(ld->args, eld->args, sizeof(ld->args));
+	tagManager.AddLineID(int(ld - lines), eld->tag);
+}
+

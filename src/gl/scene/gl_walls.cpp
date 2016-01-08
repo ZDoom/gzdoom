@@ -1720,11 +1720,10 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 			}
 			else if (!(seg->sidedef->Flags & WALLF_POLYOBJ))
 			{
-				// render it anyway with the sector's floor texture. With a background sky
-				// there are ugly holes otherwise and slopes are simply not precise enough
-				// to mach in any case.
-				gltexture = FMaterial::ValidateTexture(frontsector->GetTexture(sector_t::floor), true);
-				if (gltexture)
+				if ((frontsector->floorplane.a | frontsector->floorplane.b |
+					backsector->floorplane.a | backsector->floorplane.b) &&
+					frontsector->GetTexture(sector_t::floor) != skyflatnum &&
+					backsector->GetTexture(sector_t::floor) != skyflatnum)
 				{
 					// render it anyway with the sector's floor texture. With a background sky
 					// there are ugly holes otherwise and slopes are simply not precise enough

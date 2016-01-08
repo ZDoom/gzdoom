@@ -2195,6 +2195,7 @@ enum ChaseFlags
 	CHF_NORANDOMTURN = 32,
 	CHF_DONTANGLE = 64,
 	CHF_NOPOSTATTACKTURN = 128,
+	CHF_STOPIFBLOCKED = 256,
 };
 
 void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missilestate, bool playactive, bool nightmarefast, bool dontmove, int flags)
@@ -2349,10 +2350,15 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 	if (actor->flags & MF_JUSTATTACKED)
 	{
 		actor->flags &= ~MF_JUSTATTACKED;
-		if (!actor->isFast() && !dontmove && !(flags & CHF_NOPOSTATTACKTURN))
+		if (!actor->isFast() && !dontmove && !(flags & CHF_NOPOSTATTACKTURN) && !(flags & CHF_STOPIFBLOCKED))
 		{
 			P_NewChaseDir (actor);
 		}
+		//Because P_TryWalk would never be reached if the actor is stopped by a blocking object,
+		//need to make sure the movecount is reset, otherwise they will just keep attacking
+		//over and over again.
+		if (flags & CHF_STOPIFBLOCKED)
+			actor->movecount = pr_trywalk() & 15;
 		actor->flags &= ~MF_INCHASE;
 		return;
 	}
@@ -2510,6 +2516,8 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 	if (actor->strafecount)
 		actor->strafecount--;
 
+	bool movecheck = P_Move(actor);
+	
 	// class bosses don't do this when strafing
 	if ((!fastchase || !actor->FastChaseStrafeCount) && !dontmove)
 	{
@@ -2521,24 +2529,25 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 		// chase towards player
 		if (actor->movecount >= 0)
 			actor->movecount--;
-		if (((!(flags & CHF_NORANDOMTURN)) && (actor->movecount < 0)) || !P_Move(actor))
+		if (!(flags & CHF_STOPIFBLOCKED))
 		{
-			P_NewChaseDir (actor);
+			if ((!(flags & CHF_NORANDOMTURN) && (actor->movecount < 0)) || !movecheck)
+				P_NewChaseDir(actor);
 		}
 		
 		// if the move was illegal, reset it 
 		// (copied from A_SerpentChase - it applies to everything with CANTLEAVEFLOORPIC!)
 		if (actor->flags2&MF2_CANTLEAVEFLOORPIC && actor->floorpic != oldFloor )
 		{
-			if (P_TryMove (actor, oldX, oldY, false))
+			if (!(flags & CHF_STOPIFBLOCKED) && P_TryMove(actor, oldX, oldY, false))
 			{
 				if (nomonsterinterpolation)
 				{
 					actor->PrevX = oldX;
 					actor->PrevY = oldY;
 				}
+				P_NewChaseDir(actor);
 			}
-			P_NewChaseDir (actor);
 		}
 	}
 	else if (dontmove && actor->movecount > 0) actor->movecount--;

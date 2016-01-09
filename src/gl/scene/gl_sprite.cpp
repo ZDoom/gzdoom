@@ -277,10 +277,13 @@ void GLSprite::Draw(int pass)
 			if (spritetype == RF_PITCHFLATSPRITE)
 			{
 				angle_t pitchDegrees = 360.0 * (1.0 + (((angle_t)actor->pitch >> 16) / (float)(65536)));
-				fixed_t rollDegrees = 360.0 * (1.0 - ((actor->roll >> 16) / (float)(65536)));
 				mat.Rotate(0, 1, 0, -FlatAngle);
 				mat.Rotate(-yawvecY, 0, yawvecX, pitchDegrees);
-				mat.Rotate(yawvecX, 0, yawvecY, rollDegrees);
+				if (drawRollSpriteActor)
+				{
+					fixed_t rollDegrees = 360.0 * (1.0 - ((actor->roll >> 16) / (float)(65536)));
+					mat.Rotate(yawvecX, 0, yawvecY, rollDegrees);
+				}
 			}
 			else if (spritetype == RF_FLATSPRITE)
 			{ // [fgsfds] rotate the sprite so it faces upwards/downwards
@@ -289,11 +292,16 @@ void GLSprite::Draw(int pass)
 			// [fgsfds] Rotate the sprite about the sight vector (roll) 
 			else if (spritetype == RF_WALLSPRITE)
 			{
-				mat.Rotate(yawvecX, 0, yawvecY, 360.0 * (1.0 - ((actor->roll >> 16) / (float)(65536))));
 				mat.Rotate(0, 1, 0, -FlatAngle);
+				if (drawRollSpriteActor)
+					mat.Rotate(yawvecX, 0, yawvecY, 360.0 * (1.0 - ((actor->roll >> 16) / (float)(65536))));
 			}
 			else if (drawRollSpriteActor)
 			{
+				if (drawWithXYBillboard)
+				{
+					mat.Rotate(-sin(angleRad), 0, cos(angleRad), -GLRenderer->mAngles.Pitch);
+				}
 				mat.Rotate(cos(angleRad), 0, sin(angleRad), 360.0 * (1.0 - ((actor->roll >> 16) / (float)(65536))));
 			}
 			// [Nash] XY Billboard

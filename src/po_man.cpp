@@ -1533,11 +1533,15 @@ static void IterFindPolySides (FPolyObj *po, side_t *side)
 //
 //==========================================================================
 
+static int STACK_ARGS posicmp(const void *a, const void *b)
+{
+	return (*(const side_t **)a)->linedef->args[1] - (*(const side_t **)b)->linedef->args[1];
+}
+
 static void SpawnPolyobj (int index, int tag, int type)
 {
 	unsigned int ii;
 	int i;
-	int j;
 	FPolyObj *po = &polyobjs[index];
 
 	for (ii = 0; ii < KnownPolySides.Size(); ++ii)
@@ -1577,59 +1581,24 @@ static void SpawnPolyobj (int index, int tag, int type)
 		// didn't find a polyobj through PO_LINE_START
 		TArray<side_t *> polySideList;
 		unsigned int psIndexOld;
-		for (j = 1; j < PO_MAXPOLYSEGS; j++)
-		{
-			psIndexOld = po->Sidedefs.Size();
-			for (ii = 0; ii < KnownPolySides.Size(); ++ii)
-			{
-				i = KnownPolySides[ii];
+		psIndexOld = po->Sidedefs.Size();
 
-				if (i >= 0 &&
-					sides[i].linedef->special == Polyobj_ExplicitLine &&
-					sides[i].linedef->args[0] == tag)
-				{
-					if (!sides[i].linedef->args[1])
-					{
-						I_Error ("SpawnPolyobj: Explicit line missing order number (probably %d) in poly %d.\n",
-							j+1, tag);
-					}
-					if (sides[i].linedef->args[1] == j)
-					{
-						po->Sidedefs.Push (&sides[i]);
-					}
-				}
-			}
-			// Clear out any specials for these segs...we cannot clear them out
-			// 	in the above loop, since we aren't guaranteed one seg per linedef.
-			for (ii = 0; ii < KnownPolySides.Size(); ++ii)
+		for (ii = 0; ii < KnownPolySides.Size(); ++ii)
+		{
+			i = KnownPolySides[ii];
+
+			if (i >= 0 &&
+				sides[i].linedef->special == Polyobj_ExplicitLine &&
+				sides[i].linedef->args[0] == tag)
 			{
-				i = KnownPolySides[ii];
-				if (i >= 0 &&
-					sides[i].linedef->special == Polyobj_ExplicitLine &&
-					sides[i].linedef->args[0] == tag && sides[i].linedef->args[1] == j)
+				if (!sides[i].linedef->args[1])
 				{
-					sides[i].linedef->special = 0;
-					sides[i].linedef->args[0] = 0;
-					KnownPolySides[ii] = -1;
+					I_Error("SpawnPolyobj: Explicit line missing order number in poly %d, linedef %d.\n", tag, int(sides[i].linedef - lines));
 				}
-			}
-			if (po->Sidedefs.Size() == psIndexOld)
-			{ // Check if an explicit line order has been skipped.
-			  // A line has been skipped if there are any more explicit
-			  // lines with the current tag value. [RH] Can this actually happen?
-				for (ii = 0; ii < KnownPolySides.Size(); ++ii)
-				{
-					i = KnownPolySides[ii];
-					if (i >= 0 &&
-						sides[i].linedef->special == Polyobj_ExplicitLine &&
-						sides[i].linedef->args[0] == tag)
-					{
-						I_Error ("SpawnPolyobj: Missing explicit line %d for poly %d\n",
-							j, tag);
-					}
-				}
+				po->Sidedefs.Push (&sides[i]);
 			}
 		}
+		qsort(&po->Sidedefs[0], po->Sidedefs.Size(), sizeof(po->Sidedefs[0]), posicmp);
 		if (po->Sidedefs.Size() > 0)
 		{
 			po->crush = (type != SMT_PolySpawn) ? 3 : 0;

@@ -752,6 +752,8 @@ struct sector_t
 		Flags &= ~SECF_SPECIALFLAGS;
 	}
 
+	int GetTerrain(int pos) const;
+
 	void TransferSpecial(sector_t *model);
 	void GetSpecial(secspecial_t *spec);
 	void SetSpecial(const secspecial_t *spec);
@@ -786,6 +788,8 @@ struct sector_t
 	// these fields used to be in AActor, but presented performance problems
 	// when processed as mobj properties. Fix is to make them sector properties.
 	fixed_t		friction, movefactor;
+
+	int			terrainnum[2];
 
 	// thinker_t for reversable actions
 	TObjPtr<DSectorEffect> floordata;			// jff 2/22/98 make thinkers on

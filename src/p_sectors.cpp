@@ -26,6 +26,7 @@
 #include "doomstat.h"
 #include "g_level.h"
 #include "nodebuild.h"
+#include "p_terrain.h"
 #include "po_man.h"
 #include "farchive.h"
 #include "r_utility.h"
@@ -871,6 +872,11 @@ void sector_t::TransferSpecial(sector_t *model)
 	damageinterval = model->damageinterval;
 	leakydamage = model->leakydamage;
 	Flags = (Flags&~SECF_SPECIALFLAGS) | (model->Flags & SECF_SPECIALFLAGS);
+}
+
+int sector_t::GetTerrain(int pos) const
+{
+	return terrainnum[pos] >= 0 ? terrainnum[pos] : TerrainTypes[GetTexture(pos)];
 }
 
 FArchive &operator<< (FArchive &arc, secspecial_t &p)

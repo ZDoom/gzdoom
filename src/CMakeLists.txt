@@ -1092,6 +1092,8 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	wi_stuff.cpp
 	zstrformat.cpp
 	zstring.cpp
+	GuillotineBinPack.cpp
+	SkylineBinPack.cpp
 	g_doom/a_doommisc.cpp
 	g_heretic/a_hereticmisc.cpp
 	g_hexen/a_hexenmisc.cpp

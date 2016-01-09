@@ -453,17 +453,17 @@ endif( SSE_MATTERS )
 if( X64 )
 	set( HAVE_MMX 1 )
 else( X64 )
-	set( SAFE_CMAKE_C_FLAGS ${CMAKE_C_FLAGS} )
+	set( SAFE_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} )
 
 	if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
-		set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mmmx")
+		set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmmx")
 	endif( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 
 	CHECK_CXX_SOURCE_COMPILES("#include <mmintrin.h>
 		int main(void) { __m64 v = _m_from_int(0); }"
 		HAVE_MMX)
 
-	set( CMAKE_C_FLAGS ${SAFE_CMAKE_C_FLAGS} )
+	set( CMAKE_CXX_FLAGS ${SAFE_CMAKE_CXX_FLAGS} )
 endif( X64 )
 
 # Set up flags for GCC

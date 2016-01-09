@@ -193,7 +193,7 @@ void AActor::Serialize (FArchive &arc)
 		<< Damage;
 	if (SaveVersion >= 4530)
 	{
-		arc << floorterrain;
+		P_SerializeTerrain(arc, floorterrain);
 	}
 	if (SaveVersion >= 3227)
 	{

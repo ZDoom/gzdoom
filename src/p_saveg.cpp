@@ -52,6 +52,7 @@
 #include "farchive.h"
 #include "p_lnspec.h"
 #include "p_acs.h"
+#include "p_terrain.h"
 
 static void CopyPlayer (player_t *dst, player_t *src, const char *name);
 static void ReadOnePlayer (FArchive &arc, bool skipload);
@@ -371,7 +372,8 @@ void P_SerializeWorld (FArchive &arc)
 			<< sec->gravity;
 		if (SaveVersion >= 4530)
 		{
-			arc << sec->terrainnum[0] << sec->terrainnum[1];
+			P_SerializeTerrain(arc, sec->terrainnum[0]);
+			P_SerializeTerrain(arc, sec->terrainnum[1]);
 		}
 		if (SaveVersion >= 4529)
 		{

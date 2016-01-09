@@ -1542,7 +1542,6 @@ static void SpawnPolyobj (int index, int tag, int type)
 {
 	unsigned int ii;
 	int i;
-	int j;
 	FPolyObj *po = &polyobjs[index];
 
 	for (ii = 0; ii < KnownPolySides.Size(); ++ii)

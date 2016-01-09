@@ -349,7 +349,7 @@ void P_PlayerOnSpecial3DFloor(player_t* player)
 
 		// Apply flat specials (using the ceiling!)
 		P_PlayerOnSpecialFlat(
-			player, TerrainTypes[rover->model->GetTexture(rover->flags & FF_INVERTSECTOR? sector_t::floor : sector_t::ceiling)]);
+			player, rover->model->GetTerrain(rover->top.isceiling));
 
 		break;
 	}
@@ -769,6 +769,7 @@ void P_LineOpening_XFloors (FLineOpening &open, AActor * thing, const line_t *li
 				linedef->frontsector->floorplane.ZatPoint(x, y), 
 				linedef->backsector->floorplane.ZatPoint(x, y) };
 			FTextureID highestfloorpic;
+			int highestfloorterrain = -1;
 			FTextureID lowestceilingpic;
 			
 			highestfloorpic.SetInvalid();
@@ -799,6 +800,7 @@ void P_LineOpening_XFloors (FLineOpening &open, AActor * thing, const line_t *li
 					{
 						highestfloor = ff_top;
 						highestfloorpic = *rover->top.texture;
+						highestfloorterrain = rover->model->GetTerrain(rover->top.isceiling);
 					}
 					if(ff_top > lowestfloor[j] && ff_top <= thing->z + thing->MaxStepHeight) lowestfloor[j] = ff_top;
 				}
@@ -808,6 +810,7 @@ void P_LineOpening_XFloors (FLineOpening &open, AActor * thing, const line_t *li
 			{
 				open.bottom = highestfloor;
 				open.floorpic = highestfloorpic;
+				open.floorterrain = highestfloorterrain;
 			}
 			
 			if(lowestceiling < open.top) 

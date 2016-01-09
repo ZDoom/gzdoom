@@ -194,6 +194,7 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef,
 			open.bottom = ff;
 			open.bottomsec = front;
 			open.floorpic = front->GetTexture(sector_t::floor);
+			open.floorterrain = front->GetTerrain(sector_t::floor);
 			open.lowfloor = bf;
 		}
 		else
@@ -201,6 +202,7 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef,
 			open.bottom = bf;
 			open.bottomsec = back;
 			open.floorpic = back->GetTexture(sector_t::floor);
+			open.floorterrain = back->GetTerrain(sector_t::floor);
 			open.lowfloor = ff;
 		}
 	}
@@ -211,6 +213,7 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef,
 		open.top = FIXED_MAX;
 		open.bottomsec = NULL;
 		open.floorpic.SetInvalid();
+		open.floorterrain = -1;
 		open.bottom = FIXED_MIN;
 		open.lowfloor = FIXED_MAX;
 	}

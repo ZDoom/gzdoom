@@ -369,6 +369,10 @@ void P_SerializeWorld (FArchive &arc)
 			<< sec->heightsec
 			<< sec->bottommap << sec->midmap << sec->topmap
 			<< sec->gravity;
+		if (SaveVersion >= 4530)
+		{
+			arc << sec->terrainnum[0] << sec->terrainnum[1];
+		}
 		if (SaveVersion >= 4529)
 		{
 			arc << sec->damageamount;

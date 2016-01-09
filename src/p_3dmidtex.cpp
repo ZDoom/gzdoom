@@ -37,6 +37,7 @@
 
 #include "templates.h"
 #include "p_local.h"
+#include "p_terrain.h"
 
 
 //============================================================================
@@ -290,6 +291,8 @@ bool P_LineOpening_3dMidtex(AActor *thing, const line_t *linedef, FLineOpening &
 				open.bottom = tt;
 				open.abovemidtex = true;
 				open.floorpic = linedef->sidedef[0]->GetTexture(side_t::mid);
+				open.floorterrain = TerrainTypes[open.floorpic];
+				
 			}
 			// returns true if it touches the midtexture
 			return (abs(thing->z - tt) <= thing->MaxStepHeight);

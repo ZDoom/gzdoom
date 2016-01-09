@@ -121,7 +121,6 @@ static void ParseSplash (FScanner &sc);
 static void ParseTerrain (FScanner &sc);
 static void ParseFloor (FScanner &sc);
 static int FindSplash (FName name);
-static int FindTerrain (FName name);
 static void GenericParse (FScanner &sc, FGenericParse *parser, const char **keywords,
 	void *fields, const char *type, FName name);
 static void ParseDamage (FScanner &sc, int keyword, void *fields);
@@ -427,7 +426,7 @@ void ParseTerrain (FScanner &sc)
 
 	sc.MustGetString ();
 	name = sc.String;
-	terrainnum = (int)FindTerrain (name);
+	terrainnum = (int)P_FindTerrain (name);
 	if (terrainnum < 0)
 	{
 		FTerrainDef def;
@@ -637,7 +636,7 @@ static void ParseFloor (FScanner &sc)
 		return;
 	}
 	sc.MustGetString ();
-	terrain = FindTerrain (sc.String);
+	terrain = P_FindTerrain (sc.String);
 	if (terrain == -1)
 	{
 		Printf ("Unknown terrain %s\n", sc.String);
@@ -657,7 +656,7 @@ static void ParseDefault (FScanner &sc)
 	int terrain;
 
 	sc.MustGetString ();
-	terrain = FindTerrain (sc.String);
+	terrain = P_FindTerrain (sc.String);
 	if (terrain == -1)
 	{
 		Printf ("Unknown terrain %s\n", sc.String);
@@ -692,7 +691,7 @@ int FindSplash (FName name)
 //
 //==========================================================================
 
-int FindTerrain (FName name)
+int P_FindTerrain (FName name)
 {
 	unsigned int i;
 

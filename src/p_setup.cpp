@@ -1532,6 +1532,7 @@ void P_LoadSectors (MapData *map, FMissingTextureTracker &missingtex)
 
 		ss->gravity = 1.f;	// [RH] Default sector gravity of 1.0
 		ss->ZoneNumber = 0xFFFF;
+		ss->terrainnum[sector_t::ceiling] = ss->terrainnum[sector_t::floor] = -1;
 
 		// [RH] Sectors default to white light with the default fade.
 		//		If they are outside (have a sky ceiling), they use the outside fog.

@@ -896,6 +896,7 @@ public:
 
 	struct sector_t	*floorsector;
 	FTextureID		floorpic;			// contacted sec floorpic
+	int				floorterrain;
 	struct sector_t	*ceilingsector;
 	FTextureID		ceilingpic;			// contacted sec ceilingpic
 	fixed_t			radius, height;		// for movement checking

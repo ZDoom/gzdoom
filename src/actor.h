@@ -401,12 +401,14 @@ enum ActorRenderFlag
 	RF_SPRITETYPEMASK	= 0x7000,	// ---Different sprite types, not all implemented
 	RF_FACESPRITE		= 0x0000,	// Face sprite
 	RF_WALLSPRITE		= 0x1000,	// Wall sprite
-	RF_FLOORSPRITE		= 0x2000,	// Floor sprite
+	RF_FLATSPRITE		= 0x2000,	// Floor sprite
 	RF_VOXELSPRITE		= 0x3000,	// Voxel object
+	RF_PITCHFLATSPRITE  = 0x4000,	// [MC] OpenGL only: tilt the sprite up and down based on pitch.
 	RF_INVISIBLE		= 0x8000,	// Don't bother drawing this actor
 
 	RF_FORCEYBILLBOARD		= 0x10000,	// [BB] OpenGL only: draw with y axis billboard, i.e. anchored to the floor (overrides gl_billboard_mode setting)
 	RF_FORCEXYBILLBOARD		= 0x20000,	// [BB] OpenGL only: draw with xy axis billboard, i.e. unanchored (overrides gl_billboard_mode setting)
+	RF_ROLLSPRITE			= 0x40000,	// [marrub] roll the sprite billboard
 };
 
 #define TRANSLUC25			(FRACUNIT/4)
@@ -874,7 +876,7 @@ public:
 // NOTE: The first member variable *must* be x.
 	fixed_t	 		x,y,z;
 	AActor			*snext, **sprev;	// links in sector (if needed)
-	angle_t			angle;
+	angle_t			angle, flatangle;
 	WORD			sprite;				// used to find patch_t and flip value
 	BYTE			frame;				// sprite frame to draw
 	fixed_t			scaleX, scaleY;		// Scaling values; FRACUNIT is normal size

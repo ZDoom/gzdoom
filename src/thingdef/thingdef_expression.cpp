@@ -90,6 +90,7 @@ DEFINE_MEMBER_VARIABLE(reactiontime, AActor)
 DEFINE_MEMBER_VARIABLE(meleerange, AActor)
 DEFINE_MEMBER_VARIABLE(Speed, AActor)
 DEFINE_MEMBER_VARIABLE(roll, AActor)
+DEFINE_MEMBER_VARIABLE(flatangle, AActor)
 
 
 //==========================================================================

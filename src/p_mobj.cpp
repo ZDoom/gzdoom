@@ -348,6 +348,10 @@ void AActor::Serialize (FArchive &arc)
 			<< RipLevelMin
 			<< RipLevelMax;
 	}
+	if (SaveVersion >= 4529)
+	{
+		arc << flatangle;
+	}
 
 	{
 		FString tagstr;

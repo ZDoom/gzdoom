@@ -90,7 +90,7 @@ IMPLEMENT_CLASS(D3DFB)
 
 struct D3DFB::PackedTexture
 {
-	D3DFB::PackingTexture *Owner;
+	D3DFB::Atlas *Owner;
 
 	PackedTexture *Next, **Prev;
 
@@ -104,10 +104,10 @@ struct D3DFB::PackedTexture
 	bool Padded;
 };
 
-struct D3DFB::PackingTexture
+struct D3DFB::Atlas
 {
-	PackingTexture(D3DFB *fb, int width, int height, D3DFORMAT format);
-	~PackingTexture();
+	Atlas(D3DFB *fb, int width, int height, D3DFORMAT format);
+	~Atlas();
 
 	PackedTexture *GetBestFit(int width, int height, int &area);
 	void AllocateImage(PackedTexture *box, int width, int height);
@@ -115,7 +115,7 @@ struct D3DFB::PackingTexture
 	void AddEmptyBox(int left, int top, int right, int bottom);
 	void FreeBox(PackedTexture *box);
 
-	PackingTexture *Next;
+	Atlas *Next;
 	IDirect3DTexture9 *Tex;
 	D3DFORMAT Format;
 	PackedTexture *UsedList;	// Boxes that contain images
@@ -283,7 +283,7 @@ D3DFB::D3DFB (UINT adapter, int width, int height, bool fullscreen)
 	ScreenWipe = NULL;
 	InScene = false;
 	QuadExtra = new BufferedTris[MAX_QUAD_BATCH];
-	Packs = NULL;
+	Atlases = NULL;
 	PixelDoubling = 0;
 	SkipAt = -1;
 	CurrRenderTexture = 0;
@@ -496,7 +496,7 @@ void D3DFB::FillPresentParameters (D3DPRESENT_PARAMETERS *pp, bool fullscreen, b
 
 bool D3DFB::CreateResources()
 {
-	Packs = NULL;
+	Atlases = NULL;
 	if (!Windowed)
 	{
 		// Remove the window border in fullscreen mode
@@ -624,8 +624,8 @@ void D3DFB::ReleaseResources ()
 		delete ScreenWipe;
 		ScreenWipe = NULL;
 	}
-	PackingTexture *pack, *next;
-	for (pack = Packs; pack != NULL; pack = next)
+	Atlas *pack, *next;
+	for (pack = Atlases; pack != NULL; pack = next)
 	{
 		next = pack->Next;
 		delete pack;
@@ -1826,8 +1826,9 @@ IDirect3DTexture9 *D3DFB::GetCurrentScreen(D3DPOOL pool)
 //
 // D3DFB :: DrawPackedTextures
 //
-// DEBUG: Draws the packing textures to the screen, starting with the
-// 1-based packnum.
+// DEBUG: Draws the texture atlases to the screen, starting with the
+// 1-based packnum. Ignores atlases that are flagged for use by one
+// texture only.
 //
 //==========================================================================
 
@@ -1838,30 +1839,34 @@ void D3DFB::DrawPackedTextures(int packnum)
 		0xFFFF9999, 0xFF99FF99, 0xFF9999FF, 0xFFFFFF99,
 		0xFFFF99FF, 0xFF99FFFF, 0xFFFFCC99, 0xFF99CCFF
 	};
-	PackingTexture *pack;
+	Atlas *pack;
 	int x = 8, y = 8;
 
 	if (packnum <= 0)
 	{
 		return;
 	}
-	pack = Packs;
+	pack = Atlases;
+	// Find the first texture atlas that is an actual atlas.
 	while (pack != NULL && pack->OneUse)
-	{ // Skip textures that aren't used as packing containers
+	{ // Skip textures that aren't used as atlases
 		pack = pack->Next;
 	}
+	// Skip however many atlases we would have otherwise drawn
+	// until we've skipped <packnum> of them.
 	while (pack != NULL && packnum != 1)
 	{
 		if (!pack->OneUse)
-		{ // Skip textures that aren't used as packing containers
+		{ // Skip textures that aren't used as atlases
 			packnum--;
 		}
 		pack = pack->Next;
 	}
+	// Draw atlases until we run out of room on the screen.
 	while (pack != NULL)
 	{
 		if (pack->OneUse)
-		{ // Skip textures that aren't used as packing containers
+		{ // Skip textures that aren't used as atlases
 			pack = pack->Next;
 			continue;
 		}
@@ -1969,34 +1974,34 @@ void D3DFB::DrawPackedTextures(int packnum)
 //
 // D3DFB :: AllocPackedTexture
 //
-// Finds space to pack an image inside a packing texture and returns it.
+// Finds space to pack an image inside a texture atlas and returns it.
 // Large images and those that need to wrap always get their own textures.
 //
 //==========================================================================
 
 D3DFB::PackedTexture *D3DFB::AllocPackedTexture(int w, int h, bool wrapping, D3DFORMAT format)
 {
-	PackingTexture *bestpack;
+	Atlas *bestpack;
 	PackedTexture *bestbox;
 	int area;
 
 	// check for 254 to account for padding
 	if (w > 254 || h > 254 || wrapping)
-	{ // Create a new packing texture.
-		bestpack = new PackingTexture(this, w, h, format);
+	{ // Create a new texture atlas.
+		bestpack = new Atlas(this, w, h, format);
 		bestpack->OneUse = true;
 		bestbox = bestpack->GetBestFit(w, h, area);
 		bestbox->Padded = false;
 	}
 	else
-	{ // Try to find space in an existing packing texture.
+	{ // Try to find space in an existing texture atlas.
 		w += 2; // Add padding
 		h += 2;
 		int bestarea = INT_MAX;
 		int bestareaever = w * h;
 		bestpack = NULL;
 		bestbox = NULL;
-		for (PackingTexture *pack = Packs; pack != NULL; pack = pack->Next)
+		for (Atlas *pack = Atlases; pack != NULL; pack = pack->Next)
 		{
 			if (pack->Format == format)
 			{
@@ -2016,8 +2021,8 @@ D3DFB::PackedTexture *D3DFB::AllocPackedTexture(int w, int h, bool wrapping, D3D
 			}
 		}
 		if (bestpack == NULL)
-		{ // Create a new packing texture.
-			bestpack = new PackingTexture(this, 256, 256, format);
+		{ // Create a new texture atlas.
+			bestpack = new Atlas(this, 256, 256, format);
 			bestbox = bestpack->GetBestFit(w, h, bestarea);
 		}
 		bestbox->Padded = true;
@@ -2028,11 +2033,11 @@ D3DFB::PackedTexture *D3DFB::AllocPackedTexture(int w, int h, bool wrapping, D3D
 
 //==========================================================================
 //
-// PackingTexture Constructor
+// Atlas Constructor
 //
 //==========================================================================
 
-D3DFB::PackingTexture::PackingTexture(D3DFB *fb, int w, int h, D3DFORMAT format)
+D3DFB::Atlas::Atlas(D3DFB *fb, int w, int h, D3DFORMAT format)
 {
 	Tex = NULL;
 	Format = format;
@@ -2043,8 +2048,8 @@ D3DFB::PackingTexture::PackingTexture(D3DFB *fb, int w, int h, D3DFORMAT format)
 	Width = 0;
 	Height = 0;
 
-	Next = fb->Packs;
-	fb->Packs = this;
+	Next = fb->Atlases;
+	fb->Atlases = this;
 
 #if 1
 	if (FAILED(fb->D3DDevice->CreateTexture(w, h, 1, 0, format, D3DPOOL_MANAGED, &Tex, NULL)))
@@ -2068,11 +2073,11 @@ D3DFB::PackingTexture::PackingTexture(D3DFB *fb, int w, int h, D3DFORMAT format)
 
 //==========================================================================
 //
-// PackingTexture Destructor
+// Atlas Destructor
 //
 //==========================================================================
 
-D3DFB::PackingTexture::~PackingTexture()
+D3DFB::Atlas::~Atlas()
 {
 	PackedTexture *box, *next;
 
@@ -2096,14 +2101,14 @@ D3DFB::PackingTexture::~PackingTexture()
 
 //==========================================================================
 //
-// PackingTexture :: GetBestFit
+// Atlas :: GetBestFit
 //
 // Returns the empty box that provides the best fit for the requested
 // dimensions, or NULL if none of them are large enough.
 //
 //==========================================================================
 
-D3DFB::PackedTexture *D3DFB::PackingTexture::GetBestFit(int w, int h, int &area)
+D3DFB::PackedTexture *D3DFB::Atlas::GetBestFit(int w, int h, int &area)
 {
 	PackedTexture *box;
 	int smallestarea = INT_MAX;
@@ -2133,17 +2138,17 @@ D3DFB::PackedTexture *D3DFB::PackingTexture::GetBestFit(int w, int h, int &area)
 
 //==========================================================================
 //
-// PackingTexture :: AllocateImage
+// Atlas :: AllocateImage
 //
 // Moves the box from the empty list to the used list, sizing it to the
 // requested dimensions and adding additional boxes to the empty list if
 // needed.
 //
-// The passed box *MUST* be in this packing texture's empty list.
+// The passed box *MUST* be in this texture atlas's empty list.
 //
 //==========================================================================
 
-void D3DFB::PackingTexture::AllocateImage(D3DFB::PackedTexture *box, int w, int h)
+void D3DFB::Atlas::AllocateImage(D3DFB::PackedTexture *box, int w, int h)
 {
 	RECT start = box->Area;
 
@@ -2212,13 +2217,13 @@ void D3DFB::PackingTexture::AllocateImage(D3DFB::PackedTexture *box, int w, int 
 
 //==========================================================================
 //
-// PackingTexture :: AddEmptyBox
+// Atlas :: AddEmptyBox
 //
 // Adds a box with the specified dimensions to the empty list.
 //
 //==========================================================================
 
-void D3DFB::PackingTexture::AddEmptyBox(int left, int top, int right, int bottom)
+void D3DFB::Atlas::AddEmptyBox(int left, int top, int right, int bottom)
 {
 	PackedTexture *box = AllocateBox();
 	box->Area.left = left;
@@ -2236,14 +2241,14 @@ void D3DFB::PackingTexture::AddEmptyBox(int left, int top, int right, int bottom
 
 //==========================================================================
 //
-// PackingTexture :: AllocateBox
+// Atlas :: AllocateBox
 //
 // Returns a new PackedTexture box, either by retrieving one off the free
 // list or by creating a new one. The box is not linked into a list.
 //
 //==========================================================================
 
-D3DFB::PackedTexture *D3DFB::PackingTexture::AllocateBox()
+D3DFB::PackedTexture *D3DFB::Atlas::AllocateBox()
 {
 	PackedTexture *box;
 
@@ -2266,7 +2271,7 @@ D3DFB::PackedTexture *D3DFB::PackingTexture::AllocateBox()
 
 //==========================================================================
 //
-// PackingTexture :: FreeBox
+// Atlas :: FreeBox
 //
 // Removes a box from its current list and adds it to the empty list,
 // updating EmptyArea. If there are no boxes left in the used list, then
@@ -2275,7 +2280,7 @@ D3DFB::PackedTexture *D3DFB::PackingTexture::AllocateBox()
 //
 //==========================================================================
 
-void D3DFB::PackingTexture::FreeBox(D3DFB::PackedTexture *box)
+void D3DFB::Atlas::FreeBox(D3DFB::PackedTexture *box)
 {
 	*(box->Prev) = box->Next;
 	if (box->Next != NULL)
@@ -4004,7 +4009,7 @@ void D3DFB::SetPaletteTexture(IDirect3DTexture9 *texture, int count, D3DCOLOR bo
 	SetTexture(1, texture);
 }
 
-void D3DFB::SetPalTexBilinearConstants(PackingTexture *tex)
+void D3DFB::SetPalTexBilinearConstants(Atlas *tex)
 {
 #if 0
 	float con[8];

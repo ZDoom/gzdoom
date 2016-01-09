@@ -279,7 +279,7 @@ private:
 	friend class D3DPal;
 
 	struct PackedTexture;
-	struct PackingTexture;
+	struct Atlas;
 
 	struct FBVERTEX
 	{
@@ -392,7 +392,7 @@ private:
 	void SetPixelShader(IDirect3DPixelShader9 *shader);
 	void SetTexture(int tnum, IDirect3DTexture9 *texture);
 	void SetPaletteTexture(IDirect3DTexture9 *texture, int count, D3DCOLOR border_color);
-	void SetPalTexBilinearConstants(PackingTexture *texture);
+	void SetPalTexBilinearConstants(Atlas *texture);
 
 	BOOL AlphaTestEnabled;
 	BOOL AlphaBlendEnabled;
@@ -431,7 +431,7 @@ private:
 	BYTE BlockNum;
 	D3DPal *Palettes;
 	D3DTex *Textures;
-	PackingTexture *Packs;
+	Atlas *Atlases;
 	HRESULT LastHR;
 
 	UINT Adapter;

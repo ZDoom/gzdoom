@@ -7,7 +7,7 @@
 */
 
 #include <cassert>
-
+#include "templates.h"
 #include "GuillotineBinPack.h"
 
 using namespace std;
@@ -395,7 +395,7 @@ int GuillotineBinPack::ScoreBestShortSideFit(int width, int height, const Rect &
 {
 	int leftoverHoriz = abs(freeRect.width - width);
 	int leftoverVert = abs(freeRect.height - height);
-	int leftover = min(leftoverHoriz, leftoverVert);
+	int leftover = MIN(leftoverHoriz, leftoverVert);
 	return leftover;
 }
 
@@ -403,7 +403,7 @@ int GuillotineBinPack::ScoreBestLongSideFit(int width, int height, const Rect &f
 {
 	int leftoverHoriz = abs(freeRect.width - width);
 	int leftoverVert = abs(freeRect.height - height);
-	int leftover = max(leftoverHoriz, leftoverVert);
+	int leftover = MAX(leftoverHoriz, leftoverVert);
 	return leftover;
 }
 

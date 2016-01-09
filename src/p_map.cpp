@@ -529,16 +529,18 @@ void P_PlayerStartStomp(AActor *actor)
 //
 //==========================================================================
 
-inline fixed_t secfriction(const sector_t *sec)
+inline fixed_t secfriction(const sector_t *sec, int plane = sector_t::floor)
 {
-	fixed_t friction = Terrains[TerrainTypes[sec->GetTexture(sector_t::floor)]].Friction;
-	return friction != 0 ? friction : sec->friction;
+	if (sec->Flags & SECF_FRICTION) return sec->friction;
+	fixed_t friction = Terrains[TerrainTypes[sec->GetTexture(plane)]].Friction;
+	return friction != 0 ? friction : ORIG_FRICTION;
 }
 
-inline fixed_t secmovefac(const sector_t *sec)
+inline fixed_t secmovefac(const sector_t *sec, int plane = sector_t::floor)
 {
-	fixed_t movefactor = Terrains[TerrainTypes[sec->GetTexture(sector_t::floor)]].MoveFactor;
-	return movefactor != 0 ? movefactor : sec->movefactor;
+	if (sec->Flags & SECF_FRICTION) return sec->friction;
+	fixed_t movefactor = Terrains[TerrainTypes[sec->GetTexture(plane)]].MoveFactor;
+	return movefactor != 0 ? movefactor : ORIG_FRICTION_FACTOR;
 }
 
 //==========================================================================
@@ -584,11 +586,11 @@ int P_GetFriction(const AActor *mo, int *frictionfactor)
 					mo->z < rover->bottom.plane->ZatPoint(mo->x, mo->y))
 					continue;
 
-				newfriction = secfriction(rover->model);
+				newfriction = secfriction(rover->model, rover->top.isceiling);
 				if (newfriction < friction || friction == ORIG_FRICTION)
 				{
 					friction = newfriction;
-					movefactor = secmovefac(rover->model) >> 1;
+					movefactor = secmovefac(rover->model, rover->top.isceiling) >> 1;
 				}
 			}
 	}
@@ -622,11 +624,11 @@ int P_GetFriction(const AActor *mo, int *frictionfactor)
 				else
 					continue;
 
-				newfriction = secfriction(rover->model);
+				newfriction = secfriction(rover->model, rover->top.isceiling);
 				if (newfriction < friction || friction == ORIG_FRICTION)
 				{
 					friction = newfriction;
-					movefactor = secmovefac(rover->model);
+					movefactor = secmovefac(rover->model, rover->top.isceiling);
 				}
 			}
 

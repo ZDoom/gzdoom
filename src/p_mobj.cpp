@@ -344,7 +344,7 @@ void AActor::Serialize (FArchive &arc)
 			<< RipLevelMin
 			<< RipLevelMax;
 	}
-	if (SaveVersion >= 4529)
+	if (SaveVersion >= 4530)
 	{
 		arc << flatangle;
 	}

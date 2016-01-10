@@ -45,6 +45,8 @@
 #include "p_lnspec.h"
 #include "p_setup.h"
 #include "p_tags.h"
+#include "p_terrain.h"
+#include "v_palette.h"
 #include "r_data/colormaps.h"
 
 
@@ -120,7 +122,11 @@ struct EDFSector
 	int damageamount;
 	int damageinterval;
 	FNameNoInit damagetype;
-	FNameNoInit floorterrain;
+	BYTE leaky;
+	BYTE leakyadd;
+	BYTE leakyremove;
+	int floorterrain;
+	int ceilingterrain;
 
 	DWORD color;
 
@@ -128,7 +134,10 @@ struct EDFSector
 	DWORD damageflagsAdd;
 	DWORD damageflagsRemove;
 
-	// ceilingterrain is ignored
+	bool flagsSet;
+	bool damageflagsSet;
+	bool colorSet;
+
 	// colormaptop//bottom cannot be used because ZDoom has no corresponding properties.
 
 	FTransform planexform[2];
@@ -266,6 +275,7 @@ static void parseSector(FScanner &sc)
 
 	memset(&sec, 0, sizeof(sec));
 	sec.overlayalpha[sector_t::floor] = sec.overlayalpha[sector_t::ceiling] = FRACUNIT;
+	sec.floorterrain = sec.ceilingterrain = -1;
 
 	sc.MustGetStringName("{");
 	while (!sc.CheckString("}"))
@@ -298,6 +308,7 @@ static void parseSector(FScanner &sc)
 			}
 			else
 			{
+				sec.flagsSet = true;
 				flagvar = &sec.flags;
 			}
 			sc.CheckString("=");
@@ -306,7 +317,7 @@ static void parseSector(FScanner &sc)
 				sc.MustGetString();
 				for (const char *tok = strtok(sc.String, ",+ \t"); tok != NULL; tok = strtok(NULL, ",+ \t"))
 				{
-					if (!stricmp(tok, "SECRET")) *flagvar |= SECF_SECRET;
+					if (!stricmp(tok, "SECRET")) *flagvar |= SECF_SECRET | SECF_WASSECRET;
 					else if (!stricmp(tok, "FRICTION")) *flagvar |= SECF_FRICTION;
 					else if (!stricmp(tok, "PUSH")) *flagvar |= SECF_PUSH;
 					else if (!stricmp(tok, "KILLSOUND")) *flagvar |= SECF_SILENT;
@@ -330,16 +341,19 @@ static void parseSector(FScanner &sc)
 		else if (sc.Compare("damageflags"))
 		{
 			DWORD *flagvar = NULL;
+			BYTE *leakvar = NULL;
 			if (sc.CheckString("."))
 			{
 				sc.MustGetString();
 				if (sc.Compare("add"))
 				{
 					flagvar = &sec.damageflagsAdd;
+					leakvar = &sec.leakyadd;
 				}
 				else if (sc.Compare("remove"))
 				{
 					flagvar = &sec.damageflagsRemove;
+					leakvar = &sec.leakyremove;
 				}
 				else
 				{
@@ -348,7 +362,9 @@ static void parseSector(FScanner &sc)
 			}
 			else
 			{
+				sec.damageflagsSet = true;
 				flagvar = &sec.damageflags;
+				leakvar = &sec.leaky;
 			}
 			sc.CheckString("=");
 			do
@@ -356,8 +372,8 @@ static void parseSector(FScanner &sc)
 				sc.MustGetString();
 				for (const char *tok = strtok(sc.String, ",+ \t"); tok != NULL; tok = strtok(NULL, ",+ \t"))
 				{
-					if (!stricmp(tok, "LEAKYSUIT")) *flagvar |= 1;
-					else if (!stricmp(tok, "IGNORESUIT")) *flagvar |= 2;	// these first 2 bits will be used to set 'leakychance', but this can only be done when the sector gets initialized
+					if (!stricmp(tok, "LEAKYSUIT")) *leakvar |= 1;
+					else if (!stricmp(tok, "IGNORESUIT")) *leakvar |= 2;	// these 2 bits will be used to set 'leakychance', but this can only be done when the sector gets initialized
 					else if (!stricmp(tok, "ENDGODMODE")) *flagvar |= SECF_ENDGODMODE;
 					else if (!stricmp(tok, "ENDLEVEL")) *flagvar |= SECF_ENDLEVEL;
 					else if (!stricmp(tok, "TERRAINHIT")) *flagvar |= SECF_DMGTERRAINFX;
@@ -369,8 +385,7 @@ static void parseSector(FScanner &sc)
 		{
 			sc.CheckString("=");
 			sc.MustGetString();
-			sec.floorterrain = sc.String;	// Todo: ZDoom does not implement this yet.
-			
+			sec.floorterrain = P_FindTerrain(sc.String);
 		}
 		else if (sc.Compare("floorangle"))
 		{
@@ -390,6 +405,12 @@ static void parseSector(FScanner &sc)
 			sc.MustGetFloat();
 			sec.planexform[sector_t::floor].yoffs = FLOAT2FIXED(sc.Float);
 		}
+		else if (sc.Compare("ceilingterrain"))
+		{
+			sc.CheckString("=");
+			sc.MustGetString();
+			sec.ceilingterrain = P_FindTerrain(sc.String);
+		}
 		else if (sc.Compare("ceilingangle"))
 		{
 			sc.CheckString("=");
@@ -408,7 +429,7 @@ static void parseSector(FScanner &sc)
 			sc.MustGetFloat();
 			sec.planexform[sector_t::ceiling].yoffs = FLOAT2FIXED(sc.Float);
 		}
-		else if (sc.Compare("colormaptop") || sc.Compare("colormapbottom") || sc.Compare("ceilingterrain"))
+		else if (sc.Compare("colormaptop") || sc.Compare("colormapbottom"))
 		{
 			sc.CheckString("=");
 			sc.MustGetString();
@@ -424,6 +445,7 @@ static void parseSector(FScanner &sc)
 			if (cmap != 0)
 			{
 				sec.color = R_BlendForColormap(cmap) & 0xff000000;
+				sec.colorSet = true;
 			}
 		}
 		else if (sc.Compare("overlayalpha"))
@@ -460,12 +482,12 @@ static void parseSector(FScanner &sc)
 				sc.MustGetString();
 				for (const char *tok = strtok(sc.String, ",+ \t"); tok != NULL; tok = strtok(NULL, ",+ \t"))
 				{
-					if (!stricmp(tok, "DISABLED")) sec.portalflags[dest] |= 0;
-					else if (!stricmp(tok, "NORENDER")) sec.portalflags[dest] |= 0;
-					else if (!stricmp(tok, "NOPASS")) sec.portalflags[dest] |= 0;
-					else if (!stricmp(tok, "BLOCKSOUND")) sec.portalflags[dest] |= 0;
-					else if (!stricmp(tok, "OVERLAY")) sec.portalflags[dest] |= 0;
-					else if (!stricmp(tok, "ADDITIVE")) sec.portalflags[dest] |= 0;
+					if (!stricmp(tok, "DISABLED")) sec.portalflags[dest] |= PLANEF_DISABLED;
+					else if (!stricmp(tok, "NORENDER")) sec.portalflags[dest] |= PLANEF_NORENDER;
+					else if (!stricmp(tok, "NOPASS")) sec.portalflags[dest] |= PLANEF_NOPASS;
+					else if (!stricmp(tok, "BLOCKSOUND")) sec.portalflags[dest] |= PLANEF_BLOCKSOUND;
+					else if (!stricmp(tok, "OVERLAY")) sec.portalflags[dest] |= 0;	// we do not use this. Alpha is the sole determinant for overlay drawing
+					else if (!stricmp(tok, "ADDITIVE")) sec.portalflags[dest] |= PLANEF_ADDITIVE;
 					else if (!stricmp(tok, "USEGLOBALTEX")) {}	// not implemented
 					else sc.ScriptError("Unknown option '%s'", tok);
 				}
@@ -679,3 +701,73 @@ void ProcessEDFLinedef(line_t *ld, int recordnum)
 	tagManager.AddLineID(int(ld - lines), eld->tag);
 }
 
+void ProcessEDFSector(sector_t *sec, int recordnum)
+{
+	EDFSector *esec = EDFSectors.CheckKey(recordnum);
+	if (esec == NULL)
+	{
+		Printf("EDF Sector record %d not found\n", recordnum);
+		return;
+	}
+
+	// In ZDoom the regular and the damage flags are part of the same flag word so we need to do some masking.
+	const DWORD flagmask = SECF_SECRET | SECF_WASSECRET | SECF_FRICTION | SECF_PUSH | SECF_SILENT | SECF_SILENTMOVE;
+	if (esec->flagsSet) sec->Flags = (sec->Flags & ~flagmask);
+	sec->Flags = (sec->Flags | esec->flags | esec->flagsAdd) & ~esec->flagsRemove;
+
+	BYTE leak = 0;
+	if (esec->damageflagsSet) sec->Flags = (sec->Flags & ~SECF_DAMAGEFLAGS);
+	else leak = sec->leakydamage >= 256 ? 2 : sec->leakydamage >= 5 ? 1 : 0;
+	sec->Flags = (sec->Flags | esec->damageflags | esec->damageflagsAdd) & ~esec->damageflagsRemove;
+	leak = (leak | esec->leaky | esec->leakyadd) & ~esec->leakyremove;
+
+	// the damage properties will be unconditionally overridden by EDF.
+	sec->leakydamage = leak == 0 ? 0 : leak == 1 ? 5 : 256;
+	sec->damageamount = esec->damageamount;
+	sec->damageinterval = esec->damageinterval;
+	sec->damagetype = esec->damagetype;
+
+	sec->terrainnum[sector_t::floor] = esec->floorterrain;
+	sec->terrainnum[sector_t::ceiling] = esec->ceilingterrain;
+
+	if (esec->colorSet) sec->SetColor(RPART(esec->color), GPART(esec->color), BPART(esec->color), 0);
+
+	const DWORD pflagmask = PLANEF_DISABLED | PLANEF_NORENDER | PLANEF_NOPASS | PLANEF_BLOCKSOUND | PLANEF_ADDITIVE;
+	for (int i = 0; i < 2; i++)
+	{
+		sec->planes[i].xform.xoffs = esec->planexform[i].xoffs;
+		sec->planes[i].xform.yoffs = esec->planexform[i].yoffs;
+		sec->planes[i].xform.angle = esec->planexform[i].angle;
+		sec->planes[i].alpha = esec->overlayalpha[i];
+		sec->planes[i].Flags = (sec->planes[i].Flags & ~pflagmask) | esec->portalflags[i];
+	}
+}
+
+
+void ProcessEDFSectors()
+{
+	int i;
+
+	InitEDF();
+	if (EDFSectors.CountUsed() == 0) return;	// don't waste time if there's no records.
+
+	// collect all EDF sector records up front so we do not need to search the complete line array for each sector separately.
+	int *edfsectorrecord = new int[numsectors];
+	memset(edfsectorrecord, -1, numsectors * sizeof(int));
+	for (i = 0; i < numlines; i++)
+	{
+		if (lines[i].special == Static_Init && lines[i].args[1] == Init_EDFSector)
+		{
+			edfsectorrecord[lines[i].frontsector - sectors] = lines[i].args[0];
+			lines[i].special = 0;
+		}
+	}
+	for (i = 0; i < numsectors; i++)
+	{
+		if (edfsectorrecord[i] >= 0)
+		{
+			ProcessEDFSector(&sectors[i], edfsectorrecord[i]);
+		}
+	}
+	delete[] edfsectorrecord;
+}

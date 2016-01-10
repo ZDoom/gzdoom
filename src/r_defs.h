@@ -368,6 +368,12 @@ enum
 	PLANEF_ABSLIGHTING	= 1,	// floor/ceiling light is absolute, not relative
 	PLANEF_BLOCKED		= 2,	// can not be moved anymore.
 	PLANEF_ADDITIVE		= 4,	// rendered additive
+
+	// linked portal stuff
+	PLANEF_NORENDER		= 8,
+	PLANEF_NOPASS		= 16,
+	PLANEF_BLOCKSOUND	= 32,
+	PLANEF_DISABLED		= 64,
 };
 
 // Internal sector flags

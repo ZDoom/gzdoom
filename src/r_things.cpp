@@ -716,7 +716,8 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	}
 
 	// [ZZ] Or less definitely not visible (hue)
-	if (CurrentPortal && !!P_PointOnLineSide(thing->x, thing->y, CurrentPortal->dst))
+	// [ZZ] 10.01.2016: don't try to clip stuff inside a skybox against the current portal.
+	if (!CurrentPortalInSkybox && CurrentPortal && !!P_PointOnLineSide(thing->x, thing->y, CurrentPortal->dst))
 		return;
 
 	// [RH] Interpolate the sprite's position to make it look smooth

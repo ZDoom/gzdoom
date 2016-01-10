@@ -766,6 +766,7 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 
 	// some portals have height differences, account for this here
 	R_3D_EnterSkybox(); // push 3D floor height map
+	CurrentPortalInSkybox = false; // first portal in a skybox should set this variable to false for proper clipping in skyboxes.
 
 	// first pass, set clipping
 	memcpy (ceilingclip + pds->x1, &pds->ceilingclip[0], pds->len*sizeof(*ceilingclip));

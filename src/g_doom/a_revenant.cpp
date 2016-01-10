@@ -77,7 +77,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Tracer)
 		return;
 	
 	// change angle 	
-	exact = R_PointToAngle2 (self->x, self->y, dest->x,  dest->y);
+	exact = self->AngleTo(dest);
 
 	if (exact != self->angle)
 	{

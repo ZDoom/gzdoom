@@ -3145,8 +3145,8 @@ void FParser::SF_MoveCamera(void)
 		}
 		
 		// set step variables based on distance and speed
-		mobjangle = R_PointToAngle2(cam->x, cam->y, target->x, target->y);
-		xydist = R_PointToDist2(target->x - cam->x, target->y - cam->y);
+		mobjangle = cam->AngleTo(target);
+		xydist = cam->Distance2D(target);
 		
 		xstep = FixedMul(finecosine[mobjangle >> ANGLETOFINESHIFT], movespeed);
 		ystep = FixedMul(finesine[mobjangle >> ANGLETOFINESHIFT], movespeed);

@@ -1556,7 +1556,7 @@ int P_FaceMobj (AActor *source, AActor *target, angle_t *delta)
 	angle_t angle2;
 
 	angle1 = source->angle;
-	angle2 = R_PointToAngle2 (source->x, source->y, target->x, target->y);
+	angle2 = source->AngleTo(target);
 	if (angle2 > angle1)
 	{
 		diff = angle2 - angle1;
@@ -2019,7 +2019,7 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 					// Don't change the angle if there's THRUREFLECT on the monster.
 					if (!(BlockingMobj->flags7 & MF7_THRUREFLECT))
 					{
-						angle = R_PointToAngle2(BlockingMobj->x, BlockingMobj->y, mo->x, mo->y);
+						angle = BlockingMobj->AngleTo(mo);
 						bool dontReflect = (mo->AdjustReflectionAngle(BlockingMobj, angle));
 						// Change angle for deflection/reflection
 
@@ -3088,8 +3088,7 @@ bool AActor::IsOkayToAttack (AActor *link)
 		// to only allow the check to succeed if the enemy was in a ~84� FOV of the player
 		if (flags3 & MF3_SCREENSEEKER)
 		{
-			angle_t angle = R_PointToAngle2(Friend->x, 
-				Friend->y, link->x, link->y) - Friend->angle;
+			angle_t angle = Friend->AngleTo(link) - Friend->angle;
 			angle >>= 24;
 			if (angle>226 || angle<30)
 			{
@@ -5035,7 +5034,7 @@ AActor *P_SpawnPuff (AActor *source, const PClass *pufftype, fixed_t x, fixed_t 
 		puff->target = source;
 	
 
-	if (source != NULL) puff->angle = R_PointToAngle2(x, y, source->x, source->y);
+	if (source != NULL) puff->angle = puff->AngleTo(source);
 
 	// If a puff has a crash state and an actor was not hit,
 	// it will enter the crash state. This is used by the StrifeSpark
@@ -5782,7 +5781,7 @@ AActor * P_OldSpawnMissile(AActor * source, AActor * owner, AActor * dest, const
 	P_PlaySpawnSound(th, source);
 	th->target = owner;		// record missile's originator
 
-	th->angle = an = R_PointToAngle2 (source->x, source->y, dest->x, dest->y);
+	th->angle = an = source->AngleTo(dest);
 	an >>= ANGLETOFINESHIFT;
 	th->velx = FixedMul (th->Speed, finecosine[an]);
 	th->vely = FixedMul (th->Speed, finesine[an]);

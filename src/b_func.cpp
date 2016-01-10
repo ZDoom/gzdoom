@@ -123,7 +123,7 @@ bool DBot::Check_LOS (AActor *to, angle_t vangle)
 	if (vangle == 0)
 		return false; //Looker seems to be blind.
 
-	return absangle(R_PointToAngle2 (player->mo->x, player->mo->y, to->x, to->y) - player->mo->angle) <= vangle/2;
+	return absangle(player->mo->AngleTo(to) - player->mo->angle) <= vangle/2;
 }
 
 //-------------------------------------
@@ -220,14 +220,14 @@ shootmissile:
 		dist = player->mo->AproxDistance (enemy);
 		m = dist / GetDefaultByType (player->ReadyWeapon->ProjectileType)->Speed;
 		bglobal.SetBodyAt (enemy->x + enemy->velx*m*2, enemy->y + enemy->vely*m*2, enemy->z, 1);
-		angle = R_PointToAngle2 (player->mo->x, player->mo->y, bglobal.body1->x, bglobal.body1->y);
+		angle = player->mo->AngleTo(bglobal.body1);
 		if (Check_LOS (enemy, SHOOTFOV))
 			no_fire = false;
 	}
 	else
 	{
 		//Other weapons, mostly instant hit stuff.
-		angle = R_PointToAngle2 (player->mo->x, player->mo->y, enemy->x, enemy->y);
+		angle = player->mo->AngleTo(enemy);
 		aiming_penalty = 0;
 		if (enemy->flags & MF_SHADOW)
 			aiming_penalty += (pr_botdofire()%25)+10;
@@ -263,7 +263,6 @@ shootmissile:
 		cmd->ucmd.buttons |= BT_ATTACK;
 	}
 	//Prevents bot from jerking, when firing automatic things with low skill.
-	//player->mo->angle = R_PointToAngle2(player->mo->x, player->mo->y, player->enemy->x, player->enemy->y);
 }
 
 bool FCajunMaster::IsLeader (player_t *player)
@@ -518,7 +517,7 @@ angle_t DBot::FireRox (AActor *enemy, ticcmd_t *cmd)
 		{
 			if (bglobal.FakeFire (actor, bglobal.body1, cmd) >= SAFE_SELF_MISDIST)
 			{
-				ang = R_PointToAngle2 (actor->x, actor->y, bglobal.body1->x, bglobal.body1->y);
+				ang = actor->AngleTo(bglobal.body1);
 				return ang;
 			}
 		}
@@ -528,7 +527,7 @@ angle_t DBot::FireRox (AActor *enemy, ticcmd_t *cmd)
 	{
 		if (bglobal.FakeFire (player->mo, enemy, cmd) >= SAFE_SELF_MISDIST)
 		{
-			ang = R_PointToAngle2(player->mo->x, player->mo->y, enemy->x, enemy->y);
+			ang = player->mo->AngleTo(enemy);
 			return ang;
 		}
 	}

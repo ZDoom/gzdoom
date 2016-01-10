@@ -35,7 +35,7 @@ void DBot::Roam (ticcmd_t *cmd)
 
 	if (Reachable(dest))
 	{ // Straight towards it.
-		angle = R_PointToAngle2(player->mo->x, player->mo->y, dest->x, dest->y);
+		angle = player->mo->AngleTo(dest);
 	}
 	else if (player->mo->movedir < 8) // turn towards movement direction if not there yet
 	{

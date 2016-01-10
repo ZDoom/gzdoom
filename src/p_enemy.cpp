@@ -392,7 +392,7 @@ bool P_HitFriend(AActor * self)
 
 	if (self->flags&MF_FRIENDLY && self->target != NULL)
 	{
-		angle_t angle = R_PointToAngle2 (self->x, self->y, self->target->x, self->target->y);
+		angle_t angle = self->AngleTo(self->target);
 		fixed_t dist = self->AproxDistance (self->target);
 		P_AimLineAttack (self, angle, dist, &linetarget, 0, true);
 		if (linetarget != NULL && linetarget != self->target)
@@ -1160,7 +1160,7 @@ bool P_IsVisible(AActor *lookee, AActor *other, INTBOOL allaround, FLookExParams
 
 	if (fov && fov < ANGLE_MAX)
 	{
-		angle_t an = R_PointToAngle2 (lookee->x, lookee->y, other->x, other->y) - lookee->angle;
+		angle_t an = lookee->AngleTo(other) - lookee->angle;
 
 		if (an > (fov / 2) && an < (ANGLE_MAX - (fov / 2)))
 		{
@@ -2389,7 +2389,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 			{
 				if (pr_chase() < 100)
 				{
-					angle_t ang = R_PointToAngle2(actor->x, actor->y, actor->target->x, actor->target->y);
+					angle_t ang = actor->AngleTo(actor->target);
 					if (pr_chase() < 128) ang += ANGLE_90;
 					else ang -= ANGLE_90;
 					actor->velx = 13 * finecosine[ang>>ANGLETOFINESHIFT];
@@ -2743,7 +2743,7 @@ void A_Face (AActor *self, AActor *other, angle_t max_turn, angle_t max_pitch, a
 
 	self->flags &= ~MF_AMBUSH;
 
-	angle_t other_angle = R_PointToAngle2 (self->x, self->y, other->x, other->y);
+	angle_t other_angle = self->AngleTo(other);
 
 	// 0 means no limit. Also, if we turn in a single step anyways, no need to go through the algorithms.
 	// It also means that there is no need to check for going past the other.
@@ -2916,10 +2916,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
 
 	self->flags &= ~MF_AMBUSH;
 		
-	self->angle = R_PointToAngle2 (self->x,
-									self->y,
-									self->target->x,
-									self->target->y);
+	self->angle = self->AngleTo(self->target);
 
 	self->pitch = P_AimLineAttack (self, self->angle, MISSILERANGE, &linetarget, ANGLE_1*60, 0, self->target);
 	if (linetarget == NULL)
@@ -2932,10 +2929,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
 	}
 
 	// Let the aim trail behind the player
-	self->angle = R_PointToAngle2 (self->x,
-									self->y,
-									self->target->x - self->target->velx * 3,
-									self->target->y - self->target->vely * 3);
+	self->angle = self->AngleTo(self->target, -self->target->velx * 3, -self->target->vely * 3);
 
 	if (self->target->flags & MF_SHADOW && !(self->flags6 & MF6_SEEINVISIBLE))
 	{

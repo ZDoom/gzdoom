@@ -262,8 +262,7 @@ static void CHolyTailFollow (AActor *actor, fixed_t dist)
 		child = actor->tracer;
 		if (child)
 		{
-			an = R_PointToAngle2(actor->x, actor->y, child->x, 
-				child->y)>>ANGLETOFINESHIFT;
+			an = actor->AngleTo(child) >> ANGLETOFINESHIFT;
 			oldDistance = child->AproxDistance (actor);
 			if (P_TryMove (child, actor->x+FixedMul(dist, finecosine[an]), 
 				actor->y+FixedMul(dist, finesine[an]), true))

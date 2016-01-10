@@ -99,7 +99,7 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 	if (missile && (player->mo->AproxDistance(missile)<AVOID_DIST)) //try avoid missile got from P_Mobj.c thinking part.
 	{
 		Pitch (missile);
-		angle = R_PointToAngle2(player->mo->x, player->mo->y, missile->x, missile->y);
+		angle = player->mo->AngleTo(missile);
 		cmd->ucmd.sidemove = sleft ? -SIDERUN : SIDERUN;
 		cmd->ucmd.forwardmove = -FORWARDRUN; //Back IS best.
 
@@ -165,7 +165,7 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 			sleft = !sleft;
 		}
 
-		angle = R_PointToAngle2(player->mo->x, player->mo->y, enemy->x, enemy->y);
+		angle = player->mo->AngleTo(enemy);
 
 		if (player->ReadyWeapon == NULL ||
 			player->mo->AproxDistance(enemy) >
@@ -206,7 +206,7 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 			goto roam;
 		}
 
-		angle = R_PointToAngle2(player->mo->x, player->mo->y, mate->x, mate->y);
+		angle = player->mo->AngleTo(mate);
 
 		matedist = player->mo->AproxDistance(mate);
 		if (matedist > (FRIEND_DIST*2))
@@ -241,7 +241,7 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 						(pr_botmove()%100)>skill.isp) && player->ReadyWeapon != NULL && !(player->ReadyWeapon->WeaponFlags & WIF_WIMPY_WEAPON))
 						dest = enemy;//Dont let enemy kill the bot by supressive fire. So charge enemy.
 					else //hide while t_fight, but keep view at enemy.
-						angle = R_PointToAngle2(player->mo->x, player->mo->y, enemy->x, enemy->y);
+						angle = player->mo->AngleTo(enemy);
 				} //Just a monster, so kill it.
 				else
 					dest = enemy;

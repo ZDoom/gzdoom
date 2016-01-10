@@ -37,7 +37,7 @@ bool AArtiHealingRadius::Use (bool pickup)
 		if (playeringame[i] &&
 			players[i].mo != NULL &&
 			players[i].mo->health > 0 &&
-			P_AproxDistance (players[i].mo->x - Owner->x, players[i].mo->y - Owner->y) <= HEAL_RADIUS_DIST)
+			players[i].mo->AproxDistance (Owner) <= HEAL_RADIUS_DIST)
 		{
 			// Q: Is it worth it to make this selectable as a player property?
 			// A: Probably not - but it sure doesn't hurt.

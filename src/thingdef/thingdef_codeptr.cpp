@@ -670,7 +670,7 @@ void DoJumpIfCloser(AActor *target, DECLARE_PARAMINFO)
 	// No target - no jump
 	if (!target)
 		return;
-	if (P_AproxDistance(self->x-target->x, self->y-target->y) < dist &&
+	if (self->AproxDistance(target) < dist &&
 		(noz || 
 		((self->z > target->z && self->z - (target->z + target->height) < dist) ||
 		(self->z <= target->z && target->z - (self->z + self->height) < dist))))
@@ -3342,8 +3342,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
 
 		if (target)
 		{
-			FVector2 xyvec(target->x - x1, target->y - y1);
-			fixed_t distance = P_AproxDistance((fixed_t)xyvec.Length(), target->z - z1);
+			fixed_t xydist = self->Distance2D(target);
+			fixed_t distance = P_AproxDistance(xydist, target->z - z1);
 
 			if (range && !(flags & CLOFF_CHECKPARTIAL))
 			{
@@ -3372,11 +3372,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
 			}
 			else if (flags & CLOFF_AIM_VERT_NOOFFSET)
 			{
-				pitch += R_PointToAngle2 (0,0, (fixed_t)xyvec.Length(), target->z - z1 + offsetheight + target->height / 2);
+				pitch += R_PointToAngle2 (0,0, xydist, target->z - z1 + offsetheight + target->height / 2);
 			}
 			else
 			{
-				pitch += R_PointToAngle2 (0,0, (fixed_t)xyvec.Length(), target->z - z1 + target->height / 2);
+				pitch += R_PointToAngle2 (0,0, xydist, target->z - z1 + target->height / 2);
 			}
 		}
 		else if (flags & CLOFF_ALLOWNULL)
@@ -3546,8 +3546,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 	// [FDARI] If actors share team, don't jump
 	if ((flags & JLOSF_ALLYNOJUMP) && self->IsFriend(target)) return;
 
-	fixed_t distance = P_AproxDistance(target->x - self->x, target->y - self->y);
-	distance = P_AproxDistance(distance, target->z - self->z);
+	fixed_t distance = self->AproxDistance3D(target);
 
 	if (dist_max && (distance > dist_max)) return;
 
@@ -3635,8 +3634,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfInTargetLOS)
 
 	if ((flags & JLOSF_DEADNOJUMP) && (target->health <= 0)) return;
 
-	fixed_t distance = P_AproxDistance(target->x - self->x, target->y - self->y);
-	distance = P_AproxDistance(distance, target->z - self->z);
+	fixed_t distance = self->AproxDistance3D(target);
 
 	if (dist_max && (distance > dist_max)) return;
 
@@ -5950,7 +5948,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckProximity)
 			continue;
 
 		//Make sure it's in range and respect the desire for Z or not.
-		if (P_AproxDistance(ref->x - mo->x, ref->y - mo->y) < distance &&
+		if (ref->AproxDistance(mo) < distance &&
 			((flags & CPXF_NOZ) ||
 			((ref->z > mo->z && ref->z - (mo->z + mo->height) < distance) ||
 			(ref->z <= mo->z && mo->z - (ref->z + ref->height) < distance))))

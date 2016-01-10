@@ -347,7 +347,7 @@ void DBot::Pitch (AActor *target)
 	double diff;
 
 	diff = target->z - player->mo->z;
-	aim = atan (diff / (double)P_AproxDistance (player->mo->x - target->x, player->mo->y - target->y));
+	aim = atan(diff / (double)player->mo->AproxDistance(target));
 	player->mo->pitch = -(int)(aim * ANGLE_180/M_PI);
 }
 

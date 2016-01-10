@@ -37,7 +37,7 @@ bool DBot::Reachable (AActor *rtarget)
 
 	sector_t *last_s = player->mo->Sector;
 	fixed_t last_z = last_s->floorplane.ZatPoint (player->mo->x, player->mo->y);
-	fixed_t estimated_dist = P_AproxDistance (player->mo->x - rtarget->x, player->mo->y - rtarget->y);
+	fixed_t estimated_dist = player->mo->AproxDistance(rtarget);
 	bool reachable = true;
 
 	FPathTraverse it(player->mo->x+player->mo->velx, player->mo->y+player->mo->vely, rtarget->x, rtarget->y, PT_ADDLINES|PT_ADDTHINGS);
@@ -165,10 +165,8 @@ void DBot::Dofire (ticcmd_t *cmd)
 	//MAKEME: Decrease the rocket suicides even more.
 
 	no_fire = true;
-	//angle = R_PointToAngle2(player->mo->x, player->mo->y, player->enemy->x, player->enemy->y);
 	//Distance to enemy.
-	dist = P_AproxDistance ((player->mo->x + player->mo->velx) - (enemy->x + enemy->velx),
-		(player->mo->y + player->mo->vely) - (enemy->y + enemy->vely));
+	dist = player->mo->AproxDistance(enemy, player->mo->velx - enemy->velx, player->mo->vely - enemy->vely);
 
 	//FIRE EACH TYPE OF WEAPON DIFFERENT: Here should all the different weapons go.
 	if (player->ReadyWeapon->WeaponFlags & WIF_MELEEWEAPON)
@@ -219,7 +217,7 @@ void DBot::Dofire (ticcmd_t *cmd)
 		}
 		// prediction aiming
 shootmissile:
-		dist = P_AproxDistance (player->mo->x - enemy->x, player->mo->y - enemy->y);
+		dist = player->mo->AproxDistance (enemy);
 		m = dist / GetDefaultByType (player->ReadyWeapon->ProjectileType)->Speed;
 		bglobal.SetBodyAt (enemy->x + enemy->velx*m*2, enemy->y + enemy->vely*m*2, enemy->z, 1);
 		angle = R_PointToAngle2 (player->mo->x, player->mo->y, bglobal.body1->x, bglobal.body1->y);
@@ -331,8 +329,7 @@ AActor *DBot::Choose_Mate ()
 		{
 			if (P_CheckSight (player->mo, client->mo, SF_IGNOREVISIBILITY))
 			{
-				test = P_AproxDistance (client->mo->x - player->mo->x,
-										client->mo->y - player->mo->y);
+				test = client->mo->AproxDistance(player->mo);
 
 				if (test < closest_dist)
 				{
@@ -402,8 +399,7 @@ AActor *DBot::Find_enemy ()
 			if (Check_LOS (client->mo, vangle)) //Here's a strange one, when bot is standing still, the P_CheckSight within Check_LOS almost always returns false. tought it should be the same checksight as below but.. (below works) something must be fuckin wierd screded up. 
 			//if(P_CheckSight(player->mo, players[count].mo))
 			{
-				temp = P_AproxDistance (client->mo->x - player->mo->x,
-										client->mo->y - player->mo->y);
+				temp = client->mo->AproxDistance(player->mo);
 
 				//Too dark?
 				if (temp > DARK_DIST &&
@@ -505,7 +501,7 @@ angle_t DBot::FireRox (AActor *enemy, ticcmd_t *cmd)
 
 	actor = bglobal.body2;
 
-	dist = P_AproxDistance (actor->x-enemy->x, actor->y-enemy->y);
+	dist = actor->AproxDistance (enemy);
 	if (dist < SAFE_SELF_MISDIST)
 		return 0;
 	//Predict.

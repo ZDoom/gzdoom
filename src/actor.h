@@ -611,6 +611,7 @@ extern FDropItemPtrArray DropItemList;
 
 void FreeDropItemChain(FDropItem *chain);
 int StoreDropItemChain(FDropItem *chain);
+fixed_t P_AproxDistance (fixed_t dx, fixed_t dy);	// since we cannot include p_local here...
 
 
 
@@ -851,6 +852,41 @@ public:
 			bloodcls = bloodcls->GetReplacement();
 		}
 		return bloodcls;
+	}
+
+	// 'absolute' is reserved for a linked portal implementation which needs
+	// to distinguish between portal-aware and portal-unaware distance calculation.
+	fixed_t AproxDistance(AActor *other, bool absolute = false)
+	{
+		return P_AproxDistance(x - other->x, y - other->y);
+	}
+
+	// same with 'ref' here.
+	fixed_t AproxDistance(fixed_t otherx, fixed_t othery, AActor *ref = NULL)
+	{
+		return P_AproxDistance(x - otherx, y - othery);
+	}
+
+	fixed_t AproxDistance(AActor *other, fixed_t xadd, fixed_t yadd, bool absolute = false)
+	{
+		return P_AproxDistance(x - other->x + xadd, y - other->y + yadd);
+	}
+
+	fixed_t AproxDistance3D(AActor *other, bool absolute = false)
+	{
+		return P_AproxDistance(AproxDistance(other), z - other->z);
+	}
+
+	// more precise, but slower version, being used in a few places
+	fixed_t Distance2D(AActor *other, bool absolute = false)
+	{
+		return xs_RoundToInt(FVector2(x - other->x, y - other->y).Length());
+	}
+
+	// a full 3D version of the above
+	fixed_t Distance3D(AActor *other, bool absolute = false)
+	{
+		return xs_RoundToInt(FVector3(x - other->x, y - other->y, z - other->z).Length());
 	}
 
 	inline void SetFriendPlayer(player_t *player);

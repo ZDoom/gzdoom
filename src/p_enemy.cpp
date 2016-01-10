@@ -138,7 +138,7 @@ void P_RecursiveSound (sector_t *sec, AActor *soundtarget, bool splash, int soun
 	for (actor = sec->thinglist; actor != NULL; actor = actor->snext)
 	{
 		if (actor != soundtarget && (!splash || !(actor->flags4 & MF4_NOSPLASHALERT)) &&
-			(!maxdist || (P_AproxDistance(actor->x - emitter->x, actor->y - emitter->y) <= maxdist)))
+			(!maxdist || (actor->AproxDistance(emitter) <= maxdist)))
 		{
 			actor->LastHeard = soundtarget;
 		}
@@ -231,7 +231,7 @@ bool AActor::CheckMeleeRange ()
 	if (!pl)
 		return false;
 				
-	dist = P_AproxDistance (pl->x - x, pl->y - y);
+	dist = AproxDistance (pl);
 
 	if (dist >= meleerange + pl->radius)
 		return false;
@@ -275,7 +275,7 @@ bool P_CheckMeleeRange2 (AActor *actor)
 		return false;
 	}
 	mo = actor->target;
-	dist = P_AproxDistance (mo->x-actor->x, mo->y-actor->y);
+	dist = mo->AproxDistance (actor);
 	if (dist >= MELEERANGE*2 || dist < MELEERANGE-20*FRACUNIT + mo->radius)
 	{
 		return false;
@@ -348,8 +348,7 @@ bool P_CheckMissileRange (AActor *actor)
 
 	// OPTIMIZE: get this from a global checksight
 	// [RH] What?
-	dist = P_AproxDistance (actor->x-actor->target->x,
-							actor->y-actor->target->y) - 64*FRACUNIT;
+	dist = actor->AproxDistance (actor->target) - 64*FRACUNIT;
 	
 	if (actor->MeleeState == NULL)
 		dist -= 128*FRACUNIT;	// no melee attack, so fire more
@@ -394,7 +393,7 @@ bool P_HitFriend(AActor * self)
 	if (self->flags&MF_FRIENDLY && self->target != NULL)
 	{
 		angle_t angle = R_PointToAngle2 (self->x, self->y, self->target->x, self->target->y);
-		fixed_t dist = P_AproxDistance (self->x - self->target->x, self->y - self->target->y);
+		fixed_t dist = self->AproxDistance (self->target);
 		P_AimLineAttack (self, angle, dist, &linetarget, 0, true);
 		if (linetarget != NULL && linetarget != self->target)
 		{
@@ -450,7 +449,7 @@ bool P_Move (AActor *actor)
 
 	if ((actor->flags6 & MF6_JUMPDOWN) && target &&
 			!(target->IsFriend(actor)) &&
-			P_AproxDistance(actor->x - target->x, actor->y - target->y) < FRACUNIT*144 &&
+			actor->AproxDistance(target) < FRACUNIT*144 &&
 			pr_dropoff() < 235)
 	{
 		dropoff = 2;
@@ -933,7 +932,7 @@ void P_NewChaseDir(AActor * actor)
 		if (actor->flags3 & MF3_AVOIDMELEE)
 		{
 			bool ismeleeattacker = false;
-			fixed_t dist = P_AproxDistance(actor->x-target->x, actor->y-target->y);
+			fixed_t dist = actor->AproxDistance(target);
 			if (target->player == NULL)
 			{
 				ismeleeattacker = (target->MissileState == NULL && dist < (target->meleerange + target->radius)*2);
@@ -1151,7 +1150,7 @@ bool P_IsVisible(AActor *lookee, AActor *other, INTBOOL allaround, FLookExParams
 		fov = allaround ? 0 : ANGLE_180;
 	}
 
-	fixed_t dist = P_AproxDistance (other->x - lookee->x, other->y - lookee->y);
+	fixed_t dist = lookee->AproxDistance (other);
 
 	if (maxdist && dist > maxdist)
 		return false;			// [KS] too far
@@ -1202,8 +1201,7 @@ bool P_LookForMonsters (AActor *actor)
 		{ // Not a valid monster
 			continue;
 		}
-		if (P_AproxDistance (actor->x-mo->x, actor->y-mo->y)
-			> MONS_LOOK_RANGE)
+		if (mo->AproxDistance (actor) > MONS_LOOK_RANGE)
 		{ // Out of range
 			continue;
 		}
@@ -1703,10 +1701,8 @@ bool P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 			if ((player->mo->flags & MF_SHADOW && !(i_compatflags & COMPATF_INVISIBILITY)) ||
 				player->mo->flags3 & MF3_GHOST)
 			{
-				if ((P_AproxDistance (player->mo->x - actor->x,
-						player->mo->y - actor->y) > 2*MELEERANGE)
-					&& P_AproxDistance (player->mo->velx, player->mo->vely)
-					< 5*FRACUNIT)
+				if ((player->mo->AproxDistance (actor) > 2*MELEERANGE)
+					&& P_AproxDistance (player->mo->velx, player->mo->vely)	< 5*FRACUNIT)
 				{ // Player is sneaking - can't detect
 					continue;
 				}
@@ -1903,8 +1899,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_LookEx)
 				}
 				else
 				{
-					dist = P_AproxDistance (targ->x - self->x,
-											targ->y - self->y);
+					dist = self->AproxDistance (targ);
 
 					// [KS] If the target is too far away, don't respond to the sound.
 					if (maxheardist && dist > maxheardist)
@@ -1975,8 +1970,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_LookEx)
 			{
 				if (self->flags & MF_AMBUSH)
 				{
-					dist = P_AproxDistance (self->target->x - self->x,
-											self->target->y - self->y);
+					dist = self->AproxDistance (self->target);
 					if (P_CheckSight (self, self->target, SF_SEEPASTBLOCKEVERYTHING) &&
 						(!minseedist || dist > minseedist) &&
 						(!maxseedist || dist < maxseedist))
@@ -2390,7 +2384,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 			actor->FastChaseStrafeCount = 0;
 			actor->velx = 0;
 			actor->vely = 0;
-			fixed_t dist = P_AproxDistance (actor->x - actor->target->x, actor->y - actor->target->y);
+			fixed_t dist = actor->AproxDistance (actor->target);
 			if (dist < CLASS_BOSS_STRAFE_RANGE)
 			{
 				if (pr_chase() < 100)

@@ -2225,7 +2225,7 @@ void DPusher::Tick ()
 			{
 				int sx = m_X;
 				int sy = m_Y;
-				int dist = P_AproxDistance (thing->x - sx,thing->y - sy);
+				int dist = thing->AproxDistance (sx, sy);
 				int speed = (m_Magnitude - ((dist>>FRACBITS)>>1))<<(FRACBITS-PUSH_FACTOR-1);
 
 				// If speed <= 0, you're outside the effective radius. You also have

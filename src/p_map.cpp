@@ -1075,8 +1075,8 @@ bool PIT_CheckThing(AActor *thing, FCheckPosition &tm)
 				 abs(thing->y - tm.thing->y) < (thing->radius+tm.thing->radius))
 
 		{
-			fixed_t newdist = P_AproxDistance(thing->x - tm.x, thing->y - tm.y);
-			fixed_t olddist = P_AproxDistance(thing->x - tm.thing->x, thing->y - tm.thing->y);
+			fixed_t newdist = thing->AproxDistance(tm.x, tm.y, tm.thing);
+			fixed_t olddist = thing->AproxDistance(tm.thing);
 
 			if (newdist > olddist)
 			{
@@ -1754,7 +1754,7 @@ void P_FakeZMovement(AActor *mo)
 	{ // float down towards target if too close
 		if (!(mo->flags & MF_SKULLFLY) && !(mo->flags & MF_INFLOAT))
 		{
-			fixed_t dist = P_AproxDistance(mo->x - mo->target->x, mo->y - mo->target->y);
+			fixed_t dist = mo->AproxDistance(mo->target);
 			fixed_t delta = (mo->target->z + (mo->height >> 1)) - mo->z;
 			if (delta < 0 && dist < -(delta * 3))
 				mo->z -= mo->FloatSpeed;

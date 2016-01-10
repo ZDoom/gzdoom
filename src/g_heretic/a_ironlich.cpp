@@ -91,8 +91,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LichAttack)
 		P_TraceBleed (newdam > 0 ? newdam : damage, target, self);
 		return;
 	}
-	dist = P_AproxDistance (self->x-target->x, self->y-target->y)
-		> 8*64*FRACUNIT;
+	dist = self->AproxDistance (target) > 8*64*FRACUNIT;
 	randAttack = pr_atk ();
 	if (randAttack < atkResolve1[dist])
 	{ // Ice ball

@@ -1669,8 +1669,7 @@ bool P_SeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax, bool preci
 			if (actor->z + actor->height < target->z ||
 				target->z + target->height < actor->z)
 			{ // Need to seek vertically
-				dist = P_AproxDistance (target->x - actor->x, target->y - actor->y);
-				dist = dist / speed;
+				dist = actor->AproxDistance (target) / speed;
 				if (dist < 1)
 				{
 					dist = 1;
@@ -2380,7 +2379,7 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 	{	// float down towards target if too close
 		if (!(mo->flags & (MF_SKULLFLY | MF_INFLOAT)))
 		{
-			dist = P_AproxDistance (mo->x - mo->target->x, mo->y - mo->target->y);
+			dist = mo->AproxDistance (mo->target);
 			delta = (mo->target->z + (mo->height>>1)) - mo->z;
 			if (delta < 0 && dist < -(delta*3))
 				mo->z -= mo->FloatSpeed;
@@ -3392,7 +3391,7 @@ void AActor::Tick ()
 					if (health > 0
 						&& !players[i].Bot->enemy
 						&& player ? !IsTeammate (players[i].mo) : true
-						&& P_AproxDistance (players[i].mo->x-x, players[i].mo->y-y) < MAX_MONSTER_TARGET_DIST
+						&& AproxDistance (players[i].mo) < MAX_MONSTER_TARGET_DIST
 						&& P_CheckSight (players[i].mo, this, SF_SEEPASTBLOCKEVERYTHING))
 					{ //Probably a monster, so go kill it.
 						players[i].Bot->enemy = this;
@@ -5788,7 +5787,7 @@ AActor * P_OldSpawnMissile(AActor * source, AActor * owner, AActor * dest, const
 	th->velx = FixedMul (th->Speed, finecosine[an]);
 	th->vely = FixedMul (th->Speed, finesine[an]);
 
-	dist = P_AproxDistance (dest->x - source->x, dest->y - source->y);
+	dist = source->AproxDistance (dest);
 	if (th->Speed) dist = dist / th->Speed;
 
 	if (dist < 1)
@@ -5849,7 +5848,7 @@ AActor *P_SpawnMissileZAimed (AActor *source, fixed_t z, AActor *dest, const PCl
 	{
 		an += pr_spawnmissile.Random2() << 20;
 	}
-	dist = P_AproxDistance (dest->x - source->x, dest->y - source->y);
+	dist = source->AproxDistance (dest);
 	speed = GetDefaultSpeed (type);
 	dist /= speed;
 	velz = dist != 0 ? (dest->z - source->z)/dist : speed;

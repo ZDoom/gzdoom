@@ -158,7 +158,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FiredChase)
 	{
 		self->special2 = 0;
 		self->velx = self->vely = 0;
-		dist = P_AproxDistance (self->x - target->x, self->y - target->y);
+		dist = self->AproxDistance (target);
 		if (dist < FIREDEMON_ATTACK_RANGE)
 		{
 			if (pr_firedemonchase() < 30)

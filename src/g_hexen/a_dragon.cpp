@@ -59,21 +59,15 @@ static void DragonSeek (AActor *actor, angle_t thresh, angle_t turnMax)
 	angle = actor->angle>>ANGLETOFINESHIFT;
 	actor->velx = FixedMul (actor->Speed, finecosine[angle]);
 	actor->vely = FixedMul (actor->Speed, finesine[angle]);
+	dist = actor->AproxDistance (target) / actor->Speed;
 	if (actor->z+actor->height < target->z ||
 		target->z+target->height < actor->z)
 	{
-		dist = P_AproxDistance(target->x-actor->x, target->y-actor->y);
-		dist = dist/actor->Speed;
 		if (dist < 1)
 		{
 			dist = 1;
 		}
 		actor->velz = (target->z - actor->z)/dist;
-	}
-	else
-	{
-		dist = P_AproxDistance (target->x-actor->x, target->y-actor->y);
-		dist = dist/actor->Speed;
 	}
 	if (target->flags&MF_SHOOTABLE && pr_dragonseek() < 64)
 	{ // attack the destination mobj if it's attackable

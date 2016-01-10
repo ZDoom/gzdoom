@@ -141,7 +141,7 @@ DEFINE_ACTION_FUNCTION_PARAMS (AActor, A_Blast)
 		{	// Must be monster, player, missile, touchy or vulnerable
 			continue;
 		}
-		dist = P_AproxDistance (self->x - mo->x, self->y - mo->y);
+		dist = self->AproxDistance (mo);
 		if (dist > radius)
 		{ // Out of range
 			continue;

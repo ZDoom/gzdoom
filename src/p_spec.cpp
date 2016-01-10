@@ -62,6 +62,9 @@
 #include "farchive.h"
 #include "a_keys.h"
 #include "c_dispatch.h"
+#ifndef NO_EDF
+#include "edf.h"
+#endif
 
 // State.
 #include "r_state.h"
@@ -1313,6 +1316,7 @@ void P_SpawnSpecials (void)
 
 	//	Init special SECTORs.
 	sector = sectors;
+
 	for (i = 0; i < numsectors; i++, sector++)
 	{
 		if (sector->special == 0)
@@ -1321,7 +1325,10 @@ void P_SpawnSpecials (void)
 		P_InitSectorSpecial(sector, sector->special, false);
 	}
 
-	// Here is the place to handle EDF for sectors.
+#ifndef NO_EDF
+	ProcessEDFSectors();
+#endif
+
 	
 	// Init other misc stuff
 

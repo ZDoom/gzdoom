@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="9,00"
 	Name="jpeg-6b"
 	ProjectGUID="{AC3F5340-40CB-4C3A-8AA7-CB7158DB4466}"
 	RootNamespace="jpeg6b"
 	Keyword="Win32Proj"
+	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
 		<Platform

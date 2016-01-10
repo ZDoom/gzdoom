@@ -6,7 +6,7 @@ Actor ArmorBonus : BasicArmorBonus
 	Radius 20
 	Height 16
 	Inventory.Pickupmessage "$GOTARMBONUS"
-	Inventory.Icon "ARM1A0"
+	Inventory.Icon "BON2A0"
 	Armor.Savepercent 33.335
 	Armor.Saveamount 1
 	Armor.Maxsaveamount 200

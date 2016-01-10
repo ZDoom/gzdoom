@@ -1,0 +1,102 @@
+ACTOR DynamicLight native
+{
+	Height 0
+	Radius 0.1
+	FloatBobPhase 0
+	+NOBLOCKMAP
+	+NOGRAVITY
+	+FIXMAPTHINGPOS
+	+INVISIBLE
+}
+
+
+ACTOR PointLight : DynamicLight
+{
+	DynamicLight.Type "Point"
+}
+
+ACTOR PointLightPulse : PointLight
+{
+	DynamicLight.Type "Pulse"
+}
+
+ACTOR PointLightFlicker : PointLight
+{
+	DynamicLight.Type "Flicker"
+}
+
+ACTOR SectorPointLight : PointLight
+{
+	DynamicLight.Type "Sector"
+}
+
+ACTOR PointLightFlickerRandom : PointLight
+{
+	DynamicLight.Type "RandomFlicker"
+}
+
+// MISSILEMORE and MISSILEEVENMORE are used by the lights for additive and subtractive lights
+
+ACTOR PointLightAdditive : PointLight
+{
+   +MISSILEMORE
+}
+
+ACTOR PointLightPulseAdditive : PointLightPulse
+{
+   +MISSILEMORE
+}
+
+ACTOR PointLightFlickerAdditive : PointLightFlicker
+{
+   +MISSILEMORE
+}
+
+ACTOR SectorPointLightAdditive : SectorPointLight
+{
+   +MISSILEMORE
+}
+
+ACTOR PointLightFlickerRandomAdditive :PointLightFlickerRandom
+{
+   +MISSILEMORE
+}
+
+ACTOR PointLightSubtractive : PointLight
+{
+   +MISSILEEVENMORE
+}
+
+ACTOR PointLightPulseSubtractive : PointLightPulse
+{
+   +MISSILEEVENMORE
+}
+
+ACTOR PointLightFlickerSubtractive : PointLightFlicker
+{
+   +MISSILEEVENMORE
+}
+
+ACTOR SectorPointLightSubtractive : SectorPointLight
+{
+   +MISSILEEVENMORE
+}
+
+ACTOR PointLightFlickerRandomSubtractive : PointLightFlickerRandom
+{
+   +MISSILEEVENMORE
+}
+
+
+ACTOR VavoomLight : DynamicLight native
+{
+}
+
+ACTOR VavoomLightWhite : VavoomLight native
+{
+}
+
+ACTOR VavoomLightColor : VavoomLight native
+{
+}
+

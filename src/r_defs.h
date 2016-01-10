@@ -35,6 +35,9 @@
 // to handle sound origins in sectors.
 // SECTORS do store MObjs anyway.
 #include "actor.h"
+struct FLightNode;
+struct FGLSection;
+struct seg_t;
 
 #include "dthinker.h"
 
@@ -81,15 +84,43 @@ struct vertex_t
 {
 	fixed_t x, y;
 
+	float fx, fy;		// Floating point coordinates of this vertex (excluding polyoblect translation!)
+	angle_t viewangle;	// precalculated angle for clipping
+	int angletime;		// recalculation time for view angle
+	bool dirty;			// something has changed and needs to be recalculated
+	int numheights;
+	int numsectors;
+	sector_t ** sectors;
+	float * heightlist;
+
+	vertex_t()
+	{
+		x = y = 0;
+		fx = fy = 0;
+		angletime = 0;
+		viewangle = 0;
+		dirty = true;
+		numheights = numsectors = 0;
+		sectors = NULL;
+		heightlist = NULL;
+	}
+
 	bool operator== (const vertex_t &other)
 	{
 		return x == other.x && y == other.y;
+	}
+
+	bool operator!= (const vertex_t &other)
+	{
+		return x != other.x || y != other.y;
 	}
 
 	void clear()
 	{
 		x = y = 0;
 	}
+
+	angle_t GetClipAngle();
 };
 
 // Forward of LineDefs, for Sectors.
@@ -325,6 +356,12 @@ FArchive &operator<< (FArchive &arc, secplane_t &plane);
 
 
 #include "p_3dfloors.h"
+struct subsector_t;
+struct sector_t;
+struct side_t;
+extern bool gl_plane_reflection_i;
+struct FPortal;
+
 // Ceiling/floor flags
 enum
 {
@@ -428,6 +465,8 @@ struct extsector_t
 		TArray<lightlist_t>				lightlist;		// 3D light list
 		TArray<sector_t*>				attached;		// 3D floors attached to this sector
 	} XFloor;
+
+	TArray<vertex_t *> vertices;
 	
 	void Serialize(FArchive &arc);
 };
@@ -644,14 +683,28 @@ struct sector_t
 		return planes[pos].TexZ;
 	}
 
-	void SetPlaneTexZ(int pos, fixed_t val)
+	void SetVerticesDirty()
+	{
+		for (unsigned i = 0; i < e->vertices.Size(); i++) e->vertices[i]->dirty = true;
+	}
+
+	void SetAllVerticesDirty()
+	{
+		SetVerticesDirty();
+		for (unsigned i = 0; i < e->FakeFloor.Sectors.Size(); i++) e->FakeFloor.Sectors[i]->SetVerticesDirty();
+		for (unsigned i = 0; i < e->XFloor.attached.Size(); i++) e->XFloor.attached[i]->SetVerticesDirty();
+	}
+
+	void SetPlaneTexZ(int pos, fixed_t val, bool dirtify = false)	// This mainly gets used by init code. The only place where it must set the vertex to dirty is the interpolation code.
 	{
 		planes[pos].TexZ = val;
+		if (dirtify) SetAllVerticesDirty();
 	}
 
 	void ChangePlaneTexZ(int pos, fixed_t val)
 	{
 		planes[pos].TexZ += val;
+		SetAllVerticesDirty();
 	}
 
 	static inline short ClampLight(int level)
@@ -801,6 +854,36 @@ struct sector_t
 	int							sectornum;			// for comparing sector copies
 
 	extsector_t	*				e;		// This stores data that requires construction/destruction. Such data must not be copied by R_FakeFlat.
+
+	// GL only stuff starts here
+	float						reflect[2];
+
+	bool						transdoor;			// For transparent door hacks
+	fixed_t						transdoorheight;	// for transparent door hacks
+	int							subsectorcount;		// list of subsectors
+	subsector_t **				subsectors;
+	FPortal *					portals[2];			// floor and ceiling portals
+	FLightNode *				lighthead;
+
+	enum
+	{
+		vbo_fakefloor = floor+2,
+		vbo_fakeceiling = ceiling+2,
+	};
+
+	int				vboindex[4];	// VBO indices of the 4 planes this sector uses during rendering
+	fixed_t			vboheight[2];	// Last calculated height for the 2 planes of this actual sector
+	int				vbocount[2];	// Total count of vertices belonging to this sector's planes
+
+	float GetReflect(int pos) { return gl_plane_reflection_i? reflect[pos] : 0; }
+	bool VBOHeightcheck(int pos) const { return vboheight[pos] == GetPlaneTexZ(pos); }
+
+	enum
+	{
+		INVALIDATE_PLANES = 1,
+		INVALIDATE_OTHER = 2
+	};
+
 };
 
 FArchive &operator<< (FArchive &arc, sector_t::splane &p);
@@ -955,6 +1038,13 @@ struct side_t
 
 	vertex_t *V1() const;
 	vertex_t *V2() const;
+
+	//For GL
+	FLightNode * lighthead;				// all blended lights that may affect this wall
+
+	seg_t **segs;	// all segs belonging to this sidedef in ascending order. Used for precise rendering
+	int numsegs;
+
 };
 
 FArchive &operator<< (FArchive &arc, side_t::part &p);
@@ -1019,6 +1109,11 @@ struct seg_t
 	// Sector references. Could be retrieved from linedef, too.
 	sector_t*		frontsector;
 	sector_t*		backsector;		// NULL for one-sided lines
+
+	seg_t*			PartnerSeg;
+	subsector_t*	Subsector;
+
+	float			sidefrac;		// relative position of seg's ending vertex on owning sidedef
 };
 
 struct glsegextra_t
@@ -1026,6 +1121,9 @@ struct glsegextra_t
 	DWORD		 PartnerSeg;
 	subsector_t *Subsector;
 };
+
+extern seg_t *segs;
+
 
 //
 // A SubSector.
@@ -1041,6 +1139,12 @@ enum
 	SSECF_POLYORG = 4,
 };
 
+struct FPortalCoverage
+{
+	DWORD *		subsectors;
+	int			sscount;
+};
+
 struct subsector_t
 {
 	sector_t	*sector;
@@ -1052,6 +1156,13 @@ struct subsector_t
 	int			flags;
 
 	void BuildPolyBSP();
+	// subsector related GL data
+	FLightNode *	lighthead;	// Light nodes (blended and additive)
+	int				validcount;
+	short			mapsection;
+	char			hacked;			// 1: is part of a render hack
+									// 2: has one-sided walls
+	FPortalCoverage	portalcoverage[2];
 };
 
 

@@ -1,0 +1,190 @@
+OptionValue "SpriteclipModes"
+{
+	0, "Never"
+	1, "Smart"
+	2, "Always"
+	3, "Smarter"
+}
+
+OptionValue "EnhancedStealth"
+{
+	0, "Never"
+	1, "Infrared only"
+	2, "Infrared and torch"
+	3, "Any fixed colormap"
+}
+
+OptionValue "FilterModes"
+{
+	0, "None"
+	1, "None (nearest mipmap)"
+	5, "None (linear mipmap)"
+	2, "Linear"
+	3, "Bilinear"
+	4, "Trilinear"
+}
+
+OptionValue "TextureFormats"
+{
+	0, "RGBA8"
+	1, "RGB5_A1"
+	2, "RGBA4"
+	3, "RGBA2"
+	// [BB] Added modes for texture compression.
+	4, "COMPR_RGBA"
+	5, "S3TC_DXT1"
+	6, "S3TC_DXT3"
+	7, "S3TC_DXT5"
+}
+
+OptionValue "Anisotropy"
+{
+	1, "Off"
+	2, "2x"
+	4, "4x"
+	8, "8x"
+	16, "16x"
+}
+
+OptionValue "Colormaps"
+{
+	0, "Use as palette"
+	1, "Blend"
+}
+
+OptionValue "LightingModes"
+{
+	0, "Standard"
+	1, "Bright"
+	2, "Doom"
+	3, "Dark"
+	4, "Legacy"
+	8, "Software"
+}
+
+OptionValue "Precision"
+{
+	0, "Speed"
+	1, "Quality"
+}
+
+
+OptionValue "Hz"
+{
+	0, "Optimal"
+	60, "60"
+	70, "70"
+	72, "72"
+	75, "75"
+	85, "85"
+	100, "100"
+}
+
+OptionValue "BillboardModes"
+{
+	0, "Y Axis"
+	1, "X/Y Axis"
+}
+
+
+OptionValue "Particles"
+{
+	0, "Square"
+	1, "Round"
+	2, "Smooth"
+}
+
+OptionValue "HqResizeModes"
+{
+   0, "Off"
+   1, "Scale2x"
+   2, "Scale3x"
+   3, "Scale4x"
+   4, "hq2x"
+   5, "hq3x"
+   6, "hq4x"
+   7, "hq2x MMX"
+   8, "hq3x MMX"
+   9, "hq4x MMX"
+}
+
+OptionValue "FogMode"
+{
+	0, "Off"
+	1, "Standard"
+	2, "Radial"
+}
+
+OptionValue "FuzzStyle"
+{
+	0, "Shadow"
+	1, "Pixel fuzz"
+	2, "Smooth fuzz"
+	3, "Swirly fuzz"
+	4, "Translucent fuzz"
+	6, "Noise"
+	7, "Smooth Noise"
+	//5, "Jagged fuzz" I can't see any difference between this and 4 so it's disabled for now.
+}
+
+OptionValue VRMode
+{
+	0, "Normal"
+	1, "Green/Magenta"
+	2, "Red/Cyan"
+	5, "Left Eye"
+	6, "Right Eye"
+}
+
+OptionMenu "GLTextureGLOptions"
+{
+	Title "TEXTURE OPTIONS"
+	Option "Textures enabled",			gl_texture,						"YesNo"
+	Option "Texture Filter mode",		gl_texture_filter,				"FilterModes"
+	Option "Anisotropic filter",		gl_texture_filter_anisotropic,	"Anisotropy"
+	Option "Texture Format",			gl_texture_format,				"TextureFormats"
+	Option "Enable hires textures",		gl_texture_usehires,			"YesNo"
+	Option "High Quality Resize mode",	gl_texture_hqresize,			"HqResizeModes"
+	Option "Resize textures",			gl_texture_hqresize_textures,	"OnOff"
+	Option "Resize sprites",			gl_texture_hqresize_sprites,	"OnOff"
+	Option "Resize fonts",				gl_texture_hqresize_fonts,		"OnOff"
+	Option "Precache GL textures",		gl_precache,					"YesNo"
+	Option "Camera textures offscreen",	gl_usefb,						"OnOff"
+	Option "Trim sprite edges",			gl_trimsprites,					"OnOff"
+	Option "Sort draw lists by texture", gl_sort_textures,				"YesNo"
+}
+
+OptionMenu "GLLightOptions"
+{
+	Title "DYNAMIC LIGHTS"
+	Option "Dynamic Lights enabled",	gl_lights,						"YesNo"
+	Option "Enable light definitions",	gl_attachedlights,				"YesNo"
+	Option "Clip lights",				gl_lights_checkside,			"YesNo"
+	Option "Lights affect sprites",		gl_light_sprites,				"YesNo"
+	Option "Lights affect particles",	gl_light_particles,				"YesNo"
+	Option "Force additive lighting",	gl_lights_additive,				"YesNo"
+	Slider "Light intensity",			gl_lights_intensity, 			0.0, 1.0, 0.1
+	Slider "Light size",				gl_lights_size,					0.0, 2.0, 0.1
+}
+
+OptionMenu "GLPrefOptions"
+{
+	Title "OPENGL PREFERENCES"
+	Option "Sector light mode",			gl_lightmode,					"LightingModes"
+	Option "Fog mode",					gl_fogmode,						"FogMode"
+	Option "Fog forces fullbright",		gl_brightfog,					"YesNo"
+	Slider "Weapon light strength",		gl_weaponlight,					0,32, 2
+	Option "Environment map on mirrors",gl_mirror_envmap,				"OnOff"
+	Option "Enhanced night vision mode",gl_enhanced_nightvision,		"OnOff"
+	Option "ENV shows stealth monsters",gl_enhanced_nv_stealth,			"EnhancedStealth"
+	Option "Force brightness in fog",	gl_spritebrightfog,				"OnOff"
+	Option "Adjust sprite clipping",	gl_spriteclip,					"SpriteclipModes"
+	Option "Smooth sprite edges",		gl_sprite_blend,				"OnOff"
+	Option "Fuzz Style",				gl_fuzztype,					"FuzzStyle"
+	Option "Sprite billboard",			gl_billboard_mode,				"BillboardModes"
+	Option "Particle style",			gl_particles_style,				"Particles"
+	Slider "Ambient light level",		gl_light_ambient,				1.0, 255.0, 5.0
+	Option "Rendering quality",			gl_render_precise,				"Precision"
+	Option "Stereo 3D VR",				vr_mode, 						"VRMode"
+}
+

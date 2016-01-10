@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="9,00"
 	Name="wadsrc"
 	ProjectGUID="{1D179D4B-F008-431B-8C72-111F8372584F}"
 	RootNamespace="wadsrc"
 	Keyword="MakeFileProj"
+	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
 		<Platform
@@ -36,8 +37,8 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				Description="Checking zdoom.pk3..."
-				CommandLine="&quot;$(SolutionDir)tools\zipdir\zipdir.exe&quot; -ud &quot;$(InputDir)zdoom.pk3&quot; &quot;$(InputDir)static&quot; &#x0D;&#x0A;copy &quot;$(InputDir)zdoom.pk3&quot; &quot;$(SolutionDir)..\zdoom.pk3&quot;"
+				Description="Checking gzdoom.pk3..."
+				CommandLine="&quot;$(SolutionDir)tools\zipdir\zipdir.exe&quot; -ud &quot;$(InputDir)gzdoom.pk3&quot; &quot;$(InputDir)static&quot;&#x0D;&#x0A;copy &quot;$(InputDir)gzdoom.pk3&quot; &quot;$(SolutionDir)..\gzdoom.pk3&quot;&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -58,8 +59,8 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				Description="Checking zdoom.pk3..."
-				CommandLine="&quot;$(SolutionDir)tools\zipdir\zipdir.exe&quot; -ud &quot;$(InputDir)zdoom.pk3&quot; &quot;$(InputDir)static&quot; &#x0D;&#x0A;copy &quot;$(InputDir)zdoom.pk3&quot; &quot;$(SolutionDir)..\zdoom.pk3&quot;"
+				Description="Checking gzdoom.pk3..."
+				CommandLine="&quot;$(SolutionDir)tools\zipdir\zipdir.exe&quot; -ud &quot;$(InputDir)gzdoom.pk3&quot; &quot;$(InputDir)static&quot;&#x0D;&#x0A;copy &quot;$(InputDir)gzdoom.pk3&quot; &quot;$(SolutionDir)..\gzdoom.pk3&quot;&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -80,8 +81,8 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				Description="Checking zdoom.pk3..."
-				CommandLine="&quot;$(SolutionDir)tools\zipdir\zipdir.exe&quot; -ud &quot;$(InputDir)zdoom.pk3&quot; &quot;$(InputDir)static&quot; &#x0D;&#x0A;copy &quot;$(InputDir)zdoom.pk3&quot; &quot;$(SolutionDir)..\zdoom.pk3&quot;&#x0D;&#x0A;"
+				Description="Checking gzdoom.pk3..."
+				CommandLine="&quot;$(SolutionDir)tools\zipdir\zipdir.exe&quot; -ud &quot;$(InputDir)gzdoom.pk3&quot; &quot;$(InputDir)static&quot;&#x0D;&#x0A;copy &quot;$(InputDir)gzdoom.pk3&quot; &quot;$(SolutionDir)..\gzdoom.pk3&quot;&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -102,8 +103,8 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				Description="Checking zdoom.pk3..."
-				CommandLine="&quot;$(SolutionDir)tools\zipdir\zipdir.exe&quot; -ud &quot;$(InputDir)zdoom.pk3&quot; &quot;$(InputDir)static&quot; &#x0D;&#x0A;copy &quot;$(InputDir)zdoom.pk3&quot; &quot;$(SolutionDir)..\zdoom.pk3&quot;&#x0D;&#x0A;"
+				Description="Checking gzdoom.pk3..."
+				CommandLine="&quot;$(SolutionDir)tools\zipdir\zipdir.exe&quot; -ud &quot;$(InputDir)gzdoom.pk3&quot; &quot;$(InputDir)static&quot;&#x0D;&#x0A;copy &quot;$(InputDir)gzdoom.pk3&quot; &quot;$(SolutionDir)..\gzdoom.pk3&quot;&#x0D;&#x0A;"
 			/>
 		</Configuration>
 	</Configurations>

@@ -1193,6 +1193,7 @@ void R_DrawSkyBoxes ()
 		return;
 
 	R_3D_EnterSkybox();
+	CurrentPortalInSkybox = true;
 
 	int savedextralight = extralight;
 	fixed_t savedx = viewx;
@@ -1367,6 +1368,7 @@ void R_DrawSkyBoxes ()
 	viewangle = savedangle;
 	R_SetViewAngle ();
 
+	CurrentPortalInSkybox = false;
 	R_3D_LeaveSkybox();
 
 	if(fakeActive) return;

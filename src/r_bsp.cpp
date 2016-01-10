@@ -555,7 +555,8 @@ void R_AddLine (seg_t *line)
 	}
 
 	// reject lines that aren't seen from the portal (if any)
-	if (CurrentPortal && P_ClipLineToPortal(line->linedef, CurrentPortal->dst, viewx, viewy))
+	// [ZZ] 10.01.2016: lines inside a skybox shouldn't be clipped, although this imposes some limitations on portals in skyboxes.
+	if (!CurrentPortalInSkybox && CurrentPortal && P_ClipLineToPortal(line->linedef, CurrentPortal->dst, viewx, viewy))
 		return;
 
 	vertex_t *v1, *v2;

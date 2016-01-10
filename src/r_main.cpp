@@ -659,7 +659,7 @@ void R_HighlightPortal (PortalDrawseg* pds)
 void R_EnterPortal (PortalDrawseg* pds, int depth)
 {
 	// [ZZ] check depth. fill portal with black if it's exceeding the visual recursion limit, and continue like nothing happened.
-	if (depth > r_portal_recursions)
+	if (depth >= r_portal_recursions)
 	{
 		BYTE color = (BYTE)BestColor((DWORD *)GPalette.BaseColors, 0, 0, 0, 0, 255);
 		int spacing = RenderTarget->GetPitch();

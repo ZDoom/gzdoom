@@ -12,6 +12,7 @@ CVAR(Int, sv_portal_recursions, 4, CVAR_ARCHIVE|CVAR_SERVERINFO)
 
 PortalDrawseg* CurrentPortal = NULL;
 int CurrentPortalUniq = 0;
+bool CurrentPortalInSkybox = false;
 
 // [ZZ] lots of floats here to avoid overflowing a lot
 bool R_IntersectLines(fixed_t o1x, fixed_t o1y, fixed_t p1x, fixed_t p1y,
@@ -48,9 +49,14 @@ bool R_IntersectLines(fixed_t o1x, fixed_t o1y, fixed_t p1x, fixed_t p1y,
 	return true;
 }
 
+inline int P_PointOnLineSideExplicit (fixed_t x, fixed_t y, fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2)
+{
+	return DMulScale32 (y-y1, x2-x1, x1-x, y2-y1) > 0;
+}
+
 bool P_ClipLineToPortal(line_t* line, line_t* portal, fixed_t viewx, fixed_t viewy, bool partial, bool samebehind)
 {
-	// we do this only if simple check doesn't clip away the line
+	// check if this line is between portal and the viewer. clip away if it is.
 	bool behind1 = !!P_PointOnLineSide(line->v1->x, line->v1->y, portal);
 	bool behind2 = !!P_PointOnLineSide(line->v2->x, line->v2->y, portal);
 
@@ -64,41 +70,12 @@ bool P_ClipLineToPortal(line_t* line, line_t* portal, fixed_t viewx, fixed_t vie
 			behind2 = samebehind;
 
 	if (behind1 && behind2)
-		return true;
-
-	if ((behind1 || behind2) && partial)
 	{
-		fixed_t v1x = line->v1->x;
-		fixed_t v1y = line->v1->y;
-		fixed_t v2x = line->v2->x;
-		fixed_t v2y = line->v2->y;
-
-		fixed_t check1X = viewx;
-		fixed_t check1Y = viewy;
-
-		fixed_t check2X = portal->v2->x;
-		fixed_t check2Y = portal->v2->y;
-
-		fixed_t in1x = v1x;
-		fixed_t in1y = v1y;
-
-		bool i1 = R_IntersectLines(check1X, check1Y, check2X, check2Y, v1x, v1y, v2x, v2y, in1x, in1y);
-
-		check2X = portal->v1->x;
-		check2Y = portal->v1->y;
-
-		fixed_t in2x = v2x;
-		fixed_t in2y = v2y;
-
-		bool i2 = R_IntersectLines(check1X, check1Y, check2X, check2Y, v1x, v1y, v2x, v2y, in2x, in2y);
-
-		//if (log) Printf("intersection = %d [at %.2f, %.2f]; %d [at %.2f, %.2f]\n", i1, FIXED2FLOAT(in1x), FIXED2FLOAT(in1y), i2, FIXED2FLOAT(in2x), FIXED2FLOAT(in2y));
-
-		// now, to cull the shitty line that obstructs the view, we check if any of intersected points are on behind of the portal :)
-		behind1 = !!P_PointOnLineSide(in1x, in1y, portal);
-		behind2 = !!P_PointOnLineSide(in2x, in2y, portal);
-
-		if (behind1 && behind2)
+		// line is behind the portal plane. now check if it's in front of two view plane borders (i.e. if it will get in the way of rendering)
+		fixed_t dummyx, dummyy;
+		bool infront1 = R_IntersectLines(line->v1->x, line->v1->y, line->v2->x, line->v2->y, viewx, viewy, portal->v1->x, portal->v1->y, dummyx, dummyy);
+		bool infront2 = R_IntersectLines(line->v1->x, line->v1->y, line->v2->x, line->v2->y, viewx, viewy, portal->v2->x, portal->v2->y, dummyx, dummyy);
+		if (infront1 && infront2)
 			return true;
 	}
 

@@ -320,7 +320,7 @@ nextpost:
 // [ZZ]
 // R_ClipSpriteColumnWithPortals
 //
-bool R_ClipSpriteColumnWithPortals (fixed_t x, fixed_t y, vissprite_t* spr)
+static inline bool R_ClipSpriteColumnWithPortals (fixed_t x, fixed_t y, vissprite_t* spr)
 {
 	for (drawseg_t* seg = ds_p; seg-- > firstdrawseg; ) // copied code from killough below
 	{

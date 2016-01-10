@@ -3702,6 +3702,10 @@ void P_SetupLevel (const char *lumpname, int position)
 		}
 
 		FBehavior::StaticLoadDefaultModules ();
+#ifndef NO_EDF
+		LoadMapinfoACSLump();
+#endif
+
 
 		P_LoadStrifeConversations (map, lumpname);
 

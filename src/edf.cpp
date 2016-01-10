@@ -47,6 +47,7 @@
 #include "p_tags.h"
 #include "p_terrain.h"
 #include "v_palette.h"
+#include "p_acs.h"
 #include "r_data/colormaps.h"
 
 
@@ -770,4 +771,14 @@ void ProcessEDFSectors()
 		}
 	}
 	delete[] edfsectorrecord;
+}
+
+void LoadMapinfoACSLump()
+{
+	FEdfOptions *opt = level.info->GetOptData<FEdfOptions>("EDF", false);
+	if (opt != NULL)
+	{
+		int lump = Wads.CheckNumForName(opt->acsName);
+		if (lump >= 0) FBehavior::StaticLoadModule(lump);
+	}
 }

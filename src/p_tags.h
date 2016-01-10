@@ -64,7 +64,6 @@ public:
 	void AddSectorTag(int sector, int tag);
 	void AddLineID(int line, int tag);
 	void RemoveSectorTags(int sect);
-	void RemoveLineIDs(int sect);
 
 	void DumpTags();
 };

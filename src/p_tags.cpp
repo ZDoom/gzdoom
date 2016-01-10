@@ -118,28 +118,6 @@ void FTagManager::RemoveSectorTags(int sect)
 //
 //-----------------------------------------------------------------------------
 
-void FTagManager::RemoveLineIDs(int sect)
-{
-	if (startForLine.Size() > (unsigned int)sect)
-	{
-		int start = startForLine[sect];
-		if (start >= 0)
-		{
-			while (allIDs[start].target == sect)
-			{
-				allIDs[start].tag = allIDs[start].target = -1;
-				start++;
-			}
-		}
-	}
-}
-
-//-----------------------------------------------------------------------------
-//
-//
-//
-//-----------------------------------------------------------------------------
-
 void FTagManager::AddLineID(int line, int tag)
 {
 	if (tag == -1) return;	// For line IDs -1 means 'not set', unlike sectors.

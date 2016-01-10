@@ -322,6 +322,10 @@ nextpost:
 //
 static inline bool R_ClipSpriteColumnWithPortals (fixed_t x, fixed_t y, vissprite_t* spr)
 {
+	// [ZZ] 10.01.2016: don't clip sprites from the root of a skybox.
+	if (CurrentPortalInSkybox)
+		return false;
+
 	for (drawseg_t* seg = ds_p; seg-- > firstdrawseg; ) // copied code from killough below
 	{
 		// ignore segs from other portals

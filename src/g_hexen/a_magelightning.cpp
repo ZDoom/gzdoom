@@ -190,7 +190,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningClip)
 		}
 		else
 		{
-			self->angle = R_PointToAngle2(self->x, self->y, target->x, target->y);
+			self->angle = self->AngleTo(target);
 			self->velx = 0;
 			self->vely = 0;
 			P_ThrustMobj (self, self->angle, self->Speed>>1);

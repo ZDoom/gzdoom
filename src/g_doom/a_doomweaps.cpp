@@ -59,10 +59,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Punch)
 	if (linetarget)
 	{
 		S_Sound (self, CHAN_WEAPON, "*fist", 1, ATTN_NORM);
-		self->angle = R_PointToAngle2 (self->x,
-										self->y,
-										linetarget->x,
-										linetarget->y);
+		self->angle = self->AngleTo(linetarget);
 	}
 }
 
@@ -218,8 +215,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 	// turn to face target
 	if (!(Flags & SF_NOTURN))
 	{
-			angle = R_PointToAngle2(self->x, self->y,
-			linetarget->x, linetarget->y);
+		angle = self->AngleTo(linetarget);
 		if (angle - self->angle > ANG180)
 		{
 			if (angle - self->angle < (angle_t)(-ANG90 / 20))

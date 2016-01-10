@@ -178,8 +178,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BeakAttackPL1)
 	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage, NAME_Melee, "BeakPuff", true, &linetarget);
 	if (linetarget)
 	{
-		player->mo->angle = R_PointToAngle2 (player->mo->x,
-			player->mo->y, linetarget->x, linetarget->y);
+		player->mo->angle = player->mo->AngleTo(linetarget);
 	}
 	P_PlayPeck (player->mo);
 	player->chickenPeck = 12;
@@ -211,8 +210,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BeakAttackPL2)
 	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage, NAME_Melee, "BeakPuff", true, &linetarget);
 	if (linetarget)
 	{
-		player->mo->angle = R_PointToAngle2 (player->mo->x,
-			player->mo->y, linetarget->x, linetarget->y);
+		player->mo->angle = player->mo->AngleTo(linetarget);
 	}
 	P_PlayPeck (player->mo);
 	player->chickenPeck = 12;

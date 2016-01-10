@@ -5973,15 +5973,19 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 		case ACSF_SetSectorTerrain:
 			if (argCount >= 3)
 			{
-				int terrain = P_FindTerrain(FBehavior::StaticLookupString(args[2]));
-				FSectorTagIterator it(args[0]);
-				int s;
-				while ((s = it.Next()) >= 0)
+				if (args[1] == sector_t::floor || args[1] == sector_t::ceiling)
 				{
-					sectors[s].terrainnum[args[1]] = terrain;
+					int terrain = P_FindTerrain(FBehavior::StaticLookupString(args[2]));
+					FSectorTagIterator it(args[0]);
+					int s;
+					while ((s = it.Next()) >= 0)
+					{
+						sectors[s].terrainnum[args[1]] = terrain;
+					}
 				}
 			}
-
+			break;
+			
 		default:
 			break;
 	}

@@ -79,6 +79,7 @@ typedef float CGFloat;
 // From HIToolbox/Events.h
 enum
 {
+	kVK_ANSI_F        = 0x03,
 	kVK_Return        = 0x24,
 	kVK_Tab           = 0x30,
 	kVK_Space         = 0x31,

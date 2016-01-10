@@ -37,6 +37,7 @@
 #include "p_local.h"
 #include "p_lnspec.h"
 #include "farchive.h"
+#include "r_sky.h"
 
 // arg0 = Visibility*4 for this skybox
 
@@ -87,6 +88,24 @@ void ASkyViewpoint::Destroy ()
 class ASkyCamCompat : public ASkyViewpoint
 {
 	DECLARE_CLASS (ASkyCamCompat, ASkyViewpoint)
+
+	// skyboxify all tagged sectors
+	// This involves changing their texture to the sky flat, because while
+	// EE works with any texture for its skybox portals, ZDoom doesn't.
+	void SkyboxifySector(sector_t *sector, int plane)
+	{
+		// plane: 0=floor, 1=ceiling, 2=both
+		if (plane == 1 || plane == 2)
+		{
+			sector->CeilingSkyBox = this;
+			sector->SetTexture(sector_t::ceiling, skyflatnum, false);
+		}
+		if (plane == 0 || plane == 2)
+		{
+			sector->FloorSkyBox = this;
+			sector->SetTexture(sector_t::floor, skyflatnum, false);
+		}
+	}
 public:
 	void BeginPlay ();
 };
@@ -116,23 +135,35 @@ void ASkyCamCompat::BeginPlay ()
 				// Then, change the alpha
 				alpha = refline->args[4];
 
-				// Finally, skyboxify all tagged sectors
-				// This involves changing their texture to the sky flat, because while
-				// EE works with any texture for its skybox portals, ZDoom doesn't.
 				FSectorTagIterator it(skybox_id);
 				int secnum;
 				while ((secnum = it.Next()) >= 0)
 				{
-					// plane: 0=floor, 1=ceiling, 2=both
-					if (refline->args[2] == 1 || refline->args[2] == 2)
+					SkyboxifySector(&sectors[secnum], refline->args[2]);
+				}
+				// and finally, check for portal copy linedefs
+				for (int j=0;j<numlines;j++)
+				{
+					// Check if this portal needs to be copied to other sectors
+					// This must be done here to ensure that it gets done only after the portal is set up
+					if (lines[j].special == Sector_SetPortal &&
+						lines[j].args[1] == 1 &&
+						(lines[j].args[2] == refline->args[2] || lines[j].args[2] == 3) &&
+						lines[j].args[3] == skybox_id)
 					{
-						sectors[secnum].CeilingSkyBox = this;
-						sectors[secnum].SetTexture(sector_t::ceiling, skyflatnum, false);
-					}
-					if (refline->args[2] == 0 || refline->args[2] == 2)
-					{
-						sectors[secnum].FloorSkyBox = this;
-						sectors[secnum].SetTexture(sector_t::floor, skyflatnum, false);
+						if (lines[j].args[0] == 0)
+						{
+							SkyboxifySector(lines[j].frontsector, refline->args[2]);
+						}
+						else
+						{
+							FSectorTagIterator itr(lines[j].args[0]);
+							int s;
+							while ((s = itr.Next()) >= 0)
+							{
+								SkyboxifySector(&sectors[s], refline->args[2]);
+							}
+						}
 					}
 				}
 			}

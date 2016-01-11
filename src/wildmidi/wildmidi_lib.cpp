@@ -573,7 +573,7 @@ static inline int wm_isdigit(int c) {
 #define TOKEN_CNT_INC 8
 static char** WM_LC_Tokenize_Line(char *line_data) 
 {
-	int line_length = strlen(line_data);
+	int line_length = (int)strlen(line_data);
 	int token_data_length = 0;
 	int line_ofs = 0;
 	int token_start = 0;

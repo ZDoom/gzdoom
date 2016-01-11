@@ -1045,7 +1045,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 			return -1;
 		}
 
-		if ((rawdamage < TELEFRAG_DAMAGE) || (target->flags7 & MF7_LAXTELEFRAGDMG)) // TELEFRAG_DAMAGE may only be reduced with NOTELEFRAGPIERCE or it may not guarantee its effect.
+		if ((rawdamage < TELEFRAG_DAMAGE) || (target->flags7 & MF7_LAXTELEFRAGDMG)) // TELEFRAG_DAMAGE may only be reduced with LAXTELEFRAGDMG or it may not guarantee its effect.
 		{
 			if (player && damage > 1)
 			{
@@ -1221,7 +1221,8 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 		((player && player != source->player) || (!player && target != source)) &&
 		target->IsTeammate (source))
 	{
-		if (rawdamage < TELEFRAG_DAMAGE) //Use the original damage to check for telefrag amount. Don't let the now-amplified damagetypes do it.
+		//Use the original damage to check for telefrag amount. Don't let the now-amplified damagetypes do it.
+		if (rawdamage < TELEFRAG_DAMAGE || (target->flags7 & MF7_LAXTELEFRAGDMG)) 
 		{ // Still allow telefragging :-(
 			damage = (int)((float)damage * level.teamdamage);
 			if (damage < 0)

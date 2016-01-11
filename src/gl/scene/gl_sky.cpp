@@ -65,6 +65,72 @@ enum
 
 //==========================================================================
 //
+//  Set up the skyinfo struct
+//
+//==========================================================================
+
+void GLSkyInfo::init(int sky1, PalEntry FadeColor)
+{
+	memset(this, 0, sizeof(*this));
+	if ((sky1 & PL_SKYFLAT) && (sky1 & (PL_SKYFLAT - 1)))
+	{
+		const line_t *l = &lines[(sky1&(PL_SKYFLAT - 1)) - 1];
+		const side_t *s = l->sidedef[0];
+		int pos;
+
+		if (level.flags & LEVEL_SWAPSKIES && s->GetTexture(side_t::bottom).isValid())
+		{
+			pos = side_t::bottom;
+		}
+		else
+		{
+			pos = side_t::top;
+		}
+
+		FTextureID texno = s->GetTexture(pos);
+		texture[0] = FMaterial::ValidateTexture(texno, true);
+		if (!texture[0] || texture[0]->tex->UseType == FTexture::TEX_Null) goto normalsky;
+		skytexno1 = texno;
+		x_offset[0] = ANGLE_TO_FLOAT(s->GetTextureXOffset(pos));
+		y_offset = FIXED2FLOAT(s->GetTextureYOffset(pos));
+		mirrored = !l->args[2];
+	}
+	else
+	{
+	normalsky:
+		if (level.flags&LEVEL_DOUBLESKY)
+		{
+			texture[1] = FMaterial::ValidateTexture(sky1texture, true);
+			x_offset[1] = GLRenderer->mSky1Pos;
+			doublesky = true;
+		}
+
+		if ((level.flags&LEVEL_SWAPSKIES || (sky1 == PL_SKYFLAT) || (level.flags&LEVEL_DOUBLESKY)) &&
+			sky2texture != sky1texture)	// If both skies are equal use the scroll offset of the first!
+		{
+			texture[0] = FMaterial::ValidateTexture(sky2texture, true);
+			skytexno1 = sky2texture;
+			sky2 = true;
+			x_offset[0] = GLRenderer->mSky2Pos;
+		}
+		else if (!doublesky)
+		{
+			texture[0] = FMaterial::ValidateTexture(sky1texture, true);
+			skytexno1 = sky1texture;
+			x_offset[0] = GLRenderer->mSky1Pos;
+		}
+	}
+	if (skyfog > 0)
+	{
+		fadecolor = FadeColor;
+		fadecolor.a = 0;
+	}
+	else fadecolor = 0;
+
+}
+
+//==========================================================================
+//
 //  Calculate sky texture
 //
 //==========================================================================
@@ -92,64 +158,8 @@ void GLWall::SkyPlane(sector_t *sector, int plane, bool allowreflect)
 		}
 		else
 		{
-			int sky1 = sector->sky;
-			memset(&skyinfo, 0, sizeof(skyinfo));
-			if ((sky1 & PL_SKYFLAT) && (sky1 & (PL_SKYFLAT-1)))
-			{
-				const line_t *l = &lines[(sky1&(PL_SKYFLAT-1))-1];
-				const side_t *s = l->sidedef[0];
-				int pos;
-				
-				if (level.flags & LEVEL_SWAPSKIES && s->GetTexture(side_t::bottom).isValid())
-				{
-					pos = side_t::bottom;
-				}
-				else
-				{
-					pos = side_t::top;
-				}
-
-				FTextureID texno = s->GetTexture(pos);
-				skyinfo.texture[0] = FMaterial::ValidateTexture(texno, true);
-				if (!skyinfo.texture[0] || skyinfo.texture[0]->tex->UseType == FTexture::TEX_Null) goto normalsky;
-				skyinfo.skytexno1 = texno;
-				skyinfo.x_offset[0] = ANGLE_TO_FLOAT(s->GetTextureXOffset(pos));
-				skyinfo.y_offset = FIXED2FLOAT(s->GetTextureYOffset(pos));
-				skyinfo.mirrored = !l->args[2];
-			}
-			else
-			{
-			normalsky:
-				if (level.flags&LEVEL_DOUBLESKY)
-				{
-					skyinfo.texture[1]=FMaterial::ValidateTexture(sky1texture, true);
-					skyinfo.x_offset[1] = GLRenderer->mSky1Pos;
-					skyinfo.doublesky = true;
-				}
-				
-				if ((level.flags&LEVEL_SWAPSKIES || (sky1==PL_SKYFLAT) || (level.flags&LEVEL_DOUBLESKY)) &&
-					sky2texture!=sky1texture)	// If both skies are equal use the scroll offset of the first!
-				{
-					skyinfo.texture[0]=FMaterial::ValidateTexture(sky2texture, true);
-					skyinfo.skytexno1=sky2texture;
-					skyinfo.sky2 = true;
-					skyinfo.x_offset[0] = GLRenderer->mSky2Pos;
-				}
-				else
-				{
-					skyinfo.texture[0]=FMaterial::ValidateTexture(sky1texture, true);
-					skyinfo.skytexno1=sky1texture;
-					skyinfo.x_offset[0] = GLRenderer->mSky1Pos;
-				}
-			}
-			if (skyfog>0) 
-			{
-				skyinfo.fadecolor=Colormap.FadeColor;
-				skyinfo.fadecolor.a=0;
-			}
-			else skyinfo.fadecolor=0;
-
-			type=RENDERWALL_SKY;
+			skyinfo.init(sector->sky, Colormap.FadeColor);
+			type = RENDERWALL_SKY;
 			sky=UniqueSkies.Get(&skyinfo);
 		}
 	}
@@ -194,7 +204,7 @@ void GLWall::SkyTop(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex
 {
 	if (fs->GetTexture(sector_t::ceiling)==skyflatnum)
 	{
-		if ((bs->special&0xff) == NoSkyDraw) return;
+		if (bs->special == NoSkyDraw) return;
 		if (bs->GetTexture(sector_t::ceiling)==skyflatnum) 
 		{
 			// if the back sector is closed the sky must be drawn!
@@ -285,7 +295,7 @@ void GLWall::SkyBottom(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,ver
 {
 	if (fs->GetTexture(sector_t::floor)==skyflatnum)
 	{
-		if ((bs->special&0xff) == NoSkyDraw) return;
+		if (bs->special == NoSkyDraw) return;
 		FTexture * tex = TexMan(seg->sidedef->GetTexture(side_t::bottom));
 		
 		// For lower skies the normal logic only applies to walls with no lower texture!

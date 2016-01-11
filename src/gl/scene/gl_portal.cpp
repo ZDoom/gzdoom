@@ -45,6 +45,7 @@
 #include "c_dispatch.h"
 #include "doomstat.h"
 #include "a_sharedglobal.h"
+#include "r_sky.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_framebuffer.h"
@@ -504,7 +505,7 @@ void GLPortal::EndFrame()
 //-----------------------------------------------------------------------------
 //
 // Renders one sky portal without a stencil.
-// In more complex scenes using a stencil for skies can severly stall
+// In more complex scenes using a stencil for skies can severely stall
 // the GPU and there's rarely more than one sky visible at a time.
 //
 //-----------------------------------------------------------------------------
@@ -1061,9 +1062,74 @@ void GLHorizonPortal::DrawContents()
 
 }
 
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+//
+//
+// Eternity-style horizon portal
+//
+// To the rest of the engine these masquerade as a skybox portal
+// Internally they need to draw two horizon or sky portals
+// and will use the respective classes to achieve that.
+//
+//
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+//
+// 
+//
+//-----------------------------------------------------------------------------
+
+void GLEEHorizonPortal::DrawContents()
+{
+	PortalAll.Clock();
+	if (origin->Sector->GetTexture(sector_t::floor) == skyflatnum ||
+		origin->Sector->GetTexture(sector_t::ceiling) == skyflatnum)
+	{
+		GLSkyInfo skyinfo;
+		skyinfo.init(origin->Sector->sky, 0);
+		GLSkyPortal sky(&skyinfo, true);
+		sky.DrawContents();
+	}
+	if (origin->Sector->GetTexture(sector_t::ceiling) != skyflatnum)
+	{
+		GLHorizonInfo horz;
+		horz.plane.GetFromSector(origin->Sector, true);
+		horz.lightlevel = gl_ClampLight(origin->Sector->GetCeilingLight());
+		horz.colormap = origin->Sector->ColorMap;
+		if (origin->flags & MF_FLOAT)
+		{
+			horz.plane.texheight = viewz + abs(horz.plane.texheight);
+		}
+		GLHorizonPortal ceil(&horz, true);
+		ceil.DrawContents();
+	}
+	if (origin->Sector->GetTexture(sector_t::floor) != skyflatnum)
+	{
+		GLHorizonInfo horz;
+		horz.plane.GetFromSector(origin->Sector, false);
+		horz.lightlevel = gl_ClampLight(origin->Sector->GetFloorLight());
+		horz.colormap = origin->Sector->ColorMap;
+		if (origin->flags & MF_FLOAT)
+		{
+			horz.plane.texheight = viewz - abs(horz.plane.texheight);
+		}
+		GLHorizonPortal floor(&horz, true);
+		floor.DrawContents();
+	}
+
+
+
+}
+
 const char *GLSkyPortal::GetName() { return "Sky"; }
 const char *GLSkyboxPortal::GetName() { return "Skybox"; }
 const char *GLSectorStackPortal::GetName() { return "Sectorstack"; }
 const char *GLPlaneMirrorPortal::GetName() { return "Planemirror"; }
 const char *GLMirrorPortal::GetName() { return "Mirror"; }
 const char *GLHorizonPortal::GetName() { return "Horizon"; }
+const char *GLEEHorizonPortal::GetName() { return "EEHorizon"; }
+

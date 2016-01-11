@@ -65,6 +65,7 @@
 
 // State.
 #include "r_state.h"
+#include "r_sky.h"
 
 #include "c_console.h"
 
@@ -986,7 +987,7 @@ void P_SetupPortals()
 	}
 }
 
-inline void SetPortal(sector_t *sector, int plane, AStackPoint *portal, fixed_t alpha)
+inline void SetPortal(sector_t *sector, int plane, ASkyViewpoint *portal, fixed_t alpha)
 {
 	// plane: 0=floor, 1=ceiling, 2=both
 	if (plane > 0)
@@ -996,6 +997,8 @@ inline void SetPortal(sector_t *sector, int plane, AStackPoint *portal, fixed_t 
 			sector->CeilingSkyBox = portal;
 			if (sector->GetAlpha(sector_t::ceiling) == OPAQUE)
 				sector->SetAlpha(sector_t::ceiling, alpha);
+
+			if (!portal->bAlways) sector->SetTexture(sector_t::ceiling, skyflatnum);
 		}
 	}
 	if (plane == 2 || plane == 0)
@@ -1006,6 +1009,8 @@ inline void SetPortal(sector_t *sector, int plane, AStackPoint *portal, fixed_t 
 		}
 		if (sector->GetAlpha(sector_t::floor) == OPAQUE)
 			sector->SetAlpha(sector_t::floor, alpha);
+
+		if (!portal->bAlways) sector->SetTexture(sector_t::floor, skyflatnum);
 	}
 }
 
@@ -1071,6 +1076,47 @@ void P_SpawnPortal(line_t *line, int sectortag, int plane, int alpha)
 			}
 
 			return;
+		}
+	}
+}
+
+
+void P_SpawnHorizon(line_t *line)
+{
+	ASkyViewpoint *origin = Spawn<ASkyViewpoint>(0, 0, 0, NO_REPLACE);
+	origin->Sector = line->frontsector;
+	origin->flags7 |= MF7_HANDLENODELAY;				// mark as 'special'
+	if (line->args[1] == 3) origin->flags |= MF_FLOAT;	// well, it actually does 'float'... :P
+
+
+	int s;
+	FSectorTagIterator itr(line->args[0]);
+	while ((s = itr.Next()) >= 0)
+	{
+		SetPortal(&sectors[s], line->args[2], origin, 0);
+	}
+
+	for (int j=0;j<numlines;j++)
+	{
+		// Check if this portal needs to be copied to other sectors
+		// This must be done here to ensure that it gets done only after the portal is set up
+		if (lines[j].special == Sector_SetPortal &&
+			lines[j].args[1] == 1 &&
+			(lines[j].args[2] == line->args[2] || lines[j].args[2] == 3) &&
+			lines[j].args[3] == line->args[0])
+		{
+			if (lines[j].args[0] == 0)
+			{
+				SetPortal(lines[j].frontsector, line->args[2], origin, 0);
+			}
+			else
+			{
+				FSectorTagIterator itr(lines[j].args[0]);
+				while ((s = itr.Next()) >= 0)
+				{
+					SetPortal(&sectors[s], line->args[2], origin, 0);
+				}
+			}
 		}
 	}
 }
@@ -1408,6 +1454,8 @@ void P_SpawnSpecials (void)
 			//	- 0: normal (handled here)
 			//	- 1: copy (handled by the portal they copy)
 			//	- 2: EE-style skybox (handled by the camera object)
+			//  - 3: EE-style flat portal (HW renderer only for now)
+			//  - 4: EE-style horizon portal (HW renderer only for now)
 			//	other values reserved for later use
 			// arg 2 = 0:floor, 1:ceiling, 2:both
 			// arg 3 = 0: anchor, 1: reference line
@@ -1415,6 +1463,10 @@ void P_SpawnSpecials (void)
 			if (lines[i].args[1] == 0 && lines[i].args[3] == 0)
 			{
 				P_SpawnPortal(&lines[i], lines[i].args[0], lines[i].args[2], lines[i].args[4]);
+			}
+			else if (lines[i].args[1] == 3 || lines[i].args[1] == 4)
+			{
+				P_SpawnHorizon(&lines[i]);
 			}
 			break;
 

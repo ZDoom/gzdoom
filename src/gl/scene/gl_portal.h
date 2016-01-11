@@ -70,11 +70,13 @@ struct GLSkyInfo
 	{
 		return !!memcmp(this, &inf, sizeof(*this));
 	}
+	void init(int sky1, PalEntry fadecolor);
 };
 
 extern UniqueList<GLSkyInfo> UniqueSkies;
 extern UniqueList<GLHorizonInfo> UniqueHorizons;
 extern UniqueList<secplane_t> UniquePlaneMirrors;
+struct GLEEHorizonPortal;
 
 class GLPortal
 {
@@ -109,7 +111,7 @@ protected:
 	TArray<GLWall> lines;
 	int level;
 
-	GLPortal() { portals.Push(this); }
+	GLPortal(bool local = false) { if (!local) portals.Push(this); }
 	virtual ~GLPortal() { }
 
 	bool Start(bool usestencil, bool doquery);
@@ -214,6 +216,7 @@ public:
 struct GLSkyPortal : public GLPortal
 {
 	GLSkyInfo * origin;
+	friend struct GLEEHorizonPortal;
 
 protected:
 	virtual void DrawContents();
@@ -225,7 +228,8 @@ protected:
 public:
 
 	
-	GLSkyPortal(GLSkyInfo *  pt)
+	GLSkyPortal(GLSkyInfo *  pt, bool local = false)
+		: GLPortal(local)
 	{
 		origin=pt;
 	}
@@ -280,6 +284,7 @@ public:
 struct GLHorizonPortal : public GLPortal
 {
 	GLHorizonInfo * origin;
+	friend struct GLEEHorizonPortal;
 
 protected:
 	virtual void DrawContents();
@@ -290,7 +295,28 @@ protected:
 
 public:
 	
-	GLHorizonPortal(GLHorizonInfo * pt)
+	GLHorizonPortal(GLHorizonInfo * pt, bool local = false)
+		: GLPortal(local)
+	{
+		origin=pt;
+	}
+
+};
+
+struct GLEEHorizonPortal : public GLPortal
+{
+	AActor * origin;
+
+protected:
+	virtual void DrawContents();
+	virtual void * GetSource() const { return origin; }
+	virtual bool NeedDepthBuffer() { return false; }
+	virtual bool NeedCap() { return false; }
+	virtual const char *GetName();
+
+public:
+	
+	GLEEHorizonPortal(AActor *pt)
 	{
 		origin=pt;
 	}

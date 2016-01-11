@@ -1088,6 +1088,7 @@ void R_Subsector (subsector_t *sub)
 	}
 
 	skybox = frontsector->GetSkyBox(sector_t::ceiling);
+	if (skybox->flags7 & MF7_HANDLENODELAY) skybox = NULL;	// HW renderer only.
 
 	ceilingplane = frontsector->ceilingplane.PointOnSide(viewx, viewy, viewz) > 0 ||
 		frontsector->GetTexture(sector_t::ceiling) == skyflatnum ||
@@ -1128,7 +1129,10 @@ void R_Subsector (subsector_t *sub)
 	// killough 3/7/98: Add (x,y) offsets to flats, add deep water check
 	// killough 3/16/98: add floorlightlevel
 	// killough 10/98: add support for skies transferred from sidedefs
+
 	skybox = frontsector->GetSkyBox(sector_t::floor);
+	if (skybox->flags7 & MF7_HANDLENODELAY) skybox = NULL;	// HW renderer only.
+
 	floorplane = frontsector->floorplane.PointOnSide(viewx, viewy, viewz) > 0 || // killough 3/7/98
 		frontsector->GetTexture(sector_t::floor) == skyflatnum ||
 		(skybox != NULL && skybox->bAlways) ||

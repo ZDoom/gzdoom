@@ -176,8 +176,13 @@ void GLWall::PutWall(bool translucent)
 		break;
 
 	case RENDERWALL_SKYBOX:
-		portal=GLPortal::FindPortal(skybox);
-		if (!portal) portal=new GLSkyboxPortal(skybox);
+		portal = GLPortal::FindPortal(skybox);
+		if (!portal)
+		{
+			// either a regulat skybox or an Eternity-style horizon
+			if (skybox->flags7 & MF7_HANDLENODELAY) portal = new GLEEHorizonPortal(skybox);
+			else portal = new GLSkyboxPortal(skybox);
+		}
 		portal->AddLine(this);
 		break;
 

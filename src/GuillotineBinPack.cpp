@@ -7,6 +7,7 @@
 */
 
 #include <cassert>
+#include <limits.h>
 #include "templates.h"
 #include "GuillotineBinPack.h"
 

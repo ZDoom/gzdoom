@@ -139,39 +139,42 @@ void GLWall::SkyPlane(sector_t *sector, int plane, bool allowreflect)
 	FPortal *portal = sector->portals[plane];
 	if (portal != NULL)
 	{
-		if (GLPortal::instack[1-plane]) return;
-		type=RENDERWALL_SECTORSTACK;
+		if (GLPortal::instack[1 - plane]) return;
+		type = RENDERWALL_SECTORSTACK;
 		this->portal = portal;
 	}
-	else if (sector->GetTexture(plane)==skyflatnum)
+	else
 	{
-		GLSkyInfo skyinfo;
 		ASkyViewpoint * skyboxx = sector->GetSkyBox(plane);
-
-		// JUSTHIT is used as an indicator that a skybox is in use.
-		// This is to avoid recursion
-
-		if (!gl_noskyboxes && skyboxx && GLRenderer->mViewActor!=skyboxx && !(skyboxx->flags&MF_JUSTHIT))
+		if (sector->GetTexture(plane) == skyflatnum || (skyboxx != NULL && skyboxx->bAlways))
 		{
-			type=RENDERWALL_SKYBOX;
-			skybox=skyboxx;
+			GLSkyInfo skyinfo;
+
+			// JUSTHIT is used as an indicator that a skybox is in use.
+			// This is to avoid recursion
+
+			if (!gl_noskyboxes && skyboxx && GLRenderer->mViewActor != skyboxx && !(skyboxx->flags&MF_JUSTHIT))
+			{
+				type = RENDERWALL_SKYBOX;
+				skybox = skyboxx;
+			}
+			else
+			{
+				skyinfo.init(sector->sky, Colormap.FadeColor);
+				type = RENDERWALL_SKY;
+				sky = UniqueSkies.Get(&skyinfo);
+			}
 		}
-		else
+		else if (allowreflect && sector->GetReflect(plane) > 0)
 		{
-			skyinfo.init(sector->sky, Colormap.FadeColor);
-			type = RENDERWALL_SKY;
-			sky=UniqueSkies.Get(&skyinfo);
+			if ((plane == sector_t::ceiling && viewz > sector->ceilingplane.d) ||
+				(plane == sector_t::floor && viewz < -sector->floorplane.d)) return;
+			type = RENDERWALL_PLANEMIRROR;
+			planemirror = plane == sector_t::ceiling ? &sector->ceilingplane : &sector->floorplane;
 		}
+		else return;
+		PutWall(0);
 	}
-	else if (allowreflect && sector->GetReflect(plane) > 0)
-	{
-		if ((plane == sector_t::ceiling && viewz > sector->ceilingplane.d) ||
-			(plane == sector_t::floor && viewz < -sector->floorplane.d)) return;
-		type=RENDERWALL_PLANEMIRROR;
-		planemirror = plane == sector_t::ceiling? &sector->ceilingplane : &sector->floorplane;
-	}
-	else return;
-	PutWall(0);
 }
 
 

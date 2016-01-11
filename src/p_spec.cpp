@@ -1465,8 +1465,7 @@ void P_SpawnSpecials (void)
 				line_t *line = &lines[i];
 				ASkyViewpoint *origin = Spawn<ASkyViewpoint>(0, 0, 0, NO_REPLACE);
 				origin->Sector = line->frontsector;
-				origin->flags7 |= MF7_HANDLENODELAY;				// mark as 'special'
-				if (line->args[1] == 3) origin->flags |= MF_FLOAT;	// well, it actually does 'float'... :P
+				origin->special1 = line->args[1] == 3? SKYBOX_PLANE:SKYBOX_HORIZON;
 
 				CopyPortal(line->args[0], line->args[2], origin, 0, true);
 			}

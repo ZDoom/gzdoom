@@ -1479,8 +1479,7 @@ static fixed_t PlayersRangeFromSpot (FPlayerStart *spot)
 		if (!playeringame[i] || !players[i].mo || players[i].health <= 0)
 			continue;
 
-		distance = P_AproxDistance (players[i].mo->x - spot->x,
-									players[i].mo->y - spot->y);
+		distance = players[i].mo->AproxDistance (spot->x, spot->y);
 
 		if (distance < closest)
 			closest = distance;

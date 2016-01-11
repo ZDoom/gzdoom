@@ -611,7 +611,8 @@ extern FDropItemPtrArray DropItemList;
 
 void FreeDropItemChain(FDropItem *chain);
 int StoreDropItemChain(FDropItem *chain);
-
+fixed_t P_AproxDistance (fixed_t dx, fixed_t dy);	// since we cannot include p_local here...
+angle_t R_PointToAngle2 (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2); // same reason here with r_defs.h
 
 
 // Map Object definition.
@@ -851,6 +852,61 @@ public:
 			bloodcls = bloodcls->GetReplacement();
 		}
 		return bloodcls;
+	}
+
+	// 'absolute' is reserved for a linked portal implementation which needs
+	// to distinguish between portal-aware and portal-unaware distance calculation.
+	fixed_t AproxDistance(AActor *other, bool absolute = false)
+	{
+		return P_AproxDistance(x - other->x, y - other->y);
+	}
+
+	// same with 'ref' here.
+	fixed_t AproxDistance(fixed_t otherx, fixed_t othery, AActor *ref = NULL)
+	{
+		return P_AproxDistance(x - otherx, y - othery);
+	}
+
+	fixed_t AproxDistance(AActor *other, fixed_t xadd, fixed_t yadd, bool absolute = false)
+	{
+		return P_AproxDistance(x - other->x + xadd, y - other->y + yadd);
+	}
+
+	fixed_t AproxDistance3D(AActor *other, bool absolute = false)
+	{
+		return P_AproxDistance(AproxDistance(other), z - other->z);
+	}
+
+	// more precise, but slower version, being used in a few places
+	fixed_t Distance2D(AActor *other, bool absolute = false)
+	{
+		return xs_RoundToInt(FVector2(x - other->x, y - other->y).Length());
+	}
+
+	// a full 3D version of the above
+	fixed_t Distance3D(AActor *other, bool absolute = false)
+	{
+		return xs_RoundToInt(FVector3(x - other->x, y - other->y, z - other->z).Length());
+	}
+
+	angle_t AngleTo(AActor *other, bool absolute = false) const
+	{
+		return R_PointToAngle2(x, y, other->x, other->y);
+	}
+
+	angle_t AngleTo(AActor *other, fixed_t oxofs, fixed_t oyofs, bool absolute = false) const
+	{
+		return R_PointToAngle2(x, y, other->x + oxofs, other->y + oyofs);
+	}
+
+	fixed_t AngleTo(fixed_t otherx, fixed_t othery, AActor *ref = NULL)
+	{
+		return R_PointToAngle2(x, y, otherx, othery);
+	}
+
+	fixed_t AngleXYTo(fixed_t myx, fixed_t myy, AActor *other, bool absolute = false)
+	{
+		return R_PointToAngle2(myx, myy, other->x, other->y);
 	}
 
 	inline void SetFriendPlayer(player_t *player);

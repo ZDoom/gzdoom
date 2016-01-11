@@ -388,8 +388,7 @@ void A_KSpiritSeeker (AActor *actor, angle_t thresh, angle_t turnMax)
 				deltaZ = -15*FRACUNIT;
 			}
 		}
-		dist = P_AproxDistance (target->x-actor->x, target->y-actor->y);
-		dist = dist/actor->Speed;
+		dist = actor->AproxDistance (target) / actor->Speed;
 		if (dist < 1)
 		{
 			dist = 1;
@@ -486,7 +485,7 @@ AActor *P_SpawnKoraxMissile (fixed_t x, fixed_t y, fixed_t z,
 	z -= source->floorclip;
 	th = Spawn (type, x, y, z, ALLOW_REPLACE);
 	th->target = source; // Originator
-	an = R_PointToAngle2(x, y, dest->x, dest->y);
+	an = source->AngleXYTo(x, y, dest);
 	if (dest->flags & MF_SHADOW)
 	{ // Invisible target
 		an += pr_kmissile.Random2()<<21;
@@ -495,8 +494,7 @@ AActor *P_SpawnKoraxMissile (fixed_t x, fixed_t y, fixed_t z,
 	an >>= ANGLETOFINESHIFT;
 	th->velx = FixedMul (th->Speed, finecosine[an]);
 	th->vely = FixedMul (th->Speed, finesine[an]);
-	dist = P_AproxDistance (dest->x - x, dest->y - y);
-	dist = dist/th->Speed;
+	dist = dest->AproxDistance (x, y, source) / th->Speed;
 	if (dist < 1)
 	{
 		dist = 1;

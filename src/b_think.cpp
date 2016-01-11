@@ -81,7 +81,7 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 	int r;
 
 	stuck = false;
-	dist = dest ? P_AproxDistance(player->mo->x-dest->x, player->mo->y-dest->y) : 0;
+	dist = dest ? player->mo->AproxDistance(dest) : 0;
 
 	if (missile &&
 		((!missile->velx || !missile->vely) || !Check_LOS(missile, SHOOTFOV*3/2)))
@@ -96,14 +96,14 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 		player->mo->pitch += 80;
 
 	//HOW TO MOVE:
-	if (missile && (P_AproxDistance(player->mo->x-missile->x, player->mo->y-missile->y)<AVOID_DIST)) //try avoid missile got from P_Mobj.c thinking part.
+	if (missile && (player->mo->AproxDistance(missile)<AVOID_DIST)) //try avoid missile got from P_Mobj.c thinking part.
 	{
 		Pitch (missile);
-		angle = R_PointToAngle2(player->mo->x, player->mo->y, missile->x, missile->y);
+		angle = player->mo->AngleTo(missile);
 		cmd->ucmd.sidemove = sleft ? -SIDERUN : SIDERUN;
 		cmd->ucmd.forwardmove = -FORWARDRUN; //Back IS best.
 
-		if ((P_AproxDistance(player->mo->x-oldx, player->mo->y-oldy)<50000)
+		if ((player->mo->AproxDistance(oldx, oldy)<50000)
 			&& t_strafe<=0)
 		{
 			t_strafe = 5;
@@ -156,7 +156,7 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 			t_fight = AFTERTICS;
 
 		if (t_strafe <= 0 &&
-			(P_AproxDistance(player->mo->x-oldx, player->mo->y-oldy)<50000
+			(player->mo->AproxDistance(oldx, oldy)<50000
 			|| ((pr_botmove()%30)==10))
 			)
 		{
@@ -165,10 +165,10 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 			sleft = !sleft;
 		}
 
-		angle = R_PointToAngle2(player->mo->x, player->mo->y, enemy->x, enemy->y);
+		angle = player->mo->AngleTo(enemy);
 
 		if (player->ReadyWeapon == NULL ||
-			P_AproxDistance(player->mo->x-enemy->x, player->mo->y-enemy->y) >
+			player->mo->AproxDistance(enemy) >
 			player->ReadyWeapon->MoveCombatDist)
 		{
 			// If a monster, use lower speed (just for cooler apperance while strafing down doomed monster)
@@ -206,9 +206,9 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 			goto roam;
 		}
 
-		angle = R_PointToAngle2(player->mo->x, player->mo->y, mate->x, mate->y);
+		angle = player->mo->AngleTo(mate);
 
-		matedist = P_AproxDistance(player->mo->x - mate->x, player->mo->y - mate->y);
+		matedist = player->mo->AproxDistance(mate);
 		if (matedist > (FRIEND_DIST*2))
 			cmd->ucmd.forwardmove = FORWARDRUN;
 		else if (matedist > FRIEND_DIST)
@@ -241,7 +241,7 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 						(pr_botmove()%100)>skill.isp) && player->ReadyWeapon != NULL && !(player->ReadyWeapon->WeaponFlags & WIF_WIMPY_WEAPON))
 						dest = enemy;//Dont let enemy kill the bot by supressive fire. So charge enemy.
 					else //hide while t_fight, but keep view at enemy.
-						angle = R_PointToAngle2(player->mo->x, player->mo->y, enemy->x, enemy->y);
+						angle = player->mo->AngleTo(enemy);
 				} //Just a monster, so kill it.
 				else
 					dest = enemy;

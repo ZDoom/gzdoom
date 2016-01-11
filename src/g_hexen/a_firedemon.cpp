@@ -158,12 +158,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_FiredChase)
 	{
 		self->special2 = 0;
 		self->velx = self->vely = 0;
-		dist = P_AproxDistance (self->x - target->x, self->y - target->y);
+		dist = self->AproxDistance (target);
 		if (dist < FIREDEMON_ATTACK_RANGE)
 		{
 			if (pr_firedemonchase() < 30)
 			{
-				ang = R_PointToAngle2 (self->x, self->y, target->x, target->y);
+				ang = self->AngleTo(target);
 				if (pr_firedemonchase() < 128)
 					ang += ANGLE_90;
 				else

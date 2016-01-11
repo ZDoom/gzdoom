@@ -119,7 +119,7 @@ Rect SkylineBinPack::Insert(int width, int height)
 		return newNode;
 	}
 	
-	return InsertMinWaste(width, height);
+	return InsertBottomLeft(width, height);
 }
 
 bool SkylineBinPack::RectangleFits(int skylineNodeIndex, int width, int height, int &y) const
@@ -252,6 +252,73 @@ void SkylineBinPack::MergeSkylines()
 			skyLine.Delete(i+1);
 			--i;
 		}
+}
+
+Rect SkylineBinPack::InsertBottomLeft(int width, int height)
+{
+	int bestHeight;
+	int bestWidth;
+	int bestIndex;
+	Rect newNode = FindPositionForNewNodeBottomLeft(width, height, bestHeight, bestWidth, bestIndex);
+
+	if (bestIndex != -1)
+	{
+		assert(disjointRects.Disjoint(newNode));
+		// Perform the actual packing.
+		AddSkylineLevel(bestIndex, newNode);
+
+		usedSurfaceArea += width * height;
+#ifdef _DEBUG
+		disjointRects.Add(newNode);
+#endif
+	}
+	else
+		memset(&newNode, 0, sizeof(Rect));
+
+	return newNode;
+}
+
+Rect SkylineBinPack::FindPositionForNewNodeBottomLeft(int width, int height, int &bestHeight, int &bestWidth, int &bestIndex) const
+{
+	bestHeight = INT_MAX;
+	bestIndex = -1;
+	// Used to break ties if there are nodes at the same level. Then pick the narrowest one.
+	bestWidth = INT_MAX;
+	Rect newNode = { 0, 0, 0, 0 };
+	for(unsigned i = 0; i < skyLine.Size(); ++i)
+	{
+		int y;
+		if (RectangleFits(i, width, height, y))
+		{
+			if (y + height < bestHeight || (y + height == bestHeight && skyLine[i].width < bestWidth))
+			{
+				bestHeight = y + height;
+				bestIndex = i;
+				bestWidth = skyLine[i].width;
+				newNode.x = skyLine[i].x;
+				newNode.y = y;
+				newNode.width = width;
+				newNode.height = height;
+				assert(disjointRects.Disjoint(newNode));
+			}
+		}
+/*		if (RectangleFits(i, height, width, y))
+		{
+			if (y + width < bestHeight || (y + width == bestHeight && skyLine[i].width < bestWidth))
+			{
+				bestHeight = y + width;
+				bestIndex = i;
+				bestWidth = skyLine[i].width;
+				newNode.x = skyLine[i].x;
+				newNode.y = y;
+				newNode.width = height;
+				newNode.height = width;
+				assert(disjointRects.Disjoint(newNode));
+			}
+		}
+*/	}
+
+	return newNode;
 }
 
 Rect SkylineBinPack::InsertMinWaste(int width, int height)

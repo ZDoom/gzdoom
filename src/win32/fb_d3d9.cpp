@@ -1833,8 +1833,8 @@ void D3DFB::DrawPackedTextures(int packnum)
 {
 	D3DCOLOR empty_colors[8] =
 	{
-		0xFFFF9999, 0xFF99FF99, 0xFF9999FF, 0xFFFFFF99,
-		0xFFFF99FF, 0xFF99FFFF, 0xFFFFCC99, 0xFF99CCFF
+		0x80FF0000, 0x8000FF00, 0x800000FF, 0x80FFFF00,
+		0x80FF00FF, 0x8000FFFF, 0x80FF8000, 0x800080FF
 	};
 	Atlas *pack;
 	int x = 8, y = 8;
@@ -1869,7 +1869,14 @@ void D3DFB::DrawPackedTextures(int packnum)
 		}
 
 		AddColorOnlyRect(x-1, y-1-LBOffsetI, 258, 258, D3DCOLOR_XRGB(255,255,0));
-		AddColorOnlyQuad(x, y-LBOffsetI, 256, 256, D3DCOLOR_ARGB(180,0,0,0));
+		int back = 0;
+		for (PackedTexture *box = pack->UsedList; box != NULL; box = box->Next)
+		{
+			AddColorOnlyQuad(x + box->Area.left, y + box->Area.top,
+				box->Area.right - box->Area.left, box->Area.bottom - box->Area.top, empty_colors[back]);
+			back = (back + 1) & 7;
+		}
+//		AddColorOnlyQuad(x, y-LBOffsetI, 256, 256, D3DCOLOR_ARGB(180,0,0,0));
 
 		CheckQuadBatch();
 

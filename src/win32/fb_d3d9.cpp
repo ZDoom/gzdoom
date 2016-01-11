@@ -85,6 +85,10 @@
 // The number of quads we can batch together.
 #define MAX_QUAD_BATCH	(NUM_INDEXES / 6)
 
+// The default size for a texture atlas.
+#define DEF_ATLAS_WIDTH		512
+#define DEF_ATLAS_HEIGHT	512
+
 // TYPES -------------------------------------------------------------------
 
 IMPLEMENT_CLASS(D3DFB)
@@ -1833,8 +1837,8 @@ void D3DFB::DrawPackedTextures(int packnum)
 {
 	D3DCOLOR empty_colors[8] =
 	{
-		0xFFFF9999, 0xFF99FF99, 0xFF9999FF, 0xFFFFFF99,
-		0xFFFF99FF, 0xFF99FFFF, 0xFFFFCC99, 0xFF99CCFF
+		0x50FF0000, 0x5000FF00, 0x500000FF, 0x50FFFF00,
+		0x50FF00FF, 0x5000FFFF, 0x50FF8000, 0x500080FF
 	};
 	Atlas *pack;
 	int x = 8, y = 8;
@@ -1869,7 +1873,17 @@ void D3DFB::DrawPackedTextures(int packnum)
 		}
 
 		AddColorOnlyRect(x-1, y-1-LBOffsetI, 258, 258, D3DCOLOR_XRGB(255,255,0));
-		AddColorOnlyQuad(x, y-LBOffsetI, 256, 256, D3DCOLOR_ARGB(180,0,0,0));
+		int back = 0;
+		for (PackedTexture *box = pack->UsedList; box != NULL; box = box->Next)
+		{
+			AddColorOnlyQuad(
+				x + box->Area.left * 256 / pack->Width,
+				y + box->Area.top * 256 / pack->Height,
+				(box->Area.right - box->Area.left) * 256 / pack->Width,
+				(box->Area.bottom - box->Area.top) * 256 / pack->Height, empty_colors[back]);
+			back = (back + 1) & 7;
+		}
+//		AddColorOnlyQuad(x, y-LBOffsetI, 256, 256, D3DCOLOR_ARGB(180,0,0,0));
 
 		CheckQuadBatch();
 
@@ -1973,8 +1987,8 @@ D3DFB::PackedTexture *D3DFB::AllocPackedTexture(int w, int h, bool wrapping, D3D
 	Rect box;
 	bool padded;
 
-	// check for 254 to account for padding
-	if (w > 254 || h > 254 || wrapping)
+	// The - 2 to account for padding
+	if (w > 256 - 2 || h > 256 - 2 || wrapping)
 	{ // Create a new texture atlas.
 		pack = new Atlas(this, w, h, format);
 		pack->OneUse = true;
@@ -1999,7 +2013,7 @@ D3DFB::PackedTexture *D3DFB::AllocPackedTexture(int w, int h, bool wrapping, D3D
 		}
 		if (pack == NULL)
 		{ // Create a new texture atlas.
-			pack = new Atlas(this, 256, 256, format);
+			pack = new Atlas(this, DEF_ATLAS_WIDTH, DEF_ATLAS_HEIGHT, format);
 			box = pack->Packer.Insert(w, h);
 		}
 		padded = true;

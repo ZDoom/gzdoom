@@ -62,6 +62,7 @@
 #include "farchive.h"
 #include "a_keys.h"
 #include "c_dispatch.h"
+#include "r_sky.h"
 
 // State.
 #include "r_state.h"
@@ -71,7 +72,6 @@
 #include "r_data/r_interpolate.h"
 
 static FRandom pr_playerinspecialsector ("PlayerInSpecialSector");
-void P_SetupPortals();
 
 EXTERN_CVAR(Bool, cl_predict_specials)
 
@@ -986,7 +986,7 @@ void P_SetupPortals()
 	}
 }
 
-inline void SetPortal(sector_t *sector, int plane, AStackPoint *portal, fixed_t alpha)
+static void SetPortal(sector_t *sector, int plane, ASkyViewpoint *portal, fixed_t alpha)
 {
 	// plane: 0=floor, 1=ceiling, 2=both
 	if (plane > 0)
@@ -996,6 +996,8 @@ inline void SetPortal(sector_t *sector, int plane, AStackPoint *portal, fixed_t 
 			sector->CeilingSkyBox = portal;
 			if (sector->GetAlpha(sector_t::ceiling) == OPAQUE)
 				sector->SetAlpha(sector_t::ceiling, alpha);
+
+			if (!portal->bAlways) sector->SetTexture(sector_t::ceiling, skyflatnum);
 		}
 	}
 	if (plane == 2 || plane == 0)
@@ -1006,6 +1008,42 @@ inline void SetPortal(sector_t *sector, int plane, AStackPoint *portal, fixed_t 
 		}
 		if (sector->GetAlpha(sector_t::floor) == OPAQUE)
 			sector->SetAlpha(sector_t::floor, alpha);
+
+		if (!portal->bAlways) sector->SetTexture(sector_t::floor, skyflatnum);
+	}
+}
+
+static void CopyPortal(int sectortag, int plane, ASkyViewpoint *origin, fixed_t alpha, bool tolines)
+{
+	int s;
+	FSectorTagIterator itr(sectortag);
+	while ((s = itr.Next()) >= 0)
+	{
+		SetPortal(&sectors[s], plane, origin, alpha);
+	}
+
+	for (int j=0;j<numlines;j++)
+	{
+		// Check if this portal needs to be copied to other sectors
+		// This must be done here to ensure that it gets done only after the portal is set up
+		if (lines[j].special == Sector_SetPortal &&
+			lines[j].args[1] == 1 &&
+			(lines[j].args[2] == plane || lines[j].args[2] == 3) &&
+			lines[j].args[3] == sectortag)
+		{
+			if (lines[j].args[0] == 0)
+			{
+				SetPortal(lines[j].frontsector, plane, origin, alpha);
+			}
+			else
+			{
+				FSectorTagIterator itr(lines[j].args[0]);
+				while ((s = itr.Next()) >= 0)
+				{
+					SetPortal(&sectors[s], plane, origin, alpha);
+				}
+			}
+		}
 	}
 }
 
@@ -1039,41 +1077,38 @@ void P_SpawnPortal(line_t *line, int sectortag, int plane, int alpha)
 			reference->flags |= MF_JUSTATTACKED;
 			anchor->flags |= MF_JUSTATTACKED;
 
-			int s;
-			FSectorTagIterator itr(sectortag);
-			while ((s = itr.Next()) >= 0)
-			{
-				SetPortal(&sectors[s], plane, reference, alpha);
-			}
-
-			for (int j=0;j<numlines;j++)
-			{
-				// Check if this portal needs to be copied to other sectors
-				// This must be done here to ensure that it gets done only after the portal is set up
-				if (lines[j].special == Sector_SetPortal &&
-					lines[j].args[1] == 1 &&
-					(lines[j].args[2] == plane || lines[j].args[2] == 3) &&
-					lines[j].args[3] == sectortag)
-				{
-					if (lines[j].args[0] == 0)
-					{
-						SetPortal(lines[j].frontsector, plane, reference, alpha);
-					}
-					else
-					{
-						FSectorTagIterator itr(lines[j].args[0]);
-						while ((s = itr.Next()) >= 0)
-						{
-							SetPortal(&sectors[s], plane, reference, alpha);
-						}
-					}
-				}
-			}
-
+			CopyPortal(sectortag, plane, reference, alpha, false);
 			return;
 		}
 	}
 }
+
+// This searches the viewpoint's sector
+// for a skybox line special, gets its tag and transfers the skybox to all tagged sectors.
+void P_SpawnSkybox(ASkyViewpoint *origin)
+{
+	sector_t *Sector = origin->Sector;
+	if (Sector == NULL)
+	{
+		Printf("Sector not initialized for SkyCamCompat\n");
+		origin->Sector = Sector = P_PointInSector(origin->x, origin->y);
+	}
+	if (Sector)
+	{
+		line_t * refline = NULL;
+		for (short i = 0; i < Sector->linecount; i++)
+		{
+			refline = Sector->lines[i];
+			if (refline->special == Sector_SetPortal && refline->args[1] == 2)
+			{
+				// We found the setup linedef for this skybox, so let's use it for our init.
+				CopyPortal(refline->args[0], refline->args[2], origin, 0, true);
+				return;
+			}
+		}
+	}
+}
+
 
 
 //
@@ -1326,6 +1361,13 @@ void P_SpawnSpecials (void)
 	P_SpawnScrollers(); // killough 3/7/98: Add generalized scrollers
 	P_SpawnFriction();	// phares 3/12/98: New friction model using linedefs
 	P_SpawnPushers();	// phares 3/20/98: New pusher model using linedefs
+
+	TThinkerIterator<ASkyCamCompat> it2;
+	ASkyCamCompat *pt2;
+	while ((pt2 = it2.Next()))
+	{
+		P_SpawnSkybox(pt2);
+	}
 
 	for (i = 0; i < numlines; i++)
 	{

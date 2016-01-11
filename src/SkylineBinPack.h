@@ -72,7 +72,10 @@ private:
 	bool useWasteMap;
 	GuillotineBinPack wasteMap;
 
+	Rect InsertBottomLeft(int width, int height);
 	Rect InsertMinWaste(int width, int height);
+
+	Rect FindPositionForNewNodeBottomLeft(int width, int height, int &bestHeight, int &bestWidth, int &bestIndex) const;
 	Rect FindPositionForNewNodeMinWaste(int width, int height, int &bestHeight, int &bestWastedArea, int &bestIndex) const;
 
 	bool RectangleFits(int skylineNodeIndex, int width, int height, int &y) const;

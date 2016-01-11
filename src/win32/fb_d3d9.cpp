@@ -85,6 +85,10 @@
 // The number of quads we can batch together.
 #define MAX_QUAD_BATCH	(NUM_INDEXES / 6)
 
+// The default size for a texture atlas.
+#define DEF_ATLAS_WIDTH		512
+#define DEF_ATLAS_HEIGHT	512
+
 // TYPES -------------------------------------------------------------------
 
 IMPLEMENT_CLASS(D3DFB)
@@ -1872,8 +1876,11 @@ void D3DFB::DrawPackedTextures(int packnum)
 		int back = 0;
 		for (PackedTexture *box = pack->UsedList; box != NULL; box = box->Next)
 		{
-			AddColorOnlyQuad(x + box->Area.left, y + box->Area.top,
-				box->Area.right - box->Area.left, box->Area.bottom - box->Area.top, empty_colors[back]);
+			AddColorOnlyQuad(
+				x + box->Area.left * 256 / pack->Width,
+				y + box->Area.top * 256 / pack->Height,
+				(box->Area.right - box->Area.left) * 256 / pack->Width,
+				(box->Area.bottom - box->Area.top) * 256 / pack->Height, empty_colors[back]);
 			back = (back + 1) & 7;
 		}
 //		AddColorOnlyQuad(x, y-LBOffsetI, 256, 256, D3DCOLOR_ARGB(180,0,0,0));
@@ -1980,8 +1987,8 @@ D3DFB::PackedTexture *D3DFB::AllocPackedTexture(int w, int h, bool wrapping, D3D
 	Rect box;
 	bool padded;
 
-	// check for 254 to account for padding
-	if (w > 254 || h > 254 || wrapping)
+	// The - 2 to account for padding
+	if (w > 256 - 2 || h > 256 - 2 || wrapping)
 	{ // Create a new texture atlas.
 		pack = new Atlas(this, w, h, format);
 		pack->OneUse = true;
@@ -2006,7 +2013,7 @@ D3DFB::PackedTexture *D3DFB::AllocPackedTexture(int w, int h, bool wrapping, D3D
 		}
 		if (pack == NULL)
 		{ // Create a new texture atlas.
-			pack = new Atlas(this, 256, 256, format);
+			pack = new Atlas(this, DEF_ATLAS_WIDTH, DEF_ATLAS_HEIGHT, format);
 			box = pack->Packer.Insert(w, h);
 		}
 		padded = true;

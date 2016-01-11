@@ -118,10 +118,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_JabDagger)
 		S_Sound (self, CHAN_WEAPON,
 			linetarget->flags & MF_NOBLOOD ? "misc/metalhit" : "misc/meathit",
 			1, ATTN_NORM);
-		self->angle = R_PointToAngle2 (self->x,
-										self->y,
-										linetarget->x,
-										linetarget->y);
+		self->angle = self->AngleTo(linetarget);
 		self->flags |= MF_JUSTATTACKED;
 		P_DaggerAlert (self, linetarget);
 	}

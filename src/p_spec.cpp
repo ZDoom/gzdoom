@@ -2234,7 +2234,7 @@ void DPusher::Tick ()
 			{
 				int sx = m_X;
 				int sy = m_Y;
-				int dist = P_AproxDistance (thing->x - sx,thing->y - sy);
+				int dist = thing->AproxDistance (sx, sy);
 				int speed = (m_Magnitude - ((dist>>FRACBITS)>>1))<<(FRACBITS-PUSH_FACTOR-1);
 
 				// If speed <= 0, you're outside the effective radius. You also have
@@ -2242,7 +2242,7 @@ void DPusher::Tick ()
 
 				if ((speed > 0) && (P_CheckSight (thing, m_Source, SF_IGNOREVISIBILITY)))
 				{
-					angle_t pushangle = R_PointToAngle2 (thing->x, thing->y, sx, sy);
+					angle_t pushangle = thing->AngleTo(sx, sy);
 					if (m_Source->GetClass()->TypeName == NAME_PointPusher)
 						pushangle += ANG180;    // away
 					pushangle >>= ANGLETOFINESHIFT;

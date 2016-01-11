@@ -1056,6 +1056,7 @@ struct line_t
 	sector_t	*frontsector, *backsector;
 	int 		validcount;	// if == validcount, already checked
 	int			locknumber;	// [Dusk] lock number for special
+	TObjPtr<ASkyViewpoint> skybox;
 };
 
 // phares 3/14/98

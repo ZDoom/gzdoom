@@ -1044,6 +1044,23 @@ static void CopyPortal(int sectortag, int plane, ASkyViewpoint *origin, fixed_t 
 				}
 			}
 		}
+		if (tolines && lines[j].special == Sector_SetPortal &&
+			lines[j].args[1] == 5 &&
+			lines[j].args[3] == sectortag)
+		{
+			if (lines[j].args[0] == 0)
+			{
+				lines[j].skybox = origin;
+			}
+			else
+			{
+				FLineIdIterator itr(lines[j].args[0]);
+				while ((s = itr.Next()) >= 0)
+				{
+					lines[s].skybox = origin;
+				}
+			}
+		}
 	}
 }
 

@@ -162,6 +162,7 @@ private:
 	void FloodPlane(int pass);
 
 	void SkyPlane(sector_t *sector, int plane, bool allowmirror);
+	void SkyLine(line_t *line);
 	void SkyNormal(sector_t * fs,vertex_t * v1,vertex_t * v2);
 	void SkyTop(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex_t * v2);
 	void SkyBottom(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex_t * v2);

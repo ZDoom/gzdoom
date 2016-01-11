@@ -1588,13 +1588,16 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 		// sector's sky
 		SkyNormal(frontsector, v1, v2);
 
-		// normal texture
-		gltexture = FMaterial::ValidateTexture(seg->sidedef->GetTexture(side_t::mid), true);
-		if (gltexture)
+		if (seg->linedef->skybox == NULL)
 		{
-			DoTexture(RENDERWALL_M1S, seg, (seg->linedef->flags & ML_DONTPEGBOTTOM) > 0,
-				realfront->GetPlaneTexZ(sector_t::ceiling), realfront->GetPlaneTexZ(sector_t::floor),	// must come from the original!
-				fch1, fch2, ffh1, ffh2, 0);
+			// normal texture
+			gltexture = FMaterial::ValidateTexture(seg->sidedef->GetTexture(side_t::mid), true);
+			if (gltexture)
+			{
+				DoTexture(RENDERWALL_M1S, seg, (seg->linedef->flags & ML_DONTPEGBOTTOM) > 0,
+					realfront->GetPlaneTexZ(sector_t::ceiling), realfront->GetPlaneTexZ(sector_t::floor),	// must come from the original!
+					fch1, fch2, ffh1, ffh2, 0);
+			}
 		}
 	}
 	else // two sided

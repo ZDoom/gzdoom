@@ -131,9 +131,10 @@ void GLSkyInfo::init(int sky1, PalEntry FadeColor)
 
 //==========================================================================
 //
-//  Calculate sky texture
+//  Calculate sky texture for ceiling or floor
 //
 //==========================================================================
+
 void GLWall::SkyPlane(sector_t *sector, int plane, bool allowreflect)
 {
 	FPortal *portal = sector->portals[plane];
@@ -180,6 +181,35 @@ void GLWall::SkyPlane(sector_t *sector, int plane, bool allowreflect)
 
 //==========================================================================
 //
+//  Calculate sky texture for a line
+//
+//==========================================================================
+
+void GLWall::SkyLine(line_t *line)
+{
+	ASkyViewpoint * skyboxx = line->skybox;
+	GLSkyInfo skyinfo;
+
+	// JUSTHIT is used as an indicator that a skybox is in use.
+	// This is to avoid recursion
+
+	if (!gl_noskyboxes && skyboxx && GLRenderer->mViewActor != skyboxx && !(skyboxx->flags&MF_JUSTHIT))
+	{
+		type = RENDERWALL_SKYBOX;
+		skybox = skyboxx;
+	}
+	else
+	{
+		skyinfo.init(line->frontsector->sky, Colormap.FadeColor);
+		type = RENDERWALL_SKY;
+		sky = UniqueSkies.Get(&skyinfo);
+	}
+	PutWall(0);
+}
+
+
+//==========================================================================
+//
 //  Skies on one sided walls
 //
 //==========================================================================
@@ -190,6 +220,15 @@ void GLWall::SkyNormal(sector_t * fs,vertex_t * v1,vertex_t * v2)
 	zbottom[0]=zceil[0];
 	zbottom[1]=zceil[1];
 	SkyPlane(fs, sector_t::ceiling, true);
+
+	if (seg->linedef->skybox != NULL)
+	{
+		ztop[0] = zceil[0];
+		ztop[1] = zceil[1];
+		zbottom[0] = zfloor[0];
+		zbottom[1] = zfloor[1];
+		SkyLine(seg->linedef);
+	}
 
 	ztop[0]=zfloor[0];
 	ztop[1]=zfloor[1];

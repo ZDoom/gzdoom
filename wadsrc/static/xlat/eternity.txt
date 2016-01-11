@@ -39,7 +39,7 @@ define Unsupported (0)
 286 = 0,	Sector_SetPortal(tag,4, 1, 0, 0) // "Portal_HorizonCeiling"
 287 = 0,	Sector_SetPortal(tag,4, 0, 0, 0) // "Portal_HorizonFloor"
 288 = 0,	Sector_SetPortal(tag,4, 2, 0, 0) // "Portal_HorizonFloorCeiling"
-289 = 0,	Unsupported() // "Portal_LineTransfer"
+289 = 0,	Sector_SetPortal(0, 5, 0, tag) // "Portal_LineTransfer"
 
 // Skybox portals
 290 = 0,	Sector_SetPortal(tag, 2, 1, 1, 0) // "Portal_SkyboxCeiling"

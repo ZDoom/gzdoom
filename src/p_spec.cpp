@@ -66,7 +66,6 @@
 
 // State.
 #include "r_state.h"
-#include "r_sky.h"
 
 #include "c_console.h"
 
@@ -1080,7 +1079,7 @@ void P_SpawnPortal(line_t *line, int sectortag, int plane, int alpha)
 
 			CopyPortal(sectortag, plane, reference, alpha, false);
 			return;
-			}
+		}
 	}
 }
 
@@ -1090,66 +1089,26 @@ void P_SpawnSkybox(ASkyViewpoint *origin)
 {
 	sector_t *Sector = origin->Sector;
 	if (Sector == NULL)
-			{
+	{
 		Printf("Sector not initialized for SkyCamCompat\n");
 		origin->Sector = Sector = P_PointInSector(origin->x, origin->y);
 	}
 	if (Sector)
-				{
+	{
 		line_t * refline = NULL;
 		for (short i = 0; i < Sector->linecount; i++)
-					{
+		{
 			refline = Sector->lines[i];
 			if (refline->special == Sector_SetPortal && refline->args[1] == 2)
-					{
+			{
 				// We found the setup linedef for this skybox, so let's use it for our init.
 				CopyPortal(refline->args[0], refline->args[2], origin, 0, true);
 				return;
-						}
-					}
-				}
-}
-
-
-void P_SpawnHorizon(line_t *line)
-{
-	ASkyViewpoint *origin = Spawn<ASkyViewpoint>(0, 0, 0, NO_REPLACE);
-	origin->Sector = line->frontsector;
-	origin->flags7 |= MF7_HANDLENODELAY;				// mark as 'special'
-	if (line->args[1] == 3) origin->flags |= MF_FLOAT;	// well, it actually does 'float'... :P
-
-
-	int s;
-	FSectorTagIterator itr(line->args[0]);
-	while ((s = itr.Next()) >= 0)
-	{
-		SetPortal(&sectors[s], line->args[2], origin, 0);
-	}
-
-	for (int j=0;j<numlines;j++)
-	{
-		// Check if this portal needs to be copied to other sectors
-		// This must be done here to ensure that it gets done only after the portal is set up
-		if (lines[j].special == Sector_SetPortal &&
-			lines[j].args[1] == 1 &&
-			(lines[j].args[2] == line->args[2] || lines[j].args[2] == 3) &&
-			lines[j].args[3] == line->args[0])
-		{
-			if (lines[j].args[0] == 0)
-			{
-				SetPortal(lines[j].frontsector, line->args[2], origin, 0);
-			}
-			else
-			{
-				FSectorTagIterator itr(lines[j].args[0]);
-				while ((s = itr.Next()) >= 0)
-				{
-					SetPortal(&sectors[s], line->args[2], origin, 0);
-				}
 			}
 		}
 	}
 }
+
 
 
 //
@@ -1503,7 +1462,13 @@ void P_SpawnSpecials (void)
 			}
 			else if (lines[i].args[1] == 3 || lines[i].args[1] == 4)
 			{
-				P_SpawnHorizon(&lines[i]);
+				line_t *line = &lines[i];
+				ASkyViewpoint *origin = Spawn<ASkyViewpoint>(0, 0, 0, NO_REPLACE);
+				origin->Sector = line->frontsector;
+				origin->flags7 |= MF7_HANDLENODELAY;				// mark as 'special'
+				if (line->args[1] == 3) origin->flags |= MF_FLOAT;	// well, it actually does 'float'... :P
+
+				CopyPortal(line->args[0], line->args[2], origin, 0, true);
 			}
 			break;
 

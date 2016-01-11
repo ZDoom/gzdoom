@@ -478,6 +478,11 @@ void P_SerializeWorld (FArchive &arc)
 		}
 		arc << li->args[1] << li->args[2] << li->args[3] << li->args[4];
 
+		if (SaveVersion >= 4531)
+		{
+			arc << li->skybox;
+		}
+
 		for (j = 0; j < 2; j++)
 		{
 			if (li->sidedef[j] == NULL)

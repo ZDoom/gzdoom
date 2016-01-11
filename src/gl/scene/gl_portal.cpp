@@ -1100,7 +1100,7 @@ void GLEEHorizonPortal::DrawContents()
 		horz.plane.GetFromSector(origin->Sector, true);
 		horz.lightlevel = gl_ClampLight(origin->Sector->GetCeilingLight());
 		horz.colormap = origin->Sector->ColorMap;
-		if (origin->flags & MF_FLOAT)
+		if (origin->special1 == SKYBOX_PLANE)
 		{
 			horz.plane.texheight = viewz + abs(horz.plane.texheight);
 		}
@@ -1113,7 +1113,7 @@ void GLEEHorizonPortal::DrawContents()
 		horz.plane.GetFromSector(origin->Sector, false);
 		horz.lightlevel = gl_ClampLight(origin->Sector->GetFloorLight());
 		horz.colormap = origin->Sector->ColorMap;
-		if (origin->flags & MF_FLOAT)
+		if (origin->special1 == SKYBOX_PLANE)
 		{
 			horz.plane.texheight = viewz - abs(horz.plane.texheight);
 		}

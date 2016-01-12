@@ -354,24 +354,17 @@ static void CollectPortalSectors(FPortalMap &collection)
 	for (int i=0;i<numsectors;i++)
 	{
 		sector_t *sec = &sectors[i];
-		if (sec->CeilingSkyBox != NULL && sec->CeilingSkyBox->bAlways && sec->CeilingSkyBox->Mate != NULL)
+		for (int j = 0; j < 2; j++)
 		{
-			FPortalID id = { sec->CeilingSkyBox->x - sec->CeilingSkyBox->Mate->x,
-							 sec->CeilingSkyBox->y - sec->CeilingSkyBox->Mate->y};
+			ASkyViewpoint *SkyBox = sec->SkyBoxes[j];
+			if (SkyBox != NULL && SkyBox->bAlways && SkyBox->Mate != NULL)
+			{
+				FPortalID id = { SkyBox->x - SkyBox->Mate->x, SkyBox->y - SkyBox->Mate->y };
 
-			FPortalSectors &sss = collection[id];
-			FPortalSector ss = { sec, sector_t::ceiling };
-			sss.Push(ss);
-		}
-
-		if (sec->FloorSkyBox != NULL && sec->FloorSkyBox->bAlways && sec->FloorSkyBox->Mate != NULL)
-		{
-			FPortalID id = { sec->FloorSkyBox->x - sec->FloorSkyBox->Mate->x,
-							 sec->FloorSkyBox->y - sec->FloorSkyBox->Mate->y };
-
-			FPortalSectors &sss = collection[id];
-			FPortalSector ss = { sec, sector_t::floor };
-			sss.Push(ss);
+				FPortalSectors &sss = collection[id];
+				FPortalSector ss = { sec, j };
+				sss.Push(ss);
+			}
 		}
 	}
 }

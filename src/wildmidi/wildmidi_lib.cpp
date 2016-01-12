@@ -2893,7 +2893,7 @@ void WildMidi_Renderer::LongEvent(const unsigned char *data, int len)
 				{
 					sysex_ch -= 1;
 				}
-				_event_data ev = { sysex_ch, static_cast<unsigned long>(data[8]) };
+				_event_data ev = { sysex_ch, data[8] };
 				do_sysex_roland_drum_track((_mdi *)handle, &ev);
 			}
 			else if (data[6] == 0x00 && data[7] == 0x7F && data[8] == 0x00)

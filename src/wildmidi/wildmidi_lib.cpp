@@ -1374,46 +1374,46 @@ get_sample_data(struct _patch *sample_patch, unsigned long int freq) {
 	return return_sample;
 }
 
+
 static void do_note_off_extra(struct _note *nte) {
 
 	nte->is_off = 0;
 
-	if (nte->hold) {
-		nte->hold |= HOLD_OFF;
-	} else {
-		if (!(nte->modes & SAMPLE_ENVELOPE)) {
-			if (nte->modes & SAMPLE_LOOP) {
-				nte->modes ^= SAMPLE_LOOP;
-			}
-			nte->env_inc = 0;
 
-		} else if (nte->modes & SAMPLE_CLAMPED) {
-			if (nte->env < 5) {
-				nte->env = 5;
-				if (nte->env_level > nte->sample->env_target[5]) {
-					nte->env_inc = -nte->sample->env_rate[5];
-				} else {
-					nte->env_inc = nte->sample->env_rate[5];
-				}
-			}
-#if 1
-		} else if (nte->modes & SAMPLE_SUSTAIN) {
-			if (nte->env < 3) {
-				nte->env = 3;
-				if (nte->env_level > nte->sample->env_target[3]) {
-					nte->env_inc = -nte->sample->env_rate[3];
-				} else {
-					nte->env_inc = nte->sample->env_rate[3];
-				}
-			}
-#endif
-		} else if (nte->env < 4) {
-			nte->env = 4;
-			if (nte->env_level > nte->sample->env_target[4]) {
-				nte->env_inc = -nte->sample->env_rate[4];
+	if (!(nte->modes & SAMPLE_ENVELOPE)) {
+		if (nte->modes & SAMPLE_LOOP) {
+			nte->modes ^= SAMPLE_LOOP;
+		}
+		nte->env_inc = 0;
+
+	} else if (nte->hold) {
+		nte->hold |= HOLD_OFF;
+
+	} else if (nte->modes & SAMPLE_SUSTAIN) {
+		if (nte->env < 3) {
+			nte->env = 3;
+			if (nte->env_level > nte->sample->env_target[3]) {
+				nte->env_inc = -nte->sample->env_rate[3];
 			} else {
-				nte->env_inc = nte->sample->env_rate[4];
+				nte->env_inc = nte->sample->env_rate[3];
 			}
+		}
+
+	} else if (nte->modes & SAMPLE_CLAMPED) {
+		if (nte->env < 5) {
+			nte->env = 5;
+			if (nte->env_level > nte->sample->env_target[5]) {
+				nte->env_inc = -nte->sample->env_rate[5];
+			} else {
+				nte->env_inc = nte->sample->env_rate[5];
+			}
+		}
+	} else if (nte->env < 4) {
+		nte->env = 4;
+		if (nte->env_level > nte->sample->env_target[4]) {
+			nte->env_inc = -nte->sample->env_rate[4];
+		} else {
+			nte->env_inc = nte->sample->env_rate[4];
 		}
 	}
 }
@@ -2174,19 +2174,16 @@ static int *WM_Mix_Linear(midi * handle, int * buffer, unsigned long int count)
 				 * ========================
 				 */
 				note_data->sample_pos += note_data->sample_inc;
-				if (note_data->sample_pos > note_data->sample->loop_end) {
-					if (note_data->modes & SAMPLE_LOOP) {
+				if (note_data->modes & SAMPLE_LOOP) {
+					if (note_data->sample_pos > note_data->sample->loop_end) {
 						note_data->sample_pos =
-								note_data->sample->loop_start
-										+ ((note_data->sample_pos
-												- note_data->sample->loop_start)
-												% note_data->sample->loop_size);
-					} else if (note_data->sample_pos >= note_data->sample->data_length) {
-						if (note_data->replay == NULL) {
-							goto KILL_NOTE;
-						}
-						goto RESTART_NOTE;
+							note_data->sample->loop_start
+									+ ((note_data->sample_pos
+											- note_data->sample->loop_start)
+											% note_data->sample->loop_size);
 					}
+				} else if (note_data->sample_pos >= note_data->sample->data_length) {
+					goto END_THIS_NOTE;
 				}
 
 				if (note_data->env_inc == 0) {
@@ -2195,35 +2192,32 @@ static int *WM_Mix_Linear(midi * handle, int * buffer, unsigned long int count)
 				}
 
 				note_data->env_level += note_data->env_inc;
-				if (note_data->env_level > 4194304) {
-					note_data->env_level =
-							note_data->sample->env_target[note_data->env];
-				}
-				if  (((note_data->env_inc < 0)
-							&& (note_data->env_level
-									> note_data->sample->env_target[note_data->env]))
-					|| ((note_data->env_inc > 0)
-							&& (note_data->env_level
-									< note_data->sample->env_target[note_data->env])))
-					{
-					note_data = note_data->next;
-					continue;
+				if (note_data->env_inc < 0) {
+					if (note_data->env_level > note_data->sample->env_target[note_data->env]) {
+						note_data = note_data->next;
+						continue;
+					}
+				} else if (note_data->env_inc > 0) {
+					if (note_data->env_level < note_data->sample->env_target[note_data->env]) {
+						note_data = note_data->next;
+						continue;
+					}
 				}
 
+				// Yes could have a condition here but
+				// it would create another bottleneck
 				note_data->env_level =
 						note_data->sample->env_target[note_data->env];
 				switch (note_data->env) {
 				case 0:
-#if 0
 					if (!(note_data->modes & SAMPLE_ENVELOPE)) {
 						note_data->env_inc = 0;
 						note_data = note_data->next;
 						continue;
 					}
-#endif
 					break;
 				case 2:
-					if (note_data->modes & SAMPLE_SUSTAIN) {
+					if (note_data->modes & SAMPLE_SUSTAIN /*|| note_data->hold*/) {
 						note_data->env_inc = 0;
 						note_data = note_data->next;
 						continue;
@@ -2242,7 +2236,7 @@ static int *WM_Mix_Linear(midi * handle, int * buffer, unsigned long int count)
 					break;
 				case 5:
 					if (note_data->env_level == 0) {
-						goto KILL_NOTE;
+						goto END_THIS_NOTE;
 					}
 					/* sample release */
 					if (note_data->modes & SAMPLE_LOOP)
@@ -2251,8 +2245,9 @@ static int *WM_Mix_Linear(midi * handle, int * buffer, unsigned long int count)
 					note_data = note_data->next;
 					continue;
 				case 6:
+					END_THIS_NOTE:
 					if (note_data->replay != NULL) {
-						RESTART_NOTE: note_data->active = 0;
+						note_data->active = 0;
 						{
 							struct _note *prev_note = NULL;
 							struct _note *nte_array = mdi->note;
@@ -2273,7 +2268,7 @@ static int *WM_Mix_Linear(midi * handle, int * buffer, unsigned long int count)
 							note_data->active = 1;
 						}
 					} else {
-						KILL_NOTE: note_data->active = 0;
+						note_data->active = 0;
 						{
 							struct _note *prev_note = NULL;
 							struct _note *nte_array = mdi->note;
@@ -2417,10 +2412,7 @@ static int *WM_Mix_Gauss(midi * handle, int * buffer, unsigned long int count)
 												- note_data->sample->loop_start)
 												% note_data->sample->loop_size);
 					} else if (note_data->sample_pos >= note_data->sample->data_length) {
-						if (note_data->replay == NULL) {
-							goto KILL_NOTE;
-						}
-						goto RESTART_NOTE;
+						goto END_THIS_NOTE;
 					}
 				}
 
@@ -2430,33 +2422,32 @@ static int *WM_Mix_Gauss(midi * handle, int * buffer, unsigned long int count)
 				}
 
 				note_data->env_level += note_data->env_inc;
-				if (note_data->env_level > 4194304) {
-					note_data->env_level =
-							note_data->sample->env_target[note_data->env];
+				if (note_data->env_inc < 0) {
+					if (note_data->env_level
+						> note_data->sample->env_target[note_data->env]) {
+						note_data = note_data->next;
+						continue;
+					}
+				} else if (note_data->env_inc > 0) {
+					if (note_data->env_level
+						< note_data->sample->env_target[note_data->env]) {
+						note_data = note_data->next;
+						continue;
+					}
 				}
-				if (
-						((note_data->env_inc < 0)
-								&& (note_data->env_level
-										> note_data->sample->env_target[note_data->env]))
-						|| ((note_data->env_inc > 0)
-								&& (note_data->env_level
-										< note_data->sample->env_target[note_data->env]))
-						) {
-					note_data = note_data->next;
-					continue;
-				}
+
+				// Yes could have a condition here but
+				// it would create another bottleneck
 
 				note_data->env_level =
 						note_data->sample->env_target[note_data->env];
 				switch (note_data->env) {
 				case 0:
-#if 0
 					if (!(note_data->modes & SAMPLE_ENVELOPE)) {
 						note_data->env_inc = 0;
 						note_data = note_data->next;
 						continue;
 					}
-#endif
 					break;
 				case 2:
 					if (note_data->modes & SAMPLE_SUSTAIN) {
@@ -2478,7 +2469,7 @@ static int *WM_Mix_Gauss(midi * handle, int * buffer, unsigned long int count)
 					break;
 				case 5:
 					if (note_data->env_level == 0) {
-						goto KILL_NOTE;
+						goto END_THIS_NOTE;
 					}
 					/* sample release */
 					if (note_data->modes & SAMPLE_LOOP)
@@ -2487,8 +2478,9 @@ static int *WM_Mix_Gauss(midi * handle, int * buffer, unsigned long int count)
 					note_data = note_data->next;
 					continue;
 				case 6:
+					END_THIS_NOTE:
 					if (note_data->replay != NULL) {
-						RESTART_NOTE: note_data->active = 0;
+						note_data->active = 0;
 						{
 							struct _note *prev_note = NULL;
 							struct _note *nte_array = mdi->note;
@@ -2509,7 +2501,7 @@ static int *WM_Mix_Gauss(midi * handle, int * buffer, unsigned long int count)
 							note_data->active = 1;
 						}
 					} else {
-						KILL_NOTE: note_data->active = 0;
+						note_data->active = 0;
 						{
 							struct _note *prev_note = NULL;
 							struct _note *nte_array = mdi->note;

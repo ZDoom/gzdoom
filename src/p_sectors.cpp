@@ -883,7 +883,7 @@ FArchive &operator<< (FArchive &arc, secspecial_t &p)
 {
 	if (SaveVersion < 4529)
 	{
-		short special;
+		int special;
 		arc << special;
 		sector_t sec;
 		P_InitSectorSpecial(&sec, special, true);

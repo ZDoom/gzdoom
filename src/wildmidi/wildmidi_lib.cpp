@@ -130,18 +130,6 @@ struct _note {
 	unsigned char is_off;
 };
 
-struct _miditrack {
-	unsigned long int length;
-	unsigned long int ptr;
-	unsigned long int delta;
-	unsigned char running_event;
-	unsigned char EOT;
-};
-
-struct _mdi_patches {
-	struct _patch *patch;
-	struct _mdi_patch *next;
-};
 
 struct _event_data {
 	unsigned char channel;

@@ -63,8 +63,8 @@
 #include "a_keys.h"
 #include "c_dispatch.h"
 #include "r_sky.h"
-#ifndef NO_EDF
-#include "edf.h"
+#ifndef NO_EDATA
+#include "edata.h"
 #endif
 
 // State.
@@ -1377,8 +1377,8 @@ void P_SpawnSpecials (void)
 		P_InitSectorSpecial(sector, sector->special, false);
 	}
 
-#ifndef NO_EDF
-	ProcessEDFSectors();
+#ifndef NO_EDATA
+	ProcessEDSectors();
 #endif
 
 	

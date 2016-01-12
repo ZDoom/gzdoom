@@ -10,8 +10,8 @@ define Unsupported (0)
 
 enum
 {
-	Init_EDFSector = 253,
-	Init_EDFLine = 254
+	Init_EDSector = 253,
+	Init_EDLine = 254
 }
 
 // The tag for such a line is actually a key to find, in an ExtraData lump 
@@ -19,7 +19,7 @@ enum
 // to actually use. This is how parameterized linedefs are used by Eternity
 // in the Doom format.
 
-270 = 0,	Static_Init(tag, Init_EDFLine) // "ExtraDataSpecial"
+270 = 0,	Static_Init(tag, Init_EDLine) // "ExtraDataSpecial"
 
 // These two are standard MBF specials, no need to redefine them, they're in xlat/doom.txt
 // 271 = 0,		Static_Init (tag, Init_TransferSky, 0)
@@ -195,7 +195,7 @@ enum
 399 = 0, Thing_SpawnNoFog(0) 
 400 = 0, Teleport_EndGame(0) 
 
-401 = 0, Static_Init(tag, Init_EDFSector)
+401 = 0, Static_Init(tag, Init_EDSector)
 
 402 = 0, Thing_Projectile(0)
 403 = 0, Thing_ProjectileGravity(0)

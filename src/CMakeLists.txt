@@ -977,7 +977,7 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	doomstat.cpp
 	dsectoreffect.cpp
 	dthinker.cpp
-	edf.cpp
+	edata.cpp
 	f_wipe.cpp
 	farchive.cpp
 	files.cpp

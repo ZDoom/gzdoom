@@ -1417,7 +1417,7 @@ get_sample_data(struct _patch *sample_patch, unsigned long int freq) {
 void _WM_AdjustNoteVolumes(struct _mdi *mdi, unsigned char ch, struct _note *nte) {
     double premix_dBm;
     double premix_lin;
-    unsigned char pan_ofs;
+	int pan_ofs;
     double premix_dBm_left;
     double premix_dBm_right;
     double premix_left;

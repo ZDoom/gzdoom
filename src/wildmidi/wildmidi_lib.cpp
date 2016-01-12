@@ -2090,50 +2090,6 @@ static void freeMDI(struct _mdi *mdi) {
 	free(mdi);
 }
 
-static unsigned long int get_decay_samples(struct _patch *patch, unsigned char note) {
-
-	struct _sample *sample = NULL;
-	unsigned long int freq = 0;
-	unsigned long int decay_samples = 0;
-
-	if (patch == NULL)
-		return 0;
-
-	/* first get the freq we need so we can check the right sample */
-	if (patch->patchid & 0x80) {
-		/* is a drum patch */
-		if (patch->note) {
-			freq = freq_table[(patch->note % 12) * 100]
-					>> (10 - (patch->note / 12));
-		} else {
-			freq = freq_table[(note % 12) * 100] >> (10 - (note / 12));
-		}
-	} else {
-		freq = freq_table[(note % 12) * 100] >> (10 - (note / 12));
-	}
-
-	/* get the sample */
-	sample = get_sample_data(patch, (freq / 100));
-	if (sample == NULL)
-		return 0;
-
-	if (patch->patchid & 0x80) {
-		float sratedata = ((float) sample->rate / (float) _WM_SampleRate)
-				* (float) (sample->data_length >> 10);
-		decay_samples = (unsigned long int) sratedata;
-	/*	printf("Drums (%i / %i) * %lu = %f\n", sample->rate, _WM_SampleRate, (sample->data_length >> 10), sratedata);*/
-	} else if (sample->modes & SAMPLE_CLAMPED) {
-		decay_samples = (4194303 / sample->env_rate[5]);
-	/*	printf("clamped 4194303 / %lu = %lu\n", sample->env_rate[5], decay_samples);*/
-	} else {
-		decay_samples =
-				((4194303 - sample->env_target[4]) / sample->env_rate[4])
-						+ (sample->env_target[4] / sample->env_rate[5]);
-	/*	printf("NOT clamped ((4194303 - %lu) / %lu) + (%lu / %lu)) = %lu\n", sample->env_target[4], sample->env_rate[4], sample->env_target[4], sample->env_rate[5], decay_samples);*/
-	}
-	return decay_samples;
-}
-
 static int *WM_Mix_Linear(midi * handle, int * buffer, unsigned long int count)
 {
 	struct _mdi *mdi = (struct _mdi *)handle;

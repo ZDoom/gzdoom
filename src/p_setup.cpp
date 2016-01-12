@@ -68,8 +68,8 @@
 #include "po_man.h"
 #include "r_renderer.h"
 #include "r_data/colormaps.h"
-#ifndef NO_EDF
-#include "edf.h"
+#ifndef NO_EDATA
+#include "edata.h"
 #endif
 
 #include "fragglescript/t_fs.h"
@@ -1770,10 +1770,10 @@ void P_LoadThings (MapData * map)
 		mti[i].info = DoomEdMap.CheckKey(mti[i].EdNum);
 
 
-#ifndef NO_EDF
+#ifndef NO_EDATA
 		if (mti[i].info != NULL && mti[i].info->Special == SMT_EDFThing)
 		{
-			ProcessEDFMapthing(&mti[i], flags);
+			ProcessEDMapthing(&mti[i], flags);
 		}
 		else
 #endif
@@ -2173,15 +2173,15 @@ void P_LoadLineDefs (MapData * map)
 		//		compatible with the new format.
 
 		P_TranslateLineDef (ld, mld, -1);
-		// do not assign the tag for EDF lines.
-		if (ld->special != Static_Init || (ld->args[1] != Init_EDFLine && ld->args[1] != Init_EDFSector))
+		// do not assign the tag for Extradata lines.
+		if (ld->special != Static_Init || (ld->args[1] != Init_EDLine && ld->args[1] != Init_EDSector))
 		{
 			tagManager.AddLineID(i, mld->tag);
 		}
-#ifndef NO_EDF
-		if (ld->special == Static_Init && ld->args[1] == Init_EDFLine)
+#ifndef NO_EDATA
+		if (ld->special == Static_Init && ld->args[1] == Init_EDLine)
 		{
-			ProcessEDFLinedef(ld, mld->tag);
+			ProcessEDLinedef(ld, mld->tag);
 		}
 #endif
 
@@ -3702,7 +3702,7 @@ void P_SetupLevel (const char *lumpname, int position)
 		}
 
 		FBehavior::StaticLoadDefaultModules ();
-#ifndef NO_EDF
+#ifndef NO_EDATA
 		LoadMapinfoACSLump();
 #endif
 

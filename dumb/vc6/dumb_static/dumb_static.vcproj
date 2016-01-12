@@ -1203,10 +1203,6 @@
 						/>
 					</FileConfiguration>
 				</File>
-				<File
-					RelativePath="..\..\src\helpers\tarray.c"
-					>
-				</File>
 			</Filter>
 			<Filter
 				Name="it"

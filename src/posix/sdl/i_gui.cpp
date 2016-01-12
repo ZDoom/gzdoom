@@ -54,8 +54,3 @@ bool I_SetCursor(FTexture *cursorpic)
 	}
 	return true;
 }
-
-void I_SetMainWindowVisible(bool visible)
-{
-
-}

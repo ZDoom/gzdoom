@@ -27,14 +27,14 @@
 #ifndef __COMMON_H
 #define __COMMON_H
 
-#define SAMPLE_16BIT 0x01
-#define SAMPLE_UNSIGNED 0x02
-#define SAMPLE_LOOP 0x04
-#define SAMPLE_PINGPONG 0x08
-#define SAMPLE_REVERSE 0x10
-#define SAMPLE_SUSTAIN 0x20
-#define SAMPLE_ENVELOPE 0x40
-#define SAMPLE_CLAMPED 0x80
+#define SAMPLE_16BIT	0x01
+#define SAMPLE_UNSIGNED	0x02
+#define SAMPLE_LOOP		0x04
+#define SAMPLE_PINGPONG	0x08
+#define SAMPLE_REVERSE	0x10
+#define SAMPLE_SUSTAIN	0x20
+#define SAMPLE_ENVELOPE	0x40
+#define SAMPLE_CLAMPED	0x80
 
 #ifdef DEBUG_SAMPLES
 #define SAMPLE_CONVERT_DEBUG(dx) printf("\r%s\n",dx)
@@ -45,19 +45,19 @@
 extern unsigned short int _WM_SampleRate;
 
 struct _sample {
-	unsigned long int data_length;
-	unsigned long int loop_start;
-	unsigned long int loop_end;
-	unsigned long int loop_size;
+	unsigned int data_length;
+	unsigned int loop_start;
+	unsigned int loop_end;
+	unsigned int loop_size;
 	unsigned char loop_fraction;
-	unsigned short int rate;
-	unsigned long int freq_low;
-	unsigned long int freq_high;
-	unsigned long int freq_root;
+	unsigned short rate;
+	unsigned int freq_low;
+	unsigned int freq_high;
+	unsigned int freq_root;
 	unsigned char modes;
-	signed long int env_rate[7];
-	signed long int env_target[7];
-	unsigned long int inc_div;
+	signed int env_rate[7];
+	signed int env_target[7];
+	unsigned int inc_div;
 	signed short *data;
 	struct _sample *next;
 };

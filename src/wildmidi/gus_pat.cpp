@@ -1,30 +1,25 @@
 /*
- gus_pat.c
-
- Midi Wavetable Processing library
-
- Copyright (C) Chris Ison  2001-2011
- Copyright (C) Bret Curtis 2013-2014
-
- This file is part of WildMIDI.
-
- WildMIDI is free software: you can redistribute and/or modify the player
- under the terms of the GNU General Public License and you can redistribute
- and/or modify the library under the terms of the GNU Lesser General Public
- License as published by the Free Software Foundation, either version 3 of
- the licenses, or(at your option) any later version.
-
- WildMIDI is distributed in the hope that it will be useful, but WITHOUT
- ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License and
- the GNU Lesser General Public License for more details.
-
- You should have received a copy of the GNU General Public License and the
- GNU Lesser General Public License along with WildMIDI.  If not,  see
- <http://www.gnu.org/licenses/>.
+ * gus_pat.c -- Midi Wavetable Processing library
+ *
+ * Copyright (C) WildMIDI Developers 2001-2015
+ *
+ * This file is part of WildMIDI.
+ *
+ * WildMIDI is free software: you can redistribute and/or modify the player
+ * under the terms of the GNU General Public License and you can redistribute
+ * and/or modify the library under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either version 3 of
+ * the licenses, or(at your option) any later version.
+ *
+ * WildMIDI is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License and
+ * the GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License and the
+ * GNU Lesser General Public License along with WildMIDI.  If not,  see
+ * <http://www.gnu.org/licenses/>.
  */
-
-//#include "config.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -737,6 +732,8 @@ struct _sample * _WM_load_gus_pat(const char *filename, int fix_release) {
 	};
 	unsigned long int tmp_loop;
 
+	/*unused*/fix_release;
+
 	SAMPLE_CONVERT_DEBUG(__FUNCTION__); SAMPLE_CONVERT_DEBUG(filename);
 
 	if ((gus_patch = _WM_BufferFile(filename, &gus_size)) == NULL) {
@@ -839,17 +836,80 @@ struct _sample * _WM_load_gus_pat(const char *filename, int fix_release) {
 
 		/*
 		 FIXME: Experimental Hacky Fix
+
+		 This looks for "dodgy" release envelope settings that faulty editors
+		 may have set and attempts to corrects it.
+		 if (fix_release)
+		 Lets make this automatic ...
 		 */
-		if (fix_release) {
-			if (env_time_table[gus_patch[gus_ptr + 40]]
-					< env_time_table[gus_patch[gus_ptr + 41]]) {
-				unsigned char tmp_hack_rate = gus_patch[gus_ptr + 41];
-				gus_patch[gus_ptr + 41] = gus_patch[gus_ptr + 40];
-				gus_patch[gus_ptr + 40] = tmp_hack_rate;
+		{
+			/*
+			 After studying faulty gus_pats this way may work better
+			 Testing to determine if any further adjustments are required
+			*/
+			if (env_time_table[gus_patch[gus_ptr + 40]] < env_time_table[gus_patch[gus_ptr + 41]]) {
+				unsigned char tmp_hack_rate = 0;
+
+				if (env_time_table[gus_patch[gus_ptr + 41]] < env_time_table[gus_patch[gus_ptr + 42]]) {
+					// 1 2 3
+					tmp_hack_rate = gus_patch[gus_ptr + 40];
+					gus_patch[gus_ptr + 40] = gus_patch[gus_ptr + 42];
+					gus_patch[gus_ptr + 42] = tmp_hack_rate;
+				} else if (env_time_table[gus_patch[gus_ptr + 41]] == env_time_table[gus_patch[gus_ptr + 42]]) {
+					// 1 2 2
+					tmp_hack_rate = gus_patch[gus_ptr + 40];
+					gus_patch[gus_ptr + 40] = gus_patch[gus_ptr + 42];
+					gus_patch[gus_ptr + 41] = gus_patch[gus_ptr + 42];
+					gus_patch[gus_ptr + 42] = tmp_hack_rate;
+
+				} else {
+					if (env_time_table[gus_patch[gus_ptr + 40]] < env_time_table[gus_patch[gus_ptr + 42]]) {
+						// 1 3 2
+						tmp_hack_rate = gus_patch[gus_ptr + 40];
+						gus_patch[gus_ptr + 40] = gus_patch[gus_ptr + 41];
+						gus_patch[gus_ptr + 41] = gus_patch[gus_ptr + 42];
+						gus_patch[gus_ptr + 42] = tmp_hack_rate;
+					} else {
+						// 2 3 1 or 1 2 1
+						tmp_hack_rate = gus_patch[gus_ptr + 40];
+						gus_patch[gus_ptr + 40] = gus_patch[gus_ptr + 41];
+						gus_patch[gus_ptr + 41] = tmp_hack_rate;
+					}
+				}
+			} else if (env_time_table[gus_patch[gus_ptr + 41]] < env_time_table[gus_patch[gus_ptr + 42]]) {
+				unsigned char tmp_hack_rate = 0;
+
+				if (env_time_table[gus_patch[gus_ptr + 40]] < env_time_table[gus_patch[gus_ptr + 42]]) {
+					// 2 1 3
+					tmp_hack_rate = gus_patch[gus_ptr + 40];
+					gus_patch[gus_ptr + 40] = gus_patch[gus_ptr + 42];
+					gus_patch[gus_ptr + 42] = gus_patch[gus_ptr + 41];
+					gus_patch[gus_ptr + 41] = tmp_hack_rate;
+				} else {
+					// 3 1 2
+					tmp_hack_rate = gus_patch[gus_ptr + 41];
+					gus_patch[gus_ptr + 41] = gus_patch[gus_ptr + 42];
+					gus_patch[gus_ptr + 42] = tmp_hack_rate;
+				}
 			}
+
+#if 0
+			if ((env_time_table[gus_patch[gus_ptr + 40]] < env_time_table[gus_patch[gus_ptr + 41]]) && (env_time_table[gus_patch[gus_ptr + 41]] == env_time_table[gus_patch[gus_ptr + 42]])) {
+				uint8_t tmp_hack_rate = 0;
+				tmp_hack_rate = gus_patch[gus_ptr + 41];
+				gus_patch[gus_ptr + 41] = gus_patch[gus_ptr + 40];
+				gus_patch[gus_ptr + 42] = gus_patch[gus_ptr + 40];
+				gus_patch[gus_ptr + 40] = tmp_hack_rate;
+				tmp_hack_rate = gus_patch[gus_ptr + 47];
+				gus_patch[gus_ptr + 47] = gus_patch[gus_ptr + 46];
+				gus_patch[gus_ptr + 48] = gus_patch[gus_ptr + 46];
+				gus_patch[gus_ptr + 46] = tmp_hack_rate;
+			}
+#endif
 		}
 
 		for (i = 0; i < 6; i++) {
+			GUSPAT_INT_DEBUG("Envelope #",i);
 			if (gus_sample->modes & SAMPLE_ENVELOPE) {
 				unsigned char env_rate = gus_patch[gus_ptr + 37 + i];
 				gus_sample->env_target[i] = 16448 * gus_patch[gus_ptr + 43 + i];
@@ -884,6 +944,27 @@ struct _sample * _WM_load_gus_pat(const char *filename, int fix_release) {
 				== -1) {
 			free(gus_patch);
 			return NULL;
+		}
+
+		/*
+		 Test and set decay expected decay time after a note off
+		 NOTE: This sets samples for full range decay
+		 */
+		if (gus_sample->modes & SAMPLE_ENVELOPE) {
+			double samples_f = 0.0;
+
+			if (gus_sample->modes & SAMPLE_CLAMPED) {
+				samples_f = (4194301.0 - (float)gus_sample->env_target[5]) / gus_sample->env_rate[5];
+			} else {
+				if (gus_sample->modes & SAMPLE_SUSTAIN) {
+					samples_f = (4194301.0 - (float)gus_sample->env_target[3]) / gus_sample->env_rate[3];
+					samples_f += (float)(gus_sample->env_target[3] - gus_sample->env_target[4]) / gus_sample->env_rate[4];
+				} else {
+					samples_f = (4194301.0 - (float)gus_sample->env_target[4]) / gus_sample->env_rate[4];
+				}
+				samples_f += (float)(gus_sample->env_target[4] - gus_sample->env_target[5]) / gus_sample->env_rate[5];
+			}
+			samples_f += (float)gus_sample->env_target[5] / gus_sample->env_rate[6];
 		}
 
 		gus_ptr += tmp_cnt;

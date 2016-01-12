@@ -965,11 +965,6 @@ struct _sample * _WM_load_gus_pat(const char *filename, int fix_release) {
 				samples_f += (float)(gus_sample->env_target[4] - gus_sample->env_target[5]) / gus_sample->env_rate[5];
 			}
 			samples_f += (float)gus_sample->env_target[5] / gus_sample->env_rate[6];
-
-			gus_sample->note_off_decay = (unsigned)samples_f;
-
-		} else {
-			gus_sample->note_off_decay = gus_sample->data_length * _WM_SampleRate / gus_sample->rate;
 		}
 
 		gus_ptr += tmp_cnt;

@@ -60,8 +60,6 @@ struct _sample {
 	unsigned int inc_div;
 	signed short *data;
 	struct _sample *next;
-
-	unsigned int note_off_decay;
 };
 
 struct _env {

@@ -1794,9 +1794,19 @@ static void do_control_data_decrement(struct _mdi *mdi,
 			mdi->channel[ch].pitch_range--;
 	}
 }
-static void do_control_non_registered_param(struct _mdi *mdi,
+static void do_control_non_registered_param_fine(struct _mdi *mdi,
+		 struct _event_data *data) {
+	unsigned char ch = data->channel;
+	mdi->channel[ch].reg_data = (mdi->channel[ch].reg_data & 0x3F80)
+								| data->data;
+	mdi->channel[ch].reg_non = 1;
+}
+
+static void do_control_non_registered_param_course(struct _mdi *mdi,
 		struct _event_data *data) {
 	unsigned char ch = data->channel;
+	mdi->channel[ch].reg_data = (mdi->channel[ch].reg_data & 0x7F)
+								| (data->data << 7);
 	mdi->channel[ch].reg_non = 1;
 }
 
@@ -2913,23 +2923,23 @@ void WildMidi_Renderer::ShortEvent(int status, int parm1, int parm2)
 		ev.data = parm2;
 		switch (parm1)
 		{
-		case 0:		do_control_bank_select(mdi, &ev);				break;
-		case 6:		do_control_data_entry_course(mdi, &ev);			break;	// [sic]
-		case 7:		do_control_channel_volume(mdi, &ev);			break;
-		case 8:		do_control_channel_balance(mdi, &ev);			break;
-		case 10:	do_control_channel_pan(mdi, &ev);				break;
-		case 11:	do_control_channel_expression(mdi, &ev);		break;
-		case 38:	do_control_data_entry_fine(mdi, &ev);			break;
-		case 64:	do_control_channel_hold(mdi, &ev);				break;
-		case 96:	do_control_data_increment(mdi, &ev);			break;
-		case 97:	do_control_data_decrement(mdi, &ev);			break;
-		case 98:
-		case 99:	do_control_non_registered_param(mdi, &ev);		break;
-		case 100:	do_control_registered_param_fine(mdi, &ev);		break;
-		case 101:	do_control_registered_param_course(mdi, &ev);	break;	// [sic]
-		case 120:	do_control_channel_sound_off(mdi, &ev);			break;
-		case 121:	do_control_channel_controllers_off(mdi, &ev);	break;
-		case 123:	do_control_channel_notes_off(mdi, &ev);			break;
+		case 0:		do_control_bank_select(mdi, &ev);					break;
+		case 6:		do_control_data_entry_course(mdi, &ev);				break;	// [sic]
+		case 7:		do_control_channel_volume(mdi, &ev);				break;
+		case 8:		do_control_channel_balance(mdi, &ev);				break;
+		case 10:	do_control_channel_pan(mdi, &ev);					break;
+		case 11:	do_control_channel_expression(mdi, &ev);			break;
+		case 38:	do_control_data_entry_fine(mdi, &ev);				break;
+		case 64:	do_control_channel_hold(mdi, &ev);					break;
+		case 96:	do_control_data_increment(mdi, &ev);				break;
+		case 97:	do_control_data_decrement(mdi, &ev);				break;
+		case 98:	do_control_non_registered_param_fine(mdi, &ev);		break;
+		case 99:	do_control_non_registered_param_course(mdi, &ev);	break;	// [sic]
+		case 100:	do_control_registered_param_fine(mdi, &ev);			break;
+		case 101:	do_control_registered_param_course(mdi, &ev);		break;	// [sic]
+		case 120:	do_control_channel_sound_off(mdi, &ev);				break;
+		case 121:	do_control_channel_controllers_off(mdi, &ev);		break;
+		case 123:	do_control_channel_notes_off(mdi, &ev);				break;
 		}
 	}
 }

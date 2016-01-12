@@ -1,6 +1,6 @@
 /*
-** edf.cpp
-** Parses Eternity EDF lumps
+** edata.cpp
+** Parses Eternity Extradata lumps
 **
 **---------------------------------------------------------------------------
 ** Copyright 2015 Christoph Oelckers
@@ -51,43 +51,43 @@
 #include "r_data/colormaps.h"
 
 
-struct FEdfOptions : public FOptionalMapinfoData
+struct FEDOptions : public FOptionalMapinfoData
 {
-	FEdfOptions()
+	FEDOptions()
 	{
-		identifier = "EDF";
+		identifier = "EData";
 	}
 	virtual FOptionalMapinfoData *Clone() const
 	{
-		FEdfOptions *newopt = new FEdfOptions;
+		FEDOptions *newopt = new FEDOptions;
 		newopt->identifier = identifier;
-		newopt->edfName = edfName;
+		newopt->EDName = EDName;
 		newopt->acsName = acsName;
 		return newopt;
 	}
-	FString edfName;
+	FString EDName;
 	FString acsName;
 };
 
-DEFINE_MAP_OPTION(edf, false)
+DEFINE_MAP_OPTION(edata, false)
 {
-	FEdfOptions *opt = info->GetOptData<FEdfOptions>("EDF");
+	FEDOptions *opt = info->GetOptData<FEDOptions>("EData");
 
 	parse.ParseAssign();
 	parse.sc.MustGetString();
-	opt->edfName = parse.sc.String;
+	opt->EDName = parse.sc.String;
 }
 
 DEFINE_MAP_OPTION(loadacs, false)
 {
-	FEdfOptions *opt = info->GetOptData<FEdfOptions>("EDF");
+	FEDOptions *opt = info->GetOptData<FEDOptions>("EData");
 
 	parse.ParseAssign();
 	parse.sc.MustGetString();
 	opt->acsName = parse.sc.String;
 }
 
-struct EDFMapthing
+struct EDMapthing
 {
 	int recordnum;
 	int tid;
@@ -98,7 +98,7 @@ struct EDFMapthing
 	DWORD flags;
 };
 
-struct EDFLinedef
+struct EDLinedef
 {
 	int recordnum;
 	int special;
@@ -112,7 +112,7 @@ struct EDFLinedef
 
 
 
-struct EDFSector
+struct EDSector
 {
 	int recordnum;
 
@@ -146,15 +146,15 @@ struct EDFSector
 	fixed_t overlayalpha[2];
 };
 
-static FString EDFMap;
-static TMap<int, EDFLinedef> EDFLines;
-static TMap<int, EDFSector> EDFSectors;
-static TMap<int, EDFMapthing> EDFThings;
+static FString EDMap;
+static TMap<int, EDLinedef> EDLines;
+static TMap<int, EDSector> EDSectors;
+static TMap<int, EDMapthing> EDThings;
 
 
 static void parseLinedef(FScanner &sc)
 {
-	EDFLinedef ld;
+	EDLinedef ld;
 	bool argsset = false;
 
 	memset(&ld, 0, sizeof(ld));
@@ -267,12 +267,12 @@ static void parseLinedef(FScanner &sc)
 		ld.flags = (ld.flags & ~(ML_REPEAT_SPECIAL | ML_FIRSTSIDEONLY)) | (line.flags & (ML_REPEAT_SPECIAL | ML_FIRSTSIDEONLY));
 		if (!argsset) memcpy(ld.args, line.args, sizeof(ld.args));
 	}
-	EDFLines[ld.recordnum] = ld;
+	 EDLines[ld.recordnum] = ld;
 }
 
 static void parseSector(FScanner &sc)
 {
-	EDFSector sec;
+	EDSector sec;
 
 	memset(&sec, 0, sizeof(sec));
 	sec.overlayalpha[sector_t::floor] = sec.overlayalpha[sector_t::ceiling] = FRACUNIT;
@@ -499,15 +499,15 @@ static void parseSector(FScanner &sc)
 			sc.ScriptError("Unknown property '%s'", sc.String);
 		}
 	}
-	EDFSectors[sec.recordnum] = sec;
+	EDSectors[sec.recordnum] = sec;
 }
 
 static void parseMapthing(FScanner &sc)
 {
-	EDFMapthing mt;
+	EDMapthing mt;
 
 	memset(&mt, 0, sizeof(mt));
-	mt.flags |= MTF_SINGLE | MTF_COOPERATIVE | MTF_DEATHMATCH;	// EDF uses inverse logic, like Doom.exe
+	mt.flags |= MTF_SINGLE | MTF_COOPERATIVE | MTF_DEATHMATCH;	// Extradata uses inverse logic, like Doom.exe
 
 	sc.MustGetStringName("{");
 	while (!sc.CheckString("}"))
@@ -607,30 +607,30 @@ static void parseMapthing(FScanner &sc)
 			sc.ScriptError("Unknown property '%s'", sc.String);
 		}
 	}
-	EDFThings[mt.recordnum] = mt;
+	EDThings[mt.recordnum] = mt;
 }
 
-void InitEDF()
+void InitED()
 {
 	FString filename;
 	FScanner sc;
 
-	if (EDFMap.CompareNoCase(level.MapName) != 0)
+	if (EDMap.CompareNoCase(level.MapName) != 0)
 	{
-		EDFLines.Clear();
-		EDFSectors.Clear();
-		EDFThings.Clear();
-		EDFMap = level.MapName;
+		EDLines.Clear();
+		EDSectors.Clear();
+		EDThings.Clear();
+		EDMap = level.MapName;
 
 		const char *arg = Args->CheckValue("-edf");
 
 		if (arg != NULL) filename = arg;
 		else
 		{
-			FEdfOptions *opt = level.info->GetOptData<FEdfOptions>("EDF", false);
+			FEDOptions *opt = level.info->GetOptData<FEDOptions>("EData", false);
 			if (opt != NULL)
 			{
-				filename = opt->edfName;
+				filename = opt->EDName;
 			}
 		}
 
@@ -662,11 +662,11 @@ void InitEDF()
 	}
 }
 
-void ProcessEDFMapthing(FMapThing *mt, int recordnum)
+void ProcessEDMapthing(FMapThing *mt, int recordnum)
 {
-	InitEDF();
+	InitED();
 
-	EDFMapthing *emt = EDFThings.CheckKey(recordnum);
+	EDMapthing *emt = EDThings.CheckKey(recordnum);
 	if (emt == NULL)
 	{
 		Printf("EDF Mapthing record %d not found\n", recordnum);
@@ -682,11 +682,11 @@ void ProcessEDFMapthing(FMapThing *mt, int recordnum)
 	mt->flags = emt->flags;
 }
 
-void ProcessEDFLinedef(line_t *ld, int recordnum)
+void ProcessEDLinedef(line_t *ld, int recordnum)
 {
-	InitEDF();
+	InitED();
 
-	EDFLinedef *eld = EDFLines.CheckKey(recordnum);
+	EDLinedef *eld = EDLines.CheckKey(recordnum);
 	if (eld == NULL)
 	{
 		Printf("EDF Linedef record %d not found\n", recordnum);
@@ -702,9 +702,9 @@ void ProcessEDFLinedef(line_t *ld, int recordnum)
 	tagManager.AddLineID(int(ld - lines), eld->tag);
 }
 
-void ProcessEDFSector(sector_t *sec, int recordnum)
+void ProcessEDSector(sector_t *sec, int recordnum)
 {
-	EDFSector *esec = EDFSectors.CheckKey(recordnum);
+	EDSector *esec = EDSectors.CheckKey(recordnum);
 	if (esec == NULL)
 	{
 		Printf("EDF Sector record %d not found\n", recordnum);
@@ -722,7 +722,7 @@ void ProcessEDFSector(sector_t *sec, int recordnum)
 	sec->Flags = (sec->Flags | esec->damageflags | esec->damageflagsAdd) & ~esec->damageflagsRemove;
 	leak = (leak | esec->leaky | esec->leakyadd) & ~esec->leakyremove;
 
-	// the damage properties will be unconditionally overridden by EDF.
+	// the damage properties will be unconditionally overridden by Extradata.
 	sec->leakydamage = leak == 0 ? 0 : leak == 1 ? 5 : 256;
 	sec->damageamount = esec->damageamount;
 	sec->damageinterval = esec->damageinterval;
@@ -745,37 +745,37 @@ void ProcessEDFSector(sector_t *sec, int recordnum)
 }
 
 
-void ProcessEDFSectors()
+void ProcessEDSectors()
 {
 	int i;
 
-	InitEDF();
-	if (EDFSectors.CountUsed() == 0) return;	// don't waste time if there's no records.
+	InitED();
+	if (EDSectors.CountUsed() == 0) return;	// don't waste time if there's no records.
 
-	// collect all EDF sector records up front so we do not need to search the complete line array for each sector separately.
-	int *edfsectorrecord = new int[numsectors];
-	memset(edfsectorrecord, -1, numsectors * sizeof(int));
+	// collect all Extradata sector records up front so we do not need to search the complete line array for each sector separately.
+	int *sectorrecord = new int[numsectors];
+	memset(sectorrecord, -1, numsectors * sizeof(int));
 	for (i = 0; i < numlines; i++)
 	{
-		if (lines[i].special == Static_Init && lines[i].args[1] == Init_EDFSector)
+		if (lines[i].special == Static_Init && lines[i].args[1] == Init_EDSector)
 		{
-			edfsectorrecord[lines[i].frontsector - sectors] = lines[i].args[0];
+			sectorrecord[lines[i].frontsector - sectors] = lines[i].args[0];
 			lines[i].special = 0;
 		}
 	}
 	for (i = 0; i < numsectors; i++)
 	{
-		if (edfsectorrecord[i] >= 0)
+		if (sectorrecord[i] >= 0)
 		{
-			ProcessEDFSector(&sectors[i], edfsectorrecord[i]);
+			ProcessEDSector(&sectors[i], sectorrecord[i]);
 		}
 	}
-	delete[] edfsectorrecord;
+	delete[] sectorrecord;
 }
 
 void LoadMapinfoACSLump()
 {
-	FEdfOptions *opt = level.info->GetOptData<FEdfOptions>("EDF", false);
+	FEDOptions *opt = level.info->GetOptData<FEDOptions>("EData", false);
 	if (opt != NULL)
 	{
 		int lump = Wads.CheckNumForName(opt->acsName);

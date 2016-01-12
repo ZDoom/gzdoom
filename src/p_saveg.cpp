@@ -418,7 +418,7 @@ void P_SerializeWorld (FArchive &arc)
 			<< sec->sky
 			<< sec->MoreFlags
 			<< sec->Flags
-			<< sec->FloorSkyBox << sec->CeilingSkyBox
+			<< sec->SkyBoxes[sector_t::floor] << sec->SkyBoxes[sector_t::ceiling]
 			<< sec->ZoneNumber;
 		if (SaveVersion < 4529)
 		{

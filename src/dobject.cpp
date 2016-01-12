@@ -517,8 +517,8 @@ size_t DObject::StaticPointerSubstitution (DObject *old, DObject *notOld)
 #define SECTOR_CHECK(f,t) \
 	if (sectors[i].f.p == static_cast<t *>(old)) { sectors[i].f = static_cast<t *>(notOld); changed++; }
 			SECTOR_CHECK( SoundTarget, AActor );
-			SECTOR_CHECK( CeilingSkyBox, ASkyViewpoint );
-			SECTOR_CHECK( FloorSkyBox, ASkyViewpoint );
+			SECTOR_CHECK( SkyBoxes[sector_t::ceiling], ASkyViewpoint );
+			SECTOR_CHECK( SkyBoxes[sector_t::floor], ASkyViewpoint );
 			SECTOR_CHECK( SecActTarget, ASectorAction );
 			SECTOR_CHECK( floordata, DSectorEffect );
 			SECTOR_CHECK( ceilingdata, DSectorEffect );

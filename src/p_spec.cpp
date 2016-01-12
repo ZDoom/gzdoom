@@ -909,10 +909,10 @@ static void SetupFloorPortal (AStackPoint *point)
 {
 	NActorIterator it (NAME_LowerStackLookOnly, point->tid);
 	sector_t *Sector = point->Sector;
-	Sector->FloorSkyBox = static_cast<ASkyViewpoint*>(it.Next());
-	if (Sector->FloorSkyBox != NULL && Sector->FloorSkyBox->bAlways)
+	Sector->SkyBoxes[sector_t::floor] = static_cast<ASkyViewpoint*>(it.Next());
+	if (Sector->SkyBoxes[sector_t::floor] != NULL && Sector->SkyBoxes[sector_t::floor]->bAlways)
 	{
-		Sector->FloorSkyBox->Mate = point;
+		Sector->SkyBoxes[sector_t::floor]->Mate = point;
 		if (Sector->GetAlpha(sector_t::floor) == OPAQUE)
 			Sector->SetAlpha(sector_t::floor, Scale (point->args[0], OPAQUE, 255));
 	}
@@ -922,46 +922,13 @@ static void SetupCeilingPortal (AStackPoint *point)
 {
 	NActorIterator it (NAME_UpperStackLookOnly, point->tid);
 	sector_t *Sector = point->Sector;
-	Sector->CeilingSkyBox = static_cast<ASkyViewpoint*>(it.Next());
-	if (Sector->CeilingSkyBox != NULL && Sector->CeilingSkyBox->bAlways)
+	Sector->SkyBoxes[sector_t::ceiling] = static_cast<ASkyViewpoint*>(it.Next());
+	if (Sector->SkyBoxes[sector_t::ceiling] != NULL && Sector->SkyBoxes[sector_t::ceiling]->bAlways)
 	{
-		Sector->CeilingSkyBox->Mate = point;
+		Sector->SkyBoxes[sector_t::ceiling]->Mate = point;
 		if (Sector->GetAlpha(sector_t::ceiling) == OPAQUE)
 			Sector->SetAlpha(sector_t::ceiling, Scale (point->args[0], OPAQUE, 255));
 	}
-}
-
-static bool SpreadCeilingPortal(AStackPoint *pt, fixed_t alpha, sector_t *sector)
-{
-	bool fail = false;
-	sector->validcount = validcount;
-	for(int i=0; i<sector->linecount; i++)
-	{
-		line_t *line = sector->lines[i];
-		sector_t *backsector = sector == line->frontsector? line->backsector : line->frontsector;
-		if (line->backsector == line->frontsector) continue;
-		if (backsector == NULL) { fail = true; continue; }
-		if (backsector->validcount == validcount) continue;
-		if (backsector->CeilingSkyBox == pt) continue;
-
-		// Check if the backside would map to the same visplane
-		if (backsector->CeilingSkyBox != NULL) { fail = true; continue; }
-		if (backsector->ceilingplane != sector->ceilingplane) { fail = true; continue; }
-		if (backsector->lightlevel != sector->lightlevel) { fail = true; continue; }
-		if (backsector->GetTexture(sector_t::ceiling)		!= sector->GetTexture(sector_t::ceiling)) { fail = true; continue; }
-		if (backsector->GetXOffset(sector_t::ceiling)		!= sector->GetXOffset(sector_t::ceiling)) { fail = true; continue; }
-		if (backsector->GetYOffset(sector_t::ceiling)		!= sector->GetYOffset(sector_t::ceiling)) { fail = true; continue; }
-		if (backsector->GetXScale(sector_t::ceiling)		!= sector->GetXScale(sector_t::ceiling)) { fail = true; continue; }
-		if (backsector->GetYScale(sector_t::ceiling)		!= sector->GetYScale(sector_t::ceiling)) { fail = true; continue; }
-		if (backsector->GetAngle(sector_t::ceiling)		!= sector->GetAngle(sector_t::ceiling)) { fail = true; continue; }
-		if (SpreadCeilingPortal(pt, alpha, backsector)) { fail = true; continue; }
-	}
-	if (!fail) 
-	{
-		sector->CeilingSkyBox = pt;
-		sector->SetAlpha(sector_t::ceiling, alpha);
-	}
-	return fail;
 }
 
 void P_SetupPortals()
@@ -991,9 +958,9 @@ static void SetPortal(sector_t *sector, int plane, ASkyViewpoint *portal, fixed_
 	// plane: 0=floor, 1=ceiling, 2=both
 	if (plane > 0)
 	{
-		if (sector->CeilingSkyBox == NULL || !sector->CeilingSkyBox->bAlways) 
+		if (sector->SkyBoxes[sector_t::ceiling] == NULL || !sector->SkyBoxes[sector_t::ceiling]->bAlways) 
 		{
-			sector->CeilingSkyBox = portal;
+			sector->SkyBoxes[sector_t::ceiling] = portal;
 			if (sector->GetAlpha(sector_t::ceiling) == OPAQUE)
 				sector->SetAlpha(sector_t::ceiling, alpha);
 
@@ -1002,9 +969,9 @@ static void SetPortal(sector_t *sector, int plane, ASkyViewpoint *portal, fixed_
 	}
 	if (plane == 2 || plane == 0)
 	{
-		if (sector->FloorSkyBox == NULL || !sector->FloorSkyBox->bAlways) 
+		if (sector->SkyBoxes[sector_t::floor] == NULL || !sector->SkyBoxes[sector_t::floor]->bAlways) 
 		{
-			sector->FloorSkyBox = portal;
+			sector->SkyBoxes[sector_t::floor] = portal;
 		}
 		if (sector->GetAlpha(sector_t::floor) == OPAQUE)
 			sector->SetAlpha(sector_t::floor, alpha);

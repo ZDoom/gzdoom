@@ -1976,7 +1976,7 @@ static void do_sysex_roland_drum_track(struct _mdi *mdi,
 	}
 }
 
-static void do_sysex_roland_reset(struct _mdi *mdi, struct _event_data *data) {
+static void do_sysex_gm_reset(struct _mdi *mdi, struct _event_data *data) {
 	int i;
 	for (i = 0; i < 16; i++) {
 		mdi->channel[i].bank = 0;
@@ -2001,6 +2001,14 @@ static void do_sysex_roland_reset(struct _mdi *mdi, struct _event_data *data) {
 	}
 	mdi->channel[9].isdrum = 1;
 	UNUSED(data); /* NOOP, to please the compiler gods */
+}
+
+static void do_sysex_roland_reset(struct _mdi *mdi, struct _event_data *data) {
+	do_sysex_gm_reset(mdi, data);
+}
+
+static void do_sysex_yamaha_reset(struct _mdi *mdi, struct _event_data *data) {
+	do_sysex_gm_reset(mdi, data);
 }
 
 static int add_handle(void * handle) {
@@ -2965,6 +2973,20 @@ void WildMidi_Renderer::LongEvent(const unsigned char *data, int len)
 			{ // Roland GS reset
 				do_sysex_roland_reset((_mdi *)handle, NULL);
 			}
+		}
+	}
+	// For non-Roland Sysex messages */
+	else
+	{
+		const unsigned char gm_reset[] = { 0xf0, 0x7e, 0x7f, 0x09, 0x01, 0xf7 };
+		const unsigned char yamaha_reset[] = { 0xf0, 0x43, 0x10, 0x4c, 0x00, 0x00, 0x7e, 0x00, 0xf7};
+		if (len == 6 && memcmp(gm_reset, data, 6) == 0)
+		{
+			do_sysex_gm_reset((_mdi *)handle, NULL);
+		}
+		else if (len == 9 && memcmp(yamaha_reset, data, 9) == 0)
+		{
+			do_sysex_yamaha_reset((_mdi *)handle, NULL);
 		}
 	}
 }

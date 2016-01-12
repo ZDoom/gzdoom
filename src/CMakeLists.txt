@@ -621,9 +621,7 @@ set( PLAT_WIN32_SOURCES
 set( PLAT_POSIX_SOURCES
 	posix/i_cd.cpp
 	posix/i_movie.cpp
-	posix/i_steam.cpp
-	posix/i_system.cpp
-	posix/st_start.cpp )
+	posix/i_steam.cpp )
 set( PLAT_SDL_SOURCES
 	posix/sdl/crashcatcher.c
 	posix/sdl/hardware.cpp
@@ -631,9 +629,11 @@ set( PLAT_SDL_SOURCES
 	posix/sdl/i_input.cpp
 	posix/sdl/i_joystick.cpp
 	posix/sdl/i_main.cpp
+	posix/sdl/i_system.cpp
 	posix/sdl/i_timer.cpp
 	posix/sdl/sdlvideo.cpp
-	posix/sdl/sdlglvideo.cpp )
+	posix/sdl/sdlglvideo.cpp
+	posix/sdl/st_start.cpp )
 set( PLAT_OSX_SOURCES
 	posix/osx/iwadpicker_cocoa.mm
 	posix/osx/zdoom.icns )
@@ -642,8 +642,11 @@ set( PLAT_COCOA_SOURCES
 	posix/cocoa/i_input.mm
 	posix/cocoa/i_joystick.cpp
 	posix/cocoa/i_main.mm
+	posix/cocoa/i_system.mm
 	posix/cocoa/i_timer.cpp
-	posix/cocoa/i_video.mm )
+	posix/cocoa/i_video.mm
+	posix/cocoa/st_console.mm
+	posix/cocoa/st_start.mm )
 
 if( WIN32 )
 	set( SYSTEM_SOURCES_DIR win32 )

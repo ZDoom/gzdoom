@@ -1,17 +1,26 @@
-LZMA SDK 9.22
--------------
+LZMA SDK 15.13
+--------------
 
-LZMA SDK provides the documentation, samples, header files, libraries, 
-and tools you need to develop applications that use LZMA compression.
-
-LZMA is default and general compression method of 7z format
-in 7-Zip compression program (www.7-zip.org). LZMA provides high 
-compression ratio and very fast decompression.
+LZMA SDK provides the documentation, samples, header files,
+libraries, and tools you need to develop applications that 
+use 7z / LZMA / LZMA2 / XZ compression.
 
 LZMA is an improved version of famous LZ77 compression algorithm. 
 It was improved in way of maximum increasing of compression ratio,
 keeping high decompression speed and low memory requirements for 
 decompressing.
+
+LZMA2 is a LZMA based compression method. LZMA2 provides better 
+multithreading support for compression than LZMA and some other improvements.
+
+7z is a file format for data compression and file archiving.
+7z is a main file format for 7-Zip compression program (www.7-zip.org).
+7z format supports different compression methods: LZMA, LZMA2 and others.
+7z also supports AES-256 based encryption.
+
+XZ is a file format for data compression that uses LZMA2 compression.
+XZ format provides additional features: SHA/CRC check, filters for 
+improved compression ratio, splitting to blocks and streams,
 
 
 
@@ -24,8 +33,9 @@ Some code in LZMA SDK is based on public domain code from another developers:
   1) PPMd var.H (2001): Dmitry Shkarin
   2) SHA-256: Wei Dai (Crypto++ library)
 
-You can copy, modify, distribute and perform LZMA SDK code, even for commercial purposes,
-all without asking permission.
+Anyone is free to copy, modify, publish, use, compile, sell, or distribute the 
+original LZMA SDK code, either in source code form or as a compiled binary, for 
+any purpose, commercial or non-commercial, and by any means.
 
 LZMA SDK code is compatible with open source licenses, for example, you can 
 include it to GNU GPL or GNU LGPL code.
@@ -34,10 +44,20 @@ include it to GNU GPL or GNU LGPL code.
 LZMA SDK Contents
 -----------------
 
-LZMA SDK includes:
+  Source code:
 
-  - ANSI-C/C++/C#/Java source code for LZMA compressing and decompressing
-  - Compiled file->file LZMA compressing/decompressing program for Windows system
+    - C / C++ / C# / Java   - LZMA compression and decompression
+    - C / C++               - LZMA2 compression and decompression
+    - C / C++               - XZ compression and decompression
+    - C                     - 7z decompression
+    -     C++               - 7z compression and decompression
+    - C                     - small SFXs for installers (7z decompression)
+    -     C++               - SFXs and SFXs for installers (7z decompression)
+
+  Precomiled binaries:
+
+    - console programs for lzma / 7z / xz compression and decompression
+    - SFX modules for installers.
 
 
 UNIX/Linux version 
@@ -51,70 +71,94 @@ In some UNIX/Linux versions you must compile LZMA with static libraries.
 To compile with static libraries, you can use 
 LIB = -lm -static
 
+Also you can use p7zip (port of 7-Zip for POSIX systems like Unix or Linux):
+  
+  http://p7zip.sourceforge.net/
+
 
 Files
----------------------
-lzma.txt     - LZMA SDK description (this file)
-7zFormat.txt - 7z Format description
-7zC.txt      - 7z ANSI-C Decoder description
-methods.txt  - Compression method IDs for .7z
-lzma.exe     - Compiled file->file LZMA encoder/decoder for Windows
-7zr.exe      - 7-Zip with 7z/lzma/xz support.
-history.txt  - history of the LZMA SDK
+-----
+
+DOC/7zC.txt          - 7z ANSI-C Decoder description
+DOC/7zFormat.txt     - 7z Format description
+DOC/installer.txt    - information about 7-Zip for installers
+DOC/lzma.txt         - LZMA compression description
+DOC/lzma-sdk.txt     - LZMA SDK description (this file)
+DOC/lzma-history.txt - history of LZMA SDK
+DOC/lzma-specification.txt - Specification of LZMA
+DOC/Methods.txt      - Compression method IDs for .7z
+
+bin/installer/   - example script to create installer that uses SFX module,
+
+bin/7zdec.exe    - simplified 7z archive decoder
+bin/7zr.exe      - 7-Zip console program (reduced version)
+bin/x64/7zr.exe  - 7-Zip console program (reduced version) (x64 version)
+bin/lzma.exe     - file->file LZMA encoder/decoder for Windows
+bin/7zS2.sfx     - small SFX module for installers (GUI version)
+bin/7zS2con.sfx  - small SFX module for installers (Console version)
+bin/7zSD.sfx     - SFX module for installers.
+
+
+7zDec.exe
+---------
+7zDec.exe is simplified 7z archive decoder.
+It supports only LZMA, LZMA2, and PPMd methods.
+7zDec decodes whole solid block from 7z archive to RAM.
+The RAM consumption can be high.
+
+
 
 
 Source code structure
 ---------------------
 
-C/  - C files
-        7zCrc*.*   - CRC code
-        Alloc.*    - Memory allocation functions
-        Bra*.*     - Filters for x86, IA-64, ARM, ARM-Thumb, PowerPC and SPARC code
-        LzFind.*   - Match finder for LZ (LZMA) encoders 
-        LzFindMt.* - Match finder for LZ (LZMA) encoders for multithreading encoding
-        LzHash.h   - Additional file for LZ match finder
-        LzmaDec.*  - LZMA decoding
-        LzmaEnc.*  - LZMA encoding
-        LzmaLib.*  - LZMA Library for DLL calling
-        Types.h    - Basic types for another .c files
-        Threads.*  - The code for multithreading.
 
-    LzmaLib  - LZMA Library (.DLL for Windows)
-    
-    LzmaUtil - LZMA Utility (file->file LZMA encoder/decoder).
+Asm/ - asm files (optimized code for CRC calculation and Intel-AES encryption)
 
-    Archive - files related to archiving
-      7z     - 7z ANSI-C Decoder
+C/  - C files (compression / decompression and other)
+  Util/
+    7z       - 7z decoder program (decoding 7z files)
+    Lzma     - LZMA program (file->file LZMA encoder/decoder).
+    LzmaLib  - LZMA library (.DLL for Windows)
+    SfxSetup - small SFX module for installers 
 
 CPP/ -- CPP files
 
   Common  - common files for C++ projects
   Windows - common files for Windows related code
 
-  7zip    - files related to 7-Zip Project
-
-    Common   - common files for 7-Zip
-
-    Compress - files related to compression/decompression
+  7zip    - files related to 7-Zip
 
     Archive - files related to archiving
 
       Common   - common files for archive handling
       7z       - 7z C++ Encoder/Decoder
 
-    Bundles    - Modules that are bundles of other modules
+    Bundles  - Modules that are bundles of other modules (files)
   
-      Alone7z           - 7zr.exe: Standalone version of 7z.exe that supports only 7z/LZMA/BCJ/BCJ2
-      LzmaCon           - lzma.exe: LZMA compression/decompression
-      Format7zR         - 7zr.dll: Reduced version of 7za.dll: extracting/compressing to 7z/LZMA/BCJ/BCJ2
-      Format7zExtractR  - 7zxr.dll: Reduced version of 7zxa.dll: extracting from 7z/LZMA/BCJ/BCJ2.
+      Alone7z       - 7zr.exe: Standalone 7-Zip console program (reduced version)
+      Format7zExtractR  - 7zxr.dll: Reduced version of 7z DLL: extracting from 7z/LZMA/BCJ/BCJ2.
+      Format7zR         - 7zr.dll:  Reduced version of 7z DLL: extracting/compressing to 7z/LZMA/BCJ/BCJ2
+      LzmaCon       - lzma.exe: LZMA compression/decompression
+      LzmaSpec      - example code for LZMA Specification
+      SFXCon        - 7zCon.sfx: Console 7z SFX module
+      SFXSetup      - 7zS.sfx: 7z SFX module for installers
+      SFXWin        - 7z.sfx: GUI 7z SFX module
 
-    UI        - User Interface files
+    Common   - common files for 7-Zip
+
+    Compress - files for compression/decompression
+
+    Crypto   - files for encryption / decompression
+
+    UI       - User Interface files
          
-      Client7z - Test application for 7za.dll,  7zr.dll, 7zxr.dll
+      Client7z - Test application for 7za.dll, 7zr.dll, 7zxr.dll
       Common   - Common UI files
-      Console  - Code for console archiver
-
+      Console  - Code for console program (7z.exe)
+      Explorer    - Some code from 7-Zip Shell extension
+      FileManager - Some GUI code from 7-Zip File Manager
+      GUI         - Some GUI code from 7-Zip
 
 
 CS/ - C# files
@@ -134,8 +178,9 @@ Java/  - Java files
       RangeCoder   - Range Coder (special code of compression/decompression)
 
 
-C/C++ source code of LZMA SDK is part of 7-Zip project.
-7-Zip source code can be downloaded from 7-Zip's SourceForge page:
+Note: 
+  Asm / C / C++ source code of LZMA SDK is part of 7-Zip's source code.
+  7-Zip's source code can be downloaded from 7-Zip's SourceForge page:
 
   http://sourceforge.net/projects/sevenzip/
 
@@ -146,8 +191,8 @@ LZMA features
   - Variable dictionary size (up to 1 GB)
   - Estimated compressing speed: about 2 MB/s on 2 GHz CPU
   - Estimated decompressing speed: 
-      - 20-30 MB/s on 2 GHz Core 2 or AMD Athlon 64
-      - 1-2 MB/s on 200 MHz ARM, MIPS, PowerPC or other simple RISC
+      - 20-30 MB/s on modern 2 GHz cpu
+      - 1-2 MB/s on 200 MHz simple RISC cpu: (ARM, MIPS, PowerPC)
   - Small memory requirements for decompressing (16 KB + DictionarySize)
   - Small code size for decompressing: 5-8 KB
 
@@ -156,7 +201,7 @@ implemented in any modern 32-bit CPU (or on 16-bit CPU with some conditions).
 
 Some critical operations that affect the speed of LZMA decompression:
   1) 32*16 bit integer multiply
-  2) Misspredicted branches (penalty mostly depends from pipeline length)
+  2) Mispredicted branches (penalty mostly depends from pipeline length)
   3) 32-bit shift and arithmetic operations
 
 The speed of LZMA decompressing mostly depends from CPU speed.
@@ -304,298 +349,6 @@ compressible.
 For some ISAs (for example, for MIPS) it's impossible to get gain from such filter.
 
 
-LZMA compressed file format
----------------------------
-Offset Size Description
-  0     1   Special LZMA properties (lc,lp, pb in encoded form)
-  1     4   Dictionary size (little endian)
-  5     8   Uncompressed size (little endian). -1 means unknown size
- 13         Compressed data
-
-
-ANSI-C LZMA Decoder
-~~~~~~~~~~~~~~~~~~~
-
-Please note that interfaces for ANSI-C code were changed in LZMA SDK 4.58.
-If you want to use old interfaces you can download previous version of LZMA SDK
-from sourceforge.net site.
-
-To use ANSI-C LZMA Decoder you need the following files:
-1) LzmaDec.h + LzmaDec.c + Types.h
-LzmaUtil/LzmaUtil.c is example application that uses these files.
-
-
-Memory requirements for LZMA decoding
--------------------------------------
-
-Stack usage of LZMA decoding function for local variables is not 
-larger than 200-400 bytes.
-
-LZMA Decoder uses dictionary buffer and internal state structure.
-Internal state structure consumes
-  state_size = (4 + (1.5 << (lc + lp))) KB
-by default (lc=3, lp=0), state_size = 16 KB.
-
-
-How To decompress data
-----------------------
-
-LZMA Decoder (ANSI-C version) now supports 2 interfaces:
-1) Single-call Decompressing
-2) Multi-call State Decompressing (zlib-like interface)
-
-You must use external allocator:
-Example:
-void *SzAlloc(void *p, size_t size) { p = p; return malloc(size); }
-void SzFree(void *p, void *address) { p = p; free(address); }
-ISzAlloc alloc = { SzAlloc, SzFree };
-
-You can use p = p; operator to disable compiler warnings.
-
-
-Single-call Decompressing
--------------------------
-When to use: RAM->RAM decompressing
-Compile files: LzmaDec.h + LzmaDec.c + Types.h
-Compile defines: no defines
-Memory Requirements:
-  - Input buffer: compressed size
-  - Output buffer: uncompressed size
-  - LZMA Internal Structures: state_size (16 KB for default settings) 
-
-Interface:
-  int LzmaDecode(Byte *dest, SizeT *destLen, const Byte *src, SizeT *srcLen,
-      const Byte *propData, unsigned propSize, ELzmaFinishMode finishMode, 
-      ELzmaStatus *status, ISzAlloc *alloc);
-  In: 
-    dest     - output data
-    destLen  - output data size
-    src      - input data
-    srcLen   - input data size
-    propData - LZMA properties  (5 bytes)
-    propSize - size of propData buffer (5 bytes)
-    finishMode - It has meaning only if the decoding reaches output limit (*destLen).
-         LZMA_FINISH_ANY - Decode just destLen bytes.
-         LZMA_FINISH_END - Stream must be finished after (*destLen).
-                           You can use LZMA_FINISH_END, when you know that 
-                           current output buffer covers last bytes of stream. 
-    alloc    - Memory allocator.
-
-  Out: 
-    destLen  - processed output size 
-    srcLen   - processed input size 
-
-  Output:
-    SZ_OK
-      status:
-        LZMA_STATUS_FINISHED_WITH_MARK
-        LZMA_STATUS_NOT_FINISHED 
-        LZMA_STATUS_MAYBE_FINISHED_WITHOUT_MARK
-    SZ_ERROR_DATA - Data error
-    SZ_ERROR_MEM  - Memory allocation error
-    SZ_ERROR_UNSUPPORTED - Unsupported properties
-    SZ_ERROR_INPUT_EOF - It needs more bytes in input buffer (src).
-
-  If LZMA decoder sees end_marker before reaching output limit, it returns OK result,
-  and output value of destLen will be less than output buffer size limit.
-
-  You can use multiple checks to test data integrity after full decompression:
-    1) Check Result and "status" variable.
-    2) Check that output(destLen) = uncompressedSize, if you know real uncompressedSize.
-    3) Check that output(srcLen) = compressedSize, if you know real compressedSize. 
-       You must use correct finish mode in that case. */ 
-
-
-Multi-call State Decompressing (zlib-like interface)
-----------------------------------------------------
-
-When to use: file->file decompressing 
-Compile files: LzmaDec.h + LzmaDec.c + Types.h
-
-Memory Requirements:
- - Buffer for input stream: any size (for example, 16 KB)
- - Buffer for output stream: any size (for example, 16 KB)
- - LZMA Internal Structures: state_size (16 KB for default settings) 
- - LZMA dictionary (dictionary size is encoded in LZMA properties header)
-
-1) read LZMA properties (5 bytes) and uncompressed size (8 bytes, little-endian) to header:
-   unsigned char header[LZMA_PROPS_SIZE + 8];
-   ReadFile(inFile, header, sizeof(header)
-
-2) Allocate CLzmaDec structures (state + dictionary) using LZMA properties
-
-  CLzmaDec state;
-  LzmaDec_Constr(&state);
-  res = LzmaDec_Allocate(&state, header, LZMA_PROPS_SIZE, &g_Alloc);
-  if (res != SZ_OK)
-    return res;
-
-3) Init LzmaDec structure before any new LZMA stream. And call LzmaDec_DecodeToBuf in loop
-
-  LzmaDec_Init(&state);
-  for (;;)
-  {
-    ... 
-    int res = LzmaDec_DecodeToBuf(CLzmaDec *p, Byte *dest, SizeT *destLen, 
-        const Byte *src, SizeT *srcLen, ELzmaFinishMode finishMode);
-    ...
-  }
-
-
-4) Free all allocated structures
-  LzmaDec_Free(&state, &g_Alloc);
-
-For full code example, look at C/LzmaUtil/LzmaUtil.c code.
-
-
-How To compress data
---------------------
-
-Compile files: LzmaEnc.h + LzmaEnc.c + Types.h +
-LzFind.c + LzFind.h + LzFindMt.c + LzFindMt.h + LzHash.h
-
-Memory Requirements:
-  - (dictSize * 11.5 + 6 MB) + state_size
-
-Lzma Encoder can use two memory allocators:
-1) alloc - for small arrays.
-2) allocBig - for big arrays.
-
-For example, you can use Large RAM Pages (2 MB) in allocBig allocator for 
-better compression speed. Note that Windows has bad implementation for 
-Large RAM Pages. 
-It's OK to use same allocator for alloc and allocBig.
-
-
-Single-call Compression with callbacks
---------------------------------------
-
-Check C/LzmaUtil/LzmaUtil.c as example, 
-
-When to use: file->file decompressing 
-
-1) you must implement callback structures for interfaces:
-ISeqInStream
-ISeqOutStream
-ICompressProgress
-ISzAlloc
-
-static void *SzAlloc(void *p, size_t size) { p = p; return MyAlloc(size); }
-static void SzFree(void *p, void *address) {  p = p; MyFree(address); }
-static ISzAlloc g_Alloc = { SzAlloc, SzFree };
-
-  CFileSeqInStream inStream;
-  CFileSeqOutStream outStream;
-
-  inStream.funcTable.Read = MyRead;
-  inStream.file = inFile;
-  outStream.funcTable.Write = MyWrite;
-  outStream.file = outFile;
-
-
-2) Create CLzmaEncHandle object;
-
-  CLzmaEncHandle enc;
-
-  enc = LzmaEnc_Create(&g_Alloc);
-  if (enc == 0)
-    return SZ_ERROR_MEM;
-
-
-3) initialize CLzmaEncProps properties;
-
-  LzmaEncProps_Init(&props);
-
-  Then you can change some properties in that structure.
-
-4) Send LZMA properties to LZMA Encoder
-
-  res = LzmaEnc_SetProps(enc, &props);
-
-5) Write encoded properties to header
-
-    Byte header[LZMA_PROPS_SIZE + 8];
-    size_t headerSize = LZMA_PROPS_SIZE;
-    UInt64 fileSize;
-    int i;
-
-    res = LzmaEnc_WriteProperties(enc, header, &headerSize);
-    fileSize = MyGetFileLength(inFile);
-    for (i = 0; i < 8; i++)
-      header[headerSize++] = (Byte)(fileSize >> (8 * i));
-    MyWriteFileAndCheck(outFile, header, headerSize)
-
-6) Call encoding function:
-      res = LzmaEnc_Encode(enc, &outStream.funcTable, &inStream.funcTable, 
-        NULL, &g_Alloc, &g_Alloc);
-
-7) Destroy LZMA Encoder Object
-  LzmaEnc_Destroy(enc, &g_Alloc, &g_Alloc);
-
-
-If callback function return some error code, LzmaEnc_Encode also returns that code
-or it can return the code like SZ_ERROR_READ, SZ_ERROR_WRITE or SZ_ERROR_PROGRESS.
-
-
-Single-call RAM->RAM Compression
---------------------------------
-
-Single-call RAM->RAM Compression is similar to Compression with callbacks,
-but you provide pointers to buffers instead of pointers to stream callbacks:
-
-HRes LzmaEncode(Byte *dest, SizeT *destLen, const Byte *src, SizeT srcLen,
-    CLzmaEncProps *props, Byte *propsEncoded, SizeT *propsSize, int writeEndMark, 
-    ICompressProgress *progress, ISzAlloc *alloc, ISzAlloc *allocBig);
-
-Return code:
-  SZ_OK               - OK
-  SZ_ERROR_MEM        - Memory allocation error 
-  SZ_ERROR_PARAM      - Incorrect paramater
-  SZ_ERROR_OUTPUT_EOF - output buffer overflow
-  SZ_ERROR_THREAD     - errors in multithreading functions (only for Mt version)
-
-
-
-Defines
--------
-
-_LZMA_SIZE_OPT - Enable some optimizations in LZMA Decoder to get smaller executable code.
-
-_LZMA_PROB32   - It can increase the speed on some 32-bit CPUs, but memory usage for 
-                 some structures will be doubled in that case.
-
-_LZMA_UINT32_IS_ULONG  - Define it if int is 16-bit on your compiler and long is 32-bit.
-
-_LZMA_NO_SYSTEM_SIZE_T  - Define it if you don't want to use size_t type.
-
-
-_7ZIP_PPMD_SUPPPORT - Define it if you don't want to support PPMD method in AMSI-C .7z decoder.
-
-
-C++ LZMA Encoder/Decoder 
-~~~~~~~~~~~~~~~~~~~~~~~~
-C++ LZMA code use COM-like interfaces. So if you want to use it, 
-you can study basics of COM/OLE.
-C++ LZMA code is just wrapper over ANSI-C code.
-
-
-C++ Notes
-~~~~~~~~~~~~~~~~~~~~~~~~
-If you use some C++ code folders in 7-Zip (for example, C++ code for .7z handling),
-you must check that you correctly work with "new" operator.
-7-Zip can be compiled with MSVC 6.0 that doesn't throw "exception" from "new" operator.
-So 7-Zip uses "CPP\Common\NewHandler.cpp" that redefines "new" operator:
-operator new(size_t size)
-{
-  void *p = ::malloc(size);
-  if (p == 0)
-    throw CNewException();
-  return p;
-}
-If you use MSCV that throws exception for "new" operator, you can compile without 
-"NewHandler.cpp". So standard exception will be used. Actually some code of 
-7-Zip catches any exception in internal code and converts it to HRESULT code.
-So you don't need to catch CNewException, if you call COM interfaces of 7-Zip.
 
 ---
 

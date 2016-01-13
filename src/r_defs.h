@@ -850,6 +850,7 @@ struct sector_t
 	// [RH] The sky box to render for this sector. NULL means use a
 	// regular sky.
 	TObjPtr<ASkyViewpoint> SkyBoxes[2];
+	int PortalGroup;
 
 	int							sectornum;			// for comparing sector copies
 

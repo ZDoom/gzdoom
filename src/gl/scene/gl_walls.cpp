@@ -179,7 +179,11 @@ void GLWall::PutWall(bool translucent)
 		portal = GLPortal::FindPortal(skybox);
 		if (!portal)
 		{
-			// either a regulat skybox or an Eternity-style horizon
+			// either a line-to-line portal, a regular skybox or an Eternity-style horizon
+			if (skybox->special1 == SKYBOX_LINKEDPORTAL)
+			{
+				// todo: create a line-to-line portal
+			}
 			if (skybox->special1 != SKYBOX_MAP) portal = new GLEEHorizonPortal(skybox);
 			else portal = new GLSkyboxPortal(skybox);
 		}

@@ -67,13 +67,13 @@ void ASkyViewpoint::Destroy ()
 	// remove all sector references to ourselves.
 	for (int i = 0; i <numsectors; i++)
 	{
-		if (sectors[i].FloorSkyBox == this)
+		if (sectors[i].SkyBoxes[sector_t::floor] == this)
 		{
-			sectors[i].FloorSkyBox = NULL;
+			sectors[i].SkyBoxes[sector_t::floor] = NULL;
 		}
-		if (sectors[i].CeilingSkyBox == this)
+		if (sectors[i].SkyBoxes[sector_t::ceiling] == this)
 		{
-			sectors[i].CeilingSkyBox = NULL;
+			sectors[i].SkyBoxes[sector_t::ceiling] = NULL;
 		}
 	}
 	if (level.DefaultSkybox == this)
@@ -129,12 +129,12 @@ void ASkyPicker::PostBeginPlay ()
 	{
 		if (0 == (args[1] & 2))
 		{
-			Sector->CeilingSkyBox = box;
+			Sector->SkyBoxes[sector_t::ceiling] = box;
 			if (box == NULL) Sector->MoreFlags |= SECF_NOCEILINGSKYBOX;	// sector should ignore the level's default skybox
 		}
 		if (0 == (args[1] & 1))
 		{
-			Sector->FloorSkyBox = box;
+			Sector->SkyBoxes[sector_t::floor] = box;
 			if (box == NULL) Sector->MoreFlags |= SECF_NOFLOORSKYBOX;	// sector should ignore the level's default skybox
 		}
 	}

@@ -174,8 +174,8 @@ void GLWall::SkyPlane(sector_t *sector, int plane, bool allowreflect)
 			planemirror = plane == sector_t::ceiling ? &sector->ceilingplane : &sector->floorplane;
 		}
 		else return;
-		PutWall(0);
 	}
+	PutWall(0);
 }
 
 

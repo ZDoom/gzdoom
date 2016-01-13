@@ -1126,7 +1126,7 @@ static void load_region_dls(Renderer *song, Sample *sample, DLS_Instrument *ins,
 	sample->key_group = (SBYTE)rgn->header->usKeyGroup;
 	sample->low_freq = note_to_freq(rgn->header->RangeKey.usLow);
 	sample->high_freq = note_to_freq(rgn->header->RangeKey.usHigh);
-	sample->root_freq = note_to_freq(rgn->wsmp->usUnityNote);
+	sample->root_freq = note_to_freq(rgn->wsmp->usUnityNote + rgn->wsmp->sFineTune * .01f);
 	sample->low_vel = (BYTE)rgn->header->RangeVelocity.usLow;
 	sample->high_vel = (BYTE)rgn->header->RangeVelocity.usHigh;
 
@@ -1137,15 +1137,17 @@ static void load_region_dls(Renderer *song, Sample *sample, DLS_Instrument *ins,
 	convert_sample_data(sample, wave->data);
 	if (rgn->wsmp->cSampleLoops)
 	{
-		sample->modes |= (PATCH_LOOPEN | PATCH_SUSTAIN);
+		sample->modes |= (PATCH_LOOPEN | PATCH_SUSTAIN/* | PATCH_NO_SRELEASE*/);
 		sample->loop_start = rgn->wsmp_loop->ulStart / 2;
 		sample->loop_end = sample->loop_start + (rgn->wsmp_loop->ulLength / 2);
 	}
+	sample->scale_factor = 1024;
+	sample->scale_note = rgn->wsmp->usUnityNote;
 
 	if (sample->modes & PATCH_SUSTAIN)
 	{
 		int value;
-		double attack, hold, decay, release; int sustain;
+		int attack, hold, decay, release; int sustain;
 		CONNECTIONLIST *art = NULL;
 		CONNECTION *artList = NULL;
 
@@ -1157,16 +1159,11 @@ static void load_region_dls(Renderer *song, Sample *sample, DLS_Instrument *ins,
 			artList = rgn->artList;
 		}
 
-		value = load_connection(art->cConnections, artList, CONN_DST_EG1_ATTACKTIME);
-		attack = to_msec(value);
-		value = load_connection(art->cConnections, artList, CONN_DST_EG1_HOLDTIME);
-		hold = to_msec(value);
-		value = load_connection(art->cConnections, artList, CONN_DST_EG1_DECAYTIME);
-		decay = to_msec(value);
-		value = load_connection(art->cConnections, artList, CONN_DST_EG1_RELEASETIME);
-		release = to_msec(value);
-		value = load_connection(art->cConnections, artList, CONN_DST_EG1_SUSTAINLEVEL);
-		sustain = (int)((1.0 - to_normalized_percent(value)) * 250.0);
+		attack = load_connection(art->cConnections, artList, CONN_DST_EG1_ATTACKTIME);
+		hold = load_connection(art->cConnections, artList, CONN_DST_EG1_HOLDTIME);
+		decay = load_connection(art->cConnections, artList, CONN_DST_EG1_DECAYTIME);
+		release = load_connection(art->cConnections, artList, CONN_DST_EG1_RELEASETIME);
+		sustain = load_connection(art->cConnections, artList, CONN_DST_EG1_SUSTAINLEVEL);
 		value = load_connection(art->cConnections, artList, CONN_DST_PAN);
 		sample->panning = (int)((0.5 + to_normalized_percent(value)) * 16383.f);
 
@@ -1174,12 +1171,12 @@ static void load_region_dls(Renderer *song, Sample *sample, DLS_Instrument *ins,
 		printf("%d, Rate=%d LV=%d HV=%d Low=%d Hi=%d Root=%d Pan=%d Attack=%f Hold=%f Sustain=%d Decay=%f Release=%f\n", index, sample->sample_rate, rgn->header->RangeVelocity.usLow, rgn->header->RangeVelocity.usHigh, sample->low_freq, sample->high_freq, sample->root_freq, sample->panning, attack, hold, sustain, decay, release);
 		*/
 
-		sample->envelope.sf2.decay_vol = 0;
-		sample->envelope.sf2.attack_vol = (short)attack;
-		sample->envelope.sf2.hold_vol = (short)hold;
-		sample->envelope.sf2.decay_vol = (short)decay;
-		sample->envelope.sf2.release_vol = (short)release;
-		sample->envelope.sf2.sustain_vol = (short)sustain;
+		sample->envelope.sf2.delay_vol = -32768;
+		sample->envelope.sf2.attack_vol = (short)(attack >> 16);
+		sample->envelope.sf2.hold_vol = (short)(hold >> 16);
+		sample->envelope.sf2.decay_vol = (short)(decay >> 16);
+		sample->envelope.sf2.release_vol = (short)(release >> 16);
+		sample->envelope.sf2.sustain_vol = (short)(sustain >> 16);
 	}
 
 	sample->data_length <<= FRACTION_BITS;

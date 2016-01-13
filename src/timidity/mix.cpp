@@ -231,6 +231,10 @@ bool SF2Envelope::Update(Voice *v)
 	double sec;
 	double newvolume = 0;
 
+	// NOTE! The volume scale is different for different stages of the
+	// envelope generator:
+	// Attack stage goes from 0.0 -> 1.0, multiplied directly to the output.
+	// The following stages go from 0 -> -1000 cB (but recorded positively)
 	switch (stage)
 	{
 	case SF2_DELAY:
@@ -333,6 +337,11 @@ bool SF2Envelope::Update(Voice *v)
 #define FLUID_ATTEN_POWER_FACTOR  (-531.509)
 #define atten2amp(x) pow(10.0, (x) / FLUID_ATTEN_POWER_FACTOR)
 
+static double cb_to_amp(double x)	// centibels to amp
+{
+	return pow(10, x / -200.f);
+}
+
 void SF2Envelope::ApplyToAmp(Voice *v)
 {
 	double amp;
@@ -343,13 +352,21 @@ void SF2Envelope::ApplyToAmp(Voice *v)
 		v->right_mix = 0;
 		return;
 	}
-	else if (stage == SF2_ATTACK)
+
+	amp = v->sample->type == INST_SF2 ? atten2amp(v->attenuation) : cb_to_amp(v->attenuation);
+
+	switch (stage)
 	{
-		amp = atten2amp(v->attenuation) * volume;
-	}
-	else
-	{
-		amp = atten2amp(v->attenuation) * cb_to_amp(volume);
+	case SF2_ATTACK:
+		amp *= volume;
+		break;
+
+	case SF2_HOLD:
+		break;
+
+	default:
+		amp *= cb_to_amp(volume);
+		break;
 	}
 	amp *= FINAL_MIX_SCALE * 0.5;
 	v->left_mix = float(amp * v->left_offset);

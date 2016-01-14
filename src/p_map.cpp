@@ -4297,6 +4297,14 @@ void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, i
 			SpawnShootDecal(source, trace);
 
 	}
+	if (trace.HitType == TRACE_HitFloor || trace.HitType == TRACE_HitCeiling)
+	{
+		AActor* puff = NULL;
+		if (puffclass != NULL && puffDefaults->flags3 & MF3_ALWAYSPUFF)
+		{
+			puff = P_SpawnPuff(source, puffclass, trace.X, trace.Y, trace.Z, (source->angle + angleoffset) - ANG90, 1, 0);
+		}
+	}
 	if (thepuff != NULL)
 	{
 		if (trace.HitType == TRACE_HitFloor &&

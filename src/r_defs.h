@@ -41,6 +41,7 @@ struct seg_t;
 
 #include "dthinker.h"
 
+
 #define MAXWIDTH 5760
 #define MAXHEIGHT 3600
 

@@ -40,6 +40,7 @@
 #include "i_system.h"
 #include "po_man.h"
 #include "farchive.h"
+#include "p_portals.h"
 
 //==========================================================================
 //
@@ -452,6 +453,7 @@ void DSectorPlaneInterpolation::Restore()
 	{
 		sector->floorplane.d = bakheight;
 		sector->SetPlaneTexZ(sector_t::floor, baktexz, true);
+
 	}
 	else
 	{
@@ -459,6 +461,7 @@ void DSectorPlaneInterpolation::Restore()
 		sector->SetPlaneTexZ(sector_t::ceiling, baktexz, true);
 	}
 	P_RecalculateAttached3DFloors(sector);
+	P_CheckPortalPlane(sector, ceiling? sector_t::ceiling : sector_t::floor);
 }
 
 //==========================================================================
@@ -489,6 +492,7 @@ void DSectorPlaneInterpolation::Interpolate(fixed_t smoothratio)
 	*pheight = oldheight + FixedMul(bakheight - oldheight, smoothratio);
 	sector->SetPlaneTexZ(pos, oldtexz + FixedMul(baktexz - oldtexz, smoothratio), true);
 	P_RecalculateAttached3DFloors(sector);
+	P_CheckPortalPlane(sector, pos);
 }
 
 //==========================================================================

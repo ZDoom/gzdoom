@@ -38,6 +38,7 @@
 #include "p_effect.h"
 #include "p_terrain.h"
 #include "p_trace.h"
+#include "p_portals.h"
 
 #include "s_sound.h"
 #include "decallib.h"
@@ -5487,9 +5488,11 @@ bool P_ChangeSector(sector_t *sector, int crunch, int amt, int floorOrCeil, bool
 					}
 				}
 			} while (n);
+			P_CheckPortalPlane(sec, !floorOrCeil);
 		}
 	}
 	P_Recalculate3DFloors(sector);			// Must recalculate the 3d floor and light lists
+	
 
 	// [RH] Use different functions for the four different types of sector
 	// movement.
@@ -5549,6 +5552,8 @@ bool P_ChangeSector(sector_t *sector, int crunch, int amt, int floorOrCeil, bool
 			}
 		}
 	} while (n);	// repeat from scratch until all things left are marked valid
+
+	P_CheckPortalPlane(sector, floorOrCeil);	// check for portal obstructions after everything is done.
 
 	if (!cpos.nofit && !isreset /* && sector->MoreFlags & (SECF_UNDERWATERMASK)*/)
 	{

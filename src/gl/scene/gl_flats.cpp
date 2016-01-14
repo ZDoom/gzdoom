@@ -46,6 +46,7 @@
 #include "g_level.h"
 #include "doomstat.h"
 #include "d_player.h"
+#include "p_portals.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_cvars.h"
@@ -524,8 +525,15 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 		Colormap=frontsector->ColorMap;
 		if ((stack = (frontsector->portals[sector_t::floor] != NULL)))
 		{
-			gl_drawinfo->AddFloorStack(sector);
-			alpha = frontsector->GetAlpha(sector_t::floor)/65536.0f;
+			if (!P_PortalBlocksView(frontsector->planes[sector_t::floor].Flags))
+			{
+				gl_drawinfo->AddFloorStack(sector);
+				alpha = frontsector->GetAlpha(sector_t::floor) / 65536.0f;
+			}
+			else
+			{
+				alpha = 1.f;
+			}
 		}
 		else
 		{
@@ -575,8 +583,15 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 		Colormap=frontsector->ColorMap;
 		if ((stack = (frontsector->portals[sector_t::ceiling] != NULL))) 
 		{
-			gl_drawinfo->AddCeilingStack(sector);
-			alpha = frontsector->GetAlpha(sector_t::ceiling)/65536.0f;
+			if (!P_PortalBlocksView(frontsector->planes[sector_t::ceiling].Flags))
+			{
+				gl_drawinfo->AddCeilingStack(sector);
+				alpha = frontsector->GetAlpha(sector_t::ceiling) / 65536.0f;
+			}
+			else
+			{
+				alpha = 1.f;
+			}
 		}
 		else
 		{

@@ -374,6 +374,7 @@ enum
 	PLANEF_NOPASS		= 16,
 	PLANEF_BLOCKSOUND	= 32,
 	PLANEF_DISABLED		= 64,
+	PLANEF_OBSTRUCTED	= 128,	// if the portal plane is beyond the sector's floor or ceiling.
 };
 
 // Internal sector flags

@@ -68,7 +68,7 @@ enum
 // Parameterized linedefs
 // They are never used directly in Doom-format maps. Instead, it passes through ExtraData and 270.
 // Hexen format is incomplete; and Quasar wants to use ZDoom-compatible special values for UDMF.
-// The translation here is for the odd EDF that specifies them as numbers.
+// The translation here is for the odd Extradata that specifies them as numbers.
 
 /*
 300 = 0, Door_Raise(0)
@@ -78,7 +78,7 @@ enum
 304 = 0, Door_WaitRaise(0)
 305 = 0, Door_WaitClose(0)
 306 = 0, Floor_RaiseToHighest(0)
-307 = 0, Floor_LowerToHighest(0)
+307 = 0, Floor_LowerToHighestEE(0)
 308 = 0, Floor_RaiseToLowest(0)
 309 = 0, Floor_LowerToLowest(0)
 310 = 0, Floor_RaiseToNearest(0)
@@ -162,7 +162,7 @@ enum
 377 = 0,	Sector_SetPortal(tag, 7, 0, 1, 0) // "Portal_LinkedLineToLineAnchor"
 
 // The famous Hexen linedef
-// 378 = Line_SetIdentification
+378 = 0, Line_SetIdentification(0)
 
 // Attached sectors == linked sectors; However, the implementation in Eternity
 // is based on front sectors of tagged lines, not on sector tags. So instead

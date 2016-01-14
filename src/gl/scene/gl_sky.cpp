@@ -45,6 +45,7 @@
 #include "r_state.h"
 #include "r_utility.h"
 #include "doomdata.h"
+#include "p_portals.h"
 #include "gl/gl_functions.h"
 
 #include "gl/data/gl_data.h"
@@ -140,6 +141,8 @@ void GLWall::SkyPlane(sector_t *sector, int plane, bool allowreflect)
 	FPortal *portal = sector->portals[plane];
 	if (portal != NULL)
 	{
+		if (P_PortalBlocksView(sector->planes[plane].Flags)) return;
+
 		if (GLPortal::instack[1 - plane]) return;
 		type = RENDERWALL_SECTORSTACK;
 		this->portal = portal;
@@ -185,7 +188,7 @@ void GLWall::SkyPlane(sector_t *sector, int plane, bool allowreflect)
 //
 //==========================================================================
 
-void GLWall::SkyLine(line_t *line)
+void GLWall::SkyLine(sector_t *fs, line_t *line)
 {
 	ASkyViewpoint * skyboxx = line->skybox;
 	GLSkyInfo skyinfo;
@@ -200,7 +203,7 @@ void GLWall::SkyLine(line_t *line)
 	}
 	else
 	{
-		skyinfo.init(line->frontsector->sky, Colormap.FadeColor);
+		skyinfo.init(fs->sky, Colormap.FadeColor);
 		type = RENDERWALL_SKY;
 		sky = UniqueSkies.Get(&skyinfo);
 	}
@@ -227,7 +230,7 @@ void GLWall::SkyNormal(sector_t * fs,vertex_t * v1,vertex_t * v2)
 		ztop[1] = zceil[1];
 		zbottom[0] = zfloor[0];
 		zbottom[1] = zfloor[1];
-		SkyLine(seg->linedef);
+		SkyLine(fs, seg->linedef);
 	}
 
 	ztop[0]=zfloor[0];
@@ -297,8 +300,6 @@ void GLWall::SkyTop(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex
 	}
 	else 
 	{
-		FPortal *pfront = fs->portals[sector_t::ceiling];
-		FPortal *pback = bs->portals[sector_t::ceiling];
 		float frontreflect = fs->GetReflect(sector_t::ceiling);
 		if (frontreflect > 0)
 		{
@@ -309,9 +310,12 @@ void GLWall::SkyTop(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex
 				return;
 			}
 		}
-		else if (pfront == NULL || pfront == pback)
+		else
 		{
-			return;
+			FPortal *pfront = fs->portals[sector_t::ceiling];
+			FPortal *pback = bs->portals[sector_t::ceiling];
+			if (pfront == NULL || P_PortalBlocksView(fs->planes[sector_t::ceiling].Flags)) return;
+			if (pfront == pback && !P_PortalBlocksView(bs->planes[sector_t::ceiling].Flags)) return;
 		}
 
 		// stacked sectors
@@ -373,8 +377,6 @@ void GLWall::SkyBottom(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,ver
 	}
 	else 
 	{
-		FPortal *pfront = fs->portals[sector_t::floor];
-		FPortal *pback = bs->portals[sector_t::floor];
 		float frontreflect = fs->GetReflect(sector_t::floor);
 		if (frontreflect > 0)
 		{
@@ -385,9 +387,12 @@ void GLWall::SkyBottom(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,ver
 				return;
 			}
 		}
-		else if (pfront == NULL || pfront == pback)
+		else
 		{
-			return;
+			FPortal *pfront = fs->portals[sector_t::floor];
+			FPortal *pback = bs->portals[sector_t::floor];
+			if (pfront == NULL || P_PortalBlocksView(fs->planes[sector_t::floor].Flags)) return;
+			if (pfront == pback && !P_PortalBlocksView(bs->planes[sector_t::floor].Flags)) return;
 		}
 
 		// stacked sectors

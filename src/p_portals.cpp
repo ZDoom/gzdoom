@@ -41,35 +41,10 @@
 #include "doomerrors.h"
 #include "c_dispatch.h"
 #include "v_text.h"
+#include "p_local.h"
+#include "p_portals.h"
 
-struct FDisplacement
-{
-	fixed_t x, y;
-	bool isSet;
-	BYTE indirect;	// just for illustration.
-};
-
-struct FDisplacementTable
-{
-	TArray<FDisplacement> data;
-	int size;
-
-	void Create(int numgroups)
-	{
-		data.Resize(numgroups*numgroups);
-		memset(&data[0], 0, numgroups*numgroups*sizeof(data[0]));
-		size = numgroups;
-	}
-
-	FDisplacement &operator()(int x, int y)
-	{
-		return data[x + size*y];
-	}
-};
-
-static FDisplacementTable Displacements;
-
-
+FDisplacementTable Displacements;
 
 //============================================================================
 //
@@ -236,6 +211,10 @@ void P_CreateLinkedPortals()
 			}
 		}
 	}
+	if (orgs.Size() == 0)
+	{
+		return;
+	}
 	for (int i = 0; i < numsectors; i++)
 	{
 		for (int j = 0; j < 2; j++)
@@ -313,6 +292,20 @@ void P_CreateLinkedPortals()
 			orgs[i]->special1 = SKYBOX_PORTAL;
 		}
 	}
+
+	// reject would just get in the way when checking sight through portals.
+	if (rejectmatrix != NULL)
+	{
+		delete[] rejectmatrix;
+		rejectmatrix = NULL;
+	}
+	// finally we must flag all planes which are obstructed by the sector's own ceiling or floor.
+	for (int i = 0; i < numsectors; i++)
+	{
+		P_CheckPortalPlane(&sectors[i], sector_t::floor);
+		P_CheckPortalPlane(&sectors[i], sector_t::ceiling);
+	}
+
 }
 
 CCMD(dumpLinkTable)

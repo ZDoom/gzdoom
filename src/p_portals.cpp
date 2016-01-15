@@ -103,14 +103,14 @@ class FLinePortalTraverse : public FPathTraverse
 			fixed_t frac;
 			divline_t dl;
 
-			if (P_PointOnDivlineSide (ld->v1->x, ld->v1->y, &trace) ==
-				P_PointOnDivlineSide (ld->v2->x, ld->v2->y, &trace))
+			if (P_PointOnDivlineSidePrecise (ld->v1->x, ld->v1->y, &trace) ==
+				P_PointOnDivlineSidePrecise (ld->v2->x, ld->v2->y, &trace))
 			{
 				continue;		// line isn't crossed
 			}
 			P_MakeDivline (ld, &dl);
-			if (P_PointOnDivlineSide (trace.x, trace.y, &dl) ==
-				P_PointOnDivlineSide (trace.x+trace.dx, trace.y+trace.dy, &dl))
+			if (P_PointOnDivlineSidePrecise (trace.x, trace.y, &dl) ==
+				P_PointOnDivlineSidePrecise (trace.x+trace.dx, trace.y+trace.dy, &dl))
 			{
 				continue;		// line isn't crossed
 			}

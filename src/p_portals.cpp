@@ -45,6 +45,146 @@
 #include "p_portals.h"
 
 FDisplacementTable Displacements;
+FPortalBlockmap PortalBlockmap;
+
+//============================================================================
+//
+// BuildBlockmap
+//
+//============================================================================
+
+static void BuildBlockmap()
+{
+	PortalBlockmap.Clear();
+	for (int y = 0; y < bmapheight; y++)
+	{
+		for (int x = 0; x < bmapwidth; x++)
+		{
+			int offset = y*bmapwidth + x;
+			int *list = blockmaplump + *(blockmap + offset) + 1;
+			FPortalBlock &block = PortalBlockmap(x, y);
+
+			while (*list != -1)
+			{
+				line_t *ld = &lines[*list++];
+
+				if (ld->skybox && ld->skybox->special1 == SKYBOX_LINKEDPORTAL)
+				{
+					if (PortalBlockmap.dx == 0)
+					{
+						// only create it if there's some actual content
+						PortalBlockmap.Create(bmapwidth, bmapheight);
+						PortalBlockmap.containsLines = true;
+					}
+					block.portallines.Push(ld);
+				}
+			}
+		}
+	}
+}
+
+//===========================================================================
+//
+// FLinePortalTraverse :: AddLineIntercepts.
+//
+// Similar to AddLineIntercepts but checks the portal blockmap for line-to-line portals
+//
+//===========================================================================
+
+class FLinePortalTraverse : public FPathTraverse
+{
+	void AddLineIntercepts(int bx, int by)
+	{
+		FPortalBlock &block = PortalBlockmap(bx, by);
+
+		for (unsigned i = 0; i<block.portallines.Size(); i++)
+		{
+			line_t *ld = block.portallines[i];
+			fixed_t frac;
+			divline_t dl;
+
+			if (P_PointOnDivlineSide (ld->v1->x, ld->v1->y, &trace) ==
+				P_PointOnDivlineSide (ld->v2->x, ld->v2->y, &trace))
+			{
+				continue;		// line isn't crossed
+			}
+			P_MakeDivline (ld, &dl);
+			if (P_PointOnDivlineSide (trace.x, trace.y, &dl) ==
+				P_PointOnDivlineSide (trace.x+trace.dx, trace.y+trace.dy, &dl))
+			{
+				continue;		// line isn't crossed
+			}
+
+			// hit the line
+			P_MakeDivline(ld, &dl);
+			frac = P_InterceptVector(&trace, &dl);
+			if (frac < 0) continue;	// behind source
+
+			intercept_t newintercept;
+
+			newintercept.frac = frac;
+			newintercept.isaline = true;
+			newintercept.done = false;
+			newintercept.d.line = ld;
+			intercepts.Push(newintercept);
+		}
+	}
+
+public:
+	void init(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2)
+	{
+		FPathTraverse::init(x1, y1, x2, y2, PT_ADDLINES|PT_DELTA);
+	}
+
+	FLinePortalTraverse()
+	{
+	}
+};
+
+//============================================================================
+//
+// P_GetOffsetPosition
+//
+// Offsets a given coordinate if the trace from the origin crosses a 
+// line-to-line portal.
+//
+//============================================================================
+
+fixed_xy P_GetOffsetPosition(AActor *actor, fixed_t dx, fixed_t dy)
+{
+	fixed_t actx = actor->x, acty = actor->y;
+	if (PortalBlockmap.containsLines && actor->Sector->PortalGroup != 0)
+	{
+		FLinePortalTraverse pt;
+		bool repeat;
+		do
+		{
+			pt.init(actor->x, actor->y, dx, dy);
+			intercept_t *in;
+
+			repeat = false;
+			while ((in = pt.Next()))
+			{
+				// hit a portal line.
+				line_t *line = in->d.line;
+				FDisplacement &disp = Displacements(line->frontsector->PortalGroup, line->skybox->Sector->PortalGroup);
+
+				// update the fields, end this trace and restart from the new position
+				fixed_t newdx = FixedMul(dx, in->frac);
+				fixed_t newdy = FixedMul(dy, in->frac);
+				actx += newdx + disp.x;
+				acty += newdy + disp.y;
+				dx -= newdx;
+				dy -= newdy;
+				repeat = true;
+				break;
+			}
+		} while (repeat);
+	}
+	fixed_xy xy = { actx + dx, acty + dy };
+	return xy;
+}
+
 
 //============================================================================
 //
@@ -305,7 +445,7 @@ void P_CreateLinkedPortals()
 		P_CheckPortalPlane(&sectors[i], sector_t::floor);
 		P_CheckPortalPlane(&sectors[i], sector_t::ceiling);
 	}
-
+	BuildBlockmap();
 }
 
 CCMD(dumpLinkTable)
@@ -320,4 +460,5 @@ CCMD(dumpLinkTable)
 		Printf("\n");
 	}
 }
+
 

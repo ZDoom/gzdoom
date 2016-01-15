@@ -609,10 +609,16 @@ public:
 
 extern FDropItemPtrArray DropItemList;
 
+struct fixed_xy
+{
+	fixed_t x, y;
+};
+
 void FreeDropItemChain(FDropItem *chain);
 int StoreDropItemChain(FDropItem *chain);
 fixed_t P_AproxDistance (fixed_t dx, fixed_t dy);	// since we cannot include p_local here...
 angle_t R_PointToAngle2 (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2); // same reason here with r_defs.h
+fixed_xy P_GetOffsetPosition(AActor *src, fixed_t dx, fixed_t dy);
 
 
 // Map Object definition.

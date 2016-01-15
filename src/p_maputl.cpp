@@ -1182,7 +1182,7 @@ intercept_t *FPathTraverse::Next()
 //
 //===========================================================================
 
-FPathTraverse::FPathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int flags)
+void FPathTraverse::init (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int flags)
 {
 	fixed_t 	xt1, xt2;
 	fixed_t 	yt1, yt2;

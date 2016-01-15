@@ -1231,7 +1231,7 @@ bool FPolyObj::CheckMobjBlocking (side_t *sd)
 						// Best use the one facing the player and ignore the back side.
 						if (ld->sidedef[1] != NULL)
 						{
-							int side = P_PointOnLineSide(mobj->x, mobj->y, ld);
+							int side = P_PointOnLineSidePrecise(mobj->x, mobj->y, ld);
 							if (ld->sidedef[side] != sd)
 							{
 								continue;

@@ -132,7 +132,7 @@ bool SightCheck::PTR_SightTraverse (intercept_t *in)
 	{
 		int  frontflag;
 		
-		frontflag = P_PointOnLineSide(sightthing->x, sightthing->y, li);
+		frontflag = P_PointOnLineSidePrecise(sightthing->x, sightthing->y, li);
 		
 		//Check 3D FLOORS!
 		for(int i=1;i<=2;i++)
@@ -241,14 +241,14 @@ bool SightCheck::P_SightCheckLine (line_t *ld)
 		return true;
 	}
 	ld->validcount = validcount;
-	if (P_PointOnDivlineSide (ld->v1->x, ld->v1->y, &trace) ==
-		P_PointOnDivlineSide (ld->v2->x, ld->v2->y, &trace))
+	if (P_PointOnDivlineSidePrecise (ld->v1->x, ld->v1->y, &trace) ==
+		P_PointOnDivlineSidePrecise (ld->v2->x, ld->v2->y, &trace))
 	{
 		return true;		// line isn't crossed
 	}
 	P_MakeDivline (ld, &dl);
-	if (P_PointOnDivlineSide (trace.x, trace.y, &dl) ==
-		P_PointOnDivlineSide (trace.x+trace.dx, trace.y+trace.dy, &dl))
+	if (P_PointOnDivlineSidePrecise (trace.x, trace.y, &dl) ==
+		P_PointOnDivlineSidePrecise (trace.x+trace.dx, trace.y+trace.dy, &dl))
 	{
 		return true;		// line isn't crossed
 	}

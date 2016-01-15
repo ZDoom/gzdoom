@@ -1056,13 +1056,13 @@ void FPathTraverse::AddThingIntercepts (int bx, int by, FBlockThingsIterator &it
 					break;
 				}
 				// Check if this side is facing the trace origin
-				if (P_PointOnDivlineSide (trace.x, trace.y, &line) == 0)
+				if (P_PointOnDivlineSidePrecise (trace.x, trace.y, &line) == 0)
 				{
 					numfronts++;
 
 					// If it is, see if the trace crosses it
-					if (P_PointOnDivlineSide (line.x, line.y, &trace) !=
-						P_PointOnDivlineSide (line.x + line.dx, line.y + line.dy, &trace))
+					if (P_PointOnDivlineSidePrecise (line.x, line.y, &trace) !=
+						P_PointOnDivlineSidePrecise (line.x + line.dx, line.y + line.dy, &trace))
 					{
 						// It's a hit
 						fixed_t frac = P_InterceptVector (&trace, &line);

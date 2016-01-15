@@ -445,7 +445,7 @@ struct Channel
 
 struct MinEnvelope
 {
-	int stage;
+	BYTE stage;
 	BYTE bUpdating;
 };
 
@@ -599,7 +599,6 @@ const double log_of_2 = 0.69314718055994529;
 #define freq_to_note(x) (log((x) / 8175.7989473096690661233836992789) * (12.0 / log_of_2))
 
 #define calc_gf1_amp(x)	(pow(2.0,((x)*16.0 - 16.0)))			// Actual GUS equation
-#define cb_to_amp(x)	(pow(10.0, (x) * (1 / -200.0)))			// centibels to amp
 
 /*
 timidity.h

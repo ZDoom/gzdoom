@@ -678,6 +678,9 @@ int LoadDMXGUS()
 	return 0;
 }
 
+DLS_Data *LoadDLS(FILE *src);
+void FreeDLS(DLS_Data *data);
+
 Renderer::Renderer(float sample_rate, const char *args)
 {
 	// 'args' should be used to load a custom config or DMXGUS, but since setup currently requires a snd_reset call, this will need some refactoring first
@@ -701,6 +704,11 @@ Renderer::Renderer(float sample_rate, const char *args)
 	voices = MAX(*midi_voices, 16);
 	voice = new Voice[voices];
 	drumchannels = DEFAULT_DRUMCHANNELS;
+#if 0
+	FILE *f = fopen("c:\\windows\\system32\\drivers\\gm.dls", "rb");
+	patches = LoadDLS(f);
+	fclose(f);
+#endif
 }
 
 Renderer::~Renderer()
@@ -712,6 +720,10 @@ Renderer::~Renderer()
 	if (voice != NULL)
 	{
 		delete[] voice;
+	}
+	if (patches != NULL)
+	{
+		FreeDLS(patches);
 	}
 }
 

@@ -95,6 +95,7 @@ bool	 GLPortal::inskybox;
 UniqueList<GLSkyInfo> UniqueSkies;
 UniqueList<GLHorizonInfo> UniqueHorizons;
 UniqueList<secplane_t> UniquePlaneMirrors;
+UniqueList<GLLineToLineInfo> UniqueLineToLines;
 
 
 
@@ -109,6 +110,7 @@ void GLPortal::BeginScene()
 	UniqueSkies.Clear();
 	UniqueHorizons.Clear();
 	UniquePlaneMirrors.Clear();
+	UniqueLineToLines.Clear();
 }
 
 //==========================================================================
@@ -214,7 +216,7 @@ bool GLPortal::Start(bool usestencil, bool doquery)
 				else if (gl_noquery) doquery = false;
 
 				// If occlusion query is supported let's use it to avoid rendering portals that aren't visible
-				if (!QueryObject) glGenQueries(1, &QueryObject);
+				if (!QueryObject && doquery) glGenQueries(1, &QueryObject);
 				if (QueryObject)
 				{
 					glBeginQuery(GL_SAMPLES_PASSED, QueryObject);
@@ -242,15 +244,18 @@ bool GLPortal::Start(bool usestencil, bool doquery)
 
 				GLuint sampleCount;
 
-				glGetQueryObjectuiv(QueryObject, GL_QUERY_RESULT, &sampleCount);
-
-				if (sampleCount == 0) 	// not visible
+				if (QueryObject)
 				{
-					// restore default stencil op.
-					glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-					glStencilFunc(GL_EQUAL, recursion, ~0);		// draw sky into stencil
-					PortalAll.Unclock();
-					return false;
+					glGetQueryObjectuiv(QueryObject, GL_QUERY_RESULT, &sampleCount);
+
+					if (sampleCount == 0) 	// not visible
+					{
+						// restore default stencil op.
+						glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+						glStencilFunc(GL_EQUAL, recursion, ~0);		// draw sky into stencil
+						PortalAll.Unclock();
+						return false;
+					}
 				}
 				FDrawInfo::StartDrawInfo();
 			}
@@ -288,6 +293,7 @@ bool GLPortal::Start(bool usestencil, bool doquery)
 			glDisable(GL_DEPTH_TEST);
 		}
 	}
+
 	planestack.Push(gl_RenderState.GetClipHeightTop());
 	planestack.Push(gl_RenderState.GetClipHeightBottom());
 	glDisable(GL_CLIP_DISTANCE0);
@@ -959,6 +965,75 @@ int GLMirrorPortal::ClipPoint(fixed_t x, fixed_t y)
 //-----------------------------------------------------------------------------
 //
 //
+// Line to line Portal
+//
+//
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+void GLLineToLinePortal::DrawContents()
+{
+	// TODO: Handle recursion more intelligently
+	if (renderdepth>r_mirror_recursions) 
+	{
+		ClearScreen();
+		return;
+	}
+
+	GLRenderer->mCurrentPortal = this;
+
+	viewx += l2l->xDisplacement;
+	viewy += l2l->yDisplacement;
+	SaveMapSection();
+
+	for (unsigned i = 0; i < lines.Size(); i++)
+	{
+		ASkyViewpoint *pt = lines[i].seg->linedef->skybox;
+		int mapsection = R_PointInSubsector(pt->x, pt->y)->mapsection;
+		currentmapsection[mapsection >> 3] |= 1 << (mapsection & 7);
+	}
+
+	GLRenderer->mViewActor = NULL;
+	validcount++;
+	GLRenderer->SetupView(viewx, viewy, viewz, viewangle, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
+
+	ClearClipper();
+	GLRenderer->DrawScene();
+	RestoreMapSection();
+}
+
+
+int GLLineToLinePortal::ClipSeg(seg_t *seg) 
+{ 
+	line_t *masterline = &::lines[lines[0].seg->linedef->skybox->special2];
+	// this seg is completely behind the portal
+	if (P_PointOnLineSide(seg->v1->x, seg->v1->y, masterline) &&
+		P_PointOnLineSide(seg->v2->x, seg->v2->y, masterline)) 
+	{
+		return PClip_InFront;
+	}
+	return PClip_Inside; 
+}
+
+int GLLineToLinePortal::ClipPoint(fixed_t x, fixed_t y) 
+{ 
+	line_t *masterline = &::lines[lines[0].seg->linedef->skybox->special2];
+	if (P_PointOnLineSide(x, y, masterline)) 
+	{
+		return PClip_InFront;
+	}
+	return PClip_Inside; 
+}
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+//
+//
 // Horizon Portal
 //
 // This simply draws the area in medium sized squares. Drawing it as a whole
@@ -1151,6 +1226,7 @@ const char *GLSkyboxPortal::GetName() { return "Skybox"; }
 const char *GLSectorStackPortal::GetName() { return "Sectorstack"; }
 const char *GLPlaneMirrorPortal::GetName() { return "Planemirror"; }
 const char *GLMirrorPortal::GetName() { return "Mirror"; }
+const char *GLLineToLinePortal::GetName() { return "LineToLine"; }
 const char *GLHorizonPortal::GetName() { return "Horizon"; }
 const char *GLEEHorizonPortal::GetName() { return "EEHorizon"; }
 

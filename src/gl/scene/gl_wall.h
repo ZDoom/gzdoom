@@ -21,6 +21,7 @@ struct GLSkyInfo;
 struct FTexCoordInfo;
 struct FPortal;
 struct FFlatVertex;
+struct GLLineToLineInfo;
 
 
 enum WallTypes
@@ -42,6 +43,7 @@ enum WallTypes
 	RENDERWALL_COLOR,
 	RENDERWALL_FFBLOCK,
 	RENDERWALL_COLORLAYER,
+	RENDERWALL_LINETOLINE,
 	// Insert new types at the end!
 };
 
@@ -145,6 +147,7 @@ public:
 		GLHorizonInfo * horizon;	// for horizon information
 		FPortal * portal;			// stacked sector portals
 		secplane_t * planemirror;	// for plane mirrors
+		GLLineToLineInfo *l2l;		// line-to-line portals
 	};
 
 

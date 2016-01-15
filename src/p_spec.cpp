@@ -1083,6 +1083,9 @@ void P_SpawnPortal(line_t *line, int sectortag, int plane, int alpha, int linked
 			}
 			else
 			{
+				// link each portal object to the other line.
+				reference->special2 = i;
+				anchor->special2 = int(line - lines);
 				line->skybox = reference;
 				lines[i].skybox = anchor;
 			}

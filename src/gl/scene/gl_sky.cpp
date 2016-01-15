@@ -46,6 +46,7 @@
 #include "r_utility.h"
 #include "doomdata.h"
 #include "p_portals.h"
+#include "p_local.h"
 #include "gl/gl_functions.h"
 
 #include "gl/data/gl_data.h"
@@ -54,6 +55,7 @@
 #include "gl/scene/gl_portal.h"
 #include "gl/textures/gl_material.h"
 #include "gl/utility/gl_convert.h"
+#include "gl/scene/gl_clipper.h"
 
 CVAR(Bool,gl_noskyboxes, false, 0)
 extern int skyfog;
@@ -130,6 +132,21 @@ void GLSkyInfo::init(int sky1, PalEntry FadeColor)
 
 }
 
+
+void GLLineToLineInfo::init(line_t *line)
+{
+	static const divline_t divlx = { 0, 0, 128 * FRACUNIT, 0 };
+	static const divline_t divly = { 0, 0, 0, 128 * FRACUNIT };
+	xDisplacement = line->skybox->scaleX;
+	yDisplacement = line->skybox->scaleY;
+	angle = R_PointToAnglePrecise(line->v1->x, line->v1->y, line->v2->x, line->v2->y);
+
+	divline_t divl;
+	P_MakeDivline(line, &divl);
+	x0 = P_InterceptVector(&divlx, &divl);
+	y0 = P_InterceptVector(&divly, &divl);
+}
+
 //==========================================================================
 //
 //  Calculate sky texture for ceiling or floor
@@ -192,11 +209,18 @@ void GLWall::SkyLine(sector_t *fs, line_t *line)
 {
 	ASkyViewpoint * skyboxx = line->skybox;
 	GLSkyInfo skyinfo;
+	GLLineToLineInfo llinfo;
 
 	// JUSTHIT is used as an indicator that a skybox is in use.
 	// This is to avoid recursion
 
-	if (!gl_noskyboxes && skyboxx && GLRenderer->mViewActor != skyboxx && !(skyboxx->flags&MF_JUSTHIT))
+	if (skyboxx->special1 == SKYBOX_LINKEDPORTAL)
+	{
+		type = RENDERWALL_LINETOLINE;
+		llinfo.init(line);
+		l2l = UniqueLineToLines.Get(&llinfo);
+	}
+	else if (!gl_noskyboxes && skyboxx && GLRenderer->mViewActor != skyboxx && !(skyboxx->flags&MF_JUSTHIT))
 	{
 		type = RENDERWALL_SKYBOX;
 		skybox = skyboxx;

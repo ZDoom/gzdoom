@@ -56,6 +56,7 @@ FPortalBlockmap PortalBlockmap;
 static void BuildBlockmap()
 {
 	PortalBlockmap.Clear();
+	PortalBlockmap.Create(bmapwidth, bmapheight);
 	for (int y = 0; y < bmapheight; y++)
 	{
 		for (int x = 0; x < bmapwidth; x++)
@@ -70,17 +71,13 @@ static void BuildBlockmap()
 
 				if (ld->skybox && ld->skybox->special1 == SKYBOX_LINKEDPORTAL)
 				{
-					if (PortalBlockmap.dx == 0)
-					{
-						// only create it if there's some actual content
-						PortalBlockmap.Create(bmapwidth, bmapheight);
-						PortalBlockmap.containsLines = true;
-					}
+					PortalBlockmap.containsLines = true;
 					block.portallines.Push(ld);
 				}
 			}
 		}
 	}
+	if (!PortalBlockmap.containsLines) PortalBlockmap.Clear();
 }
 
 //===========================================================================
@@ -342,7 +339,7 @@ void P_CreateLinkedPortals()
 			if (mo->Mate != NULL)
 			{
 				orgs.Push(mo);
-				mo->special2 = ++id;
+				mo->reactiontime = ++id;
 			}
 			else
 			{

@@ -380,7 +380,6 @@ class FPathTraverse
 	divline_t trace;
 	unsigned int intercept_index;
 	unsigned int intercept_count;
-	fixed_t maxfrac;
 	unsigned int count;
 
 	void AddLineIntercepts(int bx, int by);

@@ -1284,7 +1284,7 @@ void P_ExplodeMissile (AActor *mo, line_t *line, AActor *target)
 
 	if (line != NULL && cl_missiledecals)
 	{
-		int side = P_PointOnLineSide (mo->x, mo->y, line);
+		int side = P_PointOnLineSidePrecise (mo->x, mo->y, line);
 		if (line->sidedef[side] == NULL)
 			side ^= 1;
 		if (line->sidedef[side] != NULL)

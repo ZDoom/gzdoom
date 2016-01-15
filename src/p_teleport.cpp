@@ -530,7 +530,7 @@ bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id, INTBO
 			int fudge = FUDGEFACTOR;
 
 			// Make sure we are on correct side of exit linedef.
-			while (P_PointOnLineSide(x, y, l) != side && --fudge >= 0)
+			while (P_PointOnLineSidePrecise(x, y, l) != side && --fudge >= 0)
 			{
 				if (abs(l->dx) > abs(l->dy))
 					y -= (l->dx < 0) != side ? -1 : 1;

@@ -1863,6 +1863,10 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 	line_t* 	ld;
 	sector_t*	oldsec = thing->Sector;	// [RH] for sector actions
 	sector_t*	newsec;
+	fixed_t xdelta = 0;
+	fixed_t ydelta = 0;
+	fixed_xy newxy;
+	bool portaldone = false;
 
 	tm.floatok = false;
 	oldz = thing->z;
@@ -1870,7 +1874,9 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 	{
 		thing->z = onfloor->ZatPoint(x, y);
 	}
+
 	thing->flags6 |= MF6_INTRYMOVE;
+repeatit:
 	if (!P_CheckPosition(thing, x, y, tm))
 	{
 		AActor *BlockingMobj = thing->BlockingMobj;
@@ -1900,6 +1906,24 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 			thing->z = oldz;
 			thing->flags6 &= ~MF6_INTRYMOVE;
 			return false;
+		}
+	}
+
+	if (!portaldone)
+	{
+		// Check if this crosses a line-to-line portal
+		newxy = P_GetOffsetPosition(thing, x - thing->x, y - thing->y);
+		if (newxy.x != x || newxy.y != y)
+		{
+			xdelta = newxy.x - x;
+			ydelta = newxy.y - y;
+
+			x = newxy.x;
+			y = newxy.y;
+			portaldone = true;
+
+			// Do a P_CheckPosition at the new location as well.
+			goto repeatit;
 		}
 	}
 
@@ -2108,6 +2132,8 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 	thing->ceilingsector = tm.ceilingsector;
 	thing->x = x;
 	thing->y = y;
+	thing->PrevX += xdelta;
+	thing->PrevY += ydelta;
 
 	thing->LinkToWorld();
 

@@ -100,22 +100,24 @@ class FLinePortalTraverse : public FPathTraverse
 			fixed_t frac;
 			divline_t dl;
 
+			if (ld->validcount == validcount) continue;	// already processed
+
 			if (P_PointOnDivlineSidePrecise (ld->v1->x, ld->v1->y, &trace) ==
 				P_PointOnDivlineSidePrecise (ld->v2->x, ld->v2->y, &trace))
 			{
 				continue;		// line isn't crossed
 			}
 			P_MakeDivline (ld, &dl);
-			if (P_PointOnDivlineSidePrecise (trace.x, trace.y, &dl) ==
-				P_PointOnDivlineSidePrecise (trace.x+trace.dx, trace.y+trace.dy, &dl))
+			if (P_PointOnDivlineSidePrecise (trace.x, trace.y, &dl) != 0 ||
+				P_PointOnDivlineSidePrecise (trace.x+trace.dx, trace.y+trace.dy, &dl) != 1)
 			{
-				continue;		// line isn't crossed
+				continue;		// line isn't crossed from the front side
 			}
 
 			// hit the line
 			P_MakeDivline(ld, &dl);
 			frac = P_InterceptVector(&trace, &dl);
-			if (frac < 0) continue;	// behind source
+			if (frac < 0 || frac > FRACUNIT) continue;	// behind source
 
 			intercept_t newintercept;
 
@@ -149,14 +151,15 @@ public:
 
 fixed_xy P_GetOffsetPosition(AActor *actor, fixed_t dx, fixed_t dy)
 {
-	fixed_t actx = actor->x, acty = actor->y;
+	fixed_xy dest = { actor->x + dx, actor->y + dy };
 	if (PortalBlockmap.containsLines && actor->Sector->PortalGroup != 0)
 	{
+		fixed_t actx = actor->x, acty = actor->y;
 		FLinePortalTraverse pt;
 		bool repeat;
 		do
 		{
-			pt.init(actor->x, actor->y, dx, dy);
+			pt.init(actx, acty, dx, dy);
 			intercept_t *in;
 
 			repeat = false;
@@ -173,13 +176,15 @@ fixed_xy P_GetOffsetPosition(AActor *actor, fixed_t dx, fixed_t dy)
 				acty += newdy + disp.y;
 				dx -= newdx;
 				dy -= newdy;
+				dest.x += disp.x;
+				dest.y += disp.y;
 				repeat = true;
+
 				break;
 			}
 		} while (repeat);
 	}
-	fixed_xy xy = { actx + dx, acty + dy };
-	return xy;
+	return dest;
 }
 
 

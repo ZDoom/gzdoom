@@ -545,7 +545,7 @@ inline fixed_t secfriction(const sector_t *sec, int plane = sector_t::floor)
 
 inline fixed_t secmovefac(const sector_t *sec, int plane = sector_t::floor)
 {
-	if (sec->Flags & SECF_FRICTION) return sec->friction;
+	if (sec->Flags & SECF_FRICTION) return sec->movefactor;
 	fixed_t movefactor = Terrains[sec->GetTerrain(plane)].MoveFactor;
 	return movefactor != 0 ? movefactor : ORIG_FRICTION_FACTOR;
 }

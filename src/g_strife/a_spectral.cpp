@@ -95,7 +95,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Tracer2)
 		return;
 
 	// change angle
-	exact = R_PointToAngle2 (self->x, self->y, dest->x, dest->y);
+	exact = self->AngleTo(dest);
 
 	if (exact != self->angle)
 	{
@@ -120,8 +120,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Tracer2)
 	if (!(self->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER)))
 	{
 		// change slope
-		dist = P_AproxDistance (dest->x - self->x, dest->y - self->y);
-		dist /= self->Speed;
+		dist = self->AproxDistance (dest) / self->Speed;
 
 		if (dist < 1)
 		{

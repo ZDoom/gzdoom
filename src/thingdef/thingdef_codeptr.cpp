@@ -3023,18 +3023,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Respawn)
 	if (flags & RSF_TELEFRAG)
 	{
 		// [KS] DIE DIE DIE DIE erm *ahem* =)
-		oktorespawn = P_TeleportMove(self, self->x, self->y, self->z, true);
-		if (oktorespawn)
-		{ // Need to do this over again, since P_TeleportMove() will redo
-		  // it with the proper point-on-side calculation.
-			self->UnlinkFromWorld();
-			self->LinkToWorld(true);
-			sector_t *sec = self->Sector;
-			self->dropoffz =
-			self->floorz = sec->floorplane.ZatPoint(self->x, self->y);
-			self->ceilingz = sec->ceilingplane.ZatPoint(self->x, self->y);
-			P_FindFloorCeiling(self, FFCF_ONLYSPAWNPOS);
-		}
+		oktorespawn = P_TeleportMove(self, self->x, self->y, self->z, true, false);
 	}
 	else
 	{

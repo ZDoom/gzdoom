@@ -1954,11 +1954,14 @@ bool FBehavior::Init(int lumpnum, FileReader * fr, int len)
 			int arraynum = MapVarStore[LittleLong(chunk[2])];
 			if ((unsigned)arraynum < (unsigned)NumArrays)
 			{
-				int initsize = MIN<int> (ArrayStore[arraynum].ArraySize, (LittleLong(chunk[1])-4)/4);
+				// Use unsigned iterator here to avoid issue with GCC 4.9/5.x
+				// optimizer. Might be some undefined behavior in this code,
+				// but I don't know what it is.
+				unsigned int initsize = MIN<unsigned int> (ArrayStore[arraynum].ArraySize, (LittleLong(chunk[1])-4)/4);
 				SDWORD *elems = ArrayStore[arraynum].Elements;
-				for (i = 0; i < initsize; ++i)
+				for (unsigned int j = 0; j < initsize; ++j)
 				{
-					elems[i] = LittleLong(chunk[3+i]);
+					elems[j] = LittleLong(chunk[3+j]);
 				}
 			}
 			chunk = (DWORD *)NextChunk((BYTE *)chunk);

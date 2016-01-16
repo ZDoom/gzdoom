@@ -985,7 +985,7 @@ void FPathTraverse::AddLineIntercepts(int bx, int by)
 		P_MakeDivline (ld, &dl);
 		frac = P_InterceptVector (&trace, &dl);
 
-		if (frac < 0 || frac > 1) continue;	// behind source or beyond end point
+		if (frac < 0 || frac > FRACUNIT) continue;	// behind source or beyond end point
 			
 		intercept_t newintercept;
 

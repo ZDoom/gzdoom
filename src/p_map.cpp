@@ -377,7 +377,7 @@ void P_FindFloorCeiling(AActor *actor, int flags)
 //
 //==========================================================================
 
-bool P_TeleportMove(AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefrag)
+bool P_TeleportMove(AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefrag, bool modifyactor)
 {
 	FCheckPosition tmf;
 	sector_t *oldsec = thing->Sector;
@@ -456,37 +456,40 @@ bool P_TeleportMove(AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefra
 		return false;
 	}
 
-	// the move is ok, so link the thing into its new position
-	thing->SetOrigin(x, y, z);
-	thing->floorz = tmf.floorz;
-	thing->ceilingz = tmf.ceilingz;
-	thing->floorsector = tmf.floorsector;
-	thing->floorpic = tmf.floorpic;
-	thing->floorterrain = tmf.floorterrain;
-	thing->ceilingsector = tmf.ceilingsector;
-	thing->ceilingpic = tmf.ceilingpic;
-	thing->dropoffz = tmf.dropoffz;        // killough 11/98
-	thing->BlockingLine = NULL;
-
-	if (thing->flags2 & MF2_FLOORCLIP)
+	if (modifyactor)
 	{
-		thing->AdjustFloorClip();
-	}
+		// the move is ok, so link the thing into its new position
+		thing->SetOrigin(x, y, z);
+		thing->floorz = tmf.floorz;
+		thing->ceilingz = tmf.ceilingz;
+		thing->floorsector = tmf.floorsector;
+		thing->floorpic = tmf.floorpic;
+		thing->floorterrain = tmf.floorterrain;
+		thing->ceilingsector = tmf.ceilingsector;
+		thing->ceilingpic = tmf.ceilingpic;
+		thing->dropoffz = tmf.dropoffz;        // killough 11/98
+		thing->BlockingLine = NULL;
 
-	if (thing == players[consoleplayer].camera)
-	{
-		R_ResetViewInterpolation();
-	}
+		if (thing->flags2 & MF2_FLOORCLIP)
+		{
+			thing->AdjustFloorClip();
+		}
 
-	thing->PrevX = x;
-	thing->PrevY = y;
-	thing->PrevZ = z;
+		if (thing == players[consoleplayer].camera)
+		{
+			R_ResetViewInterpolation();
+		}
 
-	// If this teleport was caused by a move, P_TryMove() will handle the
-	// sector transition messages better than we can here.
-	if (!(thing->flags6 & MF6_INTRYMOVE))
-	{
-		thing->CheckSectorTransition(oldsec);
+		thing->PrevX = x;
+		thing->PrevY = y;
+		thing->PrevZ = z;
+
+		// If this teleport was caused by a move, P_TryMove() will handle the
+		// sector transition messages better than we can here.
+		if (!(thing->flags6 & MF6_INTRYMOVE))
+		{
+			thing->CheckSectorTransition(oldsec);
+		}
 	}
 
 	return true;

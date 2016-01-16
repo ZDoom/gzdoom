@@ -546,7 +546,7 @@ inline fixed_t secfriction(const sector_t *sec, int plane = sector_t::floor)
 
 inline fixed_t secmovefac(const sector_t *sec, int plane = sector_t::floor)
 {
-	if (sec->Flags & SECF_FRICTION) return sec->friction;
+	if (sec->Flags & SECF_FRICTION) return sec->movefactor;
 	fixed_t movefactor = Terrains[sec->GetTerrain(plane)].MoveFactor;
 	return movefactor != 0 ? movefactor : ORIG_FRICTION_FACTOR;
 }
@@ -4297,6 +4297,14 @@ void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, i
 		else
 			SpawnShootDecal(source, trace);
 
+	}
+	if (trace.HitType == TRACE_HitFloor || trace.HitType == TRACE_HitCeiling)
+	{
+		AActor* puff = NULL;
+		if (puffclass != NULL && puffDefaults->flags3 & MF3_ALWAYSPUFF)
+		{
+			puff = P_SpawnPuff(source, puffclass, trace.X, trace.Y, trace.Z, (source->angle + angleoffset) - ANG90, 1, 0);
+		}
 	}
 	if (thepuff != NULL)
 	{

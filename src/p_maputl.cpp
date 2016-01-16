@@ -985,7 +985,7 @@ void FPathTraverse::AddLineIntercepts(int bx, int by)
 		P_MakeDivline (ld, &dl);
 		frac = P_InterceptVector (&trace, &dl);
 
-		if (frac < 0) continue;	// behind source
+		if (frac < 0 || frac > 1) continue;	// behind source or beyond end point
 			
 		intercept_t newintercept;
 
@@ -1170,7 +1170,7 @@ intercept_t *FPathTraverse::Next()
 		}
 	}
 	
-	if (dist > maxfrac || in == NULL) return NULL;	// checked everything in range			
+	if (dist > FRACUNIT || in == NULL) return NULL;	// checked everything in range			
 	in->done = true;
 	return in;
 }
@@ -1388,7 +1388,6 @@ void FPathTraverse::init (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int fl
 			break;
 		}
 	}
-	maxfrac = FRACUNIT;
 }
 
 FPathTraverse::~FPathTraverse()

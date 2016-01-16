@@ -1088,6 +1088,10 @@ void P_SpawnPortal(line_t *line, int sectortag, int plane, int alpha, int linked
 				anchor->special2 = int(line - lines);
 				line->skybox = reference;
 				lines[i].skybox = anchor;
+
+				// link the backsector to the portal so that anything getting in there can be moved out
+				if (line->backsector) line->backsector->LineToLineTeleport = line;
+				if (lines[i].backsector) lines[i].backsector->LineToLineTeleport = &lines[i];
 			}
 			return;
 		}

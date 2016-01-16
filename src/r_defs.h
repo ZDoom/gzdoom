@@ -853,6 +853,7 @@ struct sector_t
 	// regular sky.
 	TObjPtr<ASkyViewpoint> SkyBoxes[2];
 	int PortalGroup;
+	line_t *LineToLineTeleport;		// this is set for the back sector of a line-to-line teleport so to simplify handling of things that get behind the portal
 
 	int							sectornum;			// for comparing sector copies
 

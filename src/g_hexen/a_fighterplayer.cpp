@@ -30,7 +30,7 @@ void AdjustPlayerAngle (AActor *pmo, AActor *linetarget)
 	angle_t angle;
 	int difference;
 
-	angle = R_PointToAngle2 (pmo->x, pmo->y, linetarget->x, linetarget->y);
+	angle = pmo->AngleTo(linetarget);
 	difference = (int)angle - (int)pmo->angle;
 	if (abs(difference) > MAX_ANGLE_ADJUST)
 	{

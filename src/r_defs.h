@@ -248,6 +248,11 @@ struct secplane_t
 		return FixedMul (ic, -d - DMulScale16 (a, v->x, b, v->y));
 	}
 
+	fixed_t ZatPoint (const AActor *ac) const
+	{
+		return FixedMul (ic, -d - DMulScale16 (a, ac->X(), b, ac->Y()));
+	}
+
 	// Returns the value of z at (x,y) if d is equal to dist
 	fixed_t ZatPointDist (fixed_t x, fixed_t y, fixed_t dist) const
 	{
@@ -346,7 +351,7 @@ enum
 	SECF_DRAWN			= 128,	// sector has been drawn at least once
 	SECF_HIDDEN			= 256,	// Do not draw on textured automap
 	SECF_NOFLOORSKYBOX	= 512,	// force use of regular sky 
-	SECF_NOCEILINGSKYBOX	= 1024,	// force use of regular sky 
+	SECF_NOCEILINGSKYBOX	= 1024,	// force use of regular sky (do not separate from NOFLOORSKYBOX!!!)
 };
 
 enum
@@ -355,6 +360,20 @@ enum
 	SECF_NOFALLINGDAMAGE= 2,	// No falling damage in this sector
 	SECF_FLOORDROP		= 4,	// all actors standing on this floor will remain on it when it lowers very fast.
 	SECF_NORESPAWN		= 8,	// players can not respawn in this sector
+	SECF_FRICTION		= 16,	// sector has friction enabled
+	SECF_PUSH			= 32,	// pushers enabled
+	SECF_SILENTMOVE		= 64,	// Sector movement makes mo sound (Eternity got this so this may be useful for an extended cross-port standard.) 
+	SECF_DMGTERRAINFX	= 128,	// spawns terrain splash when inflicting damage
+	SECF_ENDGODMODE		= 256,	// getting damaged by this sector ends god mode
+	SECF_ENDLEVEL		= 512,	// ends level when health goes below 10
+	SECF_HAZARD			= 1024,	// Change to Strife's delayed damage handling.
+
+	SECF_WASSECRET		= 1 << 30,	// a secret that was discovered
+	SECF_SECRET			= 1 << 31,	// a secret sector
+
+	SECF_DAMAGEFLAGS = SECF_ENDGODMODE|SECF_ENDLEVEL|SECF_DMGTERRAINFX|SECF_HAZARD,
+	SECF_NOMODIFY = SECF_SECRET|SECF_WASSECRET,	// not modifiable by Sector_ChangeFlags
+	SECF_SPECIALFLAGS = SECF_DAMAGEFLAGS|SECF_FRICTION|SECF_PUSH,	// these flags originate from 'special and must be transferrable by floor thinkers
 };
 
 enum
@@ -426,6 +445,23 @@ struct FTransform
 	// base values
 	fixed_t base_angle, base_yoffs;
 };
+
+struct secspecial_t
+{
+	FNameNoInit damagetype;		// [RH] Means-of-death for applied damage
+	int damageamount;			// [RH] Damage to do while standing on floor
+	short special;
+	short damageinterval;	// Interval for damage application
+	short leakydamage;		// chance of leaking through radiation suit
+	int Flags;
+
+	void Clear()
+	{
+		memset(this, 0, sizeof(*this));
+	}
+};
+
+FArchive &operator<< (FArchive &arc, secspecial_t &p);
 
 struct sector_t
 {
@@ -642,7 +678,37 @@ struct sector_t
 		return pos == floor? floorplane:ceilingplane;
 	}
 
+	bool isSecret() const
+	{
+		return !!(Flags & SECF_SECRET);
+	}
 
+	bool wasSecret() const
+	{
+		return !!(Flags & SECF_WASSECRET);
+	}
+
+	void ClearSecret()
+	{
+		Flags &= ~SECF_SECRET;
+	}
+
+	void ClearSpecial()
+	{
+		// clears all variables that originate from 'special'. Used for sector type transferring thinkers
+		special = 0;
+		damageamount = 0;
+		damageinterval = 0;
+		damagetype = NAME_None;
+		leakydamage = 0;
+		Flags &= ~SECF_SPECIALFLAGS;
+	}
+
+	int GetTerrain(int pos) const;
+
+	void TransferSpecial(sector_t *model);
+	void GetSpecial(secspecial_t *spec);
+	void SetSpecial(const secspecial_t *spec);
 	bool PlaneMoving(int pos);
 
 
@@ -674,6 +740,8 @@ struct sector_t
 	// these fields used to be in AActor, but presented performance problems
 	// when processed as mobj properties. Fix is to make them sector properties.
 	fixed_t		friction, movefactor;
+
+	int			terrainnum[2];
 
 	// thinker_t for reversable actions
 	TObjPtr<DSectorEffect> floordata;			// jff 2/22/98 make thinkers on
@@ -709,9 +777,11 @@ struct sector_t
 	// thinglist is a subset of touching_thinglist
 	struct msecnode_t *touching_thinglist;				// phares 3/14/98
 
-	float gravity;		// [RH] Sector gravity (1.0 is normal)
-	short damage;		// [RH] Damage to do while standing on floor
-	short mod;			// [RH] Means-of-death for applied damage
+	float gravity;			// [RH] Sector gravity (1.0 is normal)
+	FNameNoInit damagetype;		// [RH] Means-of-death for applied damage
+	int damageamount;			// [RH] Damage to do while standing on floor
+	short damageinterval;	// Interval for damage application
+	short leakydamage;		// chance of leaking through radiation suit
 
 	WORD ZoneNumber;	// [RH] Zone this sector belongs to
 	WORD MoreFlags;		// [RH] Internal sector flags
@@ -725,9 +795,8 @@ struct sector_t
 
 	// [RH] The sky box to render for this sector. NULL means use a
 	// regular sky.
-	TObjPtr<ASkyViewpoint> FloorSkyBox, CeilingSkyBox;
+	TObjPtr<ASkyViewpoint> SkyBoxes[2];
 
-	short						secretsector;		//jff 2/16/98 remembers if sector WAS secret (automap)
 	int							sectornum;			// for comparing sector copies
 
 	extsector_t	*				e;		// This stores data that requires construction/destruction. Such data must not be copied by R_FakeFlat.

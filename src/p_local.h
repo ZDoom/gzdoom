@@ -253,6 +253,12 @@ inline int P_PointOnLineSide (fixed_t x, fixed_t y, const line_t *line)
 		: DMulScale32 (y-line->v1->y, line->dx, line->v1->x-x, line->dy) > 0;
 }
 
+inline int P_PointOnLineSidePrecise (fixed_t x, fixed_t y, const line_t *line)
+{
+	return DMulScale32 (y-line->v1->y, line->dx, line->v1->x-x, line->dy) > 0;
+}
+
+
 //==========================================================================
 //
 // P_PointOnDivlineSide
@@ -270,6 +276,12 @@ inline int P_PointOnDivlineSide (fixed_t x, fixed_t y, const divline_t *line)
 		? P_VanillaPointOnDivlineSide(x, y, line)
 		: (DMulScale32 (y-line->y, line->dx, line->x-x, line->dy) > 0);
 }
+
+inline int P_PointOnDivlineSidePrecise (fixed_t x, fixed_t y, const divline_t *line)
+{
+	return DMulScale32 (y-line->y, line->dx, line->x-x, line->dy) > 0;
+}
+
 
 //==========================================================================
 //
@@ -297,6 +309,7 @@ struct FLineOpening
 	sector_t		*topsec;
 	FTextureID		ceilingpic;
 	FTextureID		floorpic;
+	int				floorterrain;
 	bool			touchmidtex;
 	bool			abovemidtex;
 };
@@ -371,7 +384,6 @@ class FPathTraverse
 	divline_t trace;
 	unsigned int intercept_index;
 	unsigned int intercept_count;
-	fixed_t maxfrac;
 	unsigned int count;
 
 	void AddLineIntercepts(int bx, int by);
@@ -412,6 +424,7 @@ struct FCheckPosition
 	fixed_t			ceilingz;
 	fixed_t			dropoffz;
 	FTextureID		floorpic;
+	int				floorterrain;
 	sector_t		*floorsector;
 	FTextureID		ceilingpic;
 	sector_t		*ceilingsector;
@@ -455,7 +468,7 @@ bool	P_TryMove (AActor* thing, fixed_t x, fixed_t y, int dropoff, const secplane
 bool	P_TryMove (AActor* thing, fixed_t x, fixed_t y, int dropoff, const secplane_t * onfloor = NULL);
 bool	P_CheckMove(AActor *thing, fixed_t x, fixed_t y);
 void	P_ApplyTorque(AActor *mo);
-bool	P_TeleportMove (AActor* thing, fixed_t x, fixed_t y, fixed_t z, bool telefrag);	// [RH] Added z and telefrag parameters
+bool	P_TeleportMove (AActor* thing, fixed_t x, fixed_t y, fixed_t z, bool telefrag, bool modifyactor = true);	// [RH] Added z and telefrag parameters
 void	P_PlayerStartStomp (AActor *actor);		// [RH] Stomp on things for a newly spawned player
 void	P_SlideMove (AActor* mo, fixed_t tryx, fixed_t tryy, int numsteps);
 bool	P_BounceWall (AActor *mo);
@@ -512,7 +525,7 @@ void	P_TraceBleed (int damage, AActor *target, angle_t angle, int pitch);
 void	P_TraceBleed (int damage, AActor *target, AActor *missile);		// missile version
 void	P_TraceBleed (int damage, AActor *target);		// random direction version
 bool	P_HitFloor (AActor *thing);
-bool	P_HitWater (AActor *thing, sector_t *sec, fixed_t splashx = FIXED_MIN, fixed_t splashy = FIXED_MIN, fixed_t splashz=FIXED_MIN, bool checkabove = false, bool alert = true);
+bool	P_HitWater (AActor *thing, sector_t *sec, fixed_t splashx = FIXED_MIN, fixed_t splashy = FIXED_MIN, fixed_t splashz=FIXED_MIN, bool checkabove = false, bool alert = true, bool force = false);
 void	P_CheckSplash(AActor *self, fixed_t distance);
 void	P_RailAttack (AActor *source, int damage, int offset_xy, fixed_t offset_z = 0, int color1 = 0, int color2 = 0, double maxdiff = 0, int flags = 0, PClassActor *puff = NULL, angle_t angleoffset = 0, angle_t pitchoffset = 0, fixed_t distance = 8192*FRACUNIT, int duration = 0, double sparsity = 1.0, double drift = 1.0, PClassActor *spawnclass = NULL, int SpiralOffset = 270);	// [RH] Shoot a railgun
 

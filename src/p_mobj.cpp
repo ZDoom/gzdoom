@@ -276,6 +276,10 @@ void AActor::Serialize (FArchive &arc)
 		arc << dmg;
 		Damage = UncalcDamageValue(dmg, GetDefault()->Damage);
 	}
+	if (SaveVersion >= 4530)
+	{
+		P_SerializeTerrain(arc, floorterrain);
+	}
 	if (SaveVersion >= 3227)
 	{
 		arc << projectileKickback;
@@ -1375,7 +1379,7 @@ void P_ExplodeMissile (AActor *mo, line_t *line, AActor *target)
 
 	if (line != NULL && cl_missiledecals)
 	{
-		int side = P_PointOnLineSide (mo->x, mo->y, line);
+		int side = P_PointOnLineSidePrecise (mo->x, mo->y, line);
 		if (line->sidedef[side] == NULL)
 			side ^= 1;
 		if (line->sidedef[side] != NULL)
@@ -1647,7 +1651,7 @@ int P_FaceMobj (AActor *source, AActor *target, angle_t *delta)
 	angle_t angle2;
 
 	angle1 = source->angle;
-	angle2 = R_PointToAngle2 (source->x, source->y, target->x, target->y);
+	angle2 = source->AngleTo(target);
 	if (angle2 > angle1)
 	{
 		diff = angle2 - angle1;
@@ -1760,8 +1764,7 @@ bool P_SeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax, bool preci
 			if (actor->z + actor->height < target->z ||
 				target->z + target->height < actor->z)
 			{ // Need to seek vertically
-				dist = P_AproxDistance (target->x - actor->x, target->y - actor->y);
-				dist = dist / speed;
+				dist = actor->AproxDistance (target) / speed;
 				if (dist < 1)
 				{
 					dist = 1;
@@ -2111,7 +2114,7 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 					// Don't change the angle if there's THRUREFLECT on the monster.
 					if (!(BlockingMobj->flags7 & MF7_THRUREFLECT))
 					{
-						angle = R_PointToAngle2(BlockingMobj->x, BlockingMobj->y, mo->x, mo->y);
+						angle = BlockingMobj->AngleTo(mo);
 						bool dontReflect = (mo->AdjustReflectionAngle(BlockingMobj, angle));
 						// Change angle for deflection/reflection
 
@@ -2169,7 +2172,7 @@ explode:
 					if (tm.ceilingline &&
 						tm.ceilingline->backsector &&
 						tm.ceilingline->backsector->GetTexture(sector_t::ceiling) == skyflatnum &&
-						mo->z >= tm.ceilingline->backsector->ceilingplane.ZatPoint (mo->x, mo->y))
+						mo->z >= tm.ceilingline->backsector->ceilingplane.ZatPoint(mo))
 					{
 						// Hack to prevent missiles exploding against the sky.
 						// Does not handle sky floors.
@@ -2253,7 +2256,7 @@ explode:
 	{ // Don't stop sliding if halfway off a step with some velocity
 		if (mo->velx > FRACUNIT/4 || mo->velx < -FRACUNIT/4 || mo->vely > FRACUNIT/4 || mo->vely < -FRACUNIT/4)
 		{
-			if (mo->floorz > mo->Sector->floorplane.ZatPoint (mo->x, mo->y))
+			if (mo->floorz > mo->Sector->floorplane.ZatPoint(mo))
 			{
 				if (mo->dropoffz != mo->floorz) // 3DMidtex or other special cases that must be excluded
 				{
@@ -2471,7 +2474,7 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 	{	// float down towards target if too close
 		if (!(mo->flags & (MF_SKULLFLY | MF_INFLOAT)))
 		{
-			dist = P_AproxDistance (mo->x - mo->target->x, mo->y - mo->target->y);
+			dist = mo->AproxDistance (mo->target);
 			delta = (mo->target->z + (mo->height>>1)) - mo->z;
 			if (delta < 0 && dist < -(delta*3))
 				mo->z -= mo->FloatSpeed;
@@ -2499,7 +2502,7 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 	{	// Hit the floor
 		if ((!mo->player || !(mo->player->cheats & CF_PREDICTING)) &&
 			mo->Sector->SecActTarget != NULL &&
-			mo->Sector->floorplane.ZatPoint (mo->x, mo->y) == mo->floorz)
+			mo->Sector->floorplane.ZatPoint(mo) == mo->floorz)
 		{ // [RH] Let the sector do something to the actor
 			mo->Sector->SecActTarget->TriggerAction (mo, SECSPAC_HitFloor);
 		}
@@ -2601,7 +2604,7 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 	{ // hit the ceiling
 		if ((!mo->player || !(mo->player->cheats & CF_PREDICTING)) &&
 			mo->Sector->SecActTarget != NULL &&
-			mo->Sector->ceilingplane.ZatPoint (mo->x, mo->y) == mo->ceilingz)
+			mo->Sector->ceilingplane.ZatPoint(mo) == mo->ceilingz)
 		{ // [RH] Let the sector do something to the actor
 			mo->Sector->SecActTarget->TriggerAction (mo, SECSPAC_HitCeiling);
 		}
@@ -2656,7 +2659,7 @@ void P_CheckFakeFloorTriggers (AActor *mo, fixed_t oldz, bool oldz_has_viewheigh
 	if (sec->heightsec != NULL && sec->SecActTarget != NULL)
 	{
 		sector_t *hs = sec->heightsec;
-		fixed_t waterz = hs->floorplane.ZatPoint (mo->x, mo->y);
+		fixed_t waterz = hs->floorplane.ZatPoint(mo);
 		fixed_t newz;
 		fixed_t viewheight;
 
@@ -2691,7 +2694,7 @@ void P_CheckFakeFloorTriggers (AActor *mo, fixed_t oldz, bool oldz_has_viewheigh
 
 		if (!(hs->MoreFlags & SECF_FAKEFLOORONLY))
 		{
-			waterz = hs->ceilingplane.ZatPoint (mo->x, mo->y);
+			waterz = hs->ceilingplane.ZatPoint(mo);
 			if (oldz <= waterz && newz > waterz)
 			{ // View went above fake ceiling
 				sec->SecActTarget->TriggerAction (mo, SECSPAC_EyesAboveC);
@@ -3193,8 +3196,7 @@ bool AActor::IsOkayToAttack (AActor *link)
 		// to only allow the check to succeed if the enemy was in a ~84� FOV of the player
 		if (flags3 & MF3_SCREENSEEKER)
 		{
-			angle_t angle = R_PointToAngle2(Friend->x, 
-				Friend->y, link->x, link->y) - Friend->angle;
+			angle_t angle = Friend->AngleTo(link) - Friend->angle;
 			angle >>= 24;
 			if (angle>226 || angle<30)
 			{
@@ -3496,7 +3498,7 @@ void AActor::Tick ()
 					if (health > 0
 						&& !players[i].Bot->enemy
 						&& player ? !IsTeammate (players[i].mo) : true
-						&& P_AproxDistance (players[i].mo->x-x, players[i].mo->y-y) < MAX_MONSTER_TARGET_DIST
+						&& AproxDistance (players[i].mo) < MAX_MONSTER_TARGET_DIST
 						&& P_CheckSight (players[i].mo, this, SF_SEEPASTBLOCKEVERYTHING))
 					{ //Probably a monster, so go kill it.
 						players[i].Bot->enemy = this;
@@ -3560,7 +3562,7 @@ void AActor::Tick ()
 
 				if (player != NULL)
 				{
-					int scrolltype = sec->special & 0xff;
+					int scrolltype = sec->special;
 
 					if (scrolltype >= Scroll_North_Slow &&
 						scrolltype <= Scroll_SouthWest_Fast)
@@ -4139,6 +4141,7 @@ AActor *AActor::StaticSpawn (PClassActor *type, fixed_t ix, fixed_t iy, fixed_t 
 		{
 			actor->floorsector = actor->Sector;
 			actor->floorpic = actor->floorsector->GetTexture(sector_t::floor);
+			actor->floorterrain = actor->floorsector->GetTerrain(sector_t::floor);
 			actor->ceilingsector = actor->Sector;
 			actor->ceilingpic = actor->ceilingsector->GetTexture(sector_t::ceiling);
 		}
@@ -4150,6 +4153,7 @@ AActor *AActor::StaticSpawn (PClassActor *type, fixed_t ix, fixed_t iy, fixed_t 
 	else
 	{
 		actor->floorpic = actor->Sector->GetTexture(sector_t::floor);
+		actor->floorterrain = actor->Sector->GetTerrain(sector_t::floor);
 		actor->floorsector = actor->Sector;
 		actor->ceilingpic = actor->Sector->GetTexture(sector_t::ceiling);
 		actor->ceilingsector = actor->Sector;
@@ -4447,7 +4451,7 @@ void AActor::AdjustFloorClip ()
 		sector_t *hsec = m->m_sector->GetHeightSec();
 		if (hsec == NULL && m->m_sector->floorplane.ZatPoint (x, y) == z)
 		{
-			fixed_t clip = Terrains[TerrainTypes[m->m_sector->GetTexture(sector_t::floor)]].FootClip;
+			fixed_t clip = Terrains[m->m_sector->GetTerrain(sector_t::floor)].FootClip;
 			if (clip < shallowestclip)
 			{
 				shallowestclip = clip;
@@ -4532,7 +4536,7 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 		( gameaction != ga_worlddone ) &&
 		( p->mo != NULL ) && 
 		( !(p->mo->Sector->Flags & SECF_NORESPAWN) ) &&
-		( (p->mo->Sector->special & 255) != Damage_InstantDeath ))
+		( p->mo->Sector->damageamount < TELEFRAG_DAMAGE ))	// this really should be a bit smarter...
 	{
 		spawn_x = p->mo->x;
 		spawn_y = p->mo->y;
@@ -4782,10 +4786,10 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	}
 
 	// copy args to mapthing so that we have them in one place for the rest of this function	
-	if (mentry->ArgsDefined)
+	if (mentry->ArgsDefined > 0)
 	{
 		if (mentry->Type!= NULL) mthing->special = mentry->Special;
-		memcpy(mthing->args, mentry->Args, sizeof(mthing->args));
+		memcpy(mthing->args, mentry->Args, sizeof(mthing->args[0]) * mentry->ArgsDefined);
 	}
 
 	int pnum = -1;
@@ -5139,7 +5143,7 @@ AActor *P_SpawnPuff (AActor *source, PClassActor *pufftype, fixed_t x, fixed_t y
 		puff->target = source;
 	
 
-	if (source != NULL) puff->angle = R_PointToAngle2(x, y, source->x, source->y);
+	if (source != NULL) puff->angle = puff->AngleTo(source);
 
 	// If a puff has a crash state and an actor was not hit,
 	// it will enter the crash state. This is used by the StrifeSpark
@@ -5413,13 +5417,13 @@ void P_RipperBlood (AActor *mo, AActor *bleeder)
 
 int P_GetThingFloorType (AActor *thing)
 {
-	if (thing->floorpic.isValid())
+	if (thing->floorterrain >= 0)
 	{		
-		return TerrainTypes[thing->floorpic];
+		return thing->floorterrain;
 	}
 	else
 	{
-		return TerrainTypes[thing->Sector->GetTexture(sector_t::floor)];
+		return thing->Sector->GetTerrain(sector_t::floor);
 	}
 }
 
@@ -5430,7 +5434,7 @@ int P_GetThingFloorType (AActor *thing)
 // Returns true if hit liquid and splashed, false if not.
 //---------------------------------------------------------------------------
 
-bool P_HitWater (AActor * thing, sector_t * sec, fixed_t x, fixed_t y, fixed_t z, bool checkabove, bool alert)
+bool P_HitWater (AActor * thing, sector_t * sec, fixed_t x, fixed_t y, fixed_t z, bool checkabove, bool alert, bool force)
 {
 	if (thing->flags3 & MF3_DONTSPLASH)
 		return false;
@@ -5472,30 +5476,34 @@ bool P_HitWater (AActor * thing, sector_t * sec, fixed_t x, fixed_t y, fixed_t z
 	}
 #endif
 
-	for(unsigned int i=0;i<sec->e->XFloor.ffloors.Size();i++)
-	{		
+	// 'force' means, we want this sector's terrain, no matter what.
+	if (!force)
+	{
+		for (unsigned int i = 0; i<sec->e->XFloor.ffloors.Size(); i++)
+		{
 		F3DFloor * rover = sec->e->XFloor.ffloors[i];
 		if (!(rover->flags & FF_EXISTS)) continue;
 		fixed_t planez = rover->top.plane->ZatPoint(x, y);
-		if (z > planez - FRACUNIT/2 && z < planez + FRACUNIT/2)	// allow minor imprecisions
+			if (z > planez - FRACUNIT / 2 && z < planez + FRACUNIT / 2)	// allow minor imprecisions
 		{
-			if (rover->flags & (FF_SOLID|FF_SWIMMABLE) )
+				if (rover->flags & (FF_SOLID | FF_SWIMMABLE))
 			{
-				terrainnum = TerrainTypes[*rover->top.texture];
+					terrainnum = rover->model->GetTerrain(rover->top.isceiling);
 				goto foundone;
 			}
 		}
 		planez = rover->bottom.plane->ZatPoint(x, y);
 		if (planez < z && !(planez < thing->floorz)) return false;
 	}
+	}
 	hsec = sec->GetHeightSec();
-	if (hsec == NULL || !(hsec->MoreFlags & SECF_CLIPFAKEPLANES))
+	if (force || hsec == NULL || !(hsec->MoreFlags & SECF_CLIPFAKEPLANES))
 	{
-		terrainnum = TerrainTypes[sec->GetTexture(sector_t::floor)];
+		terrainnum = sec->GetTerrain(sector_t::floor);
 	}
 	else
 	{
-		terrainnum = TerrainTypes[hsec->GetTexture(sector_t::floor)];
+		terrainnum = hsec->GetTerrain(sector_t::floor);
 	}
 foundone:
 
@@ -5513,7 +5521,7 @@ foundone:
 
 	// Don't splash for living things with small vertical velocities.
 	// There are levels where the constant splashing from the monsters gets extremely annoying
-	if ((thing->flags3&MF3_ISMONSTER || thing->player) && thing->velz >= -6*FRACUNIT)
+	if (((thing->flags3&MF3_ISMONSTER || thing->player) && thing->velz >= -6*FRACUNIT) && !force)
 		return Terrains[terrainnum].IsLiquid;
 
 	splash = &Splashes[splashnum];
@@ -5595,7 +5603,7 @@ bool P_HitFloor (AActor *thing)
 	// don't splash if landing on the edge above water/lava/etc....
 	for (m = thing->touching_sectorlist; m; m = m->m_tnext)
 	{
-		if (thing->z == m->m_sector->floorplane.ZatPoint (thing->x, thing->y))
+		if (thing->z == m->m_sector->floorplane.ZatPoint(thing))
 		{
 			break;
 		}
@@ -5607,7 +5615,7 @@ bool P_HitFloor (AActor *thing)
 			if (!(rover->flags & FF_EXISTS)) continue;
 			if (rover->flags & (FF_SOLID|FF_SWIMMABLE))
 			{
-				if (rover->top.plane->ZatPoint(thing->x, thing->y) == thing->z)
+				if (rover->top.plane->ZatPoint(thing) == thing->z)
 				{
 					return P_HitWater (thing, m->m_sector);
 				}
@@ -5884,12 +5892,12 @@ AActor *P_OldSpawnMissile(AActor *source, AActor *owner, AActor *dest, PClassAct
 	P_PlaySpawnSound(th, source);
 	th->target = owner;		// record missile's originator
 
-	th->angle = an = R_PointToAngle2 (source->x, source->y, dest->x, dest->y);
+	th->angle = an = source->AngleTo(dest);
 	an >>= ANGLETOFINESHIFT;
 	th->velx = FixedMul (th->Speed, finecosine[an]);
 	th->vely = FixedMul (th->Speed, finesine[an]);
 
-	dist = P_AproxDistance (dest->x - source->x, dest->y - source->y);
+	dist = source->AproxDistance (dest);
 	if (th->Speed) dist = dist / th->Speed;
 
 	if (dist < 1)
@@ -5950,7 +5958,7 @@ AActor *P_SpawnMissileZAimed (AActor *source, fixed_t z, AActor *dest, PClassAct
 	{
 		an += pr_spawnmissile.Random2() << 20;
 	}
-	dist = P_AproxDistance (dest->x - source->x, dest->y - source->y);
+	dist = source->AproxDistance (dest);
 	speed = GetDefaultSpeed (type);
 	dist /= speed;
 	velz = dist != 0 ? (dest->z - source->z)/dist : speed;

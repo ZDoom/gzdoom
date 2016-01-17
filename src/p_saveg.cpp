@@ -52,6 +52,7 @@
 #include "farchive.h"
 #include "p_lnspec.h"
 #include "p_acs.h"
+#include "p_terrain.h"
 
 static void CopyPlayer (player_t *dst, player_t *src, const char *name);
 static void ReadOnePlayer (FArchive &arc, bool skipload);
@@ -354,7 +355,7 @@ void P_SerializeWorld (FArchive &arc)
 			short tag;
 			arc << tag;
 		}
-		arc	<< sec->soundtraversed
+		arc << sec->soundtraversed
 			<< sec->seqType
 			<< sec->friction
 			<< sec->movefactor
@@ -368,18 +369,66 @@ void P_SerializeWorld (FArchive &arc)
 			<< sec->planes[sector_t::ceiling]
 			<< sec->heightsec
 			<< sec->bottommap << sec->midmap << sec->topmap
-			<< sec->gravity
-			<< sec->damage
-			<< sec->mod
-			<< sec->SoundTarget
+			<< sec->gravity;
+		if (SaveVersion >= 4530)
+		{
+			P_SerializeTerrain(arc, sec->terrainnum[0]);
+			P_SerializeTerrain(arc, sec->terrainnum[1]);
+		}
+		if (SaveVersion >= 4529)
+		{
+			arc << sec->damageamount;
+		}
+		else
+		{
+			short dmg;
+			arc << dmg;
+			sec->damageamount = dmg;
+		}
+		if (SaveVersion >= 4528)
+		{
+			arc << sec->damageinterval
+				<< sec->leakydamage
+				<< sec->damagetype;
+		}
+		else
+		{
+			short damagemod;
+			arc << damagemod;
+			sec->damagetype = MODtoDamageType(damagemod);
+			if (sec->damageamount < 20)
+			{
+				sec->leakydamage = 0;
+				sec->damageinterval = 32;
+			}
+			else if (sec->damageamount < 50)
+			{
+				sec->leakydamage = 5;
+				sec->damageinterval = 32;
+			}
+			else
+			{
+				sec->leakydamage = 256;
+				sec->damageinterval = 1;
+			}
+		}
+
+		arc << sec->SoundTarget
 			<< sec->SecActTarget
 			<< sec->sky
 			<< sec->MoreFlags
 			<< sec->Flags
-			<< sec->FloorSkyBox << sec->CeilingSkyBox
-			<< sec->ZoneNumber
-			<< sec->secretsector
-			<< sec->interpolations[0]
+			<< sec->SkyBoxes[sector_t::floor] << sec->SkyBoxes[sector_t::ceiling]
+			<< sec->ZoneNumber;
+		if (SaveVersion < 4529)
+		{
+			short secretsector;
+			arc << secretsector;
+			if (secretsector) sec->Flags |= SECF_WASSECRET;
+			sec->special &= ~(SECRET_MASK|FRICTION_MASK|PUSH_MASK);
+			P_InitSectorSpecial(sec, sec->special, true);
+		}
+		arc	<< sec->interpolations[0]
 			<< sec->interpolations[1]
 			<< sec->interpolations[2]
 			<< sec->interpolations[3]

@@ -942,7 +942,7 @@ static void PrintFilteredActorList(const ActorTypeChecker IsActorType, const cha
 		{
 			Printf ("%s at (%d,%d,%d)\n",
 				mo->GetClass()->TypeName.GetChars(),
-				mo->x >> FRACBITS, mo->y >> FRACBITS, mo->z >> FRACBITS);
+				mo->X() >> FRACBITS, mo->Y() >> FRACBITS, mo->Z() >> FRACBITS);
 		}
 	}
 }
@@ -1082,7 +1082,7 @@ CCMD(currentpos)
 {
 	AActor *mo = players[consoleplayer].mo;
 	Printf("Current player position: (%1.3f,%1.3f,%1.3f), angle: %1.3f, floorheight: %1.3f, sector:%d, lightlevel: %d\n",
-		FIXED2FLOAT(mo->x), FIXED2FLOAT(mo->y), FIXED2FLOAT(mo->z), mo->angle/float(ANGLE_1), FIXED2FLOAT(mo->floorz), mo->Sector->sectornum, mo->Sector->lightlevel);
+		FIXED2FLOAT(mo->X()), FIXED2FLOAT(mo->Y()), FIXED2FLOAT(mo->Z()), mo->angle/float(ANGLE_1), FIXED2FLOAT(mo->floorz), mo->Sector->sectornum, mo->Sector->lightlevel);
 }
 
 //-----------------------------------------------------------------------------
@@ -1132,11 +1132,8 @@ static void PrintSecretString(const char *string, bool thislevel)
 				if (*string == ';') string++;
 				if (thislevel && secnum >= 0 && secnum < numsectors)
 				{
-					if (sectors[secnum].secretsector)
-					{
-						if ((sectors[secnum].special & SECRET_MASK)) colstr = TEXTCOLOR_RED;
-						else colstr = TEXTCOLOR_GREEN;
-					}
+					if (sectors[secnum].isSecret()) colstr = TEXTCOLOR_RED;
+					else if (sectors[secnum].wasSecret()) colstr = TEXTCOLOR_GREEN;
 					else colstr = TEXTCOLOR_ORANGE;
 				}
 			}

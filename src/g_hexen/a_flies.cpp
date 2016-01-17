@@ -84,7 +84,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FlyBuzz)
 		return 0;
 	}
 
-	angle_t ang = R_PointToAngle2(self->x, self->y, targ->x, targ->y);
+	angle_t ang = self->AngleTo(targ);
 	self->angle = ang;
 	self->args[0]++;
 	ang >>= ANGLETOFINESHIFT;

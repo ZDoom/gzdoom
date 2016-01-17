@@ -170,7 +170,7 @@ define Unsupported (0)
 384 = 0,	Static_Init(0, 3, 0, 10) // "Attach_MirrorCeilingToControl"
 
 // Attach tagged portal to front sector
-385 = 0, 	Sector_SetPortal(0, 1, 2, tag) // "Apply_PortalToFrontsector"
+385 = 0, 	Sector_SetPortal(0, 1, 3, tag) // "Apply_PortalToFrontsector"
 
 // Slopes!
 386 = 0,	Plane_Align (1, 0)	// "Slope_FrontsectorFloor"

@@ -116,36 +116,24 @@ struct _note {
 	unsigned char velocity;
 	struct _patch *patch;
 	struct _sample *sample;
-	unsigned long int sample_pos;
-	unsigned long int sample_inc;
-	signed long int env_inc;
+	unsigned int sample_pos;
+	unsigned int sample_inc;
+	signed int env_inc;
 	unsigned char env;
-	signed long int env_level;
+	signed int env_level;
 	unsigned char modes;
 	unsigned char hold;
 	unsigned char active;
 	struct _note *replay;
 	struct _note *next;
-	unsigned long int vol_lvl;
+	unsigned int left_mix_volume;
+	unsigned int right_mix_volume;
 	unsigned char is_off;
-};
-
-struct _miditrack {
-	unsigned long int length;
-	unsigned long int ptr;
-	unsigned long int delta;
-	unsigned char running_event;
-	unsigned char EOT;
-};
-
-struct _mdi_patches {
-	struct _patch *patch;
-	struct _mdi_patch *next;
 };
 
 struct _event_data {
 	unsigned char channel;
-	unsigned long int data;
+	unsigned int data;
 };
 
 struct _mdi {
@@ -286,30 +274,70 @@ static signed short int lin_volume[] = { 0, 8, 16, 24, 32, 40, 48, 56, 64, 72,
 		878, 886, 894, 903, 911, 919, 927, 935, 943, 951, 959, 967, 975, 983,
 		991, 999, 1007, 1015, 1024 };
 
-/* f: pow(( VOLUME / 127.0 ), 2.0 ) * 1024.0 */
-static signed short int sqr_volume[] = { 0, 0, 0, 0, 1, 1, 2, 3, 4, 5, 6, 7, 9,
-		10, 12, 14, 16, 18, 20, 22, 25, 27, 30, 33, 36, 39, 42, 46, 49, 53, 57,
-		61, 65, 69, 73, 77, 82, 86, 91, 96, 101, 106, 111, 117, 122, 128, 134,
-		140, 146, 152, 158, 165, 171, 178, 185, 192, 199, 206, 213, 221, 228,
-		236, 244, 251, 260, 268, 276, 284, 293, 302, 311, 320, 329, 338, 347,
-		357, 366, 376, 386, 396, 406, 416, 426, 437, 447, 458, 469, 480, 491,
-		502, 514, 525, 537, 549, 560, 572, 585, 597, 609, 622, 634, 647, 660,
-		673, 686, 699, 713, 726, 740, 754, 768, 782, 796, 810, 825, 839, 854,
-		869, 884, 899, 914, 929, 944, 960, 976, 992, 1007, 1024 };
+/* f: As per midi 2 standard */
+static float dBm_volume[] = { -999999.999999f, -84.15214884f, -72.11094901f,
+	-65.06729865f, -60.06974919f, -56.19334866f, -53.02609882f, -50.34822724f,
+	-48.02854936f, -45.98244846f, -44.15214884f, -42.49644143f, -40.984899f,
+	-39.59441475f, -38.30702741f, -37.10849848f, -35.98734953f, -34.93419198f,
+	-33.94124863f, -33.0020048f, -32.11094901f, -31.26337705f, -30.45524161f,
+	-29.6830354f, -28.94369917f, -28.23454849f, -27.55321492f, -26.89759827f,
+	-26.26582758f, -25.65622892f, -25.06729865f, -24.49768108f, -23.94614971f,
+	-23.41159124f, -22.89299216f, -22.38942706f, -21.90004881f, -21.42407988f,
+	-20.96080497f, -20.50956456f, -20.06974919f, -19.64079457f, -19.22217722f,
+	-18.81341062f, -18.41404178f, -18.02364829f, -17.64183557f, -17.26823452f,
+	-16.90249934f, -16.54430564f, -16.19334866f, -15.84934179f, -15.51201509f,
+	-15.18111405f, -14.85639845f, -14.53764126f, -14.22462776f, -13.91715461f,
+	-13.6150291f, -13.31806837f, -13.02609882f, -12.73895544f, -12.45648126f,
+	-12.17852686f, -11.90494988f, -11.63561457f, -11.37039142f, -11.10915673f,
+	-10.85179233f, -10.59818521f, -10.34822724f, -10.10181489f, -9.858848981f,
+	-9.619234433f, -9.382880049f, -9.149698303f, -8.919605147f, -8.692519831f,
+	-8.468364731f, -8.247065187f, -8.028549359f, -7.812748083f, -7.599594743f,
+	-7.389025143f, -7.180977396f, -6.97539181f, -6.772210788f, -6.571378733f,
+	-6.372841952f, -6.176548572f, -5.982448461f, -5.790493145f, -5.600635744f,
+	-5.412830896f, -5.227034694f, -5.043204627f, -4.861299517f, -4.681279468f,
+	-4.503105811f, -4.326741054f, -4.152148838f, -3.979293887f, -3.808141968f,
+	-3.63865985f, -3.470815266f, -3.304576875f, -3.139914228f, -2.976797731f,
+	-2.815198619f, -2.655088921f, -2.496441432f, -2.339229687f, -2.183427931f,
+	-2.029011099f, -1.875954785f, -1.724235224f, -1.573829269f, -1.424714368f,
+	-1.276868546f, -1.130270383f, -0.9848989963f, -0.8407340256f, -0.6977556112f,
+	-0.5559443807f, -0.4152814317f, -0.2757483179f, -0.1373270335f, 0 };
 
-/* f: pow(( VOLUME / 127.0 ), 0.5 ) * 1024.0 */
-static signed short int pan_volume[] = { 0, 90, 128, 157, 181, 203, 222, 240,
-		257, 272, 287, 301, 314, 327, 339, 351, 363, 374, 385, 396, 406, 416,
-		426, 435, 445, 454, 463, 472, 480, 489, 497, 505, 514, 521, 529, 537,
-		545, 552, 560, 567, 574, 581, 588, 595, 602, 609, 616, 622, 629, 636,
-		642, 648, 655, 661, 667, 673, 679, 686, 692, 697, 703, 709, 715, 721,
-		726, 732, 738, 743, 749, 754, 760, 765, 771, 776, 781, 786, 792, 797,
-		802, 807, 812, 817, 822, 827, 832, 837, 842, 847, 852, 857, 862, 866,
-		871, 876, 880, 885, 890, 894, 899, 904, 908, 913, 917, 922, 926, 931,
-		935, 939, 944, 948, 953, 957, 961, 965, 970, 974, 978, 982, 987, 991,
-		995, 999, 1003, 1007, 1011, 1015, 1019, 1024 };
+/* f: As per midi 2 standard */
+static float dBm_pan_volume[127] = {
+	-999999.999999f, -87.6945020928f, -73.8331126923f, -65.7264009888f,
+	-59.9763864074f, -55.5181788833f, -51.8774481743f, -48.8011722841f,
+	-46.1383198371f, -43.7914727130f, -41.6941147218f, -39.7988027954f,
+	-38.0705069530f, -36.4826252703f, -35.0144798827f, -33.6496789707f,
+	-32.3750084716f, -31.1796603753f, -30.0546819321f, -28.9925739783f,
+	-27.9869924122f, -27.0325225804f, -26.1245061976f, -25.2589067713f,
+	-24.4322036893f, -23.6413079424f, -22.8834943857f, -22.1563467917f,
+	-21.4577129008f, -20.7856673630f, -20.1384809653f, -19.5145949062f,
+	-18.9125991563f, -18.3312141503f, -17.7692752119f, -17.2257192381f,
+	-16.6995732597f, -16.1899445690f, -15.6960121652f, -15.2170193110f,
+	-14.7522670314f, -14.3011084168f, -13.8629436112f, -13.4372153915f,
+	-13.0234052546f, -12.6210299451f, -12.2296383638f, -11.8488088095f,
+	-11.4781465116f, -11.1172814164f, -10.7658661983f, -10.4235744668f,
+	-10.0900991491f, -9.7651510261f, -9.4484574055f, -9.1397609172f,
+	-8.8388184168f, -8.5453999868f, -8.2592880250f, -7.9802764101f,
+	-7.7081697387f, -7.4427826248f, -7.1839390567f, -6.9314718056f,
+	-6.6852218807f, -6.4450380272f, -6.2107762624f, -5.9822994468f,
+	-5.7594768878f, -5.5421839719f, -5.3303018237f, -5.1237169899f,
+	-4.9223211445f, -4.7260108155f, -4.5346871303f, -4.3482555779f,
+	-4.1666257875f, -3.9897113219f, -3.8174294843f, -3.6497011373f,
+	-3.4864505345f, -3.3276051620f, -3.1730955900f, -3.0228553340f,
+	-2.8768207245f, -2.7349307844f, -2.5971271143f, -2.4633537845f,
+	-2.3335572335f, -2.2076861725f, -2.0856914960f, -1.9675261968f,
+	-1.8531452871f, -1.7425057233f, -1.6355663356f, -1.5322877618f,
+	-1.4326323846f, -1.3365642732f, -1.2440491272f, -1.1550542250f,
+	-1.0695483746f, -0.9875018671f, -0.9088864335f, -0.8336752037f,
+	-0.7618426682f, -0.6933646420f, -0.6282182304f, -0.5663817981f,
+	-0.5078349388f, -0.4525584478f, -0.4005342959f, -0.3517456058f,
+	-0.3061766293f, -0.2638127266f, -0.2246403475f, -0.1886470134f,
+	-0.1558213016f, -0.1261528303f, -0.0996322457f, -0.0762512098f,
+	-0.0560023899f, -0.0388794497f, -0.0248770409f, -0.0139907967f,
+	-0.0062173263f, -0.0015542108f, 0.0000000000f };
 
-static unsigned long int freq_table[] = { 837201792, 837685632, 838169728,
+static unsigned int freq_table[] = { 837201792, 837685632, 838169728,
 		838653568, 839138240, 839623232, 840108480, 840593984, 841079680,
 		841565184, 842051648, 842538240, 843025152, 843512320, 843999232,
 		844486976, 844975040, 845463360, 845951936, 846440320, 846929536,
@@ -573,7 +601,7 @@ static inline int wm_isdigit(int c) {
 #define TOKEN_CNT_INC 8
 static char** WM_LC_Tokenize_Line(char *line_data) 
 {
-	int line_length = strlen(line_data);
+	int line_length = (int)strlen(line_data);
 	int token_data_length = 0;
 	int line_ofs = 0;
 	int token_start = 0;
@@ -1191,7 +1219,6 @@ static int load_sample(struct _patch *sample_patch) {
 					samp_max = tmp_sample->data[i];
 				if (tmp_sample->data[i] < samp_min)
 					samp_min = tmp_sample->data[i];
-
 			}
 			if (samp_max > tmp_max)
 				tmp_max = samp_max;
@@ -1386,46 +1413,120 @@ get_sample_data(struct _patch *sample_patch, unsigned long int freq) {
 	return return_sample;
 }
 
+/* Should be called in any function that effects note volumes */
+void _WM_AdjustNoteVolumes(struct _mdi *mdi, unsigned char ch, struct _note *nte) {
+    double premix_dBm;
+    double premix_lin;
+	int pan_ofs;
+    double premix_dBm_left;
+    double premix_dBm_right;
+    double premix_left;
+    double premix_right;
+    double volume_adj;
+    unsigned vol_ofs;
+
+    /*
+     Pointless CPU heating checks to shoosh up a compiler
+     */
+    if (ch > 0x0f) ch = 0x0f;
+
+    pan_ofs = mdi->channel[ch].balance + mdi->channel[ch].pan - 64;
+
+    vol_ofs = (nte->velocity * ((mdi->channel[ch].expression * mdi->channel[ch].volume) / 127)) / 127;
+
+    /*
+     This value is to reduce the chance of clipping.
+     Higher value means lower overall volume,
+     Lower value means higher overall volume.
+     NOTE: The lower the value the higher the chance of clipping.
+     FIXME: Still needs tuning. Clipping heard at a value of 3.75
+     */
+#define VOL_DIVISOR 4.0
+    volume_adj = ((float)WM_MasterVolume / 1024.0) / VOL_DIVISOR;
+
+	// Pan 0 and 1 are both hard left so 64 can be centered
+    if (pan_ofs > 127) pan_ofs = 127;
+	if (--pan_ofs < 0) pan_ofs = 0;
+    premix_dBm_left = dBm_pan_volume[126-pan_ofs];
+    premix_dBm_right = dBm_pan_volume[pan_ofs];
+
+    if (mdi->info.mixer_options & WM_MO_LOG_VOLUME) {
+        premix_dBm = dBm_volume[vol_ofs];
+
+        premix_dBm_left += premix_dBm;
+        premix_dBm_right += premix_dBm;
+
+        premix_left = (pow(10.0,(premix_dBm_left / 20.0))) * volume_adj;
+        premix_right = (pow(10.0,(premix_dBm_right / 20.0))) * volume_adj;
+    } else {
+        premix_lin = (float)(lin_volume[vol_ofs]) / 1024.0;
+
+        premix_left = premix_lin * pow(10.0, (premix_dBm_left / 20)) * volume_adj;
+        premix_right = premix_lin * pow(10.0, (premix_dBm_right / 20)) * volume_adj;
+    }
+    nte->left_mix_volume = (int)(premix_left * 1024.0);
+    nte->right_mix_volume = (int)(premix_right * 1024.0);
+}
+
+/* Should be called in any function that effects channel volumes */
+/* Calling this function with a value > 15 will make it adjust notes on all channels */
+void _WM_AdjustChannelVolumes(struct _mdi *mdi, unsigned char ch) {
+    struct _note *nte = mdi->note;
+    if (nte != NULL) {
+        do {
+            if (ch <= 15) {
+                if ((nte->noteid >> 8) == ch) {
+                    goto _DO_ADJUST;
+                }
+            } else {
+            _DO_ADJUST:
+                _WM_AdjustNoteVolumes(mdi, ch, nte);
+                if (nte->replay) _WM_AdjustNoteVolumes(mdi, ch, nte->replay);
+            }
+            nte = nte->next;
+        } while (nte != NULL);
+    }
+}
+
 static void do_note_off_extra(struct _note *nte) {
 
 	nte->is_off = 0;
 
-	if (nte->hold) {
-		nte->hold |= HOLD_OFF;
-	} else {
-		if (!(nte->modes & SAMPLE_ENVELOPE)) {
-			if (nte->modes & SAMPLE_LOOP) {
-				nte->modes ^= SAMPLE_LOOP;
-			}
-			nte->env_inc = 0;
 
-		} else if (nte->modes & SAMPLE_CLAMPED) {
-			if (nte->env < 5) {
-				nte->env = 5;
-				if (nte->env_level > nte->sample->env_target[5]) {
-					nte->env_inc = -nte->sample->env_rate[5];
-				} else {
-					nte->env_inc = nte->sample->env_rate[5];
-				}
-			}
-#if 1
-		} else if (nte->modes & SAMPLE_SUSTAIN) {
-			if (nte->env < 3) {
-				nte->env = 3;
-				if (nte->env_level > nte->sample->env_target[3]) {
-					nte->env_inc = -nte->sample->env_rate[3];
-				} else {
-					nte->env_inc = nte->sample->env_rate[3];
-				}
-			}
-#endif
-		} else if (nte->env < 4) {
-			nte->env = 4;
-			if (nte->env_level > nte->sample->env_target[4]) {
-				nte->env_inc = -nte->sample->env_rate[4];
+	if (!(nte->modes & SAMPLE_ENVELOPE)) {
+		if (nte->modes & SAMPLE_LOOP) {
+			nte->modes ^= SAMPLE_LOOP;
+		}
+		nte->env_inc = 0;
+
+	} else if (nte->hold) {
+		nte->hold |= HOLD_OFF;
+
+	} else if (nte->modes & SAMPLE_SUSTAIN) {
+		if (nte->env < 3) {
+			nte->env = 3;
+			if (nte->env_level > nte->sample->env_target[3]) {
+				nte->env_inc = -nte->sample->env_rate[3];
 			} else {
-				nte->env_inc = nte->sample->env_rate[4];
+				nte->env_inc = nte->sample->env_rate[3];
 			}
+		}
+
+	} else if (nte->modes & SAMPLE_CLAMPED) {
+		if (nte->env < 5) {
+			nte->env = 5;
+			if (nte->env_level > nte->sample->env_target[5]) {
+				nte->env_inc = -nte->sample->env_rate[5];
+			} else {
+				nte->env_inc = nte->sample->env_rate[5];
+			}
+		}
+	} else if (nte->env < 4) {
+		nte->env = 4;
+		if (nte->env_level > nte->sample->env_target[4]) {
+			nte->env_inc = -nte->sample->env_rate[4];
+		} else {
+			nte->env_inc = nte->sample->env_rate[4];
 		}
 	}
 }
@@ -1447,7 +1548,10 @@ static void do_note_off(struct _mdi *mdi, struct _event_data *data) {
 		return;
 	}
 
-	if (nte->env == 0) {
+	if ((nte->modes & SAMPLE_ENVELOPE) && (nte->env == 0)) {
+		// This is a fix for notes that end before the
+		// initial step of the envelope has completed
+		// making it impossible to hear them at times.
 		nte->is_off = 1;
 	} else {
 		do_note_off_extra(nte);
@@ -1475,24 +1579,6 @@ static inline unsigned long int get_inc(struct _mdi *mdi, struct _note *nte) {
 			/ nte->sample->inc_div));
 }
 
-static inline unsigned long int get_volume(struct _mdi *mdi, unsigned char ch,
-		struct _note *nte) {
-	signed long int volume;
-
-	if (mdi->info.mixer_options & WM_MO_LOG_VOLUME) {
-		volume = (sqr_volume[mdi->channel[ch].volume]
-				* sqr_volume[mdi->channel[ch].expression]
-				* sqr_volume[nte->velocity]) / 1048576;
-	} else {
-		volume = (lin_volume[mdi->channel[ch].volume]
-				* lin_volume[mdi->channel[ch].expression]
-				* lin_volume[nte->velocity]) / 1048576;
-	}
-
-	volume = volume * nte->patch->amp / 100;
-	return (volume);
-}
-
 static void do_note_on(struct _mdi *mdi, struct _event_data *data) {
 	struct _note *nte;
 	struct _note *prev_nte;
@@ -1502,7 +1588,7 @@ static void do_note_on(struct _mdi *mdi, struct _event_data *data) {
 	struct _sample *sample;
 	unsigned char ch = data->channel;
 	unsigned char note = (unsigned char)(data->data >> 8);
-	unsigned char velocity = (data->data & 0xFF);
+	unsigned char velocity = (unsigned char)(data->data & 0xFF);
 
 	if (velocity == 0x00) {
 		do_note_off(mdi, data);
@@ -1580,9 +1666,9 @@ static void do_note_on(struct _mdi *mdi, struct _event_data *data) {
 	nte->env_level = 0;
 	nte->modes = sample->modes;
 	nte->hold = mdi->channel[ch].hold;
-	nte->vol_lvl = get_volume(mdi, ch, nte);
 	nte->replay = NULL;
 	nte->is_off = 0;
+	_WM_AdjustNoteVolumes(mdi, ch, nte);
 }
 
 static void do_aftertouch(struct _mdi *mdi, struct _event_data *data) {
@@ -1599,38 +1685,12 @@ static void do_aftertouch(struct _mdi *mdi, struct _event_data *data) {
 		}
 	}
 
-	nte->velocity = data->data & 0xff;
-	nte->vol_lvl = get_volume(mdi, ch, nte);
-
+	nte->velocity = (unsigned char)data->data;
+	_WM_AdjustNoteVolumes(mdi, ch, nte);
 	if (nte->replay) {
-		nte->replay->velocity = data->data & 0xff;
-		nte->replay->vol_lvl = get_volume(mdi, ch, nte->replay);
+		nte->replay->velocity = (unsigned char)data->data;
+		_WM_AdjustNoteVolumes(mdi, ch, nte->replay);
 	}
-}
-
-static void do_pan_adjust(struct _mdi *mdi, unsigned char ch) {
-	signed short int pan_adjust = mdi->channel[ch].balance
-			+ mdi->channel[ch].pan;
-	signed short int left, right;
-	int amp = 32;
-
-	if (pan_adjust > 63) {
-		pan_adjust = 63;
-	} else if (pan_adjust < -64) {
-		pan_adjust = -64;
-	}
-
-	pan_adjust += 64;
-/*	if (mdi->info.mixer_options & WM_MO_LOG_VOLUME) {*/
-	left = (pan_volume[127 - pan_adjust] * WM_MasterVolume * amp) / 1048576;
-	right = (pan_volume[pan_adjust] * WM_MasterVolume * amp) / 1048576;
-/*	} else {
-	left = (lin_volume[127 - pan_adjust] * WM_MasterVolume * amp) / 1048576;
-	right= (lin_volume[pan_adjust] * WM_MasterVolume * amp) / 1048576;
-	}*/
-
-	mdi->channel[ch].left_adjust = left;
-	mdi->channel[ch].right_adjust = right;
 }
 
 static void do_control_bank_select(struct _mdi *mdi, struct _event_data *data) {
@@ -1658,33 +1718,22 @@ static void do_control_channel_volume(struct _mdi *mdi,
 	unsigned char ch = data->channel;
 
 	mdi->channel[ch].volume = (unsigned char)data->data;
-
-	if (note_data) {
-		do {
-			if ((note_data->noteid >> 8) == ch) {
-				note_data->vol_lvl = get_volume(mdi, ch, note_data);
-				if (note_data->replay)
-					note_data->replay->vol_lvl = get_volume(mdi, ch,
-							note_data->replay);
-			}
-			note_data = note_data->next;
-		} while (note_data);
-	}
+	_WM_AdjustChannelVolumes(mdi, ch);
 }
 
 static void do_control_channel_balance(struct _mdi *mdi,
 		struct _event_data *data) {
 	unsigned char ch = data->channel;
 
-	mdi->channel[ch].balance = (signed char)(data->data - 64);
-	do_pan_adjust(mdi, ch);
+	mdi->channel[ch].balance = (signed char)(data->data);
+	_WM_AdjustChannelVolumes(mdi, ch);
 }
 
 static void do_control_channel_pan(struct _mdi *mdi, struct _event_data *data) {
 	unsigned char ch = data->channel;
 
-	mdi->channel[ch].pan = (signed char)(data->data - 64);
-	do_pan_adjust(mdi, ch);
+	mdi->channel[ch].pan = (signed char)(data->data);
+	_WM_AdjustChannelVolumes(mdi, ch);
 }
 
 static void do_control_channel_expression(struct _mdi *mdi,
@@ -1693,18 +1742,7 @@ static void do_control_channel_expression(struct _mdi *mdi,
 	unsigned char ch = data->channel;
 
 	mdi->channel[ch].expression = (unsigned char)data->data;
-
-	if (note_data) {
-		do {
-			if ((note_data->noteid >> 8) == ch) {
-				note_data->vol_lvl = get_volume(mdi, ch, note_data);
-				if (note_data->replay)
-					note_data->replay->vol_lvl = get_volume(mdi, ch,
-							note_data->replay);
-			}
-			note_data = note_data->next;
-		} while (note_data);
-	}
+	_WM_AdjustChannelVolumes(mdi, ch);
 }
 
 static void do_control_data_entry_fine(struct _mdi *mdi,
@@ -1794,9 +1832,19 @@ static void do_control_data_decrement(struct _mdi *mdi,
 			mdi->channel[ch].pitch_range--;
 	}
 }
-static void do_control_non_registered_param(struct _mdi *mdi,
+static void do_control_non_registered_param_fine(struct _mdi *mdi,
+		 struct _event_data *data) {
+	unsigned char ch = data->channel;
+	mdi->channel[ch].reg_data = (mdi->channel[ch].reg_data & 0x3F80)
+								| data->data;
+	mdi->channel[ch].reg_non = 1;
+}
+
+static void do_control_non_registered_param_course(struct _mdi *mdi,
 		struct _event_data *data) {
 	unsigned char ch = data->channel;
+	mdi->channel[ch].reg_data = (mdi->channel[ch].reg_data & 0x7F)
+								| (data->data << 7);
 	mdi->channel[ch].reg_non = 1;
 }
 
@@ -1841,33 +1889,13 @@ static void do_control_channel_controllers_off(struct _mdi *mdi,
 
 	mdi->channel[ch].expression = 127;
 	mdi->channel[ch].pressure = 127;
-	mdi->channel[ch].volume = 100;
-	mdi->channel[ch].pan = 0;
-	mdi->channel[ch].balance = 0;
 	mdi->channel[ch].reg_data = 0xffff;
 	mdi->channel[ch].pitch_range = 200;
 	mdi->channel[ch].pitch = 0;
 	mdi->channel[ch].pitch_adjust = 0;
 	mdi->channel[ch].hold = 0;
-	do_pan_adjust(mdi, ch);
 
-	if (note_data) {
-		do {
-			if ((note_data->noteid >> 8) == ch) {
-				note_data->sample_inc = get_inc(mdi, note_data);
-				note_data->velocity = 0;
-				note_data->vol_lvl = get_volume(mdi, ch, note_data);
-				note_data->hold = 0;
-
-				if (note_data->replay) {
-					note_data->replay->velocity = (unsigned char)data->data;
-					note_data->replay->vol_lvl = get_volume(mdi, ch,
-							note_data->replay);
-				}
-			}
-			note_data = note_data->next;
-		} while (note_data);
-	}
+	_WM_AdjustChannelVolumes(mdi, ch);
 }
 
 static void do_control_channel_notes_off(struct _mdi *mdi,
@@ -1919,20 +1947,16 @@ static void do_channel_pressure(struct _mdi *mdi, struct _event_data *data) {
 
 	MIDI_EVENT_DEBUG(__FUNCTION__,ch);
 
-	if (note_data) {
-		do {
-			if ((note_data->noteid >> 8) == ch) {
-				note_data->velocity = (unsigned char)data->data;
-				note_data->vol_lvl = get_volume(mdi, ch, note_data);
-
-				if (note_data->replay) {
-					note_data->replay->velocity = (unsigned char)data->data;
-					note_data->replay->vol_lvl = get_volume(mdi, ch,
-							note_data->replay);
-				}
+	while (note_data) {
+		if ((note_data->noteid >> 8) == ch) {
+			note_data->velocity = (unsigned char)data->data;
+			_WM_AdjustNoteVolumes(mdi, ch, note_data);
+			if (note_data->replay) {
+				note_data->replay->velocity = (unsigned char)data->data;
+				_WM_AdjustNoteVolumes(mdi, ch, note_data->replay);
 			}
-			note_data = note_data->next;
-		} while (note_data);
+		}
+		note_data = note_data->next;
 	}
 }
 
@@ -1976,7 +2000,7 @@ static void do_sysex_roland_drum_track(struct _mdi *mdi,
 	}
 }
 
-static void do_sysex_roland_reset(struct _mdi *mdi, struct _event_data *data) {
+static void do_sysex_gm_reset(struct _mdi *mdi, struct _event_data *data) {
 	int i;
 	for (i = 0; i < 16; i++) {
 		mdi->channel[i].bank = 0;
@@ -1989,18 +2013,27 @@ static void do_sysex_roland_reset(struct _mdi *mdi, struct _event_data *data) {
 		mdi->channel[i].volume = 100;
 		mdi->channel[i].pressure = 127;
 		mdi->channel[i].expression = 127;
-		mdi->channel[i].balance = 0;
-		mdi->channel[i].pan = 0;
-		mdi->channel[i].left_adjust = 1;
-		mdi->channel[i].right_adjust = 1;
+		mdi->channel[i].balance = 64;
+		mdi->channel[i].pan = 64;
 		mdi->channel[i].pitch = 0;
 		mdi->channel[i].pitch_range = 200;
 		mdi->channel[i].reg_data = 0xFFFF;
 		mdi->channel[i].isdrum = 0;
-		do_pan_adjust(mdi, i);
 	}
+	/* I would not expect notes to be active when this event
+	 triggers but we'll adjust active notes as well just in case */
+	_WM_AdjustChannelVolumes(mdi,16); // A setting > 15 adjusts all channels
+
 	mdi->channel[9].isdrum = 1;
 	UNUSED(data); /* NOOP, to please the compiler gods */
+}
+
+static void do_sysex_roland_reset(struct _mdi *mdi, struct _event_data *data) {
+	do_sysex_gm_reset(mdi, data);
+}
+
+static void do_sysex_yamaha_reset(struct _mdi *mdi, struct _event_data *data) {
+	do_sysex_gm_reset(mdi, data);
 }
 
 static int add_handle(void * handle) {
@@ -2084,56 +2117,11 @@ static void freeMDI(struct _mdi *mdi) {
 	free(mdi);
 }
 
-static unsigned long int get_decay_samples(struct _patch *patch, unsigned char note) {
-
-	struct _sample *sample = NULL;
-	unsigned long int freq = 0;
-	unsigned long int decay_samples = 0;
-
-	if (patch == NULL)
-		return 0;
-
-	/* first get the freq we need so we can check the right sample */
-	if (patch->patchid & 0x80) {
-		/* is a drum patch */
-		if (patch->note) {
-			freq = freq_table[(patch->note % 12) * 100]
-					>> (10 - (patch->note / 12));
-		} else {
-			freq = freq_table[(note % 12) * 100] >> (10 - (note / 12));
-		}
-	} else {
-		freq = freq_table[(note % 12) * 100] >> (10 - (note / 12));
-	}
-
-	/* get the sample */
-	sample = get_sample_data(patch, (freq / 100));
-	if (sample == NULL)
-		return 0;
-
-	if (patch->patchid & 0x80) {
-		float sratedata = ((float) sample->rate / (float) _WM_SampleRate)
-				* (float) (sample->data_length >> 10);
-		decay_samples = (unsigned long int) sratedata;
-	/*	printf("Drums (%i / %i) * %lu = %f\n", sample->rate, _WM_SampleRate, (sample->data_length >> 10), sratedata);*/
-	} else if (sample->modes & SAMPLE_CLAMPED) {
-		decay_samples = (4194303 / sample->env_rate[5]);
-	/*	printf("clamped 4194303 / %lu = %lu\n", sample->env_rate[5], decay_samples);*/
-	} else {
-		decay_samples =
-				((4194303 - sample->env_target[4]) / sample->env_rate[4])
-						+ (sample->env_target[4] / sample->env_rate[5]);
-	/*	printf("NOT clamped ((4194303 - %lu) / %lu) + (%lu / %lu)) = %lu\n", sample->env_target[4], sample->env_rate[4], sample->env_target[4], sample->env_rate[5], decay_samples);*/
-	}
-	return decay_samples;
-}
-
 static int *WM_Mix_Linear(midi * handle, int * buffer, unsigned long int count)
 {
 	struct _mdi *mdi = (struct _mdi *)handle;
 	unsigned long int data_pos;
 	signed int premix, left_mix, right_mix;
-	signed int vol_mul;
 	struct _note *note_data = NULL;
 
 	do {
@@ -2147,20 +2135,11 @@ static int *WM_Mix_Linear(midi * handle, int * buffer, unsigned long int count)
 				 * ===================
 				 */
 				data_pos = note_data->sample_pos >> FPBITS;
-				vol_mul = ((note_data->vol_lvl
-						* (note_data->env_level >> 12)) >> FPBITS);
+				premix = ((note_data->sample->data[data_pos] + (((note_data->sample->data[data_pos + 1] - note_data->sample->data[data_pos]) * (int)(note_data->sample_pos & FPMASK)) / 1024)) * (note_data->env_level >> 12)) / 1024;
 
-				premix = (note_data->sample->data[data_pos]
-						+ ((note_data->sample->data[data_pos + 1]
-								- note_data->sample->data[data_pos])
-								* (signed long int) (note_data->sample_pos
-										& FPMASK)>> FPBITS)) * vol_mul
-						/ 1024;
 
-				left_mix += premix
-						* mdi->channel[note_data->noteid >> 8].left_adjust;
-				right_mix += premix
-						* mdi->channel[note_data->noteid >> 8].right_adjust;
+				left_mix += (premix * (int)note_data->left_mix_volume) / 1024;
+				right_mix += (premix * (int)note_data->right_mix_volume) / 1024;
 
 				/*
 				 * ========================
@@ -2168,19 +2147,16 @@ static int *WM_Mix_Linear(midi * handle, int * buffer, unsigned long int count)
 				 * ========================
 				 */
 				note_data->sample_pos += note_data->sample_inc;
-				if (note_data->sample_pos > note_data->sample->loop_end) {
-					if (note_data->modes & SAMPLE_LOOP) {
+				if (note_data->modes & SAMPLE_LOOP) {
+					if (note_data->sample_pos > note_data->sample->loop_end) {
 						note_data->sample_pos =
-								note_data->sample->loop_start
-										+ ((note_data->sample_pos
-												- note_data->sample->loop_start)
-												% note_data->sample->loop_size);
-					} else if (note_data->sample_pos >= note_data->sample->data_length) {
-						if (note_data->replay == NULL) {
-							goto KILL_NOTE;
-						}
-						goto RESTART_NOTE;
+							note_data->sample->loop_start
+									+ ((note_data->sample_pos
+											- note_data->sample->loop_start)
+											% note_data->sample->loop_size);
 					}
+				} else if (note_data->sample_pos >= note_data->sample->data_length) {
+					goto END_THIS_NOTE;
 				}
 
 				if (note_data->env_inc == 0) {
@@ -2189,35 +2165,32 @@ static int *WM_Mix_Linear(midi * handle, int * buffer, unsigned long int count)
 				}
 
 				note_data->env_level += note_data->env_inc;
-				if (note_data->env_level > 4194304) {
-					note_data->env_level =
-							note_data->sample->env_target[note_data->env];
-				}
-				if  (((note_data->env_inc < 0)
-							&& (note_data->env_level
-									> note_data->sample->env_target[note_data->env]))
-					|| ((note_data->env_inc > 0)
-							&& (note_data->env_level
-									< note_data->sample->env_target[note_data->env])))
-					{
-					note_data = note_data->next;
-					continue;
+				if (note_data->env_inc < 0) {
+					if (note_data->env_level > note_data->sample->env_target[note_data->env]) {
+						note_data = note_data->next;
+						continue;
+					}
+				} else if (note_data->env_inc > 0) {
+					if (note_data->env_level < note_data->sample->env_target[note_data->env]) {
+						note_data = note_data->next;
+						continue;
+					}
 				}
 
+				// Yes could have a condition here but
+				// it would create another bottleneck
 				note_data->env_level =
 						note_data->sample->env_target[note_data->env];
 				switch (note_data->env) {
 				case 0:
-#if 0
 					if (!(note_data->modes & SAMPLE_ENVELOPE)) {
 						note_data->env_inc = 0;
 						note_data = note_data->next;
 						continue;
 					}
-#endif
 					break;
 				case 2:
-					if (note_data->modes & SAMPLE_SUSTAIN) {
+					if (note_data->modes & SAMPLE_SUSTAIN /*|| note_data->hold*/) {
 						note_data->env_inc = 0;
 						note_data = note_data->next;
 						continue;
@@ -2236,7 +2209,7 @@ static int *WM_Mix_Linear(midi * handle, int * buffer, unsigned long int count)
 					break;
 				case 5:
 					if (note_data->env_level == 0) {
-						goto KILL_NOTE;
+						goto END_THIS_NOTE;
 					}
 					/* sample release */
 					if (note_data->modes & SAMPLE_LOOP)
@@ -2245,8 +2218,9 @@ static int *WM_Mix_Linear(midi * handle, int * buffer, unsigned long int count)
 					note_data = note_data->next;
 					continue;
 				case 6:
+					END_THIS_NOTE:
 					if (note_data->replay != NULL) {
-						RESTART_NOTE: note_data->active = 0;
+						note_data->active = 0;
 						{
 							struct _note *prev_note = NULL;
 							struct _note *nte_array = mdi->note;
@@ -2267,7 +2241,7 @@ static int *WM_Mix_Linear(midi * handle, int * buffer, unsigned long int count)
 							note_data->active = 1;
 						}
 					} else {
-						KILL_NOTE: note_data->active = 0;
+						note_data->active = 0;
 						{
 							struct _note *prev_note = NULL;
 							struct _note *nte_array = mdi->note;
@@ -2312,10 +2286,7 @@ static int *WM_Mix_Linear(midi * handle, int * buffer, unsigned long int count)
 			 * mix the channels together
 			 * =========================
 			 */
-			left_mix /= 1024;
-			right_mix /= 1024;
 		}
-
 		*buffer++ = left_mix;
 		*buffer++ = right_mix;
 	} while (--count);
@@ -2329,7 +2300,6 @@ static int *WM_Mix_Gauss(midi * handle, int * buffer, unsigned long int count)
 	struct _mdi *mdi = (struct _mdi *)handle;
 	unsigned long int data_pos;
 	signed int premix, left_mix, right_mix;
-	signed int vol_mul;
 	struct _note *note_data = NULL;
 	signed short int *sptr;
 	double y, xd;
@@ -2348,8 +2318,6 @@ static int *WM_Mix_Gauss(midi * handle, int * buffer, unsigned long int count)
 				 * ===================
 				 */
 				data_pos = note_data->sample_pos >> FPBITS;
-				vol_mul = ((note_data->vol_lvl
-						* (note_data->env_level >> 12)) >> FPBITS);
 
 				/* check to see if we're near one of the ends */
 				left = data_pos;
@@ -2389,12 +2357,10 @@ static int *WM_Mix_Gauss(midi * handle, int * buffer, unsigned long int count)
 					} while (gptr <= gend);
 				}
 
-				premix = (long) (y * vol_mul / 1024);
+				premix = (int)((y * (note_data->env_level >> 12)) / 1024);
 
-				left_mix += premix
-						* mdi->channel[note_data->noteid >> 8].left_adjust;
-				right_mix += premix
-						* mdi->channel[note_data->noteid >> 8].right_adjust;
+				left_mix += (premix * (int)note_data->left_mix_volume) / 1024;
+				right_mix += (premix * (int)note_data->right_mix_volume) / 1024;
 
 				/*
 				 * ========================
@@ -2411,10 +2377,7 @@ static int *WM_Mix_Gauss(midi * handle, int * buffer, unsigned long int count)
 												- note_data->sample->loop_start)
 												% note_data->sample->loop_size);
 					} else if (note_data->sample_pos >= note_data->sample->data_length) {
-						if (note_data->replay == NULL) {
-							goto KILL_NOTE;
-						}
-						goto RESTART_NOTE;
+						goto END_THIS_NOTE;
 					}
 				}
 
@@ -2424,33 +2387,32 @@ static int *WM_Mix_Gauss(midi * handle, int * buffer, unsigned long int count)
 				}
 
 				note_data->env_level += note_data->env_inc;
-				if (note_data->env_level > 4194304) {
-					note_data->env_level =
-							note_data->sample->env_target[note_data->env];
+				if (note_data->env_inc < 0) {
+					if (note_data->env_level
+						> note_data->sample->env_target[note_data->env]) {
+						note_data = note_data->next;
+						continue;
+					}
+				} else if (note_data->env_inc > 0) {
+					if (note_data->env_level
+						< note_data->sample->env_target[note_data->env]) {
+						note_data = note_data->next;
+						continue;
+					}
 				}
-				if (
-						((note_data->env_inc < 0)
-								&& (note_data->env_level
-										> note_data->sample->env_target[note_data->env]))
-						|| ((note_data->env_inc > 0)
-								&& (note_data->env_level
-										< note_data->sample->env_target[note_data->env]))
-						) {
-					note_data = note_data->next;
-					continue;
-				}
+
+				// Yes could have a condition here but
+				// it would create another bottleneck
 
 				note_data->env_level =
 						note_data->sample->env_target[note_data->env];
 				switch (note_data->env) {
 				case 0:
-#if 0
 					if (!(note_data->modes & SAMPLE_ENVELOPE)) {
 						note_data->env_inc = 0;
 						note_data = note_data->next;
 						continue;
 					}
-#endif
 					break;
 				case 2:
 					if (note_data->modes & SAMPLE_SUSTAIN) {
@@ -2472,7 +2434,7 @@ static int *WM_Mix_Gauss(midi * handle, int * buffer, unsigned long int count)
 					break;
 				case 5:
 					if (note_data->env_level == 0) {
-						goto KILL_NOTE;
+						goto END_THIS_NOTE;
 					}
 					/* sample release */
 					if (note_data->modes & SAMPLE_LOOP)
@@ -2481,8 +2443,9 @@ static int *WM_Mix_Gauss(midi * handle, int * buffer, unsigned long int count)
 					note_data = note_data->next;
 					continue;
 				case 6:
+					END_THIS_NOTE:
 					if (note_data->replay != NULL) {
-						RESTART_NOTE: note_data->active = 0;
+						note_data->active = 0;
 						{
 							struct _note *prev_note = NULL;
 							struct _note *nte_array = mdi->note;
@@ -2503,7 +2466,7 @@ static int *WM_Mix_Gauss(midi * handle, int * buffer, unsigned long int count)
 							note_data->active = 1;
 						}
 					} else {
-						KILL_NOTE: note_data->active = 0;
+						note_data->active = 0;
 						{
 							struct _note *prev_note = NULL;
 							struct _note *nte_array = mdi->note;
@@ -2548,10 +2511,7 @@ static int *WM_Mix_Gauss(midi * handle, int * buffer, unsigned long int count)
 			 * mix the channels together
 			 * =========================
 			 */
-			left_mix /= 1024;
-			right_mix /= 1024;
 		}
-
 		*buffer++ = left_mix;
 		*buffer++ = right_mix;
 	} while (--count);
@@ -2644,16 +2604,6 @@ WM_SYMBOL int WildMidi_MasterVolume(unsigned char master_volume) {
 
 	WM_MasterVolume = lin_volume[master_volume];
 
-	if (tmp_handle) {
-		while (tmp_handle) {
-			mdi = (struct _mdi *) tmp_handle->handle;
-			for (i = 0; i < 16; i++) {
-				do_pan_adjust(mdi, i);
-			}
-			tmp_handle = tmp_handle->next;
-		}
-	}
-
 	return 0;
 }
 
@@ -2734,7 +2684,6 @@ midi *WildMidi_NewMidi() {
 WM_SYMBOL int WildMidi_SetOption(midi * handle, unsigned short int options,
 		unsigned short int setting) {
 	struct _mdi *mdi;
-	int i;
 
 	if (!WM_Initialized) {
 		_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_NOT_INIT, NULL, 0);
@@ -2765,22 +2714,8 @@ WM_SYMBOL int WildMidi_SetOption(midi * handle, unsigned short int options,
 			| (options & setting));
 
 	if (options & WM_MO_LOG_VOLUME) {
-		struct _note *note_data = mdi->note;
-
-		for (i = 0; i < 16; i++) {
-			do_pan_adjust(mdi, i);
-		}
-
-		if (note_data) {
-			do {
-				note_data->vol_lvl = get_volume(mdi, (note_data->noteid >> 8),
-						note_data);
-				if (note_data->replay)
-					note_data->replay->vol_lvl = get_volume(mdi,
-							(note_data->noteid >> 8), note_data->replay);
-				note_data = note_data->next;
-			} while (note_data);
-		}
+		_WM_AdjustChannelVolumes(mdi, 16);	// Settings greater than 15
+											// adjust all channels
 	} else if (options & WM_MO_REVERB) {
 		_WM_reset_reverb(mdi->reverb);
 	}
@@ -2905,23 +2840,23 @@ void WildMidi_Renderer::ShortEvent(int status, int parm1, int parm2)
 		ev.data = parm2;
 		switch (parm1)
 		{
-		case 0:		do_control_bank_select(mdi, &ev);				break;
-		case 6:		do_control_data_entry_course(mdi, &ev);			break;	// [sic]
-		case 7:		do_control_channel_volume(mdi, &ev);			break;
-		case 8:		do_control_channel_balance(mdi, &ev);			break;
-		case 10:	do_control_channel_pan(mdi, &ev);				break;
-		case 11:	do_control_channel_expression(mdi, &ev);		break;
-		case 38:	do_control_data_entry_fine(mdi, &ev);			break;
-		case 64:	do_control_channel_hold(mdi, &ev);				break;
-		case 96:	do_control_data_increment(mdi, &ev);			break;
-		case 97:	do_control_data_decrement(mdi, &ev);			break;
-		case 98:
-		case 99:	do_control_non_registered_param(mdi, &ev);		break;
-		case 100:	do_control_registered_param_fine(mdi, &ev);		break;
-		case 101:	do_control_registered_param_course(mdi, &ev);	break;	// [sic]
-		case 120:	do_control_channel_sound_off(mdi, &ev);			break;
-		case 121:	do_control_channel_controllers_off(mdi, &ev);	break;
-		case 123:	do_control_channel_notes_off(mdi, &ev);			break;
+		case 0:		do_control_bank_select(mdi, &ev);					break;
+		case 6:		do_control_data_entry_course(mdi, &ev);				break;	// [sic]
+		case 7:		do_control_channel_volume(mdi, &ev);				break;
+		case 8:		do_control_channel_balance(mdi, &ev);				break;
+		case 10:	do_control_channel_pan(mdi, &ev);					break;
+		case 11:	do_control_channel_expression(mdi, &ev);			break;
+		case 38:	do_control_data_entry_fine(mdi, &ev);				break;
+		case 64:	do_control_channel_hold(mdi, &ev);					break;
+		case 96:	do_control_data_increment(mdi, &ev);				break;
+		case 97:	do_control_data_decrement(mdi, &ev);				break;
+		case 98:	do_control_non_registered_param_fine(mdi, &ev);		break;
+		case 99:	do_control_non_registered_param_course(mdi, &ev);	break;	// [sic]
+		case 100:	do_control_registered_param_fine(mdi, &ev);			break;
+		case 101:	do_control_registered_param_course(mdi, &ev);		break;	// [sic]
+		case 120:	do_control_channel_sound_off(mdi, &ev);				break;
+		case 121:	do_control_channel_controllers_off(mdi, &ev);		break;
+		case 123:	do_control_channel_notes_off(mdi, &ev);				break;
 		}
 	}
 }
@@ -2958,13 +2893,27 @@ void WildMidi_Renderer::LongEvent(const unsigned char *data, int len)
 				{
 					sysex_ch -= 1;
 				}
-				_event_data ev = { sysex_ch, static_cast<unsigned long>(data[8]) };
+				_event_data ev = { sysex_ch, data[8] };
 				do_sysex_roland_drum_track((_mdi *)handle, &ev);
 			}
 			else if (data[6] == 0x00 && data[7] == 0x7F && data[8] == 0x00)
 			{ // Roland GS reset
 				do_sysex_roland_reset((_mdi *)handle, NULL);
 			}
+		}
+	}
+	// For non-Roland Sysex messages */
+	else
+	{
+		const unsigned char gm_reset[] = { 0xf0, 0x7e, 0x7f, 0x09, 0x01, 0xf7 };
+		const unsigned char yamaha_reset[] = { 0xf0, 0x43, 0x10, 0x4c, 0x00, 0x00, 0x7e, 0x00, 0xf7};
+		if (len == 6 && memcmp(gm_reset, data, 6) == 0)
+		{
+			do_sysex_gm_reset((_mdi *)handle, NULL);
+		}
+		else if (len == 9 && memcmp(yamaha_reset, data, 9) == 0)
+		{
+			do_sysex_yamaha_reset((_mdi *)handle, NULL);
 		}
 	}
 }

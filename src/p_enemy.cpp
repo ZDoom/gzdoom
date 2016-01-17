@@ -138,7 +138,7 @@ void P_RecursiveSound (sector_t *sec, AActor *soundtarget, bool splash, int soun
 	for (actor = sec->thinglist; actor != NULL; actor = actor->snext)
 	{
 		if (actor != soundtarget && (!splash || !(actor->flags4 & MF4_NOSPLASHALERT)) &&
-			(!maxdist || (P_AproxDistance(actor->x - emitter->x, actor->y - emitter->y) <= maxdist)))
+			(!maxdist || (actor->AproxDistance(emitter) <= maxdist)))
 		{
 			actor->LastHeard = soundtarget;
 		}
@@ -231,7 +231,7 @@ bool AActor::CheckMeleeRange ()
 	if (!pl)
 		return false;
 				
-	dist = P_AproxDistance (pl->x - x, pl->y - y);
+	dist = AproxDistance (pl);
 
 	if (dist >= meleerange + pl->radius)
 		return false;
@@ -243,9 +243,9 @@ bool AActor::CheckMeleeRange ()
 	// [RH] Don't melee things too far above or below actor.
 	if (!(flags5 & MF5_NOVERTICALMELEERANGE))
 	{
-		if (pl->z > z + height)
+		if (pl->Z() > z + height)
 			return false;
-		if (pl->z + pl->height < z)
+		if (pl->Z() + pl->height < z)
 			return false;
 	}
 
@@ -275,16 +275,16 @@ bool P_CheckMeleeRange2 (AActor *actor)
 		return false;
 	}
 	mo = actor->target;
-	dist = P_AproxDistance (mo->x-actor->x, mo->y-actor->y);
+	dist = mo->AproxDistance (actor);
 	if (dist >= MELEERANGE*2 || dist < MELEERANGE-20*FRACUNIT + mo->radius)
 	{
 		return false;
 	}
-	if (mo->z > actor->z+actor->height)
+	if (mo->Z() > actor->Z()+actor->height)
 	{ // Target is higher than the attacker
 		return false;
 	}
-	else if (actor->z > mo->z+mo->height)
+	else if (actor->Z() > mo->Z()+mo->height)
 	{ // Attacker is higher
 		return false;
 	}
@@ -348,8 +348,7 @@ bool P_CheckMissileRange (AActor *actor)
 
 	// OPTIMIZE: get this from a global checksight
 	// [RH] What?
-	dist = P_AproxDistance (actor->x-actor->target->x,
-							actor->y-actor->target->y) - 64*FRACUNIT;
+	dist = actor->AproxDistance (actor->target) - 64*FRACUNIT;
 	
 	if (actor->MeleeState == NULL)
 		dist -= 128*FRACUNIT;	// no melee attack, so fire more
@@ -393,8 +392,8 @@ bool P_HitFriend(AActor * self)
 
 	if (self->flags&MF_FRIENDLY && self->target != NULL)
 	{
-		angle_t angle = R_PointToAngle2 (self->x, self->y, self->target->x, self->target->y);
-		fixed_t dist = P_AproxDistance (self->x - self->target->x, self->y - self->target->y);
+		angle_t angle = self->AngleTo(self->target);
+		fixed_t dist = self->AproxDistance (self->target);
 		P_AimLineAttack (self, angle, dist, &linetarget, 0, true);
 		if (linetarget != NULL && linetarget != self->target)
 		{
@@ -435,7 +434,7 @@ bool P_Move (AActor *actor)
 	// it difficult to thrust them vertically in a reasonable manner.
 	// [GZ] Let jumping actors jump.
 	if (!((actor->flags & MF_NOGRAVITY) || (actor->flags6 & MF6_CANJUMP))
-		&& actor->z > actor->floorz && !(actor->flags2 & MF2_ONMOBJ))
+		&& actor->Z() > actor->floorz && !(actor->flags2 & MF2_ONMOBJ))
 	{
 		return false;
 	}
@@ -450,7 +449,7 @@ bool P_Move (AActor *actor)
 
 	if ((actor->flags6 & MF6_JUMPDOWN) && target &&
 			!(target->IsFriend(actor)) &&
-			P_AproxDistance(actor->x - target->x, actor->y - target->y) < FRACUNIT*144 &&
+			actor->AproxDistance(target) < FRACUNIT*144 &&
 			pr_dropoff() < 235)
 	{
 		dropoff = 2;
@@ -539,11 +538,11 @@ bool P_Move (AActor *actor)
 	// actually walking down a step.
 	if (try_ok &&
 		!((actor->flags & MF_NOGRAVITY) || (actor->flags6 & MF6_CANJUMP))
-		&& actor->z > actor->floorz && !(actor->flags2 & MF2_ONMOBJ))
+		&& actor->Z() > actor->floorz && !(actor->flags2 & MF2_ONMOBJ))
 	{
-		if (actor->z <= actor->floorz + actor->MaxStepHeight)
+		if (actor->Y() <= actor->floorz + actor->MaxStepHeight)
 		{
-			fixed_t savedz = actor->z;
+			fixed_t savedz = actor->Z();
 			actor->z = actor->floorz;
 			// Make sure that there isn't some other actor between us and
 			// the floor we could get stuck in. The old code did not do this.
@@ -554,7 +553,7 @@ bool P_Move (AActor *actor)
 			else
 			{ // The monster just hit the floor, so trigger any actions.
 				if (actor->floorsector->SecActTarget != NULL &&
-					actor->floorz == actor->floorsector->floorplane.ZatPoint(actor->x, actor->y))
+					actor->floorz == actor->floorsector->floorplane.ZatPoint(actor))
 				{
 					actor->floorsector->SecActTarget->TriggerAction(actor, SECSPAC_HitFloor);
 				}
@@ -567,7 +566,7 @@ bool P_Move (AActor *actor)
 	{
 		if (((actor->flags6 & MF6_CANJUMP)||(actor->flags & MF_FLOAT)) && tm.floatok)
 		{ // must adjust height
-			fixed_t savedz = actor->z;
+			fixed_t savedz = actor->Z();
 
 			if (actor->z < tm.floorz)
 				actor->z += actor->FloatSpeed;
@@ -848,11 +847,11 @@ void P_NewChaseDir(AActor * actor)
 	
 	// Try to move away from a dropoff
 	if (actor->floorz - actor->dropoffz > actor->MaxDropOffHeight && 
-		actor->z <= actor->floorz && !(actor->flags & MF_DROPOFF) && 
+		actor->Z() <= actor->floorz && !(actor->flags & MF_DROPOFF) && 
 		!(actor->flags2 & MF2_ONMOBJ) &&
 		!(actor->flags & MF_FLOAT) && !(i_compatflags & COMPATF_DROPOFF))
 	{
-		FBoundingBox box(actor->x, actor->y, actor->radius);
+		FBoundingBox box(actor->X(), actor->Y(), actor->radius);
 		FBlockLinesIterator it(box);
 		line_t *line;
 
@@ -867,14 +866,14 @@ void P_NewChaseDir(AActor * actor)
 				box.Bottom() < line->bbox[BOXTOP]    &&
 				box.BoxOnLineSide(line) == -1)
 		    {
-				fixed_t front = line->frontsector->floorplane.ZatPoint(actor->x,actor->y);
-				fixed_t back  = line->backsector->floorplane.ZatPoint(actor->x,actor->y);
+				fixed_t front = line->frontsector->floorplane.ZatPoint(actor);
+				fixed_t back  = line->backsector->floorplane.ZatPoint(actor);
 				angle_t angle;
 		
 				// The monster must contact one of the two floors,
 				// and the other must be a tall dropoff.
 				
-				if (back == actor->z && front < actor->z - actor->MaxDropOffHeight)
+				if (back == actor->Z() && front < actor->Z() - actor->MaxDropOffHeight)
 				{
 					angle = R_PointToAngle2(0,0,line->dx,line->dy);   // front side dropoff
 				}
@@ -933,7 +932,7 @@ void P_NewChaseDir(AActor * actor)
 		if (actor->flags3 & MF3_AVOIDMELEE)
 		{
 			bool ismeleeattacker = false;
-			fixed_t dist = P_AproxDistance(actor->x-target->x, actor->y-target->y);
+			fixed_t dist = actor->AproxDistance(target);
 			if (target->player == NULL)
 			{
 				ismeleeattacker = (target->MissileState == NULL && dist < (target->meleerange + target->radius)*2);
@@ -1151,7 +1150,7 @@ bool P_IsVisible(AActor *lookee, AActor *other, INTBOOL allaround, FLookExParams
 		fov = allaround ? 0 : ANGLE_180;
 	}
 
-	fixed_t dist = P_AproxDistance (other->x - lookee->x, other->y - lookee->y);
+	fixed_t dist = lookee->AproxDistance (other);
 
 	if (maxdist && dist > maxdist)
 		return false;			// [KS] too far
@@ -1161,7 +1160,7 @@ bool P_IsVisible(AActor *lookee, AActor *other, INTBOOL allaround, FLookExParams
 
 	if (fov && fov < ANGLE_MAX)
 	{
-		angle_t an = R_PointToAngle2 (lookee->x, lookee->y, other->x, other->y) - lookee->angle;
+		angle_t an = lookee->AngleTo(other) - lookee->angle;
 
 		if (an > (fov / 2) && an < (ANGLE_MAX - (fov / 2)))
 		{
@@ -1202,8 +1201,7 @@ bool P_LookForMonsters (AActor *actor)
 		{ // Not a valid monster
 			continue;
 		}
-		if (P_AproxDistance (actor->x-mo->x, actor->y-mo->y)
-			> MONS_LOOK_RANGE)
+		if (mo->AproxDistance (actor) > MONS_LOOK_RANGE)
 		{ // Out of range
 			continue;
 		}
@@ -1703,10 +1701,8 @@ bool P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 			if ((player->mo->flags & MF_SHADOW && !(i_compatflags & COMPATF_INVISIBILITY)) ||
 				player->mo->flags3 & MF3_GHOST)
 			{
-				if ((P_AproxDistance (player->mo->x - actor->x,
-						player->mo->y - actor->y) > 2*MELEERANGE)
-					&& P_AproxDistance (player->mo->velx, player->mo->vely)
-					< 5*FRACUNIT)
+				if ((player->mo->AproxDistance (actor) > 2*MELEERANGE)
+					&& P_AproxDistance (player->mo->velx, player->mo->vely)	< 5*FRACUNIT)
 				{ // Player is sneaking - can't detect
 					continue;
 				}
@@ -1908,7 +1904,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_LookEx)
 				}
 				else
 				{
-					dist = P_AproxDistance (targ->x - self->x, targ->y - self->y);
+					dist = self->AproxDistance (targ);
 
 					// [KS] If the target is too far away, don't respond to the sound.
 					if (maxheardist && dist > maxheardist)
@@ -1979,7 +1975,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_LookEx)
 			{
 				if (self->flags & MF_AMBUSH)
 				{
-					dist = P_AproxDistance (self->target->x - self->x, self->target->y - self->y);
+					dist = self->AproxDistance (self->target);
 					if (P_CheckSight (self, self->target, SF_SEEPASTBLOCKEVERYTHING) &&
 						(!minseedist || dist > minseedist) &&
 						(!maxseedist || dist < maxseedist))
@@ -2402,12 +2398,12 @@ void A_DoChase (VMFrameStack *stack, AActor *actor, bool fastchase, FState *mele
 			actor->FastChaseStrafeCount = 0;
 			actor->velx = 0;
 			actor->vely = 0;
-			fixed_t dist = P_AproxDistance (actor->x - actor->target->x, actor->y - actor->target->y);
+			fixed_t dist = actor->AproxDistance (actor->target);
 			if (dist < CLASS_BOSS_STRAFE_RANGE)
 			{
 				if (pr_chase() < 100)
 				{
-					angle_t ang = R_PointToAngle2(actor->x, actor->y, actor->target->x, actor->target->y);
+					angle_t ang = actor->AngleTo(actor->target);
 					if (pr_chase() < 128) ang += ANGLE_90;
 					else ang -= ANGLE_90;
 					actor->velx = 13 * finecosine[ang>>ANGLETOFINESHIFT];
@@ -2569,11 +2565,11 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 				if (testsec)
 				{
 					fixed_t zdist1, zdist2;
-					if (P_Find3DFloor(testsec, corpsehit->x, corpsehit->y, corpsehit->z, false, true, zdist1)
-						!= P_Find3DFloor(testsec, self->x, self->y, self->z, false, true, zdist2))
+					if (P_Find3DFloor(testsec, corpsehit->X(), corpsehit->Y(), corpsehit->Z(), false, true, zdist1)
+						!= P_Find3DFloor(testsec, self->X(), self->Y(), self->Z(), false, true, zdist2))
 					{
 						// Not on same floor
-						if (vilesec == corpsec || abs(zdist1 - self->z) > self->height)
+						if (vilesec == corpsec || abs(zdist1 - self->Z()) > self->height)
 							continue;
 					}
 				}
@@ -2587,7 +2583,7 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 
 				corpsehit->flags |= MF_SOLID;
 				corpsehit->height = corpsehit->GetDefault()->height;
-				bool check = P_CheckPosition(corpsehit, corpsehit->x, corpsehit->y);
+				bool check = P_CheckPosition(corpsehit, corpsehit->X(), corpsehit->Y());
 				corpsehit->flags = oldflags;
 				corpsehit->radius = oldradius;
 				corpsehit->height = oldheight;
@@ -2770,7 +2766,7 @@ void A_Face (AActor *self, AActor *other, angle_t max_turn, angle_t max_pitch, a
 
 	self->flags &= ~MF_AMBUSH;
 
-	angle_t other_angle = R_PointToAngle2 (self->x, self->y, other->x, other->y);
+	angle_t other_angle = self->AngleTo(other);
 
 	// 0 means no limit. Also, if we turn in a single step anyways, no need to go through the algorithms.
 	// It also means that there is no need to check for going past the other.
@@ -2819,19 +2815,19 @@ void A_Face (AActor *self, AActor *other, angle_t max_turn, angle_t max_pitch, a
 
 		// If the target z is above the target's head, reposition to the middle of
 		// its body.		
-		if (target_z >= other->z + other->height)
+		if (target_z >= other->Z() + other->height)
 		{
-			target_z = other->z + (other->height / 2);
+			target_z = other->Z() + (other->height / 2);
 		}
 
 		//Note there is no +32*FRACUNIT on purpose. This is for customization sake. 
 		//If one doesn't want this behavior, just don't use FAF_BOTTOM.
 		if (flags & FAF_BOTTOM)
-			target_z = other->z + other->GetBobOffset(); 
+			target_z = other->Z() + other->GetBobOffset(); 
 		if (flags & FAF_MIDDLE)
-			target_z = other->z + (other->height / 2) + other->GetBobOffset();
+			target_z = other->Z() + (other->height / 2) + other->GetBobOffset();
 		if (flags & FAF_TOP)
-			target_z = other->z + (other->height) + other->GetBobOffset();
+			target_z = other->Z() + (other->height) + other->GetBobOffset();
 		if (!(flags & FAF_NODISTFACTOR))
 			target_z += pitch_offset;
 
@@ -2948,10 +2944,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
 
 	self->flags &= ~MF_AMBUSH;
 		
-	self->angle = R_PointToAngle2 (self->x,
-									self->y,
-									self->target->x,
-									self->target->y);
+	self->angle = self->AngleTo(self->target);
 
 	self->pitch = P_AimLineAttack (self, self->angle, MISSILERANGE, &linetarget, ANGLE_1*60, 0, self->target);
 	if (linetarget == NULL)
@@ -2964,10 +2957,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
 	}
 
 	// Let the aim trail behind the player
-	self->angle = R_PointToAngle2 (self->x,
-									self->y,
-									self->target->x - self->target->velx * 3,
-									self->target->y - self->target->vely * 3);
+	self->angle = self->AngleTo(self->target, -self->target->velx * 3, -self->target->vely * 3);
 
 	if (self->target->flags & MF_SHADOW && !(self->flags6 & MF6_SEEINVISIBLE))
 	{
@@ -3126,7 +3116,7 @@ AInventory *P_DropItem (AActor *source, PClassActor *type, int dropamount, int c
 		AActor *mo;
 		fixed_t spawnz;
 
-		spawnz = source->z;
+		spawnz = source->Z();
 		if (!(i_compatflags & COMPATF_NOTOSSDROPS))
 		{
 			int style = sv_dropstyle;
@@ -3143,7 +3133,7 @@ AInventory *P_DropItem (AActor *source, PClassActor *type, int dropamount, int c
 				spawnz += source->height / 2;
 			}
 		}
-		mo = Spawn(type, source->x, source->y, spawnz, ALLOW_REPLACE);
+		mo = Spawn(type, source->X(), source->Y(), spawnz, ALLOW_REPLACE);
 		if (mo != NULL)
 		{
 			mo->flags |= MF_DROPPED;

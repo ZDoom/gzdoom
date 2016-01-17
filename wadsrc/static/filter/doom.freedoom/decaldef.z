@@ -1,0 +1,29 @@
+
+/***** BFG Scorches ********************************************************/
+
+decal BFGLightning1
+{
+	pic BFGLITE1
+	shade "80 80 ff"
+	fullbright
+	randomflipx
+	animator GoAway2
+	lowerdecal BFGScorch
+}
+
+decal BFGLightning2
+{
+	pic BFGLITE2
+	shade "80 80 ff"
+	fullbright
+	randomflipy
+	animator GoAway2
+	lowerdecal BFGScorch
+}
+
+decalgroup BFGLightning
+{
+	BFGLightning1	1
+	BFGLightning2	1
+}
+

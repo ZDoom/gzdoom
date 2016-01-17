@@ -293,7 +293,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_M_Saw)
 		S_Sound (self, CHAN_WEAPON, hitsound, 1, ATTN_NORM);
 			
 		// turn to face target
-		angle = R_PointToAngle2 (self->x, self->y, linetarget->x, linetarget->y);
+		angle = self->AngleTo(linetarget);
 		if (angle - self->angle > ANG180)
 		{
 			if (angle - self->angle < (angle_t)(-ANG90/20))
@@ -344,7 +344,8 @@ static void MarinePunch(AActor *self, int damagemul)
 	if (linetarget)
 	{
 		S_Sound (self, CHAN_WEAPON, "*fist", 1, ATTN_NORM);
-		self->angle = R_PointToAngle2 (self->x, self->y, linetarget->x, linetarget->y);
+		self->angle = self->AngleTo(linetarget);
+
 	}
 }
 

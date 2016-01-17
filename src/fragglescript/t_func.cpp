@@ -3145,8 +3145,8 @@ void FParser::SF_MoveCamera(void)
 		}
 		
 		// set step variables based on distance and speed
-		mobjangle = R_PointToAngle2(cam->x, cam->y, target->x, target->y);
-		xydist = R_PointToDist2(target->x - cam->x, target->y - cam->y);
+		mobjangle = cam->AngleTo(target);
+		xydist = cam->Distance2D(target);
 		
 		xstep = FixedMul(finecosine[mobjangle >> ANGLETOFINESHIFT], movespeed);
 		ystep = FixedMul(finesine[mobjangle >> ANGLETOFINESHIFT], movespeed);
@@ -4323,44 +4323,12 @@ void  FParser::SF_KillInSector()
 //==========================================================================
 //
 // new for GZDoom: Sets a sector's type
-// (Sure, this is not particularly useful. But having it made it possible
-//  to fix a few annoying bugs in some old maps ;) )
 //
 //==========================================================================
 
 void FParser::SF_SectorType(void)
 {
-	int tagnum, secnum;
-	sector_t *sector;
-	
-	if (CheckArgs(1))
-	{
-		tagnum = intvalue(t_argv[0]);
-		
-		// argv is sector tag
-		secnum = T_FindFirstSectorFromTag(tagnum);
-		
-		if(secnum < 0)
-		{ script_error("sector not found with tagnum %i\n", tagnum); return;}
-		
-		sector = &sectors[secnum];
-		
-		if(t_argc > 1)
-		{
-			int i = -1;
-			int spec = intvalue(t_argv[1]);
-			
-			// set all sectors with tag
-			FSSectorTagIterator itr(tagnum);
-			while ((i = itr.Next()) >= 0)
-			{
-				sectors[i].special = spec;
-			}
-		}
-		
-		t_return.type = svt_int;
-		t_return.value.i = sector->special;
-	}
+	// I don't think this was ever used publicly so I'm not going to bother fixing it.
 }
 
 //==========================================================================

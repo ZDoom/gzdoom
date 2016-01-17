@@ -100,6 +100,20 @@ public:
 	TObjPtr<ASkyViewpoint> Mate;
 };
 
+// For an EE compatible linedef based definition.
+class ASkyCamCompat : public ASkyViewpoint
+{
+	DECLARE_CLASS (ASkyCamCompat, ASkyViewpoint)
+
+public:
+	void BeginPlay ()
+	{
+		// Do not call the SkyViewpoint's super method because it would trash our setup
+		AActor::BeginPlay();
+	}
+};
+
+
 class AStackPoint : public ASkyViewpoint
 {
 	DECLARE_CLASS (AStackPoint, ASkyViewpoint)

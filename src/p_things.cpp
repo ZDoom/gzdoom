@@ -82,7 +82,7 @@ bool P_Thing_Spawn (int tid, AActor *source, int type, angle_t angle, bool fog, 
 	}
 	while (spot != NULL)
 	{
-		mobj = Spawn (kind, spot->x, spot->y, spot->z, ALLOW_REPLACE);
+		mobj = Spawn (kind, spot->X(), spot->Y(), spot->Z(), ALLOW_REPLACE);
 
 		if (mobj != NULL)
 		{
@@ -94,7 +94,7 @@ bool P_Thing_Spawn (int tid, AActor *source, int type, angle_t angle, bool fog, 
 				mobj->angle = (angle != ANGLE_MAX ? angle : spot->angle);
 				if (fog)
 				{
-					P_SpawnTeleportFog(mobj, spot->x, spot->y, spot->z + TELEFOGHEIGHT, false, true);
+					P_SpawnTeleportFog(mobj, spot->X(), spot->Y(), spot->Z() + TELEFOGHEIGHT, false, true);
 				}
 				if (mobj->flags & MF_SPECIAL)
 					mobj->flags |= MF_DROPPED;	// Don't respawn
@@ -165,7 +165,7 @@ bool P_Thing_Move (int tid, AActor *source, int mapspot, bool fog)
 
 	if (source != NULL && target != NULL)
 	{
-		return P_MoveThing(source, target->x, target->y, target->z, fog);
+		return P_MoveThing(source, target->X(), target->Y(), target->Z(), fog);
 	}
 	return false;
 }
@@ -304,7 +304,8 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 						}
 						else
 						{
-nolead:						mobj->angle = R_PointToAngle2 (mobj->x, mobj->y, targ->x, targ->y);
+nolead:
+							mobj->angle = mobj->AngleTo(targ);
 							aim.Resize (fspeed);
 							mobj->velx = fixed_t(aim[0]);
 							mobj->vely = fixed_t(aim[1]);

@@ -47,6 +47,7 @@
 #include "m_argv.h"
 #include "r_renderer.h"
 #include "r_swrenderer.h"
+#include "st_console.h"
 #include "stats.h"
 #include "textures.h"
 #include "v_palette.h"
@@ -56,6 +57,18 @@
 #include "version.h"
 
 #undef Class
+
+
+@implementation NSWindow(ExitAppOnClose)
+
+- (void)exitAppOnClose
+{
+	NSButton* closeButton = [self standardWindowButton:NSWindowCloseButton];
+	[closeButton setAction:@selector(terminate:)];
+	[closeButton setTarget:NSApp];
+}
+
+@end
 
 
 EXTERN_CVAR(Bool, ticker   )
@@ -407,7 +420,7 @@ CocoaVideo::CocoaVideo(const int multisample)
 	attributes[i++] = NSOpenGLPFAStencilSize;
 	attributes[i++] = NSOpenGLPixelFormatAttribute(8);
 
-	if (!vid_autoswitch)
+	if (NSAppKitVersionNumber >= AppKit10_5 && !vid_autoswitch)
 	{
 		attributes[i++] = NSOpenGLPFAAllowOfflineRenderers;
 	}
@@ -433,6 +446,8 @@ CocoaVideo::CocoaVideo(const int multisample)
 	[[glView openGLContext] makeCurrentContext];
 
 	[m_window setContentView:glView];
+
+	FConsoleWindow::GetInstance().Show(false);
 }
 
 void CocoaVideo::StartModeIterator(const int bits, const bool fullscreen)
@@ -555,16 +570,15 @@ void CocoaVideo::SetWindowVisible(bool visible)
 		{
 			[video->m_window orderOut:nil];
 		}
+
+		I_SetNativeMouse(!visible);
 	}
 }
 
 
 static bool HasModernFullscreenAPI()
 {
-	// The following value shoud be equal to NSAppKitVersionNumber10_6
-	// and it's hard-coded in order to build on earlier SDKs
-
-	return NSAppKitVersionNumber >= 1038;
+	return NSAppKitVersionNumber >= AppKit10_6;
 }
 
 void CocoaVideo::SetStyleMask(const NSUInteger styleMask)
@@ -625,7 +639,7 @@ void CocoaVideo::SetFullscreenMode(const int width, const int height)
 		[m_window setHidesOnDeactivate:YES];
 	}
 
-	[m_window setFrame:displayRect display:YES];
+	[m_window setFrame:screenFrame display:YES];
 	[m_window setFrameOrigin:NSMakePoint(0.0f, 0.0f)];
 }
 
@@ -662,10 +676,7 @@ void CocoaVideo::SetWindowedMode(const int width, const int height)
 
 	[m_window setContentSize:windowSize];
 	[m_window center];
-
-	NSButton* closeButton = [m_window standardWindowButton:NSWindowCloseButton];
-	[closeButton setAction:@selector(terminate:)];
-	[closeButton setTarget:NSApp];
+	[m_window exitAppOnClose];
 }
 
 void CocoaVideo::SetMode(const int width, const int height, const bool fullscreen, const bool hiDPI)
@@ -1211,7 +1222,7 @@ bool I_SetCursor(FTexture* cursorpic)
 		// Create image from representation and set it as cursor
 
 		NSData* imageData = [bitmapImageRep representationUsingType:NSPNGFileType
-														 properties:nil];
+														 properties:[NSDictionary dictionary]];
 		NSImage* cursorImage = [[NSImage alloc] initWithData:imageData];
 
 		cursor = [[NSCursor alloc] initWithImage:cursorImage
@@ -1231,10 +1242,7 @@ NSSize I_GetContentViewSize(const NSWindow* const window)
 	const NSView* const view = [window contentView];
 	const NSSize frameSize   = [view frame].size;
 
-	// TODO: figure out why [NSView frame] returns different values in "fullscreen" and in window
-	// In "fullscreen" the result is multiplied by [NSScreen backingScaleFactor], but not in window
-
-	return (vid_hidpi && !fullscreen)
+	return (vid_hidpi)
 		? [view convertSizeToBacking:frameSize]
 		: frameSize;
 }
@@ -1242,5 +1250,4 @@ NSSize I_GetContentViewSize(const NSWindow* const window)
 void I_SetMainWindowVisible(bool visible)
 {
 	CocoaVideo::SetWindowVisible(visible);
-	I_SetNativeMouse(!visible);
 }

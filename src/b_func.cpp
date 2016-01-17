@@ -30,17 +30,17 @@ bool DBot::Reachable (AActor *rtarget)
 	if (player->mo == rtarget)
 		return false;
 
-	if ((rtarget->Sector->ceilingplane.ZatPoint (rtarget->x, rtarget->y) -
-		 rtarget->Sector->floorplane.ZatPoint (rtarget->x, rtarget->y))
+	if ((rtarget->Sector->ceilingplane.ZatPoint (rtarget) -
+		 rtarget->Sector->floorplane.ZatPoint (rtarget))
 		< player->mo->height) //Where rtarget is, player->mo can't be.
 		return false;
 
 	sector_t *last_s = player->mo->Sector;
-	fixed_t last_z = last_s->floorplane.ZatPoint (player->mo->x, player->mo->y);
-	fixed_t estimated_dist = P_AproxDistance (player->mo->x - rtarget->x, player->mo->y - rtarget->y);
+	fixed_t last_z = last_s->floorplane.ZatPoint (player->mo);
+	fixed_t estimated_dist = player->mo->AproxDistance(rtarget);
 	bool reachable = true;
 
-	FPathTraverse it(player->mo->x+player->mo->velx, player->mo->y+player->mo->vely, rtarget->x, rtarget->y, PT_ADDLINES|PT_ADDTHINGS);
+	FPathTraverse it(player->mo->X()+player->mo->velx, player->mo->Y()+player->mo->vely, rtarget->X(), rtarget->Y(), PT_ADDLINES|PT_ADDTHINGS);
 	intercept_t *in;
 	while ((in = it.Next()))
 	{
@@ -96,7 +96,7 @@ bool DBot::Reachable (AActor *rtarget)
 		thing = in->d.thing;
 		if (thing == player->mo) //Can't reach self in this case.
 			continue;
-		if (thing == rtarget && (rtarget->Sector->floorplane.ZatPoint (rtarget->x, rtarget->y) <= (last_z+MAXMOVEHEIGHT)))
+		if (thing == rtarget && (rtarget->Sector->floorplane.ZatPoint (rtarget) <= (last_z+MAXMOVEHEIGHT)))
 		{
 			return true;
 		}
@@ -123,7 +123,7 @@ bool DBot::Check_LOS (AActor *to, angle_t vangle)
 	if (vangle == 0)
 		return false; //Looker seems to be blind.
 
-	return absangle(R_PointToAngle2 (player->mo->x, player->mo->y, to->x, to->y) - player->mo->angle) <= vangle/2;
+	return absangle(player->mo->AngleTo(to) - player->mo->angle) <= vangle/2;
 }
 
 //-------------------------------------
@@ -165,10 +165,8 @@ void DBot::Dofire (ticcmd_t *cmd)
 	//MAKEME: Decrease the rocket suicides even more.
 
 	no_fire = true;
-	//angle = R_PointToAngle2(player->mo->x, player->mo->y, player->enemy->x, player->enemy->y);
 	//Distance to enemy.
-	dist = P_AproxDistance ((player->mo->x + player->mo->velx) - (enemy->x + enemy->velx),
-		(player->mo->y + player->mo->vely) - (enemy->y + enemy->vely));
+	dist = player->mo->AproxDistance(enemy, player->mo->velx - enemy->velx, player->mo->vely - enemy->vely);
 
 	//FIRE EACH TYPE OF WEAPON DIFFERENT: Here should all the different weapons go.
 	if (player->ReadyWeapon->WeaponFlags & WIF_MELEEWEAPON)
@@ -219,17 +217,17 @@ void DBot::Dofire (ticcmd_t *cmd)
 		}
 		// prediction aiming
 shootmissile:
-		dist = P_AproxDistance (player->mo->x - enemy->x, player->mo->y - enemy->y);
+		dist = player->mo->AproxDistance (enemy);
 		m = dist / GetDefaultByType (player->ReadyWeapon->ProjectileType)->Speed;
-		bglobal.SetBodyAt (enemy->x + enemy->velx*m*2, enemy->y + enemy->vely*m*2, enemy->z, 1);
-		angle = R_PointToAngle2 (player->mo->x, player->mo->y, bglobal.body1->x, bglobal.body1->y);
+		bglobal.SetBodyAt (enemy->X() + enemy->velx*m*2, enemy->Y() + enemy->vely*m*2, enemy->Z(), 1);
+		angle = player->mo->AngleTo(bglobal.body1);
 		if (Check_LOS (enemy, SHOOTFOV))
 			no_fire = false;
 	}
 	else
 	{
 		//Other weapons, mostly instant hit stuff.
-		angle = R_PointToAngle2 (player->mo->x, player->mo->y, enemy->x, enemy->y);
+		angle = player->mo->AngleTo(enemy);
 		aiming_penalty = 0;
 		if (enemy->flags & MF_SHADOW)
 			aiming_penalty += (pr_botdofire()%25)+10;
@@ -265,7 +263,6 @@ shootmissile:
 		cmd->ucmd.buttons |= BT_ATTACK;
 	}
 	//Prevents bot from jerking, when firing automatic things with low skill.
-	//player->mo->angle = R_PointToAngle2(player->mo->x, player->mo->y, player->enemy->x, player->enemy->y);
 }
 
 bool FCajunMaster::IsLeader (player_t *player)
@@ -331,8 +328,7 @@ AActor *DBot::Choose_Mate ()
 		{
 			if (P_CheckSight (player->mo, client->mo, SF_IGNOREVISIBILITY))
 			{
-				test = P_AproxDistance (client->mo->x - player->mo->x,
-										client->mo->y - player->mo->y);
+				test = client->mo->AproxDistance(player->mo);
 
 				if (test < closest_dist)
 				{
@@ -402,8 +398,7 @@ AActor *DBot::Find_enemy ()
 			if (Check_LOS (client->mo, vangle)) //Here's a strange one, when bot is standing still, the P_CheckSight within Check_LOS almost always returns false. tought it should be the same checksight as below but.. (below works) something must be fuckin wierd screded up. 
 			//if(P_CheckSight(player->mo, players[count].mo))
 			{
-				temp = P_AproxDistance (client->mo->x - player->mo->x,
-										client->mo->y - player->mo->y);
+				temp = client->mo->AproxDistance(player->mo);
 
 				//Too dark?
 				if (temp > DARK_DIST &&
@@ -432,7 +427,7 @@ void FCajunMaster::SetBodyAt (fixed_t x, fixed_t y, fixed_t z, int hostnum)
 	{
 		if (body1)
 		{
-			body1->SetOrigin (x, y, z);
+			body1->SetOrigin (x, y, z, false);
 		}
 		else
 		{
@@ -443,7 +438,7 @@ void FCajunMaster::SetBodyAt (fixed_t x, fixed_t y, fixed_t z, int hostnum)
 	{
 		if (body2)
 		{
-			body2->SetOrigin (x, y, z);
+			body2->SetOrigin (x, y, z, false);
 		}
 		else
 		{
@@ -464,16 +459,13 @@ void FCajunMaster::SetBodyAt (fixed_t x, fixed_t y, fixed_t z, int hostnum)
 //Emulates missile travel. Returns distance travelled.
 fixed_t FCajunMaster::FakeFire (AActor *source, AActor *dest, ticcmd_t *cmd)
 {
-	AActor *th = Spawn ("CajunTrace", source->x, source->y, source->z + 4*8*FRACUNIT, NO_REPLACE);
+	AActor *th = Spawn ("CajunTrace", source->X(), source->Y(), source->Z() + 4*8*FRACUNIT, NO_REPLACE);
 	
 	th->target = source;		// where it came from
 
 	float speed = (float)th->Speed;
 
-	FVector3 velocity;
-	velocity[0] = FIXED2FLOAT(dest->x - source->x);
-	velocity[1] = FIXED2FLOAT(dest->y - source->y);
-	velocity[2] = FIXED2FLOAT(dest->z - source->z);
+	TVector3<double> velocity = source->Vec3To(dest);
 	velocity.MakeUnit();
 	th->velx = FLOAT2FIXED(velocity[0] * speed);
 	th->vely = FLOAT2FIXED(velocity[1] * speed);
@@ -484,8 +476,8 @@ fixed_t FCajunMaster::FakeFire (AActor *source, AActor *dest, ticcmd_t *cmd)
 	while (dist < SAFE_SELF_MISDIST)
 	{
 		dist += th->Speed;
-		th->SetOrigin (th->x + th->velx, th->y + th->vely, th->z + th->velz);
-		if (!CleanAhead (th, th->x, th->y, cmd))
+		th->Move(th->velx, th->vely, th->velz);
+		if (!CleanAhead (th, th->X(), th->Y(), cmd))
 			break;
 	}
 	th->Destroy ();
@@ -499,30 +491,30 @@ angle_t DBot::FireRox (AActor *enemy, ticcmd_t *cmd)
 	AActor *actor;
 	int m;
 
-	bglobal.SetBodyAt (player->mo->x + FixedMul(player->mo->velx, 5*FRACUNIT),
-					   player->mo->y + FixedMul(player->mo->vely, 5*FRACUNIT),
-					   player->mo->z + (player->mo->height / 2), 2);
+	bglobal.SetBodyAt (player->mo->X() + FixedMul(player->mo->velx, 5*FRACUNIT),
+					   player->mo->Y() + FixedMul(player->mo->vely, 5*FRACUNIT),
+					   player->mo->Z() + (player->mo->height / 2), 2);
 
 	actor = bglobal.body2;
 
-	dist = P_AproxDistance (actor->x-enemy->x, actor->y-enemy->y);
+	dist = actor->AproxDistance (enemy);
 	if (dist < SAFE_SELF_MISDIST)
 		return 0;
 	//Predict.
 	m = (((dist+1)/FRACUNIT) / GetDefaultByName("Rocket")->Speed);
 
-	bglobal.SetBodyAt (enemy->x + FixedMul(enemy->velx, (m+2*FRACUNIT)),
-					   enemy->y + FixedMul(enemy->vely, (m+2*FRACUNIT)), ONFLOORZ, 1);
+	bglobal.SetBodyAt (enemy->X() + FixedMul(enemy->velx, (m+2*FRACUNIT)),
+					   enemy->Y() + FixedMul(enemy->vely, (m+2*FRACUNIT)), ONFLOORZ, 1);
 	
 	//try the predicted location
 	if (P_CheckSight (actor, bglobal.body1, SF_IGNOREVISIBILITY)) //See the predicted location, so give a test missile
 	{
 		FCheckPosition tm;
-		if (bglobal.SafeCheckPosition (player->mo, actor->x, actor->y, tm))
+		if (bglobal.SafeCheckPosition (player->mo, actor->X(), actor->Y(), tm))
 		{
 			if (bglobal.FakeFire (actor, bglobal.body1, cmd) >= SAFE_SELF_MISDIST)
 			{
-				ang = R_PointToAngle2 (actor->x, actor->y, bglobal.body1->x, bglobal.body1->y);
+				ang = actor->AngleTo(bglobal.body1);
 				return ang;
 			}
 		}
@@ -532,7 +524,7 @@ angle_t DBot::FireRox (AActor *enemy, ticcmd_t *cmd)
 	{
 		if (bglobal.FakeFire (player->mo, enemy, cmd) >= SAFE_SELF_MISDIST)
 		{
-			ang = R_PointToAngle2(player->mo->x, player->mo->y, enemy->x, enemy->y);
+			ang = player->mo->AngleTo(enemy);
 			return ang;
 		}
 	}

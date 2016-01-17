@@ -1117,7 +1117,7 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 	if (facetalker)
 	{
 		A_FaceTarget (npc);
-		pc->angle = R_PointToAngle2 (pc->x, pc->y, npc->x, npc->y);
+		pc->angle = pc->AngleTo(npc);
 	}
 	if ((npc->flags & MF_FRIENDLY) || (npc->flags4 & MF4_NOHATEPLAYERS))
 	{
@@ -1345,12 +1345,14 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 	if (reply->NextNode != 0)
 	{
 		int rootnode = npc->ConversationRoot;
-		if (reply->NextNode < 0)
+		unsigned next = (unsigned)(rootnode + (reply->NextNode < 0 ? -1 : 1) * reply->NextNode - 1);
+
+		if (next < StrifeDialogues.Size())
 		{
-			unsigned next = (unsigned)(rootnode - reply->NextNode - 1);
-			if (gameaction != ga_slideshow && next < StrifeDialogues.Size())
+			npc->Conversation = StrifeDialogues[next];
+
+			if (gameaction != ga_slideshow)
 			{
-				npc->Conversation = StrifeDialogues[next];
 				P_StartConversation (npc, player->mo, player->ConversationFaceTalker, false);
 				return;
 			}
@@ -1358,10 +1360,6 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 			{
 				S_StopSound (npc, CHAN_VOICE);
 			}
-		}
-		else
-		{
-			npc->Conversation = StrifeDialogues[rootnode + reply->NextNode - 1];
 		}
 	}
 

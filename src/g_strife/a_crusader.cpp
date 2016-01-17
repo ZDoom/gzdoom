@@ -11,9 +11,9 @@
 
 static bool CrusaderCheckRange (AActor *self)
 {
-	if (P_CheckSight (self, self->target) && self->reactiontime == 0)
+	if (self->reactiontime == 0 && P_CheckSight (self, self->target))
 	{
-		return P_AproxDistance (self->x - self->target->x, self->y - self->target->y) < 264*FRACUNIT;
+		return self->AproxDistance (self->target) < 264*FRACUNIT;
 	}
 	return false;
 }

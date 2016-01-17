@@ -47,6 +47,7 @@
 #include "r_data/colormaps.h"
 #include "w_wad.h"
 #include "p_tags.h"
+#include "p_terrain.h"
 
 //===========================================================================
 //
@@ -1299,6 +1300,8 @@ public:
 		sec->prevsec = -1;	// stair retriggering until build completes
 		sec->heightsec = NULL;	// sector used to get floor and ceiling height
 		sec->sectornum = index;
+		sec->damageinterval = 32;
+		sec->terrainnum[sector_t::ceiling] = sec->terrainnum[sector_t::floor] = -1;
 		if (floordrop) sec->Flags = SECF_FLOORDROP;
 		// killough 3/7/98: end changes
 
@@ -1524,6 +1527,39 @@ public:
 					cp[3] = CheckFloat(key);
 					break;
 
+				case NAME_damageamount:
+					sec->damageamount = CheckInt(key);
+					break;
+
+				case NAME_damagetype:
+					sec->damagetype = CheckString(key);
+					break;
+
+				case NAME_damageinterval:
+					sec->damageinterval = CheckInt(key);
+					if (sec->damageinterval < 1) sec->damageinterval = 1;
+					break;
+
+				case NAME_leakiness:
+					sec->leakydamage = CheckInt(key);
+					break;
+
+				case NAME_damageterraineffect:
+					Flag(sec->Flags, SECF_DMGTERRAINFX, key);
+					break;
+
+				case NAME_damagehazard:
+					Flag(sec->Flags, SECF_HAZARD, key);
+					break;
+
+				case NAME_floorterrain:
+					sec->terrainnum[sector_t::floor] = P_FindTerrain(CheckString(key));
+					break;
+
+				case NAME_ceilingterrain:
+					sec->terrainnum[sector_t::ceiling] = P_FindTerrain(CheckString(key));
+					break;
+
 				case NAME_MoreIds:
 					// delay parsing of the tag string until parsing of the sector is complete
 					// This ensures that the ID is always the first tag in the list.
@@ -1550,7 +1586,15 @@ public:
 			}
 		}
 
-		sec->secretsector = !!(sec->special&SECRET_MASK);
+		if (sec->damageamount == 0)
+		{
+			// If no damage is set, clear all other related properties so that they do not interfere
+			// with other means of setting them.
+			sec->damagetype = NAME_None;
+			sec->damageinterval = 0;
+			sec->leakydamage = 0;
+			sec->Flags &= ~SECF_DAMAGEFLAGS;
+		}
 		
 		// Reset the planes to their defaults if not all of the plane equation's parameters were found.
 		if (fplaneflags != 15)
@@ -1594,10 +1638,10 @@ public:
 		{
 			// [RH] Sectors default to white light with the default fade.
 			//		If they are outside (have a sky ceiling), they use the outside fog.
-			if (level.outsidefog != 0xff000000 && (sec->GetTexture(sector_t::ceiling) == skyflatnum || (sec->special&0xff) == Sector_Outside))
+			if (level.outsidefog != 0xff000000 && (sec->GetTexture(sector_t::ceiling) == skyflatnum || (sec->special & 0xff) == Sector_Outside))
 			{
 				if (fogMap == NULL)
-					fogMap = GetSpecialLights (PalEntry (255,255,255), level.outsidefog, 0);
+					fogMap = GetSpecialLights(PalEntry(255, 255, 255), level.outsidefog, 0);
 				sec->ColorMap = fogMap;
 			}
 			else
@@ -1610,9 +1654,9 @@ public:
 		else
 		{
 			if (lightcolor == -1) lightcolor = PalEntry(255,255,255);
-			if (fadecolor == -1) 
+			if (fadecolor == -1)
 			{
-				if (level.outsidefog != 0xff000000 && (sec->GetTexture(sector_t::ceiling) == skyflatnum || (sec->special&0xff) == Sector_Outside))
+				if (level.outsidefog != 0xff000000 && (sec->GetTexture(sector_t::ceiling) == skyflatnum || (sec->special & 0xff) == Sector_Outside))
 					fadecolor = level.outsidefog;
 				else
 					fadecolor = level.fadeto;

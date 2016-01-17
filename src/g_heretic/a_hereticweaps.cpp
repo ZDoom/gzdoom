@@ -94,8 +94,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_StaffAttack)
 	{
 		//S_StartSound(player->mo, sfx_stfhit);
 		// turn to face target
-		self->angle = R_PointToAngle2 (self->x,
-			self->y, linetarget->x, linetarget->y);
+		self->angle = self->AngleTo(linetarget);
 	}
 	return 0;
 }
@@ -325,8 +324,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GauntletAttack)
 		S_Sound (self, CHAN_AUTO, "weapons/gauntletshit", 1, ATTN_NORM);
 	}
 	// turn to face target
-	angle = R_PointToAngle2 (self->x, self->y,
-		linetarget->x, linetarget->y);
+	angle = self->AngleTo(linetarget);
 	if (angle-self->angle > ANG180)
 	{
 		if ((int)(angle-self->angle) < -ANG90/20)
@@ -684,8 +682,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DeathBallImpact)
 			}
 			else
 			{ // Seek
-				angle = R_PointToAngle2(self->x, self->y,
-					target->x, target->y);
+				self->angle = self->AngleTo(target);
 				newAngle = true;
 			}
 		}
@@ -698,8 +695,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DeathBallImpact)
 				if (linetarget && self->target != linetarget)
 				{
 					self->tracer = linetarget;
-					angle = R_PointToAngle2 (self->x, self->y,
-						linetarget->x, linetarget->y);
+					angle = self->AngleTo(linetarget);
 					newAngle = true;
 					break;
 				}
@@ -1163,7 +1159,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_HideInCeiling)
 		F3DFloor * rover = self->Sector->e->XFloor.ffloors[i];
 		if(!(rover->flags & FF_SOLID) || !(rover->flags & FF_EXISTS)) continue;
 		 
-		if ((foo = rover->bottom.plane->ZatPoint(self->x, self->y)) >= (self->z + self->height))
+		if ((foo = rover->bottom.plane->ZatPoint(self)) >= (self->z + self->height))
 		{
 			self->z = foo + 4*FRACUNIT;
 			self->bouncecount = i;

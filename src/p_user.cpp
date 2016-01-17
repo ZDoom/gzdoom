@@ -361,6 +361,8 @@ player_t &player_t::operator=(const player_t &p)
 	damagecount = p.damagecount;
 	bonuscount = p.bonuscount;
 	hazardcount = p.hazardcount;
+	hazardtype = p.hazardtype;
+	hazardinterval = p.hazardinterval;
 	poisoncount = p.poisoncount;
 	poisontype = p.poisontype;
 	poisonpaintype = p.poisonpaintype;
@@ -2625,10 +2627,8 @@ void P_PlayerThink (player_t *player)
 	if (!(player->cheats & CF_PREDICTING))
 	{
 		P_PlayerOnSpecial3DFloor (player);
-		if (player->mo->Sector->special || player->mo->Sector->damage)
-		{
-			P_PlayerInSpecialSector (player);
-		}
+		P_PlayerInSpecialSector (player);
+
 		if (player->mo->z <= player->mo->Sector->floorplane.ZatPoint(
 			player->mo->x, player->mo->y) ||
 			player->mo->waterlevel)
@@ -2687,8 +2687,8 @@ void P_PlayerThink (player_t *player)
 		if (player->hazardcount)
 		{
 			player->hazardcount--;
-			if (!(level.time & 31) && player->hazardcount > 16*TICRATE)
-				P_DamageMobj (player->mo, NULL, NULL, 5, NAME_Slime);
+			if (!(level.time % player->hazardinterval) && player->hazardcount > 16*TICRATE)
+				P_DamageMobj (player->mo, NULL, NULL, 5, player->hazardtype);
 		}
 
 		if (player->poisoncount && !(level.time & 15))
@@ -3101,7 +3101,12 @@ void player_t::Serialize (FArchive &arc)
 		<< air_finished
 		<< turnticks
 		<< oldbuttons;
-	bool IsBot;
+	if (SaveVersion >= 4929)
+	{
+		arc << hazardtype
+			<< hazardinterval;
+	}
+	bool IsBot = false;
 	if (SaveVersion >= 4514)
 	{
 		arc << Bot;

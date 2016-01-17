@@ -118,11 +118,6 @@ FConsoleWindow::FConsoleWindow()
 	[m_window makeKeyAndOrderFront:nil];
 }
 
-FConsoleWindow::~FConsoleWindow()
-{
-	[m_window close];
-}
-
 
 static FConsoleWindow* s_instance;
 

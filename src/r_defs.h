@@ -280,6 +280,11 @@ struct secplane_t
 		return FixedMul (ic, -d - DMulScale16 (a, v->x, b, v->y));
 	}
 
+	fixed_t ZatPoint (const AActor *ac) const
+	{
+		return FixedMul (ic, -d - DMulScale16 (a, ac->X(), b, ac->Y()));
+	}
+
 	// Returns the value of z at (x,y) if d is equal to dist
 	fixed_t ZatPointDist (fixed_t x, fixed_t y, fixed_t dist) const
 	{

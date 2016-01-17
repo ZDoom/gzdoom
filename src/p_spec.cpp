@@ -430,7 +430,7 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 	{
 		// Falling, not all the way down yet?
 		sector = player->mo->Sector;
-		if (player->mo->z != sector->floorplane.ZatPoint (player->mo->x, player->mo->y)
+		if (player->mo->z != sector->floorplane.ZatPoint(player->mo)
 			&& !player->mo->waterlevel)
 		{
 			return;
@@ -507,7 +507,7 @@ static void DoSectorDamage(AActor *actor, sector_t *sec, int amount, FName type,
 	if (!(flags & DAMAGE_PLAYERS) && actor->player != NULL)
 		return;
 
-	if (!(flags & DAMAGE_IN_AIR) && actor->z != sec->floorplane.ZatPoint(actor->x, actor->y) && !actor->waterlevel)
+	if (!(flags & DAMAGE_IN_AIR) && actor->z != sec->floorplane.ZatPoint(actor) && !actor->waterlevel)
 		return;
 
 	if (protectClass != NULL)
@@ -544,8 +544,8 @@ void P_SectorDamage(int tag, int amount, FName type, const PClass *protectClass,
 			{
 				next = actor->snext;
 				// Only affect actors touching the 3D floor
-				fixed_t z1 = sec->floorplane.ZatPoint(actor->x, actor->y);
-				fixed_t z2 = sec->ceilingplane.ZatPoint(actor->x, actor->y);
+				fixed_t z1 = sec->floorplane.ZatPoint(actor);
+				fixed_t z2 = sec->ceilingplane.ZatPoint(actor);
 				if (z2 < z1)
 				{
 					// Account for Vavoom-style 3D floors
@@ -2281,7 +2281,7 @@ void DPusher::Tick ()
 			}
 			else // special water sector
 			{
-				ht = hsec->floorplane.ZatPoint (thing->x, thing->y);
+				ht = hsec->floorplane.ZatPoint(thing);
 				if (thing->z > ht) // above ground
 				{
 					xspeed = m_Xmag; // full force
@@ -2310,7 +2310,7 @@ void DPusher::Tick ()
 			{ // special water sector
 				floor = &hsec->floorplane;
 			}
-			if (thing->z > floor->ZatPoint (thing->x, thing->y))
+			if (thing->z > floor->ZatPoint(thing))
 			{ // above ground
 				xspeed = yspeed = 0; // no force
 			}

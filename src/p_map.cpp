@@ -593,8 +593,8 @@ int P_GetFriction(const AActor *mo, int *frictionfactor)
 				if (!(rover->flags & FF_EXISTS)) continue;
 				if (!(rover->flags & FF_SWIMMABLE)) continue;
 
-				if (mo->z > rover->top.plane->ZatPoint(mo->x, mo->y) ||
-					mo->z < rover->bottom.plane->ZatPoint(mo->x, mo->y))
+				if (mo->z > rover->top.plane->ZatPoint(mo) ||
+					mo->z < rover->bottom.plane->ZatPoint(mo))
 					continue;
 
 				newfriction = secfriction(rover->model, rover->top.isceiling);
@@ -623,13 +623,13 @@ int P_GetFriction(const AActor *mo, int *frictionfactor)
 				if (rover->flags & FF_SOLID)
 				{
 					// Must be standing on a solid floor
-					if (mo->z != rover->top.plane->ZatPoint(mo->x, mo->y)) continue;
+					if (mo->z != rover->top.plane->ZatPoint(mo)) continue;
 				}
 				else if (rover->flags & FF_SWIMMABLE)
 				{
 					// Or on or inside a swimmable floor (e.g. in shallow water)
-					if (mo->z > rover->top.plane->ZatPoint(mo->x, mo->y) ||
-						(mo->z + mo->height) < rover->bottom.plane->ZatPoint(mo->x, mo->y))
+					if (mo->z > rover->top.plane->ZatPoint(mo) ||
+						(mo->z + mo->height) < rover->bottom.plane->ZatPoint(mo))
 						continue;
 				}
 				else
@@ -650,9 +650,9 @@ int P_GetFriction(const AActor *mo, int *frictionfactor)
 			}
 			newfriction = secfriction(sec);
 			if ((newfriction < friction || friction == ORIG_FRICTION) &&
-				(mo->z <= sec->floorplane.ZatPoint(mo->x, mo->y) ||
+				(mo->z <= sec->floorplane.ZatPoint(mo) ||
 				(sec->GetHeightSec() != NULL &&
-				mo->z <= sec->heightsec->floorplane.ZatPoint(mo->x, mo->y))))
+				mo->z <= sec->heightsec->floorplane.ZatPoint(mo))))
 			{
 				friction = newfriction;
 				movefactor = secmovefac(sec);
@@ -1798,10 +1798,10 @@ static void CheckForPushSpecial(line_t *line, int side, AActor *mobj, bool windo
 		if (windowcheck && !(ib_compatflags & BCOMPATF_NOWINDOWCHECK) && line->backsector != NULL)
 		{ // Make sure this line actually blocks us and is not a window
 			// or similar construct we are standing inside of.
-			fixed_t fzt = line->frontsector->ceilingplane.ZatPoint(mobj->x, mobj->y);
-			fixed_t fzb = line->frontsector->floorplane.ZatPoint(mobj->x, mobj->y);
-			fixed_t bzt = line->backsector->ceilingplane.ZatPoint(mobj->x, mobj->y);
-			fixed_t bzb = line->backsector->floorplane.ZatPoint(mobj->x, mobj->y);
+			fixed_t fzt = line->frontsector->ceilingplane.ZatPoint(mobj);
+			fixed_t fzb = line->frontsector->floorplane.ZatPoint(mobj);
+			fixed_t bzt = line->backsector->ceilingplane.ZatPoint(mobj);
+			fixed_t bzb = line->backsector->floorplane.ZatPoint(mobj);
 			if (fzt >= mobj->z + mobj->height && bzt >= mobj->z + mobj->height &&
 				fzb <= mobj->z && bzb <= mobj->z)
 			{
@@ -1812,8 +1812,8 @@ static void CheckForPushSpecial(line_t *line, int side, AActor *mobj, bool windo
 
 					if (!(rover->flags & FF_SOLID) || !(rover->flags & FF_EXISTS)) continue;
 
-					fixed_t ff_bottom = rover->bottom.plane->ZatPoint(mobj->x, mobj->y);
-					fixed_t ff_top = rover->top.plane->ZatPoint(mobj->x, mobj->y);
+					fixed_t ff_bottom = rover->bottom.plane->ZatPoint(mobj);
+					fixed_t ff_top = rover->top.plane->ZatPoint(mobj);
 
 					if (ff_bottom < mobj->z + mobj->height && ff_top > mobj->z)
 					{
@@ -2083,8 +2083,8 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 	{
 		fixed_t eyez = oldz + viewheight;
 
-		oldAboveFakeFloor = eyez > oldsec->heightsec->floorplane.ZatPoint(thing->x, thing->y);
-		oldAboveFakeCeiling = eyez > oldsec->heightsec->ceilingplane.ZatPoint(thing->x, thing->y);
+		oldAboveFakeFloor = eyez > oldsec->heightsec->floorplane.ZatPoint(thing);
+		oldAboveFakeCeiling = eyez > oldsec->heightsec->ceilingplane.ZatPoint(thing);
 	}
 
 	// Borrowed from MBF: 
@@ -2743,14 +2743,14 @@ const secplane_t * P_CheckSlopeWalk(AActor *actor, fixed_t &xmove, fixed_t &ymov
 	}
 
 	const secplane_t *plane = &actor->floorsector->floorplane;
-	fixed_t planezhere = plane->ZatPoint(actor->x, actor->y);
+	fixed_t planezhere = plane->ZatPoint(actor);
 
 	for (unsigned int i = 0; i<actor->floorsector->e->XFloor.ffloors.Size(); i++)
 	{
 		F3DFloor * rover = actor->floorsector->e->XFloor.ffloors[i];
 		if (!(rover->flags & FF_SOLID) || !(rover->flags & FF_EXISTS)) continue;
 
-		fixed_t thisplanez = rover->top.plane->ZatPoint(actor->x, actor->y);
+		fixed_t thisplanez = rover->top.plane->ZatPoint(actor);
 
 		if (thisplanez>planezhere && thisplanez <= actor->z + actor->MaxStepHeight)
 		{
@@ -2768,7 +2768,7 @@ const secplane_t * P_CheckSlopeWalk(AActor *actor, fixed_t &xmove, fixed_t &ymov
 			F3DFloor * rover = actor->Sector->e->XFloor.ffloors[i];
 			if (!(rover->flags & FF_SOLID) || !(rover->flags & FF_EXISTS)) continue;
 
-			fixed_t thisplanez = rover->top.plane->ZatPoint(actor->x, actor->y);
+			fixed_t thisplanez = rover->top.plane->ZatPoint(actor);
 
 			if (thisplanez>planezhere && thisplanez <= actor->z + actor->MaxStepHeight)
 			{

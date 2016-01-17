@@ -628,7 +628,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CheckTerrain)
 {
 	sector_t *sec = self->Sector;
 
-	if (self->z == sec->floorplane.ZatPoint (self->x, self->y))
+	if (self->z == sec->floorplane.ZatPoint(self))
 	{
 		if (sec->special == Damage_InstantDeath)
 		{

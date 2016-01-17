@@ -337,7 +337,7 @@ void P_PlayerOnSpecial3DFloor(player_t* player)
 		{
 			//Water and DEATH FOG!!! heh
 			if (player->mo->Z() > rover->top.plane->ZatPoint(player->mo) || 
-				(player->mo->Z() + player->mo->height) < rover->bottom.plane->ZatPoint(player->mo))
+				player->mo->Top() < rover->bottom.plane->ZatPoint(player->mo))
 				continue;
 		}
 

@@ -429,7 +429,7 @@ void P_RunEffect (AActor *actor, int effects)
 				fixedvec3 pos = actor->Vec3Offset(
 					backx - FixedMul(actor->velx, pathdist),
 					backy - FixedMul(actor->vely, pathdist),
-					backz - FixedMul(actor->velz, pathdist) + (M_Random() << 10);
+					backz - FixedMul(actor->velz, pathdist) + (M_Random() << 10));
 				particle->x = pos.x;
 				particle->y = pos.y;
 				particle->z = pos.z;

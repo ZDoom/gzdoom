@@ -1441,7 +1441,6 @@ void SFFile::ApplyGeneratorsToRegion(SFGenComposite *gen, SFSample *sfsamp, Rend
 	sp->root_freq = note_to_freq(sp->scale_note);
 	sp->sample_rate = sfsamp->SampleRate;
 	sp->key_group = gen->exclusiveClass;
-	sp->volume = 1;
 
 	// Set key scaling
 	if (gen->keynum >= 0 && gen->keynum <= 127)
@@ -1502,7 +1501,7 @@ void SFFile::ApplyGeneratorsToRegion(SFGenComposite *gen, SFSample *sfsamp, Rend
 
 void SFFile::LoadSample(SFSample *sample)
 {
-	FileReader *fp = open_filereader(Filename, openmode, NULL);
+	FileReader *fp = pathExpander.openFileReader(Filename, NULL);
 	DWORD i;
 
 	if (fp == NULL)

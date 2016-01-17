@@ -94,12 +94,13 @@ public:
 		NoWrap = nowrap;
 		ResetText(SourceText);
 	}
-	void SetClipRect(int x, int y, int width, int height)
+	void SetClipRect(int x, int y, int width, int height, bool aspect)
 	{
 		ClipX = x;
 		ClipY = y;
 		ClipWidth = width;
 		ClipHeight = height;
+		HandleAspect = aspect;
 	}
 	void SetWrapWidth(int wrap)
 	{
@@ -119,6 +120,7 @@ protected:
 	int HUDWidth, HUDHeight;
 	int ClipX, ClipY, ClipWidth, ClipHeight, WrapWidth;	// in HUD coords
 	int ClipLeft, ClipTop, ClipRight, ClipBot;			// in screen coords
+	bool HandleAspect;
 	EColorRange TextColor;
 	FFont *Font;
 	FRenderStyle Style;

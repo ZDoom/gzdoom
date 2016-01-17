@@ -35,82 +35,6 @@
 namespace Timidity
 {
 
-static TArray<FString> PathList;
-
-FString BuildPath(FString base, const char *name)
-{
-	FString current;
-	if (base.IsNotEmpty())
-	{
-		current = base;
-		if (current[current.Len() - 1] != '/') current += '/';
-	}
-	current += name;
-	return current;
-}
-
-/* This is meant to find and open files for reading. */
-FileReader *open_filereader(const char *name, int open, int *plumpnum)
-{
-	FileReader *fp;
-	FString current_filename;
-
-	if (!name || !(*name))
-	{
-		return 0;
-	}
-
-	/* First try the given name */
-	current_filename = name;
-	FixPathSeperator(current_filename);
-
-	int lumpnum = Wads.CheckNumForFullName(current_filename);
-
-	if (open != OM_FILE)
-	{
-		if (lumpnum >= 0)
-		{
-			fp = Wads.ReopenLumpNum(lumpnum);
-			if (plumpnum) *plumpnum = lumpnum;
-			return fp;
-		}
-		if (open == OM_LUMP)	// search the path list when not loading the main config
-		{
-			for (unsigned int plp = PathList.Size(); plp-- != 0; )
-			{ /* Try along the path then */
-				current_filename = BuildPath(PathList[plp], name);
-				lumpnum = Wads.CheckNumForFullName(current_filename);
-				if (lumpnum >= 0)
-				{
-					fp = Wads.ReopenLumpNum(lumpnum);
-					if (plumpnum) *plumpnum = lumpnum;
-					return fp;
-				}
-			}
-			return NULL;
-		}
-	}
-	if (plumpnum) *plumpnum = -1;
-
-
-	fp = new FileReader;
-	if (fp->Open(current_filename)) return fp;
-
-	if (name[0] != '/')
-	{
-		for (unsigned int plp = PathList.Size(); plp-- != 0; )
-		{ /* Try along the path then */
-			current_filename = BuildPath(PathList[plp], name);
-			if (fp->Open(current_filename)) return fp;
-		}
-	}
-	delete fp;
-
-	/* Nothing could be opened. */
-	current_filename = "";
-	return NULL;
-}
-
 
 
 /* This'll allocate memory or die. */
@@ -132,17 +56,5 @@ void *safe_malloc(size_t count)
 	return 0;	// Unreachable.
 }
 
-/* This adds a directory to the path list */
-void add_to_pathlist(const char *s)
-{
-	FString copy = s;
-	FixPathSeperator(copy);
-	PathList.Push(copy);
-}
-
-void clear_pathlist()
-{
-	PathList.Clear();
-}
 
 }

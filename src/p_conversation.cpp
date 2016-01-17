@@ -1347,9 +1347,10 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 		int rootnode = npc->ConversationRoot;
 		if (reply->NextNode < 0)
 		{
-			npc->Conversation = StrifeDialogues[rootnode - reply->NextNode - 1];
-			if (gameaction != ga_slideshow)
+			unsigned next = (unsigned)(rootnode - reply->NextNode - 1);
+			if (gameaction != ga_slideshow && next < StrifeDialogues.Size())
 			{
+				npc->Conversation = StrifeDialogues[next];
 				P_StartConversation (npc, player->mo, player->ConversationFaceTalker, false);
 				return;
 			}

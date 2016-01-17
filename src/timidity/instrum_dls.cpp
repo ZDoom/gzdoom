@@ -1141,7 +1141,6 @@ static void load_region_dls(Renderer *song, Sample *sample, DLS_Instrument *ins,
 		sample->loop_start = rgn->wsmp_loop->ulStart / 2;
 		sample->loop_end = sample->loop_start + (rgn->wsmp_loop->ulLength / 2);
 	}
-	sample->volume = 1.0f;
 
 	if (sample->modes & PATCH_SUSTAIN)
 	{

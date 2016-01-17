@@ -129,6 +129,10 @@ const int WRF_NOFIRE = WRF_NOPRIMARY | WRF_NOSECONDARY;
 const int WRF_ALLOWRELOAD = 16;
 const int WRF_ALLOWZOOM = 32;
 const int WRF_DISABLESWITCH = 64;
+const int WRF_ALLOWUSER1 = 128;
+const int WRF_ALLOWUSER2 = 256;
+const int WRF_ALLOWUSER3 = 512;
+const int WRF_ALLOWUSER4 = 1024;
 
 // Morph constants
 const int MRF_ADDSTAMINA = 1;
@@ -482,6 +486,17 @@ enum
 	QF_MAX =			1 << 3,
 	QF_FULLINTENSITY =	1 << 4,
 	QF_WAVE =			1 << 5,
+};
+
+// A_CheckProximity flags
+enum
+{
+	CPXF_ANCESTOR			= 1,
+	CPXF_LESSOREQUAL		= 1 << 1,
+	CPXF_NOZ				= 1 << 2,
+	CPXF_COUNTDEAD			= 1 << 3,
+	CPXF_DEADONLY			= 1 << 4,
+	CPXF_EXACT				= 1 << 5,
 };
 
 // Flags for A_CheckBlock

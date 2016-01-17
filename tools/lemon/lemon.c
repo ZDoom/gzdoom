@@ -3105,6 +3105,7 @@ struct lemon *lemp;
   FILE *in;
   char *tpltname;
   char *cp;
+  Boolean tpltnameinbuf;
 
   cp = strrchr(lemp->filename,'.');
   if( cp ){
@@ -3114,10 +3115,13 @@ struct lemon *lemp;
   }
   if( access(buf,004)==0 ){
     tpltname = buf;
+    tpltnameinbuf = LEMON_TRUE;
   }else if( access(templatename,004)==0 ){
     tpltname = templatename;
+    tpltnameinbuf = LEMON_TRUE;
   }else{
     tpltname = pathsearch(lemp->argv0,templatename,0);
+    tpltnameinbuf = LEMON_FALSE;
   }
   if( tpltname==0 ){
     fprintf(stderr,"Can't find the parser driver template file \"%s\".\n",
@@ -3128,11 +3132,11 @@ struct lemon *lemp;
   in = fopen(tpltname,"rb");
   if( in==0 ){
     fprintf(stderr,"Can't open the template file \"%s\".\n",templatename);
-    free(tpltname);
+    if (tpltnameinbuf == LEMON_FALSE) free(tpltname);
     lemp->errorcnt++;
     return 0;
   }
-  free(tpltname);
+  if (tpltnameinbuf == LEMON_FALSE) free(tpltname);
   return in;
 }
 

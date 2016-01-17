@@ -288,16 +288,16 @@ bool P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType)
 		}
 	}
 
+	if (activationType == SPAC_Use && (lineActivation & SPAC_MUse) && !mo->player && mo->flags4 & MF4_CANUSEWALLS)
+	{
+		return true;
+	}
+	if (activationType == SPAC_Push && (lineActivation & SPAC_MPush) && !mo->player && mo->flags2 & MF2_PUSHWALL)
+	{
+		return true;
+	}
 	if ((lineActivation & activationType) == 0)
 	{
-		if (activationType == SPAC_Use && (lineActivation & SPAC_MUse) && !mo->player && mo->flags4 & MF4_CANUSEWALLS)
-		{
-			return true;
-		}
-		if (activationType == SPAC_Push && (lineActivation & SPAC_MPush) && !mo->player && mo->flags2 & MF2_PUSHWALL)
-		{
-			return true;
-		}
 		if (activationType != SPAC_MCross || lineActivation != SPAC_Cross)
 		{ 
 			return false;

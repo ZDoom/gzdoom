@@ -2421,11 +2421,8 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 	{
 		int lumpnum = -1;
 		int length = 0;
-		int device = MDEV_DEFAULT;
 		MusInfo *handle = NULL;
-
-		int *devp = MidiDevices.CheckKey(musicname);
-		if (devp != NULL) device = *devp;
+		MidiDeviceSetting *devp = MidiDevices.CheckKey(musicname);
 
 		// Strip off any leading file:// component.
 		if (strncmp(musicname, "file://", 7) == 0)
@@ -2495,7 +2492,7 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 		}
 		else
 		{
-			mus_playing.handle = I_RegisterSong (reader, device);
+			mus_playing.handle = I_RegisterSong (reader, devp);
 		}
 	}
 

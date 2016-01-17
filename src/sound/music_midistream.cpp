@@ -89,12 +89,12 @@ static const BYTE StaticMIDIhead[] =
 //
 //==========================================================================
 
-MIDIStreamer::MIDIStreamer(EMidiDevice type)
+MIDIStreamer::MIDIStreamer(EMidiDevice type, const char *args)
 :
 #ifdef _WIN32
   PlayerThread(0), ExitEvent(0), BufferDoneEvent(0),
 #endif
-  MIDI(0), Division(0), InitialTempo(500000), DeviceType(type)
+  MIDI(0), Division(0), InitialTempo(500000), DeviceType(type), Args(args)
 {
 #ifdef _WIN32
 	BufferDoneEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
@@ -240,6 +240,7 @@ EMidiDevice MIDIStreamer::SelectMIDIDevice(EMidiDevice device)
 #ifdef HAVE_FLUIDSYNTH
 	case -5:		return MDEV_FLUIDSYNTH;
 #endif
+	case -6:		return MDEV_WILDMIDI;
 	default:
 		#ifdef _WIN32
 					return MDEV_MMAPI;
@@ -268,19 +269,19 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype) const
 
 #ifdef HAVE_FLUIDSYNTH
 	case MDEV_FLUIDSYNTH:
-		return new FluidSynthMIDIDevice;
+		return new FluidSynthMIDIDevice(Args);
 #endif
 
 	case MDEV_SNDSYS:
 		return new SndSysMIDIDevice;
 
 	case MDEV_GUS:
-		return new TimidityMIDIDevice;
+		return new TimidityMIDIDevice(Args);
 
 	case MDEV_OPL:
 		try
 		{
-			return new OPLMIDIDevice;
+			return new OPLMIDIDevice(Args);
 		}
 		catch (CRecoverableError &err)
 		{
@@ -290,7 +291,10 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype) const
 		}
 
 	case MDEV_TIMIDITY:
-		return new TimidityPPMIDIDevice;
+		return new TimidityPPMIDIDevice(Args);
+
+	case MDEV_WILDMIDI:
+		return new WildMIDIDevice(Args);
 
 	default:
 		return NULL;
@@ -618,6 +622,21 @@ void MIDIStreamer::FluidSettingStr(const char *setting, const char *value)
 	if (MIDI != NULL)
 	{
 		MIDI->FluidSettingStr(setting, value);
+	}
+}
+
+
+//==========================================================================
+//
+// MIDIDeviceStreamer :: WildMidiSetOption
+//
+//==========================================================================
+
+void MIDIStreamer::WildMidiSetOption(int opt, int set)
+{
+	if (MIDI != NULL)
+	{
+		MIDI->WildMidiSetOption(opt, set);
 	}
 }
 
@@ -1192,9 +1211,15 @@ void MIDIStreamer::CreateSMF(TArray<BYTE> &file, int looplimit)
 					len--;
 					file.Push(MIDI_SYSEX);
 					WriteVarLen(file, len);
-					memcpy(&file[file.Reserve(len - 1)], bytes, len);
-					running_status = 255;
+					memcpy(&file[file.Reserve(len)], bytes + 1, len);
 				}
+				else
+				{
+					file.Push(MIDI_SYSEXEND);
+					WriteVarLen(file, len);
+					memcpy(&file[file.Reserve(len)], bytes, len);
+				}
+				running_status = 255;
 			}
 			else if (MEVT_EVENTTYPE(event[2]) == 0)
 			{
@@ -1509,6 +1534,16 @@ void MIDIDevice::FluidSettingNum(const char *setting, double value)
 //==========================================================================
 
 void MIDIDevice::FluidSettingStr(const char *setting, const char *value)
+{
+}
+
+//==========================================================================
+//
+// MIDIDevice :: WildMidiSetOption
+//
+//==========================================================================
+
+void MIDIDevice::WildMidiSetOption(int opt, int set)
 {
 }
 

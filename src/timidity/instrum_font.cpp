@@ -54,7 +54,7 @@ void font_add(const char *filename, int load_order)
 	}
 	else
 	{
-		FileReader *fp = open_filereader(filename, openmode, NULL);
+		FileReader *fp = pathExpander.openFileReader(filename, NULL);
 
 		if (fp != NULL)
 		{

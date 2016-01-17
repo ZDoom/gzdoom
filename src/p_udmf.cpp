@@ -785,7 +785,7 @@ public:
 		bool strifetrans = false;
 		bool strifetrans2 = false;
 		FString arg0str, arg1str;
-		int lineid;	// forZDoomTranslated namespace
+		int lineid = -1;	// forZDoomTranslated namespace
 		FString tagstring;
 
 		memset(ld, 0, sizeof(*ld));
@@ -1082,7 +1082,7 @@ public:
 			maplinedef_t mld;
 			memset(&mld, 0, sizeof(mld));
 			mld.special = ld->special;
-			mld.tag = lineid;
+			mld.tag = ld->args[0];
 			P_TranslateLineDef(ld, &mld);
 			ld->flags = saved | (ld->flags&(ML_MONSTERSCANACTIVATE|ML_REPEAT_SPECIAL|ML_FIRSTSIDEONLY));
 		}

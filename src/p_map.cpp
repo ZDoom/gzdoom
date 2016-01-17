@@ -52,6 +52,7 @@
 #include "p_conversation.h"
 #include "r_data/r_translate.h"
 #include "g_level.h"
+#include "r_sky.h"
 
 CVAR(Bool, cl_bloodsplats, true, CVAR_ARCHIVE)
 CVAR(Int, sv_smartaim, 0, CVAR_ARCHIVE | CVAR_SERVERINFO)
@@ -376,7 +377,7 @@ void P_FindFloorCeiling(AActor *actor, int flags)
 //
 //==========================================================================
 
-bool P_TeleportMove(AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefrag)
+bool P_TeleportMove(AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefrag, bool modifyactor)
 {
 	FCheckPosition tmf;
 	sector_t *oldsec = thing->Sector;
@@ -455,37 +456,40 @@ bool P_TeleportMove(AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefra
 		return false;
 	}
 
-	// the move is ok, so link the thing into its new position
-	thing->SetOrigin(x, y, z);
-	thing->floorz = tmf.floorz;
-	thing->ceilingz = tmf.ceilingz;
-	thing->floorsector = tmf.floorsector;
-	thing->floorpic = tmf.floorpic;
-	thing->floorterrain = tmf.floorterrain;
-	thing->ceilingsector = tmf.ceilingsector;
-	thing->ceilingpic = tmf.ceilingpic;
-	thing->dropoffz = tmf.dropoffz;        // killough 11/98
-	thing->BlockingLine = NULL;
-
-	if (thing->flags2 & MF2_FLOORCLIP)
+	if (modifyactor)
 	{
-		thing->AdjustFloorClip();
-	}
+		// the move is ok, so link the thing into its new position
+		thing->SetOrigin(x, y, z);
+		thing->floorz = tmf.floorz;
+		thing->ceilingz = tmf.ceilingz;
+		thing->floorsector = tmf.floorsector;
+		thing->floorpic = tmf.floorpic;
+		thing->floorterrain = tmf.floorterrain;
+		thing->ceilingsector = tmf.ceilingsector;
+		thing->ceilingpic = tmf.ceilingpic;
+		thing->dropoffz = tmf.dropoffz;        // killough 11/98
+		thing->BlockingLine = NULL;
 
-	if (thing == players[consoleplayer].camera)
-	{
-		R_ResetViewInterpolation();
-	}
+		if (thing->flags2 & MF2_FLOORCLIP)
+		{
+			thing->AdjustFloorClip();
+		}
 
-	thing->PrevX = x;
-	thing->PrevY = y;
-	thing->PrevZ = z;
+		if (thing == players[consoleplayer].camera)
+		{
+			R_ResetViewInterpolation();
+		}
 
-	// If this teleport was caused by a move, P_TryMove() will handle the
-	// sector transition messages better than we can here.
-	if (!(thing->flags6 & MF6_INTRYMOVE))
-	{
-		thing->CheckSectorTransition(oldsec);
+		thing->PrevX = x;
+		thing->PrevY = y;
+		thing->PrevZ = z;
+
+		// If this teleport was caused by a move, P_TryMove() will handle the
+		// sector transition messages better than we can here.
+		if (!(thing->flags6 & MF6_INTRYMOVE))
+		{
+			thing->CheckSectorTransition(oldsec);
+		}
 	}
 
 	return true;
@@ -4290,6 +4294,8 @@ void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, i
 		if (puffclass != NULL && puffDefaults->flags3 & MF3_ALWAYSPUFF)
 		{
 			puff = P_SpawnPuff(source, puffclass, trace.X, trace.Y, trace.Z, (source->angle + angleoffset) - ANG90, 1, 0);
+			if (puff && (trace.Line != NULL) && (trace.Line->special == Line_Horizon) && !(puff->flags3 & MF3_SKYEXPLODE))
+				puff->Destroy();
 		}
 		if (puff != NULL && puffDefaults->flags7 & MF7_FORCEDECAL && puff->DecalGenerator)
 			SpawnShootDecal(puff, trace);
@@ -4303,6 +4309,12 @@ void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, i
 		if (puffclass != NULL && puffDefaults->flags3 & MF3_ALWAYSPUFF)
 		{
 			puff = P_SpawnPuff(source, puffclass, trace.X, trace.Y, trace.Z, (source->angle + angleoffset) - ANG90, 1, 0);
+			if (puff && !(puff->flags3 & MF3_SKYEXPLODE) &&
+				(((trace.HitType == TRACE_HitFloor) && (puff->floorpic == skyflatnum)) ||
+				((trace.HitType == TRACE_HitCeiling) && (puff->ceilingpic == skyflatnum))))
+			{
+				puff->Destroy();
+			}
 		}
 	}
 	if (thepuff != NULL)

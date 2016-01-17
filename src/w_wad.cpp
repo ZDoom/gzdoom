@@ -961,8 +961,10 @@ void FWadCollection::RenameNerve ()
 //
 // FixMacHexen
 //
-// Rename unused high resolution font lumps because they are incorrectly
-// treated as extended characters
+// Discard all extra lumps in Mac version of Hexen IWAD (demo or full)
+// to avoid any issues caused by names of these lumps, including:
+//  * Wrong height of small font
+//  * Broken life bar of mage class
 //
 //==========================================================================
 
@@ -973,22 +975,51 @@ void FWadCollection::FixMacHexen()
 		return;
 	}
 
-	for (int i = GetFirstLump(IWAD_FILENUM), last = GetLastLump(IWAD_FILENUM); i <= last; ++i)
+	FileReader* const reader = GetFileReader(IWAD_FILENUM);
+	const long iwadSize = reader->GetLength();
+
+	static const long DEMO_SIZE = 13596228;
+	static const long FULL_SIZE = 21078584;
+
+	if (   DEMO_SIZE != iwadSize
+		&& FULL_SIZE != iwadSize)
 	{
-		assert(IWAD_FILENUM == LumpInfo[i].wadnum);
+		return;
+	}
 
-		FResourceLump* const lump = LumpInfo[i].lump;
-		char* const name = lump->Name;
+	reader->Seek(0, SEEK_SET);
 
-		// Unwanted lumps are named like FONTA??1
+	BYTE checksum[16];
+	MD5Context md5;
+	md5.Update(reader, iwadSize);
+	md5.Final(checksum);
 
-		if (8 == strlen(name)
-			&& MAKE_ID('F', 'O', 'N', 'T') == lump->dwName
-			&& 'A' == name[4] && '1' == name[7]
-			&& isdigit(name[5]) && isdigit(name[6]))
-		{
-			name[0] = '\0';
-		}
+	static const BYTE HEXEN_DEMO_MD5[16] =
+	{
+		0x92, 0x5f, 0x9f, 0x50, 0x00, 0xe1, 0x7d, 0xc8,
+		0x4b, 0x0a, 0x6a, 0x3b, 0xed, 0x3a, 0x6f, 0x31
+	};
+
+	static const BYTE HEXEN_FULL_MD5[16] =
+	{
+		0xb6, 0x81, 0x40, 0xa7, 0x96, 0xf6, 0xfd, 0x7f,
+		0x3a, 0x5d, 0x32, 0x26, 0xa3, 0x2b, 0x93, 0xbe
+	};
+
+	if (   0 != memcmp(HEXEN_DEMO_MD5, checksum, sizeof checksum)
+		&& 0 != memcmp(HEXEN_FULL_MD5, checksum, sizeof checksum))
+	{
+		return;
+	}
+
+	static const int EXTRA_LUMPS = 299;
+
+	const int lastLump = GetLastLump(IWAD_FILENUM);
+	assert(GetFirstLump(IWAD_FILENUM) + 299 < lastLump);
+
+	for (int i = lastLump - EXTRA_LUMPS + 1; i <= lastLump; ++i)
+	{
+		LumpInfo[i].lump->Name[0] = '\0';
 	}
 }
 

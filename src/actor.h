@@ -1155,6 +1155,20 @@ public:
 	}
 
 	bool HasSpecialDeathStates () const;
+
+	fixed_t X() const
+	{
+		return x;
+	}
+	fixed_t Y() const
+	{
+		return y;
+	}
+	fixed_t Z() const
+	{
+		return z;
+	}
+
 };
 
 class FActorIterator

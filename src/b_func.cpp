@@ -427,7 +427,7 @@ void FCajunMaster::SetBodyAt (fixed_t x, fixed_t y, fixed_t z, int hostnum)
 	{
 		if (body1)
 		{
-			body1->SetOrigin (x, y, z);
+			body1->SetOrigin (x, y, z, false);
 		}
 		else
 		{
@@ -438,7 +438,7 @@ void FCajunMaster::SetBodyAt (fixed_t x, fixed_t y, fixed_t z, int hostnum)
 	{
 		if (body2)
 		{
-			body2->SetOrigin (x, y, z);
+			body2->SetOrigin (x, y, z, false);
 		}
 		else
 		{
@@ -465,10 +465,7 @@ fixed_t FCajunMaster::FakeFire (AActor *source, AActor *dest, ticcmd_t *cmd)
 
 	float speed = (float)th->Speed;
 
-	FVector3 velocity;
-	velocity[0] = FIXED2FLOAT(dest->x - source->x);
-	velocity[1] = FIXED2FLOAT(dest->y - source->y);
-	velocity[2] = FIXED2FLOAT(dest->z - source->z);
+	TVector3<double> velocity = source->Vec3To(dest);
 	velocity.MakeUnit();
 	th->velx = FLOAT2FIXED(velocity[0] * speed);
 	th->vely = FLOAT2FIXED(velocity[1] * speed);
@@ -479,8 +476,8 @@ fixed_t FCajunMaster::FakeFire (AActor *source, AActor *dest, ticcmd_t *cmd)
 	while (dist < SAFE_SELF_MISDIST)
 	{
 		dist += th->Speed;
-		th->SetOrigin (th->x + th->velx, th->y + th->vely, th->z + th->velz);
-		if (!CleanAhead (th, th->x, th->y, cmd))
+		th->Move(th->velx, th->vely, th->velz);
+		if (!CleanAhead (th, th->X(), th->Y(), cmd))
 			break;
 	}
 	th->Destroy ();

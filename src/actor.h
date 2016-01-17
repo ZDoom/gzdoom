@@ -951,6 +951,23 @@ public:
 		return ret;
 	}
 
+	fixedvec2 Vec2Offset(fixed_t dx, fixed_t dy) const
+	{
+		fixedvec2 ret = { x + dx, y + dy };
+		return ret;
+	}
+
+	fixedvec3 Vec3Offset(fixed_t dx, fixed_t dy, fixed_t dz) const
+	{
+		fixedvec3 ret = { x + dx, y + dy, z + dz };
+		return ret;
+	}
+
+	void Move(fixed_t dx, fixed_t dy, fixed_t dz)
+	{
+		SetOrigin(x + dx, y + dy, z + dz, true);
+	}
+
 	inline void SetFriendPlayer(player_t *player);
 
 	bool IsVisibleToPlayer() const;
@@ -1168,7 +1185,7 @@ public:
 	void LinkToWorld (sector_t *sector);
 	void UnlinkFromWorld ();
 	void AdjustFloorClip ();
-	void SetOrigin (fixed_t x, fixed_t y, fixed_t z);
+	void SetOrigin (fixed_t x, fixed_t y, fixed_t z, bool moving = false);
 	bool InStateSequence(FState * newstate, FState * basestate);
 	int GetTics(FState * newstate);
 	bool SetState (FState *newstate, bool nofunction=false);
@@ -1209,6 +1226,10 @@ public:
 	fixed_t Z() const
 	{
 		return z;
+	}
+	void SetZ(fixed_t newz)
+	{
+		z = newz;
 	}
 
 };
@@ -1284,8 +1305,24 @@ inline AActor *Spawn (const PClass *type, fixed_t x, fixed_t y, fixed_t z, repla
 	return AActor::StaticSpawn (type, x, y, z, allowreplacement);
 }
 
+inline AActor *Spawn (const PClass *type, const fixedvec3 &pos, replace_t allowreplacement)
+{
+	return AActor::StaticSpawn (type, pos.x, pos.y, pos.z, allowreplacement);
+}
+
 AActor *Spawn (const char *type, fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement);
 AActor *Spawn (FName classname, fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement);
+
+inline AActor *Spawn (const char *type, const fixedvec3 &pos, replace_t allowreplacement)
+{
+	return Spawn (type, pos.x, pos.y, pos.z, allowreplacement);
+}
+
+inline AActor *Spawn (FName classname, const fixedvec3 &pos, replace_t allowreplacement)
+{
+	return Spawn (classname, pos.x, pos.y, pos.z, allowreplacement);
+}
+
 
 template<class T>
 inline T *Spawn (fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement)
@@ -1293,6 +1330,11 @@ inline T *Spawn (fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement)
 	return static_cast<T *>(AActor::StaticSpawn (RUNTIME_CLASS(T), x, y, z, allowreplacement));
 }
 
+template<class T>
+inline T *Spawn (const fixedvec3 &pos, replace_t allowreplacement)
+{
+	return static_cast<T *>(AActor::StaticSpawn (RUNTIME_CLASS(T), pos.x, pos.y, pos.z, allowreplacement));
+}
 
 void PrintMiscActorInfo(AActor * query);
 

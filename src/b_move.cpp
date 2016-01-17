@@ -124,9 +124,6 @@ bool DBot::TryWalk (ticcmd_t *cmd)
 
 void DBot::NewChaseDir (ticcmd_t *cmd)
 {
-    fixed_t     deltax;
-    fixed_t     deltay;
-
     dirtype_t   d[3];
 
     int         tdir;
@@ -145,19 +142,18 @@ void DBot::NewChaseDir (ticcmd_t *cmd)
     olddir = (dirtype_t)player->mo->movedir;
     turnaround = opposite[olddir];
 
-    deltax = dest->x - player->mo->x;
-    deltay = dest->y - player->mo->y;
+	fixedvec2 delta = player->mo->Vec2To(dest);
 
-    if (deltax > 10*FRACUNIT)
+    if (delta.x > 10*FRACUNIT)
         d[1] = DI_EAST;
-    else if (deltax < -10*FRACUNIT)
+    else if (delta.x < -10*FRACUNIT)
         d[1] = DI_WEST;
     else
         d[1] = DI_NODIR;
 
-    if (deltay < -10*FRACUNIT)
+    if (delta.y < -10*FRACUNIT)
         d[2] = DI_SOUTH;
-    else if (deltay > 10*FRACUNIT)
+    else if (delta.y > 10*FRACUNIT)
         d[2] = DI_NORTH;
     else
         d[2] = DI_NODIR;
@@ -165,14 +161,14 @@ void DBot::NewChaseDir (ticcmd_t *cmd)
     // try direct route
     if (d[1] != DI_NODIR && d[2] != DI_NODIR)
     {
-        player->mo->movedir = diags[((deltay<0)<<1)+(deltax>0)];
+        player->mo->movedir = diags[((delta.y<0)<<1)+(delta.x>0)];
         if (player->mo->movedir != turnaround && TryWalk(cmd))
             return;
     }
 
     // try other directions
     if (pr_botnewchasedir() > 200
-        || abs(deltay)>abs(deltax))
+        || abs(delta.y)>abs(delta.x))
     {
         tdir=d[1];
         d[1]=d[2];

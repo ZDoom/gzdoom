@@ -303,8 +303,8 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 	if (t_fight<(AFTERTICS/2))
 		player->mo->flags |= MF_DROPOFF;
 
-	oldx = player->mo->x;
-	oldy = player->mo->y;
+	oldx = player->mo->X();
+	oldy = player->mo->Y();
 }
 
 //BOT_WhatToGet

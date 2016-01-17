@@ -2373,8 +2373,8 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 
 			s = ReadString (stream);
 
-			if (Trace (players[player].mo->x, players[player].mo->y,
-				players[player].mo->z + players[player].mo->height - (players[player].mo->height>>2),
+			if (Trace (players[player].mo->X(), players[player].mo->Y(),
+				players[player].mo->Z() + players[player].mo->height - (players[player].mo->height>>2),
 				players[player].mo->Sector,
 				vx, vy, vz, 172*FRACUNIT, 0, ML_BLOCKEVERYTHING, players[player].mo,
 				trace, TRACE_NoSky))

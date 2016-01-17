@@ -619,8 +619,8 @@ void P_DrawRailTrail(AActor *source, const TVector3<double> &start, const TVecto
 			double r;
 			double dirz;
 
-			if (abs(mo->x - FLOAT2FIXED(start.X)) < 20 * FRACUNIT
-				&& (mo->y - FLOAT2FIXED(start.Y)) < 20 * FRACUNIT)
+			if (abs(mo->X() - FLOAT2FIXED(start.X)) < 20 * FRACUNIT
+				&& (mo->Y() - FLOAT2FIXED(start.Y)) < 20 * FRACUNIT)
 			{ // This player (probably) fired the railgun
 				S_Sound (mo, CHAN_WEAPON, sound, 1, ATTN_NORM);
 			}
@@ -630,7 +630,7 @@ void P_DrawRailTrail(AActor *source, const TVector3<double> &start, const TVecto
 				// Only consider sound in 2D (for now, anyway)
 				// [BB] You have to divide by lengthsquared here, not multiply with it.
 
-				r = ((start.Y - FIXED2DBL(mo->y)) * (-dir.Y) - (start.X - FIXED2DBL(mo->x)) * (dir.X)) / lengthsquared;
+				r = ((start.Y - FIXED2DBL(mo->Y())) * (-dir.Y) - (start.X - FIXED2DBL(mo->X())) * (dir.X)) / lengthsquared;
 				r = clamp<double>(r, 0., 1.);
 
 				dirz = dir.Z;

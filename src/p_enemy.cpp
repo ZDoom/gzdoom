@@ -243,9 +243,9 @@ bool AActor::CheckMeleeRange ()
 	// [RH] Don't melee things too far above or below actor.
 	if (!(flags5 & MF5_NOVERTICALMELEERANGE))
 	{
-		if (pl->z > z + height)
+		if (pl->Z() > z + height)
 			return false;
-		if (pl->z + pl->height < z)
+		if (pl->Z() + pl->height < z)
 			return false;
 	}
 
@@ -280,11 +280,11 @@ bool P_CheckMeleeRange2 (AActor *actor)
 	{
 		return false;
 	}
-	if (mo->z > actor->z+actor->height)
+	if (mo->Z() > actor->Z()+actor->height)
 	{ // Target is higher than the attacker
 		return false;
 	}
-	else if (actor->z > mo->z+mo->height)
+	else if (actor->Z() > mo->Z()+mo->height)
 	{ // Attacker is higher
 		return false;
 	}
@@ -434,7 +434,7 @@ bool P_Move (AActor *actor)
 	// it difficult to thrust them vertically in a reasonable manner.
 	// [GZ] Let jumping actors jump.
 	if (!((actor->flags & MF_NOGRAVITY) || (actor->flags6 & MF6_CANJUMP))
-		&& actor->z > actor->floorz && !(actor->flags2 & MF2_ONMOBJ))
+		&& actor->Z() > actor->floorz && !(actor->flags2 & MF2_ONMOBJ))
 	{
 		return false;
 	}
@@ -538,11 +538,11 @@ bool P_Move (AActor *actor)
 	// actually walking down a step.
 	if (try_ok &&
 		!((actor->flags & MF_NOGRAVITY) || (actor->flags6 & MF6_CANJUMP))
-		&& actor->z > actor->floorz && !(actor->flags2 & MF2_ONMOBJ))
+		&& actor->Z() > actor->floorz && !(actor->flags2 & MF2_ONMOBJ))
 	{
-		if (actor->z <= actor->floorz + actor->MaxStepHeight)
+		if (actor->Y() <= actor->floorz + actor->MaxStepHeight)
 		{
-			fixed_t savedz = actor->z;
+			fixed_t savedz = actor->Z();
 			actor->z = actor->floorz;
 			// Make sure that there isn't some other actor between us and
 			// the floor we could get stuck in. The old code did not do this.
@@ -553,7 +553,7 @@ bool P_Move (AActor *actor)
 			else
 			{ // The monster just hit the floor, so trigger any actions.
 				if (actor->floorsector->SecActTarget != NULL &&
-					actor->floorz == actor->floorsector->floorplane.ZatPoint(actor->x, actor->y))
+					actor->floorz == actor->floorsector->floorplane.ZatPoint(actor))
 				{
 					actor->floorsector->SecActTarget->TriggerAction(actor, SECSPAC_HitFloor);
 				}
@@ -566,7 +566,7 @@ bool P_Move (AActor *actor)
 	{
 		if (((actor->flags6 & MF6_CANJUMP)||(actor->flags & MF_FLOAT)) && tm.floatok)
 		{ // must adjust height
-			fixed_t savedz = actor->z;
+			fixed_t savedz = actor->Z();
 
 			if (actor->z < tm.floorz)
 				actor->z += actor->FloatSpeed;
@@ -847,11 +847,11 @@ void P_NewChaseDir(AActor * actor)
 	
 	// Try to move away from a dropoff
 	if (actor->floorz - actor->dropoffz > actor->MaxDropOffHeight && 
-		actor->z <= actor->floorz && !(actor->flags & MF_DROPOFF) && 
+		actor->Z() <= actor->floorz && !(actor->flags & MF_DROPOFF) && 
 		!(actor->flags2 & MF2_ONMOBJ) &&
 		!(actor->flags & MF_FLOAT) && !(i_compatflags & COMPATF_DROPOFF))
 	{
-		FBoundingBox box(actor->x, actor->y, actor->radius);
+		FBoundingBox box(actor->X(), actor->Y(), actor->radius);
 		FBlockLinesIterator it(box);
 		line_t *line;
 
@@ -866,14 +866,14 @@ void P_NewChaseDir(AActor * actor)
 				box.Bottom() < line->bbox[BOXTOP]    &&
 				box.BoxOnLineSide(line) == -1)
 		    {
-				fixed_t front = line->frontsector->floorplane.ZatPoint(actor->x,actor->y);
-				fixed_t back  = line->backsector->floorplane.ZatPoint(actor->x,actor->y);
+				fixed_t front = line->frontsector->floorplane.ZatPoint(actor);
+				fixed_t back  = line->backsector->floorplane.ZatPoint(actor);
 				angle_t angle;
 		
 				// The monster must contact one of the two floors,
 				// and the other must be a tall dropoff.
 				
-				if (back == actor->z && front < actor->z - actor->MaxDropOffHeight)
+				if (back == actor->Z() && front < actor->Z() - actor->MaxDropOffHeight)
 				{
 					angle = R_PointToAngle2(0,0,line->dx,line->dy);   // front side dropoff
 				}
@@ -2551,11 +2551,11 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 				if (testsec)
 				{
 					fixed_t zdist1, zdist2;
-					if (P_Find3DFloor(testsec, corpsehit->x, corpsehit->y, corpsehit->z, false, true, zdist1)
-						!= P_Find3DFloor(testsec, self->x, self->y, self->z, false, true, zdist2))
+					if (P_Find3DFloor(testsec, corpsehit->X(), corpsehit->Y(), corpsehit->Z(), false, true, zdist1)
+						!= P_Find3DFloor(testsec, self->X(), self->Y(), self->Z(), false, true, zdist2))
 					{
 						// Not on same floor
-						if (vilesec == corpsec || abs(zdist1 - self->z) > self->height)
+						if (vilesec == corpsec || abs(zdist1 - self->Z()) > self->height)
 							continue;
 					}
 				}
@@ -2569,7 +2569,7 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 
 				corpsehit->flags |= MF_SOLID;
 				corpsehit->height = corpsehit->GetDefault()->height;
-				bool check = P_CheckPosition(corpsehit, corpsehit->x, corpsehit->y);
+				bool check = P_CheckPosition(corpsehit, corpsehit->X(), corpsehit->Y());
 				corpsehit->flags = oldflags;
 				corpsehit->radius = oldradius;
 				corpsehit->height = oldheight;
@@ -2792,19 +2792,19 @@ void A_Face (AActor *self, AActor *other, angle_t max_turn, angle_t max_pitch, a
 
 		// If the target z is above the target's head, reposition to the middle of
 		// its body.		
-		if (target_z >= other->z + other->height)
+		if (target_z >= other->Z() + other->height)
 		{
-			target_z = other->z + (other->height / 2);
+			target_z = other->Z() + (other->height / 2);
 		}
 
 		//Note there is no +32*FRACUNIT on purpose. This is for customization sake. 
 		//If one doesn't want this behavior, just don't use FAF_BOTTOM.
 		if (flags & FAF_BOTTOM)
-			target_z = other->z + other->GetBobOffset(); 
+			target_z = other->Z() + other->GetBobOffset(); 
 		if (flags & FAF_MIDDLE)
-			target_z = other->z + (other->height / 2) + other->GetBobOffset();
+			target_z = other->Z() + (other->height / 2) + other->GetBobOffset();
 		if (flags & FAF_TOP)
-			target_z = other->z + (other->height) + other->GetBobOffset();
+			target_z = other->Z() + (other->height) + other->GetBobOffset();
 		if (!(flags & FAF_NODISTFACTOR))
 			target_z += pitch_offset;
 
@@ -3072,7 +3072,7 @@ AInventory *P_DropItem (AActor *source, const PClass *type, int dropamount, int 
 		AActor *mo;
 		fixed_t spawnz;
 
-		spawnz = source->z;
+		spawnz = source->Z();
 		if (!(i_compatflags & COMPATF_NOTOSSDROPS))
 		{
 			int style = sv_dropstyle;
@@ -3087,7 +3087,7 @@ AInventory *P_DropItem (AActor *source, const PClass *type, int dropamount, int 
 				spawnz += source->height / 2;
 			}
 		}
-		mo = Spawn (type, source->x, source->y, spawnz, ALLOW_REPLACE);
+		mo = Spawn (type, source->X(), source->Y(), spawnz, ALLOW_REPLACE);
 		if (mo != NULL)
 		{
 			mo->flags |= MF_DROPPED;

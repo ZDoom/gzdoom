@@ -331,13 +331,13 @@ void P_PlayerOnSpecial3DFloor(player_t* player)
 		if(rover->flags & FF_SOLID)
 		{
 			// Player must be on top of the floor to be affected...
-			if(player->mo->z != rover->top.plane->ZatPoint(player->mo->x, player->mo->y)) continue;
+			if(player->mo->Z() != rover->top.plane->ZatPoint(player->mo)) continue;
 		}
 		else
 		{
 			//Water and DEATH FOG!!! heh
-			if (player->mo->z > rover->top.plane->ZatPoint(player->mo->x, player->mo->y) || 
-				(player->mo->z + player->mo->height) < rover->bottom.plane->ZatPoint(player->mo->x, player->mo->y))
+			if (player->mo->Z() > rover->top.plane->ZatPoint(player->mo) || 
+				(player->mo->Z() + player->mo->height) < rover->bottom.plane->ZatPoint(player->mo))
 				continue;
 		}
 
@@ -372,7 +372,7 @@ bool P_CheckFor3DFloorHit(AActor * mo)
 
 		if(rover->flags & FF_SOLID && rover->model->SecActTarget)
 		{
-			if(mo->floorz == rover->top.plane->ZatPoint(mo->x, mo->y)) 
+			if(mo->floorz == rover->top.plane->ZatPoint(mo)) 
 			{
 				rover->model->SecActTarget->TriggerAction (mo, SECSPAC_HitFloor);
 				return true;
@@ -402,7 +402,7 @@ bool P_CheckFor3DCeilingHit(AActor * mo)
 
 		if(rover->flags & FF_SOLID && rover->model->SecActTarget)
 		{
-			if(mo->ceilingz == rover->bottom.plane->ZatPoint(mo->x, mo->y)) 
+			if(mo->ceilingz == rover->bottom.plane->ZatPoint(mo)) 
 			{
 				rover->model->SecActTarget->TriggerAction (mo, SECSPAC_HitCeiling);
 				return true;
@@ -748,7 +748,7 @@ void P_LineOpening_XFloors (FLineOpening &open, AActor * thing, const line_t *li
     {
 		fixed_t thingbot, thingtop;
 		
-		thingbot = thing->z;
+		thingbot = thing->Z();
 		thingtop = thingbot + (thing->height==0? 1:thing->height);
 
 		extsector_t::xfloor *xf[2] = {&linedef->frontsector->e->XFloor, &linedef->backsector->e->XFloor};
@@ -789,7 +789,7 @@ void P_LineOpening_XFloors (FLineOpening &open, AActor * thing, const line_t *li
 						lowestceilingpic = *rover->bottom.texture;
 					}
 					
-					if(ff_top > highestfloor && delta1 < delta2 && (!restrict || thing->z >= ff_top))
+					if(ff_top > highestfloor && delta1 < delta2 && (!restrict || thing->Z() >= ff_top))
 					{
 						highestfloor = ff_top;
 						highestfloorpic = *rover->top.texture;

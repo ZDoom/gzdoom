@@ -148,7 +148,7 @@ FUNC(LS_Polyobj_MoveToSpot)
 	FActorIterator iterator (arg2);
 	AActor *spot = iterator.Next();
 	if (spot == NULL) return false;
-	return EV_MovePolyTo (ln, arg0, SPEED(arg1), spot->x, spot->y, false);
+	return EV_MovePolyTo (ln, arg0, SPEED(arg1), spot->X(), spot->Y(), false);
 }
 
 FUNC(LS_Polyobj_DoorSwing)
@@ -199,7 +199,7 @@ FUNC(LS_Polyobj_OR_MoveToSpot)
 	FActorIterator iterator (arg2);
 	AActor *spot = iterator.Next();
 	if (spot == NULL) return false;
-	return EV_MovePolyTo (ln, arg0, SPEED(arg1), spot->x, spot->y, true);
+	return EV_MovePolyTo (ln, arg0, SPEED(arg1), spot->X(), spot->Y(), true);
 }
 
 FUNC(LS_Polyobj_Stop)

@@ -30,17 +30,17 @@ bool DBot::Reachable (AActor *rtarget)
 	if (player->mo == rtarget)
 		return false;
 
-	if ((rtarget->Sector->ceilingplane.ZatPoint (rtarget->x, rtarget->y) -
-		 rtarget->Sector->floorplane.ZatPoint (rtarget->x, rtarget->y))
+	if ((rtarget->Sector->ceilingplane.ZatPoint (rtarget) -
+		 rtarget->Sector->floorplane.ZatPoint (rtarget))
 		< player->mo->height) //Where rtarget is, player->mo can't be.
 		return false;
 
 	sector_t *last_s = player->mo->Sector;
-	fixed_t last_z = last_s->floorplane.ZatPoint (player->mo->x, player->mo->y);
+	fixed_t last_z = last_s->floorplane.ZatPoint (player->mo);
 	fixed_t estimated_dist = player->mo->AproxDistance(rtarget);
 	bool reachable = true;
 
-	FPathTraverse it(player->mo->x+player->mo->velx, player->mo->y+player->mo->vely, rtarget->x, rtarget->y, PT_ADDLINES|PT_ADDTHINGS);
+	FPathTraverse it(player->mo->X()+player->mo->velx, player->mo->Y()+player->mo->vely, rtarget->X(), rtarget->Y(), PT_ADDLINES|PT_ADDTHINGS);
 	intercept_t *in;
 	while ((in = it.Next()))
 	{
@@ -96,7 +96,7 @@ bool DBot::Reachable (AActor *rtarget)
 		thing = in->d.thing;
 		if (thing == player->mo) //Can't reach self in this case.
 			continue;
-		if (thing == rtarget && (rtarget->Sector->floorplane.ZatPoint (rtarget->x, rtarget->y) <= (last_z+MAXMOVEHEIGHT)))
+		if (thing == rtarget && (rtarget->Sector->floorplane.ZatPoint (rtarget) <= (last_z+MAXMOVEHEIGHT)))
 		{
 			return true;
 		}
@@ -219,7 +219,7 @@ void DBot::Dofire (ticcmd_t *cmd)
 shootmissile:
 		dist = player->mo->AproxDistance (enemy);
 		m = dist / GetDefaultByType (player->ReadyWeapon->ProjectileType)->Speed;
-		bglobal.SetBodyAt (enemy->x + enemy->velx*m*2, enemy->y + enemy->vely*m*2, enemy->z, 1);
+		bglobal.SetBodyAt (enemy->X() + enemy->velx*m*2, enemy->Y() + enemy->vely*m*2, enemy->Z(), 1);
 		angle = player->mo->AngleTo(bglobal.body1);
 		if (Check_LOS (enemy, SHOOTFOV))
 			no_fire = false;
@@ -459,7 +459,7 @@ void FCajunMaster::SetBodyAt (fixed_t x, fixed_t y, fixed_t z, int hostnum)
 //Emulates missile travel. Returns distance travelled.
 fixed_t FCajunMaster::FakeFire (AActor *source, AActor *dest, ticcmd_t *cmd)
 {
-	AActor *th = Spawn ("CajunTrace", source->x, source->y, source->z + 4*8*FRACUNIT, NO_REPLACE);
+	AActor *th = Spawn ("CajunTrace", source->X(), source->Y(), source->Z() + 4*8*FRACUNIT, NO_REPLACE);
 	
 	th->target = source;		// where it came from
 
@@ -494,9 +494,9 @@ angle_t DBot::FireRox (AActor *enemy, ticcmd_t *cmd)
 	AActor *actor;
 	int m;
 
-	bglobal.SetBodyAt (player->mo->x + FixedMul(player->mo->velx, 5*FRACUNIT),
-					   player->mo->y + FixedMul(player->mo->vely, 5*FRACUNIT),
-					   player->mo->z + (player->mo->height / 2), 2);
+	bglobal.SetBodyAt (player->mo->X() + FixedMul(player->mo->velx, 5*FRACUNIT),
+					   player->mo->Y() + FixedMul(player->mo->vely, 5*FRACUNIT),
+					   player->mo->Z() + (player->mo->height / 2), 2);
 
 	actor = bglobal.body2;
 
@@ -506,14 +506,14 @@ angle_t DBot::FireRox (AActor *enemy, ticcmd_t *cmd)
 	//Predict.
 	m = (((dist+1)/FRACUNIT) / GetDefaultByName("Rocket")->Speed);
 
-	bglobal.SetBodyAt (enemy->x + FixedMul(enemy->velx, (m+2*FRACUNIT)),
-					   enemy->y + FixedMul(enemy->vely, (m+2*FRACUNIT)), ONFLOORZ, 1);
+	bglobal.SetBodyAt (enemy->X() + FixedMul(enemy->velx, (m+2*FRACUNIT)),
+					   enemy->Y() + FixedMul(enemy->vely, (m+2*FRACUNIT)), ONFLOORZ, 1);
 	
 	//try the predicted location
 	if (P_CheckSight (actor, bglobal.body1, SF_IGNOREVISIBILITY)) //See the predicted location, so give a test missile
 	{
 		FCheckPosition tm;
-		if (bglobal.SafeCheckPosition (player->mo, actor->x, actor->y, tm))
+		if (bglobal.SafeCheckPosition (player->mo, actor->X(), actor->Y(), tm))
 		{
 			if (bglobal.FakeFire (actor, bglobal.body1, cmd) >= SAFE_SELF_MISDIST)
 			{

@@ -1176,7 +1176,7 @@ void G_Ticker ()
 				}
 				if (players[i].mo)
 				{
-					DWORD sum = rngsum + players[i].mo->x + players[i].mo->y + players[i].mo->z
+					DWORD sum = rngsum + players[i].mo->X() + players[i].mo->Y() + players[i].mo->Z()
 						+ players[i].mo->angle + players[i].mo->pitch;
 					sum ^= players[i].health;
 					consistancy[i][buf] = sum;
@@ -1435,12 +1435,12 @@ bool G_CheckSpot (int playernum, FPlayerStart *mthing)
 	if (!players[playernum].mo)
 	{ // first spawn of level, before corpses
 		for (i = 0; i < playernum; i++)
-			if (players[i].mo && players[i].mo->x == x && players[i].mo->y == y)
+			if (players[i].mo && players[i].mo->X() == x && players[i].mo->Y() == y)
 				return false;
 		return true;
 	}
 
-	oldz = players[playernum].mo->z;	// [RH] Need to save corpse's z-height
+	oldz = players[playernum].mo->Z();	// [RH] Need to save corpse's z-height
 	players[playernum].mo->z = z;		// [RH] Checks are now full 3-D
 
 	// killough 4/2/98: fix bug where P_CheckPosition() uses a non-solid

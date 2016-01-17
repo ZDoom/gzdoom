@@ -84,7 +84,7 @@ FName MeansOfDeath;
 //
 void P_TouchSpecialThing (AActor *special, AActor *toucher)
 {
-	fixed_t delta = special->z - toucher->z;
+	fixed_t delta = special->Z() - toucher->Z();
 
 	// The pickup is at or above the toucher's feet OR
 	// The pickup is below the toucher.
@@ -1158,7 +1158,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 			// If the origin and target are in exactly the same spot, choose a random direction.
 			// (Most likely cause is from telefragging somebody during spawning because they
 			// haven't moved from their spawn spot at all.)
-			if (origin->x == target->x && origin->y == target->y)
+			if (origin->X() == target->X() && origin->Y() == target->Y())
 			{
 				ang = pr_kickbackdir.GenRand32();
 			}
@@ -1184,7 +1184,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 
 			// make fall forwards sometimes
 			if ((damage < 40) && (damage > target->health)
-				 && (target->z - origin->z > 64*FRACUNIT)
+				 && (target->Z() - origin->Z() > 64*FRACUNIT)
 				 && (pr_damagemobj()&1)
 				 // [RH] But only if not too fast and not flying
 				 && thrust < 10*FRACUNIT

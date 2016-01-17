@@ -1099,7 +1099,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_HideInCeiling)
 		F3DFloor * rover = self->Sector->e->XFloor.ffloors[i];
 		if(!(rover->flags & FF_SOLID) || !(rover->flags & FF_EXISTS)) continue;
 		 
-		if ((foo = rover->bottom.plane->ZatPoint(self->x, self->y)) >= (self->z + self->height))
+		if ((foo = rover->bottom.plane->ZatPoint(self)) >= (self->z + self->height))
 		{
 			self->z = foo + 4*FRACUNIT;
 			self->bouncecount = i;

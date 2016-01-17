@@ -2077,7 +2077,7 @@ explode:
 					if (tm.ceilingline &&
 						tm.ceilingline->backsector &&
 						tm.ceilingline->backsector->GetTexture(sector_t::ceiling) == skyflatnum &&
-						mo->z >= tm.ceilingline->backsector->ceilingplane.ZatPoint (mo->x, mo->y))
+						mo->z >= tm.ceilingline->backsector->ceilingplane.ZatPoint(mo))
 					{
 						// Hack to prevent missiles exploding against the sky.
 						// Does not handle sky floors.
@@ -2161,7 +2161,7 @@ explode:
 	{ // Don't stop sliding if halfway off a step with some velocity
 		if (mo->velx > FRACUNIT/4 || mo->velx < -FRACUNIT/4 || mo->vely > FRACUNIT/4 || mo->vely < -FRACUNIT/4)
 		{
-			if (mo->floorz > mo->Sector->floorplane.ZatPoint (mo->x, mo->y))
+			if (mo->floorz > mo->Sector->floorplane.ZatPoint(mo))
 			{
 				if (mo->dropoffz != mo->floorz) // 3DMidtex or other special cases that must be excluded
 				{
@@ -2407,7 +2407,7 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 	{	// Hit the floor
 		if ((!mo->player || !(mo->player->cheats & CF_PREDICTING)) &&
 			mo->Sector->SecActTarget != NULL &&
-			mo->Sector->floorplane.ZatPoint (mo->x, mo->y) == mo->floorz)
+			mo->Sector->floorplane.ZatPoint(mo) == mo->floorz)
 		{ // [RH] Let the sector do something to the actor
 			mo->Sector->SecActTarget->TriggerAction (mo, SECSPAC_HitFloor);
 		}
@@ -2509,7 +2509,7 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 	{ // hit the ceiling
 		if ((!mo->player || !(mo->player->cheats & CF_PREDICTING)) &&
 			mo->Sector->SecActTarget != NULL &&
-			mo->Sector->ceilingplane.ZatPoint (mo->x, mo->y) == mo->ceilingz)
+			mo->Sector->ceilingplane.ZatPoint(mo) == mo->ceilingz)
 		{ // [RH] Let the sector do something to the actor
 			mo->Sector->SecActTarget->TriggerAction (mo, SECSPAC_HitCeiling);
 		}
@@ -2564,7 +2564,7 @@ void P_CheckFakeFloorTriggers (AActor *mo, fixed_t oldz, bool oldz_has_viewheigh
 	if (sec->heightsec != NULL && sec->SecActTarget != NULL)
 	{
 		sector_t *hs = sec->heightsec;
-		fixed_t waterz = hs->floorplane.ZatPoint (mo->x, mo->y);
+		fixed_t waterz = hs->floorplane.ZatPoint(mo);
 		fixed_t newz;
 		fixed_t viewheight;
 
@@ -2599,7 +2599,7 @@ void P_CheckFakeFloorTriggers (AActor *mo, fixed_t oldz, bool oldz_has_viewheigh
 
 		if (!(hs->MoreFlags & SECF_FAKEFLOORONLY))
 		{
-			waterz = hs->ceilingplane.ZatPoint (mo->x, mo->y);
+			waterz = hs->ceilingplane.ZatPoint(mo);
 			if (oldz <= waterz && newz > waterz)
 			{ // View went above fake ceiling
 				sec->SecActTarget->TriggerAction (mo, SECSPAC_EyesAboveC);
@@ -5493,7 +5493,7 @@ bool P_HitFloor (AActor *thing)
 	// don't splash if landing on the edge above water/lava/etc....
 	for (m = thing->touching_sectorlist; m; m = m->m_tnext)
 	{
-		if (thing->z == m->m_sector->floorplane.ZatPoint (thing->x, thing->y))
+		if (thing->z == m->m_sector->floorplane.ZatPoint(thing))
 		{
 			break;
 		}
@@ -5505,7 +5505,7 @@ bool P_HitFloor (AActor *thing)
 			if (!(rover->flags & FF_EXISTS)) continue;
 			if (rover->flags & (FF_SOLID|FF_SWIMMABLE))
 			{
-				if (rover->top.plane->ZatPoint(thing->x, thing->y) == thing->z)
+				if (rover->top.plane->ZatPoint(thing) == thing->z)
 				{
 					return P_HitWater (thing, m->m_sector);
 				}

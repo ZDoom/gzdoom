@@ -1481,6 +1481,7 @@ enum FP_Flags
 {
 	FPF_AIMATANGLE = 1,
 	FPF_TRANSFERTRANSLATION = 2,
+	FPF_NOAUTOAIM = 4,
 };
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireCustomMissile)
 {
@@ -1520,8 +1521,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireCustomMissile)
 		// Temporarily adjusts the pitch
 		fixed_t saved_player_pitch = self->pitch;
 		self->pitch -= pitch;
-		AActor *misl = P_SpawnPlayerMissile (self, x, y, z, ti, shootangle, &linetarget);
+		AActor * misl=P_SpawnPlayerMissile (self, x, y, z, ti, shootangle, &linetarget, NULL, false, (flags & FPF_NOAUTOAIM) != 0);
 		self->pitch = saved_player_pitch;
+
 		// automatic handling of seeker missiles
 		if (misl)
 		{
@@ -2096,6 +2098,9 @@ enum SIX_Flags
 	SIXF_ORIGINATOR				= 0x00800000,
 	SIXF_TRANSFERSPRITEFRAME	= 0x01000000,
 	SIXF_TRANSFERROLL			= 0x02000000,
+	SIXF_ISTARGET				= 0x04000000,
+	SIXF_ISMASTER				= 0x08000000,
+	SIXF_ISTRACER				= 0x10000000,
 };
 
 static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
@@ -2253,6 +2258,18 @@ static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
 		mo->roll = self->roll;
 	}
 
+	if (flags & SIXF_ISTARGET)
+	{
+		self->target = mo;
+	}
+	if (flags & SIXF_ISMASTER)
+	{
+		self->master = mo;
+	}
+	if (flags & SIXF_ISTRACER)
+	{
+		self->tracer = mo;
+	}
 	return true;
 }
 
@@ -3297,6 +3314,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Respawn)
 
 	self->flags |= MF_SOLID;
 	self->height = self->GetDefault()->height;
+	self->radius = self->GetDefault()->radius;
 	CALL_ACTION(A_RestoreSpecialPosition, self);
 
 	if (flags & RSF_TELEFRAG)
@@ -5021,8 +5039,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Warp)
 	PARAM_ANGLE_OPT(angle)				{ angle = 0; }
 	PARAM_INT_OPT(flags)				{ flags = 0; }
 	PARAM_STATE_OPT(success_state)		{ success_state = NULL; }
-
-
+	PARAM_FIXED_OPT(heightoffset)		{ heightoffset = 0; }
+	
 	AActor *reference;
 
 	if ((flags & WARPF_USETID))
@@ -5041,7 +5059,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Warp)
 		return numret;
 	}
 
-	if (P_Thing_Warp(self, reference, xofs, yofs, zofs, angle, flags))
+	if (P_Thing_Warp(self, reference, xofs, yofs, zofs, angle, flags, heightoffset))
 	{
 		if (success_state)
 		{
@@ -5409,7 +5427,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DropItem)
 // A_SetSpeed
 //
 //==========================================================================
-
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetSpeed)
 {
 	PARAM_ACTION_PROLOGUE;
@@ -5422,6 +5439,29 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetSpeed)
 	{
 		ref->Speed = speed;
 	}
+	return 0;
+}
+
+//==========================================================================
+//
+// A_SetFloatSpeed
+//
+//==========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetFloatSpeed)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_INT(speed);
+	PARAM_INT_OPT(ptr)	{ ptr = AAPTR_DEFAULT; }
+
+	AActor *ref = COPY_AAPTR(self, ptr);
+
+	if (!ref)
+	{
+		ACTION_SET_RESULT(false);
+		return 0;
+	}
+
+	ref->FloatSpeed = speed;
 	return 0;
 }
 
@@ -6110,6 +6150,27 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfHigherOrLower)
 	return numret;
 }
 
+//===========================================================================
+// A_SetSpecies(str species, ptr)
+//
+// Sets the species of the calling actor('s pointer).
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetSpecies)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_NAME(species);
+	PARAM_INT_OPT(ptr)	{ ptr = AAPTR_DEFAULT; }
+
+	AActor *mobj = COPY_AAPTR(self, ptr);
+	if (!mobj)
+	{
+		ACTION_SET_RESULT(false);
+		return 0;
+	}
+
+	mobj->Species = species;
+	return 0;
+}
 
 //===========================================================================
 //
@@ -6152,3 +6213,4 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetRipMax)
 	self->RipLevelMax = max;
 	return 0;
 }
+

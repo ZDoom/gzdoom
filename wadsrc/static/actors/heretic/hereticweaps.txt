@@ -802,6 +802,7 @@ ACTOR BlasterPuff
 	+NOGRAVITY
 	+PUFFONACTORS
 	RenderStyle Add
+	SeeSound "weapons/blasterhit"
 	States
 	{
 	Crash:

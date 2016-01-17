@@ -135,7 +135,7 @@ CCMD (dumpmapthings)
 			}
 			else
 			{
-				Printf("%6d none", infos[i]->Key);
+				Printf("%6d none\n", infos[i]->Key);
 			}
 
 		}

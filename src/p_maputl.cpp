@@ -1523,3 +1523,92 @@ static AActor *RoughBlockCheck (AActor *mo, int index, void *param)
 	}
 	return NULL;
 }
+
+//===========================================================================
+//
+// P_VanillaPointOnLineSide
+// P_PointOnLineSide() from the initial Doom source code release
+//
+//===========================================================================
+
+int P_VanillaPointOnLineSide(fixed_t x, fixed_t y, const line_t* line)
+{
+	fixed_t	dx;
+	fixed_t	dy;
+	fixed_t	left;
+	fixed_t	right;
+
+	if (!line->dx)
+	{
+		if (x <= line->v1->x)
+			return line->dy > 0;
+
+		return line->dy < 0;
+	}
+	if (!line->dy)
+	{
+		if (y <= line->v1->y)
+			return line->dx < 0;
+
+		return line->dx > 0;
+	}
+
+	dx = (x - line->v1->x);
+	dy = (y - line->v1->y);
+
+	left = FixedMul ( line->dy>>FRACBITS , dx );
+	right = FixedMul ( dy , line->dx>>FRACBITS );
+
+	if (right < left)
+		return 0;		// front side
+	return 1;			// back side
+}
+
+//===========================================================================
+//
+// P_VanillaPointOnDivlineSide
+// P_PointOnDivlineSide() from the initial Doom source code release
+//
+//===========================================================================
+
+int P_VanillaPointOnDivlineSide(fixed_t x, fixed_t y, const divline_t* line)
+{
+	fixed_t	dx;
+	fixed_t	dy;
+	fixed_t	left;
+	fixed_t	right;
+
+	if (!line->dx)
+	{
+		if (x <= line->x)
+			return line->dy > 0;
+
+		return line->dy < 0;
+	}
+	if (!line->dy)
+	{
+		if (y <= line->y)
+			return line->dx < 0;
+
+		return line->dx > 0;
+	}
+
+	dx = (x - line->x);
+	dy = (y - line->y);
+
+	// try to quickly decide by looking at sign bits
+	if ( (line->dy ^ line->dx ^ dx ^ dy)&0x80000000 )
+	{
+		if ( (line->dy ^ dx) & 0x80000000 )
+			return 1;		// (left is negative)
+		return 0;
+	}
+
+	left = FixedMul ( line->dy>>8, dx>>8 );
+	right = FixedMul ( dy>>8 , line->dx>>8 );
+
+	if (right < left)
+		return 0;		// front side
+	return 1;			// back side
+}
+

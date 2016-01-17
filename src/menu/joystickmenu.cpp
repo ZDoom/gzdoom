@@ -345,8 +345,8 @@ void UpdateJoystickMenu(IJoystickConfig *selected)
 		for(unsigned i=0;i<opt->mItems.Size();i++)
 		{
 			delete opt->mItems[i];
-			opt->mItems.Clear();
 		}
+		opt->mItems.Clear();
 
 		int i;
 		int itemnum = -1;

@@ -1145,18 +1145,3 @@ private:
 	float mMaximum;
 	float mStep;
 };
-#ifndef NO_IMP
-CCMD(am_restorecolors)
-{
-	if (DMenu::CurrentMenu != NULL && DMenu::CurrentMenu->IsKindOf(RUNTIME_CLASS(DOptionMenu)))
-	{
-		DOptionMenu *m = (DOptionMenu*)DMenu::CurrentMenu;
-		const FOptionMenuDescriptor *desc = m->GetDescriptor();
-		// Find the color cvars by scanning the MapColors menu.
-		for (unsigned i = 0; i < desc->mItems.Size(); ++i)
-		{
-			desc->mItems[i]->SetValue(FOptionMenuItemColorPicker::CPF_RESET, 0);
-		}
-	}
-}
-#endif

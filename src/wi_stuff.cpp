@@ -1808,18 +1808,16 @@ void WI_updateStats ()
 
 	if (acceleratestage && sp_state != 10)
 	{
-		if (acceleratestage)
-		{
-			acceleratestage = 0;
-			sp_state = 10;
-			S_Sound (CHAN_VOICE | CHAN_UI, "intermission/nextstage", 1, ATTN_NONE);
-		}
+		acceleratestage = 0;
+		sp_state = 10;
+		S_Sound (CHAN_VOICE | CHAN_UI, "intermission/nextstage", 1, ATTN_NONE);
+
 		cnt_kills[0] = plrs[me].skills;
 		cnt_items[0] = plrs[me].sitems;
 		cnt_secret[0] = plrs[me].ssecret;
 		cnt_time = Tics2Seconds(plrs[me].stime);
 		cnt_par = wbs->partime / TICRATE;
-	    cnt_total_time = Tics2Seconds(wbs->totaltime);
+		cnt_total_time = Tics2Seconds(wbs->totaltime);
 	}
 
 	if (sp_state == 2)

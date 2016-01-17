@@ -965,7 +965,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 	}
 	if (target->health <= 0)
 	{
-		if (inflictor && mod == NAME_Ice)
+		if (inflictor && mod == NAME_Ice && !(inflictor->flags7 & MF7_ICESHATTER))
 		{
 			return -1;
 		}
@@ -1634,10 +1634,8 @@ bool AActor::OkayToSwitchTarget (AActor *other)
 	
 	int infight;
 	if (flags5 & MF5_NOINFIGHTING) infight=-1;	
-	else if (level.flags2 & LEVEL2_TOTALINFIGHTING) infight=1;
-	else if (level.flags2 & LEVEL2_NOINFIGHTING) infight=-1;	
-	else infight = infighting;
-	
+	else infight = G_SkillProperty(SKILLP_Infight);
+
 	if (infight < 0 &&	other->player == NULL && !IsHostile (other))
 	{
 		return false;	// infighting off: Non-friendlies don't target other non-friendlies

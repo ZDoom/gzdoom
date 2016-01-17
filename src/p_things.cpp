@@ -680,7 +680,7 @@ void InitSpawnablesFromMapinfo()
 }
 
 
-int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, fixed_t zofs, angle_t angle, int flags, fixed_t heightoffset)
+int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, fixed_t zofs, angle_t angle, int flags, fixed_t heightoffset, fixed_t radiusoffset, angle_t pitch)
 {
 	if (flags & WARPF_MOVEPTR)
 	{
@@ -692,25 +692,27 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 	fixed_t	oldx = caller->x;
 	fixed_t	oldy = caller->y;
 	fixed_t	oldz = caller->z;
-
 	zofs += FixedMul(reference->height, heightoffset);
-
+	
 
 	if (!(flags & WARPF_ABSOLUTEANGLE))
 	{
 		angle += (flags & WARPF_USECALLERANGLE) ? caller->angle : reference->angle;
 	}
+
+	const fixed_t rad = FixedMul(radiusoffset, reference->radius);
+	const angle_t fineangle = angle >> ANGLETOFINESHIFT;
+
 	if (!(flags & WARPF_ABSOLUTEPOSITION))
 	{
 		if (!(flags & WARPF_ABSOLUTEOFFSET))
 		{
-			angle_t fineangle = angle >> ANGLETOFINESHIFT;
 			fixed_t xofs1 = xofs;
 
 			// (borrowed from A_SpawnItemEx, assumed workable)
 			// in relative mode negative y values mean 'left' and positive ones mean 'right'
 			// This is the inverse orientation of the absolute mode!
-
+			
 			xofs = FixedMul(xofs1, finecosine[fineangle]) + FixedMul(yofs, finesine[fineangle]);
 			yofs = FixedMul(xofs1, finesine[fineangle]) - FixedMul(yofs, finecosine[fineangle]);
 		}
@@ -722,15 +724,16 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 			// assigning position again with.
 			// extra unlink, link and environment calculation
 			caller->SetOrigin(
-				reference->x + xofs,
-				reference->y + yofs,
-				reference->floorz + zofs);
+				reference->x + xofs + FixedMul(rad, finecosine[fineangle]),
+				reference->y + yofs + FixedMul(rad, finesine[fineangle]),
+				reference->z);
+			caller->z = caller->floorz + zofs;
 		}
 		else
 		{
 			caller->SetOrigin(
-				reference->x + xofs,
-				reference->y + yofs,
+				reference->x + xofs + FixedMul(rad, finecosine[fineangle]),
+				reference->y + yofs + FixedMul(rad, finesine[fineangle]),
 				reference->z + zofs);
 		}
 	}
@@ -738,11 +741,12 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 	{
 		if (flags & WARPF_TOFLOOR)
 		{
-			caller->SetOrigin(xofs, yofs, caller->floorz + zofs);
+			caller->SetOrigin(xofs + FixedMul(rad, finecosine[fineangle]), yofs + FixedMul(rad, finesine[fineangle]), zofs);
+			caller->z = caller->floorz + zofs;
 		}
 		else
 		{
-			caller->SetOrigin(xofs, yofs, zofs);
+			caller->SetOrigin(xofs + FixedMul(rad, finecosine[fineangle]), yofs + FixedMul(rad, finesine[fineangle]), zofs);
 		}
 	}
 
@@ -756,6 +760,18 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 		{
 			caller->angle = angle;
 
+			if (flags & WARPF_COPYPITCH)
+				caller->SetPitch(reference->pitch, false);
+			
+			if (pitch)
+				caller->SetPitch(caller->pitch + pitch, false);
+			
+			if (flags & WARPF_COPYVELOCITY)
+			{
+				caller->velx = reference->velx;
+				caller->vely = reference->vely;
+				caller->velz = reference->velz;
+			}
 			if (flags & WARPF_STOP)
 			{
 				caller->velx = 0;

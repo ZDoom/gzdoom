@@ -1550,6 +1550,10 @@ TXT_RANDOMGOODBYE_3 = "See you later!";
 TXT_HAVEENOUGH		= "You seem to have enough!";
 TXT_GOAWAY			= "Go away!";
 
+TXT_COMM0			= "Incoming Message";
+TXT_COMM1			= "Incoming Message from BlackBird";
+
+
 // Skills:
 
 SKILL_BABY			= "I'm too young to die";

@@ -707,6 +707,7 @@ static int LoadSprites (spritetype *sprites, Xsprite *xsprites, int numsprites,
 		mapthings[count].RenderStyle = STYLE_Count;
 		mapthings[count].alpha = -1;
 		mapthings[count].health = -1;
+		mapthings[count].FloatbobPhase = -1;
 
 		if (xsprites != NULL && sprites[i].lotag == 710)
 		{ // Blood ambient sound

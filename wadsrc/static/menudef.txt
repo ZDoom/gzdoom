@@ -456,6 +456,7 @@ OptionMenu "CustomizeControls"
 	Control 	"Look down",			"+lookdown"
 	Control 	"Center view",			"centerview"
 	Control 	"Run",					"+speed"
+	Control 	"Toggle Run",			"toggle cl_run"
 	Control 	"Strafe",				"+strafe"
 	Control 	"Show Scoreboard",		"+showscores"
 	Control 	"Toggle Scoreboard",	"togglescoreboard"
@@ -1589,10 +1590,24 @@ OptionMenu AdvSoundOptions
 	Option "OPL Emulator Core", "opl_core", "OplCores"
 	StaticText " "
 	StaticText "GUS Emulation",	1
+	TextField "GUS config file", "midi_config"
 	Slider "MIDI voices",	"midi_voices", 16, 256, 4, 0
 	Option "Emulate TiMidity", "midi_timiditylike", "OnOff"
 	Option "Read DMXGUS lumps", "midi_dmxgus", "OnOff"
 	Option "GUS memory size", "gus_memsize", "GusMemory"
+	StaticText " "
+	StaticText "FluidSynth",	1
+	TextField "Patch set", "fluid_patchset"
+	Slider "Gain",	"fluid_gain", 0, 10, 0.5, 1
+	Option "Reverb", "fluid_reverb", "OnOff"
+	Slider "MIDI voices", "fluid_voices", 16, 4096, 16, 1
+	// Leaving out the more advanced stuff for now.
+	StaticText " "
+	StaticText "Timidity++",	1
+	TextField "Path for executable", "timidity_exe"
+	Option "Reverb", "timidity_reverb", "OnOff"
+	Option "Chorus", "timidity_chorus", "OnOff"
+	Slider "Relative volume",	"timidity_mastervolume", 0, 4, 0.2, 1
 }
 
 /*=======================================

@@ -29,6 +29,7 @@
 #include "po_man.h"
 #include "farchive.h"
 #include "r_utility.h"
+#include "a_sharedglobal.h"
 #include "r_data/colormaps.h"
 
 
@@ -799,6 +800,23 @@ int sector_t::GetCeilingLight () const
 		return ClampLight(lightlevel + GetPlaneLight(ceiling));
 	}
 }
+
+
+ASkyViewpoint *sector_t::GetSkyBox(int which)
+{
+	if (which == floor)
+	{
+		if (FloorSkyBox != NULL) return FloorSkyBox;
+		if (MoreFlags & SECF_NOFLOORSKYBOX) return NULL;
+	}
+	else
+	{
+		if (CeilingSkyBox != NULL) return CeilingSkyBox;
+		if (MoreFlags & SECF_NOCEILINGSKYBOX) return NULL;
+	}
+	return level.DefaultSkybox;
+}
+
 
 sector_t *sector_t::GetHeightSec() const 
 {

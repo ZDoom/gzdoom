@@ -789,15 +789,17 @@ static int DoJumpIfCloser(AActor *target, VM_ARGS)
 	PARAM_ACTION_PROLOGUE;
 	PARAM_FIXED	(dist);
 	PARAM_STATE	(jump);
+	PARAM_BOOL_OPT(noz) { noz = false; }
 
 	ACTION_SET_RESULT(false);	// Jumps should never set the result for inventory state chains!
 
 	// No target - no jump
-	if (target != NULL && P_AproxDistance(self->x-target->x, self->y-target->y) < dist &&
-		( (self->z > target->z && self->z - (target->z + target->height) < dist) || 
-		  (self->z <=target->z && target->z - (self->z + self->height) < dist) 
-		)
-	   )
+	if (!target)
+		return numret;
+	if (P_AproxDistance(self->x-target->x, self->y-target->y) < dist &&
+		(noz || 
+		((self->z > target->z && self->z - (target->z + target->height) < dist) ||
+		(self->z <= target->z && target->z - (self->z + self->height) < dist))))
 	{
 		ACTION_JUMP(jump);
 	}
@@ -1156,7 +1158,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomMissile)
                 	targ = owner;
                 	missile->target = owner;
 					// automatic handling of seeker missiles
-					if (self->flags & missile->flags2 & MF2_SEEKERMISSILE)
+					if (self->flags2 & missile->flags2 & MF2_SEEKERMISSILE)
 					{
 						missile->tracer = self->tracer;
 					}
@@ -1577,6 +1579,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
 	PARAM_FIXED_OPT	(lifesteal)			{ lifesteal = 0; }
 	PARAM_INT_OPT	(lifestealmax)		{ lifestealmax = 0; }
 	PARAM_CLASS_OPT	(armorbonustype, ABasicArmorBonus)	{ armorbonustype = NULL; }
+	PARAM_SOUND_OPT	(MeleeSound)		{ MeleeSound = ""; }
+	PARAM_SOUND_OPT	(MissSound)			{ MissSound = ""; }
 
 	if (!self->player)
 		return 0;
@@ -1611,7 +1615,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
 
 	P_LineAttack (self, angle, range, pitch, damage, NAME_Melee, pufftype, puffFlags, &linetarget, &actualdamage);
 
-	if (linetarget)
+	if (!linetarget)
+	{
+		if (MissSound) S_Sound(self, CHAN_WEAPON, MissSound, 1, ATTN_NORM);
+	}
+	else
 	{
 		if (lifesteal && !(linetarget->flags5 & MF5_DONTDRAIN))
 		{
@@ -1643,7 +1651,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
 		}
 		if (weapon != NULL)
 		{
-			S_Sound (self, CHAN_WEAPON, weapon->AttackSound, 1, ATTN_NORM);
+			if (MeleeSound) S_Sound(self, CHAN_WEAPON, MeleeSound, 1, ATTN_NORM);
+			else			S_Sound (self, CHAN_WEAPON, weapon->AttackSound, 1, ATTN_NORM);
 		}
 
 		if (!(flags & CPF_NOTURN))
@@ -3718,7 +3727,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
 	lof_data.Flags = flags;
 	lof_data.BadActor = false;
 
-	Trace(x1, y1, z1, sec, vx, vy, vz, range, 0xFFFFFFFF, ML_BLOCKEVERYTHING, self, trace, 0,
+	Trace(x1, y1, z1, sec, vx, vy, vz, range, ActorFlags::FromInt(0xFFFFFFFF), ML_BLOCKEVERYTHING, self, trace, 0,
 		CheckLOFTraceFunc, &lof_data);
 
 	if (trace.HitType == TRACE_HitActor ||
@@ -5040,6 +5049,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Warp)
 	PARAM_INT_OPT(flags)				{ flags = 0; }
 	PARAM_STATE_OPT(success_state)		{ success_state = NULL; }
 	PARAM_FIXED_OPT(heightoffset)		{ heightoffset = 0; }
+	PARAM_FIXED_OPT(radiusoffset)		{ radiusoffset = 0; }
+	PARAM_ANGLE_OPT(pitch)				{ pitch = 0; }
 	
 	AActor *reference;
 
@@ -5059,7 +5070,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Warp)
 		return numret;
 	}
 
-	if (P_Thing_Warp(self, reference, xofs, yofs, zofs, angle, flags, heightoffset))
+	if (P_Thing_Warp(self, reference, xofs, yofs, zofs, angle, flags, heightoffset, radiusoffset, pitch))
 	{
 		if (success_state)
 		{
@@ -5238,11 +5249,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusGive)
 	PARAM_INT_OPT	(amount)	{ amount = 0; }
 	PARAM_CLASS_OPT	(filter, AActor)	{ filter = NULL; }
 	PARAM_NAME_OPT	(species)	{ species = NAME_None; }
+	PARAM_FIXED_OPT	(mindist)	{ mindist = 0; }
 
 	// We need a valid item, valid targets, and a valid range
-	if (item == NULL || (flags & RGF_MASK) == 0 || !flags || distance <= 0)
+	if (item == NULL || (flags & RGF_MASK) == 0 || !flags || distance <= 0 || mindist >= distance)
 	{
-		return 0;
+		ACTION_SET_RESULT(false);
+		return numret;
 	}
 	
 	if (amount == 0)
@@ -5250,9 +5263,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusGive)
 		amount = 1;
 	}
 	FBlockThingsIterator it(FBoundingBox(self->x, self->y, distance));
-	double distsquared = double(distance) * double(distance);
 
 	AActor *thing;
+	bool given = false;
 	while ((thing = it.Next()))
 	{
 		//[MC] Check for a filter, species, and the related exfilter/expecies/either flag(s).
@@ -5297,7 +5310,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusGive)
 		bool corpsePass = !!((flags & RGF_CORPSES) && thing->flags & MF_CORPSE);
 		bool killedPass = !!((flags & RGF_KILLED) && thing->flags6 & MF6_KILLED);
 		bool monsterPass = !!((flags & RGF_MONSTERS) && thing->flags3 & MF3_ISMONSTER);
-		bool objectPass = !!((flags & RGF_OBJECTS) && ((thing->flags & MF_SHOOTABLE) || (thing->flags6 & MF6_VULNERABLE)));
+		bool objectPass = !!((flags & RGF_OBJECTS) && (thing->player == NULL) && (!(thing->flags3 & MF3_ISMONSTER))
+											&& ((thing->flags & MF_SHOOTABLE) || (thing->flags6 & MF6_VULNERABLE)));
 		bool playerPass = !!((flags & RGF_PLAYERS) && (thing->player != NULL) && (thing->player->mo == thing));
 		bool voodooPass = !!((flags & RGF_VOODOO) && (thing->player != NULL) && (thing->player->mo != thing));
 		//Self calls priority over the rest of this.
@@ -5320,20 +5334,26 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusGive)
 
 		if (selfPass || monsterPass || corpsePass || killedPass || itemPass || objectPass || missilePass || playerPass || voodooPass)
 		{
+
 			if (flags & RGF_CUBE)
 			{ // check if inside a cube
-				if (fabs((double)thing->x - self->x) > (double)distance ||
-					fabs((double)thing->y - self->y) > (double)distance ||
-					fabs((double)(thing->z + thing->height / 2) - (self->z + self->height / 2)) > (double)distance)
+				double dx = fabs((double)(thing->x - self->x));
+				double dy = fabs((double)(thing->y - self->y));
+				double dz = fabs((double)(thing->z + thing->height / 2) - (self->z + self->height / 2));
+				double dist = (double)distance;
+				double min = (double)mindist;
+				if ((dx > dist || dy > dist || dz > dist) || (min && (dx < min && dy < min && dz < min)))
 				{
 					continue;
 				}
 			}
 			else
 			{ // check if inside a sphere
+				double distsquared = double(distance) * double(distance);
+				double minsquared = double(mindist) * double(mindist);
 				TVector3<double> tpos(thing->x, thing->y, thing->z + thing->height / 2);
 				TVector3<double> spos(self->x, self->y, self->z + self->height / 2);
-				if ((tpos - spos).LengthSquared() > distsquared)
+				if ((tpos - spos).LengthSquared() > distsquared || (minsquared && ((tpos - spos).LengthSquared() < minsquared)))
 				{
 					continue;
 				}
@@ -5356,10 +5376,16 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusGive)
 				{
 					gift->Destroy();
 				}
+				else
+				{
+					given = true;
+				}
 			}
 		}
 	}
-	return 0;
+
+	ACTION_SET_RESULT(given);
+	return numret;
 }
 
 
@@ -5463,6 +5489,29 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetFloatSpeed)
 
 	ref->FloatSpeed = speed;
 	return 0;
+}
+
+//==========================================================================
+//
+// A_SetPainThreshold
+//
+//==========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetPainThreshold)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_INT(threshold);
+	PARAM_INT_OPT(ptr)	{ ptr = AAPTR_DEFAULT; }
+
+	AActor *ref = COPY_AAPTR(self, ptr);
+
+	if (!ref)
+	{
+		ACTION_SET_RESULT(false);
+		return numret;
+	}
+
+	ref->PainThreshold = threshold;
+	return numret;
 }
 
 //===========================================================================
@@ -6214,3 +6263,63 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetRipMax)
 	return 0;
 }
 
+/*===========================================================================
+A_CheckBlock
+(state block, int flags, int ptr)
+
+Checks if something is blocking the actor('s pointer) 'ptr'.
+
+The SET pointer flags only affect the caller, not the pointer.
+===========================================================================*/
+enum CBF
+{
+	CBF_NOLINES			= 1 << 0,	//Don't check actors.
+	CBF_SETTARGET		= 1 << 1,	//Sets the caller/pointer's target to the actor blocking it. Actors only.
+	CBF_SETMASTER		= 1 << 2,	//^ but with master.
+	CBF_SETTRACER		= 1 << 3,	//^ but with tracer.
+	CBF_SETONPTR		= 1 << 4,	//Sets the pointer change on the actor doing the checking instead of self.
+};
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckBlock)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_STATE(block)
+	PARAM_INT_OPT(flags) { flags = 0; }
+	PARAM_INT_OPT(ptr) 	{ ptr = AAPTR_DEFAULT; }	
+
+	AActor *mobj = COPY_AAPTR(self, ptr);
+
+	ACTION_SET_RESULT(false);
+	//Needs at least one state jump to work. 
+	if (!mobj)
+	{
+		return numret;
+	}
+
+	//Nothing to block it so skip the rest.
+	if (P_TestMobjLocation(mobj)) return numret;
+
+	if (mobj->BlockingMobj)
+	{
+		AActor *setter = (flags & CBF_SETONPTR) ? mobj : self;
+		if (setter)
+		{
+			if (flags & CBF_SETTARGET)	setter->target = mobj->BlockingMobj;
+			if (flags & CBF_SETMASTER)	setter->master = mobj->BlockingMobj;
+			if (flags & CBF_SETTRACER)	setter->tracer = mobj->BlockingMobj;
+		}
+	}
+
+	//[MC] If modders don't want jumping, but just getting the pointer, only abort at
+	//this point. I.e. A_CheckBlock("",CBF_SETTRACER) is like having CBF_NOLINES.
+	//It gets the mobj blocking, if any, and doesn't jump at all.
+	if (!block)
+		return numret;
+
+	//[MC] Easiest way to tell if an actor is blocking it, use the pointers.
+	if (mobj->BlockingMobj || (!(flags & CBF_NOLINES) && mobj->BlockingLine != NULL))
+	{
+		ACTION_JUMP(block);
+	}
+	return numret;
+}

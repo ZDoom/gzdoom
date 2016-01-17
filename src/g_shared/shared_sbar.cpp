@@ -1338,17 +1338,17 @@ void DBaseStatusBar::Draw (EHudState state)
 		{
 			if (Scaled)
 			{
-				y -= Scale (10, SCREENHEIGHT, 200);
+				y -= Scale (11, SCREENHEIGHT, 200);
 			}
 			else
 			{
 				if (SCREENWIDTH < 640)
 				{
-					y -= 11;
+					y -= 12;
 				}
 				else
 				{ // Get past the tops of the gargoyles' wings
-					y -= 26;
+					y -= 28;
 				}
 			}
 		}

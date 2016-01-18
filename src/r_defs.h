@@ -455,6 +455,11 @@ struct secspecial_t
 	short leakydamage;		// chance of leaking through radiation suit
 	int Flags;
 
+	secspecial_t()
+	{
+		Clear();
+	}
+
 	void Clear()
 	{
 		memset(this, 0, sizeof(*this));

@@ -758,3 +758,9 @@ unsigned int I_MakeRNGSeed()
 	}
 	return seed;
 }
+
+TArray<FString> I_GetGogPaths()
+{
+    // GOG's Doom games are Windows only at the moment
+    return TArray<FString>();
+}

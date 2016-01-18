@@ -43,7 +43,8 @@ struct FOptionValues;
 //	MUSIC I/O
 //
 void I_InitMusic ();
-void I_ShutdownMusic ();
+void I_ShutdownMusic (bool onexit = false);
+void I_ShutdownMusicExit ();
 void I_BuildMIDIMenuList (FOptionValues *);
 void I_UpdateMusic ();
 
@@ -52,7 +53,8 @@ void I_SetMusicVolume (float volume);
 
 // Registers a song handle to song data.
 class MusInfo;
-MusInfo *I_RegisterSong (FileReader *reader, int device);
+struct MidiDeviceSetting;
+MusInfo *I_RegisterSong (FileReader *reader, MidiDeviceSetting *device);
 MusInfo *I_RegisterCDSong (int track, int cdid = 0);
 MusInfo *I_RegisterURLSong (const char *url);
 
@@ -81,6 +83,7 @@ public:
 	virtual void FluidSettingInt(const char *setting, int value);			// FluidSynth settings
 	virtual void FluidSettingNum(const char *setting, double value);		// "
 	virtual void FluidSettingStr(const char *setting, const char *value);	// "
+	virtual void WildMidiSetOption(int opt, int set);
 
 	void Start(bool loop, float rel_vol = -1.f, int subsong = 0);
 

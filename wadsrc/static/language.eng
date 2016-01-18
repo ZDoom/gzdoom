@@ -1,0 +1,25 @@
+/* British English */
+
+[eng]
+
+GOTARMOR = "Picked up the armour.";
+GOTMEGA = "Picked up the MegaArmour!";
+GOTARMBONUS = "Picked up an armour bonus.";
+
+SCORE_COLOR = "COLOUR";
+
+TAG_SHADOWARMOR = "Shadow Armour";
+TAG_METALARMOR = "Metal Armour";
+TAG_LEATHER = "Leather Armour";
+TAG_ARMORER = "Armourer";
+
+TXT_ARMOR1 = "MESH ARMOUR";
+
+TXT_METALARMOR = "You picked up the Metal Armour.";
+TXT_LEATHERARMOR = "You picked up the Leather Armour.";
+TXT_SHADOWARMOR = "You picked up the Shadow armour.";
+
+GOTCHEXARMOR = "Picked up the Chex(R) Armour.";
+GOTSUPERCHEXARMOR = "Picked up the Super Chex(R) Armour!";
+
+OB_BIPEDICUS2 = "%o was slimed by an armoured bipedicus.";

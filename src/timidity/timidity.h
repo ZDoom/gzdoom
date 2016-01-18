@@ -21,6 +21,7 @@
 #define TIMIDITY_H
 
 #include "doomtype.h"
+#include "pathexpander.h"
 
 class FileReader;
 
@@ -53,10 +54,6 @@ config.h
 /* A scalar applied to the final mix to try and approximate the
    volume level of FMOD's built-in MIDI player. */
 #define FINAL_MIX_SCALE				0.5
-
-/* This value is used instead when midi_timiditylike is turned on,
-   because TiMidity++ is louder than a GUS. */
-#define FINAL_MIX_TIMIDITY_SCALE	0.3
 
 /* How many bits to use for the fractional part of sample positions.
    This affects tonal accuracy. The entire position counter must fit
@@ -172,16 +169,7 @@ extern __inline__ double pow_x87_inline(double x,double y)
 common.h
 */
 
-#define OM_FILEORLUMP 0
-#define OM_LUMP 1
-#define OM_FILE 2
-
-extern void add_to_pathlist(const char *s);
-extern void clear_pathlist();
 extern void *safe_malloc(size_t count);
-
-FileReader *open_filereader(const char *name, int open, int *plumpnum);
-extern int openmode;
 
 /*
 controls.h
@@ -219,9 +207,6 @@ enum
 	PATCH_SUSTAIN			= (1<<5),
 	PATCH_NO_SRELEASE		= (1<<6),
 	PATCH_FAST_REL			= (1<<7),
-
-	PATCH_T_NO_ENVELOPE		= (1<<8),
-	PATCH_T_NO_LOOP			= (1<<9)
 };
 
 struct Sample
@@ -247,8 +232,6 @@ struct Sample
 			short release_vol;
 		} sf2;
 	} envelope;
-	float
-		volume;
 	sample_t *data;
 	SDWORD 
 		tremolo_sweep_increment, tremolo_phase_increment,
@@ -324,11 +307,12 @@ struct Instrument
 struct ToneBankElement
 {
 	ToneBankElement() :
-		note(0), amp(0), pan(0), strip_loop(0), strip_envelope(0), strip_tail(0)
+		note(0), pan(0), strip_loop(0), strip_envelope(0), strip_tail(0)
 	{}
 
 	FString name;
-	int note, amp, pan, fontbank, fontpreset, fontnote, strip_loop, strip_envelope, strip_tail;
+	int note, pan, fontbank, fontpreset, fontnote;
+	SBYTE strip_loop, strip_envelope, strip_tail;
 };
 
 /* A hack to delay instrument loading until after reading the entire MIDI file. */
@@ -461,7 +445,7 @@ struct Channel
 
 struct MinEnvelope
 {
-	int stage;
+	BYTE stage;
 	BYTE bUpdating;
 };
 
@@ -615,9 +599,6 @@ const double log_of_2 = 0.69314718055994529;
 #define freq_to_note(x) (log((x) / 8175.7989473096690661233836992789) * (12.0 / log_of_2))
 
 #define calc_gf1_amp(x)	(pow(2.0,((x)*16.0 - 16.0)))			// Actual GUS equation
-#define cb_to_amp(x)	(pow(10.0, (x) * (1 / -200.0)))			// centibels to amp
-#define db_to_amp(x)	(pow(10.0, (x) * (1 / -20.0)))			// decibels to map
-#define timidityxx_perceived_vol(x)		(pow((x), 1.66096404744))
 
 /*
 timidity.h
@@ -627,6 +608,7 @@ int LoadConfig(const char *filename);
 int LoadDMXGUS();
 extern int LoadConfig();
 extern void FreeAll();
+extern PathExpander pathExpander;
 
 extern ToneBank *tonebank[MAXBANK];
 extern ToneBank *drumset[MAXBANK];
@@ -647,7 +629,7 @@ struct Renderer
 	int voices;
 	int lost_notes, cut_notes;
 
-	Renderer(float sample_rate);
+	Renderer(float sample_rate, const char *args);
 	~Renderer();
 
 	void HandleEvent(int status, int parm1, int parm2);

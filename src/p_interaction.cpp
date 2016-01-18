@@ -74,7 +74,6 @@ EXTERN_CVAR (Bool, show_obituaries)
 
 
 FName MeansOfDeath;
-bool FriendlyFire;
 
 //
 // GET STUFF
@@ -85,7 +84,7 @@ bool FriendlyFire;
 //
 void P_TouchSpecialThing (AActor *special, AActor *toucher)
 {
-	fixed_t delta = special->z - toucher->z;
+	fixed_t delta = special->Z() - toucher->Z();
 
 	// The pickup is at or above the toucher's feet OR
 	// The pickup is below the toucher.
@@ -185,7 +184,6 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker, int dmgf
 	const char *message;
 	const char *messagename;
 	char gendermessage[1024];
-	bool friendly;
 	int  gender;
 
 	// No obituaries for non-players, voodoo dolls or when not wanted
@@ -198,10 +196,6 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker, int dmgf
 	if (inflictor && inflictor->player && inflictor->player->mo != inflictor)
 		MeansOfDeath = NAME_None;
 
-	if (multiplayer && !deathmatch)
-		FriendlyFire = true;
-
-	friendly = FriendlyFire;
 	mod = MeansOfDeath;
 	message = NULL;
 	messagename = NULL;
@@ -269,10 +263,8 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker, int dmgf
 
 	if (message == NULL && attacker != NULL && attacker->player != NULL)
 	{
-		if (friendly)
+		if (self->player != attacker->player && self->IsTeammate(attacker))
 		{
-			attacker->player->fragcount -= 2;
-			attacker->player->frags[attacker->player - players]++;
 			self = attacker;
 			gender = self->player->userinfo.GetGender();
 			mysnprintf (gendermessage, countof(gendermessage), "OB_FRIENDLY%c", '1' + (pr_obituary() & 3));
@@ -470,12 +462,21 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 				if ((dmflags2 & DF2_YES_LOSEFRAG) && deathmatch)
 					player->fragcount--;
 
-				++source->player->fragcount;
-				++source->player->spreecount;
+				if (this->IsTeammate(source))
+				{
+					source->player->fragcount--;
+				}
+				else
+				{
+					++source->player->fragcount;
+					++source->player->spreecount;
+				}
+
 				if (source->player->morphTics)
 				{ // Make a super chicken
 					source->GiveInventoryType (RUNTIME_CLASS(APowerWeaponLevel2));
 				}
+
 				if (deathmatch && cl_showsprees)
 				{
 					const char *spreemsg;
@@ -969,7 +970,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 	}
 	if (target->health <= 0)
 	{
-		if (inflictor && mod == NAME_Ice)
+		if (inflictor && mod == NAME_Ice && !(inflictor->flags7 & MF7_ICESHATTER))
 		{
 			return -1;
 		}
@@ -1024,7 +1025,6 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 	}
 	
 	MeansOfDeath = mod;
-	FriendlyFire = false;
 	// [RH] Andy Baker's Stealth monsters
 	if (target->flags & MF_STEALTH)
 	{
@@ -1045,7 +1045,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 			return -1;
 		}
 
-		if ((rawdamage < TELEFRAG_DAMAGE) || (target->flags7 & MF7_LAXTELEFRAGDMG)) // TELEFRAG_DAMAGE may only be reduced with NOTELEFRAGPIERCE or it may not guarantee its effect.
+		if ((rawdamage < TELEFRAG_DAMAGE) || (target->flags7 & MF7_LAXTELEFRAGDMG)) // TELEFRAG_DAMAGE may only be reduced with LAXTELEFRAGDMG or it may not guarantee its effect.
 		{
 			if (player && damage > 1)
 			{
@@ -1158,13 +1158,13 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 			// If the origin and target are in exactly the same spot, choose a random direction.
 			// (Most likely cause is from telefragging somebody during spawning because they
 			// haven't moved from their spawn spot at all.)
-			if (origin->x == target->x && origin->y == target->y)
+			if (origin->X() == target->X() && origin->Y() == target->Y())
 			{
 				ang = pr_kickbackdir.GenRand32();
 			}
 			else
 			{
-				ang = R_PointToAngle2 (origin->x, origin->y, target->x, target->y);
+				ang = origin->AngleTo(target);
 			}
 
 			// Calculate this as float to avoid overflows so that the
@@ -1184,7 +1184,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 
 			// make fall forwards sometimes
 			if ((damage < 40) && (damage > target->health)
-				 && (target->z - origin->z > 64*FRACUNIT)
+				 && (target->Z() - origin->Z() > 64*FRACUNIT)
 				 && (pr_damagemobj()&1)
 				 // [RH] But only if not too fast and not flying
 				 && thrust < 10*FRACUNIT
@@ -1221,9 +1221,8 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 		((player && player != source->player) || (!player && target != source)) &&
 		target->IsTeammate (source))
 	{
-		if (player)
-			FriendlyFire = true;
-		if (rawdamage < TELEFRAG_DAMAGE) //Use the original damage to check for telefrag amount. Don't let the now-amplified damagetypes do it.
+		//Use the original damage to check for telefrag amount. Don't let the now-amplified damagetypes do it.
+		if (rawdamage < TELEFRAG_DAMAGE || (target->flags7 & MF7_LAXTELEFRAGDMG)) 
 		{ // Still allow telefragging :-(
 			damage = (int)((float)damage * level.teamdamage);
 			if (damage < 0)
@@ -1257,8 +1256,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 		}
 
 		// end of game hell hack
-		if ((target->Sector->special & 255) == dDamage_End
-			&& damage >= target->health)
+		if ((target->Sector->Flags & SECF_ENDLEVEL) && damage >= target->health)
 		{
 			damage = target->health - 1;
 		}
@@ -1641,10 +1639,8 @@ bool AActor::OkayToSwitchTarget (AActor *other)
 	
 	int infight;
 	if (flags5 & MF5_NOINFIGHTING) infight=-1;	
-	else if (level.flags2 & LEVEL2_TOTALINFIGHTING) infight=1;
-	else if (level.flags2 & LEVEL2_NOINFIGHTING) infight=-1;	
-	else infight = infighting;
-	
+	else infight = G_SkillProperty(SKILLP_Infight);
+
 	if (infight < 0 &&	other->player == NULL && !IsHostile (other))
 	{
 		return false;	// infighting off: Non-friendlies don't target other non-friendlies
@@ -1840,4 +1836,23 @@ CCMD (kill)
 		Net_WriteByte (DEM_SUICIDE);
 	}
 	C_HideConsole ();
+}
+
+CCMD(remove)
+{
+	if (argv.argc() == 2)
+	{
+		if (CheckCheatmode())
+			return;
+
+		Net_WriteByte(DEM_REMOVE);
+		Net_WriteString(argv[1]);
+		C_HideConsole();
+	}
+	else
+	{
+		Printf("Usage: remove <actor class name>\n");
+		return;
+	}
+	
 }

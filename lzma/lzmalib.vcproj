@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8,00"
+	Version="8.00"
 	Name="lzmalib"
 	ProjectGUID="{6EB27E78-7C7A-4F08-8E19-957E8EB3A20F}"
 	RootNamespace="lzmalib"
 	Keyword="Win32Proj"
-	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
 		<Platform
@@ -288,6 +287,10 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath=".\C\7zArcIn.c"
+				>
+			</File>
+			<File
 				RelativePath=".\C\7zBuf.c"
 				>
 			</File>
@@ -301,10 +304,6 @@
 			</File>
 			<File
 				RelativePath=".\C\7zDec.c"
-				>
-			</File>
-			<File
-				RelativePath=".\C\7zIn.c"
 				>
 			</File>
 			<File
@@ -324,7 +323,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\C\BraIA64.c"
+				>
+			</File>
+			<File
 				RelativePath=".\C\CpuArch.c"
+				>
+			</File>
+			<File
+				RelativePath=".\C\Delta.c"
 				>
 			</File>
 			<File
@@ -345,6 +352,14 @@
 			</File>
 			<File
 				RelativePath=".\C\LzmaEnc.c"
+				>
+			</File>
+			<File
+				RelativePath=".\C\Ppmd7.c"
+				>
+			</File>
+			<File
+				RelativePath=".\C\Ppmd7Dec.c"
 				>
 			</File>
 			<File
@@ -382,7 +397,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\C\Compiler.h"
+				>
+			</File>
+			<File
 				RelativePath=".\C\CpuArch.h"
+				>
+			</File>
+			<File
+				RelativePath=".\C\Delta.h"
 				>
 			</File>
 			<File
@@ -407,6 +430,18 @@
 			</File>
 			<File
 				RelativePath=".\C\LzmaEnc.h"
+				>
+			</File>
+			<File
+				RelativePath=".\C\Ppmd.h"
+				>
+			</File>
+			<File
+				RelativePath=".\C\Ppmd7.h"
+				>
+			</File>
+			<File
+				RelativePath=".\C\Precomp.h"
 				>
 			</File>
 			<File

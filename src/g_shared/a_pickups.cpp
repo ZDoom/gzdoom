@@ -236,10 +236,12 @@ bool P_GiveBody (AActor *actor, int num, int max)
 				return true;
 			}
 		}
-		else
+		else if (num > 0)
 		{
 			if (player->health < max)
 			{
+				num = FixedMul(num, G_SkillProperty(SKILLP_HealthFactor));
+				if (num < 1) num = 1;
 				player->health += num;
 				if (player->health > max)
 				{
@@ -680,6 +682,7 @@ AInventory *AInventory::CreateCopy (AActor *other)
 {
 	AInventory *copy;
 
+	Amount = MIN(Amount, MaxAmount);
 	if (GoAway ())
 	{
 		copy = static_cast<AInventory *>(Spawn (GetClass(), 0, 0, 0, NO_REPLACE));
@@ -847,6 +850,25 @@ fixed_t AInventory::GetSpeedFactor ()
 	else
 	{
 		return FRACUNIT;
+	}
+}
+
+//===========================================================================
+//
+// AInventory :: GetNoTeleportFreeze
+//
+//===========================================================================
+
+bool AInventory::GetNoTeleportFreeze ()
+{
+	// do not check the flag here because it's only active when used on PowerUps, not on PowerupGivers.
+	if (Inventory != NULL)
+	{
+		return Inventory->GetNoTeleportFreeze();
+	}
+	else
+	{
+		return false;
 	}
 }
 

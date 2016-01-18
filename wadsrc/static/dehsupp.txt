@@ -534,7 +534,13 @@ SoundMap
 	"skeleton/active",
 	"skeleton/sight",
 	"skeleton/attack",
-	"misc/chat"
+	"misc/chat",
+	"dog/sight",
+	"dog/attack",
+	"dog/active",
+	"dog/death",
+	"dog/pain",
+	
 };
 
 // Names of different actor types, in original Doom 2 order

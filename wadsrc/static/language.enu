@@ -1281,6 +1281,14 @@ TXT_LEADBOOTSOFF = "LEAD BOOTS OFF";
 TXT_LIGHTER = "You feel lighter";
 TXT_GRAVITY = "Gravity weighs you down";
 
+// Raven intermission
+
+TXT_IMKILLS = "KILLS";
+TXT_IMITEMS = "ITEMS";
+TXT_IMSECRETS = "SECRETS";
+TXT_IMTIME = "TIME";
+
+
 RAVENQUITMSG = "ARE YOU SURE YOU WANT TO QUIT?";
 
 // Hexen strings
@@ -1541,6 +1549,10 @@ TXT_RANDOMGOODBYE_2 = "Thanks, bye!";
 TXT_RANDOMGOODBYE_3 = "See you later!";
 TXT_HAVEENOUGH		= "You seem to have enough!";
 TXT_GOAWAY			= "Go away!";
+
+TXT_COMM0			= "Incoming Message";
+TXT_COMM1			= "Incoming Message from BlackBird";
+
 
 // Skills:
 

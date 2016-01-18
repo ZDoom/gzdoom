@@ -37,6 +37,7 @@
 
 #include "templates.h"
 #include "p_local.h"
+#include "p_terrain.h"
 
 
 //============================================================================
@@ -275,7 +276,7 @@ bool P_LineOpening_3dMidtex(AActor *thing, const line_t *linedef, FLineOpening &
 	open.abovemidtex = false;
 	if (P_GetMidTexturePosition(linedef, 0, &tt, &tb))
 	{
-		if (thing->z + (thing->height/2) < (tt + tb)/2)
+		if (thing->Z() + (thing->height/2) < (tt + tb)/2)
 		{
 			if (tb < open.top)
 			{
@@ -285,14 +286,16 @@ bool P_LineOpening_3dMidtex(AActor *thing, const line_t *linedef, FLineOpening &
 		}
 		else
 		{
-			if (tt > open.bottom && (!restrict || thing->z >= tt))
+			if (tt > open.bottom && (!restrict || thing->Z() >= tt))
 			{
 				open.bottom = tt;
 				open.abovemidtex = true;
 				open.floorpic = linedef->sidedef[0]->GetTexture(side_t::mid);
+				open.floorterrain = TerrainTypes[open.floorpic];
+				
 			}
 			// returns true if it touches the midtexture
-			return (abs(thing->z - tt) <= thing->MaxStepHeight);
+			return (abs(thing->Z() - tt) <= thing->MaxStepHeight);
 		}
 	}
 	return false;

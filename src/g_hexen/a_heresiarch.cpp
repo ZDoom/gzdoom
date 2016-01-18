@@ -665,8 +665,7 @@ void A_SorcOffense2(AActor *actor)
 	if (mo)
 	{
 		mo->special2 = 35*5/2;		// 5 seconds
-		dist = P_AproxDistance(dest->x - mo->x, dest->y - mo->y);
-		dist = dist/mo->Speed;
+		dist = mo->AproxDistance(dest) / mo->Speed;
 		if(dist < 1) dist = 1;
 		mo->velz = (dest->z - mo->z) / dist;
 	}

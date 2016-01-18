@@ -35,7 +35,7 @@ void DBot::Roam (ticcmd_t *cmd)
 
 	if (Reachable(dest))
 	{ // Straight towards it.
-		angle = R_PointToAngle2(player->mo->x, player->mo->y, dest->x, dest->y);
+		angle = player->mo->AngleTo(dest);
 	}
 	else if (player->mo->movedir < 8) // turn towards movement direction if not there yet
 	{
@@ -67,8 +67,8 @@ bool DBot::Move (ticcmd_t *cmd)
 	if ((unsigned)player->mo->movedir >= 8)
 		I_Error ("Weird bot movedir!");
 
-	tryx = player->mo->x + 8*xspeed[player->mo->movedir];
-	tryy = player->mo->y + 8*yspeed[player->mo->movedir];
+	tryx = player->mo->X() + 8*xspeed[player->mo->movedir];
+	tryy = player->mo->Y() + 8*yspeed[player->mo->movedir];
 
 	try_ok = bglobal.CleanAhead (player->mo, tryx, tryy, cmd);
 
@@ -124,9 +124,6 @@ bool DBot::TryWalk (ticcmd_t *cmd)
 
 void DBot::NewChaseDir (ticcmd_t *cmd)
 {
-    fixed_t     deltax;
-    fixed_t     deltay;
-
     dirtype_t   d[3];
 
     int         tdir;
@@ -145,19 +142,18 @@ void DBot::NewChaseDir (ticcmd_t *cmd)
     olddir = (dirtype_t)player->mo->movedir;
     turnaround = opposite[olddir];
 
-    deltax = dest->x - player->mo->x;
-    deltay = dest->y - player->mo->y;
+	fixedvec2 delta = player->mo->Vec2To(dest);
 
-    if (deltax > 10*FRACUNIT)
+    if (delta.x > 10*FRACUNIT)
         d[1] = DI_EAST;
-    else if (deltax < -10*FRACUNIT)
+    else if (delta.x < -10*FRACUNIT)
         d[1] = DI_WEST;
     else
         d[1] = DI_NODIR;
 
-    if (deltay < -10*FRACUNIT)
+    if (delta.y < -10*FRACUNIT)
         d[2] = DI_SOUTH;
-    else if (deltay > 10*FRACUNIT)
+    else if (delta.y > 10*FRACUNIT)
         d[2] = DI_NORTH;
     else
         d[2] = DI_NODIR;
@@ -165,14 +161,14 @@ void DBot::NewChaseDir (ticcmd_t *cmd)
     // try direct route
     if (d[1] != DI_NODIR && d[2] != DI_NODIR)
     {
-        player->mo->movedir = diags[((deltay<0)<<1)+(deltax>0)];
+        player->mo->movedir = diags[((delta.y<0)<<1)+(delta.x>0)];
         if (player->mo->movedir != turnaround && TryWalk(cmd))
             return;
     }
 
     // try other directions
     if (pr_botnewchasedir() > 200
-        || abs(deltay)>abs(deltax))
+        || abs(delta.y)>abs(delta.x))
     {
         tdir=d[1];
         d[1]=d[2];
@@ -282,7 +278,7 @@ bool FCajunMaster::CleanAhead (AActor *thing, fixed_t x, fixed_t y, ticcmd_t *cm
 
 
 	        if ( !(thing->flags & MF_TELEPORT) &&
-	             tm.ceilingz - thing->z < thing->height)
+	             tm.ceilingz - thing->Z() < thing->height)
 	            return false;       // mobj must lower itself to fit
 
 	        // jump out of water
@@ -290,7 +286,7 @@ bool FCajunMaster::CleanAhead (AActor *thing, fixed_t x, fixed_t y, ticcmd_t *cm
 //	            maxstep=37*FRACUNIT;
 
 	        if ( !(thing->flags & MF_TELEPORT) &&
-	             (tm.floorz - thing->z > maxstep ) )
+	             (tm.floorz - thing->Z() > maxstep ) )
 	            return false;       // too big a step up
 
 
@@ -346,28 +342,13 @@ void DBot::Pitch (AActor *target)
 	double aim;
 	double diff;
 
-	diff = target->z - player->mo->z;
-	aim = atan (diff / (double)P_AproxDistance (player->mo->x - target->x, player->mo->y - target->y));
+	diff = target->Z() - player->mo->Z();
+	aim = atan(diff / (double)player->mo->AproxDistance(target));
 	player->mo->pitch = -(int)(aim * ANGLE_180/M_PI);
 }
 
 //Checks if a sector is dangerous.
 bool FCajunMaster::IsDangerous (sector_t *sec)
 {
-	int special;
-
-	return
-		   sec->damage
-		|| sec->special & DAMAGE_MASK
-		|| (special = sec->special & 0xff, special == dLight_Strobe_Hurt)
-		|| special == dDamage_Hellslime
-		|| special == dDamage_Nukage
-		|| special == dDamage_End
-		|| special == dDamage_SuperHellslime
-		|| special == dDamage_LavaWimpy
-		|| special == dDamage_LavaHefty
-		|| special == dScroll_EastLavaDamage
-		|| special == sLight_Strobe_Hurt
-		|| special == Damage_InstantDeath
-		|| special == sDamage_SuperHellslime;
+	return sec->damageamount > 0;
 }

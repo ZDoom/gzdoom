@@ -432,7 +432,7 @@ WORD FDecalLib::GetDecalID (FScanner &sc)
 		unsigned long num = strtoul (sc.String, NULL, 10);
 		if (num < 1 || num > 65535)
 		{
-			sc.MustGetStringName ("Decal ID must be between 1 and 65535");
+			sc.ScriptError ("Decal ID must be between 1 and 65535");
 		}
 		return (WORD)num;
 	}
@@ -603,16 +603,18 @@ void FDecalLib::ParseGenerator (FScanner &sc)
 {
 	const PClass *type;
 	FDecalBase *decal;
-	AActor *actor;
+	bool optional = false;
 
 	// Get name of generator (actor)
 	sc.MustGetString ();
+	optional = sc.Compare("optional");
+	if (optional) sc.MustGetString();
+
 	type = PClass::FindClass (sc.String);
 	if (type == NULL || type->ActorInfo == NULL)
 	{
-		sc.ScriptError ("%s is not an actor.", sc.String);
+		if (!optional) sc.ScriptError ("%s is not an actor.", sc.String);
 	}
-	actor = (AActor *)type->Defaults;
 
 	// Get name of generated decal
 	sc.MustGetString ();
@@ -625,14 +627,17 @@ void FDecalLib::ParseGenerator (FScanner &sc)
 		decal = ScanTreeForName (sc.String, Root);
 		if (decal == NULL)
 		{
-			sc.ScriptError ("%s has not been defined.", sc.String);
+			if (!optional) sc.ScriptError ("%s has not been defined.", sc.String);
 		}
 	}
-
-	actor->DecalGenerator = decal;
-	if (decal != NULL)
+	if (type != NULL)
 	{
-		decal->Users.Push (type);
+		AActor *actor = (AActor *)type->Defaults;
+		actor->DecalGenerator = decal;
+		if (decal != NULL)
+		{
+			decal->Users.Push(type);
+		}
 	}
 }
 

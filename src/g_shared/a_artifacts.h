@@ -18,6 +18,7 @@ public:
 	virtual AInventory *CreateTossable ();
 	virtual void Serialize (FArchive &arc);
 	virtual void OwnerDied ();
+	virtual bool GetNoTeleportFreeze();
 	virtual PalEntry GetBlend ();
 	virtual bool DrawPowerup (int x, int y);
 

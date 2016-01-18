@@ -177,6 +177,11 @@ void D_LoadWadSettings ()
 			{
 				cmd[i] = conf[i];
 			}
+			if (i == 0)
+			{
+				conf++;
+				continue;
+			}
 			cmd[i] = 0;
 			conf += i;
 			if (*conf == '\n')

@@ -8,7 +8,7 @@
 $rolloff * 200 1200
 
 $playersound	player	male	*death		dspldeth
-$playersound	player	male	*xdeath		dspdiehi
+$playersound	player	male	*xdeath		dsplxdth
 $playersound	player	male	*gibbed		dsslop
 $playersound	player	male	*pain100	dsplpain
 $playersounddup	player	male	*pain75		*pain100

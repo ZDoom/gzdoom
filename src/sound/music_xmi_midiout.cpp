@@ -108,8 +108,8 @@ extern char MIDI_CommonLengths[15];
 //
 //==========================================================================
 
-XMISong::XMISong (FileReader &reader, EMidiDevice type)
-: MIDIStreamer(type), MusHeader(0), Songs(0)
+XMISong::XMISong (FileReader &reader, EMidiDevice type, const char *args)
+: MIDIStreamer(type, args), MusHeader(0), Songs(0)
 {
 #ifdef _WIN32
 	if (ExitEvent == NULL)

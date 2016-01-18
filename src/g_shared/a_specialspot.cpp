@@ -158,7 +158,7 @@ struct FSpotList
 
 		while (true)
 		{
-			distance = P_AproxDistance(Spots[i]->x - x, Spots[i]->y - y);
+			distance = Spots[i]->AproxDistance(x, y);
 
 			if ((distance >= mindist) && ((maxdist == 0) || (distance <= maxdist))) break;
 

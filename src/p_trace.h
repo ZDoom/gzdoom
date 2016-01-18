@@ -35,6 +35,7 @@
 #define __P_TRACE_H__
 
 #include <stddef.h>
+#include "actor.h"
 #include "textures/textures.h"
 
 struct sector_t;
@@ -96,7 +97,7 @@ enum ETraceStatus
 
 bool Trace (fixed_t x, fixed_t y, fixed_t z, sector_t *sector,
 			fixed_t vx, fixed_t vy, fixed_t vz, fixed_t maxDist,
-			DWORD ActorMask, DWORD WallMask, AActor *ignore,
+			ActorFlags ActorMask, DWORD WallMask, AActor *ignore,
 			FTraceResults &res,
 			DWORD traceFlags=0,
 			ETraceStatus (*callback)(FTraceResults &res, void *)=NULL, void *callbackdata=NULL);

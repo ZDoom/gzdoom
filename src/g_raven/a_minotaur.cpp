@@ -185,7 +185,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurDecide)
 	{
 		S_Sound (self, CHAN_WEAPON, "minotaur/sight", 1, ATTN_NORM);
 	}
-	dist = P_AproxDistance (self->x-target->x, self->y-target->y);
+	dist = self->AproxDistance (target);
 	if (target->z+target->height > self->z
 		&& target->z+target->height < self->z+self->height
 		&& dist < (friendly ? 16*64*FRACUNIT : 8*64*FRACUNIT)
@@ -390,7 +390,7 @@ void P_MinotaurSlam (AActor *source, AActor *target)
 	fixed_t thrust;
 	int damage;
 
-	angle = R_PointToAngle2 (source->x, source->y, target->x, target->y);
+	angle = source->AngleTo(target);
 	angle >>= ANGLETOFINESHIFT;
 	thrust = 16*FRACUNIT+(pr_minotaurslam()<<10);
 	target->velx += FixedMul (thrust, finecosine[angle]);
@@ -489,7 +489,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurLook)
 			mo = player->mo;
 			if (mo == master) continue;
 			if (mo->health <= 0) continue;
-			dist = P_AproxDistance(self->x - mo->x, self->y - mo->y);
+			dist = self->AproxDistance(mo);
 			if (dist > MINOTAUR_LOOK_DIST) continue;
 			self->target = mo;
 			break;
@@ -514,7 +514,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurLook)
 			if (!(mo->flags3 & MF3_ISMONSTER)) continue;
 			if (mo->health <= 0) continue;
 			if (!(mo->flags & MF_SHOOTABLE)) continue;
-			dist = P_AproxDistance (self->x - mo->x, self->y - mo->y);
+			dist = self->AproxDistance(mo);
 			if (dist > MINOTAUR_LOOK_DIST) continue;
 			if ((mo == master) || (mo == self)) continue;
 			if ((mo->flags5 & MF5_SUMMONEDMONSTER) && (mo->tracer == master)) continue;

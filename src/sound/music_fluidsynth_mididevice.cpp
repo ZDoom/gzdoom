@@ -255,7 +255,7 @@ CUSTOM_CVAR(Int, fluid_chorus_type, FLUID_CHORUS_DEFAULT_TYPE, CVAR_ARCHIVE|CVAR
 //
 //==========================================================================
 
-FluidSynthMIDIDevice::FluidSynthMIDIDevice()
+FluidSynthMIDIDevice::FluidSynthMIDIDevice(const char *args)
 {
 	FluidSynth = NULL;
 	FluidSettings = NULL;
@@ -293,7 +293,15 @@ FluidSynthMIDIDevice::FluidSynthMIDIDevice()
 		fluid_reverb_width, fluid_reverb_level);
 	fluid_synth_set_chorus(FluidSynth, fluid_chorus_voices, fluid_chorus_level,
 		fluid_chorus_speed, fluid_chorus_depth, fluid_chorus_type);
-	if (0 == LoadPatchSets(fluid_patchset))
+
+	// try loading a patch set that got specified with $mididevice.
+	int res = 0;
+	if (args != NULL && *args != 0)
+	{
+		res = LoadPatchSets(args);
+	}
+
+	if (res == 0 && 0 == LoadPatchSets(fluid_patchset))
 	{
 #ifdef __unix__
 		// This is the standard location on Ubuntu.

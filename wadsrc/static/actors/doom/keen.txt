@@ -28,7 +28,7 @@ ACTOR CommanderKeen
 		KEEN AB	6
 		KEEN C	6 A_Scream
 		KEEN DEFGH	6
-		KEEN I	6 A_NoBlocking
+		KEEN I	6
 		KEEN J	6
 		KEEN K	6 A_KeenDie
 		KEEN L   -1

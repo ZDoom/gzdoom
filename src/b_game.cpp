@@ -423,8 +423,8 @@ void FCajunMaster::RemoveAllBots (bool fromlist)
 					}
 				}
 			}
+			FBehavior::StaticStartTypedScripts (SCRIPT_Disconnect, players[i].mo, true, i, true);
 			ClearPlayer (i, !fromlist);
-			FBehavior::StaticStartTypedScripts (SCRIPT_Disconnect, NULL, true, i);
 		}
 	}
 

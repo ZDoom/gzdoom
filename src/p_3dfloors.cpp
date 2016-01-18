@@ -41,9 +41,8 @@
 #include "w_wad.h"
 #include "sc_man.h"
 #include "g_level.h"
+#include "p_terrain.h"
 #include "r_data/colormaps.h"
-
-#ifdef _3DFLOORS
 
 //==========================================================================
 //
@@ -332,17 +331,23 @@ void P_PlayerOnSpecial3DFloor(player_t* player)
 		if(rover->flags & FF_SOLID)
 		{
 			// Player must be on top of the floor to be affected...
-			if(player->mo->z != rover->top.plane->ZatPoint(player->mo->x, player->mo->y)) continue;
+			if(player->mo->Z() != rover->top.plane->ZatPoint(player->mo)) continue;
 		}
 		else
 		{
 			//Water and DEATH FOG!!! heh
-			if (player->mo->z > rover->top.plane->ZatPoint(player->mo->x, player->mo->y) || 
-				(player->mo->z + player->mo->height) < rover->bottom.plane->ZatPoint(player->mo->x, player->mo->y))
+			if (player->mo->Z() > rover->top.plane->ZatPoint(player->mo) || 
+				player->mo->Top() < rover->bottom.plane->ZatPoint(player->mo))
 				continue;
 		}
-		
-		if (rover->model->special || rover->model->damage) P_PlayerInSpecialSector(player, rover->model);
+
+		// Apply sector specials
+		P_PlayerInSpecialSector(player, rover->model);
+
+		// Apply flat specials (using the ceiling!)
+		P_PlayerOnSpecialFlat(
+			player, rover->model->GetTerrain(rover->top.isceiling));
+
 		break;
 	}
 }
@@ -367,7 +372,7 @@ bool P_CheckFor3DFloorHit(AActor * mo)
 
 		if(rover->flags & FF_SOLID && rover->model->SecActTarget)
 		{
-			if(mo->floorz == rover->top.plane->ZatPoint(mo->x, mo->y)) 
+			if(mo->floorz == rover->top.plane->ZatPoint(mo)) 
 			{
 				rover->model->SecActTarget->TriggerAction (mo, SECSPAC_HitFloor);
 				return true;
@@ -397,7 +402,7 @@ bool P_CheckFor3DCeilingHit(AActor * mo)
 
 		if(rover->flags & FF_SOLID && rover->model->SecActTarget)
 		{
-			if(mo->ceilingz == rover->bottom.plane->ZatPoint(mo->x, mo->y)) 
+			if(mo->ceilingz == rover->bottom.plane->ZatPoint(mo)) 
 			{
 				rover->model->SecActTarget->TriggerAction (mo, SECSPAC_HitCeiling);
 				return true;
@@ -743,7 +748,7 @@ void P_LineOpening_XFloors (FLineOpening &open, AActor * thing, const line_t *li
     {
 		fixed_t thingbot, thingtop;
 		
-		thingbot = thing->z;
+		thingbot = thing->Z();
 		thingtop = thingbot + (thing->height==0? 1:thing->height);
 
 		extsector_t::xfloor *xf[2] = {&linedef->frontsector->e->XFloor, &linedef->backsector->e->XFloor};
@@ -757,6 +762,7 @@ void P_LineOpening_XFloors (FLineOpening &open, AActor * thing, const line_t *li
 				linedef->frontsector->floorplane.ZatPoint(x, y), 
 				linedef->backsector->floorplane.ZatPoint(x, y) };
 			FTextureID highestfloorpic;
+			int highestfloorterrain = -1;
 			FTextureID lowestceilingpic;
 			
 			highestfloorpic.SetInvalid();
@@ -783,12 +789,13 @@ void P_LineOpening_XFloors (FLineOpening &open, AActor * thing, const line_t *li
 						lowestceilingpic = *rover->bottom.texture;
 					}
 					
-					if(ff_top > highestfloor && delta1 < delta2 && (!restrict || thing->z >= ff_top))
+					if(ff_top > highestfloor && delta1 < delta2 && (!restrict || thing->Z() >= ff_top))
 					{
 						highestfloor = ff_top;
 						highestfloorpic = *rover->top.texture;
+						highestfloorterrain = rover->model->GetTerrain(rover->top.isceiling);
 					}
-					if(ff_top > lowestfloor[j] && ff_top <= thing->z + thing->MaxStepHeight) lowestfloor[j] = ff_top;
+					if(ff_top > lowestfloor[j] && ff_top <= thing->Z() + thing->MaxStepHeight) lowestfloor[j] = ff_top;
 				}
 			}
 			
@@ -796,6 +803,7 @@ void P_LineOpening_XFloors (FLineOpening &open, AActor * thing, const line_t *li
 			{
 				open.bottom = highestfloor;
 				open.floorpic = highestfloorpic;
+				open.floorterrain = highestfloorterrain;
 			}
 			
 			if(lowestceiling < open.top) 
@@ -950,8 +958,6 @@ int	P_Find3DFloor(sector_t * sec, fixed_t x, fixed_t y, fixed_t z, bool above, b
 	// Failsafe
 	return -1;
 }
-
-#endif
 
 #include "c_dispatch.h"
 

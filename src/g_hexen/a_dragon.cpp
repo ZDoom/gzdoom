@@ -59,28 +59,21 @@ static void DragonSeek (AActor *actor, angle_t thresh, angle_t turnMax)
 	angle = actor->angle>>ANGLETOFINESHIFT;
 	actor->velx = FixedMul (actor->Speed, finecosine[angle]);
 	actor->vely = FixedMul (actor->Speed, finesine[angle]);
+	dist = actor->AproxDistance (target) / actor->Speed;
 	if (actor->z+actor->height < target->z ||
 		target->z+target->height < actor->z)
 	{
-		dist = P_AproxDistance(target->x-actor->x, target->y-actor->y);
-		dist = dist/actor->Speed;
 		if (dist < 1)
 		{
 			dist = 1;
 		}
 		actor->velz = (target->z - actor->z)/dist;
 	}
-	else
-	{
-		dist = P_AproxDistance (target->x-actor->x, target->y-actor->y);
-		dist = dist/actor->Speed;
-	}
 	if (target->flags&MF_SHOOTABLE && pr_dragonseek() < 64)
 	{ // attack the destination mobj if it's attackable
 		AActor *oldTarget;
 
-		if (absangle(actor->angle-R_PointToAngle2(actor->x, actor->y,
-			target->x, target->y)) < ANGLE_45/2)
+		if (absangle(actor->angle - actor->AngleTo(target)) < ANGLE_45/2)
 		{
 			oldTarget = actor->target;
 			actor->target = target;
@@ -105,8 +98,7 @@ static void DragonSeek (AActor *actor, angle_t thresh, angle_t turnMax)
 		{
 			AActor *bestActor = NULL;
 			bestAngle = ANGLE_MAX;
-			angleToTarget = R_PointToAngle2(actor->x, actor->y,
-				actor->target->x, actor->target->y);
+			angleToTarget = actor->AngleTo(actor->target);
 			for (i = 0; i < 5; i++)
 			{
 				if (!target->args[i])
@@ -119,8 +111,7 @@ static void DragonSeek (AActor *actor, angle_t thresh, angle_t turnMax)
 				{
 					continue;
 				}
-				angleToSpot = R_PointToAngle2(actor->x, actor->y, 
-					mo->x, mo->y);
+				angleToSpot = actor->AngleTo(mo);
 				if (absangle(angleToSpot-angleToTarget) < bestAngle)
 				{
 					bestAngle = absangle(angleToSpot-angleToTarget);
@@ -196,8 +187,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DragonFlight)
 			self->target = NULL;
 			return;
 		}
-		angle = R_PointToAngle2(self->x, self->y, self->target->x,
-			self->target->y);
+		angle = self->AngleTo(self->target);
 		if (absangle(self->angle-angle) < ANGLE_45/2 && self->CheckMeleeRange())
 		{
 			int damage = pr_dragonflight.HitDice (8);

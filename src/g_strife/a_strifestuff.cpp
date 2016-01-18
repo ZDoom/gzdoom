@@ -628,13 +628,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_CheckTerrain)
 {
 	sector_t *sec = self->Sector;
 
-	if (self->z == sec->floorplane.ZatPoint (self->x, self->y))
+	if (self->z == sec->floorplane.ZatPoint(self))
 	{
-		if ((sec->special & 0xFF) == Damage_InstantDeath)
+		if (sec->special == Damage_InstantDeath)
 		{
-			P_DamageMobj (self, NULL, NULL, 999, NAME_None);
+			P_DamageMobj (self, NULL, NULL, 999, NAME_InstantDeath);
 		}
-		else if ((sec->special & 0xFF) == Scroll_StrifeCurrent)
+		else if (sec->special == Scroll_StrifeCurrent)
 		{
 			int anglespeed = tagManager.GetFirstSectorTag(sec) - 100;
 			fixed_t speed = (anglespeed % 10) << (FRACBITS - 4);

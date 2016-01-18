@@ -47,6 +47,15 @@ FString I_GetFromClipboard (bool windows_has_no_selection_clipboard);
 
 void I_GetEvent();
 
+enum
+{
+	INPUT_DIJoy,
+	INPUT_XInput,
+	INPUT_RawPS2,
+	NUM_JOYDEVICES
+};
+
+
 #ifdef USE_WINDOWS_DWORD
 #include "m_joy.h"
 
@@ -119,14 +128,6 @@ public:
 	virtual void AddAxes(float axes[NUM_JOYAXIS]) = 0;
 	virtual void GetDevices(TArray<IJoystickConfig *> &sticks) = 0;
 	virtual IJoystickConfig *Rescan() = 0;
-};
-
-enum
-{
-	INPUT_DIJoy,
-	INPUT_XInput,
-	INPUT_RawPS2,
-	NUM_JOYDEVICES
 };
 
 extern FJoystickCollection *JoyDevices[NUM_JOYDEVICES];

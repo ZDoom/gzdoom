@@ -533,6 +533,10 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 		Printf (TEXTCOLOR_RED "Unloading scripts cannot exit the level again.\n");
 		return;
 	}
+	if (gameaction == ga_completed)	// do not exit multiple times.
+	{
+		return;
+	}
 
 	if (levelname == NULL || *levelname == 0)
 	{
@@ -693,6 +697,13 @@ void G_DoCompleted (void)
 	int i; 
 
 	gameaction = ga_nothing;
+
+	if (   gamestate == GS_DEMOSCREEN
+		|| gamestate == GS_FULLCONSOLE
+		|| gamestate == GS_STARTUP)
+	{
+		return;
+	}
 
 	if (gamestate == GS_TITLELEVEL)
 	{
@@ -1221,6 +1232,7 @@ void G_FinishTravel ()
 			pawn->dropoffz = pawndup->dropoffz;
 			pawn->floorsector = pawndup->floorsector;
 			pawn->floorpic = pawndup->floorpic;
+			pawn->floorterrain = pawndup->floorterrain;
 			pawn->ceilingsector = pawndup->ceilingsector;
 			pawn->ceilingpic = pawndup->ceilingpic;
 			pawn->floorclip = pawndup->floorclip;
@@ -1787,8 +1799,14 @@ void G_ReadSnapshots (PNGHandle *png)
 		DWORD snapver;
 
 		arc << snapver;
-		arc << namelen;
-		arc.Read (mapname, namelen);
+		if (SaveVersion < 4508)
+		{
+			arc << namelen;
+			arc.Read(mapname, namelen);
+			mapname[namelen] = 0;
+			MapName = mapname;
+		}
+		else arc << MapName;
 		TheDefaultLevelInfo.snapshotVer = snapver;
 		TheDefaultLevelInfo.snapshot = new FCompressedMemFile;
 		TheDefaultLevelInfo.snapshot->Serialize (arc);

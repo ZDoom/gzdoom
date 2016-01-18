@@ -132,10 +132,12 @@ extern bool FancyStdOut;
 extern HINSTANCE g_hInst;
 extern FILE *Logfile;
 extern bool NativeMouse;
+extern bool ConWindowHidden;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 CVAR (String, queryiwad_key, "shift", CVAR_GLOBALCONFIG|CVAR_ARCHIVE);
+CVAR (Bool, con_debugoutput, false, 0);
 
 double PerfToSec, PerfToMillisec;
 UINT TimerPeriod;
@@ -912,12 +914,11 @@ void ToEditControl(HWND edit, const char *buf, wchar_t *wbuf, int bpos)
 //
 //==========================================================================
 
-void I_PrintStr(const char *cp)
+static void DoPrintStr(const char *cp, HWND edit, HANDLE StdOut)
 {
-	if (ConWindow == NULL && StdOut == NULL)
+	if (edit == NULL && StdOut == NULL)
 		return;
 
-	HWND edit = ConWindow;
 	char buf[256];
 	wchar_t wbuf[countof(buf)];
 	int bpos = 0;
@@ -1047,6 +1048,55 @@ void I_PrintStr(const char *cp)
 	{ // Set text back to gray, in case it was changed.
 		SetConsoleTextAttribute(StdOut, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
 	}
+}
+
+static TArray<FString> bufferedConsoleStuff;
+
+void I_PrintStr(const char *cp)
+{
+	if (con_debugoutput)
+	{
+		// Strip out any color escape sequences before writing to debug output
+		char * copy = new char[strlen(cp)+1];
+		const char * srcp = cp;
+		char * dstp = copy;
+
+		while (*srcp != 0)
+		{
+			if (*srcp!=0x1c && *srcp!=0x1d && *srcp!=0x1e && *srcp!=0x1f)
+			{
+				*dstp++=*srcp++;
+			}
+			else
+			{
+				if (srcp[1]!=0) srcp+=2;
+				else break;
+			}
+		}
+		*dstp=0;
+
+		OutputDebugStringA(copy);
+		delete [] copy;
+	}
+
+	if (ConWindowHidden)
+	{
+		bufferedConsoleStuff.Push(cp);
+		DoPrintStr(cp, NULL, StdOut);
+	}
+	else
+	{
+		DoPrintStr(cp, ConWindow, StdOut);
+	}
+}
+
+void I_FlushBufferedConsoleStuff()
+{
+	for (unsigned i = 0; i < bufferedConsoleStuff.Size(); i++)
+	{
+		DoPrintStr(bufferedConsoleStuff[i], ConWindow, NULL);
+	}
+	bufferedConsoleStuff.Clear();
 }
 
 //==========================================================================
@@ -1480,28 +1530,81 @@ int I_FindClose(void *handle)
 
 static bool QueryPathKey(HKEY key, const char *keypath, const char *valname, FString &value)
 {
-	HKEY steamkey;
+	HKEY pathkey;
 	DWORD pathtype;
 	DWORD pathlen;
 	LONG res;
 
-	if(ERROR_SUCCESS == RegOpenKeyEx(key, keypath, 0, KEY_QUERY_VALUE, &steamkey))
+	if(ERROR_SUCCESS == RegOpenKeyEx(key, keypath, 0, KEY_QUERY_VALUE, &pathkey))
 	{
-		if (ERROR_SUCCESS == RegQueryValueEx(steamkey, valname, 0, &pathtype, NULL, &pathlen) &&
+		if (ERROR_SUCCESS == RegQueryValueEx(pathkey, valname, 0, &pathtype, NULL, &pathlen) &&
 			pathtype == REG_SZ && pathlen != 0)
 		{
 			// Don't include terminating null in count
 			char *chars = value.LockNewBuffer(pathlen - 1);
-			res = RegQueryValueEx(steamkey, valname, 0, NULL, (LPBYTE)chars, &pathlen);
+			res = RegQueryValueEx(pathkey, valname, 0, NULL, (LPBYTE)chars, &pathlen);
 			value.UnlockBuffer();
 			if (res != ERROR_SUCCESS)
 			{
 				value = "";
 			}
 		}
-		RegCloseKey(steamkey);
+		RegCloseKey(pathkey);
 	}
 	return value.IsNotEmpty();
+}
+
+//==========================================================================
+//
+// I_GetGogPaths
+//
+// Check the registry for GOG installation paths, so we can search for IWADs
+// that were bought from GOG.com. This is a bit different from the Steam
+// version because each game has its own independent installation path, no
+// such thing as <steamdir>/SteamApps/common/<GameName>.
+//
+//==========================================================================
+
+TArray<FString> I_GetGogPaths()
+{
+	TArray<FString> result;
+	FString path;
+	FString gamepath;
+
+#ifdef _WIN64
+	FString gogregistrypath = "Software\\Wow6432Node\\GOG.com\\Games";
+#else
+	// If a 32-bit ZDoom runs on a 64-bit Windows, this will be transparently and
+	// automatically redirected to the Wow6432Node address instead, so this address
+	// should be safe to use in all cases.
+	FString gogregistrypath = "Software\\GOG.com\\Games";
+#endif
+
+	// Look for Ultimate Doom
+	gamepath = gogregistrypath + "\\1435827232";
+	if (QueryPathKey(HKEY_LOCAL_MACHINE, gamepath.GetChars(), "Path", path))
+	{
+		result.Push(path);	// directly in install folder
+	}
+
+	// Look for Doom II
+	gamepath = gogregistrypath + "\\1435848814";
+	if (QueryPathKey(HKEY_LOCAL_MACHINE, gamepath.GetChars(), "Path", path))
+	{
+		result.Push(path + "/doom2");	// in a subdirectory
+		// If direct support for the Master Levels is ever added, they are in path + /master/wads
+	}
+
+	// Look for Final Doom
+	gamepath = gogregistrypath + "\\1435848742";
+	if (QueryPathKey(HKEY_LOCAL_MACHINE, gamepath.GetChars(), "Path", path))
+	{
+		// in subdirectories
+		result.Push(path + "/TNT");
+		result.Push(path + "/Plutonia");
+	}
+
+	return result;
 }
 
 //==========================================================================
@@ -1623,3 +1726,36 @@ FString I_GetLongPathName(FString shortpath)
 	delete[] buff;
 	return longpath;
 }
+
+#if _MSC_VER == 1900 && defined(_USING_V110_SDK71_)
+//==========================================================================
+//
+// VS14Stat
+//
+// Work around an issue where stat doesn't work with v140_xp. This was
+// supposedly fixed, but as of Update 1 continues to not function on XP.
+//
+//==========================================================================
+
+#include <sys/stat.h>
+
+int VS14Stat(const char *path, struct _stat64i32 *buffer)
+{
+	WIN32_FILE_ATTRIBUTE_DATA data;
+	if(!GetFileAttributesEx(path, GetFileExInfoStandard, &data))
+		return -1;
+
+	buffer->st_ino = 0;
+	buffer->st_mode = ((data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ? S_IFDIR : S_IFREG)|
+	                  ((data.dwFileAttributes & FILE_ATTRIBUTE_READONLY) ? S_IREAD : S_IREAD|S_IWRITE);
+	buffer->st_dev = buffer->st_rdev = 0;
+	buffer->st_nlink = 1;
+	buffer->st_uid = 0;
+	buffer->st_gid = 0;
+	buffer->st_size = data.nFileSizeLow;
+	buffer->st_atime = (*(QWORD*)&data.ftLastAccessTime) / 10000000 - 11644473600LL;
+	buffer->st_mtime = (*(QWORD*)&data.ftLastWriteTime) / 10000000 - 11644473600LL;
+	buffer->st_ctime = (*(QWORD*)&data.ftCreationTime) / 10000000 - 11644473600LL;
+	return 0;
+}
+#endif

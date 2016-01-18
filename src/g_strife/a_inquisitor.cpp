@@ -20,7 +20,7 @@ bool InquisitorCheckDistance (AActor *self)
 {
 	if (self->reactiontime == 0 && P_CheckSight (self, self->target))
 	{
-		return P_AproxDistance (self->x - self->target->x, self->y - self->target->y) < 264*FRACUNIT;
+		return self->AproxDistance (self->target) < 264*FRACUNIT;
 	}
 	return false;
 }
@@ -85,7 +85,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_InquisitorJump)
 	speed = self->Speed * 2/3;
 	self->velx += FixedMul (speed, finecosine[an]);
 	self->vely += FixedMul (speed, finesine[an]);
-	dist = P_AproxDistance (self->target->x - self->x, self->target->y - self->y);
+	dist = self->AproxDistance (self->target);
 	dist /= speed;
 	if (dist < 1)
 	{

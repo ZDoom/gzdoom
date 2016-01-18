@@ -362,6 +362,8 @@ player_t &player_t::operator=(const player_t &p)
 	damagecount = p.damagecount;
 	bonuscount = p.bonuscount;
 	hazardcount = p.hazardcount;
+	hazardtype = p.hazardtype;
+	hazardinterval = p.hazardinterval;
 	poisoncount = p.poisoncount;
 	poisontype = p.poisontype;
 	poisonpaintype = p.poisonpaintype;
@@ -565,6 +567,10 @@ void APlayerPawn::Serialize (FArchive &arc)
 	if (SaveVersion >= 4503)
 	{
 		arc << AirCapacity;
+	}
+	if (SaveVersion >= 4526)
+	{
+		arc << ViewHeight;
 	}
 }
 
@@ -1562,11 +1568,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SkullPop)
 	if (player != NULL)
 	{
 		player->mo = mo;
-		if (player->camera == self)
-		{
-			player->camera = mo;
-		}
 		player->damagecount = 32;
+	}
+	for (int i = 0; i < MAXPLAYERS; ++i)
+	{
+		if (playeringame[i] && players[i].camera == self)
+		{
+			players[i].camera = mo;
+		}
 	}
 }
 
@@ -2531,11 +2540,15 @@ void P_PlayerThink (player_t *player)
 	if (!(player->cheats & CF_PREDICTING))
 	{
 		P_PlayerOnSpecial3DFloor (player);
-		if (player->mo->Sector->special || player->mo->Sector->damage)
+		P_PlayerInSpecialSector (player);
+
+		if (player->mo->z <= player->mo->Sector->floorplane.ZatPoint(
+			player->mo->x, player->mo->y) ||
+			player->mo->waterlevel)
 		{
-			P_PlayerInSpecialSector (player);
+			// Player must be touching the floor
+			P_PlayerOnSpecialFlat(player, P_GetThingFloorType(player->mo));
 		}
-		P_PlayerOnSpecialFlat (player, P_GetThingFloorType (player->mo));
 		if (player->mo->velz <= -player->mo->FallingScreamMinSpeed &&
 			player->mo->velz >= -player->mo->FallingScreamMaxSpeed && !player->morphTics &&
 			player->mo->waterlevel == 0)
@@ -2587,8 +2600,8 @@ void P_PlayerThink (player_t *player)
 		if (player->hazardcount)
 		{
 			player->hazardcount--;
-			if (!(level.time & 31) && player->hazardcount > 16*TICRATE)
-				P_DamageMobj (player->mo, NULL, NULL, 5, NAME_Slime);
+			if (!(level.time % player->hazardinterval) && player->hazardcount > 16*TICRATE)
+				P_DamageMobj (player->mo, NULL, NULL, 5, player->hazardtype);
 		}
 
 		if (player->poisoncount && !(level.time & 15))
@@ -3001,7 +3014,12 @@ void player_t::Serialize (FArchive &arc)
 		<< air_finished
 		<< turnticks
 		<< oldbuttons;
-	bool IsBot;
+	if (SaveVersion >= 4929)
+	{
+		arc << hazardtype
+			<< hazardinterval;
+	}
+	bool IsBot = false;
 	if (SaveVersion >= 4514)
 	{
 		arc << Bot;
@@ -3029,6 +3047,12 @@ void player_t::Serialize (FArchive &arc)
 		// Move weapon state flags from cheats and into WeaponState.
 		WeaponState = ((cheats >> 14) & 1) | ((cheats & (0x37 << 24)) >> (24 - 1));
 		cheats &= ~((1 << 14) | (0x37 << 24));
+	}
+	if (SaveVersion < 4527)
+	{
+		BYTE oldWeaponState;
+		arc << oldWeaponState;
+		WeaponState = oldWeaponState;
 	}
 	else
 	{

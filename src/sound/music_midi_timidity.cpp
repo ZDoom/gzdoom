@@ -58,7 +58,7 @@ CUSTOM_CVAR (Int, timidity_pipe, 90, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	}
 }
 
-CUSTOM_CVAR (Int, timidity_frequency, 22050, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR (Int, timidity_frequency, 44100, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 { // Clamp frequency to Timidity's limits
 	if (self < 4000)
 		self = 4000;
@@ -72,7 +72,7 @@ CUSTOM_CVAR (Int, timidity_frequency, 22050, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 //
 //==========================================================================
 
-TimidityPPMIDIDevice::TimidityPPMIDIDevice()
+TimidityPPMIDIDevice::TimidityPPMIDIDevice(const char *args)
 	: DiskName("zmid"),
 #ifdef _WIN32
 	  ReadWavePipe(INVALID_HANDLE_VALUE), WriteWavePipe(INVALID_HANDLE_VALUE),
@@ -85,7 +85,13 @@ TimidityPPMIDIDevice::TimidityPPMIDIDevice()
 #ifndef _WIN32
 	WavePipe[0] = WavePipe[1] = -1;
 #endif
-	
+
+	if (args == NULL || *args == 0) args = timidity_exe;
+
+	CommandLine.Format("%s %s -EFchorus=%s -EFreverb=%s -s%d ",
+		args, *timidity_extargs,
+		*timidity_chorus, *timidity_reverb, *timidity_frequency);
+
 	if (DiskName == NULL)
 	{
 		Printf(PRINT_BOLD, "Could not create temp music file\n");
@@ -186,10 +192,6 @@ int TimidityPPMIDIDevice::Open(void (*callback)(unsigned int, void *, DWORD, DWO
 
 	Validated = true;
 #endif // WIN32
-
-	CommandLine.Format("%s %s -EFchorus=%s -EFreverb=%s -s%d ",
-		*timidity_exe, *timidity_extargs,
-		*timidity_chorus, *timidity_reverb, *timidity_frequency);
 
 	pipeSize = (timidity_pipe * timidity_frequency / 1000)
 		<< (timidity_stereo + !timidity_8bit);
@@ -713,11 +715,11 @@ BOOL SafeTerminateProcess(HANDLE hProcess, UINT uExitCode)
 
 	if ( hRT )
 	{
-		// Must wait process to terminate to guarantee that it has exited...
-		WaitForSingleObject(hProcess, INFINITE);
-
+		// Must wait for process to terminate to guarantee that it has exited...
+		DWORD res = WaitForSingleObject(hProcess, 1000);
 		CloseHandle(hRT);
-		bSuccess = TRUE;
+		bSuccess = (res == WAIT_OBJECT_0);
+		dwErr = WAIT_TIMEOUT;
 	}
 
 	if ( !bSuccess )

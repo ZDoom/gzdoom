@@ -32,6 +32,7 @@
 **
 */
 #include "v_text.h"
+#include "gstrings.h"
 
 
 void M_DrawConText (int color, int x, int y, const char *str);
@@ -199,6 +200,7 @@ public:
 		{
 			text = (*opt)->mValues[Selection].Text;
 		}
+		if (*text == '$') text = GStrings(text + 1);
 		screen->DrawText (SmallFont, OptionSettings.mFontColorValue, indent + CURSORSPACE, y, 
 			text, DTA_CleanNoMove_1, true, DTA_ColorOverlay, overlay, TAG_DONE);
 		return indent;
@@ -503,6 +505,7 @@ public:
 	int Draw(FOptionMenuDescriptor *desc, int y, int indent, bool selected)
 	{
 		const char *txt = mCurrent? (const char*)mAltText : mLabel;
+		if (*txt == '$') txt = GStrings(txt + 1);
 		int w = SmallFont->StringWidth(txt) * CleanXfac_1;
 		int x = (screen->GetWidth() - w) / 2;
 		screen->DrawText (SmallFont, mColor, x, y, txt, DTA_CleanNoMove_1, true, TAG_DONE);
@@ -1045,6 +1048,19 @@ public:
 		return text;
 	}
 
+	int Draw(FOptionMenuDescriptor*desc, int y, int indent, bool selected)
+	{
+		if (mEntering)
+		{
+			// reposition the text so that the cursor is visible when in entering mode.
+			FString text = Represent();
+			int tlen = SmallFont->StringWidth(text) * CleanXfac_1;
+			int newindent = screen->GetWidth() - tlen - CURSORSPACE;
+			if (newindent < indent) indent = newindent;
+		}
+		return FOptionMenuFieldBase::Draw(desc, y, indent, selected);
+	}
+
 	bool MenuEvent ( int mkey, bool fromcontroller )
 	{
 		if ( mkey == MKEY_Enter )
@@ -1145,18 +1161,3 @@ private:
 	float mMaximum;
 	float mStep;
 };
-#ifndef NO_IMP
-CCMD(am_restorecolors)
-{
-	if (DMenu::CurrentMenu != NULL && DMenu::CurrentMenu->IsKindOf(RUNTIME_CLASS(DOptionMenu)))
-	{
-		DOptionMenu *m = (DOptionMenu*)DMenu::CurrentMenu;
-		const FOptionMenuDescriptor *desc = m->GetDescriptor();
-		// Find the color cvars by scanning the MapColors menu.
-		for (unsigned i = 0; i < desc->mItems.Size(); ++i)
-		{
-			desc->mItems[i]->SetValue(FOptionMenuItemColorPicker::CPF_RESET, 0);
-		}
-	}
-}
-#endif

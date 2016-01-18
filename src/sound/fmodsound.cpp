@@ -44,7 +44,7 @@ extern HWND Window;
 #define FALSE 0
 #define TRUE 1
 #endif
-#ifdef __APPLE__
+#if defined(__FreeBSD__) || defined(__APPLE__)
 #include <stdlib.h>
 #elif __sun
 #include <alloca.h>
@@ -462,14 +462,12 @@ public:
 			Stream->release();
 			Channel = NULL;
 			Stream = NULL;
-			Owner->Sys->setStreamBufferSize(64*1024, FMOD_TIMEUNIT_RAWBYTES);
 			// Open the stream asynchronously, so we don't hang the game while trying to reconnect.
 			// (It would be nice to do the initial open asynchronously as well, but I'd need to rethink
 			// the music system design to pull that off.)
 			result = Owner->Sys->createSound(URL, (Loop ? FMOD_LOOP_NORMAL : FMOD_LOOP_OFF) | FMOD_SOFTWARE | FMOD_2D |
 				FMOD_CREATESTREAM | FMOD_NONBLOCKING, NULL, &Stream);
 			JustStarted = true;
-			Owner->Sys->setStreamBufferSize(16*1024, FMOD_TIMEUNIT_RAWBYTES);
 			return result != FMOD_OK;
 		}
 		if (JustStarted && openstate == FMOD_OPENSTATE_PLAYING)
@@ -771,7 +769,7 @@ bool FMODSoundRenderer::Init()
 	}
 #endif
 
-#ifndef _WIN32
+#if !defined _WIN32 && !defined __APPLE__
 	// Try to load SDL output plugin
 	result = Sys->setPluginPath(progdir);	// Should we really look for it in the program directory?
 	result = Sys->loadPlugin("liboutput_sdl.so", &OutputPlugin);
@@ -1170,6 +1168,9 @@ bool FMODSoundRenderer::Init()
 	}
 	Sys->set3DSettings(0.5f, 96.f, 1.f);
 	Sys->set3DRolloffCallback(RolloffCallback);
+	// The default is 16k, which periodically starves later FMOD versions
+	// when streaming FLAC files.
+	Sys->setStreamBufferSize(64*1024, FMOD_TIMEUNIT_RAWBYTES);
 	snd_sfxvolume.Callback ();
 	return true;
 }
@@ -1733,10 +1734,6 @@ SoundStream *FMODSoundRenderer::OpenStream(const char *url, int flags)
         exinfo.dlsname = patches;
     }
 
-    // Use a larger buffer for URLs so that it's less likely to be effected
-    // by hiccups in the data rate from the remote server.
-    Sys->setStreamBufferSize(64*1024, FMOD_TIMEUNIT_RAWBYTES);
-
     result = Sys->createSound(url, mode, &exinfo, &stream);
     if(result == FMOD_ERR_FORMAT && exinfo.dlsname != NULL)
     {
@@ -1747,9 +1744,6 @@ SoundStream *FMODSoundRenderer::OpenStream(const char *url, int flags)
             Printf("%s is an unsupported format.\n", *snd_midipatchset);
         }
     }
-
-    // Restore standard buffer size.
-    Sys->setStreamBufferSize(16*1024, FMOD_TIMEUNIT_RAWBYTES);
 
     if(result != FMOD_OK)
         return NULL;

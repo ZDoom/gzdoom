@@ -149,7 +149,8 @@ void cht_DoCheat (player_t *player, int cheat)
 	case CHT_FLY:
 		if (player->mo != NULL)
 		{
-			if ((player->mo->flags7 ^= MF7_FLYCHEAT) != 0)
+			player->mo->flags7 ^= MF7_FLYCHEAT;
+			if (player->mo->flags7 & MF7_FLYCHEAT)
 			{
 				player->mo->flags |= MF_NOGRAVITY;
 				player->mo->flags2 |= MF2_FLY;
@@ -579,7 +580,7 @@ void GiveSpawner (player_t *player, const PClass *type, int amount)
 	}
 
 	AInventory *item = static_cast<AInventory *>
-		(Spawn (type, player->mo->x, player->mo->y, player->mo->z, NO_REPLACE));
+		(Spawn (type, player->mo->X(), player->mo->Y(), player->mo->Z(), NO_REPLACE));
 	if (item != NULL)
 	{
 		if (amount > 0)

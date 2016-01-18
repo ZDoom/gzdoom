@@ -37,6 +37,7 @@
 #include "p_local.h"
 #include "p_lnspec.h"
 #include "farchive.h"
+#include "r_sky.h"
 
 // arg0 = Visibility*4 for this skybox
 
@@ -66,13 +67,13 @@ void ASkyViewpoint::Destroy ()
 	// remove all sector references to ourselves.
 	for (int i = 0; i <numsectors; i++)
 	{
-		if (sectors[i].FloorSkyBox == this)
+		if (sectors[i].SkyBoxes[sector_t::floor] == this)
 		{
-			sectors[i].FloorSkyBox = NULL;
+			sectors[i].SkyBoxes[sector_t::floor] = NULL;
 		}
-		if (sectors[i].CeilingSkyBox == this)
+		if (sectors[i].SkyBoxes[sector_t::ceiling] == this)
 		{
-			sectors[i].CeilingSkyBox = NULL;
+			sectors[i].SkyBoxes[sector_t::ceiling] = NULL;
 		}
 	}
 	if (level.DefaultSkybox == this)
@@ -82,65 +83,8 @@ void ASkyViewpoint::Destroy ()
 	Super::Destroy();
 }
 
-// For an RR compatible linedef based definition. This searches the viewpoint's sector
-// for a skybox line special, gets its tag and transfers the skybox to all tagged sectors.
-class ASkyCamCompat : public ASkyViewpoint
-{
-	DECLARE_CLASS (ASkyCamCompat, ASkyViewpoint)
-public:
-	void BeginPlay ();
-};
-
 IMPLEMENT_CLASS (ASkyCamCompat)
 
-extern FTextureID skyflatnum;
-
-void ASkyCamCompat::BeginPlay ()
-{
-	if (Sector == NULL)
-	{
-		Printf("Sector not initialized for SkyCamCompat\n");
-		Sector = P_PointInSector(x, y);
-	}
-	if (Sector)
-	{
-		line_t * refline = NULL;
-		for (short i = 0; i < Sector->linecount; i++)
-		{
-			refline = Sector->lines[i];
-			if (refline->special == Sector_SetPortal && refline->args[1] == 2)
-			{
-				// We found the setup linedef for this skybox, so let's use it for our init.
-				int skybox_id = refline->args[0];
-
-				// Then, change the alpha
-				alpha = refline->args[4];
-
-				// Finally, skyboxify all tagged sectors
-				// This involves changing their texture to the sky flat, because while
-				// EE works with any texture for its skybox portals, ZDoom doesn't.
-				FSectorTagIterator it(skybox_id);
-				int secnum;
-				while ((secnum = it.Next()) >= 0)
-				{
-					// plane: 0=floor, 1=ceiling, 2=both
-					if (refline->args[2] == 1 || refline->args[2] == 2)
-					{
-						sectors[secnum].CeilingSkyBox = this;
-						sectors[secnum].SetTexture(sector_t::ceiling, skyflatnum, false);
-					}
-					if (refline->args[2] == 0 || refline->args[2] == 2)
-					{
-						sectors[secnum].FloorSkyBox = this;
-						sectors[secnum].SetTexture(sector_t::floor, skyflatnum, false);
-					}
-				}
-			}
-		}
-	}
-	// Do not call the SkyViewpoint's super method because it would trash our setup
-	AActor::BeginPlay();
-}
 
 //---------------------------------------------------------------------------
 
@@ -185,11 +129,13 @@ void ASkyPicker::PostBeginPlay ()
 	{
 		if (0 == (args[1] & 2))
 		{
-			Sector->CeilingSkyBox = box;
+			Sector->SkyBoxes[sector_t::ceiling] = box;
+			if (box == NULL) Sector->MoreFlags |= SECF_NOCEILINGSKYBOX;	// sector should ignore the level's default skybox
 		}
 		if (0 == (args[1] & 1))
 		{
-			Sector->FloorSkyBox = box;
+			Sector->SkyBoxes[sector_t::floor] = box;
+			if (box == NULL) Sector->MoreFlags |= SECF_NOFLOORSKYBOX;	// sector should ignore the level's default skybox
 		}
 	}
 	Destroy ();

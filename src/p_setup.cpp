@@ -1513,7 +1513,6 @@ void P_LoadSectors (MapData *map, FMissingTextureTracker &missingtex)
 			ss->special = LittleShort(ms->special);
 		else	// [RH] Translate to new sector special
 			ss->special = P_TranslateSectorSpecial (LittleShort(ms->special));
-		ss->secretsector = !!(ss->special&SECRET_MASK);
 		tagManager.AddSectorTag(i, LittleShort(ms->tag));
 		ss->thinglist = NULL;
 		ss->touching_thinglist = NULL;		// phares 3/14/98
@@ -1534,6 +1533,7 @@ void P_LoadSectors (MapData *map, FMissingTextureTracker &missingtex)
 
 		ss->gravity = 1.f;	// [RH] Default sector gravity of 1.0
 		ss->ZoneNumber = 0xFFFF;
+		ss->terrainnum[sector_t::ceiling] = ss->terrainnum[sector_t::floor] = -1;
 
 		// [RH] Sectors default to white light with the default fade.
 		//		If they are outside (have a sky ceiling), they use the outside fog.
@@ -1759,6 +1759,7 @@ void P_LoadThings (MapData * map)
 		mti[i].RenderStyle = STYLE_Count;
 		mti[i].alpha = -1;
 		mti[i].health = 1;
+		mti[i].FloatbobPhase = -1;
 		flags &= ~MTF_SKILLMASK;
 		mti[i].flags = (short)((flags & 0xf) | 0x7e0);
 		if (gameinfo.gametype == GAME_Strife)
@@ -1843,6 +1844,7 @@ void P_LoadThings2 (MapData * map)
 		mti[i].RenderStyle = STYLE_Count;
 		mti[i].alpha = -1;
 		mti[i].health = 1;
+		mti[i].FloatbobPhase = -1;
 	}
 	delete[] mtp;
 }
@@ -2364,7 +2366,16 @@ static void P_LoopSidedefs (bool firstloop)
 		// instead of as part of another loop
 		if (line->frontsector == line->backsector)
 		{
-			right = DWORD(line->sidedef[!sidetemp[i].b.lineside] - sides);
+			const side_t* const rightside = line->sidedef[!sidetemp[i].b.lineside];
+
+			if (NULL == rightside)
+			{
+				// There is no right side!
+				if (firstloop) Printf ("Line %d's right edge is unconnected\n", linemap[unsigned(line-lines)]);
+				continue;
+			}
+
+			right = DWORD(rightside - sides);
 		}
 		else
 		{
@@ -2530,7 +2541,6 @@ void P_ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec, intmaps
 		}
 		break;
 
-#ifdef _3DFLOORS
 	case Sector_Set3DFloor:
 		if (msd->toptexture[0]=='#')
 		{
@@ -2545,7 +2555,6 @@ void P_ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec, intmaps
 		SetTexture(sd, side_t::mid, msd->midtexture, missingtex);
 		SetTexture(sd, side_t::bottom, msd->bottomtexture, missingtex);
 		break;
-#endif
 
 	case TranslucentLine:	// killough 4/11/98: apply translucency to 2s normal texture
 		if (checktranmap)
@@ -4051,7 +4060,7 @@ void P_SetupLevel (const char *lumpname, int position)
 		{
 			if (mo->flags & MF_COUNTKILL)
 			{
-				if (mo->Sector->special == dDamage_End)
+				if (mo->Sector->damageamount > 0 && (mo->Sector->Flags & (SECF_ENDGODMODE|SECF_ENDLEVEL)) == (SECF_ENDGODMODE|SECF_ENDLEVEL))
 				{
 					mo->ClearCounters();
 				}

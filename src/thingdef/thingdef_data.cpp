@@ -253,12 +253,10 @@ static FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG(MF7, HITTARGET, AActor, flags7),
 	DEFINE_FLAG(MF7, HITMASTER, AActor, flags7),
 	DEFINE_FLAG(MF7, HITTRACER, AActor, flags7),
-	
-	// [ZK] Decal flags
-	DEFINE_FLAG(MF7, NODECAL, AActor, flags7),
+	DEFINE_FLAG(MF7, NODECAL, AActor, flags7),		// [ZK] Decal flags
 	DEFINE_FLAG(MF7, FORCEDECAL, AActor, flags7),
-
 	DEFINE_FLAG(MF7, LAXTELEFRAGDMG, AActor, flags7),
+	DEFINE_FLAG(MF7, ICESHATTER, AActor, flags7),
 
 	// Effect flags
 	DEFINE_FLAG(FX, VISIBILITYPULSE, AActor, effects),
@@ -331,9 +329,11 @@ static FFlagDef InventoryFlagDefs[] =
 	DEFINE_FLAG(IF, TOSSED, AInventory, ItemFlags),
 	DEFINE_FLAG(IF, ALWAYSRESPAWN, AInventory, ItemFlags),
 	DEFINE_FLAG(IF, TRANSFER, AInventory, ItemFlags),
+	DEFINE_FLAG(IF, NOTELEPORTFREEZE, AInventory, ItemFlags),
 
 	DEFINE_DEPRECATED_FLAG(PICKUPFLASH),
-	DEFINE_DEPRECATED_FLAG(INTERHUBSTRIP),};
+	DEFINE_DEPRECATED_FLAG(INTERHUBSTRIP),
+};
 
 static FFlagDef WeaponFlagDefs[] =
 {

@@ -103,7 +103,7 @@ void A_PainShootSkull (AActor *self, angle_t angle, const PClass *spawntype, int
 				  box.Top()    < ld->bbox[BOXBOTTOM] ||
 				  box.Bottom() > ld->bbox[BOXTOP]))
 			{
-				if (P_PointOnLineSide(self->x,self->y,ld) != P_PointOnLineSide(x,y,ld))
+				if (P_PointOnLineSidePrecise(self->x,self->y,ld) != P_PointOnLineSidePrecise(x,y,ld))
 					return;  // line blocks trajectory				//   ^
 			}
 		}

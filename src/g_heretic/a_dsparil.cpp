@@ -254,10 +254,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_GenWizard)
 {
 	AActor *mo;
 
-	mo = Spawn("Wizard", self->x, self->y, self->z, ALLOW_REPLACE);
+	mo = Spawn("Wizard", self->X(), self->Y(), self->Z(), ALLOW_REPLACE);
 	if (mo != NULL)
 	{
-		mo->z -= mo->GetDefault()->height/2;
+		mo->SetZ(mo->Z() - mo->GetDefault()->height / 2, false);
 		if (!P_TestMobjLocation (mo))
 		{ // Didn't fit
 			mo->ClearCounters();
@@ -272,7 +272,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_GenWizard)
 			self->flags &= ~MF_MISSILE;
 			mo->master = self->target;
 			// Heretic did not offset it by TELEFOGHEIGHT, so I won't either.
-			Spawn<ATeleportFog> (self->x, self->y, self->z, ALLOW_REPLACE);
+			Spawn<ATeleportFog> (self->X(), self->Y(), self->Z(), ALLOW_REPLACE);
 		}
 	}
 }

@@ -1360,6 +1360,14 @@ inline T *Spawn (const fixedvec3 &pos, replace_t allowreplacement)
 	return static_cast<T *>(AActor::StaticSpawn (RUNTIME_CLASS(T), pos.x, pos.y, pos.z, allowreplacement));
 }
 
+inline fixedvec2 Vec2Angle(fixed_t length, angle_t angle) 
+{
+	fixedvec2 ret = { FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]),
+						FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]) };
+	return ret;
+}
+
+
 void PrintMiscActorInfo(AActor * query);
 
 #define S_FREETARGMOBJ	1

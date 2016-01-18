@@ -2777,9 +2777,7 @@ void A_Face (AActor *self, AActor *other, angle_t max_turn, angle_t max_pitch, a
 	// disabled and is so by default.
 	if (max_pitch <= ANGLE_180)
 	{
-		// [DH] Don't need to do proper fixed->double conversion, since the
-		// result is only used in a ratio.
-		fixedvec2 dist = self->Vec2To(other);
+		TVector2<double> dist = self->Vec2To(other);
 		
 		// Positioning ala missile spawning, 32 units above foot level
 		fixed_t source_z = self->Z() + 32*FRACUNIT + self->GetBobOffset();
@@ -2803,8 +2801,8 @@ void A_Face (AActor *self, AActor *other, angle_t max_turn, angle_t max_pitch, a
 		if (!(flags & FAF_NODISTFACTOR))
 			target_z += pitch_offset;
 
-		double dist_z = target_z - source_z;
-		double ddist = sqrt(dist.x*dist.x + dist.y*dist.y + dist_z*dist_z);
+		double dist_z = FIXED2DBL(target_z - source_z);
+		double ddist = sqrt(dist.X*dist.X + dist.Y*dist.Y + dist_z*dist_z);
 		int other_pitch = (int)rad2bam(asin(dist_z / ddist));
 		
 		if (max_pitch != 0)

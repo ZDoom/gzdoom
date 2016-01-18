@@ -1247,6 +1247,11 @@ public:
 	{
 		return z;
 	}
+	fixedvec3 Pos() const
+	{
+		fixedvec3 ret = { X(), Y(), Z() };
+		return ret;
+	}
 	fixed_t Top() const
 	{
 		return z + height;
@@ -1254,6 +1259,19 @@ public:
 	void SetZ(fixed_t newz, bool moving = true)
 	{
 		z = newz;
+	}
+
+	// These are not for general use as they do not link the actor into the world!
+	void SetXY(fixed_t xx, fixed_t yy)
+	{
+		x = xx;
+		y = yy;
+	}
+	void SetXYZ(fixed_t xx, fixed_t yy, fixed_t zz)
+	{
+		x = xx;
+		y = yy;
+		z = zz;
 	}
 
 };

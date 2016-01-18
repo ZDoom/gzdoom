@@ -451,9 +451,7 @@ void P_RunEffect (AActor *actor, int effects)
 	{
 		// Grenade trail
 
-		fixedvec3 pos = actor->Vec3Offset(
-			-FixedMul(finecosine[(moveangle) >> ANGLETOFINESHIFT], actor->radius * 2),
-			-FixedMul(finesine[(moveangle) >> ANGLETOFINESHIFT], actor->radius * 2),
+		fixedvec3 pos = actor->Vec3Angle(-actor->radius * 2, moveangle,
 			-(actor->height >> 3) * (actor->velz >> 16) + (2 * actor->height) / 3);
 
 		P_DrawSplash2 (6, pos.x, pos.y, pos.z,

@@ -185,7 +185,7 @@ static void SpawnFly(AActor *self, const PClass *spawntype, FSoundID sound)
 	
 	if (spawntype != NULL)
 	{
-		fog = Spawn (spawntype, targ->X(), targ->Y(), targ->Z(), ALLOW_REPLACE);
+		fog = Spawn (spawntype, targ->Pos(), ALLOW_REPLACE);
 		if (fog != NULL) S_Sound (fog, CHAN_BODY, sound, 1, ATTN_NORM);
 	}
 
@@ -256,7 +256,7 @@ static void SpawnFly(AActor *self, const PClass *spawntype, FSoundID sound)
 	spawntype = PClass::FindClass(SpawnName);
 	if (spawntype != NULL)
 	{
-		newmobj = Spawn (spawntype, targ->X(), targ->Y(), targ->Z(), ALLOW_REPLACE);
+		newmobj = Spawn (spawntype, targ->Pos(), ALLOW_REPLACE);
 		if (newmobj != NULL)
 		{
 			// Make the new monster hate what the boss eye hates

@@ -140,20 +140,20 @@ void P_DSparilTeleport (AActor *actor)
 	DSpotState *state = DSpotState::GetSpotState();
 	if (state == NULL) return;
 
-	spot = state->GetSpotWithMinMaxDistance(PClass::FindClass("BossSpot"), actor->x, actor->y, 128*FRACUNIT, 0);
+	spot = state->GetSpotWithMinMaxDistance(PClass::FindClass("BossSpot"), actor->X(), actor->Y(), 128*FRACUNIT, 0);
 	if (spot == NULL) return;
 
-	prevX = actor->x;
-	prevY = actor->y;
-	prevZ = actor->z;
-	if (P_TeleportMove (actor, spot->x, spot->y, spot->z, false))
+	prevX = actor->X();
+	prevY = actor->Y();
+	prevZ = actor->Z();
+	if (P_TeleportMove (actor, spot->X(), spot->Y(), spot->Z(), false))
 	{
 		mo = Spawn("Sorcerer2Telefade", prevX, prevY, prevZ, ALLOW_REPLACE);
 		if (mo) mo->Translation = actor->Translation;
 		S_Sound (mo, CHAN_BODY, "misc/teleport", 1, ATTN_NORM);
 		actor->SetState (actor->FindState("Teleport"));
 		S_Sound (actor, CHAN_BODY, "misc/teleport", 1, ATTN_NORM);
-		actor->z = actor->floorz;
+		actor->SetZ(actor->floorz, false);
 		actor->angle = spot->angle;
 		actor->velx = actor->vely = actor->velz = 0;
 	}
@@ -237,7 +237,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BlueSpark)
 
 	for (i = 0; i < 2; i++)
 	{
-		mo = Spawn("Sorcerer2FXSpark", self->x, self->y, self->z, ALLOW_REPLACE);
+		mo = Spawn("Sorcerer2FXSpark", self->Pos(), ALLOW_REPLACE);
 		mo->velx = pr_bluespark.Random2() << 9;
 		mo->vely = pr_bluespark.Random2() << 9;
 		mo->velz = FRACUNIT + (pr_bluespark()<<8);

@@ -82,8 +82,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_VileTarget)
 
 	A_FaceTarget (self);
 
-	fog = Spawn (fire, self->target->X(), self->target->Y(),
-		self->target->Z(), ALLOW_REPLACE);
+	fog = Spawn (fire, self->target->Pos(), ALLOW_REPLACE);
 	
 	self->tracer = fog;
 	fog->target = self;

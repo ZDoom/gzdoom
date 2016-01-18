@@ -2547,8 +2547,8 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 				if (testsec)
 				{
 					fixed_t zdist1, zdist2;
-					if (P_Find3DFloor(testsec, corpsehit->X(), corpsehit->Y(), corpsehit->Z(), false, true, zdist1)
-						!= P_Find3DFloor(testsec, self->X(), self->Y(), self->Z(), false, true, zdist2))
+					if (P_Find3DFloor(testsec, corpsehit->Pos(), false, true, zdist1)
+						!= P_Find3DFloor(testsec, self->Pos(), false, true, zdist2))
 					{
 						// Not on same floor
 						if (vilesec == corpsec || abs(zdist1 - self->Z()) > self->height)
@@ -2565,7 +2565,7 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 
 				corpsehit->flags |= MF_SOLID;
 				corpsehit->height = corpsehit->GetDefault()->height;
-				bool check = P_CheckPosition(corpsehit, corpsehit->X(), corpsehit->Y());
+				bool check = P_CheckPosition(corpsehit, corpsehit->Pos());
 				corpsehit->flags = oldflags;
 				corpsehit->radius = oldradius;
 				corpsehit->height = oldheight;

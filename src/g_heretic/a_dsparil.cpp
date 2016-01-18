@@ -146,7 +146,7 @@ void P_DSparilTeleport (AActor *actor)
 	prevX = actor->X();
 	prevY = actor->Y();
 	prevZ = actor->Z();
-	if (P_TeleportMove (actor, spot->X(), spot->Y(), spot->Z(), false))
+	if (P_TeleportMove (actor, spot->Pos(), false))
 	{
 		mo = Spawn("Sorcerer2Telefade", prevX, prevY, prevZ, ALLOW_REPLACE);
 		if (mo) mo->Translation = actor->Translation;
@@ -254,7 +254,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_GenWizard)
 {
 	AActor *mo;
 
-	mo = Spawn("Wizard", self->X(), self->Y(), self->Z(), ALLOW_REPLACE);
+	mo = Spawn("Wizard", self->Pos(), ALLOW_REPLACE);
 	if (mo != NULL)
 	{
 		mo->SetZ(mo->Z() - mo->GetDefault()->height / 2, false);
@@ -272,7 +272,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_GenWizard)
 			self->flags &= ~MF_MISSILE;
 			mo->master = self->target;
 			// Heretic did not offset it by TELEFOGHEIGHT, so I won't either.
-			Spawn<ATeleportFog> (self->X(), self->Y(), self->Z(), ALLOW_REPLACE);
+			Spawn<ATeleportFog> (self->Pos(), ALLOW_REPLACE);
 		}
 	}
 }

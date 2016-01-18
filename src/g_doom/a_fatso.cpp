@@ -145,7 +145,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Mushroom)
 	P_CheckSplash(self, 128<<FRACBITS);
 
 	// Now launch mushroom cloud
-	AActor *target = Spawn("Mapspot", self->X(), self->Y(), self->Z(), NO_REPLACE);	// We need something to aim at.
+	AActor *target = Spawn("Mapspot", self->Pos(), NO_REPLACE);	// We need something to aim at.
 	AActor *master = (flags & MSF_DontHurt) ? (AActor*)(self->target) : self;
 	target->height = self->height;
  	for (i = -n; i <= n; i += 8)

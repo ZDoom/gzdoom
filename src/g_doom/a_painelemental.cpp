@@ -80,7 +80,7 @@ void A_PainShootSkull (AActor *self, angle_t angle, const PClass *spawntype, int
 
 	fixedvec2 dist = Vec2Angle(prestep, angle);
 	fixedvec3 pos = self->Vec3Offset(dist.x, dist.y, 8 * FRACUNIT, true);
-	fixedvec3 src = { self->X(), self->Y(), self->Z() };
+	fixedvec3 src = self->Pos();
 
 	for (int i = 0; i < 2; i++)
 	{
@@ -142,7 +142,7 @@ void A_PainShootSkull (AActor *self, angle_t angle, const PClass *spawntype, int
 
 	// Check for movements.
 
-	if (!P_CheckPosition (other, other->X(), other->Y()))
+	if (!P_CheckPosition (other, other->Pos()))
 	{
 		// kill it immediately
 		P_DamageMobj (other, self, self, TELEFRAG_DAMAGE, NAME_None);		

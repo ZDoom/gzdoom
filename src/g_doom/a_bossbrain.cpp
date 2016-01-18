@@ -275,7 +275,7 @@ static void SpawnFly(AActor *self, const PClass *spawntype, FSoundID sound)
 			if (!(newmobj->ObjectFlags & OF_EuthanizeMe))
 			{
 				// telefrag anything in this spot
-				P_TeleportMove (newmobj, newmobj->X(), newmobj->Y(), newmobj->Z(), true);
+				P_TeleportMove (newmobj, newmobj->Pos(), true);
 			}
 			newmobj->flags4 |= MF4_BOSSSPAWNED;
 		}

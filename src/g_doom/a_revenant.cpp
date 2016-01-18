@@ -31,7 +31,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SkelMissile)
 
 	if (missile != NULL)
 	{
-		missile->SetOrigin(missile->X() + missile->velx, missile->Y() + missile->vely, missile->Z(), false);
+		missile->SetOrigin(missile->Vec3Offset(missile->velx, missile->vely, 0), false);
 		missile->tracer = self->target;
 	}
 }

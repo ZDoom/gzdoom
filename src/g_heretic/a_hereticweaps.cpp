@@ -382,7 +382,7 @@ void FireMacePL1B (AActor *actor)
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return;
 	}
-	ball = Spawn("MaceFX2", actor->X(), actor->Y(), actor->Z() + 28*FRACUNIT - actor->floorclip, ALLOW_REPLACE);
+	ball = Spawn("MaceFX2", actor->PosPlusZ(28*FRACUNIT - actor->floorclip), ALLOW_REPLACE);
 	ball->velz = 2*FRACUNIT+/*((player->lookdir)<<(FRACBITS-5))*/
 		finetangent[FINEANGLES/4-(actor->pitch>>ANGLETOFINESHIFT)];
 	angle = actor->angle;

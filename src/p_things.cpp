@@ -436,7 +436,7 @@ bool P_Thing_Raise(AActor *thing, AActor *raiser)
 	thing->flags |= MF_SOLID;
 	thing->height = info->height;	// [RH] Use real height
 	thing->radius = info->radius;	// [RH] Use real radius
-	if (!P_CheckPosition (thing, thing->X(), thing->Y()))
+	if (!P_CheckPosition (thing, thing->Pos()))
 	{
 		thing->flags = oldflags;
 		thing->radius = oldradius;
@@ -478,7 +478,7 @@ bool P_Thing_CanRaise(AActor *thing)
 	thing->height = info->height;
 	thing->radius = info->radius;
 
-	bool check = P_CheckPosition (thing, thing->X(), thing->Y());
+	bool check = P_CheckPosition (thing, thing->Pos());
 
 	// Restore checked properties
 	thing->flags = oldflags;

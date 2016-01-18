@@ -200,7 +200,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LichIceImpact)
 DEFINE_ACTION_FUNCTION(AActor, A_LichFireGrow)
 {
 	self->health--;
-	self->SetZ(self->Z + 9*FRACUNIT);
+	self->SetZ(self->Z() + 9*FRACUNIT);
 	if (self->health == 0)
 	{
 		self->Damage = self->GetDefault()->Damage;

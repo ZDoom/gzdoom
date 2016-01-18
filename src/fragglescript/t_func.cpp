@@ -4281,7 +4281,7 @@ void FParser::SF_SpawnShot2(void)
 		
 		t_return.type = svt_mobj;
 
-		AActor *mo = Spawn (PClass, source->X(), source->Y(), source->Z()+z, ALLOW_REPLACE);
+		AActor *mo = Spawn (PClass, source->PosPlusZ(z), ALLOW_REPLACE);
 		if (mo) 
 		{
 			S_Sound (mo, CHAN_VOICE, mo->SeeSound, 1, ATTN_NORM);

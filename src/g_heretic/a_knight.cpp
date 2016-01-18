@@ -22,7 +22,6 @@ static FRandom pr_knightatk ("KnightAttack");
 DEFINE_ACTION_FUNCTION(AActor, A_DripBlood)
 {
 	AActor *mo;
-	fixed_t x, y;
 
 	fixedvec3 pos = self->Vec3Offset(
 	 (pr_dripblood.Random2 () << 11),

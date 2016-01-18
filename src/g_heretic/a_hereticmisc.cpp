@@ -163,8 +163,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_VolcanoBlast)
 	count = 1 + (pr_blast() % 3);
 	for (i = 0; i < count; i++)
 	{
-		blast = Spawn("VolcanoBlast", self->x, self->y,
-			self->z + 44*FRACUNIT, ALLOW_REPLACE);
+		blast = Spawn("VolcanoBlast", self->PosPlusZ(44*FRACUNIT), ALLOW_REPLACE);
 		blast->target = self;
 		angle = pr_blast () << 24;
 		blast->angle = angle;

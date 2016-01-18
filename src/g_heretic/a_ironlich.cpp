@@ -127,7 +127,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LichAttack)
 		mo = P_SpawnMissile (self, target, RUNTIME_CLASS(AWhirlwind));
 		if (mo != NULL)
 		{
-			mo->SetZ(mo->Z() - 32*FRACUNIT, false);
+			mo->AddZ(-32*FRACUNIT, false);
 			mo->tracer = target;
 			mo->special1 = 60;
 			mo->special2 = 50; // Timer for active sound
@@ -200,7 +200,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LichIceImpact)
 DEFINE_ACTION_FUNCTION(AActor, A_LichFireGrow)
 {
 	self->health--;
-	self->SetZ(self->Z() + 9*FRACUNIT);
+	self->AddZ(9*FRACUNIT);
 	if (self->health == 0)
 	{
 		self->Damage = self->GetDefault()->Damage;

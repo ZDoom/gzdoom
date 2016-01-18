@@ -568,9 +568,9 @@ bool P_Move (AActor *actor)
 			fixed_t savedz = actor->Z();
 
 			if (actor->Z() < tm.floorz)
-				actor->SetZ(actor->Z() + actor->FloatSpeed);
+				actor->AddZ(actor->FloatSpeed);
 			else
-				actor->SetZ(actor->Z() - actor->FloatSpeed);
+				actor->AddZ(-actor->FloatSpeed);
 
 
 			// [RH] Check to make sure there's nothing in the way of the float

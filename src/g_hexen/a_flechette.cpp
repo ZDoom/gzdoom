@@ -132,7 +132,7 @@ bool AArtiPoisonBag3::Use (bool pickup)
 		mo->velz = FixedMul(speed, finesine[modpitch]);
 		mo->velx = FixedMul(xyscale, finecosine[angle]) + (Owner->velx >> 1);
 		mo->vely = FixedMul(xyscale, finesine[angle]) + (Owner->vely >> 1);
-		mo->SetZ(mo->Z() + FixedMul(mo->Speed, finesine[orgpitch]));
+		mo->AddZ(FixedMul(mo->Speed, finesine[orgpitch]));
 
 		mo->target = Owner;
 		mo->tics -= pr_poisonbag()&3;
@@ -421,7 +421,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PoisonBagDamage)
 	
 	P_RadiusAttack (self, self->target, 4, 40, self->DamageType, RADF_HURTSOURCE);
 	bobIndex = self->special2;
-	self->SetZ(self->Z() + finesine[bobIndex << BOBTOFINESHIFT] >> 1);
+	self->AddZ(finesine[bobIndex << BOBTOFINESHIFT] >> 1);
 	self->special2 = (bobIndex + 1) & 63;
 }
 

@@ -192,7 +192,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_VolcBallImpact)
 	{
 		self->flags |= MF_NOGRAVITY;
 		self->gravity = FRACUNIT;
-		self->SetZ(self->Z() + 28*FRACUNIT);
+		self->AddZ(28*FRACUNIT);
 		//self->velz = 3*FRACUNIT;
 	}
 	P_RadiusAttack (self, self->target, 25, 25, NAME_Fire, RADF_HURTSOURCE);

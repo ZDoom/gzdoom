@@ -388,7 +388,7 @@ void FireMacePL1B (AActor *actor)
 	angle = actor->angle;
 	ball->target = actor;
 	ball->angle = angle;
-	ball->SetZ(ball->Z() + 2*finetangent[FINEANGLES/4-(actor->pitch>>ANGLETOFINESHIFT)]);
+	ball->AddZ(2*finetangent[FINEANGLES/4-(actor->pitch>>ANGLETOFINESHIFT)]);
 	angle >>= ANGLETOFINESHIFT;
 	ball->velx = (actor->velx>>1) + FixedMul(ball->Speed, finecosine[angle]);
 	ball->vely = (actor->vely>>1) + FixedMul(ball->Speed, finesine[angle]);

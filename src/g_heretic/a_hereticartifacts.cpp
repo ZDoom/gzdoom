@@ -47,7 +47,7 @@ bool AArtiTomeOfPower::Use (bool pickup)
 
 DEFINE_ACTION_FUNCTION(AActor, A_TimeBomb)
 {
-	self->SetZ(self->Z() + 32*FRACUNIT, false);
+	self->AddZ(32*FRACUNIT, false);
 	self->PrevZ = self->Z();	// no interpolation!
 	self->RenderStyle = STYLE_Add;
 	self->alpha = FRACUNIT;

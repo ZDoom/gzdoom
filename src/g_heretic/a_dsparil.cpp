@@ -257,7 +257,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_GenWizard)
 	mo = Spawn("Wizard", self->Pos(), ALLOW_REPLACE);
 	if (mo != NULL)
 	{
-		mo->SetZ(mo->Z() - mo->GetDefault()->height / 2, false);
+		mo->AddZ(-mo->GetDefault()->height / 2, false);
 		if (!P_TestMobjLocation (mo))
 		{ // Didn't fit
 			mo->ClearCounters();

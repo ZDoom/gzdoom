@@ -134,13 +134,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_FiredChase)
 	if (self->threshold) self->threshold--;
 
 	// Float up and down
-	self->SetZ(self->Z() + finesine[weaveindex << BOBTOFINESHIFT] * 8);
+	self->AddZ(finesine[weaveindex << BOBTOFINESHIFT] * 8);
 	self->special1 = (weaveindex + 2) & 63;
 
 	// Ensure it stays above certain height
 	if (self->Z() < self->floorz + (64*FRACUNIT))
 	{
-		self->SetZ(self->Z() + 2*FRACUNIT);
+		self->AddZ(2*FRACUNIT);
 	}
 
 	if(!self->target || !(self->target->flags&MF_SHOOTABLE))

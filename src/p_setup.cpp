@@ -2068,6 +2068,9 @@ void P_FinishLoadingLineDef(line_t *ld, int alpha)
 		ld->special = 0;
 		break;
 	}
+
+	// [ZZ] check initial portal link
+	P_CheckPortal(ld);
 }
 // killough 4/4/98: delay using sidedefs until they are loaded
 void P_FinishLoadingLineDefs ()
@@ -2177,11 +2180,6 @@ void P_LoadLineDefs (MapData * map)
 		if (level.flags2 & LEVEL2_WRAPMIDTEX) ld->flags |= ML_WRAP_MIDTEX;
 		if (level.flags2 & LEVEL2_CHECKSWITCHRANGE) ld->flags |= ML_CHECKSWITCHRANGE;
 	}
-
-	// [ZZ] check initial portal link
-	for (int i = 0; i < numlines; i++)
-		P_CheckPortal(&lines[i]);
-
 	delete[] mldf;
 }
 

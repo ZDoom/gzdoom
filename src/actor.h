@@ -847,7 +847,7 @@ public:
 	bool intersects(AActor *other) const
 	{
 		fixed_t blockdist = radius + other->radius;
-		return ( abs(x - other->x) < blockdist && abs(y - other->y) < blockdist);
+		return ( abs(pos.x - other->pos.x) < blockdist && abs(pos.y - other->pos.y) < blockdist);
 	}
 
 	PalEntry GetBloodColor() const
@@ -888,99 +888,99 @@ public:
 	// to distinguish between portal-aware and portal-unaware distance calculation.
 	fixed_t AproxDistance(AActor *other, bool absolute = false)
 	{
-		return P_AproxDistance(x - other->x, y - other->y);
+		return P_AproxDistance(pos.x - other->pos.x, pos.y - other->pos.y);
 	}
 
 	// same with 'ref' here.
 	fixed_t AproxDistance(fixed_t otherx, fixed_t othery, AActor *ref = NULL)
 	{
-		return P_AproxDistance(x - otherx, y - othery);
+		return P_AproxDistance(pos.x - otherx, pos.y - othery);
 	}
 
 	fixed_t AproxDistance(AActor *other, fixed_t xadd, fixed_t yadd, bool absolute = false)
 	{
-		return P_AproxDistance(x - other->x + xadd, y - other->y + yadd);
+		return P_AproxDistance(pos.x - other->pos.x + xadd, pos.y - other->pos.y + yadd);
 	}
 
 	fixed_t AproxDistance3D(AActor *other, bool absolute = false)
 	{
-		return P_AproxDistance(AproxDistance(other), z - other->z);
+		return P_AproxDistance(AproxDistance(other), pos.z - other->pos.z);
 	}
 
 	// more precise, but slower version, being used in a few places
 	fixed_t Distance2D(AActor *other, bool absolute = false)
 	{
-		return xs_RoundToInt(FVector2(x - other->x, y - other->y).Length());
+		return xs_RoundToInt(FVector2(pos.x - other->pos.x, pos.y - other->pos.y).Length());
 	}
 
 	// a full 3D version of the above
 	fixed_t Distance3D(AActor *other, bool absolute = false)
 	{
-		return xs_RoundToInt(FVector3(x - other->x, y - other->y, z - other->z).Length());
+		return xs_RoundToInt(FVector3(pos.x - other->pos.x, pos.y - other->pos.y, pos.z - other->pos.z).Length());
 	}
 
 	angle_t AngleTo(AActor *other, bool absolute = false) const
 	{
-		return R_PointToAngle2(x, y, other->x, other->y);
+		return R_PointToAngle2(pos.x, pos.y, other->pos.x, other->pos.y);
 	}
 
 	angle_t AngleTo(AActor *other, fixed_t oxofs, fixed_t oyofs, bool absolute = false) const
 	{
-		return R_PointToAngle2(x, y, other->x + oxofs, other->y + oyofs);
+		return R_PointToAngle2(pos.x, pos.y, other->pos.x + oxofs, other->pos.y + oyofs);
 	}
 
 	fixed_t AngleTo(fixed_t otherx, fixed_t othery, AActor *ref = NULL)
 	{
-		return R_PointToAngle2(x, y, otherx, othery);
+		return R_PointToAngle2(pos.x, pos.y, otherx, othery);
 	}
 
 	fixed_t AngleXYTo(fixed_t myx, fixed_t myy, AActor *other, bool absolute = false)
 	{
-		return R_PointToAngle2(myx, myy, other->x, other->y);
+		return R_PointToAngle2(myx, myy, other->pos.x, other->pos.y);
 	}
 
 	fixedvec2 Vec2To(AActor *other) const
 	{
-		fixedvec2 ret = { other->x - x, other->y - y };
+		fixedvec2 ret = { other->pos.x - pos.x, other->pos.y - pos.y };
 		return ret;
 	}
 
 	fixedvec3 Vec3To(AActor *other) const
 	{
-		fixedvec3 ret = { other->x - x, other->y - y, other->z - z };
+		fixedvec3 ret = { other->pos.x - pos.x, other->pos.y - pos.y, other->pos.z - pos.z };
 		return ret;
 	}
 
 	fixedvec2 Vec2Offset(fixed_t dx, fixed_t dy, bool absolute = false) const
 	{
-		fixedvec2 ret = { x + dx, y + dy };
+		fixedvec2 ret = { pos.x + dx, pos.y + dy };
 		return ret;
 	}
 
 
 	fixedvec2 Vec2Angle(fixed_t length, angle_t angle, bool absolute = false) const
 	{
-		fixedvec2 ret = { x + FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]),
-						  y + FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]) };
+		fixedvec2 ret = { pos.x + FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]),
+						  pos.y + FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]) };
 		return ret;
 	}
 
 	fixedvec3 Vec3Offset(fixed_t dx, fixed_t dy, fixed_t dz, bool absolute = false) const
 	{
-		fixedvec3 ret = { x + dx, y + dy, z + dz };
+		fixedvec3 ret = { pos.x + dx, pos.y + dy, pos.z + dz };
 		return ret;
 	}
 
 	fixedvec3 Vec3Angle(fixed_t length, angle_t angle, fixed_t dz, bool absolute = false) const
 	{
-		fixedvec3 ret = { x + FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]),
-						  y + FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]), z + dz };
+		fixedvec3 ret = { pos.x + FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]),
+						  pos.y + FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]), pos.z + dz };
 		return ret;
 	}
 
 	void Move(fixed_t dx, fixed_t dy, fixed_t dz)
 	{
-		SetOrigin(x + dx, y + dy, z + dz, true);
+		SetOrigin(pos.x + dx, pos.y + dy, pos.z + dz, true);
 	}
 
 	void SetOrigin(const fixedvec3 & npos, bool moving)
@@ -1007,7 +1007,10 @@ public:
 
 // info for drawing
 // NOTE: The first member variable *must* be x.
-	fixed_t	 		x,y,z;
+private:
+	fixedvec3		pos;
+public:
+	//fixed_t	 		x,y,z;
 	AActor			*snext, **sprev;	// links in sector (if needed)
 	angle_t			angle;
 	WORD			sprite;				// used to find patch_t and flip value
@@ -1205,7 +1208,7 @@ public:
 	void LinkToWorld (sector_t *sector);
 	void UnlinkFromWorld ();
 	void AdjustFloorClip ();
-	void SetOrigin (fixed_t x, fixed_t y, fixed_t z, bool moving = false);
+	void SetOrigin (fixed_t x, fixed_t y, fixed_t z, bool moving);
 	bool InStateSequence(FState * newstate, FState * basestate);
 	int GetTics(FState * newstate);
 	bool SetState (FState *newstate, bool nofunction=false);
@@ -1237,15 +1240,15 @@ public:
 
 	fixed_t X() const
 	{
-		return x;
+		return pos.x;
 	}
 	fixed_t Y() const
 	{
-		return y;
+		return pos.y;
 	}
 	fixed_t Z() const
 	{
-		return z;
+		return pos.z;
 	}
 	fixedvec3 Pos() const
 	{
@@ -1254,24 +1257,24 @@ public:
 	}
 	fixed_t Top() const
 	{
-		return z + height;
+		return pos.z + height;
 	}
 	void SetZ(fixed_t newz, bool moving = true)
 	{
-		z = newz;
+		pos.z = newz;
 	}
 
 	// These are not for general use as they do not link the actor into the world!
-	void SetXY(fixed_t xx, fixed_t yy)
+	void SetXY(fixed_t x, fixed_t y)
 	{
-		x = xx;
-		y = yy;
+		pos.x = x;
+		pos.y = y;
 	}
-	void SetXYZ(fixed_t xx, fixed_t yy, fixed_t zz)
+	void SetXYZ(fixed_t x, fixed_t y, fixed_t z)
 	{
-		x = xx;
-		y = yy;
-		z = zz;
+		pos.x = x;
+		pos.y = y;
+		pos.z = z;
 	}
 
 };

@@ -78,17 +78,17 @@ DEFINE_ACTION_FUNCTION(AActor, A_Srcr1Attack)
 	const PClass *fx = PClass::FindClass("SorcererFX1");
 	if (self->health > (self->SpawnHealth()/3)*2)
 	{ // Spit one fireball
-		P_SpawnMissileZ (self, self->z + 48*FRACUNIT, self->target, fx );
+		P_SpawnMissileZ (self, self->Z() + 48*FRACUNIT, self->target, fx );
 	}
 	else
 	{ // Spit three fireballs
-		mo = P_SpawnMissileZ (self, self->z + 48*FRACUNIT, self->target, fx);
+		mo = P_SpawnMissileZ (self, self->Z() + 48*FRACUNIT, self->target, fx);
 		if (mo != NULL)
 		{
 			velz = mo->velz;
 			angle = mo->angle;
-			P_SpawnMissileAngleZ (self, self->z + 48*FRACUNIT, fx, angle-ANGLE_1*3, velz);
-			P_SpawnMissileAngleZ (self, self->z + 48*FRACUNIT, fx, angle+ANGLE_1*3, velz);
+			P_SpawnMissileAngleZ (self, self->Z() + 48*FRACUNIT, fx, angle-ANGLE_1*3, velz);
+			P_SpawnMissileAngleZ (self, self->Z() + 48*FRACUNIT, fx, angle+ANGLE_1*3, velz);
 		}
 		if (self->health < self->SpawnHealth()/3)
 		{ // Maybe attack again
@@ -116,7 +116,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcererRise)
 	AActor *mo;
 
 	self->flags &= ~MF_SOLID;
-	mo = Spawn("Sorcerer2", self->x, self->y, self->z, ALLOW_REPLACE);
+	mo = Spawn("Sorcerer2", self->Pos(), ALLOW_REPLACE);
 	mo->Translation = self->Translation;
 	mo->SetState (mo->FindState("Rise"));
 	mo->angle = self->angle;

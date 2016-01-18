@@ -382,14 +382,13 @@ void FireMacePL1B (AActor *actor)
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return;
 	}
-	ball = Spawn("MaceFX2", actor->x, actor->y, actor->z + 28*FRACUNIT 
-		- actor->floorclip, ALLOW_REPLACE);
+	ball = Spawn("MaceFX2", actor->X(), actor->Y(), actor->Z() + 28*FRACUNIT - actor->floorclip, ALLOW_REPLACE);
 	ball->velz = 2*FRACUNIT+/*((player->lookdir)<<(FRACBITS-5))*/
 		finetangent[FINEANGLES/4-(actor->pitch>>ANGLETOFINESHIFT)];
 	angle = actor->angle;
 	ball->target = actor;
 	ball->angle = angle;
-	ball->z += 2*finetangent[FINEANGLES/4-(actor->pitch>>ANGLETOFINESHIFT)];
+	ball->SetZ(ball->Z() + 2*finetangent[FINEANGLES/4-(actor->pitch>>ANGLETOFINESHIFT)]);
 	angle >>= ANGLETOFINESHIFT;
 	ball->velx = (actor->velx>>1) + FixedMul(ball->Speed, finecosine[angle]);
 	ball->vely = (actor->vely>>1) + FixedMul(ball->Speed, finesine[angle]);
@@ -508,10 +507,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_MaceBallImpact2)
 
 	if (self->flags & MF_INBOUNCE)
 	{
-		fixed_t floordist = self->z - self->floorz;
-		fixed_t ceildist = self->ceilingz - self->z;
+		fixed_t floordist = self->Z() - self->floorz;
+		fixed_t ceildist = self->ceilingz - self->Z();
 		fixed_t vel;
 
+		// NOTE: The assumptions being made here about the plane to use for bouncing off are dead wrong.
+		// http://forum.zdoom.org/viewtopic.php?f=2&t=50449
 		if (floordist <= ceildist)
 		{
 			vel = MulScale32 (self->velz, self->Sector->floorplane.c);
@@ -529,7 +530,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MaceBallImpact2)
 		self->velz = (self->velz * 192) >> 8;
 		self->SetState (self->SpawnState);
 
-		tiny = Spawn("MaceFX3", self->x, self->y, self->z, ALLOW_REPLACE);
+		tiny = Spawn("MaceFX3", self->Pos(), ALLOW_REPLACE);
 		angle = self->angle+ANG90;
 		tiny->target = self->target;
 		tiny->angle = angle;
@@ -539,7 +540,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MaceBallImpact2)
 		tiny->velz = self->velz;
 		P_CheckMissileSpawn (tiny, self->radius);
 
-		tiny = Spawn("MaceFX3", self->x, self->y, self->z, ALLOW_REPLACE);
+		tiny = Spawn("MaceFX3", self->Pos(), ALLOW_REPLACE);
 		angle = self->angle-ANG90;
 		tiny->target = self->target;
 		tiny->angle = angle;
@@ -611,17 +612,19 @@ DEFINE_ACTION_FUNCTION(AActor, A_DeathBallImpact)
 	bool newAngle;
 	AActor *linetarget;
 
-	if ((self->z <= self->floorz) && P_HitFloor (self))
+	if ((self->Z() <= self->floorz) && P_HitFloor (self))
 	{ // Landed in some sort of liquid
 		self->Destroy ();
 		return;
 	}
 	if (self->flags & MF_INBOUNCE)
 	{
-		fixed_t floordist = self->z - self->floorz;
-		fixed_t ceildist = self->ceilingz - self->z;
+		fixed_t floordist = self->Z() - self->floorz;
+		fixed_t ceildist = self->ceilingz - self->Z();
 		fixed_t vel;
 
+		// NOTE: The assumptions being made here about the plane to use for bouncing off are dead wrong.
+		// http://forum.zdoom.org/viewtopic.php?f=2&t=50449
 		if (floordist <= ceildist)
 		{
 			vel = MulScale32 (self->velz, self->Sector->floorplane.c);
@@ -720,7 +723,7 @@ void ABlasterFX1::Effect ()
 {
 	if (pr_bfx1t() < 64)
 	{
-		Spawn("BlasterSmoke", x, y, MAX<fixed_t> (z - 8 * FRACUNIT, floorz), ALLOW_REPLACE);
+		Spawn("BlasterSmoke", X(), Y(), MAX<fixed_t> (Z() - 8 * FRACUNIT, floorz), ALLOW_REPLACE);
 	}
 }
 
@@ -799,7 +802,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnRippers)
 
 	for(i = 0; i < 8; i++)
 	{
-		ripper = Spawn<ARipper> (self->x, self->y, self->z, ALLOW_REPLACE);
+		ripper = Spawn<ARipper> (self->Pos(), ALLOW_REPLACE);
 		angle = i*ANG45;
 		ripper->target = self->target;
 		ripper->angle = angle;
@@ -1007,8 +1010,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_AddPlayerRain)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SkullRodStorm)
 {
-	fixed_t x;
-	fixed_t y;
 	AActor *mo;
 	ARainTracker *tracker;
 
@@ -1039,20 +1040,21 @@ DEFINE_ACTION_FUNCTION(AActor, A_SkullRodStorm)
 	{ // Fudge rain frequency
 		return;
 	}
-	x = self->x + ((pr_storm()&127) - 64) * FRACUNIT;
-	y = self->y + ((pr_storm()&127) - 64) * FRACUNIT;
-	mo = Spawn<ARainPillar> (x, y, ONCEILINGZ, ALLOW_REPLACE);
+	fixedvec2 pos = self->Vec2Offset(
+		((pr_storm()&127) - 64) * FRACUNIT,
+		((pr_storm()&127) - 64) * FRACUNIT);
+	mo = Spawn<ARainPillar> (pos.x, pos.y, ONCEILINGZ, ALLOW_REPLACE);
 	// We used bouncecount to store the 3D floor index in A_HideInCeiling
 	if (!mo) return;
 	fixed_t newz;
 	if (self->bouncecount >= 0 
 		&& (unsigned)self->bouncecount < self->Sector->e->XFloor.ffloors.Size())
-		newz = self->Sector->e->XFloor.ffloors[self->bouncecount]->bottom.plane->ZatPoint(x, y);// - 40 * FRACUNIT;
+		newz = self->Sector->e->XFloor.ffloors[self->bouncecount]->bottom.plane->ZatPoint(pos.x, pos.y);// - 40 * FRACUNIT;
 	else
-		newz = self->Sector->ceilingplane.ZatPoint(x, y);
-	int moceiling = P_Find3DFloor(NULL, x, y, newz, false, false, newz);
+		newz = self->Sector->ceilingplane.ZatPoint(pos.x, pos.y);
+	int moceiling = P_Find3DFloor(NULL, pos.x, pos.y, newz, false, false, newz);
 	if (moceiling >= 0)
-		mo->z = newz - mo->height;
+		mo->SetZ(newz - mo->height, false);
 	mo->Translation = multiplayer ?
 		TRANSLATION(TRANSLATION_PlayersExtra,self->special2) : 0;
 	mo->target = self->target;
@@ -1074,7 +1076,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SkullRodStorm)
 
 DEFINE_ACTION_FUNCTION(AActor, A_RainImpact)
 {
-	if (self->z > self->floorz)
+	if (self->Z() > self->floorz)
 	{
 		self->SetState (self->FindState("NotFloor"));
 	}
@@ -1099,15 +1101,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_HideInCeiling)
 		F3DFloor * rover = self->Sector->e->XFloor.ffloors[i];
 		if(!(rover->flags & FF_SOLID) || !(rover->flags & FF_EXISTS)) continue;
 		 
-		if ((foo = rover->bottom.plane->ZatPoint(self)) >= (self->z + self->height))
+		if ((foo = rover->bottom.plane->ZatPoint(self)) >= (self->Top()))
 		{
-			self->z = foo + 4*FRACUNIT;
+			self->SetZ(foo + 4*FRACUNIT, false);
 			self->bouncecount = i;
 			return;
 		}
 	}
 	self->bouncecount = -1;
-	self->z = self->ceilingz + 4*FRACUNIT;
+	self->SetZ(self->ceilingz + 4*FRACUNIT, false);
 }
 
 // --- Phoenix Rod ----------------------------------------------------------
@@ -1225,13 +1227,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_PhoenixPuff)
 
 	//[RH] Heretic never sets the target for seeking
 	//P_SeekerMissile (self, ANGLE_1*5, ANGLE_1*10);
-	puff = Spawn("PhoenixPuff", self->x, self->y, self->z, ALLOW_REPLACE);
+	puff = Spawn("PhoenixPuff", self->Pos(), ALLOW_REPLACE);
 	angle = self->angle + ANG90;
 	angle >>= ANGLETOFINESHIFT;
 	puff->velx = FixedMul (FRACUNIT*13/10, finecosine[angle]);
 	puff->vely = FixedMul (FRACUNIT*13/10, finesine[angle]);
 	puff->velz = 0;
-	puff = Spawn("PhoenixPuff", self->x, self->y, self->z, ALLOW_REPLACE);
+	puff = Spawn("PhoenixPuff", self->Pos(), ALLOW_REPLACE);
 	angle = self->angle - ANG90;
 	angle >>= ANGLETOFINESHIFT;
 	puff->velx = FixedMul (FRACUNIT*13/10, finecosine[angle]);
@@ -1269,7 +1271,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePhoenixPL2)
 {
 	AActor *mo;
 	angle_t angle;
-	fixed_t x, y, z;
 
 	fixed_t slope;
 	FSoundID soundid;
@@ -1292,12 +1293,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePhoenixPL2)
 		return;
 	}
 	angle = self->angle;
-	x = self->x + (pr_fp2.Random2() << 9);
-	y = self->y + (pr_fp2.Random2() << 9);
-	z = self->z + 26*FRACUNIT + finetangent[FINEANGLES/4-(self->pitch>>ANGLETOFINESHIFT)];
-	z -= self->floorclip;
+
+	fixedvec3 pos = self->Vec3Offset(
+		(pr_fp2.Random2() << 9),
+		(pr_fp2.Random2() << 9),
+		26*FRACUNIT + finetangent[FINEANGLES/4-(self->pitch>>ANGLETOFINESHIFT)] - self->floorclip);
+
 	slope = finetangent[FINEANGLES/4-(self->pitch>>ANGLETOFINESHIFT)] + (FRACUNIT/10);
-	mo = Spawn("PhoenixFX2", x, y, z, ALLOW_REPLACE);
+	mo = Spawn("PhoenixFX2", pos, ALLOW_REPLACE);
 	mo->target = self;
 	mo->angle = angle;
 	mo->velx = self->velx + FixedMul (mo->Speed, finecosine[angle>>ANGLETOFINESHIFT]);

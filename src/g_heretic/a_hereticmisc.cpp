@@ -57,7 +57,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PodPain)
 	}
 	for (count = chance > 240 ? 2 : 1; count; count--)
 	{
-		goo = Spawn(gootype, self->x, self->y, self->z + 48*FRACUNIT, ALLOW_REPLACE);
+		goo = Spawn(gootype, self->X(), self->Y(), self->Z() + 48*FRACUNIT, ALLOW_REPLACE);
 		goo->target = self;
 		goo->velx = pr_podpain.Random2() << 9;
 		goo->vely = pr_podpain.Random2() << 9;

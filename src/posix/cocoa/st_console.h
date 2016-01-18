@@ -85,7 +85,6 @@ private:
 	int                  m_netMaxPos;
 
 	FConsoleWindow();
-	~FConsoleWindow();
 
 	void ExpandTextView(float height);
 

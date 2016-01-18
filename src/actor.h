@@ -588,6 +588,36 @@ enum
 	AMETA_BloodType3,		// AxeBlood replacement type
 };
 
+struct fixedvec3
+{
+	fixed_t x, y, z;
+
+	operator FVector3()
+	{
+		return FVector3(FIXED2FLOAT(x), FIXED2FLOAT(y), FIXED2FLOAT(z));
+	}
+
+	operator TVector3<double>()
+	{
+		return TVector3<double>(FIXED2DBL(x), FIXED2DBL(y), FIXED2DBL(z));
+	}
+};
+
+struct fixedvec2
+{
+	fixed_t x, y;
+
+	operator FVector2()
+	{
+		return FVector2(FIXED2FLOAT(x), FIXED2FLOAT(y));
+	}
+
+	operator TVector2<double>()
+	{
+		return TVector2<double>(FIXED2DBL(x), FIXED2DBL(y));
+	}
+};
+
 struct FDropItem 
 {
 	FName Name;
@@ -909,6 +939,35 @@ public:
 		return R_PointToAngle2(myx, myy, other->x, other->y);
 	}
 
+	fixedvec2 Vec2To(AActor *other) const
+	{
+		fixedvec2 ret = { other->x - x, other->y - y };
+		return ret;
+	}
+
+	fixedvec3 Vec3To(AActor *other) const
+	{
+		fixedvec3 ret = { other->x - x, other->y - y, other->z - z };
+		return ret;
+	}
+
+	fixedvec2 Vec2Offset(fixed_t dx, fixed_t dy, bool absolute = false) const
+	{
+		fixedvec2 ret = { x + dx, y + dy };
+		return ret;
+	}
+
+	fixedvec3 Vec3Offset(fixed_t dx, fixed_t dy, fixed_t dz, bool absolute = false) const
+	{
+		fixedvec3 ret = { x + dx, y + dy, z + dz };
+		return ret;
+	}
+
+	void Move(fixed_t dx, fixed_t dy, fixed_t dz)
+	{
+		SetOrigin(x + dx, y + dy, z + dz, true);
+	}
+
 	inline void SetFriendPlayer(player_t *player);
 
 	bool IsVisibleToPlayer() const;
@@ -1126,7 +1185,7 @@ public:
 	void LinkToWorld (sector_t *sector);
 	void UnlinkFromWorld ();
 	void AdjustFloorClip ();
-	void SetOrigin (fixed_t x, fixed_t y, fixed_t z);
+	void SetOrigin (fixed_t x, fixed_t y, fixed_t z, bool moving = false);
 	bool InStateSequence(FState * newstate, FState * basestate);
 	int GetTics(FState * newstate);
 	bool SetState (FState *newstate, bool nofunction=false);
@@ -1155,6 +1214,28 @@ public:
 	}
 
 	bool HasSpecialDeathStates () const;
+
+	fixed_t X() const
+	{
+		return x;
+	}
+	fixed_t Y() const
+	{
+		return y;
+	}
+	fixed_t Z() const
+	{
+		return z;
+	}
+	fixed_t Top() const
+	{
+		return z + height;
+	}
+	void SetZ(fixed_t newz, bool moving = true)
+	{
+		z = newz;
+	}
+
 
 	// begin of GZDoom specific additions
 	TArray<TObjPtr<AActor> >		dynamiclights;
@@ -1236,8 +1317,24 @@ inline AActor *Spawn (const PClass *type, fixed_t x, fixed_t y, fixed_t z, repla
 	return AActor::StaticSpawn (type, x, y, z, allowreplacement);
 }
 
+inline AActor *Spawn (const PClass *type, const fixedvec3 &pos, replace_t allowreplacement)
+{
+	return AActor::StaticSpawn (type, pos.x, pos.y, pos.z, allowreplacement);
+}
+
 AActor *Spawn (const char *type, fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement);
 AActor *Spawn (FName classname, fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement);
+
+inline AActor *Spawn (const char *type, const fixedvec3 &pos, replace_t allowreplacement)
+{
+	return Spawn (type, pos.x, pos.y, pos.z, allowreplacement);
+}
+
+inline AActor *Spawn (FName classname, const fixedvec3 &pos, replace_t allowreplacement)
+{
+	return Spawn (classname, pos.x, pos.y, pos.z, allowreplacement);
+}
+
 
 template<class T>
 inline T *Spawn (fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement)
@@ -1245,6 +1342,11 @@ inline T *Spawn (fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement)
 	return static_cast<T *>(AActor::StaticSpawn (RUNTIME_CLASS(T), x, y, z, allowreplacement));
 }
 
+template<class T>
+inline T *Spawn (const fixedvec3 &pos, replace_t allowreplacement)
+{
+	return static_cast<T *>(AActor::StaticSpawn (RUNTIME_CLASS(T), pos.x, pos.y, pos.z, allowreplacement));
+}
 
 void PrintMiscActorInfo(AActor * query);
 

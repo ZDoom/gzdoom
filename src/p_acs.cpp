@@ -3441,12 +3441,12 @@ int DLevelScript::DoSpawnSpot (int type, int spot, int tid, int angle, bool forc
 
 		while ( (aspot = iterator.Next ()) )
 		{
-			spawned += DoSpawn (type, aspot->x, aspot->y, aspot->z, tid, angle, force);
+			spawned += DoSpawn (type, aspot->X(), aspot->Y(), aspot->Z(), tid, angle, force);
 		}
 	}
 	else if (activator != NULL)
 	{
-			spawned += DoSpawn (type, activator->x, activator->y, activator->z, tid, angle, force);
+			spawned += DoSpawn (type, activator->X(), activator->Y(), activator->Z(), tid, angle, force);
 	}
 	return spawned;
 }
@@ -3462,12 +3462,12 @@ int DLevelScript::DoSpawnSpotFacing (int type, int spot, int tid, bool force)
 
 		while ( (aspot = iterator.Next ()) )
 		{
-			spawned += DoSpawn (type, aspot->x, aspot->y, aspot->z, tid, aspot->angle >> 24, force);
+			spawned += DoSpawn (type, aspot->X(), aspot->Y(), aspot->Z(), tid, aspot->angle >> 24, force);
 		}
 	}
 	else if (activator != NULL)
 	{
-			spawned += DoSpawn (type, activator->x, activator->y, activator->z, tid, activator->angle >> 24, force);
+			spawned += DoSpawn (type, activator->X(), activator->Y(), activator->Z(), tid, activator->angle >> 24, force);
 	}
 	return spawned;
 }
@@ -4145,7 +4145,7 @@ bool DLevelScript::DoCheckActorTexture(int tid, AActor *activator, int string, b
 			F3DFloor *ff = sec->e->XFloor.ffloors[i];
 
 			if ((ff->flags & (FF_EXISTS | FF_SOLID)) == (FF_EXISTS | FF_SOLID) &&
-				actor->z >= ff->top.plane->ZatPoint(actor->x, actor->y))
+				actor->Z() >= ff->top.plane->ZatPoint(actor))
 			{ // This floor is beneath our feet.
 				secpic = *ff->top.texture;
 				break;
@@ -4158,14 +4158,14 @@ bool DLevelScript::DoCheckActorTexture(int tid, AActor *activator, int string, b
 	}
 	else
 	{
-		fixed_t z = actor->z + actor->height;
+		fixed_t z = actor->Top();
 		// Looking through planes from bottom to top
 		for (i = numff-1; i >= 0; --i)
 		{
 			F3DFloor *ff = sec->e->XFloor.ffloors[i];
 
 			if ((ff->flags & (FF_EXISTS | FF_SOLID)) == (FF_EXISTS | FF_SOLID) &&
-				z <= ff->bottom.plane->ZatPoint(actor->x, actor->y))
+				z <= ff->bottom.plane->ZatPoint(actor))
 			{ // This floor is above our eyes.
 				secpic = *ff->bottom.texture;
 				break;
@@ -4728,8 +4728,8 @@ static bool DoSpawnDecal(AActor *actor, const FDecalTemplate *tpl, int flags, an
 	{
 		angle += actor->angle;
 	}
-	return NULL != ShootDecal(tpl, actor, actor->Sector, actor->x, actor->y,
-		actor->z + (actor->height>>1) - actor->floorclip + actor->GetBobOffset() + zofs,
+	return NULL != ShootDecal(tpl, actor, actor->Sector, actor->X(), actor->Y(),
+		actor->Z() + (actor->height>>1) - actor->floorclip + actor->GetBobOffset() + zofs,
 		angle, distance, !!(flags & SDF_PERMANENT));
 }
 
@@ -8598,11 +8598,11 @@ scriptwait:
 				}
 				else if (pcd == PCD_GETACTORZ)
 				{
-					STACK(1) = actor->z + actor->GetBobOffset();
+					STACK(1) = actor->Z() + actor->GetBobOffset();
 				}
 				else
 				{
-					STACK(1) =  (&actor->x)[pcd - PCD_GETACTORX];
+					STACK(1) = pcd == PCD_GETACTORX ? actor->X() : pcd == PCD_GETACTORY ? actor->Y() : actor->Z();
 				}
 			}
 			break;

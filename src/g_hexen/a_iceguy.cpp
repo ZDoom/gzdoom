@@ -35,10 +35,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_IceGuyLook)
 		dist = ((pr_iceguylook()-128)*self->radius)>>7;
 		an = (self->angle+ANG90)>>ANGLETOFINESHIFT;
 
-		Spawn (WispTypes[pr_iceguylook()&1],
-			self->x+FixedMul(dist, finecosine[an]),
-			self->y+FixedMul(dist, finesine[an]),
-			self->z+60*FRACUNIT, ALLOW_REPLACE);
+		Spawn(WispTypes[pr_iceguylook() & 1], self->Vec3Offset(
+			FixedMul(dist, finecosine[an]),
+			FixedMul(dist, finesine[an]),
+			60 * FRACUNIT), ALLOW_REPLACE);
 	}
 }
 
@@ -60,10 +60,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_IceGuyChase)
 		dist = ((pr_iceguychase()-128)*self->radius)>>7;
 		an = (self->angle+ANG90)>>ANGLETOFINESHIFT;
 
-		mo = Spawn (WispTypes[pr_iceguychase()&1],
-			self->x+FixedMul(dist, finecosine[an]),
-			self->y+FixedMul(dist, finesine[an]),
-			self->z+60*FRACUNIT, ALLOW_REPLACE);
+		mo = Spawn(WispTypes[pr_iceguychase() & 1], self->Vec3Offset(
+			FixedMul(dist, finecosine[an]),
+			FixedMul(dist, finesine[an]),
+			60 * FRACUNIT), ALLOW_REPLACE);
 		if (mo)
 		{
 			mo->velx = self->velx;
@@ -82,22 +82,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_IceGuyChase)
 
 DEFINE_ACTION_FUNCTION(AActor, A_IceGuyAttack)
 {
-	fixed_t an;
-
 	if(!self->target) 
 	{
 		return;
 	}
-	an = (self->angle+ANG90)>>ANGLETOFINESHIFT;
-	P_SpawnMissileXYZ(self->x+FixedMul(self->radius>>1,
-		finecosine[an]), self->y+FixedMul(self->radius>>1,
-		finesine[an]), self->z+40*FRACUNIT, self, self->target,
-		PClass::FindClass ("IceGuyFX"));
-	an = (self->angle-ANG90)>>ANGLETOFINESHIFT;
-	P_SpawnMissileXYZ(self->x+FixedMul(self->radius>>1,
-		finecosine[an]), self->y+FixedMul(self->radius>>1,
-		finesine[an]), self->z+40*FRACUNIT, self, self->target,
-		PClass::FindClass ("IceGuyFX"));
+	P_SpawnMissileXYZ(self->Vec3Angle(self->radius>>1, self->angle+ANG90, 40*FRACUNIT), self, self->target, PClass::FindClass ("IceGuyFX"));
+	P_SpawnMissileXYZ(self->Vec3Angle(self->radius>>1, self->angle-ANG90, 40*FRACUNIT), self, self->target, PClass::FindClass ("IceGuyFX"));
 	S_Sound (self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NORM);
 }
 
@@ -129,7 +119,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_IceGuyMissileExplode)
 
 	for (i = 0; i < 8; i++)
 	{
-		mo = P_SpawnMissileAngleZ (self, self->z+3*FRACUNIT, 
+		mo = P_SpawnMissileAngleZ (self, self->Z()+3*FRACUNIT, 
 			PClass::FindClass("IceGuyFX2"), i*ANG45, (fixed_t)(-0.3*FRACUNIT));
 		if (mo)
 		{

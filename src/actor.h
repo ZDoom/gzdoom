@@ -1265,6 +1265,10 @@ public:
 	{
 		z = newz;
 	}
+	void AddZ(fixed_t newz, bool moving = true)
+	{
+		z += newz;
+	}
 
 	// These are not for general use as they do not link the actor into the world!
 	void SetXY(fixed_t xx, fixed_t yy)

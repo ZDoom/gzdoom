@@ -57,7 +57,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PodPain)
 	}
 	for (count = chance > 240 ? 2 : 1; count; count--)
 	{
-		goo = Spawn(gootype, self->x, self->y, self->z + 48*FRACUNIT, ALLOW_REPLACE);
+		goo = Spawn(gootype, self->PosPlusZ(48*FRACUNIT), ALLOW_REPLACE);
 		goo->target = self;
 		goo->velx = pr_podpain.Random2() << 9;
 		goo->vely = pr_podpain.Random2() << 9;
@@ -100,15 +100,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_MakePod)
 	AActor *mo;
 	fixed_t x;
 	fixed_t y;
-	fixed_t z;
 
 	if (self->special1 == MAX_GEN_PODS)
 	{ // Too many generated pods
 		return;
 	}
-	x = self->x;
-	y = self->y;
-	z = self->z;
+	x = self->X();
+	y = self->Y();
 	mo = Spawn(podtype, x, y, ONFLOORZ, ALLOW_REPLACE);
 	if (!P_CheckPosition (mo, x, y))
 	{ // Didn't fit
@@ -165,8 +163,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_VolcanoBlast)
 	count = 1 + (pr_blast() % 3);
 	for (i = 0; i < count; i++)
 	{
-		blast = Spawn("VolcanoBlast", self->x, self->y,
-			self->z + 44*FRACUNIT, ALLOW_REPLACE);
+		blast = Spawn("VolcanoBlast", self->PosPlusZ(44*FRACUNIT), ALLOW_REPLACE);
 		blast->target = self;
 		angle = pr_blast () << 24;
 		blast->angle = angle;
@@ -191,17 +188,17 @@ DEFINE_ACTION_FUNCTION(AActor, A_VolcBallImpact)
 	AActor *tiny;
 	angle_t angle;
 
-	if (self->z <= self->floorz)
+	if (self->Z() <= self->floorz)
 	{
 		self->flags |= MF_NOGRAVITY;
 		self->gravity = FRACUNIT;
-		self->z += 28*FRACUNIT;
+		self->AddZ(28*FRACUNIT);
 		//self->velz = 3*FRACUNIT;
 	}
 	P_RadiusAttack (self, self->target, 25, 25, NAME_Fire, RADF_HURTSOURCE);
 	for (i = 0; i < 4; i++)
 	{
-		tiny = Spawn("VolcanoTBlast", self->x, self->y, self->z, ALLOW_REPLACE);
+		tiny = Spawn("VolcanoTBlast", self->Pos(), ALLOW_REPLACE);
 		tiny->target = self;
 		angle = i*ANG90;
 		tiny->angle = angle;

@@ -186,8 +186,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurDecide)
 		S_Sound (self, CHAN_WEAPON, "minotaur/sight", 1, ATTN_NORM);
 	}
 	dist = self->AproxDistance (target);
-	if (target->z+target->height > self->z
-		&& target->z+target->height < self->z+self->height
+	if (target->Top() > self->Z()
+		&& target->Top() < self->Top()
 		&& dist < (friendly ? 16*64*FRACUNIT : 8*64*FRACUNIT)
 		&& dist > 1*64*FRACUNIT
 		&& pr_minotaurdecide() < 150)
@@ -205,7 +205,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurDecide)
 		self->vely = FixedMul (MNTR_CHARGE_SPEED, finesine[angle]);
 		self->special1 = TICRATE/2; // Charge duration
 	}
-	else if (target->z == target->floorz
+	else if (target->Z() == target->floorz
 		&& dist < 9*64*FRACUNIT
 		&& pr_minotaurdecide() < (friendly ? 100 : 220))
 	{ // Floor fire attack
@@ -244,7 +244,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurCharge)
 		{
 			type = PClass::FindClass ("PunchPuff");
 		}
-		puff = Spawn (type, self->x, self->y, self->z, ALLOW_REPLACE);
+		puff = Spawn (type, self->Pos(), ALLOW_REPLACE);
 		puff->velz = 2*FRACUNIT;
 		self->special1--;
 	}
@@ -285,7 +285,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurAtk2)
 		P_TraceBleed (newdam > 0 ? newdam : damage, self->target, self);
 		return;
 	}
-	z = self->z + 40*FRACUNIT;
+	z = self->Z() + 40*FRACUNIT;
 	const PClass *fx = PClass::FindClass("MinotaurFX1");
 	if (fx)
 	{
@@ -369,10 +369,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_MntrFloorFire)
 	AActor *mo;
 	fixed_t x, y;
 
-	self->z = self->floorz;
-	x = self->x + (pr_fire.Random2 () << 10);
-	y = self->y + (pr_fire.Random2 () << 10);
-	mo = Spawn("MinotaurFX3", x, y, self->floorz, ALLOW_REPLACE);
+	self->SetZ(self->floorz);
+	fixedvec2 pos = self->Vec2Offset(
+		(pr_fire.Random2 () << 10),
+		(pr_fire.Random2 () << 10));
+	mo = Spawn("MinotaurFX3", pos.x, pos.y, self->floorz, ALLOW_REPLACE);
 	mo->target = self->target;
 	mo->velx = 1; // Force block checking
 	P_CheckMissileSpawn (mo, self->radius);

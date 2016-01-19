@@ -957,15 +957,35 @@ public:
 		return ret;
 	}
 
+
+	fixedvec2 Vec2Angle(fixed_t length, angle_t angle, bool absolute = false) const
+	{
+		fixedvec2 ret = { x + FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]),
+						  y + FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]) };
+		return ret;
+	}
+
 	fixedvec3 Vec3Offset(fixed_t dx, fixed_t dy, fixed_t dz, bool absolute = false) const
 	{
 		fixedvec3 ret = { x + dx, y + dy, z + dz };
 		return ret;
 	}
 
+	fixedvec3 Vec3Angle(fixed_t length, angle_t angle, fixed_t dz, bool absolute = false) const
+	{
+		fixedvec3 ret = { x + FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]),
+						  y + FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]), z + dz };
+		return ret;
+	}
+
 	void Move(fixed_t dx, fixed_t dy, fixed_t dz)
 	{
 		SetOrigin(x + dx, y + dy, z + dz, true);
+	}
+
+	void SetOrigin(const fixedvec3 & npos, bool moving)
+	{
+		SetOrigin(npos.x, npos.y, npos.z, moving);
 	}
 
 	inline void SetFriendPlayer(player_t *player);
@@ -1227,6 +1247,16 @@ public:
 	{
 		return z;
 	}
+	fixedvec3 Pos() const
+	{
+		fixedvec3 ret = { X(), Y(), Z() };
+		return ret;
+	}
+	fixedvec3 PosPlusZ(fixed_t zadd) const
+	{
+		fixedvec3 ret = { X(), Y(), Z() + zadd };
+		return ret;
+	}
 	fixed_t Top() const
 	{
 		return z + height;
@@ -1234,6 +1264,23 @@ public:
 	void SetZ(fixed_t newz, bool moving = true)
 	{
 		z = newz;
+	}
+	void AddZ(fixed_t newz, bool moving = true)
+	{
+		z += newz;
+	}
+
+	// These are not for general use as they do not link the actor into the world!
+	void SetXY(fixed_t xx, fixed_t yy)
+	{
+		x = xx;
+		y = yy;
+	}
+	void SetXYZ(fixed_t xx, fixed_t yy, fixed_t zz)
+	{
+		x = xx;
+		y = yy;
+		z = zz;
 	}
 
 
@@ -1347,6 +1394,14 @@ inline T *Spawn (const fixedvec3 &pos, replace_t allowreplacement)
 {
 	return static_cast<T *>(AActor::StaticSpawn (RUNTIME_CLASS(T), pos.x, pos.y, pos.z, allowreplacement));
 }
+
+inline fixedvec2 Vec2Angle(fixed_t length, angle_t angle) 
+{
+	fixedvec2 ret = { FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]),
+						FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]) };
+	return ret;
+}
+
 
 void PrintMiscActorInfo(AActor * query);
 

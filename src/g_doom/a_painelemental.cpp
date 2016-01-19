@@ -35,17 +35,14 @@ enum PA_Flags
 //
 void A_PainShootSkull (AActor *self, angle_t angle, const PClass *spawntype, int flags = 0, int limit = -1)
 {
-	fixed_t x, y, z;
-	
 	AActor *other;
-	angle_t an;
 	int prestep;
 
 	if (spawntype == NULL) return;
 	if (self->DamageType==NAME_Massacre) return;
 
 	// [RH] check to make sure it's not too close to the ceiling
-	if (self->z + self->height + 8*FRACUNIT > self->ceilingz)
+	if (self->Top() + 8*FRACUNIT > self->ceilingz)
 	{
 		if (self->flags & MF_FLOAT)
 		{
@@ -76,47 +73,67 @@ void A_PainShootSkull (AActor *self, angle_t angle, const PClass *spawntype, int
 	}
 
 	// okay, there's room for another one
-	an = angle >> ANGLETOFINESHIFT;
-	
 	prestep = 4*FRACUNIT +
 		3*(self->radius + GetDefaultByType(spawntype)->radius)/2;
-	
-	x = self->x + FixedMul (prestep, finecosine[an]);
-	y = self->y + FixedMul (prestep, finesine[an]);
-	z = self->z + 8*FRACUNIT;
-				
-	// Check whether the Lost Soul is being fired through a 1-sided	// phares
-	// wall or an impassible line, or a "monsters can't cross" line.//   |
-	// If it is, then we don't allow the spawn.						//   V
 
-	FBoundingBox box(MIN(self->x, x), MIN(self->y, y), MAX(self->x, x), MAX(self->y, y));
-	FBlockLinesIterator it(box);
-	line_t *ld;
+	// NOTE: The following code contains some advance work for line-to-line portals which is currenty inactive.
 
-	while ((ld = it.Next()))
+	fixedvec2 dist = Vec2Angle(prestep, angle);
+	fixedvec3 pos = self->Vec3Offset(dist.x, dist.y, 8 * FRACUNIT, true);
+	fixedvec3 src = self->Pos();
+
+	for (int i = 0; i < 2; i++)
 	{
-		if (!(ld->flags & ML_TWOSIDED) ||
-			(ld->flags & (ML_BLOCKING|ML_BLOCKMONSTERS|ML_BLOCKEVERYTHING)))
+		// Check whether the Lost Soul is being fired through a 1-sided	// phares
+		// wall or an impassible line, or a "monsters can't cross" line.//   |
+		// If it is, then we don't allow the spawn.						//   V
+
+		FBoundingBox box(MIN(src.x, pos.x), MIN(src.y, pos.y), MAX(src.x, pos.x), MAX(src.y, pos.y));
+		FBlockLinesIterator it(box);
+		line_t *ld;
+		bool inportal = false;
+
+		while ((ld = it.Next()))
 		{
-			if (!(box.Left()   > ld->bbox[BOXRIGHT]  ||
-				  box.Right()  < ld->bbox[BOXLEFT]   ||
-				  box.Top()    < ld->bbox[BOXBOTTOM] ||
-				  box.Bottom() > ld->bbox[BOXTOP]))
+			if (ld->isLinePortal() && i == 0)
 			{
-				if (P_PointOnLineSidePrecise(self->x,self->y,ld) != P_PointOnLineSidePrecise(x,y,ld))
-					return;  // line blocks trajectory				//   ^
+				if (P_PointOnLineSidePrecise(src.x, src.y, ld) == 0 &&
+					P_PointOnLineSidePrecise(pos.x, pos.y, ld) == 1)
+				{
+					// crossed a portal line from front to back, we need to repeat the check on the other side as well.
+					inportal = true;
+				}
+			}
+			else if (!(ld->flags & ML_TWOSIDED) ||
+				(ld->flags & (ML_BLOCKING | ML_BLOCKMONSTERS | ML_BLOCKEVERYTHING)))
+			{
+				if (!(box.Left() > ld->bbox[BOXRIGHT] ||
+					box.Right() < ld->bbox[BOXLEFT] ||
+					box.Top() < ld->bbox[BOXBOTTOM] ||
+					box.Bottom() > ld->bbox[BOXTOP]))
+				{
+					if (P_PointOnLineSidePrecise(src.x, src.y, ld) != P_PointOnLineSidePrecise(pos.x, pos.y, ld))
+						return;  // line blocks trajectory				//   ^
+				}
 			}
 		}
+		if (!inportal) break;
+
+		// recalculate position and redo the check on the other side of the portal
+		pos = self->Vec3Offset(dist.x, dist.y, 8 * FRACUNIT, false);
+		src.x = pos.x - dist.x;
+		src.y = pos.y - dist.y;
+
 	}
 
-	other = Spawn (spawntype, x, y, z, ALLOW_REPLACE);
+	other = Spawn (spawntype, pos.x, pos.y, pos.z, ALLOW_REPLACE);
 
 	// Check to see if the new Lost Soul's z value is above the
 	// ceiling of its new sector, or below the floor. If so, kill it.
 
-	if ((other->z >
-         (other->Sector->ceilingplane.ZatPoint (other->x, other->y) - other->height)) ||
-        (other->z < other->Sector->floorplane.ZatPoint (other->x, other->y)))
+	if ((other->Z() >
+         (other->Sector->HighestCeiling(other) - other->height)) ||
+        (other->Z() < other->Sector->LowestFloor(other)))
 	{
 		// kill it immediately
 		P_DamageMobj (other, self, self, TELEFRAG_DAMAGE, NAME_None);//  ^
@@ -125,7 +142,7 @@ void A_PainShootSkull (AActor *self, angle_t angle, const PClass *spawntype, int
 
 	// Check for movements.
 
-	if (!P_CheckPosition (other, other->x, other->y))
+	if (!P_CheckPosition (other, other->Pos()))
 	{
 		// kill it immediately
 		P_DamageMobj (other, self, self, TELEFRAG_DAMAGE, NAME_None);		

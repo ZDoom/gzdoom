@@ -51,10 +51,10 @@ bool AArtiPoisonBag1::Use (bool pickup)
 	angle_t angle = Owner->angle >> ANGLETOFINESHIFT;
 	AActor *mo;
 
-	mo = Spawn ("PoisonBag",
-		Owner->x+16*finecosine[angle],
-		Owner->y+24*finesine[angle], Owner->z-
-		Owner->floorclip+8*FRACUNIT, ALLOW_REPLACE);
+	mo = Spawn ("PoisonBag", Owner->Vec3Offset(
+		16*finecosine[angle],
+		24*finesine[angle], 
+		-Owner->floorclip+8*FRACUNIT), ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->target = Owner;
@@ -79,10 +79,10 @@ bool AArtiPoisonBag2::Use (bool pickup)
 	angle_t angle = Owner->angle >> ANGLETOFINESHIFT;
 	AActor *mo;
 
-	mo = Spawn ("FireBomb",
-		Owner->x+16*finecosine[angle],
-		Owner->y+24*finesine[angle], Owner->z-
-		Owner->floorclip+8*FRACUNIT, ALLOW_REPLACE);
+	mo = Spawn ("FireBomb", Owner->Vec3Offset(
+		16*finecosine[angle],
+		24*finesine[angle], 
+		-Owner->floorclip+8*FRACUNIT), ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->target = Owner;
@@ -106,8 +106,7 @@ bool AArtiPoisonBag3::Use (bool pickup)
 {
 	AActor *mo;
 
-	mo = Spawn("ThrowingBomb", Owner->x, Owner->y, 
-		Owner->z-Owner->floorclip+35*FRACUNIT + (Owner->player? Owner->player->crouchoffset : 0), ALLOW_REPLACE);
+	mo = Spawn("ThrowingBomb", Owner->PosPlusZ(-Owner->floorclip+35*FRACUNIT + (Owner->player? Owner->player->crouchoffset : 0)), ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->angle = Owner->angle + (((pr_poisonbag()&7) - 4) << 24);
@@ -133,7 +132,7 @@ bool AArtiPoisonBag3::Use (bool pickup)
 		mo->velz = FixedMul(speed, finesine[modpitch]);
 		mo->velx = FixedMul(xyscale, finecosine[angle]) + (Owner->velx >> 1);
 		mo->vely = FixedMul(xyscale, finesine[angle]) + (Owner->vely >> 1);
-		mo->z += FixedMul(mo->Speed, finesine[orgpitch]);
+		mo->AddZ(FixedMul(mo->Speed, finesine[orgpitch]));
 
 		mo->target = Owner;
 		mo->tics -= pr_poisonbag()&3;
@@ -159,7 +158,7 @@ bool AArtiPoisonBagGiver::Use (bool pickup)
 	const PClass *MissileType = PClass::FindClass((ENamedName) this->GetClass()->Meta.GetMetaInt (ACMETA_MissileName, NAME_None));
 	if (MissileType != NULL)
 	{
-		AActor *mo = Spawn (MissileType, Owner->x, Owner->y, Owner->z, ALLOW_REPLACE);
+		AActor *mo = Spawn (MissileType, Owner->Pos(), ALLOW_REPLACE);
 		if (mo != NULL)
 		{
 			if (mo->IsKindOf(RUNTIME_CLASS(AInventory)))
@@ -385,7 +384,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PoisonBagInit)
 {
 	AActor *mo;
 	
-	mo = Spawn<APoisonCloud> (self->x, self->y, self->z+28*FRACUNIT, ALLOW_REPLACE);
+	mo = Spawn<APoisonCloud> (self->PosPlusZ(28*FRACUNIT), ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->target = self->target;
@@ -422,7 +421,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PoisonBagDamage)
 	
 	P_RadiusAttack (self, self->target, 4, 40, self->DamageType, RADF_HURTSOURCE);
 	bobIndex = self->special2;
-	self->z += finesine[bobIndex << BOBTOFINESHIFT] >> 1;
+	self->AddZ(finesine[bobIndex << BOBTOFINESHIFT] >> 1);
 	self->special2 = (bobIndex + 1) & 63;
 }
 
@@ -456,7 +455,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CheckThrowBomb2)
 		< (3*3)/(2*2))
 	{
 		self->SetState (self->SpawnState + 6);
-		self->z = self->floorz;
+		self->SetZ(self->floorz);
 		self->velz = 0;
 		self->BounceFlags = BOUNCE_None;
 		self->flags &= ~MF_MISSILE;

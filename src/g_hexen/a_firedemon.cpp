@@ -32,7 +32,6 @@ static FRandom pr_firedemonsplotch ("FiredSplotch");
 void A_FiredSpawnRock (AActor *actor)
 {
 	AActor *mo;
-	int x,y,z;
 	const PClass *rtype;
 
 	switch (pr_firedemonrock() % 5)
@@ -55,10 +54,11 @@ void A_FiredSpawnRock (AActor *actor)
 			break;
 	}
 
-	x = actor->x + ((pr_firedemonrock() - 128) << 12);
-	y = actor->y + ((pr_firedemonrock() - 128) << 12);
-	z = actor->z + ( pr_firedemonrock() << 11);
-	mo = Spawn (rtype, x, y, z, ALLOW_REPLACE);
+	fixedvec3 pos = actor->Vec3Offset(
+		((pr_firedemonrock() - 128) << 12),
+		((pr_firedemonrock() - 128) << 12),
+		( pr_firedemonrock() << 11));
+	mo = Spawn (rtype, pos, ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->target = actor;
@@ -97,7 +97,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FiredRocks)
 DEFINE_ACTION_FUNCTION(AActor, A_SmBounce)
 {
 	// give some more velocity (x,y,&z)
-	self->z = self->floorz + FRACUNIT;
+	self->SetZ(self->floorz + FRACUNIT);
 	self->velz = (2*FRACUNIT) + (pr_smbounce() << 10);
 	self->velx = pr_smbounce()%3<<FRACBITS;
 	self->vely = pr_smbounce()%3<<FRACBITS;
@@ -134,13 +134,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_FiredChase)
 	if (self->threshold) self->threshold--;
 
 	// Float up and down
-	self->z += finesine[weaveindex << BOBTOFINESHIFT] * 8;
+	self->AddZ(finesine[weaveindex << BOBTOFINESHIFT] * 8);
 	self->special1 = (weaveindex + 2) & 63;
 
 	// Ensure it stays above certain height
-	if (self->z < self->floorz + (64*FRACUNIT))
+	if (self->Z() < self->floorz + (64*FRACUNIT))
 	{
-		self->z += 2*FRACUNIT;
+		self->AddZ(2*FRACUNIT);
 	}
 
 	if(!self->target || !(self->target->flags&MF_SHOOTABLE))
@@ -219,14 +219,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_FiredSplotch)
 {
 	AActor *mo;
 
-	mo = Spawn ("FireDemonSplotch1", self->x, self->y, self->z, ALLOW_REPLACE);
+	mo = Spawn ("FireDemonSplotch1", self->Pos(), ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->velx = (pr_firedemonsplotch() - 128) << 11;
 		mo->vely = (pr_firedemonsplotch() - 128) << 11;
 		mo->velz = (pr_firedemonsplotch() << 10) + FRACUNIT*3;
 	}
-	mo = Spawn ("FireDemonSplotch2", self->x, self->y, self->z, ALLOW_REPLACE);
+	mo = Spawn ("FireDemonSplotch2", self->Pos(), ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->velx = (pr_firedemonsplotch() - 128) << 11;

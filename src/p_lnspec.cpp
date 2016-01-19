@@ -3107,7 +3107,7 @@ FUNC(LS_GlassBreak)
 			{
 				glass = Spawn("GlassJunk", x, y, ONFLOORZ, ALLOW_REPLACE);
 
-				glass->SetZ(glass->Z() + 24 * FRACUNIT);
+				glass->AddZ(24 * FRACUNIT);
 				glass->SetState (glass->SpawnState + (pr_glass() % glass->health));
 				an = pr_glass() << (32-8);
 				glass->angle = an;

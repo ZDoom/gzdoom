@@ -2319,10 +2319,7 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 					else
 					{
 						const AActor *def = GetDefaultByType (typeinfo);
-						fixedvec3 spawnpos = source->Vec3Offset(
-							FixedMul (def->radius * 2 + source->radius, finecosine[source->angle>>ANGLETOFINESHIFT]),
-							FixedMul (def->radius * 2 + source->radius, finesine[source->angle>>ANGLETOFINESHIFT]),
-							8 * FRACUNIT);
+						fixedvec3 spawnpos = source->Vec3Angle(def->radius * 2 + source->radius, source->angle, 8 * FRACUNIT);
 
 						AActor *spawned = Spawn (typeinfo, spawnpos, ALLOW_REPLACE);
 						if (spawned != NULL)

@@ -145,7 +145,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Mushroom)
 	P_CheckSplash(self, 128<<FRACBITS);
 
 	// Now launch mushroom cloud
-	AActor *target = Spawn("Mapspot", 0, 0, 0, NO_REPLACE);	// We need something to aim at.
+	AActor *target = Spawn("Mapspot", self->Pos(), NO_REPLACE);	// We need something to aim at.
 	AActor *master = (flags & MSF_DontHurt) ? (AActor*)(self->target) : self;
 	target->height = self->height;
  	for (i = -n; i <= n; i += 8)
@@ -153,9 +153,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Mushroom)
  		for (j = -n; j <= n; j += 8)
 		{
 			AActor *mo;
-			target->x = self->x + (i << FRACBITS);    // Aim in many directions from source
-			target->y = self->y + (j << FRACBITS);
-			target->z = self->z + (P_AproxDistance(i,j) * vrange); // Aim up fairly high
+			target->SetXYZ(
+				self->X() + (i << FRACBITS),    // Aim in many directions from source
+				self->Y() + (j << FRACBITS),
+				self->Z() + (P_AproxDistance(i,j) * vrange)); // Aim up fairly high
 			if ((flags & MSF_Classic) || // Flag explicitely set, or no flags and compat options
 				(flags == 0 && (self->state->DefineFlags & SDF_DEHACKED) && (i_compatflags & COMPATF_MUSHROOM)))
 			{	// Use old function for MBF compatibility

@@ -982,7 +982,7 @@ void FParser::SF_ObjX(void)
 	}
 
 	t_return.type = svt_fixed;           // haleyjd: SoM's fixed-point fix
-	t_return.value.f = mo ? mo->x : 0;   // null ptr check
+	t_return.value.f = mo ? mo->X() : 0;   // null ptr check
 }
 
 //==========================================================================
@@ -1005,7 +1005,7 @@ void FParser::SF_ObjY(void)
 	}
 
 	t_return.type = svt_fixed;         // haleyjd
-	t_return.value.f = mo ? mo->y : 0; // null ptr check
+	t_return.value.f = mo ? mo->Y() : 0; // null ptr check
 }
 
 //==========================================================================
@@ -1028,7 +1028,7 @@ void FParser::SF_ObjZ(void)
 	}
 
 	t_return.type = svt_fixed;         // haleyjd
-	t_return.value.f = mo ? mo->z : 0; // null ptr check
+	t_return.value.f = mo ? mo->Z() : 0; // null ptr check
 }
 
 
@@ -1466,8 +1466,8 @@ void FParser::SF_SetCamera(void)
 		angle = t_argc < 2 ? newcamera->angle : (fixed_t)FixedToAngle(fixedvalue(t_argv[1]));
 
 		newcamera->special1=newcamera->angle;
-		newcamera->special2=newcamera->z;
-		newcamera->z = t_argc < 3 ? (newcamera->z + (41 << FRACBITS)) : (intvalue(t_argv[2]) << FRACBITS);
+		newcamera->special2=newcamera->Z();
+		newcamera->SetZ(t_argc < 3 ? (newcamera->Z() + (41 << FRACBITS)) : (intvalue(t_argv[2]) << FRACBITS));
 		newcamera->angle = angle;
 		if(t_argc < 4) newcamera->pitch = 0;
 		else
@@ -1498,7 +1498,7 @@ void FParser::SF_ClearCamera(void)
 	{
 		player->camera=player->mo;
 		cam->angle=cam->special1;
-		cam->z=cam->special2;
+		cam->SetZ(cam->special2);
 	}
 
 }
@@ -3065,7 +3065,7 @@ void FParser::SF_SetWeapon()
 void FParser::SF_MoveCamera(void)
 {
 	fixed_t    x, y, z;  
-	fixed_t    xdist, ydist, zdist, xydist, movespeed;
+	fixed_t    zdist, xydist, movespeed;
 	fixed_t    xstep, ystep, zstep, targetheight;
 	angle_t    anglespeed, anglestep, angledist, targetangle, 
 		mobjangle, bigangle, smallangle;
@@ -3097,9 +3097,8 @@ void FParser::SF_MoveCamera(void)
 		anglespeed   = (angle_t)FixedToAngle(fixedvalue(t_argv[5]));
 		
 		// figure out how big one step will be
-		xdist = target->x - cam->x;
-		ydist = target->y - cam->y;
-		zdist = targetheight - cam->z;
+		fixedvec2 dist = cam->Vec2To(target);
+		zdist = targetheight - cam->Z();
 		
 		// Angle checking...  
 		//    90  
@@ -3170,19 +3169,19 @@ void FParser::SF_MoveCamera(void)
 		else
 			anglestep = anglespeed;
 		
-		if(abs(xstep) >= (abs(xdist) - 1))
-			x = target->x;
+		if(abs(xstep) >= (abs(dist.x) - 1))
+			x = cam->X() + dist.x;
 		else
 		{
-			x = cam->x + xstep;
+			x = cam->X() + xstep;
 			moved = 1;
 		}
 		
-		if(abs(ystep) >= (abs(ydist) - 1))
-			y = target->y;
+		if(abs(ystep) >= (abs(dist.y) - 1))
+			y = cam->Y() + dist.y;
 		else
 		{
-			y = cam->y + ystep;
+			y = cam->Y() + ystep;
 			moved = 1;
 		}
 		
@@ -3190,7 +3189,7 @@ void FParser::SF_MoveCamera(void)
 			z = targetheight;
 		else
 		{
-			z = cam->z + zstep;
+			z = cam->Z() + zstep;
 			moved = 1;
 		}
 		
@@ -3212,12 +3211,12 @@ void FParser::SF_MoveCamera(void)
 
 		cam->radius=8;
 		cam->height=8;
-		if ((x != cam->x || y != cam->y) && !P_TryMove(cam, x, y, true))
+		if ((x != cam->X() || y != cam->Y()) && !P_TryMove(cam, x, y, true))
 		{
 			Printf("Illegal camera move to (%f, %f)\n", x/65536.f, y/65536.f);
 			return;
 		}
-		cam->z = z;
+		cam->SetZ(z);
 
 		t_return.type = svt_int;
 		t_return.value.i = moved;
@@ -3410,13 +3409,10 @@ void FParser::SF_SetObjPosition()
 
 		if (!mobj) return;
 
-		mobj->UnlinkFromWorld();
-
-		mobj->x = intvalue(t_argv[1]) << FRACBITS;
-		if(t_argc >= 3) mobj->y = intvalue(t_argv[2]) << FRACBITS;
-		if(t_argc == 4)	mobj->z = intvalue(t_argv[3]) << FRACBITS;
-
-		mobj->LinkToWorld();
+		mobj->SetOrigin(
+			fixedvalue(t_argv[1]),
+			(t_argc >= 3)? fixedvalue(t_argv[2]) : mobj->Y(),
+			(t_argc >= 4)? fixedvalue(t_argv[3]) : mobj->Z(), false);
 	}
 }
 
@@ -4285,7 +4281,7 @@ void FParser::SF_SpawnShot2(void)
 		
 		t_return.type = svt_mobj;
 
-		AActor *mo = Spawn (PClass, source->x, source->y, source->z+z, ALLOW_REPLACE);
+		AActor *mo = Spawn (PClass, source->PosPlusZ(z), ALLOW_REPLACE);
 		if (mo) 
 		{
 			S_Sound (mo, CHAN_VOICE, mo->SeeSound, 1, ATTN_NORM);

@@ -459,7 +459,7 @@ void FCajunMaster::SetBodyAt (fixed_t x, fixed_t y, fixed_t z, int hostnum)
 //Emulates missile travel. Returns distance travelled.
 fixed_t FCajunMaster::FakeFire (AActor *source, AActor *dest, ticcmd_t *cmd)
 {
-	AActor *th = Spawn ("CajunTrace", source->X(), source->Y(), source->Z() + 4*8*FRACUNIT, NO_REPLACE);
+	AActor *th = Spawn ("CajunTrace", source->PosPlusZ(4*8*FRACUNIT), NO_REPLACE);
 	
 	th->target = source;		// where it came from
 

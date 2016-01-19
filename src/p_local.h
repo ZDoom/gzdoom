@@ -134,6 +134,10 @@ enum EPuffFlags
 };
 
 AActor *P_SpawnPuff (AActor *source, const PClass *pufftype, fixed_t x, fixed_t y, fixed_t z, angle_t dir, int updown, int flags = 0, AActor *vict = NULL);
+inline AActor *P_SpawnPuff(AActor *source, const PClass *pufftype, const fixedvec3 &pos, angle_t dir, int updown, int flags = 0, AActor *vict = NULL)
+{
+	return P_SpawnPuff(source, pufftype, pos.x, pos.y, pos.z, dir, updown, flags, vict);
+}
 void	P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage, AActor *originator);
 void	P_BloodSplatter (fixed_t x, fixed_t y, fixed_t z, AActor *originator);
 void	P_BloodSplatter2 (fixed_t x, fixed_t y, fixed_t z, AActor *originator);
@@ -144,6 +148,10 @@ void	P_ExplodeMissile (AActor *missile, line_t *explodeline, AActor *target);
 AActor *P_SpawnMissile (AActor* source, AActor* dest, const PClass *type, AActor* owner = NULL);
 AActor *P_SpawnMissileZ (AActor* source, fixed_t z, AActor* dest, const PClass *type);
 AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z, AActor *source, AActor *dest, const PClass *type, bool checkspawn = true, AActor *owner = NULL);
+inline AActor *P_SpawnMissileXYZ(const fixedvec3 &pos, AActor *source, AActor *dest, const PClass *type, bool checkspawn = true, AActor *owner = NULL)
+{
+	return P_SpawnMissileXYZ(pos.x, pos.y, pos.z, source, dest, type, checkspawn, owner);
+}
 AActor *P_SpawnMissileAngle (AActor *source, const PClass *type, angle_t angle, fixed_t velz);
 AActor *P_SpawnMissileAngleSpeed (AActor *source, const PClass *type, angle_t angle, fixed_t velz, fixed_t speed);
 AActor *P_SpawnMissileAngleZ (AActor *source, fixed_t z, const PClass *type, angle_t angle, fixed_t velz);
@@ -458,6 +466,10 @@ bool	P_TestMobjLocation (AActor *mobj);
 bool	P_TestMobjZ (AActor *mobj, bool quick=true, AActor **pOnmobj = NULL);
 bool	P_CheckPosition (AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm, bool actorsonly=false);
 bool	P_CheckPosition (AActor *thing, fixed_t x, fixed_t y, bool actorsonly=false);
+inline bool P_CheckPosition(AActor *thing, const fixedvec3 &pos, bool actorsonly = false)
+{
+	return P_CheckPosition(thing, pos.x, pos.y, actorsonly);
+}
 AActor	*P_CheckOnmobj (AActor *thing);
 void	P_FakeZMovement (AActor *mo);
 bool	P_TryMove (AActor* thing, fixed_t x, fixed_t y, int dropoff, const secplane_t * onfloor, FCheckPosition &tm, bool missileCheck = false);
@@ -465,6 +477,10 @@ bool	P_TryMove (AActor* thing, fixed_t x, fixed_t y, int dropoff, const secplane
 bool	P_CheckMove(AActor *thing, fixed_t x, fixed_t y);
 void	P_ApplyTorque(AActor *mo);
 bool	P_TeleportMove (AActor* thing, fixed_t x, fixed_t y, fixed_t z, bool telefrag, bool modifyactor = true);	// [RH] Added z and telefrag parameters
+inline bool	P_TeleportMove(AActor* thing, const fixedvec3 &pos, bool telefrag, bool modifyactor = true)
+{
+	return P_TeleportMove(thing, pos.x, pos.y, pos.z, telefrag, modifyactor);
+}
 void	P_PlayerStartStomp (AActor *actor);		// [RH] Stomp on things for a newly spawned player
 void	P_SlideMove (AActor* mo, fixed_t tryx, fixed_t tryy, int numsteps);
 bool	P_BounceWall (AActor *mo);

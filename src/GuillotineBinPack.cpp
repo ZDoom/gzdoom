@@ -144,7 +144,9 @@ void GuillotineBinPack::Insert(TArray<RectSize> &rects, TArray<Rect> &dst, bool 
 		usedRectangles.Push(newNode);
 
 		// Check that we're really producing correct packings here.
+#ifdef _DEBUG
 		assert(disjointRects.Add(newNode) == true);
+#endif
 	}
 }
 
@@ -355,8 +357,9 @@ Rect GuillotineBinPack::Insert(int width, int height, bool merge, FreeRectChoice
 	usedRectangles.Push(newRect);
 
 	// Check that we're really producing correct packings here.
+#ifdef _DEBUG
 	assert(disjointRects.Add(newRect) == true);
-
+#endif
 	return newRect;
 }
 
@@ -442,7 +445,9 @@ Rect GuillotineBinPack::FindPositionForNewNode(int width, int height, FreeRectCh
 			bestNode.height = height;
 			bestScore = INT_MIN;
 			*nodeIndex = i;
+#ifdef _DEBUG
 			assert(disjointRects.Disjoint(bestNode));
+#endif
 			break;
 		}
 		// If this is a perfect fit sideways, choose it.
@@ -470,7 +475,9 @@ Rect GuillotineBinPack::FindPositionForNewNode(int width, int height, FreeRectCh
 				bestNode.height = height;
 				bestScore = score;
 				*nodeIndex = i;
+#ifdef _DEBUG
 				assert(disjointRects.Disjoint(bestNode));
+#endif
 			}
 		}
 		// Does the rectangle fit sideways?
@@ -575,8 +582,10 @@ void GuillotineBinPack::SplitFreeRectAlongAxis(const Rect &freeRect, const Rect 
 	if (right.width > 0 && right.height > 0)
 		freeRectangles.Push(right);
 
+#ifdef _DEBUG
 	assert(disjointRects.Disjoint(bottom));
 	assert(disjointRects.Disjoint(right));
+#endif
 }
 
 void GuillotineBinPack::MergeFreeList()

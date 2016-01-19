@@ -27,7 +27,7 @@ void A_SpectralMissile (AActor *self, const char *missilename)
 {
 	if (self->target != NULL)
 	{
-		AActor *missile = P_SpawnMissileXYZ (self->x, self->y, self->z + 32*FRACUNIT, 
+		AActor *missile = P_SpawnMissileXYZ (self->PosPlusZ(32*FRACUNIT), 
 			self, self->target, PClass::FindActor(missilename), false);
 		if (missile != NULL)
 		{
@@ -78,7 +78,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnEntity)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	AActor *entity = Spawn("EntityBoss", self->x, self->y, self->z + 70*FRACUNIT, ALLOW_REPLACE);
+	AActor *entity = Spawn("EntityBoss", self->PosPlusZ(70*FRACUNIT), ALLOW_REPLACE);
 	if (entity != NULL)
 	{
 		entity->angle = self->angle;
@@ -100,13 +100,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_EntityDeath)
 	AActor *spot = self->tracer;
 	if (spot == NULL) spot = self;
 
-	fixed_t SpawnX = spot->x;
-	fixed_t SpawnY = spot->y;
-	fixed_t SpawnZ = spot->z + (self->tracer? 70*FRACUNIT : 0);
+	fixedvec3 pos = spot->Vec3Angle(secondRadius, self->angle, self->tracer? 70*FRACUNIT : 0);
 	
 	an = self->angle >> ANGLETOFINESHIFT;
-	second = Spawn("EntitySecond", SpawnX + FixedMul (secondRadius, finecosine[an]),
-		SpawnY + FixedMul (secondRadius, finesine[an]), SpawnZ, ALLOW_REPLACE);
+	second = Spawn("EntitySecond", pos, ALLOW_REPLACE);
 	second->CopyFriendliness(self, true);
 	//second->target = self->target;
 	A_FaceTarget (second);
@@ -114,18 +111,18 @@ DEFINE_ACTION_FUNCTION(AActor, A_EntityDeath)
 	second->velx += FixedMul (finecosine[an], 320000);
 	second->vely += FixedMul (finesine[an], 320000);
 
+	pos = spot->Vec3Angle(secondRadius, self->angle + ANGLE_90, self->tracer? 70*FRACUNIT : 0);
 	an = (self->angle + ANGLE_90) >> ANGLETOFINESHIFT;
-	second = Spawn("EntitySecond", SpawnX + FixedMul (secondRadius, finecosine[an]),
-		SpawnY + FixedMul (secondRadius, finesine[an]), SpawnZ, ALLOW_REPLACE);
+	second = Spawn("EntitySecond", pos, ALLOW_REPLACE);
 	second->CopyFriendliness(self, true);
 	//second->target = self->target;
 	second->velx = FixedMul (secondRadius, finecosine[an]) << 2;
 	second->vely = FixedMul (secondRadius, finesine[an]) << 2;
 	A_FaceTarget (second);
 
+	pos = spot->Vec3Angle(secondRadius, self->angle - ANGLE_90, self->tracer? 70*FRACUNIT : 0);
 	an = (self->angle - ANGLE_90) >> ANGLETOFINESHIFT;
-	second = Spawn("EntitySecond", SpawnX + FixedMul (secondRadius, finecosine[an]),
-		SpawnY + FixedMul (secondRadius, finesine[an]), SpawnZ, ALLOW_REPLACE);
+	second = Spawn("EntitySecond", pos, ALLOW_REPLACE);
 	second->CopyFriendliness(self, true);
 	//second->target = self->target;
 	second->velx = FixedMul (secondRadius, finecosine[an]) << 2;

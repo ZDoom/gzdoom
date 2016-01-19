@@ -92,7 +92,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BatMove)
 	}
 
 	// Handle Z movement
-	self->z = self->target->z + 16*finesine[self->args[0] << BOBTOFINESHIFT];
+	self->SetZ(self->target->Z() + 16*finesine[self->args[0] << BOBTOFINESHIFT]);
 	self->args[0] = (self->args[0]+3)&63;	
 	return 0;
 }

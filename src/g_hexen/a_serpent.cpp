@@ -228,9 +228,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_SerpentSpawnGibs)
 
 	for (int i = countof(GibTypes)-1; i >= 0; --i)
 	{
-		mo = Spawn (GibTypes[i],
-			self->x+((pr_serpentgibs()-128)<<12), 
-			self->y+((pr_serpentgibs()-128)<<12),
+		fixedvec2 pos = self->Vec2Offset(
+			((pr_serpentgibs() - 128) << 12),
+			((pr_serpentgibs() - 128) << 12));
+
+		mo = Spawn (GibTypes[i], pos.x, pos.y,
 			self->floorz+FRACUNIT, ALLOW_REPLACE);
 		if (mo)
 		{
@@ -294,7 +296,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SerpentHeadCheck)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	if (self->z <= self->floorz)
+	if (self->Z() <= self->floorz)
 	{
 		if (Terrains[P_GetThingFloorType(self)].IsLiquid)
 		{

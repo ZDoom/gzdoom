@@ -53,13 +53,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_Summon)
 
 	AMinotaurFriend *mo;
 
-	mo = Spawn<AMinotaurFriend> (self->x, self->y, self->z, ALLOW_REPLACE);
+	mo = Spawn<AMinotaurFriend> (self->Pos(), ALLOW_REPLACE);
 	if (mo)
 	{
 		if (P_TestMobjLocation(mo) == false || !self->tracer)
 		{ // Didn't fit - change back to artifact
 			mo->Destroy ();
-			AActor *arti = Spawn<AArtiDarkServant> (self->x, self->y, self->z, ALLOW_REPLACE);
+			AActor *arti = Spawn<AArtiDarkServant> (self->Pos(), ALLOW_REPLACE);
 			if (arti) arti->flags |= MF_DROPPED;
 			return 0;
 		}
@@ -78,7 +78,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Summon)
 		}
 
 		// Make smoke puff
-		Spawn ("MinotaurSmoke", self->x, self->y, self->z, ALLOW_REPLACE);
+		Spawn ("MinotaurSmoke", self->Pos(), ALLOW_REPLACE);
 		S_Sound (self, CHAN_VOICE, mo->ActiveSound, 1, ATTN_NORM);
 	}
 	return 0;

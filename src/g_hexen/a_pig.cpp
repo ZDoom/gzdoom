@@ -101,7 +101,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PigPain)
 	PARAM_ACTION_PROLOGUE;
 
 	CALL_ACTION(A_Pain, self);
-	if (self->z <= self->floorz)
+	if (self->Z() <= self->floorz)
 	{
 		self->velz = FRACUNIT*7/2;
 	}

@@ -291,14 +291,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_FreezeDeathChunks)
 	i = (pr_freeze.Random2()) % (numChunks/4);
 	for (i = MAX (24, numChunks + i); i >= 0; i--)
 	{
-		mo = Spawn("IceChunk", 
-			self->x + (((pr_freeze()-128)*self->radius)>>7), 
-			self->y + (((pr_freeze()-128)*self->radius)>>7), 
-			self->z + (pr_freeze()*self->height/255), ALLOW_REPLACE);
+		mo = Spawn("IceChunk", self->Vec3Offset(
+			(((pr_freeze()-128)*self->radius)>>7), 
+			(((pr_freeze()-128)*self->radius)>>7), 
+			(pr_freeze()*self->height/255)), ALLOW_REPLACE);
 		if (mo)
 		{
 				mo->SetState (mo->SpawnState + (pr_freeze()%3));
-			mo->velz = FixedDiv(mo->z - self->z, self->height)<<2;
+			mo->velz = FixedDiv(mo->Z() - self->Z(), self->height)<<2;
 			mo->velx = pr_freeze.Random2 () << (FRACBITS-7);
 			mo->vely = pr_freeze.Random2 () << (FRACBITS-7);
 			CALL_ACTION(A_IceSetTics, mo); // set a random tic wait
@@ -308,11 +308,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_FreezeDeathChunks)
 	}
 	if (self->player)
 	{ // attach the player's view to a chunk of ice
-		AActor *head = Spawn("IceChunkHead", self->x, self->y, 
-													self->z + self->player->mo->ViewHeight, ALLOW_REPLACE);
+		AActor *head = Spawn("IceChunkHead", self->PosPlusZ(self->player->mo->ViewHeight), ALLOW_REPLACE);
 		if (head != NULL)
 		{
-			head->velz = FixedDiv(head->z - self->z, self->height)<<2;
+			head->velz = FixedDiv(head->Z() - self->Z(), self->height)<<2;
 			head->velx = pr_freeze.Random2 () << (FRACBITS-7);
 			head->vely = pr_freeze.Random2 () << (FRACBITS-7);
 			head->health = self->health;

@@ -82,7 +82,7 @@ bool P_Thing_Spawn (int tid, AActor *source, int type, angle_t angle, bool fog, 
 	}
 	while (spot != NULL)
 	{
-		mobj = Spawn (kind, spot->X(), spot->Y(), spot->Z(), ALLOW_REPLACE);
+		mobj = Spawn (kind, spot->Pos(), ALLOW_REPLACE);
 
 		if (mobj != NULL)
 		{
@@ -123,11 +123,11 @@ bool P_MoveThing(AActor *source, fixed_t x, fixed_t y, fixed_t z, bool fog)
 {
 	fixed_t oldx, oldy, oldz;
 
-	oldx = source->x;
-	oldy = source->y;
-	oldz = source->z;
+	oldx = source->X();
+	oldy = source->Y();
+	oldz = source->Z();
 
-	source->SetOrigin (x, y, z);
+	source->SetOrigin (x, y, z, false);
 	if (P_TestMobjLocation (source))
 	{
 		if (fog)
@@ -146,7 +146,7 @@ bool P_MoveThing(AActor *source, fixed_t x, fixed_t y, fixed_t z, bool fog)
 	}
 	else
 	{
-		source->SetOrigin (oldx, oldy, oldz);
+		source->SetOrigin (oldx, oldy, oldz, false);
 		return false;
 	}
 }
@@ -218,7 +218,7 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 		{
 			do
 			{
-				fixed_t z = spot->z;
+				fixed_t z = spot->Z();
 				if (defflags3 & MF3_FLOORHUGGER)
 				{
 					z = ONFLOORZ;
@@ -231,7 +231,7 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 				{
 					z -= spot->floorclip;
 				}
-				mobj = Spawn (kind, spot->x, spot->y, z, ALLOW_REPLACE);
+				mobj = Spawn (kind, spot->X(), spot->Y(), z, ALLOW_REPLACE);
 
 				if (mobj)
 				{
@@ -254,8 +254,9 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 
 					if (targ != NULL)
 					{
-						fixed_t spot[3] = { targ->x, targ->y, targ->z+targ->height/2 };
-						FVector3 aim(float(spot[0] - mobj->x), float(spot[1] - mobj->y), float(spot[2] - mobj->z));
+						fixedvec3 vect = mobj->Vec3To(targ);
+						vect.z += targ->height / 2;
+						FVector3 aim = vect;
 
 						if (leadTarget && speed > 0 && (targ->velx | targ->vely | targ->velz))
 						{
@@ -435,7 +436,7 @@ bool P_Thing_Raise(AActor *thing, AActor *raiser)
 	thing->flags |= MF_SOLID;
 	thing->height = info->height;	// [RH] Use real height
 	thing->radius = info->radius;	// [RH] Use real radius
-	if (!P_CheckPosition (thing, thing->x, thing->y))
+	if (!P_CheckPosition (thing, thing->Pos()))
 	{
 		thing->flags = oldflags;
 		thing->radius = oldradius;
@@ -477,7 +478,7 @@ bool P_Thing_CanRaise(AActor *thing)
 	thing->height = info->height;
 	thing->radius = info->radius;
 
-	bool check = P_CheckPosition (thing, thing->x, thing->y);
+	bool check = P_CheckPosition (thing, thing->Pos());
 
 	// Restore checked properties
 	thing->flags = oldflags;
@@ -690,8 +691,8 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 		caller = temp;
 	}
 
-	fixed_t	oldx = caller->x;
-	fixed_t	oldy = caller->y;
+	fixed_t	oldx = caller->X();
+	fixed_t	oldy = caller->Y();
 	fixed_t	oldz = caller->z;
 	zofs += FixedMul(reference->height, heightoffset);
 	

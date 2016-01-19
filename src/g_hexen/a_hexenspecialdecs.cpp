@@ -62,7 +62,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PotteryExplode)
 
 	for(i = (pr_pottery()&3)+3; i; i--)
 	{
-		mo = Spawn ("PotteryBit", self->x, self->y, self->z, ALLOW_REPLACE);
+		mo = Spawn ("PotteryBit", self->Pos(), ALLOW_REPLACE);
 		if (mo)
 		{
 			mo->SetState (mo->SpawnState + (pr_pottery()%5));
@@ -79,7 +79,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PotteryExplode)
 		if (!((level.flags2 & LEVEL2_NOMONSTERS) || (dmflags & DF_NO_MONSTERS))
 		|| !(GetDefaultByType (type)->flags3 & MF3_ISMONSTER))
 		{ // Only spawn monsters if not -nomonsters
-			Spawn (type, self->x, self->y, self->z, ALLOW_REPLACE);
+			Spawn (type, self->Pos(), ALLOW_REPLACE);
 		}
 	}
 	return 0;
@@ -141,7 +141,7 @@ IMPLEMENT_CLASS (AZCorpseLynchedNoHeart)
 void AZCorpseLynchedNoHeart::PostBeginPlay ()
 {
 	Super::PostBeginPlay ();
-	Spawn ("BloodPool", x, y, floorz, ALLOW_REPLACE);
+	Spawn ("BloodPool", X(), Y(), floorz, ALLOW_REPLACE);
 }
 
 //============================================================================
@@ -156,7 +156,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CorpseBloodDrip)
 
 	if (pr_drip() <= 128)
 	{
-		Spawn ("CorpseBloodDrip", self->x, self->y, self->z + self->height/2, ALLOW_REPLACE);
+		Spawn ("CorpseBloodDrip", self->PosPlusZ(self->height/2), ALLOW_REPLACE);
 	}
 	return 0;
 }
@@ -176,7 +176,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CorpseExplode)
 
 	for (i = (pr_foo()&3)+3; i; i--)
 	{
-		mo = Spawn ("CorpseBit", self->x, self->y, self->z, ALLOW_REPLACE);
+		mo = Spawn ("CorpseBit", self->Pos(), ALLOW_REPLACE);
 		if (mo)
 		{
 			mo->SetState (mo->SpawnState + (pr_foo()%3));
@@ -186,7 +186,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CorpseExplode)
 		}
 	}
 	// Spawn a skull
-	mo = Spawn ("CorpseBit", self->x, self->y, self->z, ALLOW_REPLACE);
+	mo = Spawn ("CorpseBit", self->Pos(), ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->SetState (mo->SpawnState + 3);
@@ -215,9 +215,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_LeafSpawn)
 	for (i = (pr_leaf()&3)+1; i; i--)
 	{
 		mo = Spawn (pr_leaf()&1 ? PClass::FindActor("Leaf1") : PClass::FindActor("Leaf2"),
-			self->x + (pr_leaf.Random2()<<14),
-			self->y + (pr_leaf.Random2()<<14),
-			self->z + (pr_leaf()<<14), ALLOW_REPLACE);
+			self->Vec3Offset(
+			(pr_leaf.Random2()<<14),
+			(pr_leaf.Random2()<<14),
+			(pr_leaf()<<14)), ALLOW_REPLACE);
 		if (mo)
 		{
 			P_ThrustMobj (mo, self->angle, (pr_leaf()<<9)+3*FRACUNIT);
@@ -306,9 +307,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_SoAExplode)
 
 	for (i = 0; i < 10; i++)
 	{
-		mo = Spawn ("ZArmorChunk", self->x+((pr_soaexplode()-128)<<12),
-			self->y+((pr_soaexplode()-128)<<12), 
-			self->z+(pr_soaexplode()*self->height/256), ALLOW_REPLACE);
+		mo = Spawn ("ZArmorChunk", self->Vec3Offset(
+			((pr_soaexplode()-128)<<12),
+			((pr_soaexplode()-128)<<12), 
+			(pr_soaexplode()*self->height/256)), ALLOW_REPLACE);
 		if (mo)
 		{
 			mo->SetState (mo->SpawnState + i);
@@ -324,7 +326,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SoAExplode)
 		if (!((level.flags2 & LEVEL2_NOMONSTERS) || (dmflags & DF_NO_MONSTERS))
 		|| !(GetDefaultByType (type)->flags3 & MF3_ISMONSTER))
 		{ // Only spawn monsters if not -nomonsters
-			Spawn (type, self->x, self->y, self->z, ALLOW_REPLACE);
+			Spawn (type, self->Pos(), ALLOW_REPLACE);
 		}
 	}
 	S_Sound (self, CHAN_BODY, self->DeathSound, 1, ATTN_NORM);

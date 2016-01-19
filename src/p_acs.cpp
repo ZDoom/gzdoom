@@ -4157,7 +4157,7 @@ bool DLevelScript::DoCheckActorTexture(int tid, AActor *activator, int string, b
 	}
 	else
 	{
-		fixed_t z = actor->Z() + actor->height;
+		fixed_t z = actor->Top();
 		// Looking through planes from bottom to top
 		for (i = numff-1; i >= 0; --i)
 		{

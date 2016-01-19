@@ -59,9 +59,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_BrainScream)
 	PARAM_ACTION_PROLOGUE;
 	fixed_t x;
 		
-	for (x = self->x - 196*FRACUNIT; x < self->x + 320*FRACUNIT; x += 8*FRACUNIT)
+	for (x = self->X() - 196*FRACUNIT; x < self->X() + 320*FRACUNIT; x += 8*FRACUNIT)
 	{
-		BrainishExplosion (x, self->y - 320*FRACUNIT,
+		BrainishExplosion (x, self->Y() - 320*FRACUNIT,
 			128 + (pr_brainscream() << (FRACBITS + 1)));
 	}
 	S_Sound (self, CHAN_VOICE, "brain/death", 1, ATTN_NONE);
@@ -71,9 +71,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_BrainScream)
 DEFINE_ACTION_FUNCTION(AActor, A_BrainExplode)
 {
 	PARAM_ACTION_PROLOGUE;
-	fixed_t x = self->x + pr_brainexplode.Random2()*2048;
+	fixed_t x = self->X() + pr_brainexplode.Random2()*2048;
 	fixed_t z = 128 + pr_brainexplode()*2*FRACUNIT;
-	BrainishExplosion (x, self->y, z);
+	BrainishExplosion (x, self->Y(), z);
 	return 0;
 }
 
@@ -150,11 +150,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BrainSpit)
 			}
 			else if (abs(spit->vely) > abs(spit->velx))
 			{
-				spit->special2 = (targ->y - self->y) / spit->vely;
+				spit->special2 = (targ->Y() - self->Y()) / spit->vely;
 			}
 			else
 			{
-				spit->special2 = (targ->x - self->x) / spit->velx;
+				spit->special2 = (targ->X() - self->X()) / spit->velx;
 			}
 			// [GZ] Calculates when the projectile will have reached destination
 			spit->special2 += level.maptime;
@@ -196,7 +196,7 @@ static void SpawnFly(AActor *self, PClassActor *spawntype, FSoundID sound)
 	
 	if (spawntype != NULL)
 	{
-		fog = Spawn (spawntype, targ->x, targ->y, targ->z, ALLOW_REPLACE);
+		fog = Spawn (spawntype, targ->Pos(), ALLOW_REPLACE);
 		if (fog != NULL) S_Sound (fog, CHAN_BODY, sound, 1, ATTN_NORM);
 	}
 
@@ -267,7 +267,7 @@ static void SpawnFly(AActor *self, PClassActor *spawntype, FSoundID sound)
 	spawntype = PClass::FindActor(SpawnName);
 	if (spawntype != NULL)
 	{
-		newmobj = Spawn (spawntype, targ->x, targ->y, targ->z, ALLOW_REPLACE);
+		newmobj = Spawn (spawntype, targ->Pos(), ALLOW_REPLACE);
 		if (newmobj != NULL)
 		{
 			// Make the new monster hate what the boss eye hates
@@ -286,7 +286,7 @@ static void SpawnFly(AActor *self, PClassActor *spawntype, FSoundID sound)
 			if (!(newmobj->ObjectFlags & OF_EuthanizeMe))
 			{
 				// telefrag anything in this spot
-				P_TeleportMove (newmobj, newmobj->x, newmobj->y, newmobj->z, true);
+				P_TeleportMove (newmobj, newmobj->Pos(), true);
 			}
 			newmobj->flags4 |= MF4_BOSSSPAWNED;
 		}

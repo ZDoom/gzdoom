@@ -91,7 +91,7 @@ class ARandomSpawner : public AActor
 			// So now we can spawn the dropped item.
 			if (di == NULL || bouncecount >= MAX_RANDOMSPAWNERS_RECURSION)	// Prevents infinite recursions
 			{
-				Spawn("Unknown", x, y, z, NO_REPLACE);		// Show that there's a problem.
+				Spawn("Unknown", Pos(), NO_REPLACE);		// Show that there's a problem.
 				Destroy();
 				return;
 			}
@@ -149,11 +149,11 @@ class ARandomSpawner : public AActor
 			{
 				tracer = target->target;
 			}
-			newmobj = P_SpawnMissileXYZ(x, y, z, target, target->target, cls, false);
+			newmobj = P_SpawnMissileXYZ(Pos(), target, target->target, cls, false);
 		}
-		else
-		{
-			newmobj = Spawn(cls, x, y, z, NO_REPLACE);
+		else 
+		{		
+			newmobj = Spawn(cls, Pos(), NO_REPLACE);
 		}
 		if (newmobj != NULL)
 		{
@@ -187,7 +187,7 @@ class ARandomSpawner : public AActor
 			// Handle special altitude flags
 			if (newmobj->flags & MF_SPAWNCEILING)
 			{
-				newmobj->z = newmobj->ceilingz - newmobj->height - SpawnPoint[2];
+				newmobj->SetZ(newmobj->ceilingz - newmobj->height - SpawnPoint[2]);
 			}
 			else if (newmobj->flags2 & MF2_SPAWNFLOAT) 
 			{
@@ -195,9 +195,9 @@ class ARandomSpawner : public AActor
 				if (space > 48*FRACUNIT)
 				{
 					space -= 40*FRACUNIT;
-					newmobj->z = MulScale8 (space, pr_randomspawn()) + newmobj->floorz + 40*FRACUNIT;
+					newmobj->SetZ(MulScale8 (space, pr_randomspawn()) + newmobj->floorz + 40*FRACUNIT);
 				}
-				newmobj->z += SpawnPoint[2];
+				newmobj->AddZ(SpawnPoint[2]);
 			}
 			if (newmobj->flags & MF_MISSILE)
 				P_CheckMissileSpawn(newmobj, 0);

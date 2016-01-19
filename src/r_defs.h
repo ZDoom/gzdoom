@@ -455,6 +455,11 @@ struct secspecial_t
 	short leakydamage;		// chance of leaking through radiation suit
 	int Flags;
 
+	secspecial_t()
+	{
+		Clear();
+	}
+
 	void Clear()
 	{
 		memset(this, 0, sizeof(*this));
@@ -677,6 +682,17 @@ struct sector_t
 	{
 		return pos == floor? floorplane:ceilingplane;
 	}
+
+	fixed_t HighestCeiling(AActor *a) const
+	{
+		return ceilingplane.ZatPoint(a);
+	}
+
+	fixed_t LowestFloor(AActor *a) const
+	{
+		return floorplane.ZatPoint(a);
+	}
+
 
 	bool isSecret() const
 	{
@@ -972,6 +988,11 @@ struct line_t
 	sector_t	*frontsector, *backsector;
 	int 		validcount;	// if == validcount, already checked
 	int			locknumber;	// [Dusk] lock number for special
+
+	bool isLinePortal() const
+	{
+		return false;
+	}
 };
 
 // phares 3/14/98

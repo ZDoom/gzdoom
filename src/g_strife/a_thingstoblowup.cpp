@@ -18,10 +18,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Bang4Cloud)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	fixed_t spawnx, spawny;
-
 	fixedvec3 pos = self->Vec3Offset((pr_bang4cloud.Random2() & 3) * 10240, (pr_bang4cloud.Random2() & 3) * 10240, 0);
-
 	Spawn("Bang4Cloud", pos, ALLOW_REPLACE);
 	return 0;
 }

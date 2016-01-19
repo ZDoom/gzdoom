@@ -718,6 +718,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_ItBurnsItBurns)
 DEFINE_ACTION_FUNCTION(AActor, A_DropFire)
 {
 	PARAM_ACTION_PROLOGUE;
+
+	AActor *drop = Spawn("FireDroplet", self->PosPlusZ(24*FRACUNIT), ALLOW_REPLACE);
 	drop->velz = -FRACUNIT;
 	P_RadiusAttack (self, self, 64, 64, NAME_Fire, 0);
 	return 0;

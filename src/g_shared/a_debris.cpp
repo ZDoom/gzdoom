@@ -31,10 +31,8 @@ IMPLEMENT_CLASS(AGlassShard)
 
 void P_SpawnDirt (AActor *actor, fixed_t radius)
 {
-	fixed_t x,y,z;
 	PClassActor *dtype = NULL;
 	AActor *mo;
-	angle_t angle;
 
 	fixedvec3 pos = actor->Vec3Angle(radius, pr_dirt() << 24, (pr_dirt() << 9) + FRACUNIT);
 

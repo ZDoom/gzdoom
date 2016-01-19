@@ -389,7 +389,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_MntrFloorFire)
 	PARAM_ACTION_PROLOGUE;
 
 	AActor *mo;
-	fixed_t x, y;
 
 	self->SetZ(self->floorz);
 	fixedvec2 pos = self->Vec2Offset(

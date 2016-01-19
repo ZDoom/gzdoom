@@ -62,9 +62,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_KnightAttack)
 	if (self->flags & MF_SHADOW || pr_knightatk () < 40)
 	{ // Red axe
 		P_SpawnMissileZ (self, self->Z() + 36*FRACUNIT, self->target, PClass::FindActor("RedAxe"));
-		return;
+		return 0;
 	}
 	// Green axe
 	P_SpawnMissileZ (self, self->Z() + 36*FRACUNIT, self->target, PClass::FindActor("KnightAxe"));
+	return 0;
 }
 

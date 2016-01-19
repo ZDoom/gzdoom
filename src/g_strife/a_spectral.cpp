@@ -59,7 +59,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpectralLightning)
 	PARAM_ACTION_PROLOGUE;
 
 	AActor *flash;
-	fixed_t x, y;
 
 	if (self->threshold != 0)
 		--self->threshold;

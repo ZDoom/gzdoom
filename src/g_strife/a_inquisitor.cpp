@@ -134,6 +134,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_InquisitorCheckLand)
 DEFINE_ACTION_FUNCTION(AActor, A_TossArm)
 {
 	PARAM_ACTION_PROLOGUE;
+
+	AActor *foo = Spawn("InquisitorArm", self->PosPlusZ(24*FRACUNIT), ALLOW_REPLACE);
 	foo->angle = self->angle - ANGLE_90 + (pr_inq.Random2() << 22);
 	foo->velx = FixedMul (foo->Speed, finecosine[foo->angle >> ANGLETOFINESHIFT]) >> 3;
 	foo->vely = FixedMul (foo->Speed, finesine[foo->angle >> ANGLETOFINESHIFT]) >> 3;

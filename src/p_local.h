@@ -134,7 +134,7 @@ enum EPuffFlags
 };
 
 AActor *P_SpawnPuff (AActor *source, PClassActor *pufftype, fixed_t x, fixed_t y, fixed_t z, angle_t dir, int updown, int flags = 0, AActor *vict = NULL);
-inline AActor *P_SpawnPuff(AActor *source, const PClass *pufftype, const fixedvec3 &pos, angle_t dir, int updown, int flags = 0, AActor *vict = NULL)
+inline AActor *P_SpawnPuff(AActor *source, PClassActor *pufftype, const fixedvec3 &pos, angle_t dir, int updown, int flags = 0, AActor *vict = NULL)
 {
 	return P_SpawnPuff(source, pufftype, pos.x, pos.y, pos.z, dir, updown, flags, vict);
 }
@@ -145,6 +145,7 @@ void	P_RipperBlood (AActor *mo, AActor *bleeder);
 int		P_GetThingFloorType (AActor *thing);
 void	P_ExplodeMissile (AActor *missile, line_t *explodeline, AActor *target);
 
+AActor *P_OldSpawnMissile(AActor *source, AActor *owner, AActor *dest, PClassActor *type);
 AActor *P_SpawnMissile (AActor* source, AActor* dest, PClassActor *type, AActor* owner = NULL);
 AActor *P_SpawnMissileZ (AActor* source, fixed_t z, AActor* dest, PClassActor *type);
 AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z, AActor *source, AActor *dest, PClassActor *type, bool checkspawn = true, AActor *owner = NULL);

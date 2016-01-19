@@ -129,6 +129,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpotLightning)
 DEFINE_ACTION_FUNCTION(AActor, A_SpawnProgrammerBase)
 {
 	PARAM_ACTION_PROLOGUE;
+
+	AActor *foo = Spawn("ProgrammerBase", self->PosPlusZ(24*FRACUNIT), ALLOW_REPLACE);
 	if (foo != NULL)
 	{
 		foo->angle = self->angle + ANGLE_180 + (pr_prog.Random2() << 22);

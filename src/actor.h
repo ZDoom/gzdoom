@@ -957,13 +957,13 @@ public:
 		return ret;
 	}
 
-	fixedvec2 Vec2Offset(fixed_t dx, fixed_t dy) const
+	fixedvec2 Vec2Offset(fixed_t dx, fixed_t dy, bool absolute = false) const
 	{
 		fixedvec2 ret = { x + dx, y + dy };
 		return ret;
 	}
 
-	fixedvec3 Vec3Offset(fixed_t dx, fixed_t dy, fixed_t dz) const
+	fixedvec3 Vec3Offset(fixed_t dx, fixed_t dy, fixed_t dz, bool absolute = false) const
 	{
 		fixedvec3 ret = { x + dx, y + dy, z + dz };
 		return ret;

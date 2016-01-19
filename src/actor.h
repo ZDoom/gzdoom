@@ -951,21 +951,41 @@ public:
 		return ret;
 	}
 
-	fixedvec2 Vec2Offset(fixed_t dx, fixed_t dy) const
+	fixedvec2 Vec2Offset(fixed_t dx, fixed_t dy, bool absolute = false) const
 	{
 		fixedvec2 ret = { x + dx, y + dy };
 		return ret;
 	}
 
-	fixedvec3 Vec3Offset(fixed_t dx, fixed_t dy, fixed_t dz) const
+
+	fixedvec2 Vec2Angle(fixed_t length, angle_t angle, bool absolute = false) const
+	{
+		fixedvec2 ret = { x + FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]),
+						  y + FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]) };
+		return ret;
+	}
+
+	fixedvec3 Vec3Offset(fixed_t dx, fixed_t dy, fixed_t dz, bool absolute = false) const
 	{
 		fixedvec3 ret = { x + dx, y + dy, z + dz };
+		return ret;
+	}
+
+	fixedvec3 Vec3Angle(fixed_t length, angle_t angle, fixed_t dz, bool absolute = false) const
+	{
+		fixedvec3 ret = { x + FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]),
+						  y + FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]), z + dz };
 		return ret;
 	}
 
 	void Move(fixed_t dx, fixed_t dy, fixed_t dz)
 	{
 		SetOrigin(x + dx, y + dy, z + dz, true);
+	}
+
+	void SetOrigin(const fixedvec3 & npos, bool moving)
+	{
+		SetOrigin(npos.x, npos.y, npos.z, moving);
 	}
 
 	inline void SetFriendPlayer(player_t *player);
@@ -1227,7 +1247,11 @@ public:
 	{
 		return z;
 	}
-	void SetZ(fixed_t newz)
+	fixed_t Top() const
+	{
+		return z + height;
+	}
+	void SetZ(fixed_t newz, bool moving = true)
 	{
 		z = newz;
 	}

@@ -1,7 +1,6 @@
 #ifndef __WIN32GLIFACE_H__
 #define __WIN32GLIFACE_H__
 
-#include "gl/system/gl_system.h"
 #include "hardware.h"
 #include "win32iface.h"
 #include "v_video.h"
@@ -46,8 +45,6 @@ public:
 	void Shutdown();
 	bool SetFullscreen(const char *devicename, int w, int h, int bits, int hz);
 
-	PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB; // = (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
-	PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB;
 	HDC m_hDC;
 
 protected:
@@ -106,8 +103,6 @@ public:
     // look to be some cross-platform bits in the way.
 	Win32GLFrameBuffer(void *hMonitor, int width, int height, int bits, int refreshHz, bool fullscreen);
 	virtual ~Win32GLFrameBuffer();
-
-	PFNWGLSWAPINTERVALEXTPROC vsyncfunc;
 
 	// unused but must be defined
 	virtual void Blank ();

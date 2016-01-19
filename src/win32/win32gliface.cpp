@@ -1,8 +1,15 @@
-#include "gl/system/gl_system.h"
+//#include "gl/system/gl_system.h"
 
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <GL/gl.h>
+#include "wglext.h"
+
+#define USE_WINDOWS_DWORD
 #include "win32iface.h"
 #include "win32gliface.h"
 //#include "gl/gl_intern.h"
+#include "x86.h"
 #include "templates.h"
 #include "version.h"
 #include "c_console.h"
@@ -16,11 +23,15 @@
 
 #include "gl/renderer/gl_renderer.h"
 #include "gl/system/gl_framebuffer.h"
-#include "gl/shaders/gl_shader.h"
-#include "gl/utility/gl_templates.h"
 
 void gl_CalculateCPUSpeed();
 extern int NewWidth, NewHeight, NewBits, DisplayBits;
+
+// these get used before GLEW is initialized so we have to use separate pointers with different names
+PFNWGLCHOOSEPIXELFORMATARBPROC myWglChoosePixelFormatARB; // = (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
+PFNWGLCREATECONTEXTATTRIBSARBPROC myWglCreateContextAttribsARB;
+PFNWGLSWAPINTERVALEXTPROC vsyncfunc;
+
 
 CUSTOM_CVAR(Int, gl_vid_multisample, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL )
 {
@@ -582,8 +593,8 @@ bool Win32GLVideo::SetPixelFormat()
 	hRC = wglCreateContext(hDC);
 	wglMakeCurrent(hDC, hRC);
 
-	wglChoosePixelFormatARB = (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
-	wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)wglGetProcAddress("wglCreateContextAttribsARB");
+	myWglChoosePixelFormatARB = (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
+	myWglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)wglGetProcAddress("wglCreateContextAttribsARB");
 	// any extra stuff here?
 
 	wglMakeCurrent(NULL, NULL);
@@ -613,7 +624,7 @@ bool Win32GLVideo::SetupPixelFormat(bool allowsoftware, int multisample)
 	colorDepth = GetDeviceCaps(deskDC, BITSPIXEL);
 	ReleaseDC(GetDesktopWindow(), deskDC);
 
-	if (wglChoosePixelFormatARB)
+	if (myWglChoosePixelFormatARB)
 	{
 		attributes[0]	=	WGL_RED_BITS_ARB; //bits
 		attributes[1]	=	8;
@@ -663,7 +674,7 @@ bool Win32GLVideo::SetupPixelFormat(bool allowsoftware, int multisample)
 		attributes[24]	=	0;
 		attributes[25]	=	0;
 	
-		if (!wglChoosePixelFormatARB(m_hDC, attributes, attribsFloat, 1, &pixelFormat, &numFormats))
+		if (!myWglChoosePixelFormatARB(m_hDC, attributes, attribsFloat, 1, &pixelFormat, &numFormats))
 		{
 			Printf("R_OPENGL: Couldn't choose pixel format. Retrying in compatibility mode\n");
 			goto oldmethod;
@@ -737,7 +748,7 @@ bool Win32GLVideo::InitHardware (HWND Window, bool allowsoftware, int multisampl
 	}
 
 	m_hRC = 0;
-	if (wglCreateContextAttribsARB != NULL)
+	if (myWglCreateContextAttribsARB != NULL)
 	{
 		int ctxAttribs[] = {
 			WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
@@ -747,7 +758,7 @@ bool Win32GLVideo::InitHardware (HWND Window, bool allowsoftware, int multisampl
 			0
 		};
 
-		m_hRC = wglCreateContextAttribsARB(m_hDC, 0, ctxAttribs);
+		m_hRC = myWglCreateContextAttribsARB(m_hDC, 0, ctxAttribs);
 	}
 	if (m_hRC == 0)
 	{

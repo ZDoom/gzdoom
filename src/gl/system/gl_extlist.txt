@@ -1,0 +1,14 @@
+-- List of OpenGL extensions for glLoadGen
+
+-- Generation of gl_load.c and gl_load.h files:
+-- > lua LoadGen.lua -style=pointer_c -spec=gl -version=2.1 -extfile=gl_extlist.txt load
+
+GL_ARB_map_buffer_range
+GL_ARB_occlusion_query
+GL_ARB_texture_compression
+GL_ARB_uniform_buffer_object
+GL_EXT_framebuffer_object
+GL_EXT_packed_depth_stencil
+GL_EXT_texture_compression_s3tc
+GL_EXT_texture_filter_anisotropic
+GL_NV_depth_clamp

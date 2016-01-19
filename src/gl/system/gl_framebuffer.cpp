@@ -120,7 +120,7 @@ void OpenGLFrameBuffer::InitializeState()
 
 	if (first)
 	{
-		glewInit();
+		ogl_LoadFunctions();
 	}
 
 	gl_LoadExtensions();
@@ -557,3 +557,4 @@ void OpenGLFrameBuffer::GameRestart()
 	LastCamera = NULL;
 	gl_GenerateGlobalBrightmapFromColormap();
 }
+

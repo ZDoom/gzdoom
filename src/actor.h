@@ -1291,6 +1291,21 @@ public:
 		y = yy;
 		z = zz;
 	}
+	void SetXY(const fixedvec2 &npos)
+	{
+		x = npos.x;
+		y = npos.y;
+	}
+	void SetXYZ(const fixedvec3 &npos)
+	{
+		x = npos.x;
+		y = npos.y;
+		z = npos.z;
+	}
+	void SetMovement(fixed_t x, fixed_t y, fixed_t z)
+	{
+		// not yet implemented
+	}
 
 };
 

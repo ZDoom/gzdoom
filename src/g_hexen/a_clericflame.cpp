@@ -48,12 +48,12 @@ void ACFlameMissile::Effect ()
 	if (!--special1)
 	{
 		special1 = 4;
-		newz = z-12*FRACUNIT;
+		newz = Z()-12*FRACUNIT;
 		if (newz < floorz)
 		{
 			newz = floorz;
 		}
-		AActor *mo = Spawn ("CFlameFloor", x, y, newz, ALLOW_REPLACE);
+		AActor *mo = Spawn ("CFlameFloor", X(), Y(), newz, ALLOW_REPLACE);
 		if (mo)
 		{
 			mo->angle = angle;
@@ -123,9 +123,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_CFlameMissile)
 		{
 			an = (i*ANG45)>>ANGLETOFINESHIFT;
 			an90 = (i*ANG45+ANG90)>>ANGLETOFINESHIFT;
-			mo = Spawn ("CircleFlame", BlockingMobj->x+FixedMul(dist, finecosine[an]),
-				BlockingMobj->y+FixedMul(dist, finesine[an]), 
-				BlockingMobj->z+5*FRACUNIT, ALLOW_REPLACE);
+			mo = Spawn ("CircleFlame", BlockingMobj->Vec3Offset(
+				FixedMul(dist, finecosine[an]),
+				FixedMul(dist, finesine[an]), 
+				5*FRACUNIT), ALLOW_REPLACE);
 			if (mo)
 			{
 				mo->angle = an<<ANGLETOFINESHIFT;
@@ -134,9 +135,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_CFlameMissile)
 				mo->vely = mo->special2 = FixedMul(FLAMESPEED, finesine[an]);
 				mo->tics -= pr_missile()&3;
 			}
-			mo = Spawn ("CircleFlame", BlockingMobj->x-FixedMul(dist, finecosine[an]),
-				BlockingMobj->y-FixedMul(dist, finesine[an]), 
-				BlockingMobj->z+5*FRACUNIT, ALLOW_REPLACE);
+			mo = Spawn ("CircleFlame", BlockingMobj->Vec3Offset(
+				-FixedMul(dist, finecosine[an]),
+				-FixedMul(dist, finesine[an]), 
+				5*FRACUNIT), ALLOW_REPLACE);
 			if(mo)
 			{
 				mo->angle = ANG180+(an<<ANGLETOFINESHIFT);

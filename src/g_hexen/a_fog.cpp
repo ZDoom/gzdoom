@@ -41,7 +41,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FogSpawn)
 
 	self->special1 = self->args[2];		// Reset frequency count
 
-	mo = Spawn (fogs[pr_fogspawn()%3], self->x, self->y, self->z, ALLOW_REPLACE);
+	mo = Spawn (fogs[pr_fogspawn()%3], self->Pos(), ALLOW_REPLACE);
 
 	if (mo)
 	{
@@ -80,7 +80,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FogMove)
 	if ((self->args[3] % 4) == 0)
 	{
 		weaveindex = self->special2;
-		self->z += finesine[weaveindex << BOBTOFINESHIFT] * 4;
+		self->AddZ(finesine[weaveindex << BOBTOFINESHIFT] * 4);
 		self->special2 = (weaveindex + 1) & 63;
 	}
 

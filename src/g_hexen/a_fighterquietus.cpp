@@ -36,7 +36,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DropWeaponPieces)
 		const PClass *cls = j==0? p1 : j==1? p2 : p3;
 		if (cls)
 		{
-			AActor *piece = Spawn (cls, self->x, self->y, self->z, ALLOW_REPLACE);
+			AActor *piece = Spawn (cls, self->Pos(), ALLOW_REPLACE);
 			if (piece != NULL)
 			{
 				piece->velx = self->velx + finecosine[fineang];
@@ -112,10 +112,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_FSwordFlames)
 
 	for (i = 1+(pr_fswordflame()&3); i; i--)
 	{
-		fixed_t x = self->x+((pr_fswordflame()-128)<<12);
-		fixed_t y = self->y+((pr_fswordflame()-128)<<12);
-		fixed_t z = self->z+((pr_fswordflame()-128)<<11);
-		Spawn ("FSwordFlame", x, y, z, ALLOW_REPLACE);
+		fixedvec3 pos = self->Vec3Offset(
+			((pr_fswordflame()-128)<<12),
+			((pr_fswordflame()-128)<<12),
+			((pr_fswordflame()-128)<<11));
+		Spawn ("FSwordFlame", pos, ALLOW_REPLACE);
 	}
 }
 

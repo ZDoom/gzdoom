@@ -568,9 +568,9 @@ bool P_Move (AActor *actor)
 			fixed_t savedz = actor->Z();
 
 			if (actor->Z() < tm.floorz)
-				actor->SetZ(actor->Z() + actor->FloatSpeed);
+				actor->AddZ(actor->FloatSpeed);
 			else
-				actor->SetZ(actor->Z() - actor->FloatSpeed);
+				actor->AddZ(-actor->FloatSpeed);
 
 
 			// [RH] Check to make sure there's nothing in the way of the float
@@ -2547,8 +2547,8 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 				if (testsec)
 				{
 					fixed_t zdist1, zdist2;
-					if (P_Find3DFloor(testsec, corpsehit->X(), corpsehit->Y(), corpsehit->Z(), false, true, zdist1)
-						!= P_Find3DFloor(testsec, self->X(), self->Y(), self->Z(), false, true, zdist2))
+					if (P_Find3DFloor(testsec, corpsehit->Pos(), false, true, zdist1)
+						!= P_Find3DFloor(testsec, self->Pos(), false, true, zdist2))
 					{
 						// Not on same floor
 						if (vilesec == corpsec || abs(zdist1 - self->Z()) > self->height)
@@ -2565,7 +2565,7 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 
 				corpsehit->flags |= MF_SOLID;
 				corpsehit->height = corpsehit->GetDefault()->height;
-				bool check = P_CheckPosition(corpsehit, corpsehit->X(), corpsehit->Y());
+				bool check = P_CheckPosition(corpsehit, corpsehit->Pos());
 				corpsehit->flags = oldflags;
 				corpsehit->radius = oldradius;
 				corpsehit->height = oldheight;
@@ -2777,9 +2777,7 @@ void A_Face (AActor *self, AActor *other, angle_t max_turn, angle_t max_pitch, a
 	// disabled and is so by default.
 	if (max_pitch <= ANGLE_180)
 	{
-		// [DH] Don't need to do proper fixed->double conversion, since the
-		// result is only used in a ratio.
-		fixedvec2 dist = self->Vec2To(other);
+		TVector2<double> dist = self->Vec2To(other);
 		
 		// Positioning ala missile spawning, 32 units above foot level
 		fixed_t source_z = self->Z() + 32*FRACUNIT + self->GetBobOffset();
@@ -2803,8 +2801,8 @@ void A_Face (AActor *self, AActor *other, angle_t max_turn, angle_t max_pitch, a
 		if (!(flags & FAF_NODISTFACTOR))
 			target_z += pitch_offset;
 
-		double dist_z = target_z - source_z;
-		double ddist = sqrt(dist.x*dist.x + dist.y*dist.y + dist_z*dist_z);
+		double dist_z = FIXED2DBL(target_z - source_z);
+		double ddist = sqrt(dist.X*dist.X + dist.Y*dist.Y + dist_z*dist_z);
 		int other_pitch = (int)rad2bam(asin(dist_z / ddist));
 		
 		if (max_pitch != 0)

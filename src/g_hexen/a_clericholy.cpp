@@ -94,7 +94,7 @@ bool AHolySpirit::Slam (AActor *thing)
 			P_DamageMobj (thing, this, target, dam, NAME_Melee);
 			if (pr_spiritslam() < 128)
 			{
-				Spawn ("HolyPuff", x, y, z, ALLOW_REPLACE);
+				Spawn ("HolyPuff", Pos(), ALLOW_REPLACE);
 				S_Sound (this, CHAN_WEAPON, "SpiritAttack", 1, ATTN_NORM);
 				if (thing->flags3&MF3_ISMONSTER && pr_spiritslam() < 128)
 				{
@@ -136,7 +136,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CHolyAttack2)
 
 	for (j = 0; j < 4; j++)
 	{
-		mo = Spawn<AHolySpirit> (self->x, self->y, self->z, ALLOW_REPLACE);
+		mo = Spawn<AHolySpirit> (self->Pos(), ALLOW_REPLACE);
 		if (!mo)
 		{
 			continue;
@@ -157,7 +157,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CHolyAttack2)
 				mo->special2 = ((FINEANGLES/2 + i) << 16) + FINEANGLES/2 + pr_holyatk2(8 << BOBTOFINESHIFT);
 				break;
 		}
-		mo->z = self->z;
+		mo->SetZ(self->Z());
 		mo->angle = self->angle+(ANGLE_45+ANGLE_45/2)-ANGLE_45*j;
 		P_ThrustMobj(mo, mo->angle, mo->Speed);
 		mo->target = self->target;
@@ -188,11 +188,11 @@ void SpawnSpiritTail (AActor *spirit)
 	AActor *tail, *next;
 	int i;
 	
-	tail = Spawn ("HolyTail", spirit->x, spirit->y, spirit->z, ALLOW_REPLACE);
+	tail = Spawn ("HolyTail", spirit->Pos(), ALLOW_REPLACE);
 	tail->target = spirit; // parent
 	for (i = 1; i < 3; i++)
 	{
-		next = Spawn ("HolyTailTrail", spirit->x, spirit->y, spirit->z, ALLOW_REPLACE);
+		next = Spawn ("HolyTailTrail", spirit->Pos(), ALLOW_REPLACE);
 		tail->tracer = next;
 		tail = next;
 	}
@@ -264,24 +264,24 @@ static void CHolyTailFollow (AActor *actor, fixed_t dist)
 		{
 			an = actor->AngleTo(child) >> ANGLETOFINESHIFT;
 			oldDistance = child->AproxDistance (actor);
-			if (P_TryMove (child, actor->x+FixedMul(dist, finecosine[an]), 
-				actor->y+FixedMul(dist, finesine[an]), true))
+			if (P_TryMove (child, actor->X()+FixedMul(dist, finecosine[an]), 
+				actor->Y()+FixedMul(dist, finesine[an]), true))
 			{
 				newDistance = child->AproxDistance (actor)-FRACUNIT;
 				if (oldDistance < FRACUNIT)
 				{
-					if (child->z < actor->z)
+					if (child->Z() < actor->Z())
 					{
-						child->z = actor->z-dist;
+						child->SetZ(actor->Z()-dist);
 					}
 					else
 					{
-						child->z = actor->z+dist;
+						child->SetZ(actor->Z()+dist);
 					}
 				}
 				else
 				{
-					child->z = actor->z + Scale (newDistance, child->z-actor->z, oldDistance);
+					child->SetZ(actor->Z() + Scale (newDistance, child->Z()-actor->Z(), oldDistance));
 				}
 			}
 		}
@@ -328,10 +328,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_CHolyTail)
 	else
 	{
 		if (P_TryMove (self,
-			parent->x - 14*finecosine[parent->angle>>ANGLETOFINESHIFT],
-			parent->y - 14*finesine[parent->angle>>ANGLETOFINESHIFT], true))
+			parent->X() - 14*finecosine[parent->angle>>ANGLETOFINESHIFT],
+			parent->Y() - 14*finesine[parent->angle>>ANGLETOFINESHIFT], true))
 		{
-			self->z = parent->z-5*FRACUNIT;
+			self->SetZ(parent->Z()-5*FRACUNIT);
 		}
 		CHolyTailFollow (self, 10*FRACUNIT);
 	}
@@ -407,11 +407,11 @@ static void CHolySeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax)
 	actor->velx = FixedMul (actor->Speed, finecosine[angle]);
 	actor->vely = FixedMul (actor->Speed, finesine[angle]);
 	if (!(level.time&15) 
-		|| actor->z > target->z+(target->height)
-		|| actor->z+actor->height < target->z)
+		|| actor->Z() > target->Top()
+		|| actor->Top() < target->Z())
 	{
-		newZ = target->z+((pr_holyseeker()*target->height)>>8);
-		deltaZ = newZ-actor->z;
+		newZ = target->Z()+((pr_holyseeker()*target->height)>>8);
+		deltaZ = newZ - actor->Z();
 		if (abs(deltaZ) > 15*FRACUNIT)
 		{
 			if (deltaZ > 0)
@@ -442,22 +442,24 @@ static void CHolySeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax)
 
 void CHolyWeave (AActor *actor, FRandom &pr_random)
 {
-	fixed_t newX, newY;
+	fixed_t newX, newY, newZ;
 	int weaveXY, weaveZ;
 	int angle;
 
 	weaveXY = actor->special2 >> 16;
 	weaveZ = actor->special2 & FINEMASK;
 	angle = (actor->angle + ANG90) >> ANGLETOFINESHIFT;
-	newX = actor->x - FixedMul(finecosine[angle], finesine[weaveXY] * 32);
-	newY = actor->y - FixedMul(finesine[angle], finesine[weaveXY] * 32);
+	newX = actor->X() - FixedMul(finecosine[angle], finesine[weaveXY] * 32);
+	newY = actor->Y() - FixedMul(finesine[angle], finesine[weaveXY] * 32);
 	weaveXY = (weaveXY + pr_random(5 << BOBTOFINESHIFT)) & FINEMASK;
 	newX += FixedMul(finecosine[angle], finesine[weaveXY] * 32);
 	newY += FixedMul(finesine[angle], finesine[weaveXY] * 32);
 	P_TryMove(actor, newX, newY, true);
-	actor->z -= finesine[weaveZ] * 16;
+	newZ = actor->Z();
+	newZ -= finesine[weaveZ] * 16;
 	weaveZ = (weaveZ + pr_random(5 << BOBTOFINESHIFT)) & FINEMASK;
-	actor->z += finesine[weaveZ] * 16;
+	newZ += finesine[weaveZ] * 16;
+	actor->SetZ(newZ);
 	actor->special2 = weaveZ + (weaveXY << 16);
 }
 
@@ -521,7 +523,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ClericAttack)
 {
 	if (!self->target) return;
 
-	AActor * missile = P_SpawnMissileZ (self, self->z + 40*FRACUNIT, self->target, PClass::FindClass ("HolyMissile"));
+	AActor * missile = P_SpawnMissileZ (self, self->Z() + 40*FRACUNIT, self->target, PClass::FindClass ("HolyMissile"));
 	if (missile != NULL) missile->tracer = NULL;	// No initial target
 	S_Sound (self, CHAN_WEAPON, "HolySymbolFire", 1, ATTN_NORM);
 }

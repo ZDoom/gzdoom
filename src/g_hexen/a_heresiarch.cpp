@@ -232,7 +232,6 @@ void ASorcBall1::DoFireSpell ()
 DEFINE_ACTION_FUNCTION(AActor, A_SorcSpinBalls)
 {
 	AActor *mo;
-	fixed_t z;
 
 	self->SpawnState += 2;		// [RH] Don't spawn balls again
 	A_SlowBalls(self);
@@ -240,17 +239,18 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcSpinBalls)
 	self->args[3] = SORC_NORMAL;
 	self->args[4] = SORCBALL_INITIAL_SPEED;		// Initial orbit speed
 	self->special1 = ANGLE_1;
-	z = self->z - self->floorclip + self->height;
+
+	fixedvec3 pos = self->PosPlusZ(-self->floorclip + self->height);
 	
-	mo = Spawn("SorcBall1", self->x, self->y, z, NO_REPLACE);
+	mo = Spawn("SorcBall1", pos, NO_REPLACE);
 	if (mo)
 	{
 		mo->target = self;
 		mo->special2 = SORCFX4_RAPIDFIRE_TIME;
 	}
-	mo = Spawn("SorcBall2", self->x, self->y, z, NO_REPLACE);
+	mo = Spawn("SorcBall2", pos, NO_REPLACE);
 	if (mo) mo->target = self;
-	mo = Spawn("SorcBall3", self->x, self->y, z, NO_REPLACE);
+	mo = Spawn("SorcBall3", pos, NO_REPLACE);
 	if (mo) mo->target = self;
 }
 
@@ -271,7 +271,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcBallOrbit)
 	}
 
 	ASorcBall *actor;
-	int x,y;
 	angle_t angle, baseangle;
 	int mode = self->target->args[3];
 	AHeresiarch *parent = barrier_cast<AHeresiarch *>(self->target);
@@ -370,9 +369,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcBallOrbit)
 		S_Sound (actor, CHAN_BODY, "SorcererBallWoosh", 1, ATTN_NORM);
 	}
 	actor->special1 = angle;		// Set previous angle
-	x = parent->x + FixedMul(dist, finecosine[angle]);
-	y = parent->y + FixedMul(dist, finesine[angle]);
-	actor->SetOrigin (x, y, parent->z - parent->floorclip + parent->height);
+
+	fixedvec3 pos = parent->Vec3Offset(
+		FixedMul(dist, finecosine[angle]),
+		FixedMul(dist, finesine[angle]),
+		-parent->floorclip + parent->height);
+	actor->SetOrigin (pos, true);
 	actor->floorz = parent->floorz;
 	actor->ceilingz = parent->ceilingz;
 }
@@ -540,8 +542,7 @@ void ASorcBall2::CastSorcererSpell ()
 	AActor *parent = target;
 	AActor *mo;
 
-	fixed_t z = parent->z - parent->floorclip + SORC_DEFENSE_HEIGHT*FRACUNIT;
-	mo = Spawn("SorcFX2", x, y, z, ALLOW_REPLACE);
+	mo = Spawn("SorcFX2", PosPlusZ(-parent->floorclip + SORC_DEFENSE_HEIGHT*FRACUNIT), ALLOW_REPLACE);
 	parent->flags2 |= MF2_REFLECTIVE|MF2_INVULNERABLE;
 	parent->args[0] = SORC_DEFENSE_TIME;
 	if (mo) mo->target = parent;
@@ -667,7 +668,7 @@ void A_SorcOffense2(AActor *actor)
 		mo->special2 = 35*5/2;		// 5 seconds
 		dist = mo->AproxDistance(dest) / mo->Speed;
 		if(dist < 1) dist = 1;
-		mo->velz = (dest->z - mo->z) / dist;
+		mo->velz = (dest->Z() - mo->Z()) / dist;
 	}
 }
 
@@ -695,23 +696,19 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcBossAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SpawnFizzle)
 {
-	fixed_t x,y,z;
 	fixed_t dist = 5*FRACUNIT;
-	angle_t angle = self->angle >> ANGLETOFINESHIFT;
 	fixed_t speed = self->Speed;
 	angle_t rangle;
 	AActor *mo;
 	int ix;
 
-	x = self->x + FixedMul(dist,finecosine[angle]);
-	y = self->y + FixedMul(dist,finesine[angle]);
-	z = self->z - self->floorclip + (self->height>>1);
+	fixedvec3 pos = self->Vec3Angle(dist, self->angle, -self->floorclip + (self->height >> 1));
 	for (ix=0; ix<5; ix++)
 	{
-		mo = Spawn("SorcSpark1", x, y, z, ALLOW_REPLACE);
+		mo = Spawn("SorcSpark1", pos, ALLOW_REPLACE);
 		if (mo)
 		{
-			rangle = angle + ((pr_heresiarch()%5) << 1);
+			rangle = (self->angle >> ANGLETOFINESHIFT) + ((pr_heresiarch()%5) << 1);
 			mo->velx = FixedMul(pr_heresiarch()%speed, finecosine[rangle]);
 			mo->vely = FixedMul(pr_heresiarch()%speed, finesine[rangle]);
 			mo->velz = FRACUNIT*2;
@@ -755,7 +752,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcFX2Split)
 {
 	AActor *mo;
 
-	mo = Spawn(self->GetClass(), self->x, self->y, self->z, NO_REPLACE);
+	mo = Spawn(self->GetClass(), self->Pos(), NO_REPLACE);
 	if (mo)
 	{
 		mo->target = self->target;
@@ -763,7 +760,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcFX2Split)
 		mo->special1 = self->angle;					// Set angle
 		mo->SetState (mo->FindState("Orbit"));
 	}
-	mo = Spawn(self->GetClass(), self->x, self->y, self->z, NO_REPLACE);
+	mo = Spawn(self->GetClass(), self->Pos(), NO_REPLACE);
 	if (mo)
 	{
 		mo->target = self->target;
@@ -785,7 +782,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcFX2Split)
 DEFINE_ACTION_FUNCTION(AActor, A_SorcFX2Orbit)
 {
 	angle_t angle;
-	fixed_t x,y,z;
+	fixedvec3 pos;
 	AActor *parent = self->target;
 
 	// [RH] If no parent, then disappear
@@ -818,26 +815,28 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcFX2Orbit)
 	{
 		self->special1 += ANGLE_1*10;
 		angle = ((angle_t)self->special1) >> ANGLETOFINESHIFT;
-		x = parent->x + FixedMul(dist, finecosine[angle]);
-		y = parent->y + FixedMul(dist, finesine[angle]);
-		z = parent->z - parent->floorclip + SORC_DEFENSE_HEIGHT*FRACUNIT;
-		z += FixedMul(15*FRACUNIT,finecosine[angle]);
+		pos = parent->Vec3Offset(
+			FixedMul(dist, finecosine[angle]),
+			FixedMul(dist, finesine[angle]),
+			parent->floorclip + SORC_DEFENSE_HEIGHT*FRACUNIT);
+		pos.z += FixedMul(15*FRACUNIT,finecosine[angle]);
 		// Spawn trailer
-		Spawn("SorcFX2T1", x, y, z, ALLOW_REPLACE);
+		Spawn("SorcFX2T1", pos, ALLOW_REPLACE);
 	}
 	else							// Clock wise
 	{
 		self->special1 -= ANGLE_1*10;
 		angle = ((angle_t)self->special1) >> ANGLETOFINESHIFT;
-		x = parent->x + FixedMul(dist, finecosine[angle]);
-		y = parent->y + FixedMul(dist, finesine[angle]);
-		z = parent->z - parent->floorclip + SORC_DEFENSE_HEIGHT*FRACUNIT;
-		z += FixedMul(20*FRACUNIT,finesine[angle]);
+		pos = parent->Vec3Offset(
+			FixedMul(dist, finecosine[angle]),
+			FixedMul(dist, finesine[angle]),
+			parent->floorclip + SORC_DEFENSE_HEIGHT*FRACUNIT);
+		pos.z += FixedMul(20*FRACUNIT,finesine[angle]);
 		// Spawn trailer
-		Spawn("SorcFX2T1", x, y, z, ALLOW_REPLACE);
+		Spawn("SorcFX2T1", pos, ALLOW_REPLACE);
 	}
 
-	self->SetOrigin (x, y, z);
+	self->SetOrigin (pos, true);
 	self->floorz = parent->floorz;
 	self->ceilingz = parent->ceilingz;
 }
@@ -853,7 +852,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcFX2Orbit)
 DEFINE_ACTION_FUNCTION(AActor, A_SpawnBishop)
 {
 	AActor *mo;
-	mo = Spawn("Bishop", self->x, self->y, self->z, ALLOW_REPLACE);
+	mo = Spawn("Bishop", self->Pos(), ALLOW_REPLACE);
 	if (mo)
 	{
 		if (!P_TestMobjLocation(mo))
@@ -878,7 +877,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnBishop)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SorcererBishopEntry)
 {
-	Spawn("SorcFX3Explosion", self->x, self->y, self->z, ALLOW_REPLACE);
+	Spawn("SorcFX3Explosion", self->Pos(), ALLOW_REPLACE);
 	S_Sound (self, CHAN_VOICE, self->SeeSound, 1, ATTN_NORM);
 }
 

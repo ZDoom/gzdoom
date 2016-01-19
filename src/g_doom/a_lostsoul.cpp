@@ -41,7 +41,7 @@ void A_SkullAttack(AActor *self, fixed_t speed)
 	
 	if (dist < 1)
 		dist = 1;
-	self->velz = (dest->z + (dest->height>>1) - self->z) / dist;
+	self->velz = (dest->Z() + (dest->height>>1) - self->Z()) / dist;
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SkullAttack)

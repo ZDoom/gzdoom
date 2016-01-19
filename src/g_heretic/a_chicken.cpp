@@ -45,7 +45,7 @@ void AChickenPlayer::MorphPlayerThink ()
 	{ // Twitch view angle
 		angle += pr_chickenplayerthink.Random2 () << 19;
 	}
-	if ((z <= floorz) && (pr_chickenplayerthink() < 32))
+	if ((Z() <= floorz) && (pr_chickenplayerthink() < 32))
 	{ // Jump and noise
 		velz += JumpZ;
 
@@ -100,7 +100,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Feathers)
 	}
 	for (i = 0; i < count; i++)
 	{
-		mo = Spawn("Feather", self->x, self->y, self->z+20*FRACUNIT, NO_REPLACE);
+		mo = Spawn("Feather", self->PosPlusZ(20*FRACUNIT), NO_REPLACE);
 		mo->target = self;
 		mo->velx = pr_feathers.Random2() << 8;
 		mo->vely = pr_feathers.Random2() << 8;

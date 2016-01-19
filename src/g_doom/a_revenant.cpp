@@ -26,13 +26,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_SkelMissile)
 		return;
 				
 	A_FaceTarget (self);
-	missile = P_SpawnMissileZ (self, self->z + 48*FRACUNIT,
+	missile = P_SpawnMissileZ (self, self->Z() + 48*FRACUNIT,
 		self->target, PClass::FindClass("RevenantTracer"));
 
 	if (missile != NULL)
 	{
-		missile->x += missile->velx;
-		missile->y += missile->vely;
+		missile->SetOrigin(missile->Vec3Offset(missile->velx, missile->vely, 0), false);
 		missile->tracer = self->target;
 	}
 }
@@ -60,10 +59,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_Tracer)
 		return;
 	
 	// spawn a puff of smoke behind the rocket
-	P_SpawnPuff (self, PClass::FindClass(NAME_BulletPuff), self->x, self->y, self->z, 0, 3);
+	P_SpawnPuff (self, PClass::FindClass(NAME_BulletPuff), self->X(), self->Y(), self->Z(), 0, 3);
 		
-	smoke = Spawn ("RevenantTracerSmoke", self->x - self->velx,
-		self->y - self->vely, self->z, ALLOW_REPLACE);
+	smoke = Spawn ("RevenantTracerSmoke", self->Vec3Offset(-self->velx, -self->vely, 0), ALLOW_REPLACE);
 	
 	smoke->velz = FRACUNIT;
 	smoke->tics -= pr_tracer()&3;
@@ -109,11 +107,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_Tracer)
 
 		if (dest->height >= 56*FRACUNIT)
 		{
-			slope = (dest->z+40*FRACUNIT - self->z) / dist;
+			slope = (dest->Z()+40*FRACUNIT - self->Z()) / dist;
 		}
 		else
 		{
-			slope = (dest->z + self->height*2/3 - self->z) / dist;
+			slope = (dest->Z() + self->height*2/3 - self->Z()) / dist;
 		}
 
 		if (slope < self->velz)

@@ -3056,7 +3056,7 @@ bool ADehackedPickup::TryPickup (AActor *&toucher)
 	{
 		return false;
 	}
-	RealPickup = static_cast<AInventory *>(Spawn (type, X(), Y(), Z(), NO_REPLACE));
+	RealPickup = static_cast<AInventory *>(Spawn (type, Pos(), NO_REPLACE));
 	if (RealPickup != NULL)
 	{
 		// The internally spawned item should never count towards statistics.

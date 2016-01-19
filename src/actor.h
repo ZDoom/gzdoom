@@ -1247,6 +1247,16 @@ public:
 	{
 		return z;
 	}
+	fixedvec3 Pos() const
+	{
+		fixedvec3 ret = { X(), Y(), Z() };
+		return ret;
+	}
+	fixedvec3 PosPlusZ(fixed_t zadd) const
+	{
+		fixedvec3 ret = { X(), Y(), Z() + zadd };
+		return ret;
+	}
 	fixed_t Top() const
 	{
 		return z + height;
@@ -1254,6 +1264,23 @@ public:
 	void SetZ(fixed_t newz, bool moving = true)
 	{
 		z = newz;
+	}
+	void AddZ(fixed_t newz, bool moving = true)
+	{
+		z += newz;
+	}
+
+	// These are not for general use as they do not link the actor into the world!
+	void SetXY(fixed_t xx, fixed_t yy)
+	{
+		x = xx;
+		y = yy;
+	}
+	void SetXYZ(fixed_t xx, fixed_t yy, fixed_t zz)
+	{
+		x = xx;
+		y = yy;
+		z = zz;
 	}
 
 
@@ -1367,6 +1394,14 @@ inline T *Spawn (const fixedvec3 &pos, replace_t allowreplacement)
 {
 	return static_cast<T *>(AActor::StaticSpawn (RUNTIME_CLASS(T), pos.x, pos.y, pos.z, allowreplacement));
 }
+
+inline fixedvec2 Vec2Angle(fixed_t length, angle_t angle) 
+{
+	fixedvec2 ret = { FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]),
+						FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]) };
+	return ret;
+}
+
 
 void PrintMiscActorInfo(AActor * query);
 

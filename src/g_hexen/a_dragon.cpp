@@ -60,14 +60,14 @@ static void DragonSeek (AActor *actor, angle_t thresh, angle_t turnMax)
 	actor->velx = FixedMul (actor->Speed, finecosine[angle]);
 	actor->vely = FixedMul (actor->Speed, finesine[angle]);
 	dist = actor->AproxDistance (target) / actor->Speed;
-	if (actor->z+actor->height < target->z ||
-		target->z+target->height < actor->z)
+	if (actor->Top() < target->Z() ||
+		target->Top() < actor->Z())
 	{
 		if (dist < 1)
 		{
 			dist = 1;
 		}
-		actor->velz = (target->z - actor->z)/dist;
+		actor->velz = (target->Z() - actor->Z())/dist;
 	}
 	if (target->flags&MF_SHOOTABLE && pr_dragonseek() < 64)
 	{ // attack the destination mobj if it's attackable
@@ -252,11 +252,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_DragonFX2)
 	delay = 16+(pr_dragonfx2()>>3);
 	for (i = 1+(pr_dragonfx2()&3); i; i--)
 	{
-		fixed_t x = self->x+((pr_dragonfx2()-128)<<14);
-		fixed_t y = self->y+((pr_dragonfx2()-128)<<14);
-		fixed_t z = self->z+((pr_dragonfx2()-128)<<12);
+		fixedvec3 pos = self->Vec3Offset(
+			((pr_dragonfx2()-128)<<14),
+			((pr_dragonfx2()-128)<<14),
+			((pr_dragonfx2()-128)<<12));
 
-		mo = Spawn ("DragonExplosion", x, y, z, ALLOW_REPLACE);
+		mo = Spawn ("DragonExplosion", pos, ALLOW_REPLACE);
 		if (mo)
 		{
 			mo->tics = delay+(pr_dragonfx2()&3)*i*2;
@@ -288,7 +289,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DragonPain)
 
 DEFINE_ACTION_FUNCTION(AActor, A_DragonCheckCrash)
 {
-	if (self->z <= self->floorz)
+	if (self->Z() <= self->floorz)
 	{
 		self->SetState (self->FindState ("Crash"));
 	}

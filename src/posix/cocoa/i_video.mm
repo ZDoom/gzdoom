@@ -31,7 +31,7 @@
  **
  */
 
-#include <GL/glew.h>
+#include "gl/system/gl_load.h"
 
 #include "i_common.h"
 
@@ -880,6 +880,14 @@ CocoaFrameBuffer::CocoaFrameBuffer(int width, int height, bool fullscreen)
 , m_pixelBuffer(new uint8_t[width * height * BYTES_PER_PIXEL])
 , m_texture(0)
 {
+	static bool isOpenGLInitialized;
+
+	if (!isOpenGLInitialized)
+	{
+		ogl_LoadFunctions();
+		isOpenGLInitialized = true;
+	}
+
 	glEnable(GL_TEXTURE_RECTANGLE_ARB);
 
 	glGenTextures(1, &m_texture);

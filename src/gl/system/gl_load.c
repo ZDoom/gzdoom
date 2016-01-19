@@ -85,9 +85,11 @@ static PROC WinGetProcAddress(const char *name)
 	#endif
 #endif
 
+int ogl_ext_APPLE_client_storage = ogl_LOAD_FAILED;
 int ogl_ext_ARB_map_buffer_range = ogl_LOAD_FAILED;
 int ogl_ext_ARB_occlusion_query = ogl_LOAD_FAILED;
 int ogl_ext_ARB_texture_compression = ogl_LOAD_FAILED;
+int ogl_ext_ARB_texture_rectangle = ogl_LOAD_FAILED;
 int ogl_ext_ARB_uniform_buffer_object = ogl_LOAD_FAILED;
 int ogl_ext_EXT_framebuffer_object = ogl_LOAD_FAILED;
 int ogl_ext_EXT_packed_depth_stencil = ogl_LOAD_FAILED;
@@ -1937,10 +1939,12 @@ typedef struct ogl_StrToExtMap_s
 	PFN_LOADFUNCPOINTERS LoadExtension;
 } ogl_StrToExtMap;
 
-static ogl_StrToExtMap ExtensionMap[9] = {
+static ogl_StrToExtMap ExtensionMap[11] = {
+	{"GL_APPLE_client_storage", &ogl_ext_APPLE_client_storage, NULL},
 	{"GL_ARB_map_buffer_range", &ogl_ext_ARB_map_buffer_range, Load_ARB_map_buffer_range},
 	{"GL_ARB_occlusion_query", &ogl_ext_ARB_occlusion_query, Load_ARB_occlusion_query},
 	{"GL_ARB_texture_compression", &ogl_ext_ARB_texture_compression, Load_ARB_texture_compression},
+	{"GL_ARB_texture_rectangle", &ogl_ext_ARB_texture_rectangle, NULL},
 	{"GL_ARB_uniform_buffer_object", &ogl_ext_ARB_uniform_buffer_object, Load_ARB_uniform_buffer_object},
 	{"GL_EXT_framebuffer_object", &ogl_ext_EXT_framebuffer_object, Load_EXT_framebuffer_object},
 	{"GL_EXT_packed_depth_stencil", &ogl_ext_EXT_packed_depth_stencil, NULL},
@@ -1949,7 +1953,7 @@ static ogl_StrToExtMap ExtensionMap[9] = {
 	{"GL_NV_depth_clamp", &ogl_ext_NV_depth_clamp, NULL},
 };
 
-static int g_extensionMapSize = 9;
+static int g_extensionMapSize = 11;
 
 static ogl_StrToExtMap *FindExtEntry(const char *extensionName)
 {
@@ -1966,9 +1970,11 @@ static ogl_StrToExtMap *FindExtEntry(const char *extensionName)
 
 static void ClearExtensionVars(void)
 {
+	ogl_ext_APPLE_client_storage = ogl_LOAD_FAILED;
 	ogl_ext_ARB_map_buffer_range = ogl_LOAD_FAILED;
 	ogl_ext_ARB_occlusion_query = ogl_LOAD_FAILED;
 	ogl_ext_ARB_texture_compression = ogl_LOAD_FAILED;
+	ogl_ext_ARB_texture_rectangle = ogl_LOAD_FAILED;
 	ogl_ext_ARB_uniform_buffer_object = ogl_LOAD_FAILED;
 	ogl_ext_EXT_framebuffer_object = ogl_LOAD_FAILED;
 	ogl_ext_EXT_packed_depth_stencil = ogl_LOAD_FAILED;

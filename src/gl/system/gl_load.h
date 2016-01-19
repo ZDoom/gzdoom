@@ -153,15 +153,19 @@ typedef unsigned int GLhandleARB;
 extern "C" {
 #endif /*__cplusplus*/
 
+extern int ogl_ext_APPLE_client_storage;
 extern int ogl_ext_ARB_map_buffer_range;
 extern int ogl_ext_ARB_occlusion_query;
 extern int ogl_ext_ARB_texture_compression;
+extern int ogl_ext_ARB_texture_rectangle;
 extern int ogl_ext_ARB_uniform_buffer_object;
 extern int ogl_ext_EXT_framebuffer_object;
 extern int ogl_ext_EXT_packed_depth_stencil;
 extern int ogl_ext_EXT_texture_compression_s3tc;
 extern int ogl_ext_EXT_texture_filter_anisotropic;
 extern int ogl_ext_NV_depth_clamp;
+
+#define GL_UNPACK_CLIENT_STORAGE_APPLE 0x85B2
 
 #define GL_MAP_FLUSH_EXPLICIT_BIT 0x0010
 #define GL_MAP_INVALIDATE_BUFFER_BIT 0x0008
@@ -187,6 +191,11 @@ extern int ogl_ext_NV_depth_clamp;
 #define GL_TEXTURE_COMPRESSED_ARB 0x86A1
 #define GL_TEXTURE_COMPRESSED_IMAGE_SIZE_ARB 0x86A0
 #define GL_TEXTURE_COMPRESSION_HINT_ARB 0x84EF
+
+#define GL_MAX_RECTANGLE_TEXTURE_SIZE_ARB 0x84F8
+#define GL_PROXY_TEXTURE_RECTANGLE_ARB 0x84F7
+#define GL_TEXTURE_BINDING_RECTANGLE_ARB 0x84F6
+#define GL_TEXTURE_RECTANGLE_ARB 0x84F5
 
 #define GL_ACTIVE_UNIFORM_BLOCKS 0x8A36
 #define GL_ACTIVE_UNIFORM_BLOCK_MAX_NAME_LENGTH 0x8A35
@@ -1167,6 +1176,7 @@ extern int ogl_ext_NV_depth_clamp;
 #define GL_SRGB8_ALPHA8 0x8C43
 #define GL_SRGB_ALPHA 0x8C42
 
+
 #ifndef GL_ARB_map_buffer_range
 #define GL_ARB_map_buffer_range 1
 extern void (CODEGEN_FUNCPTR *_ptrc_glFlushMappedBufferRange)(GLenum target, GLintptr offset, GLsizeiptr length);
@@ -1212,6 +1222,7 @@ extern void (CODEGEN_FUNCPTR *_ptrc_glCompressedTexSubImage3DARB)(GLenum target,
 extern void (CODEGEN_FUNCPTR *_ptrc_glGetCompressedTexImageARB)(GLenum target, GLint level, void * img);
 #define glGetCompressedTexImageARB _ptrc_glGetCompressedTexImageARB
 #endif /*GL_ARB_texture_compression*/ 
+
 
 #ifndef GL_ARB_uniform_buffer_object
 #define GL_ARB_uniform_buffer_object 1

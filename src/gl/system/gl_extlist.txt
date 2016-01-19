@@ -3,9 +3,11 @@
 -- Generation of gl_load.c and gl_load.h files:
 -- > lua LoadGen.lua -style=pointer_c -spec=gl -version=2.1 -extfile=gl_extlist.txt load
 
+GL_APPLE_client_storage
 GL_ARB_map_buffer_range
 GL_ARB_occlusion_query
 GL_ARB_texture_compression
+GL_ARB_texture_rectangle
 GL_ARB_uniform_buffer_object
 GL_EXT_framebuffer_object
 GL_EXT_packed_depth_stencil

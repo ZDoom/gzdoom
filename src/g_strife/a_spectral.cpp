@@ -53,7 +53,6 @@ static FRandom pr_zap5 ("Zap5");
 DEFINE_ACTION_FUNCTION(AActor, A_SpectralLightning)
 {
 	AActor *flash;
-	fixed_t x, y;
 
 	if (self->threshold != 0)
 		--self->threshold;

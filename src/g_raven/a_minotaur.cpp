@@ -367,7 +367,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurAtk3)
 DEFINE_ACTION_FUNCTION(AActor, A_MntrFloorFire)
 {
 	AActor *mo;
-	fixed_t x, y;
 
 	self->SetZ(self->floorz);
 	fixedvec2 pos = self->Vec2Offset(

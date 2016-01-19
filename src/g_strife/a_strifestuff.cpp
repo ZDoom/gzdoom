@@ -580,7 +580,7 @@ IMPLEMENT_CLASS (AMeat)
 DEFINE_ACTION_FUNCTION(AActor, A_TossGib)
 {
 	const char *gibtype = (self->flags & MF_NOBLOOD) ? "Junk" : "Meat";
-	AActor *gib = Spawn (gibtype, self->x, self->y, self->z + 24*FRACUNIT, ALLOW_REPLACE);
+	AActor *gib = Spawn (gibtype, self->PosPlusZ(24*FRACUNIT), ALLOW_REPLACE);
 	angle_t an;
 	int speed;
 
@@ -628,7 +628,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CheckTerrain)
 {
 	sector_t *sec = self->Sector;
 
-	if (self->z == sec->floorplane.ZatPoint(self))
+	if (self->Z() == sec->floorplane.ZatPoint(self))
 	{
 		if (sec->special == Damage_InstantDeath)
 		{
@@ -681,7 +681,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ItBurnsItBurns)
 
 DEFINE_ACTION_FUNCTION(AActor, A_DropFire)
 {
-	AActor *drop = Spawn("FireDroplet", self->x, self->y, self->z + 24*FRACUNIT, ALLOW_REPLACE);
+	AActor *drop = Spawn("FireDroplet", self->PosPlusZ(24*FRACUNIT), ALLOW_REPLACE);
 	drop->velz = -FRACUNIT;
 	P_RadiusAttack (self, self, 64, 64, NAME_Fire, 0);
 }

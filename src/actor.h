@@ -1252,6 +1252,15 @@ public:
 		fixedvec3 ret = { X(), Y(), Z() };
 		return ret;
 	}
+	fixedvec3 InterpolatedPosition(fixed_t ticFrac) const
+	{
+		fixedvec3 ret;
+
+		ret.x = PrevX + FixedMul (ticFrac, X() - PrevX);
+		ret.y = PrevY + FixedMul (ticFrac, Y() - PrevY);
+		ret.z = PrevZ + FixedMul (ticFrac, Z() - PrevZ);
+		return ret;
+	}
 	fixedvec3 PosPlusZ(fixed_t zadd) const
 	{
 		fixedvec3 ret = { X(), Y(), Z() + zadd };

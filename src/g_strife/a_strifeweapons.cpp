@@ -360,8 +360,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_RocketInFlight)
 	AActor *trail;
 
 	S_Sound (self, CHAN_VOICE, "misc/missileinflight", 1, ATTN_NORM);
-	P_SpawnPuff (self, PClass::FindClass("MiniMissilePuff"), self->x, self->y, self->z, self->angle - ANGLE_180, 2, PF_HITTHING);
-	trail = Spawn("RocketTrail", self->x - self->velx, self->y - self->vely, self->z, ALLOW_REPLACE);
+	P_SpawnPuff (self, PClass::FindClass("MiniMissilePuff"), self->Pos(), self->angle - ANGLE_180, 2, PF_HITTHING);
+	trail = Spawn("RocketTrail", self->Vec3Offset(-self->velx, -self->vely, 0), ALLOW_REPLACE);
 	if (trail != NULL)
 	{
 		trail->velz = FRACUNIT;
@@ -516,10 +516,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_MaulerTorpedoWave)
 	self->angle += ANGLE_180;
 
 	// If the torpedo hit the ceiling, it should still spawn the wave
-	savedz = self->z;
-	if (wavedef && self->ceilingz - self->z < wavedef->height)
+	savedz = self->Z();
+	if (wavedef && self->ceilingz - self->Z() < wavedef->height)
 	{
-		self->z = self->ceilingz - wavedef->height;
+		self->SetZ(self->ceilingz - wavedef->height);
 	}
 
 	for (int i = 0; i < 80; ++i)
@@ -527,12 +527,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_MaulerTorpedoWave)
 		self->angle += ANGLE_45/10;
 		P_SpawnSubMissile (self, PClass::FindClass("MaulerTorpedoWave"), self->target);
 	}
-	self->z = savedz;
+	self->SetZ(savedz);
 }
 
 AActor *P_SpawnSubMissile (AActor *source, const PClass *type, AActor *target)
 {
-	AActor *other = Spawn (type, source->x, source->y, source->z, ALLOW_REPLACE);
+	AActor *other = Spawn (type, source->Pos(), ALLOW_REPLACE);
 
 	if (other == NULL)
 	{
@@ -619,20 +619,19 @@ DEFINE_ACTION_FUNCTION(AActor, A_Burnination)
 			yofs = -yofs;
 		}
 
-		fixed_t x = self->x + (xofs << FRACBITS);
-		fixed_t y = self->y + (yofs << FRACBITS);
-		sector_t * sector = P_PointInSector(x, y);
+		fixedvec2 pos = self->Vec2Offset(xofs << FRACBITS, yofs << FRACBITS);
+		sector_t * sector = P_PointInSector(pos.x, pos.y);
 
 		// The sector's floor is too high so spawn the flame elsewhere.
-		if (sector->floorplane.ZatPoint(x, y) > self->z + self->MaxStepHeight)
+		if (sector->floorplane.ZatPoint(pos.x, pos.y) > self->Z() + self->MaxStepHeight)
 		{
-			x = self->x;
-			y = self->y;
+			pos.x = self->X();
+			pos.y = self->Y();
 		}
 
 		AActor *drop = Spawn<APhosphorousFire> (
-			x, y,
-			self->z + 4*FRACUNIT, ALLOW_REPLACE);
+			pos.x, pos.y,
+			self->Z() + 4*FRACUNIT, ALLOW_REPLACE);
 		if (drop != NULL)
 		{
 			drop->velx = self->velx + ((pr_phburn.Random2 (7)) << FRACBITS);
@@ -677,9 +676,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireGrenade)
 
 	if (grenadetype != NULL)
 	{
-		self->z += 32*FRACUNIT;
+		self->AddZ(32*FRACUNIT);
 		grenade = P_SpawnSubMissile (self, grenadetype, self);
-		self->z -= 32*FRACUNIT;
+		self->AddZ(-32*FRACUNIT);
 		if (grenade == NULL)
 			return;
 
@@ -690,15 +689,20 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireGrenade)
 
 		grenade->velz = FixedMul (finetangent[FINEANGLES/4-(self->pitch>>ANGLETOFINESHIFT)], grenade->Speed) + 8*FRACUNIT;
 
+		fixedvec2 offset;
+
 		an = self->angle >> ANGLETOFINESHIFT;
 		tworadii = self->radius + grenade->radius;
-		grenade->x += FixedMul (finecosine[an], tworadii);
-		grenade->y += FixedMul (finesine[an], tworadii);
+		offset.x = FixedMul (finecosine[an], tworadii);
+		offset.y = FixedMul (finesine[an], tworadii);
 
 		an = self->angle + Angle;
 		an >>= ANGLETOFINESHIFT;
-		grenade->x += FixedMul (finecosine[an], 15*FRACUNIT);
-		grenade->y += FixedMul (finesine[an], 15*FRACUNIT);
+		offset.x += FixedMul (finecosine[an], 15*FRACUNIT);
+		offset.y += FixedMul (finesine[an], 15*FRACUNIT);
+
+		fixedvec2 newpos = grenade->Vec2Offset(offset.x, offset.y);
+		grenade->SetOrigin(newpos.x, newpos.y, grenade->Z(), false);
 	}
 }
 
@@ -923,7 +927,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil1)
 	P_BulletSlope (self, &linetarget);
 	if (linetarget != NULL)
 	{
-		spot = Spawn("SpectralLightningSpot", linetarget->x, linetarget->y, linetarget->floorz, ALLOW_REPLACE);
+		spot = Spawn("SpectralLightningSpot", linetarget->X(), linetarget->Y(), linetarget->floorz, ALLOW_REPLACE);
 		if (spot != NULL)
 		{
 			spot->tracer = linetarget;
@@ -931,7 +935,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil1)
 	}
 	else
 	{
-		spot = Spawn("SpectralLightningSpot", self->x, self->y, self->z, ALLOW_REPLACE);
+		spot = Spawn("SpectralLightningSpot", self->Pos(), ALLOW_REPLACE);
 		if (spot != NULL)
 		{
 			spot->velx += 28 * finecosine[self->angle >> ANGLETOFINESHIFT];
@@ -989,7 +993,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil3)
 		spot = P_SpawnSubMissile (self, PClass::FindClass("SpectralLightningBall1"), self);
 		if (spot != NULL)
 		{
-			spot->z = self->z + 32*FRACUNIT;
+			spot->SetZ(self->Z() + 32*FRACUNIT);
 		}
 	}
 	self->angle -= (ANGLE_180/20)*10;

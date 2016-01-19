@@ -35,9 +35,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_InquisitorDecide)
 	{
 		self->SetState (self->FindState("Grenade"));
 	}
-	if (self->target->z != self->z)
+	if (self->target->Z() != self->Z())
 	{
-		if (self->z + self->height + 54*FRACUNIT < self->ceilingz)
+		if (self->Top() + 54*FRACUNIT < self->ceilingz)
 		{
 			self->SetState (self->FindState("Jump"));
 		}
@@ -53,20 +53,20 @@ DEFINE_ACTION_FUNCTION(AActor, A_InquisitorAttack)
 
 	A_FaceTarget (self);
 
-	self->z += 32*FRACUNIT;
+	self->AddZ(32*FRACUNIT);
 	self->angle -= ANGLE_45/32;
-	proj = P_SpawnMissileZAimed (self, self->z, self->target, PClass::FindClass("InquisitorShot"));
+	proj = P_SpawnMissileZAimed (self, self->Z(), self->target, PClass::FindClass("InquisitorShot"));
 	if (proj != NULL)
 	{
 		proj->velz += 9*FRACUNIT;
 	}
 	self->angle += ANGLE_45/16;
-	proj = P_SpawnMissileZAimed (self, self->z, self->target, PClass::FindClass("InquisitorShot"));
+	proj = P_SpawnMissileZAimed (self, self->Z(), self->target, PClass::FindClass("InquisitorShot"));
 	if (proj != NULL)
 	{
 		proj->velz += 16*FRACUNIT;
 	}
-	self->z -= 32*FRACUNIT;
+	self->AddZ(-32*FRACUNIT);
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_InquisitorJump)
@@ -79,7 +79,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_InquisitorJump)
 		return;
 
 	S_Sound (self, CHAN_ITEM|CHAN_LOOP, "inquisitor/jump", 1, ATTN_NORM);
-	self->z += 64*FRACUNIT;
+	self->AddZ(64*FRACUNIT);
 	A_FaceTarget (self);
 	an = self->angle >> ANGLETOFINESHIFT;
 	speed = self->Speed * 2/3;
@@ -91,7 +91,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_InquisitorJump)
 	{
 		dist = 1;
 	}
-	self->velz = (self->target->z - self->z) / dist;
+	self->velz = (self->target->Z() - self->Z()) / dist;
 	self->reactiontime = 60;
 	self->flags |= MF_NOGRAVITY;
 }
@@ -102,7 +102,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_InquisitorCheckLand)
 	if (self->reactiontime < 0 ||
 		self->velx == 0 ||
 		self->vely == 0 ||
-		self->z <= self->floorz)
+		self->Z() <= self->floorz)
 	{
 		self->SetState (self->SeeState);
 		self->reactiontime = 0;
@@ -119,7 +119,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_InquisitorCheckLand)
 
 DEFINE_ACTION_FUNCTION(AActor, A_TossArm)
 {
-	AActor *foo = Spawn("InquisitorArm", self->x, self->y, self->z + 24*FRACUNIT, ALLOW_REPLACE);
+	AActor *foo = Spawn("InquisitorArm", self->PosPlusZ(24*FRACUNIT), ALLOW_REPLACE);
 	foo->angle = self->angle - ANGLE_90 + (pr_inq.Random2() << 22);
 	foo->velx = FixedMul (foo->Speed, finecosine[foo->angle >> ANGLETOFINESHIFT]) >> 3;
 	foo->vely = FixedMul (foo->Speed, finesine[foo->angle >> ANGLETOFINESHIFT]) >> 3;

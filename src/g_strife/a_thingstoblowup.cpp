@@ -20,10 +20,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_Bang4Cloud)
 {
 	fixed_t spawnx, spawny;
 
-	spawnx = self->x + (pr_bang4cloud.Random2() & 3) * 10240;
-	spawny = self->y + (pr_bang4cloud.Random2() & 3) * 10240;
+	fixedvec3 pos = self->Vec3Offset((pr_bang4cloud.Random2() & 3) * 10240, (pr_bang4cloud.Random2() & 3) * 10240, 0);
 
-	Spawn("Bang4Cloud", spawnx, spawny, self->z, ALLOW_REPLACE);
+	Spawn("Bang4Cloud", pos, ALLOW_REPLACE);
 }
 
 // -------------------------------------------------------------------
@@ -97,7 +96,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightGoesOut)
 
 	for (int i = 0; i < 8; ++i)
 	{
-		foo = Spawn("Rubble1", self->x, self->y, self->z, ALLOW_REPLACE);
+		foo = Spawn("Rubble1", self->Pos(), ALLOW_REPLACE);
 		if (foo != NULL)
 		{
 			int t = pr_lightout() & 15;

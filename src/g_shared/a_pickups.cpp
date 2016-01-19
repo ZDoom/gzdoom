@@ -331,7 +331,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialDoomThing)
 	{
 		self->SetState (self->SpawnState);
 		S_Sound (self, CHAN_VOICE, "misc/spawn", 1, ATTN_IDLE);
-		Spawn ("ItemFog", self->x, self->y, self->z, ALLOW_REPLACE);
+		Spawn ("ItemFog", self->Pos(), ALLOW_REPLACE);
 	}
 }
 
@@ -351,19 +351,18 @@ DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialPosition)
 	_y = self->SpawnPoint[1];
 
 	self->UnlinkFromWorld();
-	self->x = _x;
-	self->y = _y;
+	self->SetXY(_x, _y);
 	self->LinkToWorld(true);
 	sec = self->Sector;
-	self->z =
 	self->dropoffz =
 	self->floorz = sec->floorplane.ZatPoint(_x, _y);
 	self->ceilingz = sec->ceilingplane.ZatPoint(_x, _y);
+	self->SetZ(self->floorz);
 	P_FindFloorCeiling(self, FFCF_ONLYSPAWNPOS);
 
 	if (self->flags & MF_SPAWNCEILING)
 	{
-		self->z = self->ceilingz - self->height - self->SpawnPoint[2];
+		self->SetZ(self->ceilingz - self->height - self->SpawnPoint[2]);
 	}
 	else if (self->flags2 & MF2_SPAWNFLOAT)
 	{
@@ -371,33 +370,33 @@ DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialPosition)
 		if (space > 48*FRACUNIT)
 		{
 			space -= 40*FRACUNIT;
-			self->z = ((space * pr_restore())>>8) + self->floorz + 40*FRACUNIT;
+			self->SetZ(((space * pr_restore())>>8) + self->floorz + 40*FRACUNIT);
 		}
 		else
 		{
-			self->z = self->floorz;
+			self->SetZ(self->floorz);
 		}
 	}
 	else
 	{
-		self->z = self->SpawnPoint[2] + self->floorz;
+		self->SetZ(self->SpawnPoint[2] + self->floorz);
 	}
 	// Redo floor/ceiling check, in case of 3D floors
 	P_FindFloorCeiling(self, FFCF_SAMESECTOR | FFCF_ONLY3DFLOORS | FFCF_3DRESTRICT);
-	if (self->z < self->floorz)
+	if (self->Z() < self->floorz)
 	{ // Do not reappear under the floor, even if that's where we were for the
 	  // initial spawn.
-		self->z = self->floorz;
+		self->SetZ(self->floorz);
 	}
-	if ((self->flags & MF_SOLID) && (self->z + self->height > self->ceilingz))
+	if ((self->flags & MF_SOLID) && (self->Top() > self->ceilingz))
 	{ // Do the same for the ceiling.
-		self->z = self->ceilingz - self->height;
+		self->SetZ(self->ceilingz - self->height);
 	}
 	// Do not interpolate from the position the actor was at when it was
 	// picked up, in case that is different from where it is now.
-	self->PrevX = self->x;
-	self->PrevY = self->y;
-	self->PrevZ = self->z;
+	self->PrevX = self->X();
+	self->PrevY = self->Y();
+	self->PrevZ = self->Z();
 }
 
 int AInventory::StaticLastMessageTic;
@@ -728,8 +727,7 @@ AInventory *AInventory::CreateTossable ()
 		flags &= ~(MF_SPECIAL|MF_SOLID);
 		return this;
 	}
-	copy = static_cast<AInventory *>(Spawn (GetClass(), Owner->x,
-		Owner->y, Owner->z, NO_REPLACE));
+	copy = static_cast<AInventory *>(Spawn (GetClass(), Owner->Pos(), NO_REPLACE));
 	if (copy != NULL)
 	{
 		copy->MaxAmount = MaxAmount;
@@ -994,7 +992,7 @@ void AInventory::Touch (AActor *toucher)
 	// This is the only situation when a pickup flash should ever play.
 	if (PickupFlash != NULL && !ShouldStay())
 	{
-		Spawn(PickupFlash, x, y, z, ALLOW_REPLACE);
+		Spawn(PickupFlash, Pos(), ALLOW_REPLACE);
 	}
 
 	if (!(ItemFlags & IF_QUIET))
@@ -1290,8 +1288,8 @@ bool AInventory::DoRespawn ()
 		if (state != NULL) spot = state->GetRandomSpot(SpawnPointClass);
 		if (spot != NULL) 
 		{
-			SetOrigin (spot->x, spot->y, spot->z);
-			z = floorz;
+			SetOrigin (spot->Pos(), false);
+			SetZ(floorz);
 		}
 	}
 	return true;

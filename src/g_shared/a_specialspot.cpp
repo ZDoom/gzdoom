@@ -423,12 +423,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnSingleItem)
 		return;
 	}
 
-	AActor *spawned = Spawn(cls, self->x, self->y, self->z, ALLOW_REPLACE);
+	AActor *spawned = Spawn(cls, self->Pos(), ALLOW_REPLACE);
 
 	if (spawned)
 	{
-		spawned->SetOrigin (spot->x, spot->y, spot->z);
-		spawned->z = spawned->floorz;
+		spawned->SetOrigin (spot->Pos(), false);
+		spawned->SetZ(spawned->floorz);
 		// We want this to respawn.
 		if (!(self->flags & MF_DROPPED)) 
 		{

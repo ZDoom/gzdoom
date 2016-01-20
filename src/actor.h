@@ -1007,8 +1007,8 @@ public:
 
 // info for drawing
 // NOTE: The first member variable *must* be x.
-	fixed_t	 		x,y,z;
 	AActor			*snext, **sprev;	// links in sector (if needed)
+	fixed_t	 		x,y,z;
 	angle_t			angle;
 	WORD			sprite;				// used to find patch_t and flip value
 	BYTE			frame;				// sprite frame to draw

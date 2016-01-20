@@ -33,7 +33,7 @@ class FTexture;
 struct wbplayerstruct_t
 {
 	bool		in;			// whether the player is in game
-	
+
 	// Player stats, kills, collected items etc.
 	int			skills;
 	int			sitems;
@@ -41,7 +41,6 @@ struct wbplayerstruct_t
 	int			stime;
 	int			frags[MAXPLAYERS];
 	int			fragcount;	// [RH] Cumulative frags for this player
-
 };
 
 struct wbstartstruct_t
@@ -54,7 +53,7 @@ struct wbstartstruct_t
 
 	FTexture	*LName0;
 	FTexture	*LName1;
-	
+
 	int			maxkills;
 	int			maxitems;
 	int			maxsecret;
@@ -63,19 +62,19 @@ struct wbstartstruct_t
 	// the par time and sucktime
 	int			partime;	// in tics
 	int			sucktime;	// in minutes
-	
+
 	// total time for the entire current game
 	int			totaltime;
 
 	// index of this player in game
-	int			pnum;	
+	int			pnum;
 
 	wbplayerstruct_t	plyr[MAXPLAYERS];
 };
 
 // Intermission stats.
 // Parameters for world map / intermission.
-extern wbstartstruct_t wminfo; 
+extern wbstartstruct_t wminfo;
 
 
 // Called by main loop, animate the intermission.

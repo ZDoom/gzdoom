@@ -291,10 +291,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_FreezeDeathChunks)
 	i = (pr_freeze.Random2()) % (numChunks/4);
 	for (i = MAX (24, numChunks + i); i >= 0; i--)
 	{
-		mo = Spawn("IceChunk", self->Vec3Offset(
-			(((pr_freeze()-128)*self->radius)>>7), 
-			(((pr_freeze()-128)*self->radius)>>7), 
-			(pr_freeze()*self->height/255)), ALLOW_REPLACE);
+		fixed_t xo = (((pr_freeze() - 128)*self->radius) >> 7);
+		fixed_t yo = (((pr_freeze() - 128)*self->radius) >> 7);
+		fixed_t zo = (pr_freeze()*self->height / 255);
+		mo = Spawn("IceChunk", self->Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
 		if (mo)
 		{
 				mo->SetState (mo->SpawnState + (pr_freeze()%3));

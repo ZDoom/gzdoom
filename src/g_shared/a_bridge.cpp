@@ -102,14 +102,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_BridgeOrbit)
 	// Set default values
 	// Every five tics, Hexen moved the ball 3/256th of a revolution.
 	int rotationspeed  = ANGLE_45/32*3/5;
-	int rotationradius = ORBIT_RADIUS;
+	int rotationradius = ORBIT_RADIUS * FRACUNIT;
 	// If the bridge is custom, set non-default values if any.
 
 	// Set angular speed; 1--128: counterclockwise rotation ~=1--180°; 129--255: clockwise rotation ~= 180--1°
 	if (self->target->args[3] > 128) rotationspeed = ANGLE_45/32 * (self->target->args[3]-256) / TICRATE;
 	else if (self->target->args[3] > 0) rotationspeed = ANGLE_45/32 * (self->target->args[3]) / TICRATE;
 	// Set rotation radius
-	if (self->target->args[4]) rotationradius = ((self->target->args[4] * self->target->radius) / (100 * FRACUNIT));
+	if (self->target->args[4]) rotationradius = ((self->target->args[4] * self->target->radius) / 100);
 
 	self->angle += rotationspeed;
 	self->SetOrigin(self->target->Vec3Angle(rotationradius, self->angle, 0), true);

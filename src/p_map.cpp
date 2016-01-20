@@ -1034,7 +1034,7 @@ bool PIT_CheckThing(AActor *thing, FCheckPosition &tm)
 
 	fixedvec3 thingpos = thing->PosRelative(tm.thing);
 	fixed_t blockdist = thing->radius + tm.thing->radius;
-	if (abs(thingpos.x - tm.thing->X()) >= blockdist || abs(thingpos.y - tm.thing->Y()) >= blockdist)
+	if (abs(thingpos.x - tm.x) >= blockdist || abs(thingpos.y - tm.y) >= blockdist)
 		return true;
 
 	if ((thing->flags2 | tm.thing->flags2) & MF2_THRUACTORS)
@@ -1087,7 +1087,7 @@ bool PIT_CheckThing(AActor *thing, FCheckPosition &tm)
 			if (newdist > olddist)
 			{
 				// ... but not if they did not overlap in z-direction before but would after the move.
-				unblocking = !((tm.thing->Z() >= thingpos.z + thing->height && tm.z < thingpos.z + thing->height) ||
+				unblocking = !((tm.thing->Z() >= topz && tm.z < topz) ||
 					(tm.thing->Top() <= thingpos.z && tm.thing->Top() > thingpos.z));
 			}
 		}

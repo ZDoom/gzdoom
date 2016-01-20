@@ -326,7 +326,7 @@ void AActor::LinkToWorld (bool buggy)
 
 	if (!buggy || numgamenodes == 0)
 	{
-		sec = P_PointInSector (x, y);
+		sec = P_PointInSector (X(), Y());
 	}
 	else
 	{

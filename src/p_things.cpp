@@ -691,9 +691,7 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 		caller = temp;
 	}
 
-	fixed_t	oldx = caller->X();
-	fixed_t	oldy = caller->Y();
-	fixed_t	oldz = caller->z;
+	fixedvec3 old = caller->Pos();
 	zofs += FixedMul(reference->height, heightoffset);
 	
 
@@ -725,18 +723,18 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 			// now the caller's floorz should be appropriate for the assigned xy-position
 			// assigning position again with.
 			// extra unlink, link and environment calculation
-			caller->SetOrigin(
-				reference->x + xofs + FixedMul(rad, finecosine[fineangle]),
-				reference->y + yofs + FixedMul(rad, finesine[fineangle]),
-				reference->z);
-			caller->z = caller->floorz + zofs;
+			caller->SetOrigin(reference->Vec3Offset(
+				xofs + FixedMul(rad, finecosine[fineangle]),
+				yofs + FixedMul(rad, finesine[fineangle]),
+				0), true);
+			caller->SetZ(caller->floorz + zofs);
 		}
 		else
 		{
-			caller->SetOrigin(
-				reference->x + xofs + FixedMul(rad, finecosine[fineangle]),
-				reference->y + yofs + FixedMul(rad, finesine[fineangle]),
-				reference->z + zofs);
+			caller->SetOrigin(reference->Vec3Offset(
+				 xofs + FixedMul(rad, finecosine[fineangle]),
+				 yofs + FixedMul(rad, finesine[fineangle]),
+				 zofs), true);
 		}
 	}
 	else // [MC] The idea behind "absolute" is meant to be "absolute". Override everything, just like A_SpawnItemEx's.
@@ -744,7 +742,7 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 		if (flags & WARPF_TOFLOOR)
 		{
 			caller->SetOrigin(xofs + FixedMul(rad, finecosine[fineangle]), yofs + FixedMul(rad, finesine[fineangle]), zofs);
-			caller->z = caller->floorz + zofs;
+			caller->SetZ(caller->floorz + zofs);
 		}
 		else
 		{
@@ -756,7 +754,7 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 	{
 		if (flags & WARPF_TESTONLY)
 		{
-			caller->SetOrigin(oldx, oldy, oldz);
+			caller->SetOrigin(old, true);
 		}
 		else
 		{
@@ -783,29 +781,29 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 
 			if (flags & WARPF_WARPINTERPOLATION)
 			{
-				caller->PrevX += caller->x - oldx;
-				caller->PrevY += caller->y - oldy;
-				caller->PrevZ += caller->z - oldz;
+				caller->PrevX += caller->X() - old.x;
+				caller->PrevY += caller->Y() - old.y;
+				caller->PrevZ += caller->Z() - old.z;
 			}
 			else if (flags & WARPF_COPYINTERPOLATION)
 			{
-				caller->PrevX = caller->x + reference->PrevX - reference->x;
-				caller->PrevY = caller->y + reference->PrevY - reference->y;
-				caller->PrevZ = caller->z + reference->PrevZ - reference->z;
+				caller->PrevX = caller->X() + reference->PrevX - reference->X();
+				caller->PrevY = caller->Y() + reference->PrevY - reference->Y();
+				caller->PrevZ = caller->Z() + reference->PrevZ - reference->Z();
 			}
 			else if (!(flags & WARPF_INTERPOLATE))
 			{
-				caller->PrevX = caller->x;
-				caller->PrevY = caller->y;
-				caller->PrevZ = caller->z;
+				caller->PrevX = caller->X();
+				caller->PrevY = caller->Y();
+				caller->PrevZ = caller->Z();
 			}
 			if ((flags & WARPF_BOB) && (reference->flags2 & MF2_FLOATBOB))
 			{
-				caller->z += reference->GetBobOffset();
+				caller->AddZ(reference->GetBobOffset());
 			}
 		}
 		return true;
 	}
-	caller->SetOrigin(oldx, oldy, oldz);
+	caller->SetOrigin(old, true);
 	return false;
 }

@@ -62,6 +62,7 @@
 #include "farchive.h"
 #include "a_keys.h"
 #include "c_dispatch.h"
+#include "r_sky.h"
 
 // State.
 #include "r_state.h"
@@ -71,7 +72,6 @@
 #include "r_data/r_interpolate.h"
 
 static FRandom pr_playerinspecialsector ("PlayerInSpecialSector");
-void P_SetupPortals();
 
 EXTERN_CVAR(Bool, cl_predict_specials)
 
@@ -288,16 +288,16 @@ bool P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType)
 		}
 	}
 
+	if (activationType == SPAC_Use && (lineActivation & SPAC_MUse) && !mo->player && mo->flags4 & MF4_CANUSEWALLS)
+	{
+		return true;
+	}
+	if (activationType == SPAC_Push && (lineActivation & SPAC_MPush) && !mo->player && mo->flags2 & MF2_PUSHWALL)
+	{
+		return true;
+	}
 	if ((lineActivation & activationType) == 0)
 	{
-		if (activationType == SPAC_Use && (lineActivation & SPAC_MUse) && !mo->player && mo->flags4 & MF4_CANUSEWALLS)
-		{
-			return true;
-		}
-		if (activationType == SPAC_Push && (lineActivation & SPAC_MPush) && !mo->player && mo->flags2 & MF2_PUSHWALL)
-		{
-			return true;
-		}
 		if (activationType != SPAC_MCross || lineActivation != SPAC_Cross)
 		{ 
 			return false;
@@ -430,166 +430,62 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 	{
 		// Falling, not all the way down yet?
 		sector = player->mo->Sector;
-		if (player->mo->z != sector->floorplane.ZatPoint (player->mo->x, player->mo->y)
+		if (player->mo->Z() != sector->floorplane.ZatPoint(player->mo)
 			&& !player->mo->waterlevel)
 		{
 			return;
 		}
 	}
 
-	int special = sector->special & ~SECRET_MASK;
-
 	// Has hit ground.
 	AInventory *ironfeet;
 
-	// Allow subclasses. Better would be to implement it as armor and let that reduce
-	// the damage as part of the normal damage procedure. Unfortunately, I don't have
-	// different damage types yet, so that's not happening for now.
-	for (ironfeet = player->mo->Inventory; ironfeet != NULL; ironfeet = ironfeet->Inventory)
-	{
-		if (ironfeet->IsKindOf (RUNTIME_CLASS(APowerIronFeet)))
-			break;
-	}
-
-	// [RH] Normal DOOM special or BOOM specialized?
-	if (special >= dLight_Flicker && special <= 255)
-	{
-		switch (special)
-		{
-		case Sector_Heal:
-			// CoD's healing sector
-			if (!(level.time & 0x1f))
-				P_GiveBody (player->mo, 1);
-			break;
-
-		case Damage_InstantDeath:
-			// Strife's instant death sector
-			P_DamageMobj (player->mo, NULL, NULL, 999, NAME_InstantDeath);
-			break;
-
-		case dDamage_Hellslime:
-			// HELLSLIME DAMAGE
-			if (ironfeet == NULL && !(level.time&0x1f))
-				P_DamageMobj (player->mo, NULL, NULL, 10, NAME_Slime);
-			break;
-
-		case dDamage_Nukage:
-			// NUKAGE DAMAGE
-		case sLight_Strobe_Hurt:
-			if (ironfeet == NULL && !(level.time&0x1f))
-				P_DamageMobj (player->mo, NULL, NULL, 5, NAME_Slime);
-			break;
-
-		case hDamage_Sludge:
-			if (ironfeet == NULL && !(level.time&0x1f))
-				P_DamageMobj (player->mo, NULL, NULL, 4, NAME_Slime);
-			break;
-
-		case dDamage_SuperHellslime:
-			// SUPER HELLSLIME DAMAGE
-		case dLight_Strobe_Hurt:
-			// STROBE HURT
-			if (ironfeet == NULL || pr_playerinspecialsector() < 5)
-			{
-				if (!(level.time&0x1f))
-					P_DamageMobj (player->mo, NULL, NULL, 20, NAME_Slime);
-			}
-			break;
-
-		case sDamage_Hellslime:
-			if (ironfeet == NULL)
-				player->hazardcount += 2;
-			break;
-
-		case sDamage_SuperHellslime:
-			if (ironfeet == NULL)
-				player->hazardcount += 4;
-			break;
-
-		case dDamage_End:
-			// EXIT SUPER DAMAGE! (for E1M8 finale)
-			player->cheats &= ~CF_GODMODE;
-
-			if (!(level.time & 0x1f))
-				P_DamageMobj (player->mo, NULL, NULL, 20, NAME_None);
-
-			if (player->health <= 10 && (!deathmatch || !(dmflags & DF_NO_EXIT)))
-				G_ExitLevel(0, false);
-			break;
-
-		case dDamage_LavaWimpy:
-		case dScroll_EastLavaDamage:
-			if (!(level.time & 15))
-			{
-				P_DamageMobj(player->mo, NULL, NULL, 5, NAME_Fire);
-				P_HitFloor(player->mo);
-			}
-			break;
-
-		case dDamage_LavaHefty:
-			if(!(level.time & 15))
-			{
-				P_DamageMobj(player->mo, NULL, NULL, 8, NAME_Fire);
-				P_HitFloor(player->mo);
-			}
-			break;
-
-		default:
-			// [RH] Ignore unknown specials
-			break;
-		}
-	}
-	else
-	{
-		//jff 3/14/98 handle extended sector types for secrets and damage
-		switch (special & DAMAGE_MASK)
-		{
-		case 0x000: // no damage
-			break;
-		case 0x100: // 2/5 damage per 31 ticks
-			if (ironfeet == NULL && !(level.time&0x1f))
-				P_DamageMobj (player->mo, NULL, NULL, 5, NAME_Fire);
-			break;
-		case 0x200: // 5/10 damage per 31 ticks
-			if (ironfeet == NULL && !(level.time&0x1f))
-				P_DamageMobj (player->mo, NULL, NULL, 10, NAME_Slime);
-			break;
-		case 0x300: // 10/20 damage per 31 ticks
-			if (ironfeet == NULL
-				|| pr_playerinspecialsector() < 5)	// take damage even with suit
-			{
-				if (!(level.time&0x1f))
-					P_DamageMobj (player->mo, NULL, NULL, 20, NAME_Slime);
-			}
-			break;
-		}
-	}
-
 	// [RH] Apply any customizable damage
-	if (sector->damage)
+	if (sector->damageamount > 0)
 	{
-		if (sector->damage < 20)
+		// Allow subclasses. Better would be to implement it as armor and let that reduce
+		// the damage as part of the normal damage procedure. Unfortunately, I don't have
+		// different damage types yet, so that's not happening for now.
+		for (ironfeet = player->mo->Inventory; ironfeet != NULL; ironfeet = ironfeet->Inventory)
 		{
-			if (ironfeet == NULL && !(level.time&0x1f))
-				P_DamageMobj (player->mo, NULL, NULL, sector->damage, MODtoDamageType (sector->mod));
+			if (ironfeet->IsKindOf (RUNTIME_CLASS(APowerIronFeet)))
+				break;
 		}
-		else if (sector->damage < 50)
+
+		if (sector->Flags & SECF_ENDGODMODE) player->cheats &= ~CF_GODMODE;
+		if ((ironfeet == NULL || pr_playerinspecialsector() < sector->leakydamage))
 		{
-			if ((ironfeet == NULL || (pr_playerinspecialsector()<5))
-				 && !(level.time&0x1f))
+			if (sector->Flags & SECF_HAZARD)
 			{
-				P_DamageMobj (player->mo, NULL, NULL, sector->damage, MODtoDamageType (sector->mod));
+				player->hazardcount += sector->damageamount;
+				player->hazardtype = sector->damagetype;
+				player->hazardinterval = sector->damageinterval;
+			}
+			else if (level.time % sector->damageinterval == 0)
+			{
+				P_DamageMobj(player->mo, NULL, NULL, sector->damageamount, sector->damagetype);
+				if ((sector->Flags & SECF_ENDLEVEL) && player->health <= 10 && (!deathmatch || !(dmflags & DF_NO_EXIT)))
+				{
+					G_ExitLevel(0, false);
+				}
+				if (sector->Flags & SECF_DMGTERRAINFX)
+				{
+					P_HitWater(player->mo, sector, INT_MIN, INT_MIN, INT_MIN, false, true, true);
+				}
 			}
 		}
-		else
+	}
+	else if (sector->damageamount < 0)
+	{
+		if (level.time % sector->damageinterval == 0)
 		{
-			P_DamageMobj (player->mo, NULL, NULL, sector->damage, MODtoDamageType (sector->mod));
+			P_GiveBody(player->mo, -sector->damageamount, 100);
 		}
 	}
 
-	if (sector->special & SECRET_MASK)
+	if (sector->isSecret())
 	{
-		sector->special &= ~SECRET_MASK;
+		sector->ClearSecret();
 		P_GiveSecret(player->mo, true, true, int(sector - sectors));
 	}
 }
@@ -611,7 +507,7 @@ static void DoSectorDamage(AActor *actor, sector_t *sec, int amount, FName type,
 	if (!(flags & DAMAGE_PLAYERS) && actor->player != NULL)
 		return;
 
-	if (!(flags & DAMAGE_IN_AIR) && actor->z != sec->floorplane.ZatPoint(actor->x, actor->y) && !actor->waterlevel)
+	if (!(flags & DAMAGE_IN_AIR) && actor->Z() != sec->floorplane.ZatPoint(actor) && !actor->waterlevel)
 		return;
 
 	if (protectClass != NULL)
@@ -648,8 +544,8 @@ void P_SectorDamage(int tag, int amount, FName type, const PClass *protectClass,
 			{
 				next = actor->snext;
 				// Only affect actors touching the 3D floor
-				fixed_t z1 = sec->floorplane.ZatPoint(actor->x, actor->y);
-				fixed_t z2 = sec->ceilingplane.ZatPoint(actor->x, actor->y);
+				fixed_t z1 = sec->floorplane.ZatPoint(actor);
+				fixed_t z2 = sec->ceilingplane.ZatPoint(actor);
 				if (z2 < z1)
 				{
 					// Account for Vavoom-style 3D floors
@@ -657,12 +553,12 @@ void P_SectorDamage(int tag, int amount, FName type, const PClass *protectClass,
 					z1 = z2;
 					z2 = zz;
 				}
-				if (actor->z + actor->height > z1)
+				if (actor->Z() + actor->height > z1)
 				{
 					// If DAMAGE_IN_AIR is used, anything not beneath the 3D floor will be
 					// damaged (so, anything touching it or above it). Other 3D floors between
 					// the actor and this one will not stop this effect.
-					if ((flags & DAMAGE_IN_AIR) || actor->z <= z2)
+					if ((flags & DAMAGE_IN_AIR) || actor->Z() <= z2)
 					{
 						// Here we pass the DAMAGE_IN_AIR flag to disable the floor check, since it
 						// only works with the real sector's floor. We did the appropriate height checks
@@ -1013,10 +909,10 @@ static void SetupFloorPortal (AStackPoint *point)
 {
 	NActorIterator it (NAME_LowerStackLookOnly, point->tid);
 	sector_t *Sector = point->Sector;
-	Sector->FloorSkyBox = static_cast<ASkyViewpoint*>(it.Next());
-	if (Sector->FloorSkyBox != NULL && Sector->FloorSkyBox->bAlways)
+	Sector->SkyBoxes[sector_t::floor] = static_cast<ASkyViewpoint*>(it.Next());
+	if (Sector->SkyBoxes[sector_t::floor] != NULL && Sector->SkyBoxes[sector_t::floor]->bAlways)
 	{
-		Sector->FloorSkyBox->Mate = point;
+		Sector->SkyBoxes[sector_t::floor]->Mate = point;
 		if (Sector->GetAlpha(sector_t::floor) == OPAQUE)
 			Sector->SetAlpha(sector_t::floor, Scale (point->args[0], OPAQUE, 255));
 	}
@@ -1026,46 +922,13 @@ static void SetupCeilingPortal (AStackPoint *point)
 {
 	NActorIterator it (NAME_UpperStackLookOnly, point->tid);
 	sector_t *Sector = point->Sector;
-	Sector->CeilingSkyBox = static_cast<ASkyViewpoint*>(it.Next());
-	if (Sector->CeilingSkyBox != NULL && Sector->CeilingSkyBox->bAlways)
+	Sector->SkyBoxes[sector_t::ceiling] = static_cast<ASkyViewpoint*>(it.Next());
+	if (Sector->SkyBoxes[sector_t::ceiling] != NULL && Sector->SkyBoxes[sector_t::ceiling]->bAlways)
 	{
-		Sector->CeilingSkyBox->Mate = point;
+		Sector->SkyBoxes[sector_t::ceiling]->Mate = point;
 		if (Sector->GetAlpha(sector_t::ceiling) == OPAQUE)
 			Sector->SetAlpha(sector_t::ceiling, Scale (point->args[0], OPAQUE, 255));
 	}
-}
-
-static bool SpreadCeilingPortal(AStackPoint *pt, fixed_t alpha, sector_t *sector)
-{
-	bool fail = false;
-	sector->validcount = validcount;
-	for(int i=0; i<sector->linecount; i++)
-	{
-		line_t *line = sector->lines[i];
-		sector_t *backsector = sector == line->frontsector? line->backsector : line->frontsector;
-		if (line->backsector == line->frontsector) continue;
-		if (backsector == NULL) { fail = true; continue; }
-		if (backsector->validcount == validcount) continue;
-		if (backsector->CeilingSkyBox == pt) continue;
-
-		// Check if the backside would map to the same visplane
-		if (backsector->CeilingSkyBox != NULL) { fail = true; continue; }
-		if (backsector->ceilingplane != sector->ceilingplane) { fail = true; continue; }
-		if (backsector->lightlevel != sector->lightlevel) { fail = true; continue; }
-		if (backsector->GetTexture(sector_t::ceiling)		!= sector->GetTexture(sector_t::ceiling)) { fail = true; continue; }
-		if (backsector->GetXOffset(sector_t::ceiling)		!= sector->GetXOffset(sector_t::ceiling)) { fail = true; continue; }
-		if (backsector->GetYOffset(sector_t::ceiling)		!= sector->GetYOffset(sector_t::ceiling)) { fail = true; continue; }
-		if (backsector->GetXScale(sector_t::ceiling)		!= sector->GetXScale(sector_t::ceiling)) { fail = true; continue; }
-		if (backsector->GetYScale(sector_t::ceiling)		!= sector->GetYScale(sector_t::ceiling)) { fail = true; continue; }
-		if (backsector->GetAngle(sector_t::ceiling)		!= sector->GetAngle(sector_t::ceiling)) { fail = true; continue; }
-		if (SpreadCeilingPortal(pt, alpha, backsector)) { fail = true; continue; }
-	}
-	if (!fail) 
-	{
-		sector->CeilingSkyBox = pt;
-		sector->SetAlpha(sector_t::ceiling, alpha);
-	}
-	return fail;
 }
 
 void P_SetupPortals()
@@ -1090,26 +953,64 @@ void P_SetupPortals()
 	}
 }
 
-inline void SetPortal(sector_t *sector, int plane, AStackPoint *portal, fixed_t alpha)
+static void SetPortal(sector_t *sector, int plane, ASkyViewpoint *portal, fixed_t alpha)
 {
 	// plane: 0=floor, 1=ceiling, 2=both
 	if (plane > 0)
 	{
-		if (sector->CeilingSkyBox == NULL || !sector->CeilingSkyBox->bAlways) 
+		if (sector->SkyBoxes[sector_t::ceiling] == NULL || !sector->SkyBoxes[sector_t::ceiling]->bAlways) 
 		{
-			sector->CeilingSkyBox = portal;
+			sector->SkyBoxes[sector_t::ceiling] = portal;
 			if (sector->GetAlpha(sector_t::ceiling) == OPAQUE)
 				sector->SetAlpha(sector_t::ceiling, alpha);
+
+			if (!portal->bAlways) sector->SetTexture(sector_t::ceiling, skyflatnum);
 		}
 	}
 	if (plane == 2 || plane == 0)
 	{
-		if (sector->FloorSkyBox == NULL || !sector->FloorSkyBox->bAlways) 
+		if (sector->SkyBoxes[sector_t::floor] == NULL || !sector->SkyBoxes[sector_t::floor]->bAlways) 
 		{
-			sector->FloorSkyBox = portal;
+			sector->SkyBoxes[sector_t::floor] = portal;
 		}
 		if (sector->GetAlpha(sector_t::floor) == OPAQUE)
 			sector->SetAlpha(sector_t::floor, alpha);
+
+		if (!portal->bAlways) sector->SetTexture(sector_t::floor, skyflatnum);
+	}
+}
+
+static void CopyPortal(int sectortag, int plane, ASkyViewpoint *origin, fixed_t alpha, bool tolines)
+{
+	int s;
+	FSectorTagIterator itr(sectortag);
+	while ((s = itr.Next()) >= 0)
+	{
+		SetPortal(&sectors[s], plane, origin, alpha);
+	}
+
+	for (int j=0;j<numlines;j++)
+	{
+		// Check if this portal needs to be copied to other sectors
+		// This must be done here to ensure that it gets done only after the portal is set up
+		if (lines[j].special == Sector_SetPortal &&
+			lines[j].args[1] == 1 &&
+			(lines[j].args[2] == plane || lines[j].args[2] == 3) &&
+			lines[j].args[3] == sectortag)
+		{
+			if (lines[j].args[0] == 0)
+			{
+				SetPortal(lines[j].frontsector, plane, origin, alpha);
+			}
+			else
+			{
+				FSectorTagIterator itr(lines[j].args[0]);
+				while ((s = itr.Next()) >= 0)
+				{
+					SetPortal(&sectors[s], plane, origin, alpha);
+				}
+			}
+		}
 	}
 }
 
@@ -1125,10 +1026,11 @@ void P_SpawnPortal(line_t *line, int sectortag, int plane, int alpha)
 			lines[i].args[2] == plane &&
 			lines[i].args[3] == 1)
 		{
-			fixed_t x1 = (line->v1->x + line->v2->x) >> 1;
-			fixed_t y1 = (line->v1->y + line->v2->y) >> 1;
-			fixed_t x2 = (lines[i].v1->x + lines[i].v2->x) >> 1;
-			fixed_t y2 = (lines[i].v1->y + lines[i].v2->y) >> 1;
+			// beware of overflows.
+			fixed_t x1 = fixed_t((SQWORD(line->v1->x) + SQWORD(line->v2->x)) >> 1);
+			fixed_t y1 = fixed_t((SQWORD(line->v1->y) + SQWORD(line->v2->y)) >> 1);
+			fixed_t x2 = fixed_t((SQWORD(lines[i].v1->x) + SQWORD(lines[i].v2->x)) >> 1);
+			fixed_t y2 = fixed_t((SQWORD(lines[i].v1->y) + SQWORD(lines[i].v2->y)) >> 1);
 			fixed_t alpha = Scale (lines[i].args[4], OPAQUE, 255);
 
 			AStackPoint *anchor = Spawn<AStackPoint>(x1, y1, 0, NO_REPLACE);
@@ -1142,42 +1044,261 @@ void P_SpawnPortal(line_t *line, int sectortag, int plane, int alpha)
 			reference->flags |= MF_JUSTATTACKED;
 			anchor->flags |= MF_JUSTATTACKED;
 
-			int s;
-			FSectorTagIterator itr(sectortag);
-			while ((s = itr.Next()) >= 0)
-			{
-				SetPortal(&sectors[s], plane, reference, alpha);
-			}
-
-			for (int j=0;j<numlines;j++)
-			{
-				// Check if this portal needs to be copied to other sectors
-				// This must be done here to ensure that it gets done only after the portal is set up
-				if (lines[j].special == Sector_SetPortal &&
-					lines[j].args[1] == 1 &&
-					lines[j].args[2] == plane &&
-					lines[j].args[3] == sectortag)
-				{
-					if (lines[j].args[0] == 0)
-					{
-						SetPortal(lines[j].frontsector, plane, reference, alpha);
-					}
-					else
-					{
-						FSectorTagIterator itr(lines[j].args[0]);
-						while ((s = itr.Next()) >= 0)
-						{
-							SetPortal(&sectors[s], plane, reference, alpha);
-						}
-					}
-				}
-			}
-
+			CopyPortal(sectortag, plane, reference, alpha, false);
 			return;
 		}
 	}
 }
 
+// This searches the viewpoint's sector
+// for a skybox line special, gets its tag and transfers the skybox to all tagged sectors.
+void P_SpawnSkybox(ASkyViewpoint *origin)
+{
+	sector_t *Sector = origin->Sector;
+	if (Sector == NULL)
+	{
+		Printf("Sector not initialized for SkyCamCompat\n");
+		origin->Sector = Sector = P_PointInSector(origin->X(), origin->Y());
+	}
+	if (Sector)
+	{
+		line_t * refline = NULL;
+		for (short i = 0; i < Sector->linecount; i++)
+		{
+			refline = Sector->lines[i];
+			if (refline->special == Sector_SetPortal && refline->args[1] == 2)
+			{
+				// We found the setup linedef for this skybox, so let's use it for our init.
+				CopyPortal(refline->args[0], refline->args[2], origin, 0, true);
+				return;
+			}
+		}
+	}
+}
+
+
+
+//
+// P_SetSectorDamage
+//
+// Sets damage properties for one sector. Allows combination of original specials with explicit use of the damage properties
+//
+
+static void P_SetupSectorDamage(sector_t *sector, int damage, int interval, int leakchance, FName type, int flags)
+{
+	// Only set if damage is not yet initialized. This ensures that UDMF takes precedence over sector specials.
+	if (sector->damageamount == 0)
+	{
+		sector->damageamount = damage;
+		sector->damageinterval = MAX(1, interval);
+		sector->leakydamage = leakchance;
+		sector->damagetype = type;
+		sector->Flags = (sector->Flags & ~SECF_DAMAGEFLAGS) | (flags & SECF_DAMAGEFLAGS);
+	}
+}
+
+//
+// P_InitSectorSpecial
+//
+// Sets up everything derived from 'sector->special' for one sector
+// ('fromload' is necessary to allow conversion upon savegame load.)
+//
+
+void P_InitSectorSpecial(sector_t *sector, int special, bool nothinkers)
+{
+	// [RH] All secret sectors are marked with a BOOM-ish bitfield
+	if (sector->special & SECRET_MASK)
+	{
+		sector->Flags |= SECF_SECRET | SECF_WASSECRET;
+		level.total_secrets++;
+	}
+	if (sector->special & FRICTION_MASK)
+	{
+		sector->Flags |= SECF_FRICTION;
+	}
+	if (sector->special & PUSH_MASK)
+	{
+		sector->Flags |= SECF_PUSH;
+	}
+	if ((sector->special & DAMAGE_MASK) == 0x100)
+	{
+		P_SetupSectorDamage(sector, 5, 32, 0, NAME_Fire, 0);
+	}
+	else if ((sector->special & DAMAGE_MASK) == 0x200)
+	{
+		P_SetupSectorDamage(sector, 10, 32, 0, NAME_Slime, 0);
+	}
+	else if ((sector->special & DAMAGE_MASK) == 0x300)
+	{
+		P_SetupSectorDamage(sector, 20, 32, 5, NAME_Slime, 0);
+	}
+	sector->special &= 0xff;
+
+	// [RH] Normal DOOM special or BOOM specialized?
+	bool keepspecial = false;
+	switch (sector->special)
+	{
+	case Light_Phased:
+		if (!nothinkers) new DPhased (sector, 48, 63 - (sector->lightlevel & 63));
+		break;
+
+		// [RH] Hexen-like phased lighting
+	case LightSequenceStart:
+		if (!nothinkers) new DPhased (sector);
+		break;
+
+	case dLight_Flicker:
+		if (!nothinkers) new DLightFlash (sector);
+		break;
+
+	case dLight_StrobeFast:
+		if (!nothinkers) new DStrobe (sector, STROBEBRIGHT, FASTDARK, false);
+		break;
+			
+	case dLight_StrobeSlow:
+		if (!nothinkers) new DStrobe (sector, STROBEBRIGHT, SLOWDARK, false);
+		break;
+
+	case dLight_Strobe_Hurt:
+		if (!nothinkers) new DStrobe (sector, STROBEBRIGHT, FASTDARK, false);
+		P_SetupSectorDamage(sector, 20, 32, 5, NAME_Slime, 0);
+		break;
+
+	case dDamage_Hellslime:
+		P_SetupSectorDamage(sector, 10, 32, 0, NAME_Slime, 0);
+		break;
+
+	case dDamage_Nukage:
+		P_SetupSectorDamage(sector, 5, 32, 0, NAME_Slime, 0);
+		break;
+
+	case dLight_Glow:
+		if (!nothinkers) new DGlow (sector);
+		break;
+			
+	case dSector_DoorCloseIn30:
+		P_SpawnDoorCloseIn30 (sector);
+		break;
+			
+	case dDamage_End:
+		P_SetupSectorDamage(sector, 20, 32, 256, NAME_None, SECF_ENDGODMODE|SECF_ENDLEVEL);
+		break;
+
+	case dLight_StrobeSlowSync:
+		if (!nothinkers) new DStrobe (sector, STROBEBRIGHT, SLOWDARK, true);
+		break;
+
+	case dLight_StrobeFastSync:
+		if (!nothinkers) new DStrobe (sector, STROBEBRIGHT, FASTDARK, true);
+		break;
+
+	case dSector_DoorRaiseIn5Mins:
+		P_SpawnDoorRaiseIn5Mins (sector);
+		break;
+
+	case dFriction_Low:
+		sector->friction = FRICTION_LOW;
+		sector->movefactor = 0x269;
+		sector->Flags |= SECF_FRICTION;
+		break;
+
+	case dDamage_SuperHellslime:
+		P_SetupSectorDamage(sector, 20, 32, 5, NAME_Slime, 0);
+		break;
+
+	case dLight_FireFlicker:
+		if (!nothinkers) new DFireFlicker (sector);
+		break;
+
+	case dDamage_LavaWimpy:
+		P_SetupSectorDamage(sector, 5, 32, 256, NAME_Fire, SECF_DMGTERRAINFX);
+		break;
+
+	case dDamage_LavaHefty:
+		P_SetupSectorDamage(sector, 8, 32, 256, NAME_Fire, SECF_DMGTERRAINFX);
+		break;
+
+	case dScroll_EastLavaDamage:
+		P_SetupSectorDamage(sector, 5, 32, 256, NAME_Fire, SECF_DMGTERRAINFX);
+		if (!nothinkers)
+		{
+			new DStrobe(sector, STROBEBRIGHT, FASTDARK, false);
+			new DScroller(DScroller::sc_floor, (-FRACUNIT / 2) << 3,
+				0, -1, int(sector - sectors), 0);
+		}
+		keepspecial = true;
+		break;
+
+	case hDamage_Sludge:
+		P_SetupSectorDamage(sector, 4, 32, 0, NAME_Slime, 0);
+		break;
+
+	case sLight_Strobe_Hurt:
+		P_SetupSectorDamage(sector, 5, 32, 0, NAME_Slime, 0);
+		if (!nothinkers) new DStrobe (sector, STROBEBRIGHT, FASTDARK, false);
+		break;
+
+	case sDamage_Hellslime:
+		P_SetupSectorDamage(sector, 2, 32, 0, NAME_Slime, SECF_HAZARD);
+		break;
+
+	case Damage_InstantDeath:
+		// Strife's instant death sector
+		P_SetupSectorDamage(sector, TELEFRAG_DAMAGE, 1, 256, NAME_InstantDeath, 0);
+		break;
+
+	case sDamage_SuperHellslime:
+		P_SetupSectorDamage(sector, 4, 32, 0, NAME_Slime, SECF_HAZARD);
+		break;
+
+	case Sector_Hidden:
+		sector->MoreFlags |= SECF_HIDDEN;
+		break;
+
+	case Sector_Heal:
+		// CoD's healing sector
+		P_SetupSectorDamage(sector, -1, 32, 0, NAME_None, 0);
+		break;
+
+	case Sky2:
+		sector->sky = PL_SKYFLAT;
+		break;
+
+	default:
+		if (sector->special >= Scroll_North_Slow &&
+			sector->special <= Scroll_SouthWest_Fast)
+		{ // Hexen scroll special
+			static const char hexenScrollies[24][2] =
+			{
+				{  0,  1 }, {  0,  2 }, {  0,  4 },
+				{ -1,  0 }, { -2,  0 }, { -4,  0 },
+				{  0, -1 }, {  0, -2 }, {  0, -4 },
+				{  1,  0 }, {  2,  0 }, {  4,  0 },
+				{  1,  1 }, {  2,  2 }, {  4,  4 },
+				{ -1,  1 }, { -2,  2 }, { -4,  4 },
+				{ -1, -1 }, { -2, -2 }, { -4, -4 },
+				{  1, -1 }, {  2, -2 }, {  4, -4 }
+			};
+
+			
+			int i = sector->special - Scroll_North_Slow;
+			fixed_t dx = hexenScrollies[i][0] * (FRACUNIT/2);
+			fixed_t dy = hexenScrollies[i][1] * (FRACUNIT/2);
+			if (!nothinkers) new DScroller (DScroller::sc_floor, dx, dy, -1, int(sector-sectors), 0);
+		}
+		else if (sector->special >= Carry_East5 &&
+					sector->special <= Carry_East35)
+		{ // Heretic scroll special
+			// Only east scrollers also scroll the texture
+			if (!nothinkers) new DScroller (DScroller::sc_floor,
+				(-FRACUNIT/2)<<(sector->special - Carry_East5),
+				0, -1, int(sector-sectors), 0);
+		}
+		keepspecial = true;
+		break;
+	}
+	if (!keepspecial) sector->special = 0;
+}
 
 //
 // P_SpawnSpecials
@@ -1199,135 +1320,7 @@ void P_SpawnSpecials (void)
 		if (sector->special == 0)
 			continue;
 
-		// [RH] All secret sectors are marked with a BOOM-ish bitfield
-		if (sector->special & SECRET_MASK)
-			level.total_secrets++;
-
-		switch (sector->special & 0xff)
-		{
-			// [RH] Normal DOOM/Hexen specials. We clear off the special for lights
-			//	  here instead of inside the spawners.
-
-		case dLight_Flicker:
-			// FLICKERING LIGHTS
-			new DLightFlash (sector);
-			sector->special &= 0xff00;
-			break;
-
-		case dLight_StrobeFast:
-			// STROBE FAST
-			new DStrobe (sector, STROBEBRIGHT, FASTDARK, false);
-			sector->special &= 0xff00;
-			break;
-			
-		case dLight_StrobeSlow:
-			// STROBE SLOW
-			new DStrobe (sector, STROBEBRIGHT, SLOWDARK, false);
-			sector->special &= 0xff00;
-			break;
-
-		case dLight_Strobe_Hurt:
-		case sLight_Strobe_Hurt:
-			// STROBE FAST/DEATH SLIME
-			new DStrobe (sector, STROBEBRIGHT, FASTDARK, false);
-			break;
-
-		case dLight_Glow:
-			// GLOWING LIGHT
-			new DGlow (sector);
-			sector->special &= 0xff00;
-			break;
-			
-		case dSector_DoorCloseIn30:
-			// DOOR CLOSE IN 30 SECONDS
-			P_SpawnDoorCloseIn30 (sector);
-			break;
-			
-		case dLight_StrobeSlowSync:
-			// SYNC STROBE SLOW
-			new DStrobe (sector, STROBEBRIGHT, SLOWDARK, true);
-			sector->special &= 0xff00;
-			break;
-
-		case dLight_StrobeFastSync:
-			// SYNC STROBE FAST
-			new DStrobe (sector, STROBEBRIGHT, FASTDARK, true);
-			sector->special &= 0xff00;
-			break;
-
-		case dSector_DoorRaiseIn5Mins:
-			// DOOR RAISE IN 5 MINUTES
-			P_SpawnDoorRaiseIn5Mins (sector);
-			break;
-			
-		case dLight_FireFlicker:
-			// fire flickering
-			new DFireFlicker (sector);
-			sector->special &= 0xff00;
-			break;
-
-		case dFriction_Low:
-			sector->friction = FRICTION_LOW;
-			sector->movefactor = 0x269;
-			sector->special &= 0xff00;
-			sector->special |= FRICTION_MASK;
-			break;
-
-		  // [RH] Hexen-like phased lighting
-		case LightSequenceStart:
-			new DPhased (sector);
-			break;
-
-		case Light_Phased:
-			new DPhased (sector, 48, 63 - (sector->lightlevel & 63));
-			break;
-
-		case Sky2:
-			sector->sky = PL_SKYFLAT;
-			break;
-
-		case dScroll_EastLavaDamage:
-			new DStrobe (sector, STROBEBRIGHT, FASTDARK, false);
-			new DScroller (DScroller::sc_floor, (-FRACUNIT/2)<<3,
-				0, -1, int(sector-sectors), 0);
-			break;
-
-		case Sector_Hidden:
-			sector->MoreFlags |= SECF_HIDDEN;
-			sector->special &= 0xff00;
-			break;
-
-		default:
-			if ((sector->special & 0xff) >= Scroll_North_Slow &&
-				(sector->special & 0xff) <= Scroll_SouthWest_Fast)
-			{ // Hexen scroll special
-				static const char hexenScrollies[24][2] =
-				{
-					{  0,  1 }, {  0,  2 }, {  0,  4 },
-					{ -1,  0 }, { -2,  0 }, { -4,  0 },
-					{  0, -1 }, {  0, -2 }, {  0, -4 },
-					{  1,  0 }, {  2,  0 }, {  4,  0 },
-					{  1,  1 }, {  2,  2 }, {  4,  4 },
-					{ -1,  1 }, { -2,  2 }, { -4,  4 },
-					{ -1, -1 }, { -2, -2 }, { -4, -4 },
-					{  1, -1 }, {  2, -2 }, {  4, -4 }
-				};
-
-				int i = (sector->special & 0xff) - Scroll_North_Slow;
-				fixed_t dx = hexenScrollies[i][0] * (FRACUNIT/2);
-				fixed_t dy = hexenScrollies[i][1] * (FRACUNIT/2);
-				new DScroller (DScroller::sc_floor, dx, dy, -1, int(sector-sectors), 0);
-			}
-			else if ((sector->special & 0xff) >= Carry_East5 &&
-					 (sector->special & 0xff) <= Carry_East35)
-			{ // Heretic scroll special
-			  // Only east scrollers also scroll the texture
-				new DScroller (DScroller::sc_floor,
-					(-FRACUNIT/2)<<((sector->special & 0xff) - Carry_East5),
-					0, -1, int(sector-sectors), 0);
-			}
-			break;
-		}
+		P_InitSectorSpecial(sector, sector->special, false);
 	}
 	
 	// Init other misc stuff
@@ -1335,6 +1328,13 @@ void P_SpawnSpecials (void)
 	P_SpawnScrollers(); // killough 3/7/98: Add generalized scrollers
 	P_SpawnFriction();	// phares 3/12/98: New friction model using linedefs
 	P_SpawnPushers();	// phares 3/20/98: New pusher model using linedefs
+
+	TThinkerIterator<ASkyCamCompat> it2;
+	ASkyCamCompat *pt2;
+	while ((pt2 = it2.Next()))
+	{
+		P_SpawnSkybox(pt2);
+	}
 
 	for (i = 0; i < numlines; i++)
 	{
@@ -1449,8 +1449,24 @@ void P_SpawnSpecials (void)
 					FSectorTagIterator itr(lines[i].args[0]);
 					while ((s = itr.Next()) >= 0)
 					{
-						sectors[s].damage = damage;
-						sectors[s].mod = 0;//MOD_UNKNOWN;
+						sector_t *sec = &sectors[s];
+						sec->damageamount = damage;
+						sec->damagetype = NAME_None;
+						if (sec->damageamount < 20)
+						{
+							sec->leakydamage = 0;
+							sec->damageinterval = 32;
+						}
+						else if (sec->damageamount < 50)
+						{
+							sec->leakydamage = 5;
+							sec->damageinterval = 32;
+						}
+						else
+						{
+							sec->leakydamage = 256;
+							sec->damageinterval = 1;
+						}
 					}
 				}
 				break;
@@ -2052,11 +2068,11 @@ void P_SetSectorFriction (int tag, int amount, bool alterFlag)
 			// can be enabled and disabled at will.
 			if (friction == ORIG_FRICTION)
 			{
-				sectors[s].special &= ~FRICTION_MASK;
+				sectors[s].Flags &= ~SECF_FRICTION;
 			}
 			else
 			{
-				sectors[s].special |= FRICTION_MASK;
+				sectors[s].Flags |= SECF_FRICTION;
 			}
 		}
 	}
@@ -2136,8 +2152,8 @@ DPusher::DPusher (DPusher::EPusher type, line_t *l, int magnitude, int angle,
 	if (source) // point source exist?
 	{
 		m_Radius = (m_Magnitude) << (FRACBITS+1); // where force goes to zero
-		m_X = m_Source->x;
-		m_Y = m_Source->y;
+		m_X = m_Source->X();
+		m_Y = m_Source->Y();
 	}
 	m_Affectee = affectee;
 }
@@ -2172,7 +2188,7 @@ void DPusher::Tick ()
 	// Be sure the special sector type is still turned on. If so, proceed.
 	// Else, bail out; the sector type has been changed on us.
 
-	if (!(sec->special & PUSH_MASK))
+	if (!(sec->Flags & SECF_PUSH))
 		return;
 
 	// For constant pushers (wind/current) there are 3 situations:
@@ -2218,7 +2234,7 @@ void DPusher::Tick ()
 			{
 				int sx = m_X;
 				int sy = m_Y;
-				int dist = P_AproxDistance (thing->x - sx,thing->y - sy);
+				int dist = thing->AproxDistance (sx, sy);
 				int speed = (m_Magnitude - ((dist>>FRACBITS)>>1))<<(FRACBITS-PUSH_FACTOR-1);
 
 				// If speed <= 0, you're outside the effective radius. You also have
@@ -2226,7 +2242,7 @@ void DPusher::Tick ()
 
 				if ((speed > 0) && (P_CheckSight (thing, m_Source, SF_IGNOREVISIBILITY)))
 				{
-					angle_t pushangle = R_PointToAngle2 (thing->x, thing->y, sx, sy);
+					angle_t pushangle = thing->AngleTo(sx, sy);
 					if (m_Source->GetClass()->TypeName == NAME_PointPusher)
 						pushangle += ANG180;    // away
 					pushangle >>= ANGLETOFINESHIFT;
@@ -2252,7 +2268,7 @@ void DPusher::Tick ()
 		{
 			if (hsec == NULL)
 			{ // NOT special water sector
-				if (thing->z > thing->floorz) // above ground
+				if (thing->Z() > thing->floorz) // above ground
 				{
 					xspeed = m_Xmag; // full force
 					yspeed = m_Ymag;
@@ -2265,8 +2281,8 @@ void DPusher::Tick ()
 			}
 			else // special water sector
 			{
-				ht = hsec->floorplane.ZatPoint (thing->x, thing->y);
-				if (thing->z > ht) // above ground
+				ht = hsec->floorplane.ZatPoint(thing);
+				if (thing->Z() > ht) // above ground
 				{
 					xspeed = m_Xmag; // full force
 					yspeed = m_Ymag;
@@ -2294,7 +2310,7 @@ void DPusher::Tick ()
 			{ // special water sector
 				floor = &hsec->floorplane;
 			}
-			if (thing->z > floor->ZatPoint (thing->x, thing->y))
+			if (thing->Z() > floor->ZatPoint(thing))
 			{ // above ground
 				xspeed = yspeed = 0; // no force
 			}

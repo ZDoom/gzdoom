@@ -580,7 +580,7 @@ void GiveSpawner (player_t *player, const PClass *type, int amount)
 	}
 
 	AInventory *item = static_cast<AInventory *>
-		(Spawn (type, player->mo->x, player->mo->y, player->mo->z, NO_REPLACE));
+		(Spawn (type, player->mo->X(), player->mo->Y(), player->mo->Z(), NO_REPLACE));
 	if (item != NULL)
 	{
 		if (amount > 0)

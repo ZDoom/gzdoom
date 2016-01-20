@@ -151,12 +151,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningClip)
 		{
 			return;
 		}
-		self->z = self->floorz;
+		self->SetZ(self->floorz);
 		target = self->lastenemy->tracer;
 	}
 	else if (self->flags3 & MF3_CEILINGHUGGER)
 	{
-		self->z = self->ceilingz-self->height;
+		self->SetZ(self->ceilingz-self->height);
 		target = self->tracer;
 	}
 	if (self->flags3 & MF3_FLOORHUGGER)
@@ -190,7 +190,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningClip)
 		}
 		else
 		{
-			self->angle = R_PointToAngle2(self->x, self->y, target->x, target->y);
+			self->angle = self->AngleTo(target);
 			self->velx = 0;
 			self->vely = 0;
 			P_ThrustMobj (self, self->angle, self->Speed>>1);
@@ -227,10 +227,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningZap)
 	else
 	{
 		deltaZ = -10*FRACUNIT;
-	}
-	mo = Spawn(lightning, self->x+((pr_zap()-128)*self->radius/256), 
-		self->y+((pr_zap()-128)*self->radius/256), 
-		self->z+deltaZ, ALLOW_REPLACE);
+	}			
+	fixed_t xo = ((pr_zap() - 128)*self->radius / 256);
+	fixed_t yo = ((pr_zap() - 128)*self->radius / 256);
+
+	mo = Spawn(lightning, self->Vec3Offset(xo, yo, deltaZ), ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->lastenemy = self;
@@ -329,7 +330,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LastZap)
 
 	AActor *mo;
 
-	mo = Spawn(lightning, self->x, self->y, self->z, ALLOW_REPLACE);
+	mo = Spawn(lightning, self->Pos(), ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->SetState (mo->FindState (NAME_Death));

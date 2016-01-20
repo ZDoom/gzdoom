@@ -75,6 +75,7 @@
 #include "actorptrselect.h"
 #include "farchive.h"
 #include "decallib.h"
+#include "p_terrain.h"
 #include "version.h"
 #include "p_effect.h"
 
@@ -1265,7 +1266,7 @@ static int UseInventory (AActor *activator, const char *type)
 //
 //============================================================================
 
-static int CheckInventory (AActor *activator, const char *type)
+static int CheckInventory (AActor *activator, const char *type, bool max)
 {
 	if (activator == NULL || type == NULL)
 		return 0;
@@ -1276,11 +1277,26 @@ static int CheckInventory (AActor *activator, const char *type)
 	}
 	else if (stricmp (type, "Health") == 0)
 	{
+		if (max)
+		{
+			if (activator->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
+				return static_cast<APlayerPawn *>(activator)->MaxHealth;
+			else
+				return activator->SpawnHealth();
+		}
 		return activator->health;
 	}
 
 	const PClass *info = PClass::FindClass (type);
 	AInventory *item = activator->FindInventory (info);
+
+	if (max)
+	{
+		if (item)
+			return item->MaxAmount;
+		else
+			return ((AInventory *)GetDefaultByType (info))->MaxAmount;
+	}
 	return item ? item->Amount : 0;
 }
 
@@ -1939,11 +1955,14 @@ bool FBehavior::Init(int lumpnum, FileReader * fr, int len)
 			int arraynum = MapVarStore[LittleLong(chunk[2])];
 			if ((unsigned)arraynum < (unsigned)NumArrays)
 			{
-				int initsize = MIN<int> (ArrayStore[arraynum].ArraySize, (LittleLong(chunk[1])-4)/4);
+				// Use unsigned iterator here to avoid issue with GCC 4.9/5.x
+				// optimizer. Might be some undefined behavior in this code,
+				// but I don't know what it is.
+				unsigned int initsize = MIN<unsigned int> (ArrayStore[arraynum].ArraySize, (LittleLong(chunk[1])-4)/4);
 				SDWORD *elems = ArrayStore[arraynum].Elements;
-				for (i = 0; i < initsize; ++i)
+				for (unsigned int j = 0; j < initsize; ++j)
 				{
-					elems[i] = LittleLong(chunk[3+i]);
+					elems[j] = LittleLong(chunk[3+j]);
 				}
 			}
 			chunk = (DWORD *)NextChunk((BYTE *)chunk);
@@ -3423,12 +3442,12 @@ int DLevelScript::DoSpawnSpot (int type, int spot, int tid, int angle, bool forc
 
 		while ( (aspot = iterator.Next ()) )
 		{
-			spawned += DoSpawn (type, aspot->x, aspot->y, aspot->z, tid, angle, force);
+			spawned += DoSpawn (type, aspot->X(), aspot->Y(), aspot->Z(), tid, angle, force);
 		}
 	}
 	else if (activator != NULL)
 	{
-			spawned += DoSpawn (type, activator->x, activator->y, activator->z, tid, angle, force);
+			spawned += DoSpawn (type, activator->X(), activator->Y(), activator->Z(), tid, angle, force);
 	}
 	return spawned;
 }
@@ -3444,12 +3463,12 @@ int DLevelScript::DoSpawnSpotFacing (int type, int spot, int tid, bool force)
 
 		while ( (aspot = iterator.Next ()) )
 		{
-			spawned += DoSpawn (type, aspot->x, aspot->y, aspot->z, tid, aspot->angle >> 24, force);
+			spawned += DoSpawn (type, aspot->X(), aspot->Y(), aspot->Z(), tid, aspot->angle >> 24, force);
 		}
 	}
 	else if (activator != NULL)
 	{
-			spawned += DoSpawn (type, activator->x, activator->y, activator->z, tid, activator->angle >> 24, force);
+			spawned += DoSpawn (type, activator->X(), activator->Y(), activator->Z(), tid, activator->angle >> 24, force);
 	}
 	return spawned;
 }
@@ -4127,7 +4146,7 @@ bool DLevelScript::DoCheckActorTexture(int tid, AActor *activator, int string, b
 			F3DFloor *ff = sec->e->XFloor.ffloors[i];
 
 			if ((ff->flags & (FF_EXISTS | FF_SOLID)) == (FF_EXISTS | FF_SOLID) &&
-				actor->z >= ff->top.plane->ZatPoint(actor->x, actor->y))
+				actor->Z() >= ff->top.plane->ZatPoint(actor))
 			{ // This floor is beneath our feet.
 				secpic = *ff->top.texture;
 				break;
@@ -4140,14 +4159,14 @@ bool DLevelScript::DoCheckActorTexture(int tid, AActor *activator, int string, b
 	}
 	else
 	{
-		fixed_t z = actor->z + actor->height;
+		fixed_t z = actor->Top();
 		// Looking through planes from bottom to top
 		for (i = numff-1; i >= 0; --i)
 		{
 			F3DFloor *ff = sec->e->XFloor.ffloors[i];
 
 			if ((ff->flags & (FF_EXISTS | FF_SOLID)) == (FF_EXISTS | FF_SOLID) &&
-				z <= ff->bottom.plane->ZatPoint(actor->x, actor->y))
+				z <= ff->bottom.plane->ZatPoint(actor))
 			{ // This floor is above our eyes.
 				secpic = *ff->bottom.texture;
 				break;
@@ -4442,8 +4461,11 @@ enum EACSFunctions
 	ACSF_ChangeActorRoll,
 	ACSF_GetActorRoll,
 	ACSF_QuakeEx,
-	ACSF_Warp,					
-	ACSF_SpawnParticle,			// 93
+	ACSF_Warp,					// 92
+	ACSF_GetMaxInventory,
+	ACSF_SetSectorDamage,
+	ACSF_SetSectorTerrain,
+	ACSF_SpawnParticle,
 	
 	/* Zandronum's - these must be skipped when we reach 99!
 	-100:ResetMap(0),
@@ -4708,8 +4730,8 @@ static bool DoSpawnDecal(AActor *actor, const FDecalTemplate *tpl, int flags, an
 	{
 		angle += actor->angle;
 	}
-	return NULL != ShootDecal(tpl, actor, actor->Sector, actor->x, actor->y,
-		actor->z + (actor->height>>1) - actor->floorclip + actor->GetBobOffset() + zofs,
+	return NULL != ShootDecal(tpl, actor, actor->Sector, actor->X(), actor->Y(),
+		actor->Z() + (actor->height>>1) - actor->floorclip + actor->GetBobOffset() + zofs,
 		angle, distance, !!(flags & SDF_PERMANENT));
 }
 
@@ -5383,6 +5405,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args, const 
 				FName damagetype	= argCount > 5 && args[5]? FName(FBehavior::StaticLookupString(args[5])) : NAME_None;
 				fixed_t	range		= argCount > 6 && args[6]? args[6] : MISSILERANGE;
 				int flags			= argCount > 7 && args[7]? args[7] : 0;
+				int pufftid			= argCount > 8 && args[8]? args[8] : 0;
 
 				int fhflags = 0;
 				if (flags & FHF_NORANDOMPUFFZ) fhflags |= LAF_NORANDOMPUFFZ;
@@ -5390,7 +5413,12 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args, const 
 
 				if (args[0] == 0)
 				{
-					P_LineAttack(activator, angle, range, pitch, damage, damagetype, pufftype, fhflags);
+					AActor *puff = P_LineAttack(activator, angle, range, pitch, damage, damagetype, pufftype, fhflags);
+					if (puff != NULL && pufftid != 0)
+					{
+						puff->tid = pufftid;
+						puff->AddToHash();
+					}
 				}
 				else
 				{
@@ -5399,7 +5427,12 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args, const 
 
 					while ((source = it.Next()) != NULL)
 					{
-						P_LineAttack(source, angle, range, pitch, damage, damagetype, pufftype, fhflags);
+						AActor *puff = P_LineAttack(source, angle, range, pitch, damage, damagetype, pufftype, fhflags);
+						if (puff != NULL && pufftid != 0)
+						{
+							puff->tid = pufftid;
+							puff->AddToHash();
+						}
 					}
 				}
 			}
@@ -5917,7 +5950,47 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			}
 			return false;
 		}
+		case ACSF_GetMaxInventory:
+			actor = SingleActorFromTID(args[0], activator);
+			if (actor != NULL)
+			{
+				return CheckInventory(actor, FBehavior::StaticLookupString(args[1]), true);
+			}
+			break;
 
+		case ACSF_SetSectorDamage:
+			if (argCount >= 2)
+			{
+				FSectorTagIterator it(args[0]);
+				int s;
+				while ((s = it.Next()) >= 0)
+				{
+					sector_t *sec = &sectors[s];
+
+					sec->damageamount = args[1];
+					sec->damagetype = argCount >= 3 ? FName(FBehavior::StaticLookupString(args[2])) : FName(NAME_None);
+					sec->damageinterval = argCount >= 4 ? clamp(args[3], 1, INT_MAX) : 32;
+					sec->leakydamage = argCount >= 5 ? args[4] : 0;
+				}
+			}
+			break;
+
+		case ACSF_SetSectorTerrain:
+			if (argCount >= 3)
+			{
+				if (args[1] == sector_t::floor || args[1] == sector_t::ceiling)
+				{
+					int terrain = P_FindTerrain(FBehavior::StaticLookupString(args[2]));
+					FSectorTagIterator it(args[0]);
+					int s;
+					while ((s = it.Next()) >= 0)
+					{
+						sectors[s].terrainnum[args[1]] = terrain;
+					}
+				}
+			}
+			break;
+		
 		case ACSF_SpawnParticle:
 		{
 			fixed_t x = args[0];
@@ -5945,7 +6018,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 				P_SpawnParticle(x, y, z, xvel, yvel, zvel, color, fullbright, startalpha, lifetime, size, fadestep, accelx, accely, accelz);
 		}
 		break;
-
+		
 		default:
 			break;
 	}
@@ -8369,17 +8442,17 @@ scriptwait:
 			break;
 
 		case PCD_CHECKINVENTORY:
-			STACK(1) = CheckInventory (activator, FBehavior::StaticLookupString (STACK(1)));
+			STACK(1) = CheckInventory (activator, FBehavior::StaticLookupString (STACK(1)), false);
 			break;
 
 		case PCD_CHECKACTORINVENTORY:
 			STACK(2) = CheckInventory (SingleActorFromTID(STACK(2), NULL),
-										FBehavior::StaticLookupString (STACK(1)));
+										FBehavior::StaticLookupString (STACK(1)), false);
 			sp--;
 			break;
 
 		case PCD_CHECKINVENTORYDIRECT:
-			PushToStack (CheckInventory (activator, FBehavior::StaticLookupString (TAGSTR(uallong(pc[0])))));
+			PushToStack (CheckInventory (activator, FBehavior::StaticLookupString (TAGSTR(uallong(pc[0]))), false));
 			pc += 1;
 			break;
 
@@ -8555,11 +8628,11 @@ scriptwait:
 				}
 				else if (pcd == PCD_GETACTORZ)
 				{
-					STACK(1) = actor->z + actor->GetBobOffset();
+					STACK(1) = actor->Z() + actor->GetBobOffset();
 				}
 				else
 				{
-					STACK(1) =  (&actor->x)[pcd - PCD_GETACTORX];
+					STACK(1) = pcd == PCD_GETACTORX ? actor->X() : pcd == PCD_GETACTORY ? actor->Y() : actor->Z();
 				}
 			}
 			break;

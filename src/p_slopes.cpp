@@ -54,7 +54,7 @@ static void P_SlopeLineToPoint (int lineid, fixed_t x, fixed_t y, fixed_t z, boo
 		sector_t *sec;
 		secplane_t *plane;
 		
-		if (P_PointOnLineSide (x, y, line) == 0)
+		if (P_PointOnLineSidePrecise (x, y, line) == 0)
 		{
 			sec = line->frontsector;
 		}
@@ -363,7 +363,7 @@ static void P_SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt, 
 				z3 = h3? *h3 : j==0? sec->GetPlaneTexZ(sector_t::floor) : sec->GetPlaneTexZ(sector_t::ceiling);
 				vt3.Z = FIXED2FLOAT(z3);
 
-				if (P_PointOnLineSide(vertexes[vi3].x, vertexes[vi3].y, sec->lines[0]) == 0)
+				if (P_PointOnLineSidePrecise(vertexes[vi3].x, vertexes[vi3].y, sec->lines[0]) == 0)
 				{
 					vec1 = vt2 - vt3;
 					vec2 = vt1 - vt3;

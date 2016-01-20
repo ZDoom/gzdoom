@@ -95,7 +95,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ThrustInitDn)
 	self->flags2 = MF2_NOTELEPORT|MF2_FLOORCLIP;
 	self->renderflags = RF_INVISIBLE;
 	static_cast<AThrustFloor *>(self)->DirtClump =
-		Spawn("DirtClump", self->x, self->y, self->z, ALLOW_REPLACE);
+		Spawn("DirtClump", self->Pos(), ALLOW_REPLACE);
 }
 
 
@@ -140,7 +140,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ThrustLower)
 DEFINE_ACTION_FUNCTION(AActor, A_ThrustImpale)
 {
 	AActor *thing;
-	FBlockThingsIterator it(FBoundingBox(self->x, self->y, self->radius));
+	FBlockThingsIterator it(FBoundingBox(self->X(), self->Y(), self->radius));
 	while ((thing = it.Next()))
 	{
 		if (!thing->intersects(self))

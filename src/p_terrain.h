@@ -122,4 +122,8 @@ struct FTerrainDef
 extern TArray<FSplashDef> Splashes;
 extern TArray<FTerrainDef> Terrains;
 
+class FArchive;
+int P_FindTerrain(FName name);
+void P_SerializeTerrain(FArchive &arc, int &terrainnum);
+
 #endif //__P_TERRAIN_H__

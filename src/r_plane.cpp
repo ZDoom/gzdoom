@@ -1224,9 +1224,10 @@ void R_DrawSkyBoxes ()
 			extralight = 0;
 			R_SetVisibility (sky->args[0] * 0.25f);
 
-			viewx = sky->PrevX + FixedMul(r_TicFrac, sky->x - sky->PrevX);
-			viewy = sky->PrevY + FixedMul(r_TicFrac, sky->y - sky->PrevY);
-			viewz = sky->PrevZ + FixedMul(r_TicFrac, sky->z - sky->PrevZ);
+			fixedvec3 viewpos = sky->InterpolatedPosition(r_TicFrac);
+			viewx = viewpos.x;
+			viewy = viewpos.y;
+			viewz = viewpos.z;
 			viewangle = savedangle + sky->PrevAngle + FixedMul(r_TicFrac, sky->angle - sky->PrevAngle);
 
 			R_CopyStackedViewParameters();
@@ -1235,8 +1236,8 @@ void R_DrawSkyBoxes ()
 		{
 			extralight = pl->extralight;
 			R_SetVisibility (pl->visibility);
-			viewx = pl->viewx - sky->Mate->x + sky->x;
-			viewy = pl->viewy - sky->Mate->y + sky->y;
+			viewx = pl->viewx - sky->Mate->X() + sky->X();
+			viewy = pl->viewy - sky->Mate->Y() + sky->Y();
 			viewz = pl->viewz;
 			viewangle = pl->viewangle;
 		}
@@ -1280,6 +1281,7 @@ void R_DrawSkyBoxes ()
 		ds_p->sprtopclip = R_NewOpening (pl->maxx - pl->minx + 1);
 		ds_p->maskedtexturecol = ds_p->swall = -1;
 		ds_p->bFogBoundary = false;
+		ds_p->fake = 0;
 		memcpy (openings + ds_p->sprbottomclip, floorclip + pl->minx, (pl->maxx - pl->minx + 1)*sizeof(short));
 		memcpy (openings + ds_p->sprtopclip, ceilingclip + pl->minx, (pl->maxx - pl->minx + 1)*sizeof(short));
 

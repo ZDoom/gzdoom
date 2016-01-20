@@ -79,11 +79,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_FlyBuzz)
 		return;
 	}
 
-	angle_t ang = R_PointToAngle2(self->x, self->y, targ->x, targ->y);
+	angle_t ang = self->AngleTo(targ);
 	self->angle = ang;
 	self->args[0]++;
 	ang >>= ANGLETOFINESHIFT;
-	if (!P_TryMove(self, self->x + 6 * finecosine[ang], self->y + 6 * finesine[ang], true))
+	if (!P_TryMove(self, self->X() + 6 * finecosine[ang], self->Y() + 6 * finesine[ang], true))
 	{
 		self->SetIdle(true);
 		return;
@@ -94,7 +94,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FlyBuzz)
 		self->vely += (pr_fly() - 128) << BOBTOFINESHIFT;
 	}
 	int zrand = pr_fly();
-	if (targ->z + 5*FRACUNIT < self->z && zrand > 150)
+	if (targ->Z() + 5*FRACUNIT < self->Z() && zrand > 150)
 	{
 		zrand = -zrand;
 	}

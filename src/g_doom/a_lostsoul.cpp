@@ -36,12 +36,12 @@ void A_SkullAttack(AActor *self, fixed_t speed)
 	an = self->angle >> ANGLETOFINESHIFT;
 	self->velx = FixedMul (speed, finecosine[an]);
 	self->vely = FixedMul (speed, finesine[an]);
-	dist = P_AproxDistance (dest->x - self->x, dest->y - self->y);
+	dist = self->AproxDistance (dest);
 	dist = dist / speed;
 	
 	if (dist < 1)
 		dist = 1;
-	self->velz = (dest->z + (dest->height>>1) - self->z) / dist;
+	self->velz = (dest->Z() + (dest->height>>1) - self->Z()) / dist;
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SkullAttack)

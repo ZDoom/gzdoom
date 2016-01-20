@@ -158,6 +158,7 @@ bool PIT_PushThing (AActor *thing);
 bool	CheckIfExitIsGood (AActor *self, level_info_t *info);
 
 // at map load
+void P_InitSectorSpecial(sector_t *sector, int special, bool nothinkers);
 void	P_SpawnSpecials (void);
 
 // every tic
@@ -673,7 +674,7 @@ protected:
 
 	// [RH] Need these for BOOM-ish transferring ceilings
 	FTextureID	m_Texture;
-	int			m_NewSpecial;
+	secspecial_t m_NewSpecial;
 
 	// ID
 	int 		m_Tag;
@@ -760,7 +761,7 @@ protected:
 	int 		m_Crush;
 	bool		m_Hexencrush;
 	int 		m_Direction;
-	int 		m_NewSpecial;
+	secspecial_t m_NewSpecial;
 	FTextureID	m_Texture;
 	fixed_t 	m_FloorDestDist;
 	fixed_t 	m_Speed;
@@ -902,6 +903,10 @@ bool EV_DoChange (line_t *line, EChange changetype, int tag);
 // P_TELEPT
 //
 void P_SpawnTeleportFog(AActor *mobj, fixed_t x, fixed_t y, fixed_t z, bool beforeTele = true, bool setTarget = false); //Spawns teleport fog. Pass the actor to pluck TeleFogFromType and TeleFogToType. 'from' determines if this is the fog to spawn at the old position (true) or new (false).
+inline void P_SpawnTeleportFog(AActor *mobj, const fixedvec3 &pos, bool beforeTele = true, bool setTarget = false)
+{
+	P_SpawnTeleportFog(mobj, pos.x, pos.y, pos.z, beforeTele, setTarget);
+}
 bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle, bool useFog, bool sourceFog, bool keepOrientation, bool haltVelocity = true, bool keepHeight = false);
 bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, bool fog, bool sourceFog, bool keepOrientation, bool haltVelocity = true, bool keepHeight = false);
 bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id, INTBOOL reverse);

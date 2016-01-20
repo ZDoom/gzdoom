@@ -443,6 +443,7 @@ static void LoadSectors (sectortype *bsec)
 		sec->movefactor = ORIG_FRICTION_FACTOR;
 		sec->ColorMap = map;
 		sec->ZoneNumber = 0xFFFF;
+		sec->terrainnum[sector_t::ceiling] = sec->terrainnum[sector_t::floor] = -1;
 
 		if (bsec->floorstat & 4)
 		{

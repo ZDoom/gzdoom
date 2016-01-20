@@ -84,7 +84,7 @@ FName MeansOfDeath;
 //
 void P_TouchSpecialThing (AActor *special, AActor *toucher)
 {
-	fixed_t delta = special->z - toucher->z;
+	fixed_t delta = special->Z() - toucher->Z();
 
 	// The pickup is at or above the toucher's feet OR
 	// The pickup is below the toucher.
@@ -1045,7 +1045,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 			return -1;
 		}
 
-		if ((rawdamage < TELEFRAG_DAMAGE) || (target->flags7 & MF7_LAXTELEFRAGDMG)) // TELEFRAG_DAMAGE may only be reduced with NOTELEFRAGPIERCE or it may not guarantee its effect.
+		if ((rawdamage < TELEFRAG_DAMAGE) || (target->flags7 & MF7_LAXTELEFRAGDMG)) // TELEFRAG_DAMAGE may only be reduced with LAXTELEFRAGDMG or it may not guarantee its effect.
 		{
 			if (player && damage > 1)
 			{
@@ -1158,13 +1158,13 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 			// If the origin and target are in exactly the same spot, choose a random direction.
 			// (Most likely cause is from telefragging somebody during spawning because they
 			// haven't moved from their spawn spot at all.)
-			if (origin->x == target->x && origin->y == target->y)
+			if (origin->X() == target->X() && origin->Y() == target->Y())
 			{
 				ang = pr_kickbackdir.GenRand32();
 			}
 			else
 			{
-				ang = R_PointToAngle2 (origin->x, origin->y, target->x, target->y);
+				ang = origin->AngleTo(target);
 			}
 
 			// Calculate this as float to avoid overflows so that the
@@ -1184,7 +1184,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 
 			// make fall forwards sometimes
 			if ((damage < 40) && (damage > target->health)
-				 && (target->z - origin->z > 64*FRACUNIT)
+				 && (target->Z() - origin->Z() > 64*FRACUNIT)
 				 && (pr_damagemobj()&1)
 				 // [RH] But only if not too fast and not flying
 				 && thrust < 10*FRACUNIT
@@ -1221,7 +1221,8 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 		((player && player != source->player) || (!player && target != source)) &&
 		target->IsTeammate (source))
 	{
-		if (rawdamage < TELEFRAG_DAMAGE) //Use the original damage to check for telefrag amount. Don't let the now-amplified damagetypes do it.
+		//Use the original damage to check for telefrag amount. Don't let the now-amplified damagetypes do it.
+		if (rawdamage < TELEFRAG_DAMAGE || (target->flags7 & MF7_LAXTELEFRAGDMG)) 
 		{ // Still allow telefragging :-(
 			damage = (int)((float)damage * level.teamdamage);
 			if (damage < 0)
@@ -1255,8 +1256,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 		}
 
 		// end of game hell hack
-		if ((target->Sector->special & 255) == dDamage_End
-			&& damage >= target->health)
+		if ((target->Sector->Flags & SECF_ENDLEVEL) && damage >= target->health)
 		{
 			damage = target->health - 1;
 		}

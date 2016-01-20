@@ -194,6 +194,7 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef,
 			open.bottom = ff;
 			open.bottomsec = front;
 			open.floorpic = front->GetTexture(sector_t::floor);
+			open.floorterrain = front->GetTerrain(sector_t::floor);
 			open.lowfloor = bf;
 		}
 		else
@@ -201,6 +202,7 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef,
 			open.bottom = bf;
 			open.bottomsec = back;
 			open.floorpic = back->GetTexture(sector_t::floor);
+			open.floorterrain = back->GetTerrain(sector_t::floor);
 			open.lowfloor = ff;
 		}
 	}
@@ -211,6 +213,7 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef,
 		open.top = FIXED_MAX;
 		open.bottomsec = NULL;
 		open.floorpic.SetInvalid();
+		open.floorterrain = -1;
 		open.bottom = FIXED_MIN;
 		open.lowfloor = FIXED_MAX;
 	}
@@ -323,7 +326,7 @@ void AActor::LinkToWorld (bool buggy)
 
 	if (!buggy || numgamenodes == 0)
 	{
-		sec = P_PointInSector (x, y);
+		sec = P_PointInSector (X(), Y());
 	}
 	else
 	{
@@ -341,7 +344,7 @@ void AActor::LinkToWorld (sector_t *sec)
 		return;
 	}
 	Sector = sec;
-	subsector = R_PointInSubsector(x, y);	// this is from the rendering nodes, not the gameplay nodes!
+	subsector = R_PointInSubsector(X(), Y());	// this is from the rendering nodes, not the gameplay nodes!
 
 	if ( !(flags & MF_NOSECTOR) )
 	{
@@ -368,7 +371,7 @@ void AActor::LinkToWorld (sector_t *sec)
 		// When a node is deleted, its sector links (the links starting
 		// at sector_t->touching_thinglist) are broken. When a node is
 		// added, new sector links are created.
-		P_CreateSecNodeList (this, x, y);
+		P_CreateSecNodeList (this, X(), Y());
 		touching_sectorlist = sector_list;	// Attach to thing
 		sector_list = NULL;		// clear for next time
     }
@@ -377,10 +380,10 @@ void AActor::LinkToWorld (sector_t *sec)
 	// link into blockmap (inert things don't need to be in the blockmap)
 	if ( !(flags & MF_NOBLOCKMAP) )
 	{
-		int x1 = GetSafeBlockX(x - radius - bmaporgx);
-		int x2 = GetSafeBlockX(x + radius - bmaporgx);
-		int y1 = GetSafeBlockY(y - radius - bmaporgy);
-		int y2 = GetSafeBlockY(y + radius - bmaporgy);
+		int x1 = GetSafeBlockX(X() - radius - bmaporgx);
+		int x2 = GetSafeBlockX(X() + radius - bmaporgx);
+		int y1 = GetSafeBlockY(Y() - radius - bmaporgy);
+		int y2 = GetSafeBlockY(Y() + radius - bmaporgy);
 
 		if (x1 >= bmapwidth || x2 < 0 || y1 >= bmapheight || y2 < 0)
 		{ // thing is off the map
@@ -493,7 +496,7 @@ sector_t *AActor::LinkToWorldForMapThing ()
 		// that lies directly on a line should always be
 		// considered as "in front" of the line. The orientation
 		// of the line should be irrelevant.
-		node = (node_t *)node->children[R_PointOnSideSlow (x, y, node)];
+		node = (node_t *)node->children[R_PointOnSideSlow (X(), Y(), node)];
 	}
 	while (!((size_t)node & 1));
 
@@ -507,8 +510,8 @@ sector_t *AActor::LinkToWorldForMapThing ()
 		// one-sided line might go into a subsector behind the line, so
 		// the line would not be included as one of its subsector's segs.
 
-		int blockx = GetSafeBlockX(x - bmaporgx);
-		int blocky = GetSafeBlockY(y - bmaporgy);
+		int blockx = GetSafeBlockX(X() - bmaporgx);
+		int blocky = GetSafeBlockY(Y() - bmaporgy);
 
 		if ((unsigned int)blockx < (unsigned int)bmapwidth &&
 			(unsigned int)blocky < (unsigned int)bmapheight)
@@ -533,10 +536,10 @@ sector_t *AActor::LinkToWorldForMapThing ()
 				}
 
 				// Not inside the line's bounding box
-				if (x + radius <= ldef->bbox[BOXLEFT]
-					|| x - radius >= ldef->bbox[BOXRIGHT]
-					|| y + radius <= ldef->bbox[BOXBOTTOM]
-					|| y - radius >= ldef->bbox[BOXTOP] )
+				if (X() + radius <= ldef->bbox[BOXLEFT]
+					|| X() - radius >= ldef->bbox[BOXRIGHT]
+					|| Y() + radius <= ldef->bbox[BOXBOTTOM]
+					|| Y() - radius >= ldef->bbox[BOXTOP] )
 					continue;
 
 				// Get the exact distance to the line
@@ -545,8 +548,8 @@ sector_t *AActor::LinkToWorldForMapThing ()
 
 				P_MakeDivline (ldef, &dll);
 
-				dlv.x = x;
-				dlv.y = y;
+				dlv.x = X();
+				dlv.y = Y();
 				dlv.dx = FixedDiv(dll.dy, linelen);
 				dlv.dy = -FixedDiv(dll.dx, linelen);
 
@@ -555,7 +558,7 @@ sector_t *AActor::LinkToWorldForMapThing ()
 				if (distance < radius)
 				{
 					DPrintf ("%s at (%d,%d) lies on %s line %td, distance = %f\n",
-						this->GetClass()->TypeName.GetChars(), x>>FRACBITS, y>>FRACBITS, 
+						this->GetClass()->TypeName.GetChars(), X()>>FRACBITS, Y()>>FRACBITS, 
 						ldef->dx == 0? "vertical" :	ldef->dy == 0? "horizontal" : "diagonal",
 						ldef-lines, FIXED2FLOAT(distance));
 					angle_t finean = R_PointToAngle2 (0, 0, ldef->dx, ldef->dy);
@@ -571,9 +574,8 @@ sector_t *AActor::LinkToWorldForMapThing ()
 
 					// Get the distance we have to move the object away from the wall
 					distance = radius - distance;
-					x += FixedMul(distance, finecosine[finean]);
-					y += FixedMul(distance, finesine[finean]);
-					return P_PointInSector (x, y);
+					SetXY(X() + FixedMul(distance, finecosine[finean]), Y() + FixedMul(distance, finesine[finean]));
+					return P_PointInSector (X(), Y());
 				}
 			}
 		}
@@ -582,12 +584,11 @@ sector_t *AActor::LinkToWorldForMapThing ()
 	return ssec->sector;
 }
 
-void AActor::SetOrigin (fixed_t ix, fixed_t iy, fixed_t iz)
+void AActor::SetOrigin (fixed_t ix, fixed_t iy, fixed_t iz, bool moving)
 {
 	UnlinkFromWorld ();
-	x = ix;
-	y = iy;
-	z = iz;
+	SetXYZ(ix, iy, iz);
+	if (moving) SetMovement(ix - X(), iy - Y(), iz - Z());
 	LinkToWorld ();
 	floorz = Sector->floorplane.ZatPoint (ix, iy);
 	ceilingz = Sector->ceilingplane.ZatPoint (ix, iy);
@@ -875,8 +876,8 @@ AActor *FBlockThingsIterator::Next(bool centeronly)
 				fixed_t blocktop = blockbottom + MAPBLOCKSIZE;
 
 				// only return actors with the center in this block
-				if (me->x >= blockleft && me->x < blockright &&
-					me->y >= blockbottom && me->y < blocktop)
+				if (me->X() >= blockleft && me->X() < blockright &&
+					me->Y() >= blockbottom && me->Y() < blocktop)
 				{
 					return me;
 				}
@@ -982,7 +983,7 @@ void FPathTraverse::AddLineIntercepts(int bx, int by)
 		P_MakeDivline (ld, &dl);
 		frac = P_InterceptVector (&trace, &dl);
 
-		if (frac < 0) continue;	// behind source
+		if (frac < 0 || frac > FRACUNIT) continue;	// behind source or beyond end point
 			
 		intercept_t newintercept;
 
@@ -1025,41 +1026,41 @@ void FPathTraverse::AddThingIntercepts (int bx, int by, FBlockThingsIterator &it
 				switch (i)
 				{
 				case 0:		// Top edge
-					line.x = thing->x + thing->radius;
-					line.y = thing->y + thing->radius;
+					line.x = thing->X() + thing->radius;
+					line.y = thing->Y() + thing->radius;
 					line.dx = -thing->radius * 2;
 					line.dy = 0;
 					break;
 
 				case 1:		// Right edge
-					line.x = thing->x + thing->radius;
-					line.y = thing->y - thing->radius;
+					line.x = thing->X() + thing->radius;
+					line.y = thing->Y() - thing->radius;
 					line.dx = 0;
 					line.dy = thing->radius * 2;
 					break;
 
 				case 2:		// Bottom edge
-					line.x = thing->x - thing->radius;
-					line.y = thing->y - thing->radius;
+					line.x = thing->X() - thing->radius;
+					line.y = thing->Y() - thing->radius;
 					line.dx = thing->radius * 2;
 					line.dy = 0;
 					break;
 
 				case 3:		// Left edge
-					line.x = thing->x - thing->radius;
-					line.y = thing->y + thing->radius;
+					line.x = thing->X() - thing->radius;
+					line.y = thing->Y() + thing->radius;
 					line.dx = 0;
 					line.dy = thing->radius * -2;
 					break;
 				}
 				// Check if this side is facing the trace origin
-				if (P_PointOnDivlineSide (trace.x, trace.y, &line) == 0)
+				if (P_PointOnDivlineSidePrecise (trace.x, trace.y, &line) == 0)
 				{
 					numfronts++;
 
 					// If it is, see if the trace crosses it
-					if (P_PointOnDivlineSide (line.x, line.y, &trace) !=
-						P_PointOnDivlineSide (line.x + line.dx, line.y + line.dy, &trace))
+					if (P_PointOnDivlineSidePrecise (line.x, line.y, &trace) !=
+						P_PointOnDivlineSidePrecise (line.x + line.dx, line.y + line.dy, &trace))
 					{
 						// It's a hit
 						fixed_t frac = P_InterceptVector (&trace, &line);
@@ -1104,19 +1105,19 @@ void FPathTraverse::AddThingIntercepts (int bx, int by, FBlockThingsIterator &it
 			// check a corner to corner crossection for hit
 			if (tracepositive)
 			{
-				x1 = thing->x - thing->radius;
-				y1 = thing->y + thing->radius;
+				x1 = thing->X() - thing->radius;
+				y1 = thing->Y() + thing->radius;
 						
-				x2 = thing->x + thing->radius;
-				y2 = thing->y - thing->radius;					
+				x2 = thing->X() + thing->radius;
+				y2 = thing->Y() - thing->radius;					
 			}
 			else
 			{
-				x1 = thing->x - thing->radius;
-				y1 = thing->y - thing->radius;
+				x1 = thing->X() - thing->radius;
+				y1 = thing->Y() - thing->radius;
 						
-				x2 = thing->x + thing->radius;
-				y2 = thing->y + thing->radius;					
+				x2 = thing->X() + thing->radius;
+				y2 = thing->Y() + thing->radius;					
 			}
 			
 			s1 = P_PointOnDivlineSide (x1, y1, &trace);
@@ -1167,7 +1168,7 @@ intercept_t *FPathTraverse::Next()
 		}
 	}
 	
-	if (dist > maxfrac || in == NULL) return NULL;	// checked everything in range			
+	if (dist > FRACUNIT || in == NULL) return NULL;	// checked everything in range			
 	in->done = true;
 	return in;
 }
@@ -1385,7 +1386,6 @@ FPathTraverse::FPathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, in
 			break;
 		}
 	}
-	maxfrac = FRACUNIT;
 }
 
 FPathTraverse::~FPathTraverse()
@@ -1420,8 +1420,8 @@ AActor *P_BlockmapSearch (AActor *mo, int distance, AActor *(*check)(AActor*, in
 	int count;
 	AActor *target;
 
-	startX = GetSafeBlockX(mo->x-bmaporgx);
-	startY = GetSafeBlockY(mo->y-bmaporgy);
+	startX = GetSafeBlockX(mo->X()-bmaporgx);
+	startY = GetSafeBlockY(mo->Y()-bmaporgy);
 	validcount++;
 	
 	if (startX >= 0 && startX < bmapwidth && startY >= 0 && startY < bmapheight)

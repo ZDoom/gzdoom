@@ -185,9 +185,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurDecide)
 	{
 		S_Sound (self, CHAN_WEAPON, "minotaur/sight", 1, ATTN_NORM);
 	}
-	dist = P_AproxDistance (self->x-target->x, self->y-target->y);
-	if (target->z+target->height > self->z
-		&& target->z+target->height < self->z+self->height
+	dist = self->AproxDistance (target);
+	if (target->Top() > self->Z()
+		&& target->Top() < self->Top()
 		&& dist < (friendly ? 16*64*FRACUNIT : 8*64*FRACUNIT)
 		&& dist > 1*64*FRACUNIT
 		&& pr_minotaurdecide() < 150)
@@ -205,7 +205,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurDecide)
 		self->vely = FixedMul (MNTR_CHARGE_SPEED, finesine[angle]);
 		self->special1 = TICRATE/2; // Charge duration
 	}
-	else if (target->z == target->floorz
+	else if (target->Z() == target->floorz
 		&& dist < 9*64*FRACUNIT
 		&& pr_minotaurdecide() < (friendly ? 100 : 220))
 	{ // Floor fire attack
@@ -244,7 +244,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurCharge)
 		{
 			type = PClass::FindClass ("PunchPuff");
 		}
-		puff = Spawn (type, self->x, self->y, self->z, ALLOW_REPLACE);
+		puff = Spawn (type, self->Pos(), ALLOW_REPLACE);
 		puff->velz = 2*FRACUNIT;
 		self->special1--;
 	}
@@ -285,7 +285,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurAtk2)
 		P_TraceBleed (newdam > 0 ? newdam : damage, self->target, self);
 		return;
 	}
-	z = self->z + 40*FRACUNIT;
+	z = self->Z() + 40*FRACUNIT;
 	const PClass *fx = PClass::FindClass("MinotaurFX1");
 	if (fx)
 	{
@@ -367,12 +367,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurAtk3)
 DEFINE_ACTION_FUNCTION(AActor, A_MntrFloorFire)
 {
 	AActor *mo;
-	fixed_t x, y;
 
-	self->z = self->floorz;
-	x = self->x + (pr_fire.Random2 () << 10);
-	y = self->y + (pr_fire.Random2 () << 10);
-	mo = Spawn("MinotaurFX3", x, y, self->floorz, ALLOW_REPLACE);
+	self->SetZ(self->floorz);
+	fixedvec2 pos = self->Vec2Offset(
+		(pr_fire.Random2 () << 10),
+		(pr_fire.Random2 () << 10));
+	mo = Spawn("MinotaurFX3", pos.x, pos.y, self->floorz, ALLOW_REPLACE);
 	mo->target = self->target;
 	mo->velx = 1; // Force block checking
 	P_CheckMissileSpawn (mo, self->radius);
@@ -390,7 +390,7 @@ void P_MinotaurSlam (AActor *source, AActor *target)
 	fixed_t thrust;
 	int damage;
 
-	angle = R_PointToAngle2 (source->x, source->y, target->x, target->y);
+	angle = source->AngleTo(target);
 	angle >>= ANGLETOFINESHIFT;
 	thrust = 16*FRACUNIT+(pr_minotaurslam()<<10);
 	target->velx += FixedMul (thrust, finecosine[angle]);
@@ -489,7 +489,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurLook)
 			mo = player->mo;
 			if (mo == master) continue;
 			if (mo->health <= 0) continue;
-			dist = P_AproxDistance(self->x - mo->x, self->y - mo->y);
+			dist = self->AproxDistance(mo);
 			if (dist > MINOTAUR_LOOK_DIST) continue;
 			self->target = mo;
 			break;
@@ -514,7 +514,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurLook)
 			if (!(mo->flags3 & MF3_ISMONSTER)) continue;
 			if (mo->health <= 0) continue;
 			if (!(mo->flags & MF_SHOOTABLE)) continue;
-			dist = P_AproxDistance (self->x - mo->x, self->y - mo->y);
+			dist = self->AproxDistance(mo);
 			if (dist > MINOTAUR_LOOK_DIST) continue;
 			if ((mo == master) || (mo == self)) continue;
 			if ((mo->flags5 & MF5_SUMMONEDMONSTER) && (mo->tracer == master)) continue;

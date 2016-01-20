@@ -203,7 +203,18 @@ Note: All <bool> fields default to false unless mentioned otherwise.
                                       // sound sequence thing in the sector will override this property.
       hidden = <bool>;                // if true this sector will not be drawn on the textured automap.
       waterzone = <bool>;             // Sector is under water and swimmable
-	  moreids = <string>;             // Additional sector IDs/tags, specified as a space separated list of numbers (e.g. "2 666 1003 4505")
+      moreids = <string>;             // Additional sector IDs/tags, specified as a space separated list of numbers (e.g. "2 666 1003 4505")
+      damageamount = <int>;           // Amount of damage inflicted by this sector, default = 0. If this is 0, all other damage properties will be ignored.
+                                      // Setting damage through these properties will override any damage set through 'special'.
+                                      // Setting damageamount to a negative value will create a healing sector.
+      damagetype = <string>;          // Damage type for sector damage, Default = "None". (generic damage)
+      damageinterval = <int>;         // Interval in tics between damage application, default = 32.
+      leakiness = <int>;              // Probability of leaking through radiation suit (0 = never, 256 = always), default = 0.
+      damageterraineffect = <bool>;   // Will spawn a terrain splash when damage is inflicted. Default = false.
+      damagehazard = <bool>;          // Changes damage model to Strife's delayed damage for the given sector. Default = false.
+      floorterrain = <string>;        // Sets the terrain for the sector's floor. Default = 'use the flat texture's terrain definition.'
+      ceilingterrain = <string>;      // Sets the terrain for the sector's ceiling. Default = 'use the flat texture's terrain definition.'
+	  
       
       * Note about dropactors
 
@@ -376,6 +387,10 @@ Changed language describing the DIALOGUE lump to mention USDF as an option.
 
 1.25 19.04.2015
 Added 'moreids' for linedefs and sectors.
+
+1.26 05.01.2016
+added clarification about character encoding
+added sector damage properties.
 
 ===============================================================================
 EOF

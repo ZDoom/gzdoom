@@ -670,9 +670,10 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	}
 
 	// [RH] Interpolate the sprite's position to make it look smooth
-	fx = thing->PrevX + FixedMul (r_TicFrac, thing->x - thing->PrevX);
-	fy = thing->PrevY + FixedMul (r_TicFrac, thing->y - thing->PrevY);
-	fz = thing->PrevZ + FixedMul (r_TicFrac, thing->z - thing->PrevZ) + thing->GetBobOffset(r_TicFrac);
+	fixedvec3 pos = thing->InterpolatedPosition(r_TicFrac);
+	fx = pos.x;
+	fy = pos.y;
+	fz = pos.z +thing->GetBobOffset(r_TicFrac);
 
 	tex = NULL;
 	voxel = NULL;
@@ -1145,12 +1146,12 @@ void R_AddSprites (sector_t *sec, int lightlevel, int fakeside)
 			{
 				if(!(rover->top.plane->a) && !(rover->top.plane->b))
 				{
-					if(rover->top.plane->Zat0() <= thing->z) fakefloor = rover;
+					if(rover->top.plane->Zat0() <= thing->Z()) fakefloor = rover;
 				}
 			}
 			if(!(rover->bottom.plane->a) && !(rover->bottom.plane->b))
 			{
-				if(rover->bottom.plane->Zat0() >= thing->z + thing->height) fakeceiling = rover;
+				if(rover->bottom.plane->Zat0() >= thing->Top()) fakeceiling = rover;
 			}
 		}	
 		R_ProjectSprite (thing, fakeside, fakefloor, fakeceiling);

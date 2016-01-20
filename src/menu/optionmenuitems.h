@@ -32,6 +32,7 @@
 **
 */
 #include "v_text.h"
+#include "gstrings.h"
 
 
 void M_DrawConText (int color, int x, int y, const char *str);
@@ -199,6 +200,7 @@ public:
 		{
 			text = (*opt)->mValues[Selection].Text;
 		}
+		if (*text == '$') text = GStrings(text + 1);
 		screen->DrawText (SmallFont, OptionSettings.mFontColorValue, indent + CURSORSPACE, y, 
 			text, DTA_CleanNoMove_1, true, DTA_ColorOverlay, overlay, TAG_DONE);
 		return indent;
@@ -503,6 +505,7 @@ public:
 	int Draw(FOptionMenuDescriptor *desc, int y, int indent, bool selected)
 	{
 		const char *txt = mCurrent? (const char*)mAltText : mLabel;
+		if (*txt == '$') txt = GStrings(txt + 1);
 		int w = SmallFont->StringWidth(txt) * CleanXfac_1;
 		int x = (screen->GetWidth() - w) / 2;
 		screen->DrawText (SmallFont, mColor, x, y, txt, DTA_CleanNoMove_1, true, TAG_DONE);

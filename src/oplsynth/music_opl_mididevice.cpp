@@ -53,6 +53,7 @@
 #endif
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+void OPL_SetCore(const char *args);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -76,8 +77,9 @@ CVAR(Bool, opl_fullpan, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 //
 //==========================================================================
 
-OPLMIDIDevice::OPLMIDIDevice()
+OPLMIDIDevice::OPLMIDIDevice(const char *args)
 {
+	OPL_SetCore(args);
 	FullPan = opl_fullpan;
 	FWadLump data = Wads.OpenLumpName("GENMIDI");
 	OPLloadBank(data);

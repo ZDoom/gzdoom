@@ -82,7 +82,7 @@ bool P_Thing_Spawn (int tid, AActor *source, int type, angle_t angle, bool fog, 
 	}
 	while (spot != NULL)
 	{
-		mobj = Spawn (kind, spot->x, spot->y, spot->z, ALLOW_REPLACE);
+		mobj = Spawn (kind, spot->Pos(), ALLOW_REPLACE);
 
 		if (mobj != NULL)
 		{
@@ -94,7 +94,7 @@ bool P_Thing_Spawn (int tid, AActor *source, int type, angle_t angle, bool fog, 
 				mobj->angle = (angle != ANGLE_MAX ? angle : spot->angle);
 				if (fog)
 				{
-					P_SpawnTeleportFog(mobj, spot->x, spot->y, spot->z + TELEFOGHEIGHT, false, true);
+					P_SpawnTeleportFog(mobj, spot->X(), spot->Y(), spot->Z() + TELEFOGHEIGHT, false, true);
 				}
 				if (mobj->flags & MF_SPECIAL)
 					mobj->flags |= MF_DROPPED;	// Don't respawn
@@ -123,11 +123,11 @@ bool P_MoveThing(AActor *source, fixed_t x, fixed_t y, fixed_t z, bool fog)
 {
 	fixed_t oldx, oldy, oldz;
 
-	oldx = source->x;
-	oldy = source->y;
-	oldz = source->z;
+	oldx = source->X();
+	oldy = source->Y();
+	oldz = source->Z();
 
-	source->SetOrigin (x, y, z);
+	source->SetOrigin (x, y, z, false);
 	if (P_TestMobjLocation (source))
 	{
 		if (fog)
@@ -146,7 +146,7 @@ bool P_MoveThing(AActor *source, fixed_t x, fixed_t y, fixed_t z, bool fog)
 	}
 	else
 	{
-		source->SetOrigin (oldx, oldy, oldz);
+		source->SetOrigin (oldx, oldy, oldz, false);
 		return false;
 	}
 }
@@ -165,7 +165,7 @@ bool P_Thing_Move (int tid, AActor *source, int mapspot, bool fog)
 
 	if (source != NULL && target != NULL)
 	{
-		return P_MoveThing(source, target->x, target->y, target->z, fog);
+		return P_MoveThing(source, target->X(), target->Y(), target->Z(), fog);
 	}
 	return false;
 }
@@ -218,7 +218,7 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 		{
 			do
 			{
-				fixed_t z = spot->z;
+				fixed_t z = spot->Z();
 				if (defflags3 & MF3_FLOORHUGGER)
 				{
 					z = ONFLOORZ;
@@ -231,7 +231,7 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 				{
 					z -= spot->floorclip;
 				}
-				mobj = Spawn (kind, spot->x, spot->y, z, ALLOW_REPLACE);
+				mobj = Spawn (kind, spot->X(), spot->Y(), z, ALLOW_REPLACE);
 
 				if (mobj)
 				{
@@ -254,8 +254,9 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 
 					if (targ != NULL)
 					{
-						fixed_t spot[3] = { targ->x, targ->y, targ->z+targ->height/2 };
-						FVector3 aim(float(spot[0] - mobj->x), float(spot[1] - mobj->y), float(spot[2] - mobj->z));
+						fixedvec3 vect = mobj->Vec3To(targ);
+						vect.z += targ->height / 2;
+						FVector3 aim = vect;
 
 						if (leadTarget && speed > 0 && (targ->velx | targ->vely | targ->velz))
 						{
@@ -304,7 +305,8 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 						}
 						else
 						{
-nolead:						mobj->angle = R_PointToAngle2 (mobj->x, mobj->y, targ->x, targ->y);
+nolead:
+							mobj->angle = mobj->AngleTo(targ);
 							aim.Resize (fspeed);
 							mobj->velx = fixed_t(aim[0]);
 							mobj->vely = fixed_t(aim[1]);
@@ -434,7 +436,7 @@ bool P_Thing_Raise(AActor *thing, AActor *raiser)
 	thing->flags |= MF_SOLID;
 	thing->height = info->height;	// [RH] Use real height
 	thing->radius = info->radius;	// [RH] Use real radius
-	if (!P_CheckPosition (thing, thing->x, thing->y))
+	if (!P_CheckPosition (thing, thing->Pos()))
 	{
 		thing->flags = oldflags;
 		thing->radius = oldradius;
@@ -476,7 +478,7 @@ bool P_Thing_CanRaise(AActor *thing)
 	thing->height = info->height;
 	thing->radius = info->radius;
 
-	bool check = P_CheckPosition (thing, thing->x, thing->y);
+	bool check = P_CheckPosition (thing, thing->Pos());
 
 	// Restore checked properties
 	thing->flags = oldflags;
@@ -689,9 +691,7 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 		caller = temp;
 	}
 
-	fixed_t	oldx = caller->x;
-	fixed_t	oldy = caller->y;
-	fixed_t	oldz = caller->z;
+	fixedvec3 old = caller->Pos();
 	zofs += FixedMul(reference->height, heightoffset);
 	
 
@@ -723,18 +723,18 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 			// now the caller's floorz should be appropriate for the assigned xy-position
 			// assigning position again with.
 			// extra unlink, link and environment calculation
-			caller->SetOrigin(
-				reference->x + xofs + FixedMul(rad, finecosine[fineangle]),
-				reference->y + yofs + FixedMul(rad, finesine[fineangle]),
-				reference->z);
-			caller->z = caller->floorz + zofs;
+			caller->SetOrigin(reference->Vec3Offset(
+				xofs + FixedMul(rad, finecosine[fineangle]),
+				yofs + FixedMul(rad, finesine[fineangle]),
+				0), true);
+			caller->SetZ(caller->floorz + zofs);
 		}
 		else
 		{
-			caller->SetOrigin(
-				reference->x + xofs + FixedMul(rad, finecosine[fineangle]),
-				reference->y + yofs + FixedMul(rad, finesine[fineangle]),
-				reference->z + zofs);
+			caller->SetOrigin(reference->Vec3Offset(
+				 xofs + FixedMul(rad, finecosine[fineangle]),
+				 yofs + FixedMul(rad, finesine[fineangle]),
+				 zofs), true);
 		}
 	}
 	else // [MC] The idea behind "absolute" is meant to be "absolute". Override everything, just like A_SpawnItemEx's.
@@ -742,7 +742,7 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 		if (flags & WARPF_TOFLOOR)
 		{
 			caller->SetOrigin(xofs + FixedMul(rad, finecosine[fineangle]), yofs + FixedMul(rad, finesine[fineangle]), zofs);
-			caller->z = caller->floorz + zofs;
+			caller->SetZ(caller->floorz + zofs);
 		}
 		else
 		{
@@ -754,7 +754,7 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 	{
 		if (flags & WARPF_TESTONLY)
 		{
-			caller->SetOrigin(oldx, oldy, oldz);
+			caller->SetOrigin(old, true);
 		}
 		else
 		{
@@ -781,29 +781,29 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 
 			if (flags & WARPF_WARPINTERPOLATION)
 			{
-				caller->PrevX += caller->x - oldx;
-				caller->PrevY += caller->y - oldy;
-				caller->PrevZ += caller->z - oldz;
+				caller->PrevX += caller->X() - old.x;
+				caller->PrevY += caller->Y() - old.y;
+				caller->PrevZ += caller->Z() - old.z;
 			}
 			else if (flags & WARPF_COPYINTERPOLATION)
 			{
-				caller->PrevX = caller->x + reference->PrevX - reference->x;
-				caller->PrevY = caller->y + reference->PrevY - reference->y;
-				caller->PrevZ = caller->z + reference->PrevZ - reference->z;
+				caller->PrevX = caller->X() + reference->PrevX - reference->X();
+				caller->PrevY = caller->Y() + reference->PrevY - reference->Y();
+				caller->PrevZ = caller->Z() + reference->PrevZ - reference->Z();
 			}
 			else if (!(flags & WARPF_INTERPOLATE))
 			{
-				caller->PrevX = caller->x;
-				caller->PrevY = caller->y;
-				caller->PrevZ = caller->z;
+				caller->PrevX = caller->X();
+				caller->PrevY = caller->Y();
+				caller->PrevZ = caller->Z();
 			}
 			if ((flags & WARPF_BOB) && (reference->flags2 & MF2_FLOATBOB))
 			{
-				caller->z += reference->GetBobOffset();
+				caller->AddZ(reference->GetBobOffset());
 			}
 		}
 		return true;
 	}
-	caller->SetOrigin(oldx, oldy, oldz);
+	caller->SetOrigin(old, true);
 	return false;
 }

@@ -26,25 +26,26 @@ void BlastActor (AActor *victim, fixed_t strength, fixed_t speed, AActor * Owner
 {
 	angle_t angle,ang;
 	AActor *mo;
-	fixed_t x,y,z;
+	fixedvec3 pos;
 
 	if (!victim->SpecialBlastHandling (Owner, strength))
 	{
 		return;
 	}
 
-	angle = R_PointToAngle2 (Owner->x, Owner->y, victim->x, victim->y);
+	angle = Owner->AngleTo(victim);
 	angle >>= ANGLETOFINESHIFT;
 	victim->velx = FixedMul (speed, finecosine[angle]);
 	victim->vely = FixedMul (speed, finesine[angle]);
 
 	// Spawn blast puff
-	ang = R_PointToAngle2 (victim->x, victim->y, Owner->x, Owner->y);
+	ang = victim->AngleTo(Owner);
 	ang >>= ANGLETOFINESHIFT;
-	x = victim->x + FixedMul (victim->radius+FRACUNIT, finecosine[ang]);
-	y = victim->y + FixedMul (victim->radius+FRACUNIT, finesine[ang]);
-	z = victim->z - victim->floorclip + (victim->height>>1);
-	mo = Spawn (blasteffect, x, y, z, ALLOW_REPLACE);
+	pos = victim->Vec3Offset(
+		FixedMul (victim->radius+FRACUNIT, finecosine[ang]),
+		FixedMul (victim->radius+FRACUNIT, finesine[ang]),
+		-victim->floorclip + (victim->height>>1));
+	mo = Spawn (blasteffect, pos, ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->velx = victim->velx;
@@ -141,7 +142,7 @@ DEFINE_ACTION_FUNCTION_PARAMS (AActor, A_Blast)
 		{	// Must be monster, player, missile, touchy or vulnerable
 			continue;
 		}
-		dist = P_AproxDistance (self->x - mo->x, self->y - mo->y);
+		dist = self->AproxDistance (mo);
 		if (dist > radius)
 		{ // Out of range
 			continue;

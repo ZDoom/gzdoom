@@ -1220,9 +1220,7 @@ void G_FinishTravel ()
 				pawn->angle = pawndup->angle;
 				pawn->pitch = pawndup->pitch;
 			}
-			pawn->x = pawndup->x;
-			pawn->y = pawndup->y;
-			pawn->z = pawndup->z;
+			pawn->SetXYZ(pawndup->X(), pawndup->Y(), pawndup->Z());
 			pawn->velx = pawndup->velx;
 			pawn->vely = pawndup->vely;
 			pawn->velz = pawndup->velz;
@@ -1232,6 +1230,7 @@ void G_FinishTravel ()
 			pawn->dropoffz = pawndup->dropoffz;
 			pawn->floorsector = pawndup->floorsector;
 			pawn->floorpic = pawndup->floorpic;
+			pawn->floorterrain = pawndup->floorterrain;
 			pawn->ceilingsector = pawndup->ceilingsector;
 			pawn->ceilingpic = pawndup->ceilingpic;
 			pawn->floorclip = pawndup->floorclip;

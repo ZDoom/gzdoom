@@ -41,12 +41,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_ImpExplode)
 
 	self->flags &= ~MF_NOGRAVITY;
 
-	chunk = Spawn("HereticImpChunk1", self->x, self->y, self->z, ALLOW_REPLACE);
+	chunk = Spawn("HereticImpChunk1", self->Pos(), ALLOW_REPLACE);
 	chunk->velx = pr_imp.Random2 () << 10;
 	chunk->vely = pr_imp.Random2 () << 10;
 	chunk->velz = 9*FRACUNIT;
 
-	chunk = Spawn("HereticImpChunk2", self->x, self->y, self->z, ALLOW_REPLACE);
+	chunk = Spawn("HereticImpChunk2", self->Pos(), ALLOW_REPLACE);
 	chunk->velx = pr_imp.Random2 () << 10;
 	chunk->vely = pr_imp.Random2 () << 10;
 	chunk->velz = 9*FRACUNIT;

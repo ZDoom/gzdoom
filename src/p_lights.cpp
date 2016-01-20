@@ -786,12 +786,12 @@ int DPhased::PhaseHelper (sector_t *sector, int index, int light, sector_t *prev
 			l = new DPhased (sector, baselevel);
 
 		int numsteps = PhaseHelper (sector->NextSpecialSector (
-				(sector->special & 0x00ff) == LightSequenceSpecial1 ?
+				sector->special == LightSequenceSpecial1 ?
 					LightSequenceSpecial2 : LightSequenceSpecial1, prev),
 				index + 1, l->m_BaseLevel, sector);
 		l->m_Phase = ((numsteps - index - 1) * 64) / numsteps;
 
-		sector->special &= 0xff00;
+		sector->special = 0;
 
 		return numsteps;
 	}
@@ -820,7 +820,6 @@ DPhased::DPhased (sector_t *sector, int baselevel, int phase)
 {
 	m_BaseLevel = baselevel;
 	m_Phase = phase;
-	sector->special &= 0xff00;
 }
 
 //============================================================================

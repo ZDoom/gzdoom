@@ -78,17 +78,17 @@ DEFINE_ACTION_FUNCTION(AActor, A_Srcr1Attack)
 	const PClass *fx = PClass::FindClass("SorcererFX1");
 	if (self->health > (self->SpawnHealth()/3)*2)
 	{ // Spit one fireball
-		P_SpawnMissileZ (self, self->z + 48*FRACUNIT, self->target, fx );
+		P_SpawnMissileZ (self, self->Z() + 48*FRACUNIT, self->target, fx );
 	}
 	else
 	{ // Spit three fireballs
-		mo = P_SpawnMissileZ (self, self->z + 48*FRACUNIT, self->target, fx);
+		mo = P_SpawnMissileZ (self, self->Z() + 48*FRACUNIT, self->target, fx);
 		if (mo != NULL)
 		{
 			velz = mo->velz;
 			angle = mo->angle;
-			P_SpawnMissileAngleZ (self, self->z + 48*FRACUNIT, fx, angle-ANGLE_1*3, velz);
-			P_SpawnMissileAngleZ (self, self->z + 48*FRACUNIT, fx, angle+ANGLE_1*3, velz);
+			P_SpawnMissileAngleZ (self, self->Z() + 48*FRACUNIT, fx, angle-ANGLE_1*3, velz);
+			P_SpawnMissileAngleZ (self, self->Z() + 48*FRACUNIT, fx, angle+ANGLE_1*3, velz);
 		}
 		if (self->health < self->SpawnHealth()/3)
 		{ // Maybe attack again
@@ -116,7 +116,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcererRise)
 	AActor *mo;
 
 	self->flags &= ~MF_SOLID;
-	mo = Spawn("Sorcerer2", self->x, self->y, self->z, ALLOW_REPLACE);
+	mo = Spawn("Sorcerer2", self->Pos(), ALLOW_REPLACE);
 	mo->Translation = self->Translation;
 	mo->SetState (mo->FindState("Rise"));
 	mo->angle = self->angle;
@@ -140,20 +140,20 @@ void P_DSparilTeleport (AActor *actor)
 	DSpotState *state = DSpotState::GetSpotState();
 	if (state == NULL) return;
 
-	spot = state->GetSpotWithMinMaxDistance(PClass::FindClass("BossSpot"), actor->x, actor->y, 128*FRACUNIT, 0);
+	spot = state->GetSpotWithMinMaxDistance(PClass::FindClass("BossSpot"), actor->X(), actor->Y(), 128*FRACUNIT, 0);
 	if (spot == NULL) return;
 
-	prevX = actor->x;
-	prevY = actor->y;
-	prevZ = actor->z;
-	if (P_TeleportMove (actor, spot->x, spot->y, spot->z, false))
+	prevX = actor->X();
+	prevY = actor->Y();
+	prevZ = actor->Z();
+	if (P_TeleportMove (actor, spot->Pos(), false))
 	{
 		mo = Spawn("Sorcerer2Telefade", prevX, prevY, prevZ, ALLOW_REPLACE);
 		if (mo) mo->Translation = actor->Translation;
 		S_Sound (mo, CHAN_BODY, "misc/teleport", 1, ATTN_NORM);
 		actor->SetState (actor->FindState("Teleport"));
 		S_Sound (actor, CHAN_BODY, "misc/teleport", 1, ATTN_NORM);
-		actor->z = actor->floorz;
+		actor->SetZ(actor->floorz, false);
 		actor->angle = spot->angle;
 		actor->velx = actor->vely = actor->velz = 0;
 	}
@@ -237,7 +237,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BlueSpark)
 
 	for (i = 0; i < 2; i++)
 	{
-		mo = Spawn("Sorcerer2FXSpark", self->x, self->y, self->z, ALLOW_REPLACE);
+		mo = Spawn("Sorcerer2FXSpark", self->Pos(), ALLOW_REPLACE);
 		mo->velx = pr_bluespark.Random2() << 9;
 		mo->vely = pr_bluespark.Random2() << 9;
 		mo->velz = FRACUNIT + (pr_bluespark()<<8);
@@ -254,10 +254,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_GenWizard)
 {
 	AActor *mo;
 
-	mo = Spawn("Wizard", self->x, self->y, self->z, ALLOW_REPLACE);
+	mo = Spawn("Wizard", self->Pos(), ALLOW_REPLACE);
 	if (mo != NULL)
 	{
-		mo->z -= mo->GetDefault()->height/2;
+		mo->AddZ(-mo->GetDefault()->height / 2, false);
 		if (!P_TestMobjLocation (mo))
 		{ // Didn't fit
 			mo->ClearCounters();
@@ -272,7 +272,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_GenWizard)
 			self->flags &= ~MF_MISSILE;
 			mo->master = self->target;
 			// Heretic did not offset it by TELEFOGHEIGHT, so I won't either.
-			Spawn<ATeleportFog> (self->x, self->y, self->z, ALLOW_REPLACE);
+			Spawn<ATeleportFog> (self->Pos(), ALLOW_REPLACE);
 		}
 	}
 }

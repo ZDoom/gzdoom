@@ -162,7 +162,7 @@ void I_InitMusic (void)
 	if (!setatterm)
 	{
 		setatterm = true;
-		atterm (I_ShutdownMusic);
+		atterm (I_ShutdownMusicExit);
 	
 #ifndef _WIN32
 		signal (SIGCHLD, ChildSigHandler);
@@ -178,7 +178,7 @@ void I_InitMusic (void)
 //
 //==========================================================================
 
-void I_ShutdownMusic(void)
+void I_ShutdownMusic(bool onexit)
 {
 	if (MusicDown)
 		return;
@@ -189,9 +189,15 @@ void I_ShutdownMusic(void)
 		assert (currSong == NULL);
 	}
 	Timidity::FreeAll();
+	if (onexit) WildMidi_Shutdown();
 #ifdef _WIN32
 	I_ShutdownMusicWin32();
 #endif // _WIN32
+}
+
+void I_ShutdownMusicExit()
+{
+	I_ShutdownMusic(true);
 }
 
 
@@ -280,6 +286,10 @@ void MusInfo::FluidSettingStr(const char *, const char *)
 {
 }
 
+void MusInfo::WildMidiSetOption(int opt, int set)
+{
+}
+
 FString MusInfo::GetStats()
 {
 	return "No stats available for this song";
@@ -301,21 +311,21 @@ MusInfo *MusInfo::GetWaveDumper(const char *filename, int rate)
 //
 //==========================================================================
 
-static MIDIStreamer *CreateMIDIStreamer(FileReader &reader, EMidiDevice devtype, EMIDIType miditype)
+static MIDIStreamer *CreateMIDIStreamer(FileReader &reader, EMidiDevice devtype, EMIDIType miditype, const char *args)
 {
 	switch (miditype)
 	{
 	case MIDI_MUS:
-		return new MUSSong2(reader, devtype);
+		return new MUSSong2(reader, devtype, args);
 
 	case MIDI_MIDI:
-		return new MIDISong2(reader, devtype);
+		return new MIDISong2(reader, devtype, args);
 
 	case MIDI_HMI:
-		return new HMISong(reader, devtype);
+		return new HMISong(reader, devtype, args);
 
 	case MIDI_XMI:
-		return new XMISong(reader, devtype);
+		return new XMISong(reader, devtype, args);
 
 	default:
 		return NULL;
@@ -377,7 +387,7 @@ static EMIDIType IdentifyMIDIType(DWORD *id, int size)
 //
 //==========================================================================
 
-MusInfo *I_RegisterSong (FileReader *reader, int device)
+MusInfo *I_RegisterSong (FileReader *reader, MidiDeviceSetting *device)
 {
 	MusInfo *info = NULL;
 	const char *fmt;
@@ -394,12 +404,6 @@ MusInfo *I_RegisterSong (FileReader *reader, int device)
 		delete reader;
 		return 0;
 	}
-
-#ifndef _WIN32
-	// non-Windows platforms don't support MDEV_MMAPI so map to MDEV_SNDSYS
-	if (device == MDEV_MMAPI)
-		device = MDEV_SNDSYS;
-#endif
 
     // Check for gzip compression. Some formats are expected to have players
     // that can handle it, so it simplifies things if we make all songs
@@ -437,10 +441,15 @@ MusInfo *I_RegisterSong (FileReader *reader, int device)
 	EMIDIType miditype = IdentifyMIDIType(id, sizeof(id));
 	if (miditype != MIDI_NOTMIDI)
 	{
-		EMidiDevice devtype = (EMidiDevice)device;
+		EMidiDevice devtype = device == NULL? MDEV_DEFAULT : (EMidiDevice)device->device;
+#ifndef _WIN32
+		// non-Windows platforms don't support MDEV_MMAPI so map to MDEV_SNDSYS
+		if (devtype == MDEV_MMAPI)
+			devtype = MDEV_SNDSYS;
+#endif
 
 retry_as_sndsys:
-		info = CreateMIDIStreamer(*reader, devtype, miditype);
+		info = CreateMIDIStreamer(*reader, devtype, miditype, device != NULL? device->args.GetChars() : "");
 		if (info != NULL && !info->IsValid())
 		{
 			delete info;
@@ -454,7 +463,7 @@ retry_as_sndsys:
 #ifdef _WIN32
 		if (info == NULL && devtype != MDEV_MMAPI && snd_mididevice >= 0)
 		{
-			info = CreateMIDIStreamer(*reader, MDEV_MMAPI, miditype);
+			info = CreateMIDIStreamer(*reader, MDEV_MMAPI, miditype, "");
 		}
 #endif
 	}
@@ -465,7 +474,7 @@ retry_as_sndsys:
 		(id[0] == MAKE_ID('D','B','R','A') && id[1] == MAKE_ID('W','O','P','L')) ||		// DosBox Raw OPL
 		(id[0] == MAKE_ID('A','D','L','I') && *((BYTE *)id + 4) == 'B'))		// Martin Fernandez's modified IMF
 	{
-		info = new OPLMUSSong (*reader);
+		info = new OPLMUSSong (*reader, device != NULL? device->args.GetChars() : "");
 	}
 	// Check for game music
 	else if ((fmt = GME_CheckFormat(id[0])) != NULL && fmt[0] != '\0')

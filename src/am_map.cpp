@@ -998,8 +998,8 @@ void AM_restoreScaleAndLoc ()
     }
 	else
 	{
-		m_x = (players[consoleplayer].camera->x >> FRACTOMAPBITS) - m_w/2;
-		m_y = (players[consoleplayer].camera->y >> FRACTOMAPBITS)- m_h/2;
+		m_x = (players[consoleplayer].camera->X() >> FRACTOMAPBITS) - m_w/2;
+		m_y = (players[consoleplayer].camera->Y() >> FRACTOMAPBITS)- m_h/2;
     }
 	m_x2 = m_x + m_w;
 	m_y2 = m_y + m_h;
@@ -1249,8 +1249,8 @@ void AM_initVariables ()
 			if (playeringame[pnum])
 				break;
 	assert(pnum >= 0 && pnum < MAXPLAYERS);
-	m_x = (players[pnum].camera->x >> FRACTOMAPBITS) - m_w/2;
-	m_y = (players[pnum].camera->y >> FRACTOMAPBITS) - m_h/2;
+	m_x = (players[pnum].camera->X() >> FRACTOMAPBITS) - m_w/2;
+	m_y = (players[pnum].camera->Y() >> FRACTOMAPBITS) - m_h/2;
 	AM_changeWindowLoc();
 
 	// for saving & restoring
@@ -1571,25 +1571,25 @@ void AM_doFollowPlayer ()
 	fixed_t sx, sy;
 
     if (players[consoleplayer].camera != NULL &&
-		(f_oldloc.x != players[consoleplayer].camera->x ||
-		 f_oldloc.y != players[consoleplayer].camera->y))
+		(f_oldloc.x != players[consoleplayer].camera->X() ||
+		 f_oldloc.y != players[consoleplayer].camera->Y()))
 	{
-		m_x = (players[consoleplayer].camera->x >> FRACTOMAPBITS) - m_w/2;
-		m_y = (players[consoleplayer].camera->y >> FRACTOMAPBITS) - m_h/2;
+		m_x = (players[consoleplayer].camera->X() >> FRACTOMAPBITS) - m_w/2;
+		m_y = (players[consoleplayer].camera->Y() >> FRACTOMAPBITS) - m_h/2;
 		m_x2 = m_x + m_w;
 		m_y2 = m_y + m_h;
 
   		// do the parallax parchment scrolling.
-		sx = (players[consoleplayer].camera->x - f_oldloc.x) >> FRACTOMAPBITS;
-		sy = (f_oldloc.y - players[consoleplayer].camera->y) >> FRACTOMAPBITS;
+		sx = (players[consoleplayer].camera->X() - f_oldloc.x) >> FRACTOMAPBITS;
+		sy = (f_oldloc.y - players[consoleplayer].camera->Y()) >> FRACTOMAPBITS;
 		if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 		{
 			AM_rotate (&sx, &sy, players[consoleplayer].camera->angle - ANG90);
 		}
 		AM_ScrollParchment (sx, sy);
 
-		f_oldloc.x = players[consoleplayer].camera->x;
-		f_oldloc.y = players[consoleplayer].camera->y;
+		f_oldloc.x = players[consoleplayer].camera->X();
+		f_oldloc.y = players[consoleplayer].camera->Y();
 	}
 }
 
@@ -2071,17 +2071,17 @@ static bool AM_CheckSecret(line_t *line)
 	{
 		if (line->frontsector != NULL)
 		{
-			if (line->frontsector->secretsector)
+			if (line->frontsector->wasSecret())
 			{
-				if (am_map_secrets!=0 && !(line->frontsector->special&SECRET_MASK)) return true;
+				if (am_map_secrets!=0 && !line->frontsector->isSecret()) return true;
 				if (am_map_secrets==2 && !(line->flags & ML_SECRET)) return true;
 			}
 		}
 		if (line->backsector != NULL)
 		{
-			if (line->backsector->secretsector)
+			if (line->backsector->wasSecret())
 			{
-				if (am_map_secrets!=0 && !(line->backsector->special&SECRET_MASK)) return true;
+				if (am_map_secrets!=0 && !line->backsector->isSecret()) return true;
 				if (am_map_secrets==2 && !(line->flags & ML_SECRET)) return true;
 			}
 		}
@@ -2224,6 +2224,154 @@ bool AM_Check3DFloors(line_t *line)
 	return false;
 }
 
+// [TP] Check whether a sector can trigger a special that satisfies the provided function.
+// If found, specialptr and argsptr will be filled by the special and the arguments
+// If needUseActivated is true, the special must be activated by use.
+bool AM_checkSectorActions (sector_t *sector, bool (*function)(int, int *), int *specialptr, int **argsptr, bool needUseActivated)
+{
+	for (ASectorAction* action = sector->SecActTarget; action; action = barrier_cast<ASectorAction *>(action->tracer))
+	{
+		if ((action->IsActivatedByUse() || false == needUseActivated)
+			&& (*function)(action->special, action->args)
+			&& action->CanTrigger (players[consoleplayer].mo))
+		{
+			*specialptr = action->special;
+			*argsptr = action->args;
+			return true;
+		}
+	}
+
+	return false;
+}
+
+// [TP] Check whether there's a boundary on the provided line for a special that satisfies the provided function.
+// It's a boundary if the line can activate the special or the line's bordering sectors can activate it.
+// If found, specialptr and argsptr will be filled with special and args if given.
+bool AM_checkSpecialBoundary (line_t &line, bool (*function)(int, int *), int *specialptr = NULL, int **argsptr = NULL)
+{
+	if (specialptr == NULL)
+	{
+		static int sink;
+		specialptr = &sink;
+	}
+
+	if (argsptr == NULL)
+	{
+		static int *sink;
+		argsptr = &sink;
+	}
+
+	// Check if the line special qualifies for this
+	if ((line.activation & SPAC_PlayerActivate) && (*function)(line.special, line.args))
+	{
+		*specialptr = line.special;
+		*argsptr = line.args;
+		return true;
+	}
+
+	// Check sector actions in the line's front sector -- the action has to be use-activated in order to
+	// show up if this is a one-sided line, because the player cannot trigger sector actions by crossing
+	// a one-sided line (since that's impossible, duh).
+	if (AM_checkSectorActions(line.frontsector, function, specialptr, argsptr, line.backsector == NULL))
+		return true;
+
+	// If it has a back sector, check sector actions in that.
+	return (line.backsector && AM_checkSectorActions(line.backsector, function, specialptr, argsptr, false));
+}
+
+bool AM_isTeleportSpecial (int special, int *)
+{
+	return (special == Teleport ||
+		special == Teleport_NoFog ||
+		special == Teleport_ZombieChanger ||
+		special == Teleport_Line);
+}
+
+bool AM_isTeleportBoundary (line_t &line)
+{
+	return AM_checkSpecialBoundary(line, &AM_isTeleportSpecial);
+}
+
+bool AM_isExitSpecial (int special, int *)
+{
+	return (special == Teleport_NewMap ||
+		 special == Teleport_EndGame ||
+		 special == Exit_Normal ||
+		 special == Exit_Secret);
+}
+
+bool AM_isExitBoundary (line_t& line)
+{
+	return AM_checkSpecialBoundary(line, &AM_isExitSpecial);
+}
+
+bool AM_isTriggerSpecial (int special, int *)
+{
+	return LineSpecialsInfo[special] != NULL
+		&& LineSpecialsInfo[special]->max_args >= 0
+		&& special != Door_Open
+		&& special != Door_Close
+		&& special != Door_CloseWaitOpen
+		&& special != Door_Raise
+		&& special != Door_Animated
+		&& special != Generic_Door;
+}
+
+bool AM_isTriggerBoundary (line_t &line)
+{
+	return AM_checkSpecialBoundary(line, &AM_isTriggerSpecial);
+}
+
+bool AM_isLockSpecial (int special, int* args)
+{
+	return special == Door_LockedRaise
+		 || special == ACS_LockedExecute
+		 || special == ACS_LockedExecuteDoor
+		 || (special == Door_Animated && args[3] != 0)
+		 || (special == Generic_Door && args[4] != 0)
+		 || (special == FS_Execute && args[2] != 0);
+}
+
+bool AM_isLockBoundary (line_t &line, int *lockptr = NULL)
+{
+	if (lockptr == NULL)
+	{
+		static int sink;
+		lockptr = &sink;
+	}
+
+	if (line.locknumber)
+	{
+		*lockptr = line.locknumber;
+		return true;
+	}
+
+	int special;
+	int *args;
+	bool result = AM_checkSpecialBoundary(line, &AM_isLockSpecial, &special, &args);
+
+	if (result)
+	{
+		switch (special)
+		{
+		case FS_Execute:
+			*lockptr = args[2];
+			break;
+
+		case Door_Animated:
+		case Door_LockedRaise:
+			*lockptr = args[3];
+			break;
+
+		default:
+			*lockptr = args[4];
+			break;
+		}
+	}
+
+	return result;
+}
+
 //=============================================================================
 //
 // Determines visible lines, draws them.
@@ -2271,49 +2419,19 @@ void AM_drawWalls (bool allmap)
 					AM_drawMline(&l, AMColors.SecretWallColor);
 			    else
 					AM_drawMline(&l, AMColors.WallColor);
-			} 
-			else if (lines[i].locknumber > 0 && AMColors.displayLocks) 
-			{ // [Dusk] specials w/ locknumbers
-				lock = lines[i].locknumber;
-				color = P_GetMapColorForLock(lock);
-				
-				AMColor c;
-				if (color >= 0)	c.FromRGB(RPART(color), GPART(color), BPART(color));
-				else c = AMColors[AMColors.LockedColor];
-				
-				AM_drawMline (&l, c);
-			} 
-			else if ((lines[i].special == Teleport ||
-				lines[i].special == Teleport_NoFog ||
-				lines[i].special == Teleport_ZombieChanger ||
-				lines[i].special == Teleport_Line) &&
-				(lines[i].activation & SPAC_PlayerActivate) &&
-				AMColors.isValid(AMColors.IntraTeleportColor))
+			}
+			else if (AM_isTeleportBoundary(lines[i]) && AMColors.isValid(AMColors.IntraTeleportColor))
 			{ // intra-level teleporters
 				AM_drawMline(&l, AMColors.IntraTeleportColor);
 			}
-			else if ((lines[i].special == Teleport_NewMap ||
-					 lines[i].special == Teleport_EndGame ||
-					 lines[i].special == Exit_Normal ||
-					 lines[i].special == Exit_Secret) &&
-					 AMColors.isValid(AMColors.InterTeleportColor))
+			else if (AM_isExitBoundary(lines[i]) && AMColors.isValid(AMColors.InterTeleportColor))
 			{ // inter-level/game-ending teleporters
 				AM_drawMline(&l, AMColors.InterTeleportColor);
 			}
-			else if (lines[i].special == Door_LockedRaise ||
-					 lines[i].special == ACS_LockedExecute ||
-					 lines[i].special == ACS_LockedExecuteDoor ||
-					 (lines[i].special == Door_Animated && lines[i].args[3] != 0) ||
-					 (lines[i].special == Generic_Door && lines[i].args[4] != 0))
+			else if (AM_isLockBoundary(lines[i], &lock))
 			{
 				if (AMColors.displayLocks)
 				{
-					int P_GetMapColorForLock(int lock);
-
-					if (lines[i].special==Door_LockedRaise || lines[i].special==Door_Animated)
-						lock=lines[i].args[3];
-					else lock=lines[i].args[4];
-
 					color = P_GetMapColorForLock(lock);
 
 					AMColor c;
@@ -2328,16 +2446,9 @@ void AM_drawWalls (bool allmap)
 					AM_drawMline (&l, AMColors.LockedColor);  // locked special
 				}
 			}
-			else if (am_showtriggerlines && AMColors.isValid(AMColors.SpecialWallColor) 
-				&& LineSpecialsInfo[lines[i].special] != NULL
-				&& LineSpecialsInfo[lines[i].special]->max_args >= 0
-				&& lines[i].special != Door_Open
-				&& lines[i].special != Door_Close
-				&& lines[i].special != Door_CloseWaitOpen
-				&& lines[i].special != Door_Raise
-				&& lines[i].special != Door_Animated
-				&& lines[i].special != Generic_Door
-				&& (lines[i].activation & SPAC_PlayerActivate))
+			else if (am_showtriggerlines
+				&& AMColors.isValid(AMColors.SpecialWallColor)
+				&& AM_isTriggerBoundary(lines[i]))
 			{
 				AM_drawMline(&l, AMColors.SpecialWallColor);	// wall with special non-door action the player can do
 			}
@@ -2501,8 +2612,8 @@ void AM_drawPlayers ()
 		mline_t *arrow;
 		int numarrowlines;
 
-		pt.x = players[consoleplayer].camera->x >> FRACTOMAPBITS;
-		pt.y = players[consoleplayer].camera->y >> FRACTOMAPBITS;
+		pt.x = players[consoleplayer].camera->X() >> FRACTOMAPBITS;
+		pt.y = players[consoleplayer].camera->Y() >> FRACTOMAPBITS;
 		if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 		{
 			angle = ANG90;
@@ -2564,8 +2675,8 @@ void AM_drawPlayers ()
 
 		if (p->mo != NULL)
 		{
-			pt.x = p->mo->x >> FRACTOMAPBITS;
-			pt.y = p->mo->y >> FRACTOMAPBITS;
+			pt.x = p->mo->X() >> FRACTOMAPBITS;
+			pt.y = p->mo->Y() >> FRACTOMAPBITS;
 			angle = p->mo->angle;
 
 			if (am_rotate == 1 || (am_rotate == 2 && viewactive))
@@ -2596,8 +2707,8 @@ void AM_drawKeys ()
 
 	while ((key = it.Next()) != NULL)
 	{
-		p.x = key->x >> FRACTOMAPBITS;
-		p.y = key->y >> FRACTOMAPBITS;
+		p.x = key->X() >> FRACTOMAPBITS;
+		p.y = key->Y() >> FRACTOMAPBITS;
 		angle = key->angle;
 
 		if (am_rotate == 1 || (am_rotate == 2 && viewactive))
@@ -2641,8 +2752,8 @@ void AM_drawThings ()
 		{
 			if (am_cheat > 0 || !(t->flags6 & MF6_NOTONAUTOMAP))
 			{
-				p.x = t->x >> FRACTOMAPBITS;
-				p.y = t->y >> FRACTOMAPBITS;
+				p.x = t->X() >> FRACTOMAPBITS;
+				p.y = t->Y() >> FRACTOMAPBITS;
 
 				if (am_showthingsprites > 0 && t->sprite > 0)
 				{
@@ -2868,7 +2979,7 @@ void AM_drawAuthorMarkers ()
 				 marked->subsector->flags & SSECF_DRAWN :
 				 marked->Sector->MoreFlags & SECF_DRAWN)))
 			{
-				DrawMarker (tex, marked->x >> FRACTOMAPBITS, marked->y >> FRACTOMAPBITS, 0,
+				DrawMarker (tex, marked->X() >> FRACTOMAPBITS, marked->Y() >> FRACTOMAPBITS, 0,
 					flip, mark->scaleX, mark->scaleY, mark->Translation,
 					mark->alpha, mark->fillcolor, mark->RenderStyle);
 			}

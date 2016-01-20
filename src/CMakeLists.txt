@@ -187,6 +187,7 @@ else( WIN32 )
 			if( GTK2_FOUND )
 				set( ZDOOM_LIBS ${ZDOOM_LIBS} ${GTK2_LIBRARIES} )
 				include_directories( ${GTK2_INCLUDE_DIRS} )
+				link_directories( ${GTK2_LIBRARY_DIRS} )
 			else( GTK2_FOUND )
 				set( NO_GTK ON )
 			endif( GTK2_FOUND )
@@ -590,9 +591,7 @@ set( PLAT_WIN32_SOURCES
 set( PLAT_POSIX_SOURCES
 	posix/i_cd.cpp
 	posix/i_movie.cpp
-	posix/i_steam.cpp
-	posix/i_system.cpp
-	posix/st_start.cpp )
+	posix/i_steam.cpp )
 set( PLAT_SDL_SOURCES
 	posix/sdl/crashcatcher.c
 	posix/sdl/hardware.cpp
@@ -600,8 +599,10 @@ set( PLAT_SDL_SOURCES
 	posix/sdl/i_input.cpp
 	posix/sdl/i_joystick.cpp
 	posix/sdl/i_main.cpp
+	posix/sdl/i_system.cpp
 	posix/sdl/i_timer.cpp
-	posix/sdl/sdlvideo.cpp )
+	posix/sdl/sdlvideo.cpp
+	posix/sdl/st_start.cpp )
 set( PLAT_OSX_SOURCES
 	posix/osx/iwadpicker_cocoa.mm
 	posix/osx/zdoom.icns )
@@ -610,8 +611,11 @@ set( PLAT_COCOA_SOURCES
 	posix/cocoa/i_input.mm
 	posix/cocoa/i_joystick.cpp
 	posix/cocoa/i_main.mm
+	posix/cocoa/i_system.mm
 	posix/cocoa/i_timer.cpp
-	posix/cocoa/i_video.mm )
+	posix/cocoa/i_video.mm
+	posix/cocoa/st_console.mm
+	posix/cocoa/st_start.mm )
 
 if( WIN32 )
 	set( SYSTEM_SOURCES_DIR win32 )
@@ -914,6 +918,7 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	nodebuild_extract.cpp
 	nodebuild_gl.cpp
 	nodebuild_utility.cpp
+	pathexpander.cpp
 	p_3dfloors.cpp
 	p_3dmidtex.cpp
 	p_acs.cpp
@@ -993,6 +998,8 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	wi_stuff.cpp
 	zstrformat.cpp
 	zstring.cpp
+	GuillotineBinPack.cpp
+	SkylineBinPack.cpp
 	g_doom/a_doommisc.cpp
 	g_heretic/a_hereticmisc.cpp
 	g_hexen/a_hexenmisc.cpp
@@ -1090,6 +1097,7 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	sound/music_fluidsynth_mididevice.cpp
 	sound/music_softsynth_mididevice.cpp
 	sound/music_timidity_mididevice.cpp
+	sound/music_wildmidi_mididevice.cpp
 	sound/music_win_mididevice.cpp
 	sound/oalsound.cpp
 	sound/sndfile_decoder.cpp
@@ -1133,6 +1141,11 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	timidity/playmidi.cpp
 	timidity/resample.cpp
 	timidity/timidity.cpp
+	wildmidi/file_io.cpp
+	wildmidi/gus_pat.cpp
+	wildmidi/reverb.cpp
+	wildmidi/wildmidi_lib.cpp
+	wildmidi/wm_error.cpp
 	xlat/parse_xlat.cpp
 	fragglescript/t_fspic.cpp
 	fragglescript/t_func.cpp
@@ -1270,6 +1283,8 @@ source_group("Audio Files\\OPL Synth" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURC
 source_group("Audio Files\\OPL Synth\\DOSBox" FILES oplsynth/dosbox/opl.cpp oplsynth/dosbox/opl.h)
 source_group("Audio Files\\Timidity\\Headers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/timidity/.+\\.h$")
 source_group("Audio Files\\Timidity\\Source" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/timidity/.+\\.cpp$")
+source_group("Audio Files\\WildMidi\\Headers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/wildmidi/.+\\.h$")
+source_group("Audio Files\\WildMidi\\Source" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/wildmidi/.+\\.cpp$")
 source_group("Decorate++" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/thingdef/.+")
 source_group("FraggleScript" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/fragglescript/.+")
 source_group("Games\\Doom Game" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/g_doom/.+")

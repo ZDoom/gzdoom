@@ -51,7 +51,7 @@ static void TeloSpawn (AActor *source, const char *type)
 {
 	AActor *fx;
 
-	fx = Spawn (type, source->x, source->y, source->z, ALLOW_REPLACE);
+	fx = Spawn (type, source->Pos(), ALLOW_REPLACE);
 	if (fx)
 	{
 		fx->special1 = TELEPORT_LIFE;			// Lifetime countdown

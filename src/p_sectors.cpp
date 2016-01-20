@@ -26,6 +26,7 @@
 #include "doomstat.h"
 #include "g_level.h"
 #include "nodebuild.h"
+#include "p_terrain.h"
 #include "po_man.h"
 #include "farchive.h"
 #include "r_utility.h"
@@ -49,7 +50,7 @@ sector_t *sector_t::NextSpecialSector (int type, sector_t *nogood) const
 
 		if (NULL != (tsec = getNextSector (ln, this)) &&
 			tsec != nogood &&
-			(tsec->special & 0x00ff) == type)
+			tsec->special == type)
 		{
 			return tsec;
 		}
@@ -804,16 +805,8 @@ int sector_t::GetCeilingLight () const
 
 ASkyViewpoint *sector_t::GetSkyBox(int which)
 {
-	if (which == floor)
-	{
-		if (FloorSkyBox != NULL) return FloorSkyBox;
-		if (MoreFlags & SECF_NOFLOORSKYBOX) return NULL;
-	}
-	else
-	{
-		if (CeilingSkyBox != NULL) return CeilingSkyBox;
-		if (MoreFlags & SECF_NOCEILINGSKYBOX) return NULL;
-	}
+	if (SkyBoxes[which] != NULL) return SkyBoxes[which];
+	if (MoreFlags & (SECF_NOFLOORSKYBOX << which)) return NULL;
 	return level.DefaultSkybox;
 }
 
@@ -841,6 +834,65 @@ sector_t *sector_t::GetHeightSec() const
 	}
 	return heightsec;
 }
+
+
+void sector_t::GetSpecial(secspecial_t *spec)
+{
+	spec->special = special;
+	spec->damageamount = damageamount;
+	spec->damagetype = damagetype;
+	spec->damageinterval = damageinterval;
+	spec->leakydamage = leakydamage;
+	spec->Flags = Flags & SECF_SPECIALFLAGS;
+}
+
+void sector_t::SetSpecial(const secspecial_t *spec)
+{
+	special = spec->special;
+	damageamount = spec->damageamount;
+	damagetype = spec->damagetype;
+	damageinterval = spec->damageinterval;
+	leakydamage = spec->leakydamage;
+	Flags = (Flags & ~SECF_SPECIALFLAGS) | (spec->Flags & SECF_SPECIALFLAGS);
+}
+
+void sector_t::TransferSpecial(sector_t *model)
+{
+	special = model->special;
+	damageamount = model->damageamount;
+	damagetype = model->damagetype;
+	damageinterval = model->damageinterval;
+	leakydamage = model->leakydamage;
+	Flags = (Flags&~SECF_SPECIALFLAGS) | (model->Flags & SECF_SPECIALFLAGS);
+}
+
+int sector_t::GetTerrain(int pos) const
+{
+	return terrainnum[pos] >= 0 ? terrainnum[pos] : TerrainTypes[GetTexture(pos)];
+}
+
+FArchive &operator<< (FArchive &arc, secspecial_t &p)
+{
+	if (SaveVersion < 4529)
+	{
+		int special;
+		arc << special;
+		sector_t sec;
+		P_InitSectorSpecial(&sec, special, true);
+		sec.GetSpecial(&p);
+	}
+	else
+	{
+		arc << p.special
+			<< p.damageamount
+			<< p.damagetype
+			<< p.damageinterval
+			<< p.leakydamage
+			<< p.Flags;
+	}
+	return arc;
+}
+
 
 
 bool secplane_t::CopyPlaneIfValid (secplane_t *dest, const secplane_t *opp) const

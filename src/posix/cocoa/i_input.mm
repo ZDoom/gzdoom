@@ -57,6 +57,8 @@ CVAR(Bool, use_mouse,    true,  CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Bool, m_noprescale, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Bool, m_filter,     false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
+CVAR(Bool, k_allowfullscreentoggle, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+
 CUSTOM_CVAR(Int, mouse_capturemode, 1, CVAR_GLOBALCONFIG | CVAR_ARCHIVE)
 {
 	if (self < 0)
@@ -539,6 +541,16 @@ void ProcessKeyboardEvent(NSEvent* theEvent)
 	if (keyCode >= KEY_COUNT)
 	{
 		assert(!"Unknown keycode");
+		return;
+	}
+
+	if (k_allowfullscreentoggle
+		&& (kVK_ANSI_F == keyCode)
+		&& (NSCommandKeyMask & [theEvent modifierFlags])
+		&& (NSKeyDown == [theEvent type])
+		&& ![theEvent isARepeat])
+	{
+		ToggleFullscreen = !ToggleFullscreen;
 		return;
 	}
 

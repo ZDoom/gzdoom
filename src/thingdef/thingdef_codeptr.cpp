@@ -6125,7 +6125,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceVelocity)
 		fixed_t current = mobj->pitch;
 		const FVector2 velocity(mobj->velx, mobj->vely);
 		const fixed_t pitch = R_PointToAngle2(0, 0, (fixed_t)velocity.Length(), -mobj->velz);
-		fixedvec2 test;
 		if (pitchlimit > 0)
 		{
 			// [MC] angle_t for pitchlimit was required because otherwise

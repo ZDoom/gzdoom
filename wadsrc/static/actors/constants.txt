@@ -510,6 +510,14 @@ enum
 	CBF_SETONPTR		= 1 << 4,	//Sets the pointer change on the actor doing the checking instead of self.
 };
 
+//Flags for A_FaceVelocity
+enum
+{
+	FVF_NOPITCH =			1 << 0,
+	FVF_INTERPOLATE =		1 << 1,
+	FVF_NOANGLE =			1 << 2,
+};
+
 // This is only here to provide one global variable for testing.
 native int testglobalvar;
 

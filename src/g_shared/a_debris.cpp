@@ -34,7 +34,8 @@ void P_SpawnDirt (AActor *actor, fixed_t radius)
 	const PClass *dtype = NULL;
 	AActor *mo;
 
-	fixedvec3 pos = actor->Vec3Angle(radius, pr_dirt() << 24, (pr_dirt() << 9) + FRACUNIT);
+	fixed_t zo = (pr_dirt() << 9) + FRACUNIT;
+	fixedvec3 pos = actor->Vec3Angle(radius, pr_dirt() << 24, zo);
 
 	char fmt[8];
 	mysnprintf(fmt, countof(fmt), "Dirt%d", 1 + pr_dirt()%6);

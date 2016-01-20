@@ -2606,10 +2606,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnDebris)
 	
 	for (i = 0; i < GetDefaultByType(debris)->health; i++)
 	{
-		mo = Spawn(debris, self->Vec3Offset(
-			((pr_spawndebris()-128)<<12),
-			((pr_spawndebris()-128)<<12), 
-			(pr_spawndebris()*self->height/256+self->GetBobOffset())), ALLOW_REPLACE);
+		fixed_t xo = ((pr_spawndebris() - 128) << 12);
+		fixed_t yo = ((pr_spawndebris() - 128) << 12);
+		fixed_t zo = (pr_spawndebris()*self->height / 256 + self->GetBobOffset());
+		mo = Spawn(debris, self->Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
 		if (mo)
 		{
 			if (transfer_translation)
@@ -2924,10 +2924,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Burst)
 	i = (pr_burst.Random2()) % (numChunks/4);
 	for (i = MAX (24, numChunks + i); i >= 0; i--)
 	{
-		mo = Spawn(chunk, self->Vec3Offset( 
-			(((pr_burst()-128)*self->radius)>>7),
-			(((pr_burst()-128)*self->radius)>>7),
-			(pr_burst()*self->height/255 + self->GetBobOffset())), ALLOW_REPLACE);
+		fixed_t xo = (((pr_burst() - 128)*self->radius) >> 7);
+		fixed_t yo = (((pr_burst() - 128)*self->radius) >> 7);
+		fixed_t zo = (pr_burst()*self->height / 255 + self->GetBobOffset());
+		mo = Spawn(chunk, self->Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
 
 		if (mo)
 		{

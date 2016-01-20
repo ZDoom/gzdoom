@@ -3297,10 +3297,9 @@ void AActor::Tick ()
 			{
 				smokecounter = 0;
 				angle_t moveangle = R_PointToAngle2(0,0,velx,vely);
-				AActor * th = Spawn("GrenadeSmokeTrail", Vec3Offset(
-					- FixedMul (finecosine[(moveangle)>>ANGLETOFINESHIFT], radius*2) + (pr_rockettrail()<<10),
-					- FixedMul (finesine[(moveangle)>>ANGLETOFINESHIFT], radius*2) + (pr_rockettrail()<<10),
-					- (height>>3) * (velz>>16) + (2*height)/3), ALLOW_REPLACE);
+				fixed_t xo = -FixedMul(finecosine[(moveangle) >> ANGLETOFINESHIFT], radius * 2) + (pr_rockettrail() << 10);
+				fixed_t yo = -FixedMul(finesine[(moveangle) >> ANGLETOFINESHIFT], radius * 2) + (pr_rockettrail() << 10);
+				AActor * th = Spawn("GrenadeSmokeTrail", Vec3Offset(xo, yo, - (height>>3) * (velz>>16) + (2*height)/3), ALLOW_REPLACE);
 				if (th)
 				{
 					th->tics -= pr_rockettrail()&3;
@@ -5266,10 +5265,10 @@ void P_RipperBlood (AActor *mo, AActor *bleeder)
 	PalEntry bloodcolor = bleeder->GetBloodColor();
 	const PClass *bloodcls = bleeder->GetBloodType();
 
-	fixedvec3 pos = mo->Vec3Offset(
-		(pr_ripperblood.Random2 () << 12),
-		(pr_ripperblood.Random2 () << 12),
-		(pr_ripperblood.Random2 () << 12));
+	fixed_t xo = (pr_ripperblood.Random2() << 12);
+	fixed_t yo = (pr_ripperblood.Random2() << 12);
+	fixed_t zo = (pr_ripperblood.Random2() << 12);
+	fixedvec3 pos = mo->Vec3Offset(xo, yo, zo);
 
 	int bloodtype = cl_bloodtype;
 	

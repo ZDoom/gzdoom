@@ -1294,9 +1294,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePhoenixPL2)
 	}
 	angle = self->angle;
 
-	fixedvec3 pos = self->Vec3Offset(
-		(pr_fp2.Random2() << 9),
-		(pr_fp2.Random2() << 9),
+	fixed_t xo = (pr_fp2.Random2() << 9);
+	fixed_t yo = (pr_fp2.Random2() << 9);
+	fixedvec3 pos = self->Vec3Offset(xo, yo,
 		26*FRACUNIT + finetangent[FINEANGLES/4-(self->pitch>>ANGLETOFINESHIFT)] - self->floorclip);
 
 	slope = finetangent[FINEANGLES/4-(self->pitch>>ANGLETOFINESHIFT)] + (FRACUNIT/10);

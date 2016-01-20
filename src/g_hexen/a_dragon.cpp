@@ -252,12 +252,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_DragonFX2)
 	delay = 16+(pr_dragonfx2()>>3);
 	for (i = 1+(pr_dragonfx2()&3); i; i--)
 	{
-		fixedvec3 pos = self->Vec3Offset(
-			((pr_dragonfx2()-128)<<14),
-			((pr_dragonfx2()-128)<<14),
-			((pr_dragonfx2()-128)<<12));
+		fixed_t xo = ((pr_dragonfx2() - 128) << 14);
+		fixed_t yo = ((pr_dragonfx2() - 128) << 14);
+		fixed_t zo = ((pr_dragonfx2() - 128) << 12);
 
-		mo = Spawn ("DragonExplosion", pos, ALLOW_REPLACE);
+		mo = Spawn ("DragonExplosion", self->Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
 		if (mo)
 		{
 			mo->tics = delay+(pr_dragonfx2()&3)*i*2;

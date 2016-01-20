@@ -227,12 +227,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningZap)
 	else
 	{
 		deltaZ = -10*FRACUNIT;
-	}
-	mo = Spawn(lightning,
-		self->Vec3Offset(
-			((pr_zap() - 128)*self->radius / 256),
-			((pr_zap() - 128)*self->radius / 256),
-			deltaZ), ALLOW_REPLACE);
+	}			
+	fixed_t xo = ((pr_zap() - 128)*self->radius / 256);
+	fixed_t yo = ((pr_zap() - 128)*self->radius / 256);
+
+	mo = Spawn(lightning, self->Vec3Offset(xo, yo, deltaZ), ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->lastenemy = self;

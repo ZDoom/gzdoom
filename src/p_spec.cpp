@@ -430,7 +430,7 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 	{
 		// Falling, not all the way down yet?
 		sector = player->mo->Sector;
-		if (player->mo->z != sector->floorplane.ZatPoint(player->mo)
+		if (player->mo->Z() != sector->floorplane.ZatPoint(player->mo)
 			&& !player->mo->waterlevel)
 		{
 			return;
@@ -507,7 +507,7 @@ static void DoSectorDamage(AActor *actor, sector_t *sec, int amount, FName type,
 	if (!(flags & DAMAGE_PLAYERS) && actor->player != NULL)
 		return;
 
-	if (!(flags & DAMAGE_IN_AIR) && actor->z != sec->floorplane.ZatPoint(actor) && !actor->waterlevel)
+	if (!(flags & DAMAGE_IN_AIR) && actor->Z() != sec->floorplane.ZatPoint(actor) && !actor->waterlevel)
 		return;
 
 	if (protectClass != NULL)
@@ -553,12 +553,12 @@ void P_SectorDamage(int tag, int amount, FName type, const PClass *protectClass,
 					z1 = z2;
 					z2 = zz;
 				}
-				if (actor->z + actor->height > z1)
+				if (actor->Z() + actor->height > z1)
 				{
 					// If DAMAGE_IN_AIR is used, anything not beneath the 3D floor will be
 					// damaged (so, anything touching it or above it). Other 3D floors between
 					// the actor and this one will not stop this effect.
-					if ((flags & DAMAGE_IN_AIR) || actor->z <= z2)
+					if ((flags & DAMAGE_IN_AIR) || actor->Z() <= z2)
 					{
 						// Here we pass the DAMAGE_IN_AIR flag to disable the floor check, since it
 						// only works with the real sector's floor. We did the appropriate height checks
@@ -1058,7 +1058,7 @@ void P_SpawnSkybox(ASkyViewpoint *origin)
 	if (Sector == NULL)
 	{
 		Printf("Sector not initialized for SkyCamCompat\n");
-		origin->Sector = Sector = P_PointInSector(origin->x, origin->y);
+		origin->Sector = Sector = P_PointInSector(origin->X(), origin->Y());
 	}
 	if (Sector)
 	{
@@ -2152,8 +2152,8 @@ DPusher::DPusher (DPusher::EPusher type, line_t *l, int magnitude, int angle,
 	if (source) // point source exist?
 	{
 		m_Radius = (m_Magnitude) << (FRACBITS+1); // where force goes to zero
-		m_X = m_Source->x;
-		m_Y = m_Source->y;
+		m_X = m_Source->X();
+		m_Y = m_Source->Y();
 	}
 	m_Affectee = affectee;
 }
@@ -2268,7 +2268,7 @@ void DPusher::Tick ()
 		{
 			if (hsec == NULL)
 			{ // NOT special water sector
-				if (thing->z > thing->floorz) // above ground
+				if (thing->Z() > thing->floorz) // above ground
 				{
 					xspeed = m_Xmag; // full force
 					yspeed = m_Ymag;
@@ -2282,7 +2282,7 @@ void DPusher::Tick ()
 			else // special water sector
 			{
 				ht = hsec->floorplane.ZatPoint(thing);
-				if (thing->z > ht) // above ground
+				if (thing->Z() > ht) // above ground
 				{
 					xspeed = m_Xmag; // full force
 					yspeed = m_Ymag;
@@ -2310,7 +2310,7 @@ void DPusher::Tick ()
 			{ // special water sector
 				floor = &hsec->floorplane;
 			}
-			if (thing->z > floor->ZatPoint(thing))
+			if (thing->Z() > floor->ZatPoint(thing))
 			{ // above ground
 				xspeed = yspeed = 0; // no force
 			}

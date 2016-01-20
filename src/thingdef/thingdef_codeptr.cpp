@@ -4603,7 +4603,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_WolfAttack)
 	fixedvec2 vec = self->Vec2To(self->target);
 	fixed_t dx = abs (vec.x);
 	fixed_t dy = abs (vec.y);
-	fixed_t dz;
 	fixed_t dist = dx > dy ? dx : dy;
 
 	// Some enemies are more precise

@@ -1252,6 +1252,33 @@ public:
 		fixedvec3 ret = { X(), Y(), Z() };
 		return ret;
 	}
+	fixedvec3 PosRelative(AActor *other) const
+	{
+		fixedvec3 ret = { X(), Y(), Z() };
+		return ret;
+	}
+	fixedvec3 PosRelative(sector_t *sec) const
+	{
+		fixedvec3 ret = { X(), Y(), Z() };
+		return ret;
+	}
+	fixedvec3 PosRelative(line_t *line) const
+	{
+		fixedvec3 ret = { X(), Y(), Z() };
+		return ret;
+	}
+	fixed_t SoundX() const
+	{
+		return X();
+	}
+	fixed_t SoundY() const
+	{
+		return Y();
+	}
+	fixed_t SoundZ() const
+	{
+		return Z();
+	}
 	fixedvec3 InterpolatedPosition(fixed_t ticFrac) const
 	{
 		fixedvec3 ret;
@@ -1418,6 +1445,10 @@ inline fixedvec2 Vec2Angle(fixed_t length, angle_t angle)
 	return ret;
 }
 
+inline fixedvec3 PosRelative(const fixedvec3 &pos, line_t *line, sector_t *refsec = NULL)
+{
+	return pos;
+}
 
 void PrintMiscActorInfo(AActor * query);
 

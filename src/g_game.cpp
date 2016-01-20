@@ -1930,9 +1930,6 @@ void G_DoLoadGame ()
 	}
 
 	G_ReadSnapshots (png);
-	STAT_Read(png);
-	FRandom::StaticReadRNGState (png);
-	P_ReadACSDefereds (png);
 
 	// load a base level
 	savegamerestore = true;		// Use the player actors in the savegame
@@ -1942,6 +1939,9 @@ void G_DoLoadGame ()
 	delete[] map;
 	savegamerestore = false;
 
+	STAT_Read(png);
+	FRandom::StaticReadRNGState(png);
+	P_ReadACSDefereds(png);
 	P_ReadACSVars(png);
 
 	NextSkill = -1;

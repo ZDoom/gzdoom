@@ -193,11 +193,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopPainBlur)
 		self->SetState (self->FindState ("Blur"));
 		return;
 	}
-	fixedvec3 pos = self->Vec3Offset(
-		(pr_pain.Random2()<<12),
-		(pr_pain.Random2()<<12),
-		(pr_pain.Random2()<<11));
-	mo = Spawn ("BishopPainBlur", pos, ALLOW_REPLACE);
+	fixed_t xo = (pr_pain.Random2() << 12);
+	fixed_t yo = (pr_pain.Random2() << 12);
+	fixed_t zo = (pr_pain.Random2() << 11);
+	mo = Spawn ("BishopPainBlur", self->Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->angle = self->angle;

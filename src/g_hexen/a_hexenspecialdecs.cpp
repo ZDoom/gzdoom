@@ -197,11 +197,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_LeafSpawn)
 
 	for (i = (pr_leaf()&3)+1; i; i--)
 	{
+		fixed_t xo = (pr_leaf.Random2() << 14);
+		fixed_t yo = (pr_leaf.Random2() << 14);
+		fixed_t zo = (pr_leaf() << 14);
 		mo = Spawn (pr_leaf()&1 ? PClass::FindClass ("Leaf1") : PClass::FindClass ("Leaf2"),
-			self->Vec3Offset(
-			(pr_leaf.Random2()<<14),
-			(pr_leaf.Random2()<<14),
-			(pr_leaf()<<14)), ALLOW_REPLACE);
+			self->Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
+
 		if (mo)
 		{
 			P_ThrustMobj (mo, self->angle, (pr_leaf()<<9)+3*FRACUNIT);
@@ -278,10 +279,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_SoAExplode)
 
 	for (i = 0; i < 10; i++)
 	{
-		mo = Spawn ("ZArmorChunk", self->Vec3Offset(
-			((pr_soaexplode()-128)<<12),
-			((pr_soaexplode()-128)<<12), 
-			(pr_soaexplode()*self->height/256)), ALLOW_REPLACE);
+		fixed_t xo = ((pr_soaexplode() - 128) << 12);
+		fixed_t yo = ((pr_soaexplode() - 128) << 12);
+		fixed_t zo = (pr_soaexplode()*self->height / 256);
+		mo = Spawn ("ZArmorChunk", self->Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
 		if (mo)
 		{
 			mo->SetState (mo->SpawnState + i);

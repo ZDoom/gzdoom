@@ -25,10 +25,10 @@ void AFastProjectile::Tick ()
 	fixed_t zfrac;
 	int changexy;
 
-	PrevX = x;
-	PrevY = y;
-	PrevZ = z;
-	fixed_t oldz = z;
+	PrevX = X();
+	PrevY = Y();
+	PrevZ = Z();
+	fixed_t oldz = Z();
 	PrevAngle = angle;
 
 	if (!(flags5 & MF5_NOTIMEFREEZE))
@@ -57,7 +57,7 @@ void AFastProjectile::Tick ()
 	}
 
 	// Handle movement
-	if (velx || vely || (z != floorz) || velz)
+	if (velx || vely || (Z() != floorz) || velz)
 	{
 		xfrac = velx >> shift;
 		yfrac = vely >> shift;
@@ -73,14 +73,14 @@ void AFastProjectile::Tick ()
 					tm.LastRipped = NULL;	// [RH] Do rip damage each step, like Hexen
 				}
 				
-				if (!P_TryMove (this, x + xfrac,y + yfrac, true, NULL, tm))
+				if (!P_TryMove (this, X() + xfrac,Y() + yfrac, true, NULL, tm))
 				{ // Blocked move
 					if (!(flags3 & MF3_SKYEXPLODE))
 					{
 						if (tm.ceilingline &&
 							tm.ceilingline->backsector &&
 							tm.ceilingline->backsector->GetTexture(sector_t::ceiling) == skyflatnum &&
-							z >= tm.ceilingline->backsector->ceilingplane.ZatPoint (x, y))
+							Z() >= tm.ceilingline->backsector->ceilingplane.ZatPoint (this))
 						{
 							// Hack to prevent missiles exploding against the sky.
 							// Does not handle sky floors.
@@ -99,10 +99,10 @@ void AFastProjectile::Tick ()
 					return;
 				}
 			}
-			z += zfrac;
+			AddZ(zfrac);
 			UpdateWaterLevel (oldz);
-			oldz = z;
-			if (z <= floorz)
+			oldz = Z();
+			if (Z() <= floorz)
 			{ // Hit the floor
 
 				if (floorpic == skyflatnum && !(flags3 & MF3_SKYEXPLODE))
@@ -113,12 +113,12 @@ void AFastProjectile::Tick ()
 					return;
 				}
 
-				z = floorz;
+				SetZ(floorz);
 				P_HitFloor (this);
 				P_ExplodeMissile (this, NULL, NULL);
 				return;
 			}
-			if (z + height > ceilingz)
+			if (Top() > ceilingz)
 			{ // Hit the ceiling
 
 				if (ceilingpic == skyflatnum &&  !(flags3 & MF3_SKYEXPLODE))
@@ -127,7 +127,7 @@ void AFastProjectile::Tick ()
 					return;
 				}
 
-				z = ceilingz - height;
+				SetZ(ceilingz - height);
 				P_ExplodeMissile (this, NULL, NULL);
 				return;
 			}
@@ -160,7 +160,7 @@ void AFastProjectile::Effect()
 		FName name = (ENamedName) this->GetClass()->Meta.GetMetaInt (ACMETA_MissileName, NAME_None);
 		if (name != NAME_None)
 		{
-			fixed_t hitz = z-8*FRACUNIT;
+			fixed_t hitz = Z()-8*FRACUNIT;
 
 			if (hitz < floorz)
 			{
@@ -172,7 +172,7 @@ void AFastProjectile::Effect()
 			const PClass *trail = PClass::FindClass(name);
 			if (trail != NULL)
 			{
-				AActor *act = Spawn (trail, x, y, hitz, ALLOW_REPLACE);
+				AActor *act = Spawn (trail, X(), Y(), hitz, ALLOW_REPLACE);
 				if (act != NULL)
 				{
 					act->angle = this->angle;

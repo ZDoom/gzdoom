@@ -54,11 +54,10 @@ void A_FiredSpawnRock (AActor *actor)
 			break;
 	}
 
-	fixedvec3 pos = actor->Vec3Offset(
-		((pr_firedemonrock() - 128) << 12),
-		((pr_firedemonrock() - 128) << 12),
-		( pr_firedemonrock() << 11));
-	mo = Spawn (rtype, pos, ALLOW_REPLACE);
+	fixed_t xo = ((pr_firedemonrock() - 128) << 12);
+	fixed_t yo = ((pr_firedemonrock() - 128) << 12);
+	fixed_t zo = (pr_firedemonrock() << 11);
+	mo = Spawn (rtype, actor->Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->target = actor;

@@ -22,7 +22,7 @@ AActor *P_SpawnSubMissile (AActor *source, const PClass *type, AActor *target);
 
 DEFINE_ACTION_FUNCTION(AActor, A_SpectreChunkSmall)
 {
-	AActor *foo = Spawn("AlienChunkSmall", self->x, self->y, self->z + 10*FRACUNIT, ALLOW_REPLACE);
+	AActor *foo = Spawn("AlienChunkSmall", self->PosPlusZ(10*FRACUNIT), ALLOW_REPLACE);
 
 	if (foo != NULL)
 	{
@@ -40,7 +40,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpectreChunkSmall)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SpectreChunkLarge)
 {
-	AActor *foo = Spawn("AlienChunkLarge", self->x, self->y, self->z + 10*FRACUNIT, ALLOW_REPLACE);
+	AActor *foo = Spawn("AlienChunkLarge", self->PosPlusZ(10*FRACUNIT), ALLOW_REPLACE);
 
 	if (foo != NULL)
 	{
@@ -62,7 +62,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Spectre3Attack)
 	if (self->target == NULL)
 		return;
 
-	AActor *foo = Spawn("SpectralLightningV2", self->x, self->y, self->z + 32*FRACUNIT, ALLOW_REPLACE);
+	AActor *foo = Spawn("SpectralLightningV2", self->PosPlusZ(32*FRACUNIT), ALLOW_REPLACE);
 
 	foo->velz = -12*FRACUNIT;
 	foo->target = self;

@@ -661,6 +661,16 @@ DWORD *MIDISong2::SendCommand (DWORD *events, TrackInfo *track, DWORD delay, ptr
 					events[2] = (MEVT_TEMPO << 24) | Tempo;
 					events += 3;
 					break;
+
+				default:
+					if (delay != 0)
+					{
+						events[0] = delay;
+						events[1] = 0;
+						events[2] = MEVT_NOP << 24;
+						events += 3;
+					}
+					break;
 				}
 				track->TrackP += len;
 				if (track->TrackP == track->MaxTrackP)

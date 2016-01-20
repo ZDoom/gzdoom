@@ -215,8 +215,8 @@ void A_WraithFX4 (AActor *self)
 	if (spawn5)
 	{
 		fixedvec3 pos = self->Vec3Offset(
-			(pr_wraithfx4()-128)<<12,
-			(pr_wraithfx4()-128)<<12,
+			(pr_wraithfx4()-128)<<11,
+			(pr_wraithfx4()-128)<<11,
 			(pr_wraithfx4()<<10));
 
 		mo = Spawn ("WraithFX5", pos, ALLOW_REPLACE);

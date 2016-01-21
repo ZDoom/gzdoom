@@ -2633,6 +2633,15 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnDebris)
 // A_SpawnParticle
 //
 //===========================================================================
+enum SPFflag
+{
+	SPF_FULLBRIGHT =	1,
+	SPF_RELPOS =		1 << 1,
+	SPF_RELVEL =		1 << 2,
+	SPF_RELACCEL =		1 << 3,
+	SPF_RELANG =		1 << 4,
+};
+
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnParticle)
 {
 	ACTION_PARAM_START(15);
@@ -2644,13 +2653,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnParticle)
 	ACTION_PARAM_FIXED(zvel, 5);
 	ACTION_PARAM_COLOR(color, 6);
 	ACTION_PARAM_INT(lifetime, 7);
-	ACTION_PARAM_BOOL(fullbright, 8);
+	ACTION_PARAM_INT(flags, 8);
 	ACTION_PARAM_FIXED(startalphaf, 9);
 	ACTION_PARAM_INT(size, 10);
 	ACTION_PARAM_FIXED(fadestepf, 11);
 	ACTION_PARAM_FIXED(accelx, 12);
 	ACTION_PARAM_FIXED(accely, 13);
 	ACTION_PARAM_FIXED(accelz, 14);
+	ACTION_PARAM_ANGLE(angle, 15);
 
 	BYTE startalpha = (BYTE)Scale(clamp(startalphaf, 0, FRACUNIT), 255, FRACUNIT);
 	int fadestep = fadestepf < 0? -1 : Scale(clamp(fadestepf, 0, FRACUNIT), 255, FRACUNIT);
@@ -2659,8 +2669,31 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnParticle)
 
 	if (lifetime != 0)
 	{
-		fixedvec3 pos = self->Vec3Offset(xoff, yoff, zoff);
-		P_SpawnParticle(pos.x, pos.y, pos.z, xvel, yvel, zvel, color, fullbright, startalpha, lifetime, size, fadestep, accelx, accely, accelz);
+		const angle_t ang = (angle + ((flags & SPF_RELANG) ? self->angle : 0)) >> ANGLETOFINESHIFT;
+		fixedvec3 pos;
+		//[MC] Code ripped right out of A_SpawnItemEx.
+		if (flags & SPF_RELPOS)
+		{
+			// in relative mode negative y values mean 'left' and positive ones mean 'right'
+			// This is the inverse orientation of the absolute mode!
+			const fixed_t xof1 = xoff;
+			xoff = FixedMul(xof1, finecosine[ang]) + FixedMul(yoff, finesine[ang]);
+			yoff = FixedMul(xof1, finesine[ang]) - FixedMul(yoff, finecosine[ang]);
+		}
+		if (flags & SPF_RELVEL)
+		{
+			const fixed_t newxvel = FixedMul(xvel, finecosine[ang]) + FixedMul(yvel, finesine[ang]);
+			yvel = FixedMul(xvel, finesine[ang]) - FixedMul(yvel, finecosine[ang]);
+			xvel = newxvel;
+		}
+		if (flags & SPF_RELACCEL)
+		{
+			fixed_t newaccelx = FixedMul(accelx, finecosine[ang]) + FixedMul(accely, finesine[ang]);
+			accely = FixedMul(accelx, finesine[ang]) - FixedMul(accely, finecosine[ang]);
+			accelx = newaccelx;
+		}
+		pos = self->Vec3Offset(xoff, yoff, zoff);
+		P_SpawnParticle(pos.x, pos.y, pos.z, xvel, yvel, zvel, color, !!(flags & SPF_FULLBRIGHT), startalpha, lifetime, size, fadestep, accelx, accely, accelz);
 	}
 }
 

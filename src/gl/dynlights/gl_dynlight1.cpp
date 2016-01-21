@@ -96,9 +96,9 @@ bool gl_GetLight(Plane & p, ADynamicLight * light,
 	Vector fn, pos;
 	int i = 0;
 
-    float x = FIXED2FLOAT(light->x);
-	float y = FIXED2FLOAT(light->y);
-	float z = FIXED2FLOAT(light->z);
+    float x = FIXED2FLOAT(light->X());
+	float y = FIXED2FLOAT(light->Y());
+	float z = FIXED2FLOAT(light->Z());
 	
 	float dist = fabsf(p.DistToPoint(x, z, y));
 	float radius = (light->GetRadius() * gl_lights_size);
@@ -170,9 +170,9 @@ bool gl_SetupLight(Plane & p, ADynamicLight * light, Vector & nearPt, Vector & u
 {
 	Vector fn, pos;
 
-    float x = FIXED2FLOAT(light->x);
-	float y = FIXED2FLOAT(light->y);
-	float z = FIXED2FLOAT(light->z);
+    float x = FIXED2FLOAT(light->X());
+	float y = FIXED2FLOAT(light->Y());
+	float z = FIXED2FLOAT(light->Z());
 	
 	float dist = fabsf(p.DistToPoint(x, z, y));
 	float radius = (light->GetRadius() * gl_lights_size);

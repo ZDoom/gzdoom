@@ -359,7 +359,7 @@ static void CollectPortalSectors(FPortalMap &collection)
 			ASkyViewpoint *SkyBox = sec->SkyBoxes[j];
 			if (SkyBox != NULL && SkyBox->bAlways && SkyBox->Mate != NULL)
 			{
-				FPortalID id = { SkyBox->x - SkyBox->Mate->x, SkyBox->y - SkyBox->Mate->y };
+				FPortalID id = { SkyBox->X() - SkyBox->Mate->X(), SkyBox->Y() - SkyBox->Mate->Y() };
 
 				FPortalSectors &sss = collection[id];
 				FPortalSector ss = { sec, j };

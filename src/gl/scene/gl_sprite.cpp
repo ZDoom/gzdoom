@@ -405,8 +405,8 @@ void GLSprite::SplitSprite(sector_t * frontsector, bool translucent)
 	for(i=0;i<lightlist.Size();i++)
 	{
 		// Particles don't go through here so we can safely assume that actor is not NULL
-		if (i<lightlist.Size()-1) lightbottom=lightlist[i+1].plane.ZatPoint(actor->x,actor->y);
-		else lightbottom=frontsector->floorplane.ZatPoint(actor->x,actor->y);
+		if (i<lightlist.Size()-1) lightbottom=lightlist[i+1].plane.ZatPoint(actor);
+		else lightbottom=frontsector->floorplane.ZatPoint(actor);
 
 		maplightbottom=FIXED2FLOAT(lightbottom);
 		if (maplightbottom<z2) maplightbottom=z2;
@@ -452,8 +452,8 @@ void GLSprite::SetSpriteColor(sector_t *sector, fixed_t center_y)
 	for(i=0;i<lightlist.Size();i++)
 	{
 		// Particles don't go through here so we can safely assume that actor is not NULL
-		if (i<lightlist.Size()-1) lightbottom=lightlist[i+1].plane.ZatPoint(actor->x,actor->y);
-		else lightbottom=sector->floorplane.ZatPoint(actor->x,actor->y);
+		if (i<lightlist.Size()-1) lightbottom=lightlist[i+1].plane.ZatPoint(actor);
+		else lightbottom=sector->floorplane.ZatPoint(actor);
 
 		//maplighttop=FIXED2FLOAT(lightlist[i].height);
 		maplightbottom=FIXED2FLOAT(lightbottom);
@@ -617,12 +617,10 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 	if (!(currentmapsection[thing->subsector->mapsection>>3] & (1 << (thing->subsector->mapsection & 7)))) return;
 
 	// [RH] Interpolate the sprite's position to make it look smooth
-	fixed_t thingx = thing->PrevX + FixedMul (r_TicFrac, thing->x - thing->PrevX);
-	fixed_t thingy = thing->PrevY + FixedMul (r_TicFrac, thing->y - thing->PrevY);
-	fixed_t thingz = thing->PrevZ + FixedMul (r_TicFrac, thing->z - thing->PrevZ);
+	fixedvec3 thingpos = thing->InterpolatedPosition(r_TicFrac);
 
 	// Too close to the camera. This doesn't look good if it is a sprite.
-	if (P_AproxDistance(thingx-viewx, thingy-viewy)<2*FRACUNIT)
+	if (P_AproxDistance(thingpos.x-viewx, thingpos.y-viewy)<2*FRACUNIT)
 	{
 		// exclude vertically moving objects from this check.
 		if (!(thing->velx==0 && thing->vely==0 && thing->velz!=0))
@@ -637,12 +635,12 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 	// don't draw first frame of a player missile
 	if (thing->flags&MF_MISSILE && thing->target==GLRenderer->mViewActor && GLRenderer->mViewActor != NULL)
 	{
-		if (P_AproxDistance(thingx-viewx, thingy-viewy) < thing->Speed ) return;
+		if (P_AproxDistance(thingpos.x-viewx, thingpos.y-viewy) < thing->Speed ) return;
 	}
 
 	if (GLRenderer->mCurrentPortal)
 	{
-		int clipres = GLRenderer->mCurrentPortal->ClipPoint(thingx, thingy);
+		int clipres = GLRenderer->mCurrentPortal->ClipPoint(thingpos.x, thingpos.y);
 		if (clipres == GLPortal::PClip_InFront) return;
 	}
 
@@ -659,9 +657,9 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 	}
 	
 
-	x = FIXED2FLOAT(thingx);
-	z = FIXED2FLOAT(thingz-thing->floorclip);
-	y = FIXED2FLOAT(thingy);
+	x = FIXED2FLOAT(thingpos.x);
+	z = FIXED2FLOAT(thingpos.z-thing->floorclip);
+	y = FIXED2FLOAT(thingpos.y);
 
 	// [RH] Make floatbobbing a renderer-only effect.
 	if (thing->flags2 & MF2_FLOATBOB)
@@ -673,7 +671,7 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 	modelframe = gl_FindModelFrame(RUNTIME_TYPE(thing), spritenum, thing->frame, !!(thing->flags & MF_DROPPED));
 	if (!modelframe)
 	{
-		angle_t ang = R_PointToAngle(thingx, thingy);
+		angle_t ang = R_PointToAngle(thingpos.x, thingpos.y);
 
 		bool mirror;
 		FTextureID patch = gl_GetSpriteFrame(spritenum, thing->frame, -1, ang - thing->angle, &mirror);
@@ -709,7 +707,7 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 		// Tests show that this doesn't look good for many decorations and corpses
 		if (spriteheight > 0 && gl_spriteclip > 0 && (thing->renderflags & RF_SPRITETYPEMASK) == RF_FACESPRITE)
 		{
-			PerformSpriteClipAdjustment(thing, thingx, thingy, spriteheight);
+			PerformSpriteClipAdjustment(thing, thingpos.x, thingpos.y, spriteheight);
 		}
 
 		float viewvecX;
@@ -745,7 +743,7 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 		gltexture=NULL;
 	}
 
-	depth = DMulScale20 (thing->x-viewx, viewtancos, thing->y-viewy, viewtansin);
+	depth = DMulScale20 (thingpos.x-viewx, viewtancos, thingpos.y-viewy, viewtansin);
 
 	// light calculation
 
@@ -761,7 +759,7 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 			rendersector->GetCeilingLight() : rendersector->GetFloorLight());
 	foglevel = (BYTE)clamp<short>(rendersector->lightlevel, 0, 255);
 
-	lightlevel = (byte)gl_CheckSpriteGlow(rendersector, lightlevel, thingx, thingy, thingz);
+	lightlevel = (byte)gl_CheckSpriteGlow(rendersector, lightlevel, thingpos.x, thingpos.y, thingpos.z);
 
 	// colormap stuff is a little more complicated here...
 	if (gl_fixedcolormap) 
@@ -914,7 +912,7 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 
 	if (drawWithXYBillboard || modelframe)
 	{
-		if (!gl_fixedcolormap && !fullbright) SetSpriteColor(actor->Sector, actor->y + (actor->height>>1));
+		if (!gl_fixedcolormap && !fullbright) SetSpriteColor(actor->Sector, thingpos.y + (actor->height>>1));
 		PutSprite(hw_styleflags != STYLEHW_Solid);
 	}
 	else if (thing->Sector->e->XFloor.lightlist.Size()==0 || gl_fixedcolormap || fullbright) 

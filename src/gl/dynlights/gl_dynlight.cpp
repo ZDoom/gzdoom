@@ -1085,7 +1085,7 @@ void gl_AttachLight(AActor *actor, unsigned int count, const FLightDefaults *lig
 	}
 	else
 	{
-		light = Spawn<ADynamicLight>(actor->x, actor->y, actor->z, NO_REPLACE);
+		light = Spawn<ADynamicLight>(actor->Pos(), NO_REPLACE);
 		light->target = actor;
 		light->owned = true;
 		actor->dynamiclights.Push(light);

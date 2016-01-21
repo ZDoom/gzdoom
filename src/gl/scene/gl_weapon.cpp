@@ -246,7 +246,7 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 
 			lightlevel = (1.0 - min_L) * 255;
 		}
-		lightlevel = gl_CheckSpriteGlow(viewsector, lightlevel, playermo->x, playermo->y, playermo->z);
+		lightlevel = gl_CheckSpriteGlow(viewsector, lightlevel, playermo->X(), playermo->Y(), playermo->Z());
 
 		// calculate colormap for weapon sprites
 		if (viewsector->e->XFloor.ffloors.Size() && !glset.nocoloredspritelighting)

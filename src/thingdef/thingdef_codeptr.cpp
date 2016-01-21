@@ -51,6 +51,7 @@
 #include "s_sound.h"
 #include "cmdlib.h"
 #include "p_lnspec.h"
+#include "p_effect.h"
 #include "p_enemy.h"
 #include "a_action.h"
 #include "decallib.h"
@@ -2624,6 +2625,42 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnDebris)
 			mo->velx = FixedMul(mult_h, pr_spawndebris.Random2()<<(FRACBITS-6));
 			mo->vely = FixedMul(mult_h, pr_spawndebris.Random2()<<(FRACBITS-6));
 		}
+	}
+}
+
+//===========================================================================
+//
+// A_SpawnParticle
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnParticle)
+{
+	ACTION_PARAM_START(15);
+	ACTION_PARAM_FIXED(xoff, 0);
+	ACTION_PARAM_FIXED(yoff, 1);
+	ACTION_PARAM_FIXED(zoff, 2);
+	ACTION_PARAM_FIXED(xvel, 3);
+	ACTION_PARAM_FIXED(yvel, 4);
+	ACTION_PARAM_FIXED(zvel, 5);
+	ACTION_PARAM_COLOR(color, 6);
+	ACTION_PARAM_INT(lifetime, 7);
+	ACTION_PARAM_BOOL(fullbright, 8);
+	ACTION_PARAM_INT(startalpha, 9); // Byte trans
+	ACTION_PARAM_INT(size, 10);
+	ACTION_PARAM_INT(fadestep, 11);
+	ACTION_PARAM_FIXED(accelx, 12);
+	ACTION_PARAM_FIXED(accely, 13);
+	ACTION_PARAM_FIXED(accelz, 14);
+
+	startalpha = clamp<int>(startalpha, 0, 0xFF); // Clamp to byte
+	lifetime = clamp<int>(lifetime, 0, 0xFF); // Clamp to byte
+	fadestep = clamp<int>(fadestep, -1, 0xFF); // Clamp to byte inc. -1 (indicating automatic)
+	size = clamp<int>(size, 0, 0xFF); // Clamp to byte
+
+	if (lifetime != 0)
+	{
+		fixedvec3 pos = self->Vec3Offset(xoff, yoff, zoff);
+		P_SpawnParticle(pos.x, pos.y, pos.z, xvel, yvel, zvel, color, fullbright, startalpha, lifetime, size, fadestep, accelx, accely, accelz);
 	}
 }
 

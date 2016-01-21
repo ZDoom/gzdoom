@@ -2645,14 +2645,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnParticle)
 	ACTION_PARAM_COLOR(color, 6);
 	ACTION_PARAM_INT(lifetime, 7);
 	ACTION_PARAM_BOOL(fullbright, 8);
-	ACTION_PARAM_INT(startalpha, 9); // Byte trans
+	ACTION_PARAM_FIXED(startalphaf, 9);
 	ACTION_PARAM_INT(size, 10);
 	ACTION_PARAM_INT(fadestep, 11);
 	ACTION_PARAM_FIXED(accelx, 12);
 	ACTION_PARAM_FIXED(accely, 13);
 	ACTION_PARAM_FIXED(accelz, 14);
 
-	startalpha = clamp<int>(startalpha, 0, 0xFF); // Clamp to byte
+	BYTE startalpha = (BYTE)Scale(clamp(startalphaf, 0, FRACUNIT), 255, FRACUNIT);
 	lifetime = clamp<int>(lifetime, 0, 0xFF); // Clamp to byte
 	fadestep = clamp<int>(fadestep, -1, 0xFF); // Clamp to byte inc. -1 (indicating automatic)
 	size = clamp<int>(size, 0, 0xFF); // Clamp to byte

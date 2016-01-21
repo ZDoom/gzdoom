@@ -223,9 +223,6 @@ endif( X64 )
 if( NOT OPENGL_FOUND )
 	message( FATAL_ERROR "OpenGL is required for building." )
 endif( NOT OPENGL_FOUND )
-if( NOT OPENGL_GLU_FOUND )
-	message( FATAL_ERROR "OpenGL GLU is required for building." )
-endif( NOT OPENGL_GLU_FOUND )
 
 set( ZDOOM_LIBS ${ZDOOM_LIBS} ${OPENGL_LIBRARIES} )
 include_directories( ${OPENGL_INCLUDE_DIR} )
@@ -247,18 +244,18 @@ endif( NOT NO_OPENAL )
 if( NOT NO_FMOD )
 	# Search for FMOD include files
 	if( NOT WIN32 )
-	find_path( FMOD_INCLUDE_DIR fmod.hpp
-		PATHS ${FMOD_LOCAL_INC_DIRS} )
+		find_path( FMOD_INCLUDE_DIR fmod.hpp
+			PATHS ${FMOD_LOCAL_INC_DIRS} )
 	endif( NOT WIN32 )
 
 	if( NOT FMOD_INCLUDE_DIR )
-	find_path( FMOD_INCLUDE_DIR fmod.hpp
-		PATHS ${FMOD_SEARCH_PATHS}
-		${FMOD_INC_PATH_SUFFIXES} )
+		find_path( FMOD_INCLUDE_DIR fmod.hpp
+			PATHS ${FMOD_SEARCH_PATHS}
+			${FMOD_INC_PATH_SUFFIXES} )
 	endif( NOT FMOD_INCLUDE_DIR )
 
 	if( FMOD_INCLUDE_DIR )
-	message( STATUS "FMOD include files found at ${FMOD_INCLUDE_DIR}" )
+		message( STATUS "FMOD include files found at ${FMOD_INCLUDE_DIR}" )
 		include_directories( "${FMOD_INCLUDE_DIR}" )
 	else( FMOD_INCLUDE_DIR )
 		message( STATUS "Could not find FMOD include files" )
@@ -282,17 +279,17 @@ if( NOT NO_FMOD )
 
 	# Search for FMOD library
 	if( WIN32 OR APPLE )
-	find_library( FMOD_LIBRARY ${FMOD_LIB_NAME}
-		PATHS ${FMOD_SEARCH_PATHS}
-		${FMOD_LIB_PATH_SUFFIXES} )
+		find_library( FMOD_LIBRARY ${FMOD_LIB_NAME}
+			PATHS ${FMOD_SEARCH_PATHS}
+			${FMOD_LIB_PATH_SUFFIXES} )
 	else( WIN32 OR APPLE )
-	find_library( FMOD_LIBRARY
-		NAMES ${FMOD_VERSIONS}
-		PATHS ${FMOD_LOCAL_LIB_DIRS} )
+		find_library( FMOD_LIBRARY
+			NAMES ${FMOD_VERSIONS}
+			PATHS ${FMOD_LOCAL_LIB_DIRS} )
 	endif( WIN32 OR APPLE )
 
 	if( FMOD_LIBRARY )
-	message( STATUS "FMOD library found at ${FMOD_LIBRARY}" )
+		message( STATUS "FMOD library found at ${FMOD_LIBRARY}" )
 		set( ZDOOM_LIBS ${ZDOOM_LIBS} "${FMOD_LIBRARY}" )
 	else( FMOD_LIBRARY )
 		message( STATUS "Could not find FMOD library" )
@@ -1356,10 +1353,10 @@ if( MSVC )
 	endif( ZDOOM_GENERATE_MAPFILE )
 
 	if( NO_GENERATOR_EXPRESSIONS )
-	add_custom_command(TARGET zdoom POST_BUILD
-		COMMAND "mt.exe" -manifest \"${CMAKE_CURRENT_SOURCE_DIR}\\win32\\zdoom.exe.manifest\" -outputresource:\"$(TargetDir)$(TargetFileName)\"\;\#1
-		COMMENT "Adding manifest..."
-	)
+		add_custom_command(TARGET zdoom POST_BUILD
+			COMMAND "mt.exe" -manifest \"${CMAKE_CURRENT_SOURCE_DIR}\\win32\\zdoom.exe.manifest\" -outputresource:\"$(TargetDir)$(TargetFileName)\"\;\#1
+			COMMENT "Adding manifest..."
+		)
 	else( NO_GENERATOR_EXPRESSIONS )
 		add_custom_command(TARGET zdoom POST_BUILD
 			COMMAND "mt.exe" -manifest \"${CMAKE_CURRENT_SOURCE_DIR}\\win32\\zdoom.exe.manifest\" -outputresource:\"$<TARGET_FILE:zdoom>\"\;\#1
@@ -1393,18 +1390,18 @@ if( APPLE )
 		MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/posix/osx/zdoom-info.plist" )
 
 	if( NOT NO_FMOD )
-	# Fix fmod link so that it can be found in the app bundle.
-	find_program( OTOOL otool HINTS "/usr/bin" "${OSX_DEVELOPER_ROOT}/usr/bin" )
-	find_program( INSTALL_NAME_TOOL install_name_tool HINTS "/usr/bin" "${OSX_DEVELOPER_ROOT}/usr/bin" )
-	execute_process( COMMAND "${OTOOL}" -L "${FMOD_LIBRARY}"
-		COMMAND grep "libfmodex.dylib (compat"
-		COMMAND head -n1
-		COMMAND awk "{print $1}"
-		OUTPUT_VARIABLE FMOD_LINK
-		OUTPUT_STRIP_TRAILING_WHITESPACE )
-	add_custom_command( TARGET zdoom POST_BUILD
-		COMMAND "${INSTALL_NAME_TOOL}" -change "${FMOD_LINK}" @executable_path/../Frameworks/libfmodex.dylib "$<TARGET_FILE:zdoom>"
-		COMMENT "Relinking FMOD Ex" )
+		# Fix fmod link so that it can be found in the app bundle.
+		find_program( OTOOL otool HINTS "/usr/bin" "${OSX_DEVELOPER_ROOT}/usr/bin" )
+		find_program( INSTALL_NAME_TOOL install_name_tool HINTS "/usr/bin" "${OSX_DEVELOPER_ROOT}/usr/bin" )
+		execute_process( COMMAND "${OTOOL}" -L "${FMOD_LIBRARY}"
+			COMMAND grep "libfmodex.dylib (compat"
+			COMMAND head -n1
+			COMMAND awk "{print $1}"
+			OUTPUT_VARIABLE FMOD_LINK
+			OUTPUT_STRIP_TRAILING_WHITESPACE )
+		add_custom_command( TARGET zdoom POST_BUILD
+			COMMAND "${INSTALL_NAME_TOOL}" -change "${FMOD_LINK}" @executable_path/../Frameworks/libfmodex.dylib "$<TARGET_FILE:zdoom>"
+			COMMENT "Relinking FMOD Ex" )
 	endif( NOT NO_FMOD )
 endif( APPLE )
 

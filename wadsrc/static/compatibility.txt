@@ -420,3 +420,4 @@ D7F6E9F08C39A17026349A04F8C0B0BE // Return to Hadron, e1m9
 	setsectortag 910 32002
 	setlinespecial 2410 Sector_Set3DFloor 32002 4 1 0 0
 }
+

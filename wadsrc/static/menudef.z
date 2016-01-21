@@ -115,12 +115,6 @@ OptionValue "HqResizeModes"
    9, "hq4x MMX"
 }
 
-OptionValue "HqResizeTargets"
-{
-   0, "Everything"
-   1, "Sprites/fonts"
-}
- 
 OptionValue "FogMode"
 {
 	0, "Off"

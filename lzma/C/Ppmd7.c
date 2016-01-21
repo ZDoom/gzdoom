@@ -276,12 +276,12 @@ static void *ShrinkUnits(CPpmd7 *p, void *oldPtr, unsigned oldNU, unsigned newNU
   return oldPtr;
 }
 
-#define SUCCESSOR(p) ((CPpmd_Void_Ref)((p)->SuccessorLow | ((UInt32)(p)->SuccessorHigh << 16)))
+#define SUCCESSOR(p) ((CPpmd_Void_Ref)(size_t)((p)->SuccessorLow | ((UInt32)(p)->SuccessorHigh << 16)))
 
 static void SetSuccessor(CPpmd_State *p, CPpmd_Void_Ref v)
 {
-  (p)->SuccessorLow = (UInt16)((UInt32)(v) & 0xFFFF);
-  (p)->SuccessorHigh = (UInt16)(((UInt32)(v) >> 16) & 0xFFFF);
+  (p)->SuccessorLow = (UInt16)((UInt32)((size_t)v) & 0xFFFF);
+  (p)->SuccessorHigh = (UInt16)(((UInt32)((size_t)v) >> 16) & 0xFFFF);
 }
 
 static void RestartModel(CPpmd7 *p)

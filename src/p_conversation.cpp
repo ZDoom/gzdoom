@@ -1365,6 +1365,10 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 				}
 			}
 		}
+		else
+		{
+			Printf ("Next node %u is invalid, no such dialog page\n", next);
+		}
 	}
 
 	npc->angle = player->ConversationNPCAngle;

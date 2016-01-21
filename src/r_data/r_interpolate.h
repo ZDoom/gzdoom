@@ -13,9 +13,10 @@ class DInterpolation : public DObject
 	friend struct FInterpolator;
 
 	DECLARE_ABSTRACT_CLASS(DInterpolation, DObject)
+	HAS_OBJECT_POINTERS
 
-	DInterpolation *Next;
-	DInterpolation **Prev;
+	TObjPtr<DInterpolation> Next;
+	TObjPtr<DInterpolation> Prev;
 	int refcount;
 
 protected:
@@ -40,7 +41,7 @@ public:
 
 struct FInterpolator
 {
-	DInterpolation *Head;
+	TObjPtr<DInterpolation> Head;
 	bool didInterp;
 	int count;
 

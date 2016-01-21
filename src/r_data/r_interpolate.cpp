@@ -157,7 +157,10 @@ public:
 //
 //==========================================================================
 
-IMPLEMENT_ABSTRACT_CLASS(DInterpolation)
+IMPLEMENT_ABSTRACT_POINTY_CLASS(DInterpolation)
+DECLARE_POINTER(Next)
+DECLARE_POINTER(Prev)
+END_POINTERS
 IMPLEMENT_CLASS(DSectorPlaneInterpolation)
 IMPLEMENT_CLASS(DSectorScrollInterpolation)
 IMPLEMENT_CLASS(DWallScrollInterpolation)
@@ -213,9 +216,9 @@ void FInterpolator::UpdateInterpolations()
 void FInterpolator::AddInterpolation(DInterpolation *interp)
 {
 	interp->Next = Head;
-	if (Head != NULL) Head->Prev = &interp->Next;
+	if (Head != NULL) Head->Prev = interp;
+	interp->Prev = NULL;
 	Head = interp;
-	interp->Prev = &Head;
 	count++;
 }
 
@@ -227,14 +230,19 @@ void FInterpolator::AddInterpolation(DInterpolation *interp)
 
 void FInterpolator::RemoveInterpolation(DInterpolation *interp)
 {
-	if (interp->Prev != NULL)
+	if (Head == interp)
 	{
-		*interp->Prev = interp->Next;
-		if (interp->Next != NULL) interp->Next->Prev = interp->Prev;
-		interp->Next = NULL;
-		interp->Prev = NULL;
-		count--;
+		Head = interp->Next;
+		if (Head != NULL) Head->Prev = NULL;
 	}
+	else
+	{
+		if (interp->Prev != NULL) interp->Prev->Next = interp->Next;
+		if (interp->Next != NULL) interp->Next->Prev = interp->Prev;
+	}
+	interp->Next = NULL;
+	interp->Prev = NULL;
+	count--;
 }
 
 //==========================================================================
@@ -285,13 +293,15 @@ void FInterpolator::RestoreInterpolations()
 
 void FInterpolator::ClearInterpolations()
 {
-	for (DInterpolation *probe = Head; probe != NULL; )
+	DInterpolation *probe = Head;
+	Head = NULL;
+	while (probe != NULL)
 	{
 		DInterpolation *next = probe->Next;
+		probe->Next = probe->Prev = NULL;
 		probe->Destroy();
 		probe = next;
 	}
-	Head = NULL;
 }
 
 

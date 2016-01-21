@@ -4380,7 +4380,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Teleport)
 		}
 		
 		ref->SetZ((flags & TF_USESPOTZ) ? spot->Z() : ref->floorz, false);
-		self->SetZ((flags & TF_USESPOTZ) ? spot->Z() : self->floorz, false);
 
 		if (!(flags & TF_KEEPANGLE))
 			ref->angle = spot->angle;

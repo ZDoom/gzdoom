@@ -878,6 +878,7 @@ FArchive &operator<< (FArchive &arc, secspecial_t &p)
 		int special;
 		arc << special;
 		sector_t sec;
+		memset(&sec, 0, sizeof(sec));
 		P_InitSectorSpecial(&sec, special, true);
 		sec.GetSpecial(&p);
 	}

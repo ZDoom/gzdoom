@@ -881,7 +881,7 @@ public:
 	bool intersects(AActor *other) const
 	{
 		fixed_t blockdist = radius + other->radius;
-		return ( abs(X() - other->Y()) < blockdist && abs(Y() - other->Y()) < blockdist);
+		return ( abs(X() - other->X()) < blockdist && abs(Y() - other->Y()) < blockdist);
 	}
 
 	// 'absolute' is reserved for a linked portal implementation which needs

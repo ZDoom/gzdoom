@@ -600,9 +600,9 @@ public:
 protected:
 	void Heapify();
 
-	unsigned int Parent(unsigned int i) { return (i + 1u) / 2u - 1u; }
-	unsigned int Left(unsigned int i) { return (i + 1u) * 2u - 1u; }
-	unsigned int Right(unsigned int i) { return (i + 1u) * 2u; }
+	unsigned int Parent(unsigned int i) const { return (i + 1u) / 2u - 1u; }
+	unsigned int Left(unsigned int i) const { return (i + 1u) * 2u - 1u; }
+	unsigned int Right(unsigned int i) const { return (i + 1u) * 2u; }
 };
 
 class HMISong : public MIDIStreamer
@@ -630,7 +630,7 @@ protected:
 	struct TrackInfo;
 
 	void ProcessInitialMetaEvents ();
-	DWORD *SendCommand (DWORD *event, TrackInfo *track, DWORD delay);
+	DWORD *SendCommand (DWORD *event, TrackInfo *track, DWORD delay, ptrdiff_t room, bool &sysex_noroom);
 	TrackInfo *FindNextDue ();
 
 	static DWORD ReadVarLenHMI(TrackInfo *);
@@ -673,7 +673,7 @@ protected:
 	void AdvanceSong(DWORD time);
 
 	void ProcessInitialMetaEvents();
-	DWORD *SendCommand (DWORD *event, EventSource track, DWORD delay);
+	DWORD *SendCommand (DWORD *event, EventSource track, DWORD delay, ptrdiff_t room, bool &sysex_noroom);
 	EventSource FindNextDue();
 
 	BYTE *MusHeader;

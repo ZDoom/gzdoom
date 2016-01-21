@@ -844,12 +844,6 @@ public:
 		return (flags & MF_COUNTKILL) && !(flags & MF_FRIENDLY);
 	}
 
-	bool intersects(AActor *other) const
-	{
-		fixed_t blockdist = radius + other->radius;
-		return ( abs(x - other->x) < blockdist && abs(y - other->y) < blockdist);
-	}
-
 	PalEntry GetBloodColor() const
 	{
 		return (PalEntry)GetClass()->Meta.GetMetaInt(AMETA_BloodColor);
@@ -884,103 +878,109 @@ public:
 		return bloodcls;
 	}
 
+	bool intersects(AActor *other) const
+	{
+		fixed_t blockdist = radius + other->radius;
+		return ( abs(X() - other->Y()) < blockdist && abs(Y() - other->Y()) < blockdist);
+	}
+
 	// 'absolute' is reserved for a linked portal implementation which needs
 	// to distinguish between portal-aware and portal-unaware distance calculation.
 	fixed_t AproxDistance(AActor *other, bool absolute = false)
 	{
-		return P_AproxDistance(x - other->x, y - other->y);
+		return P_AproxDistance(X() - other->X(), Y() - other->Y());
 	}
 
 	// same with 'ref' here.
 	fixed_t AproxDistance(fixed_t otherx, fixed_t othery, AActor *ref = NULL)
 	{
-		return P_AproxDistance(x - otherx, y - othery);
+		return P_AproxDistance(X() - otherx, Y() - othery);
 	}
 
 	fixed_t AproxDistance(AActor *other, fixed_t xadd, fixed_t yadd, bool absolute = false)
 	{
-		return P_AproxDistance(x - other->x + xadd, y - other->y + yadd);
+		return P_AproxDistance(X() - other->X() + xadd, Y() - other->Y() + yadd);
 	}
 
 	fixed_t AproxDistance3D(AActor *other, bool absolute = false)
 	{
-		return P_AproxDistance(AproxDistance(other), z - other->z);
+		return P_AproxDistance(AproxDistance(other), Z() - other->Z());
 	}
 
 	// more precise, but slower version, being used in a few places
 	fixed_t Distance2D(AActor *other, bool absolute = false)
 	{
-		return xs_RoundToInt(FVector2(x - other->x, y - other->y).Length());
+		return xs_RoundToInt(FVector2(X() - other->X(), Y() - other->Y()).Length());
 	}
 
 	// a full 3D version of the above
 	fixed_t Distance3D(AActor *other, bool absolute = false)
 	{
-		return xs_RoundToInt(FVector3(x - other->x, y - other->y, z - other->z).Length());
+		return xs_RoundToInt(FVector3(X() - other->X(), Y() - other->Y(), Z() - other->Z()).Length());
 	}
 
 	angle_t AngleTo(AActor *other, bool absolute = false) const
 	{
-		return R_PointToAngle2(x, y, other->x, other->y);
+		return R_PointToAngle2(X(), Y(), other->X(), other->Y());
 	}
 
 	angle_t AngleTo(AActor *other, fixed_t oxofs, fixed_t oyofs, bool absolute = false) const
 	{
-		return R_PointToAngle2(x, y, other->x + oxofs, other->y + oyofs);
+		return R_PointToAngle2(X(), Y(), other->X() + oxofs, other->Y() + oyofs);
 	}
 
 	fixed_t AngleTo(fixed_t otherx, fixed_t othery, AActor *ref = NULL)
 	{
-		return R_PointToAngle2(x, y, otherx, othery);
+		return R_PointToAngle2(X(), Y(), otherx, othery);
 	}
 
 	fixed_t AngleXYTo(fixed_t myx, fixed_t myy, AActor *other, bool absolute = false)
 	{
-		return R_PointToAngle2(myx, myy, other->x, other->y);
+		return R_PointToAngle2(myx, myy, other->X(), other->Y());
 	}
 
 	fixedvec2 Vec2To(AActor *other) const
 	{
-		fixedvec2 ret = { other->x - x, other->y - y };
+		fixedvec2 ret = { other->X() - X(), other->Y() - Y() };
 		return ret;
 	}
 
 	fixedvec3 Vec3To(AActor *other) const
 	{
-		fixedvec3 ret = { other->x - x, other->y - y, other->z - z };
+		fixedvec3 ret = { other->X() - X(), other->Y() - Y(), other->Z() - Z() };
 		return ret;
 	}
 
 	fixedvec2 Vec2Offset(fixed_t dx, fixed_t dy, bool absolute = false) const
 	{
-		fixedvec2 ret = { x + dx, y + dy };
+		fixedvec2 ret = { X() + dx, Y() + dy };
 		return ret;
 	}
 
 
 	fixedvec2 Vec2Angle(fixed_t length, angle_t angle, bool absolute = false) const
 	{
-		fixedvec2 ret = { x + FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]),
-						  y + FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]) };
+		fixedvec2 ret = { X() + FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]),
+						  Y() + FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]) };
 		return ret;
 	}
 
 	fixedvec3 Vec3Offset(fixed_t dx, fixed_t dy, fixed_t dz, bool absolute = false) const
 	{
-		fixedvec3 ret = { x + dx, y + dy, z + dz };
+		fixedvec3 ret = { X() + dx, Y() + dy, Z() + dz };
 		return ret;
 	}
 
 	fixedvec3 Vec3Angle(fixed_t length, angle_t angle, fixed_t dz, bool absolute = false) const
 	{
-		fixedvec3 ret = { x + FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]),
-						  y + FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]), z + dz };
+		fixedvec3 ret = { X() + FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]),
+						  Y() + FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]), Z() + dz };
 		return ret;
 	}
 
 	void Move(fixed_t dx, fixed_t dy, fixed_t dz)
 	{
-		SetOrigin(x + dx, y + dy, z + dz, true);
+		SetOrigin(X() + dx, Y() + dy, Z() + dz, true);
 	}
 
 	void SetOrigin(const fixedvec3 & npos, bool moving)
@@ -1006,9 +1006,10 @@ public:
 	void CheckSectorTransition(sector_t *oldsec);
 
 // info for drawing
-// NOTE: The first member variable *must* be x.
-	fixed_t	 		x,y,z;
+// NOTE: The first member variable *must* be snext.
 	AActor			*snext, **sprev;	// links in sector (if needed)
+	fixedvec3		__pos;				// double underscores so that it won't get used by accident. Access to this should be exclusively through the designated access functions.
+
 	angle_t			angle;
 	WORD			sprite;				// used to find patch_t and flip value
 	BYTE			frame;				// sprite frame to draw
@@ -1237,15 +1238,15 @@ public:
 
 	fixed_t X() const
 	{
-		return x;
+		return __pos.x;
 	}
 	fixed_t Y() const
 	{
-		return y;
+		return __pos.y;
 	}
 	fixed_t Z() const
 	{
-		return z;
+		return __pos.z;
 	}
 	fixedvec3 Pos() const
 	{
@@ -1295,39 +1296,39 @@ public:
 	}
 	fixed_t Top() const
 	{
-		return z + height;
+		return Z() + height;
 	}
 	void SetZ(fixed_t newz, bool moving = true)
 	{
-		z = newz;
+		__pos.z = newz;
 	}
 	void AddZ(fixed_t newz, bool moving = true)
 	{
-		z += newz;
+		__pos.z += newz;
 	}
 
 	// These are not for general use as they do not link the actor into the world!
 	void SetXY(fixed_t xx, fixed_t yy)
 	{
-		x = xx;
-		y = yy;
+		__pos.x = xx;
+		__pos.y = yy;
 	}
 	void SetXYZ(fixed_t xx, fixed_t yy, fixed_t zz)
 	{
-		x = xx;
-		y = yy;
-		z = zz;
+		__pos.x = xx;
+		__pos.y = yy;
+		__pos.z = zz;
 	}
 	void SetXY(const fixedvec2 &npos)
 	{
-		x = npos.x;
-		y = npos.y;
+		__pos.x = npos.x;
+		__pos.y = npos.y;
 	}
 	void SetXYZ(const fixedvec3 &npos)
 	{
-		x = npos.x;
-		y = npos.y;
-		z = npos.z;
+		__pos.x = npos.x;
+		__pos.y = npos.y;
+		__pos.z = npos.z;
 	}
 	void SetMovement(fixed_t x, fixed_t y, fixed_t z)
 	{

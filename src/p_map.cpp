@@ -5268,6 +5268,7 @@ int P_PushDown(AActor *thing, FChangePosition *cpos)
 void PIT_FloorDrop(AActor *thing, FChangePosition *cpos)
 {
 	fixed_t oldfloorz = thing->floorz;
+	fixed_t oldz = thing->Z();
 
 	P_AdjustFloorCeil(thing, cpos);
 
@@ -5296,6 +5297,10 @@ void PIT_FloorDrop(AActor *thing, FChangePosition *cpos)
 			thing->AddZ(-oldfloorz + thing->floorz);
 			P_CheckFakeFloorTriggers(thing, oldz);
 		}
+	}
+	if (thing->player && thing->player->mo == thing)
+	{
+		thing->player->viewz += thing->Z() - oldz;
 	}
 }
 
@@ -5348,6 +5353,10 @@ void PIT_FloorRaise(AActor *thing, FChangePosition *cpos)
 		thing->SetZ(oldz);
 		break;
 	}
+	if (thing->player && thing->player->mo == thing)
+	{
+		thing->player->viewz += thing->Z() - oldz;
+	}
 }
 
 //=============================================================================
@@ -5359,6 +5368,7 @@ void PIT_FloorRaise(AActor *thing, FChangePosition *cpos)
 void PIT_CeilingLower(AActor *thing, FChangePosition *cpos)
 {
 	bool onfloor;
+	fixed_t oldz = thing->Z();
 
 	onfloor = thing->Z() <= thing->floorz;
 	P_AdjustFloorCeil(thing, cpos);
@@ -5395,6 +5405,10 @@ void PIT_CeilingLower(AActor *thing, FChangePosition *cpos)
 			break;
 		}
 	}
+	if (thing->player && thing->player->mo == thing)
+	{
+		thing->player->viewz += thing->Z() - oldz;
+	}
 }
 
 //=============================================================================
@@ -5406,6 +5420,7 @@ void PIT_CeilingLower(AActor *thing, FChangePosition *cpos)
 void PIT_CeilingRaise(AActor *thing, FChangePosition *cpos)
 {
 	bool isgood = P_AdjustFloorCeil(thing, cpos);
+	fixed_t oldz = thing->Z();
 
 	if (thing->flags4 & MF4_ACTLIKEBRIDGE) return; // do not move bridge things
 
@@ -5431,6 +5446,10 @@ void PIT_CeilingRaise(AActor *thing, FChangePosition *cpos)
 		{
 			thing->SetZ( MIN(thing->ceilingz - thing->height, onmobj->Top()));
 		}
+	}
+	if (thing->player && thing->player->mo == thing)
+	{
+		thing->player->viewz += thing->Z() - oldz;
 	}
 }
 

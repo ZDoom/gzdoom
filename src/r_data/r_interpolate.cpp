@@ -344,10 +344,6 @@ int DInterpolation::AddRef()
 int DInterpolation::DelRef()
 {
 	if (refcount > 0) --refcount;
-	if (refcount <= 0 && !(ObjectFlags & OF_EuthanizeMe))
-	{
-		Destroy();
-	}
 	return refcount;
 }
 
@@ -496,9 +492,16 @@ void DSectorPlaneInterpolation::Interpolate(fixed_t smoothratio)
 	bakheight = *pheight;
 	baktexz = sector->GetPlaneTexZ(pos);
 
-	*pheight = oldheight + FixedMul(bakheight - oldheight, smoothratio);
-	sector->SetPlaneTexZ(pos, oldtexz + FixedMul(baktexz - oldtexz, smoothratio));
-	P_RecalculateAttached3DFloors(sector);
+	if (refcount == 0 && oldheight == bakheight)
+	{
+		Destroy();
+	}
+	else
+	{
+		*pheight = oldheight + FixedMul(bakheight - oldheight, smoothratio);
+		sector->SetPlaneTexZ(pos, oldtexz + FixedMul(baktexz - oldtexz, smoothratio));
+		P_RecalculateAttached3DFloors(sector);
+	}
 }
 
 //==========================================================================
@@ -622,8 +625,15 @@ void DSectorScrollInterpolation::Interpolate(fixed_t smoothratio)
 	bakx = sector->GetXOffset(ceiling);
 	baky = sector->GetYOffset(ceiling, false);
 
-	sector->SetXOffset(ceiling, oldx + FixedMul(bakx - oldx, smoothratio));
-	sector->SetYOffset(ceiling, oldy + FixedMul(baky - oldy, smoothratio));
+	if (refcount == 0 && oldx == bakx && oldy == baky)
+	{
+		Destroy();
+	}
+	else
+	{
+		sector->SetXOffset(ceiling, oldx + FixedMul(bakx - oldx, smoothratio));
+		sector->SetYOffset(ceiling, oldy + FixedMul(baky - oldy, smoothratio));
+	}
 }
 
 //==========================================================================
@@ -706,8 +716,15 @@ void DWallScrollInterpolation::Interpolate(fixed_t smoothratio)
 	bakx = side->GetTextureXOffset(part);
 	baky = side->GetTextureYOffset(part);
 
-	side->SetTextureXOffset(part, oldx + FixedMul(bakx - oldx, smoothratio));
-	side->SetTextureYOffset(part, oldy + FixedMul(baky - oldy, smoothratio));
+	if (refcount == 0 && oldx == bakx && oldy == baky)
+	{
+		Destroy();
+	}
+	else
+	{
+		side->SetTextureXOffset(part, oldx + FixedMul(bakx - oldx, smoothratio));
+		side->SetTextureYOffset(part, oldy + FixedMul(baky - oldy, smoothratio));
+	}
 }
 
 //==========================================================================
@@ -798,6 +815,7 @@ void DPolyobjInterpolation::Restore()
 
 void DPolyobjInterpolation::Interpolate(fixed_t smoothratio)
 {
+	bool changed = false;
 	for(unsigned int i = 0; i < poly->Vertices.Size(); i++)
 	{
 		fixed_t *px = &poly->Vertices[i]->x;
@@ -806,15 +824,26 @@ void DPolyobjInterpolation::Interpolate(fixed_t smoothratio)
 		bakverts[i*2  ] = *px;
 		bakverts[i*2+1] = *py;
 
-		*px = oldverts[i*2  ] + FixedMul(bakverts[i*2  ] - oldverts[i*2  ], smoothratio);
-		*py = oldverts[i*2+1] + FixedMul(bakverts[i*2+1] - oldverts[i*2+1], smoothratio);
+		if (bakverts[i * 2] != oldverts[i * 2] || bakverts[i * 2 + i] != oldverts[i * 2 + 1])
+		{
+			changed = true;
+			*px = oldverts[i * 2] + FixedMul(bakverts[i * 2] - oldverts[i * 2], smoothratio);
+			*py = oldverts[i * 2 + 1] + FixedMul(bakverts[i * 2 + 1] - oldverts[i * 2 + 1], smoothratio);
+		}
 	}
-	bakcx = poly->CenterSpot.x;
-	bakcy = poly->CenterSpot.y;
-	poly->CenterSpot.x = bakcx + FixedMul(bakcx - oldcx, smoothratio);
-	poly->CenterSpot.y = bakcy + FixedMul(bakcy - oldcy, smoothratio);
+	if (refcount == 0 && !changed)
+	{
+		Destroy();
+	}
+	else
+	{
+		bakcx = poly->CenterSpot.x;
+		bakcy = poly->CenterSpot.y;
+		poly->CenterSpot.x = bakcx + FixedMul(bakcx - oldcx, smoothratio);
+		poly->CenterSpot.y = bakcy + FixedMul(bakcy - oldcy, smoothratio);
 
-	poly->ClearSubsectorLinks();
+		poly->ClearSubsectorLinks();
+	}
 }
 
 //==========================================================================

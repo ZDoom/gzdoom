@@ -17,9 +17,10 @@ class DInterpolation : public DObject
 
 	TObjPtr<DInterpolation> Next;
 	TObjPtr<DInterpolation> Prev;
-	int refcount;
 
 protected:
+	int refcount;
+
 	DInterpolation();
 
 public:

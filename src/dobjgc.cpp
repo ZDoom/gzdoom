@@ -353,6 +353,7 @@ static void MarkRoot()
 		SectorMarker->SecNum = 0;
 	}
 	Mark(SectorMarker);
+	Mark(interpolator.Head);
 	// Mark action functions
 	if (!FinalGC)
 	{

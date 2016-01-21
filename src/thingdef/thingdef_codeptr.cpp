@@ -51,6 +51,7 @@
 #include "s_sound.h"
 #include "cmdlib.h"
 #include "p_lnspec.h"
+#include "p_effect.h"
 #include "p_enemy.h"
 #include "a_action.h"
 #include "decallib.h"
@@ -2876,6 +2877,42 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnDebris)
 	return 0;
 }
 
+//===========================================================================
+//
+// A_SpawnParticle
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnParticle)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_FIXED		(xoff);
+	PARAM_FIXED		(yoff);
+	PARAM_FIXED		(zoff);
+	PARAM_FIXED		(xvel);
+	PARAM_FIXED		(yvel);
+	PARAM_FIXED		(zvel);
+	PARAM_COLOR		(color);
+	PARAM_INT		(lifetime);
+	PARAM_BOOL_OPT	(fullbright)	{ fullbright = false; }
+	PARAM_INT_OPT	(startalpha)	{ startalpha = 255; }	// Byte trans
+	PARAM_INT_OPT	(size)			{ size = -1; }
+	PARAM_INT_OPT	(fadestep)		{ fadestep = -1; }
+	PARAM_FIXED_OPT	(accelx)		{ accelx = 0; }
+	PARAM_FIXED_OPT	(accely)		{ accely = 0; }
+	PARAM_FIXED_OPT	(accelz)		{ accelz = 0; }
+
+	startalpha = clamp<int>(startalpha, 0, 0xFF); // Clamp to byte
+	lifetime = clamp<int>(lifetime, 0, 0xFF); // Clamp to byte
+	fadestep = clamp<int>(fadestep, -1, 0xFF); // Clamp to byte inc. -1 (indicating automatic)
+	size = clamp<int>(size, 0, 0xFF); // Clamp to byte
+
+	if (lifetime != 0)
+	{
+		fixedvec3 pos = self->Vec3Offset(xoff, yoff, zoff);
+		P_SpawnParticle(pos.x, pos.y, pos.z, xvel, yvel, zvel, color, fullbright, startalpha, lifetime, size, fadestep, accelx, accely, accelz);
+	}
+	return 0;
+}
 
 //===========================================================================
 //
@@ -4580,6 +4617,7 @@ enum T_Flags
 	TF_USEACTORFOG =	0x00000100, // Use the actor's TeleFogSourceType and TeleFogDestType fogs.
 	TF_NOJUMP =			0x00000200, // Don't jump after teleporting.
 	TF_OVERRIDE =		0x00000400, // Ignore NOTELEPORT.
+	TF_SENSITIVEZ =		0x00000800, // Fail if the actor wouldn't fit in the position (for Z).
 };
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Teleport)
@@ -4644,6 +4682,18 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Teleport)
 		return numret;
 	}
 
+	// [MC] By default, the function adjusts the actor's Z if it's below the floor or above the ceiling.
+	// This can be an issue as actors designed to maintain specific z positions wind up teleporting
+	// anyway when they should not, such as a floor rising above or ceiling lowering below the position
+	// of the spot.
+	if (flags & TF_SENSITIVEZ)
+	{
+		fixed_t posz = (flags & TF_USESPOTZ) ? spot->Z() : spot->floorz;
+		if ((posz + ref->height > spot->ceilingz) || (posz < spot->floorz))
+		{
+			return numret;
+		}
+	}
 	fixedvec3 prev = ref->Pos();
 	fixed_t aboveFloor = spot->Z() - spot->floorz;
 	fixed_t finalz = spot->floorz + aboveFloor;
@@ -4654,7 +4704,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Teleport)
 		finalz = spot->floorz;
 
 	//Take precedence and cooperate with telefragging first.
-	bool tele_result = P_TeleportMove(ref, spot->X(), spot->Y(), finalz, flags & TF_TELEFRAG);
+	bool tele_result = P_TeleportMove(ref, spot->X(), spot->Y(), finalz, !!(flags & TF_TELEFRAG));
 
 	if (!tele_result && (flags & TF_FORCED))
 	{
@@ -4695,7 +4745,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Teleport)
 		}
 		
 		ref->SetZ((flags & TF_USESPOTZ) ? spot->Z() : ref->floorz, false);
-		self->SetZ((flags & TF_USESPOTZ) ? spot->Z() : self->floorz, false);
 
 		if (!(flags & TF_KEEPANGLE))
 			ref->angle = spot->angle;

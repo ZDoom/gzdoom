@@ -175,9 +175,10 @@ void S_NoiseDebug (void)
 		return;
 	}
 
-	listener.X = FIXED2FLOAT(players[consoleplayer].camera->x);
-	listener.Y = FIXED2FLOAT(players[consoleplayer].camera->z);
-	listener.Z = FIXED2FLOAT(players[consoleplayer].camera->y);
+
+	listener.X = FIXED2FLOAT(players[consoleplayer].camera->SoundX());
+	listener.Y = FIXED2FLOAT(players[consoleplayer].camera->SoundZ());
+	listener.Z = FIXED2FLOAT(players[consoleplayer].camera->SoundY());
 
 	// Display the oldest channel first.
 	for (chan = Channels; chan->NextChan != NULL; chan = chan->NextChan)
@@ -666,9 +667,9 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 
 		if (players[consoleplayer].camera != NULL)
 		{
-			x = players[consoleplayer].camera->x;
-			y = players[consoleplayer].camera->z;
-			z = players[consoleplayer].camera->y;
+			x = players[consoleplayer].camera->SoundX();
+			y = players[consoleplayer].camera->SoundZ();
+			z = players[consoleplayer].camera->SoundY();
 		}
 		else
 		{
@@ -685,9 +686,9 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 //			assert(actor != NULL);
 			if (actor != NULL)
 			{
-				x = actor->x;
-				y = actor->z;
-				z = actor->y;
+				x = actor->SoundX();
+				y = actor->SoundZ();
+				z = actor->SoundY();
 			}
 			break;
 
@@ -723,7 +724,7 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 		{
 			if ((chanflags & CHAN_LISTENERZ) && players[consoleplayer].camera != NULL)
 			{
-				y = players[consoleplayer].camera != NULL ? players[consoleplayer].camera->z : 0;
+				y = players[consoleplayer].camera != NULL ? players[consoleplayer].camera->SoundZ() : 0;
 			}
 			pos->X = FIXED2FLOAT(x);
 			pos->Y = FIXED2FLOAT(y);
@@ -763,8 +764,8 @@ static void CalcSectorSoundOrg(const sector_t *sec, int channum, fixed_t *x, fix
 		// Are we inside the sector? If yes, the closest point is the one we're on.
 		if (P_PointInSector(*x, *y) == sec)
 		{
-			*x = players[consoleplayer].camera->x;
-			*y = players[consoleplayer].camera->y;
+			*x = players[consoleplayer].camera->SoundX();
+			*y = players[consoleplayer].camera->SoundY();
 		}
 		else
 		{
@@ -1567,9 +1568,9 @@ void S_RelinkSound (AActor *from, AActor *to)
 			{
 				chan->Actor = NULL;
 				chan->SourceType = SOURCE_Unattached;
-				chan->Point[0] = FIXED2FLOAT(from->x);
-				chan->Point[1] = FIXED2FLOAT(from->z);
-				chan->Point[2] = FIXED2FLOAT(from->y);
+				chan->Point[0] = FIXED2FLOAT(from->SoundX());
+				chan->Point[1] = FIXED2FLOAT(from->SoundZ());
+				chan->Point[2] = FIXED2FLOAT(from->SoundY());
 			}
 			else
 			{
@@ -1959,9 +1960,9 @@ static void S_SetListener(SoundListener &listener, AActor *listenactor)
 		listener.velocity.Z = listenactor->vely * (TICRATE/65536.f);
 		*/
 		listener.velocity.Zero();
-		listener.position.X = FIXED2FLOAT(listenactor->x);
-		listener.position.Y = FIXED2FLOAT(listenactor->z);
-		listener.position.Z = FIXED2FLOAT(listenactor->y);
+		listener.position.X = FIXED2FLOAT(listenactor->SoundX());
+		listener.position.Y = FIXED2FLOAT(listenactor->SoundZ());
+		listener.position.Z = FIXED2FLOAT(listenactor->SoundY());
 		listener.underwater = listenactor->waterlevel == 3;
 		assert(zones != NULL);
 		listener.Environment = zones[listenactor->Sector->ZoneNumber].Environment;
@@ -2640,10 +2641,7 @@ CCMD (loopsound)
 		}
 		else
 		{
-			AActor *icon = Spawn("SpeakerIcon", players[consoleplayer].mo->x,
-				players[consoleplayer].mo->y,
-				players[consoleplayer].mo->z + 32*FRACUNIT,
-				ALLOW_REPLACE);
+			AActor *icon = Spawn("SpeakerIcon", players[consoleplayer].mo->PosPlusZ(32*FRACUNIT), ALLOW_REPLACE);
 			if (icon != NULL)
 			{
 				S_Sound(icon, CHAN_BODY | CHAN_LOOP, id, 1.f, ATTN_IDLE);

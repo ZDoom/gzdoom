@@ -112,11 +112,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_FSwordFlames)
 
 	for (i = 1+(pr_fswordflame()&3); i; i--)
 	{
-		fixedvec3 pos = self->Vec3Offset(
-			((pr_fswordflame()-128)<<12),
-			((pr_fswordflame()-128)<<12),
-			((pr_fswordflame()-128)<<11));
-		Spawn ("FSwordFlame", pos, ALLOW_REPLACE);
+		fixed_t xo = ((pr_fswordflame() - 128) << 12);
+		fixed_t yo = ((pr_fswordflame() - 128) << 12);
+		fixed_t zo = ((pr_fswordflame() - 128) << 11);
+		Spawn ("FSwordFlame", self->Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
 	}
 }
 

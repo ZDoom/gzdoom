@@ -28,7 +28,7 @@ void ASpectralMonster::Touch (AActor *toucher)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SpectralLightningTail)
 {
-	AActor *foo = Spawn("SpectralLightningHTail", self->x - self->velx, self->y - self->vely, self->z, ALLOW_REPLACE);
+	AActor *foo = Spawn("SpectralLightningHTail", self->Vec3Offset(-self->velx, -self->vely, 0), ALLOW_REPLACE);
 
 	foo->angle = self->angle;
 	foo->FriendPlayer = self->FriendPlayer;
@@ -53,7 +53,6 @@ static FRandom pr_zap5 ("Zap5");
 DEFINE_ACTION_FUNCTION(AActor, A_SpectralLightning)
 {
 	AActor *flash;
-	fixed_t x, y;
 
 	if (self->threshold != 0)
 		--self->threshold;
@@ -61,17 +60,18 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpectralLightning)
 	self->velx += pr_zap5.Random2(3) << FRACBITS;
 	self->vely += pr_zap5.Random2(3) << FRACBITS;
 
-	x = self->x + pr_zap5.Random2(3) * FRACUNIT * 50;
-	y = self->y + pr_zap5.Random2(3) * FRACUNIT * 50;
+	fixedvec2 pos = self->Vec2Offset(
+		pr_zap5.Random2(3) * FRACUNIT * 50,
+		pr_zap5.Random2(3) * FRACUNIT * 50);
 
 	flash = Spawn (self->threshold > 25 ? PClass::FindClass(NAME_SpectralLightningV2) :
-		PClass::FindClass(NAME_SpectralLightningV1), x, y, ONCEILINGZ, ALLOW_REPLACE);
+		PClass::FindClass(NAME_SpectralLightningV1), pos.x, pos.y, ONCEILINGZ, ALLOW_REPLACE);
 
 	flash->target = self->target;
 	flash->velz = -18*FRACUNIT;
 	flash->FriendPlayer = self->FriendPlayer;
 
-	flash = Spawn(NAME_SpectralLightningV2, self->x, self->y, ONCEILINGZ, ALLOW_REPLACE);
+	flash = Spawn(NAME_SpectralLightningV2, self->X(), self->Y(), ONCEILINGZ, ALLOW_REPLACE);
 
 	flash->target = self->target;
 	flash->velz = -18*FRACUNIT;
@@ -128,11 +128,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_Tracer2)
 		}
 		if (dest->height >= 56*FRACUNIT)
 		{
-			slope = (dest->z+40*FRACUNIT - self->z) / dist;
+			slope = (dest->Z()+40*FRACUNIT - self->Z()) / dist;
 		}
 		else
 		{
-			slope = (dest->z + self->height*2/3 - self->z) / dist;
+			slope = (dest->Z() + self->height*2/3 - self->Z()) / dist;
 		}
 		if (slope < self->velz)
 		{

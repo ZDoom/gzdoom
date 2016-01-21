@@ -843,10 +843,11 @@ void P_DisconnectEffect (AActor *actor)
 		if (!p)
 			break;
 
-		fixedvec3 pos = actor->Vec3Offset(
-			((M_Random()-128)<<9) * (actor->radius>>FRACBITS),
-			((M_Random()-128)<<9) * (actor->radius>>FRACBITS),
-			(M_Random()<<8) * (actor->height>>FRACBITS));
+		
+		fixed_t xo = ((M_Random() - 128) << 9) * (actor->radius >> FRACBITS);
+		fixed_t yo = ((M_Random() - 128) << 9) * (actor->radius >> FRACBITS);
+		fixed_t zo = (M_Random() << 8) * (actor->height >> FRACBITS);
+		fixedvec3 pos = actor->Vec3Offset(xo, yo, zo);
 		p->x = pos.x;
 		p->y = pos.y;
 		p->z = pos.z;

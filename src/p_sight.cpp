@@ -68,11 +68,11 @@ public:
 
 	SightCheck(const AActor * t1, const AActor * t2, int flags)
 	{
-		lastztop = lastzbottom = sightzstart = t1->z + t1->height - (t1->height>>2);
+		lastztop = lastzbottom = sightzstart = t1->Z() + t1->height - (t1->height>>2);
 		lastsector = t1->Sector;
 		sightthing=t1;
 		seeingthing=t2;
-		bottomslope = t2->z - sightzstart;
+		bottomslope = t2->Z() - sightzstart;
 		topslope = bottomslope + t2->height;
 		Flags = flags;
 
@@ -132,7 +132,7 @@ bool SightCheck::PTR_SightTraverse (intercept_t *in)
 	{
 		int  frontflag;
 		
-		frontflag = P_PointOnLineSidePrecise(sightthing->x, sightthing->y, li);
+		frontflag = P_PointOnLineSidePrecise(sightthing->X(), sightthing->Y(), li);
 		
 		//Check 3D FLOORS!
 		for(int i=1;i<=2;i++)
@@ -413,8 +413,8 @@ bool SightCheck::P_SightTraverseIntercepts ()
 			if((rover->flags & FF_SOLID) == myseethrough || !(rover->flags & FF_EXISTS)) continue;
 			if ((Flags & SF_IGNOREWATERBOUNDARY) && (rover->flags & FF_SOLID) == 0) continue;
 			
-			fixed_t ff_bottom=rover->bottom.plane->ZatPoint(seeingthing->x, seeingthing->y);
-			fixed_t ff_top=rover->top.plane->ZatPoint(seeingthing->x, seeingthing->y);
+			fixed_t ff_bottom=rover->bottom.plane->ZatPoint(seeingthing);
+			fixed_t ff_top=rover->top.plane->ZatPoint(seeingthing);
 
 			if (lastztop<=ff_bottom && topz>ff_bottom && lastzbottom<=ff_bottom && bottomz>ff_bottom) return false;
 			if (lastzbottom>=ff_top && bottomz<ff_top && lastztop>=ff_top && topz<ff_top) return false;
@@ -458,8 +458,8 @@ bool SightCheck::P_SightPathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_
 
 		if(!(rover->flags & FF_EXISTS)) continue;
 		
-		fixed_t ff_bottom=rover->bottom.plane->ZatPoint(sightthing->x, sightthing->y);
-		fixed_t ff_top=rover->top.plane->ZatPoint(sightthing->x, sightthing->y);
+		fixed_t ff_bottom=rover->bottom.plane->ZatPoint(sightthing);
+		fixed_t ff_top=rover->top.plane->ZatPoint(sightthing);
 
 		if (sightzstart < ff_top && sightzstart >= ff_bottom) 
 		{
@@ -691,16 +691,16 @@ sightcounts[0]++;
 	if (!(flags & SF_IGNOREWATERBOUNDARY))
 	{
 		if ((s1->GetHeightSec() &&
-			((t1->z + t1->height <= s1->heightsec->floorplane.ZatPoint (t1->x, t1->y) &&
-			  t2->z >= s1->heightsec->floorplane.ZatPoint (t2->x, t2->y)) ||
-			 (t1->z >= s1->heightsec->ceilingplane.ZatPoint (t1->x, t1->y) &&
-			  t2->z + t1->height <= s1->heightsec->ceilingplane.ZatPoint (t2->x, t2->y))))
+			((t1->Z() + t1->height <= s1->heightsec->floorplane.ZatPoint(t1) &&
+			  t2->Z() >= s1->heightsec->floorplane.ZatPoint(t2)) ||
+			 (t1->Z() >= s1->heightsec->ceilingplane.ZatPoint(t1) &&
+			  t2->Z() + t1->height <= s1->heightsec->ceilingplane.ZatPoint(t2))))
 			||
 			(s2->GetHeightSec() &&
-			 ((t2->z + t2->height <= s2->heightsec->floorplane.ZatPoint (t2->x, t2->y) &&
-			   t1->z >= s2->heightsec->floorplane.ZatPoint (t1->x, t1->y)) ||
-			  (t2->z >= s2->heightsec->ceilingplane.ZatPoint (t2->x, t2->y) &&
-			   t1->z + t2->height <= s2->heightsec->ceilingplane.ZatPoint (t1->x, t1->y)))))
+			 ((t2->Z() + t2->height <= s2->heightsec->floorplane.ZatPoint(t2) &&
+			   t1->Z() >= s2->heightsec->floorplane.ZatPoint(t1)) ||
+			  (t2->Z() >= s2->heightsec->ceilingplane.ZatPoint(t2) &&
+			   t1->Z() + t2->height <= s2->heightsec->ceilingplane.ZatPoint(t1)))))
 		{
 			res = false;
 			goto done;
@@ -713,7 +713,7 @@ sightcounts[0]++;
 	validcount++;
 	{
 		SightCheck s(t1, t2, flags);
-		res = s.P_SightPathTraverse (t1->x, t1->y, t2->x, t2->y);
+		res = s.P_SightPathTraverse (t1->X(), t1->Y(), t2->X(), t2->Y());
 	}
 
 done:

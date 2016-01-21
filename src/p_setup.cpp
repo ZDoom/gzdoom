@@ -3379,6 +3379,7 @@ extern polyblock_t **PolyBlockMap;
 
 void P_FreeLevelData ()
 {
+	interpolator.ClearInterpolations();	// [RH] Nothing to interpolate on a fresh level.
 	Renderer->CleanLevelData();
 	FPolyObj::ClearAllSubsectorLinks(); // can't be done as part of the polyobj deletion process.
 	SN_StopAllSequences ();
@@ -3610,7 +3611,6 @@ void P_SetupLevel (const char *lumpname, int position)
 
 	// Free all level data from the previous map
 	P_FreeLevelData ();
-	interpolator.ClearInterpolations();	// [RH] Nothing to interpolate on a fresh level.
 
 	MapData *map = P_OpenMapData(lumpname, true);
 	if (map == NULL)

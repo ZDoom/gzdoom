@@ -100,19 +100,19 @@ DEFINE_ACTION_FUNCTION(AActor, A_BridgeOrbit)
 	// Set default values
 	// Every five tics, Hexen moved the ball 3/256th of a revolution.
 	int rotationspeed  = ANGLE_45/32*3/5;
-	int rotationradius = ORBIT_RADIUS;
+	int rotationradius = ORBIT_RADIUS * FRACUNIT;
 	// If the bridge is custom, set non-default values if any.
 
 	// Set angular speed; 1--128: counterclockwise rotation ~=1--180°; 129--255: clockwise rotation ~= 180--1°
 	if (self->target->args[3] > 128) rotationspeed = ANGLE_45/32 * (self->target->args[3]-256) / TICRATE;
 	else if (self->target->args[3] > 0) rotationspeed = ANGLE_45/32 * (self->target->args[3]) / TICRATE;
 	// Set rotation radius
-	if (self->target->args[4]) rotationradius = ((self->target->args[4] * self->target->radius) / (100 * FRACUNIT));
+	if (self->target->args[4]) rotationradius = ((self->target->args[4] * self->target->radius) / 100);
 
 	self->angle += rotationspeed;
-	self->x = self->target->x + rotationradius * finecosine[self->angle >> ANGLETOFINESHIFT];
-	self->y = self->target->y + rotationradius * finesine[self->angle >> ANGLETOFINESHIFT];
-	self->z = self->target->z;
+	self->SetOrigin(self->target->Vec3Angle(rotationradius, self->angle, 0), true);
+	self->floorz = self->target->floorz;
+	self->ceilingz = self->target->ceilingz;
 }
 
 
@@ -120,16 +120,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BridgeInit)
 {
 	angle_t startangle;
 	AActor *ball;
-	fixed_t cx, cy, cz;
 
 	ACTION_PARAM_START(1);
 	ACTION_PARAM_CLASS(balltype, 0);
 
 	if (balltype == NULL) balltype = PClass::FindClass("BridgeBall");
 
-	cx = self->x;
-	cy = self->y;
-	cz = self->z;
 	startangle = pr_orbit() << 24;
 
 	// Spawn triad into world -- may be more than a triad now.
@@ -137,7 +133,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BridgeInit)
 
 	for (int i = 0; i < ballcount; i++)
 	{
-		ball = Spawn(balltype, cx, cy, cz, ALLOW_REPLACE);
+		ball = Spawn(balltype, self->Pos(), ALLOW_REPLACE);
 		ball->angle = startangle + (ANGLE_45/32) * (256/ballcount) * i;
 		ball->target = self;
 		CALL_ACTION(A_BridgeOrbit, ball);

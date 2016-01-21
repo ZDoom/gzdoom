@@ -147,12 +147,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_WraithFX3)
 
 	while (numdropped-- > 0)
 	{
-		fixedvec3 pos = self->Vec3Offset(
-			(pr_wraithfx3()-128)<<11,
-			(pr_wraithfx3()-128)<<11,
-			(pr_wraithfx3()<<10));
+		fixed_t xo = (pr_wraithfx3() - 128) << 11;
+		fixed_t yo = (pr_wraithfx3() - 128) << 11;
+		fixed_t zo = pr_wraithfx3() << 10;
 
-		mo = Spawn ("WraithFX3", pos, ALLOW_REPLACE);
+		mo = Spawn ("WraithFX3", self->Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
 		if (mo)
 		{
 			mo->floorz = self->floorz;
@@ -199,12 +198,11 @@ void A_WraithFX4 (AActor *self)
 
 	if (spawn4)
 	{
-		fixedvec3 pos = self->Vec3Offset(
-			(pr_wraithfx4()-128)<<12,
-			(pr_wraithfx4()-128)<<12,
-			(pr_wraithfx4()<<10));
+		fixed_t xo = (pr_wraithfx4() - 128) << 12;
+		fixed_t yo = (pr_wraithfx4() - 128) << 12;
+		fixed_t zo = (pr_wraithfx4() << 10);
 
-		mo = Spawn ("WraithFX4", pos, ALLOW_REPLACE);
+		mo = Spawn ("WraithFX4", self->Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
 		if (mo)
 		{
 			mo->floorz = self->floorz;
@@ -214,12 +212,11 @@ void A_WraithFX4 (AActor *self)
 	}
 	if (spawn5)
 	{
-		fixedvec3 pos = self->Vec3Offset(
-			(pr_wraithfx4()-128)<<12,
-			(pr_wraithfx4()-128)<<12,
-			(pr_wraithfx4()<<10));
+		fixed_t xo = (pr_wraithfx4() - 128) << 11;
+		fixed_t yo = (pr_wraithfx4() - 128) << 11;
+		fixed_t zo = (pr_wraithfx4()<<10);
 
-		mo = Spawn ("WraithFX5", pos, ALLOW_REPLACE);
+		mo = Spawn ("WraithFX5", self->Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
 		if (mo)
 		{
 			mo->floorz = self->floorz;

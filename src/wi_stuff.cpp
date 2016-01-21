@@ -1228,7 +1228,7 @@ void WI_initDeathmatchStats (void)
 	acceleratestage = 0;
 	memset(playerready, 0, sizeof(playerready));
 	memset(cnt_frags, 0, sizeof(cnt_frags));
-	memset(cnt_deaths, 0, sizeof(cnt_frags));
+	memset(cnt_deaths, 0, sizeof(cnt_deaths));
 	memset(player_deaths, 0, sizeof(player_deaths));
 	total_frags = 0;
 	total_deaths = 0;

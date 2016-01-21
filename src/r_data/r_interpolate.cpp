@@ -824,7 +824,7 @@ void DPolyobjInterpolation::Interpolate(fixed_t smoothratio)
 		bakverts[i*2  ] = *px;
 		bakverts[i*2+1] = *py;
 
-		if (bakverts[i * 2] != oldverts[i * 2] || bakverts[i * 2 + i] != oldverts[i * 2 + 1])
+		if (bakverts[i * 2] != oldverts[i * 2] || bakverts[i * 2 + 1] != oldverts[i * 2 + 1])
 		{
 			changed = true;
 			*px = oldverts[i * 2] + FixedMul(bakverts[i * 2] - oldverts[i * 2], smoothratio);

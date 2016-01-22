@@ -158,6 +158,7 @@ OptionMenu "GLTextureGLOptions"
 	Option "Precache GL textures",		gl_precache,					"YesNo"
 	Option "Camera textures offscreen",	gl_usefb,						"OnOff"
 	Option "Trim sprite edges",			gl_trimsprites,					"OnOff"
+	Option "Sort draw lists by texture", gl_sort_textures,				"YesNo"
 }
 
 OptionMenu "GLLightOptions"

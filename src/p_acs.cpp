@@ -5993,17 +5993,17 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 		
 		case ACSF_SpawnParticle:
 		{
-			fixed_t x = args[0];
-			fixed_t y = args[1];
-			fixed_t z = args[2];
-			fixed_t xvel = args[3];
-			fixed_t yvel = args[4];
-			fixed_t zvel = args[5];
-			PalEntry color = args[6];
+			PalEntry color = args[0];
+			fixed_t x = args[1];
+			fixed_t y = args[2];
+			fixed_t z = args[3];
+			fixed_t xvel = args[4];
+			fixed_t yvel = args[5];
+			fixed_t zvel = args[6];
 			int lifetime = args[7];
 			bool fullbright = argCount > 8 ? !!args[8] : false;
-			int startalpha = argCount > 9 ? args[9] : 0xFF; // Byte trans
-			int size = argCount > 10 ? args[10] : 1;
+			int size = argCount > 9 ? args[9] : 1;
+			int startalpha = argCount > 10 ? args[10] : 0xFF; // Byte trans			
 			int fadestep = argCount > 11 ? args[11] : -1;
 			fixed_t accelx = argCount > 12 ? args[12] : 0;
 			fixed_t accely = argCount > 13 ? args[13] : 0;

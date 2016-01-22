@@ -6024,9 +6024,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckProximity)
 		//[MC]Make sure it's in range and respect the desire for Z or not. The function forces it to use
 		//Z later for ensuring CLOSEST and FARTHEST flags are respected perfectly.
 		//Ripped from sphere checking in A_RadiusGive (along with a number of things).
-
-		fixedvec3 diff = ref->Vec3To(mo);
-		diff.z += (ref->height - mo->height) / 2;
 		if ((flags & CPXF_NODISTANCE) || (ref->AproxDistance(mo) < distance &&
 			((flags & CPXF_NOZ) ||
 			((ref->Z() > mo->Z() && ref->Z() - mo->Top() < distance) ||

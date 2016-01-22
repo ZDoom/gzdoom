@@ -953,7 +953,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomMissile)
 				break;
 
 			case 2:
-				self->SetXYZ(self->Vec3Offset(x, y, self->Z()));
+				self->SetXYZ(self->Vec3Offset(x, y, 0));
 				missile = P_SpawnMissileAngleZSpeed(self, self->Z() + self->GetBobOffset() + spawnheight, ti, self->angle, 0, GetDefaultByType(ti)->Speed, self, false);
 				self->SetXYZ(pos);
 
@@ -2644,24 +2644,25 @@ enum SPFflag
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnParticle)
 {
+	//(color color1, int flags = 0, int lifetime = 35, int size = 1, float angle = 0, float xoff = 0, float yoff = 0, float zoff = 0, float velx = 0, float vely = 0, float velz = 0, float accelx = 0, float accely = 0, float accelz = 0, float startalphaf = 1, float fadestepf = -1);
 	ACTION_PARAM_START(15);
-	ACTION_PARAM_FIXED(xoff, 0);
-	ACTION_PARAM_FIXED(yoff, 1);
-	ACTION_PARAM_FIXED(zoff, 2);
-	ACTION_PARAM_FIXED(xvel, 3);
-	ACTION_PARAM_FIXED(yvel, 4);
-	ACTION_PARAM_FIXED(zvel, 5);
-	ACTION_PARAM_COLOR(color, 6);
-	ACTION_PARAM_INT(lifetime, 7);
-	ACTION_PARAM_INT(flags, 8);
-	ACTION_PARAM_FIXED(startalphaf, 9);
-	ACTION_PARAM_INT(size, 10);
-	ACTION_PARAM_FIXED(fadestepf, 11);
-	ACTION_PARAM_FIXED(accelx, 12);
-	ACTION_PARAM_FIXED(accely, 13);
-	ACTION_PARAM_FIXED(accelz, 14);
-	ACTION_PARAM_ANGLE(angle, 15);
-
+	ACTION_PARAM_COLOR(color,		0);
+	ACTION_PARAM_INT(flags,			1);
+	ACTION_PARAM_INT(lifetime,		2);
+	ACTION_PARAM_INT(size,			3);
+	ACTION_PARAM_ANGLE(angle,		4);
+	ACTION_PARAM_FIXED(xoff,		5);
+	ACTION_PARAM_FIXED(yoff,		6);
+	ACTION_PARAM_FIXED(zoff,		7);
+	ACTION_PARAM_FIXED(xvel,		8);
+	ACTION_PARAM_FIXED(yvel,		9);
+	ACTION_PARAM_FIXED(zvel,		10);
+	ACTION_PARAM_FIXED(accelx,		11);
+	ACTION_PARAM_FIXED(accely,		12);
+	ACTION_PARAM_FIXED(accelz,		13);
+	ACTION_PARAM_FIXED(startalphaf, 14);
+	ACTION_PARAM_FIXED(fadestepf,	15);
+	
 	BYTE startalpha = (BYTE)Scale(clamp(startalphaf, 0, FRACUNIT), 255, FRACUNIT);
 	int fadestep = fadestepf < 0? -1 : Scale(clamp(fadestepf, 0, FRACUNIT), 255, FRACUNIT);
 	lifetime = clamp<int>(lifetime, 0, 0xFF); // Clamp to byte

@@ -466,7 +466,7 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 			}
 			else if (level.time % sector->damageinterval == 0)
 			{
-				P_DamageMobj(player->mo, NULL, NULL, sector->damageamount, sector->damagetype);
+				if (!(player->cheats & (CF_GODMODE|CF_GODMODE2))) P_DamageMobj(player->mo, NULL, NULL, sector->damageamount, sector->damagetype);
 				if ((sector->Flags & SECF_ENDLEVEL) && player->health <= 10 && (!deathmatch || !(dmflags & DF_NO_EXIT)))
 				{
 					G_ExitLevel(0, false);

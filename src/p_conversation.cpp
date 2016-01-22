@@ -1345,21 +1345,29 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 	if (reply->NextNode != 0)
 	{
 		int rootnode = npc->ConversationRoot;
-		unsigned next = (unsigned)(rootnode + (reply->NextNode < 0 ? -1 : 1) * reply->NextNode - 1);
+		const bool isNegative = reply->NextNode < 0;
+		const unsigned next = (unsigned)(rootnode + (isNegative ? -1 : 1) * reply->NextNode - 1);
 
 		if (next < StrifeDialogues.Size())
 		{
 			npc->Conversation = StrifeDialogues[next];
 
-			if (gameaction != ga_slideshow)
+			if (isNegative)
 			{
-				P_StartConversation (npc, player->mo, player->ConversationFaceTalker, false);
-				return;
+				if (gameaction != ga_slideshow)
+				{
+					P_StartConversation (npc, player->mo, player->ConversationFaceTalker, false);
+					return;
+				}
+				else
+				{
+					S_StopSound (npc, CHAN_VOICE);
+				}
 			}
-			else
-			{
-				S_StopSound (npc, CHAN_VOICE);
-			}
+		}
+		else
+		{
+			Printf ("Next node %u is invalid, no such dialog page\n", next);
 		}
 	}
 

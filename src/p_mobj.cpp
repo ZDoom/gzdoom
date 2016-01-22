@@ -3234,7 +3234,7 @@ void AActor::Tick ()
 
 		UnlinkFromWorld ();
 		flags |= MF_NOBLOCKMAP;
-		SetXYZ(Vec3Offset(velx, vely, vely));
+		SetXYZ(Vec3Offset(velx, vely, velz));
 		SetMovement(velx, vely, velz);
 		LinkToWorld ();
 	}

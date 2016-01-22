@@ -4140,7 +4140,7 @@ bool DLevelScript::DoCheckActorTexture(int tid, AActor *activator, int string, b
 
 	if (floor)
 	{
-		fixed_t z = actor->z;
+		fixed_t z = actor->Z();
 		// Looking through planes from top to bottom
 		for (i = 0; i < numff; ++i)
 		{
@@ -4156,8 +4156,8 @@ bool DLevelScript::DoCheckActorTexture(int tid, AActor *activator, int string, b
 			}
 			else if (!(ff->flags & FF_SOLID) &&
 				tex == TexMan[*ff->top.texture] &&
-				z <= ff->top.plane->ZatPoint(actor->x, actor->y) &&
-				z >= ff->bottom.plane->ZatPoint(actor->x, actor->y))
+				z <= ff->top.plane->ZatPoint(actor->X(), actor->Y()) &&
+				z >= ff->bottom.plane->ZatPoint(actor->X(), actor->Y()))
 			{ // Having your feet within a liquid counts as being "on" it
 				return true;
 			}

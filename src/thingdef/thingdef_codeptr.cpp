@@ -953,7 +953,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomMissile)
 				break;
 
 			case 2:
-				self->SetXYZ(self->Vec3Offset(x, y, self->Z()));
+				self->SetXYZ(self->Vec3Offset(x, y, 0));
 				missile = P_SpawnMissileAngleZSpeed(self, self->Z() + self->GetBobOffset() + spawnheight, ti, self->angle, 0, GetDefaultByType(ti)->Speed, self, false);
 				self->SetXYZ(pos);
 

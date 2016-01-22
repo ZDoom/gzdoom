@@ -2644,23 +2644,24 @@ enum SPFflag
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnParticle)
 {
+	//(color color1, int flags = 0, int lifetime = 35, int size = 1, float angle = 0, float xoff = 0, float yoff = 0, float zoff = 0, float velx = 0, float vely = 0, float velz = 0, float accelx = 0, float accely = 0, float accelz = 0, float startalphaf = 1, float fadestepf = -1);
 	ACTION_PARAM_START(15);
 	ACTION_PARAM_COLOR(color,		0);
-	ACTION_PARAM_FIXED(xoff,		1);
-	ACTION_PARAM_FIXED(yoff,		2);
-	ACTION_PARAM_FIXED(zoff,		3);
-	ACTION_PARAM_FIXED(xvel,		4);
-	ACTION_PARAM_FIXED(yvel,		5);
-	ACTION_PARAM_FIXED(zvel,		6);
-	ACTION_PARAM_ANGLE(angle,		7);
-	ACTION_PARAM_INT(lifetime,		8);
-	ACTION_PARAM_INT(flags,			9);
-	ACTION_PARAM_INT(size,			10);
-	ACTION_PARAM_FIXED(startalphaf,	11);
-	ACTION_PARAM_FIXED(fadestepf,	12);
-	ACTION_PARAM_FIXED(accelx,		13);
-	ACTION_PARAM_FIXED(accely,		14);
-	ACTION_PARAM_FIXED(accelz,		15);
+	ACTION_PARAM_INT(flags,			1);
+	ACTION_PARAM_INT(lifetime,		2);
+	ACTION_PARAM_INT(size,			3);
+	ACTION_PARAM_ANGLE(angle,		4);
+	ACTION_PARAM_FIXED(xoff,		5);
+	ACTION_PARAM_FIXED(yoff,		6);
+	ACTION_PARAM_FIXED(zoff,		7);
+	ACTION_PARAM_FIXED(xvel,		8);
+	ACTION_PARAM_FIXED(yvel,		9);
+	ACTION_PARAM_FIXED(zvel,		10);
+	ACTION_PARAM_FIXED(accelx,		11);
+	ACTION_PARAM_FIXED(accely,		12);
+	ACTION_PARAM_FIXED(accelz,		13);
+	ACTION_PARAM_FIXED(startalphaf, 14);
+	ACTION_PARAM_FIXED(fadestepf,	15);
 	
 	BYTE startalpha = (BYTE)Scale(clamp(startalphaf, 0, FRACUNIT), 255, FRACUNIT);
 	int fadestep = fadestepf < 0? -1 : Scale(clamp(fadestepf, 0, FRACUNIT), 255, FRACUNIT);

@@ -227,9 +227,6 @@ endif( NOT OPENGL_FOUND )
 set( ZDOOM_LIBS ${ZDOOM_LIBS} ${OPENGL_LIBRARIES} )
 include_directories( ${OPENGL_INCLUDE_DIR} )
 
-
-# Decide on the name of the FMOD library we want to use.
-
 if( NOT NO_OPENAL )
     find_package( OpenAL )
 	mark_as_advanced(CLEAR OPENAL_LIBRARY OPENAL_INCLUDE_DIR)

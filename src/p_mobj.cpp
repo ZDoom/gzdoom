@@ -1684,7 +1684,8 @@ bool P_SeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax, bool preci
 		angle_t pitch = 0;
 		if (!(actor->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER)))
 		{ // Need to seek vertically
-			double dist = MAX(1.0, FVector2(actor->Vec2To(target)).Length());
+			fixedvec2 vec = actor->Vec2To(target);
+			double dist = MAX(1.0, TVector2<double>(vec.x, vec.y).Length());
 			// Aim at a player's eyes and at the middle of the actor for everything else.
 			fixed_t aimheight = target->height/2;
 			if (target->IsKindOf(RUNTIME_CLASS(APlayerPawn)))

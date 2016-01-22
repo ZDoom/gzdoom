@@ -5996,8 +5996,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckProximity)
 
 	int counter = 0;
 	bool result = false;
-	const double distsquared = (double)distance * (double)distance;
-	double closer, farther = 0, current = closer = distsquared;
+	if (flags & CPXF_NODISTANCE)	distance = (FIXED_MAX/2);
+	fixed_t closer = distance, farther = 0, current = distance;
 	const bool ptrWillChange = !!(flags & (CPXF_SETTARGET | CPXF_SETMASTER | CPXF_SETTRACER));
 	const bool ptrDistPref = !!(flags & (CPXF_CLOSEST | CPXF_FARTHEST));
 
@@ -6027,20 +6027,17 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckProximity)
 
 		fixedvec3 diff = ref->Vec3To(mo);
 		diff.z += (ref->height - mo->height) / 2;
-		double lengthsquared = TVector3<double>(diff.x, diff.y, (flags & CPXF_NOZ) ? 0 : diff.z).LengthSquared();
-		if ((flags & CPXF_NODISTANCE) || lengthsquared <= distsquared)
+		if ((flags & CPXF_NODISTANCE) || (ref->AproxDistance(mo) < distance &&
+			((flags & CPXF_NOZ) ||
+			((ref->Z() > mo->Z() && ref->Z() - mo->Top() < distance) ||
+			(ref->Z() <= mo->Z() && mo->Z() - ref->Top() < distance)))))
 		{
 			if ((flags & CPXF_CHECKSIGHT) && !(P_CheckSight(mo, ref, SF_IGNOREVISIBILITY | SF_IGNOREWATERBOUNDARY)))
 				continue;
 
-			if (ptrWillChange && ptrDistPref)
+			if (ptrWillChange)
 			{
-				//Saves on needless recalculation as we already included Z above, so don't do it again
-				//if we did not use the flag the first time.
-				if (flags & CPXF_NOZ) 
-					lengthsquared = TVector3<double>(diff.x, diff.y, diff.z).LengthSquared();
-
-				current = lengthsquared; //This one cannot have NOZ checking.
+				current = ref->AproxDistance(mo);
 
 				if ((flags & CPXF_CLOSEST) && ((current < closer) || !closer))
 				{

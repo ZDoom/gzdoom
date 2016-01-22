@@ -2422,7 +2422,7 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 		{
 			if ((mo->flags & MF_MISSILE) && !(mo->flags & MF_NOCLIP))
 			{
-				mo->AddZ(mo->floorz);
+				mo->SetZ(mo->floorz);
 				if (mo->BounceFlags & BOUNCE_Floors)
 				{
 					mo->FloorBounceMissile (mo->floorsector->floorplane);

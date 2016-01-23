@@ -1684,7 +1684,8 @@ bool P_SeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax, bool preci
 		angle_t pitch = 0;
 		if (!(actor->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER)))
 		{ // Need to seek vertically
-			double dist = MAX(1.0, FVector2(actor->Vec2To(target)).Length());
+			fixedvec2 vec = actor->Vec2To(target);
+			double dist = MAX(1.0, TVector2<double>(vec.x, vec.y).Length());
 			// Aim at a player's eyes and at the middle of the actor for everything else.
 			fixed_t aimheight = target->height/2;
 			if (target->IsKindOf(RUNTIME_CLASS(APlayerPawn)))
@@ -2421,7 +2422,7 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 		{
 			if ((mo->flags & MF_MISSILE) && !(mo->flags & MF_NOCLIP))
 			{
-				mo->AddZ(mo->floorz);
+				mo->SetZ(mo->floorz);
 				if (mo->BounceFlags & BOUNCE_Floors)
 				{
 					mo->FloorBounceMissile (mo->floorsector->floorplane);
@@ -3234,7 +3235,7 @@ void AActor::Tick ()
 
 		UnlinkFromWorld ();
 		flags |= MF_NOBLOCKMAP;
-		SetXYZ(Vec3Offset(velx, vely, vely));
+		SetXYZ(Vec3Offset(velx, vely, velz));
 		SetMovement(velx, vely, velz);
 		LinkToWorld ();
 	}

@@ -4150,14 +4150,14 @@ bool DLevelScript::DoCheckActorTexture(int tid, AActor *activator, int string, b
 
 			if (ff->flags & FF_SOLID &&
 				secpic.isNull() &&
-				z >= ff->top.plane->ZatPoint(actor->X(), actor->Y()))
+				z >= ff->top.plane->ZatPoint(actor))
 			{ // This is the highest solid floor beneath our feet
 				secpic = *ff->top.texture;
 			}
 			else if (!(ff->flags & FF_SOLID) &&
 				tex == TexMan[*ff->top.texture] &&
-				z <= ff->top.plane->ZatPoint(actor->X(), actor->Y()) &&
-				z >= ff->bottom.plane->ZatPoint(actor->X(), actor->Y()))
+				z <= ff->top.plane->ZatPoint(actor) &&
+				z >= ff->bottom.plane->ZatPoint(actor))
 			{ // Having your feet within a liquid counts as being "on" it
 				return true;
 			}
@@ -4180,14 +4180,14 @@ bool DLevelScript::DoCheckActorTexture(int tid, AActor *activator, int string, b
 
 			if (ff->flags & FF_SOLID &&
 				secpic.isNull() &&
-				z <= ff->bottom.plane->ZatPoint(actor->X(), actor->Y()))
+				z <= ff->bottom.plane->ZatPoint(actor))
 			{ // This is the lowest solid ceiling above our eyes
 				secpic = *ff->top.texture;
 			}
 			else if (!(ff->flags & FF_SOLID) &&
 				tex == TexMan[*ff->bottom.texture] &&
-				z <= ff->top.plane->ZatPoint(actor->X(), actor->Y()) &&
-				z >= ff->bottom.plane->ZatPoint(actor->X(), actor->Y()))
+				z <= ff->top.plane->ZatPoint(actor) &&
+				z >= ff->bottom.plane->ZatPoint(actor))
 			{ // Having your eyes within a liquid counts as being "under" it
 				return true;
 			}

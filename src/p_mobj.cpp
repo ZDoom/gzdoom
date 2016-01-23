@@ -2037,7 +2037,7 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 								//dest->x - source->x
 								fixedvec3 vect = mo->Vec3To(origin);
 								vect.z += origin->height / 2;
-								FVector3 velocity(vect);
+								TVector3<double> velocity(vect.x, vect.y, vect.z);
 								velocity.Resize(speed);
 								mo->velx = (fixed_t)(velocity.X);
 								mo->vely = (fixed_t)(velocity.Y);
@@ -5733,7 +5733,8 @@ AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
 	// missile?
 	// Answer: No, because this way, you can set up sets of parallel missiles.
 
-	FVector3 velocity = source->Vec3To(dest);
+	fixedvec3 fixvel = source->Vec3To(dest);
+	FVector3 velocity(fixvel.x, fixvel.y, fixvel.z);
 	// Floor and ceiling huggers should never have a vertical component to their velocity
 	if (th->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER))
 	{
@@ -5742,7 +5743,7 @@ AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
 	// [RH] Adjust the trajectory if the missile will go over the target's head.
 	else if (z - source->Z() >= dest->height)
 	{
-		velocity.Z += dest->height - z + source->Z();
+		velocity.Z += (dest->height - z + source->Z());
 	}
 	velocity.Resize (speed);
 	th->velx = (fixed_t)(velocity.X);

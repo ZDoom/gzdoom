@@ -2882,34 +2882,66 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnDebris)
 // A_SpawnParticle
 //
 //===========================================================================
+enum SPFflag
+{
+	SPF_FULLBRIGHT =		1,
+	SPF_RELPOS =			1 << 1,
+	SPF_RELVEL =			1 << 2,
+	SPF_RELACCEL =			1 << 3,
+	SPF_RELANG =			1 << 4,
+};
+
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnParticle)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_FIXED		(xoff);
-	PARAM_FIXED		(yoff);
-	PARAM_FIXED		(zoff);
-	PARAM_FIXED		(xvel);
-	PARAM_FIXED		(yvel);
-	PARAM_FIXED		(zvel);
 	PARAM_COLOR		(color);
-	PARAM_INT		(lifetime);
-	PARAM_BOOL_OPT	(fullbright)	{ fullbright = false; }
-	PARAM_INT_OPT	(startalpha)	{ startalpha = 255; }	// Byte trans
-	PARAM_INT_OPT	(size)			{ size = -1; }
-	PARAM_INT_OPT	(fadestep)		{ fadestep = -1; }
+	PARAM_INT_OPT	(flags)			{ flags = 0; }
+	PARAM_INT_OPT	(lifetime)		{ lifetime = 35; }
+	PARAM_INT_OPT	(size)			{ size = 1; }
+	PARAM_ANGLE_OPT	(angle)			{ angle = 0; }
+	PARAM_FIXED_OPT	(xoff)			{ xoff = 0; }
+	PARAM_FIXED_OPT	(yoff)			{ yoff = 0; }
+	PARAM_FIXED_OPT	(zoff)			{ zoff = 0; }
+	PARAM_FIXED_OPT	(xvel)			{ xvel = 0; }
+	PARAM_FIXED_OPT	(yvel)			{ yvel = 0; }
+	PARAM_FIXED_OPT	(zvel)			{ zvel = 0; }
 	PARAM_FIXED_OPT	(accelx)		{ accelx = 0; }
 	PARAM_FIXED_OPT	(accely)		{ accely = 0; }
 	PARAM_FIXED_OPT	(accelz)		{ accelz = 0; }
+	PARAM_FIXED_OPT	(startalphaf)	{ startalphaf = FRACUNIT; }
+	PARAM_FIXED_OPT	(fadestepf)		{ fadestepf = -FRACUNIT; }
 
-	startalpha = clamp<int>(startalpha, 0, 0xFF); // Clamp to byte
-	lifetime = clamp<int>(lifetime, 0, 0xFF); // Clamp to byte
-	fadestep = clamp<int>(fadestep, -1, 0xFF); // Clamp to byte inc. -1 (indicating automatic)
+	BYTE startalpha = (BYTE)(clamp(startalphaf, 0, FRACUNIT) * 255 / FRACUNIT);
+	int fadestep = fadestepf < 0 ? -1 : clamp(fadestepf, 0, FRACUNIT) * 255 / FRACUNIT;
 	size = clamp<int>(size, 0, 0xFF); // Clamp to byte
 
 	if (lifetime != 0)
 	{
-		fixedvec3 pos = self->Vec3Offset(xoff, yoff, zoff);
-		P_SpawnParticle(pos.x, pos.y, pos.z, xvel, yvel, zvel, color, fullbright, startalpha, lifetime, size, fadestep, accelx, accely, accelz);
+		const angle_t ang = (angle + ((flags & SPF_RELANG) ? self->angle : 0)) >> ANGLETOFINESHIFT;
+		fixedvec3 pos;
+		//[MC] Code ripped right out of A_SpawnItemEx.
+		if (flags & SPF_RELPOS)
+		{
+			// in relative mode negative y values mean 'left' and positive ones mean 'right'
+			// This is the inverse orientation of the absolute mode!
+			const fixed_t xof1 = xoff;
+			xoff = FixedMul(xof1, finecosine[ang]) + FixedMul(yoff, finesine[ang]);
+			yoff = FixedMul(xof1, finesine[ang]) - FixedMul(yoff, finecosine[ang]);
+		}
+		if (flags & SPF_RELVEL)
+		{
+			const fixed_t newxvel = FixedMul(xvel, finecosine[ang]) + FixedMul(yvel, finesine[ang]);
+			yvel = FixedMul(xvel, finesine[ang]) - FixedMul(yvel, finecosine[ang]);
+			xvel = newxvel;
+		}
+		if (flags & SPF_RELACCEL)
+		{
+			fixed_t newaccelx = FixedMul(accelx, finecosine[ang]) + FixedMul(accely, finesine[ang]);
+			accely = FixedMul(accelx, finesine[ang]) - FixedMul(accely, finecosine[ang]);
+			accelx = newaccelx;
+		}
+		pos = self->Vec3Offset(xoff, yoff, zoff);
+		P_SpawnParticle(pos.x, pos.y, pos.z, xvel, yvel, zvel, color, !!(flags & SPF_FULLBRIGHT), startalpha, lifetime, size, fadestep, accelx, accely, accelz);
 	}
 	return 0;
 }

@@ -5985,21 +5985,21 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 		
 		case ACSF_SpawnParticle:
 		{
-			fixed_t x = args[0];
-			fixed_t y = args[1];
-			fixed_t z = args[2];
-			fixed_t xvel = args[3];
-			fixed_t yvel = args[4];
-			fixed_t zvel = args[5];
-			PalEntry color = args[6];
-			int lifetime = args[7];
-			bool fullbright = argCount > 8 ? !!args[8] : false;
-			int startalpha = argCount > 9 ? args[9] : 0xFF; // Byte trans
-			int size = argCount > 10 ? args[10] : 1;
-			int fadestep = argCount > 11 ? args[11] : -1;
-			fixed_t accelx = argCount > 12 ? args[12] : 0;
-			fixed_t accely = argCount > 13 ? args[13] : 0;
-			fixed_t accelz = argCount > 14 ? args[14] : 0;
+			PalEntry color = args[0];
+			bool fullbright = argCount > 1 ? !!args[1] : false;
+			int lifetime = argCount > 2 ? args[2] : 35;
+			int size = argCount > 3 ? args[3] : 1;
+			fixed_t x = argCount > 4 ? args[4] : 0;
+			fixed_t y = argCount > 5 ? args[5] : 0;
+			fixed_t z = argCount > 6 ? args[6] : 0;
+			fixed_t xvel = argCount > 7 ? args[7] : 0;
+			fixed_t yvel = argCount > 8 ? args[8] : 0;
+			fixed_t zvel = argCount > 9 ? args[9] : 0;
+			fixed_t accelx = argCount > 10 ? args[10] : 0;
+			fixed_t accely = argCount > 11 ? args[11] : 0;
+			fixed_t accelz = argCount > 12 ? args[12] : 0;
+			int startalpha = argCount > 13 ? args[13] : 0xFF; // Byte trans			
+			int fadestep = argCount > 14 ? args[14] : -1;
 
 			startalpha = clamp<int>(startalpha, 0, 0xFF); // Clamp to byte
 			lifetime = clamp<int>(lifetime, 0, 0xFF); // Clamp to byte

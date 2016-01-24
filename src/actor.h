@@ -591,31 +591,11 @@ enum
 struct fixedvec3
 {
 	fixed_t x, y, z;
-
-	operator FVector3()
-	{
-		return FVector3(FIXED2FLOAT(x), FIXED2FLOAT(y), FIXED2FLOAT(z));
-	}
-
-	operator TVector3<double>()
-	{
-		return TVector3<double>(FIXED2DBL(x), FIXED2DBL(y), FIXED2DBL(z));
-	}
 };
 
 struct fixedvec2
 {
 	fixed_t x, y;
-
-	operator FVector2()
-	{
-		return FVector2(FIXED2FLOAT(x), FIXED2FLOAT(y));
-	}
-
-	operator TVector2<double>()
-	{
-		return TVector2<double>(FIXED2DBL(x), FIXED2DBL(y));
-	}
 };
 
 struct FDropItem 

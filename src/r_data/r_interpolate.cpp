@@ -261,9 +261,12 @@ void FInterpolator::DoInterpolations(fixed_t smoothratio)
 
 	didInterp = true;
 
-	for (DInterpolation *probe = Head; probe != NULL; probe = probe->Next)
+	DInterpolation *probe = Head;
+	while (probe != NULL)
 	{
+		DInterpolation *next = probe->Next;
 		probe->Interpolate(smoothratio);
+		probe = next;
 	}
 }
 

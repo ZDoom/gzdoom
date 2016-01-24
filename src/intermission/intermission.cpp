@@ -722,7 +722,10 @@ DIntermissionController::DIntermissionController(FIntermissionDescriptor *Desc, 
 	mScreen = NULL;
 	mFirst = true;
 	mGameState = state;
-	NextPage();
+
+	// If the intermission finishes straight away then cancel the wipe.
+	if(!NextPage())
+		wipegamestate = GS_FINALE;
 }
 
 bool DIntermissionController::NextPage ()

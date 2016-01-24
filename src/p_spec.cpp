@@ -1243,7 +1243,7 @@ void P_InitSectorSpecial(sector_t *sector, int special, bool nothinkers)
 		if (!nothinkers)
 		{
 			new DStrobe(sector, STROBEBRIGHT, FASTDARK, false);
-			new DScroller(DScroller::sc_floor, (-FRACUNIT / 2) << 3,
+			new DScroller(DScroller::sc_floor, -((FRACUNIT / 2) << 3),
 				0, -1, int(sector - sectors), 0);
 		}
 		keepspecial = true;

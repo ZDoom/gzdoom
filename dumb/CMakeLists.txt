@@ -8,7 +8,7 @@ include( CheckCXXCompilerFlag )
 set( CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -D_DEBUG -DDEBUGMODE=1" )
 
 if( ZD_CMAKE_COMPILER_IS_GNUC_COMPATIBLE )
-	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-pointer-sign -Wno-uninitialized" )
+	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-pointer-sign -Wno-uninitialized -Wno-unused-but-set-variable" )
 endif( ZD_CMAKE_COMPILER_IS_GNUC_COMPATIBLE )
 
 CHECK_FUNCTION_EXISTS( itoa ITOA_EXISTS )

@@ -412,6 +412,21 @@ class CommandDrawSwitchableImage : public CommandDrawImage
 					return compare != value;
 			}
 		}
+		// Key species are used to allow altnerates for existing key slots.
+		static FName LookupKeySpecies(int keynum)
+		{
+			for(unsigned int i = 0;i < PClass::m_Types.Size();++i)
+			{
+				const PClass *cls = PClass::m_Types[i];
+				if(cls->IsDescendantOf(RUNTIME_CLASS(AKey)))
+				{
+					AKey *key = (AKey *)GetDefaultByType(cls);
+					if(key->KeyNumber == keynum)
+						return cls->TypeName;
+				}
+			}
+			return FName();
+		}
 
 	public:
 		CommandDrawSwitchableImage(SBarInfo *script) : CommandDrawImage(script),
@@ -442,6 +457,7 @@ class CommandDrawSwitchableImage : public CommandDrawImage
 					condition = KEYSLOT;
 					sc.MustGetToken(TK_IntConst);
 					conditionalValue[0] = sc.Number;
+					keySpecies[0] = LookupKeySpecies(conditionalValue[0]);
 				}
 				else if(sc.Compare("armortype"))
 				{
@@ -468,6 +484,8 @@ class CommandDrawSwitchableImage : public CommandDrawImage
 				{
 					sc.MustGetToken(TK_IntConst);
 					conditionalValue[1] = sc.Number;
+					if(condition == KEYSLOT)
+						keySpecies[1] = LookupKeySpecies(conditionalValue[1]);
 				}
 				else if(condition == ARMORTYPE)
 				{
@@ -541,11 +559,21 @@ class CommandDrawSwitchableImage : public CommandDrawImage
 					if(item->IsKindOf(RUNTIME_CLASS(AKey)))
 					{
 						int keynum = static_cast<AKey *>(item)->KeyNumber;
-		
-						if(keynum == conditionalValue[0])
-							found1 = true;
-						if(conditionAnd && keynum == conditionalValue[1]) // two keys
-							found2 = true;
+						if(keynum)
+						{
+							if(keynum == conditionalValue[0])
+								found1 = true;
+							if(conditionAnd && keynum == conditionalValue[1]) // two keys
+								found2 = true;
+						}
+						else
+						{
+							FName species = item->GetSpecies();
+							if(species == keySpecies[0])
+								found1 = true;
+							if(conditionAnd && species == keySpecies[1])
+								found2 = true;
+						}
 					}
 				}
 
@@ -639,6 +667,7 @@ class CommandDrawSwitchableImage : public CommandDrawImage
 		Operator	conditionalOperator[2];
 		FString		inventoryItem[2];
 		int			armorType[2];
+		FName		keySpecies[2];
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1595,7 +1624,7 @@ class CommandDrawSelectedInventory : public CommandDrawImage, private CommandDra
 	public:
 		CommandDrawSelectedInventory(SBarInfo *script) : CommandDrawImage(script),
 			CommandDrawNumber(script), alternateOnEmpty(false),
-			artiflash(false), alwaysShowCounter(false)
+			artiflash(false), alwaysShowCounter(false), itemflash(false)
 		{
 			length = INT_MAX; // Counter size
 		}

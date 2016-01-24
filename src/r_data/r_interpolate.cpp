@@ -447,8 +447,6 @@ void DSectorPlaneInterpolation::UpdateInterpolation()
 		oldheight = sector->ceilingplane.d;
 		oldtexz = sector->GetPlaneTexZ(sector_t::ceiling);
 	}
-	if (oldtexz <-128*FRACUNIT)
-		__asm nop
 }
 
 //==========================================================================

@@ -891,7 +891,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_GunFlash)
 
 angle_t P_BulletSlope (AActor *mo, AActor **pLineTarget)
 {
-	static const int angdiff[3] = { -1<<26, 1<<26, 0 };
+	static const int angdiff[3] = { -(1<<26), 1<<26, 0 };
 	int i;
 	angle_t an;
 	angle_t pitch;

@@ -676,52 +676,55 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 			z = y = x = 0;
 		}
 
-		switch (type)
+		// [BL] Moved this case out of the switch statement to make code easier
+		//      on static analysis.
+		if(type == SOURCE_Unattached)
 		{
-		case SOURCE_None:
-		default:
-			break;
-
-		case SOURCE_Actor:
-//			assert(actor != NULL);
-			if (actor != NULL)
-			{
-				x = actor->SoundX();
-				y = actor->SoundZ();
-				z = actor->SoundY();
-			}
-			break;
-
-		case SOURCE_Sector:
-			assert(sector != NULL);
-			if (sector != NULL)
-			{
-				if (chanflags & CHAN_AREA)
-				{
-					CalcSectorSoundOrg(sector, channum, &x, &z, &y);
-				}
-				else
-				{
-					x = sector->soundorg[0];
-					z = sector->soundorg[1];
-					chanflags |= CHAN_LISTENERZ;
-				}
-			}
-			break;
-
-		case SOURCE_Polyobj:
-			assert(poly != NULL);
-			CalcPolyobjSoundOrg(poly, &x, &z, &y);
-			break;
-
-		case SOURCE_Unattached:
 			pos->X = pt[0];
 			pos->Y = !(chanflags & CHAN_LISTENERZ) ? pt[1] : FIXED2FLOAT(y);
 			pos->Z = pt[2];
-			break;
 		}
-		if (type != SOURCE_Unattached)
+		else
 		{
+			switch (type)
+			{
+			case SOURCE_None:
+			default:
+				break;
+
+			case SOURCE_Actor:
+				//assert(actor != NULL);
+				if (actor != NULL)
+				{
+					x = actor->SoundX();
+					y = actor->SoundZ();
+					z = actor->SoundY();
+				}
+				break;
+
+			case SOURCE_Sector:
+				assert(sector != NULL);
+				if (sector != NULL)
+				{
+					if (chanflags & CHAN_AREA)
+					{
+						CalcSectorSoundOrg(sector, channum, &x, &z, &y);
+					}
+					else
+					{
+						x = sector->soundorg[0];
+						z = sector->soundorg[1];
+						chanflags |= CHAN_LISTENERZ;
+					}
+				}
+				break;
+
+			case SOURCE_Polyobj:
+				assert(poly != NULL);
+				CalcPolyobjSoundOrg(poly, &x, &z, &y);
+				break;
+			}
+
 			if ((chanflags & CHAN_LISTENERZ) && players[consoleplayer].camera != NULL)
 			{
 				y = players[consoleplayer].camera != NULL ? players[consoleplayer].camera->SoundZ() : 0;

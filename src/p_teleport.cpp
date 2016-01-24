@@ -108,7 +108,7 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle,
 	sector_t *destsect;
 	bool resetpitch = false;
 	fixed_t floorheight, ceilingheight;
-	fixed_t missilespeed;
+	fixed_t missilespeed = 0;
 
 	old = thing->Pos();
 	aboveFloor = thing->Z() - thing->floorz;

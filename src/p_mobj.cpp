@@ -5939,7 +5939,7 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 							  const PClass *type, angle_t angle, AActor **pLineTarget, AActor **pMissileActor,
 							  bool nofreeaim, bool noautoaim)
 {
-	static const int angdiff[3] = { -1<<26, 1<<26, 0 };
+	static const int angdiff[3] = { -(1<<26), 1<<26, 0 };
 	angle_t an = angle;
 	angle_t pitch;
 	AActor *linetarget;

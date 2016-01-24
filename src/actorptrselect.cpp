@@ -32,6 +32,8 @@
 
 AActor *COPY_AAPTR(AActor *origin, int selector)
 {
+	if (selector == AAPTR_DEFAULT) return origin;
+
 	if (origin)
 	{
 		if (origin->player)

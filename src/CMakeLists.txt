@@ -286,15 +286,18 @@ if( NO_FMOD )
 endif( NO_FMOD )
 if( NO_OPENAL )
 	add_definitions( -DNO_OPENAL=1 )
+
+	set(MPG123_FOUND NO)
+	set(SNDFILE_FOUND NO)
+else( NO_OPENAL )
+	# Search for libSndFile
+
+	find_package( SndFile )
+
+	# Search for libmpg123
+
+	find_package( MPG123 )
 endif( NO_OPENAL )
-
-# Search for libSndFile
-
-find_package( SndFile )
-
-# Search for libmpg123
-
-find_package( MPG123 )
 
 # Search for FluidSynth
 

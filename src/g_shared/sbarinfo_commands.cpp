@@ -1595,7 +1595,7 @@ class CommandDrawSelectedInventory : public CommandDrawImage, private CommandDra
 	public:
 		CommandDrawSelectedInventory(SBarInfo *script) : CommandDrawImage(script),
 			CommandDrawNumber(script), alternateOnEmpty(false),
-			artiflash(false), alwaysShowCounter(false)
+			artiflash(false), alwaysShowCounter(false), itemflash(false)
 		{
 			length = INT_MAX; // Counter size
 		}

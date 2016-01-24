@@ -6326,6 +6326,26 @@ int DLevelScript::RunScript ()
 			sp -= 4;
 			break;
 
+		case PCD_LSPEC5EX:
+			P_ExecuteSpecial(NEXTWORD, activationline, activator, backSide,
+									STACK(5) & specialargmask,
+									STACK(4) & specialargmask,
+									STACK(3) & specialargmask,
+									STACK(2) & specialargmask,
+									STACK(1) & specialargmask);
+			sp -= 5;
+			break;
+
+		case PCD_LSPEC5EXRESULT:
+			STACK(5) = P_ExecuteSpecial(NEXTWORD, activationline, activator, backSide,
+									STACK(5) & specialargmask,
+									STACK(4) & specialargmask,
+									STACK(3) & specialargmask,
+									STACK(2) & specialargmask,
+									STACK(1) & specialargmask);
+			sp -= 4;
+			break;
+
 		case PCD_LSPEC1DIRECT:
 			temp = NEXTBYTE;
 			P_ExecuteSpecial(temp, activationline, activator, backSide,

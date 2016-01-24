@@ -2503,7 +2503,7 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 
 	case DEM_RUNSPECIAL:
 		{
-			int snum = ReadByte(stream);
+			int snum = ReadWord(stream);
 			int argn = ReadByte(stream);
 			int arg[5] = { 0, 0, 0, 0, 0 };
 
@@ -2794,7 +2794,7 @@ void Net_SkipCommand (int type, BYTE **stream)
 			break;
 
 		case DEM_RUNSPECIAL:
-			skip = 2 + *(*stream + 1) * 4;
+			skip = 3 + *(*stream + 2) * 4;
 			break;
 
 		case DEM_CONVREPLY:

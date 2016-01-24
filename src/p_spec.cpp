@@ -1177,7 +1177,7 @@ void P_InitSectorSpecial(sector_t *sector, int special, bool nothinkers)
 		break;
 			
 	case dSector_DoorCloseIn30:
-		P_SpawnDoorCloseIn30 (sector);
+		new DDoor(sector, DDoor::doorWaitClose, FRACUNIT * 2, 0, 0, 30 * TICRATE);
 		break;
 			
 	case dDamage_End:
@@ -1193,7 +1193,7 @@ void P_InitSectorSpecial(sector_t *sector, int special, bool nothinkers)
 		break;
 
 	case dSector_DoorRaiseIn5Mins:
-		P_SpawnDoorRaiseIn5Mins (sector);
+		new DDoor (sector, DDoor::doorWaitRaise, 2*FRACUNIT, TICRATE*30/7, 5*60*FRACUNIT, 0);
 		break;
 
 	case dFriction_Low:
@@ -1769,15 +1769,16 @@ static void P_SpawnScrollers(void)
 
 		// Check for undefined parameters that are non-zero and output messages for them.
 		// We don't report for specials we don't understand.
-		if (special != 0)
+		FLineSpecial *spec = P_GetLineSpecialInfo(special);
+		if (spec != NULL)
 		{
-			int max = LineSpecialsInfo[special] != NULL ? LineSpecialsInfo[special]->map_args : countof(l->args);
+			int max = spec->map_args;
 			for (unsigned arg = max; arg < countof(l->args); ++arg)
 			{
 				if (l->args[arg] != 0)
 				{
 					Printf("Line %d (type %d:%s), arg %u is %d (should be 0)\n",
-						i, special, LineSpecialsInfo[special]->name, arg+1, l->args[arg]);
+						i, special, spec->name, arg+1, l->args[arg]);
 				}
 			}
 		}

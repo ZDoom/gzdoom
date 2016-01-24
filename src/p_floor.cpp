@@ -614,7 +614,7 @@ bool EV_BuildStairs (int tag, DFloor::EStair type, line_t *line,
 		floor->m_PauseTime = 0;
 		floor->m_StepTime = floor->m_PerStepTime = persteptime;
 
-		floor->m_Crush = (!usespecials && speed == 4*FRACUNIT) ? 10 : -1; //jff 2/27/98 fix uninitialized crush field
+		floor->m_Crush = (!(usespecials & DFloor::stairUseSpecials) && speed == 4*FRACUNIT) ? 10 : -1; //jff 2/27/98 fix uninitialized crush field
 		floor->m_Hexencrush = false;
 
 		floor->m_Speed = speed;
@@ -632,7 +632,7 @@ bool EV_BuildStairs (int tag, DFloor::EStair type, line_t *line,
 		{
 			ok = 0;
 
-			if (usespecials)
+			if (usespecials & DFloor::stairUseSpecials)
 			{
 				// [RH] Find the next sector by scanning for Stairs_Special?
 				tsec = sec->NextSpecialSector (
@@ -715,7 +715,7 @@ bool EV_BuildStairs (int tag, DFloor::EStair type, line_t *line,
 				floor->m_PauseTime = 0;
 				floor->m_StepTime = floor->m_PerStepTime = persteptime;
 
-				if (usespecials == 2)
+				if (usespecials & DFloor::stairSync)
 				{
 					// [RH]
 					fixed_t rise = height - sec->CenterFloor();
@@ -727,7 +727,7 @@ bool EV_BuildStairs (int tag, DFloor::EStair type, line_t *line,
 				}
 				floor->m_Type = DFloor::buildStair;	//jff 3/31/98 do not leave uninited
 				//jff 2/27/98 fix uninitialized crush field
-				floor->m_Crush = (!usespecials && speed == 4*FRACUNIT) ? 10 : -1;
+				floor->m_Crush = (!(usespecials & DFloor::stairUseSpecials) && speed == 4*FRACUNIT) ? 10 : -1; //jff 2/27/98 fix uninitialized crush field
 				floor->m_Hexencrush = false;
 				floor->m_ResetCount = reset;	// [RH] Tics until reset (0 if never)
 				floor->m_OrgDist = sec->floorplane.d;	// [RH] Height to reset to

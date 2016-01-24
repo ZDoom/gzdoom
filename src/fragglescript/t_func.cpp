@@ -4619,9 +4619,10 @@ void init_functions(void)
 	gscr->NewVariable("trigger", svt_pMobj)->value.pMobj = &trigger_obj;
 
 	// Create constants for all existing line specials
-	for(int i=0; i<256; i++)
+	int max = P_GetMaxLineSpecial();
+	for(int i=0; i<=max; i++)
 	{
-		const FLineSpecial *ls = LineSpecialsInfo[i];
+		const FLineSpecial *ls = P_GetLineSpecialInfo(i);
 
 		if (ls != NULL && ls->max_args >= 0)	// specials with max args set to -1 can only be used in a map and are of no use hee.
 		{

@@ -622,19 +622,19 @@ FUNC(LS_Pillar_Open)
 }
 
 FUNC(LS_Ceiling_LowerByValue)
-// Ceiling_LowerByValue (tag, speed, height, change)
+// Ceiling_LowerByValue (tag, speed, height, change, crush)
 {
-	return EV_DoCeiling (DCeiling::ceilLowerByValue, ln, arg0, SPEED(arg1), 0, arg2*FRACUNIT, -1, 0, CHANGE(arg3), false);
+	return EV_DoCeiling (DCeiling::ceilLowerByValue, ln, arg0, SPEED(arg1), 0, arg2*FRACUNIT, CRUSH(arg4), 0, CHANGE(arg3), false);
 }
 
 FUNC(LS_Ceiling_RaiseByValue)
 // Ceiling_RaiseByValue (tag, speed, height, change)
 {
-	return EV_DoCeiling (DCeiling::ceilRaiseByValue, ln, arg0, SPEED(arg1), 0, arg2*FRACUNIT, -1, 0, CHANGE(arg3), false);
+	return EV_DoCeiling (DCeiling::ceilRaiseByValue, ln, arg0, SPEED(arg1), 0, arg2*FRACUNIT, CRUSH(arg4), 0, CHANGE(arg3), false);
 }
 
 FUNC(LS_Ceiling_LowerByValueTimes8)
-// Ceiling_LowerByValueTimes8 (tag, speed, height, change)
+// Ceiling_LowerByValueTimes8 (tag, speed, height, change, crush)
 {
 	return EV_DoCeiling (DCeiling::ceilLowerByValue, ln, arg0, SPEED(arg1), 0, arg2*FRACUNIT*8, -1, 0, CHANGE(arg3), false);
 }

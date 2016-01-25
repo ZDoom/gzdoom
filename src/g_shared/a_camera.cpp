@@ -176,8 +176,9 @@ void AAimingCamera::Tick ()
 		}
 		if (MaxPitchChange)
 		{ // Aim camera's pitch; use floats for precision
-			TVector2<double> vect = tracer->Vec2To(this);
-			double dz = FIXED2DBL(Z() - tracer->Z() - tracer->height/2);
+			fixedvec2 fv3 = tracer->Vec2To(this);
+			TVector2<double> vect(fv3.x, fv3.y);
+			double dz = Z() - tracer->Z() - tracer->height/2;
 			double dist = vect.Length();
 			double ang = dist != 0.f ? atan2 (dz, dist) : 0;
 			int desiredpitch = (angle_t)(ang * 2147483648.f / PI);

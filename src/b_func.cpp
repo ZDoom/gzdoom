@@ -465,7 +465,8 @@ fixed_t FCajunMaster::FakeFire (AActor *source, AActor *dest, ticcmd_t *cmd)
 
 	float speed = (float)th->Speed;
 
-	TVector3<double> velocity = source->Vec3To(dest);
+	fixedvec3 fixvel = source->Vec3To(dest);
+	TVector3<double> velocity(fixvel.x, fixvel.y, fixvel.z);
 	velocity.MakeUnit();
 	th->velx = FLOAT2FIXED(velocity[0] * speed);
 	th->vely = FLOAT2FIXED(velocity[1] * speed);

@@ -6012,7 +6012,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			startalpha = clamp<int>(startalpha, 0, 0xFF); // Clamp to byte
 			lifetime = clamp<int>(lifetime, 0, 0xFF); // Clamp to byte
 			fadestep = clamp<int>(fadestep, -1, 0xFF); // Clamp to byte inc. -1 (indicating automatic)
-			size = clamp<int>(size, 0, 0xFF); // Clamp to byte
+			size = clamp<int>(size, 0, 127); // Clamp to byte
 
 			if (lifetime != 0)
 				P_SpawnParticle(x, y, z, xvel, yvel, zvel, color, fullbright, startalpha, lifetime, size, fadestep, accelx, accely, accelz);

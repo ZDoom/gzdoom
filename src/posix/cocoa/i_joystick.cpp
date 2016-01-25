@@ -157,8 +157,9 @@ private:
 		IOHIDElementCookie cookie;
 		int32_t            value;
 
-		DigitalButton(const IOHIDElementCookie cookie)
+		explicit DigitalButton(const IOHIDElementCookie cookie)
 		: cookie(cookie)
+		, value(0)
 		{ }
 	};
 

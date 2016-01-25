@@ -1083,8 +1083,15 @@ CCMD(nextsecret)
 CCMD(currentpos)
 {
 	AActor *mo = players[consoleplayer].mo;
-	Printf("Current player position: (%1.3f,%1.3f,%1.3f), angle: %1.3f, floorheight: %1.3f, sector:%d, lightlevel: %d\n",
-		FIXED2FLOAT(mo->X()), FIXED2FLOAT(mo->Y()), FIXED2FLOAT(mo->Z()), mo->angle/float(ANGLE_1), FIXED2FLOAT(mo->floorz), mo->Sector->sectornum, mo->Sector->lightlevel);
+	if(mo)
+	{
+		Printf("Current player position: (%1.3f,%1.3f,%1.3f), angle: %1.3f, floorheight: %1.3f, sector:%d, lightlevel: %d\n",
+			FIXED2FLOAT(mo->X()), FIXED2FLOAT(mo->Y()), FIXED2FLOAT(mo->Z()), mo->angle/float(ANGLE_1), FIXED2FLOAT(mo->floorz), mo->Sector->sectornum, mo->Sector->lightlevel);
+	}
+	else
+	{
+		Printf("You are not in game!");
+	}
 }
 
 //-----------------------------------------------------------------------------

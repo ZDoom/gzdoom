@@ -299,15 +299,18 @@ if( NO_FMOD )
 endif( NO_FMOD )
 if( NO_OPENAL )
 	add_definitions( -DNO_OPENAL=1 )
+
+	set(MPG123_FOUND NO)
+	set(SNDFILE_FOUND NO)
+else( NO_OPENAL )
+	# Search for libSndFile
+
+	find_package( SndFile )
+
+	# Search for libmpg123
+
+	find_package( MPG123 )
 endif( NO_OPENAL )
-
-# Search for libSndFile
-
-find_package( SndFile )
-
-# Search for libmpg123
-
-find_package( MPG123 )
 
 # Search for FluidSynth
 
@@ -485,6 +488,11 @@ if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	set( CMAKE_CXX_FLAGS_MINSIZEREL "${REL_CXX_FLAGS} ${CMAKE_CXX_FLAGS_MINSIZEREL}" )
 	set( CMAKE_CXX_FLAGS_RELWITHDEBINFO "${REL_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}" )
 
+	if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "4.5")
+                set( CMAKE_C_FLAGS "-Wno-unused-result ${CMAKE_C_FLAGS}" )
+		set( CMAKE_CXX_FLAGS "-Wno-unused-result ${CMAKE_CXX_FLAGS}" )
+        endif(NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "4.5")
+	set( CMAKE_C_FLAGS "-Wall -Wextra -Wno-unused -Wno-unused-parameter -Wno-missing-field-initializers ${CMAKE_C_FLAGS}" )
 	set( CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-unused -Wno-unused-parameter -Wno-missing-field-initializers ${CMAKE_CXX_FLAGS}" )
 
 	# Remove extra warnings when using the official DirectX headers.

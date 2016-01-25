@@ -6036,7 +6036,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckProximity)
 			{
 				current = ref->AproxDistance(mo);
 
-				if ((flags & CPXF_CLOSEST) && ((current < closer) || !closer))
+				if ((flags & CPXF_CLOSEST) && (current < closer))
 				{
 					dist = mo;
 					closer = current;			//This actor's closer. Set the new standard.

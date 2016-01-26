@@ -1261,7 +1261,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireBullets)
 	int bslope = 0;
 	int laflags = (flags & FBF_NORANDOMPUFFZ)? LAF_NORANDOMPUFFZ : 0;
 
-	if ((flags & FBF_USEAMMO) && weapon)
+	if ((flags & FBF_USEAMMO) && weapon && ACTION_CALL_FROM_WEAPON())
 	{
 		if (!weapon->DepleteAmmo(weapon->bAltFire, true))
 			return;	// out of ammo
@@ -1450,7 +1450,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
 	pitch = P_AimLineAttack (self, angle, range, &linetarget);
 
 	// only use ammo when actually hitting something!
-	if ((flags & CPF_USEAMMO) && linetarget && weapon)
+	if ((flags & CPF_USEAMMO) && linetarget && weapon && ACTION_CALL_FROM_WEAPON())
 	{
 		if (!weapon->DepleteAmmo(weapon->bAltFire, true))
 			return;	// out of ammo
@@ -1548,7 +1548,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RailAttack)
 	AWeapon *weapon = self->player->ReadyWeapon;
 
 	// only use ammo when actually hitting something!
-	if (useammo)
+	if (useammo && weapon != NULL && ACTION_CALL_FROM_WEAPON())
 	{
 		if (!weapon->DepleteAmmo(weapon->bAltFire, true))
 			return;	// out of ammo
@@ -2644,7 +2644,6 @@ enum SPFflag
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnParticle)
 {
-	//(color color1, int flags = 0, int lifetime = 35, int size = 1, float angle = 0, float xoff = 0, float yoff = 0, float zoff = 0, float velx = 0, float vely = 0, float velz = 0, float accelx = 0, float accely = 0, float accelz = 0, float startalphaf = 1, float fadestepf = -1);
 	ACTION_PARAM_START(15);
 	ACTION_PARAM_COLOR(color,		0);
 	ACTION_PARAM_INT(flags,			1);
@@ -2665,8 +2664,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnParticle)
 	
 	BYTE startalpha = (BYTE)Scale(clamp(startalphaf, 0, FRACUNIT), 255, FRACUNIT);
 	int fadestep = fadestepf < 0? -1 : Scale(clamp(fadestepf, 0, FRACUNIT), 255, FRACUNIT);
-	lifetime = clamp<int>(lifetime, 0, 0xFF); // Clamp to byte
-	size = clamp<int>(size, 0, 0xFF); // Clamp to byte
+	lifetime = clamp<int>(lifetime, 0, 255); // Clamp to byte
+	size = clamp<int>(size, 0, 65535); // Clamp to word
 
 	if (lifetime != 0)
 	{

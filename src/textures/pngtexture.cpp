@@ -302,7 +302,7 @@ FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, const FString &filename
 	case 0:		// Grayscale
 		if (!bAlphaTexture)
 		{
-			if (colortype == 0 && HaveTrans && NonPaletteTrans[0] != 0 && NonPaletteTrans[0] < 256)
+			if (colortype == 0 && HaveTrans && NonPaletteTrans[0] < 256)
 			{
 				bMasked = true;
 				PaletteSize = 256;

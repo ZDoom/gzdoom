@@ -189,7 +189,7 @@ struct cRGBT
 	static __forceinline unsigned char R(const unsigned char * p) { return p[0]; }
 	static __forceinline unsigned char G(const unsigned char * p) { return p[1]; }
 	static __forceinline unsigned char B(const unsigned char * p) { return p[2]; }
-	static __forceinline unsigned char A(const unsigned char * p, BYTE r, BYTE g, BYTE b) { return p[0] != r || p[1] != g || p[2] != b; }
+	static __forceinline unsigned char A(const unsigned char * p, BYTE r, BYTE g, BYTE b) { return (p[0] != r || p[1] != g || p[2] != b) ? 255 : 0; }
 	static __forceinline int Gray(const unsigned char * p) { return (p[0]*77 + p[1]*143 + p[2]*36)>>8; }
 };
 

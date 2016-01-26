@@ -5995,6 +5995,13 @@ enum CPXFflags
 	CPXF_COUNTDEAD =		1 << 3,
 	CPXF_DEADONLY =			1 << 4,
 	CPXF_EXACT =			1 << 5,
+	CPXF_SETTARGET =		1 << 6,
+	CPXF_SETMASTER =		1 << 7,
+	CPXF_SETTRACER =		1 << 8,
+	CPXF_FARTHEST =			1 << 9,
+	CPXF_CLOSEST =			1 << 10,
+	CPXF_SETONPTR =			1 << 11,
+	CPXF_CHECKSIGHT =		1 << 12,
 };
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckProximity)
 {
@@ -6007,17 +6014,26 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckProximity)
 	ACTION_PARAM_INT(ptr, 5);
 
 	ACTION_SET_RESULT(false); //No inventory chain results please.
+
+	if (!jump)
+	{
+		if (!(flags & (CPXF_SETTARGET | CPXF_SETMASTER | CPXF_SETTRACER)))
+			return;
+	}
 	AActor *ref = COPY_AAPTR(self, ptr);
 
 	//We need these to check out.
-	if (!ref || !jump || !classname || distance <= 0)
+	if (!ref || !classname || (distance <= 0))
 		return;
 
 	int counter = 0;
 	bool result = false;
+	fixed_t closer = distance, farther = 0, current = distance;
+	const bool ptrWillChange = !!(flags & (CPXF_SETTARGET | CPXF_SETMASTER | CPXF_SETTRACER));
+	const bool ptrDistPref = !!(flags & (CPXF_CLOSEST | CPXF_FARTHEST));
 
 	TThinkerIterator<AActor> it;
-	AActor * mo;
+	AActor *mo, *dist = NULL;
 
 	//[MC] Process of elimination, I think, will get through this as quickly and 
 	//efficiently as possible. 
@@ -6036,12 +6052,35 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckProximity)
 		else if (classname != mo->GetClass())
 			continue;
 
-		//Make sure it's in range and respect the desire for Z or not.
-		if (ref->AproxDistance(mo) < distance &&
+		//[MC]Make sure it's in range and respect the desire for Z or not. The function forces it to use
+		//Z later for ensuring CLOSEST and FARTHEST flags are respected perfectly.
+		//Ripped from sphere checking in A_RadiusGive (along with a number of things).
+		if ((ref->AproxDistance(mo) < distance &&
 			((flags & CPXF_NOZ) ||
-			((ref->Z() > mo->Z() && ref->Top() < distance) ||
-			(ref->Z() <= mo->Z() && mo->Z() - ref->Top() < distance))))
+			((ref->Z() > mo->Z() && ref->Z() - mo->Top() < distance) ||
+			(ref->Z() <= mo->Z() && mo->Z() - ref->Top() < distance)))))
 		{
+			if ((flags & CPXF_CHECKSIGHT) && !(P_CheckSight(mo, ref, SF_IGNOREVISIBILITY | SF_IGNOREWATERBOUNDARY)))
+				continue;
+
+			if (ptrWillChange)
+			{
+				current = ref->AproxDistance(mo);
+
+				if ((flags & CPXF_CLOSEST) && (current < closer))
+				{
+					dist = mo;
+					closer = current;			//This actor's closer. Set the new standard.
+				}
+				else if ((flags & CPXF_FARTHEST) && (current > farther))
+				{
+					dist = mo;
+					farther = current;
+				}
+				else if (!dist) 
+					dist = mo; //Just get the first one and call it quits if there's nothing selected.
+			}
+
 			if (mo->flags6 & MF6_KILLED)
 			{
 				if (!(flags & (CPXF_COUNTDEAD | CPXF_DEADONLY)))
@@ -6059,8 +6098,29 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckProximity)
 			if (counter > count)
 			{
 				result = (flags & (CPXF_LESSOREQUAL | CPXF_EXACT)) ? false : true;
-				break;
+
+				//However, if we have one SET* flag and either the closest or farthest flags, keep the function going.
+				if (ptrWillChange && ptrDistPref)
+					continue;
+				else
+					break;
 			}
+		}
+	}
+
+	if (ptrWillChange && dist != NULL)
+	{
+		if (flags & CPXF_SETONPTR)
+		{
+			if (flags & CPXF_SETTARGET)	ref->target = dist;
+			if (flags & CPXF_SETMASTER)	ref->master = dist;
+			if (flags & CPXF_SETTRACER)	ref->tracer = dist;
+		}
+		else
+		{
+			if (flags & CPXF_SETTARGET)	self->target = dist;
+			if (flags & CPXF_SETMASTER)	self->master = dist;
+			if (flags & CPXF_SETTRACER)	self->tracer = dist;
 		}
 	}
 
@@ -6069,7 +6129,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckProximity)
 	else if (counter < count)
 		result = !!((flags & CPXF_LESSOREQUAL) && !(flags & CPXF_EXACT));
 
-
+	if (!jump) return;
 
 	if (result)
 	{

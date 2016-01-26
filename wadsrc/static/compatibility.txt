@@ -397,6 +397,15 @@ A53AE580A4AF2B5D0B0893F86914781E // TNT: Evilution map31
 	setthingflags 470 2016
 }
 
+4CB7AAC5C43CF32BDF05FD36481C1D9F // Plutonia: Revisited map27
+{
+	setlinespecial 1214 Plat_DownWaitUpStayLip 20 64 150 0 0
+	setlinespecial 1215 Plat_DownWaitUpStayLip 20 64 150 0 0
+	setlinespecial 1216 Plat_DownWaitUpStayLip 20 64 150 0 0
+	setlinespecial 1217 Plat_DownWaitUpStayLip 20 64 150 0 0
+	setlinespecial 1227 Plat_DownWaitUpStayLip 20 64 150 0 0
+}
+
 D0139194F7817BF06F3988DFC47DB38D // Whispers of Satan map29
 {
 	nopassover

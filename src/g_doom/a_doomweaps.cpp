@@ -679,7 +679,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireOldBFG)
 	}
 
 	AWeapon *weapon = self->player->ReadyWeapon;
-	if (ACTION_CALL_FROM_WEAPON()) weapon = NULL;
+	if (!ACTION_CALL_FROM_WEAPON()) weapon = NULL;
 	if (weapon != NULL)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire, true, 1))

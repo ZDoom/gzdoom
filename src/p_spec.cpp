@@ -36,6 +36,7 @@
 #include "templates.h"
 #include "doomdef.h"
 #include "doomstat.h"
+#include "d_event.h"
 #include "gstrings.h"
 
 #include "i_system.h"
@@ -177,7 +178,7 @@ bool CheckIfExitIsGood (AActor *self, level_info_t *info)
 	{
 		return false;
 	}
-	if (deathmatch)
+	if (deathmatch && gameaction != ga_completed)
 	{
 		Printf ("%s exited the level.\n", self->player->userinfo.GetName());
 	}

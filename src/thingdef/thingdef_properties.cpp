@@ -2455,7 +2455,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, GruntSpeed, F, PlayerPawn)
 DEFINE_CLASS_PROPERTY_PREFIX(player, FallingScreamSpeed, FF, PlayerPawn)
 {
 	PROP_FIXED_PARM(minz, 0);
-	PROP_FIXED_PARM(maxz, 0);
+	PROP_FIXED_PARM(maxz, 1);
 	defaults->FallingScreamMinSpeed = minz;
 	defaults->FallingScreamMaxSpeed = maxz;
 }

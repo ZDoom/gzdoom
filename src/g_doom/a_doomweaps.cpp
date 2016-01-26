@@ -36,7 +36,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Punch)
 	if (self->player != NULL)
 	{
 		AWeapon *weapon = self->player->ReadyWeapon;
-		if (weapon != NULL && !(weapon->WeaponFlags & WIF_DEHAMMO))
+		if (weapon != NULL && !(weapon->WeaponFlags & WIF_DEHAMMO) && ACTION_CALL_FROM_WEAPON())
 		{
 			if (!weapon->DepleteAmmo (weapon->bAltFire))
 				return;
@@ -73,7 +73,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePistol)
 	if (self->player != NULL)
 	{
 		AWeapon *weapon = self->player->ReadyWeapon;
-		if (weapon != NULL)
+		if (weapon != NULL && ACTION_CALL_FROM_WEAPON())
 		{
 			if (!weapon->DepleteAmmo (weapon->bAltFire, true, 1))
 				return;
@@ -148,7 +148,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 	slope = P_AimLineAttack (self, angle, Range, &linetarget) + (pr_saw.Random2() * (Spread_Z / 255));
 
 	AWeapon *weapon = self->player->ReadyWeapon;
-	if ((weapon != NULL) && !(Flags & SF_NOUSEAMMO) && !(!linetarget && (Flags & SF_NOUSEAMMOMISS)) && !(weapon->WeaponFlags & WIF_DEHAMMO))
+	if ((weapon != NULL) && !(Flags & SF_NOUSEAMMO) && !(!linetarget && (Flags & SF_NOUSEAMMOMISS)) && !(weapon->WeaponFlags & WIF_DEHAMMO) && ACTION_CALL_FROM_WEAPON())
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return;
@@ -250,7 +250,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireShotgun)
 
 	S_Sound (self, CHAN_WEAPON,  "weapons/shotgf", 1, ATTN_NORM);
 	AWeapon *weapon = self->player->ReadyWeapon;
-	if (weapon != NULL)
+	if (weapon != NULL && ACTION_CALL_FROM_WEAPON())
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire, true, 1))
 			return;
@@ -281,7 +281,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireShotgun2)
 
 	S_Sound (self, CHAN_WEAPON, "weapons/sshotf", 1, ATTN_NORM);
 	AWeapon *weapon = self->player->ReadyWeapon;
-	if (weapon != NULL)
+	if (weapon != NULL && ACTION_CALL_FROM_WEAPON())
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire, true, 2))
 			return;
@@ -390,7 +390,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireCGun)
 	}
 
 	AWeapon *weapon = player->ReadyWeapon;
-	if (weapon != NULL)
+	if (weapon != NULL && ACTION_CALL_FROM_WEAPON())
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire, true, 1))
 			return;
@@ -431,7 +431,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMissile)
 		return;
 	}
 	AWeapon *weapon = self->player->ReadyWeapon;
-	if (weapon != NULL)
+	if (weapon != NULL && ACTION_CALL_FROM_WEAPON())
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire, true, 1))
 			return;
@@ -454,7 +454,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireSTGrenade)
 		return;
 	}
 	AWeapon *weapon = self->player->ReadyWeapon;
-	if (weapon != NULL)
+	if (weapon != NULL && ACTION_CALL_FROM_WEAPON())
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return;
@@ -479,7 +479,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePlasma)
 		return;
 	}
 	AWeapon *weapon = self->player->ReadyWeapon;
-	if (weapon != NULL)
+	if (weapon != NULL && ACTION_CALL_FROM_WEAPON())
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire, true, 1))
 			return;
@@ -497,7 +497,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePlasma)
 //
 // [RH] A_FireRailgun
 //
-static void FireRailgun(AActor *self, int offset_xy)
+static void FireRailgun(AActor *self, int offset_xy, bool fromweapon)
 {
 	int damage;
 	player_t *player;
@@ -508,7 +508,7 @@ static void FireRailgun(AActor *self, int offset_xy)
 	}
 
 	AWeapon *weapon = self->player->ReadyWeapon;
-	if (weapon != NULL)
+	if (weapon != NULL && fromweapon)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire, true, 1))
 			return;
@@ -528,17 +528,17 @@ static void FireRailgun(AActor *self, int offset_xy)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireRailgun)
 {
-	FireRailgun(self, 0);
+	FireRailgun(self, 0, ACTION_CALL_FROM_WEAPON());
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireRailgunRight)
 {
-	FireRailgun(self, 10);
+	FireRailgun(self, 10, ACTION_CALL_FROM_WEAPON());
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireRailgunLeft)
 {
-	FireRailgun(self, -10);
+	FireRailgun(self, -10, ACTION_CALL_FROM_WEAPON());
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_RailWait)
@@ -560,7 +560,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireBFG)
 	}
 
 	AWeapon *weapon = self->player->ReadyWeapon;
-	if (weapon != NULL)
+	if (weapon != NULL && ACTION_CALL_FROM_WEAPON())
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire, true, deh.BFGCells))
 			return;
@@ -671,6 +671,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireOldBFG)
 	AActor * mo = NULL;
 
 	player_t *player;
+	bool doesautoaim = false;
 
 	if (NULL == (player = self->player))
 	{
@@ -678,18 +679,20 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireOldBFG)
 	}
 
 	AWeapon *weapon = self->player->ReadyWeapon;
+	if (!ACTION_CALL_FROM_WEAPON()) weapon = NULL;
 	if (weapon != NULL)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire, true, 1))
 			return;
+
+		doesautoaim = !(weapon->WeaponFlags & WIF_NOAUTOAIM);
+		weapon->WeaponFlags |= WIF_NOAUTOAIM; // No autoaiming that gun
 	}
 	self->player->extralight = 2;
 
 	// Save values temporarily
 	angle_t SavedPlayerAngle = self->angle;
 	fixed_t SavedPlayerPitch = self->pitch;
-	bool doesautoaim = !(self->player->ReadyWeapon->WeaponFlags & WIF_NOAUTOAIM);
-	self->player->ReadyWeapon->WeaponFlags |= WIF_NOAUTOAIM; // No autoaiming that gun
 	for (int i = 0; i < 2; i++) // Spawn two plasma balls in sequence
     {
 		self->angle += ((pr_oldbfg()&127) - 64) * (ANG90/768);
@@ -699,5 +702,5 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireOldBFG)
 		self->angle = SavedPlayerAngle;
 		self->pitch = SavedPlayerPitch;
     }
-	if (doesautoaim) self->player->ReadyWeapon->WeaponFlags &= ~WIF_NOAUTOAIM; // Restore autoaim setting
+	if (doesautoaim && weapon != NULL) weapon->WeaponFlags &= ~WIF_NOAUTOAIM; // Restore autoaim setting
 }

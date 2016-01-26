@@ -382,7 +382,7 @@ struct StateCallData
 	void AF_##name (AActor *self, AActor *stateowner, FState *, int, StateCallData *); \
 	static AFuncDesc info_##cls##_##name = { #name, AF_##name }; \
 	MSVC_ASEG AFuncDesc *infoptr_##cls##_##name GCC_ASEG = &info_##cls##_##name; \
-	void AF_##name (AActor *self, AActor *stateowner, FState *, int, StateCallData *statecall)
+	void AF_##name (AActor *self, AActor *stateowner, FState *CallingState, int, StateCallData *statecall)
 
 #define DEFINE_ACTION_FUNCTION_PARAMS(cls, name) \
 	void AFP_##name (AActor *self, AActor *stateowner, FState *CallingState, int ParameterIndex, StateCallData *statecall); \

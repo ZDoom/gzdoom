@@ -1261,7 +1261,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireBullets)
 	int bslope = 0;
 	int laflags = (flags & FBF_NORANDOMPUFFZ)? LAF_NORANDOMPUFFZ : 0;
 
-	if ((flags & FBF_USEAMMO) && weapon)
+	if ((flags & FBF_USEAMMO) && weapon && ACTION_CALL_FROM_WEAPON())
 	{
 		if (!weapon->DepleteAmmo(weapon->bAltFire, true))
 			return;	// out of ammo
@@ -1450,7 +1450,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
 	pitch = P_AimLineAttack (self, angle, range, &linetarget);
 
 	// only use ammo when actually hitting something!
-	if ((flags & CPF_USEAMMO) && linetarget && weapon)
+	if ((flags & CPF_USEAMMO) && linetarget && weapon && ACTION_CALL_FROM_WEAPON())
 	{
 		if (!weapon->DepleteAmmo(weapon->bAltFire, true))
 			return;	// out of ammo
@@ -1548,7 +1548,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RailAttack)
 	AWeapon *weapon = self->player->ReadyWeapon;
 
 	// only use ammo when actually hitting something!
-	if (useammo)
+	if (useammo && weapon != NULL && ACTION_CALL_FROM_WEAPON())
 	{
 		if (!weapon->DepleteAmmo(weapon->bAltFire, true))
 			return;	// out of ammo

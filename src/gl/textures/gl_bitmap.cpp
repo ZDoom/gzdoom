@@ -50,21 +50,22 @@
 //
 //===========================================================================
 template<class T>
-void iCopyColors(unsigned char * pout, const unsigned char * pin, int cm, int count, int step)
+void iCopyColors(unsigned char * pout, const unsigned char * pin, int cm, int count, int step, BYTE tr, BYTE tg, BYTE tb)
 {
 	int i;
 	int fac;
+	unsigned char a;
 
 	if (cm == CM_DEFAULT)
 	{
 		for(i=0;i<count;i++)
 		{
-			if (T::A(pin) != 0)
+			if ((a = T::A(pin, tr, tg, tb)) != 0)
 			{
 				pout[0]=T::R(pin);
 				pout[1]=T::G(pin);
 				pout[2]=T::B(pin);
-				pout[3]=T::A(pin);
+				pout[3]=a;
 			}
 			pout+=4;
 			pin+=step;
@@ -75,7 +76,7 @@ void iCopyColors(unsigned char * pout, const unsigned char * pin, int cm, int co
 		// Alpha shade uses the red channel for true color pics
 		for(i=0;i<count;i++)
 		{
-			if (T::A(pin) != 0)
+			if (T::A(pin, tr, tg, tb) != 0)
 			{
 				pout[0] = pout[1] =	pout[2] = 255;
 				pout[3] = T::R(pin);
@@ -88,13 +89,13 @@ void iCopyColors(unsigned char * pout, const unsigned char * pin, int cm, int co
 	{
 		for(i=0;i<count;i++) 
 		{
-			if (T::A(pin) != 0)
+			if ((a = T::A(pin, tr, tg, tb)) != 0)
 			{
 				PalEntry pe = SpecialColormaps[cm - CM_FIRSTSPECIALCOLORMAP].GrayscaleToColor[T::Gray(pin)];
 				pout[0] = pe.r;
 				pout[1] = pe.g;
 				pout[2] = pe.b;
-				pout[3] = T::A(pin);
+				pout[3] = a;
 			}
 			pout+=4;
 			pin+=step;
@@ -106,10 +107,10 @@ void iCopyColors(unsigned char * pout, const unsigned char * pin, int cm, int co
 		fac=cm-CM_DESAT0;
 		for(i=0;i<count;i++)
 		{
-			if (T::A(pin) != 0)
+			if ((a = T::A(pin, tr, tg, tb)) != 0)
 			{
 				gl_Desaturate(T::Gray(pin), T::R(pin), T::G(pin), T::B(pin), pout[0], pout[1], pout[2], fac);
-				pout[3] = T::A(pin);
+				pout[3] = a;
 			}
 			pout+=4;
 			pin+=step;
@@ -117,10 +118,11 @@ void iCopyColors(unsigned char * pout, const unsigned char * pin, int cm, int co
 	}
 }
 
-typedef void (*CopyFunc)(unsigned char * pout, const unsigned char * pin, int cm, int count, int step);
+typedef void (*CopyFunc)(unsigned char * pout, const unsigned char * pin, int cm, int count, int step, BYTE tr, BYTE tg, BYTE tb);
 
 static CopyFunc copyfuncs[]={
 	iCopyColors<cRGB>,
+	iCopyColors<cRGBT>,
 	iCopyColors<cRGBA>,
 	iCopyColors<cIA>,
 	iCopyColors<cCMYK>,
@@ -140,14 +142,14 @@ static CopyFunc copyfuncs[]={
 //===========================================================================
 void FGLBitmap::CopyPixelDataRGB(int originx, int originy,
 								const BYTE * patch, int srcwidth, int srcheight, int step_x, int step_y,
-								int rotate, int ct, FCopyInfo *inf)
+								int rotate, int ct, FCopyInfo *inf,	int r, int g, int b)
 {
 	if (ClipCopyPixelRect(&ClipRect, originx, originy, patch, srcwidth, srcheight, step_x, step_y, rotate))
 	{
 		BYTE *buffer = GetPixels() + 4*originx + Pitch*originy;
 		for (int y=0;y<srcheight;y++)
 		{
-			copyfuncs[ct](&buffer[y*Pitch], &patch[y*step_y], cm, srcwidth, step_x);
+			copyfuncs[ct](&buffer[y*Pitch], &patch[y*step_y], cm, srcwidth, step_x, (BYTE)r, (BYTE)g, (BYTE)b);
 		}
 	}
 }

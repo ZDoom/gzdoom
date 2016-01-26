@@ -5968,8 +5968,7 @@ enum CPXFflags
 	CPXF_FARTHEST =			1 << 9,
 	CPXF_CLOSEST =			1 << 10,
 	CPXF_SETONPTR =			1 << 11,
-	CPXF_NODISTANCE =		1 << 12,
-	CPXF_CHECKSIGHT =		1 << 13,
+	CPXF_CHECKSIGHT =		1 << 12,
 };
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckProximity)
 {
@@ -5991,12 +5990,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckProximity)
 	AActor *ref = COPY_AAPTR(self, ptr);
 
 	//We need these to check out.
-	if (!ref || !classname || ((distance <= 0) && !(flags & CPXF_NODISTANCE)))
+	if (!ref || !classname || (distance <= 0))
 		return;
 
 	int counter = 0;
 	bool result = false;
-	if (flags & CPXF_NODISTANCE)	distance = (FIXED_MAX/2);
 	fixed_t closer = distance, farther = 0, current = distance;
 	const bool ptrWillChange = !!(flags & (CPXF_SETTARGET | CPXF_SETMASTER | CPXF_SETTRACER));
 	const bool ptrDistPref = !!(flags & (CPXF_CLOSEST | CPXF_FARTHEST));
@@ -6024,7 +6022,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckProximity)
 		//[MC]Make sure it's in range and respect the desire for Z or not. The function forces it to use
 		//Z later for ensuring CLOSEST and FARTHEST flags are respected perfectly.
 		//Ripped from sphere checking in A_RadiusGive (along with a number of things).
-		if ((flags & CPXF_NODISTANCE) || (ref->AproxDistance(mo) < distance &&
+		if ((ref->AproxDistance(mo) < distance &&
 			((flags & CPXF_NOZ) ||
 			((ref->Z() > mo->Z() && ref->Z() - mo->Top() < distance) ||
 			(ref->Z() <= mo->Z() && mo->Z() - ref->Top() < distance)))))

@@ -504,8 +504,7 @@ enum
 	CPXF_FARTHEST =			1 << 9,
 	CPXF_CLOSEST =			1 << 10,
 	CPXF_SETONPTR =			1 << 11,
-	CPXF_NODISTANCE =		1 << 12,
-	CPXF_CHECKSIGHT =		1 << 13,
+	CPXF_CHECKSIGHT =		1 << 12,
 };
 
 // Flags for A_CheckBlock

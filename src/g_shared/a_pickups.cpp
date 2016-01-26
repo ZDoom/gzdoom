@@ -979,10 +979,12 @@ static void PrintPickupMessage (const char *str)
 
 void AInventory::Touch (AActor *toucher)
 {
+	player_t *player = toucher->player;
+
 	// If a voodoo doll touches something, pretend the real player touched it instead.
-	if (toucher->player != NULL)
+	if (player != NULL)
 	{
-		toucher = toucher->player->mo;
+		toucher = player->mo;
 	}
 
 	bool localview = toucher->CheckLocalView(consoleplayer);
@@ -1010,12 +1012,12 @@ void AInventory::Touch (AActor *toucher)
 
 		// Special check so voodoo dolls picking up items cause the
 		// real player to make noise.
-		if (toucher->player != NULL)
+		if (player != NULL)
 		{
-			PlayPickupSound (toucher->player->mo);
+			PlayPickupSound (player->mo);
 			if (!(ItemFlags & IF_NOSCREENFLASH))
 			{
-				toucher->player->bonuscount = BONUSADD;
+				player->bonuscount = BONUSADD;
 			}
 		}
 		else
@@ -1029,16 +1031,16 @@ void AInventory::Touch (AActor *toucher)
 
 	if (flags & MF_COUNTITEM)
 	{
-		if (toucher->player != NULL)
+		if (player != NULL)
 		{
-			toucher->player->itemcount++;
+			player->itemcount++;
 		}
 		level.found_items++;
 	}
 
 	if (flags5 & MF5_COUNTSECRET)
 	{
-		P_GiveSecret(toucher, true, true, -1);
+		P_GiveSecret(player != NULL? (AActor*)player->mo : toucher, true, true, -1);
 	}
 
 	//Added by MC: Check if item taken was the roam destination of any bot

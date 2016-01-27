@@ -4977,6 +4977,19 @@ enum RadiusGiveFlags
 
 static bool DoRadiusGive(AActor *self, AActor *thing, const PClass *item, int amount, fixed_t distance, int flags, const PClass *filter, FName species, fixed_t mindist)
 {
+	// [MC] We only want to make an exception for missiles here. Nothing else.
+	bool missilePass = !!((flags & RGF_MISSILES) && thing->isMissile());
+	if (thing == self)
+	{
+		if (!(flags & RGF_GIVESELF))
+			return false;
+	}
+	else if (thing->isMissile())
+	{
+		if (!missilePass)
+			return false;
+	}
+
 	//[MC] Check for a filter, species, and the related exfilter/expecies/either flag(s).
 	bool filterpass = DoCheckClass(thing, filter, !!(flags & RGF_EXFILTER)),
 		speciespass = DoCheckSpecies(thing, species, !!(flags & RGF_EXSPECIES));
@@ -4984,12 +4997,6 @@ static bool DoRadiusGive(AActor *self, AActor *thing, const PClass *item, int am
 	if ((flags & RGF_EITHER) ? (!(filterpass || speciespass)) : (!(filterpass && speciespass)))
 	{
 		if (thing != self)	//Don't let filter and species obstruct RGF_GIVESELF.
-			return false;
-	}
-
-	if (thing == self)
-	{
-		if (!(flags & RGF_GIVESELF))
 			return false;
 	}
 
@@ -5039,7 +5046,6 @@ static bool DoRadiusGive(AActor *self, AActor *thing, const PClass *item, int am
 	}
 
 	bool itemPass = !!((flags & RGF_ITEMS) && thing->IsKindOf(RUNTIME_CLASS(AInventory)));
-	bool missilePass = !!((flags & RGF_MISSILES) && thing->flags & MF_MISSILE);
 
 	if (selfPass || monsterPass || corpsePass || killedPass || itemPass || objectPass || missilePass || playerPass || voodooPass)
 	{
@@ -5120,7 +5126,24 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusGive)
 	}
 	AActor *thing;
 	bool given = false;
-	
+	if (flags & RGF_MISSILES)
+	{
+		TThinkerIterator<AActor> it;
+		while ((thing = it.Next()))
+		{
+			bool giving = !!(DoRadiusGive(self, thing, item, amount, distance, flags, filter, species, mindist));
+			if (giving)	given = true;
+		}
+	}
+	else
+	{
+		FBlockThingsIterator it(FBoundingBox(self->X(), self->Y(), distance));
+		while ((thing = it.Next()))
+		{
+			bool giving = !!(DoRadiusGive(self, thing, item, amount, distance, flags, filter, species, mindist));
+			if (giving)	given = true;
+		}
+	}
 	ACTION_SET_RESULT(given);
 }
 

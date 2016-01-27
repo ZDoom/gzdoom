@@ -54,6 +54,6 @@ void main()
 		gl_ClipDistance[0] = uClipHeightTop - worldcoord.y;
 	}
 	
-	gl_ClipDistance[2] = worldcoord.y - uClipSplit.x;
-	gl_ClipDistance[3] = uClipSplit.y - worldcoord.y;
+	gl_ClipDistance[1] = worldcoord.y - uClipSplit.x;
+	gl_ClipDistance[2] = uClipSplit.y - worldcoord.y;
 }

@@ -2507,16 +2507,11 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 		fixed_t oldY = actor->Y();
 		FTextureID oldFloor = actor->floorpic;
 
-		bool movecheck = P_Move(actor);
 		// chase towards player
-		if (actor->movecount >= 0 || !movecheck)
-			actor->movecount--;
-		if (!(flags & CHF_STOPIFBLOCKED))
+		if ((--actor->movecount < 0 && !(flags & CHF_NORANDOMTURN)) || (!P_Move(actor) && !(flags & CHF_STOPIFBLOCKED)))
 		{
-			if ((!(flags & CHF_NORANDOMTURN) && (actor->movecount < 0)) || !movecheck)
-				P_NewChaseDir(actor);
+			P_NewChaseDir(actor);
 		}
-		
 		// if the move was illegal, reset it 
 		// (copied from A_SerpentChase - it applies to everything with CANTLEAVEFLOORPIC!)
 		if (actor->flags2&MF2_CANTLEAVEFLOORPIC && actor->floorpic != oldFloor )

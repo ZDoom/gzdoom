@@ -2509,7 +2509,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 
 		bool movecheck = P_Move(actor);
 		// chase towards player
-		if (actor->movecount >= 0)
+		if (actor->movecount >= 0 || !movecheck)
 			actor->movecount--;
 		if (!(flags & CHF_STOPIFBLOCKED))
 		{

@@ -1917,32 +1917,29 @@ void S_UpdateSounds (AActor *listenactor)
 		S_ActivatePlayList(false);
 	}
 
-	if (listenactor != NULL)
+	// should never happen
+	S_SetListener(listener, listenactor);
+
+	for (FSoundChan *chan = Channels; chan != NULL; chan = chan->NextChan)
 	{
-		// should never happen
-		S_SetListener(listener, listenactor);
-
-		for (FSoundChan *chan = Channels; chan != NULL; chan = chan->NextChan)
+		if ((chan->ChanFlags & (CHAN_EVICTED | CHAN_IS3D)) == CHAN_IS3D)
 		{
-			if ((chan->ChanFlags & (CHAN_EVICTED | CHAN_IS3D)) == CHAN_IS3D)
-			{
-				CalcPosVel(chan, &pos, &vel);
-				GSnd->UpdateSoundParams3D(&listener, chan, !!(chan->ChanFlags & CHAN_AREA), pos, vel);
-			}
-			chan->ChanFlags &= ~CHAN_JUSTSTARTED;
+			CalcPosVel(chan, &pos, &vel);
+			GSnd->UpdateSoundParams3D(&listener, chan, !!(chan->ChanFlags & CHAN_AREA), pos, vel);
 		}
+		chan->ChanFlags &= ~CHAN_JUSTSTARTED;
+	}
 
-		SN_UpdateActiveSequences();
+	SN_UpdateActiveSequences();
 
 
-		GSnd->UpdateListener(&listener);
-		GSnd->UpdateSounds();
+	GSnd->UpdateListener(&listener);
+	GSnd->UpdateSounds();
 
-		if (level.time >= RestartEvictionsAt)
-		{
-			RestartEvictionsAt = 0;
-			S_RestoreEvictedChannels();
-		}
+	if (level.time >= RestartEvictionsAt)
+	{
+		RestartEvictionsAt = 0;
+		S_RestoreEvictedChannels();
 	}
 }
 

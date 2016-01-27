@@ -344,6 +344,11 @@ void MIDIStreamer::Play(bool looping, int subsong)
 	if (MIDI == NULL || 0 != MIDI->Open(Callback, this))
 	{
 		Printf(PRINT_BOLD, "Could not open MIDI out device\n");
+		if (MIDI != NULL)
+		{
+			delete MIDI;
+			MIDI = NULL;
+		}
 		return;
 	}
 

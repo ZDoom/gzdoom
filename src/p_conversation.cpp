@@ -848,7 +848,7 @@ public:
 	bool MouseEvent(int type, int x, int y)
 	{
 		int sel = -1;
-		int fh = SmallFont->GetHeight();
+		int fh = OptionSettings.mLinespacing;
 
 		// convert x/y from screen to virtual coordinates, according to CleanX/Yfac use in DrawTexture
 		x = ((x - (screen->GetWidth() / 2)) / CleanXfac) + 160;

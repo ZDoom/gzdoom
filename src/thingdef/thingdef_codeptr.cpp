@@ -5122,6 +5122,31 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusGive)
 	ACTION_SET_RESULT(given);
 }
 
+//===========================================================================
+//
+// A_CheckSpecies
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckSpecies)
+{
+	ACTION_PARAM_START(3);
+	ACTION_PARAM_STATE(jump, 0);
+	ACTION_PARAM_NAME(species, 1);
+	ACTION_PARAM_INT(ptr, 2);
+
+	AActor *mobj = COPY_AAPTR(self, ptr);
+
+	ACTION_SET_RESULT(false);
+	//Needs at least one state jump to work. 
+	if (!mobj)
+	{
+		return;
+	}
+
+	if (jump && mobj->GetSpecies() == species)
+		ACTION_JUMP(jump);
+}
+
 
 //==========================================================================
 //
@@ -6196,3 +6221,114 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckBlock)
 		ACTION_JUMP(block);
 	}
 }
+
+//===========================================================================
+//
+// A_FaceMovementDirection(angle offset, bool pitch, ptr)
+//
+// Sets the actor('s pointer) to face the direction of travel.
+//===========================================================================
+enum FMDFlags
+{
+	FMDF_NOPITCH =			1 << 0,
+	FMDF_INTERPOLATE =		1 << 1,
+	FMDF_NOANGLE =			1 << 2,
+};
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceMovementDirection)
+{
+	ACTION_PARAM_START(5);
+	ACTION_PARAM_ANGLE(offset, 0);
+	ACTION_PARAM_ANGLE(anglelimit, 1);
+	ACTION_PARAM_ANGLE(pitchlimit, 2);
+	ACTION_PARAM_INT(flags, 3);
+	ACTION_PARAM_INT(ptr, 4);
+
+	AActor *mobj = COPY_AAPTR(self, ptr);
+
+	//Need an actor.
+	if (!mobj || ((flags & FMDF_NOPITCH) && (flags & FMDF_NOANGLE)))
+	{
+		ACTION_SET_RESULT(false);
+		return;
+	}
+	
+	//Don't bother calculating this if we don't have any horizontal movement.
+	if (!(flags & FMDF_NOANGLE) && (mobj->velx != 0 || mobj->vely != 0))
+	{
+		angle_t current = mobj->angle; 
+		const angle_t angle = R_PointToAngle2(0, 0, mobj->velx, mobj->vely);
+		//Done because using anglelimit directly causes a signed/unsigned mismatch.
+		const angle_t limit = anglelimit; 
+
+		//Code borrowed from A_Face*.
+		if (limit > 0 && (absangle(current - angle) > limit))
+		{
+			if (current < angle)
+			{
+				// [MC] This may appear backwards, but I assure any who
+				// reads this, it works.
+				if (current - angle > ANGLE_180)
+					current += limit + offset;
+				else
+					current -= limit + offset;
+				mobj->SetAngle(current, !!(flags & FMDF_INTERPOLATE));
+			}
+			else if (current > angle)
+			{
+				if (angle - current > ANGLE_180)
+					current -= limit + offset;
+				else
+					current += limit + offset;
+				mobj->SetAngle(current, !!(flags & FMDF_INTERPOLATE));
+			}
+			else
+				mobj->SetAngle(angle + ANGLE_180 + offset, !!(flags & FMDF_INTERPOLATE));
+			
+		}
+		else
+			mobj->SetAngle(angle + offset, !!(flags & FMDF_INTERPOLATE));
+	}
+
+	if (!(flags & FMDF_NOPITCH))
+	{
+		fixed_t current = mobj->pitch;
+		const FVector2 velocity(mobj->velx, mobj->vely);
+		const fixed_t pitch = R_PointToAngle2(0, 0, (fixed_t)velocity.Length(), -mobj->velz);
+		if (pitchlimit > 0)
+		{
+			// [MC] angle_t for pitchlimit was required because otherwise
+			// we would wind up with less than desirable turn rates that didn't
+			// match that of A_SetPitch. We want consistency. Also, I didn't know
+			// of a better way to convert from angle_t to fixed_t properly so I
+			// used this instead.
+			fixed_t plimit = fixed_t(pitchlimit);
+			
+			if (abs(current - pitch) > plimit)
+			{
+				fixed_t max = 0;
+				
+				if (current > pitch)
+				{
+					max = MIN(plimit, (current - pitch));
+					current -= max;
+				}
+				else //if (current > pitch)
+				{
+					max = MIN(plimit, (pitch - current));
+					current += max;
+				}
+				mobj->SetPitch(current, !!(flags & FMDF_INTERPOLATE));
+			}
+			else
+			{
+				mobj->SetPitch(pitch, !!(flags & FMDF_INTERPOLATE));
+			}
+			
+		}
+		else
+		{
+			mobj->SetPitch(pitch, !!(flags & FMDF_INTERPOLATE));
+		}
+	}
+}
+

@@ -45,8 +45,14 @@ void main()
 	gl_Position = ProjectionMatrix * eyeCoordPos;
 	
 	// clip planes used for reflective flats
-	gl_ClipDistance[0] = worldcoord.y - uClipHeightBottom;
-	gl_ClipDistance[1] = uClipHeightTop - worldcoord.y;
+	if (uClipHeightBottom  > -65536.0)
+	{
+		gl_ClipDistance[0] = worldcoord.y - uClipHeightBottom;
+	}
+	else if (uClipHeightTop < 65536.0)
+	{
+		gl_ClipDistance[0] = uClipHeightTop - worldcoord.y;
+	}
 	
 	gl_ClipDistance[2] = worldcoord.y - uClipSplit.x;
 	gl_ClipDistance[3] = uClipSplit.y - worldcoord.y;

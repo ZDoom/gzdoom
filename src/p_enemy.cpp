@@ -2498,8 +2498,6 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 
 	if (actor->strafecount)
 		actor->strafecount--;
-
-	bool movecheck = P_Move(actor);
 	
 	// class bosses don't do this when strafing
 	if ((!fastchase || !actor->FastChaseStrafeCount) && !dontmove)
@@ -2509,6 +2507,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 		fixed_t oldY = actor->Y();
 		FTextureID oldFloor = actor->floorpic;
 
+		bool movecheck = P_Move(actor);
 		// chase towards player
 		if (actor->movecount >= 0)
 			actor->movecount--;

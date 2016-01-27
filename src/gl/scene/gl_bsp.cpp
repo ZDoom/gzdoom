@@ -361,11 +361,6 @@ static void DoSubsector(subsector_t * sub)
 	sector_t * fakesector;
 	sector_t fake;
 	
-	// check for visibility of this entire subsector. This requires GL nodes.
-	// (disabled because it costs more time than it saves.)
-	//if (!clipper.CheckBox(sub->bbox)) return;
-
-
 #ifdef _DEBUG
 	if (sub->sector-sectors==931)
 	{
@@ -386,6 +381,14 @@ static void DoSubsector(subsector_t * sub)
 		// range this subsector spans before going on.
 		UnclipSubsector(sub);
 	}
+
+	if (GLRenderer->mCurrentPortal)
+	{
+		int clipres = GLRenderer->mCurrentPortal->ClipSubsector(sub);
+		if (clipres == GLPortal::PClip_InFront) return;
+	}
+
+
 
 	fakesector=gl_FakeFlat(sector, &fake, false);
 

@@ -159,6 +159,7 @@ public:
 	}
 
 	virtual int ClipSeg(seg_t *seg) { return PClip_Inside; }
+	virtual int ClipSubsector(subsector_t *sub) { return PClip_Inside; }
 	virtual int ClipPoint(fixed_t x, fixed_t y) { return PClip_Inside; }
 
 	static void BeginScene();
@@ -188,6 +189,7 @@ public:
 
 	virtual bool NeedCap() { return false; }
 	virtual int ClipSeg(seg_t *seg);
+	virtual int ClipSubsector(subsector_t *sub);
 	virtual int ClipPoint(fixed_t x, fixed_t y);
 };
 

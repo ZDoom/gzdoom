@@ -46,6 +46,7 @@
 #include "c_console.h"
 #include "d_gui.h"
 #include "d_dehacked.h"
+#include "d_net.h"
 #include "g_game.h"
 #include "m_png.h"
 #include "m_misc.h"
@@ -604,7 +605,7 @@ CCMD(printstats)
 CCMD(finishgame)
 {
 	// This CCMD simulates an end-of-game action and exists to end mods that never exit their last level.
-	G_ChangeLevel(NULL, 0, 0);
+	Net_WriteByte(DEM_FINISHGAME);
 }
 
 ADD_STAT(statistics)

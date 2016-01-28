@@ -2668,6 +2668,11 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 		players[player].camera = players[player].mo;
 		break;
 
+	case DEM_FINISHGAME:
+		// Simulate an end-of-game action
+		G_ChangeLevel(NULL, 0, 0);
+		break;
+
 	default:
 		I_Error ("Unknown net command: %d", type);
 		break;

@@ -219,7 +219,7 @@ FWorldGlobalArray ACS_GlobalArrays[NUM_GLOBALVARS];
 
 //----------------------------------------------------------------------------
 //
-// ACS stack management
+// ACS stack manager
 //
 // This is needed so that the garbage collector has access to all active
 // script stacks
@@ -246,8 +246,6 @@ FACSStack::FACSStack()
 	next = head;
 	prev = NULL;
 	head = this;
-
-	Printf("Adding stack %08d\n", this);
 }
 
 FACSStack::~FACSStack()
@@ -261,7 +259,6 @@ FACSStack::~FACSStack()
 	{
 		prev->next = next;
 	}
-	Printf("Removing stack %08d\n", this);
 }
 
 //----------------------------------------------------------------------------

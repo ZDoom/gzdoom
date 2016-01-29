@@ -97,7 +97,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_KoraxChase)
 		spot = iterator.Next ();
 		if (spot != NULL)
 		{
-			P_Teleport (self, spot->X(), spot->Y(), ONFLOORZ, spot->angle, true, true, false);
+			P_Teleport (self, spot->X(), spot->Y(), ONFLOORZ, spot->angle, TELF_SOURCEFOG | TELF_DESTFOG);
 		}
 
 		P_StartScript (self, NULL, 249, NULL, NULL, 0, 0);
@@ -136,7 +136,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_KoraxChase)
 			self->tracer = spot;
 			if (spot)
 			{
-				P_Teleport (self, spot->X(), spot->Y(), ONFLOORZ, spot->angle, true, true, false);
+				P_Teleport (self, spot->X(), spot->Y(), ONFLOORZ, spot->angle, TELF_SOURCEFOG | TELF_DESTFOG);
 			}
 		}
 	}

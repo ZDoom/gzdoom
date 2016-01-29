@@ -505,6 +505,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_MaceBallImpact2)
 	AActor *tiny;
 	angle_t angle;
 
+	if ((self->Z() <= self->floorz) && P_HitFloor (self))
+	{ // Landed in some sort of liquid
+		self->Destroy ();
+		return;
+	}
 	if (self->flags & MF_INBOUNCE)
 	{
 		fixed_t floordist = self->Z() - self->floorz;

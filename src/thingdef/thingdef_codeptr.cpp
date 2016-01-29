@@ -5131,8 +5131,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusGive)
 		TThinkerIterator<AActor> it;
 		while ((thing = it.Next()))
 		{
-			bool giving = !!(DoRadiusGive(self, thing, item, amount, distance, flags, filter, species, mindist));
-			if (giving)	given = true;
+			if (DoRadiusGive(self, thing, item, amount, distance, flags, filter, species, mindist))	given = true;
 		}
 	}
 	else
@@ -5140,8 +5139,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusGive)
 		FBlockThingsIterator it(FBoundingBox(self->X(), self->Y(), distance));
 		while ((thing = it.Next()))
 		{
-			bool giving = !!(DoRadiusGive(self, thing, item, amount, distance, flags, filter, species, mindist));
-			if (giving)	given = true;
+			if (DoRadiusGive(self, thing, item, amount, distance, flags, filter, species, mindist))	given = true;
 		}
 	}
 	ACTION_SET_RESULT(given);

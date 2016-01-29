@@ -485,7 +485,7 @@ inline bool	P_TeleportMove(AActor* thing, const fixedvec3 &pos, bool telefrag, b
 {
 	return P_TeleportMove(thing, pos.x, pos.y, pos.z, telefrag, modifyactor);
 }
-void	P_PlayerStartStomp (AActor *actor);		// [RH] Stomp on things for a newly spawned player
+void	P_PlayerStartStomp (AActor *actor, bool mononly=false);		// [RH] Stomp on things for a newly spawned player
 void	P_SlideMove (AActor* mo, fixed_t tryx, fixed_t tryy, int numsteps);
 bool	P_BounceWall (AActor *mo);
 bool	P_BounceActor (AActor *mo, AActor *BlockingMobj, bool ontop);

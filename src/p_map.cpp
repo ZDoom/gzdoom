@@ -430,6 +430,12 @@ bool P_TeleportMove(AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefra
 		if (abs(th->X() - tmf.x) >= blockdist || abs(th->Y() - tmf.y) >= blockdist)
 			continue;
 
+		if ((th->flags2 | tmf.thing->flags2) & MF2_THRUACTORS)
+			continue;
+
+		if (tmf.thing->flags6 & MF6_THRUSPECIES && tmf.thing->GetSpecies() == th->GetSpecies())
+			continue;
+
 		// [RH] Z-Check
 		// But not if not MF2_PASSMOBJ or MF3_DONTOVERLAP are set!
 		// Otherwise those things would get stuck inside each other.
@@ -504,7 +510,7 @@ bool P_TeleportMove(AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefra
 //
 //==========================================================================
 
-void P_PlayerStartStomp(AActor *actor)
+void P_PlayerStartStomp(AActor *actor, bool mononly)
 {
 	AActor *th;
 	FBlockThingsIterator it(FBoundingBox(actor->X(), actor->Y(), actor->radius));
@@ -523,6 +529,9 @@ void P_PlayerStartStomp(AActor *actor)
 
 		// only kill monsters and other players
 		if (th->player == NULL && !(th->flags3 & MF3_ISMONSTER))
+			continue;
+
+		if (th->player != NULL && mononly)
 			continue;
 
 		if (actor->Z() > th->Top())

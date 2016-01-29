@@ -42,7 +42,6 @@ gameinfo
 	defaultrespawntime = 16
 	defaultdropstyle = 2
 	endoom = "ENDSTRF"
-	player5start = 5
 	pickupcolor = "d7 ba 45"
 	quitmessages = "$QUITMSG", "$QUITMSG15", "$QUITMSG16", "$QUITMSG17", "$QUITMSG18", "$QUITMSG19", "$QUITMSG20", "$QUITMSG21", "$QUITMSG22"
 	menufontcolor_title = "UNTRANSLATED"

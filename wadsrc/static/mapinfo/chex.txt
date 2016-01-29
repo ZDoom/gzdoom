@@ -43,7 +43,6 @@ gameinfo
 	defaultdropstyle = 1
 	dontcrunchcorpses = true
 	endoom = "ENDOOM"
-	player5start = 4001
 	drawreadthis = true
 	pickupcolor = "d7 ba 45"
 	quitmessages = "$QUITMSG", "$QUITMSG23", "$QUITMSG24", "$QUITMSG25", "$QUITMSG26", "$QUITMSG27", "$QUITMSG28", "$QUITMSG29"

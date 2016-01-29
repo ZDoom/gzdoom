@@ -504,7 +504,7 @@ bool P_TeleportMove(AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefra
 //
 //==========================================================================
 
-void P_PlayerStartStomp(AActor *actor)
+void P_PlayerStartStomp(AActor *actor, bool mononly)
 {
 	AActor *th;
 	FBlockThingsIterator it(FBoundingBox(actor->X(), actor->Y(), actor->radius));
@@ -523,6 +523,9 @@ void P_PlayerStartStomp(AActor *actor)
 
 		// only kill monsters and other players
 		if (th->player == NULL && !(th->flags3 & MF3_ISMONSTER))
+			continue;
+
+		if (th->player != NULL && mononly)
 			continue;
 
 		if (actor->Z() > th->Top())

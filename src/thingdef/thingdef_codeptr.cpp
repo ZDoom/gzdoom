@@ -3448,11 +3448,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
 			}
 			else if (flags & CLOFF_AIM_VERT_NOOFFSET)
 			{
-				pitch += R_PointToAngle2 (0,0, xydist, target->Z() - pos.z + offsetheight + target->height / 2);
+				pitch -= R_PointToAngle2 (0,0, xydist, target->Z() - pos.z + offsetheight + target->height / 2);
 			}
 			else
 			{
-				pitch += R_PointToAngle2 (0,0, xydist, target->Z() - pos.z + target->height / 2);
+				pitch -= R_PointToAngle2 (0,0, xydist, target->Z() - pos.z + target->height / 2);
 			}
 		}
 		else if (flags & CLOFF_ALLOWNULL)

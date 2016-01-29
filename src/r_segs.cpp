@@ -829,7 +829,7 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 						{
 							lightlist_t *lit = &backsector->e->XFloor.lightlist[j];
 							basecolormap = lit->extra_colormap;
-							wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(foggy, *lit->p_lightlevel, lit->lightsource == NULL) + r_actualextralight);
+							wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(foggy, *lit->p_lightlevel, lit->lightsource != NULL) + r_actualextralight);
 							break;
 						}
 					}
@@ -842,7 +842,7 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 						{
 							lightlist_t *lit = &frontsector->e->XFloor.lightlist[j];
 							basecolormap = lit->extra_colormap;
-							wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(foggy, *lit->p_lightlevel, lit->lightsource == NULL) + r_actualextralight);
+							wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(foggy, *lit->p_lightlevel, lit->lightsource != NULL) + r_actualextralight);
 							break;
 						}
 					}

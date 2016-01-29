@@ -35,6 +35,7 @@ typedef enum
   FF_ADDITIVETRANS	   = 0x10000000, // Render this floor with additive translucency
   FF_FLOOD			   = 0x20000000, // extends towards the next lowest flooding or solid 3D floor or the bottom of the sector
   FF_THISINSIDE		   = 0x40000000, // hack for software 3D with FF_BOTHPLANES
+  FF_RESET			   = 0x80000000, // light effect is completely reset, once interrupted  
 } ffloortype_e;
 
 // This is for the purpose of Sector_SetContents:

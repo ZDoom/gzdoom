@@ -615,7 +615,7 @@ void P_Recalculate3DFloors(sector_t * sector)
 				newlight.flags = rover->flags;
 				lightlist.Push(newlight);
 			}
-			else //if (i==0)
+			else
 			{
 				fixed_t ff_bottom=rover->bottom.plane->ZatPoint(CenterSpot(sector));
 				if (ff_bottom<maxheight)

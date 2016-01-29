@@ -466,7 +466,8 @@ void GLFlat::SetFrom3DFloor(F3DFloor *rover, bool top, bool underside)
 	lightlevel = *light->p_lightlevel;
 	
 	if (rover->flags & FF_FOG) Colormap.LightColor = (light->extra_colormap)->Fade;
-	else Colormap.CopyLightColor(light->extra_colormap);
+	else Colormap.CopyFrom3DLight(light);
+
 
 	alpha = rover->alpha/255.0f;
 	renderstyle = rover->flags&FF_ADDITIVETRANS? STYLE_Add : STYLE_Translucent;
@@ -546,13 +547,13 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 		if (x.ffloors.Size())
 		{
 			light = P_GetPlaneLight(sector, &frontsector->floorplane, false);
-			if ((!(sector->GetFlags(sector_t::floor)&PLANEF_ABSLIGHTING) || !light->fromsector)	
+			if ((!(sector->GetFlags(sector_t::floor)&PLANEF_ABSLIGHTING) || light->lightsource == NULL)	
 				&& (light->p_lightlevel != &frontsector->lightlevel))
 			{
 				lightlevel = *light->p_lightlevel;
 			}
 
-			Colormap.CopyLightColor(light->extra_colormap);
+			Colormap.CopyFrom3DLight(light);
 		}
 		renderstyle = STYLE_Translucent;
 		if (alpha!=0.0f) Process(frontsector, false, false);
@@ -604,7 +605,7 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 			{
 				lightlevel = *light->p_lightlevel;
 			}
-			Colormap.CopyLightColor(light->extra_colormap);
+			Colormap.CopyFrom3DLight(light);
 		}
 		renderstyle = STYLE_Translucent;
 		if (alpha!=0.0f) Process(frontsector, true, false);

@@ -41,7 +41,6 @@ enum WallTypes
 	RENDERWALL_M2SNF,
 	RENDERWALL_COLOR,
 	RENDERWALL_FFBLOCK,
-	RENDERWALL_COLORLAYER,
 	// Insert new types at the end!
 };
 

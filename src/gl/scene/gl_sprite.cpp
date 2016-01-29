@@ -349,8 +349,8 @@ void GLSprite::SplitSprite(sector_t * frontsector, bool translucent)
 		{
 			copySprite=*this;
 			copySprite.lightlevel = gl_ClampLight(*lightlist[i].p_lightlevel);
-			copySprite.Colormap.CopyLightColor(lightlist[i].extra_colormap);
-
+			copySprite.Colormap.CopyFrom3DLight(&lightlist[i]);
+			
 			if (glset.nocoloredspritelighting)
 			{
 				int v = (copySprite.Colormap.LightColor.r + copySprite.Colormap.LightColor.g + copySprite.Colormap.LightColor.b )/3;
@@ -389,7 +389,7 @@ void GLSprite::SetSpriteColor(sector_t *sector, fixed_t center_y)
 		if (maplightbottom<center_y)
 		{
 			lightlevel=*lightlist[i].p_lightlevel;
-			Colormap.CopyLightColor(lightlist[i].extra_colormap);
+			Colormap.CopyFrom3DLight(&lightlist[i]);
 
 			if (glset.nocoloredspritelighting)
 			{

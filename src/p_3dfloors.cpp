@@ -593,8 +593,6 @@ void P_Recalculate3DFloors(sector_t * sector)
 		lightlist[0].extra_colormap = sector->ColorMap;
 		lightlist[0].blend = 0;
 		lightlist[0].flags = 0;
-		lightlist[0].fromsector = true;
-		
 
 		resetlight = lightlist[0];
 
@@ -618,7 +616,6 @@ void P_Recalculate3DFloors(sector_t * sector)
 				newlight.extra_colormap = rover->GetColormap();
 				newlight.blend = rover->GetBlend();
 				newlight.flags = rover->flags;
-				newlight.fromsector = false;
 				lightlist.Push(newlight);
 			}
 			else
@@ -633,7 +630,6 @@ void P_Recalculate3DFloors(sector_t * sector)
 					lightlist[0].extra_colormap = rover->GetColormap();
 					lightlist[0].blend = rover->GetBlend();
 					lightlist[0].flags = rover->flags;
-					lightlist[0].fromsector = false;
 				}
 			}
 			if (!(rover->flags & (FF_DOUBLESHADOW | FF_RESET)))
@@ -660,7 +656,6 @@ void P_Recalculate3DFloors(sector_t * sector)
 					newlight.extra_colormap = resetlight.extra_colormap;
 					newlight.blend = resetlight.blend;
 					newlight.flags = rover->flags;
-					newlight.fromsector = false;
 					lightlist.Push(newlight);
 				}
 			}

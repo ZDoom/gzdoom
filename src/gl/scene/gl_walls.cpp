@@ -118,7 +118,6 @@ void GLWall::PutWall(bool translucent)
 		2,		//RENDERWALL_M2SNF,            // depends on render and texture settings, no fog, used on mid texture lines with a fog boundary.
 		3,		//RENDERWALL_COLOR,            // translucent
 		2,		//RENDERWALL_FFBLOCK           // depends on render and texture settings
-		4,		//RENDERWALL_COLORLAYER        // color layer needs special handling
 	};
 	
 	if (gltexture && gltexture->GetTransparent() && passflag[type] == 2)
@@ -162,10 +161,6 @@ void GLWall::PutWall(bool translucent)
 	}
 	else switch (type)
 	{
-	case RENDERWALL_COLORLAYER:
-		gl_drawinfo->drawlists[GLDL_TRANSLUCENTBORDER].AddWall(this);
-		break;
-
 	// portals don't go into the draw list.
 	// Instead they are added to the portal manager
 	case RENDERWALL_HORIZON:
@@ -230,9 +225,6 @@ void GLWall::PutWall(bool translucent)
 
 void GLWall::Put3DWall(lightlist_t * lightlist, bool translucent)
 {
-	bool fadewall = (!translucent && lightlist->caster && (lightlist->caster->flags&FF_FADEWALLS) && 
-		!gl_isBlack((lightlist->extra_colormap)->Fade)) && gl_isBlack(Colormap.FadeColor);
-
 	// only modify the light level if it doesn't originate from the seg's frontsector. This is to account for light transferring effects
 	if (lightlist->p_lightlevel != &seg->sidedef->sector->lightlevel)
 	{
@@ -240,23 +232,8 @@ void GLWall::Put3DWall(lightlist_t * lightlist, bool translucent)
 	}
 	// relative light won't get changed here. It is constant across the entire wall.
 
-	Colormap.CopyLightColor(lightlist->extra_colormap);
-	if (fadewall) lightlevel=255;
+	Colormap.CopyFrom3DLight(lightlist);
 	PutWall(translucent);
-
-	if (fadewall)
-	{
-		FMaterial *tex = gltexture;
-		type = RENDERWALL_COLORLAYER;
-		gltexture = NULL;
-		Colormap.LightColor = (lightlist->extra_colormap)->Fade;
-		alpha = (255-(*lightlist->p_lightlevel))/255.f*1.f;
-		if (alpha>0.f) PutWall(true);
-
-		type = RENDERWALL_FFBLOCK;
-		alpha = 1.0;
-		gltexture = tex;
-	}
 }
 
 //==========================================================================
@@ -410,8 +387,7 @@ void GLWall::SplitWall(sector_t * frontsector, bool translucent)
 				int ll=lightlevel;
 				FColormap lc=Colormap;
 
-				if (i > 0) Put3DWall(&lightlist[i], translucent);
-				else PutWall(translucent);	// uppermost section does not alter light at all.
+				Put3DWall(&lightlist[i], translucent);
 
 				lightlevel=ll;
 				Colormap=lc;

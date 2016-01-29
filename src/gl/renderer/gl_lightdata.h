@@ -2,6 +2,7 @@
 #define __GL_LIGHTDATA
 
 #include "v_palette.h"
+#include "p_3dfloors.h"
 #include "r_data/renderstyle.h"
 #include "gl/renderer/gl_colormap.h"
 
@@ -47,6 +48,17 @@ void gl_RecreateAllAttachedLights();
 extern int fogdensity;
 extern int outsidefogdensity;
 extern int skyfog;
+
+
+inline void FColormap::CopyFrom3DLight(lightlist_t *light)
+{
+	LightColor = light->extra_colormap->Color;
+	desaturation = light->extra_colormap->Desaturate;
+	blendfactor = light->extra_colormap->Color.a;
+	if (light->caster && (light->caster->flags&FF_FADEWALLS) && (light->extra_colormap->Fade & 0xffffff) != 0)
+		FadeColor = light->extra_colormap->Fade;
+}
+
 
 
 #endif

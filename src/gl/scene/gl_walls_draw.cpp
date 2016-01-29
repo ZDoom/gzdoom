@@ -79,7 +79,6 @@ void GLWall::SetupLights()
 	case RENDERWALL_FOGBOUNDARY:
 	case RENDERWALL_MIRRORSURFACE:
 	case RENDERWALL_COLOR:
-	case RENDERWALL_COLORLAYER:
 		return;
 	}
 
@@ -428,13 +427,6 @@ void GLWall::Draw(int pass)
 		case RENDERWALL_FOGBOUNDARY:
 			RenderFogBoundary();
 			break;
-
-		case RENDERWALL_COLORLAYER:
-			glEnable(GL_POLYGON_OFFSET_FILL);
-			glPolygonOffset(-1.0f, -128.0f);
-			RenderTranslucentWall();
-			glDisable(GL_POLYGON_OFFSET_FILL);
-			glPolygonOffset(0, 0);
 
 		default:
 			RenderTranslucentWall();

@@ -1631,6 +1631,18 @@ static void G_QueueBody (AActor *body)
 		translationtables[TRANSLATION_PlayerCorpses][modslot]->UpdateNative();
 	}
 
+	const int skinidx = body->player->userinfo.GetSkin();
+
+	if (0 != skinidx && !(body->flags4 & MF4_NOSKIN))
+	{
+		// Apply skin's scale to actor's scale, it will be lost otherwise
+		const AActor *const defaultActor = body->GetDefault();
+		const FPlayerSkin &skin = skins[skinidx];
+
+		body->scaleX = Scale(body->scaleX, skin.ScaleX, defaultActor->scaleX);
+		body->scaleY = Scale(body->scaleY, skin.ScaleY, defaultActor->scaleY);
+	}
+
 	bodyqueslot++;
 }
 

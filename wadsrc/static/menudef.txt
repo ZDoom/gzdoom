@@ -686,6 +686,8 @@ OptionMenu "VideoOptions"
 	Option "Teleporter zoom",			"telezoom", "OnOff"
 	Slider "Earthquake shake intensity",	"r_quakeintensity", 0.0, 1.0, 0.05, 2
 	Option "Interpolate monster movement",	"nomonsterinterpolation", "NoYes"
+	Slider "Menu dim",					"dimamount", 0, 1.0, 0.05, 2
+	ColorPicker "Dim color",			"dimcolor"
 }
 
 //-------------------------------------------------------------------------------------------

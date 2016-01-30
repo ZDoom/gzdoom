@@ -70,7 +70,7 @@ void AFastProjectile::Tick ()
 			{
 				if (--ripcount <= 0)
 				{
-					tm.LastRipped = NULL;	// [RH] Do rip damage each step, like Hexen
+					tm.LastRipped.Clear();	// [RH] Do rip damage each step, like Hexen
 				}
 				
 				if (!P_TryMove (this, X() + xfrac,Y() + yfrac, true, NULL, tm))

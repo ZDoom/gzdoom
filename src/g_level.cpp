@@ -1202,7 +1202,7 @@ void G_FinishTravel ()
 	while ( (pawn = next) != NULL)
 	{
 		next = it.Next ();
-		pnum = (pawn->player - players);
+		pnum = int(pawn->player - players);
 		pawn->ChangeStatNum (STAT_PLAYER);
 		pawndup = pawn->player->mo;
 		start = NULL;

@@ -62,6 +62,8 @@
 #include "gl/shaders/gl_shader.h"
 
 
+FMemArena GLWallLightEntryArena;
+
 //==========================================================================
 //
 // Checks whether a wall should glow
@@ -219,25 +221,6 @@ void GLWall::PutWall(bool translucent)
 
 //==========================================================================
 //
-//	Sets 3D-floor lighting info
-//
-//==========================================================================
-
-void GLWall::Put3DWall(lightlist_t * lightlist, bool translucent)
-{
-	// only modify the light level if it doesn't originate from the seg's frontsector. This is to account for light transferring effects
-	if (lightlist->p_lightlevel != &seg->sidedef->sector->lightlevel)
-	{
-		lightlevel = gl_ClampLight(*lightlist->p_lightlevel);
-	}
-	// relative light won't get changed here. It is constant across the entire wall.
-
-	Colormap.CopyFrom3DLight(lightlist);
-	PutWall(translucent);
-}
-
-//==========================================================================
-//
 //  Splits a wall vertically if a 3D-floor
 //	creates different lighting across the wall
 //
@@ -245,11 +228,6 @@ void GLWall::Put3DWall(lightlist_t * lightlist, bool translucent)
 
 void GLWall::SplitWall(sector_t * frontsector, bool translucent)
 {
-	GLWall copyWall1,copyWall2;
-	float maplightbottomleft;
-	float maplightbottomright;
-	unsigned int i;
-	int origlight = lightlevel;
 	TArray<lightlist_t> & lightlist=frontsector->e->XFloor.lightlist;
 
 	if (glseg.x1==glseg.x2 && glseg.y1==glseg.y2)
@@ -258,178 +236,17 @@ void GLWall::SplitWall(sector_t * frontsector, bool translucent)
 	}
 	::SplitWall.Clock();
 
-#ifdef _DEBUG
-	if (seg->linedef-lines==1)
+	lights = (GLWallLightEntry*)GLWallLightEntryArena.Alloc(sizeof(GLWallLightEntry)*lightlist.Size());
+	secplane_t *upperplane = &topplane;
+	for (unsigned i = 0; i < lightlist.Size(); i++)
 	{
-		int a = 0;
+		lights[i].cliptop = &lightlist[i].plane;
+		lights[i].clipbottom = i == lightlist.Size() - 1 ? &bottomplane : &lightlist[i + 1].plane;
+		lights[i].lightlevel = lightlist[i].caster != NULL? gl_ClampLight(*lightlist[i].p_lightlevel) : lightlevel;
+		lights[i].colormap.FadeColor = Colormap.FadeColor;
+		lights[i].colormap.CopyFrom3DLight(&lightlist[i]);
 	}
-#endif
-
-	if (lightlist.Size()>1)
-	{
-		for(i=0;i<lightlist.Size()-1;i++)
-		{
-			if (i<lightlist.Size()-1) 
-			{
-				secplane_t &p = lightlist[i+1].plane;
-				if (p.a | p.b)
-				{
-					maplightbottomleft = p.ZatPoint(glseg.x1,glseg.y1);
-					maplightbottomright= p.ZatPoint(glseg.x2,glseg.y2);
-				}
-				else
-				{
-					maplightbottomleft =
-					maplightbottomright= p.ZatPoint(glseg.x2,glseg.y2);
-				}
-
-			}
-			else 
-			{
-				maplightbottomright = maplightbottomleft = -32000;
-			}
-
-			// The light is completely above the wall!
-			if (maplightbottomleft>=ztop[0] && maplightbottomright>=ztop[1])
-			{
-				continue;
-			}
-
-			// check for an intersection with the upper plane
-			if ((maplightbottomleft<ztop[0] && maplightbottomright>ztop[1]) ||
-				(maplightbottomleft>ztop[0] && maplightbottomright<ztop[1]))
-			{
-				float clen = MAX<float>(fabsf(glseg.x2-glseg.x1), fabsf(glseg.y2-glseg.y2));
-
-				float dch=ztop[1]-ztop[0];
-				float dfh=maplightbottomright-maplightbottomleft;
-				float coeff= (ztop[0]-maplightbottomleft)/(dfh-dch);
-				
-				// check for inaccuracies - let's be a little generous here!
-				if (coeff*clen<.1f)
-				{
-					maplightbottomleft=ztop[0];
-				}
-				else if (coeff*clen>clen-.1f)
-				{
-					maplightbottomright=ztop[1];
-				}
-				else
-				{
-					// split the wall in 2 at the intersection and recursively split both halves
-					copyWall1=copyWall2=*this;
-
-					copyWall1.glseg.x2 = copyWall2.glseg.x1 = glseg.x1 + coeff * (glseg.x2-glseg.x1);
-					copyWall1.glseg.y2 = copyWall2.glseg.y1 = glseg.y1 + coeff * (glseg.y2-glseg.y1);
-					copyWall1.ztop[1] = copyWall2.ztop[0] = ztop[0] + coeff * (ztop[1]-ztop[0]);
-					copyWall1.zbottom[1] = copyWall2.zbottom[0] = zbottom[0] + coeff * (zbottom[1]-zbottom[0]);
-					copyWall1.glseg.fracright = copyWall2.glseg.fracleft = glseg.fracleft + coeff * (glseg.fracright-glseg.fracleft);
-					copyWall1.uprgt.u = copyWall2.uplft.u = uplft.u + coeff * (uprgt.u-uplft.u);
-					copyWall1.uprgt.v = copyWall2.uplft.v = uplft.v + coeff * (uprgt.v-uplft.v);
-					copyWall1.lorgt.u = copyWall2.lolft.u = lolft.u + coeff * (lorgt.u-lolft.u);
-					copyWall1.lorgt.v = copyWall2.lolft.v = lolft.v + coeff * (lorgt.v-lolft.v);
-
-					::SplitWall.Unclock();
-
-					copyWall1.SplitWall(frontsector, translucent);
-					copyWall2.SplitWall(frontsector, translucent);
-					return;
-				}
-			}
-
-			// check for an intersection with the lower plane
-			if ((maplightbottomleft<zbottom[0] && maplightbottomright>zbottom[1]) ||
-				(maplightbottomleft>zbottom[0] && maplightbottomright<zbottom[1]))
-			{
-				float clen = MAX<float>(fabsf(glseg.x2-glseg.x1), fabsf(glseg.y2-glseg.y2));
-
-				float dch=zbottom[1]-zbottom[0];
-				float dfh=maplightbottomright-maplightbottomleft;
-				float coeff= (zbottom[0]-maplightbottomleft)/(dfh-dch);
-
-				// check for inaccuracies - let's be a little generous here because there's
-				// some conversions between floats and fixed_t's involved
-				if (coeff*clen<.1f)
-				{
-					maplightbottomleft=zbottom[0];
-				}
-				else if (coeff*clen>clen-.1f)
-				{
-					maplightbottomright=zbottom[1];
-				}
-				else
-				{
-					// split the wall in 2 at the intersection and recursively split both halves
-					copyWall1=copyWall2=*this;
-
-					copyWall1.glseg.x2 = copyWall2.glseg.x1 = glseg.x1 + coeff * (glseg.x2-glseg.x1);
-					copyWall1.glseg.y2 = copyWall2.glseg.y1 = glseg.y1 + coeff * (glseg.y2-glseg.y1);
-					copyWall1.ztop[1] = copyWall2.ztop[0] = ztop[0] + coeff * (ztop[1]-ztop[0]);
-					copyWall1.zbottom[1] = copyWall2.zbottom[0] = zbottom[0] + coeff * (zbottom[1]-zbottom[0]);
-					copyWall1.glseg.fracright = copyWall2.glseg.fracleft = glseg.fracleft + coeff * (glseg.fracright-glseg.fracleft);
-					copyWall1.uprgt.u = copyWall2.uplft.u = uplft.u + coeff * (uprgt.u-uplft.u);
-					copyWall1.uprgt.v = copyWall2.uplft.v = uplft.v + coeff * (uprgt.v-uplft.v);
-					copyWall1.lorgt.u = copyWall2.lolft.u = lolft.u + coeff * (lorgt.u-lolft.u);
-					copyWall1.lorgt.v = copyWall2.lolft.v = lolft.v + coeff * (lorgt.v-lolft.v);
-
-					::SplitWall.Unclock();
-
-					copyWall1.SplitWall(frontsector, translucent);
-					copyWall2.SplitWall(frontsector, translucent);
-					return;
-				}
-			}
-
-			// 3D floor is completely within this light
-			if (maplightbottomleft<=zbottom[0] && maplightbottomright<=zbottom[1])
-			{
-				// These values must not be destroyed!
-				int ll=lightlevel;
-				FColormap lc=Colormap;
-
-				Put3DWall(&lightlist[i], translucent);
-
-				lightlevel=ll;
-				Colormap=lc;
-
-				::SplitWall.Unclock();
-
-				return;
-			}
-
-			if (maplightbottomleft<=ztop[0] && maplightbottomright<=ztop[1] &&
-				(maplightbottomleft!=ztop[0] || maplightbottomright!=ztop[1]))
-			{
-				copyWall1=*this;
-
-				copyWall1.flags |= GLWF_NOSPLITLOWER;
-				flags |= GLWF_NOSPLITUPPER;
-				ztop[0]=copyWall1.zbottom[0]=maplightbottomleft;
-				ztop[1]=copyWall1.zbottom[1]=maplightbottomright;
-				uplft.v=copyWall1.lolft.v=copyWall1.uplft.v+ 
-					(maplightbottomleft-copyWall1.ztop[0])*(copyWall1.lolft.v-copyWall1.uplft.v)/(zbottom[0]-copyWall1.ztop[0]);
-				uprgt.v=copyWall1.lorgt.v=copyWall1.uprgt.v+ 
-					(maplightbottomright-copyWall1.ztop[1])*(copyWall1.lorgt.v-copyWall1.uprgt.v)/(zbottom[1]-copyWall1.ztop[1]);
-				copyWall1.Put3DWall(&lightlist[i], translucent);
-			}
-			if (ztop[0]==zbottom[0] && ztop[1]==zbottom[1]) 
-			{
-				::SplitWall.Unclock();
-				return;
-			}
-		}
-	}
-
-	// These values must not be destroyed!
-	int ll=lightlevel;
-	FColormap lc=Colormap;
-
-	Put3DWall(&lightlist[lightlist.Size()-1], translucent);
-
-	lightlevel=ll;
-	Colormap=lc;
-	flags &= ~GLWF_NOSPLITUPPER;
-	::SplitWall.Unclock();
+	PutWall(translucent);
 }
 
 

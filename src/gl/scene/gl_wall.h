@@ -85,6 +85,15 @@ struct GLSectorPlane
 };
 
 
+struct GLWallLightEntry
+{
+	secplane_t *cliptop;
+	secplane_t *clipbottom;
+	int lightlevel;
+	FColormap colormap;
+};
+
+extern FMemArena GLWallLightEntryArena;
 
 class GLWall
 {
@@ -126,6 +135,7 @@ public:
 	
 	fixed_t viewdistance;
 
+	GLWallLightEntry *lights;
 	int lightlevel;
 	BYTE type;
 	BYTE flags;
@@ -149,8 +159,6 @@ public:
 
 	FTextureID topflat,bottomflat;
 	secplane_t topplane, bottomplane;	// we need to save these to pass them to the shader for calculating glows.
-
-	secplane_t *toplight, *bottomlight;	// These refer to the planes within the lightlist_t entries.
 
 	// these are not the same as ytop and ybottom!!!
 	float zceil[2];
@@ -177,7 +185,6 @@ private:
 	void SkyTop(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex_t * v2);
 	void SkyBottom(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex_t * v2);
 
-	void Put3DWall(lightlist_t * lightlist, bool translucent);
 	void SplitWall(sector_t * frontsector, bool translucent);
 	void LightPass();
 	void SetHorizon(vertex_t * ul, vertex_t * ur, vertex_t * ll, vertex_t * lr);

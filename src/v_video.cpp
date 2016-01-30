@@ -1424,13 +1424,11 @@ void V_CalcCleanFacs (int designwidth, int designheight, int realwidth, int real
 		*cleany = cy2;
 	}
 
-	if (*cleanx > 1 && *cleany > 1 && *cleanx != *cleany)
-	{
-		if (*cleanx < *cleany)
-			*cleany = *cleanx;
-		else
-			*cleanx = *cleany;
-	}
+	if (*cleanx < *cleany)
+		*cleany = *cleanx;
+	else
+		*cleanx = *cleany;
+
 	if (_cx1 != NULL)	*_cx1 = cx1;
 	if (_cx2 != NULL)	*_cx2 = cx2;
 }

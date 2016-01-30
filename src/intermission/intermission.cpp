@@ -591,6 +591,9 @@ void DIntermissionScreenCast::Drawer ()
 	// draw the current frame in the middle of the screen
 	if (caststate != NULL)
 	{
+		double castscalex = FIXED2DBL(mDefaults->scaleX);
+		double castscaley = FIXED2DBL(mDefaults->scaleY);
+
 		int castsprite = caststate->sprite;
 
 		if (!(mDefaults->flags4 & MF4_NOSKIN) &&
@@ -604,7 +607,15 @@ void DIntermissionScreenCast::Drawer ()
 			{
 				if (PlayerClasses[i].Type == mClass)
 				{
-					castsprite = skins[players[consoleplayer].userinfo.GetSkin()].sprite;
+					FPlayerSkin *skin = &skins[players[consoleplayer].userinfo.GetSkin()];
+					castsprite = skin->sprite;
+
+					if (!(mDefaults->flags4 & MF4_NOSKIN))
+					{
+						castscaley = FIXED2DBL(skin->ScaleY);
+						castscalex = FIXED2DBL(skin->ScaleX);
+					}
+
 				}
 			}
 		}
@@ -615,6 +626,10 @@ void DIntermissionScreenCast::Drawer ()
 		screen->DrawTexture (pic, 160, 170,
 			DTA_320x200, true,
 			DTA_FlipX, sprframe->Flip & 1,
+			DTA_DestHeightF, pic->GetScaledHeightDouble() * castscaley,
+			DTA_DestWidthF, pic->GetScaledWidthDouble() * castscalex,
+			DTA_RenderStyle, mDefaults->RenderStyle,
+			DTA_Alpha, mDefaults->alpha,
 			DTA_Translation, casttranslation,
 			TAG_DONE);
 	}

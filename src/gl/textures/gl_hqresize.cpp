@@ -263,6 +263,10 @@ unsigned char *gl_CreateUpsampledTextureBuffer ( const FTexture *inputTexture, u
 	if ( inputTexture->bHasCanvas )
 		return inputBuffer;
 
+	// already scaled?
+	if (inputTexture->xScale >= FRACUNIT*2 && inputTexture->yScale >= FRACUNIT*2)
+		return inputBuffer;
+
 	switch (inputTexture->UseType)
 	{
 	case FTexture::TEX_Sprite:
@@ -281,14 +285,14 @@ unsigned char *gl_CreateUpsampledTextureBuffer ( const FTexture *inputTexture, u
 
 	if (inputBuffer)
 	{
+		int type = gl_texture_hqresize;
 		outWidth = inWidth;
 		outHeight = inHeight;
-		int type = gl_texture_hqresize;
 #ifdef HAVE_MMX
 		// ASM-hqNx does not preserve the alpha channel so fall back to C-version for such textures
-		if (!hasAlpha && type > 3 && type <= 6)
+		if (!hasAlpha && type > 6 && type <= 9)
 		{
-			type += 3;
+			type -= 3;
 		}
 #endif
 

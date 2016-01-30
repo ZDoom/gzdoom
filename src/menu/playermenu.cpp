@@ -479,7 +479,8 @@ void FSliderItem::Drawer(bool selected)
 	screen->DrawText(mFont, selected? OptionSettings.mFontColorSelection : mFontColor, mXpos, mYpos, text, DTA_Clean, true, TAG_DONE);
 
 	int x = SmallFont->StringWidth ("Green") + 8 + mXpos;
-	DrawSlider (x, mYpos);
+	int x2 = SmallFont->StringWidth (mText) + 8 + mXpos;
+	DrawSlider (MAX(x2, x), mYpos);
 }
 
 
@@ -630,14 +631,7 @@ void DPlayerMenu::Init(DMenu *parent, FListMenuDescriptor *desc)
 	li = GetItem(NAME_Autoaim);
 	if (li != NULL)
 	{
-		int sel = 
-			autoaim == 0 ? 0 :
-			autoaim <= 0.25 ? 1 :
-			autoaim <= 0.5 ? 2 :
-			autoaim <= 1 ? 3 :
-			autoaim <= 2 ? 4 :
-			autoaim <= 3 ? 5:6;
-		li->SetValue(0, sel);
+		li->SetValue(0, (int)autoaim);
 	}
 
 	li = GetItem(NAME_Switch);
@@ -966,13 +960,11 @@ void DPlayerMenu::SkinChanged (FListMenuItem *li)
 
 void DPlayerMenu::AutoaimChanged (FListMenuItem *li)
 {
-	static const float ranges[] = { 0, 0.25, 0.5, 1, 2, 3, 5000 };
-
 	int	sel;
 
 	if (li->GetValue(0, &sel))
 	{
-		autoaim = ranges[sel];
+		autoaim = (float)sel;
 	}
 }
 

@@ -1422,6 +1422,8 @@ bool G_CheckSpot (int playernum, FPlayerStart *mthing)
 	fixed_t z, oldz;
 	int i;
 
+	if (mthing->type == 0) return false;
+
 	x = mthing->x;
 	y = mthing->y;
 	z = mthing->z;
@@ -1573,6 +1575,11 @@ void G_DeathMatchSpawnPlayer (int playernum)
 //
 FPlayerStart *G_PickPlayerStart(int playernum, int flags)
 {
+	if (AllPlayerStarts.Size() == 0) // No starts to pick
+	{
+		return NULL;
+	}
+
 	if ((level.flags2 & LEVEL2_RANDOMPLAYERSTARTS) || (flags & PPS_FORCERANDOM) ||
 		playerstarts[playernum].type == 0)
 	{
@@ -1622,6 +1629,18 @@ static void G_QueueBody (AActor *body)
 		*translationtables[TRANSLATION_PlayerCorpses][modslot] = *TranslationToTable(body->Translation);
 		body->Translation = TRANSLATION(TRANSLATION_PlayerCorpses,modslot);
 		translationtables[TRANSLATION_PlayerCorpses][modslot]->UpdateNative();
+	}
+
+	const int skinidx = body->player->userinfo.GetSkin();
+
+	if (0 != skinidx && !(body->flags4 & MF4_NOSKIN))
+	{
+		// Apply skin's scale to actor's scale, it will be lost otherwise
+		const AActor *const defaultActor = body->GetDefault();
+		const FPlayerSkin &skin = skins[skinidx];
+
+		body->scaleX = Scale(body->scaleX, skin.ScaleX, defaultActor->scaleX);
+		body->scaleY = Scale(body->scaleY, skin.ScaleY, defaultActor->scaleY);
 	}
 
 	bodyqueslot++;
@@ -2629,12 +2648,12 @@ bool G_ProcessIFFDemo (FString &mapname)
 
 	if (uncompSize > 0)
 	{
-		BYTE *uncompressed = new BYTE[uncompSize];
+		BYTE *uncompressed = (BYTE*)M_Malloc(uncompSize);
 		int r = uncompress (uncompressed, &uncompSize, demo_p, uLong(zdembodyend - demo_p));
 		if (r != Z_OK)
 		{
 			Printf ("Could not decompress demo! %s\n", M_ZLibError(r).GetChars());
-			delete[] uncompressed;
+			M_Free(uncompressed);
 			return true;
 		}
 		M_Free (demobuffer);

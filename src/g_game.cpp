@@ -1575,6 +1575,11 @@ void G_DeathMatchSpawnPlayer (int playernum)
 //
 FPlayerStart *G_PickPlayerStart(int playernum, int flags)
 {
+	if (AllPlayerStarts.Size() == 0) // No starts to pick
+	{
+		return NULL;
+	}
+
 	if ((level.flags2 & LEVEL2_RANDOMPLAYERSTARTS) || (flags & PPS_FORCERANDOM) ||
 		playerstarts[playernum].type == 0)
 	{

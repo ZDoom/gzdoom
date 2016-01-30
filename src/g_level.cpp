@@ -1209,8 +1209,8 @@ void G_FinishTravel ()
 		assert (pawn != pawndup);
 		if (pawndup == NULL)
 		{ // Oh no! there was no start for this player!
-			start = G_PickPlayerStart(pnum, PPS_FORCERANDOM);	 
-			pawndup = P_SpawnPlayer(start, pnum, (level.flags2 & LEVEL2_PRERAISEWEAPON) ? SPF_WEAPONFULLYUP : 0);
+			start = G_PickPlayerStart(pnum, PPS_FORCERANDOM); 
+			if (start != NULL) pawndup = P_SpawnPlayer(start, pnum, (level.flags2 & LEVEL2_PRERAISEWEAPON) ? SPF_WEAPONFULLYUP : 0);
 			if (pawndup == NULL)
 			{
 				pawn->flags |= MF_NOSECTOR | MF_NOBLOCKMAP;

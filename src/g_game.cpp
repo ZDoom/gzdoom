@@ -1422,6 +1422,8 @@ bool G_CheckSpot (int playernum, FPlayerStart *mthing)
 	fixed_t z, oldz;
 	int i;
 
+	if (mthing->type == 0) return false;
+
 	x = mthing->x;
 	y = mthing->y;
 	z = mthing->z;

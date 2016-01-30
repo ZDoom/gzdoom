@@ -369,14 +369,6 @@ bool FCajunMaster::DoAddBot (BYTE *info, botskill_t skill)
 
 	D_ReadUserInfoStrings (bnum, &info, false);
 
-	if (!deathmatch && playerstarts[bnum].type == 0)
-	{
-		Printf ("%s tried to join, but there was no player %d start\n",
-			players[bnum].userinfo.GetName(), bnum+1);
-		ClearPlayer (bnum, false);	// Make the bot inactive again
-		return false;
-	}
-
 	multiplayer = true; //Prevents cheating and so on; emulates real netgame (almost).
 	players[bnum].Bot = new DBot;
 	players[bnum].Bot->player = &players[bnum];

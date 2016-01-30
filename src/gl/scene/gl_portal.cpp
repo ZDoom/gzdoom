@@ -154,15 +154,17 @@ void GLPortal::DrawPortalStencil()
 			// Cap the stencil at the top and bottom
 			int n = lines.Size() * 2;
 			FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-			ptr->Set(-32767.0f, 32767.0f, -32767.0f, 0, 0);
-			ptr->Set(-32767.0f, 32767.0f, 32767.0f, 0, 0);
-			ptr->Set(32767.0f, 32767.0f, 32767.0f, 0, 0);
-			ptr->Set(32767.0f, 32767.0f, -32767.0f, 0, 0);
+			ptr[0].Set(-32767.0f, 32767.0f, -32767.0f, 0, 0);
+			ptr[1].Set(-32767.0f, 32767.0f, 32767.0f, 0, 0);
+			ptr[2].Set(32767.0f, 32767.0f, 32767.0f, 0, 0);
+			ptr[3].Set(32767.0f, 32767.0f, -32767.0f, 0, 0);
+			ptr += 4;
 			mPrimIndices[n + 1] = GLRenderer->mVBO->GetCount(ptr, &mPrimIndices[n]);
-			ptr->Set(-32767.0f, -32767.0f, -32767.0f, 0, 0);
-			ptr->Set(-32767.0f, -32767.0f, 32767.0f, 0, 0);
-			ptr->Set(32767.0f, -32767.0f, 32767.0f, 0, 0);
-			ptr->Set(32767.0f, -32767.0f, -32767.0f, 0, 0);
+			ptr[0].Set(-32767.0f, -32767.0f, -32767.0f, 0, 0);
+			ptr[1].Set(-32767.0f, -32767.0f, 32767.0f, 0, 0);
+			ptr[2].Set(32767.0f, -32767.0f, 32767.0f, 0, 0);
+			ptr[3].Set(32767.0f, -32767.0f, -32767.0f, 0, 0);
+			ptr += 4;
 			mPrimIndices[n + 3] = GLRenderer->mVBO->GetCount(ptr, &mPrimIndices[n + 2]);
 		}
 	}

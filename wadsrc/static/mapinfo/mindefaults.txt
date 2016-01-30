@@ -31,7 +31,6 @@ gameinfo
 	defaultrespawntime = 12
 	defaultdropstyle = 1
 	endoom = "ENDOOM"
-	player5start = 4001
 	pickupcolor = "c0 c0 c0"
 	quitmessages = "Do you want to quit?"
 

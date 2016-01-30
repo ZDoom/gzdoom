@@ -2636,12 +2636,12 @@ bool G_ProcessIFFDemo (FString &mapname)
 
 	if (uncompSize > 0)
 	{
-		BYTE *uncompressed = new BYTE[uncompSize];
+		BYTE *uncompressed = (BYTE*)M_Malloc(uncompSize);
 		int r = uncompress (uncompressed, &uncompSize, demo_p, uLong(zdembodyend - demo_p));
 		if (r != Z_OK)
 		{
 			Printf ("Could not decompress demo! %s\n", M_ZLibError(r).GetChars());
-			delete[] uncompressed;
+			M_Free(uncompressed);
 			return true;
 		}
 		M_Free (demobuffer);

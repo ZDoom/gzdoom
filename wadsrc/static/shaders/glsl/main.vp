@@ -29,6 +29,12 @@ void main()
 
 		glowdist.x = -((uGlowTopPlane.w + uGlowTopPlane.x * worldcoord.x + uGlowTopPlane.y * worldcoord.z) * uGlowTopPlane.z) - worldcoord.y;
 		glowdist.y = worldcoord.y + ((uGlowBottomPlane.w + uGlowBottomPlane.x * worldcoord.x + uGlowBottomPlane.y * worldcoord.z) * uGlowBottomPlane.z);
+
+		if (uSplitBottomPlane.z != 0)
+		{
+			gl_ClipDistance[3] = -((uSplitTopPlane.w + uSplitTopPlane.x * worldcoord.x + uSplitTopPlane.y * worldcoord.z) * uSplitTopPlane.z) - worldcoord.y;
+			gl_ClipDistance[4] = worldcoord.y + ((uSplitBottomPlane.w + uSplitBottomPlane.x * worldcoord.x + uSplitBottomPlane.y * worldcoord.z) * uSplitBottomPlane.z);
+		}
 	#endif
 	
 	#ifdef SPHEREMAP
@@ -56,4 +62,5 @@ void main()
 	
 	gl_ClipDistance[1] = worldcoord.y - uClipSplit.x;
 	gl_ClipDistance[2] = uClipSplit.y - worldcoord.y;
+	
 }

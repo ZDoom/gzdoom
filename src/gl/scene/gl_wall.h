@@ -150,6 +150,8 @@ public:
 	FTextureID topflat,bottomflat;
 	secplane_t topplane, bottomplane;	// we need to save these to pass them to the shader for calculating glows.
 
+	secplane_t *toplight, *bottomlight;	// These refer to the planes within the lightlist_t entries.
+
 	// these are not the same as ytop and ybottom!!!
 	float zceil[2];
 	float zfloor[2];

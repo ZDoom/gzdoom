@@ -174,7 +174,7 @@ void gl_LoadExtensions()
 void gl_PrintStartupLog()
 {
 	int v = 0;
-	glGetIntegerv(GL_CONTEXT_PROFILE_MASK, &v);
+	if (gl.version >= 3.2) glGetIntegerv(GL_CONTEXT_PROFILE_MASK, &v);
 
 	Printf ("GL_VENDOR: %s\n", glGetString(GL_VENDOR));
 	Printf ("GL_RENDERER: %s\n", glGetString(GL_RENDERER));

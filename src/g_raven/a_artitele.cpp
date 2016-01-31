@@ -43,7 +43,7 @@ bool AArtiTeleport::Use (bool pickup)
 		destY = start->y;
 		destAngle = ANG45 * (start->angle/45);
 	}
-	P_Teleport (Owner, destX, destY, ONFLOORZ, destAngle, true, true, false);
+	P_Teleport (Owner, destX, destY, ONFLOORZ, destAngle, TELF_SOURCEFOG | TELF_DESTFOG);
 	bool canlaugh = true;
  	if (Owner->player->morphTics && (Owner->player->MorphStyle & MORPH_UNDOBYCHAOSDEVICE))
  	{ // Teleporting away will undo any morph effects (pig)

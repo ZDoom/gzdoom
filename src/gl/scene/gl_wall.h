@@ -114,7 +114,6 @@ public:
 	{
 		RWF_BLANK = 0,
 		RWF_TEXTURED = 1,	// actually not being used anymore because with buffers it's even less efficient not writing the texture coordinates - but leave it here
-		RWF_GLOW = 2,
 		RWF_NOSPLIT = 4,
 		RWF_NORENDER = 8,
 	};
@@ -136,6 +135,7 @@ public:
 	fixed_t viewdistance;
 
 	GLWallLightEntry *lights;
+	unsigned int lightsize;
 	int lightlevel;
 	BYTE type;
 	BYTE flags;
@@ -176,6 +176,7 @@ private:
 	void SetupLights();
 	bool PrepareLight(texcoord * tcs, ADynamicLight * light);
 	void RenderWall(int textured, unsigned int *store = NULL);
+	void RenderTextured(int rflags);
 
 	void FloodPlane(int pass);
 

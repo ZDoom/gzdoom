@@ -182,11 +182,6 @@ void GLWall::RenderWall(int textured, unsigned int *store)
 	tcs[1]=uplft;
 	tcs[2]=uprgt;
 	tcs[3]=lorgt;
-	if ((flags&GLWF_GLOW) && (textured & RWF_GLOW))
-	{
-		gl_RenderState.SetGlowPlanes(topplane, bottomplane);
-		gl_RenderState.SetGlowParams(topglowcolor, bottomglowcolor);
-	}
 
 	if (!(textured & RWF_NORENDER))
 	{
@@ -306,6 +301,59 @@ void GLWall::RenderMirrorSurface()
 	}
 }
 
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
+void GLWall::RenderTextured(int rflags)
+{
+	int tmode = gl_RenderState.GetTextureMode();
+	int rel = getExtraLight();
+
+	if (flags & GLWF_GLOW)
+	{
+		gl_RenderState.EnableGlow(true);
+		gl_RenderState.SetGlowPlanes(topplane, bottomplane);
+		gl_RenderState.SetGlowParams(topglowcolor, bottomglowcolor);
+	}
+	gl_RenderState.SetMaterial(gltexture, flags & 3, 0, -1, false);
+
+	if (type == RENDERWALL_M2SNF)
+	{
+		if (flags & GLT_CLAMPY)
+		{
+			if (tmode == TM_MODULATE) gl_RenderState.SetTextureMode(TM_CLAMPY);
+		}
+		gl_SetFog(255, 0, NULL, false);
+	}
+
+	float absalpha = fabsf(alpha);
+	if (lights == NULL)
+	{
+		gl_SetColor(lightlevel, rel, Colormap, absalpha);
+		if (type != RENDERWALL_M2SNF) gl_SetFog(lightlevel, rel, &Colormap, RenderStyle == STYLE_Add);
+		RenderWall(rflags);
+	}
+	else
+	{
+		unsigned int store[2];
+		//RenderWall(rflags, store);
+		gl_RenderState.EnableSplit(true);
+		for (unsigned i = 0; i < lightsize; i++)
+		{
+			gl_SetColor(lights[i].lightlevel, rel, lights[i].colormap, absalpha);
+			if (type != RENDERWALL_M2SNF) gl_SetFog(lights[i].lightlevel, rel, &lights[i].colormap, RenderStyle == STYLE_Add);
+			gl_RenderState.SetSplitPlanes(*lights[i].cliptop, *lights[i].clipbottom);
+			//GLRenderer->mVBO->RenderArray(GL_TRIANGLE_FAN, store[0], store[1]);
+			RenderWall(rflags);
+		}
+		gl_RenderState.EnableSplit(false);
+	}
+	gl_RenderState.SetTextureMode(tmode);
+	gl_RenderState.EnableGlow(false);
+}
 
 //==========================================================================
 //
@@ -315,57 +363,26 @@ void GLWall::RenderMirrorSurface()
 
 void GLWall::RenderTranslucentWall()
 {
-	bool transparent = gltexture? gltexture->GetTransparent() : false;
-	
-	// currently the only modes possible are solid, additive or translucent
-	// and until that changes I won't fix this code for the new blending modes!
-	bool isadditive = RenderStyle == STYLE_Add;
-
 	if (gl_fixedcolormap == CM_DEFAULT && gl_lights && (gl.flags & RFL_BUFFER_STORAGE))
 	{
 		SetupLights();
 	}
-
-	if (!transparent) gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_threshold);
-	else gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
-	if (isadditive) gl_RenderState.BlendFunc(GL_SRC_ALPHA,GL_ONE);
-
-	int extra;
-	if (gltexture) 
+	if (gltexture)
 	{
-		gl_RenderState.EnableGlow(!!(flags & GLWF_GLOW));
-		gl_RenderState.SetMaterial(gltexture, flags & 3, 0, -1, false);
-		extra = getExtraLight();
+		if (!gltexture->GetTransparent()) gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_threshold);
+		else gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
+		if (RenderStyle == STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA,GL_ONE);
+		RenderTextured(RWF_TEXTURED | RWF_NOSPLIT);
+		if (RenderStyle == STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
-	else 
-	{
-		gl_RenderState.EnableTexture(false);
-		extra = 0;
-	}
-	int tmode = gl_RenderState.GetTextureMode();
-
-	gl_SetColor(lightlevel, extra, Colormap, fabsf(alpha));
-	if (type!=RENDERWALL_M2SNF) gl_SetFog(lightlevel, extra, &Colormap, isadditive);
 	else
 	{
-		if (flags & GLT_CLAMPY)
-		{
-			if (tmode == TM_MODULATE) gl_RenderState.SetTextureMode(TM_CLAMPY);
-		}
-		gl_SetFog(255, 0, NULL, false);
-	}
-
-	RenderWall(RWF_TEXTURED|RWF_NOSPLIT);
-
-	// restore default settings
-	if (isadditive) gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	if (!gltexture)	
-	{
+		gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
+		gl_SetColor(lightlevel, 0, Colormap, fabsf(alpha));
+		gl_SetFog(lightlevel, 0, &Colormap, RenderStyle == STYLE_Add);
+		RenderWall(RWF_NOSPLIT);
 		gl_RenderState.EnableTexture(true);
 	}
-	gl_RenderState.EnableGlow(false);
-	gl_RenderState.SetTextureMode(tmode);
 }
 
 //==========================================================================
@@ -375,17 +392,6 @@ void GLWall::RenderTranslucentWall()
 //==========================================================================
 void GLWall::Draw(int pass)
 {
-	int rel;
-	int tmode;
-
-#ifdef _DEBUG
-	if (seg->linedef-lines==879)
-	{
-		int a = 0;
-	}
-#endif
-
-
 	switch (pass)
 	{
 	case GLPASS_LIGHTSONLY:
@@ -396,27 +402,10 @@ void GLWall::Draw(int pass)
 		SetupLights();
 		// fall through
 	case GLPASS_PLAIN:
-		rel = rellight + getExtraLight();
-		gl_SetColor(lightlevel, rel, Colormap,1.0f);
-		tmode = gl_RenderState.GetTextureMode();
-		if (type!=RENDERWALL_M2SNF) gl_SetFog(lightlevel, rel, &Colormap, false);
-		else
-		{
-			if (flags & GLT_CLAMPY)
-			{
-				if (tmode == TM_MODULATE) gl_RenderState.SetTextureMode(TM_CLAMPY);
-			}
-			gl_SetFog(255, 0, NULL, false);
-		}
-		gl_RenderState.EnableGlow(!!(flags & GLWF_GLOW));
-		gl_RenderState.SetMaterial(gltexture, flags & 3, false, -1, false);
-		RenderWall(RWF_TEXTURED|RWF_GLOW);
-		gl_RenderState.EnableGlow(false);
-		gl_RenderState.SetTextureMode(tmode);
+		RenderTextured(RWF_TEXTURED);
 		break;
 
 	case GLPASS_TRANSLUCENT:
-
 
 		switch (type)
 		{

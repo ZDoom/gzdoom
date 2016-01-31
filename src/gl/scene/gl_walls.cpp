@@ -236,7 +236,8 @@ void GLWall::SplitWall(sector_t * frontsector, bool translucent)
 	}
 	::SplitWall.Clock();
 
-	lights = (GLWallLightEntry*)GLWallLightEntryArena.Alloc(sizeof(GLWallLightEntry)*lightlist.Size());
+	lightsize = lightlist.Size();
+	lights = (GLWallLightEntry*)GLWallLightEntryArena.Alloc(sizeof(GLWallLightEntry)*lightsize);
 	secplane_t *upperplane = &topplane;
 	for (unsigned i = 0; i < lightlist.Size(); i++)
 	{
@@ -1293,6 +1294,7 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 	Colormap = frontsector->ColorMap;
 	flags = 0;
 	dynlightindex = UINT_MAX;
+	lights = NULL;
 
 	int rel = 0;
 	int orglightlevel = gl_ClampLight(frontsector->lightlevel);

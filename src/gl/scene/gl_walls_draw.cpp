@@ -338,17 +338,18 @@ void GLWall::RenderTextured(int rflags)
 	}
 	else
 	{
-		unsigned int store[2];
-		//RenderWall(rflags, store);
 		gl_RenderState.EnableSplit(true);
-		for (unsigned i = 0; i < lightsize; i++)
+		glEnable(GL_CLIP_DISTANCE3);
+		glEnable(GL_CLIP_DISTANCE4);
+		for (unsigned i = 0; i <lightsize; i++)
 		{
 			gl_SetColor(lights[i].lightlevel, rel, lights[i].colormap, absalpha);
 			if (type != RENDERWALL_M2SNF) gl_SetFog(lights[i].lightlevel, rel, &lights[i].colormap, RenderStyle == STYLE_Add);
-			gl_RenderState.SetSplitPlanes(*lights[i].cliptop, *lights[i].clipbottom);
-			//GLRenderer->mVBO->RenderArray(GL_TRIANGLE_FAN, store[0], store[1]);
+			gl_RenderState.SetSplitPlanes(*lights[i].cliptop, lights[i].clipbottom? *lights[i].clipbottom : bottomplane);
 			RenderWall(rflags);
 		}
+		glDisable(GL_CLIP_DISTANCE3);
+		glDisable(GL_CLIP_DISTANCE4);
 		gl_RenderState.EnableSplit(false);
 	}
 	gl_RenderState.SetTextureMode(tmode);

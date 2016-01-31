@@ -242,7 +242,7 @@ void GLWall::SplitWall(sector_t * frontsector, bool translucent)
 	for (unsigned i = 0; i < lightlist.Size(); i++)
 	{
 		lights[i].cliptop = &lightlist[i].plane;
-		lights[i].clipbottom = i == lightlist.Size() - 1 ? &bottomplane : &lightlist[i + 1].plane;
+		lights[i].clipbottom = i == lightlist.Size() - 1 ? (secplane_t*)NULL : &lightlist[i + 1].plane;
 		lights[i].lightlevel = lightlist[i].caster != NULL? gl_ClampLight(*lightlist[i].p_lightlevel) : lightlevel;
 		lights[i].colormap.FadeColor = Colormap.FadeColor;
 		lights[i].colormap.CopyFrom3DLight(&lightlist[i]);

@@ -1797,8 +1797,8 @@ void R_DrawFogBoundary (int x1, int x2, short *uclip, short *dclip)
 	// we need to use a new colormap.
 
 	fixed_t lightstep = rw_lightstep;
-	fixed_t light = rw_light+lightstep*(x2-x1);
-	int x = x2;
+	fixed_t light = rw_light+lightstep*(x2-x1-1);
+	int x = x2-1;
 	int t2 = uclip[x];
 	int b2 = dclip[x];
 	int rcolormap = GETPALOOKUP (light, wallshade);

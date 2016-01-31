@@ -364,12 +364,12 @@ void GLWall::RenderTextured(int rflags)
 
 void GLWall::RenderTranslucentWall()
 {
-	if (gl_fixedcolormap == CM_DEFAULT && gl_lights && (gl.flags & RFL_BUFFER_STORAGE))
-	{
-		SetupLights();
-	}
 	if (gltexture)
 	{
+		if (gl_fixedcolormap == CM_DEFAULT && gl_lights && (gl.flags & RFL_BUFFER_STORAGE))
+		{
+			SetupLights();
+		}
 		if (!gltexture->GetTransparent()) gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_threshold);
 		else gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 		if (RenderStyle == STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA,GL_ONE);
@@ -381,6 +381,7 @@ void GLWall::RenderTranslucentWall()
 		gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 		gl_SetColor(lightlevel, 0, Colormap, fabsf(alpha));
 		gl_SetFog(lightlevel, 0, &Colormap, RenderStyle == STYLE_Add);
+		gl_RenderState.EnableTexture(false);
 		RenderWall(RWF_NOSPLIT);
 		gl_RenderState.EnableTexture(true);
 	}

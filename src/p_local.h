@@ -445,13 +445,12 @@ struct FCheckPosition
 	// [RH] These are used by PIT_CheckThing and P_XYMovement to apply
 	// ripping damage once per tic instead of once per move.
 	bool			DoRipping;
-	AActor			*LastRipped;
+	TMap<AActor*, bool> LastRipped;
 	int				PushTime;
 
 	FCheckPosition(bool rip=false)
 	{
 		DoRipping = rip;
-		LastRipped = NULL;
 		PushTime = 0;
 		FromPMove = false;
 	}

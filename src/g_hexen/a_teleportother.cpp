@@ -162,7 +162,7 @@ void P_TeleportToPlayerStarts (AActor *victim)
 	destX = start->x;
 	destY = start->y;
 	destAngle = ANG45 * (start->angle/45);
-	P_Teleport (victim, destX, destY, ONFLOORZ, destAngle, true, true, false);
+	P_Teleport (victim, destX, destY, ONFLOORZ, destAngle, TELF_SOURCEFOG | TELF_DESTFOG);
 }
 
 //===========================================================================
@@ -184,7 +184,7 @@ void P_TeleportToDeathmatchStarts (AActor *victim)
 		destX = deathmatchstarts[i].x;
 		destY = deathmatchstarts[i].y;
 		destAngle = ANG45 * (deathmatchstarts[i].angle/45);
-		P_Teleport (victim, destX, destY, ONFLOORZ, destAngle, true, true, false);
+		P_Teleport (victim, destX, destY, ONFLOORZ, destAngle, TELF_SOURCEFOG | TELF_DESTFOG);
 	}
 	else
 	{

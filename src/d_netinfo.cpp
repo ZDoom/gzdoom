@@ -60,7 +60,7 @@
 
 static FRandom pr_pickteam ("PickRandomTeam");
 
-CVAR (Float,	autoaim,				5000.f,		CVAR_USERINFO | CVAR_ARCHIVE);
+CVAR (Float,	autoaim,				35.f,		CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (String,	name,					"Player",	CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (Color,	color,					0x40cf00,	CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (Int,		colorset,				0,			CVAR_USERINFO | CVAR_ARCHIVE);
@@ -518,9 +518,9 @@ void D_UserInfoChanged (FBaseCVar *cvar)
 			autoaim = 0.0f;
 			return;
 		}
-		else if (autoaim > 5000.0f)
+		else if (autoaim > 35.0f)
 		{
-			autoaim = 5000.f;
+			autoaim = 35.f;
 			return;
 		}
 	}

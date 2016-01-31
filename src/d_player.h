@@ -492,6 +492,7 @@ public:
 		crouchdir = 0;
 		crouching = 0;
 		crouchviewdelta = 0;
+		viewheight = mo->ViewHeight;
 	}
 	
 	bool CanCrouch() const

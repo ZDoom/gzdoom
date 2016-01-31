@@ -1114,7 +1114,8 @@ static void CreateCachedNodes(MapData *map)
 	for(int i=0;i<numsegs;i++)
 	{
 		WriteLong(ZNodes, DWORD(segs[i].v1 - vertexes));
-		WriteLong(ZNodes, DWORD(glsegextras[i].PartnerSeg));
+		if (glsegextras != NULL) WriteLong(ZNodes, DWORD(glsegextras[i].PartnerSeg));
+		else WriteLong(ZNodes, 0);
 		if (segs[i].linedef)
 		{
 			WriteLong(ZNodes, DWORD(segs[i].linedef - lines));

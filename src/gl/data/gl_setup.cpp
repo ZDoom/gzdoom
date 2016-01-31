@@ -436,15 +436,6 @@ static void InitVertexData()
 
 					AddToVertex(sec, vt_sectorlists[v-vertexes]);
 					if (sec->heightsec) AddToVertex(sec->heightsec, vt_sectorlists[v-vertexes]);
-
-					for(l=0;l<x.ffloors.Size();l++)
-					{
-						F3DFloor * rover = x.ffloors[l];
-						if(!(rover->flags & FF_EXISTS)) continue;
-						if (rover->flags&FF_NOSHADE) continue; // FF_NOSHADE doesn't create any wall splits 
-
-						AddToVertex(rover->model, vt_sectorlists[v-vertexes]);
-					}
 				}
 			}
 		}

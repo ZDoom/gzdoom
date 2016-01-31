@@ -6200,6 +6200,7 @@ enum CBF
 	CBF_SETMASTER		= 1 << 2,	//^ but with master.
 	CBF_SETTRACER		= 1 << 3,	//^ but with tracer.
 	CBF_SETONPTR		= 1 << 4,	//Sets the pointer change on the actor doing the checking instead of self.
+	CBF_DROPOFF			= 1 << 5,	//Check for dropoffs.
 };
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckBlock)
@@ -6219,7 +6220,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckBlock)
 	}
 
 	//Nothing to block it so skip the rest.
-	if (P_TestMobjLocation(mobj)) return;
+	bool checker = (flags & CBF_DROPOFF) ? P_CheckMove(mobj, mobj->X(), mobj->Y()) : P_TestMobjLocation(mobj);
+	if (checker) return;
 
 	if (mobj->BlockingMobj)
 	{

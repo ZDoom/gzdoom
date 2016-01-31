@@ -132,7 +132,9 @@ CUSTOM_CVAR( Int, r_maxparticles, 4000, CVAR_ARCHIVE )
 {
 	if ( self == 0 )
 		self = 4000;
-	else if ( self < 100 )
+	else if (self > 65535)
+		self = 65535;
+	else if (self < 100)
 		self = 100;
 
 	if ( gamestate != GS_STARTUP )

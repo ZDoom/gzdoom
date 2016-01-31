@@ -283,6 +283,7 @@ void I_InitSound ()
 			if ((!GSnd || !GSnd->IsValid()) && IsOpenALPresent())
 			{
 				Printf (TEXTCOLOR_RED"FMod Ex Sound init failed. Trying OpenAL.\n");
+				I_CloseSound();
 				GSnd = new OpenALSoundRenderer;
 				snd_backend = "openal";
 			}
@@ -300,6 +301,7 @@ void I_InitSound ()
 			if ((!GSnd || !GSnd->IsValid()) && IsFModExPresent())
 			{
 				Printf (TEXTCOLOR_RED"OpenAL Sound init failed. Trying FMod Ex.\n");
+				I_CloseSound();
 				GSnd = new FMODSoundRenderer;
 				snd_backend = "fmod";
 			}

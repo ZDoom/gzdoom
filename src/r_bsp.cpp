@@ -541,7 +541,7 @@ void R_AddLine (seg_t *line)
 	if (WallC.Init(tx1, ty1, tx2, ty2, 32))
 		return;
 
-	if (WallC.sx1 > WindowRight || WallC.sx2 < WindowLeft)
+	if (WallC.sx1 >= WindowRight || WallC.sx2 <= WindowLeft)
 		return;
 
 	if (line->linedef == NULL)

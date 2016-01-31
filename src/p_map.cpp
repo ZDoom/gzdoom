@@ -1286,9 +1286,10 @@ bool PIT_CheckThing(AActor *thing, FCheckPosition &tm)
 		{
 			if (!(tm.thing->flags6 & MF6_NOBOSSRIP) || !(thing->flags2 & MF2_BOSS))
 			{
-				if (tm.LastRipped != thing)
+				bool *check = tm.LastRipped.CheckKey(thing);
+				if (check == NULL || !*check)
 				{
-					tm.LastRipped = thing;
+					tm.LastRipped[thing] = true;
 					if (!(thing->flags & MF_NOBLOOD) &&
 						!(thing->flags2 & MF2_REFLECTIVE) &&
 						!(tm.thing->flags3 & MF3_BLOODLESSIMPACT) &&

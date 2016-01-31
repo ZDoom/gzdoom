@@ -206,13 +206,13 @@ void ClipMidtex(int x1, int x2)
 	short most[MAXWIDTH];
 
 	WallMost(most, curline->frontsector->ceilingplane, &WallC);
-	for (int i = x1; i <= x2; ++i)
+	for (int i = x1; i < x2; ++i)
 	{
 		if (wallupper[i] < most[i])
 			wallupper[i] = most[i];
 	}
 	WallMost(most, curline->frontsector->floorplane, &WallC);
-	for (int i = x1; i <= x2; ++i)
+	for (int i = x1; i < x2; ++i)
 	{
 		if (walllower[i] > most[i])
 			walllower[i] = most[i];
@@ -398,12 +398,12 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 			OWallMost(walllower, textop - texheight, &WallC);
 		}
 
-		for (i = x1; i <= x2; i++)
+		for (i = x1; i < x2; i++)
 		{
 			if (wallupper[i] < mceilingclip[i])
 				wallupper[i] = mceilingclip[i];
 		}
-		for (i = x1; i <= x2; i++)
+		for (i = x1; i < x2; i++)
 		{
 			if (walllower[i] > mfloorclip[i])
 				walllower[i] = mfloorclip[i];
@@ -426,7 +426,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 		// draw the columns one at a time
 		if (drawmode == DoDraw0)
 		{
-			for (dc_x = x1; dc_x <= x2; ++dc_x)
+			for (dc_x = x1; dc_x < x2; ++dc_x)
 			{
 				BlastMaskedColumn (R_DrawMaskedColumn, tex);
 			}
@@ -434,9 +434,9 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 		else
 		{
 			// [RH] Draw up to four columns at once
-			int stop = (x2+1) & ~3;
+			int stop = x2 & ~3;
 
-			if (x1 > x2)
+			if (x1 >= x2)
 				goto clearfog;
 
 			dc_x = x1;
@@ -458,7 +458,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 				dc_x++;
 			}
 
-			while (dc_x <= x2)
+			while (dc_x < x2)
 			{
 				BlastMaskedColumn (R_DrawMaskedColumn, tex);
 				dc_x++;
@@ -486,7 +486,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 		if (fake3D & FAKE3D_CLIPTOP)
 		{
 			OWallMost(wallupper, sclipTop - viewz, &WallC);
-			for (i = x1; i <= x2; i++)
+			for (i = x1; i < x2; i++)
 			{
 				if (wallupper[i] < mceilingclip[i])
 					wallupper[i] = mceilingclip[i];
@@ -496,7 +496,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 		if (fake3D & FAKE3D_CLIPBOTTOM)
 		{
 			OWallMost(walllower, sclipBottom - viewz, &WallC);
-			for (i = x1; i <= x2; i++)
+			for (i = x1; i < x2; i++)
 			{
 				if (walllower[i] > mfloorclip[i])
 					walllower[i] = mfloorclip[i];
@@ -520,11 +520,11 @@ clearfog:
 		if (fake3D & FAKE3D_REFRESHCLIP)
 		{
 			assert(ds->bkup >= 0);
-			memcpy(openings + ds->sprtopclip, openings + ds->bkup, (ds->x2-ds->x1+1) * 2);
+			memcpy(openings + ds->sprtopclip, openings + ds->bkup, (ds->x2 - ds->x1) * 2);
 		}
 		else
 		{
-			clearbufshort(openings + ds->sprtopclip - ds->x1 + x1, x2-x1+1, viewheight);
+			clearbufshort(openings + ds->sprtopclip - ds->x1 + x1, x2 - x1, viewheight);
 		}
 	}
 	return;
@@ -539,7 +539,7 @@ void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover)
 	fixed_t Alpha = Scale(rover->alpha, OPAQUE, 255);
 	ESPSResult drawmode;
 	drawmode = R_SetPatchStyle (LegacyRenderStyles[rover->flags & FF_ADDITIVETRANS ? STYLE_Add : STYLE_Translucent],
-		Alpha,	0, 0);
+		Alpha, 0, 0);
 
 	if(drawmode == DontDraw) {
 		R_FinishSetPatchStyle();
@@ -617,12 +617,12 @@ void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover)
 	OWallMost(wallupper, sclipTop - viewz, &WallC);
 	OWallMost(walllower, sclipBottom - viewz, &WallC);
 
-	for (i = x1; i <= x2; i++)
+	for (i = x1; i < x2; i++)
 	{
 		if (wallupper[i] < mceilingclip[i])
 			wallupper[i] = mceilingclip[i];
 	}
-	for (i = x1; i <= x2; i++)
+	for (i = x1; i < x2; i++)
 	{
 		if (walllower[i] > mfloorclip[i])
 			walllower[i] = mfloorclip[i];
@@ -1093,7 +1093,7 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 		palookupoffse[3] = dc_colormap;
 	}
 
-	for(; (x <= x2) && (x & 3); ++x)
+	for(; (x < x2) && (x & 3); ++x)
 	{
 		light += rw_lightstep;
 		y1ve[0] = uwal[x];//max(uwal[x],umost[x]);
@@ -1116,7 +1116,7 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 		dovline1();
 	}
 
-	for(; x <= x2-3; x += 4)
+	for(; x < x2-3; x += 4)
 	{
 		bad = 0;
 		for (z = 3; z>= 0; --z)
@@ -1186,7 +1186,7 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 			}
 		}
 	}
-	for(;x<=x2;x++)
+	for(;x<x2;x++)
 	{
 		light += rw_lightstep;
 		y1ve[0] = uwal[x];//max(uwal[x],umost[x]);
@@ -1227,7 +1227,7 @@ void wallscan_striped (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, 
 	down = most1;
 
 	assert(WallC.sx1 <= x1);
-	assert(WallC.sx2 > x2);
+	assert(WallC.sx2 >= x2);
 
 	// kg3D - fake floors instead of zdoom light list
 	for (unsigned int i = 0; i < frontsector->e->XFloor.lightlist.Size(); i++)
@@ -1235,7 +1235,7 @@ void wallscan_striped (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, 
 		int j = WallMost (most3, frontsector->e->XFloor.lightlist[i].plane, &WallC);
 		if (j != 3)
 		{
-			for (int j = x1; j <= x2; ++j)
+			for (int j = x1; j < x2; ++j)
 			{
 				down[j] = clamp (most3[j], up[j], dwal[j]);
 			}
@@ -1317,7 +1317,7 @@ void wallscan_np2(int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed
 				int j = OWallMost(most3, partition - viewz, &WallC);
 				if (j != 3)
 				{
-					for (int j = x1; j <= x2; ++j)
+					for (int j = x1; j < x2; ++j)
 					{
 						down[j] = clamp(most3[j], up[j], dwal[j]);
 					}
@@ -1341,7 +1341,7 @@ void wallscan_np2(int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed
 				int j = OWallMost(most3, partition - viewz, &WallC);
 				if (j != 12)
 				{
-					for (int j = x1; j <= x2; ++j)
+					for (int j = x1; j < x2; ++j)
 					{
 						up[j] = clamp(most3[j], uwal[j], down[j]);
 					}
@@ -1460,7 +1460,7 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixe
 		domvline1();
 	}
 
-	for(; x <= x2-3; x += 4, p+= 4)
+	for(; x < x2-3; x += 4, p+= 4)
 	{
 		bad = 0;
 		for (z = 3, dax = x+3; z >= 0; --z, --dax)
@@ -1528,7 +1528,7 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixe
 			}
 		}
 	}
-	for(; x <= x2; ++x, ++p)
+	for(; x < x2; ++x, ++p)
 	{
 		light += rw_lightstep;
 		y1ve[0] = uwal[x];
@@ -1612,7 +1612,7 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal,
 		palookupoffse[3] = dc_colormap;
 	}
 
-	for(; (x <= x2) && ((size_t)p & 3); ++x, ++p)
+	for(; (x < x2) && ((size_t)p & 3); ++x, ++p)
 	{
 		light += rw_lightstep;
 		y1ve[0] = uwal[x];//max(uwal[x],umost[x]);
@@ -1633,7 +1633,7 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal,
 		tmvline1();
 	}
 
-	for(; x <= x2-3; x += 4, p+= 4)
+	for(; x < x2-3; x += 4, p+= 4)
 	{
 		bad = 0;
 		for (z = 3, dax = x+3; z >= 0; --z, --dax)
@@ -1704,7 +1704,7 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal,
 			}
 		}
 	}
-	for(; x <= x2; ++x, ++p)
+	for(; x < x2; ++x, ++p)
 	{
 		light += rw_lightstep;
 		y1ve[0] = uwal[x];
@@ -1855,11 +1855,11 @@ void R_RenderSegLoop ()
 			}
 			if (rw_pic->GetHeight() != 1 << rw_pic->HeightBits)
 			{
-				wallscan_np2(x1, x2-1, walltop, wallbottom, swall, lwall, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_frontfz1, rw_frontfz2), false);
+				wallscan_np2(x1, x2, walltop, wallbottom, swall, lwall, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_frontfz1, rw_frontfz2), false);
 			}
 			else
 			{
-				call_wallscan(x1, x2-1, walltop, wallbottom, swall, lwall, yscale, false);
+				call_wallscan(x1, x2, walltop, wallbottom, swall, lwall, yscale, false);
 			}
 		}
 		clearbufshort (ceilingclip+x1, x2-x1, viewheight);
@@ -1898,11 +1898,11 @@ void R_RenderSegLoop ()
 				}
 				if (rw_pic->GetHeight() != 1 << rw_pic->HeightBits)
 				{
-					wallscan_np2(x1, x2-1, walltop, wallupper, swall, lwall, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_backcz1, rw_backcz2), false);
+					wallscan_np2(x1, x2, walltop, wallupper, swall, lwall, yscale, MAX(rw_frontcz1, rw_frontcz2), MIN(rw_backcz1, rw_backcz2), false);
 				}
 				else
 				{
-					call_wallscan(x1, x2-1, walltop, wallupper, swall, lwall, yscale, false);
+					call_wallscan(x1, x2, walltop, wallupper, swall, lwall, yscale, false);
 				}
 			}
 			memcpy (ceilingclip+x1, wallupper+x1, (x2-x1)*sizeof(short));
@@ -1944,11 +1944,11 @@ void R_RenderSegLoop ()
 				}
 				if (rw_pic->GetHeight() != 1 << rw_pic->HeightBits)
 				{
-					wallscan_np2(x1, x2-1, walllower, wallbottom, swall, lwall, yscale, MAX(rw_backfz1, rw_backfz2), MIN(rw_frontfz1, rw_frontfz2), false);
+					wallscan_np2(x1, x2, walllower, wallbottom, swall, lwall, yscale, MAX(rw_backfz1, rw_backfz2), MIN(rw_frontfz1, rw_frontfz2), false);
 				}
 				else
 				{
-					call_wallscan(x1, x2-1, walllower, wallbottom, swall, lwall, yscale, false);
+					call_wallscan(x1, x2, walllower, wallbottom, swall, lwall, yscale, false);
 				}
 			}
 			memcpy (floorclip+x1, walllower+x1, (x2-x1)*sizeof(short));
@@ -2368,7 +2368,7 @@ void R_StoreWallRange (int start, int stop)
 	ds_p->siz1 = (DWORD)DivScale32 (1, WallC.sz1) >> 1;
 	ds_p->siz2 = (DWORD)DivScale32 (1, WallC.sz2) >> 1;
 	ds_p->x1 = rw_x = start;
-	ds_p->x2 = stop-1;
+	ds_p->x2 = stop;
 	ds_p->curline = curline;
 	rw_stopx = stop;
 	ds_p->bFogBoundary = false;
@@ -2547,7 +2547,7 @@ void R_StoreWallRange (int start, int stop)
 	{
 		if (ceilingplane)
 		{	// killough 4/11/98: add NULL ptr checks
-			ceilingplane = R_CheckPlane (ceilingplane, start, stop-1);
+			ceilingplane = R_CheckPlane (ceilingplane, start, stop);
 		}
 		else
 		{
@@ -2559,7 +2559,7 @@ void R_StoreWallRange (int start, int stop)
 	{
 		if (floorplane)
 		{	// killough 4/11/98: add NULL ptr checks
-			floorplane = R_CheckPlane (floorplane, start, stop-1);
+			floorplane = R_CheckPlane (floorplane, start, stop);
 		}
 		else
 		{
@@ -2707,8 +2707,8 @@ int OWallMost (short *mostbuf, fixed_t z, const FWallCoords *wallc)
 #endif
 	if (mostbuf[ix1] < 0) mostbuf[ix1] = 0;
 	else if (mostbuf[ix1] > viewheight) mostbuf[ix1] = (short)viewheight;
-	if (mostbuf[ix2] < 0) mostbuf[ix2] = 0;
-	else if (mostbuf[ix2] > viewheight) mostbuf[ix2] = (short)viewheight;
+	if (mostbuf[ix2-1] < 0) mostbuf[ix2-1] = 0;
+	else if (mostbuf[ix2-1] > viewheight) mostbuf[ix2-1] = (short)viewheight;
 
 	return bad;
 }
@@ -2865,8 +2865,8 @@ int WallMost (short *mostbuf, const secplane_t &plane, const FWallCoords *wallc)
 
 	if (mostbuf[ix1] < 0) mostbuf[ix1] = 0;
 	else if (mostbuf[ix1] > viewheight) mostbuf[ix1] = (short)viewheight;
-	if (mostbuf[ix2] < 0) mostbuf[ix2] = 0;
-	else if (mostbuf[ix2] > viewheight) mostbuf[ix2] = (short)viewheight;
+	if (mostbuf[ix2-1] < 0) mostbuf[ix2-1] = 0;
+	else if (mostbuf[ix2-1] > viewheight) mostbuf[ix2-1] = (short)viewheight;
 
 	return bad;
 }
@@ -3063,7 +3063,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 	x1 = WallC.sx1;
 	x2 = WallC.sx2;
 
-	if (x1 > clipper->x2 || x2 <= clipper->x1)
+	if (x1 >= clipper->x2 || x2 <= clipper->x1)
 		goto done;
 
 	WallT.InitFromWallCoords(&WallC);
@@ -3126,14 +3126,8 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 	dc_texturemid = topoff + FixedDiv (zpos - viewz, yscale);
 
 	// Clip sprite to drawseg
-	if (x1 < clipper->x1)
-	{
-		x1 = clipper->x1;
-	}
-	if (x2 > clipper->x2)
-	{
-		x2 = clipper->x2 + 1;
-	}
+	x1 = MAX<int>(clipper->x1, x1);
+	x2 = MIN<int>(clipper->x2, x2);
 	if (x1 >= x2)
 	{
 		goto done;

@@ -1082,7 +1082,7 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 	basecolormapdata = basecolormap->Maps;
 
 	x = x1;
-	//while ((umost[x] > dmost[x]) && (x <= x2)) x++;
+	//while ((umost[x] > dmost[x]) && (x < x2)) x++;
 
 	bool fixed = (fixedcolormap != NULL || fixedlightlev >= 0);
 	if (fixed)
@@ -1439,7 +1439,7 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixe
 		palookupoffse[3] = dc_colormap;
 	}
 
-	for(; (x <= x2) && ((size_t)p & 3); ++x, ++p)
+	for(; (x < x2) && ((size_t)p & 3); ++x, ++p)
 	{
 		light += rw_lightstep;
 		y1ve[0] = uwal[x];//max(uwal[x],umost[x]);

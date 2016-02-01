@@ -30,18 +30,22 @@ enum WallTypes
 	RENDERWALL_M1S,
 	RENDERWALL_M2S,
 	RENDERWALL_BOTTOM,
-	RENDERWALL_SKY,
 	RENDERWALL_FOGBOUNDARY,
-	RENDERWALL_HORIZON,
-	RENDERWALL_SKYBOX,
-	RENDERWALL_SECTORSTACK,
-	RENDERWALL_PLANEMIRROR,
-	RENDERWALL_MIRROR,
 	RENDERWALL_MIRRORSURFACE,
 	RENDERWALL_M2SNF,
 	RENDERWALL_COLOR,
 	RENDERWALL_FFBLOCK,
 	// Insert new types at the end!
+};
+
+enum PortalTypes
+{
+	PORTALTYPE_SKY,
+	PORTALTYPE_HORIZON,
+	PORTALTYPE_SKYBOX,
+	PORTALTYPE_SECTORSTACK,
+	PORTALTYPE_PLANEMIRROR,
+	PORTALTYPE_MIRROR,
 };
 
 struct GLSeg
@@ -159,7 +163,8 @@ public:
 private:
 
 	void CheckGlowing();
-	void PutWall(bool translucent);
+	void PutWall(sector_t *sec, bool translucent);
+	void PutPortal(int ptype);
 	void CheckTexturePosition();
 
 	void SetupLights();
@@ -175,7 +180,6 @@ private:
 	void SkyTop(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex_t * v2);
 	void SkyBottom(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex_t * v2);
 
-	void SplitWall(sector_t * frontsector, bool translucent);
 	void LightPass();
 	void SetHorizon(vertex_t * ul, vertex_t * ur, vertex_t * ll, vertex_t * lr);
 	bool DoHorizon(seg_t * seg,sector_t * fs, vertex_t * v1,vertex_t * v2);

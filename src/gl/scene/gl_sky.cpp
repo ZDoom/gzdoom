@@ -137,11 +137,12 @@ void GLSkyInfo::init(int sky1, PalEntry FadeColor)
 
 void GLWall::SkyPlane(sector_t *sector, int plane, bool allowreflect)
 {
+	int ptype = -1;
 	FPortal *portal = sector->portals[plane];
 	if (portal != NULL)
 	{
 		if (GLPortal::instack[1 - plane]) return;
-		type = RENDERWALL_SECTORSTACK;
+		ptype = PORTALTYPE_SECTORSTACK;
 		this->portal = portal;
 	}
 	else
@@ -156,13 +157,13 @@ void GLWall::SkyPlane(sector_t *sector, int plane, bool allowreflect)
 
 			if (!gl_noskyboxes && skyboxx && GLRenderer->mViewActor != skyboxx && !(skyboxx->flags&MF_JUSTHIT))
 			{
-				type = RENDERWALL_SKYBOX;
+				ptype = PORTALTYPE_SKYBOX;
 				skybox = skyboxx;
 			}
 			else
 			{
 				skyinfo.init(sector->sky, Colormap.FadeColor);
-				type = RENDERWALL_SKY;
+				ptype = PORTALTYPE_SKY;
 				sky = UniqueSkies.Get(&skyinfo);
 			}
 		}
@@ -170,12 +171,14 @@ void GLWall::SkyPlane(sector_t *sector, int plane, bool allowreflect)
 		{
 			if ((plane == sector_t::ceiling && viewz > sector->ceilingplane.d) ||
 				(plane == sector_t::floor && viewz < -sector->floorplane.d)) return;
-			type = RENDERWALL_PLANEMIRROR;
+			ptype = PORTALTYPE_PLANEMIRROR;
 			planemirror = plane == sector_t::ceiling ? &sector->ceilingplane : &sector->floorplane;
 		}
-		else return;
 	}
-	PutWall(0);
+	if (ptype != -1)
+	{
+		PutPortal(ptype);
+	}
 }
 
 
@@ -189,22 +192,23 @@ void GLWall::SkyLine(line_t *line)
 {
 	ASkyViewpoint * skyboxx = line->skybox;
 	GLSkyInfo skyinfo;
+	int ptype;
 
 	// JUSTHIT is used as an indicator that a skybox is in use.
 	// This is to avoid recursion
 
 	if (!gl_noskyboxes && skyboxx && GLRenderer->mViewActor != skyboxx && !(skyboxx->flags&MF_JUSTHIT))
 	{
-		type = RENDERWALL_SKYBOX;
+		ptype = PORTALTYPE_SKYBOX;
 		skybox = skyboxx;
 	}
 	else
 	{
 		skyinfo.init(line->frontsector->sky, Colormap.FadeColor);
-		type = RENDERWALL_SKY;
+		ptype = PORTALTYPE_SKY;
 		sky = UniqueSkies.Get(&skyinfo);
 	}
-	PutWall(0);
+	PutPortal(ptype);
 }
 
 

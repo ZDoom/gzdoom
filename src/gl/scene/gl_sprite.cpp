@@ -248,6 +248,11 @@ void GLSprite::Draw(int pass)
 			FColormap thiscm;
 			thiscm.FadeColor = Colormap.FadeColor;
 			thiscm.CopyFrom3DLight(&(*lightlist)[i]);
+			if (glset.nocoloredspritelighting)
+			{
+				thiscm.Decolorize();
+			}
+
 			gl_SetColor(thisll, rel, thiscm, trans);
 			gl_RenderState.SetSplitPlanes(*topplane, *lowplane);
 		}

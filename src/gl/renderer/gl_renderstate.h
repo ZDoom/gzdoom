@@ -46,6 +46,7 @@ class FRenderState
 	bool mTextureEnabled;
 	bool mFogEnabled;
 	bool mGlowEnabled;
+	bool mSplitEnabled;
 	bool mBrightmapEnabled;
 	bool mColorMask[4];
 	bool currentColorMask[4];
@@ -72,6 +73,7 @@ class FRenderState
 	FStateVec4 mCameraPos;
 	FStateVec4 mGlowTop, mGlowBottom;
 	FStateVec4 mGlowTopPlane, mGlowBottomPlane;
+	FStateVec4 mSplitTopPlane, mSplitBottomPlane;
 	PalEntry mFogColor;
 	PalEntry mObjectColor;
 	FStateVec4 mDynColor;
@@ -229,6 +231,11 @@ public:
 		mGlowEnabled = on;
 	}
 
+	void EnableSplit(bool on)
+	{
+		mSplitEnabled = on;
+	}
+
 	void SetLightIndex(int n)
 	{
 		mLightIndex = n;
@@ -270,6 +277,12 @@ public:
 	{
 		mGlowTopPlane.Set(FIXED2FLOAT(top.a), FIXED2FLOAT(top.b), FIXED2FLOAT(top.ic), FIXED2FLOAT(top.d));
 		mGlowBottomPlane.Set(FIXED2FLOAT(bottom.a), FIXED2FLOAT(bottom.b), FIXED2FLOAT(bottom.ic), FIXED2FLOAT(bottom.d));
+	}
+
+	void SetSplitPlanes(const secplane_t &top, const secplane_t &bottom)
+	{
+		mSplitTopPlane.Set(FIXED2FLOAT(top.a), FIXED2FLOAT(top.b), FIXED2FLOAT(top.ic), FIXED2FLOAT(top.d));
+		mSplitBottomPlane.Set(FIXED2FLOAT(bottom.a), FIXED2FLOAT(bottom.b), FIXED2FLOAT(bottom.ic), FIXED2FLOAT(bottom.d));
 	}
 
 	void SetDynLight(float r, float g, float b)

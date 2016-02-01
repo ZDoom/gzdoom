@@ -77,6 +77,27 @@
 
 @end
 
+@interface NSWindow(EnterFullscreenOnZoom)
+- (void)enterFullscreenOnZoom;
+@end
+
+@implementation NSWindow(EnterFullscreenOnZoom)
+
+- (void)enterFullscreen:(id)sender
+{
+	ToggleFullscreen = true;
+}
+
+- (void)enterFullscreenOnZoom
+{
+	NSButton* zoomButton = [self standardWindowButton:NSWindowZoomButton];
+	[zoomButton setEnabled:YES];
+	[zoomButton setAction:@selector(enterFullscreen:)];
+	[zoomButton setTarget:self];
+}
+
+@end
+
 
 EXTERN_CVAR(Bool, ticker   )
 EXTERN_CVAR(Bool, vid_vsync)
@@ -807,6 +828,7 @@ void CocoaVideo::SetWindowedMode(const int width, const int height)
 
 	[m_window setContentSize:windowSize];
 	[m_window center];
+	[m_window enterFullscreenOnZoom];
 	[m_window exitAppOnClose];
 }
 

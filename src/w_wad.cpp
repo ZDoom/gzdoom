@@ -979,9 +979,11 @@ void FWadCollection::FixMacHexen()
 	const long iwadSize = reader->GetLength();
 
 	static const long DEMO_SIZE = 13596228;
+	static const long BETA_SIZE = 13749984;
 	static const long FULL_SIZE = 21078584;
 
 	if (   DEMO_SIZE != iwadSize
+		&& BETA_SIZE != iwadSize
 		&& FULL_SIZE != iwadSize)
 	{
 		return;
@@ -1000,13 +1002,22 @@ void FWadCollection::FixMacHexen()
 		0x4b, 0x0a, 0x6a, 0x3b, 0xed, 0x3a, 0x6f, 0x31
 	};
 
+	static const BYTE HEXEN_BETA_MD5[16] =
+	{
+		0x2a, 0xf1, 0xb2, 0x7c, 0xd1, 0x1f, 0xb1, 0x59,
+		0xe6, 0x08, 0x47, 0x2a, 0x1b, 0x53, 0xe4, 0x0e
+	};
+
 	static const BYTE HEXEN_FULL_MD5[16] =
 	{
 		0xb6, 0x81, 0x40, 0xa7, 0x96, 0xf6, 0xfd, 0x7f,
 		0x3a, 0x5d, 0x32, 0x26, 0xa3, 0x2b, 0x93, 0xbe
 	};
 
-	if (   0 != memcmp(HEXEN_DEMO_MD5, checksum, sizeof checksum)
+	const bool isBeta = 0 == memcmp(HEXEN_BETA_MD5, checksum, sizeof checksum);
+
+	if (   !isBeta
+		&& 0 != memcmp(HEXEN_DEMO_MD5, checksum, sizeof checksum)
 		&& 0 != memcmp(HEXEN_FULL_MD5, checksum, sizeof checksum))
 	{
 		return;
@@ -1014,7 +1025,10 @@ void FWadCollection::FixMacHexen()
 
 	static const int EXTRA_LUMPS = 299;
 
-	const int lastLump = GetLastLump(IWAD_FILENUM);
+	// Hexen Beta is very similar to Demo but it has MAP41: Maze at the end of the WAD
+	// So keep this map if it's present but discard all extra lumps
+
+	const int lastLump = GetLastLump(IWAD_FILENUM) - (isBeta ? 12 : 0);
 	assert(GetFirstLump(IWAD_FILENUM) + 299 < lastLump);
 
 	for (int i = lastLump - EXTRA_LUMPS + 1; i <= lastLump; ++i)

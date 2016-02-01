@@ -18,6 +18,7 @@ enum
 	TRANSLATION_PlayerCorpses,
 	TRANSLATION_Decorate,
 	TRANSLATION_Blood,
+	TRANSLATION_RainPillar,
 
 	NUM_TRANSLATION_TABLES
 };

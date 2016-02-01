@@ -700,6 +700,7 @@ void R_InitTranslationTables ()
 	{
 		PushIdentityTable(TRANSLATION_Players);
 		PushIdentityTable(TRANSLATION_PlayersExtra);
+		PushIdentityTable(TRANSLATION_RainPillar);
 	}
 	// The menu player also gets a separate translation table
 	PushIdentityTable(TRANSLATION_Players);
@@ -866,6 +867,29 @@ static void SetRemap(FRemapTable *table, int i, float r, float g, float b)
 }
 
 //----------------------------------------------------------------------------
+//
+// Sets the translation Heretic's the rain pillar
+// This tries to create a translation that preserves the brightness of
+// the rain projectiles so that their effect isn't ruined.
+//
+//----------------------------------------------------------------------------
+
+static void SetPillarRemap(FRemapTable *table, int i, float h, float s, float v)
+{
+	float ph, ps, pv;
+	float fr = GPalette.BaseColors[i].r / 255.f;
+	float fg = GPalette.BaseColors[i].g / 255.f;
+	float fb = GPalette.BaseColors[i].b / 255.f;
+	RGBtoHSV(fr, fg, fb, &ph, &ps, &pv);
+	HSVtoRGB(&fr, &fg, &fb, h, s, (v*0.2f + pv*0.8f));
+	int ir = clamp (int(fr * 255.f), 0, 255);
+	int ig = clamp (int(fg * 255.f), 0, 255);
+	int ib = clamp (int(fb * 255.f), 0, 255);
+	table->Remap[i] = ColorMatcher.Pick (ir, ig, ib);
+	table->Palette[i] = PalEntry(255, ir, ig, ib);
+}
+
+//----------------------------------------------------------------------------
 
 static bool SetRange(FRemapTable *table, int start, int end, int first, int last)
 {
@@ -900,7 +924,7 @@ static bool SetRange(FRemapTable *table, int start, int end, int first, int last
 //----------------------------------------------------------------------------
 
 static void R_CreatePlayerTranslation (float h, float s, float v, const FPlayerColorSet *colorset,
-	FPlayerSkin *skin, FRemapTable *table, FRemapTable *alttable)
+	FPlayerSkin *skin, FRemapTable *table, FRemapTable *alttable, FRemapTable *pillartable)
 {
 	int i;
 	BYTE start = skin->range0start;
@@ -1023,6 +1047,7 @@ static void R_CreatePlayerTranslation (float h, float s, float v, const FPlayerC
 				v = MIN (1.f, (0.2102f + 0.0489f*(float)(i - 144)) * basev);
 				HSVtoRGB (&r, &g, &b, h, s, v);
 				SetRemap(alttable, i, r, g, b);
+				SetPillarRemap(pillartable, i, h, s, v);
 			}
 			alttable->UpdateNative();
 		}
@@ -1103,7 +1128,9 @@ void R_BuildPlayerTranslation (int player)
 	R_CreatePlayerTranslation (h, s, v, colorset,
 		&skins[players[player].userinfo.GetSkin()],
 		translationtables[TRANSLATION_Players][player],
-		translationtables[TRANSLATION_PlayersExtra][player]);
+		translationtables[TRANSLATION_PlayersExtra][player],
+		translationtables[TRANSLATION_RainPillar][player]
+		);
 }
 
 //----------------------------------------------------------------------------
@@ -1123,5 +1150,5 @@ void R_GetPlayerTranslation (int color, const FPlayerColorSet *colorset, FPlayer
 	RGBtoHSV (RPART(color)/255.f, GPART(color)/255.f, BPART(color)/255.f,
 		&h, &s, &v);
 
-	R_CreatePlayerTranslation (h, s, v, colorset, skin, table, NULL);
+	R_CreatePlayerTranslation (h, s, v, colorset, skin, table, NULL, NULL);
 }

@@ -1033,7 +1033,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SkullRodStorm)
 	if (moceiling >= 0)
 		mo->SetZ(newz - mo->height, false);
 	mo->Translation = multiplayer ?
-		TRANSLATION(TRANSLATION_PlayersExtra,self->special2) : 0;
+		TRANSLATION(TRANSLATION_RainPillar,self->special2) : 0;
 	mo->target = self->target;
 	mo->velx = 1; // Force collision detection
 	mo->velz = -mo->Speed;

@@ -903,7 +903,7 @@ FUNC(LS_Teleport_NoFog)
 // Teleport_NoFog (tid, useang, sectortag, keepheight)
 {
 	int flags = 0;
-	if (arg1)
+	if (!arg1)
 	{
 		flags |= TELF_KEEPORIENTATION;
 	}

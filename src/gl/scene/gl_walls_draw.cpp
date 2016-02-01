@@ -344,14 +344,23 @@ void GLWall::RenderTextured(int rflags)
 
 		for (unsigned i = 0; i < lightlist->Size(); i++)
 		{
-			int thisll = (*lightlist)[i].caster != NULL? gl_ClampLight(*(*lightlist)[i].p_lightlevel) : lightlevel;
-			FColormap thiscm;
-			thiscm.FadeColor = Colormap.FadeColor;
-			thiscm.CopyFrom3DLight(&(*lightlist)[i]);
-			gl_SetColor(thisll, rel, thiscm, absalpha);
-			if (type != RENDERWALL_M2SNF) gl_SetFog(thisll, rel, &thiscm, RenderStyle == STYLE_Add);
-			gl_RenderState.SetSplitPlanes((*lightlist)[i].plane, i == (*lightlist).Size() - 1 ? bottomplane : (*lightlist)[i + 1].plane);
-			RenderWall(rflags);
+			secplane_t &lowplane = i == (*lightlist).Size() - 1 ? bottomplane : (*lightlist)[i + 1].plane;
+			// this must use the exact same calculation method as GLWall::Process etc.
+			float low1 = FIXED2FLOAT(lowplane.ZatPoint(vertexes[0]));
+			float low2 = FIXED2FLOAT(lowplane.ZatPoint(vertexes[1]));
+
+			if (low1 < ztop[0] && low2 < ztop[1])
+			{
+				int thisll = (*lightlist)[i].caster != NULL ? gl_ClampLight(*(*lightlist)[i].p_lightlevel) : lightlevel;
+				FColormap thiscm;
+				thiscm.FadeColor = Colormap.FadeColor;
+				thiscm.CopyFrom3DLight(&(*lightlist)[i]);
+				gl_SetColor(thisll, rel, thiscm, absalpha);
+				if (type != RENDERWALL_M2SNF) gl_SetFog(thisll, rel, &thiscm, RenderStyle == STYLE_Add);
+				gl_RenderState.SetSplitPlanes((*lightlist)[i].plane, lowplane);
+				RenderWall(rflags);
+			}
+			if (low1 <= zbottom[0] && low2 <= zbottom[1]) break;
 		}
 
 		glDisable(GL_CLIP_DISTANCE3);

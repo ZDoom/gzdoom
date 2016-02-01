@@ -333,8 +333,8 @@ public:
 	float trans;
 	AActor * actor;
 	particle_t * particle;
+	TArray<lightlist_t> *lightlist;
 
-	void SplitSprite(sector_t * frontsector, bool translucent);
 	void SetLowerParam();
 	void PerformSpriteClipAdjustment(AActor *thing, fixed_t thingx, fixed_t thingy, float spriteheight);
 
@@ -345,7 +345,6 @@ public:
 	void Process(AActor* thing,sector_t * sector);
 	void ProcessParticle (particle_t *particle, sector_t *sector);//, int shade, int fakeside)
 	void SetThingColor(PalEntry);
-	void SetSpriteColor(sector_t *sector, fixed_t y);
 
 	// Lines start-end and fdiv must intersect.
 	double CalcIntersectionVertex(GLWall * w2);

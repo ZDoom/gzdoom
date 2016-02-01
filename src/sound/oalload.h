@@ -1,7 +1,7 @@
 #ifndef OALDEF_H
 #define OALDEF_H
 
-#ifdef _WIN32
+#if defined _WIN32 && !defined NO_OPENAL
 
 #define DEFINE_ENTRY(type, name) static type p_##name;
 #include "oaldef.h"

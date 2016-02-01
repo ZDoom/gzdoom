@@ -136,7 +136,7 @@ void cht_DoCheat (player_t *player, int cheat)
 			player->cheats &= ~CF_NOCLIP;
 			msg = GStrings("STSTR_NCOFF");
 		}
-		player->mo->velx = 1;	// force some lateral movement so that internal variables are up to date
+		if (player->mo->velx == 0) player->mo->velx = 1;	// force some lateral movement so that internal variables are up to date
 		break;
 
 	case CHT_NOVELOCITY:

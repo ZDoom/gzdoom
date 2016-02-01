@@ -240,6 +240,7 @@ void level_info_t::Reset()
 		flags2 = 0;
 	else
 		flags2 = LEVEL2_LAXMONSTERACTIVATION;
+	flags3 = 0;
 	Music = "";
 	LevelName = "";
 	FadeTable = "COLORMAP";

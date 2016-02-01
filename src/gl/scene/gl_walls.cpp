@@ -62,8 +62,6 @@
 #include "gl/shaders/gl_shader.h"
 
 
-FMemArena GLWallLightEntryArena;
-
 //==========================================================================
 //
 // Checks whether a wall should glow
@@ -228,28 +226,14 @@ void GLWall::PutWall(bool translucent)
 
 void GLWall::SplitWall(sector_t * frontsector, bool translucent)
 {
-	TArray<lightlist_t> & lightlist=frontsector->e->XFloor.lightlist;
 
 	if (glseg.x1==glseg.x2 && glseg.y1==glseg.y2)
 	{
 		return;
 	}
-	::SplitWall.Clock();
-
-	lightsize = lightlist.Size();
-	lights = (GLWallLightEntry*)GLWallLightEntryArena.Alloc(sizeof(GLWallLightEntry)*lightsize);
-	secplane_t *upperplane = &topplane;
-	for (unsigned i = 0; i < lightlist.Size(); i++)
-	{
-		lights[i].cliptop = &lightlist[i].plane;
-		lights[i].clipbottom = i == lightlist.Size() - 1 ? (secplane_t*)NULL : &lightlist[i + 1].plane;
-		lights[i].lightlevel = lightlist[i].caster != NULL? gl_ClampLight(*lightlist[i].p_lightlevel) : lightlevel;
-		lights[i].colormap.FadeColor = Colormap.FadeColor;
-		lights[i].colormap.CopyFrom3DLight(&lightlist[i]);
-	}
+	lightlist=&frontsector->e->XFloor.lightlist;
 	PutWall(translucent);
-	lights = NULL;
-	lightsize = 0;
+	lightlist = NULL;
 }
 
 
@@ -1296,7 +1280,7 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 	Colormap = frontsector->ColorMap;
 	flags = 0;
 	dynlightindex = UINT_MAX;
-	lights = NULL;
+	lightlist = NULL;
 
 	int rel = 0;
 	int orglightlevel = gl_ClampLight(frontsector->lightlevel);

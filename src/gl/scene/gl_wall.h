@@ -85,16 +85,6 @@ struct GLSectorPlane
 };
 
 
-struct GLWallLightEntry
-{
-	secplane_t *cliptop;
-	secplane_t *clipbottom;
-	int lightlevel;
-	FColormap colormap;
-};
-
-extern FMemArena GLWallLightEntryArena;
-
 class GLWall
 {
 public:
@@ -134,8 +124,7 @@ public:
 	
 	fixed_t viewdistance;
 
-	GLWallLightEntry *lights;
-	unsigned int lightsize;
+	TArray<lightlist_t> *lightlist;
 	int lightlevel;
 	BYTE type;
 	BYTE flags;

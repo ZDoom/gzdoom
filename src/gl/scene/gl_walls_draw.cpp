@@ -330,7 +330,7 @@ void GLWall::RenderTextured(int rflags)
 	}
 
 	float absalpha = fabsf(alpha);
-	if (lights == NULL)
+	if (lightlist == NULL)
 	{
 		gl_SetColor(lightlevel, rel, Colormap, absalpha);
 		if (type != RENDERWALL_M2SNF) gl_SetFog(lightlevel, rel, &Colormap, RenderStyle == STYLE_Add);
@@ -341,13 +341,19 @@ void GLWall::RenderTextured(int rflags)
 		gl_RenderState.EnableSplit(true);
 		glEnable(GL_CLIP_DISTANCE3);
 		glEnable(GL_CLIP_DISTANCE4);
-		for (unsigned i = 0; i <lightsize; i++)
+
+		for (unsigned i = 0; i < lightlist->Size(); i++)
 		{
-			gl_SetColor(lights[i].lightlevel, rel, lights[i].colormap, absalpha);
-			if (type != RENDERWALL_M2SNF) gl_SetFog(lights[i].lightlevel, rel, &lights[i].colormap, RenderStyle == STYLE_Add);
-			gl_RenderState.SetSplitPlanes(*lights[i].cliptop, lights[i].clipbottom? *lights[i].clipbottom : bottomplane);
+			int thisll = (*lightlist)[i].caster != NULL? gl_ClampLight(*(*lightlist)[i].p_lightlevel) : lightlevel;
+			FColormap thiscm;
+			thiscm.FadeColor = Colormap.FadeColor;
+			thiscm.CopyFrom3DLight(&(*lightlist)[i]);
+			gl_SetColor(thisll, rel, thiscm, absalpha);
+			if (type != RENDERWALL_M2SNF) gl_SetFog(thisll, rel, &thiscm, RenderStyle == STYLE_Add);
+			gl_RenderState.SetSplitPlanes((*lightlist)[i].plane, i == (*lightlist).Size() - 1 ? bottomplane : (*lightlist)[i + 1].plane);
 			RenderWall(rflags);
 		}
+
 		glDisable(GL_CLIP_DISTANCE3);
 		glDisable(GL_CLIP_DISTANCE4);
 		gl_RenderState.EnableSplit(false);

@@ -838,7 +838,6 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 		angle_t a1 = FrustumAngle();
 		clipper.SafeAddClipRangeRealAngles(viewangle + a1, viewangle - a1);
 
-		GLWallLightEntryArena.FreeAll();
 		ProcessScene(toscreen);
 		if (mainview) EndDrawScene(retval);	// do not call this for camera textures.
 		eye->TearDown();

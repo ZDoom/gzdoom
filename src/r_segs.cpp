@@ -171,31 +171,27 @@ fixed_t MaskedScaleY;
 
 static void BlastMaskedColumn (void (*blastfunc)(const BYTE *pixels, const FTexture::Span *spans), FTexture *tex)
 {
-	if (maskedtexturecol[dc_x] != FIXED_MAX)
+	// calculate lighting
+	if (fixedcolormap == NULL && fixedlightlev < 0)
 	{
-		// calculate lighting
-		if (fixedcolormap == NULL && fixedlightlev < 0)
-		{
-			dc_colormap = basecolormap->Maps + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
-		}
-
-		dc_iscale = MulScale18 (MaskedSWall[dc_x], MaskedScaleY);
-		sprtopscreen = centeryfrac - FixedMul (dc_texturemid, spryscale);
-		
-		// killough 1/25/98: here's where Medusa came in, because
-		// it implicitly assumed that the column was all one patch.
-		// Originally, Doom did not construct complete columns for
-		// multipatched textures, so there were no header or trailer
-		// bytes in the column referred to below, which explains
-		// the Medusa effect. The fix is to construct true columns
-		// when forming multipatched textures (see r_data.c).
-
-		// draw the texture
-		const FTexture::Span *spans;
-		const BYTE *pixels = tex->GetColumn (maskedtexturecol[dc_x] >> FRACBITS, &spans);
-		blastfunc (pixels, spans);
-//		maskedtexturecol[dc_x] = FIXED_MAX; // kg3D - seems to be useless
+		dc_colormap = basecolormap->Maps + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
 	}
+
+	dc_iscale = MulScale18 (MaskedSWall[dc_x], MaskedScaleY);
+	sprtopscreen = centeryfrac - FixedMul (dc_texturemid, spryscale);
+	
+	// killough 1/25/98: here's where Medusa came in, because
+	// it implicitly assumed that the column was all one patch.
+	// Originally, Doom did not construct complete columns for
+	// multipatched textures, so there were no header or trailer
+	// bytes in the column referred to below, which explains
+	// the Medusa effect. The fix is to construct true columns
+	// when forming multipatched textures (see r_data.c).
+
+	// draw the texture
+	const FTexture::Span *spans;
+	const BYTE *pixels = tex->GetColumn (maskedtexturecol[dc_x] >> FRACBITS, &spans);
+	blastfunc (pixels, spans);
 	rw_light += rw_lightstep;
 	spryscale += rw_scalestep;
 }

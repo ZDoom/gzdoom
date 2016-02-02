@@ -276,9 +276,9 @@ FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, const FString &filename
 			lump.Read (trans, len);
 			HaveTrans = true;
 			// Save for colortype 2
-			NonPaletteTrans[0] = BigShort(((WORD *)trans)[0]);
-			NonPaletteTrans[1] = BigShort(((WORD *)trans)[1]);
-			NonPaletteTrans[2] = BigShort(((WORD *)trans)[2]);
+			NonPaletteTrans[0] = WORD(trans[0] * 256 + trans[1]);
+			NonPaletteTrans[1] = WORD(trans[2] * 256 + trans[3]);
+			NonPaletteTrans[2] = WORD(trans[4] * 256 + trans[5]);
 			break;
 
 		case MAKE_ID('a','l','P','h'):

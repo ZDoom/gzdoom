@@ -90,7 +90,7 @@ struct F3DFloor
 	
 	fixed_t				delta;
 	
-	int					flags;
+	unsigned int		flags;
 	line_t*				master;
 	
 	sector_t *			model;

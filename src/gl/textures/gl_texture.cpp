@@ -520,6 +520,7 @@ void FTexture::CheckTrans(unsigned char * buffer, int size, int trans)
 					return;
 				}
 			}
+			gl_info.mIsTransparent = 0;
 		}
 	}
 }

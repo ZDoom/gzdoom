@@ -129,7 +129,11 @@ CVAR(Bool, mod_autochip,				false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CVAR(Int,  mod_autochip_size_force,		100,   CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CVAR(Int,  mod_autochip_size_scan,		500,   CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CVAR(Int,  mod_autochip_scan_threshold, 12,	   CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
-CVAR(Float, mod_dumb_mastervolume,		1.f,   CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
+CUSTOM_CVAR(Float, mod_dumb_mastervolume, 1.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self < 0.5f) self = 0.5f;
+	else if (self > 16.f) self = 16.f;
+}
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 

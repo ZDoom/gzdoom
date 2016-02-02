@@ -178,7 +178,10 @@ static void BlastMaskedColumn (void (*blastfunc)(const BYTE *pixels, const FText
 	}
 
 	dc_iscale = MulScale18 (MaskedSWall[dc_x], MaskedScaleY);
-	sprtopscreen = centeryfrac - FixedMul (dc_texturemid, spryscale);
+ 	if (sprflipvert)
+		sprtopscreen = centeryfrac + FixedMul(dc_texturemid, spryscale);
+	else
+		sprtopscreen = centeryfrac - FixedMul(dc_texturemid, spryscale);
 	
 	// killough 1/25/98: here's where Medusa came in, because
 	// it implicitly assumed that the column was all one patch.
@@ -222,7 +225,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	FTexture	*tex;
 	int			i;
 	sector_t	tempsec;		// killough 4/13/98
-	fixed_t		texheight, textop, texheightscale;
+	fixed_t		texheight, texheightscale;
 	bool		notrelevant = false;
 
 	const sector_t *sec;
@@ -304,9 +307,14 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	spryscale = ds->iscale + ds->iscalestep * (x1 - ds->x1);
 	rw_scalestep = ds->iscalestep;
 
+	if (fixedlightlev >= 0)
+		dc_colormap = basecolormap->Maps + fixedlightlev;
+	else if (fixedcolormap != NULL)
+		dc_colormap = fixedcolormap;
+
 	// find positioning
 	texheight = tex->GetScaledHeight() << FRACBITS;
-	texheightscale = curline->sidedef->GetTextureYScale(side_t::mid);
+	texheightscale = abs(curline->sidedef->GetTextureYScale(side_t::mid));
 	if (texheightscale != FRACUNIT)
 	{
 		texheight = FixedDiv(texheight, texheightscale);
@@ -320,8 +328,18 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 		dc_texturemid = MIN (frontsector->GetPlaneTexZ(sector_t::ceiling), backsector->GetPlaneTexZ(sector_t::ceiling));
 	}
 
-	{ // encapsulate the lifetime of rowoffset
-		fixed_t rowoffset = curline->sidedef->GetTextureYOffset(side_t::mid);
+	fixed_t rowoffset = curline->sidedef->GetTextureYOffset(side_t::mid);
+
+	if (!(curline->linedef->flags & ML_WRAP_MIDTEX) &&
+		!(curline->sidedef->Flags & WALLF_WRAP_MIDTEX))
+	{ // Texture does not wrap vertically.
+		fixed_t textop;
+
+		if (MaskedScaleY < 0)
+		{
+			MaskedScaleY = -MaskedScaleY;
+			sprflipvert = true;
+		}
 		if (tex->bWorldPanning)
 		{
 			// rowoffset is added before the MulScale3 so that the masked texture will
@@ -337,16 +355,11 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 			textop = dc_texturemid - viewz + SafeDivScale16 (rowoffset, MaskedScaleY);
 			dc_texturemid = MulScale16 (dc_texturemid - viewz, MaskedScaleY) + rowoffset;
 		}
-	}
-
-	if (fixedlightlev >= 0)
-		dc_colormap = basecolormap->Maps + fixedlightlev;
-	else if (fixedcolormap != NULL)
-		dc_colormap = fixedcolormap;
-
-	if (!(curline->linedef->flags & ML_WRAP_MIDTEX) &&
-		!(curline->sidedef->Flags & WALLF_WRAP_MIDTEX))
-	{ // Texture does not wrap vertically.
+		if (sprflipvert)
+		{
+			MaskedScaleY = -MaskedScaleY;
+			dc_texturemid -= tex->GetHeight() << FRACBITS;
+		}
 
 		// [RH] Don't bother drawing segs that are completely offscreen
 		if (MulScale12 (globaldclip, ds->sz1) < -textop &&
@@ -463,6 +476,20 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	}
 	else
 	{ // Texture does wrap vertically.
+		if (tex->bWorldPanning)
+		{
+			// rowoffset is added before the MulScale3 so that the masked texture will
+			// still be positioned in world units rather than texels.
+			dc_texturemid += rowoffset - viewz;
+			dc_texturemid = MulScale16 (dc_texturemid, MaskedScaleY);
+		}
+		else
+		{
+			// rowoffset is added outside the multiply so that it positions the texture
+			// by texels instead of world units.
+			dc_texturemid = MulScale16 (dc_texturemid - viewz, MaskedScaleY) + rowoffset;
+		}
+
 		WallC.sz1 = ds->sz1;
 		WallC.sz2 = ds->sz2;
 		WallC.sx1 = ds->sx1;
@@ -572,7 +599,7 @@ void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover)
 	}
 	xscale = FixedMul(rw_pic->xScale, scaledside->GetTextureXScale(scaledpart));
 	yscale = FixedMul(rw_pic->yScale, scaledside->GetTextureYScale(scaledpart));
-	// encapsulate the lifetime of rowoffset
+
 	fixed_t rowoffset = curline->sidedef->GetTextureYOffset(side_t::mid) + rover->master->sidedef[0]->GetTextureYOffset(side_t::mid);
 	dc_texturemid = rover->model->GetPlaneTexZ(sector_t::ceiling);
 	rw_offset = curline->sidedef->GetTextureXOffset(side_t::mid) + rover->master->sidedef[0]->GetTextureXOffset(side_t::mid);
@@ -2504,9 +2531,9 @@ void R_StoreWallRange (int start, int stop)
 				iend = DivScale32 (1, iend);
 				ds_p->yrepeat = yrepeat;
 				ds_p->iscale = istart;
-				if (stop - start > 1)
+				if (stop - start > 0)
 				{
-					ds_p->iscalestep = (iend - istart) / (stop - start - 1);
+					ds_p->iscalestep = (iend - istart) / (stop - start);
 				}
 				else
 				{

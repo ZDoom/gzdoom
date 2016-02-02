@@ -539,7 +539,7 @@ bool P_Move (AActor *actor)
 		!((actor->flags & MF_NOGRAVITY) || (actor->flags6 & MF6_CANJUMP))
 		&& actor->Z() > actor->floorz && !(actor->flags2 & MF2_ONMOBJ))
 	{
-		if (actor->Y() <= actor->floorz + actor->MaxStepHeight)
+		if (actor->Z() <= actor->floorz + actor->MaxStepHeight)
 		{
 			fixed_t savedz = actor->Z();
 			actor->SetZ(actor->floorz);

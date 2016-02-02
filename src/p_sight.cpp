@@ -56,7 +56,7 @@ class SightCheck
 	fixed_t topslope, bottomslope;	// slopes to top and bottom of target
 	int Flags;
 	divline_t trace;
-	int myseethrough;
+	unsigned int myseethrough;
 
 	bool PTR_SightTraverse (intercept_t *in);
 	bool P_SightCheckLine (line_t *ld);

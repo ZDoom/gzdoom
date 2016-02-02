@@ -7,6 +7,8 @@
 
 #ifndef NO_OPENAL
 
+#define AL_NO_PROTOTYPES
+
 #include "al.h"
 #include "alc.h"
 

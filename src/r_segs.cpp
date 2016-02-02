@@ -227,6 +227,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	sector_t	tempsec;		// killough 4/13/98
 	fixed_t		texheight, texheightscale;
 	bool		notrelevant = false;
+	fixed_t		rowoffset;
 
 	const sector_t *sec;
 
@@ -328,7 +329,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 		dc_texturemid = MIN (frontsector->GetPlaneTexZ(sector_t::ceiling), backsector->GetPlaneTexZ(sector_t::ceiling));
 	}
 
-	fixed_t rowoffset = curline->sidedef->GetTextureYOffset(side_t::mid);
+	rowoffset = curline->sidedef->GetTextureYOffset(side_t::mid);
 
 	if (!(curline->linedef->flags & ML_WRAP_MIDTEX) &&
 		!(curline->sidedef->Flags & WALLF_WRAP_MIDTEX))

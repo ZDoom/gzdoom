@@ -31,6 +31,7 @@ ACTOR Actor native //: Thinker
 	RipperLevel 0
 	RipLevelMin 0
 	RipLevelMax 0
+	ChaseThreshold 100
 
 	// Variables for the expression evaluator
 	// NOTE: fixed_t and angle_t are only used here to ensure proper conversion
@@ -69,6 +70,8 @@ ACTOR Actor native //: Thinker
 	native fixed_t meleerange;
 	native fixed_t speed;
 	native angle_t roll;
+	native int threshold;
+	native int DefThreshold;
 
 	// Meh, MBF redundant functions. Only for DeHackEd support.
 	action native A_Turn(float angle = 0);
@@ -339,6 +342,7 @@ ACTOR Actor native //: Thinker
 	action native A_SetRipperLevel(int level);
 	action native A_SetRipMin(int min);
 	action native A_SetRipMax(int max);
+	action native A_SetChaseThreshold(int threshold, bool def = false, int ptr = AAPTR_DEFAULT);
 	action native A_CheckProximity(state jump, class<Actor> classname, float distance, int count = 1, int flags = 0, int ptr = AAPTR_DEFAULT);
 	action native A_CheckBlock(state block, int flags = 0, int ptr = AAPTR_DEFAULT);
 	action native A_CheckSightOrRange(float distance, state label, bool two_dimension = false);

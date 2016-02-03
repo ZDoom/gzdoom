@@ -348,7 +348,7 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 		{
 			secplane_t &lowplane = k == (*lightlist).Size() - 1 ? bottomplane : (*lightlist)[k + 1].plane;
 
-			float low1 = lowplane.ZatPoint(dv[1].x, dv[i].y);
+			float low1 = lowplane.ZatPoint(dv[1].x, dv[1].y);
 			float low2 = lowplane.ZatPoint(dv[2].x, dv[2].y);
 
 			if (low1 < dv[1].z && low2 < dv[2].z)

@@ -1663,7 +1663,7 @@ OptionMenu ModReplayerOptions
 	Title "MODULE REPLAYER OPTIONS"
 	Option "Replayer engine",		"mod_dumb", "ModReplayers"
 	StaticText " "
-	Slider "Master Volume",			"mod_dumb_mastervolume", 1, 32, 1, 1
+	Slider "Master Volume",			"mod_dumb_mastervolume", 1, 16, 0.5, 1
 	Option "Sample rate",			"mod_samplerate", "SampleRates", "mod_dumb"
 	Option "Quality",				"mod_interp", "ModQuality", "mod_dumb"
 	Option "Volume ramping",		"mod_volramp", "ModVolumeRamps", "mod_dumb"

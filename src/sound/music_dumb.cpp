@@ -129,6 +129,11 @@ CVAR(Bool, mod_autochip,				false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CVAR(Int,  mod_autochip_size_force,		100,   CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CVAR(Int,  mod_autochip_size_scan,		500,   CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CVAR(Int,  mod_autochip_scan_threshold, 12,	   CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
+CUSTOM_CVAR(Float, mod_dumb_mastervolume, 1.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self < 0.5f) self = 0.5f;
+	else if (self > 16.f) self = 16.f;
+}
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -974,7 +979,7 @@ bool input_mod::read(SoundStream *stream, void *buffer, int sizebytes, void *use
 			// Convert to float
 			for (int i = 0; i < written * 2; ++i)
 			{
-				((float *)buffer)[i] = ((int *)buffer)[i] / (float)(1 << 24);
+				((float *)buffer)[i] = (((int *)buffer)[i] / (float)(1 << 24)) * mod_dumb_mastervolume;
 			}
 		}
 		buffer = (BYTE *)buffer + written * 8;

@@ -57,6 +57,9 @@ class AWeapon;
 
 void ST_SetNeedRefresh();
 
+bool ST_IsTimeVisible();
+bool ST_IsLatencyVisible();
+
 // HUD Message base object --------------------------------------------------
 
 class DHUDMessage : public DObject

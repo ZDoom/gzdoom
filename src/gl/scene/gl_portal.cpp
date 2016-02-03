@@ -914,7 +914,7 @@ int GLMirrorPortal::ClipSeg(seg_t *seg)
 int GLMirrorPortal::ClipSubsector(subsector_t *sub) 
 { 
 	// this seg is completely behind the mirror!
-	for(int i=0;i<sub->numlines;i++)
+	for(unsigned int i=0;i<sub->numlines;i++)
 	{
 		if (P_PointOnLineSide(sub->firstline[i].v1->x, sub->firstline[i].v1->y, linedef) == 0) return PClip_Inside;
 	}

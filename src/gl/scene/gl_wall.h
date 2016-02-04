@@ -167,6 +167,9 @@ private:
 	void PutPortal(int ptype);
 	void CheckTexturePosition();
 
+	void Put3DWall(lightlist_t * lightlist, bool translucent);
+	void SplitWall(sector_t * frontsector, bool translucent);
+
 	void SetupLights();
 	bool PrepareLight(texcoord * tcs, ADynamicLight * light);
 	void RenderWall(int textured, unsigned int *store = NULL);

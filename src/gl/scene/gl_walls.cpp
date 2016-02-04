@@ -125,10 +125,6 @@ void GLWall::PutWall(sector_t *sec, bool translucent)
 		if (gltexture == NULL) return;
 		Colormap.Clear();
 	}
-	else if (sec->e->XFloor.lightlist.Size() > 0 && gltexture != NULL)
-	{
-		lightlist = &sec->e->XFloor.lightlist;
-	}
 
 	CheckGlowing();
 
@@ -220,6 +216,138 @@ void GLWall::PutPortal(int ptype)
 		break;
 	}
 }
+//==========================================================================
+//
+//	Sets 3D-floor lighting info
+//
+//==========================================================================
+
+void GLWall::Put3DWall(lightlist_t * lightlist, bool translucent)
+{
+	// only modify the light level if it doesn't originate from the seg's frontsector. This is to account for light transferring effects
+	if (lightlist->p_lightlevel != &seg->sidedef->sector->lightlevel)
+	{
+		lightlevel = gl_ClampLight(*lightlist->p_lightlevel);
+	}
+	// relative light won't get changed here. It is constant across the entire wall.
+
+	Colormap.CopyFrom3DLight(lightlist);
+	PutWall(NULL, translucent);
+}
+
+//==========================================================================
+//
+//  Splits a wall vertically if a 3D-floor
+//	creates different lighting across the wall
+//
+//==========================================================================
+
+void GLWall::SplitWall(sector_t * frontsector, bool translucent)
+{
+	GLWall copyWall1,copyWall2;
+	float maplightbottomleft;
+	float maplightbottomright;
+	unsigned int i;
+	int origlight = lightlevel;
+	FColormap origcm=Colormap;
+
+	TArray<lightlist_t> & lightlist=frontsector->e->XFloor.lightlist;
+
+	if (glseg.x1==glseg.x2 && glseg.y1==glseg.y2)
+	{
+		return;
+	}
+	//::SplitWall.Clock();
+
+#ifdef _DEBUG
+	if (seg->linedef-lines==1)
+	{
+		int a = 0;
+	}
+#endif
+
+	if (lightlist.Size()>1)
+	{
+		for(i=0;i<lightlist.Size()-1;i++)
+		{
+			if (i<lightlist.Size()-1) 
+			{
+				secplane_t &p = lightlist[i+1].plane;
+				if (p.a | p.b)
+				{
+					maplightbottomleft = p.ZatPoint(glseg.x1,glseg.y1);
+					maplightbottomright= p.ZatPoint(glseg.x2,glseg.y2);
+				}
+				else
+				{
+					maplightbottomleft =
+					maplightbottomright= p.ZatPoint(glseg.x2,glseg.y2);
+				}
+
+			}
+			else 
+			{
+				maplightbottomright = maplightbottomleft = -32000;
+			}
+
+			// The light is completely above the wall!
+			if (maplightbottomleft>=ztop[0] && maplightbottomright>=ztop[1])
+			{
+				continue;
+			}
+
+			// check for an intersection with the upper and lower planes of the wall segment
+			if ((maplightbottomleft<ztop[0] && maplightbottomright>ztop[1]) ||
+				(maplightbottomleft>ztop[0] && maplightbottomright<ztop[1]) ||
+				(maplightbottomleft<zbottom[0] && maplightbottomright>zbottom[1]) ||
+				(maplightbottomleft>zbottom[0] && maplightbottomright<zbottom[1]))
+			{
+				// Use hardware clipping if this cannot be done cleanly.
+				this->lightlist = &lightlist;
+				PutWall(frontsector, translucent);
+				goto out;
+			}
+
+			// 3D floor is completely within this light
+			if (maplightbottomleft<=zbottom[0] && maplightbottomright<=zbottom[1])
+			{
+				Put3DWall(&lightlist[i], translucent);
+				goto out;
+			}
+
+			if (maplightbottomleft<=ztop[0] && maplightbottomright<=ztop[1] &&
+				(maplightbottomleft!=ztop[0] || maplightbottomright!=ztop[1]))
+			{
+				copyWall1=*this;
+
+				copyWall1.flags |= GLWF_NOSPLITLOWER;
+				flags |= GLWF_NOSPLITUPPER;
+				ztop[0]=copyWall1.zbottom[0]=maplightbottomleft;
+				ztop[1]=copyWall1.zbottom[1]=maplightbottomright;
+				uplft.v=copyWall1.lolft.v=copyWall1.uplft.v+ 
+					(maplightbottomleft-copyWall1.ztop[0])*(copyWall1.lolft.v-copyWall1.uplft.v)/(zbottom[0]-copyWall1.ztop[0]);
+				uprgt.v=copyWall1.lorgt.v=copyWall1.uprgt.v+ 
+					(maplightbottomright-copyWall1.ztop[1])*(copyWall1.lorgt.v-copyWall1.uprgt.v)/(zbottom[1]-copyWall1.ztop[1]);
+				copyWall1.Put3DWall(&lightlist[i], translucent);
+			}
+			if (ztop[0]==zbottom[0] && ztop[1]==zbottom[1]) 
+			{
+				//::SplitWall.Unclock();
+				goto out;
+			}
+		}
+	}
+
+	Put3DWall(&lightlist[lightlist.Size()-1], translucent);
+
+out:
+	lightlevel=origlight;
+	Colormap=origcm;
+	flags &= ~GLWF_NOSPLITUPPER;
+	this->lightlist = NULL;
+	//::SplitWall.Unclock();
+}
+
 
 //==========================================================================
 //
@@ -514,7 +642,10 @@ void GLWall::DoTexture(int _type,seg_t * seg, int peg,
 	{
 		CheckTexturePosition();
 		// Add this wall to the render list
-		PutWall(sub ? sub->sector : seg->frontsector, false);
+		sector_t * sec = sub? sub->sector : seg->frontsector;
+
+		if (sec->e->XFloor.lightlist.Size()==0 || gl_fixedcolormap) PutWall(sec, false);
+		else SplitWall(sec, false);
 	}
 
 	glseg=glsave;
@@ -806,7 +937,8 @@ void GLWall::DoMidTexture(seg_t * seg, bool drawfogboundary,
 				// Draw the stuff
 				//
 				//
-				split.PutWall(realfront, translucent);
+				if (realfront->e->XFloor.lightlist.Size()==0 || gl_fixedcolormap) split.PutWall(realfront, translucent);
+				else split.SplitWall(realfront, translucent);
 
 				t=1;
 			}
@@ -814,7 +946,13 @@ void GLWall::DoMidTexture(seg_t * seg, bool drawfogboundary,
 		}
 		else
 		{
-			PutWall(realfront, translucent);
+			//
+			//
+			// Draw the stuff without splitting
+			//
+			//
+			if (realfront->e->XFloor.lightlist.Size()==0 || gl_fixedcolormap) PutWall(realfront, translucent);
+			else SplitWall(realfront, translucent);
 		}
 		alpha=1.0f;
 	}
@@ -922,8 +1060,11 @@ void GLWall::BuildFFBlock(seg_t * seg, F3DFloor * rover,
 		RenderStyle=STYLE_Normal;
 		translucent=false;
 	}
+	
+	sector_t * sec = sub? sub->sector : seg->frontsector;
 
-	PutWall(sub? sub->sector : seg->frontsector, translucent);
+	if (sec->e->XFloor.lightlist.Size()==0 || gl_fixedcolormap) PutWall(sec, translucent);
+	else SplitWall(sec, translucent);
 
 	alpha=1.0f;
 	lightlevel = savelight;
@@ -1505,6 +1646,7 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 void GLWall::ProcessLowerMiniseg(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 {
 	if (frontsector->GetTexture(sector_t::floor) == skyflatnum) return;
+	lightlist = NULL;
 
 	fixed_t ffh = frontsector->GetPlaneTexZ(sector_t::floor);
 	fixed_t bfh = backsector->GetPlaneTexZ(sector_t::floor);

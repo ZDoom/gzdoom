@@ -1533,9 +1533,12 @@ void DBaseStatusBar::DrawPowerups ()
 	// Each icon gets a 32x32 block to draw itself in.
 	int x, y;
 	AInventory *item;
+	const int yshift = SmallFont->GetHeight();
 
 	x = -20;
-	y = 17;
+	y = 17 
+		+ (ST_IsTimeVisible()    ? yshift : 0)
+		+ (ST_IsLatencyVisible() ? yshift : 0);
 	for (item = CPlayer->mo->Inventory; item != NULL; item = item->Inventory)
 	{
 		if (item->DrawPowerup (x, y))

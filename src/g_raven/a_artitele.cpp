@@ -68,7 +68,7 @@ bool AArtiTeleport::Use (bool pickup)
 
 bool P_AutoUseChaosDevice (player_t *player)
 {
-	AInventory *arti = player->mo->FindInventory(PClass::FindClass("ArtiTeleport"));
+	AInventory *arti = player->mo->FindInventory(PClass::FindActor("ArtiTeleport"));
 
 	if (arti != NULL)
 	{

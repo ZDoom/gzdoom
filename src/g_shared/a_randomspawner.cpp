@@ -20,7 +20,7 @@
 #define MAX_RANDOMSPAWNERS_RECURSION 32 // Should be largely more than enough, honestly.
 static FRandom pr_randomspawn("RandomSpawn");
 
-static bool IsMonster(const FDropItem *di)
+static bool IsMonster(DDropItem *di)
 {
 	const PClass *pclass = PClass::FindClass(di->Name);
 
@@ -41,9 +41,9 @@ class ARandomSpawner : public AActor
 	// random spawner's velocity (0...) instead of their own.
 	void BeginPlay()
 	{
-		FDropItem *di;   // di will be our drop item list iterator
-		FDropItem *drop; // while drop stays as the reference point.
-		int n=0;
+		DDropItem *di;   // di will be our drop item list iterator
+		DDropItem *drop; // while drop stays as the reference point.
+		int n = 0;
 		bool nomonsters = (dmflags & DF_NO_MONSTERS) || (level.flags2 & LEVEL2_NOMONSTERS);
 
 		Super::BeginPlay();
@@ -56,8 +56,8 @@ class ARandomSpawner : public AActor
 				{
 					if (!nomonsters || !IsMonster(di))
 					{
-						if (di->amount < 0) di->amount = 1; // default value is -1, we need a positive value.
-						n += di->amount; // this is how we can weight the list.
+						if (di->Amount < 0) di->Amount = 1; // default value is -1, we need a positive value.
+						n += di->Amount; // this is how we can weight the list.
 					}
 					di = di->Next;
 				}
@@ -77,7 +77,7 @@ class ARandomSpawner : public AActor
 				if (di->Name != NAME_None &&
 					(!nomonsters || !IsMonster(di)))
 				{
-					n -= di->amount;
+					n -= di->Amount;
 					if ((di->Next != NULL) && (n > -1))
 						di = di->Next;
 					else
@@ -95,14 +95,14 @@ class ARandomSpawner : public AActor
 				Destroy();
 				return;
 			}
-			else if (pr_randomspawn() <= di->probability)	// prob 255 = always spawn, prob 0 = never spawn.
+			else if (pr_randomspawn() <= di->Probability)	// prob 255 = always spawn, prob 0 = almost never spawn.
 			{
 				// Handle replacement here so as to get the proper speed and flags for missiles
-				const PClass *cls;
-				cls = PClass::FindClass(di->Name);
+				PClassActor *cls;
+				cls = PClass::FindActor(di->Name);
 				if (cls != NULL)
 				{
-					const PClass *rep = cls->GetReplacement();
+					PClassActor *rep = cls->GetReplacement();
 					if (rep != NULL)
 					{
 						cls = rep;
@@ -132,21 +132,29 @@ class ARandomSpawner : public AActor
 	// necessary to them -- such as their source and destination.
 	void PostBeginPlay()
 	{
-		AActor * newmobj = NULL;
-		bool boss = false;
 		Super::PostBeginPlay();
-		if (Species == NAME_None) 
-		{ 
-			Destroy(); 
-			return; 
+
+		AActor *newmobj = NULL;
+		bool boss = false;
+
+		if (Species == NAME_None)
+		{
+			Destroy();
+			return;
 		}
-		const PClass * cls = PClass::FindClass(Species);
+		PClassActor *cls = PClass::FindActor(Species);
 		if (this->flags & MF_MISSILE && target && target->target) // Attempting to spawn a missile.
 		{
-			if ((tracer == NULL) && (flags2 & MF2_SEEKERMISSILE)) tracer = target->target;
+			if ((tracer == NULL) && (flags2 & MF2_SEEKERMISSILE))
+			{
+				tracer = target->target;
+			}
 			newmobj = P_SpawnMissileXYZ(Pos(), target, target->target, cls, false);
 		}
-		else newmobj = Spawn(cls, Pos(), NO_REPLACE);
+		else 
+		{		
+			newmobj = Spawn(cls, Pos(), NO_REPLACE);
+		}
 		if (newmobj != NULL)
 		{
 			// copy everything relevant
@@ -200,7 +208,7 @@ class ARandomSpawner : public AActor
 			if ((newmobj->flags4 & MF4_BOSSDEATH) || (newmobj->flags2 & MF2_BOSS))
 				boss = true;
 			// If a replaced actor has either of those same flags, it's also a boss.
-			AActor * rep = GetDefaultByType(GetClass()->ActorInfo->GetReplacee()->Class);
+			AActor *rep = GetDefaultByType(GetClass()->GetReplacee());
 			if (rep && ((rep->flags4 & MF4_BOSSDEATH) || (rep->flags2 & MF2_BOSS)))
 				boss = true;
 		}
@@ -215,7 +223,7 @@ class ARandomSpawner : public AActor
 		Super::Tick();
 		if (tracer == NULL || tracer->health <= 0)
 		{
-			CALL_ACTION(A_BossDeath, this);
+			A_BossDeath(this);
 			Destroy();
 		}
 	}
@@ -223,4 +231,3 @@ class ARandomSpawner : public AActor
 };
 
 IMPLEMENT_CLASS (ARandomSpawner)
-

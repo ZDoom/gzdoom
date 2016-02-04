@@ -29,16 +29,16 @@ enum
 	MORPH_STANDARDUNDOING	= MORPH_UNDOBYTOMEOFPOWER | MORPH_UNDOBYCHAOSDEVICE | MORPH_UNDOBYTIMEOUT,
 };
 
-struct PClass;
+class PClass;
 class AActor;
 class player_t;
 class AMorphedMonster;
 
-bool P_MorphPlayer (player_t *activator, player_t *player, const PClass *morphclass, int duration = 0, int style = 0,
-					const PClass *enter_flash = NULL, const PClass *exit_flash = NULL);
+bool P_MorphPlayer (player_t *activator, player_t *player, PClassPlayerPawn *morphclass, int duration = 0, int style = 0,
+					PClassActor *enter_flash = NULL, PClassActor *exit_flash = NULL);
 bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag = 0, bool force = false);
-bool P_MorphMonster (AActor *actor, const PClass *morphclass, int duration = 0, int style = 0,
-					 const PClass *enter_flash = NULL, const PClass *exit_flash = NULL);
+bool P_MorphMonster (AActor *actor, PClassActor *morphclass, int duration = 0, int style = 0,
+					 PClassActor *enter_flash = NULL, PClassActor *exit_flash = NULL);
 bool P_UndoMonsterMorph (AMorphedMonster *beast, bool force = false);
 bool P_UpdateMorphedMonster (AActor *actor);
 bool P_MorphedDeath(AActor *actor, AActor **morphed, int *morphedstyle, int *morphedhealth);

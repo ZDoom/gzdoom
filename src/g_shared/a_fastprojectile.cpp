@@ -168,7 +168,7 @@ void AFastProjectile::Effect()
 {
 	//if (pr_smoke() < 128)	// [RH] I think it looks better if it's consistent
 	{
-		FName name = (ENamedName) this->GetClass()->Meta.GetMetaInt (ACMETA_MissileName, NAME_None);
+		FName name = GetClass()->MissileName;
 		if (name != NAME_None)
 		{
 			fixed_t hitz = Z()-8*FRACUNIT;
@@ -178,9 +178,9 @@ void AFastProjectile::Effect()
 				hitz = floorz;
 			}
 			// Do not clip this offset to the floor.
-			hitz += GetClass()->Meta.GetMetaFixed (ACMETA_MissileHeight);
+			hitz += GetClass()->MissileHeight;
 		
-			const PClass *trail = PClass::FindClass(name);
+			PClassActor *trail = PClass::FindActor(name);
 			if (trail != NULL)
 			{
 				AActor *act = Spawn (trail, X(), Y(), hitz, ALLOW_REPLACE);

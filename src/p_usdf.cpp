@@ -41,6 +41,7 @@
 #include "doomerrors.h"
 #include "cmdlib.h"
 #include "actor.h"
+#include "a_pickups.h"
 #include "w_wad.h"
 
 #define Zd 1
@@ -50,11 +51,11 @@ class USDFParser : public UDMFParserBase
 {
 	//===========================================================================
 	//
-	// Checks an actor type (different representation depending on manespace)
+	// Checks an actor type (different representation depending on namespace)
 	//
 	//===========================================================================
 
-	const PClass *CheckActorType(const char *key)
+	PClassActor *CheckActorType(const char *key)
 	{
 		if (namespace_bits == St)
 		{
@@ -62,15 +63,10 @@ class USDFParser : public UDMFParserBase
 		}
 		else if (namespace_bits == Zd)
 		{
-			const PClass *cls = PClass::FindClass(CheckString(key));
+			PClassActor *cls = PClass::FindActor(CheckString(key));
 			if (cls == NULL)
 			{
 				sc.ScriptMessage("Unknown actor class '%s'", key);
-				return NULL;
-			}
-			if (!cls->IsDescendantOf(RUNTIME_CLASS(AActor)))
-			{
-				sc.ScriptMessage("'%s' is not an actor type", key);
 				return NULL;
 			}
 			return cls;
@@ -96,7 +92,7 @@ class USDFParser : public UDMFParserBase
 			switch(key)
 			{
 			case NAME_Item:
-				check.Item = CheckActorType(key);
+				check.Item = dyn_cast<PClassInventory>(CheckActorType(key));
 				break;
 
 			case NAME_Amount:
@@ -258,7 +254,7 @@ class USDFParser : public UDMFParserBase
 			switch(key)
 			{
 			case NAME_Item:
-				check.Item = CheckActorType(key);
+				check.Item = dyn_cast<PClassInventory>(CheckActorType(key));
 				break;
 
 			case NAME_Count:
@@ -370,7 +366,7 @@ class USDFParser : public UDMFParserBase
 
 	bool ParseConversation()
 	{
-		const PClass *type = NULL;
+		PClassActor *type = NULL;
 		int dlgid = -1;
 		unsigned int startpos = StrifeDialogues.Size();
 

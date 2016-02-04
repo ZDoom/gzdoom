@@ -20,8 +20,11 @@ static FRandom pr_wizatk3 ("WizAtk3");
 
 DEFINE_ACTION_FUNCTION(AActor, A_GhostOff)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	self->RenderStyle = STYLE_Normal;
 	self->flags3 &= ~MF3_GHOST;
+	return 0;
 }
 
 //----------------------------------------------------------------------------
@@ -32,8 +35,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_GhostOff)
 
 DEFINE_ACTION_FUNCTION(AActor, A_WizAtk1)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	A_FaceTarget (self);
 	CALL_ACTION(A_GhostOff, self);
+	return 0;
 }
 
 //----------------------------------------------------------------------------
@@ -44,10 +50,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_WizAtk1)
 
 DEFINE_ACTION_FUNCTION(AActor, A_WizAtk2)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	A_FaceTarget (self);
 	self->alpha = HR_SHADOW;
 	self->RenderStyle = STYLE_Translucent;
 	self->flags3 |= MF3_GHOST;
+	return 0;
 }
 
 //----------------------------------------------------------------------------
@@ -58,12 +67,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_WizAtk2)
 
 DEFINE_ACTION_FUNCTION(AActor, A_WizAtk3)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *mo;
 
 	CALL_ACTION(A_GhostOff, self);
 	if (!self->target)
 	{
-		return;
+		return 0;
 	}
 	S_Sound (self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NORM);
 	if (self->CheckMeleeRange())
@@ -71,13 +82,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_WizAtk3)
 		int damage = pr_wizatk3.HitDice (4);
 		int newdam = P_DamageMobj (self->target, self, self, damage, NAME_Melee);
 		P_TraceBleed (newdam > 0 ? newdam : damage, self->target, self);
-		return;
+		return 0;
 	}
-	const PClass *fx = PClass::FindClass("WizardFX1");
+	PClassActor *fx = PClass::FindActor("WizardFX1");
 	mo = P_SpawnMissile (self, self->target, fx);
 	if (mo != NULL)
 	{
 		P_SpawnMissileAngle(self, fx, mo->angle-(ANG45/8), mo->velz);
 		P_SpawnMissileAngle(self, fx, mo->angle+(ANG45/8), mo->velz);
 	}
+	return 0;
 }

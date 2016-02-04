@@ -1687,21 +1687,18 @@ static void SetMapThingUserData(AActor *actor, unsigned udi)
 	{
 		FName varname = MapThingsUserData[udi].Property;
 		int value = MapThingsUserData[udi].Value;
-		PSymbol *sym = actor->GetClass()->Symbols.FindSymbol(varname, true);
-		PSymbolVariable *var;
+		PField *var = dyn_cast<PField>(actor->GetClass()->Symbols.FindSymbol(varname, true));
 
 		udi++;
 
-		if (sym == NULL || sym->SymbolType != SYM_Variable ||
-			!(var = static_cast<PSymbolVariable *>(sym))->bUserVar ||
-			var->ValueType.Type != VAL_Int)
+		if (var == NULL || (var->Flags & VARF_Native) || !var->Type->IsKindOf(RUNTIME_CLASS(PBasicType)))
 		{
 			DPrintf("%s is not a user variable in class %s\n", varname.GetChars(),
 				actor->GetClass()->TypeName.GetChars());
 		}
 		else
 		{ // Set the value of the specified user variable.
-			*(int *)(reinterpret_cast<BYTE *>(actor) + var->offset) = value;
+			var->Type->SetValue(reinterpret_cast<BYTE *>(actor) + var->Offset, value);
 		}
 	}
 }

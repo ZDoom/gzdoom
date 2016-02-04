@@ -102,7 +102,7 @@ struct TeaserSpeech
 
 static FRandom pr_randomspeech("RandomSpeech");
 
-void GiveSpawner (player_t *player, const PClass *type);
+void GiveSpawner (player_t *player, PClassActor *type);
 
 TArray<FStrifeDialogueNode *> StrifeDialogues;
 
@@ -138,7 +138,7 @@ static FStrifeDialogueNode *PrevNode;
 //
 //============================================================================
 
-void SetStrifeType(int convid, const PClass *Class)
+void SetStrifeType(int convid, PClassActor *Class)
 {
 	StrifeTypes[convid] = Class;
 }
@@ -148,7 +148,7 @@ void ClearStrifeTypes()
 	StrifeTypes.Clear();
 }
 
-void SetConversation(int convid, const PClass *Class, int dlgindex)
+void SetConversation(int convid, PClassActor *Class, int dlgindex)
 {
 	if (convid != -1)
 	{
@@ -160,9 +160,9 @@ void SetConversation(int convid, const PClass *Class, int dlgindex)
 	}
 }
 
-const PClass *GetStrifeType (int typenum)
+PClassActor *GetStrifeType (int typenum)
 {
-	const PClass **ptype = StrifeTypes.CheckKey(typenum);
+	PClassActor **ptype = StrifeTypes.CheckKey(typenum);
 	if (ptype == NULL) return NULL;
 	else return *ptype;
 }
@@ -322,7 +322,7 @@ static FStrifeDialogueNode *ReadRetailNode (FileReader *lump, DWORD &prevSpeaker
 	FStrifeDialogueNode *node;
 	Speech speech;
 	char fullsound[16];
-	const PClass *type;
+	PClassActor *type;
 	int j;
 
 	node = new FStrifeDialogueNode;
@@ -363,16 +363,16 @@ static FStrifeDialogueNode *ReadRetailNode (FileReader *lump, DWORD &prevSpeaker
 
 	// The speaker's name, if any.
 	speech.Sound[0] = 0; 		//speech.Name[16] = 0;
-	node->SpeakerName = ncopystring (speech.Name);
+	node->SpeakerName = ncopystring(speech.Name);
 
 	// The item the speaker should drop when killed.
-	node->DropType = GetStrifeType (speech.DropType);
+	node->DropType = dyn_cast<PClassActor>(GetStrifeType(speech.DropType));
 
 	// Items you need to have to make the speaker use a different node.
 	node->ItemCheck.Resize(3);
 	for (j = 0; j < 3; ++j)
 	{
-		node->ItemCheck[j].Item = GetStrifeType (speech.ItemCheck[j]);
+		node->ItemCheck[j].Item = dyn_cast<PClassInventory>(GetStrifeType(speech.ItemCheck[j]));
 		node->ItemCheck[j].Amount = -1;
 	}
 	node->ItemCheckNode = speech.Link;
@@ -396,7 +396,7 @@ static FStrifeDialogueNode *ReadTeaserNode (FileReader *lump, DWORD &prevSpeaker
 	FStrifeDialogueNode *node;
 	TeaserSpeech speech;
 	char fullsound[16];
-	const PClass *type;
+	PClassActor *type;
 	int j;
 
 	node = new FStrifeDialogueNode;
@@ -409,7 +409,7 @@ static FStrifeDialogueNode *ReadTeaserNode (FileReader *lump, DWORD &prevSpeaker
 
 	// Assign the first instance of a conversation as the default for its
 	// actor, so newly spawned actors will use this conversation by default.
-	type = GetStrifeType (speech.SpeakerType);
+	type = GetStrifeType(speech.SpeakerType);
 	node->SpeakerType = type;
 
 	if ((signed)speech.SpeakerType >= 0 && prevSpeakerType != speech.SpeakerType)
@@ -444,7 +444,7 @@ static FStrifeDialogueNode *ReadTeaserNode (FileReader *lump, DWORD &prevSpeaker
 	node->SpeakerName = ncopystring (speech.Name);
 
 	// The item the speaker should drop when killed.
-	node->DropType = GetStrifeType (speech.DropType);
+	node->DropType = dyn_cast<PClassActor>(GetStrifeType (speech.DropType));
 
 	// Items you need to have to make the speaker use a different node.
 	node->ItemCheck.Resize(3);
@@ -509,14 +509,14 @@ static void ParseReplies (FStrifeDialogueReply **replyptr, Response *responses)
 		reply->LogString = NULL;
 
 		// The item to receive when this reply is used.
-		reply->GiveType = GetStrifeType (rsp->GiveType);
+		reply->GiveType = dyn_cast<PClassActor>(GetStrifeType (rsp->GiveType));
 		reply->ActionSpecial = 0;
 
 		// Do you need anything special for this reply to succeed?
 		reply->ItemCheck.Resize(3);
 		for (k = 0; k < 3; ++k)
 		{
-			reply->ItemCheck[k].Item = GetStrifeType (rsp->Item[k]);
+			reply->ItemCheck[k].Item = dyn_cast<PClassInventory>(GetStrifeType(rsp->Item[k]));
 			reply->ItemCheck[k].Amount = rsp->Count[k];
 		}
 
@@ -609,7 +609,7 @@ static int FindNode (const FStrifeDialogueNode *node)
 //
 //============================================================================
 
-static bool CheckStrifeItem (player_t *player, const PClass *itemtype, int amount=-1)
+static bool CheckStrifeItem (player_t *player, PClassActor *itemtype, int amount=-1)
 {
 	AInventory *item;
 
@@ -632,7 +632,7 @@ static bool CheckStrifeItem (player_t *player, const PClass *itemtype, int amoun
 //
 //============================================================================
 
-static void TakeStrifeItem (player_t *player, const PClass *itemtype, int amount)
+static void TakeStrifeItem (player_t *player, PClassActor *itemtype, int amount)
 {
 	if (itemtype == NULL || amount == 0)
 		return;

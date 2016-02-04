@@ -26,8 +26,8 @@ struct FFlagDef
 };
 
 FFlagDef *FindFlag (const PClass *type, const char *part1, const char *part2);
-void HandleDeprecatedFlags(AActor *defaults, FActorInfo *info, bool set, int index);
-bool CheckDeprecatedFlags(const AActor *actor, FActorInfo *info, int index);
+void HandleDeprecatedFlags(AActor *defaults, PClassActor *info, bool set, int index);
+bool CheckDeprecatedFlags(const AActor *actor, PClassActor *info, int index);
 const char *GetFlagName(unsigned int flagnum, int flagoffset);
 void ModActorFlag(AActor *actor, FFlagDef *fd, bool set);
 INTBOOL CheckActorFlag(const AActor *actor, FFlagDef *fd);
@@ -76,13 +76,13 @@ class FStateDefinitions
 	static FStateDefine *FindStateLabelInList(TArray<FStateDefine> &list, FName name, bool create);
 	static FStateLabels *CreateStateLabelList(TArray<FStateDefine> &statelist);
 	static void MakeStateList(const FStateLabels *list, TArray<FStateDefine> &dest);
-	static void RetargetStatePointers (intptr_t count, const char *target, TArray<FStateDefine> & statelist);
+	static void RetargetStatePointers(intptr_t count, const char *target, TArray<FStateDefine> & statelist);
 	FStateDefine *FindStateAddress(const char *name);
 	FState *FindState(const char *name);
 
-	FState *ResolveGotoLabel (AActor *actor, const PClass *mytype, char *name);
-	static void FixStatePointers (FActorInfo *actor, TArray<FStateDefine> & list);
-	void ResolveGotoLabels (FActorInfo *actor, AActor *defaults, TArray<FStateDefine> & list);
+	FState *ResolveGotoLabel(AActor *actor, PClassActor *mytype, char *name);
+	static void FixStatePointers(PClassActor *actor, TArray<FStateDefine> & list);
+	void ResolveGotoLabels(PClassActor *actor, AActor *defaults, TArray<FStateDefine> & list);
 
 public:
 
@@ -93,13 +93,13 @@ public:
 		lastlabel = -1;
 	}
 
-	void SetStateLabel (const char * statename, FState * state, BYTE defflags = SDF_STATE);
-	void AddStateLabel (const char * statename);
+	void SetStateLabel(const char *statename, FState *state, BYTE defflags = SDF_STATE);
+	void AddStateLabel(const char *statename);
 	int GetStateLabelIndex (FName statename);
-	void InstallStates(FActorInfo *info, AActor *defaults);
-	int FinishStates (FActorInfo *actor, AActor *defaults);
+	void InstallStates(PClassActor *info, AActor *defaults);
+	int FinishStates(PClassActor *actor, AActor *defaults);
 
-	void MakeStateDefines(const PClass *cls);
+	void MakeStateDefines(const PClassActor *cls);
 	void AddStateDefines(const FStateLabels *list);
 	void RetargetStates (intptr_t count, const char *target);
 
@@ -107,9 +107,8 @@ public:
 	bool SetStop();
 	bool SetWait();
 	bool SetLoop();
-	bool AddStates(FState *state, const char *framechars);
+	int AddStates(FState *state, const char *framechars);
 	int GetStateCount() const { return StateArray.Size(); }
-
 };
 
 //==========================================================================
@@ -118,58 +117,43 @@ public:
 //
 //==========================================================================
 
-struct FStateExpression
+struct FStateTempCall
 {
-	FxExpression *expr;
-	const PClass *owner;
-	bool constant;
-	bool cloned;
+	FStateTempCall() : ActorClass(NULL), Code(NULL), FirstState(0), NumStates(0) {}
+
+	PClassActor *ActorClass;
+	class FxTailable *Code;
+	int FirstState;
+	int NumStates;
 };
-
-class FStateExpressions
-{
-	TArray<FStateExpression> expressions;
-
-public:
-	~FStateExpressions() { Clear(); }
-	void Clear();
-	int Add(FxExpression *x, const PClass *o, bool c);
-	int Reserve(int num, const PClass *cls);
-	void Set(int num, FxExpression *x, bool cloned = false);
-	void Copy(int dest, int src, int cnt);
-	int ResolveAll();
-	FxExpression *Get(int no);
-	unsigned int Size() { return expressions.Size(); }
-};
-
-extern FStateExpressions StateParams;
-
+extern TDeletingArray<FStateTempCall *> StateTempCalls;
+extern TDeletingArray<class FxExpression *> ActorDamageFuncs;
 
 //==========================================================================
 //
 // Extra info maintained while defining an actor.
 //
 //==========================================================================
-struct FDropItem;
+class DDropItem;
 
 struct Baggage
 {
 #ifdef _DEBUG
 	FString ClassName;	// This is here so that during debugging the class name can be seen
 #endif
-	FActorInfo *Info;
+	PClassActor *Info;
 	bool DropItemSet;
 	bool StateSet;
 	int CurrentState;
 	int Lumpnum;
 	FStateDefinitions statedef;
 
-	FDropItem *DropItemList;
+	DDropItem *DropItemList;
 
 	FScriptPosition ScriptPosition;
 };
 
-inline void ResetBaggage (Baggage *bag, const PClass *stateclass)
+inline void ResetBaggage (Baggage *bag, PClassActor *stateclass)
 {
 	bag->DropItemList = NULL;
 	bag->DropItemSet = false;
@@ -177,6 +161,14 @@ inline void ResetBaggage (Baggage *bag, const PClass *stateclass)
 	bag->StateSet = false;
 	bag->statedef.MakeStateDefines(stateclass);
 }
+
+//==========================================================================
+//
+// Damage function creation
+//
+//==========================================================================
+
+VMScriptFunction *CreateDamageFunction(int dmg);
 
 //==========================================================================
 //
@@ -188,14 +180,19 @@ struct AFuncDesc
 {
 	const char *Name;
 	actionf_p Function;
+	VMNativeFunction **VMPointer;
 };
 
 AFuncDesc *FindFunction(const char * string);
 
 
-void ParseStates(FScanner &sc, FActorInfo *actor, AActor *defaults, Baggage &bag);
+void ParseStates(FScanner &sc, PClassActor *actor, AActor *defaults, Baggage &bag);
+void ParseFunctionParameters(FScanner &sc, PClassActor *cls, TArray<FxExpression *> &out_params,
+	PFunction *afd, FString statestring, FStateDefinitions *statedef);
+FxTailable *ParseActions(FScanner &sc, FState state, FString statestring, Baggage &bag);
+class FxVMFunctionCall *ParseAction(FScanner &sc, FState state, FString statestring, Baggage &bag);
 
-PSymbolActionFunction *FindGlobalActionFunction(const char *name);
+PFunction *FindGlobalActionFunction(const char *name);
 
 //==========================================================================
 //
@@ -203,12 +200,12 @@ PSymbolActionFunction *FindGlobalActionFunction(const char *name);
 //
 //==========================================================================
 
-FActorInfo *CreateNewActor(const FScriptPosition &sc, FName typeName, FName parentName, bool native);
-void SetReplacement(FScanner &sc, FActorInfo *info, FName replaceName);
+PClassActor *CreateNewActor(const FScriptPosition &sc, FName typeName, FName parentName, bool native);
+void SetReplacement(FScanner &sc, PClassActor *info, FName replaceName);
 
 void HandleActorFlag(FScanner &sc, Baggage &bag, const char *part1, const char *part2, int mod);
-void FinishActor(const FScriptPosition &sc, FActorInfo *info, Baggage &bag);
-FxExpression *ParseParameter(FScanner &sc, PClass *cls, char type, bool constant);
+void FinishActor(const FScriptPosition &sc, PClassActor *info, Baggage &bag);
+FxExpression *ParseParameter(FScanner &sc, PClassActor *cls, PType *type, bool constant);
 
 
 enum 
@@ -228,21 +225,6 @@ enum
 	DEPF_INTERHUBSTRIP,
 };
 
-enum
-{
-	ACMETA_BASE				= 0x83000,
-	ACMETA_DropItems,		// Int (index into DropItemList)
-	ACMETA_ExplosionDamage,
-	ACMETA_ExplosionRadius,
-	ACMETA_DontHurtShooter,
-	ACMETA_MeleeSound,
-	ACMETA_MeleeDamage,
-	ACMETA_MissileName,
-	ACMETA_MissileHeight,
-	ACMETA_Lump,
-};
-
-
 // Types of old style decorations
 enum EDefinitionType
 {
@@ -253,10 +235,9 @@ enum EDefinitionType
 };
 
 #if defined(_MSC_VER)
-#pragma data_seg(".areg$u")
-#pragma data_seg(".greg$u")
-#pragma data_seg(".mreg$u")
-#pragma data_seg()
+#pragma section(".areg$u",read)
+#pragma section(".greg$u",read)
+#pragma section(".mreg$u",read)
 
 #define MSVC_ASEG __declspec(allocate(".areg$u"))
 #define GCC_ASEG
@@ -279,9 +260,10 @@ union FPropParam
 	int i;
 	float f;
 	const char *s;
+	FxExpression *exp;
 };
 
-typedef void (*PropHandler)(AActor *defaults, FActorInfo *info, Baggage &bag, FPropParam *params);
+typedef void (*PropHandler)(AActor *defaults, PClassActor *info, Baggage &bag, FPropParam *params);
 
 enum ECategory
 {
@@ -293,37 +275,28 @@ struct FPropertyInfo
 {
 	const char *name;
 	const char *params;
-	const PClass *cls;
+	const PClass * const *cls;
 	PropHandler Handler;
 	int category;
 };
 
-struct FVariableInfo
-{
-	const char *name;
-	intptr_t address;
-	const PClass *owner;
-};
-
-
 FPropertyInfo *FindProperty(const char * string);
-FVariableInfo *FindVariable(const char * string, const PClass *cls);
 int MatchString (const char *in, const char **strings);
 
 
 #define DEFINE_PROPERTY_BASE(name, paramlist, clas, cat) \
-	static void Handler_##name##_##paramlist##_##clas(A##clas *defaults, FActorInfo *info, Baggage &bag, FPropParam *params); \
+	static void Handler_##name##_##paramlist##_##clas(A##clas *defaults, PClassActor *info, Baggage &bag, FPropParam *params); \
 	static FPropertyInfo Prop_##name##_##paramlist##_##clas = \
-		{ #name, #paramlist, RUNTIME_CLASS(A##clas), (PropHandler)Handler_##name##_##paramlist##_##clas, cat }; \
+		{ #name, #paramlist, &RUNTIME_CLASS_CASTLESS(A##clas), (PropHandler)Handler_##name##_##paramlist##_##clas, cat }; \
 	MSVC_PSEG FPropertyInfo *infoptr_##name##_##paramlist##_##clas GCC_PSEG = &Prop_##name##_##paramlist##_##clas; \
-	static void Handler_##name##_##paramlist##_##clas(A##clas *defaults, FActorInfo *info, Baggage &bag, FPropParam *params)
+	static void Handler_##name##_##paramlist##_##clas(A##clas *defaults, PClassActor *info, Baggage &bag, FPropParam *params)
 
 #define DEFINE_PREFIXED_PROPERTY_BASE(prefix, name, paramlist, clas, cat) \
-	static void Handler_##name##_##paramlist##_##clas(A##clas *defaults, FActorInfo *info, Baggage &bag, FPropParam *params); \
+	static void Handler_##name##_##paramlist##_##clas(A##clas *defaults, PClassActor *info, Baggage &bag, FPropParam *params); \
 	static FPropertyInfo Prop_##name##_##paramlist##_##clas = \
-{ #prefix"."#name, #paramlist, RUNTIME_CLASS(A##clas), (PropHandler)Handler_##name##_##paramlist##_##clas, cat }; \
+{ #prefix"."#name, #paramlist, &RUNTIME_CLASS_CASTLESS(A##clas), (PropHandler)Handler_##name##_##paramlist##_##clas, cat }; \
 	MSVC_PSEG FPropertyInfo *infoptr_##name##_##paramlist##_##clas GCC_PSEG = &Prop_##name##_##paramlist##_##clas; \
-	static void Handler_##name##_##paramlist##_##clas(A##clas *defaults, FActorInfo *info, Baggage &bag, FPropParam *params)
+	static void Handler_##name##_##paramlist##_##clas(A##clas *defaults, PClassActor *info, Baggage &bag, FPropParam *params)
 
 
 #define DEFINE_PROPERTY(name, paramlist, clas) DEFINE_PROPERTY_BASE(name, paramlist, clas, CAT_PROPERTY)
@@ -336,6 +309,9 @@ int MatchString (const char *in, const char **strings);
 
 #define PROP_STRING_PARM(var, no) \
 	const char *var = params[(no)+1].s;
+
+#define PROP_EXP_PARM(var, no) \
+	FxExpression *var = params[(no)+1].exp;
 
 #define PROP_INT_PARM(var, no) \
 	int var = params[(no)+1].i;
@@ -350,92 +326,36 @@ int MatchString (const char *in, const char **strings);
 	int var = params[(no)+1].i== 0? params[(no)+2].i : V_GetColor(NULL, params[(no)+2].s);
 
 
-#define DEFINE_GLOBAL_VARIABLE(name) \
-	static FVariableInfo GlobalDef__##name = { #name, intptr_t(&name), NULL }; \
-	MSVC_MSEG FVariableInfo *infoptr_GlobalDef__##name GCC_MSEG = &GlobalDef__##name;
-
-#define DEFINE_MEMBER_VARIABLE(name, cls) \
-	static FVariableInfo GlobalDef__##name = { #name, static_cast<intptr_t>(myoffsetof(cls, name)), RUNTIME_CLASS(cls) }; \
-	MSVC_MSEG FVariableInfo *infoptr_GlobalDef__##name GCC_MSEG = &GlobalDef__##name;
-
-#define DEFINE_MEMBER_VARIABLE_ALIAS(name, alias, cls) \
-	static FVariableInfo GlobalDef__##name = { #name, static_cast<intptr_t>(myoffsetof(cls, alias)), RUNTIME_CLASS(cls) }; \
-	MSVC_MSEG FVariableInfo *infoptr_GlobalDef__##name GCC_MSEG = &GlobalDef__##name;
-
-	
-
-
-struct StateCallData
-{
-	FState *State;
-	bool Result;
-};
-
 // Macros to handle action functions. These are here so that I don't have to
 // change every single use in case the parameters change.
-#define DECLARE_ACTION(name) void AF_##name(AActor *self, AActor *stateowner, FState *, int, StateCallData *);
-#define DECLARE_ACTION_PARAMS(name) void AFP_##name(AActor *self, AActor *stateowner, FState *, int, StateCallData *);
+#define DECLARE_ACTION(name)	extern VMNativeFunction *name##_VMPtr;
 
 // This distinction is here so that CALL_ACTION produces errors when trying to
 // access a function that requires parameters.
 #define DEFINE_ACTION_FUNCTION(cls, name) \
-	void AF_##name (AActor *self, AActor *stateowner, FState *, int, StateCallData *); \
-	static AFuncDesc info_##cls##_##name = { #name, AF_##name }; \
-	MSVC_ASEG AFuncDesc *infoptr_##cls##_##name GCC_ASEG = &info_##cls##_##name; \
-	void AF_##name (AActor *self, AActor *stateowner, FState *CallingState, int, StateCallData *statecall)
+	static int AF_##name(VM_ARGS); \
+	VMNativeFunction *name##_VMPtr; \
+	static const AFuncDesc cls##_##name##_Hook = { #name, AF_##name, &name##_VMPtr }; \
+	extern AFuncDesc const *const cls##_##name##_HookPtr; \
+	MSVC_ASEG AFuncDesc const *const cls##_##name##_HookPtr GCC_ASEG = &cls##_##name##_Hook; \
+	static int AF_##name(VM_ARGS)
 
-#define DEFINE_ACTION_FUNCTION_PARAMS(cls, name) \
-	void AFP_##name (AActor *self, AActor *stateowner, FState *CallingState, int ParameterIndex, StateCallData *statecall); \
-	static AFuncDesc info_##cls##_##name = { #name, AFP_##name }; \
-	MSVC_ASEG AFuncDesc *infoptr_##cls##_##name GCC_ASEG = &info_##cls##_##name; \
-	void AFP_##name (AActor *self, AActor *stateowner, FState *CallingState, int ParameterIndex, StateCallData *statecall)
+#define DEFINE_ACTION_FUNCTION_PARAMS(cls, name) DEFINE_ACTION_FUNCTION(cls, name)
 
-#define DECLARE_PARAMINFO AActor *self, AActor *stateowner, FState *CallingState, int ParameterIndex, StateCallData *statecall
-#define PUSH_PARAMINFO self, stateowner, CallingState, ParameterIndex, statecall
+//#define DECLARE_PARAMINFO AActor *self, AActor *stateowner, FState *CallingState, int ParameterIndex, StateCallData *statecall
+//#define PUSH_PARAMINFO self, stateowner, CallingState, ParameterIndex, statecall
 
-#define CALL_ACTION(name,self) AF_##name(self, self, NULL, 0, NULL)
+#define CALL_ACTION(name,self) { /*AF_##name(self, self, NULL, 0, NULL)*/ \
+		VMValue params[3] = { self, self, VMValue(NULL, ATAG_STATE) }; \
+		stack->Call(name##_VMPtr, params, countof(params), NULL, 0, NULL); \
+	}
 
 
-int EvalExpressionI (DWORD x, AActor *self);
-int EvalExpressionCol (DWORD x, AActor *self);
-FSoundID EvalExpressionSnd (DWORD x, AActor *self);
-double EvalExpressionF (DWORD x, AActor *self);
-fixed_t EvalExpressionFix (DWORD x, AActor *self);
-FState *EvalExpressionState (DWORD x, AActor *self);
-const PClass *EvalExpressionClass (DWORD x, AActor *self);
-FName EvalExpressionName (DWORD x, AActor *self);
-
-#define ACTION_PARAM_START(count)
-
-#define ACTION_PARAM_INT(var, i) \
-	int var = EvalExpressionI(ParameterIndex+i, self);
-#define ACTION_PARAM_BOOL(var,i) \
-	bool var = !!EvalExpressionI(ParameterIndex+i, self);
-#define ACTION_PARAM_FIXED(var,i) \
-	fixed_t var = EvalExpressionFix(ParameterIndex+i, self);
-#define ACTION_PARAM_FLOAT(var,i) \
-	float var = float(EvalExpressionF(ParameterIndex+i, self));
-#define ACTION_PARAM_DOUBLE(var,i) \
-	double var = EvalExpressionF(ParameterIndex+i, self);
-#define ACTION_PARAM_CLASS(var,i) \
-	const PClass *var = EvalExpressionClass(ParameterIndex+i, self);
-#define ACTION_PARAM_STATE(var,i) \
-	FState *var = EvalExpressionState(ParameterIndex+i, stateowner);
-#define ACTION_PARAM_COLOR(var,i) \
-	PalEntry var = EvalExpressionCol(ParameterIndex+i, self);
-#define ACTION_PARAM_SOUND(var,i) \
-	FSoundID var = EvalExpressionSnd(ParameterIndex+i, self);
-#define ACTION_PARAM_STRING(var,i) \
-	const char *var = EvalExpressionName(ParameterIndex+i, self);
-#define ACTION_PARAM_NAME(var,i) \
-	FName var = EvalExpressionName(ParameterIndex+i, self);
-#define ACTION_PARAM_ANGLE(var,i) \
-	angle_t var = angle_t(EvalExpressionF(ParameterIndex+i, self)*ANGLE_90/90.f);
-
-#define ACTION_SET_RESULT(v) if (statecall != NULL) statecall->Result = v;
+#define ACTION_SET_RESULT(v) do { if (numret > 0) { assert(ret != NULL); ret->SetInt(v); numret = 1; } } while(0)
+#define ACTION_OR_RESULT(v) do { if (numret > 0) { assert(ret != NULL); ret->SetInt(*(int *)ret->Location | int(v)); numret = 1; } } while(0)
 
 // Checks to see what called the current action function
-#define ACTION_CALL_FROM_ACTOR() (CallingState == self->state)
-#define ACTION_CALL_FROM_WEAPON() (self->player && CallingState != self->state && statecall == NULL)
-#define ACTION_CALL_FROM_INVENTORY() (statecall != NULL)
+#define ACTION_CALL_FROM_ACTOR() (callingstate == self->state)
+#define ACTION_CALL_FROM_WEAPON() (self->player && callingstate != self->state && !(stateowner->flags5 & MF5_INSTATECALL))
+#define ACTION_CALL_FROM_INVENTORY() (!(stateowner->flags5 & MF5_INSTATECALL))
 #endif

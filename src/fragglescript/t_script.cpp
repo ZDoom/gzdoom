@@ -666,27 +666,12 @@ static int LS_FS_Execute (line_t *ln, AActor *it, bool backSide,
 
 void FS_Close()
 {
-	int i;
-	DFsVariable *current, *next;
-
-	// we have to actually delete the global variables if we don't want
-	// to get them reported as memory leaks.
-	for(i=0; i<VARIABLESLOTS; i++)
-    {
-		current = global_script->variables[i];
-		
-		while(current)
-		{
-			next = current->next; // save for after freeing
-			
-			current->ObjectFlags |= OF_YesReallyDelete;
-			delete current;
-			current = next; // go to next in chain
-		}
-    }
-	GC::DelSoftRoot(global_script);
-	global_script->ObjectFlags |= OF_YesReallyDelete;
-	delete global_script;
+	if (global_script != NULL)
+	{
+		GC::DelSoftRoot(global_script);
+		global_script->Destroy();
+		global_script = NULL;
+	}
 }
 
 void T_Init()
@@ -700,7 +685,6 @@ void T_Init()
 		global_script = new DFsScript;
 		GC::AddSoftRoot(global_script);
 		init_functions();
-		atterm(FS_Close);
 	}
 }
 

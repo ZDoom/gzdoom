@@ -567,14 +567,15 @@ void DoReadyWeapon(AActor *self)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_WeaponReady)
 {
-	ACTION_PARAM_START(1);
-	ACTION_PARAM_INT(paramflags, 0);
+	PARAM_ACTION_PROLOGUE;
+	PARAM_INT_OPT(flags)	{ flags = 0; }
 
-													DoReadyWeaponToSwitch(self, !(paramflags & WRF_NoSwitch));
-	if ((paramflags & WRF_NoFire) != WRF_NoFire)	DoReadyWeaponToFire(self, !(paramflags & WRF_NoPrimary), !(paramflags & WRF_NoSecondary));
-	if (!(paramflags & WRF_NoBob))					DoReadyWeaponToBob(self);
-													DoReadyWeaponToGeneric(self, paramflags);
-													DoReadyWeaponDisableSwitch(self, paramflags & WRF_DisableSwitch);
+													DoReadyWeaponToSwitch(self, !(flags & WRF_NoSwitch));
+	if ((flags & WRF_NoFire) != WRF_NoFire)			DoReadyWeaponToFire(self, !(flags & WRF_NoPrimary), !(flags & WRF_NoSecondary));
+	if (!(flags & WRF_NoBob))						DoReadyWeaponToBob(self);
+													DoReadyWeaponToGeneric(self, flags);
+	DoReadyWeaponDisableSwitch(self, flags & WRF_DisableSwitch);
+	return 0;
 }
 
 //---------------------------------------------------------------------------
@@ -683,7 +684,7 @@ static void P_CheckWeaponButtons (player_t *player)
 			{
 				P_SetPsprite(player, ps_weapon, state);
 				return;
-			}
+	}
 		}
 	}
 }
@@ -698,10 +699,10 @@ static void P_CheckWeaponButtons (player_t *player)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_ReFire)
 {
-	ACTION_PARAM_START(1)
-	ACTION_PARAM_STATE(state, 0);
-
+	PARAM_ACTION_PROLOGUE;
+	PARAM_STATE_OPT(state)	{ state = NULL; }
 	A_ReFire(self, state);
+	return 0;
 }
 
 void A_ReFire(AActor *self, FState *state)
@@ -736,12 +737,14 @@ void A_ReFire(AActor *self, FState *state)
 
 DEFINE_ACTION_FUNCTION(AInventory, A_ClearReFire)
 {
+	PARAM_ACTION_PROLOGUE;
 	player_t *player = self->player;
 
 	if (NULL != player)
 	{
 		player->refire = 0;
 	}
+	return 0;
 }
 
 //---------------------------------------------------------------------------
@@ -756,12 +759,15 @@ DEFINE_ACTION_FUNCTION(AInventory, A_ClearReFire)
 
 DEFINE_ACTION_FUNCTION(AInventory, A_CheckReload)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (self->player != NULL)
 	{
 		self->player->ReadyWeapon->CheckAmmo (
 			self->player->ReadyWeapon->bAltFire ? AWeapon::AltFire
 			: AWeapon::PrimaryFire, true);
 	}
+	return 0;
 }
 
 //---------------------------------------------------------------------------
@@ -772,12 +778,14 @@ DEFINE_ACTION_FUNCTION(AInventory, A_CheckReload)
 
 DEFINE_ACTION_FUNCTION(AInventory, A_Lower)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	player_t *player = self->player;
 	pspdef_t *psp;
 
 	if (NULL == player)
 	{
-		return;
+		return 0;
 	}
 	psp = &player->psprites[ps_weapon];
 	if (player->morphTics || player->cheats & CF_INSTANTWEAPSWITCH)
@@ -790,7 +798,7 @@ DEFINE_ACTION_FUNCTION(AInventory, A_Lower)
 	}
 	if (psp->sy < WEAPONBOTTOM)
 	{ // Not lowered all the way yet
-		return;
+		return 0;
 	}
 	if (player->playerstate == PST_DEAD)
 	{ // Player is dead, so don't bring up a pending weapon
@@ -798,11 +806,12 @@ DEFINE_ACTION_FUNCTION(AInventory, A_Lower)
 	
 		// Player is dead, so keep the weapon off screen
 		P_SetPsprite (player,  ps_weapon, NULL);
-		return;
+		return 0;
 	}
 	// [RH] Clear the flash state. Only needed for Strife.
 	P_SetPsprite (player, ps_flash, NULL);
 	P_BringUpWeapon (player);
+	return 0;
 }
 
 //---------------------------------------------------------------------------
@@ -813,27 +822,29 @@ DEFINE_ACTION_FUNCTION(AInventory, A_Lower)
 
 DEFINE_ACTION_FUNCTION(AInventory, A_Raise)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (self == NULL)
 	{
-		return;
+		return 0;
 	}
 	player_t *player = self->player;
 	pspdef_t *psp;
 
 	if (NULL == player)
 	{
-		return;
+		return 0;
 	}
 	if (player->PendingWeapon != WP_NOCHANGE)
 	{
 		P_DropWeapon(player);
-		return;
+		return 0;
 	}
 	psp = &player->psprites[ps_weapon];
 	psp->sy -= RAISESPEED;
 	if (psp->sy > WEAPONTOP)
 	{ // Not raised all the way yet
-		return;
+		return 0;
 	}
 	psp->sy = WEAPONTOP;
 	if (player->ReadyWeapon != NULL)
@@ -844,6 +855,7 @@ DEFINE_ACTION_FUNCTION(AInventory, A_Raise)
 	{
 		player->psprites[ps_weapon].state = NULL;
 	}
+	return 0;
 }
 
 
@@ -859,24 +871,33 @@ enum GF_Flags
 
 DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_GunFlash)
 {
-	ACTION_PARAM_START(2)
-	ACTION_PARAM_STATE(flash, 0);
-	ACTION_PARAM_INT(Flags, 1);
+	PARAM_ACTION_PROLOGUE;
+	PARAM_STATE_OPT(flash)	{ flash = NULL; }
+	PARAM_INT_OPT  (flags)	{ flags = 0; }
 
 	player_t *player = self->player;
 
 	if (NULL == player)
 	{
-		return;
+		return 0;
 	}
-	if(!(Flags & GFF_NOEXTCHANGE)) player->mo->PlayAttacking2 ();
-
+	if (!(flags & GFF_NOEXTCHANGE))
+	{
+		player->mo->PlayAttacking2 ();
+	}
 	if (flash == NULL)
 	{
-		if (player->ReadyWeapon->bAltFire) flash = player->ReadyWeapon->FindState(NAME_AltFlash);
-		if (flash == NULL) flash = player->ReadyWeapon->FindState(NAME_Flash);
+		if (player->ReadyWeapon->bAltFire)
+		{
+			flash = player->ReadyWeapon->FindState(NAME_AltFlash);
+		}
+		if (flash == NULL)
+		{
+			flash = player->ReadyWeapon->FindState(NAME_Flash);
+		}
 	}
 	P_SetPsprite (player, ps_flash, flash);
+	return 0;
 }
 
 
@@ -924,7 +945,7 @@ angle_t P_BulletSlope (AActor *mo, AActor **pLineTarget)
 //
 // P_GunShot
 //
-void P_GunShot (AActor *mo, bool accurate, const PClass *pufftype, angle_t pitch)
+void P_GunShot (AActor *mo, bool accurate, PClassActor *pufftype, angle_t pitch)
 {
 	angle_t 	angle;
 	int 		damage;
@@ -942,37 +963,47 @@ void P_GunShot (AActor *mo, bool accurate, const PClass *pufftype, angle_t pitch
 
 DEFINE_ACTION_FUNCTION(AInventory, A_Light0)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (self->player != NULL)
 	{
 		self->player->extralight = 0;
 	}
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AInventory, A_Light1)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (self->player != NULL)
 	{
 		self->player->extralight = 1;
 	}
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AInventory, A_Light2)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (self->player != NULL)
 	{
 		self->player->extralight = 2;
 	}
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_Light)
 {
-	ACTION_PARAM_START(1);
-	ACTION_PARAM_INT(light, 0);
+	PARAM_ACTION_PROLOGUE;
+	PARAM_INT(light);
 
 	if (self->player != NULL)
 	{
 		self->player->extralight = clamp<int>(light, -20, 20);
 	}
+	return 0;
 }
 
 //------------------------------------------------------------------------
@@ -1054,7 +1085,7 @@ void P_MovePsprites (player_t *player)
 
 		// Check custom buttons
 		P_CheckWeaponButtons(player);
-	}
+		}
 }
 
 FArchive &operator<< (FArchive &arc, pspdef_t &def)

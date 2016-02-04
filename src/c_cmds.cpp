@@ -30,8 +30,6 @@
 ** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **---------------------------------------------------------------------------
 **
-** It might be a good idea to move these into files that they are more
-** closely related to, but right now, I am too lazy to do that.
 */
 
 #include <math.h>
@@ -929,8 +927,8 @@ static void PrintFilteredActorList(const ActorTypeChecker IsActorType, const cha
 
 	if (FilterName != NULL)
 	{
-		FilterClass = PClass::FindClass(FilterName);
-		if (FilterClass == NULL || FilterClass->ActorInfo == NULL)
+		FilterClass = PClass::FindActor(FilterName);
+		if (FilterClass == NULL)
 		{
 			Printf("%s is not an actor class.\n", FilterName);
 			return;
@@ -1092,6 +1090,34 @@ CCMD(currentpos)
 	{
 		Printf("You are not in game!");
 	}
+}
+
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+CCMD(vmengine)
+{
+	if (argv.argc() == 2)
+	{
+		if (stricmp(argv[1], "default") == 0)
+		{
+			VMSelectEngine(VMEngine_Default);
+			return;
+		}
+		else if (stricmp(argv[1], "checked") == 0)
+		{
+			VMSelectEngine(VMEngine_Checked);
+			return;
+		}
+		else if (stricmp(argv[1], "unchecked") == 0)
+		{
+			VMSelectEngine(VMEngine_Unchecked);
+			return;
+		}
+	}
+	Printf("Usage: vmengine <default|checked|unchecked>\n");
 }
 
 //-----------------------------------------------------------------------------

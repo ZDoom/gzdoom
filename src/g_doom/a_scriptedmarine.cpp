@@ -155,8 +155,8 @@ void AScriptedMarine::Tick ()
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_M_Refire)
 {
-	ACTION_PARAM_START(1);
-	ACTION_PARAM_BOOL(ignoremissile, 0);
+	PARAM_ACTION_PROLOGUE;
+	PARAM_BOOL_OPT(ignoremissile)	{ ignoremissile = false; }
 
 	if (self->target == NULL || self->target->health <= 0)
 	{
@@ -164,11 +164,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_M_Refire)
 		{ // Look for a new target most of the time
 			if (P_LookForPlayers (self, true, NULL) && P_CheckMissileRange (self))
 			{ // Found somebody new and in range, so don't stop shooting
-				return;
+				return 0;
 			}
 		}
 		self->SetState (self->state + 1);
-		return;
+		return 0;
 	}
 	if (((ignoremissile || self->MissileState == NULL) && !self->CheckMeleeRange ()) ||
 		!P_CheckSight (self, self->target) ||
@@ -176,6 +176,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_M_Refire)
 	{
 		self->SetState (self->state + 1);
 	}
+	return 0;
 }
 
 //============================================================================
@@ -186,15 +187,18 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_M_Refire)
 
 DEFINE_ACTION_FUNCTION(AActor, A_M_SawRefire)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (self->target == NULL || self->target->health <= 0)
 	{
 		self->SetState (self->state + 1);
-		return;
+		return 0;
 	}
 	if (!self->CheckMeleeRange ())
 	{
 		self->SetState (self->state + 1);
 	}
+	return 0;
 }
 
 //============================================================================
@@ -205,10 +209,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_M_SawRefire)
 
 DEFINE_ACTION_FUNCTION(AActor, A_MarineNoise)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (static_cast<AScriptedMarine *>(self)->CurrentWeapon == AScriptedMarine::WEAPON_Chainsaw)
 	{
 		S_Sound (self, CHAN_WEAPON, "weapons/sawidle", 1, ATTN_NORM);
 	}
+	return 0;
 }
 
 //============================================================================
@@ -219,8 +226,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_MarineNoise)
 
 DEFINE_ACTION_FUNCTION(AActor, A_MarineChase)
 {
+	PARAM_ACTION_PROLOGUE;
 	CALL_ACTION(A_MarineNoise, self);
-	A_Chase (self);
+	A_Chase (stack, self);
+	return 0;
 }
 
 //============================================================================
@@ -231,8 +240,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_MarineChase)
 
 DEFINE_ACTION_FUNCTION(AActor, A_MarineLook)
 {
+	PARAM_ACTION_PROLOGUE;
 	CALL_ACTION(A_MarineNoise, self);
 	CALL_ACTION(A_Look, self);
+	return 0;
 }
 
 //============================================================================
@@ -243,17 +254,23 @@ DEFINE_ACTION_FUNCTION(AActor, A_MarineLook)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_M_Saw)
 {
-	ACTION_PARAM_START(4);
-	ACTION_PARAM_SOUND(fullsound, 0);
-	ACTION_PARAM_SOUND(hitsound, 1);
-	ACTION_PARAM_INT(damage, 2);
-	ACTION_PARAM_CLASS(pufftype, 3);
+	PARAM_ACTION_PROLOGUE;
+	PARAM_SOUND_OPT	(fullsound)			{ fullsound = "weapons/sawfull"; }
+	PARAM_SOUND_OPT	(hitsound)			{ hitsound = "weapons/sawhit"; }
+	PARAM_INT_OPT	(damage)			{ damage = 2; }
+	PARAM_CLASS_OPT	(pufftype, AActor)	{ pufftype = NULL; }
 
 	if (self->target == NULL)
-		return;
+		return 0;
 
-	if (pufftype == NULL) pufftype = PClass::FindClass(NAME_BulletPuff);
-	if (damage == 0) damage = 2;
+	if (pufftype == NULL)
+	{
+		pufftype = PClass::FindActor(NAME_BulletPuff);
+	}
+	if (damage == 0)
+	{
+		damage = 2;
+	}
 
 	A_FaceTarget (self);
 	if (self->CheckMeleeRange ())
@@ -271,7 +288,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_M_Saw)
 		if (!linetarget)
 		{
 			S_Sound (self, CHAN_WEAPON, fullsound, 1, ATTN_NORM);
-			return;
+			return 0;
 		}
 		S_Sound (self, CHAN_WEAPON, hitsound, 1, ATTN_NORM);
 			
@@ -297,6 +314,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_M_Saw)
 		S_Sound (self, CHAN_WEAPON, fullsound, 1, ATTN_NORM);
 	}
 	//A_Chase (self);
+	return 0;
 }
 
 //============================================================================
@@ -333,10 +351,11 @@ static void MarinePunch(AActor *self, int damagemul)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_M_Punch)
 {
-	ACTION_PARAM_START(1);
-	ACTION_PARAM_INT(mult, 0);
+	PARAM_ACTION_PROLOGUE;
+	PARAM_INT(mult);
 
 	MarinePunch(self, mult);
+	return 0;
 }
 
 //============================================================================
@@ -345,7 +364,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_M_Punch)
 //
 //============================================================================
 
-void P_GunShot2 (AActor *mo, bool accurate, int pitch, const PClass *pufftype)
+void P_GunShot2 (AActor *mo, bool accurate, int pitch, PClassActor *pufftype)
 {
 	angle_t 	angle;
 	int 		damage;
@@ -369,16 +388,17 @@ void P_GunShot2 (AActor *mo, bool accurate, int pitch, const PClass *pufftype)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_M_FirePistol)
 {
-	if (self->target == NULL)
-		return;
+	PARAM_ACTION_PROLOGUE;
+	PARAM_BOOL(accurate);
 
-	ACTION_PARAM_START(1);
-	ACTION_PARAM_BOOL(accurate, 0);
+	if (self->target == NULL)
+		return 0;
 
 	S_Sound (self, CHAN_WEAPON, "weapons/pistol", 1, ATTN_NORM);
 	A_FaceTarget (self);
 	P_GunShot2 (self, accurate, P_AimLineAttack (self, self->angle, MISSILERANGE),
-		PClass::FindClass(NAME_BulletPuff));
+		PClass::FindActor(NAME_BulletPuff));
+	return 0;
 }
 
 //============================================================================
@@ -389,19 +409,22 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_M_FirePistol)
 
 DEFINE_ACTION_FUNCTION(AActor, A_M_FireShotgun)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	int pitch;
 
 	if (self->target == NULL)
-		return;
+		return 0;
 
 	S_Sound (self, CHAN_WEAPON,  "weapons/shotgf", 1, ATTN_NORM);
 	A_FaceTarget (self);
 	pitch = P_AimLineAttack (self, self->angle, MISSILERANGE);
 	for (int i = 0; i < 7; ++i)
 	{
-		P_GunShot2 (self, false, pitch, PClass::FindClass(NAME_BulletPuff));
+		P_GunShot2 (self, false, pitch, PClass::FindActor(NAME_BulletPuff));
 	}
 	self->special1 = level.maptime + 27;
+	return 0;
 }
 
 //============================================================================
@@ -412,6 +435,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_M_FireShotgun)
 
 DEFINE_ACTION_FUNCTION(AActor, A_M_CheckAttack)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (self->special1 != 0 || self->target == NULL)
 	{
 		self->SetState (self->FindState("SkipAttack"));
@@ -420,6 +445,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_M_CheckAttack)
 	{
 		A_FaceTarget (self);
 	}
+	return 0;
 }
 
 //============================================================================
@@ -430,10 +456,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_M_CheckAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_M_FireShotgun2)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	int pitch;
 
 	if (self->target == NULL)
-		return;
+		return 0;
 
 	S_Sound (self, CHAN_WEAPON, "weapons/sshotf", 1, ATTN_NORM);
 	A_FaceTarget (self);
@@ -448,6 +476,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_M_FireShotgun2)
 					  NAME_Hitscan, NAME_BulletPuff);
 	}
 	self->special1 = level.maptime;
+	return 0;
 }
 
 //============================================================================
@@ -458,16 +487,17 @@ DEFINE_ACTION_FUNCTION(AActor, A_M_FireShotgun2)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_M_FireCGun)
 {
-	if (self->target == NULL)
-		return;
+	PARAM_ACTION_PROLOGUE;
+	PARAM_BOOL(accurate);
 
-	ACTION_PARAM_START(1);
-	ACTION_PARAM_BOOL(accurate, 0);
+	if (self->target == NULL)
+		return 0;
 
 	S_Sound (self, CHAN_WEAPON, "weapons/chngun", 1, ATTN_NORM);
 	A_FaceTarget (self);
 	P_GunShot2 (self, accurate, P_AimLineAttack (self, self->angle, MISSILERANGE),
-		PClass::FindClass(NAME_BulletPuff));
+		PClass::FindActor(NAME_BulletPuff));
+	return 0;
 }
 
 //============================================================================
@@ -482,8 +512,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_M_FireCGun)
 
 DEFINE_ACTION_FUNCTION(AActor, A_M_FireMissile)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (self->target == NULL)
-		return;
+		return 0;
 
 	if (self->CheckMeleeRange ())
 	{ // If too close, punch it
@@ -492,8 +524,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_M_FireMissile)
 	else
 	{
 		A_FaceTarget (self);
-		P_SpawnMissile (self, self->target, PClass::FindClass("Rocket"));
+		P_SpawnMissile (self, self->target, PClass::FindActor("Rocket"));
 	}
+	return 0;
 }
 
 //============================================================================
@@ -504,11 +537,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_M_FireMissile)
 
 DEFINE_ACTION_FUNCTION(AActor, A_M_FireRailgun)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (self->target == NULL)
-		return;
+		return 0;
 
 	CALL_ACTION(A_MonsterRail, self);
 	self->special1 = level.maptime + 50;
+	return 0;
 }
 
 //============================================================================
@@ -519,12 +555,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_M_FireRailgun)
 
 DEFINE_ACTION_FUNCTION(AActor, A_M_FirePlasma)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (self->target == NULL)
-		return;
+		return 0;
 
 	A_FaceTarget (self);
-	P_SpawnMissile (self, self->target, PClass::FindClass("PlasmaBall"));
+	P_SpawnMissile (self, self->target, PClass::FindActor("PlasmaBall"));
 	self->special1 = level.maptime + 20;
+	return 0;
 }
 
 //============================================================================
@@ -535,8 +574,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_M_FirePlasma)
 
 DEFINE_ACTION_FUNCTION(AActor, A_M_BFGsound)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (self->target == NULL)
-		return;
+		return 0;
 
 	if (self->special1 != 0)
 	{
@@ -549,6 +590,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_M_BFGsound)
 		// Don't interrupt the firing sequence
 		self->PainChance = 0;
 	}
+	return 0;
 }
 
 //============================================================================
@@ -559,13 +601,16 @@ DEFINE_ACTION_FUNCTION(AActor, A_M_BFGsound)
 
 DEFINE_ACTION_FUNCTION(AActor, A_M_FireBFG)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (self->target == NULL)
-		return;
+		return 0;
 
 	A_FaceTarget (self);
-	P_SpawnMissile (self, self->target, PClass::FindClass("BFGBall"));
+	P_SpawnMissile (self, self->target, PClass::FindActor("BFGBall"));
 	self->special1 = level.maptime + 30;
 	self->PainChance = MARINE_PAIN_CHANCE;
+	return 0;
 }
 
 //---------------------------------------------------------------------------
@@ -597,11 +642,11 @@ void AScriptedMarine::SetWeapon (EMarineWeapon type)
 	}
 }
 
-void AScriptedMarine::SetSprite (const PClass *source)
+void AScriptedMarine::SetSprite (PClassActor *source)
 {
-	if (source == NULL || source->ActorInfo == NULL)
+	if (source == NULL)
 	{ // A valid actor class wasn't passed, so use the standard sprite
-		SpriteOverride = sprite = GetClass()->ActorInfo->OwnedStates[0].sprite;
+		SpriteOverride = sprite = GetClass()->OwnedStates[0].sprite;
 		// Copy the standard scaling
 		scaleX = GetDefault()->scaleX;
 		scaleY = GetDefault()->scaleY;

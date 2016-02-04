@@ -21,6 +21,9 @@
 /src/xlat/xlat_parser.c
 /src/xlat/xlat_parser.h
 /src/xlat/xlat_parser.out
+/src/zscript/zcc-parse.c
+/src/zscript/zcc-parse.h
+/src/zscript/zcc-parse.out
 /tools/*/debug
 /tools/*/release
 /tools/*/*.exe

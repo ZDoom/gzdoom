@@ -119,6 +119,7 @@ FScanner &FScanner::operator=(const FScanner &other)
 	LastGotLine = other.LastGotLine;
 	CMode = other.CMode;
 	Escape = other.Escape;
+	StateMode = other.StateMode;
 
 	// Copy public members
 	if (other.String == other.StringBuffer)
@@ -275,6 +276,7 @@ void FScanner::PrepareScript ()
 	LastGotLine = 1;
 	CMode = false;
 	Escape = true;
+	StateMode = 0;
 	StringBuffer[0] = '\0';
 	BigStringBuffer = "";
 }
@@ -388,6 +390,34 @@ void FScanner::SetCMode (bool cmode)
 void FScanner::SetEscape (bool esc)
 {
 	Escape = esc;
+}
+
+//==========================================================================
+//
+// FScanner :: SetStateMode
+//
+// Enters state mode. This mode is very permissive for identifiers, which
+// it returns as TOK_NonWhitespace. The only character sequences that are
+// not returned as such are these:
+//
+//   * stop
+//   * wait
+//   * fail
+//   * loop
+//   * goto - Automatically exits state mode after it's seen.
+//   * :
+//   * ;
+//   * } - Automatically exits state mode after it's seen.
+//
+// Quoted strings are returned as TOK_NonWhitespace, minus the quotes. In
+// addition, any two consecutive sequences of TOK_NonWhitespace also exit
+// state mode.
+//
+//==========================================================================
+
+void FScanner::SetStateMode(bool stately)
+{
+	StateMode = stately ? 2 : 0;
 }
 
 //==========================================================================
@@ -513,8 +543,19 @@ bool FScanner::GetToken ()
 		else if (TokenType == TK_IntConst)
 		{
 			char *stopper;
-			Number = strtol(String, &stopper, 0);
-			Float = Number;
+			// Check for unsigned
+			if (String[StringLen - 1] == 'u' || String[StringLen - 1] == 'U' ||
+				String[StringLen - 2] == 'u' || String[StringLen - 2] == 'U')
+			{
+				TokenType = TK_UIntConst;
+				Number = strtoul(String, &stopper, 0);
+				Float = (unsigned)Number;
+			}
+			else
+			{
+				Number = strtol(String, &stopper, 0);
+				Float = Number;
+			}
 		}
 		else if (TokenType == TK_FloatConst)
 		{
@@ -878,7 +919,7 @@ FString FScanner::TokenName (int token, const char *string)
 
 //==========================================================================
 //
-// FScanner::ScriptError
+// FScanner::GetMessageLine
 //
 //==========================================================================
 

@@ -63,33 +63,35 @@
 #include "thingdef.h"
 #include "thingdef_exp.h"
 #include "a_sharedglobal.h"
+#include "vmbuilder.h"
+#include "stats.h"
+
+TDeletingArray<class FxExpression *> ActorDamageFuncs;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 void InitThingdef();
 void ParseDecorate (FScanner &sc);
 
 // STATIC FUNCTION PROTOTYPES --------------------------------------------
-const PClass *QuestItemClasses[31];
-PSymbolTable		 GlobalSymbols;
+PClassActor *QuestItemClasses[31];
 
 //==========================================================================
 //
 // Starts a new actor definition
 //
 //==========================================================================
-FActorInfo *CreateNewActor(const FScriptPosition &sc, FName typeName, FName parentName, bool native)
+PClassActor *CreateNewActor(const FScriptPosition &sc, FName typeName, FName parentName, bool native)
 {
-	const PClass *replacee = NULL;
-	PClass *ti = NULL;
-	FActorInfo *info = NULL;
+	PClassActor *replacee = NULL;
+	PClassActor *ti = NULL;
 
-	PClass *parent = RUNTIME_CLASS(AActor);
+	PClassActor *parent = RUNTIME_CLASS(AActor);
 
 	if (parentName != NAME_None)
 	{
-		parent = const_cast<PClass *> (PClass::FindClass (parentName));
+		parent = PClass::FindActor(parentName);
 		
-		const PClass *p = parent;
+		PClassActor *p = parent;
 		while (p != NULL)
 		{
 			if (p->TypeName == typeName)
@@ -97,7 +99,7 @@ FActorInfo *CreateNewActor(const FScriptPosition &sc, FName typeName, FName pare
 				sc.Message(MSG_ERROR, "'%s' inherits from a class with the same name", typeName.GetChars());
 				break;
 			}
-			p = p->ParentClass;
+			p = dyn_cast<PClassActor>(p->ParentClass);
 		}
 
 		if (parent == NULL)
@@ -110,19 +112,16 @@ FActorInfo *CreateNewActor(const FScriptPosition &sc, FName typeName, FName pare
 			sc.Message(MSG_ERROR, "Parent type '%s' is not an actor in %s", parentName.GetChars(), typeName.GetChars());
 			parent = RUNTIME_CLASS(AActor);
 		}
-		else if (parent->ActorInfo == NULL)
-		{
-			sc.Message(MSG_ERROR, "uninitialized parent type '%s' in %s", parentName.GetChars(), typeName.GetChars());
-			parent = RUNTIME_CLASS(AActor);
-		}
 	}
 
 	if (native)
 	{
-		ti = (PClass*)PClass::FindClass(typeName);
+		ti = PClass::FindActor(typeName);
 		if (ti == NULL)
 		{
-			sc.Message(MSG_ERROR, "Unknown native class '%s'", typeName.GetChars());
+			extern void DumpTypeTable();
+			DumpTypeTable();
+			sc.Message(MSG_ERROR, "Unknown native actor '%s'", typeName.GetChars());
 			goto create;
 		}
 		else if (ti != RUNTIME_CLASS(AActor) && ti->ParentClass->NativeClass() != parent->NativeClass())
@@ -131,47 +130,39 @@ FActorInfo *CreateNewActor(const FScriptPosition &sc, FName typeName, FName pare
 			parent = RUNTIME_CLASS(AActor);
 			goto create;
 		}
-		else if (ti->ActorInfo != NULL)
+		else if (ti->Defaults != NULL)
 		{
 			sc.Message(MSG_ERROR, "Redefinition of internal class '%s'", typeName.GetChars());
 			goto create;
 		}
-		ti->InitializeActorInfo();
-		info = ti->ActorInfo;
+		ti->InitializeNativeDefaults();
 	}
 	else
 	{
 	create:
-		ti = parent->CreateDerivedClass (typeName, parent->Size);
-		info = ti->ActorInfo;
+		ti = static_cast<PClassActor *>(parent->CreateDerivedClass (typeName, parent->Size));
 	}
 
 	// Copy class lists from parent
-	info->ForbiddenToPlayerClass = parent->ActorInfo->ForbiddenToPlayerClass;
-	info->RestrictedToPlayerClass = parent->ActorInfo->RestrictedToPlayerClass;
-	info->VisibleToPlayerClass = parent->ActorInfo->VisibleToPlayerClass;
+	ti->ForbiddenToPlayerClass = parent->ForbiddenToPlayerClass;
+	ti->RestrictedToPlayerClass = parent->RestrictedToPlayerClass;
+	ti->VisibleToPlayerClass = parent->VisibleToPlayerClass;
 
-	if (parent->ActorInfo->DamageFactors != NULL)
+	if (parent->DamageFactors != NULL)
 	{
 		// copy damage factors from parent
-		info->DamageFactors = new DmgFactors;
-		*info->DamageFactors = *parent->ActorInfo->DamageFactors;
+		ti->DamageFactors = new DmgFactors;
+		*ti->DamageFactors = *parent->DamageFactors;
 	}
-	if (parent->ActorInfo->PainChances != NULL)
+	if (parent->PainChances != NULL)
 	{
 		// copy pain chances from parent
-		info->PainChances = new PainChanceList;
-		*info->PainChances = *parent->ActorInfo->PainChances;
+		ti->PainChances = new PainChanceList;
+		*ti->PainChances = *parent->PainChances;
 	}
-	if (parent->ActorInfo->ColorSets != NULL)
-	{
-		// copy color sets from parent
-		info->ColorSets = new FPlayerColorSetMap;
-		*info->ColorSets = *parent->ActorInfo->ColorSets;
-	}
-	info->Replacee = info->Replacement = NULL;
-	info->DoomEdNum = -1;
-	return info;
+	ti->Replacee = ti->Replacement = NULL;
+	ti->DoomEdNum = -1;
+	return ti;
 }
 
 //==========================================================================
@@ -180,28 +171,23 @@ FActorInfo *CreateNewActor(const FScriptPosition &sc, FName typeName, FName pare
 //
 //==========================================================================
 
-void SetReplacement(FScanner &sc, FActorInfo *info, FName replaceName)
+void SetReplacement(FScanner &sc, PClassActor *info, FName replaceName)
 {
 	// Check for "replaces"
 	if (replaceName != NAME_None)
 	{
 		// Get actor name
-		const PClass *replacee = PClass::FindClass (replaceName);
+		PClassActor *replacee = PClass::FindActor(replaceName);
 
 		if (replacee == NULL)
 		{
-			sc.ScriptMessage("Replaced type '%s' not found for %s", replaceName.GetChars(), info->Class->TypeName.GetChars());
-			return;
-		}
-		else if (replacee->ActorInfo == NULL)
-		{
-			sc.ScriptMessage("Replaced type '%s' for %s is not an actor", replaceName.GetChars(), info->Class->TypeName.GetChars());
+			sc.ScriptMessage("Replaced type '%s' not found for %s", replaceName.GetChars(), info->TypeName.GetChars());
 			return;
 		}
 		if (replacee != NULL)
 		{
-			replacee->ActorInfo->Replacement = info;
-			info->Replacee = replacee->ActorInfo;
+			replacee->Replacement = info;
+			info->Replacee = replacee;
 		}
 	}
 
@@ -213,10 +199,9 @@ void SetReplacement(FScanner &sc, FActorInfo *info, FName replaceName)
 //
 //==========================================================================
 
-void FinishActor(const FScriptPosition &sc, FActorInfo *info, Baggage &bag)
+void FinishActor(const FScriptPosition &sc, PClassActor *info, Baggage &bag)
 {
-	PClass *ti = info->Class;
-	AActor *defaults = (AActor*)ti->Defaults;
+	AActor *defaults = (AActor*)info->Defaults;
 
 	try
 	{
@@ -232,31 +217,21 @@ void FinishActor(const FScriptPosition &sc, FActorInfo *info, Baggage &bag)
 	bag.statedef.MakeStateDefines(NULL);
 	if (bag.DropItemSet)
 	{
-		if (bag.DropItemList == NULL)
-		{
-			if (ti->Meta.GetMetaInt (ACMETA_DropItems) != 0)
-			{
-				ti->Meta.SetMetaInt (ACMETA_DropItems, 0);
-			}
-		}
-		else
-		{
-			ti->Meta.SetMetaInt (ACMETA_DropItems,
-				StoreDropItemChain(bag.DropItemList));
-		}
+		info->DropItems = bag.DropItemList;
+		GC::WriteBarrier(info, info->DropItems);
 	}
-	if (ti->IsDescendantOf (RUNTIME_CLASS(AInventory)))
+	if (info->IsDescendantOf (RUNTIME_CLASS(AInventory)))
 	{
 		defaults->flags |= MF_SPECIAL;
 	}
 
 	// Weapons must be checked for all relevant states. They may crash the game otherwise.
-	if (ti->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
+	if (info->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
 	{
-		FState * ready = ti->ActorInfo->FindState(NAME_Ready);
-		FState * select = ti->ActorInfo->FindState(NAME_Select);
-		FState * deselect = ti->ActorInfo->FindState(NAME_Deselect);
-		FState * fire = ti->ActorInfo->FindState(NAME_Fire);
+		FState *ready = info->FindState(NAME_Ready);
+		FState *select = info->FindState(NAME_Select);
+		FState *deselect = info->FindState(NAME_Deselect);
+		FState *fire = info->FindState(NAME_Fire);
 
 		// Consider any weapon without any valid state abstract and don't output a warning
 		// This is for creating base classes for weapon groups that only set up some properties.
@@ -264,19 +239,19 @@ void FinishActor(const FScriptPosition &sc, FActorInfo *info, Baggage &bag)
 		{
 			if (!ready)
 			{
-				sc.Message(MSG_ERROR, "Weapon %s doesn't define a ready state.\n", ti->TypeName.GetChars());
+				sc.Message(MSG_ERROR, "Weapon %s doesn't define a ready state.\n", info->TypeName.GetChars());
 			}
 			if (!select) 
 			{
-				sc.Message(MSG_ERROR, "Weapon %s doesn't define a select state.\n", ti->TypeName.GetChars());
+				sc.Message(MSG_ERROR, "Weapon %s doesn't define a select state.\n", info->TypeName.GetChars());
 			}
 			if (!deselect) 
 			{
-				sc.Message(MSG_ERROR, "Weapon %s doesn't define a deselect state.\n", ti->TypeName.GetChars());
+				sc.Message(MSG_ERROR, "Weapon %s doesn't define a deselect state.\n", info->TypeName.GetChars());
 			}
 			if (!fire) 
 			{
-				sc.Message(MSG_ERROR, "Weapon %s doesn't define a fire state.\n", ti->TypeName.GetChars());
+				sc.Message(MSG_ERROR, "Weapon %s doesn't define a fire state.\n", info->TypeName.GetChars());
 			}
 		}
 	}
@@ -288,16 +263,83 @@ void FinishActor(const FScriptPosition &sc, FActorInfo *info, Baggage &bag)
 //
 //==========================================================================
 
+static void DumpFunction(FILE *dump, VMScriptFunction *sfunc, const char *label, int labellen)
+{
+	const char *marks = "=======================================================";
+	fprintf(dump, "\n%.*s %s %.*s", MAX(3, 38 - labellen / 2), marks, label, MAX(3, 38 - labellen / 2), marks);
+	fprintf(dump, "\nInteger regs: %-3d  Float regs: %-3d  Address regs: %-3d  String regs: %-3d\nStack size: %d\n",
+		sfunc->NumRegD, sfunc->NumRegF, sfunc->NumRegA, sfunc->NumRegS, sfunc->MaxParam);
+	VMDumpConstants(dump, sfunc);
+	fprintf(dump, "\nDisassembly @ %p:\n", sfunc->Code);
+	VMDisasm(dump, sfunc->Code, sfunc->CodeSize, sfunc);
+}
+
 static void FinishThingdef()
 {
-	int errorcount = StateParams.ResolveAll();
+	int errorcount = 0;
+	unsigned i;
+	int codesize = 0;
 
-	for (unsigned i = 0;i < PClass::m_Types.Size(); i++)
+#if 1
+	FILE *dump = fopen("disasm.txt", "w");
+#else
+	FILE *dump = NULL;
+#endif
+	for (i = 0; i < StateTempCalls.Size(); ++i)
 	{
-		PClass * ti = PClass::m_Types[i];
+		FStateTempCall *tcall = StateTempCalls[i];
+		VMFunction *func;
 
-		// Skip non-actors
-		if (!ti->IsDescendantOf(RUNTIME_CLASS(AActor))) continue;
+		assert(tcall->Code != NULL);
+
+		// Can we call this function directly without wrapping it in an
+		// anonymous function? e.g. Are we passing any parameters to it?
+		func = tcall->Code->GetDirectFunction();
+		if (func == NULL)
+		{
+			FCompileContext ctx(tcall->ActorClass);
+			tcall->Code = static_cast<FxTailable *>(tcall->Code->Resolve(ctx));
+
+			// Make sure resolving it didn't obliterate it.
+			if (tcall->Code != NULL)
+			{
+				VMFunctionBuilder buildit;
+
+				// Allocate registers used to pass parameters in.
+				// self, stateowner, state (all are pointers)
+				buildit.Registers[REGT_POINTER].Get(3);
+
+				// Emit a tail call via FxVMFunctionCall
+				tcall->Code->Emit(&buildit, true);
+
+				VMScriptFunction *sfunc = buildit.MakeFunction();
+				sfunc->NumArgs = NAP;
+				func = sfunc;
+
+				if (dump != NULL)
+				{
+					char label[64];
+					int labellen = mysnprintf(label, countof(label), "Function %s.States[%d] (*%d)",
+						tcall->ActorClass->TypeName.GetChars(), tcall->FirstState, tcall->NumStates);
+					DumpFunction(dump, sfunc, label, labellen);
+					codesize += sfunc->CodeSize;
+				}
+			}
+		}
+		if (tcall->Code != NULL)
+		{
+			delete tcall->Code;
+			tcall->Code = NULL;
+			for (int k = 0; k < tcall->NumStates; ++k)
+			{
+				tcall->ActorClass->OwnedStates[tcall->FirstState + k].SetAction(func);
+			}
+		}
+	}
+
+	for (i = 0; i < PClassActor::AllActorClasses.Size(); i++)
+	{
+		PClassActor *ti = PClassActor::AllActorClasses[i];
 
 		if (ti->Size == (unsigned)-1)
 		{
@@ -314,18 +356,56 @@ static void FinishThingdef()
 			errorcount++;
 			continue;
 		}
+
+		if (def->Damage != NULL)
+		{
+			FxDamageValue *dmg = (FxDamageValue *)ActorDamageFuncs[(uintptr_t)def->Damage - 1];
+			VMScriptFunction *sfunc;
+			sfunc = dmg->GetFunction();
+			if (sfunc == NULL)
+			{
+				FCompileContext ctx(ti);
+				dmg->Resolve(ctx);
+				VMFunctionBuilder buildit;
+				buildit.Registers[REGT_POINTER].Get(1);		// The self pointer
+				dmg->Emit(&buildit);
+				sfunc = buildit.MakeFunction();
+				sfunc->NumArgs = 1;
+				// Save this function in case this damage value was reused
+				// (which happens quite easily with inheritance).
+				dmg->SetFunction(sfunc);
+			}
+			def->Damage = sfunc;
+
+			if (dump != NULL && sfunc != NULL)
+			{
+				char label[64];
+				int labellen = mysnprintf(label, countof(label), "Function %s.Damage",
+					ti->TypeName.GetChars());
+				DumpFunction(dump, sfunc, label, labellen);
+				codesize += sfunc->CodeSize;
+			}
+		}
+	}
+	if (dump != NULL)
+	{
+		fprintf(dump, "\n*************************************************************************\n%i code bytes\n", codesize * 4);
+		fclose(dump);
 	}
 	if (errorcount > 0)
 	{
 		I_Error("%d errors during actor postprocessing", errorcount);
 	}
 
+	ActorDamageFuncs.DeleteAndClear();
+	StateTempCalls.DeleteAndClear();
+
 	// Since these are defined in DECORATE now the table has to be initialized here.
-	for(int i=0;i<31;i++)
+	for(int i = 0; i < 31; i++)
 	{
 		char fmt[20];
 		mysnprintf(fmt, countof(fmt), "QuestItem%d", i+1);
-		QuestItemClasses[i] = PClass::FindClass(fmt);
+		QuestItemClasses[i] = PClass::FindActor(fmt);
 	}
 }
 
@@ -342,10 +422,10 @@ static void FinishThingdef()
 void LoadActors ()
 {
 	int lastlump, lump;
+	cycle_t timer;
 
-	StateParams.Clear();
-	GlobalSymbols.ReleaseSymbols();
-	DropItemList.Clear();
+	timer.Reset(); timer.Clock();
+	ActorDamageFuncs.Clear();
 	FScriptPosition::ResetErrorCounter();
 	InitThingdef();
 	lastlump = 0;
@@ -359,5 +439,36 @@ void LoadActors ()
 		I_Error("%d errors while parsing DECORATE scripts", FScriptPosition::ErrorCounter);
 	}
 	FinishThingdef();
+	timer.Unclock();
+	Printf("DECORATE parsing took %.2f ms\n", timer.TimeMS());
+	// Base time: ~52 ms
 }
 
+
+//==========================================================================
+//
+// CreateDamageFunction
+//
+// Creates a damage function suitable for a constant, non-expressioned
+// value.
+//
+//==========================================================================
+
+VMScriptFunction *CreateDamageFunction(int dmg)
+{
+	if (dmg == 0)
+	{
+		// For zero damage, do not create a function so that the special collision detection case still works as before.
+		return NULL;
+	}
+	else
+	{
+		VMFunctionBuilder build;
+		build.Registers[REGT_POINTER].Get(1);		// The self pointer
+		build.EmitRetInt(0, false, dmg);
+		build.EmitRetInt(1, true, 0);
+		VMScriptFunction *sfunc = build.MakeFunction();
+		sfunc->NumArgs = 1;
+		return sfunc;
+	}
+}

@@ -19,27 +19,32 @@ static FRandom pr_skelfist ("SkelFist");
 // A_SkelMissile
 //
 DEFINE_ACTION_FUNCTION(AActor, A_SkelMissile)
-{		
+{
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *missile;
 		
 	if (!self->target)
-		return;
+		return 0;
 				
 	A_FaceTarget (self);
 	missile = P_SpawnMissileZ (self, self->Z() + 48*FRACUNIT,
-		self->target, PClass::FindClass("RevenantTracer"));
+		self->target, PClass::FindActor("RevenantTracer"));
 
 	if (missile != NULL)
 	{
 		missile->SetOrigin(missile->Vec3Offset(missile->velx, missile->vely, 0), false);
 		missile->tracer = self->target;
 	}
+	return 0;
 }
 
 #define TRACEANGLE (0xc000000)
 
 DEFINE_ACTION_FUNCTION(AActor, A_Tracer)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	angle_t exact;
 	fixed_t dist;
 	fixed_t slope;
@@ -56,10 +61,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_Tracer)
 	// [RH] level.time is always 0-based, so nothing special to do here.
 
 	if (level.time & 3)
-		return;
+		return 0;
 	
 	// spawn a puff of smoke behind the rocket
-	P_SpawnPuff (self, PClass::FindClass(NAME_BulletPuff), self->X(), self->Y(), self->Z(), 0, 3);
+	P_SpawnPuff (self, PClass::FindActor(NAME_BulletPuff), self->X(), self->Y(), self->Z(), 0, 3);
 		
 	smoke = Spawn ("RevenantTracerSmoke", self->Vec3Offset(-self->velx, -self->vely, 0), ALLOW_REPLACE);
 	
@@ -72,7 +77,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Tracer)
 	dest = self->tracer;
 		
 	if (!dest || dest->health <= 0 || self->Speed == 0 || !self->CanSeek(dest))
-		return;
+		return 0;
 	
 	// change angle 	
 	exact = self->AngleTo(dest);
@@ -119,21 +124,27 @@ DEFINE_ACTION_FUNCTION(AActor, A_Tracer)
 		else
 			self->velz += FRACUNIT/8;
 	}
+	return 0;
 }
 
 
 DEFINE_ACTION_FUNCTION(AActor, A_SkelWhoosh)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (!self->target)
-		return;
+		return 0;
 	A_FaceTarget (self);
 	S_Sound (self, CHAN_WEAPON, "skeleton/swing", 1, ATTN_NORM);
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_SkelFist)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (!self->target)
-		return;
+		return 0;
 				
 	A_FaceTarget (self);
 		
@@ -144,4 +155,5 @@ DEFINE_ACTION_FUNCTION(AActor, A_SkelFist)
 		int newdam = P_DamageMobj (self->target, self, self, damage, NAME_Melee);
 		P_TraceBleed (newdam > 0 ? newdam : damage, self->target, self);
 	}
+	return 0;
 }

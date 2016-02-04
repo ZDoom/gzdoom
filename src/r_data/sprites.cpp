@@ -515,7 +515,7 @@ void R_InitSkins (void)
 	int lastlump;
 	int aliasid;
 	bool remove;
-	const PClass *basetype, *transtype;
+	PClassPlayerPawn *basetype, *transtype;
 
 	key[sizeof(key)-1] = 0;
 	i = PlayerClasses.Size () - 1;
@@ -600,11 +600,11 @@ void R_InitSkins (void)
 			else if (0 == stricmp (key, "game"))
 			{
 				if (gameinfo.gametype == GAME_Heretic)
-					basetype = PClass::FindClass (NAME_HereticPlayer);
+					basetype = dyn_cast<PClassPlayerPawn>(PClass::FindActor(NAME_HereticPlayer));
 				else if (gameinfo.gametype == GAME_Strife)
-					basetype = PClass::FindClass (NAME_StrifePlayer);
+					basetype = dyn_cast<PClassPlayerPawn>(PClass::FindActor(NAME_StrifePlayer));
 				else
-					basetype = PClass::FindClass (NAME_DoomPlayer);
+					basetype = dyn_cast<PClassPlayerPawn>(PClass::FindActor(NAME_DoomPlayer));
 
 				transtype = basetype;
 
@@ -612,7 +612,7 @@ void R_InitSkins (void)
 				{
 					if (gameinfo.gametype & GAME_DoomChex)
 					{
-						transtype = PClass::FindClass (NAME_HereticPlayer);
+						transtype = dyn_cast<PClassPlayerPawn>(PClass::FindActor(NAME_HereticPlayer));
 						skins[i].othergame = true;
 					}
 					else if (gameinfo.gametype != GAME_Heretic)
@@ -631,7 +631,7 @@ void R_InitSkins (void)
 				{
 					if (gameinfo.gametype == GAME_Heretic)
 					{
-						transtype = PClass::FindClass (NAME_DoomPlayer);
+						transtype = dyn_cast<PClassPlayerPawn>(PClass::FindActor(NAME_DoomPlayer));
 						skins[i].othergame = true;
 					}
 					else if (!(gameinfo.gametype & GAME_DoomChex))
@@ -707,12 +707,12 @@ void R_InitSkins (void)
 		{
 			if (gameinfo.gametype & GAME_DoomChex)
 			{
-				basetype = transtype = PClass::FindClass (NAME_DoomPlayer);
+				basetype = transtype = dyn_cast<PClassPlayerPawn>(PClass::FindActor(NAME_DoomPlayer));
 			}
 			else if (gameinfo.gametype == GAME_Heretic)
 			{
-				basetype = PClass::FindClass (NAME_HereticPlayer);
-				transtype = PClass::FindClass (NAME_DoomPlayer);
+				basetype = dyn_cast<PClassPlayerPawn>(PClass::FindActor(NAME_HereticPlayer));
+				transtype = dyn_cast<PClassPlayerPawn>(PClass::FindActor(NAME_DoomPlayer));
 				skins[i].othergame = true;
 			}
 			else
@@ -723,17 +723,18 @@ void R_InitSkins (void)
 
 		if (!remove)
 		{
-			skins[i].range0start = transtype->Meta.GetMetaInt (APMETA_ColorRange) & 0xff;
-			skins[i].range0end = transtype->Meta.GetMetaInt (APMETA_ColorRange) >> 8;
+			skins[i].range0start = transtype->ColorRangeStart;
+			skins[i].range0end = transtype->ColorRangeEnd;
 
 			remove = true;
 			for (j = 0; j < (int)PlayerClasses.Size (); j++)
 			{
-				const PClass *type = PlayerClasses[j].Type;
+				PClassPlayerPawn *type = PlayerClasses[j].Type;
 
 				if (type->IsDescendantOf (basetype) &&
-					GetDefaultByType (type)->SpawnState->sprite == GetDefaultByType (basetype)->SpawnState->sprite &&
-					type->Meta.GetMetaInt (APMETA_ColorRange) == basetype->Meta.GetMetaInt (APMETA_ColorRange))
+					GetDefaultByType(type)->SpawnState->sprite == GetDefaultByType(basetype)->SpawnState->sprite &&
+					type->ColorRangeStart == basetype->ColorRangeStart &&
+					type->ColorRangeEnd == basetype->ColorRangeEnd)
 				{
 					PlayerClasses[j].Skins.Push ((int)i);
 					remove = false;
@@ -931,9 +932,9 @@ void R_InitSprites ()
 	memset (skins, 0, sizeof(*skins) * numskins);
 	for (i = 0; i < numskins; i++)
 	{ // Assume Doom skin by default
-		const PClass *type = PlayerClasses[0].Type;
-		skins[i].range0start = type->Meta.GetMetaInt (APMETA_ColorRange) & 255;
-		skins[i].range0end = type->Meta.GetMetaInt (APMETA_ColorRange) >> 8;
+		PClassPlayerPawn *type = PlayerClasses[0].Type;
+		skins[i].range0start = type->ColorRangeStart;
+		skins[i].range0end = type->ColorRangeEnd;
 		skins[i].ScaleX = GetDefaultByType (type)->scaleX;
 		skins[i].ScaleY = GetDefaultByType (type)->scaleY;
 	}
@@ -947,11 +948,11 @@ void R_InitSprites ()
 	// [GRB] Each player class has its own base skin
 	for (i = 0; i < PlayerClasses.Size (); i++)
 	{
-		const PClass *basetype = PlayerClasses[i].Type;
-		const char *pclassface = basetype->Meta.GetMetaString (APMETA_Face);
+		PClassPlayerPawn *basetype = PlayerClasses[i].Type;
+		FString classface = basetype->Face;
 
 		strcpy (skins[i].name, "Base");
-		if (pclassface == NULL || strcmp(pclassface, "None") == 0)
+		if (classface.IsEmpty() || strcmp(classface, "None") == 0)
 		{
 			skins[i].face[0] = 'S';
 			skins[i].face[1] = 'T';
@@ -960,10 +961,10 @@ void R_InitSprites ()
 		}
 		else
 		{
-			strcpy(skins[i].face, pclassface);
+			strcpy(skins[i].face, classface);
 		}
-		skins[i].range0start = basetype->Meta.GetMetaInt (APMETA_ColorRange) & 255;
-		skins[i].range0end = basetype->Meta.GetMetaInt (APMETA_ColorRange) >> 8;
+		skins[i].range0start = basetype->ColorRangeStart;
+		skins[i].range0end = basetype->ColorRangeEnd;
 		skins[i].ScaleX = GetDefaultByType (basetype)->scaleX;
 		skins[i].ScaleY = GetDefaultByType (basetype)->scaleY;
 		skins[i].sprite = GetDefaultByType (basetype)->SpawnState->sprite;

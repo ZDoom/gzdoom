@@ -94,6 +94,8 @@ void P_DaggerAlert (AActor *target, AActor *emitter)
 
 DEFINE_ACTION_FUNCTION(AActor, A_JabDagger)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	angle_t 	angle;
 	int 		damage;
 	int 		pitch;
@@ -126,6 +128,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_JabDagger)
 	{
 		S_Sound (self, CHAN_WEAPON, "misc/swish", 1, ATTN_NORM);
 	}
+	return 0;
 }
 
 //============================================================================
@@ -143,9 +146,9 @@ enum
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_AlertMonsters)
 {
-	ACTION_PARAM_START(1);
-	ACTION_PARAM_FIXED(maxdist, 0);
-	ACTION_PARAM_INT(Flags, 1);
+	PARAM_ACTION_PROLOGUE;
+	PARAM_FIXED_OPT(maxdist) { maxdist = 0; }
+	PARAM_INT_OPT(Flags) { Flags = 0; }
 
 	AActor * target = NULL;
 	AActor * emitter = self;
@@ -169,6 +172,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_AlertMonsters)
 	{
 		P_NoiseAlert(target, emitter, false, maxdist);
 	}
+	return 0;
 }
 
 // Poison Bolt --------------------------------------------------------------
@@ -208,12 +212,15 @@ int APoisonBolt::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 
 DEFINE_ACTION_FUNCTION(AActor, A_ClearFlash)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	player_t *player = self->player;
 
 	if (player == NULL)
-		return;
+		return 0;
 
 	P_SetPsprite (player, ps_flash, NULL);
+	return 0;
 }
 
 //============================================================================
@@ -224,10 +231,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_ClearFlash)
 
 DEFINE_ACTION_FUNCTION(AActor, A_ShowElectricFlash)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (self->player != NULL)
 	{
 		P_SetPsprite (self->player, ps_flash, self->player->ReadyWeapon->FindState(NAME_Flash));
 	}
+	return 0;
 }
 
 //============================================================================
@@ -238,19 +248,19 @@ DEFINE_ACTION_FUNCTION(AActor, A_ShowElectricFlash)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireArrow)
 {
+	PARAM_ACTION_PROLOGUE;
+	PARAM_CLASS(ti, AActor);
+
 	angle_t savedangle;
 
-	ACTION_PARAM_START(1);
-	ACTION_PARAM_CLASS(ti, 0);
-
 	if (self->player == NULL)
-		return;
+		return 0;
 
 	AWeapon *weapon = self->player->ReadyWeapon;
 	if (weapon != NULL)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
-			return;
+			return 0;
 	}
 
 	if (ti) 
@@ -262,6 +272,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireArrow)
 		self->angle = savedangle;
 		S_Sound (self, CHAN_WEAPON, "weapons/xbowshoot", 1, ATTN_NORM);
 	}
+	return 0;
 }
 
 // Assault Gun --------------------------------------------------------------
@@ -296,6 +307,8 @@ void P_StrifeGunShot (AActor *mo, bool accurate, angle_t pitch)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireAssaultGun)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	bool accurate;
 
 	S_Sound (self, CHAN_WEAPON, "weapons/assaultgun", 1, ATTN_NORM);
@@ -306,7 +319,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireAssaultGun)
 		if (weapon != NULL)
 		{
 			if (!weapon->DepleteAmmo (weapon->bAltFire))
-				return;
+				return 0;
 		}
 		self->player->mo->PlayAttacking2 ();
 		accurate = !self->player->refire;
@@ -317,6 +330,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireAssaultGun)
 	}
 
 	P_StrifeGunShot (self, accurate, P_BulletSlope (self));
+	return 0;
 }
 
 // Mini-Missile Launcher ----------------------------------------------------
@@ -329,24 +343,27 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireAssaultGun)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireMiniMissile)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	player_t *player = self->player;
 	angle_t savedangle;
 
 	if (self->player == NULL)
-		return;
+		return 0;
 
 	AWeapon *weapon = self->player->ReadyWeapon;
 	if (weapon != NULL)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
-			return;
+			return 0;
 	}
 
 	savedangle = self->angle;
 	self->angle += pr_minimissile.Random2() << (19 - player->mo->accuracy * 5 / 100);
 	player->mo->PlayAttacking2 ();
-	P_SpawnPlayerMissile (self, PClass::FindClass("MiniMissile"));
+	P_SpawnPlayerMissile (self, PClass::FindActor("MiniMissile"));
 	self->angle = savedangle;
+	return 0;
 }
 
 //============================================================================
@@ -357,15 +374,18 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMiniMissile)
 
 DEFINE_ACTION_FUNCTION(AActor, A_RocketInFlight)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *trail;
 
 	S_Sound (self, CHAN_VOICE, "misc/missileinflight", 1, ATTN_NORM);
-	P_SpawnPuff (self, PClass::FindClass("MiniMissilePuff"), self->Pos(), self->angle - ANGLE_180, 2, PF_HITTHING);
+	P_SpawnPuff (self, PClass::FindActor("MiniMissilePuff"), self->Pos(), self->angle - ANGLE_180, 2, PF_HITTHING);
 	trail = Spawn("RocketTrail", self->Vec3Offset(-self->velx, -self->vely, 0), ALLOW_REPLACE);
 	if (trail != NULL)
 	{
 		trail->velz = FRACUNIT;
 	}
+	return 0;
 }
 
 // Flame Thrower ------------------------------------------------------------
@@ -378,8 +398,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_RocketInFlight)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FlameDie)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	self->flags |= MF_NOGRAVITY;
 	self->velz = (pr_flamedie() & 3) << FRACBITS;
+	return 0;
 }
 
 //============================================================================
@@ -390,6 +413,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_FlameDie)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireFlamer)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	player_t *player = self->player;
 
 	if (player != NULL)
@@ -398,17 +423,18 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireFlamer)
 		if (weapon != NULL)
 		{
 			if (!weapon->DepleteAmmo (weapon->bAltFire))
-				return;
+				return 0;
 		}
 		player->mo->PlayAttacking2 ();
 	}
 
 	self->angle += pr_flamethrower.Random2() << 18;
-	self = P_SpawnPlayerMissile (self, PClass::FindClass("FlameMissile"));
+	self = P_SpawnPlayerMissile (self, PClass::FindActor("FlameMissile"));
 	if (self != NULL)
 	{
 		self->velz += 5*FRACUNIT;
 	}
+	return 0;
 }
 
 // Mauler -------------------------------------------------------------------
@@ -424,13 +450,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireFlamer)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireMauler1)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (self->player != NULL)
 	{
 		AWeapon *weapon = self->player->ReadyWeapon;
 		if (weapon != NULL)
 		{
 			if (!weapon->DepleteAmmo (weapon->bAltFire))
-				return;
+				return 0;
 		}
 		// Strife apparently didn't show the player shooting. Let's fix that.
 		self->player->mo->PlayAttacking2 ();
@@ -453,6 +481,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMauler1)
 		// original.
 		P_LineAttack (self, angle, PLAYERMISSILERANGE, pitch, damage, NAME_Hitscan, NAME_MaulerPuff);
 	}
+	return 0;
 }
 
 //============================================================================
@@ -465,6 +494,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMauler1)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireMauler2Pre)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	S_Sound (self, CHAN_WEAPON, "weapons/mauler2charge", 1, ATTN_NORM);
 
 	if (self->player != NULL)
@@ -472,6 +503,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMauler2Pre)
 		self->player->psprites[ps_weapon].sx += pr_mauler2.Random2() << 10;
 		self->player->psprites[ps_weapon].sy += pr_mauler2.Random2() << 10;
 	}
+	return 0;
 }
 
 //============================================================================
@@ -484,19 +516,22 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMauler2Pre)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireMauler2)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (self->player != NULL)
 	{
 		AWeapon *weapon = self->player->ReadyWeapon;
 		if (weapon != NULL)
 		{
 			if (!weapon->DepleteAmmo (weapon->bAltFire))
-				return;
+				return 0;
 		}
 		self->player->mo->PlayAttacking2 ();
 	}
-	P_SpawnPlayerMissile (self, PClass::FindClass("MaulerTorpedo"));
+	P_SpawnPlayerMissile (self, PClass::FindActor("MaulerTorpedo"));
 	P_DamageMobj (self, self, NULL, 20, self->DamageType);
 	P_ThrustMobj (self, self->angle + ANGLE_180, 0x7D000);
+	return 0;
 }
 
 //============================================================================
@@ -507,10 +542,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMauler2)
 //
 //============================================================================
 
-AActor *P_SpawnSubMissile (AActor *source, const PClass *type, AActor *target);
-
 DEFINE_ACTION_FUNCTION(AActor, A_MaulerTorpedoWave)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *wavedef = GetDefaultByName("MaulerTorpedoWave");
 	fixed_t savedz;
 	self->angle += ANGLE_180;
@@ -525,12 +560,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_MaulerTorpedoWave)
 	for (int i = 0; i < 80; ++i)
 	{
 		self->angle += ANGLE_45/10;
-		P_SpawnSubMissile (self, PClass::FindClass("MaulerTorpedoWave"), self->target);
+		P_SpawnSubMissile (self, PClass::FindActor("MaulerTorpedoWave"), self->target);
 	}
 	self->SetZ(savedz);
+	return 0;
 }
 
-AActor *P_SpawnSubMissile (AActor *source, const PClass *type, AActor *target)
+AActor *P_SpawnSubMissile (AActor *source, PClassActor *type, AActor *target)
 {
 	AActor *other = Spawn (type, source->Pos(), ALLOW_REPLACE);
 
@@ -586,11 +622,16 @@ int APhosphorousFire::DoSpecialDamage (AActor *target, int damage, FName damaget
 
 DEFINE_ACTION_FUNCTION(AActor, A_BurnArea)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	P_RadiusAttack (self, self->target, 128, 128, self->DamageType, RADF_HURTSOURCE);
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_Burnination)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	self->velz -= 8*FRACUNIT;
 	self->velx += (pr_phburn.Random2 (3)) << FRACBITS;
 	self->vely += (pr_phburn.Random2 (3)) << FRACBITS;
@@ -641,7 +682,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Burnination)
 			drop->flags |= MF_DROPPED;
 		}
 	}
-
+	return 0;
 }
 
 //============================================================================
@@ -652,25 +693,25 @@ DEFINE_ACTION_FUNCTION(AActor, A_Burnination)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireGrenade)
 {
+	PARAM_ACTION_PROLOGUE;
+	PARAM_CLASS(grenadetype, AActor);
+	PARAM_ANGLE(angleofs);
+	PARAM_STATE(flash)
+
 	player_t *player = self->player;
 	AActor *grenade;
 	angle_t an;
 	fixed_t tworadii;
 	AWeapon *weapon;
 
-	ACTION_PARAM_START(3);
-	ACTION_PARAM_CLASS(grenadetype, 0);
-	ACTION_PARAM_ANGLE(Angle, 1);
-	ACTION_PARAM_STATE(flash, 2);
-
 	if (player == NULL || grenadetype == NULL)
-		return;
+		return 0;
 
 	if ((weapon = player->ReadyWeapon) == NULL)
-		return;
+		return 0;
 
 	if (!weapon->DepleteAmmo (weapon->bAltFire))
-		return;
+		return 0;
 
 	P_SetPsprite (player, ps_flash, flash);
 
@@ -680,7 +721,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireGrenade)
 		grenade = P_SpawnSubMissile (self, grenadetype, self);
 		self->AddZ(-32*FRACUNIT);
 		if (grenade == NULL)
-			return;
+			return 0;
 
 		if (grenade->SeeSound != 0)
 		{
@@ -696,7 +737,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireGrenade)
 		offset.x = FixedMul (finecosine[an], tworadii);
 		offset.y = FixedMul (finesine[an], tworadii);
 
-		an = self->angle + Angle;
+		an = self->angle + angleofs;
 		an >>= ANGLETOFINESHIFT;
 		offset.x += FixedMul (finecosine[an], 15*FRACUNIT);
 		offset.y += FixedMul (finesine[an], 15*FRACUNIT);
@@ -704,6 +745,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireGrenade)
 		fixedvec2 newpos = grenade->Vec2Offset(offset.x, offset.y);
 		grenade->SetOrigin(newpos.x, newpos.y, grenade->Z(), false);
 	}
+	return 0;
 }
 
 // The Almighty Sigil! ------------------------------------------------------
@@ -794,12 +836,15 @@ AInventory *ASigil::CreateCopy (AActor *other)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SelectPiece)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	int pieces = MIN (static_cast<ASigil*>(self)->NumPieces, 5);
 
 	if (pieces > 1)
 	{
 		self->SetState (self->FindState("Spawn")+pieces);
 	}
+	return 0;
 }
 
 //============================================================================
@@ -817,15 +862,18 @@ DEFINE_ACTION_FUNCTION(AActor, A_SelectPiece)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SelectSigilView)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	int pieces;
 
 	if (self->player == NULL)
 	{
-		return;
+		return 0;
 	}
 	pieces = static_cast<ASigil*>(self->player->ReadyWeapon)->NumPieces;
 	P_SetPsprite (self->player, ps_weapon,
 		self->player->psprites[ps_weapon].state + pieces);
+	return 0;
 }
 
 //============================================================================
@@ -840,11 +888,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_SelectSigilView)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SelectSigilDown)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	int pieces;
 
 	if (self->player == NULL)
 	{
-		return;
+		return 0;
 	}
 	pieces = static_cast<ASigil*>(self->player->ReadyWeapon)->DownPieces;
 	static_cast<ASigil*>(self->player->ReadyWeapon)->DownPieces = 0;
@@ -854,6 +904,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SelectSigilDown)
 	}
 	P_SetPsprite (self->player, ps_weapon,
 		self->player->psprites[ps_weapon].state + pieces);
+	return 0;
 }
 
 //============================================================================
@@ -866,15 +917,18 @@ DEFINE_ACTION_FUNCTION(AActor, A_SelectSigilDown)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SelectSigilAttack)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	int pieces;
 
 	if (self->player == NULL)
 	{
-		return;
+		return 0;
 	}
 	pieces = static_cast<ASigil*>(self->player->ReadyWeapon)->NumPieces;
 	P_SetPsprite (self->player, ps_weapon,
 		self->player->psprites[ps_weapon].state + 4*pieces - 3);
+	return 0;
 }
 
 //============================================================================
@@ -885,11 +939,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_SelectSigilAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SigilCharge)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	S_Sound (self, CHAN_WEAPON, "weapons/sigilcharge", 1, ATTN_NORM);
 	if (self->player != NULL)
 	{
 		self->player->extralight = 2;
 	}
+	return 0;
 }
 
 //============================================================================
@@ -900,10 +957,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_SigilCharge)
 
 DEFINE_ACTION_FUNCTION(AActor, A_LightInverse)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (self->player != NULL)
 	{
 		self->player->extralight = INT_MIN;
 	}
+	return 0;
 }
 
 //============================================================================
@@ -914,12 +974,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightInverse)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireSigil1)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *spot;
 	player_t *player = self->player;
 	AActor *linetarget;
 
 	if (player == NULL || player->ReadyWeapon == NULL)
-		return;
+		return 0;
 
 	P_DamageMobj (self, self, NULL, 1*4, 0, DMG_NO_ARMOR);
 	S_Sound (self, CHAN_WEAPON, "weapons/sigilcharge", 1, ATTN_NORM);
@@ -947,6 +1009,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil1)
 		spot->SetFriendPlayer(player);
 		spot->target = self;
 	}
+	return 0;
 }
 
 //============================================================================
@@ -957,15 +1020,18 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil1)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireSigil2)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	player_t *player = self->player;
 
 	if (player == NULL || player->ReadyWeapon == NULL)
-		return;
+		return 0;
 
 	P_DamageMobj (self, self, NULL, 2*4, 0, DMG_NO_ARMOR);
 	S_Sound (self, CHAN_WEAPON, "weapons/sigilcharge", 1, ATTN_NORM);
 
-	P_SpawnPlayerMissile (self, PClass::FindClass("SpectralLightningH1"));
+	P_SpawnPlayerMissile (self, PClass::FindActor("SpectralLightningH1"));
+	return 0;
 }
 
 //============================================================================
@@ -976,12 +1042,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil2)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireSigil3)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *spot;
 	player_t *player = self->player;
 	int i;
 
 	if (player == NULL || player->ReadyWeapon == NULL)
-		return;
+		return 0;
 
 	P_DamageMobj (self, self, NULL, 3*4, 0, DMG_NO_ARMOR);
 	S_Sound (self, CHAN_WEAPON, "weapons/sigilcharge", 1, ATTN_NORM);
@@ -990,13 +1058,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil3)
 	for (i = 0; i < 20; ++i)
 	{
 		self->angle += ANGLE_180/20;
-		spot = P_SpawnSubMissile (self, PClass::FindClass("SpectralLightningBall1"), self);
+		spot = P_SpawnSubMissile (self, PClass::FindActor("SpectralLightningBall1"), self);
 		if (spot != NULL)
 		{
 			spot->SetZ(self->Z() + 32*FRACUNIT);
 		}
 	}
 	self->angle -= (ANGLE_180/20)*10;
+	return 0;
 }
 
 //============================================================================
@@ -1007,12 +1076,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil3)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireSigil4)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *spot;
 	player_t *player = self->player;
 	AActor *linetarget;
 
 	if (player == NULL || player->ReadyWeapon == NULL)
-		return;
+		return 0;
 
 	P_DamageMobj (self, self, NULL, 4*4, 0, DMG_NO_ARMOR);
 	S_Sound (self, CHAN_WEAPON, "weapons/sigilcharge", 1, ATTN_NORM);
@@ -1020,7 +1091,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil4)
 	P_BulletSlope (self, &linetarget);
 	if (linetarget != NULL)
 	{
-		spot = P_SpawnPlayerMissile (self, 0,0,0, PClass::FindClass("SpectralLightningBigV1"), self->angle, &linetarget);
+		spot = P_SpawnPlayerMissile (self, 0,0,0, PClass::FindActor("SpectralLightningBigV1"), self->angle, &linetarget);
 		if (spot != NULL)
 		{
 			spot->tracer = linetarget;
@@ -1028,13 +1099,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil4)
 	}
 	else
 	{
-		spot = P_SpawnPlayerMissile (self, PClass::FindClass("SpectralLightningBigV1"));
+		spot = P_SpawnPlayerMissile (self, PClass::FindActor("SpectralLightningBigV1"));
 		if (spot != NULL)
 		{
 			spot->velx += FixedMul (spot->Speed, finecosine[self->angle >> ANGLETOFINESHIFT]);
 			spot->vely += FixedMul (spot->Speed, finesine[self->angle >> ANGLETOFINESHIFT]);
 		}
 	}
+	return 0;
 }
 
 //============================================================================
@@ -1045,15 +1117,18 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil4)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireSigil5)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	player_t *player = self->player;
 
 	if (player == NULL || player->ReadyWeapon == NULL)
-		return;
+		return 0;
 
 	P_DamageMobj (self, self, NULL, 5*4, 0, DMG_NO_ARMOR);
 	S_Sound (self, CHAN_WEAPON, "weapons/sigilcharge", 1, ATTN_NORM);
 
-	P_SpawnPlayerMissile (self, PClass::FindClass("SpectralLightningBigBall1"));
+	P_SpawnPlayerMissile (self, PClass::FindActor("SpectralLightningBigBall1"));
+	return 0;
 }
 
 //============================================================================

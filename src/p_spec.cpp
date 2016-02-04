@@ -497,7 +497,7 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 //
 //============================================================================
 
-static void DoSectorDamage(AActor *actor, sector_t *sec, int amount, FName type, const PClass *protectClass, int flags)
+static void DoSectorDamage(AActor *actor, sector_t *sec, int amount, FName type, PClassActor *protectClass, int flags)
 {
 	if (!(actor->flags & MF_SHOOTABLE))
 		return;
@@ -520,7 +520,7 @@ static void DoSectorDamage(AActor *actor, sector_t *sec, int amount, FName type,
 	P_DamageMobj (actor, NULL, NULL, amount, type);
 }
 
-void P_SectorDamage(int tag, int amount, FName type, const PClass *protectClass, int flags)
+void P_SectorDamage(int tag, int amount, FName type, PClassActor *protectClass, int flags)
 {
 	FSectorTagIterator itr(tag);
 	int secnum;

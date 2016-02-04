@@ -270,7 +270,7 @@ FSpotList *DSpotState::FindSpotList(const PClass *type)
 
 bool DSpotState::AddSpot(ASpecialSpot *spot)
 {
-	FSpotList *list = FindSpotList(RUNTIME_TYPE(spot));
+	FSpotList *list = FindSpotList(spot->GetClass());
 	if (list != NULL) return list->Add(spot);
 	return false;
 }
@@ -283,7 +283,7 @@ bool DSpotState::AddSpot(ASpecialSpot *spot)
 
 bool DSpotState::RemoveSpot(ASpecialSpot *spot)
 {
-	FSpotList *list = FindSpotList(RUNTIME_TYPE(spot));
+	FSpotList *list = FindSpotList(spot->GetClass());
 	if (list != NULL) return list->Remove(spot);
 	return false;
 }
@@ -391,36 +391,36 @@ void ASpecialSpot::Destroy()
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnSingleItem)
 {
+	PARAM_ACTION_PROLOGUE;
+	PARAM_CLASS		(cls, AActor);
+	PARAM_INT_OPT	(fail_sp) { fail_sp = 0; }
+	PARAM_INT_OPT	(fail_co) { fail_co = 0; }
+	PARAM_INT_OPT	(fail_dm) { fail_dm = 0; }
+
 	AActor *spot = NULL;
 	DSpotState *state = DSpotState::GetSpotState();
 
-	if (state != NULL) spot = state->GetRandomSpot(RUNTIME_TYPE(self), true);
-	if (spot == NULL) return;
-
-	ACTION_PARAM_START(4);
-	ACTION_PARAM_CLASS(cls, 0);
-	ACTION_PARAM_INT(fail_sp, 1);
-	ACTION_PARAM_INT(fail_co, 2);
-	ACTION_PARAM_INT(fail_dm, 3);
+	if (state != NULL) spot = state->GetRandomSpot(self->GetClass(), true);
+	if (spot == NULL) return 0;
 
 	if (!multiplayer && pr_spawnmace() < fail_sp)
 	{ // Sometimes doesn't show up if not in deathmatch
-		return;
+		return 0;
 	}
 
 	if (multiplayer && !deathmatch && pr_spawnmace() < fail_co)
 	{
-		return;
+		return 0;
 	}
 
 	if (deathmatch && pr_spawnmace() < fail_dm)
 	{
-		return;
+		return 0;
 	}
 
 	if (cls == NULL)
 	{
-		return;
+		return 0;
 	}
 
 	AActor *spawned = Spawn(cls, self->Pos(), ALLOW_REPLACE);
@@ -436,8 +436,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnSingleItem)
 		}
 		if (spawned->IsKindOf(RUNTIME_CLASS(AInventory)))
 		{
-			static_cast<AInventory*>(spawned)->SpawnPointClass = RUNTIME_TYPE(self);
+			static_cast<AInventory*>(spawned)->SpawnPointClass = self->GetClass();
 		}
 	}
+	return 0;
 }
 

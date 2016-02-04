@@ -67,37 +67,56 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def);
 //
 //==========================================================================
 
-FxExpression *ParseParameter(FScanner &sc, PClass *cls, char type, bool constant)
+FxExpression *ParseParameter(FScanner &sc, PClassActor *cls, PType *type, bool constant)
 {
 	FxExpression *x = NULL;
 	int v;
 
-	switch(type)
+	if (type == TypeSound)
 	{
-	case 'S':
-	case 's':		// Sound name
 		sc.MustGetString();
 		x = new FxConstant(FSoundID(sc.String), sc);
-		break;
-
-	case 'M':
-	case 'm':		// Actor name
+	}
+	else if (type == TypeSInt32 || type == TypeFloat64)
+	{
+		x = ParseExpression (sc, cls);
+		if (constant && !x->isConstant())
+		{
+			sc.ScriptMessage("Default parameter must be constant.");
+			FScriptPosition::ErrorCounter++;
+		}
+		// Do automatic coercion between ints and floats.
+		if (type == TypeSInt32)
+		{
+			if (x->ValueType != VAL_Int)
+			{
+				x = new FxIntCast(x);
+			}
+		}
+		else
+		{
+			if (x->ValueType != VAL_Float)
+			{
+				x = new FxFloatCast(x);
+			}
+		}
+	}
+	else if (type == TypeName || type == TypeString)
+	{
 		sc.SetEscape(true);
 		sc.MustGetString();
 		sc.SetEscape(false);
-		x = new FxClassTypeCast(RUNTIME_CLASS(AActor), new FxConstant(FName(sc.String), sc));
-		break;
-
-	case 'T':
-	case 't':		// String
-		sc.SetEscape(true);
-		sc.MustGetString();
-		sc.SetEscape(false);
-		x = new FxConstant(sc.String[0]? FName(sc.String) : NAME_None, sc);
-		break;
-
-	case 'C':
-	case 'c':		// Color
+		if (type == TypeName)
+		{
+			x = new FxConstant(sc.String[0] ? FName(sc.String) : NAME_None, sc);
+		}
+		else
+		{
+			x = new FxConstant(strbin1(sc.String), sc);
+		}
+	}
+	else if (type == TypeColor)
+	{
 		sc.MustGetString ();
 		if (sc.Compare("none"))
 		{
@@ -113,16 +132,12 @@ FxExpression *ParseParameter(FScanner &sc, PClass *cls, char type, bool constant
 			// 0 needs to be the default so we have to mark the color.
 			v = MAKEARGB(1, RPART(c), GPART(c), BPART(c));
 		}
-		{
-			ExpVal val;
-			val.Type = VAL_Color;
-			val.Int = v;
-			x = new FxConstant(val, sc);
-			break;
-		}
-
-	case 'L':
-	case 'l':
+		ExpVal val;
+		val.Type = VAL_Color;
+		val.Int = v;
+		x = new FxConstant(val, sc);
+	}
+	else if (type == TypeState)
 	{
 		// This forces quotation marks around the state name.
 		sc.MustGetToken(TK_StringConst);
@@ -142,24 +157,18 @@ FxExpression *ParseParameter(FScanner &sc, PClass *cls, char type, bool constant
 		{
 			x = new FxMultiNameState(sc.String, sc);
 		}
-		break;
 	}
-
-	case 'X':
-	case 'x':
-	case 'Y':
-	case 'y':
-		x = ParseExpression (sc, cls);
-		if (constant && !x->isConstant())
-		{
-			sc.ScriptMessage("Default parameter must be constant.");
-			FScriptPosition::ErrorCounter++;
-		}
-		break;
-
-	default:
-		assert(false);
-		return NULL;
+	else if (type->GetClass() == RUNTIME_CLASS(PClassPointer))
+	{	// Actor name
+		sc.SetEscape(true);
+		sc.MustGetString();
+		sc.SetEscape(false);
+		x = new FxClassTypeCast(static_cast<PClassPointer *>(type)->ClassRestriction, new FxConstant(FName(sc.String), sc));
+	}
+	else
+	{
+		assert(false && "Unknown parameter type");
+		x = NULL;
 	}
 	return x;
 }
@@ -172,7 +181,7 @@ FxExpression *ParseParameter(FScanner &sc, PClass *cls, char type, bool constant
 //
 //==========================================================================
 
-static void ParseConstant (FScanner &sc, PSymbolTable * symt, PClass *cls)
+static void ParseConstant (FScanner &sc, PSymbolTable *symt, PClassActor *cls)
 {
 	// Read the type and make sure it's int or float.
 	if (sc.CheckToken(TK_Int) || sc.CheckToken(TK_Float))
@@ -184,25 +193,33 @@ static void ParseConstant (FScanner &sc, PSymbolTable * symt, PClass *cls)
 		FxExpression *expr = ParseExpression (sc, cls);
 		sc.MustGetToken(';');
 
-		ExpVal val = expr->EvalExpression(NULL);
-		delete expr;
-		PSymbolConst *sym = new PSymbolConst(symname);
-		if (type == TK_Int)
+		if (!expr->isConstant())
 		{
-			sym->ValueType = VAL_Int;
-			sym->Value = val.GetInt();
+			sc.ScriptMessage("Constant definition is not a constant");
+			FScriptPosition::ErrorCounter++;
 		}
 		else
 		{
-			sym->ValueType = VAL_Float;
-			sym->Float = val.GetFloat();
-		}
-		if (symt->AddSymbol (sym) == NULL)
-		{
-			delete sym;
-			sc.ScriptMessage ("'%s' is already defined in '%s'.",
-				symname.GetChars(), cls? cls->TypeName.GetChars() : "Global");
-			FScriptPosition::ErrorCounter++;
+			ExpVal val = static_cast<FxConstant *>(expr)->GetValue();
+			delete expr;
+			PSymbolConstNumeric *sym;
+			if (type == TK_Int)
+			{
+				sym = new PSymbolConstNumeric(symname, TypeSInt32);
+				sym->Value = val.GetInt();
+			}
+			else
+			{
+				sym = new PSymbolConstNumeric(symname, TypeFloat64);
+				sym->Float = val.GetFloat();
+			}
+			if (symt->AddSymbol (sym) == NULL)
+			{
+				delete sym;
+				sc.ScriptMessage ("'%s' is already defined in '%s'.",
+					symname.GetChars(), cls? cls->TypeName.GetChars() : "Global");
+				FScriptPosition::ErrorCounter++;
+			}
 		}
 	}
 	else
@@ -220,7 +237,7 @@ static void ParseConstant (FScanner &sc, PSymbolTable * symt, PClass *cls)
 //
 //==========================================================================
 
-static void ParseEnum (FScanner &sc, PSymbolTable *symt, PClass *cls)
+static void ParseEnum (FScanner &sc, PSymbolTable *symt, PClassActor *cls)
 {
 	int currvalue = 0;
 
@@ -232,11 +249,18 @@ static void ParseEnum (FScanner &sc, PSymbolTable *symt, PClass *cls)
 		if (sc.CheckToken('='))
 		{
 			FxExpression *expr = ParseExpression (sc, cls);
-			currvalue = expr->EvalExpression(NULL).GetInt();
+			if (!expr->isConstant())
+			{
+				sc.ScriptMessage("'%s' must be constant", symname.GetChars());
+				FScriptPosition::ErrorCounter++;
+			}
+			else
+			{
+				currvalue = static_cast<FxConstant *>(expr)->GetValue().GetInt();
+			}
 			delete expr;
 		}
-		PSymbolConst *sym = new PSymbolConst(symname);
-		sym->ValueType = VAL_Int;
+		PSymbolConstNumeric *sym = new PSymbolConstNumeric(symname, TypeSInt32);
 		sym->Value = currvalue;
 		if (symt->AddSymbol (sym) == NULL)
 		{
@@ -255,19 +279,175 @@ static void ParseEnum (FScanner &sc, PSymbolTable *symt, PClass *cls)
 
 //==========================================================================
 //
-// ParseNativeVariable
+// ParseArgListDef
 //
-// Parses a native variable declaration.
+// Parses the argument list from a function declaration.
 //
 //==========================================================================
 
-static void ParseNativeVariable (FScanner &sc, PSymbolTable * symt, PClass *cls)
+static void ParseArgListDef(FScanner &sc, PClassActor *cls,
+	TArray<PType *> &args, TArray<DWORD> &argflags)
 {
-	FExpressionType valuetype;
+	if (!sc.CheckToken(')'))
+	{
+		while (sc.TokenType != ')')
+		{
+			int flags = 0;
+			PType *type = NULL;
+			PClass *restrict = NULL;
+
+			// Retrieve flags before type name
+			for (;;)
+			{
+				if (sc.CheckToken(TK_Coerce) || sc.CheckToken(TK_Native))
+				{
+				}
+				else
+				{
+					break;
+				}
+			}
+			// Read the variable type
+			sc.MustGetAnyToken();
+			switch (sc.TokenType)
+			{
+			case TK_Bool:
+			case TK_Int:
+				type = TypeSInt32;
+				break;
+
+			case TK_Float:
+				type = TypeFloat64;
+				break;
+
+			case TK_Sound:		type = TypeSound;		break;
+			case TK_String:		type = TypeString;		break;
+			case TK_Name:		type = TypeName;		break;
+			case TK_State:		type = TypeState;		break;
+			case TK_Color:		type = TypeColor;		break;
+			case TK_Class:
+				sc.MustGetToken('<');
+				sc.MustGetToken(TK_Identifier);	// Get class name
+				restrict = PClass::FindClass(sc.String);
+				if (restrict == NULL)
+				{
+					sc.ScriptMessage("Unknown class type %s", sc.String);
+					FScriptPosition::ErrorCounter++;
+				}
+				else
+				{
+					type = NewClassPointer(restrict);
+				}
+				sc.MustGetToken('>');
+				break;
+			case TK_Ellipsis:
+				// Making the final type NULL signals a varargs function.
+				type = NULL;
+				sc.MustGetToken(')');
+				sc.UnGet();
+				break;
+			default:
+				sc.ScriptMessage ("Unknown variable type %s", sc.TokenName(sc.TokenType, sc.String).GetChars());
+				type = TypeSInt32;
+				FScriptPosition::ErrorCounter++;
+				break;
+			}
+			// Read the optional variable name
+			if (!sc.CheckToken(',') && !sc.CheckToken(')'))
+			{
+				sc.MustGetToken(TK_Identifier);
+			}
+			else
+			{
+				sc.UnGet();
+			}
+
+			if (sc.CheckToken('='))
+			{
+				flags |= VARF_Optional;
+				FxExpression *def = ParseParameter(sc, cls, type, true);
+				delete def;
+			}
+
+			args.Push(type);
+			argflags.Push(flags);
+			sc.MustGetAnyToken();
+			if (sc.TokenType != ',' && sc.TokenType != ')')
+			{
+				sc.ScriptError ("Expected ',' or ')' but got %s instead", sc.TokenName(sc.TokenType, sc.String).GetChars());
+			}
+		}
+	}
+	sc.MustGetToken(';');
+}
+
+//==========================================================================
+//
+// ParseFunctionDef
+//
+// Parses a native function's parameters and adds it to the class,
+// if possible.
+//
+//==========================================================================
+
+void ParseFunctionDef(FScanner &sc, PClassActor *cls, FName funcname,
+	TArray<PType *> &rets, DWORD funcflags)
+{
+	assert(cls != NULL);
+
+	const AFuncDesc *afd;
+	TArray<PType *> args;
+	TArray<DWORD> argflags;
+
+	afd = FindFunction(funcname);
+	if (afd == NULL)
+	{
+		sc.ScriptMessage ("The function '%s' has not been exported from the executable.", funcname.GetChars());
+		FScriptPosition::ErrorCounter++;
+	}
+	sc.MustGetToken('(');
+
+	if (funcflags & VARF_Method)
+	{
+		args.Push(NewClassPointer(cls)), argflags.Push(0);						// implied self pointer
+	}
+	if (funcflags & VARF_Action)
+	{
+		args.Push(NewClassPointer(RUNTIME_CLASS(AActor))), argflags.Push(0);	// implied stateowner pointer
+		args.Push(TypeState), argflags.Push(0);									// implied callingstate pointer
+	}
+	ParseArgListDef(sc, cls, args, argflags);
+
+	if (afd != NULL)
+	{
+		PFunction *sym = new PFunction(funcname);
+		sym->AddVariant(NewPrototype(rets, args), argflags, *(afd->VMPointer));
+		sym->Flags = funcflags;
+		if (cls->Symbols.AddSymbol(sym) == NULL)
+		{
+			delete sym;
+			sc.ScriptMessage ("'%s' is already defined in class '%s'.",
+				funcname.GetChars(), cls->TypeName.GetChars());
+			FScriptPosition::ErrorCounter++;
+		}
+	}
+}
+
+//==========================================================================
+//
+// ParseNativeFunction
+//
+// Parses a non-action function declaration.
+//
+//==========================================================================
+
+static void ParseNativeFunction(FScanner &sc, PClassActor *cls)
+{
+	TArray<PType *> rets(1);
 
 	if (sc.LumpNum == -1 || Wads.GetLumpFile(sc.LumpNum) > 0)
 	{
-		sc.ScriptMessage ("variables can only be imported by internal class and actor definitions!");
+		sc.ScriptMessage ("functions can only be declared by native actors!");
 		FScriptPosition::ErrorCounter++;
 	}
 
@@ -276,66 +456,34 @@ static void ParseNativeVariable (FScanner &sc, PSymbolTable * symt, PClass *cls)
 	switch (sc.TokenType)
 	{
 	case TK_Int:
-		valuetype = VAL_Int;
+	case TK_Bool:
+		rets.Push(TypeSInt32);
 		break;
 
 	case TK_Float:
-		valuetype = VAL_Float;
+		rets.Push(TypeFloat64);
 		break;
 
 	case TK_Angle_t:
-		valuetype = VAL_Angle;
+		rets.Push(TypeAngle);
 		break;
 
 	case TK_Fixed_t:
-		valuetype = VAL_Fixed;
-		break;
-
-	case TK_Bool:
-		valuetype = VAL_Bool;
+		rets.Push(TypeFixed);
 		break;
 
 	case TK_Identifier:
-		valuetype = VAL_Object;
+		rets.Push(NewPointer(RUNTIME_CLASS(DObject)));
 		// Todo: Object type
 		sc.ScriptError("Object type variables not implemented yet!");
 		break;
 
 	default:
-		sc.ScriptError("Invalid variable type %s", sc.String);
+		sc.ScriptError("Invalid return type %s", sc.String);
 		return;
 	}
-
 	sc.MustGetToken(TK_Identifier);
-	FName symname = sc.String;
-	if (sc.CheckToken('['))
-	{
-		FxExpression *expr = ParseExpression (sc, cls);
-		int maxelems = expr->EvalExpression(NULL).GetInt();
-		delete expr;
-		sc.MustGetToken(']');
-		valuetype.MakeArray(maxelems);
-	}
-	sc.MustGetToken(';');
-
-	const FVariableInfo *vi = FindVariable(symname, cls);
-	if (vi == NULL)
-	{
-		sc.ScriptError("Unknown native variable '%s'", symname.GetChars());
-	}
-
-	PSymbolVariable *sym = new PSymbolVariable(symname);
-	sym->offset = vi->address;	// todo
-	sym->ValueType = valuetype;
-	sym->bUserVar = false;
-
-	if (symt->AddSymbol (sym) == NULL)
-	{
-		delete sym;
-		sc.ScriptMessage ("'%s' is already defined in '%s'.",
-			symname.GetChars(), cls? cls->TypeName.GetChars() : "Global");
-		FScriptPosition::ErrorCounter++;
-	}
+	ParseFunctionDef(sc, cls, sc.String, rets, VARF_Method);
 }
 
 //==========================================================================
@@ -346,9 +494,10 @@ static void ParseNativeVariable (FScanner &sc, PSymbolTable * symt, PClass *cls)
 //
 //==========================================================================
 
-static void ParseUserVariable (FScanner &sc, PSymbolTable *symt, PClass *cls)
+static void ParseUserVariable (FScanner &sc, PSymbolTable *symt, PClassActor *cls)
 {
-	FExpressionType valuetype;
+	PType *type;
+	int maxelems = 1;
 
 	// Only non-native classes may have user variables.
 	if (!cls->bRuntimeClass)
@@ -363,7 +512,7 @@ static void ParseUserVariable (FScanner &sc, PSymbolTable *symt, PClass *cls)
 		sc.ScriptMessage("User variables must be of type int");
 		FScriptPosition::ErrorCounter++;
 	}
-	valuetype = VAL_Int;
+	type = TypeSInt32;
 
 	sc.MustGetToken(TK_Identifier);
 	// For now, restrict user variables to those that begin with "user_" to guarantee
@@ -374,24 +523,7 @@ static void ParseUserVariable (FScanner &sc, PSymbolTable *symt, PClass *cls)
 		FScriptPosition::ErrorCounter++;
 	}
 
-
-
 	FName symname = sc.String;
-	if (sc.CheckToken('['))
-	{
-		FxExpression *expr = ParseExpression(sc, cls);
-		int maxelems = expr->EvalExpression(NULL).GetInt();
-		delete expr;
-		sc.MustGetToken(']');
-		if (maxelems <= 0)
-		{
-			sc.ScriptMessage("Array size must be positive");
-			FScriptPosition::ErrorCounter++;
-			maxelems = 1;
-		}
-		valuetype.MakeArray(maxelems);
-	}
-	sc.MustGetToken(';');
 
 	// We must ensure that we do not define duplicates, even when they come from a parent table.
 	if (symt->FindSymbol(symname, true) != NULL)
@@ -402,10 +534,32 @@ static void ParseUserVariable (FScanner &sc, PSymbolTable *symt, PClass *cls)
 		return;
 	}
 
-	PSymbolVariable *sym = new PSymbolVariable(symname);
-	sym->offset = cls->Extend(sizeof(int) * (valuetype.Type == VAL_Array ? valuetype.size : 1));
-	sym->ValueType = valuetype;
-	sym->bUserVar = true;
+	if (sc.CheckToken('['))
+	{
+		FxExpression *expr = ParseExpression(sc, cls);
+		if (!expr->isConstant())
+		{
+			sc.ScriptMessage("Array size must be a constant");
+			FScriptPosition::ErrorCounter++;
+			maxelems = 1;
+		}
+		else
+		{
+			maxelems = static_cast<FxConstant *>(expr)->GetValue().GetInt();
+		}
+		sc.MustGetToken(']');
+		if (maxelems <= 0)
+		{
+			sc.ScriptMessage("Array size must be positive");
+			FScriptPosition::ErrorCounter++;
+			maxelems = 1;
+		}
+		type = NewArray(type, maxelems);
+	}
+	sc.MustGetToken(';');
+
+	PField *sym = new PField(symname, type, 0);
+	sym->Offset = cls->Extend(sizeof(int) * maxelems);
 	if (symt->AddSymbol(sym) == NULL)
 	{
 		delete sym;
@@ -443,9 +597,9 @@ void HandleActorFlag(FScanner &sc, Baggage &bag, const char *part1, const char *
 {
 	FFlagDef *fd;
 
-	if ( (fd = FindFlag (bag.Info->Class, part1, part2)) )
+	if ( (fd = FindFlag (bag.Info, part1, part2)) )
 	{
-		AActor *defaults = (AActor*)bag.Info->Class->Defaults;
+		AActor *defaults = (AActor*)bag.Info->Defaults;
 		if (fd->structoffset == -1)	// this is a deprecated flag that has been changed into a real property
 		{
 			HandleDeprecatedFlags(defaults, bag.Info, mod=='+', fd->flagbit);
@@ -565,17 +719,17 @@ static int ParseThingActivation (FScanner &sc)
 
 static FState *CheckState(FScanner &sc, PClass *type)
 {
-	int v=0;
+	int v = 0;
 
 	if (sc.GetString() && !sc.Crossed)
 	{
 		if (sc.Compare("0")) return NULL;
 		else if (sc.Compare("PARENT"))
 		{
-			FState * state = NULL;
+			FState *state = NULL;
 			sc.MustGetString();
 
-			FActorInfo * info = type->ParentClass->ActorInfo;
+			PClassActor *info = dyn_cast<PClassActor>(type->ParentClass);
 
 			if (info != NULL)
 			{
@@ -595,15 +749,17 @@ static FState *CheckState(FScanner &sc, PClass *type)
 				}
 			}
 
-			if (state == NULL && v==0) return NULL;
-
-			if (v!=0 && state==NULL)
+			if (state == NULL && v==0)
+			{
+				return NULL;
+			}
+			if (v != 0 && state==NULL)
 			{
 				sc.ScriptMessage("Attempt to get invalid state from actor %s\n", type->ParentClass->TypeName.GetChars());
 				FScriptPosition::ErrorCounter++;
 				return NULL;
 			}
-			state+=v;
+			state += v;
 			return state;
 		}
 		else 
@@ -647,16 +803,26 @@ static bool ParsePropertyParams(FScanner &sc, FPropertyInfo *prop, AActor *defau
 			switch ((*p) & 223)
 			{
 			case 'X':	// Expression in parentheses or number.
-				
-				if (sc.CheckString ("("))
 				{
-					FxExpression *x = ParseExpression(sc, bag.Info->Class);
-					conv.i = 0x40000000 | StateParams.Add(x, bag.Info->Class, false);
+					FxExpression *x = NULL;
+
+					if (sc.CheckString ("("))
+					{
+						x = new FxDamageValue(new FxIntCast(ParseExpression(sc, bag.Info)), true);
+						sc.MustGetStringName(")");
+					}
+					else
+					{
+						sc.MustGetNumber();
+						if (sc.Number != 0)
+						{
+							x = new FxDamageValue(new FxConstant(sc.Number, bag.ScriptPosition), false);
+						}
+					}
+					conv.exp = x;
 					params.Push(conv);
-					sc.MustGetStringName(")");
-					break;
 				}
-				// fall through
+				break;
 
 			case 'I':
 				sc.MustGetNumber();
@@ -832,29 +998,19 @@ static void ParseActorProperty(FScanner &sc, Baggage &bag)
 
 	if (prop != NULL)
 	{
-		if (bag.Info->Class->IsDescendantOf(prop->cls))
+		if (bag.Info->IsDescendantOf(*prop->cls))
 		{
-			ParsePropertyParams(sc, prop, (AActor *)bag.Info->Class->Defaults, bag);
+			ParsePropertyParams(sc, prop, (AActor *)bag.Info->Defaults, bag);
 		}
 		else
 		{
-			sc.ScriptMessage("\"%s\" requires an actor of type \"%s\"\n", propname.GetChars(), prop->cls->TypeName.GetChars());
+			sc.ScriptMessage("\"%s\" requires an actor of type \"%s\"\n", propname.GetChars(), (*prop->cls)->TypeName.GetChars());
 			FScriptPosition::ErrorCounter++;
 		}
-	}
-	else if (!propname.CompareNoCase("States"))
-	{
-		if (bag.StateSet) 
-		{
-			sc.ScriptMessage("'%s' contains multiple state declarations", bag.Info->Class->TypeName.GetChars());
-			FScriptPosition::ErrorCounter++;
-		}
-		ParseStates(sc, bag.Info, (AActor *)bag.Info->Class->Defaults, bag);
-		bag.StateSet=true;
 	}
 	else if (MatchString(propname, statenames) != -1)
 	{
-		bag.statedef.SetStateLabel(propname, CheckState (sc, bag.Info->Class));
+		bag.statedef.SetStateLabel(propname, CheckState (sc, bag.Info));
 	}
 	else
 	{
@@ -872,154 +1028,27 @@ static void ParseActorProperty(FScanner &sc, Baggage &bag)
 //
 //==========================================================================
 
-static void ParseActionDef (FScanner &sc, PClass *cls)
+static void ParseActionDef (FScanner &sc, PClassActor *cls)
 {
-	enum
-	{
-		OPTIONAL = 1
-	};
-
 	unsigned int error = 0;
-	const AFuncDesc *afd;
 	FName funcname;
-	FString args;
-	TArray<FxExpression *> DefaultParams;
-	bool hasdefaults = false;
+	TArray<PType *> rets;
 	
 	if (sc.LumpNum == -1 || Wads.GetLumpFile(sc.LumpNum) > 0)
 	{
 		sc.ScriptMessage ("Action functions can only be imported by internal class and actor definitions!");
-		++error;
+		FScriptPosition::ErrorCounter++;
 	}
 
 	sc.MustGetToken(TK_Native);
+	// check for a return value
+	if (sc.CheckToken(TK_Int) || sc.CheckToken(TK_Bool))
+	{
+		rets.Push(TypeSInt32);
+	}
 	sc.MustGetToken(TK_Identifier);
 	funcname = sc.String;
-	afd = FindFunction(sc.String);
-	if (afd == NULL)
-	{
-		sc.ScriptMessage ("The function '%s' has not been exported from the executable.", sc.String);
-		++error;
-	}
-	sc.MustGetToken('(');
-	if (!sc.CheckToken(')'))
-	{
-		while (sc.TokenType != ')')
-		{
-			int flags = 0;
-			char type = '@';
-
-			// Retrieve flags before type name
-			for (;;)
-			{
-				if (sc.CheckToken(TK_Coerce) || sc.CheckToken(TK_Native))
-				{
-				}
-				else
-				{
-					break;
-				}
-			}
-			// Read the variable type
-			sc.MustGetAnyToken();
-			switch (sc.TokenType)
-			{
-			case TK_Bool:
-			case TK_Int:
-				type = 'x';
-				break;
-
-			case TK_Float:
-				type = 'y';
-				break;
-
-			case TK_Sound:		type = 's';		break;
-			case TK_String:		type = 't';		break;
-			case TK_Name:		type = 't';		break;
-			case TK_State:		type = 'l';		break;
-			case TK_Color:		type = 'c';		break;
-			case TK_Class:
-				sc.MustGetToken('<');
-				sc.MustGetToken(TK_Identifier);	// Skip class name, since the parser doesn't care
-				sc.MustGetToken('>');
-				type = 'm';
-				break;
-			case TK_Ellipsis:
-				type = '+';
-				sc.MustGetToken(')');
-				sc.UnGet();
-				break;
-			default:
-				sc.ScriptMessage ("Unknown variable type %s", sc.TokenName(sc.TokenType, sc.String).GetChars());
-				type = 'x';
-				FScriptPosition::ErrorCounter++;
-				break;
-			}
-			// Read the optional variable name
-			if (!sc.CheckToken(',') && !sc.CheckToken(')'))
-			{
-				sc.MustGetToken(TK_Identifier);
-			}
-			else
-			{
-				sc.UnGet();
-			}
-
-			FxExpression *def;
-			if (sc.CheckToken('='))
-			{
-				hasdefaults = true;
-				flags |= OPTIONAL;
-				def = ParseParameter(sc, cls, type, true);
-			}
-			else
-			{
-				def = NULL;
-			}
-			DefaultParams.Push(def);
-
-			if (!(flags & OPTIONAL) && type != '+')
-			{
-				type -= 'a' - 'A';
-			}
-			args += type;
-			sc.MustGetAnyToken();
-			if (sc.TokenType != ',' && sc.TokenType != ')')
-			{
-				sc.ScriptError ("Expected ',' or ')' but got %s instead", sc.TokenName(sc.TokenType, sc.String).GetChars());
-			}
-		}
-	}
-	sc.MustGetToken(';');
-	if (afd != NULL)
-	{
-		PSymbolActionFunction *sym = new PSymbolActionFunction(funcname);
-		sym->Arguments = args;
-		sym->Function = afd->Function;
-		if (hasdefaults)
-		{
-			sym->defaultparameterindex = StateParams.Size();
-			for(unsigned int i = 0; i < DefaultParams.Size(); i++)
-			{
-				StateParams.Add(DefaultParams[i], cls, true);
-			}
-		}
-		else
-		{
-			sym->defaultparameterindex = -1;
-		}
-		if (error)
-		{
-			FScriptPosition::ErrorCounter += error;
-		}
-		else if (cls->Symbols.AddSymbol (sym) == NULL)
-		{
-			delete sym;
-			sc.ScriptMessage ("'%s' is already defined in class '%s'.",
-				funcname.GetChars(), cls->TypeName.GetChars());
-			FScriptPosition::ErrorCounter++;
-		}
-	}
+	ParseFunctionDef(sc, cls, funcname, rets, VARF_Method | VARF_Action);
 }
 
 //==========================================================================
@@ -1027,7 +1056,7 @@ static void ParseActionDef (FScanner &sc, PClass *cls)
 // Starts a new actor definition
 //
 //==========================================================================
-static FActorInfo *ParseActorHeader(FScanner &sc, Baggage *bag)
+static PClassActor *ParseActorHeader(FScanner &sc, Baggage *bag)
 {
 	FName typeName;
 	FName parentName;
@@ -1108,13 +1137,13 @@ static FActorInfo *ParseActorHeader(FScanner &sc, Baggage *bag)
 
 	try
 	{
-		FActorInfo *info =  CreateNewActor(sc, typeName, parentName, native);
-		info->DoomEdNum = DoomEdNum > 0? DoomEdNum : -1;
-		info->Class->Meta.SetMetaString (ACMETA_Lump, Wads.GetLumpFullPath(sc.LumpNum));
+		PClassActor *info = CreateNewActor(sc, typeName, parentName, native);
+		info->DoomEdNum = DoomEdNum > 0 ? DoomEdNum : -1;
+		info->SourceLumpName = Wads.GetLumpFullPath(sc.LumpNum);
 
 		SetReplacement(sc, info, replaceName);
 
-		ResetBaggage (bag, info->Class->ParentClass);
+		ResetBaggage (bag, info == RUNTIME_CLASS(AActor) ? NULL : static_cast<PClassActor *>(info->ParentClass));
 		bag->Info = info;
 		bag->Lumpnum = sc.LumpNum;
 #ifdef _DEBUG
@@ -1136,7 +1165,7 @@ static FActorInfo *ParseActorHeader(FScanner &sc, Baggage *bag)
 //==========================================================================
 static void ParseActor(FScanner &sc)
 {
-	FActorInfo * info=NULL;
+	PClassActor *info = NULL;
 	Baggage bag;
 
 	info = ParseActorHeader(sc, &bag);
@@ -1146,27 +1175,37 @@ static void ParseActor(FScanner &sc)
 		switch (sc.TokenType)
 		{
 		case TK_Action:
-			ParseActionDef (sc, info->Class);
+			ParseActionDef (sc, info);
 			break;
 
 		case TK_Const:
-			ParseConstant (sc, &info->Class->Symbols, info->Class);
+			ParseConstant (sc, &info->Symbols, info);
 			break;
 
 		case TK_Enum:
-			ParseEnum (sc, &info->Class->Symbols, info->Class);
+			ParseEnum (sc, &info->Symbols, info);
 			break;
 
 		case TK_Native:
-			ParseNativeVariable (sc, &info->Class->Symbols, info->Class);
+			ParseNativeFunction (sc, info);
 			break;
 
 		case TK_Var:
-			ParseUserVariable (sc, &info->Class->Symbols, info->Class);
+			ParseUserVariable (sc, &info->Symbols, info);
 			break;
 
 		case TK_Identifier:
 			ParseActorProperty(sc, bag);
+			break;
+
+		case TK_States:
+			if (bag.StateSet) 
+			{
+				sc.ScriptMessage("'%s' contains multiple state declarations", bag.Info->TypeName.GetChars());
+				FScriptPosition::ErrorCounter++;
+			}
+			ParseStates(sc, bag.Info, (AActor *)bag.Info->Defaults, bag);
+			bag.StateSet = true;
 			break;
 
 		case '+':
@@ -1175,7 +1214,7 @@ static void ParseActor(FScanner &sc)
 			break;
 
 		default:
-			sc.ScriptError("Unexpected '%s' in definition of '%s'", sc.String, bag.Info->Class->TypeName.GetChars());
+			sc.ScriptError("Unexpected '%s' in definition of '%s'", sc.String, bag.Info->TypeName.GetChars());
 			break;
 		}
 	}
@@ -1273,10 +1312,6 @@ void ParseDecorate (FScanner &sc)
 
 		case TK_Enum:
 			ParseEnum (sc, &GlobalSymbols, NULL);
-			break;
-
-		case TK_Native:
-			ParseNativeVariable(sc, &GlobalSymbols, NULL);
 			break;
 
 		case ';':

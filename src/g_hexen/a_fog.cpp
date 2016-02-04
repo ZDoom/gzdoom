@@ -27,6 +27,8 @@ static FRandom pr_fogspawn ("FogSpawn");
 
 DEFINE_ACTION_FUNCTION(AActor, A_FogSpawn)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	static const char *fogs[3] =
 	{
 		"FogPatchSmall",
@@ -34,11 +36,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_FogSpawn)
 		"FogPatchLarge"
 	};
 
-	AActor *mo=NULL;
+	AActor *mo = NULL;
 	angle_t delta;
 
-	if (self->special1-- > 0) return;
-
+	if (self->special1-- > 0)
+	{
+		return 0;
+	}
 	self->special1 = self->args[2];		// Reset frequency count
 
 	mo = Spawn (fogs[pr_fogspawn()%3], self->Pos(), ALLOW_REPLACE);
@@ -55,6 +59,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FogSpawn)
 		mo->args[4] = 1;									// Set to moving
 		mo->special2 = pr_fogspawn()&63;
 	}
+	return 0;
 }
 
 //==========================================================================
@@ -65,16 +70,21 @@ DEFINE_ACTION_FUNCTION(AActor, A_FogSpawn)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FogMove)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	int speed = self->args[0]<<FRACBITS;
 	angle_t angle;
 	int weaveindex;
 
-	if (!(self->args[4])) return;
+	if (!self->args[4])
+	{
+		return 0;
+	}
 
 	if (self->args[3]-- <= 0)
 	{
 		self->SetState (self->FindState(NAME_Death), true);
-		return;
+		return 0;
 	}
 
 	if ((self->args[3] % 4) == 0)
@@ -87,5 +97,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_FogMove)
 	angle = self->angle>>ANGLETOFINESHIFT;
 	self->velx = FixedMul(speed, finecosine[angle]);
 	self->vely = FixedMul(speed, finesine[angle]);
+	return 0;
 }
 

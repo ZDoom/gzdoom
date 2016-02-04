@@ -6,9 +6,9 @@
 **
 ** The author of this program disclaims copyright.
 **
-** This file is based on version 1.43 of lemon.c from the SQLite
-** source tree, with modifications to make it work nicer when run
-** by Developer Studio.
+** This file is based on version 1.69 of lemon.c from the SQLite
+** CVS, with modifications to make it work nicer when run
+** from Developer Studio.
 */
 #include <stdio.h>
 #include <stdarg.h>
@@ -39,6 +39,13 @@ extern int access();
 #endif
 
 static void *msort(void *list, void *next, int (*cmp)());
+
+/*
+** Compilers are getting increasingly pedantic about type conversions
+** as C evolves ever closer to Ada.... To work around the latest problems
+** we have to define the following variant of strlen().
+*/
+#define lemonStrlen(X)   ((int)strlen(X))
 
 /******** From the file "action.h" *************************************/
 static struct action *Action_new(void);
@@ -133,13 +140,13 @@ struct symbol {
     RIGHT,
     NONE,
     UNK
-  } assoc;                 /* Associativity if predecence is defined */
+  } assoc;                 /* Associativity if precedence is defined */
   char *firstset;          /* First-set for all rules of this symbol */
   Boolean lambda;          /* True if NT and can generate an empty string */
   int useCnt;              /* Number of times used */
   char *destructor;        /* Code which executes whenever this symbol is
                            ** popped from the stack during error processing */
-  int destructorln;        /* Line number of destructor code */
+  int destLineno;          /* Line number for start of destructor */
   char *datatype;          /* The data type of information held by this
                            ** object. Only used if type==NONTERMINAL */
   int dtnum;               /* The data type number.  In the parser, the value
@@ -217,7 +224,7 @@ struct action {
 struct state {
   struct config *bp;       /* The basis configurations for this state */
   struct config *cfp;      /* All configurations in this set */
-  int statenum;            /* Sequencial number for this state */
+  int statenum;            /* Sequential number for this state */
   struct action *ap;       /* Array of actions for this state */
   int nTknAct, nNtAct;     /* Number of actions on terminals and nonterminals */
   int iTknOfst, iNtOfst;   /* yy_action[] offset for terminals and nonterms */
@@ -255,28 +262,21 @@ struct lemon {
   char *start;             /* Name of the start symbol for the grammar */
   char *stacksize;         /* Size of the parser stack */
   char *include;           /* Code to put at the start of the C file */
-  int  includeln;          /* Line number for start of include code */
   char *error;             /* Code to execute when an error is seen */
-  int  errorln;            /* Line number for start of error code */
   char *overflow;          /* Code to execute on a stack overflow */
-  int  overflowln;         /* Line number for start of overflow code */
   char *failure;           /* Code to execute on parser failure */
-  int  failureln;          /* Line number for start of failure code */
   char *accept;            /* Code to execute when the parser excepts */
-  int  acceptln;           /* Line number for the start of accept code */
   char *extracode;         /* Code appended to the generated file */
-  int  extracodeln;        /* Line number for the start of the extra code */
   char *tokendest;         /* Code to execute to destroy token data */
-  int  tokendestln;        /* Line number for token destroyer code */
   char *vardest;           /* Code for the default non-terminal destructor */
-  int  vardestln;          /* Line number for default non-term destructor code*/
   char *filename;          /* Name of the input file */
   char *outname;           /* Name of the current output file */
   char *tokenprefix;       /* A prefix added to token names in the .h file */
   int nconflict;           /* Number of parsing conflicts */
   int tablesize;           /* Size of the parse tables */
   int basisflag;           /* Print only basis configurations */
-  int has_fallback;        /* True if any %fallback is seen in the grammer */
+  int has_fallback;        /* True if any %fallback is seen in the grammar */
+  int nolinenosflag;       /* True if #line statements should not be printed */
   char *argv0;             /* Name of the program */
 };
 
@@ -633,7 +633,8 @@ struct lemon *lemp;
       if( rp->lhs->lambda ) continue;
       for(i=0; i<rp->nrhs; i++){
          struct symbol *sp = rp->rhs[i];
-         if( sp->type!=TERMINAL || sp->lambda==LEMON_FALSE ) break;
+         assert( sp->type==NONTERMINAL || sp->lambda==LEMON_FALSE );
+         if( sp->lambda==LEMON_FALSE ) break;
       }
       if( i==rp->nrhs ){
         rp->lhs->lambda = LEMON_TRUE;
@@ -998,7 +999,7 @@ struct lemon *lemp;
 }
 
 /* Resolve a conflict between the two given actions.  If the
-** conflict can't be resolve, return non-zero.
+** conflict can't be resolved, return non-zero.
 **
 ** NO LONGER TRUE:
 **   To resolve a conflict, first look to see if either action
@@ -1345,13 +1346,13 @@ void ErrorMsg(const char *filename, int lineno, const char *format, ...){
     sprintf(prefix,"%.*s: ",PREFIXLIMIT-10,filename);
   }
 #endif
-  prefixsize = strlen(prefix);
+  prefixsize = lemonStrlen(prefix);
   availablewidth = LINEWIDTH - prefixsize;
 
   /* Generate the error message */
   vsprintf(errmsg,format,ap);
   va_end(ap);
-  errmsgsize = strlen(errmsg);
+  errmsgsize = lemonStrlen(errmsg);
   /* Remove trailing '\n's from the error message. */
   while( errmsgsize>0 && errmsg[errmsgsize-1]=='\n' ){
      errmsg[--errmsgsize] = 0;
@@ -1395,7 +1396,7 @@ static void handle_D_option(char *z){
     exit(1);
   }
   paz = &azDefine[nDefine-1];
-  *paz = malloc( strlen(z)+1 );
+  *paz = malloc( lemonStrlen(z)+1 );
   if( *paz==0 ){
     fprintf(stderr,"out of memory\n");
     exit(1);
@@ -1418,12 +1419,14 @@ char **argv;
   static int quiet = 0;
   static int statistics = 0;
   static int mhflag = 0;
+  static int nolinenosflag = 0;
   static struct s_options options[] = {
     {OPT_FLAG, "b", (char*)&basisflag, "Print only the basis in report."},
     {OPT_FLAG, "c", (char*)&compress, "Don't compress the action table."},
     {OPT_FSTR, "D", (char*)handle_D_option, "Define an %ifdef macro."},
     {OPT_FLAG, "g", (char*)&rpflag, "Print grammar without actions."},
-    {OPT_FLAG, "m", (char*)&mhflag, "Output a makeheaders compatible file"},
+    {OPT_FLAG, "m", (char*)&mhflag, "Output a makeheaders compatible file."},
+    {OPT_FLAG, "l", (char*)&nolinenosflag, "Do not print #line statements."},
     {OPT_FLAG, "q", (char*)&quiet, "(Quiet) Don't print the report file."},
     {OPT_FLAG, "s", (char*)&statistics,
                                    "Print parser stats to standard output."},
@@ -1452,6 +1455,7 @@ char **argv;
   lem.argv0 = argv[0];
   lem.filename = OptArg(0);
   lem.basisflag = basisflag;
+  lem.nolinenosflag = nolinenosflag;
   Symbol_new("$");
   lem.errsym = Symbol_new("error");
   lem.errsym->useCnt = 0;
@@ -1667,10 +1671,10 @@ FILE *err;
   int i;
   size_t spcnt;
   if( argv[0] ) fprintf(err,"%s",argv[0]);
-  spcnt = strlen(argv[0]) + 1;
+  spcnt = lemonStrlen(argv[0]) + 1;
   for(i=1; i<n && argv[i]; i++){
     fprintf(err," %s",argv[i]);
-    spcnt += strlen(argv[i])+1;
+    spcnt += lemonStrlen(argv[i])+1;
   }
   spcnt += k;
   for(; argv[i]; i++) fprintf(err," %s",argv[i]);
@@ -1715,7 +1719,7 @@ FILE *err;
   int errcnt = 0;
   int j;
   for(j=0; op[j].label; j++){
-    if( strncmp(&argv[i][1],op[j].label,strlen(op[j].label))==0 ) break;
+    if( strncmp(&argv[i][1],op[j].label,lemonStrlen(op[j].label))==0 ) break;
   }
   v = argv[i][0]=='-' ? 1 : 0;
   if( op[j].label==0 ){
@@ -1892,7 +1896,7 @@ void OptPrint(){
   size_t max, len;
   max = 0;
   for(i=0; op[i].label; i++){
-    len = strlen(op[i].label) + 1;
+    len = lemonStrlen(op[i].label) + 1;
     switch( op[i].type ){
       case OPT_FLAG:
       case OPT_FFLAG:
@@ -1921,17 +1925,17 @@ void OptPrint(){
       case OPT_INT:
       case OPT_FINT:
         fprintf(errstream,"  %s=<integer>%*s  %s\n",op[i].label,
-          (int)(max-strlen(op[i].label)-9),"",op[i].message);
+          (int)(max-lemonStrlen(op[i].label)-9),"",op[i].message);
         break;
       case OPT_DBL:
       case OPT_FDBL:
         fprintf(errstream,"  %s=<real>%*s  %s\n",op[i].label,
-          (int)(max-strlen(op[i].label)-6),"",op[i].message);
+          (int)(max-lemonStrlen(op[i].label)-6),"",op[i].message);
         break;
       case OPT_STR:
       case OPT_FSTR:
         fprintf(errstream,"  %s=<string>%*s  %s\n",op[i].label,
-          (int)(max-strlen(op[i].label)-8),"",op[i].message);
+          (int)(max-lemonStrlen(op[i].label)-8),"",op[i].message);
         break;
     }
   }
@@ -1979,7 +1983,8 @@ struct pstate {
   struct rule *prevrule;     /* Previous rule parsed */
   char *declkeyword;         /* Keyword of a declaration */
   char **declargslot;        /* Where the declaration argument should be put */
-  int *decllnslot;           /* Where the declaration linenumber is put */
+  int insertLineMacro;       /* Add #line before declaration insert */
+  int *decllinenoslot;       /* Where to write declaration line number */
   enum e_assoc declassoc;    /* Assign this association to decl arguments */
   int preccounter;           /* Assign this precedence to decl arguments */
   struct rule *firstrule;    /* Pointer to first rule in the grammar */
@@ -2014,7 +2019,7 @@ struct pstate *psp;
       }else if( x[0]=='{' ){
         if( psp->prevrule==0 ){
           ErrorMsg(psp->filename,psp->tokenlineno,
-"There is not prior rule opon which to attach the code \
+"There is no prior rule upon which to attach the code \
 fragment which begins on this line.");
           psp->errorcnt++;
 	}else if( psp->prevrule->code!=0 ){
@@ -2212,46 +2217,46 @@ to follow the previous rule.");
       if( isalpha(x[0]) ){
         psp->declkeyword = x;
         psp->declargslot = 0;
-        psp->decllnslot = 0;
+        psp->decllinenoslot = 0;
+        psp->insertLineMacro = 1;
         psp->state = WAITING_FOR_DECL_ARG;
         if( strcmp(x,"name")==0 ){
           psp->declargslot = &(psp->gp->name);
+          psp->insertLineMacro = 0;
 	}else if( strcmp(x,"include")==0 ){
           psp->declargslot = &(psp->gp->include);
-          psp->decllnslot = &psp->gp->includeln;
 	}else if( strcmp(x,"code")==0 ){
           psp->declargslot = &(psp->gp->extracode);
-          psp->decllnslot = &psp->gp->extracodeln;
 	}else if( strcmp(x,"token_destructor")==0 ){
           psp->declargslot = &psp->gp->tokendest;
-          psp->decllnslot = &psp->gp->tokendestln;
 	}else if( strcmp(x,"default_destructor")==0 ){
           psp->declargslot = &psp->gp->vardest;
-          psp->decllnslot = &psp->gp->vardestln;
 	}else if( strcmp(x,"token_prefix")==0 ){
           psp->declargslot = &psp->gp->tokenprefix;
+          psp->insertLineMacro = 0;
 	}else if( strcmp(x,"syntax_error")==0 ){
           psp->declargslot = &(psp->gp->error);
-          psp->decllnslot = &psp->gp->errorln;
 	}else if( strcmp(x,"parse_accept")==0 ){
           psp->declargslot = &(psp->gp->accept);
-          psp->decllnslot = &psp->gp->acceptln;
 	}else if( strcmp(x,"parse_failure")==0 ){
           psp->declargslot = &(psp->gp->failure);
-          psp->decllnslot = &psp->gp->failureln;
 	}else if( strcmp(x,"stack_overflow")==0 ){
           psp->declargslot = &(psp->gp->overflow);
-          psp->decllnslot = &psp->gp->overflowln;
         }else if( strcmp(x,"extra_argument")==0 ){
           psp->declargslot = &(psp->gp->arg);
+          psp->insertLineMacro = 0;
         }else if( strcmp(x,"token_type")==0 ){
           psp->declargslot = &(psp->gp->tokentype);
+          psp->insertLineMacro = 0;
         }else if( strcmp(x,"default_type")==0 ){
           psp->declargslot = &(psp->gp->vartype);
+          psp->insertLineMacro = 0;
         }else if( strcmp(x,"stack_size")==0 ){
           psp->declargslot = &(psp->gp->stacksize);
+          psp->insertLineMacro = 0;
         }else if( strcmp(x,"start_symbol")==0 ){
           psp->declargslot = &(psp->gp->start);
+          psp->insertLineMacro = 0;
         }else if( strcmp(x,"left")==0 ){
           psp->preccounter++;
           psp->declassoc = LEFT;
@@ -2295,7 +2300,8 @@ to follow the previous rule.");
       }else{
         struct symbol *sp = Symbol_new(x);
         psp->declargslot = &sp->destructor;
-        psp->decllnslot = &sp->destructorln;
+		psp->decllinenoslot = &sp->destLineno;
+        psp->insertLineMacro = 1;
         psp->state = WAITING_FOR_DECL_ARG;
       }
       break;
@@ -2308,7 +2314,7 @@ to follow the previous rule.");
       }else{
         struct symbol *sp = Symbol_new(x);
         psp->declargslot = &sp->datatype;
-        psp->decllnslot = 0;
+        psp->insertLineMacro = 0;
         psp->state = WAITING_FOR_DECL_ARG;
       }
       break;
@@ -2333,18 +2339,56 @@ to follow the previous rule.");
       }
       break;
     case WAITING_FOR_DECL_ARG:
-      if( (x[0]=='{' || x[0]=='\"' || isalnum(x[0])) ){
-        if( *(psp->declargslot)!=0 ){
-          ErrorMsg(psp->filename,psp->tokenlineno,
-            "The argument \"%s\" to declaration \"%%%s\" is not the first.",
-            x[0]=='\"' ? &x[1] : x,psp->declkeyword);
-          psp->errorcnt++;
-          psp->state = RESYNC_AFTER_DECL_ERROR;
-	}else{
-          *(psp->declargslot) = (x[0]=='\"' || x[0]=='{') ? &x[1] : x;
-          if( psp->decllnslot ) *psp->decllnslot = psp->tokenlineno;
-          psp->state = WAITING_FOR_DECL_OR_RULE;
-	}
+      if( x[0]=='{' || x[0]=='\"' || isalnum(x[0]) ){
+        char *zOld, *zNew, *zBuf, *z;
+        int nOld, n, nLine, nNew, nBack;
+		int addLineMacro;
+        char zLine[50];
+        zNew = x;
+        if( zNew[0]=='"' || zNew[0]=='{' ) zNew++;
+        nNew = lemonStrlen(zNew);
+        if( *psp->declargslot ){
+          zOld = *psp->declargslot;
+        }else{
+          zOld = "";
+        }
+        nOld = lemonStrlen(zOld);
+        n = nOld + nNew + 20;
+		addLineMacro = !psp->gp->nolinenosflag && psp->insertLineMacro &&
+			            (psp->decllinenoslot==0 || psp->decllinenoslot[0]!=0);
+		if( addLineMacro ){
+          for(z=psp->filename, nBack=0; *z; z++){
+            if( *z=='\\' ) nBack++;
+          }
+          sprintf(zLine, "#line %d ", psp->tokenlineno);
+          nLine = lemonStrlen(zLine);
+          n += nLine + lemonStrlen(psp->filename) + nBack;
+        }
+        *psp->declargslot = zBuf = realloc(*psp->declargslot, n);
+        zBuf += nOld;
+        if( addLineMacro ){
+          if( nOld && zBuf[-1]!='\n' ){
+            *(zBuf++) = '\n';
+          }
+          memcpy(zBuf, zLine, nLine);
+          zBuf += nLine;
+          *(zBuf++) = '"';
+          for(z=psp->filename; *z; z++){
+            if( *z=='\\' ){
+              *(zBuf++) = '\\';
+            }
+            *(zBuf++) = *z;
+          }
+          *(zBuf++) = '"';
+          *(zBuf++) = '\n';
+        }
+		if( psp->decllinenoslot && psp->decllinenoslot[0]==0 ){
+		  psp->decllinenoslot[0] = psp->tokenlineno;
+		}
+        memcpy(zBuf, zNew, nNew);
+        zBuf += nNew;
+        *zBuf = 0;
+        psp->state = WAITING_FOR_DECL_OR_RULE;
       }else{
         ErrorMsg(psp->filename,psp->tokenlineno,
           "Illegal argument to %%%s: %s",psp->declkeyword,x);
@@ -2401,7 +2445,7 @@ to follow the previous rule.");
   }
 }
 
-/* Run the proprocessor over the input file text.  The global variables
+/* Run the preprocessor over the input file text.  The global variables
 ** azDefine[0] through azDefine[nDefine-1] contains the names of all defined
 ** macros.  This routine looks for "%ifdef" and "%ifndef" and "%endif" and
 ** comments them out.  Text in between is also commented out as appropriate.
@@ -2432,7 +2476,7 @@ static void preprocess_input(char *z){
         for(n=0; z[j+n] && !isspace(z[j+n]); n++){}
         exclude = 1;
         for(k=0; k<nDefine; k++){
-          if( strncmp(azDefine[k],&z[j],n)==0 && strlen(azDefine[k])==n ){
+          if( strncmp(azDefine[k],&z[j],n)==0 && lemonStrlen(azDefine[k])==n ){
             exclude = 0;
             break;
           }
@@ -2507,15 +2551,15 @@ struct lemon *gp;
     ErrorMsg(ps.filename,0,"Can't allocate %d of memory to hold this file.",
       filesize+1);
     gp->errorcnt++;
-    fclose(fp);
+	fclose(fp);
     return;
   }
   if( fread(filebuf,1,filesize,fp)!=filesize ){
     ErrorMsg(ps.filename,0,"Can't read in all %d bytes of this file.",
       filesize);
     free(filebuf);
-    fclose(fp);
     gp->errorcnt++;
+	fclose(fp);
     return;
   }
   fclose(fp);
@@ -2706,7 +2750,7 @@ char *suffix;
   char *name;
   char *cp;
 
-  name = malloc( strlen(lemp->filename) + strlen(suffix) + 5 );
+  name = malloc( lemonStrlen(lemp->filename) + lemonStrlen(suffix) + 5 );
   if( name==0 ){
     fprintf(stderr,"Can't allocate space for a filename.\n");
     exit(1);
@@ -2751,7 +2795,7 @@ struct lemon *lemp;
   maxlen = 10;
   for(i=0; i<lemp->nsymbol; i++){
     sp = lemp->symbols[i];
-    len = (int)strlen(sp->name);
+    len = lemonStrlen(sp->name);
     if( len>maxlen ) maxlen = len;
   }
   ncolumns = 76/(maxlen+5);
@@ -2959,7 +3003,7 @@ int modemask;
   char c;
 
 #ifdef __WIN32__
-  for (cp = argv0 + strlen(argv0); cp-- > argv0; )
+  for (cp = argv0 + lemonStrlen(argv0); cp-- > argv0; )
   {
     if( *cp == '\\' || *cp == '/' )
       break;
@@ -2970,18 +3014,18 @@ int modemask;
   if( cp ){
     c = *cp;
     *cp = 0;
-    path = (char *)malloc( strlen(argv0) + strlen(name) + 2 );
+    path = (char *)malloc( lemonStrlen(argv0) + lemonStrlen(name) + 2 );
     if( path ) sprintf(path,"%s/%s",argv0,name);
     *cp = c;
   }else{
     extern char *getenv();
     pathlist = getenv("PATH");
     if( pathlist==0 ) pathlist = ".:/bin:/usr/bin";
-    path = (char *)malloc( strlen(pathlist)+strlen(name)+2 );
+    path = (char *)malloc( lemonStrlen(pathlist)+lemonStrlen(name)+2 );
     if( path!=0 ){
       while( *pathlist ){
         cp = strchr(pathlist,':');
-        if( cp==0 ) cp = &pathlist[strlen(pathlist)];
+        if( cp==0 ) cp = &pathlist[lemonStrlen(pathlist)];
         c = *cp;
         *cp = 0;
         sprintf(path,"%s/%s",pathlist,name);
@@ -3112,16 +3156,13 @@ char *filename;
 }
 
 /* Print a string to the file and keep the linenumber up to date */
-PRIVATE void tplt_print(out,lemp,str,strln,lineno)
+PRIVATE void tplt_print(out,lemp,str,lineno)
 FILE *out;
 struct lemon *lemp;
 char *str;
-int strln;
 int *lineno;
 {
   if( str==0 ) return;
-  tplt_linedir(out,strln,lemp->filename);
-  (*lineno)++;
   while( *str ){
     if( *str=='\n' ) (*lineno)++;
     putc(*str,out);
@@ -3131,8 +3172,10 @@ int *lineno;
     putc('\n',out);
     (*lineno)++;
   }
-  tplt_linedir(out,*lineno+1,lemp->outname); 
-  (*lineno)+=1;
+  if (!lemp->nolinenosflag) {
+	(*lineno)++; tplt_linedir(out,*lineno,lemp->outname);
+  }
+
   return;
 }
 
@@ -3148,21 +3191,18 @@ int *lineno;
 {
  char *cp = 0;
 
- int linecnt = 0;
  if( sp->type==TERMINAL ){
    cp = lemp->tokendest;
    if( cp==0 ) return;
-   tplt_linedir(out,lemp->tokendestln,lemp->filename);
-   fprintf(out,"{");
+   fprintf(out,"{\n"); (*lineno)++;
  }else if( sp->destructor ){
    cp = sp->destructor;
-   tplt_linedir(out,sp->destructorln,lemp->filename);
-   fprintf(out,"{");
+   fprintf(out,"{\n"); (*lineno)++;
+   if (!lemp->nolinenosflag) { (*lineno)++; tplt_linedir(out,sp->destLineno,lemp->filename); }
  }else if( lemp->vardest ){
    cp = lemp->vardest;
    if( cp==0 ) return;
-   tplt_linedir(out,lemp->vardestln,lemp->filename);
-   fprintf(out,"{");
+   fprintf(out,"{\n"); (*lineno)++;
  }else{
    assert( 0 );  /* Cannot happen */
  }
@@ -3172,12 +3212,14 @@ int *lineno;
      cp++;
      continue;
    }
-   if( *cp=='\n' ) linecnt++;
+   if( *cp=='\n' ) (*lineno)++;
    fputc(*cp,out);
  }
- (*lineno) += 3 + linecnt;
- fprintf(out,"}\n");
- tplt_linedir(out,*lineno,lemp->outname);
+ fprintf(out,"\n"); (*lineno)++;
+ if (!lemp->nolinenosflag) {
+   (*lineno)++; tplt_linedir(out,*lineno,lemp->outname);
+ }
+ fprintf(out,"}\n"); (*lineno)++;
  return;
 }
 
@@ -3225,7 +3267,7 @@ PRIVATE char *append_str(char *zText, int n, int p1, int p2, int bNoSubst){
       used += n;
       assert( used>=0 );
     }
-    n = (int)strlen(zText);
+    n = lemonStrlen(zText);
   }
   if( n+sizeof(zInt)*2+used >= (size_t)alloced ){
     alloced = n + sizeof(zInt)*2 + used + 200;
@@ -3238,7 +3280,7 @@ PRIVATE char *append_str(char *zText, int n, int p1, int p2, int bNoSubst){
       sprintf(zInt, "%d", p1);
       p1 = p2;
       strcpy(&z[used], zInt);
-      used += (int)strlen(&z[used]);
+      used += lemonStrlen(&z[used]);
       zText++;
       n--;
     }else{
@@ -3325,7 +3367,7 @@ PRIVATE void translate_code(struct lemon *lemp, struct rule *rp){
       lemp->errorcnt++;
     }else if( rp->rhsalias[i]==0 ){
       if( has_destructor(rp->rhs[i],lemp) ){
-        append_str("  yy_destructor(%d,&yymsp[%d].minor);\n", 0,
+        append_str("  yy_destructor(yypParser,%d,&yymsp[%d].minor);\n", 0,
            rp->rhs[i]->index,i-rp->nrhs+1,0);
       }else{
         /* No destructor defined for this term */
@@ -3349,18 +3391,16 @@ struct lemon *lemp;
 int *lineno;
 {
  char *cp;
- int linecnt = 0;
 
  /* Generate code to do the reduce action */
  if( rp->code ){
-   tplt_linedir(out,rp->line,lemp->filename);
+   if (!lemp->nolinenosflag) { (*lineno)++; tplt_linedir(out,rp->line,lemp->filename); }
    fprintf(out,"{%s",rp->code);
    for(cp=rp->code; *cp; cp++){
-     if( *cp=='\n' ) linecnt++;
+     if( *cp=='\n' ) (*lineno)++;
    } /* End loop */
-   (*lineno) += 3 + linecnt;
-   fprintf(out,"}\n");
-   tplt_linedir(out,*lineno,lemp->outname);
+   fprintf(out,"}\n"); (*lineno)++;
+   if (!lemp->nolinenosflag) { (*lineno)++; tplt_linedir(out,*lineno,lemp->outname); }
  } /* End if( rp->code ) */
 
  return;
@@ -3391,15 +3431,19 @@ int mhflag;                 /* True if generating makeheaders output */
   /* Allocate and initialize types[] and allocate stddt[] */
   arraysize = lemp->nsymbol * 2;
   types = (char**)calloc( arraysize, sizeof(char*) );
+  if( types==0 ){
+    fprintf(stderr,"Out of memory.\n");
+    exit(1);
+  }
   maxdtlength = 0;
   if( lemp->vartype ){
-    maxdtlength = (int)strlen(lemp->vartype);
+    maxdtlength = lemonStrlen(lemp->vartype);
   }
   for(i=0; i<lemp->nsymbol; i++){
     int len;
     struct symbol *sp = lemp->symbols[i];
     if( sp->datatype==0 ) continue;
-    len = (int)strlen(sp->datatype);
+    len = lemonStrlen(sp->datatype);
     if( len>maxdtlength ) maxdtlength = len;
   }
   stddt = (char*)malloc( maxdtlength*2 + 1 );
@@ -3432,6 +3476,10 @@ int mhflag;                 /* True if generating makeheaders output */
     while( *cp ) stddt[j++] = *cp++;
     while( j>0 && isspace(stddt[j-1]) ) j--;
     stddt[j] = 0;
+    if( lemp->tokentype && strcmp(stddt, lemp->tokentype)==0 ){
+      sp->dtnum = 0;
+      continue;
+    }
     hash = 0;
     for(j=0; stddt[j]; j++){
       hash = hash*53 + stddt[j];
@@ -3447,7 +3495,7 @@ int mhflag;                 /* True if generating makeheaders output */
     }
     if( types[hash]==0 ){
       sp->dtnum = hash + 1;
-      types[hash] = (char*)malloc( strlen(stddt)+1 );
+      types[hash] = (char*)malloc( lemonStrlen(stddt)+1 );
       if( types[hash]==0 ){
         fprintf(stderr,"Out of memory.\n");
         exit(1);
@@ -3464,6 +3512,7 @@ int mhflag;                 /* True if generating makeheaders output */
     lemp->tokentype?lemp->tokentype:"void*");  lineno++;
   if( mhflag ){ fprintf(out,"#endif\n"); lineno++; }
   fprintf(out,"typedef union {\n"); lineno++;
+  fprintf(out,"  int yyinit;\n"); lineno++;
   fprintf(out,"  %sTOKENTYPE yy0;\n",name); lineno++;
   for(i=0; i<arraysize; i++){
     if( types[i]==0 ) continue;
@@ -3570,7 +3619,7 @@ int mhflag;     /* Output in makeheaders format if true */
   tplt_xfer(lemp->name,in,out,&lineno);
 
   /* Generate the include code, if any */
-  tplt_print(out,lemp,lemp->include,lemp->includeln,&lineno);
+  tplt_print(out,lemp,lemp->include,&lineno);
   if( mhflag ){
     char *name = file_makename(lemp, ".h");
     fprintf(out,"#include \"%s\"\n", name); lineno++;
@@ -3594,7 +3643,7 @@ int mhflag;     /* Output in makeheaders format if true */
 
   /* Generate the defines */
   fprintf(out,"#define YYCODETYPE %s\n",
-    minimum_size_type(0, lemp->nsymbol+5)); lineno++;
+    minimum_size_type(0, lemp->nsymbol+1)); lineno++;
   fprintf(out,"#define YYNOCODE %d\n",lemp->nsymbol+1);  lineno++;
   fprintf(out,"#define YYACTIONTYPE %s\n",
     minimum_size_type(0, lemp->nstate+lemp->nrule+5));  lineno++;
@@ -3616,7 +3665,7 @@ int mhflag;     /* Output in makeheaders format if true */
   name = lemp->name ? lemp->name : "Parse";
   if( lemp->arg && lemp->arg[0] ){
     size_t i;
-    i = strlen(lemp->arg);
+    i = lemonStrlen(lemp->arg);
     while( i>=1 && isspace(lemp->arg[i-1]) ) i--;
     while( i>=1 && (isalnum(lemp->arg[i-1]) || lemp->arg[i-1]=='_') ) i--;
     fprintf(out,"#define %sARG_SDECL %s;\n",name,lemp->arg);  lineno++;
@@ -3809,7 +3858,9 @@ int mhflag;     /* Output in makeheaders format if true */
   /* Generate the table of fallback tokens.
   */
   if( lemp->has_fallback ){
-    for(i=0; i<lemp->nterminal; i++){
+    int mx = lemp->nterminal - 1;
+	while( mx>0 && lemp->symbols[mx]->fallback==0 ){ mx--; }
+    for(i=0; i<=mx; i++){
       struct symbol *p = lemp->symbols[i];
       if( p->fallback==0 ){
         fprintf(out, "    0,  /* %10s => nothing */\n", p->name);
@@ -3833,7 +3884,7 @@ int mhflag;     /* Output in makeheaders format if true */
   tplt_xfer(lemp->name,in,out,&lineno);
 
   /* Generate a table containing a text string that describes every
-  ** rule in the rule set of the grammer.  This information is used
+  ** rule in the rule set of the grammar.  This information is used
   ** when tracing REDUCE actions.
   */
   for(i=0, rp=lemp->rule; rp; rp=rp->next, i++){
@@ -3849,11 +3900,15 @@ int mhflag;     /* Output in makeheaders format if true */
   ** (In other words, generate the %destructor actions)
   */
   if( lemp->tokendest ){
+    int once = 1;
     for(i=0; i<lemp->nsymbol; i++){
       struct symbol *sp = lemp->symbols[i];
       if( sp==0 || sp->type!=TERMINAL ) continue;
-      fprintf(out,"    case %d: /* %s */\n",
-              sp->index, sp->name); lineno++;
+	  if( once ){
+		fprintf(out, "      /* TERMINAL Destructor */\n"); lineno++;
+		once = 0;
+	  }
+	  fprintf(out,"    case %d: /* %s */\n", sp->index, sp->name); lineno++;
     }
     for(i=0; i<lemp->nsymbol && lemp->symbols[i]->type!=TERMINAL; i++);
     if( i<lemp->nsymbol ){
@@ -3863,24 +3918,27 @@ int mhflag;     /* Output in makeheaders format if true */
   }
   if( lemp->vardest ){
     struct symbol *dflt_sp = 0;
+	int once = 1;
     for(i=0; i<lemp->nsymbol; i++){
       struct symbol *sp = lemp->symbols[i];
       if( sp==0 || sp->type==TERMINAL ||
           sp->index<=0 || sp->destructor!=0 ) continue;
-      fprintf(out,"    case %d: /* %s */\n",
-              sp->index, sp->name); lineno++;
+	  if( once ){
+		fprintf(out, "      /* Default NON-TERMINAL Destructor */\n"); lineno++;
+		once = 0;
+	  }
+	  fprintf(out,"    case %d: /* %s */\n", sp->index, sp->name); lineno++;
       dflt_sp = sp;
     }
     if( dflt_sp!=0 ){
       emit_destructor_code(out,dflt_sp,lemp,&lineno);
-      fprintf(out,"      break;\n"); lineno++;
     }
+    fprintf(out,"      break;\n"); lineno++;
   }
   for(i=0; i<lemp->nsymbol; i++){
     struct symbol *sp = lemp->symbols[i];
     if( sp==0 || sp->type==TERMINAL || sp->destructor==0 ) continue;
-    fprintf(out,"    case %d: /* %s */\n",
-            sp->index, sp->name); lineno++;
+    fprintf(out,"    case %d: /* %s */\n", sp->index, sp->name); lineno++;
 
     /* Combine duplicate destructors into a single case */
     for(j=i+1; j<lemp->nsymbol; j++){
@@ -3900,7 +3958,7 @@ int mhflag;     /* Output in makeheaders format if true */
   tplt_xfer(lemp->name,in,out,&lineno);
 
   /* Generate code which executes whenever the parser stack overflows */
-  tplt_print(out,lemp,lemp->overflow,lemp->overflowln,&lineno);
+  tplt_print(out,lemp,lemp->overflow,&lineno);
   tplt_xfer(lemp->name,in,out,&lineno);
 
   /* Generate the table of rule information 
@@ -3917,39 +3975,53 @@ int mhflag;     /* Output in makeheaders format if true */
   for(rp=lemp->rule; rp; rp=rp->next){
     translate_code(lemp, rp);
   }
+  /* First output rules other than the default: rule */
   for(rp=lemp->rule; rp; rp=rp->next){
-    struct rule *rp2;
+    struct rule *rp2;               /* Other rules with the same action */
     if( rp->code==0 ) continue;
+	if( rp->code[0]=='\n' && rp->code[1]==0 ) continue; /* Will be default: */
     fprintf(out,"      case %d: /* ",rp->index);
     writeRuleText(out, rp);
-    fprintf(out, " */\n"); lineno++;
+    fprintf(out," */\n"); lineno++;
     for(rp2=rp->next; rp2; rp2=rp2->next){
       if( rp2->code==rp->code ){
         fprintf(out,"      case %d: /*",rp2->index);
         writeRuleText(out, rp2);
-        fprintf(out," */\n"); lineno++;
+        fprintf(out, " */ yytestcase(yyruleno==%d);\n", rp2->index); lineno++;
         rp2->code = 0;
       }
     }
     emit_code(out,rp,lemp,&lineno);
     fprintf(out,"        break;\n"); lineno++;
+	rp->code = 0;
   }
+  /* Finally, output the default: rule.  We choose as the default: all
+  ** empty actions. */
+  fprintf(out,"      default:\n"); lineno++;
+  for(rp=lemp->rule; rp; rp=rp->next){
+	if( rp->code==0 ) continue;
+	assert( rp->code[0]=='\n' && rp->code[1]==0 );
+	fprintf(out,"      /* (%d) ", rp->index);
+	writeRuleText(out, rp);
+	fprintf(out," */ yytestcase(yyruleno==%d);\n", rp->index); lineno++;
+  }
+  fprintf(out,"       break;\n"); lineno++;
   tplt_xfer(lemp->name,in,out,&lineno);
 
   /* Generate code which executes if a parse fails */
-  tplt_print(out,lemp,lemp->failure,lemp->failureln,&lineno);
+  tplt_print(out,lemp,lemp->failure,&lineno);
   tplt_xfer(lemp->name,in,out,&lineno);
 
   /* Generate code which executes when a syntax error occurs */
-  tplt_print(out,lemp,lemp->error,lemp->errorln,&lineno);
+  tplt_print(out,lemp,lemp->error,&lineno);
   tplt_xfer(lemp->name,in,out,&lineno);
 
   /* Generate code which executes when the parser accepts its input */
-  tplt_print(out,lemp,lemp->accept,lemp->acceptln,&lineno);
+  tplt_print(out,lemp,lemp->accept,&lineno);
   tplt_xfer(lemp->name,in,out,&lineno);
 
   /* Append any addition code the user desires */
-  tplt_print(out,lemp,lemp->extracode,lemp->extracodeln,&lineno);
+  tplt_print(out,lemp,lemp->extracode,&lineno);
 
   acttab_free(&pActtab);
   fclose(in);
@@ -3971,12 +4043,14 @@ struct lemon *lemp;
   else                    prefix = "";
   in = file_open(lemp,".h","rb");
   if( in ){
+    int nextChar;
     for(i=1; i<lemp->nterminal && fgets(line,LINESIZE,in); i++){
       sprintf(pattern,"#define %s%-30s %2d\n",prefix,lemp->symbols[i]->name,i);
       if( strcmp(line,pattern) ) break;
     }
+    nextChar = fgetc(in);
     fclose(in);
-    if( i==lemp->nterminal ){
+    if( i==lemp->nterminal && nextChar==EOF ){
       /* No change in the file.  Don't rewrite it. */
       /* (not the best idea if you use make tools that check the date! */
       /*return;*/
@@ -4038,7 +4112,7 @@ struct lemon *lemp;
 
     /* Do not make a default if the number of rules to default
     ** is not at least 1 or if the wildcard token is a possbile
-    ** lookahed.
+    ** lookahead.
     */
     if( nbest<1 || usesWildcard ) continue;
 
@@ -4206,7 +4280,7 @@ char *y;
 
   if( y==0 ) return 0;
   z = Strsafe_find(y);
-  if( z==0 && (z=malloc( strlen(y)+1 ))!=0 ){
+  if( z==0 && (z=malloc( lemonStrlen(y)+1 ))!=0 ){
     strcpy(z,y);
     Strsafe_insert(z);
   }
@@ -4353,6 +4427,7 @@ char *x;
     sp->firstset = 0;
     sp->lambda = LEMON_FALSE;
     sp->destructor = 0;
+	sp->destLineno = 0;
     sp->datatype = 0;
 	sp->useCnt = 0;
     Symbol_insert(sp,sp->name);

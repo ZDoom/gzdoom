@@ -45,9 +45,7 @@ struct cluster_info_t;
 class FScanner;
 
 #if defined(_MSC_VER)
-#pragma data_seg(".yreg$u")
-#pragma data_seg()
-
+#pragma section(".yreg$u",read)
 #define MSVC_YSEG __declspec(allocate(".yreg$u"))
 #define GCC_YSEG
 #else

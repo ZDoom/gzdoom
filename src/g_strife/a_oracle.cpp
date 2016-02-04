@@ -10,6 +10,8 @@
 
 DEFINE_ACTION_FUNCTION(AActor, A_WakeOracleSpectre)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	TThinkerIterator<AActor> it(NAME_AlienSpectre3);
 	AActor *spectre = it.Next();
 
@@ -19,5 +21,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_WakeOracleSpectre)
 		spectre->target = self->target;
 		spectre->SetState (spectre->SeeState);
 	}
+	return 0;
 }
 

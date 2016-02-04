@@ -13,8 +13,12 @@
 // DOOM II special, map 32.
 // Uses special tag 666 by default.
 //
+
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KeenDie)
 {
+	PARAM_ACTION_PROLOGUE;
+	PARAM_INT_OPT(doortag)		{ doortag = 666; }
+
 	A_Unblock(self, false);
 	
 	// scan the remaining thinkers to see if all Keens are dead
@@ -27,14 +31,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KeenDie)
 		if (other != self && other->health > 0 && other->IsA (matchClass))
 		{
 			// other Keen not dead
-			return;
+			return 0;
 		}
 	}
 
-	ACTION_PARAM_START(1);
-	ACTION_PARAM_INT(doortag, 0);
-
 	EV_DoDoor (DDoor::doorOpen, NULL, NULL, doortag, 2*FRACUNIT, 0, 0, 0);
+	return 0;
 }
 
 

@@ -36,7 +36,8 @@
 #define AUTOSEGS_H
 
 #define REGMARKER(x) (x)
-typedef void *REGINFO;
+typedef void * const REGINFO;
+typedef void * NCREGINFO;
 
 // List of Action functons
 extern REGINFO ARegHead;
@@ -49,10 +50,6 @@ extern REGINFO CRegTail;
 // List of properties
 extern REGINFO GRegHead;
 extern REGINFO GRegTail;
-
-// List of variables
-extern REGINFO MRegHead;
-extern REGINFO MRegTail;
 
 // List of MAPINFO map options
 extern REGINFO YRegHead;
@@ -76,7 +73,7 @@ class FAutoSegIterator
 			}
 			Probe = Head;
 		}
-		REGINFO operator*() const
+		NCREGINFO operator*() const
 		{
 			return *Probe;
 		}

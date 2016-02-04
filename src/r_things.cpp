@@ -134,6 +134,7 @@ BYTE *OffscreenColorBuffer;
 FCoverageBuffer *OffscreenCoverageBuffer;
 
 //
+
 // GAME FUNCTIONS
 //
 int				MaxVisSprites;
@@ -149,6 +150,7 @@ static int spritesortersize = 0;
 static int vsprcount;
 
 static void R_ProjectWallSprite(AActor *thing, fixed_t fx, fixed_t fy, fixed_t fz, FTextureID picnum, fixed_t xscale, fixed_t yscale, INTBOOL flip);
+
 
 
 void R_DeinitSprites()
@@ -330,6 +332,11 @@ void R_DrawVisSprite (vissprite_t *vis)
 	int				x2, stop4;
 	fixed_t			xiscale;
 	ESPSResult		mode;
+
+	if (vis->xscale == 0 || vis->yscale == 0)
+	{ // scaled to 0; can't see
+		return;
+	}
 
 	dc_colormap = vis->Style.colormap;
 

@@ -687,8 +687,7 @@ void DPlayerMenu::UpdateTranslation()
 	if (PlayerClass != NULL)
 	{
 		PlayerSkin = R_FindSkin (skins[PlayerSkin].name, int(PlayerClass - &PlayerClasses[0]));
-		R_GetPlayerTranslation(PlayerColor,
-			P_GetPlayerColorSet(PlayerClass->Type->TypeName, PlayerColorset),
+		R_GetPlayerTranslation(PlayerColor, PlayerClass->Type->GetColorSet(PlayerColorset),
 			&skins[PlayerSkin], translationtables[TRANSLATION_Players][MAXPLAYERS]);
 	}
 }
@@ -757,11 +756,11 @@ void DPlayerMenu::UpdateColorsets()
 	if (li != NULL)
 	{
 		int sel = 0;
-		P_EnumPlayerColorSets(PlayerClass->Type->TypeName, &PlayerColorSets);
+		PlayerClass->Type->EnumColorSets(&PlayerColorSets);
 		li->SetString(0, "Custom");
 		for(unsigned i=0;i<PlayerColorSets.Size(); i++)
 		{
-			FPlayerColorSet *colorset = P_GetPlayerColorSet(PlayerClass->Type->TypeName, PlayerColorSets[i]);
+			FPlayerColorSet *colorset = PlayerClass->Type->GetColorSet(PlayerColorSets[i]);
 			li->SetString(i+1, colorset->Name);
 		}
 		int mycolorset = players[consoleplayer].userinfo.GetColorSet();
@@ -907,7 +906,7 @@ void DPlayerMenu::ClassChanged (FListMenuItem *li)
 		players[consoleplayer].userinfo.PlayerClassNumChanged(gameinfo.norandomplayerclass ? sel : sel-1);
 		PickPlayerClass();
 
-		cvar_set ("playerclass", sel == 0 && !gameinfo.norandomplayerclass ? "Random" : PlayerClass->Type->Meta.GetMetaString (APMETA_DisplayName));
+		cvar_set ("playerclass", sel == 0 && !gameinfo.norandomplayerclass ? "Random" : PlayerClass->Type->DisplayName.GetChars());
 
 		UpdateSkins();
 		UpdateColorsets();

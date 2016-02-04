@@ -349,7 +349,7 @@ void GLWall::RenderTextured(int rflags)
 			float low1 = FIXED2FLOAT(lowplane.ZatPoint(vertexes[0]));
 			float low2 = FIXED2FLOAT(lowplane.ZatPoint(vertexes[1]));
 
-			if (low1 < ztop[0] && low2 < ztop[1])
+			if (low1 < ztop[0] || low2 < ztop[1])
 			{
 				int thisll = (*lightlist)[i].caster != NULL ? gl_ClampLight(*(*lightlist)[i].p_lightlevel) : lightlevel;
 				FColormap thiscm;

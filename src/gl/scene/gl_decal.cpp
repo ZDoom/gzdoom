@@ -351,7 +351,7 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 			float low1 = lowplane.ZatPoint(dv[1].x, dv[1].y);
 			float low2 = lowplane.ZatPoint(dv[2].x, dv[2].y);
 
-			if (low1 < dv[1].z && low2 < dv[2].z)
+			if (low1 < dv[1].z || low2 < dv[2].z)
 			{
 				int thisll = (*lightlist)[k].caster != NULL ? gl_ClampLight(*(*lightlist)[k].p_lightlevel) : lightlevel;
 				FColormap thiscm;

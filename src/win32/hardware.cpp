@@ -299,7 +299,8 @@ void I_SaveWindowedPos ()
 		return;
 	}
 	// Make sure we only save the window position if it's not fullscreen.
-	if ((GetWindowLong (Window, GWL_STYLE) & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW)
+	static const int WINDOW_STYLE = WS_OVERLAPPEDWINDOW & ~WS_MAXIMIZEBOX;
+	if ((GetWindowLong (Window, GWL_STYLE) & WINDOW_STYLE) == WINDOW_STYLE)
 	{
 		RECT wrect;
 

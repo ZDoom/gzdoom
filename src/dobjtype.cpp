@@ -1986,7 +1986,7 @@ END_POINTERS
 //
 //==========================================================================
 
-static int STACK_ARGS cregcmp (const void *a, const void *b)
+static int STACK_ARGS cregcmp (const void *a, const void *b) NO_SANITIZE
 {
 	const PClass *class1 = *(const PClass **)a;
 	const PClass *class2 = *(const PClass **)b;

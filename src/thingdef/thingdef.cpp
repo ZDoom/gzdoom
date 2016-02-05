@@ -54,6 +54,7 @@
 #include "decallib.h"
 #include "m_random.h"
 #include "i_system.h"
+#include "m_argv.h"
 #include "p_local.h"
 #include "doomerrors.h"
 #include "a_hexenglobal.h"
@@ -262,7 +263,6 @@ void FinishActor(const FScriptPosition &sc, PClassActor *info, Baggage &bag)
 // Do some postprocessing after everything has been defined
 //
 //==========================================================================
-CVAR(Bool, dumpdisassembly, false, 0);
 
 static void DumpFunction(FILE *dump, VMScriptFunction *sfunc, const char *label, int labellen)
 {
@@ -282,7 +282,7 @@ static void FinishThingdef()
 	int codesize = 0;
 	FILE *dump = NULL;
 
-	if (dumpdisassembly) dump = fopen("disasm.txt", "w");
+	if (Args->CheckParm("-dumpdisasm")) dump = fopen("disasm.txt", "w");
 
 	for (i = 0; i < StateTempCalls.Size(); ++i)
 	{

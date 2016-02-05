@@ -925,7 +925,7 @@ void WriteUserInfo(FArchive &arc, userinfo_t &info)
 
 		case NAME_PlayerClass:
 			i = info.GetPlayerClassNum();
-			arc.WriteString(i == -1 ? "Random" : PlayerClasses[i].Type->DisplayName);
+			arc.WriteString(i == -1 ? "Random" : PlayerClasses[i].Type->DisplayName.GetChars());
 			break;
 
 		default:

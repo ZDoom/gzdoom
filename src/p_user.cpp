@@ -1189,7 +1189,7 @@ const char *APlayerPawn::GetSoundClass() const
 
 	// [GRB]
 	PClassPlayerPawn *pclass = GetClass();
-	return pclass->SoundClass.IsNotEmpty() ? pclass->SoundClass : "player";
+	return pclass->SoundClass.IsNotEmpty() ? pclass->SoundClass.GetChars() : "player";
 }
 
 //===========================================================================

@@ -343,16 +343,16 @@ namespace StringFormat
 
 // FName inline implementations that take FString parameters
 
-inline FName::FName(const FString &text) { Index = NameData.FindName (text, text.Len(), false); }
-inline FName::FName(const FString &text, bool noCreate) { Index = NameData.FindName (text, text.Len(), noCreate); }
-inline FName &FName::operator = (const FString &text) { Index = NameData.FindName (text, text.Len(), false); return *this; }
-inline FName &FNameNoInit::operator = (const FString &text) { Index = NameData.FindName (text, text.Len(), false); return *this; }
+inline FName::FName(const FString &text) { Index = NameData.FindName (text.GetChars(), text.Len(), false); }
+inline FName::FName(const FString &text, bool noCreate) { Index = NameData.FindName (text.GetChars(), text.Len(), noCreate); }
+inline FName &FName::operator = (const FString &text) { Index = NameData.FindName (text.GetChars(), text.Len(), false); return *this; }
+inline FName &FNameNoInit::operator = (const FString &text) { Index = NameData.FindName (text.GetChars(), text.Len(), false); return *this; }
 
 // Hash FStrings on their contents. (used by TMap)
 extern unsigned int SuperFastHash (const char *data, size_t len);
 template<> struct THashTraits<FString>
 {
-	hash_t Hash(const FString &key) { return (hash_t)SuperFastHash(key, key.Len()); }
+	hash_t Hash(const FString &key) { return (hash_t)SuperFastHash(key.GetChars(), key.Len()); }
 	// Compares two keys, returning zero if they are the same.
 	int Compare(const FString &left, const FString &right) { return left.Compare(right); }
 };

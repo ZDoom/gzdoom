@@ -1411,7 +1411,7 @@ void DBaseStatusBar::DrawLog ()
 {
 	int hudwidth, hudheight;
 
-	if (CPlayer->LogText && *CPlayer->LogText)
+	if (CPlayer->LogText.IsNotEmpty())
 	{
 		// This uses the same scaling as regular HUD messages
 		switch (con_scaletext)

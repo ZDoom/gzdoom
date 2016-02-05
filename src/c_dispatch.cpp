@@ -1203,11 +1203,11 @@ static int DumpHash (FConsoleCommand **table, bool aliases, const char *pattern=
 
 void FConsoleAlias::PrintAlias ()
 {
-	if (m_Command[0])
+	if (m_Command[0].IsNotEmpty())
 	{
 		Printf (TEXTCOLOR_YELLOW "%s : %s\n", m_Name, m_Command[0].GetChars());
 	}
-	if (m_Command[1])
+	if (m_Command[1].IsNotEmpty())
 	{
 		Printf (TEXTCOLOR_ORANGE "%s : %s\n", m_Name, m_Command[1].GetChars());
 	}

@@ -415,7 +415,7 @@ void S_Start ()
 			// Parse the global SNDINFO
 			S_ParseSndInfo(true);
 		
-			if (*LocalSndInfo)
+			if (LocalSndInfo.IsNotEmpty())
 			{
 				// Now parse the local SNDINFO
 				int j = Wads.CheckNumForFullName(LocalSndInfo, true);
@@ -432,7 +432,7 @@ void S_Start ()
 
 		if (parse_ss)
 		{
-			S_ParseSndSeq(*LocalSndSeq? Wads.CheckNumForFullName(LocalSndSeq, true) : -1);
+			S_ParseSndSeq(LocalSndSeq.IsNotEmpty()? Wads.CheckNumForFullName(LocalSndSeq, true) : -1);
 		}
 		
 		LastLocalSndInfo = LocalSndInfo;
@@ -2553,7 +2553,7 @@ int S_GetMusic (char **name)
 {
 	int order;
 
-	if (mus_playing.name)
+	if (mus_playing.name.IsNotEmpty())
 	{
 		*name = copystring (mus_playing.name);
 		order = mus_playing.baseorder;

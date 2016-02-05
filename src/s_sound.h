@@ -102,7 +102,7 @@ public:
 	}
 	FSoundID(const FString &name)
 	{
-		ID = S_FindSound(name);
+		ID = S_FindSound(name.GetChars());
 	}
 	FSoundID(const FSoundID &other)
 	{
@@ -120,7 +120,7 @@ public:
 	}
 	FSoundID &operator=(const FString &name)
 	{
-		ID = S_FindSound(name);
+		ID = S_FindSound(name.GetChars());
 		return *this;
 	}
 	operator int() const

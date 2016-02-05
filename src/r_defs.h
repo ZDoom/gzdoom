@@ -151,8 +151,8 @@ struct FUDMFKey
 	FUDMFKey& operator =(const FString &val)
 	{
 		Type = UDMF_String;
-		IntVal = strtol(val, NULL, 0);
-		FloatVal = strtod(val, NULL);
+		IntVal = strtol(val.GetChars(), NULL, 0);
+		FloatVal = strtod(val.GetChars(), NULL);
 		StringVal = val;
 		return *this;
 	}

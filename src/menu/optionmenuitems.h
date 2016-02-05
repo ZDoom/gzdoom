@@ -504,7 +504,7 @@ public:
 
 	int Draw(FOptionMenuDescriptor *desc, int y, int indent, bool selected)
 	{
-		const char *txt = mCurrent? (const char*)mAltText : mLabel;
+		const char *txt = mCurrent? mAltText.GetChars() : mLabel;
 		if (*txt == '$') txt = GStrings(txt + 1);
 		int w = SmallFont->StringWidth(txt) * CleanXfac_1;
 		int x = (screen->GetWidth() - w) / 2;

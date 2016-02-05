@@ -520,7 +520,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 					wallupper[i] = mceilingclip[i];
 			}
 			mceilingclip = wallupper;
-		}			
+		}
 		if (fake3D & FAKE3D_CLIPBOTTOM)
 		{
 			OWallMost(walllower, sclipBottom - viewz, &WallC);
@@ -2763,11 +2763,6 @@ int OWallMost (short *mostbuf, fixed_t z, const FWallCoords *wallc)
 	}
 #endif
 #endif
-	if (mostbuf[ix1] < 0) mostbuf[ix1] = 0;
-	else if (mostbuf[ix1] > viewheight) mostbuf[ix1] = (short)viewheight;
-	if (mostbuf[ix2-1] < 0) mostbuf[ix2-1] = 0;
-	else if (mostbuf[ix2-1] > viewheight) mostbuf[ix2-1] = (short)viewheight;
-
 	return bad;
 }
 
@@ -2920,11 +2915,6 @@ int WallMost (short *mostbuf, const secplane_t &plane, const FWallCoords *wallc)
 		fixed_t yinc = (Scale (z2>>4, InvZtoScale, iy2) - y) / (ix2-ix1);
 		qinterpolatedown16short (&mostbuf[ix1], ix2-ix1, y + centeryfrac,yinc);
 	}
-
-	if (mostbuf[ix1] < 0) mostbuf[ix1] = 0;
-	else if (mostbuf[ix1] > viewheight) mostbuf[ix1] = (short)viewheight;
-	if (mostbuf[ix2-1] < 0) mostbuf[ix2-1] = 0;
-	else if (mostbuf[ix2-1] > viewheight) mostbuf[ix2-1] = (short)viewheight;
 
 	return bad;
 }

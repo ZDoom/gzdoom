@@ -80,14 +80,7 @@ bool P_ClipLineToPortal(line_t* line, line_t* portal, fixed_t viewx, fixed_t vie
 
 bool P_CheckPortal(line_t* line)
 {
-	if (line->special == Line_Mirror)
-	{
-		line->portal = true;
-		line->portal_mirror = true;
-		line->portal_passive = true;
-		line->portal_dst = line;
-	}
-	else if (line->special == Line_SetPortal)
+	if (line->special == Line_SetPortal)
 	{
 		// portal destination is special argument #0
 		line_t* dst = NULL;
@@ -110,28 +103,18 @@ bool P_CheckPortal(line_t* line)
 
 		if (dst)
 		{
-			line->portal = true;
-			line->portal_mirror = false;
-			line->portal_passive = true;// !!(line->args[2] & PORTAL_VISUAL; (line->special == Line_SetVisualPortal);
-			line->portal_dst = dst;
+			line->_portal = true;
+			//line->portal_passive = true;// !!(line->args[2] & PORTAL_VISUAL; (line->special == Line_SetVisualPortal);
+			line->_portal_dst = dst;
 		}
 		else
 		{
-			line->portal = false;
-			line->portal_mirror = false;
-			line->portal_passive = false;
-			line->portal_dst = NULL;
+			line->_portal = false;
+			//line->portal_passive = false;
+			line->_portal_dst = NULL;
 		}
 	}
-	else
-	{
-		line->portal = false;
-		line->portal_mirror = false;
-		line->portal_passive = false;
-		line->portal_dst = NULL;
-	}
-
-	return (line->portal);
+	return (line->_portal);
 }
 
 void P_TranslatePortalXY(line_t* src, line_t* dst, fixed_t& x, fixed_t& y)
@@ -297,12 +280,12 @@ bool PortalTracer::TraceStep()
 		{
 			li = in->d.line;
 
-			if (li->portal && !li->portal_passive)
+			if (li->isLinePortal())
 			{
 				if (P_PointOnLineSide(startx-dirx, starty-diry, li))
 					continue; // we're at the back side of this line
 
-				line_t* out = li->portal_dst;
+				line_t* out = li->getPortalDestination();
 
 				this->in = li;
 				this->out = out;

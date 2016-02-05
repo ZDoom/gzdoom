@@ -2004,8 +2004,7 @@ void R_NewWall (bool needlights)
 	midtexture = toptexture = bottomtexture = 0;
 
 	if (sidedef == linedef->sidedef[0] &&
-		linedef->portal &&
-		(!linedef->portal_mirror || r_drawmirrors)) // [ZZ] compatibility with r_drawmirrors cvar that existed way before portals
+		(linedef->isVisualPortal() || (linedef->special == Line_Mirror && r_drawmirrors))) // [ZZ] compatibility with r_drawmirrors cvar that existed way before portals
 	{
 		markfloor = markceiling = true; // act like an one-sided wall here (todo: check how does this work with transparency)
 		rw_markportal = true;
@@ -2632,7 +2631,7 @@ void R_StoreWallRange (int start, int stop)
 	{
 		PortalDrawseg pds;
 		pds.src = curline->linedef;
-		pds.dst = curline->linedef->portal_dst;
+		pds.dst = curline->linedef->special == Line_Mirror? curline->linedef : curline->linedef->getPortalDestination();
 		pds.x1 = ds_p->x1;
 		pds.x2 = ds_p->x2;
 		pds.len = pds.x2 - pds.x1;
@@ -2653,7 +2652,7 @@ void R_StoreWallRange (int start, int stop)
 				pds.floorclip[i] = RenderTarget->GetHeight()-1;
 		}
 
-		pds.mirror = curline->linedef->portal_mirror;
+		pds.mirror = curline->linedef->special == Line_Mirror;
 		WallPortals.Push(pds);
 	}
 

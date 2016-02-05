@@ -988,14 +988,25 @@ struct line_t
 	sector_t	*frontsector, *backsector;
 	int 		validcount;	// if == validcount, already checked
 	int			locknumber;	// [Dusk] lock number for special
-	line_t		*portal_dst;
-	bool		portal;
-	bool		portal_mirror;
-	bool		portal_passive;
 
+	line_t		*_portal_dst;
+	bool		_portal;
+
+	// returns true if the portal is crossable by actors
 	bool isLinePortal() const
 	{
-		return portal;
+		return false;	// right now there are no crossable portals
+	}
+
+	// returns true if the portal needs to be handled by the renderer
+	bool isVisualPortal() const
+	{
+		return _portal;
+	}
+
+	line_t *getPortalDestination() const
+	{
+		return _portal_dst;
 	}
 };
 

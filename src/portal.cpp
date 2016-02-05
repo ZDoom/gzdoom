@@ -85,6 +85,18 @@ void P_SpawnLinePortal(line_t* line)
 				port->mType = PORTT_LINKED;
 				port->mAlign = PORG_ABSOLUTE;
 				port->mDefFlags = PORTF_TYPEINTERACTIVE;
+
+				// we need to create the backlink here, too.
+				lines[i].portalindex = linePortals.Reserve(1);
+				port = &linePortals.Last();
+
+				memset(port, 0, sizeof(FLinePortal));
+				port->mOrigin = &lines[i];
+				port->mDestination = line;
+				port->mType = PORTT_LINKED;
+				port->mAlign = PORG_ABSOLUTE;
+				port->mDefFlags = PORTF_TYPEINTERACTIVE;
+
 			}
 		}
 	}

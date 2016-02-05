@@ -6578,6 +6578,8 @@ void PrintMiscActorInfo(AActor *query)
 			"OptFuzzy", "Stencil", "Translucent", "Add", "Shaded", "TranslucentStencil",
 			"Shadow", "Subtract", "AddStencil", "AddShaded"};
 
+		FLineSpecial *spec = P_GetLineSpecialInfo(query->special);
+
 		Printf("%s @ %p has the following flags:\n   flags: %x", query->GetTag(), query, query->flags.GetValue());
 		for (flagi = 0; flagi <= 31; flagi++)
 			if (query->flags & ActorFlags::FromInt(1<<flagi)) Printf(" %s", FLAG_NAME(1<<flagi, flags));
@@ -6610,7 +6612,7 @@ void PrintMiscActorInfo(AActor *query)
 		/*for (flagi = 0; flagi < 31; flagi++)
 			if (query->renderflags & 1<<flagi) Printf(" %s", flagnamesr[flagi]);*/
 		Printf("\nSpecial+args: %s(%i, %i, %i, %i, %i)\nspecial1: %i, special2: %i.",
-			(query->special ? LineSpecialsInfo[query->special]->name : "None"),
+			(spec ? spec->name : "None"),
 			query->args[0], query->args[1], query->args[2], query->args[3], 
 			query->args[4],	query->special1, query->special2);
 		Printf("\nTID: %d", query->tid);

@@ -621,7 +621,7 @@ void T_PreprocessScripts()
 //
 //==========================================================================
 
-static bool RunScript(int snum, AActor * t_trigger)
+bool T_RunScript(int snum, AActor * t_trigger)
 {
 	DFraggleThinker *th = DFraggleThinker::ActiveThinker;
 	if (th)
@@ -649,21 +649,6 @@ static bool RunScript(int snum, AActor * t_trigger)
 //
 //==========================================================================
 
-static int LS_FS_Execute (line_t *ln, AActor *it, bool backSide,
-	int arg0, int arg1, int arg2, int arg3, int arg4)
-// FS_Execute(script#,firstsideonly,lock,msgtype)
-{
-	if (arg1 && ln && backSide) return false;
-	if (arg2!=0 && !P_CheckKeys(it, arg2, !!arg3)) return false;
-	return RunScript(arg0,it);
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
 void FS_Close()
 {
 	if (global_script != NULL)
@@ -680,8 +665,6 @@ void T_Init()
 
 	if (global_script == NULL)
 	{
-		// I'd rather link the special here than make another source file depend on FS!
-		LineSpecials[FS_Execute]=LS_FS_Execute;
 		global_script = new DFsScript;
 		GC::AddSoftRoot(global_script);
 		init_functions();
@@ -704,6 +687,6 @@ CCMD(fpuke)
 	}
 	else
 	{
-		RunScript(atoi(argv[1]), players[consoleplayer].mo);
+		T_RunScript(atoi(argv[1]), players[consoleplayer].mo);
 	}
 }

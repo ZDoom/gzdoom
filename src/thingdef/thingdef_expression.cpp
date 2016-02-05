@@ -3007,7 +3007,7 @@ int DecoCallLineSpecial(VMFrameStack *stack, VMValue *param, int numparam, VMRet
 	{
 		v[i - 2] = param[i].i;
 	}
-	ret->SetInt(LineSpecials[param[0].i](NULL, reinterpret_cast<AActor*>(param[1].a), false, v[0], v[1], v[2], v[3], v[4]));
+	ret->SetInt(P_ExecuteSpecial(param[0].i, NULL, reinterpret_cast<AActor*>(param[1].a), false, v[0], v[1], v[2], v[3], v[4]));
 	return 1;
 }
 

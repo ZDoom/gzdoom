@@ -603,7 +603,7 @@ CCMD (special)
 			}
 		}
 		Net_WriteByte(DEM_RUNSPECIAL);
-		Net_WriteByte(specnum);
+		Net_WriteWord(specnum);
 		Net_WriteByte(argc - 2);
 		for (int i = 2; i < argc; ++i)
 		{

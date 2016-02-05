@@ -158,7 +158,7 @@ enum EDemoCommand
 	DEM_CONVREPLY,		// 59 Word: Dialogue node, Byte: Reply number
 	DEM_CONVCLOSE,		// 60
 	DEM_CONVNULL,		// 61
-	DEM_RUNSPECIAL,		// 62 Byte: Special number, Byte: Arg count, Ints: Args
+	DEM_RUNSPECIAL,		// 62 Word: Special number, Byte: Arg count, Ints: Args
 	DEM_SETPITCHLIMIT,	// 63 Byte: Up limit, Byte: Down limit (in degrees)
 	DEM_ADVANCEINTER,	// 64 Advance intermission screen state
 	DEM_RUNNAMEDSCRIPT,	// 65 String: Script name, Byte: Arg count + Always flag; each arg is a 4-byte int

@@ -2307,8 +2307,9 @@ bool AM_isExitBoundary (line_t& line)
 
 bool AM_isTriggerSpecial (int special, int *)
 {
-	return LineSpecialsInfo[special] != NULL
-		&& LineSpecialsInfo[special]->max_args >= 0
+	FLineSpecial *spec = P_GetLineSpecialInfo(special);
+	return spec != NULL
+		&& spec->max_args >= 0
 		&& special != Door_Open
 		&& special != Door_Close
 		&& special != Door_CloseWaitOpen

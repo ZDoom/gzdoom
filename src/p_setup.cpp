@@ -1962,7 +1962,6 @@ void P_SetLineID (int i, line_t *ld)
 			break;
 
 		case Line_SetPortal:
-		case Line_SetVisualPortal:
 			setid = ld->args[1]; // 0 = target id, 1 = this id, 2 = plane anchor
 			break;
 		}

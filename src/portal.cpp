@@ -91,8 +91,7 @@ bool P_CheckPortal(line_t* line)
 		line->portal_passive = true;
 		line->portal_dst = line;
 	}
-	else if (line->special == Line_SetPortal ||
-			 line->special == Line_SetVisualPortal)
+	else if (line->special == Line_SetPortal)
 	{
 		// portal destination is special argument #0
 		line_t* dst = NULL;
@@ -117,7 +116,7 @@ bool P_CheckPortal(line_t* line)
 		{
 			line->portal = true;
 			line->portal_mirror = false;
-			line->portal_passive = (line->special == Line_SetVisualPortal);
+			line->portal_passive = true;// !!(line->args[2] & PORTAL_VISUAL; (line->special == Line_SetVisualPortal);
 			line->portal_dst = dst;
 		}
 		else

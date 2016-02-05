@@ -64,6 +64,7 @@
 #include "a_keys.h"
 #include "c_dispatch.h"
 #include "r_sky.h"
+#include "portal.h"
 
 // State.
 #include "r_state.h"
@@ -1426,6 +1427,10 @@ void P_SpawnSpecials (void)
 			{
 				P_SpawnPortal(&lines[i], lines[i].args[0], lines[i].args[2], lines[i].args[4]);
 			}
+			break;
+
+		case Line_SetPortal:
+			P_SpawnLinePortal(&lines[i]);
 			break;
 
 		// [RH] ZDoom Static_Init settings

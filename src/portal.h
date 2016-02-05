@@ -8,10 +8,11 @@
 #include "p_local.h"
 #include "m_bbox.h"
 
+void P_SpawnLinePortal(line_t* line);
+
 
 /* code ported from prototype */
 bool P_ClipLineToPortal(line_t* line, line_t* portal, fixed_t viewx, fixed_t viewy, bool partial = true, bool samebehind = true);
-bool P_CheckPortal(line_t* line);
 void P_TranslatePortalXY(line_t* src, line_t* dst, fixed_t& x, fixed_t& y);
 void P_TranslatePortalVXVY(line_t* src, line_t* dst, fixed_t& vx, fixed_t& vy);
 void P_TranslatePortalAngle(line_t* src, line_t* dst, angle_t& angle);

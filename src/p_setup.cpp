@@ -2064,9 +2064,6 @@ void P_FinishLoadingLineDef(line_t *ld, int alpha)
 		ld->special = 0;
 		break;
 	}
-
-	// [ZZ] check initial portal link
-	P_CheckPortal(ld);
 }
 // killough 4/4/98: delay using sidedefs until they are loaded
 void P_FinishLoadingLineDefs ()

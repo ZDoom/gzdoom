@@ -37,7 +37,7 @@
 **
 */
 
-#include <malloc.h>
+#include <stdlib.h>
 #include "actor.h"
 #include "sc_man.h"
 #include "tarray.h"

@@ -262,6 +262,7 @@ void FinishActor(const FScriptPosition &sc, PClassActor *info, Baggage &bag)
 // Do some postprocessing after everything has been defined
 //
 //==========================================================================
+CVAR(Bool, dumpdisassembly, false, 0);
 
 static void DumpFunction(FILE *dump, VMScriptFunction *sfunc, const char *label, int labellen)
 {
@@ -279,12 +280,10 @@ static void FinishThingdef()
 	int errorcount = 0;
 	unsigned i;
 	int codesize = 0;
-
-#if 1
-	FILE *dump = fopen("disasm.txt", "w");
-#else
 	FILE *dump = NULL;
-#endif
+
+	if (dumpdisassembly) dump = fopen("disasm.txt", "w");
+
 	for (i = 0; i < StateTempCalls.Size(); ++i)
 	{
 		FStateTempCall *tcall = StateTempCalls[i];

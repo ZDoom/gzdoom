@@ -253,7 +253,7 @@ DBaseStatusBar::DBaseStatusBar (int reltop, int hres, int vres)
 
 void DBaseStatusBar::Destroy ()
 {
-	for (unsigned int i = 0; i < countof(Messages); ++i)
+	for (size_t i = 0; i < countof(Messages); ++i)
 	{
 		DHUDMessage *msg = Messages[i];
 		while (msg)
@@ -355,7 +355,7 @@ void DBaseStatusBar::MultiplayerChanged ()
 
 void DBaseStatusBar::Tick ()
 {
-	for (unsigned int i = 0; i < countof(Messages); ++i)
+	for (size_t i = 0; i < countof(Messages); ++i)
 	{
 		DHUDMessage *msg = Messages[i];
 		DHUDMessage **prev = &Messages[i];
@@ -437,7 +437,7 @@ void DBaseStatusBar::AttachMessage (DHUDMessage *msg, DWORD id, int layer)
 
 DHUDMessage *DBaseStatusBar::DetachMessage (DHUDMessage *msg)
 {
-	for (unsigned int i = 0; i < countof(Messages); ++i)
+	for (size_t i = 0; i < countof(Messages); ++i)
 	{
 		DHUDMessage *probe = Messages[i];
 		DHUDMessage **prev = &Messages[i];
@@ -464,7 +464,7 @@ DHUDMessage *DBaseStatusBar::DetachMessage (DHUDMessage *msg)
 
 DHUDMessage *DBaseStatusBar::DetachMessage (DWORD id)
 {
-	for (unsigned int i = 0; i < countof(Messages); ++i)
+	for (size_t i = 0; i < countof(Messages); ++i)
 	{
 		DHUDMessage *probe = Messages[i];
 		DHUDMessage **prev = &Messages[i];
@@ -497,7 +497,7 @@ DHUDMessage *DBaseStatusBar::DetachMessage (DWORD id)
 
 void DBaseStatusBar::DetachAllMessages ()
 {
-	for (unsigned int i = 0; i < countof(Messages); ++i)
+	for (size_t i = 0; i < countof(Messages); ++i)
 	{
 		DHUDMessage *probe = Messages[i];
 
@@ -1411,7 +1411,7 @@ void DBaseStatusBar::DrawLog ()
 {
 	int hudwidth, hudheight;
 
-	if (CPlayer->LogText && *CPlayer->LogText)
+	if (CPlayer->LogText.IsNotEmpty())
 	{
 		// This uses the same scaling as regular HUD messages
 		switch (con_scaletext)
@@ -1681,7 +1681,7 @@ void DBaseStatusBar::Serialize (FArchive &arc)
 	}
 	else
 	{
-		for (unsigned int i = 0; i < countof(Messages); ++i)
+		for (size_t i = 0; i < countof(Messages); ++i)
 		{
 			arc << Messages[i];
 		}
@@ -1693,7 +1693,7 @@ void DBaseStatusBar::ScreenSizeChanged ()
 	st_scale.Callback ();
 	ST_SetNeedRefresh();
 
-	for (unsigned int i = 0; i < countof(Messages); ++i)
+	for (size_t i = 0; i < countof(Messages); ++i)
 	{
 		DHUDMessage *message = Messages[i];
 		while (message != NULL)

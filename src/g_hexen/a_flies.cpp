@@ -60,6 +60,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_FlySearch)
 	// So search the sectors instead. We can't potentially find something all
 	// the way on the other side of the map and we can't find invisible corpses,
 	// but at least we aren't crippled on maps with lots of stuff going on.
+	PARAM_ACTION_PROLOGUE;
+
 	validcount++;
 	AActor *other = FindCorpse(self, self->Sector, 5);
 	if (other != NULL)
@@ -67,16 +69,19 @@ DEFINE_ACTION_FUNCTION(AActor, A_FlySearch)
 		self->target = other;
 		self->SetState(self->FindState("Buzz"));
 	}
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_FlyBuzz)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *targ = self->target;
 
 	if (targ == NULL || !(targ->flags & MF_CORPSE) || pr_fly() < 5)
 	{
 		self->SetIdle();
-		return;
+		return 0;
 	}
 
 	angle_t ang = self->AngleTo(targ);
@@ -86,7 +91,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FlyBuzz)
 	if (!P_TryMove(self, self->X() + 6 * finecosine[ang], self->Y() + 6 * finesine[ang], true))
 	{
 		self->SetIdle(true);
-		return;
+		return 0;
 	}
 	if (self->args[0] & 2)
 	{
@@ -103,4 +108,5 @@ DEFINE_ACTION_FUNCTION(AActor, A_FlyBuzz)
 	{
 		S_Sound(self, CHAN_VOICE, self->ActiveSound, 0.5f, ATTN_STATIC);
 	}
+	return 0;
 }

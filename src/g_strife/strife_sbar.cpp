@@ -714,7 +714,7 @@ private:
 			};
 			for (i = 0; i < 7; ++i)
 			{
-				const PClass *ammotype = PClass::FindClass(AmmoList[i].AmmoType);
+				PClassActor *ammotype = PClass::FindActor(AmmoList[i].AmmoType);
 				item = CPlayer->mo->FindInventory (ammotype);
 
 				if (item == NULL)

@@ -43,7 +43,7 @@
 class FScanner;
 class FDecalTemplate;
 struct FDecalAnimator;
-struct PClass;
+class PClass;
 class DBaseDecal;
 struct side_t;
 

@@ -17,6 +17,7 @@
 #include "g_level.h"
 #include "r_data/colormaps.h"
 #include "gi.h"
+#include "portal.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -629,6 +630,11 @@ static void LoadWalls (walltype *walls, int numwalls, sectortype *bsec)
 		}
 	}
 
+	// [ZZ] set initial line portal link
+	//      (even though this is rather hard to happen... build doesn't have portals in our sense and it's walls don't get translated into anything like this)
+	for (int i = 0; i < numlines; i++)
+		P_CheckPortal(&lines[i]);
+
 	// Finish setting sector properties that depend on walls
 	for (i = 0; i < numsectors; ++i, ++bsec)
 	{
@@ -895,6 +901,7 @@ void ACustomSprite::BeginPlay ()
 		renderflags |= RF_XFLIP;
 	if (cstat & 8)
 		renderflags |= RF_YFLIP;
+
 	// set face/wall/floor flags
 	renderflags |= ActorRenderFlags::FromInt (((cstat >> 4) & 3) << 12);
 }

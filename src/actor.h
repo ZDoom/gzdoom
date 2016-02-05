@@ -42,6 +42,8 @@
 #include "tflags.h"
 
 struct subsector_t;
+class PClassAmmo;
+
 //
 // NOTES: AActor
 //
@@ -278,7 +280,7 @@ enum ActorFlag4
 enum ActorFlag5
 {
 	MF5_DONTDRAIN		= 0x00000001,	// cannot be drained health from.
-	/*					= 0x00000002,	   reserved for use by scripting branch */
+	MF5_INSTATECALL		= 0x00000002,	// This actor is being run through CallStateChain
 	MF5_NODROPOFF		= 0x00000004,	// cannot drop off under any circumstances.
 	MF5_NOFORWARDFALL	= 0x00000008,	// Does not make any actor fall forward by being damaged by this
 	MF5_COUNTSECRET		= 0x00000010,	// From Doom 64: actor acts like a secret
@@ -560,67 +562,54 @@ inline AActor *GetDefaultByType (const PClass *type)
 template<class T>
 inline T *GetDefault ()
 {
-	return (T *)(RUNTIME_CLASS(T)->Defaults);
+	return (T *)(RUNTIME_CLASS_CASTLESS(T)->Defaults);
 }
 
 struct line_t;
 struct secplane_t;
 struct FStrifeDialogueNode;
 
-enum
-{
-	AMETA_BASE = 0x12000,
-
-	AMETA_Obituary,			// string (player was killed by this actor)
-	AMETA_HitObituary,		// string (player was killed by this actor in melee)
-	AMETA_DeathHeight,		// fixed (height on normal death)
-	AMETA_BurnHeight,		// fixed (height on burning death)
-	AMETA_StrifeName,		// string (for named Strife objects)
-	AMETA_BloodColor,		// colorized blood
-	AMETA_GibHealth,		// negative health below which this monster dies an extreme death
-	AMETA_WoundHealth,		// health needed to enter wound state
-	AMETA_FastSpeed,		// Speed in fast mode
-	AMETA_RDFactor,			// Radius damage factor
-	AMETA_CameraHeight,		// Height of camera when used as such
-	AMETA_HowlSound,		// Sound being played when electrocuted or poisoned
-	AMETA_BloodType,		// Blood replacement type
-	AMETA_BloodType2,		// Bloodsplatter replacement type
-	AMETA_BloodType3,		// AxeBlood replacement type
-};
-
 struct fixedvec3
 {
 	fixed_t x, y, z;
+
+	operator FVector3()
+	{
+		return FVector3(FIXED2FLOAT(x), FIXED2FLOAT(y), FIXED2FLOAT(z));
+	}
+
+	operator TVector3<double>()
+	{
+		return TVector3<double>(FIXED2DBL(x), FIXED2DBL(y), FIXED2DBL(z));
+	}
 };
 
 struct fixedvec2
 {
 	fixed_t x, y;
-};
 
-struct FDropItem 
-{
-	FName Name;
-	int probability;
-	int amount;
-	FDropItem * Next;
-};
-
-class FDropItemPtrArray : public TArray<FDropItem *>
-{
-public:
-	~FDropItemPtrArray()
+	operator FVector2()
 	{
-		Clear();
+		return FVector2(FIXED2FLOAT(x), FIXED2FLOAT(y));
 	}
 
-	void Clear();
+	operator TVector2<double>()
+	{
+		return TVector2<double>(FIXED2DBL(x), FIXED2DBL(y));
+	}
 };
 
-extern FDropItemPtrArray DropItemList;
+class DDropItem : public DObject
+{
+	DECLARE_CLASS(DDropItem, DObject)
+	HAS_OBJECT_POINTERS
+public:
+	DDropItem *Next;
+	FName Name;
+	int Probability;
+	int Amount;
+};
 
-void FreeDropItemChain(FDropItem *chain);
-int StoreDropItemChain(FDropItem *chain);
 fixed_t P_AproxDistance (fixed_t dx, fixed_t dy);	// since we cannot include p_local here...
 angle_t R_PointToAngle2 (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2); // same reason here with r_defs.h
 
@@ -628,7 +617,7 @@ angle_t R_PointToAngle2 (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2); // sam
 // Map Object definition.
 class AActor : public DThinker
 {
-	DECLARE_CLASS (AActor, DThinker)
+	DECLARE_CLASS_WITH_META (AActor, DThinker, PClassActor)
 	HAS_OBJECT_POINTERS
 public:
 	AActor () throw();
@@ -639,14 +628,14 @@ public:
 
 	void Serialize (FArchive &arc);
 
-	static AActor *StaticSpawn (const PClass *type, fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement, bool SpawningMapThing = false);
+	static AActor *StaticSpawn (PClassActor *type, fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement, bool SpawningMapThing = false);
 
 	inline AActor *GetDefault () const
 	{
-		return (AActor *)(RUNTIME_TYPE(this)->Defaults);
+		return (AActor *)(this->GetClass()->Defaults);
 	}
 
-	FDropItem *GetDropItems();
+	DDropItem *GetDropItems() const;
 
 	// Return true if the monster should use a missile attack, false for melee
 	bool SuggestMissileAttack (fixed_t dist);
@@ -727,7 +716,7 @@ public:
 	// Take the amount value of an item from the inventory list.
 	// If nothing is left, the item may be destroyed.
 	// Returns true if the initial item count is positive.
-	virtual bool TakeInventory (const PClass *itemclass, int amount, bool fromdecorate = false, bool notakeinfinite = false);
+	virtual bool TakeInventory (PClassActor *itemclass, int amount, bool fromdecorate = false, bool notakeinfinite = false);
 
 	// Uses an item and removes it from the inventory.
 	virtual bool UseInventory (AInventory *item);
@@ -742,21 +731,21 @@ public:
 	bool CheckLocalView (int playernum) const;
 
 	// Finds the first item of a particular type.
-	AInventory *FindInventory (const PClass *type, bool subclass = false);
+	AInventory *FindInventory (PClassActor *type, bool subclass=false);
 	AInventory *FindInventory (FName type);
 	template<class T> T *FindInventory ()
 	{
-		return static_cast<T *> (FindInventory (RUNTIME_CLASS(T)));
+		return static_cast<T *> (FindInventory (RUNTIME_TEMPLATE_CLASS(T)));
 	}
 
 	// Adds one item of a particular type. Returns NULL if it could not be added.
-	AInventory *GiveInventoryType (const PClass *type);
+	AInventory *GiveInventoryType (PClassActor *type);
 
 	// Returns the first item held with IF_INVBAR set.
 	AInventory *FirstInv ();
 
 	// Tries to give the actor some ammo.
-	bool GiveAmmo (const PClass *type, int amount);
+	bool GiveAmmo (PClassAmmo *type, int amount);
 
 	// Destroys all the inventory the actor is holding.
 	void DestroyAllInventory ();
@@ -810,8 +799,9 @@ public:
 	void Crash();
 
 	// Return starting health adjusted by skill level
-	int SpawnHealth();
-	int GibHealth();
+	int SpawnHealth() const;
+	int GetGibHealth() const;
+	fixed_t GetCameraHeight() const;
 
 	inline bool isMissile(bool precise=true)
 	{
@@ -826,7 +816,7 @@ public:
 
 	PalEntry GetBloodColor() const
 	{
-		return (PalEntry)GetClass()->Meta.GetMetaInt(AMETA_BloodColor);
+		return GetClass()->BloodColor;
 	}
 
 	// These also set CF_INTERPVIEW for players.
@@ -834,22 +824,25 @@ public:
 	void SetAngle(angle_t ang, bool interpolate);
 	void SetRoll(angle_t roll, bool interpolate);
 
-	const PClass *GetBloodType(int type = 0) const
+	PClassActor *GetBloodType(int type = 0) const
 	{
-		const PClass *bloodcls;
+		PClassActor *bloodcls;
 		if (type == 0)
 		{
-			bloodcls = PClass::FindClass((ENamedName)GetClass()->Meta.GetMetaInt(AMETA_BloodType, NAME_Blood));
+			bloodcls = PClass::FindActor(GetClass()->BloodType);
 		}
 		else if (type == 1)
 		{
-			bloodcls = PClass::FindClass((ENamedName)GetClass()->Meta.GetMetaInt(AMETA_BloodType2, NAME_BloodSplatter));
+			bloodcls = PClass::FindActor(GetClass()->BloodType2);
 		}
 		else if (type == 2)
 		{
-			bloodcls = PClass::FindClass((ENamedName)GetClass()->Meta.GetMetaInt(AMETA_BloodType3, NAME_AxeBlood));
+			bloodcls = PClass::FindActor(GetClass()->BloodType3);
 		}
-		else return NULL;
+		else
+		{
+			return NULL;
+		}
 
 		if (bloodcls != NULL)
 		{
@@ -1020,7 +1013,7 @@ public:
 	fixed_t			velx, vely, velz;	// velocity
 	SDWORD			tics;				// state tic counter
 	FState			*state;
-	SDWORD			Damage;			// For missiles and monster railgun
+	VMFunction		*Damage;			// For missiles and monster railgun
 	int				projectileKickback;
 	ActorFlags		flags;
 	ActorFlags2		flags2;			// Heretic flags
@@ -1144,8 +1137,8 @@ public:
 
 	FNameNoInit PainType;
 	FNameNoInit DeathType;
-	const PClass *TeleFogSourceType;
-	const PClass *TeleFogDestType;
+	PClassActor *TeleFogSourceType;
+	PClassActor *TeleFogDestType;
 	int RipperLevel;
 	int RipLevelMin;
 	int RipLevelMax;
@@ -1200,18 +1193,18 @@ public:
 
 	FState *FindState (FName label) const
 	{
-		return GetClass()->ActorInfo->FindState(1, &label);
+		return GetClass()->FindState(1, &label);
 	}
 
 	FState *FindState (FName label, FName sublabel, bool exact = false) const
 	{
 		FName names[] = { label, sublabel };
-		return GetClass()->ActorInfo->FindState(2, names, exact);
+		return GetClass()->FindState(2, names, exact);
 	}
 
 	FState *FindState(int numnames, FName *names, bool exact = false) const
 	{
-		return GetClass()->ActorInfo->FindState(numnames, names, exact);
+		return GetClass()->FindState(numnames, names, exact);
 	}
 
 	bool HasSpecialDeathStates () const;
@@ -1364,7 +1357,7 @@ public:
 		do
 		{
 			actor = FActorIterator::Next ();
-		} while (actor && !actor->IsKindOf (RUNTIME_CLASS(T)));
+		} while (actor && !actor->IsKindOf (RUNTIME_TEMPLATE_CLASS(T)));
 		return static_cast<T *>(actor);
 	}
 };
@@ -1391,12 +1384,11 @@ public:
 bool P_IsTIDUsed(int tid);
 int P_FindUniqueTID(int start_tid, int limit);
 
-inline AActor *Spawn (const PClass *type, fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement)
+inline AActor *Spawn (PClassActor *type, fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement)
 {
 	return AActor::StaticSpawn (type, x, y, z, allowreplacement);
 }
-
-inline AActor *Spawn (const PClass *type, const fixedvec3 &pos, replace_t allowreplacement)
+inline AActor *Spawn (PClassActor *type, const fixedvec3 &pos, replace_t allowreplacement)
 {
 	return AActor::StaticSpawn (type, pos.x, pos.y, pos.z, allowreplacement);
 }
@@ -1418,13 +1410,13 @@ inline AActor *Spawn (FName classname, const fixedvec3 &pos, replace_t allowrepl
 template<class T>
 inline T *Spawn (fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement)
 {
-	return static_cast<T *>(AActor::StaticSpawn (RUNTIME_CLASS(T), x, y, z, allowreplacement));
+	return static_cast<T *>(AActor::StaticSpawn (RUNTIME_TEMPLATE_CLASS(T), x, y, z, allowreplacement));
 }
 
 template<class T>
 inline T *Spawn (const fixedvec3 &pos, replace_t allowreplacement)
 {
-	return static_cast<T *>(AActor::StaticSpawn (RUNTIME_CLASS(T), pos.x, pos.y, pos.z, allowreplacement));
+	return static_cast<T *>(AActor::StaticSpawn (RUNTIME_TEMPLATE_CLASS(T), pos.x, pos.y, pos.z, allowreplacement));
 }
 
 inline fixedvec2 Vec2Angle(fixed_t length, angle_t angle) 

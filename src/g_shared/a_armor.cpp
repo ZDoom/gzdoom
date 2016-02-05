@@ -180,7 +180,7 @@ void ABasicArmor::AbsorbDamage (int damage, FName damageType, int &newdamage)
 		// The differences include not using a default value, and of course the way
 		// the damage factor info is obtained.
 		const fixed_t *pdf = NULL;
-		DmgFactors *df = PClass::FindClass(ArmorType)->ActorInfo->DamageFactors;
+		DmgFactors *df = PClass::FindActor(ArmorType)->DamageFactors;
 		if (df != NULL && df->CountUsed() != 0)
 		{
 			pdf = df->CheckFactor(damageType);

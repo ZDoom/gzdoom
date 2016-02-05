@@ -56,7 +56,7 @@ static FRandom pr_leadtarget ("LeadTarget");
 bool P_Thing_Spawn (int tid, AActor *source, int type, angle_t angle, bool fog, int newtid)
 {
 	int rtn = 0;
-	const PClass *kind;
+	PClassActor *kind;
 	AActor *spot, *mobj;
 	FActorIterator iterator (tid);
 
@@ -68,7 +68,7 @@ bool P_Thing_Spawn (int tid, AActor *source, int type, angle_t angle, bool fog, 
 	// Handle decorate replacements.
 	kind = kind->GetReplacement();
 
-	if ((GetDefaultByType (kind)->flags3 & MF3_ISMONSTER) && 
+	if ((GetDefaultByType(kind)->flags3 & MF3_ISMONSTER) && 
 		((dmflags & DF_NO_MONSTERS) || (level.flags2 & LEVEL2_NOMONSTERS)))
 		return false;
 
@@ -175,7 +175,7 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 	bool leadTarget)
 {
 	int rtn = 0;
-	const PClass *kind;
+	PClassActor *kind;
 	AActor *spot, *mobj, *targ = forcedest;
 	FActorIterator iterator (tid);
 	double fspeed = speed;
@@ -187,9 +187,9 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 	}
 	else
 	{
-		kind = PClass::FindClass(type_name);
+		kind = PClass::FindActor(type_name);
 	}
-	if (kind == NULL || kind->ActorInfo == NULL)
+	if (kind == NULL)
 	{
 		return false;
 	}
@@ -197,7 +197,7 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 	// Handle decorate replacements.
 	kind = kind->GetReplacement();
 
-	defflags3 = GetDefaultByType (kind)->flags3;
+	defflags3 = GetDefaultByType(kind)->flags3;
 	if ((defflags3 & MF3_ISMONSTER) && 
 		((dmflags & DF_NO_MONSTERS) || (level.flags2 & LEVEL2_NOMONSTERS)))
 		return false;
@@ -513,19 +513,19 @@ void P_Thing_SetVelocity(AActor *actor, fixed_t vx, fixed_t vy, fixed_t vz, bool
 	}
 }
 
-const PClass *P_GetSpawnableType(int spawnnum)
+PClassActor *P_GetSpawnableType(int spawnnum)
 {
 	if (spawnnum < 0)
 	{ // A named arg from a UDMF map
 		FName spawnname = FName(ENamedName(-spawnnum));
 		if (spawnname.IsValidName())
 		{
-			return PClass::FindClass(spawnname);
+			return PClass::FindActor(spawnname);
 		}
 	}
 	else
 	{ // A numbered arg from a Hexen or UDMF map
-		const PClass **type = SpawnableThings.CheckKey(spawnnum);
+		PClassActor **type = SpawnableThings.CheckKey(spawnnum);
 		if (type != NULL)
 		{
 			return *type;
@@ -651,10 +651,10 @@ void InitClassMap(FClassMap &themap, SpawnMap &thedata)
 
 	while (it.NextPair(pair))
 	{
-		const PClass *cls = NULL;
+		PClassActor *cls = NULL;
 		if (pair->Value.classname != NAME_None)
 		{
-			cls = PClass::FindClass(pair->Value.classname);
+			cls = PClass::FindActor(pair->Value.classname);
 			if (cls == NULL)
 			{
 				Printf(TEXTCOLOR_RED "Script error, \"%s\" line %d:\nUnknown actor class %s\n",

@@ -46,22 +46,27 @@ void A_SkullAttack(AActor *self, fixed_t speed)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SkullAttack)
 {
-	ACTION_PARAM_START(1);
-	ACTION_PARAM_FIXED(n, 0);
+	PARAM_ACTION_PROLOGUE;
+	PARAM_FIXED_OPT(speed) { speed = SKULLSPEED; }
 
-	if (n <= 0) n = SKULLSPEED;
-	A_SkullAttack(self, n);
+	if (speed <= 0)
+		speed = SKULLSPEED;
+	A_SkullAttack(self, speed);
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_BetaSkullAttack)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	int damage;
 	if (!self || !self->target || self->target->GetSpecies() == self->GetSpecies())
-		return;
+		return 0;
 	S_Sound (self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NORM);
 	A_FaceTarget(self);
-	damage = (pr_oldsoul()%8+1)*self->Damage;
+	damage = (pr_oldsoul()%8+1)*self->GetMissileDamage(0,1);
 	P_DamageMobj(self->target, self, self, damage, NAME_None);
+	return 0;
 }
 
 

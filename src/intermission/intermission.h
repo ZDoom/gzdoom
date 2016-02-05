@@ -229,7 +229,7 @@ class DIntermissionScreenCast : public DIntermissionScreen
 	DECLARE_CLASS (DIntermissionScreenCast, DIntermissionScreen)
 
 	const char *mName;
-	const PClass *mClass;
+	PClassActor *mClass;
 	AActor *mDefaults;
 	TArray<FICastSound> mCastSounds;
 

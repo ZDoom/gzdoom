@@ -9,11 +9,10 @@
 struct FStrifeDialogueReply;
 class FTexture;
 struct FBrokenLines;
-struct PClass;
 
 struct FStrifeDialogueItemCheck
 {
-	const PClass *Item;
+	PClassInventory *Item;
 	int Amount;
 };
 
@@ -21,12 +20,12 @@ struct FStrifeDialogueItemCheck
 struct FStrifeDialogueNode
 {
 	~FStrifeDialogueNode ();
-	const PClass *DropType;
+	PClassActor *DropType;
 	TArray<FStrifeDialogueItemCheck> ItemCheck;
 	int ThisNodeNum;	// location of this node in StrifeDialogues
 	int ItemCheckNode;	// index into StrifeDialogues
 
-	const PClass *SpeakerType;
+	PClassActor *SpeakerType;
 	char *SpeakerName;
 	FSoundID SpeakerVoice;
 	FTextureID Backdrop;
@@ -41,7 +40,7 @@ struct FStrifeDialogueReply
 	~FStrifeDialogueReply ();
 
 	FStrifeDialogueReply *Next;
-	const PClass *GiveType;
+	PClassActor *GiveType;
 	int ActionSpecial;
 	int Args[5];
 	TArray<FStrifeDialogueItemCheck> ItemCheck;
@@ -58,9 +57,9 @@ extern TArray<FStrifeDialogueNode *> StrifeDialogues;
 
 struct MapData;
 
-void SetStrifeType(int convid, const PClass *Class);
-void SetConversation(int convid, const PClass *Class, int dlgindex);
-const PClass *GetStrifeType (int typenum);
+void SetStrifeType(int convid, PClassActor *Class);
+void SetConversation(int convid, PClassActor *Class, int dlgindex);
+PClassActor *GetStrifeType (int typenum);
 int GetConversation(int conv_id);
 int GetConversation(FName classname);
 

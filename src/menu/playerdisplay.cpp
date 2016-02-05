@@ -413,8 +413,7 @@ void FListMenuItemPlayerDisplay::UpdateTranslation()
 	if (mPlayerClass != NULL)
 	{
 		PlayerSkin = R_FindSkin (skins[PlayerSkin].name, int(mPlayerClass - &PlayerClasses[0]));
-		R_GetPlayerTranslation(PlayerColor,
-			P_GetPlayerColorSet(mPlayerClass->Type->TypeName, PlayerColorset),
+		R_GetPlayerTranslation(PlayerColor, mPlayerClass->Type->GetColorSet(PlayerColorset),
 			&skins[PlayerSkin], translationtables[TRANSLATION_Players][MAXPLAYERS]);
 	}
 }
@@ -536,9 +535,9 @@ void FListMenuItemPlayerDisplay::Drawer(bool selected)
 		return;
 	}
 
-	const char *portrait = mPlayerClass->Type->Meta.GetMetaString(APMETA_Portrait);
+	FString portrait = mPlayerClass->Type->Portrait;
 
-	if (portrait != NULL && !mNoportrait)
+	if (portrait.IsNotEmpty() && !mNoportrait)
 	{
 		FTextureID texid = TexMan.CheckForTexture(portrait, FTexture::TEX_MiscPatch);
 		if (texid.isValid())

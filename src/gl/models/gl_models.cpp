@@ -930,7 +930,7 @@ void gl_RenderModel(GLSprite * spr)
 
 
 	gl_RenderState.EnableModelMatrix(true);
-	gl_RenderFrameModels( smf, spr->actor->state, spr->actor->tics, RUNTIME_TYPE(spr->actor), NULL, translation );
+	gl_RenderFrameModels( smf, spr->actor->state, spr->actor->tics, spr->actor->GetClass(), NULL, translation );
 	gl_RenderState.EnableModelMatrix(false);
 
 	glDepthFunc(GL_LESS);

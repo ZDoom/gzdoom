@@ -1293,6 +1293,10 @@ void I_StartupRawPS2()
 			{
 				JoyDevices[INPUT_RawPS2] = joys;
 			}
+			else
+			{
+				delete joys;
+			}
 		}
 	}
 }

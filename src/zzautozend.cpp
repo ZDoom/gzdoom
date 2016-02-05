@@ -37,34 +37,27 @@
 
 #if defined(_MSC_VER)
 
-#pragma data_seg(".areg$z")
-void *ARegTail = 0;
+#pragma section(".areg$z",read)
+__declspec(allocate(".areg$z")) void *const ARegTail = 0;
 
-#pragma data_seg(".creg$z")
-void *CRegTail = 0;
+#pragma section(".creg$z",read)
+__declspec(allocate(".creg$z")) void *const CRegTail = 0;
 
-#pragma data_seg(".greg$z")
-void *GRegTail = 0;
+#pragma section(".greg$z",read)
+__declspec(allocate(".greg$z")) void *const GRegTail = 0;
 
-#pragma data_seg(".mreg$z")
-void *MRegTail = 0;
-
-#pragma data_seg(".yreg$z")
-void *YRegTail = 0;
-
-#pragma data_seg()
-
+#pragma section(".yreg$z",read)
+__declspec(allocate(".yreg$z")) void *const YRegTail = 0;
 
 
 #elif defined(__GNUC__)
 
 #include "doomtype.h"
 
-void *ARegTail __attribute__((section(SECTION_AREG))) = 0;
-void *CRegTail __attribute__((section(SECTION_CREG))) = 0;
-void *GRegTail __attribute__((section(SECTION_GREG))) = 0;
-void *MRegTail __attribute__((section(SECTION_MREG))) = 0;
-void *YRegTail __attribute__((section(SECTION_YREG))) = 0;
+void *const ARegTail __attribute__((section(SECTION_AREG))) = 0;
+void *const CRegTail __attribute__((section(SECTION_CREG))) = 0;
+void *const GRegTail __attribute__((section(SECTION_GREG))) = 0;
+void *const YRegTail __attribute__((section(SECTION_YREG))) = 0;
 
 #else
 

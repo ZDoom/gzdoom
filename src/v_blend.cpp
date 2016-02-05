@@ -121,7 +121,7 @@ void V_AddPlayerBlend (player_t *CPlayer, float blend[4], float maxinvalpha, int
 	}
 
 	PalEntry painFlash = CPlayer->mo->DamageFade;
-	CPlayer->mo->GetClass()->ActorInfo->GetPainFlash(CPlayer->mo->DamageTypeReceived, &painFlash);
+	CPlayer->mo->GetClass()->GetPainFlash(CPlayer->mo->DamageTypeReceived, &painFlash);
 
 	if (painFlash.a != 0)
 	{

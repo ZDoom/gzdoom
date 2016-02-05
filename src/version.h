@@ -51,7 +51,7 @@ const char *GetVersionString();
 // Version identifier for network games.
 // Bump it every time you do a release unless you're certain you
 // didn't change anything that will affect sync.
-#define NETGAMEVERSION 231
+#define NETGAMEVERSION 232
 
 // Version stored in the ini's [LastRun] section.
 // Bump it if you made some configuration change that you want to
@@ -65,7 +65,7 @@ const char *GetVersionString();
 
 // Minimum demo version we can play.
 // Bump it whenever you change or remove existing DEM_ commands.
-#define MINDEMOVERSION 0x21C
+#define MINDEMOVERSION 0x21D
 
 // SAVEVER is the version of the information stored in level snapshots.
 // Note that SAVEVER is not directly comparable to VERSION.

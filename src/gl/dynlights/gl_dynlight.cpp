@@ -78,12 +78,12 @@ void gl_ParseVavoomSkybox();
 //
 //==========================================================================
 
-inline const PClass * GetRealType(const PClass * ti)
+inline PClassActor * GetRealType(PClassActor * ti)
 {
-	FActorInfo *rep = ti->ActorInfo->GetReplacement(false);
-	if (rep != ti->ActorInfo && rep != NULL && rep->Class->IsDescendantOf(RUNTIME_CLASS(ADehackedPickup)))
+	PClassActor *rep = ti->GetReplacement(false);
+	if (rep != ti && rep != NULL && rep->IsDescendantOf(RUNTIME_CLASS(ADehackedPickup)))
 	{
-		return rep->Class;
+		return rep;
 	}
 	return ti;
 }
@@ -1012,7 +1012,7 @@ void gl_InitializeActorLights()
 {
 	for(unsigned int i=0;i<LightAssociations.Size();i++)
 	{
-		const PClass * ti = PClass::FindClass(LightAssociations[i].ActorName());
+		PClassActor * ti = PClass::FindActor(LightAssociations[i].ActorName());
 		if (ti)
 		{
 			ti = GetRealType(ti);

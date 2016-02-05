@@ -328,7 +328,7 @@ void DBot::WhatToGet (AActor *item)
 		// FIXME
 		AWeapon *heldWeapon;
 
-		heldWeapon = static_cast<AWeapon *> (player->mo->FindInventory (item->GetClass()));
+		heldWeapon = dyn_cast<AWeapon>(player->mo->FindInventory(item->GetClass()));
 		if (heldWeapon != NULL)
 		{
 			if (!weapgiveammo)
@@ -343,7 +343,7 @@ void DBot::WhatToGet (AActor *item)
 	else if (item->IsKindOf (RUNTIME_CLASS(AAmmo)))
 	{
 		AAmmo *ammo = static_cast<AAmmo *> (item);
-		const PClass *parent = ammo->GetParentAmmo ();
+		PClassActor *parent = ammo->GetParentAmmo ();
 		AInventory *holdingammo = player->mo->FindInventory (parent);
 
 		if (holdingammo != NULL && holdingammo->Amount >= holdingammo->MaxAmount)

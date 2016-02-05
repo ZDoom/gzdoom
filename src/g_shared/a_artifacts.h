@@ -44,7 +44,7 @@ public:
 	virtual bool Use (bool pickup);
 	virtual void Serialize (FArchive &arc);
 
-	const PClass *PowerupType;
+	PClassActor *PowerupType;
 	int EffectTics;			// Non-0 to override the powerup's default tics
 	PalEntry BlendColor;	// Non-0 to override the powerup's default blend
 	FNameNoInit Mode;		// Meaning depends on powerup - used for Invulnerability and Invisibility

@@ -76,7 +76,7 @@
 // Gets a class pointer and performs an error check for correct type
 //
 //==========================================================================
-static const PClass *FindClassTentative(const char *name, const char *ancestor)
+static PClassActor *FindClassTentative(const char *name, PClass *ancestor)
 {
 	// "" and "none" mean 'no class'
 	if (name == NULL || *name == 0 || !stricmp(name, "none"))
@@ -84,15 +84,29 @@ static const PClass *FindClassTentative(const char *name, const char *ancestor)
 		return NULL;
 	}
 
-	const PClass *anc = PClass::FindClass(ancestor);
-	assert(anc != NULL);	// parent classes used here should always be natively defined	
-	const PClass *cls = const_cast<PClass*>(anc)->FindClassTentative(name);
-	assert (cls != NULL);	// cls can not ne NULL here
-	if (!cls->IsDescendantOf(anc))
+	PClass *cls = ancestor->FindClassTentative(name);
+	assert(cls != NULL);	// cls can not be NULL here
+	if (!cls->IsDescendantOf(ancestor))
 	{
-		I_Error("%s does not inherit from %s\n", name, ancestor);
+		I_Error("%s does not inherit from %s\n", name, ancestor->TypeName.GetChars());
 	}
-	return cls;
+	return static_cast<PClassActor *>(cls);
+}
+static AAmmo::MetaClass *FindClassTentativeAmmo(const char *name)
+{
+	return static_cast<AAmmo::MetaClass *>(FindClassTentative(name, RUNTIME_CLASS(AAmmo)));
+}
+static AWeapon::MetaClass *FindClassTentativeWeapon(const char *name)
+{
+	return static_cast<AWeapon::MetaClass *>(FindClassTentative(name, RUNTIME_CLASS(AWeapon)));
+}
+static APowerup::MetaClass *FindClassTentativePowerup(const char *name)
+{
+	return static_cast<APowerup::MetaClass *>(FindClassTentative(name, RUNTIME_CLASS(APowerup)));
+}
+static APlayerPawn::MetaClass *FindClassTentativePlayerPawn(const char *name)
+{
+	return static_cast<APlayerPawn::MetaClass *>(FindClassTentative(name, RUNTIME_CLASS(APlayerPawn)));
 }
 
 //==========================================================================
@@ -158,7 +172,7 @@ INTBOOL CheckActorFlag(const AActor *owner, FFlagDef *fd)
 {
 	if (fd->structoffset == -1)
 	{
-		return CheckDeprecatedFlags(owner, owner->GetClass()->ActorInfo, fd->flagbit);
+		return CheckDeprecatedFlags(owner, owner->GetClass(), fd->flagbit);
 	}
 	else
 #ifdef __BIG_ENDIAN__
@@ -217,7 +231,7 @@ INTBOOL CheckActorFlag(const AActor *owner, const char *flagname, bool printerro
 // properties is not recommended
 //
 //===========================================================================
-void HandleDeprecatedFlags(AActor *defaults, FActorInfo *info, bool set, int index)
+void HandleDeprecatedFlags(AActor *defaults, PClassActor *info, bool set, int index)
 {
 	switch (index)
 	{
@@ -258,7 +272,7 @@ void HandleDeprecatedFlags(AActor *defaults, FActorInfo *info, bool set, int ind
 	case DEPF_PICKUPFLASH:
 		if (set)
 		{
-			static_cast<AInventory*>(defaults)->PickupFlash = FindClassTentative("PickupFlash", "Actor");
+			static_cast<AInventory*>(defaults)->PickupFlash = FindClassTentative("PickupFlash", RUNTIME_CLASS(AActor));
 		}
 		else
 		{
@@ -282,7 +296,7 @@ void HandleDeprecatedFlags(AActor *defaults, FActorInfo *info, bool set, int ind
 //
 //===========================================================================
 
-bool CheckDeprecatedFlags(const AActor *actor, FActorInfo *info, int index)
+bool CheckDeprecatedFlags(const AActor *actor, PClassActor *info, int index)
 {
 	// A deprecated flag is false if
 	// a) it hasn't been added here
@@ -435,10 +449,10 @@ DEFINE_INFO_PROPERTY(conversationid, IiI, Actor)
 //==========================================================================
 DEFINE_PROPERTY(skip_super, 0, Actor)
 {
-	if (info->Class->IsDescendantOf(RUNTIME_CLASS(AInventory)))
+	if (info->IsDescendantOf(RUNTIME_CLASS(AInventory)))
 	{
 		bag.ScriptPosition.Message(MSG_WARNING,
-			"'skip_super' in definition of inventory item '%s' ignored.", info->Class->TypeName.GetChars() );
+			"'skip_super' in definition of inventory item '%s' ignored.", info->TypeName.GetChars() );
 		return;
 	}
 	if (bag.StateSet)
@@ -449,10 +463,6 @@ DEFINE_PROPERTY(skip_super, 0, Actor)
 	}
 
 	memcpy ((void *)defaults, (void *)GetDefault<AActor>(), sizeof(AActor));
-	if (bag.DropItemList != NULL)
-	{
-		FreeDropItemChain (bag.DropItemList);
-	}
 	ResetBaggage (&bag, RUNTIME_CLASS(AActor));
 }
 
@@ -480,7 +490,8 @@ DEFINE_PROPERTY(health, I, Actor)
 DEFINE_PROPERTY(gibhealth, I, Actor)
 {
 	PROP_INT_PARM(id, 0);
-	info->Class->Meta.SetMetaInt (AMETA_GibHealth, id);
+	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
+	static_cast<PClassActor *>(info)->GibHealth = id;
 }
 
 //==========================================================================
@@ -489,7 +500,8 @@ DEFINE_PROPERTY(gibhealth, I, Actor)
 DEFINE_PROPERTY(woundhealth, I, Actor)
 {
 	PROP_INT_PARM(id, 0);
-	info->Class->Meta.SetMetaInt (AMETA_WoundHealth, id);
+	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
+	static_cast<PClassActor *>(info)->WoundHealth = id;
 }
 
 //==========================================================================
@@ -537,7 +549,7 @@ DEFINE_PROPERTY(painthreshold, I, Actor)
 //==========================================================================
 DEFINE_PROPERTY(damage, X, Actor)
 {
-	PROP_INT_PARM(id, 0);
+	PROP_EXP_PARM(id, 0);
 
 	// Damage can either be a single number, in which case it is subject
 	// to the original damage calculation rules. Or, it can be an expression
@@ -545,7 +557,16 @@ DEFINE_PROPERTY(damage, X, Actor)
 	// compatibility reasons, expressions must be enclosed within
 	// parentheses.
 
-	defaults->Damage = id;
+	// Store this expression here for now. It will be converted to a function
+	// later once all actors have been processed.
+	if (id == NULL)
+	{
+		defaults->Damage = NULL;
+	}
+	else
+	{
+		defaults->Damage = (VMFunction *)(uintptr_t)(ActorDamageFuncs.Push(id) + 1);
+	}
 }
 
 //==========================================================================
@@ -731,7 +752,8 @@ DEFINE_PROPERTY(activesound, S, Actor)
 DEFINE_PROPERTY(howlsound, S, Actor)
 {
 	PROP_STRING_PARM(str, 0);
-	info->Class->Meta.SetMetaInt (AMETA_HowlSound, S_FindSound(str));
+	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
+	static_cast<PClassActor *>(info)->HowlSound = str;
 }
 
 //==========================================================================
@@ -757,24 +779,25 @@ DEFINE_PROPERTY(dropitem, S_i_i, Actor)
 		bag.DropItemList = NULL;
 	}
 
-	FDropItem *di = new FDropItem;
+	DDropItem *di = new DDropItem;
 
-	di->Name =type;
-	di->probability=255;
-	di->amount=-1;
+	di->Name = type;
+	di->Probability = 255;
+	di->Amount = -1;
 
 	if (PROP_PARM_COUNT > 1)
 	{
 		PROP_INT_PARM(prob, 1);
-		di->probability = prob;
+		di->Probability = prob;
 		if (PROP_PARM_COUNT > 2)
 		{
 			PROP_INT_PARM(amt, 2);
-			di->amount = amt;
+			di->Amount = amt;
 		}
 	}
 	di->Next = bag.DropItemList;
 	bag.DropItemList = di;
+	GC::WriteBarrier(di);
 }
 
 //==========================================================================
@@ -823,7 +846,8 @@ DEFINE_PROPERTY(alpha, F, Actor)
 DEFINE_PROPERTY(obituary, S, Actor)
 {
 	PROP_STRING_PARM(str, 0);
-	info->Class->Meta.SetMetaString (AMETA_Obituary, str);
+	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
+	static_cast<PClassActor *>(info)->Obituary = str;
 }
 
 //==========================================================================
@@ -832,7 +856,8 @@ DEFINE_PROPERTY(obituary, S, Actor)
 DEFINE_PROPERTY(hitobituary, S, Actor)
 {
 	PROP_STRING_PARM(str, 0);
-	info->Class->Meta.SetMetaString (AMETA_HitObituary, str);
+	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
+	static_cast<PClassActor *>(info)->HitObituary = str;
 }
 
 //==========================================================================
@@ -840,7 +865,8 @@ DEFINE_PROPERTY(hitobituary, S, Actor)
 //==========================================================================
 DEFINE_PROPERTY(donthurtshooter, 0, Actor)
 {
-	info->Class->Meta.SetMetaInt (ACMETA_DontHurtShooter, true);
+	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
+	static_cast<PClassActor *>(info)->DontHurtShooter = true;
 }
 
 //==========================================================================
@@ -849,7 +875,8 @@ DEFINE_PROPERTY(donthurtshooter, 0, Actor)
 DEFINE_PROPERTY(explosionradius, I, Actor)
 {
 	PROP_INT_PARM(id, 0);
-	info->Class->Meta.SetMetaInt (ACMETA_ExplosionRadius, id);
+	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
+	static_cast<PClassActor *>(info)->ExplosionRadius = id;
 }
 
 //==========================================================================
@@ -858,7 +885,8 @@ DEFINE_PROPERTY(explosionradius, I, Actor)
 DEFINE_PROPERTY(explosiondamage, I, Actor)
 {
 	PROP_INT_PARM(id, 0);
-	info->Class->Meta.SetMetaInt (ACMETA_ExplosionDamage, id);
+	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
+	static_cast<PClassActor *>(info)->ExplosionDamage = id;
 }
 
 //==========================================================================
@@ -867,9 +895,8 @@ DEFINE_PROPERTY(explosiondamage, I, Actor)
 DEFINE_PROPERTY(deathheight, F, Actor)
 {
 	PROP_FIXED_PARM(h, 0);
-	// AActor::Die() uses a height of 0 to mean "cut the height to 1/4",
-	// so if a height of 0 is desired, store it as -1.
-	info->Class->Meta.SetMetaFixed (AMETA_DeathHeight, h <= 0 ? -1 : h);
+	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
+	static_cast<PClassActor *>(info)->DeathHeight = MAX(0, h);
 }
 
 //==========================================================================
@@ -878,8 +905,8 @@ DEFINE_PROPERTY(deathheight, F, Actor)
 DEFINE_PROPERTY(burnheight, F, Actor)
 {
 	PROP_FIXED_PARM(h, 0);
-	// The note above for AMETA_DeathHeight also applies here.
-	info->Class->Meta.SetMetaFixed (AMETA_BurnHeight, h <= 0 ? -1 : h);
+	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
+	static_cast<PClassActor *>(info)->BurnHeight = MAX(0, h);
 }
 
 //==========================================================================
@@ -906,7 +933,8 @@ DEFINE_PROPERTY(meleethreshold, F, Actor)
 DEFINE_PROPERTY(meleedamage, I, Actor)
 {
 	PROP_INT_PARM(id, 0);
-	info->Class->Meta.SetMetaInt (ACMETA_MeleeDamage, id);
+	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
+	static_cast<PClassActor *>(info)->MeleeDamage = id;
 }
 
 //==========================================================================
@@ -924,7 +952,8 @@ DEFINE_PROPERTY(meleerange, F, Actor)
 DEFINE_PROPERTY(meleesound, S, Actor)
 {
 	PROP_STRING_PARM(str, 0);
-	info->Class->Meta.SetMetaInt (ACMETA_MeleeSound, S_FindSound(str));
+	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
+	static_cast<PClassActor *>(info)->MeleeSound = str;
 }
 
 //==========================================================================
@@ -933,7 +962,8 @@ DEFINE_PROPERTY(meleesound, S, Actor)
 DEFINE_PROPERTY(missiletype, S, Actor)
 {
 	PROP_STRING_PARM(str, 0);
-	info->Class->Meta.SetMetaInt (ACMETA_MissileName, FName(str));
+	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
+	static_cast<PClassActor *>(info)->MissileName = str;
 }
 
 //==========================================================================
@@ -942,7 +972,8 @@ DEFINE_PROPERTY(missiletype, S, Actor)
 DEFINE_PROPERTY(missileheight, F, Actor)
 {
 	PROP_FIXED_PARM(id, 0);
-	info->Class->Meta.SetMetaFixed (ACMETA_MissileHeight, id);
+	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
+	static_cast<PClassActor *>(info)->MissileHeight = id;
 }
 
 //==========================================================================
@@ -1012,7 +1043,8 @@ DEFINE_PROPERTY(bloodcolor, C, Actor)
 
 	PalEntry pe = color;
 	pe.a = CreateBloodTranslation(pe);
-	info->Class->Meta.SetMetaInt (AMETA_BloodColor, pe);
+	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
+	static_cast<PClassActor *>(info)->BloodColor = pe;
 }
 
 
@@ -1025,23 +1057,26 @@ DEFINE_PROPERTY(bloodtype, Sss, Actor)
 	PROP_STRING_PARM(str1, 1)
 	PROP_STRING_PARM(str2, 2)
 
+	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
+	PClassActor *ainfo = static_cast<PClassActor *>(info);
+
 	FName blood = str;
 	// normal blood
-	info->Class->Meta.SetMetaInt (AMETA_BloodType, blood);
+	ainfo->BloodType = blood;
 
 	if (PROP_PARM_COUNT > 1)
 	{
 		blood = str1;
 	}
 	// blood splatter
-	info->Class->Meta.SetMetaInt (AMETA_BloodType2, blood);
+	ainfo->BloodType2 = blood;
 
 	if (PROP_PARM_COUNT > 2)
 	{
 		blood = str2;
 	}
 	// axe blood
-	info->Class->Meta.SetMetaInt (AMETA_BloodType3, blood);
+	ainfo->BloodType3 = blood;
 }
 
 //==========================================================================
@@ -1244,7 +1279,8 @@ DEFINE_PROPERTY(poisondamagetype, S, Actor)
 DEFINE_PROPERTY(fastspeed, F, Actor)
 {
 	PROP_FIXED_PARM(i, 0);
-	info->Class->Meta.SetMetaFixed (AMETA_FastSpeed, i);
+	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
+	static_cast<PClassActor *>(info)->FastSpeed = i;
 }
 
 //==========================================================================
@@ -1253,7 +1289,8 @@ DEFINE_PROPERTY(fastspeed, F, Actor)
 DEFINE_PROPERTY(radiusdamagefactor, F, Actor)
 {
 	PROP_FIXED_PARM(i, 0);
-	info->Class->Meta.SetMetaFixed (AMETA_RDFactor, i);
+	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
+	static_cast<PClassActor *>(info)->RDFactor = i;
 }
 
 //==========================================================================
@@ -1262,7 +1299,8 @@ DEFINE_PROPERTY(radiusdamagefactor, F, Actor)
 DEFINE_PROPERTY(cameraheight, F, Actor)
 {
 	PROP_FIXED_PARM(i, 0);
-	info->Class->Meta.SetMetaFixed (AMETA_CameraHeight, i);
+	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
+	static_cast<PClassActor *>(info)->CameraHeight = i;
 }
 
 //==========================================================================
@@ -1382,7 +1420,7 @@ DEFINE_PROPERTY(visibletoplayerclass, Ssssssssssssssssssss, Actor)
 	{
 		PROP_STRING_PARM(n, i);
 		if (*n != 0)
-			info->VisibleToPlayerClass.Push(FindClassTentative(n, "PlayerPawn"));
+			info->VisibleToPlayerClass.Push(FindClassTentativePlayerPawn(n));
 	}
 }
 
@@ -1410,7 +1448,8 @@ DEFINE_PROPERTY(stamina, I, Actor)
 DEFINE_PROPERTY(telefogsourcetype, S, Actor)
 {
 	PROP_STRING_PARM(str, 0);
-	defaults->TeleFogSourceType = FindClassTentative(str,"Actor");
+
+	defaults->TeleFogSourceType = FindClassTentative(str, RUNTIME_CLASS(AActor));
 }
 
 //==========================================================================
@@ -1419,7 +1458,8 @@ DEFINE_PROPERTY(telefogsourcetype, S, Actor)
 DEFINE_PROPERTY(telefogdesttype, S, Actor)
 {
 	PROP_STRING_PARM(str, 0);
-	defaults->TeleFogDestType = FindClassTentative(str, "Actor");
+
+	defaults->TeleFogDestType = FindClassTentative(str, RUNTIME_CLASS(AActor));
 }
 
 //==========================================================================
@@ -1477,7 +1517,7 @@ DEFINE_CLASS_PROPERTY(restrictedto, Ssssssssssssssssssss, Inventory)
 	{
 		PROP_STRING_PARM(n, i);
 		if (*n != 0)
-			info->RestrictedToPlayerClass.Push(FindClassTentative(n, "PlayerPawn"));
+			info->RestrictedToPlayerClass.Push(FindClassTentativePlayerPawn(n));
 	}
 }
 
@@ -1491,7 +1531,7 @@ DEFINE_CLASS_PROPERTY(forbiddento, Ssssssssssssssssssss, Inventory)
 	{
 		PROP_STRING_PARM(n, i);
 		if (*n != 0)
-			info->ForbiddenToPlayerClass.Push(FindClassTentative(n, "PlayerPawn"));
+			info->ForbiddenToPlayerClass.Push(FindClassTentativePlayerPawn(n));
 	}
 }
 
@@ -1519,7 +1559,8 @@ DEFINE_CLASS_PROPERTY(backpackmaxamount, I, Ammo)
 DEFINE_CLASS_PROPERTY(dropamount, I, Ammo)
 {
 	PROP_INT_PARM(i, 0);
-	info->Class->Meta.SetMetaInt (AIMETA_DropAmount, i);
+	assert(info->IsKindOf(RUNTIME_CLASS(PClassAmmo)));
+	static_cast<PClassAmmo *>(info)->DropAmount = i;
 }
 
 //==========================================================================
@@ -1557,11 +1598,11 @@ DEFINE_CLASS_PROPERTY(saveamount, I, Armor)
 	PROP_INT_PARM(i, 0);
 
 	// Special case here because this property has to work for 2 unrelated classes
-	if (info->Class->IsDescendantOf(RUNTIME_CLASS(ABasicArmorPickup)))
+	if (info->IsDescendantOf(RUNTIME_CLASS(ABasicArmorPickup)))
 	{
 		((ABasicArmorPickup*)defaults)->SaveAmount=i;
 	}
-	else if (info->Class->IsDescendantOf(RUNTIME_CLASS(ABasicArmorBonus)))
+	else if (info->IsDescendantOf(RUNTIME_CLASS(ABasicArmorBonus)))
 	{
 		((ABasicArmorBonus*)defaults)->SaveAmount=i;
 	}
@@ -1580,11 +1621,11 @@ DEFINE_CLASS_PROPERTY(savepercent, F, Armor)
 
 	i = clamp(i, 0, 100*FRACUNIT)/100;
 	// Special case here because this property has to work for 2 unrelated classes
-	if (info->Class->IsDescendantOf(RUNTIME_CLASS(ABasicArmorPickup)))
+	if (info->IsDescendantOf(RUNTIME_CLASS(ABasicArmorPickup)))
 	{
 		((ABasicArmorPickup*)defaults)->SavePercent = i;
 	}
-	else if (info->Class->IsDescendantOf(RUNTIME_CLASS(ABasicArmorBonus)))
+	else if (info->IsDescendantOf(RUNTIME_CLASS(ABasicArmorBonus)))
 	{
 		((ABasicArmorBonus*)defaults)->SavePercent = i;
 	}
@@ -1602,11 +1643,11 @@ DEFINE_CLASS_PROPERTY(maxabsorb, I, Armor)
 	PROP_INT_PARM(i, 0);
 
 	// Special case here because this property has to work for 2 unrelated classes
-	if (info->Class->IsDescendantOf(RUNTIME_CLASS(ABasicArmorPickup)))
+	if (info->IsDescendantOf(RUNTIME_CLASS(ABasicArmorPickup)))
 	{
 		((ABasicArmorPickup*)defaults)->MaxAbsorb = i;
 	}
-	else if (info->Class->IsDescendantOf(RUNTIME_CLASS(ABasicArmorBonus)))
+	else if (info->IsDescendantOf(RUNTIME_CLASS(ABasicArmorBonus)))
 	{
 		((ABasicArmorBonus*)defaults)->MaxAbsorb = i;
 	}
@@ -1624,11 +1665,11 @@ DEFINE_CLASS_PROPERTY(maxfullabsorb, I, Armor)
 	PROP_INT_PARM(i, 0);
 
 	// Special case here because this property has to work for 2 unrelated classes
-	if (info->Class->IsDescendantOf(RUNTIME_CLASS(ABasicArmorPickup)))
+	if (info->IsDescendantOf(RUNTIME_CLASS(ABasicArmorPickup)))
 	{
 		((ABasicArmorPickup*)defaults)->MaxFullAbsorb = i;
 	}
-	else if (info->Class->IsDescendantOf(RUNTIME_CLASS(ABasicArmorBonus)))
+	else if (info->IsDescendantOf(RUNTIME_CLASS(ABasicArmorBonus)))
 	{
 		((ABasicArmorBonus*)defaults)->MaxFullAbsorb = i;
 	}
@@ -1669,7 +1710,7 @@ DEFINE_CLASS_PROPERTY(icon, S, Inventory)
 				!(gameinfo.flags&GI_SHAREWARE) && Wads.GetLumpFile(bag.Lumpnum) != 0)
 			{
 				bag.ScriptPosition.Message(MSG_WARNING,
-					"Icon '%s' for '%s' not found\n", i, info->Class->TypeName.GetChars());
+					"Icon '%s' for '%s' not found\n", i, info->TypeName.GetChars());
 			}
 		}
 	}
@@ -1708,7 +1749,7 @@ DEFINE_CLASS_PROPERTY(defmaxamount, 0, Inventory)
 DEFINE_CLASS_PROPERTY(pickupflash, S, Inventory)
 {
 	PROP_STRING_PARM(str, 0);
-	defaults->PickupFlash = FindClassTentative(str, "Actor");
+	defaults->PickupFlash = FindClassTentative(str, RUNTIME_CLASS(AActor));
 }
 
 //==========================================================================
@@ -1717,7 +1758,8 @@ DEFINE_CLASS_PROPERTY(pickupflash, S, Inventory)
 DEFINE_CLASS_PROPERTY(pickupmessage, T, Inventory)
 {
 	PROP_STRING_PARM(str, 0);
-	info->Class->Meta.SetMetaString(AIMETA_PickupMessage, str);
+	assert(info->IsKindOf(RUNTIME_CLASS(PClassInventory)));
+	static_cast<PClassInventory *>(info)->PickupMessage = str;
 }
 
 //==========================================================================
@@ -1760,7 +1802,8 @@ DEFINE_CLASS_PROPERTY(usesound, S, Inventory)
 DEFINE_CLASS_PROPERTY(givequest, I, Inventory)
 {
 	PROP_INT_PARM(i, 0);
-	info->Class->Meta.SetMetaInt(AIMETA_GiveQuest, i);
+	assert(info->IsKindOf(RUNTIME_CLASS(PClassInventory)));
+	static_cast<PClassInventory *>(info)->GiveQuest = i;
 }
 
 //==========================================================================
@@ -1770,8 +1813,9 @@ DEFINE_CLASS_PROPERTY(lowmessage, IT, Health)
 {
 	PROP_INT_PARM(i, 0);
 	PROP_STRING_PARM(str, 1);
-	info->Class->Meta.SetMetaInt(AIMETA_LowHealth, i);
-	info->Class->Meta.SetMetaString(AIMETA_LowHealthMessage, str);
+	assert(info->IsKindOf(RUNTIME_CLASS(PClassHealth)));
+	static_cast<PClassHealth *>(info)->LowHealth = i;
+	static_cast<PClassHealth *>(info)->LowHealthMessage = str;
 }
 
 //==========================================================================
@@ -1798,7 +1842,8 @@ DEFINE_CLASS_PROPERTY(number, I, PuzzleItem)
 DEFINE_CLASS_PROPERTY(failmessage, T, PuzzleItem)
 {
 	PROP_STRING_PARM(str, 0);
-	info->Class->Meta.SetMetaString(AIMETA_PuzzFailMessage, str);
+	assert(info->IsKindOf(RUNTIME_CLASS(PClassPuzzleItem)));
+	static_cast<PClassPuzzleItem *>(info)->PuzzFailMessage = str;
 }
 
 //==========================================================================
@@ -1835,7 +1880,7 @@ DEFINE_CLASS_PROPERTY(ammotype, S, Weapon)
 {
 	PROP_STRING_PARM(str, 0);
 	if (!stricmp(str, "none") || *str == 0) defaults->AmmoType1 = NULL;
-	else defaults->AmmoType1 = FindClassTentative(str, "Ammo");
+	else defaults->AmmoType1 = FindClassTentativeAmmo(str);
 }
 
 //==========================================================================
@@ -1845,7 +1890,7 @@ DEFINE_CLASS_PROPERTY(ammotype1, S, Weapon)
 {
 	PROP_STRING_PARM(str, 0);
 	if (!stricmp(str, "none") || *str == 0) defaults->AmmoType1 = NULL;
-	else defaults->AmmoType1 = FindClassTentative(str, "Ammo");
+	else defaults->AmmoType1 = FindClassTentativeAmmo(str);
 }
 
 //==========================================================================
@@ -1855,7 +1900,7 @@ DEFINE_CLASS_PROPERTY(ammotype2, S, Weapon)
 {
 	PROP_STRING_PARM(str, 0);
 	if (!stricmp(str, "none") || *str == 0) defaults->AmmoType1 = NULL;
-	else defaults->AmmoType2 = FindClassTentative(str, "Ammo");
+	else defaults->AmmoType2 = FindClassTentativeAmmo(str);
 }
 
 //==========================================================================
@@ -1944,7 +1989,7 @@ DEFINE_CLASS_PROPERTY(minselectionammo2, I, Weapon)
 DEFINE_CLASS_PROPERTY(sisterweapon, S, Weapon)
 {
 	PROP_STRING_PARM(str, 0);
-	defaults->SisterWeaponType = FindClassTentative(str, "Weapon");
+	defaults->SisterWeaponType = FindClassTentativeWeapon(str);
 }
 
 //==========================================================================
@@ -2017,7 +2062,8 @@ DEFINE_CLASS_PROPERTY(bobrangey, F, Weapon)
 DEFINE_CLASS_PROPERTY(slotnumber, I, Weapon)
 {
 	PROP_INT_PARM(i, 0);
-	info->Class->Meta.SetMetaInt(AWMETA_SlotNumber, i);
+	assert(info->IsKindOf(RUNTIME_CLASS(PClassWeapon)));
+	static_cast<PClassWeapon *>(info)->SlotNumber = i;
 }
 
 //==========================================================================
@@ -2026,7 +2072,8 @@ DEFINE_CLASS_PROPERTY(slotnumber, I, Weapon)
 DEFINE_CLASS_PROPERTY(slotpriority, F, Weapon)
 {
 	PROP_FIXED_PARM(i, 0);
-	info->Class->Meta.SetMetaFixed(AWMETA_SlotPriority, i);
+	assert(info->IsKindOf(RUNTIME_CLASS(PClassWeapon)));
+	static_cast<PClassWeapon *>(info)->SlotPriority = i;
 }
 
 //==========================================================================
@@ -2053,7 +2100,7 @@ DEFINE_CLASS_PROPERTY(number, I, WeaponPiece)
 DEFINE_CLASS_PROPERTY(weapon, S, WeaponPiece)
 {
 	PROP_STRING_PARM(str, 0);
-	defaults->WeaponClass = FindClassTentative(str, "Weapon");
+	defaults->WeaponClass = FindClassTentativeWeapon(str);
 }
 
 //==========================================================================
@@ -2065,13 +2112,13 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, color, C_f, Inventory)
 		"INVERSEMAP", "GOLDMAP", "REDMAP", "GREENMAP", "BLUEMAP", NULL };
 
 	int alpha;
-	PalEntry * pBlendColor;
+	PalEntry *pBlendColor;
 
-	if (info->Class->IsDescendantOf(RUNTIME_CLASS(APowerup)))
+	if (info->IsDescendantOf(RUNTIME_CLASS(APowerup)))
 	{
 		pBlendColor = &((APowerup*)defaults)->BlendColor;
 	}
-	else if (info->Class->IsDescendantOf(RUNTIME_CLASS(APowerupGiver)))
+	else if (info->IsDescendantOf(RUNTIME_CLASS(APowerupGiver)))
 	{
 		pBlendColor = &((APowerupGiver*)defaults)->BlendColor;
 	}
@@ -2095,7 +2142,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, color, C_f, Inventory)
 			*pBlendColor = MakeSpecialColormap(v);
 			return;
 		}
-		else if (!stricmp(name, "none") && info->Class->IsDescendantOf(RUNTIME_CLASS(APowerupGiver)))
+		else if (!stricmp(name, "none") && info->IsDescendantOf(RUNTIME_CLASS(APowerupGiver)))
 		{
 			*pBlendColor = MakeSpecialColormap(65535);
 			return;
@@ -2122,11 +2169,11 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, colormap, FFFfff, Inventory)
 {
 	PalEntry * pBlendColor;
 
-	if (info->Class->IsDescendantOf(RUNTIME_CLASS(APowerup)))
+	if (info->IsDescendantOf(RUNTIME_CLASS(APowerup)))
 	{
 		pBlendColor = &((APowerup*)defaults)->BlendColor;
 	}
-	else if (info->Class->IsDescendantOf(RUNTIME_CLASS(APowerupGiver)))
+	else if (info->IsDescendantOf(RUNTIME_CLASS(APowerupGiver)))
 	{
 		pBlendColor = &((APowerupGiver*)defaults)->BlendColor;
 	}
@@ -2166,11 +2213,11 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, duration, I, Inventory)
 {
 	int *pEffectTics;
 
-	if (info->Class->IsDescendantOf(RUNTIME_CLASS(APowerup)))
+	if (info->IsDescendantOf(RUNTIME_CLASS(APowerup)))
 	{
 		pEffectTics = &((APowerup*)defaults)->EffectTics;
 	}
-	else if (info->Class->IsDescendantOf(RUNTIME_CLASS(APowerupGiver)))
+	else if (info->IsDescendantOf(RUNTIME_CLASS(APowerupGiver)))
 	{
 		pEffectTics = &((APowerupGiver*)defaults)->EffectTics;
 	}
@@ -2191,11 +2238,11 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, strength, F, Inventory)
 {
 	fixed_t *pStrength;
 
-	if (info->Class->IsDescendantOf(RUNTIME_CLASS(APowerup)))
+	if (info->IsDescendantOf(RUNTIME_CLASS(APowerup)))
 	{
 		pStrength = &((APowerup*)defaults)->Strength;
 	}
-	else if (info->Class->IsDescendantOf(RUNTIME_CLASS(APowerupGiver)))
+	else if (info->IsDescendantOf(RUNTIME_CLASS(APowerupGiver)))
 	{
 		pStrength = &((APowerupGiver*)defaults)->Strength;
 	}
@@ -2215,11 +2262,11 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, mode, S, Inventory)
 {
 	PROP_STRING_PARM(str, 0);
 	FName *pMode;
-	if (info->Class->IsDescendantOf(RUNTIME_CLASS(APowerup)))
+	if (info->IsDescendantOf(RUNTIME_CLASS(APowerup)))
 	{
 		pMode = &((APowerup*)defaults)->Mode;
 	}
-	else if (info->Class->IsDescendantOf(RUNTIME_CLASS(APowerupGiver)))
+	else if (info->IsDescendantOf(RUNTIME_CLASS(APowerupGiver)))
 	{
 		pMode = &((APowerupGiver*)defaults)->Mode;
 	}
@@ -2240,12 +2287,12 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, type, S, PowerupGiver)
 
 	// Yuck! What was I thinking when I decided to prepend "Power" to the name? 
 	// Now it's too late to change it...
-	const PClass *cls = PClass::FindClass(str);
+	PClassActor *cls = PClass::FindActor(str);
 	if (cls == NULL || !cls->IsDescendantOf(RUNTIME_CLASS(APowerup)))
 	{
 		FString st;
 		st.Format("%s%s", strnicmp(str, "power", 5)? "Power" : "", str);
-		cls = FindClassTentative(st, "Powerup");
+		cls = FindClassTentativePowerup(st);
 	}
 
 	defaults->PowerupType = cls;
@@ -2263,7 +2310,8 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, type, S, PowerupGiver)
 DEFINE_CLASS_PROPERTY_PREFIX(player, displayname, S, PlayerPawn)
 {
 	PROP_STRING_PARM(str, 0);
-	info->Class->Meta.SetMetaString (APMETA_DisplayName, str);
+	assert(info->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
+	static_cast<PClassPlayerPawn *>(info)->DisplayName = str;
 }
 
 //==========================================================================
@@ -2275,7 +2323,8 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, soundclass, S, PlayerPawn)
 
 	FString tmp = str;
 	tmp.ReplaceChars (' ', '_');
-	info->Class->Meta.SetMetaString (APMETA_SoundClass, tmp);
+	assert(info->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
+	static_cast<PClassPlayerPawn *>(info)->SoundClass = tmp;
 }
 
 //==========================================================================
@@ -2291,7 +2340,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, face, S, PlayerPawn)
 	{
 		bag.ScriptPosition.Message(MSG_WARNING,
 			"Invalid face '%s' for '%s';\nSTF replacement codes must be 3 characters.\n",
-			tmp.GetChars(), info->Class->TypeName.GetChars ());
+			tmp.GetChars(), info->TypeName.GetChars ());
 	}
 
 	bool valid = (
@@ -2303,10 +2352,11 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, face, S, PlayerPawn)
 	{
 		bag.ScriptPosition.Message(MSG_WARNING,
 			"Invalid face '%s' for '%s';\nSTF replacement codes must be alphanumeric.\n",
-			tmp.GetChars(), info->Class->TypeName.GetChars ());
+			tmp.GetChars(), info->TypeName.GetChars ());
 	}
 	
-	info->Class->Meta.SetMetaString (APMETA_Face, tmp);
+	assert(info->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
+	static_cast<PClassPlayerPawn *>(info)->Face = tmp;
 }
 
 //==========================================================================
@@ -2320,7 +2370,9 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, colorrange, I_I, PlayerPawn)
 	if (start > end)
 		swapvalues (start, end);
 
-	info->Class->Meta.SetMetaInt (APMETA_ColorRange, (start & 255) | ((end & 255) << 8));
+	assert(info->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
+	static_cast<PClassPlayerPawn *>(info)->ColorRangeStart = start;
+	static_cast<PClassPlayerPawn *>(info)->ColorRangeEnd = end;
 }
 
 //==========================================================================
@@ -2375,7 +2427,8 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, colorset, ISIIIiiiiiiiiiiiiiiiiiiiiiiii, Pl
 	}
 	else
 	{
-		info->SetColorSet(setnum, &color);
+		assert(info->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
+		static_cast<PClassPlayerPawn *>(info)->ColorSets.Insert(setnum, color);
 	}
 }
 
@@ -2401,7 +2454,8 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, colorsetfile, ISSI, PlayerPawn)
 	}
 	else if (color.Lump >= 0)
 	{
-		info->SetColorSet(setnum, &color);
+		assert(info->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
+		static_cast<PClassPlayerPawn *>(info)->ColorSets.Insert(setnum, color);
 	}
 }
 
@@ -2418,7 +2472,8 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, clearcolorset, I, PlayerPawn)
 	}
 	else
 	{
-		info->SetColorSet(setnum, NULL);
+		assert(info->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
+		static_cast<PClassPlayerPawn *>(info)->ColorSets.Remove(setnum);
 	}
 }
 
@@ -2588,7 +2643,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, morphweapon, S, PlayerPawn)
 DEFINE_CLASS_PROPERTY_PREFIX(player, flechettetype, S, PlayerPawn)
 {
 	PROP_STRING_PARM(str, 0);
-	defaults->FlechetteType = FindClassTentative(str, "ArtiPoisonBag");
+	defaults->FlechetteType = FindClassTentative(str, RUNTIME_CLASS(AArtiPoisonBag));
 }
 
 //==========================================================================
@@ -2601,7 +2656,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, scoreicon, S, PlayerPawn)
 	if (!defaults->ScoreIcon.isValid())
 	{
 		bag.ScriptPosition.Message(MSG_WARNING,
-			"Icon '%s' for '%s' not found\n", z, info->Class->TypeName.GetChars ());
+			"Icon '%s' for '%s' not found\n", z, info->TypeName.GetChars ());
 	}
 }
 
@@ -2652,7 +2707,8 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, damagescreencolor, Cfs, PlayerPawn)
 		PROP_STRING_PARM(type, 3);
 
 		color.a = BYTE(255 * clamp(a, 0.f, 1.f));
-		info->SetPainFlash(type, color);
+		assert(info->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
+		static_cast<PClassPlayerPawn *>(info)->PainFlashes.Insert(type, color);
 	}
 }
 
@@ -2672,18 +2728,19 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, startitem, S_i, PlayerPawn)
 		bag.DropItemList = NULL;
 	}
 
-	FDropItem * di=new FDropItem;
+	DDropItem *di = new DDropItem;
 
 	di->Name = str;
-	di->probability = 255;
-	di->amount = 1;
+	di->Probability = 255;
+	di->Amount = 1;
 	if (PROP_PARM_COUNT > 1)
 	{
 		PROP_INT_PARM(amt, 1);
-		di->amount = amt;
+		di->Amount = amt;
 	}
 	di->Next = bag.DropItemList;
 	bag.DropItemList = di;
+	GC::WriteBarrier(di);
 }
 
 //==========================================================================
@@ -2692,7 +2749,8 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, startitem, S_i, PlayerPawn)
 DEFINE_CLASS_PROPERTY_PREFIX(player, invulnerabilitymode, S, PlayerPawn)
 {
 	PROP_STRING_PARM(str, 0);
-	info->Class->Meta.SetMetaInt (APMETA_InvulMode, (FName)str);
+	assert(info->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
+	static_cast<PClassPlayerPawn *>(info)->InvulMode = str;
 }
 
 //==========================================================================
@@ -2701,7 +2759,8 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, invulnerabilitymode, S, PlayerPawn)
 DEFINE_CLASS_PROPERTY_PREFIX(player, healradiustype, S, PlayerPawn)
 {
 	PROP_STRING_PARM(str, 0);
-	info->Class->Meta.SetMetaInt (APMETA_HealingRadius, (FName)str);
+	assert(info->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
+	static_cast<PClassPlayerPawn *>(info)->HealingRadiusType = str;
 }
 
 //==========================================================================
@@ -2709,10 +2768,11 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, healradiustype, S, PlayerPawn)
 //==========================================================================
 DEFINE_CLASS_PROPERTY_PREFIX(player, hexenarmor, FFFFF, PlayerPawn)
 {
-	for (int i=0;i<5;i++)
+	assert(info->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
+	for (int i = 0; i < 5; i++)
 	{
 		PROP_FIXED_PARM(val, i);
-		info->Class->Meta.SetMetaFixed (APMETA_Hexenarmor0+i, val);
+		static_cast<PClassPlayerPawn *>(info)->HexenArmor[i] = val;
 	}
 }
 
@@ -2721,8 +2781,9 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, hexenarmor, FFFFF, PlayerPawn)
 //==========================================================================
 DEFINE_CLASS_PROPERTY_PREFIX(player, portrait, S, PlayerPawn)
 {
+	assert(info->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
 	PROP_STRING_PARM(val, 0);
-	info->Class->Meta.SetMetaString (APMETA_Portrait, val);
+	static_cast<PClassPlayerPawn *>(info)->Portrait = val;
 }
 
 //==========================================================================
@@ -2732,6 +2793,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, weaponslot, ISsssssssssssssssssssssssssssss
 {
 	PROP_INT_PARM(slot, 0);
 
+	assert(info->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
 	if (slot < 0 || slot > 9)
 	{
 		I_Error("Slot must be between 0 and 9.");
@@ -2745,7 +2807,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, weaponslot, ISsssssssssssssssssssssssssssss
 			PROP_STRING_PARM(str, i);
 			weapons << ' ' << str;
 		}
-		info->Class->Meta.SetMetaString(APMETA_Slot0 + slot, &weapons[1]);
+		static_cast<PClassPlayerPawn *>(info)->Slot[slot] = &weapons[1];
 	}
 }
 

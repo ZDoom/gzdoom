@@ -66,13 +66,8 @@ enum AAPTR
 
 AActor *COPY_AAPTR(AActor *origin, int selector);
 
-// Use COPY_AAPTR_NOT_NULL to return from a function if the pointer is NULL
-#define COPY_AAPTR_NOT_NULL(source, destination, selector) { destination = COPY_AAPTR(source, selector); if (!destination) return; }
-
-
-
 enum PTROP
- {
+{
 	PTROP_UNSAFETARGET = 1,
 	PTROP_UNSAFEMASTER = 2,
 	PTROP_NOSAFEGUARDS = PTROP_UNSAFETARGET|PTROP_UNSAFEMASTER

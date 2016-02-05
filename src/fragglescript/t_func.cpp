@@ -228,7 +228,7 @@ static const char * const ActorNames_init[]=
 	"PointPuller",
 };
 
-static const PClass * ActorTypes[countof(ActorNames_init)];
+static PClassActor * ActorTypes[countof(ActorNames_init)];
 
 //==========================================================================
 //
@@ -244,32 +244,32 @@ static const PClass * ActorTypes[countof(ActorNames_init)];
 // Doom index is only supported for the original things up to MBF
 //
 //==========================================================================
-const PClass * T_GetMobjType(svalue_t arg)
+PClassActor * T_GetMobjType(svalue_t arg)
 {
-	const PClass * PClass=NULL;
+	PClassActor * pclass=NULL;
 	
 	if (arg.type==svt_string)
 	{
-		PClass=PClass::FindClass(arg.string);
+		pclass=PClass::FindActor(arg.string);
 
 		// invalid object to spawn
-		if(!PClass) script_error("unknown object type: %s\n", arg.string.GetChars()); 
+		if(!pclass) script_error("unknown object type: %s\n", arg.string.GetChars()); 
 	}
 	else if (arg.type==svt_mobj)
 	{
 		AActor * mo = actorvalue(arg);
-		if (mo) PClass = mo->GetClass();
+		if (mo) pclass = mo->GetClass();
 	}
 	else
 	{
 		int objtype = intvalue(arg);
-		if (objtype>=0 && objtype<int(countof(ActorTypes))) PClass=ActorTypes[objtype];
-		else PClass=NULL;
+		if (objtype>=0 && objtype<int(countof(ActorTypes))) pclass=ActorTypes[objtype];
+		else pclass=NULL;
 
 		// invalid object to spawn
-		if(!PClass) script_error("unknown object type: %i\n", objtype); 
+		if(!pclass) script_error("unknown object type: %i\n", objtype); 
 	}
-	return PClass;
+	return pclass;
 }
 
 //==========================================================================
@@ -341,7 +341,7 @@ inline int T_FindFirstSectorFromTag(int tagnum)
 // Doom index is only supported for the 4 original ammo types
 //
 //==========================================================================
-static const PClass * T_GetAmmo(const svalue_t &t)
+static PClassAmmo * T_GetAmmo(const svalue_t &t)
 {
 	const char * p;
 
@@ -362,8 +362,8 @@ static const PClass * T_GetAmmo(const svalue_t &t)
 		}
 		p=DefAmmo[ammonum];
 	}
-	const PClass * am=PClass::FindClass(p);
-	if (!am->IsDescendantOf(RUNTIME_CLASS(AAmmo)))
+	PClassAmmo * am=dyn_cast<PClassAmmo>(PClass::FindActor(p));
+	if (am == NULL)
 	{
 		script_error("unknown ammo type : %s", p);
 		return NULL;
@@ -861,12 +861,12 @@ void FParser::SF_Player(void)
 void FParser::SF_Spawn(void)
 {
 	int x, y, z;
-	const PClass *PClass;
+	PClassActor *pclass;
 	angle_t angle = 0;
 	
 	if (CheckArgs(3))
 	{
-		if (!(PClass=T_GetMobjType(t_argv[0]))) return;
+		if (!(pclass=T_GetMobjType(t_argv[0]))) return;
 		
 		x = fixedvalue(t_argv[1]);
 		y = fixedvalue(t_argv[2]);
@@ -892,7 +892,7 @@ void FParser::SF_Spawn(void)
 		}
 		
 		t_return.type = svt_mobj;
-		t_return.value.mobj = Spawn(PClass, x, y, z, ALLOW_REPLACE);
+		t_return.value.mobj = Spawn(pclass, x, y, z, ALLOW_REPLACE);
 
 		if (t_return.value.mobj)		
 		{
@@ -2570,8 +2570,8 @@ static void FS_GiveInventory (AActor *actor, const char * type, int amount)
 	{
 		type = "BasicArmorPickup";
 	}
-	const PClass * info = PClass::FindClass (type);
-	if (info == NULL || !info->IsDescendantOf (RUNTIME_CLASS(AInventory)))
+	PClassInventory * info = dyn_cast<PClassInventory>(PClass::FindActor (type));
+	if (info == NULL)
 	{
 		Printf ("Unknown inventory item: %s\n", type);
 		return;
@@ -2623,7 +2623,7 @@ static void FS_TakeInventory (AActor *actor, const char * type, int amount)
 	{
 		return;
 	}
-	const PClass * info = PClass::FindClass (type);
+	PClassActor * info = PClass::FindActor (type);
 	if (info == NULL)
 	{
 		return;
@@ -2672,7 +2672,7 @@ static int FS_CheckInventory (AActor *activator, const char *type)
 		return activator->health;
 	}
 
-	const PClass *info = PClass::FindClass (type);
+	PClassActor *info = PClass::FindActor (type);
 	AInventory *item = activator->FindInventory (info);
 	return item ? item->Amount : 0;
 }
@@ -2732,7 +2732,7 @@ void FParser::SF_PlayerKeys(void)
 void FParser::SF_PlayerAmmo(void)
 {
 	int playernum, amount;
-	const PClass * ammotype;
+	PClassAmmo * ammotype;
 	
 	if (CheckArgs(2))
 	{
@@ -2768,7 +2768,7 @@ void FParser::SF_PlayerAmmo(void)
 void FParser::SF_MaxPlayerAmmo()
 {
 	int playernum, amount;
-	const PClass * ammotype;
+	PClassAmmo * ammotype;
 
 	if (CheckArgs(2))
 	{
@@ -2843,7 +2843,7 @@ void FParser::SF_PlayerWeapon()
 			script_error("weaponnum out of range! %s\n", weaponnum);
 			return;
 		}
-		const PClass * ti = PClass::FindClass(WeaponNames[weaponnum]);
+		PClassWeapon * ti = static_cast<PClassWeapon *>(PClass::FindActor(WeaponNames[weaponnum]));
 		if (!ti)
 		{
 			script_error("incompatibility in playerweapon\n", weaponnum);
@@ -2924,7 +2924,7 @@ void FParser::SF_PlayerSelectedWeapon()
 				script_error("weaponnum out of range! %s\n", weaponnum);
 				return;
 			}
-			const PClass * ti = PClass::FindClass(WeaponNames[weaponnum]);
+			PClassWeapon * ti = static_cast<PClassWeapon *>(PClass::FindActor(WeaponNames[weaponnum]));
 			if (!ti)
 			{
 				script_error("incompatibility in playerweapon\n", weaponnum);
@@ -3028,7 +3028,7 @@ void FParser::SF_SetWeapon()
 		int playernum=T_GetPlayerNum(t_argv[0]);
 		if (playernum!=-1) 
 		{
-			AInventory *item = players[playernum].mo->FindInventory (PClass::FindClass (stringvalue(t_argv[1])));
+			AInventory *item = players[playernum].mo->FindInventory (PClass::FindActor (stringvalue(t_argv[1])));
 
 			if (item == NULL || !item->IsKindOf (RUNTIME_CLASS(AWeapon)))
 			{
@@ -3343,11 +3343,11 @@ void FParser::SF_SpawnExplosion()
 {
 	fixed_t   x, y, z;
 	AActor*   spawn;
-	const PClass * PClass;
+	PClassActor * pclass;
 	
 	if (CheckArgs(3))
 	{
-		if (!(PClass=T_GetMobjType(t_argv[0]))) return;
+		if (!(pclass=T_GetMobjType(t_argv[0]))) return;
 		
 		x = fixedvalue(t_argv[1]);
 		y = fixedvalue(t_argv[2]);
@@ -3356,7 +3356,7 @@ void FParser::SF_SpawnExplosion()
 		else
 			z = P_PointInSector(x, y)->floorplane.ZatPoint(x,y);
 		
-		spawn = Spawn (PClass, x, y, z, ALLOW_REPLACE);
+		spawn = Spawn (pclass, x, y, z, ALLOW_REPLACE);
 		t_return.type = svt_int;
 		t_return.value.i=0;
 		if (spawn)
@@ -3514,15 +3514,15 @@ void FParser::SF_SpawnMissile()
 {
 	AActor *mobj;
 	AActor *target;
-	const PClass * PClass;
+	PClassActor * pclass;
 
 	if (CheckArgs(3))
 	{
-		if (!(PClass=T_GetMobjType(t_argv[2]))) return;
+		if (!(pclass=T_GetMobjType(t_argv[2]))) return;
 
 		mobj = actorvalue(t_argv[0]);
 		target = actorvalue(t_argv[1]);
-		if (mobj && target) P_SpawnMissile(mobj, target, PClass);
+		if (mobj && target) P_SpawnMissile(mobj, target, pclass);
 	}
 }
 
@@ -4150,7 +4150,7 @@ void FParser::SF_MobjHeight(void)
 
 void FParser::SF_ThingCount(void)
 {
-	const PClass *pClass;
+	PClassActor *pClass;
 	AActor * mo;
 	int count=0;
 	bool replacemented = false;
@@ -4161,7 +4161,7 @@ void FParser::SF_ThingCount(void)
 		pClass=T_GetMobjType(t_argv[0]);
 		if (!pClass) return;
 		// If we want to count map items we must consider actor replacement
-		pClass = pClass->ActorInfo->GetReplacement()->Class;
+		pClass = pClass->GetReplacement();
 		
 again:
 		TThinkerIterator<AActor> it;
@@ -4191,7 +4191,7 @@ again:
 		{
 			// Again, with decorate replacements
 			replacemented = true;
-			PClass *newkind = pClass->ActorInfo->GetReplacement()->Class;
+			PClassActor *newkind = pClass->GetReplacement();
 			if (newkind != pClass)
 			{
 				pClass = newkind;
@@ -4259,7 +4259,7 @@ void FParser::SF_SetColor(void)
 void FParser::SF_SpawnShot2(void)
 {
 	AActor *source = NULL;
-	const PClass * PClass;
+	PClassActor * pclass;
 	int z=0;
 	
 	// t_argv[0] = type to spawn
@@ -4277,11 +4277,11 @@ void FParser::SF_SpawnShot2(void)
 		
 		if(!source)	return;
 		
-		if (!(PClass=T_GetMobjType(t_argv[0]))) return;
+		if (!(pclass=T_GetMobjType(t_argv[0]))) return;
 		
 		t_return.type = svt_mobj;
 
-		AActor *mo = Spawn (PClass, source->PosPlusZ(z), ALLOW_REPLACE);
+		AActor *mo = Spawn (pclass, source->PosPlusZ(z), ALLOW_REPLACE);
 		if (mo) 
 		{
 			S_Sound (mo, CHAN_VOICE, mo->SeeSound, 1, ATTN_NORM);
@@ -4606,7 +4606,7 @@ void init_functions(void)
 {
 	for(unsigned i=0;i<countof(ActorNames_init);i++)
 	{
-		ActorTypes[i]=PClass::FindClass(ActorNames_init[i]);
+		ActorTypes[i]=PClass::FindActor(ActorNames_init[i]);
 	}
 
 	DFsScript * gscr = global_script;
@@ -4619,9 +4619,10 @@ void init_functions(void)
 	gscr->NewVariable("trigger", svt_pMobj)->value.pMobj = &trigger_obj;
 
 	// Create constants for all existing line specials
-	for(int i=0; i<256; i++)
+	int max = P_GetMaxLineSpecial();
+	for(int i=0; i<=max; i++)
 	{
-		const FLineSpecial *ls = LineSpecialsInfo[i];
+		const FLineSpecial *ls = P_GetLineSpecialInfo(i);
 
 		if (ls != NULL && ls->max_args >= 0)	// specials with max args set to -1 can only be used in a map and are of no use hee.
 		{

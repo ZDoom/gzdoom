@@ -148,6 +148,7 @@ ACTOR RandomSpawner native
 ACTOR FastProjectile native
 {
 	Projectile
+	MissileHeight 0
 }
 
 // Sector flag setter ------------------------------------------------------

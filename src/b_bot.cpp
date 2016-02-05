@@ -270,7 +270,7 @@ void InitBotStuff()
 			{
 				w->MoveCombatDist = botinits[i].movecombatdist;
 				w->WeaponFlags |= botinits[i].weaponflags;
-				w->ProjectileType = PClass::FindClass(botinits[i].projectile);
+				w->ProjectileType = PClass::FindActor(botinits[i].projectile);
 			}
 		}
 	}

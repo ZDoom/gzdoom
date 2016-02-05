@@ -63,6 +63,6 @@ public:
 	int NumPieces, DownPieces;
 };
 
-extern const PClass *QuestItemClasses[31];
+extern PClassActor *QuestItemClasses[31];
 
 #endif

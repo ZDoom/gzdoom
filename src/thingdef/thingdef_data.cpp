@@ -46,7 +46,6 @@
 
 static TArray<FPropertyInfo*> properties;
 static TArray<AFuncDesc> AFTable;
-static TArray<FVariableInfo*> variables;
 
 //==========================================================================
 //
@@ -376,13 +375,13 @@ static FFlagDef PowerSpeedFlagDefs[] =
 	DEFINE_FLAG(PSF, NOTRAIL, APowerSpeed, SpeedFlags),
 };
 
-static const struct FFlagList { const PClass *Type; FFlagDef *Defs; int NumDefs; } FlagLists[] =
+static const struct FFlagList { const PClass * const *Type; FFlagDef *Defs; int NumDefs; } FlagLists[] =
 {
-	{ RUNTIME_CLASS(AActor), 		ActorFlagDefs,		countof(ActorFlagDefs) },
-	{ RUNTIME_CLASS(AInventory), 	InventoryFlagDefs,	countof(InventoryFlagDefs) },
-	{ RUNTIME_CLASS(AWeapon), 		WeaponFlagDefs,		countof(WeaponFlagDefs) },
-	{ RUNTIME_CLASS(APlayerPawn),	PlayerPawnFlagDefs,	countof(PlayerPawnFlagDefs) },
-	{ RUNTIME_CLASS(APowerSpeed),	PowerSpeedFlagDefs,	countof(PowerSpeedFlagDefs) },
+	{ &RUNTIME_CLASS_CASTLESS(AActor), 		ActorFlagDefs,		countof(ActorFlagDefs) },
+	{ &RUNTIME_CLASS_CASTLESS(AInventory), 	InventoryFlagDefs,	countof(InventoryFlagDefs) },
+	{ &RUNTIME_CLASS_CASTLESS(AWeapon), 	WeaponFlagDefs,		countof(WeaponFlagDefs) },
+	{ &RUNTIME_CLASS_CASTLESS(APlayerPawn),	PlayerPawnFlagDefs,	countof(PlayerPawnFlagDefs) },
+	{ &RUNTIME_CLASS_CASTLESS(APowerSpeed),	PowerSpeedFlagDefs,	countof(PowerSpeedFlagDefs) },
 };
 #define NUM_FLAG_LISTS (countof(FlagLists))
 
@@ -430,7 +429,7 @@ FFlagDef *FindFlag (const PClass *type, const char *part1, const char *part2)
 	{ // Search all lists
 		for (i = 0; i < NUM_FLAG_LISTS; ++i)
 		{
-			if (type->IsDescendantOf (FlagLists[i].Type))
+			if (type->IsDescendantOf (*FlagLists[i].Type))
 			{
 				def = FindFlag (FlagLists[i].Defs, FlagLists[i].NumDefs, part1);
 				if (def != NULL)
@@ -444,9 +443,9 @@ FFlagDef *FindFlag (const PClass *type, const char *part1, const char *part2)
 	{ // Search just the named list
 		for (i = 0; i < NUM_FLAG_LISTS; ++i)
 		{
-			if (stricmp (FlagLists[i].Type->TypeName.GetChars(), part1) == 0)
+			if (stricmp ((*FlagLists[i].Type)->TypeName.GetChars(), part1) == 0)
 			{
-				if (type->IsDescendantOf (FlagLists[i].Type))
+				if (type->IsDescendantOf (*FlagLists[i].Type))
 				{
 					return FindFlag (FlagLists[i].Defs, FlagLists[i].NumDefs, part2);
 				}
@@ -469,7 +468,7 @@ FFlagDef *FindFlag (const PClass *type, const char *part1, const char *part2)
 
 const char *GetFlagName(unsigned int flagnum, int flagoffset)
 {
-	for(unsigned i = 0; i < countof(ActorFlagDefs); i++)
+	for(size_t i = 0; i < countof(ActorFlagDefs); i++)
 	{
 		if (ActorFlagDefs[i].flagbit == flagnum && ActorFlagDefs[i].structoffset == flagoffset)
 		{
@@ -542,53 +541,13 @@ AFuncDesc *FindFunction(const char * string)
 
 //==========================================================================
 //
-// Find a variable by name using a binary search
-//
-//==========================================================================
-
-FVariableInfo *FindVariable(const char * string, const PClass *cls)
-{
-	int min = 0, max = variables.Size()-1;
-
-	while (min <= max)
-	{
-		int mid = (min + max) / 2;
-		int lexval;
-		
-		if (cls < variables[mid]->owner) lexval = -1;
-		else if (cls > variables[mid]->owner) lexval = 1;
-		else lexval = stricmp (string, variables[mid]->name);
-
-		if (lexval == 0)
-		{
-			return variables[mid];
-		}
-		else if (lexval > 0)
-		{
-			min = mid + 1;
-		}
-		else
-		{
-			max = mid - 1;
-		}
-	}
-	return NULL;
-}
-
-
-//==========================================================================
-//
 // Find an action function in AActor's table
 //
 //==========================================================================
 
-PSymbolActionFunction *FindGlobalActionFunction(const char *name)
+PFunction *FindGlobalActionFunction(const char *name)
 {
-	PSymbol *sym = RUNTIME_CLASS(AActor)->Symbols.FindSymbol(name, false);
-	if (sym != NULL && sym->SymbolType == SYM_ActionFunction)
-		return static_cast<PSymbolActionFunction*>(sym);
-	else
-		return NULL;
+	return dyn_cast<PFunction>(RUNTIME_CLASS(AActor)->Symbols.FindSymbol(name, false));
 }
 
 
@@ -611,15 +570,6 @@ static int STACK_ARGS propcmp(const void * a, const void * b)
 static int STACK_ARGS funccmp(const void * a, const void * b)
 {
 	return stricmp( ((AFuncDesc*)a)->Name, ((AFuncDesc*)b)->Name);
-}
-
-static int STACK_ARGS varcmp(const void * a, const void * b)
-{
-	FVariableInfo *A = *(FVariableInfo**)a;
-	FVariableInfo *B = *(FVariableInfo**)b;
-	if (A->owner < B->owner) return -1;
-	if (A->owner > B->owner) return 1;
-	return stricmp(A->name, B->name);
 }
 
 //==========================================================================
@@ -650,29 +600,55 @@ void InitThingdef()
 	}
 
 	// Create a sorted list of native action functions
+	AFTable.Clear();
 	if (AFTable.Size() == 0)
 	{
 		FAutoSegIterator probe(ARegHead, ARegTail);
 
 		while (*++probe != NULL)
 		{
-			AFTable.Push(*(AFuncDesc *)*probe);
+			AFuncDesc *afunc = (AFuncDesc *)*probe;
+			assert(afunc->VMPointer != NULL);
+			*(afunc->VMPointer) = new VMNativeFunction(afunc->Function, afunc->Name);
+			AFTable.Push(*afunc);
 		}
 		AFTable.ShrinkToFit();
 		qsort(&AFTable[0], AFTable.Size(), sizeof(AFTable[0]), funccmp);
 	}
 
-	// Create a sorted list of native variables
-	if (variables.Size() == 0)
-	{
-		FAutoSegIterator probe(MRegHead, MRegTail);
-
-		while (*++probe != NULL)
-		{
-			variables.Push((FVariableInfo *)*probe);
-		}
-		variables.ShrinkToFit();
-		qsort(&variables[0], variables.Size(), sizeof(variables[0]), varcmp);
-	}
+	// Define some member variables we feel like exposing to the user
+	PSymbolTable &symt = RUNTIME_CLASS(AActor)->Symbols;
+	PType *array5 = NewArray(TypeSInt32, 5);
+	symt.AddSymbol(new PField(NAME_Alpha,		TypeFixed,	VARF_Native, myoffsetof(AActor,alpha)));
+	symt.AddSymbol(new PField(NAME_Angle,		TypeAngle,	VARF_Native, myoffsetof(AActor,angle)));
+	symt.AddSymbol(new PField(NAME_Args,		array5,		VARF_Native, myoffsetof(AActor,args)));
+	symt.AddSymbol(new PField(NAME_CeilingZ,	TypeFixed,	VARF_Native, myoffsetof(AActor,ceilingz)));
+	symt.AddSymbol(new PField(NAME_FloorZ,		TypeFixed,	VARF_Native, myoffsetof(AActor,floorz)));
+	symt.AddSymbol(new PField(NAME_Health,		TypeSInt32,	VARF_Native, myoffsetof(AActor,health)));
+	symt.AddSymbol(new PField(NAME_Mass,		TypeSInt32,	VARF_Native, myoffsetof(AActor,Mass)));
+	symt.AddSymbol(new PField(NAME_Pitch,		TypeAngle,	VARF_Native, myoffsetof(AActor,pitch)));
+	symt.AddSymbol(new PField(NAME_Roll,		TypeAngle,	VARF_Native, myoffsetof(AActor,roll)));
+	symt.AddSymbol(new PField(NAME_Special,		TypeSInt32,	VARF_Native, myoffsetof(AActor,special)));
+	symt.AddSymbol(new PField(NAME_TID,			TypeSInt32,	VARF_Native, myoffsetof(AActor,tid)));
+	symt.AddSymbol(new PField(NAME_TIDtoHate,	TypeSInt32,	VARF_Native, myoffsetof(AActor,TIDtoHate)));
+	symt.AddSymbol(new PField(NAME_WaterLevel,	TypeSInt32,	VARF_Native, myoffsetof(AActor,waterlevel)));
+	symt.AddSymbol(new PField(NAME_X,			TypeFixed,	VARF_Native, myoffsetof(AActor,__pos.x)));	// must remain read-only!
+	symt.AddSymbol(new PField(NAME_Y,			TypeFixed,	VARF_Native, myoffsetof(AActor,__pos.y)));	// must remain read-only!
+	symt.AddSymbol(new PField(NAME_Z,			TypeFixed,	VARF_Native, myoffsetof(AActor,__pos.z)));	// must remain read-only!
+	symt.AddSymbol(new PField(NAME_VelX,		TypeFixed,	VARF_Native, myoffsetof(AActor,velx)));
+	symt.AddSymbol(new PField(NAME_VelY,		TypeFixed,	VARF_Native, myoffsetof(AActor,vely)));
+	symt.AddSymbol(new PField(NAME_VelZ,		TypeFixed,	VARF_Native, myoffsetof(AActor,velz)));
+	symt.AddSymbol(new PField(NAME_MomX,		TypeFixed,	VARF_Native, myoffsetof(AActor,velx)));
+	symt.AddSymbol(new PField(NAME_MomY,		TypeFixed,	VARF_Native, myoffsetof(AActor,vely)));
+	symt.AddSymbol(new PField(NAME_MomZ,		TypeFixed,	VARF_Native, myoffsetof(AActor,velz)));
+	symt.AddSymbol(new PField(NAME_ScaleX,		TypeFixed,	VARF_Native, myoffsetof(AActor,scaleX)));
+	symt.AddSymbol(new PField(NAME_ScaleY,		TypeFixed,	VARF_Native, myoffsetof(AActor,scaleY)));
+	symt.AddSymbol(new PField(NAME_Score,		TypeSInt32,	VARF_Native, myoffsetof(AActor,Score)));
+	symt.AddSymbol(new PField(NAME_Accuracy,	TypeSInt32,	VARF_Native, myoffsetof(AActor,accuracy)));
+	symt.AddSymbol(new PField(NAME_Stamina,		TypeSInt32,	VARF_Native, myoffsetof(AActor,stamina)));
+	symt.AddSymbol(new PField(NAME_Height,		TypeFixed,	VARF_Native, myoffsetof(AActor,height)));
+	symt.AddSymbol(new PField(NAME_Radius,		TypeFixed,	VARF_Native, myoffsetof(AActor,radius)));
+	symt.AddSymbol(new PField(NAME_ReactionTime,TypeSInt32,	VARF_Native, myoffsetof(AActor,reactiontime)));
+	symt.AddSymbol(new PField(NAME_MeleeRange,	TypeFixed,	VARF_Native, myoffsetof(AActor,meleerange)));
+	symt.AddSymbol(new PField(NAME_Speed,		TypeFixed,	VARF_Native, myoffsetof(AActor,Speed)));
 }
-

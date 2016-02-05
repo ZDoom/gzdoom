@@ -47,12 +47,15 @@ bool AArtiTomeOfPower::Use (bool pickup)
 
 DEFINE_ACTION_FUNCTION(AActor, A_TimeBomb)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	self->AddZ(32*FRACUNIT, false);
 	self->PrevZ = self->Z();	// no interpolation!
 	self->RenderStyle = STYLE_Add;
 	self->alpha = FRACUNIT;
 	P_RadiusAttack (self, self->target, 128, 128, self->DamageType, RADF_HURTSOURCE);
 	P_CheckSplash(self, 128<<FRACBITS);
+	return 0;
 }
 
 class AArtiTimeBomb : public AInventory

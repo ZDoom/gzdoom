@@ -56,7 +56,7 @@
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="true"
 				WholeProgramOptimization="false"
-				AdditionalIncludeDirectories="src\win32;src\sound;src;zlib;src\g_shared;src\g_doom;src\g_raven;src\g_heretic;src\g_hexen;src\g_strife;&quot;jpeg-6b&quot;;&quot;game-music-emu&quot;;gdtoa;bzip2;lzma\C"
+				AdditionalIncludeDirectories="src\zscript;src\win32;src\sound;src;zlib;src\g_shared;src\g_doom;src\g_raven;src\g_heretic;src\g_hexen;src\g_strife;&quot;jpeg-6b&quot;;&quot;game-music-emu&quot;;gdtoa;bzip2;lzma\C"
 				PreprocessorDefinitions="NDEBUG,WIN32,_WIN32,_WINDOWS,HAVE_STRUPR,HAVE_FILELENGTH;NO_VA_COPY,BACKPATCH,HAVE_FLUIDSYNTH,DYN_FLUIDSYNTH,NO_OPENAL"
 				StringPooling="true"
 				ExceptionHandling="1"
@@ -180,7 +180,7 @@
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="true"
-				AdditionalIncludeDirectories="src\win32;src\sound;src;zlib;src\g_shared;src\g_doom;src\g_raven;src\g_heretic;src\g_hexen;src\g_strife;&quot;jpeg-6b&quot;;game-music-emu;gdtoa;bzip2;lzma\C"
+				AdditionalIncludeDirectories="src\zscript;src\win32;src\sound;src;zlib;src\g_shared;src\g_doom;src\g_raven;src\g_heretic;src\g_hexen;src\g_strife;&quot;jpeg-6b&quot;;game-music-emu;gdtoa;bzip2;lzma\C"
 				PreprocessorDefinitions="NDEBUG,WIN32,_WIN32,_WINDOWS,HAVE_STRUPR,HAVE_FILELENGTH;NO_VA_COPY,NO_OPENAL"
 				StringPooling="true"
 				RuntimeLibrary="0"
@@ -291,7 +291,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="src\win32;src\sound;src;zlib;src\g_shared;src\g_doom;src\g_raven;src\g_heretic;src\g_hexen;src\g_strife;&quot;jpeg-6b&quot;;&quot;game-music-emu&quot;;gdtoa;bzip2;lzma\C"
+				AdditionalIncludeDirectories="src\zscript;src\win32;src\sound;src;zlib;src\g_shared;src\g_doom;src\g_raven;src\g_heretic;src\g_hexen;src\g_strife;&quot;jpeg-6b&quot;;&quot;game-music-emu&quot;;gdtoa;bzip2;lzma\C"
 				PreprocessorDefinitions="WIN32,_DEBUG,_WIN32,_WINDOWS,_CRTDBG_MAP_ALLOC,HAVE_STRUPR,HAVE_FILELENGTH;NO_VA_COPY,BACKPATCH,HAVE_FLUIDSYNTH,DYN_FLUIDSYNTH,NO_OPENAL"
 				MinimalRebuild="true"
 				RuntimeLibrary="1"
@@ -400,7 +400,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="src\win32;src\sound;src;zlib;src\g_shared;src\g_doom;src\g_raven;src\g_heretic;src\g_hexen;src\g_strife;&quot;jpeg-6b&quot;;game-music-emu;gdtoa;bzip2;lzma\C"
+				AdditionalIncludeDirectories="src\zscript;src\win32;src\sound;src;zlib;src\g_shared;src\g_doom;src\g_raven;src\g_heretic;src\g_hexen;src\g_strife;&quot;jpeg-6b&quot;;game-music-emu;gdtoa;bzip2;lzma\C"
 				PreprocessorDefinitions="WIN32,_DEBUG,_WIN32,_WINDOWS,_CRTDBG_MAP_ALLOC,HAVE_STRUPR,HAVE_FILELENGTH;NO_VA_COPY,NO_OPENAL"
 				MinimalRebuild="true"
 				RuntimeLibrary="1"
@@ -3723,6 +3723,158 @@
 			</File>
 		</Filter>
 		<Filter
+			Name="ZScript"
+			>
+			<File
+				RelativePath=".\src\zscript\ast.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\zscript\vm.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\zscript\vmbuilder.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\zscript\vmbuilder.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\zscript\vmdisasm.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\zscript\vmexec.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\zscript\vmexec.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\zscript\vmframe.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\zscript\vmops.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\zscript\zcc-parse.c"
+				>
+				<FileConfiguration
+					Name="Release|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|x64"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\src\zscript\zcc-parse.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\zscript\zcc-parse.lemon"
+				>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Generating zcc-parse.c and zcc-parse.h..."
+						CommandLine="tools\lemon\lemon.exe &quot;$(InputPath)&quot;&#x0D;&#x0A;"
+						Outputs="$(InputDir)\zcc-parse.c;$(InputDir)\zcc-parse.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Generating zcc-parse.c and zcc-parse.h..."
+						CommandLine="tools\lemon\lemon.exe &quot;$(InputPath)&quot;&#x0D;&#x0A;"
+						Outputs="$(InputDir)\zcc-parse.c;$(InputDir)\zcc-parse.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Generating zcc-parse.c and zcc-parse.h..."
+						CommandLine="tools\lemon\lemon.exe &quot;$(InputPath)&quot;&#x0D;&#x0A;"
+						Outputs="$(InputDir)\zcc-parse.c;$(InputDir)\zcc-parse.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|x64"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Generating zcc-parse.c and zcc-parse.h..."
+						CommandLine="tools\lemon\lemon.exe &quot;$(InputPath)&quot;&#x0D;&#x0A;"
+						Outputs="$(InputDir)\zcc-parse.c;$(InputDir)\zcc-parse.h"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\src\zscript\zcc_compile.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\zscript\zcc_compile.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\zscript\zcc_errors.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\zscript\zcc_expr.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\zscript\zcc_exprlist.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\zscript\zcc_parser.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\zscript\zcc_parser.h"
+				>
+			</File>
+		</Filter>
+		<Filter
 			Name="Menu"
 			>
 			<File
@@ -3819,10 +3971,6 @@
 			</File>
 			<File
 				RelativePath=".\src\thingdef\thingdef_expression.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\src\thingdef\thingdef_function.cpp"
 				>
 			</File>
 			<File
@@ -6793,6 +6941,18 @@
 			</File>
 			<File
 				RelativePath=".\src\r_utility.h"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="Portals"
+			>
+			<File
+				RelativePath=".\src\portal.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\src\portal.h"
 				>
 			</File>
 		</Filter>

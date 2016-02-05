@@ -66,9 +66,11 @@ void AChickenPlayer::MorphPlayerThink ()
 
 DEFINE_ACTION_FUNCTION(AActor, A_ChicAttack)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (!self->target)
 	{
-		return;
+		return 0;
 	}
 	if (self->CheckMeleeRange())
 	{
@@ -76,6 +78,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ChicAttack)
 		int newdam = P_DamageMobj (self->target, self, self, damage, NAME_Melee);
 		P_TraceBleed (newdam > 0 ? newdam : damage, self->target, self);
 	}
+	return 0;
 }
 
 //----------------------------------------------------------------------------
@@ -86,6 +89,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_ChicAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_Feathers)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	int i;
 	int count;
 	AActor *mo;
@@ -107,6 +112,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Feathers)
 		mo->velz = FRACUNIT + (pr_feathers() << 9);
 		mo->SetState (mo->SpawnState + (pr_feathers()&7));
 	}
+	return 0;
 }
 
 //---------------------------------------------------------------------------
@@ -132,14 +138,17 @@ void P_UpdateBeak (AActor *self)
 
 DEFINE_ACTION_FUNCTION(AActor, A_BeakRaise)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	player_t *player;
 
 	if (NULL == (player = self->player))
 	{
-		return;
+		return 0;
 	}
 	player->psprites[ps_weapon].sy = WEAPONTOP;
 	P_SetPsprite (player, ps_weapon, player->ReadyWeapon->GetReadyState());
+	return 0;
 }
 
 //----------------------------------------------------------------------------
@@ -161,6 +170,8 @@ void P_PlayPeck (AActor *chicken)
 
 DEFINE_ACTION_FUNCTION(AActor, A_BeakAttackPL1)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	angle_t angle;
 	int damage;
 	int slope;
@@ -169,7 +180,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BeakAttackPL1)
 
 	if (NULL == (player = self->player))
 	{
-		return;
+		return 0;
 	}
 
 	damage = 1 + (pr_beakatkpl1()&3);
@@ -183,6 +194,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BeakAttackPL1)
 	P_PlayPeck (player->mo);
 	player->chickenPeck = 12;
 	player->psprites[ps_weapon].tics -= pr_beakatkpl1() & 7;
+	return 0;
 }
 
 //----------------------------------------------------------------------------
@@ -193,6 +205,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_BeakAttackPL1)
 
 DEFINE_ACTION_FUNCTION(AActor, A_BeakAttackPL2)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	angle_t angle;
 	int damage;
 	int slope;
@@ -201,7 +215,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BeakAttackPL2)
 
 	if (NULL == (player = self->player))
 	{
-		return;
+		return 0;
 	}
 
 	damage = pr_beakatkpl2.HitDice (4);
@@ -215,4 +229,5 @@ DEFINE_ACTION_FUNCTION(AActor, A_BeakAttackPL2)
 	P_PlayPeck (player->mo);
 	player->chickenPeck = 12;
 	player->psprites[ps_weapon].tics -= pr_beakatkpl2()&3;
+	return 0;
 }

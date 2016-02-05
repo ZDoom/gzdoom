@@ -18,13 +18,17 @@ static FRandom pr_spawnfly ("SpawnFly");
 
 DEFINE_ACTION_FUNCTION(AActor, A_BrainAwake)
 {
+	PARAM_ACTION_PROLOGUE;
 	// killough 3/26/98: only generates sound now
 	S_Sound (self, CHAN_VOICE, "brain/sight", 1, ATTN_NONE);
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_BrainPain)
 {
+	PARAM_ACTION_PROLOGUE;
 	S_Sound (self, CHAN_VOICE, "brain/pain", 1, ATTN_NONE);
+	return 0;
 }
 
 static void BrainishExplosion (fixed_t x, fixed_t y, fixed_t z)
@@ -35,16 +39,15 @@ static void BrainishExplosion (fixed_t x, fixed_t y, fixed_t z)
 		boom->DeathSound = "misc/brainexplode";
 		boom->velz = pr_brainscream() << 9;
 
-		const PClass *cls = PClass::FindClass("BossBrain");
+		PClassActor *cls = PClass::FindActor("BossBrain");
 		if (cls != NULL)
 		{
-			FState *state = cls->ActorInfo->FindState(NAME_Brainexplode);
+			FState *state = cls->FindState(NAME_Brainexplode);
 			if (state != NULL)
 				boom->SetState (state);
-
 		}
 		boom->effects = 0;
-		boom->Damage = 0;	// disables collision detection which is not wanted here
+		boom->Damage = NULL;	// disables collision detection which is not wanted here
 		boom->tics -= pr_brainscream() & 7;
 		if (boom->tics < 1)
 			boom->tics = 1;
@@ -53,6 +56,7 @@ static void BrainishExplosion (fixed_t x, fixed_t y, fixed_t z)
 
 DEFINE_ACTION_FUNCTION(AActor, A_BrainScream)
 {
+	PARAM_ACTION_PROLOGUE;
 	fixed_t x;
 		
 	for (x = self->X() - 196*FRACUNIT; x < self->X() + 320*FRACUNIT; x += 8*FRACUNIT)
@@ -61,20 +65,25 @@ DEFINE_ACTION_FUNCTION(AActor, A_BrainScream)
 			128 + (pr_brainscream() << (FRACBITS + 1)));
 	}
 	S_Sound (self, CHAN_VOICE, "brain/death", 1, ATTN_NONE);
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_BrainExplode)
 {
+	PARAM_ACTION_PROLOGUE;
 	fixed_t x = self->X() + pr_brainexplode.Random2()*2048;
 	fixed_t z = 128 + pr_brainexplode()*2*FRACUNIT;
 	BrainishExplosion (x, self->Y(), z);
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_BrainDie)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	// [RH] If noexit, then don't end the level.
 	if ((deathmatch || alwaysapplydmflags) && (dmflags & DF_NO_EXIT))
-		return;
+		return 0;
 
 	// New dmflag: Kill all boss spawned monsters before ending the level.
 	if (dmflags2 & DF2_KILLBOSSMONST)
@@ -98,17 +107,18 @@ DEFINE_ACTION_FUNCTION(AActor, A_BrainDie)
 	}
 
 	G_ExitLevel (0, false);
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BrainSpit)
 {
+	PARAM_ACTION_PROLOGUE;
+	PARAM_CLASS_OPT(spawntype, AActor) { spawntype = NULL; }
+
 	DSpotState *state = DSpotState::GetSpotState();
 	AActor *targ;
 	AActor *spit;
 	bool isdefault = false;
-
-	ACTION_PARAM_START(1);
-	ACTION_PARAM_CLASS(spawntype, 0);
 
 	// shoot a cube at current target
 	targ = state->GetNextInList(PClass::FindClass("BossTarget"), G_SkillProperty(SKILLP_EasyBossBrain));
@@ -117,7 +127,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BrainSpit)
 	{
 		if (spawntype == NULL) 
 		{
-			spawntype = PClass::FindClass("SpawnShot");
+			spawntype = PClass::FindActor("SpawnShot");
 			isdefault = true;
 		}
 
@@ -161,9 +171,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BrainSpit)
 			S_Sound (self, CHAN_WEAPON, "brain/spit", 1, ATTN_NONE);
 		}
 	}
+	return 0;
 }
 
-static void SpawnFly(AActor *self, const PClass *spawntype, FSoundID sound)
+static void SpawnFly(AActor *self, PClassActor *spawntype, FSoundID sound)
 {
 	AActor *newmobj;
 	AActor *fog;
@@ -191,8 +202,8 @@ static void SpawnFly(AActor *self, const PClass *spawntype, FSoundID sound)
 
 	FName SpawnName;
 
-	FDropItem *di;   // di will be our drop item list iterator
-	FDropItem *drop; // while drop stays as the reference point.
+	DDropItem *di;   // di will be our drop item list iterator
+	DDropItem *drop; // while drop stays as the reference point.
 	int n = 0;
 
 	// First see if this cube has its own actor list
@@ -208,11 +219,11 @@ static void SpawnFly(AActor *self, const PClass *spawntype, FSoundID sound)
 		{
 			if (di->Name != NAME_None)
 			{
-				if (di->amount < 0)
+				if (di->Amount < 0)
 				{
-					di->amount = 1; // default value is -1, we need a positive value.
+					di->Amount = 1; // default value is -1, we need a positive value.
 				}
-				n += di->amount; // this is how we can weight the list.
+				n += di->Amount; // this is how we can weight the list.
 			}
 		}
 		di = drop;
@@ -221,7 +232,7 @@ static void SpawnFly(AActor *self, const PClass *spawntype, FSoundID sound)
 		{
 			if (di->Name != NAME_None)
 			{
-				n -= di->amount; // logically, none of the -1 values have survived by now.
+				n -= di->Amount; // logically, none of the -1 values have survived by now.
 			}
 			if ((di->Next != NULL) && (n >= 0))
 			{
@@ -253,7 +264,7 @@ static void SpawnFly(AActor *self, const PClass *spawntype, FSoundID sound)
 		else if (r < 246) SpawnName = "HellKnight";
 		else			  SpawnName = "BaronOfHell";
 	}
-	spawntype = PClass::FindClass(SpawnName);
+	spawntype = PClass::FindActor(SpawnName);
 	if (spawntype != NULL)
 	{
 		newmobj = Spawn (spawntype, targ->Pos(), ALLOW_REPLACE);
@@ -287,10 +298,10 @@ static void SpawnFly(AActor *self, const PClass *spawntype, FSoundID sound)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnFly)
 {
-	FSoundID sound;
+	PARAM_ACTION_PROLOGUE;
+	PARAM_CLASS_OPT	(spawntype, AActor)	{ spawntype = NULL; }
 
-	ACTION_PARAM_START(1);
-	ACTION_PARAM_CLASS(spawntype, 0);
+	FSoundID sound;
 
 	if (spawntype != NULL) 
 	{
@@ -298,15 +309,18 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnFly)
 	}
 	else
 	{
-		spawntype = PClass::FindClass ("SpawnFire");
+		spawntype = PClass::FindActor("SpawnFire");
 		sound = "brain/spawn";
 	}
 	SpawnFly(self, spawntype, sound);
+	return 0;
 }
 
 // travelling cube sound
 DEFINE_ACTION_FUNCTION(AActor, A_SpawnSound)
 {
+	PARAM_ACTION_PROLOGUE;
 	S_Sound (self, CHAN_BODY, "brain/cube", 1, ATTN_IDLE);
-	SpawnFly(self, PClass::FindClass("SpawnFire"), "brain/spawn");
+	SpawnFly(self, PClass::FindActor("SpawnFire"), "brain/spawn");
+	return 0;
 }

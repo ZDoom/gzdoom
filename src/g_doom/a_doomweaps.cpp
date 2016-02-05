@@ -28,6 +28,8 @@ static FRandom pr_oldbfg ("OldBFG");
 //
 DEFINE_ACTION_FUNCTION(AActor, A_Punch)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	angle_t 	angle;
 	int 		damage;
 	int 		pitch;
@@ -39,7 +41,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Punch)
 		if (weapon != NULL && !(weapon->WeaponFlags & WIF_DEHAMMO) && ACTION_CALL_FROM_WEAPON())
 		{
 			if (!weapon->DepleteAmmo (weapon->bAltFire))
-				return;
+				return 0;
 		}
 	}
 
@@ -61,6 +63,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Punch)
 		S_Sound (self, CHAN_WEAPON, "*fist", 1, ATTN_NORM);
 		self->angle = self->AngleTo(linetarget);
 	}
+	return 0;
 }
 
 //
@@ -68,6 +71,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_Punch)
 //
 DEFINE_ACTION_FUNCTION(AActor, A_FirePistol)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	bool accurate;
 
 	if (self->player != NULL)
@@ -76,7 +81,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePistol)
 		if (weapon != NULL && ACTION_CALL_FROM_WEAPON())
 		{
 			if (!weapon->DepleteAmmo (weapon->bAltFire, true, 1))
-				return;
+				return 0;
 
 			P_SetPsprite (self->player, ps_flash, weapon->FindState(NAME_Flash));
 		}
@@ -91,7 +96,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePistol)
 
 	S_Sound (self, CHAN_WEAPON, "weapons/pistol", 1, ATTN_NORM);
 
-	P_GunShot (self, accurate, PClass::FindClass(NAME_BulletPuff), P_BulletSlope (self));
+	P_GunShot (self, accurate, PClass::FindActor(NAME_BulletPuff), P_BulletSlope (self));
+	return 0;
 }
 
 //
@@ -111,62 +117,70 @@ enum SAW_Flags
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 {
+	PARAM_ACTION_PROLOGUE;
+	PARAM_SOUND_OPT	(fullsound)			{ fullsound = "weapons/sawfull"; }
+	PARAM_SOUND_OPT	(hitsound)			{ hitsound = "weapons/sawhit"; }
+	PARAM_INT_OPT	(damage)			{ damage = 2; }
+	PARAM_CLASS_OPT	(pufftype, AActor)	{ pufftype = NULL; }
+	PARAM_INT_OPT	(flags)				{ flags = 0; }
+	PARAM_FIXED_OPT	(range)				{ range = 0; }
+	PARAM_ANGLE_OPT	(spread_xy)			{ spread_xy = angle_t(2.8125 * (ANGLE_90 / 90.0)); }
+	PARAM_ANGLE_OPT	(spread_z)			{ spread_z = 0; }
+	PARAM_FIXED_OPT	(lifesteal)			{ lifesteal = 0; }
+	PARAM_INT_OPT	(lifestealmax)		{ lifestealmax = 0; }
+	PARAM_CLASS_OPT	(armorbonustype, ABasicArmorBonus)	{ armorbonustype = NULL; }
+
 	angle_t angle;
 	angle_t slope;
 	player_t *player;
 	AActor *linetarget;
 	int actualdamage;
 
-	ACTION_PARAM_START(11);
-	ACTION_PARAM_SOUND(fullsound, 0);
-	ACTION_PARAM_SOUND(hitsound, 1);
-	ACTION_PARAM_INT(damage, 2);
-	ACTION_PARAM_CLASS(pufftype, 3);
-	ACTION_PARAM_INT(Flags, 4);
-	ACTION_PARAM_FIXED(Range, 5);
-	ACTION_PARAM_ANGLE(Spread_XY, 6);
-	ACTION_PARAM_ANGLE(Spread_Z, 7);
-	ACTION_PARAM_FIXED(LifeSteal, 8);
-	ACTION_PARAM_INT(lifestealmax, 9);
-	ACTION_PARAM_CLASS(armorbonustype, 10);
-
 	if (NULL == (player = self->player))
 	{
-		return;
+		return 0;
 	}
 
-	if (pufftype == NULL) pufftype = PClass::FindClass(NAME_BulletPuff);
-	if (damage == 0) damage = 2;
-
-	if (!(Flags & SF_NORANDOM))
+	if (pufftype == NULL)
+	{
+		pufftype = PClass::FindActor(NAME_BulletPuff);
+	}
+	if (damage == 0)
+	{
+		damage = 2;
+	}
+	if (!(flags & SF_NORANDOM))
+	{
 		damage *= (pr_saw()%10+1);
-	
-	// use meleerange + 1 so the puff doesn't skip the flash (i.e. plays all states)
-	if (Range == 0) Range = MELEERANGE+1;
+	}
+	if (range == 0)
+	{ // use meleerange + 1 so the puff doesn't skip the flash (i.e. plays all states)
+		range = MELEERANGE+1;
+	}
 
-	angle = self->angle + (pr_saw.Random2() * (Spread_XY / 255));
-	slope = P_AimLineAttack (self, angle, Range, &linetarget) + (pr_saw.Random2() * (Spread_Z / 255));
+	angle = self->angle + (pr_saw.Random2() * (spread_xy / 255));
+	slope = P_AimLineAttack (self, angle, range, &linetarget) + (pr_saw.Random2() * (spread_z / 255));
 
 	AWeapon *weapon = self->player->ReadyWeapon;
-	if ((weapon != NULL) && !(Flags & SF_NOUSEAMMO) && !(!linetarget && (Flags & SF_NOUSEAMMOMISS)) && !(weapon->WeaponFlags & WIF_DEHAMMO) && ACTION_CALL_FROM_WEAPON())
+	if ((weapon != NULL) && !(flags & SF_NOUSEAMMO) && !(!linetarget && (flags & SF_NOUSEAMMOMISS)) && !(weapon->WeaponFlags & WIF_DEHAMMO) && ACTION_CALL_FROM_WEAPON())
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
-			return;
+			return 0;
 	}
 
-	P_LineAttack (self, angle, Range, slope, damage, NAME_Melee, pufftype, false, &linetarget, &actualdamage);
+	P_LineAttack (self, angle, range, slope, damage, NAME_Melee, pufftype, false, &linetarget, &actualdamage);
 
 	if (!linetarget)
 	{
-		if ((Flags & SF_RANDOMLIGHTMISS) && (pr_saw() > 64))
+		if ((flags & SF_RANDOMLIGHTMISS) && (pr_saw() > 64))
 		{
 			player->extralight = !player->extralight;
 		}
 		S_Sound (self, CHAN_WEAPON, fullsound, 1, ATTN_NORM);
-		return;
+		return 0;
 	}
 
-	if (Flags & SF_RANDOMLIGHTHIT)
+	if (flags & SF_RANDOMLIGHTHIT)
 	{
 		int randVal = pr_saw();
 		if (randVal < 64)
@@ -183,16 +197,19 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 		}
 	}
 
-	if (LifeSteal && !(linetarget->flags5 & MF5_DONTDRAIN))
+	if (lifesteal && !(linetarget->flags5 & MF5_DONTDRAIN))
 	{
-		if (Flags & SF_STEALARMOR)
+		if (flags & SF_STEALARMOR)
 		{
-			if (!armorbonustype) armorbonustype = PClass::FindClass("ArmorBonus");
-
-			if (armorbonustype->IsDescendantOf (RUNTIME_CLASS(ABasicArmorBonus)))
+			if (armorbonustype == NULL)
 			{
-				ABasicArmorBonus *armorbonus = static_cast<ABasicArmorBonus *>(Spawn (armorbonustype, 0,0,0, NO_REPLACE));
-				armorbonus->SaveAmount *= (actualdamage * LifeSteal) >> FRACBITS;
+				armorbonustype = dyn_cast<ABasicArmorBonus::MetaClass>(PClass::FindClass("ArmorBonus"));
+			}
+			if (armorbonustype != NULL)
+			{
+				assert(armorbonustype->IsDescendantOf (RUNTIME_CLASS(ABasicArmorBonus)));
+				ABasicArmorBonus *armorbonus = static_cast<ABasicArmorBonus *>(Spawn(armorbonustype, 0,0,0, NO_REPLACE));
+				armorbonus->SaveAmount *= (actualdamage * lifesteal) >> FRACBITS;
 				armorbonus->MaxSaveAmount = lifestealmax <= 0 ? armorbonus->MaxSaveAmount : lifestealmax;
 				armorbonus->flags |= MF_DROPPED;
 				armorbonus->ClearCounters();
@@ -206,14 +223,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 
 		else
 		{
-			P_GiveBody (self, (actualdamage * LifeSteal) >> FRACBITS, lifestealmax);
+			P_GiveBody (self, (actualdamage * lifesteal) >> FRACBITS, lifestealmax);
 		}
 	}
 
 	S_Sound (self, CHAN_WEAPON, hitsound, 1, ATTN_NORM);
 		
 	// turn to face target
-	if (!(Flags & SF_NOTURN))
+	if (!(flags & SF_NOTURN))
 	{
 		angle = self->AngleTo(linetarget);
 		if (angle - self->angle > ANG180)
@@ -231,8 +248,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 				self->angle += ANG90 / 20;
 		}
 	}
-	if (!(Flags & SF_NOPULLIN))
+	if (!(flags & SF_NOPULLIN))
 		self->flags |= MF_JUSTATTACKED;
+	return 0;
 }
 
 //
@@ -240,12 +258,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 //
 DEFINE_ACTION_FUNCTION(AActor, A_FireShotgun)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	int i;
 	player_t *player;
 
 	if (NULL == (player = self->player))
 	{
-		return;
+		return 0;
 	}
 
 	S_Sound (self, CHAN_WEAPON,  "weapons/shotgf", 1, ATTN_NORM);
@@ -253,15 +273,18 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireShotgun)
 	if (weapon != NULL && ACTION_CALL_FROM_WEAPON())
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire, true, 1))
-			return;
+			return 0;
 		P_SetPsprite (player, ps_flash, weapon->FindState(NAME_Flash));
 	}
 	player->mo->PlayAttacking2 ();
 
 	angle_t pitch = P_BulletSlope (self);
 
-	for (i=0 ; i<7 ; i++)
-		P_GunShot (self, false, PClass::FindClass(NAME_BulletPuff), pitch);
+	for (i = 0; i < 7; i++)
+	{
+		P_GunShot (self, false, PClass::FindActor(NAME_BulletPuff), pitch);
+	}
+	return 0;
 }
 
 //
@@ -269,6 +292,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireShotgun)
 //
 DEFINE_ACTION_FUNCTION(AActor, A_FireShotgun2)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	int 		i;
 	angle_t 	angle;
 	int 		damage;
@@ -276,7 +301,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireShotgun2)
 
 	if (NULL == (player = self->player))
 	{
-		return;
+		return 0;
 	}
 
 	S_Sound (self, CHAN_WEAPON, "weapons/sshotf", 1, ATTN_NORM);
@@ -284,7 +309,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireShotgun2)
 	if (weapon != NULL && ACTION_CALL_FROM_WEAPON())
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire, true, 2))
-			return;
+			return 0;
 		P_SetPsprite (player, ps_flash, weapon->FindState(NAME_Flash));
 	}
 	player->mo->PlayAttacking2 ();
@@ -310,22 +335,29 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireShotgun2)
 					  pitch + (pr_fireshotgun2.Random2() * 332063), damage,
 					  NAME_Hitscan, NAME_BulletPuff);
 	}
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_OpenShotgun2)
 {
+	PARAM_ACTION_PROLOGUE;
 	S_Sound (self, CHAN_WEAPON, "weapons/sshoto", 1, ATTN_NORM);
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_LoadShotgun2)
 {
+	PARAM_ACTION_PROLOGUE;
 	S_Sound (self, CHAN_WEAPON, "weapons/sshotl", 1, ATTN_NORM);
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_CloseShotgun2)
 {
+	PARAM_ACTION_PROLOGUE;
 	S_Sound (self, CHAN_WEAPON, "weapons/sshotc", 1, ATTN_NORM);
 	A_ReFire (self);
+	return 0;
 }
 
 
@@ -341,15 +373,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_CloseShotgun2)
 void P_SetSafeFlash(AWeapon *weapon, player_t *player, FState *flashstate, int index)
 {
 
-	const PClass * cls = weapon->GetClass();
+	PClassActor *cls = weapon->GetClass();
 	while (cls != RUNTIME_CLASS(AWeapon))
 	{
-		FActorInfo * info = cls->ActorInfo;
-		if (flashstate >= info->OwnedStates && flashstate < info->OwnedStates + info->NumOwnedStates)
+		if (flashstate >= cls->OwnedStates && flashstate < cls->OwnedStates + cls->NumOwnedStates)
 		{
 			// The flash state belongs to this class.
 			// Now let's check if the actually wanted state does also
-			if (flashstate+index < info->OwnedStates + info->NumOwnedStates)
+			if (flashstate + index < cls->OwnedStates + cls->NumOwnedStates)
 			{
 				// we're ok so set the state
 				P_SetPsprite (player, ps_flash, flashstate + index);
@@ -363,7 +394,7 @@ void P_SetSafeFlash(AWeapon *weapon, player_t *player, FState *flashstate, int i
 			}
 		}
 		// try again with parent class
-		cls = cls->ParentClass;
+		cls = static_cast<PClassActor *>(cls->ParentClass);
 	}
 	// if we get here the state doesn't seem to belong to any class in the inheritance chain
 	// This can happen with Dehacked if the flash states are remapped. 
@@ -382,18 +413,20 @@ void P_SetSafeFlash(AWeapon *weapon, player_t *player, FState *flashstate, int i
 //
 DEFINE_ACTION_FUNCTION(AActor, A_FireCGun)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	player_t *player;
 
 	if (self == NULL || NULL == (player = self->player))
 	{
-		return;
+		return 0;
 	}
 
 	AWeapon *weapon = player->ReadyWeapon;
 	if (weapon != NULL && ACTION_CALL_FROM_WEAPON())
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire, true, 1))
-			return;
+			return 0;
 		
 		S_Sound (self, CHAN_WEAPON, "weapons/chngun", 1, ATTN_NORM);
 
@@ -416,7 +449,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireCGun)
 	}
 	player->mo->PlayAttacking2 ();
 
-	P_GunShot (self, !player->refire, PClass::FindClass(NAME_BulletPuff), P_BulletSlope (self));
+	P_GunShot (self, !player->refire, PClass::FindActor(NAME_BulletPuff), P_BulletSlope (self));
+	return 0;
 }
 
 //
@@ -424,19 +458,22 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireCGun)
 //
 DEFINE_ACTION_FUNCTION(AActor, A_FireMissile)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	player_t *player;
 
 	if (NULL == (player = self->player))
 	{
-		return;
+		return 0;
 	}
 	AWeapon *weapon = self->player->ReadyWeapon;
 	if (weapon != NULL && ACTION_CALL_FROM_WEAPON())
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire, true, 1))
-			return;
+			return 0;
 	}
-	P_SpawnPlayerMissile (self, PClass::FindClass("Rocket"));
+	P_SpawnPlayerMissile (self, PClass::FindActor("Rocket"));
+	return 0;
 }
 
 //
@@ -444,20 +481,23 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMissile)
 //
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireSTGrenade)
 {
+	PARAM_ACTION_PROLOGUE;
+	PARAM_CLASS_OPT(grenade, AActor)	{ grenade = PClass::FindActor("Grenade"); }
+
 	player_t *player;
-	ACTION_PARAM_START(1);
-	ACTION_PARAM_CLASS(grenade, 0);
-	if (grenade == NULL) return;
+
+	if (grenade == NULL)
+		return 0;
 
 	if (NULL == (player = self->player))
 	{
-		return;
+		return 0;
 	}
 	AWeapon *weapon = self->player->ReadyWeapon;
 	if (weapon != NULL && ACTION_CALL_FROM_WEAPON())
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
-			return;
+			return 0;
 	}
 		
 	// Temporarily raise the pitch to send the grenade slightly upwards
@@ -465,6 +505,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireSTGrenade)
 	self->pitch -= (1152 << FRACBITS);
 	P_SpawnPlayerMissile(self, grenade);
 	self->pitch = SavedPlayerPitch;
+	return 0;
 }
 
 //
@@ -472,17 +513,19 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireSTGrenade)
 //
 DEFINE_ACTION_FUNCTION(AActor, A_FirePlasma)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	player_t *player;
 
 	if (NULL == (player = self->player))
 	{
-		return;
+		return 0;
 	}
 	AWeapon *weapon = self->player->ReadyWeapon;
 	if (weapon != NULL && ACTION_CALL_FROM_WEAPON())
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire, true, 1))
-			return;
+			return 0;
 
 		FState *flash = weapon->FindState(NAME_Flash);
 		if (flash != NULL)
@@ -491,7 +534,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePlasma)
 		}
 	}
 
-	P_SpawnPlayerMissile (self, PClass::FindClass("PlasmaBall"));
+	P_SpawnPlayerMissile (self, PClass::FindActor("PlasmaBall"));
+	return 0;
 }
 
 //
@@ -528,22 +572,29 @@ static void FireRailgun(AActor *self, int offset_xy, bool fromweapon)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireRailgun)
 {
+	PARAM_ACTION_PROLOGUE;
 	FireRailgun(self, 0, ACTION_CALL_FROM_WEAPON());
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireRailgunRight)
 {
+	PARAM_ACTION_PROLOGUE;
 	FireRailgun(self, 10, ACTION_CALL_FROM_WEAPON());
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireRailgunLeft)
 {
+	PARAM_ACTION_PROLOGUE;
 	FireRailgun(self, -10, ACTION_CALL_FROM_WEAPON());
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_RailWait)
 {
 	// Okay, this was stupid. Just use a NULL function instead of this.
+	return 0;
 }
 
 //
@@ -552,21 +603,24 @@ DEFINE_ACTION_FUNCTION(AActor, A_RailWait)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireBFG)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	player_t *player;
 
 	if (NULL == (player = self->player))
 	{
-		return;
+		return 0;
 	}
 
 	AWeapon *weapon = self->player->ReadyWeapon;
 	if (weapon != NULL && ACTION_CALL_FROM_WEAPON())
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire, true, deh.BFGCells))
-			return;
+			return 0;
 	}
 
-	P_SpawnPlayerMissile (self,  0, 0, 0, PClass::FindClass("BFGBall"), self->angle, NULL, NULL, !!(dmflags2 & DF2_NO_FREEAIMBFG));
+	P_SpawnPlayerMissile (self,  0, 0, 0, PClass::FindActor("BFGBall"), self->angle, NULL, NULL, !!(dmflags2 & DF2_NO_FREEAIMBFG));
+	return 0;
 }
 
 
@@ -576,22 +630,22 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireBFG)
 //
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BFGSpray)
 {
+	PARAM_ACTION_PROLOGUE;
+	PARAM_CLASS_OPT	(spraytype, AActor)		{ spraytype = NULL; }
+	PARAM_INT_OPT	(numrays)				{ numrays = 40; }
+	PARAM_INT_OPT	(damagecnt)				{ damagecnt = 15; }
+	PARAM_ANGLE_OPT	(angle)					{ angle = ANGLE_90; }
+	PARAM_FIXED_OPT	(distance)				{ distance = 16*64*FRACUNIT; }
+	PARAM_ANGLE_OPT	(vrange)				{ vrange = 32*FRACUNIT; }
+	PARAM_INT_OPT	(defdamage)				{ defdamage = 0; }
+
 	int 				i;
 	int 				j;
 	int 				damage;
 	angle_t 			an;
 	AActor				*linetarget;
 
-	ACTION_PARAM_START(7);
-	ACTION_PARAM_CLASS(spraytype, 0);
-	ACTION_PARAM_INT(numrays, 1);
-	ACTION_PARAM_INT(damagecnt, 2);
-	ACTION_PARAM_ANGLE(angle, 3);
-	ACTION_PARAM_FIXED(distance, 4);
-	ACTION_PARAM_ANGLE(vrange, 5);
-	ACTION_PARAM_INT(defdamage, 6);
-
-	if (spraytype == NULL) spraytype = PClass::FindClass("BFGExtra");
+	if (spraytype == NULL) spraytype = PClass::FindActor("BFGExtra");
 	if (numrays <= 0) numrays = 40;
 	if (damagecnt <= 0) damagecnt = 15;
 	if (angle == 0) angle = ANG90;
@@ -600,7 +654,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BFGSpray)
 
 	// [RH] Don't crash if no target
 	if (!self->target)
-		return;
+		return 0;
 
 	// offset angles from its attack angle
 	for (i = 0; i < numrays; i++)
@@ -646,6 +700,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BFGSpray)
 			P_TraceBleed(newdam > 0 ? newdam : damage, linetarget, self->target);
 		}
 	}
+	return 0;
 }
 
 //
@@ -653,7 +708,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BFGSpray)
 //
 DEFINE_ACTION_FUNCTION(AActor, A_BFGsound)
 {
+	PARAM_ACTION_PROLOGUE;
 	S_Sound (self, CHAN_WEAPON, "weapons/bfgf", 1, ATTN_NORM);
+	return 0;
 }
 
 //
@@ -667,7 +724,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_BFGsound)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireOldBFG)
 {
-	const PClass * plasma[] = {PClass::FindClass("PlasmaBall1"), PClass::FindClass("PlasmaBall2")};
+	PARAM_ACTION_PROLOGUE;
+	PClassActor *plasma[] = { PClass::FindActor("PlasmaBall1"), PClass::FindActor("PlasmaBall2") };
 	AActor * mo = NULL;
 
 	player_t *player;
@@ -675,7 +733,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireOldBFG)
 
 	if (NULL == (player = self->player))
 	{
-		return;
+		return 0;
 	}
 
 	AWeapon *weapon = self->player->ReadyWeapon;
@@ -683,7 +741,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireOldBFG)
 	if (weapon != NULL)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire, true, 1))
-			return;
+			return 0;
 
 		doesautoaim = !(weapon->WeaponFlags & WIF_NOAUTOAIM);
 		weapon->WeaponFlags |= WIF_NOAUTOAIM; // No autoaiming that gun
@@ -702,5 +760,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireOldBFG)
 		self->angle = SavedPlayerAngle;
 		self->pitch = SavedPlayerPitch;
     }
-	if (doesautoaim && weapon != NULL) weapon->WeaponFlags &= ~WIF_NOAUTOAIM; // Restore autoaim setting
+	if (doesautoaim && weapon != NULL)
+	{ // Restore autoaim setting
+		weapon->WeaponFlags &= ~WIF_NOAUTOAIM;
+	}
+	return 0;
 }

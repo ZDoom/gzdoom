@@ -47,7 +47,7 @@ bool PClass::bShutdown;
 // A harmless non-NULL FlatPointer for classes without pointers.
 static const size_t TheEnd = ~(size_t)0;
 
-static int STACK_ARGS cregcmp (const void *a, const void *b)
+static int STACK_ARGS cregcmp (const void *a, const void *b) NO_SANITIZE
 {
 	// VC++ introduces NULLs in the sequence. GCC seems to work as expected and not do it.
 	const ClassReg *class1 = *(const ClassReg **)a;

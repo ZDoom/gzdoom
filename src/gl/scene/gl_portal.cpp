@@ -899,7 +899,7 @@ void GLMirrorPortal::DrawContents()
 
 int GLMirrorPortal::ClipSeg(seg_t *seg) 
 { 
-	we cannot use P_PointOnLineSide here because it loses the special meaning of 0 == 'on the line'.
+	//we cannot use P_PointOnLineSide here because it loses the special meaning of 0 == 'on the line'.
 	int side1 = DMulScale32(seg->v1->y - linedef->v1->y, linedef->dx, linedef->v1->x - seg->v1->x, linedef->dy);
 	int side2 = DMulScale32(seg->v2->y - linedef->v1->y, linedef->dx, linedef->v1->x - seg->v2->x, linedef->dy);
 

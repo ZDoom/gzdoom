@@ -3484,6 +3484,21 @@ ExpEmit FxIfStatement::Emit(VMFunctionBuilder *build, bool tailcall)
 //
 //==========================================================================
 
+FxReturnStatement::FxReturnStatement(const FScriptPosition &pos)
+: FxTailable(pos)
+{
+}
+
+ExpEmit FxReturnStatement::Emit(VMFunctionBuilder *build, bool tailcall)
+{
+	build->Emit(OP_RET, RET_FINAL, REGT_NIL, 0);
+	return ExpEmit();
+}
+
+//==========================================================================
+//
+//==========================================================================
+
 FxClassTypeCast::FxClassTypeCast(const PClass *dtype, FxExpression *x)
 : FxExpression(x->ScriptPosition)
 {

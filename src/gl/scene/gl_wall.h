@@ -163,7 +163,7 @@ public:
 private:
 
 	void CheckGlowing();
-	void PutWall(sector_t *sec, bool translucent);
+	void PutWall(bool translucent);
 	void PutPortal(int ptype);
 	void CheckTexturePosition();
 

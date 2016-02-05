@@ -96,7 +96,7 @@ void GLWall::CheckGlowing()
 // 
 //
 //==========================================================================
-void GLWall::PutWall(sector_t *sec, bool translucent)
+void GLWall::PutWall(bool translucent)
 {
 	int list;
 
@@ -232,7 +232,7 @@ void GLWall::Put3DWall(lightlist_t * lightlist, bool translucent)
 	// relative light won't get changed here. It is constant across the entire wall.
 
 	Colormap.CopyFrom3DLight(lightlist);
-	PutWall(NULL, translucent);
+	PutWall(translucent);
 }
 
 //==========================================================================
@@ -304,7 +304,7 @@ void GLWall::SplitWall(sector_t * frontsector, bool translucent)
 			{
 				// Use hardware clipping if this cannot be done cleanly.
 				this->lightlist = &lightlist;
-				PutWall(frontsector, translucent);
+				PutWall(translucent);
 				goto out;
 			}
 
@@ -391,7 +391,7 @@ bool GLWall::DoHorizon(seg_t * seg,sector_t * fs, vertex_t * v1,vertex_t * v2)
 			PutPortal(PORTALTYPE_HORIZON);
 		}
 		ztop[1] = ztop[0] = zbottom[0];
-	}
+	} 
 
 	if (viewz > fs->GetPlaneTexZ(sector_t::floor))
 	{
@@ -644,7 +644,7 @@ void GLWall::DoTexture(int _type,seg_t * seg, int peg,
 		// Add this wall to the render list
 		sector_t * sec = sub? sub->sector : seg->frontsector;
 
-		if (sec->e->XFloor.lightlist.Size()==0 || gl_fixedcolormap) PutWall(sec, false);
+		if (sec->e->XFloor.lightlist.Size()==0 || gl_fixedcolormap) PutWall(false);
 		else SplitWall(sec, false);
 	}
 
@@ -846,7 +846,7 @@ void GLWall::DoMidTexture(seg_t * seg, bool drawfogboundary,
 		type=RENDERWALL_FOGBOUNDARY;
 		FMaterial *savetex = gltexture;
 		gltexture = NULL;
-		PutWall(seg->frontsector, true);
+		PutWall(true);
 		if (!savetex) 
 		{
 			flags &= ~(GLWF_NOSPLITUPPER|GLWF_NOSPLITLOWER);
@@ -937,7 +937,7 @@ void GLWall::DoMidTexture(seg_t * seg, bool drawfogboundary,
 				// Draw the stuff
 				//
 				//
-				if (realfront->e->XFloor.lightlist.Size()==0 || gl_fixedcolormap) split.PutWall(realfront, translucent);
+				if (realfront->e->XFloor.lightlist.Size()==0 || gl_fixedcolormap) split.PutWall(translucent);
 				else split.SplitWall(realfront, translucent);
 
 				t=1;
@@ -951,7 +951,7 @@ void GLWall::DoMidTexture(seg_t * seg, bool drawfogboundary,
 			// Draw the stuff without splitting
 			//
 			//
-			if (realfront->e->XFloor.lightlist.Size()==0 || gl_fixedcolormap) PutWall(realfront, translucent);
+			if (realfront->e->XFloor.lightlist.Size()==0 || gl_fixedcolormap) PutWall(translucent);
 			else SplitWall(realfront, translucent);
 		}
 		alpha=1.0f;
@@ -1063,7 +1063,7 @@ void GLWall::BuildFFBlock(seg_t * seg, F3DFloor * rover,
 	
 	sector_t * sec = sub? sub->sector : seg->frontsector;
 
-	if (sec->e->XFloor.lightlist.Size()==0 || gl_fixedcolormap) PutWall(sec, translucent);
+	if (sec->e->XFloor.lightlist.Size()==0 || gl_fixedcolormap) PutWall(translucent);
 	else SplitWall(sec, translucent);
 
 	alpha=1.0f;
@@ -1693,7 +1693,7 @@ void GLWall::ProcessLowerMiniseg(seg_t *seg, sector_t * frontsector, sector_t * 
 			type = RENDERWALL_BOTTOM;
 			gltexture->GetTexCoordInfo(&tci, FRACUNIT, FRACUNIT);
 			SetWallCoordinates(seg, &tci, FIXED2FLOAT(bfh), bfh, bfh, ffh, ffh, 0);
-			PutWall(seg->frontsector, false);
+			PutWall(false);
 		}
 	}
 }

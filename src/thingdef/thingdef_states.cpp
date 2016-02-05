@@ -386,6 +386,12 @@ FxTailable *ParseActions(FScanner &sc, FState state, FString statestring, Baggag
 			}
 			add = new FxIfStatement(cond, true_part, false_part, sc);
 		}
+		else if (sc.Compare("return"))
+		{ // Handle a return statement
+			sc.MustGetStringName(";");
+			sc.MustGetString();
+			add = new FxReturnStatement(sc);
+		}
 		else
 		{ // Handle a regular action function call
 			add = ParseAction(sc, state, statestring, bag);

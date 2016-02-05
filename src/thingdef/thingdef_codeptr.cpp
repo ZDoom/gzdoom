@@ -676,7 +676,7 @@ static void DoJump(AActor *self, AActor *stateowner, FState *callingstate, FStat
 	{
 		P_SetPsprite(self->player, ps_flash, jumpto);
 	}
-	else if (callingstate == self->state)
+	else if (callingstate == self->state || (self->ObjectFlags & OF_StateChanged))
 	{
 		// Rather than using self->SetState(jumpto) to set the state,
 		// set the state directly. Since this function is only called by

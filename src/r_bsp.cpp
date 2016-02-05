@@ -56,6 +56,7 @@
 #include "r_sky.h"
 #include "po_man.h"
 #include "r_data/colormaps.h"
+#include "portal.h"
 
 seg_t*			curline;
 side_t* 		sidedef;
@@ -98,8 +99,8 @@ static BYTE		FakeSide;
 
 int WindowLeft, WindowRight;
 WORD MirrorFlags;
-seg_t *ActiveWallMirror;
-TArray<size_t> WallMirrors;
+TArray<PortalDrawseg> WallPortals;
+
 
 static subsector_t *InSubsector;
 
@@ -553,6 +554,11 @@ void R_AddLine (seg_t *line)
 		return;
 	}
 
+	// reject lines that aren't seen from the portal (if any)
+	// [ZZ] 10.01.2016: lines inside a skybox shouldn't be clipped, although this imposes some limitations on portals in skyboxes.
+	if (!CurrentPortalInSkybox && CurrentPortal && P_ClipLineToPortal(line->linedef, CurrentPortal->dst, viewx, viewy))
+		return;
+
 	vertex_t *v1, *v2;
 
 	v1 = line->linedef->v1;
@@ -584,7 +590,7 @@ void R_AddLine (seg_t *line)
 	rw_havehigh = rw_havelow = false;
 
 	// Single sided line?
-	if (backsector == NULL)
+	if (backsector == NULL || (line->linedef->portal && line->sidedef == line->linedef->sidedef[0]))
 	{
 		solid = true;
 	}

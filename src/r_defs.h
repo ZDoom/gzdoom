@@ -988,10 +988,14 @@ struct line_t
 	sector_t	*frontsector, *backsector;
 	int 		validcount;	// if == validcount, already checked
 	int			locknumber;	// [Dusk] lock number for special
+	line_t		*portal_dst;
+	bool		portal;
+	bool		portal_mirror;
+	bool		portal_passive;
 
 	bool isLinePortal() const
 	{
-		return false;
+		return portal;
 	}
 };
 

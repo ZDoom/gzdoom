@@ -68,6 +68,7 @@
 #include "po_man.h"
 #include "r_renderer.h"
 #include "r_data/colormaps.h"
+#include "portal.h"
 
 #include "fragglescript/t_fs.h"
 
@@ -1959,6 +1960,11 @@ void P_SetLineID (int i, line_t *ld)
 		case Static_Init:
 			if (ld->args[1] == Init_SectorLink) setid = ld->args[0];
 			break;
+
+		case Line_SetPortal:
+		case Line_SetVisualPortal:
+			setid = ld->args[1]; // 0 = target id, 1 = this id, 2 = plane anchor
+			break;
 		}
 		if (setid != -1)
 		{
@@ -2059,6 +2065,9 @@ void P_FinishLoadingLineDef(line_t *ld, int alpha)
 		ld->special = 0;
 		break;
 	}
+
+	// [ZZ] check initial portal link
+	P_CheckPortal(ld);
 }
 // killough 4/4/98: delay using sidedefs until they are loaded
 void P_FinishLoadingLineDefs ()

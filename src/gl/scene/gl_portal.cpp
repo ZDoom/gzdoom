@@ -937,9 +937,12 @@ void GLMirrorPortal::DrawContents()
 
 int GLMirrorPortal::ClipSeg(seg_t *seg) 
 { 
+	we cannot use P_PointOnLineSide here because it loses the special meaning of 0 == 'on the line'.
+	int side1 = DMulScale32(seg->v1->y - linedef->v1->y, linedef->dx, linedef->v1->x - seg->v1->x, linedef->dy);
+	int side2 = DMulScale32(seg->v2->y - linedef->v1->y, linedef->dx, linedef->v1->x - seg->v2->x, linedef->dy);
+
+	if (side1 >= 0 && side2 >= 0)
 	// this seg is completely behind the mirror.
-	if (P_PointOnLineSide(seg->v1->x, seg->v1->y, linedef) &&
-		P_PointOnLineSide(seg->v2->x, seg->v2->y, linedef)) 
 	{
 		return PClip_InFront;
 	}

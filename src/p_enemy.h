@@ -61,7 +61,6 @@ void A_Weave(AActor *self, int xyspeed, int zspeed, fixed_t xydist, fixed_t zdis
 void A_Unblock(AActor *self, bool drop);
 
 DECLARE_ACTION(A_Look)
-DECLARE_ACTION(A_Wander)
 DECLARE_ACTION(A_BossDeath)
 DECLARE_ACTION(A_Pain)
 DECLARE_ACTION(A_MonsterRail)
@@ -71,6 +70,7 @@ DECLARE_ACTION(A_FreezeDeath)
 DECLARE_ACTION(A_FreezeDeathChunks)
 void A_BossDeath(AActor *self);
 
+void A_Wander(AActor *self, int flags = 0);
 void A_Chase(VMFrameStack *stack, AActor *self);
 void A_FaceTarget(AActor *actor);
 void A_Face(AActor *self, AActor *other, angle_t max_turn = 0, angle_t max_pitch = ANGLE_270, angle_t ang_offset = 0, angle_t pitch_offset = 0, int flags = 0, fixed_t z_add = 0);

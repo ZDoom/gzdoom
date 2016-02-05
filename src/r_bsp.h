@@ -107,8 +107,6 @@ extern size_t			FirstInterestingDrawseg;
 extern int			WindowLeft, WindowRight;
 extern WORD			MirrorFlags;
 
-extern TArray<PortalDrawseg> WallPortals;
-
 typedef void (*drawfunc_t) (int start, int stop);
 
 EXTERN_CVAR (Bool, r_drawflat)		// [RH] Don't texture segs?

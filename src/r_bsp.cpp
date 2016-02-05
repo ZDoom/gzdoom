@@ -99,7 +99,7 @@ static BYTE		FakeSide;
 
 int WindowLeft, WindowRight;
 WORD MirrorFlags;
-TArray<PortalDrawseg> WallPortals;
+TArray<PortalDrawseg> WallPortals(1000);	// note: this array needs to go away as reallocation can cause crashes.
 
 
 static subsector_t *InSubsector;
@@ -590,7 +590,7 @@ void R_AddLine (seg_t *line)
 	rw_havehigh = rw_havelow = false;
 
 	// Single sided line?
-	if (backsector == NULL || (line->linedef->portal && line->sidedef == line->linedef->sidedef[0]))
+	if (backsector == NULL || (line->linedef->isVisualPortal() && line->sidedef == line->linedef->sidedef[0]))
 	{
 		solid = true;
 	}

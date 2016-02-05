@@ -6,97 +6,35 @@
 #include "c_cvars.h"
 #include "m_bbox.h"
 #include "p_tags.h"
+#include "farchive.h"
 
 // simulation recurions maximum
 CVAR(Int, sv_portal_recursions, 4, CVAR_ARCHIVE|CVAR_SERVERINFO)
 
-PortalDrawseg* CurrentPortal = NULL;
-int CurrentPortalUniq = 0;
-bool CurrentPortalInSkybox = false;
+TArray<FLinePortal> linePortals;
 
-// [ZZ] lots of floats here to avoid overflowing a lot
-bool R_IntersectLines(fixed_t o1x, fixed_t o1y, fixed_t p1x, fixed_t p1y,
-				      fixed_t o2x, fixed_t o2y, fixed_t p2x, fixed_t p2y,
-				      fixed_t& rx, fixed_t& ry)
+
+FArchive &operator<< (FArchive &arc, FLinePortal &port)
 {
-	float xx = FIXED2FLOAT(o2x) - FIXED2FLOAT(o1x);
-	float xy = FIXED2FLOAT(o2y) - FIXED2FLOAT(o1y);
-
-	float d1x = FIXED2FLOAT(p1x) - FIXED2FLOAT(o1x);
-	float d1y = FIXED2FLOAT(p1y) - FIXED2FLOAT(o1y);
-
-	if (d1x > d1y)
-	{
-		d1y = d1y / d1x * 32767.0f;
-		d1x = 32767.0;
-	}
-	else
-	{
-		d1x = d1x / d1y * 32767.0f;
-		d1y = 32767.0;
-	}
-
-	float d2x = FIXED2FLOAT(p2x) - FIXED2FLOAT(o2x);
-	float d2y = FIXED2FLOAT(p2y) - FIXED2FLOAT(o2y);
-
-	float cross = d1x*d2y - d1y*d2x;
-	if (fabs(cross) < 1e-8)
-		return false;
-
-	float t1 = (xx * d2y - xy * d2x)/cross;
-	rx = o1x + FLOAT2FIXED(d1x * t1);
-	ry = o1y + FLOAT2FIXED(d1y * t1);
-	return true;
+	arc << port.mOrigin
+		<< port.mDestination
+		<< port.mXDisplacement
+		<< port.mYDisplacement
+		<< port.mType
+		<< port.mFlags
+		<< port.mDefFlags
+		<< port.mAlign;
+	return arc;
 }
 
-inline int P_PointOnLineSideExplicit (fixed_t x, fixed_t y, fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2)
+
+void P_SpawnLinePortal(line_t* line)
 {
-	return DMulScale32 (y-y1, x2-x1, x1-x, y2-y1) > 0;
-}
+	// portal destination is special argument #0
+	line_t* dst = NULL;
 
-bool P_ClipLineToPortal(line_t* line, line_t* portal, fixed_t viewx, fixed_t viewy, bool partial, bool samebehind)
-{
-	// check if this line is between portal and the viewer. clip away if it is.
-	bool behind1 = !!P_PointOnLineSide(line->v1->x, line->v1->y, portal);
-	bool behind2 = !!P_PointOnLineSide(line->v2->x, line->v2->y, portal);
-
-	// [ZZ] update 16.12.2014: if a vertex equals to one of portal's vertices, it's treated as being behind the portal.
-	//                         this is required in order to clip away diagonal lines around the portal (example: 1-sided triangle shape with a mirror on it's side)
-	if ((line->v1->x == portal->v1->x && line->v1->y == portal->v1->y) ||
-		(line->v1->x == portal->v2->x && line->v1->y == portal->v2->y))
-			behind1 = samebehind;
-	if ((line->v2->x == portal->v1->x && line->v2->y == portal->v1->y) ||
-		(line->v2->x == portal->v2->x && line->v2->y == portal->v2->y))
-			behind2 = samebehind;
-
-	if (behind1 && behind2)
+	if (line->args[2] >= PORTT_VISUAL && line->args[2] <= PORTT_LINKED)
 	{
-		// line is behind the portal plane. now check if it's in front of two view plane borders (i.e. if it will get in the way of rendering)
-		fixed_t dummyx, dummyy;
-		bool infront1 = R_IntersectLines(line->v1->x, line->v1->y, line->v2->x, line->v2->y, viewx, viewy, portal->v1->x, portal->v1->y, dummyx, dummyy);
-		bool infront2 = R_IntersectLines(line->v1->x, line->v1->y, line->v2->x, line->v2->y, viewx, viewy, portal->v2->x, portal->v2->y, dummyx, dummyy);
-		if (infront1 && infront2)
-			return true;
-	}
-
-	return false;
-}
-
-bool P_CheckPortal(line_t* line)
-{
-	if (line->special == Line_Mirror)
-	{
-		line->portal = true;
-		line->portal_mirror = true;
-		line->portal_passive = true;
-		line->portal_dst = line;
-	}
-	else if (line->special == Line_SetPortal ||
-			 line->special == Line_SetVisualPortal)
-	{
-		// portal destination is special argument #0
-		line_t* dst = NULL;
-
 		if (line->args[0] > 0)
 		{
 			int linenum = -1;
@@ -113,30 +51,161 @@ bool P_CheckPortal(line_t* line)
 			}
 		}
 
-		if (dst)
+		line->portalindex = linePortals.Reserve(1);
+		FLinePortal *port = &linePortals.Last();
+
+		memset(port, 0, sizeof(FLinePortal));
+		port->mOrigin = line;
+		port->mDestination = dst;
+		port->mType = BYTE(line->args[2]);	// range check is done above.
+		port->mAlign = BYTE(line->args[3] >= PORG_ABSOLUTE && line->args[3] <= PORG_CEILING ? line->args[3] : PORG_ABSOLUTE);
+		if (port->mDestination != NULL)
 		{
-			line->portal = true;
-			line->portal_mirror = false;
-			line->portal_passive = (line->special == Line_SetVisualPortal);
-			line->portal_dst = dst;
+			port->mDefFlags = port->mType == PORTT_VISUAL ? PORTF_VISIBLE : port->mType == PORTT_TELEPORT ? PORTF_TYPETELEPORT : PORTF_TYPEINTERACTIVE;
+
+
 		}
-		else
+	}
+	else if (line->args[2] == PORTT_LINKEDEE && line->args[0] == 0)
+	{
+		// EE-style portals require that the first line ID is identical and the first arg of the two linked linedefs are 0 and 1 respectively.
+
+		int mytag = tagManager.GetFirstLineID(line);
+
+		for (int i = 0; i < numlines; i++)
 		{
-			line->portal = false;
-			line->portal_mirror = false;
-			line->portal_passive = false;
-			line->portal_dst = NULL;
+			if (tagManager.GetFirstLineID(&lines[i]) == mytag && lines[i].args[0] == 1)
+			{
+				line->portalindex = linePortals.Reserve(1);
+				FLinePortal *port = &linePortals.Last();
+
+				memset(port, 0, sizeof(FLinePortal));
+				port->mOrigin = line;
+				port->mDestination = &lines[i];
+				port->mType = PORTT_LINKED;
+				port->mAlign = PORG_ABSOLUTE;
+				port->mDefFlags = PORTF_TYPEINTERACTIVE;
+
+				// we need to create the backlink here, too.
+				lines[i].portalindex = linePortals.Reserve(1);
+				port = &linePortals.Last();
+
+				memset(port, 0, sizeof(FLinePortal));
+				port->mOrigin = &lines[i];
+				port->mDestination = line;
+				port->mType = PORTT_LINKED;
+				port->mAlign = PORG_ABSOLUTE;
+				port->mDefFlags = PORTF_TYPEINTERACTIVE;
+
+			}
 		}
 	}
 	else
 	{
-		line->portal = false;
-		line->portal_mirror = false;
-		line->portal_passive = false;
-		line->portal_dst = NULL;
+		// undefined type
+		return;
+	}
+}
+
+void P_UpdatePortal(FLinePortal *port)
+{
+	if (port->mDestination == NULL)
+	{
+		// Portal has no destination: switch it off
+		port->mFlags = 0;
+	}
+	else if (port->mDestination->getPortalDestination() != port->mOrigin)
+	{
+		//portal doesn't link back. This will be a simple teleporter portal.
+		port->mFlags = port->mDefFlags & ~PORTF_INTERACTIVE;
+		if (port->mType == PORTT_LINKED)
+		{
+			// this is illegal. Demote the type to TELEPORT
+			port->mType = PORTT_TELEPORT;
+			port->mDefFlags &= ~PORTF_INTERACTIVE;
+		}
+	}
+	else
+	{
+		port->mFlags = port->mDefFlags;
+	}
+}
+
+void P_FinalizePortals()
+{
+	for (unsigned i = 0; i < linePortals.Size(); i++)
+	{
+		FLinePortal * port = &linePortals[i];
+		P_UpdatePortal(port);
+	}
+}
+
+// [ZZ] lots of floats here to avoid overflowing a lot
+bool P_IntersectLines(fixed_t o1x, fixed_t o1y, fixed_t p1x, fixed_t p1y,
+				      fixed_t o2x, fixed_t o2y, fixed_t p2x, fixed_t p2y,
+				      fixed_t& rx, fixed_t& ry)
+{
+	double xx = FIXED2DBL(o2x) - FIXED2DBL(o1x);
+	double xy = FIXED2DBL(o2y) - FIXED2DBL(o1y);
+
+	double d1x = FIXED2DBL(p1x) - FIXED2DBL(o1x);
+	double d1y = FIXED2DBL(p1y) - FIXED2DBL(o1y);
+
+	if (d1x > d1y)
+	{
+		d1y = d1y / d1x * 32767.0f;
+		d1x = 32767.0;
+	}
+	else
+	{
+		d1x = d1x / d1y * 32767.0f;
+		d1y = 32767.0;
 	}
 
-	return (line->portal);
+	double d2x = FIXED2DBL(p2x) - FIXED2DBL(o2x);
+	double d2y = FIXED2DBL(p2y) - FIXED2DBL(o2y);
+
+	double cross = d1x*d2y - d1y*d2x;
+	if (fabs(cross) < 1e-8)
+		return false;
+
+	double t1 = (xx * d2y - xy * d2x)/cross;
+	rx = o1x + FLOAT2FIXED(d1x * t1);
+	ry = o1y + FLOAT2FIXED(d1y * t1);
+	return true;
+}
+
+inline int P_PointOnLineSideExplicit (fixed_t x, fixed_t y, fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2)
+{
+	return DMulScale32 (y-y1, x2-x1, x1-x, y2-y1) > 0;
+}
+
+bool P_ClipLineToPortal(line_t* line, line_t* portal, fixed_t viewx, fixed_t viewy, bool partial, bool samebehind)
+{
+	// check if this line is between portal and the viewer. clip away if it is.
+	bool behind1 = !!P_PointOnLineSidePrecise(line->v1->x, line->v1->y, portal);
+	bool behind2 = !!P_PointOnLineSidePrecise(line->v2->x, line->v2->y, portal);
+
+	// [ZZ] update 16.12.2014: if a vertex equals to one of portal's vertices, it's treated as being behind the portal.
+	//                         this is required in order to clip away diagonal lines around the portal (example: 1-sided triangle shape with a mirror on it's side)
+	if ((line->v1->x == portal->v1->x && line->v1->y == portal->v1->y) ||
+		(line->v1->x == portal->v2->x && line->v1->y == portal->v2->y))
+			behind1 = samebehind;
+	if ((line->v2->x == portal->v1->x && line->v2->y == portal->v1->y) ||
+		(line->v2->x == portal->v2->x && line->v2->y == portal->v2->y))
+			behind2 = samebehind;
+
+	if (behind1 && behind2)
+	{
+		// line is behind the portal plane. now check if it's in front of two view plane borders (i.e. if it will get in the way of rendering)
+		fixed_t dummyx, dummyy;
+		bool infront1 = P_IntersectLines(line->v1->x, line->v1->y, line->v2->x, line->v2->y, viewx, viewy, portal->v1->x, portal->v1->y, dummyx, dummyy);
+		bool infront2 = P_IntersectLines(line->v1->x, line->v1->y, line->v2->x, line->v2->y, viewx, viewy, portal->v2->x, portal->v2->y, dummyx, dummyy);
+		if (infront1 && infront2)
+			return true;
+	}
+
+	return false;
 }
 
 void P_TranslatePortalXY(line_t* src, line_t* dst, fixed_t& x, fixed_t& y)
@@ -211,17 +280,22 @@ void P_TranslatePortalAngle(line_t* src, line_t* dst, angle_t& angle)
 
 void P_TranslatePortalZ(line_t* src, line_t* dst, fixed_t& z)
 {
-	// args[2] = 0 - no teleport
+	// args[2] = 0 - no adjustment
 	// args[2] = 1 - adjust by floor difference
 	// args[2] = 2 - adjust by ceiling difference
 
-	if (src->args[2] == 1)
+	switch (src->getPortalAlignment())
 	{
+	case PORG_FLOOR:
 		z = z - src->frontsector->floorplane.ZatPoint(src->v1->x, src->v1->y) + dst->frontsector->floorplane.ZatPoint(dst->v2->x, dst->v2->y);
-	}
-	else if (src->args[2] == 2)
-	{
+		return;
+
+	case PORG_CEILING:
 		z = z - src->frontsector->ceilingplane.ZatPoint(src->v1->x, src->v1->y) + dst->frontsector->ceilingplane.ZatPoint(dst->v2->x, dst->v2->y);
+		return;
+
+	default:
+		return;
 	}
 }
 
@@ -244,9 +318,9 @@ fixed_t P_PointLineDistance(line_t* line, fixed_t x, fixed_t y)
 
 void P_NormalizeVXVY(fixed_t& vx, fixed_t& vy)
 {
-	float _vx = FIXED2FLOAT(vx);
-	float _vy = FIXED2FLOAT(vy);
-	float len = sqrt(_vx*_vx+_vy*_vy);
+	double _vx = FIXED2DBL(vx);
+	double _vy = FIXED2DBL(vy);
+	double len = sqrt(_vx*_vx+_vy*_vy);
 	vx = FLOAT2FIXED(_vx/len);
 	vy = FLOAT2FIXED(_vy/len);
 }
@@ -302,12 +376,12 @@ bool PortalTracer::TraceStep()
 		{
 			li = in->d.line;
 
-			if (li->portal && !li->portal_passive)
+			if (li->isLinePortal())
 			{
 				if (P_PointOnLineSide(startx-dirx, starty-diry, li))
 					continue; // we're at the back side of this line
 
-				line_t* out = li->portal_dst;
+				line_t* out = li->getPortalDestination();
 
 				this->in = li;
 				this->out = out;
@@ -361,7 +435,7 @@ bool PortalTracer::TraceStep()
 		}
 	}
 
-	//Printf("returning %d; vx = %.2f; vy = %.2f\n", (oDepth != depth), FIXED2FLOAT(this->vx), FIXED2FLOAT(this->vy));
+	//Printf("returning %d; vx = %.2f; vy = %.2f\n", (oDepth != depth), FIXED2DBL(this->vx), FIXED2DBL(this->vy));
 
 	return (oDepth != depth); // if a portal has been found, return false
 }

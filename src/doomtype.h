@@ -113,6 +113,16 @@ typedef TMap<int, PClassActor *> FClassMap;
 #define NOVTABLE
 #endif
 
+#if defined(__clang__)
+#if defined(__has_feature) && __has_feature(address_sanitizer))
+#define NO_SANITIZE __attribute__((no_sanitize("address")))
+#else
+#define NO_SANITIZE
+#endif
+#else
+#define NO_SANITIZE
+#endif
+
 #include "basictypes.h"
 
 // Bounding box coordinate storage.

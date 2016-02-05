@@ -37,6 +37,7 @@
 #include "r_local.h"
 #include "r_plane.h"
 #include "r_bsp.h"
+#include "r_segs.h"
 #include "r_3dfloors.h"
 #include "r_sky.h"
 #include "st_stuff.h"

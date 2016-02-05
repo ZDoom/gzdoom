@@ -57,6 +57,7 @@ public:
 	bool SectorHasTag(int sector, int tag) const;
 	bool SectorHasTag(const sector_t *sector, int tag) const;
 
+	int GetFirstLineID(const line_t *line) const;
 	bool LineHasID(int line, int id) const;
 	bool LineHasID(const line_t *line, int id) const;
 

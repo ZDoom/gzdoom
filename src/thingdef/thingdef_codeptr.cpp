@@ -219,6 +219,39 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, IsPointerEqual)
 
 //==========================================================================
 //
+// CountInv
+//
+// NON-ACTION function to return the inventory count of an item.
+//
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, CountInv)
+{
+	if (numret > 0)
+	{
+		assert(ret != NULL);
+		PARAM_PROLOGUE;
+		PARAM_OBJECT(self, AActor);
+		PARAM_CLASS(itemtype, AInventory);
+		PARAM_INT_OPT(pick_pointer)		{ pick_pointer = AAPTR_DEFAULT; }
+
+		self = COPY_AAPTR(self, pick_pointer);
+		if (self == NULL || itemtype == NULL)
+		{
+			ret->SetInt(false);
+		}
+		else
+		{
+			AInventory *item = self->FindInventory(itemtype);
+			ret->SetInt(item ? item->Amount : 0);
+			return 1;
+		}
+	}
+	return 0;
+}
+
+//==========================================================================
+//
 // A_RearrangePointers
 //
 // Allow an actor to change its relationship to other actors by

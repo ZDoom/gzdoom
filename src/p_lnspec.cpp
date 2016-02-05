@@ -3777,7 +3777,7 @@ int P_ExecuteSpecial(int			num,
 					 int			arg4,
 					 int			arg5)
 {
-	if (num >= 0 && num < countof(LineSpecials))
+	if (num >= 0 && num < (int)countof(LineSpecials))
 	{
 		return LineSpecials[num](line, activator, backSide, arg1, arg2, arg3, arg4, arg5);
 	}

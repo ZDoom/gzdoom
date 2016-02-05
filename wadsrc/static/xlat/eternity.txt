@@ -8,11 +8,18 @@
 
 define Unsupported (0)
 
+enum
+{
+	Init_EDSector = 253,
+	Init_EDLine = 254
+}
+
 // The tag for such a line is actually a key to find, in an ExtraData lump 
 // indicated for the current level by the EMAPINFO lump, what line special
 // to actually use. This is how parameterized linedefs are used by Eternity
-// in the Doom format. "xlating" this would thus be quite complicated...
-270 = 0,	Unsupported() // "ExtraDataSpecial"
+// in the Doom format.
+
+270 = 0,	Static_Init(tag, Init_EDLine) // "ExtraDataSpecial"
 
 // These two are standard MBF specials, no need to redefine them, they're in xlat/doom.txt
 // 271 = 0,		Static_Init (tag, Init_TransferSky, 0)
@@ -60,53 +67,51 @@ define Unsupported (0)
 // Parameterized linedefs
 // They are never used directly in Doom-format maps. Instead, it passes through ExtraData and 270.
 // Hexen format is incomplete; and Quasar wants to use ZDoom-compatible special values for UDMF.
-// So there is no need to bother with them and they are listed only for completeness' sake.
-/*
-   300: "Door_Raise"
-   301: "Door_Open"
-   302: "Door_Close"
-   303: "Door_CloseWaitOpen"
-   304: "Door_WaitRaise"
-   305: "Door_WaitClose"
-   306: "Floor_RaiseToHighest"
-   307: "Floor_LowerToHighest"
-   308: "Floor_RaiseToLowest"
-   309: "Floor_LowerToLowest"
-   310: "Floor_RaiseToNearest"
-   311: "Floor_LowerToNearest"
-   312: "Floor_RaiseToLowestCeiling"
-   313: "Floor_LowerToLowestCeiling"
-   314: "Floor_RaiseToCeiling"
-   315: "Floor_RaiseByTexture"
-   316: "Floor_LowerByTexture"
-   317: "Floor_RaiseByValue"
-   318: "Floor_LowerByValue"
-   319: "Floor_MoveToValue"
-   320: "Floor_RaiseInstant"
-   321: "Floor_LowerInstant"
-   322: "Floor_ToCeilingInstant"
-   323: "Ceiling_RaiseToHighest"
-   324: "Ceiling_ToHighestInstant"
-   325: "Ceiling_RaiseToNearest"
-   326: "Ceiling_LowerToNearest"
-   327: "Ceiling_RaiseToLowest"
-   328: "Ceiling_LowerToLowest"
-   329: "Ceiling_RaiseToHighestFloor"
-   330: "Ceiling_LowerToHighestFloor"
-   331: "Ceiling_ToFloorInstant"
-   332: "Ceiling_LowerToFloor"
-   333: "Ceiling_RaiseByTexture"
-   334: "Ceiling_LowerByTexture"
-   335: "Ceiling_RaiseByValue"
-   336: "Ceiling_LowerByValue"
-   337: "Ceiling_MoveToValue"
-   338: "Ceiling_RaiseInstant"
-   339: "Ceiling_LowerInstant"
-   340: "Stairs_BuildUpDoom"
-   341: "Stairs_BuildDownDoom"
-   342: "Stairs_BuildUpDoomSync"
-   343: "Stairs_BuildDownDoomSync"
-*/
+// The translation here is for the odd Extradata that specifies them as numbers.
+300 = 0, Door_Raise(0)
+301 = 0, Door_Open(0)
+302 = 0, Door_Close(0)
+303 = 0, Door_CloseWaitOpen(0)
+304 = 0, Door_WaitRaise(0)
+305 = 0, Door_WaitClose(0)
+306 = 0, Floor_RaiseToHighest(0)
+307 = 0, Floor_LowerToHighestEE(0)
+308 = 0, Floor_RaiseToLowest(0)
+309 = 0, Floor_LowerToLowest(0)
+310 = 0, Floor_RaiseToNearest(0)
+311 = 0, Floor_LowerToNearest(0)
+312 = 0, Floor_RaiseToLowestCeiling(0)
+313 = 0, Floor_LowerToLowestCeiling(0)
+314 = 0, Floor_RaiseToCeiling(0)
+315 = 0, Floor_RaiseByTexture(0)
+316 = 0, Floor_LowerByTexture(0)
+317 = 0, Floor_RaiseByValue(0)
+318 = 0, Floor_LowerByValue(0)
+319 = 0, Floor_MoveToValue(0)
+320 = 0, Floor_RaiseInstant(0)
+321 = 0, Floor_LowerInstant(0)
+322 = 0, Floor_ToCeilingInstant(0)
+323 = 0, Ceiling_RaiseToHighest(0)
+324 = 0, Ceiling_ToHighestInstant(0)
+325 = 0, Ceiling_RaiseToNearest(0)
+326 = 0, Ceiling_LowerToNearest(0)
+327 = 0, Ceiling_RaiseToLowest(0)
+328 = 0, Ceiling_LowerToLowest(0)
+329 = 0, Ceiling_RaiseToHighestFloor(0)
+330 = 0, Ceiling_LowerToHighestFloor(0)
+331 = 0, Ceiling_ToFloorInstant(0)
+332 = 0, Ceiling_LowerToFloor(0)
+333 = 0, Ceiling_RaiseByTexture(0)
+334 = 0, Ceiling_LowerByTexture(0)
+335 = 0, Ceiling_RaiseByValue(0)
+336 = 0, Ceiling_LowerByValue(0)
+337 = 0, Ceiling_MoveToValue(0)
+338 = 0, Ceiling_RaiseInstant(0)
+339 = 0, Ceiling_LowerInstant(0)
+340 = 0, Stairs_BuildUpDoom(0)
+341 = 0, Stairs_BuildDownDoom(0)
+342 = 0, Stairs_BuildUpDoomSync(0)
+343 = 0, Stairs_BuildDownDoomSync(0)
 
 // Two-way portals are not supported yet either
 344 = 0,	Unsupported() // "Portal_TwowayCeiling"
@@ -115,18 +120,16 @@ define Unsupported (0)
 347 = 0,	Unsupported() // "Portal_TwowayAnchorLineFloor"
 
 // More parameterized linedefs
-/*
-   348: "Polyobj_StartLine"
-   349: "Polyobj_ExplicitLine"
-   350: "Polyobj_DoorSlide"
-   351: "Polyobj_DoorSwing"
-   352: "Polyobj_Move"
-   353: "Polyobj_OR_Move"
-   354: "Polyobj_RotateRight"
-   355: "Polyobj_OR_RotateRight"
-   356: "Polyobj_RotateLeft"
-   357: "Polyobj_OR_RotateLeft"
-*/
+348 = 0, Polyobj_StartLine(0)
+349 = 0, Polyobj_ExplicitLine(0)
+350 = 0, Polyobj_DoorSlide(0)
+351 = 0, Polyobj_DoorSwing(0)
+352 = 0, Polyobj_Move(0)
+353 = 0, Polyobj_OR_Move(0)
+354 = 0, Polyobj_RotateRight(0)
+355 = 0, Polyobj_OR_RotateRight(0)
+356 = 0, Polyobj_RotateLeft(0)
+357 = 0, Polyobj_OR_RotateLeft(0)
 
 // Eternity's linked portals, vertical link version (floor-to-ceiling)
 358 = 0,	Unsupported() // "Portal_LinkedCeiling"
@@ -135,29 +138,27 @@ define Unsupported (0)
 361 = 0,	Unsupported() // "Portal_LinkedAnchorLineFloor"
 
 // Even more parameterized linedefs
-/*
-   362: "Pillar_Build"
-   363: "Pillar_BuildAndCrush"
-   364: "Pillar_Open"
-   365: "ACS_Execute"
-   366: "ACS_Suspend"
-   367: "ACS_Terminate"
-   368: "Light_RaiseByValue"
-   369: "Light_LowerByValue"
-   370: "Light_ChangeToValue"
-   371: "Light_Fade"
-   372: "Light_Glow"
-   373: "Light_Flicker"
-   374: "Light_Strobe"
-   375: "Radius_Quake"
-*/
+362 = 0, Pillar_Build(0)
+363 = 0, Pillar_BuildAndCrush(0)
+364 = 0, Pillar_Open(0)
+365 = 0, ACS_Execute(0)
+366 = 0, ACS_Suspend(0)
+367 = 0, ACS_Terminate(0)
+368 = 0, Light_RaiseByValue(0)
+369 = 0, Light_LowerByValue(0)
+370 = 0, Light_ChangeToValue(0)
+371 = 0, Light_Fade(0)
+372 = 0, Light_Glow(0)
+373 = 0, Light_Flicker(0)
+374 = 0, Light_Strobe(0)
+375 = 0, Radius_Quake(0)
 
 // Eternity's linked portals, horizontal link version (wall-to-wall)
-376 = 0,	Unsupported() // "Portal_LinkedLineToLine"
-377 = 0,	Unsupported() // "Portal_LinkedLineToLineAnchor"
+376 = 0,	Line_SetPortal(0, tag, 4) // "Portal_LinkedLineToLine"
+377 = 0,	Line_SetPortal(1, tag, 4) // "Portal_LinkedLineToLineAnchor"
 
 // The famous Hexen linedef
-// 378 = Line_SetIdentification
+378 = 0, Line_SetIdentification(0)
 
 // Attached sectors == linked sectors; However, the implementation in Eternity
 // is based on front sectors of tagged lines, not on sector tags. So instead
@@ -186,7 +187,23 @@ define Unsupported (0)
 396 = 0,	Plane_Copy(tag, tag)// "Slope_FrontFloorAndCeilingToTaggedSlope"
 
 // Last parameterized linedefs
-// 397 = Floor_Waggle
-// 398 = Thing_Spawn
-// 399 = Thing_SpawnNoFog
-// 400 = Teleport_EndGame
+397 = 0, Floor_Waggle(0) 
+398 = 0, Thing_Spawn(0) 
+399 = 0, Thing_SpawnNoFog(0) 
+400 = 0, Teleport_EndGame(0) 
+
+401 = 0, Static_Init(tag, Init_EDSector)
+
+402 = 0, Thing_Projectile(0)
+403 = 0, Thing_ProjectileGravity(0)
+404 = 0, Thing_Activate(0)
+405 = 0, Thing_Deactivate(0)
+410 = 0, Plat_PerpetualRaise(0)
+411 = 0, Plat_Stop(0)
+412 = 0, Plat_DownWaitUpStay(0)
+413 = 0, Plat_DownByValue(0)
+414 = 0, Plat_UpWaitDownStay(0)
+415 = 0, Plat_UpByValue(0)
+416 = 0, Floor_LowerToHighest(0)
+420 = 0, ACS_ExecuteWithResult(0)
+421 = 0, Thing_ChangeTID(0) 

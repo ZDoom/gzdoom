@@ -65,6 +65,9 @@
 #include "c_dispatch.h"
 #include "r_sky.h"
 #include "portal.h"
+#ifndef NO_EDATA
+#include "edata.h"
+#endif
 
 // State.
 #include "r_state.h"
@@ -1324,6 +1327,11 @@ void P_SpawnSpecials (void)
 
 		P_InitSectorSpecial(sector, sector->special, false);
 	}
+
+#ifndef NO_EDATA
+	ProcessEDSectors();
+#endif
+
 	
 	// Init other misc stuff
 

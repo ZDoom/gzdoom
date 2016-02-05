@@ -1,0 +1,8 @@
+// This should be included by any converted Eternity project so set the DoomEdNums that conflict with regular ZDoom get set.
+
+DoomEdNums
+{
+  5003 = none
+  5004 = "$EDThing"
+}
+

@@ -59,6 +59,8 @@ typedef enum {
 	Init_Damage = 2,
 	Init_SectorLink = 3,
 	NUM_STATIC_INITS,
+	Init_EDSector = 253,
+	Init_EDLine = 254,
 	Init_TransferSky = 255
 } staticinit_t;
 

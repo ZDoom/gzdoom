@@ -69,6 +69,9 @@
 #include "r_renderer.h"
 #include "r_data/colormaps.h"
 #include "portal.h"
+#ifndef NO_EDATA
+#include "edata.h"
+#endif
 
 #include "fragglescript/t_fs.h"
 
@@ -1757,34 +1760,45 @@ void P_LoadThings (MapData * map)
 		mti[i].alpha = -1;
 		mti[i].health = 1;
 		mti[i].FloatbobPhase = -1;
-		flags &= ~MTF_SKILLMASK;
-		mti[i].flags = (short)((flags & 0xf) | 0x7e0);
-		if (gameinfo.gametype == GAME_Strife)
-		{
-			mti[i].flags &= ~MTF_AMBUSH;
-			if (flags & STF_SHADOW)			mti[i].flags |= MTF_SHADOW;
-			if (flags & STF_ALTSHADOW)		mti[i].flags |= MTF_ALTSHADOW;
-			if (flags & STF_STANDSTILL)		mti[i].flags |= MTF_STANDSTILL;
-			if (flags & STF_AMBUSH)			mti[i].flags |= MTF_AMBUSH;
-			if (flags & STF_FRIENDLY)		mti[i].flags |= MTF_FRIENDLY;
-		}
-		else
-		{
-			if (flags & BTF_BADEDITORCHECK)
-			{
-				flags &= 0x1F;
-			}
-			if (flags & BTF_NOTDEATHMATCH)	mti[i].flags &= ~MTF_DEATHMATCH;
-			if (flags & BTF_NOTCOOPERATIVE)	mti[i].flags &= ~MTF_COOPERATIVE;
-			if (flags & BTF_FRIENDLY)		mti[i].flags |= MTF_FRIENDLY;
-		}
-		if (flags & BTF_NOTSINGLE)			mti[i].flags &= ~MTF_SINGLE;
 
 		mti[i].x = LittleShort(mt->x) << FRACBITS;
 		mti[i].y = LittleShort(mt->y) << FRACBITS;
 		mti[i].angle = LittleShort(mt->angle);
 		mti[i].EdNum = LittleShort(mt->type);
 		mti[i].info = DoomEdMap.CheckKey(mti[i].EdNum);
+
+
+#ifndef NO_EDATA
+		if (mti[i].info != NULL && mti[i].info->Special == SMT_EDThing)
+		{
+			ProcessEDMapthing(&mti[i], flags);
+		}
+		else
+#endif
+		{
+			flags &= ~MTF_SKILLMASK;
+			mti[i].flags = (short)((flags & 0xf) | 0x7e0);
+			if (gameinfo.gametype == GAME_Strife)
+			{
+				mti[i].flags &= ~MTF_AMBUSH;
+				if (flags & STF_SHADOW)			mti[i].flags |= MTF_SHADOW;
+				if (flags & STF_ALTSHADOW)		mti[i].flags |= MTF_ALTSHADOW;
+				if (flags & STF_STANDSTILL)		mti[i].flags |= MTF_STANDSTILL;
+				if (flags & STF_AMBUSH)			mti[i].flags |= MTF_AMBUSH;
+				if (flags & STF_FRIENDLY)		mti[i].flags |= MTF_FRIENDLY;
+			}
+			else
+			{
+				if (flags & BTF_BADEDITORCHECK)
+				{
+					flags &= 0x1F;
+				}
+				if (flags & BTF_NOTDEATHMATCH)	mti[i].flags &= ~MTF_DEATHMATCH;
+				if (flags & BTF_NOTCOOPERATIVE)	mti[i].flags &= ~MTF_COOPERATIVE;
+				if (flags & BTF_FRIENDLY)		mti[i].flags |= MTF_FRIENDLY;
+			}
+			if (flags & BTF_NOTSINGLE)			mti[i].flags &= ~MTF_SINGLE;
+		}
 	}
 	delete [] mtp;
 }
@@ -2160,7 +2174,19 @@ void P_LoadLineDefs (MapData * map)
 
 		// [RH] Translate old linedef special and flags to be
 		//		compatible with the new format.
-		P_TranslateLineDef (ld, mld, i);
+
+		P_TranslateLineDef (ld, mld, -1);
+		// do not assign the tag for Extradata lines.
+		if (ld->special != Static_Init || (ld->args[1] != Init_EDLine && ld->args[1] != Init_EDSector))
+		{
+			tagManager.AddLineID(i, mld->tag);
+		}
+#ifndef NO_EDATA
+		if (ld->special == Static_Init && ld->args[1] == Init_EDLine)
+		{
+			ProcessEDLinedef(ld, mld->tag);
+		}
+#endif
 
 		ld->v1 = &vertexes[LittleShort(mld->v1)];
 		ld->v2 = &vertexes[LittleShort(mld->v2)];
@@ -3330,7 +3356,7 @@ void P_LoadBehavior (MapData * map)
 
 void P_GetPolySpots (MapData * map, TArray<FNodeBuilder::FPolyStart> &spots, TArray<FNodeBuilder::FPolyStart> &anchors)
 {
-	if (map->HasBehavior)
+	//if (map->HasBehavior)
 	{
 		for (unsigned int i = 0; i < MapThingsConverted.Size(); ++i)
 		{
@@ -3682,6 +3708,10 @@ void P_SetupLevel (const char *lumpname, int position)
 		}
 
 		FBehavior::StaticLoadDefaultModules ();
+#ifndef NO_EDATA
+		LoadMapinfoACSLump();
+#endif
+
 
 		P_LoadStrifeConversations (map, lumpname);
 

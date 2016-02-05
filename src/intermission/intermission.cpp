@@ -409,7 +409,7 @@ void DIntermissionScreenCast::Init(FIntermissionAction *desc, bool first)
 {
 	Super::Init(desc, first);
 	mName = static_cast<FIntermissionActionCast*>(desc)->mName;
-	mClass = PClass::FindClass(static_cast<FIntermissionActionCast*>(desc)->mCastClass);
+	mClass = PClass::FindActor(static_cast<FIntermissionActionCast*>(desc)->mCastClass);
 	if (mClass != NULL) mDefaults = GetDefaultByType(mClass);
 	else
 	{
@@ -463,7 +463,7 @@ int DIntermissionScreenCast::Responder (event_t *ev)
 	if (mClass != NULL)
 	{
 		FName label[] = {NAME_Death, NAME_Cast};
-		caststate = mClass->ActorInfo->FindState(2, label);
+		caststate = mClass->FindState(2, label);
 		if (caststate == NULL) return -1;
 
 		casttics = caststate->GetTics();

@@ -12,13 +12,22 @@
 
 DECLARE_ACTION(A_SkullAttack)
 
-static const PClass *GetSpawnType(DECLARE_PARAMINFO)
+static PClassActor *GetSpawnType(VMValue *param)
 {
-	ACTION_PARAM_START(1);
-	ACTION_PARAM_CLASS(spawntype, 0);
+	PClassActor *spawntype;
 
-	if (spawntype == NULL) spawntype = PClass::FindClass("LostSoul");
-	return spawntype;
+	if (param == NULL || param->Type == REGT_NIL)
+	{
+		spawntype = NULL;
+	}
+	else
+	{
+		assert(param->Type == REGT_POINTER);
+		assert(param->atag == ATAG_OBJECT || param->a == NULL);
+		spawntype = (PClassActor *)param->a;
+	}
+
+	return (spawntype != NULL) ? spawntype : PClass::FindActor("LostSoul");
 }
 
 
@@ -33,13 +42,13 @@ enum PA_Flags
 // A_PainShootSkull
 // Spawn a lost soul and launch it at the target
 //
-void A_PainShootSkull (AActor *self, angle_t angle, const PClass *spawntype, int flags = 0, int limit = -1)
+void A_PainShootSkull (AActor *self, angle_t angle, PClassActor *spawntype, int flags = 0, int limit = -1)
 {
 	AActor *other;
 	int prestep;
 
 	if (spawntype == NULL) return;
-	if (self->DamageType==NAME_Massacre) return;
+	if (self->DamageType == NAME_Massacre) return;
 
 	// [RH] check to make sure it's not too close to the ceiling
 	if (self->Top() + 8*FRACUNIT > self->ceilingz)
@@ -163,42 +172,50 @@ void A_PainShootSkull (AActor *self, angle_t angle, const PClass *spawntype, int
 // 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PainAttack)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (!self->target)
-		return;
+		return 0;
 
-	ACTION_PARAM_START(4);
-	ACTION_PARAM_CLASS(spawntype, 0);
-	ACTION_PARAM_ANGLE(angle, 1);
-	ACTION_PARAM_INT(flags, 2);
-	ACTION_PARAM_INT(limit, 3);
+	PARAM_CLASS_OPT (spawntype, AActor)	{ spawntype = NULL; }
+	PARAM_ANGLE_OPT (angle)				{ angle = 0; }
+	PARAM_INT_OPT   (flags)				{ flags = 0; }
+	PARAM_INT_OPT   (limit)				{ limit = -1; }
 
-	if (spawntype == NULL) spawntype = PClass::FindClass("LostSoul");
+	if (spawntype == NULL) spawntype = PClass::FindActor("LostSoul");
 
 	if (!(flags & PAF_AIMFACING))
 		A_FaceTarget (self);
 	A_PainShootSkull (self, self->angle+angle, spawntype, flags, limit);
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DualPainAttack)
 {
-	if (!self->target)
-		return;
+	PARAM_ACTION_PROLOGUE;
 
-	const PClass *spawntype = GetSpawnType(PUSH_PARAMINFO);
+	if (!self->target)
+		return 0;
+
+	PClassActor *spawntype = GetSpawnType(numparam > NAP ? &param[NAP] : NULL);
 	A_FaceTarget (self);
 	A_PainShootSkull (self, self->angle + ANG45, spawntype);
 	A_PainShootSkull (self, self->angle - ANG45, spawntype);
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PainDie)
 {
-	if (self->target != NULL && self->IsFriend (self->target))
+	PARAM_ACTION_PROLOGUE;
+
+	if (self->target != NULL && self->IsFriend(self->target))
 	{ // And I thought you were my friend!
 		self->flags &= ~MF_FRIENDLY;
 	}
-	const PClass *spawntype = GetSpawnType(PUSH_PARAMINFO);
+	PClassActor *spawntype = GetSpawnType(numparam > NAP ? &param[NAP] : NULL);
 	A_Unblock(self, true);
 	A_PainShootSkull (self, self->angle + ANG90, spawntype);
 	A_PainShootSkull (self, self->angle + ANG180, spawntype);
 	A_PainShootSkull (self, self->angle + ANG270, spawntype);
+	return 0;
 }

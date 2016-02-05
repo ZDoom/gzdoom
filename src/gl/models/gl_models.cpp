@@ -810,7 +810,7 @@ void gl_RenderModel(GLSprite * spr, int cm)
 	}
 #endif
 
-	gl_RenderFrameModels( smf, spr->actor->state, spr->actor->tics, RUNTIME_TYPE(spr->actor), cm, NULL, translation );
+	gl_RenderFrameModels( smf, spr->actor->state, spr->actor->tics, spr->actor->GetClass(), cm, NULL, translation );
 
 	if (gl.shadermodel < 4)
 	{

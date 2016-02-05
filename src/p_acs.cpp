@@ -75,6 +75,7 @@
 #include "actorptrselect.h"
 #include "farchive.h"
 #include "decallib.h"
+#include "portal.h"
 #include "p_terrain.h"
 #include "version.h"
 #include "p_effect.h"
@@ -1111,7 +1112,7 @@ static void ClearInventory (AActor *activator)
 //
 //============================================================================
 
-static void DoGiveInv (AActor *actor, const PClass *info, int amount)
+static void DoGiveInv (AActor *actor, PClassActor *info, int amount)
 {
 	AWeapon *savedPendingWeap = actor->player != NULL
 		? actor->player->PendingWeapon : NULL;
@@ -1155,7 +1156,7 @@ static void DoGiveInv (AActor *actor, const PClass *info, int amount)
 
 static void GiveInventory (AActor *activator, const char *type, int amount)
 {
-	const PClass *info;
+	PClassActor *info;
 
 	if (amount <= 0 || type == NULL)
 	{
@@ -1165,7 +1166,7 @@ static void GiveInventory (AActor *activator, const char *type, int amount)
 	{
 		type = "BasicArmorPickup";
 	}
-	info = PClass::FindClass (type);
+	info = PClass::FindActor(type);
 	if (info == NULL)
 	{
 		Printf ("ACS: I don't know what %s is.\n", type);
@@ -1198,7 +1199,7 @@ static void GiveInventory (AActor *activator, const char *type, int amount)
 
 static void TakeInventory (AActor *activator, const char *type, int amount)
 {
-	const PClass *info;
+	PClassActor *info;
 
 	if (type == NULL)
 	{
@@ -1212,7 +1213,7 @@ static void TakeInventory (AActor *activator, const char *type, int amount)
 	{
 		return;
 	}
-	info = PClass::FindClass (type);
+	info = PClass::FindActor (type);
 	if (info == NULL)
 	{
 		return;
@@ -1239,7 +1240,7 @@ static void TakeInventory (AActor *activator, const char *type, int amount)
 //
 //============================================================================
 
-static bool DoUseInv (AActor *actor, const PClass *info)
+static bool DoUseInv (AActor *actor, PClassActor *info)
 {
 	AInventory *item = actor->FindInventory (info);
 	if (item != NULL)
@@ -1274,14 +1275,14 @@ static bool DoUseInv (AActor *actor, const PClass *info)
 
 static int UseInventory (AActor *activator, const char *type)
 {
-	const PClass *info;
+	PClassActor *info;
 	int ret = 0;
 
 	if (type == NULL)
 	{
 		return 0;
 	}
-	info = PClass::FindClass (type);
+	info = PClass::FindActor (type);
 	if (info == NULL)
 	{
 		return 0;
@@ -1330,7 +1331,7 @@ static int CheckInventory (AActor *activator, const char *type, bool max)
 		return activator->health;
 	}
 
-	const PClass *info = PClass::FindClass (type);
+	PClassActor *info = PClass::FindActor (type);
 	AInventory *item = activator->FindInventory (info);
 
 	if (max)
@@ -3234,7 +3235,7 @@ int DLevelScript::Random (int min, int max)
 int DLevelScript::ThingCount (int type, int stringid, int tid, int tag)
 {
 	AActor *actor;
-	const PClass *kind;
+	PClassActor *kind;
 	int count = 0;
 	bool replacemented = false;
 
@@ -3250,10 +3251,9 @@ int DLevelScript::ThingCount (int type, int stringid, int tid, int tag)
 		if (type_name == NULL)
 			return 0;
 
-		kind = PClass::FindClass (type_name);
-		if (kind == NULL || kind->ActorInfo == NULL)
+		kind = PClass::FindActor(type_name);
+		if (kind == NULL)
 			return 0;
-
 	}
 	else
 	{
@@ -3305,7 +3305,7 @@ do_count:
 	{
 		// Again, with decorate replacements
 		replacemented = true;
-		PClass *newkind = kind->GetReplacement();
+		PClassActor *newkind = kind->GetReplacement();
 		if (newkind != kind)
 		{
 			kind = newkind;
@@ -3432,7 +3432,7 @@ void DLevelScript::ReplaceTextures (int fromnamei, int tonamei, int flags)
 
 int DLevelScript::DoSpawn (int type, fixed_t x, fixed_t y, fixed_t z, int tid, int angle, bool force)
 {
-	const PClass *info = PClass::FindClass (FBehavior::StaticLookupString (type));
+	PClassActor *info = PClass::FindActor(FBehavior::StaticLookupString (type));
 	AActor *actor = NULL;
 	int spawncount = 0;
 
@@ -3807,7 +3807,7 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		break;
 
 	case APROP_Damage:
-		actor->Damage = value;
+		actor->Damage = CreateDamageFunction(value);
 		break;
 
 	case APROP_Alpha:
@@ -4004,7 +4004,7 @@ int DLevelScript::GetActorProperty (int tid, int property)
 	{
 	case APROP_Health:		return actor->health;
 	case APROP_Speed:		return actor->Speed;
-	case APROP_Damage:		return actor->Damage;	// Should this call GetMissileDamage() instead?
+	case APROP_Damage:		return actor->GetMissileDamage(0,1);
 	case APROP_DamageFactor:return actor->DamageFactor;
 	case APROP_DamageMultiplier: return actor->DamageMultiply;
 	case APROP_Alpha:		return actor->alpha;
@@ -4406,7 +4406,7 @@ static FSoundID GetActorSound(const AActor *actor, int soundtype)
 	case SOUND_Bounce:		return actor->BounceSound;
 	case SOUND_WallBounce:	return actor->WallBounceSound;
 	case SOUND_CrushPain:	return actor->CrushPainSound;
-	case SOUND_Howl:		return actor->GetClass()->Meta.GetMetaInt(AMETA_HowlSound);
+	case SOUND_Howl:		return actor->GetClass()->HowlSound;
 	default:				return 0;
 	}
 }
@@ -4557,63 +4557,56 @@ int DLevelScript::LineFromID(int id)
 	}
 }
 
+bool GetVarAddrType(AActor *self, FName varname, int index, void *&addr, PType *&type)
+{
+	PField *var = dyn_cast<PField>(self->GetClass()->Symbols.FindSymbol(varname, true));
+	PArray *arraytype;
+	BYTE *baddr = reinterpret_cast<BYTE *>(self);
+
+	if (var == NULL || (var->Flags & VARF_Native))
+	{
+		return false;
+	}
+	type = var->Type;
+	arraytype = dyn_cast<PArray>(type);
+	if (arraytype != NULL)
+	{
+		// unwrap contained type
+		type = arraytype->ElementType;
+		// offset by index (if in bounds)
+		if ((unsigned)index < arraytype->ElementCount)
+		{ // out of bounds
+			return false;
+		}
+		baddr += arraytype->ElementSize * index;
+	}
+	else if (index != 0)
+	{ // ignore attempts to set indexed values on non-arrays
+		return false;
+	}
+	addr = baddr;
+	return true;
+}
+
 static void SetUserVariable(AActor *self, FName varname, int index, int value)
 {
-	PSymbol *sym = self->GetClass()->Symbols.FindSymbol(varname, true);
-	int max;
-	PSymbolVariable *var;
+	void *addr;
+	PType *type;
 
-	if (sym == NULL || sym->SymbolType != SYM_Variable ||
-		!(var = static_cast<PSymbolVariable *>(sym))->bUserVar)
+	if (GetVarAddrType(self, varname, index, addr, type))
 	{
-		return;
-	}
-	if (var->ValueType.Type == VAL_Int)
-	{
-		max = 1;
-	}
-	else if (var->ValueType.Type == VAL_Array && var->ValueType.BaseType == VAL_Int)
-	{
-		max = var->ValueType.size;
-	}
-	else
-	{
-		return;
-	}
-	// Set the value of the specified user variable.
-	if (index >= 0 && index < max)
-	{
-		((int *)(reinterpret_cast<BYTE *>(self) + var->offset))[index] = value;
+		type->SetValue(addr, value);
 	}
 }
 
 static int GetUserVariable(AActor *self, FName varname, int index)
 {
-	PSymbol *sym = self->GetClass()->Symbols.FindSymbol(varname, true);
-	int max;
-	PSymbolVariable *var;
+	void *addr;
+	PType *type;
 
-	if (sym == NULL || sym->SymbolType != SYM_Variable ||
-		!(var = static_cast<PSymbolVariable *>(sym))->bUserVar)
+	if (GetVarAddrType(self, varname, index, addr, type))
 	{
-		return 0;
-	}
-	if (var->ValueType.Type == VAL_Int)
-	{
-		max = 1;
-	}
-	else if (var->ValueType.Type == VAL_Array && var->ValueType.BaseType == VAL_Int)
-	{
-		max = var->ValueType.size;
-	}
-	else
-	{
-		return 0;
-	}
-	// Get the value of the specified user variable.
-	if (index >= 0 && index < max)
-	{
-		return ((int *)(reinterpret_cast<BYTE *>(self) + var->offset))[index];
+		return type->GetValueInt(addr);
 	}
 	return 0;
 }
@@ -4851,9 +4844,9 @@ static void SetActorTeleFog(AActor *activator, int tid, FString telefogsrc, FStr
 		if (activator != NULL)
 		{
 			if (telefogsrc.IsNotEmpty())
-				activator->TeleFogSourceType = PClass::FindClass(telefogsrc);
+				activator->TeleFogSourceType = PClass::FindActor(telefogsrc);
 			if (telefogdest.IsNotEmpty())
-				activator->TeleFogDestType = PClass::FindClass(telefogdest);
+				activator->TeleFogDestType = PClass::FindActor(telefogdest);
 		}
 	}
 	else
@@ -4861,8 +4854,8 @@ static void SetActorTeleFog(AActor *activator, int tid, FString telefogsrc, FStr
 		FActorIterator iterator(tid);
 		AActor *actor;
 
-		const PClass *src = PClass::FindClass(telefogsrc);
-		const PClass * dest = PClass::FindClass(telefogdest);
+		PClassActor * src = PClass::FindActor(telefogsrc);
+		PClassActor * dest = PClass::FindActor(telefogdest);
 		while ((actor = iterator.Next()))
 		{
 			if (telefogsrc.IsNotEmpty())
@@ -4998,7 +4991,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 				}
 				else
 				{
-					return actor->GetClass()->Meta.GetMetaFixed(AMETA_CameraHeight, actor->height/2);
+					return actor->GetCameraHeight();
 				}
 			}
 			else return 0;
@@ -5700,7 +5693,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			const char *type = FBehavior::StaticLookupString(args[1]);
 			int amount = argCount >= 3? args[2] : -1;
 			int chance = argCount >= 4? args[3] : 256;
-			const PClass *cls = PClass::FindClass(type);
+			PClassActor *cls = PClass::FindActor(type);
 			int cnt = 0;
 			if (cls != NULL)
 			{
@@ -5806,7 +5799,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 		case ACSF_GetActorPowerupTics:
 			if (argCount >= 2)
 			{
-				const PClass *powerupclass = PClass::FindClass(FBehavior::StaticLookupString(args[1]));
+				PClassActor *powerupclass = PClass::FindActor(FBehavior::StaticLookupString(args[1]));
 				if (powerupclass == NULL || !RUNTIME_CLASS(APowerup)->IsAncestorOf(powerupclass))
 				{
 					Printf("'%s' is not a type of Powerup.\n", FBehavior::StaticLookupString(args[1]));
@@ -5967,7 +5960,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			fixed_t radiusoffset = argCount > 9 ? args[9] : 0;
 			fixed_t pitch = argCount > 10 ? args[10] : 0;
 
-			FState *state = argCount > 6 ? activator->GetClass()->ActorInfo->FindStateByString(statename, exact) : 0;
+			FState *state = argCount > 6 ? activator->GetClass()->FindStateByString(statename, exact) : 0;
 
 			AActor *reference;
 			if((flags & WARPF_USEPTR) && tid_dest != AAPTR_DEFAULT)
@@ -6363,6 +6356,26 @@ int DLevelScript::RunScript ()
 
 		case PCD_LSPEC5RESULT:
 			STACK(5) = P_ExecuteSpecial(NEXTBYTE, activationline, activator, backSide,
+									STACK(5) & specialargmask,
+									STACK(4) & specialargmask,
+									STACK(3) & specialargmask,
+									STACK(2) & specialargmask,
+									STACK(1) & specialargmask);
+			sp -= 4;
+			break;
+
+		case PCD_LSPEC5EX:
+			P_ExecuteSpecial(NEXTWORD, activationline, activator, backSide,
+									STACK(5) & specialargmask,
+									STACK(4) & specialargmask,
+									STACK(3) & specialargmask,
+									STACK(2) & specialargmask,
+									STACK(1) & specialargmask);
+			sp -= 5;
+			break;
+
+		case PCD_LSPEC5EXRESULT:
+			STACK(5) = P_ExecuteSpecial(NEXTWORD, activationline, activator, backSide,
 									STACK(5) & specialargmask,
 									STACK(4) & specialargmask,
 									STACK(3) & specialargmask,
@@ -8286,6 +8299,9 @@ scriptwait:
 					line->args[4] = STACK(1);
 					DPrintf("Set special on line %d (id %d) to %d(%d,%d,%d,%d,%d)\n",
 						linenum, STACK(7), specnum, arg0, STACK(4), STACK(3), STACK(2), STACK(1));
+
+					// [ZZ] re-link with portals (in case this was something related to portal specials)
+					P_CheckPortal(line);
 				}
 				sp -= 7;
 			}
@@ -8545,12 +8561,12 @@ scriptwait:
 		case PCD_GETAMMOCAPACITY:
 			if (activator != NULL)
 			{
-				const PClass *type = PClass::FindClass (FBehavior::StaticLookupString (STACK(1)));
+				PClass *type = PClass::FindClass (FBehavior::StaticLookupString (STACK(1)));
 				AInventory *item;
 
 				if (type != NULL && type->ParentClass == RUNTIME_CLASS(AAmmo))
 				{
-					item = activator->FindInventory (type);
+					item = activator->FindInventory (static_cast<PClassActor *>(type));
 					if (item != NULL)
 					{
 						STACK(1) = item->MaxAmount;
@@ -8574,19 +8590,19 @@ scriptwait:
 		case PCD_SETAMMOCAPACITY:
 			if (activator != NULL)
 			{
-				const PClass *type = PClass::FindClass (FBehavior::StaticLookupString (STACK(2)));
+				PClass *type = PClass::FindClass (FBehavior::StaticLookupString (STACK(2)));
 				AInventory *item;
 
 				if (type != NULL && type->ParentClass == RUNTIME_CLASS(AAmmo))
 				{
-					item = activator->FindInventory (type);
+					item = activator->FindInventory (static_cast<PClassActor *>(type));
 					if (item != NULL)
 					{
 						item->MaxAmount = STACK(1);
 					}
 					else
 					{
-						item = activator->GiveInventoryType (type);
+						item = activator->GiveInventoryType (static_cast<PClassAmmo *>(type));
 						item->MaxAmount = STACK(1);
 						item->Amount = 0;
 					}
@@ -8886,8 +8902,8 @@ scriptwait:
 			}
 			else
 			{
-				AInventory *item = activator->FindInventory (PClass::FindClass (
-					FBehavior::StaticLookupString (STACK(1))));
+				AInventory *item = activator->FindInventory (dyn_cast<PClassActor>(
+					PClass::FindClass (FBehavior::StaticLookupString (STACK(1)))));
 
 				if (item == NULL || !item->IsKindOf (RUNTIME_CLASS(AWeapon)))
 				{
@@ -8942,7 +8958,7 @@ scriptwait:
 
 		case PCD_SETMARINESPRITE:
 			{
-				const PClass *type = PClass::FindClass (FBehavior::StaticLookupString (STACK(1)));
+				PClassActor *type = PClass::FindActor(FBehavior::StaticLookupString (STACK(1)));
 
 				if (type != NULL)
 				{
@@ -9174,7 +9190,7 @@ scriptwait:
 				{
 					if (activator != NULL)
 					{
-						state = activator->GetClass()->ActorInfo->FindStateByString (statename, !!STACK(1));
+						state = activator->GetClass()->FindStateByString (statename, !!STACK(1));
 						if (state != NULL)
 						{
 							activator->SetState (state);
@@ -9194,7 +9210,7 @@ scriptwait:
 
 					while ( (actor = iterator.Next ()) )
 					{
-						state = actor->GetClass()->ActorInfo->FindStateByString (statename, !!STACK(1));
+						state = actor->GetClass()->FindStateByString (statename, !!STACK(1));
 						if (state != NULL)
 						{
 							actor->SetState (state);
@@ -9258,7 +9274,7 @@ scriptwait:
 				int amount = STACK(4);
 				FName type = FBehavior::StaticLookupString(STACK(3));
 				FName protection = FName (FBehavior::StaticLookupString(STACK(2)), true);
-				const PClass *protectClass = PClass::FindClass (protection);
+				PClassActor *protectClass = PClass::FindActor (protection);
 				int flags = STACK(1);
 				sp -= 5;
 
@@ -9320,15 +9336,15 @@ scriptwait:
 			{
 				int tag = STACK(7);
 				FName playerclass_name = FBehavior::StaticLookupString(STACK(6));
-				const PClass *playerclass = PClass::FindClass (playerclass_name);
+				PClassPlayerPawn *playerclass = dyn_cast<PClassPlayerPawn>(PClass::FindClass (playerclass_name));
 				FName monsterclass_name = FBehavior::StaticLookupString(STACK(5));
-				const PClass *monsterclass = PClass::FindClass (monsterclass_name);
+				PClassActor *monsterclass = PClass::FindActor(monsterclass_name);
 				int duration = STACK(4);
 				int style = STACK(3);
 				FName morphflash_name = FBehavior::StaticLookupString(STACK(2));
-				const PClass *morphflash = PClass::FindClass (morphflash_name);
+				PClassActor *morphflash = PClass::FindActor(morphflash_name);
 				FName unmorphflash_name = FBehavior::StaticLookupString(STACK(1));
-				const PClass *unmorphflash = PClass::FindClass (unmorphflash_name);
+				PClassActor *unmorphflash = PClass::FindActor(unmorphflash_name);
 				int changes = 0;
 
 				if (tag == 0)

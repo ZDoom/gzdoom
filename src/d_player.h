@@ -44,41 +44,61 @@
 //Added by MC:
 #include "b_bot.h"
 
-enum
-{
-	APMETA_BASE = 0x95000,
+class player_t;
 
-	APMETA_DisplayName,		// display name (used in menus etc.)
-	APMETA_SoundClass,		// sound class
-	APMETA_Face,			// doom status bar face (when used)
-	APMETA_ColorRange,		// skin color range
-	APMETA_InvulMode,
-	APMETA_HealingRadius,
-	APMETA_Portrait,
-	APMETA_Hexenarmor0,
-	APMETA_Hexenarmor1,
-	APMETA_Hexenarmor2,
-	APMETA_Hexenarmor3,
-	APMETA_Hexenarmor4,
-	APMETA_Slot0,
-	APMETA_Slot1,
-	APMETA_Slot2,
-	APMETA_Slot3,
-	APMETA_Slot4,
-	APMETA_Slot5,
-	APMETA_Slot6,
-	APMETA_Slot7,
-	APMETA_Slot8,
-	APMETA_Slot9,
+// Standard pre-defined skin colors
+struct FPlayerColorSet
+{
+	struct ExtraRange
+	{
+		BYTE RangeStart, RangeEnd;	// colors to remap
+		BYTE FirstColor, LastColor;	// colors to map to
+	};
+
+	FName Name;			// Name of this color
+
+	int Lump;			// Lump to read the translation from, otherwise use next 2 fields
+	BYTE FirstColor, LastColor;		// Describes the range of colors to use for the translation
+
+	BYTE RepresentativeColor;		// A palette entry representative of this translation,
+									// for map arrows and status bar backgrounds and such
+	BYTE NumExtraRanges;
+	ExtraRange Extra[6];
 };
 
-FPlayerColorSet *P_GetPlayerColorSet(FName classname, int setnum);
-void P_EnumPlayerColorSets(FName classname, TArray<int> *out);
-const char *GetPrintableDisplayName(const PClass *cls);
+typedef TMap<int, FPlayerColorSet> FPlayerColorSetMap;
+typedef TMap<FName, PalEntry> PainFlashList;
+
+class PClassPlayerPawn : public PClassActor
+{
+	DECLARE_CLASS(PClassPlayerPawn, PClassActor);
+protected:
+	virtual void Derive(PClass *newclass);
+public:
+	PClassPlayerPawn();
+	void EnumColorSets(TArray<int> *out);
+	FPlayerColorSet *GetColorSet(int setnum) { return ColorSets.CheckKey(setnum); }
+	void SetPainFlash(FName type, PalEntry color);
+	bool GetPainFlash(FName type, PalEntry *color) const;
+
+	FString DisplayName;	// Display name (used in menus, etc.)
+	FString SoundClass;		// Sound class
+	FString Face;			// Doom status bar face (when used)
+	FString Portrait;
+	FString Slot[10];
+	FName InvulMode;
+	FName HealingRadiusType;
+	fixed_t HexenArmor[5];
+	BYTE ColorRangeStart;	// Skin color range
+	BYTE ColorRangeEnd;
+	FPlayerColorSetMap ColorSets;
+	PainFlashList PainFlashes;
+};
+FString GetPrintableDisplayName(PClassPlayerPawn *cls);
 
 class APlayerPawn : public AActor
 {
-	DECLARE_CLASS (APlayerPawn, AActor)
+	DECLARE_CLASS_WITH_META(APlayerPawn, AActor, PClassPlayerPawn)
 	HAS_OBJECT_POINTERS
 public:
 	virtual void Serialize (FArchive &arc);
@@ -96,9 +116,9 @@ public:
 	virtual void TweakSpeeds (int &forwardmove, int &sidemove);
 	virtual void MorphPlayerThink ();
 	virtual void ActivateMorphWeapon ();
-	AWeapon *PickNewWeapon (const PClass *ammotype);
-	AWeapon *BestWeapon (const PClass *ammotype);
-	void CheckWeaponSwitch(const PClass *ammotype);
+	AWeapon *PickNewWeapon (PClassAmmo *ammotype);
+	AWeapon *BestWeapon (PClassAmmo *ammotype);
+	void CheckWeaponSwitch(PClassAmmo *ammotype);
 	virtual void GiveDeathmatchInventory ();
 	virtual void FilterCoopRespawnInventory (APlayerPawn *oldplayer);
 
@@ -140,7 +160,8 @@ public:
 	fixed_t		AttackZOffset;			// attack height, relative to player center
 	fixed_t		UseRange;				// [NS] Distance at which player can +use
 	fixed_t		AirCapacity;			// Multiplier for air supply underwater.
-	const PClass *FlechetteType;
+	PClassActor *FlechetteType;
+
 
 	// [CW] Fades for when you are being damaged.
 	PalEntry DamageFade;
@@ -251,7 +272,7 @@ public:
 
 	bool CheckSkin (int skin);
 
-	const PClass *Type;
+	PClassPlayerPawn *Type;
 	DWORD Flags;
 	TArray<int> Skins;
 };
@@ -319,7 +340,7 @@ struct userinfo_t : TMap<FName,FBaseCVar *>
 	{
 		return *static_cast<FIntCVar *>(*CheckKey(NAME_PlayerClass));
 	}
-	const PClass *GetPlayerClassType() const
+	PClassPlayerPawn *GetPlayerClassType() const
 	{
 		return PlayerClasses[GetPlayerClassNum()].Type;
 	}
@@ -376,7 +397,7 @@ public:
 
 	userinfo_t	userinfo;				// [RH] who is this?
 	
-	const PClass *cls;					// class of associated PlayerPawn
+	PClassPlayerPawn *cls;				// class of associated PlayerPawn
 
 	float		DesiredFOV;				// desired field of vision
 	float		FOV;					// current field of vision
@@ -434,9 +455,9 @@ public:
 	short		fixedlightlevel;
 	pspdef_t	psprites[NUMPSPRITES];	// view sprites (gun, etc)
 	int			morphTics;				// player is a chicken/pig if > 0
-	const PClass *MorphedPlayerClass;		// [MH] (for SBARINFO) class # for this player instance when morphed
+	PClassPlayerPawn *MorphedPlayerClass;		// [MH] (for SBARINFO) class # for this player instance when morphed
 	int			MorphStyle;				// which effects to apply for this player instance when morphed
-	const PClass *MorphExitFlash;		// flash to apply when demorphing (cache of value given to P_MorphPlayer)
+	PClassActor *MorphExitFlash;		// flash to apply when demorphing (cache of value given to P_MorphPlayer)
 	TObjPtr<AWeapon>	PremorphWeapon;		// ready weapon before morphing
 	int			chickenPeck;			// chicken peck countdown
 	int			jumpTics;				// delay the next jump for a moment

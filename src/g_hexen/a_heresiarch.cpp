@@ -231,6 +231,8 @@ void ASorcBall1::DoFireSpell ()
 
 DEFINE_ACTION_FUNCTION(AActor, A_SorcSpinBalls)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *mo;
 
 	self->SpawnState += 2;		// [RH] Don't spawn balls again
@@ -252,6 +254,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcSpinBalls)
 	if (mo) mo->target = self;
 	mo = Spawn("SorcBall3", pos, NO_REPLACE);
 	if (mo) mo->target = self;
+	return 0;
 }
 
 
@@ -263,11 +266,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcSpinBalls)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SorcBallOrbit)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	// [RH] If no parent, then die instead of crashing
 	if (self->target == NULL)
 	{
 		self->SetState (self->FindState(NAME_Pain));
-		return;
+		return 0;
 	}
 
 	ASorcBall *actor;
@@ -279,14 +284,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcBallOrbit)
 
 	if (!self->IsKindOf (RUNTIME_CLASS(ASorcBall)))
 	{
-		I_Error ("Corrupted sorcerer:\nTried to use a %s", RUNTIME_TYPE(self)->TypeName.GetChars());
+		I_Error ("Corrupted sorcerer:\nTried to use a %s", self->GetClass()->TypeName.GetChars());
 	}
 	actor = static_cast<ASorcBall *> (self);
 
 	if (actor->target->health <= 0)
 	{
 		actor->SetState (actor->FindState(NAME_Pain));
-		return;
+		return 0;
 	}
 
 	baseangle = (angle_t)parent->special1;
@@ -311,7 +316,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcBallOrbit)
 		break;
 
 	case SORC_STOPPING:			// Balls stopping
-		if ((parent->StopBall == RUNTIME_TYPE(actor)) &&
+		if ((parent->StopBall == actor->GetClass()) &&
 			 (parent->args[1] > SORCBALL_SPEED_ROTATIONS) &&
 			 (absangle(angle - (parent->angle>>ANGLETOFINESHIFT)) < (30<<5)))
 		{
@@ -328,7 +333,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcBallOrbit)
 		break;
 
 	case SORC_FIRESPELL:			// Casting spell
-		if (parent->StopBall == RUNTIME_TYPE(actor))
+		if (parent->StopBall == actor->GetClass())
 		{
 			// Put sorcerer into special throw spell anim
 			if (parent->health > 0)
@@ -339,7 +344,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcBallOrbit)
 		break;
 
 	case SORC_FIRING_SPELL:
-		if (parent->StopBall == RUNTIME_TYPE(actor))
+		if (parent->StopBall == actor->GetClass())
 		{
 			if (actor->special2-- <= 0)
 			{
@@ -377,6 +382,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcBallOrbit)
 	actor->SetOrigin (pos, true);
 	actor->floorz = parent->floorz;
 	actor->ceilingz = parent->ceilingz;
+	return 0;
 }
 
 //============================================================================
@@ -389,8 +395,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcBallOrbit)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SpeedBalls)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	self->args[3] = SORC_ACCELERATE;				// speed mode
 	self->args[2] = SORCBALL_TERMINAL_SPEED;		// target speed
+	return 0;
 }
 
 
@@ -566,7 +575,7 @@ void ASorcBall3::CastSorcererSpell ()
 
 	ang1 = angle - ANGLE_45;
 	ang2 = angle + ANGLE_45;
-	const PClass *cls = PClass::FindClass("SorcFX3");
+	PClassActor *cls = PClass::FindActor("SorcFX3");
 	if (health < (SpawnHealth()/3))
 	{	// Spawn 2 at a time
 		mo = P_SpawnMissileAngle(parent, cls, ang1, 4*FRACUNIT);
@@ -615,7 +624,7 @@ void ASorcBall1::CastSorcererSpell ()
 
 	ang1 = angle + ANGLE_1*70;
 	ang2 = angle - ANGLE_1*70;
-	const PClass *cls = PClass::FindClass("SorcFX1");
+	PClassActor *cls = PClass::FindActor("SorcFX1");
 	mo = P_SpawnMissileAngle (parent, cls, ang1, 0);
 	if (mo)
 	{
@@ -662,7 +671,7 @@ void A_SorcOffense2(AActor *actor)
 	delta = (finesine[index])*SORCFX4_SPREAD_ANGLE;
 	delta = (delta>>FRACBITS)*ANGLE_1;
 	ang1 = actor->angle + delta;
-	mo = P_SpawnMissileAngle(parent, PClass::FindClass("SorcFX4"), ang1, 0);
+	mo = P_SpawnMissileAngle(parent, PClass::FindActor("SorcFX4"), ang1, 0);
 	if (mo)
 	{
 		mo->special2 = 35*5/2;		// 5 seconds
@@ -682,8 +691,11 @@ void A_SorcOffense2(AActor *actor)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SorcBossAttack)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	self->args[3] = SORC_ACCELERATE;
 	self->args[2] = SORCBALL_INITIAL_SPEED;
+	return 0;
 }
 
 //============================================================================
@@ -696,6 +708,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcBossAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SpawnFizzle)
 {
+	PARAM_ACTION_PROLOGUE;
 	fixed_t dist = 5*FRACUNIT;
 	fixed_t speed = self->Speed;
 	angle_t rangle;
@@ -714,6 +727,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnFizzle)
 			mo->velz = FRACUNIT*2;
 		}
 	}
+	return 0;
 }
 
 
@@ -727,8 +741,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnFizzle)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SorcFX1Seek)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	A_DoBounceCheck (self, "SorcererHeadScream");
 	P_SeekerMissile (self,ANGLE_1*2,ANGLE_1*6);
+	return 0;
 }
 
 
@@ -750,6 +767,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcFX1Seek)
 // Split ball in two
 DEFINE_ACTION_FUNCTION(AActor, A_SorcFX2Split)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *mo;
 
 	mo = Spawn(self->GetClass(), self->Pos(), NO_REPLACE);
@@ -769,6 +788,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcFX2Split)
 		mo->SetState (mo->FindState("Orbit"));
 	}
 	self->Destroy ();
+	return 0;
 }
 
 //============================================================================
@@ -781,6 +801,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcFX2Split)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SorcFX2Orbit)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	angle_t angle;
 	fixedvec3 pos;
 	AActor *parent = self->target;
@@ -789,7 +811,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcFX2Orbit)
 	if (parent == NULL)
 	{
 		self->Destroy();
-		return;
+		return 0;
 	}
 
 	fixed_t dist = parent->radius;
@@ -839,6 +861,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcFX2Orbit)
 	self->SetOrigin (pos, true);
 	self->floorz = parent->floorz;
 	self->ceilingz = parent->ceilingz;
+	return 0;
 }
 
 //============================================================================
@@ -851,6 +874,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcFX2Orbit)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SpawnBishop)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *mo;
 	mo = Spawn("Bishop", self->Pos(), ALLOW_REPLACE);
 	if (mo)
@@ -867,6 +892,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnBishop)
 		}
 	}
 	self->Destroy ();
+	return 0;
 }
 
 //============================================================================
@@ -877,8 +903,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnBishop)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SorcererBishopEntry)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	Spawn("SorcFX3Explosion", self->Pos(), ALLOW_REPLACE);
 	S_Sound (self, CHAN_VOICE, self->SeeSound, 1, ATTN_NORM);
+	return 0;
 }
 
 //============================================================================
@@ -891,10 +920,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcererBishopEntry)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SorcFX4Check)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (self->special2-- <= 0)
 	{
 		self->SetState (self->FindState(NAME_Death));
 	}
+	return 0;
 }
 
 //============================================================================
@@ -907,6 +939,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcFX4Check)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SorcBallPop)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	S_Sound (self, CHAN_BODY, "SorcererBallPop", 1, ATTN_NONE);
 	self->flags &= ~MF_NOGRAVITY;
 	self->gravity = FRACUNIT/8;
@@ -916,6 +950,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcBallPop)
 	self->special2 = 4*FRACUNIT;		// Initial bounce factor
 	self->args[4] = BOUNCE_TIME_UNIT;	// Bounce time unit
 	self->args[3] = 5;					// Bounce time in seconds
+	return 0;
 }
 
 //============================================================================
@@ -948,5 +983,8 @@ void A_DoBounceCheck (AActor *self, const char *sound)
 
 DEFINE_ACTION_FUNCTION(AActor, A_BounceCheck)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	A_DoBounceCheck (self, "SorcererBigBallExplode");
+	return 0;
 }

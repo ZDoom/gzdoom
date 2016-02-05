@@ -537,7 +537,3 @@ enum
 	FMDF_INTERPOLATE =		1 << 1,
 	FMDF_NOANGLE =			1 << 2,
 };
-
-// This is only here to provide one global variable for testing.
-native int testglobalvar;
-

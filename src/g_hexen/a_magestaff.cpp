@@ -119,20 +119,22 @@ void MStaffSpawn (AActor *pmo, angle_t angle)
 
 DEFINE_ACTION_FUNCTION(AActor, A_MStaffAttack)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	angle_t angle;
 	player_t *player;
 	AActor *linetarget;
 
 	if (NULL == (player = self->player))
 	{
-		return;
+		return 0;
 	}
 
 	AMWeapBloodscourge *weapon = static_cast<AMWeapBloodscourge *> (self->player->ReadyWeapon);
 	if (weapon != NULL)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
-			return;
+			return 0;
 	}
 	angle = self->angle;
 	
@@ -151,6 +153,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MStaffAttack)
 	MStaffSpawn (self, angle+ANGLE_1*5);
 	S_Sound (self, CHAN_WEAPON, "MageStaffFire", 1, ATTN_NORM);
 	weapon->MStaffCount = 3;
+	return 0;
 }
 
 //============================================================================
@@ -161,6 +164,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_MStaffAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_MStaffPalette)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (self->player != NULL)
 	{
 		AMWeapBloodscourge *weapon = static_cast<AMWeapBloodscourge *> (self->player->ReadyWeapon);
@@ -169,6 +174,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MStaffPalette)
 			weapon->MStaffCount--;
 		}
 	}
+	return 0;
 }
 
 //============================================================================
@@ -179,11 +185,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_MStaffPalette)
 
 DEFINE_ACTION_FUNCTION(AActor, A_MStaffTrack)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if ((self->tracer == 0) && (pr_mstafftrack()<50))
 	{
 		self->tracer = P_RoughMonsterSearch (self, 10, true);
 	}
 	P_SeekerMissile (self, ANGLE_1*2, ANGLE_1*10);
+	return 0;
 }
 
 //============================================================================
@@ -239,13 +248,17 @@ void MStaffSpawn2 (AActor *actor, angle_t angle)
 
 DEFINE_ACTION_FUNCTION(AActor, A_MageAttack)
 {
-	if (!self->target) return;
+	PARAM_ACTION_PROLOGUE;
 
+	if (self->target == NULL)
+	{
+		return 0;
+	}
 	angle_t angle;
 	angle = self->angle;
 	MStaffSpawn2 (self, angle);
 	MStaffSpawn2 (self, angle-ANGLE_1*5);
 	MStaffSpawn2 (self, angle+ANGLE_1*5);
 	S_Sound (self, CHAN_WEAPON, "MageStaffFire", 1, ATTN_NORM);
+	return 0;
 }
-

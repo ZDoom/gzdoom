@@ -8,18 +8,23 @@
 */
 
 DEFINE_ACTION_FUNCTION(AActor, A_BspiAttack)
-{		
+{
+	PARAM_ACTION_PROLOGUE;
+
 	if (!self->target)
-		return;
+		return 0;
 
 	A_FaceTarget (self);
 
 	// launch a missile
-	P_SpawnMissile (self, self->target, PClass::FindClass("ArachnotronPlasma"));
+	P_SpawnMissile (self, self->target, PClass::FindActor("ArachnotronPlasma"));
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_BabyMetal)
 {
+	PARAM_ACTION_PROLOGUE;
 	S_Sound (self, CHAN_BODY, "baby/walk", 1, ATTN_IDLE);
-	A_Chase (self);
+	A_Chase (stack, self);
+	return 0;
 }

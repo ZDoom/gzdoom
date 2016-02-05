@@ -439,13 +439,16 @@ CCMD (use)
 {
 	if (argv.argc() > 1 && who != NULL)
 	{
-		SendItemUse = who->FindInventory (PClass::FindClass (argv[1]));
+		SendItemUse = who->FindInventory(PClass::FindActor(argv[1]));
 	}
 }
 
 CCMD (invdrop)
 {
-	if (players[consoleplayer].mo) SendItemDrop = players[consoleplayer].mo->InvSel;
+	if (players[consoleplayer].mo)
+	{
+		SendItemDrop = players[consoleplayer].mo->InvSel;
+	}
 }
 
 CCMD (weapdrop)
@@ -457,11 +460,11 @@ CCMD (drop)
 {
 	if (argv.argc() > 1 && who != NULL)
 	{
-		SendItemDrop = who->FindInventory (PClass::FindClass (argv[1]));
+		SendItemDrop = who->FindInventory(PClass::FindActor(argv[1]));
 	}
 }
 
-const PClass *GetFlechetteType(AActor *other);
+PClassActor *GetFlechetteType(AActor *other);
 
 CCMD (useflechette)
 { // Select from one of arti_poisonbag1-3, whichever the player has
@@ -475,7 +478,7 @@ CCMD (useflechette)
 	if (who == NULL)
 		return;
 
-	const PClass *type = GetFlechetteType(who);
+	PClassActor *type = GetFlechetteType(who);
 	if (type != NULL)
 	{
 		AInventory *item;
@@ -502,7 +505,7 @@ CCMD (select)
 {
 	if (argv.argc() > 1)
 	{
-		AInventory *item = who->FindInventory (PClass::FindClass (argv[1]));
+		AInventory *item = who->FindInventory(PClass::FindActor(argv[1]));
 		if (item != NULL)
 		{
 			who->InvSel = item;
@@ -1350,7 +1353,7 @@ void G_PlayerReborn (int player)
 	BYTE		currclass;
 	userinfo_t  userinfo;	// [RH] Save userinfo
 	APlayerPawn *actor;
-	const PClass *cls;
+	PClassPlayerPawn *cls;
 	FString		log;
 	DBot		*Bot;		//Added by MC:
 

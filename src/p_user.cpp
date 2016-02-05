@@ -129,26 +129,26 @@ bool FPlayerClass::CheckSkin (int skin)
 //
 //===========================================================================
 
-const char *GetPrintableDisplayName(const PClass *cls)
+FString GetPrintableDisplayName(PClassPlayerPawn *cls)
 { 
 	// Fixme; This needs a decent way to access the string table without creating a mess.
-	const char *name = cls->Meta.GetMetaString(APMETA_DisplayName);
-	return name;
+	// [RH] ????
+	return cls->DisplayName;
 }
 
-bool ValidatePlayerClass(const PClass *ti, const char *name)
+bool ValidatePlayerClass(PClassActor *ti, const char *name)
 {
-	if (!ti)
+	if (ti == NULL)
 	{
-		Printf ("Unknown player class '%s'\n", name);
+		Printf("Unknown player class '%s'\n", name);
 		return false;
 	}
-	else if (!ti->IsDescendantOf (RUNTIME_CLASS (APlayerPawn)))
+	else if (!ti->IsDescendantOf(RUNTIME_CLASS(APlayerPawn)))
 	{
-		Printf ("Invalid player class '%s'\n", name);
+		Printf("Invalid player class '%s'\n", name);
 		return false;
 	}
-	else if (ti->Meta.GetMetaString (APMETA_DisplayName) == NULL)
+	else if (static_cast<PClassPlayerPawn *>(ti)->DisplayName.IsEmpty())
 	{
 		Printf ("Missing displayname for player class '%s'\n", name);
 		return false;
@@ -161,18 +161,18 @@ void SetupPlayerClasses ()
 	FPlayerClass newclass;
 
 	PlayerClasses.Clear();
-	for (unsigned i=0; i<gameinfo.PlayerClasses.Size(); i++)
+	for (unsigned i = 0; i < gameinfo.PlayerClasses.Size(); i++)
 	{
-		newclass.Flags = 0;
-		newclass.Type = PClass::FindClass(gameinfo.PlayerClasses[i]);
-
-		if (ValidatePlayerClass(newclass.Type, gameinfo.PlayerClasses[i]))
+		PClassActor *cls = PClass::FindActor(gameinfo.PlayerClasses[i]);
+		if (ValidatePlayerClass(cls, gameinfo.PlayerClasses[i]))
 		{
-			if ((GetDefaultByType(newclass.Type)->flags6 & MF6_NOMENU))
+			newclass.Flags = 0;
+			newclass.Type = static_cast<PClassPlayerPawn *>(cls);
+			if ((GetDefaultByType(cls)->flags6 & MF6_NOMENU))
 			{
 				newclass.Flags |= PCF_NOMENU;
 			}
-			PlayerClasses.Push (newclass);
+			PlayerClasses.Push(newclass);
 		}
 	}
 }
@@ -189,17 +189,17 @@ CCMD (addplayerclass)
 {
 	if (ParsingKeyConf && argv.argc () > 1)
 	{
-		const PClass *ti = PClass::FindClass (argv[1]);
+		PClassActor *ti = PClass::FindActor(argv[1]);
 
 		if (ValidatePlayerClass(ti, argv[1]))
 		{
 			FPlayerClass newclass;
 
-			newclass.Type = ti;
+			newclass.Type = static_cast<PClassPlayerPawn *>(ti);
 			newclass.Flags = 0;
 
 			int arg = 2;
-			while (arg < argv.argc ())
+			while (arg < argv.argc())
 			{
 				if (!stricmp (argv[arg], "nomenu"))
 				{
@@ -212,7 +212,6 @@ CCMD (addplayerclass)
 
 				arg++;
 			}
-
 			PlayerClasses.Push (newclass);
 		}
 	}
@@ -224,7 +223,7 @@ CCMD (playerclasses)
 	{
 		Printf ("%3d: Class = %s, Name = %s\n", i,
 			PlayerClasses[i].Type->TypeName.GetChars(),
-			PlayerClasses[i].Type->Meta.GetMetaString (APMETA_DisplayName));
+			PlayerClasses[i].Type->DisplayName.GetChars());
 	}
 }
 
@@ -496,6 +495,90 @@ int player_t::GetSpawnClass()
 {
 	const PClass * type = PlayerClasses[CurrentPlayerClass].Type;
 	return static_cast<APlayerPawn*>(GetDefaultByType(type))->SpawnMask;
+}
+
+//===========================================================================
+//
+// PClassPlayerPawn
+//
+//===========================================================================
+
+IMPLEMENT_CLASS(PClassPlayerPawn)
+
+PClassPlayerPawn::PClassPlayerPawn()
+{
+	for (size_t i = 0; i < countof(HexenArmor); ++i)
+	{
+		HexenArmor[i] = 0;
+	}
+	ColorRangeStart = 0;
+	ColorRangeEnd = 0;
+}
+
+void PClassPlayerPawn::Derive(PClass *newclass)
+{
+	assert(newclass->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
+	Super::Derive(newclass);
+	PClassPlayerPawn *newp = static_cast<PClassPlayerPawn *>(newclass);
+	size_t i;
+
+	newp->DisplayName = DisplayName;
+	newp->SoundClass = SoundClass;
+	newp->Face = Face;
+	newp->InvulMode = InvulMode;
+	newp->HealingRadiusType = HealingRadiusType;
+	newp->ColorRangeStart = ColorRangeStart;
+	newp->ColorRangeEnd = ColorRangeEnd;
+	newp->ColorSets = ColorSets;
+	for (i = 0; i < countof(HexenArmor); ++i)
+	{
+		newp->HexenArmor[i] = HexenArmor[i];
+	}
+	for (i = 0; i < countof(Slot); ++i)
+	{
+		newp->Slot[i] = Slot[i];
+	}
+}
+
+static int STACK_ARGS intcmp(const void *a, const void *b)
+{
+	return *(const int *)a - *(const int *)b;
+}
+
+void PClassPlayerPawn::EnumColorSets(TArray<int> *out)
+{
+	out->Clear();
+	FPlayerColorSetMap::Iterator it(ColorSets);
+	FPlayerColorSetMap::Pair *pair;
+
+	while (it.NextPair(pair))
+	{
+		out->Push(pair->Key);
+	}
+	qsort(&(*out)[0], out->Size(), sizeof(int), intcmp);
+}
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+bool PClassPlayerPawn::GetPainFlash(FName type, PalEntry *color) const
+{
+	const PClassPlayerPawn *info = this;
+
+	while (info != NULL)
+	{
+		const PalEntry *flash = info->PainFlashes.CheckKey(type);
+		if (flash != NULL)
+		{
+			*color = *flash;
+			return true;
+		}
+		// Try parent class
+		info = dyn_cast<PClassPlayerPawn>(info->ParentClass);
+	}
+	return false;
 }
 
 //===========================================================================
@@ -834,7 +917,7 @@ bool APlayerPawn::UseInventory (AInventory *item)
 //
 //===========================================================================
 
-AWeapon *APlayerPawn::BestWeapon (const PClass *ammotype)
+AWeapon *APlayerPawn::BestWeapon(PClassAmmo *ammotype)
 {
 	AWeapon *bestMatch = NULL;
 	int bestOrder = INT_MAX;
@@ -896,7 +979,7 @@ AWeapon *APlayerPawn::BestWeapon (const PClass *ammotype)
 //
 //===========================================================================
 
-AWeapon *APlayerPawn::PickNewWeapon (const PClass *ammotype)
+AWeapon *APlayerPawn::PickNewWeapon(PClassAmmo *ammotype)
 {
 	AWeapon *best = BestWeapon (ammotype);
 
@@ -924,7 +1007,7 @@ AWeapon *APlayerPawn::PickNewWeapon (const PClass *ammotype)
 //
 //===========================================================================
 
-void APlayerPawn::CheckWeaponSwitch(const PClass *ammotype)
+void APlayerPawn::CheckWeaponSwitch(PClassAmmo *ammotype)
 {
 	if (!player->userinfo.GetNeverSwitch() &&
 		player->PendingWeapon == WP_NOCHANGE && 
@@ -951,14 +1034,14 @@ void APlayerPawn::CheckWeaponSwitch(const PClass *ammotype)
 
 void APlayerPawn::GiveDeathmatchInventory()
 {
-	for (unsigned int i = 0; i < PClass::m_Types.Size(); ++i)
+	for (unsigned int i = 0; i < PClassActor::AllActorClasses.Size(); ++i)
 	{
-		if (PClass::m_Types[i]->IsDescendantOf (RUNTIME_CLASS(AKey)))
+		if (PClassActor::AllActorClasses[i]->IsDescendantOf (RUNTIME_CLASS(AKey)))
 		{
-			AKey *key = (AKey *)GetDefaultByType (PClass::m_Types[i]);
+			AKey *key = (AKey *)GetDefaultByType (PClassActor::AllActorClasses[i]);
 			if (key->KeyNumber != 0)
 			{
-				key = static_cast<AKey *>(Spawn (PClass::m_Types[i], 0,0,0, NO_REPLACE));
+				key = static_cast<AKey *>(Spawn(static_cast<PClassActor *>(PClassActor::AllActorClasses[i]), 0,0,0, NO_REPLACE));
 				if (!key->CallTryPickup (this))
 				{
 					key->Destroy ();
@@ -1105,8 +1188,8 @@ const char *APlayerPawn::GetSoundClass() const
 	}
 
 	// [GRB]
-	const char *sclass = GetClass ()->Meta.GetMetaString (APMETA_SoundClass);
-	return sclass != NULL ? sclass : "player";
+	PClassPlayerPawn *pclass = GetClass();
+	return pclass->SoundClass.IsNotEmpty() ? pclass->SoundClass.GetChars() : "player";
 }
 
 //===========================================================================
@@ -1220,18 +1303,14 @@ void APlayerPawn::GiveDefaultInventory ()
 	// HexenArmor must always be the first item in the inventory because
 	// it provides player class based protection that should not affect
 	// any other protection item.
-	fixed_t hx[5];
-	for(int i=0;i<5;i++)
-	{
-		hx[i] = GetClass()->Meta.GetMetaFixed(APMETA_Hexenarmor0+i);
-	}
-	GiveInventoryType (RUNTIME_CLASS(AHexenArmor));
+	PClassPlayerPawn *myclass = GetClass();
+	GiveInventoryType(RUNTIME_CLASS(AHexenArmor));
 	AHexenArmor *harmor = FindInventory<AHexenArmor>();
-	harmor->Slots[4] = hx[0];
-	harmor->SlotsIncrement[0] = hx[1];
-	harmor->SlotsIncrement[1] = hx[2];
-	harmor->SlotsIncrement[2] = hx[3];
-	harmor->SlotsIncrement[3] = hx[4];
+	harmor->Slots[4] = myclass->HexenArmor[0];
+	for (int i = 0; i < 4; ++i)
+	{
+		harmor->SlotsIncrement[i] = myclass->HexenArmor[i + 1];
+	}
 
 	// BasicArmor must come right after that. It should not affect any
 	// other protection item as well but needs to process the damage
@@ -1243,25 +1322,25 @@ void APlayerPawn::GiveDefaultInventory ()
 	AddInventory (barmor);
 
 	// Now add the items from the DECORATE definition
-	FDropItem *di = GetDropItems();
+	DDropItem *di = GetDropItems();
 
 	while (di)
 	{
-		const PClass *ti = PClass::FindClass (di->Name);
+		PClassActor *ti = PClass::FindActor (di->Name);
 		if (ti)
 		{
 			AInventory *item = FindInventory (ti);
 			if (item != NULL)
 			{
 				item->Amount = clamp<int>(
-					item->Amount + (di->amount ? di->amount : ((AInventory *)item->GetDefault ())->Amount),
+					item->Amount + (di->Amount ? di->Amount : ((AInventory *)item->GetDefault ())->Amount),
 					0, item->MaxAmount);
 			}
 			else
 			{
 				item = static_cast<AInventory *>(Spawn (ti, 0,0,0, NO_REPLACE));
-				item->ItemFlags|=IF_IGNORESKILL;	// no skill multiplicators here
-				item->Amount = di->amount;
+				item->ItemFlags |= IF_IGNORESKILL;	// no skill multiplicators here
+				item->Amount = di->Amount;
 				if (item->IsKindOf (RUNTIME_CLASS (AWeapon)))
 				{
 					// To allow better control any weapon is emptied of
@@ -1298,7 +1377,7 @@ void APlayerPawn::MorphPlayerThink ()
 
 void APlayerPawn::ActivateMorphWeapon ()
 {
-	const PClass *morphweapon = PClass::FindClass (MorphWeapon);
+	PClassActor *morphweapon = PClass::FindActor (MorphWeapon);
 	player->PendingWeapon = WP_NOCHANGE;
 	player->psprites[ps_weapon].sy = WEAPONTOP;
 
@@ -1358,7 +1437,7 @@ void APlayerPawn::Die (AActor *source, AActor *inflictor, int dmgflags)
 				AInventory *item;
 
 				// kgDROP - start - modified copy from a_action.cpp
-				FDropItem *di = weap->GetDropItems();
+				DDropItem *di = weap->GetDropItems();
 
 				if (di != NULL)
 				{
@@ -1366,8 +1445,8 @@ void APlayerPawn::Die (AActor *source, AActor *inflictor, int dmgflags)
 					{
 						if (di->Name != NAME_None)
 						{
-							const PClass *ti = PClass::FindClass(di->Name);
-							if (ti) P_DropItem (player->mo, ti, di->amount, di->probability);
+							PClassActor *ti = PClass::FindActor(di->Name);
+							if (ti) P_DropItem (player->mo, ti, di->Amount, di->Probability);
 						}
 						di = di->Next;
 					}
@@ -1466,6 +1545,8 @@ void APlayerPawn::TweakSpeeds (int &forward, int &side)
 
 DEFINE_ACTION_FUNCTION(AActor, A_PlayerScream)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	int sound = 0;
 	int chan = CHAN_VOICE;
 
@@ -1479,7 +1560,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PlayerScream)
 		{
 			S_Sound (self, CHAN_VOICE, "*death", 1, ATTN_NORM);
 		}
-		return;
+		return 0;
 	}
 
 	// Handle the different player death screams
@@ -1528,6 +1609,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PlayerScream)
 		}
 	}
 	S_Sound (self, chan, sound, 1, ATTN_NORM);
+	return 0;
 }
 
 
@@ -1539,17 +1621,18 @@ DEFINE_ACTION_FUNCTION(AActor, A_PlayerScream)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SkullPop)
 {
-	ACTION_PARAM_START(1);
-	ACTION_PARAM_CLASS(spawntype, 0);
+	PARAM_ACTION_PROLOGUE;
+	PARAM_CLASS_OPT(spawntype, APlayerChunk)	{ spawntype = NULL; }
 
 	APlayerPawn *mo;
 	player_t *player;
 
 	// [GRB] Parameterized version
-	if (!spawntype || !spawntype->IsDescendantOf (RUNTIME_CLASS (APlayerChunk)))
+	if (spawntype == NULL || !spawntype->IsDescendantOf(RUNTIME_CLASS(APlayerChunk)))
 	{
-		spawntype = PClass::FindClass("BloodySkull");
-		if (spawntype == NULL) return;
+		spawntype = dyn_cast<PClassPlayerPawn>(PClass::FindClass("BloodySkull"));
+		if (spawntype == NULL)
+			return 0;
 	}
 
 	self->flags &= ~MF_SOLID;
@@ -1577,6 +1660,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SkullPop)
 			players[i].camera = mo;
 		}
 	}
+	return 0;
 }
 
 //----------------------------------------------------------------------------
@@ -1587,10 +1671,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SkullPop)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CheckPlayerDone)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (self->player == NULL)
 	{
-		self->Destroy ();
+		self->Destroy();
 	}
+	return 0;
 }
 
 //===========================================================================
@@ -2202,8 +2289,8 @@ void P_PlayerThink (player_t *player)
 
 	if (debugfile && !(player->cheats & CF_PREDICTING))
 	{
-		fprintf (debugfile, "tic %d for pl %td: (%d, %d, %d, %u) b:%02x p:%d y:%d f:%d s:%d u:%d\n",
-			gametic, player-players, player->mo->X(), player->mo->Y(), player->mo->Z(),
+		fprintf (debugfile, "tic %d for pl %d: (%d, %d, %d, %u) b:%02x p:%d y:%d f:%d s:%d u:%d\n",
+			gametic, (int)(player-players), player->mo->X(), player->mo->Y(), player->mo->Z(),
 			player->mo->angle>>ANGLETOFINESHIFT, player->cmd.ucmd.buttons,
 			player->cmd.ucmd.pitch, player->cmd.ucmd.yaw, player->cmd.ucmd.forwardmove,
 			player->cmd.ucmd.sidemove, player->cmd.ucmd.upmove);
@@ -3159,55 +3246,6 @@ void player_t::Serialize (FArchive &arc)
 	if (SaveVersion >= 4522)
 	{
 		arc << MUSINFOactor << MUSINFOtics;
-	}
-}
-
-
-static FPlayerColorSetMap *GetPlayerColors(FName classname)
-{
-	const PClass *cls = PClass::FindClass(classname);
-
-	if (cls != NULL)
-	{
-		FActorInfo *inf = cls->ActorInfo;
-
-		if (inf != NULL)
-		{
-			return inf->ColorSets;
-		}
-	}
-	return NULL;
-}
-
-FPlayerColorSet *P_GetPlayerColorSet(FName classname, int setnum)
-{
-	FPlayerColorSetMap *map = GetPlayerColors(classname);
-	if (map == NULL)
-	{
-		return NULL;
-	}
-	return map->CheckKey(setnum);
-}
-
-static int STACK_ARGS intcmp(const void *a, const void *b)
-{
-	return *(const int *)a - *(const int *)b;
-}
-
-void P_EnumPlayerColorSets(FName classname, TArray<int> *out)
-{
-	out->Clear();
-	FPlayerColorSetMap *map = GetPlayerColors(classname);
-	if (map != NULL)
-	{
-		FPlayerColorSetMap::Iterator it(*map);
-		FPlayerColorSetMap::Pair *pair;
-
-		while (it.NextPair(pair))
-		{
-			out->Push(pair->Key);
-		}
-		qsort(&(*out)[0], out->Size(), sizeof(int), intcmp);
 	}
 }
 

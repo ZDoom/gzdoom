@@ -68,6 +68,7 @@
 #include "po_man.h"
 #include "r_renderer.h"
 #include "r_data/colormaps.h"
+#include "portal.h"
 #ifndef NO_EDATA
 #include "edata.h"
 #endif
@@ -1690,21 +1691,18 @@ static void SetMapThingUserData(AActor *actor, unsigned udi)
 	{
 		FName varname = MapThingsUserData[udi].Property;
 		int value = MapThingsUserData[udi].Value;
-		PSymbol *sym = actor->GetClass()->Symbols.FindSymbol(varname, true);
-		PSymbolVariable *var;
+		PField *var = dyn_cast<PField>(actor->GetClass()->Symbols.FindSymbol(varname, true));
 
 		udi++;
 
-		if (sym == NULL || sym->SymbolType != SYM_Variable ||
-			!(var = static_cast<PSymbolVariable *>(sym))->bUserVar ||
-			var->ValueType.Type != VAL_Int)
+		if (var == NULL || (var->Flags & VARF_Native) || !var->Type->IsKindOf(RUNTIME_CLASS(PBasicType)))
 		{
 			DPrintf("%s is not a user variable in class %s\n", varname.GetChars(),
 				actor->GetClass()->TypeName.GetChars());
 		}
 		else
 		{ // Set the value of the specified user variable.
-			*(int *)(reinterpret_cast<BYTE *>(actor) + var->offset) = value;
+			var->Type->SetValue(reinterpret_cast<BYTE *>(actor) + var->Offset, value);
 		}
 	}
 }
@@ -1976,6 +1974,11 @@ void P_SetLineID (int i, line_t *ld)
 		case Static_Init:
 			if (ld->args[1] == Init_SectorLink) setid = ld->args[0];
 			break;
+
+		case Line_SetPortal:
+		case Line_SetVisualPortal:
+			setid = ld->args[1]; // 0 = target id, 1 = this id, 2 = plane anchor
+			break;
 		}
 		if (setid != -1)
 		{
@@ -2076,6 +2079,9 @@ void P_FinishLoadingLineDef(line_t *ld, int alpha)
 		ld->special = 0;
 		break;
 	}
+
+	// [ZZ] check initial portal link
+	P_CheckPortal(ld);
 }
 // killough 4/4/98: delay using sidedefs until they are loaded
 void P_FinishLoadingLineDefs ()

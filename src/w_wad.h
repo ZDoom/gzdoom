@@ -166,14 +166,20 @@ public:
 
 	inline int CheckNumForName (const BYTE *name) { return CheckNumForName ((const char *)name, ns_global); }
 	inline int CheckNumForName (const char *name) { return CheckNumForName (name, ns_global); }
+	inline int CheckNumForName (const FString &name) { return CheckNumForName (name.GetChars()); }
 	inline int CheckNumForName (const BYTE *name, int ns) { return CheckNumForName ((const char *)name, ns); }
 	inline int GetNumForName (const char *name) { return GetNumForName (name, ns_global); }
+	inline int GetNumForName (const FString &name) { return GetNumForName (name.GetChars(), ns_global); }
 	inline int GetNumForName (const BYTE *name) { return GetNumForName ((const char *)name); }
 	inline int GetNumForName (const BYTE *name, int ns) { return GetNumForName ((const char *)name, ns); }
 
 	int CheckNumForFullName (const char *name, bool trynormal = false, int namespc = ns_global);
 	int CheckNumForFullName (const char *name, int wadfile);
 	int GetNumForFullName (const char *name);
+
+	inline int CheckNumForFullName(const FString &name, bool trynormal = false, int namespc = ns_global) { return CheckNumForFullName(name.GetChars(), trynormal, namespc); }
+	inline int CheckNumForFullName (const FString &name, int wadfile) { return CheckNumForFullName(name.GetChars(), wadfile); }
+	inline int GetNumForFullName (const FString &name) { return GetNumForFullName(name.GetChars()); }
 
 	void SetLinkedTexture(int lump, FTexture *tex);
 	FTexture *GetLinkedTexture(int lump);

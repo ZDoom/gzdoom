@@ -135,6 +135,7 @@ IMPLEMENT_POINTY_CLASS (AActor)
  DECLARE_POINTER (LastHeard)
  DECLARE_POINTER (master)
  DECLARE_POINTER (Poisoner)
+ DECLARE_POINTER (Damage)
 END_POINTERS
 
 AActor::~AActor ()
@@ -142,6 +143,79 @@ AActor::~AActor ()
 	// Please avoid calling the destructor directly (or through delete)!
 	// Use Destroy() instead.
 }
+
+//==========================================================================
+//
+// CalcDamageValue
+//
+// Given a script function, returns an integer to represent it in a
+// savegame. This encoding is compatible with previous incarnations
+// where damage was an integer.
+//
+//             0 : use null function
+//    0x40000000 : use default function
+// anything else : use function that returns this number
+//
+//==========================================================================
+
+static int CalcDamageValue(VMFunction *func)
+{
+	if (func == NULL)
+	{
+		return 0;
+	}
+	VMScriptFunction *sfunc = dyn_cast<VMScriptFunction>(func);
+	if (sfunc == NULL)
+	{
+		return 0x40000000;
+	}
+	VMOP *op = sfunc->Code;
+	// If the function was created by CreateDamageFunction(), extract
+	// the value used to create it and return that. Otherwise, return
+	// indicating to use the default function.
+	if (op->op == OP_RETI && op->a == 0)
+	{
+		return op->i16;
+	}
+	if (op->op == OP_RET && op->a == 0 && op->b == (REGT_INT | REGT_KONST))
+	{
+		return sfunc->KonstD[op->c];
+	}
+	return 0x40000000;
+}
+
+//==========================================================================
+//
+// UncalcDamageValue
+//
+// Given a damage integer, returns a script function for it.
+//
+//==========================================================================
+
+static VMFunction *UncalcDamageValue(int dmg, VMFunction *def)
+{
+	if (dmg == 0)
+	{
+		return NULL;
+	}
+	if ((dmg & 0xC0000000) == 0x40000000)
+	{
+		return def;
+	}
+	// Does the default version return this? If so, use it. Otherwise,
+	// create a new function.
+	if (CalcDamageValue(def) == dmg)
+	{
+		return def;
+	}
+	return CreateDamageFunction(dmg);
+}
+
+//==========================================================================
+//
+// AActor :: Serialize
+//
+//==========================================================================
 
 void AActor::Serialize (FArchive &arc)
 {
@@ -189,8 +263,19 @@ void AActor::Serialize (FArchive &arc)
 		<< vely
 		<< velz
 		<< tics
-		<< state
-		<< Damage;
+		<< state;
+	if (arc.IsStoring())
+	{
+		int dmg;
+		dmg = CalcDamageValue(Damage);
+		arc << dmg;
+	}
+	else
+	{
+		int dmg;
+		arc << dmg;
+		Damage = UncalcDamageValue(dmg, GetDefault()->Damage);
+	}
 	if (SaveVersion >= 4530)
 	{
 		P_SerializeTerrain(arc, floorterrain);
@@ -525,7 +610,16 @@ bool AActor::SetState (FState *newstate, bool nofunction)
 		{
 			// Check whether the called action function resulted in destroying the actor
 			if (ObjectFlags & OF_EuthanizeMe)
+			{
 				return false;
+			}
+			if (ObjectFlags & OF_StateChanged)
+			{ // The action was an A_Jump-style function that wants to change the next state.
+				ObjectFlags &= ~OF_StateChanged;
+				newstate = state;
+				tics = 0;		 // make sure we loop and set the new state properly
+				continue;
+			}
 		}
 		newstate = newstate->GetNextState();
 	} while (tics == 0);
@@ -601,7 +695,7 @@ void AActor::RemoveInventory(AInventory *item)
 //
 //============================================================================
 
-bool AActor::TakeInventory(const PClass *itemclass, int amount, bool fromdecorate, bool notakeinfinite)
+bool AActor::TakeInventory(PClassActor *itemclass, int amount, bool fromdecorate, bool notakeinfinite)
 {
 	AInventory *item = FindInventory(itemclass);
 
@@ -754,13 +848,14 @@ AInventory *AActor::DropInventory (AInventory *item)
 //
 //============================================================================
 
-AInventory *AActor::FindInventory (const PClass *type, bool subclass)
+AInventory *AActor::FindInventory (PClassActor *type, bool subclass)
 {
 	AInventory *item;
 
-	if (type == NULL) return NULL;
-
-	assert (type->ActorInfo != NULL);
+	if (type == NULL)
+	{
+		return NULL;
+	}
 	for (item = Inventory; item != NULL; item = item->Inventory)
 	{
 		if (!subclass)
@@ -783,7 +878,7 @@ AInventory *AActor::FindInventory (const PClass *type, bool subclass)
 
 AInventory *AActor::FindInventory (FName type)
 {
-	return FindInventory(PClass::FindClass(type));
+	return FindInventory(PClass::FindActor(type));
 }
 
 //============================================================================
@@ -792,7 +887,7 @@ AInventory *AActor::FindInventory (FName type)
 //
 //============================================================================
 
-AInventory *AActor::GiveInventoryType (const PClass *type)
+AInventory *AActor::GiveInventoryType (PClassActor *type)
 {
 	AInventory *item = NULL;
 
@@ -816,7 +911,7 @@ AInventory *AActor::GiveInventoryType (const PClass *type)
 //
 //============================================================================
 
-bool AActor::GiveAmmo (const PClass *type, int amount)
+bool AActor::GiveAmmo (PClassAmmo *type, int amount)
 {
 	if (type != NULL)
 	{
@@ -1011,24 +1106,24 @@ bool AActor::IsVisibleToPlayer() const
 		return true;
  
 	if (VisibleToTeam != 0 && teamplay &&
-		(signed)(VisibleToTeam-1) != players[consoleplayer].userinfo.GetTeam())
+		(signed)(VisibleToTeam-1) != players[consoleplayer].userinfo.GetTeam() )
 		return false;
 
 	const player_t* pPlayer = players[consoleplayer].camera->player;
 
-	if(pPlayer && pPlayer->mo && GetClass()->ActorInfo->VisibleToPlayerClass.Size() > 0)
+	if (pPlayer && pPlayer->mo && GetClass()->VisibleToPlayerClass.Size() > 0)
 	{
 		bool visible = false;
-		for(unsigned int i = 0;i < GetClass()->ActorInfo->VisibleToPlayerClass.Size();++i)
+		for(unsigned int i = 0;i < GetClass()->VisibleToPlayerClass.Size();++i)
 		{
-			const PClass *cls = GetClass()->ActorInfo->VisibleToPlayerClass[i];
-			if(cls && pPlayer->mo->GetClass()->IsDescendantOf(cls))
+			PClassPlayerPawn *cls = GetClass()->VisibleToPlayerClass[i];
+			if (cls && pPlayer->mo->GetClass()->IsDescendantOf(cls))
 			{
 				visible = true;
 				break;
 			}
 		}
-		if(!visible)
+		if (!visible)
 			return false;
 	}
 
@@ -1122,7 +1217,7 @@ bool AActor::Grind(bool items)
 		{
 			if (this->flags4 & MF4_BOSSDEATH) 
 			{
-				CALL_ACTION(A_BossDeath, this);
+				A_BossDeath(this);
 			}
 			flags &= ~MF_SOLID;
 			flags3 |= MF3_DONTGIB;
@@ -1140,10 +1235,10 @@ bool AActor::Grind(bool items)
 		{
 			if (this->flags4 & MF4_BOSSDEATH) 
 			{
-				CALL_ACTION(A_BossDeath, this);
+				A_BossDeath(this);
 			}
 
-			const PClass *i = PClass::FindClass("RealGibs");
+			PClassActor *i = PClass::FindActor("RealGibs");
 
 			if (i != NULL)
 			{
@@ -2684,7 +2779,7 @@ void P_NightmareRespawn (AActor *mobj)
 	// spawn it
 	x = mobj->SpawnPoint[0];
 	y = mobj->SpawnPoint[1];
-	mo = AActor::StaticSpawn(RUNTIME_TYPE(mobj), x, y, z, NO_REPLACE, true);
+	mo = AActor::StaticSpawn(mobj->GetClass(), x, y, z, NO_REPLACE, true);
 
 	if (z == ONFLOORZ)
 	{
@@ -2924,27 +3019,40 @@ CCMD(utid)
 
 int AActor::GetMissileDamage (int mask, int add)
 {
-	if ((Damage & 0xC0000000) == 0x40000000)
-	{
-		return EvalExpressionI (Damage & 0x3FFFFFFF, this);
-	}
-	if (Damage == 0)
+	if (Damage == NULL)
 	{
 		return 0;
 	}
+	VMFrameStack stack;
+	VMValue param = this;
+	VMReturn results[2];
+
+	int amount, calculated = false;
+
+	results[0].IntAt(&amount);
+	results[1].IntAt(&calculated);
+
+	if (stack.Call(Damage, &param, 1, results, 2) < 1)
+	{ // No results
+		return 0;
+	}
+	if (calculated)
+	{
+		return amount;
+	}
 	else if (mask == 0)
 	{
-		return add * Damage;
+		return add * amount;
 	}
 	else
 	{
-		return ((pr_missiledamage() & mask) + add) * Damage;
+		return ((pr_missiledamage() & mask) + add) * amount;
 	}
 }
 
 void AActor::Howl ()
 {
-	int howl = GetClass()->Meta.GetMetaInt(AMETA_HowlSound);
+	FSoundID howl = GetClass()->HowlSound;
 	if (!S_IsActorPlayingSomething(this, CHAN_BODY, howl))
 	{
 		S_Sound (this, CHAN_BODY, howl, 1, ATTN_NORM);
@@ -3603,7 +3711,8 @@ void AActor::Tick ()
 		// won't hurt anything. Don't do this if damage is 0! That way, you can
 		// still have missiles that go straight up and down through actors without
 		// damaging anything.
-		if ((flags & MF_MISSILE) && (velx|vely) == 0 && Damage != 0)
+		// (for backwards compatibility this must check for lack of damage function, not for zero damage!)
+		if ((flags & MF_MISSILE) && (velx|vely) == 0 && Damage != NULL)
 		{
 			velx = 1;
 		}
@@ -3941,25 +4050,21 @@ bool AActor::UpdateWaterLevel (fixed_t oldz, bool dosplash)
 //
 //==========================================================================
 
-AActor *AActor::StaticSpawn (const PClass *type, fixed_t ix, fixed_t iy, fixed_t iz, replace_t allowreplacement, bool SpawningMapThing)
+AActor *AActor::StaticSpawn (PClassActor *type, fixed_t ix, fixed_t iy, fixed_t iz, replace_t allowreplacement, bool SpawningMapThing)
 {
 	if (type == NULL)
 	{
 		I_Error ("Tried to spawn a class-less actor\n");
 	}
 
-	if (type->ActorInfo == NULL)
-	{
-		I_Error ("%s is not an actor\n", type->TypeName.GetChars());
-	}
-
 	if (allowreplacement)
+	{
 		type = type->GetReplacement();
-
+	}
 
 	AActor *actor;
 	
-	actor = static_cast<AActor *>(const_cast<PClass *>(type)->CreateNew ());
+	actor = static_cast<AActor *>(const_cast<PClassActor *>(type)->CreateNew ());
 
 	// Set default dialogue
 	actor->ConversationRoot = GetConversation(actor->GetClass()->TypeName);
@@ -4004,10 +4109,9 @@ AActor *AActor::StaticSpawn (const PClass *type, fixed_t ix, fixed_t iy, fixed_t
 	actor->frame = st->GetFrame();
 	actor->renderflags = (actor->renderflags & ~RF_FULLBRIGHT) | ActorRenderFlags::FromInt (st->GetFullbright());
 	actor->touching_sectorlist = NULL;	// NULL head of sector list // phares 3/13/98
-	if (G_SkillProperty(SKILLP_FastMonsters))
-		actor->Speed = actor->GetClass()->Meta.GetMetaFixed(AMETA_FastSpeed, actor->Speed);
+	if (G_SkillProperty(SKILLP_FastMonsters) && actor->GetClass()->FastSpeed >= 0)
+		actor->Speed = actor->GetClass()->FastSpeed;
 	actor->DamageMultiply = FRACUNIT;
-
 
 	// set subsector and/or block links
 	actor->LinkToWorld (SpawningMapThing);
@@ -4144,7 +4248,11 @@ AActor *Spawn (FName classname, fixed_t x, fixed_t y, fixed_t z, replace_t allow
 	{
 		I_Error("Attempt to spawn actor of unknown type '%s'\n", classname.GetChars());
 	}
-	return AActor::StaticSpawn (cls, x, y, z, allowreplacement);
+	if (!cls->IsKindOf(RUNTIME_CLASS(PClassActor)))
+	{
+		I_Error("Attempt to spawn non-actor of type '%s'\n", classname.GetChars());
+	}
+	return AActor::StaticSpawn (const_cast<PClassActor *>(static_cast<const PClassActor *>(cls)), x, y, z, allowreplacement);
 }
 
 void AActor::LevelSpawned ()
@@ -4652,7 +4760,7 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 // [RH] position is used to weed out unwanted start spots
 AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 {
-	const PClass *i;
+	PClassActor *i;
 	int mask;
 	AActor *mobj;
 	fixed_t x, y, z;
@@ -4672,8 +4780,8 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 		mentry = DoomEdMap.CheckKey(0);
 		if (mentry == NULL)	// we need a valid entry for the rest of this function so if we can't find a default, let's exit right away.
 		{
-			return NULL;
-		}
+		return NULL;
+	}
 	}
 	if (mentry->Type == NULL && mentry->Special <= 0)
 	{
@@ -4706,18 +4814,18 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 		case SMT_PolySpawn:
 		case SMT_PolySpawnCrush:
 		case SMT_PolySpawnHurt:
-		{
-			polyspawns_t *polyspawn = new polyspawns_t;
-			polyspawn->next = polyspawns;
-			polyspawn->x = mthing->x;
-			polyspawn->y = mthing->y;
-			polyspawn->angle = mthing->angle;
+	{
+		polyspawns_t *polyspawn = new polyspawns_t;
+		polyspawn->next = polyspawns;
+		polyspawn->x = mthing->x;
+		polyspawn->y = mthing->y;
+		polyspawn->angle = mthing->angle;
 			polyspawn->type = mentry->Special;
-			polyspawns = polyspawn;
+		polyspawns = polyspawn;
 			if (mentry->Special != SMT_PolyAnchor)
-				po_NumPolyobjs++;
-			return NULL;
-		}
+			po_NumPolyobjs++;
+		return NULL;
+	}
 
 		case SMT_Player1Start:
 		case SMT_Player2Start:
@@ -4734,8 +4842,8 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 		default:
 			break;
 
-		}
 	}
+		}
 
 	if (pnum == -1 || (level.flags & LEVEL_FILTERSTARTS))
 	{
@@ -4829,24 +4937,25 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 
 	// [RH] If the thing's corresponding sprite has no frames, also map
 	//		it to the unknown thing.
-	// Handle decorate replacements explicitly here
-	// to check for missing frames in the replacement object.
+		// Handle decorate replacements explicitly here
+		// to check for missing frames in the replacement object.
 	i = mentry->Type->GetReplacement();
 
-	const AActor *defaults = GetDefaultByType (i);
-	if (defaults->SpawnState == NULL ||
-		sprites[defaults->SpawnState->sprite].numframes == 0)
-	{
-		// We don't load mods for shareware games so we'll just ignore
-		// missing actors. Heretic needs this since the shareware includes
-		// the retail weapons in Deathmatch.
-		if (gameinfo.flags & GI_SHAREWARE)
-			return NULL;
+		const AActor *defaults = GetDefaultByType (i);
+		if (defaults->SpawnState == NULL ||
+			sprites[defaults->SpawnState->sprite].numframes == 0)
+		{
+			// We don't load mods for shareware games so we'll just ignore
+			// missing actors. Heretic needs this since the shareware includes
+			// the retail weapons in Deathmatch.
+			if (gameinfo.flags & GI_SHAREWARE)
+				return NULL;
 
-		Printf ("%s at (%i, %i) has no frames\n",
-				i->TypeName.GetChars(), mthing->x>>FRACBITS, mthing->y>>FRACBITS);
-		i = PClass::FindClass("Unknown");
-	}
+			Printf ("%s at (%i, %i) has no frames\n",
+					i->TypeName.GetChars(), mthing->x>>FRACBITS, mthing->y>>FRACBITS);
+			i = PClass::FindActor("Unknown");
+			assert(i->IsKindOf(RUNTIME_CLASS(PClassActor)));
+		}
 
 	const AActor *info = GetDefaultByType (i);
 
@@ -5009,7 +5118,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 // P_SpawnPuff
 //
 
-AActor *P_SpawnPuff (AActor *source, const PClass *pufftype, fixed_t x, fixed_t y, fixed_t z, angle_t dir, int updown, int flags, AActor *vict)
+AActor *P_SpawnPuff (AActor *source, PClassActor *pufftype, fixed_t x, fixed_t y, fixed_t z, angle_t dir, int updown, int flags, AActor *vict)
 {
 	AActor *puff;
 	
@@ -5092,7 +5201,7 @@ void P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage, AAc
 {
 	AActor *th;
 	PalEntry bloodcolor = originator->GetBloodColor();
-	const PClass *bloodcls = originator->GetBloodType();
+	PClassActor *bloodcls = originator->GetBloodType();
 	
 	int bloodtype = cl_bloodtype;
 	
@@ -5146,25 +5255,26 @@ void P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage, AAc
 				advance = 2;
 			}
 
-			PClass *cls = th->GetClass();
+			PClassActor *cls = th->GetClass();
 
 			while (cls != RUNTIME_CLASS(AActor))
 			{
-				FActorInfo *ai = cls->ActorInfo;
 				int checked_advance = advance;
-				if (ai->OwnsState(th->SpawnState))
+				if (cls->OwnsState(th->SpawnState))
 				{
 					for (; checked_advance > 0; --checked_advance)
 					{
 						// [RH] Do not set to a state we do not own.
-						if (ai->OwnsState(th->SpawnState + checked_advance))
+						if (cls->OwnsState(th->SpawnState + checked_advance))
 						{
 							th->SetState(th->SpawnState + checked_advance);
 							goto statedone;
 						}
 					}
 				}
-				cls = cls->ParentClass;
+				// We can safely assume the ParentClass is of type PClassActor
+				// since we stop when we see the Actor base class.
+				cls = static_cast<PClassActor *>(cls->ParentClass);
 			}
 		}
 
@@ -5185,7 +5295,7 @@ void P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage, AAc
 void P_BloodSplatter (fixed_t x, fixed_t y, fixed_t z, AActor *originator)
 {
 	PalEntry bloodcolor = originator->GetBloodColor();
-	const PClass *bloodcls = originator->GetBloodType(1); 
+	PClassActor *bloodcls = originator->GetBloodType(1); 
 
 	int bloodtype = cl_bloodtype;
 	
@@ -5225,7 +5335,7 @@ void P_BloodSplatter (fixed_t x, fixed_t y, fixed_t z, AActor *originator)
 void P_BloodSplatter2 (fixed_t x, fixed_t y, fixed_t z, AActor *originator)
 {
 	PalEntry bloodcolor = originator->GetBloodColor();
-	const PClass *bloodcls = originator->GetBloodType(2);
+	PClassActor *bloodcls = originator->GetBloodType(2);
 
 	int bloodtype = cl_bloodtype;
 	
@@ -5265,7 +5375,7 @@ void P_BloodSplatter2 (fixed_t x, fixed_t y, fixed_t z, AActor *originator)
 void P_RipperBlood (AActor *mo, AActor *bleeder)
 {
 	PalEntry bloodcolor = bleeder->GetBloodColor();
-	const PClass *bloodcls = bleeder->GetBloodType();
+	PClassActor *bloodcls = bleeder->GetBloodType();
 
 	fixed_t xo = (pr_ripperblood.Random2() << 12);
 	fixed_t yo = (pr_ripperblood.Random2() << 12);
@@ -5375,20 +5485,20 @@ bool P_HitWater (AActor * thing, sector_t * sec, fixed_t x, fixed_t y, fixed_t z
 	{
 		for (unsigned int i = 0; i<sec->e->XFloor.ffloors.Size(); i++)
 		{
-			F3DFloor * rover = sec->e->XFloor.ffloors[i];
-			if (!(rover->flags & FF_EXISTS)) continue;
-			fixed_t planez = rover->top.plane->ZatPoint(x, y);
+		F3DFloor * rover = sec->e->XFloor.ffloors[i];
+		if (!(rover->flags & FF_EXISTS)) continue;
+		fixed_t planez = rover->top.plane->ZatPoint(x, y);
 			if (z > planez - FRACUNIT / 2 && z < planez + FRACUNIT / 2)	// allow minor imprecisions
-			{
+		{
 				if (rover->flags & (FF_SOLID | FF_SWIMMABLE))
-				{
+			{
 					terrainnum = rover->model->GetTerrain(rover->top.isceiling);
-					goto foundone;
-				}
+				goto foundone;
 			}
-			planez = rover->bottom.plane->ZatPoint(x, y);
-			if (planez < z && !(planez < thing->floorz)) return false;
 		}
+		planez = rover->bottom.plane->ZatPoint(x, y);
+		if (planez < z && !(planez < thing->floorz)) return false;
+	}
 	}
 	hsec = sec->GetHeightSec();
 	if (force || hsec == NULL || !(hsec->MoreFlags & SECF_CLIPFAKEPLANES))
@@ -5661,11 +5771,12 @@ void P_PlaySpawnSound(AActor *missile, AActor *spawner)
 	}
 }
 
-static fixed_t GetDefaultSpeed(const PClass *type)
+static fixed_t GetDefaultSpeed(PClassActor *type)
 {
-	if (type == NULL) return 0;
-	else if (G_SkillProperty(SKILLP_FastMonsters))
-		return type->Meta.GetMetaFixed(AMETA_FastSpeed, GetDefaultByType(type)->Speed);
+	if (type == NULL)
+		return 0;
+	else if (G_SkillProperty(SKILLP_FastMonsters) && type->FastSpeed >= 0)
+		return type->FastSpeed;
 	else
 		return GetDefaultByType(type)->Speed;
 }
@@ -5679,7 +5790,7 @@ static fixed_t GetDefaultSpeed(const PClass *type)
 //
 //---------------------------------------------------------------------------
 
-AActor *P_SpawnMissile (AActor *source, AActor *dest, const PClass *type, AActor *owner)
+AActor *P_SpawnMissile (AActor *source, AActor *dest, PClassActor *type, AActor *owner)
 {
 	if (source == NULL)
 	{
@@ -5689,7 +5800,7 @@ AActor *P_SpawnMissile (AActor *source, AActor *dest, const PClass *type, AActor
 		source, dest, type, true, owner);
 }
 
-AActor *P_SpawnMissileZ (AActor *source, fixed_t z, AActor *dest, const PClass *type)
+AActor *P_SpawnMissileZ (AActor *source, fixed_t z, AActor *dest, PClassActor *type)
 {
 	if (source == NULL)
 	{
@@ -5699,7 +5810,7 @@ AActor *P_SpawnMissileZ (AActor *source, fixed_t z, AActor *dest, const PClass *
 }
 
 AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
-	AActor *source, AActor *dest, const PClass *type, bool checkspawn, AActor *owner)
+	AActor *source, AActor *dest, PClassActor *type, bool checkspawn, AActor *owner)
 {
 	if (source == NULL)
 	{
@@ -5774,7 +5885,7 @@ AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
 	return (!checkspawn || P_CheckMissileSpawn (th, source->radius)) ? th : NULL;
 }
 
-AActor * P_OldSpawnMissile(AActor * source, AActor * owner, AActor * dest, const PClass *type)
+AActor *P_OldSpawnMissile(AActor *source, AActor *owner, AActor *dest, PClassActor *type)
 {
 	if (source == NULL)
 	{
@@ -5818,7 +5929,7 @@ AActor * P_OldSpawnMissile(AActor * source, AActor * owner, AActor * dest, const
 //
 //---------------------------------------------------------------------------
 
-AActor *P_SpawnMissileAngle (AActor *source, const PClass *type,
+AActor *P_SpawnMissileAngle (AActor *source, PClassActor *type,
 	angle_t angle, fixed_t velz)
 {
 	if (source == NULL)
@@ -5830,13 +5941,13 @@ AActor *P_SpawnMissileAngle (AActor *source, const PClass *type,
 }
 
 AActor *P_SpawnMissileAngleZ (AActor *source, fixed_t z,
-	const PClass *type, angle_t angle, fixed_t velz)
+	PClassActor *type, angle_t angle, fixed_t velz)
 {
 	return P_SpawnMissileAngleZSpeed (source, z, type, angle, velz,
 		GetDefaultSpeed (type));
 }
 
-AActor *P_SpawnMissileZAimed (AActor *source, fixed_t z, AActor *dest, const PClass *type)
+AActor *P_SpawnMissileZAimed (AActor *source, fixed_t z, AActor *dest, PClassActor *type)
 {
 	if (source == NULL)
 	{
@@ -5869,7 +5980,7 @@ AActor *P_SpawnMissileZAimed (AActor *source, fixed_t z, AActor *dest, const PCl
 //
 //---------------------------------------------------------------------------
 
-AActor *P_SpawnMissileAngleSpeed (AActor *source, const PClass *type,
+AActor *P_SpawnMissileAngleSpeed (AActor *source, PClassActor *type,
 	angle_t angle, fixed_t velz, fixed_t speed)
 {
 	if (source == NULL)
@@ -5881,7 +5992,7 @@ AActor *P_SpawnMissileAngleSpeed (AActor *source, const PClass *type,
 }
 
 AActor *P_SpawnMissileAngleZSpeed (AActor *source, fixed_t z,
-	const PClass *type, angle_t angle, fixed_t velz, fixed_t speed, AActor *owner, bool checkspawn)
+	PClassActor *type, angle_t angle, fixed_t velz, fixed_t speed, AActor *owner, bool checkspawn)
 {
 	if (source == NULL)
 	{
@@ -5922,7 +6033,7 @@ AActor *P_SpawnMissileAngleZSpeed (AActor *source, fixed_t z,
 ================
 */
 
-AActor *P_SpawnPlayerMissile (AActor *source, const PClass *type)
+AActor *P_SpawnPlayerMissile (AActor *source, PClassActor *type)
 {
 	if (source == NULL)
 	{
@@ -5931,13 +6042,13 @@ AActor *P_SpawnPlayerMissile (AActor *source, const PClass *type)
 	return P_SpawnPlayerMissile (source, 0, 0, 0, type, source->angle);
 }
 
-AActor *P_SpawnPlayerMissile (AActor *source, const PClass *type, angle_t angle)
+AActor *P_SpawnPlayerMissile (AActor *source, PClassActor *type, angle_t angle)
 {
 	return P_SpawnPlayerMissile (source, 0, 0, 0, type, angle);
 }
 
 AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
-							  const PClass *type, angle_t angle, AActor **pLineTarget, AActor **pMissileActor,
+							  PClassActor *type, angle_t angle, AActor **pLineTarget, AActor **pMissileActor,
 							  bool nofreeaim, bool noautoaim)
 {
 	static const int angdiff[3] = { -(1<<26), 1<<26, 0 };
@@ -6101,14 +6212,14 @@ FName AActor::GetSpecies()
 		return Species;
 	}
 
-	const PClass *thistype = GetClass();
+	PClassActor *thistype = GetClass();
 
 	if (GetDefaultByType(thistype)->flags3 & MF3_ISMONSTER)
 	{
 		while (thistype->ParentClass)
 		{
 			if (GetDefaultByType(thistype->ParentClass)->flags3 & MF3_ISMONSTER)
-				thistype = thistype->ParentClass;
+				thistype = static_cast<PClassActor *>(thistype->ParentClass);
 			else 
 				break;
 		}
@@ -6229,11 +6340,6 @@ int AActor::TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, FN
 	return (death == NULL) ? -1 : damage;
 }
 
-int AActor::GibHealth()
-{
-	return -abs(GetClass()->Meta.GetMetaInt (AMETA_GibHealth, FixedMul(SpawnHealth(), gameinfo.gibfactor)));
-}
-
 void AActor::Crash()
 {
 	// [RC] Weird that this forces the Crash state regardless of flag.
@@ -6247,7 +6353,7 @@ void AActor::Crash()
 		
 		if (DamageType != NAME_None)
 		{
-			if (health < GibHealth())
+			if (health < GetGibHealth())
 			{ // Extreme death
 				FName labels[] = { NAME_Crash, NAME_Extreme, DamageType };
 				crashstate = FindState (3, labels, true);
@@ -6259,13 +6365,13 @@ void AActor::Crash()
 		}
 		if (crashstate == NULL)
 		{
-			if (health < GibHealth())
+			if (health < GetGibHealth())
 			{ // Extreme death
-				crashstate = FindState (NAME_Crash, NAME_Extreme);
+				crashstate = FindState(NAME_Crash, NAME_Extreme);
 			}
 			else
 			{ // Normal death
-				crashstate = FindState (NAME_Crash);
+				crashstate = FindState(NAME_Crash);
 			}
 		}
 		if (crashstate != NULL) SetState(crashstate);
@@ -6283,7 +6389,7 @@ void AActor::SetIdle(bool nofunction)
 	SetState(idle, nofunction);
 }
 
-int AActor::SpawnHealth()
+int AActor::SpawnHealth() const
 {
 	int defhealth = StartHealth ? StartHealth : GetDefault()->health;
 	if (!(flags3 & MF3_ISMONSTER) || defhealth == 0)
@@ -6345,15 +6451,28 @@ void AActor::Revive()
 	}
 }
 
-FDropItem *AActor::GetDropItems()
+int AActor::GetGibHealth() const
 {
-	unsigned int index = GetClass()->Meta.GetMetaInt (ACMETA_DropItems) - 1;
+	int gibhealth = GetClass()->GibHealth;
 
-	if (index < DropItemList.Size())
+	if (gibhealth != INT_MIN)
 	{
-		return DropItemList[index];
+		return -abs(gibhealth);
 	}
-	return NULL;
+	else
+	{
+		return -FixedMul(SpawnHealth(), gameinfo.gibfactor);
+	}
+}
+
+fixed_t AActor::GetCameraHeight() const
+{
+	return GetClass()->CameraHeight == FIXED_MIN ? height / 2 : GetClass()->CameraHeight;
+}
+
+DDropItem *AActor::GetDropItems() const
+{
+	return GetClass()->DropItems;
 }
 
 fixed_t AActor::GetGravity() const
@@ -6437,31 +6556,9 @@ void AActor::ClearCounters()
 // DropItem handling
 //
 //----------------------------------------------------------------------------
-FDropItemPtrArray DropItemList;
-
-void FreeDropItemChain(FDropItem *chain)
-{
-	while (chain != NULL)
-	{
-		FDropItem *next = chain->Next;
-		delete chain;
-		chain = next;
-	}
-}
-
-void FDropItemPtrArray::Clear()
-{
-	for (unsigned int i = 0; i < Size(); ++i)
-	{
-		FreeDropItemChain ((*this)[i]);
-	}
-	TArray<FDropItem *>::Clear();
-}
-
-int StoreDropItemChain(FDropItem *chain)
-{
-	return DropItemList.Push (chain) + 1;
-}
+IMPLEMENT_POINTY_CLASS(DDropItem)
+ DECLARE_POINTER(Next)
+END_POINTERS
 
 void PrintMiscActorInfo(AActor *query)
 {
@@ -6480,6 +6577,8 @@ void PrintMiscActorInfo(AActor *query)
 		static const char * renderstyles[]= {"None", "Normal", "Fuzzy", "SoulTrans",
 			"OptFuzzy", "Stencil", "Translucent", "Add", "Shaded", "TranslucentStencil",
 			"Shadow", "Subtract", "AddStencil", "AddShaded"};
+
+		FLineSpecial *spec = P_GetLineSpecialInfo(query->special);
 
 		Printf("%s @ %p has the following flags:\n   flags: %x", query->GetTag(), query, query->flags.GetValue());
 		for (flagi = 0; flagi <= 31; flagi++)
@@ -6513,7 +6612,7 @@ void PrintMiscActorInfo(AActor *query)
 		/*for (flagi = 0; flagi < 31; flagi++)
 			if (query->renderflags & 1<<flagi) Printf(" %s", flagnamesr[flagi]);*/
 		Printf("\nSpecial+args: %s(%i, %i, %i, %i, %i)\nspecial1: %i, special2: %i.",
-			(query->special ? LineSpecialsInfo[query->special]->name : "None"),
+			(spec ? spec->name : "None"),
 			query->args[0], query->args[1], query->args[2], query->args[3], 
 			query->args[4],	query->special1, query->special2);
 		Printf("\nTID: %d", query->tid);

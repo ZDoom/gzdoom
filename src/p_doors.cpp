@@ -121,7 +121,7 @@ void DDoor::Tick ()
 		{
 			switch (m_Type)
 			{
-			case doorRaiseIn5Mins:
+			case doorWaitRaise:
 				m_Direction = 1;
 				m_Type = doorRaise;
 				DoorSound (true);
@@ -215,7 +215,7 @@ void DDoor::Tick ()
 			switch (m_Type)
 			{
 			case doorRaise:
-			case doorRaiseIn5Mins:
+			case doorWaitRaise:
 				m_Direction = -1;
 				DoorSound(false);
 				break;
@@ -348,9 +348,9 @@ DDoor::DDoor (sector_t *sector)
 //
 //============================================================================
 
-DDoor::DDoor (sector_t *sec, EVlDoor type, fixed_t speed, int delay, int lightTag)
+DDoor::DDoor (sector_t *sec, EVlDoor type, fixed_t speed, int delay, int lightTag, int topcountdown)
 	: DMovingCeiling (sec),
-  	  m_Type (type), m_Speed (speed), m_TopWait (delay), m_LightTag (lightTag)
+  	  m_Type (type), m_Speed (speed), m_TopWait (delay), m_TopCountdown(topcountdown), m_LightTag (lightTag)
 {
 	vertex_t *spot;
 	fixed_t height;
@@ -384,12 +384,21 @@ DDoor::DDoor (sector_t *sec, EVlDoor type, fixed_t speed, int delay, int lightTa
 		DoorSound (false);
 		break;
 
-	case doorRaiseIn5Mins:
+	case doorWaitRaise:
 		m_Direction = 2;
 		height = sec->FindLowestCeilingSurrounding (&spot);
 		m_TopDist = sec->ceilingplane.PointToDist (spot, height - 4*FRACUNIT);
-		m_TopCountdown = 5 * 60 * TICRATE;
 		break;
+
+	case doorWaitClose:
+		m_Direction = 0;
+		m_Type = DDoor::doorRaise;
+		height = sec->FindHighestFloorPoint (&m_BotSpot);
+		m_BotDist = sec->ceilingplane.PointToDist (m_BotSpot, height);
+		m_OldFloorDist = sec->floorplane.d;
+		m_TopDist = sec->ceilingplane.d;
+		break;
+
 	}
 
 	if (!m_Sector->floordata || !m_Sector->floordata->IsKindOf(RUNTIME_CLASS(DPlat)) ||
@@ -414,7 +423,7 @@ DDoor::DDoor (sector_t *sec, EVlDoor type, fixed_t speed, int delay, int lightTa
 //============================================================================
 
 bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
-				int tag, int speed, int delay, int lock, int lightTag, bool boomgen)
+				int tag, int speed, int delay, int lock, int lightTag, bool boomgen, int topcountdown)
 {
 	bool		rtn = false;
 	int 		secnum;
@@ -480,7 +489,7 @@ bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
 			}
 			return false;
 		}
-		if (new DDoor (sec, type, speed, delay, lightTag))
+		if (new DDoor (sec, type, speed, delay, lightTag, topcountdown))
 			rtn = true;
 	}
 	else
@@ -494,48 +503,13 @@ bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
 			if (sec->PlaneMoving(sector_t::ceiling))
 				continue;
 
-			if (new DDoor (sec, type, speed, delay, lightTag))
+			if (new DDoor (sec, type, speed, delay, lightTag, topcountdown))
 				rtn = true;
 		}
 				
 	}
 	return rtn;
 }
-
-//============================================================================
-//
-// Spawn a door that closes after 30 seconds
-//
-//============================================================================
-
-void P_SpawnDoorCloseIn30 (sector_t *sec)
-{
-	fixed_t height;
-	DDoor *door = new DDoor (sec);
-
-	door->m_Sector = sec;
-	door->m_Direction = 0;
-	door->m_Type = DDoor::doorRaise;
-	door->m_Speed = FRACUNIT*2;
-	door->m_TopCountdown = 30 * TICRATE;
-	height = sec->FindHighestFloorPoint (&door->m_BotSpot);
-	door->m_BotDist = sec->ceilingplane.PointToDist (door->m_BotSpot, height);
-	door->m_OldFloorDist = sec->floorplane.d;
-	door->m_TopDist = sec->ceilingplane.d;
-	door->m_LightTag = 0;
-}
-
-//============================================================================
-//
-// Spawn a door that opens after 5 minutes
-//
-//============================================================================
-
-void P_SpawnDoorRaiseIn5Mins (sector_t *sec)
-{
-	new DDoor (sec, DDoor::doorRaiseIn5Mins, 2*FRACUNIT, TICRATE*30/7, 0);
-}
-
 
 //============================================================================
 //

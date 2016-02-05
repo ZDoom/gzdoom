@@ -146,7 +146,7 @@ void AdjustSpriteOffsets()
 // Normally this would be better placed in p_lnspec.cpp.
 // But I have accidentally overwritten that file several times
 // so I'd rather place it here.
-static int LS_Sector_SetPlaneReflection (line_t *ln, AActor *it, bool backSide,
+int LS_Sector_SetPlaneReflection (line_t *ln, AActor *it, bool backSide,
 	int arg0, int arg1, int arg2, int arg3, int arg4)
 {
 // Sector_SetPlaneReflection (tag, floor, ceiling)
@@ -163,7 +163,7 @@ static int LS_Sector_SetPlaneReflection (line_t *ln, AActor *it, bool backSide,
 	return true;
 }
 
-static int LS_SetGlobalFogParameter (line_t *ln, AActor *it, bool backSide,
+int LS_SetGlobalFogParameter (line_t *ln, AActor *it, bool backSide,
 	int arg0, int arg1, int arg2, int arg3, int arg4)
 {
 // SetGlobalFogParameter (type, value)
@@ -485,8 +485,6 @@ void gl_RecalcVertexHeights(vertex_t * v)
 
 void gl_InitData()
 {
-	LineSpecials[157]=LS_SetGlobalFogParameter;
-	LineSpecials[159]=LS_Sector_SetPlaneReflection;
 	gl_InitModels();
 	AdjustSpriteOffsets();
 }

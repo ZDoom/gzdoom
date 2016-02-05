@@ -68,11 +68,13 @@ FState *AFWeapAxe::GetAtkState (bool hold)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckReady)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	player_t *player;
 
 	if (NULL == (player = self->player))
 	{
-		return;
+		return 0;
 	}
 	if (player->ReadyWeapon->Ammo1->Amount)
 	{
@@ -82,6 +84,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckReady)
 	{
 		DoReadyWeapon(self);
 	}
+	return 0;
 }
 
 //============================================================================
@@ -92,11 +95,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckReady)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckReadyG)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	player_t *player;
 
 	if (NULL == (player = self->player))
 	{
-		return;
+		return 0;
 	}
 	if (player->ReadyWeapon->Ammo1->Amount <= 0)
 	{
@@ -106,6 +111,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckReadyG)
 	{
 		DoReadyWeapon(self);
 	}
+	return 0;
 }
 
 //============================================================================
@@ -116,11 +122,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckReadyG)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckUp)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	player_t *player;
 
 	if (NULL == (player = self->player))
 	{
-		return;
+		return 0;
 	}
 	if (player->ReadyWeapon->Ammo1->Amount)
 	{
@@ -130,6 +138,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckUp)
 	{
 		CALL_ACTION(A_Raise, self);
 	}
+	return 0;
 }
 
 //============================================================================
@@ -140,11 +149,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckUp)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckUpG)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	player_t *player;
 
 	if (NULL == (player = self->player))
 	{
-		return;
+		return 0;
 	}
 	if (player->ReadyWeapon->Ammo1->Amount <= 0)
 	{
@@ -154,6 +165,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckUpG)
 	{
 		CALL_ACTION(A_Raise, self);
 	}
+	return 0;
 }
 
 //============================================================================
@@ -164,16 +176,19 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckUpG)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckAtk)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	player_t *player;
 
 	if (NULL == (player = self->player))
 	{
-		return;
+		return 0;
 	}
 	if (player->ReadyWeapon->Ammo1->Amount)
 	{
 		P_SetPsprite (player, ps_weapon, player->ReadyWeapon->FindState ("FireGlow"));
 	}
+	return 0;
 }
 
 //============================================================================
@@ -184,6 +199,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckAtk)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FAxeAttack)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	angle_t angle;
 	fixed_t power;
 	int damage;
@@ -192,12 +209,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeAttack)
 	int useMana;
 	player_t *player;
 	AWeapon *weapon;
-	const PClass *pufftype;
+	PClassActor *pufftype;
 	AActor *linetarget;
 
 	if (NULL == (player = self->player))
 	{
-		return;
+		return 0;
 	}
 	AActor *pmo=player->mo;
 
@@ -209,12 +226,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeAttack)
 	{
 		damage <<= 1;
 		power = 6*FRACUNIT;
-		pufftype = PClass::FindClass ("AxePuffGlow");
+		pufftype = PClass::FindActor ("AxePuffGlow");
 		useMana = 1;
 	}
 	else
 	{
-		pufftype = PClass::FindClass ("AxePuff");
+		pufftype = PClass::FindActor ("AxePuff");
 		useMana = 0;
 	}
 	for (i = 0; i < 16; i++)
@@ -275,6 +292,6 @@ axedone:
 			}
 		}
 	}
-	return;		
+	return 0;		
 }
 

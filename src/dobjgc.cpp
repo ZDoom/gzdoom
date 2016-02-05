@@ -71,6 +71,7 @@
 #include "doomstat.h"
 #include "m_argv.h"
 #include "po_man.h"
+#include "autosegs.h"
 #include "v_video.h"
 #include "menu/menu.h"
 #include "intermission/intermission.h"
@@ -150,6 +151,7 @@ int Pause = DEFAULT_GCPAUSE;
 int StepMul = DEFAULT_GCMUL;
 int StepCount;
 size_t Dept;
+bool FinalGC;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -288,6 +290,22 @@ void Mark(DObject **obj)
 
 //==========================================================================
 //
+// MarkArray
+//
+// Mark an array of objects gray.
+//
+//==========================================================================
+
+void MarkArray(DObject **obj, size_t count)
+{
+	for (size_t i = 0; i < count; ++i)
+	{
+		Mark(obj[i]);
+	}
+}
+
+//==========================================================================
+//
 // MarkRoot
 //
 // Mark the root set of objects.
@@ -336,6 +354,25 @@ static void MarkRoot()
 	}
 	Mark(SectorMarker);
 	Mark(interpolator.Head);
+	// Mark action functions
+	if (!FinalGC)
+	{
+		FAutoSegIterator probe(ARegHead, ARegTail);
+
+		while (*++probe != NULL)
+		{
+			AFuncDesc *afunc = (AFuncDesc *)*probe;
+			Mark(*(afunc->VMPointer));
+		}
+	}
+	// Mark types
+	TypeTable.Mark();
+	for (unsigned int i = 0; i < PClass::AllClasses.Size(); ++i)
+	{
+		Mark(PClass::AllClasses[i]);
+	}
+	// Mark global symbols
+	GlobalSymbols.MarkSymbols();
 	// Mark bot stuff.
 	Mark(bglobal.firstthing);
 	Mark(bglobal.body1);
@@ -365,7 +402,7 @@ static void MarkRoot()
 //
 // Atomic
 //
-// If their were any propagations that needed to be done atomicly, they
+// If there were any propagations that needed to be done atomicly, they
 // would go here. It also sets things up for the sweep state.
 //
 //==========================================================================

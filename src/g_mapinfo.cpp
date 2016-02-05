@@ -371,12 +371,12 @@ level_info_t *level_info_t::CheckLevelRedirect ()
 {
 	if (RedirectType != NAME_None)
 	{
-		const PClass *type = PClass::FindClass(RedirectType);
+		PClassActor *type = PClass::FindActor(RedirectType);
 		if (type != NULL)
 		{
 			for (int i = 0; i < MAXPLAYERS; ++i)
 			{
-				if (playeringame[i] && players[i].mo->FindInventory (type))
+				if (playeringame[i] && players[i].mo->FindInventory(type))
 				{
 					// check for actual presence of the map.
 					if (P_CheckMapData(RedirectMapName))

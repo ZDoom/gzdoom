@@ -80,6 +80,7 @@ struct vissprite_t
 	short 			renderflags;
 	DWORD			Translation;	// [RH] for color translation
 	visstyle_t		Style;
+	int				CurrentPortalUniq; // [ZZ] to identify the portal that this thing is in. used for clipping.
 };
 
 struct particle_t;

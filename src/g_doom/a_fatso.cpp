@@ -19,22 +19,25 @@
 
 DEFINE_ACTION_FUNCTION(AActor, A_FatRaise)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	A_FaceTarget (self);
 	S_Sound (self, CHAN_WEAPON, "fatso/raiseguns", 1, ATTN_NORM);
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FatAttack1)
 {
+	PARAM_ACTION_PROLOGUE;
+	PARAM_CLASS_OPT(spawntype, AActor)	{ spawntype = NULL; }
+
 	AActor *missile;
 	angle_t an;
 
 	if (!self->target)
-		return;
+		return 0;
 
-	ACTION_PARAM_START(1);
-	ACTION_PARAM_CLASS(spawntype, 0);
-
-	if (spawntype == NULL) spawntype = PClass::FindClass("FatShot");
+	if (spawntype == NULL) spawntype = PClass::FindActor("FatShot");
 
 	A_FaceTarget (self);
 	// Change direction  to ...
@@ -49,20 +52,21 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FatAttack1)
 		missile->velx = FixedMul (missile->Speed, finecosine[an]);
 		missile->vely = FixedMul (missile->Speed, finesine[an]);
 	}
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FatAttack2)
 {
+	PARAM_ACTION_PROLOGUE;
+	PARAM_CLASS_OPT(spawntype, AActor)	{ spawntype = NULL; }
+
 	AActor *missile;
 	angle_t an;
 
 	if (!self->target)
-		return;
+		return 0;
 
-	ACTION_PARAM_START(1);
-	ACTION_PARAM_CLASS(spawntype, 0);
-
-	if (spawntype == NULL) spawntype = PClass::FindClass("FatShot");
+	if (spawntype == NULL) spawntype = PClass::FindActor("FatShot");
 
 	A_FaceTarget (self);
 	// Now here choose opposite deviation.
@@ -77,20 +81,21 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FatAttack2)
 		missile->velx = FixedMul (missile->Speed, finecosine[an]);
 		missile->vely = FixedMul (missile->Speed, finesine[an]);
 	}
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FatAttack3)
 {
+	PARAM_ACTION_PROLOGUE;
+	PARAM_CLASS_OPT(spawntype, AActor)	{ spawntype = NULL; }
+
 	AActor *missile;
 	angle_t an;
 
 	if (!self->target)
-		return;
+		return 0;
 
-	ACTION_PARAM_START(1);
-	ACTION_PARAM_CLASS(spawntype, 0);
-
-	if (spawntype == NULL) spawntype = PClass::FindClass("FatShot");
+	if (spawntype == NULL) spawntype = PClass::FindActor("FatShot");
 
 	A_FaceTarget (self);
 	
@@ -111,14 +116,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FatAttack3)
 		missile->velx = FixedMul (missile->Speed, finecosine[an]);
 		missile->vely = FixedMul (missile->Speed, finesine[an]);
 	}
+	return 0;
 }
 
 //
 // killough 9/98: a mushroom explosion effect, sorta :)
 // Original idea: Linguica
 //
-
-AActor * P_OldSpawnMissile(AActor * source, AActor * owner, AActor * dest, const PClass *type);
 
 enum
 {
@@ -129,17 +133,23 @@ enum
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Mushroom)
 {
+	PARAM_ACTION_PROLOGUE;
+	PARAM_CLASS_OPT	(spawntype, AActor)		{ spawntype = NULL; }
+	PARAM_INT_OPT	(n)						{ n = 0; }
+	PARAM_INT_OPT	(flags)					{ flags = 0; }
+	PARAM_FIXED_OPT	(vrange)				{ vrange = 4*FRACUNIT; }
+	PARAM_FIXED_OPT	(hrange)				{ hrange = FRACUNIT/2; }
+
 	int i, j;
 
-	ACTION_PARAM_START(5);
-	ACTION_PARAM_CLASS(spawntype, 0);
-	ACTION_PARAM_INT(n, 1);
-	ACTION_PARAM_INT(flags, 2);
-	ACTION_PARAM_FIXED(vrange, 3);
-	ACTION_PARAM_FIXED(hrange, 4);
-
-	if (n == 0) n = self->Damage; // GetMissileDamage (0, 1);
-	if (spawntype == NULL) spawntype = PClass::FindClass("FatShot");
+	if (n == 0)
+	{
+		n = self->GetMissileDamage(0, 1);
+	}
+	if (spawntype == NULL)
+	{
+		spawntype = PClass::FindActor("FatShot");
+	}
 
 	P_RadiusAttack (self, self->target, 128, 128, self->DamageType, (flags & MSF_DontHurt) ? 0 : RADF_HURTSOURCE);
 	P_CheckSplash(self, 128<<FRACBITS);
@@ -176,4 +186,5 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Mushroom)
 		}
 	}
 	target->Destroy();
+	return 0;
 }

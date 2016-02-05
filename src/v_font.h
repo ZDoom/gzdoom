@@ -95,6 +95,7 @@ public:
 	// Return width of string in pixels (unscaled)
 	int StringWidth (const BYTE *str) const;
 	inline int StringWidth (const char *str) const { return StringWidth ((const BYTE *)str); }
+	inline int StringWidth (const FString &str) const { return StringWidth ((const BYTE *)str.GetChars()); }
 
 	int GetCharCode(int code, bool needpic) const;
 	char GetCursor() const { return Cursor; }

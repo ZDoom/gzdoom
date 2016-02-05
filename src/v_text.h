@@ -79,5 +79,7 @@ FBrokenLines *V_BreakLines (FFont *font, int maxwidth, const BYTE *str, bool pre
 void V_FreeBrokenLines (FBrokenLines *lines);
 inline FBrokenLines *V_BreakLines (FFont *font, int maxwidth, const char *str, bool preservecolor = false)
  { return V_BreakLines (font, maxwidth, (const BYTE *)str, preservecolor); }
+inline FBrokenLines *V_BreakLines (FFont *font, int maxwidth, const FString &str, bool preservecolor = false)
+ { return V_BreakLines (font, maxwidth, (const BYTE *)str.GetChars(), preservecolor); }
 
 #endif //__V_TEXT_H__

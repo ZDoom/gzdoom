@@ -17,8 +17,10 @@ static FRandom pr_troopattack ("TroopAttack");
 //
 DEFINE_ACTION_FUNCTION(AActor, A_TroopAttack)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (!self->target)
-		return;
+		return 0;
 				
 	A_FaceTarget (self);
 	if (self->CheckMeleeRange ())
@@ -27,9 +29,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_TroopAttack)
 		S_Sound (self, CHAN_WEAPON, "imp/melee", 1, ATTN_NORM);
 		int newdam = P_DamageMobj (self->target, self, self, damage, NAME_Melee);
 		P_TraceBleed (newdam > 0 ? newdam : damage, self->target, self);
-		return;
+		return 0;
 	}
 	
 	// launch a missile
-	P_SpawnMissile (self, self->target, PClass::FindClass("DoomImpBall"));
+	P_SpawnMissile (self, self->target, PClass::FindActor("DoomImpBall"));
+	return 0;
 }

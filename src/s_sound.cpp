@@ -415,7 +415,7 @@ void S_Start ()
 			// Parse the global SNDINFO
 			S_ParseSndInfo(true);
 		
-			if (*LocalSndInfo)
+			if (LocalSndInfo.IsNotEmpty())
 			{
 				// Now parse the local SNDINFO
 				int j = Wads.CheckNumForFullName(LocalSndInfo, true);
@@ -432,7 +432,7 @@ void S_Start ()
 
 		if (parse_ss)
 		{
-			S_ParseSndSeq(*LocalSndSeq? Wads.CheckNumForFullName(LocalSndSeq, true) : -1);
+			S_ParseSndSeq(LocalSndSeq.IsNotEmpty()? Wads.CheckNumForFullName(LocalSndSeq, true) : -1);
 		}
 		
 		LastLocalSndInfo = LocalSndInfo;
@@ -1086,11 +1086,11 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 		{
 			SoundListener listener;
 			S_SetListener(listener, players[consoleplayer].camera);
-			chan = (FSoundChan*)GSnd->StartSound3D (sfx->data, &listener, volume, rolloff, attenuation, pitch, basepriority, pos, vel, channel, startflags, NULL);
+			chan = (FSoundChan*)GSnd->StartSound3D (sfx->data, &listener, float(volume), rolloff, float(attenuation), pitch, basepriority, pos, vel, channel, startflags, NULL);
 		}
 		else
 		{
-			chan = (FSoundChan*)GSnd->StartSound (sfx->data, volume, pitch, startflags, NULL);
+			chan = (FSoundChan*)GSnd->StartSound (sfx->data, float(volume), pitch, startflags, NULL);
 		}
 	}
 	if (chan == NULL && (chanflags & CHAN_LOOP))
@@ -1112,13 +1112,13 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 		chan->SoundID = sound_id;
 		chan->OrgID = FSoundID(org_id);
 		chan->EntChannel = channel;
-		chan->Volume = volume;
+		chan->Volume = float(volume);
 		chan->ChanFlags |= chanflags;
 		chan->NearLimit = near_limit;
 		chan->LimitRange = limit_range;
 		chan->Pitch = pitch;
 		chan->Priority = basepriority;
-		chan->DistanceScale = attenuation;
+		chan->DistanceScale = float(attenuation);
 		chan->SourceType = type;
 		switch (type)
 		{
@@ -2553,7 +2553,7 @@ int S_GetMusic (char **name)
 {
 	int order;
 
-	if (mus_playing.name)
+	if (mus_playing.name.IsNotEmpty())
 	{
 		*name = copystring (mus_playing.name);
 		order = mus_playing.baseorder;

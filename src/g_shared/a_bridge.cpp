@@ -92,10 +92,12 @@ void ACustomBridge::Destroy()
 
 DEFINE_ACTION_FUNCTION(AActor, A_BridgeOrbit)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (self->target == NULL)
 	{ // Don't crash if somebody spawned this into the world
 	  // independantly of a Bridge actor.
-		return;
+		return 0;
 	}
 	// Set default values
 	// Every five tics, Hexen moved the ball 3/256th of a revolution.
@@ -113,18 +115,22 @@ DEFINE_ACTION_FUNCTION(AActor, A_BridgeOrbit)
 	self->SetOrigin(self->target->Vec3Angle(rotationradius, self->angle, 0), true);
 	self->floorz = self->target->floorz;
 	self->ceilingz = self->target->ceilingz;
+	return 0;
 }
 
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BridgeInit)
 {
+	PARAM_ACTION_PROLOGUE;
+	PARAM_CLASS_OPT(balltype, AActor)	{ balltype = NULL; }
+
 	angle_t startangle;
 	AActor *ball;
 
-	ACTION_PARAM_START(1);
-	ACTION_PARAM_CLASS(balltype, 0);
-
-	if (balltype == NULL) balltype = PClass::FindClass("BridgeBall");
+	if (balltype == NULL)
+	{
+		balltype = PClass::FindActor("BridgeBall");
+	}
 
 	startangle = pr_orbit() << 24;
 
@@ -138,6 +144,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BridgeInit)
 		ball->target = self;
 		CALL_ACTION(A_BridgeOrbit, ball);
 	}
+	return 0;
 }
 
 

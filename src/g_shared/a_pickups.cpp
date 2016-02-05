@@ -22,6 +22,41 @@
 
 static FRandom pr_restore ("RestorePos");
 
+IMPLEMENT_CLASS(PClassInventory)
+
+PClassInventory::PClassInventory()
+{
+	GiveQuest = 0;
+	AltHUDIcon.SetNull();
+}
+
+void PClassInventory::Derive(PClass *newclass)
+{
+	assert(newclass->IsKindOf(RUNTIME_CLASS(PClassInventory)));
+	Super::Derive(newclass);
+	PClassInventory *newc = static_cast<PClassInventory *>(newclass);
+
+	newc->PickupMessage = PickupMessage;
+	newc->GiveQuest = GiveQuest;
+	newc->AltHUDIcon = AltHUDIcon;
+}
+
+IMPLEMENT_CLASS(PClassAmmo)
+
+PClassAmmo::PClassAmmo()
+{
+	DropAmount = 0;
+}
+
+void PClassAmmo::Derive(PClass *newclass)
+{
+	assert(newclass->IsKindOf(RUNTIME_CLASS(PClassAmmo)));
+	Super::Derive(newclass);
+	PClassAmmo *newc = static_cast<PClassAmmo *>(newclass);
+
+	newc->DropAmount = DropAmount;
+}
+
 IMPLEMENT_CLASS (AAmmo)
 
 //===========================================================================
@@ -53,15 +88,15 @@ void AAmmo::Serialize (FArchive &arc)
 //
 //===========================================================================
 
-const PClass *AAmmo::GetParentAmmo () const
+PClassActor *AAmmo::GetParentAmmo () const
 {
-	const PClass *type = GetClass ();
+	PClass *type = GetClass();
 
 	while (type->ParentClass != RUNTIME_CLASS(AAmmo) && type->ParentClass != NULL)
 	{
 		type = type->ParentClass;
 	}
-	return type;
+	return static_cast<PClassActor *>(type);
 }
 
 //===========================================================================
@@ -139,8 +174,7 @@ AInventory *AAmmo::CreateCopy (AActor *other)
 
 	if (GetClass()->ParentClass != RUNTIME_CLASS(AAmmo) && GetClass() != RUNTIME_CLASS(AAmmo))
 	{
-		const PClass *type = GetParentAmmo();
-		assert (type->ActorInfo != NULL);
+		PClassActor *type = GetParentAmmo();
 		if (!GoAway ())
 		{
 			Destroy ();
@@ -289,11 +323,14 @@ bool P_GiveBody (AActor *actor, int num, int max)
 
 DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialThing1)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	self->renderflags &= ~RF_INVISIBLE;
 	if (static_cast<AInventory *>(self)->DoRespawn ())
 	{
 		S_Sound (self, CHAN_VOICE, "misc/spawn", 1, ATTN_IDLE);
 	}
+	return 0;
 }
 
 //---------------------------------------------------------------------------
@@ -304,12 +341,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialThing1)
 
 DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialThing2)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	self->flags |= MF_SPECIAL;
 	if (!(self->GetDefault()->flags & MF_NOGRAVITY))
 	{
 		self->flags &= ~MF_NOGRAVITY;
 	}
 	self->SetState (self->SpawnState);
+	return 0;
 }
 
 
@@ -321,6 +361,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialThing2)
 
 DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialDoomThing)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	self->renderflags &= ~RF_INVISIBLE;
 	self->flags |= MF_SPECIAL;
 	if (!(self->GetDefault()->flags & MF_NOGRAVITY))
@@ -333,6 +375,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialDoomThing)
 		S_Sound (self, CHAN_VOICE, "misc/spawn", 1, ATTN_IDLE);
 		Spawn ("ItemFog", self->Pos(), ALLOW_REPLACE);
 	}
+	return 0;
 }
 
 //---------------------------------------------------------------------------
@@ -343,6 +386,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialDoomThing)
 
 DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialPosition)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	// Move item back to its original location
 	fixed_t _x, _y;
 	sector_t *sec;
@@ -397,6 +442,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialPosition)
 	self->PrevX = self->X();
 	self->PrevY = self->Y();
 	self->PrevZ = self->Z();
+	return 0;
 }
 
 int AInventory::StaticLastMessageTic;
@@ -1079,7 +1125,7 @@ void AInventory::DoPickupSpecial (AActor *toucher)
 
 const char *AInventory::PickupMessage ()
 {
-	return GetClass()->Meta.GetMetaString (AIMETA_PickupMessage);
+	return GetClass()->PickupMessage;
 }
 
 //===========================================================================
@@ -1306,8 +1352,8 @@ bool AInventory::DoRespawn ()
 
 void AInventory::GiveQuest (AActor *toucher)
 {
-	int quest = GetClass()->Meta.GetMetaInt(AIMETA_GiveQuest);
-	if (quest>0 && quest<31)
+	int quest = GetClass()->GiveQuest;
+	if (quest > 0 && quest <= (int)countof(QuestItemClasses))
 	{
 		toucher->GiveInventoryType (QuestItemClasses[quest-1]);
 	}
@@ -1478,7 +1524,7 @@ bool AInventory::CanPickup (AActor *toucher)
 	if (!toucher)
 		return false;
 
-	FActorInfo *ai = GetClass()->ActorInfo;
+	PClassActor *ai = GetClass();
 	// Is the item restricted to certain player classes?
 	if (ai->RestrictedToPlayerClass.Size() != 0)
 	{
@@ -1607,6 +1653,35 @@ bool ACustomInventory::TryPickup (AActor *&toucher)
 	return useok;
 }
 
+IMPLEMENT_CLASS(PClassHealth)
+
+//===========================================================================
+//
+// PClassHealth Constructor
+//
+//===========================================================================
+
+PClassHealth::PClassHealth()
+{
+	LowHealth = 0;
+}
+
+//===========================================================================
+//
+// PClassHealth :: Derive
+//
+//===========================================================================
+
+void PClassHealth::Derive(PClass *newclass)
+{
+	assert(newclass->IsKindOf(RUNTIME_CLASS(PClassHealth)));
+	Super::Derive(newclass);
+	PClassHealth *newc = static_cast<PClassHealth *>(newclass);
+	
+	newc->LowHealth = LowHealth;
+	newc->LowHealthMessage = LowHealthMessage;
+}
+
 IMPLEMENT_CLASS (AHealth)
 
 //===========================================================================
@@ -1616,13 +1691,13 @@ IMPLEMENT_CLASS (AHealth)
 //===========================================================================
 const char *AHealth::PickupMessage ()
 {
-	int threshold = GetClass()->Meta.GetMetaInt(AIMETA_LowHealth, 0);
+	int threshold = GetClass()->LowHealth;
 
 	if (PrevHealth < threshold)
 	{
-		const char *message = GetClass()->Meta.GetMetaString (AIMETA_LowHealthMessage);
+		FString message = GetClass()->LowHealthMessage;
 
-		if (message != NULL)
+		if (message.IsNotEmpty())
 		{
 			return message;
 		}
@@ -1752,13 +1827,14 @@ AInventory *ABackpackItem::CreateCopy (AActor *other)
 {
 	// Find every unique type of ammo. Give it to the player if
 	// he doesn't have it already, and double its maximum capacity.
-	for (unsigned int i = 0; i < PClass::m_Types.Size(); ++i)
+	for (unsigned int i = 0; i < PClassActor::AllActorClasses.Size(); ++i)
 	{
-		const PClass *type = PClass::m_Types[i];
+		PClass *type = PClassActor::AllActorClasses[i];
 
 		if (type->ParentClass == RUNTIME_CLASS(AAmmo))
 		{
-			AAmmo *ammo = static_cast<AAmmo *>(other->FindInventory (type));
+			PClassActor *atype = static_cast<PClassActor *>(type);
+			AAmmo *ammo = static_cast<AAmmo *>(other->FindInventory(atype));
 			int amount = static_cast<AAmmo *>(GetDefaultByType(type))->BackpackAmount;
 			// extra ammo in baby mode and nightmare mode
 			if (!(ItemFlags&IF_IGNORESKILL))
@@ -1768,7 +1844,7 @@ AInventory *ABackpackItem::CreateCopy (AActor *other)
 			if (amount < 0) amount = 0;
 			if (ammo == NULL)
 			{ // The player did not have the ammo. Add it.
-				ammo = static_cast<AAmmo *>(Spawn (type, 0, 0, 0, NO_REPLACE));
+				ammo = static_cast<AAmmo *>(Spawn(atype, 0, 0, 0, NO_REPLACE));
 				ammo->Amount = bDepleted ? 0 : amount;
 				if (ammo->BackpackMaxAmount > ammo->MaxAmount)
 				{

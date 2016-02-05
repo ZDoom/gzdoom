@@ -25,8 +25,11 @@ static FRandom pr_delaygib ("DelayGib");
 
 DEFINE_ACTION_FUNCTION(AActor, A_SerpentUnHide)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	self->renderflags &= ~RF_INVISIBLE;
 	self->floorclip = 24*FRACUNIT;
+	return 0;
 }
 
 //============================================================================
@@ -37,8 +40,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_SerpentUnHide)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SerpentHide)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	self->renderflags |= RF_INVISIBLE;
 	self->floorclip = 0;
+	return 0;
 }
 
 //============================================================================
@@ -50,7 +56,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_SerpentHide)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SerpentRaiseHump)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	self->floorclip -= 4*FRACUNIT;
+	return 0;
 }
 
 //============================================================================
@@ -61,7 +70,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_SerpentRaiseHump)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SerpentLowerHump)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	self->floorclip += 4*FRACUNIT;
+	return 0;
 }
 
 //============================================================================
@@ -74,21 +86,23 @@ DEFINE_ACTION_FUNCTION(AActor, A_SerpentLowerHump)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SerpentHumpDecide)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (self->MissileState != NULL)
 	{
 		if (pr_serpenthump() > 30)
 		{
-			return;
+			return 0;
 		}
 		else if (pr_serpenthump() < 40)
 		{ // Missile attack
 			self->SetState (self->MeleeState);
-			return;
+			return 0;
 		}
 	}
 	else if (pr_serpenthump() > 3)
 	{
-		return;
+		return 0;
 	}
 	if (!self->CheckMeleeRange ())
 	{ // The hump shouldn't occur when within melee range
@@ -102,6 +116,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SerpentHumpDecide)
 			S_Sound (self, CHAN_BODY, "SerpentActive", 1, ATTN_NORM);
 		}
 	}
+	return 0;
 }
 
 //============================================================================
@@ -112,16 +127,18 @@ DEFINE_ACTION_FUNCTION(AActor, A_SerpentHumpDecide)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SerpentCheckForAttack)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (!self->target)
 	{
-		return;
+		return 0;
 	}
 	if (self->MissileState != NULL)
 	{
 		if (!self->CheckMeleeRange ())
 		{
 			self->SetState (self->FindState ("Attack"));
-			return;
+			return 0;
 		}
 	}
 	if (P_CheckMeleeRange2 (self))
@@ -139,6 +156,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SerpentCheckForAttack)
 			self->SetState (self->FindState ("Attack"));
 		}
 	}
+	return 0;
 }
 
 //============================================================================
@@ -149,14 +167,17 @@ DEFINE_ACTION_FUNCTION(AActor, A_SerpentCheckForAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SerpentChooseAttack)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (!self->target || self->CheckMeleeRange())
 	{
-		return;
+		return 0;
 	}
 	if (self->MissileState != NULL)
 	{
 		self->SetState (self->MissileState);
 	}
+	return 0;
 }
 	
 //============================================================================
@@ -167,9 +188,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_SerpentChooseAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SerpentMeleeAttack)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (!self->target)
 	{
-		return;
+		return 0;
 	}
 	if (self->CheckMeleeRange ())
 	{
@@ -182,6 +205,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SerpentMeleeAttack)
 	{
 		CALL_ACTION(A_SerpentCheckForAttack, self);
 	}
+	return 0;
 }
 
 //============================================================================
@@ -192,6 +216,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_SerpentMeleeAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SerpentSpawnGibs)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *mo;
 	static const char *GibTypes[] =
 	{
@@ -215,6 +241,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SerpentSpawnGibs)
 			mo->floorclip = 6*FRACUNIT;
 		}
 	}
+	return 0;
 }
 
 //============================================================================
@@ -225,7 +252,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_SerpentSpawnGibs)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FloatGib)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	self->floorclip -= FRACUNIT;
+	return 0;
 }
 
 //============================================================================
@@ -236,7 +266,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_FloatGib)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SinkGib)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	self->floorclip += FRACUNIT;
+	return 0;
 }
 
 //============================================================================
@@ -247,7 +280,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_SinkGib)
 
 DEFINE_ACTION_FUNCTION(AActor, A_DelayGib)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	self->tics -= pr_delaygib()>>2;
+	return 0;
 }
 
 //============================================================================
@@ -258,6 +294,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_DelayGib)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SerpentHeadCheck)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (self->Z() <= self->floorz)
 	{
 		if (Terrains[P_GetThingFloorType(self)].IsLiquid)
@@ -270,5 +308,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_SerpentHeadCheck)
 			self->SetState (self->FindState(NAME_Death));
 		}
 	}
+	return 0;
 }
 

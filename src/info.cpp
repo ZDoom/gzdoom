@@ -42,7 +42,7 @@
 #include "v_text.h"
 
 #include "gi.h"
-
+#include "vm.h"
 #include "actor.h"
 #include "r_state.h"
 #include "i_system.h"
@@ -50,12 +50,33 @@
 #include "templates.h"
 #include "cmdlib.h"
 #include "g_level.h"
+#include "stats.h"
 
 extern void LoadActors ();
 extern void InitBotStuff();
 extern void ClearStrifeTypes();
 
+TArray<PClassActor *> PClassActor::AllActorClasses;
 FRandom FState::pr_statetics("StateTics");
+
+cycle_t ActionCycles;
+
+bool FState::CallAction(AActor *self, AActor *stateowner)
+{
+	if (ActionFunc != NULL)
+	{
+		ActionCycles.Clock();
+		static VMFrameStack stack;
+		VMValue params[3] = { self, stateowner, VMValue(this, ATAG_STATE) };
+		stack.Call(ActionFunc, params, countof(params), NULL, 0, NULL);
+		ActionCycles.Unclock();
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
 
 //==========================================================================
 //
@@ -99,13 +120,17 @@ int GetSpriteIndex(const char * spritename, bool add)
 	return (lastindex = (int)sprites.Push (temp));
 }
 
+IMPLEMENT_POINTY_CLASS(PClassActor)
+ DECLARE_POINTER(DropItems)
+END_POINTERS
 
 //==========================================================================
 //
+// PClassActor :: StaticInit										STATIC
 //
 //==========================================================================
 
-void FActorInfo::StaticInit ()
+void PClassActor::StaticInit()
 {
 	sprites.Clear();
 	if (sprites.Size() == 0)
@@ -135,32 +160,205 @@ void FActorInfo::StaticInit ()
 
 //==========================================================================
 //
+// PClassActor :: StaticSetActorNums								STATIC
+//
 // Called after Dehacked patches are applied
 //
 //==========================================================================
 
-void FActorInfo::StaticSetActorNums ()
+void PClassActor::StaticSetActorNums()
 {
-	for (unsigned int i = 0; i < PClass::m_RuntimeActors.Size(); ++i)
+	for (unsigned int i = 0; i < PClassActor::AllActorClasses.Size(); ++i)
 	{
-		PClass::m_RuntimeActors[i]->ActorInfo->RegisterIDs ();
+		static_cast<PClassActor *>(PClassActor::AllActorClasses[i])->RegisterIDs();
 	}
 }
 
 //==========================================================================
 //
+// PClassActor Constructor
 //
 //==========================================================================
 
-void FActorInfo::RegisterIDs ()
+PClassActor::PClassActor()
 {
-	const PClass *cls = PClass::FindClass(Class->TypeName);
+	GameFilter = GAME_Any;
+	SpawnID = 0;
+	DoomEdNum = -1;
+	OwnedStates = NULL;
+	NumOwnedStates = 0;
+	Replacement = NULL;
+	Replacee = NULL;
+	StateList = NULL;
+	DamageFactors = NULL;
+	PainChances = NULL;
+
+	DeathHeight = -1;
+	BurnHeight = -1;
+	GibHealth = INT_MIN;
+	WoundHealth = 6;
+	PoisonDamage = 0;
+	FastSpeed = FIXED_MIN;
+	RDFactor = FRACUNIT;
+	CameraHeight = FIXED_MIN;
+	BloodType = NAME_Blood;
+	BloodType2 = NAME_BloodSplatter;
+	BloodType3 = NAME_AxeBlood;
+
+	DropItems = NULL;
+
+	DontHurtShooter = false;
+	ExplosionDamage = 128;
+	ExplosionRadius = -1;
+	MissileHeight = 32*FRACUNIT;
+	MeleeDamage = 0;
+
+	// Record this in the master list.
+	AllActorClasses.Push(this);
+}
+
+//==========================================================================
+//
+// PClassActor Destructor
+//
+//==========================================================================
+
+PClassActor::~PClassActor()
+{
+	if (OwnedStates != NULL)
+	{
+		delete[] OwnedStates;
+	}
+	if (DamageFactors != NULL)
+	{
+		delete DamageFactors;
+	}
+	if (PainChances != NULL)
+	{
+		delete PainChances;
+	}
+	if (StateList != NULL)
+	{
+		StateList->Destroy();
+		M_Free(StateList);
+	}
+}
+
+//==========================================================================
+//
+// PClassActor :: Derive
+//
+//==========================================================================
+
+void PClassActor::Derive(PClass *newclass)
+{
+	assert(newclass->IsKindOf(RUNTIME_CLASS(PClassActor)));
+	Super::Derive(newclass);
+	PClassActor *newa = static_cast<PClassActor *>(newclass);
+
+	newa->Obituary = Obituary;
+	newa->HitObituary = HitObituary;
+	newa->DeathHeight = DeathHeight;
+	newa->BurnHeight = BurnHeight;
+	newa->BloodColor = BloodColor;
+	newa->GibHealth = GibHealth;
+	newa->WoundHealth = WoundHealth;
+	newa->PoisonDamage = PoisonDamage;
+	newa->FastSpeed = FastSpeed;
+	newa->RDFactor = RDFactor;
+	newa->CameraHeight = CameraHeight;
+	newa->HowlSound = HowlSound;
+	newa->BloodType = BloodType;
+	newa->BloodType2 = BloodType2;
+	newa->BloodType3 = BloodType3;
+
+	newa->DropItems = DropItems;
+
+	newa->DontHurtShooter = DontHurtShooter;
+	newa->ExplosionRadius = ExplosionRadius;
+	newa->ExplosionDamage = ExplosionDamage;
+	newa->MeleeDamage = MeleeDamage;
+	newa->MeleeSound = MeleeSound;
+	newa->MissileName = MissileName;
+	newa->MissileHeight = MissileHeight;
+}
+
+//==========================================================================
+//
+// PClassActor :: PropagateMark
+//
+//==========================================================================
+
+size_t PClassActor::PropagateMark()
+{
+	// Mark state functions
+	for (int i = 0; i < NumOwnedStates; ++i)
+	{
+		if (OwnedStates[i].ActionFunc != NULL)
+		{
+			GC::Mark(OwnedStates[i].ActionFunc);
+		}
+	}
+	// Mark damage function
+	if (Defaults != NULL)
+	{
+		GC::Mark(((AActor *)Defaults)->Damage);
+	}
+
+//	marked += ActorInfo->NumOwnedStates * sizeof(FState);
+	return Super::PropagateMark();
+}
+
+//==========================================================================
+//
+// PClassActor :: InitializeNativeDefaults
+//
+// This is used by DECORATE to assign ActorInfos to internal classes
+//
+//==========================================================================
+
+void PClassActor::InitializeNativeDefaults()
+{
+	Symbols.SetParentTable(&ParentClass->Symbols);
+	assert(Defaults == NULL);
+	Defaults = (BYTE *)M_Malloc(Size);
+	if (ParentClass->Defaults != NULL) 
+	{
+		memcpy(Defaults, ParentClass->Defaults, ParentClass->Size);
+		if (Size > ParentClass->Size)
+		{
+			memset(Defaults + ParentClass->Size, 0, Size - ParentClass->Size);
+		}
+	}
+	else
+	{
+		memset (Defaults, 0, Size);
+	}
+}
+
+//==========================================================================
+//
+// PClassActor :: RegisterIDs
+//
+// Registers this class's SpawnID and DoomEdNum in the appropriate tables.
+//
+//==========================================================================
+
+void PClassActor::RegisterIDs()
+{
+	PClassActor *cls = PClass::FindActor(TypeName);
+
+	if (cls == NULL)
+	{
+		Printf(TEXTCOLOR_RED"The actor '%s' has been hidden by a non-actor of the same name\n", TypeName.GetChars());
+		return;
+	}
 
 	// Conversation IDs have never been filtered by game so we cannot start doing that.
 	if (ConversationID > 0)
 	{
 		StrifeTypes[ConversationID] = cls;
-		if (cls != Class) 
+		if (cls != this) 
 		{
 			Printf(TEXTCOLOR_RED"Conversation ID %d refers to hidden class type '%s'\n", SpawnID, cls->TypeName.GetChars());
 		}
@@ -170,7 +368,7 @@ void FActorInfo::RegisterIDs ()
 		if (SpawnID > 0)
 		{
 			SpawnableThings[SpawnID] = cls;
-			if (cls != Class) 
+			if (cls != this) 
 			{
 				Printf(TEXTCOLOR_RED"Spawn ID %d refers to hidden class type '%s'\n", SpawnID, cls->TypeName.GetChars());
 			}
@@ -187,7 +385,7 @@ void FActorInfo::RegisterIDs ()
 			ent.Type = cls;
 			ent.Special = -2;	// use -2 instead of -1 so that we can recognize DECORATE defined entries and print a warning message if duplicates occur.
 			DoomEdMap.Insert(DoomEdNum, ent);
-			if (cls != Class) 
+			if (cls != this) 
 			{
 				Printf(TEXTCOLOR_RED"Editor number %d refers to hidden class type '%s'\n", DoomEdNum, cls->TypeName.GetChars());
 			}
@@ -197,24 +395,25 @@ void FActorInfo::RegisterIDs ()
 
 //==========================================================================
 //
+// PClassActor :: GetReplacement
 //
 //==========================================================================
 
-FActorInfo *FActorInfo::GetReplacement (bool lookskill)
+PClassActor *PClassActor::GetReplacement(bool lookskill)
 {
 	FName skillrepname;
 	
 	if (lookskill && AllSkills.Size() > (unsigned)gameskill)
 	{
-		skillrepname = AllSkills[gameskill].GetReplacement(this->Class->TypeName);
+		skillrepname = AllSkills[gameskill].GetReplacement(TypeName);
 		if (skillrepname != NAME_None && PClass::FindClass(skillrepname) == NULL)
 		{
 			Printf("Warning: incorrect actor name in definition of skill %s: \n"
 				   "class %s is replaced by non-existent class %s\n"
 				   "Skill replacement will be ignored for this actor.\n", 
 				   AllSkills[gameskill].Name.GetChars(), 
-				   this->Class->TypeName.GetChars(), skillrepname.GetChars());
-			AllSkills[gameskill].SetReplacement(this->Class->TypeName, NAME_None);
+				   TypeName.GetChars(), skillrepname.GetChars());
+			AllSkills[gameskill].SetReplacement(TypeName, NAME_None);
 			AllSkills[gameskill].SetReplacedBy(skillrepname, NAME_None);
 			lookskill = false; skillrepname = NAME_None;
 		}
@@ -225,15 +424,15 @@ FActorInfo *FActorInfo::GetReplacement (bool lookskill)
 	}
 	// The Replacement field is temporarily NULLed to prevent
 	// potential infinite recursion.
-	FActorInfo *savedrep = Replacement;
+	PClassActor *savedrep = Replacement;
 	Replacement = NULL;
-	FActorInfo *rep = savedrep;
+	PClassActor *rep = savedrep;
 	// Handle skill-based replacement here. It has precedence on DECORATE replacement
 	// in that the skill replacement is applied first, followed by DECORATE replacement
 	// on the actor indicated by the skill replacement.
 	if (lookskill && (skillrepname != NAME_None))
 	{
-		rep = PClass::FindClass(skillrepname)->ActorInfo;
+		rep = PClass::FindActor(skillrepname);
 	}
 	// Now handle DECORATE replacement chain
 	// Skill replacements are not recursive, contrarily to DECORATE replacements
@@ -245,24 +444,25 @@ FActorInfo *FActorInfo::GetReplacement (bool lookskill)
 
 //==========================================================================
 //
+// PClassActor :: GetReplacee
 //
 //==========================================================================
 
-FActorInfo *FActorInfo::GetReplacee (bool lookskill)
+PClassActor *PClassActor::GetReplacee(bool lookskill)
 {
 	FName skillrepname;
 	
 	if (lookskill && AllSkills.Size() > (unsigned)gameskill)
 	{
-		skillrepname = AllSkills[gameskill].GetReplacedBy(this->Class->TypeName);
+		skillrepname = AllSkills[gameskill].GetReplacedBy(TypeName);
 		if (skillrepname != NAME_None && PClass::FindClass(skillrepname) == NULL)
 		{
 			Printf("Warning: incorrect actor name in definition of skill %s: \n"
 				   "non-existent class %s is replaced by class %s\n"
 				   "Skill replacement will be ignored for this actor.\n", 
 				   AllSkills[gameskill].Name.GetChars(), 
-				   skillrepname.GetChars(), this->Class->TypeName.GetChars());
-			AllSkills[gameskill].SetReplacedBy(this->Class->TypeName, NAME_None);
+				   skillrepname.GetChars(), TypeName.GetChars());
+			AllSkills[gameskill].SetReplacedBy(TypeName, NAME_None);
 			AllSkills[gameskill].SetReplacement(skillrepname, NAME_None);
 			lookskill = false; 
 		}
@@ -273,23 +473,25 @@ FActorInfo *FActorInfo::GetReplacee (bool lookskill)
 	}
 	// The Replacee field is temporarily NULLed to prevent
 	// potential infinite recursion.
-	FActorInfo *savedrep = Replacee;
+	PClassActor *savedrep = Replacee;
 	Replacee = NULL;
-	FActorInfo *rep = savedrep;
+	PClassActor *rep = savedrep;
 	if (lookskill && (skillrepname != NAME_None) && (PClass::FindClass(skillrepname) != NULL))
 	{
-		rep = PClass::FindClass(skillrepname)->ActorInfo;
+		rep = PClass::FindActor(skillrepname);
 	}
-	rep = rep->GetReplacee (false);	Replacee = savedrep;
+	rep = rep->GetReplacee(false);
+	Replacee = savedrep;
 	return rep;
 }
 
 //==========================================================================
 //
+// PClassActor :: SetDamageFactor
 //
 //==========================================================================
 
-void FActorInfo::SetDamageFactor(FName type, fixed_t factor)
+void PClassActor::SetDamageFactor(FName type, fixed_t factor)
 {
 	if (DamageFactors == NULL)
 	{
@@ -300,78 +502,23 @@ void FActorInfo::SetDamageFactor(FName type, fixed_t factor)
 
 //==========================================================================
 //
+// PClassActor :: SetPainChance
 //
 //==========================================================================
 
-void FActorInfo::SetPainChance(FName type, int chance)
+void PClassActor::SetPainChance(FName type, int chance)
 {
 	if (chance >= 0) 
 	{
-		if (PainChances == NULL) PainChances=new PainChanceList;
+		if (PainChances == NULL)
+		{
+			PainChances = new PainChanceList;
+		}
 		PainChances->Insert(type, MIN(chance, 256));
 	}
-	else 
+	else if (PainChances != NULL)
 	{
-		if (PainChances != NULL) 
-			PainChances->Remove(type);
-	}
-}
-
-//==========================================================================
-//
-//
-//==========================================================================
-
-void FActorInfo::SetPainFlash(FName type, PalEntry color)
-{
-	if (PainFlashes == NULL)
-		PainFlashes = new PainFlashList;
-
-	PainFlashes->Insert(type, color);
-}
-
-//==========================================================================
-//
-//
-//==========================================================================
-
-bool FActorInfo::GetPainFlash(FName type, PalEntry *color) const
-{
-	const FActorInfo *info = this;
-
-	while (info != NULL)
-	{
-		if (info->PainFlashes != NULL)
-		{
-			PalEntry *flash = info->PainFlashes->CheckKey(type);
-			if (flash != NULL)
-			{
-				*color = *flash;
-				return true;
-			}
-		}
-		// Try parent class
-		info = info->Class->ParentClass->ActorInfo;
-	}
-	return false;
-}
-
-//==========================================================================
-//
-//
-//==========================================================================
-
-void FActorInfo::SetColorSet(int index, const FPlayerColorSet *set)
-{
-	if (set != NULL) 
-	{
-		if (ColorSets == NULL) ColorSets = new FPlayerColorSetMap;
-		ColorSets->Insert(index, *set);
-	}
-	else 
-	{
-		if (ColorSets != NULL) 
-			ColorSets->Remove(index);
+		PainChances->Remove(type);
 	}
 }
 
@@ -401,24 +548,23 @@ static void SummonActor (int command, int command2, FCommandLine argv)
 
 	if (argv.argc() > 1)
 	{
-		const PClass *type = PClass::FindClass (argv[1]);
+		PClassActor *type = PClass::FindActor(argv[1]);
 		if (type == NULL)
 		{
-			Printf ("Unknown class '%s'\n", argv[1]);
+			Printf ("Unknown actor '%s'\n", argv[1]);
 			return;
 		}
 		Net_WriteByte (argv.argc() > 2 ? command2 : command);
 		Net_WriteString (type->TypeName.GetChars());
 
-		if (argv.argc () > 2) {
+		if (argv.argc () > 2)
+		{
 			Net_WriteWord (atoi (argv[2])); // angle
-			if (argv.argc () > 3) Net_WriteWord (atoi (argv[3])); // TID
-			else Net_WriteWord (0);
-			if (argv.argc () > 4) Net_WriteByte (atoi (argv[4])); // special
-			else Net_WriteByte (0);
-			for(int i = 5; i < 10; i++) { // args[5]
-				if(i < argv.argc()) Net_WriteLong (atoi (argv[i]));
-				else Net_WriteLong (0);
+			Net_WriteWord ((argv.argc() > 3) ? atoi(argv[3]) : 0); // TID
+			Net_WriteByte ((argv.argc() > 4) ? atoi(argv[4]) : 0); // special
+			for (int i = 5; i < 10; i++)
+			{ // args[5]
+				Net_WriteLong((i < argv.argc()) ? atoi(argv[i]) : 0);
 			}
 		}
 	}

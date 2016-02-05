@@ -61,6 +61,8 @@ extern bool P_AutoUseChaosDevice (player_t *player);
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_StaffAttack)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	angle_t angle;
 	int slope;
 	player_t *player;
@@ -68,20 +70,22 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_StaffAttack)
 
 	if (NULL == (player = self->player))
 	{
-		return;
+		return 0;
 	}
 
-	ACTION_PARAM_START(2);
-	ACTION_PARAM_INT(damage, 0);
-	ACTION_PARAM_CLASS(puff, 1);
+	PARAM_INT	(damage);
+	PARAM_CLASS	(puff, AActor);
 
 	AWeapon *weapon = player->ReadyWeapon;
 	if (weapon != NULL)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
-			return;
+			return 0;
 	}
-	if (puff == NULL) puff = PClass::FindClass(NAME_BulletPuff);	// just to be sure
+	if (puff == NULL)
+	{
+		puff = PClass::FindActor(NAME_BulletPuff);	// just to be sure
+	}
 	angle = self->angle;
 	angle += pr_sap.Random2() << 18;
 	slope = P_AimLineAttack (self, angle, MELEERANGE, &linetarget);
@@ -92,6 +96,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_StaffAttack)
 		// turn to face target
 		self->angle = self->AngleTo(linetarget);
 	}
+	return 0;
 }
 
 
@@ -103,20 +108,22 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_StaffAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireGoldWandPL1)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	angle_t angle;
 	int damage;
 	player_t *player;
 
 	if (NULL == (player = self->player))
 	{
-		return;
+		return 0;
 	}
 
 	AWeapon *weapon = player->ReadyWeapon;
 	if (weapon != NULL)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
-			return;
+			return 0;
 	}
 	angle_t pitch = P_BulletSlope(self);
 	damage = 7+(pr_fgw()&7);
@@ -127,6 +134,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireGoldWandPL1)
 	}
 	P_LineAttack (self, angle, PLAYERMISSILERANGE, pitch, damage, NAME_Hitscan, "GoldWandPuff1");
 	S_Sound (self, CHAN_WEAPON, "weapons/wandhit", 1, ATTN_NORM);
+	return 0;
 }
 
 //----------------------------------------------------------------------------
@@ -137,6 +145,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireGoldWandPL1)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireGoldWandPL2)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	int i;
 	angle_t angle;
 	int damage;
@@ -145,20 +155,20 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireGoldWandPL2)
 
 	if (NULL == (player = self->player))
 	{
-		return;
+		return 0;
 	}
 
 	AWeapon *weapon = player->ReadyWeapon;
 	if (weapon != NULL)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
-			return;
+			return 0;
 	}
 	angle_t pitch = P_BulletSlope(self);
 	velz = FixedMul (GetDefaultByName("GoldWandFX2")->Speed,
 		finetangent[FINEANGLES/4-((signed)pitch>>ANGLETOFINESHIFT)]);
-	P_SpawnMissileAngle (self, PClass::FindClass("GoldWandFX2"), self->angle-(ANG45/8), velz);
-	P_SpawnMissileAngle (self, PClass::FindClass("GoldWandFX2"), self->angle+(ANG45/8), velz);
+	P_SpawnMissileAngle (self, PClass::FindActor("GoldWandFX2"), self->angle-(ANG45/8), velz);
+	P_SpawnMissileAngle (self, PClass::FindActor("GoldWandFX2"), self->angle+(ANG45/8), velz);
 	angle = self->angle-(ANG45/8);
 	for(i = 0; i < 5; i++)
 	{
@@ -167,6 +177,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireGoldWandPL2)
 		angle += ((ANG45/8)*2)/4;
 	}
 	S_Sound (self, CHAN_WEAPON, "weapons/wandhit", 1, ATTN_NORM);
+	return 0;
 }
 
 //----------------------------------------------------------------------------
@@ -177,22 +188,25 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireGoldWandPL2)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireCrossbowPL1)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	player_t *player;
 
 	if (NULL == (player = self->player))
 	{
-		return;
+		return 0;
 	}
 
 	AWeapon *weapon = player->ReadyWeapon;
 	if (weapon != NULL)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
-			return;
+			return 0;
 	}
-	P_SpawnPlayerMissile (self, PClass::FindClass("CrossbowFX1"));
-	P_SpawnPlayerMissile (self, PClass::FindClass("CrossbowFX3"), self->angle-(ANG45/10));
-	P_SpawnPlayerMissile (self, PClass::FindClass("CrossbowFX3"), self->angle+(ANG45/10));
+	P_SpawnPlayerMissile (self, PClass::FindActor("CrossbowFX1"));
+	P_SpawnPlayerMissile (self, PClass::FindActor("CrossbowFX3"), self->angle-(ANG45/10));
+	P_SpawnPlayerMissile (self, PClass::FindActor("CrossbowFX3"), self->angle+(ANG45/10));
+	return 0;
 }
 
 //----------------------------------------------------------------------------
@@ -203,24 +217,27 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireCrossbowPL1)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireCrossbowPL2)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	player_t *player;
 
 	if (NULL == (player = self->player))
 	{
-		return;
+		return 0;
 	}
 
 	AWeapon *weapon = self->player->ReadyWeapon;
 	if (weapon != NULL)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
-			return;
+			return 0;
 	}
-	P_SpawnPlayerMissile (self, PClass::FindClass("CrossbowFX2"));
-	P_SpawnPlayerMissile (self, PClass::FindClass("CrossbowFX2"), self->angle-(ANG45/10));
-	P_SpawnPlayerMissile (self, PClass::FindClass("CrossbowFX2"), self->angle+(ANG45/10));
-	P_SpawnPlayerMissile (self, PClass::FindClass("CrossbowFX3"), self->angle-(ANG45/5));
-	P_SpawnPlayerMissile (self, PClass::FindClass("CrossbowFX3"), self->angle+(ANG45/5));
+	P_SpawnPlayerMissile (self, PClass::FindActor("CrossbowFX2"));
+	P_SpawnPlayerMissile (self, PClass::FindActor("CrossbowFX2"), self->angle-(ANG45/10));
+	P_SpawnPlayerMissile (self, PClass::FindActor("CrossbowFX2"), self->angle+(ANG45/10));
+	P_SpawnPlayerMissile (self, PClass::FindActor("CrossbowFX3"), self->angle-(ANG45/5));
+	P_SpawnPlayerMissile (self, PClass::FindActor("CrossbowFX3"), self->angle+(ANG45/5));
+	return 0;
 }
 
 //---------------------------------------------------------------------------
@@ -231,29 +248,30 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireCrossbowPL2)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GauntletAttack)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	angle_t angle;
 	int damage;
 	int slope;
 	int randVal;
 	fixed_t dist;
 	player_t *player;
-	const PClass *pufftype;
+	PClassActor *pufftype;
 	AActor *linetarget;
 	int actualdamage = 0;
 
 	if (NULL == (player = self->player))
 	{
-		return;
+		return 0;
 	}
 
-	ACTION_PARAM_START(1);
-	ACTION_PARAM_INT(power, 0);
+	PARAM_INT(power);
 
 	AWeapon *weapon = player->ReadyWeapon;
 	if (weapon != NULL)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
-			return;
+			return 0;
 	}
 	player->psprites[ps_weapon].sx = ((pr_gatk()&3)-2) * FRACUNIT;
 	player->psprites[ps_weapon].sy = WEAPONTOP + (pr_gatk()&3) * FRACUNIT;
@@ -263,14 +281,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GauntletAttack)
 		damage = pr_gatk.HitDice (2);
 		dist = 4*MELEERANGE;
 		angle += pr_gatk.Random2() << 17;
-		pufftype = PClass::FindClass("GauntletPuff2");
+		pufftype = PClass::FindActor("GauntletPuff2");
 	}
 	else
 	{
 		damage = pr_gatk.HitDice (2);
 		dist = MELEERANGE+1;
 		angle += pr_gatk.Random2() << 18;
-		pufftype = PClass::FindClass("GauntletPuff1");
+		pufftype = PClass::FindActor("GauntletPuff1");
 	}
 	slope = P_AimLineAttack (self, angle, dist, &linetarget);
 	P_LineAttack (self, angle, dist, slope, damage, NAME_Melee, pufftype, false, &linetarget, &actualdamage);
@@ -281,7 +299,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GauntletAttack)
 			player->extralight = !player->extralight;
 		}
 		S_Sound (self, CHAN_AUTO, "weapons/gauntletson", 1, ATTN_NORM);
-		return;
+		return 0;
 	}
 	randVal = pr_gatk();
 	if (randVal < 64)
@@ -322,6 +340,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GauntletAttack)
 			self->angle += ANG90/20;
 	}
 	self->flags |= MF_JUSTATTACKED;
+	return 0;
 }
 
 // --- Mace -----------------------------------------------------------------
@@ -404,33 +423,36 @@ void FireMacePL1B (AActor *actor)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireMacePL1)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *ball;
 	player_t *player;
 
 	if (NULL == (player = self->player))
 	{
-		return;
+		return 0;
 	}
 
 	if (pr_maceatk() < 28)
 	{
 		FireMacePL1B (self);
-		return;
+		return 0;
 	}
 	AWeapon *weapon = player->ReadyWeapon;
 	if (weapon != NULL)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
-			return;
+			return 0;
 	}
 	player->psprites[ps_weapon].sx = ((pr_maceatk()&3)-2)*FRACUNIT;
 	player->psprites[ps_weapon].sy = WEAPONTOP+(pr_maceatk()&3)*FRACUNIT;
-	ball = P_SpawnPlayerMissile (self, PClass::FindClass("MaceFX1"),
+	ball = P_SpawnPlayerMissile (self, PClass::FindActor("MaceFX1"),
 		self->angle+(((pr_maceatk()&7)-4)<<24));
 	if (ball)
 	{
 		ball->special1 = 16; // tics till dropoff
 	}
+	return 0;
 }
 
 //----------------------------------------------------------------------------
@@ -441,14 +463,16 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMacePL1)
 
 DEFINE_ACTION_FUNCTION(AActor, A_MacePL1Check)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (self->special1 == 0)
 	{
-		return;
+		return 0;
 	}
 	self->special1 -= 4;
 	if (self->special1 > 0)
 	{
-		return;
+		return 0;
 	}
 	self->special1 = 0;
 	self->flags &= ~MF_NOGRAVITY;
@@ -467,6 +491,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MacePL1Check)
 	self->vely = (int)(self->vely * velscale);
 #endif
 	self->velz -= self->velz >> 1;
+	return 0;
 }
 
 //----------------------------------------------------------------------------
@@ -477,6 +502,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_MacePL1Check)
 
 DEFINE_ACTION_FUNCTION(AActor, A_MaceBallImpact)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if ((self->health != MAGIC_JUNK) && (self->flags & MF_INBOUNCE))
 	{ // Bounce
 		self->health = MAGIC_JUNK;
@@ -492,6 +519,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MaceBallImpact)
 		self->gravity = FRACUNIT;
 		S_Sound (self, CHAN_BODY, "weapons/macehit", 1, ATTN_NORM);
 	}
+	return 0;
 }
 
 //----------------------------------------------------------------------------
@@ -502,13 +530,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_MaceBallImpact)
 
 DEFINE_ACTION_FUNCTION(AActor, A_MaceBallImpact2)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *tiny;
 	angle_t angle;
 
 	if ((self->Z() <= self->floorz) && P_HitFloor (self))
 	{ // Landed in some sort of liquid
 		self->Destroy ();
-		return;
+		return 0;
 	}
 	if (self->flags & MF_INBOUNCE)
 	{
@@ -549,6 +579,7 @@ boom:
 		self->BounceFlags = BOUNCE_None;
 		self->gravity = FRACUNIT;
 	}
+	return 0;
 }
 
 //----------------------------------------------------------------------------
@@ -559,20 +590,22 @@ boom:
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireMacePL2)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *mo;
 	player_t *player;
 	AActor *linetarget;
 
 	if (NULL == (player = self->player))
 	{
-		return;
+		return 0;
 	}
 
 	AWeapon *weapon = player->ReadyWeapon;
 	if (weapon != NULL)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
-			return;
+			return 0;
 	}
 	mo = P_SpawnPlayerMissile (self, 0,0,0, RUNTIME_CLASS(AMaceFX4), self->angle, &linetarget);
 	if (mo)
@@ -587,6 +620,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMacePL2)
 		}
 	}
 	S_Sound (self, CHAN_WEAPON, "weapons/maceshoot", 1, ATTN_NORM);
+	return 0;
 }
 
 //----------------------------------------------------------------------------
@@ -597,6 +631,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMacePL2)
 
 DEFINE_ACTION_FUNCTION(AActor, A_DeathBallImpact)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	int i;
 	AActor *target;
 	angle_t angle = 0;
@@ -606,7 +642,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DeathBallImpact)
 	if ((self->Z() <= self->floorz) && P_HitFloor (self))
 	{ // Landed in some sort of liquid
 		self->Destroy ();
-		return;
+		return 0;
 	}
 	if (self->flags & MF_INBOUNCE)
 	{
@@ -664,6 +700,7 @@ boom:
 		self->gravity = FRACUNIT;
 		S_Sound (self, CHAN_BODY, "weapons/maceexplode", 1, ATTN_NORM);
 	}
+	return 0;
 }
 
 
@@ -739,20 +776,22 @@ int ARipper::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireBlasterPL1)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	angle_t angle;
 	int damage;
 	player_t *player;
 
 	if (NULL == (player = self->player))
 	{
-		return;
+		return 0;
 	}
 
 	AWeapon *weapon = self->player->ReadyWeapon;
 	if (weapon != NULL)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
-			return;
+			return 0;
 	}
 	angle_t pitch = P_BulletSlope(self);
 	damage = pr_fb1.HitDice (4);
@@ -763,6 +802,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireBlasterPL1)
 	}
 	P_LineAttack (self, angle, PLAYERMISSILERANGE, pitch, damage, NAME_Hitscan, "BlasterPuff");
 	S_Sound (self, CHAN_WEAPON, "weapons/blastershoot", 1, ATTN_NORM);
+	return 0;
 }
 
 //----------------------------------------------------------------------------
@@ -773,6 +813,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireBlasterPL1)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SpawnRippers)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	unsigned int i;
 	angle_t angle;
 	AActor *ripper;
@@ -788,6 +830,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnRippers)
 		ripper->vely = FixedMul (ripper->Speed, finesine[angle]);
 		P_CheckMissileSpawn (ripper, self->radius);
 	}
+	return 0;
 }
 
 // --- Skull rod ------------------------------------------------------------
@@ -860,26 +903,29 @@ void ARainTracker::Serialize (FArchive &arc)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireSkullRodPL1)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *mo;
 	player_t *player;
 
 	if (NULL == (player = self->player))
 	{
-		return;
+		return 0;
 	}
 
 	AWeapon *weapon = player->ReadyWeapon;
 	if (weapon != NULL)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
-			return;
+			return 0;
 	}
-	mo = P_SpawnPlayerMissile (self, PClass::FindClass("HornRodFX1"));
+	mo = P_SpawnPlayerMissile (self, PClass::FindActor("HornRodFX1"));
 	// Randomize the first frame
 	if (mo && pr_fsr1() > 128)
 	{
 		mo->SetState (mo->state->GetNextState());
 	}
+	return 0;
 }
 
 //----------------------------------------------------------------------------
@@ -893,19 +939,21 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSkullRodPL1)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireSkullRodPL2)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	player_t *player;
 	AActor *MissileActor;
 	AActor *linetarget;
 
 	if (NULL == (player = self->player))
 	{
-		return;
+		return 0;
 	}
 	AWeapon *weapon = player->ReadyWeapon;
 	if (weapon != NULL)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
-			return;
+			return 0;
 	}
 	P_SpawnPlayerMissile (self, 0,0,0, RUNTIME_CLASS(AHornRodFX2), self->angle, &linetarget, &MissileActor);
 	// Use MissileActor instead of the return value from
@@ -920,6 +968,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSkullRodPL2)
 		}
 		S_Sound (MissileActor, CHAN_WEAPON, "weapons/hornrodpowshoot", 1, ATTN_NORM);
 	}
+	return 0;
 }
 
 //----------------------------------------------------------------------------
@@ -930,11 +979,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSkullRodPL2)
 
 DEFINE_ACTION_FUNCTION(AActor, A_AddPlayerRain)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	ARainTracker *tracker;
 
 	if (self->target == NULL || self->target->health <= 0)
 	{ // Shooter is dead or nonexistant
-		return;
+		return 0;
 	}
 
 	tracker = self->target->FindInventory<ARainTracker> ();
@@ -977,6 +1028,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_AddPlayerRain)
 		tracker->Rain1 = self;
 	}
 	self->special1 = S_FindSound ("misc/rain");
+	return 0;
 }
 
 //----------------------------------------------------------------------------
@@ -987,6 +1039,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_AddPlayerRain)
 
 DEFINE_ACTION_FUNCTION(AActor, A_SkullRodStorm)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *mo;
 	ARainTracker *tracker;
 
@@ -996,7 +1050,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SkullRodStorm)
 		if (self->target == NULL)
 		{ // Player left the game
 			self->Destroy ();
-			return;
+			return 0;
 		}
 		tracker = self->target->FindInventory<ARainTracker> ();
 		if (tracker != NULL)
@@ -1011,18 +1065,18 @@ DEFINE_ACTION_FUNCTION(AActor, A_SkullRodStorm)
 			}
 		}
 		self->Destroy ();
-		return;
+		return 0;
 	}
 	if (pr_storm() < 25)
 	{ // Fudge rain frequency
-		return;
+		return 0;
 	}
 	fixedvec2 pos = self->Vec2Offset(
 		((pr_storm()&127) - 64) * FRACUNIT,
 		((pr_storm()&127) - 64) * FRACUNIT);
 	mo = Spawn<ARainPillar> (pos.x, pos.y, ONCEILINGZ, ALLOW_REPLACE);
 	// We used bouncecount to store the 3D floor index in A_HideInCeiling
-	if (!mo) return;
+	if (!mo) return 0;
 	fixed_t newz;
 	if (self->bouncecount >= 0 
 		&& (unsigned)self->bouncecount < self->Sector->e->XFloor.ffloors.Size())
@@ -1043,6 +1097,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SkullRodStorm)
 	{
 		S_Sound (self, CHAN_BODY|CHAN_LOOP, self->special1, 1, ATTN_NORM);
 	}
+	return 0;
 }
 
 //----------------------------------------------------------------------------
@@ -1053,6 +1108,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SkullRodStorm)
 
 DEFINE_ACTION_FUNCTION(AActor, A_RainImpact)
 {
+	PARAM_ACTION_PROLOGUE;
 	if (self->Z() > self->floorz)
 	{
 		self->SetState (self->FindState("NotFloor"));
@@ -1061,6 +1117,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RainImpact)
 	{
 		P_HitFloor (self);
 	}
+	return 0;
 }
 
 //----------------------------------------------------------------------------
@@ -1071,6 +1128,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_RainImpact)
 
 DEFINE_ACTION_FUNCTION(AActor, A_HideInCeiling)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	// We use bouncecount to store the 3D floor index
 	fixed_t foo;
 	for (unsigned int i=0; i< self->Sector->e->XFloor.ffloors.Size(); i++)
@@ -1082,11 +1141,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_HideInCeiling)
 		{
 			self->SetZ(foo + 4*FRACUNIT, false);
 			self->bouncecount = i;
-			return;
+			return 0;
 		}
 	}
 	self->bouncecount = -1;
 	self->SetZ(self->ceilingz + 4*FRACUNIT, false);
+	return 0;
 }
 
 // --- Phoenix Rod ----------------------------------------------------------
@@ -1170,25 +1230,28 @@ int APhoenixFX2::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FirePhoenixPL1)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	angle_t angle;
 	player_t *player;
 
 	if (NULL == (player = self->player))
 	{
-		return;
+		return 0;
 	}
 
 	AWeapon *weapon = self->player->ReadyWeapon;
 	if (weapon != NULL)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
-			return;
+			return 0;
 	}
 	P_SpawnPlayerMissile (self, RUNTIME_CLASS(APhoenixFX1));
 	angle = self->angle + ANG180;
 	angle >>= ANGLETOFINESHIFT;
 	self->velx += FixedMul (4*FRACUNIT, finecosine[angle]);
 	self->vely += FixedMul (4*FRACUNIT, finesine[angle]);
+	return 0;
 }
 
 //----------------------------------------------------------------------------
@@ -1199,6 +1262,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePhoenixPL1)
 
 DEFINE_ACTION_FUNCTION(AActor, A_PhoenixPuff)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *puff;
 	angle_t angle;
 
@@ -1216,6 +1281,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PhoenixPuff)
 	puff->velx = FixedMul (FRACUNIT*13/10, finecosine[angle]);
 	puff->vely = FixedMul (FRACUNIT*13/10, finesine[angle]);
 	puff->velz = 0;
+	return 0;
 }
 
 //----------------------------------------------------------------------------
@@ -1226,6 +1292,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_PhoenixPuff)
 
 DEFINE_ACTION_FUNCTION(AActor, A_InitPhoenixPL2)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (self->player != NULL)
 	{
 		APhoenixRod *flamethrower = static_cast<APhoenixRod *> (self->player->ReadyWeapon);
@@ -1234,6 +1302,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_InitPhoenixPL2)
 			flamethrower->FlameCount = FLAME_THROWER_TICS;
 		}
 	}
+	return 0;
 }
 
 //----------------------------------------------------------------------------
@@ -1246,6 +1315,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_InitPhoenixPL2)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FirePhoenixPL2)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *mo;
 	angle_t angle;
 
@@ -1256,7 +1327,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePhoenixPL2)
 
 	if (NULL == (player = self->player))
 	{
-		return;
+		return 0;
 	}
 
 	soundid = "weapons/phoenixpowshoot";
@@ -1267,7 +1338,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePhoenixPL2)
 		P_SetPsprite (player, ps_weapon, flamethrower->FindState("Powerdown"));
 		player->refire = 0;
 		S_StopSound (self, CHAN_WEAPON);
-		return;
+		return 0;
 	}
 	angle = self->angle;
 
@@ -1288,6 +1359,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePhoenixPL2)
 		S_Sound (self, CHAN_WEAPON|CHAN_LOOP, soundid, 1, ATTN_NORM);
 	}	
 	P_CheckMissileSpawn (mo, self->radius);
+	return 0;
 }
 
 //----------------------------------------------------------------------------
@@ -1298,19 +1370,22 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePhoenixPL2)
 
 DEFINE_ACTION_FUNCTION(AActor, A_ShutdownPhoenixPL2)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	player_t *player;
 
 	if (NULL == (player = self->player))
 	{
-		return;
+		return 0;
 	}
 	S_StopSound (self, CHAN_WEAPON);
 	AWeapon *weapon = player->ReadyWeapon;
 	if (weapon != NULL)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
-			return;
+			return 0;
 	}
+	return 0;
 }
 
 //----------------------------------------------------------------------------
@@ -1321,7 +1396,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_ShutdownPhoenixPL2)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FlameEnd)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	self->velz += FRACUNIT*3/2;
+	return 0;
 }
 
 //----------------------------------------------------------------------------
@@ -1332,6 +1410,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_FlameEnd)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FloatPuff)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	self->velz += FRACUNIT*18/10;
+	return 0;
 }
 

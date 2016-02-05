@@ -67,6 +67,9 @@ CVAR(Bool, r_np2, true, 0)
 
 extern fixed_t globaluclip, globaldclip;
 
+PortalDrawseg* CurrentPortal = NULL;
+int CurrentPortalUniq = 0;
+bool CurrentPortalInSkybox = false;
 
 // OPTIMIZE: closed two sided lines as single sided
 

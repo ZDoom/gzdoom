@@ -10,10 +10,6 @@
 // simulation recurions maximum
 CVAR(Int, sv_portal_recursions, 4, CVAR_ARCHIVE|CVAR_SERVERINFO)
 
-PortalDrawseg* CurrentPortal = NULL;
-int CurrentPortalUniq = 0;
-bool CurrentPortalInSkybox = false;
-
 // [ZZ] lots of floats here to avoid overflowing a lot
 bool R_IntersectLines(fixed_t o1x, fixed_t o1y, fixed_t p1x, fixed_t p1y,
 				      fixed_t o2x, fixed_t o2y, fixed_t p2x, fixed_t p2y,

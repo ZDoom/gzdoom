@@ -321,7 +321,7 @@ void PClassActor::InitializeNativeDefaults()
 {
 	Symbols.SetParentTable(&ParentClass->Symbols);
 	assert(Defaults == NULL);
-	Defaults = new BYTE[Size];
+	Defaults = (BYTE *)M_Malloc(Size);
 	if (ParentClass->Defaults != NULL) 
 	{
 		memcpy(Defaults, ParentClass->Defaults, ParentClass->Size);

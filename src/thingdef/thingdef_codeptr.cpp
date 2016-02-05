@@ -6360,6 +6360,35 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetRipMax)
 	return 0;
 }
 
+//===========================================================================
+//
+// A_SetChaseThreshold(int threshold, bool def, int ptr)
+//
+// Sets the current chase threshold of the actor (pointer). If def is true,
+// changes the default threshold which the actor resets to once it switches
+// targets and doesn't have the +QUICKTORETALIATE flag.
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetChaseThreshold)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_INT(threshold);
+	PARAM_BOOL_OPT(def) { def = false; }
+	PARAM_INT_OPT(ptr) { ptr = AAPTR_DEFAULT; }
+
+
+	AActor *mobj = COPY_AAPTR(self, ptr);
+	if (!mobj)
+	{
+		ACTION_SET_RESULT(false);
+		return 0;
+	}
+	if (def)
+		mobj->DefThreshold = (threshold >= 0) ? threshold : 0;
+	else
+		mobj->threshold = (threshold >= 0) ? threshold : 0;
+	return 0;
+}
+
 //==========================================================================
 //
 // A_CheckProximity(jump, classname, distance, count, flags, ptr)

@@ -433,6 +433,10 @@ void AActor::Serialize (FArchive &arc)
 			<< RipLevelMin
 			<< RipLevelMax;
 	}
+	if (SaveVersion >= 4531)
+	{
+		arc << DefThreshold;
+	}
 
 	{
 		FString tagstr;

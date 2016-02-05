@@ -138,11 +138,6 @@ extern Clipper clipper;
 
 angle_t R_PointToPseudoAngle (fixed_t viewx, fixed_t viewy, fixed_t x, fixed_t y);
 
-inline angle_t R_PointToAnglePrecise (fixed_t viewx, fixed_t viewy, fixed_t x, fixed_t y)
-{
-	return xs_RoundToUInt(atan2(double(y-viewy), double(x-viewx)) * (ANGLE_180/M_PI));
-}
-
 // Used to speed up angle calculations during clipping
 inline angle_t vertex_t::GetClipAngle()
 {

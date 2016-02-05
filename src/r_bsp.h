@@ -25,6 +25,7 @@
 
 #include "tarray.h"
 #include <stddef.h>
+#include "portal.h"
 
 // The 3072 below is just an arbitrary value picked to avoid
 // drawing lines the player is too close to that would overflow
@@ -86,6 +87,7 @@ struct drawseg_t
 // backups
 	ptrdiff_t	bkup;	// sprtopclip backup, for mid and fake textures
 	FWallTmapVals tmapvals;
+	int			CurrentPortalUniq; // [ZZ] to identify the portal that this drawseg is in. used for sprite clipping.
 };
 
 
@@ -104,9 +106,8 @@ extern size_t			FirstInterestingDrawseg;
 
 extern int			WindowLeft, WindowRight;
 extern WORD			MirrorFlags;
-extern seg_t*		ActiveWallMirror;
 
-extern TArray<size_t>	WallMirrors;
+extern TArray<PortalDrawseg> WallPortals;
 
 typedef void (*drawfunc_t) (int start, int stop);
 

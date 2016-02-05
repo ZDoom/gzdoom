@@ -52,6 +52,7 @@
 #include "r_3dfloors.h"
 #include "v_palette.h"
 #include "r_data/colormaps.h"
+#include "portal.h"
 
 #define WALLYREPEAT 8
 
@@ -103,7 +104,7 @@ extern fixed_t	rw_frontfz1, rw_frontfz2;
 int				rw_ceilstat, rw_floorstat;
 bool			rw_mustmarkfloor, rw_mustmarkceiling;
 bool			rw_prepped;
-bool			rw_markmirror;
+bool			rw_markportal;
 bool			rw_havehigh;
 bool			rw_havelow;
 
@@ -1989,7 +1990,7 @@ void R_NewWall (bool needlights)
 {
 	fixed_t rowoffset, yrepeat;
 
-	rw_markmirror = false;
+	rw_markportal = false;
 
 	sidedef = curline->sidedef;
 	linedef = curline->linedef;
@@ -1999,65 +2000,64 @@ void R_NewWall (bool needlights)
 
 	midtexture = toptexture = bottomtexture = 0;
 
-	if (backsector == NULL)
+	if (sidedef == linedef->sidedef[0] &&
+		linedef->portal &&
+		(!linedef->portal_mirror || r_drawmirrors)) // [ZZ] compatibility with r_drawmirrors cvar that existed way before portals
+	{
+		markfloor = markceiling = true; // act like an one-sided wall here (todo: check how does this work with transparency)
+		rw_markportal = true;
+	}
+	else if (backsector == NULL)
 	{
 		// single sided line
 		// a single sided line is terminal, so it must mark ends
 		markfloor = markceiling = true;
-		// [RH] Render mirrors later, but mark them now.
-		if (linedef->special != Line_Mirror || !r_drawmirrors)
+		// [RH] Horizon lines do not need to be textured
+		if (linedef->special != Line_Horizon)
 		{
-			// [RH] Horizon lines do not need to be textured
-			if (linedef->special != Line_Horizon)
-			{
-				midtexture = TexMan(sidedef->GetTexture(side_t::mid), true);
-				rw_offset_mid = sidedef->GetTextureXOffset(side_t::mid);
-				rowoffset = sidedef->GetTextureYOffset(side_t::mid);
-				rw_midtexturescalex = sidedef->GetTextureXScale(side_t::mid);
-				rw_midtexturescaley = sidedef->GetTextureYScale(side_t::mid);
-				yrepeat = FixedMul(midtexture->yScale, rw_midtexturescaley);
-				if (yrepeat >= 0)
-				{ // normal orientation
-					if (linedef->flags & ML_DONTPEGBOTTOM)
-					{ // bottom of texture at bottom
-						rw_midtexturemid = MulScale16(frontsector->GetPlaneTexZ(sector_t::floor) - viewz, yrepeat) + (midtexture->GetHeight() << FRACBITS);
-					}
-					else
-					{ // top of texture at top
-						rw_midtexturemid = MulScale16(frontsector->GetPlaneTexZ(sector_t::ceiling) - viewz, yrepeat);
-						if (rowoffset < 0 && midtexture != NULL)
-						{
-							rowoffset += midtexture->GetHeight() << FRACBITS;
-						}
-					}
+			midtexture = TexMan(sidedef->GetTexture(side_t::mid), true);
+			rw_offset_mid = sidedef->GetTextureXOffset(side_t::mid);
+			rowoffset = sidedef->GetTextureYOffset(side_t::mid);
+			rw_midtexturescalex = sidedef->GetTextureXScale(side_t::mid);
+			rw_midtexturescaley = sidedef->GetTextureYScale(side_t::mid);
+			yrepeat = FixedMul(midtexture->yScale, rw_midtexturescaley);
+			if (yrepeat >= 0)
+			{ // normal orientation
+				if (linedef->flags & ML_DONTPEGBOTTOM)
+				{ // bottom of texture at bottom
+					rw_midtexturemid = MulScale16(frontsector->GetPlaneTexZ(sector_t::floor) - viewz, yrepeat) + (midtexture->GetHeight() << FRACBITS);
 				}
 				else
-				{ // upside down
-					rowoffset = -rowoffset;
-					if (linedef->flags & ML_DONTPEGBOTTOM)
-					{ // top of texture at bottom
-						rw_midtexturemid = MulScale16(frontsector->GetPlaneTexZ(sector_t::floor) - viewz, yrepeat);
+				{ // top of texture at top
+					rw_midtexturemid = MulScale16(frontsector->GetPlaneTexZ(sector_t::ceiling) - viewz, yrepeat);
+					if (rowoffset < 0 && midtexture != NULL)
+					{
+						rowoffset += midtexture->GetHeight() << FRACBITS;
 					}
-					else
-					{ // bottom of texture at top
-						rw_midtexturemid = MulScale16(frontsector->GetPlaneTexZ(sector_t::ceiling) - viewz, yrepeat) + (midtexture->GetHeight() << FRACBITS);
-					}
-				}
-				if (midtexture->bWorldPanning)
-				{
-					rw_midtexturemid += MulScale16(rowoffset, yrepeat);
-				}
-				else
-				{
-					// rowoffset is added outside the multiply so that it positions the texture
-					// by texels instead of world units.
-					rw_midtexturemid += rowoffset;
 				}
 			}
-		}
-		else
-		{
-			rw_markmirror = true;
+			else
+			{ // upside down
+				rowoffset = -rowoffset;
+				if (linedef->flags & ML_DONTPEGBOTTOM)
+				{ // top of texture at bottom
+					rw_midtexturemid = MulScale16(frontsector->GetPlaneTexZ(sector_t::floor) - viewz, yrepeat);
+				}
+				else
+				{ // bottom of texture at top
+					rw_midtexturemid = MulScale16(frontsector->GetPlaneTexZ(sector_t::ceiling) - viewz, yrepeat) + (midtexture->GetHeight() << FRACBITS);
+				}
+			}
+			if (midtexture->bWorldPanning)
+			{
+				rw_midtexturemid += MulScale16(rowoffset, yrepeat);
+			}
+			else
+			{
+				// rowoffset is added outside the multiply so that it positions the texture
+				// by texels instead of world units.
+				rw_midtexturemid += rowoffset;
+			}
 		}
 	}
 	else
@@ -2380,6 +2380,7 @@ void R_StoreWallRange (int start, int stop)
 	rw_offset = sidedef->GetTextureXOffset(side_t::mid);
 	rw_light = rw_lightleft + rw_lightstep * (start - WallC.sx1);
 
+	ds_p->CurrentPortalUniq = CurrentPortalUniq;
 	ds_p->sx1 = WallC.sx1;
 	ds_p->sx2 = WallC.sx2;
 	ds_p->sz1 = WallC.sz1;
@@ -2403,10 +2404,8 @@ void R_StoreWallRange (int start, int stop)
 	// killough 1/6/98, 2/1/98: remove limit on openings
 	ds_p->sprtopclip = ds_p->sprbottomclip = ds_p->maskedtexturecol = ds_p->bkup = ds_p->swall = -1;
 
-	if (rw_markmirror)
+	if (rw_markportal)
 	{
-		size_t drawsegnum = ds_p - drawsegs;
-		WallMirrors.Push (drawsegnum);
 		ds_p->silhouette = SIL_BOTH;
 	}
 	else if (backsector == NULL)
@@ -2617,9 +2616,42 @@ void R_StoreWallRange (int start, int stop)
 	}
 
 	// [RH] Draw any decals bound to the seg
-	for (DBaseDecal *decal = curline->sidedef->AttachedDecals; decal != NULL; decal = decal->WallNext)
+	// [ZZ] Only if not an active mirror
+	if (!rw_markportal)
 	{
-		R_RenderDecal (curline->sidedef, decal, ds_p, 0);
+		for (DBaseDecal *decal = curline->sidedef->AttachedDecals; decal != NULL; decal = decal->WallNext)
+		{
+			R_RenderDecal (curline->sidedef, decal, ds_p, 0);
+		}
+	}
+
+	if (rw_markportal)
+	{
+		PortalDrawseg pds;
+		pds.src = curline->linedef;
+		pds.dst = curline->linedef->portal_dst;
+		pds.x1 = ds_p->x1;
+		pds.x2 = ds_p->x2;
+		pds.len = pds.x2 - pds.x1;
+		pds.ceilingclip.Resize(pds.len);
+		memcpy(&pds.ceilingclip[0], openings + ds_p->sprtopclip, pds.len*sizeof(*openings));
+		pds.floorclip.Resize(pds.len);
+		memcpy(&pds.floorclip[0], openings + ds_p->sprbottomclip, pds.len*sizeof(*openings));
+
+		for (int i = 0; i < pds.x2-pds.x1; i++)
+		{
+			if (pds.ceilingclip[i] < 0)
+				pds.ceilingclip[i] = 0;
+			if (pds.ceilingclip[i] >= RenderTarget->GetHeight())
+				pds.ceilingclip[i] = RenderTarget->GetHeight()-1;
+			if (pds.floorclip[i] < 0)
+				pds.floorclip[i] = 0;
+			if (pds.floorclip[i] >= RenderTarget->GetHeight())
+				pds.floorclip[i] = RenderTarget->GetHeight()-1;
+		}
+
+		pds.mirror = curline->linedef->portal_mirror;
+		WallPortals.Push(pds);
 	}
 
 	ds_p++;

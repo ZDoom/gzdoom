@@ -6,9 +6,127 @@
 #include "c_cvars.h"
 #include "m_bbox.h"
 #include "p_tags.h"
+#include "farchive.h"
 
 // simulation recurions maximum
 CVAR(Int, sv_portal_recursions, 4, CVAR_ARCHIVE|CVAR_SERVERINFO)
+
+TArray<FLinePortal> linePortals;
+
+
+FArchive &operator<< (FArchive &arc, FLinePortal &port)
+{
+	arc << port.mOrigin
+		<< port.mDestination
+		<< port.mXDisplacement
+		<< port.mYDisplacement
+		<< port.mType
+		<< port.mFlags
+		<< port.mDefFlags
+		<< port.mAlign;
+	return arc;
+}
+
+
+void P_SpawnLinePortal(line_t* line)
+{
+	// portal destination is special argument #0
+	line_t* dst = NULL;
+
+	if (line->args[2] >= PORTT_VISUAL && line->args[2] <= PORTT_LINKED)
+	{
+		if (line->args[0] > 0)
+		{
+			int linenum = -1;
+
+			for (int i = 0; i < numlines; i++)
+			{
+				if (&lines[i] == line)
+					continue;
+				if (tagManager.LineHasID(&lines[i], line->args[0]))
+				{
+					dst = &lines[i];
+					break;
+				}
+			}
+		}
+
+		line->portalindex = linePortals.Reserve(1);
+		FLinePortal *port = &linePortals.Last();
+
+		memset(port, 0, sizeof(FLinePortal));
+		port->mOrigin = line;
+		port->mDestination = dst;
+		port->mType = BYTE(line->args[2]);	// range check is done above.
+		port->mAlign = BYTE(line->args[3] >= PORG_ABSOLUTE && line->args[3] <= PORG_CEILING ? line->args[3] : PORG_ABSOLUTE);
+		if (port->mDestination != NULL)
+		{
+			port->mDefFlags = port->mType == PORTT_VISUAL ? PORTF_VISIBLE : port->mType == PORTT_TELEPORT ? PORTF_TYPETELEPORT : PORTF_TYPEINTERACTIVE;
+
+
+		}
+	}
+	else if (line->args[2] == PORTT_LINKEDEE && line->args[0] == 0)
+	{
+		// EE-style portals require that the first line ID is identical and the first arg of the two linked linedefs are 0 and 1 respectively.
+
+		int mytag = tagManager.GetFirstLineID(line);
+
+		for (int i = 0; i < numlines; i++)
+		{
+			if (tagManager.GetFirstLineID(&lines[i]) == mytag && lines[i].args[0] == 1)
+			{
+				line->portalindex = linePortals.Reserve(1);
+				FLinePortal *port = &linePortals.Last();
+
+				memset(port, 0, sizeof(FLinePortal));
+				port->mOrigin = line;
+				port->mDestination = &lines[i];
+				port->mType = PORTT_LINKED;
+				port->mAlign = PORG_ABSOLUTE;
+				port->mDefFlags = PORTF_TYPEINTERACTIVE;
+			}
+		}
+	}
+	else
+	{
+		// undefined type
+		return;
+	}
+}
+
+void P_UpdatePortal(FLinePortal *port)
+{
+	if (port->mDestination == NULL)
+	{
+		// Portal has no destination: switch it off
+		port->mFlags = 0;
+	}
+	else if (port->mDestination->getPortalDestination() != port->mOrigin)
+	{
+		//portal doesn't link back. This will be a simple teleporter portal.
+		port->mFlags = port->mDefFlags & ~PORTF_INTERACTIVE;
+		if (port->mType == PORTT_LINKED)
+		{
+			// this is illegal. Demote the type to TELEPORT
+			port->mType = PORTT_TELEPORT;
+			port->mDefFlags &= ~PORTF_INTERACTIVE;
+		}
+	}
+	else
+	{
+		port->mFlags = port->mDefFlags;
+	}
+}
+
+void P_FinalizePortals()
+{
+	for (unsigned i = 0; i < linePortals.Size(); i++)
+	{
+		FLinePortal * port = &linePortals[i];
+		P_UpdatePortal(port);
+	}
+}
 
 // [ZZ] lots of floats here to avoid overflowing a lot
 bool P_IntersectLines(fixed_t o1x, fixed_t o1y, fixed_t p1x, fixed_t p1y,
@@ -76,41 +194,6 @@ bool P_ClipLineToPortal(line_t* line, line_t* portal, fixed_t viewx, fixed_t vie
 	}
 
 	return false;
-}
-
-void P_SpawnLinePortal(line_t* line)
-{
-	// portal destination is special argument #0
-	line_t* dst = NULL;
-
-	if (line->args[0] > 0)
-	{
-		int linenum = -1;
-
-		for (int i = 0; i < numlines; i++)
-		{
-			if (&lines[i] == line)
-				continue;
-			if (tagManager.LineHasID(&lines[i], line->args[0]))
-			{
-				dst = &lines[i];
-				break;
-			}
-		}
-	}
-
-	if (dst)
-	{
-		line->_portal = true;
-		//line->portal_passive = true;// !!(line->args[2] & PORTAL_VISUAL; (line->special == Line_SetVisualPortal);
-		line->_portal_dst = dst;
-	}
-	else
-	{
-		line->_portal = false;
-		//line->portal_passive = false;
-		line->_portal_dst = NULL;
-	}
 }
 
 void P_TranslatePortalXY(line_t* src, line_t* dst, fixed_t& x, fixed_t& y)
@@ -185,17 +268,22 @@ void P_TranslatePortalAngle(line_t* src, line_t* dst, angle_t& angle)
 
 void P_TranslatePortalZ(line_t* src, line_t* dst, fixed_t& z)
 {
-	// args[2] = 0 - no teleport
+	// args[2] = 0 - no adjustment
 	// args[2] = 1 - adjust by floor difference
 	// args[2] = 2 - adjust by ceiling difference
 
-	if (src->args[2] == 1)
+	switch (src->getPortalAlignment())
 	{
+	case PORG_FLOOR:
 		z = z - src->frontsector->floorplane.ZatPoint(src->v1->x, src->v1->y) + dst->frontsector->floorplane.ZatPoint(dst->v2->x, dst->v2->y);
-	}
-	else if (src->args[2] == 2)
-	{
+		return;
+
+	case PORG_CEILING:
 		z = z - src->frontsector->ceilingplane.ZatPoint(src->v1->x, src->v1->y) + dst->frontsector->ceilingplane.ZatPoint(dst->v2->x, dst->v2->y);
+		return;
+
+	default:
+		return;
 	}
 }
 

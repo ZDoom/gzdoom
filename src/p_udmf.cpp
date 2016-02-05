@@ -792,6 +792,7 @@ public:
 
 		memset(ld, 0, sizeof(*ld));
 		ld->Alpha = FRACUNIT;
+		ld->portalindex = UINT_MAX;
 		ld->sidedef[0] = ld->sidedef[1] = NULL;
 		if (level.flags2 & LEVEL2_CLIPMIDTEX) ld->flags |= ML_CLIP_MIDTEX;
 		if (level.flags2 & LEVEL2_WRAPMIDTEX) ld->flags |= ML_WRAP_MIDTEX;

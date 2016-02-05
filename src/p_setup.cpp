@@ -2156,6 +2156,7 @@ void P_LoadLineDefs (MapData * map)
 	for (i = 0; i < numlines; i++, mld++, ld++)
 	{
 		ld->Alpha = FRACUNIT;	// [RH] Opaque by default
+		ld->portalindex = UINT_MAX;
 
 		// [RH] Translate old linedef special and flags to be
 		//		compatible with the new format.
@@ -2235,6 +2236,8 @@ void P_LoadLineDefs2 (MapData * map)
 	for (i = 0; i < numlines; i++, mld++, ld++)
 	{
 		int j;
+
+		ld->portalindex = UINT_MAX;
 
 		for (j = 0; j < 5; j++)
 			ld->args[j] = mld->args[j];
@@ -3365,6 +3368,7 @@ void P_FreeLevelData ()
 		level.killed_monsters = level.found_items = level.found_secrets =
 		wminfo.maxfrags = 0;
 		
+	linePortals.Clear();
 	FBehavior::StaticUnloadModules ();
 	if (vertexes != NULL)
 	{

@@ -988,26 +988,14 @@ struct line_t
 	sector_t	*frontsector, *backsector;
 	int 		validcount;	// if == validcount, already checked
 	int			locknumber;	// [Dusk] lock number for special
-
-	line_t		*_portal_dst;
-	bool		_portal;
+	unsigned	portalindex;
 
 	// returns true if the portal is crossable by actors
-	bool isLinePortal() const
-	{
-		return false;	// right now there are no crossable portals
-	}
-
+	bool isLinePortal() const;
 	// returns true if the portal needs to be handled by the renderer
-	bool isVisualPortal() const
-	{
-		return _portal;
-	}
-
-	line_t *getPortalDestination() const
-	{
-		return _portal_dst;
-	}
+	bool isVisualPortal() const;
+	line_t *getPortalDestination() const;
+	int getPortalAlignment() const;
 };
 
 // phares 3/14/98

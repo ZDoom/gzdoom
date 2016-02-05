@@ -99,7 +99,7 @@ static BYTE		FakeSide;
 
 int WindowLeft, WindowRight;
 WORD MirrorFlags;
-TArray<PortalDrawseg> WallPortals;
+TArray<PortalDrawseg> WallPortals(1000);	// note: this array needs to go away as reallocation can cause crashes.
 
 
 static subsector_t *InSubsector;

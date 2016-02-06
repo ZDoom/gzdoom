@@ -9,26 +9,25 @@ set(GME_VERSION 0.6.0 CACHE INTERNAL "libgme Version")
 # 2.6+ always assumes FATAL_ERROR, but 2.4 and below don't.
 # Of course, 2.4 might work, in which case you're welcome to drop
 # down the requirement, but I can't test that.
-cmake_minimum_required(VERSION 2.6 FATAL_ERROR)
+cmake_minimum_required(VERSION 2.8.7 FATAL_ERROR)
 
 make_release_only()
 
 # I don't plan on debugging this, so make it a release build.
 if( NOT CMAKE_BUILD_TYPE MATCHES "Release" )
 	set( CMAKE_BUILD_TYPE "RelWithDebInfo" )
-endif( NOT CMAKE_BUILD_TYPE MATCHES "Release" )
+endif()
 
 if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra" )
 	if( NOT PROFILE )
 		set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fomit-frame-pointer" )
-	endif( NOT PROFILE )
+	endif()
 	check_cxx_compiler_flag( -Wno-array-bounds HAVE_NO_ARRAY_BOUNDS )
 	if( HAVE_NO_ARRAY_BOUNDS )
 		set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-array-bounds" )
-	endif( HAVE_NO_ARRAY_BOUNDS )
-endif( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
-
+	endif()
+endif()
 
 
 # Default emulators to build (all of them! ;)
@@ -99,7 +98,7 @@ if (CMAKE_COMPILER_IS_GNUCXX)
          endif()
       endif()
    endif() # test visibility
-endif (CMAKE_COMPILER_IS_GNUCXX)
+endif()
 
 # Cache this result
 set( LIBGME_HAVE_GCC_VISIBILITY ${ENABLE_VISIBILITY} CACHE BOOL "GCC support for hidden visibility")

@@ -21,6 +21,7 @@ struct GLSkyInfo;
 struct FTexCoordInfo;
 struct FPortal;
 struct FFlatVertex;
+struct GLLineToLineInfo;
 
 
 enum WallTypes
@@ -46,6 +47,7 @@ enum PortalTypes
 	PORTALTYPE_SECTORSTACK,
 	PORTALTYPE_PLANEMIRROR,
 	PORTALTYPE_MIRROR,
+	PORTALTYPE_LINETOLINE,
 };
 
 struct GLSeg
@@ -147,6 +149,7 @@ public:
 		GLHorizonInfo * horizon;	// for horizon information
 		FPortal * portal;			// stacked sector portals
 		secplane_t * planemirror;	// for plane mirrors
+		GLLineToLineInfo *l2l;		// line-to-line portals
 	};
 
 
@@ -178,7 +181,7 @@ private:
 	void FloodPlane(int pass);
 
 	void SkyPlane(sector_t *sector, int plane, bool allowmirror);
-	void SkyLine(line_t *line);
+	void SkyLine(sector_t *sec, line_t *line);
 	void SkyNormal(sector_t * fs,vertex_t * v1,vertex_t * v2);
 	void SkyTop(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex_t * v2);
 	void SkyBottom(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex_t * v2);

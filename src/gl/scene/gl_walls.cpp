@@ -209,6 +209,12 @@ void GLWall::PutPortal(int ptype)
 		}
 		break;
 
+	case PORTALTYPE_LINETOLINE:
+		portal=GLPortal::FindPortal(l2l);
+		if (!portal) portal=new GLLineToLinePortal(l2l);
+		portal->AddLine(this);
+		break;
+
 	case PORTALTYPE_SKY:
 		portal=GLPortal::FindPortal(sky);
 		if (!portal) portal=new GLSkyPortal(sky);
@@ -1582,7 +1588,16 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 				fch1, fch2, ffh1, ffh2, bch1, bch2, bfh1, bfh2);
 		}
 
-		if (backsector->e->XFloor.ffloors.Size() || frontsector->e->XFloor.ffloors.Size())
+		if (seg->linedef->isVisualPortal() && seg->sidedef == seg->linedef->sidedef[0])
+		{
+			ztop[0] = FIXED2FLOAT(bch1);
+			ztop[1] = FIXED2FLOAT(bch2);
+			zbottom[0] = FIXED2FLOAT(bfh1);
+			zbottom[1] = FIXED2FLOAT(bfh2);
+
+			//SkyLine(frontsector, seg->linedef);
+		}
+		else if (backsector->e->XFloor.ffloors.Size() || frontsector->e->XFloor.ffloors.Size())
 		{
 			DoFFloorBlocks(seg, frontsector, backsector, fch1, fch2, ffh1, ffh2, bch1, bch2, bfh1, bfh2);
 		}

@@ -114,7 +114,7 @@ typedef TMap<int, const PClass *> FClassMap;
 #endif
 
 #if defined(__clang__)
-#if defined(__has_feature) && __has_feature(address_sanitizer))
+#if defined(__has_feature) && __has_feature(address_sanitizer)
 #define NO_SANITIZE __attribute__((no_sanitize("address")))
 #else
 #define NO_SANITIZE

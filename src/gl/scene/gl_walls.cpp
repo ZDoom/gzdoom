@@ -1730,7 +1730,7 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 			zbottom[0] = FIXED2FLOAT(bfh1);
 			zbottom[1] = FIXED2FLOAT(bfh2);
 
-			//SkyLine(frontsector, seg->linedef);
+			SkyLine(frontsector, seg->linedef);
 		}
 		else if (backsector->e->XFloor.ffloors.Size() || frontsector->e->XFloor.ffloors.Size())
 		{

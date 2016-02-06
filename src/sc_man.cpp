@@ -856,7 +856,7 @@ int FScanner::MustMatchString (const char * const *strings, size_t stride)
 	i = MatchString (strings, stride);
 	if (i == -1)
 	{
-		ScriptError (NULL);
+		ScriptError ("Unknown keyword '%s'", String);
 	}
 	return i;
 }

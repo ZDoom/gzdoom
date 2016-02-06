@@ -139,7 +139,6 @@ DEFINE_SPECIAL(Sector_ChangeSound, 140, 2, 2, 2)
 
 DEFINE_SPECIAL(Teleport_NoStop, 154, 2, 3, 3)
 // portal specials
-DEFINE_SPECIAL(Line_SetVisualPortal, 155, -1, -1, 3)
 DEFINE_SPECIAL(Line_SetPortal, 156, -1, -1, 3)
 // GZDoom/Vavoom specials 
 // Although ZDoom doesn't support them it's better to have them defined so that

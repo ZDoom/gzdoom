@@ -3,6 +3,6 @@
 DoomEdNums
 {
   5003 = none
-  5004 = "$EDFThing"
+  5004 = "$EDThing"
 }
 

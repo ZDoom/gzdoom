@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <algorithm>
 
+#include "p_lnspec.h"
 #include "templates.h"
 #include "doomdef.h"
 #include "m_swap.h"
@@ -339,11 +340,11 @@ static inline bool R_ClipSpriteColumnWithPortals (fixed_t x, fixed_t y, vissprit
 		if (!seg->curline) continue;
 
 		line_t* line = seg->curline->linedef;
-		// divline? wtf, anyway, divlines aren't supposed to be drawn. But I definitely saw NULL linedefs in drawsegs.
+		// ignore minisegs from GL nodes.
 		if (!line) continue;
 
 		// check if this line will clip sprites to itself
-		if (!line->portal)
+		if (!line->isVisualPortal() && line->special != Line_Mirror)
 			continue;
 
 		// don't clip sprites with portal's back side (it's transparent)
@@ -739,7 +740,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 
 	// [ZZ] Or less definitely not visible (hue)
 	// [ZZ] 10.01.2016: don't try to clip stuff inside a skybox against the current portal.
-	if (!CurrentPortalInSkybox && CurrentPortal && !!P_PointOnLineSide(thing->X(), thing->Y(), CurrentPortal->dst))
+	if (!CurrentPortalInSkybox && CurrentPortal && !!P_PointOnLineSidePrecise(thing->X(), thing->Y(), CurrentPortal->dst))
 		return;
 
 	// [RH] Interpolate the sprite's position to make it look smooth

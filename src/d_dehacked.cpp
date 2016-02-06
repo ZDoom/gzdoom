@@ -2723,9 +2723,9 @@ static bool LoadDehSupp ()
 						else
 						{
 							TArray<DWORD> &args = sym->Variants[0].ArgFlags;
-							if (args.Size() != 0 && !(args[0] & VARF_Optional))
+							if (args.Size() > 3 && !(args[3] & VARF_Optional))
 							{
-								sc.ScriptError("Incompatible code pointer '%s'", sc.String);
+								sc.ScriptMessage("Incompatible code pointer '%s' %d, %d", sc.String, args.Size(), args.Size() > 3? args[3] : 0);
 							}
 						}
 						Actions.Push(sym);

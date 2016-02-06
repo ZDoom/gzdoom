@@ -193,18 +193,11 @@ void GLWall::SkyLine(sector_t *fs, line_t *line)
 {
 	ASkyViewpoint * skyboxx = line->skybox;
 	GLSkyInfo skyinfo;
-	GLLineToLineInfo llinfo;
 
 	// JUSTHIT is used as an indicator that a skybox is in use.
 	// This is to avoid recursion
 
-	if (line->isVisualPortal())
-	{
-		type = RENDERWALL_LINETOLINE;
-		llinfo.init(line);
-		l2l = UniqueLineToLines.Get(&llinfo);
-	}
-	else if (!gl_noskyboxes && skyboxx && GLRenderer->mViewActor != skyboxx && !(skyboxx->flags&MF_JUSTHIT))
+	if (!gl_noskyboxes && skyboxx && GLRenderer->mViewActor != skyboxx && !(skyboxx->flags&MF_JUSTHIT))
 	{
 		type = RENDERWALL_SKYBOX;
 		skybox = skyboxx;

@@ -1610,7 +1610,19 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 		// sector's sky
 		SkyNormal(frontsector, v1, v2);
 
-		if (seg->linedef->skybox == NULL)
+		if (seg->linedef->isVisualPortal())
+		{
+			GLLineToLineInfo llinfo;
+			ztop[0] = zceil[0];
+			ztop[1] = zceil[1];
+			zbottom[0] = zfloor[0];
+			zbottom[1] = zfloor[1];
+			llinfo.init(seg->linedef);
+			l2l = UniqueLineToLines.Get(&llinfo);
+			type = RENDERWALL_LINETOLINE;
+			PutWall(0);
+		}
+		else if (seg->linedef->skybox == NULL && !seg->linedef->isVisualPortal())
 		{
 			// normal texture
 			gltexture = FMaterial::ValidateTexture(seg->sidedef->GetTexture(side_t::mid), true);
@@ -1725,12 +1737,15 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 
 		if (seg->linedef->isVisualPortal() && seg->sidedef == seg->linedef->sidedef[0])
 		{
+			GLLineToLineInfo llinfo;
 			ztop[0] = FIXED2FLOAT(bch1);
 			ztop[1] = FIXED2FLOAT(bch2);
 			zbottom[0] = FIXED2FLOAT(bfh1);
 			zbottom[1] = FIXED2FLOAT(bfh2);
-
-			SkyLine(frontsector, seg->linedef);
+			llinfo.init(seg->linedef);
+			l2l = UniqueLineToLines.Get(&llinfo);
+			type = RENDERWALL_LINETOLINE;
+			PutWall(0);
 		}
 		else if (backsector->e->XFloor.ffloors.Size() || frontsector->e->XFloor.ffloors.Size())
 		{

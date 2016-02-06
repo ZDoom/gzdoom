@@ -1,4 +1,4 @@
-cmake_minimum_required( VERSION 2.4 )
+cmake_minimum_required( VERSION 2.8.7 )
 if( NOT NO_FMOD AND FMOD_INCLUDE_DIR )
 	add_library( output_sdl MODULE output_sdl.c )
 	include_directories( ${FMOD_INCLUDE_DIR} ${SDL2_INCLUDE_DIR} )
@@ -8,4 +8,4 @@ if( NOT NO_FMOD AND FMOD_INCLUDE_DIR )
 	add_custom_command( TARGET output_sdl POST_BUILD
 		COMMAND chmod +x ${CMAKE_CURRENT_BINARY_DIR}/link-make
 		COMMAND /bin/sh -c ${CMAKE_CURRENT_BINARY_DIR}/link-make )
-endif( NOT NO_FMOD AND FMOD_INCLUDE_DIR )
+endif()

@@ -1,4 +1,4 @@
-cmake_minimum_required( VERSION 2.4 )
+cmake_minimum_required( VERSION 2.8.7 )
 
 if(NOT CMAKE_CROSSCOMPILING)
 	message(STATUS "${ZLIB_INCLUDE_DIR}" )
@@ -9,4 +9,4 @@ if(NOT CMAKE_CROSSCOMPILING)
 		zipdir.c )
 	target_link_libraries( zipdir ${ZLIB_LIBRARIES} ${BZIP2_LIBRARIES} lzma )
 	set( CROSS_EXPORTS ${CROSS_EXPORTS} zipdir PARENT_SCOPE )
-endif(NOT CMAKE_CROSSCOMPILING)
+endif()

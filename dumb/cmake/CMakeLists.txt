@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 2.8.7)
 project(libdumb C)
 
 set(CMAKE_C_FLAGS "-Wall -DDUMB_DECLARE_DEPRECATED -D_USE_SSE -msse -Wno-unused-variable -Wno-unused-but-set-variable")
@@ -108,7 +108,7 @@ set_target_properties(dumb PROPERTIES DEBUG_POSTFIX d)
 # Make sure the dylib install name path is set on OSX so you can include dumb in app bundles
 IF(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     set_target_properties(dumb PROPERTIES INSTALL_NAME_DIR ${CMAKE_INSTALL_PREFIX}/lib)
-ENDIF(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+ENDIF()
 
 INSTALL(FILES ${INSTALL_HEADERS} DESTINATION include/)
 INSTALL(TARGETS dumb

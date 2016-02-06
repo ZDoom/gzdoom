@@ -190,7 +190,7 @@ void SF2Envelope::Release(Voice *v)
 	if (stage == SF2_ATTACK)
 	{
 		// The attack stage does not use an attenuation in cB like all the rest.
-		volume = log10(volume) * -200;
+		volume = float(log10(volume) * -200);
 	}
 	stage = SF2_RELEASE;
 	bUpdating = true;

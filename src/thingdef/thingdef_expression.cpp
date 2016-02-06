@@ -2145,7 +2145,6 @@ FxExpression *FxRandomPick::Resolve(FCompileContext &ctx)
 
 ExpEmit FxRandomPick::Emit(VMFunctionBuilder *build)
 {
-#pragma message("FxRandomPick::Emit: Floating point part needs reviewing!")
 	unsigned i;
 
 	assert(choices.Size() > 0);
@@ -2171,6 +2170,14 @@ ExpEmit FxRandomPick::Emit(VMFunctionBuilder *build)
 	// automatically pick it as the destination register for each case.
 	resultreg.Free(build);
 
+	// For floating point results, we need to get a new register, since we can't
+	// reuse the integer one used to store the random result.
+	if (ValueType == VAL_Float)
+	{
+		resultreg = ExpEmit(build, REGT_FLOAT);
+		resultreg.Free(build);
+	}
+
 	// Allocate space for the jump table.
 	size_t jumptable = build->Emit(OP_JMP, 0);
 	for (i = 1; i < choices.Size(); ++i)
@@ -2193,8 +2200,7 @@ ExpEmit FxRandomPick::Emit(VMFunctionBuilder *build)
 			else
 			{
 				double val = static_cast<FxConstant *>(choices[i])->GetValue().GetFloat();
-				build->Emit(OP_PARAM, 0, REGT_FLOAT | REGT_KONST, build->GetConstantFloat(val));
-				build->ParamChange(-1);	// all params should use the same register here.
+				build->Emit(OP_LKF, resultreg.RegNum, build->GetConstantFloat(val));
 			}
 		}
 		else
@@ -2205,14 +2211,7 @@ ExpEmit FxRandomPick::Emit(VMFunctionBuilder *build)
 			  // was expected. Copy it to the one we wanted.
 
 				resultreg.Reuse(build);	// This is really just for the assert in Reuse()
-				if (ValueType == VAL_Int)
-				{
-					build->Emit(OP_MOVE, resultreg.RegNum, casereg.RegNum, 0);
-				}
-				else
-				{
-					build->Emit(OP_MOVEF, resultreg.RegNum, casereg.RegNum, 0);
-				}
+				build->Emit(ValueType == VAL_Int ? OP_MOVE : OP_MOVEF, resultreg.RegNum, casereg.RegNum, 0);
 				resultreg.Free(build);
 			}
 			// Free this register so the remaining cases can use it.

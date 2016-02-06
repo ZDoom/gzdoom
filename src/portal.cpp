@@ -7,6 +7,7 @@
 #include "m_bbox.h"
 #include "p_tags.h"
 #include "farchive.h"
+#include "v_text.h"
 
 // simulation recurions maximum
 CVAR(Int, sv_portal_recursions, 4, CVAR_ARCHIVE|CVAR_SERVERINFO)
@@ -58,7 +59,22 @@ void P_SpawnLinePortal(line_t* line)
 		port->mOrigin = line;
 		port->mDestination = dst;
 		port->mType = BYTE(line->args[2]);	// range check is done above.
-		port->mAlign = BYTE(line->args[3] >= PORG_ABSOLUTE && line->args[3] <= PORG_CEILING ? line->args[3] : PORG_ABSOLUTE);
+
+		if (port->mType == PORTT_LINKED)
+		{
+			// Linked portals have no z-offset ever.
+			port->mAlign = PORG_ABSOLUTE;
+		}
+		else
+		{
+			port->mAlign = BYTE(line->args[3] >= PORG_ABSOLUTE && line->args[3] <= PORG_CEILING ? line->args[3] : PORG_ABSOLUTE);
+			if (port->mType == PORTT_INTERACTIVE)
+			{
+				// Due to the way z is often handled, these pose a major issue for parts of the code that needs to transparently handle interactive portals.
+				Printf(TEXTCOLOR_RED "Warning: z-offsetting not allowed for interactive portals. Changing line %d to teleport-portal!\n", int(line - lines));
+				port->mType = PORTT_TELEPORT;
+			}
+		}
 		if (port->mDestination != NULL)
 		{
 			port->mDefFlags = port->mType == PORTT_VISUAL ? PORTF_VISIBLE : port->mType == PORTT_TELEPORT ? PORTF_TYPETELEPORT : PORTF_TYPEINTERACTIVE;

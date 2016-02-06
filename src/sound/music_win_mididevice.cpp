@@ -175,7 +175,7 @@ int WinMIDIDevice::GetTechnology() const
 
 int WinMIDIDevice::SetTempo(int tempo)
 {
-	MIDIPROPTEMPO data = { sizeof(MIDIPROPTEMPO), tempo };
+	MIDIPROPTEMPO data = { sizeof(MIDIPROPTEMPO), (DWORD)tempo };
 	return midiStreamProperty(MidiOut, (LPBYTE)&data, MIDIPROP_SET | MIDIPROP_TEMPO);
 }
 
@@ -187,7 +187,7 @@ int WinMIDIDevice::SetTempo(int tempo)
 
 int WinMIDIDevice::SetTimeDiv(int timediv)
 {
-	MIDIPROPTIMEDIV data = { sizeof(MIDIPROPTIMEDIV), timediv };
+	MIDIPROPTIMEDIV data = { sizeof(MIDIPROPTIMEDIV), (DWORD)timediv };
 	return midiStreamProperty(MidiOut, (LPBYTE)&data, MIDIPROP_SET | MIDIPROP_TIMEDIV);
 }
 

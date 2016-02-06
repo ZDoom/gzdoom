@@ -165,8 +165,13 @@ static bool ChangePortalLine(line_t *line, int destid)
 	if (line->portalindex >= linePortals.Size()) return false;
 	FLinePortal *port = &linePortals[line->portalindex];
 	if (port->mType == PORTT_LINKED) return false;	// linked portals cannot be changed.
+	if (destid == 0) port->mDestination = NULL;
 	port->mDestination = FindDestination(line, destid);
-	if (port->mType == PORTT_INTERACTIVE)
+	if (port->mDestination == NULL)
+	{
+		port->mFlags = 0;
+	}
+	else if (port->mType == PORTT_INTERACTIVE)
 	{
 		FLinePortal *portd = &linePortals[port->mDestination->portalindex];
 		if (portd != NULL && portd->mType == PORTT_INTERACTIVE && portd->mDestination == line)

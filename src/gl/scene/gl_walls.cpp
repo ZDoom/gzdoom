@@ -124,6 +124,7 @@ void GLWall::PutWall(bool translucent)
 		3,		//RENDERWALL_COLOR,            // translucent
 		2,		//RENDERWALL_FFBLOCK           // depends on render and texture settings
 		4,		//RENDERWALL_COLORLAYER        // color layer needs special handling
+		4,		//RENDERWALL_LINETOLINE
 	};
 	
 	if (gltexture && gltexture->GetTransparent() && passflag[type] == 2)
@@ -245,6 +246,12 @@ void GLWall::PutWall(bool translucent)
 			type=RENDERWALL_MIRRORSURFACE;
 			gl_drawinfo->drawlists[GLDL_TRANSLUCENTBORDER].AddWall(this);
 		}
+		break;
+
+	case RENDERWALL_LINETOLINE:
+		portal=GLPortal::FindPortal(l2l);
+		if (!portal) portal=new GLLineToLinePortal(l2l);
+		portal->AddLine(this);
 		break;
 
 	case RENDERWALL_SKY:
@@ -1716,7 +1723,16 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 				fch1, fch2, ffh1, ffh2, bch1, bch2, bfh1, bfh2);
 		}
 
-		if (backsector->e->XFloor.ffloors.Size() || frontsector->e->XFloor.ffloors.Size())
+		if (seg->linedef->isVisualPortal() && seg->sidedef == seg->linedef->sidedef[0])
+		{
+			ztop[0] = FIXED2FLOAT(bch1);
+			ztop[1] = FIXED2FLOAT(bch2);
+			zbottom[0] = FIXED2FLOAT(bfh1);
+			zbottom[1] = FIXED2FLOAT(bfh2);
+
+			//SkyLine(frontsector, seg->linedef);
+		}
+		else if (backsector->e->XFloor.ffloors.Size() || frontsector->e->XFloor.ffloors.Size())
 		{
 			DoFFloorBlocks(seg, frontsector, backsector, fch1, fch2, ffh1, ffh2, bch1, bch2, bfh1, bfh2);
 		}

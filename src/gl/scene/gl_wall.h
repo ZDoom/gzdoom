@@ -20,6 +20,7 @@ struct GLDrawList;
 struct GLSkyInfo;
 struct FTexCoordInfo;
 struct FPortal;
+struct GLLineToLineInfo;
 
 
 enum WallTypes
@@ -42,6 +43,7 @@ enum WallTypes
 	RENDERWALL_COLOR,
 	RENDERWALL_FFBLOCK,
 	RENDERWALL_COLORLAYER,
+	RENDERWALL_LINETOLINE,
 	// Insert new types at the end!
 };
 
@@ -136,6 +138,7 @@ public:
 		GLHorizonInfo * horizon;	// for horizon information
 		FPortal * portal;			// stacked sector portals
 		secplane_t * planemirror;	// for plane mirrors
+		GLLineToLineInfo *l2l;		// line-to-line portals
 	};
 
 
@@ -162,7 +165,7 @@ private:
 	void FloodPlane(int pass);
 
 	void SkyPlane(sector_t *sector, int plane, bool allowmirror);
-	void SkyLine(line_t *line);
+	void SkyLine(sector_t *sec, line_t *line);
 	void SkyNormal(sector_t * fs,vertex_t * v1,vertex_t * v2);
 	void SkyTop(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex_t * v2);
 	void SkyBottom(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex_t * v2);

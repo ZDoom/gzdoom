@@ -51,6 +51,17 @@ struct GLHorizonInfo
 	FColormap colormap;
 };
 
+struct GLLineToLineInfo
+{
+	fixed_t xDisplacement;
+	fixed_t yDisplacement;
+	fixed_t turnangle;
+	fixed_t angle;
+	fixed_t x0;
+	fixed_t y0;
+	void init(line_t *line);
+};
+
 struct GLSkyInfo
 {
 	float x_offset[2];
@@ -76,6 +87,7 @@ struct GLSkyInfo
 extern UniqueList<GLSkyInfo> UniqueSkies;
 extern UniqueList<GLHorizonInfo> UniqueHorizons;
 extern UniqueList<secplane_t> UniquePlaneMirrors;
+extern UniqueList<GLLineToLineInfo> UniqueLineToLines;
 struct GLEEHorizonPortal;
 
 class GLPortal
@@ -185,6 +197,28 @@ public:
 	GLMirrorPortal(line_t * line)
 	{
 		linedef=line;
+	}
+
+	virtual bool NeedCap() { return false; }
+	virtual int ClipSeg(seg_t *seg);
+	virtual int ClipSubsector(subsector_t *sub);
+	virtual int ClipPoint(fixed_t x, fixed_t y);
+};
+
+
+struct GLLineToLinePortal : public GLPortal
+{
+	GLLineToLineInfo *l2l;
+protected:
+	virtual void DrawContents();
+	virtual void * GetSource() const { return l2l; }
+	virtual const char *GetName();
+
+public:
+	
+	GLLineToLinePortal(GLLineToLineInfo *ll)
+	{
+		l2l=ll;
 	}
 
 	virtual bool NeedCap() { return false; }

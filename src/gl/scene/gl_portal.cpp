@@ -1050,7 +1050,12 @@ void GLLineToLinePortal::DrawContents()
 
 	for (unsigned i = 0; i < lines.Size(); i++)
 	{
-		int mapsection = lines[i].seg->linedef->getPortalDestination()->frontsector->subsectors[0]->mapsection;
+		line_t *line = lines[i].seg->linedef->getPortalDestination();
+		subsector_t *sub;
+		if (line->sidedef[0]->Flags & WALLF_POLYOBJ) 
+			sub = R_PointInSubsector(line->v1->x, line->v1->y);
+		else sub = line->frontsector->subsectors[0];
+		int mapsection = sub->mapsection;
 		currentmapsection[mapsection >> 3] |= 1 << (mapsection & 7);
 	}
 

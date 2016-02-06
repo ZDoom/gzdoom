@@ -1,10 +1,10 @@
-cmake_minimum_required( VERSION 2.4 )
+cmake_minimum_required( VERSION 2.8.7 )
 
 make_release_only()
 
 if( ZD_CMAKE_COMPILER_IS_GNUC_COMPATIBLE )
 	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -fomit-frame-pointer" )
-endif( ZD_CMAKE_COMPILER_IS_GNUC_COMPATIBLE )
+endif()
 
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_7ZIP_PPMD_SUPPPORT" )
 
@@ -30,9 +30,9 @@ set( LZMA_FILES
 
 if( WIN32 )
 	set( LZMA_FILES ${LZMA_FILES} C/LzFindMt.c C/Threads.c )
-else( WIN32 )
+else()
 	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_7ZIP_ST" )
-endif( WIN32 )
+endif()
 
 add_library( lzma ${LZMA_FILES} )
 target_link_libraries( lzma )

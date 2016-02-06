@@ -35,6 +35,8 @@
 #ifndef AUTOSEGS_H
 #define AUTOSEGS_H
 
+#include "doomtype.h"
+
 #define REGMARKER(x) (x)
 typedef void *REGINFO;
 
@@ -76,11 +78,11 @@ class FAutoSegIterator
 			}
 			Probe = Head;
 		}
-		REGINFO operator*() const
+		REGINFO operator*() const NO_SANITIZE
 		{
 			return *Probe;
 		}
-		FAutoSegIterator &operator++()
+		FAutoSegIterator &operator++() NO_SANITIZE
 		{
 			do
 			{

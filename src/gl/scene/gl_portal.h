@@ -53,12 +53,13 @@ struct GLHorizonInfo
 
 struct GLLineToLineInfo
 {
-	fixed_t xDisplacement;
-	fixed_t yDisplacement;
-	fixed_t turnangle;
-	fixed_t angle;
-	fixed_t x0;
-	fixed_t y0;
+	angle_t viewangle;
+	fixed_t viewx;
+	fixed_t viewy;
+	fixed_t viewz;
+	fixed_t x0, y0;
+	angle_t lineangle;
+
 	void init(line_t *line);
 };
 

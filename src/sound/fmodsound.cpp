@@ -2311,9 +2311,9 @@ void FMODSoundRenderer::UpdateListener(SoundListener *listener)
 	pos.z = listener->position.Z;
 
 	float angle = listener->angle;
-	forward.x = cos(angle);
+	forward.x = cosf(angle);
 	forward.y = 0;
-	forward.z = sin(angle);
+	forward.z = sinf(angle);
 
 	up.x = 0;
 	up.y = 1;

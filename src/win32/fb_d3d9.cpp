@@ -1487,10 +1487,10 @@ void D3DFB::DoOffByOneCheck ()
 	float texbot = 1.f / float(FBHeight);
 	FBVERTEX verts[4] =
 	{
-		{ -0.5f,  -0.5f, 0.5f, 1.f, 0, ~0,      0.f,    0.f },
-		{ 255.5f, -0.5f, 0.5f, 1.f, 0, ~0, texright,    0.f },
-		{ 255.5f,  0.5f, 0.5f, 1.f, 0, ~0, texright, texbot },
-		{ -0.5f,   0.5f, 0.5f, 1.f, 0, ~0,      0.f, texbot }
+		{ -0.5f,  -0.5f, 0.5f, 1.f, D3DCOLOR_RGBA(0,0,0,0), D3DCOLOR_RGBA(255,255,255,255),      0.f,    0.f },
+		{ 255.5f, -0.5f, 0.5f, 1.f, D3DCOLOR_RGBA(0,0,0,0), D3DCOLOR_RGBA(255,255,255,255), texright,    0.f },
+		{ 255.5f,  0.5f, 0.5f, 1.f, D3DCOLOR_RGBA(0,0,0,0), D3DCOLOR_RGBA(255,255,255,255), texright, texbot },
+		{ -0.5f,   0.5f, 0.5f, 1.f, D3DCOLOR_RGBA(0,0,0,0), D3DCOLOR_RGBA(255,255,255,255),      0.f, texbot }
 	};
 	int i, c;
 

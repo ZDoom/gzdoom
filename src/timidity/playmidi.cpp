@@ -94,7 +94,7 @@ void Renderer::recompute_freq(int v)
 		if (ch->pitchfactor == 0)
 		{
 			/* Damn. Somebody bent the pitch. */
-			ch->pitchfactor = pow(2.f, ((abs(pb) * ch->pitchsens) / (8191.f * 1200.f)));
+			ch->pitchfactor = float(pow(2.f, ((abs(pb) * ch->pitchsens) / (8191.f * 1200.f))));
 		}
 		if (pb < 0)
 		{

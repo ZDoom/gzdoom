@@ -2305,7 +2305,7 @@ void P_PlayerThink (player_t *player)
 	{
 		// A negative scale is used to prevent G_AddViewAngle/G_AddViewPitch
 		// from scaling with the FOV scale.
-		desired *= fabs(player->ReadyWeapon->FOVScale);
+		desired *= fabsf(player->ReadyWeapon->FOVScale);
 	}
 	if (player->FOV != desired)
 	{

@@ -143,11 +143,13 @@ FxExpression *FxExpression::Resolve(FCompileContext &ctx)
 
 FxExpression *FxExpression::ResolveAsBoolean(FCompileContext &ctx)
 {
+	///FIXME: Use an actual boolean type
 	FxExpression *x = Resolve(ctx);
 	if (x != NULL)
 	{
 		switch (x->ValueType.Type)
 		{
+		case VAL_Int:
 		case VAL_Sound:
 		case VAL_Color:
 		case VAL_Name:
@@ -155,6 +157,9 @@ FxExpression *FxExpression::ResolveAsBoolean(FCompileContext &ctx)
 			break;
 
 		default:
+			ScriptPosition.Message(MSG_ERROR, "Not an integral type");
+			delete this;
+			return NULL;
 			break;
 		}
 	}

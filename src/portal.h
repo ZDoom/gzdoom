@@ -52,6 +52,7 @@ extern TArray<FLinePortal> linePortals;
 
 void P_SpawnLinePortal(line_t* line);
 void P_FinalizePortals();
+bool P_ChangePortal(line_t *ln, int thisid, int destid);
 
 
 /* code ported from prototype */

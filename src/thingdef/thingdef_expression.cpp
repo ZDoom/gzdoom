@@ -1697,7 +1697,7 @@ ExpEmit FxBinaryLogical::Emit(VMFunctionBuilder *build)
 	else
 	{
 		assert(Operator == TK_OrOr);
-		build->Emit(OP_EQ_K, 0, op1.RegNum, zero);
+		build->Emit(OP_EQ_K, 1, op1.RegNum, zero);
 		// If op1 is not 0, skip evaluation of op2.
 		size_t patchspot = build->Emit(OP_JMP, 0, 0, 0);
 

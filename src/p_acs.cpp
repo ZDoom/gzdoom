@@ -4561,7 +4561,7 @@ bool GetVarAddrType(AActor *self, FName varname, int index, void *&addr, PType *
 {
 	PField *var = dyn_cast<PField>(self->GetClass()->Symbols.FindSymbol(varname, true));
 	PArray *arraytype;
-	BYTE *baddr = reinterpret_cast<BYTE *>(self);
+	BYTE *baddr = reinterpret_cast<BYTE *>(self) + var->Offset;
 
 	if (var == NULL || (var->Flags & VARF_Native))
 	{

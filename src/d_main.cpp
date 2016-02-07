@@ -1476,7 +1476,7 @@ void ParseCVarInfo()
 
 bool D_AddFile (TArray<FString> &wadfiles, const char *file, bool check, int position)
 {
-	if (file == NULL)
+	if (file == NULL || *file == '\0')
 	{
 		return false;
 	}
@@ -1507,6 +1507,10 @@ bool D_AddFile (TArray<FString> &wadfiles, const char *file, bool check, int pos
 
 void D_AddWildFile (TArray<FString> &wadfiles, const char *value)
 {
+	if (value == NULL || *value == '\0')
+	{
+		return;
+	}
 	const char *wadfile = BaseFileSearch (value, ".wad");
 
 	if (wadfile != NULL)
@@ -1648,6 +1652,10 @@ static const char *BaseFileSearch (const char *file, const char *ext, bool lookf
 {
 	static char wad[PATH_MAX];
 
+	if (file == NULL || *file == '\0')
+	{
+		return NULL;
+	}
 	if (lookfirstinprogdir)
 	{
 		mysnprintf (wad, countof(wad), "%s%s%s", progdir.GetChars(), progdir[progdir.Len() - 1] != '/' ? "/" : "", file);

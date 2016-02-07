@@ -1,0 +1,20 @@
+Build with "--input custom" re2c switch.
+
+These are three examples of "--input custom" usage:
+
+- input_custom_default.re:
+    implements default re2c input model (pointers to plain buffer)
+
+- input_custom_fgetc:
+    implements C-style file input (using <stdio.h>)
+
+- input_custom_fgetc:
+    implements std::istringstream input
+
+Note that these examples are very simple and don't need
+to implement YYFILL; the only reason they don't use
+"re2c:yyfill:enable = 0;" is to keep YYLESSTHAN and YYLIMIT
+(for the sake of example).
+
+In real-life programs one will need to care for correct
+end-of-input handling.

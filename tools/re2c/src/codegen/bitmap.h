@@ -10,8 +10,8 @@ namespace re2c
 
 struct Go;
 struct Span;
-class State;
-class OutputFile;
+struct State;
+struct OutputFile;
 
 class BitMap
 {

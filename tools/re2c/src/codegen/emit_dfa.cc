@@ -106,7 +106,7 @@ void DFA::emit_body (OutputFile & o, uint32_t& ind, const std::set<label_t> & us
 	for (State * s = head; s; s = s->next)
 	{
 		bool readCh = false;
-		emit_state (o, ind, s, used_labels.count (s->label));
+		emit_state (o, ind, s, used_labels.count (s->label) != 0);
 		emit_action (s->action, o, ind, readCh, s, cond, skeleton, used_labels, save_yyaccept);
 		s->go.emit(o, ind, readCh);
 	}

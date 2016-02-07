@@ -7,8 +7,8 @@
 namespace re2c
 {
 
-static const size_t INFINITY = std::numeric_limits<size_t>::max();
-static const size_t UNDEFINED = INFINITY - 1;
+static const size_t INFINITI = std::numeric_limits<size_t>::max();
+static const size_t UNDEFINED = INFINITI - 1;
 
 static bool loopback(size_t node, size_t narcs, const size_t *arcs)
 {
@@ -38,12 +38,12 @@ static bool loopback(size_t node, size_t narcs, const size_t *arcs)
  *   - values in range [0 .. stack size] mean that this node is on stack
  *     (link to a node with the smallest index reachable from this one)
  *   - UNDEFINED means that this node has not been visited yet
- *   - INFINITY means that this node has already been popped off stack
+ *   - INFINITI means that this node has already been popped off stack
  *
  * We use stack size (rather than topological sort index) as unique index
  * of a node on stack. This is safe because indices of nodes on stack are
  * still unique and less than indices of nodes that have been popped off
- * stack (INFINITY).
+ * stack (INFINITI).
  *
  */
 static void scc(
@@ -87,7 +87,7 @@ static void scc(
 		{
 			j = stack.top();
 			stack.pop();
-			lowlink[j] = INFINITY;
+			lowlink[j] = INFINITI;
 		}
 		while (j != i);
 	}

@@ -8,9 +8,9 @@
 namespace re2c
 {
 
-struct Range;
-struct RegExp;
-struct RuleOp;
+class Range;
+class RegExp;
+class RuleOp;
 
 struct nfa_state_t
 {

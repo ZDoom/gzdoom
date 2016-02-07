@@ -13,7 +13,7 @@ namespace re2c
 {
 
 class BitMap;
-class State;
+struct State;
 struct If;
 
 struct Span

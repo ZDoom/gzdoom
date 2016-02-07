@@ -5,6 +5,11 @@ if( NOT CMAKE_CROSSCOMPILING )
 include( CheckFunctionExists )
 include( CheckTypeSize )
 
+if( MSVC )
+	# Runtime type information is required
+	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /GR" )
+endif()
+
 set( PACKAGE_NAME re2c )
 set( PACKAGE_TARNAME re2c )
 set( PACKAGE_VERSION 0.16 )

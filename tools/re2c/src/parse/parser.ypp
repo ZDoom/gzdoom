@@ -1,0 +1,775 @@
+%{
+
+#include "src/util/c99_stdint.h"
+#include <assert.h>
+#include <stddef.h>
+#include <stdlib.h>
+#include <limits>
+#include <list>
+#include <map>
+#include <set>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include "src/codegen/output.h"
+#include "src/conf/opt.h"
+#include "src/globals.h"
+#include "src/ir/compile.h"
+#include "src/ir/adfa/adfa.h"
+#include "src/ir/regexp/encoding/enc.h"
+#include "src/ir/regexp/encoding/range_suffix.h"
+#include "src/ir/regexp/regexp.h"
+#include "src/ir/regexp/regexp_cat.h"
+#include "src/ir/regexp/regexp_close.h"
+#include "src/ir/regexp/regexp_null.h"
+#include "src/ir/regexp/regexp_rule.h"
+#include "src/ir/rule_rank.h"
+#include "src/ir/skeleton/skeleton.h"
+#include "src/parse/code.h"
+#include "src/parse/extop.h"
+#include "src/parse/loc.h"
+#include "src/parse/parser.h"
+#include "src/parse/scanner.h"
+#include "src/parse/spec.h"
+#include "src/util/counter.h"
+#include "src/util/free_list.h"
+#include "src/util/range.h"
+#include "src/util/smart_ptr.h"
+
+#define YYMALLOC malloc
+#define YYFREE free
+
+using namespace re2c;
+
+extern "C"
+{
+int yylex();
+void yyerror(const char*);
+}
+
+static counter_t<rule_rank_t> rank_counter;
+static std::vector<std::string> condnames;
+static re2c::SpecMap  specMap;
+static Spec spec;
+static RuleOp *specNone = NULL;
+static RuleOpList       specStar;
+static RuleOp * star_default = NULL;
+static Scanner          *in = NULL;
+static Scanner::ParseMode  parseMode;
+static SetupMap            ruleSetupMap;
+static bool                foundRules;
+static symbol_table_t symbol_table;
+
+/* Bison version 1.875 emits a definition that is not working
+ * with several g++ version. Hence we disable it here.
+ */
+#if defined(__GNUC__)
+#define __attribute__(x)
+#endif
+
+void context_check(CondList *clist)
+{
+	if (!opts->cFlag)
+	{
+		delete clist;
+		in->fatal("conditions are only allowed when using -c switch");
+	}
+}
+
+void context_none(CondList *clist)
+{
+	delete clist;
+	context_check(NULL);
+	in->fatal("no expression specified");
+}
+
+void context_rule
+	( CondList * clist
+	, const Loc & loc
+	, RegExp * expr
+	, RegExp * look
+	, const Code * code
+	, const std::string * newcond
+	)
+{
+	context_check(clist);
+	for(CondList::const_iterator it = clist->begin(); it != clist->end(); ++it)
+	{
+		if (specMap.find(*it) == specMap.end())
+		{
+			condnames.push_back (*it);
+		}
+
+		RuleOp * rule = new RuleOp
+			( loc
+			, expr
+			, look
+			, rank_counter.next ()
+			, code
+			, newcond
+			);
+		specMap[*it].add (rule);
+	}
+	delete clist;
+	delete newcond;
+}
+
+void setup_rule(CondList *clist, const Code * code)
+{
+	assert(clist);
+	assert(code);
+	context_check(clist);
+	for(CondList::const_iterator it = clist->begin(); it != clist->end(); ++it)
+	{
+		if (ruleSetupMap.find(*it) != ruleSetupMap.end())
+		{
+			in->fatalf_at(code->loc.line, "code to setup rule '%s' is already defined", it->c_str());
+		}
+		ruleSetupMap[*it] = std::make_pair(code->loc.line, code->text);
+	}
+	delete clist;
+}
+
+void default_rule(CondList *clist, const Code * code)
+{
+	assert(clist);
+	assert(code);
+	context_check(clist);
+	for(CondList::const_iterator it = clist->begin(); it != clist->end(); ++it)
+	{
+		RuleOp * def = new RuleOp
+			( code->loc
+			, in->mkDefault ()
+			, new NullOp
+			, rule_rank_t::def ()
+			, code
+			, NULL
+			);
+		if (!specMap[*it].add_def (def))
+		{
+			in->fatalf_at(code->loc.line, "code to default rule '%s' is already defined", it->c_str());
+		}
+	}
+	delete clist;
+}
+
+%}
+
+%start	spec
+
+%union {
+	re2c::RegExp * regexp;
+	const re2c::Code * code;
+	char op;
+	re2c::ExtOp extop;
+	std::string * str;
+	re2c::CondList * clist;
+};
+
+%token TOKEN_CLOSE
+%token TOKEN_CLOSESIZE
+%token TOKEN_CODE
+%token TOKEN_CONF
+%token TOKEN_ID
+%token TOKEN_FID
+%token TOKEN_FID_END
+%token TOKEN_NOCOND
+%token TOKEN_REGEXP
+%token TOKEN_SETUP
+%token TOKEN_STAR
+
+%type <op>      TOKEN_CLOSE TOKEN_STAR TOKEN_SETUP close
+%type <extop>   TOKEN_CLOSESIZE
+%type <code>    TOKEN_CODE
+%type <regexp>  TOKEN_REGEXP rule look expr diff term factor primary
+%type <str>     TOKEN_ID TOKEN_FID newcond
+%type <clist>   cond clist
+
+%%
+
+spec:
+		/* empty */
+		{
+		}
+	|	spec rule
+		{
+			foundRules = true;
+		}
+	|	spec decl
+;
+
+decl:
+		TOKEN_ID '=' expr ';'
+		{
+			if (!symbol_table.insert (std::make_pair (* $1, $3)).second)
+			{
+				in->fatal("sym already defined");
+			}
+			delete $1;
+		}
+	|	TOKEN_FID expr TOKEN_FID_END
+		{
+			if (!symbol_table.insert (std::make_pair (* $1, $2)).second)
+			{
+				in->fatal("sym already defined");
+			}
+			delete $1;
+		}
+	|	TOKEN_ID '=' expr '/'
+		{
+			in->fatal("trailing contexts are not allowed in named definitions");
+		}
+	|	TOKEN_FID expr '/'
+		{
+			in->fatal("trailing contexts are not allowed in named definitions");
+		}
+	|	TOKEN_CONF {}
+;
+
+rule:
+		expr look TOKEN_CODE
+		{
+			if (opts->cFlag)
+			{
+				in->fatal("condition or '<*>' required when using -c switch");
+			}
+			RuleOp * rule = new RuleOp
+				( $3->loc
+				, $1
+				, $2
+				, rank_counter.next ()
+				, $3
+				, NULL
+				);
+			spec.add (rule);
+		}
+	|	TOKEN_STAR TOKEN_CODE /* default rule */
+		{
+			if (opts->cFlag)
+				in->fatal("condition or '<*>' required when using -c switch");
+			RuleOp * def = new RuleOp
+				( $2->loc
+				, in->mkDefault ()
+				, new NullOp
+				, rule_rank_t::def ()
+				, $2
+				, NULL
+				);
+			if (!spec.add_def (def))
+			{
+				in->fatal("code to default rule is already defined");
+			}
+		}
+	|	'<' cond '>' expr look newcond TOKEN_CODE
+		{
+			context_rule ($2, $7->loc, $4, $5, $7, $6);
+		}
+	|	'<' cond '>' expr look ':' newcond
+		{
+			assert($7);
+			Loc loc (in->get_fname (), in->get_cline ());
+			context_rule ($2, loc, $4, $5, NULL, $7);
+		}
+	|	'<' cond '>' look newcond TOKEN_CODE
+		{
+			context_none($2);
+			delete $5;
+		}
+	|	'<' cond '>' look ':' newcond
+		{
+			assert($6);
+			context_none($2);
+			delete $6;
+		}
+	|	'<' cond '>' TOKEN_STAR TOKEN_CODE /* default rule for conditions */
+		{
+			default_rule($2, $5);
+		}
+	|	'<' TOKEN_STAR '>' expr look newcond TOKEN_CODE
+		{
+			context_check(NULL);
+			RuleOp * rule = new RuleOp
+				( $7->loc
+				, $4
+				, $5
+				, rank_counter.next ()
+				, $7
+				, $6
+				);
+			specStar.push_back (rule);
+			delete $6;
+		}
+	|	'<' TOKEN_STAR '>' expr look ':' newcond
+		{
+			assert($7);
+			context_check(NULL);
+			Loc loc (in->get_fname (), in->get_cline ());
+			RuleOp * rule = new RuleOp
+				( loc
+				, $4
+				, $5
+				, rank_counter.next ()
+				, NULL
+				, $7
+				);
+			specStar.push_back (rule);
+			delete $7;
+		}
+	|	'<' TOKEN_STAR '>' look newcond TOKEN_CODE
+		{
+			context_none(NULL);
+			delete $5;
+		}
+	|	'<' TOKEN_STAR '>' look ':' newcond
+		{
+			assert($6);
+			context_none(NULL);
+			delete $6;
+		}
+	|	'<' TOKEN_STAR '>' TOKEN_STAR TOKEN_CODE /* default rule for all conditions */
+		{
+			if (star_default)
+			{
+				in->fatal ("code to default rule '*' is already defined");
+			}
+			star_default = new RuleOp
+				( $5->loc
+				, in->mkDefault ()
+				, new NullOp
+				, rule_rank_t::def ()
+				, $5
+				, NULL
+				);
+		}
+	|	TOKEN_NOCOND newcond TOKEN_CODE
+		{
+			context_check(NULL);
+			if (specNone)
+			{
+				in->fatal("code to handle illegal condition already defined");
+			}
+			$$ = specNone = new RuleOp
+				( $3->loc
+				, new NullOp
+				, new NullOp
+				, rank_counter.next ()
+				, $3
+				, $2
+				);
+			delete $2;
+		}
+	|	TOKEN_NOCOND ':' newcond
+		{
+			assert($3);
+			context_check(NULL);
+			if (specNone)
+			{
+				in->fatal("code to handle illegal condition already defined");
+			}
+			Loc loc (in->get_fname (), in->get_cline ());
+			$$ = specNone = new RuleOp
+				( loc
+				, new NullOp
+				, new NullOp
+				, rank_counter.next ()
+				, NULL
+				, $3
+				);
+			delete $3;
+		}
+	|	TOKEN_SETUP TOKEN_STAR '>' TOKEN_CODE
+		{
+			CondList *clist = new CondList();
+			clist->insert("*");
+			setup_rule(clist, $4);
+		}
+	|	TOKEN_SETUP cond '>' TOKEN_CODE
+		{
+			setup_rule($2, $4);
+		}
+;
+
+cond:
+		/* empty */
+		{
+			in->fatal("unnamed condition not supported");
+		}
+	|	clist
+		{
+			$$ = $1;
+		}
+	;
+
+clist:
+		TOKEN_ID
+		{
+			$$ = new CondList();
+			$$->insert(* $1);
+			delete $1;
+		}
+	|	clist ',' TOKEN_ID
+		{
+			$1->insert(* $3);
+			delete $3;
+			$$ = $1;
+		}
+;
+
+newcond:
+		/* empty */
+		{
+			$$ = NULL;
+		}
+	|	'=' '>' TOKEN_ID
+		{
+			$$ = $3;
+		}
+;
+
+look:
+		/* empty */
+		{
+			$$ = new NullOp;
+		}
+	|	'/' expr
+		{
+			$$ = $2;
+		}
+;
+
+expr:
+		diff
+		{
+			$$ = $1;
+		}
+	|	expr '|' diff
+		{
+			$$ = mkAlt($1, $3);
+		}
+;
+
+diff:
+		term
+		{
+			$$ = $1;
+		}
+	|	diff '\\' term
+		{
+			$$ = in->mkDiff($1, $3);
+		}
+;
+
+term:
+		factor
+		{
+			$$ = $1;
+		}
+	|	term factor
+		{
+			$$ = new CatOp($1, $2);
+		}
+;
+
+factor:
+		primary
+		{
+			$$ = $1;
+		}
+	|	primary close
+		{
+			switch($2)
+			{
+			case '*':
+				$$ = new CloseOp($1);
+				break;
+			case '+':
+				$$ = new CatOp (new CloseOp($1), $1);
+				break;
+			case '?':
+				$$ = mkAlt($1, new NullOp());
+				break;
+			}
+		}
+	|	primary TOKEN_CLOSESIZE
+		{
+			if ($2.max == std::numeric_limits<uint32_t>::max())
+			{
+				$$ = repeat_from ($1, $2.min);
+			}
+			else if ($2.min == $2.max)
+			{
+				$$ = repeat ($1, $2.min);
+			}
+			else
+			{
+				$$ = repeat_from_to ($1, $2.min, $2.max);
+			}
+			$$ = $$ ? $$ : new NullOp;
+		}
+;
+
+close:
+		TOKEN_CLOSE
+		{
+			$$ = $1;
+		}
+	|	TOKEN_STAR
+		{
+			$$ = $1;
+		}
+	|	close TOKEN_CLOSE
+		{
+			$$ = ($1 == $2) ? $1 : '*';
+		}
+	|	close TOKEN_STAR
+		{
+			$$ = ($1 == $2) ? $1 : '*';
+		}
+;
+
+primary:
+		TOKEN_ID
+		{
+			symbol_table_t::iterator i = symbol_table.find (* $1);
+			delete $1;
+			if (i == symbol_table.end ())
+			{
+				in->fatal("can't find symbol");
+			}
+			$$ = i->second;
+		}
+	|	TOKEN_REGEXP
+		{
+			$$ = $1;
+		}
+	|	'(' expr ')'
+		{
+			$$ = $2;
+		}
+;
+
+%%
+
+extern "C" {
+void yyerror(const char* s)
+{
+	in->fatal(s);
+}
+
+int yylex(){
+	return in ? in->scan() : 0;
+}
+} // end extern "C"
+
+namespace re2c
+{
+
+void parse(Scanner& i, Output & o)
+{
+	std::map<std::string, smart_ptr<DFA> >  dfa_map;
+	ScannerState rules_state;
+
+	in = &i;
+
+	o.source.wversion_time ()
+		.wline_info (in->get_cline (), in->get_fname ().c_str ());
+	if (opts->target == opt_t::SKELETON)
+	{
+		Skeleton::emit_prolog (o.source);
+	}
+
+	Enc encodingOld = opts->encoding;
+	
+	while ((parseMode = i.echo()) != Scanner::Stop)
+	{
+		o.source.new_block ();
+		bool bPrologBrace = false;
+		ScannerState curr_state;
+
+		i.save_state(curr_state);
+		foundRules = false;
+
+		if (opts->rFlag && parseMode == Scanner::Rules && dfa_map.size())
+		{
+			in->fatal("cannot have a second 'rules:re2c' block");
+		}
+		if (parseMode == Scanner::Reuse)
+		{
+			if (dfa_map.empty())
+			{
+				in->fatal("got 'use:re2c' without 'rules:re2c'");
+			}
+		}
+		else if (parseMode == Scanner::Rules)
+		{
+			i.save_state(rules_state);
+		}
+		else
+		{
+			dfa_map.clear();
+		}
+		rank_counter.reset ();
+		spec.clear ();
+		in->set_in_parse(true);
+		yyparse();
+		in->set_in_parse(false);
+		if (opts->rFlag && parseMode == Scanner::Reuse)
+		{
+			if (foundRules || opts->encoding != encodingOld)
+			{
+				// Re-parse rules
+				parseMode = Scanner::Parse;
+				i.restore_state(rules_state);
+				i.reuse();
+				dfa_map.clear();
+				parse_cleanup();
+				spec.clear ();
+				rank_counter.reset ();
+				in->set_in_parse(true);
+				yyparse();
+				in->set_in_parse(false);
+
+				// Now append potential new rules
+				i.restore_state(curr_state);
+				parseMode = Scanner::Parse;
+				in->set_in_parse(true);
+				yyparse();
+				in->set_in_parse(false);
+			}
+			encodingOld = opts->encoding;
+		}
+		o.source.set_block_line (in->get_cline ());
+		uint32_t ind = opts->topIndent;
+		if (opts->cFlag)
+		{
+			SpecMap::iterator it;
+			SetupMap::const_iterator itRuleSetup;
+
+			if (parseMode != Scanner::Reuse)
+			{
+				// <*> rules must have the lowest priority
+				// now that all rules have been parsed, we can fix it
+				for (RuleOpList::const_iterator itOp = specStar.begin(); itOp != specStar.end(); ++itOp)
+				{
+					(*itOp)->rank = rank_counter.next ();
+				}
+				// merge <*> rules to all conditions
+				for (it = specMap.begin(); it != specMap.end(); ++it)
+				{
+					for (RuleOpList::const_iterator itOp = specStar.begin(); itOp != specStar.end(); ++itOp)
+					{
+						it->second.add (*itOp);
+					}
+					if (star_default)
+					{
+						it->second.add_def (star_default);
+					}
+				}
+
+				if (specNone)
+				{
+					specMap["0"].add (specNone);
+					// Note that "0" inserts first, which is important.
+					condnames.insert (condnames.begin (), "0");
+				}
+				o.types = condnames;
+			}
+
+			size_t nCount = specMap.size();
+
+			for (it = specMap.begin(); it != specMap.end(); ++it)
+			{
+				if (parseMode != Scanner::Reuse)
+				{
+					itRuleSetup = ruleSetupMap.find(it->first);				
+					if (itRuleSetup != ruleSetupMap.end())
+					{
+						yySetupRule = itRuleSetup->second.second;
+					}
+					else
+					{
+						itRuleSetup = ruleSetupMap.find("*");
+						if (itRuleSetup != ruleSetupMap.end())
+						{
+							yySetupRule = itRuleSetup->second.second;
+						}
+						else
+						{
+							yySetupRule = "";
+						}
+					}
+
+					dfa_map[it->first] = compile(it->second, o, it->first, opts->encoding.nCodeUnits ());
+				}
+				if (parseMode != Scanner::Rules && dfa_map.find(it->first) != dfa_map.end())
+				{
+					dfa_map[it->first]->emit(o, ind, !--nCount, bPrologBrace);
+				}
+			}
+		}
+		else
+		{
+			if (spec.re || !dfa_map.empty())
+			{
+				if (parseMode != Scanner::Reuse)
+				{
+					dfa_map[""] = compile(spec, o, "", opts->encoding.nCodeUnits ());
+				}
+				if (parseMode != Scanner::Rules && dfa_map.find("") != dfa_map.end())
+				{
+					dfa_map[""]->emit(o, ind, 0, bPrologBrace);
+				}
+			}
+		}
+		o.source.wline_info (in->get_cline (), in->get_fname ().c_str ());
+		/* restore original char handling mode*/
+		opts.reset_encoding (encodingOld);
+	}
+
+	if (opts->cFlag)
+	{
+		SetupMap::const_iterator itRuleSetup;
+		for (itRuleSetup = ruleSetupMap.begin(); itRuleSetup != ruleSetupMap.end(); ++itRuleSetup)
+		{
+			if (itRuleSetup->first != "*" && specMap.find(itRuleSetup->first) == specMap.end())
+			{
+				in->fatalf_at(itRuleSetup->second.first, "setup for non existing rule '%s' found", itRuleSetup->first.c_str());
+			}
+		}
+		if (specMap.size() < ruleSetupMap.size())
+		{
+			uint32_t line = in->get_cline();
+			itRuleSetup = ruleSetupMap.find("*");
+			if (itRuleSetup != ruleSetupMap.end())
+			{
+				line = itRuleSetup->second.first;
+			}
+			in->fatalf_at(line, "setup for all rules with '*' not possible when all rules are setup explicitly");
+		}
+	}
+
+	if (opts->target == opt_t::SKELETON)
+	{
+		Skeleton::emit_epilog (o.source, o.skeletons);
+	}
+
+	parse_cleanup();
+	in = NULL;
+}
+
+void parse_cleanup()
+{
+	RegExp::vFreeList.clear();
+	Range::vFreeList.clear();
+	RangeSuffix::freeList.clear();
+	Code::freelist.clear();
+	symbol_table.clear ();
+	condnames.clear ();
+	specMap.clear();
+	specStar.clear();
+	star_default = NULL;
+	specNone = NULL;
+}
+
+} // end namespace re2c

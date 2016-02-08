@@ -20,6 +20,10 @@ class AWhirlwind : public AActor
 	DECLARE_CLASS (AWhirlwind, AActor)
 public:
 	int DoSpecialDamage (AActor *target, int damage, FName damagetype);
+	void BeginPlay()
+	{
+		special1 = 60;
+	}
 };
 
 IMPLEMENT_CLASS(AWhirlwind)
@@ -129,7 +133,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_LichAttack)
 		{
 			mo->AddZ(-32*FRACUNIT, false);
 			mo->tracer = target;
-			mo->special1 = 60;
 			mo->special2 = 50; // Timer for active sound
 			mo->health = 20*TICRATE; // Duration
 			S_Sound (self, CHAN_BODY, "ironlich/attack3", 1, ATTN_NORM);

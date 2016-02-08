@@ -219,6 +219,39 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, IsPointerEqual)
 
 //==========================================================================
 //
+// CountInv
+//
+// NON-ACTION function to return the inventory count of an item.
+//
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, CountInv)
+{
+	if (numret > 0)
+	{
+		assert(ret != NULL);
+		PARAM_PROLOGUE;
+		PARAM_OBJECT(self, AActor);
+		PARAM_CLASS(itemtype, AInventory);
+		PARAM_INT_OPT(pick_pointer)		{ pick_pointer = AAPTR_DEFAULT; }
+
+		self = COPY_AAPTR(self, pick_pointer);
+		if (self == NULL || itemtype == NULL)
+		{
+			ret->SetInt(false);
+		}
+		else
+		{
+			AInventory *item = self->FindInventory(itemtype);
+			ret->SetInt(item ? item->Amount : 0);
+			return 1;
+		}
+	}
+	return 0;
+}
+
+//==========================================================================
+//
 // A_RearrangePointers
 //
 // Allow an actor to change its relationship to other actors by
@@ -5553,7 +5586,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DropItem)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetSpeed)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_INT(speed);
+	PARAM_FIXED(speed);
 	PARAM_INT_OPT(ptr)	{ ptr = AAPTR_DEFAULT; }
 
 	AActor *ref = COPY_AAPTR(self, ptr);
@@ -5573,7 +5606,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetSpeed)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetFloatSpeed)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_INT(speed);
+	PARAM_FIXED(speed);
 	PARAM_INT_OPT(ptr)	{ ptr = AAPTR_DEFAULT; }
 
 	AActor *ref = COPY_AAPTR(self, ptr);
@@ -6360,6 +6393,35 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetRipMax)
 	return 0;
 }
 
+//===========================================================================
+//
+// A_SetChaseThreshold(int threshold, bool def, int ptr)
+//
+// Sets the current chase threshold of the actor (pointer). If def is true,
+// changes the default threshold which the actor resets to once it switches
+// targets and doesn't have the +QUICKTORETALIATE flag.
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetChaseThreshold)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_INT(threshold);
+	PARAM_BOOL_OPT(def) { def = false; }
+	PARAM_INT_OPT(ptr) { ptr = AAPTR_DEFAULT; }
+
+
+	AActor *mobj = COPY_AAPTR(self, ptr);
+	if (!mobj)
+	{
+		ACTION_SET_RESULT(false);
+		return 0;
+	}
+	if (def)
+		mobj->DefThreshold = (threshold >= 0) ? threshold : 0;
+	else
+		mobj->threshold = (threshold >= 0) ? threshold : 0;
+	return 0;
+}
+
 //==========================================================================
 //
 // A_CheckProximity(jump, classname, distance, count, flags, ptr)
@@ -6390,8 +6452,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckProximity)
 	PARAM_CLASS(classname, AActor);
 	PARAM_FIXED(distance);
 	PARAM_INT_OPT(count) { count = 1; }
-	PARAM_INT(flags) { flags = 0; }
-	PARAM_INT(ptr) { ptr = AAPTR_DEFAULT; }
+	PARAM_INT_OPT(flags) { flags = 0; }
+	PARAM_INT_OPT(ptr) { ptr = AAPTR_DEFAULT; }
 
 	ACTION_SET_RESULT(false); //No inventory chain results please.
 
@@ -6426,7 +6488,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckProximity)
 		//Check inheritance for the classname. Taken partly from CheckClass DECORATE function.
 		if (flags & CPXF_ANCESTOR)
 		{
-			if (!(mo->GetClass()->IsAncestorOf(classname)))
+			if (!(mo->IsKindOf(classname)))
 				continue;
 		}
 		//Otherwise, just check for the regular class name.

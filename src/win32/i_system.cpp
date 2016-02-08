@@ -1424,8 +1424,8 @@ static HCURSOR CreateBitmapCursor(int xhot, int yhot, HBITMAP and_mask, HBITMAP 
 	ICONINFO iconinfo =
 	{
 		FALSE,		// fIcon
-		xhot,		// xHotspot
-		yhot,		// yHotspot
+		(DWORD)xhot,	// xHotspot
+		(DWORD)yhot,	// yHotspot
 		and_mask,	// hbmMask
 		color_mask	// hbmColor
 	};

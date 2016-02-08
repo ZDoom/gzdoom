@@ -105,6 +105,7 @@ DEFINE_SPECIAL(Scroll_Texture_Down, 103, -1, -1, 2)
 DEFINE_SPECIAL(Ceiling_CrushAndRaiseSilentDist, 104, 3, 5, 5)
 DEFINE_SPECIAL(Door_WaitRaise, 105, 4, 5, 5)
 DEFINE_SPECIAL(Door_WaitClose, 106, 4, 5, 5)
+DEFINE_SPECIAL(Line_SetPortalTarget, 107, 2, 2, 2)
 
 DEFINE_SPECIAL(Light_ForceLightning, 109, 1, 1, 1)
 DEFINE_SPECIAL(Light_RaiseByValue, 110, 2, 2, 2)

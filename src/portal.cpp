@@ -29,6 +29,24 @@ FArchive &operator<< (FArchive &arc, FLinePortal &port)
 }
 
 
+static line_t *FindDestination(line_t *src, int tag)
+{
+	if (tag)
+	{
+		int lineno = -1;
+		FLineIdIterator it(tag);
+
+		while ((lineno = it.Next()) >= 0)
+		{
+			if (&lines[lineno] != src)
+			{
+				return &lines[lineno];
+			}
+		}
+	}
+	return NULL;
+}
+
 void P_SpawnLinePortal(line_t* line)
 {
 	// portal destination is special argument #0
@@ -36,21 +54,7 @@ void P_SpawnLinePortal(line_t* line)
 
 	if (line->args[2] >= PORTT_VISUAL && line->args[2] <= PORTT_LINKED)
 	{
-		if (line->args[0] > 0)
-		{
-			int linenum = -1;
-
-			for (int i = 0; i < numlines; i++)
-			{
-				if (&lines[i] == line)
-					continue;
-				if (tagManager.LineHasID(&lines[i], line->args[0]))
-				{
-					dst = &lines[i];
-					break;
-				}
-			}
-		}
+		dst = FindDestination(line, line->args[0]);
 
 		line->portalindex = linePortals.Reserve(1);
 		FLinePortal *port = &linePortals.Last();
@@ -154,6 +158,50 @@ void P_FinalizePortals()
 		FLinePortal * port = &linePortals[i];
 		P_UpdatePortal(port);
 	}
+}
+
+static bool ChangePortalLine(line_t *line, int destid)
+{
+	if (line->portalindex >= linePortals.Size()) return false;
+	FLinePortal *port = &linePortals[line->portalindex];
+	if (port->mType == PORTT_LINKED) return false;	// linked portals cannot be changed.
+	if (destid == 0) port->mDestination = NULL;
+	port->mDestination = FindDestination(line, destid);
+	if (port->mDestination == NULL)
+	{
+		port->mFlags = 0;
+	}
+	else if (port->mType == PORTT_INTERACTIVE)
+	{
+		FLinePortal *portd = &linePortals[port->mDestination->portalindex];
+		if (portd != NULL && portd->mType == PORTT_INTERACTIVE && portd->mDestination == line)
+		{
+			// this is a 2-way interactive portal
+			port->mFlags = port->mDefFlags | PORTF_INTERACTIVE;
+			portd->mFlags = portd->mDefFlags | PORTF_INTERACTIVE;
+		}
+		else
+		{
+			port->mFlags = port->mDefFlags;
+			portd->mFlags = portd->mDefFlags;
+		}
+	}
+	return true;
+}
+
+
+bool P_ChangePortal(line_t *ln, int thisid, int destid)
+{
+	int lineno;
+
+	if (thisid == 0) return ChangePortalLine(ln, destid);
+	FLineIdIterator it(thisid);
+	bool res = false;
+	while ((lineno = it.Next()) >= 0)
+	{
+		res |= ChangePortalLine(&lines[lineno], destid);
+	}
+	return res;
 }
 
 // [ZZ] lots of floats here to avoid overflowing a lot

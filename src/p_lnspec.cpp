@@ -57,6 +57,7 @@
 #include "d_net.h"
 #include "d_event.h"
 #include "gstrings.h"
+#include "portal.h"
 #include "r_data/colormaps.h"
 #include "fragglescript/t_fs.h"
 
@@ -3387,6 +3388,11 @@ FUNC(LS_Thing_SetConversation)
 	return true;
 }
 
+FUNC(LS_Line_SetPortalTarget)
+// Line_SetPortalTarget(thisid, destid)
+{
+	return P_ChangePortal(ln, arg0, arg1);
+}
 
 static lnSpecFunc LineSpecials[] =
 {
@@ -3497,7 +3503,7 @@ static lnSpecFunc LineSpecials[] =
 	/* 104 */ LS_Ceiling_CrushAndRaiseSilentDist,
 	/* 105 */ LS_Door_WaitRaise,
 	/* 106 */ LS_Door_WaitClose,
-	/* 107 */ LS_NOP,
+	/* 107 */ LS_Line_SetPortalTarget,
 	/* 108 */ LS_NOP,
 	/* 109 */ LS_Light_ForceLightning,
 	/* 110 */ LS_Light_RaiseByValue,

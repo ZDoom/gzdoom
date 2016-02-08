@@ -698,8 +698,8 @@ bool FMODSoundRenderer::Init()
 	}
 
 	const char *wrongver = NULL;
-#if FMOD_VERSION >= 0x43800
-	if (version < 0x43800)
+#if FMOD_VERSION >= 0x43600
+	if (version < 0x43600)
 #else
 	if (version < 0x42000)
 #endif
@@ -2311,9 +2311,9 @@ void FMODSoundRenderer::UpdateListener(SoundListener *listener)
 	pos.z = listener->position.Z;
 
 	float angle = listener->angle;
-	forward.x = cos(angle);
+	forward.x = cosf(angle);
 	forward.y = 0;
-	forward.z = sin(angle);
+	forward.z = sinf(angle);
 
 	up.x = 0;
 	up.y = 1;
@@ -3135,7 +3135,7 @@ void FMODSoundRenderer::InitCreateSoundExInfo(FMOD_CREATESOUNDEXINFO *exinfo) co
 
 FMOD_RESULT FMODSoundRenderer::SetSystemReverbProperties(const REVERB_PROPERTIES *props)
 {
-#if FMOD_VERSION < 0x43800
+#if FMOD_VERSION < 0x43600
 	return Sys->setReverbProperties((const FMOD_REVERB_PROPERTIES *)props);
 #else
 	// The reverb format changed when hardware mixing support was dropped, because

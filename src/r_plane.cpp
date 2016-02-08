@@ -1531,7 +1531,7 @@ void R_DrawNormalPlane (visplane_t *pl, fixed_t alpha, bool additive, bool maske
 	yscale = pl->yscale << (16 - ds_ybits);
 	if (planeang != 0)
 	{
-		double rad = bam2rad(planeang);
+		double rad = ANGLE2RAD(planeang);
 		double cosine = cos(rad), sine = sin(rad);
 
 		pviewx = xs_RoundToInt(pl->xoffs + viewx * cosine - viewy * sine);
@@ -1668,13 +1668,13 @@ void R_DrawTiltedPlane (visplane_t *pl, fixed_t alpha, bool additive, bool maske
 	// p is the texture origin in view space
 	// Don't add in the offsets at this stage, because doing so can result in
 	// errors if the flat is rotated.
-	ang = bam2rad(ANG270 - viewangle);
+	ang = ANGLE2RAD(ANG270 - viewangle);
 	p[0] = vx * cos(ang) - vy * sin(ang);
 	p[2] = vx * sin(ang) + vy * cos(ang);
 	p[1] = pl->height.ZatPoint(0.0, 0.0) - vz;
 
 	// m is the v direction vector in view space
-	ang = bam2rad(ANG180 - viewangle - pl->angle);
+	ang = ANGLE2RAD(ANG180 - viewangle - pl->angle);
 	m[0] = yscale * cos(ang);
 	m[2] = yscale * sin(ang);
 //	m[1] = FIXED2FLOAT(pl->height.ZatPoint (0, iyscale) - pl->height.ZatPoint (0,0));
@@ -1690,7 +1690,7 @@ void R_DrawTiltedPlane (visplane_t *pl, fixed_t alpha, bool additive, bool maske
 	// This code keeps the texture coordinates constant across the x,y plane no matter
 	// how much you slope the surface. Use the commented-out code above instead to keep
 	// the textures a constant size across the surface's plane instead.
-	ang = bam2rad(pl->angle);
+	ang = ANGLE2RAD(pl->angle);
 	m[1] = pl->height.ZatPoint(vx + yscale * sin(ang), vy + yscale * cos(ang)) - zeroheight;
 	ang += PI/2;
 	n[1] = pl->height.ZatPoint(vx + xscale * sin(ang), vy + xscale * cos(ang)) - zeroheight;

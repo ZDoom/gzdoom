@@ -154,6 +154,8 @@ ACTOR Whirlwind native
 	+EXPLOCOUNT
 	+StepMissile
 	RenderStyle Translucent
+	DefThreshold 60
+	Threshold 50
 	Alpha 0.4
 	
 	action native A_WhirlwindSeek();

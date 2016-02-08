@@ -260,7 +260,7 @@ fixed_t UDMFParserBase::CheckFixed(const char *key)
 
 angle_t UDMFParserBase::CheckAngle(const char *key)
 {
-	return angle_t(CheckFloat(key) * ANGLE_90 / 90.);
+	return FLOAT2ANGLE(CheckFloat(key));
 }
 
 bool UDMFParserBase::CheckBool(const char *key)

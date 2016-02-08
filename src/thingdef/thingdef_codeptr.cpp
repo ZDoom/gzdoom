@@ -6093,7 +6093,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckProximity)
 		//Check inheritance for the classname. Taken partly from CheckClass DECORATE function.
 		if (flags & CPXF_ANCESTOR)
 		{
-			if (!(mo->GetClass()->IsAncestorOf(classname)))
+			if (!(mo->IsKindOf(classname)))
 				continue;
 		}
 		//Otherwise, just check for the regular class name.

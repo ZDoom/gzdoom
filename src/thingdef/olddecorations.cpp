@@ -48,6 +48,7 @@
 #include "decallib.h"
 #include "i_system.h"
 #include "thingdef.h"
+#include "thingdef_exp.h"
 #include "r_data/r_translate.h"
 
 // TYPES -------------------------------------------------------------------
@@ -495,7 +496,8 @@ static void ParseInsideDecoration (Baggage &bag, AActor *defaults,
 		else if (def == DEF_Projectile && sc.Compare ("Damage"))
 		{
 			sc.MustGetNumber ();
-			defaults->Damage = CreateDamageFunction(sc.Number);
+			FxDamageValue *x = new FxDamageValue(new FxConstant(sc.Number, sc), false);
+			defaults->Damage = (VMFunction *)(uintptr_t)(ActorDamageFuncs.Push(x) + 1);
 		}
 		else if (def == DEF_Projectile && sc.Compare ("DamageType"))
 		{

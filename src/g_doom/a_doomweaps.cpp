@@ -124,7 +124,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 	PARAM_CLASS_OPT	(pufftype, AActor)	{ pufftype = NULL; }
 	PARAM_INT_OPT	(flags)				{ flags = 0; }
 	PARAM_FIXED_OPT	(range)				{ range = 0; }
-	PARAM_ANGLE_OPT	(spread_xy)			{ spread_xy = angle_t(2.8125 * (ANGLE_90 / 90.0)); }
+	PARAM_ANGLE_OPT(spread_xy)			{ spread_xy = 33554432; /*angle_t(2.8125 * (ANGLE_90 / 90.0));*/ } // The floating point expression does not get optimized away.
 	PARAM_ANGLE_OPT	(spread_z)			{ spread_z = 0; }
 	PARAM_FIXED_OPT	(lifesteal)			{ lifesteal = 0; }
 	PARAM_INT_OPT	(lifestealmax)		{ lifestealmax = 0; }

@@ -516,7 +516,7 @@ void P_SerializeWorld (FArchive &arc)
 		arc << zn->Environment;
 	}
 
-	if (SaveVersion >= 4532)
+	if (SaveVersion >= 4533)
 	{
 		arc << linePortals;
 	}

@@ -651,4 +651,6 @@ void InitThingdef()
 	symt.AddSymbol(new PField(NAME_ReactionTime,TypeSInt32,	VARF_Native, myoffsetof(AActor,reactiontime)));
 	symt.AddSymbol(new PField(NAME_MeleeRange,	TypeFixed,	VARF_Native, myoffsetof(AActor,meleerange)));
 	symt.AddSymbol(new PField(NAME_Speed,		TypeFixed,	VARF_Native, myoffsetof(AActor,Speed)));
+	symt.AddSymbol(new PField(NAME_Threshold,	TypeSInt32, VARF_Native, myoffsetof(AActor,threshold)));
+	symt.AddSymbol(new PField(NAME_DefThreshold,TypeSInt32, VARF_Native, myoffsetof(AActor,DefThreshold)));
 }

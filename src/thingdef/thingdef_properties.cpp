@@ -547,12 +547,23 @@ DEFINE_PROPERTY(painthreshold, I, Actor)
 //==========================================================================
 //
 //==========================================================================
-DEFINE_PROPERTY(chasethreshold, I, Actor)
+DEFINE_PROPERTY(defthreshold, I, Actor)
 {
 	PROP_INT_PARM(id, 0);
 	if (id < 0)
-		I_Error("ChaseThreshold cannot be negative.");
+		I_Error("DefThreshold cannot be negative.");
 	defaults->DefThreshold = id;
+}
+
+//==========================================================================
+//
+//==========================================================================
+DEFINE_PROPERTY(threshold, I, Actor)
+{
+	PROP_INT_PARM(id, 0);
+	if (id < 0)
+		I_Error("Threshold cannot be negative.");
+	defaults->threshold = id;
 }
 
 //==========================================================================

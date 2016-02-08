@@ -31,7 +31,7 @@ ACTOR Actor native //: Thinker
 	RipperLevel 0
 	RipLevelMin 0
 	RipLevelMax 0
-	ChaseThreshold 100
+	DefThreshold 100
 
 	// Functions
 	native bool CheckClass(class<Actor> checkclass, int ptr_select = AAPTR_DEFAULT, bool match_superclass = false);

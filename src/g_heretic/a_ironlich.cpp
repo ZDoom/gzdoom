@@ -131,8 +131,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_LichAttack)
 		{
 			mo->AddZ(-32*FRACUNIT, false);
 			mo->tracer = target;
-			mo->special1 = 60;
-			mo->special2 = 50; // Timer for active sound
 			mo->health = 20*TICRATE; // Duration
 			S_Sound (self, CHAN_BODY, "ironlich/attack3", 1, ATTN_NORM);
 		}
@@ -158,9 +156,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_WhirlwindSeek)
 		self->flags &= ~MF_MISSILE;
 		return 0;
 	}
-	if ((self->special2 -= 3) < 0)
+	if ((self->threshold -= 3) < 0)
 	{
-		self->special2 = 58 + (pr_seek() & 31);
+		self->threshold = 58 + (pr_seek() & 31);
 		S_Sound (self, CHAN_BODY, "ironlich/attack3", 1, ATTN_NORM);
 	}
 	if (self->tracer && self->tracer->flags&MF_SHADOW)

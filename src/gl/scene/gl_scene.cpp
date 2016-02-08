@@ -886,7 +886,7 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 	SetViewArea();
 
 	// We have to scale the pitch to account for the pixel stretching, because the playsim doesn't know about this and treats it as 1:1.
-	double radPitch = bam2rad(viewpitch);
+	double radPitch = ANGLE2RAD(viewpitch);
 	if (radPitch > PI) radPitch -= 2 * PI;
 	radPitch = clamp(radPitch, -PI / 2, PI / 2);
 

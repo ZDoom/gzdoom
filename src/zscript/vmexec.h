@@ -339,14 +339,13 @@ begin:
 	OP(SANG):
 		ASSERTA(a); ASSERTF(B); ASSERTKD(C);
 		GETADDR(PA,KC,X_WRITE_NIL);
-		*(VM_UWORD *)ptr = (VM_UWORD)(reg.f[B] * ((1<<30) / 180.0)) << 1;	// deg -> BAM
+		*(VM_UWORD *)ptr = (VM_UWORD)(xs_CRoundToInt((reg.f[B]) * (0x40000000/90.)));	// deg -> BAM
 		NEXTOP;
 	OP(SANG_R):
 		ASSERTA(a); ASSERTF(B); ASSERTD(C);
 		GETADDR(PA,RC,X_WRITE_NIL);
-		*(VM_UWORD *)ptr = (VM_UWORD)(reg.f[B] * ((1<<30) / 180.0)) << 1;
+		*(VM_UWORD *)ptr = (VM_UWORD)(xs_CRoundToInt((reg.f[B]) * (0x40000000/90.)));
 		NEXTOP;
-
 	OP(SBIT):
 		ASSERTA(a); ASSERTD(B);
 		GETADDR(PA,0,X_WRITE_NIL);

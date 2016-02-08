@@ -108,13 +108,4 @@ inline angle_t absangle(angle_t a)
 //	without additional checking.
 extern angle_t			tantoangle[SLOPERANGE+1];
 
-inline double bam2rad(angle_t ang)
-{
-	return double(ang >> 1) * (PI / ANGLE_90);
-}
-inline angle_t rad2bam(double ang)
-{
-	return angle_t(ang * (double(1<<30) / PI)) << 1;
-}
-
 #endif // __TABLES_H__

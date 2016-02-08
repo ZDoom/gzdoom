@@ -141,4 +141,12 @@ inline SDWORD ModDiv (SDWORD num, SDWORD den, SDWORD *dmval)
 #define FIXED2FLOAT(f)		((f) / float(65536))
 #define FIXED2DBL(f)		((f) / double(65536))
 
+#define ANGLE2DBL(f)		((f) * (90./ANGLE_90))
+#define ANGLE2FLOAT(f)		(float((f) * (90./ANGLE_90)))
+#define FLOAT2ANGLE(f)		((angle_t)xs_CRoundToInt((f) * (ANGLE_90/90.)))
+
+#define ANGLE2RAD(f)		((f) * (M_PI/ANGLE_180))
+#define ANGLE2RADF(f)		((f) * float(M_PI/ANGLE_180))
+#define RAD2ANGLE(f)		((angle_t)xs_CRoundToInt((f) * (ANGLE_180/M_PI)))
+
 #endif

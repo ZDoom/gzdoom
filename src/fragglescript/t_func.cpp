@@ -1473,9 +1473,9 @@ void FParser::SF_SetCamera(void)
 		else
 		{
 			fixed_t pitch = fixedvalue(t_argv[3]);
-			if(pitch < -50*FRACUNIT) pitch = -50*FRACUNIT;
-			if(pitch > 50*FRACUNIT)  pitch =  50*FRACUNIT;
-			newcamera->pitch=(angle_t)((pitch/65536.0f)*(ANGLE_45/45.0f)*(20.0f/32.0f));
+			if (pitch < -50 * FRACUNIT) pitch = -50 * FRACUNIT;
+			if (pitch > 50 * FRACUNIT)  pitch = 50 * FRACUNIT;
+			newcamera->pitch = xs_CRoundToUInt((pitch / 65536.0f)*(ANGLE_45 / 45.0f)*(20.0f / 32.0f));
 		}
 		player->camera=newcamera;
 	}

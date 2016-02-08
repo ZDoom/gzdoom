@@ -531,7 +531,7 @@ static void VOX_ReadOptions(FScanner &sc, VoxelOptions &opts)
 			{
 				sc.TokenMustBe(TK_FloatConst);
 			}
-			opts.AngleOffset = ANGLE_90 + angle_t(sc.Float * ANGLE_180 / 180.0);
+			opts.AngleOffset = ANGLE_90 + FLOAT2ANGLE(sc.Float);
 		}
 		else if (sc.Compare("overridepalette"))
 		{

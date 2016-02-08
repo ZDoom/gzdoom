@@ -1686,7 +1686,7 @@ ExpEmit FxBinaryLogical::Emit(VMFunctionBuilder *build)
 		op2.Free(build);
 
 		ExpEmit to(build, REGT_INT);
-		build->Emit(OP_EQ_K, 0, op2.RegNum, zero);
+		build->Emit(OP_EQ_K, 1, op2.RegNum, zero);
 		build->Emit(OP_JMP, 2);
 		build->Emit(OP_LI, to.RegNum, 1);
 		build->Emit(OP_JMP, 1);
@@ -1707,7 +1707,7 @@ ExpEmit FxBinaryLogical::Emit(VMFunctionBuilder *build)
 		op2.Free(build);
 
 		ExpEmit to(build, REGT_INT);
-		build->Emit(OP_EQ_K, 1, op2.RegNum, zero);
+		build->Emit(OP_EQ_K, 0, op2.RegNum, zero);
 		build->Emit(OP_JMP, 2);
 		build->Emit(OP_LI, to.RegNum, 0);
 		build->Emit(OP_JMP, 1);

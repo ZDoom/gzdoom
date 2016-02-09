@@ -1,7 +1,11 @@
 #ifndef _RE2C_UTIL_C99_STDINT_
 #define _RE2C_UTIL_C99_STDINT_
 
+#if defined(_MSC_VER) && _MSC_VER < 1500
+#include "config.msc.h"
+#else
 #include "config.h"
+#endif
 
 #if HAVE_STDINT_H
 #    include <stdint.h>

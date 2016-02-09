@@ -913,12 +913,12 @@ public:
 
 class FxClassTypeCast : public FxExpression
 {
-	const PClass *desttype;
+	PClass *desttype;
 	FxExpression *basex;
 
 public:
 
-	FxClassTypeCast(const PClass *dtype, FxExpression *x);
+	FxClassTypeCast(PClass *dtype, FxExpression *x);
 	~FxClassTypeCast();
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);

@@ -647,6 +647,8 @@ public:
 	// Returns true if this actor is within melee range of its target
 	bool CheckMeleeRange();
 
+	bool CheckNoDelay();
+
 	virtual void BeginPlay();			// Called immediately after the actor is created
 	virtual void PostBeginPlay();		// Called immediately before the actor's first tick
 	virtual void LevelSpawned();		// Called after BeginPlay if this actor was spawned by the world

@@ -259,7 +259,7 @@ void I_InitSound ()
 	nosfx = !!Args->CheckParm ("-nosfx");
 
 	GSnd = NULL;
-	if (nosound)
+	if (nosound || batchrun)
 	{
 		GSnd = new NullSoundRenderer;
 		I_InitMusic ();

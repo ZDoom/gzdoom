@@ -55,7 +55,7 @@ private:
 	static void append (Range ** & ptail, uint32_t l, uint32_t u);
 
 	// test addition and subtraction
-	template <uint8_t> friend Range * re2c_test::range (uint32_t n);
+	//template <uint8_t> friend Range * re2c_test::range (uint32_t n);
 
 	FORBID_COPY (Range);
 };

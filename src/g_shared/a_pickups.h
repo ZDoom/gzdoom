@@ -139,6 +139,7 @@ protected:
 	virtual void Derive(PClass *newclass);
 public:
 	PClassInventory();
+	virtual void ReplaceClassRef(PClass *oldclass, PClass *newclass);
 
 	FString PickupMessage;
 	int GiveQuest;			// Optionally give one of the quest items.
@@ -269,6 +270,7 @@ protected:
 	virtual void Derive(PClass *newclass);
 public:
 	PClassWeapon();
+	virtual void ReplaceClassRef(PClass *oldclass, PClass *newclass);
 
 	int SlotNumber;
 	fixed_t SlotPriority;

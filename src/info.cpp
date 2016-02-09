@@ -524,6 +524,37 @@ void PClassActor::SetPainChance(FName type, int chance)
 
 //==========================================================================
 //
+// PClassActor :: ReplaceClassRef
+//
+//==========================================================================
+
+void PClassActor::ReplaceClassRef(PClass *oldclass, PClass *newclass)
+{
+	for (unsigned i = 0; i < VisibleToPlayerClass.Size(); i++)
+	{
+		if (VisibleToPlayerClass[i] == oldclass)
+			VisibleToPlayerClass[i] = static_cast<PClassPlayerPawn*>(newclass);
+	}
+	for (unsigned i = 0; i < ForbiddenToPlayerClass.Size(); i++)
+	{
+		if (ForbiddenToPlayerClass[i] == oldclass)
+			ForbiddenToPlayerClass[i] = static_cast<PClassPlayerPawn*>(newclass);
+	}
+	for (unsigned i = 0; i < RestrictedToPlayerClass.Size(); i++)
+	{
+		if (RestrictedToPlayerClass[i] == oldclass)
+			RestrictedToPlayerClass[i] = static_cast<PClassPlayerPawn*>(newclass);
+	}
+	AActor *def = (AActor*)Defaults;
+	if (def != NULL)
+	{
+		if (def->TeleFogSourceType == oldclass) def->TeleFogSourceType = static_cast<PClassActor *>(newclass);
+		if (def->TeleFogDestType == oldclass) def->TeleFogDestType = static_cast<PClassActor *>(newclass);
+	}
+}
+
+//==========================================================================
+//
 // DmgFactors :: CheckFactor
 //
 // Checks for the existance of a certain damage type. If that type does not

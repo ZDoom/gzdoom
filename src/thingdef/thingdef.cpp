@@ -340,15 +340,10 @@ static void FinishThingdef()
 	{
 		PClassActor *ti = PClassActor::AllActorClasses[i];
 
-		if (ti->Size == TClass_Fatal || ti->Size == TClass_Nonfatal)
+		if (ti->Size == TentativeClass)
 		{
 			Printf(TEXTCOLOR_RED "Class %s referenced but not defined\n", ti->TypeName.GetChars());
-			if (ti->Size == TClass_Fatal) errorcount++;
-			else
-			{
-				// In order to prevent a crash, this class needs to be completed, even though it defines nothing.
-				ti->ParentClass->CreateDerivedClass(ti->TypeName, ti->ParentClass->Size);
-			}
+			errorcount++;
 			continue;
 		}
 

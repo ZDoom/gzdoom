@@ -39,6 +39,18 @@ void PClassInventory::Derive(PClass *newclass)
 	newc->PickupMessage = PickupMessage;
 	newc->GiveQuest = GiveQuest;
 	newc->AltHUDIcon = AltHUDIcon;
+	newc->ForbiddenToPlayerClass = ForbiddenToPlayerClass;
+	newc->RestrictedToPlayerClass = RestrictedToPlayerClass;
+}
+
+void PClassInventory::ReplaceClassRef(PClass *oldclass, PClass *newclass)
+{
+	Super::ReplaceClassRef(oldclass, newclass);
+	AInventory *def = (AInventory*)Defaults;
+	if (def != NULL)
+	{
+		if (def->PickupFlash == oldclass) def->PickupFlash = static_cast<PClassActor *>(newclass);
+	}
 }
 
 IMPLEMENT_CLASS(PClassAmmo)

@@ -601,8 +601,7 @@ public:
 
 enum
 {
-	TClass_Fatal = UINT_MAX,
-	TClass_Nonfatal = UINT_MAX - 1
+	TentativeClass = UINT_MAX,
 };
 
 class PClassClass;

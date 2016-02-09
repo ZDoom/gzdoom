@@ -200,6 +200,7 @@ public:
 	PClassActor();
 	~PClassActor();
 
+	virtual void ReplaceClassRef(PClass *oldclass, PClass *newclass);
 	void BuildDefaults();
 	void ApplyDefaults(BYTE *defaults);
 	void RegisterIDs();

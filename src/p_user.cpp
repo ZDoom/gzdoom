@@ -581,6 +581,16 @@ bool PClassPlayerPawn::GetPainFlash(FName type, PalEntry *color) const
 	return false;
 }
 
+void PClassPlayerPawn::ReplaceClassRef(PClass *oldclass, PClass *newclass)
+{
+	Super::ReplaceClassRef(oldclass, newclass);
+	APlayerPawn *def = (APlayerPawn*)Defaults;
+	if (def != NULL)
+	{
+		if (def->FlechetteType == oldclass) def->FlechetteType = static_cast<PClassInventory *>(newclass);
+	}
+}
+
 //===========================================================================
 //
 // player_t :: SendPitchLimits

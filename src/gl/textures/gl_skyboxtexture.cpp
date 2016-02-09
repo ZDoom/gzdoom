@@ -207,7 +207,7 @@ void gl_ParseVavoomSkybox()
 				maplump = Wads.CheckNumForFullName(sc.String, true);
 
 				FTexture *tex = TexMan.FindTexture(sc.String, FTexture::TEX_Wall, FTextureManager::TEXMAN_TryAny);
-				if (tex != NULL)
+				if (tex == NULL)
 				{
 					Printf("Texture '%s' not found in Vavoom skybox '%s'\n", sc.String, sb->Name.GetChars());
 				}

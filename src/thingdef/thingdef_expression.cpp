@@ -3503,7 +3503,7 @@ ExpEmit FxReturnStatement::Emit(VMFunctionBuilder *build, bool tailcall)
 //
 //==========================================================================
 
-FxClassTypeCast::FxClassTypeCast(const PClass *dtype, FxExpression *x)
+FxClassTypeCast::FxClassTypeCast(PClass *dtype, FxExpression *x)
 : FxExpression(x->ScriptPosition)
 {
 	desttype = dtype;
@@ -3542,11 +3542,11 @@ FxExpression *FxClassTypeCast::Resolve(FCompileContext &ctx)
 	if (basex->isConstant())
 	{
 		FName clsname = static_cast<FxConstant *>(basex)->GetValue().GetName();
-		const PClass *cls = NULL;
+		PClass *cls = NULL;
 
 		if (clsname != NAME_None)
 		{
-			cls = PClass::FindClass(clsname);
+			cls = desttype->FindClassTentative(clsname);
 			if (cls == NULL)
 			{
 				/* lax */

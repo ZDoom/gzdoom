@@ -138,17 +138,8 @@ void AFastProjectile::Tick ()
 			}
 		}
 	}
-	if ((flags7 & MF7_HANDLENODELAY) && !(flags2 & MF2_DORMANT))
-	{
-		flags7 &= ~MF7_HANDLENODELAY;
-		if (state->GetNoDelay())
-		{
-			// For immediately spawned objects with the NoDelay flag set for their
-			// Spawn state, explicitly call the current state's function.
-			if (state->CallAction(this, this) && (ObjectFlags & OF_EuthanizeMe))
-				return;				// freed itself
-		}
-	}
+	if (!CheckNoDelay())
+		return;		// freed itself
 	// Advance the state
 	if (tics != -1)
 	{

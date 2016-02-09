@@ -484,7 +484,7 @@ void FSliderItem::Drawer(bool selected)
 	screen->DrawText(mFont, selected? OptionSettings.mFontColorSelection : mFontColor, mXpos, mYpos, text, DTA_Clean, true, TAG_DONE);
 
 	int x = SmallFont->StringWidth ("Green") + 8 + mXpos;
-	int x2 = SmallFont->StringWidth (mText) + 8 + mXpos;
+	int x2 = SmallFont->StringWidth (text) + 8 + mXpos;
 	DrawSlider (MAX(x2, x), mYpos);
 }
 

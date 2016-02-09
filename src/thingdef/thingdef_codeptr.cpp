@@ -1711,6 +1711,12 @@ static void DoGiveInventory(AActor * receiver, bool use_aaptr, DECLARE_PARAMINFO
 	if (amount==0) amount=1;
 	if (mi) 
 	{
+		if (!mi->IsDescendantOf (RUNTIME_CLASS(AInventory)))
+		{
+			ACTION_SET_RESULT(false);
+			return;
+		}
+
 		AInventory *item = static_cast<AInventory *>(Spawn (mi, 0, 0, 0, NO_REPLACE));
 		if (!item)
 		{

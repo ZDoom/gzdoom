@@ -444,7 +444,7 @@ void LoadActors ()
 	}
 	FinishThingdef();
 	timer.Unclock();
-	Printf("DECORATE parsing took %.2f ms\n", timer.TimeMS());
+	if (!batchrun) Printf("DECORATE parsing took %.2f ms\n", timer.TimeMS());
 	// Base time: ~52 ms
 }
 

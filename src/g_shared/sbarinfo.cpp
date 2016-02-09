@@ -434,7 +434,7 @@ void SBarInfo::Load()
 		int lump = Wads.CheckNumForFullName(gameinfo.statusbar, true);
 		if(lump != -1)
 		{
-			Printf ("ParseSBarInfo: Loading default status bar definition.\n");
+			if (!batchrun) Printf ("ParseSBarInfo: Loading default status bar definition.\n");
 			if(SBarInfoScript[SCRIPT_DEFAULT] == NULL)
 				SBarInfoScript[SCRIPT_DEFAULT] = new SBarInfo(lump);
 			else
@@ -444,7 +444,7 @@ void SBarInfo::Load()
 
 	if(Wads.CheckNumForName("SBARINFO") != -1)
 	{
-		Printf ("ParseSBarInfo: Loading custom status bar definition.\n");
+		if (!batchrun) Printf ("ParseSBarInfo: Loading custom status bar definition.\n");
 		int lastlump, lump;
 		lastlump = 0;
 		while((lump = Wads.FindLump("SBARINFO", &lastlump)) != -1)

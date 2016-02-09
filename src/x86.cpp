@@ -195,7 +195,7 @@ void DumpCPUInfo(const CPUInfo *cpu)
 	}
 	*t = '\0';
 
-	if (cpu->VendorID[0])
+	if (cpu->VendorID[0] && !batchrun)
 	{
 		Printf("CPU Vendor ID: %s\n", cpu->VendorID);
 		if (cpustring[0])

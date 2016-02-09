@@ -121,7 +121,7 @@ bool FGrpFile::Open(bool quiet)
 		fileinfo[i].NameWithZero[12] = '\0';	// Be sure filename is null-terminated
 		Lumps[i].LumpNameSetup(fileinfo[i].NameWithZero);
 	}
-	if (!quiet) Printf(", %d lumps\n", NumLumps);
+	if (!quiet && !batchrun) Printf(", %d lumps\n", NumLumps);
 
 	delete[] fileinfo;
 	return true;

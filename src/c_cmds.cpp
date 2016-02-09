@@ -456,9 +456,9 @@ CCMD (exec)
 	}
 }
 
-void execLogfile(const char *fn)
+void execLogfile(const char *fn, bool append)
 {
-	if ((Logfile = fopen(fn, "w")))
+	if ((Logfile = fopen(fn, append? "a" : "w")))
 	{
 		const char *timestr = myasctime();
 		Printf("Log started: %s\n", timestr);
@@ -482,7 +482,7 @@ CCMD (logfile)
 
 	if (argv.argc() >= 2)
 	{
-		execLogfile(argv[1]);
+		execLogfile(argv[1], argv.argc() >=3? !!argv[2]:false);
 	}
 }
 

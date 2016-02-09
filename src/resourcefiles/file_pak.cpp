@@ -104,7 +104,7 @@ bool FPakFile::Open(bool quiet)
 
 	Lumps = new FUncompressedLump[NumLumps];
 
-	if (!quiet) Printf(", %d lumps\n", NumLumps);
+	if (!quiet && !batchrun) Printf(", %d lumps\n", NumLumps);
 
 	for(DWORD i = 0; i < NumLumps; i++)
 	{

@@ -98,6 +98,7 @@ enum
 	CLASSREG_PClassPlayerPawn,
 	CLASSREG_PClassType,
 	CLASSREG_PClassClass,
+	CLASSREG_PClassWeaponPiece
 };
 
 struct ClassReg

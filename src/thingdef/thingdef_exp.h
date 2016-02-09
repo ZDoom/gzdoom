@@ -984,7 +984,7 @@ public:
 };
 
 
-FxExpression *ParseExpression (FScanner &sc, PClassActor *cls);
+FxExpression *ParseExpression (FScanner &sc, PClassActor *cls, bool mustresolve = false);
 
 
 #endif

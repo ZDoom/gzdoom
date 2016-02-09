@@ -30,15 +30,37 @@ PClassInventory::PClassInventory()
 	AltHUDIcon.SetNull();
 }
 
-void PClassInventory::Derive(PClass *newclass)
+void PClassInventory::DeriveData(PClass *newclass)
 {
 	assert(newclass->IsKindOf(RUNTIME_CLASS(PClassInventory)));
-	Super::Derive(newclass);
+	Super::DeriveData(newclass);
 	PClassInventory *newc = static_cast<PClassInventory *>(newclass);
 
 	newc->PickupMessage = PickupMessage;
 	newc->GiveQuest = GiveQuest;
 	newc->AltHUDIcon = AltHUDIcon;
+	newc->ForbiddenToPlayerClass = ForbiddenToPlayerClass;
+	newc->RestrictedToPlayerClass = RestrictedToPlayerClass;
+}
+
+void PClassInventory::ReplaceClassRef(PClass *oldclass, PClass *newclass)
+{
+	Super::ReplaceClassRef(oldclass, newclass);
+	AInventory *def = (AInventory*)Defaults;
+	if (def != NULL)
+	{
+		if (def->PickupFlash == oldclass) def->PickupFlash = static_cast<PClassActor *>(newclass);
+		for (unsigned i = 0; i < ForbiddenToPlayerClass.Size(); i++)
+		{
+			if (ForbiddenToPlayerClass[i] == oldclass)
+				ForbiddenToPlayerClass[i] = static_cast<PClassPlayerPawn*>(newclass);
+		}
+		for (unsigned i = 0; i < RestrictedToPlayerClass.Size(); i++)
+		{
+			if (RestrictedToPlayerClass[i] == oldclass)
+				RestrictedToPlayerClass[i] = static_cast<PClassPlayerPawn*>(newclass);
+		}
+	}
 }
 
 IMPLEMENT_CLASS(PClassAmmo)
@@ -48,10 +70,10 @@ PClassAmmo::PClassAmmo()
 	DropAmount = 0;
 }
 
-void PClassAmmo::Derive(PClass *newclass)
+void PClassAmmo::DeriveData(PClass *newclass)
 {
 	assert(newclass->IsKindOf(RUNTIME_CLASS(PClassAmmo)));
-	Super::Derive(newclass);
+	Super::DeriveData(newclass);
 	PClassAmmo *newc = static_cast<PClassAmmo *>(newclass);
 
 	newc->DropAmount = DropAmount;
@@ -1524,7 +1546,7 @@ bool AInventory::CanPickup (AActor *toucher)
 	if (!toucher)
 		return false;
 
-	PClassActor *ai = GetClass();
+	PClassInventory *ai = GetClass();
 	// Is the item restricted to certain player classes?
 	if (ai->RestrictedToPlayerClass.Size() != 0)
 	{
@@ -1672,10 +1694,10 @@ PClassHealth::PClassHealth()
 //
 //===========================================================================
 
-void PClassHealth::Derive(PClass *newclass)
+void PClassHealth::DeriveData(PClass *newclass)
 {
 	assert(newclass->IsKindOf(RUNTIME_CLASS(PClassHealth)));
-	Super::Derive(newclass);
+	Super::DeriveData(newclass);
 	PClassHealth *newc = static_cast<PClassHealth *>(newclass);
 	
 	newc->LowHealth = LowHealth;

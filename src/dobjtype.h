@@ -601,8 +601,7 @@ public:
 
 enum
 {
-	TClass_Fatal = UINT_MAX,
-	TClass_Nonfatal = UINT_MAX - 1
+	TentativeClass = UINT_MAX,
 };
 
 class PClassClass;
@@ -611,13 +610,14 @@ class PClass : public PStruct
 	DECLARE_CLASS(PClass, PStruct);
 	HAS_OBJECT_POINTERS;
 protected:
-	virtual void Derive(PClass *newclass);
 	// We unravel _WITH_META here just as we did for PType.
 	enum { MetaClassNum = CLASSREG_PClassClass };
+	virtual void Derive(PClass *newclass);
 public:
 	typedef PClassClass MetaClass;
 	MetaClass *GetClass() const;
 
+	virtual void DeriveData(PClass *newclass) {}
 	static void StaticInit();
 	static void StaticShutdown();
 	static void StaticBootstrap();
@@ -678,9 +678,9 @@ class PClassType : public PClass
 {
 	DECLARE_CLASS(PClassType, PClass);
 protected:
-	virtual void Derive(PClass *newclass);
 public:
 	PClassType();
+	virtual void Derive(PClass *newclass);
 
 	PClass *TypeTableType;	// The type to use for hashing into the type table
 };

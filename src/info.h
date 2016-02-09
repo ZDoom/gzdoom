@@ -237,8 +237,6 @@ public:
 	PainChanceList *PainChances;
 
 	TArray<PClassPlayerPawn *> VisibleToPlayerClass;
-	TArray<PClassPlayerPawn *> RestrictedToPlayerClass;
-	TArray<PClassPlayerPawn *> ForbiddenToPlayerClass;
 
 	FString Obituary;		// Player was killed by this actor
 	FString HitObituary;	// Player was killed by this actor in melee

@@ -275,6 +275,22 @@ void PClassActor::DeriveData(PClass *newclass)
 	newa->MeleeSound = MeleeSound;
 	newa->MissileName = MissileName;
 	newa->MissileHeight = MissileHeight;
+
+	newa->VisibleToPlayerClass = VisibleToPlayerClass;
+
+	if (DamageFactors != NULL)
+	{
+		// copy damage factors from parent
+		newa->DamageFactors = new DmgFactors;
+		*newa->DamageFactors = *DamageFactors;
+	}
+	if (PainChances != NULL)
+	{
+		// copy pain chances from parent
+		newa->PainChances = new PainChanceList;
+		*newa->PainChances = *PainChances;
+	}
+
 }
 
 //==========================================================================
@@ -528,16 +544,6 @@ void PClassActor::ReplaceClassRef(PClass *oldclass, PClass *newclass)
 	{
 		if (VisibleToPlayerClass[i] == oldclass)
 			VisibleToPlayerClass[i] = static_cast<PClassPlayerPawn*>(newclass);
-	}
-	for (unsigned i = 0; i < ForbiddenToPlayerClass.Size(); i++)
-	{
-		if (ForbiddenToPlayerClass[i] == oldclass)
-			ForbiddenToPlayerClass[i] = static_cast<PClassPlayerPawn*>(newclass);
-	}
-	for (unsigned i = 0; i < RestrictedToPlayerClass.Size(); i++)
-	{
-		if (RestrictedToPlayerClass[i] == oldclass)
-			RestrictedToPlayerClass[i] = static_cast<PClassPlayerPawn*>(newclass);
 	}
 	AActor *def = (AActor*)Defaults;
 	if (def != NULL)

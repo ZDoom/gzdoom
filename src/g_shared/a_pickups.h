@@ -143,6 +143,8 @@ public:
 	FString PickupMessage;
 	int GiveQuest;			// Optionally give one of the quest items.
 	FTextureID AltHUDIcon;
+	TArray<PClassPlayerPawn *> RestrictedToPlayerClass;
+	TArray<PClassPlayerPawn *> ForbiddenToPlayerClass;
 };
 
 class AInventory : public AActor

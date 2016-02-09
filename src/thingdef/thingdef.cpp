@@ -145,23 +145,6 @@ PClassActor *CreateNewActor(const FScriptPosition &sc, FName typeName, FName par
 		ti = static_cast<PClassActor *>(parent->CreateDerivedClass (typeName, parent->Size));
 	}
 
-	// Copy class lists from parent
-	ti->ForbiddenToPlayerClass = parent->ForbiddenToPlayerClass;
-	ti->RestrictedToPlayerClass = parent->RestrictedToPlayerClass;
-	ti->VisibleToPlayerClass = parent->VisibleToPlayerClass;
-
-	if (parent->DamageFactors != NULL)
-	{
-		// copy damage factors from parent
-		ti->DamageFactors = new DmgFactors;
-		*ti->DamageFactors = *parent->DamageFactors;
-	}
-	if (parent->PainChances != NULL)
-	{
-		// copy pain chances from parent
-		ti->PainChances = new PainChanceList;
-		*ti->PainChances = *parent->PainChances;
-	}
 	ti->Replacee = ti->Replacement = NULL;
 	ti->DoomEdNum = -1;
 	return ti;

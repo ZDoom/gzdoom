@@ -50,6 +50,16 @@ void PClassInventory::ReplaceClassRef(PClass *oldclass, PClass *newclass)
 	if (def != NULL)
 	{
 		if (def->PickupFlash == oldclass) def->PickupFlash = static_cast<PClassActor *>(newclass);
+		for (unsigned i = 0; i < ForbiddenToPlayerClass.Size(); i++)
+		{
+			if (ForbiddenToPlayerClass[i] == oldclass)
+				ForbiddenToPlayerClass[i] = static_cast<PClassPlayerPawn*>(newclass);
+		}
+		for (unsigned i = 0; i < RestrictedToPlayerClass.Size(); i++)
+		{
+			if (RestrictedToPlayerClass[i] == oldclass)
+				RestrictedToPlayerClass[i] = static_cast<PClassPlayerPawn*>(newclass);
+		}
 	}
 }
 
@@ -1536,7 +1546,7 @@ bool AInventory::CanPickup (AActor *toucher)
 	if (!toucher)
 		return false;
 
-	PClassActor *ai = GetClass();
+	PClassInventory *ai = GetClass();
 	// Is the item restricted to certain player classes?
 	if (ai->RestrictedToPlayerClass.Size() != 0)
 	{

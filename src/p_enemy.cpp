@@ -2823,8 +2823,7 @@ void A_Face (AActor *self, AActor *other, angle_t max_turn, angle_t max_pitch, a
 		{
 			self->pitch = other_pitch;
 		}
-		if (flags & FAF_NODISTFACTOR)
-			self->pitch += pitch_offset;
+		self->pitch += pitch_offset;
 	}
 	
 

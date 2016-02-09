@@ -324,7 +324,12 @@ void FValueTextItem::Drawer(bool selected)
 	screen->DrawText(mFont, selected? OptionSettings.mFontColorSelection : mFontColor, mXpos, mYpos, text, DTA_Clean, true, TAG_DONE);
 
 	int x = mXpos + mFont->StringWidth(text) + 8;
-	if (mSelections.Size() > 0) screen->DrawText(mFont, mFontColor2, x, mYpos, mSelections[mSelection], DTA_Clean, true, TAG_DONE);
+	if (mSelections.Size() > 0)
+	{
+		const char *mOptValue = mSelections[mSelection];
+		if (*mOptValue == '$') mOptValue = GStrings(mOptValue + 1);
+		screen->DrawText(mFont, mFontColor2, x, mYpos, mOptValue, DTA_Clean, true, TAG_DONE);
+	}
 }
 
 //=============================================================================
@@ -479,7 +484,7 @@ void FSliderItem::Drawer(bool selected)
 	screen->DrawText(mFont, selected? OptionSettings.mFontColorSelection : mFontColor, mXpos, mYpos, text, DTA_Clean, true, TAG_DONE);
 
 	int x = SmallFont->StringWidth ("Green") + 8 + mXpos;
-	int x2 = SmallFont->StringWidth (mText) + 8 + mXpos;
+	int x2 = SmallFont->StringWidth (text) + 8 + mXpos;
 	DrawSlider (MAX(x2, x), mYpos);
 }
 

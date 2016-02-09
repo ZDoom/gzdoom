@@ -635,11 +635,11 @@ static void ParseFloor (FScanner &sc)
 
 	if (!picnum.Exists())
 	{
-		sc.MustGetString();
 		if (!opt)
 		{
 			Printf("Unknown flat %s\n", sc.String);
 		}
+		sc.MustGetString();
 		return;
 	}
 	sc.MustGetString ();

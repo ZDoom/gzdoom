@@ -137,6 +137,7 @@ PClassActor *CreateNewActor(const FScriptPosition &sc, FName typeName, FName par
 			goto create;
 		}
 		ti->InitializeNativeDefaults();
+		ti->ParentClass->DeriveData(ti);
 	}
 	else
 	{

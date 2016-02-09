@@ -73,9 +73,9 @@ class PClassPlayerPawn : public PClassActor
 {
 	DECLARE_CLASS(PClassPlayerPawn, PClassActor);
 protected:
-	virtual void Derive(PClass *newclass);
 public:
 	PClassPlayerPawn();
+	virtual void DeriveData(PClass *newclass);
 	void EnumColorSets(TArray<int> *out);
 	FPlayerColorSet *GetColorSet(int setnum) { return ColorSets.CheckKey(setnum); }
 	void SetPainFlash(FName type, PalEntry color);

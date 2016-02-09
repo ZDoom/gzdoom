@@ -32,6 +32,10 @@ ACTOR Actor native //: Thinker
 	RipLevelMin 0
 	RipLevelMax 0
 	DefThreshold 100
+	BloodType "Blood", "BloodSplatter", "AxeBlood"
+	ExplosionDamage 128
+	MissileHeight 32
+	
 
 	// Functions
 	native bool CheckClass(class<Actor> checkclass, int ptr_select = AAPTR_DEFAULT, bool match_superclass = false);

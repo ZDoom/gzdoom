@@ -201,16 +201,11 @@ PClassActor::PClassActor()
 	FastSpeed = FIXED_MIN;
 	RDFactor = FRACUNIT;
 	CameraHeight = FIXED_MIN;
-	BloodType = NAME_Blood;
-	BloodType2 = NAME_BloodSplatter;
-	BloodType3 = NAME_AxeBlood;
 
 	DropItems = NULL;
 
 	DontHurtShooter = false;
-	ExplosionDamage = 128;
 	ExplosionRadius = -1;
-	MissileHeight = 32*FRACUNIT;
 	MeleeDamage = 0;
 
 	// Record this in the master list.
@@ -250,10 +245,9 @@ PClassActor::~PClassActor()
 //
 //==========================================================================
 
-void PClassActor::Derive(PClass *newclass)
+void PClassActor::DeriveData(PClass *newclass)
 {
 	assert(newclass->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	Super::Derive(newclass);
 	PClassActor *newa = static_cast<PClassActor *>(newclass);
 
 	newa->Obituary = Obituary;

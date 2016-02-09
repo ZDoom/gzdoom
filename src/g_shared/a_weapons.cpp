@@ -44,10 +44,10 @@ PClassWeapon::PClassWeapon()
 	SlotPriority = FIXED_MAX;
 }
 
-void PClassWeapon::Derive(PClass *newclass)
+void PClassWeapon::DeriveData(PClass *newclass)
 {
 	assert(newclass->IsKindOf(RUNTIME_CLASS(PClassWeapon)));
-	Super::Derive(newclass);
+	Super::DeriveData(newclass);
 	PClassWeapon *newc = static_cast<PClassWeapon *>(newclass);
 
 	newc->SlotNumber = SlotNumber;

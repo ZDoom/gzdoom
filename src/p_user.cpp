@@ -515,10 +515,10 @@ PClassPlayerPawn::PClassPlayerPawn()
 	ColorRangeEnd = 0;
 }
 
-void PClassPlayerPawn::Derive(PClass *newclass)
+void PClassPlayerPawn::DeriveData(PClass *newclass)
 {
 	assert(newclass->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
-	Super::Derive(newclass);
+	Super::DeriveData(newclass);
 	PClassPlayerPawn *newp = static_cast<PClassPlayerPawn *>(newclass);
 	size_t i;
 

@@ -2347,6 +2347,7 @@ PClass *PClass::CreateDerivedClass(FName name, unsigned int size)
 	type->Size = size;
 	type->bRuntimeClass = true;
 	Derive(type);
+	DeriveData(type);
 	if (!notnew)
 	{
 		type->InsertIntoHash();

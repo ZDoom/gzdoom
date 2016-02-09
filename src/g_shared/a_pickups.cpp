@@ -30,10 +30,10 @@ PClassInventory::PClassInventory()
 	AltHUDIcon.SetNull();
 }
 
-void PClassInventory::Derive(PClass *newclass)
+void PClassInventory::DeriveData(PClass *newclass)
 {
 	assert(newclass->IsKindOf(RUNTIME_CLASS(PClassInventory)));
-	Super::Derive(newclass);
+	Super::DeriveData(newclass);
 	PClassInventory *newc = static_cast<PClassInventory *>(newclass);
 
 	newc->PickupMessage = PickupMessage;
@@ -60,10 +60,10 @@ PClassAmmo::PClassAmmo()
 	DropAmount = 0;
 }
 
-void PClassAmmo::Derive(PClass *newclass)
+void PClassAmmo::DeriveData(PClass *newclass)
 {
 	assert(newclass->IsKindOf(RUNTIME_CLASS(PClassAmmo)));
-	Super::Derive(newclass);
+	Super::DeriveData(newclass);
 	PClassAmmo *newc = static_cast<PClassAmmo *>(newclass);
 
 	newc->DropAmount = DropAmount;
@@ -1684,10 +1684,10 @@ PClassHealth::PClassHealth()
 //
 //===========================================================================
 
-void PClassHealth::Derive(PClass *newclass)
+void PClassHealth::DeriveData(PClass *newclass)
 {
 	assert(newclass->IsKindOf(RUNTIME_CLASS(PClassHealth)));
-	Super::Derive(newclass);
+	Super::DeriveData(newclass);
 	PClassHealth *newc = static_cast<PClassHealth *>(newclass);
 	
 	newc->LowHealth = LowHealth;

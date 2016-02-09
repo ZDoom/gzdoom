@@ -2322,12 +2322,19 @@ PClass *PClass::CreateDerivedClass(FName name, unsigned int size)
 	const PClass *existclass = FindClass(name);
 
 	// This is a placeholder so fill it in
-	if (existclass != NULL && existclass->Size == (unsigned)-1)
+	if (existclass != NULL && (existclass->Size == TClass_Fatal || existclass->Size == TClass_Nonfatal))
 	{
 		type = const_cast<PClass*>(existclass);
 		if (!IsDescendantOf(type->ParentClass))
 		{
-			I_Error("%s must inherit from %s but doesn't.", name.GetChars(), type->ParentClass->TypeName.GetChars());
+			if (existclass->Size == TClass_Fatal)
+			{
+				I_Error("%s must inherit from %s but doesn't.", name.GetChars(), type->ParentClass->TypeName.GetChars());
+			}
+			else
+			{
+				Printf(TEXTCOLOR_RED "%s must inherit from %s but doesn't.", name.GetChars(), type->ParentClass->TypeName.GetChars());
+			}
 		}
 		DPrintf("Defining placeholder class %s\n", name.GetChars());
 		notnew = true;
@@ -2380,7 +2387,7 @@ unsigned int PClass::Extend(unsigned int extension)
 //
 //==========================================================================
 
-PClass *PClass::FindClassTentative(FName name)
+PClass *PClass::FindClassTentative(FName name, bool fatal)
 {
 	if (name == NAME_None)
 	{
@@ -2400,7 +2407,7 @@ PClass *PClass::FindClassTentative(FName name)
 
 	type->TypeName = name;
 	type->ParentClass = this;
-	type->Size = -1;
+	type->Size = fatal? TClass_Fatal : TClass_Nonfatal;
 	type->bRuntimeClass = true;
 	TypeTable.AddType(type, RUNTIME_CLASS(PClass), (intptr_t)type->Outer, name, bucket);
 	return type;

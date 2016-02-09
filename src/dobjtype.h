@@ -599,6 +599,12 @@ public:
 
 // Meta-info for every class derived from DObject ---------------------------
 
+enum
+{
+	TClass_Fatal = UINT_MAX,
+	TClass_Nonfatal = UINT_MAX - 1
+};
+
 class PClassClass;
 class PClass : public PStruct
 {
@@ -661,7 +667,7 @@ public:
 	static PClassActor *FindActor(const FString &name)	{ return FindActor(FName(name, true)); }
 	static PClassActor *FindActor(ENamedName name)		{ return FindActor(FName(name)); }
 	static PClassActor *FindActor(FName name);
-	PClass *FindClassTentative(FName name);	// not static!
+	PClass *FindClassTentative(FName name, bool fatal = true);	// not static!
 
 	static TArray<PClass *> AllClasses;
 

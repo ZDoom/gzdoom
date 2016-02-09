@@ -3546,23 +3546,13 @@ FxExpression *FxClassTypeCast::Resolve(FCompileContext &ctx)
 
 		if (clsname != NAME_None)
 		{
-			cls = desttype->FindClassTentative(clsname);
-			if (cls == NULL)
+			// for backwards compatibility with old times it cannot be made a fatal error, if the class is not defined. :(
+			cls = desttype->FindClassTentative(clsname, false);
+			if (!cls->IsDescendantOf(desttype))
 			{
-				/* lax */
-				// Since this happens in released WADs it must pass without a terminal error... :(
-				ScriptPosition.Message(MSG_WARNING,
-					"Unknown class name '%s'", 
-					clsname.GetChars(), desttype->TypeName.GetChars());
-			}
-			else 
-			{
-				if (!cls->IsDescendantOf(desttype))
-				{
-					ScriptPosition.Message(MSG_ERROR,"class '%s' is not compatible with '%s'", clsname.GetChars(), desttype->TypeName.GetChars());
-					delete this;
-					return NULL;
-				}
+				ScriptPosition.Message(MSG_ERROR,"class '%s' is not compatible with '%s'", clsname.GetChars(), desttype->TypeName.GetChars());
+				delete this;
+				return NULL;
 			}
 			ScriptPosition.Message(MSG_DEBUG,"resolving '%s' as class name", clsname.GetChars());
 		}

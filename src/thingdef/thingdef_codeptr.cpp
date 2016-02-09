@@ -238,14 +238,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, CountInv)
 		self = COPY_AAPTR(self, pick_pointer);
 		if (self == NULL || itemtype == NULL)
 		{
-			ret->SetInt(false);
+			ret->SetInt(0);
 		}
 		else
 		{
 			AInventory *item = self->FindInventory(itemtype);
 			ret->SetInt(item ? item->Amount : 0);
-			return 1;
 		}
+		return 1;
 	}
 	return 0;
 }

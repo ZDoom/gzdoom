@@ -3564,8 +3564,8 @@ FxExpression *FxClassTypeCast::Resolve(FCompileContext &ctx)
 					delete this;
 					return NULL;
 				}
+				ScriptPosition.Message(MSG_DEBUG, "resolving '%s' as class name", clsname.GetChars());
 			}
-			ScriptPosition.Message(MSG_DEBUG, "resolving '%s' as class name", clsname.GetChars());
 		}
 		FxExpression *x = new FxConstant(cls, ScriptPosition);
 		delete this;

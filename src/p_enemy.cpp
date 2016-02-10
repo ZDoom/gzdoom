@@ -2525,7 +2525,7 @@ void A_DoChase (VMFrameStack *stack, AActor *actor, bool fastchase, FState *mele
 		// (copied from A_SerpentChase - it applies to everything with CANTLEAVEFLOORPIC!)
 		if (actor->flags2&MF2_CANTLEAVEFLOORPIC && actor->floorpic != oldFloor )
 		{
-			if (!(flags & CHF_STOPIFBLOCKED) && P_TryMove(actor, oldX, oldY, false))
+			if (P_TryMove(actor, oldX, oldY, false))
 			{
 				if (nomonsterinterpolation)
 				{

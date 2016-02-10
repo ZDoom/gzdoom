@@ -2414,7 +2414,7 @@ PClass *PClass::FindClassTentative(FName name, bool fatal)
 		return static_cast<PClass *>(found);
 	}
 	PClass *type = static_cast<PClass *>(GetClass()->CreateNew());
-	Printf("Creating placeholder class %s : %s\n", name.GetChars(), TypeName.GetChars());
+	DPrintf("Creating placeholder class %s : %s\n", name.GetChars(), TypeName.GetChars());
 
 	type->TypeName = name;
 	type->ParentClass = this;

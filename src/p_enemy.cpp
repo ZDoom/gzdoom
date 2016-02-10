@@ -2532,8 +2532,8 @@ void A_DoChase (VMFrameStack *stack, AActor *actor, bool fastchase, FState *mele
 					actor->PrevX = oldX;
 					actor->PrevY = oldY;
 				}
-				P_NewChaseDir(actor);
 			}
+			P_NewChaseDir(actor);
 		}
 	}
 	else if (dontmove && actor->movecount > 0) actor->movecount--;

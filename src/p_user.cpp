@@ -515,10 +515,10 @@ PClassPlayerPawn::PClassPlayerPawn()
 	ColorRangeEnd = 0;
 }
 
-void PClassPlayerPawn::Derive(PClass *newclass)
+void PClassPlayerPawn::DeriveData(PClass *newclass)
 {
 	assert(newclass->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
-	Super::Derive(newclass);
+	Super::DeriveData(newclass);
 	PClassPlayerPawn *newp = static_cast<PClassPlayerPawn *>(newclass);
 	size_t i;
 
@@ -579,6 +579,16 @@ bool PClassPlayerPawn::GetPainFlash(FName type, PalEntry *color) const
 		info = dyn_cast<PClassPlayerPawn>(info->ParentClass);
 	}
 	return false;
+}
+
+void PClassPlayerPawn::ReplaceClassRef(PClass *oldclass, PClass *newclass)
+{
+	Super::ReplaceClassRef(oldclass, newclass);
+	APlayerPawn *def = (APlayerPawn*)Defaults;
+	if (def != NULL)
+	{
+		if (def->FlechetteType == oldclass) def->FlechetteType = static_cast<PClassInventory *>(newclass);
+	}
 }
 
 //===========================================================================

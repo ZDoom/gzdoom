@@ -72,12 +72,15 @@ static FxExpression *ParseExpressionB (FScanner &sc, PClassActor *cls);
 static FxExpression *ParseExpressionA (FScanner &sc, PClassActor *cls);
 static FxExpression *ParseExpression0 (FScanner &sc, PClassActor *cls);
 
-FxExpression *ParseExpression (FScanner &sc, PClassActor *cls)
+FxExpression *ParseExpression (FScanner &sc, PClassActor *cls, bool mustresolve)
 {
 	FxExpression *data = ParseExpressionM (sc, cls);
 
-	FCompileContext ctx(cls);
-	data = data->Resolve(ctx);
+	if (mustresolve)
+	{
+		FCompileContext ctx(cls);
+		data = data->Resolve(ctx);
+	}
 
 	return data;
 }

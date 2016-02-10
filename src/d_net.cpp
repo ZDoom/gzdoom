@@ -1739,7 +1739,7 @@ void D_CheckNetGame (void)
 		Printf("Arbitrator selected " TEXTCOLOR_BLUE "%s" TEXTCOLOR_NORMAL " networking mode.\n", NetMode == NET_PeerToPeer ? "peer to peer" : "packet server");
 	}
 
-	Printf ("player %i of %i (%i nodes)\n",
+	if (!batchrun) Printf ("player %i of %i (%i nodes)\n",
 			consoleplayer+1, doomcom.numplayers, doomcom.numnodes);
 }
 

@@ -44,6 +44,7 @@
 #include "autosegs.h"
 #include "v_text.h"
 #include "a_pickups.h"
+#include "a_weaponpiece.h"
 #include "d_player.h"
 #include "fragglescript/t_fs.h"
 
@@ -2163,6 +2164,7 @@ PClass *ClassReg::RegisterClass()
 		&PClassPlayerPawn::RegistrationInfo,
 		&PClassType::RegistrationInfo,
 		&PClassClass::RegistrationInfo,
+		&PClassWeaponPiece::RegistrationInfo,
 	};
 
 	// Skip classes that have already been registered
@@ -2318,11 +2320,12 @@ PClass *PClass::CreateDerivedClass(FName name, unsigned int size)
 	assert (size >= Size);
 	PClass *type;
 	bool notnew;
+	size_t bucket;
 
-	const PClass *existclass = FindClass(name);
+	PClass *existclass = static_cast<PClass *>(TypeTable.FindType(RUNTIME_CLASS(PClass), /*FIXME:Outer*/0, name, &bucket));
 
 	// This is a placeholder so fill it in
-	if (existclass != NULL && existclass->Size == (unsigned)-1)
+	if (existclass != NULL && (existclass->Size == TentativeClass))
 	{
 		type = const_cast<PClass*>(existclass);
 		if (!IsDescendantOf(type->ParentClass))
@@ -2334,18 +2337,32 @@ PClass *PClass::CreateDerivedClass(FName name, unsigned int size)
 	}
 	else
 	{
-		// Create a new type object of the same type as us. (We may be a derived class of PClass.)
-		type = static_cast<PClass *>(GetClass()->CreateNew());
 		notnew = false;
 	}
+
+	// Create a new type object of the same type as us. (We may be a derived class of PClass.)
+	type = static_cast<PClass *>(GetClass()->CreateNew());
 
 	type->TypeName = name;
 	type->Size = size;
 	type->bRuntimeClass = true;
 	Derive(type);
+	DeriveData(type);
 	if (!notnew)
 	{
 		type->InsertIntoHash();
+	}
+	else
+	{
+		PClassActor::AllActorClasses.Pop();	// remove the newly added class from the list
+		// todo: replace all affected fields
+		for (unsigned i = 0; i < PClassActor::AllActorClasses.Size(); i++)
+		{
+			PClassActor::AllActorClasses[i]->ReplaceClassRef(existclass, type);
+			if (PClassActor::AllActorClasses[i] == existclass)
+				PClassActor::AllActorClasses[i] = static_cast<PClassActor*>(type);
+		}
+		TypeTable.ReplaceType(type, existclass, bucket);
 	}
 	return type;
 }
@@ -2380,7 +2397,7 @@ unsigned int PClass::Extend(unsigned int extension)
 //
 //==========================================================================
 
-PClass *PClass::FindClassTentative(FName name)
+PClass *PClass::FindClassTentative(FName name, bool fatal)
 {
 	if (name == NAME_None)
 	{
@@ -2396,11 +2413,11 @@ PClass *PClass::FindClassTentative(FName name)
 		return static_cast<PClass *>(found);
 	}
 	PClass *type = static_cast<PClass *>(GetClass()->CreateNew());
-	DPrintf("Creating placeholder class %s : %s\n", name.GetChars(), TypeName.GetChars());
+	Printf("Creating placeholder class %s : %s\n", name.GetChars(), TypeName.GetChars());
 
 	type->TypeName = name;
 	type->ParentClass = this;
-	type->Size = -1;
+	type->Size = TentativeClass;
 	type->bRuntimeClass = true;
 	TypeTable.AddType(type, RUNTIME_CLASS(PClass), (intptr_t)type->Outer, name, bucket);
 	return type;

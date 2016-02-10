@@ -1534,12 +1534,12 @@ DEFINE_PROPERTY(riplevelmax, I, Actor)
 //==========================================================================
 DEFINE_CLASS_PROPERTY(restrictedto, Ssssssssssssssssssss, Inventory)
 {
-	info->RestrictedToPlayerClass.Clear();
+	static_cast<PClassInventory*>(info)->RestrictedToPlayerClass.Clear();
 	for(int i = 0;i < PROP_PARM_COUNT;++i)
 	{
 		PROP_STRING_PARM(n, i);
 		if (*n != 0)
-			info->RestrictedToPlayerClass.Push(FindClassTentativePlayerPawn(n));
+			static_cast<PClassInventory*>(info)->RestrictedToPlayerClass.Push(FindClassTentativePlayerPawn(n));
 	}
 }
 
@@ -1548,12 +1548,12 @@ DEFINE_CLASS_PROPERTY(restrictedto, Ssssssssssssssssssss, Inventory)
 //==========================================================================
 DEFINE_CLASS_PROPERTY(forbiddento, Ssssssssssssssssssss, Inventory)
 {
-	info->ForbiddenToPlayerClass.Clear();
+	static_cast<PClassInventory*>(info)->ForbiddenToPlayerClass.Clear();
 	for(int i = 0;i < PROP_PARM_COUNT;++i)
 	{
 		PROP_STRING_PARM(n, i);
 		if (*n != 0)
-			info->ForbiddenToPlayerClass.Push(FindClassTentativePlayerPawn(n));
+			static_cast<PClassInventory*>(info)->ForbiddenToPlayerClass.Push(FindClassTentativePlayerPawn(n));
 	}
 }
 

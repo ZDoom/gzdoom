@@ -192,14 +192,15 @@ class PClassActor : public PClass
 	DECLARE_CLASS(PClassActor, PClass);
 	HAS_OBJECT_POINTERS;
 protected:
-	virtual void Derive(PClass *newclass);
 public:
 	static void StaticInit ();
 	static void StaticSetActorNums ();
+	virtual void DeriveData(PClass *newclass);
 
 	PClassActor();
 	~PClassActor();
 
+	virtual void ReplaceClassRef(PClass *oldclass, PClass *newclass);
 	void BuildDefaults();
 	void ApplyDefaults(BYTE *defaults);
 	void RegisterIDs();
@@ -236,8 +237,6 @@ public:
 	PainChanceList *PainChances;
 
 	TArray<PClassPlayerPawn *> VisibleToPlayerClass;
-	TArray<PClassPlayerPawn *> RestrictedToPlayerClass;
-	TArray<PClassPlayerPawn *> ForbiddenToPlayerClass;
 
 	FString Obituary;		// Player was killed by this actor
 	FString HitObituary;	// Player was killed by this actor in melee

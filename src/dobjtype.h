@@ -599,19 +599,25 @@ public:
 
 // Meta-info for every class derived from DObject ---------------------------
 
+enum
+{
+	TentativeClass = UINT_MAX,
+};
+
 class PClassClass;
 class PClass : public PStruct
 {
 	DECLARE_CLASS(PClass, PStruct);
 	HAS_OBJECT_POINTERS;
 protected:
-	virtual void Derive(PClass *newclass);
 	// We unravel _WITH_META here just as we did for PType.
 	enum { MetaClassNum = CLASSREG_PClassClass };
+	virtual void Derive(PClass *newclass);
 public:
 	typedef PClassClass MetaClass;
 	MetaClass *GetClass() const;
 
+	virtual void DeriveData(PClass *newclass) {}
 	static void StaticInit();
 	static void StaticShutdown();
 	static void StaticBootstrap();
@@ -661,7 +667,7 @@ public:
 	static PClassActor *FindActor(const FString &name)	{ return FindActor(FName(name, true)); }
 	static PClassActor *FindActor(ENamedName name)		{ return FindActor(FName(name)); }
 	static PClassActor *FindActor(FName name);
-	PClass *FindClassTentative(FName name);	// not static!
+	PClass *FindClassTentative(FName name, bool fatal = true);	// not static!
 
 	static TArray<PClass *> AllClasses;
 
@@ -672,9 +678,9 @@ class PClassType : public PClass
 {
 	DECLARE_CLASS(PClassType, PClass);
 protected:
-	virtual void Derive(PClass *newclass);
 public:
 	PClassType();
+	virtual void Derive(PClass *newclass);
 
 	PClass *TypeTableType;	// The type to use for hashing into the type table
 };

@@ -44,14 +44,27 @@ PClassWeapon::PClassWeapon()
 	SlotPriority = FIXED_MAX;
 }
 
-void PClassWeapon::Derive(PClass *newclass)
+void PClassWeapon::DeriveData(PClass *newclass)
 {
 	assert(newclass->IsKindOf(RUNTIME_CLASS(PClassWeapon)));
-	Super::Derive(newclass);
+	Super::DeriveData(newclass);
 	PClassWeapon *newc = static_cast<PClassWeapon *>(newclass);
 
 	newc->SlotNumber = SlotNumber;
 	newc->SlotPriority = SlotPriority;
+}
+
+
+void PClassWeapon::ReplaceClassRef(PClass *oldclass, PClass *newclass)
+{
+	Super::ReplaceClassRef(oldclass, newclass);
+	AWeapon *def = (AWeapon*)Defaults;
+	if (def != NULL)
+	{
+		if (def->AmmoType1 == oldclass) def->AmmoType1 = static_cast<PClassAmmo *>(newclass);
+		if (def->AmmoType2 == oldclass) def->AmmoType2 = static_cast<PClassAmmo *>(newclass);
+		if (def->SisterWeaponType == oldclass) def->SisterWeaponType = static_cast<PClassWeapon *>(newclass);
+	}
 }
 
 //===========================================================================

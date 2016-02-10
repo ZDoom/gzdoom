@@ -125,6 +125,8 @@ typedef TMap<int, PClassActor *> FClassMap;
 
 #include "basictypes.h"
 
+extern bool batchrun;
+
 // Bounding box coordinate storage.
 enum
 {

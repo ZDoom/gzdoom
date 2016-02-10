@@ -52,6 +52,7 @@
 #include "thingdef_exp.h"
 #include "m_fixed.h"
 #include "vmbuilder.h"
+#include "v_text.h"
 
 ExpEmit::ExpEmit(VMFunctionBuilder *build, int type)
 : RegNum(build->Registers[type].Get(1)), RegType(type), Konst(false), Fixed(false)
@@ -3503,7 +3504,7 @@ ExpEmit FxReturnStatement::Emit(VMFunctionBuilder *build, bool tailcall)
 //
 //==========================================================================
 
-FxClassTypeCast::FxClassTypeCast(const PClass *dtype, FxExpression *x)
+FxClassTypeCast::FxClassTypeCast(PClass *dtype, FxExpression *x)
 : FxExpression(x->ScriptPosition)
 {
 	desttype = dtype;
@@ -3542,7 +3543,7 @@ FxExpression *FxClassTypeCast::Resolve(FCompileContext &ctx)
 	if (basex->isConstant())
 	{
 		FName clsname = static_cast<FxConstant *>(basex)->GetValue().GetName();
-		const PClass *cls = NULL;
+		PClass *cls = NULL;
 
 		if (clsname != NAME_None)
 		{
@@ -3552,19 +3553,19 @@ FxExpression *FxClassTypeCast::Resolve(FCompileContext &ctx)
 				/* lax */
 				// Since this happens in released WADs it must pass without a terminal error... :(
 				ScriptPosition.Message(MSG_WARNING,
-					"Unknown class name '%s'", 
+					"Unknown class name '%s'",
 					clsname.GetChars(), desttype->TypeName.GetChars());
 			}
-			else 
+			else
 			{
 				if (!cls->IsDescendantOf(desttype))
 				{
-					ScriptPosition.Message(MSG_ERROR,"class '%s' is not compatible with '%s'", clsname.GetChars(), desttype->TypeName.GetChars());
+					ScriptPosition.Message(MSG_ERROR, "class '%s' is not compatible with '%s'", clsname.GetChars(), desttype->TypeName.GetChars());
 					delete this;
 					return NULL;
 				}
+				ScriptPosition.Message(MSG_DEBUG, "resolving '%s' as class name", clsname.GetChars());
 			}
-			ScriptPosition.Message(MSG_DEBUG,"resolving '%s' as class name", clsname.GetChars());
 		}
 		FxExpression *x = new FxConstant(cls, ScriptPosition);
 		delete this;

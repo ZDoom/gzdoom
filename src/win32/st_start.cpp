@@ -688,13 +688,16 @@ FHexenStartupScreen::FHexenStartupScreen(int max_progress, HRESULT &hr)
 	LayoutMainWindow (Window, NULL);
 	InvalidateRect (StartupScreen, NULL, TRUE);
 
-	if (DoomStartupInfo.Song.IsNotEmpty())
+	if (!batchrun)
 	{
-		S_ChangeMusic(DoomStartupInfo.Song.GetChars(), true, true);
-	}
-	else
-	{
-		S_ChangeMusic ("orb", true, true);
+		if (DoomStartupInfo.Song.IsNotEmpty())
+		{
+			S_ChangeMusic(DoomStartupInfo.Song.GetChars(), true, true);
+		}
+		else
+		{
+			S_ChangeMusic("orb", true, true);
+		}
 	}
 	hr = S_OK;
 }

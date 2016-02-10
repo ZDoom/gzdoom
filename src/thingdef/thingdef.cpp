@@ -137,6 +137,7 @@ PClassActor *CreateNewActor(const FScriptPosition &sc, FName typeName, FName par
 			goto create;
 		}
 		ti->InitializeNativeDefaults();
+		ti->ParentClass->DeriveData(ti);
 	}
 	else
 	{
@@ -144,23 +145,6 @@ PClassActor *CreateNewActor(const FScriptPosition &sc, FName typeName, FName par
 		ti = static_cast<PClassActor *>(parent->CreateDerivedClass (typeName, parent->Size));
 	}
 
-	// Copy class lists from parent
-	ti->ForbiddenToPlayerClass = parent->ForbiddenToPlayerClass;
-	ti->RestrictedToPlayerClass = parent->RestrictedToPlayerClass;
-	ti->VisibleToPlayerClass = parent->VisibleToPlayerClass;
-
-	if (parent->DamageFactors != NULL)
-	{
-		// copy damage factors from parent
-		ti->DamageFactors = new DmgFactors;
-		*ti->DamageFactors = *parent->DamageFactors;
-	}
-	if (parent->PainChances != NULL)
-	{
-		// copy pain chances from parent
-		ti->PainChances = new PainChanceList;
-		*ti->PainChances = *parent->PainChances;
-	}
 	ti->Replacee = ti->Replacement = NULL;
 	ti->DoomEdNum = -1;
 	return ti;
@@ -340,9 +324,9 @@ static void FinishThingdef()
 	{
 		PClassActor *ti = PClassActor::AllActorClasses[i];
 
-		if (ti->Size == (unsigned)-1)
+		if (ti->Size == TentativeClass)
 		{
-			Printf("Class %s referenced but not defined\n", ti->TypeName.GetChars());
+			Printf(TEXTCOLOR_RED "Class %s referenced but not defined\n", ti->TypeName.GetChars());
 			errorcount++;
 			continue;
 		}
@@ -439,7 +423,7 @@ void LoadActors ()
 	}
 	FinishThingdef();
 	timer.Unclock();
-	Printf("DECORATE parsing took %.2f ms\n", timer.TimeMS());
+	if (!batchrun) Printf("DECORATE parsing took %.2f ms\n", timer.TimeMS());
 	// Base time: ~52 ms
 }
 

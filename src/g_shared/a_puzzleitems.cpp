@@ -11,9 +11,9 @@
 
 IMPLEMENT_CLASS(PClassPuzzleItem)
 
-void PClassPuzzleItem::Derive(PClass *newclass)
+void PClassPuzzleItem::DeriveData(PClass *newclass)
 {
-	Super::Derive(newclass);
+	Super::DeriveData(newclass);
 	assert(newclass->IsKindOf(RUNTIME_CLASS(PClassPuzzleItem)));
 	static_cast<PClassPuzzleItem *>(newclass)->PuzzFailMessage = PuzzFailMessage;
 }

@@ -152,7 +152,7 @@ void PClassActor::StaticInit()
 		sprites.Push (temp);
 	}
 
-	Printf ("LoadActors: Load actor definitions.\n");
+	if (!batchrun) Printf ("LoadActors: Load actor definitions.\n");
 	ClearStrifeTypes();
 	LoadActors ();
 	InitBotStuff();
@@ -201,16 +201,11 @@ PClassActor::PClassActor()
 	FastSpeed = FIXED_MIN;
 	RDFactor = FRACUNIT;
 	CameraHeight = FIXED_MIN;
-	BloodType = NAME_Blood;
-	BloodType2 = NAME_BloodSplatter;
-	BloodType3 = NAME_AxeBlood;
 
 	DropItems = NULL;
 
 	DontHurtShooter = false;
-	ExplosionDamage = 128;
 	ExplosionRadius = -1;
-	MissileHeight = 32*FRACUNIT;
 	MeleeDamage = 0;
 
 	// Record this in the master list.
@@ -250,10 +245,9 @@ PClassActor::~PClassActor()
 //
 //==========================================================================
 
-void PClassActor::Derive(PClass *newclass)
+void PClassActor::DeriveData(PClass *newclass)
 {
 	assert(newclass->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	Super::Derive(newclass);
 	PClassActor *newa = static_cast<PClassActor *>(newclass);
 
 	newa->Obituary = Obituary;
@@ -281,6 +275,22 @@ void PClassActor::Derive(PClass *newclass)
 	newa->MeleeSound = MeleeSound;
 	newa->MissileName = MissileName;
 	newa->MissileHeight = MissileHeight;
+
+	newa->VisibleToPlayerClass = VisibleToPlayerClass;
+
+	if (DamageFactors != NULL)
+	{
+		// copy damage factors from parent
+		newa->DamageFactors = new DmgFactors;
+		*newa->DamageFactors = *DamageFactors;
+	}
+	if (PainChances != NULL)
+	{
+		// copy pain chances from parent
+		newa->PainChances = new PainChanceList;
+		*newa->PainChances = *PainChances;
+	}
+
 }
 
 //==========================================================================
@@ -519,6 +529,27 @@ void PClassActor::SetPainChance(FName type, int chance)
 	else if (PainChances != NULL)
 	{
 		PainChances->Remove(type);
+	}
+}
+
+//==========================================================================
+//
+// PClassActor :: ReplaceClassRef
+//
+//==========================================================================
+
+void PClassActor::ReplaceClassRef(PClass *oldclass, PClass *newclass)
+{
+	for (unsigned i = 0; i < VisibleToPlayerClass.Size(); i++)
+	{
+		if (VisibleToPlayerClass[i] == oldclass)
+			VisibleToPlayerClass[i] = static_cast<PClassPlayerPawn*>(newclass);
+	}
+	AActor *def = (AActor*)Defaults;
+	if (def != NULL)
+	{
+		if (def->TeleFogSourceType == oldclass) def->TeleFogSourceType = static_cast<PClassActor *>(newclass);
+		if (def->TeleFogDestType == oldclass) def->TeleFogDestType = static_cast<PClassActor *>(newclass);
 	}
 }
 

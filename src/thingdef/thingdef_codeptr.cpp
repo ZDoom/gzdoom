@@ -3310,7 +3310,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Burst)
 	// [RH] Do some stuff to make this more useful outside Hexen
 	if (self->flags4 & MF4_BOSSDEATH)
 	{
-		CALL_ACTION(A_BossDeath, self);
+		A_BossDeath(self);
 	}
 	A_Unblock(self, true);
 

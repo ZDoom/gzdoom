@@ -1343,13 +1343,13 @@ FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener
         FVector3 dir = pos - listener->position;
         if(dir.DoesNotApproximatelyEqual(FVector3(0.f, 0.f, 0.f)))
         {
-            float gain = GetRolloff(rolloff, sqrt(dist_sqr) * distscale);
+            float gain = GetRolloff(rolloff, sqrtf(dist_sqr) * distscale);
             dir.Resize((gain > 0.00001f) ? 1.f/gain : 100000.f);
         }
         if((chanflags&SNDF_AREA) && dist_sqr < AREA_SOUND_RADIUS*AREA_SOUND_RADIUS)
         {
             FVector3 amb(0.f, !(dir.Y>=0.f) ? -1.f : 1.f, 0.f);
-            float a = sqrt(dist_sqr) / AREA_SOUND_RADIUS;
+            float a = sqrtf(dist_sqr) / AREA_SOUND_RADIUS;
             dir = amb + (dir-amb)*a;
         }
         dir += listener->position;
@@ -1362,7 +1362,7 @@ FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener
 
         float mindist = rolloff->MinDistance/distscale;
         FVector3 amb(0.f, !(dir.Y>=0.f) ? -mindist : mindist, 0.f);
-        float a = sqrt(dist_sqr) / AREA_SOUND_RADIUS;
+        float a = sqrtf(dist_sqr) / AREA_SOUND_RADIUS;
         dir = amb + (dir-amb)*a;
 
         dir += listener->position;
@@ -1582,13 +1582,13 @@ void OpenALSoundRenderer::UpdateSoundParams3D(SoundListener *listener, FISoundCh
     {
         if(dir.DoesNotApproximatelyEqual(FVector3(0.f, 0.f, 0.f)))
         {
-            float gain = GetRolloff(&chan->Rolloff, sqrt(chan->DistanceSqr) * chan->DistanceScale);
+            float gain = GetRolloff(&chan->Rolloff, sqrtf(chan->DistanceSqr) * chan->DistanceScale);
             dir.Resize((gain > 0.00001f) ? 1.f/gain : 100000.f);
         }
         if(areasound && chan->DistanceSqr < AREA_SOUND_RADIUS*AREA_SOUND_RADIUS)
         {
             FVector3 amb(0.f, !(dir.Y>=0.f) ? -1.f : 1.f, 0.f);
-            float a = sqrt(chan->DistanceSqr) / AREA_SOUND_RADIUS;
+            float a = sqrtf(chan->DistanceSqr) / AREA_SOUND_RADIUS;
             dir = amb + (dir-amb)*a;
         }
     }
@@ -1596,7 +1596,7 @@ void OpenALSoundRenderer::UpdateSoundParams3D(SoundListener *listener, FISoundCh
     {
         float mindist = chan->Rolloff.MinDistance / chan->DistanceScale;
         FVector3 amb(0.f, !(dir.Y>=0.f) ? -mindist : mindist, 0.f);
-        float a = sqrt(chan->DistanceSqr) / AREA_SOUND_RADIUS;
+        float a = sqrtf(chan->DistanceSqr) / AREA_SOUND_RADIUS;
         dir = amb + (dir-amb)*a;
     }
     dir += listener->position;
@@ -1617,9 +1617,9 @@ void OpenALSoundRenderer::UpdateListener(SoundListener *listener)
     float angle = listener->angle;
     ALfloat orient[6];
     // forward
-    orient[0] = cos(angle);
+    orient[0] = cosf(angle);
     orient[1] = 0.f;
-    orient[2] = -sin(angle);
+    orient[2] = -sinf(angle);
     // up
     orient[3] = 0.f;
     orient[4] = 1.f;
@@ -1758,7 +1758,7 @@ float OpenALSoundRenderer::GetAudibility(FISoundChannel *chan)
     alGetSourcef(source, AL_GAIN, &volume);
     getALError();
 
-    volume *= GetRolloff(&chan->Rolloff, sqrt(chan->DistanceSqr) * chan->DistanceScale);
+    volume *= GetRolloff(&chan->Rolloff, sqrtf(chan->DistanceSqr) * chan->DistanceScale);
     return volume;
 }
 

@@ -88,17 +88,11 @@ FxExpression *ParseParameter(FScanner &sc, PClassActor *cls, PType *type, bool c
 		// Do automatic coercion between ints and floats.
 		if (type == TypeSInt32)
 		{
-			if (x->ValueType != VAL_Int)
-			{
-				x = new FxIntCast(x);
-			}
+			x = new FxIntCast(x);
 		}
 		else
 		{
-			if (x->ValueType != VAL_Float)
-			{
-				x = new FxFloatCast(x);
-			}
+			x = new FxFloatCast(x);
 		}
 	}
 	else if (type == TypeName || type == TypeString)

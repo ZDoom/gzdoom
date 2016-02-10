@@ -467,7 +467,8 @@ static FxExpression *ParseExpression0 (FScanner &sc, PClassActor *cls)
 			PFunction *func = dyn_cast<PFunction>(cls->Symbols.FindSymbol(identifier, true));
 			try
 			{
-				if (func != NULL)
+				// There is an action function ACS_NamedExecuteWithResult which must be ignored here for this to work.
+				if (func != NULL && identifier != NAME_ACS_NamedExecuteWithResult)
 				{
 					sc.UnGet();
 					ParseFunctionParameters(sc, cls, *args, func, "", NULL);

@@ -3235,7 +3235,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CountdownArg)
 	PARAM_INT(argnum);
 	PARAM_STATE_OPT(state)	{ state = self->FindState(NAME_Death); }
 
-	if (argnum > 0 && argnum < (int)countof(self->args))
+	if (argnum >= 0 && argnum < (int)countof(self->args))
 	{
 		if (!self->args[argnum]--)
 		{

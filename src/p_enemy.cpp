@@ -2533,7 +2533,8 @@ void A_DoChase (VMFrameStack *stack, AActor *actor, bool fastchase, FState *mele
 					actor->PrevY = oldY;
 				}
 			}
-			P_NewChaseDir(actor);
+			if (!(flags & CHF_STOPIFBLOCKED))
+				P_NewChaseDir(actor);
 		}
 	}
 	else if (dontmove && actor->movecount > 0) actor->movecount--;

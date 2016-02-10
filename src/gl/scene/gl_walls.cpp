@@ -47,6 +47,7 @@
 #include "vectors.h"
 #include "r_defs.h"
 #include "r_sky.h"
+#include "portal.h"
 
 #include "gl/system/gl_cvars.h"
 #include "gl/renderer/gl_lightdata.h"

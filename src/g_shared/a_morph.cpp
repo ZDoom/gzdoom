@@ -550,10 +550,7 @@ bool P_MorphedDeath(AActor *actor, AActor **morphed, int *morphedstyle, int *mor
 			if (realme->flags4 & MF4_BOSSDEATH)
 			{
 				realme->health = 0;	// make sure that A_BossDeath considers it dead.
-				// FIXME: Use the caller's stack once the whole chain is scriptable.
-				VMFrameStack stack;
-				VMValue params[3] = { realme, realme, VMValue(NULL, ATAG_STATE) };
-				stack.Call(A_BossDeath_VMPtr, params, countof(params), NULL, 0, NULL);
+				A_BossDeath(realme);
 			}
 		}
 		fakeme->flags3 |= MF3_STAYMORPHED; // moved here from AMorphedMonster::Die()

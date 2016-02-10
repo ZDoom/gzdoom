@@ -620,7 +620,9 @@ bool AActor::SetState (FState *newstate, bool nofunction)
 			if (ObjectFlags & OF_StateChanged)
 			{ // The action was an A_Jump-style function that wants to change the next state.
 				ObjectFlags &= ~OF_StateChanged;
+				FState *saved = newstate;
 				newstate = state;
+				state = saved;	// we need this for comparison of sprites.
 				tics = 0;		 // make sure we loop and set the new state properly
 				continue;
 			}

@@ -195,6 +195,7 @@ protected:
 	{
 		isresolved = false;
 		ScriptPosition = pos;
+		ValueType = VAL_Unresolved;
 	}
 public:
 	virtual ~FxExpression() {}

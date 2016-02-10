@@ -1715,7 +1715,7 @@ static void SetPointer(FState *state, PFunction *sym, int frame = 0)
 {
 	if (sym == NULL)
 	{
-		state->SetAction(NULL);
+		state->ClearAction();
 		return;
 	}
 	else

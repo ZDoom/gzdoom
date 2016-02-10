@@ -2165,6 +2165,7 @@ PClass *ClassReg::RegisterClass()
 		&PClassType::RegistrationInfo,
 		&PClassClass::RegistrationInfo,
 		&PClassWeaponPiece::RegistrationInfo,
+		&PClassPowerupGiver::RegistrationInfo,
 	};
 
 	// Skip classes that have already been registered

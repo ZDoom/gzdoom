@@ -219,6 +219,39 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, IsPointerEqual)
 
 //==========================================================================
 //
+// CountInv
+//
+// NON-ACTION function to return the inventory count of an item.
+//
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, CountInv)
+{
+	if (numret > 0)
+	{
+		assert(ret != NULL);
+		PARAM_PROLOGUE;
+		PARAM_OBJECT(self, AActor);
+		PARAM_CLASS(itemtype, AInventory);
+		PARAM_INT_OPT(pick_pointer)		{ pick_pointer = AAPTR_DEFAULT; }
+
+		self = COPY_AAPTR(self, pick_pointer);
+		if (self == NULL || itemtype == NULL)
+		{
+			ret->SetInt(0);
+		}
+		else
+		{
+			AInventory *item = self->FindInventory(itemtype);
+			ret->SetInt(item ? item->Amount : 0);
+		}
+		return 1;
+	}
+	return 0;
+}
+
+//==========================================================================
+//
 // A_RearrangePointers
 //
 // Allow an actor to change its relationship to other actors by
@@ -6419,8 +6452,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckProximity)
 	PARAM_CLASS(classname, AActor);
 	PARAM_FIXED(distance);
 	PARAM_INT_OPT(count) { count = 1; }
-	PARAM_INT(flags) { flags = 0; }
-	PARAM_INT(ptr) { ptr = AAPTR_DEFAULT; }
+	PARAM_INT_OPT(flags) { flags = 0; }
+	PARAM_INT_OPT(ptr) { ptr = AAPTR_DEFAULT; }
 
 	ACTION_SET_RESULT(false); //No inventory chain results please.
 
@@ -6455,7 +6488,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckProximity)
 		//Check inheritance for the classname. Taken partly from CheckClass DECORATE function.
 		if (flags & CPXF_ANCESTOR)
 		{
-			if (!(mo->GetClass()->IsAncestorOf(classname)))
+			if (!(mo->IsKindOf(classname)))
 				continue;
 		}
 		//Otherwise, just check for the regular class name.

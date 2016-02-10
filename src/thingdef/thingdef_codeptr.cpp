@@ -277,8 +277,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetDistance)
 		{
 			fixedvec3 diff = self->Vec3To(target);
 			diff.z += (target->height - self->height) / 2;
-			const double lengthsquared = TVector3<double>(diff.x, diff.y, diff.z).LengthSquared();
-			ret->SetFloat(lengthsquared);
+			const double length = TVector3<double>(FIXED2DBL(diff.x), FIXED2DBL(diff.y), FIXED2DBL(diff.z)).Length();
+			ret->SetFloat(length);
 		}
 		return 1;
 	}

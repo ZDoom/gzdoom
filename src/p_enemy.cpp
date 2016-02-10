@@ -2111,10 +2111,7 @@ void A_Wander(AActor *self, int flags)
 		}
 	}
 
-	if (self->movecount >= 0)
-		self->movecount--;
-
-	if ((!(flags & CHF_NORANDOMTURN) && self->movecount < 0) || !P_Move(self))
+	if ((--self->movecount < 0 && !(flags & CHF_NORANDOMTURN)) || (!P_Move(self) && !(flags & CHF_STOPIFBLOCKED)))
 	{
 		P_RandomChaseDir(self);
 		self->movecount += 5;

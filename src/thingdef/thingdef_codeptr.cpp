@@ -271,13 +271,15 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetDistance)
 
 		if (!target || target == self)
 		{
-			ret->SetFloat(false);
+			ret->SetFloat(0);
 		}
 		else
 		{
 			fixedvec3 diff = self->Vec3To(target);
-			diff.z += (target->height - self->height) / 2;
-			const double length = TVector3<double>(FIXED2DBL(diff.x), FIXED2DBL(diff.y), FIXED2DBL(diff.z)).Length();
+			if (checkz)
+				diff.z += (target->height - self->height) / 2;
+
+			const double length = TVector3<double>(FIXED2DBL(diff.x), FIXED2DBL(diff.y), (checkz) ? FIXED2DBL(diff.z) : 0).Length();
 			ret->SetFloat(length);
 		}
 		return 1;

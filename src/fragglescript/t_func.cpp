@@ -1571,7 +1571,7 @@ public:
 		bool res = DMover::crushed != MoveFloor(speed, dest, crush, direction, false);
 		Destroy();
 		m_Sector->floordata=NULL;
-		StopInterpolation();
+		StopInterpolation(true);
 		m_Sector=NULL;
 		return res;
 	}
@@ -1656,6 +1656,14 @@ public:
 		m_Speed=movespeed;
 		m_Direction = _m_Direction;
 		m_FloorDestDist = moveheight;
+
+		// Do not interpolate instant movement floors.
+		fixed_t movedist = abs(-sec->floorplane.d - moveheight);
+		if (m_Speed >= movedist)
+		{
+			StopInterpolation(true);
+		}
+
 		StartFloorSound();
 	}
 };
@@ -1713,7 +1721,7 @@ public:
 		bool res = DMover::crushed != MoveCeiling(speed, dest, crush, direction, false);
 		Destroy();
 		m_Sector->ceilingdata=NULL;
-		StopInterpolation ();
+		StopInterpolation (true);
 		m_Sector=NULL;
 		return res;
 	}
@@ -1806,7 +1814,7 @@ public:
 		fixed_t movedist = abs(sec->ceilingplane.d - m_BottomHeight);
 		if (m_Speed >= movedist)
 		{
-			StopInterpolation ();
+			StopInterpolation (true);
 			m_Silent=2;
 		}
 		PlayCeilingSound();

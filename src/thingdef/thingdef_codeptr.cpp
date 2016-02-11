@@ -3235,7 +3235,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CountdownArg)
 	PARAM_INT(argnum);
 	PARAM_STATE_OPT(state)	{ state = self->FindState(NAME_Death); }
 
-	if (argnum > 0 && argnum < (int)countof(self->args))
+	if (argnum >= 0 && argnum < (int)countof(self->args))
 	{
 		if (!self->args[argnum]--)
 		{
@@ -3310,7 +3310,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Burst)
 	// [RH] Do some stuff to make this more useful outside Hexen
 	if (self->flags4 & MF4_BOSSDEATH)
 	{
-		CALL_ACTION(A_BossDeath, self);
+		A_BossDeath(self);
 	}
 	A_Unblock(self, true);
 
@@ -6483,6 +6483,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckProximity)
 	while ((mo = it.Next()))
 	{
 		if (mo == ref) //Don't count self.
+			continue;
+
+		// no unmorphed versions of currently morphed players.
+		if (mo->flags & MF_UNMORPHED)
 			continue;
 
 		//Check inheritance for the classname. Taken partly from CheckClass DECORATE function.

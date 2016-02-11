@@ -8,6 +8,7 @@
 
 enum ExpValType
 {
+	VAL_Unresolved,	// type not yet known
 	VAL_Int,		// integer number
 	VAL_Float,		// floating point number
 	VAL_Unknown,	// nothing

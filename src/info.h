@@ -126,6 +126,8 @@ struct FState
 		Frame = frame - 'A';
 	}
 	void SetAction(VMFunction *func) { ActionFunc = func; }
+	void ClearAction() { ActionFunc = NULL; }
+	void SetAction(const char *name);
 	bool CallAction(AActor *self, AActor *stateowner);
 	static PClassActor *StaticFindStateOwner (const FState *state);
 	static PClassActor *StaticFindStateOwner (const FState *state, PClassActor *info);

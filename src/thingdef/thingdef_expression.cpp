@@ -623,7 +623,7 @@ ExpEmit FxMinusSign::Emit(VMFunctionBuilder *build)
 	else
 	{
 		assert(ValueType == VAL_Float);
-		build->Emit(OP_NEG, from.RegNum, from.RegNum, 0);
+		build->Emit(OP_FLOP, from.RegNum, from.RegNum, FLOP_NEG);
 	}
 	return from;
 }

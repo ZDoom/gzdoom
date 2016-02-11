@@ -79,11 +79,20 @@ const int SXF_ISMASTER				=	1 << 27;
 const int SXF_ISTRACER				=	1 << 28;
 
 // Flags for A_Chase
-const int CHF_FASTCHASE = 1;
-const int CHF_NOPLAYACTIVE = 2;
-const int CHF_NIGHTMAREFAST = 4;
-const int CHF_RESURRECT = 8;
-const int CHF_DONTMOVE = 16;
+enum
+{
+	CHF_FASTCHASE =						1,
+	CHF_NOPLAYACTIVE =					2,
+	CHF_NIGHTMAREFAST =					4,
+	CHF_RESURRECT =						8,
+	CHF_DONTMOVE =						16,
+	CHF_NORANDOMTURN =					32,
+	CHF_NODIRECTIONTURN =				64,
+	CHF_NOPOSTATTACKTURN =				128,
+	CHF_STOPIFBLOCKED =					256,
+
+	CHF_DONTTURN = CHF_NORANDOMTURN | CHF_NOPOSTATTACKTURN | CHF_STOPIFBLOCKED
+};
 
 // Flags for A_LookEx
 const int LOF_NOSIGHTCHECK = 1;

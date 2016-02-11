@@ -42,6 +42,18 @@ IMPLEMENT_CLASS (APowerup)
 
 // Powerup-Giver -------------------------------------------------------------
 
+IMPLEMENT_CLASS(PClassPowerupGiver)
+
+void PClassPowerupGiver::ReplaceClassRef(PClass *oldclass, PClass *newclass)
+{
+	Super::ReplaceClassRef(oldclass, newclass);
+	APowerupGiver *def = (APowerupGiver*)Defaults;
+	if (def != NULL)
+	{
+		if (def->PowerupType == oldclass) def->PowerupType = static_cast<PClassWeapon *>(newclass);
+	}
+}
+
 //===========================================================================
 //
 // APowerupGiver :: Use

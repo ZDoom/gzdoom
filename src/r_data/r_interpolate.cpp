@@ -344,9 +344,10 @@ int DInterpolation::AddRef()
 //
 //==========================================================================
 
-int DInterpolation::DelRef()
+int DInterpolation::DelRef(bool force)
 {
 	if (refcount > 0) --refcount;
+	if (force && refcount == 0) Destroy();
 	return refcount;
 }
 
@@ -935,20 +936,6 @@ DInterpolation *sector_t::SetInterpolation(int position, bool attach)
 	interpolations[position]->AddRef();
 	GC::WriteBarrier(interpolations[position]);
 	return interpolations[position];
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void sector_t::StopInterpolation(int position)
-{
-	if (interpolations[position] != NULL)
-	{
-		interpolations[position]->DelRef();
-	}
 }
 
 //==========================================================================

@@ -7782,8 +7782,12 @@ scriptwait:
 						break;
 
 					case PRINTNAME_LEVEL:
-						work += level.MapName;
-						break;
+					{
+						FString uppername = level.MapName;
+						uppername.ToUpper();
+						work += uppername;
+						break; 
+					}
 
 					case PRINTNAME_SKILL:
 						work += G_SkillName();

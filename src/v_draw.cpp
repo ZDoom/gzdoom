@@ -781,10 +781,10 @@ void DCanvas::VirtualToRealCoordsFixed(fixed_t &x, fixed_t &y, fixed_t &w, fixed
 {
 	double dx, dy, dw, dh;
 
-	dx = FIXED2FLOAT(x);
-	dy = FIXED2FLOAT(y);
-	dw = FIXED2FLOAT(w);
-	dh = FIXED2FLOAT(h);
+	dx = FIXED2DBL(x);
+	dy = FIXED2DBL(y);
+	dw = FIXED2DBL(w);
+	dh = FIXED2DBL(h);
 	VirtualToRealCoords(dx, dy, dw, dh, vwidth, vheight, vbottom, handleaspect);
 	x = FLOAT2FIXED(dx);
 	y = FLOAT2FIXED(dy);
@@ -1184,8 +1184,8 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 		return;
 	}
 
-	scalex /= FIXED2FLOAT(tex->xScale);
-	scaley /= FIXED2FLOAT(tex->yScale);
+	scalex /= FIXED2DBL(tex->xScale);
+	scaley /= FIXED2DBL(tex->yScale);
 
 	cosrot = cos(rot);
 	sinrot = sin(rot);

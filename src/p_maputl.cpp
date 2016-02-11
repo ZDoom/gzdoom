@@ -560,7 +560,7 @@ sector_t *AActor::LinkToWorldForMapThing ()
 					DPrintf ("%s at (%d,%d) lies on %s line %td, distance = %f\n",
 						this->GetClass()->TypeName.GetChars(), X()>>FRACBITS, Y()>>FRACBITS, 
 						ldef->dx == 0? "vertical" :	ldef->dy == 0? "horizontal" : "diagonal",
-						ldef-lines, FIXED2FLOAT(distance));
+						ldef-lines, FIXED2DBL(distance));
 					angle_t finean = R_PointToAngle2 (0, 0, ldef->dx, ldef->dy);
 					if (ldef->backsector != NULL && ldef->backsector == ssec->sector)
 					{

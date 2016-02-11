@@ -6507,7 +6507,7 @@ DDropItem *AActor::GetDropItems() const
 fixed_t AActor::GetGravity() const
 {
 	if (flags & MF_NOGRAVITY) return 0;
-	return fixed_t(level.gravity * Sector->gravity * FIXED2FLOAT(gravity) * 81.92);
+	return fixed_t(level.gravity * Sector->gravity * FIXED2DBL(gravity) * 81.92);
 }
 
 // killough 11/98:
@@ -6631,13 +6631,13 @@ void PrintMiscActorInfo(AActor *query)
 		for (flagi = 0; flagi <= 31; flagi++)
 			if (query->flags7 & ActorFlags7::FromInt(1<<flagi)) Printf(" %s", FLAG_NAME(1<<flagi, flags7));
 		Printf("\nBounce flags: %x\nBounce factors: f:%f, w:%f", 
-			query->BounceFlags.GetValue(), FIXED2FLOAT(query->bouncefactor),
-			FIXED2FLOAT(query->wallbouncefactor));
+			query->BounceFlags.GetValue(), FIXED2DBL(query->bouncefactor),
+			FIXED2DBL(query->wallbouncefactor));
 		/*for (flagi = 0; flagi < 31; flagi++)
 			if (query->BounceFlags & 1<<flagi) Printf(" %s", flagnamesb[flagi]);*/
 		Printf("\nRender style = %i:%s, alpha %f\nRender flags: %x", 
 			querystyle, (querystyle < STYLE_Count ? renderstyles[querystyle] : "Unknown"),
-			FIXED2FLOAT(query->alpha), query->renderflags.GetValue());
+			FIXED2DBL(query->alpha), query->renderflags.GetValue());
 		/*for (flagi = 0; flagi < 31; flagi++)
 			if (query->renderflags & 1<<flagi) Printf(" %s", flagnamesr[flagi]);*/
 		Printf("\nSpecial+args: %s(%i, %i, %i, %i, %i)\nspecial1: %i, special2: %i.",
@@ -6646,10 +6646,10 @@ void PrintMiscActorInfo(AActor *query)
 			query->args[4],	query->special1, query->special2);
 		Printf("\nTID: %d", query->tid);
 		Printf("\nCoord= x: %f, y: %f, z:%f, floor:%f, ceiling:%f.",
-			FIXED2FLOAT(query->X()), FIXED2FLOAT(query->Y()), FIXED2FLOAT(query->Z()),
-			FIXED2FLOAT(query->floorz), FIXED2FLOAT(query->ceilingz));
+			FIXED2DBL(query->X()), FIXED2DBL(query->Y()), FIXED2DBL(query->Z()),
+			FIXED2DBL(query->floorz), FIXED2DBL(query->ceilingz));
 		Printf("\nSpeed= %f, velocity= x:%f, y:%f, z:%f, combined:%f.\n",
-			FIXED2FLOAT(query->Speed), FIXED2FLOAT(query->velx), FIXED2FLOAT(query->vely), FIXED2FLOAT(query->velz),
-			sqrt(pow(FIXED2FLOAT(query->velx), 2) + pow(FIXED2FLOAT(query->vely), 2) + pow(FIXED2FLOAT(query->velz), 2)));
+			FIXED2DBL(query->Speed), FIXED2DBL(query->velx), FIXED2DBL(query->vely), FIXED2DBL(query->velz),
+			sqrt(pow(FIXED2DBL(query->velx), 2) + pow(FIXED2DBL(query->vely), 2) + pow(FIXED2DBL(query->velz), 2)));
 	}
 }

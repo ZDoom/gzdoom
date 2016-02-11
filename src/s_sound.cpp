@@ -63,10 +63,6 @@
 #define O_BINARY 0
 #endif
 
-#ifndef FIXED2FLOAT
-#define FIXED2FLOAT(f)			(((float)(f))/(float)65536)
-#endif
-
 #define NORM_PITCH				128
 #define NORM_PRIORITY			64
 #define NORM_SEP				0

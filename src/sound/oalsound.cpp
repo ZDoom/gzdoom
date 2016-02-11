@@ -83,6 +83,8 @@ bool IsOpenALPresent()
 {
 #ifdef NO_OPENAL
 	return false;
+#elif !defined DYN_OPENAL
+	return true;
 #else
 	static bool cached_result = false;
 	static bool done = false;
@@ -425,10 +427,10 @@ public:
     virtual bool IsEnded()
     {
         return !Playing.load();
-    }
+            }
 
     virtual FString GetStats()
-    {
+        {
         FString stats;
         size_t pos, len;
         ALfloat volume;
@@ -1538,24 +1540,24 @@ FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener
         else
         {
             alSourcei(source, AL_SOURCE_RELATIVE, AL_FALSE);
-            alSource3f(source, AL_POSITION, dir[0], dir[1], -dir[2]);
-        }
+        alSource3f(source, AL_POSITION, dir[0], dir[1], -dir[2]);
+    }
     }
     else
     {
         FVector3 dir = pos;
         if(AL.EXT_SOURCE_RADIUS)
             alSourcef(source, AL_SOURCE_RADIUS, (chanflags&SNDF_AREA) ? AREA_SOUND_RADIUS : 0.f);
-        else if((chanflags&SNDF_AREA) && dist_sqr < AREA_SOUND_RADIUS*AREA_SOUND_RADIUS)
-        {
+    else if((chanflags&SNDF_AREA) && dist_sqr < AREA_SOUND_RADIUS*AREA_SOUND_RADIUS)
+    {
             dir -= listener->position;
 
-            float mindist = rolloff->MinDistance/distscale;
-            FVector3 amb(0.f, !(dir.Y>=0.f) ? -mindist : mindist, 0.f);
-            float a = sqrtf(dist_sqr) / AREA_SOUND_RADIUS;
-            dir = amb + (dir-amb)*a;
+        float mindist = rolloff->MinDistance/distscale;
+        FVector3 amb(0.f, !(dir.Y>=0.f) ? -mindist : mindist, 0.f);
+        float a = sqrtf(dist_sqr) / AREA_SOUND_RADIUS;
+        dir = amb + (dir-amb)*a;
 
-            dir += listener->position;
+        dir += listener->position;
         }
         if(dist_sqr < (0.0004f*0.0004f))
         {
@@ -1566,8 +1568,8 @@ FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener
         else
         {
             alSourcei(source, AL_SOURCE_RELATIVE, AL_FALSE);
-            alSource3f(source, AL_POSITION, dir[0], dir[1], -dir[2]);
-        }
+        alSource3f(source, AL_POSITION, dir[0], dir[1], -dir[2]);
+    }
     }
     alSource3f(source, AL_VELOCITY, vel[0], vel[1], -vel[2]);
     alSource3f(source, AL_DIRECTION, 0.f, 0.f, 0.f);
@@ -1799,7 +1801,7 @@ void OpenALSoundRenderer::UpdateSoundParams3D(SoundListener *listener, FISoundCh
         {
             float gain = GetRolloff(&chan->Rolloff, sqrtf(chan->DistanceSqr)*chan->DistanceScale);
             dir.MakeResize((gain > 0.00001f) ? 1.f/gain : 100000.f);
-        }
+    }
     }
     else if(!AL.EXT_SOURCE_RADIUS && areasound &&
             chan->DistanceSqr < AREA_SOUND_RADIUS*AREA_SOUND_RADIUS)
@@ -1822,7 +1824,7 @@ void OpenALSoundRenderer::UpdateSoundParams3D(SoundListener *listener, FISoundCh
     else
     {
         alSourcei(source, AL_SOURCE_RELATIVE, AL_FALSE);
-        alSource3f(source, AL_POSITION, dir[0], dir[1], -dir[2]);
+    alSource3f(source, AL_POSITION, dir[0], dir[1], -dir[2]);
     }
     alSource3f(source, AL_VELOCITY, vel[0], vel[1], -vel[2]);
     getALError();

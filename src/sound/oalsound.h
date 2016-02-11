@@ -12,7 +12,9 @@
 
 #ifndef NO_OPENAL
 
+#ifdef DYN_OPENAL
 #define AL_NO_PROTOTYPES
+#endif // DYN_OPENAL
 
 #include "al.h"
 #include "alc.h"

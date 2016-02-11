@@ -3825,19 +3825,12 @@ void FParser::SF_ObjType()
 //
 //==========================================================================
 
-inline fixed_t double2fixed(double t)
-{
-	return (fixed_t)(t*65536.0);
-}
-
-
-
 void FParser::SF_Sin()
 {
 	if (CheckArgs(1))
 	{
 		t_return.type = svt_fixed;
-		t_return.value.f = double2fixed(sin(floatvalue(t_argv[0])));
+		t_return.value.f = FLOAT2FIXED(sin(floatvalue(t_argv[0])));
 	}
 }
 
@@ -3847,7 +3840,7 @@ void FParser::SF_ASin()
 	if (CheckArgs(1))
 	{
 		t_return.type = svt_fixed;
-		t_return.value.f = double2fixed(asin(floatvalue(t_argv[0])));
+		t_return.value.f = FLOAT2FIXED(asin(floatvalue(t_argv[0])));
 	}
 }
 
@@ -3857,7 +3850,7 @@ void FParser::SF_Cos()
 	if (CheckArgs(1))
 	{
 		t_return.type = svt_fixed;
-		t_return.value.f = double2fixed(cos(floatvalue(t_argv[0])));
+		t_return.value.f = FLOAT2FIXED(cos(floatvalue(t_argv[0])));
 	}
 }
 
@@ -3867,7 +3860,7 @@ void FParser::SF_ACos()
 	if (CheckArgs(1))
 	{
 		t_return.type = svt_fixed;
-		t_return.value.f = double2fixed(acos(floatvalue(t_argv[0])));
+		t_return.value.f = FLOAT2FIXED(acos(floatvalue(t_argv[0])));
 	}
 }
 
@@ -3877,7 +3870,7 @@ void FParser::SF_Tan()
 	if (CheckArgs(1))
 	{
 		t_return.type = svt_fixed;
-		t_return.value.f = double2fixed(tan(floatvalue(t_argv[0])));
+		t_return.value.f = FLOAT2FIXED(tan(floatvalue(t_argv[0])));
 	}
 }
 
@@ -3887,7 +3880,7 @@ void FParser::SF_ATan()
 	if (CheckArgs(1))
 	{
 		t_return.type = svt_fixed;
-		t_return.value.f = double2fixed(atan(floatvalue(t_argv[0])));
+		t_return.value.f = FLOAT2FIXED(atan(floatvalue(t_argv[0])));
 	}
 }
 
@@ -3897,7 +3890,7 @@ void FParser::SF_Exp()
 	if (CheckArgs(1))
 	{
 		t_return.type = svt_fixed;
-		t_return.value.f = double2fixed(exp(floatvalue(t_argv[0])));
+		t_return.value.f = FLOAT2FIXED(exp(floatvalue(t_argv[0])));
 	}
 }
 
@@ -3906,7 +3899,7 @@ void FParser::SF_Log()
 	if (CheckArgs(1))
 	{
 		t_return.type = svt_fixed;
-		t_return.value.f = double2fixed(log(floatvalue(t_argv[0])));
+		t_return.value.f = FLOAT2FIXED(log(floatvalue(t_argv[0])));
 	}
 }
 
@@ -3916,7 +3909,7 @@ void FParser::SF_Sqrt()
 	if (CheckArgs(1))
 	{
 		t_return.type = svt_fixed;
-		t_return.value.f = double2fixed(sqrt(floatvalue(t_argv[0])));
+		t_return.value.f = FLOAT2FIXED(sqrt(floatvalue(t_argv[0])));
 	}
 }
 
@@ -3936,7 +3929,7 @@ void FParser::SF_Pow()
 	if (CheckArgs(2))
 	{
 		t_return.type = svt_fixed;
-		t_return.value.f = double2fixed(pow(floatvalue(t_argv[0]), floatvalue(t_argv[1])));
+		t_return.value.f = FLOAT2FIXED(pow(floatvalue(t_argv[0]), floatvalue(t_argv[1])));
 	}
 }
 

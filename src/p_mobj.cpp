@@ -5875,7 +5875,7 @@ AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
 	// Answer: No, because this way, you can set up sets of parallel missiles.
 
 	fixedvec3 fixvel = source->Vec3To(dest);
-	FVector3 velocity(fixvel.x, fixvel.y, fixvel.z);
+	TVector3<double> velocity(fixvel.x, fixvel.y, fixvel.z);
 	// Floor and ceiling huggers should never have a vertical component to their velocity
 	if (th->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER))
 	{
@@ -5887,9 +5887,9 @@ AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
 		velocity.Z += (dest->height - z + source->Z());
 	}
 	velocity.Resize (speed);
-	th->velx = (fixed_t)(velocity.X);
-	th->vely = (fixed_t)(velocity.Y);
-	th->velz = (fixed_t)(velocity.Z);
+	th->velx = xs_CRoundToInt(velocity.X);
+	th->vely = xs_CRoundToInt(velocity.Y);
+	th->velz = xs_CRoundToInt(velocity.Z);
 
 	// invisible target: rotate velocity vector in 2D
 	// [RC] Now monsters can aim at invisible player as if they were fully visible.
@@ -6163,16 +6163,16 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 	vz = -finesine[pitch>>ANGLETOFINESHIFT];
 	speed = MissileActor->Speed;
 
-	FVector3 vec(vx, vy, vz);
+	TVector3<double> vec(vx, vy, vz);
 
 	if (MissileActor->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER))
 	{
 		vec.Z = 0;
 	}
 	vec.Resize(speed);
-	MissileActor->velx = (fixed_t)vec.X;
-	MissileActor->vely = (fixed_t)vec.Y;
-	MissileActor->velz = (fixed_t)vec.Z;
+	MissileActor->velx = xs_CRoundToInt(vec.X);
+	MissileActor->vely = xs_CRoundToInt(vec.Y);
+	MissileActor->velz = xs_CRoundToInt(vec.Z);
 
 	if (MissileActor->flags4 & MF4_SPECTRAL)
 	{

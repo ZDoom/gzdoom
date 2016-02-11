@@ -1187,8 +1187,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomMissile)
 				{
 					if (CMF_OFFSETPITCH & flags)
 					{
-							FVector2 velocity (missile->velx, missile->vely);
-							pitch += R_PointToAngle2(0,0, (fixed_t)velocity.Length(), missile->velz);
+							TVector2<double> velocity (missile->velx, missile->vely);
+							pitch += R_PointToAngle2(0,0, xs_CRoundToInt(velocity.Length()), missile->velz);
 					}
 					ang = pitch >> ANGLETOFINESHIFT;
 					missilespeed = abs(FixedMul(finecosine[ang], missile->Speed));
@@ -1196,8 +1196,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomMissile)
 				}
 				else
 				{
-					FVector2 velocity (missile->velx, missile->vely);
-					missilespeed = (fixed_t)velocity.Length();
+					TVector2<double> velocity (missile->velx, missile->vely);
+					missilespeed = xs_CRoundToInt(velocity.Length());
 				}
 
 				if (CMF_SAVEPITCH & flags)
@@ -1603,8 +1603,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireCustomMissile)
 			{
 				// This original implementation is to aim straight ahead and then offset
 				// the angle from the resulting direction. 
-				FVector3 velocity(misl->velx, misl->vely, 0);
-				fixed_t missilespeed = (fixed_t)velocity.Length();
+				TVector3<double> velocity(misl->velx, misl->vely, 0);
+				fixed_t missilespeed = xs_CRoundToInt(velocity.Length());
 				misl->angle += angle;
 				angle_t an = misl->angle >> ANGLETOFINESHIFT;
 				misl->velx = FixedMul (missilespeed, finecosine[an]);
@@ -6751,8 +6751,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceMovementDirection)
 	if (!(flags & FMDF_NOPITCH))
 	{
 		fixed_t current = mobj->pitch;
-		const FVector2 velocity(mobj->velx, mobj->vely);
-		const fixed_t pitch = R_PointToAngle2(0, 0, (fixed_t)velocity.Length(), -mobj->velz);
+		const TVector2<double> velocity(mobj->velx, mobj->vely);
+		const fixed_t pitch = R_PointToAngle2(0, 0, xs_CRoundToInt(velocity.Length()), -mobj->velz);
 		if (pitchlimit > 0)
 		{
 			// [MC] angle_t for pitchlimit was required because otherwise

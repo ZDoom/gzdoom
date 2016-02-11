@@ -252,6 +252,43 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, CountInv)
 
 //==========================================================================
 //
+// GetDistance
+//
+// NON-ACTION function to get the distance in double.
+//
+//==========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetDistance)
+{
+	if (numret > 0)
+	{
+		assert(ret != NULL);
+		PARAM_PROLOGUE;
+		PARAM_OBJECT(self, AActor);
+		PARAM_BOOL(checkz);
+		PARAM_INT_OPT(ptr) { ptr = AAPTR_TARGET; }
+
+		AActor *target = COPY_AAPTR(self, ptr);
+
+		if (!target || target == self)
+		{
+			ret->SetFloat(0);
+		}
+		else
+		{
+			fixedvec3 diff = self->Vec3To(target);
+			if (checkz)
+				diff.z += (target->height - self->height) / 2;
+
+			const double length = TVector3<double>(FIXED2DBL(diff.x), FIXED2DBL(diff.y), (checkz) ? FIXED2DBL(diff.z) : 0).Length();
+			ret->SetFloat(length);
+		}
+		return 1;
+	}
+	return 0;
+}
+
+//==========================================================================
+//
 // A_RearrangePointers
 //
 // Allow an actor to change its relationship to other actors by

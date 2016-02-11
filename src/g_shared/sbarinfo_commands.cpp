@@ -310,8 +310,8 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 			
 			if (applyscale)
 			{
-				spawnScaleX = FIXED2FLOAT(item->scaleX);
-				spawnScaleY = FIXED2FLOAT(item->scaleY);
+				spawnScaleX = FIXED2DBL(item->scaleX);
+				spawnScaleY = FIXED2DBL(item->scaleY);
 			}
 			
 			texture = TexMan[icon];

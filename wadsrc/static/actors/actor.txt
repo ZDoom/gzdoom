@@ -41,6 +41,7 @@ ACTOR Actor native //: Thinker
 	native bool CheckClass(class<Actor> checkclass, int ptr_select = AAPTR_DEFAULT, bool match_superclass = false);
 	native bool IsPointerEqual(int ptr_select1, int ptr_select2);
 	native int	CountInv(class<Inventory> itemtype, int ptr_select = AAPTR_DEFAULT);
+	native float GetDistance(bool checkz, int ptr = AAPTR_DEFAULT);
 
 	// Action functions
 	// Meh, MBF redundant functions. Only for DeHackEd support.
@@ -149,7 +150,7 @@ ACTOR Actor native //: Thinker
 	action native A_SkullPop(class<PlayerChunk> skulltype = "BloodySkull");
 	action native A_CheckPlayerDone();
 
-	action native A_Wander();
+	action native A_Wander(int flags = 0);
 	action native A_Look2();
 	action native A_TossGib();
 	action native A_SentinelBob();

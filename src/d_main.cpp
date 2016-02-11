@@ -2481,8 +2481,9 @@ void D_DoomMain (void)
 		FinishDehPatch();
 
 		InitActorNumsFromMapinfo();
-		PClassActor::StaticSetActorNums ();
 		InitSpawnablesFromMapinfo();
+		PClassActor::StaticSetActorNums();
+
 		//Added by MC:
 		bglobal.getspawned.Clear();
 		argcount = Args->CheckParmList("-bots", &args);

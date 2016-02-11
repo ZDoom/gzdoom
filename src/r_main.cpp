@@ -714,15 +714,15 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 		{ // any mirror--use floats to avoid integer overflow
 			vertex_t *v2 = pds->src->v2;
 
-			float dx = FIXED2FLOAT(v2->x - v1->x);
-			float dy = FIXED2FLOAT(v2->y - v1->y);
-			float x1 = FIXED2FLOAT(v1->x);
-			float y1 = FIXED2FLOAT(v1->y);
-			float x = FIXED2FLOAT(startx);
-			float y = FIXED2FLOAT(starty);
+			double dx = FIXED2DBL(v2->x - v1->x);
+			double dy = FIXED2DBL(v2->y - v1->y);
+			double x1 = FIXED2DBL(v1->x);
+			double y1 = FIXED2DBL(v1->y);
+			double x = FIXED2DBL(startx);
+			double y = FIXED2DBL(starty);
 
 			// the above two cases catch len == 0
-			float r = ((x - x1)*dx + (y - y1)*dy) / (dx*dx + dy*dy);
+			double r = ((x - x1)*dx + (y - y1)*dy) / (dx*dx + dy*dy);
 
 			viewx = FLOAT2FIXED((x1 + r * dx)*2 - x);
 			viewy = FLOAT2FIXED((y1 + r * dy)*2 - y);

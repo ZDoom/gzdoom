@@ -1652,12 +1652,12 @@ void R_DrawTiltedPlane (visplane_t *pl, fixed_t alpha, bool additive, bool maske
 		return;
 	}
 
-	double vx = FIXED2FLOAT(viewx);
-	double vy = FIXED2FLOAT(viewy);
-	double vz = FIXED2FLOAT(viewz);
+	double vx = FIXED2DBL(viewx);
+	double vy = FIXED2DBL(viewy);
+	double vz = FIXED2DBL(viewz);
 
-	lxscale = FIXED2FLOAT(pl->xscale) * ifloatpow2[ds_xbits];
-	lyscale = FIXED2FLOAT(pl->yscale) * ifloatpow2[ds_ybits];
+	lxscale = FIXED2DBL(pl->xscale) * ifloatpow2[ds_xbits];
+	lyscale = FIXED2DBL(pl->yscale) * ifloatpow2[ds_ybits];
 	xscale = 64.f / lxscale;
 	yscale = 64.f / lyscale;
 	zeroheight = pl->height.ZatPoint(vx, vy);

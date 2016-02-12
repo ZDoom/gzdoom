@@ -258,7 +258,7 @@ enum EDefinitionType
 union FPropParam
 {
 	int i;
-	float f;
+	double d;
 	const char *s;
 	FxExpression *exp;
 };
@@ -317,10 +317,13 @@ int MatchString (const char *in, const char **strings);
 	int var = params[(no)+1].i;
 
 #define PROP_FLOAT_PARM(var, no) \
-	float var = params[(no)+1].f;
+	float var = float(params[(no)+1].d);
+
+#define PROP_DOUBLE_PARM(var, no) \
+	double var = params[(no)+1].d;
 
 #define PROP_FIXED_PARM(var, no) \
-	fixed_t var = fixed_t(params[(no)+1].f * FRACUNIT);
+	fixed_t var = FLOAT2FIXED(params[(no)+1].d);
 
 #define PROP_COLOR_PARM(var, no) \
 	int var = params[(no)+1].i== 0? params[(no)+2].i : V_GetColor(NULL, params[(no)+2].s);

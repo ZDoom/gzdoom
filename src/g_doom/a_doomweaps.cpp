@@ -636,7 +636,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BFGSpray)
 	PARAM_INT_OPT	(damagecnt)				{ damagecnt = 15; }
 	PARAM_ANGLE_OPT	(angle)					{ angle = ANGLE_90; }
 	PARAM_FIXED_OPT	(distance)				{ distance = 16*64*FRACUNIT; }
-	PARAM_ANGLE_OPT	(vrange)				{ vrange = 32*FRACUNIT; }
+	PARAM_ANGLE_OPT	(vrange)				{ vrange = 32*ANGLE_1; }
 	PARAM_INT_OPT	(defdamage)				{ defdamage = 0; }
 
 	int 				i;

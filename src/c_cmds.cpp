@@ -1084,7 +1084,7 @@ CCMD(currentpos)
 	if(mo)
 	{
 		Printf("Current player position: (%1.3f,%1.3f,%1.3f), angle: %1.3f, floorheight: %1.3f, sector:%d, lightlevel: %d\n",
-			FIXED2FLOAT(mo->X()), FIXED2FLOAT(mo->Y()), FIXED2FLOAT(mo->Z()), mo->angle/float(ANGLE_1), FIXED2FLOAT(mo->floorz), mo->Sector->sectornum, mo->Sector->lightlevel);
+			FIXED2DBL(mo->X()), FIXED2DBL(mo->Y()), FIXED2DBL(mo->Z()), ANGLE2DBL(mo->angle), FIXED2DBL(mo->floorz), mo->Sector->sectornum, mo->Sector->lightlevel);
 	}
 	else
 	{

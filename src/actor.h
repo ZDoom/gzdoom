@@ -865,13 +865,13 @@ public:
 	// more precise, but slower version, being used in a few places
 	fixed_t Distance2D(AActor *other, bool absolute = false)
 	{
-		return xs_RoundToInt(FVector2(X() - other->X(), Y() - other->Y()).Length());
+		return xs_RoundToInt(TVector2<double>(X() - other->X(), Y() - other->Y()).Length());
 	}
 
 	// a full 3D version of the above
 	fixed_t Distance3D(AActor *other, bool absolute = false)
 	{
-		return xs_RoundToInt(FVector3(X() - other->X(), Y() - other->Y(), Z() - other->Z()).Length());
+		return xs_RoundToInt(TVector3<double>(X() - other->X(), Y() - other->Y(), Z() - other->Z()).Length());
 	}
 
 	angle_t AngleTo(AActor *other, bool absolute = false) const

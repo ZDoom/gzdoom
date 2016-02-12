@@ -543,7 +543,6 @@ struct sector_t
 	sector_t *GetHeightSec() const;
 
 	DInterpolation *SetInterpolation(int position, bool attach);
-	void StopInterpolation(int position);
 
 	ASkyViewpoint *GetSkyBox(int which);
 

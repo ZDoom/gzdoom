@@ -25,7 +25,7 @@ protected:
 
 public:
 	int AddRef();
-	int DelRef();
+	int DelRef(bool force = false);
 
 	virtual void Destroy();
 	virtual void UpdateInterpolation() = 0;

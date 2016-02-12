@@ -2512,8 +2512,8 @@ void AM_rotate(fixed_t *xp, fixed_t *yp, angle_t a)
 		cosrot = cos(rot);
 	}
 
-	double x = FIXED2FLOAT(*xp);
-	double y = FIXED2FLOAT(*yp);
+	double x = FIXED2DBL(*xp);
+	double y = FIXED2DBL(*yp);
 	double tmpx = (x * cosrot) - (y * sinrot);
 	y = (x * sinrot) + (y * cosrot);
 	x = tmpx;

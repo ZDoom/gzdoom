@@ -4222,9 +4222,9 @@ void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, i
 	rail_data.Caller = source;
 	
 	rail_data.StopAtOne = !!(railflags & RAF_NOPIERCE);
-	start.X = FIXED2FLOAT(xy.x);
-	start.Y = FIXED2FLOAT(xy.y);
-	start.Z = FIXED2FLOAT(shootz);
+	start.X = FIXED2DBL(xy.x);
+	start.Y = FIXED2DBL(xy.y);
+	start.Z = FIXED2DBL(shootz);
 
 	int flags;
 

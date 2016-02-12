@@ -332,7 +332,7 @@ int APoisonCloud::DoSpecialDamage (AActor *victim, int damage, FName damagetype)
 			int damage = 15 + (pr_poisoncloudd()&15);
 			if (mate)
 			{
-				damage = (int)((float)damage * level.teamdamage);
+				damage = (int)((double)damage * level.teamdamage);
 			}
 			// Handle passive damage modifiers (e.g. PowerProtection)
 			if (victim->Inventory != NULL)

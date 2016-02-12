@@ -165,8 +165,8 @@ public:
 	void Activate (AActor *activator);
 	void Deactivate (AActor *activator);
 protected:
-	float Splerp (float p1, float p2, float p3, float p4);
-	float Lerp (float p1, float p2);
+	double Splerp (double p1, double p2, double p3, double p4);
+	double Lerp (double p1, double p2);
 	virtual bool Interpolate ();
 	virtual void NewNode ();
 
@@ -191,10 +191,10 @@ void APathFollower::Serialize (FArchive &arc)
 
 // Interpolate between p2 and p3 along a Catmull-Rom spline
 // http://research.microsoft.com/~hollasch/cgindex/curves/catmull-rom.html
-float APathFollower::Splerp (float p1, float p2, float p3, float p4)
+double APathFollower::Splerp (double p1, double p2, double p3, double p4)
 {
-	float t = Time;
-	float res = 2*p2;
+	double t = Time;
+	double res = 2*p2;
 	res += (p3 - p1) * Time;
 	t *= Time;
 	res += (2*p1 - 5*p2 + 4*p3 - p4) * t;
@@ -204,7 +204,7 @@ float APathFollower::Splerp (float p1, float p2, float p3, float p4)
 }
 
 // Linearly interpolate between p1 and p2
-float APathFollower::Lerp (float p1, float p2)
+double APathFollower::Lerp (double p1, double p2)
 {
 	return p1 + Time * (p2 - p1);
 }
@@ -325,7 +325,7 @@ void APathFollower::Tick ()
 
 	if (Interpolate ())
 	{
-		Time += 8.f / ((float)CurrNode->args[1] * (float)TICRATE);
+		Time += float(8.f / ((double)CurrNode->args[1] * (double)TICRATE));
 		if (Time > 1.f)
 		{
 			Time -= 1.f;
@@ -371,20 +371,20 @@ bool APathFollower::Interpolate ()
 	fixed_t x, y, z;
 	if (args[2] & 1)
 	{	// linear
-		x = FLOAT2FIXED(Lerp (FIXED2FLOAT(CurrNode->X()), FIXED2FLOAT(CurrNode->Next->X())));
-		y = FLOAT2FIXED(Lerp (FIXED2FLOAT(CurrNode->Y()), FIXED2FLOAT(CurrNode->Next->Y())));
-		z = FLOAT2FIXED(Lerp (FIXED2FLOAT(CurrNode->Z()), FIXED2FLOAT(CurrNode->Next->Z())));
+		x = FLOAT2FIXED(Lerp (FIXED2DBL(CurrNode->X()), FIXED2DBL(CurrNode->Next->X())));
+		y = FLOAT2FIXED(Lerp (FIXED2DBL(CurrNode->Y()), FIXED2DBL(CurrNode->Next->Y())));
+		z = FLOAT2FIXED(Lerp (FIXED2DBL(CurrNode->Z()), FIXED2DBL(CurrNode->Next->Z())));
 	}
 	else
 	{	// spline
 		if (CurrNode->Next->Next==NULL) return false;
 
-		x = FLOAT2FIXED(Splerp (FIXED2FLOAT(PrevNode->X()), FIXED2FLOAT(CurrNode->X()),
-								FIXED2FLOAT(CurrNode->Next->X()), FIXED2FLOAT(CurrNode->Next->Next->X())));
-		y = FLOAT2FIXED(Splerp (FIXED2FLOAT(PrevNode->Y()), FIXED2FLOAT(CurrNode->Y()),
-								FIXED2FLOAT(CurrNode->Next->Y()), FIXED2FLOAT(CurrNode->Next->Next->Y())));
-		z = FLOAT2FIXED(Splerp (FIXED2FLOAT(PrevNode->Z()), FIXED2FLOAT(CurrNode->Z()),
-								FIXED2FLOAT(CurrNode->Next->Z()), FIXED2FLOAT(CurrNode->Next->Next->Z())));
+		x = FLOAT2FIXED(Splerp (FIXED2DBL(PrevNode->X()), FIXED2DBL(CurrNode->X()),
+								FIXED2DBL(CurrNode->Next->X()), FIXED2DBL(CurrNode->Next->Next->X())));
+		y = FLOAT2FIXED(Splerp (FIXED2DBL(PrevNode->Y()), FIXED2DBL(CurrNode->Y()),
+								FIXED2DBL(CurrNode->Next->Y()), FIXED2DBL(CurrNode->Next->Next->Y())));
+		z = FLOAT2FIXED(Splerp (FIXED2DBL(PrevNode->Z()), FIXED2DBL(CurrNode->Z()),
+								FIXED2DBL(CurrNode->Next->Z()), FIXED2DBL(CurrNode->Next->Next->Z())));
 	}
 	SetXYZ(x, y, z);
 	LinkToWorld ();
@@ -442,11 +442,11 @@ bool APathFollower::Interpolate ()
 		{
 			if (args[2] & 2)
 			{ // interpolate angle
-				float angle1 = (float)CurrNode->angle;
-				float angle2 = (float)CurrNode->Next->angle;
+				double angle1 = (double)CurrNode->angle;
+				double angle2 = (double)CurrNode->Next->angle;
 				if (angle2 - angle1 <= -2147483648.f)
 				{
-					float lerped = Lerp (angle1, angle2 + 4294967296.f);
+					double lerped = Lerp (angle1, angle2 + 4294967296.f);
 					if (lerped >= 4294967296.f)
 					{
 						angle = xs_CRoundToUInt(lerped - 4294967296.f);
@@ -458,7 +458,7 @@ bool APathFollower::Interpolate ()
 				}
 				else if (angle2 - angle1 >= 2147483648.f)
 				{
-					float lerped = Lerp (angle1, angle2 - 4294967296.f);
+					double lerped = Lerp (angle1, angle2 - 4294967296.f);
 					if (lerped < 0.f)
 					{
 						angle = xs_CRoundToUInt(lerped + 4294967296.f);
@@ -477,15 +477,15 @@ bool APathFollower::Interpolate ()
 			{ // linear
 				if (args[2] & 4)
 				{ // interpolate pitch
-					pitch = FLOAT2FIXED(Lerp (FIXED2FLOAT(CurrNode->pitch), FIXED2FLOAT(CurrNode->Next->pitch)));
+					pitch = FLOAT2FIXED(Lerp (FIXED2DBL(CurrNode->pitch), FIXED2DBL(CurrNode->Next->pitch)));
 				}
 			}
 			else
 			{ // spline
 				if (args[2] & 4)
 				{ // interpolate pitch
-					pitch = FLOAT2FIXED(Splerp (FIXED2FLOAT(PrevNode->pitch), FIXED2FLOAT(CurrNode->pitch),
-						FIXED2FLOAT(CurrNode->Next->pitch), FIXED2FLOAT(CurrNode->Next->Next->pitch)));
+					pitch = FLOAT2FIXED(Splerp (FIXED2DBL(PrevNode->pitch), FIXED2DBL(CurrNode->pitch),
+						FIXED2DBL(CurrNode->Next->pitch), FIXED2DBL(CurrNode->Next->Next->pitch)));
 				}
 			}
 		}

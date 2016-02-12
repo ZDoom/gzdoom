@@ -526,12 +526,15 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 	}
 
 	// don't draw first frame of a player missile
-	if (thing->flags&MF_MISSILE && !(thing->flags7 & MF7_FLYCHEAT) && thing->target==GLRenderer->mViewActor && GLRenderer->mViewActor != NULL)
+	if (thing->flags&MF_MISSILE)
 	{
-		fixed_t clipdist = clamp(thing->Speed, thing->target->radius, thing->target->radius*2);
-		if (P_AproxDistance(thingpos.x-viewx, thingpos.y-viewy) < clipdist) return;
+		if (!(thing->flags7 & MF7_FLYCHEAT) && thing->target==GLRenderer->mViewActor && GLRenderer->mViewActor != NULL)
+		{
+			fixed_t clipdist = clamp(thing->Speed, thing->target->radius, thing->target->radius*2);
+			if (P_AproxDistance(thingpos.x-viewx, thingpos.y-viewy) < clipdist) return;
+		}
+		thing->flags7 |= MF7_FLYCHEAT;	// do this only once for the very first frame, but not if it gets into range again.
 	}
-	thing->flags7 |= MF7_FLYCHEAT;	// do this only once for the very first frame, but not if it gets into range again.
 
 	if (GLRenderer->mCurrentPortal)
 	{

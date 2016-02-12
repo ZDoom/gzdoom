@@ -3147,6 +3147,7 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 		else if (rets[0] == TypeFloat64)	ValueType = VAL_Float;
 		else if (rets[0] == TypeAngle)		ValueType = VAL_Angle;
 		else if (rets[0] == TypeFixed)		ValueType = VAL_Fixed;
+		else if (rets[0] == TypeState)		ValueType = VAL_State;
 		else
 		{
 			ValueType = VAL_Int;

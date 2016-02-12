@@ -1040,6 +1040,14 @@ static void ParseActionDef (FScanner &sc, PClassActor *cls)
 	{
 		rets.Push(TypeSInt32);
 	}
+	else if (sc.CheckToken(TK_State))
+	{
+		rets.Push(TypeState);
+	}
+	else if (sc.CheckToken(TK_Float))
+	{
+		rets.Push(TypeFloat64);
+	}
 	sc.MustGetToken(TK_Identifier);
 	funcname = sc.String;
 	ParseFunctionDef(sc, cls, funcname, rets, VARF_Method | VARF_Action);

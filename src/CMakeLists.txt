@@ -865,12 +865,6 @@ set( NOT_COMPILED_SOURCE_FILES
 )
 
 set( FASTMATH_SOURCES
-	nodebuild.cpp
-	nodebuild_classify_nosse2.cpp
-	nodebuild_events.cpp
-	nodebuild_extract.cpp
-	nodebuild_gl.cpp
-	nodebuild_utility.cpp
 	r_swrenderer.cpp
 	r_3dfloors.cpp
 	r_bsp.cpp
@@ -1026,6 +1020,12 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	memarena.cpp
 	md5.cpp
 	name.cpp
+	nodebuild.cpp
+	nodebuild_classify_nosse2.cpp
+	nodebuild_events.cpp
+	nodebuild_extract.cpp
+	nodebuild_gl.cpp
+	nodebuild_utility.cpp
 	pathexpander.cpp
 	p_3dfloors.cpp
 	p_3dmidtex.cpp

@@ -5,7 +5,7 @@ set( CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -D_DEBUG" )
 # Disable warnings for << operator precedence (4554) and
 # unreferenced labels (4102) from VC
 if( MSVC )
-	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /wd4554 /wd4102" )
+	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /wd4554 /wd4102 /fp:fast" )
 endif()
 
 if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )

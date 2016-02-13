@@ -135,6 +135,7 @@ OptionValue VRMode
 	9, "Amber/Blue"
 	5, "Left Eye"
 	6, "Right Eye"
+	7, "Quad-buffered"
 }
 
 OptionMenu "GLTextureGLOptions"

@@ -118,8 +118,7 @@ if( MSVC )
 	# String pooling
 	# Function-level linking
 	# Disable run-time type information
-	# Set floating point model to fast or the GL render will suffer for it.
-	set( ALL_C_FLAGS "/GF /Gy /GR- /fp:fast" )
+	set( ALL_C_FLAGS "/GF /Gy /GR-" )
 	
 	if( CMAKE_SIZEOF_VOID_P MATCHES "4")
 		# SSE2 option (mostly to switch it off in VC2012 and later where it's the default

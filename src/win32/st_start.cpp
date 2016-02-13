@@ -1584,7 +1584,7 @@ void ST_Util_DrawChar (BITMAPINFO *screen, const BYTE *font, int x, int y, BYTE 
 	const BYTE fg      = attrib & 0x0F;
 	const BYTE fg_left = fg << 4;
 	const BYTE bg      = bg_left >> 4;
-	const BYTE color_array[4] = { bg_left | bg, attrib & 0x7F, fg_left | bg, fg_left | fg };
+	const BYTE color_array[4] = { (BYTE)(bg_left | bg), (BYTE)(attrib & 0x7F), (BYTE)(fg_left | bg), (BYTE)(fg_left | fg) };
 	const BYTE *src = font + 1 + charnum * font[0];
 	int pitch = screen->bmiHeader.biWidth >> 1;
 	BYTE *dest = ST_Util_BitsForBitmap(screen) + x*4 + y * font[0] * pitch;

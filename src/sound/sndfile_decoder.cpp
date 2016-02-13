@@ -126,7 +126,7 @@ TArray<char> SndFileDecoder::readAll()
 
     output.Resize((unsigned)(SndInfo.frames * framesize));
     size_t got = read(&output[0], output.Size());
-    output.Resize(got);
+    output.Resize((unsigned)got);
 
     return output;
 }

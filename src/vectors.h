@@ -1230,6 +1230,6 @@ typedef TVector2<float>		FVector2;
 typedef TVector3<float>		FVector3;
 typedef TRotator<float>		FRotator;
 typedef TMatrix3x3<float>	FMatrix3x3;
-typedef TAngle<float>		FAngle;
+//typedef TAngle<float>		FAngle;
 
 #endif

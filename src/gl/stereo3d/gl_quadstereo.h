@@ -73,6 +73,13 @@ public:
 	bool bQuadStereoSupported;
 };
 
+// To use Quad-buffered stereo mode with nvidia 3d vision glasses, 
+// you must either:
+// A) be using a Quadro series video card, OR
+//
+// B) be using nvidia driver version 314.07 or later
+//    AND have your monitor set to 120 Hz refresh rate
+//    AND have gzdoom in true full screen mode
 class QuadStereo : public Stereo3DMode
 {
 public:

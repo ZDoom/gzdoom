@@ -41,6 +41,8 @@ QuadStereo::QuadStereo(double ipdMeters)
 	: leftEye(ipdMeters), rightEye(ipdMeters)
 {
 	// Check whether quad-buffered stereo is supported in the current context
+	// We are assuming the OpenGL context is already current at this point,
+	// i.e. this constructor is called "just in time".
 	GLboolean supportsStereo, supportsBuffered;
 	glGetBooleanv(GL_STEREO, &supportsStereo);
 	glGetBooleanv(GL_DOUBLEBUFFER, &supportsBuffered);
@@ -49,9 +51,10 @@ QuadStereo::QuadStereo(double ipdMeters)
 	rightEye.bQuadStereoSupported = bQuadStereoSupported;
 
 	eye_ptrs.Push(&leftEye);
-	// If stereo is not supported, just draw scene once
-	if (bQuadStereoSupported)
+	// If stereo is not supported, just draw scene once (left eye view only)
+	if (bQuadStereoSupported) {
 		eye_ptrs.Push(&rightEye);
+	}
 }
 
 /* static */

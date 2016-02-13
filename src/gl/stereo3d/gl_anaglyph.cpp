@@ -61,4 +61,12 @@ const RedCyan& RedCyan::getInstance(FLOATTYPE ipd)
 }
 
 
+/* static */
+const AmberBlue& AmberBlue::getInstance(FLOATTYPE ipd)
+{
+	static AmberBlue instance(ipd);
+	return instance;
+}
+
+
 } /* namespace s3d */

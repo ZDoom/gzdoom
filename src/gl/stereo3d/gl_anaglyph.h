@@ -115,6 +115,14 @@ public:
 	GreenMagenta(float ipd) : MaskAnaglyph(ColorMask(false, true, false), ipd) {}
 };
 
+class AmberBlue : public MaskAnaglyph
+{
+public:
+	static const AmberBlue& getInstance(float ipd);
+
+	AmberBlue(float ipd) : MaskAnaglyph(ColorMask(true, true, false), ipd) {}
+};
+
 // TODO matrix anaglyph
 
 

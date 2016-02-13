@@ -80,6 +80,10 @@ const Stereo3DMode& Stereo3DMode::getCurrentMode()
 	case 6:
 		setCurrentMode(RightEyeView::getInstance(vr_ipd));
 		break;
+	// TODO: 8: Oculus Rift
+	case 9:
+		setCurrentMode(AmberBlue::getInstance(vr_ipd));
+		break;
 	case 0:
 	default:
 		setCurrentMode(MonoView::getInstance());

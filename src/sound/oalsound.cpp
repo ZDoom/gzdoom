@@ -617,7 +617,7 @@ public:
         SampleRate = srate;
         Looping = loop;
 
-        Data.Resize((size_t)(0.2 * SampleRate) * FrameSize);
+        Data.Resize((SampleRate / 5) * FrameSize);
 
         return true;
     }
@@ -782,7 +782,7 @@ OpenALSoundRenderer::OpenALSoundRenderer()
     alcGetIntegerv(Device, ALC_STEREO_SOURCES, 1, &numStereo);
 
     Sources.Resize(MIN<int>(MAX<int>(*snd_channels, 2), numMono+numStereo));
-    for(size_t i = 0;i < Sources.Size();i++)
+    for(unsigned i = 0;i < Sources.Size();i++)
     {
         alGenSources(1, &Sources[i]);
         if(getALError() != AL_NO_ERROR)

@@ -741,16 +741,19 @@ struct sector_t
 
 	inline bool PortalBlocksView(int plane)
 	{
+		if (SkyBoxes[plane] == NULL || SkyBoxes[plane]->special1 != SKYBOX_LINKEDPORTAL) return true;
 		return !!(planes[plane].Flags & (PLANEF_NORENDER | PLANEF_DISABLED | PLANEF_OBSTRUCTED));
 	}
 
 	inline bool PortalBlocksMovement(int plane)
 	{
+		if (SkyBoxes[plane] == NULL || SkyBoxes[plane]->special1 != SKYBOX_LINKEDPORTAL) return true;
 		return !!(planes[plane].Flags & (PLANEF_NOPASS | PLANEF_DISABLED | PLANEF_OBSTRUCTED));
 	}
 
 	inline bool PortalBlocksSound(int plane)
 	{
+		if (SkyBoxes[plane] == NULL || SkyBoxes[plane]->special1 != SKYBOX_LINKEDPORTAL) return true;
 		return !!(planes[plane].Flags & (PLANEF_BLOCKSOUND | PLANEF_DISABLED | PLANEF_OBSTRUCTED));
 	}
 

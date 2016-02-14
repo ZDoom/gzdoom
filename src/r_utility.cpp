@@ -878,16 +878,22 @@ void R_SetupFrame (AActor *actor)
 	interpolator.DoInterpolations (r_TicFrac);
 
 	// Keep the view within the sector's floor and ceiling
-	fixed_t theZ = viewsector->ceilingplane.ZatPoint (viewx, viewy) - 4*FRACUNIT;
-	if (viewz > theZ)
+	if (viewsector->PortalBlocksMovement(sector_t::ceiling))
 	{
-		viewz = theZ;
+		fixed_t theZ = viewsector->ceilingplane.ZatPoint(viewx, viewy) - 4 * FRACUNIT;
+		if (viewz > theZ)
+		{
+			viewz = theZ;
+		}
 	}
 
-	theZ = viewsector->floorplane.ZatPoint (viewx, viewy) + 4*FRACUNIT;
-	if (viewz < theZ)
+	if (viewsector->PortalBlocksMovement(sector_t::floor))
 	{
-		viewz = theZ;
+		fixed_t theZ = viewsector->floorplane.ZatPoint(viewx, viewy) + 4 * FRACUNIT;
+		if (viewz < theZ)
+		{
+			viewz = theZ;
+		}
 	}
 
 	if (!paused)

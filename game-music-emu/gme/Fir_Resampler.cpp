@@ -156,7 +156,7 @@ int Fir_Resampler_::input_needed( blargg_long output_count ) const
 		output_count -= 2;
 	}
 	
-	long input_extra = input_count - (write_pos - &buf [(width_ - 1) * stereo]);
+	long input_extra = (long)(input_count - (write_pos - &buf [(width_ - 1) * stereo]));
 	if ( input_extra < 0 )
 		input_extra = 0;
 	return input_extra;

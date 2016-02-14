@@ -38,7 +38,7 @@ off_t MPG123Decoder::file_lseek(void *handle, off_t offset, int whence)
 ssize_t MPG123Decoder::file_read(void *handle, void *buffer, size_t bytes)
 {
     FileReader *reader = reinterpret_cast<MPG123Decoder*>(handle)->Reader;
-    return reader->Read(buffer, bytes);
+    return (ssize_t)reader->Read(buffer, (long)bytes);
 }
 
 
@@ -183,7 +183,7 @@ bool MPG123Decoder::seek(size_t ms_offset)
     if(mpg123_getformat(MPG123, &srate, &channels, &enc) == MPG123_OK)
     {
         size_t smp_offset = (size_t)((double)ms_offset / 1000. * srate);
-        if(mpg123_seek(MPG123, smp_offset, SEEK_SET) >= 0)
+        if(mpg123_seek(MPG123, (off_t)smp_offset, SEEK_SET) >= 0)
         {
             Done = false;
             return true;

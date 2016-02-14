@@ -2324,7 +2324,7 @@ OPTSTR_OPENAL				= "OpenAL";
 
 
 
-
+SAFEMESSAGE			= "Do you really want to do this?";
 MNU_COLORPICKER		= "SELECT COLOR";
 
 

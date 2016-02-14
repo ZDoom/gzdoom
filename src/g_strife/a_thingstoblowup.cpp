@@ -104,6 +104,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightGoesOut)
 	sec->floorplane.d = sec->floorplane.PointToDist (spot, newheight);
 	fixed_t newtheight = sec->floorplane.Zat0();
 	sec->ChangePlaneTexZ(sector_t::floor, newtheight - oldtheight);
+	sec->CheckPortalPlane(sector_t::floor);
 
 	for (int i = 0; i < 8; ++i)
 	{

@@ -871,6 +871,19 @@ int sector_t::GetTerrain(int pos) const
 	return terrainnum[pos] >= 0 ? terrainnum[pos] : TerrainTypes[GetTexture(pos)];
 }
 
+void sector_t::CheckPortalPlane(int plane)
+{
+	ASkyViewpoint *portal = SkyBoxes[plane];
+	if (!portal || portal->special1 != SKYBOX_LINKEDPORTAL) return;
+
+	fixed_t planeh = planes[plane].TexZ;
+	int obstructed = PLANEF_OBSTRUCTED * (plane == sector_t::floor ?
+		planeh > portal->threshold : planeh < portal->threshold);
+	planes[plane].Flags = (planes[plane].Flags  & ~PLANEF_OBSTRUCTED) | obstructed;
+}
+
+
+
 FArchive &operator<< (FArchive &arc, secspecial_t &p)
 {
 	if (SaveVersion < 4529)

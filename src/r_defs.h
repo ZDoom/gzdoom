@@ -518,6 +518,7 @@ struct sector_t
 	DInterpolation *SetInterpolation(int position, bool attach);
 
 	ASkyViewpoint *GetSkyBox(int which);
+	void CheckPortalPlane(int plane);
 
 	enum
 	{
@@ -738,6 +739,22 @@ struct sector_t
 		Flags &= ~SECF_SPECIALFLAGS;
 	}
 
+	inline bool PortalBlocksView(int plane)
+	{
+		return !!(planes[plane].Flags & (PLANEF_NORENDER | PLANEF_DISABLED | PLANEF_OBSTRUCTED));
+	}
+
+	inline bool PortalBlocksMovement(int plane)
+	{
+		return !!(planes[plane].Flags & (PLANEF_NOPASS | PLANEF_DISABLED | PLANEF_OBSTRUCTED));
+	}
+
+	inline bool PortalBlocksSound(int plane)
+	{
+		return !!(planes[plane].Flags & (PLANEF_BLOCKSOUND | PLANEF_DISABLED | PLANEF_OBSTRUCTED));
+	}
+
+
 	int GetTerrain(int pos) const;
 
 	void TransferSpecial(sector_t *model);
@@ -830,6 +847,7 @@ struct sector_t
 	// [RH] The sky box to render for this sector. NULL means use a
 	// regular sky.
 	TObjPtr<ASkyViewpoint> SkyBoxes[2];
+	int PortalGroup;
 
 	int							sectornum;			// for comparing sector copies
 

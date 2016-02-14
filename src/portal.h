@@ -8,6 +8,30 @@
 #include "p_local.h"
 #include "m_bbox.h"
 
+struct FDisplacement
+{
+	fixed_t x, y;
+	bool isSet;
+	BYTE indirect;	// just for illustration.
+};
+
+struct FDisplacementTable
+{
+	TArray<FDisplacement> data;
+	int size;
+
+	void Create(int numgroups)
+	{
+		data.Resize(numgroups*numgroups);
+		memset(&data[0], 0, numgroups*numgroups*sizeof(data[0]));
+		size = numgroups;
+	}
+
+	FDisplacement &operator()(int x, int y)
+	{
+		return data[x + size*y];
+	}
+};
 
 enum
 {

@@ -60,6 +60,18 @@ enum
 extern size_t MaxDrawSegs;
 
 
+enum
+{
+	SKYBOX_ANCHOR = -1,
+	SKYBOX_SKYVIEWPOINT = 0,				// a regular skybox
+	SKYBOX_STACKEDSECTORTHING,	// stacked sectors with the thing method
+	SKYBOX_PORTAL,				// stacked sectors with Sector_SetPortal
+	SKYBOX_LINKEDPORTAL,		// linked portal (interactive)
+	SKYBOX_PLANE,				// EE-style plane portal (not implemented in SW renderer)
+	SKYBOX_HORIZON,				// EE-style horizon portal (not implemented in SW renderer)
+};
+
+
 //
 // INTERNAL MAP TYPES
 //	used by play and refresh
@@ -545,6 +557,7 @@ struct sector_t
 	DInterpolation *SetInterpolation(int position, bool attach);
 
 	ASkyViewpoint *GetSkyBox(int which);
+	void CheckPortalPlane(int plane);
 
 	enum
 	{
@@ -779,6 +792,22 @@ struct sector_t
 		Flags &= ~SECF_SPECIALFLAGS;
 	}
 
+	inline bool PortalBlocksView(int plane)
+	{
+		return !!(planes[plane].Flags & (PLANEF_NORENDER | PLANEF_DISABLED | PLANEF_OBSTRUCTED));
+	}
+
+	inline bool PortalBlocksMovement(int plane)
+	{
+		return !!(planes[plane].Flags & (PLANEF_NOPASS | PLANEF_DISABLED | PLANEF_OBSTRUCTED));
+	}
+
+	inline bool PortalBlocksSound(int plane)
+	{
+		return !!(planes[plane].Flags & (PLANEF_BLOCKSOUND | PLANEF_DISABLED | PLANEF_OBSTRUCTED));
+	}
+
+
 	int GetTerrain(int pos) const;
 
 	void TransferSpecial(sector_t *model);
@@ -871,6 +900,7 @@ struct sector_t
 	// [RH] The sky box to render for this sector. NULL means use a
 	// regular sky.
 	TObjPtr<ASkyViewpoint> SkyBoxes[2];
+	int PortalGroup;
 
 	int							sectornum;			// for comparing sector copies
 

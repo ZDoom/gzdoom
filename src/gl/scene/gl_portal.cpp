@@ -46,6 +46,7 @@
 #include "doomstat.h"
 #include "a_sharedglobal.h"
 #include "r_sky.h"
+#include "portal.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_framebuffer.h"
@@ -156,15 +157,17 @@ void GLPortal::DrawPortalStencil()
 			// Cap the stencil at the top and bottom
 			int n = lines.Size() * 2;
 			FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-			ptr->Set(-32767.0f, 32767.0f, -32767.0f, 0, 0);
-			ptr->Set(-32767.0f, 32767.0f, 32767.0f, 0, 0);
-			ptr->Set(32767.0f, 32767.0f, 32767.0f, 0, 0);
-			ptr->Set(32767.0f, 32767.0f, -32767.0f, 0, 0);
+			ptr[0].Set(-32767.0f, 32767.0f, -32767.0f, 0, 0);
+			ptr[1].Set(-32767.0f, 32767.0f, 32767.0f, 0, 0);
+			ptr[2].Set(32767.0f, 32767.0f, 32767.0f, 0, 0);
+			ptr[3].Set(32767.0f, 32767.0f, -32767.0f, 0, 0);
+			ptr += 4;
 			mPrimIndices[n + 1] = GLRenderer->mVBO->GetCount(ptr, &mPrimIndices[n]);
-			ptr->Set(-32767.0f, -32767.0f, -32767.0f, 0, 0);
-			ptr->Set(-32767.0f, -32767.0f, 32767.0f, 0, 0);
-			ptr->Set(32767.0f, -32767.0f, 32767.0f, 0, 0);
-			ptr->Set(32767.0f, -32767.0f, -32767.0f, 0, 0);
+			ptr[0].Set(-32767.0f, -32767.0f, -32767.0f, 0, 0);
+			ptr[1].Set(-32767.0f, -32767.0f, 32767.0f, 0, 0);
+			ptr[2].Set(32767.0f, -32767.0f, 32767.0f, 0, 0);
+			ptr[3].Set(32767.0f, -32767.0f, -32767.0f, 0, 0);
+			ptr += 4;
 			mPrimIndices[n + 3] = GLRenderer->mVBO->GetCount(ptr, &mPrimIndices[n + 2]);
 		}
 	}
@@ -297,7 +300,6 @@ bool GLPortal::Start(bool usestencil, bool doquery)
 	planestack.Push(gl_RenderState.GetClipHeightTop());
 	planestack.Push(gl_RenderState.GetClipHeightBottom());
 	glDisable(GL_CLIP_DISTANCE0);
-	glDisable(GL_CLIP_DISTANCE1);
 	gl_RenderState.SetClipHeightBottom(-65536.f);
 	gl_RenderState.SetClipHeightTop(65536.f);
 
@@ -366,7 +368,7 @@ void GLPortal::End(bool usestencil)
 	if (f > -65535.f) glEnable(GL_CLIP_DISTANCE0);
 	planestack.Pop(f);
 	gl_RenderState.SetClipHeightTop(f);
-	if (f < 65535.f) glEnable(GL_CLIP_DISTANCE1);
+	if (f < 65535.f) glEnable(GL_CLIP_DISTANCE0);
 
 	if (usestencil)
 	{
@@ -647,14 +649,15 @@ void GLSkyboxPortal::DrawContents()
 	PlaneMirrorMode=0;
 
 	bool oldclamp = gl_RenderState.SetDepthClamp(false);
-	viewx = origin->PrevX + FixedMul(r_TicFrac, origin->x - origin->PrevX);
-	viewy = origin->PrevY + FixedMul(r_TicFrac, origin->y - origin->PrevY);
-	viewz = origin->PrevZ + FixedMul(r_TicFrac, origin->z - origin->PrevZ);
+	fixedvec3 viewpos = origin->InterpolatedPosition(r_TicFrac);
+	viewx = viewpos.x;
+	viewy = viewpos.y;
+	viewz = viewpos.z;
 	viewangle += origin->PrevAngle + FixedMul(r_TicFrac, origin->angle - origin->PrevAngle);
 
-	// Don't let the viewpoint be too close to a floor or ceiling!
-	fixed_t floorh = origin->Sector->floorplane.ZatPoint(origin->x, origin->y);
-	fixed_t ceilh = origin->Sector->ceilingplane.ZatPoint(origin->x, origin->y);
+	// Don't let the viewpoint be too close to a floor or ceiling
+	fixed_t floorh = origin->Sector->floorplane.ZatPoint(origin);
+	fixed_t ceilh = origin->Sector->ceilingplane.ZatPoint(origin);
 	if (viewz<floorh+4*FRACUNIT) viewz=floorh+4*FRACUNIT;
 	if (viewz>ceilh-4*FRACUNIT) viewz=ceilh-4*FRACUNIT;
 
@@ -755,7 +758,6 @@ void GLSectorStackPortal::DrawContents()
 	viewx += origin->xDisplacement;
 	viewy += origin->yDisplacement;
 	GLRenderer->mViewActor = NULL;
-	GLRenderer->mCurrentPortal = this;
 
 
 	validcount++;
@@ -814,17 +816,17 @@ void GLPlaneMirrorPortal::DrawContents()
 	if (PlaneMirrorMode < 0)
 	{
 		gl_RenderState.SetClipHeightTop(f);	// ceiling mirror: clip everything with a z lower than the portal's ceiling
-		glEnable(GL_CLIP_DISTANCE1);
+		gl_RenderState.SetClipHeightBottom(-65536.f);
 	}
 	else
 	{
 		gl_RenderState.SetClipHeightBottom(f);	// floor mirror: clip everything with a z higher than the portal's floor
-		glEnable(GL_CLIP_DISTANCE0);
+		gl_RenderState.SetClipHeightTop(65536.f);
 	}
 
+	glEnable(GL_CLIP_DISTANCE0);
 	GLRenderer->DrawScene();
 	glDisable(GL_CLIP_DISTANCE0);
-	glDisable(GL_CLIP_DISTANCE1);
 	gl_RenderState.SetClipHeightBottom(-65536.f);
 	gl_RenderState.SetClipHeightTop(65536.f);
 	PlaneMirrorFlag--;
@@ -942,24 +944,167 @@ void GLMirrorPortal::DrawContents()
 
 int GLMirrorPortal::ClipSeg(seg_t *seg) 
 { 
-	// this seg is completely behind the mirror!
-	if (P_PointOnLineSide(seg->v1->x, seg->v1->y, linedef) &&
-		P_PointOnLineSide(seg->v2->x, seg->v2->y, linedef)) 
+	//we cannot use P_PointOnLineSide here because it loses the special meaning of 0 == 'on the line'.
+	int side1 = DMulScale32(seg->v1->y - linedef->v1->y, linedef->dx, linedef->v1->x - seg->v1->x, linedef->dy);
+	int side2 = DMulScale32(seg->v2->y - linedef->v1->y, linedef->dx, linedef->v1->x - seg->v2->x, linedef->dy);
+
+	if (side1 >= 0 && side2 >= 0)
+	// this seg is completely behind the mirror.
 	{
 		return PClip_InFront;
 	}
 	return PClip_Inside; 
+}
+
+int GLMirrorPortal::ClipSubsector(subsector_t *sub) 
+{ 
+	// this seg is completely behind the mirror!
+	for(unsigned int i=0;i<sub->numlines;i++)
+	{
+		if (P_PointOnLineSidePrecise(sub->firstline[i].v1->x, sub->firstline[i].v1->y, linedef) == 0) return PClip_Inside;
+	}
+	return PClip_InFront; 
 }
 
 int GLMirrorPortal::ClipPoint(fixed_t x, fixed_t y) 
 { 
-	if (P_PointOnLineSide(x, y, linedef)) 
+	if (P_PointOnLineSidePrecise(x, y, linedef)) 
 	{
 		return PClip_InFront;
 	}
 	return PClip_Inside; 
 }
 
+
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+//
+//
+// Line to line Portal
+//
+//
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+
+static void glTranslatePortal(line_t* src, line_t* dst, fixed_t& x, fixed_t& y, angle_t & angle)
+{
+	// Get the angle between the two linedefs, for rotating
+	// orientation and velocity. Rotate 180 degrees, and flip
+	// the position across the exit linedef, if reversed.
+
+	double xangle = atan2(double(dst->dy), double(dst->dx)) - atan2(double(src->dy), double(src->dx)) + M_PI;
+	double s = sin(xangle);
+	double c = cos(xangle);
+
+	fixed_t nposx = x - src->v1->x;
+	fixed_t nposy = y - src->v1->y;
+
+	// Rotate position along normal to match exit linedef
+	x = xs_RoundToInt(nposx * c - nposy * s) + dst->v2->x;
+	y = xs_RoundToInt(nposy * c + nposx * s) + dst->v2->y;
+	angle += xs_CRoundToInt(xangle * (ANGLE_180 / M_PI));
+}
+
+void GLLineToLineInfo::init(line_t *line)
+{
+	static const divline_t divlx = { 0, 0, 128 * FRACUNIT, 0 };
+	static const divline_t divly = { 0, 0, 0, 128 * FRACUNIT };
+
+	// store some info about the portal line
+	divline_t divl;
+	P_MakeDivline(line, &divl);
+	x0 = P_InterceptVector(&divlx, &divl);
+	y0 = P_InterceptVector(&divly, &divl);
+	lineangle = R_PointToAnglePrecise(line->v1->x, line->v1->y, line->v2->x, line->v2->y);
+
+	// and some info about the viewpoint translation
+	viewx = ::viewx;
+	viewy = ::viewy;
+	viewz = ::viewz;
+	viewangle = ::viewangle;
+	glTranslatePortal(line, line->getPortalDestination(), viewx, viewy, viewangle);
+	P_TranslatePortalZ(line, line->getPortalDestination(), viewz);
+}
+
+
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+void GLLineToLinePortal::DrawContents()
+{
+	// TODO: Handle recursion more intelligently
+	if (renderdepth>r_mirror_recursions) 
+	{
+		ClearScreen();
+		return;
+	}
+
+	GLRenderer->mCurrentPortal = this;
+
+	viewx = l2l->viewx;
+	viewy = l2l->viewy;
+	viewz = l2l->viewz;
+	viewangle = l2l->viewangle;
+	SaveMapSection();
+
+	for (unsigned i = 0; i < lines.Size(); i++)
+	{
+		line_t *line = lines[i].seg->linedef->getPortalDestination();
+		subsector_t *sub;
+		if (line->sidedef[0]->Flags & WALLF_POLYOBJ) 
+			sub = R_PointInSubsector(line->v1->x, line->v1->y);
+		else sub = line->frontsector->subsectors[0];
+		int mapsection = sub->mapsection;
+		currentmapsection[mapsection >> 3] |= 1 << (mapsection & 7);
+	}
+
+	GLRenderer->mViewActor = NULL;
+	validcount++;
+	GLRenderer->SetupView(viewx, viewy, viewz, viewangle, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
+
+	ClearClipper();
+	GLRenderer->DrawScene();
+	RestoreMapSection();
+}
+
+
+int GLLineToLinePortal::ClipSeg(seg_t *seg) 
+{ 
+	line_t *linedef = lines[0].seg->linedef->getPortalDestination();
+	// this seg is completely behind the portal
+	//we cannot use P_PointOnLineSide here because it loses the special meaning of 0 == 'on the line'.
+	int side1 = DMulScale32(seg->v1->y - linedef->v1->y, linedef->dx, linedef->v1->x - seg->v1->x, linedef->dy);
+	int side2 = DMulScale32(seg->v2->y - linedef->v1->y, linedef->dx, linedef->v1->x - seg->v2->x, linedef->dy);
+
+	if (side1 >= 0 && side2 >= 0)
+	{
+		return PClip_InFront;
+	}
+	return PClip_Inside; 
+}
+
+int GLLineToLinePortal::ClipSubsector(subsector_t *sub) 
+{ 
+	line_t *masterline = lines[0].seg->linedef->getPortalDestination();
+
+	for(unsigned int i=0;i<sub->numlines;i++)
+	{
+		if (P_PointOnLineSidePrecise(sub->firstline[i].v1->x, sub->firstline[i].v1->y, masterline) == 0) return PClip_Inside;
+	}
+	return PClip_InFront; 
+}
+
+int GLLineToLinePortal::ClipPoint(fixed_t x, fixed_t y) 
+{ 
+	line_t *masterline = lines[0].seg->linedef->getPortalDestination();
+	if (P_PointOnLineSidePrecise(x, y, masterline)) 
+	{
+		return PClip_InFront;
+	}
+	return PClip_Inside; 
+}
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------

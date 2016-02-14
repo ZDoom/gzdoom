@@ -75,17 +75,17 @@ static void P_SlopeLineToPoint (int lineid, fixed_t x, fixed_t y, fixed_t z, boo
 			plane = &sec->floorplane;
 		}
 
-		FVector3 p, v1, v2, cross;
+		TVector3<double> p, v1, v2, cross;
 
-		p[0] = FIXED2FLOAT (line->v1->x);
-		p[1] = FIXED2FLOAT (line->v1->y);
-		p[2] = FIXED2FLOAT (plane->ZatPoint (line->v1->x, line->v1->y));
-		v1[0] = FIXED2FLOAT (line->dx);
-		v1[1] = FIXED2FLOAT (line->dy);
-		v1[2] = FIXED2FLOAT (plane->ZatPoint (line->v2->x, line->v2->y)) - p[2];
-		v2[0] = FIXED2FLOAT (x - line->v1->x);
-		v2[1] = FIXED2FLOAT (y - line->v1->y);
-		v2[2] = FIXED2FLOAT (z) - p[2];
+		p[0] = FIXED2DBL (line->v1->x);
+		p[1] = FIXED2DBL (line->v1->y);
+		p[2] = FIXED2DBL (plane->ZatPoint (line->v1->x, line->v1->y));
+		v1[0] = FIXED2DBL (line->dx);
+		v1[1] = FIXED2DBL (line->dy);
+		v1[2] = FIXED2DBL (plane->ZatPoint (line->v2->x, line->v2->y)) - p[2];
+		v2[0] = FIXED2DBL (x - line->v1->x);
+		v2[1] = FIXED2DBL (y - line->v1->y);
+		v2[2] = FIXED2DBL (z) - p[2];
 
 		cross = v1 ^ v2;
 		double len = cross.Length();
@@ -187,23 +187,23 @@ void P_SetSlope (secplane_t *plane, bool setCeil, int xyangi, int zangi,
 	}
 	xyang = (angle_t)Scale (xyangi, ANGLE_90, 90 << ANGLETOFINESHIFT);
 
-	FVector3 norm;
+	TVector3<double> norm;
 
 	if (ib_compatflags & BCOMPATF_SETSLOPEOVERFLOW)
 	{
-		norm[0] = float(finecosine[zang] * finecosine[xyang]);
-		norm[1] = float(finecosine[zang] * finesine[xyang]);
+		norm[0] = double(finecosine[zang] * finecosine[xyang]);
+		norm[1] = double(finecosine[zang] * finesine[xyang]);
 	}
 	else
 	{
-		norm[0] = float(finecosine[zang]) * float(finecosine[xyang]);
-		norm[1] = float(finecosine[zang]) * float(finesine[xyang]);
+		norm[0] = double(finecosine[zang]) * double(finecosine[xyang]);
+		norm[1] = double(finecosine[zang]) * double(finesine[xyang]);
 	}
-	norm[2] = float(finesine[zang]) * 65536.f;
+	norm[2] = double(finesine[zang]) * 65536.f;
 	norm.MakeUnit();
-	plane->a = (int)(norm[0] * 65536.f);
-	plane->b = (int)(norm[1] * 65536.f);
-	plane->c = (int)(norm[2] * 65536.f);
+	plane->a = FLOAT2FIXED(norm[0]);
+	plane->b = FLOAT2FIXED(norm[1]);
+	plane->c = FLOAT2FIXED(norm[2]);
 	//plane->ic = (int)(65536.f / norm[2]);
 	plane->ic = DivScale32 (1, plane->c);
 	plane->d = -TMulScale16 (plane->a, x,
@@ -226,17 +226,17 @@ void P_VavoomSlope(sector_t * sec, int id, fixed_t x, fixed_t y, fixed_t z, int 
 
 		if (l->args[0]==id)
 		{
-			FVector3 v1, v2, cross;
+			TVector3<double> v1, v2, cross;
 			secplane_t *srcplane = (which == 0) ? &sec->floorplane : &sec->ceilingplane;
 			fixed_t srcheight = (which == 0) ? sec->GetPlaneTexZ(sector_t::floor) : sec->GetPlaneTexZ(sector_t::ceiling);
 
-			v1[0] = FIXED2FLOAT (x - l->v2->x);
-			v1[1] = FIXED2FLOAT (y - l->v2->y);
-			v1[2] = FIXED2FLOAT (z - srcheight);
+			v1[0] = FIXED2DBL (x - l->v2->x);
+			v1[1] = FIXED2DBL (y - l->v2->y);
+			v1[2] = FIXED2DBL (z - srcheight);
 			
-			v2[0] = FIXED2FLOAT (x - l->v1->x);
-			v2[1] = FIXED2FLOAT (y - l->v1->y);
-			v2[2] = FIXED2FLOAT (z - srcheight);
+			v2[0] = FIXED2DBL (x - l->v1->x);
+			v2[1] = FIXED2DBL (y - l->v1->y);
+			v2[2] = FIXED2DBL (z - srcheight);
 
 			cross = v1 ^ v2;
 			double len = cross.Length();
@@ -334,8 +334,8 @@ static void P_SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt, 
 			sector_t *sec = &sectors[i];
 			if (sec->linecount != 3) continue;	// only works with triangular sectors
 
-			FVector3 vt1, vt2, vt3, cross;
-			FVector3 vec1, vec2;
+			TVector3<double> vt1, vt2, vt3, cross;
+			TVector3<double> vec1, vec2;
 			int vi1, vi2, vi3;
 
 			vi1 = int(sec->lines[0]->v1 - vertexes);
@@ -343,12 +343,12 @@ static void P_SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt, 
 			vi3 = (sec->lines[1]->v1 == sec->lines[0]->v1 || sec->lines[1]->v1 == sec->lines[0]->v2)?
 				int(sec->lines[1]->v2 - vertexes) : int(sec->lines[1]->v1 - vertexes);
 
-			vt1.X = FIXED2FLOAT(vertexes[vi1].x);
-			vt1.Y = FIXED2FLOAT(vertexes[vi1].y);
-			vt2.X = FIXED2FLOAT(vertexes[vi2].x);
-			vt2.Y = FIXED2FLOAT(vertexes[vi2].y);
-			vt3.X = FIXED2FLOAT(vertexes[vi3].x);
-			vt3.Y = FIXED2FLOAT(vertexes[vi3].y);
+			vt1.X = FIXED2DBL(vertexes[vi1].x);
+			vt1.Y = FIXED2DBL(vertexes[vi1].y);
+			vt2.X = FIXED2DBL(vertexes[vi2].x);
+			vt2.Y = FIXED2DBL(vertexes[vi2].y);
+			vt3.X = FIXED2DBL(vertexes[vi3].x);
+			vt3.Y = FIXED2DBL(vertexes[vi3].y);
 
 			for(int j=0; j<2; j++)
 			{
@@ -358,10 +358,10 @@ static void P_SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt, 
 				fixed_t z3;
 				if (h1==NULL && h2==NULL && h3==NULL) continue;
 
-				vt1.Z = FIXED2FLOAT(h1? *h1 : j==0? sec->GetPlaneTexZ(sector_t::floor) : sec->GetPlaneTexZ(sector_t::ceiling));
-				vt2.Z = FIXED2FLOAT(h2? *h2 : j==0? sec->GetPlaneTexZ(sector_t::floor) : sec->GetPlaneTexZ(sector_t::ceiling));
+				vt1.Z = FIXED2DBL(h1? *h1 : j==0? sec->GetPlaneTexZ(sector_t::floor) : sec->GetPlaneTexZ(sector_t::ceiling));
+				vt2.Z = FIXED2DBL(h2? *h2 : j==0? sec->GetPlaneTexZ(sector_t::floor) : sec->GetPlaneTexZ(sector_t::ceiling));
 				z3 = h3? *h3 : j==0? sec->GetPlaneTexZ(sector_t::floor) : sec->GetPlaneTexZ(sector_t::ceiling);
-				vt3.Z = FIXED2FLOAT(z3);
+				vt3.Z = FIXED2DBL(z3);
 
 				if (P_PointOnLineSidePrecise(vertexes[vi3].x, vertexes[vi3].y, sec->lines[0]) == 0)
 				{
@@ -374,7 +374,7 @@ static void P_SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt, 
 					vec2 = vt2 - vt3;
 				}
 
-				FVector3 cross = vec1 ^ vec2;
+				TVector3<double> cross = vec1 ^ vec2;
 
 				double len = cross.Length();
 				if (len == 0)
@@ -519,7 +519,7 @@ static void P_AlignPlane (sector_t *sec, line_t *line, int which)
 
 	refsec = line->frontsector == sec ? line->backsector : line->frontsector;
 
-	FVector3 p, v1, v2, cross;
+	TVector3<double> p, v1, v2, cross;
 
 	secplane_t *srcplane;
 	fixed_t srcheight, destheight;
@@ -528,15 +528,15 @@ static void P_AlignPlane (sector_t *sec, line_t *line, int which)
 	srcheight = (which == 0) ? sec->GetPlaneTexZ(sector_t::floor) : sec->GetPlaneTexZ(sector_t::ceiling);
 	destheight = (which == 0) ? refsec->GetPlaneTexZ(sector_t::floor) : refsec->GetPlaneTexZ(sector_t::ceiling);
 
-	p[0] = FIXED2FLOAT (line->v1->x);
-	p[1] = FIXED2FLOAT (line->v1->y);
-	p[2] = FIXED2FLOAT (destheight);
-	v1[0] = FIXED2FLOAT (line->dx);
-	v1[1] = FIXED2FLOAT (line->dy);
+	p[0] = FIXED2DBL (line->v1->x);
+	p[1] = FIXED2DBL(line->v1->y);
+	p[2] = FIXED2DBL(destheight);
+	v1[0] = FIXED2DBL(line->dx);
+	v1[1] = FIXED2DBL(line->dy);
 	v1[2] = 0;
-	v2[0] = FIXED2FLOAT (refvert->x - line->v1->x);
-	v2[1] = FIXED2FLOAT (refvert->y - line->v1->y);
-	v2[2] = FIXED2FLOAT (srcheight - destheight);
+	v2[0] = FIXED2DBL(refvert->x - line->v1->x);
+	v2[1] = FIXED2DBL(refvert->y - line->v1->y);
+	v2[2] = FIXED2DBL(srcheight - destheight);
 
 	cross = (v1 ^ v2).Unit();
 

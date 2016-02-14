@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="8.00"
 	Name="re2c"
 	ProjectGUID="{667D2EE7-C357-49E2-9BAB-0A4A45F0F76E}"
 	RootNamespace="re2c"
 	Keyword="Win32Proj"
-	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
 		<Platform
@@ -45,6 +44,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="1"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
 				StringPooling="true"
 				ExceptionHandling="1"
@@ -74,8 +74,6 @@
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				OptimizeForWindows98="1"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -95,6 +93,9 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -127,6 +128,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="1"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
 				StringPooling="true"
 				ExceptionHandling="1"
@@ -156,8 +158,6 @@
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				OptimizeForWindows98="1"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
 				TargetMachine="17"
 			/>
 			<Tool
@@ -177,6 +177,9 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -208,6 +211,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="1"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
 				StringPooling="true"
 				ExceptionHandling="1"
@@ -236,8 +240,6 @@
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				OptimizeForWindows98="1"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -257,6 +259,9 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -289,6 +294,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="1"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
 				StringPooling="true"
 				ExceptionHandling="1"
@@ -318,8 +324,6 @@
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				OptimizeForWindows98="1"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
 				TargetMachine="17"
 			/>
 			<Tool
@@ -341,6 +345,9 @@
 				Name="VCAppVerifierTool"
 			/>
 			<Tool
+				Name="VCWebDeploymentTool"
+			/>
+			<Tool
 				Name="VCPostBuildEventTool"
 			/>
 		</Configuration>
@@ -354,119 +361,219 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\actions.cc"
+				RelativePath=".\src\ir\adfa\adfa.cc"
 				>
 			</File>
 			<File
-				RelativePath=".\code.cc"
+				RelativePath=".\src\codegen\bitmap.cc"
 				>
 			</File>
 			<File
-				RelativePath=".\dfa.cc"
+				RelativePath=".\src\ir\nfa\calc_size.cc"
 				>
 			</File>
 			<File
-				RelativePath=".\main.cc"
+				RelativePath=".\src\parse\code.cc"
 				>
 			</File>
 			<File
-				RelativePath=".\mbo_getopt.cc"
+				RelativePath=".\src\ir\compile.cc"
 				>
 			</File>
 			<File
-				RelativePath=".\parser.cc"
+				RelativePath=".\src\ir\skeleton\control_flow.cc"
 				>
 			</File>
 			<File
-				RelativePath=".\parser.y"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						ObjectFile="$(IntDir)\$(InputName)1.obj"
-						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|x64"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						ObjectFile="$(IntDir)\$(InputName)1.obj"
-						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						ObjectFile="$(IntDir)\$(InputName)1.obj"
-						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|x64"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						ObjectFile="$(IntDir)\$(InputName)1.obj"
-						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\scanner.cc"
+				RelativePath=".\src\ir\dfa\determinization.cc"
 				>
 			</File>
 			<File
-				RelativePath=".\scanner.re"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|x64"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|x64"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\substr.cc"
+				RelativePath=".\src\ir\regexp\display.cc"
 				>
 			</File>
 			<File
-				RelativePath=".\translate.cc"
+				RelativePath=".\src\codegen\emit_action.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\src\codegen\emit_dfa.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ir\regexp\encoding\enc.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ir\dfa\fillpoints.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ir\regexp\fixed_length.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ir\skeleton\generate_code.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ir\skeleton\generate_data.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\src\codegen\go_construct.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\src\codegen\go_destruct.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\src\codegen\go_emit.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\src\codegen\go_used_labels.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\src\parse\input.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\src\codegen\input_api.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\src\codegen\label.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\src\parse\lex.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\src\parse\lex_conf.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\src\main.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ir\skeleton\match_empty.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ir\skeleton\maxlen.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ir\dfa\minimization.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\src\conf\msg.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ir\nfa\nfa.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\src\conf\opt.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\src\codegen\output.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\src\conf\parse_opts.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\src\parse\parser.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ir\adfa\prepare.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\src\codegen\print.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\src\util\range.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ir\regexp\encoding\range_suffix.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ir\regexp\regexp.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ir\rule_rank.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\src\util\s_to_n32_unsafe.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\src\parse\scanner.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ir\skeleton\skeleton.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ir\nfa\split.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\src\parse\unescape.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ir\skeleton\unreachable.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ir\regexp\encoding\utf16\utf16.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ir\regexp\encoding\utf16\utf16_range.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ir\regexp\encoding\utf16\utf16_regexp.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ir\regexp\encoding\utf8\utf8.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ir\regexp\encoding\utf8\utf8_range.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ir\regexp\encoding\utf8\utf8_regexp.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\src\conf\warn.cc"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ir\skeleton\way.cc"
 				>
 			</File>
 		</Filter>
@@ -476,63 +583,255 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\basics.h"
+				RelativePath=".\src\ir\adfa\action.h"
 				>
 			</File>
 			<File
-				RelativePath=".\code.h"
+				RelativePath=".\src\ir\adfa\adfa.h"
 				>
 			</File>
 			<File
-				RelativePath=".\code_names.h"
+				RelativePath=".\src\util\allocate.h"
 				>
 			</File>
 			<File
-				RelativePath=".\config_w32.h"
+				RelativePath=".\src\util\attribute.h"
 				>
 			</File>
 			<File
-				RelativePath=".\dfa.h"
+				RelativePath=".\src\codegen\bitmap.h"
 				>
 			</File>
 			<File
-				RelativePath=".\globals.h"
+				RelativePath=".\src\util\c99_stdint.h"
 				>
 			</File>
 			<File
-				RelativePath=".\ins.h"
+				RelativePath=".\src\ir\regexp\encoding\case.h"
 				>
 			</File>
 			<File
-				RelativePath=".\mbo_getopt.h"
+				RelativePath=".\src\parse\code.h"
 				>
 			</File>
 			<File
-				RelativePath=".\parser.h"
+				RelativePath=".\src\ir\compile.h"
 				>
 			</File>
 			<File
-				RelativePath=".\re.h"
+				RelativePath=".\config.msc.h"
 				>
 			</File>
 			<File
-				RelativePath=".\scanner.h"
+				RelativePath=".\src\util\counter.h"
 				>
 			</File>
 			<File
-				RelativePath=".\stream_lc.h"
+				RelativePath=".\src\ir\dfa\dfa.h"
 				>
 			</File>
 			<File
-				RelativePath=".\substr.h"
+				RelativePath=".\src\codegen\emit.h"
 				>
 			</File>
 			<File
-				RelativePath=".\token.h"
+				RelativePath=".\src\ir\regexp\empty_class_policy.h"
 				>
 			</File>
 			<File
-				RelativePath=".\y.tab.h"
+				RelativePath=".\src\ir\regexp\encoding\enc.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\parse\extop.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\util\forbid_copy.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\util\free_list.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\globals.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\codegen\go.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\codegen\indent.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\parse\input.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\codegen\input_api.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\codegen\label.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\parse\loc.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\util\local_increment.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\conf\msg.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ir\nfa\nfa.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\conf\opt.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\util\ord_hash_set.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\codegen\output.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\parse\parser.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ir\skeleton\path.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\codegen\print.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\util\range.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ir\regexp\encoding\range_suffix.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ir\regexp\regexp.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ir\regexp\regexp_alt.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ir\regexp\regexp_cat.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ir\regexp\regexp_close.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ir\regexp\regexp_match.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ir\regexp\regexp_null.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ir\regexp\regexp_rule.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ir\rule_rank.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\parse\rules.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\util\s_to_n32_unsafe.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\parse\scanner.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ir\skeleton\skeleton.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\util\smart_ptr.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\parse\spec.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\util\static_assert.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\util\u32lim.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\parse\unescape.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\util\uniq_vector.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ir\regexp\encoding\utf16\utf16.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ir\regexp\encoding\utf16\utf16_range.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ir\regexp\encoding\utf16\utf16_regexp.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ir\regexp\encoding\utf8\utf8.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ir\regexp\encoding\utf8\utf8_range.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ir\regexp\encoding\utf8\utf8_regexp.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\conf\warn.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\ir\skeleton\way.h"
+				>
+			</File>
+			<File
+				RelativePath=".\src\parse\y.tab.h"
 				>
 			</File>
 		</Filter>

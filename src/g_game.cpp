@@ -439,13 +439,16 @@ CCMD (use)
 {
 	if (argv.argc() > 1 && who != NULL)
 	{
-		SendItemUse = who->FindInventory (PClass::FindClass (argv[1]));
+		SendItemUse = who->FindInventory(PClass::FindActor(argv[1]));
 	}
 }
 
 CCMD (invdrop)
 {
-	if (players[consoleplayer].mo) SendItemDrop = players[consoleplayer].mo->InvSel;
+	if (players[consoleplayer].mo)
+	{
+		SendItemDrop = players[consoleplayer].mo->InvSel;
+	}
 }
 
 CCMD (weapdrop)
@@ -457,11 +460,11 @@ CCMD (drop)
 {
 	if (argv.argc() > 1 && who != NULL)
 	{
-		SendItemDrop = who->FindInventory (PClass::FindClass (argv[1]));
+		SendItemDrop = who->FindInventory(PClass::FindActor(argv[1]));
 	}
 }
 
-const PClass *GetFlechetteType(AActor *other);
+PClassActor *GetFlechetteType(AActor *other);
 
 CCMD (useflechette)
 { // Select from one of arti_poisonbag1-3, whichever the player has
@@ -475,7 +478,7 @@ CCMD (useflechette)
 	if (who == NULL)
 		return;
 
-	const PClass *type = GetFlechetteType(who);
+	PClassActor *type = GetFlechetteType(who);
 	if (type != NULL)
 	{
 		AInventory *item;
@@ -502,7 +505,7 @@ CCMD (select)
 {
 	if (argv.argc() > 1)
 	{
-		AInventory *item = who->FindInventory (PClass::FindClass (argv[1]));
+		AInventory *item = who->FindInventory(PClass::FindActor(argv[1]));
 		if (item != NULL)
 		{
 			who->InvSel = item;
@@ -1350,7 +1353,7 @@ void G_PlayerReborn (int player)
 	BYTE		currclass;
 	userinfo_t  userinfo;	// [RH] Save userinfo
 	APlayerPawn *actor;
-	const PClass *cls;
+	PClassPlayerPawn *cls;
 	FString		log;
 	DBot		*Bot;		//Added by MC:
 
@@ -1421,6 +1424,8 @@ bool G_CheckSpot (int playernum, FPlayerStart *mthing)
 	fixed_t y;
 	fixed_t z, oldz;
 	int i;
+
+	if (mthing->type == 0) return false;
 
 	x = mthing->x;
 	y = mthing->y;
@@ -1557,7 +1562,7 @@ void G_DeathMatchSpawnPlayer (int playernum)
 			if (spot == NULL)
 			{ // We have a player 1 start, right?
 				spot = &playerstarts[0];
-				if (spot == NULL)
+				if (spot->type == 0)
 				{ // Fine, whatever.
 					spot = &deathmatchstarts[0];
 				}
@@ -1573,7 +1578,13 @@ void G_DeathMatchSpawnPlayer (int playernum)
 //
 FPlayerStart *G_PickPlayerStart(int playernum, int flags)
 {
-	if ((level.flags2 & LEVEL2_RANDOMPLAYERSTARTS) || (flags & PPS_FORCERANDOM))
+	if (AllPlayerStarts.Size() == 0) // No starts to pick
+	{
+		return NULL;
+	}
+
+	if ((level.flags2 & LEVEL2_RANDOMPLAYERSTARTS) || (flags & PPS_FORCERANDOM) ||
+		playerstarts[playernum].type == 0)
 	{
 		if (!(flags & PPS_NOBLOCKINGCHECK))
 		{
@@ -1592,7 +1603,7 @@ FPlayerStart *G_PickPlayerStart(int playernum, int flags)
 			{ // Pick an open spot at random.
 				return good_starts[pr_pspawn(good_starts.Size())];
 			}
-	}
+		}
 		// Pick a spot at random, whether it's open or not.
 		return &AllPlayerStarts[pr_pspawn(AllPlayerStarts.Size())];
 	}
@@ -1621,6 +1632,18 @@ static void G_QueueBody (AActor *body)
 		*translationtables[TRANSLATION_PlayerCorpses][modslot] = *TranslationToTable(body->Translation);
 		body->Translation = TRANSLATION(TRANSLATION_PlayerCorpses,modslot);
 		translationtables[TRANSLATION_PlayerCorpses][modslot]->UpdateNative();
+	}
+
+	const int skinidx = body->player->userinfo.GetSkin();
+
+	if (0 != skinidx && !(body->flags4 & MF4_NOSKIN))
+	{
+		// Apply skin's scale to actor's scale, it will be lost otherwise
+		const AActor *const defaultActor = body->GetDefault();
+		const FPlayerSkin &skin = skins[skinidx];
+
+		body->scaleX = Scale(body->scaleX, skin.ScaleX, defaultActor->scaleX);
+		body->scaleY = Scale(body->scaleY, skin.ScaleY, defaultActor->scaleY);
 	}
 
 	bodyqueslot++;
@@ -1665,16 +1688,17 @@ void G_DoReborn (int playernum, bool freshbot)
 		}
 
 		if (!(level.flags2 & LEVEL2_RANDOMPLAYERSTARTS) &&
+			playerstarts[playernum].type != 0 &&
 			G_CheckSpot (playernum, &playerstarts[playernum]))
 		{
 			AActor *mo = P_SpawnPlayer(&playerstarts[playernum], playernum);
-			if (mo != NULL) P_PlayerStartStomp(mo);
+			if (mo != NULL) P_PlayerStartStomp(mo, true);
 		}
 		else
 		{ // try to spawn at any random player's spot
 			FPlayerStart *start = G_PickPlayerStart(playernum, PPS_FORCERANDOM);
 			AActor *mo = P_SpawnPlayer(start, playernum);
-			if (mo != NULL) P_PlayerStartStomp(mo);
+			if (mo != NULL) P_PlayerStartStomp(mo, true);
 		}
 	}
 }
@@ -1930,9 +1954,6 @@ void G_DoLoadGame ()
 	}
 
 	G_ReadSnapshots (png);
-	STAT_Read(png);
-	FRandom::StaticReadRNGState (png);
-	P_ReadACSDefereds (png);
 
 	// load a base level
 	savegamerestore = true;		// Use the player actors in the savegame
@@ -1942,6 +1963,9 @@ void G_DoLoadGame ()
 	delete[] map;
 	savegamerestore = false;
 
+	STAT_Read(png);
+	FRandom::StaticReadRNGState(png);
+	P_ReadACSDefereds(png);
 	P_ReadACSVars(png);
 
 	NextSkill = -1;
@@ -2627,12 +2651,12 @@ bool G_ProcessIFFDemo (FString &mapname)
 
 	if (uncompSize > 0)
 	{
-		BYTE *uncompressed = new BYTE[uncompSize];
+		BYTE *uncompressed = (BYTE*)M_Malloc(uncompSize);
 		int r = uncompress (uncompressed, &uncompSize, demo_p, uLong(zdembodyend - demo_p));
 		if (r != Z_OK)
 		{
 			Printf ("Could not decompress demo! %s\n", M_ZLibError(r).GetChars());
-			delete[] uncompressed;
+			M_Free(uncompressed);
 			return true;
 		}
 		M_Free (demobuffer);

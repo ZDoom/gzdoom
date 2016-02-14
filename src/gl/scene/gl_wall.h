@@ -31,20 +31,24 @@ enum WallTypes
 	RENDERWALL_M1S,
 	RENDERWALL_M2S,
 	RENDERWALL_BOTTOM,
-	RENDERWALL_SKY,
 	RENDERWALL_FOGBOUNDARY,
-	RENDERWALL_HORIZON,
-	RENDERWALL_SKYBOX,
-	RENDERWALL_SECTORSTACK,
-	RENDERWALL_PLANEMIRROR,
-	RENDERWALL_MIRROR,
 	RENDERWALL_MIRRORSURFACE,
 	RENDERWALL_M2SNF,
 	RENDERWALL_COLOR,
 	RENDERWALL_FFBLOCK,
-	RENDERWALL_COLORLAYER,
 	RENDERWALL_LINETOLINE,
 	// Insert new types at the end!
+};
+
+enum PortalTypes
+{
+	PORTALTYPE_SKY,
+	PORTALTYPE_HORIZON,
+	PORTALTYPE_SKYBOX,
+	PORTALTYPE_SECTORSTACK,
+	PORTALTYPE_PLANEMIRROR,
+	PORTALTYPE_MIRROR,
+	PORTALTYPE_LINETOLINE,
 };
 
 struct GLSeg
@@ -88,7 +92,6 @@ struct GLSectorPlane
 };
 
 
-
 class GLWall
 {
 public:
@@ -108,7 +111,6 @@ public:
 	{
 		RWF_BLANK = 0,
 		RWF_TEXTURED = 1,	// actually not being used anymore because with buffers it's even less efficient not writing the texture coordinates - but leave it here
-		RWF_GLOW = 2,
 		RWF_NOSPLIT = 4,
 		RWF_NORENDER = 8,
 	};
@@ -129,6 +131,7 @@ public:
 	
 	fixed_t viewdistance;
 
+	TArray<lightlist_t> *lightlist;
 	int lightlevel;
 	BYTE type;
 	BYTE flags;
@@ -165,22 +168,25 @@ private:
 
 	void CheckGlowing();
 	void PutWall(bool translucent);
+	void PutPortal(int ptype);
 	void CheckTexturePosition();
+
+	void Put3DWall(lightlist_t * lightlist, bool translucent);
+	void SplitWall(sector_t * frontsector, bool translucent);
 
 	void SetupLights();
 	bool PrepareLight(texcoord * tcs, ADynamicLight * light);
 	void RenderWall(int textured, unsigned int *store = NULL);
+	void RenderTextured(int rflags);
 
 	void FloodPlane(int pass);
 
 	void SkyPlane(sector_t *sector, int plane, bool allowmirror);
-	void SkyLine(sector_t *fs, line_t *line);
+	void SkyLine(sector_t *sec, line_t *line);
 	void SkyNormal(sector_t * fs,vertex_t * v1,vertex_t * v2);
 	void SkyTop(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex_t * v2);
 	void SkyBottom(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex_t * v2);
 
-	void Put3DWall(lightlist_t * lightlist, bool translucent);
-	void SplitWall(sector_t * frontsector, bool translucent);
 	void LightPass();
 	void SetHorizon(vertex_t * ul, vertex_t * ur, vertex_t * ll, vertex_t * lr);
 	bool DoHorizon(seg_t * seg,sector_t * fs, vertex_t * v1,vertex_t * v2);
@@ -334,8 +340,8 @@ public:
 	float trans;
 	AActor * actor;
 	particle_t * particle;
+	TArray<lightlist_t> *lightlist;
 
-	void SplitSprite(sector_t * frontsector, bool translucent);
 	void SetLowerParam();
 	void PerformSpriteClipAdjustment(AActor *thing, fixed_t thingx, fixed_t thingy, float spriteheight);
 
@@ -346,7 +352,6 @@ public:
 	void Process(AActor* thing,sector_t * sector);
 	void ProcessParticle (particle_t *particle, sector_t *sector);//, int shade, int fakeside)
 	void SetThingColor(PalEntry);
-	void SetSpriteColor(sector_t *sector, fixed_t y);
 
 	// Lines start-end and fdiv must intersect.
 	double CalcIntersectionVertex(GLWall * w2);

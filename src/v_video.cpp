@@ -858,8 +858,8 @@ void DFrameBuffer::DrawRateStuff ()
 			int rate_x;
 
 			chars = mysnprintf (fpsbuff, countof(fpsbuff), "%2u ms (%3u fps)", howlong, LastCount);
-			rate_x = Width - chars * 8;
-			Clear (rate_x, 0, Width, 8, GPalette.BlackIndex, 0);
+			rate_x = Width - ConFont->StringWidth(&fpsbuff[0]);
+			Clear (rate_x, 0, Width, ConFont->GetHeight(), GPalette.BlackIndex, 0);
 			DrawText (ConFont, CR_WHITE, rate_x, 0, (char *)&fpsbuff[0], TAG_DONE);
 
 			DWORD thisSec = ms/1000;
@@ -1424,13 +1424,11 @@ void V_CalcCleanFacs (int designwidth, int designheight, int realwidth, int real
 		*cleany = cy2;
 	}
 
-	if (*cleanx > 1 && *cleany > 1 && *cleanx != *cleany)
-	{
-		if (*cleanx < *cleany)
-			*cleany = *cleanx;
-		else
-			*cleanx = *cleany;
-	}
+	if (*cleanx < *cleany)
+		*cleany = *cleanx;
+	else
+		*cleanx = *cleany;
+
 	if (_cx1 != NULL)	*_cx1 = cx1;
 	if (_cx2 != NULL)	*_cx2 = cx2;
 }

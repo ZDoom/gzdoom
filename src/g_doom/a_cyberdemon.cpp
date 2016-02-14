@@ -9,15 +9,21 @@
 
 DEFINE_ACTION_FUNCTION(AActor, A_CyberAttack)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (!self->target)
-		return;
+		return 0;
 				
 	A_FaceTarget (self);
-	P_SpawnMissile (self, self->target, PClass::FindClass("Rocket"));
+	P_SpawnMissile (self, self->target, PClass::FindActor("Rocket"));
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_Hoof)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	S_Sound (self, CHAN_BODY, "cyber/hoof", 1, ATTN_IDLE);
-	A_Chase (self);
+	A_Chase (stack, self);
+	return 0;
 }

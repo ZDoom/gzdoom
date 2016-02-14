@@ -587,8 +587,8 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 		player - players == consoleplayer &&
 		camera == player->mo &&
 		!demoplayback &&
-		iview->nviewx == camera->x &&
-		iview->nviewy == camera->y && 
+		iview->nviewx == camera->X() &&
+		iview->nviewy == camera->Y() && 
 		!(player->cheats & (CF_TOTALLYFROZEN|CF_FROZEN)) &&
 		player->playerstate == PST_LIVE &&
 		player->mo->reactiontime == 0 &&
@@ -839,9 +839,9 @@ void R_SetupFrame (AActor *actor)
 	}
 	else
 	{
-		iview->nviewx = camera->x;
-		iview->nviewy = camera->y;
-		iview->nviewz = camera->player ? camera->player->viewz : camera->z + camera->GetClass()->Meta.GetMetaFixed(AMETA_CameraHeight);
+		iview->nviewx = camera->X();
+		iview->nviewy = camera->Y();
+		iview->nviewz = camera->player ? camera->player->viewz : camera->Z() + camera->GetCameraHeight();
 		viewsector = camera->Sector;
 		r_showviewer = false;
 	}

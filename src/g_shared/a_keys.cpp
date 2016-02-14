@@ -14,10 +14,10 @@
 
 struct OneKey
 {
-	const PClass *key;
+	PClassActor *key;
 	int count;
 
-	bool check(AActor * owner)
+	bool check(AActor *owner)
 	{
 		if (owner->IsKindOf(RUNTIME_CLASS(AKey)))
 		{
@@ -122,7 +122,7 @@ static const char * keywords_lock[]={
 //
 //===========================================================================
 
-static void AddOneKey(Keygroup *keygroup, const PClass *mi, FScanner &sc)
+static void AddOneKey(Keygroup *keygroup, PClassActor *mi, FScanner &sc)
 {
 	if (mi)
 	{
@@ -159,17 +159,17 @@ static void AddOneKey(Keygroup *keygroup, const PClass *mi, FScanner &sc)
 //
 //===========================================================================
 
-static Keygroup * ParseKeygroup(FScanner &sc)
+static Keygroup *ParseKeygroup(FScanner &sc)
 {
-	Keygroup * keygroup;
-	const PClass * mi;
+	Keygroup *keygroup;
+	PClassActor *mi;
 
 	sc.MustGetStringName("{");
 	keygroup = new Keygroup;
 	while (!sc.CheckString("}"))
 	{
 		sc.MustGetString();
-		mi = PClass::FindClass(sc.String);
+		mi = PClass::FindActor(sc.String);
 		AddOneKey(keygroup, mi, sc);
 	}
 	if (keygroup->anykeylist.Size() == 0)
@@ -208,9 +208,9 @@ static void ParseLock(FScanner &sc)
 	int i,r,g,b;
 	int keynum;
 	Lock sink;
-	Lock * lock=&sink;
-	Keygroup * keygroup;
-	const PClass * mi;
+	Lock *lock = &sink;
+	Keygroup *keygroup;
+	PClassActor *mi;
 
 	sc.MustGetNumber();
 	keynum = sc.Number;
@@ -292,7 +292,7 @@ static void ParseLock(FScanner &sc)
 			break;
 
 		default:
-			mi = PClass::FindClass(sc.String);
+			mi = PClass::FindActor(sc.String);
 			if (mi) 
 			{
 				keygroup = new Keygroup;
@@ -328,27 +328,27 @@ static void ParseLock(FScanner &sc)
 static void ClearLocks()
 {
 	unsigned int i;
-	for(i=0;i<PClass::m_Types.Size();i++)
+	for(i = 0; i < PClassActor::AllActorClasses.Size(); i++)
 	{
-		if (PClass::m_Types[i]->IsDescendantOf(RUNTIME_CLASS(AKey)))
+		if (PClassActor::AllActorClasses[i]->IsDescendantOf(RUNTIME_CLASS(AKey)))
 		{
-			AKey *key = static_cast<AKey*>(GetDefaultByType(PClass::m_Types[i]));
+			AKey *key = static_cast<AKey*>(GetDefaultByType(PClassActor::AllActorClasses[i]));
 			if (key != NULL)
 			{
 				key->KeyNumber = 0;
 			}
 		}
 	}
-	for(i=0;i<256;i++)
+	for(i = 0; i < 256; i++)
 	{
-		if (locks[i]!=NULL) 
+		if (locks[i] != NULL) 
 		{
 			delete locks[i];
-			locks[i]=NULL;
+			locks[i] = NULL;
 		}
 	}
-	currentnumber=0;
-	keysdone=false;
+	currentnumber = 0;
+	keysdone = false;
 }
 
 //===========================================================================

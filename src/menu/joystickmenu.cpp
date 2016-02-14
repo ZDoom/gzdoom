@@ -225,7 +225,7 @@ public:
 
 	void SetSelection(int Selection)
 	{
-		float f = fabs(SELECTED_JOYSTICK->GetAxisScale(mAxis));
+		float f = fabsf(SELECTED_JOYSTICK->GetAxisScale(mAxis));
 		if (Selection) f*=-1;
 		SELECTED_JOYSTICK->SetAxisScale(mAxis, f);
 	}

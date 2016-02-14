@@ -74,10 +74,10 @@ void A_KSpiritRoam (AActor *);
 void A_KBolt (AActor *);
 void A_KBoltRaise (AActor *);
 
-void KoraxFire (AActor *actor, const PClass *type, int arm);
+void KoraxFire (AActor *actor, PClassActor *type, int arm);
 void KSpiritInit (AActor *spirit, AActor *korax);
 AActor *P_SpawnKoraxMissile (fixed_t x, fixed_t y, fixed_t z,
-	AActor *source, AActor *dest, const PClass *type);
+	AActor *source, AActor *dest, PClassActor *type);
 
 extern void SpawnSpiritTail (AActor *spirit);
 
@@ -89,6 +89,8 @@ extern void SpawnSpiritTail (AActor *spirit);
 
 DEFINE_ACTION_FUNCTION(AActor, A_KoraxChase)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *spot;
 
 	if ((!self->special2) && (self->health <= (self->SpawnHealth()/2)))
@@ -97,16 +99,19 @@ DEFINE_ACTION_FUNCTION(AActor, A_KoraxChase)
 		spot = iterator.Next ();
 		if (spot != NULL)
 		{
-			P_Teleport (self, spot->x, spot->y, ONFLOORZ, spot->angle, true, true, false);
+			P_Teleport (self, spot->X(), spot->Y(), ONFLOORZ, spot->angle, TELF_SOURCEFOG | TELF_DESTFOG);
 		}
 
 		P_StartScript (self, NULL, 249, NULL, NULL, 0, 0);
 		self->special2 = 1;	// Don't run again
 
-		return;
+		return 0;
 	}
 
-	if (!self->target) return;
+	if (self->target == NULL)
+	{
+		return 0;
+	}
 	if (pr_koraxchase()<30)
 	{
 		self->SetState (self->MissileState);
@@ -136,10 +141,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_KoraxChase)
 			self->tracer = spot;
 			if (spot)
 			{
-				P_Teleport (self, spot->x, spot->y, ONFLOORZ, spot->angle, true, true, false);
+				P_Teleport (self, spot->X(), spot->Y(), ONFLOORZ, spot->angle, TELF_SOURCEFOG | TELF_DESTFOG);
 			}
 		}
 	}
+	return 0;
 }
 
 //============================================================================
@@ -150,17 +156,23 @@ DEFINE_ACTION_FUNCTION(AActor, A_KoraxChase)
 
 DEFINE_ACTION_FUNCTION(AActor, A_KoraxBonePop)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *mo;
 	int i;
 
 	// Spawn 6 spirits equalangularly
 	for (i = 0; i < 6; ++i)
 	{
-		mo = P_SpawnMissileAngle (self, PClass::FindClass("KoraxSpirit"), ANGLE_60*i, 5*FRACUNIT);
-		if (mo) KSpiritInit (mo, self);
+		mo = P_SpawnMissileAngle (self, PClass::FindActor("KoraxSpirit"), ANGLE_60*i, 5*FRACUNIT);
+		if (mo)
+		{
+			KSpiritInit (mo, self);
+		}
 	}
 
 	P_StartScript (self, NULL, 255, NULL, NULL, 0, 0);		// Death script
+	return 0;
 }
 
 //============================================================================
@@ -190,6 +202,8 @@ void KSpiritInit (AActor *spirit, AActor *korax)
 
 DEFINE_ACTION_FUNCTION(AActor, A_KoraxDecide)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (pr_koraxdecide()<220)
 	{
 		self->SetState (self->FindState("Attack"));
@@ -198,6 +212,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_KoraxDecide)
 	{
 		self->SetState (self->FindState("Command"));
 	}
+	return 0;
 }
 
 //============================================================================
@@ -208,6 +223,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_KoraxDecide)
 
 DEFINE_ACTION_FUNCTION(AActor, A_KoraxMissile)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	static const struct { const char *type, *sound; } choices[6] =
 	{
 		{ "WraithFX1", "WraithMissileFire" },
@@ -220,11 +237,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_KoraxMissile)
 
 	int type = pr_koraxmissile()%6;
 	int i;
-	const PClass *info;
+	PClassActor *info;
 
 	S_Sound (self, CHAN_VOICE, "KoraxAttack", 1, ATTN_NORM);
 
-	info = PClass::FindClass (choices[type].type);
+	info = PClass::FindActor(choices[type].type);
 	if (info == NULL)
 	{
 		I_Error ("Unknown Korax missile: %s\n", choices[type].type);
@@ -236,6 +253,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_KoraxMissile)
 	{
 		KoraxFire (self, info, i);
 	}
+	return 0;
 }
 
 //============================================================================
@@ -248,7 +266,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_KoraxMissile)
 
 DEFINE_ACTION_FUNCTION(AActor, A_KoraxCommand)
 {
-	fixed_t x,y,z;
+	PARAM_ACTION_PROLOGUE;
 	angle_t ang;
 	int numcommands;
 
@@ -256,10 +274,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_KoraxCommand)
 
 	// Shoot stream of lightning to ceiling
 	ang = (self->angle - ANGLE_90) >> ANGLETOFINESHIFT;
-	x = self->x + KORAX_COMMAND_OFFSET * finecosine[ang];
-	y = self->y + KORAX_COMMAND_OFFSET * finesine[ang];
-	z = self->z + KORAX_COMMAND_HEIGHT*FRACUNIT;
-	Spawn("KoraxBolt", x, y, z, ALLOW_REPLACE);
+	fixedvec3 pos = self->Vec3Offset(
+		KORAX_COMMAND_OFFSET * finecosine[ang],
+		KORAX_COMMAND_OFFSET * finesine[ang],
+		KORAX_COMMAND_HEIGHT*FRACUNIT);
+	Spawn("KoraxBolt", pos, ALLOW_REPLACE);
 
 	if (self->health <= (self->SpawnHealth() >> 1))
 	{
@@ -271,6 +290,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_KoraxCommand)
 	}
 
 	P_StartScript (self, NULL, 250+(pr_koraxcommand()%numcommands), NULL, NULL, 0, 0);
+	return 0;
 }
 
 //============================================================================
@@ -288,7 +308,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_KoraxCommand)
 //
 //============================================================================
 
-void KoraxFire (AActor *actor, const PClass *type, int arm)
+void KoraxFire (AActor *actor, PClassActor *type, int arm)
 {
 	static const int extension[6] =
 	{
@@ -310,14 +330,13 @@ void KoraxFire (AActor *actor, const PClass *type, int arm)
 	};
 
 	angle_t ang;
-	fixed_t x,y,z;
 
-	ang = (actor->angle + (arm < 3 ? -KORAX_DELTAANGLE : KORAX_DELTAANGLE))
-		>> ANGLETOFINESHIFT;
-	x = actor->x + extension[arm] * finecosine[ang];
-	y = actor->y + extension[arm] * finesine[ang];
-	z = actor->z - actor->floorclip + armheight[arm];
-	P_SpawnKoraxMissile (x, y, z, actor, actor->target, type);
+	ang = (actor->angle + (arm < 3 ? -KORAX_DELTAANGLE : KORAX_DELTAANGLE)) >> ANGLETOFINESHIFT;
+	fixedvec3 pos = actor->Vec3Offset(
+		extension[arm] * finecosine[ang],
+		extension[arm] * finesine[ang],
+		-actor->floorclip + armheight[arm]);
+	P_SpawnKoraxMissile (pos.x, pos.y, pos.z, actor, actor->target, type);
 }
 
 //============================================================================
@@ -372,11 +391,11 @@ void A_KSpiritSeeker (AActor *actor, angle_t thresh, angle_t turnMax)
 	actor->vely = FixedMul (actor->Speed, finesine[angle]);
 
 	if (!(level.time&15) 
-		|| actor->z > target->z+(target->GetDefault()->height)
-		|| actor->z+actor->height < target->z)
+		|| actor->Z() > target->Z()+(target->GetDefault()->height)
+		|| actor->Top() < target->Z())
 	{
-		newZ = target->z+((pr_kspiritseek()*target->GetDefault()->height)>>8);
-		deltaZ = newZ-actor->z;
+		newZ = target->Z()+((pr_kspiritseek()*target->GetDefault()->height)>>8);
+		deltaZ = newZ-actor->Z();
 		if (abs(deltaZ) > 15*FRACUNIT)
 		{
 			if(deltaZ > 0)
@@ -406,6 +425,8 @@ void A_KSpiritSeeker (AActor *actor, angle_t thresh, angle_t turnMax)
 
 DEFINE_ACTION_FUNCTION(AActor, A_KSpiritRoam)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (self->health-- <= 0)
 	{
 		S_Sound (self, CHAN_VOICE, "SpiritDie", 1, ATTN_NORM);
@@ -424,6 +445,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_KSpiritRoam)
 			S_Sound (self, CHAN_VOICE, "SpiritActive", 1, ATTN_NONE);
 		}
 	}
+	return 0;
 }
 
 //============================================================================
@@ -434,11 +456,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_KSpiritRoam)
 
 DEFINE_ACTION_FUNCTION(AActor, A_KBolt)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	// Countdown lifetime
 	if (self->special1-- <= 0)
 	{
 		self->Destroy ();
 	}
+	return 0;
 }
 
 //============================================================================
@@ -449,15 +474,17 @@ DEFINE_ACTION_FUNCTION(AActor, A_KBolt)
 
 DEFINE_ACTION_FUNCTION(AActor, A_KBoltRaise)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *mo;
 	fixed_t z;
 
 	// Spawn a child upward
-	z = self->z + KORAX_BOLT_HEIGHT;
+	z = self->Z() + KORAX_BOLT_HEIGHT;
 
 	if ((z + KORAX_BOLT_HEIGHT) < self->ceilingz)
 	{
-		mo = Spawn("KoraxBolt", self->x, self->y, z, ALLOW_REPLACE);
+		mo = Spawn("KoraxBolt", self->X(), self->Y(), z, ALLOW_REPLACE);
 		if (mo)
 		{
 			mo->special1 = KORAX_BOLT_LIFETIME;
@@ -467,6 +494,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_KBoltRaise)
 	{
 		// Maybe cap it off here
 	}
+	return 0;
 }
 
 //============================================================================
@@ -476,7 +504,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_KBoltRaise)
 //============================================================================
 
 AActor *P_SpawnKoraxMissile (fixed_t x, fixed_t y, fixed_t z,
-	AActor *source, AActor *dest, const PClass *type)
+	AActor *source, AActor *dest, PClassActor *type)
 {
 	AActor *th;
 	angle_t an;
@@ -499,6 +527,6 @@ AActor *P_SpawnKoraxMissile (fixed_t x, fixed_t y, fixed_t z,
 	{
 		dist = 1;
 	}
-	th->velz = (dest->z-z+(30*FRACUNIT))/dist;
+	th->velz = (dest->Z()-z+(30*FRACUNIT))/dist;
 	return (P_CheckMissileSpawn(th, source->radius) ? th : NULL);
 }

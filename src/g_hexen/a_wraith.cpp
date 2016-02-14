@@ -29,15 +29,18 @@ static FRandom pr_wraithfx4 ("WraithFX4");
 
 DEFINE_ACTION_FUNCTION(AActor, A_WraithInit)
 {
-	self->z += 48<<FRACBITS;
+	PARAM_ACTION_PROLOGUE;
+
+	self->AddZ(48<<FRACBITS);
 
 	// [RH] Make sure the wraith didn't go into the ceiling
-	if (self->z + self->height > self->ceilingz)
+	if (self->Top() > self->ceilingz)
 	{
-		self->z = self->ceilingz - self->height;
+		self->SetZ(self->ceilingz - self->height);
 	}
 
 	self->special1 = 0;			// index into floatbob
+	return 0;
 }
 
 //============================================================================
@@ -48,11 +51,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_WraithInit)
 
 DEFINE_ACTION_FUNCTION(AActor, A_WraithRaiseInit)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	self->renderflags &= ~RF_INVISIBLE;
 	self->flags2 &= ~MF2_NONSHOOTABLE;
 	self->flags3 &= ~MF3_DONTBLAST;
 	self->flags |= MF_SHOOTABLE|MF_SOLID;
 	self->floorclip = self->height;
+	return 0;
 }
 
 //============================================================================
@@ -63,6 +69,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_WraithRaiseInit)
 
 DEFINE_ACTION_FUNCTION(AActor, A_WraithRaise)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (A_RaiseMobj (self, 2*FRACUNIT))
 	{
 		// Reached it's target height
@@ -75,6 +83,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_WraithRaise)
 	}
 
 	P_SpawnDirt (self, self->radius);
+	return 0;
 }
 
 //============================================================================
@@ -85,6 +94,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_WraithRaise)
 
 DEFINE_ACTION_FUNCTION(AActor, A_WraithMelee)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	int amount;
 
 	// Steal health from target and give to self
@@ -94,6 +105,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_WraithMelee)
 		P_DamageMobj (self->target, self, self, amount, NAME_Melee);
 		self->health += amount;
 	}
+	return 0;
 }
 
 //============================================================================
@@ -104,13 +116,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_WraithMelee)
 
 DEFINE_ACTION_FUNCTION(AActor, A_WraithFX2)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *mo;
 	angle_t angle;
 	int i;
 
 	for (i = 2; i; --i)
 	{
-		mo = Spawn ("WraithFX2", self->x, self->y, self->z, ALLOW_REPLACE);
+		mo = Spawn ("WraithFX2", self->Pos(), ALLOW_REPLACE);
 		if(mo)
 		{
 			if (pr_wraithfx2 ()<128)
@@ -130,6 +144,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_WraithFX2)
 			mo->floorclip = 10*FRACUNIT;
 		}
 	}
+	return 0;
 }
 
 //============================================================================
@@ -142,20 +157,26 @@ DEFINE_ACTION_FUNCTION(AActor, A_WraithFX2)
 
 DEFINE_ACTION_FUNCTION(AActor, A_WraithFX3)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *mo;
 	int numdropped = pr_wraithfx3()%15;
 
 	while (numdropped-- > 0)
 	{
-		mo = Spawn ("WraithFX3", self->x, self->y, self->z, ALLOW_REPLACE);
+		fixed_t xo = (pr_wraithfx3() - 128) << 11;
+		fixed_t yo = (pr_wraithfx3() - 128) << 11;
+		fixed_t zo = pr_wraithfx3() << 10;
+
+		mo = Spawn ("WraithFX3", self->Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
 		if (mo)
 		{
-			mo->x += (pr_wraithfx3()-128)<<11;
-			mo->y += (pr_wraithfx3()-128)<<11;
-			mo->z += (pr_wraithfx3()<<10);
+			mo->floorz = self->floorz;
+			mo->ceilingz = self->ceilingz;
 			mo->target = self;
 		}
 	}
+	return 0;
 }
 
 //============================================================================
@@ -195,23 +216,29 @@ void A_WraithFX4 (AActor *self)
 
 	if (spawn4)
 	{
-		mo = Spawn ("WraithFX4", self->x, self->y, self->z, ALLOW_REPLACE);
+		fixed_t xo = (pr_wraithfx4() - 128) << 12;
+		fixed_t yo = (pr_wraithfx4() - 128) << 12;
+		fixed_t zo = (pr_wraithfx4() << 10);
+
+		mo = Spawn ("WraithFX4", self->Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
 		if (mo)
 		{
-			mo->x += (pr_wraithfx4()-128)<<12;
-			mo->y += (pr_wraithfx4()-128)<<12;
-			mo->z += (pr_wraithfx4()<<10);
+			mo->floorz = self->floorz;
+			mo->ceilingz = self->ceilingz;
 			mo->target = self;
 		}
 	}
 	if (spawn5)
 	{
-		mo = Spawn ("WraithFX5", self->x, self->y, self->z, ALLOW_REPLACE);
+		fixed_t xo = (pr_wraithfx4() - 128) << 11;
+		fixed_t yo = (pr_wraithfx4() - 128) << 11;
+		fixed_t zo = (pr_wraithfx4()<<10);
+
+		mo = Spawn ("WraithFX5", self->Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
 		if (mo)
 		{
-			mo->x += (pr_wraithfx4()-128)<<11;
-			mo->y += (pr_wraithfx4()-128)<<11;
-			mo->z += (pr_wraithfx4()<<10);
+			mo->floorz = self->floorz;
+			mo->ceilingz = self->ceilingz;
 			mo->target = self;
 		}
 	}
@@ -225,14 +252,17 @@ void A_WraithFX4 (AActor *self)
 
 DEFINE_ACTION_FUNCTION(AActor, A_WraithChase)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	int weaveindex = self->special1;
-	self->z += finesine[weaveindex << BOBTOFINESHIFT] * 8;
+	self->AddZ(finesine[weaveindex << BOBTOFINESHIFT] * 8);
 	self->special1 = (weaveindex + 2) & 63;
 //	if (self->floorclip > 0)
 //	{
 //		P_SetMobjState(self, S_WRAITH_RAISE2);
 //		return;
 //	}
-	A_Chase (self);
+	A_Chase (stack, self);
 	A_WraithFX4 (self);
+	return 0;
 }

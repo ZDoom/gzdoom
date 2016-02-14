@@ -182,6 +182,6 @@ extern unsigned int MakeKey (const char *s);
 extern unsigned int MakeKey (const char *s, size_t len);
 extern unsigned int SuperFastHash (const char *data, size_t len);
 
-void execLogfile(const char *fn);
+void execLogfile(const char *fn, bool append = false);
 
 #endif //__C_DISPATCH_H__

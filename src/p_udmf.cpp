@@ -47,6 +47,7 @@
 #include "r_data/colormaps.h"
 #include "w_wad.h"
 #include "p_tags.h"
+#include "portal.h"
 #include "p_terrain.h"
 
 //===========================================================================
@@ -259,7 +260,7 @@ fixed_t UDMFParserBase::CheckFixed(const char *key)
 
 angle_t UDMFParserBase::CheckAngle(const char *key)
 {
-	return angle_t(CheckFloat(key) * ANGLE_90 / 90.);
+	return FLOAT2ANGLE(CheckFloat(key));
 }
 
 bool UDMFParserBase::CheckBool(const char *key)
@@ -791,6 +792,7 @@ public:
 
 		memset(ld, 0, sizeof(*ld));
 		ld->Alpha = FRACUNIT;
+		ld->portalindex = UINT_MAX;
 		ld->sidedef[0] = ld->sidedef[1] = NULL;
 		if (level.flags2 & LEVEL2_CLIPMIDTEX) ld->flags |= ML_CLIP_MIDTEX;
 		if (level.flags2 & LEVEL2_WRAPMIDTEX) ld->flags |= ML_WRAP_MIDTEX;

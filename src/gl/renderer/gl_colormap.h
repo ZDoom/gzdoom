@@ -7,6 +7,7 @@
 
 extern DWORD gl_fixedcolormap;
 
+struct lightlist_t;
 
 enum EColorManipulation
 {
@@ -63,6 +64,8 @@ struct FColormap
 		desaturation = from->Desaturate;
 		blendfactor = from->Color.a;
 	}
+
+	void CopyFrom3DLight(lightlist_t *light);
 
 	void Decolorize()	// this for 'nocoloredspritelighting' and not the same as desaturation. The normal formula results in a value that's too dark.
 	{

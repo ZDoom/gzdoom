@@ -16,7 +16,7 @@
 #include "gl/utility/gl_convert.h"
 
 
-glcycle_t RenderWall,SetupWall,ClipWall,SplitWall;
+glcycle_t RenderWall,SetupWall,ClipWall;
 glcycle_t RenderFlat,SetupFlat;
 glcycle_t RenderSprite,SetupSprite;
 glcycle_t All, Finish, PortalAll, Bsp;
@@ -91,7 +91,6 @@ void ResetProfilingData()
 	ProcessAll.Reset();
 	RenderWall.Reset();
 	SetupWall.Reset();
-	SplitWall.Reset();
 	ClipWall.Reset();
 	RenderFlat.Reset();
 	SetupFlat.Reset();
@@ -111,15 +110,15 @@ void ResetProfilingData()
 
 static void AppendRenderTimes(FString &str)
 {
-	double setupwall = SetupWall.TimeMS() - SplitWall.TimeMS();
+	double setupwall = SetupWall.TimeMS();
 	double clipwall = ClipWall.TimeMS() - SetupWall.TimeMS();
 	double bsp = Bsp.TimeMS() - ClipWall.TimeMS() - SetupFlat.TimeMS() - SetupSprite.TimeMS();
 
-	str.AppendFormat("W: Render=%2.3f, Split = %2.3f, Setup=%2.3f, Clip=%2.3f\n"
+	str.AppendFormat("W: Render=%2.3f, Setup=%2.3f, Clip=%2.3f\n"
 		"F: Render=%2.3f, Setup=%2.3f\n"
 		"S: Render=%2.3f, Setup=%2.3f\n"
 		"All=%2.3f, Render=%2.3f, Setup=%2.3f, BSP = %2.3f, Portal=%2.3f, Drawcalls=%2.3f, Finish=%2.3f\n",
-	RenderWall.TimeMS(), SplitWall.TimeMS(), setupwall, clipwall, RenderFlat.TimeMS(), SetupFlat.TimeMS(),
+	RenderWall.TimeMS(), setupwall, clipwall, RenderFlat.TimeMS(), SetupFlat.TimeMS(),
 	RenderSprite.TimeMS(), SetupSprite.TimeMS(), All.TimeMS() + Finish.TimeMS(), RenderAll.TimeMS(),
 	ProcessAll.TimeMS(), bsp, PortalAll.TimeMS(), drawcalls.TimeMS(), Finish.TimeMS());
 }

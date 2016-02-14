@@ -268,7 +268,7 @@ bool FZipFile::Open(bool quiet)
 	NumLumps -= skipped;
 	free(directory);
 
-	if (!quiet) Printf(TEXTCOLOR_NORMAL ", %d lumps\n", NumLumps);
+	if (!quiet && !batchrun) Printf(TEXTCOLOR_NORMAL ", %d lumps\n", NumLumps);
 	
 	PostProcessArchive(&Lumps[0], sizeof(FZipLump));
 	return true;

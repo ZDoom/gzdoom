@@ -293,6 +293,7 @@ static int P_Set3DFloor(line_t * line, int param, int param2, int alpha)
 			// if flooding is used the floor must be non-solid and is automatically made shootthrough and seethrough
 			if ((param2 & 128) && !(flags & FF_SOLID)) flags |= FF_FLOOD | FF_SEETHROUGH | FF_SHOOTTHROUGH;
 			if (param2 & 512) flags |= FF_FADEWALLS;
+			if (param2&1024) flags |= FF_RESET;
 			FTextureID tex = line->sidedef[0]->GetTexture(side_t::top);
 			if (!tex.Exists() && alpha < 255)
 			{
@@ -340,7 +341,7 @@ void P_PlayerOnSpecial3DFloor(player_t* player)
 		{
 			//Water and DEATH FOG!!! heh
 			if (player->mo->Z() > rover->top.plane->ZatPoint(player->mo) || 
-				(player->mo->Z() + player->mo->height) < rover->bottom.plane->ZatPoint(player->mo))
+				player->mo->Top() < rover->bottom.plane->ZatPoint(player->mo))
 				continue;
 		}
 
@@ -437,6 +438,7 @@ void P_Recalculate3DFloors(sector_t * sector)
 	fixed_t			maxheight, minheight;
 	unsigned		i, j;
 	lightlist_t newlight;
+	lightlist_t resetlight;	// what it goes back to after FF_DOUBLESHADOW
 
 	TArray<F3DFloor*> & ffloors=sector->e->XFloor.ffloors;
 	TArray<lightlist_t> & lightlist = sector->e->XFloor.lightlist;
@@ -591,8 +593,9 @@ void P_Recalculate3DFloors(sector_t * sector)
 		lightlist[0].extra_colormap = sector->ColorMap;
 		lightlist[0].blend = 0;
 		lightlist[0].flags = 0;
-		lightlist[0].fromsector = true;
-		
+
+		resetlight = lightlist[0];
+
 		maxheight = sector->CenterCeiling();
 		minheight = sector->CenterFloor();
 		for(i = 0; i < ffloors.Size(); i++)
@@ -613,10 +616,9 @@ void P_Recalculate3DFloors(sector_t * sector)
 				newlight.extra_colormap = rover->GetColormap();
 				newlight.blend = rover->GetBlend();
 				newlight.flags = rover->flags;
-				newlight.fromsector = false;
 				lightlist.Push(newlight);
 			}
-			else if (i==0)
+			else
 			{
 				fixed_t ff_bottom=rover->bottom.plane->ZatPoint(CenterSpot(sector));
 				if (ff_bottom<maxheight)
@@ -628,9 +630,20 @@ void P_Recalculate3DFloors(sector_t * sector)
 					lightlist[0].extra_colormap = rover->GetColormap();
 					lightlist[0].blend = rover->GetBlend();
 					lightlist[0].flags = rover->flags;
-					lightlist[0].fromsector = false;
 				}
 			}
+			if (!(rover->flags & (FF_DOUBLESHADOW | FF_RESET)))
+			{
+				resetlight = lightlist.Last();
+			}
+			else if (rover->flags & FF_RESET)
+			{
+				resetlight.p_lightlevel = &sector->lightlevel;
+				resetlight.lightsource = NULL;
+				resetlight.extra_colormap = sector->ColorMap;
+				resetlight.blend = 0;
+			}
+
 			if (rover->flags&FF_DOUBLESHADOW)
 			{
 				fixed_t ff_bottom=rover->bottom.plane->ZatPoint(CenterSpot(sector));
@@ -638,22 +651,11 @@ void P_Recalculate3DFloors(sector_t * sector)
 				{
 					newlight.caster = rover;
 					newlight.plane = *rover->bottom.plane;
-					if (lightlist.Size()>1)
-					{
-						newlight.lightsource = lightlist[lightlist.Size()-2].lightsource;
-						newlight.p_lightlevel = lightlist[lightlist.Size()-2].p_lightlevel;
-						newlight.extra_colormap = lightlist[lightlist.Size()-2].extra_colormap;
-						newlight.blend = lightlist[lightlist.Size()-2].blend;
-					}
-					else
-					{
-						newlight.lightsource = NULL;
-						newlight.p_lightlevel = &sector->lightlevel;
-						newlight.extra_colormap = sector->ColorMap;
-						newlight.blend = 0;
-					}
+					newlight.lightsource = resetlight.lightsource;
+					newlight.p_lightlevel = resetlight.p_lightlevel;
+					newlight.extra_colormap = resetlight.extra_colormap;
+					newlight.blend = resetlight.blend;
 					newlight.flags = rover->flags;
-					newlight.fromsector = false;
 					lightlist.Push(newlight);
 				}
 			}
@@ -832,7 +834,7 @@ void P_LineOpening_XFloors (FLineOpening &open, AActor * thing, const line_t *li
 //==========================================================================
 void P_Spawn3DFloors (void)
 {
-	static int flagvals[] = {128+512, 2+512, 512};
+	static int flagvals[] = {512, 2+512, 512+1024};
 	int i;
 	line_t * line;
 

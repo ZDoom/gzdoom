@@ -38,7 +38,7 @@ struct visplane_s
 	FTextureID	picnum;
 	int			lightlevel;
 	fixed_t		xoffs, yoffs;		// killough 2/28/98: Support scrolling flats
-	int			minx, maxx;
+	int			left, right;
 	FDynamicColormap *colormap;			// [RH] Support multiple colormaps
 	fixed_t		xscale, yscale;		// [RH] Support flat scaling
 	angle_t		angle;				// [RH] Support flat rotation
@@ -58,7 +58,7 @@ struct visplane_s
 
 	// kg3D - keep track of mirror and skybox owner
 	int CurrentSkybox;
-	int CurrentMirror; // mirror counter, counts all of them
+	int CurrentPortalUniq; // mirror counter, counts all of them
 	int MirrorFlags; // this is not related to CurrentMirror
 
 	unsigned short *bottom;			// [RH] bottom and top arrays are dynamically

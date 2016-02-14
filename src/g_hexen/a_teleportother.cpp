@@ -51,7 +51,7 @@ static void TeloSpawn (AActor *source, const char *type)
 {
 	AActor *fx;
 
-	fx = Spawn (type, source->x, source->y, source->z, ALLOW_REPLACE);
+	fx = Spawn (type, source->Pos(), ALLOW_REPLACE);
 	if (fx)
 	{
 		fx->special1 = TELEPORT_LIFE;			// Lifetime countdown
@@ -65,30 +65,41 @@ static void TeloSpawn (AActor *source, const char *type)
 
 DEFINE_ACTION_FUNCTION(AActor, A_TeloSpawnA)
 {
+	PARAM_ACTION_PROLOGUE;
 	TeloSpawn (self, "TelOtherFX2");
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_TeloSpawnB)
 {
+	PARAM_ACTION_PROLOGUE;
 	TeloSpawn (self, "TelOtherFX3");
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_TeloSpawnC)
 {
+	PARAM_ACTION_PROLOGUE;
 	TeloSpawn (self, "TelOtherFX4");
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_TeloSpawnD)
 {
+	PARAM_ACTION_PROLOGUE;
 	TeloSpawn (self, "TelOtherFX5");
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_CheckTeleRing)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (self->special1-- <= 0)
 	{
 		self->SetState (self->FindState(NAME_Death));
 	}
+	return 0;
 }
 
 //===========================================================================
@@ -162,7 +173,7 @@ void P_TeleportToPlayerStarts (AActor *victim)
 	destX = start->x;
 	destY = start->y;
 	destAngle = ANG45 * (start->angle/45);
-	P_Teleport (victim, destX, destY, ONFLOORZ, destAngle, true, true, false);
+	P_Teleport (victim, destX, destY, ONFLOORZ, destAngle, TELF_SOURCEFOG | TELF_DESTFOG);
 }
 
 //===========================================================================
@@ -184,7 +195,7 @@ void P_TeleportToDeathmatchStarts (AActor *victim)
 		destX = deathmatchstarts[i].x;
 		destY = deathmatchstarts[i].y;
 		destAngle = ANG45 * (deathmatchstarts[i].angle/45);
-		P_Teleport (victim, destX, destY, ONFLOORZ, destAngle, true, true, false);
+		P_Teleport (victim, destX, destY, ONFLOORZ, destAngle, TELF_SOURCEFOG | TELF_DESTFOG);
 	}
 	else
 	{

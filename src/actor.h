@@ -42,6 +42,8 @@
 #include "tflags.h"
 
 struct subsector_t;
+class PClassAmmo;
+
 //
 // NOTES: AActor
 //
@@ -278,7 +280,7 @@ enum ActorFlag4
 enum ActorFlag5
 {
 	MF5_DONTDRAIN		= 0x00000001,	// cannot be drained health from.
-	/*					= 0x00000002,	   reserved for use by scripting branch */
+	MF5_INSTATECALL		= 0x00000002,	// This actor is being run through CallStateChain
 	MF5_NODROPOFF		= 0x00000004,	// cannot drop off under any circumstances.
 	MF5_NOFORWARDFALL	= 0x00000008,	// Does not make any actor fall forward by being damaged by this
 	MF5_COUNTSECRET		= 0x00000010,	// From Doom 64: actor acts like a secret
@@ -560,92 +562,34 @@ inline AActor *GetDefaultByType (const PClass *type)
 template<class T>
 inline T *GetDefault ()
 {
-	return (T *)(RUNTIME_CLASS(T)->Defaults);
+	return (T *)(RUNTIME_CLASS_CASTLESS(T)->Defaults);
 }
 
 struct line_t;
 struct secplane_t;
 struct FStrifeDialogueNode;
 
-enum
-{
-	AMETA_BASE = 0x12000,
-
-	AMETA_Obituary,			// string (player was killed by this actor)
-	AMETA_HitObituary,		// string (player was killed by this actor in melee)
-	AMETA_DeathHeight,		// fixed (height on normal death)
-	AMETA_BurnHeight,		// fixed (height on burning death)
-	AMETA_StrifeName,		// string (for named Strife objects)
-	AMETA_BloodColor,		// colorized blood
-	AMETA_GibHealth,		// negative health below which this monster dies an extreme death
-	AMETA_WoundHealth,		// health needed to enter wound state
-	AMETA_FastSpeed,		// Speed in fast mode
-	AMETA_RDFactor,			// Radius damage factor
-	AMETA_CameraHeight,		// Height of camera when used as such
-	AMETA_HowlSound,		// Sound being played when electrocuted or poisoned
-	AMETA_BloodType,		// Blood replacement type
-	AMETA_BloodType2,		// Bloodsplatter replacement type
-	AMETA_BloodType3,		// AxeBlood replacement type
-};
-
 struct fixedvec3
 {
 	fixed_t x, y, z;
-
-	operator FVector3()
-	{
-		return FVector3(FIXED2FLOAT(x), FIXED2FLOAT(y), FIXED2FLOAT(z));
-	}
-
-	operator TVector3<double>()
-	{
-		return TVector3<double>(FIXED2DBL(x), FIXED2DBL(y), FIXED2DBL(z));
-	}
 };
 
 struct fixedvec2
 {
 	fixed_t x, y;
-
-	operator FVector2()
-	{
-		return FVector2(FIXED2FLOAT(x), FIXED2FLOAT(y));
-	}
-
-	operator TVector2<double>()
-	{
-		return TVector2<double>(FIXED2DBL(x), FIXED2DBL(y));
-	}
 };
 
-struct FDropItem 
+class DDropItem : public DObject
 {
-	FName Name;
-	int probability;
-	int amount;
-	FDropItem * Next;
-};
-
-class FDropItemPtrArray : public TArray<FDropItem *>
-{
+	DECLARE_CLASS(DDropItem, DObject)
+	HAS_OBJECT_POINTERS
 public:
-	~FDropItemPtrArray()
-	{
-		Clear();
-	}
-
-	void Clear();
+	DDropItem *Next;
+	FName Name;
+	int Probability;
+	int Amount;
 };
 
-extern FDropItemPtrArray DropItemList;
-
-struct fixed_xy
-{
-	fixed_t x, y;
-};
-
-void FreeDropItemChain(FDropItem *chain);
-int StoreDropItemChain(FDropItem *chain);
 fixed_t P_AproxDistance (fixed_t dx, fixed_t dy);	// since we cannot include p_local here...
 angle_t R_PointToAngle2 (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2); // same reason here with r_defs.h
 fixed_xy P_GetOffsetPosition(AActor *src, fixed_t dx, fixed_t dy);
@@ -654,7 +598,7 @@ fixed_xy P_GetOffsetPosition(AActor *src, fixed_t dx, fixed_t dy);
 // Map Object definition.
 class AActor : public DThinker
 {
-	DECLARE_CLASS (AActor, DThinker)
+	DECLARE_CLASS_WITH_META (AActor, DThinker, PClassActor)
 	HAS_OBJECT_POINTERS
 public:
 	AActor () throw();
@@ -665,14 +609,14 @@ public:
 
 	void Serialize (FArchive &arc);
 
-	static AActor *StaticSpawn (const PClass *type, fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement, bool SpawningMapThing = false);
+	static AActor *StaticSpawn (PClassActor *type, fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement, bool SpawningMapThing = false);
 
 	inline AActor *GetDefault () const
 	{
-		return (AActor *)(RUNTIME_TYPE(this)->Defaults);
+		return (AActor *)(this->GetClass()->Defaults);
 	}
 
-	FDropItem *GetDropItems();
+	DDropItem *GetDropItems() const;
 
 	// Return true if the monster should use a missile attack, false for melee
 	bool SuggestMissileAttack (fixed_t dist);
@@ -683,6 +627,8 @@ public:
 
 	// Returns true if this actor is within melee range of its target
 	bool CheckMeleeRange();
+
+	bool CheckNoDelay();
 
 	virtual void BeginPlay();			// Called immediately after the actor is created
 	virtual void PostBeginPlay();		// Called immediately before the actor's first tick
@@ -753,7 +699,7 @@ public:
 	// Take the amount value of an item from the inventory list.
 	// If nothing is left, the item may be destroyed.
 	// Returns true if the initial item count is positive.
-	virtual bool TakeInventory (const PClass *itemclass, int amount, bool fromdecorate = false, bool notakeinfinite = false);
+	virtual bool TakeInventory (PClassActor *itemclass, int amount, bool fromdecorate = false, bool notakeinfinite = false);
 
 	// Uses an item and removes it from the inventory.
 	virtual bool UseInventory (AInventory *item);
@@ -768,21 +714,21 @@ public:
 	bool CheckLocalView (int playernum) const;
 
 	// Finds the first item of a particular type.
-	AInventory *FindInventory (const PClass *type, bool subclass = false);
+	AInventory *FindInventory (PClassActor *type, bool subclass=false);
 	AInventory *FindInventory (FName type);
 	template<class T> T *FindInventory ()
 	{
-		return static_cast<T *> (FindInventory (RUNTIME_CLASS(T)));
+		return static_cast<T *> (FindInventory (RUNTIME_TEMPLATE_CLASS(T)));
 	}
 
 	// Adds one item of a particular type. Returns NULL if it could not be added.
-	AInventory *GiveInventoryType (const PClass *type);
+	AInventory *GiveInventoryType (PClassActor *type);
 
 	// Returns the first item held with IF_INVBAR set.
 	AInventory *FirstInv ();
 
 	// Tries to give the actor some ammo.
-	bool GiveAmmo (const PClass *type, int amount);
+	bool GiveAmmo (PClassAmmo *type, int amount);
 
 	// Destroys all the inventory the actor is holding.
 	void DestroyAllInventory ();
@@ -836,8 +782,9 @@ public:
 	void Crash();
 
 	// Return starting health adjusted by skill level
-	int SpawnHealth();
-	int GibHealth();
+	int SpawnHealth() const;
+	int GetGibHealth() const;
+	fixed_t GetCameraHeight() const;
 
 	inline bool isMissile(bool precise=true)
 	{
@@ -850,15 +797,9 @@ public:
 		return (flags & MF_COUNTKILL) && !(flags & MF_FRIENDLY);
 	}
 
-	bool intersects(AActor *other) const
-	{
-		fixed_t blockdist = radius + other->radius;
-		return ( abs(x - other->x) < blockdist && abs(y - other->y) < blockdist);
-	}
-
 	PalEntry GetBloodColor() const
 	{
-		return (PalEntry)GetClass()->Meta.GetMetaInt(AMETA_BloodColor);
+		return GetClass()->BloodColor;
 	}
 
 	// These also set CF_INTERPVIEW for players.
@@ -866,22 +807,25 @@ public:
 	void SetAngle(angle_t ang, bool interpolate);
 	void SetRoll(angle_t roll, bool interpolate);
 
-	const PClass *GetBloodType(int type = 0) const
+	PClassActor *GetBloodType(int type = 0) const
 	{
-		const PClass *bloodcls;
+		PClassActor *bloodcls;
 		if (type == 0)
 		{
-			bloodcls = PClass::FindClass((ENamedName)GetClass()->Meta.GetMetaInt(AMETA_BloodType, NAME_Blood));
+			bloodcls = PClass::FindActor(GetClass()->BloodType);
 		}
 		else if (type == 1)
 		{
-			bloodcls = PClass::FindClass((ENamedName)GetClass()->Meta.GetMetaInt(AMETA_BloodType2, NAME_BloodSplatter));
+			bloodcls = PClass::FindActor(GetClass()->BloodType2);
 		}
 		else if (type == 2)
 		{
-			bloodcls = PClass::FindClass((ENamedName)GetClass()->Meta.GetMetaInt(AMETA_BloodType3, NAME_AxeBlood));
+			bloodcls = PClass::FindActor(GetClass()->BloodType3);
 		}
-		else return NULL;
+		else
+		{
+			return NULL;
+		}
 
 		if (bloodcls != NULL)
 		{
@@ -890,88 +834,114 @@ public:
 		return bloodcls;
 	}
 
+	bool intersects(AActor *other) const
+	{
+		fixed_t blockdist = radius + other->radius;
+		return ( abs(X() - other->X()) < blockdist && abs(Y() - other->Y()) < blockdist);
+	}
+
 	// 'absolute' is reserved for a linked portal implementation which needs
 	// to distinguish between portal-aware and portal-unaware distance calculation.
 	fixed_t AproxDistance(AActor *other, bool absolute = false)
 	{
-		return P_AproxDistance(x - other->x, y - other->y);
+		return P_AproxDistance(X() - other->X(), Y() - other->Y());
 	}
 
 	// same with 'ref' here.
 	fixed_t AproxDistance(fixed_t otherx, fixed_t othery, AActor *ref = NULL)
 	{
-		return P_AproxDistance(x - otherx, y - othery);
+		return P_AproxDistance(X() - otherx, Y() - othery);
 	}
 
 	fixed_t AproxDistance(AActor *other, fixed_t xadd, fixed_t yadd, bool absolute = false)
 	{
-		return P_AproxDistance(x - other->x + xadd, y - other->y + yadd);
+		return P_AproxDistance(X() - other->X() + xadd, Y() - other->Y() + yadd);
 	}
 
 	fixed_t AproxDistance3D(AActor *other, bool absolute = false)
 	{
-		return P_AproxDistance(AproxDistance(other), z - other->z);
+		return P_AproxDistance(AproxDistance(other), Z() - other->Z());
 	}
 
 	// more precise, but slower version, being used in a few places
 	fixed_t Distance2D(AActor *other, bool absolute = false)
 	{
-		return xs_RoundToInt(FVector2(x - other->x, y - other->y).Length());
+		return xs_RoundToInt(TVector2<double>(X() - other->X(), Y() - other->Y()).Length());
 	}
 
 	// a full 3D version of the above
 	fixed_t Distance3D(AActor *other, bool absolute = false)
 	{
-		return xs_RoundToInt(FVector3(x - other->x, y - other->y, z - other->z).Length());
+		return xs_RoundToInt(TVector3<double>(X() - other->X(), Y() - other->Y(), Z() - other->Z()).Length());
 	}
 
 	angle_t AngleTo(AActor *other, bool absolute = false) const
 	{
-		return R_PointToAngle2(x, y, other->x, other->y);
+		return R_PointToAngle2(X(), Y(), other->X(), other->Y());
 	}
 
 	angle_t AngleTo(AActor *other, fixed_t oxofs, fixed_t oyofs, bool absolute = false) const
 	{
-		return R_PointToAngle2(x, y, other->x + oxofs, other->y + oyofs);
+		return R_PointToAngle2(X(), Y(), other->X() + oxofs, other->Y() + oyofs);
 	}
 
 	fixed_t AngleTo(fixed_t otherx, fixed_t othery, AActor *ref = NULL)
 	{
-		return R_PointToAngle2(x, y, otherx, othery);
+		return R_PointToAngle2(X(), Y(), otherx, othery);
 	}
 
 	fixed_t AngleXYTo(fixed_t myx, fixed_t myy, AActor *other, bool absolute = false)
 	{
-		return R_PointToAngle2(myx, myy, other->x, other->y);
+		return R_PointToAngle2(myx, myy, other->X(), other->Y());
 	}
 
 	fixedvec2 Vec2To(AActor *other) const
 	{
-		fixedvec2 ret = { other->x - x, other->y - y };
+		fixedvec2 ret = { other->X() - X(), other->Y() - Y() };
 		return ret;
 	}
 
 	fixedvec3 Vec3To(AActor *other) const
 	{
-		fixedvec3 ret = { other->x - x, other->y - y, other->z - z };
+		fixedvec3 ret = { other->X() - X(), other->Y() - Y(), other->Z() - Z() };
 		return ret;
 	}
 
 	fixedvec2 Vec2Offset(fixed_t dx, fixed_t dy, bool absolute = false) const
 	{
-		fixedvec2 ret = { x + dx, y + dy };
+		fixedvec2 ret = { X() + dx, Y() + dy };
+		return ret;
+	}
+
+
+	fixedvec2 Vec2Angle(fixed_t length, angle_t angle, bool absolute = false) const
+	{
+		fixedvec2 ret = { X() + FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]),
+						  Y() + FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]) };
 		return ret;
 	}
 
 	fixedvec3 Vec3Offset(fixed_t dx, fixed_t dy, fixed_t dz, bool absolute = false) const
 	{
-		fixedvec3 ret = { x + dx, y + dy, z + dz };
+		fixedvec3 ret = { X() + dx, Y() + dy, Z() + dz };
+		return ret;
+	}
+
+	fixedvec3 Vec3Angle(fixed_t length, angle_t angle, fixed_t dz, bool absolute = false) const
+	{
+		fixedvec3 ret = { X() + FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]),
+						  Y() + FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]), Z() + dz };
 		return ret;
 	}
 
 	void Move(fixed_t dx, fixed_t dy, fixed_t dz)
 	{
-		SetOrigin(x + dx, y + dy, z + dz, true);
+		SetOrigin(X() + dx, Y() + dy, Z() + dz, true);
+	}
+
+	void SetOrigin(const fixedvec3 & npos, bool moving)
+	{
+		SetOrigin(npos.x, npos.y, npos.z, moving);
 	}
 
 	inline void SetFriendPlayer(player_t *player);
@@ -992,9 +962,10 @@ public:
 	void CheckSectorTransition(sector_t *oldsec);
 
 // info for drawing
-// NOTE: The first member variable *must* be x.
-	fixed_t	 		x,y,z;
+// NOTE: The first member variable *must* be snext.
 	AActor			*snext, **sprev;	// links in sector (if needed)
+	fixedvec3		__pos;				// double underscores so that it won't get used by accident. Access to this should be exclusively through the designated access functions.
+
 	angle_t			angle;
 	WORD			sprite;				// used to find patch_t and flip value
 	BYTE			frame;				// sprite frame to draw
@@ -1025,7 +996,7 @@ public:
 	fixed_t			velx, vely, velz;	// velocity
 	SDWORD			tics;				// state tic counter
 	FState			*state;
-	SDWORD			Damage;			// For missiles and monster railgun
+	VMFunction		*Damage;			// For missiles and monster railgun
 	int				projectileKickback;
 	ActorFlags		flags;
 	ActorFlags2		flags2;			// Heretic flags
@@ -1053,6 +1024,7 @@ public:
 	SDWORD			reactiontime;	// if non 0, don't attack yet; used by
 									// player to freeze a bit after teleporting
 	SDWORD			threshold;		// if > 0, the target will be chased
+	SDWORD			DefThreshold;	// [MC] Default threshold which the actor will reset its threshold to after switching targets
 									// no matter what (even if shot)
 	player_t		*player;		// only valid if type of APlayerPawn
 	TObjPtr<AActor>	LastLookActor;	// Actor last looked for (if TIDtoHate != 0)
@@ -1149,8 +1121,8 @@ public:
 
 	FNameNoInit PainType;
 	FNameNoInit DeathType;
-	const PClass *TeleFogSourceType;
-	const PClass *TeleFogDestType;
+	PClassActor *TeleFogSourceType;
+	PClassActor *TeleFogDestType;
 	int RipperLevel;
 	int RipLevelMin;
 	int RipLevelMax;
@@ -1191,7 +1163,7 @@ public:
 	void LinkToWorld (sector_t *sector);
 	void UnlinkFromWorld ();
 	void AdjustFloorClip ();
-	void SetOrigin (fixed_t x, fixed_t y, fixed_t z, bool moving = false);
+	virtual void SetOrigin (fixed_t x, fixed_t y, fixed_t z, bool moving = false);
 	bool InStateSequence(FState * newstate, FState * basestate);
 	int GetTics(FState * newstate);
 	bool SetState (FState *newstate, bool nofunction=false);
@@ -1205,37 +1177,119 @@ public:
 
 	FState *FindState (FName label) const
 	{
-		return GetClass()->ActorInfo->FindState(1, &label);
+		return GetClass()->FindState(1, &label);
 	}
 
 	FState *FindState (FName label, FName sublabel, bool exact = false) const
 	{
 		FName names[] = { label, sublabel };
-		return GetClass()->ActorInfo->FindState(2, names, exact);
+		return GetClass()->FindState(2, names, exact);
 	}
 
 	FState *FindState(int numnames, FName *names, bool exact = false) const
 	{
-		return GetClass()->ActorInfo->FindState(numnames, names, exact);
+		return GetClass()->FindState(numnames, names, exact);
 	}
 
 	bool HasSpecialDeathStates () const;
 
 	fixed_t X() const
 	{
-		return x;
+		return __pos.x;
 	}
 	fixed_t Y() const
 	{
-		return y;
+		return __pos.y;
 	}
 	fixed_t Z() const
 	{
-		return z;
+		return __pos.z;
 	}
-	void SetZ(fixed_t newz)
+	fixedvec3 Pos() const
 	{
-		z = newz;
+		fixedvec3 ret = { X(), Y(), Z() };
+		return ret;
+	}
+	fixedvec3 PosRelative(AActor *other) const
+	{
+		fixedvec3 ret = { X(), Y(), Z() };
+		return ret;
+	}
+	fixedvec3 PosRelative(sector_t *sec) const
+	{
+		fixedvec3 ret = { X(), Y(), Z() };
+		return ret;
+	}
+	fixedvec3 PosRelative(line_t *line) const
+	{
+		fixedvec3 ret = { X(), Y(), Z() };
+		return ret;
+	}
+	fixed_t SoundX() const
+	{
+		return X();
+	}
+	fixed_t SoundY() const
+	{
+		return Y();
+	}
+	fixed_t SoundZ() const
+	{
+		return Z();
+	}
+	fixedvec3 InterpolatedPosition(fixed_t ticFrac) const
+	{
+		fixedvec3 ret;
+
+		ret.x = PrevX + FixedMul (ticFrac, X() - PrevX);
+		ret.y = PrevY + FixedMul (ticFrac, Y() - PrevY);
+		ret.z = PrevZ + FixedMul (ticFrac, Z() - PrevZ);
+		return ret;
+	}
+	fixedvec3 PosPlusZ(fixed_t zadd) const
+	{
+		fixedvec3 ret = { X(), Y(), Z() + zadd };
+		return ret;
+	}
+	fixed_t Top() const
+	{
+		return Z() + height;
+	}
+	void SetZ(fixed_t newz, bool moving = true)
+	{
+		__pos.z = newz;
+	}
+	void AddZ(fixed_t newz, bool moving = true)
+	{
+		__pos.z += newz;
+	}
+
+	// These are not for general use as they do not link the actor into the world!
+	void SetXY(fixed_t xx, fixed_t yy)
+	{
+		__pos.x = xx;
+		__pos.y = yy;
+	}
+	void SetXYZ(fixed_t xx, fixed_t yy, fixed_t zz)
+	{
+		__pos.x = xx;
+		__pos.y = yy;
+		__pos.z = zz;
+	}
+	void SetXY(const fixedvec2 &npos)
+	{
+		__pos.x = npos.x;
+		__pos.y = npos.y;
+	}
+	void SetXYZ(const fixedvec3 &npos)
+	{
+		__pos.x = npos.x;
+		__pos.y = npos.y;
+		__pos.z = npos.z;
+	}
+	void SetMovement(fixed_t x, fixed_t y, fixed_t z)
+	{
+		// not yet implemented
 	}
 
 
@@ -1287,7 +1341,7 @@ public:
 		do
 		{
 			actor = FActorIterator::Next ();
-		} while (actor && !actor->IsKindOf (RUNTIME_CLASS(T)));
+		} while (actor && !actor->IsKindOf (RUNTIME_TEMPLATE_CLASS(T)));
 		return static_cast<T *>(actor);
 	}
 };
@@ -1314,12 +1368,11 @@ public:
 bool P_IsTIDUsed(int tid);
 int P_FindUniqueTID(int start_tid, int limit);
 
-inline AActor *Spawn (const PClass *type, fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement)
+inline AActor *Spawn (PClassActor *type, fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement)
 {
 	return AActor::StaticSpawn (type, x, y, z, allowreplacement);
 }
-
-inline AActor *Spawn (const PClass *type, const fixedvec3 &pos, replace_t allowreplacement)
+inline AActor *Spawn (PClassActor *type, const fixedvec3 &pos, replace_t allowreplacement)
 {
 	return AActor::StaticSpawn (type, pos.x, pos.y, pos.z, allowreplacement);
 }
@@ -1341,13 +1394,25 @@ inline AActor *Spawn (FName classname, const fixedvec3 &pos, replace_t allowrepl
 template<class T>
 inline T *Spawn (fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement)
 {
-	return static_cast<T *>(AActor::StaticSpawn (RUNTIME_CLASS(T), x, y, z, allowreplacement));
+	return static_cast<T *>(AActor::StaticSpawn (RUNTIME_TEMPLATE_CLASS(T), x, y, z, allowreplacement));
 }
 
 template<class T>
 inline T *Spawn (const fixedvec3 &pos, replace_t allowreplacement)
 {
-	return static_cast<T *>(AActor::StaticSpawn (RUNTIME_CLASS(T), pos.x, pos.y, pos.z, allowreplacement));
+	return static_cast<T *>(AActor::StaticSpawn (RUNTIME_TEMPLATE_CLASS(T), pos.x, pos.y, pos.z, allowreplacement));
+}
+
+inline fixedvec2 Vec2Angle(fixed_t length, angle_t angle) 
+{
+	fixedvec2 ret = { FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]),
+						FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]) };
+	return ret;
+}
+
+inline fixedvec3 PosRelative(const fixedvec3 &pos, line_t *line, sector_t *refsec = NULL)
+{
+	return pos;
 }
 
 void PrintMiscActorInfo(AActor * query);

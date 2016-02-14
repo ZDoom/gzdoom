@@ -23,6 +23,8 @@ IMPLEMENT_CLASS(ADegninOre)
 
 DEFINE_ACTION_FUNCTION(AActor, A_RemoveForceField)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	self->flags &= ~MF_SPECIAL;
 
 	for (int i = 0; i < self->Sector->linecount; ++i)
@@ -36,6 +38,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RemoveForceField)
 			line->sidedef[1]->SetTexture(side_t::mid, FNullTextureID());
 		}
 	}
+	return 0;
 }
 
 bool ADegninOre::Use (bool pickup)
@@ -78,7 +81,7 @@ bool AHealthTraining::TryPickup (AActor *&toucher)
 {
 	if (Super::TryPickup (toucher))
 	{
-		toucher->GiveInventoryType (PClass::FindClass("GunTraining"));
+		toucher->GiveInventoryType (PClass::FindActor("GunTraining"));
 		AInventory *coin = Spawn<ACoin> (0,0,0, NO_REPLACE);
 		if (coin != NULL)
 		{
@@ -177,6 +180,7 @@ IMPLEMENT_CLASS (ARaiseAlarm)
 bool ARaiseAlarm::TryPickup (AActor *&toucher)
 {
 	P_NoiseAlert (toucher, toucher);
+	VMFrameStack stack1, *stack = &stack1;
 	CALL_ACTION(A_WakeOracleSpectre, toucher);
 	GoAwayAndDie ();
 	return true;
@@ -281,7 +285,7 @@ IMPLEMENT_CLASS (AAmmoFillup)
 
 bool AAmmoFillup::TryPickup (AActor *&toucher)
 {
-	const PClass * clip = PClass::FindClass(NAME_ClipOfBullets);
+	PClassActor *clip = PClass::FindActor(NAME_ClipOfBullets);
 	if (clip != NULL)
 	{
 		AInventory *item = toucher->FindInventory(clip);

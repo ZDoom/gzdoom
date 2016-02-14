@@ -53,11 +53,13 @@ struct GLHorizonInfo
 
 struct GLLineToLineInfo
 {
-	fixed_t xDisplacement;
-	fixed_t yDisplacement;
-	fixed_t angle;
-	fixed_t x0;
-	fixed_t y0;
+	angle_t viewangle;
+	fixed_t viewx;
+	fixed_t viewy;
+	fixed_t viewz;
+	fixed_t x0, y0;
+	angle_t lineangle;
+
 	void init(line_t *line);
 };
 
@@ -171,6 +173,7 @@ public:
 	}
 
 	virtual int ClipSeg(seg_t *seg) { return PClip_Inside; }
+	virtual int ClipSubsector(subsector_t *sub) { return PClip_Inside; }
 	virtual int ClipPoint(fixed_t x, fixed_t y) { return PClip_Inside; }
 
 	static void BeginScene();
@@ -200,6 +203,7 @@ public:
 
 	virtual bool NeedCap() { return false; }
 	virtual int ClipSeg(seg_t *seg);
+	virtual int ClipSubsector(subsector_t *sub);
 	virtual int ClipPoint(fixed_t x, fixed_t y);
 };
 
@@ -221,6 +225,7 @@ public:
 
 	virtual bool NeedCap() { return false; }
 	virtual int ClipSeg(seg_t *seg);
+	virtual int ClipSubsector(subsector_t *sub);
 	virtual int ClipPoint(fixed_t x, fixed_t y);
 };
 

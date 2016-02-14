@@ -13,8 +13,10 @@ static FRandom pr_sargattack ("SargAttack");
 
 DEFINE_ACTION_FUNCTION(AActor, A_SargAttack)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (!self->target)
-		return;
+		return 0;
 				
 	A_FaceTarget (self);
 	if (self->CheckMeleeRange ())
@@ -23,4 +25,5 @@ DEFINE_ACTION_FUNCTION(AActor, A_SargAttack)
 		int newdam = P_DamageMobj (self->target, self, self, damage, NAME_Melee);
 		P_TraceBleed (newdam > 0 ? newdam : damage, self->target, self);
 	}
+	return 0;
 }

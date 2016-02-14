@@ -183,8 +183,8 @@ struct FUDMFKey
 	FUDMFKey& operator =(const FString &val)
 	{
 		Type = UDMF_String;
-		IntVal = strtol(val, NULL, 0);
-		FloatVal = strtod(val, NULL);
+		IntVal = strtol(val.GetChars(), NULL, 0);
+		FloatVal = strtod(val.GetChars(), NULL);
 		StringVal = val;
 		return *this;
 	}
@@ -502,6 +502,11 @@ struct secspecial_t
 	short leakydamage;		// chance of leaking through radiation suit
 	int Flags;
 
+	secspecial_t()
+	{
+		Clear();
+	}
+
 	void Clear()
 	{
 		memset(this, 0, sizeof(*this));
@@ -539,7 +544,6 @@ struct sector_t
 	sector_t *GetHeightSec() const;
 
 	DInterpolation *SetInterpolation(int position, bool attach);
-	void StopInterpolation(int position);
 
 	ASkyViewpoint *GetSkyBox(int which);
 
@@ -738,6 +742,17 @@ struct sector_t
 	{
 		return pos == floor? floorplane:ceilingplane;
 	}
+
+	fixed_t HighestCeiling(AActor *a) const
+	{
+		return ceilingplane.ZatPoint(a);
+	}
+
+	fixed_t LowestFloor(AActor *a) const
+	{
+		return floorplane.ZatPoint(a);
+	}
+
 
 	bool isSecret() const
 	{
@@ -1072,7 +1087,15 @@ struct line_t
 	sector_t	*frontsector, *backsector;
 	int 		validcount;	// if == validcount, already checked
 	int			locknumber;	// [Dusk] lock number for special
+	unsigned	portalindex;
 	TObjPtr<ASkyViewpoint> skybox;
+
+	// returns true if the portal is crossable by actors
+	bool isLinePortal() const;
+	// returns true if the portal needs to be handled by the renderer
+	bool isVisualPortal() const;
+	line_t *getPortalDestination() const;
+	int getPortalAlignment() const;
 };
 
 // phares 3/14/98

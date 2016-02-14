@@ -126,11 +126,14 @@ int ALightningZap::SpecialMissileHit (AActor *thing)
 
 DEFINE_ACTION_FUNCTION(AActor, A_LightningReady)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	DoReadyWeapon(self);
 	if (pr_lightningready() < 160)
 	{
 		S_Sound (self, CHAN_WEAPON, "MageLightningReady", 1, ATTN_NORM);
 	}
+	return 0;
 }
 
 //============================================================================
@@ -141,6 +144,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningReady)
 
 DEFINE_ACTION_FUNCTION(AActor, A_LightningClip)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *cMo;
 	AActor *target = NULL;
 	int zigZag;
@@ -149,14 +154,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningClip)
 	{
 		if (self->lastenemy == NULL)
 		{
-			return;
+			return 0;
 		}
-		self->z = self->floorz;
+		self->SetZ(self->floorz);
 		target = self->lastenemy->tracer;
 	}
 	else if (self->flags3 & MF3_CEILINGHUGGER)
 	{
-		self->z = self->ceilingz-self->height;
+		self->SetZ(self->ceilingz-self->height);
 		target = self->tracer;
 	}
 	if (self->flags3 & MF3_FLOORHUGGER)
@@ -196,6 +201,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningClip)
 			P_ThrustMobj (self, self->angle, self->Speed>>1);
 		}
 	}
+	return 0;
 }
 
 
@@ -207,10 +213,16 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningClip)
 
 DEFINE_ACTION_FUNCTION(AActor, A_LightningZap)
 {
+	PARAM_ACTION_PROLOGUE;
 
-	const PClass *lightning=PClass::FindClass((ENamedName) self->GetClass()->Meta.GetMetaInt (ACMETA_MissileName, NAME_LightningZap));
+	PClassActor *lightning = PClass::FindActor(self->GetClass()->MissileName);
 	AActor *mo;
 	fixed_t deltaZ;
+
+	if (lightning == NULL)
+	{
+		lightning = PClass::FindActor(NAME_LightningZap);
+	}
 
 	CALL_ACTION(A_LightningClip, self);
 
@@ -218,7 +230,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningZap)
 	if (self->health <= 0)
 	{
 		self->SetState (self->FindState(NAME_Death));
-		return;
+		return 0;
 	}
 	if (self->flags3 & MF3_FLOORHUGGER)
 	{
@@ -227,10 +239,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningZap)
 	else
 	{
 		deltaZ = -10*FRACUNIT;
-	}
-	mo = Spawn(lightning, self->x+((pr_zap()-128)*self->radius/256), 
-		self->y+((pr_zap()-128)*self->radius/256), 
-		self->z+deltaZ, ALLOW_REPLACE);
+	}			
+	fixed_t xo = ((pr_zap() - 128)*self->radius / 256);
+	fixed_t yo = ((pr_zap() - 128)*self->radius / 256);
+
+	mo = Spawn(lightning, self->Vec3Offset(xo, yo, deltaZ), ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->lastenemy = self;
@@ -250,6 +263,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningZap)
 	{
 		S_Sound (self, CHAN_BODY, self->ActiveSound, 1, ATTN_NORM);
 	}
+	return 0;
 }
 
 //============================================================================
@@ -260,9 +274,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningZap)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_MLightningAttack)
 {
-    ACTION_PARAM_START(2);
-    ACTION_PARAM_CLASS(floor, 0);
-    ACTION_PARAM_CLASS(ceiling, 1);
+	PARAM_ACTION_PROLOGUE;
+	PARAM_CLASS_OPT(floor, AActor)		{ floor = PClass::FindActor("LightningFloor"); }
+	PARAM_CLASS_OPT(ceiling, AActor)	{ ceiling = PClass::FindActor("LightningCeiling"); }
 
 	AActor *fmo, *cmo;
 
@@ -290,6 +304,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_MLightningAttack)
 			weapon->DepleteAmmo (weapon->bAltFire);
 		}
 	}
+	return 0;
 }
 
 //============================================================================
@@ -300,6 +315,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_MLightningAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_ZapMimic)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *mo;
 
 	mo = self->lastenemy;
@@ -315,6 +332,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ZapMimic)
 			self->vely = mo->vely;
 		}
 	}
+	return 0;
 }
 
 //============================================================================
@@ -325,17 +343,23 @@ DEFINE_ACTION_FUNCTION(AActor, A_ZapMimic)
 
 DEFINE_ACTION_FUNCTION(AActor, A_LastZap)
 {
-	const PClass *lightning=PClass::FindClass((ENamedName) self->GetClass()->Meta.GetMetaInt (ACMETA_MissileName, NAME_LightningZap));
+	PARAM_ACTION_PROLOGUE;
+	PClassActor *lightning = PClass::FindActor(self->GetClass()->MissileName);
 
 	AActor *mo;
 
-	mo = Spawn(lightning, self->x, self->y, self->z, ALLOW_REPLACE);
+	if (lightning == NULL)
+	{
+		lightning = PClass::FindActor(NAME_LightningZap);
+	}
+	mo = Spawn(lightning, self->Pos(), ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->SetState (mo->FindState (NAME_Death));
 		mo->velz = 40*FRACUNIT;
-		mo->Damage = 0;
+		mo->Damage = NULL;
 	}
+	return 0;
 }
 
 //============================================================================
@@ -346,6 +370,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_LastZap)
 
 DEFINE_ACTION_FUNCTION(AActor, A_LightningRemove)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *mo;
 
 	mo = self->lastenemy;
@@ -354,4 +380,5 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningRemove)
 		mo->lastenemy = NULL;
 		P_ExplodeMissile (mo, NULL, NULL);
 	}
+	return 0;
 }

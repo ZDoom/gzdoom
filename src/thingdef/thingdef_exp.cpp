@@ -57,34 +57,35 @@ FRandom pr_exrandom ("EX_Random");
 // [GRB] Parses an expression and stores it into Expression array
 //
 
-static FxExpression *ParseExpressionM (FScanner &sc, const PClass *cls);
-static FxExpression *ParseExpressionL (FScanner &sc, const PClass *cls);
-static FxExpression *ParseExpressionK (FScanner &sc, const PClass *cls);
-static FxExpression *ParseExpressionJ (FScanner &sc, const PClass *cls);
-static FxExpression *ParseExpressionI (FScanner &sc, const PClass *cls);
-static FxExpression *ParseExpressionH (FScanner &sc, const PClass *cls);
-static FxExpression *ParseExpressionG (FScanner &sc, const PClass *cls);
-static FxExpression *ParseExpressionF (FScanner &sc, const PClass *cls);
-static FxExpression *ParseExpressionE (FScanner &sc, const PClass *cls);
-static FxExpression *ParseExpressionD (FScanner &sc, const PClass *cls);
-static FxExpression *ParseExpressionC (FScanner &sc, const PClass *cls);
-static FxExpression *ParseExpressionB (FScanner &sc, const PClass *cls);
-static FxExpression *ParseExpressionA (FScanner &sc, const PClass *cls);
-static FxExpression *ParseExpression0 (FScanner &sc, const PClass *cls);
+static FxExpression *ParseExpressionM (FScanner &sc, PClassActor *cls);
+static FxExpression *ParseExpressionL (FScanner &sc, PClassActor *cls);
+static FxExpression *ParseExpressionK (FScanner &sc, PClassActor *cls);
+static FxExpression *ParseExpressionJ (FScanner &sc, PClassActor *cls);
+static FxExpression *ParseExpressionI (FScanner &sc, PClassActor *cls);
+static FxExpression *ParseExpressionH (FScanner &sc, PClassActor *cls);
+static FxExpression *ParseExpressionG (FScanner &sc, PClassActor *cls);
+static FxExpression *ParseExpressionF (FScanner &sc, PClassActor *cls);
+static FxExpression *ParseExpressionE (FScanner &sc, PClassActor *cls);
+static FxExpression *ParseExpressionD (FScanner &sc, PClassActor *cls);
+static FxExpression *ParseExpressionC (FScanner &sc, PClassActor *cls);
+static FxExpression *ParseExpressionB (FScanner &sc, PClassActor *cls);
+static FxExpression *ParseExpressionA (FScanner &sc, PClassActor *cls);
+static FxExpression *ParseExpression0 (FScanner &sc, PClassActor *cls);
 
-FxExpression *ParseExpression (FScanner &sc, PClass *cls)
+FxExpression *ParseExpression (FScanner &sc, PClassActor *cls, bool mustresolve)
 {
 	FxExpression *data = ParseExpressionM (sc, cls);
 
-	FCompileContext ctx;
-	ctx.cls = cls;
-	ctx.lax = true;
-	data = data->Resolve(ctx);
+	if (mustresolve)
+	{
+		FCompileContext ctx(cls);
+		data = data->Resolve(ctx);
+	}
 
 	return data;
 }
 
-static FxExpression *ParseExpressionM (FScanner &sc, const PClass *cls)
+static FxExpression *ParseExpressionM (FScanner &sc, PClassActor *cls)
 {
 	FxExpression *condition = ParseExpressionL (sc, cls);
 
@@ -101,7 +102,7 @@ static FxExpression *ParseExpressionM (FScanner &sc, const PClass *cls)
 	}
 }
 
-static FxExpression *ParseExpressionL (FScanner &sc, const PClass *cls)
+static FxExpression *ParseExpressionL (FScanner &sc, PClassActor *cls)
 {
 	FxExpression *tmp = ParseExpressionK (sc, cls);
 
@@ -113,7 +114,7 @@ static FxExpression *ParseExpressionL (FScanner &sc, const PClass *cls)
 	return tmp;
 }
 
-static FxExpression *ParseExpressionK (FScanner &sc, const PClass *cls)
+static FxExpression *ParseExpressionK (FScanner &sc, PClassActor *cls)
 {
 	FxExpression *tmp = ParseExpressionJ (sc, cls);
 
@@ -125,7 +126,7 @@ static FxExpression *ParseExpressionK (FScanner &sc, const PClass *cls)
 	return tmp;
 }
 
-static FxExpression *ParseExpressionJ (FScanner &sc, const PClass *cls)
+static FxExpression *ParseExpressionJ (FScanner &sc, PClassActor *cls)
 {
 	FxExpression *tmp = ParseExpressionI (sc, cls);
 
@@ -137,7 +138,7 @@ static FxExpression *ParseExpressionJ (FScanner &sc, const PClass *cls)
 	return tmp;
 }
 
-static FxExpression *ParseExpressionI (FScanner &sc, const PClass *cls)
+static FxExpression *ParseExpressionI (FScanner &sc, PClassActor *cls)
 {
 	FxExpression *tmp = ParseExpressionH (sc, cls);
 
@@ -149,7 +150,7 @@ static FxExpression *ParseExpressionI (FScanner &sc, const PClass *cls)
 	return tmp;
 }
 
-static FxExpression *ParseExpressionH (FScanner &sc, const PClass *cls)
+static FxExpression *ParseExpressionH (FScanner &sc, PClassActor *cls)
 {
 	FxExpression *tmp = ParseExpressionG (sc, cls);
 
@@ -161,7 +162,7 @@ static FxExpression *ParseExpressionH (FScanner &sc, const PClass *cls)
 	return tmp;
 }
 
-static FxExpression *ParseExpressionG (FScanner &sc, const PClass *cls)
+static FxExpression *ParseExpressionG (FScanner &sc, PClassActor *cls)
 {
 	FxExpression *tmp = ParseExpressionF (sc, cls);
 
@@ -175,7 +176,7 @@ static FxExpression *ParseExpressionG (FScanner &sc, const PClass *cls)
 	return tmp;
 }
 
-static FxExpression *ParseExpressionF (FScanner &sc, const PClass *cls)
+static FxExpression *ParseExpressionF (FScanner &sc, PClassActor *cls)
 {
 	FxExpression *tmp = ParseExpressionE (sc, cls);
 
@@ -189,7 +190,7 @@ static FxExpression *ParseExpressionF (FScanner &sc, const PClass *cls)
 	return tmp;
 }
 
-static FxExpression *ParseExpressionE (FScanner &sc, const PClass *cls)
+static FxExpression *ParseExpressionE (FScanner &sc, PClassActor *cls)
 {
 	FxExpression *tmp = ParseExpressionD (sc, cls);
 
@@ -203,7 +204,7 @@ static FxExpression *ParseExpressionE (FScanner &sc, const PClass *cls)
 	return tmp;
 }
 
-static FxExpression *ParseExpressionD (FScanner &sc, const PClass *cls)
+static FxExpression *ParseExpressionD (FScanner &sc, PClassActor *cls)
 {
 	FxExpression *tmp = ParseExpressionC (sc, cls);
 
@@ -217,7 +218,7 @@ static FxExpression *ParseExpressionD (FScanner &sc, const PClass *cls)
 	return tmp;
 }
 
-static FxExpression *ParseExpressionC (FScanner &sc, const PClass *cls)
+static FxExpression *ParseExpressionC (FScanner &sc, PClassActor *cls)
 {
 	FxExpression *tmp = ParseExpressionB (sc, cls);
 
@@ -231,7 +232,7 @@ static FxExpression *ParseExpressionC (FScanner &sc, const PClass *cls)
 	return tmp;
 }
 
-static FxExpression *ParseExpressionB (FScanner &sc, const PClass *cls)
+static FxExpression *ParseExpressionB (FScanner &sc, PClassActor *cls)
 {
 	sc.GetToken();
 	switch(sc.TokenType)
@@ -260,7 +261,7 @@ static FxExpression *ParseExpressionB (FScanner &sc, const PClass *cls)
 //
 //==========================================================================
 
-static FxExpression *ParseExpressionA (FScanner &sc, const PClass *cls)
+static FxExpression *ParseExpressionA (FScanner &sc, PClassActor *cls)
 {
 	FxExpression *base_expr = ParseExpression0 (sc, cls);
 
@@ -311,7 +312,7 @@ static FxExpression *ParseExpressionA (FScanner &sc, const PClass *cls)
 
 
 
-static FxExpression *ParseExpression0 (FScanner &sc, const PClass *cls)
+static FxExpression *ParseExpression0 (FScanner &sc, PClassActor *cls)
 {
 	FScriptPosition scpos(sc);
 	if (sc.CheckToken('('))
@@ -462,16 +463,22 @@ static FxExpression *ParseExpression0 (FScanner &sc, const PClass *cls)
 		FName identifier = FName(sc.String);
 		if (sc.CheckToken('('))
 		{
-			FArgumentList *args = NULL;
+			FArgumentList *args = new FArgumentList;
+			PFunction *func = dyn_cast<PFunction>(cls->Symbols.FindSymbol(identifier, true));
 			try
 			{
-				if (!sc.CheckToken(')'))
+				// There is an action function ACS_NamedExecuteWithResult which must be ignored here for this to work.
+				if (func != NULL && identifier != NAME_ACS_NamedExecuteWithResult)
 				{
-					args = new FArgumentList;
+					sc.UnGet();
+					ParseFunctionParameters(sc, cls, *args, func, "", NULL);
+					return new FxVMFunctionCall(func, args, sc);
+				}
+				else if (!sc.CheckToken(')'))
+				{
 					do
 					{
 						args->Push(ParseExpressionM (sc, cls));
-
 					}
 					while (sc.CheckToken(','));
 					sc.MustGetToken(')');

@@ -68,6 +68,7 @@
 #include "po_man.h"
 #include "r_renderer.h"
 #include "r_data/colormaps.h"
+#include "portal.h"
 #ifndef NO_EDATA
 #include "edata.h"
 #endif
@@ -1690,21 +1691,18 @@ static void SetMapThingUserData(AActor *actor, unsigned udi)
 	{
 		FName varname = MapThingsUserData[udi].Property;
 		int value = MapThingsUserData[udi].Value;
-		PSymbol *sym = actor->GetClass()->Symbols.FindSymbol(varname, true);
-		PSymbolVariable *var;
+		PField *var = dyn_cast<PField>(actor->GetClass()->Symbols.FindSymbol(varname, true));
 
 		udi++;
 
-		if (sym == NULL || sym->SymbolType != SYM_Variable ||
-			!(var = static_cast<PSymbolVariable *>(sym))->bUserVar ||
-			var->ValueType.Type != VAL_Int)
+		if (var == NULL || (var->Flags & VARF_Native) || !var->Type->IsKindOf(RUNTIME_CLASS(PBasicType)))
 		{
 			DPrintf("%s is not a user variable in class %s\n", varname.GetChars(),
 				actor->GetClass()->TypeName.GetChars());
 		}
 		else
 		{ // Set the value of the specified user variable.
-			*(int *)(reinterpret_cast<BYTE *>(actor) + var->offset) = value;
+			var->Type->SetValue(reinterpret_cast<BYTE *>(actor) + var->Offset, value);
 		}
 	}
 }
@@ -1771,7 +1769,7 @@ void P_LoadThings (MapData * map)
 
 
 #ifndef NO_EDATA
-		if (mti[i].info != NULL && mti[i].info->Special == SMT_EDFThing)
+		if (mti[i].info != NULL && mti[i].info->Special == SMT_EDThing)
 		{
 			ProcessEDMapthing(&mti[i], flags);
 		}
@@ -1976,6 +1974,10 @@ void P_SetLineID (int i, line_t *ld)
 		case Static_Init:
 			if (ld->args[1] == Init_SectorLink) setid = ld->args[0];
 			break;
+
+		case Line_SetPortal:
+			setid = ld->args[1]; // 0 = target id, 1 = this id, 2 = plane anchor
+			break;
 		}
 		if (setid != -1)
 		{
@@ -2168,6 +2170,7 @@ void P_LoadLineDefs (MapData * map)
 	for (i = 0; i < numlines; i++, mld++, ld++)
 	{
 		ld->Alpha = FRACUNIT;	// [RH] Opaque by default
+		ld->portalindex = UINT_MAX;
 
 		// [RH] Translate old linedef special and flags to be
 		//		compatible with the new format.
@@ -2259,6 +2262,8 @@ void P_LoadLineDefs2 (MapData * map)
 	for (i = 0; i < numlines; i++, mld++, ld++)
 	{
 		int j;
+
+		ld->portalindex = UINT_MAX;
 
 		for (j = 0; j < 5; j++)
 			ld->args[j] = mld->args[j];
@@ -3379,6 +3384,7 @@ extern polyblock_t **PolyBlockMap;
 
 void P_FreeLevelData ()
 {
+	interpolator.ClearInterpolations();	// [RH] Nothing to interpolate on a fresh level.
 	Renderer->CleanLevelData();
 	FPolyObj::ClearAllSubsectorLinks(); // can't be done as part of the polyobj deletion process.
 	SN_StopAllSequences ();
@@ -3388,6 +3394,7 @@ void P_FreeLevelData ()
 		level.killed_monsters = level.found_items = level.found_secrets =
 		wminfo.maxfrags = 0;
 		
+	linePortals.Clear();
 	FBehavior::StaticUnloadModules ();
 	if (vertexes != NULL)
 	{
@@ -3610,7 +3617,6 @@ void P_SetupLevel (const char *lumpname, int position)
 
 	// Free all level data from the previous map
 	P_FreeLevelData ();
-	interpolator.ClearInterpolations();	// [RH] Nothing to interpolate on a fresh level.
 
 	MapData *map = P_OpenMapData(lumpname, true);
 	if (map == NULL)

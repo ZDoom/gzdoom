@@ -63,10 +63,6 @@
 #define O_BINARY 0
 #endif
 
-#ifndef FIXED2FLOAT
-#define FIXED2FLOAT(f)			(((float)(f))/(float)65536)
-#endif
-
 #define NORM_PITCH				128
 #define NORM_PRIORITY			64
 #define NORM_SEP				0
@@ -175,9 +171,10 @@ void S_NoiseDebug (void)
 		return;
 	}
 
-	listener.X = FIXED2FLOAT(players[consoleplayer].camera->x);
-	listener.Y = FIXED2FLOAT(players[consoleplayer].camera->z);
-	listener.Z = FIXED2FLOAT(players[consoleplayer].camera->y);
+
+	listener.X = FIXED2FLOAT(players[consoleplayer].camera->SoundX());
+	listener.Y = FIXED2FLOAT(players[consoleplayer].camera->SoundZ());
+	listener.Z = FIXED2FLOAT(players[consoleplayer].camera->SoundY());
 
 	// Display the oldest channel first.
 	for (chan = Channels; chan->NextChan != NULL; chan = chan->NextChan)
@@ -414,7 +411,7 @@ void S_Start ()
 			// Parse the global SNDINFO
 			S_ParseSndInfo(true);
 		
-			if (*LocalSndInfo)
+			if (LocalSndInfo.IsNotEmpty())
 			{
 				// Now parse the local SNDINFO
 				int j = Wads.CheckNumForFullName(LocalSndInfo, true);
@@ -431,7 +428,7 @@ void S_Start ()
 
 		if (parse_ss)
 		{
-			S_ParseSndSeq(*LocalSndSeq? Wads.CheckNumForFullName(LocalSndSeq, true) : -1);
+			S_ParseSndSeq(LocalSndSeq.IsNotEmpty()? Wads.CheckNumForFullName(LocalSndSeq, true) : -1);
 		}
 		
 		LastLocalSndInfo = LocalSndInfo;
@@ -666,64 +663,67 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 
 		if (players[consoleplayer].camera != NULL)
 		{
-			x = players[consoleplayer].camera->x;
-			y = players[consoleplayer].camera->z;
-			z = players[consoleplayer].camera->y;
+			x = players[consoleplayer].camera->SoundX();
+			y = players[consoleplayer].camera->SoundZ();
+			z = players[consoleplayer].camera->SoundY();
 		}
 		else
 		{
 			z = y = x = 0;
 		}
 
-		switch (type)
+		// [BL] Moved this case out of the switch statement to make code easier
+		//      on static analysis.
+		if(type == SOURCE_Unattached)
 		{
-		case SOURCE_None:
-		default:
-			break;
-
-		case SOURCE_Actor:
-//			assert(actor != NULL);
-			if (actor != NULL)
-			{
-				x = actor->x;
-				y = actor->z;
-				z = actor->y;
-			}
-			break;
-
-		case SOURCE_Sector:
-			assert(sector != NULL);
-			if (sector != NULL)
-			{
-				if (chanflags & CHAN_AREA)
-				{
-					CalcSectorSoundOrg(sector, channum, &x, &z, &y);
-				}
-				else
-				{
-					x = sector->soundorg[0];
-					z = sector->soundorg[1];
-					chanflags |= CHAN_LISTENERZ;
-				}
-			}
-			break;
-
-		case SOURCE_Polyobj:
-			assert(poly != NULL);
-			CalcPolyobjSoundOrg(poly, &x, &z, &y);
-			break;
-
-		case SOURCE_Unattached:
 			pos->X = pt[0];
 			pos->Y = !(chanflags & CHAN_LISTENERZ) ? pt[1] : FIXED2FLOAT(y);
 			pos->Z = pt[2];
-			break;
 		}
-		if (type != SOURCE_Unattached)
+		else
 		{
+			switch (type)
+			{
+			case SOURCE_None:
+			default:
+				break;
+
+			case SOURCE_Actor:
+				//assert(actor != NULL);
+				if (actor != NULL)
+				{
+					x = actor->SoundX();
+					y = actor->SoundZ();
+					z = actor->SoundY();
+				}
+				break;
+
+			case SOURCE_Sector:
+				assert(sector != NULL);
+				if (sector != NULL)
+				{
+					if (chanflags & CHAN_AREA)
+					{
+						CalcSectorSoundOrg(sector, channum, &x, &z, &y);
+					}
+					else
+					{
+						x = sector->soundorg[0];
+						z = sector->soundorg[1];
+						chanflags |= CHAN_LISTENERZ;
+					}
+				}
+				break;
+
+			case SOURCE_Polyobj:
+				assert(poly != NULL);
+				CalcPolyobjSoundOrg(poly, &x, &z, &y);
+				break;
+			}
+
 			if ((chanflags & CHAN_LISTENERZ) && players[consoleplayer].camera != NULL)
 			{
-				y = players[consoleplayer].camera != NULL ? players[consoleplayer].camera->z : 0;
+				y = players[consoleplayer].camera != NULL ? players[consoleplayer].camera->SoundZ() : 0;
 			}
 			pos->X = FIXED2FLOAT(x);
 			pos->Y = FIXED2FLOAT(y);
@@ -763,8 +763,8 @@ static void CalcSectorSoundOrg(const sector_t *sec, int channum, fixed_t *x, fix
 		// Are we inside the sector? If yes, the closest point is the one we're on.
 		if (P_PointInSector(*x, *y) == sec)
 		{
-			*x = players[consoleplayer].camera->x;
-			*y = players[consoleplayer].camera->y;
+			*x = players[consoleplayer].camera->SoundX();
+			*y = players[consoleplayer].camera->SoundY();
 		}
 		else
 		{
@@ -1082,11 +1082,11 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 		{
 			SoundListener listener;
 			S_SetListener(listener, players[consoleplayer].camera);
-			chan = (FSoundChan*)GSnd->StartSound3D (sfx->data, &listener, volume, rolloff, attenuation, pitch, basepriority, pos, vel, channel, startflags, NULL);
+			chan = (FSoundChan*)GSnd->StartSound3D (sfx->data, &listener, float(volume), rolloff, float(attenuation), pitch, basepriority, pos, vel, channel, startflags, NULL);
 		}
 		else
 		{
-			chan = (FSoundChan*)GSnd->StartSound (sfx->data, volume, pitch, startflags, NULL);
+			chan = (FSoundChan*)GSnd->StartSound (sfx->data, float(volume), pitch, startflags, NULL);
 		}
 	}
 	if (chan == NULL && (chanflags & CHAN_LOOP))
@@ -1108,13 +1108,13 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 		chan->SoundID = sound_id;
 		chan->OrgID = FSoundID(org_id);
 		chan->EntChannel = channel;
-		chan->Volume = volume;
+		chan->Volume = float(volume);
 		chan->ChanFlags |= chanflags;
 		chan->NearLimit = near_limit;
 		chan->LimitRange = limit_range;
 		chan->Pitch = pitch;
 		chan->Priority = basepriority;
-		chan->DistanceScale = attenuation;
+		chan->DistanceScale = float(attenuation);
 		chan->SourceType = type;
 		switch (type)
 		{
@@ -1567,9 +1567,9 @@ void S_RelinkSound (AActor *from, AActor *to)
 			{
 				chan->Actor = NULL;
 				chan->SourceType = SOURCE_Unattached;
-				chan->Point[0] = FIXED2FLOAT(from->x);
-				chan->Point[1] = FIXED2FLOAT(from->z);
-				chan->Point[2] = FIXED2FLOAT(from->y);
+				chan->Point[0] = FIXED2FLOAT(from->SoundX());
+				chan->Point[1] = FIXED2FLOAT(from->SoundZ());
+				chan->Point[2] = FIXED2FLOAT(from->SoundY());
 			}
 			else
 			{
@@ -1913,32 +1913,29 @@ void S_UpdateSounds (AActor *listenactor)
 		S_ActivatePlayList(false);
 	}
 
-	if (listenactor != NULL)
+	// should never happen
+	S_SetListener(listener, listenactor);
+
+	for (FSoundChan *chan = Channels; chan != NULL; chan = chan->NextChan)
 	{
-		// should never happen
-		S_SetListener(listener, listenactor);
-
-		for (FSoundChan *chan = Channels; chan != NULL; chan = chan->NextChan)
+		if ((chan->ChanFlags & (CHAN_EVICTED | CHAN_IS3D)) == CHAN_IS3D)
 		{
-			if ((chan->ChanFlags & (CHAN_EVICTED | CHAN_IS3D)) == CHAN_IS3D)
-			{
-				CalcPosVel(chan, &pos, &vel);
-				GSnd->UpdateSoundParams3D(&listener, chan, !!(chan->ChanFlags & CHAN_AREA), pos, vel);
-			}
-			chan->ChanFlags &= ~CHAN_JUSTSTARTED;
+			CalcPosVel(chan, &pos, &vel);
+			GSnd->UpdateSoundParams3D(&listener, chan, !!(chan->ChanFlags & CHAN_AREA), pos, vel);
 		}
+		chan->ChanFlags &= ~CHAN_JUSTSTARTED;
+	}
 
-		SN_UpdateActiveSequences();
+	SN_UpdateActiveSequences();
 
 
-		GSnd->UpdateListener(&listener);
-		GSnd->UpdateSounds();
+	GSnd->UpdateListener(&listener);
+	GSnd->UpdateSounds();
 
-		if (level.time >= RestartEvictionsAt)
-		{
-			RestartEvictionsAt = 0;
-			S_RestoreEvictedChannels();
-		}
+	if (level.time >= RestartEvictionsAt)
+	{
+		RestartEvictionsAt = 0;
+		S_RestoreEvictedChannels();
 	}
 }
 
@@ -1952,16 +1949,16 @@ static void S_SetListener(SoundListener &listener, AActor *listenactor)
 {
 	if (listenactor != NULL)
 	{
-		listener.angle = (float)(listenactor->angle) * ((float)PI / 2147483648.f);
+		listener.angle = ANGLE2RADF(listenactor->angle);
 		/*
 		listener.velocity.X = listenactor->velx * (TICRATE/65536.f);
 		listener.velocity.Y = listenactor->velz * (TICRATE/65536.f);
 		listener.velocity.Z = listenactor->vely * (TICRATE/65536.f);
 		*/
 		listener.velocity.Zero();
-		listener.position.X = FIXED2FLOAT(listenactor->x);
-		listener.position.Y = FIXED2FLOAT(listenactor->z);
-		listener.position.Z = FIXED2FLOAT(listenactor->y);
+		listener.position.X = FIXED2FLOAT(listenactor->SoundX());
+		listener.position.Y = FIXED2FLOAT(listenactor->SoundZ());
+		listener.position.Z = FIXED2FLOAT(listenactor->SoundY());
 		listener.underwater = listenactor->waterlevel == 3;
 		assert(zones != NULL);
 		listener.Environment = zones[listenactor->Sector->ZoneNumber].Environment;
@@ -2552,7 +2549,7 @@ int S_GetMusic (char **name)
 {
 	int order;
 
-	if (mus_playing.name)
+	if (mus_playing.name.IsNotEmpty())
 	{
 		*name = copystring (mus_playing.name);
 		order = mus_playing.baseorder;
@@ -2640,10 +2637,7 @@ CCMD (loopsound)
 		}
 		else
 		{
-			AActor *icon = Spawn("SpeakerIcon", players[consoleplayer].mo->x,
-				players[consoleplayer].mo->y,
-				players[consoleplayer].mo->z + 32*FRACUNIT,
-				ALLOW_REPLACE);
+			AActor *icon = Spawn("SpeakerIcon", players[consoleplayer].mo->PosPlusZ(32*FRACUNIT), ALLOW_REPLACE);
 			if (icon != NULL)
 			{
 				S_Sound(icon, CHAN_BODY | CHAN_LOOP, id, 1.f, ATTN_IDLE);

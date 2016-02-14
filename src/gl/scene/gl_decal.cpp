@@ -308,14 +308,7 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 		gl_RenderState.SetObjectColor(decal->AlphaColor|0xff000000);
 	}
 
-	gl_SetColor(light, rel, p, a);
 
-	// for additively drawn decals we must temporarily set the fog color to black.
-	PalEntry fc = gl_RenderState.GetFogColor();
-	if (decal->RenderStyle.BlendOp == STYLEOP_Add && decal->RenderStyle.DestAlpha == STYLEALPHA_One)
-	{
-		gl_RenderState.SetFog(0,-1);
-	}
 
 
 	gl_SetRenderStyle(decal->RenderStyle, false, false);
@@ -326,14 +319,55 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 	if (decal->RenderStyle.SrcAlpha == STYLEALPHA_One) gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_sprite_threshold);
 	else gl_RenderState.AlphaFunc(GL_GREATER, 0.f);
 
-	gl_RenderState.Apply();
+
+	gl_SetColor(light, rel, p, a);
+	// for additively drawn decals we must temporarily set the fog color to black.
+	PalEntry fc = gl_RenderState.GetFogColor();
+	if (decal->RenderStyle.BlendOp == STYLEOP_Add && decal->RenderStyle.DestAlpha == STYLEALPHA_One)
+	{
+		gl_RenderState.SetFog(0,-1);
+	}
+
 	FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
 	for (i = 0; i < 4; i++)
 	{
 		ptr->Set(dv[i].x, dv[i].z, dv[i].y, dv[i].u, dv[i].v);
 		ptr++;
 	}
-	GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_FAN);
+
+	if (lightlist == NULL)
+	{
+		gl_RenderState.Apply();
+		GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_FAN);
+	}
+	else
+	{
+		unsigned int offset;
+		unsigned int count = GLRenderer->mVBO->GetCount(ptr, &offset);
+		for (unsigned k = 0; k < lightlist->Size(); k++)
+		{
+			secplane_t &lowplane = k == (*lightlist).Size() - 1 ? bottomplane : (*lightlist)[k + 1].plane;
+
+			float low1 = lowplane.ZatPoint(dv[1].x, dv[1].y);
+			float low2 = lowplane.ZatPoint(dv[2].x, dv[2].y);
+
+			if (low1 < dv[1].z || low2 < dv[2].z)
+			{
+				int thisll = (*lightlist)[k].caster != NULL ? gl_ClampLight(*(*lightlist)[k].p_lightlevel) : lightlevel;
+				FColormap thiscm;
+				thiscm.FadeColor = Colormap.FadeColor;
+				thiscm.CopyFrom3DLight(&(*lightlist)[k]);
+				gl_SetColor(thisll, rel, thiscm, a);
+				if (glset.nocoloredspritelighting) thiscm.Decolorize();
+				gl_SetFog(thisll, rel, &thiscm, RenderStyle == STYLE_Add);
+				gl_RenderState.SetSplitPlanes((*lightlist)[k].plane, lowplane);
+
+				gl_RenderState.Apply();
+				GLRenderer->mVBO->RenderArray(GL_TRIANGLE_FAN, offset, count);
+			}
+			if (low1 <= dv[0].z && low2 <= dv[3].z) break;
+		}
+	}
 
 	rendered_decals++;
 	gl_RenderState.SetTextureMode(TM_MODULATE);
@@ -351,13 +385,31 @@ void GLWall::DoDrawDecals()
 {
 	if (seg->sidedef && seg->sidedef->AttachedDecals)
 	{
-		gl_SetFog(lightlevel, rellight + getExtraLight(), &Colormap, false);
+		if (lightlist != NULL)
+		{
+			gl_RenderState.EnableSplit(true);
+			glEnable(GL_CLIP_DISTANCE3);
+			glEnable(GL_CLIP_DISTANCE4);
+		}
+		else
+		{
+			gl_SetFog(lightlevel, rellight + getExtraLight(), &Colormap, false);
+		}
+
 		DBaseDecal *decal = seg->sidedef->AttachedDecals;
 		while (decal)
 		{
 			DrawDecal(decal);
 			decal = decal->WallNext;
 		}
+
+		if (lightlist != NULL)
+		{
+			glDisable(GL_CLIP_DISTANCE3);
+			glDisable(GL_CLIP_DISTANCE4);
+			gl_RenderState.EnableSplit(false);
+		}
+
 	}
 }
 

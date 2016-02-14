@@ -1005,20 +1005,23 @@ void DoMain (HINSTANCE hInstance)
 	catch (class CNoRunExit &)
 	{
 		I_ShutdownGraphics();
-		if (FancyStdOut && !AttachedStdOut)
-		{ // Outputting to a new console window: Wait for a keypress before quitting.
-			DWORD bytes;
-			HANDLE stdinput = GetStdHandle(STD_INPUT_HANDLE);
-
-			ShowWindow (Window, SW_HIDE);
-			WriteFile(StdOut, "Press any key to exit...", 24, &bytes, NULL);
-			FlushConsoleInputBuffer(stdinput);
-			SetConsoleMode(stdinput, 0);
-			ReadConsole(stdinput, &bytes, 1, &bytes, NULL);
-		}
-		else if (StdOut == NULL)
+		if (!batchrun)
 		{
-			ShowErrorPane(NULL);
+			if (FancyStdOut && !AttachedStdOut)
+			{ // Outputting to a new console window: Wait for a keypress before quitting.
+				DWORD bytes;
+				HANDLE stdinput = GetStdHandle(STD_INPUT_HANDLE);
+
+				ShowWindow(Window, SW_HIDE);
+				WriteFile(StdOut, "Press any key to exit...", 24, &bytes, NULL);
+				FlushConsoleInputBuffer(stdinput);
+				SetConsoleMode(stdinput, 0);
+				ReadConsole(stdinput, &bytes, 1, &bytes, NULL);
+			}
+			else if (StdOut == NULL)
+			{
+				ShowErrorPane(NULL);
+			}
 		}
 		exit(0);
 	}
@@ -1028,7 +1031,14 @@ void DoMain (HINSTANCE hInstance)
 		RestoreConView ();
 		if (error.GetMessage ())
 		{
-			ShowErrorPane (error.GetMessage());
+			if (!batchrun)
+			{
+				ShowErrorPane(error.GetMessage());
+			}
+			else
+			{
+				Printf("%s\n", error.GetMessage());
+			}
 		}
 		exit (-1);
 	}
@@ -1284,7 +1294,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 	_CrtSetDbgFlag (_CrtSetDbgFlag(0) | _CRTDBG_LEAK_CHECK_DF);
 
 	// Use this to break at a specific allocation number.
-	//_crtBreakAlloc = 77624;
+	//_crtBreakAlloc = 53039;
 #endif
 
 	DoMain (hInstance);

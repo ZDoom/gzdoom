@@ -46,8 +46,8 @@
 #include "zstring.h"
 #include "vectors.h"
 
-struct PClass;
-typedef TMap<int, const PClass *> FClassMap;
+class PClassActor;
+typedef TMap<int, PClassActor *> FClassMap;
 
 // Since this file is included by everything, it seems an appropriate place
 // to check the NOASM/USEASM macros.
@@ -113,7 +113,19 @@ typedef TMap<int, const PClass *> FClassMap;
 #define NOVTABLE
 #endif
 
+#if defined(__clang__)
+#if defined(__has_feature) && __has_feature(address_sanitizer)
+#define NO_SANITIZE __attribute__((no_sanitize("address")))
+#else
+#define NO_SANITIZE
+#endif
+#else
+#define NO_SANITIZE
+#endif
+
 #include "basictypes.h"
+
+extern bool batchrun;
 
 // Bounding box coordinate storage.
 enum

@@ -901,7 +901,8 @@ void FPolyObj::ThrustMobj (AActor *actor, side_t *side)
 	actor->vely += thrustY;
 	if (crush)
 	{
-		if (bHurtOnTouch || !P_CheckMove (actor, actor->x + thrustX, actor->y + thrustY))
+		fixedvec2 pos = actor->Vec2Offset(thrustX, thrustY);
+		if (bHurtOnTouch || !P_CheckMove (actor, pos.x, pos.y))
 		{
 			int newdam = P_DamageMobj (actor, NULL, NULL, crush, NAME_Crush);
 			P_TraceBleed (newdam > 0 ? newdam : crush, actor);
@@ -1199,8 +1200,8 @@ bool FPolyObj::CheckMobjBlocking (side_t *sd)
 							&& !((mobj->flags & MF_FLOAT) && (ld->flags & ML_BLOCK_FLOATERS))
 							&& (!(ld->flags & ML_3DMIDTEX) ||
 								(!P_LineOpening_3dMidtex(mobj, ld, open) &&
-									(mobj->z + mobj->height < open.top)
-								) || (open.abovemidtex && mobj->z > mobj->floorz))
+									(mobj->Top() < open.top)
+								) || (open.abovemidtex && mobj->Z() > mobj->floorz))
 							)
 						{
 							// [BL] We can't just continue here since we must
@@ -1213,7 +1214,7 @@ bool FPolyObj::CheckMobjBlocking (side_t *sd)
 							performBlockingThrust = true;
 						}
 
-						FBoundingBox box(mobj->x, mobj->y, mobj->radius);
+						FBoundingBox box(mobj->X(), mobj->Y(), mobj->radius);
 
 						if (box.Right() <= ld->bbox[BOXLEFT]
 							|| box.Left() >= ld->bbox[BOXRIGHT]
@@ -1231,15 +1232,15 @@ bool FPolyObj::CheckMobjBlocking (side_t *sd)
 						// Best use the one facing the player and ignore the back side.
 						if (ld->sidedef[1] != NULL)
 						{
-							int side = P_PointOnLineSidePrecise(mobj->x, mobj->y, ld);
+							int side = P_PointOnLineSidePrecise(mobj->X(), mobj->Y(), ld);
 							if (ld->sidedef[side] != sd)
 							{
 								continue;
 							}
 							// [BL] See if we hit below the floor/ceiling of the poly.
 							else if(!performBlockingThrust && (
-									mobj->z < ld->sidedef[!side]->sector->GetSecPlane(sector_t::floor).ZatPoint(mobj) ||
-									mobj->z + mobj->height > ld->sidedef[!side]->sector->GetSecPlane(sector_t::ceiling).ZatPoint(mobj)
+									mobj->Z() < ld->sidedef[!side]->sector->GetSecPlane(sector_t::floor).ZatPoint(mobj) ||
+									mobj->Top() > ld->sidedef[!side]->sector->GetSecPlane(sector_t::ceiling).ZatPoint(mobj)
 								))
 							{
 								performBlockingThrust = true;

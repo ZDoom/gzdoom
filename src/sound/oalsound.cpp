@@ -36,6 +36,8 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #define USE_WINDOWS_DWORD
+#else
+#include <dlfcn.h>
 #endif
 
 #include "except.h"
@@ -54,40 +56,66 @@
 #include "i_musicinterns.h"
 #include "tempfiles.h"
 
+#include "oalload.h"
 
 CVAR (String, snd_aldevice, "Default", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, snd_efx, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
+#ifdef _WIN32
+static HMODULE hmodOpenAL;
+#define OPENALLIB "openal32.dll"
+#else
+static void* hmodOpenAL;
+#ifdef __APPLE__
+#define OPENALLIB "OpenAL.framework/OpenAL"
+#else
+#define OPENALLIB "libopenal.so"
+#endif
+#define LoadLibrary(x) dlopen((x), RTLD_LAZY)
+#define GetProcAddress(a,b) dlsym((a),(b))
+#define FreeLibrary(x) dlclose((x))
+#endif
 
 bool IsOpenALPresent()
 {
 #ifdef NO_OPENAL
 	return false;
-#elif !defined _WIN32
-	return true;	// on non-Windows we cannot delay load the library so it has to be present.
 #else
-	static bool cached_result;
+	static bool cached_result = false;
 	static bool done = false;
 
 	if (!done)
 	{
 		done = true;
-
-		__try
+		if (hmodOpenAL == NULL)
 		{
-			// just call one function from the API to force loading the DLL
-			alcGetError(NULL);
-		}
-		__except (CheckException(GetExceptionCode()))
-		{
-			// FMod could not be delay loaded
-			return false;
+			hmodOpenAL = LoadLibrary(NicePath("$PROGDIR/" OPENALLIB));
+			if (hmodOpenAL == NULL)
+			{
+				hmodOpenAL = LoadLibrary(OPENALLIB);
+				if (hmodOpenAL == NULL)
+				{
+					return false;
+				}
+			}
+			for(int i = 0; oalfuncs[i].name != NULL; i++)
+			{
+				*oalfuncs[i].funcaddr = GetProcAddress(hmodOpenAL, oalfuncs[i].name);
+				if (*oalfuncs[i].funcaddr == NULL)
+				{
+					FreeLibrary(hmodOpenAL);
+					hmodOpenAL = NULL;
+					return false;
+				}
+			}
 		}
 		cached_result = true;
 	}
 	return cached_result;
 #endif
 }
+
+
 
 void I_BuildALDeviceList(FOptionValues *opt)
 {
@@ -589,7 +617,7 @@ public:
         SampleRate = srate;
         Looping = loop;
 
-        Data.Resize((size_t)(0.2 * SampleRate) * FrameSize);
+        Data.Resize((SampleRate / 5) * FrameSize);
 
         return true;
     }
@@ -753,8 +781,21 @@ OpenALSoundRenderer::OpenALSoundRenderer()
     alcGetIntegerv(Device, ALC_MONO_SOURCES, 1, &numMono);
     alcGetIntegerv(Device, ALC_STEREO_SOURCES, 1, &numStereo);
 
-    Sources.Resize(MIN<int>(MAX<int>(*snd_channels, 2), numMono+numStereo));
-    for(size_t i = 0;i < Sources.Size();i++)
+    // OpenAL specification doesn't require alcGetIntegerv() to return
+    // meaningful values for ALC_MONO_SOURCES and ALC_MONO_SOURCES.
+    // At least Apple's OpenAL implementation returns zeroes,
+    // although it can generate reasonable number of sources.
+
+    const int numChannels = MAX<int>(*snd_channels, 2);
+    int numSources = numMono + numStereo;
+
+    if (0 == numSources)
+    {
+        numSources = numChannels;
+    }
+
+    Sources.Resize(MIN<int>(numChannels, numSources));
+    for(unsigned i = 0;i < Sources.Size();i++)
     {
         alGenSources(1, &Sources[i]);
         if(getALError() != AL_NO_ERROR)
@@ -1315,13 +1356,13 @@ FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener
         FVector3 dir = pos - listener->position;
         if(dir.DoesNotApproximatelyEqual(FVector3(0.f, 0.f, 0.f)))
         {
-            float gain = GetRolloff(rolloff, sqrt(dist_sqr) * distscale);
+            float gain = GetRolloff(rolloff, sqrtf(dist_sqr) * distscale);
             dir.Resize((gain > 0.00001f) ? 1.f/gain : 100000.f);
         }
         if((chanflags&SNDF_AREA) && dist_sqr < AREA_SOUND_RADIUS*AREA_SOUND_RADIUS)
         {
             FVector3 amb(0.f, !(dir.Y>=0.f) ? -1.f : 1.f, 0.f);
-            float a = sqrt(dist_sqr) / AREA_SOUND_RADIUS;
+            float a = sqrtf(dist_sqr) / AREA_SOUND_RADIUS;
             dir = amb + (dir-amb)*a;
         }
         dir += listener->position;
@@ -1334,7 +1375,7 @@ FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener
 
         float mindist = rolloff->MinDistance/distscale;
         FVector3 amb(0.f, !(dir.Y>=0.f) ? -mindist : mindist, 0.f);
-        float a = sqrt(dist_sqr) / AREA_SOUND_RADIUS;
+        float a = sqrtf(dist_sqr) / AREA_SOUND_RADIUS;
         dir = amb + (dir-amb)*a;
 
         dir += listener->position;
@@ -1554,13 +1595,13 @@ void OpenALSoundRenderer::UpdateSoundParams3D(SoundListener *listener, FISoundCh
     {
         if(dir.DoesNotApproximatelyEqual(FVector3(0.f, 0.f, 0.f)))
         {
-            float gain = GetRolloff(&chan->Rolloff, sqrt(chan->DistanceSqr) * chan->DistanceScale);
+            float gain = GetRolloff(&chan->Rolloff, sqrtf(chan->DistanceSqr) * chan->DistanceScale);
             dir.Resize((gain > 0.00001f) ? 1.f/gain : 100000.f);
         }
         if(areasound && chan->DistanceSqr < AREA_SOUND_RADIUS*AREA_SOUND_RADIUS)
         {
             FVector3 amb(0.f, !(dir.Y>=0.f) ? -1.f : 1.f, 0.f);
-            float a = sqrt(chan->DistanceSqr) / AREA_SOUND_RADIUS;
+            float a = sqrtf(chan->DistanceSqr) / AREA_SOUND_RADIUS;
             dir = amb + (dir-amb)*a;
         }
     }
@@ -1568,7 +1609,7 @@ void OpenALSoundRenderer::UpdateSoundParams3D(SoundListener *listener, FISoundCh
     {
         float mindist = chan->Rolloff.MinDistance / chan->DistanceScale;
         FVector3 amb(0.f, !(dir.Y>=0.f) ? -mindist : mindist, 0.f);
-        float a = sqrt(chan->DistanceSqr) / AREA_SOUND_RADIUS;
+        float a = sqrtf(chan->DistanceSqr) / AREA_SOUND_RADIUS;
         dir = amb + (dir-amb)*a;
     }
     dir += listener->position;
@@ -1589,9 +1630,9 @@ void OpenALSoundRenderer::UpdateListener(SoundListener *listener)
     float angle = listener->angle;
     ALfloat orient[6];
     // forward
-    orient[0] = cos(angle);
+    orient[0] = cosf(angle);
     orient[1] = 0.f;
-    orient[2] = -sin(angle);
+    orient[2] = -sinf(angle);
     // up
     orient[3] = 0.f;
     orient[4] = 1.f;
@@ -1730,7 +1771,7 @@ float OpenALSoundRenderer::GetAudibility(FISoundChannel *chan)
     alGetSourcef(source, AL_GAIN, &volume);
     getALError();
 
-    volume *= GetRolloff(&chan->Rolloff, sqrt(chan->DistanceSqr) * chan->DistanceScale);
+    volume *= GetRolloff(&chan->Rolloff, sqrtf(chan->DistanceSqr) * chan->DistanceScale);
     return volume;
 }
 

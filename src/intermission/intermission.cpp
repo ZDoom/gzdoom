@@ -409,7 +409,7 @@ void DIntermissionScreenCast::Init(FIntermissionAction *desc, bool first)
 {
 	Super::Init(desc, first);
 	mName = static_cast<FIntermissionActionCast*>(desc)->mName;
-	mClass = PClass::FindClass(static_cast<FIntermissionActionCast*>(desc)->mCastClass);
+	mClass = PClass::FindActor(static_cast<FIntermissionActionCast*>(desc)->mCastClass);
 	if (mClass != NULL) mDefaults = GetDefaultByType(mClass);
 	else
 	{
@@ -463,7 +463,7 @@ int DIntermissionScreenCast::Responder (event_t *ev)
 	if (mClass != NULL)
 	{
 		FName label[] = {NAME_Death, NAME_Cast};
-		caststate = mClass->ActorInfo->FindState(2, label);
+		caststate = mClass->FindState(2, label);
 		if (caststate == NULL) return -1;
 
 		casttics = caststate->GetTics();
@@ -591,6 +591,9 @@ void DIntermissionScreenCast::Drawer ()
 	// draw the current frame in the middle of the screen
 	if (caststate != NULL)
 	{
+		double castscalex = FIXED2DBL(mDefaults->scaleX);
+		double castscaley = FIXED2DBL(mDefaults->scaleY);
+
 		int castsprite = caststate->sprite;
 
 		if (!(mDefaults->flags4 & MF4_NOSKIN) &&
@@ -604,7 +607,15 @@ void DIntermissionScreenCast::Drawer ()
 			{
 				if (PlayerClasses[i].Type == mClass)
 				{
-					castsprite = skins[players[consoleplayer].userinfo.GetSkin()].sprite;
+					FPlayerSkin *skin = &skins[players[consoleplayer].userinfo.GetSkin()];
+					castsprite = skin->sprite;
+
+					if (!(mDefaults->flags4 & MF4_NOSKIN))
+					{
+						castscaley = FIXED2DBL(skin->ScaleY);
+						castscalex = FIXED2DBL(skin->ScaleX);
+					}
+
 				}
 			}
 		}
@@ -615,6 +626,10 @@ void DIntermissionScreenCast::Drawer ()
 		screen->DrawTexture (pic, 160, 170,
 			DTA_320x200, true,
 			DTA_FlipX, sprframe->Flip & 1,
+			DTA_DestHeightF, pic->GetScaledHeightDouble() * castscaley,
+			DTA_DestWidthF, pic->GetScaledWidthDouble() * castscalex,
+			DTA_RenderStyle, mDefaults->RenderStyle,
+			DTA_Alpha, mDefaults->alpha,
 			DTA_Translation, casttranslation,
 			TAG_DONE);
 	}
@@ -722,7 +737,10 @@ DIntermissionController::DIntermissionController(FIntermissionDescriptor *Desc, 
 	mScreen = NULL;
 	mFirst = true;
 	mGameState = state;
-	NextPage();
+
+	// If the intermission finishes straight away then cancel the wipe.
+	if(!NextPage())
+		wipegamestate = GS_FINALE;
 }
 
 bool DIntermissionController::NextPage ()

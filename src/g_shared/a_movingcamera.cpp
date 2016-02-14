@@ -165,8 +165,8 @@ public:
 	void Activate (AActor *activator);
 	void Deactivate (AActor *activator);
 protected:
-	float Splerp (float p1, float p2, float p3, float p4);
-	float Lerp (float p1, float p2);
+	double Splerp (double p1, double p2, double p3, double p4);
+	double Lerp (double p1, double p2);
 	virtual bool Interpolate ();
 	virtual void NewNode ();
 
@@ -191,10 +191,10 @@ void APathFollower::Serialize (FArchive &arc)
 
 // Interpolate between p2 and p3 along a Catmull-Rom spline
 // http://research.microsoft.com/~hollasch/cgindex/curves/catmull-rom.html
-float APathFollower::Splerp (float p1, float p2, float p3, float p4)
+double APathFollower::Splerp (double p1, double p2, double p3, double p4)
 {
-	float t = Time;
-	float res = 2*p2;
+	double t = Time;
+	double res = 2*p2;
 	res += (p3 - p1) * Time;
 	t *= Time;
 	res += (2*p1 - 5*p2 + 4*p3 - p4) * t;
@@ -204,7 +204,7 @@ float APathFollower::Splerp (float p1, float p2, float p3, float p4)
 }
 
 // Linearly interpolate between p1 and p2
-float APathFollower::Lerp (float p1, float p2)
+double APathFollower::Lerp (double p1, double p2)
 {
 	return p1 + Time * (p2 - p1);
 }
@@ -282,7 +282,7 @@ void APathFollower::Activate (AActor *activator)
 		if (CurrNode != NULL)
 		{
 			NewNode ();
-			SetOrigin (CurrNode->x, CurrNode->y, CurrNode->z);
+			SetOrigin (CurrNode->Pos(), false);
 			Time = 0.f;
 			HoldTime = 0;
 			bJustStepped = true;
@@ -302,9 +302,7 @@ void APathFollower::Tick ()
 		if (CurrNode->args[2])
 		{
 			HoldTime = level.time + CurrNode->args[2] * TICRATE / 8;
-			x = CurrNode->x;
-			y = CurrNode->y;
-			z = CurrNode->z;
+			SetXYZ(CurrNode->X(), CurrNode->Y(), CurrNode->Z());
 		}
 	}
 
@@ -327,7 +325,7 @@ void APathFollower::Tick ()
 
 	if (Interpolate ())
 	{
-		Time += 8.f / ((float)CurrNode->args[1] * (float)TICRATE);
+		Time += float(8.f / ((double)CurrNode->args[1] * (double)TICRATE));
 		if (Time > 1.f)
 		{
 			Time -= 1.f;
@@ -362,31 +360,33 @@ bool APathFollower::Interpolate ()
 
 	if ((args[2] & 8) && Time > 0.f)
 	{
-		dx = x;
-		dy = y;
-		dz = z;
+		dx = X();
+		dy = Y();
+		dz = Z();
 	}
 
 	if (CurrNode->Next==NULL) return false;
 
 	UnlinkFromWorld ();
+	fixed_t x, y, z;
 	if (args[2] & 1)
 	{	// linear
-		x = FLOAT2FIXED(Lerp (FIXED2FLOAT(CurrNode->x), FIXED2FLOAT(CurrNode->Next->x)));
-		y = FLOAT2FIXED(Lerp (FIXED2FLOAT(CurrNode->y), FIXED2FLOAT(CurrNode->Next->y)));
-		z = FLOAT2FIXED(Lerp (FIXED2FLOAT(CurrNode->z), FIXED2FLOAT(CurrNode->Next->z)));
+		x = FLOAT2FIXED(Lerp (FIXED2DBL(CurrNode->X()), FIXED2DBL(CurrNode->Next->X())));
+		y = FLOAT2FIXED(Lerp (FIXED2DBL(CurrNode->Y()), FIXED2DBL(CurrNode->Next->Y())));
+		z = FLOAT2FIXED(Lerp (FIXED2DBL(CurrNode->Z()), FIXED2DBL(CurrNode->Next->Z())));
 	}
 	else
 	{	// spline
 		if (CurrNode->Next->Next==NULL) return false;
 
-		x = FLOAT2FIXED(Splerp (FIXED2FLOAT(PrevNode->x), FIXED2FLOAT(CurrNode->x),
-								FIXED2FLOAT(CurrNode->Next->x), FIXED2FLOAT(CurrNode->Next->Next->x)));
-		y = FLOAT2FIXED(Splerp (FIXED2FLOAT(PrevNode->y), FIXED2FLOAT(CurrNode->y),
-								FIXED2FLOAT(CurrNode->Next->y), FIXED2FLOAT(CurrNode->Next->Next->y)));
-		z = FLOAT2FIXED(Splerp (FIXED2FLOAT(PrevNode->z), FIXED2FLOAT(CurrNode->z),
-								FIXED2FLOAT(CurrNode->Next->z), FIXED2FLOAT(CurrNode->Next->Next->z)));
+		x = FLOAT2FIXED(Splerp (FIXED2DBL(PrevNode->X()), FIXED2DBL(CurrNode->X()),
+								FIXED2DBL(CurrNode->Next->X()), FIXED2DBL(CurrNode->Next->Next->X())));
+		y = FLOAT2FIXED(Splerp (FIXED2DBL(PrevNode->Y()), FIXED2DBL(CurrNode->Y()),
+								FIXED2DBL(CurrNode->Next->Y()), FIXED2DBL(CurrNode->Next->Next->Y())));
+		z = FLOAT2FIXED(Splerp (FIXED2DBL(PrevNode->Z()), FIXED2DBL(CurrNode->Z()),
+								FIXED2DBL(CurrNode->Next->Z()), FIXED2DBL(CurrNode->Next->Next->Z())));
 	}
+	SetXYZ(x, y, z);
 	LinkToWorld ();
 
 	if (args[2] & 6)
@@ -395,9 +395,9 @@ bool APathFollower::Interpolate ()
 		{
 			if (args[2] & 1)
 			{ // linear
-				dx = CurrNode->Next->x - CurrNode->x;
-				dy = CurrNode->Next->y - CurrNode->y;
-				dz = CurrNode->Next->z - CurrNode->z;
+				dx = CurrNode->Next->X() - CurrNode->X();
+				dy = CurrNode->Next->Y() - CurrNode->Y();
+				dz = CurrNode->Next->Z() - CurrNode->Z();
 			}
 			else if (Time > 0.f)
 			{ // spline
@@ -422,6 +422,7 @@ bool APathFollower::Interpolate ()
 				x -= dx;
 				y -= dy;
 				z -= dz;
+				SetXYZ(x, y, z);
 			}
 			if (args[2] & 2)
 			{ // adjust yaw
@@ -429,62 +430,62 @@ bool APathFollower::Interpolate ()
 			}
 			if (args[2] & 4)
 			{ // adjust pitch; use floats for precision
-				float fdx = FIXED2FLOAT(dx);
-				float fdy = FIXED2FLOAT(dy);
-				float fdz = FIXED2FLOAT(-dz);
-				float dist = (float)sqrt (fdx*fdx + fdy*fdy);
-				float ang = dist != 0.f ? (float)atan2 (fdz, dist) : 0;
-				pitch = (angle_t)(ang * 2147483648.f / PI);
+				double fdx = FIXED2DBL(dx);
+				double fdy = FIXED2DBL(dy);
+				double fdz = FIXED2DBL(-dz);
+				double dist = sqrt (fdx*fdx + fdy*fdy);
+				double ang = dist != 0.f ? atan2 (fdz, dist) : 0;
+				pitch = (fixed_t)RAD2ANGLE(ang);
 			}
 		}
 		else
 		{
 			if (args[2] & 2)
 			{ // interpolate angle
-				float angle1 = (float)CurrNode->angle;
-				float angle2 = (float)CurrNode->Next->angle;
+				double angle1 = (double)CurrNode->angle;
+				double angle2 = (double)CurrNode->Next->angle;
 				if (angle2 - angle1 <= -2147483648.f)
 				{
-					float lerped = Lerp (angle1, angle2 + 4294967296.f);
+					double lerped = Lerp (angle1, angle2 + 4294967296.f);
 					if (lerped >= 4294967296.f)
 					{
-						angle = (angle_t)(lerped - 4294967296.f);
+						angle = xs_CRoundToUInt(lerped - 4294967296.f);
 					}
 					else
 					{
-						angle = (angle_t)lerped;
+						angle = xs_CRoundToUInt(lerped);
 					}
 				}
 				else if (angle2 - angle1 >= 2147483648.f)
 				{
-					float lerped = Lerp (angle1, angle2 - 4294967296.f);
+					double lerped = Lerp (angle1, angle2 - 4294967296.f);
 					if (lerped < 0.f)
 					{
-						angle = (angle_t)(lerped + 4294967296.f);
+						angle = xs_CRoundToUInt(lerped + 4294967296.f);
 					}
 					else
 					{
-						angle = (angle_t)lerped;
+						angle = xs_CRoundToUInt(lerped);
 					}
 				}
 				else
 				{
-					angle = (angle_t)Lerp (angle1, angle2);
+					angle = xs_CRoundToUInt(Lerp (angle1, angle2));
 				}
 			}
 			if (args[2] & 1)
 			{ // linear
 				if (args[2] & 4)
 				{ // interpolate pitch
-					pitch = FLOAT2FIXED(Lerp (FIXED2FLOAT(CurrNode->pitch), FIXED2FLOAT(CurrNode->Next->pitch)));
+					pitch = FLOAT2FIXED(Lerp (FIXED2DBL(CurrNode->pitch), FIXED2DBL(CurrNode->Next->pitch)));
 				}
 			}
 			else
 			{ // spline
 				if (args[2] & 4)
 				{ // interpolate pitch
-					pitch = FLOAT2FIXED(Splerp (FIXED2FLOAT(PrevNode->pitch), FIXED2FLOAT(CurrNode->pitch),
-						FIXED2FLOAT(CurrNode->Next->pitch), FIXED2FLOAT(CurrNode->Next->Next->pitch)));
+					pitch = FLOAT2FIXED(Splerp (FIXED2DBL(PrevNode->pitch), FIXED2DBL(CurrNode->pitch),
+						FIXED2DBL(CurrNode->Next->pitch), FIXED2DBL(CurrNode->Next->Next->pitch)));
 				}
 			}
 		}
@@ -548,11 +549,11 @@ bool AActorMover::Interpolate ()
 
 	if (Super::Interpolate ())
 	{
-		fixed_t savedz = tracer->z;
-		tracer->z = z;
-		if (!P_TryMove (tracer, x, y, true))
+		fixed_t savedz = tracer->Z();
+		tracer->SetZ(Z());
+		if (!P_TryMove (tracer, X(), Y(), true))
 		{
-			tracer->z = savedz;
+			tracer->SetZ(savedz);
 			return false;
 		}
 
@@ -589,9 +590,9 @@ void AActorMover::Activate (AActor *activator)
 	// Don't let the renderer interpolate between the actor's
 	// old position and its new position.
 	Interpolate ();
-	tracer->PrevX = tracer->x;
-	tracer->PrevY = tracer->y;
-	tracer->PrevZ = tracer->z;
+	tracer->PrevX = tracer->X();
+	tracer->PrevY = tracer->Y();
+	tracer->PrevZ = tracer->Z();
 	tracer->PrevAngle = tracer->angle;
 }
 
@@ -667,16 +668,16 @@ bool AMovingCamera::Interpolate ()
 
 	if (Super::Interpolate ())
 	{
-		angle = R_PointToAngle2 (x, y, tracer->x, tracer->y);
+		angle = AngleTo(tracer, true);
 
 		if (args[2] & 4)
 		{ // Also aim camera's pitch; use floats for precision
-			float dx = FIXED2FLOAT(x - tracer->x);
-			float dy = FIXED2FLOAT(y - tracer->y);
-			float dz = FIXED2FLOAT(z - tracer->z - tracer->height/2);
-			float dist = (float)sqrt (dx*dx + dy*dy);
-			float ang = dist != 0.f ? (float)atan2 (dz, dist) : 0;
-			pitch = (angle_t)(ang * 2147483648.f / PI);
+			double dx = FIXED2DBL(X() - tracer->X());
+			double dy = FIXED2DBL(Y() - tracer->Y());
+			double dz = FIXED2DBL(Z() - tracer->Z() - tracer->height/2);
+			double dist = sqrt (dx*dx + dy*dy);
+			double ang = dist != 0.f ? atan2 (dz, dist) : 0;
+			pitch = RAD2ANGLE(ang);
 		}
 
 		return true;

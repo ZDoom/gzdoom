@@ -16,13 +16,13 @@
 static FRandom pr_spectrespawn ("AlienSpectreSpawn");
 static FRandom pr_spectrechunk ("212e4");
 
-AActor *P_SpawnSubMissile (AActor *source, const PClass *type, AActor *target);
-
 //============================================================================
 
 DEFINE_ACTION_FUNCTION(AActor, A_SpectreChunkSmall)
 {
-	AActor *foo = Spawn("AlienChunkSmall", self->x, self->y, self->z + 10*FRACUNIT, ALLOW_REPLACE);
+	PARAM_ACTION_PROLOGUE;
+
+	AActor *foo = Spawn("AlienChunkSmall", self->PosPlusZ(10*FRACUNIT), ALLOW_REPLACE);
 
 	if (foo != NULL)
 	{
@@ -36,11 +36,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpectreChunkSmall)
 
 		foo->velz = (pr_spectrechunk() & 15) << FRACBITS;
 	}
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_SpectreChunkLarge)
 {
-	AActor *foo = Spawn("AlienChunkLarge", self->x, self->y, self->z + 10*FRACUNIT, ALLOW_REPLACE);
+	PARAM_ACTION_PROLOGUE;
+
+	AActor *foo = Spawn("AlienChunkLarge", self->PosPlusZ(10*FRACUNIT), ALLOW_REPLACE);
 
 	if (foo != NULL)
 	{
@@ -54,15 +57,17 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpectreChunkLarge)
 
 		foo->velz = (pr_spectrechunk() & 7) << FRACBITS;
 	}
-
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_Spectre3Attack)
 {
-	if (self->target == NULL)
-		return;
+	PARAM_ACTION_PROLOGUE;
 
-	AActor *foo = Spawn("SpectralLightningV2", self->x, self->y, self->z + 32*FRACUNIT, ALLOW_REPLACE);
+	if (self->target == NULL)
+		return 0;
+
+	AActor *foo = Spawn("SpectralLightningV2", self->PosPlusZ(32*FRACUNIT), ALLOW_REPLACE);
 
 	foo->velz = -12*FRACUNIT;
 	foo->target = self;
@@ -73,13 +78,16 @@ DEFINE_ACTION_FUNCTION(AActor, A_Spectre3Attack)
 	for (int i = 0; i < 20; ++i)
 	{
 		self->angle += ANGLE_180 / 20;
-		P_SpawnSubMissile (self, PClass::FindClass("SpectralLightningBall2"), self);
+		P_SpawnSubMissile (self, PClass::FindActor("SpectralLightningBall2"), self);
 	}
 	self->angle -= ANGLE_180 / 20 * 10;
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_AlienSpectreDeath)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *player;
 	char voc[32];
 	int log;
@@ -88,7 +96,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_AlienSpectreDeath)
 	A_Unblock(self, true); // [RH] Need this for Sigil rewarding
 	if (!CheckBossDeath (self))
 	{
-		return;
+		return 0;
 	}
 	for (i = 0, player = NULL; i < MAXPLAYERS; ++i)
 	{
@@ -100,7 +108,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_AlienSpectreDeath)
 	}
 	if (player == NULL)
 	{
-		return;
+		return 0;
 	}
 
 	switch (self->GetClass()->TypeName)
@@ -184,9 +192,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_AlienSpectreDeath)
 		break;
 
 	default:
-		return;
+		return 0;
 	}
 	mysnprintf (voc, countof(voc), "svox/voc%d", log);
 	S_Sound (CHAN_VOICE, voc, 1, ATTN_NORM);
 	player->player->SetLogNumber (log);
+	return 0;
 }

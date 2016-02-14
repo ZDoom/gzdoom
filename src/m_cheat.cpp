@@ -53,7 +53,7 @@
 
 void cht_DoCheat (player_t *player, int cheat)
 {
-	static const char * BeholdPowers[9] =
+	static const char * const BeholdPowers[9] =
 	{
 		"PowerInvulnerable",
 		"PowerStrength",
@@ -65,7 +65,7 @@ void cht_DoCheat (player_t *player, int cheat)
 		"PowerMask",
 		"PowerTargeter",
 	};
-	const PClass *type;
+	PClassActor *type;
 	AInventory *item;
 	const char *msg = "";
 	char msgbuild[32];
@@ -136,6 +136,7 @@ void cht_DoCheat (player_t *player, int cheat)
 			player->cheats &= ~CF_NOCLIP;
 			msg = GStrings("STSTR_NCOFF");
 		}
+		if (player->mo->velx == 0) player->mo->velx = 1;	// force some lateral movement so that internal variables are up to date
 		break;
 
 	case CHT_NOVELOCITY:
@@ -166,7 +167,7 @@ void cht_DoCheat (player_t *player, int cheat)
 		break;
 
 	case CHT_MORPH:
-		msg = cht_Morph (player, PClass::FindClass (gameinfo.gametype == GAME_Heretic ? NAME_ChickenPlayer : NAME_PigPlayer), true);
+		msg = cht_Morph (player, static_cast<PClassPlayerPawn *>(PClass::FindClass (gameinfo.gametype == GAME_Heretic ? NAME_ChickenPlayer : NAME_PigPlayer)), true);
 		break;
 
 	case CHT_NOTARGET:
@@ -197,7 +198,7 @@ void cht_DoCheat (player_t *player, int cheat)
 	case CHT_CHAINSAW:
 		if (player->mo != NULL && player->health >= 0)
 		{
-			type = PClass::FindClass ("Chainsaw");
+			type = PClass::FindActor("Chainsaw");
 			if (player->mo->FindInventory (type) == NULL)
 			{
 				player->mo->GiveInventoryType (type);
@@ -261,7 +262,7 @@ void cht_DoCheat (player_t *player, int cheat)
 		}
 		else if (player->mo != NULL && player->health >= 0)
 		{
-			item = player->mo->FindInventory (BeholdPowers[i]);
+			item = player->mo->FindInventory(PClass::FindActor(BeholdPowers[i]));
 			if (item == NULL)
 			{
 				if (i != 0)
@@ -542,13 +543,13 @@ void cht_DoCheat (player_t *player, int cheat)
 		Printf ("%s cheats: %s\n", player->userinfo.GetName(), msg);
 }
 
-const char *cht_Morph (player_t *player, const PClass *morphclass, bool quickundo)
+const char *cht_Morph (player_t *player, PClassPlayerPawn *morphclass, bool quickundo)
 {
 	if (player->mo == NULL)
 	{
 		return "";
 	}
-	PClass *oldclass = player->mo->GetClass();
+	PClassPlayerPawn *oldclass = player->mo->GetClass();
 
 	// Set the standard morph style for the current game
 	int style = MORPH_UNDOBYTOMEOFPOWER;
@@ -572,7 +573,7 @@ const char *cht_Morph (player_t *player, const PClass *morphclass, bool quickund
 	return "";
 }
 
-void GiveSpawner (player_t *player, const PClass *type, int amount)
+void GiveSpawner (player_t *player, PClassInventory *type, int amount)
 {
 	if (player->mo == NULL || player->health <= 0)
 	{
@@ -617,7 +618,7 @@ void cht_Give (player_t *player, const char *name, int amount)
 {
 	enum { ALL_NO, ALL_YES, ALL_YESYES } giveall;
 	int i;
-	const PClass *type;
+	PClassActor *type;
 
 	if (player != &players[consoleplayer])
 		Printf ("%s is a cheater: give %s\n", player->userinfo.GetName(), name);
@@ -667,10 +668,10 @@ void cht_Give (player_t *player, const char *name, int amount)
 	if (giveall || stricmp (name, "backpack") == 0)
 	{
 		// Select the correct type of backpack based on the game
-		type = PClass::FindClass(gameinfo.backpacktype);
+		type = PClass::FindActor(gameinfo.backpacktype);
 		if (type != NULL)
 		{
-			GiveSpawner (player, type, 1);
+			GiveSpawner (player, static_cast<PClassInventory *>(type), 1);
 		}
 
 		if (!giveall)
@@ -681,16 +682,17 @@ void cht_Give (player_t *player, const char *name, int amount)
 	{
 		// Find every unique type of ammo. Give it to the player if
 		// he doesn't have it already, and set each to its maximum.
-		for (unsigned int i = 0; i < PClass::m_Types.Size(); ++i)
+		for (unsigned int i = 0; i < PClassActor::AllActorClasses.Size(); ++i)
 		{
-			const PClass *type = PClass::m_Types[i];
+			PClassActor *type = PClassActor::AllActorClasses[i];
 
 			if (type->ParentClass == RUNTIME_CLASS(AAmmo))
 			{
-				AInventory *ammo = player->mo->FindInventory (type);
+				PClassAmmo *atype = static_cast<PClassAmmo *>(type);
+				AInventory *ammo = player->mo->FindInventory(atype);
 				if (ammo == NULL)
 				{
-					ammo = static_cast<AInventory *>(Spawn (type, 0, 0, 0, NO_REPLACE));
+					ammo = static_cast<AInventory *>(Spawn (atype, 0, 0, 0, NO_REPLACE));
 					ammo->AttachToOwner (player->mo);
 					ammo->Amount = ammo->MaxAmount;
 				}
@@ -737,14 +739,14 @@ void cht_Give (player_t *player, const char *name, int amount)
 
 	if (giveall || stricmp (name, "keys") == 0)
 	{
-		for (unsigned int i = 0; i < PClass::m_Types.Size(); ++i)
+		for (unsigned int i = 0; i < PClassActor::AllActorClasses.Size(); ++i)
 		{
-			if (PClass::m_Types[i]->IsDescendantOf (RUNTIME_CLASS(AKey)))
+			if (PClassActor::AllActorClasses[i]->IsDescendantOf (RUNTIME_CLASS(AKey)))
 			{
-				AKey *key = (AKey *)GetDefaultByType (PClass::m_Types[i]);
+				AKey *key = (AKey *)GetDefaultByType (PClassActor::AllActorClasses[i]);
 				if (key->KeyNumber != 0)
 				{
-					key = static_cast<AKey *>(Spawn (PClass::m_Types[i], 0,0,0, NO_REPLACE));
+					key = static_cast<AKey *>(Spawn(static_cast<PClassActor *>(PClassActor::AllActorClasses[i]), 0,0,0, NO_REPLACE));
 					if (!key->CallTryPickup (player->mo))
 					{
 						key->Destroy ();
@@ -759,23 +761,22 @@ void cht_Give (player_t *player, const char *name, int amount)
 	if (giveall || stricmp (name, "weapons") == 0)
 	{
 		AWeapon *savedpending = player->PendingWeapon;
-		for (unsigned int i = 0; i < PClass::m_Types.Size(); ++i)
+		for (unsigned int i = 0; i < PClassActor::AllActorClasses.Size(); ++i)
 		{
-			type = PClass::m_Types[i];
+			type = PClassActor::AllActorClasses[i];
 			// Don't give replaced weapons unless the replacement was done by Dehacked.
 			if (type != RUNTIME_CLASS(AWeapon) &&
 				type->IsDescendantOf (RUNTIME_CLASS(AWeapon)) &&
-				(type->GetReplacement() == type ||
-				 type->GetReplacement()->IsDescendantOf(RUNTIME_CLASS(ADehackedPickup))))
-
+				(static_cast<PClassActor *>(type)->GetReplacement() == type ||
+				 static_cast<PClassActor *>(type)->GetReplacement()->IsDescendantOf(RUNTIME_CLASS(ADehackedPickup))))
 			{
-				// Give the weapon only if it is in a weapon slot. 
-				if (player->weapons.LocateWeapon(type, NULL, NULL))
+				// Give the weapon only if it belongs to the current game or
+				if (player->weapons.LocateWeapon(static_cast<PClassWeapon*>(type), NULL, NULL))
 				{
 					AWeapon *def = (AWeapon*)GetDefaultByType (type);
 					if (giveall == ALL_YESYES || !(def->WeaponFlags & WIF_CHEATNOTWEAPON))
 					{
-						GiveSpawner (player, type, 1);
+						GiveSpawner (player, static_cast<PClassInventory *>(type), 1);
 					}
 				}
 			}
@@ -788,9 +789,9 @@ void cht_Give (player_t *player, const char *name, int amount)
 
 	if (giveall || stricmp (name, "artifacts") == 0)
 	{
-		for (unsigned int i = 0; i < PClass::m_Types.Size(); ++i)
+		for (unsigned int i = 0; i < PClassActor::AllActorClasses.Size(); ++i)
 		{
-			type = PClass::m_Types[i];
+			type = PClassActor::AllActorClasses[i];
 			if (type->IsDescendantOf (RUNTIME_CLASS(AInventory)))
 			{
 				AInventory *def = (AInventory*)GetDefaultByType (type);
@@ -802,7 +803,7 @@ void cht_Give (player_t *player, const char *name, int amount)
 					// Do not give replaced items unless using "give everything"
 					if (giveall == ALL_YESYES || type->GetReplacement() == type)
 					{
-						GiveSpawner (player, type, amount <= 0 ? def->MaxAmount : amount);
+						GiveSpawner (player, static_cast<PClassInventory *>(type), amount <= 0 ? def->MaxAmount : amount);
 					}
 				}
 			}
@@ -813,9 +814,9 @@ void cht_Give (player_t *player, const char *name, int amount)
 
 	if (giveall || stricmp (name, "puzzlepieces") == 0)
 	{
-		for (unsigned int i = 0; i < PClass::m_Types.Size(); ++i)
+		for (unsigned int i = 0; i < PClassActor::AllActorClasses.Size(); ++i)
 		{
-			type = PClass::m_Types[i];
+			type = PClassActor::AllActorClasses[i];
 			if (type->IsDescendantOf (RUNTIME_CLASS(APuzzleItem)))
 			{
 				AInventory *def = (AInventory*)GetDefaultByType (type);
@@ -824,7 +825,7 @@ void cht_Give (player_t *player, const char *name, int amount)
 					// Do not give replaced items unless using "give everything"
 					if (giveall == ALL_YESYES || type->GetReplacement() == type)
 					{
-						GiveSpawner (player, type, amount <= 0 ? def->MaxAmount : amount);
+						GiveSpawner (player, static_cast<PClassInventory *>(type), amount <= 0 ? def->MaxAmount : amount);
 					}
 				}
 			}
@@ -836,7 +837,7 @@ void cht_Give (player_t *player, const char *name, int amount)
 	if (giveall)
 		return;
 
-	type = PClass::FindClass (name);
+	type = PClass::FindActor(name);
 	if (type == NULL || !type->IsDescendantOf (RUNTIME_CLASS(AInventory)))
 	{
 		if (player == &players[consoleplayer])
@@ -844,7 +845,7 @@ void cht_Give (player_t *player, const char *name, int amount)
 	}
 	else
 	{
-		GiveSpawner (player, type, amount);
+		GiveSpawner (player, static_cast<PClassInventory *>(type), amount);
 	}
 	return;
 }
@@ -852,7 +853,7 @@ void cht_Give (player_t *player, const char *name, int amount)
 void cht_Take (player_t *player, const char *name, int amount)
 {
 	bool takeall;
-	const PClass *type;
+	PClassActor *type;
 
 	if (player->mo == NULL || player->health <= 0)
 	{
@@ -896,15 +897,16 @@ void cht_Take (player_t *player, const char *name, int amount)
 	if (takeall || stricmp (name, "backpack") == 0)
 	{
 		// Take away all types of backpacks the player might own.
-		for (unsigned int i = 0; i < PClass::m_Types.Size(); ++i)
+		for (unsigned int i = 0; i < PClassActor::AllActorClasses.Size(); ++i)
 		{
-			const PClass *type = PClass::m_Types[i];
+			PClass *type = PClassActor::AllActorClasses[i];
 
 			if (type->IsDescendantOf(RUNTIME_CLASS (ABackpackItem)))
 			{
-				AInventory *pack = player->mo->FindInventory (type);
+				AInventory *pack = player->mo->FindInventory(static_cast<PClassActor *>(type));
 
-				if (pack) pack->Destroy();
+				if (pack)
+					pack->Destroy();
 			}
 		}
 
@@ -914,13 +916,13 @@ void cht_Take (player_t *player, const char *name, int amount)
 
 	if (takeall || stricmp (name, "ammo") == 0)
 	{
-		for (unsigned int i = 0; i < PClass::m_Types.Size(); ++i)
+		for (unsigned int i = 0; i < PClassActor::AllActorClasses.Size(); ++i)
 		{
-			const PClass *type = PClass::m_Types[i];
+			PClass *type = PClassActor::AllActorClasses[i];
 
 			if (type->ParentClass == RUNTIME_CLASS (AAmmo))
 			{
-				AInventory *ammo = player->mo->FindInventory (type);
+				AInventory *ammo = player->mo->FindInventory(static_cast<PClassActor *>(type));
 
 				if (ammo)
 					ammo->Amount = 0;
@@ -933,13 +935,13 @@ void cht_Take (player_t *player, const char *name, int amount)
 
 	if (takeall || stricmp (name, "armor") == 0)
 	{
-		for (unsigned int i = 0; i < PClass::m_Types.Size(); ++i)
+		for (unsigned int i = 0; i < PClassActor::AllActorClasses.Size(); ++i)
 		{
-			type = PClass::m_Types[i];
+			type = PClassActor::AllActorClasses[i];
 
 			if (type->IsDescendantOf (RUNTIME_CLASS (AArmor)))
 			{
-				AActor *armor = player->mo->FindInventory (type);
+				AActor *armor = player->mo->FindInventory(static_cast<PClassActor *>(type));
 
 				if (armor)
 					armor->Destroy ();
@@ -952,13 +954,13 @@ void cht_Take (player_t *player, const char *name, int amount)
 
 	if (takeall || stricmp (name, "keys") == 0)
 	{
-		for (unsigned int i = 0; i < PClass::m_Types.Size(); ++i)
+		for (unsigned int i = 0; i < PClassActor::AllActorClasses.Size(); ++i)
 		{
-			type = PClass::m_Types[i];
+			type = PClassActor::AllActorClasses[i];
 
 			if (type->IsDescendantOf (RUNTIME_CLASS (AKey)))
 			{
-				AActor *key = player->mo->FindInventory (type);
+				AActor *key = player->mo->FindInventory(static_cast<PClassActor *>(type));
 
 				if (key)
 					key->Destroy ();
@@ -971,14 +973,14 @@ void cht_Take (player_t *player, const char *name, int amount)
 
 	if (takeall || stricmp (name, "weapons") == 0)
 	{
-		for (unsigned int i = 0; i < PClass::m_Types.Size(); ++i)
+		for (unsigned int i = 0; i < PClassActor::AllActorClasses.Size(); ++i)
 		{
-			type = PClass::m_Types[i];
+			type = PClassActor::AllActorClasses[i];
 
 			if (type != RUNTIME_CLASS(AWeapon) &&
 				type->IsDescendantOf (RUNTIME_CLASS (AWeapon)))
 			{
-				AActor *weapon = player->mo->FindInventory (type);
+				AActor *weapon = player->mo->FindInventory(static_cast<PClassActor *>(type));
 
 				if (weapon)
 					weapon->Destroy ();
@@ -996,9 +998,9 @@ void cht_Take (player_t *player, const char *name, int amount)
 
 	if (takeall || stricmp (name, "artifacts") == 0)
 	{
-		for (unsigned int i = 0; i < PClass::m_Types.Size(); ++i)
+		for (unsigned int i = 0; i < PClassActor::AllActorClasses.Size(); ++i)
 		{
-			type = PClass::m_Types[i];
+			type = PClassActor::AllActorClasses[i];
 
 			if (type->IsDescendantOf (RUNTIME_CLASS (AInventory)))
 			{
@@ -1008,7 +1010,7 @@ void cht_Take (player_t *player, const char *name, int amount)
 					!type->IsDescendantOf (RUNTIME_CLASS (AWeapon)) &&
 					!type->IsDescendantOf (RUNTIME_CLASS (AKey)))
 				{
-					AActor *artifact = player->mo->FindInventory (type);
+					AActor *artifact = player->mo->FindInventory(static_cast<PClassActor *>(type));
 
 					if (artifact)
 						artifact->Destroy ();
@@ -1022,13 +1024,13 @@ void cht_Take (player_t *player, const char *name, int amount)
 
 	if (takeall || stricmp (name, "puzzlepieces") == 0)
 	{
-		for (unsigned int i = 0; i < PClass::m_Types.Size(); ++i)
+		for (unsigned int i = 0; i < PClassActor::AllActorClasses.Size(); ++i)
 		{
-			type = PClass::m_Types[i];
+			type = PClassActor::AllActorClasses[i];
 
 			if (type->IsDescendantOf (RUNTIME_CLASS (APuzzleItem)))
 			{
-				AActor *puzzlepiece = player->mo->FindInventory (type);
+				AActor *puzzlepiece = player->mo->FindInventory(static_cast<PClassActor *>(type));
 
 				if (puzzlepiece)
 					puzzlepiece->Destroy ();
@@ -1042,7 +1044,7 @@ void cht_Take (player_t *player, const char *name, int amount)
 	if (takeall)
 		return;
 
-	type = PClass::FindClass (name);
+	type = PClass::FindActor (name);
 	if (type == NULL || !type->IsDescendantOf (RUNTIME_CLASS (AInventory)))
 	{
 		if (player == &players[consoleplayer])

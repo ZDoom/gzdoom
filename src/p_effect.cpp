@@ -132,7 +132,9 @@ CUSTOM_CVAR( Int, r_maxparticles, 4000, CVAR_ARCHIVE )
 {
 	if ( self == 0 )
 		self = 4000;
-	else if ( self < 100 )
+	else if (self > 65535)
+		self = 65535;
+	else if (self < 100)
 		self = 100;
 
 	if ( gamestate != GS_STARTUP )
@@ -284,6 +286,31 @@ void P_ThinkParticles ()
 	}
 }
 
+void P_SpawnParticle(fixed_t x, fixed_t y, fixed_t z, fixed_t velx, fixed_t vely, fixed_t velz, PalEntry color, bool fullbright, BYTE startalpha, BYTE lifetime, WORD size, int fadestep, fixed_t accelx, fixed_t accely, fixed_t accelz)
+{
+	particle_t *particle = NewParticle();
+
+	if (particle)
+	{
+		particle->x = x;
+		particle->y = y;
+		particle->z = z;
+		particle->velx = velx;
+		particle->vely = vely;
+		particle->velz = velz;
+		particle->color = ParticleColor(color);
+		particle->trans = startalpha;
+		if (fadestep < 0) fadestep = FADEFROMTTL(lifetime);
+		particle->fade = fadestep;
+		particle->ttl = lifetime;
+		particle->accx = accelx;
+		particle->accy = accely;
+		particle->accz = accelz;
+		particle->bright = fullbright;
+		particle->size = size;
+	}
+}
+
 //
 // P_RunEffects
 //
@@ -320,7 +347,7 @@ particle_t *JitterParticle (int ttl)
 	return JitterParticle (ttl, 1.0);
 }
 // [XA] Added "drift speed" multiplier setting for enhanced railgun stuffs.
-particle_t *JitterParticle (int ttl, float drift)
+particle_t *JitterParticle (int ttl, double drift)
 {
 	particle_t *particle = NewParticle ();
 
@@ -451,9 +478,7 @@ void P_RunEffect (AActor *actor, int effects)
 	{
 		// Grenade trail
 
-		fixedvec3 pos = actor->Vec3Offset(
-			-FixedMul(finecosine[(moveangle) >> ANGLETOFINESHIFT], actor->radius * 2),
-			-FixedMul(finesine[(moveangle) >> ANGLETOFINESHIFT], actor->radius * 2),
+		fixedvec3 pos = actor->Vec3Angle(-actor->radius * 2, moveangle,
 			-(actor->height >> 3) * (actor->velz >> 16) + (2 * actor->height) / 3);
 
 		P_DrawSplash2 (6, pos.x, pos.y, pos.z,
@@ -599,13 +624,14 @@ void P_DrawSplash2 (int count, fixed_t x, fixed_t y, fixed_t z, angle_t angle, i
 	}
 }
 
-void P_DrawRailTrail(AActor *source, const TVector3<double> &start, const TVector3<double> &end, int color1, int color2, double maxdiff, int flags, const PClass *spawnclass, angle_t angle, int duration, double sparsity, double drift, int SpiralOffset)
+void P_DrawRailTrail(AActor *source, const TVector3<double> &start, const TVector3<double> &end, int color1, int color2, double maxdiff_d, int flags, PClassActor *spawnclass, angle_t angle, int duration, double sparsity, double drift, int SpiralOffset)
 {
 	double length, lengthsquared;
 	int steps, i;
 	TAngle<double> deg;
 	TVector3<double> step, dir, pos, extend;
 	bool fullbright;
+	float maxdiff = (float)maxdiff_d;
 
 	dir = end - start;
 	lengthsquared = dir | dir;
@@ -845,10 +871,11 @@ void P_DisconnectEffect (AActor *actor)
 		if (!p)
 			break;
 
-		fixedvec3 pos = actor->Vec3Offset(
-			((M_Random()-128)<<9) * (actor->radius>>FRACBITS),
-			((M_Random()-128)<<9) * (actor->radius>>FRACBITS),
-			(M_Random()<<8) * (actor->height>>FRACBITS));
+		
+		fixed_t xo = ((M_Random() - 128) << 9) * (actor->radius >> FRACBITS);
+		fixed_t yo = ((M_Random() - 128) << 9) * (actor->radius >> FRACBITS);
+		fixed_t zo = (M_Random() << 8) * (actor->height >> FRACBITS);
+		fixedvec3 pos = actor->Vec3Offset(xo, yo, zo);
 		p->x = pos.x;
 		p->y = pos.y;
 		p->z = pos.z;

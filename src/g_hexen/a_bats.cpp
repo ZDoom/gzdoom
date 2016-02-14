@@ -27,23 +27,28 @@ static FRandom pr_batmove ("BatMove");
 
 DEFINE_ACTION_FUNCTION(AActor, A_BatSpawnInit)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	self->special1 = 0;	// Frequency count
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_BatSpawn)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *mo;
 	int delta;
 	angle_t angle;
 
 	// Countdown until next spawn
-	if (self->special1-- > 0) return;
+	if (self->special1-- > 0) return 0;
 	self->special1 = self->args[0];		// Reset frequency count
 
 	delta = self->args[1];
 	if (delta==0) delta=1;
 	angle = self->angle + (((pr_batspawn()%delta)-(delta>>1))<<24);
-	mo = P_SpawnMissileAngle (self, PClass::FindClass ("Bat"), angle, 0);
+	mo = P_SpawnMissileAngle (self, PClass::FindActor("Bat"), angle, 0);
 	if (mo)
 	{
 		mo->args[0] = pr_batspawn()&63;			// floatbob index
@@ -51,11 +56,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_BatSpawn)
 		mo->special2 = self->args[3]<<3;		// Set lifetime
 		mo->target = self;
 	}
+	return 0;
 }
 
 
 DEFINE_ACTION_FUNCTION(AActor, A_BatMove)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	angle_t newangle;
 
 	if (self->special2 < 0)
@@ -84,6 +92,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BatMove)
 	}
 
 	// Handle Z movement
-	self->z = self->target->z + 16*finesine[self->args[0] << BOBTOFINESHIFT];
+	self->SetZ(self->target->Z() + 16*finesine[self->args[0] << BOBTOFINESHIFT]);
 	self->args[0] = (self->args[0]+3)&63;	
+	return 0;
 }

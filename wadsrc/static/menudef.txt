@@ -364,18 +364,6 @@ OptionValue "Gender"
 	2, "Other"
 }
 
-OptionValue "Autoaim"
-{
-	0, "Never"
-	1, "Very low"
-	2, "Low"
-	3, "Medium"
-	4, "High"
-	5, "Very high"
-	6, "Always"
-}
-
-
 ListMenu "PlayerMenu"
 {
 	StaticTextCentered 160, 6, "$MNU_PLAYERSETUP"
@@ -414,7 +402,7 @@ ListMenu "PlayerMenu"
 	ValueText "Class", "Class"
 	ValueText "Skin", "Skin"
 	ValueText "Gender", "Gender", "Gender"
-	ValueText "Autoaim", "Autoaim", "Autoaim"
+	Slider "Autoaim", "Autoaim", 0, 35, 1
 	ValueText "Switch on pickup", "Switch", "OffOn"
 	ValueText "Always Run", "AlwaysRun", "OnOff"
 	Class "PlayerMenu"
@@ -710,6 +698,8 @@ OptionMenu "VideoOptions"
 	Option "Teleporter zoom",			"telezoom", "OnOff"
 	Slider "Earthquake shake intensity",	"r_quakeintensity", 0.0, 1.0, 0.05, 2
 	Option "Interpolate monster movement",	"nomonsterinterpolation", "NoYes"
+	Slider "Menu dim",					"dimamount", 0, 1.0, 0.05, 2
+	ColorPicker "Dim color",			"dimcolor"
 }
 
 //-------------------------------------------------------------------------------------------
@@ -905,6 +895,10 @@ OptionMenu "MiscOptions"
 	{
 		Option "Merge left+right Alt/Ctrl/Shift", 		"k_mergekeys", "OnOff"
 		Option "Alt-Enter toggles fullscreen",			"k_allowfullscreentoggle", "OnOff"
+	}
+	IfOption(Mac)
+	{
+		Option "Command-F toggles fullscreen",			"k_allowfullscreentoggle", "OnOff"
 	}
 	Option "Show IWAD selection dialog",			"queryiwad", "OnOff"
 	StaticText " "
@@ -1669,6 +1663,7 @@ OptionMenu ModReplayerOptions
 	Title "MODULE REPLAYER OPTIONS"
 	Option "Replayer engine",		"mod_dumb", "ModReplayers"
 	StaticText " "
+	Slider "Master Volume",			"mod_dumb_mastervolume", 1, 16, 0.5, 1
 	Option "Sample rate",			"mod_samplerate", "SampleRates", "mod_dumb"
 	Option "Quality",				"mod_interp", "ModQuality", "mod_dumb"
 	Option "Volume ramping",		"mod_volramp", "ModVolumeRamps", "mod_dumb"

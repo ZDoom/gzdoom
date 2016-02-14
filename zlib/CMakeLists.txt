@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.4.4)
+cmake_minimum_required(VERSION 2.8.7)
 set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS ON)
 
 make_release_only()
@@ -135,7 +135,7 @@ if(MINGW)
                             -o ${CMAKE_CURRENT_BINARY_DIR}/zlib1rc.obj
                             -i ${CMAKE_CURRENT_SOURCE_DIR}/win32/zlib1.rc)
     set(ZLIB_SRCS ${ZLIB_SRCS} ${CMAKE_CURRENT_BINARY_DIR}/zlib1rc.obj)
-endif(MINGW)
+endif()
 
 add_library(${ZLIBNAME} ${ZLIB_SRCS} ${ZLIB_PUBLIC_HDRS} ${ZLIB_PRIVATE_HDRS})
 set_target_properties(${ZLIBNAME} PROPERTIES DEFINE_SYMBOL ZLIB_DLL)

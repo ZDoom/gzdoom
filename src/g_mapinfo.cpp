@@ -240,6 +240,7 @@ void level_info_t::Reset()
 		flags2 = 0;
 	else
 		flags2 = LEVEL2_LAXMONSTERACTIVATION;
+	flags3 = 0;
 	Music = "";
 	LevelName = "";
 	FadeTable = "COLORMAP";
@@ -370,12 +371,12 @@ level_info_t *level_info_t::CheckLevelRedirect ()
 {
 	if (RedirectType != NAME_None)
 	{
-		const PClass *type = PClass::FindClass(RedirectType);
+		PClassActor *type = PClass::FindActor(RedirectType);
 		if (type != NULL)
 		{
 			for (int i = 0; i < MAXPLAYERS; ++i)
 			{
-				if (playeringame[i] && players[i].mo->FindInventory (type))
+				if (playeringame[i] && players[i].mo->FindInventory(type))
 				{
 					// check for actual presence of the map.
 					if (P_CheckMapData(RedirectMapName))

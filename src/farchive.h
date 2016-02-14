@@ -170,8 +170,14 @@ virtual void Read (void *mem, unsigned int len);
 		void WriteCount (DWORD count);
 		DWORD ReadCount ();
 
-		void UserWriteClass (const PClass *info);
-		void UserReadClass (const PClass *&info);
+		void UserWriteClass (PClass *info);
+		void UserReadClass (PClass *&info);
+		template<typename T> void UserReadClass(T *&info)
+		{
+			PClass *myclass;
+			UserReadClass(myclass);
+			info = dyn_cast<T>(myclass);
+		}
 
 		FArchive& operator<< (BYTE &c);
 		FArchive& operator<< (WORD &s);
@@ -206,13 +212,11 @@ inline  FArchive& operator<< (DObject* &object) { return ReadObject (object, RUN
 protected:
 		enum { EObjectHashSize = 137 };
 
-		DWORD FindObjectIndex (const DObject *obj) const;
-		DWORD MapObject (const DObject *obj);
-		DWORD WriteClass (const PClass *info);
-		const PClass *ReadClass ();
-		const PClass *ReadClass (const PClass *wanttype);
-		const PClass *ReadStoredClass (const PClass *wanttype);
-		DWORD HashObject (const DObject *obj) const;
+		DWORD MapObject (DObject *obj);
+		DWORD WriteClass (PClass *info);
+		PClass *ReadClass ();
+		PClass *ReadClass (const PClass *wanttype);
+		PClass *ReadStoredClass (const PClass *wanttype);
 		DWORD AddName (const char *name);
 		DWORD AddName (unsigned int start);	// Name has already been added to storage
 		DWORD FindName (const char *name) const;
@@ -223,24 +227,12 @@ protected:
 		bool m_Storing;			// inserting objects?
 		bool m_HubTravel;		// travelling inside a hub?
 		FFile *m_File;			// unerlying file object
-		DWORD m_ObjectCount;	// # of objects currently serialized
-		DWORD m_MaxObjectCount;
-		DWORD m_ClassCount;		// # of unique classes currently serialized
 
-		struct TypeMap
-		{
-			const PClass *toCurrent;	// maps archive type index to execution type index
-			DWORD toArchive;		// maps execution type index to archive type index
+		TMap<PClass *, DWORD> ClassToArchive;	// Maps PClass to archive type index
+		TArray<PClass *>	  ArchiveToClass;	// Maps archive type index to PClass
 
-			enum { NO_INDEX = 0xffffffff };
-		} *m_TypeMap;
-
-		struct ObjectMap
-		{
-			const DObject *object;
-			DWORD hashNext;
-		} *m_ObjectMap;
-		DWORD m_ObjectHash[EObjectHashSize];
+		TMap<DObject *, DWORD> ObjectToArchive;	// Maps objects to archive index
+		TArray<DObject *>	   ArchiveToObject;	// Maps archive index to objects
 
 		struct NameMap
 		{
@@ -281,10 +273,8 @@ inline FArchive &operator<< (FArchive &arc, PalEntry &p)
 template<class T>
 inline FArchive &operator<< (FArchive &arc, T* &object)
 {
-	return arc.SerializeObject ((DObject*&)object, RUNTIME_CLASS(T));
+	return arc.SerializeObject ((DObject*&)object, RUNTIME_TEMPLATE_CLASS(T));
 }
-
-FArchive &operator<< (FArchive &arc, const PClass * &info);
 
 class FFont;
 FArchive &SerializeFFontPtr (FArchive &arc, FFont* &font);
@@ -296,9 +286,11 @@ template<> inline FArchive &operator<< <FFont> (FArchive &arc, FFont* &font)
 struct FStrifeDialogueNode;
 struct FSwitchDef;
 struct FDoorAnimation;
+struct FLinePortal;
 template<> FArchive &operator<< (FArchive &arc, FStrifeDialogueNode *&node);
 template<> FArchive &operator<< (FArchive &arc, FSwitchDef* &sw);
 template<> FArchive &operator<< (FArchive &arc, FDoorAnimation* &da);
+FArchive &operator<< (FArchive &arc, FLinePortal &da);
 
 
 

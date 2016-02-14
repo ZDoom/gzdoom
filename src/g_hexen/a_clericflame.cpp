@@ -48,12 +48,12 @@ void ACFlameMissile::Effect ()
 	if (!--special1)
 	{
 		special1 = 4;
-		newz = z-12*FRACUNIT;
+		newz = Z()-12*FRACUNIT;
 		if (newz < floorz)
 		{
 			newz = floorz;
 		}
-		AActor *mo = Spawn ("CFlameFloor", x, y, newz, ALLOW_REPLACE);
+		AActor *mo = Spawn ("CFlameFloor", X(), Y(), newz, ALLOW_REPLACE);
 		if (mo)
 		{
 			mo->angle = angle;
@@ -69,20 +69,23 @@ void ACFlameMissile::Effect ()
 
 DEFINE_ACTION_FUNCTION(AActor, A_CFlameAttack)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	player_t *player;
 
 	if (NULL == (player = self->player))
 	{
-		return;
+		return 0;
 	}
 	AWeapon *weapon = self->player->ReadyWeapon;
 	if (weapon != NULL)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
-			return;
+			return 0;
 	}
 	P_SpawnPlayerMissile (self, RUNTIME_CLASS(ACFlameMissile));
 	S_Sound (self, CHAN_WEAPON, "ClericFlameFire", 1, ATTN_NORM);
+	return 0;
 }
 
 //============================================================================
@@ -93,11 +96,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_CFlameAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CFlamePuff)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	self->renderflags &= ~RF_INVISIBLE;
 	self->velx = 0;
 	self->vely = 0;
 	self->velz = 0;
 	S_Sound (self, CHAN_BODY, "ClericFlameExplode", 1, ATTN_NORM);
+	return 0;
 }
 
 //============================================================================
@@ -108,6 +114,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_CFlamePuff)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CFlameMissile)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	int i;
 	int an, an90;
 	fixed_t dist;
@@ -123,9 +131,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_CFlameMissile)
 		{
 			an = (i*ANG45)>>ANGLETOFINESHIFT;
 			an90 = (i*ANG45+ANG90)>>ANGLETOFINESHIFT;
-			mo = Spawn ("CircleFlame", BlockingMobj->x+FixedMul(dist, finecosine[an]),
-				BlockingMobj->y+FixedMul(dist, finesine[an]), 
-				BlockingMobj->z+5*FRACUNIT, ALLOW_REPLACE);
+			mo = Spawn ("CircleFlame", BlockingMobj->Vec3Offset(
+				FixedMul(dist, finecosine[an]),
+				FixedMul(dist, finesine[an]), 
+				5*FRACUNIT), ALLOW_REPLACE);
 			if (mo)
 			{
 				mo->angle = an<<ANGLETOFINESHIFT;
@@ -134,9 +143,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_CFlameMissile)
 				mo->vely = mo->special2 = FixedMul(FLAMESPEED, finesine[an]);
 				mo->tics -= pr_missile()&3;
 			}
-			mo = Spawn ("CircleFlame", BlockingMobj->x-FixedMul(dist, finecosine[an]),
-				BlockingMobj->y-FixedMul(dist, finesine[an]), 
-				BlockingMobj->z+5*FRACUNIT, ALLOW_REPLACE);
+			mo = Spawn ("CircleFlame", BlockingMobj->Vec3Offset(
+				-FixedMul(dist, finecosine[an]),
+				-FixedMul(dist, finesine[an]), 
+				5*FRACUNIT), ALLOW_REPLACE);
 			if(mo)
 			{
 				mo->angle = ANG180+(an<<ANGLETOFINESHIFT);
@@ -148,6 +158,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CFlameMissile)
 		}
 		self->SetState (self->SpawnState);
 	}
+	return 0;
 }
 
 //============================================================================
@@ -158,10 +169,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_CFlameMissile)
 
 DEFINE_ACTION_FUNCTION(AActor, A_CFlameRotate)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	int an;
 
 	an = (self->angle+ANG90)>>ANGLETOFINESHIFT;
 	self->velx = self->special1+FixedMul(FLAMEROTSPEED, finecosine[an]);
 	self->vely = self->special2+FixedMul(FLAMEROTSPEED, finesine[an]);
 	self->angle += ANG90/15;
+	return 0;
 }

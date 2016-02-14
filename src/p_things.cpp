@@ -56,7 +56,7 @@ static FRandom pr_leadtarget ("LeadTarget");
 bool P_Thing_Spawn (int tid, AActor *source, int type, angle_t angle, bool fog, int newtid)
 {
 	int rtn = 0;
-	const PClass *kind;
+	PClassActor *kind;
 	AActor *spot, *mobj;
 	FActorIterator iterator (tid);
 
@@ -68,7 +68,7 @@ bool P_Thing_Spawn (int tid, AActor *source, int type, angle_t angle, bool fog, 
 	// Handle decorate replacements.
 	kind = kind->GetReplacement();
 
-	if ((GetDefaultByType (kind)->flags3 & MF3_ISMONSTER) && 
+	if ((GetDefaultByType(kind)->flags3 & MF3_ISMONSTER) && 
 		((dmflags & DF_NO_MONSTERS) || (level.flags2 & LEVEL2_NOMONSTERS)))
 		return false;
 
@@ -82,7 +82,7 @@ bool P_Thing_Spawn (int tid, AActor *source, int type, angle_t angle, bool fog, 
 	}
 	while (spot != NULL)
 	{
-		mobj = Spawn (kind, spot->X(), spot->Y(), spot->Z(), ALLOW_REPLACE);
+		mobj = Spawn (kind, spot->Pos(), ALLOW_REPLACE);
 
 		if (mobj != NULL)
 		{
@@ -123,11 +123,11 @@ bool P_MoveThing(AActor *source, fixed_t x, fixed_t y, fixed_t z, bool fog)
 {
 	fixed_t oldx, oldy, oldz;
 
-	oldx = source->x;
-	oldy = source->y;
-	oldz = source->z;
+	oldx = source->X();
+	oldy = source->Y();
+	oldz = source->Z();
 
-	source->SetOrigin (x, y, z);
+	source->SetOrigin (x, y, z, false);
 	if (P_TestMobjLocation (source))
 	{
 		if (fog)
@@ -146,7 +146,7 @@ bool P_MoveThing(AActor *source, fixed_t x, fixed_t y, fixed_t z, bool fog)
 	}
 	else
 	{
-		source->SetOrigin (oldx, oldy, oldz);
+		source->SetOrigin (oldx, oldy, oldz, false);
 		return false;
 	}
 }
@@ -175,7 +175,7 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 	bool leadTarget)
 {
 	int rtn = 0;
-	const PClass *kind;
+	PClassActor *kind;
 	AActor *spot, *mobj, *targ = forcedest;
 	FActorIterator iterator (tid);
 	double fspeed = speed;
@@ -187,9 +187,9 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 	}
 	else
 	{
-		kind = PClass::FindClass(type_name);
+		kind = PClass::FindActor(type_name);
 	}
-	if (kind == NULL || kind->ActorInfo == NULL)
+	if (kind == NULL)
 	{
 		return false;
 	}
@@ -197,7 +197,7 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 	// Handle decorate replacements.
 	kind = kind->GetReplacement();
 
-	defflags3 = GetDefaultByType (kind)->flags3;
+	defflags3 = GetDefaultByType(kind)->flags3;
 	if ((defflags3 & MF3_ISMONSTER) && 
 		((dmflags & DF_NO_MONSTERS) || (level.flags2 & LEVEL2_NOMONSTERS)))
 		return false;
@@ -218,7 +218,7 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 		{
 			do
 			{
-				fixed_t z = spot->z;
+				fixed_t z = spot->Z();
 				if (defflags3 & MF3_FLOORHUGGER)
 				{
 					z = ONFLOORZ;
@@ -231,7 +231,7 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 				{
 					z -= spot->floorclip;
 				}
-				mobj = Spawn (kind, spot->x, spot->y, z, ALLOW_REPLACE);
+				mobj = Spawn (kind, spot->X(), spot->Y(), z, ALLOW_REPLACE);
 
 				if (mobj)
 				{
@@ -254,8 +254,9 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 
 					if (targ != NULL)
 					{
-						fixed_t spot[3] = { targ->x, targ->y, targ->z+targ->height/2 };
-						FVector3 aim(float(spot[0] - mobj->x), float(spot[1] - mobj->y), float(spot[2] - mobj->z));
+						fixedvec3 vect = mobj->Vec3To(targ);
+						vect.z += targ->height / 2;
+						TVector3<double> aim(vect.x, vect.y, vect.z);
 
 						if (leadTarget && speed > 0 && (targ->velx | targ->vely | targ->velz))
 						{
@@ -266,7 +267,7 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 							// with the math. I don't think I would have thought of using
 							// trig alone had I been left to solve it by myself.
 
-							FVector3 tvel(targ->velx, targ->vely, targ->velz);
+							TVector3<double> tvel(targ->velx, targ->vely, targ->velz);
 							if (!(targ->flags & MF_NOGRAVITY) && targ->waterlevel < 3)
 							{ // If the target is subject to gravity and not underwater,
 							  // assume that it isn't moving vertically. Thanks to gravity,
@@ -287,14 +288,14 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 
 							// Use the cross product of two of the triangle's sides to get a
 							// rotation vector.
-							FVector3 rv(tvel ^ aim);
+							TVector3<double> rv(tvel ^ aim);
 							// The vector must be normalized.
 							rv.MakeUnit();
 							// Now combine the rotation vector with angle b to get a rotation matrix.
-							FMatrix3x3 rm(rv, cos(asin(sinb)), sinb);
+							TMatrix3x3<double> rm(rv, cos(asin(sinb)), sinb);
 							// And multiply the original aim vector with the matrix to get a
 							// new aim vector that leads the target.
-							FVector3 aimvec = rm * aim;
+							TVector3<double> aimvec = rm * aim;
 							// And make the projectile follow that vector at the desired speed.
 							double aimscale = fspeed / dist;
 							mobj->velx = fixed_t (aimvec[0] * aimscale);
@@ -435,7 +436,7 @@ bool P_Thing_Raise(AActor *thing, AActor *raiser)
 	thing->flags |= MF_SOLID;
 	thing->height = info->height;	// [RH] Use real height
 	thing->radius = info->radius;	// [RH] Use real radius
-	if (!P_CheckPosition (thing, thing->x, thing->y))
+	if (!P_CheckPosition (thing, thing->Pos()))
 	{
 		thing->flags = oldflags;
 		thing->radius = oldradius;
@@ -477,7 +478,7 @@ bool P_Thing_CanRaise(AActor *thing)
 	thing->height = info->height;
 	thing->radius = info->radius;
 
-	bool check = P_CheckPosition (thing, thing->x, thing->y);
+	bool check = P_CheckPosition (thing, thing->Pos());
 
 	// Restore checked properties
 	thing->flags = oldflags;
@@ -512,19 +513,19 @@ void P_Thing_SetVelocity(AActor *actor, fixed_t vx, fixed_t vy, fixed_t vz, bool
 	}
 }
 
-const PClass *P_GetSpawnableType(int spawnnum)
+PClassActor *P_GetSpawnableType(int spawnnum)
 {
 	if (spawnnum < 0)
 	{ // A named arg from a UDMF map
 		FName spawnname = FName(ENamedName(-spawnnum));
 		if (spawnname.IsValidName())
 		{
-			return PClass::FindClass(spawnname);
+			return PClass::FindActor(spawnname);
 		}
 	}
 	else
 	{ // A numbered arg from a Hexen or UDMF map
-		const PClass **type = SpawnableThings.CheckKey(spawnnum);
+		PClassActor **type = SpawnableThings.CheckKey(spawnnum);
 		if (type != NULL)
 		{
 			return *type;
@@ -650,10 +651,10 @@ void InitClassMap(FClassMap &themap, SpawnMap &thedata)
 
 	while (it.NextPair(pair))
 	{
-		const PClass *cls = NULL;
+		PClassActor *cls = NULL;
 		if (pair->Value.classname != NAME_None)
 		{
-			cls = PClass::FindClass(pair->Value.classname);
+			cls = PClass::FindActor(pair->Value.classname);
 			if (cls == NULL)
 			{
 				Printf(TEXTCOLOR_RED "Script error, \"%s\" line %d:\nUnknown actor class %s\n",
@@ -690,9 +691,7 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 		caller = temp;
 	}
 
-	fixed_t	oldx = caller->x;
-	fixed_t	oldy = caller->y;
-	fixed_t	oldz = caller->z;
+	fixedvec3 old = caller->Pos();
 	zofs += FixedMul(reference->height, heightoffset);
 	
 
@@ -724,18 +723,18 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 			// now the caller's floorz should be appropriate for the assigned xy-position
 			// assigning position again with.
 			// extra unlink, link and environment calculation
-			caller->SetOrigin(
-				reference->x + xofs + FixedMul(rad, finecosine[fineangle]),
-				reference->y + yofs + FixedMul(rad, finesine[fineangle]),
-				reference->z);
-			caller->z = caller->floorz + zofs;
+			caller->SetOrigin(reference->Vec3Offset(
+				xofs + FixedMul(rad, finecosine[fineangle]),
+				yofs + FixedMul(rad, finesine[fineangle]),
+				0), true);
+			caller->SetZ(caller->floorz + zofs);
 		}
 		else
 		{
-			caller->SetOrigin(
-				reference->x + xofs + FixedMul(rad, finecosine[fineangle]),
-				reference->y + yofs + FixedMul(rad, finesine[fineangle]),
-				reference->z + zofs);
+			caller->SetOrigin(reference->Vec3Offset(
+				 xofs + FixedMul(rad, finecosine[fineangle]),
+				 yofs + FixedMul(rad, finesine[fineangle]),
+				 zofs), true);
 		}
 	}
 	else // [MC] The idea behind "absolute" is meant to be "absolute". Override everything, just like A_SpawnItemEx's.
@@ -743,7 +742,7 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 		if (flags & WARPF_TOFLOOR)
 		{
 			caller->SetOrigin(xofs + FixedMul(rad, finecosine[fineangle]), yofs + FixedMul(rad, finesine[fineangle]), zofs);
-			caller->z = caller->floorz + zofs;
+			caller->SetZ(caller->floorz + zofs);
 		}
 		else
 		{
@@ -755,7 +754,7 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 	{
 		if (flags & WARPF_TESTONLY)
 		{
-			caller->SetOrigin(oldx, oldy, oldz);
+			caller->SetOrigin(old, true);
 		}
 		else
 		{
@@ -782,29 +781,29 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 
 			if (flags & WARPF_WARPINTERPOLATION)
 			{
-				caller->PrevX += caller->x - oldx;
-				caller->PrevY += caller->y - oldy;
-				caller->PrevZ += caller->z - oldz;
+				caller->PrevX += caller->X() - old.x;
+				caller->PrevY += caller->Y() - old.y;
+				caller->PrevZ += caller->Z() - old.z;
 			}
 			else if (flags & WARPF_COPYINTERPOLATION)
 			{
-				caller->PrevX = caller->x + reference->PrevX - reference->x;
-				caller->PrevY = caller->y + reference->PrevY - reference->y;
-				caller->PrevZ = caller->z + reference->PrevZ - reference->z;
+				caller->PrevX = caller->X() + reference->PrevX - reference->X();
+				caller->PrevY = caller->Y() + reference->PrevY - reference->Y();
+				caller->PrevZ = caller->Z() + reference->PrevZ - reference->Z();
 			}
 			else if (!(flags & WARPF_INTERPOLATE))
 			{
-				caller->PrevX = caller->x;
-				caller->PrevY = caller->y;
-				caller->PrevZ = caller->z;
+				caller->PrevX = caller->X();
+				caller->PrevY = caller->Y();
+				caller->PrevZ = caller->Z();
 			}
 			if ((flags & WARPF_BOB) && (reference->flags2 & MF2_FLOATBOB))
 			{
-				caller->z += reference->GetBobOffset();
+				caller->AddZ(reference->GetBobOffset());
 			}
 		}
 		return true;
 	}
-	caller->SetOrigin(oldx, oldy, oldz);
+	caller->SetOrigin(old, true);
 	return false;
 }

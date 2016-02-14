@@ -62,8 +62,6 @@
 #include "decallib.h"
 #include "v_palette.h"
 #include "a_sharedglobal.h"
-#include "thingdef/thingdef.h"
-#include "thingdef/thingdef_exp.h"
 #include "vectors.h"
 #include "dobject.h"
 #include "r_data/r_translate.h"
@@ -72,6 +70,7 @@
 #include "doomerrors.h"
 #include "p_effect.h"
 #include "farchive.h"
+#include "vmbuilder.h"
 
 // [SO] Just the way Randy said to do it :)
 // [RH] Made this CVAR_SERVERINFO
@@ -82,7 +81,7 @@ static void UnloadDehSupp ();
 
 
 // This is a list of all the action functions used by each of Doom's states.
-static TArray<PSymbol *> Actions;
+static TArray<PFunction *> Actions;
 
 // These are the original heights of every Doom 2 thing. They are used if a patch
 // specifies that a thing should be hanging from the ceiling but doesn't specify
@@ -110,7 +109,7 @@ struct StateMapper
 {
 	FState *State;
 	int StateSpan;
-	const PClass *Owner;
+	PClassActor *Owner;
 	bool OwnerIsPickup;
 };
 
@@ -121,7 +120,7 @@ static TArray<StateMapper> StateMap;
 static TArray<FSoundID> SoundMap;
 
 // Names of different actor types, in original Doom 2 order
-static TArray<const PClass *> InfoNames;
+static TArray<PClassActor *> InfoNames;
 
 // bit flags for PatchThing (a .bex extension):
 struct BitName
@@ -142,8 +141,8 @@ struct StyleName
 
 static TArray<StyleName> StyleNames;
 
-static TArray<const PClass *> AmmoNames;
-static TArray<const PClass *> WeaponNames;
+static TArray<PClassAmmo *> AmmoNames;
+static TArray<PClassActor *> WeaponNames;
 
 // DeHackEd trickery to support MBF-style parameters
 // List of states that are hacked to use a codepointer
@@ -156,7 +155,7 @@ static TArray<MBFParamState> MBFParamStates;
 // Data on how to correctly modify the codepointers
 struct CodePointerAlias
 {
-	char name[20];
+	FName name;
 	char alias[20];
 	BYTE params;
 };
@@ -164,7 +163,7 @@ static TArray<CodePointerAlias> MBFCodePointers;
 
 struct AmmoPerAttack
 {
-	actionf_p func;
+	VMNativeFunction **func;
 	int ammocount;
 };
 
@@ -174,7 +173,7 @@ DECLARE_ACTION(A_FireShotgun)
 DECLARE_ACTION(A_FireShotgun2)
 DECLARE_ACTION(A_FireCGun)
 DECLARE_ACTION(A_FireMissile)
-DECLARE_ACTION_PARAMS(A_Saw)
+DECLARE_ACTION(A_Saw)
 DECLARE_ACTION(A_FirePlasma)
 DECLARE_ACTION(A_FireBFG)
 DECLARE_ACTION(A_FireOldBFG)
@@ -182,17 +181,17 @@ DECLARE_ACTION(A_FireRailgun)
 
 // Default ammo use of the various weapon attacks
 static AmmoPerAttack AmmoPerAttacks[] = {
-	{ AF_A_Punch, 0},
-	{ AF_A_FirePistol, 1},
-	{ AF_A_FireShotgun, 1}, 
-	{ AF_A_FireShotgun2, 2},
-	{ AF_A_FireCGun, 1},
-	{ AF_A_FireMissile, 1},
-	{ AFP_A_Saw, 0},
-	{ AF_A_FirePlasma, 1},
-	{ AF_A_FireBFG, -1},	// uses deh.BFGCells
-	{ AF_A_FireOldBFG, 1},
-	{ AF_A_FireRailgun, 1},
+	{ &A_Punch_VMPtr, 0},
+	{ &A_FirePistol_VMPtr, 1},
+	{ &A_FireShotgun_VMPtr, 1}, 
+	{ &A_FireShotgun2_VMPtr, 2},
+	{ &A_FireCGun_VMPtr, 1},
+	{ &A_FireMissile_VMPtr, 1},
+	{ &A_Saw_VMPtr, 0},
+	{ &A_FirePlasma_VMPtr, 1},
+	{ &A_FireBFG_VMPtr, -1},	// uses deh.BFGCells
+	{ &A_FireOldBFG_VMPtr, 1},
+	{ &A_FireRailgun_VMPtr, 1},
 	{ NULL, 0}
 };
 
@@ -232,7 +231,7 @@ IMPLEMENT_POINTY_CLASS (ADehackedPickup)
  DECLARE_POINTER (RealPickup)
 END_POINTERS
 
-TArray<PClass *> TouchedActors;
+TArray<PClassActor *> TouchedActors;
 
 char *UnchangedSpriteNames;
 int NumUnchangedSprites;
@@ -354,11 +353,14 @@ static bool ReadChars (char **stuff, int size);
 static char *igets (void);
 static int GetLine (void);
 
-static void PushTouchedActor(PClass *cls)
+static void PushTouchedActor(PClassActor *cls)
 {
 	for(unsigned i = 0; i < TouchedActors.Size(); i++)
 	{
-		if (TouchedActors[i] == cls) return;
+		if (TouchedActors[i] == cls)
+		{
+			return;
+		}
 	}
 	TouchedActors.Push(cls);
 }
@@ -426,7 +428,7 @@ static FState *FindState (int statenum)
 			{
 				if (StateMap[i].OwnerIsPickup)
 				{
-					PushTouchedActor(const_cast<PClass *>(StateMap[i].Owner));
+					PushTouchedActor(StateMap[i].Owner);
 				}
 				return StateMap[i].State + statenum - stateacc;
 			}
@@ -632,28 +634,149 @@ static int GetLine (void)
 	}
 }
 
-// This enum must be in sync with the Aliases array in DEHSUPP.
-enum MBFCodePointers
+// misc1 = vrange (arg +3), misc2 = hrange (arg+4)
+static int CreateMushroomFunc(VMFunctionBuilder &buildit, int value1, int value2)
+{ // A_Mushroom
+	buildit.Emit(OP_PARAM, 0, REGT_NIL, 0);		// spawntype
+	buildit.Emit(OP_PARAM, 0, REGT_NIL, 0);		// numspawns
+	buildit.Emit(OP_PARAMI, 1);					// flag
+	// vrange
+	if (value1 == 0)
+	{
+		buildit.Emit(OP_PARAM, 0, REGT_NIL, 0);
+	}
+	else
+	{
+		buildit.Emit(OP_PARAM, 0, REGT_FLOAT | REGT_KONST, buildit.GetConstantFloat(FIXED2DBL(value1)));
+	}
+	// hrange
+	if (value2 == 0)
+	{
+		buildit.Emit(OP_PARAM, 0, REGT_NIL, 0);
+	}
+	else
+	{
+		buildit.Emit(OP_PARAM, 0, REGT_FLOAT | REGT_KONST, buildit.GetConstantFloat(FIXED2DBL(value2)));
+	}
+	return 5;
+}
+
+// misc1 = type (arg +0), misc2 = Z-pos (arg +2)
+static int CreateSpawnFunc(VMFunctionBuilder &buildit, int value1, int value2)
+{ // A_SpawnItem
+	if (InfoNames[value1-1] == NULL)
+	{
+		I_Error("No class found for dehackednum %d!\n", value1+1);
+		return 0;
+	}
+	int typereg = buildit.GetConstantAddress(InfoNames[value1-1], ATAG_OBJECT);
+	int heightreg = buildit.GetConstantFloat(value2);
+
+	buildit.Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, typereg);	// itemtype
+	buildit.Emit(OP_PARAM, 0, REGT_NIL, 0);							// distance
+	buildit.Emit(OP_PARAM, 0, REGT_FLOAT | REGT_KONST, heightreg);	// height
+	// The rest of the parameters to A_SpawnItem can just keep their defaults
+	return 3;
+}
+
+// misc1 = angle (in degrees) (arg +0 but factor in current actor angle too)
+static int CreateTurnFunc(VMFunctionBuilder &buildit, int value1, int value2)
+{ // A_Turn
+	buildit.Emit(OP_PARAM, 0, REGT_FLOAT | REGT_KONST, buildit.GetConstantFloat(value1));		// angle
+	return 1;
+}
+
+// misc1 = angle (in degrees) (arg +0)
+static int CreateFaceFunc(VMFunctionBuilder &buildit, int value1, int value2)
+{ // A_FaceTarget
+	buildit.Emit(OP_PARAM, 0, REGT_FLOAT | REGT_KONST, buildit.GetConstantFloat(value1));		// angle
+	return 1;
+}
+
+// misc1 = damage, misc 2 = sound
+static int CreateScratchFunc(VMFunctionBuilder &buildit, int value1, int value2)
+{ // A_CustomMeleeAttack
+	buildit.EmitParamInt(value1);					// damage
+	if (value2)
+	{
+		buildit.EmitParamInt(SoundMap[value2-1]);	// hit sound
+		return 2;
+	}
+	return 1;
+}
+
+// misc1 = sound, misc2 = attenuation none (true) or normal (false)
+static int CreatePlaySoundFunc(VMFunctionBuilder &buildit, int value1, int value2)
+{ // A_PlaySound
+	int float1 = buildit.GetConstantFloat(1);
+	int attenreg = buildit.GetConstantFloat(value2 ? ATTN_NONE : ATTN_NORM);
+
+	buildit.EmitParamInt(SoundMap[value1-1]);						// soundid
+	buildit.Emit(OP_PARAMI, CHAN_BODY);								// channel
+	buildit.Emit(OP_PARAM, 0, REGT_FLOAT | REGT_KONST, float1);		// volume
+	buildit.Emit(OP_PARAMI, false);									// looping
+	buildit.Emit(OP_PARAM, 0, REGT_FLOAT | REGT_KONST, attenreg);	// attenuation
+	return 5;
+}
+
+// misc1 = state, misc2 = probability
+static int CreateRandomJumpFunc(VMFunctionBuilder &buildit, int value1, int value2)
+{ // A_Jump
+	int statereg = buildit.GetConstantAddress(FindState(value1), ATAG_STATE);
+
+	buildit.EmitParamInt(value2);									// maxchance
+	buildit.Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, statereg);	// jumpto
+	return 2;
+}
+
+// misc1 = Boom linedef type, misc2 = sector tag
+static int CreateLineEffectFunc(VMFunctionBuilder &buildit, int value1, int value2)
+{ // A_LineEffect
+	// This is the second MBF codepointer that couldn't be translated easily.
+	// Calling P_TranslateLineDef() here was a simple matter, as was adding an
+	// extra parameter to A_CallSpecial so as to replicate the LINEDONE stuff,
+	// but unfortunately DEHACKED lumps are processed before the map translation
+	// arrays are initialized so this didn't work.
+	buildit.EmitParamInt(value1);					// special
+	buildit.EmitParamInt(value2);					// tag
+	return 2;
+}
+
+// No misc, but it's basically A_Explode with an added effect
+static int CreateNailBombFunc(VMFunctionBuilder &buildit, int value1, int value2)
+{ // A_Explode
+	// This one does not actually have MBF-style parameters. But since
+	// we're aliasing it to an extension of A_Explode...
+	buildit.Emit(OP_PARAM, 0, REGT_NIL, 0);			// damage
+	buildit.Emit(OP_PARAM, 0, REGT_NIL, 0);			// distance
+	buildit.Emit(OP_PARAM, 0, REGT_NIL, 0);			// flags
+	buildit.Emit(OP_PARAM, 0, REGT_NIL, 0);			// alert
+	buildit.Emit(OP_PARAM, 0, REGT_NIL, 0);			// fulldamagedistance
+	buildit.Emit(OP_PARAMI, 30);					// nails
+	buildit.Emit(OP_PARAMI, 10);					// naildamage
+	return 7;
+}
+
+// This array must be in sync with the Aliases array in DEHSUPP.
+static int (*MBFCodePointerFactories[])(VMFunctionBuilder&, int, int) =
 {
 	// Die and Detonate are not in this list because these codepointers have
 	// no dehacked arguments and therefore do not need special handling.
 	// NailBomb has no argument but is implemented as new parameters for A_Explode.
-	MBF_Mushroom,	// misc1 = vrange (arg +3), misc2 = hrange (arg+4)
-	MBF_Spawn,		// misc1 = type (arg +0), misc2 = Z-pos (arg +2)
-	MBF_Turn,		// misc1 = angle (in degrees) (arg +0 but factor in current actor angle too)
-	MBF_Face,		// misc1 = angle (in degrees) (arg +0)
-	MBF_Scratch,	// misc1 = damage, misc 2 = sound
-	MBF_PlaySound,	// misc1 = sound, misc2 = attenuation none (true) or normal (false)
-	MBF_RandomJump,	// misc1 = state, misc2 = probability
-	MBF_LineEffect,	// misc1 = Boom linedef type, misc2 = sector tag
-	SMMU_NailBomb,	// No misc, but it's basically A_Explode with an added effect
+	CreateMushroomFunc,
+	CreateSpawnFunc,
+	CreateTurnFunc,
+	CreateFaceFunc,
+	CreateScratchFunc,
+	CreatePlaySoundFunc,
+	CreateRandomJumpFunc,
+	CreateLineEffectFunc,
+	CreateNailBombFunc
 };
 
-int PrepareStateParameters(FState * state, int numparams, const PClass *cls);// Should probably be in a .h file.
+// Creates new functions for the given state so as to convert MBF-args (misc1 and misc2) into real args.
 
-// Hacks the parameter list for the given state so as to convert MBF-args (misc1 and misc2) into real args.
-
-void SetDehParams(FState * state, int codepointer)
+void SetDehParams(FState *state, int codepointer)
 {
 	int value1 = state->GetMisc1();
 	int value2 = state->GetMisc2();
@@ -662,100 +785,35 @@ void SetDehParams(FState * state, int codepointer)
 	// Fakey fake script position thingamajig. Because NULL cannot be used instead.
 	// Even if the lump was parsed by an FScanner, there would hardly be a way to
 	// identify which line is troublesome.
-	FScriptPosition * pos = new FScriptPosition(FString("DEHACKED"), 0);
+	FScriptPosition *pos = new FScriptPosition(FString("DEHACKED"), 0);
 	
 	// Let's identify the codepointer we're dealing with.
-	PSymbolActionFunction * sym; PSymbol * s;	
-	s = RUNTIME_CLASS(AInventory)->Symbols.FindSymbol(FName(MBFCodePointers[codepointer].name), true);
-	if (!s || s->SymbolType != SYM_ActionFunction) return;
-	sym = static_cast<PSymbolActionFunction*>(s);
+	PFunction *sym;
+	sym = dyn_cast<PFunction>(RUNTIME_CLASS(AInventory)->Symbols.FindSymbol(FName(MBFCodePointers[codepointer].name), true));
+	if (sym == NULL) return;
 
-
-	// Bleargh! This will all have to be redone once scripting works
-
-	// Not sure exactly why the index for a state is greater by one point than the index for a symbol.
-	DPrintf("SetDehParams: Paramindex is %d, default is %d.\n", 
-		state->ParameterIndex-1, sym->defaultparameterindex);
-	if (state->ParameterIndex-1 == sym->defaultparameterindex)
+	if (codepointer < 0 || (unsigned)codepointer >= countof(MBFCodePointerFactories))
 	{
-		int a = PrepareStateParameters(state, MBFCodePointers[codepointer].params+1, 
-			FState::StaticFindStateOwner(state)) -1;
-		int b = sym->defaultparameterindex;
-		//		StateParams.Copy(a, b, MBFParams[codepointer]);
-		// Meh, function doesn't work. For some reason it resets the paramindex to the default value.
-		// For instance, a dehacked Commander Keen calling A_Explode would result in a crash as
-		// ACTION_PARAM_INT(damage, 0) would properly evaluate at paramindex 1377, but then 
-		// ACTION_PARAM_INT(distance, 1) would improperly evaluate at paramindex 148! Now I'm not sure
-		// whether it's a genuine problem or working as intended and merely not appropriate for the
-		// task at hand here. So rather than modify it, I use a simple for loop of Set()s and Get()s,
-		// with a small modification to Set() that I know will have no repercussion anywhere else.
-		for (int i = 0; i<MBFCodePointers[codepointer].params; i++)
-		{
-			StateParams.Set(a+i, StateParams.Get(b+i), true);
-		}
-		DPrintf("New paramindex is %d.\n", state->ParameterIndex-1);
-	}
-	int ParamIndex = state->ParameterIndex - 1;
-
-	switch (codepointer)
-	{
-	case MBF_Mushroom:
-		StateParams.Set(ParamIndex+2, new FxConstant(1, *pos)); // Flag
-		// NOTE: Do not convert to float here because it will lose precision. It must be double.
-		if (value1) StateParams.Set(ParamIndex+3, new FxConstant(value1/65536., *pos)); // vrange
-		if (value2) StateParams.Set(ParamIndex+4, new FxConstant(value2/65536., *pos)); // hrange
-		break;
-	case MBF_Spawn:
-		if (InfoNames[value1-1] == NULL)
-		{
-			I_Error("No class found for dehackednum %d!\n", value1+1);
-			return;
-		}
-		StateParams.Set(ParamIndex+0, new FxConstant(InfoNames[value1-1], *pos));	// type
-		StateParams.Set(ParamIndex+2, new FxConstant(value2, *pos));				// height
-		break;
-	case MBF_Turn:
-		// Intentional fall through. I tried something more complicated by creating an
-		// FxExpression that corresponded to "variable angle + angle" so as to use A_SetAngle
-		// as well, but it became an overcomplicated mess that didn't even work as I had to
-		// create a compile context as well and couldn't get it right.
-	case MBF_Face:
-		StateParams.Set(ParamIndex+0, new FxConstant(value1, *pos)); // angle
-		break;
-	case MBF_Scratch:	// misc1 = damage, misc 2 = sound
-		StateParams.Set(ParamIndex+0, new FxConstant(value1, *pos));							// damage
-		if (value2) StateParams.Set(ParamIndex+1, new FxConstant(SoundMap[value2-1], *pos));	// hit sound
-		break;
-	case MBF_PlaySound:
-		StateParams.Set(ParamIndex+0, new FxConstant(SoundMap[value1-1], *pos));				// soundid
-		StateParams.Set(ParamIndex+1, new FxConstant(CHAN_BODY, *pos));							// channel
-		StateParams.Set(ParamIndex+2, new FxConstant(1.0, *pos));								// volume
-		StateParams.Set(ParamIndex+3, new FxConstant(false, *pos));								// looping
-		StateParams.Set(ParamIndex+4, new FxConstant((value2 ? ATTN_NONE : ATTN_NORM), *pos));	// attenuation
-		break;
-	case MBF_RandomJump:
-		StateParams.Set(ParamIndex+0, new FxConstant(2, *pos));					// count
-		StateParams.Set(ParamIndex+1, new FxConstant(value2, *pos));			// maxchance
-		StateParams.Set(ParamIndex+2, new FxConstant(FindState(value1), *pos));	// jumpto
-		break;
-	case MBF_LineEffect:
-		// This is the second MBF codepointer that couldn't be translated easily.
-		// Calling P_TranslateLineDef() here was a simple matter, as was adding an
-		// extra parameter to A_CallSpecial so as to replicate the LINEDONE stuff,
-		// but unfortunately DEHACKED lumps are processed before the map translation
-		// arrays are initialized so this didn't work.
-		StateParams.Set(ParamIndex+0, new FxConstant(value1, *pos));	// special
-		StateParams.Set(ParamIndex+1, new FxConstant(value2, *pos));	// tag
-		break;
-	case SMMU_NailBomb:
-		// That one does not actually have MBF-style parameters. But since
-		// we're aliasing it to an extension of A_Explode...
-		StateParams.Set(ParamIndex+5, new FxConstant(30, *pos));	// nails
-		StateParams.Set(ParamIndex+6, new FxConstant(10, *pos));	// naildamage
-		break;
-	default:
 		// This simply should not happen.
 		Printf("Unmanaged dehacked codepointer alias num %i\n", codepointer);
+	}
+	else
+	{
+		VMFunctionBuilder buildit;
+		// Allocate registers used to pass parameters in.
+		// self, stateowner, state (all are pointers)
+		buildit.Registers[REGT_POINTER].Get(3);
+		// Emit code to pass the standard action function parameters.
+		buildit.Emit(OP_PARAM, 0, REGT_POINTER, 0);
+		buildit.Emit(OP_PARAM, 0, REGT_POINTER, 1);
+		buildit.Emit(OP_PARAM, 0, REGT_POINTER, 2);
+		// Emit code for action parameters.
+		int argcount = MBFCodePointerFactories[codepointer](buildit, value1, value2);
+		buildit.Emit(OP_TAIL_K, buildit.GetConstantAddress(sym->Variants[0].Implementation, ATAG_OBJECT), NAP + argcount, 0);
+		// Attach it to the state.
+		VMScriptFunction *sfunc = buildit.MakeFunction();
+		sfunc->NumArgs = NAP;
+		state->SetAction(sfunc);
 	}
 }
 
@@ -785,7 +843,7 @@ static int PatchThing (int thingy)
 	FStateDefinitions statedef;
 	bool patchedStates = false;
 	ActorFlags oldflags;
-	const PClass *type;
+	PClassActor *type;
 	SWORD *ednum, dummyed;
 
 	type = NULL;
@@ -811,7 +869,7 @@ static int PatchThing (int thingy)
 			else
 			{
 				info = GetDefaultByType (type);
-				ednum = &type->ActorInfo->DoomEdNum;
+				ednum = &type->DoomEdNum;
 			}
 		}
 	}
@@ -851,7 +909,7 @@ static int PatchThing (int thingy)
 		}
 		else if (linelen == 14 && stricmp (Line1, "Missile damage") == 0)
 		{
-			info->Damage = val;
+			info->Damage = CreateDamageFunction(val);
 		}
 		else if (linelen == 5)
 		{
@@ -1227,7 +1285,7 @@ static int PatchThing (int thingy)
 
 		if (info->flags & MF_SPECIAL)
 		{
-			PushTouchedActor(const_cast<PClass *>(type));
+			PushTouchedActor(const_cast<PClassActor *>(type));
 		}
 
 		// If MF_COUNTKILL is set, make sure the other standard monster flags are
@@ -1250,7 +1308,7 @@ static int PatchThing (int thingy)
 		info->flags4 |= MF4_CANUSEWALLS;
 		if (patchedStates)
 		{
-			statedef.InstallStates(type->ActorInfo, info);
+			statedef.InstallStates(type, info);
 		}
 	}
 
@@ -1462,7 +1520,7 @@ static int PatchSprite (int sprNum)
 
 static int PatchAmmo (int ammoNum)
 {
-	const PClass *ammoType = NULL;
+	PClassAmmo *ammoType = NULL;
 	AAmmo *defaultAmmo = NULL;
 	int result;
 	int oldclip;
@@ -1509,9 +1567,9 @@ static int PatchAmmo (int ammoNum)
 	// Fix per-ammo/max-ammo amounts for descendants of the base ammo class
 	if (oldclip != *per)
 	{
-		for (unsigned int i = 0; i < PClass::m_Types.Size(); ++i)
+		for (unsigned int i = 0; i < PClassActor::AllActorClasses.Size(); ++i)
 		{
-			PClass *type = PClass::m_Types[i];
+			PClassActor *type = PClassActor::AllActorClasses[i];
 
 			if (type == ammoType)
 				continue;
@@ -1543,7 +1601,7 @@ static int PatchAmmo (int ammoNum)
 static int PatchWeapon (int weapNum)
 {
 	int result;
-	const PClass *type = NULL;
+	PClassActor *type = NULL;
 	BYTE dummy[sizeof(AWeapon)];
 	AWeapon *info = (AWeapon *)&dummy;
 	bool patchedStates = false;
@@ -1647,28 +1705,26 @@ static int PatchWeapon (int weapNum)
 
 	if (patchedStates)
 	{
-		statedef.InstallStates(type->ActorInfo, info);
+		statedef.InstallStates(type, info);
 	}
 
 	return result;
 }
 
-static void SetPointer(FState *state, PSymbol *sym, int frame = 0)
+static void SetPointer(FState *state, PFunction *sym, int frame = 0)
 {
-	if (sym==NULL || sym->SymbolType != SYM_ActionFunction)
+	if (sym == NULL)
 	{
-		state->SetAction(NULL);
+		state->ClearAction();
 		return;
 	}
 	else
 	{
-		FString symname = sym->SymbolName.GetChars();
-		state->SetAction(static_cast<PSymbolActionFunction*>(sym));
+		state->SetAction(sym->Variants[0].Implementation);
 
-		// Note: CompareNoCase() calls stricmp() and therefore returns 0 when they're the same.
 		for (unsigned int i = 0; i < MBFCodePointers.Size(); i++)
 		{
-			if (!symname.CompareNoCase(MBFCodePointers[i].name))
+			if (sym->SymbolName == MBFCodePointers[i].name)
 			{
 				MBFParamState newstate;
 				newstate.state = state;
@@ -1722,7 +1778,9 @@ static int PatchPointer (int ptrNum)
 			{
 				int index = atoi(Line2);
 				if ((unsigned)(index) >= Actions.Size())
+				{
 					SetPointer(state, NULL);
+				}
 				else
 				{
 					SetPointer(state, Actions[index], CodePConv[ptrNum]);
@@ -1820,16 +1878,16 @@ static int PatchMisc (int dummy)
 					"Minotaur",
 					NULL
 				};
-				static const PClass * const types[] =
+				static const PClass * const *types[] =
 				{
-					RUNTIME_CLASS(APowerInvulnerable),
-					RUNTIME_CLASS(APowerStrength),
-					RUNTIME_CLASS(APowerInvisibility),
-					RUNTIME_CLASS(APowerIronFeet),
-					RUNTIME_CLASS(APowerLightAmp),
-					RUNTIME_CLASS(APowerWeaponLevel2),
-					RUNTIME_CLASS(APowerSpeed),
-					RUNTIME_CLASS(APowerMinotaur)
+					&RUNTIME_CLASS_CASTLESS(APowerInvulnerable),
+					&RUNTIME_CLASS_CASTLESS(APowerStrength),
+					&RUNTIME_CLASS_CASTLESS(APowerInvisibility),
+					&RUNTIME_CLASS_CASTLESS(APowerIronFeet),
+					&RUNTIME_CLASS_CASTLESS(APowerLightAmp),
+					&RUNTIME_CLASS_CASTLESS(APowerWeaponLevel2),
+					&RUNTIME_CLASS_CASTLESS(APowerSpeed),
+					&RUNTIME_CLASS_CASTLESS(APowerMinotaur)
 				};
 				int i;
 
@@ -1855,7 +1913,7 @@ static int PatchMisc (int dummy)
 					}
 					else if (a > 0)
 					{
-						static_cast<APowerup *>(GetDefaultByType (types[i]))->BlendColor = PalEntry(
+						static_cast<APowerup *>(GetDefaultByType (*types[i]))->BlendColor = PalEntry(
 							BYTE(clamp(a,0.f,1.f)*255.f),
 							clamp(r,0,255),
 							clamp(g,0,255),
@@ -1863,7 +1921,7 @@ static int PatchMisc (int dummy)
 					}
 					else
 					{
-						static_cast<APowerup *>(GetDefaultByType (types[i]))->BlendColor = 0;
+						static_cast<APowerup *>(GetDefaultByType (*types[i]))->BlendColor = 0;
 					}
 				}
 			}
@@ -1924,18 +1982,14 @@ static int PatchMisc (int dummy)
 		player->health = deh.StartHealth;
 
 		// Hm... I'm not sure that this is the right way to change this info...
-		int index = PClass::FindClass(NAME_DoomPlayer)->Meta.GetMetaInt (ACMETA_DropItems) - 1;
-		if (index >= 0 && index < (signed)DropItemList.Size())
+		DDropItem *di = PClass::FindActor(NAME_DoomPlayer)->DropItems;
+		while (di != NULL)
 		{
-			FDropItem * di = DropItemList[index];
-			while (di != NULL)
+			if (di->Name == NAME_Clip)
 			{
-				if (di->Name == NAME_Clip)
-				{
-					di->amount = deh.StartBullets;
-				}
-				di = di->Next;
+				di->Amount = deh.StartBullets;
 			}
+			di = di->Next;
 		}
 	}
 
@@ -2043,21 +2097,21 @@ static int PatchCodePtrs (int dummy)
 					if (!symname.CompareNoCase(MBFCodePointers[i].alias))
 					{
 						symname = MBFCodePointers[i].name;
-						Printf("%s --> %s\n", MBFCodePointers[i].alias, MBFCodePointers[i].name);
+						Printf("%s --> %s\n", MBFCodePointers[i].alias, MBFCodePointers[i].name.GetChars());
 					}
 				}
 
 				// This skips the action table and goes directly to the internal symbol table
 				// DEH compatible functions are easy to recognize.
-				PSymbol *sym = RUNTIME_CLASS(AInventory)->Symbols.FindSymbol(symname, true);
-				if (sym == NULL || sym->SymbolType != SYM_ActionFunction)
+				PFunction *sym = dyn_cast<PFunction>(RUNTIME_CLASS(AInventory)->Symbols.FindSymbol(symname, true));
+				if (sym == NULL)
 				{
 					Printf("Frame %d: Unknown code pointer '%s'\n", frame, Line2);
 				}
 				else
 				{
-					FString &args = static_cast<PSymbolActionFunction*>(sym)->Arguments;
-					if (args.Len()!=0 && (args[0]<'a' || args[0]>'z'))
+					TArray<DWORD> &args = sym->Variants[0].ArgFlags;
+					if ((sym->Flags & (VARF_Method | VARF_Action)) != (VARF_Method | VARF_Action) || (args.Size() > 3 && !(args[3] & VARF_Optional)))
 					{
 						Printf("Frame %d: Incompatible code pointer '%s'\n", frame, Line2);
 						sym = NULL;
@@ -2441,7 +2495,7 @@ bool D_LoadDehFile(const char *patchfile)
 
 static bool DoDehPatch()
 {
-	Printf("Adding dehacked patch %s\n", PatchName);
+	if (!batchrun) Printf("Adding dehacked patch %s\n", PatchName);
 
 	int cont;
 
@@ -2532,32 +2586,13 @@ static bool DoDehPatch()
 	UnloadDehSupp ();
 	delete[] PatchName;
 	delete[] PatchFile;
-	Printf ("Patch installed\n");
+	if (!batchrun) Printf ("Patch installed\n");
 	return true;
 }
 
 static inline bool CompareLabel (const char *want, const BYTE *have)
 {
 	return *(DWORD *)want == *(DWORD *)have;
-}
-
-static inline short GetWord (const BYTE *in)
-{
-	return (in[0] << 8) | (in[1]);
-}
-
-static short *GetWordSpace (void *in, size_t size)
-{
-	short *ptr;
-	size_t i;
-
-	ptr = (short *)in;
-
-	for (i = 0; i < size; i++)
-	{
-		ptr[i] = GetWord ((BYTE *)in + i*2);
-	}
-	return ptr;
 }
 
 static int DehUseCount;
@@ -2680,17 +2715,17 @@ static bool LoadDehSupp ()
 						// or AActor so this will find all of them.
 						FString name = "A_";
 						name << sc.String;
-						PSymbol *sym = RUNTIME_CLASS(AInventory)->Symbols.FindSymbol(name, true);
-						if (sym == NULL || sym->SymbolType != SYM_ActionFunction)
+						PFunction *sym = dyn_cast<PFunction>(RUNTIME_CLASS(AInventory)->Symbols.FindSymbol(name, true));
+						if (sym == NULL)
 						{
 							sc.ScriptError("Unknown code pointer '%s'", sc.String);
 						}
 						else
 						{
-							FString &args = static_cast<PSymbolActionFunction*>(sym)->Arguments;
-							if (args.Len()!=0 && (args[0]<'a' || args[0]>'z'))
+							TArray<DWORD> &args = sym->Variants[0].ArgFlags;
+							if ((sym->Flags & (VARF_Method|VARF_Action)) != (VARF_Method | VARF_Action) || (args.Size() > 3 && !(args[3] & VARF_Optional)))
 							{
-								sc.ScriptError("Incompatible code pointer '%s'", sc.String);
+								sc.ScriptMessage("Incompatible code pointer '%s'", sc.String);
 							}
 						}
 						Actions.Push(sym);
@@ -2757,19 +2792,20 @@ static bool LoadDehSupp ()
 					StateMapper s;
 					sc.MustGetString();
 
-					const PClass *type = PClass::FindClass (sc.String);
+					PClass *type = PClass::FindClass (sc.String);
 					if (type == NULL)
 					{
 						sc.ScriptError ("Can't find type %s", sc.String);
 					}
-					else if (type->ActorInfo == NULL)
+					else if (!type->IsKindOf(RUNTIME_CLASS(PClassActor)))
 					{
-						sc.ScriptError ("%s has no ActorInfo", sc.String);
+						sc.ScriptError ("%s is not an actor", sc.String);
 					}
 
 					sc.MustGetStringName(",");
 					sc.MustGetString();
-					s.State = type->ActorInfo->FindState(sc.String);
+					PClassActor *actortype = static_cast<PClassActor *>(type);
+					s.State = actortype->FindState(sc.String);
 					if (s.State == NULL)
 					{
 						sc.ScriptError("Invalid state '%s' in '%s'", sc.String, type->TypeName.GetChars());
@@ -2777,14 +2813,14 @@ static bool LoadDehSupp ()
 
 					sc.MustGetStringName(",");
 					sc.MustGetNumber();
-					if (s.State == NULL || s.State + sc.Number > type->ActorInfo->OwnedStates + type->ActorInfo->NumOwnedStates)
+					if (s.State == NULL || s.State + sc.Number > actortype->OwnedStates + actortype->NumOwnedStates)
 					{
 						sc.ScriptError("Invalid state range in '%s'", type->TypeName.GetChars());
 					}
 					AActor *def = GetDefaultByType(type);
 					
 					s.StateSpan = sc.Number;
-					s.Owner = type;
+					s.Owner = actortype;
 					s.OwnerIsPickup = def != NULL && (def->flags & MF_SPECIAL) != 0;
 					if (addit) StateMap.Push(s);
 
@@ -2809,7 +2845,7 @@ static bool LoadDehSupp ()
 				while (!sc.CheckString("}"))
 				{
 					sc.MustGetString();
-					const PClass *cls = PClass::FindClass(sc.String);
+					PClassActor *cls = PClass::FindActor(sc.String);
 					if (cls == NULL)
 					{
 						sc.ScriptError("Unknown actor type '%s'", sc.String);
@@ -2876,8 +2912,8 @@ static bool LoadDehSupp ()
 					}
 					else
 					{
-						const PClass *cls = PClass::FindClass(sc.String);
-						if (cls == NULL || cls->ParentClass != RUNTIME_CLASS(AAmmo))
+						PClassAmmo *cls = dyn_cast<PClassAmmo>(PClass::FindClass(sc.String));
+						if (cls == NULL)
 						{
 							sc.ScriptError("Unknown ammo type '%s'", sc.String);
 						}
@@ -2894,12 +2930,12 @@ static bool LoadDehSupp ()
 				while (!sc.CheckString("}"))
 				{
 					sc.MustGetString();
-					const PClass *cls = PClass::FindClass(sc.String);
+					PClass *cls = PClass::FindClass(sc.String);
 					if (cls == NULL || !cls->IsDescendantOf(RUNTIME_CLASS(AWeapon)))
 					{
 						sc.ScriptError("Unknown weapon type '%s'", sc.String);
 					}
-					WeaponNames.Push(cls);
+					WeaponNames.Push(static_cast<PClassActor *>(cls));
 					if (sc.CheckString("}")) break;
 					sc.MustGetStringName(",");
 				}
@@ -2915,8 +2951,7 @@ static bool LoadDehSupp ()
 					temp.alias[19]=0;
 					sc.MustGetStringName(",");
 					sc.MustGetString();
-					strncpy(temp.name, sc.String, 19);
-					temp.name[19]=0;
+					temp.name = sc.String;
 					sc.MustGetStringName(",");
 					sc.MustGetNumber();
 					temp.params = sc.Number;
@@ -2949,7 +2984,7 @@ void FinishDehPatch ()
 
 	for (touchedIndex = 0; touchedIndex < TouchedActors.Size(); ++touchedIndex)
 	{
-		PClass *type = TouchedActors[touchedIndex];
+		PClassActor *type = TouchedActors[touchedIndex];
 		AActor *defaults1 = GetDefaultByType (type);
 		if (!(defaults1->flags & MF_SPECIAL))
 		{ // We only need to do this for pickups
@@ -2959,8 +2994,8 @@ void FinishDehPatch ()
 		// Create a new class that will serve as the actual pickup
 		char typeNameBuilder[32];
 		mysnprintf (typeNameBuilder, countof(typeNameBuilder), "DehackedPickup%d", touchedIndex);
-		PClass *subclass = RUNTIME_CLASS(ADehackedPickup)->CreateDerivedClass
-			(typeNameBuilder, sizeof(ADehackedPickup));
+		PClassActor *subclass = static_cast<PClassActor *>(RUNTIME_CLASS(ADehackedPickup)->
+			CreateDerivedClass(typeNameBuilder, sizeof(ADehackedPickup)));
 		AActor *defaults2 = GetDefaultByType (subclass);
 		memcpy ((void *)defaults2, (void *)defaults1, sizeof(AActor));
 
@@ -2971,21 +3006,21 @@ void FinishDehPatch ()
 		if (!type->IsDescendantOf(RUNTIME_CLASS(AInventory)))
 		{
 			// If this is a hacked non-inventory item we must also copy AInventory's special states
-			statedef.AddStateDefines(RUNTIME_CLASS(AInventory)->ActorInfo->StateList);
+			statedef.AddStateDefines(RUNTIME_CLASS(AInventory)->StateList);
 		}
-		statedef.InstallStates(subclass->ActorInfo, defaults2);
+		statedef.InstallStates(subclass, defaults2);
 
 		// Use the DECORATE replacement feature to redirect all spawns
 		// of the original class to the new one.
-		FActorInfo *old_replacement = type->ActorInfo->Replacement;
+		PClassActor *old_replacement = type->Replacement;
 
-		type->ActorInfo->Replacement = subclass->ActorInfo;
-		subclass->ActorInfo->Replacee = type->ActorInfo;
+		type->Replacement = subclass;
+		subclass->Replacee = type;
 		// If this actor was already replaced by another actor, copy that
 		// replacement over to this item.
 		if (old_replacement != NULL)
 		{
-			subclass->ActorInfo->Replacement = old_replacement;
+			subclass->Replacement = old_replacement;
 		}
 
 		DPrintf ("%s replaces %s\n", subclass->TypeName.GetChars(), type->TypeName.GetChars());
@@ -3018,7 +3053,7 @@ void FinishDehPatch ()
 
 			TMap<FState*, bool> StateVisited;
 
-			FState *state = WeaponNames[i]->ActorInfo->FindState(NAME_Fire);
+			FState *state = WeaponNames[i]->FindState(NAME_Fire);
 			while (state != NULL)
 			{
 				bool *check = StateVisited.CheckKey(state);
@@ -3029,7 +3064,7 @@ void FinishDehPatch ()
 				StateVisited[state] = true;
 				for(unsigned j = 0; AmmoPerAttacks[j].func != NULL; j++)
 				{
-					if (state->ActionFunc == AmmoPerAttacks[j].func)
+					if (state->ActionFunc == *AmmoPerAttacks[j].func)
 					{
 						found = true;
 						int use = AmmoPerAttacks[j].ammocount;
@@ -3051,12 +3086,12 @@ void ModifyDropAmount(AInventory *inv, int dropamount);
 
 bool ADehackedPickup::TryPickup (AActor *&toucher)
 {
-	const PClass *type = DetermineType ();
+	PClassActor *type = DetermineType ();
 	if (type == NULL)
 	{
 		return false;
 	}
-	RealPickup = static_cast<AInventory *>(Spawn (type, X(), Y(), Z(), NO_REPLACE));
+	RealPickup = static_cast<AInventory *>(Spawn (type, Pos(), NO_REPLACE));
 	if (RealPickup != NULL)
 	{
 		// The internally spawned item should never count towards statistics.
@@ -3125,7 +3160,7 @@ void ADehackedPickup::Destroy ()
 	Super::Destroy ();
 }
 
-const PClass *ADehackedPickup::DetermineType ()
+PClassActor *ADehackedPickup::DetermineType ()
 {
 	// Look at the actor's current sprite to determine what kind of
 	// item to pretend to me.
@@ -3138,7 +3173,7 @@ const PClass *ADehackedPickup::DetermineType ()
 		int lex = memcmp (DehSpriteMappings[mid].Sprite, sprites[sprite].name, 4);
 		if (lex == 0)
 		{
-			return PClass::FindClass (DehSpriteMappings[mid].ClassName);
+			return PClass::FindActor(DehSpriteMappings[mid].ClassName);
 		}
 		else if (lex < 0)
 		{

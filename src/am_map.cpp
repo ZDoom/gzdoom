@@ -2307,8 +2307,9 @@ bool AM_isExitBoundary (line_t& line)
 
 bool AM_isTriggerSpecial (int special, int *)
 {
-	return LineSpecialsInfo[special] != NULL
-		&& LineSpecialsInfo[special]->max_args >= 0
+	FLineSpecial *spec = P_GetLineSpecialInfo(special);
+	return spec != NULL
+		&& spec->max_args >= 0
 		&& special != Door_Open
 		&& special != Door_Close
 		&& special != Door_CloseWaitOpen
@@ -2511,8 +2512,8 @@ void AM_rotate(fixed_t *xp, fixed_t *yp, angle_t a)
 		cosrot = cos(rot);
 	}
 
-	double x = FIXED2FLOAT(*xp);
-	double y = FIXED2FLOAT(*yp);
+	double x = FIXED2DBL(*xp);
+	double y = FIXED2DBL(*yp);
 	double tmpx = (x * cosrot) - (y * sinrot);
 	y = (x * sinrot) + (y * cosrot);
 	x = tmpx;

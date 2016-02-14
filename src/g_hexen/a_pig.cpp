@@ -60,6 +60,8 @@ void APigPlayer::MorphPlayerThink ()
 
 DEFINE_ACTION_FUNCTION(AActor, A_SnoutAttack)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	angle_t angle;
 	int damage;
 	int slope;
@@ -69,7 +71,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SnoutAttack)
 
 	if (NULL == (player = self->player))
 	{
-		return;
+		return 0;
 	}
 
 	damage = 3+(pr_snoutattack()&3);
@@ -85,6 +87,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SnoutAttack)
 			S_Sound(player->mo, CHAN_VOICE, "PigAttack", 1, ATTN_NORM);
 		}
 	}
+	return 0;
 }
 
 //============================================================================
@@ -95,9 +98,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_SnoutAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_PigPain)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	CALL_ACTION(A_Pain, self);
-	if (self->z <= self->floorz)
+	if (self->Z() <= self->floorz)
 	{
 		self->velz = FRACUNIT*7/2;
 	}
+	return 0;
 }

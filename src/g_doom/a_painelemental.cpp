@@ -12,16 +12,6 @@
 
 DECLARE_ACTION(A_SkullAttack)
 
-static const PClass *GetSpawnType(DECLARE_PARAMINFO)
-{
-	ACTION_PARAM_START(1);
-	ACTION_PARAM_CLASS(spawntype, 0);
-
-	if (spawntype == NULL) spawntype = PClass::FindClass("LostSoul");
-	return spawntype;
-}
-
-
 enum PA_Flags
 {
 	PAF_NOSKULLATTACK = 1,
@@ -33,19 +23,17 @@ enum PA_Flags
 // A_PainShootSkull
 // Spawn a lost soul and launch it at the target
 //
-void A_PainShootSkull (AActor *self, angle_t angle, const PClass *spawntype, int flags = 0, int limit = -1)
+void A_PainShootSkull (AActor *self, angle_t angle, PClassActor *spawntype, int flags = 0, int limit = -1)
 {
-	fixed_t x, y, z;
-	
 	AActor *other;
-	angle_t an;
 	int prestep;
 
-	if (spawntype == NULL) return;
-	if (self->DamageType==NAME_Massacre) return;
+	if (spawntype == NULL) spawntype = PClass::FindActor("LostSoul");
+	assert(spawntype != NULL);
+	if (self->DamageType == NAME_Massacre) return;
 
 	// [RH] check to make sure it's not too close to the ceiling
-	if (self->z + self->height + 8*FRACUNIT > self->ceilingz)
+	if (self->Top() + 8*FRACUNIT > self->ceilingz)
 	{
 		if (self->flags & MF_FLOAT)
 		{
@@ -76,47 +64,67 @@ void A_PainShootSkull (AActor *self, angle_t angle, const PClass *spawntype, int
 	}
 
 	// okay, there's room for another one
-	an = angle >> ANGLETOFINESHIFT;
-	
 	prestep = 4*FRACUNIT +
 		3*(self->radius + GetDefaultByType(spawntype)->radius)/2;
-	
-	x = self->x + FixedMul (prestep, finecosine[an]);
-	y = self->y + FixedMul (prestep, finesine[an]);
-	z = self->z + 8*FRACUNIT;
-				
-	// Check whether the Lost Soul is being fired through a 1-sided	// phares
-	// wall or an impassible line, or a "monsters can't cross" line.//   |
-	// If it is, then we don't allow the spawn.						//   V
 
-	FBoundingBox box(MIN(self->x, x), MIN(self->y, y), MAX(self->x, x), MAX(self->y, y));
-	FBlockLinesIterator it(box);
-	line_t *ld;
+	// NOTE: The following code contains some advance work for line-to-line portals which is currenty inactive.
 
-	while ((ld = it.Next()))
+	fixedvec2 dist = Vec2Angle(prestep, angle);
+	fixedvec3 pos = self->Vec3Offset(dist.x, dist.y, 8 * FRACUNIT, true);
+	fixedvec3 src = self->Pos();
+
+	for (int i = 0; i < 2; i++)
 	{
-		if (!(ld->flags & ML_TWOSIDED) ||
-			(ld->flags & (ML_BLOCKING|ML_BLOCKMONSTERS|ML_BLOCKEVERYTHING)))
+		// Check whether the Lost Soul is being fired through a 1-sided	// phares
+		// wall or an impassible line, or a "monsters can't cross" line.//   |
+		// If it is, then we don't allow the spawn.						//   V
+
+		FBoundingBox box(MIN(src.x, pos.x), MIN(src.y, pos.y), MAX(src.x, pos.x), MAX(src.y, pos.y));
+		FBlockLinesIterator it(box);
+		line_t *ld;
+		bool inportal = false;
+
+		while ((ld = it.Next()))
 		{
-			if (!(box.Left()   > ld->bbox[BOXRIGHT]  ||
-				  box.Right()  < ld->bbox[BOXLEFT]   ||
-				  box.Top()    < ld->bbox[BOXBOTTOM] ||
-				  box.Bottom() > ld->bbox[BOXTOP]))
+			if (ld->isLinePortal() && i == 0)
 			{
-				if (P_PointOnLineSidePrecise(self->x,self->y,ld) != P_PointOnLineSidePrecise(x,y,ld))
-					return;  // line blocks trajectory				//   ^
+				if (P_PointOnLineSidePrecise(src.x, src.y, ld) == 0 &&
+					P_PointOnLineSidePrecise(pos.x, pos.y, ld) == 1)
+				{
+					// crossed a portal line from front to back, we need to repeat the check on the other side as well.
+					inportal = true;
+				}
+			}
+			else if (!(ld->flags & ML_TWOSIDED) ||
+				(ld->flags & (ML_BLOCKING | ML_BLOCKMONSTERS | ML_BLOCKEVERYTHING)))
+			{
+				if (!(box.Left() > ld->bbox[BOXRIGHT] ||
+					box.Right() < ld->bbox[BOXLEFT] ||
+					box.Top() < ld->bbox[BOXBOTTOM] ||
+					box.Bottom() > ld->bbox[BOXTOP]))
+				{
+					if (P_PointOnLineSidePrecise(src.x, src.y, ld) != P_PointOnLineSidePrecise(pos.x, pos.y, ld))
+						return;  // line blocks trajectory				//   ^
+				}
 			}
 		}
+		if (!inportal) break;
+
+		// recalculate position and redo the check on the other side of the portal
+		pos = self->Vec3Offset(dist.x, dist.y, 8 * FRACUNIT, false);
+		src.x = pos.x - dist.x;
+		src.y = pos.y - dist.y;
+
 	}
 
-	other = Spawn (spawntype, x, y, z, ALLOW_REPLACE);
+	other = Spawn (spawntype, pos.x, pos.y, pos.z, ALLOW_REPLACE);
 
 	// Check to see if the new Lost Soul's z value is above the
 	// ceiling of its new sector, or below the floor. If so, kill it.
 
-	if ((other->z >
-         (other->Sector->ceilingplane.ZatPoint (other->x, other->y) - other->height)) ||
-        (other->z < other->Sector->floorplane.ZatPoint (other->x, other->y)))
+	if ((other->Z() >
+         (other->Sector->HighestCeiling(other) - other->height)) ||
+        (other->Z() < other->Sector->LowestFloor(other)))
 	{
 		// kill it immediately
 		P_DamageMobj (other, self, self, TELEFRAG_DAMAGE, NAME_None);//  ^
@@ -125,7 +133,7 @@ void A_PainShootSkull (AActor *self, angle_t angle, const PClass *spawntype, int
 
 	// Check for movements.
 
-	if (!P_CheckPosition (other, other->x, other->y))
+	if (!P_CheckPosition (other, other->Pos()))
 	{
 		// kill it immediately
 		P_DamageMobj (other, self, self, TELEFRAG_DAMAGE, NAME_None);		
@@ -146,42 +154,48 @@ void A_PainShootSkull (AActor *self, angle_t angle, const PClass *spawntype, int
 // 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PainAttack)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (!self->target)
-		return;
+		return 0;
 
-	ACTION_PARAM_START(4);
-	ACTION_PARAM_CLASS(spawntype, 0);
-	ACTION_PARAM_ANGLE(angle, 1);
-	ACTION_PARAM_INT(flags, 2);
-	ACTION_PARAM_INT(limit, 3);
-
-	if (spawntype == NULL) spawntype = PClass::FindClass("LostSoul");
+	PARAM_CLASS_OPT (spawntype, AActor)	{ spawntype = NULL; }
+	PARAM_ANGLE_OPT (angle)				{ angle = 0; }
+	PARAM_INT_OPT   (flags)				{ flags = 0; }
+	PARAM_INT_OPT   (limit)				{ limit = -1; }
 
 	if (!(flags & PAF_AIMFACING))
 		A_FaceTarget (self);
 	A_PainShootSkull (self, self->angle+angle, spawntype, flags, limit);
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DualPainAttack)
 {
-	if (!self->target)
-		return;
+	PARAM_ACTION_PROLOGUE;
+	PARAM_CLASS_OPT(spawntype, AActor) { spawntype = NULL; }
 
-	const PClass *spawntype = GetSpawnType(PUSH_PARAMINFO);
+	if (!self->target)
+		return 0;
+
 	A_FaceTarget (self);
 	A_PainShootSkull (self, self->angle + ANG45, spawntype);
 	A_PainShootSkull (self, self->angle - ANG45, spawntype);
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PainDie)
 {
-	if (self->target != NULL && self->IsFriend (self->target))
+	PARAM_ACTION_PROLOGUE;
+	PARAM_CLASS_OPT(spawntype, AActor) { spawntype = NULL; }
+
+	if (self->target != NULL && self->IsFriend(self->target))
 	{ // And I thought you were my friend!
 		self->flags &= ~MF_FRIENDLY;
 	}
-	const PClass *spawntype = GetSpawnType(PUSH_PARAMINFO);
 	A_Unblock(self, true);
 	A_PainShootSkull (self, self->angle + ANG90, spawntype);
 	A_PainShootSkull (self, self->angle + ANG180, spawntype);
 	A_PainShootSkull (self, self->angle + ANG270, spawntype);
+	return 0;
 }

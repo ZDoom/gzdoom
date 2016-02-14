@@ -119,20 +119,22 @@ void MStaffSpawn (AActor *pmo, angle_t angle)
 
 DEFINE_ACTION_FUNCTION(AActor, A_MStaffAttack)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	angle_t angle;
 	player_t *player;
 	AActor *linetarget;
 
 	if (NULL == (player = self->player))
 	{
-		return;
+		return 0;
 	}
 
 	AMWeapBloodscourge *weapon = static_cast<AMWeapBloodscourge *> (self->player->ReadyWeapon);
 	if (weapon != NULL)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
-			return;
+			return 0;
 	}
 	angle = self->angle;
 	
@@ -140,8 +142,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_MStaffAttack)
 	P_AimLineAttack (self, angle, PLAYERMISSILERANGE, &linetarget, ANGLE_1*32);
 	if (linetarget == NULL)
 	{
-		BlockCheckLine.x = self->x;
-		BlockCheckLine.y = self->y;
+		BlockCheckLine.x = self->X();
+		BlockCheckLine.y = self->Y();
 		BlockCheckLine.dx = -finesine[angle >> ANGLETOFINESHIFT];
 		BlockCheckLine.dy = -finecosine[angle >> ANGLETOFINESHIFT];
 		linetarget = P_BlockmapSearch (self, 10, FrontBlockCheck);
@@ -151,6 +153,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MStaffAttack)
 	MStaffSpawn (self, angle+ANGLE_1*5);
 	S_Sound (self, CHAN_WEAPON, "MageStaffFire", 1, ATTN_NORM);
 	weapon->MStaffCount = 3;
+	return 0;
 }
 
 //============================================================================
@@ -161,6 +164,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_MStaffAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_MStaffPalette)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (self->player != NULL)
 	{
 		AMWeapBloodscourge *weapon = static_cast<AMWeapBloodscourge *> (self->player->ReadyWeapon);
@@ -169,6 +174,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MStaffPalette)
 			weapon->MStaffCount--;
 		}
 	}
+	return 0;
 }
 
 //============================================================================
@@ -179,11 +185,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_MStaffPalette)
 
 DEFINE_ACTION_FUNCTION(AActor, A_MStaffTrack)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if ((self->tracer == 0) && (pr_mstafftrack()<50))
 	{
 		self->tracer = P_RoughMonsterSearch (self, 10, true);
 	}
 	P_SeekerMissile (self, ANGLE_1*2, ANGLE_1*10);
+	return 0;
 }
 
 //============================================================================
@@ -202,7 +211,7 @@ static AActor *FrontBlockCheck (AActor *mo, int index, void *)
 	{
 		if (link->Me != mo)
 		{
-			if (P_PointOnDivlineSide (link->Me->x, link->Me->y, &BlockCheckLine) == 0 &&
+			if (P_PointOnDivlineSide (link->Me->X(), link->Me->Y(), &BlockCheckLine) == 0 &&
 				mo->IsOkayToAttack (link->Me))
 			{
 				return link->Me;
@@ -222,7 +231,7 @@ void MStaffSpawn2 (AActor *actor, angle_t angle)
 {
 	AActor *mo;
 
-	mo = P_SpawnMissileAngleZ (actor, actor->z+40*FRACUNIT,
+	mo = P_SpawnMissileAngleZ (actor, actor->Z()+40*FRACUNIT,
 		RUNTIME_CLASS(AMageStaffFX2), angle, 0);
 	if (mo)
 	{
@@ -239,13 +248,17 @@ void MStaffSpawn2 (AActor *actor, angle_t angle)
 
 DEFINE_ACTION_FUNCTION(AActor, A_MageAttack)
 {
-	if (!self->target) return;
+	PARAM_ACTION_PROLOGUE;
 
+	if (self->target == NULL)
+	{
+		return 0;
+	}
 	angle_t angle;
 	angle = self->angle;
 	MStaffSpawn2 (self, angle);
 	MStaffSpawn2 (self, angle-ANGLE_1*5);
 	MStaffSpawn2 (self, angle+ANGLE_1*5);
 	S_Sound (self, CHAN_WEAPON, "MageStaffFire", 1, ATTN_NORM);
+	return 0;
 }
-

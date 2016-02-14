@@ -80,22 +80,22 @@ AInventory *ACoin::CreateTossable ()
 	if (Amount >= 50)
 	{
 		Amount -= 50;
-		tossed = static_cast<ACoin*>(Spawn("Gold50", Owner->x, Owner->y, Owner->z, NO_REPLACE));
+		tossed = static_cast<ACoin*>(Spawn("Gold50", Owner->Pos(), NO_REPLACE));
 	}
 	else if (Amount >= 25)
 	{
 		Amount -= 25;
-		tossed = static_cast<ACoin*>(Spawn("Gold25", Owner->x, Owner->y, Owner->z, NO_REPLACE));
+		tossed = static_cast<ACoin*>(Spawn("Gold25", Owner->Pos(), NO_REPLACE));
 	}
 	else if (Amount >= 10)
 	{
 		Amount -= 10;
-		tossed = static_cast<ACoin*>(Spawn("Gold10", Owner->x, Owner->y, Owner->z, NO_REPLACE));
+		tossed = static_cast<ACoin*>(Spawn("Gold10", Owner->Pos(), NO_REPLACE));
 	}
 	else if (Amount > 1 || (ItemFlags & IF_KEEPDEPLETED))
 	{
 		Amount -= 1;
-		tossed = static_cast<ACoin*>(Spawn("Coin", Owner->x, Owner->y, Owner->z, NO_REPLACE));
+		tossed = static_cast<ACoin*>(Spawn("Coin", Owner->Pos(), NO_REPLACE));
 	}
 	else // Amount == 1 && !(ItemFlags & IF_KEEPDEPLETED)
 	{

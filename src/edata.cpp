@@ -392,7 +392,7 @@ static void parseSector(FScanner &sc)
 		{
 			sc.CheckString("=");
 			sc.MustGetFloat();
-			sec.planexform[sector_t::floor].angle = angle_t(sc.Float * ANGLE_90 / 90.);
+			sec.planexform[sector_t::floor].angle = FLOAT2ANGLE(sc.Float);
 		}
 		else if (sc.Compare("flooroffsetx"))
 		{
@@ -416,7 +416,7 @@ static void parseSector(FScanner &sc)
 		{
 			sc.CheckString("=");
 			sc.MustGetFloat();
-			sec.planexform[sector_t::ceiling].angle = angle_t(sc.Float * ANGLE_90 / 90.);
+			sec.planexform[sector_t::ceiling].angle = FLOAT2ANGLE(sc.Float);
 		}
 		else if (sc.Compare("ceilingoffsetx"))
 		{

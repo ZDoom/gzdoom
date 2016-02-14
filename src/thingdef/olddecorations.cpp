@@ -48,6 +48,7 @@
 #include "decallib.h"
 #include "i_system.h"
 #include "thingdef.h"
+#include "thingdef_exp.h"
 #include "r_data/r_translate.h"
 
 // TYPES -------------------------------------------------------------------
@@ -102,7 +103,7 @@ IMPLEMENT_CLASS (AFakeInventory)
 
 static void ParseInsideDecoration (Baggage &bag, AActor *defaults,
 	FExtraInfo &extra, EDefinitionType def, FScanner &sc, TArray<FState> &StateArray);
-static void ParseSpriteFrames (FActorInfo *info, TArray<FState> &states, FScanner &sc);
+static void ParseSpriteFrames (PClassActor *info, TArray<FState> &states, FScanner &sc);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -145,24 +146,22 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 	Baggage bag;
 	TArray<FState> StateArray;
 	FExtraInfo extra;
-	FActorInfo *info;
-	PClass *type;
-	PClass *parent;
+	PClassActor *type;
+	PClassActor *parent;
 	FName typeName;
 
-	if (def == DEF_Pickup) parent = RUNTIME_CLASS(AFakeInventory);
-	else parent = RUNTIME_CLASS(AActor);
+	parent = (def == DEF_Pickup) ? RUNTIME_CLASS(AFakeInventory) : RUNTIME_CLASS(AActor);
 
 	sc.MustGetString();
 	typeName = FName(sc.String);
-	type = parent->CreateDerivedClass (typeName, parent->Size);
+	type = static_cast<PClassActor *>(parent->CreateDerivedClass (typeName, parent->Size));
 	ResetBaggage(&bag, parent);
-	info = bag.Info = type->ActorInfo;
+	bag.Info = type;
 #ifdef _DEBUG
 	bag.ClassName = type->TypeName;
 #endif
 
-	info->GameFilter = GAME_Any;
+	type->GameFilter = GAME_Any;
 	sc.MustGetStringName("{");
 
 	memset (&extra, 0, sizeof(extra));
@@ -191,16 +190,16 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 		// Make a copy of the final frozen frame for A_FreezeDeathChunks
 		FState icecopy = StateArray[extra.IceDeathEnd-1];
 		StateArray.Push (icecopy);
-		info->NumOwnedStates += 1;
+		type->NumOwnedStates += 1;
 	}
 
-	info->OwnedStates = new FState[info->NumOwnedStates];
-	memcpy (info->OwnedStates, &StateArray[0], info->NumOwnedStates * sizeof(info->OwnedStates[0]));
-	if (info->NumOwnedStates == 1)
+	type->OwnedStates = new FState[type->NumOwnedStates];
+	memcpy (type->OwnedStates, &StateArray[0], type->NumOwnedStates * sizeof(type->OwnedStates[0]));
+	if (type->NumOwnedStates == 1)
 	{
-		info->OwnedStates->Tics = -1;
-		info->OwnedStates->TicRange = 0;
-		info->OwnedStates->Misc1 = 0;
+		type->OwnedStates->Tics = -1;
+		type->OwnedStates->TicRange = 0;
+		type->OwnedStates->Misc1 = 0;
 	}
 	else
 	{
@@ -209,56 +208,59 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 		// Spawn states loop endlessly
 		for (i = extra.SpawnStart; i < extra.SpawnEnd-1; ++i)
 		{
-			info->OwnedStates[i].NextState = &info->OwnedStates[i+1];
+			type->OwnedStates[i].NextState = &type->OwnedStates[i+1];
 		}
-		info->OwnedStates[i].NextState = &info->OwnedStates[extra.SpawnStart];
+		type->OwnedStates[i].NextState = &type->OwnedStates[extra.SpawnStart];
 
 		// Death states are one-shot and freeze on the final state
 		if (extra.DeathEnd != 0)
 		{
 			for (i = extra.DeathStart; i < extra.DeathEnd-1; ++i)
 			{
-				info->OwnedStates[i].NextState = &info->OwnedStates[i+1];
+				type->OwnedStates[i].NextState = &type->OwnedStates[i+1];
 			}
 			if (extra.bDiesAway || def == DEF_Projectile)
 			{
-				info->OwnedStates[i].NextState = NULL;
+				type->OwnedStates[i].NextState = NULL;
 			}
 			else
 			{
-				info->OwnedStates[i].Tics = -1;
-				info->OwnedStates[i].TicRange = 0;
-				info->OwnedStates[i].Misc1 = 0;
+				type->OwnedStates[i].Tics = -1;
+				type->OwnedStates[i].TicRange = 0;
+				type->OwnedStates[i].Misc1 = 0;
 			}
 
 			if (def == DEF_Projectile)
 			{
 				if (extra.bExplosive)
 				{
-					info->OwnedStates[extra.DeathStart].SetAction(FindGlobalActionFunction("A_Explode"));
+					type->OwnedStates[extra.DeathStart].SetAction("A_Explode");
 				}
 			}
 			else
 			{
 				// The first frame plays the death sound and
 				// the second frame makes it nonsolid.
-				info->OwnedStates[extra.DeathStart].SetAction(FindGlobalActionFunction("A_Scream"));
+				type->OwnedStates[extra.DeathStart].SetAction("A_Scream");
 				if (extra.bSolidOnDeath)
 				{
 				}
 				else if (extra.DeathStart + 1 < extra.DeathEnd)
 				{
-					info->OwnedStates[extra.DeathStart+1].SetAction(FindGlobalActionFunction("A_NoBlocking"));
+					type->OwnedStates[extra.DeathStart+1].SetAction("A_NoBlocking");
 				}
 				else
 				{
-					info->OwnedStates[extra.DeathStart].SetAction(FindGlobalActionFunction("A_ScreamAndUnblock"));
+					type->OwnedStates[extra.DeathStart].SetAction("A_ScreamAndUnblock");
 				}
 
-				if (extra.DeathHeight == 0) extra.DeathHeight = ((AActor*)(type->Defaults))->height;
-				info->Class->Meta.SetMetaFixed (AMETA_DeathHeight, extra.DeathHeight);
+				if (extra.DeathHeight == 0)
+				{
+					extra.DeathHeight = ((AActor*)(type->Defaults))->height;
+				}
+				type->DeathHeight = extra.DeathHeight;
 			}
-			bag.statedef.SetStateLabel("Death", &info->OwnedStates[extra.DeathStart]);
+			bag.statedef.SetStateLabel("Death", &type->OwnedStates[extra.DeathStart]);
 		}
 
 		// Burn states are the same as death states, except they can optionally terminate
@@ -266,38 +268,38 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 		{
 			for (i = extra.FireDeathStart; i < extra.FireDeathEnd-1; ++i)
 			{
-				info->OwnedStates[i].NextState = &info->OwnedStates[i+1];
+				type->OwnedStates[i].NextState = &type->OwnedStates[i+1];
 			}
 			if (extra.bBurnAway)
 			{
-				info->OwnedStates[i].NextState = NULL;
+				type->OwnedStates[i].NextState = NULL;
 			}
 			else
 			{
-				info->OwnedStates[i].Tics = -1;
-				info->OwnedStates[i].TicRange = 0;
-				info->OwnedStates[i].Misc1 = 0;
+				type->OwnedStates[i].Tics = -1;
+				type->OwnedStates[i].TicRange = 0;
+				type->OwnedStates[i].Misc1 = 0;
 			}
 
 			// The first frame plays the burn sound and
 			// the second frame makes it nonsolid.
-			info->OwnedStates[extra.FireDeathStart].SetAction(FindGlobalActionFunction("A_ActiveSound"));
+			type->OwnedStates[extra.FireDeathStart].SetAction("A_ActiveSound");
 			if (extra.bSolidOnBurn)
 			{
 			}
 			else if (extra.FireDeathStart + 1 < extra.FireDeathEnd)
 			{
-				info->OwnedStates[extra.FireDeathStart+1].SetAction(FindGlobalActionFunction("A_NoBlocking"));
+				type->OwnedStates[extra.FireDeathStart+1].SetAction("A_NoBlocking");
 			}
 			else
 			{
-				info->OwnedStates[extra.FireDeathStart].SetAction(FindGlobalActionFunction("A_ActiveAndUnblock"));
+				type->OwnedStates[extra.FireDeathStart].SetAction("A_ActiveAndUnblock");
 			}
 
 			if (extra.BurnHeight == 0) extra.BurnHeight = ((AActor*)(type->Defaults))->height;
-			type->Meta.SetMetaFixed (AMETA_BurnHeight, extra.BurnHeight);
+			type->BurnHeight = extra.BurnHeight;
 
-			bag.statedef.SetStateLabel("Burn", &info->OwnedStates[extra.FireDeathStart]);
+			bag.statedef.SetStateLabel("Burn", &type->OwnedStates[extra.FireDeathStart]);
 		}
 
 		// Ice states are similar to burn and death, except their final frame enters
@@ -306,25 +308,25 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 		{
 			for (i = extra.IceDeathStart; i < extra.IceDeathEnd-1; ++i)
 			{
-				info->OwnedStates[i].NextState = &info->OwnedStates[i+1];
+				type->OwnedStates[i].NextState = &type->OwnedStates[i+1];
 			}
-			info->OwnedStates[i].NextState = &info->OwnedStates[info->NumOwnedStates-1];
-			info->OwnedStates[i].Tics = 5;
-			info->OwnedStates[i].TicRange = 0;
-			info->OwnedStates[i].Misc1 = 0;
-			info->OwnedStates[i].SetAction(FindGlobalActionFunction("A_FreezeDeath"));
+			type->OwnedStates[i].NextState = &type->OwnedStates[type->NumOwnedStates-1];
+			type->OwnedStates[i].Tics = 5;
+			type->OwnedStates[i].TicRange = 0;
+			type->OwnedStates[i].Misc1 = 0;
+			type->OwnedStates[i].SetAction("A_FreezeDeath");
 
-			i = info->NumOwnedStates - 1;
-			info->OwnedStates[i].NextState = &info->OwnedStates[i];
-			info->OwnedStates[i].Tics = 1;
-			info->OwnedStates[i].TicRange = 0;
-			info->OwnedStates[i].Misc1 = 0;
-			info->OwnedStates[i].SetAction(FindGlobalActionFunction("A_FreezeDeathChunks"));
-			bag.statedef.SetStateLabel("Ice", &info->OwnedStates[extra.IceDeathStart]);
+			i = type->NumOwnedStates - 1;
+			type->OwnedStates[i].NextState = &type->OwnedStates[i];
+			type->OwnedStates[i].Tics = 1;
+			type->OwnedStates[i].TicRange = 0;
+			type->OwnedStates[i].Misc1 = 0;
+			type->OwnedStates[i].SetAction("A_FreezeDeathChunks");
+			bag.statedef.SetStateLabel("Ice", &type->OwnedStates[extra.IceDeathStart]);
 		}
 		else if (extra.bGenericIceDeath)
 		{
-			bag.statedef.SetStateLabel("Ice", RUNTIME_CLASS(AActor)->ActorInfo->FindState(NAME_GenericFreezeDeath));
+			bag.statedef.SetStateLabel("Ice", RUNTIME_CLASS(AActor)->FindState(NAME_GenericFreezeDeath));
 		}
 	}
 	if (def == DEF_BreakableDecoration)
@@ -335,8 +337,8 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 	{
 		((AActor *)(type->Defaults))->flags |= MF_DROPOFF|MF_MISSILE;
 	}
-	bag.statedef.SetStateLabel("Spawn", &info->OwnedStates[extra.SpawnStart]);
-	bag.statedef.InstallStates (info, ((AActor *)(type->Defaults)));
+	bag.statedef.SetStateLabel("Spawn", &type->OwnedStates[extra.SpawnStart]);
+	bag.statedef.InstallStates (type, ((AActor *)(type->Defaults)));
 }
 
 //==========================================================================
@@ -478,23 +480,24 @@ static void ParseInsideDecoration (Baggage &bag, AActor *defaults,
 		else if (def == DEF_Projectile && sc.Compare ("ExplosionRadius"))
 		{
 			sc.MustGetNumber ();
-			bag.Info->Class->Meta.SetMetaInt(ACMETA_ExplosionRadius, sc.Number);
+			bag.Info->ExplosionRadius = sc.Number;
 			extra.bExplosive = true;
 		}
 		else if (def == DEF_Projectile && sc.Compare ("ExplosionDamage"))
 		{
 			sc.MustGetNumber ();
-			bag.Info->Class->Meta.SetMetaInt(ACMETA_ExplosionDamage, sc.Number);
+			bag.Info->ExplosionDamage = sc.Number;
 			extra.bExplosive = true;
 		}
 		else if (def == DEF_Projectile && sc.Compare ("DoNotHurtShooter"))
 		{
-			bag.Info->Class->Meta.SetMetaInt(ACMETA_DontHurtShooter, true);
+			bag.Info->DontHurtShooter = true;
 		}
 		else if (def == DEF_Projectile && sc.Compare ("Damage"))
 		{
 			sc.MustGetNumber ();
-			defaults->Damage = sc.Number;
+			FxDamageValue *x = new FxDamageValue(new FxConstant(sc.Number, sc), false);
+			defaults->Damage = (VMFunction *)(uintptr_t)(ActorDamageFuncs.Push(x) + 1);
 		}
 		else if (def == DEF_Projectile && sc.Compare ("DamageType"))
 		{
@@ -574,7 +577,7 @@ static void ParseInsideDecoration (Baggage &bag, AActor *defaults,
 		else if (def == DEF_Pickup && sc.Compare ("PickupMessage"))
 		{
 			sc.MustGetString ();
-			bag.Info->Class->Meta.SetMetaString(AIMETA_PickupMessage, sc.String);
+			static_cast<PClassInventory *>(bag.Info)->PickupMessage = sc.String;
 		}
 		else if (def == DEF_Pickup && sc.Compare ("Respawns"))
 		{
@@ -645,7 +648,7 @@ static void ParseInsideDecoration (Baggage &bag, AActor *defaults,
 //			"10:A, 15:B, 8:C, 6:B"
 //==========================================================================
 
-static void ParseSpriteFrames (FActorInfo *info, TArray<FState> &states, FScanner &sc)
+static void ParseSpriteFrames (PClassActor *info, TArray<FState> &states, FScanner &sc)
 {
 	FState state;
 	char *token = strtok (sc.String, ",\t\n\r");

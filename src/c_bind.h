@@ -69,7 +69,7 @@ public:
 
 	const char *GetBind(unsigned int index) const
 	{
-		if (index < NUM_KEYS) return Binds[index];
+		if (index < NUM_KEYS) return Binds[index].GetChars();
 		else return NULL;
 	}
 

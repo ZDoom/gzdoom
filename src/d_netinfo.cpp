@@ -60,7 +60,7 @@
 
 static FRandom pr_pickteam ("PickRandomTeam");
 
-CVAR (Float,	autoaim,				5000.f,		CVAR_USERINFO | CVAR_ARCHIVE);
+CVAR (Float,	autoaim,				35.f,		CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (String,	name,					"Player",	CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (Color,	color,					0x40cf00,	CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (Int,		colorset,				0,			CVAR_USERINFO | CVAR_ARCHIVE);
@@ -154,9 +154,9 @@ int D_PlayerClassToInt (const char *classname)
 	{
 		for (unsigned int i = 0; i < PlayerClasses.Size (); ++i)
 		{
-			const PClass *type = PlayerClasses[i].Type;
+			PClassPlayerPawn *type = PlayerClasses[i].Type;
 
-			if (stricmp (type->Meta.GetMetaString (APMETA_DisplayName), classname) == 0)
+			if (type->DisplayName.IsNotEmpty() && stricmp(type->DisplayName, classname) == 0)
 			{
 				return i;
 			}
@@ -178,7 +178,7 @@ void D_GetPlayerColor (int player, float *h, float *s, float *v, FPlayerColorSet
 
 	if (players[player].mo != NULL)
 	{
-		colorset = P_GetPlayerColorSet(players[player].mo->GetClass()->TypeName, info->GetColorSet());
+		colorset = players[player].mo->GetClass()->GetColorSet(info->GetColorSet());
 	}
 	if (colorset != NULL)
 	{
@@ -518,9 +518,9 @@ void D_UserInfoChanged (FBaseCVar *cvar)
 			autoaim = 0.0f;
 			return;
 		}
-		else if (autoaim > 5000.0f)
+		else if (autoaim > 35.0f)
 		{
-			autoaim = 5000.f;
+			autoaim = 35.f;
 			return;
 		}
 	}
@@ -723,7 +723,7 @@ void D_WriteUserInfoStrings (int pnum, BYTE **stream, bool compact)
 
 		case NAME_PlayerClass:
 			*stream += sprintf(*((char **)stream), "\\%s", info->GetPlayerClassNum() == -1 ? "Random" :
-				D_EscapeUserInfo(info->GetPlayerClassType()->Meta.GetMetaString(APMETA_DisplayName)).GetChars());
+				D_EscapeUserInfo(info->GetPlayerClassType()->DisplayName.GetChars()).GetChars());
 			break;
 
 		case NAME_Skin:
@@ -894,7 +894,7 @@ void ReadCompatibleUserInfo(FArchive &arc, userinfo_t &info)
 
 	*static_cast<FStringCVar *>(info[NAME_Name]) = netname;
 	*static_cast<FIntCVar *>(info[NAME_Team]) = team;
-	*static_cast<FFloatCVar *>(info[NAME_Autoaim]) = (float)aimdist / ANGLE_1;
+	*static_cast<FFloatCVar *>(info[NAME_Autoaim]) = ANGLE2FLOAT(aimdist);
 	*static_cast<FIntCVar *>(info[NAME_Skin]) = skin;
 	*static_cast<FIntCVar *>(info[NAME_Gender]) = gender;
 	*static_cast<FBoolCVar *>(info[NAME_NeverSwitchOnPickup]) = neverswitch;
@@ -925,7 +925,7 @@ void WriteUserInfo(FArchive &arc, userinfo_t &info)
 
 		case NAME_PlayerClass:
 			i = info.GetPlayerClassNum();
-			arc.WriteString(i == -1 ? "Random" : PlayerClasses[i].Type->Meta.GetMetaString(APMETA_DisplayName));
+			arc.WriteString(i == -1 ? "Random" : PlayerClasses[i].Type->DisplayName.GetChars());
 			break;
 
 		default:
@@ -1014,7 +1014,7 @@ CCMD (playerinfo)
 		Printf("%20s: %s (%d)\n", "Skin", skins[ui->GetSkin()].name, ui->GetSkin());
 		Printf("%20s: %s (%d)\n", "Gender", GenderNames[ui->GetGender()], ui->GetGender());
 		Printf("%20s: %s (%d)\n", "PlayerClass",
-			ui->GetPlayerClassNum() == -1 ? "Random" : ui->GetPlayerClassType()->Meta.GetMetaString (APMETA_DisplayName),
+			ui->GetPlayerClassNum() == -1 ? "Random" : ui->GetPlayerClassType()->DisplayName.GetChars(),
 			ui->GetPlayerClassNum());
 
 		// Print generic info

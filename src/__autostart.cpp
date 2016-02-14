@@ -46,24 +46,26 @@
 
 #if defined(_MSC_VER)
 
-#pragma comment(linker, "/merge:.areg=.data /merge:.creg=.data /merge:.greg=.data /merge:.mreg=.data /merge:.yreg=.data")
+// The various reg sections are used to group pointers spread across multiple
+// source files into cohesive arrays in the final executable. We don't
+// actually care about these sections themselves and merge them all into
+// a single section during the final link. (.rdata is the standard section
+// for initialized read-only data.)
 
-#pragma data_seg(".areg$a")
-void *ARegHead = 0;
+#pragma comment(linker, "/merge:.areg=.rdata /merge:.creg=.rdata /merge:.greg=.rdata")
+#pragma comment(linker, "/merge:.yreg=.rdata")
 
-#pragma data_seg(".creg$a")
-void *CRegHead = 0;
+#pragma section(".areg$a",read)
+__declspec(allocate(".areg$a")) void *const ARegHead = 0;
 
-#pragma data_seg(".greg$a")
-void *GRegHead = 0;
+#pragma section(".creg$a",read)
+__declspec(allocate(".creg$a")) void *const CRegHead = 0;
 
-#pragma data_seg(".mreg$a")
-void *MRegHead = 0;
+#pragma section(".greg$a",read)
+__declspec(allocate(".greg$a")) void *const GRegHead = 0;
 
-#pragma data_seg(".yreg$a")
-void *YRegHead = 0;
-
-#pragma data_seg()
+#pragma section(".yreg$a",read)
+__declspec(allocate(".yreg$a")) void *const YRegHead = 0;
 
 // We want visual styles support under XP
 #if defined _M_IX86
@@ -88,11 +90,15 @@ void *YRegHead = 0;
 
 #include "doomtype.h"
 
-void *ARegHead __attribute__((section(SECTION_AREG))) = 0;
-void *CRegHead __attribute__((section(SECTION_CREG))) = 0;
-void *GRegHead __attribute__((section(SECTION_GREG))) = 0;
-void *MRegHead __attribute__((section(SECTION_MREG))) = 0;
-void *YRegHead __attribute__((section(SECTION_YREG))) = 0;
+// I don't know of an easy way to merge sections together with the GNU linker,
+// so GCC users will see all of these sections appear in the final executable.
+// (There are linker scripts, but that apparently involves extracting the
+// default script from ld and then modifying it.)
+
+void *const ARegHead __attribute__((section(SECTION_AREG))) = 0;
+void *const CRegHead __attribute__((section(SECTION_CREG))) = 0;
+void *const GRegHead __attribute__((section(SECTION_GREG))) = 0;
+void *const YRegHead __attribute__((section(SECTION_YREG))) = 0;
 
 #else
 

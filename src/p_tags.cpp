@@ -247,6 +247,18 @@ bool FTagManager::SectorHasTag(const sector_t *sector, int tag) const
 //
 //-----------------------------------------------------------------------------
 
+int FTagManager::GetFirstLineID(const line_t *line) const
+{
+	int i = lineindex(line);
+	return LineHasIDs(i) ? allIDs[startForLine[i]].tag : 0;
+}
+
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+
 bool FTagManager::LineHasID(int i, int tag) const
 {
 	if (LineHasIDs(i))

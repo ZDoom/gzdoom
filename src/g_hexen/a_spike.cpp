@@ -78,16 +78,21 @@ void AThrustFloor::Deactivate (AActor *activator)
 
 DEFINE_ACTION_FUNCTION(AActor, A_ThrustInitUp)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	self->special2 = 5;	// Raise speed
 	self->args[0] = 1;		// Mark as up
 	self->floorclip = 0;
 	self->flags = MF_SOLID;
 	self->flags2 = MF2_NOTELEPORT|MF2_FLOORCLIP;
 	self->special1 = 0L;
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_ThrustInitDn)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	self->special2 = 5;	// Raise speed
 	self->args[0] = 0;		// Mark as down
 	self->floorclip = self->GetDefault()->height;
@@ -95,12 +100,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_ThrustInitDn)
 	self->flags2 = MF2_NOTELEPORT|MF2_FLOORCLIP;
 	self->renderflags = RF_INVISIBLE;
 	static_cast<AThrustFloor *>(self)->DirtClump =
-		Spawn("DirtClump", self->x, self->y, self->z, ALLOW_REPLACE);
+		Spawn("DirtClump", self->Pos(), ALLOW_REPLACE);
+	return 0;
 }
 
 
 DEFINE_ACTION_FUNCTION(AActor, A_ThrustRaise)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AThrustFloor *actor = static_cast<AThrustFloor *>(self);
 
 	if (A_RaiseMobj (actor, self->special2*FRACUNIT))
@@ -123,10 +131,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_ThrustRaise)
 	if (pr_thrustraise()<40)
 		P_SpawnDirt (actor, actor->radius);
 	actor->special2++;							// Increase raise speed
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_ThrustLower)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	if (A_SinkMobj (self, 6*FRACUNIT))
 	{
 		self->args[0] = 0;
@@ -135,12 +146,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_ThrustLower)
 		else
 			self->SetState (self->FindState ("ThrustInit1"), true);
 	}
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_ThrustImpale)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *thing;
-	FBlockThingsIterator it(FBoundingBox(self->x, self->y, self->radius));
+	FBlockThingsIterator it(FBoundingBox(self->X(), self->Y(), self->radius));
 	while ((thing = it.Next()))
 	{
 		if (!thing->intersects(self))
@@ -158,5 +172,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_ThrustImpale)
 		P_TraceBleed (newdam > 0 ? newdam : 10001, thing);
 		self->args[1] = 1;	// Mark thrust thing as bloody
 	}
+	return 0;
 }
 

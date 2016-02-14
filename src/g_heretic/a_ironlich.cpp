@@ -63,6 +63,8 @@ int AWhirlwind::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 
 DEFINE_ACTION_FUNCTION(AActor, A_LichAttack)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	int i;
 	AActor *fire;
 	AActor *baseFire;
@@ -81,7 +83,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LichAttack)
 	target = self->target;
 	if (target == NULL)
 	{
-		return;
+		return 0;
 	}
 	A_FaceTarget (self);
 	if (self->CheckMeleeRange ())
@@ -89,25 +91,24 @@ DEFINE_ACTION_FUNCTION(AActor, A_LichAttack)
 		int damage = pr_atk.HitDice (6);
 		int newdam = P_DamageMobj (target, self, self, damage, NAME_Melee);
 		P_TraceBleed (newdam > 0 ? newdam : damage, target, self);
-		return;
+		return 0;
 	}
 	dist = self->AproxDistance (target) > 8*64*FRACUNIT;
 	randAttack = pr_atk ();
 	if (randAttack < atkResolve1[dist])
 	{ // Ice ball
-		P_SpawnMissile (self, target, PClass::FindClass("HeadFX1"));
+		P_SpawnMissile (self, target, PClass::FindActor("HeadFX1"));
 		S_Sound (self, CHAN_BODY, "ironlich/attack2", 1, ATTN_NORM);
 	}
 	else if (randAttack < atkResolve2[dist])
 	{ // Fire column
-		baseFire = P_SpawnMissile (self, target, PClass::FindClass("HeadFX3"));
+		baseFire = P_SpawnMissile (self, target, PClass::FindActor("HeadFX3"));
 		if (baseFire != NULL)
 		{
 			baseFire->SetState (baseFire->FindState("NoGrow"));
 			for (i = 0; i < 5; i++)
 			{
-				fire = Spawn("HeadFX3", baseFire->x, baseFire->y,
-					baseFire->z, ALLOW_REPLACE);
+				fire = Spawn("HeadFX3", baseFire->Pos(), ALLOW_REPLACE);
 				if (i == 0)
 				{
 					S_Sound (self, CHAN_BODY, "ironlich/attack1", 1, ATTN_NORM);
@@ -117,7 +118,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LichAttack)
 				fire->velx = baseFire->velx;
 				fire->vely = baseFire->vely;
 				fire->velz = baseFire->velz;
-				fire->Damage = 0;
+				fire->Damage = NULL;
 				fire->health = (i+1) * 2;
 				P_CheckMissileSpawn (fire, self->radius);
 			}
@@ -128,14 +129,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_LichAttack)
 		mo = P_SpawnMissile (self, target, RUNTIME_CLASS(AWhirlwind));
 		if (mo != NULL)
 		{
-			mo->z -= 32*FRACUNIT;
+			mo->AddZ(-32*FRACUNIT, false);
 			mo->tracer = target;
-			mo->special1 = 60;
-			mo->special2 = 50; // Timer for active sound
 			mo->health = 20*TICRATE; // Duration
 			S_Sound (self, CHAN_BODY, "ironlich/attack3", 1, ATTN_NORM);
 		}
 	}
+	return 0;
 }
 
 //----------------------------------------------------------------------------
@@ -146,24 +146,27 @@ DEFINE_ACTION_FUNCTION(AActor, A_LichAttack)
 
 DEFINE_ACTION_FUNCTION(AActor, A_WhirlwindSeek)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	self->health -= 3;
 	if (self->health < 0)
 	{
 		self->velx = self->vely = self->velz = 0;
 		self->SetState (self->FindState(NAME_Death));
 		self->flags &= ~MF_MISSILE;
-		return;
+		return 0;
 	}
-	if ((self->special2 -= 3) < 0)
+	if ((self->threshold -= 3) < 0)
 	{
-		self->special2 = 58 + (pr_seek() & 31);
+		self->threshold = 58 + (pr_seek() & 31);
 		S_Sound (self, CHAN_BODY, "ironlich/attack3", 1, ATTN_NORM);
 	}
 	if (self->tracer && self->tracer->flags&MF_SHADOW)
 	{
-		return;
+		return 0;
 	}
 	P_SeekerMissile (self, ANGLE_1*10, ANGLE_1*30);
+	return 0;
 }
 
 //----------------------------------------------------------------------------
@@ -174,13 +177,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_WhirlwindSeek)
 
 DEFINE_ACTION_FUNCTION(AActor, A_LichIceImpact)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	unsigned int i;
 	angle_t angle;
 	AActor *shard;
 
 	for (i = 0; i < 8; i++)
 	{
-		shard = Spawn("HeadFX2", self->x, self->y, self->z, ALLOW_REPLACE);
+		shard = Spawn("HeadFX2", self->Pos(), ALLOW_REPLACE);
 		angle = i*ANG45;
 		shard->target = self->target;
 		shard->angle = angle;
@@ -190,6 +195,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LichIceImpact)
 		shard->velz = -FRACUNIT*6/10;
 		P_CheckMissileSpawn (shard, self->radius);
 	}
+	return 0;
 }
 
 //----------------------------------------------------------------------------
@@ -200,12 +206,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_LichIceImpact)
 
 DEFINE_ACTION_FUNCTION(AActor, A_LichFireGrow)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	self->health--;
-	self->z += 9*FRACUNIT;
+	self->AddZ(9*FRACUNIT);
 	if (self->health == 0)
 	{
 		self->Damage = self->GetDefault()->Damage;
 		self->SetState (self->FindState("NoGrow"));
 	}
+	return 0;
 }
 

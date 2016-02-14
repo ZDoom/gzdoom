@@ -21,7 +21,9 @@ void A_Fire(AActor *self, int height);
 //
 DEFINE_ACTION_FUNCTION(AActor, A_VileStart)
 {
+	PARAM_ACTION_PROLOGUE;
 	S_Sound (self, CHAN_VOICE, "vile/start", 1, ATTN_NORM);
+	return 0;
 }
 
 
@@ -31,28 +33,32 @@ DEFINE_ACTION_FUNCTION(AActor, A_VileStart)
 //
 DEFINE_ACTION_FUNCTION(AActor, A_StartFire)
 {
+	PARAM_ACTION_PROLOGUE;
 	S_Sound (self, CHAN_BODY, "vile/firestrt", 1, ATTN_NORM);
 	A_Fire (self, 0);
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireCrackle)
 {
+	PARAM_ACTION_PROLOGUE;
 	S_Sound (self, CHAN_BODY, "vile/firecrkl", 1, ATTN_NORM);
 	A_Fire (self, 0);
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Fire)
 {
-	ACTION_PARAM_START(1);
-	ACTION_PARAM_FIXED(height,0);
+	PARAM_ACTION_PROLOGUE;
+	PARAM_FIXED_OPT(height)		{ height = 0; }
 	
 	A_Fire(self, height);
+	return 0;
 }
 
 void A_Fire(AActor *self, int height)
 {
 	AActor *dest;
-	angle_t an;
 				
 	dest = self->tracer;
 	if (dest == NULL || self->target == NULL)
@@ -62,11 +68,8 @@ void A_Fire(AActor *self, int height)
 	if (!P_CheckSight (self->target, dest, 0) )
 		return;
 
-	an = dest->angle >> ANGLETOFINESHIFT;
-
-	self->SetOrigin (dest->x + FixedMul (24*FRACUNIT, finecosine[an]),
-					 dest->y + FixedMul (24*FRACUNIT, finesine[an]),
-					 dest->z + height);
+	fixedvec3 newpos = dest->Vec3Angle(24 * FRACUNIT, dest->angle, height);
+	self->SetOrigin(newpos, true);
 }
 
 
@@ -77,22 +80,23 @@ void A_Fire(AActor *self, int height)
 //
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_VileTarget)
 {
-	ACTION_PARAM_START(1);
-	ACTION_PARAM_CLASS(fire,0);
+	PARAM_ACTION_PROLOGUE;
+	PARAM_CLASS_OPT(fire, AActor)	{ fire = PClass::FindActor("ArchvileFire"); }
+
 	AActor *fog;
 		
 	if (!self->target)
-		return;
+		return 0;
 
 	A_FaceTarget (self);
 
-	fog = Spawn (fire, self->target->x, self->target->y,
-		self->target->z, ALLOW_REPLACE);
+	fog = Spawn (fire, self->target->Pos(), ALLOW_REPLACE);
 	
 	self->tracer = fog;
 	fog->target = self;
 	fog->tracer = self->target;
 	A_Fire(fog, 0);
+	return 0;
 }
 
 
@@ -106,26 +110,25 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_VileTarget)
 #define VAF_DMGTYPEAPPLYTODIRECT 1
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_VileAttack)
-{		
-	ACTION_PARAM_START(7);
-	ACTION_PARAM_SOUND(snd,0);
-	ACTION_PARAM_INT(dmg,1);
-	ACTION_PARAM_INT(blastdmg,2);
-	ACTION_PARAM_INT(blastrad,3);
-	ACTION_PARAM_FIXED(thrust,4);
-	ACTION_PARAM_NAME(dmgtype,5);
-	ACTION_PARAM_INT(flags,6);
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_SOUND_OPT	(snd)		{ snd = "vile/stop"; }
+	PARAM_INT_OPT	(dmg)		{ dmg = 20; }
+	PARAM_INT_OPT	(blastdmg)	{ blastdmg = 70; }
+	PARAM_INT_OPT	(blastrad)	{ blastrad = 70; }
+	PARAM_FIXED_OPT	(thrust)	{ thrust = FRACUNIT; }
+	PARAM_NAME_OPT	(dmgtype)	{ dmgtype = NAME_Fire; }
+	PARAM_INT_OPT	(flags)		{ flags = 0; }
 
 	AActor *fire, *target;
-	angle_t an;
 		
 	if (NULL == (target = self->target))
-		return;
+		return 0;
 	
 	A_FaceTarget (self);
 
 	if (!P_CheckSight (self, target, 0) )
-		return;
+		return 0;
 
 	S_Sound (self, CHAN_WEAPON, snd, 1, ATTN_NORM);
 
@@ -139,18 +142,19 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_VileAttack)
 
 	P_TraceBleed (newdam > 0 ? newdam : dmg, target);
 		
-	an = self->angle >> ANGLETOFINESHIFT;
 	fire = self->tracer;
 
 	if (fire != NULL)
 	{
 		// move the fire between the vile and the player
-		fire->SetOrigin (target->x - FixedMul (24*FRACUNIT, finecosine[an]),
-						 target->y - FixedMul (24*FRACUNIT, finesine[an]),
-						 target->z);
+		fixedvec3 pos = target->Vec3Angle(-24 * FRACUNIT, self->angle, 0);
+		fire->SetOrigin (pos, true);
 		
 		P_RadiusAttack (fire, self, blastdmg, blastrad, dmgtype, 0);
 	}
 	if (!(target->flags7 & MF7_DONTTHRUST))
+	{
 		target->velz = Scale(thrust, 1000, target->Mass);
+	}
+	return 0;
 }

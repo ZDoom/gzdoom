@@ -42,6 +42,7 @@
 #include "g_level.h"
 #include "thingdef/thingdef.h"
 #include "i_system.h"
+#include "templates.h"
 
 
 #include "gl/renderer/gl_renderer.h"
@@ -89,7 +90,7 @@ void AVavoomLight::BeginPlay ()
 {
 	// This must not call Super::BeginPlay!
 	ChangeStatNum(STAT_DLIGHT);
-	if (Sector) z -= Sector->floorplane.ZatPoint(x, y);
+	if (Sector) AddZ(-Sector->floorplane.ZatPoint(this), false);
 	lighttype = PointLight;
 }
 
@@ -170,7 +171,7 @@ void ADynamicLight::PostBeginPlay()
 		Activate (NULL);
 	}
 
-	subsector = R_PointInSubsector(x,y);
+	subsector = R_PointInSubsector(X(), Y());
 }
 
 
@@ -333,8 +334,8 @@ void ADynamicLight::Tick()
 //==========================================================================
 void ADynamicLight::UpdateLocation()
 {
-	fixed_t oldx=x;
-	fixed_t oldy=y;
+	fixed_t oldx=X();
+	fixed_t oldy=Y();
 	fixed_t oldradius=radius;
 	float intensity;
 
@@ -343,10 +344,15 @@ void ADynamicLight::UpdateLocation()
 		if (target)
 		{
 			angle_t angle = target->angle>>ANGLETOFINESHIFT;
-			PrevX = x = target->x + FixedMul(m_offX, finecosine[angle]) + FixedMul(m_offZ, finesine[angle]);
-			PrevY = y = target->y + FixedMul(m_offX, finesine[angle]) - FixedMul(m_offZ, finecosine[angle]);
-			PrevZ = z = target->z + m_offY + target->GetBobOffset();
-			subsector = R_PointInSubsector(x, y);
+			fixedvec3 pos = target->Vec3Offset(
+				FixedMul(m_offX, finecosine[angle]) + FixedMul(m_offZ, finesine[angle]),
+				FixedMul(m_offX, finesine[angle]) - FixedMul(m_offZ, finecosine[angle]),
+				m_offY + target->GetBobOffset());
+			SetXYZ(pos); // attached lights do not need to go into the regular blockmap
+			PrevX = pos.x;
+			PrevY = pos.y;
+			PrevZ = pos.z;
+			subsector = R_PointInSubsector(pos.x, pos.y);
 			Sector = subsector->sector;
 		}
 
@@ -356,7 +362,7 @@ void ADynamicLight::UpdateLocation()
 
 		if (lighttype == FlickerLight || lighttype == RandomFlickerLight) 
 		{
-			intensity = float(m_intensity[1]);
+			intensity = float(MAX(m_intensity[0], m_intensity[1]));
 		}
 		else
 		{
@@ -364,7 +370,7 @@ void ADynamicLight::UpdateLocation()
 		}
 		radius = FLOAT2FIXED(intensity * 2.0f * gl_lights_size);
 
-		if (x!=oldx || y!=oldy || radius!=oldradius) 
+		if (X()!=oldx || Y()!=oldy || radius!=oldradius) 
 		{
 			//Update the light lists
 			LinkLight();
@@ -378,6 +384,19 @@ void ADynamicLight::UpdateLocation()
 //
 //
 //==========================================================================
+
+void ADynamicLight::SetOrigin(fixed_t x, fixed_t y, fixed_t z, bool moving)
+{
+	Super::SetOrigin(x, y, z, moving);
+	LinkLight();
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 void ADynamicLight::SetOffset(fixed_t x, fixed_t y, fixed_t z)
 {
 	m_offX = x;
@@ -495,15 +514,15 @@ float ADynamicLight::DistToSeg(seg_t *seg)
    float seg_dy = FIXED2FLOAT(seg->v2->y - seg->v1->y);
    float seg_length_sq = seg_dx * seg_dx + seg_dy * seg_dy;
 
-   u = (  FIXED2FLOAT(x - seg->v1->x) * seg_dx + FIXED2FLOAT(y - seg->v1->y) * seg_dy) / seg_length_sq;
+   u = (  FIXED2FLOAT(X() - seg->v1->x) * seg_dx + FIXED2FLOAT(Y() - seg->v1->y) * seg_dy) / seg_length_sq;
    if (u < 0.f) u = 0.f; // clamp the test point to the line segment
    if (u > 1.f) u = 1.f;
 
    px = FIXED2FLOAT(seg->v1->x) + (u * seg_dx);
    py = FIXED2FLOAT(seg->v1->y) + (u * seg_dy);
 
-   px -= FIXED2FLOAT(x);
-   py -= FIXED2FLOAT(y);
+   px -= FIXED2FLOAT(X());
+   py -= FIXED2FLOAT(Y());
 
    return (px*px) + (py*py);
 }
@@ -536,7 +555,7 @@ void ADynamicLight::CollectWithinRadius(subsector_t *subSec, float radius)
 		if (seg->sidedef && seg->linedef && seg->linedef->validcount!=::validcount)
 		{
 			// light is in front of the seg
-			if (DMulScale32 (y-seg->v1->y, seg->v2->x-seg->v1->x, seg->v1->x-x, seg->v2->y-seg->v1->y) <=0)
+			if (DMulScale32 (Y()-seg->v1->y, seg->v2->x-seg->v1->x, seg->v1->x-X(), seg->v2->y-seg->v1->y) <=0)
 			{
 				seg->linedef->validcount=validcount;
 				touching_sides = AddLightNode(&seg->sidedef->lighthead, seg->sidedef, this, touching_sides);
@@ -592,7 +611,7 @@ void ADynamicLight::LinkLight()
 	if (radius>0)
 	{
 		// passing in radius*radius allows us to do a distance check without any calls to sqrtf
-		subsector_t * subSec = R_PointInSubsector(x, y);
+		subsector_t * subSec = R_PointInSubsector(X(), Y());
 		if (subSec)
 		{
 			float fradius = FIXED2FLOAT(radius);
@@ -702,7 +721,7 @@ CCMD(listlights)
 		subsecs = 0;
 		Printf("%s at (%f, %f, %f), color = 0x%02x%02x%02x, radius = %f ",
 			dl->target? dl->target->GetClass()->TypeName.GetChars() : dl->GetClass()->TypeName.GetChars(),
-			FIXED2FLOAT(dl->x), FIXED2FLOAT(dl->y), FIXED2FLOAT(dl->z), dl->args[LIGHT_RED], 
+			FIXED2FLOAT(dl->X()), FIXED2FLOAT(dl->Y()), FIXED2FLOAT(dl->Z()), dl->args[LIGHT_RED], 
 			dl->args[LIGHT_GREEN], dl->args[LIGHT_BLUE], FIXED2FLOAT(dl->radius));
 		i++;
 

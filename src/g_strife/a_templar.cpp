@@ -13,13 +13,15 @@ static FRandom pr_templar ("Templar");
 
 DEFINE_ACTION_FUNCTION(AActor, A_TemplarAttack)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	int damage;
 	angle_t angle;
 	int pitch;
 	int pitchdiff;
 
 	if (self->target == NULL)
-		return;
+		return 0;
 
 	S_Sound (self, CHAN_WEAPON, "templar/shoot", 1, ATTN_NORM);
 	A_FaceTarget (self);
@@ -32,4 +34,5 @@ DEFINE_ACTION_FUNCTION(AActor, A_TemplarAttack)
 		pitchdiff = pr_templar.Random2() * 332063;
 		P_LineAttack (self, angle, MISSILERANGE+64*FRACUNIT, pitch+pitchdiff, damage, NAME_Hitscan, NAME_MaulerPuff);
 	}
+	return 0;
 }

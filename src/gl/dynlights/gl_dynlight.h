@@ -81,7 +81,8 @@ public:
 	void UnlinkLight();
 	size_t PointerSubstitution (DObject *old, DObject *notOld);
 
-	virtual void BeginPlay();
+	void BeginPlay();
+	void SetOrigin (fixed_t x, fixed_t y, fixed_t z, bool moving = false);
 	void PostBeginPlay();
 	void Destroy();
 	void Activate(AActor *activator);

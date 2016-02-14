@@ -510,7 +510,7 @@ void FTexture::CheckTrans(unsigned char * buffer, int size, int trans)
 		if (trans == -1)
 		{
 			DWORD * dwbuf = (DWORD*)buffer;
-			if (gl_info.mIsTransparent == -1) for(int i=0;i<size;i++)
+			for(int i=0;i<size;i++)
 			{
 				DWORD alpha = dwbuf[i]>>24;
 
@@ -520,8 +520,8 @@ void FTexture::CheckTrans(unsigned char * buffer, int size, int trans)
 					return;
 				}
 			}
+			gl_info.mIsTransparent = 0;
 		}
-		gl_info.mIsTransparent = 0;
 	}
 }
 

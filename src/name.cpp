@@ -182,6 +182,7 @@ void FName::NameManager::InitBuckets ()
 	// Register built-in names. 'None' must be name 0.
 	for (size_t i = 0; i < countof(PredefinedNames); ++i)
 	{
+		assert((0 == FindName(PredefinedNames[i], true)) && "Predefined name already inserted");
 		FindName (PredefinedNames[i], false);
 	}
 }

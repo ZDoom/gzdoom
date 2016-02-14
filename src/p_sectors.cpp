@@ -878,6 +878,7 @@ FArchive &operator<< (FArchive &arc, secspecial_t &p)
 		int special;
 		arc << special;
 		sector_t sec;
+		memset(&sec, 0, sizeof(sec));
 		P_InitSectorSpecial(&sec, special, true);
 		sec.GetSpecial(&p);
 	}
@@ -1023,9 +1024,9 @@ CUSTOM_CVAR(Int, r_fakecontrast, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 //
 //==========================================================================
 
-int side_t::GetLightLevel (bool foggy, int baselight, bool noabsolute, int *pfakecontrast) const
+int side_t::GetLightLevel (bool foggy, int baselight, bool is3dlight, int *pfakecontrast) const
 {
-	if (!noabsolute && (Flags & WALLF_ABSLIGHTING))
+	if (!is3dlight && (Flags & WALLF_ABSLIGHTING))
 	{
 		baselight = Light;
 	}
@@ -1065,7 +1066,7 @@ int side_t::GetLightLevel (bool foggy, int baselight, bool noabsolute, int *pfak
 			}
 		}
 	}
-	if (!(Flags & WALLF_ABSLIGHTING) && (!foggy || (Flags & WALLF_LIGHT_FOG)))
+	if (!is3dlight && !(Flags & WALLF_ABSLIGHTING) && (!foggy || (Flags & WALLF_LIGHT_FOG)))
 	{
 		baselight += this->Light;
 	}

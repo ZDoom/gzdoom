@@ -43,6 +43,8 @@
 
 #include "dobject.h"
 #include "doomdef.h"
+#include "vm.h"
+#include "s_sound.h"
 
 #include "m_fixed.h"
 #include "m_random.h"
@@ -63,7 +65,7 @@ enum
 struct FState
 {
 	FState		*NextState;
-	actionf_p	ActionFunc;
+	VMFunction	*ActionFunc;
 	WORD		sprite;
 	SWORD		Tics;
 	WORD		TicRange;
@@ -78,7 +80,6 @@ struct FState
 	BYTE		NoDelay:1;		// Spawn states executes its action normally
 	BYTE		CanRaise:1;		// Allows a monster to be resurrected without waiting for an infinate frame
 	BYTE		Slow:1;			// Inverse of fast
-	int			ParameterIndex;
 
 	inline int GetFrame() const
 	{
@@ -124,33 +125,12 @@ struct FState
 	{
 		Frame = frame - 'A';
 	}
-	void SetAction(PSymbolActionFunction *func, bool setdefaultparams = true)
-	{
-		if (func != NULL)
-		{
-			ActionFunc = func->Function;
-			if (setdefaultparams) ParameterIndex = func->defaultparameterindex+1;
-		}
-		else 
-		{
-			ActionFunc = NULL;
-			if (setdefaultparams) ParameterIndex = 0;
-		}
-	}
-	inline bool CallAction(AActor *self, AActor *stateowner, StateCallData *statecall = NULL)
-	{
-		if (ActionFunc != NULL)
-		{
-			ActionFunc(self, stateowner, this, ParameterIndex-1, statecall);
-			return true;
-		}
-		else
-		{
-			return false;
-		}
-	}
-	static const PClass *StaticFindStateOwner (const FState *state);
-	static const PClass *StaticFindStateOwner (const FState *state, const FActorInfo *info);
+	void SetAction(VMFunction *func) { ActionFunc = func; }
+	void ClearAction() { ActionFunc = NULL; }
+	void SetAction(const char *name);
+	bool CallAction(AActor *self, AActor *stateowner);
+	static PClassActor *StaticFindStateOwner (const FState *state);
+	static PClassActor *StaticFindStateOwner (const FState *state, PClassActor *info);
 	static FRandom pr_statetics;
 };
 
@@ -178,35 +158,11 @@ FArchive &operator<< (FArchive &arc, FState *&state);
 
 #include "gametype.h"
 
-// Standard pre-defined skin colors
-struct FPlayerColorSet
-{
-	struct ExtraRange
-	{
-		BYTE RangeStart, RangeEnd;	// colors to remap
-		BYTE FirstColor, LastColor;	// colors to map to
-	};
-
-	FName Name;			// Name of this color
-
-	int Lump;			// Lump to read the translation from, otherwise use next 2 fields
-	BYTE FirstColor, LastColor;		// Describes the range of colors to use for the translation
-
-	BYTE RepresentativeColor;		// A palette entry representative of this translation,
-									// for map arrows and status bar backgrounds and such
-	BYTE NumExtraRanges;
-	ExtraRange Extra[6];
-};
-
 struct DmgFactors : public TMap<FName, fixed_t>
 {
 	fixed_t *CheckFactor(FName type);
 };
 typedef TMap<FName, int> PainChanceList;
-typedef TMap<FName, PalEntry> PainFlashList;
-typedef TMap<int, FPlayerColorSet> FPlayerColorSetMap;
-
-
 
 struct DamageTypeDefinition
 {
@@ -230,24 +186,34 @@ public:
 	static int ApplyMobjDamageFactor(int damage, FName type, DmgFactors const * const factors);
 };
 
+class DDropItem;
+class PClassPlayerPawn;
 
-struct FActorInfo
+class PClassActor : public PClass
 {
+	DECLARE_CLASS(PClassActor, PClass);
+	HAS_OBJECT_POINTERS;
+protected:
+public:
 	static void StaticInit ();
 	static void StaticSetActorNums ();
+	virtual void DeriveData(PClass *newclass);
 
-	void BuildDefaults ();
-	void ApplyDefaults (BYTE *defaults);
-	void RegisterIDs ();
+	PClassActor();
+	~PClassActor();
+
+	virtual void ReplaceClassRef(PClass *oldclass, PClass *newclass);
+	void BuildDefaults();
+	void ApplyDefaults(BYTE *defaults);
+	void RegisterIDs();
 	void SetDamageFactor(FName type, fixed_t factor);
 	void SetPainChance(FName type, int chance);
-	void SetPainFlash(FName type, PalEntry color);
-	bool GetPainFlash(FName type, PalEntry *color) const;
-	void SetColorSet(int index, const FPlayerColorSet *set);
+	size_t PropagateMark();
+	void InitializeNativeDefaults();
 
-	FState *FindState (int numnames, FName *names, bool exact=false) const;
+	FState *FindState(int numnames, FName *names, bool exact=false) const;
 	FState *FindStateByString(const char *name, bool exact=false);
-	FState *FindState (FName name) const
+	FState *FindState(FName name) const
 	{
 		return FindState(1, &name);
 	}
@@ -257,13 +223,12 @@ struct FActorInfo
 		return state >= OwnedStates && state < OwnedStates + NumOwnedStates;
 	}
 
-	FActorInfo *GetReplacement (bool lookskill=true);
-	FActorInfo *GetReplacee (bool lookskill=true);
+	PClassActor *GetReplacement(bool lookskill=true);
+	PClassActor *GetReplacee(bool lookskill=true);
 
-	PClass *Class;
 	FState *OwnedStates;
-	FActorInfo *Replacement;
-	FActorInfo *Replacee;
+	PClassActor *Replacement;
+	PClassActor *Replacee;
 	int NumOwnedStates;
 	BYTE GameFilter;
 	WORD SpawnID;
@@ -272,16 +237,49 @@ struct FActorInfo
 	FStateLabels *StateList;
 	DmgFactors *DamageFactors;
 	PainChanceList *PainChances;
-	PainFlashList *PainFlashes;
-	FPlayerColorSetMap *ColorSets;
-	TArray<const PClass *> VisibleToPlayerClass;
-	TArray<const PClass *> RestrictedToPlayerClass;
-	TArray<const PClass *> ForbiddenToPlayerClass;
+
+	TArray<PClassPlayerPawn *> VisibleToPlayerClass;
+
+	FString Obituary;		// Player was killed by this actor
+	FString HitObituary;	// Player was killed by this actor in melee
+	fixed_t DeathHeight;	// Height on normal death
+	fixed_t BurnHeight;		// Height on burning death
+	PalEntry BloodColor;	// Colorized blood
+	int GibHealth;			// Negative health below which this monster dies an extreme death
+	int WoundHealth;		// Health needed to enter wound state
+	int PoisonDamage;		// Amount of poison damage
+	fixed_t FastSpeed;		// Speed in fast mode
+	fixed_t RDFactor;		// Radius damage factor
+	fixed_t CameraHeight;	// Height of camera when used as such
+	FSoundID HowlSound;		// Sound being played when electrocuted or poisoned
+	FName BloodType;		// Blood replacement type
+	FName BloodType2;		// Bloopsplatter replacement type
+	FName BloodType3;		// AxeBlood replacement type
+
+	DDropItem *DropItems;
+	FString SourceLumpName;
+
+	// Old Decorate compatibility stuff
+	bool DontHurtShooter;
+	int ExplosionRadius;
+	int ExplosionDamage;
+	int MeleeDamage;
+	FSoundID MeleeSound;
+	FName MissileName;
+	fixed_t MissileHeight;
+
+	// For those times when being able to scan every kind of actor is convenient
+	static TArray<PClassActor *> AllActorClasses;
 };
+
+inline PClassActor *PClass::FindActor(FName name)
+{
+	 return dyn_cast<PClassActor>(FindClass(name));
+}
 
 struct FDoomEdEntry
 {
-	const PClass *Type;
+	PClassActor *Type;
 	short Special;
 	signed char ArgsDefined;
 	int Args[5];
@@ -313,7 +311,7 @@ enum ESpecialMapthings
 	SMT_CopyCeilingPlane,
 	SMT_VertexFloorZ,
 	SMT_VertexCeilingZ,
-	SMT_EDFThing,
+	SMT_EDThing,
 
 };
 
@@ -328,5 +326,20 @@ void InitActorNumsFromMapinfo();
 int GetSpriteIndex(const char * spritename, bool add = true);
 TArray<FName> &MakeStateNameList(const char * fname);
 void AddStateLight(FState *state, const char *lname);
+
+// Standard parameters for all action functons
+//   self         - Actor this action is to operate on (player if a weapon)
+//   stateowner   - Actor this action really belongs to (may be an item)
+//   callingstate - State this action was called from
+#define PARAM_ACTION_PROLOGUE_TYPE(type) \
+	PARAM_PROLOGUE; \
+	PARAM_OBJECT	 (self, type); \
+	PARAM_OBJECT_OPT (stateowner, AActor) { stateowner = self; } \
+	PARAM_STATE_OPT  (callingstate) { callingstate = NULL; } \
+
+#define PARAM_ACTION_PROLOGUE	PARAM_ACTION_PROLOGUE_TYPE(AActor)
+
+// Number of action paramaters
+#define NAP 3
 
 #endif	// __INFO_H__

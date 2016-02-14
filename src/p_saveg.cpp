@@ -53,6 +53,7 @@
 #include "p_lnspec.h"
 #include "p_acs.h"
 #include "p_terrain.h"
+#include "portal.h"
 
 static void CopyPlayer (player_t *dst, player_t *src, const char *name);
 static void ReadOnePlayer (FArchive &arc, bool skipload);
@@ -425,7 +426,6 @@ void P_SerializeWorld (FArchive &arc)
 			short secretsector;
 			arc << secretsector;
 			if (secretsector) sec->Flags |= SECF_WASSECRET;
-			sec->special &= ~(SECRET_MASK|FRICTION_MASK|PUSH_MASK);
 			P_InitSectorSpecial(sec, sec->special, true);
 		}
 		arc	<< sec->interpolations[0]
@@ -478,6 +478,12 @@ void P_SerializeWorld (FArchive &arc)
 		}
 		arc << li->args[1] << li->args[2] << li->args[3] << li->args[4];
 
+		if (SaveVersion >= 4532)
+		{
+			arc << li->portalindex;
+		}
+		else li->portalindex = UINT_MAX;
+
 		if (SaveVersion >= 4531)
 		{
 			arc << li->skybox;
@@ -516,6 +522,15 @@ void P_SerializeWorld (FArchive &arc)
 	for (i = 0, zn = zones; i < numzones; ++i, ++zn)
 	{
 		arc << zn->Environment;
+	}
+
+	if (SaveVersion >= 4532)
+	{
+		arc << linePortals;
+	}
+	else
+	{
+		linePortals.Clear();
 	}
 }
 

@@ -384,6 +384,11 @@ DWORD *MIDISong2::SendCommand (DWORD *events, TrackInfo *track, DWORD delay, ptr
 	event = track->TrackBegin[track->TrackP++];
 	CHECK_FINISHED
 
+	// The actual event type will be filled in below.
+	events[0] = delay;
+	events[1] = 0;
+	events[2] = MEVT_NOP << 24;
+
 	if (event != MIDI_SYSEX && event != MIDI_META && event != MIDI_SYSEXEND)
 	{
 		// Normal short message
@@ -582,17 +587,10 @@ DWORD *MIDISong2::SendCommand (DWORD *events, TrackInfo *track, DWORD delay, ptr
 				break;
 			}
 		}
-		events[0] = delay;
-		events[1] = 0;
 		if (event != MIDI_META && (!track->Designated || (track->Designation & DesignationMask)))
 		{
 			events[2] = event | (data1<<8) | (data2<<16);
 		}
-		else
-		{
-			events[2] = MEVT_NOP << 24;
-		}
-		events += 3;
 	}
 	else
 	{
@@ -612,8 +610,6 @@ DWORD *MIDISong2::SendCommand (DWORD *events, TrackInfo *track, DWORD delay, ptr
 			}
 			else
 			{
-				events[0] = delay;
-				events[1] = 0;
 				BYTE *msg = (BYTE *)&events[3];
 				if (event == MIDI_SYSEX)
 				{ // Need to add the SysEx marker to the message.
@@ -631,7 +627,6 @@ DWORD *MIDISong2::SendCommand (DWORD *events, TrackInfo *track, DWORD delay, ptr
 				{
 					*msg++ = 0;
 				}
-				events = (DWORD *)msg;
 				track->TrackP += len;
 			}
 		}
@@ -659,7 +654,6 @@ DWORD *MIDISong2::SendCommand (DWORD *events, TrackInfo *track, DWORD delay, ptr
 					events[0] = delay;
 					events[1] = 0;
 					events[2] = (MEVT_TEMPO << 24) | Tempo;
-					events += 3;
 					break;
 				}
 				track->TrackP += len;
@@ -677,6 +671,18 @@ DWORD *MIDISong2::SendCommand (DWORD *events, TrackInfo *track, DWORD delay, ptr
 	if (!track->Finished)
 	{
 		track->Delay = track->ReadVarLen();
+	}
+	// Advance events pointer unless this is a non-delaying NOP.
+	if (events[0] != 0 || MEVT_EVENTTYPE(events[2]) != MEVT_NOP)
+	{
+		if (MEVT_EVENTTYPE(events[2]) == MEVT_LONGMSG)
+		{
+			events += 3 + ((MEVT_EVENTPARM(events[2]) + 3) >> 2);
+		}
+		else
+		{
+			events += 3;
+		}
 	}
 	return events;
 }

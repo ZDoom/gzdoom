@@ -1,7 +1,16 @@
 
+// 
+class PClassWeaponPiece : public PClassInventory
+{
+	DECLARE_CLASS(PClassWeaponPiece, PClassInventory)
+protected:
+public:
+	virtual void ReplaceClassRef(PClass *oldclass, PClass *newclass);
+};
+
 class AWeaponPiece : public AInventory
 {
-	DECLARE_CLASS (AWeaponPiece, AInventory)
+	DECLARE_CLASS_WITH_META(AWeaponPiece, AInventory, PClassWeaponPiece)
 	HAS_OBJECT_POINTERS
 protected:
 	bool PrivateShouldStay ();
@@ -14,7 +23,7 @@ public:
 	virtual void PlayPickupSound (AActor *toucher);
 
 	int PieceValue;
-	const PClass * WeaponClass;
+	PClassWeapon *WeaponClass;
 	TObjPtr<AWeapon> FullWeapon;
 };
 

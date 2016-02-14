@@ -216,6 +216,8 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	muGlowTopColor.Init(hShader, "uGlowTopColor");
 	muGlowBottomPlane.Init(hShader, "uGlowBottomPlane");
 	muGlowTopPlane.Init(hShader, "uGlowTopPlane");
+	muSplitBottomPlane.Init(hShader, "uSplitBottomPlane");
+	muSplitTopPlane.Init(hShader, "uSplitTopPlane");
 	muFixedColormap.Init(hShader, "uFixedColormap");
 	muInterpolationFactor.Init(hShader, "uInterpolationFactor");
 	muClipHeightTop.Init(hShader, "uClipHeightTop");

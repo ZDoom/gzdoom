@@ -36,6 +36,7 @@
 #include "templates.h"
 #include "doomdef.h"
 #include "doomstat.h"
+#include "d_event.h"
 #include "gstrings.h"
 
 #include "i_system.h"
@@ -63,6 +64,7 @@
 #include "a_keys.h"
 #include "c_dispatch.h"
 #include "r_sky.h"
+#include "portal.h"
 #ifndef NO_EDATA
 #include "edata.h"
 #endif
@@ -180,7 +182,7 @@ bool CheckIfExitIsGood (AActor *self, level_info_t *info)
 	{
 		return false;
 	}
-	if (deathmatch)
+	if (deathmatch && gameaction != ga_completed)
 	{
 		Printf ("%s exited the level.\n", self->player->userinfo.GetName());
 	}
@@ -436,7 +438,7 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 	{
 		// Falling, not all the way down yet?
 		sector = player->mo->Sector;
-		if (player->mo->z != sector->floorplane.ZatPoint(player->mo)
+		if (player->mo->Z() != sector->floorplane.ZatPoint(player->mo)
 			&& !player->mo->waterlevel)
 		{
 			return;
@@ -469,7 +471,7 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 			}
 			else if (level.time % sector->damageinterval == 0)
 			{
-				P_DamageMobj(player->mo, NULL, NULL, sector->damageamount, sector->damagetype);
+				if (!(player->cheats & (CF_GODMODE|CF_GODMODE2))) P_DamageMobj(player->mo, NULL, NULL, sector->damageamount, sector->damagetype);
 				if ((sector->Flags & SECF_ENDLEVEL) && player->health <= 10 && (!deathmatch || !(dmflags & DF_NO_EXIT)))
 				{
 					G_ExitLevel(0, false);
@@ -502,7 +504,7 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 //
 //============================================================================
 
-static void DoSectorDamage(AActor *actor, sector_t *sec, int amount, FName type, const PClass *protectClass, int flags)
+static void DoSectorDamage(AActor *actor, sector_t *sec, int amount, FName type, PClassActor *protectClass, int flags)
 {
 	if (!(actor->flags & MF_SHOOTABLE))
 		return;
@@ -513,7 +515,7 @@ static void DoSectorDamage(AActor *actor, sector_t *sec, int amount, FName type,
 	if (!(flags & DAMAGE_PLAYERS) && actor->player != NULL)
 		return;
 
-	if (!(flags & DAMAGE_IN_AIR) && actor->z != sec->floorplane.ZatPoint(actor) && !actor->waterlevel)
+	if (!(flags & DAMAGE_IN_AIR) && actor->Z() != sec->floorplane.ZatPoint(actor) && !actor->waterlevel)
 		return;
 
 	if (protectClass != NULL)
@@ -525,7 +527,7 @@ static void DoSectorDamage(AActor *actor, sector_t *sec, int amount, FName type,
 	P_DamageMobj (actor, NULL, NULL, amount, type);
 }
 
-void P_SectorDamage(int tag, int amount, FName type, const PClass *protectClass, int flags)
+void P_SectorDamage(int tag, int amount, FName type, PClassActor *protectClass, int flags)
 {
 	FSectorTagIterator itr(tag);
 	int secnum;
@@ -559,12 +561,12 @@ void P_SectorDamage(int tag, int amount, FName type, const PClass *protectClass,
 					z1 = z2;
 					z2 = zz;
 				}
-				if (actor->z + actor->height > z1)
+				if (actor->Z() + actor->height > z1)
 				{
 					// If DAMAGE_IN_AIR is used, anything not beneath the 3D floor will be
 					// damaged (so, anything touching it or above it). Other 3D floors between
 					// the actor and this one will not stop this effect.
-					if ((flags & DAMAGE_IN_AIR) || actor->z <= z2)
+					if ((flags & DAMAGE_IN_AIR) || actor->Z() <= z2)
 					{
 						// Here we pass the DAMAGE_IN_AIR flag to disable the floor check, since it
 						// only works with the real sector's floor. We did the appropriate height checks
@@ -1107,7 +1109,7 @@ void P_SpawnSkybox(ASkyViewpoint *origin)
 	if (Sector == NULL)
 	{
 		Printf("Sector not initialized for SkyCamCompat\n");
-		origin->Sector = Sector = P_PointInSector(origin->x, origin->y);
+		origin->Sector = Sector = P_PointInSector(origin->X(), origin->Y());
 	}
 	if (Sector)
 	{
@@ -1226,7 +1228,7 @@ void P_InitSectorSpecial(sector_t *sector, int special, bool nothinkers)
 		break;
 			
 	case dSector_DoorCloseIn30:
-		P_SpawnDoorCloseIn30 (sector);
+		new DDoor(sector, DDoor::doorWaitClose, FRACUNIT * 2, 0, 0, 30 * TICRATE);
 		break;
 			
 	case dDamage_End:
@@ -1242,7 +1244,7 @@ void P_InitSectorSpecial(sector_t *sector, int special, bool nothinkers)
 		break;
 
 	case dSector_DoorRaiseIn5Mins:
-		P_SpawnDoorRaiseIn5Mins (sector);
+		new DDoor (sector, DDoor::doorWaitRaise, 2*FRACUNIT, TICRATE*30/7, 5*60*TICRATE, 0);
 		break;
 
 	case dFriction_Low:
@@ -1272,7 +1274,7 @@ void P_InitSectorSpecial(sector_t *sector, int special, bool nothinkers)
 		if (!nothinkers)
 		{
 			new DStrobe(sector, STROBEBRIGHT, FASTDARK, false);
-			new DScroller(DScroller::sc_floor, (-FRACUNIT / 2) << 3,
+			new DScroller(DScroller::sc_floor, -((FRACUNIT / 2) << 3),
 				0, -1, int(sector - sectors), 0);
 		}
 		keepspecial = true;
@@ -1496,6 +1498,10 @@ void P_SpawnSpecials (void)
 			}
 			break;
 
+		case Line_SetPortal:
+			P_SpawnLinePortal(&lines[i]);
+			break;
+
 		// [RH] ZDoom Static_Init settings
 		case Static_Init:
 			switch (lines[i].args[1])
@@ -1568,6 +1574,7 @@ void P_SpawnSpecials (void)
 	P_CreateLinkedPortals();
 	// [RH] Start running any open scripts on this map
 	FBehavior::StaticStartTypedScripts (SCRIPT_Open, NULL, false);
+	P_FinalizePortals();
 }
 
 // killough 2/28/98:
@@ -1839,15 +1846,16 @@ static void P_SpawnScrollers(void)
 
 		// Check for undefined parameters that are non-zero and output messages for them.
 		// We don't report for specials we don't understand.
-		if (special != 0)
+		FLineSpecial *spec = P_GetLineSpecialInfo(special);
+		if (spec != NULL)
 		{
-			int max = LineSpecialsInfo[special] != NULL ? LineSpecialsInfo[special]->map_args : countof(l->args);
+			int max = spec->map_args;
 			for (unsigned arg = max; arg < countof(l->args); ++arg)
 			{
 				if (l->args[arg] != 0)
 				{
 					Printf("Line %d (type %d:%s), arg %u is %d (should be 0)\n",
-						i, special, LineSpecialsInfo[special]->name, arg+1, l->args[arg]);
+						i, special, spec->name, arg+1, l->args[arg]);
 				}
 			}
 		}
@@ -2222,8 +2230,8 @@ DPusher::DPusher (DPusher::EPusher type, line_t *l, int magnitude, int angle,
 	if (source) // point source exist?
 	{
 		m_Radius = (m_Magnitude) << (FRACBITS+1); // where force goes to zero
-		m_X = m_Source->x;
-		m_Y = m_Source->y;
+		m_X = m_Source->X();
+		m_Y = m_Source->Y();
 	}
 	m_Affectee = affectee;
 }
@@ -2338,7 +2346,7 @@ void DPusher::Tick ()
 		{
 			if (hsec == NULL)
 			{ // NOT special water sector
-				if (thing->z > thing->floorz) // above ground
+				if (thing->Z() > thing->floorz) // above ground
 				{
 					xspeed = m_Xmag; // full force
 					yspeed = m_Ymag;
@@ -2352,7 +2360,7 @@ void DPusher::Tick ()
 			else // special water sector
 			{
 				ht = hsec->floorplane.ZatPoint(thing);
-				if (thing->z > ht) // above ground
+				if (thing->Z() > ht) // above ground
 				{
 					xspeed = m_Xmag; // full force
 					yspeed = m_Ymag;
@@ -2380,7 +2388,7 @@ void DPusher::Tick ()
 			{ // special water sector
 				floor = &hsec->floorplane;
 			}
-			if (thing->z > floor->ZatPoint(thing))
+			if (thing->Z() > floor->ZatPoint(thing))
 			{ // above ground
 				xspeed = yspeed = 0; // no force
 			}

@@ -228,7 +228,7 @@ bool P_GetMidTexturePosition(const line_t *line, int sideno, fixed_t *ptextop, f
 	FTexture * tex= TexMan(texnum);
 	if (!tex) return false;
 
-	fixed_t totalscale = FixedMul(side->GetTextureYScale(side_t::mid), tex->yScale);
+	fixed_t totalscale = abs(FixedMul(side->GetTextureYScale(side_t::mid), tex->yScale));
 	fixed_t y_offset = side->GetTextureYOffset(side_t::mid);
 	fixed_t textureheight = tex->GetScaledHeight(totalscale) << FRACBITS;
 	if (totalscale != FRACUNIT && !tex->bWorldPanning)

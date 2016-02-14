@@ -324,7 +324,12 @@ void FValueTextItem::Drawer(bool selected)
 	screen->DrawText(mFont, selected? OptionSettings.mFontColorSelection : mFontColor, mXpos, mYpos, text, DTA_Clean, true, TAG_DONE);
 
 	int x = mXpos + mFont->StringWidth(text) + 8;
-	if (mSelections.Size() > 0) screen->DrawText(mFont, mFontColor2, x, mYpos, mSelections[mSelection], DTA_Clean, true, TAG_DONE);
+	if (mSelections.Size() > 0)
+	{
+		const char *mOptValue = mSelections[mSelection];
+		if (*mOptValue == '$') mOptValue = GStrings(mOptValue + 1);
+		screen->DrawText(mFont, mFontColor2, x, mYpos, mOptValue, DTA_Clean, true, TAG_DONE);
+	}
 }
 
 //=============================================================================
@@ -479,7 +484,8 @@ void FSliderItem::Drawer(bool selected)
 	screen->DrawText(mFont, selected? OptionSettings.mFontColorSelection : mFontColor, mXpos, mYpos, text, DTA_Clean, true, TAG_DONE);
 
 	int x = SmallFont->StringWidth ("Green") + 8 + mXpos;
-	DrawSlider (x, mYpos);
+	int x2 = SmallFont->StringWidth (text) + 8 + mXpos;
+	DrawSlider (MAX(x2, x), mYpos);
 }
 
 
@@ -630,14 +636,7 @@ void DPlayerMenu::Init(DMenu *parent, FListMenuDescriptor *desc)
 	li = GetItem(NAME_Autoaim);
 	if (li != NULL)
 	{
-		int sel = 
-			autoaim == 0 ? 0 :
-			autoaim <= 0.25 ? 1 :
-			autoaim <= 0.5 ? 2 :
-			autoaim <= 1 ? 3 :
-			autoaim <= 2 ? 4 :
-			autoaim <= 3 ? 5:6;
-		li->SetValue(0, sel);
+		li->SetValue(0, (int)autoaim);
 	}
 
 	li = GetItem(NAME_Switch);
@@ -693,8 +692,7 @@ void DPlayerMenu::UpdateTranslation()
 	if (PlayerClass != NULL)
 	{
 		PlayerSkin = R_FindSkin (skins[PlayerSkin].name, int(PlayerClass - &PlayerClasses[0]));
-		R_GetPlayerTranslation(PlayerColor,
-			P_GetPlayerColorSet(PlayerClass->Type->TypeName, PlayerColorset),
+		R_GetPlayerTranslation(PlayerColor, PlayerClass->Type->GetColorSet(PlayerColorset),
 			&skins[PlayerSkin], translationtables[TRANSLATION_Players][MAXPLAYERS]);
 	}
 }
@@ -763,11 +761,11 @@ void DPlayerMenu::UpdateColorsets()
 	if (li != NULL)
 	{
 		int sel = 0;
-		P_EnumPlayerColorSets(PlayerClass->Type->TypeName, &PlayerColorSets);
+		PlayerClass->Type->EnumColorSets(&PlayerColorSets);
 		li->SetString(0, "Custom");
 		for(unsigned i=0;i<PlayerColorSets.Size(); i++)
 		{
-			FPlayerColorSet *colorset = P_GetPlayerColorSet(PlayerClass->Type->TypeName, PlayerColorSets[i]);
+			FPlayerColorSet *colorset = PlayerClass->Type->GetColorSet(PlayerColorSets[i]);
 			li->SetString(i+1, colorset->Name);
 		}
 		int mycolorset = players[consoleplayer].userinfo.GetColorSet();
@@ -913,7 +911,7 @@ void DPlayerMenu::ClassChanged (FListMenuItem *li)
 		players[consoleplayer].userinfo.PlayerClassNumChanged(gameinfo.norandomplayerclass ? sel : sel-1);
 		PickPlayerClass();
 
-		cvar_set ("playerclass", sel == 0 && !gameinfo.norandomplayerclass ? "Random" : PlayerClass->Type->Meta.GetMetaString (APMETA_DisplayName));
+		cvar_set ("playerclass", sel == 0 && !gameinfo.norandomplayerclass ? "Random" : PlayerClass->Type->DisplayName.GetChars());
 
 		UpdateSkins();
 		UpdateColorsets();
@@ -966,13 +964,11 @@ void DPlayerMenu::SkinChanged (FListMenuItem *li)
 
 void DPlayerMenu::AutoaimChanged (FListMenuItem *li)
 {
-	static const float ranges[] = { 0, 0.25, 0.5, 1, 2, 3, 5000 };
-
 	int	sel;
 
 	if (li->GetValue(0, &sel))
 	{
-		autoaim = ranges[sel];
+		autoaim = (float)sel;
 	}
 }
 

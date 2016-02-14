@@ -80,8 +80,8 @@ class ACSStringPool
 {
 public:
 	ACSStringPool();
-	int AddString(const char *str, const SDWORD *stack, int stackdepth);
-	int AddString(FString &str, const SDWORD *stack, int stackdepth);
+	int AddString(const char *str);
+	int AddString(FString &str);
 	const char *GetString(int strnum);
 	void LockString(int strnum);
 	void UnlockString(int strnum);
@@ -99,7 +99,7 @@ public:
 
 private:
 	int FindString(const char *str, size_t len, unsigned int h, unsigned int bucketnum);
-	int InsertString(FString &str, unsigned int h, unsigned int bucketnum, const SDWORD *stack, int stackdepth);
+	int InsertString(FString &str, unsigned int h, unsigned int bucketnum);
 	void FindFirstFreeEntry(unsigned int base);
 
 	enum { NUM_BUCKETS = 251 };
@@ -119,7 +119,7 @@ private:
 };
 extern ACSStringPool GlobalACSStrings;
 
-void P_CollectACSGlobalStrings(const SDWORD *stack, int stackdepth);
+void P_CollectACSGlobalStrings();
 void P_ReadACSVars(PNGHandle *);
 void P_WriteACSVars(FILE*);
 void P_ClearACSVars(bool);
@@ -769,6 +769,8 @@ public:
 		PCD_PRINTSCRIPTCHARARRAY,
 		PCD_PRINTSCRIPTCHRANGE,
 /*380*/	PCD_STRCPYTOSCRIPTCHRANGE,
+		PCD_LSPEC5EX,
+		PCD_LSPEC5EXRESULT,
 
 /*381*/	PCODE_COMMAND_COUNT
 	};
@@ -910,7 +912,7 @@ protected:
 	int DoSpawnSpot (int type, int spot, int tid, int angle, bool forced);
 	int DoSpawnSpotFacing (int type, int spot, int tid, bool forced);
 	int DoClassifyActor (int tid);
-	int CallFunction(int argCount, int funcIndex, SDWORD *args, const SDWORD *stack, int stackdepth);
+	int CallFunction(int argCount, int funcIndex, SDWORD *args);
 
 	void DoFadeTo (int r, int g, int b, int a, fixed_t time);
 	void DoFadeRange (int r1, int g1, int b1, int a1,
@@ -918,7 +920,7 @@ protected:
 	void DoSetFont (int fontnum);
 	void SetActorProperty (int tid, int property, int value);
 	void DoSetActorProperty (AActor *actor, int property, int value);
-	int GetActorProperty (int tid, int property, const SDWORD *stack, int stackdepth);
+	int GetActorProperty (int tid, int property);
 	int CheckActorProperty (int tid, int property, int value);
 	int GetPlayerInput (int playernum, int inputnum);
 

@@ -171,7 +171,7 @@ bool	P_PredictLine (line_t *ld, AActor *mo, int side, int activationType);
 
 void 	P_PlayerInSpecialSector (player_t *player, sector_t * sector=NULL);
 void	P_PlayerOnSpecialFlat (player_t *player, int floorType);
-void	P_SectorDamage(int tag, int amount, FName type, const PClass *protectClass, int flags);
+void	P_SectorDamage(int tag, int amount, FName type, PClassActor *protectClass, int flags);
 void	P_SetSectorFriction (int tag, int amount, bool alterFlag);
 
 inline fixed_t FrictionToMoveFactor(fixed_t friction)
@@ -529,12 +529,13 @@ public:
 		doorClose,
 		doorOpen,
 		doorRaise,
-		doorRaiseIn5Mins,
+		doorWaitRaise,
 		doorCloseWaitOpen,
+		doorWaitClose,
 	};
 
 	DDoor (sector_t *sector);
-	DDoor (sector_t *sec, EVlDoor type, fixed_t speed, int delay, int lightTag);
+	DDoor (sector_t *sec, EVlDoor type, fixed_t speed, int delay, int topcountdown, int lightTag);
 
 	void Serialize (FArchive &arc);
 	void Tick ();
@@ -560,9 +561,7 @@ protected:
 
 	friend bool	EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
 						   int tag, int speed, int delay, int lock,
-						   int lightTag, bool boomgen);
-	friend void P_SpawnDoorCloseIn30 (sector_t *sec);
-	friend void P_SpawnDoorRaiseIn5Mins (sector_t *sec);
+						   int lightTag, bool boomgen, int topcountdown);
 private:
 	DDoor ();
 
@@ -570,9 +569,7 @@ private:
 
 bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
 				int tag, int speed, int delay, int lock,
-				int lightTag, bool boomgen = false);
-void P_SpawnDoorCloseIn30 (sector_t *sec);
-void P_SpawnDoorRaiseIn5Mins (sector_t *sec);
+				int lightTag, bool boomgen = false, int topcountdown = 0);
 
 class DAnimatedDoor : public DMovingCeiling
 {
@@ -731,7 +728,7 @@ public:
 		floorLowerToLowestCeiling,
 		floorLowerByTexture,
 		floorLowerToCeiling,
-		 
+
 		donutRaise,
 
 		buildStair,
@@ -749,6 +746,12 @@ public:
 	{
 		buildUp,
 		buildDown
+	};
+
+	enum EStairType
+	{
+		stairUseSpecials = 1,
+		stairSync = 2
 	};
 
 	DFloor (sector_t *sec);
@@ -902,9 +905,22 @@ bool EV_DoChange (line_t *line, EChange changetype, int tag);
 //
 // P_TELEPT
 //
+enum
+{
+	TELF_DESTFOG			= 1,
+	TELF_SOURCEFOG			= 2,
+	TELF_KEEPORIENTATION	= 4,
+	TELF_KEEPVELOCITY		= 8,
+	TELF_KEEPHEIGHT			= 16,
+};
+
 void P_SpawnTeleportFog(AActor *mobj, fixed_t x, fixed_t y, fixed_t z, bool beforeTele = true, bool setTarget = false); //Spawns teleport fog. Pass the actor to pluck TeleFogFromType and TeleFogToType. 'from' determines if this is the fog to spawn at the old position (true) or new (false).
-bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle, bool useFog, bool sourceFog, bool keepOrientation, bool haltVelocity = true, bool keepHeight = false);
-bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, bool fog, bool sourceFog, bool keepOrientation, bool haltVelocity = true, bool keepHeight = false);
+inline void P_SpawnTeleportFog(AActor *mobj, const fixedvec3 &pos, bool beforeTele = true, bool setTarget = false)
+{
+	P_SpawnTeleportFog(mobj, pos.x, pos.y, pos.z, beforeTele, setTarget);
+}
+bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle, int flags); // bool useFog, bool sourceFog, bool keepOrientation, bool haltVelocity = true, bool keepHeight = false
+bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, int flags);
 bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id, INTBOOL reverse);
 bool EV_TeleportOther (int other_tid, int dest_tid, bool fog);
 bool EV_TeleportGroup (int group_tid, AActor *victim, int source_tid, int dest_tid, bool moveSource, bool fog);

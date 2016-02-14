@@ -56,6 +56,7 @@
 #include "r_sky.h"
 #include "po_man.h"
 #include "r_data/colormaps.h"
+#include "portal.h"
 
 seg_t*			curline;
 side_t* 		sidedef;
@@ -98,8 +99,8 @@ static BYTE		FakeSide;
 
 int WindowLeft, WindowRight;
 WORD MirrorFlags;
-seg_t *ActiveWallMirror;
-TArray<size_t> WallMirrors;
+TArray<PortalDrawseg> WallPortals(1000);	// note: this array needs to go away as reallocation can cause crashes.
+
 
 static subsector_t *InSubsector;
 
@@ -541,7 +542,7 @@ void R_AddLine (seg_t *line)
 	if (WallC.Init(tx1, ty1, tx2, ty2, 32))
 		return;
 
-	if (WallC.sx1 > WindowRight || WallC.sx2 < WindowLeft)
+	if (WallC.sx1 >= WindowRight || WallC.sx2 <= WindowLeft)
 		return;
 
 	if (line->linedef == NULL)
@@ -552,6 +553,11 @@ void R_AddLine (seg_t *line)
 		}
 		return;
 	}
+
+	// reject lines that aren't seen from the portal (if any)
+	// [ZZ] 10.01.2016: lines inside a skybox shouldn't be clipped, although this imposes some limitations on portals in skyboxes.
+	if (!CurrentPortalInSkybox && CurrentPortal && P_ClipLineToPortal(line->linedef, CurrentPortal->dst, viewx, viewy))
+		return;
 
 	vertex_t *v1, *v2;
 
@@ -584,7 +590,7 @@ void R_AddLine (seg_t *line)
 	rw_havehigh = rw_havelow = false;
 
 	// Single sided line?
-	if (backsector == NULL)
+	if (backsector == NULL || (line->linedef->isVisualPortal() && line->sidedef == line->linedef->sidedef[0]))
 	{
 		solid = true;
 	}
@@ -1088,7 +1094,7 @@ void R_Subsector (subsector_t *sub)
 	}
 
 	skybox = frontsector->GetSkyBox(sector_t::ceiling);
-	if (skybox->special1 != SKYBOX_MAP) skybox = NULL;	// HW renderer only.
+	if (skybox != NULL && skybox->special1 != SKYBOX_MAP) skybox = NULL;	// HW renderer only.
 
 	ceilingplane = frontsector->ceilingplane.PointOnSide(viewx, viewy, viewz) > 0 ||
 		frontsector->GetTexture(sector_t::ceiling) == skyflatnum ||
@@ -1131,7 +1137,7 @@ void R_Subsector (subsector_t *sub)
 	// killough 10/98: add support for skies transferred from sidedefs
 
 	skybox = frontsector->GetSkyBox(sector_t::floor);
-	if (skybox->special1 != SKYBOX_MAP) skybox = NULL;	// HW renderer only.
+	if (skybox != NULL && skybox->special1 != SKYBOX_MAP) skybox = NULL;	// HW renderer only.
 
 	floorplane = frontsector->floorplane.PointOnSide(viewx, viewy, viewz) > 0 || // killough 3/7/98
 		frontsector->GetTexture(sector_t::floor) == skyflatnum ||

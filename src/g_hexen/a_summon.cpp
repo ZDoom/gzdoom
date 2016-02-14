@@ -31,7 +31,7 @@ IMPLEMENT_CLASS (AArtiDarkServant)
 
 bool AArtiDarkServant::Use (bool pickup)
 {
-	AActor *mo = P_SpawnPlayerMissile (Owner, PClass::FindClass ("SummoningDoll"));
+	AActor *mo = P_SpawnPlayerMissile (Owner, PClass::FindActor("SummoningDoll"));
 	if (mo)
 	{
 		mo->target = Owner;
@@ -49,17 +49,19 @@ bool AArtiDarkServant::Use (bool pickup)
 
 DEFINE_ACTION_FUNCTION(AActor, A_Summon)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AMinotaurFriend *mo;
 
-	mo = Spawn<AMinotaurFriend> (self->x, self->y, self->z, ALLOW_REPLACE);
+	mo = Spawn<AMinotaurFriend> (self->Pos(), ALLOW_REPLACE);
 	if (mo)
 	{
 		if (P_TestMobjLocation(mo) == false || !self->tracer)
 		{ // Didn't fit - change back to artifact
 			mo->Destroy ();
-			AActor *arti = Spawn<AArtiDarkServant> (self->x, self->y, self->z, ALLOW_REPLACE);
+			AActor *arti = Spawn<AArtiDarkServant> (self->Pos(), ALLOW_REPLACE);
 			if (arti) arti->flags |= MF_DROPPED;
-			return;
+			return 0;
 		}
 
 		mo->StartTime = level.maptime;
@@ -76,7 +78,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_Summon)
 		}
 
 		// Make smoke puff
-		Spawn ("MinotaurSmoke", self->x, self->y, self->z, ALLOW_REPLACE);
+		Spawn ("MinotaurSmoke", self->Pos(), ALLOW_REPLACE);
 		S_Sound (self, CHAN_VOICE, mo->ActiveSound, 1, ATTN_NORM);
 	}
+	return 0;
 }

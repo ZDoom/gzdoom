@@ -30,8 +30,6 @@
 ** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **---------------------------------------------------------------------------
 **
-** It might be a good idea to move these into files that they are more
-** closely related to, but right now, I am too lazy to do that.
 */
 
 #include <math.h>
@@ -458,9 +456,9 @@ CCMD (exec)
 	}
 }
 
-void execLogfile(const char *fn)
+void execLogfile(const char *fn, bool append)
 {
-	if ((Logfile = fopen(fn, "w")))
+	if ((Logfile = fopen(fn, append? "a" : "w")))
 	{
 		const char *timestr = myasctime();
 		Printf("Log started: %s\n", timestr);
@@ -484,7 +482,7 @@ CCMD (logfile)
 
 	if (argv.argc() >= 2)
 	{
-		execLogfile(argv[1]);
+		execLogfile(argv[1], argv.argc() >=3? !!argv[2]:false);
 	}
 }
 
@@ -605,7 +603,7 @@ CCMD (special)
 			}
 		}
 		Net_WriteByte(DEM_RUNSPECIAL);
-		Net_WriteByte(specnum);
+		Net_WriteWord(specnum);
 		Net_WriteByte(argc - 2);
 		for (int i = 2; i < argc; ++i)
 		{
@@ -929,8 +927,8 @@ static void PrintFilteredActorList(const ActorTypeChecker IsActorType, const cha
 
 	if (FilterName != NULL)
 	{
-		FilterClass = PClass::FindClass(FilterName);
-		if (FilterClass == NULL || FilterClass->ActorInfo == NULL)
+		FilterClass = PClass::FindActor(FilterName);
+		if (FilterClass == NULL)
 		{
 			Printf("%s is not an actor class.\n", FilterName);
 			return;
@@ -1083,8 +1081,43 @@ CCMD(nextsecret)
 CCMD(currentpos)
 {
 	AActor *mo = players[consoleplayer].mo;
-	Printf("Current player position: (%1.3f,%1.3f,%1.3f), angle: %1.3f, floorheight: %1.3f, sector:%d, lightlevel: %d\n",
-		FIXED2FLOAT(mo->X()), FIXED2FLOAT(mo->Y()), FIXED2FLOAT(mo->Z()), mo->angle/float(ANGLE_1), FIXED2FLOAT(mo->floorz), mo->Sector->sectornum, mo->Sector->lightlevel);
+	if(mo)
+	{
+		Printf("Current player position: (%1.3f,%1.3f,%1.3f), angle: %1.3f, floorheight: %1.3f, sector:%d, lightlevel: %d\n",
+			FIXED2DBL(mo->X()), FIXED2DBL(mo->Y()), FIXED2DBL(mo->Z()), ANGLE2DBL(mo->angle), FIXED2DBL(mo->floorz), mo->Sector->sectornum, mo->Sector->lightlevel);
+	}
+	else
+	{
+		Printf("You are not in game!");
+	}
+}
+
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+CCMD(vmengine)
+{
+	if (argv.argc() == 2)
+	{
+		if (stricmp(argv[1], "default") == 0)
+		{
+			VMSelectEngine(VMEngine_Default);
+			return;
+		}
+		else if (stricmp(argv[1], "checked") == 0)
+		{
+			VMSelectEngine(VMEngine_Checked);
+			return;
+		}
+		else if (stricmp(argv[1], "unchecked") == 0)
+		{
+			VMSelectEngine(VMEngine_Unchecked);
+			return;
+		}
+	}
+	Printf("Usage: vmengine <default|checked|unchecked>\n");
 }
 
 //-----------------------------------------------------------------------------
@@ -1201,5 +1234,18 @@ CCMD(secret)
 			}
 			else inlevel = false;
 		}
+	}
+}
+
+CCMD(angleconvtest)
+{
+	Printf("Testing degrees to angle conversion:\n");
+	for (double ang = -5 * 180.; ang < 5 * 180.; ang += 45.)
+	{
+		angle_t ang1 = FLOAT2ANGLE(ang);
+		angle_t ang2 = (angle_t)(ang * (ANGLE_90 / 90.));
+		angle_t ang3 = (angle_t)(int)(ang * (ANGLE_90 / 90.));
+		Printf("Angle = %.5f: xs_RoundToInt = %08x, unsigned cast = %08x, signed cast = %08x\n",
+			ang, ang1, ang2, ang3);
 	}
 }

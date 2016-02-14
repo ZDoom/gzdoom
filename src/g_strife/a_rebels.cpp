@@ -22,10 +22,12 @@ static FRandom pr_shootgun ("ShootGun");
 
 DEFINE_ACTION_FUNCTION(AActor, A_ShootGun)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	int pitch;
 
 	if (self->target == NULL)
-		return;
+		return 0;
 
 	S_Sound (self, CHAN_WEAPON, "monsters/rifle", 1, ATTN_NORM);
 	A_FaceTarget (self);
@@ -33,6 +35,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ShootGun)
 	P_LineAttack (self, self->angle + (pr_shootgun.Random2() << 19),
 		MISSILERANGE, pitch,
 		3*(pr_shootgun() % 5 + 1), NAME_Hitscan, NAME_StrifePuff);
+	return 0;
 }
 
 // Teleporter Beacon --------------------------------------------------------
@@ -71,21 +74,23 @@ bool ATeleporterBeacon::Use (bool pickup)
 
 DEFINE_ACTION_FUNCTION(AActor, A_Beacon)
 {
+	PARAM_ACTION_PROLOGUE;
+
 	AActor *owner = self->target;
 	AActor *rebel;
 	angle_t an;
 
-	rebel = Spawn("Rebel1", self->x, self->y, self->floorz, ALLOW_REPLACE);
-	if (!P_TryMove (rebel, rebel->x, rebel->y, true))
+	rebel = Spawn("Rebel1", self->X(), self->Y(), self->floorz, ALLOW_REPLACE);
+	if (!P_TryMove (rebel, rebel->X(), rebel->Y(), true))
 	{
 		rebel->Destroy ();
-		return;
+		return 0;
 	}
 	// Once the rebels start teleporting in, you can't pick up the beacon anymore.
 	self->flags &= ~MF_SPECIAL;
 	static_cast<AInventory *>(self)->DropTime = 0;
 	// Set up the new rebel.
-	rebel->threshold = BASETHRESHOLD;
+	rebel->threshold = rebel->DefThreshold;
 	rebel->target = NULL;
 	rebel->flags4 |= MF4_INCOMBAT;
 	rebel->LastHeard = owner;	// Make sure the rebels look for targets
@@ -112,9 +117,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_Beacon)
 	rebel->SetState (rebel->SeeState);
 	rebel->angle = self->angle;
 	an = self->angle >> ANGLETOFINESHIFT;
-	Spawn<ATeleportFog> (rebel->x + 20*finecosine[an], rebel->y + 20*finesine[an], rebel->z + TELEFOGHEIGHT, ALLOW_REPLACE);
+	Spawn<ATeleportFog> (rebel->Vec3Offset(20*finecosine[an], 20*finesine[an], TELEFOGHEIGHT), ALLOW_REPLACE);
 	if (--self->health < 0)
 	{
 		self->SetState(self->FindState(NAME_Death));
 	}
+	return 0;
 }

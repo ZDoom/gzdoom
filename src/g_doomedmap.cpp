@@ -69,7 +69,7 @@ const char *SpecialMapthingNames[] = {
 	"$CopyCeilingPlane",
 	"$VertexFloorZ",
 	"$VertexCeilingZ",
-	"$EDFThing",
+	"$EDThing",
 
 };
 //==========================================================================
@@ -259,10 +259,10 @@ void InitActorNumsFromMapinfo()
 
 	while (it.NextPair(pair))
 	{
-		const PClass *cls = NULL;
+		PClassActor *cls = NULL;
 		if (pair->Value.classname != NAME_None)
 		{
-			cls = PClass::FindClass(pair->Value.classname);
+			cls = PClass::FindActor(pair->Value.classname);
 			if (cls == NULL)
 			{
 				Printf(TEXTCOLOR_RED "Script error, \"%s\" line %d:\nUnknown actor class %s\n",

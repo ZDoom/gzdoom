@@ -9,7 +9,16 @@
 #include "v_font.h"
 #include "farchive.h"
 
-IMPLEMENT_CLASS (APuzzleItem)
+IMPLEMENT_CLASS(PClassPuzzleItem)
+
+void PClassPuzzleItem::DeriveData(PClass *newclass)
+{
+	Super::DeriveData(newclass);
+	assert(newclass->IsKindOf(RUNTIME_CLASS(PClassPuzzleItem)));
+	static_cast<PClassPuzzleItem *>(newclass)->PuzzFailMessage = PuzzFailMessage;
+}
+
+IMPLEMENT_CLASS(APuzzleItem)
 
 void APuzzleItem::Serialize (FArchive &arc)
 {
@@ -37,9 +46,9 @@ bool APuzzleItem::Use (bool pickup)
 	S_Sound (Owner, CHAN_VOICE, "*puzzfail", 1, ATTN_IDLE);
 	if (Owner != NULL && Owner->CheckLocalView (consoleplayer))
 	{
-		const char *message = GetClass()->Meta.GetMetaString (AIMETA_PuzzFailMessage);
-		if (message != NULL && *message=='$') message = GStrings[message + 1];
-		if (message == NULL) message = GStrings("TXT_USEPUZZLEFAILED");
+		FString message = GetClass()->PuzzFailMessage;
+		if (message.IsNotEmpty() && message[0] == '$') message = GStrings[&message[1]];
+		if (message.IsEmpty()) message = GStrings("TXT_USEPUZZLEFAILED");
 		C_MidPrintBold (SmallFont, message);
 	}
 	return false;

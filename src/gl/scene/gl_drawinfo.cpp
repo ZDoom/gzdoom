@@ -767,11 +767,11 @@ void GLDrawList::DrawSorted()
 		sorted=DoSort(SortNodes[SortNodeStart]);
 	}
 	gl_RenderState.ClearClipSplit();
+	glEnable(GL_CLIP_DISTANCE1);
 	glEnable(GL_CLIP_DISTANCE2);
-	glEnable(GL_CLIP_DISTANCE3);
 	DoDrawSorted(sorted);
+	glDisable(GL_CLIP_DISTANCE1);
 	glDisable(GL_CLIP_DISTANCE2);
-	glDisable(GL_CLIP_DISTANCE3);
 	gl_RenderState.ClearClipSplit();
 }
 

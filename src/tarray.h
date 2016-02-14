@@ -52,6 +52,14 @@ class FArchive;
 
 // TArray -------------------------------------------------------------------
 
+// Must match TArray's layout.
+struct FArray
+{
+	void *Array;
+	unsigned int Most;
+	unsigned int Count;
+};
+
 // T is the type stored in the array.
 // TT is the type returned by operator().
 template <class T, class TT=T>
@@ -119,6 +127,22 @@ public:
 			Count = 0;
 			Most = 0;
 		}
+	}
+	// Check equality of two arrays
+	bool operator==(const TArray<T> &other) const
+	{
+		if (Count != other.Count)
+		{
+			return false;
+		}
+		for (unsigned int i = 0; i < Count; ++i)
+		{
+			if (Array[i] != other.Array[i])
+			{
+				return false;
+			}
+		}
+		return true;
 	}
 	// Return a reference to an element
 	T &operator[] (size_t index) const
@@ -358,6 +382,15 @@ public:
 				delete (*this)[i];
 		}
 	}
+	void DeleteAndClear()
+	{
+		for (unsigned int i = 0; i < TArray<T,TT>::Size(); ++i)
+		{
+			if ((*this)[i] != NULL) 
+				delete (*this)[i];
+		}
+		this->Clear();
+	}
 };
 
 // TAutoGrowArray -----------------------------------------------------------
@@ -428,9 +461,39 @@ template<class KT> struct THashTraits
 {
 	// Returns the hash value for a key.
 	hash_t Hash(const KT key) { return (hash_t)(intptr_t)key; }
+	hash_t Hash(double key)
+	{
+		hash_t keyhash[2];
+		memcpy(&keyhash, &key, sizeof(keyhash));
+		return keyhash[0] ^ keyhash[1];
+	}
 
 	// Compares two keys, returning zero if they are the same.
 	int Compare(const KT left, const KT right) { return left != right; }
+};
+
+template<> struct THashTraits<float>
+{
+	// Use all bits when hashing singles instead of converting them to ints.
+	hash_t Hash(float key)
+	{
+		hash_t keyhash;
+		memcpy(&keyhash, &key, sizeof(keyhash));
+		return keyhash;
+	}
+	int Compare(float left, float right) { return left != right; }
+};
+
+template<> struct THashTraits<double>
+{
+	// Use all bits when hashing doubles instead of converting them to ints.
+	hash_t Hash(double key)
+	{
+		hash_t keyhash[2];
+		memcpy(&keyhash, &key, sizeof(keyhash));
+		return keyhash[0] ^ keyhash[1];
+	}
+	int Compare(double left, double right) { return left != right; }
 };
 
 template<class VT> struct TValueTraits
@@ -441,6 +504,15 @@ template<class VT> struct TValueTraits
 	{
 		::new(&value) VT;
 	}
+};
+
+// Must match layout of TMap
+struct FMap
+{
+	void *Nodes;
+	void *LastFree;
+	hash_t Size;
+	hash_t NumUsed;
 };
 
 template<class KT, class VT, class MapType> class TMapIterator;

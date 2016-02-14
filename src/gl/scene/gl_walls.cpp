@@ -797,6 +797,7 @@ void GLWall::DoMidTexture(seg_t * seg, bool drawfogboundary,
 	GLSeg glsave=glseg;
 	fixed_t texturetop, texturebottom;
 	bool wrap = (seg->linedef->flags&ML_WRAP_MIDTEX) || (seg->sidedef->Flags&WALLF_WRAP_MIDTEX);
+	bool mirrory = false;
 
 	//
 	//
@@ -809,16 +810,22 @@ void GLWall::DoMidTexture(seg_t * seg, bool drawfogboundary,
 		// At this point slopes don't matter because they don't affect the texture's z-position
 
 		gltexture->GetTexCoordInfo(&tci, seg->sidedef->GetTextureXScale(side_t::mid), seg->sidedef->GetTextureYScale(side_t::mid));
-		fixed_t rowoffset = tci.RowOffset(seg->sidedef->GetTextureYOffset(side_t::mid));
-		if ( (seg->linedef->flags & ML_DONTPEGBOTTOM) >0)
+		if (tci.mRenderHeight < 0)
 		{
-			texturebottom = MAX(realfront->GetPlaneTexZ(sector_t::floor),realback->GetPlaneTexZ(sector_t::floor))+rowoffset;
-			texturetop=texturebottom+(tci.mRenderHeight << FRACBITS);
+			mirrory = true;
+			tci.mRenderHeight = -tci.mRenderHeight;
+			tci.mScaleY = -tci.mScaleY;
+		}
+		fixed_t rowoffset = tci.RowOffset(seg->sidedef->GetTextureYOffset(side_t::mid));
+		if ((seg->linedef->flags & ML_DONTPEGBOTTOM) >0)
+		{
+			texturebottom = MAX(realfront->GetPlaneTexZ(sector_t::floor), realback->GetPlaneTexZ(sector_t::floor)) + rowoffset;
+			texturetop = texturebottom + (tci.mRenderHeight << FRACBITS);
 		}
 		else
 		{
-			texturetop = MIN(realfront->GetPlaneTexZ(sector_t::ceiling),realback->GetPlaneTexZ(sector_t::ceiling))+rowoffset;
-			texturebottom=texturetop-(tci.mRenderHeight << FRACBITS);
+			texturetop = MIN(realfront->GetPlaneTexZ(sector_t::ceiling), realback->GetPlaneTexZ(sector_t::ceiling)) + rowoffset;
+			texturebottom = texturetop - (tci.mRenderHeight << FRACBITS);
 		}
 	}
 	else texturetop=texturebottom=0;
@@ -958,6 +965,11 @@ void GLWall::DoMidTexture(seg_t * seg, bool drawfogboundary,
 		{
 			flags|=GLT_CLAMPY;
 		}
+	}
+	if (mirrory)
+	{
+		tci.mRenderHeight = -tci.mRenderHeight;
+		tci.mScaleY = -tci.mScaleY;
 	}
 	SetWallCoordinates(seg, &tci, FIXED2FLOAT(texturetop), topleft, topright, bottomleft, bottomright, t_ofs);
 

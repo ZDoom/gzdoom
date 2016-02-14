@@ -18,6 +18,7 @@ CVAR(Int, sv_portal_recursions, 4, CVAR_ARCHIVE|CVAR_SERVERINFO)
 FDisplacementTable Displacements;
 
 TArray<FLinePortal> linePortals;
+TArray<FLinePortal*> linkedPortals;	// only the linked portals, this is used to speed up looking for them in P_CollectConnectedGroups.
 
 
 FArchive &operator<< (FArchive &arc, FLinePortal &port)
@@ -168,6 +169,19 @@ void P_UpdatePortal(FLinePortal *port)
  	}
 }
 
+void P_CollectLinkedPortals()
+{
+	linkedPortals.Clear();
+	for (unsigned i = 0; i < linePortals.Size(); i++)
+	{
+		FLinePortal * port = &linePortals[i];
+		if (port->mType == PORTT_LINKED)
+		{
+			linkedPortals.Push(port);
+		}
+	}
+}
+
 void P_FinalizePortals()
 {
 	for (unsigned i = 0; i < linePortals.Size(); i++)
@@ -175,6 +189,7 @@ void P_FinalizePortals()
 		FLinePortal * port = &linePortals[i];
 		P_UpdatePortal(port);
 	}
+	P_CollectLinkedPortals();
 }
 
 static bool ChangePortalLine(line_t *line, int destid)
@@ -839,6 +854,88 @@ void P_CreateLinkedPortals()
 	//BuildBlockmap();
 }
 
+
+//============================================================================
+//
+// Collect all portal groups this actor would occupy at the given position
+// This is used to determine which parts of the map need to be checked.
+//
+//============================================================================
+
+bool P_CollectConnectedGroups(AActor *actor, fixed_t newx, fixed_t newy, FPortalGroupTable &out)
+{
+	TArray<FLinePortal*> foundPortals;
+	bool retval = false;
+	if (linePortals.Size() == 0)
+	{
+		return false;
+	}
+	out.setSize(Displacements.size);
+	out.setBit(actor->Sector->PortalGroup);
+	//FBoundingBox box(newx, newy, actor->radius);
+	int thisgroup = actor->Sector->PortalGroup;
+	for (unsigned i = 0; i < linePortals.Size(); i++)
+	{
+		if (linePortals[i].mType != PORTT_LINKED) continue;	// not a linked portal
+		line_t *ld = linePortals[i].mOrigin;
+		int othergroup = ld->frontsector->PortalGroup;
+		FDisplacement &disp = Displacements(thisgroup, othergroup);
+		if (!disp.isSet) continue;	// no connection.
+
+		FBoundingBox box(newx + disp.x, newy + disp.y, actor->radius);
+
+		if (box.Right() <= ld->bbox[BOXLEFT]
+			|| box.Left() >= ld->bbox[BOXRIGHT]
+			|| box.Top() <= ld->bbox[BOXBOTTOM]
+			|| box.Bottom() >= ld->bbox[BOXTOP])
+			continue;	// not touched
+
+		if (box.BoxOnLineSide(linePortals[i].mOrigin) != -1) continue;	// not touched
+		foundPortals.Push(&linePortals[i]);
+	}
+	bool foundone = true;
+	while (foundone)
+	{
+		foundone = false;
+		for (int i = foundPortals.Size() - 1; i >= 0; i--)
+		{
+			if (out.getBit(foundPortals[i]->mOrigin->frontsector->PortalGroup) && 
+				!out.getBit(foundPortals[i]->mDestination->frontsector->PortalGroup))
+			{
+				out.setBit(foundPortals[i]->mDestination->frontsector->PortalGroup);
+				foundone = true;
+				retval = true;
+				foundPortals.Delete(i);
+			}
+		}
+	}
+	sector_t *sec = P_PointInSector(newx, newy);
+	sector_t *wsec = sec;
+	while (!wsec->PortalBlocksMovement(sector_t::ceiling) && actor->Top() > wsec->SkyBoxes[sector_t::ceiling]->threshold)
+	{
+		sector_t *othersec = wsec->SkyBoxes[sector_t::ceiling]->Sector;
+		FDisplacement &disp = Displacements(actor->Sector->PortalGroup, othersec->PortalGroup);
+		fixed_t dx = newx + disp.x;
+		fixed_t dy = newx + disp.y;
+		out.setBit(othersec->PortalGroup);
+		wsec = P_PointInSector(dx, dy);	// get upper sector at the exact spot we want to check and repeat,
+		retval = true;
+	}
+	wsec = sec;
+	while (!wsec->PortalBlocksMovement(sector_t::floor) && actor->Z() < wsec->SkyBoxes[sector_t::floor]->threshold)
+	{
+		sector_t *othersec = wsec->SkyBoxes[sector_t::ceiling]->Sector;
+		FDisplacement &disp = Displacements(actor->Sector->PortalGroup, othersec->PortalGroup);
+		fixed_t dx = newx + disp.x;
+		fixed_t dy = newx + disp.y;
+		out.setBit(othersec->PortalGroup);
+		wsec = P_PointInSector(dx, dy);	// get lower sector at the exact spot we want to check and repeat,
+		retval = true;
+	}
+	return retval;
+}
+
+
 CCMD(dumplinktable)
 {
 	for (int x = 1; x < Displacements.size; x++)
@@ -851,6 +948,7 @@ CCMD(dumplinktable)
 		Printf("\n");
 	}
 }
+
 
 
 

@@ -524,6 +524,7 @@ void P_SerializeWorld (FArchive &arc)
 	{
 		linePortals.Clear();
 	}
+	P_CollectLinkedPortals();
 }
 
 void extsector_t::Serialize(FArchive &arc)

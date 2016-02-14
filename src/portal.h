@@ -7,6 +7,7 @@
 #include "actor.h"
 #include "p_local.h"
 #include "m_bbox.h"
+#include "a_sharedglobal.h"
 
 struct FDisplacement
 {
@@ -30,6 +31,40 @@ struct FDisplacementTable
 	FDisplacement &operator()(int x, int y)
 	{
 		return data[x + size*y];
+	}
+};
+
+extern FDisplacementTable Displacements;
+
+struct FPortalGroupTable
+{
+	TArray<DWORD> data;
+	TArray<int> touchingGroups;
+
+	void setSize(int num)
+	{
+		data.Resize((num + 31) / 32);
+		memset(&data[0], 0, data.Size()*sizeof(DWORD));
+	}
+
+	void clear()
+	{
+		data.Clear();
+		touchingGroups.Clear();
+	}
+
+	void setBit(int group)
+	{
+		if (!getBit(group))
+		{
+			data[group >> 5] |= (1 << (group & 31));
+			touchingGroups.Push(group);
+		}
+	}
+
+	int getBit(int group)
+	{
+		return data[group >> 5] & (1 << (group & 31));
 	}
 };
 
@@ -60,6 +95,12 @@ enum
 	PORG_CEILING,
 };
 
+enum
+{
+	PCOLL_NOTLINKED = 1,
+	PCOLL_LINKED = 2
+};
+
 struct FLinePortal
 {
 	line_t *mOrigin;
@@ -78,6 +119,12 @@ void P_SpawnLinePortal(line_t* line);
 void P_FinalizePortals();
 bool P_ChangePortal(line_t *ln, int thisid, int destid);
 void P_CreateLinkedPortals();
+bool P_CollectConnectedGroups(AActor *actor, fixed_t newx, fixed_t newy, FPortalGroupTable &out);
+void P_CollectLinkedPortals();
+inline int P_NumPortalGroups()
+{
+	return Displacements.size;
+}
 
 
 /* code ported from prototype */
@@ -143,6 +190,24 @@ inline line_t *line_t::getPortalDestination() const
 inline int line_t::getPortalAlignment() const
 {
 	return portalindex >= linePortals.Size() ? 0 : linePortals[portalindex].mAlign;
+}
+
+inline bool sector_t::PortalBlocksView(int plane)
+{
+	if (SkyBoxes[plane] == NULL || SkyBoxes[plane]->special1 != SKYBOX_LINKEDPORTAL) return true;
+	return !!(planes[plane].Flags & (PLANEF_NORENDER | PLANEF_DISABLED | PLANEF_OBSTRUCTED));
+}
+
+inline bool sector_t::PortalBlocksMovement(int plane)
+{
+	if (SkyBoxes[plane] == NULL || SkyBoxes[plane]->special1 != SKYBOX_LINKEDPORTAL) return true;
+	return !!(planes[plane].Flags & (PLANEF_NOPASS | PLANEF_DISABLED | PLANEF_OBSTRUCTED));
+}
+
+inline bool sector_t::PortalBlocksSound(int plane)
+{
+	if (SkyBoxes[plane] == NULL || SkyBoxes[plane]->special1 != SKYBOX_LINKEDPORTAL) return true;
+	return !!(planes[plane].Flags & (PLANEF_BLOCKSOUND | PLANEF_DISABLED | PLANEF_OBSTRUCTED));
 }
 
 #endif

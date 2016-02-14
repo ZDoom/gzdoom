@@ -1554,7 +1554,17 @@ TXT_COMM0			= "Incoming Message";
 TXT_COMM1			= "Incoming Message from BlackBird";
 
 
-// Skills:
+// Menu Strings
+
+// Main Menu
+MNU_NEWGAME			= "NEW GAME";
+MNU_OPTIONS			= "OPTIONS";
+MNU_GAMEFILES		= "GAME FILES";
+MNU_INFO			= "INFO";
+MNU_QUITGAME		= "QUIT GAME";
+
+// Skills
+MNU_CHOOSESKILL		= "CHOOSE SKILL LEVEL:";
 
 SKILL_BABY			= "I'm too young to die";
 SKILL_EASY			= "Hey, not too rough";
@@ -1574,39 +1584,11 @@ SSKILL_NORMAL		= "Veteran";
 SSKILL_HARD			= "Elite";
 SSKILL_NIGHTMARE	= "Bloodbath";
 
-// Menu
-MNU_NEWGAME			= "NEW GAME";
-MNU_OPTIONS			= "OPTIONS";
-MNU_GAMEFILES		= "GAME FILES";
-MNU_INFO			= "INFO";
-MNU_QUITGAME		= "QUIT GAME";
-
-MNU_FIGHTER			= "FIGHTER";
-MNU_CLERIC			= "CLERIC";
-MNU_MAGE			= "MAGE";
-MNU_RANDOM			= "RANDOM";
-
-MNU_LOADGAME		= "LOAD GAME";
-MNU_SAVEGAME		= "SAVE GAME";
-
-MNU_COTD			= "CITY OF THE DAMNED";
-MNU_HELLSMAW		= "HELL'S MAW";
-MNU_DOME			= "THE DOME OF D'SPARIL";
-MNU_OSSUARY			= "THE OSSUARY";
-MNU_DEMESNE			= "THE STAGNANT DEMESNE";
-
 MNU_WETNURSE		= "THOU NEEDETH A WET-NURSE";
 MNU_YELLOWBELLIES	= "YELLOWBELLIES-R-US";
 MNU_BRINGEST		= "BRINGEST THEM ONETH";
 MNU_SMITE			= "THOU ART A SMITE-MEISTER";
 MNU_BLACKPLAGUE		= "BLACK PLAGUE POSSESSES THEE";
-
-MNU_NOPICTURE		= "No Picture";
-MNU_DIFFVERSION		= "Different\nVersion";
-MNU_NOFILES			= "No files";
-
-MNU_CHOOSECLASS		= "CHOOSE CLASS:";
-MNU_CHOOSESKILL		= "CHOOSE SKILL LEVEL:";
 
 MNU_SQUIRE			= "SQUIRE";
 MNU_KNIGHT			= "KNIGHT";
@@ -1626,13 +1608,725 @@ MNU_SORCERER        = "SORCERER";
 MNU_WARLOCK			= "WARLOCK";
 MNU_ARCHMAGE		= "ARCHMAGE";
 
-MNU_PLAYERSETUP		= "PLAYER SETUP";
+// Classes
+MNU_CHOOSECLASS		= "CHOOSE CLASS:";
+MNU_FIGHTER			= "FIGHTER";
+MNU_CLERIC			= "CLERIC";
+MNU_MAGE			= "MAGE";
+MNU_RANDOM			= "RANDOM";
 
+// Game Files
+MNU_LOADGAME		= "LOAD GAME";
+MNU_SAVEGAME		= "SAVE GAME";
+MNU_NOPICTURE		= "No Picture";
+MNU_DIFFVERSION		= "Different\nVersion";
+MNU_NOFILES			= "No files";
 MNU_DELETESG		= "Do you really want to delete the savegame\n";
 
+// Episodes
+MNU_EPISODE			= "Select Episode";
+MNU_COTD			= "CITY OF THE DAMNED";
+MNU_HELLSMAW		= "HELL'S MAW";
+MNU_DOME			= "THE DOME OF D'SPARIL";
+MNU_OSSUARY			= "THE OSSUARY";
+MNU_DEMESNE			= "THE STAGNANT DEMESNE";
 $ifgame(heretic) SWSTRING = "ONLY AVAILABLE IN THE REGISTERED VERSION";
 
-MNU_EPISODE			= "Select Episode";
+// Options Menu
+OPTMNU_TITLE				= "OPTIONS";
+OPTMNU_CONTROLS				= "Customize Controls";
+OPTMNU_MOUSE				= "Mouse options";
+OPTMNU_JOYSTICK				= "Joystick options";
+OPTMNU_PLAYER				= "Player Setup";
+OPTMNU_GAMEPLAY				= "Gameplay Options";
+OPTMNU_COMPATIBILITY		= "Compatibility Options";
+OPTMNU_AUTOMAP				= "Automap Options";
+OPTMNU_HUD					= "HUD Options";
+OPTMNU_MISCELLANEOUS		= "Miscellaneous Options";
+OPTMNU_NETWORK				= "Network Options";
+OPTMNU_SOUND				= "Sound Options";
+OPTMNU_DISPLAY				= "Display Options";
+OPTMNU_VIDEO				= "Set video mode";
+OPTMNU_DEFAULTS				= "Reset to defaults";
+OPTMNU_RESETTOSAVED			= "Reset to last saved";
+OPTMNU_CONSOLE				= "Go to console";
+
+// Controls Menu
+
+CNTRLMNU_TITLE					= "CUSTOMIZE CONTROLS";
+CNTRLMNU_SWITCHTEXT1			= "ENTER to change, BACKSPACE to clear";
+CNTRLMNU_SWITCHTEXT2			= "Press new key for control, ESC to cancel";
+CNTRLMNU_CONTROLS				= "Controls";
+CNTRLMNU_ATTACK					= "Fire";
+CNTRLMNU_ALTATTACK				= "Secondary Fire";
+CNTRLMNU_RELOAD					= "Weapon Reload";
+CNTRLMNU_ZOOM					= "Weapon Zoom";
+CNTRLMNU_USER1					= "Weapon State 1";
+CNTRLMNU_USER2					= "Weapon State 2";
+CNTRLMNU_USER3					= "Weapon State 3";
+CNTRLMNU_USER4					= "Weapon State 4";
+CNTRLMNU_USE					= "Use / Open";
+CNTRLMNU_FORWARD				= "Move forward";
+CNTRLMNU_BACK					= "Move backward";
+CNTRLMNU_MOVELEFT				= "Strafe left";
+CNTRLMNU_MOVERIGHT				= "Strafe right";
+CNTRLMNU_TURNLEFT				= "Turn left";
+CNTRLMNU_TURNRIGHT				= "Turn right";
+CNTRLMNU_TURN180				= "Quick Turn";
+CNTRLMNU_JUMP					= "Jump";
+CNTRLMNU_CROUCH					= "Crouch";
+CNTRLMNU_TOGGLECROUCH			= "Crouch Toggle";
+CNTRLMNU_MOVEUP					= "Fly / Swim up";
+CNTRLMNU_MOVEDOWN				= "Fly / Swim down";
+CNTRLMNU_LAND					= "Stop flying";
+CNTRLMNU_MOUSELOOK				= "Mouse look";
+CNTRLMNU_KEYBOARDLOOK			= "Keyboard look";
+CNTRLMNU_LOOKUP					= "Look up";
+CNTRLMNU_LOOKDOWN				= "Look down";
+CNTRLMNU_CENTERVIEW				= "Center view";
+CNTRLMNU_RUN					= "Run";
+CNTRLMNU_TOGGLERUN				= "Toggle Run";
+CNTRLMNU_STRAFE					= "Strafe";
+CNTRLMNU_SCOREBOARD				= "Show Scoreboard";
+CNTRLMNU_TOGGLESCOREBOARD		= "Toggle Scoreboard";
+CNTRLMNU_CHAT					= "Chat";
+CNTRLMNU_SAY					= "Say";
+CNTRLMNU_TEAMSAY				= "Team say";
+CNTRLMNU_WEAPONS				= "Weapons";
+CNTRLMNU_NEXTWEAPON				= "Next weapon";
+CNTRLMNU_PREVIOUSWEAPON			= "Previous weapon";
+CNTRLMNU_SLOT1					= "Weapon Slot 1";
+CNTRLMNU_SLOT2					= "Weapon Slot 2";
+CNTRLMNU_SLOT3					= "Weapon Slot 3";
+CNTRLMNU_SLOT4					= "Weapon Slot 4";
+CNTRLMNU_SLOT5					= "Weapon Slot 5";
+CNTRLMNU_SLOT6					= "Weapon Slot 6";
+CNTRLMNU_SLOT7					= "Weapon Slot 7";
+CNTRLMNU_SLOT8					= "Weapon Slot 8";
+CNTRLMNU_SLOT9					= "Weapon Slot 9";
+CNTRLMNU_SLOT0					= "Weapon Slot 0";
+CNTRLMNU_INVENTORY				= "Inventory";
+CNTRLMNU_USEITEM				= "Activate item";
+CNTRLMNU_USEALLITEMS			= "Activate all items";
+CNTRLMNU_NEXTITEM				= "Next item";
+CNTRLMNU_PREVIOUSITEM			= "Previous item";
+CNTRLMNU_DROPITEM				= "Drop item";
+CNTRLMNU_QUERYITEM				= "Query item";
+CNTRLMNU_DROPWEAPON				= "Drop weapon";
+CNTRLMNU_OTHER					= "Other";
+CNTRLMNU_AUTOMAP				= "Toggle automap";
+CNTRLMNU_CHASECAM				= "Chasecam";
+CNTRLMNU_COOPSPY				= "Coop spy";
+CNTRLMNU_SCREENSHOT				= "Screenshot";
+CNTRLMNU_CONSOLE				= "Open console";
+CNTRLMNU_POPUPS					= "Strife Popup Screens";
+CNTRLMNU_MISSION				= "Mission objectives";
+CNTRLMNU_KEYS					= "Keys list";
+CNTRLMNU_STATS					= "Weapons/ammo/stats";
+
+// Mouse Menu
+
+MOUSEMNU_TITLE				= "MOUSE OPTIONS";
+MOUSEMNU_ENABLEMOUSE		= "Enable mouse";
+MOUSEMNU_MOUSEINMENU		= "Enable mouse in menus";
+MOUSEMNU_SHOWBACKBUTTON		= "Show back button";
+MOUSEMNU_CURSOR				= "Cursor";
+MOUSEMNU_SENSITIVITY		= "Overall sensitivity";
+MOUSEMNU_NOPRESCALE			= "Prescale mouse movement";
+MOUSEMNU_SMOOTHMOUSE		= "Smooth mouse movement";
+MOUSEMNU_TURNSPEED			= "Turning speed";
+MOUSEMNU_MOUSELOOKSPEED		= "Mouselook speed";
+MOUSEMNU_FORWBACKSPEED		= "Forward/Backward speed";
+MOUSEMNU_STRAFESPEED		= "Strafing speed";
+MOUSEMNU_ALWAYSMOUSELOOK	= "Always Mouselook";
+MOUSEMNU_INVERTMOUSE		= "Invert Mouse";
+MOUSEMNU_LOOKSPRING			= "Lookspring";
+MOUSEMNU_LOOKSTRAFE			= "Lookstrafe";
+
+// Joystick Menu
+
+JOYMNU_CONFIG				= "CONFIGURE CONTROLLER";
+JOYMNU_OPTIONS				= "CONTROLLER OPTIONS";
+
+// Player Setup Menu
+PLYRMNU_PLAYERSETUP		= "PLAYER SETUP";
+PLYRMNU_NAME			= "Name";
+PLYRMNU_TEAM			= "Team";
+PLYRMNU_PLAYERCOLOR		= "Color";
+PLYRMNU_RED				= "Red";
+PLYRMNU_GREEN			= "Green";
+PLYRMNU_BLUE			= "Blue";
+PLYRMNU_PLAYERCLASS		= "Class";
+PLYRMNU_PLAYERSKIN		= "Skin";
+PLYRMNU_PLAYERGENDER	= "Gender";
+PLYRMNU_AUTOAIM			= "Autoaim";
+PLYRMNU_SWITCHONPICKUP	= "Switch on pickup";
+PLYRMNU_ALWAYSRUN		= "Always Run";
+
+// Display Options
+DSPLYMNU_TITLE					= "DISPLAY OPTIONS";
+DSPLYMNU_SCOREBOARD				= "Scoreboard Options";
+DSPLYMNU_SCREENSIZE				= "Screen size";
+DSPLYMNU_BRIGHTNESS				= "Brightness";
+DSPLYMNU_VSYNC					= "Vertical Sync";
+DSPLYMNU_CAPFPS					= "Rendering Interpolation";
+DSPLYMNU_COLUMNMETHOD			= "Column render mode";
+DSPLYMNU_WIPETYPE				= "Screen wipe style";
+DSPLYMNU_SHOWENDOOM				= "Show ENDOOM screen";
+DSPLYMNU_PALLETEHACK			= "DirectDraw palette hack"; // Not used
+DSPLYMNU_ATTACHEDSURFACES		= "Use attached surfaces"; // Not used
+DSPLYMNU_STRETCHSKY				= "Stretch short skies";
+DSPLYMNU_DRAWFUZZ				= "Use fuzz effect";
+DSPLYMNU_TRANSSOUL				= "Lost Soul translucency";
+DSPLYMNU_FAKECONTRAST			= "Use fake contrast";
+DSPLYMNU_ROCKETTRAILS			= "Rocket Trails";
+DSPLYMNU_BLOODTYPE				= "Blood Type";
+DSPLYMNU_PUFFTYPE				= "Bullet Puff Type";
+DSPLYMNU_MAXPARTICLES			= "Number of particles";
+DSPLYMNU_MAXDECALS				= "Number of decals";
+DSPLYMNU_PLAYERSPRITES			= "Show player sprites";
+DSPLYMNU_DEATHCAM				= "Death camera";
+DSPLYMNU_TELEZOOM				= "Teleporter zoom";
+DSPLYMNU_QUAKEINTENSITY			= "Earthquake shake intensity";
+DSPLYMNU_NOMONSTERINTERPOLATION	= "Interpolate monster movement";
+DSPLYMNU_MENUDIM				= "Menu dim";
+DSPLYMNU_DIMCOLOR				= "Dim color";
+
+// HUD Options
+HUDMNU_TITLE					= "HUD Options";
+HUDMNU_ALTHUD					= "Alternative HUD";
+HUDMNU_MESSAGE					= "Message Options";
+HUDMNU_CROSSHAIR				= "Default Crosshair";
+HUDMNU_FORCECROSSHAIR			= "Force default crosshair";
+HUDMNU_GROWCROSSHAIR			= "Grow crosshair when picking up items";
+HUDMNU_CROSSHAIRCOLOR			= "Crosshair color";
+HUDMNU_CROSSHAIRHEALTH			= "Crosshair shows health";
+HUDMNU_CROSSHAIRSCALE			= "Scale crosshair";
+HUDMNU_NAMETAGS					= "Display nametags";
+HUDMNU_NAMETAGCOLOR				= "Nametag color";
+HUDMNU_SCALESTATBAR				= "Stretch status bar";
+HUDMNU_SCALEFULLSCREENHUD		= "Stretch Fullscreen HUD";
+HUDMNU_OLDOUCH					= "Use old ouch mug shot formula";
+HUDMNU_HEXENFLASHES				= "Hexen weapon flashes";
+HUDMNU_POISONFLASHES			= "Poison damage flashes";
+HUDMNU_ICEFLASHES				= "Ice death flashes";
+HUDMNU_HAZARDFLASHES			= "Poison Buildup flashes";
+
+// AltHUD Options
+ALTHUDMNU_TITLE					= "Alternative HUD";
+ALTHUDMNU_ENABLE				= "Enable alternative HUD";
+ALTHUDMNU_SCALEHUD				= "Stretch alternative HUD";
+ALTHUDMNU_SHOWSECRETS			= "Show secret count";
+ALTHUDMNU_SHOWMONSTERS			= "Show monster count";
+ALTHUDMNU_SHOWITEMS				= "Show item count";
+ALTHUDMNU_SHOWSTATS				= "Show stamina and accuracy";
+ALTHUDMNU_SHOWBERSERK			= "Show berserk";
+ALTHUDMNU_SHOWWEAPONS			= "Show weapons";
+ALTHUDMNU_SHOWAMMO				= "Show ammo for";
+ALTHUDMNU_SHOWTIME				= "Show time";
+ALTHUDMNU_TIMECOLOR				= "Time color";
+ALTHUDMNU_SHOWLAG				= "Show network latency";
+ALTHUDMNU_AMMORED				= "Red ammo display below %";
+ALTHUDMNU_AMMOYELLOW			= "Yellow ammo display below %";
+ALTHUDMNU_HEALTHRED				= "Red health display below";
+ALTHUDMNU_HEALTHYELLOW			= "Yellow health display below";
+ALTHUDMNU_HEALTHGREEN			= "Green health display below";
+ALTHUDMNU_ARMORRED				= "Red armor display below";
+ALTHUDMNU_ARMORYELLOW			= "Yellow armor display below";
+ALTHUDMNU_ARMORGREEN			= "Green armor display below";
+ALTHUDMNU_AUTOMAPHUD			= "Alternative Automap HUD";
+ALTHUDMNU_TITLECOLOR			= "Map title color";
+ALTHUDMNU_MAPTIMECOLOR			= "Map time color";
+ALTHUDMNU_HUBTIMECOLOR			= "Hub time color";
+ALTHUDMNU_TOTALTIMECOLOR		= "Total time color";
+ALTHUDMNU_COORDINATECOLOR		= "Coordinate color";
+ALTHUDMNU_COORDINATEMODE		= "Coordinate mode";
+ALTHUDMNU_STATSNAMECOLOR		= "Statistics name color";
+ALTHUDMNU_STATSCOLOR			= "Statistics color";
+
+// Misc. Options
+MISCMNU_TITLE					= "Miscellaneous Options";
+MISCMNU_MERGEKEYS				= "Merge left+right Alt/Ctrl/Shift";
+MISCMNU_WINFULLSCREENTOGGLE		= "Alt-Enter toggles fullscreen";
+MISCMNU_MACFULLSCREENTOGGLE		= "Command-F toggles fullscreen";
+MISCMNU_QUERYIWAD				= "Show IWAD selection dialog";
+MISCMNU_ALLCHEATS				= "Enable cheats from all games";
+MISCMNU_ENABLEAUTOSAVES			= "Enable autosaves";
+MISCMNU_AUTOSAVECOUNT			= "Number of autosaves";
+MISCMNU_DEHLOAD					= "Load *.deh/*.bex lumps";
+MISCMNU_CACHENODES				= "Cache nodes";
+MISCMNU_CACHETIME				= "Time threshold for node caching";
+MISCMNU_CLEARNODECACHE			= "Clear node cache";
+
+// Automap Options
+AUTOMAPMNU_TITLE				= "AUTOMAP OPTIONS";
+AUTOMAPMNU_COLORSET				= "Map color set";
+AUTOMAPMNU_CUSTOMCOLORS			= "Allow map defined colors";
+AUTOMAPMNU_SETCUSTOMCOLORS		= "Set custom colors";
+AUTOMAPMNU_CONTROLS				= "Customize map controls";
+AUTOMAPMNU_ROTATE				= "Rotate automap";
+AUTOMAPMNU_OVERLAY				= "Overlay automap";
+AUTOMAPMNU_TEXTURED				= "Enable textured display";
+AUTOMAPMNU_FOLLOW				= "Follow player";
+AUTOMAPMNU_SHOWITEMS			= "Show item counts";
+AUTOMAPMNU_SHOWMONSTERS			= "Show monster counts";
+AUTOMAPMNU_SHOWSECRETS			= "Show secret counts";
+AUTOMAPMNU_SHOWTIME				= "Show time elapsed";
+AUTOMAPMNU_SHOWTOTALTIME		= "Show total time elapsed";
+AUTOMAPMNU_MAPSECRETS			= "Show secrets on map";
+AUTOMAPMNU_SHOWMAPLABEL			= "Show map label";
+AUTOMAPMNU_DRAWMAPBACK			= "Draw map background";
+AUTOMAPMNU_SHOWKEYS				= "Show keys (cheat)";
+AUTOMAPMNU_SHOWTRIGGERLINES		= "Show trigger lines";
+AUTOMAPMNU_SHOWTHINGSPRITES		= "Show things as sprites";
+
+// Automap Controls
+MAPCNTRLMNU_TITLE 			= "CUSTOMIZE MAP CONTROLS";
+MAPCNTRLMNU_CONTROLS		= "Map Controls";
+MAPCNTRLMNU_PANLEFT			= "Pan left";
+MAPCNTRLMNU_PANRIGHT		= "Pan right";
+MAPCNTRLMNU_PANUP			= "Pan up";
+MAPCNTRLMNU_PANDOWN			= "Pan down";
+MAPCNTRLMNU_ZOOMIN			= "Zoom in";
+MAPCNTRLMNU_ZOOMOUT			= "Zoom out";
+MAPCNTRLMNU_TOGGLEZOOM		= "Toggle zoom";
+MAPCNTRLMNU_TOGGLEFOLLOW	= "Toggle follow";
+MAPCNTRLMNU_TOGGLEGRID		= "Toggle grid";
+MAPCNTRLMNU_TOGGLETEXTURE	= "Toggle texture";
+MAPCNTRLMNU_SETMARK			= "Set mark";
+MAPCNTRLMNU_CLEARMARK		= "Clear mark";
+
+// Automap Colors
+MAPCOLORMNU_TITLE 						= "CUSTOMIZE MAP COLORS";
+MAPCOLORMNU_DEFAULTMAPCOLORS			= "Restore default custom colors";
+MAPCOLORMNU_BACKCOLOR 					= "Background";
+MAPCOLORMNU_YOURCOLOR 					= "You";
+MAPCOLORMNU_WALLCOLOR 					= "1-sided walls";	
+MAPCOLORMNU_FDWALLCOLOR 				= "2-sided walls with different floors";		
+MAPCOLORMNU_CDWALLCOLOR 				= "2-sided walls with different ceilings";
+MAPCOLORMNU_EFWALLCOLOR 				= "2-sided walls with 3D floors";	
+MAPCOLORMNU_GRIDCOLOR 					= "Map grid";
+MAPCOLORMNU_XHAIRCOLOR 					= "Center point";
+MAPCOLORMNU_NOTSEENCOLOR 				= "Not-yet-seen walls";		
+MAPCOLORMNU_LOCKEDCOLOR 				= "Locked doors";
+MAPCOLORMNU_INTRALEVELCOLOR				= "Teleporter to the same map";
+MAPCOLORMNU_INTERLEVELCOLOR 			= "Teleporter to a different map";
+MAPCOLORMNU_SECRETSECTORCOLOR 			= "Secret sector";
+MAPCOLORMNU_SPECIALWALLCOLOR			= "Special trigger lines";
+MAPCOLORMNU_CHEATMODE					= "Cheat Mode";
+MAPCOLORMNU_TSWALLCOLOR					= "Invisible 2-sided walls";	
+MAPCOLORMNU_SECRETWALLCOLOR				= "Secret walls";
+MAPCOLORMNU_THINGCOLOR					= "Actors";
+MAPCOLORMNU_MONSTERCOLOR				= "Monsters";
+MAPCOLORMNU_NONCOUNTINGMONSTERCOLOR 	= "non-counting Monsters";
+MAPCOLORMNU_FRIENDCOLOR 				= "Friends";
+MAPCOLORMNU_ITEMCOLOR 					= "Items";
+MAPCOLORMNU_COUNTITEMCOLOR 				= "Count Items";
+MAPCOLORMNU_OVERLAY 					= "Overlay Mode";
+MAPCOLORMNU_OVCHEATMODE 				= "Overlay Cheat Mode";
+
+// Message Options
+MSGMNU_TITLE				= "MESSAGES";
+MSGMNU_SHOWMESSAGES			= "Show messages";
+MSGMNU_SHOWOBITUARIES		= "Show obituaries";
+MSGMNU_SHOWSECRETS			= "Show secret notifications";
+MSGMNU_SCALETEXT			= "Scale text in high res";
+MSGMNU_MESSAGELEVEL			= "Minimum message level";
+MSGMNU_CENTERMESSAGES		= "Center messages";
+MSGMNU_MESSAGECOLORS		= "Message Colors";
+MSGMNU_ITEMPICKUP			= "Item Pickup";
+MSGMNU_OBITUARIES			= "Obituaries";
+MSGMNU_CRITICALMESSAGES		= "Critical Messages";
+MSGMNU_CHATMESSAGES			= "Chat Messages";
+MSGMNU_TEAMMESSAGES			= "Team Messages";
+MSGMNU_CENTEREDMESSAGES		= "Centered Messages";
+MSGMNU_SCREENSHOTMESSAGES	= "Screenshot messages";
+MSGMNU_LONGSAVEMESSAGES		= "Detailed save messages";
+
+// Scoreboard Options
+SCRBRDMNU_TITLE				= "SCOREBOARD OPTIONS";
+SCRBRDMNU_COOPERATIVE		= "Cooperative Options";
+SCRBRDMNU_ENABLE			= "Enable Scoreboard";
+SCRBRDMNU_HEADERCOLOR		= "Header Color";
+SCRBRDMNU_YOURCOLOR			= "Your Player Color";
+SCRBRDMNU_OTHERPLAYERCOLOR	= "Other Players' Color";
+SCRBRDMNU_DEATHMATCH		= "Deathmatch Options";
+SCRBRDMNU_TEAMDEATHMATCH	= "Team Deathmatch Options";
+
+// Gameplay Menu
+GMPLYMNU_TITLE				= "GAMEPLAY OPTIONS";
+GMPLYMNU_TEAMPLAY			= "Teamplay";		
+GMPLYMNU_TEAMDAMAGE			= "Team damage scalar";
+GMPLYMNU_SMARTAUTOAIM		= "Smart Autoaim";
+GMPLYMNU_FALLINGDAMAGE		= "Falling damage";
+GMPLYMNU_DROPWEAPON			= "Drop weapon";
+GMPLYMNU_DOUBLEAMMO			= "Double ammo";
+GMPLYMNU_INFINITEAMMO		= "Infinite ammo";
+GMPLYMNU_INFINITEINVENTORY	= "Infinite inventory";
+GMPLYMNU_NOMONSTERS			= "No monsters";
+GMPLYMNU_NOMONSTERSTOEXIT	= "No monsters to exit";
+GMPLYMNU_MONSTERSRESPAWN	= "Monsters respawn";
+GMPLYMNU_NORESPAWN			= "No respawn";
+GMPLYMNU_ITEMSRESPAWN		= "Items respawn";
+GMPLYMNU_SUPERRESPAWN		= "Big powerups respawn";
+GMPLYMNU_FASTMONSTERS		= "Fast monsters";
+GMPLYMNU_DEGENERATION		= "Degeneration";
+GMPLYMNU_NOAUTOAIM			= "Allow Autoaim";
+GMPLYMNU_ALLOWSUICIDE		= "Allow Suicide";
+GMPLYMNU_ALLOWJUMP			= "Allow jump";
+GMPLYMNU_ALLOWCROUCH		= "Allow crouch";
+GMPLYMNU_ALLOWFREELOOK		= "Allow freelook";
+GMPLYMNU_ALLOWFOV			= "Allow FOV";
+GMPLYMNU_BFGFREEAIM			= "Allow BFG aiming";
+GMPLYMNU_ALLOWAUTOMAP		= "Allow automap";
+GMPLYMNU_AUTOMAPALLIES		= "Automap allies";
+GMPLYMNU_ALLOWSPYING		= "Allow spying";
+GMPLYMNU_CHASECAM			= "Chasecam cheat";
+GMPLYMNU_DONTCHECKAMMO		= "Check ammo for weapon switch";
+GMPLYMNU_KILLBOSSSPAWNS		= "Icon's death kills its spawns";
+GMPLYMNU_NOCOUNTENDMONSTER	= "End sector counts for kill %";
+GMPLYMNU_DEATHMATCH			= "Deathmatch Settings";
+GMPLYMNU_WEAPONSSTAY		= "Weapons stay";
+GMPLYMNU_ALLOWPOWERUPS		= "Allow powerups";
+GMPLYMNU_ALLOWHEALTH		= "Allow health";
+GMPLYMNU_ALLOWARMOR			= "Allow armor";
+GMPLYMNU_SPAWNFARTHEST		= "Spawn farthest";
+GMPLYMNU_SAMEMAP			= "Same map";
+GMPLYMNU_FORCERESPAWN		= "Force respawn";
+GMPLYMNU_ALLOWEXIT			= "Allow exit";
+GMPLYMNU_BARRELSRESPAWN		= "Barrels respawn";
+GMPLYMNU_RESPAWNPROTECTION	= "Respawn protection";
+GMPLYMNU_LOSEFRAG			= "Lose frag if fragged";
+GMPLYMNU_KEEPFRAGS			= "Keep frags gained";
+GMPLYMNU_NOTEAMSWITCH		= "No team switching";
+GMPLYMNU_COOPERATIVE		= "Cooperative Settings";
+GMPLYMNU_MULTIPLAYERWEAPONS	= "Spawn multi. weapons";
+GMPLYMNU_LOSEINVENTORY		= "Lose entire inventory";
+GMPLYMNU_KEEPKEYS			= "Keep keys";
+GMPLYMNU_KEEPWEAPONS		= "Keep weapons";
+GMPLYMNU_KEEPARMOR			= "Keep armor";
+GMPLYMNU_KEEPPOWERUPS		= "Keep powerups";
+GMPLYMNU_KEEPAMMO			= "Keep ammo";
+GMPLYMNU_LOSEHALFAMMO		= "Lose half ammo";
+GMPLYMNU_SPAWNWHEREDIED		= "Spawn where died";
+
+// Compatibility Options
+CMPTMNU_TITLE				= "COMPATIBILITY OPTIONS";
+CMPTMNU_MODE				= "Compatibility mode";
+CMPTMNU_ACTORBEHAVIOR		= "Actor Behavior";
+CMPTMNU_CORPSEGIBS			= "Crushed monsters can be resurrected";
+CMPTMNU_NOBLOCKFRIENDS		= "Friendly monsters aren't blocked";
+CMPTMNU_LIMITPAIN			= "Limit Pain Elementals' Lost Souls";
+CMPTMNU_MBFMONSTERMOVE		= "Monster movement is affected by effects";
+CMPTMNU_CROSSDROPOFF		= "Monsters cannot cross dropoffs";
+CMPTMNU_DROPOFF				= "Monsters get stuck over dropoffs";
+CMPTMNU_INVISIBILITY		= "Monsters see invisible players";
+CMPTMNU_MINOTAUR			= "No Minotaur floor flames in water";
+CMPTMNU_NOTOSSDROPS			= "Spawn item drops on the floor";
+CMPTMNU_DEHACKEDBEHAVIOR	= "DehackEd Behavior";
+CMPTMNU_DEHHEALTH			= "DEH health settings like Doom2.exe";
+CMPTMNU_MUSHROOM			= "Original A_Mushroom speed in DEH mods";
+CMPTMNU_MAPACTIONBEHAVIOR	= "Map/Action Behavior";
+CMPTMNU_USEBLOCKING			= "All special lines can block <use>";
+CMPTMNU_ANYBOSSDEATH		= "Allow any bossdeath for level special";
+CMPTMNU_NODOORLIGHT			= "Disable BOOM door light effect";
+CMPTMNU_LIGHT				= "Find neighboring light like Doom";
+CMPTMNU_SHORTTEX			= "Find shortest textures like Doom";
+CMPTMNU_STAIRS				= "Use buggier stair building";
+CMPTMNU_FLOORMOVE			= "Use Doom's floor motion behavior";
+CMPTMNU_POINTONLINE			= "Use Doom's point-on-line algorithm";
+CMPTMNU_PHYSICSBEHAVIOR		= "Physics Behavior";
+CMPTMNU_NOPASSOVER			= "Actors are infinitely tall";
+CMPTMNU_BOOMSCROLL			= "Boom scrollers are additive";
+CMPTMNU_BADANGLES			= "Cannot travel straight NSEW";
+CMPTMNU_WALLRUN				= "Enable wall running";
+CMPTMNU_RAVENSCROLL			= "Raven scrollers use original speed";
+CMPTMNU_TRACE				= "Self ref. sectors don't block shots";
+CMPTMNU_HITSCAN				= "Use Doom code for hitscan checks";
+CMPTMNU_MISSILECLIP			= "Use Doom heights for missile clipping";
+CMPTMNU_RENDERINGBEHAVIOR	= "Rendering Behavior";
+CMPTMNU_POLYOBJ				= "Draw polyobjects like Hexen";
+CMPTMNU_MASKEDMIDTEX		= "Ignore Y offsets on masked midtextures";
+CMPTMNU_SPRITESORT			= "Invert sprite sorting";
+CMPTMNU_SOUNDBEHAVIOR		= "Sound Behavior";
+CMPTMNU_SOUNDSLOTS			= "Cripple sound for silent BFG trick";
+CMPTMNU_SILENTPICKUP		= "Don't let others hear your pickups";
+CMPTMNU_SILENTINSTANTFLOORS	= "Inst. moving floors are not silent";
+CMPTMNU_SECTORSOUNDS		= "Sector sounds use center as source";
+CMPTMNU_SOUNDCUTOFF			= "Sounds stop when actor vanishes";
+CMPTMNU_SOUNDTARGET			= "Use original sound target handling";
+
+// Sound Options
+SNDMNU_TITLE			= "SOUND OPTIONS";
+SNDMNU_SFXVOLUME		= "Sounds volume";
+SNDMNU_MENUVOLUME		= "Menu volume";
+SNDMNU_MUSICVOLUME		= "Music volume";
+SNDMNU_MIDIDEVICE		= "MIDI device";
+SNDMNU_UNDERWATERREVERB	= "Underwater reverb";
+SNDMNU_RANDOMIZEPITCHES	= "Randomize pitches";
+SNDMNU_CHANNELS			= "Sound channels";
+SNDMNU_BACKEND			= "Sound backend";
+SNDMNU_FMOD				= "FMOD options";
+SNDMNU_OPENAL			= "OpenAL options";
+SNDMNU_RESTART			= "Restart sound";
+SNDMNU_ADVANCED			= "Advanced options";
+SNDMNU_MODREPLAYER		= "Module replayer options";
+
+// Fmod Options
+FMODMNU_TITLE			= "FMOD OPTIONS";
+FMODMNU_WATERCUTOFF		= "Underwater cutoff";
+FMODMNU_OUTPUTSYSTEM	= "Output system";
+FMODMNU_OUTPUTFORMAT	= "Output format";
+FMODMNU_SPEAKERMODE		= "Speaker mode";
+FMODMNU_RESAMPLER		= "Resampler";
+FMODMNU_HRTFFILTER		= "HRTF filter";
+FMODMNU_BUFFERSIZE		= "Buffer size";
+FMODMNU_BUFFERCOUNT		= "Buffer count";
+
+// OpenAL Options
+OPENALMNU_TITLE				= "OPENAL OPTIONS";
+OPENALMNU_PLAYBACKDEVICE	= "Playback device";
+OPENALMNU_ENABLEEFX			= "Enable EFX";
+
+// Advanced Sound Options
+ADVSNDMNU_TITLE				= "ADVANCED SOUND OPTIONS";
+ADVSNDMNU_SAMPLERATE		= "Sample rate";
+ADVSNDMNU_OPLSYNTHESIS		= "OPL Synthesis";
+ADVSNDMNU_OPLNUMCHIPS		= "Number of emulated OPL chips";
+ADVSNDMNU_OPLFULLPAN		= "Full MIDI stereo panning";
+ADVSNDMNU_OPLCORES			= "OPL Emulator Core";
+ADVSNDMNU_GUSEMULATION		= "GUS Emulation";
+ADVSNDMNU_GUSCONFIG			= "GUS config file";
+ADVSNDMNU_MIDIVOICES		= "MIDI voices";
+ADVSNDMNU_DMXGUS			= "Read DMXGUS lumps";
+ADVSNDMNU_GUSMEMSIZE		= "GUS memory size";
+ADVSNDMNU_FLUIDSYNTH		= "FluidSynth";
+ADVSNDMNU_FLUIDPATCHSET		= "Patch set";
+ADVSNDMNU_FLUIDGAIN			= "Gain";
+ADVSNDMNU_REVERB			= "Reverb";
+ADVSNDMNU_FLUIDVOICES		= "MIDI voices";
+ADVSNDMNU_TIMIDITY			= "Timidity++";
+ADVSNDMNU_TIMIDITYEXE		= "Path for executable";
+ADVSNDMNU_TIMIDITYCHORUS	= "Chorus";
+ADVSNDMNU_TIMIDITYVOLUME	= "Relative volume";
+ADVSNDMNU_WILDMIDI			= "WildMidi";
+ADVSNDMNU_WILDMIDICONFIG	= "WildMidi config file";
+
+// Module Replayer Options
+MODMNU_TITLE			= "MODULE REPLAYER OPTIONS";
+MODMNU_REPLAYERENGINE	= "Replayer engine";
+MODMNU_MASTERVOLUME		= "Master Volume";
+MODMNU_QUALITY			= "Quality";
+MODMNU_VOLUMERAMPING	= "Volume ramping";
+MODMNU_CHIPOMATIC		= "Chip-o-matic";
+
+// Video Options
+VIDMNU_TITLE			= "VIDEO MODE";
+VIDMNU_FULLSCREEN		= "Fullscreen";
+VIDMNU_HIDPI			= "Retina/HiDPI support";
+VIDMNU_ASPECTRATIO		= "Aspect ratio";
+VIDMNU_FORCEASPECT		= "Force aspect ratio";
+VIDMNU_5X4ASPECTRATIO	= "Enable 5:4 aspect ratio";
+VIDMNU_ENTERTEXT		= "Press ENTER to set mode";
+VIDMNU_TESTTEXT1		= "T to test mode for 5 seconds";
+VIDMNU_TESTTEXT2		= "Please wait 5 seconds...";
+
+// Network Options
+NETMNU_TITLE					= "NETWORK OPTIONS";
+NETMNU_LOCALOPTIONS				= "Local options";
+NETMNU_MOVEPREDICTION			= "Movement prediction";
+NETMNU_LINESPECIALPREDICTION	= "Predict line actions";
+NETMNU_PREDICTIONLERPSCALE		= "Prediction Lerp Scale";
+NETMNU_LERPTHRESHOLD			= "Lerp Threshold";
+NETMNU_HOSTOPTIONS				= "Host options";
+NETMNU_EXTRATICS				= "Extra Tics";
+NETMNU_TICBALANCE				= "Latency balancing";
+
+// Option Values
+OPTVAL_OFF					= "Off";
+OPTVAL_ON					= "On";
+OPTVAL_MALE					= "Male";
+OPTVAL_FEMALE				= "Female";
+OPTVAL_OTHER				= "Other";
+OPTVAL_UPPERLEFT			= "Upper left";
+OPTVAL_UPPERRIGHT			= "Upper right";
+OPTVAL_LOWERLEFT			= "Lower left";
+OPTVAL_LOWERRIGHT			= "Lower right";
+OPTVAL_TOUCHSCREENLIKE		= "Touchscreen-like";
+OPTVAL_NONE					= "None";
+OPTVAL_TURNING				= "Turning";
+OPTVAL_LOOKINGUPDOWN		= "Looking Up/Down";
+OPTVAL_MOVINGFORWARD		= "Moving Forward";
+OPTVAL_STRAFING				= "Strafing";
+OPTVAL_MOVINGUPDOWN			= "Moving Up/Down";
+OPTVAL_INVERTED				= "Inverted";
+OPTVAL_NOTINVERTED			= "Not Inverted";
+OPTVAL_ORIGINAL				= "Original";
+OPTVAL_OPTIMIZED			= "Optimized";
+OPTVAL_PARTICLES 			= "Particles";
+OPTVAL_SPRITES				= "Sprites";
+OPTVAL_SPRITESPARTICLES		= "Sprites & Particles";
+OPTVAL_MELT					= "Melt";
+OPTVAL_BURN					= "Burn";
+OPTVAL_CROSSFADE			= "Crossfade";
+OPTVAL_ONLYMODIFIED			= "Only modified";
+OPTVAL_SMOOTH				= "Smooth";
+OPTVAL_TRANSLUCENT			= "Translucent";
+OPTVAL_FUZZ					= "Fuzz";
+OPTVAL_SHADOW				= "Shadow";
+OPTVAL_ITEMS				= "Items";
+OPTVAL_WEAPONS				= "Weapons";
+OPTVAL_BOTH					= "Both";
+OPTVAL_ZDOOM				= "ZDoom";
+OPTVAL_STRIFE				= "Strife";
+OPTVAL_PLAYER				= "Player";
+OPTVAL_MAP					= "Map";
+OPTVAL_SCALETO640X400		= "Scale to 640x400";
+OPTVAL_PIXELDOUBLE			= "Pixel double";
+OPTVAL_CURRENTWEAPON		= "Current weapon";
+OPTVAL_AVAILABLEWEAPONS		= "Available weapons";
+OPTVAL_ALLWEAPONS			= "All weapons";
+OPTVAL_LEVELMILLISECONDS	= "Level, milliseconds";
+OPTVAL_LEVELSECONDS			= "Level, seconds";
+OPTVAL_LEVEL				= "Level";
+OPTVAL_HUBSECONDS			= "Hub, seconds";
+OPTVAL_HUB					= "Hub";
+OPTVAL_TOTALSECONDS			= "Total, seconds";
+OPTVAL_TOTAL				= "Total";
+OPTVAL_SYSTEMSECONDS		= "System, seconds";
+OPTVAL_SYSTEM				= "System";
+OPTVAL_NETGAMESONLY			= "Netgames only";
+OPTVAL_ALWAYS				= "Always";
+OPTVAL_SCRIPTSONLY			= "Scripts Only";
+OPTVAL_NEVER				= "Never";
+OPTVAL_ALL					= "All";
+OPTVAL_ONLYLASTONE			= "Only last one";
+OPTVAL_CUSTOM				= "Custom";
+OPTVAL_TRADITIONALDOOM		= "Traditional Doom";
+OPTVAL_TRADITIONALSTRIFE	= "Traditional Strife";
+OPTVAL_TRADITIONALRAVEN		= "Traditional Raven";
+OPTVAL_ONLYWHENFOUND		= "Only when found";
+OPTVAL_ONFOROVERLAYONLY		= "On for overlay only";
+OPTVAL_OVERLAYNORMAL		= "Overlay+Normal";
+OPTVAL_OVERLAYONLY			= "Overlay Only";
+OPTVAL_NOTFORHUBS			= "Not for hubs";
+OPTVAL_FRONT				= "Front";
+OPTVAL_ANIMATED				= "Animated";
+OPTVAL_ROTATED				= "Rotated";
+OPTVAL_MAPDEFINEDCOLORSONLY = "Map defined colors only";
+OPTVAL_DOUBLE				= "Double";
+OPTVAL_ITEMPICKUP			= "Item Pickup";
+OPTVAL_OBITUARIES			= "Obituaries";
+OPTVAL_CRITICALMESSAGES		= "Critical Messages";
+OPTVAL_NEVERFRIENDS			= "Never friends";
+OPTVAL_ONLYMONSTERS			= "Only monsters";
+OPTVAL_HEXEN				= "Hexen";
+OPTVAL_OLD					= "Old";
+OPTVAL_DEFAULT				= "Default";
+OPTVAL_DOOM					= "Doom";
+OPTVAL_DOOMSTRICT			= "Doom (strict)";
+OPTVAL_BOOM					= "Boom";
+OPTVAL_BOOMSTRICT			= "Boom (strict)";
+OPTVAL_MBF					= "MBF";
+OPTVAL_ZDOOM2063			= "ZDoom 2.0.63";
+OPTVAL_4000HZ				= "4000 Hz";
+OPTVAL_8000HZ				= "8000 Hz";
+OPTVAL_11025HZ				= "11025 Hz";
+OPTVAL_22050HZ				= "22050 Hz";
+OPTVAL_32000HZ				= "32000 Hz";
+OPTVAL_44100HZ				= "44100 Hz";
+OPTVAL_48000HZ				= "48000 Hz";
+OPTVAL_64SAMPLES			= "64 samples";
+OPTVAL_128SAMPLES			= "128 samples";
+OPTVAL_256SAMPLES			= "256 samples";
+OPTVAL_512SAMPLES			= "512 samples";
+OPTVAL_1024SAMPLES			= "1024 samples";
+OPTVAL_2048SAMPLES			= "2048 samples";
+OPTVAL_4096SAMPLES			= "4096 samples";
+OPTVAL_UNLIMITED			= "Unlimited";
+OPTVAL_256K					= "256K";
+OPTVAL_512K					= "512K";
+OPTVAL_768K					= "768K";
+OPTVAL_1024K				= "1024K";
+OPTVAL_MAMEOPL2				= "MAME OPL2";
+OPTVAL_DOSBOXOPL3			= "DOSBox OPL3";
+OPTVAL_JAVAOPL3				= "Java OPL3";
+OPTVAL_NUKEDOPL3			= "Nuked OPL3";
+OPTVAL_SOUNDSYSTEM			= "Sound System";
+OPTVAL_FOO_DUMB				= "foo_dumb";
+OPTVAL_ALIASING				= "Aliasing";
+OPTVAL_LINEAR				= "Linear";
+OPTVAL_CUBIC				= "Cubic";
+OPTVAL_BLEP					= "Band-limited step"
+OPTVAL_LINEARSLOW			= "Linear (Slower)";
+OPTVAL_BLAM					= "Band-limited linear";
+OPTVAL_CUBICSLOW			= "Cubic (Slower)";
+OPTVAL_SINC					= "Sinc";
+OPTVAL_NOTEONOFFONLY		= "Note on/off only";
+OPTVAL_FULLRAMPING			= "Full ramping";
+OPTVAL_ALLUNACKNOWLEDGED	= "All unacknowledged";
+// Colors
+C_BRICK					= "\cabrick";
+C_TAN					= "\cbtan";
+C_GRAY					= "\ccgray";
+C_GREEN					= "\cdgreen";
+C_BROWN					= "\cebrown";
+C_GOLD					= "\cfgold";
+C_RED					= "\cgred";
+C_BLUE					= "\chblue";
+C_ORANGE				= "\ciorange";
+C_WHITE					= "\cjwhite";
+C_YELLOW				= "\ckyellow";
+C_DEFAULT				= "\cldefault";
+C_BLACK					= "\cmblack";
+C_LIGHTBLUE				= "\cnlight blue";
+C_CREAM					= "\cocream";
+C_OLIVE					= "\cpolive";
+C_DARKGREEN				= "\cqdark green";
+C_DARKRED				= "\crdark red";
+C_DARKBROWN				= "\csdark brown";
+C_PURPLE				= "\ctpurple";
+C_DARKGRAY				= "\cudark gray";
+C_CYAN					= "\cvcyan";
+// Option Strings
+OPTSTR_SIMPLEARROW			= "Simple arrow";
+OPTSTR_HERETIC				= "Heretic";
+OPTSTR_CHEX					= "Chex";
+OPTSTR_SYSTEMCURSOR			= "System cursor";
+OPTSTR_DIRECTSOUND			= "DirectSound";
+OPTSTR_WASAPI				= "Vista WASAPI";
+OPTSTR_ASIO					= "ASIO";
+OPTSTR_WAVEOUT				= "WaveOut";
+OPTSTR_NOSOUND				= "No Sound";
+OPTSTR_OSS					= "OSS";
+OPTSTR_ALSA					= "ALSA";
+OPTSTR_SDL					= "SDL";
+OPTSTR_ESD					= "ESD";
+OPTSTR_PULSEAUDIO			= "PulseAudio";
+OPTSTR_COREAUDIO			= "Core Audio";
+OPTSTR_PCM8BIT				= "8-bit";
+OPTSTR_PCM16BIT				= "16-bit";
+OPTSTR_PCM24BIT				= "24-bit";
+OPTSTR_PCM32BIT				= "32-bit";
+OPTSTR_PCMFLOAT				= "32-bit float";
+OPTSTR_AUTO					= "Auto";
+OPTSTR_MONO					= "Mono";
+OPTSTR_STEREO				= "Stereo";
+OPTSTR_PROLOGIC				= "Dolby Prologic Decoder";
+OPTSTR_QUAD					= "Quad";
+OPTSTR_SURROUND				= "5 speakers";
+OPTSTR_5POINT1				= "5.1 speakers";
+OPTSTR_7POINT1				= "7.1 speakers";
+OPTSTR_NOINTERPOLATION		= "No interpolation";
+OPTSTR_SPLINE				= "Spline";
+OPTSTR_FMOD					= "FMOD Ex";
+OPTSTR_OPENAL				= "OpenAL";
+
+
+
+
+MNU_COLORPICKER		= "SELECT COLOR";
+
 
 WI_FINISHED			= "finished";
 WI_ENTERING			= "Now entering:";

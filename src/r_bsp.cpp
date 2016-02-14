@@ -1094,6 +1094,7 @@ void R_Subsector (subsector_t *sub)
 	}
 
 	skybox = frontsector->GetSkyBox(sector_t::ceiling);
+	if (skybox != NULL && skybox->special1 >= SKYBOX_PLANE) skybox = NULL;	// skip unsupported portal types
 
 	ceilingplane = frontsector->ceilingplane.PointOnSide(viewx, viewy, viewz) > 0 ||
 		frontsector->GetTexture(sector_t::ceiling) == skyflatnum ||
@@ -1135,6 +1136,8 @@ void R_Subsector (subsector_t *sub)
 	// killough 3/16/98: add floorlightlevel
 	// killough 10/98: add support for skies transferred from sidedefs
 	skybox = frontsector->GetSkyBox(sector_t::floor);
+	if (skybox != NULL && skybox->special1 >= SKYBOX_PLANE) skybox = NULL;	// skip unsupported portal types
+
 	floorplane = frontsector->floorplane.PointOnSide(viewx, viewy, viewz) > 0 || // killough 3/7/98
 		frontsector->GetTexture(sector_t::floor) == skyflatnum ||
 		(skybox != NULL && skybox->bAlways) ||

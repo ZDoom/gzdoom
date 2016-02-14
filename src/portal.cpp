@@ -504,3 +504,8 @@ bool PortalTracer::TraceStep()
 	return (oDepth != depth); // if a portal has been found, return false
 }
 
+void P_CreateLinkedPortals()
+{
+}
+
+

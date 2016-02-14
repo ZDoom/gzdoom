@@ -57,6 +57,18 @@ enum
 extern size_t MaxDrawSegs;
 
 
+enum
+{
+	SKYBOX_ANCHOR = -1,
+	SKYBOX_SKYVIEWPOINT = 0,				// a regular skybox
+	SKYBOX_STACKEDSECTORTHING,	// stacked sectors with the thing method
+	SKYBOX_PORTAL,				// stacked sectors with Sector_SetPortal
+	SKYBOX_LINKEDPORTAL,		// linked portal (interactive)
+	SKYBOX_PLANE,				// EE-style plane portal (not implemented in SW renderer)
+	SKYBOX_HORIZON,				// EE-style horizon portal (not implemented in SW renderer)
+};
+
+
 //
 // INTERNAL MAP TYPES
 //	used by play and refresh

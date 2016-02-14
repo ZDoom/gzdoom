@@ -54,6 +54,7 @@ void ASkyViewpoint::BeginPlay ()
 	{
 		level.DefaultSkybox = this;
 	}
+	special1 = SKYBOX_SKYVIEWPOINT;
 }
 
 void ASkyViewpoint::Serialize (FArchive &arc)
@@ -84,6 +85,13 @@ void ASkyViewpoint::Destroy ()
 }
 
 IMPLEMENT_CLASS (ASkyCamCompat)
+
+void ASkyCamCompat::BeginPlay()
+{
+	// Do not call the SkyViewpoint's super method because it would trash our setup
+	AActor::BeginPlay();
+	special1 = SKYBOX_SKYVIEWPOINT;
+}
 
 
 //---------------------------------------------------------------------------
@@ -154,6 +162,7 @@ void AStackPoint::BeginPlay ()
 	AActor::BeginPlay ();
 
 	bAlways = true;
+	special1 = SKYBOX_STACKEDSECTORTHING;
 }
 
 //---------------------------------------------------------------------------

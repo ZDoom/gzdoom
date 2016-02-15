@@ -106,11 +106,7 @@ class ASkyCamCompat : public ASkyViewpoint
 	DECLARE_CLASS (ASkyCamCompat, ASkyViewpoint)
 
 public:
-	void BeginPlay ()
-	{
-		// Do not call the SkyViewpoint's super method because it would trash our setup
-		AActor::BeginPlay();
-	}
+	void BeginPlay();
 };
 
 

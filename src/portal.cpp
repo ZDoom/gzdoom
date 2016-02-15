@@ -8,9 +8,14 @@
 #include "p_tags.h"
 #include "farchive.h"
 #include "v_text.h"
+#include "a_sharedglobal.h"
+#include "i_system.h"
+#include "c_dispatch.h"
 
 // simulation recurions maximum
 CVAR(Int, sv_portal_recursions, 4, CVAR_ARCHIVE|CVAR_SERVERINFO)
+
+FDisplacementTable Displacements;
 
 TArray<FLinePortal> linePortals;
 
@@ -148,7 +153,19 @@ void P_UpdatePortal(FLinePortal *port)
 	else
 	{
 		port->mFlags = port->mDefFlags;
-	}
+		if (port->mType == PORTT_LINKED)
+		{
+			if (linePortals[port->mDestination->portalindex].mType != PORTT_LINKED)
+			{
+				port->mType = PORTT_INTERACTIVE;	// linked portals must be two-way.
+			}
+			else
+			{
+				port->mXDisplacement = port->mDestination->v2->x - port->mOrigin->v1->x;
+				port->mYDisplacement = port->mDestination->v2->y - port->mOrigin->v1->y;
+			}
+		}
+ 	}
 }
 
 void P_FinalizePortals()
@@ -503,4 +520,337 @@ bool PortalTracer::TraceStep()
 
 	return (oDepth != depth); // if a portal has been found, return false
 }
+
+
+
+//============================================================================
+//
+// CollectSectors
+//
+// Collects all sectors that are connected to any sector belonging to a portal
+// because they all will need the same displacement values
+//
+//============================================================================
+
+static bool CollectSectors(int groupid, sector_t *origin)
+{
+	if (origin->PortalGroup != 0) return false;	// already processed
+	origin->PortalGroup = groupid;
+
+	TArray<sector_t *> list(16);
+	list.Push(origin);
+
+	for (unsigned i = 0; i < list.Size(); i++)
+	{
+		sector_t *sec = list[i];
+
+		for (int j = 0; j < sec->linecount; j++)
+		{
+			line_t *line = sec->lines[j];
+			sector_t *other = line->frontsector == sec ? line->backsector : line->frontsector;
+			if (other != NULL && other != sec && other->PortalGroup != groupid)
+			{
+				other->PortalGroup = groupid;
+				list.Push(other);
+			}
+		}
+	}
+	return true;
+}
+
+
+//============================================================================
+//
+// AddDisplacementForPortal
+//
+// Adds the displacement for one portal to the displacement array
+// (one version for sector to sector plane, one for line to line portals)
+//
+//============================================================================
+
+static void AddDisplacementForPortal(AStackPoint *portal)
+{
+	int thisgroup = portal->Mate->Sector->PortalGroup;
+	int othergroup = portal->Sector->PortalGroup;
+	if (thisgroup == othergroup)
+	{
+		Printf("Portal between sectors %d and %d has both sides in same group and will be disabled\n", portal->Sector->sectornum, portal->Mate->Sector->sectornum);
+		portal->special1 = portal->Mate->special1 = SKYBOX_PORTAL;
+		return;
+	}
+	if (thisgroup <= 0 || thisgroup >= Displacements.size || othergroup <= 0 || othergroup >= Displacements.size)
+	{
+		Printf("Portal between sectors %d and %d has invalid group and will be disabled\n", portal->Sector->sectornum, portal->Mate->Sector->sectornum);
+		portal->special1 = portal->Mate->special1 = SKYBOX_PORTAL;
+		return;
+	}
+
+	FDisplacement & disp = Displacements(thisgroup, othergroup);
+	if (!disp.isSet)
+	{
+		disp.x = portal->scaleX;
+		disp.y = portal->scaleY;
+		disp.isSet = true;
+	}
+	else
+	{
+		if (disp.x != portal->scaleX || disp.y != portal->scaleY)
+		{
+			Printf("Portal between sectors %d and %d has displacement mismatch and will be disabled\n", portal->Sector->sectornum, portal->Mate->Sector->sectornum);
+			portal->special1 = portal->Mate->special1 = SKYBOX_PORTAL;
+			return;
+		}
+	}
+}
+
+
+static void AddDisplacementForPortal(FLinePortal *portal)
+{
+	int thisgroup = portal->mOrigin->frontsector->PortalGroup;
+	int othergroup = portal->mDestination->frontsector->PortalGroup;
+	if (thisgroup == othergroup)
+	{
+		Printf("Portal between lines %d and %d has both sides in same group\n", int(portal->mOrigin-lines), int(portal->mDestination-lines));
+		portal->mType = linePortals[portal->mDestination->portalindex].mType = PORTT_TELEPORT;
+		return;
+	}
+	if (thisgroup <= 0 || thisgroup >= Displacements.size || othergroup <= 0 || othergroup >= Displacements.size)
+	{
+		Printf("Portal between lines %d and %d has invalid group\n", int(portal->mOrigin - lines), int(portal->mDestination - lines));
+		portal->mType = linePortals[portal->mDestination->portalindex].mType = PORTT_TELEPORT;
+		return;
+	}
+
+	FDisplacement & disp = Displacements(thisgroup, othergroup);
+	if (!disp.isSet)
+	{
+		disp.x = portal->mXDisplacement;
+		disp.y = portal->mYDisplacement;
+		disp.isSet = true;
+	}
+	else
+	{
+		if (disp.x != portal->mXDisplacement || disp.y != portal->mYDisplacement)
+		{
+			Printf("Portal between lines %d and %d has displacement mismatch\n", int(portal->mOrigin - lines), int(portal->mDestination - lines));
+			portal->mType = linePortals[portal->mDestination->portalindex].mType = PORTT_TELEPORT;
+			return;
+		}
+	}
+}
+
+//============================================================================
+//
+// ConnectGroups
+//
+// Do the indirect connections. This loop will run until it cannot find any new connections
+//
+//============================================================================
+
+static bool ConnectGroups()
+{
+	// Now 
+	BYTE indirect = 1;
+	bool bogus = false;
+	bool changed;
+	do
+	{
+		changed = false;
+		for (int x = 1; x < Displacements.size; x++)
+		{
+			for (int y = 1; y < Displacements.size; y++)
+			{
+				FDisplacement &dispxy = Displacements(x, y);
+				if (dispxy.isSet)
+				{
+					for (int z = 1; z < Displacements.size; z++)
+					{
+						FDisplacement &dispyz = Displacements(y, z);
+						if (dispyz.isSet)
+						{
+							FDisplacement &dispxz = Displacements(x, z);
+							if (dispxz.isSet)
+							{
+								if (dispxy.x + dispyz.x != dispxz.x || dispxy.y + dispyz.y != dispxz.y)
+								{
+									bogus = true;
+								}
+							}
+							else
+							{
+								dispxz.x = dispxy.x + dispyz.x;
+								dispxz.y = dispxy.y + dispyz.y;
+								dispxz.isSet = true;
+								dispxz.indirect = indirect;
+								changed = true;
+							}
+						}
+					}
+				}
+			}
+		}
+		indirect++;
+	} while (changed);
+	return bogus;
+}
+
+
+//============================================================================
+//
+// P_CreateLinkedPortals
+//
+// Creates the data structures needed for linked portals
+// Removes portals from sloped sectors (as they cannot work on them)
+// Group all sectors connected to one side of the portal
+// Caclculate displacements between all created groups.
+//
+// Portals with the same offset but different anchors will not be merged.
+//
+//============================================================================
+
+void P_CreateLinkedPortals()
+{
+	TThinkerIterator<AStackPoint> it;
+	AStackPoint *mo;
+	TArray<AStackPoint *> orgs;
+	int id = 0;
+	bool bogus = false;
+
+	while ((mo = it.Next()))
+	{
+		if (mo->special1 == SKYBOX_LINKEDPORTAL)
+		{
+			if (mo->Mate != NULL)
+			{
+				orgs.Push(mo);
+				mo->reactiontime = ++id;
+			}
+			else
+			{
+				// this should never happen, but if it does, the portal needs to be removed
+				mo->Destroy();
+			}
+		}
+	}
+	if (orgs.Size() == 0)
+	{
+		return;
+	}
+	for (int i = 0; i < numsectors; i++)
+	{
+		for (int j = 0; j < 2; j++)
+		{
+			ASkyViewpoint *box = sectors[i].SkyBoxes[j];
+			if (box != NULL && box->special1 == SKYBOX_LINKEDPORTAL)
+			{
+				secplane_t &plane = j == 0 ? sectors[i].floorplane : sectors[i].ceilingplane;
+				if (plane.a || plane.b)
+				{
+					// The engine cannot deal with portals on a sloped plane.
+					sectors[i].SkyBoxes[j] = NULL;
+					Printf("Portal on %s of sector %d is sloped and will be disabled\n", j==0? "floor":"ceiling", i);
+				}
+			}
+		}
+	}
+
+	// Group all sectors, starting at each portal origin.
+	id = 1;
+	for (unsigned i = 0; i < orgs.Size(); i++)
+	{
+		if (CollectSectors(id, orgs[i]->Sector)) id++;
+		if (CollectSectors(id, orgs[i]->Mate->Sector)) id++;
+	}
+	for (unsigned i = 0; i < linePortals.Size(); i++)
+	{
+		if (linePortals[i].mType == PORTT_LINKED)
+		{
+			if (CollectSectors(id, linePortals[i].mOrigin->frontsector)) id++;
+			if (CollectSectors(id, linePortals[i].mDestination->frontsector)) id++;
+		}
+	}
+
+	Displacements.Create(id);
+	// Check for leftover sectors that connect to a portal
+	for (int i = 0; i<numsectors; i++)
+	{
+		for (int j = 0; j < 2; j++)
+		{
+			ASkyViewpoint *box = sectors[i].SkyBoxes[j];
+			if (box != NULL)
+			{
+				if (box->special1 == SKYBOX_LINKEDPORTAL && box->Sector->PortalGroup == 0)
+				{
+					CollectSectors(box->Sector->PortalGroup, box->Sector);
+					box = box->Mate;
+					if (box->special1 == SKYBOX_LINKEDPORTAL && box->Sector->PortalGroup == 0)
+					{
+						CollectSectors(box->Sector->PortalGroup, box->Sector);
+					}
+				}
+			}
+		}
+	}
+	for (unsigned i = 0; i < orgs.Size(); i++)
+	{
+		AddDisplacementForPortal(orgs[i]);
+	}
+	for (unsigned i = 0; i < linePortals.Size(); i++)
+	{
+		if (linePortals[i].mType == PORTT_LINKED)
+		{
+			AddDisplacementForPortal(&linePortals[i]);
+		}
+	}
+
+	for (int x = 1; x < Displacements.size; x++)
+	{
+		for (int y = x + 1; y < Displacements.size; y++)
+		{
+			FDisplacement &dispxy = Displacements(x, y);
+			FDisplacement &dispyx = Displacements(y, x);
+			if (dispxy.isSet && dispyx.isSet &&
+				(dispxy.x != -dispyx.x || dispxy.y != -dispyx.y))
+			{
+				Printf("Link offset mismatch between groups %d and %d\n", x, y);	// need to find some sectors to report.
+				bogus = true;
+			}
+			// todo: Find sectors that have no group but belong to a portal.
+		}
+	}
+	bogus |= ConnectGroups();
+	if (bogus)
+	{
+		// todo: disable all portals whose offsets do not match the associated groups
+	}
+
+	// reject would just get in the way when checking sight through portals.
+	if (rejectmatrix != NULL)
+	{
+		delete[] rejectmatrix;
+		rejectmatrix = NULL;
+	}
+	// finally we must flag all planes which are obstructed by the sector's own ceiling or floor.
+	for (int i = 0; i < numsectors; i++)
+	{
+		sectors[i].CheckPortalPlane(sector_t::floor);
+		sectors[i].CheckPortalPlane(sector_t::ceiling);
+	}
+	//BuildBlockmap();
+}
+
+CCMD(dumplinktable)
+{
+	for (int x = 1; x < Displacements.size; x++)
+	{
+		for (int y = 1; y < Displacements.size; y++)
+		{
+			FDisplacement &disp = Displacements(x, y);
+			Printf("%c%c(%6d, %6d)", TEXTCOLOR_ESCAPE, 'C' + disp.indirect, disp.x >> FRACBITS, disp.y >> FRACBITS);
+		}
+		Printf("\n");
+	}
+}
+
+
 

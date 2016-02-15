@@ -1036,15 +1036,16 @@ static void CopyPortal(int sectortag, int plane, ASkyViewpoint *origin, fixed_t 
 	}
 }
 
-void P_SpawnPortal(line_t *line, int sectortag, int plane, int alpha)
+void P_SpawnPortal(line_t *line, int sectortag, int plane, int alpha, int linked)
 {
+	if (plane < 0 || plane > 2 || (linked && plane == 2)) return;
 	for (int i=0;i<numlines;i++)
 	{
 		// We must look for the reference line with a linear search unless we want to waste the line ID for it
 		// which is not a good idea.
 		if (lines[i].special == Sector_SetPortal &&
 			lines[i].args[0] == sectortag &&
-			lines[i].args[1] == 0 &&
+			lines[i].args[1] == linked &&
 			lines[i].args[2] == plane &&
 			lines[i].args[3] == 1)
 		{
@@ -1053,10 +1054,18 @@ void P_SpawnPortal(line_t *line, int sectortag, int plane, int alpha)
 			fixed_t y1 = fixed_t((SQWORD(line->v1->y) + SQWORD(line->v2->y)) >> 1);
 			fixed_t x2 = fixed_t((SQWORD(lines[i].v1->x) + SQWORD(lines[i].v2->x)) >> 1);
 			fixed_t y2 = fixed_t((SQWORD(lines[i].v1->y) + SQWORD(lines[i].v2->y)) >> 1);
+			fixed_t z = linked ? line->frontsector->planes[plane].TexZ : 0;	// the map's sector height defines the portal plane for linked portals
+
 			fixed_t alpha = Scale (lines[i].args[4], OPAQUE, 255);
 
 			AStackPoint *anchor = Spawn<AStackPoint>(x1, y1, 0, NO_REPLACE);
 			AStackPoint *reference = Spawn<AStackPoint>(x2, y2, 0, NO_REPLACE);
+			reference->special1 = linked ? SKYBOX_LINKEDPORTAL : SKYBOX_PORTAL;
+			anchor->special1 = SKYBOX_ANCHOR;
+			// store the portal displacement in the unused scaleX/Y members of the portal reference actor.
+			anchor->scaleX = -(reference->scaleX = x2 - x1);
+			anchor->scaleY = -(reference->scaleY = y2 - y1);
+			anchor->threshold = reference->threshold = z;
 
 			reference->Mate = anchor;
 			anchor->Mate = reference;
@@ -1445,15 +1454,17 @@ void P_SpawnSpecials (void)
 			//	- 0: normal (handled here)
 			//	- 1: copy (handled by the portal they copy)
 			//	- 2: EE-style skybox (handled by the camera object)
-			//  - 3: EE-style flat portal (HW renderer only for now)
-			//  - 4: EE-style horizon portal (HW renderer only for now)
+			//  - 3: EE-style flat portal (GZDoom HW renderer only for now)
+			//  - 4: EE-style horizon portal (GZDoom HW renderer only for now)
+			//  - 5: copy portal to line (GZDoom HW renderer only for now)
+			//  - 6: linked portal
 			//	other values reserved for later use
 			// arg 2 = 0:floor, 1:ceiling, 2:both
 			// arg 3 = 0: anchor, 1: reference line
 			// arg 4 = for the anchor only: alpha
-			if (lines[i].args[1] == 0 && lines[i].args[3] == 0)
+			if ((lines[i].args[1] == 0 || lines[i].args[1] == 6) && lines[i].args[3] == 0)
 			{
-				P_SpawnPortal(&lines[i], lines[i].args[0], lines[i].args[2], lines[i].args[4]);
+				P_SpawnPortal(&lines[i], lines[i].args[0], lines[i].args[2], lines[i].args[4], lines[i].args[1]);
 			}
 			else if (lines[i].args[1] == 3 || lines[i].args[1] == 4)
 			{
@@ -1542,6 +1553,7 @@ void P_SpawnSpecials (void)
 	// [RH] Start running any open scripts on this map
 	FBehavior::StaticStartTypedScripts (SCRIPT_Open, NULL, false);
 	P_FinalizePortals();
+	P_CreateLinkedPortals();
 }
 
 // killough 2/28/98:

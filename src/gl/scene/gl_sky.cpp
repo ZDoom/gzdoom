@@ -142,6 +142,8 @@ void GLWall::SkyPlane(sector_t *sector, int plane, bool allowreflect)
 	FPortal *portal = sector->portals[plane];
 	if (portal != NULL)
 	{
+		if (sector->PortalBlocksView(plane)) return;
+
 		if (GLPortal::instack[1 - plane]) return;
 		ptype = PORTALTYPE_SECTORSTACK;
 		this->portal = portal;
@@ -302,8 +304,6 @@ void GLWall::SkyTop(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex
 	}
 	else 
 	{
-		FPortal *pfront = fs->portals[sector_t::ceiling];
-		FPortal *pback = bs->portals[sector_t::ceiling];
 		float frontreflect = fs->GetReflect(sector_t::ceiling);
 		if (frontreflect > 0)
 		{
@@ -314,9 +314,12 @@ void GLWall::SkyTop(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex
 				return;
 			}
 		}
-		else if (pfront == NULL || pfront == pback)
+		else
 		{
-			return;
+			FPortal *pfront = fs->portals[sector_t::ceiling];
+			FPortal *pback = bs->portals[sector_t::ceiling];
+			if (pfront == NULL || fs->PortalBlocksView(sector_t::ceiling)) return;
+			if (pfront == pback && !bs->PortalBlocksView(sector_t::ceiling)) return;
 		}
 
 		// stacked sectors
@@ -378,8 +381,6 @@ void GLWall::SkyBottom(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,ver
 	}
 	else 
 	{
-		FPortal *pfront = fs->portals[sector_t::floor];
-		FPortal *pback = bs->portals[sector_t::floor];
 		float frontreflect = fs->GetReflect(sector_t::floor);
 		if (frontreflect > 0)
 		{
@@ -390,9 +391,12 @@ void GLWall::SkyBottom(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,ver
 				return;
 			}
 		}
-		else if (pfront == NULL || pfront == pback)
+		else
 		{
-			return;
+			FPortal *pfront = fs->portals[sector_t::floor];
+			FPortal *pback = bs->portals[sector_t::floor];
+			if (pfront == NULL || fs->PortalBlocksView(sector_t::floor)) return;
+			if (pfront == pback && !bs->PortalBlocksView(sector_t::floor)) return;
 		}
 
 		// stacked sectors

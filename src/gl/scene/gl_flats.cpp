@@ -606,8 +606,15 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 		Colormap=frontsector->ColorMap;
 		if ((stack = (frontsector->portals[sector_t::floor] != NULL)))
 		{
-			gl_drawinfo->AddFloorStack(sector);
-			alpha = frontsector->GetAlpha(sector_t::floor)/65536.0f;
+			if (!frontsector->PortalBlocksView(sector_t::floor))
+			{
+				gl_drawinfo->AddFloorStack(sector);
+				alpha = frontsector->GetAlpha(sector_t::floor) / 65536.0f;
+			}
+			else
+			{
+				alpha = 1.f;
+			}
 		}
 		else
 		{
@@ -657,8 +664,15 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 		Colormap=frontsector->ColorMap;
 		if ((stack = (frontsector->portals[sector_t::ceiling] != NULL))) 
 		{
-			gl_drawinfo->AddCeilingStack(sector);
-			alpha = frontsector->GetAlpha(sector_t::ceiling)/65536.0f;
+			if (!frontsector->PortalBlocksView(sector_t::ceiling))
+			{
+				gl_drawinfo->AddCeilingStack(sector);
+				alpha = frontsector->GetAlpha(sector_t::ceiling) / 65536.0f;
+			}
+			else
+			{
+				alpha = 1.f;
+			}
 		}
 		else
 		{

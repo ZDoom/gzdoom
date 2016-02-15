@@ -212,6 +212,8 @@ sector_t * gl_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool bac
 				dest->ceilingplane=sec->floorplane;
 				dest->ceilingplane.FlipVert();
 				dest->planes[sector_t::ceiling].TexZ = dest->planes[sector_t::floor].TexZ;
+				dest->portals[sector_t::ceiling] = NULL;
+				dest->portals[sector_t::floor] = NULL;
 				return dest;
 			}
 		}

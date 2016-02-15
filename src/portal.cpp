@@ -52,6 +52,7 @@
 #include "c_dispatch.h"
 #include "p_maputl.h"
 #include "p_spec.h"
+#include "p_checkposition.h"
 
 // simulation recurions maximum
 CVAR(Int, sv_portal_recursions, 4, CVAR_ARCHIVE|CVAR_SERVERINFO)
@@ -671,8 +672,6 @@ bool PortalTracer::TraceStep()
 
 	return (oDepth != depth); // if a portal has been found, return false
 }
-
-
 
 //============================================================================
 //

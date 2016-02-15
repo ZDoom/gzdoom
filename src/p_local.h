@@ -36,7 +36,7 @@ struct line_t;
 struct sector_t;
 struct msecnode_t;
 struct secplane_t;
-
+struct FCheckPosition;
 
 #include <stdlib.h>
 
@@ -234,47 +234,6 @@ AActor *P_RoughMonsterSearch (AActor *mo, int distance, bool onlyseekable=false)
 //
 // P_MAP
 //
-
-struct FCheckPosition
-{
-	// in
-	AActor			*thing;
-	fixed_t			x;
-	fixed_t			y;
-	fixed_t			z;
-
-	// out
-	sector_t		*sector;
-	fixed_t			floorz;
-	fixed_t			ceilingz;
-	fixed_t			dropoffz;
-	FTextureID		floorpic;
-	int				floorterrain;
-	sector_t		*floorsector;
-	FTextureID		ceilingpic;
-	sector_t		*ceilingsector;
-	bool			touchmidtex;
-	bool			abovemidtex;
-	bool			floatok;
-	bool			FromPMove;
-	line_t			*ceilingline;
-	AActor			*stepthing;
-	// [RH] These are used by PIT_CheckThing and P_XYMovement to apply
-	// ripping damage once per tic instead of once per move.
-	bool			DoRipping;
-	TMap<AActor*, bool> LastRipped;
-
-	//FPortalGroupTable	Groups;
-	int				PushTime;
-
-	FCheckPosition(bool rip=false)
-	{
-		DoRipping = rip;
-		PushTime = 0;
-		FromPMove = false;
-	}
-};
-
 
 
 // If "floatok" true, move would be ok

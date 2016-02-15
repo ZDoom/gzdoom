@@ -23,6 +23,7 @@
 #include "d_event.h"
 #include "d_player.h"
 #include "p_spec.h"
+#include "p_checkposition.h"
 
 static FRandom pr_botdofire ("BotDoFire");
 

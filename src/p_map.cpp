@@ -41,6 +41,7 @@
 #include "p_effect.h"
 #include "p_terrain.h"
 #include "p_trace.h"
+#include "p_checkposition.h"
 #include "r_utility.h"
 
 #include "s_sound.h"

@@ -51,6 +51,7 @@
 #include "r_data/r_translate.h"
 #include "teaminfo.h"
 #include "p_spec.h"
+#include "p_checkposition.h"
 
 #include "gi.h"
 

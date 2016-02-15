@@ -20,6 +20,7 @@
 #include "p_enemy.h"
 #include "d_player.h"
 #include "p_spec.h"
+#include "p_checkposition.h"
 
 static FRandom pr_botopendoor ("BotOpenDoor");
 static FRandom pr_bottrywalk ("BotTryWalk");

@@ -5,6 +5,7 @@
 #include "r_sky.h"
 #include "p_lnspec.h"
 #include "b_bot.h"
+#include "p_checkposition.h"
 
 
 IMPLEMENT_CLASS(AFastProjectile)

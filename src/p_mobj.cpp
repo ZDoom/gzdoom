@@ -69,6 +69,7 @@
 #include "r_renderer.h"
 #include "po_man.h"
 #include "p_spec.h"
+#include "p_checkposition.h"
 
 // MACROS ------------------------------------------------------------------
 

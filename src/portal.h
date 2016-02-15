@@ -9,6 +9,25 @@
 #include "m_bbox.h"
 #include "a_sharedglobal.h"
 
+struct FPortalGroupTable;
+//============================================================================
+//
+// This table holds the offsets for the different parts of a map
+// that are connected by portals.
+// The idea here is basically the same as implemented in Eternity Engine:
+//
+// - each portal creates two sector groups in the map 
+//   which are offset by the displacement of the portal anchors
+//
+// - for two or multiple groups the displacement is calculated by
+//   adding the displacements between intermediate groups which
+//   have to be traversed to connect the two
+//
+// - any sector not connected to any portal is assigned to group 0
+//   Group 0 has no displacement to any other group in the level.
+//
+//============================================================================
+
 struct FDisplacement
 {
 	fixed_t x, y;
@@ -36,37 +55,11 @@ struct FDisplacementTable
 
 extern FDisplacementTable Displacements;
 
-struct FPortalGroupTable
-{
-	TArray<DWORD> data;
-	TArray<int> touchingGroups;
-
-	void setSize(int num)
-	{
-		data.Resize((num + 31) / 32);
-		memset(&data[0], 0, data.Size()*sizeof(DWORD));
-	}
-
-	void clear()
-	{
-		data.Clear();
-		touchingGroups.Clear();
-	}
-
-	void setBit(int group)
-	{
-		if (!getBit(group))
-		{
-			data[group >> 5] |= (1 << (group & 31));
-			touchingGroups.Push(group);
-		}
-	}
-
-	int getBit(int group)
-	{
-		return data[group >> 5] & (1 << (group & 31));
-	}
-};
+//============================================================================
+//
+// Flags and types for linedef portals
+//
+//============================================================================
 
 enum
 {
@@ -100,6 +93,14 @@ enum
 	PCOLL_NOTLINKED = 1,
 	PCOLL_LINKED = 2
 };
+
+//============================================================================
+//
+// All information about a line-to-line portal (all types)
+// There is no structure for sector plane portals because for historic
+// reasons those use actors to connect.
+//
+//============================================================================
 
 struct FLinePortal
 {
@@ -135,9 +136,14 @@ void P_TranslatePortalAngle(line_t* src, line_t* dst, angle_t& angle);
 void P_TranslatePortalZ(line_t* src, line_t* dst, fixed_t& z);
 void P_NormalizeVXVY(fixed_t& vx, fixed_t& vy);
 
+//============================================================================
+//
 // basically, this is a teleporting tracer function,
 // which can be used by itself (to calculate portal-aware offsets, say, for projectiles)
 // or to teleport normal tracers (like hitscan, railgun, autoaim tracers)
+//
+//============================================================================
+
 class PortalTracer
 {
 public:
@@ -168,6 +174,12 @@ public:
 
 /* new code */
 fixed_t P_PointLineDistance(line_t* line, fixed_t x, fixed_t y);
+
+//============================================================================
+//
+// some wrappers around the portal data.
+//
+//============================================================================
 
 
 // returns true if the portal is crossable by actors

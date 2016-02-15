@@ -1,3 +1,42 @@
+/*
+** portals.cpp
+** Everything that has to do with portals (both of the line and sector variety)
+**
+**---------------------------------------------------------------------------
+** Copyright 2016 ZZYZX
+** Copyright 2016 Christoph Oelckers
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+** There is no code here that is directly taken from Eternity
+** although some similarities may be inevitable because it has to
+** implement the same concepts.
+*/
+
+
 #include "portal.h"
 #include "p_local.h"
 #include "p_lnspec.h"
@@ -23,6 +62,12 @@ TArray<FLinePortal> linePortals;
 TArray<FLinePortal*> linkedPortals;	// only the linked portals, this is used to speed up looking for them in P_CollectConnectedGroups.
 
 
+//============================================================================
+//
+// Save a line portal for savegames.
+//
+//============================================================================
+
 FArchive &operator<< (FArchive &arc, FLinePortal &port)
 {
 	arc << port.mOrigin
@@ -36,6 +81,12 @@ FArchive &operator<< (FArchive &arc, FLinePortal &port)
 	return arc;
 }
 
+
+//============================================================================
+//
+// finds the destination for a line portal for spawning
+//
+//============================================================================
 
 static line_t *FindDestination(line_t *src, int tag)
 {
@@ -54,6 +105,12 @@ static line_t *FindDestination(line_t *src, int tag)
 	}
 	return NULL;
 }
+
+//============================================================================
+//
+// Spawns a single line portal
+//
+//============================================================================
 
 void P_SpawnLinePortal(line_t* line)
 {
@@ -135,6 +192,12 @@ void P_SpawnLinePortal(line_t* line)
 	}
 }
 
+//============================================================================
+//
+// Update a line portal's state after all have been spawned
+//
+//============================================================================
+
 void P_UpdatePortal(FLinePortal *port)
 {
 	if (port->mDestination == NULL)
@@ -171,6 +234,13 @@ void P_UpdatePortal(FLinePortal *port)
  	}
 }
 
+//============================================================================
+//
+// Collect a separate list of linked portals so that these can be
+// processed faster without the simpler types interfering.
+//
+//============================================================================
+
 void P_CollectLinkedPortals()
 {
 	linkedPortals.Clear();
@@ -184,6 +254,12 @@ void P_CollectLinkedPortals()
 	}
 }
 
+//============================================================================
+//
+// Post-process all line portals
+//
+//============================================================================
+
 void P_FinalizePortals()
 {
 	for (unsigned i = 0; i < linePortals.Size(); i++)
@@ -193,6 +269,12 @@ void P_FinalizePortals()
 	}
 	P_CollectLinkedPortals();
 }
+
+//============================================================================
+//
+// Change the destination of a portal
+//
+//============================================================================
 
 static bool ChangePortalLine(line_t *line, int destid)
 {
@@ -224,6 +306,12 @@ static bool ChangePortalLine(line_t *line, int destid)
 }
 
 
+//============================================================================
+//
+// Change the destination of a group of portals
+//
+//============================================================================
+
 bool P_ChangePortal(line_t *ln, int thisid, int destid)
 {
 	int lineno;
@@ -238,7 +326,13 @@ bool P_ChangePortal(line_t *ln, int thisid, int destid)
 	return res;
 }
 
+//============================================================================
+//
+// Calculate the intersection between two lines.
 // [ZZ] lots of floats here to avoid overflowing a lot
+//
+//============================================================================
+
 bool P_IntersectLines(fixed_t o1x, fixed_t o1y, fixed_t p1x, fixed_t p1y,
 				      fixed_t o2x, fixed_t o2y, fixed_t p2x, fixed_t p2y,
 				      fixed_t& rx, fixed_t& ry)
@@ -278,9 +372,15 @@ inline int P_PointOnLineSideExplicit (fixed_t x, fixed_t y, fixed_t x1, fixed_t 
 	return DMulScale32 (y-y1, x2-x1, x1-x, y2-y1) > 0;
 }
 
+//============================================================================
+//
+// check if this line is between portal and the viewer. clip away if it is.
+// (this may need some fixing)
+//
+//============================================================================
+
 bool P_ClipLineToPortal(line_t* line, line_t* portal, fixed_t viewx, fixed_t viewy, bool partial, bool samebehind)
 {
-	// check if this line is between portal and the viewer. clip away if it is.
 	bool behind1 = !!P_PointOnLineSidePrecise(line->v1->x, line->v1->y, portal);
 	bool behind2 = !!P_PointOnLineSidePrecise(line->v2->x, line->v2->y, portal);
 
@@ -305,6 +405,12 @@ bool P_ClipLineToPortal(line_t* line, line_t* portal, fixed_t viewx, fixed_t vie
 
 	return false;
 }
+
+//============================================================================
+//
+// Translates a coordinate by a portal's displacement
+//
+//============================================================================
 
 void P_TranslatePortalXY(line_t* src, line_t* dst, fixed_t& x, fixed_t& y)
 {
@@ -342,6 +448,12 @@ void P_TranslatePortalXY(line_t* src, line_t* dst, fixed_t& x, fixed_t& y)
 	y = ty;
 }
 
+//============================================================================
+//
+// Translates a velocity vector by a portal's displacement
+//
+//============================================================================
+
 void P_TranslatePortalVXVY(line_t* src, line_t* dst, fixed_t& vx, fixed_t& vy)
 {
 	angle_t angle =
@@ -360,6 +472,12 @@ void P_TranslatePortalVXVY(line_t* src, line_t* dst, fixed_t& vx, fixed_t& vy)
 	vy = FixedMul(orig_vely, c) + FixedMul(orig_velx, s);
 }
 
+//============================================================================
+//
+// Translates an angle by a portal's displacement
+//
+//============================================================================
+
 void P_TranslatePortalAngle(line_t* src, line_t* dst, angle_t& angle)
 {
 	if (!src || !dst)
@@ -375,6 +493,12 @@ void P_TranslatePortalAngle(line_t* src, line_t* dst, angle_t& angle)
 	xangle += ANGLE_180;
 	angle += xangle;
 }
+
+//============================================================================
+//
+// Translates a z-coordinate by a portal's displacement
+//
+//============================================================================
 
 void P_TranslatePortalZ(line_t* src, line_t* dst, fixed_t& z)
 {
@@ -397,7 +521,12 @@ void P_TranslatePortalZ(line_t* src, line_t* dst, fixed_t& z)
 	}
 }
 
+//============================================================================
+//
 // calculate shortest distance from a point (x,y) to a linedef
+//
+//============================================================================
+
 fixed_t P_PointLineDistance(line_t* line, fixed_t x, fixed_t y)
 {
 	angle_t angle = R_PointToAngle2(0, 0, line->dx, line->dy);
@@ -423,7 +552,12 @@ void P_NormalizeVXVY(fixed_t& vx, fixed_t& vy)
 	vy = FLOAT2FIXED(_vy/len);
 }
 
+//============================================================================
+//
 // portal tracer code
+//
+//============================================================================
+
 PortalTracer::PortalTracer(fixed_t startx, fixed_t starty, fixed_t endx, fixed_t endy)
 {
 	this->startx = startx;
@@ -582,6 +716,9 @@ static bool CollectSectors(int groupid, sector_t *origin)
 //
 // Adds the displacement for one portal to the displacement array
 // (one version for sector to sector plane, one for line to line portals)
+//
+// Note: Despite the similarities to Eternity's equivalent this is
+// original code!
 //
 //============================================================================
 
@@ -796,14 +933,13 @@ void P_CreateLinkedPortals()
 			ASkyViewpoint *box = sectors[i].SkyBoxes[j];
 			if (box != NULL)
 			{
-				if (box->special1 == SKYBOX_LINKEDPORTAL && box->Sector->PortalGroup == 0)
+				if (box->special1 == SKYBOX_LINKEDPORTAL && sectors[i].PortalGroup == 0)
 				{
-					CollectSectors(box->Sector->PortalGroup, box->Sector);
-					box = box->Mate;
-					if (box->special1 == SKYBOX_LINKEDPORTAL && box->Sector->PortalGroup == 0)
-					{
-						CollectSectors(box->Sector->PortalGroup, box->Sector);
-					}
+					// Note: the linked actor will be on the other side of the portal.
+					// To get this side's group we will have to look at the mate object.
+					CollectSectors(box->Mate->Sector->PortalGroup, &sectors[i]);
+					// We cannot process the backlink here because all we can access is the anchor object
+					// If necessary that will have to be done for the other side's portal.
 				}
 			}
 		}
@@ -829,7 +965,13 @@ void P_CreateLinkedPortals()
 			if (dispxy.isSet && dispyx.isSet &&
 				(dispxy.x != -dispyx.x || dispxy.y != -dispyx.y))
 			{
-				Printf("Link offset mismatch between groups %d and %d\n", x, y);	// need to find some sectors to report.
+				int sec1 = -1, sec2 = -1;
+				for (int i = 0; i < numsectors && (sec1 == -1 || sec2 == -1); i++)
+				{
+					if (sec1 == -1 && sectors[i].PortalGroup == x)  sec1 = i;
+					if (sec2 == -1 && sectors[i].PortalGroup == y)  sec2 = i;
+				}
+				Printf("Link offset mismatch between sectors %d and %d\n", sec1, sec2);
 				bogus = true;
 			}
 			// todo: Find sectors that have no group but belong to a portal.
@@ -937,6 +1079,12 @@ bool P_CollectConnectedGroups(AActor *actor, fixed_t newx, fixed_t newy, FPortal
 	return retval;
 }
 
+
+//============================================================================
+//
+// print the group link table to the console
+//
+//============================================================================
 
 CCMD(dumplinktable)
 {

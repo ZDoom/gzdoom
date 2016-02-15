@@ -78,7 +78,7 @@ struct FCheckPosition
 	bool			DoRipping;
 	TMap<AActor*, bool> LastRipped;
 
-	//FPortalGroupTable	Groups;
+	FPortalGroupTable	Groups;
 	int				PushTime;
 
 	FCheckPosition(bool rip=false)

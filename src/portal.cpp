@@ -973,7 +973,23 @@ void P_CreateLinkedPortals()
 				Printf("Link offset mismatch between sectors %d and %d\n", sec1, sec2);
 				bogus = true;
 			}
-			// todo: Find sectors that have no group but belong to a portal.
+			// mark everything that connects to a one-sided line
+			for (int i = 0; i < numlines; i++)
+			{
+				if (lines[i].backsector == NULL && lines[i].frontsector->PortalGroup == 0)
+				{
+					CollectSectors(-1, lines[i].frontsector);
+				}
+			}
+			// and now print a message for everything that still wasn't processed.
+			for (int i = 0; i < numsectors; i++)
+			{
+				if (sectors[i].PortalGroup == 0)
+				{
+					Printf("Unable to assign sector %d to any group. Possibly self-referencing\n", i);
+				}
+				else if (sectors[i].PortalGroup == -1) sectors[i].PortalGroup = 0;
+			}
 		}
 	}
 	bogus |= ConnectGroups();

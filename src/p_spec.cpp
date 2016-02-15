@@ -46,6 +46,8 @@
 #include "w_wad.h"
 
 #include "p_local.h"
+#include "p_spec.h"
+#include "p_blockmap.h"
 #include "p_lnspec.h"
 #include "p_terrain.h"
 #include "p_acs.h"
@@ -64,7 +66,10 @@
 #include "a_keys.h"
 #include "c_dispatch.h"
 #include "r_sky.h"
+#include "d_player.h"
 #include "portal.h"
+#include "p_maputl.h"
+#include "p_blockmap.h"
 #ifndef NO_EDATA
 #include "edata.h"
 #endif

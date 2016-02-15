@@ -63,6 +63,7 @@
 #include "r_data/colormaps.h"
 #include "r_data/voxels.h"
 #include "p_local.h"
+#include "p_maputl.h"
 
 // [RH] A c-buffer. Used for keeping track of offscreen voxel spans.
 

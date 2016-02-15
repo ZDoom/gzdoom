@@ -12,6 +12,8 @@
 #include "g_level.h"
 #include "doomstat.h"
 #include "farchive.h"
+#include "a_pickups.h"
+#include "d_player.h"
 
 #define MAULATORTICS (25*35)
 

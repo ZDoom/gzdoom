@@ -19,6 +19,7 @@
 #include "statnums.h"
 #include "d_net.h"
 #include "d_event.h"
+#include "d_player.h"
 
 static FRandom pr_botmove ("BotMove");
 

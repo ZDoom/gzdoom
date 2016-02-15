@@ -38,6 +38,8 @@
 #include "templates.h"
 #include "p_local.h"
 #include "p_terrain.h"
+#include "p_maputl.h"
+#include "p_spec.h"
 
 
 //============================================================================

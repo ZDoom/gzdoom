@@ -36,6 +36,8 @@
 #include "p_local.h"
 #include "cmdlib.h"
 #include "p_lnspec.h"
+#include "p_maputl.h"
+#include "p_spec.h"
 
 //===========================================================================
 //

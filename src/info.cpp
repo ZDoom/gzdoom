@@ -35,6 +35,7 @@
 */
 
 
+#include "doomstat.h"
 #include "info.h"
 #include "m_fixed.h"
 #include "c_dispatch.h"
@@ -51,6 +52,8 @@
 #include "cmdlib.h"
 #include "g_level.h"
 #include "stats.h"
+#include "thingdef.h"
+#include "d_player.h"
 
 extern void LoadActors ();
 extern void InitBotStuff();

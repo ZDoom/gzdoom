@@ -58,8 +58,12 @@
 #include "d_event.h"
 #include "gstrings.h"
 #include "portal.h"
+#include "po_man.h"
+#include "d_player.h"
+#include "r_utility.h"
 #include "r_data/colormaps.h"
 #include "fragglescript/t_fs.h"
+#include "p_spec.h"
 
 // Remaps EE sector change types to Generic_Floor values. According to the Eternity Wiki:
 /*

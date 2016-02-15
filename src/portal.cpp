@@ -11,6 +11,8 @@
 #include "a_sharedglobal.h"
 #include "i_system.h"
 #include "c_dispatch.h"
+#include "p_maputl.h"
+#include "p_spec.h"
 
 // simulation recurions maximum
 CVAR(Int, sv_portal_recursions, 4, CVAR_ARCHIVE|CVAR_SERVERINFO)

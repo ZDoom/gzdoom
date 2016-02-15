@@ -58,6 +58,7 @@
 #include "g_level.h"
 #include "d_net.h"
 #include "d_netinf.h"
+#include "a_morph.h"
 
 static FRandom pr_obituary ("Obituary");
 static FRandom pr_botrespawn ("BotRespawn");

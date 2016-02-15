@@ -1153,4 +1153,17 @@ struct visstyle_t
 };
 
 
+//----------------------------------------------------------------------------------
+//
+// The playsim can use different nodes than the renderer so this is
+// not the same as R_PointInSubsector
+//
+//----------------------------------------------------------------------------------
+subsector_t *P_PointInSubsector(fixed_t x, fixed_t y);
+inline sector_t *P_PointInSector(fixed_t x, fixed_t y)
+{
+	return P_PointInSubsector(x, y)->sector;
+}
+
+
 #endif

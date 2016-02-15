@@ -60,6 +60,7 @@
 #include "v_video.h"
 #include "p_spec.h"
 #include "hardware.h"
+#include "r_utility.h"
 #include "intermission/intermission.h"
 
 EXTERN_CVAR (Int, disableautosave)

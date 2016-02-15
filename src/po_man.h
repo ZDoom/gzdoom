@@ -107,4 +107,40 @@ FArchive &operator<< (FArchive &arc, FPolyObj *&poly);
 FArchive &operator<< (FArchive &arc, const FPolyObj *&poly);
 
 
+// ===== PO_MAN =====
+
+typedef enum
+{
+	PODOOR_NONE,
+	PODOOR_SLIDE,
+	PODOOR_SWING,
+} podoortype_t;
+
+bool EV_RotatePoly (line_t *line, int polyNum, int speed, int byteAngle, int direction, bool overRide);
+bool EV_MovePoly (line_t *line, int polyNum, int speed, angle_t angle, fixed_t dist, bool overRide);
+bool EV_MovePolyTo (line_t *line, int polyNum, int speed, fixed_t x, fixed_t y, bool overRide);
+bool EV_OpenPolyDoor (line_t *line, int polyNum, int speed, angle_t angle, int delay, int distance, podoortype_t type);
+bool EV_StopPoly (int polyNum);
+
+
+// [RH] Data structure for P_SpawnMapThing() to keep track
+//		of polyobject-related things.
+struct polyspawns_t
+{
+	polyspawns_t *next;
+	fixed_t x;
+	fixed_t y;
+	short angle;
+	short type;
+};
+
+extern int po_NumPolyobjs;
+extern polyspawns_t *polyspawns;	// [RH] list of polyobject things to spawn
+
+
+void PO_Init ();
+bool PO_Busy (int polyobj);
+FPolyObj *PO_GetPolyobj(int polyNum);
+
+
 #endif

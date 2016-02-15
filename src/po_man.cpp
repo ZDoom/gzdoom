@@ -29,6 +29,9 @@
 #include "p_setup.h"
 #include "vectors.h"
 #include "farchive.h"
+#include "p_blockmap.h"
+#include "p_maputl.h"
+#include "r_utility.h"
 
 // MACROS ------------------------------------------------------------------
 

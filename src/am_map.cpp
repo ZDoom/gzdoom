@@ -42,6 +42,8 @@
 #include "r_renderer.h"
 #include "r_sky.h"
 #include "sbar.h"
+#include "d_player.h"
+#include "p_blockmap.h"
 
 #include "m_cheat.h"
 #include "i_system.h"
@@ -58,6 +60,7 @@
 // State.
 #include "doomstat.h"
 #include "r_state.h"
+#include "r_utility.h"
 
 // Data.
 #include "gstrings.h"

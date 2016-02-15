@@ -41,3 +41,5 @@
 /lzma/x64/
 /zlib/x64/
 /build_vc2015
+/build_vc2015-32
+/build_vc2015-64

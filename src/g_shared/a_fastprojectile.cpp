@@ -4,6 +4,7 @@
 #include "g_level.h"
 #include "r_sky.h"
 #include "p_lnspec.h"
+#include "b_bot.h"
 
 
 IMPLEMENT_CLASS(AFastProjectile)

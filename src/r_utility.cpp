@@ -55,6 +55,8 @@
 #include "r_renderer.h"
 #include "r_data/colormaps.h"
 #include "farchive.h"
+#include "r_utility.h"
+#include "d_player.h"
 
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------

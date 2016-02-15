@@ -32,9 +32,13 @@
 #include "m_bbox.h"
 
 #include "doomdef.h"
+#include "doomdata.h"
 #include "doomstat.h"
 #include "p_local.h"
+#include "p_maputl.h"
 #include "p_3dmidtex.h"
+#include "p_blockmap.h"
+#include "r_utility.h"
 
 // State.
 #include "r_state.h"

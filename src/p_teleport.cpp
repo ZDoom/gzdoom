@@ -34,6 +34,10 @@
 #include "m_random.h"
 #include "i_system.h"
 #include "doomstat.h"
+#include "d_player.h"
+#include "p_maputl.h"
+#include "r_utility.h"
+#include "p_spec.h"
 
 #define FUDGEFACTOR		10
 

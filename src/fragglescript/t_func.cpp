@@ -68,6 +68,7 @@
 #include "r_data/colormaps.h"
 #include "farchive.h"
 #include "p_setup.h"
+#include "p_spec.h"
 
 static FRandom pr_script("FScript");
 

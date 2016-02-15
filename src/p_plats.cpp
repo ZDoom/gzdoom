@@ -31,6 +31,7 @@
 #include "r_state.h"
 #include "gi.h"
 #include "farchive.h"
+#include "p_spec.h"
 
 static FRandom pr_doplat ("DoPlat");
 

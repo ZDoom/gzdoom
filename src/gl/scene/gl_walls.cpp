@@ -210,7 +210,7 @@ void GLWall::PutWall(bool translucent)
 		if (!portal)
 		{
 			// either a regular skybox or an Eternity-style horizon
-			if (skybox->special1 != SKYBOX_MAP) portal = new GLEEHorizonPortal(skybox);
+			if (skybox->special1 != SKYBOX_SKYVIEWPOINT) portal = new GLEEHorizonPortal(skybox);
 			else portal = new GLSkyboxPortal(skybox);
 		}
 		portal->AddLine(this);

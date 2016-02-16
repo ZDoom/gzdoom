@@ -47,6 +47,9 @@
 #include "vectors.h"
 #include "r_defs.h"
 #include "r_sky.h"
+#include "r_utility.h"
+#include "p_maputl.h"
+#include "doomdata.h"
 #include "portal.h"
 
 #include "gl/system/gl_cvars.h"

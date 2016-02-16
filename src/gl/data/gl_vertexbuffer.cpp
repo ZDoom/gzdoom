@@ -41,6 +41,7 @@
 #include "gl/system/gl_system.h"
 #include "doomtype.h"
 #include "p_local.h"
+#include "r_state.h"
 #include "m_argv.h"
 #include "c_cvars.h"
 #include "gl/system/gl_interface.h"

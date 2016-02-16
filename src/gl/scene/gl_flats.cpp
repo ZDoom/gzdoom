@@ -46,6 +46,7 @@
 #include "g_level.h"
 #include "doomstat.h"
 #include "d_player.h"
+#include "portal.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_cvars.h"

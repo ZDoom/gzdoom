@@ -44,6 +44,7 @@
 #include "colormatcher.h"
 #include "i_system.h"
 #include "p_local.h"
+#include "p_tags.h"
 #include "p_lnspec.h"
 #include "c_dispatch.h"
 #include "r_sky.h"

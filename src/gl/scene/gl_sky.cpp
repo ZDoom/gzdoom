@@ -45,6 +45,7 @@
 #include "r_state.h"
 #include "r_utility.h"
 #include "doomdata.h"
+#include "portal.h"
 #include "gl/gl_functions.h"
 
 #include "gl/data/gl_data.h"

@@ -47,6 +47,8 @@
 #include "a_sharedglobal.h"
 #include "r_sky.h"
 #include "portal.h"
+#include "p_maputl.h"
+#include "d_player.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_framebuffer.h"

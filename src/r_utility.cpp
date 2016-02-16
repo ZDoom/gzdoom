@@ -34,7 +34,7 @@
 #include "doomstat.h"
 #include "m_random.h"
 #include "m_bbox.h"
-#include "p_local.h"
+#include "portal.h"
 #include "r_sky.h"
 #include "st_stuff.h"
 #include "c_cvars.h"
@@ -57,6 +57,7 @@
 #include "farchive.h"
 #include "r_utility.h"
 #include "d_player.h"
+#include "portal.h"
 
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------

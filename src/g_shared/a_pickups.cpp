@@ -427,7 +427,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialPosition)
 	self->floorz = sec->floorplane.ZatPoint(_x, _y);
 	self->ceilingz = sec->ceilingplane.ZatPoint(_x, _y);
 	self->SetZ(self->floorz);
-	P_FindFloorCeiling(self, FFCF_ONLYSPAWNPOS);
+	P_FindFloorCeiling(self, FFCF_ONLYSPAWNPOS | FFCF_NOPORTALS);	// no pprtal checks here so that things get spawned in this sector.
 
 	if (self->flags & MF_SPAWNCEILING)
 	{
@@ -451,6 +451,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialPosition)
 		self->SetZ(self->SpawnPoint[2] + self->floorz);
 	}
 	// Redo floor/ceiling check, in case of 3D floors
+	// we need to get the actual floor and ceiling heights including portals here
+	self->floorz = sec->LowestFloorAt(self, &self->floorsector);
+	self->ceilingz = sec->HighestCeilingAt(self, &self->ceilingsector);
 	P_FindFloorCeiling(self, FFCF_SAMESECTOR | FFCF_ONLY3DFLOORS | FFCF_3DRESTRICT);
 	if (self->Z() < self->floorz)
 	{ // Do not reappear under the floor, even if that's where we were for the

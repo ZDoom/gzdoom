@@ -30,6 +30,7 @@
 #include "po_man.h"
 #include "farchive.h"
 #include "r_utility.h"
+#include "portal.h"
 #include "a_sharedglobal.h"
 #include "r_data/colormaps.h"
 
@@ -882,7 +883,78 @@ void sector_t::CheckPortalPlane(int plane)
 	planes[plane].Flags = (planes[plane].Flags  & ~PLANEF_OBSTRUCTED) | obstructed;
 }
 
+//===========================================================================
+//
+// Finds the highest ceiling at the given position, all portals considered
+//
+//===========================================================================
 
+fixed_t sector_t::HighestCeilingAt(fixed_t x, fixed_t y, sector_t **resultsec)
+{
+	sector_t *check = this;
+	fixed_t planeheight = FIXED_MIN;
+
+	// Continue until we find a blocking portal or a portal below where we actually are.
+	while (!check->PortalBlocksMovement(ceiling) && planeheight < check->SkyBoxes[ceiling]->threshold)
+	{
+		FDisplacement &disp = check->CeilingDisplacement();
+		x += disp.pos.x;
+		y += disp.pos.y;
+		planeheight = check->SkyBoxes[ceiling]->threshold;
+		check = P_PointInSector(x, y);
+	}
+	if (resultsec) *resultsec = check;
+	return check->ceilingplane.ZatPoint(x, y);
+}
+
+//===========================================================================
+//
+// Finds the lowest floor at the given position, all portals considered
+//
+//===========================================================================
+
+fixed_t sector_t::LowestFloorAt(fixed_t x, fixed_t y, sector_t **resultsec)
+{
+	sector_t *check = this;
+	fixed_t planeheight = FIXED_MAX;
+
+	// Continue until we find a blocking portal or a portal above where we actually are.
+	while (!check->PortalBlocksMovement(floor) && planeheight > check->SkyBoxes[floor]->threshold)
+	{
+		FDisplacement &disp = check->FloorDisplacement();
+		x += disp.pos.x;
+		y += disp.pos.y;
+		planeheight = check->SkyBoxes[floor]->threshold;
+		check = P_PointInSector(x, y);
+	}
+	if (resultsec) *resultsec = check;
+	return check->ceilingplane.ZatPoint(x, y);
+}
+
+
+//===========================================================================
+//
+// Calculates the height of a sector plane, respecting portal offsets
+// between two spots
+//
+//===========================================================================
+
+fixed_t sector_t::PlaneAtPoint(const secplane_t &plane, fixed_t x, fixed_t y, int refgroup) const
+{
+	if (refgroup != PortalGroup)
+	{
+		FDisplacement &disp = Displacements(PortalGroup, refgroup);
+		x += disp.pos.x;
+		y += disp.pos.y;
+	}
+	return plane.ZatPoint(x, y);
+}
+
+//===========================================================================
+//
+// 
+//
+//===========================================================================
 
 FArchive &operator<< (FArchive &arc, secspecial_t &p)
 {
@@ -908,6 +980,11 @@ FArchive &operator<< (FArchive &arc, secspecial_t &p)
 }
 
 
+//===========================================================================
+//
+// 
+//
+//===========================================================================
 
 bool secplane_t::CopyPlaneIfValid (secplane_t *dest, const secplane_t *opp) const
 {

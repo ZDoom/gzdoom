@@ -55,6 +55,7 @@ enum
 };
 
 extern size_t MaxDrawSegs;
+struct FDisplacement;
 
 
 enum
@@ -240,6 +241,16 @@ struct secplane_t
 	fixed_t Zat0 () const
 	{
 		return ic < 0 ? d : -d;
+	}
+
+	fixed_t ZatPoint(const fixedvec2 &spot) const
+	{
+		return FixedMul(ic, -d - DMulScale16(a, spot.x, b, spot.y));
+	}
+
+	fixed_t ZatPoint(const fixedvec3 &spot) const
+	{
+		return FixedMul(ic, -d - DMulScale16(a, spot.x, b, spot.y));
 	}
 
 	// Returns the value of z at (x,y)
@@ -702,17 +713,6 @@ struct sector_t
 		return pos == floor? floorplane:ceilingplane;
 	}
 
-	fixed_t HighestCeiling(AActor *a) const
-	{
-		return ceilingplane.ZatPoint(a);
-	}
-
-	fixed_t LowestFloor(AActor *a) const
-	{
-		return floorplane.ZatPoint(a);
-	}
-
-
 	bool isSecret() const
 	{
 		return !!(Flags & SECF_SECRET);
@@ -750,6 +750,63 @@ struct sector_t
 	void SetSpecial(const secspecial_t *spec);
 	bool PlaneMoving(int pos);
 
+	// Portal-aware height calculation
+	fixed_t HighestCeilingAt(fixed_t x, fixed_t y, sector_t **resultsec = NULL);
+	fixed_t LowestFloorAt(fixed_t x, fixed_t y, sector_t **resultsec = NULL);
+
+	fixed_t HighestCeilingAt(AActor *a, sector_t **resultsec = NULL)
+	{
+		return HighestCeilingAt(a->X(), a->X(), resultsec);
+	}
+
+	fixed_t LowestFloorAt(AActor *a, sector_t **resultsec = NULL)
+	{
+		return LowestFloorAt(a->X(), a->Y(), resultsec);
+	}
+
+	// ... for ceilings
+	fixed_t CeilingAtPoint(fixed_t x, fixed_t y, int refgroup) const
+	{
+		return PlaneAtPoint(ceilingplane, x, y, refgroup);
+	}
+	fixed_t CeilingAtPoint(AActor *actor) const
+	{
+		return PlaneAtPoint(ceilingplane, actor->X(), actor->Y(), actor->Sector->PortalGroup);
+	}
+	fixed_t CeilingAtPoint(fixed_t x, fixed_t y, sector_t *refsector) const
+	{
+		return PlaneAtPoint(ceilingplane, x, y, refsector->PortalGroup);
+	}
+
+	// ... for floors
+	fixed_t FloorAtPoint(fixed_t x, fixed_t y, int refgroup) const
+	{
+		return PlaneAtPoint(floorplane, x, y, refgroup);
+	}
+	fixed_t FloorAtPoint(AActor *actor) const
+	{
+		return PlaneAtPoint(floorplane, actor->X(), actor->Y(), actor->Sector->PortalGroup);
+	}
+	fixed_t FloorAtPoint(fixed_t x, fixed_t y, sector_t *refsector) const
+	{
+		return PlaneAtPoint(floorplane, x, y, refsector->PortalGroup);
+	}
+
+	// ... for control sectors
+	fixed_t PlaneAtPoint(const secplane_t &plane, AActor *actor) const
+	{
+		return PlaneAtPoint(plane, actor->X(), actor->Y(), actor->Sector->PortalGroup);
+	}
+	fixed_t PlaneAtPoint(const secplane_t &plane, fixed_t x, fixed_t y, sector_t *refsector) const
+	{
+		return PlaneAtPoint(plane, x, y, refsector->PortalGroup);
+	}
+
+	// The worker function for all the above.
+	fixed_t PlaneAtPoint(const secplane_t &plane, fixed_t x, fixed_t y, int refgroup) const;
+
+	FDisplacement &FloorDisplacement();
+	FDisplacement &CeilingDisplacement();
 
 	// Member variables
 	fixed_t		CenterFloor () const { return floorplane.ZatPoint (soundorg[0], soundorg[1]); }
@@ -1165,5 +1222,6 @@ inline sector_t *P_PointInSector(fixed_t x, fixed_t y)
 	return P_PointInSubsector(x, y)->sector;
 }
 
+#define _ZatPoint ZatPoint	// so that it still compiles during the transition
 
 #endif

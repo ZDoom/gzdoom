@@ -774,13 +774,13 @@ static void AddDisplacementForPortal(AStackPoint *portal)
 	FDisplacement & disp = Displacements(thisgroup, othergroup);
 	if (!disp.isSet)
 	{
-		disp.x = portal->scaleX;
-		disp.y = portal->scaleY;
+		disp.pos.x = portal->scaleX;
+		disp.pos.y = portal->scaleY;
 		disp.isSet = true;
 	}
 	else
 	{
-		if (disp.x != portal->scaleX || disp.y != portal->scaleY)
+		if (disp.pos.x != portal->scaleX || disp.pos.y != portal->scaleY)
 		{
 			Printf("Portal between sectors %d and %d has displacement mismatch and will be disabled\n", portal->Sector->sectornum, portal->Mate->Sector->sectornum);
 			portal->special1 = portal->Mate->special1 = SKYBOX_PORTAL;
@@ -810,13 +810,13 @@ static void AddDisplacementForPortal(FLinePortal *portal)
 	FDisplacement & disp = Displacements(thisgroup, othergroup);
 	if (!disp.isSet)
 	{
-		disp.x = portal->mXDisplacement;
-		disp.y = portal->mYDisplacement;
+		disp.pos.x = portal->mXDisplacement;
+		disp.pos.y = portal->mYDisplacement;
 		disp.isSet = true;
 	}
 	else
 	{
-		if (disp.x != portal->mXDisplacement || disp.y != portal->mYDisplacement)
+		if (disp.pos.x != portal->mXDisplacement || disp.pos.y != portal->mYDisplacement)
 		{
 			Printf("Portal between lines %d and %d has displacement mismatch\n", int(portal->mOrigin - lines), int(portal->mDestination - lines));
 			portal->mType = linePortals[portal->mDestination->portalindex].mType = PORTT_TELEPORT;
@@ -857,15 +857,14 @@ static bool ConnectGroups()
 							FDisplacement &dispxz = Displacements(x, z);
 							if (dispxz.isSet)
 							{
-								if (dispxy.x + dispyz.x != dispxz.x || dispxy.y + dispyz.y != dispxz.y)
+								if (dispxy.pos.x + dispyz.pos.x != dispxz.pos.x || dispxy.pos.y + dispyz.pos.y != dispxz.pos.y)
 								{
 									bogus = true;
 								}
 							}
 							else
 							{
-								dispxz.x = dispxy.x + dispyz.x;
-								dispxz.y = dispxy.y + dispyz.y;
+								dispxz.pos = dispxy.pos + dispyz.pos;
 								dispxz.isSet = true;
 								dispxz.indirect = indirect;
 								changed = true;
@@ -995,7 +994,7 @@ void P_CreateLinkedPortals()
 			FDisplacement &dispxy = Displacements(x, y);
 			FDisplacement &dispyx = Displacements(y, x);
 			if (dispxy.isSet && dispyx.isSet &&
-				(dispxy.x != -dispyx.x || dispxy.y != -dispyx.y))
+				(dispxy.pos.x != -dispyx.pos.x || dispxy.pos.y != -dispyx.pos.y))
 			{
 				int sec1 = -1, sec2 = -1;
 				for (int i = 0; i < numsectors && (sec1 == -1 || sec2 == -1); i++)
@@ -1083,7 +1082,7 @@ bool P_CollectConnectedGroups(AActor *actor, fixed_t newx, fixed_t newy, FPortal
 		FDisplacement &disp = Displacements(thisgroup, othergroup);
 		if (!disp.isSet) continue;	// no connection.
 
-		FBoundingBox box(newx + disp.x, newy + disp.y, actor->radius);
+		FBoundingBox box(newx + disp.pos.x, newy + disp.pos.y, actor->radius);
 
 		if (box.Right() <= ld->bbox[BOXLEFT]
 			|| box.Left() >= ld->bbox[BOXRIGHT]
@@ -1117,8 +1116,8 @@ bool P_CollectConnectedGroups(AActor *actor, fixed_t newx, fixed_t newy, FPortal
 	{
 		sector_t *othersec = wsec->SkyBoxes[sector_t::ceiling]->Sector;
 		FDisplacement &disp = Displacements(actor->Sector->PortalGroup, othersec->PortalGroup);
-		fixed_t dx = newx + disp.x;
-		fixed_t dy = newx + disp.y;
+		fixed_t dx = newx + disp.pos.x;
+		fixed_t dy = newx + disp.pos.y;
 		processMask.setBit(othersec->PortalGroup);
 		out.Add(othersec->PortalGroup);
 		wsec = P_PointInSector(dx, dy);	// get upper sector at the exact spot we want to check and repeat
@@ -1129,8 +1128,8 @@ bool P_CollectConnectedGroups(AActor *actor, fixed_t newx, fixed_t newy, FPortal
 	{
 		sector_t *othersec = wsec->SkyBoxes[sector_t::ceiling]->Sector;
 		FDisplacement &disp = Displacements(actor->Sector->PortalGroup, othersec->PortalGroup);
-		fixed_t dx = newx + disp.x;
-		fixed_t dy = newx + disp.y;
+		fixed_t dx = newx + disp.pos.x;
+		fixed_t dy = newx + disp.pos.y;
 		processMask.setBit(othersec->PortalGroup);
 		out.Add(othersec->PortalGroup);
 		wsec = P_PointInSector(dx, dy);	// get lower sector at the exact spot we want to check and repeat
@@ -1153,7 +1152,7 @@ CCMD(dumplinktable)
 		for (int y = 1; y < Displacements.size; y++)
 		{
 			FDisplacement &disp = Displacements(x, y);
-			Printf("%c%c(%6d, %6d)", TEXTCOLOR_ESCAPE, 'C' + disp.indirect, disp.x >> FRACBITS, disp.y >> FRACBITS);
+			Printf("%c%c(%6d, %6d)", TEXTCOLOR_ESCAPE, 'C' + disp.indirect, disp.pos.x >> FRACBITS, disp.pos.y >> FRACBITS);
 		}
 		Printf("\n");
 	}

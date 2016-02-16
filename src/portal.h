@@ -30,9 +30,14 @@ struct FPortalGroupArray;
 
 struct FDisplacement
 {
-	fixed_t x, y;
+	fixedvec2 pos;
 	bool isSet;
 	BYTE indirect;	// just for illustration.
+
+	operator fixedvec2()
+	{
+		return pos;
+	}
 };
 
 struct FDisplacementTable
@@ -220,6 +225,17 @@ inline bool sector_t::PortalBlocksSound(int plane)
 {
 	if (SkyBoxes[plane] == NULL || SkyBoxes[plane]->special1 != SKYBOX_LINKEDPORTAL) return true;
 	return !!(planes[plane].Flags & (PLANEF_BLOCKSOUND | PLANEF_DISABLED | PLANEF_OBSTRUCTED));
+}
+
+// These may only be called if the portal has been validated
+inline FDisplacement &sector_t::FloorDisplacement()
+{
+	return Displacements(PortalGroup, SkyBoxes[sector_t::floor]->Sector->PortalGroup);
+}
+
+inline FDisplacement &sector_t::CeilingDisplacement()
+{
+	return Displacements(PortalGroup, SkyBoxes[sector_t::ceiling]->Sector->PortalGroup);
 }
 
 #endif

@@ -122,9 +122,9 @@ void A_PainShootSkull (AActor *self, angle_t angle, PClassActor *spawntype, int 
 	// Check to see if the new Lost Soul's z value is above the
 	// ceiling of its new sector, or below the floor. If so, kill it.
 
-	if ((other->Z() >
-         (other->Sector->HighestCeiling(other) - other->height)) ||
-        (other->Z() < other->Sector->LowestFloor(other)))
+	if ((other->Top() >
+         (other->Sector->HighestCeilingAt(other))) ||
+        (other->Z() < other->Sector->LowestFloorAt(other)))
 	{
 		// kill it immediately
 		P_DamageMobj (other, self, self, TELEFRAG_DAMAGE, NAME_None);//  ^

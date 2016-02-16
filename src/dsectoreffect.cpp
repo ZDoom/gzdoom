@@ -29,6 +29,7 @@
 #include "r_data/r_interpolate.h"
 #include "statnums.h"
 #include "farchive.h"
+#include "doomstat.h"
 
 IMPLEMENT_CLASS (DSectorEffect)
 

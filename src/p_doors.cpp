@@ -36,6 +36,8 @@
 #include "sc_man.h"
 #include "cmdlib.h"
 #include "farchive.h"
+#include "d_player.h"
+#include "p_spec.h"
 
 //============================================================================
 //

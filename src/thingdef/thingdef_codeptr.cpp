@@ -73,6 +73,9 @@
 #include "p_trace.h"
 #include "p_setup.h"
 #include "gstrings.h"
+#include "d_player.h"
+#include "p_maputl.h"
+#include "p_spec.h"
 
 AActor *SingleActorFromTID(int tid, AActor *defactor);
 

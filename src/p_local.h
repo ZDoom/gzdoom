@@ -24,13 +24,19 @@
 #define __P_LOCAL__
 
 #include "doomtype.h"
-#include "doomdef.h"
 #include "tables.h"
-#include "r_state.h"
-#include "r_utility.h"
-#include "d_player.h"
 
-#include "a_morph.h"
+class player_t;
+class AActor;
+struct FPlayerStart;
+class PClassActor;
+struct fixedvec3;
+class APlayerPawn;
+struct line_t;
+struct sector_t;
+struct msecnode_t;
+struct secplane_t;
+struct FCheckPosition;
 
 #include <stdlib.h>
 
@@ -119,7 +125,7 @@ void	P_PredictionLerpReset();
 #define SPF_TEMPPLAYER		1	// spawning a short-lived dummy player
 #define SPF_WEAPONFULLYUP	2	// spawn with weapon already raised
 
-APlayerPawn *P_SpawnPlayer (struct FPlayerStart *mthing, int playernum, int flags=0);
+APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags=0);
 
 void P_ThrustMobj (AActor *mo, angle_t angle, fixed_t move);
 int P_FaceMobj (AActor *source, AActor *target, angle_t *delta);
@@ -221,200 +227,6 @@ enum WARPF
 
 
 
-//
-// P_MAPUTL
-//
-struct divline_t
-{
-	fixed_t 	x;
-	fixed_t 	y;
-	fixed_t 	dx;
-	fixed_t 	dy;
-	
-};
-
-struct intercept_t
-{
-	fixed_t 	frac;			// along trace line
-	bool	 	isaline;
-	bool		done;
-	union {
-		AActor *thing;
-		line_t *line;
-	} d;
-};
-
-typedef bool (*traverser_t) (intercept_t *in);
-
-fixed_t P_AproxDistance (fixed_t dx, fixed_t dy);
-
-//==========================================================================
-//
-// P_PointOnLineSide
-//
-// Returns 0 (front/on) or 1 (back)
-// [RH] inlined, stripped down, and made more precise
-//
-//==========================================================================
-
-inline int P_PointOnLineSide (fixed_t x, fixed_t y, const line_t *line)
-{
-	extern int P_VanillaPointOnLineSide(fixed_t x, fixed_t y, const line_t* line);
-
-	return i_compatflags2 & COMPATF2_POINTONLINE
-		? P_VanillaPointOnLineSide(x, y, line)
-		: DMulScale32 (y-line->v1->y, line->dx, line->v1->x-x, line->dy) > 0;
-}
-
-inline int P_PointOnLineSidePrecise (fixed_t x, fixed_t y, const line_t *line)
-{
-	return DMulScale32 (y-line->v1->y, line->dx, line->v1->x-x, line->dy) > 0;
-}
-
-
-//==========================================================================
-//
-// P_PointOnDivlineSide
-//
-// Same as P_PointOnLineSide except it uses divlines
-// [RH] inlined, stripped down, and made more precise
-//
-//==========================================================================
-
-inline int P_PointOnDivlineSide (fixed_t x, fixed_t y, const divline_t *line)
-{
-	extern int P_VanillaPointOnDivlineSide(fixed_t x, fixed_t y, const divline_t* line);
-
-	return (i_compatflags2 & COMPATF2_POINTONLINE)
-		? P_VanillaPointOnDivlineSide(x, y, line)
-		: (DMulScale32 (y-line->y, line->dx, line->x-x, line->dy) > 0);
-}
-
-inline int P_PointOnDivlineSidePrecise (fixed_t x, fixed_t y, const divline_t *line)
-{
-	return DMulScale32 (y-line->y, line->dx, line->x-x, line->dy) > 0;
-}
-
-
-//==========================================================================
-//
-// P_MakeDivline
-//
-//==========================================================================
-
-inline void P_MakeDivline (const line_t *li, divline_t *dl)
-{
-	dl->x = li->v1->x;
-	dl->y = li->v1->y;
-	dl->dx = li->dx;
-	dl->dy = li->dy;
-}
-
-fixed_t P_InterceptVector (const divline_t *v2, const divline_t *v1);
-
-struct FLineOpening
-{
-	fixed_t			top;
-	fixed_t			bottom;
-	fixed_t			range;
-	fixed_t			lowfloor;
-	sector_t		*bottomsec;
-	sector_t		*topsec;
-	FTextureID		ceilingpic;
-	FTextureID		floorpic;
-	int				floorterrain;
-	bool			touchmidtex;
-	bool			abovemidtex;
-};
-
-void	P_LineOpening (FLineOpening &open, AActor *thing, const line_t *linedef, fixed_t x, fixed_t y, fixed_t refx=FIXED_MIN, fixed_t refy=0, int flags=0);
-
-class FBoundingBox;
-struct polyblock_t;
-
-class FBlockLinesIterator
-{
-	int minx, maxx;
-	int miny, maxy;
-
-	int curx, cury;
-	polyblock_t *polyLink;
-	int polyIndex;
-	int *list;
-
-	void StartBlock(int x, int y);
-
-public:
-	FBlockLinesIterator(int minx, int miny, int maxx, int maxy, bool keepvalidcount = false);
-	FBlockLinesIterator(const FBoundingBox &box);
-	line_t *Next();
-	void Reset() { StartBlock(minx, miny); }
-};
-
-class FBlockThingsIterator
-{
-	int minx, maxx;
-	int miny, maxy;
-
-	int curx, cury;
-
-	FBlockNode *block;
-
-	int Buckets[32];
-
-	struct HashEntry
-	{
-		AActor *Actor;
-		int Next;
-	};
-	HashEntry FixedHash[10];
-	int NumFixedHash;
-	TArray<HashEntry> DynHash;
-
-	HashEntry *GetHashEntry(int i) { return i < (int)countof(FixedHash) ? &FixedHash[i] : &DynHash[i - countof(FixedHash)]; }
-
-	void StartBlock(int x, int y);
-	void SwitchBlock(int x, int y);
-	void ClearHash();
-
-	// The following is only for use in the path traverser 
-	// and therefore declared private.
-	FBlockThingsIterator();
-
-	friend class FPathTraverse;
-
-public:
-	FBlockThingsIterator(int minx, int miny, int maxx, int maxy);
-	FBlockThingsIterator(const FBoundingBox &box);
-	AActor *Next(bool centeronly = false);
-	void Reset() { StartBlock(minx, miny); }
-};
-
-class FPathTraverse
-{
-	static TArray<intercept_t> intercepts;
-
-	divline_t trace;
-	unsigned int intercept_index;
-	unsigned int intercept_count;
-	unsigned int count;
-
-	void AddLineIntercepts(int bx, int by);
-	void AddThingIntercepts(int bx, int by, FBlockThingsIterator &it, bool compatible);
-public:
-
-	intercept_t *Next();
-
-	FPathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int flags);
-	~FPathTraverse();
-	const divline_t &Trace() const { return trace; }
-};
-
-
-#define PT_ADDLINES 	1
-#define PT_ADDTHINGS	2
-#define PT_COMPATIBLE	4
-#define PT_DELTA		8		// x2,y2 is passed as a delta, not as an endpoint
 
 AActor *P_BlockmapSearch (AActor *mo, int distance, AActor *(*check)(AActor*, int, void *), void *params = NULL);
 AActor *P_RoughMonsterSearch (AActor *mo, int distance, bool onlyseekable=false);
@@ -422,45 +234,6 @@ AActor *P_RoughMonsterSearch (AActor *mo, int distance, bool onlyseekable=false)
 //
 // P_MAP
 //
-
-struct FCheckPosition
-{
-	// in
-	AActor			*thing;
-	fixed_t			x;
-	fixed_t			y;
-	fixed_t			z;
-
-	// out
-	sector_t		*sector;
-	fixed_t			floorz;
-	fixed_t			ceilingz;
-	fixed_t			dropoffz;
-	FTextureID		floorpic;
-	int				floorterrain;
-	sector_t		*floorsector;
-	FTextureID		ceilingpic;
-	sector_t		*ceilingsector;
-	bool			touchmidtex;
-	bool			abovemidtex;
-	bool			floatok;
-	bool			FromPMove;
-	line_t			*ceilingline;
-	AActor			*stepthing;
-	// [RH] These are used by PIT_CheckThing and P_XYMovement to apply
-	// ripping damage once per tic instead of once per move.
-	bool			DoRipping;
-	TMap<AActor*, bool> LastRipped;
-	int				PushTime;
-
-	FCheckPosition(bool rip=false)
-	{
-		DoRipping = rip;
-		PushTime = 0;
-		FromPMove = false;
-	}
-};
-
 
 
 // If "floatok" true, move would be ok
@@ -539,7 +312,6 @@ enum	// P_LineAttack flags
 
 AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance, int pitch, int damage, FName damageType, PClassActor *pufftype, int flags = 0, AActor **victim = NULL, int *actualdamage = NULL);
 AActor *P_LineAttack (AActor *t1, angle_t angle, fixed_t distance, int pitch, int damage, FName damageType, FName pufftype, int flags = 0, AActor **victim = NULL, int *actualdamage = NULL);
-AActor *P_LinePickActor (AActor *t1, angle_t angle, fixed_t distance, int pitch, ActorFlags actorMask, DWORD wallMask);
 void	P_TraceBleed (int damage, fixed_t x, fixed_t y, fixed_t z, AActor *target, angle_t angle, int pitch);
 void	P_TraceBleed (int damage, AActor *target, angle_t angle, int pitch);
 void	P_TraceBleed (int damage, AActor *target, AActor *missile);		// missile version
@@ -587,31 +359,10 @@ bool	Check_Sides(AActor *, int, int);					// phares
 // [RH] 
 const secplane_t * P_CheckSlopeWalk (AActor *actor, fixed_t &xmove, fixed_t &ymove);
 
-//----------------------------------------------------------------------------------
-//
-// Added so that in the source there's a clear distinction between
-// game engine and renderer specific calls.
-// (For ZDoom itself this doesn't make any difference here but for GZDoom it does.)
-//
-//----------------------------------------------------------------------------------
-subsector_t *P_PointInSubsector (fixed_t x, fixed_t y);
-inline sector_t *P_PointInSector(fixed_t x, fixed_t y)
-{
-	return P_PointInSubsector(x,y)->sector;
-}
-
 //
 // P_SETUP
 //
 extern BYTE*			rejectmatrix;	// for fast sight rejection
-extern int*				blockmaplump;	// offsets in blockmap are from here
-
-extern int*				blockmap;
-extern int				bmapwidth;
-extern int				bmapheight; 	// in mapblocks
-extern fixed_t			bmaporgx;
-extern fixed_t			bmaporgy;		// origin of block map
-extern FBlockNode**		blocklinks; 	// for thing chains
 
 
 
@@ -639,46 +390,9 @@ enum EDmgFlags
 };
 
 
-// ===== PO_MAN =====
-
-typedef enum
-{
-	PODOOR_NONE,
-	PODOOR_SLIDE,
-	PODOOR_SWING,
-} podoortype_t;
-
-bool EV_RotatePoly (line_t *line, int polyNum, int speed, int byteAngle, int direction, bool overRide);
-bool EV_MovePoly (line_t *line, int polyNum, int speed, angle_t angle, fixed_t dist, bool overRide);
-bool EV_MovePolyTo (line_t *line, int polyNum, int speed, fixed_t x, fixed_t y, bool overRide);
-bool EV_OpenPolyDoor (line_t *line, int polyNum, int speed, angle_t angle, int delay, int distance, podoortype_t type);
-bool EV_StopPoly (int polyNum);
-
-
-// [RH] Data structure for P_SpawnMapThing() to keep track
-//		of polyobject-related things.
-struct polyspawns_t
-{
-	polyspawns_t *next;
-	fixed_t x;
-	fixed_t y;
-	short angle;
-	short type;
-};
-
-extern int po_NumPolyobjs;
-extern polyspawns_t *polyspawns;	// [RH] list of polyobject things to spawn
-
-
-void PO_Init ();
-bool PO_Busy (int polyobj);
-FPolyObj *PO_GetPolyobj(int polyNum);
-
 //
 // P_SPEC
 //
-#include "p_spec.h"
-
 bool P_AlignFlat (int linenum, int side, int fc);
 
 #endif	// __P_LOCAL__

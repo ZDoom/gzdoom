@@ -18,6 +18,7 @@
 #include "r_data/colormaps.h"
 #include "gi.h"
 #include "portal.h"
+#include "p_spec.h"
 
 // MACROS ------------------------------------------------------------------
 

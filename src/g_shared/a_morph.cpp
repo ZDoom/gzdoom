@@ -13,6 +13,7 @@
 #include "g_level.h"
 #include "farchive.h"
 #include "p_enemy.h"
+#include "d_player.h"
 
 static FRandom pr_morphmonst ("MorphMonster");
 

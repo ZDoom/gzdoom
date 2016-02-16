@@ -34,8 +34,10 @@
 
 #include "i_system.h"
 #include "p_local.h"
+#include "p_spec.h"
 
 // State.
+#include "d_player.h"
 #include "dobject.h"
 #include "doomstat.h"
 #include "r_state.h"
@@ -532,6 +534,7 @@ void P_SerializeWorld (FArchive &arc)
 	{
 		linePortals.Clear();
 	}
+	P_CollectLinkedPortals();
 }
 
 void extsector_t::Serialize(FArchive &arc)

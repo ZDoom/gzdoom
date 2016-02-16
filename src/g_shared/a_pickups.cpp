@@ -19,6 +19,8 @@
 #include "g_game.h"
 #include "doomstat.h"
 #include "farchive.h"
+#include "d_player.h"
+#include "p_spec.h"
 
 static FRandom pr_restore ("RestorePos");
 

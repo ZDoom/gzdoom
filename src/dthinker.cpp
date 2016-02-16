@@ -39,6 +39,7 @@
 #include "i_system.h"
 #include "doomerrors.h"
 #include "farchive.h"
+#include "d_player.h"
 
 
 static cycle_t ThinkCycles;

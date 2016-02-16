@@ -31,6 +31,8 @@
 #include "i_system.h"
 #include "doomdef.h"
 #include "p_local.h"
+#include "p_maputl.h"
+#include "d_player.h"
 #include "m_bbox.h"
 #include "p_lnspec.h"
 #include "s_sound.h"
@@ -44,8 +46,12 @@
 #include "thingdef/thingdef.h"
 #include "d_dehacked.h"
 #include "g_level.h"
+#include "r_utility.h"
+#include "p_blockmap.h"
 #include "r_data/r_translate.h"
 #include "teaminfo.h"
+#include "p_spec.h"
+#include "p_checkposition.h"
 
 #include "gi.h"
 

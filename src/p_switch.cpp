@@ -47,6 +47,8 @@
 #include "tarray.h"
 #include "cmdlib.h"
 #include "farchive.h"
+#include "p_maputl.h"
+#include "p_spec.h"
 
 #include "gi.h"
 

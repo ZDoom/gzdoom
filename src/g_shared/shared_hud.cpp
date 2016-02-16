@@ -50,6 +50,8 @@
 #include "doomstat.h"
 #include "g_level.h"
 #include "d_net.h"
+#include "d_player.h"
+#include "r_utility.h"
 
 #include <time.h>
 

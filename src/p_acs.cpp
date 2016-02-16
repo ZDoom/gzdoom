@@ -40,6 +40,7 @@
 #include "templates.h"
 #include "doomdef.h"
 #include "p_local.h"
+#include "d_player.h"
 #include "p_spec.h"
 #include "g_level.h"
 #include "s_sound.h"
@@ -79,6 +80,8 @@
 #include "p_terrain.h"
 #include "version.h"
 #include "p_effect.h"
+#include "r_utility.h"
+#include "a_morph.h"
 
 #include "g_shared/a_pickups.h"
 

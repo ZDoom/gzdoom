@@ -197,6 +197,41 @@ struct PalEntry
 #endif
 };
 
+class FArchive;
+class PClassInventory;
+
+class FTextureID
+{
+	friend class FTextureManager;
+	friend FArchive &operator<< (FArchive &arc, FTextureID &tex);
+	friend FTextureID GetHUDIcon(PClassInventory *cls);
+	friend void R_InitSpriteDefs();
+
+public:
+	FTextureID() throw() {}
+	bool isNull() const { return texnum == 0; }
+	bool isValid() const { return texnum > 0; }
+	bool Exists() const { return texnum >= 0; }
+	void SetInvalid() { texnum = -1; }
+	void SetNull() { texnum = 0; }
+	bool operator ==(const FTextureID &other) const { return texnum == other.texnum; }
+	bool operator !=(const FTextureID &other) const { return texnum != other.texnum; }
+	FTextureID operator +(int offset) throw();
+	int GetIndex() const { return texnum; }	// Use this only if you absolutely need the index!
+
+											// The switch list needs these to sort the switches by texture index
+	int operator -(FTextureID other) const { return texnum - other.texnum; }
+	bool operator < (FTextureID other) const { return texnum < other.texnum; }
+	bool operator > (FTextureID other) const { return texnum > other.texnum; }
+
+protected:
+	FTextureID(int num) { texnum = num; }
+private:
+	int texnum;
+};
+
+
+
 // Screenshot buffer image data types
 enum ESSType
 {

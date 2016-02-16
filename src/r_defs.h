@@ -792,21 +792,9 @@ struct sector_t
 		Flags &= ~SECF_SPECIALFLAGS;
 	}
 
-	inline bool PortalBlocksView(int plane)
-	{
-		return !!(planes[plane].Flags & (PLANEF_NORENDER | PLANEF_DISABLED | PLANEF_OBSTRUCTED));
-	}
-
-	inline bool PortalBlocksMovement(int plane)
-	{
-		return !!(planes[plane].Flags & (PLANEF_NOPASS | PLANEF_DISABLED | PLANEF_OBSTRUCTED));
-	}
-
-	inline bool PortalBlocksSound(int plane)
-	{
-		return !!(planes[plane].Flags & (PLANEF_BLOCKSOUND | PLANEF_DISABLED | PLANEF_OBSTRUCTED));
-	}
-
+	bool PortalBlocksView(int plane);
+	bool PortalBlocksMovement(int plane);
+	bool PortalBlocksSound(int plane);
 
 	int GetTerrain(int pos) const;
 
@@ -1275,6 +1263,19 @@ struct visstyle_t
 	fixed_t			alpha;
 	FRenderStyle	RenderStyle;
 };
+
+
+//----------------------------------------------------------------------------------
+//
+// The playsim can use different nodes than the renderer so this is
+// not the same as R_PointInSubsector
+//
+//----------------------------------------------------------------------------------
+subsector_t *P_PointInSubsector(fixed_t x, fixed_t y);
+inline sector_t *P_PointInSector(fixed_t x, fixed_t y)
+{
+	return P_PointInSubsector(x, y)->sector;
+}
 
 
 #endif

@@ -30,6 +30,7 @@
 #include "r_state.h"
 #include "gi.h"
 #include "farchive.h"
+#include "p_spec.h"
 
 //============================================================================
 //

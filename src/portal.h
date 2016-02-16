@@ -7,6 +7,26 @@
 #include "actor.h"
 #include "p_local.h"
 #include "m_bbox.h"
+#include "a_sharedglobal.h"
+
+struct FPortalGroupArray;
+//============================================================================
+//
+// This table holds the offsets for the different parts of a map
+// that are connected by portals.
+// The idea here is basically the same as implemented in Eternity Engine:
+//
+// - each portal creates two sector groups in the map 
+//   which are offset by the displacement of the portal anchors
+//
+// - for two or multiple groups the displacement is calculated by
+//   adding the displacements between intermediate groups which
+//   have to be traversed to connect the two
+//
+// - any sector not connected to any portal is assigned to group 0
+//   Group 0 has no displacement to any other group in the level.
+//
+//============================================================================
 
 struct FDisplacement
 {
@@ -32,6 +52,14 @@ struct FDisplacementTable
 		return data[x + size*y];
 	}
 };
+
+extern FDisplacementTable Displacements;
+
+//============================================================================
+//
+// Flags and types for linedef portals
+//
+//============================================================================
 
 enum
 {
@@ -60,6 +88,20 @@ enum
 	PORG_CEILING,
 };
 
+enum
+{
+	PCOLL_NOTLINKED = 1,
+	PCOLL_LINKED = 2
+};
+
+//============================================================================
+//
+// All information about a line-to-line portal (all types)
+// There is no structure for sector plane portals because for historic
+// reasons those use actors to connect.
+//
+//============================================================================
+
 struct FLinePortal
 {
 	line_t *mOrigin;
@@ -78,6 +120,12 @@ void P_SpawnLinePortal(line_t* line);
 void P_FinalizePortals();
 bool P_ChangePortal(line_t *ln, int thisid, int destid);
 void P_CreateLinkedPortals();
+bool P_CollectConnectedGroups(AActor *actor, fixed_t newx, fixed_t newy, FPortalGroupArray &out);
+void P_CollectLinkedPortals();
+inline int P_NumPortalGroups()
+{
+	return Displacements.size;
+}
 
 
 /* code ported from prototype */
@@ -88,9 +136,14 @@ void P_TranslatePortalAngle(line_t* src, line_t* dst, angle_t& angle);
 void P_TranslatePortalZ(line_t* src, line_t* dst, fixed_t& z);
 void P_NormalizeVXVY(fixed_t& vx, fixed_t& vy);
 
+//============================================================================
+//
 // basically, this is a teleporting tracer function,
 // which can be used by itself (to calculate portal-aware offsets, say, for projectiles)
 // or to teleport normal tracers (like hitscan, railgun, autoaim tracers)
+//
+//============================================================================
+
 class PortalTracer
 {
 public:
@@ -122,6 +175,12 @@ public:
 /* new code */
 fixed_t P_PointLineDistance(line_t* line, fixed_t x, fixed_t y);
 
+//============================================================================
+//
+// some wrappers around the portal data.
+//
+//============================================================================
+
 
 // returns true if the portal is crossable by actors
 inline bool line_t::isLinePortal() const
@@ -143,6 +202,24 @@ inline line_t *line_t::getPortalDestination() const
 inline int line_t::getPortalAlignment() const
 {
 	return portalindex >= linePortals.Size() ? 0 : linePortals[portalindex].mAlign;
+}
+
+inline bool sector_t::PortalBlocksView(int plane)
+{
+	if (SkyBoxes[plane] == NULL || SkyBoxes[plane]->special1 != SKYBOX_LINKEDPORTAL) return true;
+	return !!(planes[plane].Flags & (PLANEF_NORENDER | PLANEF_DISABLED | PLANEF_OBSTRUCTED));
+}
+
+inline bool sector_t::PortalBlocksMovement(int plane)
+{
+	if (SkyBoxes[plane] == NULL || SkyBoxes[plane]->special1 != SKYBOX_LINKEDPORTAL) return true;
+	return !!(planes[plane].Flags & (PLANEF_NOPASS | PLANEF_DISABLED | PLANEF_OBSTRUCTED));
+}
+
+inline bool sector_t::PortalBlocksSound(int plane)
+{
+	if (SkyBoxes[plane] == NULL || SkyBoxes[plane]->special1 != SKYBOX_LINKEDPORTAL) return true;
+	return !!(planes[plane].Flags & (PLANEF_BLOCKSOUND | PLANEF_DISABLED | PLANEF_OBSTRUCTED));
 }
 
 #endif

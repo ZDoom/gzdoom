@@ -4,41 +4,58 @@
 
 //============================================================================
 //
-// Data structure which collects all portals being touched by an actor
-// when checking its position.
+// This is a dynamic array which holds its first MAX_STATIC entries in normal
+// variables to avoid constant allocations which this would otherwise
+// require.
+// 
+// When collecting touched portal groups the normal cases are either
+// no portals == one group or
+// two portals = two groups
+// 
+// Anything with more can happen but far less infrequently, so this
+// organization helps avoiding the overhead from heap allocations
+// in the vast majority of situations.
 //
 //============================================================================
 
-struct FPortalGroupTable
+struct FPortalGroupArray
 {
-	TArray<DWORD> data;
-	TArray<int> touchingGroups;
-
-	void setSize(int num)
+	enum
 	{
-		data.Resize((num + 31) / 32);
-		memset(&data[0], 0, data.Size()*sizeof(DWORD));
+		MAX_STATIC = 2
+	};
+
+	FPortalGroupArray()
+	{
+		varused = 0;
 	}
 
-	void clear()
+	void Clear()
 	{
 		data.Clear();
-		touchingGroups.Clear();
+		varused = 0;
 	}
 
-	void setBit(int group)
+	void Add(DWORD num)
 	{
-		if (!getBit(group))
-		{
-			data[group >> 5] |= (1 << (group & 31));
-			touchingGroups.Push(group);
-		}
+		if (varused < MAX_STATIC) entry[varused++] = num;
+		else data.Push(num);
 	}
 
-	int getBit(int group)
+	unsigned Size()
 	{
-		return data[group >> 5] & (1 << (group & 31));
+		return varused + data.Size();
 	}
+
+	DWORD operator[](unsigned index)
+	{
+		return index < MAX_STATIC ? entry[index] : data[index - MAX_STATIC];
+	}
+
+private:
+	DWORD entry[MAX_STATIC];
+	unsigned varused;
+	TArray<DWORD> data;
 };
 
 
@@ -78,7 +95,7 @@ struct FCheckPosition
 	bool			DoRipping;
 	TMap<AActor*, bool> LastRipped;
 
-	FPortalGroupTable	Groups;
+	FPortalGroupArray	Groups;
 	int				PushTime;
 
 	FCheckPosition(bool rip=false)

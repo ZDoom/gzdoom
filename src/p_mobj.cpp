@@ -456,7 +456,7 @@ void AActor::Serialize (FArchive &arc)
 	if (arc.IsLoading ())
 	{
 		touching_sectorlist = NULL;
-		LinkToWorld (Sector);
+		LinkToWorld (false, NULL, Sector);
 		AddToHash ();
 		SetShade (fillcolor);
 		if (player)

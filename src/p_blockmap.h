@@ -10,12 +10,13 @@ struct FBlockNode
 {
 	AActor *Me;						// actor this node references
 	int BlockIndex;					// index into blocklinks for the block this node is in
+	int Group;						// portal group this link belongs to (can be different than the actor's own group
 	FBlockNode **PrevActor;			// previous actor in this block
 	FBlockNode *NextActor;			// next actor in this block
 	FBlockNode **PrevBlock;			// previous block this actor is in
 	FBlockNode *NextBlock;			// next block this actor is in
 
-	static FBlockNode *Create (AActor *who, int x, int y);
+	static FBlockNode *Create (AActor *who, int x, int y, int group = -1);
 	void Release ();
 
 	static FBlockNode *FreeBlocks;

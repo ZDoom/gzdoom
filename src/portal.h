@@ -9,7 +9,7 @@
 #include "m_bbox.h"
 #include "a_sharedglobal.h"
 
-struct FPortalGroupTable;
+struct FPortalGroupArray;
 //============================================================================
 //
 // This table holds the offsets for the different parts of a map
@@ -120,7 +120,7 @@ void P_SpawnLinePortal(line_t* line);
 void P_FinalizePortals();
 bool P_ChangePortal(line_t *ln, int thisid, int destid);
 void P_CreateLinkedPortals();
-bool P_CollectConnectedGroups(AActor *actor, fixed_t newx, fixed_t newy, FPortalGroupTable &out);
+bool P_CollectConnectedGroups(AActor *actor, fixed_t newx, fixed_t newy, FPortalGroupArray &out);
 void P_CollectLinkedPortals();
 inline int P_NumPortalGroups()
 {

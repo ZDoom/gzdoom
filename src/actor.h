@@ -44,6 +44,7 @@
 struct subsector_t;
 class PClassAmmo;
 struct FBlockNode;
+struct FPortalGroupArray;
 
 //
 // NOTES: AActor
@@ -1131,11 +1132,10 @@ private:
 	friend class FActorIterator;
 	friend bool P_IsTIDUsed(int tid);
 
-	sector_t *LinkToWorldForMapThing ();
+	bool FixMapthingPos();
 
 public:
-	void LinkToWorld (bool buggy=false);
-	void LinkToWorld (sector_t *sector);
+	void LinkToWorld (bool spawningmapthing=false, FPortalGroupArray *groups = NULL, sector_t *sector = NULL);
 	void UnlinkFromWorld ();
 	void AdjustFloorClip ();
 	void SetOrigin (fixed_t x, fixed_t y, fixed_t z, bool moving = false);

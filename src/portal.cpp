@@ -62,6 +62,39 @@ FDisplacementTable Displacements;
 TArray<FLinePortal> linePortals;
 TArray<FLinePortal*> linkedPortals;	// only the linked portals, this is used to speed up looking for them in P_CollectConnectedGroups.
 
+//============================================================================
+//
+// This is used to mark processed portals for some collection functions.
+//
+//============================================================================
+
+struct FPortalBits
+{
+	TArray<DWORD> data;
+
+	void setSize(int num)
+	{
+		data.Resize((num + 31) / 32);
+		clear();
+	}
+
+	void clear()
+	{
+		memset(&data[0], 0, data.Size()*sizeof(DWORD));
+	}
+
+	void setBit(int group)
+	{
+		data[group >> 5] |= (1 << (group & 31));
+	}
+
+	int getBit(int group)
+	{
+		return data[group >> 5] & (1 << (group & 31));
+	}
+};
+
+
 
 //============================================================================
 //
@@ -1021,22 +1054,31 @@ void P_CreateLinkedPortals()
 //
 //============================================================================
 
-bool P_CollectConnectedGroups(AActor *actor, fixed_t newx, fixed_t newy, FPortalGroupTable &out)
+bool P_CollectConnectedGroups(AActor *actor, fixed_t newx, fixed_t newy, FPortalGroupArray &out)
 {
-	TArray<FLinePortal*> foundPortals;
+	// Keep this temporary work stuff static. This function can never be called recursively
+	// and this would have to be reallocated for each call otherwise.
+	static FPortalBits processMask;
+	static TArray<FLinePortal*> foundPortals;
+
 	bool retval = false;
-	if (linePortals.Size() == 0)
+	if (linkedPortals.Size() == 0)
 	{
+		// If there are no portals, all sectors are in group 0.
+		out.Add(0);
 		return false;
 	}
-	out.setSize(Displacements.size);
-	out.setBit(actor->Sector->PortalGroup);
-	//FBoundingBox box(newx, newy, actor->radius);
+	processMask.setSize(linkedPortals.Size());
+	processMask.clear();
+	foundPortals.Clear();
+
 	int thisgroup = actor->Sector->PortalGroup;
-	for (unsigned i = 0; i < linePortals.Size(); i++)
+	processMask.setBit(thisgroup);
+	out.Add(thisgroup);
+
+	for (unsigned i = 0; i < linkedPortals.Size(); i++)
 	{
-		if (linePortals[i].mType != PORTT_LINKED) continue;	// not a linked portal
-		line_t *ld = linePortals[i].mOrigin;
+		line_t *ld = linkedPortals[i]->mOrigin;
 		int othergroup = ld->frontsector->PortalGroup;
 		FDisplacement &disp = Displacements(thisgroup, othergroup);
 		if (!disp.isSet) continue;	// no connection.
@@ -1049,8 +1091,8 @@ bool P_CollectConnectedGroups(AActor *actor, fixed_t newx, fixed_t newy, FPortal
 			|| box.Bottom() >= ld->bbox[BOXTOP])
 			continue;	// not touched
 
-		if (box.BoxOnLineSide(linePortals[i].mOrigin) != -1) continue;	// not touched
-		foundPortals.Push(&linePortals[i]);
+		if (box.BoxOnLineSide(linkedPortals[i]->mOrigin) != -1) continue;	// not touched
+		foundPortals.Push(linkedPortals[i]);
 	}
 	bool foundone = true;
 	while (foundone)
@@ -1058,10 +1100,11 @@ bool P_CollectConnectedGroups(AActor *actor, fixed_t newx, fixed_t newy, FPortal
 		foundone = false;
 		for (int i = foundPortals.Size() - 1; i >= 0; i--)
 		{
-			if (out.getBit(foundPortals[i]->mOrigin->frontsector->PortalGroup) && 
-				!out.getBit(foundPortals[i]->mDestination->frontsector->PortalGroup))
+			if (processMask.getBit(foundPortals[i]->mOrigin->frontsector->PortalGroup) && 
+				!processMask.getBit(foundPortals[i]->mDestination->frontsector->PortalGroup))
 			{
-				out.setBit(foundPortals[i]->mDestination->frontsector->PortalGroup);
+				processMask.setBit(foundPortals[i]->mDestination->frontsector->PortalGroup);
+				out.Add(foundPortals[i]->mDestination->frontsector->PortalGroup);
 				foundone = true;
 				retval = true;
 				foundPortals.Delete(i);
@@ -1076,8 +1119,9 @@ bool P_CollectConnectedGroups(AActor *actor, fixed_t newx, fixed_t newy, FPortal
 		FDisplacement &disp = Displacements(actor->Sector->PortalGroup, othersec->PortalGroup);
 		fixed_t dx = newx + disp.x;
 		fixed_t dy = newx + disp.y;
-		out.setBit(othersec->PortalGroup);
-		wsec = P_PointInSector(dx, dy);	// get upper sector at the exact spot we want to check and repeat,
+		processMask.setBit(othersec->PortalGroup);
+		out.Add(othersec->PortalGroup);
+		wsec = P_PointInSector(dx, dy);	// get upper sector at the exact spot we want to check and repeat
 		retval = true;
 	}
 	wsec = sec;
@@ -1087,8 +1131,9 @@ bool P_CollectConnectedGroups(AActor *actor, fixed_t newx, fixed_t newy, FPortal
 		FDisplacement &disp = Displacements(actor->Sector->PortalGroup, othersec->PortalGroup);
 		fixed_t dx = newx + disp.x;
 		fixed_t dy = newx + disp.y;
-		out.setBit(othersec->PortalGroup);
-		wsec = P_PointInSector(dx, dy);	// get lower sector at the exact spot we want to check and repeat,
+		processMask.setBit(othersec->PortalGroup);
+		out.Add(othersec->PortalGroup);
+		wsec = P_PointInSector(dx, dy);	// get lower sector at the exact spot we want to check and repeat
 		retval = true;
 	}
 	return retval;

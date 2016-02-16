@@ -57,6 +57,7 @@
 #include "farchive.h"
 #include "r_utility.h"
 #include "d_player.h"
+#include "portal.h"
 
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------

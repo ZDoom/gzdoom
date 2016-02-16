@@ -211,6 +211,13 @@ inline int line_t::getPortalAlignment() const
 
 inline bool sector_t::PortalBlocksView(int plane)
 {
+	if (SkyBoxes[plane] == NULL) return true;
+	if (SkyBoxes[plane]->special1 != SKYBOX_LINKEDPORTAL) return false;
+	return !!(planes[plane].Flags & (PLANEF_NORENDER | PLANEF_DISABLED | PLANEF_OBSTRUCTED));
+}
+
+inline bool sector_t::PortalBlocksSight(int plane)
+{
 	if (SkyBoxes[plane] == NULL || SkyBoxes[plane]->special1 != SKYBOX_LINKEDPORTAL) return true;
 	return !!(planes[plane].Flags & (PLANEF_NORENDER | PLANEF_DISABLED | PLANEF_OBSTRUCTED));
 }

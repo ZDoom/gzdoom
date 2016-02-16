@@ -793,6 +793,7 @@ struct sector_t
 	}
 
 	bool PortalBlocksView(int plane);
+	bool PortalBlocksSight(int plane);
 	bool PortalBlocksMovement(int plane);
 	bool PortalBlocksSound(int plane);
 

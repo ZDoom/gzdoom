@@ -932,6 +932,74 @@ fixed_t sector_t::LowestFloorAt(fixed_t x, fixed_t y, sector_t **resultsec)
 }
 
 
+fixed_t sector_t::NextHighestCeilingAt(fixed_t x, fixed_t y, fixed_t z, sector_t **resultsec, F3DFloor **resultffloor)
+{
+	sector_t *sec = this;
+	while (true)
+	{
+		// Looking through planes from bottom to top
+		for (int i = sec->e->XFloor.ffloors.Size() - 1; i >= 0; --i)
+		{
+			F3DFloor *ff = sec->e->XFloor.ffloors[i];
+
+			fixed_t ffz = ff->bottom.plane->ZatPoint(x, y);
+			if ((ff->flags & (FF_EXISTS | FF_SOLID)) == (FF_EXISTS | FF_SOLID) && z <= ffz)
+			{ // This floor is above our eyes.
+				if (resultsec) *resultsec = sec;
+				if (resultffloor) *resultffloor = ff;
+				return ffz;
+			}
+		}
+		if (sec->PortalBlocksMovement(sector_t::ceiling))
+		{ // Use sector's floor
+			if (resultffloor) *resultffloor = NULL;
+			if (resultsec) *resultsec = sec;
+			return sec->ceilingplane.ZatPoint(x, y);
+		}
+		else
+		{
+			FDisplacement &disp = sec->CeilingDisplacement();
+			x += disp.pos.x;
+			y += disp.pos.y;
+		}
+	}
+}
+
+fixed_t sector_t::NextLowestFloorAt(fixed_t x, fixed_t y, fixed_t z, sector_t **resultsec, F3DFloor **resultffloor)
+{
+	sector_t *sec = this;
+	while (true)
+	{
+		// Looking through planes from top to bottom
+		unsigned numff = sec->e->XFloor.ffloors.Size();
+		for (unsigned i = 0; i < numff; ++i)
+		{
+			F3DFloor *ff = sec->e->XFloor.ffloors[i];
+
+			fixed_t ffz = ff->top.plane->ZatPoint(x, y);
+			if ((ff->flags & (FF_EXISTS | FF_SOLID)) == (FF_EXISTS | FF_SOLID) && z >= ffz)
+			{ // This floor is beneath our feet.
+				if (resultsec) *resultsec = sec;
+				if (resultffloor) *resultffloor = ff;
+				return ffz;
+			}
+		}
+		if (sec->PortalBlocksMovement(sector_t::floor))
+		{ // Use sector's floor
+			if (resultffloor) *resultffloor = NULL;
+			if (resultsec) *resultsec = sec;
+			return sec->floorplane.ZatPoint(x, y);
+		}
+		else
+		{
+			FDisplacement &disp = sec->FloorDisplacement();
+			x += disp.pos.x;
+			y += disp.pos.y;
+			sec = P_PointInSector(x, y);
+		}
+	}
+}
+
 //===========================================================================
 //
 // Calculates the height of a sector plane, respecting portal offsets
@@ -1163,3 +1231,43 @@ int side_t::GetLightLevel (bool foggy, int baselight, bool is3dlight, int *pfake
 	return baselight;
 }
 
+#include "c_dispatch.h"
+#include "d_player.h"
+
+CCMD(highestceiling)
+{
+	sector_t *sec;
+	fixed_t h = players[consoleplayer].mo->Sector->HighestCeilingAt(players[consoleplayer].mo, &sec);
+	Printf("Check at position %f,%f, height = %f, srcsector = %d dstsector = %d, srcgroup = %d, dstgroup = %d\n",
+		players[consoleplayer].mo->X() / 65536., players[consoleplayer].mo->Y() / 65536., h / 65536.,
+		players[consoleplayer].mo->Sector->sectornum, sec->sectornum, players[consoleplayer].mo->Sector->PortalGroup, sec->PortalGroup);
+}
+
+CCMD(lowestfloor)
+{
+	sector_t *sec;
+	fixed_t h = players[consoleplayer].mo->Sector->LowestFloorAt(players[consoleplayer].mo, &sec);
+	Printf("Check at position %f,%f, height = %f, srcsector = %d dstsector = %d, srcgroup = %d, dstgroup = %d\n",
+		players[consoleplayer].mo->X() / 65536., players[consoleplayer].mo->Y() / 65536., h / 65536.,
+		players[consoleplayer].mo->Sector->sectornum, sec->sectornum, players[consoleplayer].mo->Sector->PortalGroup, sec->PortalGroup);
+}
+
+CCMD(nexthighestceiling)
+{
+	sector_t *sec;
+	F3DFloor *ff;
+	fixed_t h = players[consoleplayer].mo->Sector->NextHighestCeilingAt(players[consoleplayer].mo, players[consoleplayer].mo->Top(), &sec, &ff);
+	Printf("Check at position %f,%f, height = %f, srcsector = %d dstsector = %d, srcgroup = %d, dstgroup = %d, 3dfloor = %d\n",
+		players[consoleplayer].mo->X() / 65536., players[consoleplayer].mo->Y() / 65536., h / 65536.,
+		players[consoleplayer].mo->Sector->sectornum, sec->sectornum, players[consoleplayer].mo->Sector->PortalGroup, sec->PortalGroup, !!ff);
+}
+
+CCMD(nextlowestfloor)
+{
+	sector_t *sec;
+	F3DFloor *ff;
+	fixed_t h = players[consoleplayer].mo->Sector->NextLowestFloorAt(players[consoleplayer].mo, players[consoleplayer].mo->Z(), &sec, &ff);
+	Printf("Check at position %f,%f, height = %f, srcsector = %d dstsector = %d, srcgroup = %d, dstgroup = %d, 3dfloor = %d\n",
+		players[consoleplayer].mo->X() / 65536., players[consoleplayer].mo->Y() / 65536., h / 65536.,
+		players[consoleplayer].mo->Sector->sectornum, sec->sectornum, players[consoleplayer].mo->Sector->PortalGroup, sec->PortalGroup, !!ff);
+}

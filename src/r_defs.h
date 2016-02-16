@@ -764,6 +764,19 @@ struct sector_t
 		return LowestFloorAt(a->X(), a->Y(), resultsec);
 	}
 
+	fixed_t NextHighestCeilingAt(fixed_t x, fixed_t y, fixed_t z, sector_t **resultsec = NULL, F3DFloor **resultffloor = NULL);
+	fixed_t NextLowestFloorAt(fixed_t x, fixed_t y, fixed_t z, sector_t **resultsec = NULL, F3DFloor **resultffloor = NULL);
+
+	fixed_t NextHighestCeilingAt(AActor *a, fixed_t z, sector_t **resultsec = NULL, F3DFloor **resultffloor = NULL)
+	{
+		return NextHighestCeilingAt(a->X(), a->Y(), z, resultsec, resultffloor);
+	}
+
+	fixed_t NextLowestFloorAt(AActor *a, fixed_t z, sector_t **resultsec = NULL, F3DFloor **resultffloor = NULL)
+	{
+		return NextLowestFloorAt(a->X(), a->Y(), z, resultsec, resultffloor);
+	}
+
 	// ... for ceilings
 	fixed_t CeilingAtPoint(fixed_t x, fixed_t y, int refgroup) const
 	{

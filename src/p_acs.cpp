@@ -4181,47 +4181,18 @@ bool DLevelScript::DoCheckActorTexture(int tid, AActor *activator, int string, b
 	}
 	int i, numff;
 	FTextureID secpic;
-	sector_t *sec = actor->Sector;
-	numff = sec->e->XFloor.ffloors.Size();
+	sector_t *resultsec;
+	F3DFloor *resffloor;
 
 	if (floor)
 	{
-		// Looking through planes from top to bottom
-		for (i = 0; i < numff; ++i)
-		{
-			F3DFloor *ff = sec->e->XFloor.ffloors[i];
-
-			if ((ff->flags & (FF_EXISTS | FF_SOLID)) == (FF_EXISTS | FF_SOLID) &&
-				actor->Z() >= ff->top.plane->ZatPoint(actor))
-			{ // This floor is beneath our feet.
-				secpic = *ff->top.texture;
-				break;
-			}
-		}
-		if (i == numff)
-		{ // Use sector's floor
-			secpic = sec->GetTexture(sector_t::floor);
-		}
+		actor->Sector->NextLowestFloorAt(actor, actor->Z(), &resultsec, &resffloor);
+		secpic = resffloor ? *resffloor->top.texture : resultsec->planes[sector_t::floor].Texture;
 	}
 	else
 	{
-		fixed_t z = actor->Top();
-		// Looking through planes from bottom to top
-		for (i = numff-1; i >= 0; --i)
-		{
-			F3DFloor *ff = sec->e->XFloor.ffloors[i];
-
-			if ((ff->flags & (FF_EXISTS | FF_SOLID)) == (FF_EXISTS | FF_SOLID) &&
-				z <= ff->bottom.plane->ZatPoint(actor))
-			{ // This floor is above our eyes.
-				secpic = *ff->bottom.texture;
-				break;
-			}
-		}
-		if (i < 0)
-		{ // Use sector's ceiling
-			secpic = sec->GetTexture(sector_t::ceiling);
-		}
+		actor->Sector->NextHighestCeilingAt(actor, actor->Top(), &resultsec, &resffloor);
+		secpic = resffloor ? *resffloor->bottom.texture : resultsec->planes[sector_t::ceiling].Texture;
 	}
 	return tex == TexMan[secpic];
 }

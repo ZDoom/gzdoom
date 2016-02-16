@@ -42,6 +42,7 @@
 #include "p_local.h"
 #include "p_lnspec.h"
 #include "a_sharedglobal.h"
+#include "r_utility.h"
 #include "gl/gl_functions.h"
 
 #include "gl/system/gl_interface.h"

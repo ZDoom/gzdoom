@@ -44,6 +44,7 @@
 #include "r_sky.h"
 #include "p_effect.h"
 #include "po_man.h"
+#include "doomdata.h"
 
 #include "gl/renderer/gl_renderer.h"
 #include "gl/data/gl_data.h"

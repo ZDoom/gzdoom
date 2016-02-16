@@ -43,6 +43,8 @@
 #include "thingdef/thingdef.h"
 #include "i_system.h"
 #include "templates.h"
+#include "doomdata.h"
+#include "r_utility.h"
 
 
 #include "gl/renderer/gl_renderer.h"

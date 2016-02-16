@@ -928,7 +928,7 @@ fixed_t sector_t::LowestFloorAt(fixed_t x, fixed_t y, sector_t **resultsec)
 		check = P_PointInSector(x, y);
 	}
 	if (resultsec) *resultsec = check;
-	return check->ceilingplane.ZatPoint(x, y);
+	return check->floorplane.ZatPoint(x, y);
 }
 
 

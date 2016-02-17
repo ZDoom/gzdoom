@@ -30,7 +30,7 @@ ACTOR PainElemental
 		PAIN D 5 A_FaceTarget
 		PAIN E 5 A_FaceTarget
 		PAIN F 5 BRIGHT A_FaceTarget
-		PAIN A 0 BRIGHT A_PainAttack
+		PAIN F 0 BRIGHT A_PainAttack
 		Goto See
 	Pain:
 		PAIN G 6

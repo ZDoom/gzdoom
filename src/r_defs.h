@@ -757,7 +757,7 @@ struct sector_t
 
 	fixed_t HighestCeilingAt(AActor *a, sector_t **resultsec = NULL)
 	{
-		return HighestCeilingAt(a->X(), a->X(), resultsec);
+		return HighestCeilingAt(a->X(), a->Y(), resultsec);
 	}
 
 	fixed_t LowestFloorAt(AActor *a, sector_t **resultsec = NULL)

@@ -935,6 +935,8 @@ fixed_t sector_t::LowestFloorAt(fixed_t x, fixed_t y, sector_t **resultsec)
 fixed_t sector_t::NextHighestCeilingAt(fixed_t x, fixed_t y, fixed_t z, sector_t **resultsec, F3DFloor **resultffloor)
 {
 	sector_t *sec = this;
+	fixed_t planeheight = FIXED_MIN;
+
 	while (true)
 	{
 		// Looking through planes from bottom to top
@@ -950,7 +952,7 @@ fixed_t sector_t::NextHighestCeilingAt(fixed_t x, fixed_t y, fixed_t z, sector_t
 				return ffz;
 			}
 		}
-		if (sec->PortalBlocksMovement(sector_t::ceiling))
+		if (sec->PortalBlocksMovement(ceiling) || planeheight >= sec->SkyBoxes[ceiling]->threshold)
 		{ // Use sector's floor
 			if (resultffloor) *resultffloor = NULL;
 			if (resultsec) *resultsec = sec;
@@ -961,6 +963,8 @@ fixed_t sector_t::NextHighestCeilingAt(fixed_t x, fixed_t y, fixed_t z, sector_t
 			FDisplacement &disp = sec->CeilingDisplacement();
 			x += disp.pos.x;
 			y += disp.pos.y;
+			planeheight = sec->SkyBoxes[ceiling]->threshold;
+			sec = P_PointInSector(x, y);
 		}
 	}
 }
@@ -968,6 +972,7 @@ fixed_t sector_t::NextHighestCeilingAt(fixed_t x, fixed_t y, fixed_t z, sector_t
 fixed_t sector_t::NextLowestFloorAt(fixed_t x, fixed_t y, fixed_t z, sector_t **resultsec, F3DFloor **resultffloor)
 {
 	sector_t *sec = this;
+	fixed_t planeheight = FIXED_MAX;
 	while (true)
 	{
 		// Looking through planes from top to bottom
@@ -984,7 +989,7 @@ fixed_t sector_t::NextLowestFloorAt(fixed_t x, fixed_t y, fixed_t z, sector_t **
 				return ffz;
 			}
 		}
-		if (sec->PortalBlocksMovement(sector_t::floor))
+		if (sec->PortalBlocksMovement(sector_t::floor) || planeheight <= sec->SkyBoxes[floor]->threshold)
 		{ // Use sector's floor
 			if (resultffloor) *resultffloor = NULL;
 			if (resultsec) *resultsec = sec;
@@ -995,6 +1000,7 @@ fixed_t sector_t::NextLowestFloorAt(fixed_t x, fixed_t y, fixed_t z, sector_t **
 			FDisplacement &disp = sec->FloorDisplacement();
 			x += disp.pos.x;
 			y += disp.pos.y;
+			planeheight = sec->SkyBoxes[floor]->threshold;
 			sec = P_PointInSector(x, y);
 		}
 	}

@@ -558,7 +558,7 @@ bool P_Move (AActor *actor)
 			else
 			{ // The monster just hit the floor, so trigger any actions.
 				if (actor->floorsector->SecActTarget != NULL &&
-					actor->floorz == actor->floorsector->FloorAtPoint(actor))
+					actor->floorz == actor->floorsector->floorplane.ZatPoint(actor->PosRelative(actor->floorsector))
 				{
 					actor->floorsector->SecActTarget->TriggerAction(actor, SECSPAC_HitFloor);
 				}
@@ -868,8 +868,8 @@ void P_NewChaseDir(AActor * actor)
 				box.Bottom() < line->bbox[BOXTOP]    &&
 				box.BoxOnLineSide(line) == -1)
 		    {
-				fixed_t front = line->frontsector->FloorAtPoint(actor);
-				fixed_t back  = line->backsector->FloorAtPoint(actor);
+				fixed_t front = line->frontsector->floorplane.ZatPoint(actor->PosRelative(line));
+				fixed_t back  = line->backsector->floorplane.ZatPoint(actor->PosRelative(line));
 				angle_t angle;
 		
 				// The monster must contact one of the two floors,

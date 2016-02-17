@@ -778,47 +778,6 @@ struct sector_t
 		return NextLowestFloorAt(a->X(), a->Y(), z, resultsec, resultffloor);
 	}
 
-	// ... for ceilings
-	fixed_t CeilingAtPoint(fixed_t x, fixed_t y, int refgroup) const
-	{
-		return PlaneAtPoint(ceilingplane, x, y, refgroup);
-	}
-	fixed_t CeilingAtPoint(AActor *actor) const
-	{
-		return PlaneAtPoint(ceilingplane, actor->X(), actor->Y(), actor->Sector->PortalGroup);
-	}
-	fixed_t CeilingAtPoint(fixed_t x, fixed_t y, sector_t *refsector) const
-	{
-		return PlaneAtPoint(ceilingplane, x, y, refsector->PortalGroup);
-	}
-
-	// ... for floors
-	fixed_t FloorAtPoint(fixed_t x, fixed_t y, int refgroup) const
-	{
-		return PlaneAtPoint(floorplane, x, y, refgroup);
-	}
-	fixed_t FloorAtPoint(AActor *actor) const
-	{
-		return PlaneAtPoint(floorplane, actor->X(), actor->Y(), actor->Sector->PortalGroup);
-	}
-	fixed_t FloorAtPoint(fixed_t x, fixed_t y, sector_t *refsector) const
-	{
-		return PlaneAtPoint(floorplane, x, y, refsector->PortalGroup);
-	}
-
-	// ... for control sectors
-	fixed_t PlaneAtPoint(const secplane_t &plane, AActor *actor) const
-	{
-		return PlaneAtPoint(plane, actor->X(), actor->Y(), actor->Sector->PortalGroup);
-	}
-	fixed_t PlaneAtPoint(const secplane_t &plane, fixed_t x, fixed_t y, sector_t *refsector) const
-	{
-		return PlaneAtPoint(plane, x, y, refsector->PortalGroup);
-	}
-
-	// The worker function for all the above.
-	fixed_t PlaneAtPoint(const secplane_t &plane, fixed_t x, fixed_t y, int refgroup) const;
-
 	FDisplacement &FloorDisplacement();
 	FDisplacement &CeilingDisplacement();
 

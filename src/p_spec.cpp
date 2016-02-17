@@ -440,7 +440,7 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 	{
 		// Falling, not all the way down yet?
 		sector = player->mo->Sector;
-		if (player->mo->Z() != sector->floorplane.ZatPoint(player->mo)
+		if (player->mo->Z() != sector->LowestFloorAt(player->mo)
 			&& !player->mo->waterlevel)
 		{
 			return;
@@ -480,7 +480,7 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 				}
 				if (sector->Flags & SECF_DMGTERRAINFX)
 				{
-					P_HitWater(player->mo, sector, INT_MIN, INT_MIN, INT_MIN, false, true, true);
+					P_HitWater(player->mo, player->mo->Sector, INT_MIN, INT_MIN, INT_MIN, false, true, true);
 				}
 			}
 		}
@@ -2299,6 +2299,7 @@ void DPusher::Tick ()
 			continue;
 
 		sector_t *hsec = sec->GetHeightSec();
+		fixedvec2 pos = thing->PosRelative(sec);
 		if (m_Type == p_wind)
 		{
 			if (hsec == NULL)
@@ -2316,7 +2317,7 @@ void DPusher::Tick ()
 			}
 			else // special water sector
 			{
-				ht = hsec->floorplane.ZatPoint(thing);
+				ht = hsec->floorplane.ZatPoint(pos);
 				if (thing->Z() > ht) // above ground
 				{
 					xspeed = m_Xmag; // full force
@@ -2345,7 +2346,7 @@ void DPusher::Tick ()
 			{ // special water sector
 				floor = &hsec->floorplane;
 			}
-			if (thing->Z() > floor->ZatPoint(thing))
+			if (thing->Z() > floor->ZatPoint(pos))
 			{ // above ground
 				xspeed = yspeed = 0; // no force
 			}

@@ -2186,7 +2186,7 @@ explode:
 					if (tm.ceilingline &&
 						tm.ceilingline->backsector &&
 						tm.ceilingline->backsector->GetTexture(sector_t::ceiling) == skyflatnum &&
-						mo->Z() >= tm.ceilingline->backsector->ceilingplane.ZatPoint(mo))
+						mo->Z() >= tm.ceilingline->backsector->ceilingplane.ZatPoint(mo->PosRelative(tm.ceilingline)))
 					{
 						// Hack to prevent missiles exploding against the sky.
 						// Does not handle sky floors.
@@ -3640,7 +3640,8 @@ void AActor::Tick ()
 				{
 					continue;
 				}
-				height = sec->floorplane.ZatPoint (this);
+				fixedvec3 pos = PosRelative(sec);
+				height = sec->floorplane.ZatPoint (pos);
 				if (Z() > height)
 				{
 					if (heightsec == NULL)
@@ -3648,7 +3649,7 @@ void AActor::Tick ()
 						continue;
 					}
 
-					waterheight = heightsec->floorplane.ZatPoint (this);
+					waterheight = heightsec->floorplane.ZatPoint (pos);
 					if (waterheight > height && Z() >= waterheight)
 					{
 						continue;
@@ -3689,7 +3690,7 @@ void AActor::Tick ()
 			floorplane = P_FindFloorPlane(floorsector, X(), Y(), floorz);
 
 			if (floorplane.c < STEEPSLOPE &&
-				floorplane.ZatPoint (this) <= floorz)
+				floorplane.ZatPoint (PosRelative(floorsector)) <= floorz)
 			{
 				const msecnode_t *node;
 				bool dopush = true;
@@ -3701,7 +3702,7 @@ void AActor::Tick ()
 						const sector_t *sec = node->m_sector;
 						if (sec->floorplane.c >= STEEPSLOPE)
 						{
-							if (floorplane.ZatPoint (this) >= Z() - MaxStepHeight)
+							if (floorplane.ZatPoint (PosRelative(node->m_sector)) >= Z() - MaxStepHeight)
 							{
 								dopush = false;
 								break;
@@ -4171,6 +4172,8 @@ AActor *AActor::StaticSpawn (PClassActor *type, fixed_t ix, fixed_t iy, fixed_t 
 		// z-coordinate.
 		if (!SpawningMapThing) 
 		{
+			actor->ceilingz = actor->Sector->HighestCeilingAt(actor, &actor->ceilingsector);
+			actor->dropoffz = actor->floorz = actor->Sector->LowestFloorAt(actor, &actor->floorsector);
 			P_FindFloorCeiling(actor, FFCF_ONLYSPAWNPOS);
 		}
 		else
@@ -4477,15 +4480,16 @@ void AActor::AdjustFloorClip ()
 	const msecnode_t *m;
 
 	// possibly standing on a 3D-floor
-	if (Sector->e->XFloor.ffloors.Size() && Z()>Sector->floorplane.ZatPoint(this)) floorclip=0;
+	if (Sector->e->XFloor.ffloors.Size() && Z() > Sector->floorplane.ZatPoint(this)) floorclip = 0;
 
 	// [RH] clip based on shallowest floor player is standing on
 	// If the sector has a deep water effect, then let that effect
 	// do the floorclipping instead of the terrain type.
 	for (m = touching_sectorlist; m; m = m->m_tnext)
 	{
+		fixedvec3 pos = PosRelative(m->m_sector);
 		sector_t *hsec = m->m_sector->GetHeightSec();
-		if (hsec == NULL && m->m_sector->floorplane.ZatPoint (this) == Z())
+		if (hsec == NULL && m->m_sector->floorplane.ZatPoint (pos) == Z())
 		{
 			fixed_t clip = Terrains[m->m_sector->GetTerrain(sector_t::floor)].FootClip;
 			if (clip < shallowestclip)
@@ -5523,9 +5527,9 @@ bool P_HitWater (AActor * thing, sector_t * sec, fixed_t x, fixed_t y, fixed_t z
 		fixed_t planez = rover->top.plane->ZatPoint(x, y);
 			if (z > planez - FRACUNIT / 2 && z < planez + FRACUNIT / 2)	// allow minor imprecisions
 		{
-				if (rover->flags & (FF_SOLID | FF_SWIMMABLE))
+			if (rover->flags & (FF_SOLID | FF_SWIMMABLE))
 			{
-					terrainnum = rover->model->GetTerrain(rover->top.isceiling);
+				terrainnum = rover->model->GetTerrain(rover->top.isceiling);
 				goto foundone;
 			}
 		}
@@ -5638,9 +5642,11 @@ bool P_HitFloor (AActor *thing)
 		return false;
 
 	// don't splash if landing on the edge above water/lava/etc....
+	fixedvec3 pos;
 	for (m = thing->touching_sectorlist; m; m = m->m_tnext)
 	{
-		if (thing->Z() == m->m_sector->floorplane.ZatPoint(thing))
+		pos = thing->PosRelative(m->m_sector);
+		if (thing->Z() == m->m_sector->floorplane.ZatPoint(pos.x, pos.y))
 		{
 			break;
 		}
@@ -5652,9 +5658,9 @@ bool P_HitFloor (AActor *thing)
 			if (!(rover->flags & FF_EXISTS)) continue;
 			if (rover->flags & (FF_SOLID|FF_SWIMMABLE))
 			{
-				if (rover->top.plane->ZatPoint(thing) == thing->Z())
+				if (rover->top.plane->ZatPoint(pos.x, pos.y) == thing->Z())
 				{
-					return P_HitWater (thing, m->m_sector);
+					return P_HitWater (thing, m->m_sector, pos.x, pos.y, pos.z);
 				}
 			}
 		}
@@ -5664,7 +5670,7 @@ bool P_HitFloor (AActor *thing)
 		return false;
 	}
 
-	return P_HitWater (thing, m->m_sector);
+	return P_HitWater (thing, m->m_sector, pos.x, pos.y, pos.z);
 }
 
 //---------------------------------------------------------------------------
@@ -5677,12 +5683,15 @@ bool P_HitFloor (AActor *thing)
 
 void P_CheckSplash(AActor *self, fixed_t distance)
 {
-	if (self->Z() <= self->floorz + (distance<<FRACBITS) && self->floorsector == self->Sector && self->Sector->GetHeightSec() == NULL)
+	sector_t *floorsec;
+	self->Sector->LowestFloorAt(self, &floorsec);
+	if (self->Z() <= self->floorz + (distance<<FRACBITS) && self->floorsector == floorsec && self->Sector->GetHeightSec() == NULL && floorsec->heightsec == NULL)
 	{
 		// Explosion splashes never alert monsters. This is because A_Explode has
 		// a separate parameter for that so this would get in the way of proper 
 		// behavior.
-		P_HitWater (self, self->Sector, self->X(), self->Y(), self->floorz, false, false);
+		fixedvec3 pos = self->PosRelative(floorsec);
+		P_HitWater (self, floorsec, pos.x, pos.y, self->floorz, false, false);
 	}
 }
 

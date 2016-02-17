@@ -1002,24 +1002,6 @@ fixed_t sector_t::NextLowestFloorAt(fixed_t x, fixed_t y, fixed_t z, sector_t **
 
 //===========================================================================
 //
-// Calculates the height of a sector plane, respecting portal offsets
-// between two spots
-//
-//===========================================================================
-
-fixed_t sector_t::PlaneAtPoint(const secplane_t &plane, fixed_t x, fixed_t y, int refgroup) const
-{
-	if (refgroup != PortalGroup)
-	{
-		FDisplacement &disp = Displacements(PortalGroup, refgroup);
-		x += disp.pos.x;
-		y += disp.pos.y;
-	}
-	return plane.ZatPoint(x, y);
-}
-
-//===========================================================================
-//
 // 
 //
 //===========================================================================

@@ -513,8 +513,8 @@ void AActor::SetOrigin (fixed_t ix, fixed_t iy, fixed_t iz, bool moving)
 	SetXYZ(ix, iy, iz);
 	if (moving) SetMovement(ix - X(), iy - Y(), iz - Z());
 	LinkToWorld ();
-	floorz = Sector->floorplane.ZatPoint (ix, iy);
-	ceilingz = Sector->ceilingplane.ZatPoint (ix, iy);
+	floorz = Sector->LowestFloorAt(ix, iy, &floorsector);
+	ceilingz = Sector->HighestCeilingAt(ix, iy, &ceilingsector);
 	P_FindFloorCeiling(this, FFCF_ONLYSPAWNPOS);
 }
 

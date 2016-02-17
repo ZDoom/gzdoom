@@ -3276,7 +3276,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CountdownArg)
 	PARAM_INT(cnt);
 	PARAM_STATE_OPT(state) { state = self->FindState(NAME_Death); }
 
-	if (cnt<0 || cnt >= 5) return;
+	if (cnt<0 || cnt >= 5) return 0;
 	if (!self->args[cnt]--)
 	{
 		if (self->flags&MF_MISSILE)
@@ -3292,6 +3292,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CountdownArg)
 			self->SetState(state);
 		}
 	}
+	return 0;
 }
 
 //============================================================================

@@ -32,9 +32,13 @@
 #include "m_bbox.h"
 
 #include "doomdef.h"
+#include "doomdata.h"
 #include "doomstat.h"
 #include "p_local.h"
+#include "p_maputl.h"
 #include "p_3dmidtex.h"
+#include "p_blockmap.h"
+#include "r_utility.h"
 
 // State.
 #include "r_state.h"
@@ -42,6 +46,8 @@
 #include "po_man.h"
 
 static AActor *RoughBlockCheck (AActor *mo, int index, void *);
+static int R_PointOnSideSlow(fixed_t x, fixed_t y, node_t *node);
+sector_t *P_PointInSectorBuggy(fixed_t x, fixed_t y);
 
 
 //==========================================================================
@@ -313,37 +319,116 @@ void AActor::UnlinkFromWorld ()
 
 //==========================================================================
 //
+// If the thing is exactly on a line, move it into the sector
+// slightly in order to resolve clipping issues in the renderer.
+//
+//==========================================================================
+
+bool AActor::FixMapthingPos()
+{
+	sector_t *secstart = P_PointInSectorBuggy(X(), Y());
+
+	int blockx = GetSafeBlockX(X() - bmaporgx);
+	int blocky = GetSafeBlockY(Y() - bmaporgy);
+	bool success = false;
+
+	if ((unsigned int)blockx < (unsigned int)bmapwidth &&
+		(unsigned int)blocky < (unsigned int)bmapheight)
+	{
+		int *list;
+
+		for (list = blockmaplump + blockmap[blocky*bmapwidth + blockx] + 1; *list != -1; ++list)
+		{
+			line_t *ldef = &lines[*list];
+
+			if (ldef->frontsector == ldef->backsector)
+			{ // Skip two-sided lines inside a single sector
+				continue;
+			}
+			if (ldef->backsector != NULL)
+			{
+				if (ldef->frontsector->floorplane == ldef->backsector->floorplane &&
+					ldef->frontsector->ceilingplane == ldef->backsector->ceilingplane)
+				{ // Skip two-sided lines without any height difference on either side
+					continue;
+				}
+			}
+
+			// Not inside the line's bounding box
+			if (X() + radius <= ldef->bbox[BOXLEFT]
+				|| X() - radius >= ldef->bbox[BOXRIGHT]
+				|| Y() + radius <= ldef->bbox[BOXBOTTOM]
+				|| Y() - radius >= ldef->bbox[BOXTOP])
+				continue;
+
+			// Get the exact distance to the line
+			divline_t dll, dlv;
+			fixed_t linelen = (fixed_t)sqrt((double)ldef->dx*ldef->dx + (double)ldef->dy*ldef->dy);
+
+			P_MakeDivline(ldef, &dll);
+
+			dlv.x = X();
+			dlv.y = Y();
+			dlv.dx = FixedDiv(dll.dy, linelen);
+			dlv.dy = -FixedDiv(dll.dx, linelen);
+
+			fixed_t distance = abs(P_InterceptVector(&dlv, &dll));
+
+			if (distance < radius)
+			{
+				DPrintf("%s at (%d,%d) lies on %s line %td, distance = %f\n",
+					this->GetClass()->TypeName.GetChars(), X() >> FRACBITS, Y() >> FRACBITS,
+					ldef->dx == 0 ? "vertical" : ldef->dy == 0 ? "horizontal" : "diagonal",
+					ldef - lines, FIXED2DBL(distance));
+				angle_t finean = R_PointToAngle2(0, 0, ldef->dx, ldef->dy);
+				if (ldef->backsector != NULL && ldef->backsector == secstart)
+				{
+					finean += ANGLE_90;
+				}
+				else
+				{
+					finean -= ANGLE_90;
+				}
+				finean >>= ANGLETOFINESHIFT;
+
+				// Get the distance we have to move the object away from the wall
+				distance = radius - distance;
+				SetXY(X() + FixedMul(distance, finecosine[finean]), Y() + FixedMul(distance, finesine[finean]));
+				success = true;
+			}
+		}
+	}
+	return success;
+}
+
+//==========================================================================
+//
 // P_SetThingPosition
-// Links a thing into both a block and a subsector based on it's x y.
+// Links a thing into both a block and a subsector based on its x y.
 // Sets thing->sector properly
 //
 //==========================================================================
 
-void AActor::LinkToWorld (bool buggy)
+void AActor::LinkToWorld (bool spawningmapthing, FPortalGroupArray *groups, sector_t *sector)
 {
-	// link into subsector
-	sector_t *sec;
-
-	if (!buggy || numgamenodes == 0)
+	if (spawningmapthing && (flags4 & MF4_FIXMAPTHINGPOS) && sector == NULL)
 	{
-		sec = P_PointInSector (X(), Y());
-	}
-	else
-	{
-		sec = LinkToWorldForMapThing ();
+		if (FixMapthingPos()) spawningmapthing = false;
 	}
 
-	LinkToWorld (sec);
-}
-
-void AActor::LinkToWorld (sector_t *sec)
-{
-	if (sec == NULL)
+	if (sector == NULL)
 	{
-		LinkToWorld ();
-		return;
+		if (!spawningmapthing || numgamenodes == 0)
+		{
+			sector = P_PointInSector(X(), Y());
+		}
+		else
+		{
+			sector = P_PointInSectorBuggy(X(), Y());
+		}
 	}
-	Sector = sec;
+
+	Sector = sector;
 	subsector = R_PointInSubsector(X(), Y());	// this is from the rendering nodes, not the gameplay nodes!
 
 	if ( !(flags & MF_NOSECTOR) )
@@ -352,7 +437,7 @@ void AActor::LinkToWorld (sector_t *sec)
 		// killough 8/11/98: simpler scheme using pointer-to-pointer prev
 		// pointers, allows head nodes to be treated like everything else
 
-		AActor **link = &sec->thinglist;
+		AActor **link = &sector->thinglist;
 		AActor *next = *link;
 		if ((snext = next))
 			next->sprev = &snext;
@@ -401,7 +486,7 @@ void AActor::LinkToWorld (sector_t *sec)
 				for (int x = x1; x <= x2; ++x)
 				{
 					FBlockNode **link = &blocklinks[y*bmapwidth + x];
-					FBlockNode *node = FBlockNode::Create (this, x, y);
+					FBlockNode *node = FBlockNode::Create (this, x, y, this->Sector->PortalGroup);
 
 					// Link in to block
 					if ((node->NextActor = *link) != NULL)
@@ -422,168 +507,6 @@ void AActor::LinkToWorld (sector_t *sec)
 	}
 }
 
-//==========================================================================
-//
-// [RH] LinkToWorldForMapThing
-//
-// Emulate buggy PointOnLineSide and fix actors that lie on
-// lines to compensate for some IWAD maps.
-//
-//==========================================================================
-
-static int R_PointOnSideSlow (fixed_t x, fixed_t y, node_t *node)
-{
-	// [RH] This might have been faster than two multiplies and an
-	// add on a 386/486, but it certainly isn't on anything newer than that.
-	fixed_t	dx;
-	fixed_t	dy;
-	double	left;
-	double	right;
-
-	if (!node->dx)
-	{
-		if (x <= node->x)
-			return node->dy > 0;
-
-		return node->dy < 0;
-	}
-	if (!node->dy)
-	{
-		if (y <= node->y)
-			return node->dx < 0;
-
-		return node->dx > 0;
-	}
-
-	dx = (x - node->x);
-	dy = (y - node->y);
-
-	// Try to quickly decide by looking at sign bits.
-	if ( (node->dy ^ node->dx ^ dx ^ dy)&0x80000000 )
-	{
-		if  ( (node->dy ^ dx) & 0x80000000 )
-		{
-			// (left is negative)
-			return 1;
-		}
-		return 0;
-	}
-
-	// we must use doubles here because the fixed point code will produce errors due to loss of precision for extremely short linedefs.
-	left = (double)node->dy * (double)dx;
-	right = (double)dy * (double)node->dx;
-
-	if (right < left)
-	{
-		// front side
-		return 0;
-	}
-	// back side
-	return 1;
-}
-
-sector_t *AActor::LinkToWorldForMapThing ()
-{
-	node_t *node = gamenodes + numgamenodes - 1;
-
-	do
-	{
-		// Use original buggy point-on-side test when spawning
-		// things at level load so that the map spots in the
-		// emerald key room of Hexen MAP01 are spawned on the
-		// window ledge instead of the blocking floor in front
-		// of it. Why do I consider it buggy? Because a point
-		// that lies directly on a line should always be
-		// considered as "in front" of the line. The orientation
-		// of the line should be irrelevant.
-		node = (node_t *)node->children[R_PointOnSideSlow (X(), Y(), node)];
-	}
-	while (!((size_t)node & 1));
-
-	subsector_t *ssec = (subsector_t *)((BYTE *)node - 1);
-
-	if (flags4 & MF4_FIXMAPTHINGPOS)
-	{
-		// If the thing is exactly on a line, move it into the subsector
-		// slightly in order to resolve clipping issues in the renderer.
-		// This check needs to use the blockmap, because an actor on a
-		// one-sided line might go into a subsector behind the line, so
-		// the line would not be included as one of its subsector's segs.
-
-		int blockx = GetSafeBlockX(X() - bmaporgx);
-		int blocky = GetSafeBlockY(Y() - bmaporgy);
-
-		if ((unsigned int)blockx < (unsigned int)bmapwidth &&
-			(unsigned int)blocky < (unsigned int)bmapheight)
-		{
-			int *list;
-
-			for (list = blockmaplump + blockmap[blocky*bmapwidth + blockx] + 1; *list != -1; ++list)
-			{
-				line_t *ldef = &lines[*list];
-
-				if (ldef->frontsector == ldef->backsector)
-				{ // Skip two-sided lines inside a single sector
-					continue;
-				}
-				if (ldef->backsector != NULL)
-				{
-					if (ldef->frontsector->floorplane == ldef->backsector->floorplane &&
-						ldef->frontsector->ceilingplane == ldef->backsector->ceilingplane)
-					{ // Skip two-sided lines without any height difference on either side
-						continue;
-					}
-				}
-
-				// Not inside the line's bounding box
-				if (X() + radius <= ldef->bbox[BOXLEFT]
-					|| X() - radius >= ldef->bbox[BOXRIGHT]
-					|| Y() + radius <= ldef->bbox[BOXBOTTOM]
-					|| Y() - radius >= ldef->bbox[BOXTOP] )
-					continue;
-
-				// Get the exact distance to the line
-				divline_t dll, dlv;
-				fixed_t linelen = (fixed_t)sqrt((double)ldef->dx*ldef->dx + (double)ldef->dy*ldef->dy);
-
-				P_MakeDivline (ldef, &dll);
-
-				dlv.x = X();
-				dlv.y = Y();
-				dlv.dx = FixedDiv(dll.dy, linelen);
-				dlv.dy = -FixedDiv(dll.dx, linelen);
-
-				fixed_t distance = abs(P_InterceptVector(&dlv, &dll));
-
-				if (distance < radius)
-				{
-					DPrintf ("%s at (%d,%d) lies on %s line %td, distance = %f\n",
-						this->GetClass()->TypeName.GetChars(), X()>>FRACBITS, Y()>>FRACBITS, 
-						ldef->dx == 0? "vertical" :	ldef->dy == 0? "horizontal" : "diagonal",
-						ldef-lines, FIXED2DBL(distance));
-					angle_t finean = R_PointToAngle2 (0, 0, ldef->dx, ldef->dy);
-					if (ldef->backsector != NULL && ldef->backsector == ssec->sector)
-					{
-						finean += ANGLE_90;
-					}
-					else
-					{
-						finean -= ANGLE_90;
-					}
-					finean >>= ANGLETOFINESHIFT;
-
-					// Get the distance we have to move the object away from the wall
-					distance = radius - distance;
-					SetXY(X() + FixedMul(distance, finecosine[finean]), Y() + FixedMul(distance, finesine[finean]));
-					return P_PointInSector (X(), Y());
-				}
-			}
-		}
-	}
-
-	return ssec->sector;
-}
-
 void AActor::SetOrigin (fixed_t ix, fixed_t iy, fixed_t iz, bool moving)
 {
 	UnlinkFromWorld ();
@@ -597,7 +520,7 @@ void AActor::SetOrigin (fixed_t ix, fixed_t iy, fixed_t iz, bool moving)
 
 FBlockNode *FBlockNode::FreeBlocks = NULL;
 
-FBlockNode *FBlockNode::Create (AActor *who, int x, int y)
+FBlockNode *FBlockNode::Create (AActor *who, int x, int y, int group)
 {
 	FBlockNode *block;
 
@@ -1524,6 +1447,67 @@ static AActor *RoughBlockCheck (AActor *mo, int index, void *param)
 	return NULL;
 }
 
+//==========================================================================
+//
+// [RH] LinkToWorldForMapThing
+//
+// Emulate buggy PointOnLineSide and fix actors that lie on
+// lines to compensate for some IWAD maps.
+//
+//==========================================================================
+
+static int R_PointOnSideSlow(fixed_t x, fixed_t y, node_t *node)
+{
+	// [RH] This might have been faster than two multiplies and an
+	// add on a 386/486, but it certainly isn't on anything newer than that.
+	fixed_t	dx;
+	fixed_t	dy;
+	double	left;
+	double	right;
+
+	if (!node->dx)
+	{
+		if (x <= node->x)
+			return node->dy > 0;
+
+		return node->dy < 0;
+	}
+	if (!node->dy)
+	{
+		if (y <= node->y)
+			return node->dx < 0;
+
+		return node->dx > 0;
+	}
+
+	dx = (x - node->x);
+	dy = (y - node->y);
+
+	// Try to quickly decide by looking at sign bits.
+	if ((node->dy ^ node->dx ^ dx ^ dy) & 0x80000000)
+	{
+		if ((node->dy ^ dx) & 0x80000000)
+		{
+			// (left is negative)
+			return 1;
+		}
+		return 0;
+	}
+
+	// we must use doubles here because the fixed point code will produce errors due to loss of precision for extremely short linedefs.
+	left = (double)node->dy * (double)dx;
+	right = (double)dy * (double)node->dx;
+
+	if (right < left)
+	{
+		// front side
+		return 0;
+	}
+	// back side
+	return 1;
+}
+
+
 //===========================================================================
 //
 // P_VanillaPointOnLineSide
@@ -1610,5 +1594,26 @@ int P_VanillaPointOnDivlineSide(fixed_t x, fixed_t y, const divline_t* line)
 	if (right < left)
 		return 0;		// front side
 	return 1;			// back side
+}
+
+sector_t *P_PointInSectorBuggy(fixed_t x, fixed_t y)
+{
+	node_t *node = gamenodes + numgamenodes - 1;
+
+	do
+	{
+		// Use original buggy point-on-side test when spawning
+		// things at level load so that the map spots in the
+		// emerald key room of Hexen MAP01 are spawned on the
+		// window ledge instead of the blocking floor in front
+		// of it. Why do I consider it buggy? Because a point
+		// that lies directly on a line should always be
+		// considered as "in front" of the line. The orientation
+		// of the line should be irrelevant.
+		node = (node_t *)node->children[R_PointOnSideSlow(x, y, node)];
+	} while (!((size_t)node & 1));
+
+	subsector_t *ssec = (subsector_t *)((BYTE *)node - 1);
+	return ssec->sector;
 }
 

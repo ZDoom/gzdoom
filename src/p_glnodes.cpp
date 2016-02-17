@@ -65,6 +65,8 @@
 #include "version.h"
 #include "md5.h"
 #include "m_misc.h"
+#include "r_utility.h"
+#include "cmdlib.h"
 
 void P_GetPolySpots (MapData * lump, TArray<FNodeBuilder::FPolyStart> &spots, TArray<FNodeBuilder::FPolyStart> &anchors);
 

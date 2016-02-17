@@ -13,6 +13,7 @@
 #include "teaminfo.h"
 #include "d_net.h"
 #include "farchive.h"
+#include "d_player.h"
 
 IMPLEMENT_POINTY_CLASS(DBot)
  DECLARE_POINTER(dest)

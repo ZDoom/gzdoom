@@ -80,6 +80,9 @@
 #include "m_joy.h"
 #include "farchive.h"
 #include "r_renderer.h"
+#include "r_utility.h"
+#include "a_morph.h"
+#include "p_spec.h"
 #include "r_data/colormaps.h"
 
 #include <zlib.h>

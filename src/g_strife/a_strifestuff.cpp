@@ -19,6 +19,8 @@
 #include "d_event.h"
 #include "v_font.h"
 #include "farchive.h"
+#include "p_spec.h"
+#include "portal.h"
 
 // Include all the other Strife stuff here to reduce compile time
 #include "a_acolyte.cpp"

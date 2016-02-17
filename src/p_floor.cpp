@@ -31,6 +31,7 @@
 #include "tables.h"
 #include "farchive.h"
 #include "p_3dmidtex.h"
+#include "p_spec.h"
 #include "r_data/r_interpolate.h"
 
 //==========================================================================
@@ -411,8 +412,8 @@ bool EV_DoFloor (DFloor::EFloor floortype, line_t *line, int tag,
 
 		case DFloor::floorLowerByTexture:
 			floor->m_Direction = -1;
-			newheight = sec->floorplane.ZatPoint (0, 0) - sec->FindShortestTextureAround ();
-			floor->m_FloorDestDist = sec->floorplane.PointToDist (0, 0, newheight);
+			newheight = sec->floorplane.ZatPoint (sec->soundorg[0], sec->soundorg[1]) - sec->FindShortestTextureAround ();
+			floor->m_FloorDestDist = sec->floorplane.PointToDist (sec->soundorg[0], sec->soundorg[1], newheight);
 			break;
 
 		case DFloor::floorLowerToCeiling:
@@ -428,14 +429,14 @@ bool EV_DoFloor (DFloor::EFloor floortype, line_t *line, int tag,
 			//		since the code is identical to what was here. (Oddly
 			//		enough, BOOM preserved the code here even though it
 			//		also had this function.)
-			newheight = sec->floorplane.ZatPoint (0, 0) + sec->FindShortestTextureAround ();
-			floor->m_FloorDestDist = sec->floorplane.PointToDist (0, 0, newheight);
+			newheight = sec->floorplane.ZatPoint (sec->soundorg[0], sec->soundorg[1]) + sec->FindShortestTextureAround ();
+			floor->m_FloorDestDist = sec->floorplane.PointToDist (sec->soundorg[0], sec->soundorg[1], newheight);
 			break;
 
 		case DFloor::floorRaiseAndChange:
 			floor->m_Direction = 1;
-			newheight = sec->floorplane.ZatPoint (0, 0) + height;
-			floor->m_FloorDestDist = sec->floorplane.PointToDist (0, 0, newheight);
+			newheight = sec->floorplane.ZatPoint (sec->soundorg[0], sec->soundorg[1]) + height;
+			floor->m_FloorDestDist = sec->floorplane.PointToDist (sec->soundorg[0], sec->soundorg[1], newheight);
 			if (line != NULL)
 			{
 				FTextureID oldpic = sec->GetTexture(sector_t::floor);
@@ -618,8 +619,8 @@ bool EV_BuildStairs (int tag, DFloor::EStair type, line_t *line,
 		floor->m_Hexencrush = false;
 
 		floor->m_Speed = speed;
-		height = sec->floorplane.ZatPoint (0, 0) + stairstep;
-		floor->m_FloorDestDist = sec->floorplane.PointToDist (0, 0, height);
+		height = sec->floorplane.ZatPoint (sec->soundorg[0], sec->soundorg[1]) + stairstep;
+		floor->m_FloorDestDist = sec->floorplane.PointToDist (sec->soundorg[0], sec->soundorg[1], height);
 
 		texture = sec->GetTexture(sector_t::floor);
 		osecnum = secnum;				//jff 3/4/98 preserve loop index

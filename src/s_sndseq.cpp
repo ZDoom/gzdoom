@@ -28,6 +28,7 @@
 #include "c_dispatch.h"
 #include "g_level.h"
 #include "farchive.h"
+#include "d_player.h"
 
 // MACROS ------------------------------------------------------------------
 

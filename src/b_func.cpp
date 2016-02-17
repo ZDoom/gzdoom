@@ -11,6 +11,7 @@
 #include "doomdef.h"
 #include "doomstat.h"
 #include "p_local.h"
+#include "p_maputl.h"
 #include "b_bot.h"
 #include "g_game.h"
 #include "m_random.h"
@@ -20,6 +21,9 @@
 #include "i_system.h"
 #include "s_sound.h"
 #include "d_event.h"
+#include "d_player.h"
+#include "p_spec.h"
+#include "p_checkposition.h"
 
 static FRandom pr_botdofire ("BotDoFire");
 

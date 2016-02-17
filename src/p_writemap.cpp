@@ -5,6 +5,8 @@
 #include "r_defs.h"
 #include "m_swap.h"
 #include "doomstat.h"
+#include "d_player.h"
+#include "p_spec.h"
 
 static int WriteTHINGS (FILE *file);
 static int WriteLINEDEFS (FILE *file);

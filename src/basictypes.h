@@ -81,6 +81,17 @@ union QWORD_UNION
 typedef SDWORD							fixed_t;
 typedef DWORD							dsfixed_t;				// fixedpt used by span drawer
 
+struct fixedvec3
+{
+	fixed_t x, y, z;
+};
+
+struct fixedvec2
+{
+	fixed_t x, y;
+};
+
+
 #define FIXED_MAX						(signed)(0x7fffffff)
 #define FIXED_MIN						(signed)(0x80000000)
 

@@ -40,6 +40,7 @@
 #include "thingdef/thingdef.h"
 #include "doomstat.h"
 #include "farchive.h"
+#include "a_pickups.h"
 
 static FRandom pr_spot ("SpecialSpot");
 static FRandom pr_spawnmace ("SpawnMace");

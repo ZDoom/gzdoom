@@ -1077,12 +1077,17 @@ DEFINE_ACTION_FUNCTION(AActor, A_SkullRodStorm)
 	mo = Spawn<ARainPillar> (pos.x, pos.y, ONCEILINGZ, ALLOW_REPLACE);
 	// We used bouncecount to store the 3D floor index in A_HideInCeiling
 	if (!mo) return 0;
+	if (mo->Sector->PortalGroup != self->Sector->PortalGroup)
+	{
+		// spawning this through a portal will never work right so abort right away.
+		mo->Destroy();
+		return 0;
+	}
 	fixed_t newz;
-	if (self->bouncecount >= 0 
-		&& (unsigned)self->bouncecount < self->Sector->e->XFloor.ffloors.Size())
-		newz = self->Sector->e->XFloor.ffloors[self->bouncecount]->bottom.plane->ZatPoint(pos.x, pos.y);// - 40 * FRACUNIT;
+	if (self->bouncecount >= 0 && (unsigned)self->bouncecount < self->Sector->e->XFloor.ffloors.Size())
+		newz = self->Sector->e->XFloor.ffloors[self->bouncecount]->bottom.plane->ZatPoint(mo);// - 40 * FRACUNIT;
 	else
-		newz = self->Sector->ceilingplane.ZatPoint(pos.x, pos.y);
+		newz = self->Sector->ceilingplane.ZatPoint(mo);
 	int moceiling = P_Find3DFloor(NULL, pos.x, pos.y, newz, false, false, newz);
 	if (moceiling >= 0)
 		mo->SetZ(newz - mo->height, false);

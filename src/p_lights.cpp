@@ -27,8 +27,10 @@
 
 #include "doomdef.h"
 #include "p_local.h"
+#include "p_spec.h"
 
 #include "p_lnspec.h"
+#include "doomstat.h"
 
 // State.
 #include "r_state.h"

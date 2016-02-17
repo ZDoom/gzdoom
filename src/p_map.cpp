@@ -34,10 +34,15 @@
 
 #include "doomdef.h"
 #include "p_local.h"
+#include "p_spec.h"
+#include "d_player.h"
+#include "p_maputl.h"
 #include "p_lnspec.h"
 #include "p_effect.h"
 #include "p_terrain.h"
 #include "p_trace.h"
+#include "p_checkposition.h"
+#include "r_utility.h"
 
 #include "s_sound.h"
 #include "decallib.h"

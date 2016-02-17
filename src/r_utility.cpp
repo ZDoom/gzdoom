@@ -34,7 +34,7 @@
 #include "doomstat.h"
 #include "m_random.h"
 #include "m_bbox.h"
-#include "p_local.h"
+#include "portal.h"
 #include "r_sky.h"
 #include "st_stuff.h"
 #include "c_cvars.h"
@@ -55,6 +55,9 @@
 #include "r_renderer.h"
 #include "r_data/colormaps.h"
 #include "farchive.h"
+#include "r_utility.h"
+#include "d_player.h"
+#include "portal.h"
 
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -878,16 +881,22 @@ void R_SetupFrame (AActor *actor)
 	interpolator.DoInterpolations (r_TicFrac);
 
 	// Keep the view within the sector's floor and ceiling
-	fixed_t theZ = viewsector->ceilingplane.ZatPoint (viewx, viewy) - 4*FRACUNIT;
-	if (viewz > theZ)
+	if (viewsector->PortalBlocksMovement(sector_t::ceiling))
 	{
-		viewz = theZ;
+		fixed_t theZ = viewsector->ceilingplane.ZatPoint(viewx, viewy) - 4 * FRACUNIT;
+		if (viewz > theZ)
+		{
+			viewz = theZ;
+		}
 	}
 
-	theZ = viewsector->floorplane.ZatPoint (viewx, viewy) + 4*FRACUNIT;
-	if (viewz < theZ)
+	if (viewsector->PortalBlocksMovement(sector_t::floor))
 	{
-		viewz = theZ;
+		fixed_t theZ = viewsector->floorplane.ZatPoint(viewx, viewy) + 4 * FRACUNIT;
+		if (viewz < theZ)
+		{
+			viewz = theZ;
+		}
 	}
 
 	if (!paused)

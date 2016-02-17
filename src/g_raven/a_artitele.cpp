@@ -3,11 +3,14 @@
 #include "a_artifacts.h"
 #include "gstrings.h"
 #include "p_local.h"
+#include "p_spec.h"
 #include "gi.h"
 #include "s_sound.h"
 #include "m_random.h"
 #include "doomstat.h"
 #include "g_game.h"
+#include "d_player.h"
+#include "a_morph.h"
 
 static FRandom pr_tele ("TeleportSelf");
 

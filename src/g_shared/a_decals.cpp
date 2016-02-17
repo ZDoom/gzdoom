@@ -45,6 +45,7 @@
 #include "colormatcher.h"
 #include "v_palette.h"
 #include "farchive.h"
+#include "doomdata.h"
 
 static fixed_t DecalWidth, DecalLeft, DecalRight;
 static fixed_t SpreadZ;

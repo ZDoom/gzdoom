@@ -9,6 +9,8 @@
 #include "a_sharedglobal.h"
 #include "statnums.h"
 #include "farchive.h"
+#include "d_player.h"
+#include "r_utility.h"
 
 static FRandom pr_quake ("Quake");
 

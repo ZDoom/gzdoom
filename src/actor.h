@@ -43,6 +43,8 @@
 
 struct subsector_t;
 class PClassAmmo;
+struct FBlockNode;
+struct FPortalGroupArray;
 
 //
 // NOTES: AActor
@@ -530,21 +532,6 @@ enum EThingSpecialActivationType
 	THINGSPEC_Switch			= 1<<10,	// The thing is alternatively activated and deactivated when triggered
 };
 
-// [RH] Like msecnode_t, but for the blockmap
-struct FBlockNode
-{
-	AActor *Me;						// actor this node references
-	int BlockIndex;					// index into blocklinks for the block this node is in
-	FBlockNode **PrevActor;			// previous actor in this block
-	FBlockNode *NextActor;			// next actor in this block
-	FBlockNode **PrevBlock;			// previous block this actor is in
-	FBlockNode *NextBlock;			// next block this actor is in
-
-	static FBlockNode *Create (AActor *who, int x, int y);
-	void Release ();
-
-	static FBlockNode *FreeBlocks;
-};
 
 class FDecalBase;
 class AInventory;
@@ -568,16 +555,6 @@ inline T *GetDefault ()
 struct line_t;
 struct secplane_t;
 struct FStrifeDialogueNode;
-
-struct fixedvec3
-{
-	fixed_t x, y, z;
-};
-
-struct fixedvec2
-{
-	fixed_t x, y;
-};
 
 class DDropItem : public DObject
 {
@@ -1155,11 +1132,10 @@ private:
 	friend class FActorIterator;
 	friend bool P_IsTIDUsed(int tid);
 
-	sector_t *LinkToWorldForMapThing ();
+	bool FixMapthingPos();
 
 public:
-	void LinkToWorld (bool buggy=false);
-	void LinkToWorld (sector_t *sector);
+	void LinkToWorld (bool spawningmapthing=false, FPortalGroupArray *groups = NULL, sector_t *sector = NULL);
 	void UnlinkFromWorld ();
 	void AdjustFloorClip ();
 	virtual void SetOrigin (fixed_t x, fixed_t y, fixed_t z, bool moving = false);
@@ -1415,6 +1391,7 @@ inline fixedvec3 PosRelative(const fixedvec3 &pos, line_t *line, sector_t *refse
 }
 
 void PrintMiscActorInfo(AActor * query);
+AActor *P_LinePickActor(AActor *t1, angle_t angle, fixed_t distance, int pitch, ActorFlags actorMask, DWORD wallMask);
 
 #define S_FREETARGMOBJ	1
 

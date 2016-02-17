@@ -414,7 +414,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialPosition)
 
 	// Move item back to its original location
 	fixed_t _x, _y;
-	sector_t *sec;
 
 	_x = self->SpawnPoint[0];
 	_y = self->SpawnPoint[1];
@@ -422,12 +421,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialPosition)
 	self->UnlinkFromWorld();
 	self->SetXY(_x, _y);
 	self->LinkToWorld(true);
-	sec = self->Sector;
-	self->dropoffz =
-	self->floorz = sec->floorplane.ZatPoint(_x, _y);
-	self->ceilingz = sec->ceilingplane.ZatPoint(_x, _y);
-	self->SetZ(self->floorz);
-	P_FindFloorCeiling(self, FFCF_ONLYSPAWNPOS | FFCF_NOPORTALS);	// no pprtal checks here so that things get spawned in this sector.
+	self->SetZ(self->Sector->floorplane.ZatPoint(_x, _y));
+	P_FindFloorCeiling(self, FFCF_ONLYSPAWNPOS | FFCF_NOPORTALS);	// no portal checks here so that things get spawned in this sector.
 
 	if (self->flags & MF_SPAWNCEILING)
 	{
@@ -450,10 +445,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialPosition)
 	{
 		self->SetZ(self->SpawnPoint[2] + self->floorz);
 	}
-	// Redo floor/ceiling check, in case of 3D floors
-	// we need to get the actual floor and ceiling heights including portals here
-	self->floorz = sec->LowestFloorAt(self, &self->floorsector);
-	self->ceilingz = sec->HighestCeilingAt(self, &self->ceilingsector);
+	// Redo floor/ceiling check, in case of 3D floors and portals
 	P_FindFloorCeiling(self, FFCF_SAMESECTOR | FFCF_ONLY3DFLOORS | FFCF_3DRESTRICT);
 	if (self->Z() < self->floorz)
 	{ // Do not reappear under the floor, even if that's where we were for the

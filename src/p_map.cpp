@@ -238,21 +238,24 @@ static bool PIT_FindFloorCeiling(line_t *ld, const FBoundingBox &box, FCheckPosi
 
 void P_GetFloorCeilingZ(FCheckPosition &tmf, int flags)
 {
-	sector_t *sec;
-	if (!(flags & FFCF_ONLYSPAWNPOS))
-	{
-		sec = !(flags & FFCF_SAMESECTOR) ? P_PointInSector(tmf.x, tmf.y) : tmf.thing->Sector;
+	sector_t *sec = !(flags & FFCF_SAMESECTOR) ? P_PointInSector(tmf.x, tmf.y) : tmf.thing->Sector;
 
-		tmf.floorz = tmf.dropoffz = sec->LowestFloorAt(tmf.x, tmf.y, &tmf.floorsector);
-		tmf.ceilingz = sec->HighestCeilingAt(tmf.x, tmf.y, &tmf.ceilingsector);
-		tmf.floorpic = sec->GetTexture(sector_t::floor);
-		tmf.floorterrain = sec->GetTerrain(sector_t::floor);
-		tmf.ceilingpic = sec->GetTexture(sector_t::ceiling);
+	if (flags & FFCF_NOPORTALS)
+	{
+		tmf.thing->dropoffz = tmf.thing->floorz = sec->floorplane.ZatPoint(tmf.x, tmf.y);
+		tmf.thing->ceilingz = sec->ceilingplane.ZatPoint(tmf.x, tmf.y);
+		tmf.ceilingsector = tmf.floorsector = sec;
 	}
 	else
 	{
-		sec = tmf.thing->Sector;
+		tmf.floorz = tmf.dropoffz = sec->LowestFloorAt(tmf.x, tmf.y, &tmf.floorsector);
+		tmf.ceilingz = sec->HighestCeilingAt(tmf.x, tmf.y, &tmf.ceilingsector);
 	}
+	tmf.floorpic = tmf.floorsector->GetTexture(sector_t::floor);
+	tmf.floorterrain = tmf.floorsector->GetTerrain(sector_t::floor);
+	tmf.ceilingpic = tmf.ceilingsector->GetTexture(sector_t::ceiling);
+
+	tmf.sector = sec;
 
 	for (unsigned int i = 0; i<sec->e->XFloor.ffloors.Size(); i++)
 	{
@@ -299,21 +302,8 @@ void P_FindFloorCeiling(AActor *actor, int flags)
 	{
 		flags |= FFCF_3DRESTRICT;
 	}
-	if (!(flags & FFCF_ONLYSPAWNPOS))
-	{
-		P_GetFloorCeilingZ(tmf, flags);
-	}
-	else
-	{
-		tmf.ceilingsector = tmf.floorsector = actor->Sector;
+	P_GetFloorCeilingZ(tmf, flags);
 
-		tmf.floorz = tmf.dropoffz = actor->floorz;
-		tmf.ceilingz = actor->ceilingz;
-		tmf.floorpic = actor->floorpic;
-		tmf.floorterrain = actor->floorterrain;
-		tmf.ceilingpic = actor->ceilingpic;
-		P_GetFloorCeilingZ(tmf, flags);
-	}
 	actor->floorz = tmf.floorz;
 	actor->dropoffz = tmf.dropoffz;
 	actor->ceilingz = tmf.ceilingz;

@@ -769,10 +769,9 @@ void APlayerPawn::PostBeginPlay()
 	// Voodoo dolls: restore original floorz/ceilingz logic
 	if (player == NULL || player->mo != this)
 	{
-		dropoffz = floorz = Sector->floorplane.ZatPoint(this);
-		ceilingz = Sector->ceilingplane.ZatPoint(this);
-		P_FindFloorCeiling(this, FFCF_ONLYSPAWNPOS);
+		P_FindFloorCeiling(this, FFCF_ONLYSPAWNPOS|FFCF_NOPORTALS);
 		SetZ(floorz);
+		P_FindFloorCeiling(this, FFCF_ONLYSPAWNPOS);
 	}
 	else
 	{

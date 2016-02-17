@@ -558,7 +558,7 @@ bool P_Move (AActor *actor)
 			else
 			{ // The monster just hit the floor, so trigger any actions.
 				if (actor->floorsector->SecActTarget != NULL &&
-					actor->floorz == actor->floorsector->floorplane.ZatPoint(actor->PosRelative(actor->floorsector))
+					actor->floorz == actor->floorsector->floorplane.ZatPoint(actor->PosRelative(actor->floorsector)))
 				{
 					actor->floorsector->SecActTarget->TriggerAction(actor, SECSPAC_HitFloor);
 				}

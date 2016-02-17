@@ -2299,7 +2299,7 @@ void DPusher::Tick ()
 			continue;
 
 		sector_t *hsec = sec->GetHeightSec();
-		fixedvec2 pos = thing->PosRelative(sec);
+		fixedvec3 pos = thing->PosRelative(sec);
 		if (m_Type == p_wind)
 		{
 			if (hsec == NULL)

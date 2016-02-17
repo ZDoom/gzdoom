@@ -3558,7 +3558,7 @@ void AActor::Tick ()
 
 			for (node = touching_sectorlist; node; node = node->m_tnext)
 			{
-				const sector_t *sec = node->m_sector;
+				sector_t *sec = node->m_sector;
 				fixed_t scrollx, scrolly;
 
 				if (level.Scrolls != NULL)
@@ -4172,8 +4172,6 @@ AActor *AActor::StaticSpawn (PClassActor *type, fixed_t ix, fixed_t iy, fixed_t 
 		// z-coordinate.
 		if (!SpawningMapThing) 
 		{
-			actor->ceilingz = actor->Sector->HighestCeilingAt(actor, &actor->ceilingsector);
-			actor->dropoffz = actor->floorz = actor->Sector->LowestFloorAt(actor, &actor->floorsector);
 			P_FindFloorCeiling(actor, FFCF_ONLYSPAWNPOS);
 		}
 		else

@@ -3269,28 +3269,23 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIf)
 // A_CountdownArg
 //
 //===========================================================================
+
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CountdownArg)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_INT(argnum);
-	PARAM_STATE_OPT(state)	{ state = self->FindState(NAME_Death); }
+	PARAM_INT(cnt);
+	PARAM_STATE_OPT(state) { state = self->FindState(NAME_Death); }
 
-	if (argnum >= 0 && argnum < (int)countof(self->args))
+	if (cnt<0 || cnt >= 5) return 0;
+	if (!self->args[cnt]--)
 	{
-		if (!self->args[argnum]--)
+		if (self->flags&MF_MISSILE)
 		{
-			if (self->flags & MF_MISSILE)
-			{
-				P_ExplodeMissile(self, NULL, NULL);
-			}
-			else if (self->flags & MF_SHOOTABLE)
-			{
-				P_DamageMobj(self, NULL, NULL, self->health, NAME_None, DMG_FORCED);
-			}
-			else
-			{
-				self->SetState(self->FindState(NAME_Death));
-			}
+			P_ExplodeMissile(self, NULL, NULL);
+		}
+		else if (self->flags&MF_SHOOTABLE)
+		{
+			P_DamageMobj(self, NULL, NULL, self->health, NAME_None, DMG_FORCED);
 		}
 		else
 		{

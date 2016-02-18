@@ -36,6 +36,8 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #define USE_WINDOWS_DWORD
+#else
+#include <dlfcn.h>
 #endif
 
 #include "except.h"
@@ -61,14 +63,23 @@ CVAR (Bool, snd_efx, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 #ifdef _WIN32
 static HMODULE hmodOpenAL;
+#define OPENALLIB "openal32.dll"
+#else
+static void* hmodOpenAL;
+#ifdef __APPLE__
+#define OPENALLIB "OpenAL.framework/OpenAL"
+#else
+#define OPENALLIB "libopenal.so"
+#endif
+#define LoadLibrary(x) dlopen((x), RTLD_LAZY)
+#define GetProcAddress(a,b) dlsym((a),(b))
+#define FreeLibrary(x) dlclose((x))
 #endif
 
 bool IsOpenALPresent()
 {
 #ifdef NO_OPENAL
 	return false;
-#elif !defined _WIN32
-	return true;
 #else
 	static bool cached_result = false;
 	static bool done = false;
@@ -78,10 +89,10 @@ bool IsOpenALPresent()
 		done = true;
 		if (hmodOpenAL == NULL)
 		{
-			hmodOpenAL = LoadLibrary(NicePath("$PROGDIR/openal32.dll"));
+			hmodOpenAL = LoadLibrary(NicePath("$PROGDIR/" OPENALLIB));
 			if (hmodOpenAL == NULL)
 			{
-				hmodOpenAL = LoadLibrary("openal32.dll");
+				hmodOpenAL = LoadLibrary(OPENALLIB);
 				if (hmodOpenAL == NULL)
 				{
 					return false;
@@ -90,7 +101,7 @@ bool IsOpenALPresent()
 			for(int i = 0; oalfuncs[i].name != NULL; i++)
 			{
 				*oalfuncs[i].funcaddr = GetProcAddress(hmodOpenAL, oalfuncs[i].name);
-				if (oalfuncs[i].funcaddr == NULL)
+				if (*oalfuncs[i].funcaddr == NULL)
 				{
 					FreeLibrary(hmodOpenAL);
 					hmodOpenAL = NULL;

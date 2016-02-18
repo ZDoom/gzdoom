@@ -626,7 +626,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DeathBallImpact)
 			}
 			else
 			{ // Seek
-				self->angle = self->AngleTo(target);
+				angle = self->AngleTo(target);
 				newAngle = true;
 			}
 		}

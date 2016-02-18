@@ -95,11 +95,11 @@ void DMover::Serialize (FArchive &arc)
 	arc << interpolation;
 }
 
-void DMover::StopInterpolation()
+void DMover::StopInterpolation(bool force)
 {
 	if (interpolation != NULL)
 	{
-		interpolation->DelRef();
+		interpolation->DelRef(force);
 		interpolation = NULL;
 	}
 }

@@ -323,6 +323,54 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetDistance)
 	return 0;
 }
 
+//===========================================================================
+//
+// A_State
+//
+// Returns the state passed in.
+//
+//===========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_State)
+{
+	PARAM_PROLOGUE;
+	PARAM_OBJECT(self, AActor);
+	PARAM_STATE(returnme);
+	ACTION_RETURN_STATE(returnme);
+}
+
+//===========================================================================
+//
+// A_Int
+//
+// Returns the int passed in.
+//
+//===========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Int)
+{
+	PARAM_PROLOGUE;
+	PARAM_OBJECT(self, AActor);
+	PARAM_INT(returnme);
+	ACTION_RETURN_INT(returnme);
+}
+
+//===========================================================================
+//
+// A_Bool
+//
+// Returns the bool passed in.
+//
+//===========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Bool)
+{
+	PARAM_PROLOGUE;
+	PARAM_OBJECT(self, AActor);
+	PARAM_BOOL(returnme);
+	ACTION_RETURN_BOOL(returnme);
+}
+
 //==========================================================================
 //
 // A_RearrangePointers
@@ -6756,49 +6804,4 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceMovementDirection)
 		}
 	}
 	ACTION_RETURN_BOOL(true);
-}
-
-//===========================================================================
-//
-// A_State
-//
-// Returns the state passed in.
-//
-//===========================================================================
-
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_State)
-{
-	PARAM_ACTION_PROLOGUE;
-	PARAM_STATE(returnme);
-	ACTION_RETURN_STATE(returnme);
-}
-
-//===========================================================================
-//
-// A_Int
-//
-// Returns the int passed in.
-//
-//===========================================================================
-
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Int)
-{
-	PARAM_ACTION_PROLOGUE;
-	PARAM_INT(returnme);
-	ACTION_RETURN_INT(returnme);
-}
-
-//===========================================================================
-//
-// A_Bool
-//
-// Returns the bool passed in.
-//
-//===========================================================================
-
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Bool)
-{
-	PARAM_ACTION_PROLOGUE;
-	PARAM_BOOL(returnme);
-	ACTION_RETURN_BOOL(returnme);
 }

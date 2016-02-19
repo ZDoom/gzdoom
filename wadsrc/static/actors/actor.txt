@@ -43,6 +43,10 @@ ACTOR Actor native //: Thinker
 	native int	CountInv(class<Inventory> itemtype, int ptr_select = AAPTR_DEFAULT);
 	native float GetDistance(bool checkz, int ptr = AAPTR_DEFAULT);
 
+	native state A_State(state returnme);
+	native int A_Int(int returnme);
+	native bool A_Bool(bool returnme);
+
 	// Action functions
 	// Meh, MBF redundant functions. Only for DeHackEd support.
 	action native A_Turn(float angle = 0);
@@ -331,10 +335,6 @@ ACTOR Actor native //: Thinker
 	action native int ACS_NamedLockedExecuteDoor(name script, int mapnum=0, int arg1=0, int arg2=0, int lock=0);
 	action native int ACS_NamedExecuteWithResult(name script, int arg1=0, int arg2=0, int arg3=0, int arg4=0);
 	action native ACS_NamedExecuteAlways(name script, int mapnum=0, int arg1=0, int arg2=0, int arg3=0);
-
-	native state A_State(state returnme);
-	native int A_Int(int returnme);
-	native bool A_Bool(bool returnme);
 	
 	States
 	{

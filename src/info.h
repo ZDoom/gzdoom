@@ -128,7 +128,7 @@ struct FState
 	void SetAction(VMFunction *func) { ActionFunc = func; }
 	void ClearAction() { ActionFunc = NULL; }
 	void SetAction(const char *name);
-	bool CallAction(AActor *self, AActor *stateowner);
+	bool CallAction(AActor *self, AActor *stateowner, FState **stateret);
 	static PClassActor *StaticFindStateOwner (const FState *state);
 	static PClassActor *StaticFindStateOwner (const FState *state, PClassActor *info);
 	static FRandom pr_statetics;

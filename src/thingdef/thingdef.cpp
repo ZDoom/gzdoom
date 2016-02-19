@@ -281,7 +281,7 @@ static void FinishThingdef()
 		if (func == NULL)
 		{
 			FCompileContext ctx(tcall->ActorClass);
-			tcall->Code = static_cast<FxTailable *>(tcall->Code->Resolve(ctx));
+			tcall->Code = tcall->Code->Resolve(ctx);
 
 			// Make sure resolving it didn't obliterate it.
 			if (tcall->Code != NULL)
@@ -292,11 +292,25 @@ static void FinishThingdef()
 				// self, stateowner, state (all are pointers)
 				buildit.Registers[REGT_POINTER].Get(3);
 
-				// Emit a tail call via FxVMFunctionCall
-				tcall->Code->Emit(&buildit, true);
+				// Emit code
+				tcall->Code->Emit(&buildit);
 
 				VMScriptFunction *sfunc = buildit.MakeFunction();
 				sfunc->NumArgs = NAP;
+				
+				// Generate prototype for this anonymous function
+				TArray<PType *> args(3);
+				SetImplicitArgs(&args, NULL, tcall->ActorClass, VARF_Method | VARF_Action);
+				if (tcall->Proto != NULL)
+				{
+					sfunc->Proto = NewPrototype(tcall->Proto->ReturnTypes, args);
+				}
+				else
+				{
+					TArray<PType *> norets(0);
+					sfunc->Proto = NewPrototype(norets, args);
+				}
+
 				func = sfunc;
 
 				if (dump != NULL)
@@ -354,6 +368,7 @@ static void FinishThingdef()
 				dmg->Emit(&buildit);
 				sfunc = buildit.MakeFunction();
 				sfunc->NumArgs = 1;
+				sfunc->Proto = NULL;		///FIXME: Need a proper prototype here
 				// Save this function in case this damage value was reused
 				// (which happens quite easily with inheritance).
 				dmg->SetFunction(sfunc);

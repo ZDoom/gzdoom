@@ -204,6 +204,7 @@ public:
 	
 	virtual bool isConstant() const;
 	virtual void RequestAddress();
+	virtual VMFunction *GetDirectFunction();
 
 	virtual ExpEmit Emit(VMFunctionBuilder *build);
 
@@ -389,6 +390,17 @@ public:
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
+class FxCastStateToBool : public FxExpression
+{
+	FxExpression *basex;
+
+public:
+	FxCastStateToBool(FxExpression *x);
+	~FxCastStateToBool();
+	FxExpression *Resolve(FCompileContext&);
+
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
 
 //==========================================================================
 //
@@ -819,41 +831,24 @@ public:
 
 //==========================================================================
 //
-// FxTailable
-//
-// An expression that can produce a tail call
-//
-//==========================================================================
-
-class FxTailable : public FxExpression
-{
-public:
-	FxTailable(const FScriptPosition &pos) : FxExpression(pos) {}
-	virtual ExpEmit Emit(VMFunctionBuilder *build, bool tailcall) = 0;
-	ExpEmit Emit(VMFunctionBuilder *build);
-	virtual VMFunction *GetDirectFunction();
-};
-
-//==========================================================================
-//
 // FxVMFunctionCall
 //
 //==========================================================================
 
-class FxVMFunctionCall : public FxTailable
+class FxVMFunctionCall : public FxExpression
 {
 	PFunction *Function;
 	FArgumentList *ArgList;
-	PType *ReturnType;
 
 public:
 	FxVMFunctionCall(PFunction *func, FArgumentList *args, const FScriptPosition &pos);
 	~FxVMFunctionCall();
 	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
 	ExpEmit Emit(VMFunctionBuilder *build, bool tailcall);
-	unsigned GetArgCount() { return ArgList == NULL ? 0 : ArgList->Size(); }
-	VMFunction *GetVMFunction() { return Function->Variants[0].Implementation; }
-	VMFunction *GetDirectFunction();
+	unsigned GetArgCount() const { return ArgList == NULL ? 0 : ArgList->Size(); }
+	VMFunction *GetVMFunction() const { return Function->Variants[0].Implementation; }
+	bool IsDirectFunction();
 };
 
 //==========================================================================
@@ -862,15 +857,15 @@ public:
 //
 //==========================================================================
 
-class FxSequence : public FxTailable
+class FxSequence : public FxExpression
 {
-	TDeletingArray<FxTailable *> Expressions;
+	TDeletingArray<FxExpression *> Expressions;
 
 public:
-	FxSequence(const FScriptPosition &pos) : FxTailable(pos) {}
+	FxSequence(const FScriptPosition &pos) : FxExpression(pos) {}
 	FxExpression *Resolve(FCompileContext&);
-	ExpEmit Emit(VMFunctionBuilder *build, bool tailcall);
-	void Add(FxTailable *expr) { if (expr != NULL) Expressions.Push(expr); }
+	ExpEmit Emit(VMFunctionBuilder *build);
+	void Add(FxExpression *expr) { if (expr != NULL) Expressions.Push(expr); }
 	VMFunction *GetDirectFunction();
 };
 
@@ -880,17 +875,17 @@ public:
 //
 //==========================================================================
 
-class FxIfStatement : public FxTailable
+class FxIfStatement : public FxExpression
 {
 	FxExpression *Condition;
-	FxTailable *WhenTrue;
-	FxTailable *WhenFalse;
+	FxExpression *WhenTrue;
+	FxExpression *WhenFalse;
 
 public:
-	FxIfStatement(FxExpression *cond, FxTailable *true_part, FxTailable *false_part, const FScriptPosition &pos);
+	FxIfStatement(FxExpression *cond, FxExpression *true_part, FxExpression *false_part, const FScriptPosition &pos);
 	~FxIfStatement();
 	FxExpression *Resolve(FCompileContext&);
-	ExpEmit Emit(VMFunctionBuilder *build, bool tailcall);
+	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
 //==========================================================================
@@ -899,11 +894,15 @@ public:
 //
 //==========================================================================
 
-class FxReturnStatement : public FxTailable
+class FxReturnStatement : public FxExpression
 {
+	FxVMFunctionCall *Call;
+
 public:
-	FxReturnStatement(const FScriptPosition &pos);
-	ExpEmit Emit(VMFunctionBuilder *build, bool tailcall);
+	FxReturnStatement(FxVMFunctionCall *call, const FScriptPosition &pos);
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
+	VMFunction *GetDirectFunction();
 };
 
 //==========================================================================

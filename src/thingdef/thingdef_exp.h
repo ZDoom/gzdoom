@@ -390,6 +390,17 @@ public:
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
+class FxCastStateToBool : public FxExpression
+{
+	FxExpression *basex;
+
+public:
+	FxCastStateToBool(FxExpression *x);
+	~FxCastStateToBool();
+	FxExpression *Resolve(FCompileContext&);
+
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
 
 //==========================================================================
 //

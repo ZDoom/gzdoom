@@ -168,6 +168,11 @@ FxExpression *FxExpression::ResolveAsBoolean(FCompileContext &ctx)
 			x->ValueType = VAL_Int;
 			break;
 
+		case VAL_State:
+			x = new FxCastStateToBool(x);
+			x = x->Resolve(ctx);
+			break;
+
 		default:
 			ScriptPosition.Message(MSG_ERROR, "Not an integral type");
 			delete this;
@@ -511,6 +516,67 @@ ExpEmit FxFloatCast::Emit(VMFunctionBuilder *build)
 //
 //==========================================================================
 
+FxCastStateToBool::FxCastStateToBool(FxExpression *x)
+: FxExpression(x->ScriptPosition)
+{
+	basex = x;
+	ValueType = VAL_Int;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxCastStateToBool::~FxCastStateToBool()
+{
+	SAFE_DELETE(basex);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxExpression *FxCastStateToBool::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	SAFE_RESOLVE(basex, ctx);
+
+	assert(basex->ValueType == VAL_State);
+	assert(!basex->isConstant() && "We shouldn't be able to generate a constant state ref");
+	return this;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+ExpEmit FxCastStateToBool::Emit(VMFunctionBuilder *build)
+{
+	ExpEmit from = basex->Emit(build);
+	assert(from.RegType == REGT_POINTER);
+	from.Free(build);
+	ExpEmit to(build, REGT_INT);
+
+	// If from is NULL, produce 0. Otherwise, produce 1.
+	build->Emit(OP_LI, to.RegNum, 0);
+	build->Emit(OP_EQA_K, 0, from.RegNum, build->GetConstantAddress(NULL, ATAG_GENERIC));
+	build->Emit(OP_JMP, 1);
+	build->Emit(OP_LI, to.RegNum, 1);
+	return to;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 FxPlusSign::FxPlusSign(FxExpression *operand)
 : FxExpression(operand->ScriptPosition)
 {
@@ -753,7 +819,6 @@ FxExpression *FxUnaryNotBoolean::Resolve(FCompileContext& ctx)
 {
 	CHECKRESOLVED();
 	if (Operand)
-
 	{
 		Operand = Operand->ResolveAsBoolean(ctx);
 	}

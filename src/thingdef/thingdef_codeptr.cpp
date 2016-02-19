@@ -108,10 +108,15 @@ bool ACustomInventory::CallStateChain (AActor *actor, FState *state)
 {
 	INTBOOL result = false;
 	int counter = 0;
-	int retval, numret;
-	VMReturn ret;
-	ret.IntAt(&retval);
 	VMValue params[3] = { actor, this, 0 };
+
+	// We accept return types of `state`, `(int|bool)` or `state, (int|bool)`.
+	// The last one is for the benefit of A_Warp and A_Teleport.
+	int retval, numret;
+	FState *nextstate;
+	VMReturn ret[2];
+	ret[0].PointerAt((void **)&nextstate);
+	ret[1].IntAt(&retval);
 
 	this->flags5 |= MF5_INSTATECALL;
 	FState *savedstate = this->state;
@@ -119,40 +124,68 @@ bool ACustomInventory::CallStateChain (AActor *actor, FState *state)
 	while (state != NULL)
 	{
 		this->state = state;
+		nextstate = NULL;	// assume no jump
 
 		if (state->ActionFunc != NULL)
 		{
 			VMFrameStack stack;
+			PPrototype *proto = state->ActionFunc->Proto;
+			VMReturn *wantret;
 
 			params[2] = VMValue(state, ATAG_STATE);
-			retval = true;	// assume success
-			numret = stack.Call(state->ActionFunc, params, countof(params), &ret, 1);
+			retval = true;		// assume success
+			wantret = NULL;		// assume no return value wanted
+			numret = 0;
+
+			// For functions that return nothing (or return some type
+			// we don't care about), we pretend they return true,
+			// thanks to the values set just above.
+
+			if (proto->ReturnTypes.Size() == 1)
+			{
+				if (proto->ReturnTypes[0] == TypeState)
+				{ // Function returns a state
+					wantret = &ret[0];
+				}
+				else if (proto->ReturnTypes[0] == TypeSInt32 || proto->ReturnTypes[0] == TypeBool)
+				{ // Function returns an int or bool
+					wantret = &ret[1];
+				}
+				numret = 1;
+			}
+			else if (proto->ReturnTypes.Size() == 2)
+			{
+				if (proto->ReturnTypes[0] == TypeState &&
+					(proto->ReturnTypes[1] == TypeSInt32 || proto->ReturnTypes[1] == TypeBool))
+				{ // Function returns a state and an int or bool
+					wantret = &ret[0];
+					numret = 2;
+				}
+			}
+			stack.Call(state->ActionFunc, params, countof(params), wantret, numret);
 			// As long as even one state succeeds, the whole chain succeeds unless aborted below.
-			result |= retval;
+			// A state that wants to jump does not count as "succeeded".
+			if (nextstate != NULL)
+			{
+				result |= retval;
+			}
 		}
 
 		// Since there are no delays it is a good idea to check for infinite loops here!
 		counter++;
 		if (counter >= 10000)	break;
 
-		if (this->state == state) 
+		if (nextstate == NULL) 
 		{
-			FState *next = state->GetNextState();
+			nextstate = state->GetNextState();
 
-			if (state == next) 
+			if (state == nextstate) 
 			{ // Abort immediately if the state jumps to itself!
 				result = false;
 				break;
 			}
-			
-			// If both variables are still the same there was no jump
-			// so we must advance to the next state.
-			state = next;
 		}
-		else 
-		{
-			state = this->state;
-		}
+		state = nextstate;
 	}
 	this->flags5 &= ~MF5_INSTATECALL;
 	this->state = savedstate;

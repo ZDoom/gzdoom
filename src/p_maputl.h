@@ -108,8 +108,72 @@ void	P_LineOpening (FLineOpening &open, AActor *thing, const line_t *linedef, fi
 class FBoundingBox;
 struct polyblock_t;
 
+//============================================================================
+//
+// This is a dynamic array which holds its first MAX_STATIC entries in normal
+// variables to avoid constant allocations which this would otherwise
+// require.
+// 
+// When collecting touched portal groups the normal cases are either
+// no portals == one group or
+// two portals = two groups
+// 
+// Anything with more can happen but far less infrequently, so this
+// organization helps avoiding the overhead from heap allocations
+// in the vast majority of situations.
+//
+//============================================================================
+
+struct FPortalGroupArray
+{
+	enum
+	{
+		LOWER = 0x4000,
+		UPPER = 0x8000,
+		FLAT = 0xc000,
+	};
+
+	enum
+	{
+		MAX_STATIC = 4
+	};
+
+	FPortalGroupArray()
+	{
+		varused = 0;
+	}
+
+	void Clear()
+	{
+		data.Clear();
+		varused = 0;
+	}
+
+	void Add(DWORD num)
+	{
+		if (varused < MAX_STATIC) entry[varused++] = (WORD)num;
+		else data.Push((WORD)num);
+	}
+
+	unsigned Size()
+	{
+		return varused + data.Size();
+	}
+
+	DWORD operator[](unsigned index)
+	{
+		return index < MAX_STATIC ? entry[index] : data[index - MAX_STATIC];
+	}
+
+private:
+	WORD entry[MAX_STATIC];
+	unsigned varused;
+	TArray<WORD> data;
+};
+
 class FBlockLinesIterator
 {
+	friend class FMultiBlockLinesIterator;
 	int minx, maxx;
 	int miny, maxy;
 
@@ -120,12 +184,60 @@ class FBlockLinesIterator
 
 	void StartBlock(int x, int y);
 
+	FBlockLinesIterator() {}
+	void init(const FBoundingBox &box);
 public:
 	FBlockLinesIterator(int minx, int miny, int maxx, int maxy, bool keepvalidcount = false);
 	FBlockLinesIterator(const FBoundingBox &box);
 	line_t *Next();
 	void Reset() { StartBlock(minx, miny); }
 };
+
+class FMultiBlockLinesIterator
+{
+	fixedvec3 checkpoint;
+	fixedvec2 offset;
+	short basegroup;
+	short portalposition;
+	WORD index;
+	bool continueup;
+	bool continuedown;
+	FBlockLinesIterator blockIterator;
+	FPortalGroupArray checklist;
+
+	void startIteratorForGroup(int group);
+
+public:
+
+	enum
+	{
+		PP_ORIGIN,
+		PP_ABOVE,
+		PP_BELOW,
+		PP_THROUGHLINE
+	};
+
+	struct CheckResult
+	{
+		line_t *line;
+		fixedvec2 position;
+		int portalposition;
+	};
+
+	FMultiBlockLinesIterator(AActor *origin, fixed_t checkx = FIXED_MAX, fixed_t checky = FIXED_MAX, fixed_t checkradius = -1);
+	bool Next(CheckResult *item);
+	void Reset();
+	// for stopping group traversal through portals. Only the calling code can decide whether this is needed so this needs to be set from the outside.
+	void StopUp()
+	{
+		continueup = false;
+	}
+	void StopDown()
+	{
+		continuedown = false;
+	}
+};
+
 
 class FBlockThingsIterator
 {

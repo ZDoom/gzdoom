@@ -125,7 +125,7 @@ void P_SpawnLinePortal(line_t* line);
 void P_FinalizePortals();
 bool P_ChangePortal(line_t *ln, int thisid, int destid);
 void P_CreateLinkedPortals();
-bool P_CollectConnectedGroups(AActor *actor, fixed_t newx, fixed_t newy, FPortalGroupArray &out);
+bool P_CollectConnectedGroups(int startgroup, const fixedvec3 &position, fixed_t upperz, fixed_t checkradius, FPortalGroupArray &out);
 void P_CollectLinkedPortals();
 inline int P_NumPortalGroups()
 {
@@ -243,6 +243,27 @@ inline FDisplacement &sector_t::FloorDisplacement()
 inline FDisplacement &sector_t::CeilingDisplacement()
 {
 	return Displacements(PortalGroup, SkyBoxes[sector_t::ceiling]->Sector->PortalGroup);
+}
+
+inline fixedvec3 AActor::PosRelative(AActor *other) const
+{
+	FDisplacement &disp = Displacements(Sector->PortalGroup, other->Sector->PortalGroup);
+	fixedvec3 ret = { X() + disp.pos.x, Y() + disp.pos.y, Z() };
+	return ret;
+}
+
+inline fixedvec3 AActor::PosRelative(sector_t *sec) const
+{
+	FDisplacement &disp = Displacements(Sector->PortalGroup, sec->PortalGroup);
+	fixedvec3 ret = { X() + disp.pos.x, Y() + disp.pos.y, Z() };
+	return ret;
+}
+
+inline fixedvec3 AActor::PosRelative(line_t *line) const
+{
+	FDisplacement &disp = Displacements(Sector->PortalGroup, line->frontsector->PortalGroup);
+	fixedvec3 ret = { X() + disp.pos.x, Y() + disp.pos.y, Z() };
+	return ret;
 }
 
 #endif

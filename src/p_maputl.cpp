@@ -39,6 +39,7 @@
 #include "p_3dmidtex.h"
 #include "p_blockmap.h"
 #include "r_utility.h"
+#include "portal.h"
 
 // State.
 #include "r_state.h"
@@ -572,7 +573,7 @@ FBlockLinesIterator::FBlockLinesIterator(int _minx, int _miny, int _maxx, int _m
 	Reset();
 }
 
-FBlockLinesIterator::FBlockLinesIterator(const FBoundingBox &box)
+void FBlockLinesIterator::init(const FBoundingBox &box)
 {
 	validcount++;
 	maxy = GetSafeBlockY(box.Top() - bmaporgy);
@@ -582,6 +583,10 @@ FBlockLinesIterator::FBlockLinesIterator(const FBoundingBox &box)
 	Reset();
 }
 
+FBlockLinesIterator::FBlockLinesIterator(const FBoundingBox &box)
+{
+	init(box);
+}
 
 //===========================================================================
 //
@@ -679,6 +684,82 @@ line_t *FBlockLinesIterator::Next()
 		}
 		StartBlock(curx, cury);
 	}
+}
+
+//===========================================================================
+//
+// FMultiBlockLinesIterator :: FMultiBlockLinesIterator
+//
+// An iterator that can check multiple portal groups.
+//
+//===========================================================================
+
+FMultiBlockLinesIterator::FMultiBlockLinesIterator(AActor *origin, fixed_t checkx, fixed_t checky, fixed_t checkradius)
+{
+	checkpoint = origin->Pos();
+	if (checkx != FIXED_MAX) checkpoint.x = checkx;
+	if (checky != FIXED_MAX) checkpoint.y = checky;
+	P_CollectConnectedGroups(origin->Sector->PortalGroup, checkpoint, origin->Top(), checkradius, checklist);
+	checkpoint.z = checkradius;
+	basegroup = origin->Sector->PortalGroup;
+	Reset();
+}
+
+bool FMultiBlockLinesIterator::Next(FMultiBlockLinesIterator::CheckResult *item)
+{
+	line_t *line = blockIterator.Next();
+	if (line != NULL)
+	{
+		item->line = line;
+		item->position = offset;
+		item->portalposition = portalposition;
+		return true;
+	}
+	else if (checklist[index] & FPortalGroupArray::UPPER)
+	{
+		if (continueup)
+		{
+			sector_t *sector = P_PointInSector(offset.x, offset.y);
+			if (!sector->PortalBlocksMovement(sector_t::ceiling))
+			{
+				startIteratorForGroup(sector->SkyBoxes[sector_t::ceiling]->Sector->PortalGroup);
+				return Next(item);
+			}
+		}
+	}
+	else if (checklist[index] & FPortalGroupArray::LOWER)
+	{
+		if (continuedown)
+		{
+			sector_t *sector = P_PointInSector(offset.x, offset.y);
+			if (!sector->PortalBlocksMovement(sector_t::floor))
+			{
+				startIteratorForGroup(sector->SkyBoxes[sector_t::floor]->Sector->PortalGroup);
+				return Next(item);
+			}
+		}
+	}
+	index++;
+	if (index >= checklist.Size()) return false;
+	startIteratorForGroup(checklist[index]);
+	return Next(item);
+}
+
+void FMultiBlockLinesIterator::startIteratorForGroup(int group)
+{
+	offset = Displacements(basegroup, group);
+	offset.x += checkpoint.x;
+	offset.y += checkpoint.y;
+	FBoundingBox box(offset.x, offset.y, checkpoint.z);
+	blockIterator.init(box);
+}
+
+void FMultiBlockLinesIterator::Reset()
+{
+	continueup = continueup = true;
+	index = -1;
+	portalposition = PP_ORIGIN;
+	startIteratorForGroup(basegroup);
 }
 
 //===========================================================================

@@ -1053,7 +1053,7 @@ void P_CreateLinkedPortals()
 //
 //============================================================================
 
-bool P_CollectConnectedGroups(AActor *actor, fixed_t newx, fixed_t newy, FPortalGroupArray &out)
+bool P_CollectConnectedGroups(int startgroup, const fixedvec3 &position, fixed_t upperz, fixed_t checkradius, FPortalGroupArray &out)
 {
 	// Keep this temporary work stuff static. This function can never be called recursively
 	// and this would have to be reallocated for each call otherwise.
@@ -1071,9 +1071,9 @@ bool P_CollectConnectedGroups(AActor *actor, fixed_t newx, fixed_t newy, FPortal
 	processMask.clear();
 	foundPortals.Clear();
 
-	int thisgroup = actor->Sector->PortalGroup;
+	int thisgroup = startgroup;
 	processMask.setBit(thisgroup);
-	out.Add(thisgroup);
+	//out.Add(thisgroup);
 
 	for (unsigned i = 0; i < linkedPortals.Size(); i++)
 	{
@@ -1082,7 +1082,7 @@ bool P_CollectConnectedGroups(AActor *actor, fixed_t newx, fixed_t newy, FPortal
 		FDisplacement &disp = Displacements(thisgroup, othergroup);
 		if (!disp.isSet) continue;	// no connection.
 
-		FBoundingBox box(newx + disp.pos.x, newy + disp.pos.y, actor->radius);
+		FBoundingBox box(position.x + disp.pos.x, position.y + disp.pos.y, checkradius);
 
 		if (box.Right() <= ld->bbox[BOXLEFT]
 			|| box.Left() >= ld->bbox[BOXRIGHT]
@@ -1110,27 +1110,27 @@ bool P_CollectConnectedGroups(AActor *actor, fixed_t newx, fixed_t newy, FPortal
 			}
 		}
 	}
-	sector_t *sec = P_PointInSector(newx, newy);
+	sector_t *sec = P_PointInSector(position.x, position.y);
 	sector_t *wsec = sec;
-	while (!wsec->PortalBlocksMovement(sector_t::ceiling) && actor->Top() > wsec->SkyBoxes[sector_t::ceiling]->threshold)
+	while (!wsec->PortalBlocksMovement(sector_t::ceiling) && upperz > wsec->SkyBoxes[sector_t::ceiling]->threshold)
 	{
 		sector_t *othersec = wsec->SkyBoxes[sector_t::ceiling]->Sector;
-		FDisplacement &disp = Displacements(actor->Sector->PortalGroup, othersec->PortalGroup);
-		fixed_t dx = newx + disp.pos.x;
-		fixed_t dy = newx + disp.pos.y;
+		FDisplacement &disp = Displacements(startgroup, othersec->PortalGroup);
+		fixed_t dx = position.x + disp.pos.x;
+		fixed_t dy = position.y + disp.pos.y;
 		processMask.setBit(othersec->PortalGroup);
-		out.Add(othersec->PortalGroup);
+		out.Add(othersec->PortalGroup|FPortalGroupArray::UPPER);
 		wsec = P_PointInSector(dx, dy);	// get upper sector at the exact spot we want to check and repeat
 		retval = true;
 	}
 	wsec = sec;
-	while (!wsec->PortalBlocksMovement(sector_t::floor) && actor->Z() < wsec->SkyBoxes[sector_t::floor]->threshold)
+	while (!wsec->PortalBlocksMovement(sector_t::floor) && position.z < wsec->SkyBoxes[sector_t::floor]->threshold)
 	{
-		sector_t *othersec = wsec->SkyBoxes[sector_t::ceiling]->Sector;
-		FDisplacement &disp = Displacements(actor->Sector->PortalGroup, othersec->PortalGroup);
-		fixed_t dx = newx + disp.pos.x;
-		fixed_t dy = newx + disp.pos.y;
-		processMask.setBit(othersec->PortalGroup);
+		sector_t *othersec = wsec->SkyBoxes[sector_t::floor]->Sector;
+		FDisplacement &disp = Displacements(startgroup, othersec->PortalGroup);
+		fixed_t dx = position.x + disp.pos.x;
+		fixed_t dy = position.y + disp.pos.y;
+		processMask.setBit(othersec->PortalGroup|FPortalGroupArray::LOWER);
 		out.Add(othersec->PortalGroup);
 		wsec = P_PointInSector(dx, dy);	// get lower sector at the exact spot we want to check and repeat
 		retval = true;

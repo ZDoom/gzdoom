@@ -1185,21 +1185,10 @@ public:
 		fixedvec3 ret = { X(), Y(), Z() };
 		return ret;
 	}
-	fixedvec3 PosRelative(AActor *other) const
-	{
-		fixedvec3 ret = { X(), Y(), Z() };
-		return ret;
-	}
-	fixedvec3 PosRelative(sector_t *sec) const
-	{
-		fixedvec3 ret = { X(), Y(), Z() };
-		return ret;
-	}
-	fixedvec3 PosRelative(line_t *line) const
-	{
-		fixedvec3 ret = { X(), Y(), Z() };
-		return ret;
-	}
+	fixedvec3 PosRelative(AActor *other) const;
+	fixedvec3 PosRelative(sector_t *sec) const;
+	fixedvec3 PosRelative(line_t *line) const;
+
 	fixed_t SoundX() const
 	{
 		return X();

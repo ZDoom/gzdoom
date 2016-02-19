@@ -775,6 +775,7 @@ void P_LineOpening_XFloors (FLineOpening &open, AActor * thing, const line_t *li
 			FTextureID highestfloorpic;
 			int highestfloorterrain = -1;
 			FTextureID lowestceilingpic;
+			sector_t *lowestceilingsec = NULL, *highestfloorsec = NULL;
 			
 			highestfloorpic.SetInvalid();
 			lowestceilingpic.SetInvalid();
@@ -798,6 +799,7 @@ void P_LineOpening_XFloors (FLineOpening &open, AActor * thing, const line_t *li
 					{
 						lowestceiling = ff_bottom;
 						lowestceilingpic = *rover->bottom.texture;
+						lowestceilingsec = j == 0 ? linedef->frontsector : linedef->backsector;
 					}
 					
 					if(ff_top > highestfloor && delta1 < delta2 && (!restrict || thing->Z() >= ff_top))
@@ -805,6 +807,7 @@ void P_LineOpening_XFloors (FLineOpening &open, AActor * thing, const line_t *li
 						highestfloor = ff_top;
 						highestfloorpic = *rover->top.texture;
 						highestfloorterrain = rover->model->GetTerrain(rover->top.isceiling);
+						highestfloorsec = j == 0 ? linedef->frontsector : linedef->backsector;
 					}
 					if(ff_top > lowestfloor[j] && ff_top <= thing->Z() + thing->MaxStepHeight) lowestfloor[j] = ff_top;
 				}
@@ -815,12 +818,14 @@ void P_LineOpening_XFloors (FLineOpening &open, AActor * thing, const line_t *li
 				open.bottom = highestfloor;
 				open.floorpic = highestfloorpic;
 				open.floorterrain = highestfloorterrain;
+				open.bottomsec = highestfloorsec;
 			}
 			
 			if(lowestceiling < open.top) 
 			{
 				open.top = lowestceiling;
 				open.ceilingpic = lowestceilingpic;
+				open.topsec = lowestceilingsec;
 			}
 			
 			open.lowfloor = MIN(lowestfloor[0], lowestfloor[1]);

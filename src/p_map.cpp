@@ -226,6 +226,7 @@ static bool PIT_FindFloorCeiling(FMultiBlockLinesIterator::CheckResult &cres, co
 		if (open.top < tmf.ceilingz)
 		{
 			tmf.ceilingz = open.top;
+			if (open.topsec != NULL) tmf.floorsector = open.topsec;
 		}
 	}
 
@@ -245,7 +246,9 @@ static bool PIT_FindFloorCeiling(FMultiBlockLinesIterator::CheckResult &cres, co
 		}
 
 		if (open.lowfloor < tmf.dropoffz)
+		{
 			tmf.dropoffz = open.lowfloor;
+		}
 	}
 	return true;
 }

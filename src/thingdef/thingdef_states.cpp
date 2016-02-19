@@ -372,7 +372,7 @@ void AddImplicitReturn(FxSequence *code, const PPrototype *proto, FScanner &sc)
 	else
 	{ // Something was returned earlier in the sequence. Make it an error
 	  // instead of adding an implicit one.
-		sc.ScriptError("Action list must end with a return statement");
+		sc.ScriptError("Action list must return a value");
 	}
 }
 
@@ -487,8 +487,9 @@ FxExpression *ParseActions(FScanner &sc, FState state, FString statestring, Bagg
 			proto = ReturnCheck(proto, true_proto, sc);
 			proto = ReturnCheck(proto, false_proto, sc);
 			// If one side does not end with a return, we don't consider the if statement
-			// to end with a return.
-			if (true_ret && (false_proto == NULL || false_ret))
+			// to end with a return. If the else case is missing, it can never be considered
+			// as ending with a return.
+			if (true_ret && false_ret)
 			{
 				lastwasret = true;
 			}

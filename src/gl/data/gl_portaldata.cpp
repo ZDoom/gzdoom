@@ -356,7 +356,7 @@ static void CollectPortalSectors(FPortalMap &collection)
 		sector_t *sec = &sectors[i];
 		for (int j = 0; j < 2; j++)
 		{
-			ASkyViewpoint *SkyBox = sec->SkyBoxes[j];
+			ASkyViewpoint *SkyBox = barrier_cast<ASkyViewpoint*>(sec->SkyBoxes[j]);
 			if (SkyBox != NULL && SkyBox->bAlways && SkyBox->Mate != NULL)
 			{
 				FPortalID id = { SkyBox->X() - SkyBox->Mate->X(), SkyBox->Y() - SkyBox->Mate->Y() };

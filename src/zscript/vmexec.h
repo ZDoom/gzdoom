@@ -551,7 +551,7 @@ begin:
 				}
 				stack->PopFrame();
 			}
-			assert(numret == C);
+			assert(numret == C && "Number of parameters returned differs from what was expected by the caller");
 			for (b = B; b != 0; --b)
 			{
 				reg.param[--f->NumParam].~VMValue();

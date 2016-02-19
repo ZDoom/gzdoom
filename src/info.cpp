@@ -52,7 +52,7 @@
 #include "cmdlib.h"
 #include "g_level.h"
 #include "stats.h"
-#include "thingdef.h"
+#include "thingdef/thingdef.h"
 #include "d_player.h"
 
 extern void LoadActors ();
@@ -69,14 +69,37 @@ void FState::SetAction(const char *name)
 	ActionFunc = FindGlobalActionFunction(name)->Variants[0].Implementation;
 }
 
-bool FState::CallAction(AActor *self, AActor *stateowner)
+bool FState::CallAction(AActor *self, AActor *stateowner, FState **stateret)
 {
 	if (ActionFunc != NULL)
 	{
 		ActionCycles.Clock();
+
 		static VMFrameStack stack;
 		VMValue params[3] = { self, stateowner, VMValue(this, ATAG_STATE) };
-		stack.Call(ActionFunc, params, countof(params), NULL, 0, NULL);
+		// If the function returns a state, store it at *stateret.
+		// If it doesn't return a state but stateret is non-NULL, we need
+		// to set *stateret to NULL.
+		if (stateret != NULL)
+		{
+			*stateret = NULL;
+			if (ActionFunc->Proto == NULL ||
+				ActionFunc->Proto->ReturnTypes.Size() == 0 ||
+				ActionFunc->Proto->ReturnTypes[0] != TypeState)
+			{
+				stateret = NULL;
+			}
+		}
+		if (stateret == NULL)
+		{
+			stack.Call(ActionFunc, params, countof(params), NULL, 0, NULL);
+		}
+		else
+		{
+			VMReturn ret;
+			ret.PointerAt((void **)stateret);
+			stack.Call(ActionFunc, params, countof(params), &ret, 1, NULL);
+		}
 		ActionCycles.Unclock();
 		return true;
 	}

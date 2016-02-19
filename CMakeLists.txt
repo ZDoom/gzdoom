@@ -188,6 +188,16 @@ option(FORCE_INTERNAL_JPEG "Use internal jpeg")
 option(FORCE_INTERNAL_BZIP2 "Use internal bzip2")
 option(FORCE_INTERNAL_GME "Use internal gme" ON)
 
+# Fast math flags, required by some subprojects
+set( ZD_FASTMATH_FLAG "" )
+if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
+	set( ZD_FASTMATH_FLAG "-ffast-math" )
+else()
+	if( MSVC )
+		set( ZD_FASTMATH_FLAG "/fp:fast" )
+	endif()
+endif()
+
 if( ZLIB_FOUND AND NOT FORCE_INTERNAL_ZLIB )
 	message( STATUS "Using system zlib" )
 else()

@@ -7,7 +7,7 @@ ACTOR Inventory native
 	Inventory.PickupSound "misc/i_pkup"
 	Inventory.PickupMessage "$TXT_DEFAULTPICKUPMSG"
 	
-	action native A_JumpIfNoAmmo(state label);
+	action native state A_JumpIfNoAmmo(state label);
 	action native A_CustomPunch(int damage, bool norandom = false, int flags = CPF_USEAMMO, class<Actor> pufftype = "BulletPuff", float range = 0, float lifesteal = 0, int lifestealmax = 0, class<BasicArmorBonus> armorbonustype = "ArmorBonus", sound MeleeSound = "", sound MissSound = "");
 	action native A_FireBullets(float/*angle*/ spread_xy, float/*angle*/ spread_z, int numbullets, int damageperbullet, class<Actor> pufftype = "BulletPuff", int flags = 1, float range = 0);
 	action native A_FireCustomMissile(class<Actor> missiletype, float angle = 0, bool useammo = true, int spawnofs_xy = 0, float spawnheight = 0, int flags = 0, float pitch = 0);
@@ -42,7 +42,7 @@ ACTOR Inventory native
 	action native A_CheckReload();
 	action native A_GunFlash(state flash = "", int flags = 0);
 	action native A_Saw(sound fullsound = "weapons/sawfull", sound hitsound = "weapons/sawhit", int damage = 2, class<Actor> pufftype = "BulletPuff", int flags = 0, float range = 0, float/*angle*/ spread_xy = 2.8125, float/*angle*/ spread_z = 0, float lifesteal = 0, int lifestealmax = 0, class<BasicArmorBonus> armorbonustype = "ArmorBonus");
-	action native A_CheckForReload(int counter, state label, bool dontincrement = false);
+	action native state A_CheckForReload(int counter, state label, bool dontincrement = false);
 	action native A_ResetReloadCounter();
 	action native A_RestoreSpecialPosition();
 	action native A_RestoreSpecialDoomThing();

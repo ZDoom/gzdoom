@@ -705,6 +705,38 @@ FMultiBlockLinesIterator::FMultiBlockLinesIterator(FPortalGroupArray &check, AAc
 	Reset();
 }
 
+bool FMultiBlockLinesIterator::GoUp(fixed_t x, fixed_t y)
+{
+	if (continueup)
+	{
+		sector_t *sector = P_PointInSector(x, y);
+		if (!sector->PortalBlocksMovement(sector_t::ceiling))
+		{
+			startIteratorForGroup(sector->SkyBoxes[sector_t::ceiling]->Sector->PortalGroup);
+			portalflags = FFCF_NOFLOOR;
+			return true;
+		}
+		else continueup = false;
+	}
+	return false;
+}
+
+bool FMultiBlockLinesIterator::GoDown(fixed_t x, fixed_t y)
+{
+	if (continuedown)
+	{
+		sector_t *sector = P_PointInSector(x, y);
+		if (!sector->PortalBlocksMovement(sector_t::floor))
+		{
+			startIteratorForGroup(sector->SkyBoxes[sector_t::floor]->Sector->PortalGroup);
+			portalflags = FFCF_NOCEILING;
+			return true;
+		}
+		else continuedown = false;
+	}
+	return false;
+}
+
 bool FMultiBlockLinesIterator::Next(FMultiBlockLinesIterator::CheckResult *item)
 {
 	line_t *line = blockIterator.Next();
@@ -715,36 +747,33 @@ bool FMultiBlockLinesIterator::Next(FMultiBlockLinesIterator::CheckResult *item)
 		item->portalflags = portalflags;
 		return true;
 	}
-	else if (checklist[index] & FPortalGroupArray::UPPER)
+	bool onlast = unsigned(index + 1) >= checklist.Size();
+	int nextflags = onlast ? 0 : checklist[index + 1] & FPortalGroupArray::FLAT;
+
+	if (portalflags == FFCF_NOFLOOR && nextflags != FPortalGroupArray::UPPER)
 	{
-		if (continueup)
-		{
-			sector_t *sector = P_PointInSector(offset.x, offset.y);
-			if (!sector->PortalBlocksMovement(sector_t::ceiling))
-			{
-				startIteratorForGroup(sector->SkyBoxes[sector_t::ceiling]->Sector->PortalGroup);
-				portalflags = FFCF_NOFLOOR;
-				return Next(item);
-			}
-		}
+		// if this is the last upper portal in the list, check if we need to go further up to find the real ceiling.
+		if (GoUp(offset.x, offset.y)) return Next(item);
 	}
-	else if (checklist[index] & FPortalGroupArray::LOWER)
+	else if (portalflags == FFCF_NOCEILING && nextflags != FPortalGroupArray::LOWER)
 	{
-		if (continuedown)
-		{
-			sector_t *sector = P_PointInSector(offset.x, offset.y);
-			if (!sector->PortalBlocksMovement(sector_t::floor))
-			{
-				startIteratorForGroup(sector->SkyBoxes[sector_t::floor]->Sector->PortalGroup);
-				portalflags = FFCF_NOCEILING;
-				return Next(item);
-			}
-		}
+		// if this is the last lower portal in the list, check if we need to go further down to find the real floor.
+		if (GoDown(offset.x, offset.y)) return Next(item);
 	}
+	if (onlast)
+	{
+		// We reached the end of the list. Check if we still need to check up- and downwards.
+		if (GoUp(checkpoint.x, checkpoint.y) ||
+			GoDown(checkpoint.x, checkpoint.y))
+		{
+			return Next(item);
+		}
+		return false;
+	}
+
 	index++;
-	if (index >= checklist.Size()) return false;
 	startIteratorForGroup(checklist[index] & ~FPortalGroupArray::FLAT);
-	switch (checklist[index] & FPortalGroupArray::FLAT)
+	switch (nextflags)
 	{
 	case FPortalGroupArray::UPPER:
 		portalflags = FFCF_NOFLOOR;

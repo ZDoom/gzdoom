@@ -211,6 +211,8 @@ class FMultiBlockLinesIterator
 	FBlockLinesIterator blockIterator;
 	FBoundingBox bbox;
 
+	bool GoUp(fixed_t x, fixed_t y);
+	bool GoDown(fixed_t x, fixed_t y);
 	void startIteratorForGroup(int group);
 
 public:

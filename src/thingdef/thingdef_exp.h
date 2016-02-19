@@ -835,9 +835,9 @@ public:
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
 	ExpEmit Emit(VMFunctionBuilder *build, bool tailcall);
-	unsigned GetArgCount() { return ArgList == NULL ? 0 : ArgList->Size(); }
-	VMFunction *GetVMFunction() { return Function->Variants[0].Implementation; }
-	VMFunction *GetDirectFunction();
+	unsigned GetArgCount() const { return ArgList == NULL ? 0 : ArgList->Size(); }
+	VMFunction *GetVMFunction() const { return Function->Variants[0].Implementation; }
+	bool IsDirectFunction();
 };
 
 //==========================================================================
@@ -891,6 +891,7 @@ public:
 	FxReturnStatement(FxVMFunctionCall *call, const FScriptPosition &pos);
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
+	VMFunction *GetDirectFunction();
 };
 
 //==========================================================================

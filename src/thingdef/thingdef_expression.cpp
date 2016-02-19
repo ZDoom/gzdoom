@@ -3204,24 +3204,6 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build, bool tailcall)
 
 //==========================================================================
 //
-// FxVMFunctionCall :: GetDirectFunction
-//
-// If the function is not passed any explicit arguments, returns the
-// function. Otherwise returns NULL.
-//
-//==========================================================================
-
-VMFunction *FxVMFunctionCall::GetDirectFunction()
-{
-	if (GetArgCount() == 0)
-	{
-		return GetVMFunction();
-	}
-	return NULL;
-}
-
-//==========================================================================
-//
 //
 //
 //==========================================================================
@@ -3503,6 +3485,19 @@ ExpEmit FxReturnStatement::Emit(VMFunctionBuilder *build)
 		Call->Emit(build, true);
 	}
 	return ExpEmit();
+}
+
+VMFunction *FxReturnStatement::GetDirectFunction()
+{
+	// If this return statement calls a function with no arguments,
+	// then it can be a "direct" function. That is, the DECORATE
+	// definition can call that function directly without wrapping
+	// it inside VM code.
+	if (Call != NULL && Call->GetArgCount() == 0)
+	{
+		return Call->GetVMFunction();
+	}
+	return NULL;
 }
 
 //==========================================================================

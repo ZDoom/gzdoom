@@ -277,7 +277,7 @@ static void FinishThingdef()
 
 		// Can we call this function directly without wrapping it in an
 		// anonymous function? e.g. Are we passing any parameters to it?
-		func = NULL;//tcall->Code->GetDirectFunction();
+		func = tcall->Code->GetDirectFunction();
 		if (func == NULL)
 		{
 			FCompileContext ctx(tcall->ActorClass);

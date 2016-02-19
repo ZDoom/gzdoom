@@ -918,6 +918,8 @@ void P_CreateLinkedPortals()
 	}
 	if (orgs.Size() == 0)
 	{
+		// Create the 0->0 translation which is always needed.
+		Displacements.Create(1);
 		return;
 	}
 	for (int i = 0; i < numsectors; i++)

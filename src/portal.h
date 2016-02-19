@@ -41,6 +41,11 @@ struct FDisplacementTable
 	TArray<FDisplacement> data;
 	int size;
 
+	FDisplacementTable()
+	{
+		Create(1);
+	}
+
 	void Create(int numgroups)
 	{
 		data.Resize(numgroups*numgroups);
@@ -50,6 +55,7 @@ struct FDisplacementTable
 
 	FDisplacement &operator()(int x, int y)
 	{
+		if (x == y) return data[0];	// shortcut for the most common case
 		return data[x + size*y];
 	}
 };

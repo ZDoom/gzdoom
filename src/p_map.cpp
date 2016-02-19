@@ -857,6 +857,8 @@ bool PIT_CheckLine(line_t *ld, const FBoundingBox &box, FCheckPosition &tm)
 	fixedvec2 ref = FindRefPoint(ld, rpos);
 	FLineOpening open;
 
+	P_LineOpening(open, tm.thing, ld, ref.x, ref.y, tm.x, tm.y, 0);
+
 	// the floorplane on both sides is identical with the current one
 	// so don't mess around with the z-position.
 	if (ld->frontsector->floorplane == ld->backsector->floorplane &&

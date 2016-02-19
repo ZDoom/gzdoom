@@ -377,6 +377,42 @@ static void ParseArgListDef(FScanner &sc, PClassActor *cls,
 
 //==========================================================================
 //
+// SetImplicitArgs
+//
+// Adds the parameters implied by the function flags.
+//
+//==========================================================================
+
+void SetImplicitArgs(TArray<PType *> *args, TArray<DWORD> *argflags, PClassActor *cls, DWORD funcflags)
+{
+	// Must be called before adding any other arguments.
+	assert(args == NULL || args->Size() == 0);
+	assert(argflags == NULL || argflags->Size() == 0);
+
+	if (funcflags & VARF_Method)
+	{
+		// implied self pointer
+		if (args != NULL)		args->Push(NewClassPointer(cls));
+		if (argflags != NULL)	argflags->Push(0);
+	}
+	if (funcflags & VARF_Action)
+	{
+		// implied stateowner and callingstate pointers
+		if (args != NULL)
+		{
+			args->Push(NewClassPointer(RUNTIME_CLASS(AActor)));
+			args->Push(TypeState);
+		}
+		if (argflags != NULL)
+		{
+			argflags->Push(0);
+			argflags->Push(0);
+		}
+	}
+}
+
+//==========================================================================
+//
 // ParseFunctionDef
 //
 // Parses a native function's parameters and adds it to the class,
@@ -401,15 +437,7 @@ void ParseFunctionDef(FScanner &sc, PClassActor *cls, FName funcname,
 	}
 	sc.MustGetToken('(');
 
-	if (funcflags & VARF_Method)
-	{
-		args.Push(NewClassPointer(cls)), argflags.Push(0);						// implied self pointer
-	}
-	if (funcflags & VARF_Action)
-	{
-		args.Push(NewClassPointer(RUNTIME_CLASS(AActor))), argflags.Push(0);	// implied stateowner pointer
-		args.Push(TypeState), argflags.Push(0);									// implied callingstate pointer
-	}
+	SetImplicitArgs(&args, &argflags, cls, funcflags);
 	ParseArgListDef(sc, cls, args, argflags);
 
 	if (afd != NULL)
@@ -464,6 +492,10 @@ static void ParseNativeFunction(FScanner &sc, PClassActor *cls)
 
 	case TK_Fixed_t:
 		rets.Push(TypeFixed);
+		break;
+
+	case TK_State:
+		rets.Push(TypeState);
 		break;
 
 	case TK_Identifier:
@@ -1036,10 +1068,22 @@ static void ParseActionDef (FScanner &sc, PClassActor *cls)
 
 	sc.MustGetToken(TK_Native);
 	// check for a return value
-	if (sc.CheckToken(TK_Int) || sc.CheckToken(TK_Bool))
+	do
 	{
-		rets.Push(TypeSInt32);
+		if (sc.CheckToken(TK_Int) || sc.CheckToken(TK_Bool))
+		{
+			rets.Push(TypeSInt32);
+		}
+		else if (sc.CheckToken(TK_State))
+		{
+			rets.Push(TypeState);
+		}
+		else if (sc.CheckToken(TK_Float))
+		{
+			rets.Push(TypeFloat64);
+		}
 	}
+	while (sc.CheckToken(','));
 	sc.MustGetToken(TK_Identifier);
 	funcname = sc.String;
 	ParseFunctionDef(sc, cls, funcname, rets, VARF_Method | VARF_Action);

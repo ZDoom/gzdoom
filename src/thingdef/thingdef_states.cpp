@@ -314,7 +314,12 @@ do_stop:
 					continue;
 				}
 
-				tcall->Code = ParseActions(sc, state, statestring, bag);
+				bool hasfinalret;
+				tcall->Code = ParseActions(sc, state, statestring, bag, tcall->Proto, hasfinalret);
+				if (!hasfinalret)
+				{
+					AddImplicitReturn(static_cast<FxSequence*>(tcall->Code), tcall->Proto, sc);
+				}
 				goto endofstate;
 			}
 			sc.UnGet();
@@ -348,49 +353,162 @@ endofstate:
 
 //==========================================================================
 //
-// ParseActions
+// AddImplicitReturn
+//
+// Adds an implied return; statement to the end of a code sequence.
 //
 //==========================================================================
 
-FxTailable *ParseActions(FScanner &sc, FState state, FString statestring, Baggage &bag)
+void AddImplicitReturn(FxSequence *code, const PPrototype *proto, FScanner &sc)
+{
+	if (proto == NULL || proto->ReturnTypes.Size() == 0)
+	{ // Returns nothing. Good. We can safely add an implied return.
+		code->Add(new FxReturnStatement(NULL, sc));
+	}
+	else
+	{ // Something was returned earlier in the sequence. Make it an error
+	  // instead of adding an implicit one.
+		sc.ScriptError("Action list must end with a return statement");
+	}
+}
+
+//==========================================================================
+//
+// ReturnCheck
+//
+// If proto1 is NULL, returns proto2. If proto2 is NULL, returns proto1.
+// If neither is null, checks if both prototypes define the same return
+// types. If not, an error is flagged.
+//
+//==========================================================================
+
+static PPrototype *ReturnCheck(PPrototype *proto1, PPrototype *proto2, FScanner &sc)
+{
+	if (proto1 == NULL)
+	{
+		return proto2;
+	}
+	if (proto2 == NULL)
+	{
+		return proto1;
+	}
+	// A prototype that defines fewer return types can be compatible with
+	// one that defines more if the shorter one matches the initial types
+	// for the longer one.
+	if (proto2->ReturnTypes.Size() < proto1->ReturnTypes.Size())
+	{ // Make proto1 the shorter one to avoid code duplication below.
+		swapvalues(proto1, proto2);
+	}
+	// If one prototype returns nothing, they both must.
+	if (proto1->ReturnTypes.Size() == 0)
+	{
+		if (proto2->ReturnTypes.Size() == 0)
+		{
+			return proto1;
+		}
+		proto1 = NULL;
+	}
+	else
+	{
+		for (unsigned i = 0; i < proto1->ReturnTypes.Size(); ++i)
+		{
+			if (proto1->ReturnTypes[i] != proto2->ReturnTypes[i])
+			{ // Incompatible
+				proto1 = NULL;
+				break;
+			}
+		}
+	}
+	if (proto1 == NULL)
+	{
+		sc.ScriptError("Return types are incompatible");
+	}
+	return proto1;
+}
+
+//==========================================================================
+//
+// ParseActions
+//
+// If this action block contains any return statements, the prototype for
+// one of them will be returned. This is used for deducing the return type
+// of anonymous functions. All called functions passed to return must have
+// matching return types.
+//
+//==========================================================================
+
+FxExpression *ParseActions(FScanner &sc, FState state, FString statestring, Baggage &bag,
+						   PPrototype *&retproto, bool &endswithret)
 {
 	// If it's not a '{', then it should be a single action.
 	// Otherwise, it's a sequence of actions.
 	if (!sc.Compare("{"))
 	{
-		return ParseAction(sc, state, statestring, bag);
+		FxVMFunctionCall *call = ParseAction(sc, state, statestring, bag);
+		retproto = call->GetVMFunction()->Proto;
+		endswithret = true;
+		return new FxReturnStatement(call, sc);
 	}
 
 	const FScriptPosition pos(sc);
 
 	FxSequence *seq = NULL;
+	PPrototype *proto = NULL;
+	bool lastwasret = false;
+
 	sc.MustGetString();
 	while (!sc.Compare("}"))
 	{
-		FxTailable *add;
+		FxExpression *add;
+		lastwasret = false;
 		if (sc.Compare("if"))
 		{ // Hangle an if statement
 			FxExpression *cond;
-			FxTailable *true_part, *false_part = NULL;
+			FxExpression *true_part, *false_part = NULL;
+			PPrototype *true_proto, *false_proto = NULL;
+			bool true_ret, false_ret = false;
 			sc.MustGetStringName("(");
 			cond = ParseExpression(sc, bag.Info);
 			sc.MustGetStringName(")");
 			sc.MustGetStringName("{");	// braces are mandatory
-			true_part = ParseActions(sc, state, statestring, bag);
+			true_part = ParseActions(sc, state, statestring, bag, true_proto, true_ret);
 			sc.MustGetString();
 			if (sc.Compare("else"))
 			{
 				sc.MustGetStringName("{");	// braces are still mandatory
-				false_part = ParseActions(sc, state, statestring, bag);
+				false_part = ParseActions(sc, state, statestring, bag, false_proto, false_ret);
 				sc.MustGetString();
 			}
 			add = new FxIfStatement(cond, true_part, false_part, sc);
+			proto = ReturnCheck(proto, true_proto, sc);
+			proto = ReturnCheck(proto, false_proto, sc);
+			// If one side does not end with a return, we don't consider the if statement
+			// to end with a return.
+			if (true_ret && (false_proto == NULL || false_ret))
+			{
+				lastwasret = true;
+			}
 		}
 		else if (sc.Compare("return"))
 		{ // Handle a return statement
-			sc.MustGetStringName(";");
+			lastwasret = true;
+			FxVMFunctionCall *retexp = NULL;
+			PPrototype *retproto;
 			sc.MustGetString();
-			add = new FxReturnStatement(sc);
+			if (!sc.Compare(";"))
+			{
+				retexp = ParseAction(sc, state, statestring, bag);
+				sc.MustGetStringName(";");
+				retproto = retexp->GetVMFunction()->Proto;
+			}
+			else
+			{ // Returning nothing; we still need a prototype for that.
+				TArray<PType *> notypes(0);
+				retproto = NewPrototype(notypes, notypes);
+			}
+			proto = ReturnCheck(proto, retproto, sc);
+			sc.MustGetString();
+			add = new FxReturnStatement(retexp, sc);
 		}
 		else
 		{ // Handle a regular action function call
@@ -408,6 +526,8 @@ FxTailable *ParseActions(FScanner &sc, FState state, FString statestring, Baggag
 			seq->Add(add);
 		}
 	}
+	endswithret = lastwasret;
+	retproto = proto;
 	return seq;
 }
 
@@ -460,7 +580,7 @@ FxVMFunctionCall *ParseAction(FScanner &sc, FState state, FString statestring, B
 void ParseFunctionParameters(FScanner &sc, PClassActor *cls, TArray<FxExpression *> &out_params,
 	PFunction *afd, FString statestring, FStateDefinitions *statedef)
 {
-	const TArray<PType *> &params = afd->Variants[0].Proto->ArgumentTypes;
+	const TArray<PType *> &params = afd->Variants[0].Implementation->Proto->ArgumentTypes;
 	const TArray<DWORD> &paramflags = afd->Variants[0].ArgFlags;
 	int numparams = (int)params.Size();
 	int pnum = 0;

@@ -36,14 +36,6 @@ if( CMAKE_SIZEOF_VOID_P MATCHES "8" )
 	set( X64 64 )
 endif()
 
-if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
-	set ( FASTMATH "-ffast-math" )
-else()
-	if ( MSVC )
-		set ( FASTMATH "/fp:fast" )
-	endif()
-endif()
-
 # You can either use "make install" on the FMOD distribution to put it
 # in standard system locations, or you can unpack the FMOD distribution
 # in the root of the zdoom tree. e.g.:
@@ -930,6 +922,7 @@ set( NOT_COMPILED_SOURCE_FILES
 	asm_x86_64/tmap3.s
 )
 
+# Enable fast math for some sources
 set( FASTMATH_SOURCES
 	r_swrenderer.cpp
 	r_3dfloors.cpp
@@ -1331,12 +1324,12 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	zzautozend.cpp
 )
 
-set_source_files_properties( ${FASTMATH_SOURCES} PROPERTIES COMPILE_FLAGS ${FASTMATH} )
+set_source_files_properties( ${FASTMATH_SOURCES} PROPERTIES COMPILE_FLAGS ${ZD_FASTMATH_FLAG} )
 set_source_files_properties( xlat/parse_xlat.cpp PROPERTIES OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.c" )
 set_source_files_properties( sc_man.cpp PROPERTIES OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h" )
 set_source_files_properties( ${NOT_COMPILED_SOURCE_FILES} PROPERTIES HEADER_FILE_ONLY TRUE )
 if ( WIN32 )
-	set_source_files_properties( win32/fb_d3d9.cpp win32/fb_d3d9_wipe.cpp PROPERTIES COMPILE_FLAGS ${FASTMATH} )
+	set_source_files_properties( win32/fb_d3d9.cpp win32/fb_d3d9_wipe.cpp PROPERTIES COMPILE_FLAGS ${ZD_FASTMATH_FLAG} )
 endif()
 
 

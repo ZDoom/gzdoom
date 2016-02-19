@@ -178,9 +178,16 @@ void P_SetPsprite (player_t *player, int position, FState *state, bool nofunctio
 
 		if (!nofunction && player->mo != NULL)
 		{
-			if (state->CallAction(player->mo, player->ReadyWeapon))
+			FState *newstate;
+			if (state->CallAction(player->mo, player->ReadyWeapon, &newstate))
 			{
-				if (!psp->state)
+				if (newstate != NULL)
+				{
+					state = newstate;
+					psp->tics = 0;
+					continue;
+				}
+				if (psp->state == NULL)
 				{
 					break;
 				}

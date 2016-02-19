@@ -361,6 +361,20 @@ bool P_ChangePortal(line_t *ln, int thisid, int destid)
 
 //============================================================================
 //
+// clears all portal dat for a new level start
+//
+//============================================================================
+
+void P_ClearPortals()
+{
+	Displacements.Create(1);
+	linePortals.Clear();
+	linkedPortals.Clear();
+}
+
+
+//============================================================================
+//
 // Calculate the intersection between two lines.
 // [ZZ] lots of floats here to avoid overflowing a lot
 //

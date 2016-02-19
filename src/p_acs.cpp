@@ -4178,7 +4178,6 @@ bool DLevelScript::DoCheckActorTexture(int tid, AActor *activator, int string, b
 	  // they're obviously not the same.
 		return 0;
 	}
-	int i, numff;
 	FTextureID secpic;
 	sector_t *resultsec;
 	F3DFloor *resffloor;

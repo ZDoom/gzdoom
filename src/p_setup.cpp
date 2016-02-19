@@ -3392,12 +3392,12 @@ void P_FreeLevelData ()
 	FPolyObj::ClearAllSubsectorLinks(); // can't be done as part of the polyobj deletion process.
 	SN_StopAllSequences ();
 	DThinker::DestroyAllThinkers ();
+	P_ClearPortals();
 	tagManager.Clear();
 	level.total_monsters = level.total_items = level.total_secrets =
 		level.killed_monsters = level.found_items = level.found_secrets =
 		wminfo.maxfrags = 0;
 		
-	linePortals.Clear();
 	FBehavior::StaticUnloadModules ();
 	if (vertexes != NULL)
 	{

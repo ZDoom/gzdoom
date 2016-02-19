@@ -361,6 +361,10 @@ endofstate:
 
 void AddImplicitReturn(FxSequence *code, const PPrototype *proto, FScanner &sc)
 {
+	if (code == NULL)
+	{
+		return;
+	}
 	if (proto == NULL || proto->ReturnTypes.Size() == 0)
 	{ // Returns nothing. Good. We can safely add an implied return.
 		code->Add(new FxReturnStatement(NULL, sc));

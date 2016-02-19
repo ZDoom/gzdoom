@@ -892,7 +892,9 @@ int DoJumpIfInventory(AActor *owner, AActor *self, AActor *stateowner, FState *c
 		if (itemamount > 0)
 		{
 			if (item->Amount >= itemamount)
+			{
 				ACTION_RETURN_STATE(label);
+			}
 		}
 		else if (item->Amount >= item->MaxAmount)
 		{
@@ -2306,9 +2308,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItem)
 		AWeapon *weapon = self->player->ReadyWeapon;
 
 		if (weapon == NULL)
+		{
 			ACTION_RETURN_BOOL(true);
+		}
 		if (useammo && !weapon->DepleteAmmo(weapon->bAltFire))
+		{
 			ACTION_RETURN_BOOL(true);
+		}
 	}
 
 	AActor *mo = Spawn( missile, self->Vec3Angle(distance, self->angle, -self->floorclip + self->GetBobOffset() + zheight), ALLOW_REPLACE);
@@ -2343,13 +2349,15 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItemEx)
 	{
 		ACTION_RETURN_BOOL(false);
 	}
-
 	if (chance > 0 && pr_spawnitemex() < chance)
+	{
 		ACTION_RETURN_BOOL(true);
-
+	}
 	// Don't spawn monsters if this actor has been massacred
 	if (self->DamageType == NAME_Massacre && (GetDefaultByType(missile)->flags3 & MF3_ISMONSTER))
+	{
 		ACTION_RETURN_BOOL(true);
+	}
 
 	fixedvec2 pos;
 
@@ -2425,17 +2433,22 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ThrowGrenade)
 	PARAM_BOOL_OPT	(useammo)		{ useammo = true; }
 
 	if (missile == NULL)
+	{
 		ACTION_RETURN_BOOL(true);
-
+	}
 	if (ACTION_CALL_FROM_WEAPON())
 	{
 		// Used from a weapon, so use some ammo
 		AWeapon *weapon = self->player->ReadyWeapon;
 
 		if (weapon == NULL)
+		{
 			ACTION_RETURN_BOOL(true);
+		}
 		if (useammo && !weapon->DepleteAmmo(weapon->bAltFire))
+		{
 			ACTION_RETURN_BOOL(true);
+		}
 	}
 
 	AActor *bo;
@@ -3655,7 +3668,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
 			if (range && !(flags & CLOFF_CHECKPARTIAL))
 			{
 				if (distance > range)
+				{
 					ACTION_RETURN_STATE(NULL);
+				}
 			}
 
 			{
@@ -3828,8 +3843,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 		}
 
 		if (target == NULL)
-			ACTION_RETURN_STATE(NULL); // [KS] Let's not call P_CheckSight unnecessarily in this case.
-		
+		{ // [KS] Let's not call P_CheckSight unnecessarily in this case.
+			ACTION_RETURN_STATE(NULL);
+		}
 		if ((flags & JLOSF_DEADNOJUMP) && (target->health <= 0))
 		{
 			ACTION_RETURN_STATE(NULL);
@@ -3842,7 +3858,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 		// Does the player aim at something that can be shot?
 		P_AimLineAttack(self, self->angle, MISSILERANGE, &target, (flags & JLOSF_NOAUTOAIM) ? ANGLE_1/2 : 0);
 		
-		if (!target) ACTION_RETURN_STATE(NULL);
+		if (!target)
+		{
+			ACTION_RETURN_STATE(NULL);
+		}
 
 		switch (flags & (JLOSF_TARGETLOS|JLOSF_FLIPFOV))
 		{
@@ -3865,22 +3884,26 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 
 	// [FDARI] If target is not a combatant, don't jump
 	if ( (flags & JLOSF_COMBATANTONLY) && (!target->player) && !(target->flags3 & MF3_ISMONSTER))
+	{
 		ACTION_RETURN_STATE(NULL);
-
+	}
 	// [FDARI] If actors share team, don't jump
 	if ((flags & JLOSF_ALLYNOJUMP) && self->IsFriend(target))
+	{
 		ACTION_RETURN_STATE(NULL);
-
+	}
 	fixed_t distance = self->AproxDistance3D(target);
 
 	if (dist_max && (distance > dist_max))
+	{
 		ACTION_RETURN_STATE(NULL);
-
+	}
 	if (dist_close && (distance < dist_close))
 	{
 		if (flags & JLOSF_CLOSENOJUMP)
+		{
 			ACTION_RETURN_STATE(NULL);
-
+		}
 		if (flags & JLOSF_CLOSENOFOV)
 			fov = 0;
 
@@ -3892,7 +3915,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 	else { viewport = self; }
 
 	if (doCheckSight && !P_CheckSight (viewport, target, SF_IGNOREVISIBILITY))
+	{
 		ACTION_RETURN_STATE(NULL);
+	}
 
 	if (flags & JLOSF_FLIPFOV)
 	{
@@ -3970,8 +3995,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfInTargetLOS)
 	if (dist_close && (distance < dist_close))
 	{
 		if (flags & JLOSF_CLOSENOJUMP)
+		{
 			ACTION_RETURN_STATE(NULL);
-
+		}
 		if (flags & JLOSF_CLOSENOFOV)
 			fov = 0;
 
@@ -3989,8 +4015,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfInTargetLOS)
 		}
 	}
 	if (doCheckSight && !P_CheckSight (target, self, SF_IGNOREVISIBILITY))
+	{
 		ACTION_RETURN_STATE(NULL);
-
+	}
 	ACTION_RETURN_STATE(jump);
 }
 
@@ -4005,8 +4032,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckForReload)
 	PARAM_ACTION_PROLOGUE;
 
 	if ( self->player == NULL || self->player->ReadyWeapon == NULL )
+	{
 		ACTION_RETURN_STATE(NULL);
-
+	}
 	PARAM_INT		(count);
 	PARAM_STATE		(jump);
 	PARAM_BOOL_OPT	(dontincrement)		{ dontincrement = false; }
@@ -4284,8 +4312,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_MonsterRefire)
 	A_FaceTarget(self);
 
 	if (pr_monsterrefire() < prob)
+	{
 		ACTION_RETURN_STATE(NULL);
-
+	}
 	if (self->target == NULL
 		|| P_HitFriend (self)
 		|| self->target->health <= 0
@@ -5458,7 +5487,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckSpecies)
 	AActor *mobj = COPY_AAPTR(self, ptr);
 
 	if (mobj != NULL && jump && mobj->GetSpecies() == species)
+	{
 		ACTION_RETURN_STATE(jump);
+	}
 	ACTION_RETURN_STATE(NULL);
 }
 
@@ -6400,14 +6431,17 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckProximity)
 	if (!jump)
 	{
 		if (!(flags & (CPXF_SETTARGET | CPXF_SETMASTER | CPXF_SETTRACER)))
+		{
 			ACTION_RETURN_STATE(NULL);
+		}
 	}
 	AActor *ref = COPY_AAPTR(self, ptr);
 
 	// We need these to check out.
 	if (!ref || !classname || distance <= 0)
+	{
 		ACTION_RETURN_STATE(NULL);
-
+	}
 	int counter = 0;
 	bool result = false;
 	fixed_t closer = distance, farther = 0, current = distance;
@@ -6556,7 +6590,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckBlock)
 
 	//Nothing to block it so skip the rest.
 	bool checker = (flags & CBF_DROPOFF) ? P_CheckMove(mobj, mobj->X(), mobj->Y()) : P_TestMobjLocation(mobj);
-	if (checker) ACTION_RETURN_STATE(NULL);
+	if (checker)
+	{
+		ACTION_RETURN_STATE(NULL);
+	}
 
 	if (mobj->BlockingMobj)
 	{
@@ -6573,8 +6610,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckBlock)
 	//this point. I.e. A_CheckBlock("",CBF_SETTRACER) is like having CBF_NOLINES.
 	//It gets the mobj blocking, if any, and doesn't jump at all.
 	if (!block)
+	{
 		ACTION_RETURN_STATE(NULL);
-
+	}
 	//[MC] Easiest way to tell if an actor is blocking it, use the pointers.
 	if (mobj->BlockingMobj || (!(flags & CBF_NOLINES) && mobj->BlockingLine != NULL))
 	{

@@ -494,6 +494,10 @@ static void ParseNativeFunction(FScanner &sc, PClassActor *cls)
 		rets.Push(TypeFixed);
 		break;
 
+	case TK_State:
+		rets.Push(TypeState);
+		break;
+
 	case TK_Identifier:
 		rets.Push(NewPointer(RUNTIME_CLASS(DObject)));
 		// Todo: Object type

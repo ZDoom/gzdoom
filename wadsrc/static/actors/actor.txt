@@ -332,6 +332,10 @@ ACTOR Actor native //: Thinker
 	action native int ACS_NamedExecuteWithResult(name script, int arg1=0, int arg2=0, int arg3=0, int arg4=0);
 	action native ACS_NamedExecuteAlways(name script, int mapnum=0, int arg1=0, int arg2=0, int arg3=0);
 
+	native state A_State(state returnme);
+	native int A_Int(int returnme);
+	native bool A_Bool(bool returnme);
+	
 	States
 	{
 	Spawn:

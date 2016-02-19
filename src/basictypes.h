@@ -126,6 +126,12 @@ inline fixedvec3 operator +(const fixedvec3 &v1, const fixedvec3 &v2)
 	return v;
 }
 
+inline fixedvec3 operator +(const fixedvec3 &v1, const fixedvec2 &v2)
+{
+	fixedvec3 v = { v1.x + v2.x, v1.y + v2.y, v1.z };
+	return v;
+}
+
 #define FIXED_MAX						(signed)(0x7fffffff)
 #define FIXED_MIN						(signed)(0x80000000)
 

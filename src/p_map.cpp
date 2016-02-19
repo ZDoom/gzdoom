@@ -80,6 +80,7 @@ TArray<line_t *> spechit;
 // Temporary holder for thing_sectorlist threads
 msecnode_t* sector_list = NULL;		// phares 3/16/98
 
+
 //==========================================================================
 //
 // GetCoefficientClosestPointInLine24
@@ -91,8 +92,9 @@ msecnode_t* sector_list = NULL;		// phares 3/16/98
 //
 //==========================================================================
 
-static fixed_t GetCoefficientClosestPointInLine24(line_t *ld, FCheckPosition &tm)
+static inline fixed_t GetCoefficientClosestPointInLine24(line_t *ld, fixedvec2 pos)
 {
+#ifndef USE_FLOAT
 	// [EP] Use 64 bit integers in order to keep the exact result of the
 	// multiplication, because in the case the vertexes have both the
 	// distance coordinates equal to the map limit (32767 units, which is
@@ -102,8 +104,8 @@ static fixed_t GetCoefficientClosestPointInLine24(line_t *ld, FCheckPosition &tm
 	// fixed_t notation, which is 1.52587890625e-05 in float notation), the
 	// product and the sum can be 1 in the worst case, which is very tiny.
 
-	SQWORD r_num = ((SQWORD(tm.x - ld->v1->x)*ld->dx) +
-					(SQWORD(tm.y - ld->v1->y)*ld->dy));
+	SQWORD r_num = ((SQWORD(pos.x - ld->v1->x)*ld->dx) +
+		(SQWORD(pos.y - ld->v1->y)*ld->dy));
 
 	// The denominator is always positive. Use this to avoid useless
 	// calculations.
@@ -131,16 +133,58 @@ static fixed_t GetCoefficientClosestPointInLine24(line_t *ld, FCheckPosition &tm
 	// Thanks to the fact that in this code path the denominator is greater
 	// than the numerator, it's possible to avoid this bad situation by
 	// just checking the last 24 bits of the numerator.
-	if ((r_num >> (63-24)) != 0) {
+	if ((r_num >> (63 - 24)) != 0) {
 		// [EP] In fact, if the numerator is greater than
 		// (1 << (63-24)), the denominator must be greater than
 		// (1 << (63-24)), hence the denominator won't be zero after
 		// the right shift by 24 places.
-		return (fixed_t)(r_num/(r_den >> 24));
+		return (fixed_t)(r_num / (r_den >> 24));
 	}
 	// [EP] Having the last 24 bits all zero allows left shifting
 	// the numerator by 24 bits without overflow.
-	return (fixed_t)((r_num << 24)/r_den);
+	return (fixed_t)((r_num << 24) / r_den);
+#else
+	double dx = ld->dx;
+	double dy = ld->dy;
+	return xs_CRoundToInt(((double)(pos.x - ld->v1->x) * dx + (double)(pos.y - ld->v1->y) * dy) / (dx*dx + dy*dy) * 16777216.f);
+#endif
+}
+
+
+//==========================================================================
+//
+// FindRefPoint
+//
+// Finds the point on the line closest to the given coordinate
+//
+//==========================================================================
+
+static inline fixedvec2 FindRefPoint(line_t *ld, fixedvec2 pos)
+{
+	if (!((((ld->frontsector->floorplane.a | ld->frontsector->floorplane.b) |
+		(ld->backsector->floorplane.a | ld->backsector->floorplane.b) |
+		(ld->frontsector->ceilingplane.a | ld->frontsector->ceilingplane.b) |
+		(ld->backsector->ceilingplane.a | ld->backsector->ceilingplane.b)) == 0)
+		&& ld->backsector->e->XFloor.ffloors.Size() == 0 && ld->frontsector->e->XFloor.ffloors.Size() == 0))
+	{
+		fixed_t r = GetCoefficientClosestPointInLine24(ld, pos);
+		if (r <= 0)
+		{
+			pos.x = ld->v1->x;
+			pos.y = ld->v1->y;
+		}
+		else if (r >= (1 << 24))
+		{
+			pos.x = ld->v2->x;
+			pos.y = ld->v2->y;
+		}
+		else
+		{
+			pos.x = ld->v1->x + MulScale24(r, ld->dx);
+			pos.y = ld->v1->y + MulScale24(r, ld->dy);
+		}
+	}
+	return pos;
 }
 
 //==========================================================================
@@ -151,8 +195,10 @@ static fixed_t GetCoefficientClosestPointInLine24(line_t *ld, FCheckPosition &tm
 //
 //==========================================================================
 
-static bool PIT_FindFloorCeiling(line_t *ld, const FBoundingBox &box, FCheckPosition &tmf, int flags)
+static bool PIT_FindFloorCeiling(FMultiBlockLinesIterator::CheckResult &cres, const FBoundingBox &box, FCheckPosition &tmf, int flags)
 {
+	line_t *ld = cres.line;
+
 	if (box.Right() <= ld->bbox[BOXLEFT]
 		|| box.Left() >= ld->bbox[BOXRIGHT]
 		|| box.Top() <= ld->bbox[BOXBOTTOM]
@@ -169,76 +215,52 @@ static bool PIT_FindFloorCeiling(line_t *ld, const FBoundingBox &box, FCheckPosi
 		return true;
 	}
 
-	fixed_t sx, sy;
+	fixedvec2 refpoint = FindRefPoint(ld, cres.position);
 	FLineOpening open;
 
-	// set openrange, opentop, openbottom
-	if ((((ld->frontsector->floorplane.a | ld->frontsector->floorplane.b) |
-		(ld->backsector->floorplane.a | ld->backsector->floorplane.b) |
-		(ld->frontsector->ceilingplane.a | ld->frontsector->ceilingplane.b) |
-		(ld->backsector->ceilingplane.a | ld->backsector->ceilingplane.b)) == 0)
-		&& ld->backsector->e->XFloor.ffloors.Size() == 0 && ld->frontsector->e->XFloor.ffloors.Size() == 0)
-	{
-		P_LineOpening(open, tmf.thing, ld, sx = tmf.x, sy = tmf.y, tmf.x, tmf.y, flags);
-	}
-	else
-	{ // Find the point on the line closest to the actor's center, and use
-		// that to calculate openings
-		double dx = ld->dx;
-		double dy = ld->dy;
-		fixed_t r = xs_CRoundToInt(((double)(tmf.x - ld->v1->x) * dx +
-			(double)(tmf.y - ld->v1->y) * dy) /
-			(dx*dx + dy*dy) * 16777216.f);
-		if (r <= 0)
-		{
-			P_LineOpening(open, tmf.thing, ld, sx = ld->v1->x, sy = ld->v1->y, tmf.x, tmf.y, flags);
-		}
-		else if (r >= (1 << 24))
-		{
-			P_LineOpening(open, tmf.thing, ld, sx = ld->v2->x, sy = ld->v2->y, tmf.thing->X(), tmf.thing->Y(), flags);
-		}
-		else
-		{
-			P_LineOpening(open, tmf.thing, ld, sx = ld->v1->x + MulScale24(r, ld->dx),
-				sy = ld->v1->y + MulScale24(r, ld->dy), tmf.x, tmf.y, flags);
-		}
-	}
+	P_LineOpening(open, tmf.thing, ld, refpoint.x, refpoint.y, cres.position.x, cres.position.y, flags);
 
 	// adjust floor / ceiling heights
-	if (open.top < tmf.ceilingz)
+	if (!(flags & FFCF_NOCEILING))
 	{
-		tmf.ceilingz = open.top;
+		if (open.top < tmf.ceilingz)
+		{
+			tmf.ceilingz = open.top;
+		}
 	}
 
-	if (open.bottom > tmf.floorz)
+	if (!(flags & FFCF_NOFLOOR))
 	{
-		tmf.floorz = open.bottom;
-		if (open.bottomsec != NULL) tmf.floorsector = open.bottomsec;
-		tmf.touchmidtex = open.touchmidtex;
-		tmf.abovemidtex = open.abovemidtex;
-	}
-	else if (open.bottom == tmf.floorz)
-	{
-		tmf.touchmidtex |= open.touchmidtex;
-		tmf.abovemidtex |= open.abovemidtex;
-	}
+		if (open.bottom > tmf.floorz)
+		{
+			tmf.floorz = open.bottom;
+			if (open.bottomsec != NULL) tmf.floorsector = open.bottomsec;
+			tmf.touchmidtex = open.touchmidtex;
+			tmf.abovemidtex = open.abovemidtex;
+		}
+		else if (open.bottom == tmf.floorz)
+		{
+			tmf.touchmidtex |= open.touchmidtex;
+			tmf.abovemidtex |= open.abovemidtex;
+		}
 
-	if (open.lowfloor < tmf.dropoffz)
-		tmf.dropoffz = open.lowfloor;
-
+		if (open.lowfloor < tmf.dropoffz)
+			tmf.dropoffz = open.lowfloor;
+	}
 	return true;
 }
 
 
 //==========================================================================
 //
-//
+// calculates the actual floor and ceiling position at a given
+// coordinate. Traverses through portals unless being told not to.
 //
 //==========================================================================
 
 void P_GetFloorCeilingZ(FCheckPosition &tmf, int flags)
 {
-	sector_t *sec = !(flags & FFCF_SAMESECTOR) ? P_PointInSector(tmf.x, tmf.y) : tmf.thing->Sector;
+	sector_t *sec = (!(flags & FFCF_SAMESECTOR) || tmf.thing->Sector == NULL)? P_PointInSector(tmf.x, tmf.y) : tmf.thing->Sector;
 
 	if (flags & FFCF_NOPORTALS)
 	{
@@ -268,17 +290,20 @@ void P_GetFloorCeilingZ(FCheckPosition &tmf, int flags)
 
 		if (ff_top > tmf.floorz)
 		{
-			if (ff_top <= tmf.z || (!(flags & FFCF_3DRESTRICT) && (tmf.thing != NULL && ff_bottom < tmf.z && ff_top < tmf.z + tmf.thing->MaxStepHeight)))
+			// either with feet above the 3D floor or feet with less than 'stepheight' map units inside
+			if (ff_top <= tmf.z || (!(flags & FFCF_3DRESTRICT) && (ff_bottom < tmf.z && ff_top < tmf.z + tmf.thing->MaxStepHeight)))
 			{
 				tmf.dropoffz = tmf.floorz = ff_top;
 				tmf.floorpic = *rover->top.texture;
 				tmf.floorterrain = rover->model->GetTerrain(rover->top.isceiling);
+				tmf.floorsector = sec;
 			}
 		}
 		if (ff_bottom <= tmf.ceilingz && ff_bottom > tmf.z + tmf.thing->height)
 		{
 			tmf.ceilingz = ff_bottom;
 			tmf.ceilingpic = *rover->bottom.texture;
+			tmf.ceilingsector = sec;
 		}
 	}
 }
@@ -303,6 +328,7 @@ void P_FindFloorCeiling(AActor *actor, int flags)
 		flags |= FFCF_3DRESTRICT;
 	}
 	P_GetFloorCeilingZ(tmf, flags);
+	assert(tmf.thing->Sector != NULL);
 
 	actor->floorz = tmf.floorz;
 	actor->dropoffz = tmf.dropoffz;
@@ -313,43 +339,43 @@ void P_FindFloorCeiling(AActor *actor, int flags)
 	actor->ceilingpic = tmf.ceilingpic;
 	actor->ceilingsector = tmf.ceilingsector;
 
-	FBoundingBox box(tmf.x, tmf.y, actor->radius);
-
 	tmf.touchmidtex = false;
 	tmf.abovemidtex = false;
 	validcount++;
 
-	FBlockLinesIterator it(box);
-	line_t *ld;
+	FPortalGroupArray grouplist;
+	FMultiBlockLinesIterator mit(grouplist, actor, tmf.x, tmf.y, actor->radius);
+	FMultiBlockLinesIterator::CheckResult cres;
 
-	while ((ld = it.Next()))
+	// if we already have a valid floor/ceiling sector within the current sector, 
+	// we do not need to iterate through plane portals to find a floor or ceiling.
+	if (actor->floorsector == actor->Sector) mit.StopDown();
+	if (actor->ceilingsector == actor->Sector) mit.StopUp();
+
+	while ((mit.Next(&cres)))
 	{
-		PIT_FindFloorCeiling(ld, box, tmf, flags);
+		PIT_FindFloorCeiling(cres, mit.Box(), tmf, flags|cres.portalflags);
 	}
 
 	if (tmf.touchmidtex) tmf.dropoffz = tmf.floorz;
 
-	if (!(flags & FFCF_ONLYSPAWNPOS) || (tmf.abovemidtex && (tmf.floorz <= actor->Z())))
+	bool usetmf = !(flags & FFCF_ONLYSPAWNPOS) || (tmf.abovemidtex && (tmf.floorz <= actor->Z()));
+
+	// when actual floor or ceiling are beyond a portal plane we also need to use the result of the blockmap iterator, regardless of the flags being specified.
+	if (usetmf || tmf.floorsector->PortalGroup != actor->Sector->PortalGroup)
 	{
 		actor->floorz = tmf.floorz;
 		actor->dropoffz = tmf.dropoffz;
-		actor->ceilingz = tmf.ceilingz;
 		actor->floorpic = tmf.floorpic;
 		actor->floorterrain = tmf.floorterrain;
 		actor->floorsector = tmf.floorsector;
+	}
+
+	if (usetmf || tmf.ceilingsector->PortalGroup != actor->Sector->PortalGroup)
+	{
+		actor->ceilingz = tmf.ceilingz;
 		actor->ceilingpic = tmf.ceilingpic;
 		actor->ceilingsector = tmf.ceilingsector;
-	}
-	else
-	{
-		actor->floorsector = actor->ceilingsector = actor->Sector;
-		// [BB] Don't forget to update floorpic and ceilingpic.
-		if (actor->Sector != NULL)
-		{
-			actor->floorpic = actor->Sector->GetTexture(sector_t::floor);
-			actor->floorterrain = actor->Sector->GetTerrain(sector_t::floor);
-			actor->ceilingpic = actor->Sector->GetTexture(sector_t::ceiling);
-		}
 	}
 }
 
@@ -392,16 +418,17 @@ bool P_TeleportMove(AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefra
 
 	bool StompAlwaysFrags = ((thing->flags2 & MF2_TELESTOMP) || (level.flags & LEVEL_MONSTERSTELEFRAG) || telefrag) && !(thing->flags7 & MF7_NOTELESTOMP);
 
-	FBoundingBox box(x, y, thing->radius);
-	FBlockLinesIterator it(box);
-	line_t *ld;
-
 	// P_LineOpening requires the thing's z to be the destination z in order to work.
 	fixed_t savedz = thing->Z();
 	thing->SetZ(z);
-	while ((ld = it.Next()))
+
+	FPortalGroupArray grouplist;
+	FMultiBlockLinesIterator mit(grouplist, thing, tmf.x, tmf.y, thing->radius);
+	FMultiBlockLinesIterator::CheckResult cres;
+
+	while (mit.Next(&cres))
 	{
-		PIT_FindFloorCeiling(ld, box, tmf, 0);
+		PIT_FindFloorCeiling(cres, mit.Box(), tmf, 0);
 	}
 	thing->SetZ(savedz);
 
@@ -714,6 +741,7 @@ int P_GetMoveFactor(const AActor *mo, int *frictionp)
 	return movefactor;
 }
 
+
 //
 // MOVEMENT ITERATOR FUNCTIONS
 //
@@ -825,56 +853,18 @@ bool PIT_CheckLine(line_t *ld, const FBoundingBox &box, FCheckPosition &tm)
 		}
 	}
 
-	fixed_t sx = 0, sy = 0;
+	fixedvec2 rpos = { tm.x, tm.y };
+	fixedvec2 ref = FindRefPoint(ld, rpos);
 	FLineOpening open;
 
-	// set openrange, opentop, openbottom
-	if ((((ld->frontsector->floorplane.a | ld->frontsector->floorplane.b) |
-		(ld->backsector->floorplane.a | ld->backsector->floorplane.b) |
-		(ld->frontsector->ceilingplane.a | ld->frontsector->ceilingplane.b) |
-		(ld->backsector->ceilingplane.a | ld->backsector->ceilingplane.b)) == 0)
-		&& ld->backsector->e->XFloor.ffloors.Size() == 0 && ld->frontsector->e->XFloor.ffloors.Size() == 0)
+	// the floorplane on both sides is identical with the current one
+	// so don't mess around with the z-position.
+	if (ld->frontsector->floorplane == ld->backsector->floorplane &&
+		ld->frontsector->floorplane == tm.thing->Sector->floorplane &&
+		!ld->frontsector->e->XFloor.ffloors.Size() && !ld->backsector->e->XFloor.ffloors.Size() &&
+		!open.abovemidtex)
 	{
-		P_LineOpening(open, tm.thing, ld, sx = tm.x, sy = tm.y, tm.x, tm.y);
-	}
-	else
-	{ // Find the point on the line closest to the actor's center, and use
-		// that to calculate openings
-		fixed_t r = GetCoefficientClosestPointInLine24(ld, tm);
-
-		/*		Printf ("%d:%d: %d  (%d %d %d %d)  (%d %d %d %d)\n", level.time, ld-lines, r,
-		ld->frontsector->floorplane.a,
-		ld->frontsector->floorplane.b,
-		ld->frontsector->floorplane.c,
-		ld->frontsector->floorplane.ic,
-		ld->backsector->floorplane.a,
-		ld->backsector->floorplane.b,
-		ld->backsector->floorplane.c,
-		ld->backsector->floorplane.ic);*/
-		if (r <= 0)
-		{
-			P_LineOpening(open, tm.thing, ld, sx = ld->v1->x, sy = ld->v1->y, tm.x, tm.y);
-		}
-		else if (r >= (1 << 24))
-		{
-			P_LineOpening(open, tm.thing, ld, sx = ld->v2->x, sy = ld->v2->y, pos.x, pos.y);
-		}
-		else
-		{
-			P_LineOpening(open, tm.thing, ld, sx = ld->v1->x + MulScale24(r, ld->dx),
-				sy = ld->v1->y + MulScale24(r, ld->dy), tm.x, tm.y);
-		}
-
-		// the floorplane on both sides is identical with the current one
-		// so don't mess around with the z-position
-		if (ld->frontsector->floorplane == ld->backsector->floorplane &&
-			ld->frontsector->floorplane == tm.thing->Sector->floorplane &&
-			!ld->frontsector->e->XFloor.ffloors.Size() && !ld->backsector->e->XFloor.ffloors.Size() &&
-			!open.abovemidtex)
-		{
-			open.bottom = INT_MIN;
-		}
-		/*	Printf ("    %d %d %d\n", sx, sy, openbottom);*/
+		open.bottom = INT_MIN;
 	}
 
 	if (rail &&
@@ -886,7 +876,7 @@ bool PIT_CheckLine(line_t *ld, const FBoundingBox &box, FCheckPosition &tm)
 		// from either side. How long until somebody reports this as a bug and I'm
 		// forced to say, "It's not a bug. It's a feature?" Ugh.
 		(!(level.flags2 & LEVEL2_RAILINGHACK) ||
-		open.bottom == tm.thing->Sector->floorplane.ZatPoint(sx, sy)))
+		open.bottom == tm.thing->Sector->floorplane.ZatPoint(ref.x, ref.y)))
 	{
 		open.bottom += 32 * FRACUNIT;
 	}

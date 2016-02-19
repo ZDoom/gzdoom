@@ -739,10 +739,41 @@ struct sector_t
 		Flags &= ~SECF_SPECIALFLAGS;
 	}
 
-	bool PortalBlocksView(int plane);
-	bool PortalBlocksSight(int plane);
-	bool PortalBlocksMovement(int plane);
-	bool PortalBlocksSound(int plane);
+	bool PortalBlocksView(int plane)
+	{
+		if (SkyBoxes[plane] == NULL) return true;
+		if (SkyBoxes[plane]->special1 != SKYBOX_LINKEDPORTAL) return false;
+		return !!(planes[plane].Flags & (PLANEF_NORENDER | PLANEF_DISABLED | PLANEF_OBSTRUCTED));
+	}
+
+	bool PortalBlocksSight(int plane)
+	{
+		if (SkyBoxes[plane] == NULL || SkyBoxes[plane]->special1 != SKYBOX_LINKEDPORTAL) return true;
+		return !!(planes[plane].Flags & (PLANEF_NORENDER | PLANEF_DISABLED | PLANEF_OBSTRUCTED));
+	}
+
+	bool PortalBlocksMovement(int plane)
+	{
+		if (SkyBoxes[plane] == NULL || SkyBoxes[plane]->special1 != SKYBOX_LINKEDPORTAL) return true;
+		return !!(planes[plane].Flags & (PLANEF_NOPASS | PLANEF_DISABLED | PLANEF_OBSTRUCTED));
+	}
+
+	bool PortalBlocksSound(int plane)
+	{
+		if (SkyBoxes[plane] == NULL || SkyBoxes[plane]->special1 != SKYBOX_LINKEDPORTAL) return true;
+		return !!(planes[plane].Flags & (PLANEF_BLOCKSOUND | PLANEF_DISABLED | PLANEF_OBSTRUCTED));
+	}
+
+	// These may only be called if the portal has been validated
+	FDisplacement &FloorDisplacement()
+	{
+		return Displacements(PortalGroup, SkyBoxes[sector_t::floor]->Sector->PortalGroup);
+	}
+
+	FDisplacement &CeilingDisplacement()
+	{
+		return Displacements(PortalGroup, SkyBoxes[sector_t::ceiling]->Sector->PortalGroup);
+	}
 
 	int GetTerrain(int pos) const;
 
@@ -777,9 +808,6 @@ struct sector_t
 	{
 		return NextLowestFloorAt(a->X(), a->Y(), z, resultsec, resultffloor);
 	}
-
-	FDisplacement &FloorDisplacement();
-	FDisplacement &CeilingDisplacement();
 
 	// Member variables
 	fixed_t		CenterFloor () const { return floorplane.ZatPoint (soundorg[0], soundorg[1]); }
@@ -864,7 +892,7 @@ struct sector_t
 
 	// [RH] The sky box to render for this sector. NULL means use a
 	// regular sky.
-	TObjPtr<ASkyViewpoint> SkyBoxes[2];
+	TObjPtr<AActor> SkyBoxes[2];
 	int PortalGroup;
 
 	int							sectornum;			// for comparing sector copies
@@ -1045,11 +1073,26 @@ struct line_t
 	unsigned	portalindex;
 
 	// returns true if the portal is crossable by actors
-	bool isLinePortal() const;
+	bool isLinePortal() const
+	{
+		return portalindex >= linePortals.Size() ? false : !!(linePortals[portalindex].mFlags & PORTF_PASSABLE);
+	}
+
 	// returns true if the portal needs to be handled by the renderer
-	bool isVisualPortal() const;
-	line_t *getPortalDestination() const;
-	int getPortalAlignment() const;
+	bool isVisualPortal() const
+	{
+		return portalindex >= linePortals.Size() ? false : !!(linePortals[portalindex].mFlags & PORTF_VISIBLE);
+	}
+
+	line_t *getPortalDestination() const
+	{
+		return portalindex >= linePortals.Size() ? (line_t*)NULL : linePortals[portalindex].mDestination;
+	}
+
+	int getPortalAlignment() const
+	{
+		return portalindex >= linePortals.Size() ? 0 : linePortals[portalindex].mAlign;
+	}
 };
 
 // phares 3/14/98
@@ -1195,6 +1238,24 @@ inline sector_t *P_PointInSector(fixed_t x, fixed_t y)
 	return P_PointInSubsector(x, y)->sector;
 }
 
-#define _ZatPoint ZatPoint	// so that it still compiles during the transition
+inline fixedvec3 AActor::PosRelative(AActor *other) const
+{
+	return __pos + Displacements(Sector->PortalGroup, other->Sector->PortalGroup);
+}
+
+inline fixedvec3 AActor::PosRelative(sector_t *sec) const
+{
+	return __pos + Displacements(Sector->PortalGroup, sec->PortalGroup);
+}
+
+inline fixedvec3 AActor::PosRelative(line_t *line) const
+{
+	return __pos + Displacements(Sector->PortalGroup, line->frontsector->PortalGroup);
+}
+
+inline fixedvec3 PosRelative(const fixedvec3 &pos, line_t *line, sector_t *refsec = NULL)
+{
+	return pos + Displacements(refsec->PortalGroup, line->frontsector->PortalGroup);
+}
 
 #endif

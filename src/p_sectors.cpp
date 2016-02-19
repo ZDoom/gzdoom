@@ -30,7 +30,6 @@
 #include "po_man.h"
 #include "farchive.h"
 #include "r_utility.h"
-#include "portal.h"
 #include "a_sharedglobal.h"
 #include "r_data/colormaps.h"
 
@@ -806,7 +805,7 @@ int sector_t::GetCeilingLight () const
 
 ASkyViewpoint *sector_t::GetSkyBox(int which)
 {
-	if (SkyBoxes[which] != NULL) return SkyBoxes[which];
+	if (SkyBoxes[which] != NULL) return barrier_cast<ASkyViewpoint*>(SkyBoxes[which]);
 	if (MoreFlags & (SECF_NOFLOORSKYBOX << which)) return NULL;
 	return level.DefaultSkybox;
 }
@@ -874,7 +873,7 @@ int sector_t::GetTerrain(int pos) const
 
 void sector_t::CheckPortalPlane(int plane)
 {
-	ASkyViewpoint *portal = SkyBoxes[plane];
+	AActor *portal = SkyBoxes[plane];
 	if (!portal || portal->special1 != SKYBOX_LINKEDPORTAL) return;
 
 	fixed_t planeh = planes[plane].TexZ;

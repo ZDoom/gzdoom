@@ -3,11 +3,7 @@
 
 #include "basictypes.h"
 #include "v_video.h"
-#include "r_defs.h"
-#include "actor.h"
-#include "p_local.h"
 #include "m_bbox.h"
-#include "a_sharedglobal.h"
 
 struct FPortalGroupArray;
 //============================================================================
@@ -179,91 +175,5 @@ public:
 
 /* new code */
 fixed_t P_PointLineDistance(line_t* line, fixed_t x, fixed_t y);
-
-//============================================================================
-//
-// some wrappers around the portal data.
-//
-//============================================================================
-
-
-// returns true if the portal is crossable by actors
-inline bool line_t::isLinePortal() const
-{
-	return portalindex >= linePortals.Size() ? false : !!(linePortals[portalindex].mFlags & PORTF_PASSABLE);
-}
-
-// returns true if the portal needs to be handled by the renderer
-inline bool line_t::isVisualPortal() const
-{
-	return portalindex >= linePortals.Size() ? false : !!(linePortals[portalindex].mFlags & PORTF_VISIBLE);
-}
-
-inline line_t *line_t::getPortalDestination() const
-{
-	return portalindex >= linePortals.Size() ? (line_t*)NULL : linePortals[portalindex].mDestination;
-}
-
-inline int line_t::getPortalAlignment() const
-{
-	return portalindex >= linePortals.Size() ? 0 : linePortals[portalindex].mAlign;
-}
-
-inline bool sector_t::PortalBlocksView(int plane)
-{
-	if (SkyBoxes[plane] == NULL) return true;
-	if (SkyBoxes[plane]->special1 != SKYBOX_LINKEDPORTAL) return false;
-	return !!(planes[plane].Flags & (PLANEF_NORENDER | PLANEF_DISABLED | PLANEF_OBSTRUCTED));
-}
-
-inline bool sector_t::PortalBlocksSight(int plane)
-{
-	if (SkyBoxes[plane] == NULL || SkyBoxes[plane]->special1 != SKYBOX_LINKEDPORTAL) return true;
-	return !!(planes[plane].Flags & (PLANEF_NORENDER | PLANEF_DISABLED | PLANEF_OBSTRUCTED));
-}
-
-inline bool sector_t::PortalBlocksMovement(int plane)
-{
-	if (SkyBoxes[plane] == NULL || SkyBoxes[plane]->special1 != SKYBOX_LINKEDPORTAL) return true;
-	return !!(planes[plane].Flags & (PLANEF_NOPASS | PLANEF_DISABLED | PLANEF_OBSTRUCTED));
-}
-
-inline bool sector_t::PortalBlocksSound(int plane)
-{
-	if (SkyBoxes[plane] == NULL || SkyBoxes[plane]->special1 != SKYBOX_LINKEDPORTAL) return true;
-	return !!(planes[plane].Flags & (PLANEF_BLOCKSOUND | PLANEF_DISABLED | PLANEF_OBSTRUCTED));
-}
-
-// These may only be called if the portal has been validated
-inline FDisplacement &sector_t::FloorDisplacement()
-{
-	return Displacements(PortalGroup, SkyBoxes[sector_t::floor]->Sector->PortalGroup);
-}
-
-inline FDisplacement &sector_t::CeilingDisplacement()
-{
-	return Displacements(PortalGroup, SkyBoxes[sector_t::ceiling]->Sector->PortalGroup);
-}
-
-inline fixedvec3 AActor::PosRelative(AActor *other) const
-{
-	FDisplacement &disp = Displacements(Sector->PortalGroup, other->Sector->PortalGroup);
-	fixedvec3 ret = { X() + disp.pos.x, Y() + disp.pos.y, Z() };
-	return ret;
-}
-
-inline fixedvec3 AActor::PosRelative(sector_t *sec) const
-{
-	FDisplacement &disp = Displacements(Sector->PortalGroup, sec->PortalGroup);
-	fixedvec3 ret = { X() + disp.pos.x, Y() + disp.pos.y, Z() };
-	return ret;
-}
-
-inline fixedvec3 AActor::PosRelative(line_t *line) const
-{
-	FDisplacement &disp = Displacements(Sector->PortalGroup, line->frontsector->PortalGroup);
-	fixedvec3 ret = { X() + disp.pos.x, Y() + disp.pos.y, Z() };
-	return ret;
-}
 
 #endif

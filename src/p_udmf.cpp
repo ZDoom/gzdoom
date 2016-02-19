@@ -47,7 +47,6 @@
 #include "r_data/colormaps.h"
 #include "w_wad.h"
 #include "p_tags.h"
-#include "portal.h"
 #include "p_terrain.h"
 
 //===========================================================================

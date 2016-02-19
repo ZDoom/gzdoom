@@ -3,6 +3,7 @@
 
 #include "r_defs.h"
 #include "doomstat.h"
+#include "m_bbox.h"
 
 extern int validcount;
 
@@ -141,12 +142,14 @@ struct FPortalGroupArray
 	FPortalGroupArray()
 	{
 		varused = 0;
+		inited = false;
 	}
 
 	void Clear()
 	{
 		data.Clear();
 		varused = 0;
+		inited = false;
 	}
 
 	void Add(DWORD num)
@@ -165,9 +168,11 @@ struct FPortalGroupArray
 		return index < MAX_STATIC ? entry[index] : data[index - MAX_STATIC];
 	}
 
+	bool inited;
+
 private:
 	WORD entry[MAX_STATIC];
-	unsigned varused;
+	BYTE varused;
 	TArray<WORD> data;
 };
 
@@ -195,36 +200,29 @@ public:
 
 class FMultiBlockLinesIterator
 {
+	FPortalGroupArray &checklist;
 	fixedvec3 checkpoint;
 	fixedvec2 offset;
 	short basegroup;
-	short portalposition;
+	short portalflags;
 	WORD index;
 	bool continueup;
 	bool continuedown;
 	FBlockLinesIterator blockIterator;
-	FPortalGroupArray checklist;
+	FBoundingBox bbox;
 
 	void startIteratorForGroup(int group);
 
 public:
 
-	enum
-	{
-		PP_ORIGIN,
-		PP_ABOVE,
-		PP_BELOW,
-		PP_THROUGHLINE
-	};
-
 	struct CheckResult
 	{
 		line_t *line;
 		fixedvec2 position;
-		int portalposition;
+		int portalflags;
 	};
 
-	FMultiBlockLinesIterator(AActor *origin, fixed_t checkx = FIXED_MAX, fixed_t checky = FIXED_MAX, fixed_t checkradius = -1);
+	FMultiBlockLinesIterator(FPortalGroupArray &check, AActor *origin, fixed_t checkx = FIXED_MAX, fixed_t checky = FIXED_MAX, fixed_t checkradius = -1);
 	bool Next(CheckResult *item);
 	void Reset();
 	// for stopping group traversal through portals. Only the calling code can decide whether this is needed so this needs to be set from the outside.
@@ -235,6 +233,10 @@ public:
 	void StopDown()
 	{
 		continuedown = false;
+	}
+	const FBoundingBox &Box() const
+	{
+		return bbox;
 	}
 };
 

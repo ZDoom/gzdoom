@@ -288,6 +288,8 @@ enum
 	FFCF_ONLY3DFLOORS = 4,	// includes 3D midtexes
 	FFCF_3DRESTRICT = 8,	// ignore 3D midtexes and floors whose floorz are above thing's z
 	FFCF_NOPORTALS = 16,	// ignore portals (considers them impassable.)
+	FFCF_NOFLOOR = 32,
+	FFCF_NOCEILING = 64,
 };
 void	P_FindFloorCeiling (AActor *actor, int flags=0);
 

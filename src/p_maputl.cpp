@@ -39,7 +39,6 @@
 #include "p_3dmidtex.h"
 #include "p_blockmap.h"
 #include "r_utility.h"
-#include "portal.h"
 
 // State.
 #include "r_state.h"
@@ -694,7 +693,8 @@ line_t *FBlockLinesIterator::Next()
 //
 //===========================================================================
 
-FMultiBlockLinesIterator::FMultiBlockLinesIterator(AActor *origin, fixed_t checkx, fixed_t checky, fixed_t checkradius)
+FMultiBlockLinesIterator::FMultiBlockLinesIterator(FPortalGroupArray &check, AActor *origin, fixed_t checkx, fixed_t checky, fixed_t checkradius)
+	: checklist(check)
 {
 	checkpoint = origin->Pos();
 	if (checkx != FIXED_MAX) checkpoint.x = checkx;
@@ -712,7 +712,7 @@ bool FMultiBlockLinesIterator::Next(FMultiBlockLinesIterator::CheckResult *item)
 	{
 		item->line = line;
 		item->position = offset;
-		item->portalposition = portalposition;
+		item->portalflags = portalflags;
 		return true;
 	}
 	else if (checklist[index] & FPortalGroupArray::UPPER)
@@ -723,6 +723,7 @@ bool FMultiBlockLinesIterator::Next(FMultiBlockLinesIterator::CheckResult *item)
 			if (!sector->PortalBlocksMovement(sector_t::ceiling))
 			{
 				startIteratorForGroup(sector->SkyBoxes[sector_t::ceiling]->Sector->PortalGroup);
+				portalflags = FFCF_NOFLOOR;
 				return Next(item);
 			}
 		}
@@ -735,13 +736,28 @@ bool FMultiBlockLinesIterator::Next(FMultiBlockLinesIterator::CheckResult *item)
 			if (!sector->PortalBlocksMovement(sector_t::floor))
 			{
 				startIteratorForGroup(sector->SkyBoxes[sector_t::floor]->Sector->PortalGroup);
+				portalflags = FFCF_NOCEILING;
 				return Next(item);
 			}
 		}
 	}
 	index++;
 	if (index >= checklist.Size()) return false;
-	startIteratorForGroup(checklist[index]);
+	startIteratorForGroup(checklist[index] & ~FPortalGroupArray::FLAT);
+	switch (checklist[index] & FPortalGroupArray::FLAT)
+	{
+	case FPortalGroupArray::UPPER:
+		portalflags = FFCF_NOFLOOR;
+		break;
+
+	case FPortalGroupArray::LOWER:
+		portalflags = FFCF_NOCEILING;
+		break;
+
+	default:
+		portalflags = 0;
+	}
+
 	return Next(item);
 }
 
@@ -750,15 +766,15 @@ void FMultiBlockLinesIterator::startIteratorForGroup(int group)
 	offset = Displacements(basegroup, group);
 	offset.x += checkpoint.x;
 	offset.y += checkpoint.y;
-	FBoundingBox box(offset.x, offset.y, checkpoint.z);
-	blockIterator.init(box);
+	bbox.setBox(offset.x, offset.y, checkpoint.z);
+	blockIterator.init(bbox);
 }
 
 void FMultiBlockLinesIterator::Reset()
 {
 	continueup = continueup = true;
 	index = -1;
-	portalposition = PP_ORIGIN;
+	portalflags = 0;
 	startIteratorForGroup(basegroup);
 }
 

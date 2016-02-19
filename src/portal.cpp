@@ -37,7 +37,6 @@
 */
 
 
-#include "portal.h"
 #include "p_local.h"
 #include "p_lnspec.h"
 #include "r_bsp.h"
@@ -925,7 +924,7 @@ void P_CreateLinkedPortals()
 	{
 		for (int j = 0; j < 2; j++)
 		{
-			ASkyViewpoint *box = sectors[i].SkyBoxes[j];
+			AActor *box = sectors[i].SkyBoxes[j];
 			if (box != NULL && box->special1 == SKYBOX_LINKEDPORTAL)
 			{
 				secplane_t &plane = j == 0 ? sectors[i].floorplane : sectors[i].ceilingplane;
@@ -961,7 +960,7 @@ void P_CreateLinkedPortals()
 	{
 		for (int j = 0; j < 2; j++)
 		{
-			ASkyViewpoint *box = sectors[i].SkyBoxes[j];
+			ASkyViewpoint *box = barrier_cast<ASkyViewpoint*>(sectors[i].SkyBoxes[j]);
 			if (box != NULL)
 			{
 				if (box->special1 == SKYBOX_LINKEDPORTAL && sectors[i].PortalGroup == 0)
@@ -1061,10 +1060,10 @@ bool P_CollectConnectedGroups(int startgroup, const fixedvec3 &position, fixed_t
 	static TArray<FLinePortal*> foundPortals;
 
 	bool retval = false;
+	out.inited = true;
 	if (linkedPortals.Size() == 0)
 	{
 		// If there are no portals, all sectors are in group 0.
-		out.Add(0);
 		return false;
 	}
 	processMask.setSize(linkedPortals.Size());

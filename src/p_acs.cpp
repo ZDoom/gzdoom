@@ -76,7 +76,6 @@
 #include "actorptrselect.h"
 #include "farchive.h"
 #include "decallib.h"
-#include "portal.h"
 #include "p_terrain.h"
 #include "version.h"
 #include "p_effect.h"

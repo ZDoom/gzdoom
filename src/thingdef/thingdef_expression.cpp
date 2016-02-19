@@ -565,7 +565,7 @@ ExpEmit FxCastStateToBool::Emit(VMFunctionBuilder *build)
 
 	// If from is NULL, produce 0. Otherwise, produce 1.
 	build->Emit(OP_LI, to.RegNum, 0);
-	build->Emit(OP_EQA_K, 0, from.RegNum, build->GetConstantAddress(NULL, ATAG_GENERIC));
+	build->Emit(OP_EQA_K, 1, from.RegNum, build->GetConstantAddress(NULL, ATAG_GENERIC));
 	build->Emit(OP_JMP, 1);
 	build->Emit(OP_LI, to.RegNum, 1);
 	return to;

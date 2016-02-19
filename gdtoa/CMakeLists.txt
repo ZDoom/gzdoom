@@ -5,12 +5,15 @@ set( CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -D_DEBUG" )
 # Disable warnings for << operator precedence (4554) and
 # unreferenced labels (4102) from VC
 if( MSVC )
-	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /wd4554 /wd4102 /fp:fast" )
+	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /wd4554 /wd4102" )
 endif()
 
 if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra" )
 endif()
+
+# Enable fast flag for gdtoa
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${ZD_FASTMATH_FLAG}" )
 
 include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
 add_definitions( -DINFNAN_CHECK -DMULTIPLE_THREADS )

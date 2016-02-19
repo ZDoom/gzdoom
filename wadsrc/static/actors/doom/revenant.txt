@@ -31,7 +31,7 @@ ACTOR Revenant
 		SKEL AABBCCDDEEFF 2 A_Chase
 		Loop
 	Melee:
-		SKEL G 1 A_FaceTarget
+		SKEL G 0 A_FaceTarget
 		SKEL G 6 A_SkelWhoosh
 		SKEL H 6 A_FaceTarget
 		SKEL I 6 A_SkelFist

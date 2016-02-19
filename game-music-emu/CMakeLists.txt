@@ -29,11 +29,8 @@ if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	endif()
 endif()
 
-if( MSVC )
-	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /fp:fast" )
-	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /fp:fast" )
-endif()
-
+# Enable fast flag for GME
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ZD_FASTMATH_FLAG}" )
 
 # Default emulators to build (all of them! ;)
 if (NOT DEFINED USE_GME_AY)

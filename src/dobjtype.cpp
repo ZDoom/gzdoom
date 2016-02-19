@@ -1222,6 +1222,38 @@ PStatePointer::PStatePointer()
 {
 }
 
+//==========================================================================
+//
+// PStatePointer :: GetStoreOp
+//
+//==========================================================================
+
+int PStatePointer::GetStoreOp() const
+{
+	return OP_SP;
+}
+
+//==========================================================================
+//
+// PStatePointer :: GetLoadOp
+//
+//==========================================================================
+
+int PStatePointer::GetLoadOp() const
+{
+	return OP_LP;
+}
+
+//==========================================================================
+//
+// PStatePointer :: GetRegType
+//
+//==========================================================================
+
+int PStatePointer::GetRegType() const
+{
+	return REGT_POINTER;
+}
 
 /* PPointer ***************************************************************/
 
@@ -1948,7 +1980,7 @@ size_t PFunction::PropagateMark()
 {
 	for (unsigned i = 0; i < Variants.Size(); ++i)
 	{
-		GC::Mark(Variants[i].Proto);
+		//GC::Mark(Variants[i].Proto);
 		GC::Mark(Variants[i].Implementation);
 	}
 	return Variants.Size() * sizeof(Variants[0]) + Super::PropagateMark();
@@ -1967,9 +1999,10 @@ unsigned PFunction::AddVariant(PPrototype *proto, TArray<DWORD> &argflags, VMFun
 {
 	Variant variant;
 
-	variant.Proto = proto;
+	//variant.Proto = proto;
 	variant.ArgFlags = argflags;
 	variant.Implementation = impl;
+	impl->Proto = proto;
 	return Variants.Push(variant);
 }
 

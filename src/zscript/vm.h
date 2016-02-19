@@ -162,8 +162,10 @@ public:
 	bool Native;
 	FName Name;
 
-	VMFunction() : Native(false), Name(NAME_None) {}
-	VMFunction(FName name) : Native(false), Name(name) {}
+	class PPrototype *Proto;
+
+	VMFunction() : Native(false), Name(NAME_None), Proto(NULL) {}
+	VMFunction(FName name) : Native(false), Name(name), Proto(NULL) {}
 };
 
 enum EVMOpMode

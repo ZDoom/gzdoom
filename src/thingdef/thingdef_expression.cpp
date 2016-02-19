@@ -129,6 +129,17 @@ bool FxExpression::isConstant() const
 //
 //==========================================================================
 
+VMFunction *FxExpression::GetDirectFunction()
+{
+	return NULL;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 FxExpression *FxExpression::Resolve(FCompileContext &ctx)
 {
 	isresolved = true;
@@ -3066,34 +3077,12 @@ ExpEmit FxActionSpecialCall::Emit(VMFunctionBuilder *build)
 
 //==========================================================================
 //
-//
-//
-//==========================================================================
-
-ExpEmit FxTailable::Emit(VMFunctionBuilder *build)
-{
-	return Emit(build, false);
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-VMFunction *FxTailable::GetDirectFunction()
-{
-	return NULL;
-}
-
-//==========================================================================
-//
 // FxVMFunctionCall
 //
 //==========================================================================
 
 FxVMFunctionCall::FxVMFunctionCall(PFunction *func, FArgumentList *args, const FScriptPosition &pos)
-: FxTailable(pos)
+: FxExpression(pos)
 {
 	Function = func;
 	ArgList = args;
@@ -3134,14 +3123,9 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 		delete this;
 		return NULL;
 	}
-	TArray<PType *> &rets = Function->Variants[0].Proto->ReturnTypes;
-	if (rets.Size() == 0)
+	TArray<PType *> &rets = Function->Variants[0].Implementation->Proto->ReturnTypes;
+	if (rets.Size() > 0)
 	{
-		ReturnType = TypeVoid;
-	}
-	else
-	{
-		ReturnType = rets[0];
 		// If more types are added to ParseNativeFunction(), add them here too.
 			 if (rets[0] == TypeSInt32)		ValueType = VAL_Int;
 		else if (rets[0] == TypeFloat64)	ValueType = VAL_Float;
@@ -3164,6 +3148,11 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 // function. (self, stateowner, callingstate)
 //
 //==========================================================================
+
+ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
+{
+	return Emit(build, false);
+}
 
 ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build, bool tailcall)
 {
@@ -3191,17 +3180,17 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build, bool tailcall)
 		}
 	}
 	// Get a constant register for this function
-	int funcaddr = build->GetConstantAddress(Function->Variants[0].Implementation, ATAG_OBJECT);
+	VMFunction *vmfunc = Function->Variants[0].Implementation;
+	int funcaddr = build->GetConstantAddress(vmfunc, ATAG_OBJECT);
 	// Emit the call
 	if (tailcall)
 	{ // Tail call
 		build->Emit(OP_TAIL_K, funcaddr, count, 0);
 		return ExpEmit();
 	}
-	else if (ReturnType != TypeVoid)
+	else if (vmfunc->Proto->ReturnTypes.Size() > 0)
 	{ // Call, expecting one result
-		assert(ReturnType != NULL);
-		ExpEmit reg(build, ReturnType->GetRegType());
+		ExpEmit reg(build, vmfunc->Proto->ReturnTypes[0]->GetRegType());
 		build->Emit(OP_CALL_K, funcaddr, count, 1);
 		build->Emit(OP_RESULT, 0, reg.RegType, reg.RegNum);
 		return reg;
@@ -3331,7 +3320,7 @@ FxExpression *FxSequence::Resolve(FCompileContext &ctx)
 	CHECKRESOLVED();
 	for (unsigned i = 0; i < Expressions.Size(); ++i)
 	{
-		if (NULL == (Expressions[i] = static_cast<FxTailable *>(Expressions[i]->Resolve(ctx))))
+		if (NULL == (Expressions[i] = Expressions[i]->Resolve(ctx)))
 		{
 			delete this;
 			return NULL;
@@ -3346,11 +3335,11 @@ FxExpression *FxSequence::Resolve(FCompileContext &ctx)
 //
 //==========================================================================
 
-ExpEmit FxSequence::Emit(VMFunctionBuilder *build, bool tailcall)
+ExpEmit FxSequence::Emit(VMFunctionBuilder *build)
 {
 	for (unsigned i = 0; i < Expressions.Size(); ++i)
 	{
-		ExpEmit v = Expressions[i]->Emit(build, tailcall ? i == Expressions.Size()-1 : false);
+		ExpEmit v = Expressions[i]->Emit(build);
 		// Throw away any result. We don't care about it.
 		v.Free(build);
 	}
@@ -3378,9 +3367,9 @@ VMFunction *FxSequence::GetDirectFunction()
 //
 //==========================================================================
 
-FxIfStatement::FxIfStatement(FxExpression *cond, FxTailable *true_part,
-	FxTailable *false_part, const FScriptPosition &pos)
-: FxTailable(pos)
+FxIfStatement::FxIfStatement(FxExpression *cond, FxExpression *true_part,
+	FxExpression *false_part, const FScriptPosition &pos)
+: FxExpression(pos)
 {
 	Condition = cond;
 	WhenTrue = true_part;
@@ -3407,12 +3396,12 @@ FxExpression *FxIfStatement::Resolve(FCompileContext &ctx)
 	ABORT(Condition);
 	if (WhenTrue != NULL)
 	{
-		WhenTrue = static_cast<FxTailable *>(WhenTrue->Resolve(ctx));
+		WhenTrue = WhenTrue->Resolve(ctx);
 		ABORT(WhenTrue);
 	}
 	if (WhenFalse != NULL)
 	{
-		WhenFalse = static_cast<FxTailable *>(WhenFalse->Resolve(ctx));
+		WhenFalse = WhenFalse->Resolve(ctx);
 		ABORT(WhenFalse);
 	}
 	ValueType = VAL_Unknown;
@@ -3422,7 +3411,7 @@ FxExpression *FxIfStatement::Resolve(FCompileContext &ctx)
 		ExpVal condval = static_cast<FxConstant *>(Condition)->GetValue();
 		bool result = condval.GetBool();
 
-		FxTailable *e = result ? WhenTrue : WhenFalse;
+		FxExpression *e = result ? WhenTrue : WhenFalse;
 		delete (result ? WhenFalse : WhenTrue);
 		WhenTrue = WhenFalse = NULL;
 		delete this;
@@ -3431,11 +3420,11 @@ FxExpression *FxIfStatement::Resolve(FCompileContext &ctx)
 	return this;
 }
 
-ExpEmit FxIfStatement::Emit(VMFunctionBuilder *build, bool tailcall)
+ExpEmit FxIfStatement::Emit(VMFunctionBuilder *build)
 {
 	ExpEmit v;
 	size_t jumpspot;
-	FxTailable *path1, *path2;
+	FxExpression *path1, *path2;
 	int condcheck;
 
 	// This is pretty much copied from FxConditional, except we don't
@@ -3465,24 +3454,18 @@ ExpEmit FxIfStatement::Emit(VMFunctionBuilder *build, bool tailcall)
 	cond.Free(build);
 
 	// Evaluate first path
-	v = path1->Emit(build, tailcall);
+	v = path1->Emit(build);
 	v.Free(build);
 	if (path2 != NULL)
 	{
 		size_t path1jump = build->Emit(OP_JMP, 0);
 		// Evaluate second path
 		build->BackpatchToHere(jumpspot);
-		v = path2->Emit(build, tailcall);
+		v = path2->Emit(build);
 		v.Free(build);
 		jumpspot = path1jump;
 	}
 	build->BackpatchToHere(jumpspot);
-	if (tailcall)
-	{
-		// When tailcall is true, execution is not expected to get past
-		// this if statement, so issue a RET.
-		build->Emit(OP_RET, RET_FINAL, REGT_NIL, 0);
-	}
 	return ExpEmit();
 }
 
@@ -3490,14 +3473,35 @@ ExpEmit FxIfStatement::Emit(VMFunctionBuilder *build, bool tailcall)
 //
 //==========================================================================
 
-FxReturnStatement::FxReturnStatement(const FScriptPosition &pos)
-: FxTailable(pos)
+FxReturnStatement::FxReturnStatement(FxVMFunctionCall *call, const FScriptPosition &pos)
+: FxExpression(pos), Call(call)
 {
 }
 
-ExpEmit FxReturnStatement::Emit(VMFunctionBuilder *build, bool tailcall)
+FxExpression *FxReturnStatement::Resolve(FCompileContext &ctx)
 {
-	build->Emit(OP_RET, RET_FINAL, REGT_NIL, 0);
+	CHECKRESOLVED();
+	if (Call != NULL)
+	{
+		Call = static_cast<FxVMFunctionCall *>(Call->Resolve(ctx));
+		ABORT(Call);
+	}
+	return this;
+}
+
+ExpEmit FxReturnStatement::Emit(VMFunctionBuilder *build)
+{
+	// If we return nothing, use a regular RET opcode. If we return
+	// something, use TAIL to call the function. Our return type
+	// should be compatible with the called function's return type.
+	if (Call == NULL)
+	{
+		build->Emit(OP_RET, RET_FINAL, REGT_NIL, 0);
+	}
+	else
+	{
+		Call->Emit(build, true);
+	}
 	return ExpEmit();
 }
 

@@ -415,6 +415,10 @@ class PStatePointer : public PBasicType
 	DECLARE_CLASS(PStatePointer, PBasicType);
 public:
 	PStatePointer();
+
+	virtual int GetStoreOp() const;
+	virtual int GetLoadOp() const;
+	virtual int GetRegType() const;
 };
 
 class PPointer : public PBasicType
@@ -582,7 +586,7 @@ class PFunction : public PSymbol
 public:
 	struct Variant
 	{
-		PPrototype *Proto;
+		//PPrototype *Proto;
 		VMFunction *Implementation;
 		TArray<DWORD> ArgFlags;		// Should be the same length as Proto->ArgumentTypes
 	};

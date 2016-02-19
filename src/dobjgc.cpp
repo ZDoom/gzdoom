@@ -73,7 +73,7 @@
 #include "po_man.h"
 #include "autosegs.h"
 #include "v_video.h"
-#include "textures.h"
+#include "textures/textures.h"
 #include "r_utility.h"
 #include "menu/menu.h"
 #include "intermission/intermission.h"

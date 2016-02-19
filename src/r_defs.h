@@ -796,17 +796,17 @@ struct sector_t
 		return LowestFloorAt(a->X(), a->Y(), resultsec);
 	}
 
-	fixed_t NextHighestCeilingAt(fixed_t x, fixed_t y, fixed_t z, sector_t **resultsec = NULL, F3DFloor **resultffloor = NULL);
-	fixed_t NextLowestFloorAt(fixed_t x, fixed_t y, fixed_t z, sector_t **resultsec = NULL, F3DFloor **resultffloor = NULL);
+	fixed_t NextHighestCeilingAt(fixed_t x, fixed_t y, fixed_t z, int flags = 0, sector_t **resultsec = NULL, F3DFloor **resultffloor = NULL);
+	fixed_t NextLowestFloorAt(fixed_t x, fixed_t y, fixed_t z, int flags = 0, fixed_t steph = 0, sector_t **resultsec = NULL, F3DFloor **resultffloor = NULL);
 
-	fixed_t NextHighestCeilingAt(AActor *a, fixed_t z, sector_t **resultsec = NULL, F3DFloor **resultffloor = NULL)
+	fixed_t NextHighestCeilingAt(AActor *a, fixed_t z, int flags = 0, sector_t **resultsec = NULL, F3DFloor **resultffloor = NULL)
 	{
-		return NextHighestCeilingAt(a->X(), a->Y(), z, resultsec, resultffloor);
+		return NextHighestCeilingAt(a->X(), a->Y(), z, flags, resultsec, resultffloor);
 	}
 
-	fixed_t NextLowestFloorAt(AActor *a, fixed_t z, sector_t **resultsec = NULL, F3DFloor **resultffloor = NULL)
+	fixed_t NextLowestFloorAt(AActor *a, fixed_t z, int flags, sector_t **resultsec = NULL, F3DFloor **resultffloor = NULL)
 	{
-		return NextLowestFloorAt(a->X(), a->Y(), z, resultsec, resultffloor);
+		return NextLowestFloorAt(a->X(), a->Y(), z, flags, a->MaxStepHeight, resultsec, resultffloor);
 	}
 
 	// Member variables

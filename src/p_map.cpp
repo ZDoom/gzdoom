@@ -261,51 +261,24 @@ static bool PIT_FindFloorCeiling(FMultiBlockLinesIterator::CheckResult &cres, co
 void P_GetFloorCeilingZ(FCheckPosition &tmf, int flags)
 {
 	sector_t *sec = (!(flags & FFCF_SAMESECTOR) || tmf.thing->Sector == NULL)? P_PointInSector(tmf.x, tmf.y) : tmf.thing->Sector;
+	F3DFloor *ffc, *fff;
 
-	if (flags & FFCF_NOPORTALS)
+	tmf.ceilingz = sec->NextHighestCeilingAt(tmf.thing, tmf.z + tmf.thing->height, flags, &tmf.floorsector, &ffc);
+	tmf.floorz = tmf.dropoffz = sec->NextLowestFloorAt(tmf.thing, tmf.z, flags, &tmf.ceilingsector, &fff);
+
+	if (fff)
 	{
-		tmf.thing->dropoffz = tmf.thing->floorz = sec->floorplane.ZatPoint(tmf.x, tmf.y);
-		tmf.thing->ceilingz = sec->ceilingplane.ZatPoint(tmf.x, tmf.y);
-		tmf.ceilingsector = tmf.floorsector = sec;
+		tmf.floorpic = *fff->top.texture;
+		tmf.floorterrain = fff->model->GetTerrain(fff->top.isceiling);
 	}
 	else
 	{
-		tmf.floorz = tmf.dropoffz = sec->LowestFloorAt(tmf.x, tmf.y, &tmf.floorsector);
-		tmf.ceilingz = sec->HighestCeilingAt(tmf.x, tmf.y, &tmf.ceilingsector);
+		tmf.floorpic = tmf.floorsector->GetTexture(sector_t::floor);
+		tmf.floorterrain = tmf.floorsector->GetTerrain(sector_t::floor);
 	}
-	tmf.floorpic = tmf.floorsector->GetTexture(sector_t::floor);
-	tmf.floorterrain = tmf.floorsector->GetTerrain(sector_t::floor);
-	tmf.ceilingpic = tmf.ceilingsector->GetTexture(sector_t::ceiling);
-
+	tmf.ceilingpic = ffc ? *ffc->bottom.texture : tmf.ceilingsector->GetTexture(sector_t::ceiling);
 	tmf.sector = sec;
 
-	for (unsigned int i = 0; i<sec->e->XFloor.ffloors.Size(); i++)
-	{
-		F3DFloor*  rover = sec->e->XFloor.ffloors[i];
-
-		if (!(rover->flags & FF_SOLID) || !(rover->flags & FF_EXISTS)) continue;
-
-		fixed_t ff_bottom = rover->bottom.plane->ZatPoint(tmf.x, tmf.y);
-		fixed_t ff_top = rover->top.plane->ZatPoint(tmf.x, tmf.y);
-
-		if (ff_top > tmf.floorz)
-		{
-			// either with feet above the 3D floor or feet with less than 'stepheight' map units inside
-			if (ff_top <= tmf.z || (!(flags & FFCF_3DRESTRICT) && (ff_bottom < tmf.z && ff_top < tmf.z + tmf.thing->MaxStepHeight)))
-			{
-				tmf.dropoffz = tmf.floorz = ff_top;
-				tmf.floorpic = *rover->top.texture;
-				tmf.floorterrain = rover->model->GetTerrain(rover->top.isceiling);
-				tmf.floorsector = sec;
-			}
-		}
-		if (ff_bottom <= tmf.ceilingz && ff_bottom > tmf.z + tmf.thing->height)
-		{
-			tmf.ceilingz = ff_bottom;
-			tmf.ceilingpic = *rover->bottom.texture;
-			tmf.ceilingsector = sec;
-		}
-	}
 }
 
 //==========================================================================

@@ -31,6 +31,7 @@
 #include "farchive.h"
 #include "r_utility.h"
 #include "a_sharedglobal.h"
+#include "p_local.h"
 #include "r_data/colormaps.h"
 
 
@@ -931,7 +932,7 @@ fixed_t sector_t::LowestFloorAt(fixed_t x, fixed_t y, sector_t **resultsec)
 }
 
 
-fixed_t sector_t::NextHighestCeilingAt(fixed_t x, fixed_t y, fixed_t z, sector_t **resultsec, F3DFloor **resultffloor)
+fixed_t sector_t::NextHighestCeilingAt(fixed_t x, fixed_t y, fixed_t z, int flags, sector_t **resultsec, F3DFloor **resultffloor)
 {
 	sector_t *sec = this;
 	fixed_t planeheight = FIXED_MIN;
@@ -951,7 +952,7 @@ fixed_t sector_t::NextHighestCeilingAt(fixed_t x, fixed_t y, fixed_t z, sector_t
 				return ffz;
 			}
 		}
-		if (sec->PortalBlocksMovement(ceiling) || planeheight >= sec->SkyBoxes[ceiling]->threshold)
+		if ((flags & FFCF_NOPORTALS) || sec->PortalBlocksMovement(ceiling) || planeheight >= sec->SkyBoxes[ceiling]->threshold)
 		{ // Use sector's floor
 			if (resultffloor) *resultffloor = NULL;
 			if (resultsec) *resultsec = sec;
@@ -968,7 +969,7 @@ fixed_t sector_t::NextHighestCeilingAt(fixed_t x, fixed_t y, fixed_t z, sector_t
 	}
 }
 
-fixed_t sector_t::NextLowestFloorAt(fixed_t x, fixed_t y, fixed_t z, sector_t **resultsec, F3DFloor **resultffloor)
+fixed_t sector_t::NextLowestFloorAt(fixed_t x, fixed_t y, fixed_t z, int flags, fixed_t steph, sector_t **resultsec, F3DFloor **resultffloor)
 {
 	sector_t *sec = this;
 	fixed_t planeheight = FIXED_MAX;
@@ -981,14 +982,20 @@ fixed_t sector_t::NextLowestFloorAt(fixed_t x, fixed_t y, fixed_t z, sector_t **
 			F3DFloor *ff = sec->e->XFloor.ffloors[i];
 
 			fixed_t ffz = ff->top.plane->ZatPoint(x, y);
-			if ((ff->flags & (FF_EXISTS | FF_SOLID)) == (FF_EXISTS | FF_SOLID) && z >= ffz)
-			{ // This floor is beneath our feet.
-				if (resultsec) *resultsec = sec;
-				if (resultffloor) *resultffloor = ff;
-				return ffz;
+			fixed_t ffb = ff->bottom.plane->ZatPoint(x, y);
+
+			// either with feet above the 3D floor or feet with less than 'stepheight' map units inside
+			if ((ff->flags & (FF_EXISTS | FF_SOLID)) == (FF_EXISTS | FF_SOLID))
+			{
+				if (z >= ffz || (!(flags & FFCF_3DRESTRICT) && (ffb < z && ffz < z + steph)))
+				{ // This floor is beneath our feet.
+					if (resultsec) *resultsec = sec;
+					if (resultffloor) *resultffloor = ff;
+					return ffz;
+				}
 			}
 		}
-		if (sec->PortalBlocksMovement(sector_t::floor) || planeheight <= sec->SkyBoxes[floor]->threshold)
+		if ((flags & FFCF_NOPORTALS) || sec->PortalBlocksMovement(sector_t::floor) || planeheight <= sec->SkyBoxes[floor]->threshold)
 		{ // Use sector's floor
 			if (resultffloor) *resultffloor = NULL;
 			if (resultsec) *resultsec = sec;
@@ -1216,45 +1223,4 @@ int side_t::GetLightLevel (bool foggy, int baselight, bool is3dlight, int *pfake
 		baselight += this->Light;
 	}
 	return baselight;
-}
-
-#include "c_dispatch.h"
-#include "d_player.h"
-
-CCMD(highestceiling)
-{
-	sector_t *sec;
-	fixed_t h = players[consoleplayer].mo->Sector->HighestCeilingAt(players[consoleplayer].mo, &sec);
-	Printf("Check at position %f,%f, height = %f, srcsector = %d dstsector = %d, srcgroup = %d, dstgroup = %d\n",
-		players[consoleplayer].mo->X() / 65536., players[consoleplayer].mo->Y() / 65536., h / 65536.,
-		players[consoleplayer].mo->Sector->sectornum, sec->sectornum, players[consoleplayer].mo->Sector->PortalGroup, sec->PortalGroup);
-}
-
-CCMD(lowestfloor)
-{
-	sector_t *sec;
-	fixed_t h = players[consoleplayer].mo->Sector->LowestFloorAt(players[consoleplayer].mo, &sec);
-	Printf("Check at position %f,%f, height = %f, srcsector = %d dstsector = %d, srcgroup = %d, dstgroup = %d\n",
-		players[consoleplayer].mo->X() / 65536., players[consoleplayer].mo->Y() / 65536., h / 65536.,
-		players[consoleplayer].mo->Sector->sectornum, sec->sectornum, players[consoleplayer].mo->Sector->PortalGroup, sec->PortalGroup);
-}
-
-CCMD(nexthighestceiling)
-{
-	sector_t *sec;
-	F3DFloor *ff;
-	fixed_t h = players[consoleplayer].mo->Sector->NextHighestCeilingAt(players[consoleplayer].mo, players[consoleplayer].mo->Top(), &sec, &ff);
-	Printf("Check at position %f,%f, height = %f, srcsector = %d dstsector = %d, srcgroup = %d, dstgroup = %d, 3dfloor = %d\n",
-		players[consoleplayer].mo->X() / 65536., players[consoleplayer].mo->Y() / 65536., h / 65536.,
-		players[consoleplayer].mo->Sector->sectornum, sec->sectornum, players[consoleplayer].mo->Sector->PortalGroup, sec->PortalGroup, !!ff);
-}
-
-CCMD(nextlowestfloor)
-{
-	sector_t *sec;
-	F3DFloor *ff;
-	fixed_t h = players[consoleplayer].mo->Sector->NextLowestFloorAt(players[consoleplayer].mo, players[consoleplayer].mo->Z(), &sec, &ff);
-	Printf("Check at position %f,%f, height = %f, srcsector = %d dstsector = %d, srcgroup = %d, dstgroup = %d, 3dfloor = %d\n",
-		players[consoleplayer].mo->X() / 65536., players[consoleplayer].mo->Y() / 65536., h / 65536.,
-		players[consoleplayer].mo->Sector->sectornum, sec->sectornum, players[consoleplayer].mo->Sector->PortalGroup, sec->PortalGroup, !!ff);
 }

@@ -158,6 +158,7 @@ enum
 class VMFunction : public DObject
 {
 	DECLARE_ABSTRACT_CLASS(VMFunction, DObject);
+	HAS_OBJECT_POINTERS;
 public:
 	bool Native;
 	FName Name;

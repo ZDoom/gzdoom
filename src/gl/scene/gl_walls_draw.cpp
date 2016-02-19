@@ -310,7 +310,7 @@ void GLWall::RenderMirrorSurface()
 void GLWall::RenderTextured(int rflags)
 {
 	int tmode = gl_RenderState.GetTextureMode();
-	int rel = getExtraLight();
+	int rel = rellight + getExtraLight();
 
 	if (flags & GLWF_GLOW)
 	{

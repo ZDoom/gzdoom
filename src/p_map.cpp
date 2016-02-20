@@ -531,11 +531,14 @@ bool P_TeleportMove(AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefra
 
 void P_PlayerStartStomp(AActor *actor, bool mononly)
 {
-	AActor *th;
-	FBlockThingsIterator it(FBoundingBox(actor->X(), actor->Y(), actor->radius));
+	FPortalGroupArray grouplist;
+	FMultiBlockThingsIterator mit(grouplist, actor);
+	FMultiBlockThingsIterator::CheckResult cres;
 
-	while ((th = it.Next()))
+	while ((mit.Next(&cres)))
 	{
+		AActor *th = cres.thing;
+
 		if (!(th->flags & MF_SHOOTABLE))
 			continue;
 
@@ -543,7 +546,8 @@ void P_PlayerStartStomp(AActor *actor, bool mononly)
 		if (th == actor || (th->player == actor->player && th->player != NULL))
 			continue;
 
-		if (!th->intersects(actor))
+		fixed_t blockdist = th->radius + actor->radius;
+		if (abs(th->X() - cres.position.x) >= blockdist || abs(th->Y() - cres.position.y) >= blockdist)
 			continue;
 
 		// only kill monsters and other players

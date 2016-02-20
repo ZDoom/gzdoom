@@ -49,7 +49,7 @@ endif()
 # a system-wide version.
 
 # Construct version numbers for searching for the FMOD library on Linux.
-set( MINOR_VERSIONS "50" "49" "48" "47" "46" "45" "44" "43" "42" "41"
+set( MINOR_VERSIONS "61" "50" "49" "48" "47" "46" "45" "44" "43" "42" "41"
 	"40" "39" "38" "37" "36" "35" "34" "33" "32" "31" "30" "29" "28"
 	"27" "26" "25" "24" "23" "22" "21" "20" "21" "19" "18" "17" "16"
 	"15" "14" "13" "12" "11" "10" "09" "08" "07" "06" "05" "04" "03"
@@ -73,7 +73,12 @@ set( FMOD_DIR_VERSIONS ${FMOD_DIR_VERSIONS} "../fmod" )
 foreach( majver ${MAJOR_VERSIONS} )
 	foreach( minver ${MINOR_VERSIONS} )
 		set( FMOD_VERSIONS ${FMOD_VERSIONS} "fmodex${X64}-4.${majver}.${minver}" )
-		set( FMOD_DIR_VERSIONS ${FMOD_DIR_VERSIONS} "${CMAKE_HOME_DIRECTORY}/fmodapi4${majver}${minver}linux${X64}" )
+		# FMOD Ex version 4.44 unified 32-bit and 64-bit linux packages into one.
+		if( NOT majver EQUAL "44" )
+			set( FMOD_DIR_VERSIONS ${FMOD_DIR_VERSIONS} "${CMAKE_HOME_DIRECTORY}/fmodapi4${majver}${minver}linux${X64}" )
+		else()
+			set( FMOD_DIR_VERSIONS ${FMOD_DIR_VERSIONS} "${CMAKE_HOME_DIRECTORY}/fmodapi4${majver}${minver}linux" )
+		endif()
 	endforeach()
 	foreach( dir ${FMOD_DIR_VERSIONS} )
 		set( FMOD_LOCAL_INC_DIRS ${FMOD_LOCAL_INC_DIRS} "${dir}/api/inc" )

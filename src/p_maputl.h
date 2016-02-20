@@ -224,7 +224,8 @@ public:
 		int portalflags;
 	};
 
-	FMultiBlockLinesIterator(FPortalGroupArray &check, AActor *origin, fixed_t checkx = FIXED_MAX, fixed_t checky = FIXED_MAX, fixed_t checkradius = -1);
+	FMultiBlockLinesIterator(FPortalGroupArray &check, AActor *origin, fixed_t checkradius = -1);
+	FMultiBlockLinesIterator(FPortalGroupArray &check, fixed_t checkx, fixed_t checky, fixed_t checkz, fixed_t checkh, fixed_t checkradius);
 	bool Next(CheckResult *item);
 	void Reset();
 	// for stopping group traversal through portals. Only the calling code can decide whether this is needed so this needs to be set from the outside.
@@ -274,13 +275,51 @@ class FBlockThingsIterator
 	FBlockThingsIterator();
 
 	friend class FPathTraverse;
+	friend class FMultiBlockThingsIterator;
 
 public:
 	FBlockThingsIterator(int minx, int miny, int maxx, int maxy);
-	FBlockThingsIterator(const FBoundingBox &box);
+	FBlockThingsIterator(const FBoundingBox &box)
+	{
+		init(box);
+	}
+	void init(const FBoundingBox &box);
 	AActor *Next(bool centeronly = false);
 	void Reset() { StartBlock(minx, miny); }
 };
+
+class FMultiBlockThingsIterator
+{
+	FPortalGroupArray &checklist;
+	fixedvec3 checkpoint;
+	short basegroup;
+	short portalflags;
+	short index;
+	FBlockThingsIterator blockIterator;
+	FBoundingBox bbox;
+
+	void startIteratorForGroup(int group);
+
+public:
+
+	struct CheckResult
+	{
+		AActor *thing;
+		fixedvec3 position;
+		int portalflags;
+	};
+
+	FMultiBlockThingsIterator(FPortalGroupArray &check, AActor *origin, fixed_t checkradius = -1);
+	FMultiBlockThingsIterator(FPortalGroupArray &check, fixed_t checkx, fixed_t checky, fixed_t checkz, fixed_t checkh, fixed_t checkradius);
+	bool Next(CheckResult *item);
+	void Reset();
+	const FBoundingBox &Box() const
+	{
+		return bbox;
+	}
+};
+
+
 
 class FPathTraverse
 {

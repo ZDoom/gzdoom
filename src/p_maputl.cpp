@@ -711,17 +711,33 @@ line_t *FBlockLinesIterator::Next()
 //
 //===========================================================================
 
-FMultiBlockLinesIterator::FMultiBlockLinesIterator(FPortalGroupArray &check, AActor *origin, fixed_t checkx, fixed_t checky, fixed_t checkradius)
+FMultiBlockLinesIterator::FMultiBlockLinesIterator(FPortalGroupArray &check, AActor *origin, fixed_t checkradius)
 	: checklist(check)
 {
 	checkpoint = origin->Pos();
-	if (checkx != FIXED_MAX) checkpoint.x = checkx;
-	if (checky != FIXED_MAX) checkpoint.y = checky;
-	P_CollectConnectedGroups(origin->Sector->PortalGroup, checkpoint, origin->Top(), checkradius, checklist);
+	if (!check.inited) P_CollectConnectedGroups(origin->Sector->PortalGroup, checkpoint, origin->Top(), checkradius, checklist);
 	checkpoint.z = checkradius;
 	basegroup = origin->Sector->PortalGroup;
 	Reset();
 }
+
+FMultiBlockLinesIterator::FMultiBlockLinesIterator(FPortalGroupArray &check, fixed_t checkx, fixed_t checky, fixed_t checkz, fixed_t checkh, fixed_t checkradius)
+	: checklist(check)
+{
+	checkpoint.x = checkx;
+	checkpoint.y = checky;
+	checkpoint.z = checkz;
+	basegroup = P_PointInSector(checkx, checky)->PortalGroup;
+	if (!check.inited) P_CollectConnectedGroups(basegroup, checkpoint, checkz + checkh, checkradius, checklist);
+	checkpoint.z = checkradius;
+	Reset();
+}
+
+//===========================================================================
+//
+// Go up a ceiling portal
+//
+//===========================================================================
 
 bool FMultiBlockLinesIterator::GoUp(fixed_t x, fixed_t y)
 {
@@ -739,6 +755,12 @@ bool FMultiBlockLinesIterator::GoUp(fixed_t x, fixed_t y)
 	return false;
 }
 
+//===========================================================================
+//
+// Go down a floor portal
+//
+//===========================================================================
+
 bool FMultiBlockLinesIterator::GoDown(fixed_t x, fixed_t y)
 {
 	if (continuedown)
@@ -754,6 +776,12 @@ bool FMultiBlockLinesIterator::GoDown(fixed_t x, fixed_t y)
 	}
 	return false;
 }
+
+//===========================================================================
+//
+// Gets the next line - also manages switching between portal groups 
+//
+//===========================================================================
 
 bool FMultiBlockLinesIterator::Next(FMultiBlockLinesIterator::CheckResult *item)
 {
@@ -808,6 +836,12 @@ bool FMultiBlockLinesIterator::Next(FMultiBlockLinesIterator::CheckResult *item)
 	return Next(item);
 }
 
+//===========================================================================
+//
+// start iterating a new group
+//
+//===========================================================================
+
 void FMultiBlockLinesIterator::startIteratorForGroup(int group)
 {
 	offset = Displacements(basegroup, group);
@@ -816,6 +850,12 @@ void FMultiBlockLinesIterator::startIteratorForGroup(int group)
 	bbox.setBox(offset.x, offset.y, checkpoint.z);
 	blockIterator.init(bbox);
 }
+
+//===========================================================================
+//
+// Resets the iterator
+//
+//===========================================================================
 
 void FMultiBlockLinesIterator::Reset()
 {
@@ -851,8 +891,7 @@ FBlockThingsIterator::FBlockThingsIterator(int _minx, int _miny, int _maxx, int 
 	Reset();
 }
 
-FBlockThingsIterator::FBlockThingsIterator(const FBoundingBox &box)
-: DynHash(0)
+void FBlockThingsIterator::init(const FBoundingBox &box)
 {
 	maxy = GetSafeBlockY(box.Top() - bmaporgy);
 	miny = GetSafeBlockY(box.Bottom() - bmaporgy);
@@ -993,6 +1032,108 @@ AActor *FBlockThingsIterator::Next(bool centeronly)
 	}
 }
 
+
+
+//===========================================================================
+//
+// FMultiBlockThingsIterator :: FMultiBlockThingsIterator
+//
+// An iterator that can check multiple portal groups.
+//
+//===========================================================================
+
+FMultiBlockThingsIterator::FMultiBlockThingsIterator(FPortalGroupArray &check, AActor *origin, fixed_t checkradius)
+	: checklist(check)
+{
+	checkpoint = origin->Pos();
+	if (!check.inited) P_CollectConnectedGroups(origin->Sector->PortalGroup, checkpoint, origin->Top(), checkradius, checklist);
+	checkpoint.z = checkradius;
+	basegroup = origin->Sector->PortalGroup;
+	Reset();
+}
+
+FMultiBlockThingsIterator::FMultiBlockThingsIterator(FPortalGroupArray &check, fixed_t checkx, fixed_t checky, fixed_t checkz, fixed_t checkh, fixed_t checkradius)
+	: checklist(check)
+{
+	checkpoint.x = checkx;
+	checkpoint.y = checky;
+	checkpoint.z = checkz;
+	basegroup = P_PointInSector(checkx, checky)->PortalGroup;
+	if (!check.inited) P_CollectConnectedGroups(basegroup, checkpoint, checkz + checkh, checkradius, checklist);
+	checkpoint.z = checkradius;
+	Reset();
+}
+
+//===========================================================================
+//
+// Gets the next line - also manages switching between portal groups 
+//
+//===========================================================================
+
+bool FMultiBlockThingsIterator::Next(FMultiBlockThingsIterator::CheckResult *item)
+{
+	AActor *thing = blockIterator.Next();
+	if (thing != NULL)
+	{
+		item->thing = thing;
+		item->position = checkpoint + Displacements(basegroup, thing->Sector->PortalGroup);
+		item->portalflags = portalflags;
+		return true;
+	}
+	bool onlast = unsigned(index + 1) >= checklist.Size();
+	int nextflags = onlast ? 0 : checklist[index + 1] & FPortalGroupArray::FLAT;
+
+	if (onlast)
+	{
+		return false;
+	}
+
+	index++;
+	startIteratorForGroup(checklist[index] & ~FPortalGroupArray::FLAT);
+	switch (nextflags)
+	{
+	case FPortalGroupArray::UPPER:
+		portalflags = FFCF_NOFLOOR;
+		break;
+
+	case FPortalGroupArray::LOWER:
+		portalflags = FFCF_NOCEILING;
+		break;
+
+	default:
+		portalflags = 0;
+	}
+
+	return Next(item);
+}
+
+//===========================================================================
+//
+// start iterating a new group
+//
+//===========================================================================
+
+void FMultiBlockThingsIterator::startIteratorForGroup(int group)
+{
+	fixedvec2 offset = Displacements(basegroup, group);
+	offset.x += checkpoint.x;
+	offset.y += checkpoint.y;
+	bbox.setBox(offset.x, offset.y, checkpoint.z);
+	blockIterator.init(bbox);
+}
+
+//===========================================================================
+//
+// Resets the iterator
+//
+//===========================================================================
+
+void FMultiBlockThingsIterator::Reset()
+{
+	index = -1;
+	portalflags = 0;
+	startIteratorForGroup(basegroup);
+}
 
 //===========================================================================
 //

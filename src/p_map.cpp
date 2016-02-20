@@ -334,7 +334,7 @@ void P_FindFloorCeiling(AActor *actor, int flags)
 	validcount++;
 
 	FPortalGroupArray grouplist;
-	FMultiBlockLinesIterator mit(grouplist, actor, tmf.x, tmf.y, actor->radius);
+	FMultiBlockLinesIterator mit(grouplist, actor);
 	FMultiBlockLinesIterator::CheckResult cres;
 
 	// if we already have a valid floor/ceiling sector within the current sector, 
@@ -420,7 +420,7 @@ bool P_TeleportMove(AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefra
 	thing->SetZ(z);
 
 	FPortalGroupArray grouplist;
-	FMultiBlockLinesIterator mit(grouplist, thing, tmf.x, tmf.y, thing->radius);
+	FMultiBlockLinesIterator mit(grouplist, x, y, z, thing->height, thing->radius);
 	FMultiBlockLinesIterator::CheckResult cres;
 
 	while (mit.Next(&cres))
@@ -431,11 +431,13 @@ bool P_TeleportMove(AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefra
 
 	if (tmf.touchmidtex) tmf.dropoffz = tmf.floorz;
 
-	FBlockThingsIterator it2(FBoundingBox(x, y, thing->radius));
-	AActor *th;
+	FMultiBlockThingsIterator mit2(grouplist, x, y, z, thing->height, thing->radius);
+	FMultiBlockThingsIterator::CheckResult cres2;
 
-	while ((th = it2.Next()))
+	while (mit2.Next(&cres2))
 	{
+		AActor *th = cres2.thing;
+
 		if (!(th->flags & MF_SHOOTABLE))
 			continue;
 
@@ -444,7 +446,7 @@ bool P_TeleportMove(AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefra
 			continue;
 
 		fixed_t blockdist = th->radius + tmf.thing->radius;
-		if (abs(th->X() - tmf.x) >= blockdist || abs(th->Y() - tmf.y) >= blockdist)
+		if (abs(th->X() - cres.position.x) >= blockdist || abs(th->Y() - cres.position.y) >= blockdist)
 			continue;
 
 		if ((th->flags2 | tmf.thing->flags2) & MF2_THRUACTORS)

@@ -162,10 +162,28 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef,
 		front = linedef->frontsector;
 		back = linedef->backsector;
 
-		fc = front->ceilingplane.ZatPoint (x, y);
-		ff = front->floorplane.ZatPoint (x, y);
-		bc = back->ceilingplane.ZatPoint (x, y);
-		bf = back->floorplane.ZatPoint (x, y);
+		if (!(flags & FFCF_NOPORTALS) && !linedef->frontsector->PortalBlocksMovement(sector_t::ceiling) && 
+			linedef->backsector->SkyBoxes[sector_t::ceiling] &&
+			linedef->frontsector->SkyBoxes[sector_t::ceiling]->Sector->PortalGroup == linedef->backsector->SkyBoxes[sector_t::ceiling]->Sector->PortalGroup)
+		{
+			fc = bc = FIXED_MAX;
+		}
+		else
+		{
+			fc = front->ceilingplane.ZatPoint(x, y);
+			bc = back->ceilingplane.ZatPoint(x, y);
+		}
+		if (!(flags & FFCF_NOPORTALS) && !linedef->frontsector->PortalBlocksMovement(sector_t::floor) &&
+			linedef->backsector->SkyBoxes[sector_t::floor] &&
+			linedef->frontsector->SkyBoxes[sector_t::floor]->Sector->PortalGroup == linedef->backsector->SkyBoxes[sector_t::floor]->Sector->PortalGroup)
+		{
+			ff = bf = FIXED_MIN;
+		}
+		else
+		{
+			ff = front->floorplane.ZatPoint(x, y);
+			bf = back->floorplane.ZatPoint(x, y);
+		}
 
 		/*Printf ("]]]]]] %d %d\n", ff, bf);*/
 

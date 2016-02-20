@@ -205,7 +205,7 @@ class FMultiBlockLinesIterator
 	fixedvec2 offset;
 	short basegroup;
 	short portalflags;
-	WORD index;
+	short index;
 	bool continueup;
 	bool continuedown;
 	FBlockLinesIterator blockIterator;

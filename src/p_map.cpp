@@ -194,8 +194,9 @@ static inline fixedvec2 FindRefPoint(line_t *ld, fixedvec2 pos)
 // only3d set means to only check against 3D floors and midtexes.
 //
 //==========================================================================
+bool ffcf_verbose;
 
-static bool PIT_FindFloorCeiling(FMultiBlockLinesIterator::CheckResult &cres, const FBoundingBox &box, FCheckPosition &tmf, int flags)
+static bool PIT_FindFloorCeiling(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::CheckResult &cres, const FBoundingBox &box, FCheckPosition &tmf, int flags)
 {
 	line_t *ld = cres.line;
 
@@ -209,6 +210,12 @@ static bool PIT_FindFloorCeiling(FMultiBlockLinesIterator::CheckResult &cres, co
 		return true;
 
 	// A line has been hit
+
+	if (ffcf_verbose)
+	{
+		Printf("Hit line %d at position %f,%f, group %d\n",
+			int(ld - lines), FIXED2FLOAT(cres.position.x), FIXED2FLOAT(cres.position.y), ld->frontsector->PortalGroup);
+	}
 
 	if (!ld->backsector)
 	{ // One sided line
@@ -227,6 +234,8 @@ static bool PIT_FindFloorCeiling(FMultiBlockLinesIterator::CheckResult &cres, co
 		{
 			tmf.ceilingz = open.top;
 			if (open.topsec != NULL) tmf.floorsector = open.topsec;
+			if (ffcf_verbose) Printf("    Adjust ceilingz to %f\n", FIXED2FLOAT(open.top));
+			mit.StopUp();
 		}
 	}
 
@@ -238,6 +247,8 @@ static bool PIT_FindFloorCeiling(FMultiBlockLinesIterator::CheckResult &cres, co
 			if (open.bottomsec != NULL) tmf.floorsector = open.bottomsec;
 			tmf.touchmidtex = open.touchmidtex;
 			tmf.abovemidtex = open.abovemidtex;
+			if (ffcf_verbose) Printf("    Adjust floorz to %f\n", FIXED2FLOAT(open.bottom));
+			if (tmf.floorz > tmf.dropoffz + tmf.thing->MaxDropOffHeight) mit.StopDown();
 		}
 		else if (open.bottom == tmf.floorz)
 		{
@@ -245,9 +256,11 @@ static bool PIT_FindFloorCeiling(FMultiBlockLinesIterator::CheckResult &cres, co
 			tmf.abovemidtex |= open.abovemidtex;
 		}
 
-		if (open.lowfloor < tmf.dropoffz)
+		if (open.lowfloor < tmf.dropoffz && open.lowfloor > FIXED_MIN)
 		{
 			tmf.dropoffz = open.lowfloor;
+			if (ffcf_verbose) Printf("    Adjust dropoffz to %f\n", FIXED2FLOAT(open.bottom));
+			if (tmf.floorz > tmf.dropoffz + tmf.thing->MaxDropOffHeight) mit.StopDown();
 		}
 	}
 	return true;
@@ -266,8 +279,8 @@ void P_GetFloorCeilingZ(FCheckPosition &tmf, int flags)
 	sector_t *sec = (!(flags & FFCF_SAMESECTOR) || tmf.thing->Sector == NULL)? P_PointInSector(tmf.x, tmf.y) : tmf.thing->Sector;
 	F3DFloor *ffc, *fff;
 
-	tmf.ceilingz = sec->NextHighestCeilingAt(tmf.thing, tmf.z + tmf.thing->height, flags, &tmf.floorsector, &ffc);
-	tmf.floorz = tmf.dropoffz = sec->NextLowestFloorAt(tmf.thing, tmf.z, flags, &tmf.ceilingsector, &fff);
+	tmf.ceilingz = sec->NextHighestCeilingAt(tmf.thing, tmf.z + tmf.thing->height, flags, &tmf.ceilingsector, &ffc);
+	tmf.floorz = tmf.dropoffz = sec->NextLowestFloorAt(tmf.thing, tmf.z, flags, &tmf.floorsector, &fff);
 
 	if (fff)
 	{
@@ -314,6 +327,7 @@ void P_FindFloorCeiling(AActor *actor, int flags)
 	actor->floorsector = tmf.floorsector;
 	actor->ceilingpic = tmf.ceilingpic;
 	actor->ceilingsector = tmf.ceilingsector;
+	if (ffcf_verbose) Printf("Starting with ceilingz = %f, floorz = %f\n", FIXED2FLOAT(tmf.ceilingz), FIXED2FLOAT(tmf.floorz));
 
 	tmf.touchmidtex = false;
 	tmf.abovemidtex = false;
@@ -330,7 +344,7 @@ void P_FindFloorCeiling(AActor *actor, int flags)
 
 	while ((mit.Next(&cres)))
 	{
-		PIT_FindFloorCeiling(cres, mit.Box(), tmf, flags|cres.portalflags);
+		PIT_FindFloorCeiling(mit, cres, mit.Box(), tmf, flags|cres.portalflags);
 	}
 
 	if (tmf.touchmidtex) tmf.dropoffz = tmf.floorz;
@@ -355,6 +369,13 @@ void P_FindFloorCeiling(AActor *actor, int flags)
 	}
 }
 
+// Debug CCMD for checking errors in the MultiBlockLinesIterator (needs to be removed when this code is complete)
+CCMD(ffcf)
+{
+	ffcf_verbose = true;
+	P_FindFloorCeiling(players[0].mo, 0);
+	ffcf_verbose = false;
+}
 //==========================================================================
 //
 // TELEPORT MOVE
@@ -404,7 +425,7 @@ bool P_TeleportMove(AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefra
 
 	while (mit.Next(&cres))
 	{
-		PIT_FindFloorCeiling(cres, mit.Box(), tmf, 0);
+		PIT_FindFloorCeiling(mit, cres, mit.Box(), tmf, 0);
 	}
 	thing->SetZ(savedz);
 

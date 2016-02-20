@@ -446,7 +446,7 @@ bool P_TeleportMove(AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefra
 			continue;
 
 		fixed_t blockdist = th->radius + tmf.thing->radius;
-		if (abs(th->X() - cres.position.x) >= blockdist || abs(th->Y() - cres.position.y) >= blockdist)
+		if (abs(th->X() - cres2.position.x) >= blockdist || abs(th->Y() - cres2.position.y) >= blockdist)
 			continue;
 
 		if ((th->flags2 | tmf.thing->flags2) & MF2_THRUACTORS)

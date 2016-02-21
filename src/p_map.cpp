@@ -76,6 +76,7 @@ static FRandom pr_crunch("DoCrunch");
 // keep track of special lines as they are hit,
 // but don't process them until the move is proven valid
 TArray<line_t *> spechit;
+TArray<line_t *> portalhit;
 
 // Temporary holder for thing_sectorlist threads
 msecnode_t* sector_list = NULL;		// phares 3/16/98
@@ -414,8 +415,6 @@ bool P_TeleportMove(AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefra
 	tmf.touchmidtex = false;
 	tmf.abovemidtex = false;
 	P_GetFloorCeilingZ(tmf, 0);
-
-	spechit.Clear();
 
 	bool StompAlwaysFrags = ((thing->flags2 & MF2_TELESTOMP) || (level.flags & LEVEL_MONSTERSTELEFRAG) || telefrag) && !(thing->flags7 & MF7_NOTELESTOMP);
 
@@ -839,7 +838,6 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 	if (!(tm.thing->flags & MF_DROPOFF) &&
 		!(tm.thing->flags & (MF_NOGRAVITY | MF_NOCLIP)))
 	{
-		// Check 3D floors as well
 		if ((open.frontfloorplane.c < STEEPSLOPE) != (open.backfloorplane.c < STEEPSLOPE))
 		{
 			// on the boundary of a steep slope
@@ -847,7 +845,7 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 		}
 	}
 
-	// If the floor planes on both sides we should recalculate open.bottom at the actual position we are checking
+	// If the floor planes on both sides match we should recalculate open.bottom at the actual position we are checking
 	// This is to avoid bumpy movement when crossing a linedef with the same slope on both sides.
 	if (open.frontfloorplane == open.backfloorplane)
 	{
@@ -901,6 +899,10 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 	if (ld->special)
 	{
 		spechit.Push(ld);
+	}
+	if (ld->portalindex >= 0)
+	{
+		portalhit.Push(ld);
 	}
 
 	return true;
@@ -1013,9 +1015,8 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 	if (!((thing->flags & (MF_SOLID | MF_SPECIAL | MF_SHOOTABLE)) || thing->flags6 & MF6_TOUCHY))
 		return true;	// can't hit thing
 
-	fixedvec3 thingpos = thing->PosRelative(tm.thing);
 	fixed_t blockdist = thing->radius + tm.thing->radius;
-	if (abs(thingpos.x - tm.x) >= blockdist || abs(thingpos.y - tm.y) >= blockdist)
+	if (abs(thing->X() - cres.position.x) >= blockdist || abs(thing->Y() - cres.position.y) >= blockdist)
 		return true;
 
 	if ((thing->flags2 | tm.thing->flags2) & MF2_THRUACTORS)
@@ -1026,50 +1027,55 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 
 	tm.thing->BlockingMobj = thing;
 	topz = thing->Top();
-	if (!(i_compatflags & COMPATF_NO_PASSMOBJ) && !(tm.thing->flags & (MF_FLOAT | MF_MISSILE | MF_SKULLFLY | MF_NOGRAVITY)) &&
-		(thing->flags & MF_SOLID) && (thing->flags4 & MF4_ACTLIKEBRIDGE))
-	{
-		// [RH] Let monsters walk on actors as well as floors
-		if ((tm.thing->flags3 & MF3_ISMONSTER) &&
-			topz >= tm.floorz && topz <= tm.thing->Z() + tm.thing->MaxStepHeight)
-		{
-			// The commented-out if is an attempt to prevent monsters from walking off a
-			// thing further than they would walk off a ledge. I can't think of an easy
-			// way to do this, so I restrict them to only walking on bridges instead.
-			// Uncommenting the if here makes it almost impossible for them to walk on
-			// anything, bridge or otherwise.
-			//			if (abs(thing->x - tmx) <= thing->radius &&
-			//				abs(thing->y - tmy) <= thing->radius)
-			{
-				tm.stepthing = thing;
-				tm.floorz = topz;
-			}
-		}
-	}
 
 	// Both things overlap in x or y direction
 	bool unblocking = false;
 
-	if ((tm.FromPMove || tm.thing->player != NULL) && thing->flags&MF_SOLID)
+	// walking on other actors and unblocking is too messy through restricted portal types so disable it.
+	if (!(cres.portalflags & FFCF_RESTRICTEDPORTAL))
 	{
-		// Both actors already overlap. To prevent them from remaining stuck allow the move if it
-		// takes them further apart or the move does not change the position (when called from P_ChangeSector.)
-		if (tm.x == tm.thing->X() && tm.y == tm.thing->Y())
+		if (!(i_compatflags & COMPATF_NO_PASSMOBJ) && !(tm.thing->flags & (MF_FLOAT | MF_MISSILE | MF_SKULLFLY | MF_NOGRAVITY)) &&
+			(thing->flags & MF_SOLID) && (thing->flags4 & MF4_ACTLIKEBRIDGE))
 		{
-			unblocking = true;
-		}
-		else if (abs(thingpos.x - tm.thing->X()) < (thing->radius+tm.thing->radius) &&
-				 abs(thingpos.y - tm.thing->Y()) < (thing->radius+tm.thing->radius))
-
-		{
-			fixed_t newdist = thing->AproxDistance(tm.x, tm.y, tm.thing);
-			fixed_t olddist = thing->AproxDistance(tm.thing);
-
-			if (newdist > olddist)
+			// [RH] Let monsters walk on actors as well as floors
+			if (cres.zdiff != 0 && (tm.thing->flags3 & MF3_ISMONSTER) &&
+				topz >= tm.floorz && topz <= cres.position.z + tm.thing->MaxStepHeight)
 			{
-				// ... but not if they did not overlap in z-direction before but would after the move.
-				unblocking = !((tm.thing->Z() >= topz && tm.z < topz) ||
-					(tm.thing->Top() <= thingpos.z && tm.thing->Top() > thingpos.z));
+				// The commented-out if is an attempt to prevent monsters from walking off a
+				// thing further than they would walk off a ledge. I can't think of an easy
+				// way to do this, so I restrict them to only walking on bridges instead.
+				// Uncommenting the if here makes it almost impossible for them to walk on
+				// anything, bridge or otherwise.
+				//			if (abs(thing->x - tmx) <= thing->radius &&
+				//				abs(thing->y - tmy) <= thing->radius)
+				{
+					tm.stepthing = thing;
+					tm.floorz = topz;
+				}
+			}
+		}
+
+		if (((tm.FromPMove || tm.thing->player != NULL) && thing->flags&MF_SOLID))
+		{
+			fixedvec3 oldpos = tm.thing->PosRelative(thing);
+			// Both actors already overlap. To prevent them from remaining stuck allow the move if it
+			// takes them further apart or the move does not change the position (when called from P_ChangeSector.)
+			if (oldpos.x == thing->X() && oldpos.y == thing->Y())
+			{
+				unblocking = true;
+			}
+			else if (abs(thing->X() - oldpos.x) < (thing->radius + tm.thing->radius) &&
+				abs(thing->Y() - oldpos.y) < (thing->radius + tm.thing->radius))
+
+			{
+				fixed_t newdist = thing->AproxDistance(cres.position.x, cres.position.y);
+				fixed_t olddist = thing->AproxDistance(oldpos.x, oldpos.y);
+
+				if (newdist > olddist)
+				{
+					// unblock only if there's already a vertical overlap (or both actors are flagged not to overlap)
+					unblocking = (cres.position.z + tm.thing->height > thing->Z() && cres.position.z < topz) || (tm.thing->flags3 & thing->flags3 & MF3_DONTOVERLAP);
+				}
 			}
 		}
 	}
@@ -1087,7 +1093,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 			{ // Some things prefer not to overlap each other, if possible
 				return unblocking;
 			}
-			if ((tm.thing->Z() >= topz) || (tm.thing->Top() <= thing->Z()))
+			if ((cres.position.z >= topz) || (cres.position.z + tm.thing->height <= thing->Z()))
 				return true;
 		}
 	}
@@ -1103,7 +1109,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 			// or different species if DONTHARMSPECIES
 			(!(thing->flags6 & MF6_DONTHARMSPECIES) || thing->GetSpecies() != tm.thing->GetSpecies()) &&
 			// touches vertically
-			topz >= tm.thing->Z() && tm.thing->Z() + tm.thing->height >= thingpos.z &&
+			topz >= cres.position.z && cres.position.z + tm.thing->height >= thing->Z() &&
 			// prevents lost souls from exploding when fired by pain elementals
 			(thing->master != tm.thing && tm.thing->master != thing))
 			// Difference with MBF: MBF hardcodes the LS/PE check and lets actors of the same species
@@ -1206,11 +1212,11 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 		}
 
 		// Check if it went over / under
-		if (tm.thing->Z() > thingpos.z + clipheight)
+		if (cres.position.z > thing->Z() + clipheight)
 		{ // Over thing
 			return true;
 		}
-		if (tm.thing->Top() < thingpos.z)
+		if (cres.position.z + tm.thing->height < thing->Z())
 		{ // Under thing
 			return true;
 		}
@@ -1361,7 +1367,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 		// [RH] The next condition is to compensate for the extra height
 		// that gets added by P_CheckPosition() so that you cannot pick
 		// up things that are above your true height.
-		&& thingpos.z < tm.thing->Top() - tm.thing->MaxStepHeight)
+		&& thing->Z() < cres.position.z + tm.thing->height - tm.thing->MaxStepHeight)
 	{ // Can be picked up by tmthing
 		P_TouchSpecialThing(thing, tm.thing);	// can remove thing
 	}
@@ -1476,8 +1482,8 @@ bool P_CheckPosition(AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm, bo
 			// could end up stuck inside a wall.
 			AActor *BlockingMobj = thing->BlockingMobj;
 
-			// If this blocks through a line portal with a vertical displacement, it will always completely block. There is no way to step up onto such an actor.
-			if (BlockingMobj == NULL || (i_compatflags & COMPATF_NO_PASSMOBJ) || tcres.zdiff != 0)
+			// If this blocks through a restricted line portal, it will always completely block.
+			if (BlockingMobj == NULL || (i_compatflags & COMPATF_NO_PASSMOBJ) || (tcres.portalflags & FFCF_RESTRICTEDPORTAL))
 			{ // Thing slammed into something; don't let it move now.
 				thing->height = realheight;
 				return false;
@@ -1533,7 +1539,6 @@ bool P_CheckPosition(AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm, bo
 
 	FMultiBlockLinesIterator it(pcheck, thing);
 	FMultiBlockLinesIterator::CheckResult lcres;
-	line_t *ld;
 
 	fixed_t thingdropoffz = tm.floorz;
 	//bool onthing = (thingdropoffz != tmdropoffz);

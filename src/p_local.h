@@ -290,6 +290,7 @@ enum
 	FFCF_NOPORTALS = 16,	// ignore portals (considers them impassable.)
 	FFCF_NOFLOOR = 32,
 	FFCF_NOCEILING = 64,
+	FFCF_RESTRICTEDPORTAL = 128,	// current values in the iterator's return are through a restricted portal type (i.e. some features are blocked.)
 };
 void	P_FindFloorCeiling (AActor *actor, int flags=0);
 

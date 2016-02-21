@@ -1969,8 +1969,6 @@ static bool DoGiveInventory(AActor *receiver, bool orresult, VM_ARGS)
 		return false;
 	}
 
-	bool res = true;
-	
 	if (amount <= 0)
 	{
 		amount = 1;

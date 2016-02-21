@@ -2540,3 +2540,14 @@ MUSIC_ULTIMA = "ultima";
 MUSIC_READ_M = "read_m";
 MUSIC_DM2TTL = "dm2ttl";
 MUSIC_DM2INT = "dm2int";
+
+// GZDoom exclusive:
+
+DSPLYMNU_GLOPT	= "OpenGL Options";
+DSPLYMNU_GAMMA	= "Gamma correction";
+DSPLYMNU_CONTRAST ="Contrast";
+
+GLMNU_TITLE		= "OPENGL OPTIONS";
+GLMNU_DYNLIGHT	= "Dynamic Light Options";
+GLMNU_TEXOPT	= "Texture Options";
+GLMNU_PREFS		= "Preferences";

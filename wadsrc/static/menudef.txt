@@ -652,25 +652,25 @@ OptionValue Fuzziness
 
 OptionMenu "OpenGLOptions"
 {
-	Title "OPENGL OPTIONS"
-	Submenu "Dynamic Light Options",	"GLLightOptions"
-	Submenu "Texture Options", 			"GLTextureGLOptions"
+	Title "$GLMNU_TITLE"
+	Submenu "$GLMNU_DYNLIGHT",	"GLLightOptions"
+	Submenu "$GLMNU_TEXOPT", 			"GLTextureGLOptions"
 	Submenu "Shader Options",			"GLShaderOptions"
-	Submenu "Preferences", 				"GLPrefOptions"
+	Submenu "$GLMNU_PREFS", 				"GLPrefOptions"
 }
 
 OptionMenu "VideoOptions"
 {
 	Title "$DSPLYMNU_TITLE"
 	
-	Submenu "OpenGL Options", 			"OpenGLOptions"
+	Submenu "$DSPLYMNU_GLOPT", 			"OpenGLOptions"
 	Submenu "$DSPLYMNU_SCOREBOARD", 			"ScoreboardOptions"
 	StaticText " "
 	Slider "$DSPLYMNU_SCREENSIZE",				"screenblocks", 3.0, 12.0, 1.0, 0
 
-	Slider "Gamma correction",			"Gamma",						0.75, 3.0, 0.05, 2
-	Slider "Brightness",				"vid_brightness",				-0.8,0.8, 0.05
-	Slider "Contrast",					"vid_contrast",	   				0.1, 3.0, 0.1
+	Slider "$DSPLYMNU_GAMMA",			"Gamma",						0.75, 3.0, 0.05, 2
+	Slider "$DSPLYMNU_BRIGHTNESS",				"vid_brightness",				-0.8,0.8, 0.05
+	Slider "$DSPLYMNU_CONTRAST",					"vid_contrast",	   				0.1, 3.0, 0.1
 
 	Option "$DSPLYMNU_VSYNC",					"vid_vsync", "OnOff"
 	Option "$DSPLYMNU_CAPFPS",					"cl_capfps", "OffOn"

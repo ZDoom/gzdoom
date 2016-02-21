@@ -323,6 +323,10 @@ static const UINT32 ksl_tab[8*16]=
 };
 #undef DV
 
+/* 0 / 3.0 / 1.5 / 6.0 dB/OCT */
+static const UINT32 ksl_shift[4] = { 31, 1, 2, 0 };
+
+
 /* sustain level table (3dB per step) */
 /* 0 - 15: 0, 3, 6, 9,12,15,18,21,24,27,30,33,36,39,42,93 (dB)*/
 #define SC(db) (UINT32) ( db * (2.0/ENV_STEP) )
@@ -1271,9 +1275,8 @@ void set_ksl_tl(FM_OPL *OPL,int slot,int v)
 {
 	OPL_CH   *CH   = &OPL->P_CH[slot/2];
 	OPL_SLOT *SLOT = &CH->SLOT[slot&1];
-	int ksl = v>>6; /* 0 / 1.5 / 3.0 / 6.0 dB/OCT */
 
-	SLOT->ksl = ksl ? 3-ksl : 31;
+	SLOT->ksl = ksl_shift[v >> 6];
 	SLOT->TL  = (v&0x3f)<<(ENV_BITS-1-7); /* 7 bits TL (bit 6 = always 0) */
 
 	SLOT->TLL = SLOT->TL + (CH->ksl_base>>SLOT->ksl);

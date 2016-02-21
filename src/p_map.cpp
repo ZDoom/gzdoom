@@ -5495,7 +5495,7 @@ bool P_ChangeSector(sector_t *sector, int crunch, int amt, int floorOrCeil, bool
 
 	// Also process all sectors that have 3D floors transferred from the
 	// changed sector.
-	if (sector->e->XFloor.attached.Size())
+	if (sector->e->XFloor.attached.Size() && floorOrCeil != 2)
 	{
 		unsigned       i;
 		sector_t*      sec;
@@ -5601,7 +5601,7 @@ bool P_ChangeSector(sector_t *sector, int crunch, int amt, int floorOrCeil, bool
 		}
 	} while (n);	// repeat from scratch until all things left are marked valid
 
-	sector->CheckPortalPlane(floorOrCeil);	// check for portal obstructions after everything is done.
+	if (floorOrCeil != 2) sector->CheckPortalPlane(floorOrCeil);	// check for portal obstructions after everything is done.
 
 	if (!cpos.nofit && !isreset /* && sector->MoreFlags & (SECF_UNDERWATERMASK)*/)
 	{

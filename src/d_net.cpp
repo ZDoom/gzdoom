@@ -2199,10 +2199,11 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 
 	case DEM_WARPCHEAT:
 		{
-			int x, y;
+			int x, y, z;
 			x = ReadWord (stream);
 			y = ReadWord (stream);
-			P_TeleportMove (players[player].mo, x * 65536, y * 65536, ONFLOORZ, true);
+			z = ReadWord (stream);
+			P_TeleportMove (players[player].mo, x * 65536, y * 65536, z * 65536, true);
 		}
 		break;
 
@@ -2744,9 +2745,12 @@ void Net_SkipCommand (int type, BYTE **stream)
 			skip = strlen ((char *)(*stream)) + 1;
 			break;
 
+		case DEM_WARPCHEAT:
+			skip = 6;
+			break;
+
 		case DEM_INVUSE:
 		case DEM_INVDROP:
-		case DEM_WARPCHEAT:
 			skip = 4;
 			break;
 

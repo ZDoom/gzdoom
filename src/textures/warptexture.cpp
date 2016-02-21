@@ -44,6 +44,7 @@ FWarpTexture::FWarpTexture (FTexture *source)
 : GenTime (0), SourcePic (source), Pixels (0), Spans (0), Speed (1.f)
 {
 	CopyInfo(source);
+	SetupMultipliers(128, 128); // [mxd]
 	bWarped = 1;
 }
 
@@ -138,6 +139,8 @@ void FWarpTexture::MakeTexture (DWORD time)
 	BYTE *buffer = (BYTE *)alloca (MAX (Width, Height));
 	int xsize = Width;
 	int ysize = Height;
+	int xmul = WidthOffsetMultipiler;  // [mxd]
+	int ymul = HeightOffsetMultipiler; // [mxd]
 	int xmask = WidthMask;
 	int ymask = Height - 1;
 	int ybits = HeightBits;
@@ -149,30 +152,58 @@ void FWarpTexture::MakeTexture (DWORD time)
 	}
 
 	DWORD timebase = DWORD(time * Speed * 32 / 28);
+	// [mxd] Rewrote to fix animation for NPo2 textures
 	for (y = ysize-1; y >= 0; y--)
 	{
-		int xt, xf = (finesine[(timebase+y*128)&FINEMASK]>>13) & xmask;
+		int xf = (finesine[(timebase+y*ymul)&FINEMASK]>>13) % xsize;
+		if(xf < 0) xf += xsize; 
+		int xt = xf;
 		const BYTE *source = otherpix + y;
 		BYTE *dest = Pixels + y;
-		for (xt = xsize; xt; xt--, xf = (xf+1)&xmask, dest += ysize)
-			*dest = source[xf << ybits];
+		for (xt = xsize; xt; xt--, xf = (xf+1)%xsize, dest += ysize)
+			*dest = source[xf + ymask * xf];
 	}
 	timebase = DWORD(time * Speed * 23 / 28);
 	for (x = xsize-1; x >= 0; x--)
 	{
-		int yt, yf = (finesine[(time+(x+17)*128)&FINEMASK]>>13) & ymask;
-		const BYTE *source = Pixels + (x << ybits);
+		int yf = (finesine[(time+(x+17)*xmul)&FINEMASK]>>13) % ysize;
+		if(yf < 0) yf += ysize;
+		int yt = yf;
+		const BYTE *source = Pixels + (x + ymask * x);
 		BYTE *dest = buffer;
-		for (yt = ysize; yt; yt--, yf = (yf+1)&ymask)
+		for (yt = ysize; yt; yt--, yf = (yf+1)%ysize)
 			*dest++ = source[yf];
-		memcpy (Pixels+(x<<ybits), buffer, ysize);
+		memcpy (Pixels+(x+ymask*x), buffer, ysize);
 	}
+}
+
+// [mxd] Non power of 2 textures need different offset multipliers, otherwise warp animation won't sync across texture
+void FWarpTexture::SetupMultipliers (int width, int height)
+{
+	WidthOffsetMultipiler = width;
+	HeightOffsetMultipiler = height;
+	int widthpo2 = NextPo2(Width);
+	int heightpo2 = NextPo2(Height);
+	if(widthpo2 != Width) WidthOffsetMultipiler = (int)(WidthOffsetMultipiler * ((float)widthpo2 / Width));
+	if(heightpo2 != Height) HeightOffsetMultipiler = (int)(HeightOffsetMultipiler * ((float)heightpo2 / Height));
+}
+
+int FWarpTexture::NextPo2 (int v)
+{
+	v--;
+	v |= v >> 1;
+	v |= v >> 2;
+	v |= v >> 4;
+	v |= v >> 8;
+	v |= v >> 16;
+	return ++v;
 }
 
 // [GRB] Eternity-like warping
 FWarp2Texture::FWarp2Texture (FTexture *source)
 : FWarpTexture (source)
 {
+	SetupMultipliers(256, 128); // [mxd]
 	bWarped = 2;
 }
 
@@ -194,6 +225,8 @@ void FWarp2Texture::MakeTexture (DWORD time)
 
 	int xsize = Width;
 	int ysize = Height;
+	int xmul = WidthOffsetMultipiler;  // [mxd]
+	int ymul = HeightOffsetMultipiler; // [mxd]
 	int xmask = WidthMask;
 	int ymask = Height - 1;
 	int ybits = HeightBits;
@@ -205,18 +238,21 @@ void FWarp2Texture::MakeTexture (DWORD time)
 	}
 
 	DWORD timebase = DWORD(time * Speed * 40 / 28);
-	for (x = 0; x < xsize; ++x)
+	// [mxd] Rewrote to fix animation for NPo2 textures
+	for (x = 0; x < xsize; x++)
 	{
-		BYTE *dest = Pixels + (x << ybits);
-		for (y = 0; y < ysize; ++y)
+		BYTE *dest = Pixels + (x + ymask * x);
+		for (y = 0; y < ysize; y++)
 		{
 			int xt = (x + 128
-				+ ((finesine[(y*128 + timebase*5 + 900) & FINEMASK]*2)>>FRACBITS)
-				+ ((finesine[(x*256 + timebase*4 + 300) & FINEMASK]*2)>>FRACBITS)) & xmask;
+				+ ((finesine[(y*ymul + timebase*5 + 900) & FINEMASK]*2)>>FRACBITS)
+				+ ((finesine[(x*xmul + timebase*4 + 300) & FINEMASK]*2)>>FRACBITS)) % xsize;
+
 			int yt = (y + 128
-				+ ((finesine[(y*128 + timebase*3 + 700) & FINEMASK]*2)>>FRACBITS)
-				+ ((finesine[(x*256 + timebase*4 + 1200) & FINEMASK]*2)>>FRACBITS)) & ymask;
-			*dest++ = otherpix[(xt << ybits) + yt];
+				+ ((finesine[(y*ymul + timebase*3 + 700) & FINEMASK]*2)>>FRACBITS)
+				+ ((finesine[(x*xmul + timebase*4 + 1200) & FINEMASK]*2)>>FRACBITS)) % ysize;
+
+			*dest++ = otherpix[(xt + ymask * xt) + yt];
 		}
 	}
 }

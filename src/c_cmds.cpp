@@ -777,15 +777,16 @@ CCMD (warp)
 		Printf ("You can only warp inside a level.\n");
 		return;
 	}
-	if (argv.argc() != 3)
+	if (argv.argc() < 3 || argv.argc() > 4)
 	{
-		Printf ("Usage: warp <x> <y>\n");
+		Printf ("Usage: warp <x> <y> [z]\n");
 	}
 	else
 	{
 		Net_WriteByte (DEM_WARPCHEAT);
 		Net_WriteWord (atoi (argv[1]));
 		Net_WriteWord (atoi (argv[2]));
+		Net_WriteWord (argv.argc() == 3 ? ONFLOORZ/65536 : atoi (argv[3]));
 	}
 }
 

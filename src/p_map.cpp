@@ -462,8 +462,8 @@ bool P_TeleportMove(AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefra
 		{
 			if (!(th->flags3 & thing->flags3 & MF3_DONTOVERLAP))
 			{
-				if (z > th->Top() ||	// overhead
-					z + thing->height < th->Z())	// underneath
+				if (z > cres.position.z + th->height ||	// overhead
+					z + thing->height < cres.position.z)	// underneath
 					continue;
 			}
 		}
@@ -557,9 +557,9 @@ void P_PlayerStartStomp(AActor *actor, bool mononly)
 		if (th->player != NULL && mononly)
 			continue;
 
-		if (actor->Z() > th->Top())
+		if (actor->Z() > cres.position.z + th->height)
 			continue;        // overhead
-		if (actor->Top() < th->Z())
+		if (actor->Top() < cres.position.z)
 			continue;        // underneath
 
 		P_DamageMobj(th, actor, actor, TELEFRAG_DAMAGE, NAME_Telefrag);

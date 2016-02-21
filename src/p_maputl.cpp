@@ -534,6 +534,12 @@ void AActor::SetOrigin (fixed_t ix, fixed_t iy, fixed_t iz, bool moving)
 	P_FindFloorCeiling(this, FFCF_ONLYSPAWNPOS);
 }
 
+//===========================================================================
+//
+// FBlockNode - allows to link actors into multiple blocks in the blockmap
+//
+//===========================================================================
+
 FBlockNode *FBlockNode::FreeBlocks = NULL;
 
 FBlockNode *FBlockNode::Create (AActor *who, int x, int y, int group)
@@ -789,7 +795,9 @@ bool FMultiBlockLinesIterator::Next(FMultiBlockLinesIterator::CheckResult *item)
 	if (line != NULL)
 	{
 		item->line = line;
-		item->position = offset;
+		item->position.x = offset.x;
+		item->position.y = offset.y;
+		item->position.z = checkpoint.z;
 		item->portalflags = portalflags;
 		return true;
 	}

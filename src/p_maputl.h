@@ -220,7 +220,7 @@ public:
 	struct CheckResult
 	{
 		line_t *line;
-		fixedvec2 position;
+		fixedvec3 position;
 		int portalflags;
 	};
 

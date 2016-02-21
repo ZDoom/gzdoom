@@ -112,6 +112,12 @@ struct fixedvec3
 		return *this;
 	}
 
+	operator fixedvec2()
+	{
+		fixedvec2 ret = { x, y };
+		return ret;
+	}
+
 };
 
 inline fixedvec2 operator +(const fixedvec2 &v1, const fixedvec2 &v2)

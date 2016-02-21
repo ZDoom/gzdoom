@@ -553,8 +553,11 @@ protected:
 	BYTE *Pixels;
 	Span **Spans;
 	float Speed;
+	int WidthOffsetMultipiler, HeightOffsetMultipiler;  // [mxd]
 
 	virtual void MakeTexture (DWORD time);
+	int NextPo2 (int v); // [mxd]
+	void SetupMultipliers (int width, int height); // [mxd]
 };
 
 // [GRB] Eternity-like warping

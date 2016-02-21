@@ -673,3 +673,7 @@ xx(Max_Exp)
 xx(Mant_Dig)
 xx(Min_10_Exp)
 xx(Max_10_Exp)
+
+xx(__decorate_internal_int__)
+xx(__decorate_internal_bool__)
+xx(__decorate_internal_state__)

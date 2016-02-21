@@ -121,7 +121,8 @@ public:
 
 	bool Activate()
 	{
-		M_StartMessage("Do you really want to do this?", 0);
+		const char *msg = GStrings("SAFEMESSAGE");
+		if (msg) M_StartMessage(msg, 0);
 		return true;
 	}
 };

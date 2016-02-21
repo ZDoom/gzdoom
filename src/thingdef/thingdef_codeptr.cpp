@@ -325,13 +325,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetDistance)
 
 //===========================================================================
 //
-// A_State
+// __decorate_internal_state__
 //
 // Returns the state passed in.
 //
 //===========================================================================
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_State)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, __decorate_internal_state__)
 {
 	PARAM_PROLOGUE;
 	PARAM_OBJECT(self, AActor);
@@ -341,13 +341,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_State)
 
 //===========================================================================
 //
-// A_Int
+// __decorate_internal_int__
 //
 // Returns the int passed in.
 //
 //===========================================================================
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Int)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, __decorate_internal_int__)
 {
 	PARAM_PROLOGUE;
 	PARAM_OBJECT(self, AActor);
@@ -357,13 +357,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Int)
 
 //===========================================================================
 //
-// A_Bool
+// __decorate_internal_bool__
 //
 // Returns the bool passed in.
 //
 //===========================================================================
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Bool)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, __decorate_internal_bool__)
 {
 	PARAM_PROLOGUE;
 	PARAM_OBJECT(self, AActor);
@@ -825,6 +825,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Jump)
 	{
 		int jumpnum = (count == 1 ? 0 : (pr_cajump() % count));
 		PARAM_STATE_AT(paramnum + jumpnum, jumpto);
+		if (jumpto == NULL)
+		{ // Remap NULL state to the 'Null' state found in Actor, since
+		  // returning NULL would not jump.
+			jumpto = RUNTIME_CLASS(AActor)->FindState(NAME_Null);
+		}
 		ACTION_RETURN_STATE(jumpto);
 	}
 	ACTION_RETURN_STATE(NULL);
@@ -838,9 +843,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Jump)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfHealthLower)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_INT		(health);
-	PARAM_STATE		(jump);
-	PARAM_INT_OPT	(ptr_selector)	{ ptr_selector = AAPTR_DEFAULT; }
+	PARAM_INT			(health);
+	PARAM_STATE_NOT_NULL(jump);
+	PARAM_INT_OPT		(ptr_selector)	{ ptr_selector = AAPTR_DEFAULT; }
 
 	AActor *measured;
 
@@ -861,7 +866,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfHealthLower)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetOutsideMeleeRange)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_STATE(jump);
+	PARAM_STATE_NOT_NULL(jump);
 
 	if (!self->CheckMeleeRange())
 	{
@@ -878,7 +883,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetOutsideMeleeRange)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInsideMeleeRange)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_STATE(jump);
+	PARAM_STATE_NOT_NULL(jump);
 
 	if (self->CheckMeleeRange())
 	{
@@ -895,9 +900,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInsideMeleeRange)
 static int DoJumpIfCloser(AActor *target, VM_ARGS)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_FIXED	(dist);
-	PARAM_STATE	(jump);
-	PARAM_BOOL_OPT(noz) { noz = false; }
+	PARAM_FIXED			(dist);
+	PARAM_STATE_NOT_NULL(jump);
+	PARAM_BOOL_OPT		(noz) { noz = false; }
 
 	if (!target)
 	{ // No target - no jump
@@ -951,10 +956,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfMasterCloser)
 int DoJumpIfInventory(AActor *owner, AActor *self, AActor *stateowner, FState *callingstate, VMValue *param, int numparam, VMReturn *ret, int numret)
 {
 	int paramnum = NAP-1;
-	PARAM_CLASS		(itemtype, AInventory);
-	PARAM_INT		(itemamount);
-	PARAM_STATE		(label);
-	PARAM_INT_OPT	(setowner) { setowner = AAPTR_DEFAULT; }
+	PARAM_CLASS			(itemtype, AInventory);
+	PARAM_INT			(itemamount);
+	PARAM_STATE_NOT_NULL(label);
+	PARAM_INT_OPT		(setowner) { setowner = AAPTR_DEFAULT; }
 
 	if (itemtype == NULL)
 	{
@@ -1005,9 +1010,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfInTargetInventory)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfArmorType)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_NAME	 (type);
-	PARAM_STATE	 (label);
-	PARAM_INT_OPT(amount) { amount = 1; }
+	PARAM_NAME			(type);
+	PARAM_STATE_NOT_NULL(label);
+	PARAM_INT_OPT		(amount) { amount = 1; }
 
 	ABasicArmor *armor = (ABasicArmor *)self->FindInventory(NAME_BasicArmor);
 
@@ -1462,7 +1467,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomComboAttack)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfNoAmmo)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_STATE(jump);
+	PARAM_STATE_NOT_NULL(jump);
 
 	if (!ACTION_CALL_FROM_WEAPON())
 	{
@@ -1969,8 +1974,6 @@ static bool DoGiveInventory(AActor *receiver, bool orresult, VM_ARGS)
 		return false;
 	}
 
-	bool res = true;
-	
 	if (amount <= 0)
 	{
 		amount = 1;
@@ -2008,15 +2011,13 @@ static bool DoGiveInventory(AActor *receiver, bool orresult, VM_ARGS)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GiveInventory)
 {
 	PARAM_ACTION_PROLOGUE;
-	bool result = DoGiveInventory(self, false, VM_ARGS_NAMES);
-	ACTION_RETURN_BOOL(result);
+	ACTION_RETURN_BOOL(DoGiveInventory(self, false, VM_ARGS_NAMES));
 }	
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GiveToTarget)
 {
 	PARAM_ACTION_PROLOGUE;
-	bool result = DoGiveInventory(self->target, false, VM_ARGS_NAMES);
-	ACTION_RETURN_BOOL(result);
+	ACTION_RETURN_BOOL(DoGiveInventory(self->target, false, VM_ARGS_NAMES));
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GiveToChildren)
@@ -2096,15 +2097,13 @@ bool DoTakeInventory(AActor *receiver, bool orresult, VM_ARGS)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_TakeInventory)
 {
 	PARAM_ACTION_PROLOGUE;
-	bool result = DoTakeInventory(self, false, VM_ARGS_NAMES);
-	ACTION_RETURN_BOOL(result);
+	ACTION_RETURN_BOOL(DoTakeInventory(self, false, VM_ARGS_NAMES));
 }	
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_TakeFromTarget)
 {
 	PARAM_ACTION_PROLOGUE;
-	bool result = DoTakeInventory(self->target, false, VM_ARGS_NAMES);
-	ACTION_RETURN_BOOL(result);
+	ACTION_RETURN_BOOL(DoTakeInventory(self->target, false, VM_ARGS_NAMES));
 }	
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_TakeFromChildren)
@@ -2405,8 +2404,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItem)
 	AActor *mo = Spawn( missile, self->Vec3Angle(distance, self->angle, -self->floorclip + self->GetBobOffset() + zheight), ALLOW_REPLACE);
 
 	int flags = (transfer_translation ? SIXF_TRANSFERTRANSLATION : 0) + (useammo ? SIXF_SETMASTER : 0);
-	bool result = InitSpawnedItem(self, mo, flags);
-	ACTION_RETURN_BOOL(result);	// for an inventory item's use state
+	ACTION_RETURN_BOOL(InitSpawnedItem(self, mo, flags));	// for an inventory item's use state
 }
 
 //===========================================================================
@@ -3036,7 +3034,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnParticle)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckSight)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_STATE(jump);
+	PARAM_STATE_NOT_NULL(jump);
 
 	for (int i = 0; i < MAXPLAYERS; i++) 
 	{
@@ -3104,9 +3102,9 @@ static bool DoCheckSightOrRange(AActor *self, AActor *camera, double range, bool
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckSightOrRange)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_FLOAT(range);
-	PARAM_STATE(jump);
-	PARAM_BOOL_OPT(twodi)	{ twodi = false; }
+	PARAM_FLOAT			(range);
+	PARAM_STATE_NOT_NULL(jump);
+	PARAM_BOOL_OPT		(twodi)	{ twodi = false; }
 
 	range = range * range * (double(FRACUNIT) * FRACUNIT);		// no need for square roots
 	for (int i = 0; i < MAXPLAYERS; ++i)
@@ -3169,9 +3167,9 @@ static bool DoCheckRange(AActor *self, AActor *camera, double range, bool twodi)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckRange)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_FLOAT(range);
-	PARAM_STATE(jump);
-	PARAM_BOOL_OPT(twodi)	{ twodi = false; }
+	PARAM_FLOAT			(range);
+	PARAM_STATE_NOT_NULL(jump);
+	PARAM_BOOL_OPT		(twodi)	{ twodi = false; }
 
 	range = range * range * (double(FRACUNIT) * FRACUNIT);		// no need for square roots
 	for (int i = 0; i < MAXPLAYERS; ++i)
@@ -3252,11 +3250,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetBlend)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIf)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_BOOL	(condition);
-	PARAM_STATE	(jump);
+	PARAM_BOOL			(condition);
+	PARAM_STATE_NOT_NULL(jump);
 
-	if (!condition) jump = NULL;
-	ACTION_RETURN_STATE(jump);
+	ACTION_RETURN_STATE(condition ? jump : NULL);
 }
 
 //===========================================================================
@@ -3357,7 +3354,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Burst)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckFloor)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_STATE(jump);
+	PARAM_STATE_NOT_NULL(jump);
 
 	if (self->Z() <= self->floorz)
 	{
@@ -3376,7 +3373,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckFloor)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckCeiling)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_STATE(jump);
+	PARAM_STATE_NOT_NULL(jump);
 
 	if (self->Top() >= self->ceilingz) // Height needs to be counted
 	{
@@ -3512,7 +3509,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Respawn)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PlayerSkinCheck)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_STATE(jump);
+	PARAM_STATE_NOT_NULL(jump);
 
 	if (self->player != NULL &&
 		skins[self->player->userinfo.GetSkin()].othergame)
@@ -3695,10 +3692,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
 	fixed_t	vx, vy, vz;
 
 	PARAM_ACTION_PROLOGUE;
-	PARAM_STATE		(jump);
-	PARAM_INT_OPT	(flags)			{ flags = 0; }
-	PARAM_FIXED_OPT	(range)			{ range = 0; }
-	PARAM_FIXED_OPT	(minrange)		{ minrange = 0; }
+	PARAM_STATE_NOT_NULL(jump);
+	PARAM_INT_OPT		(flags)			{ flags = 0; }
+	PARAM_FIXED_OPT		(range)			{ range = 0; }
+	PARAM_FIXED_OPT		(minrange)		{ minrange = 0; }
 	{
 		PARAM_ANGLE_OPT	(angle)			{ angle = 0; }
 		PARAM_ANGLE_OPT	(pitch)			{ pitch = 0; }
@@ -3895,11 +3892,11 @@ enum JLOS_flags
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_STATE		(jump);
-	PARAM_ANGLE_OPT	(fov)			{ fov = 0; }
-	PARAM_INT_OPT	(flags)			{ flags = 0; }
-	PARAM_FIXED_OPT	(dist_max)		{ dist_max = 0; }
-	PARAM_FIXED_OPT	(dist_close)	{ dist_close = 0; }
+	PARAM_STATE_NOT_NULL(jump);
+	PARAM_ANGLE_OPT		(fov)			{ fov = 0; }
+	PARAM_INT_OPT		(flags)			{ flags = 0; }
+	PARAM_FIXED_OPT		(dist_max)		{ dist_max = 0; }
+	PARAM_FIXED_OPT		(dist_close)	{ dist_close = 0; }
 
 	angle_t an;
 	AActor *target, *viewport;
@@ -4030,11 +4027,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfInTargetLOS)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_STATE		(jump);
-	PARAM_ANGLE_OPT	(fov)			{ fov = 0; }
-	PARAM_INT_OPT	(flags)			{ flags = 0; }
-	PARAM_FIXED_OPT	(dist_max)		{ dist_max = 0; }
-	PARAM_FIXED_OPT	(dist_close)	{ dist_close = 0; }
+	PARAM_STATE_NOT_NULL(jump);
+	PARAM_ANGLE_OPT		(fov)			{ fov = 0; }
+	PARAM_INT_OPT		(flags)			{ flags = 0; }
+	PARAM_FIXED_OPT		(dist_max)		{ dist_max = 0; }
+	PARAM_FIXED_OPT		(dist_close)	{ dist_close = 0; }
 
 	angle_t an;
 	AActor *target;
@@ -4117,9 +4114,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckForReload)
 	{
 		ACTION_RETURN_STATE(NULL);
 	}
-	PARAM_INT		(count);
-	PARAM_STATE		(jump);
-	PARAM_BOOL_OPT	(dontincrement)		{ dontincrement = false; }
+	PARAM_INT			(count);
+	PARAM_STATE_NOT_NULL(jump);
+	PARAM_BOOL_OPT		(dontincrement)		{ dontincrement = false; }
 
 	if (numret > 0)
 	{
@@ -4281,9 +4278,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ChangeFlag)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckFlag)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_STRING	(flagname);
-	PARAM_STATE		(jumpto);
-	PARAM_INT_OPT	(checkpointer)	{ checkpointer = AAPTR_DEFAULT; }
+	PARAM_STRING		(flagname);
+	PARAM_STATE_NOT_NULL(jumpto);
+	PARAM_INT_OPT		(checkpointer)	{ checkpointer = AAPTR_DEFAULT; }
 
 	AActor *owner = COPY_AAPTR(self, checkpointer);
 	if (owner == NULL)
@@ -4388,8 +4385,8 @@ DEFINE_ACTION_FUNCTION_PARAMS (AActor, A_FaceConsolePlayer)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_MonsterRefire)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_INT	(prob);
-	PARAM_STATE	(jump);
+	PARAM_INT			(prob);
+	PARAM_STATE_NOT_NULL(jump);
 
 	A_FaceTarget(self);
 
@@ -5218,7 +5215,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Warp)
 
 	if (P_Thing_Warp(self, reference, xofs, yofs, zofs, angle, flags, heightoffset, radiusoffset, pitch))
 	{
-		if (success_state)
+		if (success_state != NULL)
 		{
 			// Jumps should never set the result for inventory state chains!
 			// in this case, you have the statejump to help you handle all the success anyway.
@@ -5562,9 +5559,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusGive)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckSpecies)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_STATE(jump);
-	PARAM_NAME_OPT(species)		{ species = NAME_None; }
-	PARAM_INT_OPT(ptr)			{ ptr = AAPTR_DEFAULT; }
+	PARAM_STATE_NOT_NULL(jump);
+	PARAM_NAME_OPT		(species)		{ species = NAME_None; }
+	PARAM_INT_OPT		(ptr)			{ ptr = AAPTR_DEFAULT; }
 
 	AActor *mobj = COPY_AAPTR(self, ptr);
 
@@ -6362,12 +6359,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ResetHealth)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfHigherOrLower)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_STATE(high);
-	PARAM_STATE(low);
-	PARAM_FIXED_OPT(offsethigh) { offsethigh = 0; }
-	PARAM_FIXED_OPT(offsetlow)  { offsetlow = 0; }
-	PARAM_BOOL_OPT(includeHeight)  { includeHeight = true; }
-	PARAM_INT_OPT(ptr)  { ptr = AAPTR_TARGET; }
+	PARAM_STATE_NOT_NULL(high);
+	PARAM_STATE_NOT_NULL(low);
+	PARAM_FIXED_OPT		(offsethigh)	{ offsethigh = 0; }
+	PARAM_FIXED_OPT		(offsetlow)		{ offsetlow = 0; }
+	PARAM_BOOL_OPT		(includeHeight)	{ includeHeight = true; }
+	PARAM_INT_OPT		(ptr)			{ ptr = AAPTR_TARGET; }
 
 	AActor *mobj = COPY_AAPTR(self, ptr);
 
@@ -6503,7 +6500,7 @@ enum CPXFflags
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckProximity)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_STATE(jump);
+	PARAM_STATE_NOT_NULL(jump);
 	PARAM_CLASS(classname, AActor);
 	PARAM_FIXED(distance);
 	PARAM_INT_OPT(count) { count = 1; }
@@ -6658,7 +6655,7 @@ enum CBF
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckBlock)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_STATE(block)
+	PARAM_STATE_NOT_NULL(block);
 	PARAM_INT_OPT(flags) { flags = 0; }
 	PARAM_INT_OPT(ptr) 	{ ptr = AAPTR_DEFAULT; }	
 

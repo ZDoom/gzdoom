@@ -372,7 +372,7 @@ void AddImplicitReturn(FxSequence *code, const PPrototype *proto, FScanner &sc)
 	else
 	{ // Something was returned earlier in the sequence. Make it an error
 	  // instead of adding an implicit one.
-		sc.ScriptError("Action list must return a value");
+		sc.ScriptError("Not all paths return a value");
 	}
 }
 

@@ -99,6 +99,8 @@ struct FLineOpening
 	sector_t		*topsec;
 	FTextureID		ceilingpic;
 	FTextureID		floorpic;
+	secplane_t		frontfloorplane;
+	secplane_t		backfloorplane;
 	int				floorterrain;
 	bool			touchmidtex;
 	bool			abovemidtex;
@@ -221,6 +223,7 @@ public:
 	{
 		line_t *line;
 		fixedvec3 position;
+		fixed_t zdiff;
 		int portalflags;
 	};
 
@@ -306,6 +309,7 @@ public:
 	{
 		AActor *thing;
 		fixedvec3 position;
+		fixed_t zdiff;
 		int portalflags;
 	};
 

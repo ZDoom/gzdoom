@@ -229,6 +229,8 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef,
 			open.floorterrain = back->GetTerrain(sector_t::floor);
 			open.lowfloor = ff;
 		}
+		open.frontfloorplane = front->floorplane;
+		open.backfloorplane = back->floorplane;
 	}
 	else
 	{ // Dummy stuff to have some sort of opening for the 3D checks to modify
@@ -240,6 +242,8 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef,
 		open.floorterrain = -1;
 		open.bottom = FIXED_MIN;
 		open.lowfloor = FIXED_MAX;
+		open.frontfloorplane.SetAtHeight(FIXED_MIN, sector_t::floor);
+		open.backfloorplane.SetAtHeight(FIXED_MIN, sector_t::floor);
 	}
 
 	// Check 3D floors
@@ -798,6 +802,7 @@ bool FMultiBlockLinesIterator::Next(FMultiBlockLinesIterator::CheckResult *item)
 		item->position.x = offset.x;
 		item->position.y = offset.y;
 		item->position.z = checkpoint.z;
+		item->zdiff = 0;
 		item->portalflags = portalflags;
 		return true;
 	}
@@ -1085,6 +1090,7 @@ bool FMultiBlockThingsIterator::Next(FMultiBlockThingsIterator::CheckResult *ite
 	{
 		item->thing = thing;
 		item->position = checkpoint + Displacements(basegroup, thing->Sector->PortalGroup);
+		item->zdiff = 0;
 		item->portalflags = portalflags;
 		return true;
 	}

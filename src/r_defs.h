@@ -345,6 +345,21 @@ struct secplane_t
 		return -TMulScale16 (a, v->x, b, v->y, z, c);
 	}
 
+	void SetAtHeight(fixed_t height, int ceiling)
+	{
+		a = b = 0;
+		if (ceiling)
+		{
+			c = ic = -FRACUNIT;
+			d = height;
+		}
+		else
+		{
+			c = ic = FRACUNIT;
+			d = -height;
+		}
+	}
+
 	bool CopyPlaneIfValid (secplane_t *dest, const secplane_t *opp) const;
 
 };

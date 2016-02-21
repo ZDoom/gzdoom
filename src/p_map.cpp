@@ -276,7 +276,7 @@ static bool PIT_FindFloorCeiling(FMultiBlockLinesIterator &mit, FMultiBlockLines
 
 void P_GetFloorCeilingZ(FCheckPosition &tmf, int flags)
 {
-	sector_t *sec = (!(flags & FFCF_SAMESECTOR) || tmf.thing->Sector == NULL)? P_PointInSector(tmf.x, tmf.y) : tmf.thing->Sector;
+	sector_t *sec = (!(flags & FFCF_SAMESECTOR) || tmf.thing->Sector == NULL)? P_PointInSector(tmf.x, tmf.y) : tmf.sector;
 	F3DFloor *ffc, *fff;
 
 	tmf.ceilingz = sec->NextHighestCeilingAt(tmf.thing, tmf.z + tmf.thing->height, flags, &tmf.ceilingsector, &ffc);
@@ -315,6 +315,10 @@ void P_FindFloorCeiling(AActor *actor, int flags)
 	if (flags & FFCF_ONLYSPAWNPOS)
 	{
 		flags |= FFCF_3DRESTRICT;
+	}
+	if (flags & FFCF_SAMESECTOR)
+	{
+		tmf.sector = actor->Sector;
 	}
 	P_GetFloorCeilingZ(tmf, flags);
 	assert(tmf.thing->Sector != NULL);
@@ -759,8 +763,9 @@ int P_GetMoveFactor(const AActor *mo, int *frictionp)
 //==========================================================================
 
 static // killough 3/26/98: make static
-bool PIT_CheckLine(line_t *ld, const FBoundingBox &box, FCheckPosition &tm)
+bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::CheckResult &cres, const FBoundingBox &box, FCheckPosition &tm)
 {
+	line_t *ld = cres.line;
 	bool rail = false;
 
 	if (box.Right() <= ld->bbox[BOXLEFT]
@@ -802,7 +807,6 @@ bool PIT_CheckLine(line_t *ld, const FBoundingBox &box, FCheckPosition &tm)
 	bool NotBlocked = ((tm.thing->flags3 & MF3_NOBLOCKMONST)
 		|| ((i_compatflags & COMPATF_NOBLOCKFRIENDS) && (tm.thing->flags & MF_FRIENDLY)));
 
-	fixedvec3 pos = tm.thing->PosRelative(ld);
 	if (!(Projectile) || (ld->flags & (ML_BLOCKEVERYTHING | ML_BLOCKPROJECTILE)))
 	{
 		if (ld->flags & ML_RAILING)
@@ -821,55 +825,33 @@ bool PIT_CheckLine(line_t *ld, const FBoundingBox &box, FCheckPosition &tm)
 			}
 			tm.thing->BlockingLine = ld;
 			// Calculate line side based on the actor's original position, not the new one.
-			CheckForPushSpecial(ld, P_PointOnLineSide(pos.x, pos.y, ld), tm.thing, false);
+			CheckForPushSpecial(ld, P_PointOnLineSide(cres.position.x, cres.position.y, ld), tm.thing, false);
 			return false;
 		}
 	}
 
-	// [RH] Steep sectors count as dropoffs (unless already in one)
+	fixedvec2 ref = FindRefPoint(ld, cres.position);
+	FLineOpening open;
+
+	P_LineOpening(open, tm.thing, ld, ref.x, ref.y, cres.position.x, cres.position.y, cres.portalflags);
+
+	// [RH] Steep sectors count as dropoffs, if the actor touches the boundary between a steep slope and something else
 	if (!(tm.thing->flags & MF_DROPOFF) &&
 		!(tm.thing->flags & (MF_NOGRAVITY | MF_NOCLIP)))
 	{
-		secplane_t frontplane, backplane;
 		// Check 3D floors as well
-		frontplane = P_FindFloorPlane(ld->frontsector, pos.x, pos.y, tm.thing->floorz);
-		backplane = P_FindFloorPlane(ld->backsector, pos.x, pos.y, tm.thing->floorz);
-		if (frontplane.c < STEEPSLOPE || backplane.c < STEEPSLOPE)
+		if ((open.frontfloorplane.c < STEEPSLOPE) != (open.backfloorplane.c < STEEPSLOPE))
 		{
-			const msecnode_t *node = tm.thing->touching_sectorlist;
-			bool allow = false;
-			int count = 0;
-			while (node != NULL)
-			{
-				count++;
-				if (node->m_sector->floorplane.c < STEEPSLOPE)
-				{
-					allow = true;
-					break;
-				}
-				node = node->m_tnext;
-			}
-			if (!allow)
-			{
-				return false;
-			}
+			// on the boundary of a steep slope
+			return false;
 		}
 	}
 
-	fixedvec2 rpos = { tm.x, tm.y };
-	fixedvec2 ref = FindRefPoint(ld, rpos);
-	FLineOpening open;
-
-	P_LineOpening(open, tm.thing, ld, ref.x, ref.y, tm.x, tm.y, 0);
-
-	// the floorplane on both sides is identical with the current one
-	// so don't mess around with the z-position.
-	if (ld->frontsector->floorplane == ld->backsector->floorplane &&
-		ld->frontsector->floorplane == tm.thing->Sector->floorplane &&
-		!ld->frontsector->e->XFloor.ffloors.Size() && !ld->backsector->e->XFloor.ffloors.Size() &&
-		!open.abovemidtex)
+	// If the floor planes on both sides we should recalculate open.bottom at the actual position we are checking
+	// This is to avoid bumpy movement when crossing a linedef with the same slope on both sides.
+	if (open.frontfloorplane == open.backfloorplane)
 	{
-		open.bottom = INT_MIN;
+		open.bottom = open.frontfloorplane.ZatPoint(cres.position.x, cres.position.y);
 	}
 
 	if (rail &&
@@ -1017,8 +999,9 @@ static bool CanAttackHurt(AActor *victim, AActor *shooter)
 //
 //==========================================================================
 
-bool PIT_CheckThing(AActor *thing, FCheckPosition &tm)
+bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::CheckResult &cres, const FBoundingBox &box, FCheckPosition &tm)
 {
+	AActor *thing = cres.thing;
 	fixed_t topz;
 	bool 	solid;
 	int 	damage;
@@ -1440,56 +1423,29 @@ bool P_CheckPosition(AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm, bo
 
 	tm.x = x;
 	tm.y = y;
+	tm.z = thing->Z();
 
-	newsec = P_PointInSector(x, y);
+	newsec = tm.sector = P_PointInSector(x, y);
 	tm.ceilingline = thing->BlockingLine = NULL;
 
-	// The base floor / ceiling is from the subsector that contains the point.
+	// Retrieve the base floor / ceiling from the target location.
 	// Any contacted lines the step closer together will adjust them.
-	tm.floorz = tm.dropoffz = newsec->LowestFloorAt(x, y, &tm.floorsector);
-	tm.ceilingz = newsec->HighestCeilingAt(x, y, &tm.ceilingsector);
-	tm.floorpic = tm.floorsector->GetTexture(sector_t::floor);
-	tm.floorterrain = tm.floorsector->GetTerrain(sector_t::floor);
-	tm.ceilingpic = tm.ceilingsector->GetTexture(sector_t::ceiling);
-	tm.touchmidtex = false;
-	tm.abovemidtex = false;
-
-	//Added by MC: Fill the tmsector.
-	tm.sector = newsec;
-
-	//Check 3D floors
-	if (!thing->IsNoClip2() && newsec->e->XFloor.ffloors.Size())
+	if (!thing->IsNoClip2())
 	{
-		F3DFloor*  rover;
-		fixed_t    delta1;
-		fixed_t    delta2;
-		int        thingtop = thing->Z() + (thing->height == 0 ? 1 : thing->height);
-
-		for (unsigned i = 0; i<newsec->e->XFloor.ffloors.Size(); i++)
-		{
-			rover = newsec->e->XFloor.ffloors[i];
-			if (!(rover->flags & FF_SOLID) || !(rover->flags & FF_EXISTS)) continue;
-
-			fixed_t ff_bottom = rover->bottom.plane->ZatPoint(x, y);
-			fixed_t ff_top = rover->top.plane->ZatPoint(x, y);
-
-			delta1 = thing->Z() - (ff_bottom + ((ff_top - ff_bottom) / 2));
-			delta2 = thingtop - (ff_bottom + ((ff_top - ff_bottom) / 2));
-
-			if (ff_top > tm.floorz && abs(delta1) < abs(delta2))
-			{
-				tm.floorz = tm.dropoffz = ff_top;
-				tm.floorpic = *rover->top.texture;
-				tm.floorterrain = rover->model->GetTerrain(rover->top.isceiling);
-			}
-			if (ff_bottom < tm.ceilingz && abs(delta1) >= abs(delta2))
-			{
-				tm.ceilingz = ff_bottom;
-				tm.ceilingpic = *rover->bottom.texture;
-			}
-		}
+		P_GetFloorCeilingZ(tm, FFCF_SAMESECTOR);
+	}
+	else
+	{
+		// With noclip2, we must ignore 3D floors and go right to the uppermost ceiling and lowermost floor.
+		tm.floorz = tm.dropoffz = newsec->LowestFloorAt(x, y, &tm.floorsector);
+		tm.ceilingz = newsec->HighestCeilingAt(x, y, &tm.ceilingsector);
+		tm.floorpic = tm.floorsector->GetTexture(sector_t::floor);
+		tm.floorterrain = tm.floorsector->GetTerrain(sector_t::floor);
+		tm.ceilingpic = tm.ceilingsector->GetTexture(sector_t::ceiling);
 	}
 
+	tm.touchmidtex = false;
+	tm.abovemidtex = false;
 	validcount++;
 	spechit.Clear();
 
@@ -1507,51 +1463,52 @@ bool P_CheckPosition(AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm, bo
 	tm.stepthing = NULL;
 	FBoundingBox box(x, y, thing->radius);
 
-	{
-		FBlockThingsIterator it2(box);
-		AActor *th;
-		while ((th = it2.Next()))
-		{
-			if (!PIT_CheckThing(th, tm))
-			{ // [RH] If a thing can be stepped up on, we need to continue checking
-				// other things in the blocks and see if we hit something that is
-				// definitely blocking. Otherwise, we need to check the lines, or we
-				// could end up stuck inside a wall.
-				AActor *BlockingMobj = thing->BlockingMobj;
+	FPortalGroupArray pcheck;
+	FMultiBlockThingsIterator it2(pcheck, x, y, thing->Z(), thing->height, thing->radius);
+	FMultiBlockThingsIterator::CheckResult tcres;
 
-				if (BlockingMobj == NULL || (i_compatflags & COMPATF_NO_PASSMOBJ))
-				{ // Thing slammed into something; don't let it move now.
+	while ((it2.Next(&tcres)))
+	{
+		if (!PIT_CheckThing(it2, tcres, it2.Box(), tm))
+		{ // [RH] If a thing can be stepped up on, we need to continue checking
+			// other things in the blocks and see if we hit something that is
+			// definitely blocking. Otherwise, we need to check the lines, or we
+			// could end up stuck inside a wall.
+			AActor *BlockingMobj = thing->BlockingMobj;
+
+			// If this blocks through a line portal with a vertical displacement, it will always completely block. There is no way to step up onto such an actor.
+			if (BlockingMobj == NULL || (i_compatflags & COMPATF_NO_PASSMOBJ) || tcres.zdiff != 0)
+			{ // Thing slammed into something; don't let it move now.
+				thing->height = realheight;
+				return false;
+			}
+			else if (!BlockingMobj->player && !(thing->flags & (MF_FLOAT | MF_MISSILE | MF_SKULLFLY)) &&
+				BlockingMobj->Top() - thing->Z() <= thing->MaxStepHeight)
+			{
+				if (thingblocker == NULL ||
+					BlockingMobj->Z() > thingblocker->Z())
+				{
+					thingblocker = BlockingMobj;
+				}
+				thing->BlockingMobj = NULL;
+			}
+			else if (thing->player &&
+				thing->Top() - BlockingMobj->Z() <= thing->MaxStepHeight)
+			{
+				if (thingblocker)
+				{ // There is something to step up on. Return this thing as
+					// the blocker so that we don't step up.
 					thing->height = realheight;
 					return false;
 				}
-				else if (!BlockingMobj->player && !(thing->flags & (MF_FLOAT | MF_MISSILE | MF_SKULLFLY)) &&
-					BlockingMobj->Top() - thing->Z() <= thing->MaxStepHeight)
-				{
-					if (thingblocker == NULL ||
-						BlockingMobj->Z() > thingblocker->Z())
-					{
-						thingblocker = BlockingMobj;
-					}
-					thing->BlockingMobj = NULL;
-				}
-				else if (thing->player &&
-					thing->Top() - BlockingMobj->Z() <= thing->MaxStepHeight)
-				{
-					if (thingblocker)
-					{ // There is something to step up on. Return this thing as
-						// the blocker so that we don't step up.
-						thing->height = realheight;
-						return false;
-					}
-					// Nothing is blocking us, but this actor potentially could
-					// if there is something else to step on.
-					thing->BlockingMobj = NULL;
-				}
-				else
-				{ // Definitely blocking
-					thing->height = realheight;
-					return false;
-				}
+				// Nothing is blocking us, but this actor potentially could
+				// if there is something else to step on.
+				thing->BlockingMobj = NULL;
+			}
+			else
+			{ // Definitely blocking
+				thing->height = realheight;
+				return false;
 			}
 		}
 	}
@@ -1574,7 +1531,8 @@ bool P_CheckPosition(AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm, bo
 	if (actorsonly || (thing->flags & MF_NOCLIP))
 		return (thing->BlockingMobj = thingblocker) == NULL;
 
-	FBlockLinesIterator it(box);
+	FMultiBlockLinesIterator it(pcheck, thing);
+	FMultiBlockLinesIterator::CheckResult lcres;
 	line_t *ld;
 
 	fixed_t thingdropoffz = tm.floorz;
@@ -1583,9 +1541,9 @@ bool P_CheckPosition(AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm, bo
 
 	bool good = true;
 
-	while ((ld = it.Next()))
+	while (it.Next(&lcres))
 	{
-		good &= PIT_CheckLine(ld, box, tm);
+		good &= PIT_CheckLine(it, lcres, it.Box(), tm);
 	}
 	if (!good)
 	{

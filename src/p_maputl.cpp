@@ -802,7 +802,6 @@ bool FMultiBlockLinesIterator::Next(FMultiBlockLinesIterator::CheckResult *item)
 		item->position.x = offset.x;
 		item->position.y = offset.y;
 		item->position.z = checkpoint.z;
-		item->zdiff = 0;
 		item->portalflags = portalflags;
 		return true;
 	}
@@ -1055,7 +1054,7 @@ AActor *FBlockThingsIterator::Next(bool centeronly)
 //
 //===========================================================================
 
-FMultiBlockThingsIterator::FMultiBlockThingsIterator(FPortalGroupArray &check, AActor *origin, fixed_t checkradius)
+FMultiBlockThingsIterator::FMultiBlockThingsIterator(FPortalGroupArray &check, AActor *origin, fixed_t checkradius, bool ignorerestricted)
 	: checklist(check)
 {
 	checkpoint = origin->Pos();
@@ -1065,7 +1064,7 @@ FMultiBlockThingsIterator::FMultiBlockThingsIterator(FPortalGroupArray &check, A
 	Reset();
 }
 
-FMultiBlockThingsIterator::FMultiBlockThingsIterator(FPortalGroupArray &check, fixed_t checkx, fixed_t checky, fixed_t checkz, fixed_t checkh, fixed_t checkradius)
+FMultiBlockThingsIterator::FMultiBlockThingsIterator(FPortalGroupArray &check, fixed_t checkx, fixed_t checky, fixed_t checkz, fixed_t checkh, fixed_t checkradius, bool ignorerestricted)
 	: checklist(check)
 {
 	checkpoint.x = checkx;
@@ -1090,7 +1089,6 @@ bool FMultiBlockThingsIterator::Next(FMultiBlockThingsIterator::CheckResult *ite
 	{
 		item->thing = thing;
 		item->position = checkpoint + Displacements(basegroup, thing->Sector->PortalGroup);
-		item->zdiff = 0;
 		item->portalflags = portalflags;
 		return true;
 	}

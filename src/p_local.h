@@ -240,7 +240,14 @@ AActor *P_RoughMonsterSearch (AActor *mo, int distance, bool onlyseekable=false)
 // if within "tmfloorz - tmceilingz".
 extern msecnode_t		*sector_list;		// phares 3/16/98
 
-extern TArray<line_t *> spechit;
+struct spechit_t
+{
+	line_t *line;
+	fixedvec2 refpos;
+};
+
+extern TArray<spechit_t> spechit;
+extern TArray<spechit_t> portalhit;
 
 
 bool	P_TestMobjLocation (AActor *mobj);

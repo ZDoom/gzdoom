@@ -612,18 +612,18 @@ bool P_Move (AActor *actor)
 		// Do NOT simply return false 1/4th of the time (causes monsters to
 		// back out when they shouldn't, and creates secondary stickiness).
 
-		line_t *ld;
+		spechit_t spec;
 		int good = 0;
 		
 		if (!(actor->flags6 & MF6_NOTRIGGER))
 		{
-			while (spechit.Pop (ld))
+			while (spechit.Pop (spec))
 			{
 				// [RH] let monsters push lines, as well as use them
-				if (((actor->flags4 & MF4_CANUSEWALLS) && P_ActivateLine (ld, actor, 0, SPAC_Use)) ||
-					((actor->flags2 & MF2_PUSHWALL) && P_ActivateLine (ld, actor, 0, SPAC_Push)))
+				if (((actor->flags4 & MF4_CANUSEWALLS) && P_ActivateLine (spec.line, actor, 0, SPAC_Use)) ||
+					((actor->flags2 & MF2_PUSHWALL) && P_ActivateLine (spec.line, actor, 0, SPAC_Push)))
 				{
-					good |= ld == actor->BlockingLine ? 1 : 2;
+					good |= spec.line == actor->BlockingLine ? 1 : 2;
 				}
 			}
 		}

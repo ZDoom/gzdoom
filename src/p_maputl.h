@@ -223,7 +223,6 @@ public:
 	{
 		line_t *line;
 		fixedvec3 position;
-		fixed_t zdiff;
 		int portalflags;
 	};
 
@@ -309,12 +308,11 @@ public:
 	{
 		AActor *thing;
 		fixedvec3 position;
-		fixed_t zdiff;
 		int portalflags;
 	};
 
-	FMultiBlockThingsIterator(FPortalGroupArray &check, AActor *origin, fixed_t checkradius = -1);
-	FMultiBlockThingsIterator(FPortalGroupArray &check, fixed_t checkx, fixed_t checky, fixed_t checkz, fixed_t checkh, fixed_t checkradius);
+	FMultiBlockThingsIterator(FPortalGroupArray &check, AActor *origin, fixed_t checkradius = -1, bool ignorerestricted = false);
+	FMultiBlockThingsIterator(FPortalGroupArray &check, fixed_t checkx, fixed_t checky, fixed_t checkz, fixed_t checkh, fixed_t checkradius, bool ignorerestricted = false);
 	bool Next(CheckResult *item);
 	void Reset();
 	const FBoundingBox &Box() const

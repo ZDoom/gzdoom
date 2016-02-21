@@ -63,7 +63,7 @@ CVAR(Bool, cl_bloodsplats, true, CVAR_ARCHIVE)
 CVAR(Int, sv_smartaim, 0, CVAR_ARCHIVE | CVAR_SERVERINFO)
 CVAR(Bool, cl_doautoaim, false, CVAR_ARCHIVE)
 
-static void CheckForPushSpecial(line_t *line, int side, AActor *mobj, bool windowcheck);
+static void CheckForPushSpecial(line_t *line, int side, AActor *mobj, fixedvec2 * posforwindowcheck = NULL);
 static void SpawnShootDecal(AActor *t1, const FTraceResults &trace);
 static void SpawnDeepSplash(AActor *t1, const FTraceResults &trace, AActor *puff,
 	fixed_t vx, fixed_t vy, fixed_t vz, fixed_t shootz, bool ffloor = false);
@@ -75,8 +75,8 @@ static FRandom pr_crunch("DoCrunch");
 
 // keep track of special lines as they are hit,
 // but don't process them until the move is proven valid
-TArray<line_t *> spechit;
-TArray<line_t *> portalhit;
+TArray<spechit_t> spechit;
+TArray<spechit_t> portalhit;
 
 // Temporary holder for thing_sectorlist threads
 msecnode_t* sector_list = NULL;		// phares 3/16/98
@@ -465,8 +465,8 @@ bool P_TeleportMove(AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefra
 		{
 			if (!(th->flags3 & thing->flags3 & MF3_DONTOVERLAP))
 			{
-				if (z > cres.position.z + th->height ||	// overhead
-					z + thing->height < cres.position.z)	// underneath
+				if (z > th->Top() ||	// overhead
+					z + thing->height < th->Z())	// underneath
 					continue;
 			}
 		}
@@ -560,9 +560,9 @@ void P_PlayerStartStomp(AActor *actor, bool mononly)
 		if (th->player != NULL && mononly)
 			continue;
 
-		if (actor->Z() > cres.position.z + th->height)
+		if (actor->Z() > th->Top())
 			continue;        // overhead
-		if (actor->Top() < cres.position.z)
+		if (actor->Top() < th->Z())
 			continue;        // underneath
 
 		P_DamageMobj(th, actor, actor, TELEFRAG_DAMAGE, NAME_Telefrag);
@@ -793,7 +793,7 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 			P_DamageMobj(tm.thing, NULL, NULL, tm.thing->Mass >> 5, NAME_Melee);
 		}
 		tm.thing->BlockingLine = ld;
-		CheckForPushSpecial(ld, 0, tm.thing, false);
+		CheckForPushSpecial(ld, 0, tm.thing);
 		return false;
 	}
 
@@ -824,7 +824,7 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 			}
 			tm.thing->BlockingLine = ld;
 			// Calculate line side based on the actor's original position, not the new one.
-			CheckForPushSpecial(ld, P_PointOnLineSide(cres.position.x, cres.position.y, ld), tm.thing, false);
+			CheckForPushSpecial(ld, P_PointOnLineSide(cres.position.x, cres.position.y, ld), tm.thing);
 			return false;
 		}
 	}
@@ -896,13 +896,18 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 		tm.dropoffz = open.lowfloor;
 
 	// if contacted a special line, add it to the list
+	spechit_t spec;
 	if (ld->special)
 	{
-		spechit.Push(ld);
+		spec.line = ld;
+		spec.refpos = cres.position;
+		spechit.Push(spec);
 	}
 	if (ld->portalindex >= 0)
 	{
-		portalhit.Push(ld);
+		spec.line = ld;
+		spec.refpos = cres.position;
+		portalhit.Push(spec);
 	}
 
 	return true;
@@ -1038,8 +1043,8 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 			(thing->flags & MF_SOLID) && (thing->flags4 & MF4_ACTLIKEBRIDGE))
 		{
 			// [RH] Let monsters walk on actors as well as floors
-			if (cres.zdiff != 0 && (tm.thing->flags3 & MF3_ISMONSTER) &&
-				topz >= tm.floorz && topz <= cres.position.z + tm.thing->MaxStepHeight)
+			if ((tm.thing->flags3 & MF3_ISMONSTER) &&
+				topz >= tm.floorz && topz <= tm.thing->Z() + tm.thing->MaxStepHeight)
 			{
 				// The commented-out if is an attempt to prevent monsters from walking off a
 				// thing further than they would walk off a ledge. I can't think of an easy
@@ -1074,7 +1079,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 				if (newdist > olddist)
 				{
 					// unblock only if there's already a vertical overlap (or both actors are flagged not to overlap)
-					unblocking = (cres.position.z + tm.thing->height > thing->Z() && cres.position.z < topz) || (tm.thing->flags3 & thing->flags3 & MF3_DONTOVERLAP);
+					unblocking = (tm.thing->Top() > thing->Z() && tm.thing->Z() < topz) || (tm.thing->flags3 & thing->flags3 & MF3_DONTOVERLAP);
 				}
 			}
 		}
@@ -1093,7 +1098,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 			{ // Some things prefer not to overlap each other, if possible
 				return unblocking;
 			}
-			if ((cres.position.z >= topz) || (cres.position.z + tm.thing->height <= thing->Z()))
+			if ((tm.thing->Z() >= topz) || (tm.thing->Top() <= thing->Z()))
 				return true;
 		}
 	}
@@ -1109,7 +1114,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 			// or different species if DONTHARMSPECIES
 			(!(thing->flags6 & MF6_DONTHARMSPECIES) || thing->GetSpecies() != tm.thing->GetSpecies()) &&
 			// touches vertically
-			topz >= cres.position.z && cres.position.z + tm.thing->height >= thing->Z() &&
+			topz >= tm.thing->Z() && tm.thing->Top() >= thing->Z() &&
 			// prevents lost souls from exploding when fired by pain elementals
 			(thing->master != tm.thing && tm.thing->master != thing))
 			// Difference with MBF: MBF hardcodes the LS/PE check and lets actors of the same species
@@ -1212,11 +1217,11 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 		}
 
 		// Check if it went over / under
-		if (cres.position.z > thing->Z() + clipheight)
+		if (tm.thing->Z() > thing->Z() + clipheight)
 		{ // Over thing
 			return true;
 		}
-		if (cres.position.z + tm.thing->height < thing->Z())
+		if (tm.thing->Top() < thing->Z())
 		{ // Under thing
 			return true;
 		}
@@ -1367,7 +1372,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 		// [RH] The next condition is to compensate for the extra height
 		// that gets added by P_CheckPosition() so that you cannot pick
 		// up things that are above your true height.
-		&& thing->Z() < cres.position.z + tm.thing->height - tm.thing->MaxStepHeight)
+		&& thing->Z() < tm.thing->Top() - tm.thing->MaxStepHeight)
 	{ // Can be picked up by tmthing
 		P_TouchSpecialThing(thing, tm.thing);	// can remove thing
 	}
@@ -1641,12 +1646,16 @@ bool P_TestMobjZ(AActor *actor, bool quick, AActor **pOnmobj)
 		return true;
 	}
 
-	FBlockThingsIterator it(FBoundingBox(actor->X(), actor->Y(), actor->radius));
-	AActor *thing;
+	FPortalGroupArray check;
+	FMultiBlockThingsIterator it(check, actor, -1, true);
+	FMultiBlockThingsIterator::CheckResult cres;
 
-	while ((thing = it.Next()))
+	while (it.Next(&cres))
 	{
-		if (!thing->intersects(actor))
+		AActor *thing = cres.thing;
+
+		fixed_t blockdist = thing->radius + actor->radius;
+		if (abs(thing->X() - cres.position.x) >= blockdist || abs(thing->Y() - cres.position.y) >= blockdist)
 		{
 			continue;
 		}
@@ -1753,18 +1762,18 @@ void P_FakeZMovement(AActor *mo)
 //
 //===========================================================================
 
-static void CheckForPushSpecial(line_t *line, int side, AActor *mobj, bool windowcheck)
+static void CheckForPushSpecial(line_t *line, int side, AActor *mobj, fixedvec2 *posforwindowcheck)
 {
 	if (line->special && !(mobj->flags6 & MF6_NOTRIGGER))
 	{
-		if (windowcheck && !(ib_compatflags & BCOMPATF_NOWINDOWCHECK) && line->backsector != NULL)
+		if (posforwindowcheck && !(ib_compatflags & BCOMPATF_NOWINDOWCHECK) && line->backsector != NULL)
 		{ // Make sure this line actually blocks us and is not a window
 			// or similar construct we are standing inside of.
 			fixedvec3 pos = mobj->PosRelative(line);
-			fixed_t fzt = line->frontsector->ceilingplane.ZatPoint(pos);
-			fixed_t fzb = line->frontsector->floorplane.ZatPoint(pos);
-			fixed_t bzt = line->backsector->ceilingplane.ZatPoint(pos);
-			fixed_t bzb = line->backsector->floorplane.ZatPoint(pos);
+			fixed_t fzt = line->frontsector->ceilingplane.ZatPoint(*posforwindowcheck);
+			fixed_t fzb = line->frontsector->floorplane.ZatPoint(*posforwindowcheck);
+			fixed_t bzt = line->backsector->ceilingplane.ZatPoint(*posforwindowcheck);
+			fixed_t bzb = line->backsector->floorplane.ZatPoint(*posforwindowcheck);
 			if (fzt >= mobj->Top() && bzt >= mobj->Top() &&
 				fzb <= mobj->Z() && bzb <= mobj->Z())
 			{
@@ -1775,8 +1784,8 @@ static void CheckForPushSpecial(line_t *line, int side, AActor *mobj, bool windo
 
 					if (!(rover->flags & FF_SOLID) || !(rover->flags & FF_EXISTS)) continue;
 
-					fixed_t ff_bottom = rover->bottom.plane->ZatPoint(pos);
-					fixed_t ff_top = rover->top.plane->ZatPoint(pos);
+					fixed_t ff_bottom = rover->bottom.plane->ZatPoint(*posforwindowcheck);
+					fixed_t ff_top = rover->top.plane->ZatPoint(*posforwindowcheck);
 
 					if (ff_bottom < mobj->Top() && ff_top > mobj->Z())
 					{
@@ -2081,12 +2090,13 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 	// if any special lines were hit, do the effect
 	if (!(thing->flags & (MF_TELEPORT | MF_NOCLIP)))
 	{
-		while (spechit.Pop(ld))
+		spechit_t spec;
+		while (spechit.Pop(spec))
 		{
-			fixedvec3 thingpos = thing->PosRelative(ld);
+			line_t *ld = spec.line;
 			fixedvec3 oldrelpos = PosRelative(oldpos, ld, oldsector);
 			// see if the line was crossed
-			side = P_PointOnLineSide(thingpos.x, thingpos.y, ld);
+			side = P_PointOnLineSide(spec.refpos.x, spec.refpos.y, ld);
 			oldside = P_PointOnLineSide(oldrelpos.x, oldrelpos.y, ld);
 			if (side != oldside && ld->special && !(thing->flags6 & MF6_NOTRIGGER))
 			{
@@ -2185,10 +2195,9 @@ pushline:
 		while (numSpecHitTemp > 0)
 		{
 			// see which lines were pushed
-			ld = spechit[--numSpecHitTemp];
-			fixedvec3 pos = thing->PosRelative(ld);
-			side = P_PointOnLineSide(pos.x, pos.y, ld);
-			CheckForPushSpecial(ld, side, thing, true);
+			spechit_t &spec = spechit[--numSpecHitTemp];
+			side = P_PointOnLineSide(spec.refpos.x, spec.refpos.y, spec.line);
+			CheckForPushSpecial(spec.line, side, thing, &spec.refpos);
 		}
 	}
 	return false;

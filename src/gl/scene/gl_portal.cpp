@@ -1150,6 +1150,7 @@ void GLHorizonPortal::DrawContents()
 		PortalAll.Unclock();
 		return;
 	}
+	gl_RenderState.SetCameraPos(FIXED2FLOAT(viewx), FIXED2FLOAT(viewy), FIXED2FLOAT(viewz));
 
 
 	z=FIXED2FLOAT(sp->texheight);

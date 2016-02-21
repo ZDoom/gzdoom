@@ -192,6 +192,7 @@ void ParseFunctionParameters(FScanner &sc, PClassActor *cls, TArray<FxExpression
 	PFunction *afd, FString statestring, FStateDefinitions *statedef);
 FxExpression *ParseActions(FScanner &sc, FState state, FString statestring, Baggage &bag, PPrototype *&proto, bool &endswithret);
 class FxVMFunctionCall *ParseAction(FScanner &sc, FState state, FString statestring, Baggage &bag);
+FName CheckCastKludges(FName in);
 void AddImplicitReturn(class FxSequence *code, const PPrototype *proto, FScanner &sc);
 void SetImplicitArgs(TArray<PType *> *args, TArray<DWORD> *argflags, PClassActor *cls, DWORD funcflags);
 

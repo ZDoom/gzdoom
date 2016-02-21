@@ -325,13 +325,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetDistance)
 
 //===========================================================================
 //
-// A_State
+// __decorate_internal_state__
 //
 // Returns the state passed in.
 //
 //===========================================================================
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_State)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, __decorate_internal_state__)
 {
 	PARAM_PROLOGUE;
 	PARAM_OBJECT(self, AActor);
@@ -341,13 +341,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_State)
 
 //===========================================================================
 //
-// A_Int
+// __decorate_internal_int__
 //
 // Returns the int passed in.
 //
 //===========================================================================
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Int)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, __decorate_internal_int__)
 {
 	PARAM_PROLOGUE;
 	PARAM_OBJECT(self, AActor);
@@ -357,13 +357,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Int)
 
 //===========================================================================
 //
-// A_Bool
+// __decorate_internal_bool__
 //
 // Returns the bool passed in.
 //
 //===========================================================================
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Bool)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, __decorate_internal_bool__)
 {
 	PARAM_PROLOGUE;
 	PARAM_OBJECT(self, AActor);

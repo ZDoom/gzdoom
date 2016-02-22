@@ -1542,7 +1542,7 @@ bool P_CheckPosition(AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm, bo
 	if (actorsonly || (thing->flags & MF_NOCLIP))
 		return (thing->BlockingMobj = thingblocker) == NULL;
 
-	FMultiBlockLinesIterator it(pcheck, thing);
+	FMultiBlockLinesIterator it(pcheck, x, y, thing->Z(), thing->height, thing->radius);
 	FMultiBlockLinesIterator::CheckResult lcres;
 
 	fixed_t thingdropoffz = tm.floorz;
@@ -1835,7 +1835,6 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 	fixed_t		oldz;
 	int 		side;
 	int 		oldside;
-	line_t* 	ld;
 	sector_t*	oldsec = thing->Sector;	// [RH] for sector actions
 	sector_t*	newsec;
 

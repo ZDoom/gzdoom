@@ -240,7 +240,14 @@ AActor *P_RoughMonsterSearch (AActor *mo, int distance, bool onlyseekable=false)
 // if within "tmfloorz - tmceilingz".
 extern msecnode_t		*sector_list;		// phares 3/16/98
 
-extern TArray<line_t *> spechit;
+struct spechit_t
+{
+	line_t *line;
+	fixedvec2 refpos;
+};
+
+extern TArray<spechit_t> spechit;
+extern TArray<spechit_t> portalhit;
 
 
 bool	P_TestMobjLocation (AActor *mobj);
@@ -287,6 +294,10 @@ enum
 	FFCF_SAMESECTOR = 2,
 	FFCF_ONLY3DFLOORS = 4,	// includes 3D midtexes
 	FFCF_3DRESTRICT = 8,	// ignore 3D midtexes and floors whose floorz are above thing's z
+	FFCF_NOPORTALS = 16,	// ignore portals (considers them impassable.)
+	FFCF_NOFLOOR = 32,
+	FFCF_NOCEILING = 64,
+	FFCF_RESTRICTEDPORTAL = 128,	// current values in the iterator's return are through a restricted portal type (i.e. some features are blocked.)
 };
 void	P_FindFloorCeiling (AActor *actor, int flags=0);
 

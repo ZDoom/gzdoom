@@ -81,16 +81,62 @@ union QWORD_UNION
 typedef SDWORD							fixed_t;
 typedef DWORD							dsfixed_t;				// fixedpt used by span drawer
 
-struct fixedvec3
-{
-	fixed_t x, y, z;
-};
-
 struct fixedvec2
 {
 	fixed_t x, y;
+
+	fixedvec2 &operator +=(const fixedvec2 &other)
+	{
+		x += other.x;
+		y += other.y;
+		return *this;
+	}
 };
 
+struct fixedvec3
+{
+	fixed_t x, y, z;
+
+	fixedvec3 &operator +=(const fixedvec3 &other)
+	{
+		x += other.x;
+		y += other.y;
+		z += other.z;
+		return *this;
+	}
+
+	fixedvec3 &operator +=(const fixedvec2 &other)
+	{
+		x += other.x;
+		y += other.y;
+		return *this;
+	}
+
+	operator fixedvec2()
+	{
+		fixedvec2 ret = { x, y };
+		return ret;
+	}
+
+};
+
+inline fixedvec2 operator +(const fixedvec2 &v1, const fixedvec2 &v2)
+{
+	fixedvec2 v = { v1.x + v2.x, v1.y + v2.y };
+	return v;
+}
+
+inline fixedvec3 operator +(const fixedvec3 &v1, const fixedvec3 &v2)
+{
+	fixedvec3 v = { v1.x + v2.x, v1.y + v2.y, v1.z + v2.z };
+	return v;
+}
+
+inline fixedvec3 operator +(const fixedvec3 &v1, const fixedvec2 &v2)
+{
+	fixedvec3 v = { v1.x + v2.x, v1.y + v2.y, v1.z };
+	return v;
+}
 
 #define FIXED_MAX						(signed)(0x7fffffff)
 #define FIXED_MIN						(signed)(0x80000000)

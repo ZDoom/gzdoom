@@ -40,6 +40,7 @@
 #include "memarena.h"
 #include "g_level.h"
 #include "tflags.h"
+#include "portal.h"
 
 struct subsector_t;
 class PClassAmmo;
@@ -1182,24 +1183,13 @@ public:
 	}
 	fixedvec3 Pos() const
 	{
-		fixedvec3 ret = { X(), Y(), Z() };
-		return ret;
+		return __pos;
 	}
-	fixedvec3 PosRelative(AActor *other) const
-	{
-		fixedvec3 ret = { X(), Y(), Z() };
-		return ret;
-	}
-	fixedvec3 PosRelative(sector_t *sec) const
-	{
-		fixedvec3 ret = { X(), Y(), Z() };
-		return ret;
-	}
-	fixedvec3 PosRelative(line_t *line) const
-	{
-		fixedvec3 ret = { X(), Y(), Z() };
-		return ret;
-	}
+
+	fixedvec3 PosRelative(AActor *other) const;
+	fixedvec3 PosRelative(sector_t *sec) const;
+	fixedvec3 PosRelative(line_t *line) const;
+
 	fixed_t SoundX() const
 	{
 		return X();
@@ -1383,11 +1373,6 @@ inline fixedvec2 Vec2Angle(fixed_t length, angle_t angle)
 	fixedvec2 ret = { FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]),
 						FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]) };
 	return ret;
-}
-
-inline fixedvec3 PosRelative(const fixedvec3 &pos, line_t *line, sector_t *refsec = NULL)
-{
-	return pos;
 }
 
 void PrintMiscActorInfo(AActor * query);

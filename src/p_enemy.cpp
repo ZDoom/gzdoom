@@ -558,7 +558,7 @@ bool P_Move (AActor *actor)
 			else
 			{ // The monster just hit the floor, so trigger any actions.
 				if (actor->floorsector->SecActTarget != NULL &&
-					actor->floorz == actor->floorsector->floorplane.ZatPoint(actor))
+					actor->floorz == actor->floorsector->floorplane.ZatPoint(actor->PosRelative(actor->floorsector)))
 				{
 					actor->floorsector->SecActTarget->TriggerAction(actor, SECSPAC_HitFloor);
 				}
@@ -612,18 +612,18 @@ bool P_Move (AActor *actor)
 		// Do NOT simply return false 1/4th of the time (causes monsters to
 		// back out when they shouldn't, and creates secondary stickiness).
 
-		line_t *ld;
+		spechit_t spec;
 		int good = 0;
 		
 		if (!(actor->flags6 & MF6_NOTRIGGER))
 		{
-			while (spechit.Pop (ld))
+			while (spechit.Pop (spec))
 			{
 				// [RH] let monsters push lines, as well as use them
-				if (((actor->flags4 & MF4_CANUSEWALLS) && P_ActivateLine (ld, actor, 0, SPAC_Use)) ||
-					((actor->flags2 & MF2_PUSHWALL) && P_ActivateLine (ld, actor, 0, SPAC_Push)))
+				if (((actor->flags4 & MF4_CANUSEWALLS) && P_ActivateLine (spec.line, actor, 0, SPAC_Use)) ||
+					((actor->flags2 & MF2_PUSHWALL) && P_ActivateLine (spec.line, actor, 0, SPAC_Push)))
 				{
-					good |= ld == actor->BlockingLine ? 1 : 2;
+					good |= spec.line == actor->BlockingLine ? 1 : 2;
 				}
 			}
 		}
@@ -868,8 +868,8 @@ void P_NewChaseDir(AActor * actor)
 				box.Bottom() < line->bbox[BOXTOP]    &&
 				box.BoxOnLineSide(line) == -1)
 		    {
-				fixed_t front = line->frontsector->floorplane.ZatPoint(actor);
-				fixed_t back  = line->backsector->floorplane.ZatPoint(actor);
+				fixed_t front = line->frontsector->floorplane.ZatPoint(actor->PosRelative(line));
+				fixed_t back  = line->backsector->floorplane.ZatPoint(actor->PosRelative(line));
 				angle_t angle;
 		
 				// The monster must contact one of the two floors,

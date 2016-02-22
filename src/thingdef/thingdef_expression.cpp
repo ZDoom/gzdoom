@@ -3525,6 +3525,11 @@ FxReturnStatement::FxReturnStatement(FxVMFunctionCall *call, const FScriptPositi
 {
 }
 
+FxReturnStatement::~FxReturnStatement()
+{
+	SAFE_DELETE(Call);
+}
+
 FxExpression *FxReturnStatement::Resolve(FCompileContext &ctx)
 {
 	CHECKRESOLVED();

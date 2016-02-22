@@ -57,7 +57,6 @@
 #include "d_net.h"
 #include "d_event.h"
 #include "gstrings.h"
-#include "portal.h"
 #include "po_man.h"
 #include "d_player.h"
 #include "r_utility.h"

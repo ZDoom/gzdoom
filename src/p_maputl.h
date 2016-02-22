@@ -3,6 +3,7 @@
 
 #include "r_defs.h"
 #include "doomstat.h"
+#include "m_bbox.h"
 
 extern int validcount;
 
@@ -98,6 +99,8 @@ struct FLineOpening
 	sector_t		*topsec;
 	FTextureID		ceilingpic;
 	FTextureID		floorpic;
+	secplane_t		frontfloorplane;
+	secplane_t		backfloorplane;
 	int				floorterrain;
 	bool			touchmidtex;
 	bool			abovemidtex;
@@ -108,8 +111,76 @@ void	P_LineOpening (FLineOpening &open, AActor *thing, const line_t *linedef, fi
 class FBoundingBox;
 struct polyblock_t;
 
+//============================================================================
+//
+// This is a dynamic array which holds its first MAX_STATIC entries in normal
+// variables to avoid constant allocations which this would otherwise
+// require.
+// 
+// When collecting touched portal groups the normal cases are either
+// no portals == one group or
+// two portals = two groups
+// 
+// Anything with more can happen but far less infrequently, so this
+// organization helps avoiding the overhead from heap allocations
+// in the vast majority of situations.
+//
+//============================================================================
+
+struct FPortalGroupArray
+{
+	enum
+	{
+		LOWER = 0x4000,
+		UPPER = 0x8000,
+		FLAT = 0xc000,
+	};
+
+	enum
+	{
+		MAX_STATIC = 4
+	};
+
+	FPortalGroupArray()
+	{
+		varused = 0;
+		inited = false;
+	}
+
+	void Clear()
+	{
+		data.Clear();
+		varused = 0;
+		inited = false;
+	}
+
+	void Add(DWORD num)
+	{
+		if (varused < MAX_STATIC) entry[varused++] = (WORD)num;
+		else data.Push((WORD)num);
+	}
+
+	unsigned Size()
+	{
+		return varused + data.Size();
+	}
+
+	DWORD operator[](unsigned index)
+	{
+		return index < MAX_STATIC ? entry[index] : data[index - MAX_STATIC];
+	}
+
+	bool inited;
+
+private:
+	WORD entry[MAX_STATIC];
+	BYTE varused;
+	TArray<WORD> data;
+};
+
 class FBlockLinesIterator
 {
+	friend class FMultiBlockLinesIterator;
 	int minx, maxx;
 	int miny, maxy;
 
@@ -120,12 +191,60 @@ class FBlockLinesIterator
 
 	void StartBlock(int x, int y);
 
+	FBlockLinesIterator() {}
+	void init(const FBoundingBox &box);
 public:
 	FBlockLinesIterator(int minx, int miny, int maxx, int maxy, bool keepvalidcount = false);
 	FBlockLinesIterator(const FBoundingBox &box);
 	line_t *Next();
 	void Reset() { StartBlock(minx, miny); }
 };
+
+class FMultiBlockLinesIterator
+{
+	FPortalGroupArray &checklist;
+	fixedvec3 checkpoint;
+	fixedvec2 offset;
+	short basegroup;
+	short portalflags;
+	short index;
+	bool continueup;
+	bool continuedown;
+	FBlockLinesIterator blockIterator;
+	FBoundingBox bbox;
+
+	bool GoUp(fixed_t x, fixed_t y);
+	bool GoDown(fixed_t x, fixed_t y);
+	void startIteratorForGroup(int group);
+
+public:
+
+	struct CheckResult
+	{
+		line_t *line;
+		fixedvec3 position;
+		int portalflags;
+	};
+
+	FMultiBlockLinesIterator(FPortalGroupArray &check, AActor *origin, fixed_t checkradius = -1);
+	FMultiBlockLinesIterator(FPortalGroupArray &check, fixed_t checkx, fixed_t checky, fixed_t checkz, fixed_t checkh, fixed_t checkradius);
+	bool Next(CheckResult *item);
+	void Reset();
+	// for stopping group traversal through portals. Only the calling code can decide whether this is needed so this needs to be set from the outside.
+	void StopUp()
+	{
+		continueup = false;
+	}
+	void StopDown()
+	{
+		continuedown = false;
+	}
+	const FBoundingBox &Box() const
+	{
+		return bbox;
+	}
+};
+
 
 class FBlockThingsIterator
 {
@@ -158,13 +277,51 @@ class FBlockThingsIterator
 	FBlockThingsIterator();
 
 	friend class FPathTraverse;
+	friend class FMultiBlockThingsIterator;
 
 public:
 	FBlockThingsIterator(int minx, int miny, int maxx, int maxy);
-	FBlockThingsIterator(const FBoundingBox &box);
+	FBlockThingsIterator(const FBoundingBox &box)
+	{
+		init(box);
+	}
+	void init(const FBoundingBox &box);
 	AActor *Next(bool centeronly = false);
 	void Reset() { StartBlock(minx, miny); }
 };
+
+class FMultiBlockThingsIterator
+{
+	FPortalGroupArray &checklist;
+	fixedvec3 checkpoint;
+	short basegroup;
+	short portalflags;
+	short index;
+	FBlockThingsIterator blockIterator;
+	FBoundingBox bbox;
+
+	void startIteratorForGroup(int group);
+
+public:
+
+	struct CheckResult
+	{
+		AActor *thing;
+		fixedvec3 position;
+		int portalflags;
+	};
+
+	FMultiBlockThingsIterator(FPortalGroupArray &check, AActor *origin, fixed_t checkradius = -1, bool ignorerestricted = false);
+	FMultiBlockThingsIterator(FPortalGroupArray &check, fixed_t checkx, fixed_t checky, fixed_t checkz, fixed_t checkh, fixed_t checkradius, bool ignorerestricted = false);
+	bool Next(CheckResult *item);
+	void Reset();
+	const FBoundingBox &Box() const
+	{
+		return bbox;
+	}
+};
+
+
 
 class FPathTraverse
 {

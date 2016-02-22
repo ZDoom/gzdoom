@@ -659,7 +659,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CheckTerrain)
 
 	sector_t *sec = self->Sector;
 
-	if (self->Z() == sec->floorplane.ZatPoint(self))
+	if (self->Z() == sec->floorplane.ZatPoint(self) && sec->PortalBlocksMovement(sector_t::floor))
 	{
 		if (sec->special == Damage_InstantDeath)
 		{

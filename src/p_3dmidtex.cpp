@@ -294,7 +294,9 @@ bool P_LineOpening_3dMidtex(AActor *thing, const line_t *linedef, FLineOpening &
 				open.abovemidtex = true;
 				open.floorpic = linedef->sidedef[0]->GetTexture(side_t::mid);
 				open.floorterrain = TerrainTypes[open.floorpic];
-				
+				open.frontfloorplane.SetAtHeight(tt, sector_t::floor);
+				open.backfloorplane.SetAtHeight(tt, sector_t::floor);
+
 			}
 			// returns true if it touches the midtexture
 			return (abs(thing->Z() - tt) <= thing->MaxStepHeight);

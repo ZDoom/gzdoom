@@ -3,11 +3,7 @@
 
 #include "basictypes.h"
 #include "v_video.h"
-#include "r_defs.h"
-#include "actor.h"
-#include "p_local.h"
 #include "m_bbox.h"
-#include "a_sharedglobal.h"
 
 struct FPortalGroupArray;
 //============================================================================
@@ -30,15 +26,25 @@ struct FPortalGroupArray;
 
 struct FDisplacement
 {
-	fixed_t x, y;
+	fixedvec2 pos;
 	bool isSet;
 	BYTE indirect;	// just for illustration.
+
+	operator fixedvec2()
+	{
+		return pos;
+	}
 };
 
 struct FDisplacementTable
 {
 	TArray<FDisplacement> data;
 	int size;
+
+	FDisplacementTable()
+	{
+		Create(1);
+	}
 
 	void Create(int numgroups)
 	{
@@ -49,6 +55,7 @@ struct FDisplacementTable
 
 	FDisplacement &operator()(int x, int y)
 	{
+		if (x == y) return data[0];	// shortcut for the most common case
 		return data[x + size*y];
 	}
 };
@@ -116,11 +123,12 @@ struct FLinePortal
 
 extern TArray<FLinePortal> linePortals;
 
+void P_ClearPortals();
 void P_SpawnLinePortal(line_t* line);
 void P_FinalizePortals();
 bool P_ChangePortal(line_t *ln, int thisid, int destid);
 void P_CreateLinkedPortals();
-bool P_CollectConnectedGroups(AActor *actor, fixed_t newx, fixed_t newy, FPortalGroupArray &out);
+bool P_CollectConnectedGroups(int startgroup, const fixedvec3 &position, fixed_t upperz, fixed_t checkradius, FPortalGroupArray &out);
 void P_CollectLinkedPortals();
 inline int P_NumPortalGroups()
 {
@@ -174,59 +182,5 @@ public:
 
 /* new code */
 fixed_t P_PointLineDistance(line_t* line, fixed_t x, fixed_t y);
-
-//============================================================================
-//
-// some wrappers around the portal data.
-//
-//============================================================================
-
-
-// returns true if the portal is crossable by actors
-inline bool line_t::isLinePortal() const
-{
-	return portalindex >= linePortals.Size() ? false : !!(linePortals[portalindex].mFlags & PORTF_PASSABLE);
-}
-
-// returns true if the portal needs to be handled by the renderer
-inline bool line_t::isVisualPortal() const
-{
-	return portalindex >= linePortals.Size() ? false : !!(linePortals[portalindex].mFlags & PORTF_VISIBLE);
-}
-
-inline line_t *line_t::getPortalDestination() const
-{
-	return portalindex >= linePortals.Size() ? (line_t*)NULL : linePortals[portalindex].mDestination;
-}
-
-inline int line_t::getPortalAlignment() const
-{
-	return portalindex >= linePortals.Size() ? 0 : linePortals[portalindex].mAlign;
-}
-
-inline bool sector_t::PortalBlocksView(int plane)
-{
-	if (SkyBoxes[plane] == NULL) return true;
-	if (SkyBoxes[plane]->special1 != SKYBOX_LINKEDPORTAL) return false;
-	return !!(planes[plane].Flags & (PLANEF_NORENDER | PLANEF_DISABLED | PLANEF_OBSTRUCTED));
-}
-
-inline bool sector_t::PortalBlocksSight(int plane)
-{
-	if (SkyBoxes[plane] == NULL || SkyBoxes[plane]->special1 != SKYBOX_LINKEDPORTAL) return true;
-	return !!(planes[plane].Flags & (PLANEF_NORENDER | PLANEF_DISABLED | PLANEF_OBSTRUCTED));
-}
-
-inline bool sector_t::PortalBlocksMovement(int plane)
-{
-	if (SkyBoxes[plane] == NULL || SkyBoxes[plane]->special1 != SKYBOX_LINKEDPORTAL) return true;
-	return !!(planes[plane].Flags & (PLANEF_NOPASS | PLANEF_DISABLED | PLANEF_OBSTRUCTED));
-}
-
-inline bool sector_t::PortalBlocksSound(int plane)
-{
-	if (SkyBoxes[plane] == NULL || SkyBoxes[plane]->special1 != SKYBOX_LINKEDPORTAL) return true;
-	return !!(planes[plane].Flags & (PLANEF_BLOCKSOUND | PLANEF_DISABLED | PLANEF_OBSTRUCTED));
-}
 
 #endif

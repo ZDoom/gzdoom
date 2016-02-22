@@ -280,8 +280,8 @@ void P_GetFloorCeilingZ(FCheckPosition &tmf, int flags)
 	sector_t *sec = (!(flags & FFCF_SAMESECTOR) || tmf.thing->Sector == NULL)? P_PointInSector(tmf.x, tmf.y) : tmf.sector;
 	F3DFloor *ffc, *fff;
 
-	tmf.ceilingz = sec->NextHighestCeilingAt(tmf.thing, tmf.z + tmf.thing->height, flags, &tmf.ceilingsector, &ffc);
-	tmf.floorz = tmf.dropoffz = sec->NextLowestFloorAt(tmf.thing, tmf.z, flags, &tmf.floorsector, &fff);
+	tmf.ceilingz = sec->NextHighestCeilingAt(tmf.x, tmf.y, tmf.z + tmf.thing->height, flags, &tmf.ceilingsector, &ffc);
+	tmf.floorz = tmf.dropoffz = sec->NextLowestFloorAt(tmf.x, tmf.y, tmf.z, flags, tmf.thing->MaxStepHeight, &tmf.floorsector, &fff);
 
 	if (fff)
 	{

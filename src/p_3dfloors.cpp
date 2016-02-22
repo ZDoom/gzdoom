@@ -821,13 +821,6 @@ void P_LineOpening_XFloors (FLineOpening &open, AActor * thing, const line_t *li
 				open.floorpic = highestfloorpic;
 				open.floorterrain = highestfloorterrain;
 				open.bottomsec = highestfloorsec;
-			}
-			
-			if(lowestceiling < open.top) 
-			{
-				open.top = lowestceiling;
-				open.ceilingpic = lowestceilingpic;
-				open.topsec = lowestceilingsec;
 				if (highestfloorplanes[0])
 				{
 					open.frontfloorplane = *highestfloorplanes[0];
@@ -838,6 +831,13 @@ void P_LineOpening_XFloors (FLineOpening &open, AActor * thing, const line_t *li
 					open.backfloorplane = *highestfloorplanes[1];
 					if (open.backfloorplane.c < 0) open.backfloorplane.FlipVert();
 				}
+			}
+			
+			if(lowestceiling < open.top) 
+			{
+				open.top = lowestceiling;
+				open.ceilingpic = lowestceilingpic;
+				open.topsec = lowestceilingsec;
 			}
 			
 			open.lowfloor = MIN(lowestfloor[0], lowestfloor[1]);

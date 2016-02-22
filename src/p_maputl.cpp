@@ -726,7 +726,7 @@ FMultiBlockLinesIterator::FMultiBlockLinesIterator(FPortalGroupArray &check, AAc
 {
 	checkpoint = origin->Pos();
 	if (!check.inited) P_CollectConnectedGroups(origin->Sector->PortalGroup, checkpoint, origin->Top(), checkradius, checklist);
-	checkpoint.z = checkradius;
+	checkpoint.z = checkradius == -1? origin->radius : checkradius;
 	basegroup = origin->Sector->PortalGroup;
 	Reset();
 }
@@ -801,7 +801,6 @@ bool FMultiBlockLinesIterator::Next(FMultiBlockLinesIterator::CheckResult *item)
 		item->line = line;
 		item->position.x = offset.x;
 		item->position.y = offset.y;
-		item->position.z = checkpoint.z;
 		item->portalflags = portalflags;
 		return true;
 	}
@@ -1059,7 +1058,7 @@ FMultiBlockThingsIterator::FMultiBlockThingsIterator(FPortalGroupArray &check, A
 {
 	checkpoint = origin->Pos();
 	if (!check.inited) P_CollectConnectedGroups(origin->Sector->PortalGroup, checkpoint, origin->Top(), checkradius, checklist);
-	checkpoint.z = checkradius;
+	checkpoint.z = checkradius == -1? origin->radius : checkradius;
 	basegroup = origin->Sector->PortalGroup;
 	Reset();
 }

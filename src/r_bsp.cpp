@@ -56,7 +56,6 @@
 #include "r_sky.h"
 #include "po_man.h"
 #include "r_data/colormaps.h"
-#include "portal.h"
 
 seg_t*			curline;
 side_t* 		sidedef;

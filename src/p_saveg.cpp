@@ -55,7 +55,6 @@
 #include "p_lnspec.h"
 #include "p_acs.h"
 #include "p_terrain.h"
-#include "portal.h"
 
 static void CopyPlayer (player_t *dst, player_t *src, const char *name);
 static void ReadOnePlayer (FArchive &arc, bool skipload);

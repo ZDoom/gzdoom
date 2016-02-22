@@ -25,7 +25,7 @@
 
 #include "tarray.h"
 #include <stddef.h>
-#include "portal.h"
+#include "r_defs.h"
 
 // The 3072 below is just an arbitrary value picked to avoid
 // drawing lines the player is too close to that would overflow

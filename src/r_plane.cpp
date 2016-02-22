@@ -58,7 +58,6 @@
 #include "r_3dfloors.h"
 #include "v_palette.h"
 #include "r_data/colormaps.h"
-#include "portal.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable:4244)

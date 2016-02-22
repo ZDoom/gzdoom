@@ -37,7 +37,6 @@
 */
 
 
-#include "portal.h"
 #include "p_local.h"
 #include "p_lnspec.h"
 #include "r_bsp.h"
@@ -359,6 +358,20 @@ bool P_ChangePortal(line_t *ln, int thisid, int destid)
 	}
 	return res;
 }
+
+//============================================================================
+//
+// clears all portal dat for a new level start
+//
+//============================================================================
+
+void P_ClearPortals()
+{
+	Displacements.Create(1);
+	linePortals.Clear();
+	linkedPortals.Clear();
+}
+
 
 //============================================================================
 //
@@ -774,13 +787,13 @@ static void AddDisplacementForPortal(AStackPoint *portal)
 	FDisplacement & disp = Displacements(thisgroup, othergroup);
 	if (!disp.isSet)
 	{
-		disp.x = portal->scaleX;
-		disp.y = portal->scaleY;
+		disp.pos.x = portal->scaleX;
+		disp.pos.y = portal->scaleY;
 		disp.isSet = true;
 	}
 	else
 	{
-		if (disp.x != portal->scaleX || disp.y != portal->scaleY)
+		if (disp.pos.x != portal->scaleX || disp.pos.y != portal->scaleY)
 		{
 			Printf("Portal between sectors %d and %d has displacement mismatch and will be disabled\n", portal->Sector->sectornum, portal->Mate->Sector->sectornum);
 			portal->special1 = portal->Mate->special1 = SKYBOX_PORTAL;
@@ -810,13 +823,13 @@ static void AddDisplacementForPortal(FLinePortal *portal)
 	FDisplacement & disp = Displacements(thisgroup, othergroup);
 	if (!disp.isSet)
 	{
-		disp.x = portal->mXDisplacement;
-		disp.y = portal->mYDisplacement;
+		disp.pos.x = portal->mXDisplacement;
+		disp.pos.y = portal->mYDisplacement;
 		disp.isSet = true;
 	}
 	else
 	{
-		if (disp.x != portal->mXDisplacement || disp.y != portal->mYDisplacement)
+		if (disp.pos.x != portal->mXDisplacement || disp.pos.y != portal->mYDisplacement)
 		{
 			Printf("Portal between lines %d and %d has displacement mismatch\n", int(portal->mOrigin - lines), int(portal->mDestination - lines));
 			portal->mType = linePortals[portal->mDestination->portalindex].mType = PORTT_TELEPORT;
@@ -857,15 +870,14 @@ static bool ConnectGroups()
 							FDisplacement &dispxz = Displacements(x, z);
 							if (dispxz.isSet)
 							{
-								if (dispxy.x + dispyz.x != dispxz.x || dispxy.y + dispyz.y != dispxz.y)
+								if (dispxy.pos.x + dispyz.pos.x != dispxz.pos.x || dispxy.pos.y + dispyz.pos.y != dispxz.pos.y)
 								{
 									bogus = true;
 								}
 							}
 							else
 							{
-								dispxz.x = dispxy.x + dispyz.x;
-								dispxz.y = dispxy.y + dispyz.y;
+								dispxz.pos = dispxy.pos + dispyz.pos;
 								dispxz.isSet = true;
 								dispxz.indirect = indirect;
 								changed = true;
@@ -920,13 +932,15 @@ void P_CreateLinkedPortals()
 	}
 	if (orgs.Size() == 0)
 	{
+		// Create the 0->0 translation which is always needed.
+		Displacements.Create(1);
 		return;
 	}
 	for (int i = 0; i < numsectors; i++)
 	{
 		for (int j = 0; j < 2; j++)
 		{
-			ASkyViewpoint *box = sectors[i].SkyBoxes[j];
+			AActor *box = sectors[i].SkyBoxes[j];
 			if (box != NULL && box->special1 == SKYBOX_LINKEDPORTAL)
 			{
 				secplane_t &plane = j == 0 ? sectors[i].floorplane : sectors[i].ceilingplane;
@@ -962,7 +976,7 @@ void P_CreateLinkedPortals()
 	{
 		for (int j = 0; j < 2; j++)
 		{
-			ASkyViewpoint *box = sectors[i].SkyBoxes[j];
+			ASkyViewpoint *box = barrier_cast<ASkyViewpoint*>(sectors[i].SkyBoxes[j]);
 			if (box != NULL)
 			{
 				if (box->special1 == SKYBOX_LINKEDPORTAL && sectors[i].PortalGroup == 0)
@@ -995,7 +1009,7 @@ void P_CreateLinkedPortals()
 			FDisplacement &dispxy = Displacements(x, y);
 			FDisplacement &dispyx = Displacements(y, x);
 			if (dispxy.isSet && dispyx.isSet &&
-				(dispxy.x != -dispyx.x || dispxy.y != -dispyx.y))
+				(dispxy.pos.x != -dispyx.pos.x || dispxy.pos.y != -dispyx.pos.y))
 			{
 				int sec1 = -1, sec2 = -1;
 				for (int i = 0; i < numsectors && (sec1 == -1 || sec2 == -1); i++)
@@ -1054,7 +1068,7 @@ void P_CreateLinkedPortals()
 //
 //============================================================================
 
-bool P_CollectConnectedGroups(AActor *actor, fixed_t newx, fixed_t newy, FPortalGroupArray &out)
+bool P_CollectConnectedGroups(int startgroup, const fixedvec3 &position, fixed_t upperz, fixed_t checkradius, FPortalGroupArray &out)
 {
 	// Keep this temporary work stuff static. This function can never be called recursively
 	// and this would have to be reallocated for each call otherwise.
@@ -1062,19 +1076,19 @@ bool P_CollectConnectedGroups(AActor *actor, fixed_t newx, fixed_t newy, FPortal
 	static TArray<FLinePortal*> foundPortals;
 
 	bool retval = false;
+	out.inited = true;
 	if (linkedPortals.Size() == 0)
 	{
 		// If there are no portals, all sectors are in group 0.
-		out.Add(0);
 		return false;
 	}
 	processMask.setSize(linkedPortals.Size());
 	processMask.clear();
 	foundPortals.Clear();
 
-	int thisgroup = actor->Sector->PortalGroup;
+	int thisgroup = startgroup;
 	processMask.setBit(thisgroup);
-	out.Add(thisgroup);
+	//out.Add(thisgroup);
 
 	for (unsigned i = 0; i < linkedPortals.Size(); i++)
 	{
@@ -1083,7 +1097,7 @@ bool P_CollectConnectedGroups(AActor *actor, fixed_t newx, fixed_t newy, FPortal
 		FDisplacement &disp = Displacements(thisgroup, othergroup);
 		if (!disp.isSet) continue;	// no connection.
 
-		FBoundingBox box(newx + disp.x, newy + disp.y, actor->radius);
+		FBoundingBox box(position.x + disp.pos.x, position.y + disp.pos.y, checkradius);
 
 		if (box.Right() <= ld->bbox[BOXLEFT]
 			|| box.Left() >= ld->bbox[BOXRIGHT]
@@ -1111,27 +1125,27 @@ bool P_CollectConnectedGroups(AActor *actor, fixed_t newx, fixed_t newy, FPortal
 			}
 		}
 	}
-	sector_t *sec = P_PointInSector(newx, newy);
+	sector_t *sec = P_PointInSector(position.x, position.y);
 	sector_t *wsec = sec;
-	while (!wsec->PortalBlocksMovement(sector_t::ceiling) && actor->Top() > wsec->SkyBoxes[sector_t::ceiling]->threshold)
+	while (!wsec->PortalBlocksMovement(sector_t::ceiling) && upperz > wsec->SkyBoxes[sector_t::ceiling]->threshold)
 	{
 		sector_t *othersec = wsec->SkyBoxes[sector_t::ceiling]->Sector;
-		FDisplacement &disp = Displacements(actor->Sector->PortalGroup, othersec->PortalGroup);
-		fixed_t dx = newx + disp.x;
-		fixed_t dy = newx + disp.y;
+		FDisplacement &disp = Displacements(startgroup, othersec->PortalGroup);
+		fixed_t dx = position.x + disp.pos.x;
+		fixed_t dy = position.y + disp.pos.y;
 		processMask.setBit(othersec->PortalGroup);
-		out.Add(othersec->PortalGroup);
+		out.Add(othersec->PortalGroup|FPortalGroupArray::UPPER);
 		wsec = P_PointInSector(dx, dy);	// get upper sector at the exact spot we want to check and repeat
 		retval = true;
 	}
 	wsec = sec;
-	while (!wsec->PortalBlocksMovement(sector_t::floor) && actor->Z() < wsec->SkyBoxes[sector_t::floor]->threshold)
+	while (!wsec->PortalBlocksMovement(sector_t::floor) && position.z < wsec->SkyBoxes[sector_t::floor]->threshold)
 	{
-		sector_t *othersec = wsec->SkyBoxes[sector_t::ceiling]->Sector;
-		FDisplacement &disp = Displacements(actor->Sector->PortalGroup, othersec->PortalGroup);
-		fixed_t dx = newx + disp.x;
-		fixed_t dy = newx + disp.y;
-		processMask.setBit(othersec->PortalGroup);
+		sector_t *othersec = wsec->SkyBoxes[sector_t::floor]->Sector;
+		FDisplacement &disp = Displacements(startgroup, othersec->PortalGroup);
+		fixed_t dx = position.x + disp.pos.x;
+		fixed_t dy = position.y + disp.pos.y;
+		processMask.setBit(othersec->PortalGroup|FPortalGroupArray::LOWER);
 		out.Add(othersec->PortalGroup);
 		wsec = P_PointInSector(dx, dy);	// get lower sector at the exact spot we want to check and repeat
 		retval = true;
@@ -1153,7 +1167,7 @@ CCMD(dumplinktable)
 		for (int y = 1; y < Displacements.size; y++)
 		{
 			FDisplacement &disp = Displacements(x, y);
-			Printf("%c%c(%6d, %6d)", TEXTCOLOR_ESCAPE, 'C' + disp.indirect, disp.x >> FRACBITS, disp.y >> FRACBITS);
+			Printf("%c%c(%6d, %6d)", TEXTCOLOR_ESCAPE, 'C' + disp.indirect, disp.pos.x >> FRACBITS, disp.pos.y >> FRACBITS);
 		}
 		Printf("\n");
 	}

@@ -67,7 +67,6 @@
 #include "c_dispatch.h"
 #include "r_sky.h"
 #include "d_player.h"
-#include "portal.h"
 #include "p_maputl.h"
 #include "p_blockmap.h"
 #ifndef NO_EDATA
@@ -440,7 +439,7 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 	{
 		// Falling, not all the way down yet?
 		sector = player->mo->Sector;
-		if (player->mo->Z() != sector->floorplane.ZatPoint(player->mo)
+		if (player->mo->Z() != sector->LowestFloorAt(player->mo)
 			&& !player->mo->waterlevel)
 		{
 			return;
@@ -480,7 +479,7 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 				}
 				if (sector->Flags & SECF_DMGTERRAINFX)
 				{
-					P_HitWater(player->mo, sector, INT_MIN, INT_MIN, INT_MIN, false, true, true);
+					P_HitWater(player->mo, player->mo->Sector, INT_MIN, INT_MIN, INT_MIN, false, true, true);
 				}
 			}
 		}
@@ -919,10 +918,11 @@ static void SetupFloorPortal (AStackPoint *point)
 {
 	NActorIterator it (NAME_LowerStackLookOnly, point->tid);
 	sector_t *Sector = point->Sector;
-	Sector->SkyBoxes[sector_t::floor] = static_cast<ASkyViewpoint*>(it.Next());
-	if (Sector->SkyBoxes[sector_t::floor] != NULL && Sector->SkyBoxes[sector_t::floor]->bAlways)
+	ASkyViewpoint *skyv = static_cast<ASkyViewpoint*>(it.Next());
+	Sector->SkyBoxes[sector_t::floor] = skyv;
+	if (skyv != NULL && skyv->bAlways)
 	{
-		Sector->SkyBoxes[sector_t::floor]->Mate = point;
+		skyv->Mate = point;
 		if (Sector->GetAlpha(sector_t::floor) == OPAQUE)
 			Sector->SetAlpha(sector_t::floor, Scale (point->args[0], OPAQUE, 255));
 	}
@@ -932,12 +932,13 @@ static void SetupCeilingPortal (AStackPoint *point)
 {
 	NActorIterator it (NAME_UpperStackLookOnly, point->tid);
 	sector_t *Sector = point->Sector;
-	Sector->SkyBoxes[sector_t::ceiling] = static_cast<ASkyViewpoint*>(it.Next());
-	if (Sector->SkyBoxes[sector_t::ceiling] != NULL && Sector->SkyBoxes[sector_t::ceiling]->bAlways)
+	ASkyViewpoint *skyv = static_cast<ASkyViewpoint*>(it.Next());
+	Sector->SkyBoxes[sector_t::ceiling] = skyv;
+	if (skyv != NULL && skyv->bAlways)
 	{
-		Sector->SkyBoxes[sector_t::ceiling]->Mate = point;
+		skyv->Mate = point;
 		if (Sector->GetAlpha(sector_t::ceiling) == OPAQUE)
-			Sector->SetAlpha(sector_t::ceiling, Scale (point->args[0], OPAQUE, 255));
+			Sector->SetAlpha(sector_t::ceiling, Scale(point->args[0], OPAQUE, 255));
 	}
 }
 
@@ -968,7 +969,7 @@ static void SetPortal(sector_t *sector, int plane, ASkyViewpoint *portal, fixed_
 	// plane: 0=floor, 1=ceiling, 2=both
 	if (plane > 0)
 	{
-		if (sector->SkyBoxes[sector_t::ceiling] == NULL || !sector->SkyBoxes[sector_t::ceiling]->bAlways) 
+		if (sector->SkyBoxes[sector_t::ceiling] == NULL || !barrier_cast<ASkyViewpoint*>(sector->SkyBoxes[sector_t::ceiling])->bAlways)
 		{
 			sector->SkyBoxes[sector_t::ceiling] = portal;
 			if (sector->GetAlpha(sector_t::ceiling) == OPAQUE)
@@ -979,7 +980,7 @@ static void SetPortal(sector_t *sector, int plane, ASkyViewpoint *portal, fixed_
 	}
 	if (plane == 2 || plane == 0)
 	{
-		if (sector->SkyBoxes[sector_t::floor] == NULL || !sector->SkyBoxes[sector_t::floor]->bAlways) 
+		if (sector->SkyBoxes[sector_t::floor] == NULL || !barrier_cast<ASkyViewpoint*>(sector->SkyBoxes[sector_t::floor])->bAlways)
 		{
 			sector->SkyBoxes[sector_t::floor] = portal;
 		}
@@ -2326,6 +2327,7 @@ void DPusher::Tick ()
 			continue;
 
 		sector_t *hsec = sec->GetHeightSec();
+		fixedvec3 pos = thing->PosRelative(sec);
 		if (m_Type == p_wind)
 		{
 			if (hsec == NULL)
@@ -2343,7 +2345,7 @@ void DPusher::Tick ()
 			}
 			else // special water sector
 			{
-				ht = hsec->floorplane.ZatPoint(thing);
+				ht = hsec->floorplane.ZatPoint(pos);
 				if (thing->Z() > ht) // above ground
 				{
 					xspeed = m_Xmag; // full force
@@ -2372,7 +2374,7 @@ void DPusher::Tick ()
 			{ // special water sector
 				floor = &hsec->floorplane;
 			}
-			if (thing->Z() > floor->ZatPoint(thing))
+			if (thing->Z() > floor->ZatPoint(pos))
 			{ // above ground
 				xspeed = yspeed = 0; // no force
 			}

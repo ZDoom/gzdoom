@@ -372,7 +372,7 @@ void AddImplicitReturn(FxSequence *code, const PPrototype *proto, FScanner &sc)
 	else
 	{ // Something was returned earlier in the sequence. Make it an error
 	  // instead of adding an implicit one.
-		sc.ScriptError("Action list must return a value");
+		sc.ScriptError("Not all paths return a value");
 	}
 }
 
@@ -555,7 +555,9 @@ FxVMFunctionCall *ParseAction(FScanner &sc, FState state, FString statestring, B
 		return call;
 	}
 
-	PFunction *afd = dyn_cast<PFunction>(bag.Info->Symbols.FindSymbol(FName(sc.String, true), true));
+	FName symname = FName(sc.String, true);
+	symname = CheckCastKludges(symname);
+	PFunction *afd = dyn_cast<PFunction>(bag.Info->Symbols.FindSymbol(symname, true));
 	if (afd != NULL)
 	{
 		FArgumentList *args = new FArgumentList;
@@ -676,5 +678,26 @@ void ParseFunctionParameters(FScanner &sc, PClassActor *cls, TArray<FxExpression
 	else
 	{
 		sc.MustGetStringName(")");
+	}
+}
+
+//==========================================================================
+//
+// CheckCastKludges
+//
+//==========================================================================
+
+FName CheckCastKludges(FName in)
+{
+	switch (in)
+	{
+	case NAME_Int:
+		return NAME___decorate_internal_int__;
+	case NAME_Bool:
+		return NAME___decorate_internal_bool__;
+	case NAME_State:
+		return NAME___decorate_internal_state__;
+	default:
+		return in;
 	}
 }

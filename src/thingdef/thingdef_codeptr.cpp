@@ -325,13 +325,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetDistance)
 
 //===========================================================================
 //
-// A_State
+// __decorate_internal_state__
 //
 // Returns the state passed in.
 //
 //===========================================================================
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_State)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, __decorate_internal_state__)
 {
 	PARAM_PROLOGUE;
 	PARAM_OBJECT(self, AActor);
@@ -341,13 +341,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_State)
 
 //===========================================================================
 //
-// A_Int
+// __decorate_internal_int__
 //
 // Returns the int passed in.
 //
 //===========================================================================
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Int)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, __decorate_internal_int__)
 {
 	PARAM_PROLOGUE;
 	PARAM_OBJECT(self, AActor);
@@ -357,13 +357,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Int)
 
 //===========================================================================
 //
-// A_Bool
+// __decorate_internal_bool__
 //
 // Returns the bool passed in.
 //
 //===========================================================================
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Bool)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, __decorate_internal_bool__)
 {
 	PARAM_PROLOGUE;
 	PARAM_OBJECT(self, AActor);
@@ -1969,8 +1969,6 @@ static bool DoGiveInventory(AActor *receiver, bool orresult, VM_ARGS)
 		return false;
 	}
 
-	bool res = true;
-	
 	if (amount <= 0)
 	{
 		amount = 1;
@@ -2008,15 +2006,13 @@ static bool DoGiveInventory(AActor *receiver, bool orresult, VM_ARGS)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GiveInventory)
 {
 	PARAM_ACTION_PROLOGUE;
-	bool result = DoGiveInventory(self, false, VM_ARGS_NAMES);
-	ACTION_RETURN_BOOL(result);
+	ACTION_RETURN_BOOL(DoGiveInventory(self, false, VM_ARGS_NAMES));
 }	
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GiveToTarget)
 {
 	PARAM_ACTION_PROLOGUE;
-	bool result = DoGiveInventory(self->target, false, VM_ARGS_NAMES);
-	ACTION_RETURN_BOOL(result);
+	ACTION_RETURN_BOOL(DoGiveInventory(self->target, false, VM_ARGS_NAMES));
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GiveToChildren)
@@ -2096,15 +2092,13 @@ bool DoTakeInventory(AActor *receiver, bool orresult, VM_ARGS)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_TakeInventory)
 {
 	PARAM_ACTION_PROLOGUE;
-	bool result = DoTakeInventory(self, false, VM_ARGS_NAMES);
-	ACTION_RETURN_BOOL(result);
+	ACTION_RETURN_BOOL(DoTakeInventory(self, false, VM_ARGS_NAMES));
 }	
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_TakeFromTarget)
 {
 	PARAM_ACTION_PROLOGUE;
-	bool result = DoTakeInventory(self->target, false, VM_ARGS_NAMES);
-	ACTION_RETURN_BOOL(result);
+	ACTION_RETURN_BOOL(DoTakeInventory(self->target, false, VM_ARGS_NAMES));
 }	
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_TakeFromChildren)
@@ -2405,8 +2399,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItem)
 	AActor *mo = Spawn( missile, self->Vec3Angle(distance, self->angle, -self->floorclip + self->GetBobOffset() + zheight), ALLOW_REPLACE);
 
 	int flags = (transfer_translation ? SIXF_TRANSFERTRANSLATION : 0) + (useammo ? SIXF_SETMASTER : 0);
-	bool result = InitSpawnedItem(self, mo, flags);
-	ACTION_RETURN_BOOL(result);	// for an inventory item's use state
+	ACTION_RETURN_BOOL(InitSpawnedItem(self, mo, flags));	// for an inventory item's use state
 }
 
 //===========================================================================
@@ -3255,8 +3248,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIf)
 	PARAM_BOOL	(condition);
 	PARAM_STATE	(jump);
 
-	if (!condition) jump = NULL;
-	ACTION_RETURN_STATE(jump);
+	ACTION_RETURN_STATE(condition ? jump : NULL);
 }
 
 //===========================================================================

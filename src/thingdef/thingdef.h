@@ -192,6 +192,7 @@ void ParseFunctionParameters(FScanner &sc, PClassActor *cls, TArray<FxExpression
 	PFunction *afd, FString statestring, FStateDefinitions *statedef);
 FxExpression *ParseActions(FScanner &sc, FState state, FString statestring, Baggage &bag, PPrototype *&proto, bool &endswithret);
 class FxVMFunctionCall *ParseAction(FScanner &sc, FState state, FString statestring, Baggage &bag);
+FName CheckCastKludges(FName in);
 void AddImplicitReturn(class FxSequence *code, const PPrototype *proto, FScanner &sc);
 void SetImplicitArgs(TArray<PType *> *args, TArray<DWORD> *argflags, PClassActor *cls, DWORD funcflags);
 
@@ -357,8 +358,8 @@ int MatchString (const char *in, const char **strings);
 	}
 
 
-#define ACTION_RETURN_STATE(state)	if (numret > 0) { assert(ret != NULL); ret->SetPointer(state, ATAG_STATE); return 1; } return 0
-#define ACTION_RETURN_INT(v) if (numret > 0) { assert(ret != NULL); ret->SetInt(v); return 1; } return 0
+#define ACTION_RETURN_STATE(v) do { FState *state = v; if (numret > 0) { assert(ret != NULL); ret->SetPointer(state, ATAG_STATE); return 1; } return 0; } while(0)
+#define ACTION_RETURN_INT(v) do { int u = v; if (numret > 0) { assert(ret != NULL); ret->SetInt(u); return 1; } return 0; } while(0)
 #define ACTION_RETURN_BOOL(v) ACTION_RETURN_INT(v)
 
 // Checks to see what called the current action function

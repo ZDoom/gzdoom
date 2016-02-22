@@ -900,6 +900,7 @@ class FxReturnStatement : public FxExpression
 
 public:
 	FxReturnStatement(FxVMFunctionCall *call, const FScriptPosition &pos);
+	~FxReturnStatement();
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
 	VMFunction *GetDirectFunction();

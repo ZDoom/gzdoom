@@ -5358,7 +5358,7 @@ void P_BloodSplatter (fixed_t x, fixed_t y, fixed_t z, AActor *originator)
 	}
 	if (bloodtype >= 1)
 	{
-		P_DrawSplash2 (40, x, y, z, R_PointToAngle2 (x, y, originator->X(), originator->Y()), 2, bloodcolor);
+		P_DrawSplash2 (40, x, y, z, 0u - originator->AngleTo(x, y), 2, bloodcolor);
 	}
 }
 
@@ -5398,7 +5398,7 @@ void P_BloodSplatter2 (fixed_t x, fixed_t y, fixed_t z, AActor *originator)
 	}
 	if (bloodtype >= 1)
 	{
-		P_DrawSplash2 (100, x, y, z, R_PointToAngle2 (0, 0, originator->X() - x, originator->Y() - y), 2, bloodcolor);
+		P_DrawSplash2 (100, x, y, z, 0u - originator->AngleTo(x, y), 2, bloodcolor);
 	}
 }
 

@@ -111,7 +111,7 @@ void A_PainShootSkull (AActor *self, angle_t angle, PClassActor *spawntype, int 
 		if (!inportal) break;
 
 		// recalculate position and redo the check on the other side of the portal
-		pos = self->Vec3Offset(dist.x, dist.y, 8 * FRACUNIT, false);
+		pos = self->Vec3Offset(dist.x, dist.y, 8 * FRACUNIT);
 		src.x = pos.x - dist.x;
 		src.y = pos.y - dist.y;
 

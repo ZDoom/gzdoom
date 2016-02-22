@@ -951,9 +951,4 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 #define PARAM_OBJECT_OPT(x,type)	++paramnum; PARAM_OBJECT_OPT_AT(paramnum,x,type)
 #define PARAM_CLASS_OPT(x,base)		++paramnum; PARAM_CLASS_OPT_AT(paramnum,x,base)
 
-// For use in the A_Jump* family of functions. If the function is passed a NULL state,
-// it still needs to be able to jump (and destroy the actor), so map it to Actor's
-// 'Null' state.
-#define PARAM_STATE_NOT_NULL(x)		PARAM_STATE(x); do { if (x == NULL) { x = RUNTIME_CLASS(AActor)->FindState(NAME_Null); } } while(0)
-
 #endif

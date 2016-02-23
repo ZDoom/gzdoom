@@ -478,7 +478,7 @@ bool EV_DoFloor (DFloor::EFloor floortype, line_t *line, int tag,
 			(floor->m_Direction<0 && floor->m_FloorDestDist<sec->floorplane.d) ||	// moving down but going up
 			(floor->m_Speed >= abs(sec->floorplane.d - floor->m_FloorDestDist)))	// moving in one step
 		{
-			floor->StopInterpolation();
+			floor->StopInterpolation(true);
 
 			// [Graf Zahl]
 			// Don't make sounds for instant movement hacks but make an exception for

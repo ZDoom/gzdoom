@@ -412,7 +412,7 @@ DCeiling *DCeiling::Create(sector_t *sec, DCeiling::ECeiling type, line_t *line,
 	}
 	if (ceiling->m_Speed >= movedist)
 	{
-		ceiling->StopInterpolation();
+		ceiling->StopInterpolation(true);
 	}
 
 	// set texture/type change properties

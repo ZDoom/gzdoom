@@ -2065,7 +2065,6 @@ FxMinMax::FxMinMax(TArray<FxExpression*> &expr, int type, const FScriptPosition 
 FxExpression *FxMinMax::Resolve(FCompileContext &ctx)
 {
 	unsigned int i;
-	bool isconst;
 	int intcount, floatcount;
 
 	CHECKRESOLVED();
@@ -2113,63 +2112,75 @@ FxExpression *FxMinMax::Resolve(FCompileContext &ctx)
 		ValueType = VAL_Int;
 	}
 
-	// Determine if every argument is constant
-	isconst = true;
+	// If at least two arguments are constants, they can be solved now.
+
+	// Look for first constant
 	for (i = 0; i < choices.Size(); ++i)
 	{
-		if (!choices[i]->isConstant())
+		if (choices[i]->isConstant())
 		{
-			isconst = false;
+			ExpVal best = static_cast<FxConstant *>(choices[i])->GetValue();
+			// Compare against remaining constants, which are removed.
+			// The best value gets stored in this one.
+			for (unsigned j = i + 1; j < choices.Size(); )
+			{
+				if (!choices[j]->isConstant())
+				{
+					j++;
+				}
+				else
+				{
+					ExpVal value = static_cast<FxConstant *>(choices[j])->GetValue();
+					assert(value.Type == ValueType.Type);
+					if (Type == TK_Min)
+					{
+						if (value.Type == VAL_Float)
+						{
+							if (value.Float < best.Float)
+							{
+								best.Float = value.Float;
+							}
+						}
+						else
+						{
+							if (value.Int < best.Int)
+							{
+								best.Int = value.Int;
+							}
+						}
+					}
+					else
+					{
+						if (value.Type == VAL_Float)
+						{
+							if (value.Float > best.Float)
+							{
+								best.Float = value.Float;
+							}
+						}
+						else
+						{
+							if (value.Int > best.Int)
+							{
+								best.Int = value.Int;
+							}
+						}
+					}
+					delete choices[j];
+					choices[j] = NULL;
+					choices.Delete(j);
+				}
+			}
+			FxExpression *x = new FxConstant(best, ScriptPosition);
+			if (i == 0 && choices.Size() == 1)
+			{ // Every choice was constant
+				delete this;
+				return x;
+			}
+			delete choices[i];
+			choices[i] = x;
 			break;
 		}
-	}
-
-	// If every argument is constant, we can decide this now.
-	if (isconst)
-	{
-		ExpVal best = static_cast<FxConstant *>(choices[0])->GetValue();
-		for (i = 1; i < choices.Size(); ++i)
-		{
-			ExpVal value = static_cast<FxConstant *>(choices[i])->GetValue();
-			assert(value.Type == ValueType.Type);
-			if (Type == TK_Min)
-			{
-				if (value.Type == VAL_Float)
-				{
-					if (value.Float < best.Float)
-					{
-						best.Float = value.Float;
-					}
-				}
-				else
-				{
-					if (value.Int < best.Int)
-					{
-						best.Int = value.Int;
-					}
-				}
-			}
-			else
-			{
-				if (value.Type == VAL_Float)
-				{
-					if (value.Float > best.Float)
-					{
-						best.Float = value.Float;
-					}
-				}
-				else
-				{
-					if (value.Int > best.Int)
-					{
-						best.Int = value.Int;
-					}
-				}
-			}
-		}
-		FxExpression *x = new FxConstant(best, ScriptPosition);
-		delete this;
-		return x;
 	}
 	return this;
 }

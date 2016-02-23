@@ -2043,6 +2043,214 @@ ExpEmit FxAbs::Emit(VMFunctionBuilder *build)
 //
 //
 //==========================================================================
+FxMinMax::FxMinMax(TArray<FxExpression*> &expr, int type, const FScriptPosition &pos)
+: FxExpression(pos), Type(type)
+{
+	assert(expr.Size() > 0);
+	assert(type == TK_Min || type == TK_Max);
+
+	ValueType = VAL_Unknown;
+	choices.Resize(expr.Size());
+	for (unsigned i = 0; i < expr.Size(); ++i)
+	{
+		choices[i] = expr[i];
+	}
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+FxExpression *FxMinMax::Resolve(FCompileContext &ctx)
+{
+	unsigned int i;
+	bool isconst;
+	int intcount, floatcount;
+
+	CHECKRESOLVED();
+
+	// Determine if float or int
+	intcount = floatcount = 0;
+	for (i = 0; i < choices.Size(); ++i)
+	{
+		RESOLVE(choices[i], ctx);
+		ABORT(choices[i]);
+
+		if (choices[i]->ValueType == VAL_Float)
+		{
+			floatcount++;
+		}
+		else if (choices[i]->ValueType == VAL_Int)
+		{
+			intcount++;
+		}
+		else
+		{
+			ScriptPosition.Message(MSG_ERROR, "Arguments must be of type int or float");
+			delete this;
+			return NULL;
+		}
+	}
+	if (floatcount != 0)
+	{
+		ValueType = VAL_Float;
+		if (intcount != 0)
+		{ // There are some ints that need to be cast to floats
+			for (i = 0; i < choices.Size(); ++i)
+			{
+				if (choices[i]->ValueType == VAL_Int)
+				{
+					choices[i] = new FxFloatCast(choices[i]);
+					RESOLVE(choices[i], ctx);
+					ABORT(choices[i]);
+				}
+			}
+		}
+	}
+	else
+	{
+		ValueType = VAL_Int;
+	}
+
+	// Determine if every argument is constant
+	isconst = true;
+	for (i = 0; i < choices.Size(); ++i)
+	{
+		if (!choices[i]->isConstant())
+		{
+			isconst = false;
+			break;
+		}
+	}
+
+	// If every argument is constant, we can decide this now.
+	if (isconst)
+	{
+		ExpVal best = static_cast<FxConstant *>(choices[0])->GetValue();
+		for (i = 1; i < choices.Size(); ++i)
+		{
+			ExpVal value = static_cast<FxConstant *>(choices[i])->GetValue();
+			assert(value.Type == ValueType.Type);
+			if (Type == TK_Min)
+			{
+				if (value.Type == VAL_Float)
+				{
+					if (value.Float < best.Float)
+					{
+						best.Float = value.Float;
+					}
+				}
+				else
+				{
+					if (value.Int < best.Int)
+					{
+						best.Int = value.Int;
+					}
+				}
+			}
+			else
+			{
+				if (value.Type == VAL_Float)
+				{
+					if (value.Float > best.Float)
+					{
+						best.Float = value.Float;
+					}
+				}
+				else
+				{
+					if (value.Int > best.Int)
+					{
+						best.Int = value.Int;
+					}
+				}
+			}
+		}
+		FxExpression *x = new FxConstant(best, ScriptPosition);
+		delete this;
+		return x;
+	}
+	return this;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+static void EmitLoad(VMFunctionBuilder *build, const ExpEmit resultreg, const ExpVal &value)
+{
+	if (resultreg.RegType == REGT_FLOAT)
+	{
+		build->Emit(OP_LKF, resultreg.RegNum, build->GetConstantFloat(value.GetFloat()));
+	}
+	else
+	{
+		build->EmitLoadInt(resultreg.RegNum, value.GetInt());
+	}
+}
+
+ExpEmit FxMinMax::Emit(VMFunctionBuilder *build)
+{
+	unsigned i;
+	int opcode, opA;
+
+	assert(choices.Size() > 0);
+	assert(OP_LTF_RK == OP_LTF_RR+1);
+	assert(OP_LT_RK == OP_LT_RR+1);
+	assert(OP_LEF_RK == OP_LEF_RR+1);
+	assert(OP_LE_RK == OP_LE_RR+1);
+
+	if (Type == TK_Min)
+	{
+		opcode = ValueType.Type == VAL_Float ? OP_LEF_RR : OP_LE_RR;
+		opA = 1;
+	}
+	else
+	{
+		opcode = ValueType.Type == VAL_Float ? OP_LTF_RR : OP_LT_RR;
+		opA = 0;
+	}
+
+	ExpEmit bestreg;
+
+	// Get first value into a register. This will also be the result register.
+	if (choices[0]->isConstant())
+	{
+		bestreg = ExpEmit(build, ValueType.Type == VAL_Float ? REGT_FLOAT : REGT_INT);
+		EmitLoad(build, bestreg, static_cast<FxConstant *>(choices[0])->GetValue());
+	}
+	else
+	{
+		bestreg = choices[0]->Emit(build);
+	}
+
+	// Compare every choice. Better matches get copied to the bestreg.
+	for (i = 1; i < choices.Size(); ++i)
+	{
+		ExpEmit checkreg = choices[i]->Emit(build);
+		assert(checkreg.RegType == bestreg.RegType);
+		build->Emit(opcode + checkreg.Konst, opA, bestreg.RegNum, checkreg.RegNum);
+		build->Emit(OP_JMP, 1);
+		if (checkreg.Konst)
+		{
+			build->Emit(bestreg.RegType == REGT_FLOAT ? OP_LKF : OP_LK, bestreg.RegNum, checkreg.RegNum);
+		}
+		else
+		{
+			build->Emit(bestreg.RegType == REGT_FLOAT ? OP_MOVEF : OP_MOVE, bestreg.RegNum, checkreg.RegNum, 0);
+			checkreg.Free(build);
+		}
+	}
+	return bestreg;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 FxRandom::FxRandom(FRandom * r, FxExpression *mi, FxExpression *ma, const FScriptPosition &pos)
 : FxExpression(pos)
 {
@@ -2269,16 +2477,7 @@ ExpEmit FxRandomPick::Emit(VMFunctionBuilder *build)
 		build->BackpatchToHere(jumptable + i);
 		if (choices[i]->isConstant())
 		{
-			if (ValueType == VAL_Int)
-			{
-				int val = static_cast<FxConstant *>(choices[i])->GetValue().GetInt();
-				build->EmitLoadInt(resultreg.RegNum, val);
-			}
-			else
-			{
-				double val = static_cast<FxConstant *>(choices[i])->GetValue().GetFloat();
-				build->Emit(OP_LKF, resultreg.RegNum, build->GetConstantFloat(val));
-			}
+			EmitLoad(build, resultreg, static_cast<FxConstant *>(choices[i])->GetValue());
 		}
 		else
 		{

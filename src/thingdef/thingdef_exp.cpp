@@ -349,6 +349,21 @@ static FxExpression *ParseExpression0 (FScanner &sc, PClassActor *cls)
 		// a cheap way to get them working when people use "name" instead of 'name'.
 		return new FxConstant(FName(sc.String), scpos);
 	}
+	else if (sc.CheckToken(TK_Min) || sc.CheckToken(TK_Max))
+	{
+		int type = sc.TokenType;
+		TArray<FxExpression*> list;
+		sc.MustGetToken('(');
+		for (;;)
+		{
+			FxExpression *expr = ParseExpressionM(sc, cls);
+			list.Push(expr);
+			if (sc.CheckToken(')'))
+				break;
+			sc.MustGetToken(',');
+		}
+		return new FxMinMax(list, type, sc);
+	}
 	else if (sc.CheckToken(TK_Random))
 	{
 		FRandom *rng;

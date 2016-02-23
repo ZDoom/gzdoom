@@ -629,6 +629,24 @@ public:
 //
 //==========================================================================
 
+class FxMinMax : public FxExpression
+{
+	TDeletingArray<FxExpression *> choices;
+	int Type;
+
+public:
+	FxMinMax(TArray<FxExpression*> &expr, int type, const FScriptPosition &pos);
+	FxExpression *Resolve(FCompileContext&);
+
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 class FxRandom : public FxExpression
 {
 protected:

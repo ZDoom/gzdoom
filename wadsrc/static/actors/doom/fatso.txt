@@ -34,7 +34,7 @@ ACTOR Fatso
 		FATT H 10 BRIGHT A_FatAttack2
 		FATT IG 5 A_FaceTarget
 		FATT H 10 BRIGHT A_FatAttack3
-		FATT IG 5
+		FATT IG 5 A_FaceTarget
 		Goto See
 	Pain:
 		FATT J 3

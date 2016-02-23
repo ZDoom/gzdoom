@@ -1,7 +1,11 @@
 #ifndef OALDEF_H
 #define OALDEF_H
 
-#if defined _WIN32 && !defined NO_OPENAL
+#ifndef NO_OPENAL
+
+#ifndef _WIN32
+typedef void* FARPROC;
+#endif
 
 #define DEFINE_ENTRY(type, name) static type p_##name;
 #include "oaldef.h"

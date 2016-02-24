@@ -927,7 +927,7 @@ void cht_Take (player_t *player, const char *name, int amount)
 				AInventory *ammo = player->mo->FindInventory(static_cast<PClassActor *>(type));
 
 				if (ammo)
-					ammo->Amount = 0;
+					ammo->DepleteOrDestroy();
 			}
 		}
 
@@ -943,10 +943,10 @@ void cht_Take (player_t *player, const char *name, int amount)
 
 			if (type->IsDescendantOf (RUNTIME_CLASS (AArmor)))
 			{
-				AActor *armor = player->mo->FindInventory(static_cast<PClassActor *>(type));
+				AInventory *armor = player->mo->FindInventory(static_cast<PClassActor *>(type));
 
 				if (armor)
-					armor->Destroy ();
+					armor->DepleteOrDestroy();
 			}
 		}
 

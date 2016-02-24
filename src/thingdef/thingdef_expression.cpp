@@ -2043,11 +2043,11 @@ ExpEmit FxAbs::Emit(VMFunctionBuilder *build)
 //
 //
 //==========================================================================
-FxMinMax::FxMinMax(TArray<FxExpression*> &expr, int type, const FScriptPosition &pos)
+FxMinMax::FxMinMax(TArray<FxExpression*> &expr, FName type, const FScriptPosition &pos)
 : FxExpression(pos), Type(type)
 {
 	assert(expr.Size() > 0);
-	assert(type == TK_Min || type == TK_Max);
+	assert(type == NAME_Min || type == NAME_Max);
 
 	ValueType = VAL_Unknown;
 	choices.Resize(expr.Size());
@@ -2132,7 +2132,7 @@ FxExpression *FxMinMax::Resolve(FCompileContext &ctx)
 				{
 					ExpVal value = static_cast<FxConstant *>(choices[j])->GetValue();
 					assert(value.Type == ValueType.Type);
-					if (Type == TK_Min)
+					if (Type == NAME_Min)
 					{
 						if (value.Type == VAL_Float)
 						{
@@ -2213,7 +2213,7 @@ ExpEmit FxMinMax::Emit(VMFunctionBuilder *build)
 	assert(OP_LEF_RK == OP_LEF_RR+1);
 	assert(OP_LE_RK == OP_LE_RR+1);
 
-	if (Type == TK_Min)
+	if (Type == NAME_Min)
 	{
 		opcode = ValueType.Type == VAL_Float ? OP_LEF_RR : OP_LE_RR;
 		opA = 1;

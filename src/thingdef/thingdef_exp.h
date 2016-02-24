@@ -632,10 +632,10 @@ public:
 class FxMinMax : public FxExpression
 {
 	TDeletingArray<FxExpression *> choices;
-	int Type;
+	FName Type;
 
 public:
-	FxMinMax(TArray<FxExpression*> &expr, int type, const FScriptPosition &pos);
+	FxMinMax(TArray<FxExpression*> &expr, FName type, const FScriptPosition &pos);
 	FxExpression *Resolve(FCompileContext&);
 
 	ExpEmit Emit(VMFunctionBuilder *build);

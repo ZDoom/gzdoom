@@ -52,6 +52,12 @@
 
 FRandom pr_exrandom ("EX_Random");
 
+static FxExpression *ParseRandom(FScanner &sc, FName identifier, PClassActor *cls);
+static FxExpression *ParseRandomPick(FScanner &sc, FName identifier, PClassActor *cls);
+static FxExpression *ParseRandom2(FScanner &sc, PClassActor *cls);
+static FxExpression *ParseAbs(FScanner &sc, PClassActor *cls);
+static FxExpression *ParseMinMax(FScanner &sc, FName identifier, PClassActor *cls);
+
 //
 // ParseExpression
 // [GRB] Parses an expression and stores it into Expression array
@@ -349,161 +355,63 @@ static FxExpression *ParseExpression0 (FScanner &sc, PClassActor *cls)
 		// a cheap way to get them working when people use "name" instead of 'name'.
 		return new FxConstant(FName(sc.String), scpos);
 	}
-	else if (sc.CheckToken(TK_Min) || sc.CheckToken(TK_Max))
-	{
-		int type = sc.TokenType;
-		TArray<FxExpression*> list;
-		sc.MustGetToken('(');
-		for (;;)
-		{
-			FxExpression *expr = ParseExpressionM(sc, cls);
-			list.Push(expr);
-			if (sc.CheckToken(')'))
-				break;
-			sc.MustGetToken(',');
-		}
-		return new FxMinMax(list, type, sc);
-	}
-	else if (sc.CheckToken(TK_Random))
-	{
-		FRandom *rng;
-
-		if (sc.CheckToken('['))
-		{
-			sc.MustGetToken(TK_Identifier);
-			rng = FRandom::StaticFindRNG(sc.String);
-			sc.MustGetToken(']');
-		}
-		else
-		{
-			rng = &pr_exrandom;
-		}
-		sc.MustGetToken('(');
-
-		FxExpression *min = ParseExpressionM (sc, cls);
-		sc.MustGetToken(',');
-		FxExpression *max = ParseExpressionM (sc, cls);
-		sc.MustGetToken(')');
-
-		return new FxRandom(rng, min, max, sc);
-	}
-	else if (sc.CheckToken(TK_RandomPick) || sc.CheckToken(TK_FRandomPick))
-	{
-		bool floaty = sc.TokenType == TK_FRandomPick;
-		FRandom *rng;
-		TArray<FxExpression*> list;
-		list.Clear();
-		int index = 0;
-
-		if (sc.CheckToken('['))
-		{
-			sc.MustGetToken(TK_Identifier);
-			rng = FRandom::StaticFindRNG(sc.String);
-			sc.MustGetToken(']');
-		}
-		else
-		{
-			rng = &pr_exrandom;
-		}
-		sc.MustGetToken('(');
-
-		for (;;)
-		{
-			FxExpression *expr = ParseExpressionM(sc, cls);
-			list.Push(expr);
-			if (sc.CheckToken(')'))
-				break;
-			sc.MustGetToken(',');
-		}
-		return new FxRandomPick(rng, list, floaty, sc);
-	}
-	else if (sc.CheckToken(TK_FRandom))
-	{
-		FRandom *rng;
-
-		if (sc.CheckToken('['))
-		{
-			sc.MustGetToken(TK_Identifier);
-			rng = FRandom::StaticFindRNG(sc.String);
-			sc.MustGetToken(']');
-		}
-		else
-		{
-			rng = &pr_exrandom;
-		}
-		sc.MustGetToken('(');
-
-		FxExpression *min = ParseExpressionM (sc, cls);
-		sc.MustGetToken(',');
-		FxExpression *max = ParseExpressionM (sc, cls);
-		sc.MustGetToken(')');
-
-		return new FxFRandom(rng, min, max, sc);
-	}
-	else if (sc.CheckToken(TK_Random2))
-	{
-		FRandom *rng;
-
-		if (sc.CheckToken('['))
-		{
-			sc.MustGetToken(TK_Identifier);
-			rng = FRandom::StaticFindRNG(sc.String);
-			sc.MustGetToken(']');
-		}
-		else
-		{
-			rng = &pr_exrandom;
-		}
-
-		sc.MustGetToken('(');
-
-		FxExpression *mask = NULL;
-
-		if (!sc.CheckToken(')'))
-		{
-			mask = ParseExpressionM(sc, cls);
-			sc.MustGetToken(')');
-		}
-		return new FxRandom2(rng, mask, sc);
-	}
-	else if (sc.CheckToken(TK_Abs))
-	{
-		sc.MustGetToken('(');
-		FxExpression *x = ParseExpressionM (sc, cls);
-		sc.MustGetToken(')');
-		return new FxAbs(x); 
-	}
 	else if (sc.CheckToken(TK_Identifier))
 	{
 		FName identifier = FName(sc.String);
+		FArgumentList *args;
+		PFunction *func;
+
+		switch (identifier)
+		{
+		case NAME_Random:
+		case NAME_FRandom:
+			return ParseRandom(sc, identifier, cls);
+		case NAME_RandomPick:
+		case NAME_FRandomPick:
+			return ParseRandomPick(sc, identifier, cls);
+		case NAME_Random2:
+			return ParseRandom2(sc, cls);
+		default:
+			break;
+		}
 		if (sc.CheckToken('('))
 		{
-			FArgumentList *args = new FArgumentList;
-			PFunction *func = dyn_cast<PFunction>(cls->Symbols.FindSymbol(identifier, true));
-			try
+			switch (identifier)
 			{
-				// There is an action function ACS_NamedExecuteWithResult which must be ignored here for this to work.
-				if (func != NULL && identifier != NAME_ACS_NamedExecuteWithResult)
+			case NAME_Min:
+			case NAME_Max:
+				return ParseMinMax(sc, identifier, cls);
+			case NAME_Abs:
+				return ParseAbs(sc, cls);
+			default:
+				args = new FArgumentList;
+				func = dyn_cast<PFunction>(cls->Symbols.FindSymbol(identifier, true));
+				try
 				{
-					sc.UnGet();
-					ParseFunctionParameters(sc, cls, *args, func, "", NULL);
-					return new FxVMFunctionCall(func, args, sc);
-				}
-				else if (!sc.CheckToken(')'))
-				{
-					do
+					// There is an action function ACS_NamedExecuteWithResult which must be ignored here for this to work.
+					if (func != NULL && identifier != NAME_ACS_NamedExecuteWithResult)
 					{
-						args->Push(ParseExpressionM (sc, cls));
+						sc.UnGet();
+						ParseFunctionParameters(sc, cls, *args, func, "", NULL);
+						return new FxVMFunctionCall(func, args, sc);
 					}
-					while (sc.CheckToken(','));
-					sc.MustGetToken(')');
+					else if (!sc.CheckToken(')'))
+					{
+						do
+						{
+							args->Push(ParseExpressionM (sc, cls));
+						}
+						while (sc.CheckToken(','));
+						sc.MustGetToken(')');
+					}
+					return new FxFunctionCall(NULL, identifier, args, sc);
 				}
-				return new FxFunctionCall(NULL, identifier, args, sc);
-			}
-			catch (...)
-			{
-				delete args;
-				throw;
+				catch (...)
+				{
+					delete args;
+					throw;
+				}
+				break;
 			}
 		}	
 		else
@@ -519,4 +427,97 @@ static FxExpression *ParseExpression0 (FScanner &sc, PClassActor *cls)
 	return NULL;
 }
 
+static FRandom *ParseRNG(FScanner &sc)
+{
+	FRandom *rng;
 
+	if (sc.CheckToken('['))
+	{
+		sc.MustGetToken(TK_Identifier);
+		rng = FRandom::StaticFindRNG(sc.String);
+		sc.MustGetToken(']');
+	}
+	else
+	{
+		rng = &pr_exrandom;
+	}
+	return rng;
+}
+
+static FxExpression *ParseRandom(FScanner &sc, FName identifier, PClassActor *cls)
+{
+	FRandom *rng = ParseRNG(sc);
+
+	sc.MustGetToken('(');
+	FxExpression *min = ParseExpressionM (sc, cls);
+	sc.MustGetToken(',');
+	FxExpression *max = ParseExpressionM (sc, cls);
+	sc.MustGetToken(')');
+
+	if (identifier == NAME_Random)
+	{
+		return new FxRandom(rng, min, max, sc);
+	}
+	else
+	{
+		return new FxFRandom(rng, min, max, sc);
+	}
+}
+
+static FxExpression *ParseRandomPick(FScanner &sc, FName identifier, PClassActor *cls)
+{
+	bool floaty = identifier == NAME_FRandomPick;
+	FRandom *rng;
+	TArray<FxExpression*> list;
+	list.Clear();
+	int index = 0;
+
+	rng = ParseRNG(sc);
+	sc.MustGetToken('(');
+
+	for (;;)
+	{
+		FxExpression *expr = ParseExpressionM(sc, cls);
+		list.Push(expr);
+		if (sc.CheckToken(')'))
+			break;
+		sc.MustGetToken(',');
+	}
+	return new FxRandomPick(rng, list, floaty, sc);
+}
+
+static FxExpression *ParseRandom2(FScanner &sc, PClassActor *cls)
+{
+	FRandom *rng = ParseRNG(sc);
+	FxExpression *mask = NULL;
+
+	sc.MustGetToken('(');
+
+	if (!sc.CheckToken(')'))
+	{
+		mask = ParseExpressionM(sc, cls);
+		sc.MustGetToken(')');
+	}
+	return new FxRandom2(rng, mask, sc);
+}
+
+static FxExpression *ParseAbs(FScanner &sc, PClassActor *cls)
+{
+	FxExpression *x = ParseExpressionM (sc, cls);
+	sc.MustGetToken(')');
+	return new FxAbs(x); 
+}
+
+static FxExpression *ParseMinMax(FScanner &sc, FName identifier, PClassActor *cls)
+{
+	TArray<FxExpression*> list;
+	for (;;)
+	{
+		FxExpression *expr = ParseExpressionM(sc, cls);
+		list.Push(expr);
+		if (sc.CheckToken(')'))
+			break;
+		sc.MustGetToken(',');
+	}
+	return new FxMinMax(list, identifier, sc);
+}

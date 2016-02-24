@@ -593,7 +593,7 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 	sector_t rs;
 	sector_t * rendersector;
 	// don't draw the thing that's used as camera (for viewshifts during quakes!)
-	if (thing==GLRenderer->mViewActor) return;
+	if (thing==GLRenderer->mViewActor || (thing == players[consoleplayer].camera && !r_showviewer)) return;
 
 	// Don't waste time projecting sprites that are definitely not visible.
 	if (thing == NULL || thing->sprite == 0 || !thing->IsVisibleToPlayer())

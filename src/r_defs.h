@@ -1278,4 +1278,14 @@ inline fixedvec3 PosRelative(const fixedvec3 &pos, line_t *line, sector_t *refse
 	return pos + Displacements(refsec->PortalGroup, line->frontsector->PortalGroup);
 }
 
+inline void AActor::ClearInterpolation()
+{
+	PrevX = X();
+	PrevY = Y();
+	PrevZ = Z();
+	PrevAngle = angle;
+	PrevPortalGroup = Sector->PortalGroup;
+}
+
+
 #endif

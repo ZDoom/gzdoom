@@ -4983,7 +4983,6 @@ void A_Weave(AActor *self, int xyspeed, int zspeed, fixed_t xydist, fixed_t zdis
 			newX -= self->X();
 			newY -= self->Y();
 			self->SetXY(self->Vec2Offset(newX, newY));
-			self->SetMovement(newX, newY, 0);
 			self->LinkToWorld ();
 		}
 		self->WeaveIndexXY = weaveXY;

@@ -27,11 +27,8 @@ void AFastProjectile::Tick ()
 	fixed_t zfrac;
 	int changexy;
 
-	PrevX = X();
-	PrevY = Y();
-	PrevZ = Z();
+	ClearInterpolation();
 	fixed_t oldz = Z();
-	PrevAngle = angle;
 
 	if (!(flags5 & MF5_NOTIMEFREEZE))
 	{

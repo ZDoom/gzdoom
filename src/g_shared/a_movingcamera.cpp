@@ -590,10 +590,7 @@ void AActorMover::Activate (AActor *activator)
 	// Don't let the renderer interpolate between the actor's
 	// old position and its new position.
 	Interpolate ();
-	tracer->PrevX = tracer->X();
-	tracer->PrevY = tracer->Y();
-	tracer->PrevZ = tracer->Z();
-	tracer->PrevAngle = tracer->angle;
+	tracer->ClearInterpolation();
 }
 
 void AActorMover::Deactivate (AActor *activator)

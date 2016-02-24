@@ -508,10 +508,6 @@ bool P_TeleportMove(AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefra
 			R_ResetViewInterpolation();
 		}
 
-		thing->PrevX = x;
-		thing->PrevY = y;
-		thing->PrevZ = z;
-
 		// If this teleport was caused by a move, P_TryMove() will handle the
 		// sector transition messages better than we can here.
 		if (!(thing->flags6 & MF6_INTRYMOVE))

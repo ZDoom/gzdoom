@@ -130,7 +130,7 @@ bool P_MoveThing(AActor *source, fixed_t x, fixed_t y, fixed_t z, bool fog)
 	oldy = source->Y();
 	oldz = source->Z();
 
-	source->SetOrigin (x, y, z, false);
+	source->SetOrigin (x, y, z, true);
 	if (P_TestMobjLocation (source))
 	{
 		if (fog)
@@ -138,9 +138,7 @@ bool P_MoveThing(AActor *source, fixed_t x, fixed_t y, fixed_t z, bool fog)
 			P_SpawnTeleportFog(source, x, y, z, false, true);
 			P_SpawnTeleportFog(source, oldx, oldy, oldz, true, true);
 		}
-		source->PrevX = x;
-		source->PrevY = y;
-		source->PrevZ = z;
+		source->ClearInterpolation();
 		if (source == players[consoleplayer].camera)
 		{
 			R_ResetViewInterpolation();
@@ -149,7 +147,7 @@ bool P_MoveThing(AActor *source, fixed_t x, fixed_t y, fixed_t z, bool fog)
 	}
 	else
 	{
-		source->SetOrigin (oldx, oldy, oldz, false);
+		source->SetOrigin (oldx, oldy, oldz, true);
 		return false;
 	}
 }
@@ -695,6 +693,8 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 	}
 
 	fixedvec3 old = caller->Pos();
+	int oldpgroup = caller->Sector->PortalGroup;
+
 	zofs += FixedMul(reference->height, heightoffset);
 	
 
@@ -744,12 +744,12 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 	{
 		if (flags & WARPF_TOFLOOR)
 		{
-			caller->SetOrigin(xofs + FixedMul(rad, finecosine[fineangle]), yofs + FixedMul(rad, finesine[fineangle]), zofs);
+			caller->SetOrigin(xofs + FixedMul(rad, finecosine[fineangle]), yofs + FixedMul(rad, finesine[fineangle]), zofs, true);
 			caller->SetZ(caller->floorz + zofs);
 		}
 		else
 		{
-			caller->SetOrigin(xofs + FixedMul(rad, finecosine[fineangle]), yofs + FixedMul(rad, finesine[fineangle]), zofs);
+			caller->SetOrigin(xofs + FixedMul(rad, finecosine[fineangle]), yofs + FixedMul(rad, finesine[fineangle]), zofs, true);
 		}
 	}
 
@@ -782,23 +782,29 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 				caller->velz = 0;
 			}
 
+			// this is no fun with line portals 
 			if (flags & WARPF_WARPINTERPOLATION)
 			{
-				caller->PrevX += caller->X() - old.x;
-				caller->PrevY += caller->Y() - old.y;
-				caller->PrevZ += caller->Z() - old.z;
+				// This just translates the movement but doesn't change the vector
+				fixedvec3 displacedold  = old + Displacements(oldpgroup, caller->Sector->PortalGroup);
+				caller->PrevX += caller->X() - displacedold.x;
+				caller->PrevY += caller->Y() - displacedold.y;
+				caller->PrevZ += caller->Z() - displacedold.z;
+				caller->PrevPortalGroup = caller->Sector->PortalGroup;
 			}
 			else if (flags & WARPF_COPYINTERPOLATION)
 			{
+				// Map both positions of the reference actor to the current portal group
+				fixedvec3 displacedold = old + Displacements(reference->PrevPortalGroup, caller->Sector->PortalGroup);
+				fixedvec3 displacedref = old + Displacements(reference->Sector->PortalGroup, caller->Sector->PortalGroup);
 				caller->PrevX = caller->X() + reference->PrevX - reference->X();
 				caller->PrevY = caller->Y() + reference->PrevY - reference->Y();
 				caller->PrevZ = caller->Z() + reference->PrevZ - reference->Z();
+				caller->PrevPortalGroup = caller->Sector->PortalGroup;
 			}
 			else if (!(flags & WARPF_INTERPOLATE))
 			{
-				caller->PrevX = caller->X();
-				caller->PrevY = caller->Y();
-				caller->PrevZ = caller->Z();
+				caller->ClearInterpolation();
 			}
 			if ((flags & WARPF_BOB) && (reference->flags2 & MF2_FLOATBOB))
 			{

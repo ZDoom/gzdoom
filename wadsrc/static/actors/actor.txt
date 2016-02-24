@@ -311,8 +311,8 @@ ACTOR Actor native //: Thinker
 	action native state A_JumpIfHigherOrLower(state high, state low, float offsethigh = 0, float offsetlow = 0, bool includeHeight = true, int ptr = AAPTR_TARGET);
 	action native A_SetSpecies(name species, int ptr = AAPTR_DEFAULT);
 	action native A_SetRipperLevel(int level);
-	action native A_SetRipMin(int min);
-	action native A_SetRipMax(int max);
+	action native A_SetRipMin(int mininum);
+	action native A_SetRipMax(int maximum);
 	action native A_SetChaseThreshold(int threshold, bool def = false, int ptr = AAPTR_DEFAULT);
 	action native state A_CheckProximity(state jump, class<Actor> classname, float distance, int count = 1, int flags = 0, int ptr = AAPTR_DEFAULT);
 	action native state A_CheckBlock(state block, int flags = 0, int ptr = AAPTR_DEFAULT);

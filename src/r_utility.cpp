@@ -581,8 +581,11 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 		iview->oviewpitch = iview->nviewpitch;
 		iview->oviewangle = iview->nviewangle;
 	}
-	viewx = iview->oviewx + FixedMul (frac, iview->nviewx - iview->oviewx);
-	viewy = iview->oviewy + FixedMul (frac, iview->nviewy - iview->oviewy);
+	int oldgroup = R_PointInSubsector(iview->oviewx, iview->oviewy)->sector->PortalGroup;
+	int newgroup = R_PointInSubsector(iview->nviewx, iview->nviewy)->sector->PortalGroup;
+	fixedvec2 disp = Displacements(oldgroup, newgroup);
+	viewx = iview->oviewx + FixedMul (frac, iview->nviewx - iview->oviewx - disp.x);
+	viewy = iview->oviewy + FixedMul (frac, iview->nviewy - iview->oviewy - disp.y);
 	viewz = iview->oviewz + FixedMul (frac, iview->nviewz - iview->oviewz);
 	if (player != NULL &&
 		!(player->cheats & CF_INTERPVIEW) &&
@@ -637,6 +640,26 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 	
 	// Due to interpolation this is not necessarily the same as the sector the camera is in.
 	viewsector = R_PointInSubsector(viewx, viewy)->sector;
+	if (!viewsector->PortalBlocksMovement(sector_t::ceiling))
+	{
+		AActor *point = viewsector->SkyBoxes[sector_t::ceiling];
+		if (viewz > point->threshold)
+		{
+			viewx += point->scaleX;
+			viewy += point->scaleY;
+			viewsector = R_PointInSubsector(viewx, viewy)->sector;
+		}
+	}
+	if (!viewsector->PortalBlocksMovement(sector_t::floor))
+	{
+		AActor *point = viewsector->SkyBoxes[sector_t::floor];
+		if (viewz < point->threshold)
+		{
+			viewx += point->scaleX;
+			viewy += point->scaleY;
+			viewsector = R_PointInSubsector(viewx, viewy)->sector;
+		}
+	}
 }
 
 //==========================================================================

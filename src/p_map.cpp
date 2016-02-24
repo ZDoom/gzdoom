@@ -748,6 +748,30 @@ int P_GetMoveFactor(const AActor *mo, int *frictionp)
 }
 
 
+//==========================================================================
+//
+// Checks if the line intersects with the actor
+// returns 
+// - 1 when above/below
+// - 0 when intersecting
+// - -1 when outside the portal
+//
+//==========================================================================
+
+static int LineIsAbove(line_t *line, AActor *actor)
+{
+	AActor *point = line->frontsector->SkyBoxes[sector_t::floor];
+	if (point == NULL) return -1;
+	return point->threshold >= actor->Top();
+}
+
+static int LineIsBelow(line_t *line, AActor *actor)
+{
+	AActor *point = line->frontsector->SkyBoxes[sector_t::ceiling];
+	if (point == NULL) return -1;
+	return point->threshold <= actor->Z();
+}
+
 //
 // MOVEMENT ITERATOR FUNCTIONS
 //
@@ -788,6 +812,13 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 
 	if (!ld->backsector)
 	{ // One sided line
+		if (((cres.portalflags & FFCF_NOFLOOR) && LineIsAbove(cres.line, tm.thing) != 0) ||
+			((cres.portalflags & FFCF_NOCEILING) && LineIsBelow(cres.line, tm.thing) != 0))
+		{
+			// this blocking line is in a different vertical layer and does not intersect with the actor that is being checked.
+			// Since a one-sided line does not have an opening there's nothing left to do about it.
+			return true;
+		}
 		if (tm.thing->flags2 & MF2_BLASTED)
 		{
 			P_DamageMobj(tm.thing, NULL, NULL, tm.thing->Mass >> 5, NAME_Melee);
@@ -818,17 +849,52 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 			((Projectile) && (ld->flags & ML_BLOCKPROJECTILE)) ||				// block projectiles
 			((tm.thing->flags & MF_FLOAT) && (ld->flags & ML_BLOCK_FLOATERS)))	// block floaters
 		{
-			if (tm.thing->flags2 & MF2_BLASTED)
+			if (cres.portalflags & FFCF_NOFLOOR)
 			{
-				P_DamageMobj(tm.thing, NULL, NULL, tm.thing->Mass >> 5, NAME_Melee);
+				int state = LineIsAbove(cres.line, tm.thing);
+				if (state == -1) return true;
+				if (state == 1)
+				{
+					// the line should not block but we should set the ceilingz to the portal boundary so that we can't float up into that line.
+					fixed_t portalz = cres.line->frontsector->SkyBoxes[sector_t::floor]->threshold;
+					if (portalz < tm.ceilingz)
+					{
+						tm.ceilingz = portalz;
+						tm.ceilingsector = cres.line->frontsector;
+					}
+					return true;
+				}
 			}
-			tm.thing->BlockingLine = ld;
-			// Calculate line side based on the actor's original position, not the new one.
-			CheckForPushSpecial(ld, P_PointOnLineSide(cres.position.x, cres.position.y, ld), tm.thing);
-			return false;
+			else if (cres.portalflags & FFCF_NOCEILING)
+			{
+				// same, but for downward portals
+				int state = LineIsBelow(cres.line, tm.thing);
+				if (state == -1) return true;
+				if (state == 1)
+				{
+					fixed_t portalz = cres.line->frontsector->SkyBoxes[sector_t::ceiling]->threshold;
+					if (portalz > tm.floorz)
+					{
+						tm.floorz = portalz;
+						tm.floorsector = cres.line->frontsector;
+						tm.floorterrain = 0;
+					}
+					return true;
+				}
+			}
+			else
+			{
+				if (tm.thing->flags2 & MF2_BLASTED)
+				{
+					P_DamageMobj(tm.thing, NULL, NULL, tm.thing->Mass >> 5, NAME_Melee);
+				}
+				tm.thing->BlockingLine = ld;
+				// Calculate line side based on the actor's original position, not the new one.
+				CheckForPushSpecial(ld, P_PointOnLineSide(cres.position.x, cres.position.y, ld), tm.thing);
+				return false;
+			}
 		}
 	}
-
 	fixedvec2 ref = FindRefPoint(ld, cres.position);
 	FLineOpening open;
 
@@ -867,33 +933,39 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 	}
 
 	// adjust floor / ceiling heights
-	if (open.top < tm.ceilingz)
+	if (!(cres.portalflags & FFCF_NOCEILING))
 	{
-		tm.ceilingz = open.top;
-		tm.ceilingsector = open.topsec;
-		tm.ceilingpic = open.ceilingpic;
-		tm.ceilingline = ld;
-		tm.thing->BlockingLine = ld;
+		if (open.top < tm.ceilingz)
+		{
+			tm.ceilingz = open.top;
+			tm.ceilingsector = open.topsec;
+			tm.ceilingpic = open.ceilingpic;
+			tm.ceilingline = ld;
+			tm.thing->BlockingLine = ld;
+		}
 	}
 
-	if (open.bottom > tm.floorz)
+	if (!(cres.portalflags & FFCF_NOFLOOR))
 	{
-		tm.floorz = open.bottom;
-		tm.floorsector = open.bottomsec;
-		tm.floorpic = open.floorpic;
-		tm.floorterrain = open.floorterrain;
-		tm.touchmidtex = open.touchmidtex;
-		tm.abovemidtex = open.abovemidtex;
-		tm.thing->BlockingLine = ld;
-	}
-	else if (open.bottom == tm.floorz)
-	{
-		tm.touchmidtex |= open.touchmidtex;
-		tm.abovemidtex |= open.abovemidtex;
-	}
+		if (open.bottom > tm.floorz)
+		{
+			tm.floorz = open.bottom;
+			tm.floorsector = open.bottomsec;
+			tm.floorpic = open.floorpic;
+			tm.floorterrain = open.floorterrain;
+			tm.touchmidtex = open.touchmidtex;
+			tm.abovemidtex = open.abovemidtex;
+			tm.thing->BlockingLine = ld;
+		}
+		else if (open.bottom == tm.floorz)
+		{
+			tm.touchmidtex |= open.touchmidtex;
+			tm.abovemidtex |= open.abovemidtex;
+		}
 
-	if (open.lowfloor < tm.dropoffz)
-		tm.dropoffz = open.lowfloor;
+		if (open.lowfloor < tm.dropoffz)
+			tm.dropoffz = open.lowfloor;
+	}
 
 	// if contacted a special line, add it to the list
 	spechit_t spec;
@@ -903,7 +975,7 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 		spec.refpos = cres.position;
 		spechit.Push(spec);
 	}
-	if (ld->portalindex >= 0)
+	if (ld->portalindex >= 0 && ld->portalindex != UINT_MAX)
 	{
 		spec.line = ld;
 		spec.refpos = cres.position;

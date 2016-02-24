@@ -3289,40 +3289,45 @@ void AActor::SetRoll(angle_t r, bool interpolate)
 }
 
 
-void AActor::CheckPortalTransition()
+void AActor::CheckPortalTransition(bool islinked)
 {
-	if (!Sector->PortalBlocksMovement(sector_t::ceiling))
+	bool moved = false;
+	while (!Sector->PortalBlocksMovement(sector_t::ceiling))
 	{
 		AActor *port = Sector->SkyBoxes[sector_t::ceiling];
 		if (Z() > port->threshold)
 		{
 			fixedvec3 oldpos = Pos();
-			UnlinkFromWorld();
+			if (islinked && !moved) UnlinkFromWorld();
 			SetXYZ(PosRelative(port->Sector));
 			PrevX += X() - oldpos.x;
 			PrevY += Y() - oldpos.y;
 			PrevZ += Z() - oldpos.z;
-			LinkToWorld();
-			if (player) Printf("Transitioned upwards to sector %d\n", Sector->sectornum);
-			return;
+			Sector = P_PointInSector(X(), Y());
+			moved = true;
 		}
+		else break;
 	}
-	if (!Sector->PortalBlocksMovement(sector_t::floor))
+	if (!moved)
 	{
-		AActor *port = Sector->SkyBoxes[sector_t::floor];
-		if (Z() < port->threshold && floorz < port->threshold)
+		while (!Sector->PortalBlocksMovement(sector_t::floor))
 		{
-			fixedvec3 oldpos = Pos();
-			UnlinkFromWorld();
-			SetXYZ(PosRelative(port->Sector));
-			PrevX += X() - oldpos.x;
-			PrevY += Y() - oldpos.y;
-			PrevZ += Z() - oldpos.z;
-			LinkToWorld();
-			if (player) Printf("Transitioned downwards to sector %d\n", Sector->sectornum);
-			return;
+			AActor *port = Sector->SkyBoxes[sector_t::floor];
+			if (Z() < port->threshold && floorz < port->threshold)
+			{
+				fixedvec3 oldpos = Pos();
+				if (islinked && !moved) UnlinkFromWorld();
+				SetXYZ(PosRelative(port->Sector));
+				PrevX += X() - oldpos.x;
+				PrevY += Y() - oldpos.y;
+				PrevZ += Z() - oldpos.z;
+				Sector = P_PointInSector(X(), Y());
+				moved = true;
+			}
+			else break;
 		}
 	}
+	if (islinked && moved) LinkToWorld();
 }
 
 //
@@ -3392,7 +3397,7 @@ void AActor::Tick ()
 		UnlinkFromWorld ();
 		flags |= MF_NOBLOCKMAP;
 		SetXYZ(Vec3Offset(velx, vely, velz));
-		CheckPortalTransition();
+		CheckPortalTransition(false);
 		SetMovement(velx, vely, velz);
 		LinkToWorld ();
 	}
@@ -3860,7 +3865,7 @@ void AActor::Tick ()
 			Crash();
 		}
 
-		CheckPortalTransition();
+		CheckPortalTransition(true);
 
 		UpdateWaterLevel (oldz);
 

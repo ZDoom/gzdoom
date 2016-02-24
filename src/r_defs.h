@@ -340,6 +340,11 @@ struct secplane_t
 		return -TMulScale16 (a, x, y, b, z, c);
 	}
 
+	fixed_t PointToDist(fixedvec2 xy, fixed_t z) const
+	{
+		return -TMulScale16(a, xy.x, xy.y, b, z, c);
+	}
+
 	fixed_t PointToDist (const vertex_t *v, fixed_t z) const
 	{
 		return -TMulScale16 (a, v->x, b, v->y, z, c);
@@ -825,8 +830,8 @@ struct sector_t
 	}
 
 	// Member variables
-	fixed_t		CenterFloor () const { return floorplane.ZatPoint (soundorg[0], soundorg[1]); }
-	fixed_t		CenterCeiling () const { return ceilingplane.ZatPoint (soundorg[0], soundorg[1]); }
+	fixed_t		CenterFloor () const { return floorplane.ZatPoint (centerspot); }
+	fixed_t		CenterCeiling () const { return ceilingplane.ZatPoint (centerspot); }
 
 	// [RH] store floor and ceiling planes instead of heights
 	secplane_t	floorplane, ceilingplane;
@@ -844,7 +849,7 @@ struct sector_t
 	int			sky;
 	FNameNoInit	SeqName;		// Sound sequence name. Setting seqType non-negative will override this.
 
-	fixed_t		soundorg[2];	// origin for any sounds played by the sector
+	fixedvec2	centerspot;		// origin for any sounds played by the sector
 	int 		validcount;		// if == validcount, already checked
 	AActor* 	thinglist;		// list of mobjs in sector
 

@@ -1123,7 +1123,7 @@ OptionMenu MessageOptions
 	Option "$MSGMNU_CENTEREDMESSAGES",			"msgmidcolor", "TextColors"
 	StaticText " "
 	Option "$MSGMNU_SCREENSHOTMESSAGES",		"screenshot_quiet",	"OffOn"
-	Option "$MSGMNU_LONGSAVEMESSAGES",	"		longsavemessages",	"OnOff"
+	Option "$MSGMNU_LONGSAVEMESSAGES",			"longsavemessages",	"OnOff"
 }
 
 //-------------------------------------------------------------------------------------------

@@ -3288,6 +3288,48 @@ void AActor::SetRoll(angle_t r, bool interpolate)
 	}
 }
 
+
+void AActor::CheckPortalTransition(bool islinked)
+{
+	bool moved = false;
+	while (!Sector->PortalBlocksMovement(sector_t::ceiling))
+	{
+		AActor *port = Sector->SkyBoxes[sector_t::ceiling];
+		if (Z() > port->threshold)
+		{
+			fixedvec3 oldpos = Pos();
+			if (islinked && !moved) UnlinkFromWorld();
+			SetXYZ(PosRelative(port->Sector));
+			PrevX += X() - oldpos.x;
+			PrevY += Y() - oldpos.y;
+			PrevZ += Z() - oldpos.z;
+			Sector = P_PointInSector(X(), Y());
+			moved = true;
+		}
+		else break;
+	}
+	if (!moved)
+	{
+		while (!Sector->PortalBlocksMovement(sector_t::floor))
+		{
+			AActor *port = Sector->SkyBoxes[sector_t::floor];
+			if (Z() < port->threshold && floorz < port->threshold)
+			{
+				fixedvec3 oldpos = Pos();
+				if (islinked && !moved) UnlinkFromWorld();
+				SetXYZ(PosRelative(port->Sector));
+				PrevX += X() - oldpos.x;
+				PrevY += Y() - oldpos.y;
+				PrevZ += Z() - oldpos.z;
+				Sector = P_PointInSector(X(), Y());
+				moved = true;
+			}
+			else break;
+		}
+	}
+	if (islinked && moved) LinkToWorld();
+}
+
 //
 // P_MobjThinker
 //
@@ -3355,6 +3397,7 @@ void AActor::Tick ()
 		UnlinkFromWorld ();
 		flags |= MF_NOBLOCKMAP;
 		SetXYZ(Vec3Offset(velx, vely, velz));
+		CheckPortalTransition(false);
 		SetMovement(velx, vely, velz);
 		LinkToWorld ();
 	}
@@ -3821,6 +3864,8 @@ void AActor::Tick ()
 		{
 			Crash();
 		}
+
+		CheckPortalTransition(true);
 
 		UpdateWaterLevel (oldz);
 

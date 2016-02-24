@@ -1316,6 +1316,7 @@ OptionMenu "CompatibilityOptions"
 	Option "$CMPTMNU_STAIRS",						"compat_stairs", "YesNo"
 	Option "$CMPTMNU_FLOORMOVE",					"compat_floormove", "YesNo"
 	Option "$CMPTMNU_POINTONLINE",					"compat_pointonline", "YesNo"
+	Option "$CMPTMNU_MULTIEXIT",					"compat_multiexit", "YesNo"
 	
 	StaticText " "
 	StaticText "$CMPTMNU_PHYSICSBEHAVIOR",1

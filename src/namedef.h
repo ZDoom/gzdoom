@@ -280,7 +280,10 @@ xx(Cast) // 'damage type' for the cast call
 
 // Special names for thingdef_exp.cpp
 xx(Random)
+xx(FRandom)
 xx(Random2)
+xx(RandomPick)
+xx(FRandomPick)
 xx(Cos)
 xx(Sin)
 xx(Alpha)

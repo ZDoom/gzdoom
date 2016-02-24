@@ -508,6 +508,7 @@ public:
 	virtual AInventory *CreateTossable ();
 	virtual bool HandlePickup (AInventory *item);
 	virtual void AbsorbDamage (int damage, FName damageType, int &newdamage);
+	void DepleteOrDestroy();
 
 	fixed_t Slots[5];
 	fixed_t SlotsIncrement[4];

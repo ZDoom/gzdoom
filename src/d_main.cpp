@@ -572,7 +572,8 @@ CUSTOM_CVAR(Int, compatmode, 0, CVAR_ARCHIVE|CVAR_NOINITCALL)
 		break;
 
 	case 4: // Old ZDoom compat mode
-		v = COMPATF_SOUNDTARGET|COMPATF_LIGHT;
+		v = COMPATF_SOUNDTARGET | COMPATF_LIGHT;
+		w = COMPATF2_MULTIEXIT;
 		break;
 
 	case 5: // MBF compat mode
@@ -627,6 +628,7 @@ CVAR (Flag, compat_badangles,			compatflags2, COMPATF2_BADANGLES);
 CVAR (Flag, compat_floormove,			compatflags2, COMPATF2_FLOORMOVE);
 CVAR (Flag, compat_soundcutoff,			compatflags2, COMPATF2_SOUNDCUTOFF);
 CVAR (Flag, compat_pointonline,			compatflags2, COMPATF2_POINTONLINE);
+CVAR (Flag, compat_multiexit,			compatflags2, COMPATF2_MULTIEXIT);
 
 //==========================================================================
 //

@@ -5381,13 +5381,13 @@ enum RadiusGiveFlags
 static bool DoRadiusGive(AActor *self, AActor *thing, PClassActor *item, int amount, fixed_t distance, int flags, PClassActor *filter, FName species, fixed_t mindist)
 {
 	// [MC] We only want to make an exception for missiles here. Nothing else.
-	bool missilePass = !!((flags & RGF_MISSILES) && thing->isMissile());
+	bool missilePass = !!((flags & RGF_MISSILES) && thing->flags & MF_MISSILE);
 	if (thing == self)
 	{
 		if (!(flags & RGF_GIVESELF))
 			return false;
 	}
-	else if (thing->isMissile())
+	else if (thing->flags & MF_MISSILE)
 	{
 		if (!missilePass)
 			return false;

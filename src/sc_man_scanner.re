@@ -185,12 +185,6 @@ std2:
 		'#include'					{ RET(TK_Include); }
 		'fixed_t'					{ RET(TK_Fixed_t); }
 		'angle_t'					{ RET(TK_Angle_t); }
-		'abs'						{ RET(TK_Abs); }
-		'random'					{ RET(TK_Random); }
-		'random2'					{ RET(TK_Random2); }
-		'frandom'					{ RET(TK_FRandom); }
-		'randompick'				{ RET(TK_RandomPick); }
-		'frandompick'				{ RET(TK_FRandomPick); }
 
 		L (L|D)*					{ RET(TK_Identifier); }
 

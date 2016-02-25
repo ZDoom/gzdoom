@@ -366,7 +366,7 @@ OptionValue "Gender"
 
 ListMenu "PlayerMenu"
 {
-	StaticTextCentered 160, 6, "$PLYRMNU_PLAYERSETUP"
+	StaticTextCentered 160, 6, "$MNU_PLAYERSETUP"
 	Font "SmallFont"
 	Linespacing 14
 	Position 48, 36

@@ -1092,6 +1092,11 @@ struct line_t
 	int			locknumber;	// [Dusk] lock number for special
 	unsigned	portalindex;
 
+	FLinePortal *getPortal() const
+	{
+		return portalindex >= linePortals.Size() ? (FLinePortal*)NULL : &linePortals[portalindex];
+	}
+
 	// returns true if the portal is crossable by actors
 	bool isLinePortal() const
 	{

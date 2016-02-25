@@ -54,6 +54,22 @@
 #include "vmbuilder.h"
 #include "v_text.h"
 
+struct FLOP
+{
+	ENamedName Name;
+	int Flop;
+	double (*Evaluate)(double);
+};
+
+// Decorate operates on degrees, so the evaluate functions need to convert
+// degrees to radians for those that work with angles.
+static const FLOP FxFlops[] =
+{
+	{ NAME_Sqrt,	FLOP_SQRT,		[](double v) { return sqrt(v); } },
+	{ NAME_Cos,		FLOP_COS_DEG,	[](double v) { return cos(v * (M_PI / 180.0)); } },
+	{ NAME_Sin,		FLOP_SIN_DEG,	[](double v) { return sin(v * (M_PI / 180.0)); } },
+};
+
 ExpEmit::ExpEmit(VMFunctionBuilder *build, int type)
 : RegNum(build->Registers[type].Get(1)), RegType(type), Konst(false), Fixed(false)
 {
@@ -3148,18 +3164,21 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 {
 	// There's currently only 3 global functions.
 	// If this changes later, it won't be here!
-	if (MethodName == NAME_Sin || MethodName == NAME_Cos || MethodName == NAME_Sqrt)
+	for (int i = 0; i < countof(FxFlops); ++i)
 	{
-		if (Self != NULL)
+		if (MethodName == FxFlops[i].Name)
 		{
-			ScriptPosition.Message(MSG_ERROR, "Global functions cannot have a self pointer");
+			if (Self != NULL)
+			{
+				ScriptPosition.Message(MSG_ERROR, "Global functions cannot have a self pointer");
+				delete this;
+				return NULL;
+			}
+			FxExpression *x = new FxFlopFunctionCall(i, ArgList, ScriptPosition);
+			ArgList = NULL;
 			delete this;
-			return NULL;
+			return x->Resolve(ctx);
 		}
-		FxExpression *x = new FxGlobalFunctionCall(MethodName, ArgList, ScriptPosition);
-		ArgList = NULL;
-		delete this;
-		return x->Resolve(ctx);
 	}
 
 	int min, max, special;
@@ -3483,10 +3502,11 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build, bool tailcall)
 //
 //==========================================================================
 
-FxGlobalFunctionCall::FxGlobalFunctionCall(FName fname, FArgumentList *args, const FScriptPosition &pos)
+FxFlopFunctionCall::FxFlopFunctionCall(int index, FArgumentList *args, const FScriptPosition &pos)
 : FxExpression(pos)
 {
-	Name = fname;
+	assert(index >= 0 && index < countof(FxFlops) && "FLOP index out of range");
+	Index = index;
 	ArgList = args;
 }
 
@@ -3496,18 +3516,18 @@ FxGlobalFunctionCall::FxGlobalFunctionCall(FName fname, FArgumentList *args, con
 //
 //==========================================================================
 
-FxGlobalFunctionCall::~FxGlobalFunctionCall()
+FxFlopFunctionCall::~FxFlopFunctionCall()
 {
 	SAFE_DELETE(ArgList);
 }
 
-FxExpression *FxGlobalFunctionCall::Resolve(FCompileContext& ctx)
+FxExpression *FxFlopFunctionCall::Resolve(FCompileContext& ctx)
 {
 	CHECKRESOLVED();
 
 	if (ArgList == NULL || ArgList->Size() != 1)
 	{
-		ScriptPosition.Message(MSG_ERROR, "%s only has one parameter", Name.GetChars());
+		ScriptPosition.Message(MSG_ERROR, "%s only has one parameter", FName(FxFlops[Index].Name).GetChars());
 		delete this;
 		return NULL;
 	}
@@ -3528,15 +3548,7 @@ FxExpression *FxGlobalFunctionCall::Resolve(FCompileContext& ctx)
 	if ((*ArgList)[0]->isConstant())
 	{
 		double v = static_cast<FxConstant *>((*ArgList)[0])->GetValue().GetFloat();
-		if (Name == NAME_Sqrt)
-		{
-			v = sqrt(v);
-		}
-		else
-		{
-			v *= M_PI / 180.0;		// convert from degrees to radians
-			v = (Name == NAME_Sin) ? sin(v) : cos(v);
-		}
+		v = FxFlops[Index].Evaluate(v);
 		FxExpression *x = new FxConstant(v, ScriptPosition);
 		delete this;
 		return x;
@@ -3554,15 +3566,12 @@ FxExpression *FxGlobalFunctionCall::Resolve(FCompileContext& ctx)
 //
 //==========================================================================
 
-ExpEmit FxGlobalFunctionCall::Emit(VMFunctionBuilder *build)
+ExpEmit FxFlopFunctionCall::Emit(VMFunctionBuilder *build)
 {
 	ExpEmit v = (*ArgList)[0]->Emit(build);
 	assert(!v.Konst && v.RegType == REGT_FLOAT);
 
-	build->Emit(OP_FLOP, v.RegNum, v.RegNum,
-		(Name == NAME_Sqrt) ?	FLOP_SQRT :
-		(Name == NAME_Sin) ?	FLOP_SIN_DEG :
-								FLOP_COS_DEG);
+	build->Emit(OP_FLOP, v.RegNum, v.RegNum, FxFlops[Index].Flop);
 	return v;
 }
 

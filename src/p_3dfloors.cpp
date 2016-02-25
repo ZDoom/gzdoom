@@ -478,13 +478,13 @@ void P_Recalculate3DFloors(sector_t * sector)
 		while (oldlist.Size())
 		{
 			pick=oldlist[0];
-			fixed_t height=pick->top.plane->ZatPoint(CenterSpot(sector));
+			fixed_t height=pick->top.plane->ZatPoint(sector->centerspot);
 
 			// find highest starting ffloor - intersections are not supported!
 			pickindex=0;
 			for (j=1;j<oldlist.Size();j++)
 			{
-				fixed_t h2=oldlist[j]->top.plane->ZatPoint(CenterSpot(sector));
+				fixed_t h2=oldlist[j]->top.plane->ZatPoint(sector->centerspot);
 
 				if (h2>height)
 				{
@@ -495,7 +495,7 @@ void P_Recalculate3DFloors(sector_t * sector)
 			}
 
 			oldlist.Delete(pickindex);
-			fixed_t pick_bottom=pick->bottom.plane->ZatPoint(CenterSpot(sector));
+			fixed_t pick_bottom=pick->bottom.plane->ZatPoint(sector->centerspot);
 
 			if (pick->flags & FF_THISINSIDE)
 			{
@@ -609,7 +609,7 @@ void P_Recalculate3DFloors(sector_t * sector)
 			if ( !(rover->flags & FF_EXISTS) || rover->flags & FF_NOSHADE )
 				continue;
 				
-			fixed_t ff_top=rover->top.plane->ZatPoint(CenterSpot(sector));
+			fixed_t ff_top=rover->top.plane->ZatPoint(sector->centerspot);
 			if (ff_top < minheight) break;	// reached the floor
 			if (ff_top < maxheight)
 			{
@@ -624,7 +624,7 @@ void P_Recalculate3DFloors(sector_t * sector)
 			}
 			else
 			{
-				fixed_t ff_bottom=rover->bottom.plane->ZatPoint(CenterSpot(sector));
+				fixed_t ff_bottom=rover->bottom.plane->ZatPoint(sector->centerspot);
 				if (ff_bottom<maxheight)
 				{
 					// this segment begins over the ceiling and extends beyond it
@@ -650,7 +650,7 @@ void P_Recalculate3DFloors(sector_t * sector)
 
 			if (rover->flags&FF_DOUBLESHADOW)
 			{
-				fixed_t ff_bottom=rover->bottom.plane->ZatPoint(CenterSpot(sector));
+				fixed_t ff_bottom=rover->bottom.plane->ZatPoint(sector->centerspot);
 				if(ff_bottom < maxheight && ff_bottom>minheight)
 				{
 					newlight.caster = rover;
@@ -738,11 +738,11 @@ lightlist_t * P_GetPlaneLight(sector_t * sector, secplane_t * plane, bool unders
 	unsigned   i;
 	TArray<lightlist_t> &lightlist = sector->e->XFloor.lightlist;
 
-	fixed_t planeheight=plane->ZatPoint(CenterSpot(sector));
+	fixed_t planeheight=plane->ZatPoint(sector->centerspot);
 	if(underside) planeheight--;
 	
 	for(i = 1; i < lightlist.Size(); i++)
-		if (lightlist[i].plane.ZatPoint(CenterSpot(sector)) <= planeheight) 
+		if (lightlist[i].plane.ZatPoint(sector->centerspot) <= planeheight) 
 			return &lightlist[i - 1];
 		
 	return &lightlist[lightlist.Size() - 1];
@@ -1002,8 +1002,8 @@ CCMD (dump3df)
 
 		for (unsigned int i = 0; i < ffloors.Size(); i++)
 		{
-			fixed_t height=ffloors[i]->top.plane->ZatPoint(CenterSpot(sector));
-			fixed_t bheight=ffloors[i]->bottom.plane->ZatPoint(CenterSpot(sector));
+			fixed_t height=ffloors[i]->top.plane->ZatPoint(sector->centerspot);
+			fixed_t bheight=ffloors[i]->bottom.plane->ZatPoint(sector->centerspot);
 
 			IGNORE_FORMAT_PRE
 			Printf("FFloor %d @ top = %f (model = %d), bottom = %f (model = %d), flags = %B, alpha = %d %s %s\n", 

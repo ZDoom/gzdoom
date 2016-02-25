@@ -1615,7 +1615,7 @@ void FParser::SF_FloorHeight(void)
 				DFloorChanger * f = new DFloorChanger(&sectors[i]);
 				if (!f->Move(
 					abs(dest - sectors[i].CenterFloor()), 
-					sectors[i].floorplane.PointToDist (CenterSpot(&sectors[i]), dest), 
+					sectors[i].floorplane.PointToDist (sectors[i].centerspot, dest),
 					crush? 10:-1, 
 					(dest > sectors[i].CenterFloor()) ? 1 : -1))
 				{
@@ -1699,7 +1699,7 @@ void FParser::SF_MoveFloor(void)
 			// Don't start a second thinker on the same floor
 			if (sec->floordata) continue;
 			
-			new DMoveFloor(sec,sec->floorplane.PointToDist(CenterSpot(sec),destheight),
+			new DMoveFloor(sec,sec->floorplane.PointToDist(sec->centerspot,destheight),
 				destheight < sec->CenterFloor() ? -1:1,crush,platspeed);
 		}
 	}
@@ -1763,7 +1763,7 @@ void FParser::SF_CeilingHeight(void)
 				DCeilingChanger * c = new DCeilingChanger(&sectors[i]);
 				if (!c->Move(
 					abs(dest - sectors[i].CenterCeiling()), 
-					sectors[i].ceilingplane.PointToDist (CenterSpot(&sectors[i]), dest), 
+					sectors[i].ceilingplane.PointToDist (sectors[i].centerspot, dest), 
 					crush? 10:-1,
 					(dest > sectors[i].CenterCeiling()) ? 1 : -1))
 				{
@@ -1807,8 +1807,7 @@ public:
 		m_Silent = silent;
 		m_Type = DCeiling::ceilLowerByValue;	// doesn't really matter as long as it's no special value
 		m_Tag=tag;			
-		vertex_t * spot=CenterSpot(sec);
-		m_TopHeight=m_BottomHeight=sec->ceilingplane.PointToDist(spot,destheight);
+		m_TopHeight=m_BottomHeight=sec->ceilingplane.PointToDist(sec->centerspot,destheight);
 		m_Direction=destheight>sec->GetPlaneTexZ(sector_t::ceiling)? 1:-1;
 
 		// Do not interpolate instant movement ceilings.

@@ -473,10 +473,7 @@ void AActor::Serialize (FArchive &arc)
 				Speed = GetDefault()->Speed;
 			}
 		}
-		PrevX = X();
-		PrevY = Y();
-		PrevZ = Z();
-		PrevAngle = angle;
+		ClearInterpolation();
 		UpdateWaterLevel(Z(), false);
 	}
 }
@@ -3304,6 +3301,7 @@ void AActor::CheckPortalTransition(bool islinked)
 			PrevY += Y() - oldpos.y;
 			PrevZ += Z() - oldpos.z;
 			Sector = P_PointInSector(X(), Y());
+			PrevPortalGroup = Sector->PortalGroup;
 			moved = true;
 		}
 		else break;
@@ -3322,6 +3320,7 @@ void AActor::CheckPortalTransition(bool islinked)
 				PrevY += Y() - oldpos.y;
 				PrevZ += Z() - oldpos.z;
 				Sector = P_PointInSector(X(), Y());
+				PrevPortalGroup = Sector->PortalGroup;
 				moved = true;
 			}
 			else break;
@@ -3368,10 +3367,7 @@ void AActor::Tick ()
 
 	// This is necessary to properly interpolate movement outside this function
 	// like from an ActorMover
-	PrevX = X();
-	PrevY = Y();
-	PrevZ = Z();
-	PrevAngle = angle;
+	ClearInterpolation();
 
 	if (flags5 & MF5_NOINTERACTION)
 	{
@@ -3398,7 +3394,6 @@ void AActor::Tick ()
 		flags |= MF_NOBLOCKMAP;
 		SetXYZ(Vec3Offset(velx, vely, velz));
 		CheckPortalTransition(false);
-		SetMovement(velx, vely, velz);
 		LinkToWorld ();
 	}
 	else
@@ -4157,9 +4152,6 @@ AActor *AActor::StaticSpawn (PClassActor *type, fixed_t ix, fixed_t iy, fixed_t 
 		actor->Conversation = NULL;
 	}
 
-	actor->PrevX = ix;
-	actor->PrevY = iy;
-	actor->PrevZ = iz;
 	actor->SetXYZ(ix, iy, iz);
 	actor->picnum.SetInvalid();
 	actor->health = actor->SpawnHealth();
@@ -4195,6 +4187,7 @@ AActor *AActor::StaticSpawn (PClassActor *type, fixed_t ix, fixed_t iy, fixed_t 
 
 	// set subsector and/or block links
 	actor->LinkToWorld (SpawningMapThing);
+	actor->ClearInterpolation();
 
 	actor->dropoffz =			// killough 11/98: for tracking dropoffs
 	actor->floorz = actor->Sector->floorplane.ZatPoint (ix, iy);
@@ -5822,6 +5815,7 @@ bool P_CheckMissileSpawn (AActor* th, fixed_t maxdist)
 			return false;
 		}
 	}
+	th->ClearInterpolation();
 	return true;
 }
 

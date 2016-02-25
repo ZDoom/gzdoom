@@ -3277,8 +3277,8 @@ FUNC(LS_GlassBreak)
 
 			x = ln->v1->x + ln->dx/2;
 			y = ln->v1->y + ln->dy/2;
-			x += (ln->frontsector->soundorg[0] - x) / 5;
-			y += (ln->frontsector->soundorg[1] - y) / 5;
+			x += (ln->frontsector->centerspot.x - x) / 5;
+			y += (ln->frontsector->centerspot.y - y) / 5;
 
 			for (int i = 0; i < 7; ++i)
 			{

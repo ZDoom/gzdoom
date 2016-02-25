@@ -1974,8 +1974,8 @@ void AM_drawSubsectors()
 			}
 			else
 			{
-				secx = FIXED2DBL(sec->soundorg[0]);
-				secy = FIXED2DBL(sec->soundorg[1]);
+				secx = FIXED2DBL(sec->centerspot.x);
+				secy = FIXED2DBL(sec->centerspot.y);
 			}
 			seczb = floorplane->ZatPoint(secx, secy);
 			seczt = sec->ceilingplane.ZatPoint(secx, secy);

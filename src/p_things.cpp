@@ -797,9 +797,9 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 				// Map both positions of the reference actor to the current portal group
 				fixedvec3 displacedold = old + Displacements(reference->PrevPortalGroup, caller->Sector->PortalGroup);
 				fixedvec3 displacedref = old + Displacements(reference->Sector->PortalGroup, caller->Sector->PortalGroup);
-				caller->PrevX = caller->X() + reference->PrevX - reference->X();
-				caller->PrevY = caller->Y() + reference->PrevY - reference->Y();
-				caller->PrevZ = caller->Z() + reference->PrevZ - reference->Z();
+				caller->PrevX = caller->X() + displacedold.x - displacedref.x;
+				caller->PrevY = caller->Y() + displacedold.y - displacedref.y;
+				caller->PrevZ = caller->Z() + displacedold.z - displacedref.z;
 				caller->PrevPortalGroup = caller->Sector->PortalGroup;
 			}
 			else if (!(flags & WARPF_INTERPOLATE))

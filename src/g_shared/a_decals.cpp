@@ -528,7 +528,11 @@ void DBaseDecal::Spread (const FDecalTemplate *tpl, side_t *wall, fixed_t x, fix
 	GetWallStuff (wall, v1, ldx, ldy);
 	rorg = Length (x - v1->x, y - v1->y);
 
-	tex = TexMan[PicNum];
+	if ((tex = TexMan[PicNum]) == NULL)
+	{
+		return;
+	}
+
 	int dwidth = tex->GetWidth ();
 
 	DecalWidth = dwidth * ScaleX;

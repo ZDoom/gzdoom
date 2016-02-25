@@ -411,6 +411,11 @@ D0139194F7817BF06F3988DFC47DB38D // Whispers of Satan map29
 	nopassover
 }
 
+5397C3B7D9B33AAF526D15A81A762828 // daedalus.wad Travel tubes (they are all identical)
+{
+	multiexit
+}
+
 D7F6E9F08C39A17026349A04F8C0B0BE // Return to Hadron, e1m9
 19D03FFC875589E21EDBB7AB74EF4AEF // Return to Hadron, e1m9, 2016.01.03 update
 {

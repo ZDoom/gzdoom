@@ -742,7 +742,7 @@ public:
 	bool IsHostile (AActor *other);
 
 	inline bool IsNoClip2() const;
-	void CheckPortalTransition();
+	void CheckPortalTransition(bool islinked);
 
 	// What species am I?
 	virtual FName GetSpecies();
@@ -911,6 +911,8 @@ public:
 						  Y() + FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]), Z() + dz };
 		return ret;
 	}
+
+	void ClearInterpolation();
 
 	void Move(fixed_t dx, fixed_t dy, fixed_t dz)
 	{
@@ -1120,6 +1122,7 @@ public:
 	// [RH] Used to interpolate the view to get >35 FPS
 	fixed_t PrevX, PrevY, PrevZ;
 	angle_t PrevAngle;
+	int PrevPortalGroup;
 
 	// ThingIDs
 	static void ClearTIDHashes ();
@@ -1253,11 +1256,6 @@ public:
 		__pos.y = npos.y;
 		__pos.z = npos.z;
 	}
-	void SetMovement(fixed_t x, fixed_t y, fixed_t z)
-	{
-		// not yet implemented
-	}
-
 
 	// begin of GZDoom specific additions
 	TArray<TObjPtr<AActor> >		dynamiclights;

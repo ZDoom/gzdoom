@@ -1136,7 +1136,7 @@ OptionMenu MessageOptions
 	Option "$MSGMNU_CENTEREDMESSAGES",			"msgmidcolor", "TextColors"
 	StaticText " "
 	Option "$MSGMNU_SCREENSHOTMESSAGES",		"screenshot_quiet",	"OffOn"
-	Option "$MSGMNU_LONGSAVEMESSAGES",	"		longsavemessages",	"OnOff"
+	Option "$MSGMNU_LONGSAVEMESSAGES",			"longsavemessages",	"OnOff"
 }
 
 //-------------------------------------------------------------------------------------------
@@ -1317,6 +1317,7 @@ OptionMenu "CompatibilityOptions"
 	Option "$CMPTMNU_STAIRS",						"compat_stairs", "YesNo"
 	Option "$CMPTMNU_FLOORMOVE",					"compat_floormove", "YesNo"
 	Option "$CMPTMNU_POINTONLINE",					"compat_pointonline", "YesNo"
+	Option "$CMPTMNU_MULTIEXIT",					"compat_multiexit", "YesNo"
 	
 	StaticText " "
 	StaticText "$CMPTMNU_PHYSICSBEHAVIOR",1

@@ -2,8 +2,6 @@
 #define __SECTORE_H
 
 
-#define CenterSpot(sec) (vertex_t*)&(sec)->soundorg[0]
-
 // 3D floor flags. Most are the same as in Legacy but I added some for EDGE's and Vavoom's features as well.
 typedef enum
 {

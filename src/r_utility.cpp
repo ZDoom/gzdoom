@@ -640,7 +640,8 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 	
 	// Due to interpolation this is not necessarily the same as the sector the camera is in.
 	viewsector = R_PointInSubsector(viewx, viewy)->sector;
-	if (!viewsector->PortalBlocksMovement(sector_t::ceiling))
+	bool moved = false;
+	while (!viewsector->PortalBlocksMovement(sector_t::ceiling))
 	{
 		AActor *point = viewsector->SkyBoxes[sector_t::ceiling];
 		if (viewz > point->threshold)
@@ -648,16 +649,23 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 			viewx += point->scaleX;
 			viewy += point->scaleY;
 			viewsector = R_PointInSubsector(viewx, viewy)->sector;
+			moved = true;
 		}
+		else break;
 	}
-	if (!viewsector->PortalBlocksMovement(sector_t::floor))
+	if (!moved)
 	{
-		AActor *point = viewsector->SkyBoxes[sector_t::floor];
-		if (viewz < point->threshold)
+		while (!viewsector->PortalBlocksMovement(sector_t::floor))
 		{
-			viewx += point->scaleX;
-			viewy += point->scaleY;
-			viewsector = R_PointInSubsector(viewx, viewy)->sector;
+			AActor *point = viewsector->SkyBoxes[sector_t::floor];
+			if (viewz < point->threshold)
+			{
+				viewx += point->scaleX;
+				viewy += point->scaleY;
+				viewsector = R_PointInSubsector(viewx, viewy)->sector;
+				moved = true;
+			}
+			else break;
 		}
 	}
 }

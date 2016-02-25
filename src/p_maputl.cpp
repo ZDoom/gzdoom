@@ -416,6 +416,7 @@ bool AActor::FixMapthingPos()
 				// Get the distance we have to move the object away from the wall
 				distance = radius - distance;
 				SetXY(X() + FixedMul(distance, finecosine[finean]), Y() + FixedMul(distance, finesine[finean]));
+				ClearInterpolation();
 				success = true;
 			}
 		}
@@ -533,9 +534,9 @@ void AActor::SetOrigin (fixed_t ix, fixed_t iy, fixed_t iz, bool moving)
 {
 	UnlinkFromWorld ();
 	SetXYZ(ix, iy, iz);
-	if (moving) SetMovement(ix - X(), iy - Y(), iz - Z());
 	LinkToWorld ();
 	P_FindFloorCeiling(this, FFCF_ONLYSPAWNPOS);
+	if (!moving) ClearInterpolation();
 }
 
 //===========================================================================

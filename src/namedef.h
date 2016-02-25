@@ -332,6 +332,7 @@ xx(Radius)
 xx(ReactionTime)
 xx(MeleeRange)
 xx(Speed)
+xx(Clamp)
 
 // Various actor names which are used internally
 xx(MapSpot)

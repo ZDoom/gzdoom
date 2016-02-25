@@ -692,7 +692,7 @@ void P_NormalizeVXVY(fixed_t& vx, fixed_t& vy)
 fixedvec2 P_GetOffsetPosition(AActor *actor, fixed_t dx, fixed_t dy)
 {
 	fixedvec3 dest = { actor->X() + dx, actor->Y() + dy };
-	if (PortalBlockmap.containsLines && actor->Sector->PortalGroup != 0)
+	if (PortalBlockmap.containsLines)
 	{
 		fixed_t actx = actor->X(), acty = actor->Y();
 		FLinePortalTraverse it;

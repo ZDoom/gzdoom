@@ -56,8 +56,11 @@ struct FDisplacementTable
 
 	fixedvec2 getOffset(int x, int y) const
 	{
-		static const fixedvec2 nulvec = { 0,0 };
-		if (x == y) return nulvec;	// shortcut for the most common case
+		if (x == y)
+		{
+			fixedvec2 nulvec = { 0,0 };
+			return nulvec;	// shortcut for the most common case
+		}
 		return data[x + size*y].pos;
 	}
 };

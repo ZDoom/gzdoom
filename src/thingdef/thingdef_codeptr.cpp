@@ -323,6 +323,40 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetDistance)
 	return 0;
 }
 
+//==========================================================================
+//
+// GetSpawnHealth
+//
+//==========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetSpawnHealth)
+{
+	if (numret > 0)
+	{
+		PARAM_PROLOGUE;
+		PARAM_OBJECT(self, AActor);
+		ret->SetInt(self->SpawnHealth());
+		return 1;
+	}
+	return 0;
+}
+
+//==========================================================================
+//
+// GetGibHealth
+//
+//==========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetGibHealth)
+{
+	if (numret > 0)
+	{
+		PARAM_PROLOGUE;
+		PARAM_OBJECT(self, AActor);
+		ret->SetInt(self->GetGibHealth());
+		return 1;
+	}
+	return 0;
+}
+
 //===========================================================================
 //
 // __decorate_internal_state__

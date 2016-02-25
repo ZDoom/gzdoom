@@ -856,7 +856,7 @@ bool FMultiBlockLinesIterator::Next(FMultiBlockLinesIterator::CheckResult *item)
 
 void FMultiBlockLinesIterator::startIteratorForGroup(int group)
 {
-	offset = Displacements(basegroup, group);
+	offset = Displacements.getOffset(basegroup, group);
 	offset.x += checkpoint.x;
 	offset.y += checkpoint.y;
 	bbox.setBox(offset.x, offset.y, checkpoint.z);
@@ -1088,7 +1088,7 @@ bool FMultiBlockThingsIterator::Next(FMultiBlockThingsIterator::CheckResult *ite
 	if (thing != NULL)
 	{
 		item->thing = thing;
-		item->position = checkpoint + Displacements(basegroup, thing->Sector->PortalGroup);
+		item->position = checkpoint + Displacements.getOffset(basegroup, thing->Sector->PortalGroup);
 		item->portalflags = portalflags;
 		return true;
 	}
@@ -1127,7 +1127,7 @@ bool FMultiBlockThingsIterator::Next(FMultiBlockThingsIterator::CheckResult *ite
 
 void FMultiBlockThingsIterator::startIteratorForGroup(int group)
 {
-	fixedvec2 offset = Displacements(basegroup, group);
+	fixedvec2 offset = Displacements.getOffset(basegroup, group);
 	offset.x += checkpoint.x;
 	offset.y += checkpoint.y;
 	bbox.setBox(offset.x, offset.y, checkpoint.z);

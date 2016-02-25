@@ -818,22 +818,28 @@ public:
 		return ( abs(X() - other->X()) < blockdist && abs(Y() - other->Y()) < blockdist);
 	}
 
-	// 'absolute' is reserved for a linked portal implementation which needs
-	// to distinguish between portal-aware and portal-unaware distance calculation.
-	fixed_t AproxDistance(AActor *other, bool absolute = false)
-	{
-		return P_AproxDistance(X() - other->X(), Y() - other->Y());
-	}
-
-	// same with 'ref' here.
-	fixed_t AproxDistance(fixed_t otherx, fixed_t othery, AActor *ref = NULL)
+	fixed_t AproxDistance(fixed_t otherx, fixed_t othery)
 	{
 		return P_AproxDistance(X() - otherx, Y() - othery);
 	}
 
+	fixed_t AngleTo(fixed_t otherx, fixed_t othery)
+	{
+		return R_PointToAngle2(X(), Y(), otherx, othery);
+	}
+
+	// 'absolute' is reserved for a linked portal implementation which needs
+	// to distinguish between portal-aware and portal-unaware distance calculation.
+	fixed_t AproxDistance(AActor *other, bool absolute = false)
+	{
+		fixedvec3 otherpos = absolute ? other->Pos() : other->PosRelative(this);
+		return P_AproxDistance(X() - otherpos.x, Y() - otherpos.y);
+	}
+
 	fixed_t AproxDistance(AActor *other, fixed_t xadd, fixed_t yadd, bool absolute = false)
 	{
-		return P_AproxDistance(X() - other->X() + xadd, Y() - other->Y() + yadd);
+		fixedvec3 otherpos = absolute ? other->Pos() : other->PosRelative(this);
+		return P_AproxDistance(X() - otherpos.x + xadd, Y() - otherpos.y + yadd);
 	}
 
 	fixed_t AproxDistance3D(AActor *other, bool absolute = false)
@@ -844,18 +850,21 @@ public:
 	// more precise, but slower version, being used in a few places
 	fixed_t Distance2D(AActor *other, bool absolute = false)
 	{
-		return xs_RoundToInt(TVector2<double>(X() - other->X(), Y() - other->Y()).Length());
+		fixedvec3 otherpos = absolute ? other->Pos() : other->PosRelative(this);
+		return xs_RoundToInt(TVector2<double>(X() - otherpos.x, Y() - otherpos.y).Length());
 	}
 
 	// a full 3D version of the above
 	fixed_t Distance3D(AActor *other, bool absolute = false)
 	{
-		return xs_RoundToInt(TVector3<double>(X() - other->X(), Y() - other->Y(), Z() - other->Z()).Length());
+		fixedvec3 otherpos = absolute ? other->Pos() : other->PosRelative(this);
+		return xs_RoundToInt(TVector3<double>(X() - otherpos.x, Y() - otherpos.y, Z() - otherpos.z).Length());
 	}
 
-	angle_t AngleTo(AActor *other, bool absolute = false) const
+	angle_t AngleTo(AActor *other, bool absolute = false)
 	{
-		return R_PointToAngle2(X(), Y(), other->X(), other->Y());
+		fixedvec3 otherpos = absolute ? other->Pos() : other->PosRelative(this);
+		return R_PointToAngle2(X(), Y(), otherpos.x, otherpos.y);
 	}
 
 	angle_t AngleTo(AActor *other, fixed_t oxofs, fixed_t oyofs, bool absolute = false) const
@@ -863,25 +872,17 @@ public:
 		return R_PointToAngle2(X(), Y(), other->X() + oxofs, other->Y() + oyofs);
 	}
 
-	fixed_t AngleTo(fixed_t otherx, fixed_t othery, AActor *ref = NULL)
-	{
-		return R_PointToAngle2(X(), Y(), otherx, othery);
-	}
-
-	fixed_t AngleXYTo(fixed_t myx, fixed_t myy, AActor *other, bool absolute = false)
-	{
-		return R_PointToAngle2(myx, myy, other->X(), other->Y());
-	}
-
 	fixedvec2 Vec2To(AActor *other) const
 	{
-		fixedvec2 ret = { other->X() - X(), other->Y() - Y() };
+		fixedvec3 otherpos = other->PosRelative(this);
+		fixedvec2 ret = { otherpos.x - X(), otherpos.y - Y() };
 		return ret;
 	}
 
 	fixedvec3 Vec3To(AActor *other) const
 	{
-		fixedvec3 ret = { other->X() - X(), other->Y() - Y(), other->Z() - Z() };
+		fixedvec3 otherpos = other->PosRelative(this);
+		fixedvec3 ret = { otherpos.x - X(), otherpos.y - Y(), otherpos.z - Z() };
 		return ret;
 	}
 
@@ -1190,7 +1191,7 @@ public:
 		return __pos;
 	}
 
-	fixedvec3 PosRelative(AActor *other) const;
+	fixedvec3 PosRelative(const AActor *other) const;
 	fixedvec3 PosRelative(sector_t *sec) const;
 	fixedvec3 PosRelative(line_t *line) const;
 

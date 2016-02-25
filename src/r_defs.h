@@ -1183,6 +1183,11 @@ struct line_t
 	unsigned	portalindex;
 	TObjPtr<ASkyViewpoint> skybox;
 
+	FLinePortal *getPortal() const
+	{
+		return portalindex >= linePortals.Size() ? (FLinePortal*)NULL : &linePortals[portalindex];
+	}
+
 	// returns true if the portal is crossable by actors
 	bool isLinePortal() const
 	{

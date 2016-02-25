@@ -325,6 +325,7 @@ public:
 
 class FPathTraverse
 {
+protected:
 	static TArray<intercept_t> intercepts;
 
 	divline_t trace;
@@ -332,15 +333,37 @@ class FPathTraverse
 	unsigned int intercept_count;
 	unsigned int count;
 
-	void AddLineIntercepts(int bx, int by);
-	void AddThingIntercepts(int bx, int by, FBlockThingsIterator &it, bool compatible);
+	virtual void AddLineIntercepts(int bx, int by);
+	virtual void AddThingIntercepts(int bx, int by, FBlockThingsIterator &it, bool compatible);
+	FPathTraverse() {}
 public:
 
 	intercept_t *Next();
 
-	FPathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int flags);
-	~FPathTraverse();
+	FPathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int flags)
+	{
+		init(x1, y1, x2, y2, flags);
+	}
+	void init(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int flags);
+	virtual ~FPathTraverse();
 	const divline_t &Trace() const { return trace; }
+};
+
+//============================================================================
+//
+// A traverser that uses the portal blockmap
+// This should be in portal.h but that'd create circular dependencies.
+//
+//============================================================================
+
+class FLinePortalTraverse : public FPathTraverse
+{
+	void AddLineIntercepts(int bx, int by);
+
+public:
+	FLinePortalTraverse()
+	{
+	}
 };
 
 

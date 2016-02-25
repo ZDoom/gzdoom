@@ -1749,7 +1749,7 @@ JOYMNU_CONFIG				= "CONFIGURE CONTROLLER";
 JOYMNU_OPTIONS				= "CONTROLLER OPTIONS";
 
 // Player Setup Menu
-PLYRMNU_PLAYERSETUP		= "PLAYER SETUP";
+MNU_PLAYERSETUP		= "PLAYER SETUP";
 PLYRMNU_NAME			= "Name";
 PLYRMNU_TEAM			= "Team";
 PLYRMNU_PLAYERCOLOR		= "Color";
@@ -2258,7 +2258,7 @@ OPTVAL_FOO_DUMB				= "foo_dumb";
 OPTVAL_ALIASING				= "Aliasing";
 OPTVAL_LINEAR				= "Linear";
 OPTVAL_CUBIC				= "Cubic";
-OPTVAL_BLEP					= "Band-limited step"
+OPTVAL_BLEP					= "Band-limited step";
 OPTVAL_LINEARSLOW			= "Linear (Slower)";
 OPTVAL_BLAM					= "Band-limited linear";
 OPTVAL_CUBICSLOW			= "Cubic (Slower)";

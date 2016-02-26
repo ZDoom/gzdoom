@@ -50,6 +50,23 @@
 
 class FArchive;
 
+
+template<typename T> class TIterator
+{
+public:
+	TIterator(T* ptr = nullptr) { m_ptr = ptr; }
+	bool operator==(const TIterator<T>& other) const { return (m_ptr == other.m_ptr); }
+	bool operator!=(const TIterator<T>& other) const { return (m_ptr != other.m_ptr); }
+	TIterator<T> &operator++() { ++m_ptr; return (*this); }
+	T &operator*() { return *m_ptr; }
+	const T &operator*() const { return *m_ptr; }
+	T* operator->() { return m_ptr; }
+
+protected:
+	T* m_ptr;
+};
+
+
 // TArray -------------------------------------------------------------------
 
 // Must match TArray's layout.
@@ -68,6 +85,32 @@ class TArray
 	template<class U, class UU> friend FArchive &operator<< (FArchive &arc, TArray<U,UU> &self);
 
 public:
+
+    typedef TIterator<T>                       iterator;
+    typedef TIterator<const T>                 const_iterator;
+
+    iterator begin()
+	{
+		return &Array[0];
+	}
+
+	iterator end()
+	{
+		return &Array[Count];
+	}
+	
+	const_iterator cbegin() const
+	{
+		return &Array[0];
+	}
+	
+	const_iterator cend() const
+	{
+		return &Array[Count];
+	}
+	
+	
+
 	////////
 	// This is a dummy constructor that does nothing. The purpose of this
 	// is so you can create a global TArray in the data segment that gets

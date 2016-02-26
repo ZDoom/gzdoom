@@ -712,7 +712,7 @@ fixedvec2 P_GetOffsetPosition(AActor *actor, fixed_t dx, fixed_t dy)
 		bool repeat;
 		do
 		{
-			it.init(actx, acty, dx, dy, PT_ADDLINES);
+			it.init(actx, acty, dx, dy, PT_ADDLINES|PT_DELTA);
 			intercept_t *in;
 
 			repeat = false;

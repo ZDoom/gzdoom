@@ -886,31 +886,57 @@ public:
 		return ret;
 	}
 
-	fixedvec2 Vec2Offset(fixed_t dx, fixed_t dy, bool absolute = false) const
+	fixedvec2 Vec2Offset(fixed_t dx, fixed_t dy, bool absolute = false)
 	{
-		fixedvec2 ret = { X() + dx, Y() + dy };
-		return ret;
+		if (absolute)
+		{
+			fixedvec2 ret = { X() + dx, Y() + dy };
+			return ret;
+		}
+		else return P_GetOffsetPosition(this, dx, dy);
 	}
 
 
-	fixedvec2 Vec2Angle(fixed_t length, angle_t angle, bool absolute = false) const
+	fixedvec2 Vec2Angle(fixed_t length, angle_t angle, bool absolute = false)
 	{
-		fixedvec2 ret = { X() + FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]),
-						  Y() + FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]) };
-		return ret;
+		if (absolute)
+		{
+			fixedvec2 ret = { X() + FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]),
+							  Y() + FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]) };
+			return ret;
+		}
+		else return P_GetOffsetPosition(this, FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]), FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]));
 	}
 
-	fixedvec3 Vec3Offset(fixed_t dx, fixed_t dy, fixed_t dz, bool absolute = false) const
+	fixedvec3 Vec3Offset(fixed_t dx, fixed_t dy, fixed_t dz, bool absolute = false)
 	{
-		fixedvec3 ret = { X() + dx, Y() + dy, Z() + dz };
-		return ret;
+		if (absolute)
+		{
+			fixedvec3 ret = { X() + dx, Y() + dy, Z() + dz };
+			return ret;
+		}
+		else
+		{
+			fixedvec2 op = P_GetOffsetPosition(this, dx, dy);
+			fixedvec3 pos = { op.x, op.y, Z() + dz };
+			return pos;
+		}
 	}
 
-	fixedvec3 Vec3Angle(fixed_t length, angle_t angle, fixed_t dz, bool absolute = false) const
+	fixedvec3 Vec3Angle(fixed_t length, angle_t angle, fixed_t dz, bool absolute = false)
 	{
-		fixedvec3 ret = { X() + FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]),
+		if (absolute)
+		{
+			fixedvec3 ret = { X() + FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]),
 						  Y() + FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]), Z() + dz };
-		return ret;
+			return ret;
+		}
+		else
+		{
+			fixedvec2 op = P_GetOffsetPosition(this, FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]), FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]));
+			fixedvec3 pos = { op.x, op.y, Z() + dz };
+			return pos;
+		}
 	}
 
 	void ClearInterpolation();

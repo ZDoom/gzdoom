@@ -30,10 +30,6 @@ struct FDisplacement
 	bool isSet;
 	BYTE indirect;	// just for illustration.
 
-	operator fixedvec2()
-	{
-		return pos;
-	}
 };
 
 struct FDisplacementTable
@@ -55,8 +51,17 @@ struct FDisplacementTable
 
 	FDisplacement &operator()(int x, int y)
 	{
-		if (x == y) return data[0];	// shortcut for the most common case
 		return data[x + size*y];
+	}
+
+	fixedvec2 getOffset(int x, int y) const
+	{
+		if (x == y)
+		{
+			fixedvec2 nulvec = { 0,0 };
+			return nulvec;	// shortcut for the most common case
+		}
+		return data[x + size*y].pos;
 	}
 };
 
@@ -72,7 +77,13 @@ extern FDisplacementTable Displacements;
 
 struct FPortalBlock
 {
+	bool neighborContainsLines;	// this is for skipping the traverser and exiting early if we can quickly decide that there's no portals nearby.
 	TArray<line_t*> portallines;
+
+	FPortalBlock()
+	{
+		neighborContainsLines = false;
+	}
 };
 
 struct FPortalBlockmap
@@ -187,5 +198,6 @@ void P_TranslatePortalAngle(line_t* src, line_t* dst, angle_t& angle);
 void P_TranslatePortalZ(line_t* src, line_t* dst, fixed_t& z);
 void P_NormalizeVXVY(fixed_t& vx, fixed_t& vy);
 fixed_t P_PointLineDistance(line_t* line, fixed_t x, fixed_t y);
+fixedvec2 P_GetOffsetPosition(AActor *actor, fixed_t dx, fixed_t dy);
 
 #endif

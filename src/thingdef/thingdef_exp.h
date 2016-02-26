@@ -830,19 +830,19 @@ public:
 
 //==========================================================================
 //
-//	FxGlobalFunctionCall
+//	FxFlopFunctionCall
 //
 //==========================================================================
 
-class FxGlobalFunctionCall : public FxExpression
+class FxFlopFunctionCall : public FxExpression
 {
-	FName Name;
+	int Index;
 	FArgumentList *ArgList;
 
 public:
 
-	FxGlobalFunctionCall(FName fname, FArgumentList *args, const FScriptPosition &pos);
-	~FxGlobalFunctionCall();
+	FxFlopFunctionCall(int index, FArgumentList *args, const FScriptPosition &pos);
+	~FxFlopFunctionCall();
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
 };

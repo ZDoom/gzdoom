@@ -57,6 +57,7 @@ static FxExpression *ParseRandomPick(FScanner &sc, FName identifier, PClassActor
 static FxExpression *ParseRandom2(FScanner &sc, PClassActor *cls);
 static FxExpression *ParseAbs(FScanner &sc, PClassActor *cls);
 static FxExpression *ParseMinMax(FScanner &sc, FName identifier, PClassActor *cls);
+static FxExpression *ParseClamp(FScanner &sc, PClassActor *cls);
 
 //
 // ParseExpression
@@ -381,6 +382,8 @@ static FxExpression *ParseExpression0 (FScanner &sc, PClassActor *cls)
 			case NAME_Min:
 			case NAME_Max:
 				return ParseMinMax(sc, identifier, cls);
+			case NAME_Clamp:
+				return ParseClamp(sc, cls);
 			case NAME_Abs:
 				return ParseAbs(sc, cls);
 			default:
@@ -520,4 +523,24 @@ static FxExpression *ParseMinMax(FScanner &sc, FName identifier, PClassActor *cl
 		sc.MustGetToken(',');
 	}
 	return new FxMinMax(list, identifier, sc);
+}
+
+static FxExpression *ParseClamp(FScanner &sc, PClassActor *cls)
+{
+	FxExpression *src = ParseExpressionM(sc, cls);
+	sc.MustGetToken(',');
+	FxExpression *min = ParseExpressionM(sc, cls);
+	sc.MustGetToken(',');
+	FxExpression *max = ParseExpressionM(sc, cls);
+	sc.MustGetToken(')');
+
+	// Build clamp(a,x,y) as min(max(a,x),y)
+	TArray<FxExpression *> list(2);
+	list.Reserve(2);
+	list[0] = src;
+	list[1] = min;
+	FxExpression *maxexpr = new FxMinMax(list, NAME_Max, sc);
+	list[0] = maxexpr;
+	list[1] = max;
+	return new FxMinMax(list, NAME_Min, sc);
 }

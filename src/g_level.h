@@ -125,7 +125,7 @@ struct FMapOptInfo
 	bool old;
 };
 
-enum ELevelFlags
+enum ELevelFlags : unsigned int
 {
 	LEVEL_NOINTERMISSION		= 0x00000001,
 	LEVEL_NOINVENTORYBAR		= 0x00000002,	// This effects Doom only, since it's the only one without a standard inventory bar.

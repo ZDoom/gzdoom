@@ -80,6 +80,8 @@ EXTERN_CVAR(Bool, gl_portals)
 EXTERN_CVAR(Bool, gl_noquery)
 EXTERN_CVAR(Int, r_mirror_recursions)
 
+extern bool r_showviewer;
+
 TArray<GLPortal *> GLPortal::portals;
 int GLPortal::recursion;
 int GLPortal::MirrorFlag;
@@ -291,6 +293,7 @@ bool GLPortal::Start(bool usestencil, bool doquery)
 	savedviewactor=GLRenderer->mViewActor;
 	savedviewangle=viewangle;
 	savedviewarea=in_area;
+	savedshowviewer = r_showviewer;
 
 	NextPortal = GLRenderer->mCurrentPortal;
 	GLRenderer->mCurrentPortal = NULL;	// Portals which need this have to set it themselves
@@ -354,6 +357,7 @@ void GLPortal::End(bool usestencil)
 		viewangle=savedviewangle;
 		GLRenderer->mViewActor=savedviewactor;
 		in_area=savedviewarea;
+		r_showviewer = savedshowviewer;
 		GLRenderer->SetupView(viewx, viewy, viewz, viewangle, !!(MirrorFlag & 1), !!(PlaneMirrorFlag & 1));
 
 		{
@@ -411,6 +415,7 @@ void GLPortal::End(bool usestencil)
 		viewangle=savedviewangle;
 		GLRenderer->mViewActor=savedviewactor;
 		in_area=savedviewarea;
+		r_showviewer = savedshowviewer;
 		GLRenderer->SetupView(viewx, viewy, viewz, viewangle, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
 
 		// This draws a valid z-buffer into the stencil's contents to ensure it
@@ -776,6 +781,7 @@ void GLPlaneMirrorPortal::DrawContents()
 	viewz = 2*planez - viewz;
 	GLRenderer->mViewActor = NULL;
 	PlaneMirrorMode = ksgn(origin->c);
+	r_showviewer = true;
 
 	validcount++;
 
@@ -883,6 +889,7 @@ void GLMirrorPortal::DrawContents()
 										linedef->v2->x, linedef->v2->y) - startang;
 
 	GLRenderer->mViewActor = NULL;
+	r_showviewer = true;
 
 	validcount++;
 

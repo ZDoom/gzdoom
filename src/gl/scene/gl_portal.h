@@ -116,6 +116,7 @@ private:
 	angle_t savedviewangle;
 	AActor * savedviewactor;
 	area_t savedviewarea;
+	bool savedshowviewer;
 	unsigned char clipsave;
 	GLPortal *NextPortal;
 	TArray<BYTE> savedmapsection;

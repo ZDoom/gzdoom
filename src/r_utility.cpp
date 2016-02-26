@@ -583,7 +583,7 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 	}
 	int oldgroup = R_PointInSubsector(iview->oviewx, iview->oviewy)->sector->PortalGroup;
 	int newgroup = R_PointInSubsector(iview->nviewx, iview->nviewy)->sector->PortalGroup;
-	fixedvec2 disp = Displacements(oldgroup, newgroup);
+	fixedvec2 disp = Displacements.getOffset(oldgroup, newgroup);
 	viewx = iview->oviewx + FixedMul (frac, iview->nviewx - iview->oviewx - disp.x);
 	viewy = iview->oviewy + FixedMul (frac, iview->nviewy - iview->oviewy - disp.y);
 	viewz = iview->oviewz + FixedMul (frac, iview->nviewz - iview->oviewz);

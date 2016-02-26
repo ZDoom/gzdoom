@@ -323,6 +323,40 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetDistance)
 	return 0;
 }
 
+//==========================================================================
+//
+// GetSpawnHealth
+//
+//==========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetSpawnHealth)
+{
+	if (numret > 0)
+	{
+		PARAM_PROLOGUE;
+		PARAM_OBJECT(self, AActor);
+		ret->SetInt(self->SpawnHealth());
+		return 1;
+	}
+	return 0;
+}
+
+//==========================================================================
+//
+// GetGibHealth
+//
+//==========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetGibHealth)
+{
+	if (numret > 0)
+	{
+		PARAM_PROLOGUE;
+		PARAM_OBJECT(self, AActor);
+		ret->SetInt(self->GetGibHealth());
+		return 1;
+	}
+	return 0;
+}
+
 //===========================================================================
 //
 // __decorate_internal_state__
@@ -5147,7 +5181,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_WolfAttack)
 			if (spawnblood)
 			{
 				P_SpawnBlood(bloodpos, angle, newdam > 0 ? newdam : damage, self->target);
-				P_TraceBleed(newdam > 0 ? newdam : damage, self->target, self->AngleTo(dx, dy, self->target), 0);
+				P_TraceBleed(newdam > 0 ? newdam : damage, self->target, self);
 			}
 		}
 	}

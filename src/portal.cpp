@@ -121,6 +121,11 @@ static void BuildBlockmap()
 				{
 					PortalBlockmap.containsLines = true;
 					block.portallines.Push(ld);
+					block.neighborContainsLines = true;
+					if (x > 0) PortalBlockmap(x - 1, y).neighborContainsLines = true;
+					if (y > 0) PortalBlockmap(x, y - 1).neighborContainsLines = true;
+					if (x < PortalBlockmap.dx - 1) PortalBlockmap(x + 1, y).neighborContainsLines = true;
+					if (y < PortalBlockmap.dy - 1) PortalBlockmap(x, y + 1).neighborContainsLines = true;
 				}
 			}
 		}
@@ -691,15 +696,23 @@ void P_NormalizeVXVY(fixed_t& vx, fixed_t& vy)
 
 fixedvec2 P_GetOffsetPosition(AActor *actor, fixed_t dx, fixed_t dy)
 {
-	fixedvec3 dest = { actor->X() + dx, actor->Y() + dy };
+	fixedvec2 dest = { actor->X() + dx, actor->Y() + dy };
 	if (PortalBlockmap.containsLines)
 	{
 		fixed_t actx = actor->X(), acty = actor->Y();
+		// Try some easily discoverable early-out first. If we know that the trace cannot possibly find a portal, this saves us from calling the traverser completely for vast parts of the map.
+		if (dx < 128 * FRACUNIT && dy < 128 * FRACUNIT)
+		{
+			fixed_t blockx = GetSafeBlockX(actx - bmaporgx);
+			fixed_t blocky = GetSafeBlockX(acty - bmaporgy);
+			if (blockx < 0 || blocky < 0 || blockx >= bmapwidth || blocky >= bmapheight || !PortalBlockmap(blockx, blocky).neighborContainsLines) return dest;
+		}
+
 		FLinePortalTraverse it;
 		bool repeat;
 		do
 		{
-			it.init(actx, acty, dx, dy, PT_ADDLINES);
+			it.init(actx, acty, dx, dy, PT_ADDLINES|PT_DELTA);
 			intercept_t *in;
 
 			repeat = false;
@@ -1159,9 +1172,9 @@ bool P_CollectConnectedGroups(int startgroup, const fixedvec3 &position, fixed_t
 	while (!wsec->PortalBlocksMovement(sector_t::ceiling) && upperz > wsec->SkyBoxes[sector_t::ceiling]->threshold)
 	{
 		sector_t *othersec = wsec->SkyBoxes[sector_t::ceiling]->Sector;
-		FDisplacement &disp = Displacements(startgroup, othersec->PortalGroup);
-		fixed_t dx = position.x + disp.pos.x;
-		fixed_t dy = position.y + disp.pos.y;
+		fixedvec2 pos = Displacements.getOffset(startgroup, othersec->PortalGroup);
+		fixed_t dx = position.x + pos.x;
+		fixed_t dy = position.y + pos.y;
 		processMask.setBit(othersec->PortalGroup);
 		out.Add(othersec->PortalGroup|FPortalGroupArray::UPPER);
 		wsec = P_PointInSector(dx, dy);	// get upper sector at the exact spot we want to check and repeat
@@ -1171,9 +1184,9 @@ bool P_CollectConnectedGroups(int startgroup, const fixedvec3 &position, fixed_t
 	while (!wsec->PortalBlocksMovement(sector_t::floor) && position.z < wsec->SkyBoxes[sector_t::floor]->threshold)
 	{
 		sector_t *othersec = wsec->SkyBoxes[sector_t::floor]->Sector;
-		FDisplacement &disp = Displacements(startgroup, othersec->PortalGroup);
-		fixed_t dx = position.x + disp.pos.x;
-		fixed_t dy = position.y + disp.pos.y;
+		fixedvec2 pos = Displacements.getOffset(startgroup, othersec->PortalGroup);
+		fixed_t dx = position.x + pos.x;
+		fixed_t dy = position.y + pos.y;
 		processMask.setBit(othersec->PortalGroup|FPortalGroupArray::LOWER);
 		out.Add(othersec->PortalGroup);
 		wsec = P_PointInSector(dx, dy);	// get lower sector at the exact spot we want to check and repeat

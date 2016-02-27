@@ -213,7 +213,7 @@ void FConsoleWindow::AddText(const char* message)
 		if (TEXTCOLOR_ESCAPE == *message)
 		{
 			const BYTE* colorID = reinterpret_cast<const BYTE*>(message) + 1;
-			if ('\0' == colorID)
+			if ('\0' == *colorID)
 			{
 				break;
 			}

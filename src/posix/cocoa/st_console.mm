@@ -188,6 +188,8 @@ void FConsoleWindow::ShowFatalError(const char* const message)
 	AddText(PalEntry(255, 255, 170), message);
 	AddText("\n");
 
+	ScrollTextToBottom();
+
 	[NSApp runModalForWindow:m_window];
 }
 
@@ -338,6 +340,14 @@ void FConsoleWindow::AddText(const PalEntry& color, const char* const message)
 }
 
 
+void FConsoleWindow::ScrollTextToBottom()
+{
+	[m_textView scrollRangeToVisible:NSMakeRange(m_characterCount, 0)];
+
+	[[NSRunLoop currentRunLoop] limitDateForMode:NSDefaultRunLoopMode];
+}
+
+
 void FConsoleWindow::SetTitleText()
 {
 	static const CGFloat TITLE_TEXT_HEIGHT = 32.0f;
@@ -485,6 +495,8 @@ void FConsoleWindow::NetInit(const char* const message, const int playerCount)
 
 		[m_window setFrame:windowRect display:YES];
 		[[m_window contentView] addSubview:m_netView];
+
+		ScrollTextToBottom();
 	}
 
 	[m_netMessageText setStringValue:[NSString stringWithUTF8String:message]];

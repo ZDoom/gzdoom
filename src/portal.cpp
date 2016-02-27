@@ -323,6 +323,12 @@ void P_UpdatePortal(FLinePortal *port)
 		// Portal has no destination: switch it off
 		port->mFlags = 0;
 	}
+	else if ((port->mOrigin->backsector == NULL && !(port->mOrigin->sidedef[0]->Flags & WALLF_POLYOBJ)) ||
+		(port->mDestination->backsector == NULL && !(port->mOrigin->sidedef[0]->Flags & WALLF_POLYOBJ)))
+	{
+		// disable teleporting capability if a portal is or links to a one-sided wall (unless part of a polyobject.)
+		port->mFlags = PORTF_VISIBLE;
+	}
 	else if (port->mDestination->getPortalDestination() != port->mOrigin)
 	{
 		//portal doesn't link back. This will be a simple teleporter portal.
@@ -387,6 +393,7 @@ void P_FinalizePortals()
 	}
 	P_CollectLinkedPortals();
 	BuildBlockmap();
+	P_CreateLinkedPortals();
 }
 
 //============================================================================

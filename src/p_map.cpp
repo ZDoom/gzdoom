@@ -808,6 +808,18 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 
 	if (!ld->backsector)
 	{ // One sided line
+
+		// Needed for polyobject portals. Having two-sided lines just for portals on otherwise solid polyobjects is a messy subject.
+		if ((cres.line->sidedef[0]->Flags & WALLF_POLYOBJ) && cres.line->isLinePortal())
+		{
+			spechit_t spec;
+			spec.line = ld;
+			spec.refpos = cres.position;
+			spec.oldrefpos = tm.thing->PosRelative(ld);
+			portalhit.Push(spec);
+			return true;
+		}
+
 		if (((cres.portalflags & FFCF_NOFLOOR) && LineIsAbove(cres.line, tm.thing) != 0) ||
 			((cres.portalflags & FFCF_NOCEILING) && LineIsBelow(cres.line, tm.thing) != 0))
 		{
@@ -2143,7 +2155,7 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 	while (true)
 	{
 		fixed_t bestfrac = FIXED_MAX;
-		spechit_t *besthit = NULL;
+		spechit_t besthit;
 		// find the portal nearest to the crossing actor
 		for (auto &spec : portalhit)
 		{
@@ -2160,7 +2172,7 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 				fixed_t frac = P_InterceptVector(&dl1, &dl2);
 				if (frac < bestfrac)
 				{
-					besthit = &spec;
+					besthit = spec;
 					bestfrac = frac;
 				}
 			}
@@ -2168,7 +2180,7 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 
 		if (bestfrac < FIXED_MAX)
 		{
-			line_t *ld = besthit->line;
+			line_t *ld = besthit.line;
 			FLinePortal *port = ld->getPortal();
 			if (port->mType == PORTT_LINKED)
 			{
@@ -2192,8 +2204,6 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 				// so that the spechit array gets proper positions assigned that can be evaluated later.
 				P_TranslatePortalXY(ld, out, pos.x, pos.y);
 				P_TranslatePortalXY(ld, out, thingpos.x, thingpos.y);
-				P_TranslatePortalVXVY(ld, out, thing->velx, thing->vely);
-				P_TranslatePortalAngle(ld, out, thing->angle);
 				P_TranslatePortalZ(ld, out, pos.z);
 				thing->SetXYZ(thingpos.x, thingpos.y, pos.z);
 				if (!P_CheckPosition(thing, pos.x, pos.y))
@@ -2204,16 +2214,19 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 				}
 				thing->UnlinkFromWorld();
 				thing->SetXYZ(pos);
+				P_TranslatePortalVXVY(ld, out, thing->velx, thing->vely);
+				P_TranslatePortalAngle(ld, out, thing->angle);
 				thing->LinkToWorld();
 				P_FindFloorCeiling(thing);
 				thing->ClearInterpolation();
+				portalcrossed = true;
 			}
 			// if this is the current camera we need to store the point where the portal was crossed and the exit
 			// so that the renderer can properly calculate an interpolated position along the movement path.
 			if (thing == players[consoleplayer].camera)
 			{
-				divline_t dl1 = { besthit->oldrefpos.x,besthit-> oldrefpos.y, besthit->refpos.x - besthit->oldrefpos.x, besthit->refpos.y - besthit->oldrefpos.y };
-				fixedvec3 hit = { dl1.x + FixedMul(dl1.dx, bestfrac), dl1.y + FixedMul(dl1.dy, bestfrac), 0 };
+				divline_t dl1 = { besthit.oldrefpos.x,besthit. oldrefpos.y, besthit.refpos.x - besthit.oldrefpos.x, besthit.refpos.y - besthit.oldrefpos.y };
+				fixedvec3a hit = { dl1.x + FixedMul(dl1.dx, bestfrac), dl1.y + FixedMul(dl1.dy, bestfrac), 0, 0 };
 				line_t *out = port->mDestination;
 
 				R_AddInterpolationPoint(hit);
@@ -2226,6 +2239,8 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 				{
 					P_TranslatePortalXY(ld, out, hit.x, hit.y);
 					P_TranslatePortalZ(ld, out, hit.z);
+					players[consoleplayer].viewz += hit.z;	// needs to be done here because otherwise the renderer will not catch the change.
+					P_TranslatePortalAngle(ld, out, hit.angle);
 				}
 				R_AddInterpolationPoint(hit);
 			}
@@ -5450,7 +5465,7 @@ void PIT_FloorDrop(AActor *thing, FChangePosition *cpos)
 	}
 	if (thing->player && thing->player->mo == thing)
 	{
-		thing->player->viewz += thing->Z() - oldz;
+		//thing->player->viewz += thing->Z() - oldz;
 	}
 }
 

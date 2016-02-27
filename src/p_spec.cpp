@@ -1531,8 +1531,6 @@ void P_SpawnSpecials (void)
 	}
 	// [RH] Start running any open scripts on this map
 	FBehavior::StaticStartTypedScripts (SCRIPT_Open, NULL, false);
-	P_FinalizePortals();
-	P_CreateLinkedPortals();
 }
 
 // killough 2/28/98:

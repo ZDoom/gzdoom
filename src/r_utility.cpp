@@ -81,7 +81,7 @@ static TArray<InterpolationViewer> PastViewers;
 static FRandom pr_torchflicker ("TorchFlicker");
 static FRandom pr_hom;
 static bool NoInterpolateView;
-static TArray<fixedvec3> InterpolationPath;
+static TArray<fixedvec3a> InterpolationPath;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -586,6 +586,8 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 	int oldgroup = R_PointInSubsector(iview->oviewx, iview->oviewy)->sector->PortalGroup;
 	int newgroup = R_PointInSubsector(iview->nviewx, iview->nviewy)->sector->PortalGroup;
 
+	fixed_t oviewangle = iview->oviewangle;
+	fixed_t nviewangle = iview->nviewangle;
 	if ((iview->oviewx != iview->nviewx || iview->oviewy != iview->nviewy) && InterpolationPath.Size() > 0)
 	{
 		viewx = iview->nviewx;
@@ -601,27 +603,31 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 			fixed_t pathlen = 0;
 			fixed_t zdiff = 0;
 			fixed_t totalzdiff = 0;
+			angle_t adiff = 0;
+			angle_t totaladiff = 0;
 			fixed_t oviewz = iview->oviewz;
 			fixed_t nviewz = iview->nviewz;
-			fixedvec3 oldpos = { iview->oviewx, iview->oviewy, 0 };
-			fixedvec3 newpos = { iview->nviewx, iview->nviewy, 0 };
+			fixedvec3a oldpos = { iview->oviewx, iview->oviewy, 0, 0 };
+			fixedvec3a newpos = { iview->nviewx, iview->nviewy, 0, 0 };
 			InterpolationPath.Push(newpos);	// add this to  the array to simplify the loops below
 
 			for (unsigned i = 0; i < InterpolationPath.Size(); i += 2)
 			{
-				fixedvec3 &start = i == 0 ? oldpos : InterpolationPath[i - 1];
-				fixedvec3 &end = InterpolationPath[i];
+				fixedvec3a &start = i == 0 ? oldpos : InterpolationPath[i - 1];
+				fixedvec3a &end = InterpolationPath[i];
 				pathlen += xs_CRoundToInt(TVector2<double>(end.x - start.x, end.y - start.y).Length());
 				totalzdiff += start.z;
+				totaladiff += start.angle;
 			}
 			fixed_t interpolatedlen = FixedMul(frac, pathlen);
 
 			for (unsigned i = 0; i < InterpolationPath.Size(); i += 2)
 			{
-				fixedvec3 &start = i == 0 ? oldpos : InterpolationPath[i - 1];
-				fixedvec3 &end = InterpolationPath[i];
+				fixedvec3a &start = i == 0 ? oldpos : InterpolationPath[i - 1];
+				fixedvec3a &end = InterpolationPath[i];
 				fixed_t fraglen = xs_CRoundToInt(TVector2<double>(end.x - start.x, end.y - start.y).Length());
 				zdiff += start.z;
+				adiff += start.angle;
 				if (fraglen <= interpolatedlen)
 				{
 					interpolatedlen -= fraglen;
@@ -631,9 +637,12 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 					fixed_t fragfrac = FixedDiv(interpolatedlen, fraglen);
 					oviewz += zdiff;
 					nviewz -= totalzdiff - zdiff;
+					oviewangle += adiff;
+					nviewangle -= totaladiff - adiff;
 					viewx = start.x + FixedMul(fragfrac, end.x - start.x);
 					viewy = start.y + FixedMul(fragfrac, end.y - start.y);
 					viewz = oviewz + FixedMul(frac, nviewz - oviewz);
+					break;
 				}
 			}
 			InterpolationPath.Pop();
@@ -661,7 +670,7 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 		(!netgame || !cl_noprediction) &&
 		!LocalKeyboardTurner)
 	{
-		viewangle = iview->nviewangle + (LocalViewAngle & 0xFFFF0000);
+		viewangle = nviewangle + (LocalViewAngle & 0xFFFF0000);
 
 		fixed_t delta = player->centering ? 0 : -(signed)(LocalViewPitch & 0xFFFF0000);
 
@@ -694,7 +703,7 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 	else
 	{
 		viewpitch = iview->oviewpitch + FixedMul (frac, iview->nviewpitch - iview->oviewpitch);
-		viewangle = iview->oviewangle + FixedMul (frac, iview->nviewangle - iview->oviewangle);
+		viewangle = oviewangle + FixedMul (frac, nviewangle - oviewangle);
 	}
 	
 	// Due to interpolation this is not necessarily the same as the sector the camera is in.
@@ -876,7 +885,7 @@ void R_ClearInterpolationPath()
 //
 //==========================================================================
 
-void R_AddInterpolationPoint(const fixedvec3 &vec)
+void R_AddInterpolationPoint(const fixedvec3a &vec)
 {
 	InterpolationPath.Push(vec);
 }

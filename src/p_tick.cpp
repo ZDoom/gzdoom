@@ -112,6 +112,7 @@ void P_Ticker (void)
 		S_ResumeSound (false);
 
 	P_ResetSightCounters (false);
+	R_ClearInterpolationPath();
 
 	// Since things will be moving, it's okay to interpolate them in the renderer.
 	r_NoInterpolate = false;

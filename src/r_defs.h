@@ -1400,7 +1400,8 @@ inline void AActor::ClearInterpolation()
 	PrevY = Y();
 	PrevZ = Z();
 	PrevAngle = angle;
-	PrevPortalGroup = Sector->PortalGroup;
+	if (Sector) PrevPortalGroup = Sector->PortalGroup;
+	else PrevPortalGroup = 0;
 }
 
 

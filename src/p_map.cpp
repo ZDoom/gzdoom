@@ -969,12 +969,14 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 	{
 		spec.line = ld;
 		spec.refpos = cres.position;
+		spec.oldrefpos = tm.thing->PosRelative(ld);
 		spechit.Push(spec);
 	}
 	if (ld->portalindex >= 0 && ld->portalindex != UINT_MAX)
 	{
 		spec.line = ld;
 		spec.refpos = cres.position;
+		spec.oldrefpos = tm.thing->PosRelative(ld);
 		portalhit.Push(spec);
 	}
 
@@ -1526,7 +1528,6 @@ bool P_CheckPosition(AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm, bo
 	tm.touchmidtex = false;
 	tm.abovemidtex = false;
 	validcount++;
-	spechit.Clear();
 
 	if ((thing->flags & MF_NOCLIP) && !(thing->flags & MF_SKULLFLY))
 		return true;
@@ -1604,6 +1605,8 @@ bool P_CheckPosition(AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm, bo
 	// a pickup they cannot get, because their validcount will prevent them from
 	// being considered for collision with the player.
 	validcount++;
+	spechit.Clear();
+	portalhit.Clear();
 
 	thing->BlockingMobj = NULL;
 	thing->height = realheight;
@@ -2132,22 +2135,126 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 		return false;
 	}
 
-	// the move is ok, so link the thing into its new position
-	thing->UnlinkFromWorld();
 
-	oldpos = thing->Pos();
-	oldsector = thing->Sector;
-	thing->floorz = tm.floorz;
-	thing->ceilingz = tm.ceilingz;
-	thing->dropoffz = tm.dropoffz;		// killough 11/98: keep track of dropoffs
-	thing->floorpic = tm.floorpic;
-	thing->floorterrain = tm.floorterrain;
-	thing->floorsector = tm.floorsector;
-	thing->ceilingpic = tm.ceilingpic;
-	thing->ceilingsector = tm.ceilingsector;
-	thing->SetXY(x, y);
+	// Check for crossed portals
+	bool portalcrossed;
+	portalcrossed = false;
 
-	thing->LinkToWorld();
+	while (true)
+	{
+		fixed_t bestfrac = FIXED_MAX;
+		spechit_t *besthit = NULL;
+		// find the portal nearest to the crossing actor
+		for (auto &spec : portalhit)
+		{
+			line_t *ld = spec.line;
+			if (ld->frontsector->PortalGroup != thing->Sector->PortalGroup) continue;	// must be in the same group to be considered valid.
+
+			// see if the line was crossed
+			oldside = P_PointOnLineSide(spec.oldrefpos.x, spec.oldrefpos.y, ld);
+			side = P_PointOnLineSide(spec.refpos.x, spec.refpos.y, ld);
+			if (oldside == 0 && side == 1)
+			{
+				divline_t dl2 = { ld->v1->x, ld->v1->y, ld->dx, ld->dy };
+				divline_t dl1 = { spec.oldrefpos.x, spec.oldrefpos.y, spec.refpos.x - spec.oldrefpos.x, spec.refpos.y - spec.oldrefpos.y };
+				fixed_t frac = P_InterceptVector(&dl1, &dl2);
+				if (frac < bestfrac)
+				{
+					besthit = &spec;
+					bestfrac = frac;
+				}
+			}
+		}
+
+		if (bestfrac < FIXED_MAX)
+		{
+			line_t *ld = besthit->line;
+			FLinePortal *port = ld->getPortal();
+			if (port->mType == PORTT_LINKED)
+			{
+				thing->UnlinkFromWorld();
+				thing->SetXY(tm.x + port->mXDisplacement, tm.y + port->mYDisplacement);
+				thing->PrevX += port->mXDisplacement;
+				thing->PrevY += port->mYDisplacement;
+				thing->LinkToWorld();
+				P_FindFloorCeiling(thing);
+				portalcrossed = true;
+			}
+			else if (!portalcrossed)
+			{
+				line_t *out = port->mDestination;
+				fixedvec3 pos = { tm.x, tm.y, thing->Z() };
+				fixedvec3 oldthingpos = thing->Pos();
+				fixedvec2 thingpos = oldthingpos;
+				
+				// This gets a bit tricky because we want to catch all line specials the actor crosses on the other side, too.
+				// So we have to translate the old Actor xy and temporarily set this as the actor's current position for the P_CheckPosition call,
+				// so that the spechit array gets proper positions assigned that can be evaluated later.
+				P_TranslatePortalXY(ld, out, pos.x, pos.y);
+				P_TranslatePortalXY(ld, out, thingpos.x, thingpos.y);
+				P_TranslatePortalVXVY(ld, out, thing->velx, thing->vely);
+				P_TranslatePortalAngle(ld, out, thing->angle);
+				P_TranslatePortalZ(ld, out, pos.z);
+				thing->SetXYZ(thingpos.x, thingpos.y, pos.z);
+				if (!P_CheckPosition(thing, pos.x, pos.y))
+				{
+					thing->SetXYZ(oldthingpos);
+					thing->flags6 &= ~MF6_INTRYMOVE;
+					return false;
+				}
+				thing->UnlinkFromWorld();
+				thing->SetXYZ(pos);
+				thing->LinkToWorld();
+				P_FindFloorCeiling(thing);
+				thing->ClearInterpolation();
+			}
+			// if this is the current camera we need to store the point where the portal was crossed and the exit
+			// so that the renderer can properly calculate an interpolated position along the movement path.
+			if (thing == players[consoleplayer].camera)
+			{
+				divline_t dl1 = { besthit->oldrefpos.x,besthit-> oldrefpos.y, besthit->refpos.x - besthit->oldrefpos.x, besthit->refpos.y - besthit->oldrefpos.y };
+				fixedvec3 hit = { dl1.x + FixedMul(dl1.dx, bestfrac), dl1.y + FixedMul(dl1.dy, bestfrac), 0 };
+				line_t *out = port->mDestination;
+
+				R_AddInterpolationPoint(hit);
+				if (port->mType == PORTT_LINKED)
+				{
+					hit.x += port->mXDisplacement;
+					hit.y += port->mYDisplacement;
+				}
+				else
+				{
+					P_TranslatePortalXY(ld, out, hit.x, hit.y);
+					P_TranslatePortalZ(ld, out, hit.z);
+				}
+				R_AddInterpolationPoint(hit);
+			}
+			if (port->mType == PORTT_LINKED) continue;
+		}
+		break;
+	}
+
+
+
+	if (!portalcrossed)
+	{
+		// the move is ok, so link the thing into its new position
+		thing->UnlinkFromWorld();
+
+		oldpos = thing->Pos();
+		oldsector = thing->Sector;
+		thing->floorz = tm.floorz;
+		thing->ceilingz = tm.ceilingz;
+		thing->dropoffz = tm.dropoffz;		// killough 11/98: keep track of dropoffs
+		thing->floorpic = tm.floorpic;
+		thing->floorterrain = tm.floorterrain;
+		thing->floorsector = tm.floorsector;
+		thing->ceilingpic = tm.ceilingpic;
+		thing->ceilingsector = tm.ceilingsector;
+		thing->SetXY(x, y);
+
+		thing->LinkToWorld();
+	}
 
 	if (thing->flags2 & MF2_FLOORCLIP)
 	{
@@ -2161,10 +2268,9 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 		while (spechit.Pop(spec))
 		{
 			line_t *ld = spec.line;
-			fixedvec3 oldrelpos = PosRelative(oldpos, ld, oldsector);
 			// see if the line was crossed
 			side = P_PointOnLineSide(spec.refpos.x, spec.refpos.y, ld);
-			oldside = P_PointOnLineSide(oldrelpos.x, oldrelpos.y, ld);
+			oldside = P_PointOnLineSide(spec.oldrefpos.x, spec.oldrefpos.y, ld);
 			if (side != oldside && ld->special && !(thing->flags6 & MF6_NOTRIGGER))
 			{
 				if (thing->player && (thing->player->cheats & CF_PREDICTING))

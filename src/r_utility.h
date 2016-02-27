@@ -68,6 +68,8 @@ fixed_t R_PointToDist2 (fixed_t dx, fixed_t dy);
 void R_ResetViewInterpolation ();
 void R_RebuildViewInterpolation(player_t *player);
 bool R_GetViewInterpolationStatus();
+void R_ClearInterpolationPath();
+void R_AddInterpolationPoint(const fixedvec3 &vec);
 void R_SetViewSize (int blocks);
 void R_SetFOV (float fov);
 float R_GetFOV ();

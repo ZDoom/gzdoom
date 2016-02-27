@@ -208,12 +208,12 @@ void I_PrintStr(const char* const message)
 		else if (0x1d == *srcp || 0x1f == *srcp) // Opening and closing bar character
 		{
 			*dstp++ = '-';
-			*srcp++;
+			++srcp;
 		}
 		else if (0x1e == *srcp) // Middle bar character
 		{
 			*dstp++ = '=';
-			*srcp++;
+			++srcp;
 		}
 		else
 		{

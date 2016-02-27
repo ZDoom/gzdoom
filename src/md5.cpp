@@ -166,7 +166,7 @@ void MD5Context::Final(BYTE digest[16])
 void
 MD5Transform(DWORD buf[4], const DWORD in[16])
 {
-	register DWORD a, b, c, d;
+	DWORD a, b, c, d;
 
 	a = buf[0];
 	b = buf[1];

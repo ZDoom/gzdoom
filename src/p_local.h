@@ -243,6 +243,7 @@ extern msecnode_t		*sector_list;		// phares 3/16/98
 struct spechit_t
 {
 	line_t *line;
+	fixedvec2 oldrefpos;
 	fixedvec2 refpos;
 };
 

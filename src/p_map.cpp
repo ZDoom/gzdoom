@@ -808,6 +808,18 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 
 	if (!ld->backsector)
 	{ // One sided line
+
+		// Needed for polyobject portals. Having two-sided lines just for portals on otherwise solid polyobjects is a messy subject.
+		if ((cres.line->sidedef[0]->Flags & WALLF_POLYOBJ) && cres.line->isLinePortal())
+		{
+			spechit_t spec;
+			spec.line = ld;
+			spec.refpos = cres.position;
+			spec.oldrefpos = tm.thing->PosRelative(ld);
+			portalhit.Push(spec);
+			return true;
+		}
+
 		if (((cres.portalflags & FFCF_NOFLOOR) && LineIsAbove(cres.line, tm.thing) != 0) ||
 			((cres.portalflags & FFCF_NOCEILING) && LineIsBelow(cres.line, tm.thing) != 0))
 		{
@@ -969,16 +981,120 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 	{
 		spec.line = ld;
 		spec.refpos = cres.position;
+		spec.oldrefpos = tm.thing->PosRelative(ld);
 		spechit.Push(spec);
 	}
-	if (ld->portalindex >= 0 && ld->portalindex != UINT_MAX)
+	if (ld->portalindex != UINT_MAX)
 	{
 		spec.line = ld;
 		spec.refpos = cres.position;
+		spec.oldrefpos = tm.thing->PosRelative(ld);
 		portalhit.Push(spec);
 	}
 
 	return true;
+}
+
+//==========================================================================
+//
+//
+// PIT_CheckPortal
+// This checks the destination side of a non-static line portal
+// We cannot run a full P_CheckPosition there because it'd set 
+// multiple fields to values that can cause problems in other
+// parts of the code
+// 
+// What this does is starting a separate BlockLinesIterator
+// and only taking the absolutely necessary information
+// (i.e. floor and ceiling height plus terrain)
+// 
+//
+//==========================================================================
+
+static bool PIT_CheckPortal(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::CheckResult cres, const FBoundingBox &box, FCheckPosition &tm)
+{
+	// if in another vertical section let's just ignore it.
+	if (cres.portalflags & (FFCF_NOCEILING | FFCF_NOFLOOR)) return false;
+
+	if (box.Right() <= cres.line->bbox[BOXLEFT]
+		|| box.Left() >= cres.line->bbox[BOXRIGHT]
+		|| box.Top() <= cres.line->bbox[BOXBOTTOM]
+		|| box.Bottom() >= cres.line->bbox[BOXTOP])
+		return false;
+
+	if (box.BoxOnLineSide(cres.line) != -1)
+		return false;
+
+	line_t *lp = cres.line->getPortalDestination();
+	fixed_t zofs = 0;
+
+	P_TranslatePortalXY(cres.line, lp, cres.position.x, cres.position.y);
+	P_TranslatePortalZ(cres.line, lp, zofs);
+
+	// fudge a bit with the portal line so that this gets included in the checks that normally only get run on two-sided lines
+	sector_t *sec = lp->backsector;
+	if (lp->backsector == NULL) lp->backsector = lp->frontsector;
+	tm.thing->AddZ(zofs);
+
+	FBoundingBox pbox(cres.position.x, cres.position.y, tm.thing->radius);
+	FBlockLinesIterator it(pbox);
+	bool ret = false;
+	line_t *ld;
+
+	// Check all lines at the destination
+	while ((ld = it.Next()))
+	{
+		if (pbox.Right() <= ld->bbox[BOXLEFT]
+			|| pbox.Left() >= ld->bbox[BOXRIGHT]
+			|| pbox.Top() <= ld->bbox[BOXBOTTOM]
+			|| pbox.Bottom() >= ld->bbox[BOXTOP])
+			continue;
+
+		if (pbox.BoxOnLineSide(ld) != -1)
+			continue;
+
+		if (ld->backsector == NULL) 
+			continue;
+
+		fixedvec2 ref = FindRefPoint(ld, cres.position);
+		FLineOpening open;
+
+		P_LineOpening(open, tm.thing, ld, ref.x, ref.y, cres.position.x, cres.position.y, 0);
+
+		// adjust floor / ceiling heights
+		if (open.top - zofs < tm.ceilingz)
+		{
+			tm.ceilingz = open.top - zofs;
+			tm.ceilingpic = open.ceilingpic;
+			/*
+			tm.ceilingsector = open.topsec;
+			tm.ceilingline = ld;
+			tm.thing->BlockingLine = ld;
+			*/
+			ret = true;
+		}
+
+		if (open.bottom - zofs > tm.floorz)
+		{
+			tm.floorz = open.bottom - zofs;
+			tm.floorpic = open.floorpic;
+			tm.floorterrain = open.floorterrain;
+			/*
+			tm.floorsector = open.bottomsec;
+			tm.touchmidtex = open.touchmidtex;
+			tm.abovemidtex = open.abovemidtex;
+			tm.thing->BlockingLine = ld;
+			*/
+			ret = true;
+		}
+
+		if (open.lowfloor - zofs < tm.dropoffz)
+			tm.dropoffz = open.lowfloor - zofs;
+	}
+	tm.thing->AddZ(-zofs);
+	lp->backsector = sec;
+
+	return ret;
 }
 
 
@@ -1526,7 +1642,6 @@ bool P_CheckPosition(AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm, bo
 	tm.touchmidtex = false;
 	tm.abovemidtex = false;
 	validcount++;
-	spechit.Clear();
 
 	if ((thing->flags & MF_NOCLIP) && !(thing->flags & MF_SKULLFLY))
 		return true;
@@ -1610,6 +1725,9 @@ bool P_CheckPosition(AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm, bo
 	if (actorsonly || (thing->flags & MF_NOCLIP))
 		return (thing->BlockingMobj = thingblocker) == NULL;
 
+	spechit.Clear();
+	portalhit.Clear();
+
 	FMultiBlockLinesIterator it(pcheck, x, y, thing->Z(), thing->height, thing->radius);
 	FMultiBlockLinesIterator::CheckResult lcres;
 
@@ -1621,7 +1739,22 @@ bool P_CheckPosition(AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm, bo
 
 	while (it.Next(&lcres))
 	{
-		good &= PIT_CheckLine(it, lcres, it.Box(), tm);
+		bool thisresult = PIT_CheckLine(it, lcres, it.Box(), tm);
+		good &= thisresult;
+		if (thisresult)
+		{
+			FLinePortal *port = lcres.line->getPortal();
+			if (port != NULL && port->mFlags & PORTF_PASSABLE && port->mType != PORTT_LINKED)
+			{
+				// Checking the other side of the portal completely is too costly,
+				// but checking the portal's destination line is necessary to 
+				// retrieve the proper sector heights on the other side.
+				if (PIT_CheckPortal(it, lcres, it.Box(), tm))
+				{
+					tm.thing->BlockingLine = lcres.line;
+				}
+			}
+		}
 	}
 	if (!good)
 	{
@@ -2132,22 +2265,126 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 		return false;
 	}
 
-	// the move is ok, so link the thing into its new position
-	thing->UnlinkFromWorld();
 
-	oldpos = thing->Pos();
-	oldsector = thing->Sector;
-	thing->floorz = tm.floorz;
-	thing->ceilingz = tm.ceilingz;
-	thing->dropoffz = tm.dropoffz;		// killough 11/98: keep track of dropoffs
-	thing->floorpic = tm.floorpic;
-	thing->floorterrain = tm.floorterrain;
-	thing->floorsector = tm.floorsector;
-	thing->ceilingpic = tm.ceilingpic;
-	thing->ceilingsector = tm.ceilingsector;
-	thing->SetXY(x, y);
+	// Check for crossed portals
+	bool portalcrossed;
+	portalcrossed = false;
 
-	thing->LinkToWorld();
+	while (true)
+	{
+		fixed_t bestfrac = FIXED_MAX;
+		spechit_t besthit;
+		// find the portal nearest to the crossing actor
+		for (auto &spec : portalhit)
+		{
+			line_t *ld = spec.line;
+			if (ld->frontsector->PortalGroup != thing->Sector->PortalGroup) continue;	// must be in the same group to be considered valid.
+
+			// see if the line was crossed
+			oldside = P_PointOnLineSide(spec.oldrefpos.x, spec.oldrefpos.y, ld);
+			side = P_PointOnLineSide(spec.refpos.x, spec.refpos.y, ld);
+			if (oldside == 0 && side == 1)
+			{
+				divline_t dl2 = { ld->v1->x, ld->v1->y, ld->dx, ld->dy };
+				divline_t dl1 = { spec.oldrefpos.x, spec.oldrefpos.y, spec.refpos.x - spec.oldrefpos.x, spec.refpos.y - spec.oldrefpos.y };
+				fixed_t frac = P_InterceptVector(&dl1, &dl2);
+				if (frac < bestfrac)
+				{
+					besthit = spec;
+					bestfrac = frac;
+				}
+			}
+		}
+
+		if (bestfrac < FIXED_MAX)
+		{
+			line_t *ld = besthit.line;
+			FLinePortal *port = ld->getPortal();
+			if (port->mType == PORTT_LINKED)
+			{
+				thing->UnlinkFromWorld();
+				thing->SetXY(tm.x + port->mXDisplacement, tm.y + port->mYDisplacement);
+				thing->PrevX += port->mXDisplacement;
+				thing->PrevY += port->mYDisplacement;
+				thing->LinkToWorld();
+				P_FindFloorCeiling(thing);
+				portalcrossed = true;
+			}
+			else if (!portalcrossed)
+			{
+				line_t *out = port->mDestination;
+				fixedvec3 pos = { tm.x, tm.y, thing->Z() };
+				fixedvec3 oldthingpos = thing->Pos();
+				fixedvec2 thingpos = oldthingpos;
+				
+				P_TranslatePortalXY(ld, out, pos.x, pos.y);
+				P_TranslatePortalXY(ld, out, thingpos.x, thingpos.y);
+				P_TranslatePortalZ(ld, out, pos.z);
+				thing->SetXYZ(thingpos.x, thingpos.y, pos.z);
+				if (!P_CheckPosition(thing, pos.x, pos.y, true))	// check if some actor blocks us on the other side. (No line checks, because of the mess that'd create.)
+				{
+					thing->SetXYZ(oldthingpos);
+					thing->flags6 &= ~MF6_INTRYMOVE;
+					return false;
+				}
+				thing->UnlinkFromWorld();
+				thing->SetXYZ(pos);
+				P_TranslatePortalVXVY(ld, out, thing->velx, thing->vely);
+				P_TranslatePortalAngle(ld, out, thing->angle);
+				thing->LinkToWorld();
+				P_FindFloorCeiling(thing);
+				thing->ClearInterpolation();
+				portalcrossed = true;
+			}
+			// if this is the current camera we need to store the point where the portal was crossed and the exit
+			// so that the renderer can properly calculate an interpolated position along the movement path.
+			if (thing == players[consoleplayer].camera)
+			{
+				divline_t dl1 = { besthit.oldrefpos.x,besthit. oldrefpos.y, besthit.refpos.x - besthit.oldrefpos.x, besthit.refpos.y - besthit.oldrefpos.y };
+				fixedvec3a hit = { dl1.x + FixedMul(dl1.dx, bestfrac), dl1.y + FixedMul(dl1.dy, bestfrac), 0, 0 };
+				line_t *out = port->mDestination;
+
+				R_AddInterpolationPoint(hit);
+				if (port->mType == PORTT_LINKED)
+				{
+					hit.x += port->mXDisplacement;
+					hit.y += port->mYDisplacement;
+				}
+				else
+				{
+					P_TranslatePortalXY(ld, out, hit.x, hit.y);
+					P_TranslatePortalZ(ld, out, hit.z);
+					players[consoleplayer].viewz += hit.z;	// needs to be done here because otherwise the renderer will not catch the change.
+					P_TranslatePortalAngle(ld, out, hit.angle);
+				}
+				R_AddInterpolationPoint(hit);
+			}
+			if (port->mType == PORTT_LINKED) continue;
+		}
+		break;
+	}
+
+
+
+	if (!portalcrossed)
+	{
+		// the move is ok, so link the thing into its new position
+		thing->UnlinkFromWorld();
+
+		oldpos = thing->Pos();
+		oldsector = thing->Sector;
+		thing->floorz = tm.floorz;
+		thing->ceilingz = tm.ceilingz;
+		thing->dropoffz = tm.dropoffz;		// killough 11/98: keep track of dropoffs
+		thing->floorpic = tm.floorpic;
+		thing->floorterrain = tm.floorterrain;
+		thing->floorsector = tm.floorsector;
+		thing->ceilingpic = tm.ceilingpic;
+		thing->ceilingsector = tm.ceilingsector;
+		thing->SetXY(x, y);
+
+		thing->LinkToWorld();
+	}
 
 	if (thing->flags2 & MF2_FLOORCLIP)
 	{
@@ -2161,10 +2398,9 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 		while (spechit.Pop(spec))
 		{
 			line_t *ld = spec.line;
-			fixedvec3 oldrelpos = PosRelative(oldpos, ld, oldsector);
 			// see if the line was crossed
 			side = P_PointOnLineSide(spec.refpos.x, spec.refpos.y, ld);
-			oldside = P_PointOnLineSide(oldrelpos.x, oldrelpos.y, ld);
+			oldside = P_PointOnLineSide(spec.oldrefpos.x, spec.oldrefpos.y, ld);
 			if (side != oldside && ld->special && !(thing->flags6 & MF6_NOTRIGGER))
 			{
 				if (thing->player && (thing->player->cheats & CF_PREDICTING))
@@ -5344,7 +5580,7 @@ void PIT_FloorDrop(AActor *thing, FChangePosition *cpos)
 	}
 	if (thing->player && thing->player->mo == thing)
 	{
-		thing->player->viewz += thing->Z() - oldz;
+		//thing->player->viewz += thing->Z() - oldz;
 	}
 }
 

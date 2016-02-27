@@ -152,7 +152,7 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef,
 		sector_t *front, *back;
 		fixed_t fc, ff, bc, bf;
 
-		if (linedef->sidedef[1] == NULL)
+		if (linedef->backsector == NULL)
 		{
 			// single sided line
 			open.range = 0;

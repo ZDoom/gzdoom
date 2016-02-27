@@ -995,6 +995,108 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 	return true;
 }
 
+//==========================================================================
+//
+//
+// PIT_CheckPortal
+// This checks the destination side of a non-static line portal
+// We cannot run a full P_CheckPosition there because it'd set 
+// multiple fields to values that can cause problems in other
+// parts of the code
+// 
+// What this does is starting a separate BlockLinesIterator
+// and only taking the absolutely necessary information
+// (i.e. floor and ceiling height plus terrain)
+// 
+//
+//==========================================================================
+
+static bool PIT_CheckPortal(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::CheckResult cres, const FBoundingBox &box, FCheckPosition &tm)
+{
+	// if in another vertical section let's just ignore it.
+	if (cres.portalflags & (FFCF_NOCEILING | FFCF_NOFLOOR)) return false;
+
+	if (box.Right() <= cres.line->bbox[BOXLEFT]
+		|| box.Left() >= cres.line->bbox[BOXRIGHT]
+		|| box.Top() <= cres.line->bbox[BOXBOTTOM]
+		|| box.Bottom() >= cres.line->bbox[BOXTOP])
+		return false;
+
+	if (box.BoxOnLineSide(cres.line) != -1)
+		return false;
+
+	line_t *lp = cres.line->getPortalDestination();
+	fixed_t zofs = 0;
+
+	P_TranslatePortalXY(cres.line, lp, cres.position.x, cres.position.y);
+	P_TranslatePortalZ(cres.line, lp, zofs);
+
+	// fudge a bit with the portal line so that this gets included in the checks that normally only get run on two-sided lines
+	sector_t *sec = lp->backsector;
+	if (lp->backsector == NULL) lp->backsector = lp->frontsector;
+	tm.thing->AddZ(zofs);
+
+	FBoundingBox pbox(cres.position.x, cres.position.y, tm.thing->radius);
+	FBlockLinesIterator it(pbox);
+	bool ret = false;
+	line_t *ld;
+
+	// Check all lines at the destination
+	while ((ld = it.Next()))
+	{
+		if (pbox.Right() <= ld->bbox[BOXLEFT]
+			|| pbox.Left() >= ld->bbox[BOXRIGHT]
+			|| pbox.Top() <= ld->bbox[BOXBOTTOM]
+			|| pbox.Bottom() >= ld->bbox[BOXTOP])
+			continue;
+
+		if (pbox.BoxOnLineSide(ld) != -1)
+			continue;
+
+		if (ld->backsector == NULL) 
+			continue;
+
+		fixedvec2 ref = FindRefPoint(ld, cres.position);
+		FLineOpening open;
+
+		P_LineOpening(open, tm.thing, ld, ref.x, ref.y, cres.position.x, cres.position.y, 0);
+
+		// adjust floor / ceiling heights
+		if (open.top - zofs < tm.ceilingz)
+		{
+			tm.ceilingz = open.top - zofs;
+			tm.ceilingpic = open.ceilingpic;
+			/*
+			tm.ceilingsector = open.topsec;
+			tm.ceilingline = ld;
+			tm.thing->BlockingLine = ld;
+			*/
+			ret = true;
+		}
+
+		if (open.bottom - zofs > tm.floorz)
+		{
+			tm.floorz = open.bottom - zofs;
+			tm.floorpic = open.floorpic;
+			tm.floorterrain = open.floorterrain;
+			/*
+			tm.floorsector = open.bottomsec;
+			tm.touchmidtex = open.touchmidtex;
+			tm.abovemidtex = open.abovemidtex;
+			tm.thing->BlockingLine = ld;
+			*/
+			ret = true;
+		}
+
+		if (open.lowfloor - zofs < tm.dropoffz)
+			tm.dropoffz = open.lowfloor - zofs;
+	}
+	tm.thing->AddZ(-zofs);
+	lp->backsector = sec;
+
+	return ret;
+}
+
 
 //==========================================================================
 //
@@ -1617,13 +1719,14 @@ bool P_CheckPosition(AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm, bo
 	// a pickup they cannot get, because their validcount will prevent them from
 	// being considered for collision with the player.
 	validcount++;
-	spechit.Clear();
-	portalhit.Clear();
 
 	thing->BlockingMobj = NULL;
 	thing->height = realheight;
 	if (actorsonly || (thing->flags & MF_NOCLIP))
 		return (thing->BlockingMobj = thingblocker) == NULL;
+
+	spechit.Clear();
+	portalhit.Clear();
 
 	FMultiBlockLinesIterator it(pcheck, x, y, thing->Z(), thing->height, thing->radius);
 	FMultiBlockLinesIterator::CheckResult lcres;
@@ -1636,7 +1739,22 @@ bool P_CheckPosition(AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm, bo
 
 	while (it.Next(&lcres))
 	{
-		good &= PIT_CheckLine(it, lcres, it.Box(), tm);
+		bool thisresult = PIT_CheckLine(it, lcres, it.Box(), tm);
+		good &= thisresult;
+		if (thisresult)
+		{
+			FLinePortal *port = lcres.line->getPortal();
+			if (port != NULL && port->mFlags & PORTF_PASSABLE && port->mType != PORTT_LINKED)
+			{
+				// Checking the other side of the portal completely is too costly,
+				// but checking the portal's destination line is necessary to 
+				// retrieve the proper sector heights on the other side.
+				if (PIT_CheckPortal(it, lcres, it.Box(), tm))
+				{
+					tm.thing->BlockingLine = lcres.line;
+				}
+			}
+		}
 	}
 	if (!good)
 	{
@@ -2199,14 +2317,11 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 				fixedvec3 oldthingpos = thing->Pos();
 				fixedvec2 thingpos = oldthingpos;
 				
-				// This gets a bit tricky because we want to catch all line specials the actor crosses on the other side, too.
-				// So we have to translate the old Actor xy and temporarily set this as the actor's current position for the P_CheckPosition call,
-				// so that the spechit array gets proper positions assigned that can be evaluated later.
 				P_TranslatePortalXY(ld, out, pos.x, pos.y);
 				P_TranslatePortalXY(ld, out, thingpos.x, thingpos.y);
 				P_TranslatePortalZ(ld, out, pos.z);
 				thing->SetXYZ(thingpos.x, thingpos.y, pos.z);
-				if (!P_CheckPosition(thing, pos.x, pos.y))
+				if (!P_CheckPosition(thing, pos.x, pos.y, true))	// check if some actor blocks us on the other side. (No line checks, because of the mess that'd create.)
 				{
 					thing->SetXYZ(oldthingpos);
 					thing->flags6 &= ~MF6_INTRYMOVE;

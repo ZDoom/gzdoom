@@ -2137,7 +2137,8 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 
 
 	// Check for crossed portals
-	bool portalcrossed = false;
+	bool portalcrossed;
+	portalcrossed = false;
 
 	while (true)
 	{

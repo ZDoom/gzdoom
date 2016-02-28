@@ -162,11 +162,22 @@ static inline fixed_t GetCoefficientClosestPointInLine24(line_t *ld, fixedvec2 p
 
 static inline fixedvec2 FindRefPoint(line_t *ld, fixedvec2 pos)
 {
-	if (!((((ld->frontsector->floorplane.a | ld->frontsector->floorplane.b) |
-		(ld->backsector->floorplane.a | ld->backsector->floorplane.b) |
-		(ld->frontsector->ceilingplane.a | ld->frontsector->ceilingplane.b) |
-		(ld->backsector->ceilingplane.a | ld->backsector->ceilingplane.b)) == 0)
-		&& ld->backsector->e->XFloor.ffloors.Size() == 0 && ld->frontsector->e->XFloor.ffloors.Size() == 0))
+	// If there's any chance of slopes getting in the way we need to get a proper refpoint, otherwise we can save the work.
+	// Slopes can get in here when:
+	// - the actual sector planes are sloped
+	// - there's 3D floors in this sector
+	// - there's a crossable floor portal (for which the dropoff needs to be calculated within P_LineOpening, and the lower sector can easily have slopes)
+	if (
+		(((ld->frontsector->floorplane.a | ld->frontsector->floorplane.b) |
+			(ld->backsector->floorplane.a | ld->backsector->floorplane.b) |
+			(ld->frontsector->ceilingplane.a | ld->frontsector->ceilingplane.b) |
+			(ld->backsector->ceilingplane.a | ld->backsector->ceilingplane.b)) != 0)
+		||
+			ld->backsector->e->XFloor.ffloors.Size() == 0 
+		||
+			ld->frontsector->e->XFloor.ffloors.Size() == 0
+		|| 
+			!ld->frontsector->PortalBlocksMovement(sector_t::floor))
 	{
 		fixed_t r = GetCoefficientClosestPointInLine24(ld, pos);
 		if (r <= 0)
@@ -972,7 +983,9 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 		}
 
 		if (open.lowfloor < tm.dropoffz)
+		{
 			tm.dropoffz = open.lowfloor;
+		}
 	}
 
 	// if contacted a special line, add it to the list

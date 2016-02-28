@@ -150,7 +150,7 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef,
 	if (!(flags & FFCF_ONLY3DFLOORS))
 	{
 		sector_t *front, *back;
-		fixed_t fc, ff, bc, bf;
+		fixed_t fc = 0, ff = 0, bc = 0, bf = 0;
 
 		if (linedef->backsector == NULL)
 		{
@@ -162,28 +162,19 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef,
 		front = linedef->frontsector;
 		back = linedef->backsector;
 
-		if (!(flags & FFCF_NOPORTALS) && !linedef->frontsector->PortalBlocksMovement(sector_t::ceiling) && 
-			linedef->backsector->SkyBoxes[sector_t::ceiling] &&
-			linedef->frontsector->SkyBoxes[sector_t::ceiling]->Sector->PortalGroup == linedef->backsector->SkyBoxes[sector_t::ceiling]->Sector->PortalGroup)
+		if (!(flags & FFCF_NOPORTALS))
 		{
-			fc = bc = FIXED_MAX;
+			if (!linedef->frontsector->PortalBlocksMovement(sector_t::ceiling)) fc = FIXED_MAX;
+			if (!linedef->backsector->PortalBlocksMovement(sector_t::ceiling)) bc = FIXED_MAX;
+			if (!linedef->frontsector->PortalBlocksMovement(sector_t::floor)) ff = FIXED_MIN;
+			if (!linedef->backsector->PortalBlocksMovement(sector_t::floor)) bf = FIXED_MIN;
 		}
-		else
-		{
-			fc = front->ceilingplane.ZatPoint(x, y);
-			bc = back->ceilingplane.ZatPoint(x, y);
-		}
-		if (!(flags & FFCF_NOPORTALS) && !linedef->frontsector->PortalBlocksMovement(sector_t::floor) &&
-			linedef->backsector->SkyBoxes[sector_t::floor] &&
-			linedef->frontsector->SkyBoxes[sector_t::floor]->Sector->PortalGroup == linedef->backsector->SkyBoxes[sector_t::floor]->Sector->PortalGroup)
-		{
-			ff = bf = FIXED_MIN;
-		}
-		else
-		{
-			ff = front->floorplane.ZatPoint(x, y);
-			bf = back->floorplane.ZatPoint(x, y);
-		}
+
+		if (fc == 0) fc = front->ceilingplane.ZatPoint(x, y);
+		if (bc == 0) bc = back->ceilingplane.ZatPoint(x, y);
+		if (ff == 0) ff = front->floorplane.ZatPoint(x, y);
+		if (bf == 0) bf = back->floorplane.ZatPoint(x, y);
+
 
 		/*Printf ("]]]]]] %d %d\n", ff, bf);*/
 
@@ -198,8 +189,7 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef,
 		// that imprecisions in the plane equation mean there is a
 		// good chance that even if a slope and non-slope look like
 		// they line up, they won't be perfectly aligned.
-		if (refx == FIXED_MIN ||
-			abs (ff-bf) > 256)
+		if (ff == FIXED_MIN || bf == FIXED_MIN || (refx == FIXED_MIN || abs (ff-bf) > 256))
 		{
 			usefront = (ff > bf);
 		}
@@ -219,7 +209,13 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef,
 			open.bottomsec = front;
 			open.floorpic = front->GetTexture(sector_t::floor);
 			open.floorterrain = front->GetTerrain(sector_t::floor);
-			open.lowfloor = bf;
+			if (bf != FIXED_MIN) open.lowfloor = bf;
+			else
+			{
+				// We must check through the portal for the actual dropoff.
+				// If there's no lines in the lower sections we'd never get a usable value otherwise.
+				open.lowfloor = back->NextLowestFloorAt(refx, refy, back->SkyBoxes[sector_t::floor]->threshold-1);
+			}
 		}
 		else
 		{
@@ -227,7 +223,13 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef,
 			open.bottomsec = back;
 			open.floorpic = back->GetTexture(sector_t::floor);
 			open.floorterrain = back->GetTerrain(sector_t::floor);
-			open.lowfloor = ff;
+			if (ff != FIXED_MIN) open.lowfloor = ff;
+			else
+			{
+				// We must check through the portal for the actual dropoff.
+				// If there's no lines in the lower sections we'd never get a usable value otherwise.
+				open.lowfloor = front->NextLowestFloorAt(refx, refy, front->SkyBoxes[sector_t::floor]->threshold - 1);
+			}
 		}
 		open.frontfloorplane = front->floorplane;
 		open.backfloorplane = back->floorplane;

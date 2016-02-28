@@ -2604,40 +2604,48 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 		fixedvec2 viletry = self->Vec2Offset(
 			FixedMul (absSpeed, xspeed[self->movedir]),
 			FixedMul (absSpeed, yspeed[self->movedir]), true);
-		AActor *corpsehit;
 
-		FBlockThingsIterator it(FBoundingBox(viletry.x, viletry.y, 32*FRACUNIT));
-		while ((corpsehit = it.Next()))
+		FPortalGroupArray check(FPortalGroupArray::PGA_Full3d);
+
+		FMultiBlockThingsIterator it(check, viletry.x, viletry.y, self->Z() - 64* FRACUNIT, self->Top() + 64 * FRACUNIT, 32 * FRACUNIT);
+		FMultiBlockThingsIterator::CheckResult cres;
+		while (it.Next(&cres))
 		{
+			AActor *corpsehit = cres.thing;
 			FState *raisestate = corpsehit->GetRaiseState();
 			if (raisestate != NULL)
 			{
 				// use the current actor's radius instead of the Arch Vile's default.
 				fixed_t maxdist = corpsehit->GetDefault()->radius + self->radius;
 
-				if (abs(corpsehit->X() - viletry.x) > maxdist ||
-					abs(corpsehit->Y() - viletry.y) > maxdist)
+				if (abs(cres.position.x - viletry.x) > maxdist ||
+					abs(cres.position.y - viletry.y) > maxdist)
 					continue;			// not actually touching
 				// Let's check if there are floors in between the archvile and its target
 
-				// if in a different section of the map, only consider possible if a line of sight exists.
-				if (corpsehit->Sector->PortalGroup != self->Sector->PortalGroup && !P_CheckSight(self, corpsehit))
-					continue;
-
-				sector_t *vilesec = self->Sector;
-				sector_t *corpsec = corpsehit->Sector;
-				// We only need to test if at least one of the sectors has a 3D floor.
-				sector_t *testsec = vilesec->e->XFloor.ffloors.Size() ? vilesec :
-					(vilesec != corpsec && corpsec->e->XFloor.ffloors.Size()) ? corpsec : NULL;
-				if (testsec)
+				if (corpsehit->Sector->PortalGroup != self->Sector->PortalGroup)
 				{
-					fixed_t zdist1, zdist2;
-					if (P_Find3DFloor(testsec, corpsehit->Pos(), false, true, zdist1)
-						!= P_Find3DFloor(testsec, self->Pos(), false, true, zdist2))
+					// if in a different section of the map, only consider possible if a line of sight exists.
+					if (!P_CheckSight(self, corpsehit))
+						continue;
+				}
+				else
+				{
+					sector_t *vilesec = self->Sector;
+					sector_t *corpsec = corpsehit->Sector;
+					// We only need to test if at least one of the sectors has a 3D floor.
+					sector_t *testsec = vilesec->e->XFloor.ffloors.Size() ? vilesec :
+						(vilesec != corpsec && corpsec->e->XFloor.ffloors.Size()) ? corpsec : NULL;
+					if (testsec)
 					{
-						// Not on same floor
-						if (vilesec == corpsec || abs(zdist1 - self->Z()) > self->height)
-							continue;
+						fixed_t zdist1, zdist2;
+						if (P_Find3DFloor(testsec, corpsehit->Pos(), false, true, zdist1)
+							!= P_Find3DFloor(testsec, self->Pos(), false, true, zdist2))
+						{
+							// Not on same floor
+							if (vilesec == corpsec || abs(zdist1 - self->Z()) > self->height)
+								continue;
+						}
 					}
 				}
 

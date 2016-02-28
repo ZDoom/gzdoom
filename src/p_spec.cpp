@@ -2249,11 +2249,14 @@ void DPusher::Tick ()
 		// Seek out all pushable things within the force radius of this
 		// point pusher. Crosses sectors, so use blockmap.
 
-		FBlockThingsIterator it(FBoundingBox(m_X, m_Y, m_Radius));
-		AActor *thing;
+		FPortalGroupArray check(FPortalGroupArray::PGA_NoSectorPortals);	// no sector portals because this thing is utterly z-unaware.
+		FMultiBlockThingsIterator it(check, m_X, m_Y, 0, 0, m_Radius);
+		FMultiBlockThingsIterator::CheckResult cres;
 
-		while ((thing = it.Next()))
+
+		while (it.Next(&cres))
 		{
+			AActor *thing = cres.thing;
 			// Normal ZDoom is based only on the WINDTHRUST flag, with the noclip cheat as an exemption.
 			bool pusharound = ((thing->flags2 & MF2_WINDTHRUST) && !(thing->flags & MF_NOCLIP));
 					

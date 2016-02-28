@@ -173,9 +173,9 @@ static inline fixedvec2 FindRefPoint(line_t *ld, fixedvec2 pos)
 			(ld->frontsector->ceilingplane.a | ld->frontsector->ceilingplane.b) |
 			(ld->backsector->ceilingplane.a | ld->backsector->ceilingplane.b)) != 0)
 		||
-			ld->backsector->e->XFloor.ffloors.Size() == 0 
+			ld->backsector->e->XFloor.ffloors.Size() != 0 
 		||
-			ld->frontsector->e->XFloor.ffloors.Size() == 0
+			ld->frontsector->e->XFloor.ffloors.Size() != 0
 		|| 
 			!ld->frontsector->PortalBlocksMovement(sector_t::floor))
 	{

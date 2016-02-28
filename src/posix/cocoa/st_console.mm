@@ -377,7 +377,12 @@ void FConsoleWindow::SetProgressBar(const bool visible)
 	{
 		ExpandTextView(-PROGRESS_BAR_HEIGHT);
 
-		m_progressBar = [[NSProgressIndicator alloc] initWithFrame:NSMakeRect(2.0f, 0.0f, 508.0f, 16.0f)];
+		static const CGFloat PROGRESS_BAR_X = 2.0f;
+		const NSRect PROGRESS_BAR_RECT = NSMakeRect(
+			PROGRESS_BAR_X, 0.0f,
+			[m_window frame].size.width - PROGRESS_BAR_X * 2, 16.0f);
+
+		m_progressBar = [[NSProgressIndicator alloc] initWithFrame:PROGRESS_BAR_RECT];
 		[m_progressBar setIndeterminate:NO];
 		[m_progressBar setAutoresizingMask:NSViewWidthSizable];
 

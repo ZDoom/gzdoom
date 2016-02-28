@@ -192,6 +192,39 @@ void FConsoleWindow::ShowFatalError(const char* const message)
 }
 
 
+static const unsigned int THIRTY_FPS = 33; // milliseconds per update
+
+
+template <typename Function, unsigned int interval = THIRTY_FPS>
+struct TimedUpdater
+{
+	explicit TimedUpdater(const Function& function)
+	{
+		const unsigned int currentTime = I_MSTime();
+
+		if (currentTime - m_previousTime > interval)
+		{
+			m_previousTime = currentTime;
+
+			function();
+
+			[[NSRunLoop currentRunLoop] limitDateForMode:NSDefaultRunLoopMode];
+		}
+	}
+
+	static unsigned int m_previousTime;
+};
+
+template <typename Function, unsigned int interval>
+unsigned int TimedUpdater<Function, interval>::m_previousTime;
+
+template <typename Function, unsigned int interval = THIRTY_FPS>
+static void UpdateTimed(const Function& function)
+{
+	TimedUpdater<Function, interval> dummy(function);
+}
+
+
 void FConsoleWindow::AddText(const char* message)
 {
 	PalEntry color(223, 223, 223);
@@ -376,18 +409,11 @@ void FConsoleWindow::Progress(const int current, const int maximum)
 		return;
 	}
 
-	static unsigned int previousTime = I_MSTime();
-	unsigned int currentTime = I_MSTime();
-
-	if (currentTime - previousTime > 33) // approx. 30 FPS
+	UpdateTimed([&]()
 	{
-		previousTime = currentTime;
-
 		[m_progressBar setMaxValue:maximum];
 		[m_progressBar setDoubleValue:current];
-
-		[[NSRunLoop currentRunLoop] limitDateForMode:NSDefaultRunLoopMode];
-	}
+	});
 }
 
 

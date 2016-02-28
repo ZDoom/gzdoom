@@ -150,9 +150,40 @@ void P_RecursiveSound (sector_t *sec, AActor *soundtarget, bool splash, int soun
 		}
 	}
 
+	bool checkabove = !sec->PortalBlocksSound(sector_t::ceiling);
+	bool checkbelow = !sec->PortalBlocksSound(sector_t::floor);
+
 	for (i = 0; i < sec->linecount; i++)
 	{
 		check = sec->lines[i];
+
+		// I wish there was a better method to do this than randomly looking through the portal at a few places...
+		if (checkabove)
+		{
+			sector_t *upper =
+				P_PointInSector(check->v1->x + check->dx / 2 + sec->SkyBoxes[sector_t::ceiling]->scaleX,
+					check->v1->y + check->dy / 2 + sec->SkyBoxes[sector_t::ceiling]->scaleY);
+
+			P_RecursiveSound(upper, soundtarget, splash, soundblocks, emitter, maxdist);
+		}
+		if (checkbelow)
+		{
+			sector_t *lower =
+				P_PointInSector(check->v1->x + check->dx / 2 + sec->SkyBoxes[sector_t::floor]->scaleX,
+					check->v1->y + check->dy / 2 + sec->SkyBoxes[sector_t::floor]->scaleY);
+
+			P_RecursiveSound(lower, soundtarget, splash, soundblocks, emitter, maxdist);
+		}
+		FLinePortal *port = check->getPortal();
+		if (port && (port->mFlags & PORTF_SOUNDTRAVERSE))
+		{
+			if (port->mDestination)
+			{
+				P_RecursiveSound(port->mDestination->frontsector, soundtarget, splash, soundblocks, emitter, maxdist);
+			}
+		}
+
+
 		if (check->sidedef[1] == NULL ||
 			!(check->flags & ML_TWOSIDED))
 		{

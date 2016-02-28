@@ -841,7 +841,7 @@ class FxFlopFunctionCall : public FxExpression
 
 public:
 
-	FxFlopFunctionCall(int index, FArgumentList *args, const FScriptPosition &pos);
+	FxFlopFunctionCall(size_t index, FArgumentList *args, const FScriptPosition &pos);
 	~FxFlopFunctionCall();
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);

@@ -921,7 +921,7 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 
 	// If the floor planes on both sides match we should recalculate open.bottom at the actual position we are checking
 	// This is to avoid bumpy movement when crossing a linedef with the same slope on both sides.
-	if (open.frontfloorplane == open.backfloorplane)
+	if (open.frontfloorplane == open.backfloorplane && open.bottom > FIXED_MIN)
 	{
 		open.bottom = open.frontfloorplane.ZatPoint(cres.position.x, cres.position.y);
 	}

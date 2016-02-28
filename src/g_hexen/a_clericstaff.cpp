@@ -112,7 +112,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffCheck)
 				{
 					newLife = player->health + (damage >> 4);
 					newLife = newLife > max ? max : newLife;
-					pmo->health = player->health = newLife;
+					if (newLife > player->health)
+					{
+						pmo->health = player->health = newLife;
+					}
 					P_SetPsprite(player, ps_weapon, weapon->FindState("Drain"));
 				}
 				if (weapon != NULL)

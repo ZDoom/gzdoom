@@ -609,7 +609,10 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 		{
 			if (!frontsector->PortalBlocksView(sector_t::floor))
 			{
-				gl_drawinfo->AddFloorStack(sector);
+				if (sector->SkyBoxes[sector_t::floor]->special1 == SKYBOX_STACKEDSECTORTHING)
+				{
+					gl_drawinfo->AddFloorStack(sector);
+				}
 				alpha = frontsector->GetAlpha(sector_t::floor) / 65536.0f;
 			}
 			else
@@ -667,7 +670,10 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 		{
 			if (!frontsector->PortalBlocksView(sector_t::ceiling))
 			{
-				gl_drawinfo->AddCeilingStack(sector);
+				if (sector->SkyBoxes[sector_t::ceiling]->special1 == SKYBOX_STACKEDSECTORTHING)
+				{
+					gl_drawinfo->AddCeilingStack(sector);
+				}
 				alpha = frontsector->GetAlpha(sector_t::ceiling) / 65536.0f;
 			}
 			else

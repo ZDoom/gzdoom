@@ -94,7 +94,7 @@ FConsoleWindow::FConsoleWindow()
 	[textContainer setContainerSize:NSMakeSize(initialWidth, FLT_MAX)];
 	[textContainer setWidthTracksTextView:YES];
 
-	[m_scrollView initWithFrame:NSMakeRect(0.0f, 0.0f, initialWidth, initialHeight)];
+	[m_scrollView initWithFrame:initialRect];
 	[m_scrollView setBorderType:NSNoBorder];
 	[m_scrollView setHasVerticalScroller:YES];
 	[m_scrollView setHasHorizontalScroller:NO];

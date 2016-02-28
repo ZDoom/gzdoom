@@ -324,7 +324,8 @@ void FConsoleWindow::AddText(const char* message)
 
 void FConsoleWindow::AddText(const PalEntry& color, const char* const message)
 {
-	NSString* const text = [NSString stringWithUTF8String:message];
+	NSString* const text = [NSString stringWithCString:message
+											  encoding:NSISOLatin1StringEncoding];
 
 	NSDictionary* const attributes = [NSDictionary dictionaryWithObjectsAndKeys:
 									  [NSFont systemFontOfSize:14.0f], NSFontAttributeName,

@@ -333,6 +333,12 @@ static void parseSector(FScanner &sc)
 			sc.MustGetNumber();
 			sec.damageamount = sc.Number;
 		}
+		else if (sc.Compare("damagemod"))
+		{
+			sc.CheckString("=");
+			sc.MustGetString();
+			sec.damagetype = sc.String;
+		}
 		else if (sc.Compare("damagemask"))
 		{
 			sc.CheckString("=");

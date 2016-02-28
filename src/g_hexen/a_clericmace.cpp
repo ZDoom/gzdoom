@@ -36,26 +36,18 @@ DEFINE_ACTION_FUNCTION(AActor, A_CMaceAttack)
 	damage = 25+(pr_maceatk()&15);
 	for (i = 0; i < 16; i++)
 	{
-		angle = player->mo->angle+i*(ANG45/16);
-		slope = P_AimLineAttack (player->mo, angle, 2*MELEERANGE, &linetarget);
-		if (linetarget)
+		for (int j = 1; j >= -1; j -= 2)
 		{
-			P_LineAttack (player->mo, angle, 2*MELEERANGE, slope, damage, NAME_Melee, hammertime, true, &linetarget);
-			if (linetarget != NULL)
+			angle = player->mo->angle + j*i*(ANG45 / 16);
+			slope = P_AimLineAttack(player->mo, angle, 2 * MELEERANGE, &linetarget);
+			if (linetarget)
 			{
-				AdjustPlayerAngle (player->mo, linetarget);
-				goto macedone;
-			}
-		}
-		angle = player->mo->angle-i*(ANG45/16);
-		slope = P_AimLineAttack (player->mo, angle, 2*MELEERANGE, &linetarget);
-		if (linetarget)
-		{
-			P_LineAttack (player->mo, angle, 2*MELEERANGE, slope, damage, NAME_Melee, hammertime, true, &linetarget);
-			if (linetarget != NULL)
-			{
-				AdjustPlayerAngle (player->mo, linetarget);
-				goto macedone;
+				P_LineAttack(player->mo, angle, 2 * MELEERANGE, slope, damage, NAME_Melee, hammertime, true, &linetarget);
+				if (linetarget != NULL)
+				{
+					AdjustPlayerAngle(player->mo, linetarget);
+					goto macedone;
+				}
 			}
 		}
 	}

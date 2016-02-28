@@ -236,36 +236,23 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeAttack)
 	}
 	for (i = 0; i < 16; i++)
 	{
-		angle = pmo->angle+i*(ANG45/16);
-		slope = P_AimLineAttack (pmo, angle, AXERANGE, &linetarget);
-		if (linetarget)
+		for (int j = 1; j >= -1; j -= 2)
 		{
-			P_LineAttack (pmo, angle, AXERANGE, slope, damage, NAME_Melee, pufftype, true, &linetarget);
-			if (linetarget != NULL)
+			angle = pmo->angle + j*i*(ANG45 / 16);
+			slope = P_AimLineAttack(pmo, angle, AXERANGE, &linetarget);
+			if (linetarget)
 			{
-				if (linetarget->flags3&MF3_ISMONSTER || linetarget->player)
+				P_LineAttack(pmo, angle, AXERANGE, slope, damage, NAME_Melee, pufftype, true, &linetarget);
+				if (linetarget != NULL)
 				{
-					P_ThrustMobj (linetarget, angle, power);
+					if (linetarget->flags3&MF3_ISMONSTER || linetarget->player)
+					{
+						P_ThrustMobj(linetarget, angle, power);
+					}
+					AdjustPlayerAngle(pmo, linetarget);
+					useMana++;
+					goto axedone;
 				}
-				AdjustPlayerAngle (pmo, linetarget);
-				useMana++; 
-				goto axedone;
-			}
-		}
-		angle = pmo->angle-i*(ANG45/16);
-		slope = P_AimLineAttack (pmo, angle, AXERANGE, &linetarget);
-		if (linetarget)
-		{
-			P_LineAttack (pmo, angle, AXERANGE, slope, damage, NAME_Melee, pufftype, true, &linetarget);
-			if (linetarget != NULL)
-			{
-				if (linetarget->flags3&MF3_ISMONSTER)
-				{
-					P_ThrustMobj (linetarget, angle, power);
-				}
-				AdjustPlayerAngle (pmo, linetarget);
-				useMana++; 
-				goto axedone;
 			}
 		}
 	}

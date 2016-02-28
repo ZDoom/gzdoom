@@ -711,7 +711,7 @@ fixedvec2 P_GetOffsetPosition(AActor *actor, fixed_t dx, fixed_t dy)
 		if (dx < 128 * FRACUNIT && dy < 128 * FRACUNIT)
 		{
 			fixed_t blockx = GetSafeBlockX(actx - bmaporgx);
-			fixed_t blocky = GetSafeBlockX(acty - bmaporgy);
+			fixed_t blocky = GetSafeBlockY(acty - bmaporgy);
 			if (blockx < 0 || blocky < 0 || blockx >= bmapwidth || blocky >= bmapheight || !PortalBlockmap(blockx, blocky).neighborContainsLines) return dest;
 		}
 

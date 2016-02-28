@@ -313,9 +313,10 @@ void FConsoleWindow::AddText(const char* message)
 
 	if ([m_window isVisible])
 	{
-		[m_textView scrollRangeToVisible:NSMakeRange(m_characterCount, 0)];
-
-		[[NSRunLoop currentRunLoop] limitDateForMode:NSDefaultRunLoopMode];
+		UpdateTimed([&]()
+		{
+			[m_textView scrollRangeToVisible:NSMakeRange(m_characterCount, 0)];
+		});
 	}
 }
 

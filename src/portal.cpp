@@ -701,12 +701,12 @@ void P_NormalizeVXVY(fixed_t& vx, fixed_t& vy)
 //
 //============================================================================
 
-fixedvec2 P_GetOffsetPosition(AActor *actor, fixed_t dx, fixed_t dy)
+fixedvec2 P_GetOffsetPosition(fixed_t x, fixed_t y, fixed_t dx, fixed_t dy)
 {
-	fixedvec2 dest = { actor->X() + dx, actor->Y() + dy };
+	fixedvec2 dest = { x + dx, y + dy };
 	if (PortalBlockmap.containsLines)
 	{
-		fixed_t actx = actor->X(), acty = actor->Y();
+		fixed_t actx = x, acty = y;
 		// Try some easily discoverable early-out first. If we know that the trace cannot possibly find a portal, this saves us from calling the traverser completely for vast parts of the map.
 		if (dx < 128 * FRACUNIT && dy < 128 * FRACUNIT)
 		{

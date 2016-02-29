@@ -198,6 +198,6 @@ void P_TranslatePortalAngle(line_t* src, line_t* dst, angle_t& angle);
 void P_TranslatePortalZ(line_t* src, line_t* dst, fixed_t& z);
 void P_NormalizeVXVY(fixed_t& vx, fixed_t& vy);
 fixed_t P_PointLineDistance(line_t* line, fixed_t x, fixed_t y);
-fixedvec2 P_GetOffsetPosition(AActor *actor, fixed_t dx, fixed_t dy);
+fixedvec2 P_GetOffsetPosition(fixed_t x, fixed_t y, fixed_t dx, fixed_t dy);
 
 #endif

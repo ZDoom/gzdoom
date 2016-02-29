@@ -205,9 +205,9 @@ void P_FindParticleSubsectors ()
 	}
 	for (WORD i = ActiveParticles; i != NO_PARTICLE; i = Particles[i].tnext)
 	{
-		subsector_t *ssec = R_PointInSubsector (Particles[i].x, Particles[i].y);
-		int ssnum = int(ssec-subsectors);
-		Particles[i].subsector = ssec;
+		 // Try to reuse the subsector from the last portal check, if still valid.
+		if (Particles[i].subsector == NULL) Particles[i].subsector = R_PointInSubsector(Particles[i].x, Particles[i].y);
+		int ssnum = int(Particles[i].subsector - subsectors);
 		Particles[i].snext = ParticlesInSubsec[ssnum];
 		ParticlesInSubsec[ssnum] = i;
 	}
@@ -278,12 +278,37 @@ void P_ThinkParticles ()
 			InactiveParticles = (int)(particle - Particles);
 			continue;
 		}
-		particle->x += particle->velx;
-		particle->y += particle->vely;
+
+		fixedvec2 newxy = P_GetOffsetPosition(particle->x, particle->y, particle->velx, particle->vely);
+		particle->x = newxy.x;
+		particle->y = newxy.y;
+		//particle->x += particle->velx;
+		//particle->y += particle->vely;
 		particle->z += particle->velz;
 		particle->velx += particle->accx;
 		particle->vely += particle->accy;
 		particle->velz += particle->accz;
+		particle->subsector = R_PointInSubsector(particle->x, particle->y);
+		if (!particle->subsector->sector->PortalBlocksMovement(sector_t::ceiling))
+		{
+			AActor *skybox = particle->subsector->sector->SkyBoxes[sector_t::ceiling];
+			if (particle->z > skybox->threshold)
+			{
+				particle->x += skybox->scaleX;
+				particle->y += skybox->scaleY;
+				particle->subsector = NULL;
+			}
+		}
+		else if (!particle->subsector->sector->PortalBlocksMovement(sector_t::floor))
+		{
+			AActor *skybox = particle->subsector->sector->SkyBoxes[sector_t::floor];
+			if (particle->z < skybox->threshold)
+			{
+				particle->x += skybox->scaleX;
+				particle->y += skybox->scaleY;
+				particle->subsector = NULL;
+			}
+		}
 		prev = particle;
 	}
 }

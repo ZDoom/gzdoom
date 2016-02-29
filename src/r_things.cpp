@@ -324,18 +324,19 @@ nextpost:
 // [ZZ]
 // R_ClipSpriteColumnWithPortals
 //
-static inline bool R_ClipSpriteColumnWithPortals (fixed_t x, fixed_t y, vissprite_t* spr)
-{
-	// [ZZ] 10.01.2016: don't clip sprites from the root of a skybox.
-	if (CurrentPortalInSkybox)
-		return false;
 
+static TArray<drawseg_t *> portaldrawsegs;
+
+static inline void R_CollectPortals()
+{
+	// This function collects all drawsegs that may be of interest to R_ClipSpriteColumnWithPortals 
+	// Having that function over the entire list of drawsegs can break down performance quite drastically.
+	// This is doing the costly stuff only once so that R_ClipSpriteColumnWithPortals can 
+	// a) exit early if no relevant info is found and
+	// b) skip most of the collected drawsegs which have no portal attached.
+	portaldrawsegs.Clear();
 	for (drawseg_t* seg = ds_p; seg-- > firstdrawseg; ) // copied code from killough below
 	{
-		// ignore segs from other portals
-		if (seg->CurrentPortalUniq != CurrentPortalUniq)
-			continue;
-
 		// I don't know what makes this happen (some old top-down portal code or possibly skybox code? something adds null lines...)
 		// crashes at the first frame of the first map of Action2.wad
 		if (!seg->curline) continue;
@@ -352,8 +353,28 @@ static inline bool R_ClipSpriteColumnWithPortals (fixed_t x, fixed_t y, vissprit
 		if (seg->curline->sidedef != line->sidedef[0])
 			continue;
 
+		portaldrawsegs.Push(seg);
+	}
+}
+
+static inline bool R_ClipSpriteColumnWithPortals(fixed_t x, fixed_t y, vissprite_t* spr)
+{
+	// [ZZ] 10.01.2016: don't clip sprites from the root of a skybox.
+	if (CurrentPortalInSkybox)
+		return false;
+
+	for(drawseg_t *seg : portaldrawsegs)
+	{
+		// ignore segs from other portals
+		if (seg->CurrentPortalUniq != CurrentPortalUniq)
+			continue;
+
+		// (all checks that are already done in R_CollectPortals have been removed for performance reasons.)
+
+		line_t* line = seg->curline->linedef;
+
 		// don't clip if the sprite is in front of the portal
-		if (!P_PointOnLineSide(x, y, line))
+		if (!P_PointOnLineSidePrecise(x, y, line))
 			continue;
 
 		// now if current column is covered by this drawseg, we clip it away
@@ -363,6 +384,7 @@ static inline bool R_ClipSpriteColumnWithPortals (fixed_t x, fixed_t y, vissprit
 
 	return false;
 }
+
 
 //
 // R_DrawVisSprite
@@ -2332,6 +2354,7 @@ void R_DrawHeightPlanes(fixed_t height); // kg3D - fake planes
 
 void R_DrawMasked (void)
 {
+	R_CollectPortals();
 	R_SortVisSprites (DrewAVoxel ? sv_compare2d : sv_compare, firstvissprite - vissprites);
 
 	if (height_top == NULL)

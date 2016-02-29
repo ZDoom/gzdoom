@@ -25,15 +25,14 @@ enum
 // 271 = 0,		Static_Init (tag, Init_TransferSky, 0)
 // 272 = 0,		Static_Init (tag, Init_TransferSky, 1)
 
-// Small script starters. Small is considered deprecated now anyway.
-273 = 0,	Unsupported() // "WR_StartScript_1S"
-274 = 0,	Unsupported() // "W1_StartScript"
-275 = 0,	Unsupported() // "W1_StartScript_1S"
-276 = 0,	Unsupported() // "SR_StartScript"
-277 = 0,	Unsupported() // "S1_StartScript"
-278 = 0,	Unsupported() // "GR_StartScript"
-279 = 0,	Unsupported() // "G1_StartScript"
-280 = 0,	Unsupported() // "WR_StartScript"
+273 = WALK|REP|FIRSTSIDE,	ACS_Execute(tag)
+274 = WALK,					ACS_Execute(tag)
+275 = WALK|FIRSTSIDE,		ACS_Execute(tag)
+276 = USE|REP,				ACS_Execute(tag)
+277 = USE,					ACS_Execute(tag)
+278 = SHOOT|REP,			ACS_Execute(tag)
+279 = SHOOT,				ACS_Execute(tag)
+280 = WALK|REP,				ACS_Execute(tag)
 
 // 3D mid-textures
 281 = 0,	Sector_Attach3DMidtex(tag, 0, 0) // "3DMidTex_MoveWithFloor"
@@ -214,3 +213,5 @@ enum
 426 = 0, DamageThing(0)
 427 = 0, Thing_Damage(0)
 428 = 0, Thing_Destroy(0)
+429 = 0, Door_LockedRaise(0)
+430 = 0, ACS_LockedExecute(0)

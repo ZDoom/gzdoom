@@ -129,6 +129,14 @@ struct polyblock_t;
 
 struct FPortalGroupArray
 {
+	// Controls how groups are connected
+	enum
+	{
+		PGA_NoSectorPortals,// only collect line portals
+		PGA_CheckPosition,	// only collects sector portals at the actual position
+		PGA_Full3d,			// Goes up and down sector portals at any linedef within the bounding box (this is a lot slower and should only be done if really needed.)
+	};
+
 	enum
 	{
 		LOWER = 0x4000,
@@ -141,8 +149,9 @@ struct FPortalGroupArray
 		MAX_STATIC = 4
 	};
 
-	FPortalGroupArray()
+	FPortalGroupArray(int collectionmethod = PGA_CheckPosition)
 	{
+		method = collectionmethod;
 		varused = 0;
 		inited = false;
 	}
@@ -171,6 +180,7 @@ struct FPortalGroupArray
 	}
 
 	bool inited;
+	int method;
 
 private:
 	WORD entry[MAX_STATIC];

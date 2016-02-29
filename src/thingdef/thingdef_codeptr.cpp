@@ -5570,10 +5570,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusGive)
 	}
 	else
 	{
-		FBlockThingsIterator it(FBoundingBox(self->X(), self->Y(), distance));
-		while ((thing = it.Next()))
+		FPortalGroupArray check(FPortalGroupArray::PGA_Full3d);
+		fixed_t mid = self->Z() + self->height / 2;
+		FMultiBlockThingsIterator it(check, self->X(), self->Y(), mid-distance, mid+distance, distance);
+		FMultiBlockThingsIterator::CheckResult cres;
+
+		while ((it.Next(&cres)))
 		{
-			given += DoRadiusGive(self, thing, item, amount, distance, flags, filter, species, mindist);
+			given += DoRadiusGive(self, cres.thing, item, amount, distance, flags, filter, species, mindist);
 		}
 	}
 	ACTION_RETURN_INT(given);

@@ -1117,87 +1117,157 @@ void P_CreateLinkedPortals()
 //
 //============================================================================
 
+
+static bool ProcessLayer()
+{
+}
+
 bool P_CollectConnectedGroups(int startgroup, const fixedvec3 &position, fixed_t upperz, fixed_t checkradius, FPortalGroupArray &out)
 {
 	// Keep this temporary work stuff static. This function can never be called recursively
 	// and this would have to be reallocated for each call otherwise.
 	static FPortalBits processMask;
 	static TArray<FLinePortal*> foundPortals;
+	static TArray<int> groupsToCheck;
 
 	bool retval = false;
 	out.inited = true;
-	if (linkedPortals.Size() == 0)
+	if (linkedPortals.Size() != 0)
 	{
-		// If there are no portals, all sectors are in group 0.
-		return false;
-	}
-	processMask.setSize(linkedPortals.Size());
-	processMask.clear();
-	foundPortals.Clear();
+		processMask.setSize(linkedPortals.Size());
+		processMask.clear();
+		foundPortals.Clear();
 
-	int thisgroup = startgroup;
-	processMask.setBit(thisgroup);
-	//out.Add(thisgroup);
+		int thisgroup = startgroup;
+		processMask.setBit(thisgroup);
+		//out.Add(thisgroup);
 
-	for (unsigned i = 0; i < linkedPortals.Size(); i++)
-	{
-		line_t *ld = linkedPortals[i]->mOrigin;
-		int othergroup = ld->frontsector->PortalGroup;
-		FDisplacement &disp = Displacements(thisgroup, othergroup);
-		if (!disp.isSet) continue;	// no connection.
-
-		FBoundingBox box(position.x + disp.pos.x, position.y + disp.pos.y, checkradius);
-
-		if (box.Right() <= ld->bbox[BOXLEFT]
-			|| box.Left() >= ld->bbox[BOXRIGHT]
-			|| box.Top() <= ld->bbox[BOXBOTTOM]
-			|| box.Bottom() >= ld->bbox[BOXTOP])
-			continue;	// not touched
-
-		if (box.BoxOnLineSide(linkedPortals[i]->mOrigin) != -1) continue;	// not touched
-		foundPortals.Push(linkedPortals[i]);
-	}
-	bool foundone = true;
-	while (foundone)
-	{
-		foundone = false;
-		for (int i = foundPortals.Size() - 1; i >= 0; i--)
+		for (unsigned i = 0; i < linkedPortals.Size(); i++)
 		{
-			if (processMask.getBit(foundPortals[i]->mOrigin->frontsector->PortalGroup) && 
-				!processMask.getBit(foundPortals[i]->mDestination->frontsector->PortalGroup))
+			line_t *ld = linkedPortals[i]->mOrigin;
+			int othergroup = ld->frontsector->PortalGroup;
+			FDisplacement &disp = Displacements(thisgroup, othergroup);
+			if (!disp.isSet) continue;	// no connection.
+
+			FBoundingBox box(position.x + disp.pos.x, position.y + disp.pos.y, checkradius);
+
+			if (box.Right() <= ld->bbox[BOXLEFT]
+				|| box.Left() >= ld->bbox[BOXRIGHT]
+				|| box.Top() <= ld->bbox[BOXBOTTOM]
+				|| box.Bottom() >= ld->bbox[BOXTOP])
+				continue;	// not touched
+
+			if (box.BoxOnLineSide(linkedPortals[i]->mOrigin) != -1) continue;	// not touched
+			foundPortals.Push(linkedPortals[i]);
+		}
+		bool foundone = true;
+		while (foundone)
+		{
+			foundone = false;
+			for (int i = foundPortals.Size() - 1; i >= 0; i--)
 			{
-				processMask.setBit(foundPortals[i]->mDestination->frontsector->PortalGroup);
-				out.Add(foundPortals[i]->mDestination->frontsector->PortalGroup);
-				foundone = true;
-				retval = true;
-				foundPortals.Delete(i);
+				if (processMask.getBit(foundPortals[i]->mOrigin->frontsector->PortalGroup) &&
+					!processMask.getBit(foundPortals[i]->mDestination->frontsector->PortalGroup))
+				{
+					processMask.setBit(foundPortals[i]->mDestination->frontsector->PortalGroup);
+					out.Add(foundPortals[i]->mDestination->frontsector->PortalGroup);
+					foundone = true;
+					retval = true;
+					foundPortals.Delete(i);
+				}
 			}
 		}
 	}
-	sector_t *sec = P_PointInSector(position.x, position.y);
-	sector_t *wsec = sec;
-	while (!wsec->PortalBlocksMovement(sector_t::ceiling) && upperz > wsec->SkyBoxes[sector_t::ceiling]->threshold)
+	if (out.method != FPortalGroupArray::PGA_NoSectorPortals)
 	{
-		sector_t *othersec = wsec->SkyBoxes[sector_t::ceiling]->Sector;
-		fixedvec2 pos = Displacements.getOffset(startgroup, othersec->PortalGroup);
-		fixed_t dx = position.x + pos.x;
-		fixed_t dy = position.y + pos.y;
-		processMask.setBit(othersec->PortalGroup);
-		out.Add(othersec->PortalGroup|FPortalGroupArray::UPPER);
-		wsec = P_PointInSector(dx, dy);	// get upper sector at the exact spot we want to check and repeat
-		retval = true;
-	}
-	wsec = sec;
-	while (!wsec->PortalBlocksMovement(sector_t::floor) && position.z < wsec->SkyBoxes[sector_t::floor]->threshold)
-	{
-		sector_t *othersec = wsec->SkyBoxes[sector_t::floor]->Sector;
-		fixedvec2 pos = Displacements.getOffset(startgroup, othersec->PortalGroup);
-		fixed_t dx = position.x + pos.x;
-		fixed_t dy = position.y + pos.y;
-		processMask.setBit(othersec->PortalGroup|FPortalGroupArray::LOWER);
-		out.Add(othersec->PortalGroup);
-		wsec = P_PointInSector(dx, dy);	// get lower sector at the exact spot we want to check and repeat
-		retval = true;
+		sector_t *sec = P_PointInSector(position.x, position.y);
+		sector_t *wsec = sec;
+		while (!wsec->PortalBlocksMovement(sector_t::ceiling) && upperz > wsec->SkyBoxes[sector_t::ceiling]->threshold)
+		{
+			sector_t *othersec = wsec->SkyBoxes[sector_t::ceiling]->Sector;
+			fixedvec2 pos = Displacements.getOffset(startgroup, othersec->PortalGroup);
+			fixed_t dx = position.x + pos.x;
+			fixed_t dy = position.y + pos.y;
+			processMask.setBit(othersec->PortalGroup);
+			out.Add(othersec->PortalGroup | FPortalGroupArray::UPPER);
+			wsec = P_PointInSector(dx, dy);	// get upper sector at the exact spot we want to check and repeat
+			retval = true;
+		}
+		wsec = sec;
+		while (!wsec->PortalBlocksMovement(sector_t::floor) && position.z < wsec->SkyBoxes[sector_t::floor]->threshold)
+		{
+			sector_t *othersec = wsec->SkyBoxes[sector_t::floor]->Sector;
+			fixedvec2 pos = Displacements.getOffset(startgroup, othersec->PortalGroup);
+			fixed_t dx = position.x + pos.x;
+			fixed_t dy = position.y + pos.y;
+			processMask.setBit(othersec->PortalGroup | FPortalGroupArray::LOWER);
+			out.Add(othersec->PortalGroup);
+			wsec = P_PointInSector(dx, dy);	// get lower sector at the exact spot we want to check and repeat
+			retval = true;
+		}
+		if (out.method == FPortalGroupArray::PGA_Full3d)
+		{
+			groupsToCheck.Clear();
+			groupsToCheck.Push(startgroup);
+			int thisgroup = startgroup;
+			for (unsigned i = 0; i < groupsToCheck.Size();i++)
+			{
+				fixedvec2 disp = Displacements.getOffset(startgroup, thisgroup & ~FPortalGroupArray::FLAT);
+				FBoundingBox box(position.x + disp.x, position.y + disp.y, checkradius);
+				FBlockLinesIterator it(box);
+				line_t *ld;
+				while ((ld = it.Next()))
+				{
+					if (box.Right() <= ld->bbox[BOXLEFT]
+						|| box.Left() >= ld->bbox[BOXRIGHT]
+						|| box.Top() <= ld->bbox[BOXBOTTOM]
+						|| box.Bottom() >= ld->bbox[BOXTOP])
+						continue;
+
+					if (box.BoxOnLineSide(ld) != -1)
+						continue;
+
+					if (!(thisgroup & FPortalGroupArray::LOWER))
+					{
+						for (int s = 0; s < 2; s++)
+						{
+							sector_t *sec = s ? ld->backsector : ld->frontsector;
+							if (sec && !(sec->PortalBlocksMovement(sector_t::ceiling)))
+							{
+								if (sec->SkyBoxes[sector_t::ceiling]->threshold < upperz)
+								{
+									int grp = sec->SkyBoxes[sector_t::ceiling]->Sector->PortalGroup;
+									if (!(processMask.getBit(grp)))
+									{
+										processMask.setBit(grp);
+										groupsToCheck.Push(grp | FPortalGroupArray::UPPER);
+									}
+								}
+							}
+						}
+					}
+					if (!(thisgroup & FPortalGroupArray::UPPER))
+					{
+						for (int s = 0; s < 2; s++)
+						{
+							sector_t *sec = s ? ld->backsector : ld->frontsector;
+							if (sec && !(sec->PortalBlocksMovement(sector_t::floor)))
+							{
+								if (sec->SkyBoxes[sector_t::floor]->threshold > position.z)
+								{
+									int grp = sec->SkyBoxes[sector_t::floor]->Sector->PortalGroup;
+									if (!(processMask.getBit(grp)))
+									{
+										processMask.setBit(grp);
+										groupsToCheck.Push(grp | FPortalGroupArray::LOWER);
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 	return retval;
 }

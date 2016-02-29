@@ -3518,7 +3518,7 @@ FxFlopFunctionCall::FxFlopFunctionCall(size_t index, FArgumentList *args, const 
 : FxExpression(pos)
 {
 	assert(index < countof(FxFlops) && "FLOP index out of range");
-	Index = index;
+	Index = (int)index;
 	ArgList = args;
 }
 

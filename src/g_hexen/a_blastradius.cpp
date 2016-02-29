@@ -151,6 +151,11 @@ DEFINE_ACTION_FUNCTION_PARAMS (AActor, A_Blast)
 		{ // Out of range
 			continue;
 		}
+		if (mo->Sector->PortalGroup != self->Sector->PortalGroup && !P_CheckSight(self, mo))
+		{
+			// in another region and cannot be seen.
+			continue;
+		}
 		BlastActor (mo, strength, speed, self, blasteffect, !!(blastflags & BF_NOIMPACTDAMAGE));
 	}
 	return 0;

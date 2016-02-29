@@ -272,17 +272,17 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 
 	if (fixedlightlev < 0)
 	{
+		if (!(fake3D & FAKE3D_CLIPTOP))
+		{
+			sclipTop = sec->ceilingplane.ZatPoint(viewx, viewy);
+		}
 		for (i = frontsector->e->XFloor.lightlist.Size() - 1; i >= 0; i--)
 		{
-			if (!(fake3D & FAKE3D_CLIPTOP))
-			{
-				sclipTop = sec->ceilingplane.ZatPoint(viewx, viewy);
-			}
-			if (sclipTop <= frontsector->e->XFloor.lightlist[i].plane.ZatPoint(viewx, viewy))
+			if (sclipTop <= frontsector->e->XFloor.lightlist[i].plane.Zat0())
 			{
 				lightlist_t *lit = &frontsector->e->XFloor.lightlist[i];
 				basecolormap = lit->extra_colormap;
-				wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(foggy, *lit->p_lightlevel, lit->lightsource == NULL) + r_actualextralight);
+				wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(foggy, *lit->p_lightlevel, lit->lightsource != NULL) + r_actualextralight);
 				break;
 			}
 		}

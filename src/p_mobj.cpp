@@ -3286,6 +3286,42 @@ void AActor::SetRoll(angle_t r, bool interpolate)
 }
 
 
+fixedvec3 AActor::GetPortalTransition(fixed_t byoffset)
+{
+	bool moved = false;
+	sector_t *sec = Sector;
+	fixed_t testz = Z() + byoffset;
+	fixedvec3 pos = Pos();
+
+	while (!sec->PortalBlocksMovement(sector_t::ceiling))
+	{
+		AActor *port = sec->SkyBoxes[sector_t::ceiling];
+		if (testz > port->threshold)
+		{
+			pos = PosRelative(port->Sector);
+			sec = P_PointInSector(pos.x, pos.y);
+			moved = true;
+		}
+		else break;
+	}
+	if (!moved)
+	{
+		while (!sec->PortalBlocksMovement(sector_t::floor))
+		{
+			AActor *port = sec->SkyBoxes[sector_t::floor];
+			if (testz <= port->threshold)
+			{
+				pos = PosRelative(port->Sector);
+				sec = P_PointInSector(pos.x, pos.y);
+			}
+			else break;
+		}
+	}
+	return pos;
+}
+
+
+
 void AActor::CheckPortalTransition(bool islinked)
 {
 	bool moved = false;
@@ -6128,13 +6164,13 @@ AActor *P_SpawnPlayerMissile (AActor *source, PClassActor *type, angle_t angle)
 }
 
 AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
-							  PClassActor *type, angle_t angle, AActor **pLineTarget, AActor **pMissileActor,
-							  bool nofreeaim, bool noautoaim)
+							  PClassActor *type, angle_t angle, FTranslatedLineTarget *pLineTarget, AActor **pMissileActor,
+							  bool nofreeaim, bool noautoaim, int aimflags)
 {
 	static const int angdiff[3] = { -(1<<26), 1<<26, 0 };
 	angle_t an = angle;
 	angle_t pitch;
-	AActor *linetarget;
+	FTranslatedLineTarget scratch;
 	AActor *defaultobject = GetDefaultByType(type);
 	int vrange = nofreeaim ? ANGLE_1*35 : 0;
 
@@ -6142,12 +6178,13 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 	{
 		return NULL;
 	}
+	if (!pLineTarget) pLineTarget = &scratch;
 	if (source->player && source->player->ReadyWeapon && ((source->player->ReadyWeapon->WeaponFlags & WIF_NOAUTOAIM) || noautoaim))
 	{
 		// Keep exactly the same angle and pitch as the player's own aim
 		an = angle;
 		pitch = source->pitch;
-		linetarget = NULL;
+		pLineTarget->linetarget = NULL;
 	}
 	else // see which target is to be aimed at
 	{
@@ -6160,7 +6197,7 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 		do
 		{
 			an = angle + angdiff[i];
-			pitch = P_AimLineAttack (source, an, linetargetrange, &linetarget, vrange);
+			pitch = P_AimLineAttack (source, an, linetargetrange, pLineTarget, vrange, aimflags);
 	
 			if (source->player != NULL &&
 				!nofreeaim &&
@@ -6169,9 +6206,9 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 			{
 				break;
 			}
-		} while (linetarget == NULL && --i >= 0);
+		} while (pLineTarget->linetarget == NULL && --i >= 0);
 
-		if (linetarget == NULL)
+		if (pLineTarget->linetarget == NULL)
 		{
 			an = angle;
 			if (nofreeaim || !level.IsFreelookAllowed())
@@ -6180,7 +6217,6 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 			}
 		}
 	}
-	if (pLineTarget) *pLineTarget = linetarget;
 
 	if (z != ONFLOORZ && z != ONCEILINGZ)
 	{

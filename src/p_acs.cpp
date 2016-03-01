@@ -4939,7 +4939,9 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 			{
 				if (actor->player != NULL && actor->player->playerstate == PST_LIVE)
 				{
-					P_BulletSlope(actor, &actor);
+					FTranslatedLineTarget t;
+					P_BulletSlope(actor, &t, ALF_PORTALRESTRICT);
+					actor = t.linetarget;
 				}
 				else
 				{

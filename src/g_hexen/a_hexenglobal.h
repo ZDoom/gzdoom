@@ -3,6 +3,8 @@
 
 #include "d_player.h"
 
+void AdjustPlayerAngle(AActor *pmo, FTranslatedLineTarget *t);
+
 class AHolySpirit : public AActor
 {
 	DECLARE_CLASS (AHolySpirit, AActor)

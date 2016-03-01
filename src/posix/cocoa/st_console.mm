@@ -94,7 +94,7 @@ FConsoleWindow::FConsoleWindow()
 	[textContainer setContainerSize:NSMakeSize(initialWidth, FLT_MAX)];
 	[textContainer setWidthTracksTextView:YES];
 
-	[m_scrollView initWithFrame:NSMakeRect(0.0f, 0.0f, initialWidth, initialHeight)];
+	[m_scrollView initWithFrame:initialRect];
 	[m_scrollView setBorderType:NSNoBorder];
 	[m_scrollView setHasVerticalScroller:YES];
 	[m_scrollView setHasHorizontalScroller:NO];
@@ -112,6 +112,12 @@ FConsoleWindow::FConsoleWindow()
 	[m_window setTitle:title];
 	[m_window center];
 	[m_window exitAppOnClose];
+
+	if (NSAppKitVersionNumber >= AppKit10_7)
+	{
+		// Do not allow fullscreen mode for this window
+		[m_window setCollectionBehavior:NSWindowCollectionBehaviorFullScreenAuxiliary];
+	}
 
 	[[m_window contentView] addSubview:m_scrollView];
 
@@ -182,7 +188,42 @@ void FConsoleWindow::ShowFatalError(const char* const message)
 	AddText(PalEntry(255, 255, 170), message);
 	AddText("\n");
 
+	ScrollTextToBottom();
+
 	[NSApp runModalForWindow:m_window];
+}
+
+
+static const unsigned int THIRTY_FPS = 33; // milliseconds per update
+
+
+template <typename Function, unsigned int interval = THIRTY_FPS>
+struct TimedUpdater
+{
+	explicit TimedUpdater(const Function& function)
+	{
+		const unsigned int currentTime = I_MSTime();
+
+		if (currentTime - m_previousTime > interval)
+		{
+			m_previousTime = currentTime;
+
+			function();
+
+			[[NSRunLoop currentRunLoop] limitDateForMode:NSDefaultRunLoopMode];
+		}
+	}
+
+	static unsigned int m_previousTime;
+};
+
+template <typename Function, unsigned int interval>
+unsigned int TimedUpdater<Function, interval>::m_previousTime;
+
+template <typename Function, unsigned int interval = THIRTY_FPS>
+static void UpdateTimed(const Function& function)
+{
+	TimedUpdater<Function, interval> dummy(function);
 }
 
 
@@ -274,15 +315,17 @@ void FConsoleWindow::AddText(const char* message)
 
 	if ([m_window isVisible])
 	{
-		[m_textView scrollRangeToVisible:NSMakeRange(m_characterCount, 0)];
-
-		[[NSRunLoop currentRunLoop] limitDateForMode:NSDefaultRunLoopMode];
+		UpdateTimed([&]()
+		{
+			[m_textView scrollRangeToVisible:NSMakeRange(m_characterCount, 0)];
+		});
 	}
 }
 
 void FConsoleWindow::AddText(const PalEntry& color, const char* const message)
 {
-	NSString* const text = [NSString stringWithUTF8String:message];
+	NSString* const text = [NSString stringWithCString:message
+											  encoding:NSISOLatin1StringEncoding];
 
 	NSDictionary* const attributes = [NSDictionary dictionaryWithObjectsAndKeys:
 									  [NSFont systemFontOfSize:14.0f], NSFontAttributeName,
@@ -295,6 +338,14 @@ void FConsoleWindow::AddText(const PalEntry& color, const char* const message)
 	[[m_textView textStorage] appendAttributedString:formattedText];
 
 	m_characterCount += [text length];
+}
+
+
+void FConsoleWindow::ScrollTextToBottom()
+{
+	[m_textView scrollRangeToVisible:NSMakeRange(m_characterCount, 0)];
+
+	[[NSRunLoop currentRunLoop] limitDateForMode:NSDefaultRunLoopMode];
 }
 
 
@@ -337,7 +388,12 @@ void FConsoleWindow::SetProgressBar(const bool visible)
 	{
 		ExpandTextView(-PROGRESS_BAR_HEIGHT);
 
-		m_progressBar = [[NSProgressIndicator alloc] initWithFrame:NSMakeRect(2.0f, 0.0f, 508.0f, 16.0f)];
+		static const CGFloat PROGRESS_BAR_X = 2.0f;
+		const NSRect PROGRESS_BAR_RECT = NSMakeRect(
+			PROGRESS_BAR_X, 0.0f,
+			[m_window frame].size.width - PROGRESS_BAR_X * 2, 16.0f);
+
+		m_progressBar = [[NSProgressIndicator alloc] initWithFrame:PROGRESS_BAR_RECT];
 		[m_progressBar setIndeterminate:NO];
 		[m_progressBar setAutoresizingMask:NSViewWidthSizable];
 
@@ -370,18 +426,11 @@ void FConsoleWindow::Progress(const int current, const int maximum)
 		return;
 	}
 
-	static unsigned int previousTime = I_MSTime();
-	unsigned int currentTime = I_MSTime();
-
-	if (currentTime - previousTime > 33) // approx. 30 FPS
+	UpdateTimed([&]()
 	{
-		previousTime = currentTime;
-
 		[m_progressBar setMaxValue:maximum];
 		[m_progressBar setDoubleValue:current];
-
-		[[NSRunLoop currentRunLoop] limitDateForMode:NSDefaultRunLoopMode];
-	}
+	});
 }
 
 
@@ -447,6 +496,8 @@ void FConsoleWindow::NetInit(const char* const message, const int playerCount)
 
 		[m_window setFrame:windowRect display:YES];
 		[[m_window contentView] addSubview:m_netView];
+
+		ScrollTextToBottom();
 	}
 
 	[m_netMessageText setStringValue:[NSString stringWithUTF8String:message]];

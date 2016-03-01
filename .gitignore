@@ -4,6 +4,7 @@
 *.pdb
 *.ilk
 *.aps
+/fmodapi*/
 /Release
 /wadsrc_wad
 *.user
@@ -45,3 +46,4 @@
 /build_vc2015
 /build_vc2015-32
 /build_vc2015-64
+/build

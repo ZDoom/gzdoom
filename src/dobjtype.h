@@ -5,7 +5,6 @@
 #error You must #include "dobject.h" to get dobjtype.h
 #endif
 
-#include "thingdef/thingdef_type.h"
 #include "vm.h"
 
 // Variable/parameter/field flags -------------------------------------------

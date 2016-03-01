@@ -89,6 +89,8 @@ private:
 	void ExpandTextView(float height);
 
 	void AddText(const PalEntry& color, const char* message);
+
+	void ScrollTextToBottom();
 };
 
 #endif // COCOA_ST_CONSOLE_INCLUDED

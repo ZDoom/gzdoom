@@ -24,8 +24,6 @@ void A_FAxeCheckReadyG (AActor *actor);
 void A_FAxeCheckUpG (AActor *actor);
 void A_FAxeAttack (AActor *actor);
 
-extern void AdjustPlayerAngle (AActor *pmo, AActor *linetarget);
-
 // The Fighter's Axe --------------------------------------------------------
 
 class AFWeapAxe : public AFighterWeapon
@@ -210,7 +208,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeAttack)
 	player_t *player;
 	AWeapon *weapon;
 	PClassActor *pufftype;
-	AActor *linetarget;
+	FTranslatedLineTarget t;
 
 	if (NULL == (player = self->player))
 	{
@@ -236,36 +234,23 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeAttack)
 	}
 	for (i = 0; i < 16; i++)
 	{
-		angle = pmo->angle+i*(ANG45/16);
-		slope = P_AimLineAttack (pmo, angle, AXERANGE, &linetarget);
-		if (linetarget)
+		for (int j = 1; j >= -1; j -= 2)
 		{
-			P_LineAttack (pmo, angle, AXERANGE, slope, damage, NAME_Melee, pufftype, true, &linetarget);
-			if (linetarget != NULL)
+			angle = pmo->angle + j*i*(ANG45 / 16);
+			slope = P_AimLineAttack(pmo, angle, AXERANGE, &t);
+			if (t.linetarget)
 			{
-				if (linetarget->flags3&MF3_ISMONSTER || linetarget->player)
+				P_LineAttack(pmo, angle, AXERANGE, slope, damage, NAME_Melee, pufftype, true, &t);
+				if (t.linetarget != NULL)
 				{
-					P_ThrustMobj (linetarget, angle, power);
+					if (t.linetarget->flags3&MF3_ISMONSTER || t.linetarget->player)
+					{
+						P_ThrustMobj(t.linetarget, t.hitangle, power);
+					}
+					AdjustPlayerAngle(pmo, &t);
+					useMana++;
+					goto axedone;
 				}
-				AdjustPlayerAngle (pmo, linetarget);
-				useMana++; 
-				goto axedone;
-			}
-		}
-		angle = pmo->angle-i*(ANG45/16);
-		slope = P_AimLineAttack (pmo, angle, AXERANGE, &linetarget);
-		if (linetarget)
-		{
-			P_LineAttack (pmo, angle, AXERANGE, slope, damage, NAME_Melee, pufftype, true, &linetarget);
-			if (linetarget != NULL)
-			{
-				if (linetarget->flags3&MF3_ISMONSTER)
-				{
-					P_ThrustMobj (linetarget, angle, power);
-				}
-				AdjustPlayerAngle (pmo, linetarget);
-				useMana++; 
-				goto axedone;
 			}
 		}
 	}
@@ -273,7 +258,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeAttack)
 	pmo->weaponspecial = 0;
 
 	angle = pmo->angle;
-	slope = P_AimLineAttack (pmo, angle, MELEERANGE, &linetarget);
+	slope = P_AimLineAttack (pmo, angle, MELEERANGE);
 	P_LineAttack (pmo, angle, MELEERANGE, slope, damage, NAME_Melee, pufftype, true);
 
 axedone:

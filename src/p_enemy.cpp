@@ -150,9 +150,40 @@ void P_RecursiveSound (sector_t *sec, AActor *soundtarget, bool splash, int soun
 		}
 	}
 
+	bool checkabove = !sec->PortalBlocksSound(sector_t::ceiling);
+	bool checkbelow = !sec->PortalBlocksSound(sector_t::floor);
+
 	for (i = 0; i < sec->linecount; i++)
 	{
 		check = sec->lines[i];
+
+		// I wish there was a better method to do this than randomly looking through the portal at a few places...
+		if (checkabove)
+		{
+			sector_t *upper =
+				P_PointInSector(check->v1->x + check->dx / 2 + sec->SkyBoxes[sector_t::ceiling]->scaleX,
+					check->v1->y + check->dy / 2 + sec->SkyBoxes[sector_t::ceiling]->scaleY);
+
+			P_RecursiveSound(upper, soundtarget, splash, soundblocks, emitter, maxdist);
+		}
+		if (checkbelow)
+		{
+			sector_t *lower =
+				P_PointInSector(check->v1->x + check->dx / 2 + sec->SkyBoxes[sector_t::floor]->scaleX,
+					check->v1->y + check->dy / 2 + sec->SkyBoxes[sector_t::floor]->scaleY);
+
+			P_RecursiveSound(lower, soundtarget, splash, soundblocks, emitter, maxdist);
+		}
+		FLinePortal *port = check->getPortal();
+		if (port && (port->mFlags & PORTF_SOUNDTRAVERSE))
+		{
+			if (port->mDestination)
+			{
+				P_RecursiveSound(port->mDestination->frontsector, soundtarget, splash, soundblocks, emitter, maxdist);
+			}
+		}
+
+
 		if (check->sidedef[1] == NULL ||
 			!(check->flags & ML_TWOSIDED))
 		{
@@ -394,16 +425,16 @@ bool AActor::SuggestMissileAttack (fixed_t dist)
 
 bool P_HitFriend(AActor * self)
 {
-	AActor *linetarget;
+	FTranslatedLineTarget t;
 
 	if (self->flags&MF_FRIENDLY && self->target != NULL)
 	{
 		angle_t angle = self->AngleTo(self->target);
 		fixed_t dist = self->AproxDistance (self->target);
-		P_AimLineAttack (self, angle, dist, &linetarget, 0, true);
-		if (linetarget != NULL && linetarget != self->target)
+		P_AimLineAttack (self, angle, dist, &t, 0, true);
+		if (t.linetarget != NULL && t.linetarget != self->target)
 		{
-			return self->IsFriend (linetarget);
+			return self->IsFriend (t.linetarget);
 		}
 	}
 	return false;
@@ -2573,40 +2604,48 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 		fixedvec2 viletry = self->Vec2Offset(
 			FixedMul (absSpeed, xspeed[self->movedir]),
 			FixedMul (absSpeed, yspeed[self->movedir]), true);
-		AActor *corpsehit;
 
-		FBlockThingsIterator it(FBoundingBox(viletry.x, viletry.y, 32*FRACUNIT));
-		while ((corpsehit = it.Next()))
+		FPortalGroupArray check(FPortalGroupArray::PGA_Full3d);
+
+		FMultiBlockThingsIterator it(check, viletry.x, viletry.y, self->Z() - 64* FRACUNIT, self->Top() + 64 * FRACUNIT, 32 * FRACUNIT);
+		FMultiBlockThingsIterator::CheckResult cres;
+		while (it.Next(&cres))
 		{
+			AActor *corpsehit = cres.thing;
 			FState *raisestate = corpsehit->GetRaiseState();
 			if (raisestate != NULL)
 			{
 				// use the current actor's radius instead of the Arch Vile's default.
 				fixed_t maxdist = corpsehit->GetDefault()->radius + self->radius;
 
-				if (abs(corpsehit->X() - viletry.x) > maxdist ||
-					abs(corpsehit->Y() - viletry.y) > maxdist)
+				if (abs(cres.position.x - viletry.x) > maxdist ||
+					abs(cres.position.y - viletry.y) > maxdist)
 					continue;			// not actually touching
 				// Let's check if there are floors in between the archvile and its target
 
-				// if in a different section of the map, only consider possible if a line of sight exists.
-				if (corpsehit->Sector->PortalGroup != self->Sector->PortalGroup && !P_CheckSight(self, corpsehit))
-					continue;
-
-				sector_t *vilesec = self->Sector;
-				sector_t *corpsec = corpsehit->Sector;
-				// We only need to test if at least one of the sectors has a 3D floor.
-				sector_t *testsec = vilesec->e->XFloor.ffloors.Size() ? vilesec :
-					(vilesec != corpsec && corpsec->e->XFloor.ffloors.Size()) ? corpsec : NULL;
-				if (testsec)
+				if (corpsehit->Sector->PortalGroup != self->Sector->PortalGroup)
 				{
-					fixed_t zdist1, zdist2;
-					if (P_Find3DFloor(testsec, corpsehit->Pos(), false, true, zdist1)
-						!= P_Find3DFloor(testsec, self->Pos(), false, true, zdist2))
+					// if in a different section of the map, only consider possible if a line of sight exists.
+					if (!P_CheckSight(self, corpsehit))
+						continue;
+				}
+				else
+				{
+					sector_t *vilesec = self->Sector;
+					sector_t *corpsec = corpsehit->Sector;
+					// We only need to test if at least one of the sectors has a 3D floor.
+					sector_t *testsec = vilesec->e->XFloor.ffloors.Size() ? vilesec :
+						(vilesec != corpsec && corpsec->e->XFloor.ffloors.Size()) ? corpsec : NULL;
+					if (testsec)
 					{
-						// Not on same floor
-						if (vilesec == corpsec || abs(zdist1 - self->Z()) > self->height)
-							continue;
+						fixed_t zdist1, zdist2;
+						if (P_Find3DFloor(testsec, corpsehit->Pos(), false, true, zdist1)
+							!= P_Find3DFloor(testsec, self->Pos(), false, true, zdist2))
+						{
+							// Not on same floor
+							if (vilesec == corpsec || abs(zdist1 - self->Z()) > self->height)
+								continue;
+						}
 					}
 				}
 
@@ -2951,7 +2990,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
 		return 0;
 
 	fixed_t saved_pitch = self->pitch;
-	AActor *linetarget;
+	FTranslatedLineTarget t;
 
 	// [RH] Andy Baker's stealth monsters
 	if (self->flags & MF_STEALTH)
@@ -2963,8 +3002,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
 		
 	self->angle = self->AngleTo(self->target);
 
-	self->pitch = P_AimLineAttack (self, self->angle, MISSILERANGE, &linetarget, ANGLE_1*60, 0, self->target);
-	if (linetarget == NULL)
+	self->pitch = P_AimLineAttack (self, self->angle, MISSILERANGE, &t, ANGLE_1*60, 0, self->target);
+	if (t.linetarget == NULL)
 	{
 		// We probably won't hit the target, but aim at it anyway so we don't look stupid.
 		fixedvec2 pos = self->Vec2To(self->target);

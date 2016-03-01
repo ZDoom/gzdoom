@@ -743,6 +743,7 @@ public:
 
 	inline bool IsNoClip2() const;
 	void CheckPortalTransition(bool islinked);
+	fixedvec3 GetPortalTransition(fixed_t byoffset);
 
 	// What species am I?
 	virtual FName GetSpecies();
@@ -893,7 +894,7 @@ public:
 			fixedvec2 ret = { X() + dx, Y() + dy };
 			return ret;
 		}
-		else return P_GetOffsetPosition(this, dx, dy);
+		else return P_GetOffsetPosition(X(), Y(), dx, dy);
 	}
 
 
@@ -905,7 +906,7 @@ public:
 							  Y() + FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]) };
 			return ret;
 		}
-		else return P_GetOffsetPosition(this, FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]), FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]));
+		else return P_GetOffsetPosition(X(), Y(), FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]), FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]));
 	}
 
 	fixedvec3 Vec3Offset(fixed_t dx, fixed_t dy, fixed_t dz, bool absolute = false)
@@ -917,7 +918,7 @@ public:
 		}
 		else
 		{
-			fixedvec2 op = P_GetOffsetPosition(this, dx, dy);
+			fixedvec2 op = P_GetOffsetPosition(X(), Y(), dx, dy);
 			fixedvec3 pos = { op.x, op.y, Z() + dz };
 			return pos;
 		}
@@ -933,7 +934,7 @@ public:
 		}
 		else
 		{
-			fixedvec2 op = P_GetOffsetPosition(this, FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]), FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]));
+			fixedvec2 op = P_GetOffsetPosition(X(), Y(), FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]), FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]));
 			fixedvec3 pos = { op.x, op.y, Z() + dz };
 			return pos;
 		}
@@ -1403,6 +1404,28 @@ inline fixedvec2 Vec2Angle(fixed_t length, angle_t angle)
 
 void PrintMiscActorInfo(AActor * query);
 AActor *P_LinePickActor(AActor *t1, angle_t angle, fixed_t distance, int pitch, ActorFlags actorMask, DWORD wallMask);
+
+// If we want to make P_AimLineAttack capable of handling arbitrary portals, it needs to pass a lot more info than just the linetarget actor.
+struct FTranslatedLineTarget
+{
+	AActor *linetarget;
+	angle_t hitangle;
+	fixedvec3 targetPosFromSrc;
+	angle_t targetAngleFromSrc;
+	fixedvec3 sourcePosFromTarget;
+	angle_t sourceAngleFromTarget;
+	bool unlinked;	// found by a trace that went through an unlinked portal.
+
+	angle_t SourceAngleToTarget() const
+	{
+		return R_PointToAngle2(sourcePosFromTarget.x, sourcePosFromTarget.y, linetarget->X(), linetarget->Y());
+	}
+	angle_t TargetAngleToSource() const
+	{
+		return R_PointToAngle2(linetarget->X(), linetarget->Y(), sourcePosFromTarget.x, sourcePosFromTarget.y);
+	}
+};
+
 
 #define S_FREETARGMOBJ	1
 

@@ -154,6 +154,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ThrustImpale)
 	PARAM_ACTION_PROLOGUE;
 
 	AActor *thing;
+	// This doesn't need to iterate through portals.
 	FBlockThingsIterator it(FBoundingBox(self->X(), self->Y(), self->radius));
 	while ((thing = it.Next()))
 	{

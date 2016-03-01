@@ -129,6 +129,14 @@ struct polyblock_t;
 
 struct FPortalGroupArray
 {
+	// Controls how groups are connected
+	enum
+	{
+		PGA_NoSectorPortals,// only collect line portals
+		PGA_CheckPosition,	// only collects sector portals at the actual position
+		PGA_Full3d,			// Goes up and down sector portals at any linedef within the bounding box (this is a lot slower and should only be done if really needed.)
+	};
+
 	enum
 	{
 		LOWER = 0x4000,
@@ -141,8 +149,9 @@ struct FPortalGroupArray
 		MAX_STATIC = 4
 	};
 
-	FPortalGroupArray()
+	FPortalGroupArray(int collectionmethod = PGA_CheckPosition)
 	{
+		method = collectionmethod;
 		varused = 0;
 		inited = false;
 	}
@@ -171,6 +180,7 @@ struct FPortalGroupArray
 	}
 
 	bool inited;
+	int method;
 
 private:
 	WORD entry[MAX_STATIC];
@@ -329,6 +339,7 @@ protected:
 	static TArray<intercept_t> intercepts;
 
 	divline_t trace;
+	fixed_t startfrac;
 	unsigned int intercept_index;
 	unsigned int intercept_count;
 	unsigned int count;
@@ -344,7 +355,8 @@ public:
 	{
 		init(x1, y1, x2, y2, flags);
 	}
-	void init(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int flags);
+	void init(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int flags, fixed_t startfrac = 0);
+	bool PortalRelocate(intercept_t *in, int flags, fixedvec3 *optpos = NULL);
 	virtual ~FPathTraverse();
 	const divline_t &Trace() const { return trace; }
 };
@@ -383,6 +395,5 @@ fixed_t P_InterceptVector (const divline_t *v2, const divline_t *v1);
 #define PT_ADDTHINGS	2
 #define PT_COMPATIBLE	4
 #define PT_DELTA		8		// x2,y2 is passed as a delta, not as an endpoint
-
 
 #endif

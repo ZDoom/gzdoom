@@ -77,7 +77,7 @@ FxVMFunctionCall *DoActionSpecials(FScanner &sc, FState & state, Baggage &bag)
 	if (special > 0 && min_args >= 0)
 	{
 		FArgumentList *args = new FArgumentList;
-		args->Push(new FxParameter(new FxConstant(special, sc)));
+		args->Push(new FxConstant(special, sc));
 		i = 0;
 
 		// Make this consistent with all other parameter parsing
@@ -85,7 +85,7 @@ FxVMFunctionCall *DoActionSpecials(FScanner &sc, FState & state, Baggage &bag)
 		{
 			while (i < 5)
 			{
-				args->Push(new FxParameter(new FxIntCast(ParseExpression(sc, bag.Info))));
+				args->Push(new FxIntCast(ParseExpression(sc, bag.Info)));
 				i++;
 				if (!sc.CheckToken (',')) break;
 			}
@@ -441,6 +441,45 @@ static PPrototype *ReturnCheck(PPrototype *proto1, PPrototype *proto2, FScanner 
 //
 //==========================================================================
 
+static FxExpression *ParseIf(FScanner &sc, FState state, FString statestring, Baggage &bag,
+	PPrototype *&retproto, bool &lastwasret)
+{
+	FxExpression *add, *cond;
+	FxExpression *true_part, *false_part = NULL;
+	PPrototype *true_proto, *false_proto = NULL;
+	bool true_ret, false_ret = false;
+	sc.MustGetStringName("(");
+	cond = ParseExpression(sc, bag.Info);
+	sc.MustGetStringName(")");
+	sc.MustGetStringName("{");	// braces are mandatory
+	true_part = ParseActions(sc, state, statestring, bag, true_proto, true_ret);
+	sc.MustGetString();
+	if (sc.Compare("else"))
+	{
+		if (sc.CheckString("if"))
+		{
+			false_part = ParseIf(sc, state, statestring, bag, false_proto, false_ret);
+		}
+		else
+		{
+			sc.MustGetStringName("{");	// braces are still mandatory
+			false_part = ParseActions(sc, state, statestring, bag, false_proto, false_ret);
+			sc.MustGetString();
+		}
+	}
+	add = new FxIfStatement(cond, true_part, false_part, sc);
+	retproto = ReturnCheck(retproto, true_proto, sc);
+	retproto = ReturnCheck(retproto, false_proto, sc);
+	// If one side does not end with a return, we don't consider the if statement
+	// to end with a return. If the else case is missing, it can never be considered
+	// as ending with a return.
+	if (true_ret && false_ret)
+	{
+		lastwasret = true;
+	}
+	return add;
+}
+
 FxExpression *ParseActions(FScanner &sc, FState state, FString statestring, Baggage &bag,
 						   PPrototype *&retproto, bool &endswithret)
 {
@@ -467,32 +506,7 @@ FxExpression *ParseActions(FScanner &sc, FState state, FString statestring, Bagg
 		lastwasret = false;
 		if (sc.Compare("if"))
 		{ // Hangle an if statement
-			FxExpression *cond;
-			FxExpression *true_part, *false_part = NULL;
-			PPrototype *true_proto, *false_proto = NULL;
-			bool true_ret, false_ret = false;
-			sc.MustGetStringName("(");
-			cond = ParseExpression(sc, bag.Info);
-			sc.MustGetStringName(")");
-			sc.MustGetStringName("{");	// braces are mandatory
-			true_part = ParseActions(sc, state, statestring, bag, true_proto, true_ret);
-			sc.MustGetString();
-			if (sc.Compare("else"))
-			{
-				sc.MustGetStringName("{");	// braces are still mandatory
-				false_part = ParseActions(sc, state, statestring, bag, false_proto, false_ret);
-				sc.MustGetString();
-			}
-			add = new FxIfStatement(cond, true_part, false_part, sc);
-			proto = ReturnCheck(proto, true_proto, sc);
-			proto = ReturnCheck(proto, false_proto, sc);
-			// If one side does not end with a return, we don't consider the if statement
-			// to end with a return. If the else case is missing, it can never be considered
-			// as ending with a return.
-			if (true_ret && false_ret)
-			{
-				lastwasret = true;
-			}
+			add = ParseIf(sc, state, statestring, bag, proto, lastwasret);
 		}
 		else if (sc.Compare("return"))
 		{ // Handle a return statement
@@ -569,7 +583,7 @@ FxVMFunctionCall *ParseAction(FScanner &sc, FState state, FString statestring, B
 		}
 		return call;
 	}
-	sc.ScriptError("Invalid state parameter %s\n", sc.String);
+	sc.ScriptError("Invalid parameter '%s'\n", sc.String);
 	return NULL;
 }
 
@@ -647,7 +661,7 @@ void ParseFunctionParameters(FScanner &sc, PClassActor *cls, TArray<FxExpression
 			// Use the generic parameter parser for everything else
 			x = ParseParameter(sc, cls, params[pnum], false);
 		}
-		out_params.Push(new FxParameter(x));
+		out_params.Push(x);
 		pnum++;
 		numparams--;
 		if (numparams > 0)

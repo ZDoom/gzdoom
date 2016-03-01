@@ -225,45 +225,13 @@ void FxExpression::RequestAddress()
 //
 //==========================================================================
 
-FxParameter::FxParameter(FxExpression *operand)
-: FxExpression(operand->ScriptPosition)
+static void EmitParameter(VMFunctionBuilder *build, FxExpression *operand, const FScriptPosition &pos)
 {
-	Operand = operand;
-	ValueType = operand->ValueType;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-FxParameter::~FxParameter()
-{
-	SAFE_DELETE(Operand);
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-FxExpression *FxParameter::Resolve(FCompileContext& ctx)
-{
-	CHECKRESOLVED();
-	SAFE_RESOLVE(Operand, ctx);
-	ValueType = Operand->ValueType;
-	return this;
-}
-
-ExpEmit FxParameter::Emit(VMFunctionBuilder *build)
-{
-	ExpEmit where = Operand->Emit(build);
+	ExpEmit where = operand->Emit(build);
 
 	if (where.RegType == REGT_NIL)
 	{
-		ScriptPosition.Message(MSG_ERROR, "Attempted to pass a non-value");
+		pos.Message(MSG_ERROR, "Attempted to pass a non-value");
 		build->Emit(OP_PARAM, 0, where.RegType, where.RegNum);
 	}
 	else
@@ -276,7 +244,6 @@ ExpEmit FxParameter::Emit(VMFunctionBuilder *build)
 		build->Emit(OP_PARAM, 0, regtype, where.RegNum);
 		where.Free(build);
 	}
-	return ExpEmit();
 }
 
 //==========================================================================
@@ -2251,8 +2218,8 @@ FxRandom::FxRandom(FRandom * r, FxExpression *mi, FxExpression *ma, const FScrip
 {
 	if (mi != NULL && ma != NULL)
 	{
-		min = new FxParameter(new FxIntCast(mi));
-		max = new FxParameter(new FxIntCast(ma));
+		min = new FxIntCast(mi);
+		max = new FxIntCast(ma);
 	}
 	else min = max = NULL;
 	rng = r;
@@ -2336,8 +2303,8 @@ ExpEmit FxRandom::Emit(VMFunctionBuilder *build)
 	build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, build->GetConstantAddress(rng, ATAG_RNG));
 	if (min != NULL && max != NULL)
 	{
-		min->Emit(build);
-		max->Emit(build);
+		EmitParameter(build, min, ScriptPosition);
+		EmitParameter(build, max, ScriptPosition);
 		build->Emit(OP_CALL_K, build->GetConstantAddress(callfunc, ATAG_OBJECT), 3, 1);
 	}
 	else
@@ -2523,8 +2490,8 @@ FxFRandom::FxFRandom(FRandom *r, FxExpression *mi, FxExpression *ma, const FScri
 {
 	if (mi != NULL && ma != NULL)
 	{
-		min = new FxParameter(new FxFloatCast(mi));
-		max = new FxParameter(new FxFloatCast(ma));
+		min = new FxFloatCast(mi);
+		max = new FxFloatCast(ma);
 	}
 	ValueType = TypeFloat64;
 }
@@ -2572,8 +2539,8 @@ ExpEmit FxFRandom::Emit(VMFunctionBuilder *build)
 	build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, build->GetConstantAddress(rng, ATAG_RNG));
 	if (min != NULL && max != NULL)
 	{
-		min->Emit(build);
-		max->Emit(build);
+		EmitParameter(build, min, ScriptPosition);
+		EmitParameter(build, max, ScriptPosition);
 		build->Emit(OP_CALL_K, build->GetConstantAddress(callfunc, ATAG_OBJECT), 3, 1);
 	}
 	else
@@ -2597,7 +2564,6 @@ FxRandom2::FxRandom2(FRandom *r, FxExpression *m, const FScriptPosition &pos)
 	rng = r;
 	if (m) mask = new FxIntCast(m);
 	else mask = new FxConstant(-1, pos);
-	mask = new FxParameter(mask);
 	ValueType = TypeSInt32;
 }
 
@@ -2642,7 +2608,7 @@ ExpEmit FxRandom2::Emit(VMFunctionBuilder *build)
 	callfunc = ((PSymbolVMFunction *)sym)->Function;
 
 	build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, build->GetConstantAddress(rng, ATAG_RNG));
-	mask->Emit(build);
+	EmitParameter(build, mask, ScriptPosition);
 	build->Emit(OP_CALL_K, build->GetConstantAddress(callfunc, ATAG_OBJECT), 2, 1);
 	ExpEmit out(build, REGT_INT);
 	build->Emit(OP_RESULT, 0, REGT_INT, out.RegNum);
@@ -3407,7 +3373,7 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build, bool tailcall)
 	{
 		for (unsigned i = 0; i < ArgList->Size(); ++i)
 		{
-			(*ArgList)[i]->Emit(build);
+			EmitParameter(build, (*ArgList)[i], ScriptPosition);
 		}
 	}
 	// Get a constant register for this function

@@ -219,17 +219,6 @@ public:
 	bool isresolved;
 };
 
-class FxParameter : public FxExpression
-{
-	FxExpression *Operand;
-
-public:
-	FxParameter(FxExpression*);
-	~FxParameter();
-	FxExpression *Resolve(FCompileContext&);
-	ExpEmit Emit(VMFunctionBuilder *build);
-};
-
 //==========================================================================
 //
 //	FxIdentifier

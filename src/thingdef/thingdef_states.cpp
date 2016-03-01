@@ -77,7 +77,7 @@ FxVMFunctionCall *DoActionSpecials(FScanner &sc, FState & state, Baggage &bag)
 	if (special > 0 && min_args >= 0)
 	{
 		FArgumentList *args = new FArgumentList;
-		args->Push(new FxParameter(new FxConstant(special, sc)));
+		args->Push(new FxConstant(special, sc));
 		i = 0;
 
 		// Make this consistent with all other parameter parsing
@@ -85,7 +85,7 @@ FxVMFunctionCall *DoActionSpecials(FScanner &sc, FState & state, Baggage &bag)
 		{
 			while (i < 5)
 			{
-				args->Push(new FxParameter(new FxIntCast(ParseExpression(sc, bag.Info))));
+				args->Push(new FxIntCast(ParseExpression(sc, bag.Info)));
 				i++;
 				if (!sc.CheckToken (',')) break;
 			}
@@ -661,7 +661,7 @@ void ParseFunctionParameters(FScanner &sc, PClassActor *cls, TArray<FxExpression
 			// Use the generic parameter parser for everything else
 			x = ParseParameter(sc, cls, params[pnum], false);
 		}
-		out_params.Push(new FxParameter(x));
+		out_params.Push(x);
 		pnum++;
 		numparams--;
 		if (numparams > 0)

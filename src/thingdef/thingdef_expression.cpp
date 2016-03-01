@@ -3356,6 +3356,14 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build, bool tailcall)
 	assert(build->Registers[REGT_POINTER].GetMostUsed() >= 3);
 	int count = GetArgCount();
 
+	if (count == 1)
+	{
+		ExpEmit reg;
+		if (CheckEmitCast(build, tailcall, reg))
+		{
+			return reg;
+		}
+	}
 	// Emit code to pass implied parameters
 	if (Function->Flags & VARF_Method)
 	{
@@ -3397,6 +3405,47 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build, bool tailcall)
 		build->Emit(OP_CALL_K, funcaddr, count, 0);
 		return ExpEmit();
 	}
+}
+
+//==========================================================================
+//
+// If calling one of the casting kludge functions, don't bother calling the
+// function; just use the parameter directly. Returns true if this was a
+// kludge function, false otherwise.
+//
+//==========================================================================
+
+bool FxVMFunctionCall::CheckEmitCast(VMFunctionBuilder *build, bool returnit, ExpEmit &reg)
+{
+	FName funcname = Function->SymbolName;
+	if (funcname == NAME___decorate_internal_int__ ||
+		funcname == NAME___decorate_internal_bool__ ||
+		funcname == NAME___decorate_internal_state__)
+	{
+		FxExpression *arg = (*ArgList)[0];
+		if (returnit)
+		{
+			if (arg->isConstant() &&
+				(funcname == NAME___decorate_internal_int__ ||
+				 funcname == NAME___decorate_internal_bool__))
+			{ // Use immediate version for integers in range
+				build->EmitRetInt(0, true, static_cast<FxConstant *>(arg)->GetValue().Int);
+			}
+			else
+			{
+				ExpEmit where = arg->Emit(build);
+				build->Emit(OP_RET, RET_FINAL, where.RegType | (where.Konst ? REGT_KONST : 0), where.RegNum);
+				where.Free(build);
+			}
+			reg = ExpEmit();
+		}
+		else
+		{
+			reg = arg->Emit(build);
+		}
+		return true;
+	}
+	return false;
 }
 
 //==========================================================================

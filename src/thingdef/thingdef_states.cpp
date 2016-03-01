@@ -583,7 +583,7 @@ FxVMFunctionCall *ParseAction(FScanner &sc, FState state, FString statestring, B
 		}
 		return call;
 	}
-	sc.ScriptError("Invalid state parameter %s\n", sc.String);
+	sc.ScriptError("Invalid parameter '%s'\n", sc.String);
 	return NULL;
 }
 

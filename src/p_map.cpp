@@ -4760,12 +4760,8 @@ bool P_UseTraverse(AActor *usething, fixed_t startx, fixed_t starty, fixed_t end
 			if (P_PointOnLineSide(xpos.x, xpos.y, in->d.line) == 0)
 			{
 				FLinePortal *port = in->d.line->getPortal();
-				if (port->mType != PORTT_LINKED)	// other types will cause problems with 
-				{
-					return true;
-				}
 				// Also translate the player origin, so that we can use that for checks further below and in P_CheckSwitchRange
-				it.PortalRealign(in, PT_ADDLINES | PT_ADDTHINGS, &xpos);
+				it.PortalRelocate(in, PT_ADDLINES | PT_ADDTHINGS, &xpos);
 			}
 			continue;
 	

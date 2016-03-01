@@ -820,8 +820,8 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 	if (!ld->backsector)
 	{ // One sided line
 
-		// Needed for polyobject portals. Having two-sided lines just for portals on otherwise solid polyobjects is a messy subject.
-		if ((cres.line->sidedef[0]->Flags & WALLF_POLYOBJ) && cres.line->isLinePortal())
+		// Needed for polyobject portals.
+		if (cres.line->isLinePortal())
 		{
 			spechit_t spec;
 			spec.line = ld;
@@ -4731,10 +4731,11 @@ bool P_TalkFacing(AActor *player)
 //
 //==========================================================================
 
-bool P_UseTraverse(AActor *usething, fixed_t endx, fixed_t endy, bool &foundline)
+bool P_UseTraverse(AActor *usething, fixed_t startx, fixed_t starty, fixed_t endx, fixed_t endy, bool &foundline)
 {
-	FPathTraverse it(usething->X(), usething->Y(), endx, endy, PT_ADDLINES | PT_ADDTHINGS);
+	FPathTraverse it(startx, starty, endx, endy, PT_ADDLINES | PT_ADDTHINGS);
 	intercept_t *in;
+	fixedvec3 xpos = { startx, starty, usething->Z() };
 
 	while ((in = it.Next()))
 	{
@@ -4753,6 +4754,21 @@ bool P_UseTraverse(AActor *usething, fixed_t endx, fixed_t endy, bool &foundline
 					return true;
 			}
 			continue;
+		}
+		if (in->d.line->isLinePortal())
+		{
+			if (P_PointOnLineSide(xpos.x, xpos.y, in->d.line) == 0)
+			{
+				FLinePortal *port = in->d.line->getPortal();
+				if (port->mType != PORTT_LINKED)	// other types will cause problems with 
+				{
+					return true;
+				}
+				// Also translate the player origin, so that we can use that for checks further below and in P_CheckSwitchRange
+				it.PortalRealign(in, PT_ADDLINES | PT_ADDTHINGS, &xpos);
+			}
+			continue;
+	
 		}
 
 		FLineOpening open;
@@ -4782,7 +4798,7 @@ bool P_UseTraverse(AActor *usething, fixed_t endx, fixed_t endy, bool &foundline
 					return true;
 				}
 
-				sec = P_PointOnLineSide(usething->X(), usething->Y(), in->d.line) == 0 ?
+				sec = P_PointOnLineSide(xpos.x, xpos.y, in->d.line) == 0 ?
 					in->d.line->frontsector : in->d.line->backsector;
 
 				if (sec != NULL && sec->SecActTarget &&
@@ -4801,7 +4817,7 @@ bool P_UseTraverse(AActor *usething, fixed_t endx, fixed_t endy, bool &foundline
 			continue;			// not a special line, but keep checking
 		}
 
-		if (P_PointOnLineSide(usething->X(), usething->Y(), in->d.line) == 1)
+		if (P_PointOnLineSide(xpos.x, xpos.y, in->d.line) == 1)
 		{
 			if (!(in->d.line->activation & SPAC_UseBack))
 			{
@@ -4811,7 +4827,7 @@ bool P_UseTraverse(AActor *usething, fixed_t endx, fixed_t endy, bool &foundline
 			}
 			else
 			{
-				P_ActivateLine(in->d.line, usething, 1, SPAC_UseBack);
+				P_ActivateLine(in->d.line, usething, 1, SPAC_UseBack, &xpos);
 				return true;
 			}
 		}
@@ -4822,7 +4838,7 @@ bool P_UseTraverse(AActor *usething, fixed_t endx, fixed_t endy, bool &foundline
 				goto blocked; // Line cannot be used from front side so treat it as a non-trigger line
 			}
 
-			P_ActivateLine(in->d.line, usething, 0, SPAC_Use);
+			P_ActivateLine(in->d.line, usething, 0, SPAC_Use, &xpos);
 
 			//WAS can't use more than one special line in a row
 			//jff 3/21/98 NOW multiple use allowed with enabling line flag
@@ -4859,9 +4875,9 @@ bool P_UseTraverse(AActor *usething, fixed_t endx, fixed_t endy, bool &foundline
 //
 //==========================================================================
 
-bool P_NoWayTraverse(AActor *usething, fixed_t endx, fixed_t endy)
+bool P_NoWayTraverse(AActor *usething, fixed_t startx, fixed_t starty, fixed_t endx, fixed_t endy)
 {
-	FPathTraverse it(usething->X(), usething->Y(), endx, endy, PT_ADDLINES);
+	FPathTraverse it(startx, starty, endx, endy, PT_ADDLINES);
 	intercept_t *in;
 
 	while ((in = it.Next()))
@@ -4872,6 +4888,7 @@ bool P_NoWayTraverse(AActor *usething, fixed_t endx, fixed_t endy)
 		// [GrafZahl] de-obfuscated. Was I the only one who was unable to make sense out of
 		// this convoluted mess?
 		if (ld->special) continue;
+		if (ld->isLinePortal()) return false;
 		if (ld->flags&(ML_BLOCKING | ML_BLOCKEVERYTHING | ML_BLOCK_PLAYERS)) return true;
 		P_LineOpening(open, NULL, ld, it.Trace().x + FixedMul(it.Trace().dx, in->frac),
 			it.Trace().y + FixedMul(it.Trace().dy, in->frac));
@@ -4890,12 +4907,16 @@ bool P_NoWayTraverse(AActor *usething, fixed_t endx, fixed_t endy)
 //
 //==========================================================================
 
+CVAR(Int, userange, 0, 0);
+
 void P_UseLines(player_t *player)
 {
 	bool foundline = false;
 
+	// If the player is transitioning a portal, use the group that is at its vertical center.
+	fixedvec2 start = player->mo->GetPortalTransition(player->mo->height / 2);
 	// [NS] Now queries the Player's UseRange.
-	fixedvec2 end = player->mo->Vec2Angle(player->mo->UseRange, player->mo->angle, true);
+	fixedvec2 end = start + Vec2Angle(userange > 0? fixed_t(userange<<FRACBITS) : player->mo->UseRange, player->mo->angle);
 
 	// old code:
 	//
@@ -4903,13 +4924,13 @@ void P_UseLines(player_t *player)
 	//
 	// This added test makes the "oof" sound work on 2s lines -- killough:
 
-	if (!P_UseTraverse(player->mo, end.x, end.y, foundline))
+	if (!P_UseTraverse(player->mo, start.x, start.y, end.x, end.y, foundline))
 	{ // [RH] Give sector a chance to eat the use
 		sector_t *sec = player->mo->Sector;
 		int spac = SECSPAC_Use;
 		if (foundline) spac |= SECSPAC_UseWall;
 		if ((!sec->SecActTarget || !sec->SecActTarget->TriggerAction(player->mo, spac)) &&
-			P_NoWayTraverse(player->mo, end.x, end.y))
+			P_NoWayTraverse(player->mo, start.x, start.y, end.x, end.y))
 		{
 			S_Sound(player->mo, CHAN_VOICE, "*usefail", 1, ATTN_IDLE);
 		}

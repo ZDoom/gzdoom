@@ -743,6 +743,7 @@ public:
 
 	inline bool IsNoClip2() const;
 	void CheckPortalTransition(bool islinked);
+	fixedvec3 GetPortalTransition(fixed_t byoffset);
 
 	// What species am I?
 	virtual FName GetSpecies();

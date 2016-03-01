@@ -3286,6 +3286,42 @@ void AActor::SetRoll(angle_t r, bool interpolate)
 }
 
 
+fixedvec3 AActor::GetPortalTransition(fixed_t byoffset)
+{
+	bool moved = false;
+	sector_t *sec = Sector;
+	fixed_t testz = Z() + byoffset;
+	fixedvec3 pos = Pos();
+
+	while (!sec->PortalBlocksMovement(sector_t::ceiling))
+	{
+		AActor *port = sec->SkyBoxes[sector_t::ceiling];
+		if (testz > port->threshold)
+		{
+			pos = PosRelative(port->Sector);
+			sec = P_PointInSector(pos.x, pos.y);
+			moved = true;
+		}
+		else break;
+	}
+	if (!moved)
+	{
+		while (!sec->PortalBlocksMovement(sector_t::floor))
+		{
+			AActor *port = sec->SkyBoxes[sector_t::floor];
+			if (testz <= port->threshold)
+			{
+				pos = PosRelative(port->Sector);
+				sec = P_PointInSector(pos.x, pos.y);
+			}
+			else break;
+		}
+	}
+	return pos;
+}
+
+
+
 void AActor::CheckPortalTransition(bool islinked)
 {
 	bool moved = false;

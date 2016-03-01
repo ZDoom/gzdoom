@@ -201,14 +201,14 @@ bool CheckIfExitIsGood (AActor *self, level_info_t *info)
 //
 //============================================================================
 
-bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType)
+bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType, fixedvec3 *optpos)
 {
 	int lineActivation;
 	INTBOOL repeat;
 	INTBOOL buttonSuccess;
 	BYTE special;
 
-	if (!P_TestActivateLine (line, mo, side, activationType))
+	if (!P_TestActivateLine (line, mo, side, activationType, optpos))
 	{
 		return false;
 	}
@@ -262,7 +262,7 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType)
 //
 //============================================================================
 
-bool P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType)
+bool P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType, fixedvec3 *optpos)
 {
  	int lineActivation = line->activation;
 
@@ -291,7 +291,7 @@ bool P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType)
 	}
 	if (activationType == SPAC_Use || activationType == SPAC_UseBack)
 	{
-		if (!P_CheckSwitchRange(mo, line, side))
+		if (!P_CheckSwitchRange(mo, line, side, optpos))
 		{
 			return false;
 		}

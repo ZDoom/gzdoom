@@ -127,7 +127,7 @@ FxExpression *ParseParameter(FScanner &sc, PClassActor *cls, PType *type, bool c
 			v = MAKEARGB(1, RPART(c), GPART(c), BPART(c));
 		}
 		ExpVal val;
-		val.Type = VAL_Color;
+		val.Type = TypeColor;
 		val.Int = v;
 		x = new FxConstant(val, sc);
 	}

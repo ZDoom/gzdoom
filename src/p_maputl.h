@@ -339,6 +339,7 @@ protected:
 	static TArray<intercept_t> intercepts;
 
 	divline_t trace;
+	fixed_t startfrac;
 	unsigned int intercept_index;
 	unsigned int intercept_count;
 	unsigned int count;
@@ -354,7 +355,8 @@ public:
 	{
 		init(x1, y1, x2, y2, flags);
 	}
-	void init(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int flags);
+	void init(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int flags, fixed_t startfrac = 0);
+	bool PortalRelocate(intercept_t *in, int flags, fixedvec3 *optpos = NULL);
 	virtual ~FPathTraverse();
 	const divline_t &Trace() const { return trace; }
 };
@@ -393,6 +395,5 @@ fixed_t P_InterceptVector (const divline_t *v2, const divline_t *v1);
 #define PT_ADDTHINGS	2
 #define PT_COMPATIBLE	4
 #define PT_DELTA		8		// x2,y2 is passed as a delta, not as an endpoint
-
 
 #endif

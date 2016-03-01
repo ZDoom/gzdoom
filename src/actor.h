@@ -743,6 +743,7 @@ public:
 
 	inline bool IsNoClip2() const;
 	void CheckPortalTransition(bool islinked);
+	fixedvec3 GetPortalTransition(fixed_t byoffset);
 
 	// What species am I?
 	virtual FName GetSpecies();
@@ -893,7 +894,7 @@ public:
 			fixedvec2 ret = { X() + dx, Y() + dy };
 			return ret;
 		}
-		else return P_GetOffsetPosition(this, dx, dy);
+		else return P_GetOffsetPosition(X(), Y(), dx, dy);
 	}
 
 
@@ -905,7 +906,7 @@ public:
 							  Y() + FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]) };
 			return ret;
 		}
-		else return P_GetOffsetPosition(this, FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]), FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]));
+		else return P_GetOffsetPosition(X(), Y(), FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]), FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]));
 	}
 
 	fixedvec3 Vec3Offset(fixed_t dx, fixed_t dy, fixed_t dz, bool absolute = false)
@@ -917,7 +918,7 @@ public:
 		}
 		else
 		{
-			fixedvec2 op = P_GetOffsetPosition(this, dx, dy);
+			fixedvec2 op = P_GetOffsetPosition(X(), Y(), dx, dy);
 			fixedvec3 pos = { op.x, op.y, Z() + dz };
 			return pos;
 		}
@@ -933,7 +934,7 @@ public:
 		}
 		else
 		{
-			fixedvec2 op = P_GetOffsetPosition(this, FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]), FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]));
+			fixedvec2 op = P_GetOffsetPosition(X(), Y(), FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]), FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]));
 			fixedvec3 pos = { op.x, op.y, Z() + dz };
 			return pos;
 		}

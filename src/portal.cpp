@@ -277,7 +277,7 @@ void P_SpawnLinePortal(line_t* line)
 
 		for (int i = 0; i < numlines; i++)
 		{
-			if (tagManager.GetFirstLineID(&lines[i]) == mytag && lines[i].args[0] == 1)
+			if (tagManager.GetFirstLineID(&lines[i]) == mytag && lines[i].args[0] == 1 && lines[i].special == Line_SetPortal)
 			{
 				line->portalindex = linePortals.Reserve(1);
 				FLinePortal *port = &linePortals.Last();
@@ -322,12 +322,6 @@ void P_UpdatePortal(FLinePortal *port)
 	{
 		// Portal has no destination: switch it off
 		port->mFlags = 0;
-	}
-	else if ((port->mOrigin->backsector == NULL && !(port->mOrigin->sidedef[0]->Flags & WALLF_POLYOBJ)) ||
-		(port->mDestination->backsector == NULL && !(port->mOrigin->sidedef[0]->Flags & WALLF_POLYOBJ)))
-	{
-		// disable teleporting capability if a portal is or links to a one-sided wall (unless part of a polyobject.)
-		port->mFlags = PORTF_VISIBLE;
 	}
 	else if (port->mDestination->getPortalDestination() != port->mOrigin)
 	{
@@ -562,24 +556,17 @@ void P_TranslatePortalXY(line_t* src, line_t* dst, fixed_t& x, fixed_t& y)
 	// Get the angle between the two linedefs, for rotating
 	// orientation and velocity. Rotate 180 degrees, and flip
 	// the position across the exit linedef, if reversed.
-	angle_t angle =
-			R_PointToAngle2(0, 0, dst->dx, dst->dy) -
-			R_PointToAngle2(0, 0, src->dx, src->dy);
 
-	angle += ANGLE_180;
-
-	// Sine, cosine of angle adjustment
-	fixed_t s = finesine[angle>>ANGLETOFINESHIFT];
-	fixed_t c = finecosine[angle>>ANGLETOFINESHIFT];
-
-	fixed_t tx, ty;
+	double angle = atan2(dst->dy, dst->dx) - atan2(src->dy, src->dx) + M_PI;
+	fixed_t s = FLOAT2FIXED(sin(angle));
+	fixed_t c = FLOAT2FIXED(cos(angle));
 
 	nposx = x - src->v1->x;
 	nposy = y - src->v1->y;
 
 	// Rotate position along normal to match exit linedef
-	tx = FixedMul(nposx, c) - FixedMul(nposy, s);
-	ty = FixedMul(nposy, c) + FixedMul(nposx, s);
+	fixed_t tx = FixedMul(nposx, c) - FixedMul(nposy, s);
+	fixed_t ty = FixedMul(nposy, c) + FixedMul(nposx, s);
 
 	tx += dst->v2->x;
 	ty += dst->v2->y;
@@ -596,15 +583,9 @@ void P_TranslatePortalXY(line_t* src, line_t* dst, fixed_t& x, fixed_t& y)
 
 void P_TranslatePortalVXVY(line_t* src, line_t* dst, fixed_t& vx, fixed_t& vy)
 {
-	angle_t angle =
-		R_PointToAngle2(0, 0, dst->dx, dst->dy) -
-		R_PointToAngle2(0, 0, src->dx, src->dy);
-
-	angle += ANGLE_180;
-
-	// Sine, cosine of angle adjustment
-	fixed_t s = finesine[angle>>ANGLETOFINESHIFT];
-	fixed_t c = finecosine[angle>>ANGLETOFINESHIFT];
+	double angle = atan2(dst->dy, dst->dx) - atan2(src->dy, src->dx) + M_PI;
+	fixed_t s = FLOAT2FIXED(sin(angle));
+	fixed_t c = FLOAT2FIXED(cos(angle));
 
 	fixed_t orig_velx = vx;
 	fixed_t orig_vely = vy;
@@ -626,12 +607,7 @@ void P_TranslatePortalAngle(line_t* src, line_t* dst, angle_t& angle)
 	// Get the angle between the two linedefs, for rotating
 	// orientation and velocity. Rotate 180 degrees, and flip
 	// the position across the exit linedef, if reversed.
-	angle_t xangle =
-			R_PointToAngle2(0, 0, dst->dx, dst->dy) -
-			R_PointToAngle2(0, 0, src->dx, src->dy);
-
-	xangle += ANGLE_180;
-	angle += xangle;
+	angle += RAD2ANGLE(atan2(dst->dy, dst->dx) - atan2(src->dy, src->dx)) + ANGLE_180;
 }
 
 //============================================================================
@@ -701,12 +677,12 @@ void P_NormalizeVXVY(fixed_t& vx, fixed_t& vy)
 //
 //============================================================================
 
-fixedvec2 P_GetOffsetPosition(AActor *actor, fixed_t dx, fixed_t dy)
+fixedvec2 P_GetOffsetPosition(fixed_t x, fixed_t y, fixed_t dx, fixed_t dy)
 {
-	fixedvec2 dest = { actor->X() + dx, actor->Y() + dy };
+	fixedvec2 dest = { x + dx, y + dy };
 	if (PortalBlockmap.containsLines)
 	{
-		fixed_t actx = actor->X(), acty = actor->Y();
+		fixed_t actx = x, acty = y;
 		// Try some easily discoverable early-out first. If we know that the trace cannot possibly find a portal, this saves us from calling the traverser completely for vast parts of the map.
 		if (dx < 128 * FRACUNIT && dy < 128 * FRACUNIT)
 		{

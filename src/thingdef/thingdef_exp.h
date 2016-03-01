@@ -84,7 +84,7 @@ struct FCompileContext
 
 struct ExpVal
 {
-	ExpValType Type;
+	PType *Type;
 	union
 	{
 		int Int;
@@ -94,13 +94,13 @@ struct ExpVal
 
 	ExpVal()
 	{
-		Type = VAL_Int;
+		Type = TypeSInt32;
 		Int = 0;
 	}
 
 	~ExpVal()
 	{
-		if (Type == VAL_String)
+		if (Type == TypeString)
 		{
 			((FString *)&pointer)->~FString();
 		}
@@ -108,14 +108,14 @@ struct ExpVal
 
 	ExpVal(const FString &str)
 	{
-		Type = VAL_String;
+		Type = TypeString;
 		::new(&pointer) FString(str);
 	}
 
 	ExpVal(const ExpVal &o)
 	{
 		Type = o.Type;
-		if (o.Type == VAL_String)
+		if (o.Type == TypeString)
 		{
 			::new(&pointer) FString(*(FString *)&o.pointer);
 		}
@@ -127,12 +127,12 @@ struct ExpVal
 
 	ExpVal &operator=(const ExpVal &o)
 	{
-		if (Type == VAL_String)
+		if (Type == TypeString)
 		{
 			((FString *)&pointer)->~FString();
 		}
 		Type = o.Type;
-		if (o.Type == VAL_String)
+		if (o.Type == TypeString)
 		{
 			::new(&pointer) FString(*(FString *)&o.pointer);
 		}
@@ -145,27 +145,30 @@ struct ExpVal
 
 	int GetInt() const
 	{
-		return Type == VAL_Int? Int : Type == VAL_Float? int(Float) : 0;
+		int regtype = Type->GetRegType();
+		return regtype == REGT_INT ? Int : regtype == REGT_FLOAT ? int(Float) : 0;
 	}
 
 	double GetFloat() const
 	{
-		return Type == VAL_Int? double(Int) : Type == VAL_Float? Float : 0;
+		int regtype = Type->GetRegType();
+		return regtype == REGT_INT ? double(Int) : regtype == REGT_FLOAT ? Float : 0;
 	}
 
 	const FString GetString() const
 	{
-		return Type == VAL_String ? *(FString *)&pointer : Type == VAL_Name ? FString(FName(ENamedName(Int)).GetChars()) : "";
+		return Type == TypeString ? *(FString *)&pointer : Type == TypeName ? FString(FName(ENamedName(Int)).GetChars()) : "";
 	}
 
 	bool GetBool() const
 	{
-		return (Type == VAL_Int || Type == VAL_Sound) ? !!Int : Type == VAL_Float? Float!=0. : false;
+		int regtype = Type->GetRegType();
+		return regtype == REGT_INT ? !!Int : regtype == REGT_FLOAT ? Float!=0. : false;
 	}
 	
 	FName GetName() const
 	{
-		return Type == VAL_Name? ENamedName(Int) : NAME_None;
+		return Type == TypeName ? ENamedName(Int) : NAME_None;
 	}
 };
 
@@ -195,7 +198,7 @@ protected:
 	{
 		isresolved = false;
 		ScriptPosition = pos;
-		ValueType = VAL_Unresolved;
+		ValueType = NULL;
 	}
 public:
 	virtual ~FxExpression() {}
@@ -205,24 +208,15 @@ public:
 	virtual bool isConstant() const;
 	virtual void RequestAddress();
 	virtual VMFunction *GetDirectFunction();
+	bool IsNumeric() const { return ValueType->GetRegType() == REGT_INT || ValueType->GetRegType() == REGT_FLOAT; }
+	bool IsPointer() const { return ValueType->GetRegType() == REGT_POINTER; }
 
 	virtual ExpEmit Emit(VMFunctionBuilder *build);
 
 	FScriptPosition ScriptPosition;
-	FExpressionType ValueType;
+	PType *ValueType;
 
 	bool isresolved;
-};
-
-class FxParameter : public FxExpression
-{
-	FxExpression *Operand;
-
-public:
-	FxParameter(FxExpression*);
-	~FxParameter();
-	FxExpression *Resolve(FCompileContext&);
-	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
 //==========================================================================
@@ -288,35 +282,35 @@ class FxConstant : public FxExpression
 public:
 	FxConstant(int val, const FScriptPosition &pos) : FxExpression(pos)
 	{
-		ValueType = value.Type = VAL_Int;
+		ValueType = value.Type = TypeSInt32;
 		value.Int = val;
 		isresolved = true;
 	}
 
 	FxConstant(double val, const FScriptPosition &pos) : FxExpression(pos)
 	{
-		ValueType = value.Type = VAL_Float;
+		ValueType = value.Type = TypeFloat64;
 		value.Float = val;
 		isresolved = true;
 	}
 
 	FxConstant(FSoundID val, const FScriptPosition &pos) : FxExpression(pos)
 	{
-		ValueType = value.Type = VAL_Sound;
+		ValueType = value.Type = TypeSound;
 		value.Int = val;
 		isresolved = true;
 	}
 
 	FxConstant(FName val, const FScriptPosition &pos) : FxExpression(pos)
 	{
-		ValueType = value.Type = VAL_Name;
+		ValueType = value.Type = TypeName;
 		value.Int = val;
 		isresolved = true;
 	}
 
 	FxConstant(const FString &str, const FScriptPosition &pos) : FxExpression(pos)
 	{
-		ValueType = VAL_String;
+		ValueType = TypeString;
 		value = ExpVal(str);
 		isresolved = true;
 	}
@@ -327,19 +321,19 @@ public:
 		ValueType = cv.Type;
 		isresolved = true;
 	}
-	
-	FxConstant(const PClass *val, const FScriptPosition &pos) : FxExpression(pos)
+
+	FxConstant(PClass *val, const FScriptPosition &pos) : FxExpression(pos)
 	{
 		value.pointer = (void*)val;
 		ValueType = val;
-		value.Type = VAL_Class;
+		value.Type = NewClassPointer(RUNTIME_CLASS(AActor));
 		isresolved = true;
 	}
 
 	FxConstant(FState *state, const FScriptPosition &pos) : FxExpression(pos)
 	{
 		value.pointer = state;
-		ValueType = value.Type = VAL_State;
+		ValueType = value.Type = TypeState;
 		isresolved = true;
 	}
 	
@@ -864,6 +858,7 @@ public:
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
 	ExpEmit Emit(VMFunctionBuilder *build, bool tailcall);
+	bool CheckEmitCast(VMFunctionBuilder *build, bool returnit, ExpEmit &reg);
 	unsigned GetArgCount() const { return ArgList == NULL ? 0 : ArgList->Size(); }
 	VMFunction *GetVMFunction() const { return Function->Variants[0].Implementation; }
 	bool IsDirectFunction();

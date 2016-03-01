@@ -1203,7 +1203,7 @@ void FPathTraverse::AddLineIntercepts(int bx, int by)
 		P_MakeDivline (ld, &dl);
 		frac = P_InterceptVector (&trace, &dl);
 
-		if (frac < 0 || frac > FRACUNIT) continue;	// behind source or beyond end point
+		if (frac < startfrac || frac > FRACUNIT) continue;	// behind source or beyond end point
 			
 		intercept_t newintercept;
 
@@ -1284,7 +1284,7 @@ void FPathTraverse::AddThingIntercepts (int bx, int by, FBlockThingsIterator &it
 					{
 						// It's a hit
 						fixed_t frac = P_InterceptVector (&trace, &line);
-						if (frac < 0)
+						if (frac < startfrac)
 						{ // behind source
 							continue;
 						}
@@ -1352,7 +1352,7 @@ void FPathTraverse::AddThingIntercepts (int bx, int by, FBlockThingsIterator &it
 				
 				frac = P_InterceptVector (&trace, &dl);
 
-				if (frac >= 0)
+				if (frac >= startfrac)
 				{
 					intercept_t newintercept;
 					newintercept.frac = frac;
@@ -1400,7 +1400,7 @@ intercept_t *FPathTraverse::Next()
 //
 //===========================================================================
 
-void FPathTraverse::init (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int flags)
+void FPathTraverse::init (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int flags, fixed_t startfrac)
 {
 	fixed_t 	xt1, xt2;
 	fixed_t 	yt1, yt2;
@@ -1424,6 +1424,7 @@ void FPathTraverse::init (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int fl
 				
 	validcount++;
 	intercept_index = intercepts.Size();
+	this->startfrac = startfrac;
 		
 	if ( ((x1-bmaporgx)&(MAPBLOCKSIZE-1)) == 0)
 		x1 += FRACUNIT; // don't side exactly on a line
@@ -1444,8 +1445,8 @@ void FPathTraverse::init (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int fl
 		trace.dy = y2 - y1;
 	}
 
-	_x1 = (long long)x1 - bmaporgx;
-	_y1 = (long long)y1 - bmaporgy;
+	_x1 = (long long)x1 + FixedMul(trace.dx, startfrac) - bmaporgx;
+	_y1 = (long long)y1 + FixedMul(trace.dy, startfrac) - bmaporgy;
 	x1 -= bmaporgx;
 	y1 -= bmaporgy;
 	xt1 = int(_x1 >> MAPBLOCKSHIFT);
@@ -1607,6 +1608,41 @@ void FPathTraverse::init (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int fl
 		}
 	}
 }
+
+//===========================================================================
+//
+// Relocates the trace when going through a line portal
+//
+//===========================================================================
+
+bool FPathTraverse::PortalRelocate(intercept_t *in, int flags, fixedvec3 *optpos)
+{
+	if (!in->isaline || !in->d.line->isLinePortal()) return false;
+	if (P_PointOnLineSidePrecise(trace.x, trace.y, in->d.line) == 1) return false;
+
+	fixed_t hitx = trace.x;
+	fixed_t hity = trace.y;
+	fixed_t endx = trace.x + trace.dx;
+	fixed_t endy = trace.y + trace.dy;
+	line_t *out = in->d.line->getPortalDestination();
+
+	P_TranslatePortalXY(in->d.line, out, hitx, hity);
+	P_TranslatePortalXY(in->d.line, out, endx, endy);
+	if (optpos != NULL)
+	{
+		P_TranslatePortalXY(in->d.line, out, optpos->x, optpos->y);
+		P_TranslatePortalZ(in->d.line, out, optpos->z);
+	}
+	intercepts.Resize(intercept_index);
+	init(hitx, hity, endx, endy, flags, in->frac);
+	return true;
+}
+
+//===========================================================================
+//
+//
+//
+//===========================================================================
 
 FPathTraverse::~FPathTraverse()
 {

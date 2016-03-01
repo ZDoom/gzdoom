@@ -106,7 +106,6 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle, 
 	fixedvec3 old;
 	fixed_t aboveFloor;
 	player_t *player;
-	angle_t an;
 	sector_t *destsect;
 	bool resetpitch = false;
 	fixed_t floorheight, ceilingheight;
@@ -193,8 +192,9 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle, 
 		if (!predicting)
 		{
 			fixed_t fogDelta = thing->flags & MF_MISSILE ? 0 : TELEFOGHEIGHT;
-			an = angle >> ANGLETOFINESHIFT;
-			P_SpawnTeleportFog(thing, x + 20 * finecosine[an], y + 20 * finesine[an], thing->Z() + fogDelta, false, true);
+			fixedvec2 vector = Vec2Angle(20 * FRACUNIT, angle);
+			fixedvec2 fogpos = P_GetOffsetPosition(x, y, vector.x, vector.y);
+			P_SpawnTeleportFog(thing, fogpos.x, fogpos.y, thing->Z() + fogDelta, false, true);
 
 		}
 		if (thing->player)

@@ -425,16 +425,16 @@ bool AActor::SuggestMissileAttack (fixed_t dist)
 
 bool P_HitFriend(AActor * self)
 {
-	AActor *linetarget;
+	FTranslatedLineTarget t;
 
 	if (self->flags&MF_FRIENDLY && self->target != NULL)
 	{
 		angle_t angle = self->AngleTo(self->target);
 		fixed_t dist = self->AproxDistance (self->target);
-		P_AimLineAttack (self, angle, dist, &linetarget, 0, true);
-		if (linetarget != NULL && linetarget != self->target)
+		P_AimLineAttack (self, angle, dist, &t, 0, true);
+		if (t.linetarget != NULL && t.linetarget != self->target)
 		{
-			return self->IsFriend (linetarget);
+			return self->IsFriend (t.linetarget);
 		}
 	}
 	return false;
@@ -2990,7 +2990,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
 		return 0;
 
 	fixed_t saved_pitch = self->pitch;
-	AActor *linetarget;
+	FTranslatedLineTarget t;
 
 	// [RH] Andy Baker's stealth monsters
 	if (self->flags & MF_STEALTH)
@@ -3002,8 +3002,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
 		
 	self->angle = self->AngleTo(self->target);
 
-	self->pitch = P_AimLineAttack (self, self->angle, MISSILERANGE, &linetarget, ANGLE_1*60, 0, self->target);
-	if (linetarget == NULL)
+	self->pitch = P_AimLineAttack (self, self->angle, MISSILERANGE, &t, ANGLE_1*60, 0, self->target);
+	if (t.linetarget == NULL)
 	{
 		// We probably won't hit the target, but aim at it anyway so we don't look stupid.
 		fixedvec2 pos = self->Vec2To(self->target);

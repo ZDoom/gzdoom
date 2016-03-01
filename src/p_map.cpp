@@ -3787,7 +3787,7 @@ void aim_t::AimTraverse(fixed_t startx, fixed_t starty, fixed_t endx, fixed_t en
 //
 //============================================================================
 
-fixed_t P_AimLineAttack(AActor *t1, angle_t angle, fixed_t distance, AActor **pLineTarget, fixed_t vrange,
+fixed_t P_AimLineAttack(AActor *t1, angle_t angle, fixed_t distance, FTranslatedLineTarget *pLineTarget, fixed_t vrange,
 	int flags, AActor *target, AActor *friender)
 {
 	fixed_t x2;
@@ -3881,7 +3881,18 @@ fixed_t P_AimLineAttack(AActor *t1, angle_t angle, fixed_t distance, AActor **pL
 	}
 	if (pLineTarget)
 	{
-		*pLineTarget = aim.linetarget;
+		if (aim.linetarget)
+		{
+			pLineTarget->linetarget = aim.linetarget;
+			pLineTarget->hitangle = angle;
+			pLineTarget->targetPosFromSrc = aim.linetarget->Pos();
+			pLineTarget->targetAngleFromSrc = aim.linetarget->angle;
+			pLineTarget->sourcePosFromTarget = t1->Pos();
+			pLineTarget->sourceAngleFromTarget = t1->angle;
+			pLineTarget->unlinked = false;
+		}
+		else
+			memset(pLineTarget, 0, sizeof(*pLineTarget));
 	}
 	return aim.linetarget ? aim.aimpitch : t1->pitch;
 }
@@ -3936,7 +3947,7 @@ static ETraceStatus CheckForActor(FTraceResults &res, void *userdata)
 //==========================================================================
 
 AActor *P_LineAttack(AActor *t1, angle_t angle, fixed_t distance,
-	int pitch, int damage, FName damageType, PClassActor *pufftype, int flags, AActor **victim, int *actualdamage)
+	int pitch, int damage, FName damageType, PClassActor *pufftype, int flags, FTranslatedLineTarget*victim, int *actualdamage)
 {
 	fixed_t vx, vy, vz, shootz;
 	FTraceResults trace;
@@ -3953,7 +3964,7 @@ AActor *P_LineAttack(AActor *t1, angle_t angle, fixed_t distance,
 
 	if (victim != NULL)
 	{
-		*victim = NULL;
+		memset(victim, 0, sizeof(*victim));
 	}
 	if (actualdamage != NULL)
 	{
@@ -4136,6 +4147,7 @@ AActor *P_LineAttack(AActor *t1, angle_t angle, fixed_t distance,
 					puff = P_SpawnPuff(t1, pufftype, hitx, hity, hitz, angle - ANG180, 2, puffFlags | PF_HITTHING | PF_TEMPORARY);
 					killPuff = true;
 				}
+#pragma message("damage angle")
 				newdam = P_DamageMobj(trace.Actor, puff ? puff : t1, t1, damage, damageType, dmgflags);
 				if (actualdamage != NULL)
 				{
@@ -4175,7 +4187,13 @@ AActor *P_LineAttack(AActor *t1, angle_t angle, fixed_t distance,
 			}
 			if (victim != NULL)
 			{
-				*victim = trace.Actor;
+				victim->linetarget = trace.Actor;
+				victim->hitangle = angle;
+				victim->targetPosFromSrc = trace.Actor->Pos();
+				victim->targetAngleFromSrc = trace.Actor->angle;
+				victim->sourcePosFromTarget = t1->Pos();
+				victim->sourceAngleFromTarget = t1->angle;
+				victim->unlinked = false;
 			}
 		}
 		if (trace.Crossed3DWater || trace.CrossedWater)
@@ -4198,22 +4216,22 @@ AActor *P_LineAttack(AActor *t1, angle_t angle, fixed_t distance,
 }
 
 AActor *P_LineAttack(AActor *t1, angle_t angle, fixed_t distance,
-	int pitch, int damage, FName damageType, FName pufftype, int flags, AActor **victim, int *actualdamage)
+	int pitch, int damage, FName damageType, FName pufftype, int flags, FTranslatedLineTarget *victim, int *actualdamage)
 {
 	PClassActor *type = PClass::FindActor(pufftype);
-	if (victim != NULL)
-	{
-		*victim = NULL;
-	}
 	if (type == NULL)
 	{
+		if (victim != NULL)
+		{
+			memset(victim, 0, sizeof(*victim));
+		}
 		Printf("Attempt to spawn unknown actor type '%s'\n", pufftype.GetChars());
+		return NULL;
 	}
 	else
 	{
 		return P_LineAttack(t1, angle, distance, pitch, damage, damageType, type, flags, victim, actualdamage);
 	}
-	return NULL;
 }
 
 //==========================================================================
@@ -4387,6 +4405,24 @@ void P_TraceBleed(int damage, AActor *target, AActor *missile)
 	P_TraceBleed(damage, target->X(), target->Y(), target->Z() + target->height / 2,
 		target, missile->AngleTo(target),
 		pitch);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void P_TraceBleed(int damage, FTranslatedLineTarget *t, AActor *puff)
+{
+	if (t->linetarget == NULL || puff->flags3 & MF3_BLOODLESSIMPACT)
+	{
+		return;
+	}
+
+	fixed_t randpitch = (pr_tracebleed() - 128) << 16;
+	P_TraceBleed(damage, t->linetarget->X(), t->linetarget->Y(), t->linetarget->Z() + t->linetarget->height / 2,
+		t->linetarget, t->SourceAngleToTarget(), 0);
 }
 
 //==========================================================================
@@ -4573,6 +4609,7 @@ void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, i
 			if (puffDefaults->flags3 & MF3_FOILINVUL) dmgFlagPass |= DMG_FOILINVUL;
 			if (puffDefaults->flags7 & MF7_FOILBUDDHA) dmgFlagPass |= DMG_FOILBUDDHA;
 		}
+#pragma message("damage angle")
 		int newdam = P_DamageMobj(hitactor, thepuff ? thepuff : source, source, damage, damagetype, dmgFlagPass);
 
 		if (bleed)
@@ -4690,37 +4727,25 @@ void P_AimCamera(AActor *t1, fixed_t &CameraX, fixed_t &CameraY, fixed_t &Camera
 
 bool P_TalkFacing(AActor *player)
 {
-	AActor *linetarget;
+	static const int angleofs[] = { 0, ANGLE_90 >> 4, - ANGLE_90 >> 4 };
+	FTranslatedLineTarget t;
 
-	P_AimLineAttack(player, player->angle, TALKRANGE, &linetarget, ANGLE_1 * 35, ALF_FORCENOSMART | ALF_CHECKCONVERSATION);
-	if (linetarget == NULL)
+	for (int angle : angleofs)
 	{
-		P_AimLineAttack(player, player->angle + (ANGLE_90 >> 4), TALKRANGE, &linetarget, ANGLE_1 * 35, ALF_FORCENOSMART | ALF_CHECKCONVERSATION);
-		if (linetarget == NULL)
+		P_AimLineAttack(player, player->angle + angle, TALKRANGE, &t, ANGLE_1 * 35, ALF_FORCENOSMART | ALF_CHECKCONVERSATION | ALF_PORTALRESTRICT);
+		if (t.linetarget != NULL)
 		{
-			P_AimLineAttack(player, player->angle - (ANGLE_90 >> 4), TALKRANGE, &linetarget, ANGLE_1 * 35, ALF_FORCENOSMART | ALF_CHECKCONVERSATION);
-			if (linetarget == NULL)
+			if (t.linetarget->health > 0 && // Dead things can't talk.
+				t.linetarget->flags4 & MF4_INCOMBAT && // Fighting things don't talk either.
+				t.linetarget->Conversation != NULL)
 			{
-				return false;
+				// Give the NPC a chance to play a brief animation
+				t.linetarget->ConversationAnimation(0);
+				P_StartConversation(t.linetarget, player, true, true);
+				return true;
 			}
+			return false;
 		}
-	}
-	// Dead things can't talk.
-	if (linetarget->health <= 0)
-	{
-		return false;
-	}
-	// Fighting things don't talk either.
-	if (linetarget->flags4 & MF4_INCOMBAT)
-	{
-		return false;
-	}
-	if (linetarget->Conversation != NULL)
-	{
-		// Give the NPC a chance to play a brief animation
-		linetarget->ConversationAnimation(0);
-		P_StartConversation(linetarget, player, true, true);
-		return true;
 	}
 	return false;
 }

@@ -100,7 +100,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_JabDagger)
 	int 		damage;
 	int 		pitch;
 	int			power;
-	AActor *linetarget;
+	FTranslatedLineTarget t;
 
 	power = MIN(10, self->player->mo->stamina / 10);
 	damage = (pr_jabdagger() % (power + 8)) * (power + 2);
@@ -111,18 +111,18 @@ DEFINE_ACTION_FUNCTION(AActor, A_JabDagger)
 	}
 
 	angle = self->angle + (pr_jabdagger.Random2() << 18);
-	pitch = P_AimLineAttack (self, angle, 80*FRACUNIT, &linetarget);
-	P_LineAttack (self, angle, 80*FRACUNIT, pitch, damage, NAME_Melee, "StrifeSpark", true, &linetarget);
+	pitch = P_AimLineAttack (self, angle, 80*FRACUNIT);
+	P_LineAttack (self, angle, 80*FRACUNIT, pitch, damage, NAME_Melee, "StrifeSpark", true, &t);
 
 	// turn to face target
-	if (linetarget)
+	if (t.linetarget)
 	{
 		S_Sound (self, CHAN_WEAPON,
-			linetarget->flags & MF_NOBLOOD ? "misc/metalhit" : "misc/meathit",
+			t.linetarget->flags & MF_NOBLOOD ? "misc/metalhit" : "misc/meathit",
 			1, ATTN_NORM);
-		self->angle = self->AngleTo(linetarget);
+		self->angle = t.SourceAngleToTarget();
 		self->flags |= MF_JUSTATTACKED;
-		P_DaggerAlert (self, linetarget);
+		P_DaggerAlert (self, t.linetarget);
 	}
 	else
 	{
@@ -978,7 +978,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil1)
 
 	AActor *spot;
 	player_t *player = self->player;
-	AActor *linetarget;
+	FTranslatedLineTarget t;
 
 	if (player == NULL || player->ReadyWeapon == NULL)
 		return 0;
@@ -986,13 +986,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil1)
 	P_DamageMobj (self, self, NULL, 1*4, 0, DMG_NO_ARMOR);
 	S_Sound (self, CHAN_WEAPON, "weapons/sigilcharge", 1, ATTN_NORM);
 
-	P_BulletSlope (self, &linetarget);
-	if (linetarget != NULL)
+	P_BulletSlope (self, &t, ALF_PORTALRESTRICT);
+	if (t.linetarget != NULL)
 	{
-		spot = Spawn("SpectralLightningSpot", linetarget->X(), linetarget->Y(), linetarget->floorz, ALLOW_REPLACE);
+		spot = Spawn("SpectralLightningSpot", t.linetarget->X(), t.linetarget->Y(), t.linetarget->floorz, ALLOW_REPLACE);
 		if (spot != NULL)
 		{
-			spot->tracer = linetarget;
+			spot->tracer = t.linetarget;
 		}
 	}
 	else
@@ -1080,7 +1080,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil4)
 
 	AActor *spot;
 	player_t *player = self->player;
-	AActor *linetarget;
+	FTranslatedLineTarget t;
 
 	if (player == NULL || player->ReadyWeapon == NULL)
 		return 0;
@@ -1088,13 +1088,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil4)
 	P_DamageMobj (self, self, NULL, 4*4, 0, DMG_NO_ARMOR);
 	S_Sound (self, CHAN_WEAPON, "weapons/sigilcharge", 1, ATTN_NORM);
 
-	P_BulletSlope (self, &linetarget);
-	if (linetarget != NULL)
+	P_BulletSlope (self, &t, ALF_PORTALRESTRICT);
+	if (t.linetarget != NULL)
 	{
-		spot = P_SpawnPlayerMissile (self, 0,0,0, PClass::FindActor("SpectralLightningBigV1"), self->angle, &linetarget);
+		spot = P_SpawnPlayerMissile (self, 0,0,0, PClass::FindActor("SpectralLightningBigV1"), self->angle, &t, NULL, false, false, ALF_PORTALRESTRICT);
 		if (spot != NULL)
 		{
-			spot->tracer = linetarget;
+			spot->tracer = t.linetarget;
 		}
 	}
 	else

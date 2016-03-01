@@ -927,7 +927,7 @@ static inline bool isFakePain(AActor *target, AActor *inflictor, int damage)
 
 // Returns the amount of damage actually inflicted upon the target, or -1 if
 // the damage was cancelled.
-int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage, FName mod, int flags)
+int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage, FName mod, int flags, angle_t angle)
 {
 	unsigned ang;
 	player_t *player = NULL;
@@ -1151,11 +1151,15 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 		{
 			AActor *origin = (source && (flags & DMG_INFLICTOR_IS_PUFF))? source : inflictor;
 
-			// If the origin and target are in exactly the same spot, choose a random direction.
-			// (Most likely cause is from telefragging somebody during spawning because they
-			// haven't moved from their spawn spot at all.)
-			if (origin->X() == target->X() && origin->Y() == target->Y())
+			if (flags & DMG_USEANGLE)
 			{
+				ang = angle;
+			}
+			else if (origin->X() == target->X() && origin->Y() == target->Y())
+			{
+				// If the origin and target are in exactly the same spot, choose a random direction.
+				// (Most likely cause is from telefragging somebody during spawning because they
+				// haven't moved from their spawn spot at all.)
 				ang = pr_kickbackdir.GenRand32();
 			}
 			else

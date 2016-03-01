@@ -66,7 +66,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_StaffAttack)
 	angle_t angle;
 	int slope;
 	player_t *player;
-	AActor *linetarget;
+	FTranslatedLineTarget t;
 
 	if (NULL == (player = self->player))
 	{
@@ -88,13 +88,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_StaffAttack)
 	}
 	angle = self->angle;
 	angle += pr_sap.Random2() << 18;
-	slope = P_AimLineAttack (self, angle, MELEERANGE, &linetarget);
-	P_LineAttack (self, angle, MELEERANGE, slope, damage, NAME_Melee, puff, true, &linetarget);
-	if (linetarget)
+	slope = P_AimLineAttack (self, angle, MELEERANGE);
+	P_LineAttack (self, angle, MELEERANGE, slope, damage, NAME_Melee, puff, true, &t);
+	if (t.linetarget)
 	{
 		//S_StartSound(player->mo, sfx_stfhit);
 		// turn to face target
-		self->angle = self->AngleTo(linetarget);
+		self->angle = t.SourceAngleToTarget();
 	}
 	return 0;
 }
@@ -257,7 +257,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GauntletAttack)
 	fixed_t dist;
 	player_t *player;
 	PClassActor *pufftype;
-	AActor *linetarget;
+	FTranslatedLineTarget t;
 	int actualdamage = 0;
 
 	if (NULL == (player = self->player))
@@ -290,9 +290,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GauntletAttack)
 		angle += pr_gatk.Random2() << 18;
 		pufftype = PClass::FindActor("GauntletPuff1");
 	}
-	slope = P_AimLineAttack (self, angle, dist, &linetarget);
-	P_LineAttack (self, angle, dist, slope, damage, NAME_Melee, pufftype, false, &linetarget, &actualdamage);
-	if (!linetarget)
+	slope = P_AimLineAttack (self, angle, dist);
+	P_LineAttack (self, angle, dist, slope, damage, NAME_Melee, pufftype, false, &t, &actualdamage);
+	if (!t.linetarget)
 	{
 		if (pr_gatk() > 64)
 		{
@@ -316,7 +316,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GauntletAttack)
 	}
 	if (power)
 	{
-		if (!(linetarget->flags5 & MF5_DONTDRAIN)) P_GiveBody (self, actualdamage>>1);
+		if (!(t.linetarget->flags5 & MF5_DONTDRAIN)) P_GiveBody (self, actualdamage>>1);
 		S_Sound (self, CHAN_AUTO, "weapons/gauntletspowhit", 1, ATTN_NORM);
 	}
 	else
@@ -324,7 +324,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GauntletAttack)
 		S_Sound (self, CHAN_AUTO, "weapons/gauntletshit", 1, ATTN_NORM);
 	}
 	// turn to face target
-	angle = self->AngleTo(linetarget);
+	angle = t.SourceAngleToTarget();
 	if (angle-self->angle > ANG180)
 	{
 		if ((int)(angle-self->angle) < -ANG90/20)
@@ -594,7 +594,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMacePL2)
 
 	AActor *mo;
 	player_t *player;
-	AActor *linetarget;
+	FTranslatedLineTarget t;
 
 	if (NULL == (player = self->player))
 	{
@@ -607,16 +607,16 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMacePL2)
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return 0;
 	}
-	mo = P_SpawnPlayerMissile (self, 0,0,0, RUNTIME_CLASS(AMaceFX4), self->angle, &linetarget);
+	mo = P_SpawnPlayerMissile (self, 0,0,0, RUNTIME_CLASS(AMaceFX4), self->angle, &t);
 	if (mo)
 	{
 		mo->velx += self->velx;
 		mo->vely += self->vely;
 		mo->velz = 2*FRACUNIT+
 			clamp<fixed_t>(finetangent[FINEANGLES/4-(self->pitch>>ANGLETOFINESHIFT)], -5*FRACUNIT, 5*FRACUNIT);
-		if (linetarget)
+		if (t.linetarget && !t.unlinked)
 		{
-			mo->tracer = linetarget;
+			mo->tracer = t.linetarget;
 		}
 	}
 	S_Sound (self, CHAN_WEAPON, "weapons/maceshoot", 1, ATTN_NORM);
@@ -637,7 +637,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DeathBallImpact)
 	AActor *target;
 	angle_t angle = 0;
 	bool newAngle;
-	AActor *linetarget;
+	FTranslatedLineTarget t;
 
 	if ((self->Z() <= self->floorz) && P_HitFloor (self))
 	{ // Landed in some sort of liquid
@@ -671,11 +671,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_DeathBallImpact)
 			angle = 0;
 			for (i = 0; i < 16; i++)
 			{
-				P_AimLineAttack (self, angle, 10*64*FRACUNIT, &linetarget, 0, ALF_NOFRIENDS, NULL, self->target);
-				if (linetarget && self->target != linetarget)
+				P_AimLineAttack (self, angle, 10*64*FRACUNIT, &t, 0, ALF_NOFRIENDS|ALF_PORTALRESTRICT, NULL, self->target);
+				if (t.linetarget && self->target != t.linetarget)
 				{
-					self->tracer = linetarget;
-					angle = self->AngleTo(linetarget);
+					self->tracer = t.linetarget;
+					angle = t.SourceAngleToTarget();
 					newAngle = true;
 					break;
 				}
@@ -943,7 +943,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSkullRodPL2)
 
 	player_t *player;
 	AActor *MissileActor;
-	AActor *linetarget;
+	FTranslatedLineTarget t;
 
 	if (NULL == (player = self->player))
 	{
@@ -955,16 +955,16 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSkullRodPL2)
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return 0;
 	}
-	P_SpawnPlayerMissile (self, 0,0,0, RUNTIME_CLASS(AHornRodFX2), self->angle, &linetarget, &MissileActor);
+	P_SpawnPlayerMissile (self, 0,0,0, RUNTIME_CLASS(AHornRodFX2), self->angle, &t, &MissileActor);
 	// Use MissileActor instead of the return value from
 	// P_SpawnPlayerMissile because we need to give info to the mobj
 	// even if it exploded immediately.
 	if (MissileActor != NULL)
 	{
 		MissileActor->special2 = (int)(player - players);
-		if (linetarget)
+		if (t.linetarget && !t.unlinked)
 		{
-			MissileActor->tracer = linetarget;
+			MissileActor->tracer = t.linetarget;
 		}
 		S_Sound (MissileActor, CHAN_WEAPON, "weapons/hornrodpowshoot", 1, ATTN_NORM);
 	}

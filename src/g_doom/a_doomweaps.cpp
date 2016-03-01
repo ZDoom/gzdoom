@@ -33,7 +33,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Punch)
 	angle_t 	angle;
 	int 		damage;
 	int 		pitch;
-	AActor		*linetarget;
+	FTranslatedLineTarget t;
 
 	if (self->player != NULL)
 	{
@@ -53,15 +53,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_Punch)
 	angle = self->angle;
 
 	angle += pr_punch.Random2() << 18;
-	pitch = P_AimLineAttack (self, angle, MELEERANGE, &linetarget);
+	pitch = P_AimLineAttack (self, angle, MELEERANGE);
 
-	P_LineAttack (self, angle, MELEERANGE, pitch, damage, NAME_Melee, NAME_BulletPuff, LAF_ISMELEEATTACK, &linetarget);
+	P_LineAttack (self, angle, MELEERANGE, pitch, damage, NAME_Melee, NAME_BulletPuff, LAF_ISMELEEATTACK, &t);
 
 	// turn to face target
-	if (linetarget)
+	if (t.linetarget)
 	{
 		S_Sound (self, CHAN_WEAPON, "*fist", 1, ATTN_NORM);
-		self->angle = self->AngleTo(linetarget);
+		self->angle = t.SourceAngleToTarget();
 	}
 	return 0;
 }
@@ -133,7 +133,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 	angle_t angle;
 	angle_t slope;
 	player_t *player;
-	AActor *linetarget;
+	FTranslatedLineTarget t;
 	int actualdamage;
 
 	if (NULL == (player = self->player))
@@ -159,18 +159,18 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 	}
 
 	angle = self->angle + (pr_saw.Random2() * (spread_xy / 255));
-	slope = P_AimLineAttack (self, angle, range, &linetarget) + (pr_saw.Random2() * (spread_z / 255));
+	slope = P_AimLineAttack (self, angle, range, &t) + (pr_saw.Random2() * (spread_z / 255));
 
 	AWeapon *weapon = self->player->ReadyWeapon;
-	if ((weapon != NULL) && !(flags & SF_NOUSEAMMO) && !(!linetarget && (flags & SF_NOUSEAMMOMISS)) && !(weapon->WeaponFlags & WIF_DEHAMMO) && ACTION_CALL_FROM_WEAPON())
+	if ((weapon != NULL) && !(flags & SF_NOUSEAMMO) && !(!t.linetarget && (flags & SF_NOUSEAMMOMISS)) && !(weapon->WeaponFlags & WIF_DEHAMMO) && ACTION_CALL_FROM_WEAPON())
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return 0;
 	}
 
-	P_LineAttack (self, angle, range, slope, damage, NAME_Melee, pufftype, false, &linetarget, &actualdamage);
+	P_LineAttack (self, angle, range, slope, damage, NAME_Melee, pufftype, false, &t, &actualdamage);
 
-	if (!linetarget)
+	if (!t.linetarget)
 	{
 		if ((flags & SF_RANDOMLIGHTMISS) && (pr_saw() > 64))
 		{
@@ -197,7 +197,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 		}
 	}
 
-	if (lifesteal && !(linetarget->flags5 & MF5_DONTDRAIN))
+	if (lifesteal && !(t.linetarget->flags5 & MF5_DONTDRAIN))
 	{
 		if (flags & SF_STEALARMOR)
 		{
@@ -232,7 +232,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 	// turn to face target
 	if (!(flags & SF_NOTURN))
 	{
-		angle = self->AngleTo(linetarget);
+		angle = t.SourceAngleToTarget();
 		if (angle - self->angle > ANG180)
 		{
 			if (angle - self->angle < (angle_t)(-ANG90 / 20))
@@ -643,7 +643,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BFGSpray)
 	int 				j;
 	int 				damage;
 	angle_t 			an;
-	AActor				*linetarget;
+	FTranslatedLineTarget t;
 
 	if (spraytype == NULL) spraytype = PClass::FindActor("BFGExtra");
 	if (numrays <= 0) numrays = 40;
@@ -662,18 +662,18 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BFGSpray)
 		an = self->angle - angle / 2 + angle / numrays*i;
 
 		// self->target is the originator (player) of the missile
-		P_AimLineAttack(self->target, an, distance, &linetarget, vrange);
+		P_AimLineAttack(self->target, an, distance, &t, vrange);
 
-		if (linetarget != NULL)
+		if (t.linetarget != NULL)
 		{
-			AActor *spray = Spawn(spraytype, linetarget->PosPlusZ(linetarget->height >> 2), ALLOW_REPLACE);
+			AActor *spray = Spawn(spraytype, t.linetarget->PosPlusZ(t.linetarget->height >> 2), ALLOW_REPLACE);
 
 			int dmgFlags = 0;
 			FName dmgType = NAME_BFGSplash;
 
 			if (spray != NULL)
 			{
-				if (spray->flags6 & MF6_MTHRUSPECIES && self->target->GetSpecies() == linetarget->GetSpecies())
+				if (spray->flags6 & MF6_MTHRUSPECIES && self->target->GetSpecies() == t.linetarget->GetSpecies())
 				{
 					spray->Destroy(); // [MC] Remove it because technically, the spray isn't trying to "hit" them.
 					continue;
@@ -696,8 +696,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BFGSpray)
 				damage = defdamage;
 			}
 
-			int newdam = P_DamageMobj(linetarget, self->target, self->target, damage, dmgType, dmgFlags);
-			P_TraceBleed(newdam > 0 ? newdam : damage, linetarget, self->target);
+			int newdam = P_DamageMobj(t.linetarget, self->target, self->target, damage, dmgType, dmgFlags|DMG_USEANGLE, t.SourceAngleToTarget());
+			P_TraceBleed(newdam > 0 ? newdam : damage, &t, self);
 		}
 	}
 	return 0;

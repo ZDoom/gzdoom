@@ -1618,6 +1618,8 @@ void FPathTraverse::init (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int fl
 bool FPathTraverse::PortalRelocate(intercept_t *in, int flags, fixedvec3 *optpos)
 {
 	if (!in->isaline || !in->d.line->isLinePortal()) return false;
+	if (P_PointOnLineSidePrecise(trace.x, trace.y, in->d.line) == 1) return false;
+
 	fixed_t hitx = trace.x;
 	fixed_t hity = trace.y;
 	fixed_t endx = trace.x + trace.dx;

@@ -711,6 +711,8 @@ FName CheckCastKludges(FName in)
 		return NAME___decorate_internal_bool__;
 	case NAME_State:
 		return NAME___decorate_internal_state__;
+	case NAME_Float:
+		return NAME___decorate_internal_float__;
 	default:
 		return in;
 	}

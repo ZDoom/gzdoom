@@ -360,8 +360,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetGibHealth)
 //===========================================================================
 //
 // __decorate_internal_state__
+// __decorate_internal_int__
+// __decorate_internal_bool__
+// __decorate_internal_float__
 //
-// Returns the state passed in.
+// Placeholders for forcing DECORATE to cast numbers. If actually called,
+// returns whatever was passed.
 //
 //===========================================================================
 
@@ -373,14 +377,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, __decorate_internal_state__)
 	ACTION_RETURN_STATE(returnme);
 }
 
-//===========================================================================
-//
-// __decorate_internal_int__
-//
-// Returns the int passed in.
-//
-//===========================================================================
-
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, __decorate_internal_int__)
 {
 	PARAM_PROLOGUE;
@@ -389,20 +385,25 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, __decorate_internal_int__)
 	ACTION_RETURN_INT(returnme);
 }
 
-//===========================================================================
-//
-// __decorate_internal_bool__
-//
-// Returns the bool passed in.
-//
-//===========================================================================
-
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, __decorate_internal_bool__)
 {
 	PARAM_PROLOGUE;
 	PARAM_OBJECT(self, AActor);
 	PARAM_BOOL(returnme);
 	ACTION_RETURN_BOOL(returnme);
+}
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, __decorate_internal_float__)
+{
+	PARAM_PROLOGUE;
+	PARAM_OBJECT(self, AActor);
+	PARAM_FLOAT(returnme);
+	if (numret > 0)
+	{
+		ret->SetFloat(returnme);
+		return 1;
+	}
+	return 0;
 }
 
 //==========================================================================

@@ -85,7 +85,7 @@ static BYTE BitTranslate[32];
 
 CUSTOM_CVAR (Int, menu_screenratios, -1, CVAR_ARCHIVE)
 {
-	if (self < -1 || self > 4)
+	if (self < -1 || self > 6)
 	{
 		self = -1;
 	}
@@ -216,7 +216,7 @@ static void BuildModesList (int hiwidth, int hiheight, int hi_bits)
 	bool letterbox=false;
 	int  ratiomatch;
 
-	if (menu_screenratios >= 0 && menu_screenratios <= 4)
+	if (menu_screenratios >= 0 && menu_screenratios <= 6)
 	{
 		ratiomatch = menu_screenratios;
 	}

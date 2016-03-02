@@ -308,7 +308,7 @@ CUSTOM_CVAR (Float, vid_winscale, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 CCMD (vid_listmodes)
 {
-	static const char *ratios[6] = { "", " - 16:9", " - 16:10", "", " - 5:4", " - 21:9" };
+	static const char *ratios[6] = { "", " - 16:9", " - 16:10", "", " - 5:4", "", " - 21:9" };
 	int width, height, bits;
 	bool letterbox;
 

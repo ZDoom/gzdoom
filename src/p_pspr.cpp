@@ -919,20 +919,21 @@ DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_GunFlash)
 // the height of the intended target
 //
 
-angle_t P_BulletSlope (AActor *mo, AActor **pLineTarget)
+angle_t P_BulletSlope (AActor *mo, FTranslatedLineTarget *pLineTarget, int aimflags)
 {
 	static const int angdiff[3] = { -(1<<26), 1<<26, 0 };
 	int i;
 	angle_t an;
 	angle_t pitch;
-	AActor *linetarget;
+	FTranslatedLineTarget scratch;
 
+	if (pLineTarget == NULL) pLineTarget = &scratch;
 	// see which target is to be aimed at
 	i = 2;
 	do
 	{
 		an = mo->angle + angdiff[i];
-		pitch = P_AimLineAttack (mo, an, 16*64*FRACUNIT, &linetarget);
+		pitch = P_AimLineAttack (mo, an, 16*64*FRACUNIT, pLineTarget, 0, aimflags);
 
 		if (mo->player != NULL &&
 			level.IsFreelookAllowed() &&
@@ -940,11 +941,8 @@ angle_t P_BulletSlope (AActor *mo, AActor **pLineTarget)
 		{
 			break;
 		}
-	} while (linetarget == NULL && --i >= 0);
-	if (pLineTarget != NULL)
-	{
-		*pLineTarget = linetarget;
-	}
+	} while (pLineTarget->linetarget == NULL && --i >= 0);
+
 	return pitch;
 }
 

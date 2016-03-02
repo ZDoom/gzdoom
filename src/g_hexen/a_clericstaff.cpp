@@ -55,7 +55,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffCheck)
 	int slope;
 	int i;
 	player_t *player;
-	AActor *linetarget;
+	FTranslatedLineTarget t;
 	PClassActor *puff;
 
 	if (NULL == (player = self->player))
@@ -73,15 +73,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffCheck)
 		for (int j = 1; j >= -1; j -= 2)
 		{
 			angle = pmo->angle + j*i*(ANG45 / 16);
-			slope = P_AimLineAttack(pmo, angle, fixed_t(1.5*MELEERANGE), &linetarget, 0, ALF_CHECK3D);
-			if (linetarget)
+			slope = P_AimLineAttack(pmo, angle, fixed_t(1.5*MELEERANGE), &t, 0, ALF_CHECK3D);
+			if (t.linetarget)
 			{
-				P_LineAttack(pmo, angle, fixed_t(1.5*MELEERANGE), slope, damage, NAME_Melee, puff, false, &linetarget);
-				if (linetarget != NULL)
+				P_LineAttack(pmo, angle, fixed_t(1.5*MELEERANGE), slope, damage, NAME_Melee, puff, false, &t);
+				if (t.linetarget != NULL)
 				{
-					pmo->angle = pmo->AngleTo(linetarget);
-					if (((linetarget->player && (!linetarget->IsTeammate(pmo) || level.teamdamage != 0)) || linetarget->flags3&MF3_ISMONSTER)
-						&& (!(linetarget->flags2&(MF2_DORMANT | MF2_INVULNERABLE))))
+					pmo->angle = t.SourceAngleToTarget();
+					if (((t.linetarget->player && (!t.linetarget->IsTeammate(pmo) || level.teamdamage != 0)) || t.linetarget->flags3&MF3_ISMONSTER)
+						&& (!(t.linetarget->flags2&(MF2_DORMANT | MF2_INVULNERABLE))))
 					{
 						newLife = player->health + (damage >> 3);
 						newLife = newLife > max ? max : newLife;

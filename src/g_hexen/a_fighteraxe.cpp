@@ -24,8 +24,6 @@ void A_FAxeCheckReadyG (AActor *actor);
 void A_FAxeCheckUpG (AActor *actor);
 void A_FAxeAttack (AActor *actor);
 
-extern void AdjustPlayerAngle (AActor *pmo, AActor *linetarget);
-
 // The Fighter's Axe --------------------------------------------------------
 
 class AFWeapAxe : public AFighterWeapon
@@ -210,7 +208,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeAttack)
 	player_t *player;
 	AWeapon *weapon;
 	PClassActor *pufftype;
-	AActor *linetarget;
+	FTranslatedLineTarget t;
 
 	if (NULL == (player = self->player))
 	{
@@ -239,17 +237,17 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeAttack)
 		for (int j = 1; j >= -1; j -= 2)
 		{
 			angle = pmo->angle + j*i*(ANG45 / 16);
-			slope = P_AimLineAttack(pmo, angle, AXERANGE, &linetarget);
-			if (linetarget)
+			slope = P_AimLineAttack(pmo, angle, AXERANGE, &t);
+			if (t.linetarget)
 			{
-				P_LineAttack(pmo, angle, AXERANGE, slope, damage, NAME_Melee, pufftype, true, &linetarget);
-				if (linetarget != NULL)
+				P_LineAttack(pmo, angle, AXERANGE, slope, damage, NAME_Melee, pufftype, true, &t);
+				if (t.linetarget != NULL)
 				{
-					if (linetarget->flags3&MF3_ISMONSTER || linetarget->player)
+					if (t.linetarget->flags3&MF3_ISMONSTER || t.linetarget->player)
 					{
-						P_ThrustMobj(linetarget, angle, power);
+						P_ThrustMobj(t.linetarget, t.hitangle, power);
 					}
-					AdjustPlayerAngle(pmo, linetarget);
+					AdjustPlayerAngle(pmo, &t);
 					useMana++;
 					goto axedone;
 				}
@@ -260,7 +258,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeAttack)
 	pmo->weaponspecial = 0;
 
 	angle = pmo->angle;
-	slope = P_AimLineAttack (pmo, angle, MELEERANGE, &linetarget);
+	slope = P_AimLineAttack (pmo, angle, MELEERANGE);
 	P_LineAttack (pmo, angle, MELEERANGE, slope, damage, NAME_Melee, pufftype, true);
 
 axedone:

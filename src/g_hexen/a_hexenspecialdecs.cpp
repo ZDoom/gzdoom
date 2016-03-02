@@ -350,7 +350,7 @@ void AZBell::Activate (AActor *activator)
 {
 	if (health > 0)
 	{
-		P_DamageMobj (this, activator, activator, 10, NAME_Melee); // 'ring' the bell
+		P_DamageMobj (this, activator, activator, 10, NAME_Melee, DMG_THRUSTLESS); // 'ring' the bell
 	}
 }
 

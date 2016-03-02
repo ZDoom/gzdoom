@@ -97,17 +97,20 @@ bool AMageStaffFX2::SpecialBlastHandling (AActor *source, fixed_t strength)
 //
 //============================================================================
 
-void MStaffSpawn (AActor *pmo, angle_t angle)
+void MStaffSpawn (AActor *pmo, angle_t angle, AActor *alttarget)
 {
 	AActor *mo;
-	AActor *linetarget;
+	FTranslatedLineTarget t;
 
 	mo = P_SpawnPlayerMissile (pmo, 0, 0, 8*FRACUNIT,
-		RUNTIME_CLASS(AMageStaffFX2), angle, &linetarget);
+		RUNTIME_CLASS(AMageStaffFX2), angle, &t);
 	if (mo)
 	{
 		mo->target = pmo;
-		mo->tracer = linetarget;
+		if (t.linetarget && !t.unlinked)
+			mo->tracer = t.linetarget;
+		else
+			mo->tracer = alttarget;
 	}
 }
 
@@ -123,7 +126,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MStaffAttack)
 
 	angle_t angle;
 	player_t *player;
-	AActor *linetarget;
+	FTranslatedLineTarget t;
 
 	if (NULL == (player = self->player))
 	{
@@ -139,18 +142,18 @@ DEFINE_ACTION_FUNCTION(AActor, A_MStaffAttack)
 	angle = self->angle;
 	
 	// [RH] Let's try and actually track what the player aimed at
-	P_AimLineAttack (self, angle, PLAYERMISSILERANGE, &linetarget, ANGLE_1*32);
-	if (linetarget == NULL)
+	P_AimLineAttack (self, angle, PLAYERMISSILERANGE, &t, ANGLE_1*32);
+	if (t.linetarget == NULL)
 	{
 		BlockCheckLine.x = self->X();
 		BlockCheckLine.y = self->Y();
 		BlockCheckLine.dx = -finesine[angle >> ANGLETOFINESHIFT];
 		BlockCheckLine.dy = -finecosine[angle >> ANGLETOFINESHIFT];
-		linetarget = P_BlockmapSearch (self, 10, FrontBlockCheck);
+		t.linetarget = P_BlockmapSearch (self, 10, FrontBlockCheck);
 	}
-	MStaffSpawn (self, angle);
-	MStaffSpawn (self, angle-ANGLE_1*5);
-	MStaffSpawn (self, angle+ANGLE_1*5);
+	MStaffSpawn (self, angle, t.linetarget);
+	MStaffSpawn (self, angle-ANGLE_1*5, t.linetarget);
+	MStaffSpawn (self, angle+ANGLE_1*5, t.linetarget);
 	S_Sound (self, CHAN_WEAPON, "MageStaffFire", 1, ATTN_NORM);
 	weapon->MStaffCount = 3;
 	return 0;

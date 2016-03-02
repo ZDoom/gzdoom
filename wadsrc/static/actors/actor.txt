@@ -356,4 +356,5 @@ ACTOR Actor native //: Thinker
 	native state __decorate_internal_state__(state);
 	native int __decorate_internal_int__(int);
 	native bool __decorate_internal_bool__(bool);
+	native float __decorate_internal_float__(float);
 }

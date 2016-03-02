@@ -176,7 +176,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BeakAttackPL1)
 	int damage;
 	int slope;
 	player_t *player;
-	AActor *linetarget;
+	FTranslatedLineTarget t;
 
 	if (NULL == (player = self->player))
 	{
@@ -185,11 +185,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_BeakAttackPL1)
 
 	damage = 1 + (pr_beakatkpl1()&3);
 	angle = player->mo->angle;
-	slope = P_AimLineAttack (player->mo, angle, MELEERANGE, &linetarget);
-	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage, NAME_Melee, "BeakPuff", true, &linetarget);
-	if (linetarget)
+	slope = P_AimLineAttack (player->mo, angle, MELEERANGE);
+	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage, NAME_Melee, "BeakPuff", true, &t);
+	if (t.linetarget)
 	{
-		player->mo->angle = player->mo->AngleTo(linetarget);
+		player->mo->angle = t.SourceAngleToTarget();
 	}
 	P_PlayPeck (player->mo);
 	player->chickenPeck = 12;
@@ -211,7 +211,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BeakAttackPL2)
 	int damage;
 	int slope;
 	player_t *player;
-	AActor *linetarget;
+	FTranslatedLineTarget t;
 
 	if (NULL == (player = self->player))
 	{
@@ -220,11 +220,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_BeakAttackPL2)
 
 	damage = pr_beakatkpl2.HitDice (4);
 	angle = player->mo->angle;
-	slope = P_AimLineAttack (player->mo, angle, MELEERANGE, &linetarget);
-	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage, NAME_Melee, "BeakPuff", true, &linetarget);
-	if (linetarget)
+	slope = P_AimLineAttack (player->mo, angle, MELEERANGE);
+	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage, NAME_Melee, "BeakPuff", true, &t);
+	if (t.linetarget)
 	{
-		player->mo->angle = player->mo->AngleTo(linetarget);
+		player->mo->angle = t.SourceAngleToTarget();
 	}
 	P_PlayPeck (player->mo);
 	player->chickenPeck = 12;

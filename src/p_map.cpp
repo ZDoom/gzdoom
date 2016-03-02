@@ -3674,15 +3674,15 @@ struct aim_t
 		else if (position == sector_t::floor && portal->threshold > limitz) return;
 		aim_t newtrace = Clone();
 
-		Printf("-----Entering %s portal\n", position ? "ceiling" : "floor");
 
 		newtrace.toppitch = newtoppitch;
 		newtrace.bottompitch = newbottompitch;
 		newtrace.aimdir = position == sector_t::ceiling? aim_t::aim_up : aim_t::aim_down;
 		newtrace.startpos = { startpos.x + portal->scaleX, startpos.y + portal->scaleY, startpos.z };
-		newtrace.lastsector = P_PointInSector(startpos.x, startpos.y);
 		newtrace.startfrac = frac + FixedDiv(FRACUNIT, attackrange);	// this is to skip the transition line to the portal which will produce a bogus opening
+		newtrace.lastsector = P_PointInSector(newtrace.startpos.x + FixedMul(aimtrace.x, newtrace.startfrac) , newtrace.startpos.y + FixedMul(aimtrace.y, newtrace.startfrac));
 		newtrace.limitz = portal->threshold;
+		Printf("-----Entering %s portal from sector %d to sector %d\n", position ? "ceiling" : "floor", lastsector->sectornum, newtrace.lastsector->sectornum);
 		newtrace.AimTraverse();
 		SetResult(linetarget, newtrace.linetarget);
 		SetResult(thing_friend, newtrace.thing_friend);
@@ -3798,6 +3798,7 @@ struct aim_t
 
 				sector_t *entersec = frontflag ? li->frontsector : li->backsector;
 				sector_t *exitsec = frontflag ? li->backsector : li->frontsector;
+				lastsector = entersec;
 				// check portal in backsector when aiming up/downward is possible, the line doesn't have portals on both sides and there's actually a portal in the backsector
 				if ((planestocheck & aim_up) && toppitch < 0 && open.top != FIXED_MAX && !entersec->PortalBlocksMovement(sector_t::ceiling))
 				{

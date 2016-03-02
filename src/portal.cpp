@@ -1108,9 +1108,16 @@ bool P_CollectConnectedGroups(int startgroup, const fixedvec3 &position, fixed_t
 
 	bool retval = false;
 	out.inited = true;
+
+	processMask.setSize(Displacements.size);
+	if (Displacements.size == 1)
+	{
+		processMask.setBit(startgroup);
+		return false;
+	}
+
 	if (linkedPortals.Size() != 0)
 	{
-		processMask.setSize(linkedPortals.Size());
 		processMask.clear();
 		foundPortals.Clear();
 

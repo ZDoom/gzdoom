@@ -744,6 +744,13 @@ void DCanvas::VirtualToRealCoords(double &x, double &y, double &w, double &h,
 	double vwidth, double vheight, bool vbottom, bool handleaspect) const
 {
 	int myratio = handleaspect ? CheckRatio (Width, Height) : 0;
+
+    // if 21:9 AR, map to 16:9 for all callers.
+    // this allows for black bars and stops the stretching of fullscreen images
+    if (myratio == 6) {
+        myratio = 2;
+    }
+
 	double right = x + w;
 	double bottom = y + h;
 

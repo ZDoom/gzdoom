@@ -1797,7 +1797,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
 		if (!(flags & CPF_NOTURN))
 		{
 			// turn to face target
-			self->angle = t.SourceAngleToTarget();
+			self->angle = t.angleFromSource;
 		}
 
 		if (flags & CPF_PULLIN) self->flags |= MF_JUSTATTACKED;

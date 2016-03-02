@@ -210,7 +210,7 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef,
 			open.floorpic = front->GetTexture(sector_t::floor);
 			open.floorterrain = front->GetTerrain(sector_t::floor);
 			if (bf != FIXED_MIN) open.lowfloor = bf;
-			else
+			else if (!(flags & FFCF_NODROPOFF))
 			{
 				// We must check through the portal for the actual dropoff.
 				// If there's no lines in the lower sections we'd never get a usable value otherwise.
@@ -224,7 +224,7 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef,
 			open.floorpic = back->GetTexture(sector_t::floor);
 			open.floorterrain = back->GetTerrain(sector_t::floor);
 			if (ff != FIXED_MIN) open.lowfloor = ff;
-			else
+			else if (!(flags & FFCF_NODROPOFF))
 			{
 				// We must check through the portal for the actual dropoff.
 				// If there's no lines in the lower sections we'd never get a usable value otherwise.
@@ -264,7 +264,8 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef,
 		open.abovemidtex = open.touchmidtex = false;
 	}
 
-	open.range = open.top - open.bottom;
+	// avoid overflows in the opening.
+	open.range = (fixed_t)MIN<QWORD>((QWORD)open.top - open.bottom, FIXED_MAX);
 }
 
 

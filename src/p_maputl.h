@@ -351,9 +351,9 @@ public:
 
 	intercept_t *Next();
 
-	FPathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int flags)
+	FPathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int flags, fixed_t startfrac = 0)
 	{
-		init(x1, y1, x2, y2, flags);
+		init(x1, y1, x2, y2, flags, startfrac);
 	}
 	void init(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int flags, fixed_t startfrac = 0);
 	bool PortalRelocate(intercept_t *in, int flags, fixedvec3 *optpos = NULL);

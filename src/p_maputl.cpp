@@ -1616,7 +1616,7 @@ void FPathTraverse::init (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int fl
 //
 //===========================================================================
 
-bool FPathTraverse::PortalRelocate(intercept_t *in, int flags, fixedvec3 *optpos)
+int FPathTraverse::PortalRelocate(intercept_t *in, int flags, fixedvec3 *optpos)
 {
 	if (!in->isaline || !in->d.line->isLinePortal()) return false;
 	if (P_PointOnLineSidePrecise(trace.x, trace.y, in->d.line) == 1) return false;
@@ -1636,7 +1636,7 @@ bool FPathTraverse::PortalRelocate(intercept_t *in, int flags, fixedvec3 *optpos
 	}
 	intercepts.Resize(intercept_index);
 	init(hitx, hity, endx, endy, flags, in->frac);
-	return true;
+	return in->d.line->getPortal()->mType == PORTT_LINKED? 1:-1;
 }
 
 //===========================================================================

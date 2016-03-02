@@ -3679,7 +3679,7 @@ struct aim_t
 		newtrace.bottompitch = newbottompitch;
 		newtrace.aimdir = position == sector_t::ceiling? aim_t::aim_up : aim_t::aim_down;
 		newtrace.startpos = { startpos.x + portal->scaleX, startpos.y + portal->scaleY, startpos.z };
-		newtrace.startfrac = frac + FixedDiv(FRACUNIT, attackrange);	// this is to skip the transition line to the portal which will produce a bogus opening
+		newtrace.startfrac = frac + FixedDiv(FRACUNIT, attackrange);	// this is to skip the transition line to the portal which would produce a bogus opening
 		newtrace.lastsector = P_PointInSector(newtrace.startpos.x + FixedMul(aimtrace.x, newtrace.startfrac) , newtrace.startpos.y + FixedMul(aimtrace.y, newtrace.startfrac));
 		newtrace.limitz = portal->threshold;
 		Printf("-----Entering %s portal from sector %d to sector %d\n", position ? "ceiling" : "floor", lastsector->sectornum, newtrace.lastsector->sectornum);
@@ -3689,6 +3689,45 @@ struct aim_t
 		SetResult(thing_other, newtrace.thing_other);
 		Printf("-----Exiting %s portal\n", position ? "ceiling" : "floor");
 	}
+
+	//============================================================================
+	//
+	// traverses a line portal
+	// simply calling PortalRelocate does not work here because more needs to be set up
+	//
+	//============================================================================
+
+	void EnterLinePortal(line_t *li, fixed_t frac)
+	{
+		aim_t newtrace = Clone();
+
+		FLinePortal *port = li->getPortal();
+		line_t *dest = port->mDestination;
+
+		newtrace.toppitch = toppitch;
+		newtrace.bottompitch = bottompitch;
+		newtrace.aimdir = aimdir;
+		newtrace.unlinked = (port->mType != PORTT_LINKED);
+		newtrace.startpos = startpos;
+		newtrace.aimtrace = aimtrace;
+		P_TranslatePortalXY(li, dest, newtrace.startpos.x, newtrace.startpos.y);
+		P_TranslatePortalZ(li, dest, newtrace.startpos.z);
+		P_TranslatePortalVXVY(li, dest, newtrace.aimtrace.x, newtrace.aimtrace.y);
+
+		newtrace.startfrac = frac + FixedDiv(FRACUNIT, attackrange);	// this is to skip the transition line to the portal which would produce a bogus opening
+
+		fixed_t x = newtrace.startpos.x + FixedMul(newtrace.aimtrace.x, newtrace.startfrac);
+		fixed_t y = newtrace.startpos.y + FixedMul(newtrace.aimtrace.y, newtrace.startfrac);
+
+		newtrace.lastsector = P_PointInSector(x, y);
+		P_TranslatePortalZ(li, dest, limitz);
+		Printf("-----Entering line portal from sector %d to sector %d\n", lastsector->sectornum, newtrace.lastsector->sectornum);
+		newtrace.AimTraverse();
+		SetResult(linetarget, newtrace.linetarget);
+		SetResult(thing_friend, newtrace.thing_friend);
+		SetResult(thing_other, newtrace.thing_other);
+	}
+
 
 	//============================================================================
 	//
@@ -3758,6 +3797,13 @@ struct aim_t
 				int frontflag = P_PointOnLineSidePrecise(startpos.x, startpos.y, li);
 
 				Printf("Found line %d: toppitch = %f, bottompitch = %f\n", int(li - lines), ANGLE2DBL(toppitch), ANGLE2DBL(bottompitch));
+
+				if (li->isLinePortal() && frontflag == 0)
+				{
+					EnterLinePortal(li, in->frac);
+					return;
+				}
+
 
 				if (!(li->flags & ML_TWOSIDED) || (li->flags & ML_BLOCKEVERYTHING))
 					return;				// stop
@@ -3886,7 +3932,7 @@ struct aim_t
 			if (crossedffloors)
 			{
 				// if 3D floors were in the way do an extra visibility check for safety
-				if (!P_CheckSight(shootthing, th, SF_IGNOREVISIBILITY | SF_IGNOREWATERBOUNDARY))
+				if (!unlinked && !P_CheckSight(shootthing, th, SF_IGNOREVISIBILITY | SF_IGNOREWATERBOUNDARY))
 				{
 					// the thing can't be seen so we can safely exclude its range from our aiming field
 					if (thingtoppitch < toppitch)

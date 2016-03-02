@@ -818,6 +818,13 @@ void DCanvas::VirtualToRealCoordsInt(int &x, int &y, int &w, int &h,
 void DCanvas::FillBorder (FTexture *img)
 {
 	int myratio = CheckRatio (Width, Height);
+
+    // if 21:9 AR, fill borders akin to 16:9, since all fullscreen
+    // images are being drawn to that scale.
+    if (myratio == 6) {
+        myratio = 2;
+    }
+
 	if (myratio == 0)
 	{ // This is a 4:3 display, so no border to show
 		return;

@@ -363,7 +363,7 @@ void R_SWRSetWindow(int windowSize, int fullWidth, int fullHeight, int stHeight,
 	virtwidth = virtwidth2 = fullWidth;
 	virtheight = virtheight2 = fullHeight;
 
-	if (trueratio & 4)
+	if (Is54Aspect(trueratio))
 	{
 		virtheight2 = virtheight2 * BaseRatioSizes[trueratio][3] / 48;
 	}
@@ -372,7 +372,7 @@ void R_SWRSetWindow(int windowSize, int fullWidth, int fullHeight, int stHeight,
 		virtwidth2 = virtwidth2 * BaseRatioSizes[trueratio][3] / 48;
 	}
 
-	if (WidescreenRatio & 4)
+	if (Is54Aspect(WidescreenRatio))
 	{
 		virtheight = virtheight * BaseRatioSizes[WidescreenRatio][3] / 48;
 	}

@@ -816,7 +816,7 @@ void DCanvas::FillBorder (FTexture *img)
 		return;
 	}
 	int bordtop, bordbottom, bordleft, bordright, bord;
-	if (myratio & 4)
+	if (Is54Aspect(myratio))
 	{ // Screen is taller than it is wide
 		bordleft = bordright = 0;
 		bord = Height - Height * BaseRatioSizes[myratio][3] / 48;

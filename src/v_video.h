@@ -503,8 +503,14 @@ extern "C" void ASM_PatchPitch (void);
 
 int CheckRatio (int width, int height, int *trueratio=NULL);
 static inline int CheckRatio (double width, double height) { return CheckRatio(int(width), int(height)); }
-extern const int BaseRatioSizes[5][4];
+extern const int BaseRatioSizes[7][4];
 
+inline bool IsRatioWidescreen(int ratio) {
+    return (ratio & 3)!=0;
+}
 
+inline bool Is54Aspect(int ratio) {
+    return ratio == 4;
+}
 
 #endif // __V_VIDEO_H__

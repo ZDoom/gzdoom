@@ -4281,12 +4281,7 @@ AActor *P_LineAttack(AActor *t1, angle_t angle, fixed_t distance,
 				trace.Sector->heightsec == NULL &&
 				trace.HitType == TRACE_HitFloor)
 			{
-				// Using the puff's position is not accurate enough.
-				// Instead make it splash at the actual hit position
-				hitx = t1->X() + FixedMul(vx, trace.Distance);
-				hity = t1->Y() + FixedMul(vy, trace.Distance);
-				hitz = shootz + FixedMul(vz, trace.Distance);
-				P_HitWater(puff, P_PointInSector(hitx, hity), hitx, hity, hitz);
+				P_HitWater(puff, trace.Sector, trace.X, trace.Y, trace.Z);
 			}
 		}
 		else
@@ -4852,8 +4847,7 @@ void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, i
 			trace.CrossedWater == NULL &&
 			trace.Sector->heightsec == NULL)
 		{
-			thepuff->SetOrigin(trace.X, trace.Y, trace.Z, false);
-			P_HitWater(thepuff, trace.Sector);
+			P_HitWater(thepuff, trace.Sector, trace.X, trace.Y, trace.Z);
 		}
 		if (trace.Crossed3DWater || trace.CrossedWater)
 		{
@@ -6458,11 +6452,10 @@ static void SpawnDeepSplash(AActor *t1, const FTraceResults &trace, AActor *puff
 
 		if (hitdist >= 0 && hitdist <= trace.Distance)
 		{
-			fixed_t hitx = t1->X() + FixedMul(vx, hitdist);
-			fixed_t hity = t1->Y() + FixedMul(vy, hitdist);
+			fixedvec2 hitpos = t1->Vec2Offset(FixedMul(vx, hitdist), FixedMul(vy, hitdist));
 			fixed_t hitz = shootz + FixedMul(vz, hitdist);
 
-			P_HitWater(puff != NULL ? puff : t1, P_PointInSector(hitx, hity), hitx, hity, hitz);
+			P_HitWater(puff != NULL ? puff : t1, P_PointInSector(hitpos.x, hitpos.y), hitpos.x, hitpos.y, hitz);
 		}
 	}
 }

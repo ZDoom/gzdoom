@@ -3799,10 +3799,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
 				
 				ang >>= ANGLETOFINESHIFT;
 
-				//pos = self->Vec2Offset(
-					//FixedMul(xofs, finecosine[ang]) + FixedMul(yofs, finesine[ang]),
-					//FixedMul(xofs, finesine[ang]) - FixedMul(yofs, finecosine[ang]));
-
 				fixedvec2 xy = self->Vec2Offset(
 					FixedMul(offsetforward, finecosine[ang]) + FixedMul(offsetwidth, finesine[ang]),
 					FixedMul(offsetforward, finesine[ang]) - FixedMul(offsetwidth, finecosine[ang]));

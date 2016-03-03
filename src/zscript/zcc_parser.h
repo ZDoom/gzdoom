@@ -158,8 +158,8 @@ struct ZCC_TreeNode
 		assert(SiblingNext->SiblingPrev == this);
 
 		// Check integrity of new sibling list.
-		assert(sibling->SiblingPrev->SiblingNext = sibling);
-		assert(sibling->SiblingNext->SiblingPrev = sibling);
+		assert(sibling->SiblingPrev->SiblingNext == sibling);
+		assert(sibling->SiblingNext->SiblingPrev == sibling);
 
 		ZCC_TreeNode *siblingend = sibling->SiblingPrev;
 		SiblingPrev->SiblingNext = sibling;

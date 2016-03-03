@@ -3702,6 +3702,7 @@ struct aim_t
 		aim_t newtrace = Clone();
 
 		FLinePortal *port = li->getPortal();
+		if (port->mType != PORTT_LINKED && (flags & ALF_PORTALRESTRICT)) return;
 
 		newtrace.toppitch = toppitch;
 		newtrace.bottompitch = bottompitch;

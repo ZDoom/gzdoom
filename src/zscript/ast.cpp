@@ -377,10 +377,11 @@ static void PrintStateLine(FLispString &out, ZCC_TreeNode *node)
 	ZCC_StateLine *snode = (ZCC_StateLine *)node;
 	out.Open("state-line");
 	out.Add(snode->Sprite, 4);
-	if (snode->bBright)
-	{
-		out.Add("bright", 6);
-	}
+	if (snode->bNoDelay) out.Add("nodelay", 7);
+	if (snode->bBright) out.Add("bright", 6);
+	if (snode->bFast) out.Add("fast", 4);
+	if (snode->bSlow) out.Add("slow", 4);
+	if (snode->bCanRaise) out.Add("canraise", 8);
 	out.Add(*(snode->Frames));
 	PrintNodes(out, snode->Offset);
 	PrintNodes(out, snode->Action, false);

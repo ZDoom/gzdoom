@@ -253,7 +253,11 @@ struct ZCC_StateGoto : ZCC_StatePart
 struct ZCC_StateLine : ZCC_StatePart
 {
 	char Sprite[4];
-	BITFIELD bBright:1;
+	BITFIELD bBright : 1;
+	BITFIELD bFast : 1;
+	BITFIELD bSlow : 1;
+	BITFIELD bNoDelay : 1;
+	BITFIELD bCanRaise : 1;
 	FString *Frames;
 	ZCC_Expression *Offset;
 	ZCC_TreeNode *Action;

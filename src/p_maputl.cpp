@@ -1287,9 +1287,33 @@ void FPathTraverse::AddThingIntercepts (int bx, int by, FBlockThingsIterator &it
 						fixed_t frac = P_InterceptVector (&trace, &line);
 						if (frac < startfrac)
 						{ // behind source
+							if (startfrac > 0)
+							{
+								// check if the trace starts within this actor
+								switch (i)
+								{
+								case 0:
+									line.y -= 2 * thing->radius;
+									break;
+
+								case 1:
+									line.x -= 2 * thing->radius;
+									break;
+
+								case 2:
+									line.y += 2 * thing->radius;
+									break;
+
+								case 3:
+									line.x += 2 * thing->radius;
+									break;
+								}
+								fixed_t frac2 = P_InterceptVector(&trace, &line);
+								if (frac2 >= startfrac) goto addit;
+							}
 							continue;
 						}
-
+					addit:
 						intercept_t newintercept;
 						newintercept.frac = frac;
 						newintercept.isaline = false;
@@ -1422,16 +1446,6 @@ void FPathTraverse::init (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int fl
 	int 		mapystep;
 
 	int 		count;
-				
-	validcount++;
-	intercept_index = intercepts.Size();
-	this->startfrac = startfrac;
-		
-	if ( ((x1-bmaporgx)&(MAPBLOCKSIZE-1)) == 0)
-		x1 += FRACUNIT; // don't side exactly on a line
-	
-	if ( ((y1-bmaporgy)&(MAPBLOCKSIZE-1)) == 0)
-		y1 += FRACUNIT; // don't side exactly on a line
 
 	trace.x = x1;
 	trace.y = y1;
@@ -1445,9 +1459,30 @@ void FPathTraverse::init (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int fl
 		trace.dx = x2 - x1;
 		trace.dy = y2 - y1;
 	}
+	if (startfrac > 0)
+	{
+		fixed_t startdx = FixedMul(trace.dx, startfrac);
+		fixed_t startdy = FixedMul(trace.dy, startfrac);
 
-	_x1 = (long long)x1 + FixedMul(trace.dx, startfrac) - bmaporgx;
-	_y1 = (long long)y1 + FixedMul(trace.dy, startfrac) - bmaporgy;
+		x1 += startdx;
+		y1 += startdy;
+		x2 = trace.dx - startdx;
+		y2 = trace.dy - startdy;
+		flags |= PT_DELTA;
+	}
+
+	validcount++;
+	intercept_index = intercepts.Size();
+	this->startfrac = startfrac;
+
+	if ( ((x1-bmaporgx)&(MAPBLOCKSIZE-1)) == 0)
+		x1 += FRACUNIT; // don't side exactly on a line
+	
+	if ( ((y1-bmaporgy)&(MAPBLOCKSIZE-1)) == 0)
+		y1 += FRACUNIT; // don't side exactly on a line
+
+	_x1 = (long long)x1 - bmaporgx;
+	_y1 = (long long)y1 - bmaporgy;
 	x1 -= bmaporgx;
 	y1 -= bmaporgy;
 	xt1 = int(_x1 >> MAPBLOCKSHIFT);

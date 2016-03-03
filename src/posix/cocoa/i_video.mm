@@ -1170,7 +1170,7 @@ CCMD(vid_listmodes)
 		return;
 	}
 
-	static const char* const ratios[5] = { "", " - 16:9", " - 16:10", " - 17:10", " - 5:4" };
+	static const char* const ratios[7] = { "", " - 16:9", " - 16:10", " - 17:10", " - 5:4", "", " - 21:9" };
 	int width, height;
 	bool letterbox;
 

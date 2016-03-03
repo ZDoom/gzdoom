@@ -26,7 +26,6 @@ struct intercept_t
 	} d;
 };
 
-
 //==========================================================================
 //
 // P_PointOnLineSide
@@ -107,6 +106,10 @@ struct FLineOpening
 };
 
 void	P_LineOpening (FLineOpening &open, AActor *thing, const line_t *linedef, fixed_t x, fixed_t y, fixed_t refx=FIXED_MIN, fixed_t refy=0, int flags=0);
+inline void	P_LineOpening(FLineOpening &open, AActor *thing, const line_t *linedef, fixedvec2 xy, fixed_t refx = FIXED_MIN, fixed_t refy = 0, int flags = 0)
+{
+	P_LineOpening(open, thing, linedef, xy.x, xy.y, refx, refy, flags);
+}
 
 class FBoundingBox;
 struct polyblock_t;
@@ -351,14 +354,24 @@ public:
 
 	intercept_t *Next();
 
-	FPathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int flags)
+	FPathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int flags, fixed_t startfrac = 0)
 	{
-		init(x1, y1, x2, y2, flags);
+		init(x1, y1, x2, y2, flags, startfrac);
 	}
 	void init(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int flags, fixed_t startfrac = 0);
-	bool PortalRelocate(intercept_t *in, int flags, fixedvec3 *optpos = NULL);
+	int PortalRelocate(intercept_t *in, int flags, fixedvec3 *optpos = NULL);
 	virtual ~FPathTraverse();
 	const divline_t &Trace() const { return trace; }
+
+	inline fixedvec2 InterceptPoint(const intercept_t *in)
+	{
+		return
+		{
+			trace.x + FixedMul(trace.dx, in->frac),
+			trace.y + FixedMul(trace.dy, in->frac) 
+		};
+	}
+
 };
 
 //============================================================================

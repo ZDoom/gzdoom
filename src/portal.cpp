@@ -709,14 +709,13 @@ fixedvec2 P_GetOffsetPosition(fixed_t x, fixed_t y, fixed_t dx, fixed_t dy)
 				// Teleport portals are intentionally ignored since skipping this stuff is their entire reason for existence.
 				if (port->mFlags & PORTF_INTERACTIVE)
 				{
-					fixed_t hitdx = FixedMul(it.Trace().dx, in->frac);
-					fixed_t hitdy = FixedMul(it.Trace().dy, in->frac);
+					fixedvec2 hit = it.InterceptPoint(in);
 
 					if (port->mType == PORTT_LINKED)
 					{
 						// optimized handling for linked portals where we only need to add an offset.
-						actx = it.Trace().x + hitdx + port->mXDisplacement;
-						acty = it.Trace().y + hitdy + port->mYDisplacement;
+						hit.x += port->mXDisplacement;
+						hit.y += port->mYDisplacement;
 						dest.x += port->mXDisplacement;
 						dest.y += port->mYDisplacement;
 					}
@@ -724,15 +723,12 @@ fixedvec2 P_GetOffsetPosition(fixed_t x, fixed_t y, fixed_t dx, fixed_t dy)
 					{
 						// interactive ones are more complex because the vector may be rotated.
 						// Note: There is no z-translation here, there's just too much code in the engine that wouldn't be able to handle interactive portals with a height difference.
-						actx = it.Trace().x + hitdx;
-						acty = it.Trace().y + hitdy;
-
-						P_TranslatePortalXY(line, out, actx, acty);
+						P_TranslatePortalXY(line, out, hit.x, hit.y);
 						P_TranslatePortalXY(line, out, dest.x, dest.y);
 					}
 					// update the fields, end this trace and restart from the new position
-					dx = dest.x - actx;
-					dy = dest.y - acty;
+					dx = dest.x - hit.x;
+					dy = dest.y - hit.y;
 					repeat = true;
 				}
 
@@ -1108,9 +1104,16 @@ bool P_CollectConnectedGroups(int startgroup, const fixedvec3 &position, fixed_t
 
 	bool retval = false;
 	out.inited = true;
+
+	processMask.setSize(Displacements.size);
+	if (Displacements.size == 1)
+	{
+		processMask.setBit(startgroup);
+		return false;
+	}
+
 	if (linkedPortals.Size() != 0)
 	{
-		processMask.setSize(linkedPortals.Size());
 		processMask.clear();
 		foundPortals.Clear();
 

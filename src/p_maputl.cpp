@@ -210,7 +210,7 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef,
 			open.floorpic = front->GetTexture(sector_t::floor);
 			open.floorterrain = front->GetTerrain(sector_t::floor);
 			if (bf != FIXED_MIN) open.lowfloor = bf;
-			else
+			else if (!(flags & FFCF_NODROPOFF))
 			{
 				// We must check through the portal for the actual dropoff.
 				// If there's no lines in the lower sections we'd never get a usable value otherwise.
@@ -224,7 +224,7 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef,
 			open.floorpic = back->GetTexture(sector_t::floor);
 			open.floorterrain = back->GetTerrain(sector_t::floor);
 			if (ff != FIXED_MIN) open.lowfloor = ff;
-			else
+			else if (!(flags & FFCF_NODROPOFF))
 			{
 				// We must check through the portal for the actual dropoff.
 				// If there's no lines in the lower sections we'd never get a usable value otherwise.
@@ -264,7 +264,8 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef,
 		open.abovemidtex = open.touchmidtex = false;
 	}
 
-	open.range = open.top - open.bottom;
+	// avoid overflows in the opening.
+	open.range = (fixed_t)MIN<QWORD>((QWORD)open.top - open.bottom, FIXED_MAX);
 }
 
 
@@ -1286,9 +1287,33 @@ void FPathTraverse::AddThingIntercepts (int bx, int by, FBlockThingsIterator &it
 						fixed_t frac = P_InterceptVector (&trace, &line);
 						if (frac < startfrac)
 						{ // behind source
+							if (startfrac > 0)
+							{
+								// check if the trace starts within this actor
+								switch (i)
+								{
+								case 0:
+									line.y -= 2 * thing->radius;
+									break;
+
+								case 1:
+									line.x -= 2 * thing->radius;
+									break;
+
+								case 2:
+									line.y += 2 * thing->radius;
+									break;
+
+								case 3:
+									line.x += 2 * thing->radius;
+									break;
+								}
+								fixed_t frac2 = P_InterceptVector(&trace, &line);
+								if (frac2 >= startfrac) goto addit;
+							}
 							continue;
 						}
-
+					addit:
 						intercept_t newintercept;
 						newintercept.frac = frac;
 						newintercept.isaline = false;
@@ -1421,16 +1446,6 @@ void FPathTraverse::init (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int fl
 	int 		mapystep;
 
 	int 		count;
-				
-	validcount++;
-	intercept_index = intercepts.Size();
-	this->startfrac = startfrac;
-		
-	if ( ((x1-bmaporgx)&(MAPBLOCKSIZE-1)) == 0)
-		x1 += FRACUNIT; // don't side exactly on a line
-	
-	if ( ((y1-bmaporgy)&(MAPBLOCKSIZE-1)) == 0)
-		y1 += FRACUNIT; // don't side exactly on a line
 
 	trace.x = x1;
 	trace.y = y1;
@@ -1444,9 +1459,30 @@ void FPathTraverse::init (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int fl
 		trace.dx = x2 - x1;
 		trace.dy = y2 - y1;
 	}
+	if (startfrac > 0)
+	{
+		fixed_t startdx = FixedMul(trace.dx, startfrac);
+		fixed_t startdy = FixedMul(trace.dy, startfrac);
 
-	_x1 = (long long)x1 + FixedMul(trace.dx, startfrac) - bmaporgx;
-	_y1 = (long long)y1 + FixedMul(trace.dy, startfrac) - bmaporgy;
+		x1 += startdx;
+		y1 += startdy;
+		x2 = trace.dx - startdx;
+		y2 = trace.dy - startdy;
+		flags |= PT_DELTA;
+	}
+
+	validcount++;
+	intercept_index = intercepts.Size();
+	this->startfrac = startfrac;
+
+	if ( ((x1-bmaporgx)&(MAPBLOCKSIZE-1)) == 0)
+		x1 += FRACUNIT; // don't side exactly on a line
+	
+	if ( ((y1-bmaporgy)&(MAPBLOCKSIZE-1)) == 0)
+		y1 += FRACUNIT; // don't side exactly on a line
+
+	_x1 = (long long)x1 - bmaporgx;
+	_y1 = (long long)y1 - bmaporgy;
 	x1 -= bmaporgx;
 	y1 -= bmaporgy;
 	xt1 = int(_x1 >> MAPBLOCKSHIFT);
@@ -1615,7 +1651,7 @@ void FPathTraverse::init (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int fl
 //
 //===========================================================================
 
-bool FPathTraverse::PortalRelocate(intercept_t *in, int flags, fixedvec3 *optpos)
+int FPathTraverse::PortalRelocate(intercept_t *in, int flags, fixedvec3 *optpos)
 {
 	if (!in->isaline || !in->d.line->isLinePortal()) return false;
 	if (P_PointOnLineSidePrecise(trace.x, trace.y, in->d.line) == 1) return false;
@@ -1635,7 +1671,7 @@ bool FPathTraverse::PortalRelocate(intercept_t *in, int flags, fixedvec3 *optpos
 	}
 	intercepts.Resize(intercept_index);
 	init(hitx, hity, endx, endy, flags, in->frac);
-	return true;
+	return in->d.line->getPortal()->mType == PORTT_LINKED? 1:-1;
 }
 
 //===========================================================================

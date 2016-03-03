@@ -245,7 +245,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeAttack)
 				{
 					if (t.linetarget->flags3&MF3_ISMONSTER || t.linetarget->player)
 					{
-						P_ThrustMobj(t.linetarget, t.hitangle, power);
+						P_ThrustMobj(t.linetarget, t.angleFromSource, power);
 					}
 					AdjustPlayerAngle(pmo, &t);
 					useMana++;

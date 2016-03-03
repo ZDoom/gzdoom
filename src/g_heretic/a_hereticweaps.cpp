@@ -94,7 +94,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_StaffAttack)
 	{
 		//S_StartSound(player->mo, sfx_stfhit);
 		// turn to face target
-		self->angle = t.SourceAngleToTarget();
+		self->angle = t.angleFromSource;
 	}
 	return 0;
 }
@@ -324,7 +324,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GauntletAttack)
 		S_Sound (self, CHAN_AUTO, "weapons/gauntletshit", 1, ATTN_NORM);
 	}
 	// turn to face target
-	angle = t.SourceAngleToTarget();
+	angle = t.angleFromSource;
 	if (angle-self->angle > ANG180)
 	{
 		if ((int)(angle-self->angle) < -ANG90/20)
@@ -675,7 +675,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DeathBallImpact)
 				if (t.linetarget && self->target != t.linetarget)
 				{
 					self->tracer = t.linetarget;
-					angle = t.SourceAngleToTarget();
+					angle = t.angleFromSource;
 					newAngle = true;
 					break;
 				}

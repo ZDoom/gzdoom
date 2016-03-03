@@ -61,7 +61,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Punch)
 	if (t.linetarget)
 	{
 		S_Sound (self, CHAN_WEAPON, "*fist", 1, ATTN_NORM);
-		self->angle = t.SourceAngleToTarget();
+		self->angle = t.angleFromSource;
 	}
 	return 0;
 }
@@ -232,7 +232,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 	// turn to face target
 	if (!(flags & SF_NOTURN))
 	{
-		angle = t.SourceAngleToTarget();
+		angle = t.angleFromSource;
 		if (angle - self->angle > ANG180)
 		{
 			if (angle - self->angle < (angle_t)(-ANG90 / 20))
@@ -696,7 +696,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BFGSpray)
 				damage = defdamage;
 			}
 
-			int newdam = P_DamageMobj(t.linetarget, self->target, self->target, damage, dmgType, dmgFlags|DMG_USEANGLE, t.SourceAngleToTarget());
+			int newdam = P_DamageMobj(t.linetarget, self->target, self->target, damage, dmgType, dmgFlags|DMG_USEANGLE, t.angleFromSource);
 			P_TraceBleed(newdam > 0 ? newdam : damage, &t, self);
 		}
 	}

@@ -526,6 +526,7 @@ enum
 	CBF_SETTRACER		= 1 << 3,	//^ but with tracer.
 	CBF_SETONPTR		= 1 << 4,	//Sets the pointer change on the actor doing the checking instead of self.
 	CBF_DROPOFF			= 1 << 5,	//Check for dropoffs.
+	CBF_NOACTORS		= 1 << 6,	//Don't check actors.
 };
 
 enum

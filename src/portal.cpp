@@ -265,9 +265,17 @@ void P_SpawnLinePortal(line_t* line)
 		if (port->mDestination != NULL)
 		{
 			port->mDefFlags = port->mType == PORTT_VISUAL ? PORTF_VISIBLE : port->mType == PORTT_TELEPORT ? PORTF_TYPETELEPORT : PORTF_TYPEINTERACTIVE;
-
-
 		}
+
+		// Get the angle between the two linedefs, for rotating
+		// orientation and velocity. Rotate 180 degrees, and flip
+		// the position across the exit linedef, if reversed.
+
+		double angle = atan2(dst->dy, dst->dx) - atan2(line->dy, line->dx) + M_PI;
+		port->mSinRot = FLOAT2FIXED(sin(angle));
+		port->mCosRot = FLOAT2FIXED(cos(angle));
+		port->mAngleDiff = RAD2ANGLE(angle);
+
 	}
 	else if (line->args[2] == PORTT_LINKEDEE && line->args[0] == 0)
 	{
@@ -546,30 +554,22 @@ bool P_ClipLineToPortal(line_t* line, line_t* portal, fixed_t viewx, fixed_t vie
 //
 //============================================================================
 
-void P_TranslatePortalXY(line_t* src, line_t* dst, fixed_t& x, fixed_t& y)
+void P_TranslatePortalXY(line_t* src, fixed_t& x, fixed_t& y)
 {
-	if (!src || !dst)
-		return;
+	if (!src) return;
+	FLinePortal *port = src->getPortal();
+	if (!port) return;
 
-	fixed_t nposx, nposy;	// offsets from line
-
-	// Get the angle between the two linedefs, for rotating
-	// orientation and velocity. Rotate 180 degrees, and flip
-	// the position across the exit linedef, if reversed.
-
-	double angle = atan2(dst->dy, dst->dx) - atan2(src->dy, src->dx) + M_PI;
-	fixed_t s = FLOAT2FIXED(sin(angle));
-	fixed_t c = FLOAT2FIXED(cos(angle));
-
-	nposx = x - src->v1->x;
-	nposy = y - src->v1->y;
+	// offsets from line
+	fixed_t nposx = x - src->v1->x;
+	fixed_t nposy = y - src->v1->y;
 
 	// Rotate position along normal to match exit linedef
-	fixed_t tx = FixedMul(nposx, c) - FixedMul(nposy, s);
-	fixed_t ty = FixedMul(nposy, c) + FixedMul(nposx, s);
+	fixed_t tx = FixedMul(nposx, port->mCosRot) - FixedMul(nposy, port->mSinRot);
+	fixed_t ty = FixedMul(nposy, port->mCosRot) + FixedMul(nposx, port->mSinRot);
 
-	tx += dst->v2->x;
-	ty += dst->v2->y;
+	tx += port->mDestination->v2->x;
+	ty += port->mDestination->v2->y;
 
 	x = tx;
 	y = ty;
@@ -581,16 +581,16 @@ void P_TranslatePortalXY(line_t* src, line_t* dst, fixed_t& x, fixed_t& y)
 //
 //============================================================================
 
-void P_TranslatePortalVXVY(line_t* src, line_t* dst, fixed_t& vx, fixed_t& vy)
+void P_TranslatePortalVXVY(line_t* src, fixed_t& vx, fixed_t& vy)
 {
-	double angle = atan2(dst->dy, dst->dx) - atan2(src->dy, src->dx) + M_PI;
-	fixed_t s = FLOAT2FIXED(sin(angle));
-	fixed_t c = FLOAT2FIXED(cos(angle));
+	if (!src) return;
+	FLinePortal *port = src->getPortal();
+	if (!port) return;
 
 	fixed_t orig_velx = vx;
 	fixed_t orig_vely = vy;
-	vx = FixedMul(orig_velx, c) - FixedMul(orig_vely, s);
-	vy = FixedMul(orig_vely, c) + FixedMul(orig_velx, s);
+	vx = FixedMul(orig_velx, port->mCosRot) - FixedMul(orig_vely, port->mSinRot);
+	vy = FixedMul(orig_vely, port->mCosRot) + FixedMul(orig_velx, port->mSinRot);
 }
 
 //============================================================================
@@ -599,15 +599,12 @@ void P_TranslatePortalVXVY(line_t* src, line_t* dst, fixed_t& vx, fixed_t& vy)
 //
 //============================================================================
 
-void P_TranslatePortalAngle(line_t* src, line_t* dst, angle_t& angle)
+void P_TranslatePortalAngle(line_t* src, angle_t& angle)
 {
-	if (!src || !dst)
-		return;
-
-	// Get the angle between the two linedefs, for rotating
-	// orientation and velocity. Rotate 180 degrees, and flip
-	// the position across the exit linedef, if reversed.
-	angle += RAD2ANGLE(atan2(dst->dy, dst->dx) - atan2(src->dy, src->dx)) + ANGLE_180;
+	if (!src) return;
+	FLinePortal *port = src->getPortal();
+	if (!port) return;
+	angle += port->mAngleDiff;
 }
 
 //============================================================================
@@ -616,12 +613,14 @@ void P_TranslatePortalAngle(line_t* src, line_t* dst, angle_t& angle)
 //
 //============================================================================
 
-void P_TranslatePortalZ(line_t* src, line_t* dst, fixed_t& z)
+void P_TranslatePortalZ(line_t* src, fixed_t& z)
 {
 	// args[2] = 0 - no adjustment
 	// args[2] = 1 - adjust by floor difference
 	// args[2] = 2 - adjust by ceiling difference
 
+	// This cannot be precalculated because heights may change.
+	line_t *dst = src->getPortalDestination();
 	switch (src->getPortalAlignment())
 	{
 	case PORG_FLOOR:
@@ -704,7 +703,6 @@ fixedvec2 P_GetOffsetPosition(fixed_t x, fixed_t y, fixed_t dx, fixed_t dy)
 				// hit a portal line.
 				line_t *line = in->d.line;
 				FLinePortal *port = line->getPortal();
-				line_t* out = port->mDestination;
 
 				// Teleport portals are intentionally ignored since skipping this stuff is their entire reason for existence.
 				if (port->mFlags & PORTF_INTERACTIVE)
@@ -723,8 +721,8 @@ fixedvec2 P_GetOffsetPosition(fixed_t x, fixed_t y, fixed_t dx, fixed_t dy)
 					{
 						// interactive ones are more complex because the vector may be rotated.
 						// Note: There is no z-translation here, there's just too much code in the engine that wouldn't be able to handle interactive portals with a height difference.
-						P_TranslatePortalXY(line, out, hit.x, hit.y);
-						P_TranslatePortalXY(line, out, dest.x, dest.y);
+						P_TranslatePortalXY(line, hit.x, hit.y);
+						P_TranslatePortalXY(line, dest.x, dest.y);
 					}
 					// update the fields, end this trace and restart from the new position
 					dx = dest.x - hit.x;

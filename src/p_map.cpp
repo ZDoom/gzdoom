@@ -1041,8 +1041,8 @@ static bool PIT_CheckPortal(FMultiBlockLinesIterator &mit, FMultiBlockLinesItera
 	line_t *lp = cres.line->getPortalDestination();
 	fixed_t zofs = 0;
 
-	P_TranslatePortalXY(cres.line, lp, cres.position.x, cres.position.y);
-	P_TranslatePortalZ(cres.line, lp, zofs);
+	P_TranslatePortalXY(cres.line, cres.position.x, cres.position.y);
+	P_TranslatePortalZ(cres.line, zofs);
 
 	// fudge a bit with the portal line so that this gets included in the checks that normally only get run on two-sided lines
 	sector_t *sec = lp->backsector;
@@ -2325,14 +2325,13 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 			}
 			else if (!portalcrossed)
 			{
-				line_t *out = port->mDestination;
 				fixedvec3 pos = { tm.x, tm.y, thing->Z() };
 				fixedvec3 oldthingpos = thing->Pos();
 				fixedvec2 thingpos = oldthingpos;
 				
-				P_TranslatePortalXY(ld, out, pos.x, pos.y);
-				P_TranslatePortalXY(ld, out, thingpos.x, thingpos.y);
-				P_TranslatePortalZ(ld, out, pos.z);
+				P_TranslatePortalXY(ld, pos.x, pos.y);
+				P_TranslatePortalXY(ld, thingpos.x, thingpos.y);
+				P_TranslatePortalZ(ld, pos.z);
 				thing->SetXYZ(thingpos.x, thingpos.y, pos.z);
 				if (!P_CheckPosition(thing, pos.x, pos.y, true))	// check if some actor blocks us on the other side. (No line checks, because of the mess that'd create.)
 				{
@@ -2342,8 +2341,8 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 				}
 				thing->UnlinkFromWorld();
 				thing->SetXYZ(pos);
-				P_TranslatePortalVXVY(ld, out, thing->velx, thing->vely);
-				P_TranslatePortalAngle(ld, out, thing->angle);
+				P_TranslatePortalVXVY(ld, thing->velx, thing->vely);
+				P_TranslatePortalAngle(ld, thing->angle);
 				thing->LinkToWorld();
 				P_FindFloorCeiling(thing);
 				thing->ClearInterpolation();
@@ -2355,7 +2354,6 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 			{
 				divline_t dl1 = { besthit.oldrefpos.x,besthit. oldrefpos.y, besthit.refpos.x - besthit.oldrefpos.x, besthit.refpos.y - besthit.oldrefpos.y };
 				fixedvec3a hit = { dl1.x + FixedMul(dl1.dx, bestfrac), dl1.y + FixedMul(dl1.dy, bestfrac), 0, 0 };
-				line_t *out = port->mDestination;
 
 				R_AddInterpolationPoint(hit);
 				if (port->mType == PORTT_LINKED)
@@ -2365,10 +2363,10 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 				}
 				else
 				{
-					P_TranslatePortalXY(ld, out, hit.x, hit.y);
-					P_TranslatePortalZ(ld, out, hit.z);
+					P_TranslatePortalXY(ld, hit.x, hit.y);
+					P_TranslatePortalZ(ld, hit.z);
 					players[consoleplayer].viewz += hit.z;	// needs to be done here because otherwise the renderer will not catch the change.
-					P_TranslatePortalAngle(ld, out, hit.angle);
+					P_TranslatePortalAngle(ld, hit.angle);
 				}
 				R_AddInterpolationPoint(hit);
 			}
@@ -3700,7 +3698,6 @@ struct aim_t
 		aim_t newtrace = Clone();
 
 		FLinePortal *port = li->getPortal();
-		line_t *dest = port->mDestination;
 
 		newtrace.toppitch = toppitch;
 		newtrace.bottompitch = bottompitch;
@@ -3708,9 +3705,9 @@ struct aim_t
 		newtrace.unlinked = (port->mType != PORTT_LINKED);
 		newtrace.startpos = startpos;
 		newtrace.aimtrace = aimtrace;
-		P_TranslatePortalXY(li, dest, newtrace.startpos.x, newtrace.startpos.y);
-		P_TranslatePortalZ(li, dest, newtrace.startpos.z);
-		P_TranslatePortalVXVY(li, dest, newtrace.aimtrace.x, newtrace.aimtrace.y);
+		P_TranslatePortalXY(li, newtrace.startpos.x, newtrace.startpos.y);
+		P_TranslatePortalZ(li, newtrace.startpos.z);
+		P_TranslatePortalVXVY(li, newtrace.aimtrace.x, newtrace.aimtrace.y);
 
 		newtrace.startfrac = frac + FixedDiv(FRACUNIT, attackrange);	// this is to skip the transition line to the portal which would produce a bogus opening
 
@@ -3718,7 +3715,7 @@ struct aim_t
 		fixed_t y = newtrace.startpos.y + FixedMul(newtrace.aimtrace.y, newtrace.startfrac);
 
 		newtrace.lastsector = P_PointInSector(x, y);
-		P_TranslatePortalZ(li, dest, limitz);
+		P_TranslatePortalZ(li, limitz);
 		Printf("-----Entering line portal from sector %d to sector %d\n", lastsector->sectornum, newtrace.lastsector->sectornum);
 		newtrace.AimTraverse();
 		SetResult(linetarget, newtrace.linetarget);

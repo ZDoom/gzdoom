@@ -3436,6 +3436,8 @@ bool P_BounceActor(AActor *mo, AActor *BlockingMobj, bool ontop)
 //
 //============================================================================
 
+CVAR(Bool, aimdebug, false, 0)
+
 struct AimTarget : public FTranslatedLineTarget
 {
 	angle_t pitch;
@@ -3678,12 +3680,14 @@ struct aim_t
 		newtrace.startfrac = frac + FixedDiv(FRACUNIT, attackrange);	// this is to skip the transition line to the portal which would produce a bogus opening
 		newtrace.lastsector = P_PointInSector(newtrace.startpos.x + FixedMul(aimtrace.x, newtrace.startfrac) , newtrace.startpos.y + FixedMul(aimtrace.y, newtrace.startfrac));
 		newtrace.limitz = portal->threshold;
-		Printf("-----Entering %s portal from sector %d to sector %d\n", position ? "ceiling" : "floor", lastsector->sectornum, newtrace.lastsector->sectornum);
+		if (aimdebug)
+			Printf("-----Entering %s portal from sector %d to sector %d\n", position ? "ceiling" : "floor", lastsector->sectornum, newtrace.lastsector->sectornum);
 		newtrace.AimTraverse();
 		SetResult(linetarget, newtrace.linetarget);
 		SetResult(thing_friend, newtrace.thing_friend);
 		SetResult(thing_other, newtrace.thing_other);
-		Printf("-----Exiting %s portal\n", position ? "ceiling" : "floor");
+		if (aimdebug)
+			Printf("-----Exiting %s portal\n", position ? "ceiling" : "floor");
 	}
 
 	//============================================================================
@@ -3716,7 +3720,8 @@ struct aim_t
 
 		newtrace.lastsector = P_PointInSector(x, y);
 		P_TranslatePortalZ(li, limitz);
-		Printf("-----Entering line portal from sector %d to sector %d\n", lastsector->sectornum, newtrace.lastsector->sectornum);
+		if (aimdebug)
+			Printf("-----Entering line portal from sector %d to sector %d\n", lastsector->sectornum, newtrace.lastsector->sectornum);
 		newtrace.AimTraverse();
 		SetResult(linetarget, newtrace.linetarget);
 		SetResult(thing_friend, newtrace.thing_friend);
@@ -3771,9 +3776,11 @@ struct aim_t
 		FPathTraverse it(startpos.x, startpos.y, aimtrace.x, aimtrace.y, PT_ADDLINES | PT_ADDTHINGS | PT_COMPATIBLE | PT_DELTA, startfrac);
 		intercept_t *in;
 
-		Printf("Start AimTraverse, start = %f,%f,%f, vect = %f,%f,%f\n",
-			startpos.x / 65536., startpos.y / 65536., startpos.y / 65536.,
-			aimtrace.x / 65536., aimtrace.y / 65536.);
+		if (aimdebug)
+			Printf("Start AimTraverse, start = %f,%f,%f, vect = %f,%f,%f\n",
+				startpos.x / 65536., startpos.y / 65536., startpos.y / 65536.,
+				aimtrace.x / 65536., aimtrace.y / 65536.);
+		
 		while ((in = it.Next()))
 		{
 			line_t* 			li;
@@ -3791,7 +3798,8 @@ struct aim_t
 				li = in->d.line;
 				int frontflag = P_PointOnLineSidePrecise(startpos.x, startpos.y, li);
 
-				Printf("Found line %d: toppitch = %f, bottompitch = %f\n", int(li - lines), ANGLE2DBL(toppitch), ANGLE2DBL(bottompitch));
+				if (aimdebug)
+					Printf("Found line %d: toppitch = %f, bottompitch = %f\n", int(li - lines), ANGLE2DBL(toppitch), ANGLE2DBL(bottompitch));
 
 				if (li->isLinePortal() && frontflag == 0)
 				{
@@ -3834,7 +3842,8 @@ struct aim_t
 				if (!AimTraverse3DFloors(it.Trace(), in, frontflag, &planestocheck))
 					return;
 
-				Printf("After line %d: toppitch = %f, bottompitch = %f, planestocheck = %d\n", int(li - lines), ANGLE2DBL(toppitch), ANGLE2DBL(bottompitch), planestocheck);
+				if (aimdebug)
+					Printf("After line %d: toppitch = %f, bottompitch = %f, planestocheck = %d\n", int(li - lines), ANGLE2DBL(toppitch), ANGLE2DBL(bottompitch), planestocheck);
 
 				sector_t *entersec = frontflag ? li->frontsector : li->backsector;
 				sector_t *exitsec = frontflag ? li->backsector : li->frontsector;
@@ -3990,20 +3999,23 @@ struct aim_t
 					if (sv_smartaim < 3)
 					{
 						// don't autoaim at barrels and other shootable stuff unless no monsters have been found
-						Printf("Hit other %s at %f,%f,%f\n", th->GetClass()->TypeName.GetChars(), th->X() / 65536., th->Y() / 65536., th->Z() / 65536.);
+						if (aimdebug)
+							Printf("Hit other %s at %f,%f,%f\n", th->GetClass()->TypeName.GetChars(), th->X() / 65536., th->Y() / 65536., th->Z() / 65536.);
 						SetResult(thing_other, in->frac, th, thingpitch);
 					}
 				}
 				else
 				{
-					Printf("Hit target %s at %f,%f,%f\n", th->GetClass()->TypeName.GetChars(), th->X() / 65536., th->Y() / 65536., th->Z() / 65536.);
+					if (aimdebug)
+						Printf("Hit target %s at %f,%f,%f\n", th->GetClass()->TypeName.GetChars(), th->X() / 65536., th->Y() / 65536., th->Z() / 65536.);
 					SetResult(linetarget, in->frac, th, thingpitch);
 					return;
 				}
 			}
 			else
 			{
-				Printf("Hit target %s at %f,%f,%f\n", th->GetClass()->TypeName.GetChars(), th->X() / 65536., th->Y() / 65536., th->Z() / 65536.);
+				if (aimdebug)
+					Printf("Hit target %s at %f,%f,%f\n", th->GetClass()->TypeName.GetChars(), th->X() / 65536., th->Y() / 65536., th->Z() / 65536.);
 				SetResult(linetarget, in->frac, th, thingpitch);
 				return;
 			}

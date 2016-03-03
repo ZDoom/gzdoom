@@ -4460,7 +4460,7 @@ AActor *P_LinePickActor(AActor *t1, angle_t angle, fixed_t distance, int pitch,
 	TData.hitGhosts = true;
 	
 	if (Trace(t1->X(), t1->Y(), shootz, t1->Sector, vx, vy, vz, distance,
-		actorMask, wallMask, t1, trace, TRACE_NoSky, CheckForActor, &TData))
+		actorMask, wallMask, t1, trace, TRACE_NoSky | TRACE_PortalRestrict, CheckForActor, &TData))
 	{
 		if (trace.HitType == TRACE_HitActor)
 		{

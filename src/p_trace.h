@@ -84,6 +84,7 @@ enum
 	TRACE_NoSky			= 1,	// Hitting the sky returns TRACE_HitNone
 	TRACE_PCross		= 2,	// Trigger SPAC_PCROSS lines
 	TRACE_Impact		= 4,	// Trigger SPAC_IMPACT lines
+	TRACE_PortalRestrict= 8,	// Cannot go through portals without a static link offset.
 };
 
 // return values from callback

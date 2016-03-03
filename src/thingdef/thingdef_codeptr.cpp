@@ -3734,6 +3734,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
 		PARAM_FIXED_OPT	(offsetheight)	{ offsetheight = 0; }
 		PARAM_FIXED_OPT	(offsetwidth)	{ offsetwidth = 0; }
 		PARAM_INT_OPT	(ptr_target)	{ ptr_target = AAPTR_DEFAULT; }
+		PARAM_FIXED_OPT	(offsetforward)	{ offsetforward = 0; }
 
 		target = COPY_AAPTR(self, ptr_target == AAPTR_DEFAULT ? AAPTR_TARGET|AAPTR_PLAYER_GETTARGET|AAPTR_NULL : ptr_target); // no player-support by default
 
@@ -3751,6 +3752,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
 		}
 		if (flags & CLOFF_MUL_WIDTH)
 		{
+			offsetforward = FixedMul(self->radius, offsetforward);
 			offsetwidth = FixedMul(self->radius, offsetwidth);
 		}
 		
@@ -3797,9 +3799,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
 				
 				ang >>= ANGLETOFINESHIFT;
 
+				//pos = self->Vec2Offset(
+					//FixedMul(xofs, finecosine[ang]) + FixedMul(yofs, finesine[ang]),
+					//FixedMul(xofs, finesine[ang]) - FixedMul(yofs, finecosine[ang]));
+
 				fixedvec2 xy = self->Vec2Offset(
-					FixedMul(offsetwidth, finesine[ang]),
-					-FixedMul(offsetwidth, finecosine[ang]));
+					FixedMul(offsetforward, finecosine[ang]) + FixedMul(offsetwidth, finesine[ang]),
+					FixedMul(offsetforward, finesine[ang]) - FixedMul(offsetwidth, finecosine[ang]));
 
 				pos.x = xy.x;
 				pos.y = xy.y;
@@ -3826,8 +3832,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
 			angle_t ang = self->angle >> ANGLETOFINESHIFT;
 
 			fixedvec2 xy = self->Vec2Offset(
-				FixedMul(offsetwidth, finesine[ang]),
-				-FixedMul(offsetwidth, finecosine[ang]));
+				FixedMul(offsetforward, finecosine[ang]) + FixedMul(offsetwidth, finesine[ang]),
+				FixedMul(offsetforward, finesine[ang]) - FixedMul(offsetwidth, finecosine[ang]));
 
 			pos.x = xy.x;
 			pos.y = xy.y;

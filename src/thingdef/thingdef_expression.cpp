@@ -3420,7 +3420,8 @@ bool FxVMFunctionCall::CheckEmitCast(VMFunctionBuilder *build, bool returnit, Ex
 	FName funcname = Function->SymbolName;
 	if (funcname == NAME___decorate_internal_int__ ||
 		funcname == NAME___decorate_internal_bool__ ||
-		funcname == NAME___decorate_internal_state__)
+		funcname == NAME___decorate_internal_state__ ||
+		funcname == NAME___decorate_internal_float__)
 	{
 		FxExpression *arg = (*ArgList)[0];
 		if (returnit)

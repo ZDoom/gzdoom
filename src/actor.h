@@ -1409,21 +1409,8 @@ AActor *P_LinePickActor(AActor *t1, angle_t angle, fixed_t distance, int pitch, 
 struct FTranslatedLineTarget
 {
 	AActor *linetarget;
-	angle_t hitangle;
-	fixedvec3 targetPosFromSrc;
-	angle_t targetAngleFromSrc;
-	fixedvec3 sourcePosFromTarget;
-	angle_t sourceAngleFromTarget;
+	angle_t angleFromSource;
 	bool unlinked;	// found by a trace that went through an unlinked portal.
-
-	angle_t SourceAngleToTarget() const
-	{
-		return R_PointToAngle2(sourcePosFromTarget.x, sourcePosFromTarget.y, linetarget->X(), linetarget->Y());
-	}
-	angle_t TargetAngleToSource() const
-	{
-		return R_PointToAngle2(linetarget->X(), linetarget->Y(), sourcePosFromTarget.x, sourcePosFromTarget.y);
-	}
 };
 
 

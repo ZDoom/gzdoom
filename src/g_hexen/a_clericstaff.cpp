@@ -79,7 +79,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffCheck)
 				P_LineAttack(pmo, angle, fixed_t(1.5*MELEERANGE), slope, damage, NAME_Melee, puff, false, &t);
 				if (t.linetarget != NULL)
 				{
-					pmo->angle = t.SourceAngleToTarget();
+					pmo->angle = t.angleFromSource;
 					if (((t.linetarget->player && (!t.linetarget->IsTeammate(pmo) || level.teamdamage != 0)) || t.linetarget->flags3&MF3_ISMONSTER)
 						&& (!(t.linetarget->flags2&(MF2_DORMANT | MF2_INVULNERABLE))))
 					{

@@ -489,6 +489,8 @@ struct ZCC_OpInfoType
 	ZCC_OpProto *FindBestProto(PType *optype, const PType::Conversion **route, int &numslots);
 	ZCC_OpProto *FindBestProto(PType *left, const PType::Conversion **route1, int &numslots,
 		PType *right, const PType::Conversion **route2, int &numslots2);
+
+	void FreeAllProtos();
 };
 
 #define CONVERSION_ROUTE_SIZE	8

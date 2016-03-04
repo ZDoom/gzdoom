@@ -230,6 +230,10 @@ public:
 			SetSelection(Selection);
 			S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 		}
+		else
+		{
+			return FOptionMenuItem::MenuEvent(mkey, fromcontroller);
+		}
 		return true;
 	}
 

@@ -904,6 +904,7 @@ OptionMenu "MiscOptions"
 	StaticText " "
 	Option "$MISCMNU_ALLCHEATS",				"allcheats", "OnOff"
 	Option "$MISCMNU_ENABLEAUTOSAVES",			"disableautosave", "Autosave"
+	Option "$MISCMNU_SAVELOADCONFIRMATION",			"saveloadconfirmation", "OnOff"
 	Slider "$MISCMNU_AUTOSAVECOUNT",			"autosavecount", 1, 20, 1, 0
 	Option "$MISCMNU_DEHLOAD",					"dehload", "dehopt"
 	StaticText " "
@@ -1689,6 +1690,7 @@ OptionValue ForceRatios
 	5.0, "17:10"
 	2.0, "16:10"
 	4.0, "5:4"
+	6.0, "21:9"
 }
 OptionValue Ratios
 {
@@ -1696,6 +1698,7 @@ OptionValue Ratios
 	1.0, "16:9"
 	2.0, "16:10"
 	3.0, "17:10"
+	6.0, "21:9"
 	 -1, "$OPTVAL_ALL"
 }
 OptionValue RatiosTFT
@@ -1705,6 +1708,7 @@ OptionValue RatiosTFT
 	1.0, "16:9"
 	2.0, "16:10"
 	3.0, "17:10"
+	6.0, "21:9"
 	 -1, "$OPTVAL_ALL"
 }
 

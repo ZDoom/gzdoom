@@ -496,7 +496,7 @@ void PType::StaticInit()
 	RUNTIME_CLASS(PSound)->TypeTableType = RUNTIME_CLASS(PSound);
 	RUNTIME_CLASS(PColor)->TypeTableType = RUNTIME_CLASS(PColor);
 	RUNTIME_CLASS(PPointer)->TypeTableType = RUNTIME_CLASS(PPointer);
-	RUNTIME_CLASS(PClassPointer)->TypeTableType = RUNTIME_CLASS(PPointer);	// not sure about this yet
+	RUNTIME_CLASS(PClassPointer)->TypeTableType = RUNTIME_CLASS(PClassPointer);
 	RUNTIME_CLASS(PEnum)->TypeTableType = RUNTIME_CLASS(PEnum);
 	RUNTIME_CLASS(PArray)->TypeTableType = RUNTIME_CLASS(PArray);
 	RUNTIME_CLASS(PDynArray)->TypeTableType = RUNTIME_CLASS(PDynArray);
@@ -1430,11 +1430,11 @@ void PClassPointer::GetTypeIDs(intptr_t &id1, intptr_t &id2) const
 PClassPointer *NewClassPointer(PClass *restrict)
 {
 	size_t bucket;
-	PType *ptype = TypeTable.FindType(RUNTIME_CLASS(PPointer), (intptr_t)RUNTIME_CLASS(PClass), (intptr_t)restrict, &bucket);
+	PType *ptype = TypeTable.FindType(RUNTIME_CLASS(PClassPointer), (intptr_t)RUNTIME_CLASS(PClass), (intptr_t)restrict, &bucket);
 	if (ptype == NULL)
 	{
 		ptype = new PClassPointer(restrict);
-		TypeTable.AddType(ptype, RUNTIME_CLASS(PPointer), (intptr_t)RUNTIME_CLASS(PClass), (intptr_t)restrict, bucket);
+		TypeTable.AddType(ptype, RUNTIME_CLASS(PClassPointer), (intptr_t)RUNTIME_CLASS(PClass), (intptr_t)restrict, bucket);
 	}
 	return static_cast<PClassPointer *>(ptype);
 }

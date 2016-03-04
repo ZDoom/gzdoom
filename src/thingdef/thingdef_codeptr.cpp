@@ -3734,6 +3734,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
 		PARAM_FIXED_OPT	(offsetheight)	{ offsetheight = 0; }
 		PARAM_FIXED_OPT	(offsetwidth)	{ offsetwidth = 0; }
 		PARAM_INT_OPT	(ptr_target)	{ ptr_target = AAPTR_DEFAULT; }
+		PARAM_FIXED_OPT	(offsetforward)	{ offsetforward = 0; }
 
 		target = COPY_AAPTR(self, ptr_target == AAPTR_DEFAULT ? AAPTR_TARGET|AAPTR_PLAYER_GETTARGET|AAPTR_NULL : ptr_target); // no player-support by default
 
@@ -3751,6 +3752,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
 		}
 		if (flags & CLOFF_MUL_WIDTH)
 		{
+			offsetforward = FixedMul(self->radius, offsetforward);
 			offsetwidth = FixedMul(self->radius, offsetwidth);
 		}
 		
@@ -3798,8 +3800,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
 				ang >>= ANGLETOFINESHIFT;
 
 				fixedvec2 xy = self->Vec2Offset(
-					FixedMul(offsetwidth, finesine[ang]),
-					-FixedMul(offsetwidth, finecosine[ang]));
+					FixedMul(offsetforward, finecosine[ang]) + FixedMul(offsetwidth, finesine[ang]),
+					FixedMul(offsetforward, finesine[ang]) - FixedMul(offsetwidth, finecosine[ang]));
 
 				pos.x = xy.x;
 				pos.y = xy.y;
@@ -3826,8 +3828,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
 			angle_t ang = self->angle >> ANGLETOFINESHIFT;
 
 			fixedvec2 xy = self->Vec2Offset(
-				FixedMul(offsetwidth, finesine[ang]),
-				-FixedMul(offsetwidth, finecosine[ang]));
+				FixedMul(offsetforward, finecosine[ang]) + FixedMul(offsetwidth, finesine[ang]),
+				FixedMul(offsetforward, finesine[ang]) - FixedMul(offsetwidth, finecosine[ang]));
 
 			pos.x = xy.x;
 			pos.y = xy.y;
@@ -3868,7 +3870,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
 	lof_data.Flags = flags;
 	lof_data.BadActor = false;
 
-	Trace(pos.x, pos.y, pos.z, sec, vx, vy, vz, range, ActorFlags::FromInt(0xFFFFFFFF), ML_BLOCKEVERYTHING, self, trace, 0,
+	Trace(pos.x, pos.y, pos.z, sec, vx, vy, vz, range, ActorFlags::FromInt(0xFFFFFFFF), ML_BLOCKEVERYTHING, self, trace, TRACE_PortalRestrict,
 		CheckLOFTraceFunc, &lof_data);
 
 	if (trace.HitType == TRACE_HitActor ||
@@ -6681,12 +6683,13 @@ The SET pointer flags only affect the caller, not the pointer.
 ===========================================================================*/
 enum CBF
 {
-	CBF_NOLINES			= 1 << 0,	//Don't check actors.
+	CBF_NOLINES			= 1 << 0,	//Don't check lines.
 	CBF_SETTARGET		= 1 << 1,	//Sets the caller/pointer's target to the actor blocking it. Actors only.
 	CBF_SETMASTER		= 1 << 2,	//^ but with master.
 	CBF_SETTRACER		= 1 << 3,	//^ but with tracer.
 	CBF_SETONPTR		= 1 << 4,	//Sets the pointer change on the actor doing the checking instead of self.
 	CBF_DROPOFF			= 1 << 5,	//Check for dropoffs.
+	CBF_NOACTORS		= 1 << 6,	//Don't check actors.
 };
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckBlock)
@@ -6729,8 +6732,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckBlock)
 	{
 		ACTION_RETURN_STATE(NULL);
 	}
-	//[MC] Easiest way to tell if an actor is blocking it, use the pointers.
-	if (mobj->BlockingMobj || (!(flags & CBF_NOLINES) && mobj->BlockingLine != NULL))
+	//[MC] I don't know why I let myself be persuaded not to include a flag.
+	//If an actor is loaded with pointers, they don't really have any options to spare.
+
+	if ((!(flags & CBF_NOACTORS) && (mobj->BlockingMobj)) || (!(flags & CBF_NOLINES) && mobj->BlockingLine != NULL))
 	{
 		ACTION_RETURN_STATE(block);
 	}

@@ -100,7 +100,7 @@ DEFINE_ACTION_FUNCTION_PARAMS (AActor, A_Blast)
 	PARAM_ACTION_PROLOGUE;
 	PARAM_INT_OPT	(blastflags)			{ blastflags = 0; }
 	PARAM_INT_OPT	(strength)				{ strength = 255; }
-	PARAM_INT_OPT	(radius)				{ radius = 255; }
+	PARAM_FIXED_OPT	(radius)				{ radius = 255*FRACUNIT; }
 	PARAM_FIXED_OPT	(speed)					{ speed = 20; }
 	PARAM_CLASS_OPT	(blasteffect, AActor)	{ blasteffect = PClass::FindActor("BlastEffect"); }
 	PARAM_SOUND_OPT	(blastsound)			{ blastsound = "BlastRadius"; }

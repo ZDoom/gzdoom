@@ -33,6 +33,27 @@ struct OpProto2
 	EvalConst2op EvalConst;
 };
 
+static struct FreeOpInfoProtos
+{
+	~FreeOpInfoProtos()
+	{
+		for (size_t i = 0; i < countof(ZCC_OpInfo); ++i)
+		{
+			ZCC_OpInfo[i].FreeAllProtos();
+		}
+	}
+} ProtoFreeer;
+
+void ZCC_OpInfoType::FreeAllProtos()
+{
+	for (ZCC_OpProto *proto = Protos, *next = NULL; proto != NULL; proto = next)
+	{
+		next = proto->Next;
+		delete proto;
+	}
+	Protos = NULL;
+}
+
 void ZCC_OpInfoType::AddProto(PType *res, PType *optype, EvalConst1op evalconst)
 {
 	ZCC_OpProto *proto = new ZCC_OpProto(res, optype, NULL);
@@ -181,258 +202,16 @@ ZCC_OpProto *ZCC_OpInfoType::FindBestProto(
 	return best_proto;
 }
 
-static ZCC_ExprConstant *EvalIncFloat64(ZCC_ExprConstant *val)
-{
-	val->DoubleVal++;
-	return val;
-}
-
-static ZCC_ExprConstant *EvalIncInt32(ZCC_ExprConstant *val)
-{
-	val->IntVal++;
-	return val;
-}
-
-static ZCC_ExprConstant *EvalDecFloat64(ZCC_ExprConstant *val)
-{
-	val->DoubleVal--;
-	return val;
-}
-
-static ZCC_ExprConstant *EvalDecInt32(ZCC_ExprConstant *val)
-{
-	val->IntVal--;
-	return val;
-}
-
-static ZCC_ExprConstant *EvalNegateFloat64(ZCC_ExprConstant *val)
-{
-	val->DoubleVal = -val->DoubleVal;
-	return val;
-}
-
-static ZCC_ExprConstant *EvalNegateInt32(ZCC_ExprConstant *val)
-{
-	val->IntVal = -val->IntVal;
-	return val;
-}
-
 static ZCC_ExprConstant *EvalIdentity(ZCC_ExprConstant *val)
 {
 	return val;
 }
 
-static ZCC_ExprConstant *EvalBitNot(ZCC_ExprConstant *val)
-{
-	val->IntVal = ~val->IntVal;
-	return val;
-}
-
-static ZCC_ExprConstant *EvalBoolNot(ZCC_ExprConstant *val)
-{
-	val->IntVal = !val->IntVal;
-	return val;
-}
-
-static ZCC_ExprConstant *EvalAddFloat64(ZCC_ExprConstant *l, ZCC_ExprConstant *r, FSharedStringArena &)
-{
-	l->DoubleVal += r->DoubleVal;
-	return l;
-}
-
-static ZCC_ExprConstant *EvalAddInt32(ZCC_ExprConstant *l, ZCC_ExprConstant *r, FSharedStringArena &)
-{
-	l->IntVal += r->IntVal;
-	return l;
-}
-
-static ZCC_ExprConstant *EvalSubFloat64(ZCC_ExprConstant *l, ZCC_ExprConstant *r, FSharedStringArena &)
-{
-	l->DoubleVal -= r->DoubleVal;
-	return l;
-}
-
-static ZCC_ExprConstant *EvalSubInt32(ZCC_ExprConstant *l, ZCC_ExprConstant *r, FSharedStringArena &)
-{
-	l->IntVal -= r->IntVal;
-	return l;
-}
-
-static ZCC_ExprConstant *EvalMulFloat64(ZCC_ExprConstant *l, ZCC_ExprConstant *r, FSharedStringArena &)
-{
-	l->DoubleVal *= r->DoubleVal;
-	return l;
-}
-
-static ZCC_ExprConstant *EvalMulUInt32(ZCC_ExprConstant *l, ZCC_ExprConstant *r, FSharedStringArena &)
-{
-	l->UIntVal *= r->UIntVal;
-	return l;
-}
-
-static ZCC_ExprConstant *EvalMulSInt32(ZCC_ExprConstant *l, ZCC_ExprConstant *r, FSharedStringArena &)
-{
-	l->IntVal *= r->IntVal;
-	return l;
-}
-
-static ZCC_ExprConstant *EvalDivFloat64(ZCC_ExprConstant *l, ZCC_ExprConstant *r, FSharedStringArena &)
-{
-	l->DoubleVal /= r->DoubleVal;
-	return l;
-}
-
-static ZCC_ExprConstant *EvalDivUInt32(ZCC_ExprConstant *l, ZCC_ExprConstant *r, FSharedStringArena &)
-{
-	l->UIntVal /= r->UIntVal;
-	return l;
-}
-
-static ZCC_ExprConstant *EvalDivSInt32(ZCC_ExprConstant *l, ZCC_ExprConstant *r, FSharedStringArena &)
-{
-	l->IntVal /= r->IntVal;
-	return l;
-}
-
-static ZCC_ExprConstant *EvalModFloat64(ZCC_ExprConstant *l, ZCC_ExprConstant *r, FSharedStringArena &)
-{
-	l->DoubleVal = luai_nummod(l->DoubleVal, r->DoubleVal);
-	return l;
-}
-
-static ZCC_ExprConstant *EvalModUInt32(ZCC_ExprConstant *l, ZCC_ExprConstant *r, FSharedStringArena &)
-{
-	l->UIntVal %= r->UIntVal;
-	return l;
-}
-
-static ZCC_ExprConstant *EvalModSInt32(ZCC_ExprConstant *l, ZCC_ExprConstant *r, FSharedStringArena &)
-{
-	l->IntVal %= r->IntVal;
-	return l;
-}
-
-static ZCC_ExprConstant *EvalPow(ZCC_ExprConstant *l, ZCC_ExprConstant *r, FSharedStringArena &)
-{
-	l->DoubleVal = pow(l->DoubleVal, r->DoubleVal);
-	return l;
-}
 
 static ZCC_ExprConstant *EvalConcat(ZCC_ExprConstant *l, ZCC_ExprConstant *r, FSharedStringArena &strings)
 {
 	FString str = *l->StringVal + *r->StringVal;
 	l->StringVal = strings.Alloc(str);
-	return l;
-}
-
-static ZCC_ExprConstant *EvalBitAnd(ZCC_ExprConstant *l, ZCC_ExprConstant *r, FSharedStringArena &)
-{
-	l->IntVal &= r->IntVal;
-	return l;
-}
-
-static ZCC_ExprConstant *EvalBitOr(ZCC_ExprConstant *l, ZCC_ExprConstant *r, FSharedStringArena &)
-{
-	l->IntVal |= r->IntVal;
-	return l;
-}
-
-static ZCC_ExprConstant *EvalBitXor(ZCC_ExprConstant *l, ZCC_ExprConstant *r, FSharedStringArena &)
-{
-	l->IntVal ^= r->IntVal;
-	return l;
-}
-
-static ZCC_ExprConstant *EvalBoolAnd(ZCC_ExprConstant *l, ZCC_ExprConstant *r, FSharedStringArena &)
-{
-	l->IntVal = l->IntVal && r->IntVal;
-	return l;
-}
-
-static ZCC_ExprConstant *EvalBoolOr(ZCC_ExprConstant *l, ZCC_ExprConstant *r, FSharedStringArena &)
-{
-	l->IntVal = l->IntVal || r->IntVal;
-	return l;
-}
-
-static ZCC_ExprConstant *EvalSHL(ZCC_ExprConstant *l, ZCC_ExprConstant *r, FSharedStringArena &)
-{
-	l->IntVal <<= r->UIntVal;
-	return l;
-}
-
-static ZCC_ExprConstant *EvalSHR_S(ZCC_ExprConstant *l, ZCC_ExprConstant *r, FSharedStringArena &)
-{
-	l->IntVal >>= r->UIntVal;
-	return l;
-}
-
-static ZCC_ExprConstant *EvalSHR_U(ZCC_ExprConstant *l, ZCC_ExprConstant *r, FSharedStringArena &)
-{
-	l->UIntVal >>= r->UIntVal;
-	return l;
-}
-
-static ZCC_ExprConstant *EvalLTSInt32(ZCC_ExprConstant *l, ZCC_ExprConstant *r, FSharedStringArena &)
-{
-	l->IntVal = l->IntVal < r->IntVal;
-	l->Type = TypeBool;
-	return l;
-}
-
-static ZCC_ExprConstant *EvalLTUInt32(ZCC_ExprConstant *l, ZCC_ExprConstant *r, FSharedStringArena &)
-{
-	l->IntVal = l->UIntVal < r->UIntVal;
-	l->Type = TypeBool;
-	return l;
-}
-
-static ZCC_ExprConstant *EvalLTFloat64(ZCC_ExprConstant *l, ZCC_ExprConstant *r, FSharedStringArena &)
-{
-	l->IntVal = l->DoubleVal < r->DoubleVal;
-	l->Type = TypeBool;
-	return l;
-}
-
-static ZCC_ExprConstant *EvalLTEQSInt32(ZCC_ExprConstant *l, ZCC_ExprConstant *r, FSharedStringArena &)
-{
-	l->IntVal = l->IntVal <= r->IntVal;
-	l->Type = TypeBool;
-	return l;
-}
-
-static ZCC_ExprConstant *EvalLTEQUInt32(ZCC_ExprConstant *l, ZCC_ExprConstant *r, FSharedStringArena &)
-{
-	l->IntVal = l->UIntVal <= r->UIntVal;
-	l->Type = TypeBool;
-	return l;
-}
-
-static ZCC_ExprConstant *EvalLTEQFloat64(ZCC_ExprConstant *l, ZCC_ExprConstant *r, FSharedStringArena &)
-{
-	l->IntVal = l->DoubleVal <= r->DoubleVal;
-	l->Type = TypeBool;
-	return l;
-}
-
-static ZCC_ExprConstant *EvalEQEQSInt32(ZCC_ExprConstant *l, ZCC_ExprConstant *r, FSharedStringArena &)
-{
-	l->IntVal = l->IntVal == r->IntVal;
-	l->Type = TypeBool;
-	return l;
-}
-
-static ZCC_ExprConstant *EvalEQEQUInt32(ZCC_ExprConstant *l, ZCC_ExprConstant *r, FSharedStringArena &)
-{
-	l->IntVal = l->UIntVal == r->UIntVal;
-	l->Type = TypeBool;
-	return l;
-}
-
-static ZCC_ExprConstant *EvalEQEQFloat64(ZCC_ExprConstant *l, ZCC_ExprConstant *r, FSharedStringArena &)
-{
-	l->IntVal = l->DoubleVal == r->DoubleVal;
-	l->Type = TypeBool;
 	return l;
 }
 
@@ -471,25 +250,25 @@ void ZCC_InitOperators()
 		{ PEX_PostDec	 , (PType **)&TypeUInt32,  EvalIdentity },
 		{ PEX_PostDec	 , (PType **)&TypeFloat64, EvalIdentity },
 
-		{ PEX_PreInc	 , (PType **)&TypeSInt32,  EvalIncInt32 },
-		{ PEX_PreInc	 , (PType **)&TypeUInt32,  EvalIncInt32 },
-		{ PEX_PreInc	 , (PType **)&TypeFloat64, EvalIncFloat64 },
+		{ PEX_PreInc	 , (PType **)&TypeSInt32,  [](auto *val) { val->IntVal += 1; return val; } },
+		{ PEX_PreInc	 , (PType **)&TypeUInt32,  [](auto *val) { val->UIntVal += 1; return val; } },
+		{ PEX_PreInc	 , (PType **)&TypeFloat64, [](auto *val) { val->DoubleVal += 1; return val; } },
 
-		{ PEX_PreDec	 , (PType **)&TypeSInt32,  EvalDecInt32 },
-		{ PEX_PreDec	 , (PType **)&TypeUInt32,  EvalDecInt32 },
-		{ PEX_PreDec	 , (PType **)&TypeFloat64, EvalDecFloat64 },
+		{ PEX_PreDec	 , (PType **)&TypeSInt32,  [](auto *val) { val->IntVal -= 1; return val; } },
+		{ PEX_PreDec	 , (PType **)&TypeUInt32,  [](auto *val) { val->UIntVal -= 1; return val; } },
+		{ PEX_PreDec	 , (PType **)&TypeFloat64, [](auto *val) { val->DoubleVal -= 1; return val; } },
 
-		{ PEX_Negate	 , (PType **)&TypeSInt32,  EvalNegateInt32 },
-		{ PEX_Negate	 , (PType **)&TypeFloat64, EvalNegateFloat64 },
+		{ PEX_Negate	 , (PType **)&TypeSInt32,  [](auto *val) { val->IntVal = -val->IntVal; return val; } },
+		{ PEX_Negate	 , (PType **)&TypeFloat64, [](auto *val) { val->DoubleVal = -val->DoubleVal; return val; } },
 
 		{ PEX_AntiNegate , (PType **)&TypeSInt32,  EvalIdentity },
 		{ PEX_AntiNegate , (PType **)&TypeUInt32,  EvalIdentity },
 		{ PEX_AntiNegate , (PType **)&TypeFloat64, EvalIdentity },
 
-		{ PEX_BitNot	 , (PType **)&TypeSInt32,  EvalBitNot },
-		{ PEX_BitNot	 , (PType **)&TypeUInt32,  EvalBitNot },
+		{ PEX_BitNot	 , (PType **)&TypeSInt32,  [](auto *val) { val->IntVal = ~val->IntVal; return val; } },
+		{ PEX_BitNot	 , (PType **)&TypeUInt32,  [](auto *val) { val->UIntVal = ~val->UIntVal; return val; } },
 
-		{ PEX_BoolNot	 , (PType **)&TypeBool,    EvalBoolNot },
+		{ PEX_BoolNot	 , (PType **)&TypeBool,    [](auto *val) { val->IntVal = !val->IntVal; return val; } },
 	};
 	for (size_t i = 0; i < countof(UnaryOpInit); ++i)
 	{
@@ -499,62 +278,62 @@ void ZCC_InitOperators()
 	// Binary operators
 	static const OpProto2 BinaryOpInit[] =
 	{
-		{ PEX_Add		 , (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  EvalAddInt32 },
-		{ PEX_Add		 , (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  EvalAddInt32 },
-		{ PEX_Add		 , (PType **)&TypeFloat64, (PType **)&TypeFloat64, (PType **)&TypeFloat64, EvalAddFloat64 },
+		{ PEX_Add		 , (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  [](auto *l, auto *r, auto &) { l->IntVal += r->IntVal; return l; } },
+		{ PEX_Add		 , (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  [](auto *l, auto *r, auto &) { l->UIntVal += r->UIntVal; return l; } },
+		{ PEX_Add		 , (PType **)&TypeFloat64, (PType **)&TypeFloat64, (PType **)&TypeFloat64, [](auto *l, auto *r, auto &) { l->DoubleVal += r->DoubleVal; return l; } },
 
-		{ PEX_Sub		 , (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  EvalSubInt32 },
-		{ PEX_Sub		 , (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  EvalSubInt32 },
-		{ PEX_Sub		 , (PType **)&TypeFloat64, (PType **)&TypeFloat64, (PType **)&TypeFloat64, EvalSubFloat64 },
+		{ PEX_Sub		 , (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  [](auto *l, auto *r, auto &) { l->IntVal -= r->IntVal; return l; } },
+		{ PEX_Sub		 , (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  [](auto *l, auto *r, auto &) { l->UIntVal -= r->UIntVal; return l; } },
+		{ PEX_Sub		 , (PType **)&TypeFloat64, (PType **)&TypeFloat64, (PType **)&TypeFloat64, [](auto *l, auto *r, auto &) { l->DoubleVal -= r->DoubleVal; return l; } },
 
-		{ PEX_Mul		 , (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  EvalMulSInt32 },
-		{ PEX_Mul		 , (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  EvalMulUInt32 },
-		{ PEX_Mul		 , (PType **)&TypeFloat64, (PType **)&TypeFloat64, (PType **)&TypeFloat64, EvalMulFloat64 },
+		{ PEX_Mul		 , (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  [](auto *l, auto *r, auto &) { l->IntVal *= r->IntVal; return l; } },
+		{ PEX_Mul		 , (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  [](auto *l, auto *r, auto &) { l->UIntVal *= r->UIntVal; return l; } },
+		{ PEX_Mul		 , (PType **)&TypeFloat64, (PType **)&TypeFloat64, (PType **)&TypeFloat64, [](auto *l, auto *r, auto &) { l->DoubleVal *= r->DoubleVal; return l; } },
 
-		{ PEX_Div		 , (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  EvalDivSInt32 },
-		{ PEX_Div		 , (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  EvalDivUInt32 },
-		{ PEX_Div		 , (PType **)&TypeFloat64, (PType **)&TypeFloat64, (PType **)&TypeFloat64, EvalDivFloat64 },
+		{ PEX_Div		 , (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  [](auto *l, auto *r, auto &) { l->IntVal /= r->IntVal; return l; } },
+		{ PEX_Div		 , (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  [](auto *l, auto *r, auto &) { l->UIntVal /= r->UIntVal; return l; } },
+		{ PEX_Div		 , (PType **)&TypeFloat64, (PType **)&TypeFloat64, (PType **)&TypeFloat64, [](auto *l, auto *r, auto &) { l->DoubleVal /= r->DoubleVal; return l; } },
 
-		{ PEX_Mod		 , (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  EvalModSInt32 },
-		{ PEX_Mod		 , (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  EvalModUInt32 },
-		{ PEX_Mod		 , (PType **)&TypeFloat64, (PType **)&TypeFloat64, (PType **)&TypeFloat64, EvalModFloat64 },
+		{ PEX_Mod		 , (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  [](auto *l, auto *r, auto &) { l->IntVal %= r->IntVal; return l; } },
+		{ PEX_Mod		 , (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  [](auto *l, auto *r, auto &) { l->UIntVal %= r->UIntVal; return l; } },
+		{ PEX_Mod		 , (PType **)&TypeFloat64, (PType **)&TypeFloat64, (PType **)&TypeFloat64, [](auto *l, auto *r, auto &) { l->DoubleVal = luai_nummod(l->DoubleVal, r->DoubleVal); return l; } },
 
-		{ PEX_Pow		 , (PType **)&TypeFloat64, (PType **)&TypeFloat64, (PType **)&TypeFloat64, EvalPow },
+		{ PEX_Pow		 , (PType **)&TypeFloat64, (PType **)&TypeFloat64, (PType **)&TypeFloat64, [](auto *l, auto *r, auto &) { l->DoubleVal = pow(l->DoubleVal, r->DoubleVal); return l; } },
 
 		{ PEX_Concat	 , (PType **)&TypeString,  (PType **)&TypeString,  (PType **)&TypeString,  EvalConcat },
 
-		{ PEX_BitAnd	 , (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  EvalBitAnd },
-		{ PEX_BitAnd	 , (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  EvalBitAnd },
+		{ PEX_BitAnd	 , (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  [](auto *l, auto *r, auto &) { l->IntVal &= r->IntVal; return l; } },
+		{ PEX_BitAnd	 , (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  [](auto *l, auto *r, auto &) { l->UIntVal &= r->UIntVal; return l; } },
 
-		{ PEX_BitOr		 , (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  EvalBitOr },
-		{ PEX_BitOr		 , (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  EvalBitOr },
+		{ PEX_BitOr		 , (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  [](auto *l, auto *r, auto &) { l->IntVal |= r->IntVal; return l; } },
+		{ PEX_BitOr		 , (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  [](auto *l, auto *r, auto &) { l->UIntVal |= r->UIntVal; return l; } },
 
-		{ PEX_BitXor	 , (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  EvalBitXor },
-		{ PEX_BitXor	 , (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  EvalBitXor },
+		{ PEX_BitXor	 , (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  [](auto *l, auto *r, auto &) { l->IntVal ^= r->IntVal; return l; } },
+		{ PEX_BitXor	 , (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  [](auto *l, auto *r, auto &) { l->UIntVal ^= r->UIntVal; return l; } },
 
-		{ PEX_BoolAnd	 , (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  EvalBoolAnd },
-		{ PEX_BoolAnd	 , (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  EvalBoolAnd },
+		{ PEX_BoolAnd	 , (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  [](auto *l, auto *r, auto &) { l->IntVal = l->IntVal && r->IntVal; l->Type = TypeBool; return l; } },
+		{ PEX_BoolAnd	 , (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  [](auto *l, auto *r, auto &) { l->IntVal = l->UIntVal && r->UIntVal; l->Type = TypeBool; return l;  } },
 
-		{ PEX_BoolOr	 , (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  EvalBoolOr },
-		{ PEX_BoolOr	 , (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  EvalBoolOr },
+		{ PEX_BoolOr	 , (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  [](auto *l, auto *r, auto &) { l->IntVal = l->IntVal || r->IntVal; l->Type = TypeBool; return l; } },
+		{ PEX_BoolOr	 , (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  [](auto *l, auto *r, auto &) { l->IntVal = l->UIntVal || r->UIntVal; l->Type = TypeBool; return l; } },
 
-		{ PEX_LeftShift  , (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  (PType **)&TypeUInt32,  EvalSHL },
-		{ PEX_LeftShift  , (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  EvalSHL },
+		{ PEX_LeftShift  , (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  (PType **)&TypeUInt32,  [](auto *l, auto *r, auto &) { l->IntVal <<= r->UIntVal; return l; } },
+		{ PEX_LeftShift  , (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  [](auto *l, auto *r, auto &) { l->UIntVal <<= r->UIntVal; return l; } },
 
-		{ PEX_RightShift , (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  (PType **)&TypeUInt32,  EvalSHR_S },
-		{ PEX_RightShift , (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  EvalSHR_U },
+		{ PEX_RightShift , (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  (PType **)&TypeUInt32,  [](auto *l, auto *r, auto &) { l->IntVal >>= r->UIntVal; return l; } },
+		{ PEX_RightShift , (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  [](auto *l, auto *r, auto &) { l->UIntVal >>= r->UIntVal; return l; } },
 
-		{ PEX_LT		 , (PType **)&TypeBool,    (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  EvalLTSInt32 },
-		{ PEX_LT		 , (PType **)&TypeBool,    (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  EvalLTUInt32 },
-		{ PEX_LT		 , (PType **)&TypeBool,    (PType **)&TypeFloat64, (PType **)&TypeFloat64, EvalLTFloat64 },
+		{ PEX_LT		 , (PType **)&TypeBool,    (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  [](auto *l, auto *r, auto &) { l->IntVal = l->IntVal < r->IntVal; l->Type = TypeBool; return l; } },
+		{ PEX_LT		 , (PType **)&TypeBool,    (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  [](auto *l, auto *r, auto &) { l->IntVal = l->UIntVal < r->UIntVal; l->Type = TypeBool; return l; } },
+		{ PEX_LT		 , (PType **)&TypeBool,    (PType **)&TypeFloat64, (PType **)&TypeFloat64, [](auto *l, auto *r, auto &) { l->IntVal = l->DoubleVal < r->DoubleVal; l->Type = TypeBool; return l; } },
 
-		{ PEX_LTEQ		 , (PType **)&TypeBool,    (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  EvalLTEQSInt32 },
-		{ PEX_LTEQ		 , (PType **)&TypeBool,    (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  EvalLTEQUInt32 },
-		{ PEX_LTEQ		 , (PType **)&TypeBool,    (PType **)&TypeFloat64, (PType **)&TypeFloat64, EvalLTEQFloat64 },
+		{ PEX_LTEQ		 , (PType **)&TypeBool,    (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  [](auto *l, auto *r, auto &) { l->IntVal = l->IntVal <= r->IntVal; l->Type = TypeBool; return l; } },
+		{ PEX_LTEQ		 , (PType **)&TypeBool,    (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  [](auto *l, auto *r, auto &) { l->IntVal = l->UIntVal <= r->UIntVal; l->Type = TypeBool; return l; } },
+		{ PEX_LTEQ		 , (PType **)&TypeBool,    (PType **)&TypeFloat64, (PType **)&TypeFloat64, [](auto *l, auto *r, auto &) { l->IntVal = l->DoubleVal <= r->DoubleVal; l->Type = TypeBool; return l; } },
 
-		{ PEX_EQEQ		 , (PType **)&TypeBool,    (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  EvalEQEQSInt32 },
-		{ PEX_EQEQ		 , (PType **)&TypeBool,    (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  EvalEQEQUInt32 },
-		{ PEX_EQEQ		 , (PType **)&TypeBool,    (PType **)&TypeFloat64, (PType **)&TypeFloat64, EvalEQEQFloat64 },
+		{ PEX_EQEQ		 , (PType **)&TypeBool,    (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  [](auto *l, auto *r, auto &) { l->IntVal = l->IntVal == r->IntVal; l->Type = TypeBool; return l; } },
+		{ PEX_EQEQ		 , (PType **)&TypeBool,    (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  [](auto *l, auto *r, auto &) { l->IntVal = l->UIntVal == r->UIntVal; l->Type = TypeBool; return l; } },
+		{ PEX_EQEQ		 , (PType **)&TypeBool,    (PType **)&TypeFloat64, (PType **)&TypeFloat64, [](auto *l, auto *r, auto &) { l->IntVal = l->DoubleVal == r->DoubleVal; l->Type = TypeBool; return l; } },
 
 		{ PEX_LTGTEQ	 , (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  (PType **)&TypeSInt32,  EvalLTGTEQSInt32 },
 		{ PEX_LTGTEQ	 , (PType **)&TypeSInt32,  (PType **)&TypeUInt32,  (PType **)&TypeUInt32,  EvalLTGTEQUInt32 },

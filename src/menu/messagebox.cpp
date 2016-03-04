@@ -47,6 +47,7 @@
 
 
 extern FSaveGameNode *quickSaveSlot;
+EXTERN_CVAR (Bool, saveloadconfirmation) // [mxd]
 
 class DMessageBoxMenu : public DMenu
 {
@@ -588,13 +589,22 @@ CCMD (quicksave)
 	if (gamestate != GS_LEVEL)
 		return;
 		
-	S_Sound (CHAN_VOICE | CHAN_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
 	if (quickSaveSlot == NULL)
 	{
+		S_Sound(CHAN_VOICE | CHAN_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
 		M_StartControlPanel(false);
 		M_SetMenu(NAME_Savegamemenu);
 		return;
 	}
+	
+	// [mxd]. Just save the game, no questions asked.
+	if (!saveloadconfirmation)
+	{
+		G_SaveGame(quickSaveSlot->Filename.GetChars(), quickSaveSlot->Title);
+		return;
+	}
+
+	S_Sound(CHAN_VOICE | CHAN_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
 	DMenu *newmenu = new DQuickSaveMenu(false);
 	newmenu->mParentMenu = DMenu::CurrentMenu;
 	M_ActivateMenu(newmenu);
@@ -666,22 +676,30 @@ void DQuickLoadMenu::HandleResult(bool res)
 
 CCMD (quickload)
 {	// F9
-	M_StartControlPanel (true);
-
 	if (netgame)
 	{
+		M_StartControlPanel(true);
 		M_StartMessage (GStrings("QLOADNET"), 1);
 		return;
 	}
 		
 	if (quickSaveSlot == NULL)
 	{
-		M_StartControlPanel(false);
+		M_StartControlPanel(true);
 		// signal that whatever gets loaded should be the new quicksave
 		quickSaveSlot = (FSaveGameNode *)1;
 		M_SetMenu(NAME_Loadgamemenu);
 		return;
 	}
+
+	// [mxd]. Just load the game, no questions asked.
+	if (!saveloadconfirmation)
+	{
+		G_LoadGame(quickSaveSlot->Filename.GetChars());
+		return;
+	}
+
+	M_StartControlPanel(true);
 	DMenu *newmenu = new DQuickLoadMenu(false);
 	newmenu->mParentMenu = DMenu::CurrentMenu;
 	M_ActivateMenu(newmenu);

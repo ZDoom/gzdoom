@@ -41,6 +41,19 @@ static void SetNodeLine(ZCC_TreeNode *name, int line)
 	struct StateOpts {
 		ZCC_Expression *Offset;
 		bool Bright;
+		bool Fast;
+		bool Slow;
+		bool NoDelay;
+		bool CanRaise;
+
+		void Zero() {
+			Offset = NULL;
+			Bright = false;
+			Fast = false;
+			Slow = false;
+			NoDelay = false;
+			CanRaise = false;
+		}
 	};
 
 	struct VarOrFun
@@ -433,15 +446,23 @@ state_line(X) ::= NWS(A) NWS(B) expr state_opts(C) state_action(D).
 	}
 	line->Frames = stat->Strings.Alloc(FName(B.Name()).GetChars());
 	line->bBright = C.Bright;
+	line->bFast = C.Fast;
+	line->bSlow = C.Slow;
+	line->bNoDelay = C.NoDelay;
+	line->bCanRaise = C.CanRaise;
 	line->Offset = C.Offset;
 	line->Action = D;
 	X = line;
 }
 
-state_opts(X) ::= .													{ StateOpts opts; opts.Offset = NULL; opts.Bright = false; X = opts; }
+state_opts(X) ::= .													{ StateOpts opts; opts.Zero(); X = opts; }
 state_opts(X) ::= state_opts(A) BRIGHT.								{ A.Bright = true; X = A; }
+state_opts(X) ::= state_opts(A) FAST.								{ A.Fast = true; X = A; }
+state_opts(X) ::= state_opts(A) SLOW.								{ A.Slow = true; X = A; }
+state_opts(X) ::= state_opts(A) NODELAY.							{ A.NoDelay = true; X = A; }
+state_opts(X) ::= state_opts(A) CANRAISE.							{ A.CanRaise = true; X = A; }
 state_opts(X) ::= state_opts(A) OFFSET LPAREN expr(B) COMMA expr(C) RPAREN.	{ A.Offset = B; B->AppendSibling(C); X = A; }
-state_opts(X) ::= state_opts(A) LIGHT LPAREN light_list RPAREN.		{ X = A; }
+state_opts(X) ::= state_opts(A) LIGHT LPAREN light_list RPAREN.		{ X = A; }	///FIXME: GZDoom would want to know this
 
 light_list ::= STRCONST.
 light_list ::= light_list COMMA STRCONST.

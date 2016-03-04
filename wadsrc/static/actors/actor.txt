@@ -240,7 +240,7 @@ ACTOR Actor native //: Thinker
 	action native A_CustomMeleeAttack(int damage = 0, sound meleesound = "", sound misssound = "", name damagetype = "none", bool bleed = true);
 	action native A_CustomComboAttack(class<Actor> missiletype, float spawnheight, int damage, sound meleesound = "", name damagetype = "none", bool bleed = true);
 	action native A_Burst(class<Actor> chunktype);
-	action native A_Blast(int flags = 0, int strength = 255, int radius = 255, float speed = 20, class<Actor> blasteffect = "BlastEffect", sound blastsound = "BlastRadius");
+	action native A_Blast(int flags = 0, int strength = 255, float radius = 255, float speed = 20, class<Actor> blasteffect = "BlastEffect", sound blastsound = "BlastRadius");
 	action native A_RadiusThrust(int force = 128, int distance = -1, int flags = RTF_AFFECTSOURCE, int fullthrustdistance = 0);
 	action native A_Explode(int damage = -1, int distance = -1, int flags = XF_HURTSOURCE, bool alert = false, int fulldamagedistance = 0, int nails = 0, int naildamage = 10, class<Actor> pufftype = "BulletPuff");
 	action native A_Stop();
@@ -251,7 +251,7 @@ ACTOR Actor native //: Thinker
 	action native A_LookEx(int flags = 0, float minseedist = 0, float maxseedist = 0, float maxheardist = 0, float fov = 0, state label = "");
 	action native A_ClearLastHeard();
 	action native A_ClearTarget();
-	action native state A_CheckLOF(state jump, int flags = 0, float range = 0, float minrange = 0, float angle = 0, float pitch = 0, float offsetheight = 0, float offsetwidth = 0, int ptr_target = AAPTR_DEFAULT);
+	action native state A_CheckLOF(state jump, int flags = 0, float range = 0, float minrange = 0, float angle = 0, float pitch = 0, float offsetheight = 0, float offsetwidth = 0, int ptr_target = AAPTR_DEFAULT, float offsetforward = 0);
 	action native state A_JumpIfTargetInLOS (state label, float/*angle*/ fov = 0, int flags = 0, float dist_max = 0, float dist_close = 0);
 	action native state A_JumpIfInTargetLOS (state label, float/*angle*/ fov = 0, int flags = 0, float dist_max = 0, float dist_close = 0);
 	action native bool A_SelectWeapon(class<Weapon> whichweapon);

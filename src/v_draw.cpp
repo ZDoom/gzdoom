@@ -744,6 +744,13 @@ void DCanvas::VirtualToRealCoords(double &x, double &y, double &w, double &h,
 	double vwidth, double vheight, bool vbottom, bool handleaspect) const
 {
 	int myratio = handleaspect ? CheckRatio (Width, Height) : 0;
+
+    // if 21:9 AR, map to 16:9 for all callers.
+    // this allows for black bars and stops the stretching of fullscreen images
+    if (myratio == 6) {
+        myratio = 2;
+    }
+
 	double right = x + w;
 	double bottom = y + h;
 
@@ -811,12 +818,19 @@ void DCanvas::VirtualToRealCoordsInt(int &x, int &y, int &w, int &h,
 void DCanvas::FillBorder (FTexture *img)
 {
 	int myratio = CheckRatio (Width, Height);
+
+    // if 21:9 AR, fill borders akin to 16:9, since all fullscreen
+    // images are being drawn to that scale.
+    if (myratio == 6) {
+        myratio = 2;
+    }
+
 	if (myratio == 0)
 	{ // This is a 4:3 display, so no border to show
 		return;
 	}
 	int bordtop, bordbottom, bordleft, bordright, bord;
-	if (myratio & 4)
+	if (Is54Aspect(myratio))
 	{ // Screen is taller than it is wide
 		bordleft = bordright = 0;
 		bord = Height - Height * BaseRatioSizes[myratio][3] / 48;

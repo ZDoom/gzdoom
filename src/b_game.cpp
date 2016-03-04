@@ -60,6 +60,7 @@ Everything that is changed is marked (maybe commented) with "Added by MC"
 #include "d_net.h"
 #include "d_netinf.h"
 #include "d_player.h"
+#include "doomerrors.h"
 
 static FRandom pr_botspawn ("BotSpawn");
 
@@ -496,7 +497,15 @@ bool FCajunMaster::LoadBots ()
 		DPrintf ("No " BOTFILENAME ", so no bots\n");
 		return false;
 	}
-	sc.OpenFile(tmp);
+	try
+	{
+		sc.OpenFile(tmp);
+	}
+	catch (CRecoverableError &err)
+	{
+		Printf("%s. So no bots\n", err.GetMessage());
+		return false;
+	}
 
 	while (sc.GetString ())
 	{

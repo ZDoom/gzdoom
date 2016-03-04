@@ -1660,14 +1660,13 @@ int FPathTraverse::PortalRelocate(intercept_t *in, int flags, fixedvec3 *optpos)
 	fixed_t hity = trace.y;
 	fixed_t endx = trace.x + trace.dx;
 	fixed_t endy = trace.y + trace.dy;
-	line_t *out = in->d.line->getPortalDestination();
-
-	P_TranslatePortalXY(in->d.line, out, hitx, hity);
-	P_TranslatePortalXY(in->d.line, out, endx, endy);
+	
+	P_TranslatePortalXY(in->d.line, hitx, hity);
+	P_TranslatePortalXY(in->d.line, endx, endy);
 	if (optpos != NULL)
 	{
-		P_TranslatePortalXY(in->d.line, out, optpos->x, optpos->y);
-		P_TranslatePortalZ(in->d.line, out, optpos->z);
+		P_TranslatePortalXY(in->d.line, optpos->x, optpos->y);
+		P_TranslatePortalZ(in->d.line, optpos->z);
 	}
 	intercepts.Resize(intercept_index);
 	init(hitx, hity, endx, endy, flags, in->frac);

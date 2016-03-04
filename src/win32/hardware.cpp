@@ -383,7 +383,7 @@ CUSTOM_CVAR (Float, vid_winscale, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 CCMD (vid_listmodes)
 {
-	static const char *ratios[5] = { "", " - 16:9", " - 16:10", " - 17:10", " - 5:4" };
+	static const char *ratios[7] = { "", " - 16:9", " - 16:10", " - 17:10", " - 5:4", " - 17:10", " - 21:9" };
 	int width, height, bits;
 	bool letterbox;
 
@@ -401,7 +401,7 @@ CCMD (vid_listmodes)
 			int ratio = CheckRatio (width, height);
 			Printf (thisMode ? PRINT_BOLD : PRINT_HIGH,
 				"%s%4d x%5d x%3d%s%s\n",
-				thisMode || !(ratio & 3) ? "" : TEXTCOLOR_GOLD,
+				thisMode || !IsRatioWidescreen(ratio) ? "" : TEXTCOLOR_GOLD,
 				width, height, bits,
 				ratios[ratio],
 				thisMode || !letterbox ? "" : TEXTCOLOR_BROWN " LB"

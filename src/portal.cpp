@@ -224,6 +224,23 @@ static line_t *FindDestination(line_t *src, int tag)
 	return NULL;
 }
 
+
+//============================================================================
+//
+//
+//
+//============================================================================
+
+static void SetRotation(FLinePortal *port)
+{
+	line_t *dst = port->mDestination;
+	line_t *line = port->mOrigin;
+	double angle = atan2(dst->dy, dst->dx) - atan2(line->dy, line->dx) + M_PI;
+	port->mSinRot = FLOAT2FIXED(sin(angle));
+	port->mCosRot = FLOAT2FIXED(cos(angle));
+	port->mAngleDiff = RAD2ANGLE(angle);
+}
+
 //============================================================================
 //
 // Spawns a single line portal
@@ -270,12 +287,7 @@ void P_SpawnLinePortal(line_t* line)
 		// Get the angle between the two linedefs, for rotating
 		// orientation and velocity. Rotate 180 degrees, and flip
 		// the position across the exit linedef, if reversed.
-
-		double angle = atan2(dst->dy, dst->dx) - atan2(line->dy, line->dx) + M_PI;
-		port->mSinRot = FLOAT2FIXED(sin(angle));
-		port->mCosRot = FLOAT2FIXED(cos(angle));
-		port->mAngleDiff = RAD2ANGLE(angle);
-
+		SetRotation(port);
 	}
 	else if (line->args[2] == PORTT_LINKEDEE && line->args[0] == 0)
 	{
@@ -296,6 +308,7 @@ void P_SpawnLinePortal(line_t* line)
 				port->mType = PORTT_LINKED;
 				port->mAlign = PORG_ABSOLUTE;
 				port->mDefFlags = PORTF_TYPEINTERACTIVE;
+				SetRotation(port);
 
 				// we need to create the backlink here, too.
 				lines[i].portalindex = linePortals.Reserve(1);
@@ -308,6 +321,7 @@ void P_SpawnLinePortal(line_t* line)
 				port->mAlign = PORG_ABSOLUTE;
 				port->mDefFlags = PORTF_TYPEINTERACTIVE;
 
+				SetRotation(port);
 			}
 		}
 	}
@@ -427,9 +441,10 @@ static bool ChangePortalLine(line_t *line, int destid)
 		else
 		{
 			port->mFlags = port->mDefFlags;
-			portd->mFlags = portd->mDefFlags;
 		}
+		SetRotation(portd);
 	}
+	SetRotation(port);
 	return true;
 }
 

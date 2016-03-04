@@ -121,7 +121,7 @@ if( MSVC )
 	set( ALL_C_FLAGS "/GF /Gy /GR-" )
 	
 	if( CMAKE_SIZEOF_VOID_P MATCHES "4")
-		# SSE2 option (mostly to switch it off in VC2012 and later where it's the default
+		# SSE2 option (to allow x87 in 32 bit and disallow extended feature sets which have not yet been checked for precision)
 		option (ZDOOM_USE_SSE2	"Use SSE2 instruction set")
 		if (ZDOOM_USE_SSE2)
 			set( ALL_C_FLAGS "${ALL_C_FLAGS} /arch:SSE2")
@@ -131,6 +131,8 @@ if( MSVC )
 				set( ALL_C_FLAGS "${ALL_C_FLAGS} /arch:IA32")
 			endif ()
 		endif ()
+	else()
+		set( ALL_C_FLAGS "${ALL_C_FLAGS} /arch:SSE2")
 	endif()
 	
 	# Avoid CRT DLL dependancies in release builds, optionally generate assembly output for checking crash locations.

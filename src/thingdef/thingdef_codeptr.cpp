@@ -146,6 +146,7 @@ bool ACustomInventory::CallStateChain (AActor *actor, FState *state)
 				if (proto->ReturnTypes[0] == TypeState)
 				{ // Function returns a state
 					wantret = &ret[0];
+					retval = false;	// this is a jump function which never affects the success state.
 				}
 				else if (proto->ReturnTypes[0] == TypeSInt32 || proto->ReturnTypes[0] == TypeBool)
 				{ // Function returns an int or bool

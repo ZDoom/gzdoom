@@ -158,8 +158,8 @@ struct ZCC_TreeNode
 		assert(SiblingNext->SiblingPrev == this);
 
 		// Check integrity of new sibling list.
-		assert(sibling->SiblingPrev->SiblingNext = sibling);
-		assert(sibling->SiblingNext->SiblingPrev = sibling);
+		assert(sibling->SiblingPrev->SiblingNext == sibling);
+		assert(sibling->SiblingNext->SiblingPrev == sibling);
 
 		ZCC_TreeNode *siblingend = sibling->SiblingPrev;
 		SiblingPrev->SiblingNext = sibling;
@@ -253,7 +253,11 @@ struct ZCC_StateGoto : ZCC_StatePart
 struct ZCC_StateLine : ZCC_StatePart
 {
 	char Sprite[4];
-	BITFIELD bBright:1;
+	BITFIELD bBright : 1;
+	BITFIELD bFast : 1;
+	BITFIELD bSlow : 1;
+	BITFIELD bNoDelay : 1;
+	BITFIELD bCanRaise : 1;
 	FString *Frames;
 	ZCC_Expression *Offset;
 	ZCC_TreeNode *Action;
@@ -485,6 +489,8 @@ struct ZCC_OpInfoType
 	ZCC_OpProto *FindBestProto(PType *optype, const PType::Conversion **route, int &numslots);
 	ZCC_OpProto *FindBestProto(PType *left, const PType::Conversion **route1, int &numslots,
 		PType *right, const PType::Conversion **route2, int &numslots2);
+
+	void FreeAllProtos();
 };
 
 #define CONVERSION_ROUTE_SIZE	8

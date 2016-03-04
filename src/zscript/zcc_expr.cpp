@@ -33,6 +33,27 @@ struct OpProto2
 	EvalConst2op EvalConst;
 };
 
+static struct FreeOpInfoProtos
+{
+	~FreeOpInfoProtos()
+	{
+		for (size_t i = 0; i < countof(ZCC_OpInfo); ++i)
+		{
+			ZCC_OpInfo[i].FreeAllProtos();
+		}
+	}
+} ProtoFreeer;
+
+void ZCC_OpInfoType::FreeAllProtos()
+{
+	for (ZCC_OpProto *proto = Protos, *next = NULL; proto != NULL; proto = next)
+	{
+		next = proto->Next;
+		delete proto;
+	}
+	Protos = NULL;
+}
+
 void ZCC_OpInfoType::AddProto(PType *res, PType *optype, EvalConst1op evalconst)
 {
 	ZCC_OpProto *proto = new ZCC_OpProto(res, optype, NULL);

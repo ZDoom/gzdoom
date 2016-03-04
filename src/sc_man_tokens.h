@@ -129,4 +129,12 @@ xx(TK_Wait,					"'wait'")
 xx(TK_Meta,					"'meta'")
 xx(TK_Deprecated,			"'deprecated'")
 xx(TK_ReadOnly,				"'readonly'")
+
+xx(TK_CanRaise,				"'canraise'")
+xx(TK_Fast,					"'fast'")
+xx(TK_Light,				"'light'")
+xx(TK_NoDelay,				"'nodelay'")
+xx(TK_Offset,				"'offset'")
+xx(TK_Slow,					"'slow'")
+xx(TK_Bright,				"'bright'")
 #undef xx

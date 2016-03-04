@@ -147,6 +147,14 @@ static void InitTokenMap()
 	TOKENDEF (TK_FloatConst,	ZCC_FLOATCONST);
 	TOKENDEF (TK_NonWhitespace,	ZCC_NWS);
 
+	TOKENDEF (TK_Bright,		ZCC_BRIGHT);
+	TOKENDEF (TK_Slow,			ZCC_SLOW);
+	TOKENDEF (TK_Fast,			ZCC_FAST);
+	TOKENDEF (TK_NoDelay,		ZCC_NODELAY);
+	TOKENDEF (TK_Offset,		ZCC_OFFSET);
+	TOKENDEF (TK_CanRaise,		ZCC_CANRAISE);
+	TOKENDEF (TK_Light,			ZCC_CANRAISE);
+
 	ZCC_InitOperators();
 	ZCC_InitConversions();
 }
@@ -194,43 +202,44 @@ static void DoParse(const char *filename)
 	while (sc.GetToken())
 	{
 		value.SourceLoc = sc.GetMessageLine();
-		if (sc.TokenType == TK_StringConst)
+		switch (sc.TokenType)
 		{
+		case TK_StringConst:
 			value.String = state.Strings.Alloc(sc.String, sc.StringLen);
 			tokentype = ZCC_STRCONST;
-		}
-		else if (sc.TokenType == TK_NameConst)
-		{
+			break;
+
+		case TK_NameConst:
 			value.Int = sc.Name;
 			tokentype = ZCC_NAMECONST;
-		}
-		else if (sc.TokenType == TK_IntConst)
-		{
+			break;
+
+		case TK_IntConst:
 			value.Int = sc.Number;
 			tokentype = ZCC_INTCONST;
-		}
-		else if (sc.TokenType == TK_UIntConst)
-		{
+			break;
+
+		case TK_UIntConst:
 			value.Int = sc.Number;
 			tokentype = ZCC_UINTCONST;
-		}
-		else if (sc.TokenType == TK_FloatConst)
-		{
+			break;
+
+		case TK_FloatConst:
 			value.Float = sc.Float;
 			tokentype = ZCC_FLOATCONST;
-		}
-		else if (sc.TokenType == TK_Identifier)
-		{
+			break;
+
+		case TK_Identifier:
 			value.Int = FName(sc.String);
 			tokentype = ZCC_IDENTIFIER;
-		}
-		else if (sc.TokenType == TK_NonWhitespace)
-		{
+			break;
+
+		case TK_NonWhitespace:
 			value.Int = FName(sc.String);
 			tokentype = ZCC_NWS;
-		}
-		else
-		{
+			break;
+
+		default:
 			TokenMapEntry *zcctoken = TokenMap.CheckKey(sc.TokenType);
 			if (zcctoken != NULL)
 			{
@@ -240,16 +249,18 @@ static void DoParse(const char *filename)
 			else
 			{
 				sc.ScriptMessage("Unexpected token %s.\n", sc.TokenName(sc.TokenType).GetChars());
-				break;
+				goto parse_end;
 			}
+			break;
 		}
 		ZCCParse(parser, tokentype, value, &state);
 		if (failed)
 		{
 			sc.ScriptMessage("Parse failed\n");
-			break;
+			goto parse_end;
 		}
 	}
+parse_end:
 	value.Int = -1;
 	ZCCParse(parser, ZCC_EOF, value, &state);
 	ZCCParse(parser, 0, value, &state);

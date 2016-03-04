@@ -20,7 +20,7 @@ struct GLDrawList;
 struct GLSkyInfo;
 struct FTexCoordInfo;
 struct FPortal;
-struct GLLineToLineInfo;
+struct FGLLinePortal;
 
 
 enum WallTypes
@@ -138,7 +138,7 @@ public:
 		GLHorizonInfo * horizon;	// for horizon information
 		FPortal * portal;			// stacked sector portals
 		secplane_t * planemirror;	// for plane mirrors
-		GLLineToLineInfo *l2l;		// line-to-line portals
+		FGLLinePortal *lineportal;	// line-to-line portals
 	};
 
 

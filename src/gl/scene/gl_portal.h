@@ -192,10 +192,23 @@ struct GLLinePortal : public GLPortal
 
 	GLLinePortal(FGLLinePortal *line)
 	{
-		v1 = line->v1;
-		v2 = line->v2;
-		dx = line->dx;
-		dy = line->dy;
+		if (line->reference->mType != PORTT_LINKED)
+		{
+			// For non-linked portals we must check the actual linedef.
+			line_t *lline = line->reference->mDestination;
+			v1 = lline->v1;
+			v2 = lline->v2;
+			dx = lline->dx;
+			dy = lline->dy;
+		}
+		else
+		{
+			// For linked portals we can check the merged span.
+			v1 = line->v1;
+			v2 = line->v2;
+			dx = line->dx;
+			dy = line->dy;
+		}
 	}
 
 	line_t *line()

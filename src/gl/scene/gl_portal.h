@@ -41,26 +41,16 @@
 #include "gl/renderer/gl_renderer.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/utility/gl_templates.h"
+#include "gl/data/gl_data.h"
 
 class ASkyViewpoint;
+
 
 struct GLHorizonInfo
 {
 	GLSectorPlane plane;
 	int lightlevel;
 	FColormap colormap;
-};
-
-struct GLLineToLineInfo
-{
-	angle_t viewangle;
-	fixed_t viewx;
-	fixed_t viewy;
-	fixed_t viewz;
-	fixed_t x0, y0;
-	angle_t lineangle;
-
-	void init(line_t *line);
 };
 
 struct GLSkyInfo
@@ -88,7 +78,7 @@ struct GLSkyInfo
 extern UniqueList<GLSkyInfo> UniqueSkies;
 extern UniqueList<GLHorizonInfo> UniqueHorizons;
 extern UniqueList<secplane_t> UniquePlaneMirrors;
-extern UniqueList<GLLineToLineInfo> UniqueLineToLines;
+extern UniqueList<FGLLinePortal> UniqueLineToLines;
 struct GLEEHorizonPortal;
 
 class GLPortal
@@ -184,8 +174,44 @@ public:
 	static GLPortal * FindPortal(const void * src);
 };
 
+struct GLLinePortal : public GLPortal
+{
+	// this must be the same as at the start of line_t, so that we can pass in this structure directly to P_ClipLineToPortal.
+	vertex_t	*v1, *v2;	// vertices, from v1 to v2
+	fixed_t 	dx, dy;		// precalculated v2 - v1 for side checking
 
-struct GLMirrorPortal : public GLPortal
+	angle_t		angv1, angv2;	// for quick comparisons with a line or subsector
+
+	GLLinePortal(line_t *line)
+	{
+		v1 = line->v1;
+		v2 = line->v2;
+		dx = line->dx;
+		dy = line->dy;
+	}
+
+	GLLinePortal(FGLLinePortal *line)
+	{
+		v1 = line->v1;
+		v2 = line->v2;
+		dx = line->dx;
+		dy = line->dy;
+	}
+
+	line_t *line()
+	{
+		vertex_t **pv = &v1;
+		return reinterpret_cast<line_t*>(pv);
+	}
+
+	virtual int ClipSeg(seg_t *seg);
+	virtual int ClipSubsector(subsector_t *sub);
+	virtual int ClipPoint(fixed_t x, fixed_t y);
+	virtual bool NeedCap() { return false; }
+};
+
+
+struct GLMirrorPortal : public GLLinePortal
 {
 	// mirror portals always consist of single linedefs!
 	line_t * linedef;
@@ -198,36 +224,28 @@ protected:
 public:
 	
 	GLMirrorPortal(line_t * line)
+		: GLLinePortal(line)
 	{
 		linedef=line;
 	}
-
-	virtual bool NeedCap() { return false; }
-	virtual int ClipSeg(seg_t *seg);
-	virtual int ClipSubsector(subsector_t *sub);
-	virtual int ClipPoint(fixed_t x, fixed_t y);
 };
 
 
-struct GLLineToLinePortal : public GLPortal
+struct GLLineToLinePortal : public GLLinePortal
 {
-	GLLineToLineInfo *l2l;
+	FGLLinePortal *glport;
 protected:
 	virtual void DrawContents();
-	virtual void * GetSource() const { return l2l; }
+	virtual void * GetSource() const { return glport; }
 	virtual const char *GetName();
 
 public:
 	
-	GLLineToLinePortal(GLLineToLineInfo *ll)
+	GLLineToLinePortal(FGLLinePortal *ll)
+		: GLLinePortal(ll)
 	{
-		l2l=ll;
+		glport = ll;
 	}
-
-	virtual bool NeedCap() { return false; }
-	virtual int ClipSeg(seg_t *seg);
-	virtual int ClipSubsector(subsector_t *sub);
-	virtual int ClipPoint(fixed_t x, fixed_t y);
 };
 
 
@@ -238,7 +256,7 @@ struct GLSkyboxPortal : public GLPortal
 protected:
 	virtual void DrawContents();
 	virtual void * GetSource() const { return origin; }
-	virtual bool IsSky() { return true; } // later!
+	virtual bool IsSky() { return true; }
 	virtual const char *GetName();
 
 public:

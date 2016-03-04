@@ -87,6 +87,8 @@ typedef TArray<FPortalSector> FPortalSectors;
 typedef TMap<FPortalID, FPortalSectors> FPortalMap;
 
 TArray<FPortal *> portals;
+TArray<FGLLinePortal*> linePortalToGL;
+TArray<FGLLinePortal> glLinePortals;
 
 //==========================================================================
 //
@@ -425,6 +427,77 @@ void gl_InitPortals()
 				}
 			}
 		}
+	}
+
+	// Now group the line portals (each group must be a continuous set of colinear linedefs with no gaps)
+	glLinePortals.Clear();
+	linePortalToGL.Clear();
+	TArray<int> tempindex;
+
+	tempindex.Reserve(linePortals.Size());
+	memset(&tempindex[0], -1, linePortals.Size() * sizeof(int));
+
+	for (unsigned i = 0; i < linePortals.Size(); i++)
+	{
+		auto port = linePortals[i];
+		bool gotsome;
+
+		if (tempindex[i] == -1)
+		{
+			tempindex[i] = glLinePortals.Size();
+			line_t *pSrcLine = linePortals[i].mOrigin;
+			line_t *pLine = linePortals[i].mDestination;
+			FGLLinePortal glport = { pLine->v1, pLine->v2, 0, 0, &linePortals[i] };
+			glLinePortals.Push(glport);
+
+			// We cannot do this grouping for non-linked portals because they can be changed at run time.
+			if (linePortals[i].mType == PORTT_LINKED)
+			do
+			{
+				// now collect all other colinear lines connected to this one. We run this loop as long as it still finds a match
+				gotsome = false;
+				for (unsigned j = 0; j < linePortals.Size(); j++)
+				{
+					if (tempindex[j] == -1)
+					{
+						line_t *pSrcLine2 = linePortals[j].mOrigin;
+						line_t *pLine2 = linePortals[j].mDestination;
+						// angular precision is intentionally reduced to 32 bit BAM to account for precision problems (otherwise many not perfectly horizontal or vertical portals aren't found here.)
+						angle_t srcang = RAD2ANGLE(atan2(pSrcLine->dy, pSrcLine->dx));
+						angle_t dstang = RAD2ANGLE(atan2(pLine->dy, pLine->dx));
+						if ((pSrcLine->v2 == pSrcLine2->v1 && pLine->v1 == pLine2->v2) ||
+							(pSrcLine->v1 == pSrcLine2->v2 && pLine->v2 == pLine2->v1))
+						{
+							// The line connects, now check the translation
+							fixed_t srcang2 = RAD2ANGLE(atan2(pSrcLine2->dy, pSrcLine2->dx));
+							fixed_t dstang2 = RAD2ANGLE(atan2(pLine2->dy, pLine2->dx));
+							if (srcang == srcang2 && dstang == dstang2)
+							{
+								// The lines connect and  both source and destination are colinear, so this is a match
+								gotsome = true;
+								tempindex[j] = tempindex[i];
+								if (pLine->v1 == pLine2->v2) glLinePortals[tempindex[i]].v1 = pLine2->v1;
+								else glLinePortals[tempindex[i]].v2 = pLine2->v2;
+							}
+						}
+					}
+				}
+			} while (gotsome);
+		}
+	}
+	for (auto glport : glLinePortals)
+	{
+		glport.dx = glport.v2->x - glport.v1->x;
+		glport.dy = glport.v2->y - glport.v1->y;
+	}
+	linePortalToGL.Resize(linePortals.Size());
+	for (unsigned i = 0; i < linePortals.Size(); i++)
+	{
+		linePortalToGL[i] = &glLinePortals[tempindex[i]];
+		/*
+		Printf("portal at line %d translates to GL portal %d, range = %f,%f to %f,%f\n",
+			int(linePortals[i].mOrigin - lines), tempindex[i], linePortalToGL[i]->v1->x / 65536., linePortalToGL[i]->v1->y / 65536., linePortalToGL[i]->v2->x / 65536., linePortalToGL[i]->v2->y / 65536.);
+		*/
 	}
 }
 

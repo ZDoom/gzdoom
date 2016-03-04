@@ -54,7 +54,17 @@ struct FPortal
 	GLSectorStackPortal *GetGLPortal();
 };
 
+struct FGLLinePortal
+{
+	// defines the complete span of this portal
+	vertex_t	*v1, *v2;	// vertices, from v1 to v2
+	fixed_t 	dx, dy;		// precalculated v2 - v1 for side checking
+	FLinePortal *reference;	// one of the associated line portals, for retrieving translation info etc.
+};
+
 extern TArray<FPortal *> portals;
+extern TArray<FGLLinePortal*> linePortalToGL;
+
 extern TArray<BYTE> currentmapsection;
 
 void gl_InitPortals();

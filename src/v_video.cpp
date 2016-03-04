@@ -1738,8 +1738,8 @@ const int BaseRatioSizes[7][4] =
 	{ 1152, 500, 0,                   48*5/6 },		// 16:10  386,      166.6667, multiplied by three
 	{ 1224, 471, 0,                   48*40/51 },	// 17:10  408,		156.8627, multiplied by three
 	{  960, 640, (int)(6.5*FRACUNIT), 48*15/16 },   //  5:4   320,      213.3333, multiplied by three
-    { 1224, 471, 0,                   48*40/51 },	// 17:10  408,		156.8627, multiplied by three (REDUNDANT)
-    {  568, 113, 0,                   48*9/16 }     //  21:9
+	{ 1224, 471, 0,                   48*40/51 },	// 17:10  408,		156.8627, multiplied by three (REDUNDANT)
+	{ 1707, 338, 0,                   48*9/16 }     	// 21:9   568.8889, 337.5,    multiplied by three
 };
 
 void IVideo::DumpAdapters ()

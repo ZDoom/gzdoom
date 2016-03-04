@@ -878,12 +878,12 @@ void FGLRenderer::RenderView (player_t* player)
 
 	// I stopped using BaseRatioSizes here because the information there wasn't well presented.
 	//							4:3				16:9		16:10		17:10		5:4
-	static float ratios[]={1.333333f, 1.777777f, 1.6f, 1.7f, 1.25f};
+	static float ratios[]={1.333333f, 1.777777f, 1.6f, 1.7f, 1.25f, 1.7f, 2.333333f};
 
 	// now render the main view
 	float fovratio;
 	float ratio = ratios[WidescreenRatio];
-	if (!(WidescreenRatio&4))
+	if (! Is54Aspect(WidescreenRatio))
 	{
 		fovratio = 1.333333f;
 	}

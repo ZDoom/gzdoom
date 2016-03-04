@@ -56,6 +56,7 @@ struct FTraceInfo
 	void *TraceCallbackData;
 	DWORD TraceFlags;
 	int inshootthrough;
+	fixed_t startfrac;
 
 	// These are required for 3D-floor checking
 	// to create a fake sector with a floor 
@@ -108,78 +109,8 @@ bool Trace (fixed_t x, fixed_t y, fixed_t z, sector_t *sector,
 	res.Crossed3DWater = NULL;
 	*/
 
-	// Do a 3D floor check in the starting sector
-	TDeletingArray<F3DFloor*> &ff = sector->e->XFloor.ffloors;
-
-	if (ff.Size())
-	{
-		memcpy(&inf.DummySector[0],sector,sizeof(sector_t));
-		inf.CurSector=sector=&inf.DummySector[0];
-		inf.sectorsel=1;
-		fixed_t bf = sector->floorplane.ZatPoint (x, y);
-		fixed_t bc = sector->ceilingplane.ZatPoint (x, y);
-
-		for(unsigned int i=0;i<ff.Size();i++)
-		{
-			F3DFloor * rover=ff[i];
-			if (!(rover->flags&FF_EXISTS))
-				continue;
-
-			if (rover->flags&FF_SWIMMABLE && res.Crossed3DWater == NULL)
-			{
-				if (inf.Check3DFloorPlane(rover, false))
-					res.Crossed3DWater = rover;
-			}
-
-			if (!(rover->flags&FF_SHOOTTHROUGH))
-			{
-				fixed_t ff_bottom=rover->bottom.plane->ZatPoint(x, y);
-				fixed_t ff_top=rover->top.plane->ZatPoint(x, y);
-				// clip to the part of the sector we are in
-				if (z>ff_top)
-				{
-					// above
-					if (bf<ff_top)
-					{
-						sector->floorplane=*rover->top.plane;
-						sector->SetTexture(sector_t::floor, *rover->top.texture, false);
-						bf=ff_top;
-					}
-				}
-				else if (z<ff_bottom)
-				{
-					//below
-					if (bc>ff_bottom)
-					{
-						sector->ceilingplane=*rover->bottom.plane;
-						sector->SetTexture(sector_t::ceiling, *rover->bottom.texture, false);
-						bc=ff_bottom;
-					}
-				}
-				else
-				{
-					// inside
-					if (bf<ff_bottom)
-					{
-						sector->floorplane=*rover->bottom.plane;
-						sector->SetTexture(sector_t::floor, *rover->bottom.texture, false);
-						bf=ff_bottom;
-					}
-
-					if (bc>ff_top)
-					{
-						sector->ceilingplane=*rover->top.plane;
-						sector->SetTexture(sector_t::ceiling, *rover->top.texture, false);
-						bc=ff_top;
-					}
-					inf.inshootthrough = false;
-				}
-			}
-		}
-	}
-
 	// check for overflows and clip if necessary
-	SQWORD xd = (SQWORD)x + ( ( SQWORD(vx) * SQWORD(maxDist) )>>16);
+	SQWORD xd = (SQWORD)x + ((SQWORD(vx) * SQWORD(maxDist)) >> 16);
 
 	if (xd>SQWORD(32767)*FRACUNIT)
 	{
@@ -191,15 +122,15 @@ bool Trace (fixed_t x, fixed_t y, fixed_t z, sector_t *sector,
 	}
 
 
-	SQWORD yd = (SQWORD)y + ( ( SQWORD(vy) * SQWORD(maxDist) )>>16);
+	SQWORD yd = (SQWORD)y + ((SQWORD(vy) * SQWORD(maxDist)) >> 16);
 
 	if (yd>SQWORD(32767)*FRACUNIT)
 	{
-		maxDist = inf.MaxDist=FixedDiv(FIXED_MAX-y,vy);
+		maxDist = inf.MaxDist = FixedDiv(FIXED_MAX - y, vy);
 	}
 	else if (yd<-SQWORD(32767)*FRACUNIT)
 	{
-		maxDist = inf.MaxDist=FixedDiv(FIXED_MIN-y,vy);
+		maxDist = inf.MaxDist = FixedDiv(FIXED_MIN - y, vy);
 	}
 
 	// recalculate the trace's end points for robustness
@@ -250,6 +181,86 @@ bool Trace (fixed_t x, fixed_t y, fixed_t z, sector_t *sector,
 
 bool FTraceInfo::TraceTraverse (int ptflags)
 {
+	// Do a 3D floor check in the starting sector
+	TDeletingArray<F3DFloor*> &ff = CurSector->e->XFloor.ffloors;
+
+	if (ff.Size())
+	{
+		memcpy(&DummySector[0], CurSector, sizeof(sector_t));
+		CurSector = &DummySector[0];
+		sectorsel = 1;
+
+		fixed_t sdist = FixedMul(MaxDist, startfrac);
+		fixed_t x = StartX + FixedMul(Vx, sdist);
+		fixed_t y = StartY + FixedMul(Vy, sdist);
+		fixed_t z = StartZ + FixedMul(Vz, sdist);
+
+		fixed_t bf = CurSector->floorplane.ZatPoint(x, y);
+		fixed_t bc = CurSector->ceilingplane.ZatPoint(x, y);
+
+		for (auto rover : ff)
+		{
+			if (!(rover->flags&FF_EXISTS))
+				continue;
+
+			if (rover->flags&FF_SWIMMABLE && Results->Crossed3DWater == NULL)
+			{
+				if (Check3DFloorPlane(rover, false))
+					Results->Crossed3DWater = rover;
+			}
+
+			if (!(rover->flags&FF_SHOOTTHROUGH))
+			{
+				fixed_t ff_bottom = rover->bottom.plane->ZatPoint(x, y);
+				fixed_t ff_top = rover->top.plane->ZatPoint(x, y);
+				// clip to the part of the sector we are in
+				if (z>ff_top)
+				{
+					// above
+					if (bf<ff_top)
+					{
+						CurSector->floorplane = *rover->top.plane;
+						CurSector->SetTexture(sector_t::floor, *rover->top.texture, false);
+						CurSector->SkyBoxes[sector_t::floor] == NULL;
+						bf = ff_top;
+					}
+				}
+				else if (z<ff_bottom)
+				{
+					//below
+					if (bc>ff_bottom)
+					{
+						CurSector->ceilingplane = *rover->bottom.plane;
+						CurSector->SetTexture(sector_t::ceiling, *rover->bottom.texture, false);
+						bc = ff_bottom;
+						CurSector->SkyBoxes[sector_t::ceiling] == NULL;
+					}
+				}
+				else
+				{
+					// inside
+					if (bf<ff_bottom)
+					{
+						CurSector->floorplane = *rover->bottom.plane;
+						CurSector->SetTexture(sector_t::floor, *rover->bottom.texture, false);
+						CurSector->SkyBoxes[sector_t::floor] == NULL;
+						bf = ff_bottom;
+					}
+
+					if (bc>ff_top)
+					{
+						CurSector->ceilingplane = *rover->top.plane;
+						CurSector->SetTexture(sector_t::ceiling, *rover->top.texture, false);
+						CurSector->SkyBoxes[sector_t::ceiling] == NULL;
+						bc = ff_top;
+					}
+					inshootthrough = false;
+				}
+			}
+		}
+	}
+
+
 	FPathTraverse it(StartX, StartY, FixedMul (Vx, MaxDist), FixedMul (Vy, MaxDist), ptflags | PT_DELTA);
 	intercept_t *in;
 

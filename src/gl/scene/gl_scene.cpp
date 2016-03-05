@@ -978,7 +978,7 @@ void FGLRenderer::RenderView (player_t* player)
 	NoInterpolateView = false;
 	// prepare all camera textures that have been used in the last frame
 	FCanvasTextureInfo::UpdateAll();
-	NoInterpolateView = true;
+	NoInterpolateView = saved_niv;
 
 
 	// I stopped using BaseRatioSizes here because the information there wasn't well presented.

@@ -3991,7 +3991,8 @@ struct aim_t
 					if (sv_smartaim < 2)
 					{
 						// friends don't aim at friends (except players), at least not first
-						Printf("Hit friend %s at %f,%f,%f\n", th->GetClass()->TypeName.GetChars(), th->X() / 65536., th->Y() / 65536., th->Z() / 65536.);
+						if (aimdebug)
+							Printf("Hit friend %s at %f,%f,%f\n", th->GetClass()->TypeName.GetChars(), th->X() / 65536., th->Y() / 65536., th->Z() / 65536.);
 						SetResult(thing_friend, in->frac, th, thingpitch);
 					}
 				}

@@ -3220,7 +3220,7 @@ FxExpression *FxActionSpecialCall::Resolve(FCompileContext& ctx)
 
 int DecoCallLineSpecial(VMFrameStack *stack, VMValue *param, int numparam, VMReturn *ret, int numret)
 {
-	assert(numparam > 2 && numparam < 7);
+	assert(numparam > 2 && numparam < 8);
 	assert(numret == 1);
 	assert(param[0].Type == REGT_INT);
 	assert(param[1].Type == REGT_POINTER);

@@ -1119,6 +1119,10 @@ FUNC(LS_ThrustThing)
 	}
 	else if (it)
 	{
+		if (level.flags2 & LEVEL2_HEXENHACK && backSide)
+		{
+			return false;
+		}
 		ThrustThingHelper (it, BYTEANGLE(arg0), arg1, arg2);
 		return true;
 	}

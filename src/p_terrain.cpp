@@ -702,6 +702,7 @@ int P_FindTerrain (FName name)
 {
 	unsigned int i;
 
+	if (name == NAME_Null) return -1;
 	for (i = 0; i < Terrains.Size (); i++)
 	{
 		if (Terrains[i].Name == name)

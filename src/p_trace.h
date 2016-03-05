@@ -78,7 +78,9 @@ struct FTraceResults
 	BYTE Tier;
 	ETraceResult HitType;
 	sector_t *CrossedWater;		// For Boom-style, Transfer_Heights-based deep water
+	fixedvec3 CrossedWaterPos;	// remember the position so that we can use it for spawning the splash
 	F3DFloor *Crossed3DWater;	// For 3D floor-based deep water
+	fixedvec3 Crossed3DWaterPos;
 	F3DFloor *ffloor;
 };
 

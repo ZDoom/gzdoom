@@ -103,7 +103,7 @@ static char HexenSectorSpecialOk[256]={
 static inline bool P_IsThingSpecial(int specnum)
 {
 	return (specnum >= Thing_Projectile && specnum <= Thing_SpawnNoFog) ||
-			specnum == Thing_SpawnFacing || Thing_ProjectileIntercept || Thing_ProjectileAimed;
+			specnum == Thing_SpawnFacing || specnum == Thing_ProjectileIntercept || specnum == Thing_ProjectileAimed;
 }
 
 enum

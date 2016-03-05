@@ -265,7 +265,7 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef,
 	}
 
 	// avoid overflows in the opening.
-	open.range = (fixed_t)MIN<QWORD>((QWORD)open.top - open.bottom, FIXED_MAX);
+	open.range = (fixed_t)MIN<SQWORD>((SQWORD)open.top - open.bottom, FIXED_MAX);
 }
 
 
@@ -874,7 +874,7 @@ void FMultiBlockLinesIterator::startIteratorForGroup(int group)
 
 void FMultiBlockLinesIterator::Reset()
 {
-	continueup = continueup = true;
+	continueup = continuedown = true;
 	index = -1;
 	portalflags = 0;
 	startIteratorForGroup(basegroup);

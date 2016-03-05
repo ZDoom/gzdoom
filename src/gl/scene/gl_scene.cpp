@@ -95,7 +95,8 @@ EXTERN_CVAR (Bool, r_deathcamera)
 
 
 extern int viewpitch;
- 
+extern bool NoInterpolateView;
+
 DWORD			gl_fixedcolormap;
 area_t			in_area;
 TArray<BYTE> currentmapsection;
@@ -872,8 +873,12 @@ void FGLRenderer::RenderView (player_t* player)
 
 	GLRenderer->mLights->Clear();
 
+	// NoInterpolateView should have no bearing on camera textures, but needs to be preserved for the main view below.
+	bool saved_niv = NoInterpolateView;
+	NoInterpolateView = false;
 	// prepare all camera textures that have been used in the last frame
 	FCanvasTextureInfo::UpdateAll();
+	NoInterpolateView = true;
 
 
 	// I stopped using BaseRatioSizes here because the information there wasn't well presented.

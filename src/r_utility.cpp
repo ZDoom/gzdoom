@@ -80,7 +80,7 @@ struct InterpolationViewer
 static TArray<InterpolationViewer> PastViewers;
 static FRandom pr_torchflicker ("TorchFlicker");
 static FRandom pr_hom;
-static bool NoInterpolateView;
+bool NoInterpolateView;	// GL needs access to this.
 static TArray<fixedvec3a> InterpolationPath;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------

@@ -76,6 +76,7 @@ struct FTraceResults
 	line_t *Line;		// valid if hit a line
 	BYTE Side;
 	BYTE Tier;
+	bool unlinked;		// passed through a portal without static offset.
 	ETraceResult HitType;
 	sector_t *CrossedWater;		// For Boom-style, Transfer_Heights-based deep water
 	fixedvec3 CrossedWaterPos;	// remember the position so that we can use it for spawning the splash

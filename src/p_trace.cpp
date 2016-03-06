@@ -78,7 +78,7 @@ struct FTraceInfo
 	bool ThingCheck(intercept_t *in);
 	bool TraceTraverse (int ptflags);
 	bool CheckPlane(const secplane_t &plane);
-	void EnterLinePortal(line_t *li, fixed_t frac);
+	int EnterLinePortal(line_t *li, fixed_t frac);
 	void EnterSectorPortal(int position, fixed_t frac, sector_t *entersec);
 
 
@@ -262,38 +262,50 @@ void FTraceInfo::EnterSectorPortal(int position, fixed_t frac, sector_t *enterse
 //
 //============================================================================
 
-void FTraceInfo::EnterLinePortal(line_t *li, fixed_t frac)
+int FTraceInfo::EnterLinePortal(line_t *li, fixed_t frac)
 {
-	/*
-	aim_t newtrace = Clone();
-
 	FLinePortal *port = li->getPortal();
-	if (port->mType != PORTT_LINKED && (flags & ALF_PORTALRESTRICT)) return;
 
-	newtrace.toppitch = toppitch;
-	newtrace.bottompitch = bottompitch;
+	// The caller cannot handle portals without global offset.
+	if (port->mType != PORTT_LINKED && (TraceFlags & TRACE_PortalRestrict)) return -1;
+
+	FTraceInfo newtrace;
+
+	newtrace.StartX = StartX;
+	newtrace.StartY = StartY;
+	newtrace.StartZ = StartZ;
+	newtrace.Vx = Vx;
+	newtrace.Vy = Vy;
+	newtrace.Vz = Vz;
+
+	P_TranslatePortalXY(li, newtrace.StartX, newtrace.StartY);
+	P_TranslatePortalZ(li, newtrace.StartZ);
+	P_TranslatePortalVXVY(li, newtrace.Vx, newtrace.Vy);
+
+	frac += FixedDiv(FRACUNIT, MaxDist);
+	fixed_t enterdist = FixedMul(MaxDist, frac);
+	fixed_t enterX = newtrace.StartX + FixedMul(enterdist, Vx);
+	fixed_t enterY = newtrace.StartY + FixedMul(enterdist, Vy);
+
+	newtrace.ActorMask = ActorMask;
+	newtrace.WallMask = WallMask;
+	newtrace.IgnoreThis = IgnoreThis;
+	newtrace.Results = Results;
+	newtrace.TempResults = TempResults;
+	newtrace.CurSector = P_PointInSector(enterX, enterY);
+	newtrace.MaxDist = MaxDist;
+	newtrace.EnterDist = EnterDist;
+	newtrace.TraceCallback = TraceCallback;
+	newtrace.TraceCallbackData = TraceCallbackData;
+	newtrace.TraceFlags = TraceFlags;
+	newtrace.inshootthrough = true;
+	newtrace.startfrac = frac;
 	newtrace.aimdir = aimdir;
-	newtrace.unlinked = (port->mType != PORTT_LINKED);
-	newtrace.startpos = startpos;
-	newtrace.aimtrace = aimtrace;
-	P_TranslatePortalXY(li, newtrace.startpos.x, newtrace.startpos.y);
-	P_TranslatePortalZ(li, newtrace.startpos.z);
-	P_TranslatePortalVXVY(li, newtrace.aimtrace.x, newtrace.aimtrace.y);
-
-	newtrace.startfrac = frac + FixedDiv(FRACUNIT, attackrange);	// this is to skip the transition line to the portal which would produce a bogus opening
-
-	fixed_t x = newtrace.startpos.x + FixedMul(newtrace.aimtrace.x, newtrace.startfrac);
-	fixed_t y = newtrace.startpos.y + FixedMul(newtrace.aimtrace.y, newtrace.startfrac);
-
-	newtrace.lastsector = P_PointInSector(x, y);
-	P_TranslatePortalZ(li, limitz);
-	if (aimdebug)
-		Printf("-----Entering line portal from sector %d to sector %d\n", lastsector->sectornum, newtrace.lastsector->sectornum);
-	newtrace.AimTraverse();
-	SetResult(linetarget, newtrace.linetarget);
-	SetResult(thing_friend, newtrace.thing_friend);
-	SetResult(thing_other, newtrace.thing_other);
-	*/
+	newtrace.limitz = limitz;
+	P_TranslatePortalZ(li, newtrace.limitz);
+	newtrace.sectorsel = 0;
+	Results->unlinked = true;
+	return newtrace.TraceTraverse(ActorMask ? PT_ADDLINES | PT_ADDTHINGS | PT_COMPATIBLE : PT_ADDLINES);
 }
 
 //==========================================================================
@@ -514,10 +526,24 @@ bool FTraceInfo::LineCheck(intercept_t *in)
 			return false;
 		}
 	}
+	else if (in->d.line->isLinePortal())
+	{
+		if (entersector == NULL || (hitz >= bf && hitz <= bc))
+		{
+			int res = EnterLinePortal(in->d.line, in->frac);
+			if (res != -1)
+			{
+				aimdir = INT_MAX;	// flag for ending the traverse
+				return !!res;
+			}
+		}
+		goto normalline;	// hit upper or lower tier.
+	}
 	else if (entersector == NULL ||
 		hitz < bf || hitz > bc ||
 		in->d.line->flags & WallMask)
 	{
+normalline:
 		// hit the wall
 		Results->HitType = TRACE_HitWall;
 		Results->Tier =

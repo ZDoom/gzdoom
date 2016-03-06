@@ -227,13 +227,7 @@ void FTraceInfo::EnterSectorPortal(int position, fixed_t frac, sector_t *enterse
 
 	if (newtrace.TraceTraverse(ActorMask ? PT_ADDLINES | PT_ADDTHINGS | PT_COMPATIBLE : PT_ADDLINES))
 	{
-		if (newtrace.Results->HitType != TRACE_HitNone)
-		{
-			if (newtrace.Results->Fraction < TempResults->Fraction)
-			{
-				*TempResults = *newtrace.Results;
-			}
-		}
+		Results->CopyIfCloser(TempResults);
 	}
 }
 
@@ -855,7 +849,25 @@ bool FTraceInfo::TraceTraverse (int ptflags)
 	if (TempResults->HitType != TRACE_HitNone && 
 		(Results->HitType == TRACE_HitNone || Results->Fraction > TempResults->Fraction))
 	{
-		*Results = *TempResults;
+		// We still need to do a water check here or this may get missed on occasion
+		if (Results->CrossedWater == NULL &&
+			CurSector->heightsec != NULL &&
+			CurSector->heightsec->floorplane.ZatPoint(Results->X, Results->Y) >= Results->Z)
+		{
+			// Save the result so that the water check doesn't destroy it.
+			FTraceResults *res = Results;
+			FTraceResults hsecResult;
+			Results = &hsecResult;
+
+			if (CheckSectorPlane(CurSector->heightsec, true))
+			{
+				Results->CrossedWater = &sectors[CurSector->sectornum];
+				Results->CrossedWaterPos = { Results->X, Results->Y, Results->Z };
+			}
+			Results = res;
+		}
+
+		Results->CopyIfCloser(TempResults);
 		return true;
 	}
 	else if (Results->HitType == TRACE_HitNone)

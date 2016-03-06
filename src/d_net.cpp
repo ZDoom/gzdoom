@@ -2382,9 +2382,7 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 			{
 				if (trace.HitType == TRACE_HitWall)
 				{
-					DImpactDecal::StaticCreate (s,
-						trace.X, trace.Y, trace.Z,
-						trace.Line->sidedef[trace.Side], NULL);
+					DImpactDecal::StaticCreate (s, trace.HitPos, trace.Line->sidedef[trace.Side], NULL);
 				}
 			}
 		}

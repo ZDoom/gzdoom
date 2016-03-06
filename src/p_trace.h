@@ -65,7 +65,8 @@ struct FTraceResults
 {
 	sector_t *Sector;
 	FTextureID HitTexture;
-	fixed_t X, Y, Z;
+	fixedvec3 HitPos;
+	fixedvec3 HitVector;
 	fixedvec3 SrcFromTarget;
 	angle_t SrcAngleToTarget;
 

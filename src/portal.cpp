@@ -1078,11 +1078,6 @@ void P_CreateLinkedPortals()
 //
 //============================================================================
 
-
-static bool ProcessLayer()
-{
-}
-
 bool P_CollectConnectedGroups(int startgroup, const fixedvec3 &position, fixed_t upperz, fixed_t checkradius, FPortalGroupArray &out)
 {
 	// Keep this temporary work stuff static. This function can never be called recursively

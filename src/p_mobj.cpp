@@ -1444,8 +1444,7 @@ void P_ExplodeMissile (AActor *mo, line_t *line, AActor *target)
 						}
 					}
 
-					DImpactDecal::StaticCreate (base->GetDecal (),
-						x, y, z, line->sidedef[side], ffloor);
+					DImpactDecal::StaticCreate(base->GetDecal(), { x, y, z }, line->sidedef[side], ffloor);
 				}
 			}
 		}
@@ -5228,7 +5227,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 // P_SpawnPuff
 //
 
-AActor *P_SpawnPuff (AActor *source, PClassActor *pufftype, fixed_t x, fixed_t y, fixed_t z, angle_t dir, int updown, int flags, AActor *vict)
+AActor *P_SpawnPuff (AActor *source, PClassActor *pufftype, fixed_t x, fixed_t y, fixed_t z, angle_t hitdir, angle_t particledir, int updown, int flags, AActor *vict)
 {
 	AActor *puff;
 	
@@ -5256,8 +5255,8 @@ AActor *P_SpawnPuff (AActor *source, PClassActor *pufftype, fixed_t x, fixed_t y
 	if ( puff && (puff->flags5 & MF5_PUFFGETSOWNER))
 		puff->target = source;
 	
-
-	if (source != NULL) puff->angle = puff->AngleTo(source);
+	// Angle is the opposite of the hit direction (i.e. the puff faces the source.)
+	puff->angle = hitdir + ANGLE_180;
 
 	// If a puff has a crash state and an actor was not hit,
 	// it will enter the crash state. This is used by the StrifeSpark
@@ -5282,7 +5281,7 @@ AActor *P_SpawnPuff (AActor *source, PClassActor *pufftype, fixed_t x, fixed_t y
 	{
 		if (cl_pufftype && updown != 3 && (puff->flags4 & MF4_ALLOWPARTICLES))
 		{
-			P_DrawSplash2 (32, x, y, z, dir, updown, 1);
+			P_DrawSplash2 (32, x, y, z, particledir, updown, 1);
 			puff->renderflags |= RF_INVISIBLE;
 		}
 
@@ -5402,7 +5401,7 @@ void P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage, AAc
 //
 //---------------------------------------------------------------------------
 
-void P_BloodSplatter (fixed_t x, fixed_t y, fixed_t z, AActor *originator)
+void P_BloodSplatter (fixedvec3 pos, AActor *originator)
 {
 	PalEntry bloodcolor = originator->GetBloodColor();
 	PClassActor *bloodcls = originator->GetBloodType(1); 
@@ -5416,7 +5415,7 @@ void P_BloodSplatter (fixed_t x, fixed_t y, fixed_t z, AActor *originator)
 	{
 		AActor *mo;
 
-		mo = Spawn(bloodcls, x, y, z, NO_REPLACE); // GetBloodType already performed the replacement
+		mo = Spawn(bloodcls, pos, NO_REPLACE); // GetBloodType already performed the replacement
 		mo->target = originator;
 		mo->velx = pr_splatter.Random2 () << 10;
 		mo->vely = pr_splatter.Random2 () << 10;
@@ -5432,7 +5431,7 @@ void P_BloodSplatter (fixed_t x, fixed_t y, fixed_t z, AActor *originator)
 	}
 	if (bloodtype >= 1)
 	{
-		P_DrawSplash2 (40, x, y, z, 0u - originator->AngleTo(x, y), 2, bloodcolor);
+		P_DrawSplash2 (40, pos.x, pos.y, pos.z, 0u - originator->AngleTo(pos), 2, bloodcolor);
 	}
 }
 
@@ -5442,7 +5441,7 @@ void P_BloodSplatter (fixed_t x, fixed_t y, fixed_t z, AActor *originator)
 //
 //===========================================================================
 
-void P_BloodSplatter2 (fixed_t x, fixed_t y, fixed_t z, AActor *originator)
+void P_BloodSplatter2 (fixedvec3 pos, AActor *originator)
 {
 	PalEntry bloodcolor = originator->GetBloodColor();
 	PClassActor *bloodcls = originator->GetBloodType(2);
@@ -5456,10 +5455,10 @@ void P_BloodSplatter2 (fixed_t x, fixed_t y, fixed_t z, AActor *originator)
 	{
 		AActor *mo;
 		
-		x += ((pr_splat()-128)<<11);
-		y += ((pr_splat()-128)<<11);
+		pos.x += ((pr_splat()-128)<<11);
+		pos.y += ((pr_splat()-128)<<11);
 
-		mo = Spawn (bloodcls, x, y, z, NO_REPLACE); // GetBloodType already performed the replacement
+		mo = Spawn (bloodcls, pos, NO_REPLACE); // GetBloodType already performed the replacement
 		mo->target = originator;
 
 		// colorize the blood!
@@ -5472,7 +5471,7 @@ void P_BloodSplatter2 (fixed_t x, fixed_t y, fixed_t z, AActor *originator)
 	}
 	if (bloodtype >= 1)
 	{
-		P_DrawSplash2 (100, x, y, z, 0u - originator->AngleTo(x, y), 2, bloodcolor);
+		P_DrawSplash2 (100, pos.x, pos.y, pos.z, 0u - originator->AngleTo(pos), 2, bloodcolor);
 	}
 }
 
@@ -5733,7 +5732,7 @@ bool P_HitFloor (AActor *thing)
 			{
 				if (rover->top.plane->ZatPoint(pos.x, pos.y) == thing->Z())
 				{
-					return P_HitWater (thing, m->m_sector, pos.x, pos.y, pos.z);
+					return P_HitWater (thing, m->m_sector, pos);
 				}
 			}
 		}
@@ -5743,7 +5742,7 @@ bool P_HitFloor (AActor *thing)
 		return false;
 	}
 
-	return P_HitWater (thing, m->m_sector, pos.x, pos.y, pos.z);
+	return P_HitWater (thing, m->m_sector, pos);
 }
 
 //---------------------------------------------------------------------------

@@ -829,6 +829,11 @@ public:
 		return R_PointToAngle2(X(), Y(), otherx, othery);
 	}
 
+	fixed_t AngleTo(fixedvec2 other)
+	{
+		return R_PointToAngle2(X(), Y(), other.x, other.y);
+	}
+
 	// 'absolute' is reserved for a linked portal implementation which needs
 	// to distinguish between portal-aware and portal-unaware distance calculation.
 	fixed_t AproxDistance(AActor *other, bool absolute = false)

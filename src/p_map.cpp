@@ -5513,14 +5513,16 @@ void P_FindAboveIntersectors(AActor *actor)
 	if (!(actor->flags & MF_SOLID))
 		return;
 
-	AActor *thing;
-	FBlockThingsIterator it(FBoundingBox(actor->X(), actor->Y(), actor->radius));
-	while ((thing = it.Next()))
+	FPortalGroupArray check;
+	FMultiBlockThingsIterator it(check, actor);
+	FMultiBlockThingsIterator::CheckResult cres;
+	while (it.Next(&cres))
 	{
-		if (!thing->intersects(actor))
-		{
+		AActor *thing = cres.thing;
+		fixed_t blockdist = actor->radius + thing->radius;
+		if (abs(actor->X() - cres.position.x) >= blockdist || abs(actor->Y() - cres.position.y) >= blockdist)
 			continue;
-		}
+
 		if (!(thing->flags & MF_SOLID))
 		{ // Can't hit thing
 			continue;
@@ -5568,13 +5570,16 @@ void P_FindBelowIntersectors(AActor *actor)
 		return;
 
 	AActor *thing;
-	FBlockThingsIterator it(FBoundingBox(actor->X(), actor->Y(), actor->radius));
-	while ((thing = it.Next()))
+	FPortalGroupArray check;
+	FMultiBlockThingsIterator it(check, actor);
+	FMultiBlockThingsIterator::CheckResult cres;
+	while (it.Next(&cres))
 	{
-		if (!thing->intersects(actor))
-		{
+		AActor *thing = cres.thing;
+		fixed_t blockdist = actor->radius + thing->radius;
+		if (abs(actor->X() - cres.position.x) >= blockdist || abs(actor->Y() - cres.position.y) >= blockdist)
 			continue;
-		}
+
 		if (!(thing->flags & MF_SOLID))
 		{ // Can't hit thing
 			continue;
@@ -5718,6 +5723,7 @@ int P_PushUp(AActor *thing, FChangePosition *cpos)
 			return 2;
 		}
 	}
+	thing->CheckPortalTransition(true);
 	return 0;
 }
 
@@ -5765,6 +5771,7 @@ int P_PushDown(AActor *thing, FChangePosition *cpos)
 			}
 		}
 	}
+	thing->CheckPortalTransition(true);
 	return 0;
 }
 

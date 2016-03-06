@@ -813,12 +813,6 @@ public:
 		return bloodcls;
 	}
 
-	bool intersects(AActor *other) const
-	{
-		fixed_t blockdist = radius + other->radius;
-		return ( abs(X() - other->X()) < blockdist && abs(Y() - other->Y()) < blockdist);
-	}
-
 	fixed_t AproxDistance(fixed_t otherx, fixed_t othery)
 	{
 		return P_AproxDistance(X() - otherx, Y() - othery);

@@ -141,22 +141,17 @@ bool Trace (fixed_t x, fixed_t y, fixed_t z, sector_t *sector,
 	inf.aimdir = -1;
 	inf.startfrac = 0;
 	memset(&res, 0, sizeof(res));
-	/* // Redundant with the memset
-	res.HitType = TRACE_HitNone;
-	res.CrossedWater = NULL;
-	res.Crossed3DWater = NULL;
-	*/
 
 	// check for overflows and clip if necessary
 	SQWORD xd = (SQWORD)x + ((SQWORD(vx) * SQWORD(maxDist)) >> 16);
 
 	if (xd>SQWORD(32767)*FRACUNIT)
 	{
-		maxDist = inf.MaxDist = FixedDiv(FIXED_MAX - x, vx);
+		inf.MaxDist = FixedDiv(FIXED_MAX - x, vx);
 	}
 	else if (xd<-SQWORD(32767)*FRACUNIT)
 	{
-		maxDist = inf.MaxDist = FixedDiv(FIXED_MIN - x, vx);
+		inf.MaxDist = FixedDiv(FIXED_MIN - x, vx);
 	}
 
 
@@ -164,32 +159,19 @@ bool Trace (fixed_t x, fixed_t y, fixed_t z, sector_t *sector,
 
 	if (yd>SQWORD(32767)*FRACUNIT)
 	{
-		maxDist = inf.MaxDist = FixedDiv(FIXED_MAX - y, vy);
+		inf.MaxDist = FixedDiv(FIXED_MAX - y, vy);
 	}
 	else if (yd<-SQWORD(32767)*FRACUNIT)
 	{
-		maxDist = inf.MaxDist = FixedDiv(FIXED_MIN - y, vy);
+		inf.MaxDist = FixedDiv(FIXED_MIN - y, vy);
 	}
 
 	if (inf.TraceTraverse (ptflags))
 	{ 
-		if (flags)
-		{
-			return EditTraceResult(flags, res);
-		}
-		else
-		{
-			return true;
-		}
+		return flags ? EditTraceResult(flags, res) : true;
 	}
 	else
 	{
-		res.HitType = TRACE_HitNone;
-		res.X = x + FixedMul (vx, maxDist);
-		res.Y = y + FixedMul (vy, maxDist);
-		res.Z = z + FixedMul (vz, maxDist);
-		res.Distance = maxDist;
-		res.Fraction = FRACUNIT;
 		return false;
 	}
 }
@@ -909,8 +891,15 @@ bool FTraceInfo::TraceTraverse (int ptflags)
 		}
 		Results = res;
 	}
-
-	return true;
+	if (Results->HitType == TRACE_HitNone && Results->Distance == 0)
+	{
+		Results->X = StartX + FixedMul(Vx, MaxDist);
+		Results->Y = StartY + FixedMul(Vy, MaxDist);
+		Results->Z = StartZ + FixedMul(Vz, MaxDist);
+		Results->Distance = MaxDist;
+		Results->Fraction = FRACUNIT;
+	}
+	return Results->HitType != TRACE_HitNone;
 }
 
 //==========================================================================

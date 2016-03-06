@@ -4874,7 +4874,7 @@ void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, i
 CVAR(Float, chase_height, -8.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Float, chase_dist, 90.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
-void P_AimCamera(AActor *t1, fixed_t &CameraX, fixed_t &CameraY, fixed_t &CameraZ, sector_t *&CameraSector)
+void P_AimCamera(AActor *t1, fixed_t &CameraX, fixed_t &CameraY, fixed_t &CameraZ, sector_t *&CameraSector, bool &unlinked)
 {
 	fixed_t distance = (fixed_t)(clamp<double>(chase_dist, 0, 30000) * FRACUNIT);
 	angle_t angle = (t1->angle - ANG180) >> ANGLETOFINESHIFT;
@@ -4905,6 +4905,7 @@ void P_AimCamera(AActor *t1, fixed_t &CameraX, fixed_t &CameraY, fixed_t &Camera
 		CameraZ = trace.Z;
 	}
 	CameraSector = trace.Sector;
+	unlinked = trace.unlinked;
 }
 
 

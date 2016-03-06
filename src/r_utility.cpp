@@ -927,6 +927,7 @@ void R_SetupFrame (AActor *actor)
 	player_t *player = actor->player;
 	unsigned int newblend;
 	InterpolationViewer *iview;
+	bool unlinked = false;
 
 	if (player != NULL && player->mo == actor)
 	{	// [RH] Use camera instead of viewplayer
@@ -962,9 +963,22 @@ void R_SetupFrame (AActor *actor)
 	if (player != NULL && gamestate != GS_TITLELEVEL &&
 		((player->cheats & CF_CHASECAM) || (r_deathcamera && camera->health <= 0)))
 	{
+		sector_t *oldsector = R_PointInSubsector(iview->oviewx, iview->oviewy)->sector;
 		// [RH] Use chasecam view
-		P_AimCamera (camera, iview->nviewx, iview->nviewy, iview->nviewz, viewsector);
+		P_AimCamera (camera, iview->nviewx, iview->nviewy, iview->nviewz, viewsector, unlinked);
 		r_showviewer = true;
+		// Interpolating this is a very complicated thing because nothing keeps track of the aim camera's movement, so whenever we detect a portal transition
+		// it's probably best to just reset the interpolation for this move.
+		// Note that this can still cause problems with unusually linked portals
+		if (viewsector->PortalGroup != oldsector->PortalGroup || (unlinked && P_AproxDistance(iview->oviewx - iview->nviewx, iview->oviewy - iview->nviewy) > 256 * FRACUNIT))
+		{
+			iview->otic = nowtic;
+			iview->oviewx = iview->nviewx;
+			iview->oviewy = iview->nviewy;
+			iview->oviewz = iview->nviewz;
+			iview->oviewpitch = iview->nviewpitch;
+			iview->oviewangle = iview->nviewangle;
+		}
 	}
 	else
 	{

@@ -5020,7 +5020,29 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 		// save spots for respawning in network games
 		FPlayerStart start(mthing, pnum+1);
 		playerstarts[pnum] = start;
-		AllPlayerStarts.Push(start);
+		if (level.flags2 & LEVEL2_RANDOMPLAYERSTARTS)
+		{ // When using random player starts, all starts count
+			AllPlayerStarts.Push(start);
+		}
+		else
+		{ // When not using random player starts, later single player
+		  // starts should override earlier ones, since the earlier
+		  // ones are for voodoo dolls and not likely to be ideal for
+		  // spawning regular players.
+			unsigned i;
+			for (i = 0; i < AllPlayerStarts.Size(); ++i)
+			{
+				if (AllPlayerStarts[i].type == pnum+1)
+				{
+					AllPlayerStarts[i] = start;
+					break;
+				}
+			}
+			if (i == AllPlayerStarts.Size())
+			{
+				AllPlayerStarts.Push(start);
+			}
+		}
 		if (!deathmatch && !(level.flags2 & LEVEL2_RANDOMPLAYERSTARTS))
 		{
 			return P_SpawnPlayer(&start, pnum, (level.flags2 & LEVEL2_PRERAISEWEAPON) ? SPF_WEAPONFULLYUP : 0);

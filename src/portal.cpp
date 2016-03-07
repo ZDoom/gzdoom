@@ -122,15 +122,27 @@ static void BuildBlockmap()
 					PortalBlockmap.containsLines = true;
 					block.portallines.Push(ld);
 					block.neighborContainsLines = true;
+					if (ld->getPortal()->mType == PORTT_LINKED) block.containsLinkedPortals = true;
 					if (x > 0) PortalBlockmap(x - 1, y).neighborContainsLines = true;
 					if (y > 0) PortalBlockmap(x, y - 1).neighborContainsLines = true;
 					if (x < PortalBlockmap.dx - 1) PortalBlockmap(x + 1, y).neighborContainsLines = true;
 					if (y < PortalBlockmap.dy - 1) PortalBlockmap(x, y + 1).neighborContainsLines = true;
 				}
+				else
+				{
+
+					bool yes = ld->frontsector->PortalIsLinked(sector_t::ceiling) || ld->frontsector->PortalIsLinked(sector_t::floor);
+					if (ld->backsector)
+					{
+						yes |= ld->backsector->PortalIsLinked(sector_t::ceiling) || ld->backsector->PortalIsLinked(sector_t::floor);
+					}
+					block.containsLinkedPortals |= yes;
+					PortalBlockmap.hasLinkedSectorPortals |= yes;
+
+				}
 			}
 		}
 	}
-	if (!PortalBlockmap.containsLines) PortalBlockmap.Clear();
 }
 
 //===========================================================================
@@ -1066,6 +1078,14 @@ void P_CreateLinkedPortals()
 	{
 		sectors[i].CheckPortalPlane(sector_t::floor);
 		sectors[i].CheckPortalPlane(sector_t::ceiling);
+		// set a flag on each line connecting to a plane portal sector. This is used to reduce the amount of checks in P_CheckSight.
+		if (sectors[i].PortalIsLinked(sector_t::floor) || sectors[i].PortalIsLinked(sector_t::ceiling))
+		{
+			for (int j = 0; j < sectors[j].linecount; j++)
+			{
+				sectors[i].lines[j]->flags |= ML_PORTALCONNECT;
+			}
+		}
 	}
 	//BuildBlockmap();
 }

@@ -5575,7 +5575,6 @@ void P_FindBelowIntersectors(AActor *actor)
 	if (!(actor->flags & MF_SOLID))
 		return;
 
-	AActor *thing;
 	FPortalGroupArray check;
 	FMultiBlockThingsIterator it(check, actor);
 	FMultiBlockThingsIterator::CheckResult cres;

@@ -162,7 +162,7 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef,
 		front = linedef->frontsector;
 		back = linedef->backsector;
 
-		if (!(flags & FFCF_NOPORTALS))
+		if (!(flags & FFCF_NOPORTALS) && (linedef->flags & ML_PORTALCONNECT))
 		{
 			if (!linedef->frontsector->PortalBlocksMovement(sector_t::ceiling)) fc = FIXED_MAX;
 			if (!linedef->backsector->PortalBlocksMovement(sector_t::ceiling)) bc = FIXED_MAX;

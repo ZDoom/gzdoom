@@ -207,7 +207,7 @@ ACTOR Actor native //: Thinker
 	action native A_FadeIn(float reduce = 0.1, int flags = 0);
 	action native A_FadeOut(float reduce = 0.1, int flags = 1); //bool remove == true
 	action native A_FadeTo(float target, float amount = 0.1, int flags = 0);
-	action native A_SetScale(float scalex, float scaley = 0, int ptr = AAPTR_DEFAULT);
+	action native A_SetScale(float scalex, float scaley = 0, int ptr = AAPTR_DEFAULT, bool usezero = false);
 	action native A_SetMass(int mass);
 	action native A_SpawnDebris(class<Actor> spawntype, bool transfer_translation = false, float mult_h = 1, float mult_v = 1);
 	action native A_SpawnParticle(color color1, int flags = 0, int lifetime = 35, int size = 1, float angle = 0, float xoff = 0, float yoff = 0, float zoff = 0, float velx = 0, float vely = 0, float velz = 0, float accelx = 0, float accely = 0, float accelz = 0, float startalphaf = 1, float fadestepf = -1);

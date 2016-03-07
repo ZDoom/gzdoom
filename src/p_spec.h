@@ -626,7 +626,7 @@ public:
 		ceilRaiseInstant,
 		ceilCrushAndRaise,
 		ceilLowerAndCrush,
-		ceilLowerAndCrushDist,
+		ceil_placeholder,
 		ceilCrushRaiseAndStay,
 		ceilRaiseToNearest,
 		ceilLowerToLowest,

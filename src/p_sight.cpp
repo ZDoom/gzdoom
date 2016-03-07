@@ -96,6 +96,7 @@ class SightCheck
 	fixed_t topslope, bottomslope;	// slopes to top and bottom of target
 	int Flags;
 	divline_t trace;
+	int portaldir;
 	unsigned int myseethrough;
 
 	void P_SightOpening(SightOpening &open, const line_t *linedef, fixed_t x, fixed_t y);

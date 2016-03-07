@@ -232,6 +232,9 @@ int Quiet;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static const UINT32 centralfile = ZIP_CENTRALFILE;
+static const UINT32 endofdir = ZIP_ENDOFDIR;
+
 static int no_mem;
 
 static ISzAlloc Alloc = { SzAlloc, SzFree };
@@ -1305,7 +1308,8 @@ int compress_ppmd(Byte *out, unsigned int *outlen, const Byte *in, unsigned int 
 		return -1;
 	}
 
-	*(short *)out = LittleShort((maxorder - 1) + ((sasize - 1) << 4) + (cutoff << 12));
+	const short outval = LittleShort((maxorder - 1) + ((sasize - 1) << 4) + (cutoff << 12));
+	memcpy(out, (const Byte *)&outval, sizeof(short));
 	*outlen = *outlen - ppsout.buffersize;
 	return 0;
 }
@@ -1420,12 +1424,12 @@ BYTE *find_central_dir(FILE *fin)
 		free(dir);
 		return NULL;
 	}
-	if (*(UINT32 *)dir != ZIP_CENTRALFILE)
+	if (memcmp(dir, (const BYTE *)&centralfile, sizeof(UINT32)) != 0)
 	{
 		free(dir);
 		return NULL;
 	}
-	*(UINT32 *)(dir + LittleLong(eod.DirectorySize)) = ZIP_ENDOFDIR;
+	memcpy(dir + LittleLong(eod.DirectorySize), (const BYTE *)&endofdir, sizeof(UINT32));
 	return dir;
 }
 
@@ -1444,7 +1448,7 @@ CentralDirectoryEntry *find_file_in_zip(BYTE *dir, const char *path, unsigned in
 	CentralDirectoryEntry *ent;
 	int flags;
 
-	while (*(UINT32 *)dir == ZIP_CENTRALFILE)
+	while (memcmp(dir, (const BYTE *)&centralfile, sizeof(UINT32)) == 0)
 	{
 		ent = (CentralDirectoryEntry *)dir;
 		if (pathlen == LittleShort(ent->NameLength) &&
@@ -1455,7 +1459,7 @@ CentralDirectoryEntry *find_file_in_zip(BYTE *dir, const char *path, unsigned in
 		}
 		dir += sizeof(*ent) + LittleShort(ent->NameLength) + LittleShort(ent->ExtraLength) + LittleShort(ent->CommentLength);
 	}
-	if (*(UINT32 *)dir != ZIP_CENTRALFILE)
+	if (memcmp(dir, (const BYTE *)&centralfile, sizeof(UINT32)) != 0)
 	{
 		return NULL;
 	}

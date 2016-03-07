@@ -5178,7 +5178,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_WolfAttack)
 			if ((0 && dpuff->flags3 & MF3_PUFFONACTORS) || !spawnblood)
 			{
 				spawnblood = false;
-				P_SpawnPuff(self, pufftype, bloodpos, angle, 0);
+				P_SpawnPuff(self, pufftype, bloodpos, angle, angle, 0);
 			}
 		}
 		else if (self->target->flags3 & MF3_GHOST)

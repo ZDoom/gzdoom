@@ -92,6 +92,13 @@ struct FTraceInfo
 		return CheckPlane(checkBottom? *(ffloor->bottom.plane) : *(ffloor->top.plane));
 	}
 
+	void SetSourcePosition()
+	{
+		Results->SrcFromTarget = { StartX, StartY, StartZ };
+		Results->HitVector = { Vx, Vy, Vz };
+		Results->SrcAngleToTarget = R_PointToAngle2(0, 0, Results->HitPos.x - StartX, Results->HitPos.y - StartY);
+	}
+
 
 };
 
@@ -227,7 +234,7 @@ void FTraceInfo::EnterSectorPortal(int position, fixed_t frac, sector_t *enterse
 
 	if (newtrace.TraceTraverse(ActorMask ? PT_ADDLINES | PT_ADDTHINGS | PT_COMPATIBLE : PT_ADDLINES))
 	{
-		Results->CopyIfCloser(TempResults);
+		TempResults->CopyIfCloser(newtrace.Results);
 	}
 }
 
@@ -319,7 +326,7 @@ void FTraceInfo::Setup3DFloors()
 				if (Check3DFloorPlane(rover, false))
 				{
 					Results->Crossed3DWater = rover;
-					Results->Crossed3DWaterPos = { Results->X, Results->Y, Results->Z };
+					Results->Crossed3DWaterPos = Results->HitPos;
 				}
 			}
 
@@ -468,7 +475,7 @@ bool FTraceInfo::LineCheck(intercept_t *in)
 		if (CheckSectorPlane(hsec, true))
 		{
 			Results->CrossedWater = &sectors[CurSector->sectornum];
-			Results->CrossedWaterPos = { Results->X, Results->Y, Results->Z };
+			Results->CrossedWaterPos = Results->HitPos;
 		}
 	}
 
@@ -645,9 +652,8 @@ cont:
 
 		if (Results->HitType == TRACE_HitWall)
 		{
-			Results->X = hitx;
-			Results->Y = hity;
-			Results->Z = hitz;
+			Results->HitPos = { hitx, hity, hitz };
+			SetSourcePosition();
 			Results->Distance = dist;
 			Results->Fraction = in->frac;
 			Results->Line = in->d.line;
@@ -773,9 +779,8 @@ cont1:
 
 
 	Results->HitType = TRACE_HitActor;
-	Results->X = hitx;
-	Results->Y = hity;
-	Results->Z = hitz;
+	Results->HitPos = { hitx, hity, hitz };
+	SetSourcePosition();
 	Results->Distance = dist;
 	Results->Fraction = in->frac;
 	Results->Actor = in->d.thing;
@@ -823,7 +828,7 @@ bool FTraceInfo::TraceTraverse (int ptflags)
 					if (Check3DFloorPlane(rover, false))
 					{
 						Results->Crossed3DWater = rover;
-						Results->Crossed3DWaterPos = { Results->X, Results->Y, Results->Z };
+						Results->Crossed3DWaterPos = Results->HitPos;
 					}
 				}
 			}
@@ -852,7 +857,7 @@ bool FTraceInfo::TraceTraverse (int ptflags)
 		// We still need to do a water check here or this may get missed on occasion
 		if (Results->CrossedWater == NULL &&
 			CurSector->heightsec != NULL &&
-			CurSector->heightsec->floorplane.ZatPoint(Results->X, Results->Y) >= Results->Z)
+			CurSector->heightsec->floorplane.ZatPoint(Results->HitPos) >= Results->HitPos.z)
 		{
 			// Save the result so that the water check doesn't destroy it.
 			FTraceResults *res = Results;
@@ -862,7 +867,7 @@ bool FTraceInfo::TraceTraverse (int ptflags)
 			if (CheckSectorPlane(CurSector->heightsec, true))
 			{
 				Results->CrossedWater = &sectors[CurSector->sectornum];
-				Results->CrossedWaterPos = { Results->X, Results->Y, Results->Z };
+				Results->CrossedWaterPos = Results->HitPos;
 			}
 			Results = res;
 		}
@@ -889,7 +894,7 @@ bool FTraceInfo::TraceTraverse (int ptflags)
 
 	if (Results->CrossedWater == NULL &&
 		CurSector->heightsec != NULL &&
-		CurSector->heightsec->floorplane.ZatPoint(Results->X, Results->Y) >= Results->Z)
+		CurSector->heightsec->floorplane.ZatPoint(Results->HitPos) >= Results->HitPos.z)
 	{
 		// Save the result so that the water check doesn't destroy it.
 		FTraceResults *res = Results;
@@ -899,15 +904,17 @@ bool FTraceInfo::TraceTraverse (int ptflags)
 		if (CheckSectorPlane(CurSector->heightsec, true))
 		{
 			Results->CrossedWater = &sectors[CurSector->sectornum];
-			Results->CrossedWaterPos = { Results->X, Results->Y, Results->Z };
+			Results->CrossedWaterPos = Results->HitPos;
 		}
 		Results = res;
 	}
 	if (Results->HitType == TRACE_HitNone && Results->Distance == 0)
 	{
-		Results->X = StartX + FixedMul(Vx, MaxDist);
-		Results->Y = StartY + FixedMul(Vy, MaxDist);
-		Results->Z = StartZ + FixedMul(Vz, MaxDist);
+		Results->HitPos = {
+			StartX + FixedMul(Vx, MaxDist),
+			StartY + FixedMul(Vy, MaxDist),
+			StartZ + FixedMul(Vz, MaxDist) };
+		SetSourcePosition();
 		Results->Distance = MaxDist;
 		Results->Fraction = FRACUNIT;
 	}
@@ -934,9 +941,11 @@ bool FTraceInfo::CheckPlane (const secplane_t &plane)
 
 		if (hitdist > EnterDist && hitdist < MaxDist)
 		{
-			Results->X = StartX + FixedMul (Vx, hitdist);
-			Results->Y = StartY + FixedMul (Vy, hitdist);
-			Results->Z = StartZ + FixedMul (Vz, hitdist);
+			Results->HitPos = {
+				StartX + FixedMul(Vx, hitdist),
+				StartY + FixedMul(Vy, hitdist),
+				StartZ + FixedMul(Vz, hitdist) };
+			SetSourcePosition();
 			Results->Distance = hitdist;
 			Results->Fraction = FixedDiv (hitdist, MaxDist);
 			return true;

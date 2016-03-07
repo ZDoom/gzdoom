@@ -4299,7 +4299,9 @@ AActor *P_LineAttack(AActor *t1, angle_t angle, fixed_t distance,
 			if (i_compatflags & COMPATF_HITSCAN)
 			{
 				fixedvec2 ofs = P_GetOffsetPosition(bleedpos.x, bleedpos.y, -10 * trace.HitVector.x, -10 * trace.HitVector.y);
-				bleedpos -= { ofs.x, ofs.y, -10 * trace.HitVector.z};
+				bleedpos.x = ofs.x;
+				bleedpos.y = ofs.y;
+				bleedpos.z -= -10 * trace.HitVector.z;
 			}
 
 			// Spawn bullet puffs or blood spots, depending on target type.
@@ -4676,7 +4678,9 @@ static ETraceStatus ProcessRailHit(FTraceResults &res, void *userdata)
 	if (i_compatflags & COMPATF_HITSCAN)
 	{
 		fixedvec2 ofs = P_GetOffsetPosition(newhit.HitPos.x, newhit.HitPos.y, -10 * res.HitVector.x, -10 * res.HitVector.y);
-		newhit.HitPos = { ofs.x, ofs.y, -10 * res.HitVector.z};
+		newhit.HitPos.x = ofs.x;
+		newhit.HitPos.y = ofs.y;
+		newhit.HitPos.z -= -10 * res.HitVector.z;
 	}
 	data->RailHits.Push(newhit);
 

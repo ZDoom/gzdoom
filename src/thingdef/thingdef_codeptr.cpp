@@ -2919,8 +2919,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetScale)
 
 	if (ref != NULL)
 	{
+		if (scaley == 0 && !usezero)
+		{
+			scaley = scalex;
+		}
 		ref->scaleX = scalex;
-		ref->scaleY = (!usezero && !scaley) ? scalex : scaley;
+		ref->scaleY = scaley;
 	}
 	return 0;
 }

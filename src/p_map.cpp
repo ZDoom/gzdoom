@@ -5245,6 +5245,10 @@ void P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bo
 	double bombdistancefloat = 1.f / (double)(bombdistance - fulldamagedistance);
 	double bombdamagefloat = (double)bombdamage;
 
+	FPortalGroupArray grouplist;
+	FMultiBlockThingsIterator it(grouplist, bombspot->X(), bombspot->Y(), bombspot->Z() - (bombdistance<<FRACBITS), bombspot->height + (bombdistance*2)<<FRACBITS, bombdistance);
+	FMultiBlockThingsIterator::CheckResult cres;
+
 	FBlockThingsIterator it(FBoundingBox(bombspot->X(), bombspot->Y(), bombdistance << FRACBITS));
 	AActor *thing;
 
@@ -5253,8 +5257,9 @@ void P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bo
 		bombsource = bombspot;
 	}
 
-	while ((thing = it.Next()))
+	while ((it.Next(&cres)))
 	{
+		AActor *thing = cres.thing;
 		// Vulnerable actors can be damaged by radius attacks even if not shootable
 		// Used to emulate MBF's vulnerability of non-missile bouncers to explosions.
 		if (!((thing->flags & MF_SHOOTABLE) || (thing->flags6 & MF6_VULNERABLE)))

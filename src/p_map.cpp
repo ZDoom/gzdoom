@@ -5246,11 +5246,8 @@ void P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bo
 	double bombdamagefloat = (double)bombdamage;
 
 	FPortalGroupArray grouplist;
-	FMultiBlockThingsIterator it(grouplist, bombspot->X(), bombspot->Y(), bombspot->Z() - (bombdistance<<FRACBITS), bombspot->height + (bombdistance*2)<<FRACBITS, bombdistance);
+	FMultiBlockThingsIterator it(grouplist, bombspot->X(), bombspot->Y(), bombspot->Z() - (bombdistance<<FRACBITS), bombspot->height + ((bombdistance*2)<<FRACBITS), bombdistance);
 	FMultiBlockThingsIterator::CheckResult cres;
-
-	FBlockThingsIterator it(FBoundingBox(bombspot->X(), bombspot->Y(), bombdistance << FRACBITS));
-	AActor *thing;
 
 	if (flags & RADF_SOURCEISSPOT)
 	{ // The source is actually the same as the spot, even if that wasn't what we received.

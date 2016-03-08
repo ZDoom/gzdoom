@@ -155,7 +155,7 @@ void GLWall::SetupLights()
 				}
 				if (outcnt[0]!=4 && outcnt[1]!=4 && outcnt[2]!=4 && outcnt[3]!=4) 
 				{
-					gl_GetLight(p, node->lightsource, true, false, lightdata);
+					gl_GetLight(seg->frontsector->PortalGroup, p, node->lightsource, true, false, lightdata);
 				}
 			}
 		}

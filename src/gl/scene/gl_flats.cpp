@@ -150,7 +150,7 @@ void GLFlat::SetupSubsectorLights(int pass, subsector_t * sub, int *dli)
 		}
 
 		p.Set(plane.plane);
-		gl_GetLight(p, light, false, false, lightdata);
+		gl_GetLight(sub->sector->PortalGroup, p, light, false, false, lightdata);
 		node = node->nextLight;
 	}
 

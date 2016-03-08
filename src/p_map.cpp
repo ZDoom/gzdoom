@@ -5527,7 +5527,7 @@ void P_FindAboveIntersectors(AActor *actor)
 	{
 		AActor *thing = cres.thing;
 		fixed_t blockdist = actor->radius + thing->radius;
-		if (abs(actor->X() - cres.position.x) >= blockdist || abs(actor->Y() - cres.position.y) >= blockdist)
+		if (abs(thing->X() - cres.position.x) >= blockdist || abs(thing->Y() - cres.position.y) >= blockdist)
 			continue;
 
 		if (!(thing->flags & MF_SOLID))
@@ -5583,7 +5583,7 @@ void P_FindBelowIntersectors(AActor *actor)
 	{
 		AActor *thing = cres.thing;
 		fixed_t blockdist = actor->radius + thing->radius;
-		if (abs(actor->X() - cres.position.x) >= blockdist || abs(actor->Y() - cres.position.y) >= blockdist)
+		if (abs(thing->X() - cres.position.x) >= blockdist || abs(thing->Y() - cres.position.y) >= blockdist)
 			continue;
 
 		if (!(thing->flags & MF_SOLID))

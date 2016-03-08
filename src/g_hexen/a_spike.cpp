@@ -161,7 +161,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ThrustImpale)
 	while (it.Next(&cres))
 	{
 		fixed_t blockdist = self->radius + cres.thing->radius;
-		if (abs(self->X() - cres.position.x) >= blockdist || abs(self->Y() - cres.position.y) >= blockdist)
+		if (abs(cres.thing->X() - cres.position.x) >= blockdist || abs(cres.thing->Y() - cres.position.y) >= blockdist)
 			continue;
 
 		// Q: Make this z-aware for everything? It never was before.

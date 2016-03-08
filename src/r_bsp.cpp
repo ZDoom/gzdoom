@@ -1092,7 +1092,7 @@ void R_Subsector (subsector_t *sub)
 		basecolormap = frontsector->ColorMap;
 	}
 
-	skybox = frontsector->GetSkyBox(sector_t::ceiling);
+	skybox = NULL;// frontsector->GetSkyBox(sector_t::ceiling);
 	if (skybox != NULL && skybox->special1 >= SKYBOX_PLANE) skybox = NULL;	// skip unsupported portal types
 
 	ceilingplane = frontsector->ceilingplane.PointOnSide(viewx, viewy, viewz) > 0 ||
@@ -1134,7 +1134,7 @@ void R_Subsector (subsector_t *sub)
 	// killough 3/7/98: Add (x,y) offsets to flats, add deep water check
 	// killough 3/16/98: add floorlightlevel
 	// killough 10/98: add support for skies transferred from sidedefs
-	skybox = frontsector->GetSkyBox(sector_t::floor);
+	skybox = NULL;// frontsector->GetSkyBox(sector_t::floor);
 	if (skybox != NULL && skybox->special1 >= SKYBOX_PLANE) skybox = NULL;	// skip unsupported portal types
 
 	floorplane = frontsector->floorplane.PointOnSide(viewx, viewy, viewz) > 0 || // killough 3/7/98

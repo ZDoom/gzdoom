@@ -1081,7 +1081,7 @@ void P_CreateLinkedPortals()
 		// set a flag on each line connecting to a plane portal sector. This is used to reduce the amount of checks in P_CheckSight.
 		if (sectors[i].PortalIsLinked(sector_t::floor) || sectors[i].PortalIsLinked(sector_t::ceiling))
 		{
-			for (int j = 0; j < sectors[j].linecount; j++)
+			for (int j = 0; j < sectors[i].linecount; j++)
 			{
 				sectors[i].lines[j]->flags |= ML_PORTALCONNECT;
 			}

@@ -66,6 +66,8 @@
 //EXTERN_CVAR (Int, tx)
 //EXTERN_CVAR (Int, ty)
 
+extern subsector_t *InSubsector;
+
 static void R_DrawSkyStriped (visplane_t *pl);
 
 planefunction_t 		floorfunc;
@@ -1314,6 +1316,7 @@ void R_DrawSkyBoxes ()
 		viewzStack.Push (viewz);
 		visplaneStack.Push (pl);
 
+		InSubsector = NULL;
 		R_RenderBSPNode (nodes + numnodes - 1);
 		R_3D_ResetClip(); // reset clips (floor/ceiling)
 		R_DrawPlanes ();

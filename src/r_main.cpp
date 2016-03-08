@@ -86,6 +86,8 @@ static void R_ShutdownRenderer();
 extern short *openings;
 extern bool r_fakingunderwater;
 extern "C" int fuzzviewheight;
+extern subsector_t *InSubsector;
+extern bool r_showviewer;
 
 
 // PRIVATE DATA DECLARATIONS -----------------------------------------------
@@ -93,7 +95,6 @@ extern "C" int fuzzviewheight;
 static float CurrentVisibility = 8.f;
 static fixed_t MaxVisForWall;
 static fixed_t MaxVisForFloor;
-extern bool r_showviewer;
 bool r_dontmaplines;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -772,6 +773,7 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 	memcpy (ceilingclip + pds->x1, &pds->ceilingclip[0], pds->len*sizeof(*ceilingclip));
 	memcpy (floorclip + pds->x1, &pds->floorclip[0], pds->len*sizeof(*floorclip));
 
+	InSubsector = NULL;
 	R_RenderBSPNode (nodes + numnodes - 1);
 	R_3D_ResetClip(); // reset clips (floor/ceiling)
 
@@ -916,6 +918,7 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	}
 	// Link the polyobjects right before drawing the scene to reduce the amounts of calls to this function
 	PO_LinkToSubsectors();
+	InSubsector = NULL;
 	R_RenderBSPNode (nodes + numnodes - 1);	// The head node is the last node output.
 	R_3D_ResetClip(); // reset clips (floor/ceiling)
 	camera->renderflags = savedflags;

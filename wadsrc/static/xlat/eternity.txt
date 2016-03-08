@@ -112,11 +112,11 @@ enum
 342 = 0, Stairs_BuildUpDoomSync(0)
 343 = 0, Stairs_BuildDownDoomSync(0)
 
-// Two-way portals are not supported yet either
-344 = 0,	Unsupported() // "Portal_TwowayCeiling"
-345 = 0,	Unsupported() // "Portal_TwowayFloor"
-346 = 0,	Unsupported() // "Portal_TwowayAnchorLine"
-347 = 0,	Unsupported() // "Portal_TwowayAnchorLineFloor"
+// Two-way portals are just the same as the simple types.
+344 = 0,	Sector_SetPortal(tag, 0, 1, 1, 0) // "Portal_AnchoredCeiling"
+345 = 0,	Sector_SetPortal(tag, 0, 0, 1, 0) // "Portal_AnchoredFloor"
+346 = 0,	Sector_SetPortal(tag, 0, 1, 0, 0) // "Portal_AnchorLine"
+347 = 0,	Sector_SetPortal(tag, 0, 0, 0, 0) // "Portal_AnchorLineFloor"
 
 // More parameterized linedefs
 348 = 0, Polyobj_StartLine(0)
@@ -215,3 +215,8 @@ enum
 428 = 0, Thing_Destroy(0)
 429 = 0, Door_LockedRaise(0)
 430 = 0, ACS_LockedExecute(0)
+431 = 0, Floor_Donut(0)
+432 = 0, Ceiling_CrushAndRaise(0)
+433 = 0, Ceiling_CrushStop(0)
+434 = 0, Ceiling_CrushRaiseAndStay(0)
+435 = 0, Ceiling_LowerAndCrush(0)

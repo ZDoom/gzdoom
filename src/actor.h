@@ -1167,7 +1167,7 @@ private:
 	bool FixMapthingPos();
 
 public:
-	void LinkToWorld (bool spawningmapthing=false, FPortalGroupArray *groups = NULL, sector_t *sector = NULL);
+	void LinkToWorld (bool spawningmapthing=false, sector_t *sector = NULL);
 	void UnlinkFromWorld ();
 	void AdjustFloorClip ();
 	virtual void SetOrigin (fixed_t x, fixed_t y, fixed_t z, bool moving = false);

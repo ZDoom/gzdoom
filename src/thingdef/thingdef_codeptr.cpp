@@ -5024,9 +5024,7 @@ void A_Weave(AActor *self, int xyspeed, int zspeed, fixed_t xydist, fixed_t zdis
 		{
 			self->UnlinkFromWorld ();
 			self->flags |= MF_NOBLOCKMAP;
-			// the following 4 lines are for future-proofing this for both interpolation overhaul and line portals.
-			// For portals we need to calculate the destination including the portal offset
-			// and for interpolation we need to set the performed movement explicitly, because SetXY cannot do that.
+			// We need to do portal offsetting here explicitly, because SetXY cannot do that.
 			newX -= self->X();
 			newY -= self->Y();
 			self->SetXY(self->Vec2Offset(newX, newY));

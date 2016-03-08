@@ -264,6 +264,11 @@ static FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG(RF, INVISIBLE, AActor, renderflags),
 	DEFINE_FLAG(RF, FORCEYBILLBOARD, AActor, renderflags),
 	DEFINE_FLAG(RF, FORCEXYBILLBOARD, AActor, renderflags),
+	DEFINE_FLAG(RF, ROLLSPRITE, AActor, renderflags), // [marrub] roll the sprite billboard 
+		// [fgsfds] Flat sprites
+	DEFINE_FLAG(RF, FLATSPRITE, AActor, renderflags),
+	DEFINE_FLAG(RF, WALLSPRITE, AActor, renderflags),
+	DEFINE_FLAG(RF, PITCHFLATSPRITE, AActor, renderflags),
 
 	// Bounce flags
 	DEFINE_FLAG2(BOUNCE_Walls, BOUNCEONWALLS, AActor, BounceFlags),
@@ -621,6 +626,7 @@ void InitThingdef()
 	PType *array5 = NewArray(TypeSInt32, 5);
 	symt.AddSymbol(new PField(NAME_Alpha,		TypeFixed,	VARF_Native, myoffsetof(AActor,alpha)));
 	symt.AddSymbol(new PField(NAME_Angle,		TypeAngle,	VARF_Native, myoffsetof(AActor,angle)));
+	symt.AddSymbol(new PField(NAME_FlatAngle,	TypeAngle,	VARF_Native, myoffsetof(AActor,flatangle)));
 	symt.AddSymbol(new PField(NAME_Args,		array5,		VARF_Native, myoffsetof(AActor,args)));
 	symt.AddSymbol(new PField(NAME_CeilingZ,	TypeFixed,	VARF_Native, myoffsetof(AActor,ceilingz)));
 	symt.AddSymbol(new PField(NAME_FloorZ,		TypeFixed,	VARF_Native, myoffsetof(AActor,floorz)));

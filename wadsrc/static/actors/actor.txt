@@ -321,6 +321,7 @@ ACTOR Actor native //: Thinker
 	action native state A_CheckSightOrRange(float distance, state label, bool two_dimension = false);
 	action native state A_CheckRange(float distance, state label, bool two_dimension = false);
 	action native bool A_FaceMovementDirection(float offset = 0, float anglelimit = 0, float pitchlimit = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
+	action native A_SetFlatAngle(float flatangle = 0, int ptr = AAPTR_DEFAULT);
 
 	action native A_RearrangePointers(int newtarget, int newmaster = AAPTR_DEFAULT, int newtracer = AAPTR_DEFAULT, int flags=0);
 	action native A_TransferPointer(int ptr_source, int ptr_recepient, int sourcefield, int recepientfield=AAPTR_DEFAULT, int flags=0);

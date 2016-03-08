@@ -441,6 +441,10 @@ void AActor::Serialize (FArchive &arc)
 	{
 		arc << DefThreshold;
 	}
+	if (SaveVersion >= 4534)
+	{
+		arc << flatangle;
+	}
 
 	{
 		FString tagstr;

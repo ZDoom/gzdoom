@@ -80,7 +80,7 @@ bool GLWall::PrepareLight(texcoord * tcs, ADynamicLight * light)
 		return false;
 	}
 
-	if (!gl_SetupLight(p, light, nearPt, up, right, scale, Colormap.colormap, true, !!(flags&GLWF_FOGGY))) 
+	if (!gl_SetupLight(seg->frontsector->PortalGroup, p, light, nearPt, up, right, scale, Colormap.colormap, true, !!(flags&GLWF_FOGGY))) 
 	{
 		return false;
 	}
@@ -196,7 +196,7 @@ void GLWall::SetupLights()
 					}
 					if (outcnt[0]!=4 && outcnt[1]!=4 && outcnt[2]!=4 && outcnt[3]!=4) 
 					{
-						gl_GetLight(p, node->lightsource, Colormap.colormap, true, false, lightdata);
+						gl_GetLight(seg->frontsector->PortalGroup, p, node->lightsource, Colormap.colormap, true, false, lightdata);
 					}
 				}
 			}

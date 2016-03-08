@@ -98,8 +98,8 @@ public:
 	FLightNode * touching_subsectors;
 
 private:
-	float DistToSeg(seg_t *seg);
-	void CollectWithinRadius(subsector_t *subSec, float radius);
+	float DistToSeg(const fixedvec3 &pos, seg_t *seg);
+	void CollectWithinRadius(const fixedvec3 &pos, subsector_t *subSec, float radius);
 
 protected:
 	fixed_t m_offX, m_offY, m_offZ;
@@ -183,8 +183,8 @@ struct FDynLightData
 
 
 
-bool gl_GetLight(Plane & p, ADynamicLight * light, int desaturation, bool checkside, bool forceadditive, FDynLightData &data);
-bool gl_SetupLight(Plane & p, ADynamicLight * light, Vector & nearPt, Vector & up, Vector & right, float & scale, int desaturation, bool checkside=true, bool forceadditive=true);
+bool gl_GetLight(int group, Plane & p, ADynamicLight * light, int desaturation, bool checkside, bool forceadditive, FDynLightData &data);
+bool gl_SetupLight(int group, Plane & p, ADynamicLight * light, Vector & nearPt, Vector & up, Vector & right, float & scale, int desaturation, bool checkside=true, bool forceadditive=true);
 bool gl_SetupLightTexture();
 
 

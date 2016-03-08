@@ -147,7 +147,7 @@ void GLFlat::DrawSubsectorLights(subsector_t * sub, int pass)
 		}
 
 		p.Set(plane.plane);
-		if (!gl_SetupLight(p, light, nearPt, up, right, scale, Colormap.colormap, false, foggy)) 
+		if (!gl_SetupLight(sub->sector->PortalGroup, p, light, nearPt, up, right, scale, Colormap.colormap, false, foggy)) 
 		{
 			node=node->nextLight;
 			continue;
@@ -210,7 +210,7 @@ bool GLFlat::SetupSubsectorLights(bool lightsapplied, subsector_t * sub)
 			}
 
 			p.Set(plane.plane);
-			gl_GetLight(p, light, Colormap.colormap, false, false, lightdata);
+			gl_GetLight(sub->sector->PortalGroup, p, light, Colormap.colormap, false, false, lightdata);
 			node = node->nextLight;
 		}
 	}

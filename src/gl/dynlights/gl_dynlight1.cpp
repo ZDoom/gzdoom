@@ -90,15 +90,16 @@ CUSTOM_CVAR (Bool, gl_lights_additive, false,  CVAR_ARCHIVE | CVAR_GLOBALCONFIG 
 // Sets up the parameters to render one dynamic light onto one plane
 //
 //==========================================================================
-bool gl_GetLight(Plane & p, ADynamicLight * light,
+bool gl_GetLight(int group, Plane & p, ADynamicLight * light,
 				 int desaturation, bool checkside, bool forceadditive, FDynLightData &ldata)
 {
 	Vector fn, pos;
 	int i = 0;
 
-    float x = FIXED2FLOAT(light->X());
-	float y = FIXED2FLOAT(light->Y());
-	float z = FIXED2FLOAT(light->Z());
+	fixedvec3 lpos = light->PosRelative(group);
+    float x = FIXED2FLOAT(lpos.x);
+	float y = FIXED2FLOAT(lpos.y);
+	float z = FIXED2FLOAT(lpos.z);
 	
 	float dist = fabsf(p.DistToPoint(x, z, y));
 	float radius = (light->GetRadius() * gl_lights_size);
@@ -165,14 +166,15 @@ bool gl_GetLight(Plane & p, ADynamicLight * light,
 // Sets up the parameters to render one dynamic light onto one plane
 //
 //==========================================================================
-bool gl_SetupLight(Plane & p, ADynamicLight * light, Vector & nearPt, Vector & up, Vector & right, 
+bool gl_SetupLight(int group, Plane & p, ADynamicLight * light, Vector & nearPt, Vector & up, Vector & right, 
 				   float & scale, int desaturation, bool checkside, bool forceadditive)
 {
 	Vector fn, pos;
 
-    float x = FIXED2FLOAT(light->X());
-	float y = FIXED2FLOAT(light->Y());
-	float z = FIXED2FLOAT(light->Z());
+	fixedvec3 lpos = light->PosRelative(group);
+    float x = FIXED2FLOAT(lpos.x);
+	float y = FIXED2FLOAT(lpos.y);
+	float z = FIXED2FLOAT(lpos.z);
 	
 	float dist = fabsf(p.DistToPoint(x, z, y));
 	float radius = (light->GetRadius() * gl_lights_size);

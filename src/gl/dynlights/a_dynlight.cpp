@@ -45,6 +45,7 @@
 #include "templates.h"
 #include "doomdata.h"
 #include "r_utility.h"
+#include "portal.h"
 
 
 #include "gl/renderer/gl_renderer.h"
@@ -508,25 +509,25 @@ static FLightNode * DeleteLightNode(FLightNode * node)
 //
 //==========================================================================
 
-float ADynamicLight::DistToSeg(seg_t *seg)
+float ADynamicLight::DistToSeg(const fixedvec3 &pos, seg_t *seg)
 {
-   float u, px, py;
+	float u, px, py;
 
-   float seg_dx = FIXED2FLOAT(seg->v2->x - seg->v1->x);
-   float seg_dy = FIXED2FLOAT(seg->v2->y - seg->v1->y);
-   float seg_length_sq = seg_dx * seg_dx + seg_dy * seg_dy;
+	float seg_dx = FIXED2FLOAT(seg->v2->x - seg->v1->x);
+	float seg_dy = FIXED2FLOAT(seg->v2->y - seg->v1->y);
+	float seg_length_sq = seg_dx * seg_dx + seg_dy * seg_dy;
 
-   u = (  FIXED2FLOAT(X() - seg->v1->x) * seg_dx + FIXED2FLOAT(Y() - seg->v1->y) * seg_dy) / seg_length_sq;
-   if (u < 0.f) u = 0.f; // clamp the test point to the line segment
-   if (u > 1.f) u = 1.f;
+	u = (FIXED2FLOAT(pos.x - seg->v1->x) * seg_dx + FIXED2FLOAT(pos.y - seg->v1->y) * seg_dy) / seg_length_sq;
+	if (u < 0.f) u = 0.f; // clamp the test point to the line segment
+	if (u > 1.f) u = 1.f;
 
-   px = FIXED2FLOAT(seg->v1->x) + (u * seg_dx);
-   py = FIXED2FLOAT(seg->v1->y) + (u * seg_dy);
+	px = FIXED2FLOAT(seg->v1->x) + (u * seg_dx);
+	py = FIXED2FLOAT(seg->v1->y) + (u * seg_dy);
 
-   px -= FIXED2FLOAT(X());
-   py -= FIXED2FLOAT(Y());
+	px -= FIXED2FLOAT(pos.x);
+	py -= FIXED2FLOAT(pos.y);
 
-   return (px*px) + (py*py);
+	return (px*px) + (py*py);
 }
 
 
@@ -537,7 +538,7 @@ float ADynamicLight::DistToSeg(seg_t *seg)
 //
 //==========================================================================
 
-void ADynamicLight::CollectWithinRadius(subsector_t *subSec, float radius)
+void ADynamicLight::CollectWithinRadius(const fixedvec3 &pos, subsector_t *subSec, float radius)
 {
 	if (!subSec) return;
 
@@ -554,11 +555,27 @@ void ADynamicLight::CollectWithinRadius(subsector_t *subSec, float radius)
 		if (seg->sidedef && seg->linedef && seg->linedef->validcount!=::validcount)
 		{
 			// light is in front of the seg
-			if (DMulScale32 (Y()-seg->v1->y, seg->v2->x-seg->v1->x, seg->v1->x-X(), seg->v2->y-seg->v1->y) <=0)
+			if (DMulScale32(pos.y - seg->v1->y, seg->v2->x - seg->v1->x, seg->v1->x - pos.x, seg->v2->y - seg->v1->y) <= 0)
 			{
 				seg->linedef->validcount=validcount;
 				touching_sides = AddLightNode(&seg->sidedef->lighthead[additive], 
 											  seg->sidedef, this, touching_sides);
+			}
+		}
+		if (seg->linedef)
+		{
+			FLinePortal *port = seg->linedef->getPortal();
+			if (port && port->mType == PORTT_LINKED)
+			{
+				if (DistToSeg(pos, seg) <= radius)
+				{
+					line_t *other = port->mDestination;
+					if (other->validcount != ::validcount)
+					{
+						subsector_t *othersub = R_PointInSubsector(other->v1->x + other->dx / 2, other->v1->y + other->dy / 2);
+						if (othersub->validcount != ::validcount) CollectWithinRadius(PosRelative(other), othersub, radius);
+					}
+				}
 			}
 		}
 
@@ -569,11 +586,33 @@ void ADynamicLight::CollectWithinRadius(subsector_t *subSec, float radius)
 			if (sub != NULL && sub->validcount!=::validcount)
 			{
 				// check distance from x/y to seg and if within radius add opposing subsector (lather/rinse/repeat)
-				if (DistToSeg(seg) <= radius)
+				if (DistToSeg(pos, seg) <= radius)
 				{
-					CollectWithinRadius(sub, radius);
+					CollectWithinRadius(pos, sub, radius);
 				}
 			}
+		}
+	}
+	if (subSec->sector->PortalIsLinked(sector_t::ceiling))
+	{
+		line_t *other = subSec->firstline->linedef;
+		AActor *sb = subSec->sector->SkyBoxes[sector_t::ceiling];
+		if (sb->threshold < Z() + radius)
+		{
+			fixedvec2 refpos = { other->v1->x + other->dx / 2 + sb->scaleX, other->v1->y + other->dy / 2 + sb->scaleY };
+			subsector_t *othersub = R_PointInSubsector(refpos.x, refpos.y);
+			if (othersub->validcount != ::validcount) CollectWithinRadius(PosRelative(othersub->sector), othersub, radius);
+		}
+	}
+	if (subSec->sector->PortalIsLinked(sector_t::floor))
+	{
+		line_t *other = subSec->firstline->linedef;
+		AActor *sb = subSec->sector->SkyBoxes[sector_t::floor];
+		if (sb->threshold > Z() - radius)
+		{
+			fixedvec2 refpos = { other->v1->x + other->dx / 2 + sb->scaleX, other->v1->y + other->dy / 2 + sb->scaleY };
+			subsector_t *othersub = R_PointInSubsector(refpos.x, refpos.y);
+			if (othersub->validcount != ::validcount) CollectWithinRadius(PosRelative(othersub->sector), othersub, radius);
 		}
 	}
 }
@@ -605,13 +644,11 @@ void ADynamicLight::LinkLight()
 	if (radius>0)
 	{
 		// passing in radius*radius allows us to do a distance check without any calls to sqrtf
-		::validcount++;
 		subsector_t * subSec = R_PointInSubsector(X(), Y());
-		if (subSec)
-		{
-			float fradius = FIXED2FLOAT(radius);
-			CollectWithinRadius(subSec, fradius*fradius);
-		}
+		float fradius = FIXED2FLOAT(radius);
+		::validcount++;
+		CollectWithinRadius(Pos(), subSec, fradius*fradius);
+
 	}
 		
 	// Now delete any nodes that won't be used. These are the ones where

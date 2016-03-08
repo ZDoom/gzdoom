@@ -36,6 +36,7 @@
 
 #include <stddef.h>
 #include "actor.h"
+#include "cmdlib.h"
 #include "textures/textures.h"
 
 struct sector_t;
@@ -64,23 +65,47 @@ struct FTraceResults
 {
 	sector_t *Sector;
 	FTextureID HitTexture;
-	fixed_t X, Y, Z;
+	fixedvec3 HitPos;
+	fixedvec3 HitVector;
 	fixedvec3 SrcFromTarget;
 	angle_t SrcAngleToTarget;
 
 	fixed_t Distance;
 	fixed_t Fraction;
-	
+
 	AActor *Actor;		// valid if hit an actor
 
 	line_t *Line;		// valid if hit a line
 	BYTE Side;
 	BYTE Tier;
+	bool unlinked;		// passed through a portal without static offset.
 	ETraceResult HitType;
-	sector_t *CrossedWater;		// For Boom-style, Transfer_Heights-based deep water
-	F3DFloor *Crossed3DWater;	// For 3D floor-based deep water
 	F3DFloor *ffloor;
+
+	sector_t *CrossedWater;		// For Boom-style, Transfer_Heights-based deep water
+	fixedvec3 CrossedWaterPos;	// remember the position so that we can use it for spawning the splash
+	F3DFloor *Crossed3DWater;	// For 3D floor-based deep water
+	fixedvec3 Crossed3DWaterPos;
+
+	void CopyIfCloser(FTraceResults *other)
+	{
+		if (other->Distance < Distance || HitType == TRACE_HitNone)
+		{
+			memcpy(this, other, myoffsetof(FTraceResults, CrossedWater));
+		}
+		if (CrossedWater == NULL && other->CrossedWater != NULL)
+		{
+			CrossedWater = other->CrossedWater;
+			CrossedWaterPos = other->CrossedWaterPos;
+		}
+		if (Crossed3DWater == NULL && other->Crossed3DWater != NULL)
+		{
+			Crossed3DWater = other->Crossed3DWater;
+			Crossed3DWaterPos = other->Crossed3DWaterPos;
+		}
+	}
 };
+	
 
 enum
 {

@@ -64,7 +64,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Tracer)
 		return 0;
 	
 	// spawn a puff of smoke behind the rocket
-	P_SpawnPuff (self, PClass::FindActor(NAME_BulletPuff), self->X(), self->Y(), self->Z(), 0, 3);
+	P_SpawnPuff (self, PClass::FindActor(NAME_BulletPuff), self->Pos(), self->angle, self->angle, 3);
 		
 	smoke = Spawn ("RevenantTracerSmoke", self->Vec3Offset(-self->velx, -self->vely, 0), ALLOW_REPLACE);
 	

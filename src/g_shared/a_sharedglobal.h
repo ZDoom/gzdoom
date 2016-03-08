@@ -63,8 +63,8 @@ public:
 	DImpactDecal (fixed_t z);
 	DImpactDecal (side_t *wall, const FDecalTemplate *templ);
 
-	static DImpactDecal *StaticCreate (const char *name, fixed_t x, fixed_t y, fixed_t z, side_t *wall, F3DFloor * ffloor, PalEntry color=0);
-	static DImpactDecal *StaticCreate (const FDecalTemplate *tpl, fixed_t x, fixed_t y, fixed_t z, side_t *wall, F3DFloor * ffloor, PalEntry color=0);
+	static DImpactDecal *StaticCreate (const char *name, const fixedvec3 &pos, side_t *wall, F3DFloor * ffloor, PalEntry color=0);
+	static DImpactDecal *StaticCreate (const FDecalTemplate *tpl, const fixedvec3 &pos, side_t *wall, F3DFloor * ffloor, PalEntry color=0);
 
 	void BeginPlay ();
 	void Destroy ();

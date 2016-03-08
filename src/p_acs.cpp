@@ -4546,7 +4546,7 @@ bool GetVarAddrType(AActor *self, FName varname, int index, void *&addr, PType *
 		// unwrap contained type
 		type = arraytype->ElementType;
 		// offset by index (if in bounds)
-		if ((unsigned)index < arraytype->ElementCount)
+		if ((unsigned)index >= arraytype->ElementCount)
 		{ // out of bounds
 			return false;
 		}

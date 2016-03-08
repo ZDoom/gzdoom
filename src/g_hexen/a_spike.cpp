@@ -153,24 +153,32 @@ DEFINE_ACTION_FUNCTION(AActor, A_ThrustImpale)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	AActor *thing;
 	// This doesn't need to iterate through portals.
-	FBlockThingsIterator it(FBoundingBox(self->X(), self->Y(), self->radius));
-	while ((thing = it.Next()))
+
+	FPortalGroupArray check;
+	FMultiBlockThingsIterator it(check, self);
+	FMultiBlockThingsIterator::CheckResult cres;
+	while (it.Next(&cres))
 	{
-		if (!thing->intersects(self))
-		{
+		fixed_t blockdist = self->radius + cres.thing->radius;
+		if (abs(self->X() - cres.position.x) >= blockdist || abs(self->Y() - cres.position.y) >= blockdist)
 			continue;
+
+		// Q: Make this z-aware for everything? It never was before.
+		if (cres.thing->Top() < self->Z() || cres.thing->Z() > self->Top())
+		{
+			if (self->Sector->PortalGroup != cres.thing->Sector->PortalGroup)
+				continue;
 		}
 
-		if (!(thing->flags & MF_SHOOTABLE) )
+		if (!(cres.thing->flags & MF_SHOOTABLE) )
 			continue;
 
-		if (thing == self)
+		if (cres.thing == self)
 			continue;	// don't clip against self
 
-		int newdam = P_DamageMobj (thing, self, self, 10001, NAME_Crush);
-		P_TraceBleed (newdam > 0 ? newdam : 10001, thing);
+		int newdam = P_DamageMobj (cres.thing, self, self, 10001, NAME_Crush);
+		P_TraceBleed (newdam > 0 ? newdam : 10001, cres.thing);
 		self->args[1] = 1;	// Mark thrust thing as bloody
 	}
 	return 0;

@@ -743,7 +743,7 @@ public:
 
 	inline bool IsNoClip2() const;
 	void CheckPortalTransition(bool islinked);
-	fixedvec3 GetPortalTransition(fixed_t byoffset);
+	fixedvec3 GetPortalTransition(fixed_t byoffset, sector_t **pSec = NULL);
 
 	// What species am I?
 	virtual FName GetSpecies();
@@ -813,12 +813,6 @@ public:
 		return bloodcls;
 	}
 
-	bool intersects(AActor *other) const
-	{
-		fixed_t blockdist = radius + other->radius;
-		return ( abs(X() - other->X()) < blockdist && abs(Y() - other->Y()) < blockdist);
-	}
-
 	fixed_t AproxDistance(fixed_t otherx, fixed_t othery)
 	{
 		return P_AproxDistance(X() - otherx, Y() - othery);
@@ -827,6 +821,11 @@ public:
 	fixed_t AngleTo(fixed_t otherx, fixed_t othery)
 	{
 		return R_PointToAngle2(X(), Y(), otherx, othery);
+	}
+
+	fixed_t AngleTo(fixedvec2 other)
+	{
+		return R_PointToAngle2(X(), Y(), other.x, other.y);
 	}
 
 	// 'absolute' is reserved for a linked portal implementation which needs
@@ -1218,6 +1217,7 @@ public:
 		return __pos;
 	}
 
+	fixedvec3 PosRelative(int grp) const;
 	fixedvec3 PosRelative(const AActor *other) const;
 	fixedvec3 PosRelative(sector_t *sec) const;
 	fixedvec3 PosRelative(line_t *line) const;

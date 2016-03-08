@@ -112,30 +112,56 @@ struct fixedvec3
 		return *this;
 	}
 
+	fixedvec3 &operator -=(const fixedvec2 &other)
+	{
+		x -= other.x;
+		y -= other.y;
+		return *this;
+	}
+
+	fixedvec3 &operator -=(const fixedvec3 &other)
+	{
+		x -= other.x;
+		y -= other.y;
+		z -= other.z;
+		return *this;
+	}
+
 	operator fixedvec2()
 	{
-		fixedvec2 ret = { x, y };
-		return ret;
+		return { x, y };
 	}
 
 };
 
 inline fixedvec2 operator +(const fixedvec2 &v1, const fixedvec2 &v2)
 {
-	fixedvec2 v = { v1.x + v2.x, v1.y + v2.y };
-	return v;
+	return { v1.x + v2.x, v1.y + v2.y };
+}
+
+inline fixedvec2 operator -(const fixedvec2 &v1, const fixedvec2 &v2)
+{
+	return { v1.x - v2.x, v1.y - v2.y };
 }
 
 inline fixedvec3 operator +(const fixedvec3 &v1, const fixedvec3 &v2)
 {
-	fixedvec3 v = { v1.x + v2.x, v1.y + v2.y, v1.z + v2.z };
-	return v;
+	return { v1.x + v2.x, v1.y + v2.y, v1.z + v2.z };
 }
 
 inline fixedvec3 operator +(const fixedvec3 &v1, const fixedvec2 &v2)
 {
-	fixedvec3 v = { v1.x + v2.x, v1.y + v2.y, v1.z };
-	return v;
+	return { v1.x + v2.x, v1.y + v2.y, v1.z };
+}
+
+inline fixedvec3 operator -(const fixedvec3 &v1, const fixedvec2 &v2)
+{
+	return{ v1.x - v2.x, v1.y - v2.y, v1.z };
+}
+
+inline fixedvec3 operator -(const fixedvec3 &v1, const fixedvec3 &v2)
+{
+	return{ v1.x - v2.x, v1.y - v2.y, v1.z - v2.z };
 }
 
 #define FIXED_MAX						(signed)(0x7fffffff)

@@ -638,7 +638,7 @@ void DImpactDecal::CheckMax ()
 	}
 }
 
-DImpactDecal *DImpactDecal::StaticCreate (const char *name, fixed_t x, fixed_t y, fixed_t z, side_t *wall, F3DFloor * ffloor, PalEntry color)
+DImpactDecal *DImpactDecal::StaticCreate (const char *name, const fixedvec3 &pos, side_t *wall, F3DFloor * ffloor, PalEntry color)
 {
 	if (cl_maxdecals > 0)
 	{
@@ -646,13 +646,13 @@ DImpactDecal *DImpactDecal::StaticCreate (const char *name, fixed_t x, fixed_t y
 
 		if (tpl != NULL && (tpl = tpl->GetDecal()) != NULL)
 		{
-			return StaticCreate (tpl, x, y, z, wall, ffloor, color);
+			return StaticCreate (tpl, pos, wall, ffloor, color);
 		}
 	}
 	return NULL;
 }
 
-DImpactDecal *DImpactDecal::StaticCreate (const FDecalTemplate *tpl, fixed_t x, fixed_t y, fixed_t z, side_t *wall, F3DFloor * ffloor, PalEntry color)
+DImpactDecal *DImpactDecal::StaticCreate (const FDecalTemplate *tpl, const fixedvec3 &pos, side_t *wall, F3DFloor * ffloor, PalEntry color)
 {
 	DImpactDecal *decal = NULL;
 	if (tpl != NULL && cl_maxdecals > 0 && !(wall->Flags & WALLF_NOAUTODECALS))
@@ -666,16 +666,16 @@ DImpactDecal *DImpactDecal::StaticCreate (const FDecalTemplate *tpl, fixed_t x, 
 			// apply the custom color as well.
 			if (tpl->ShadeColor != tpl_low->ShadeColor) lowercolor=0;
 			else lowercolor = color;
-			StaticCreate (tpl_low, x, y, z, wall, ffloor, lowercolor);
+			StaticCreate (tpl_low, pos, wall, ffloor, lowercolor);
 		}
 		DImpactDecal::CheckMax();
-		decal = new DImpactDecal (z);
+		decal = new DImpactDecal (pos.z);
 		if (decal == NULL)
 		{
 			return NULL;
 		}
 
-		if (!decal->StickToWall (wall, x, y, ffloor).isValid())
+		if (!decal->StickToWall (wall, pos.x, pos.y, ffloor).isValid())
 		{
 			return NULL;
 		}
@@ -692,7 +692,7 @@ DImpactDecal *DImpactDecal::StaticCreate (const FDecalTemplate *tpl, fixed_t x, 
 		}
 
 		// Spread decal to nearby walls if it does not all fit on this one
-		decal->Spread (tpl, wall, x, y, z, ffloor);
+		decal->Spread (tpl, wall, pos.x, pos.y, pos.z, ffloor);
 	}
 	return decal;
 }
@@ -779,22 +779,20 @@ DBaseDecal *ShootDecal(const FDecalTemplate *tpl, AActor *basisactor, sector_t *
 	{
 		if (permanent)
 		{
-			decal = new DBaseDecal(trace.Z);
+			decal = new DBaseDecal(trace.HitPos.z);
 			wall = trace.Line->sidedef[trace.Side];
-			decal->StickToWall(wall, trace.X, trace.Y, trace.ffloor);
+			decal->StickToWall(wall, trace.HitPos.x, trace.HitPos.y, trace.ffloor);
 			tpl->ApplyToDecal(decal, wall);
 			// Spread decal to nearby walls if it does not all fit on this one
 			if (cl_spreaddecals)
 			{
-				decal->Spread(tpl, wall, trace.X, trace.Y, trace.Z, trace.ffloor);
+				decal->Spread(tpl, wall, trace.HitPos.x, trace.HitPos.y, trace.HitPos.z, trace.ffloor);
 			}
 			return decal;
 		}
 		else
 		{
-			return DImpactDecal::StaticCreate(tpl,
-				trace.X, trace.Y, trace.Z,
-				trace.Line->sidedef[trace.Side], NULL);
+			return DImpactDecal::StaticCreate(tpl, trace.HitPos, trace.Line->sidedef[trace.Side], NULL);
 		}
 	}
 	return NULL;

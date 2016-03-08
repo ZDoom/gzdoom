@@ -48,42 +48,139 @@ static int sightcounts[6];
 static cycle_t SightCycles;
 static cycle_t MaxSightCycles;
 
+enum
+{
+	SO_TOPFRONT = 1,
+	SO_TOPBACK = 2,
+	SO_BOTTOMFRONT = 4,
+	SO_BOTTOMBACK = 8,
+
+};
+
+struct SightOpening
+{
+	fixed_t top;
+	fixed_t bottom;
+	int range;
+	int portalflags;
+
+	void SwapSides()
+	{
+		portalflags = ((portalflags & (SO_TOPFRONT | SO_BOTTOMFRONT)) << 1) | ((portalflags & (SO_TOPBACK | SO_BOTTOMBACK)) >> 1);
+	}
+};
+
+struct SightTask
+{
+	fixed_t frac;
+	fixed_t topslope;
+	fixed_t bottomslope;
+	int direction;
+	int portalgroup;
+};
+
+
 static TArray<intercept_t> intercepts (128);
+static TArray<SightTask> portals(32);
 
 class SightCheck
 {
-	fixed_t sightzstart;				// eye z of looker
-	const AActor * sightthing;
-	const AActor * seeingthing;
+	fixedvec3 sightstart;
+	fixedvec2 sightend;
+	fixed_t startfrac;
+
+	AActor * seeingthing;
 	fixed_t lastztop;				// z at last line
 	fixed_t lastzbottom;				// z at last line
 	sector_t * lastsector;			// last sector being entered by trace
 	fixed_t topslope, bottomslope;	// slopes to top and bottom of target
 	int Flags;
 	divline_t trace;
+	int portaldir;
+	int portalgroup;
+	bool portalfound;
 	unsigned int myseethrough;
 
+	void P_SightOpening(SightOpening &open, const line_t *linedef, fixed_t x, fixed_t y);
 	bool PTR_SightTraverse (intercept_t *in);
 	bool P_SightCheckLine (line_t *ld);
-	bool P_SightBlockLinesIterator (int x, int y);
+	int P_SightBlockLinesIterator (int x, int y);
 	bool P_SightTraverseIntercepts ();
 
 public:
-	bool P_SightPathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2);
+	bool P_SightPathTraverse ();
 
-	SightCheck(const AActor * t1, const AActor * t2, int flags)
+	void init(AActor * t1, AActor * t2, sector_t *startsector, SightTask *task, int flags)
 	{
-		lastztop = lastzbottom = sightzstart = t1->Z() + t1->height - (t1->height>>2);
-		lastsector = t1->Sector;
-		sightthing=t1;
+		sightstart = t1->PosRelative(task->portalgroup);
+		sightend = t2->PosRelative(task->portalgroup);
+		sightstart.z += t1->height - (t1->height >> 2);
+
+		startfrac = task->frac;
+		trace = { sightstart.x, sightstart.y, sightend.x - sightstart.x, sightend.y - sightstart.y };
+		lastztop = lastzbottom = sightstart.z;
+		lastsector = startsector;
 		seeingthing=t2;
-		bottomslope = t2->Z() - sightzstart;
-		topslope = bottomslope + t2->height;
+		topslope = task->topslope;
+		bottomslope = task->bottomslope;
 		Flags = flags;
+		portaldir = task->direction;
+		portalfound = false;
 
 		myseethrough = FF_SEETHROUGH;
 	}
 };
+
+//==========================================================================
+//
+// P_SightOpening
+//
+// Simplified version that removes everything not needed for a sight check
+//
+//==========================================================================
+
+void SightCheck::P_SightOpening(SightOpening &open, const line_t *linedef, fixed_t x, fixed_t y)
+{
+	open.portalflags = 0;
+	sector_t *front = linedef->frontsector;
+	sector_t *back = linedef->backsector;
+
+	if (back == NULL)
+	{
+		// single sided line
+		if (linedef->flags & ML_PORTALCONNECT)
+		{
+			if (!front->PortalBlocksSight(sector_t::ceiling)) open.portalflags |= SO_TOPFRONT;
+			if (!front->PortalBlocksSight(sector_t::floor)) open.portalflags |= SO_BOTTOMFRONT;
+		}
+
+		open.range = 0;
+		return;
+	}
+
+
+	fixed_t fc = 0, ff = 0, bc = 0, bf = 0;
+
+	if (linedef->flags & ML_PORTALCONNECT)
+	{
+		if (!front->PortalBlocksSight(sector_t::ceiling)) fc = FIXED_MAX, open.portalflags |= SO_TOPFRONT;
+		if (!back->PortalBlocksSight(sector_t::ceiling)) bc = FIXED_MAX, open.portalflags |= SO_TOPBACK;
+		if (!front->PortalBlocksSight(sector_t::floor)) ff = FIXED_MIN, open.portalflags |= SO_BOTTOMFRONT;
+		if (!back->PortalBlocksSight(sector_t::floor)) bf = FIXED_MIN, open.portalflags |= SO_BOTTOMBACK;
+	}
+
+	if (fc == 0) fc = front->ceilingplane.ZatPoint(x, y);
+	if (bc == 0) bc = back->ceilingplane.ZatPoint(x, y);
+	if (ff == 0) ff = front->floorplane.ZatPoint(x, y);
+	if (bf == 0) bf = back->floorplane.ZatPoint(x, y);
+
+	open.bottom = MAX(ff, bf);
+	open.top = MIN(fc, bc);
+
+	// we only want to know if there is an opening, not how large it is.
+	open.range = open.bottom >= open.top ? 0 : 1;
+}
+
 
 /*
 ==============
@@ -93,14 +190,12 @@ public:
 ==============
 */
 
-/*
-static bool PTR_SightTraverse (intercept_t *in)
-*/
 bool SightCheck::PTR_SightTraverse (intercept_t *in)
 {
 	line_t  *li;
 	fixed_t slope;
-	FLineOpening open;
+	SightOpening open;
+	int  frontflag = -1;
 
 	li = in->d.line;
 
@@ -114,30 +209,68 @@ bool SightCheck::PTR_SightTraverse (intercept_t *in)
 
 	fixed_t trX=trace.x + FixedMul (trace.dx, in->frac);
 	fixed_t trY=trace.y + FixedMul (trace.dy, in->frac);
-	P_LineOpening (open, NULL, li, trX, trY);
+	P_SightOpening (open, li, trX, trY);
 
-	if (open.range <= 0)		// quick test for totally closed doors
+	FLinePortal *lport = li->getPortal();
+
+	if (open.range == 0 && open.portalflags == 0 && (lport == NULL || lport->mType != PORTT_LINKED))		// quick test for totally closed doors (must be delayed if portal checks are needed, though)
 		return false;		// stop
 
 	// check bottom
-	slope = FixedDiv (open.bottom - sightzstart, in->frac);
-	if (slope > bottomslope)
-		bottomslope = slope;
+	if (open.bottom > FIXED_MIN)
+	{
+		slope = FixedDiv(open.bottom - sightstart.z, in->frac);
+		if (slope > bottomslope)
+			bottomslope = slope;
+	}
 
 	// check top
-	slope = FixedDiv (open.top - sightzstart, in->frac);
-	if (slope < topslope)
-		topslope = slope;
+	if (open.top < FIXED_MAX)
+	{
+		slope = FixedDiv(open.top - sightstart.z, in->frac);
+		if (slope < topslope)
+			topslope = slope;
+	}
 
-	if (topslope <= bottomslope)
+	if (open.portalflags)
+	{
+		sector_t *frontsec, *backsec;
+		frontflag = P_PointOnLineSidePrecise(sightstart.x, sightstart.y, li);
+		if (!frontflag)
+		{
+			frontsec = li->frontsector;
+			backsec = li->backsector;
+		}
+		else
+		{
+			frontsec = li->backsector;
+			if (!frontsec) return false;	// We are looking through the backside of a one-sided line. Just abort if that happens.
+			backsec = li->frontsector;
+			open.SwapSides();				// swap flags to make the next checks simpler.
+		}
+
+		if (portaldir != sector_t::floor && (open.portalflags & SO_TOPBACK) && !(open.portalflags & SO_TOPFRONT))
+		{
+			portals.Push({ in->frac, topslope, bottomslope, sector_t::ceiling, backsec->SkyBoxes[sector_t::ceiling]->Sector->PortalGroup });
+		}
+		if (portaldir != sector_t::ceiling && (open.portalflags & SO_BOTTOMBACK) && !(open.portalflags & SO_BOTTOMFRONT))
+		{
+			portals.Push({ in->frac, topslope, bottomslope, sector_t::floor, backsec->SkyBoxes[sector_t::floor]->Sector->PortalGroup });
+		}
+	}
+	if (lport)
+	{
+		portals.Push({ in->frac, topslope, bottomslope, portaldir, lport->mDestination->frontsector->PortalGroup });
+		return false;
+	}
+
+	if (topslope <= bottomslope || open.range == 0)
 		return false;		// stop
 
 	// now handle 3D-floors
 	if(li->frontsector->e->XFloor.ffloors.Size() || li->backsector->e->XFloor.ffloors.Size())
 	{
-		int  frontflag;
-		
-		frontflag = P_PointOnLineSidePrecise(sightthing->X(), sightthing->Y(), li);
+		if (frontflag == -1) frontflag = P_PointOnLineSidePrecise(sightstart.x, sightstart.y, li);
 		
 		//Check 3D FLOORS!
 		for(int i=1;i<=2;i++)
@@ -145,8 +278,8 @@ bool SightCheck::PTR_SightTraverse (intercept_t *in)
 			sector_t * s=i==1? li->frontsector:li->backsector;
 			fixed_t    highslope, lowslope;
 
-			fixed_t topz= FixedMul (topslope, in->frac) + sightzstart;
-			fixed_t bottomz= FixedMul (bottomslope, in->frac) + sightzstart;
+			fixed_t topz= FixedMul (topslope, in->frac) + sightstart.z;
+			fixed_t bottomz= FixedMul (bottomslope, in->frac) + sightstart.z;
 
 			for(unsigned int j=0;j<s->e->XFloor.ffloors.Size();j++)
 			{
@@ -158,8 +291,8 @@ bool SightCheck::PTR_SightTraverse (intercept_t *in)
 				fixed_t ff_bottom=rover->bottom.plane->ZatPoint(trX, trY);
 				fixed_t ff_top=rover->top.plane->ZatPoint(trX, trY);
 
-				highslope = FixedDiv (ff_top - sightzstart, in->frac);
-				lowslope = FixedDiv (ff_bottom - sightzstart, in->frac);
+				highslope = FixedDiv (ff_top - sightstart.z, in->frac);
+				lowslope = FixedDiv (ff_bottom - sightstart.z, in->frac);
 
 				if (highslope>=topslope)
 				{
@@ -221,8 +354,8 @@ bool SightCheck::PTR_SightTraverse (intercept_t *in)
 	}
 	else lastsector=NULL;	// don't need it if there are no 3D-floors
 
-	lastztop= FixedMul (topslope, in->frac) + sightzstart;
-	lastzbottom= FixedMul (bottomslope, in->frac) + sightzstart;
+	lastztop= FixedMul (topslope, in->frac) + sightstart.z;
+	lastzbottom= FixedMul (bottomslope, in->frac) + sightstart.z;
 
 	return true;			// keep going
 }
@@ -308,10 +441,11 @@ bool SightCheck::P_SightCheckLine (line_t *ld)
 ===================
 */
 
-bool SightCheck::P_SightBlockLinesIterator (int x, int y)
+int SightCheck::P_SightBlockLinesIterator (int x, int y)
 {
 	int offset;
 	int *list;
+	int res = 1;
 
 	polyblock_t *polyLink;
 	unsigned int i;
@@ -319,7 +453,12 @@ bool SightCheck::P_SightBlockLinesIterator (int x, int y)
 
 	offset = y*bmapwidth+x;
 
+	// if any of the previous blocks may contain a portal we may abort the collection of lines here, but we may not abort the sight check.
+	// (We still try to delay activating this for as long as possible.)
+	portalfound = portalfound || PortalBlockmap(x, y).containsLinkedPortals;
+
 	polyLink = PolyBlockMap[offset];
+	portalfound |= (polyLink && PortalBlockmap.hasLinkedPolyPortals);
 	while (polyLink)
 	{
 		if (polyLink->polyobj)
@@ -329,8 +468,11 @@ bool SightCheck::P_SightBlockLinesIterator (int x, int y)
 				polyLink->polyobj->validcount = validcount;
 				for (i = 0; i < polyLink->polyobj->Linedefs.Size(); i++)
 				{
-					if (!P_SightCheckLine (polyLink->polyobj->Linedefs[i]))
-						return false;
+					if (!P_SightCheckLine(polyLink->polyobj->Linedefs[i]))
+					{
+						if (!portalfound) return 0;
+						else res = -1;
+					}
 				}
 			}
 		}
@@ -342,10 +484,13 @@ bool SightCheck::P_SightBlockLinesIterator (int x, int y)
 	for (list = blockmaplump + offset + 1; *list != -1; list++)
 	{
 		if (!P_SightCheckLine (&lines[*list]))
-			return false;
+		{
+			if (!portalfound) return 0;
+			else res = -1;
+		}
 	}
 
-	return true;			// everything was checked
+	return res;			// everything was checked
 }
 
 /*
@@ -374,12 +519,16 @@ bool SightCheck::P_SightTraverseIntercepts ()
 		scan = &intercepts[scanpos];
 		P_MakeDivline (scan->d.line, &dl);
 		scan->frac = P_InterceptVector (&trace, &dl);
+		if (scan->frac < startfrac)
+		{
+			scan->frac = FIXED_MAX;
+			count--;
+		}
 	}
 
 //
 // go through in order
-// [RH] Is it really necessary to go through in order? All we care about is if
-// the trace is obstructed, not what specifically obstructed it.
+// proper order is needed to handle 3D floors and portals.
 //
 	in = NULL;
 
@@ -408,8 +557,8 @@ bool SightCheck::P_SightTraverseIntercepts ()
 	{
 		// we must do one last check whether the trace has crossed a 3D floor in the last sector
 
-		fixed_t topz= topslope + sightzstart;
-		fixed_t bottomz= bottomslope + sightzstart;
+		fixed_t topz= topslope + sightstart.z;
+		fixed_t bottomz= bottomslope + sightstart.z;
 		
 		for(unsigned int i=0;i<lastsector->e->XFloor.ffloors.Size();i++)
 		{
@@ -441,8 +590,9 @@ bool SightCheck::P_SightTraverseIntercepts ()
 ==================
 */
 
-bool SightCheck::P_SightPathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2)
+bool SightCheck::P_SightPathTraverse ()
 {
+	fixed_t x1, x2, y1, y2;
 	fixed_t xt1,yt1,xt2,yt2;
 	long long _x1,_y1,_x2,_y2;
 	fixed_t xstep,ystep;
@@ -453,34 +603,49 @@ bool SightCheck::P_SightPathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_
 
 	validcount++;
 	intercepts.Clear ();
+	x1 = sightstart.x + FixedMul(startfrac, trace.dx);
+	y1 = sightstart.y + FixedMul(startfrac, trace.dy);
+	x2 = sightend.x;
+	y2 = sightend.y;
+	if (lastsector == NULL) lastsector = P_PointInSector(x1, y1);
 
 	// for FF_SEETHROUGH the following rule applies:
 	// If the viewer is in an area without FF_SEETHROUGH he can only see into areas without this flag
 	// If the viewer is in an area with FF_SEETHROUGH he can only see into areas with this flag
+	bool checkfloor = true, checkceiling = true;
 	for(unsigned int i=0;i<lastsector->e->XFloor.ffloors.Size();i++)
 	{
 		F3DFloor*  rover = lastsector->e->XFloor.ffloors[i];
 
 		if(!(rover->flags & FF_EXISTS)) continue;
 		
-		fixed_t ff_bottom=rover->bottom.plane->ZatPoint(sightthing);
-		fixed_t ff_top=rover->top.plane->ZatPoint(sightthing);
+		fixed_t ff_bottom=rover->bottom.plane->ZatPoint(sightstart);
+		fixed_t ff_top=rover->top.plane->ZatPoint(sightstart);
 
-		if (sightzstart < ff_top && sightzstart >= ff_bottom) 
+		if (sightstart.z < ff_top) checkceiling = false;
+		if (sightstart.z >= ff_bottom) checkfloor = false;
+
+		if (sightstart.z < ff_top && sightstart.z >= ff_bottom) 
 		{
 			myseethrough = rover->flags & FF_SEETHROUGH;
 			break;
 		}
 	}
 
+	// We also must check if the starting sector contains  portals, and start sight checks in those as well.
+	if (portaldir != sector_t::floor && checkceiling && !lastsector->PortalBlocksSight(sector_t::ceiling))
+	{
+		portals.Push({ 0, topslope, bottomslope, sector_t::ceiling, lastsector->SkyBoxes[sector_t::ceiling]->Sector->PortalGroup });
+	}
+	if (portaldir != sector_t::ceiling && checkfloor && !lastsector->PortalBlocksSight(sector_t::floor))
+	{
+		portals.Push({ 0, topslope, bottomslope, sector_t::floor, lastsector->SkyBoxes[sector_t::floor]->Sector->PortalGroup });
+	}
+
 	if ( ((x1-bmaporgx)&(MAPBLOCKSIZE-1)) == 0)
 		x1 += FRACUNIT;							// don't side exactly on a line
 	if ( ((y1-bmaporgy)&(MAPBLOCKSIZE-1)) == 0)
 		y1 += FRACUNIT;							// don't side exactly on a line
-	trace.x = x1;
-	trace.y = y1;
-	trace.dx = x2 - x1;
-	trace.dy = y2 - y1;
 
 	_x1 = (long long)x1 - bmaporgx;
 	_y1 = (long long)y1 - bmaporgy;
@@ -495,12 +660,6 @@ bool SightCheck::P_SightPathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_
 	y2 -= bmaporgy;
 	xt2 = int(_x2 >> MAPBLOCKSHIFT);
 	yt2 = int(_y2 >> MAPBLOCKSHIFT);
-
-// points should never be out of bounds, but check once instead of
-// each block
-	if (xt1<0 || yt1<0 || xt1>=bmapwidth || yt1>=bmapheight
-	||  xt2<0 || yt2<0 || xt2>=bmapwidth || yt2>=bmapheight)
-		return false;
 
 	if (xt2 > xt1)
 	{
@@ -572,13 +731,21 @@ bool SightCheck::P_SightPathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_
 
 	for (count = 0 ; count < 100 ; count++)
 	{
-		if (!P_SightBlockLinesIterator (mapx, mapy))
+		// end traversing when reaching the end of the blockmap
+		// an early out is not possible because with portals a trace can easily land outside the map's bounds.
+		if (mapx < 0 || mapx >= bmapwidth || mapy < 0 || mapy >= bmapheight)
 		{
-sightcounts[1]++;
+			break;
+		}
+		int res = P_SightBlockLinesIterator(mapx, mapy);
+		if (res == 0)
+		{
+			sightcounts[1]++;
 			return false;	// early out
 		}
 
-		if ((mapxstep | mapystep) == 0)
+		// either reached the end or had an early-out condition with portals left to check,
+		if (res == -1 || (mapxstep | mapystep) == 0)
 			break;
 
 		switch ((((yintercept >> FRACBITS) == mapy) << 1) | ((xintercept >> FRACBITS) == mapx))
@@ -649,7 +816,7 @@ sightcounts[2]++;
 =====================
 */
 
-bool P_CheckSight (const AActor *t1, const AActor *t2, int flags)
+bool P_CheckSight (AActor *t1, AActor *t2, int flags)
 {
 	SightCycles.Clock();
 
@@ -716,9 +883,34 @@ sightcounts[0]++;
 	// Now look from eyes of t1 to any part of t2.
 
 	validcount++;
+	portals.Clear();
 	{
-		SightCheck s(t1, t2, flags);
-		res = s.P_SightPathTraverse (t1->X(), t1->Y(), t2->X(), t2->Y());
+		sector_t *sec;
+		fixed_t lookheight = t1->height - (t1->height >> 2);
+		t1->GetPortalTransition(lookheight, &sec);
+
+		fixed_t bottomslope = t2->Z() - (t1->Z() + lookheight);
+		fixed_t topslope = bottomslope + t2->height;
+		SightTask task = { 0, topslope, bottomslope, -1, sec->PortalGroup };
+
+
+		SightCheck s;
+		s.init(t1, t2, sec, &task, flags);
+		res = s.P_SightPathTraverse ();
+		if (!res)
+		{
+			fixed_t dist = t1->AproxDistance(t2);
+			for (unsigned i = 0; i < portals.Size(); i++)
+			{
+				portals[i].frac += FixedDiv(FRACUNIT, dist);
+				s.init(t1, t2, NULL, &portals[i], flags);
+				if (s.P_SightPathTraverse())
+				{
+					res = true;
+					break;
+				}
+			}
+		}
 	}
 
 done:

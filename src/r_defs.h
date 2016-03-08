@@ -216,7 +216,6 @@ public:
 //
 class DSectorEffect;
 struct sector_t;
-struct line_t;
 struct FRemapTable;
 
 enum
@@ -822,7 +821,7 @@ struct sector_t
 	bool PortalBlocksSight(int plane)
 	{
 		if (SkyBoxes[plane] == NULL || SkyBoxes[plane]->special1 != SKYBOX_LINKEDPORTAL) return true;
-		return !!(planes[plane].Flags & (PLANEF_NORENDER | PLANEF_DISABLED | PLANEF_OBSTRUCTED));
+		return !!(planes[plane].Flags & (PLANEF_NORENDER | PLANEF_NOPASS | PLANEF_DISABLED | PLANEF_OBSTRUCTED));
 	}
 
 	bool PortalBlocksMovement(int plane)
@@ -835,6 +834,11 @@ struct sector_t
 	{
 		if (SkyBoxes[plane] == NULL || SkyBoxes[plane]->special1 != SKYBOX_LINKEDPORTAL) return true;
 		return !!(planes[plane].Flags & (PLANEF_BLOCKSOUND | PLANEF_DISABLED | PLANEF_OBSTRUCTED));
+	}
+
+	bool PortalIsLinked(int plane)
+	{
+		return (SkyBoxes[plane] != NULL && SkyBoxes[plane]->special1 == SKYBOX_LINKEDPORTAL);
 	}
 
 	// These may only be called if the portal has been validated
@@ -1372,6 +1376,11 @@ subsector_t *P_PointInSubsector(fixed_t x, fixed_t y);
 inline sector_t *P_PointInSector(fixed_t x, fixed_t y)
 {
 	return P_PointInSubsector(x, y)->sector;
+}
+
+inline fixedvec3 AActor::PosRelative(int portalgroup) const
+{
+	return __pos + Displacements.getOffset(Sector->PortalGroup, portalgroup);
 }
 
 inline fixedvec3 AActor::PosRelative(const AActor *other) const

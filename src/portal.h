@@ -78,11 +78,13 @@ extern FDisplacementTable Displacements;
 struct FPortalBlock
 {
 	bool neighborContainsLines;	// this is for skipping the traverser and exiting early if we can quickly decide that there's no portals nearby.
+	bool containsLinkedPortals;	// this is for sight check optimization. We can't early-out on an impenetrable line if there may be portals being found in the same block later on.
 	TArray<line_t*> portallines;
 
 	FPortalBlock()
 	{
 		neighborContainsLines = false;
+		containsLinkedPortals = false;
 	}
 };
 
@@ -91,6 +93,8 @@ struct FPortalBlockmap
 	TArray<FPortalBlock> data;
 	int dx, dy;
 	bool containsLines;
+	bool hasLinkedSectorPortals;	// global flag to shortcut portal checks if the map has none.
+	bool hasLinkedPolyPortals;	// this means that any early-outs in P_CheckSight need to be disabled if a block contains polyobjects.
 
 	void Create(int blockx, int blocky)
 	{
@@ -105,6 +109,8 @@ struct FPortalBlockmap
 		data.ShrinkToFit();
 		dx = dy = 0;
 		containsLines = false;
+		hasLinkedPolyPortals = false;
+		hasLinkedSectorPortals = false;
 	}
 
 	FPortalBlock &operator()(int x, int y)

@@ -275,7 +275,7 @@ void	P_PlayerStartStomp (AActor *actor, bool mononly=false);		// [RH] Stomp on t
 void	P_SlideMove (AActor* mo, fixed_t tryx, fixed_t tryy, int numsteps);
 bool	P_BounceWall (AActor *mo);
 bool	P_BounceActor (AActor *mo, AActor *BlockingMobj, bool ontop);
-bool	P_CheckSight (const AActor *t1, const AActor *t2, int flags=0);
+bool	P_CheckSight (AActor *t1, AActor *t2, int flags=0);
 
 enum ESightFlags
 {

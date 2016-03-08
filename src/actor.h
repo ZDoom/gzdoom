@@ -743,7 +743,7 @@ public:
 
 	inline bool IsNoClip2() const;
 	void CheckPortalTransition(bool islinked);
-	fixedvec3 GetPortalTransition(fixed_t byoffset);
+	fixedvec3 GetPortalTransition(fixed_t byoffset, sector_t **pSec = NULL);
 
 	// What species am I?
 	virtual FName GetSpecies();
@@ -1217,6 +1217,7 @@ public:
 		return __pos;
 	}
 
+	fixedvec3 PosRelative(int grp) const;
 	fixedvec3 PosRelative(const AActor *other) const;
 	fixedvec3 PosRelative(sector_t *sec) const;
 	fixedvec3 PosRelative(line_t *line) const;

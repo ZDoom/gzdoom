@@ -2913,11 +2913,16 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetScale)
 	PARAM_FIXED		(scalex);
 	PARAM_FIXED_OPT	(scaley)	{ scaley = scalex; }
 	PARAM_INT_OPT	(ptr)		{ ptr = AAPTR_DEFAULT; }
+	PARAM_BOOL_OPT	(usezero)	{ usezero = false; }
 
 	AActor *ref = COPY_AAPTR(self, ptr);
 
 	if (ref != NULL)
 	{
+		if (scaley == 0 && !usezero)
+		{
+			scaley = scalex;
+		}
 		ref->scaleX = scalex;
 		ref->scaleY = scaley;
 	}

@@ -5245,12 +5245,13 @@ void P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bo
 	if (bombdistance <= 0)
 		return;
 	fulldamagedistance = clamp<int>(fulldamagedistance, 0, bombdistance - 1);
+	fixed_t bombdistfix = bombdistance << FRACBITS;
 
 	double bombdistancefloat = 1.f / (double)(bombdistance - fulldamagedistance);
 	double bombdamagefloat = (double)bombdamage;
 
 	FPortalGroupArray grouplist;
-	FMultiBlockThingsIterator it(grouplist, bombspot->X(), bombspot->Y(), bombspot->Z() - (bombdistance<<FRACBITS), bombspot->height + ((bombdistance*2)<<FRACBITS), bombdistance);
+	FMultiBlockThingsIterator it(grouplist, bombspot->X(), bombspot->Y(), bombspot->Z() - bombdistfix, bombspot->height + bombdistfix*2, bombdistfix);
 	FMultiBlockThingsIterator::CheckResult cres;
 
 	if (flags & RADF_SOURCEISSPOT)
@@ -5575,7 +5576,6 @@ void P_FindBelowIntersectors(AActor *actor)
 	if (!(actor->flags & MF_SOLID))
 		return;
 
-	AActor *thing;
 	FPortalGroupArray check;
 	FMultiBlockThingsIterator it(check, actor);
 	FMultiBlockThingsIterator::CheckResult cres;

@@ -1677,9 +1677,10 @@ int FPathTraverse::PortalRelocate(intercept_t *in, int flags, fixedvec3 *optpos)
 		P_TranslatePortalXY(in->d.line, optpos->x, optpos->y);
 		P_TranslatePortalZ(in->d.line, optpos->z);
 	}
+	line_t *saved = in->d.line;	// this gets overwriitten by the init call.
 	intercepts.Resize(intercept_index);
 	init(hitx, hity, endx, endy, flags, in->frac);
-	return in->d.line->getPortal()->mType == PORTT_LINKED? 1:-1;
+	return saved->getPortal()->mType == PORTT_LINKED? 1:-1;
 }
 
 //===========================================================================

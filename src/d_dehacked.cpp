@@ -2505,9 +2505,9 @@ static bool DoDehPatch()
 	{
 		if (PatchFile[25] < '3')
 		{
+			Printf (PRINT_BOLD, "\"%s\" is an old and unsupported DeHackEd patch\n", PatchName);
 			delete[] PatchName;
 			delete[] PatchFile;
-			Printf (PRINT_BOLD, "\"%s\" is an old and unsupported DeHackEd patch\n", PatchFile);
 			return false;
 		}
 		// fix for broken WolfenDoom patches which contain \0 characters in some places.

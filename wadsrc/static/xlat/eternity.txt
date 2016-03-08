@@ -218,3 +218,5 @@ enum
 431 = 0, Floor_Donut(0)
 432 = 0, Ceiling_CrushAndRaise(0)
 433 = 0, Ceiling_CrushStop(0)
+434 = 0, Ceiling_CrushRaiseAndStay(0)
+435 = 0, Ceiling_LowerAndCrush(0)

@@ -101,7 +101,7 @@ WORD MirrorFlags;
 TArray<PortalDrawseg> WallPortals(1000);	// note: this array needs to go away as reallocation can cause crashes.
 
 
-static subsector_t *InSubsector;
+subsector_t *InSubsector;
 
 CVAR (Bool, r_drawflat, false, 0)		// [RH] Don't texture segs?
 

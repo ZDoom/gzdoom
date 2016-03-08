@@ -5250,7 +5250,7 @@ void P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bo
 	double bombdistancefloat = 1.f / (double)(bombdistance - fulldamagedistance);
 	double bombdamagefloat = (double)bombdamage;
 
-	FPortalGroupArray grouplist;
+	FPortalGroupArray grouplist(FPortalGroupArray::PGA_Full3d);
 	FMultiBlockThingsIterator it(grouplist, bombspot->X(), bombspot->Y(), bombspot->Z() - bombdistfix, bombspot->height + bombdistfix*2, bombdistfix);
 	FMultiBlockThingsIterator::CheckResult cres;
 

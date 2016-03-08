@@ -842,7 +842,9 @@ bool FTraceInfo::TraceTraverse (int ptflags)
 		}
 		else if (in->isaline)
 		{
-			if (!LineCheck(in)) break;
+			bool res = LineCheck(in);
+			if (aimdir == INT_MAX) return res;	// signal for immediate abort 
+			if (!res) break;
 		}
 		else if ((in->d.thing->flags & ActorMask) && in->d.thing != IgnoreThis)
 		{

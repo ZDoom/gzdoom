@@ -97,6 +97,7 @@ class SightCheck
 	int Flags;
 	divline_t trace;
 	int portaldir;
+	bool portalfound;
 	unsigned int myseethrough;
 
 	void P_SightOpening(SightOpening &open, const line_t *linedef, fixed_t x, fixed_t y);
@@ -110,8 +111,8 @@ public:
 
 	void init(AActor * t1, AActor * t2, sector_t *startsector, SightTask *task, int flags)
 	{
-		sightstart = t1->PosRelative(startsector);
-		sightend = t2->PosRelative(startsector);
+		sightstart = t1->PosRelative(task->portalgroup);
+		sightend = t2->PosRelative(task->portalgroup);
 		sightstart.z += t1->height - (t1->height >> 2);
 
 		startfrac = task->frac;
@@ -123,6 +124,7 @@ public:
 		bottomslope = task->bottomslope;
 		Flags = flags;
 		portaldir = task->direction;
+		portalfound = false;
 
 		myseethrough = FF_SEETHROUGH;
 
@@ -251,7 +253,7 @@ bool SightCheck::PTR_SightTraverse (intercept_t *in)
 		{
 			frontsec = li->backsector;
 			if (!frontsec) return false;	// We are looking through the backside of a one-sided line. Just abort if that happens.
-			backsec = li->backsector;
+			backsec = li->frontsector;
 			open.SwapSides();				// swap flags to make the next checks simpler.
 		}
 
@@ -452,17 +454,19 @@ int SightCheck::P_SightBlockLinesIterator (int x, int y)
 	int offset;
 	int *list;
 	int res = 1;
-	bool portals;
 
 	polyblock_t *polyLink;
 	unsigned int i;
 	extern polyblock_t **PolyBlockMap;
 
 	offset = y*bmapwidth+x;
-	portals = PortalBlockmap(x, y).containsLinkedPortals;
+
+	// if any of the previous blocks may contain a portal we may abort the collection of lines here, but we may not abort the sight check.
+	// (We still try to delay activating this for as long as possible.)
+	portalfound = portalfound || PortalBlockmap(x, y).containsLinkedPortals;
 
 	polyLink = PolyBlockMap[offset];
-	portals |= (polyLink && PortalBlockmap.hasLinkedPolyPortals);
+	portalfound |= (polyLink && PortalBlockmap.hasLinkedPolyPortals);
 	while (polyLink)
 	{
 		if (polyLink->polyobj)
@@ -474,7 +478,7 @@ int SightCheck::P_SightBlockLinesIterator (int x, int y)
 				{
 					if (!P_SightCheckLine(polyLink->polyobj->Linedefs[i]))
 					{
-						if (!portals) return 0;
+						if (!portalfound) return 0;
 						else res = -1;
 					}
 				}
@@ -489,7 +493,7 @@ int SightCheck::P_SightBlockLinesIterator (int x, int y)
 	{
 		if (!P_SightCheckLine (&lines[*list]))
 		{
-			if (!portals) return 0;
+			if (!portalfound) return 0;
 			else res = -1;
 		}
 	}
@@ -523,6 +527,11 @@ bool SightCheck::P_SightTraverseIntercepts ()
 		scan = &intercepts[scanpos];
 		P_MakeDivline (scan->d.line, &dl);
 		scan->frac = P_InterceptVector (&trace, &dl);
+		if (scan->frac < startfrac)
+		{
+			scan->frac = FIXED_MAX;
+			count--;
+		}
 	}
 
 //
@@ -646,12 +655,6 @@ bool SightCheck::P_SightPathTraverse ()
 	xt2 = int(_x2 >> MAPBLOCKSHIFT);
 	yt2 = int(_y2 >> MAPBLOCKSHIFT);
 
-// points should never be out of bounds, but check once instead of
-// each block
-	if (xt1<0 || yt1<0 || xt1>=bmapwidth || yt1>=bmapheight
-	||  xt2<0 || yt2<0 || xt2>=bmapwidth || yt2>=bmapheight)
-		return false;
-
 	if (xt2 > xt1)
 	{
 		mapxstep = 1;
@@ -722,10 +725,16 @@ bool SightCheck::P_SightPathTraverse ()
 
 	for (count = 0 ; count < 100 ; count++)
 	{
+		// end traversing when reaching the end of the blockmap
+		// an early out is not possible because with portals a trace can easily land outside the map's bounds.
+		if (mapx < 0 || mapx >= bmapwidth || mapy < 0 || mapy >= bmapheight)
+		{
+			break;
+		}
 		int res = P_SightBlockLinesIterator(mapx, mapy);
 		if (res == 0)
 		{
-sightcounts[1]++;
+			sightcounts[1]++;
 			return false;	// early out
 		}
 
@@ -868,6 +877,7 @@ sightcounts[0]++;
 	// Now look from eyes of t1 to any part of t2.
 
 	validcount++;
+	portals.Clear();
 	{
 		sector_t *sec;
 		fixed_t lookheight = t1->height - (t1->height >> 2);
@@ -888,7 +898,11 @@ sightcounts[0]++;
 			{
 				portals[i].frac += FixedDiv(FRACUNIT, dist);
 				s.init(t1, t2, NULL, &portals[i], flags);
-				if (s.P_SightPathTraverse()) break;
+				if (s.P_SightPathTraverse())
+				{
+					res = true;
+					break;
+				}
 			}
 		}
 	}

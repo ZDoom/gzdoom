@@ -1217,6 +1217,7 @@ public:
 		return __pos;
 	}
 
+	fixedvec3 PosRelative(int grp) const;
 	fixedvec3 PosRelative(const AActor *other) const;
 	fixedvec3 PosRelative(sector_t *sec) const;
 	fixedvec3 PosRelative(line_t *line) const;

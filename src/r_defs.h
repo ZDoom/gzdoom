@@ -1267,6 +1267,11 @@ inline sector_t *P_PointInSector(fixed_t x, fixed_t y)
 	return P_PointInSubsector(x, y)->sector;
 }
 
+inline fixedvec3 AActor::PosRelative(int portalgroup) const
+{
+	return __pos + Displacements.getOffset(Sector->PortalGroup, portalgroup);
+}
+
 inline fixedvec3 AActor::PosRelative(const AActor *other) const
 {
 	return __pos + Displacements.getOffset(Sector->PortalGroup, other->Sector->PortalGroup);

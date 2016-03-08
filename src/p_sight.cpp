@@ -97,6 +97,7 @@ class SightCheck
 	int Flags;
 	divline_t trace;
 	int portaldir;
+	int portalgroup;
 	bool portalfound;
 	unsigned int myseethrough;
 
@@ -127,15 +128,6 @@ public:
 		portalfound = false;
 
 		myseethrough = FF_SEETHROUGH;
-
-		if (portaldir != sector_t::floor && !t1->Sector->PortalBlocksSight(sector_t::ceiling))
-		{
-			portals.Push({ 0, topslope, bottomslope, sector_t::ceiling, t1->Sector->SkyBoxes[sector_t::ceiling]->Sector->PortalGroup });
-		}
-		if (portaldir != sector_t::ceiling && !t1->Sector->PortalBlocksSight(sector_t::floor))
-		{
-			portals.Push({ 0, topslope, bottomslope, sector_t::floor, t1->Sector->SkyBoxes[sector_t::floor]->Sector->PortalGroup });
-		}
 	}
 };
 
@@ -620,6 +612,7 @@ bool SightCheck::P_SightPathTraverse ()
 	// for FF_SEETHROUGH the following rule applies:
 	// If the viewer is in an area without FF_SEETHROUGH he can only see into areas without this flag
 	// If the viewer is in an area with FF_SEETHROUGH he can only see into areas with this flag
+	bool checkfloor = true, checkceiling = true;
 	for(unsigned int i=0;i<lastsector->e->XFloor.ffloors.Size();i++)
 	{
 		F3DFloor*  rover = lastsector->e->XFloor.ffloors[i];
@@ -629,11 +622,24 @@ bool SightCheck::P_SightPathTraverse ()
 		fixed_t ff_bottom=rover->bottom.plane->ZatPoint(sightstart);
 		fixed_t ff_top=rover->top.plane->ZatPoint(sightstart);
 
+		if (sightstart.z < ff_top) checkceiling = false;
+		if (sightstart.z >= ff_bottom) checkfloor = false;
+
 		if (sightstart.z < ff_top && sightstart.z >= ff_bottom) 
 		{
 			myseethrough = rover->flags & FF_SEETHROUGH;
 			break;
 		}
+	}
+
+	// We also must check if the starting sector contains  portals, and start sight checks in those as well.
+	if (portaldir != sector_t::floor && checkceiling && !lastsector->PortalBlocksSight(sector_t::ceiling))
+	{
+		portals.Push({ 0, topslope, bottomslope, sector_t::ceiling, lastsector->SkyBoxes[sector_t::ceiling]->Sector->PortalGroup });
+	}
+	if (portaldir != sector_t::ceiling && checkfloor && !lastsector->PortalBlocksSight(sector_t::floor))
+	{
+		portals.Push({ 0, topslope, bottomslope, sector_t::floor, lastsector->SkyBoxes[sector_t::floor]->Sector->PortalGroup });
 	}
 
 	if ( ((x1-bmaporgx)&(MAPBLOCKSIZE-1)) == 0)

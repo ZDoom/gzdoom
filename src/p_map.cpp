@@ -2405,11 +2405,18 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 	if (!(thing->flags & (MF_TELEPORT | MF_NOCLIP)))
 	{
 		spechit_t spec;
+		fixedvec3 lastpos = thing->Pos();
 		while (spechit.Pop(spec))
 		{
 			line_t *ld = spec.line;
 			// see if the line was crossed
-			side = P_PointOnLineSide(spec.refpos.x, spec.refpos.y, ld);
+
+			// One more case of trying to preserve some side effects from the original:
+			// If the reference position is the same as the actor's position before checking the spechits,
+			// we use the thing's actual position, including all the side effects of the original.
+			// If some portal transition has to be considered here, we cannot do that and use the reference position stored with the spechit.
+			bool posisoriginal = (spec.refpos.x == lastpos.x && spec.refpos.y == lastpos.y);
+			side = posisoriginal? P_PointOnLineSide(thing->X(), thing->Y(), ld) : P_PointOnLineSide(spec.refpos.x, spec.refpos.y, ld);
 			oldside = P_PointOnLineSide(spec.oldrefpos.x, spec.oldrefpos.y, ld);
 			if (side != oldside && ld->special && !(thing->flags6 & MF6_NOTRIGGER))
 			{

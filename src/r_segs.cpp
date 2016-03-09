@@ -2643,12 +2643,12 @@ void R_StoreWallRange (int start, int stop)
 		{
 			if (pds.ceilingclip[i] < 0)
 				pds.ceilingclip[i] = 0;
-			if (pds.ceilingclip[i] >= RenderTarget->GetHeight())
-				pds.ceilingclip[i] = RenderTarget->GetHeight()-1;
+			if (pds.ceilingclip[i] >= viewheight)
+				pds.ceilingclip[i] = viewheight-1;
 			if (pds.floorclip[i] < 0)
 				pds.floorclip[i] = 0;
-			if (pds.floorclip[i] >= RenderTarget->GetHeight())
-				pds.floorclip[i] = RenderTarget->GetHeight()-1;
+			if (pds.floorclip[i] >= viewheight)
+				pds.floorclip[i] = viewheight-1;
 		}
 
 		pds.mirror = curline->linedef->special == Line_Mirror;

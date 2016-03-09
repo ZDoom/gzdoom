@@ -1983,7 +1983,7 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 
 	FCheckPosition tm(!!(mo->flags2 & MF2_RIP));
 
-
+	angle_t oldangle = mo->angle;
 	do
 	{
 		if (i_compatflags & COMPATF_WALLRUN) pushtime++;
@@ -2213,13 +2213,25 @@ explode:
 				// If the new position does not match the desired position, the player
 				// must have gone through a teleporter, so stop moving right now if it
 				// was a regular teleporter. If it was a line-to-line or fogless teleporter,
-				// the move should continue, but startx and starty need to change.
+				// the move should continue, but startx, starty and xmove, ymove need to change.
 				if (mo->velx == 0 && mo->vely == 0)
 				{
 					step = steps;
 				}
 				else
 				{
+					angle_t anglediff = (mo->angle - oldangle) >> ANGLETOFINESHIFT;
+
+					if (anglediff != 0)
+					{
+						fixed_t xnew = FixedMul(xmove, finecosine[anglediff]) - FixedMul(ymove, finesine[anglediff]);
+						fixed_t ynew = FixedMul(xmove, finesine[anglediff]) + FixedMul(ymove, finecosine[anglediff]);
+
+						xmove = xnew;
+						ymove = ynew;
+						oldangle = mo->angle;	// in case more moves are needed this needs to be updated.
+					}
+
 					startx = mo->X() - Scale (xmove, step, steps);
 					starty = mo->Y() - Scale (ymove, step, steps);
 				}

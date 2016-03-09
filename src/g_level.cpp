@@ -1221,32 +1221,48 @@ void G_FinishTravel ()
 			}
 		}
 
-		if (start == NULL) start = G_PickPlayerStart(pnum, 0);
+		if (start == NULL)
+		{
+			start = G_PickPlayerStart(pnum, 0);
+			if (start == NULL)
+			{
+				Printf(TEXTCOLOR_RED "No player %d start to travel to!\n", pnum + 1);
+				// Move to the coordinates this player had when they left the level.
+				pawn->SetXYZ(pawndup->X(), pawndup->Y(), pawndup->Z());
+			}
+		}
 		oldpawn = pawndup;
 
 		// The player being spawned here is a short lived dummy and
 		// must not start any ENTER script or big problems will happen.
 		pawndup = P_SpawnPlayer(start, pnum, SPF_TEMPPLAYER);
-		if (!(changeflags & CHANGELEVEL_KEEPFACING))
+		if (pawndup != NULL)
 		{
-			pawn->angle = pawndup->angle;
-			pawn->pitch = pawndup->pitch;
+			if (!(changeflags & CHANGELEVEL_KEEPFACING))
+			{
+				pawn->angle = pawndup->angle;
+				pawn->pitch = pawndup->pitch;
+			}
+			pawn->SetXYZ(pawndup->X(), pawndup->Y(), pawndup->Z());
+			pawn->velx = pawndup->velx;
+			pawn->vely = pawndup->vely;
+			pawn->velz = pawndup->velz;
+			pawn->Sector = pawndup->Sector;
+			pawn->floorz = pawndup->floorz;
+			pawn->ceilingz = pawndup->ceilingz;
+			pawn->dropoffz = pawndup->dropoffz;
+			pawn->floorsector = pawndup->floorsector;
+			pawn->floorpic = pawndup->floorpic;
+			pawn->floorterrain = pawndup->floorterrain;
+			pawn->ceilingsector = pawndup->ceilingsector;
+			pawn->ceilingpic = pawndup->ceilingpic;
+			pawn->floorclip = pawndup->floorclip;
+			pawn->waterlevel = pawndup->waterlevel;
 		}
-		pawn->SetXYZ(pawndup->X(), pawndup->Y(), pawndup->Z());
-		pawn->velx = pawndup->velx;
-		pawn->vely = pawndup->vely;
-		pawn->velz = pawndup->velz;
-		pawn->Sector = pawndup->Sector;
-		pawn->floorz = pawndup->floorz;
-		pawn->ceilingz = pawndup->ceilingz;
-		pawn->dropoffz = pawndup->dropoffz;
-		pawn->floorsector = pawndup->floorsector;
-		pawn->floorpic = pawndup->floorpic;
-		pawn->floorterrain = pawndup->floorterrain;
-		pawn->ceilingsector = pawndup->ceilingsector;
-		pawn->ceilingpic = pawndup->ceilingpic;
-		pawn->floorclip = pawndup->floorclip;
-		pawn->waterlevel = pawndup->waterlevel;
+		else
+		{
+			P_FindFloorCeiling(pawn);
+		}
 		pawn->target = NULL;
 		pawn->lastenemy = NULL;
 		pawn->player->mo = pawn;
@@ -1255,7 +1271,10 @@ void G_FinishTravel ()
 		pawn->flags2 &= ~MF2_BLASTED;
 		DObject::StaticPointerSubstitution (oldpawn, pawn);
 		oldpawn->Destroy();
-		pawndup->Destroy ();
+		if (pawndup != NULL)
+		{
+			pawndup->Destroy();
+		}
 		pawn->LinkToWorld ();
 		pawn->ClearInterpolation();
 		pawn->AddToHash ();

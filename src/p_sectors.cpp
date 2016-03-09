@@ -940,12 +940,13 @@ fixed_t sector_t::NextHighestCeilingAt(fixed_t x, fixed_t y, fixed_t z, int flag
 	while (true)
 	{
 		// Looking through planes from bottom to top
+		fixed_t realceil = sec->ceilingplane.ZatPoint(x, y);
 		for (int i = sec->e->XFloor.ffloors.Size() - 1; i >= 0; --i)
 		{
 			F3DFloor *ff = sec->e->XFloor.ffloors[i];
 
 			fixed_t ffz = ff->bottom.plane->ZatPoint(x, y);
-			if ((ff->flags & (FF_EXISTS | FF_SOLID)) == (FF_EXISTS | FF_SOLID) && z <= ffz)
+			if (ffz < realceil && ((ff->flags & (FF_EXISTS | FF_SOLID)) == (FF_EXISTS | FF_SOLID) && z <= ffz))
 			{ // This floor is above our eyes.
 				if (resultsec) *resultsec = sec;
 				if (resultffloor) *resultffloor = ff;
@@ -956,7 +957,7 @@ fixed_t sector_t::NextHighestCeilingAt(fixed_t x, fixed_t y, fixed_t z, int flag
 		{ // Use sector's floor
 			if (resultffloor) *resultffloor = NULL;
 			if (resultsec) *resultsec = sec;
-			return sec->ceilingplane.ZatPoint(x, y);
+			return realceil;
 		}
 		else
 		{
@@ -977,17 +978,19 @@ fixed_t sector_t::NextLowestFloorAt(fixed_t x, fixed_t y, fixed_t z, int flags, 
 	{
 		// Looking through planes from top to bottom
 		unsigned numff = sec->e->XFloor.ffloors.Size();
+		fixed_t realfloor = sec->floorplane.ZatPoint(x, y);
 		for (unsigned i = 0; i < numff; ++i)
 		{
 			F3DFloor *ff = sec->e->XFloor.ffloors[i];
 
-			fixed_t ffz = ff->top.plane->ZatPoint(x, y);
-			fixed_t ffb = ff->bottom.plane->ZatPoint(x, y);
 
 			// either with feet above the 3D floor or feet with less than 'stepheight' map units inside
 			if ((ff->flags & (FF_EXISTS | FF_SOLID)) == (FF_EXISTS | FF_SOLID))
 			{
-				if (z >= ffz || (!(flags & FFCF_3DRESTRICT) && (ffb < z && ffz < z + steph)))
+				fixed_t ffz = ff->top.plane->ZatPoint(x, y);
+				fixed_t ffb = ff->bottom.plane->ZatPoint(x, y);
+
+				if (ffz > realfloor && (z >= ffz || (!(flags & FFCF_3DRESTRICT) && (ffb < z && ffz < z + steph))))
 				{ // This floor is beneath our feet.
 					if (resultsec) *resultsec = sec;
 					if (resultffloor) *resultffloor = ff;
@@ -999,7 +1002,7 @@ fixed_t sector_t::NextLowestFloorAt(fixed_t x, fixed_t y, fixed_t z, int flags, 
 		{ // Use sector's floor
 			if (resultffloor) *resultffloor = NULL;
 			if (resultsec) *resultsec = sec;
-			return sec->floorplane.ZatPoint(x, y);
+			return realfloor;
 		}
 		else
 		{

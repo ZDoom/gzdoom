@@ -1107,7 +1107,25 @@ void P_CreateLinkedPortals()
 			}
 		}
 	}
-	//BuildBlockmap();
+	if (linkedPortals.Size() > 0)
+	{
+		// We need to relink all actors that may touch a linked line portal
+		TThinkerIterator<AActor> it;
+		AActor *actor;
+		while ((actor = it.Next()))
+		{
+			if (!(actor->flags & MF_NOBLOCKMAP))
+			{
+				FPortalGroupArray check(FPortalGroupArray::PGA_NoSectorPortals);
+				P_CollectConnectedGroups(actor->Sector->PortalGroup, actor->Pos(), actor->Top(), actor->radius, check);
+				if (check.Size() > 0)
+				{
+					actor->UnlinkFromWorld();
+					actor->LinkToWorld();
+				}
+			}
+		}
+	}
 }
 
 
@@ -1208,7 +1226,7 @@ bool P_CollectConnectedGroups(int startgroup, const fixedvec3 &position, fixed_t
 			wsec = P_PointInSector(dx, dy);	// get lower sector at the exact spot we want to check and repeat
 			retval = true;
 		}
-		if (out.method == FPortalGroupArray::PGA_Full3d)
+		if (out.method == FPortalGroupArray::PGA_Full3d && PortalBlockmap.hasLinkedSectorPortals)
 		{
 			groupsToCheck.Clear();
 			groupsToCheck.Push(startgroup);

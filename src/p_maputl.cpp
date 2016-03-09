@@ -435,7 +435,7 @@ bool AActor::FixMapthingPos()
 //
 //==========================================================================
 
-void AActor::LinkToWorld (bool spawningmapthing, FPortalGroupArray *groups, sector_t *sector)
+void AActor::LinkToWorld(bool spawningmapthing, sector_t *sector)
 {
 	if (spawningmapthing && (flags4 & MF4_FIXMAPTHINGPOS) && sector == NULL)
 	{
@@ -457,7 +457,7 @@ void AActor::LinkToWorld (bool spawningmapthing, FPortalGroupArray *groups, sect
 	Sector = sector;
 	subsector = R_PointInSubsector(X(), Y());	// this is from the rendering nodes, not the gameplay nodes!
 
-	if ( !(flags & MF_NOSECTOR) )
+	if (!(flags & MF_NOSECTOR))
 	{
 		// invisible things don't go into the sector links
 		// killough 8/11/98: simpler scheme using pointer-to-pointer prev
@@ -482,51 +482,60 @@ void AActor::LinkToWorld (bool spawningmapthing, FPortalGroupArray *groups, sect
 		// When a node is deleted, its sector links (the links starting
 		// at sector_t->touching_thinglist) are broken. When a node is
 		// added, new sector links are created.
-		P_CreateSecNodeList (this, X(), Y());
+		P_CreateSecNodeList(this, X(), Y());
 		touching_sectorlist = sector_list;	// Attach to thing
 		sector_list = NULL;		// clear for next time
-    }
+	}
 
-	
+
 	// link into blockmap (inert things don't need to be in the blockmap)
-	if ( !(flags & MF_NOBLOCKMAP) )
+	if (!(flags & MF_NOBLOCKMAP))
 	{
-		int x1 = GetSafeBlockX(X() - radius - bmaporgx);
-		int x2 = GetSafeBlockX(X() + radius - bmaporgx);
-		int y1 = GetSafeBlockY(Y() - radius - bmaporgy);
-		int y2 = GetSafeBlockY(Y() + radius - bmaporgy);
+		FPortalGroupArray check(FPortalGroupArray::PGA_NoSectorPortals);
 
-		if (x1 >= bmapwidth || x2 < 0 || y1 >= bmapheight || y2 < 0)
-		{ // thing is off the map
-			BlockNode = NULL;
-		}
-		else
-        { // [RH] Link into every block this actor touches, not just the center one
-			FBlockNode **alink = &this->BlockNode;
-			x1 = MAX (0, x1);
-			y1 = MAX (0, y1);
-			x2 = MIN (bmapwidth - 1, x2);
-			y2 = MIN (bmapheight - 1, y2);
-			for (int y = y1; y <= y2; ++y)
-			{
-				for (int x = x1; x <= x2; ++x)
+		P_CollectConnectedGroups(Sector->PortalGroup, Pos(), Top(), radius, check);
+
+		for (int i = -1; i < (int)check.Size(); i++)
+		{
+			fixedvec3 pos = i==-1? Pos() : PosRelative(check[i]);
+
+			int x1 = GetSafeBlockX(pos.x - radius - bmaporgx);
+			int x2 = GetSafeBlockX(pos.x + radius - bmaporgx);
+			int y1 = GetSafeBlockY(pos.y - radius - bmaporgy);
+			int y2 = GetSafeBlockY(pos.y + radius - bmaporgy);
+
+			if (x1 >= bmapwidth || x2 < 0 || y1 >= bmapheight || y2 < 0)
+			{ // thing is off the map
+				BlockNode = NULL;
+			}
+			else
+			{ // [RH] Link into every block this actor touches, not just the center one
+				FBlockNode **alink = &this->BlockNode;
+				x1 = MAX(0, x1);
+				y1 = MAX(0, y1);
+				x2 = MIN(bmapwidth - 1, x2);
+				y2 = MIN(bmapheight - 1, y2);
+				for (int y = y1; y <= y2; ++y)
 				{
-					FBlockNode **link = &blocklinks[y*bmapwidth + x];
-					FBlockNode *node = FBlockNode::Create (this, x, y, this->Sector->PortalGroup);
-
-					// Link in to block
-					if ((node->NextActor = *link) != NULL)
+					for (int x = x1; x <= x2; ++x)
 					{
-						(*link)->PrevActor = &node->NextActor;
-					}
-					node->PrevActor = link;
-					*link = node;
+						FBlockNode **link = &blocklinks[y*bmapwidth + x];
+						FBlockNode *node = FBlockNode::Create(this, x, y, this->Sector->PortalGroup);
 
-					// Link in to actor
-					node->PrevBlock = alink;
-					node->NextBlock = NULL;
-					(*alink) = node;
-					alink = &node->NextBlock;
+						// Link in to block
+						if ((node->NextActor = *link) != NULL)
+						{
+							(*link)->PrevActor = &node->NextActor;
+						}
+						node->PrevActor = link;
+						*link = node;
+
+						// Link in to actor
+						node->PrevBlock = alink;
+						node->NextBlock = NULL;
+						(*alink) = node;
+						alink = &node->NextBlock;
+					}
 				}
 			}
 		}
@@ -1668,9 +1677,10 @@ int FPathTraverse::PortalRelocate(intercept_t *in, int flags, fixedvec3 *optpos)
 		P_TranslatePortalXY(in->d.line, optpos->x, optpos->y);
 		P_TranslatePortalZ(in->d.line, optpos->z);
 	}
+	line_t *saved = in->d.line;	// this gets overwriitten by the init call.
 	intercepts.Resize(intercept_index);
 	init(hitx, hity, endx, endy, flags, in->frac);
-	return in->d.line->getPortal()->mType == PORTT_LINKED? 1:-1;
+	return saved->getPortal()->mType == PORTT_LINKED? 1:-1;
 }
 
 //===========================================================================

@@ -547,6 +547,7 @@ bool FTexture::SmoothEdges(unsigned char * buffer,int w, int h)
 	int x,y;
 	bool trans=buffer[MSB]==0; // If I set this to false here the code won't detect textures 
 	// that only contain transparent pixels.
+	bool semitrans = false;
 	unsigned char * l1;
 
 	if (h<=1 || w<=1) return false;  // makes (a) no sense and (b) doesn't work with this code!
@@ -555,35 +556,44 @@ bool FTexture::SmoothEdges(unsigned char * buffer,int w, int h)
 
 
 	if (l1[MSB]==0 && !CHKPIX(1)) CHKPIX(w);
+	else if (l1[MSB]<255) semitrans=true;
 	l1+=4;
 	for(x=1;x<w-1;x++, l1+=4)
 	{
 		if (l1[MSB]==0 &&  !CHKPIX(-1) && !CHKPIX(1)) CHKPIX(w);
+		else if (l1[MSB]<255) semitrans=true;
 	}
 	if (l1[MSB]==0 && !CHKPIX(-1)) CHKPIX(w);
+	else if (l1[MSB]<255) semitrans=true;
 	l1+=4;
 
 	for(y=1;y<h-1;y++)
 	{
 		if (l1[MSB]==0 && !CHKPIX(-w) && !CHKPIX(1)) CHKPIX(w);
+		else if (l1[MSB]<255) semitrans=true;
 		l1+=4;
 		for(x=1;x<w-1;x++, l1+=4)
 		{
 			if (l1[MSB]==0 &&  !CHKPIX(-w) && !CHKPIX(-1) && !CHKPIX(1) && !CHKPIX(-w-1) && !CHKPIX(-w+1) && !CHKPIX(w-1) && !CHKPIX(w+1)) CHKPIX(w);
+			else if (l1[MSB]<255) semitrans=true;
 		}
 		if (l1[MSB]==0 && !CHKPIX(-w) && !CHKPIX(-1)) CHKPIX(w);
+		else if (l1[MSB]<255) semitrans=true;
 		l1+=4;
 	}
 
 	if (l1[MSB]==0 && !CHKPIX(-w)) CHKPIX(1);
+	else if (l1[MSB]<255) semitrans=true;
 	l1+=4;
 	for(x=1;x<w-1;x++, l1+=4)
 	{
 		if (l1[MSB]==0 &&  !CHKPIX(-w) && !CHKPIX(-1)) CHKPIX(1);
+		else if (l1[MSB]<255) semitrans=true;
 	}
 	if (l1[MSB]==0 && !CHKPIX(-w)) CHKPIX(-1);
+	else if (l1[MSB]<255) semitrans=true;
 
-	return trans;
+	return trans || semitrans;
 }
 
 //===========================================================================

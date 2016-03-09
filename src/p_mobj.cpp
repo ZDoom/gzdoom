@@ -4603,6 +4603,10 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 	fixed_t spawn_x, spawn_y, spawn_z;
 	angle_t spawn_angle;
 
+	if (mthing == NULL)
+	{
+		return NULL;
+	}
 	// not playing?
 	if ((unsigned)playernum >= (unsigned)MAXPLAYERS || !playeringame[playernum])
 		return NULL;

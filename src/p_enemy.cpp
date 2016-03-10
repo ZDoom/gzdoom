@@ -2618,8 +2618,8 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 				// use the current actor's radius instead of the Arch Vile's default.
 				fixed_t maxdist = corpsehit->GetDefault()->radius + self->radius;
 
-				if (abs(cres.position.x - viletry.x) > maxdist ||
-					abs(cres.position.y - viletry.y) > maxdist)
+				if (abs(corpsehit->Pos().x - cres.position.x) > maxdist ||
+					abs(corpsehit->Pos().y - cres.position.y) > maxdist)
 					continue;			// not actually touching
 				// Let's check if there are floors in between the archvile and its target
 

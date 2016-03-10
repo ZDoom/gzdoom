@@ -218,6 +218,8 @@ class FMultiBlockLinesIterator
 	FPortalGroupArray &checklist;
 	fixedvec3 checkpoint;
 	fixedvec2 offset;
+	sector_t *startsector;
+	sector_t *cursector;
 	short basegroup;
 	short portalflags;
 	short index;
@@ -240,7 +242,7 @@ public:
 	};
 
 	FMultiBlockLinesIterator(FPortalGroupArray &check, AActor *origin, fixed_t checkradius = -1);
-	FMultiBlockLinesIterator(FPortalGroupArray &check, fixed_t checkx, fixed_t checky, fixed_t checkz, fixed_t checkh, fixed_t checkradius);
+	FMultiBlockLinesIterator(FPortalGroupArray &check, fixed_t checkx, fixed_t checky, fixed_t checkz, fixed_t checkh, fixed_t checkradius, sector_t *newsec);
 	bool Next(CheckResult *item);
 	void Reset();
 	// for stopping group traversal through portals. Only the calling code can decide whether this is needed so this needs to be set from the outside.
@@ -325,7 +327,7 @@ public:
 	};
 
 	FMultiBlockThingsIterator(FPortalGroupArray &check, AActor *origin, fixed_t checkradius = -1, bool ignorerestricted = false);
-	FMultiBlockThingsIterator(FPortalGroupArray &check, fixed_t checkx, fixed_t checky, fixed_t checkz, fixed_t checkh, fixed_t checkradius, bool ignorerestricted = false);
+	FMultiBlockThingsIterator(FPortalGroupArray &check, fixed_t checkx, fixed_t checky, fixed_t checkz, fixed_t checkh, fixed_t checkradius, bool ignorerestricted, sector_t *newsec);
 	bool Next(CheckResult *item);
 	void Reset();
 	const FBoundingBox &Box() const

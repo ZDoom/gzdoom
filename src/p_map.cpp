@@ -431,9 +431,10 @@ bool P_TeleportMove(AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefra
 	// P_LineOpening requires the thing's z to be the destination z in order to work.
 	fixed_t savedz = thing->Z();
 	thing->SetZ(z);
+	sector_t *sector = P_PointInSector(x, y);
 
 	FPortalGroupArray grouplist;
-	FMultiBlockLinesIterator mit(grouplist, x, y, z, thing->height, thing->radius);
+	FMultiBlockLinesIterator mit(grouplist, x, y, z, thing->height, thing->radius, sector);
 	FMultiBlockLinesIterator::CheckResult cres;
 
 	while (mit.Next(&cres))
@@ -444,7 +445,7 @@ bool P_TeleportMove(AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefra
 
 	if (tmf.touchmidtex) tmf.dropoffz = tmf.floorz;
 
-	FMultiBlockThingsIterator mit2(grouplist, x, y, z, thing->height, thing->radius);
+	FMultiBlockThingsIterator mit2(grouplist, x, y, z, thing->height, thing->radius, false, sector);
 	FMultiBlockThingsIterator::CheckResult cres2;
 
 	while (mit2.Next(&cres2))
@@ -1670,7 +1671,7 @@ bool P_CheckPosition(AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm, bo
 	FBoundingBox box(x, y, thing->radius);
 
 	FPortalGroupArray pcheck;
-	FMultiBlockThingsIterator it2(pcheck, x, y, thing->Z(), thing->height, thing->radius);
+	FMultiBlockThingsIterator it2(pcheck, x, y, thing->Z(), thing->height, thing->radius, false, newsec);
 	FMultiBlockThingsIterator::CheckResult tcres;
 
 	while ((it2.Next(&tcres)))
@@ -1740,7 +1741,7 @@ bool P_CheckPosition(AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm, bo
 	spechit.Clear();
 	portalhit.Clear();
 
-	FMultiBlockLinesIterator it(pcheck, x, y, thing->Z(), thing->height, thing->radius);
+	FMultiBlockLinesIterator it(pcheck, x, y, thing->Z(), thing->height, thing->radius, newsec);
 	FMultiBlockLinesIterator::CheckResult lcres;
 
 	fixed_t thingdropoffz = tm.floorz;
@@ -5258,7 +5259,7 @@ void P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bo
 	double bombdamagefloat = (double)bombdamage;
 
 	FPortalGroupArray grouplist(FPortalGroupArray::PGA_Full3d);
-	FMultiBlockThingsIterator it(grouplist, bombspot->X(), bombspot->Y(), bombspot->Z() - bombdistfix, bombspot->height + bombdistfix*2, bombdistfix);
+	FMultiBlockThingsIterator it(grouplist, bombspot->X(), bombspot->Y(), bombspot->Z() - bombdistfix, bombspot->height + bombdistfix*2, bombdistfix, false, bombspot->Sector);
 	FMultiBlockThingsIterator::CheckResult cres;
 
 	if (flags & RADF_SOURCEISSPOT)

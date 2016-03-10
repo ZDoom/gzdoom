@@ -576,6 +576,6 @@ DThinker *FThinkerIterator::Next ()
 ADD_STAT (think)
 {
 	FString out;
-	out.Format ("Think time = %04.1f ms, Action = %04.1f ms", ThinkCycles.TimeMS(), ActionCycles.TimeMS());
+	out.Format ("Think time = %04.2f ms, Action = %04.2f ms", ThinkCycles.TimeMS(), ActionCycles.TimeMS());
 	return out;
 }

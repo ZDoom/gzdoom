@@ -1973,7 +1973,7 @@ static void D_DoomInit()
 	// Set the FPU precision to 53 significant bits. This is the default
 	// for Visual C++, but not for GCC, so some slight math variances
 	// might crop up if we leave it alone.
-#if defined(_FPU_GETCW)
+#if defined(_FPU_GETCW) && defined(_FPU_EXTENDED) && defined(_FPU_DOUBLE)
 	{
 		int cw;
 		_FPU_GETCW(cw);

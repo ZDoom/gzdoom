@@ -741,16 +741,19 @@ FMultiBlockLinesIterator::FMultiBlockLinesIterator(FPortalGroupArray &check, AAc
 	if (!check.inited) P_CollectConnectedGroups(origin->Sector->PortalGroup, checkpoint, origin->Top(), checkradius, checklist);
 	checkpoint.z = checkradius == -1? origin->radius : checkradius;
 	basegroup = origin->Sector->PortalGroup;
+	startsector = origin->Sector;
 	Reset();
 }
 
-FMultiBlockLinesIterator::FMultiBlockLinesIterator(FPortalGroupArray &check, fixed_t checkx, fixed_t checky, fixed_t checkz, fixed_t checkh, fixed_t checkradius)
+FMultiBlockLinesIterator::FMultiBlockLinesIterator(FPortalGroupArray &check, fixed_t checkx, fixed_t checky, fixed_t checkz, fixed_t checkh, fixed_t checkradius, sector_t *newsec)
 	: checklist(check)
 {
 	checkpoint.x = checkx;
 	checkpoint.y = checky;
 	checkpoint.z = checkz;
-	basegroup = P_PointInSector(checkx, checky)->PortalGroup;
+	if (newsec == NULL)	newsec = P_PointInSector(checkx, checky);
+	startsector = newsec;
+	basegroup = newsec->PortalGroup;
 	if (!check.inited) P_CollectConnectedGroups(basegroup, checkpoint, checkz + checkh, checkradius, checklist);
 	checkpoint.z = checkradius;
 	Reset();
@@ -766,10 +769,9 @@ bool FMultiBlockLinesIterator::GoUp(fixed_t x, fixed_t y)
 {
 	if (continueup)
 	{
-		sector_t *sector = P_PointInSector(x, y);
-		if (!sector->PortalBlocksMovement(sector_t::ceiling))
+		if (!cursector->PortalBlocksMovement(sector_t::ceiling))
 		{
-			startIteratorForGroup(sector->SkyBoxes[sector_t::ceiling]->Sector->PortalGroup);
+			startIteratorForGroup(cursector->SkyBoxes[sector_t::ceiling]->Sector->PortalGroup);
 			portalflags = FFCF_NOFLOOR;
 			return true;
 		}
@@ -788,10 +790,9 @@ bool FMultiBlockLinesIterator::GoDown(fixed_t x, fixed_t y)
 {
 	if (continuedown)
 	{
-		sector_t *sector = P_PointInSector(x, y);
-		if (!sector->PortalBlocksMovement(sector_t::floor))
+		if (!cursector->PortalBlocksMovement(sector_t::floor))
 		{
-			startIteratorForGroup(sector->SkyBoxes[sector_t::floor]->Sector->PortalGroup);
+			startIteratorForGroup(cursector->SkyBoxes[sector_t::floor]->Sector->PortalGroup);
 			portalflags = FFCF_NOCEILING;
 			return true;
 		}
@@ -871,6 +872,7 @@ void FMultiBlockLinesIterator::startIteratorForGroup(int group)
 	offset = Displacements.getOffset(basegroup, group);
 	offset.x += checkpoint.x;
 	offset.y += checkpoint.y;
+	cursector = group == startsector->PortalGroup ? startsector : P_PointInSector(offset.x, offset.y);
 	bbox.setBox(offset.x, offset.y, checkpoint.z);
 	blockIterator.init(bbox);
 }
@@ -1076,13 +1078,14 @@ FMultiBlockThingsIterator::FMultiBlockThingsIterator(FPortalGroupArray &check, A
 	Reset();
 }
 
-FMultiBlockThingsIterator::FMultiBlockThingsIterator(FPortalGroupArray &check, fixed_t checkx, fixed_t checky, fixed_t checkz, fixed_t checkh, fixed_t checkradius, bool ignorerestricted)
+FMultiBlockThingsIterator::FMultiBlockThingsIterator(FPortalGroupArray &check, fixed_t checkx, fixed_t checky, fixed_t checkz, fixed_t checkh, fixed_t checkradius, bool ignorerestricted, sector_t *newsec)
 	: checklist(check)
 {
 	checkpoint.x = checkx;
 	checkpoint.y = checky;
 	checkpoint.z = checkz;
-	basegroup = P_PointInSector(checkx, checky)->PortalGroup;
+	if (newsec == NULL) newsec = P_PointInSector(checkx, checky);
+	basegroup = newsec->PortalGroup;
 	if (!check.inited) P_CollectConnectedGroups(basegroup, checkpoint, checkz + checkh, checkradius, checklist);
 	checkpoint.z = checkradius;
 	Reset();

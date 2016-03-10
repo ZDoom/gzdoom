@@ -804,7 +804,7 @@ static void CreateStartSpot (fixed_t *pos, FMapThing *start)
 
 static void CalcPlane (SlopeWork &slope, secplane_t &plane)
 {
-	TVector3<double> pt[3];
+	DVector3 pt[3];
 	long j;
 
 	slope.x[0] = slope.wal->x;  slope.y[0] = slope.wal->y;
@@ -823,8 +823,8 @@ static void CalcPlane (SlopeWork &slope, secplane_t &plane)
 		-slope.dy, slope.x[2]-slope.wal->x);
 	slope.z[2] += Scale (slope.heinum, j, slope.i);
 
-	pt[0] = TVector3<double>(slope.dx, -slope.dy, 0);
-	pt[1] = TVector3<double>(slope.x[2] - slope.x[0], slope.y[0] - slope.y[2], (slope.z[2] - slope.z[0]) / 16);
+	pt[0] = DVector3(slope.dx, -slope.dy, 0);
+	pt[1] = DVector3(slope.x[2] - slope.x[0], slope.y[0] - slope.y[2], (slope.z[2] - slope.z[0]) / 16);
 	pt[2] = (pt[0] ^ pt[1]).Unit();
 
 	if ((pt[2][2] < 0 && plane.c > 0) || (pt[2][2] > 0 && plane.c < 0))

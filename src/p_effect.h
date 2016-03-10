@@ -89,7 +89,7 @@ void P_RunEffects (void);
 
 void P_RunEffect (AActor *actor, int effects);
 
-void P_DrawRailTrail(AActor *source, const TVector3<double> &start, const TVector3<double> &end, int color1, int color2, double maxdiff = 0, int flags = 0, PClassActor *spawnclass = NULL, angle_t angle = 0, int duration = 35, double sparsity = 1.0, double drift = 1.0, int SpiralOffset = 270);
+void P_DrawRailTrail(AActor *source, const DVector3 &start, const DVector3 &end, int color1, int color2, double maxdiff = 0, int flags = 0, PClassActor *spawnclass = NULL, angle_t angle = 0, int duration = 35, double sparsity = 1.0, double drift = 1.0, int SpiralOffset = 270);
 void P_DrawSplash (int count, fixed_t x, fixed_t y, fixed_t z, angle_t angle, int kind);
 void P_DrawSplash2 (int count, fixed_t x, fixed_t y, fixed_t z, angle_t angle, int updown, int kind);
 void P_DisconnectEffect (AActor *actor);

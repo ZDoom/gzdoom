@@ -4704,7 +4704,7 @@ void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, i
 {
 	fixed_t vx, vy, vz;
 	angle_t angle, pitch;
-	TVector3<double> start, end;
+	DVector3 start, end;
 	FTraceResults trace;
 	fixed_t shootz;
 

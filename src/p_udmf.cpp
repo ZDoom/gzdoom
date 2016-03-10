@@ -1607,7 +1607,7 @@ public:
 		}
 		else
 		{
-			double ulen = TVector3<double>(fp[0], fp[1], fp[2]).Length();
+			double ulen = DVector3(fp[0], fp[1], fp[2]).Length();
 
 			// normalize the vector, it must have a length of 1
 			sec->floorplane.a = FLOAT2FIXED(fp[0] / ulen);
@@ -1625,7 +1625,7 @@ public:
 		}
 		else
 		{
-			double ulen = TVector3<double>(cp[0], cp[1], cp[2]).Length();
+			double ulen = DVector3(cp[0], cp[1], cp[2]).Length();
 
 			// normalize the vector, it must have a length of 1
 			sec->ceilingplane.a = FLOAT2FIXED(cp[0] / ulen);

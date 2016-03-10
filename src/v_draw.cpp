@@ -1279,7 +1279,7 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 					ds_x1 = x1;
 					ds_x2 = x2 - 1;
 
-					TVector2<double> tex(x1 - originx, y - originy);
+					DVector2 tex(x1 - originx, y - originy);
 					if (dorotate)
 					{
 						double t = tex.X;

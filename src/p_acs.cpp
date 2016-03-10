@@ -5341,7 +5341,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 			return FLOAT2FIXED(sqrt(FIXED2DBL(args[0])));
 
 		case ACSF_VectorLength:
-			return FLOAT2FIXED(TVector2<double>(FIXED2DBL(args[0]), FIXED2DBL(args[1])).Length());
+			return FLOAT2FIXED(DVector2(FIXED2DBL(args[0]), FIXED2DBL(args[1])).Length());
 
 		case ACSF_SetHUDClipRect:
 			ClipRectLeft = argCount > 0 ? args[0] : 0;

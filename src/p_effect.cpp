@@ -651,12 +651,12 @@ void P_DrawSplash2 (int count, fixed_t x, fixed_t y, fixed_t z, angle_t angle, i
 	}
 }
 
-void P_DrawRailTrail(AActor *source, const TVector3<double> &start, const TVector3<double> &end, int color1, int color2, double maxdiff_d, int flags, PClassActor *spawnclass, angle_t angle, int duration, double sparsity, double drift, int SpiralOffset)
+void P_DrawRailTrail(AActor *source, const DVector3 &start, const DVector3 &end, int color1, int color2, double maxdiff_d, int flags, PClassActor *spawnclass, angle_t angle, int duration, double sparsity, double drift, int SpiralOffset)
 {
 	double length, lengthsquared;
 	int steps, i;
 	TAngle<double> deg;
-	TVector3<double> step, dir, pos, extend;
+	DVector3 step, dir, pos, extend;
 	bool fullbright;
 	float maxdiff = (float)maxdiff_d;
 
@@ -681,7 +681,7 @@ void P_DrawRailTrail(AActor *source, const TVector3<double> &start, const TVecto
 			// The railgun's sound is special. It gets played from the
 			// point on the slug's trail that is closest to the hearing player.
 			AActor *mo = players[consoleplayer].camera;
-			TVector3<double> point;
+			DVector3 point;
 			double r;
 			double dirz;
 
@@ -728,7 +728,7 @@ void P_DrawRailTrail(AActor *source, const TVector3<double> &start, const TVecto
 			minelem = fabs(dir[i]);
 		}
 	}
-	TVector3<double> tempvec(0, 0, 0);
+	DVector3 tempvec(0, 0, 0);
 	tempvec[epos] = 1;
 	extend = tempvec - (dir | tempvec) * dir;
 	//
@@ -739,7 +739,7 @@ void P_DrawRailTrail(AActor *source, const TVector3<double> &start, const TVecto
 	// Create the outer spiral.
 	if (color1 != -1 && (!r_rail_smartspiral || color2 == -1) && r_rail_spiralsparsity > 0 && (spawnclass == NULL))
 	{
-		TVector3<double> spiral_step = step * r_rail_spiralsparsity * sparsity;
+		DVector3 spiral_step = step * r_rail_spiralsparsity * sparsity;
 		int spiral_steps = (int)(steps * r_rail_spiralsparsity / sparsity);
 		
 		color1 = color1 == 0 ? -1 : ParticleColor(color1);
@@ -748,7 +748,7 @@ void P_DrawRailTrail(AActor *source, const TVector3<double> &start, const TVecto
 		for (i = spiral_steps; i; i--)
 		{
 			particle_t *p = NewParticle ();
-			TVector3<double> tempvec;
+			DVector3 tempvec;
 
 			if (!p)
 				return;
@@ -761,7 +761,7 @@ void P_DrawRailTrail(AActor *source, const TVector3<double> &start, const TVecto
 			p->size = 3;
 			p->bright = fullbright;
 
-			tempvec = TMatrix3x3<double>(dir, deg) * extend;
+			tempvec = DMatrix3x3(dir, deg) * extend;
 			p->velx = FLOAT2FIXED(tempvec.X * drift)>>4;
 			p->vely = FLOAT2FIXED(tempvec.Y * drift)>>4;
 			p->velz = FLOAT2FIXED(tempvec.Z * drift)>>4;
@@ -795,11 +795,11 @@ void P_DrawRailTrail(AActor *source, const TVector3<double> &start, const TVecto
 	// Create the inner trail.
 	if (color2 != -1 && r_rail_trailsparsity > 0 && spawnclass == NULL)
 	{
-		TVector3<double> trail_step = step * r_rail_trailsparsity * sparsity;
+		DVector3 trail_step = step * r_rail_trailsparsity * sparsity;
 		int trail_steps = xs_FloorToInt(steps * r_rail_trailsparsity / sparsity);
 
 		color2 = color2 == 0 ? -1 : ParticleColor(color2);
-		TVector3<double> diff(0, 0, 0);
+		DVector3 diff(0, 0, 0);
 
 		pos = start;
 		for (i = trail_steps; i; i--)
@@ -822,7 +822,7 @@ void P_DrawRailTrail(AActor *source, const TVector3<double> &start, const TVecto
 					diff.Z = clamp<double>(diff.Z + ((rnd & 32) ? 1 : -1), -maxdiff, maxdiff);
 			}
 
-			TVector3<double> postmp = pos + diff;
+			DVector3 postmp = pos + diff;
 
 			p->size = 2;
 			p->x = FLOAT2FIXED(postmp.X);
@@ -857,9 +857,9 @@ void P_DrawRailTrail(AActor *source, const TVector3<double> &start, const TVecto
 		if (sparsity < 1)
 			sparsity = 32;
 
-		TVector3<double> trail_step = (step / 3) * sparsity;
+		DVector3 trail_step = (step / 3) * sparsity;
 		int trail_steps = (int)((steps * 3) / sparsity);
-		TVector3<double> diff(0, 0, 0);
+		DVector3 diff(0, 0, 0);
 
 		pos = start;
 		for (i = trail_steps; i; i--)
@@ -874,7 +874,7 @@ void P_DrawRailTrail(AActor *source, const TVector3<double> &start, const TVecto
 				if (rnd & 4)
 					diff.Z = clamp<double>(diff.Z + ((rnd & 32) ? 1 : -1), -maxdiff, maxdiff);
 			}			
-			TVector3<double> postmp = pos + diff;
+			DVector3 postmp = pos + diff;
 
 			AActor *thing = Spawn (spawnclass, FLOAT2FIXED(postmp.X), FLOAT2FIXED(postmp.Y), FLOAT2FIXED(postmp.Z), ALLOW_REPLACE);
 			if (thing)

@@ -122,7 +122,7 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle, 
 	ceilingheight = destsect->ceilingplane.ZatPoint (x, y);
 	if (thing->flags & MF_MISSILE)
 	{ // We don't measure z velocity, because it doesn't change.
-		missilespeed = xs_CRoundToInt(TVector2<double>(thing->velx, thing->vely).Length());
+		missilespeed = xs_CRoundToInt(DVector2(thing->velx, thing->vely).Length());
 	}
 	if (flags & TELF_KEEPHEIGHT)
 	{

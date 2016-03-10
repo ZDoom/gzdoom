@@ -577,7 +577,7 @@ bool EV_MovePolyTo(line_t *line, int polyNum, int speed, fixed_t targx, fixed_t 
 {
 	DMovePolyTo *pe = NULL;
 	FPolyObj *poly;
-	TVector2<double> dist;
+	DVector2 dist;
 	double distlen;
 
 	if ((poly = PO_GetPolyobj(polyNum)) == NULL)

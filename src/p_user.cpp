@@ -2753,13 +2753,13 @@ void P_PredictionLerpReset()
 
 bool P_LerpCalculate(PredictPos from, PredictPos to, PredictPos &result, float scale)
 {
-	TVector3<double> vecFrom(FIXED2DBL(from.x), FIXED2DBL(from.y), FIXED2DBL(from.z));
-	TVector3<double> vecTo(FIXED2DBL(to.x), FIXED2DBL(to.y), FIXED2DBL(to.z));
-	TVector3<double> vecResult;
+	DVector3 vecFrom(FIXED2DBL(from.x), FIXED2DBL(from.y), FIXED2DBL(from.z));
+	DVector3 vecTo(FIXED2DBL(to.x), FIXED2DBL(to.y), FIXED2DBL(to.z));
+	DVector3 vecResult;
 	vecResult = vecTo - vecFrom;
 	vecResult *= scale;
 	vecResult = vecResult + vecFrom;
-	TVector3<double> delta = vecResult - vecTo;
+	DVector3 delta = vecResult - vecTo;
 
 	result.x = FLOAT2FIXED(vecResult.X);
 	result.y = FLOAT2FIXED(vecResult.Y);

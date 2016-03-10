@@ -2871,7 +2871,7 @@ void A_Face (AActor *self, AActor *other, angle_t max_turn, angle_t max_pitch, a
 	if (max_pitch <= ANGLE_180)
 	{
 		fixedvec2 pos = self->Vec2To(other);
-		TVector2<double> dist(pos.x, pos.y);
+		DVector2 dist(pos.x, pos.y);
 		
 		// Positioning ala missile spawning, 32 units above foot level
 		fixed_t source_z = self->Z() + 32*FRACUNIT + self->GetBobOffset();
@@ -3007,7 +3007,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
 	{
 		// We probably won't hit the target, but aim at it anyway so we don't look stupid.
 		fixedvec2 pos = self->Vec2To(self->target);
-		TVector2<double> xydiff(pos.x, pos.y);
+		DVector2 xydiff(pos.x, pos.y);
 		double zdiff = (self->target->Z() + (self->target->height>>1)) - (self->Z() + (self->height>>1) - self->floorclip);
 		self->pitch = int(atan2(zdiff, xydiff.Length()) * ANGLE_180 / -M_PI);
 	}

@@ -593,7 +593,7 @@ void ADynamicLight::CollectWithinRadius(const fixedvec3 &pos, subsector_t *subSe
 			}
 		}
 	}
-	if (subSec->sector->PortalIsLinked(sector_t::ceiling))
+	if (!subSec->sector->PortalBlocksSight(sector_t::ceiling))
 	{
 		line_t *other = subSec->firstline->linedef;
 		AActor *sb = subSec->sector->SkyBoxes[sector_t::ceiling];
@@ -604,7 +604,7 @@ void ADynamicLight::CollectWithinRadius(const fixedvec3 &pos, subsector_t *subSe
 			if (othersub->validcount != ::validcount) CollectWithinRadius(PosRelative(othersub->sector), othersub, radius);
 		}
 	}
-	if (subSec->sector->PortalIsLinked(sector_t::floor))
+	if (!subSec->sector->PortalBlocksSight(sector_t::floor))
 	{
 		line_t *other = subSec->firstline->linedef;
 		AActor *sb = subSec->sector->SkyBoxes[sector_t::floor];

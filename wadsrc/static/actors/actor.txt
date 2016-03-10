@@ -317,7 +317,7 @@ ACTOR Actor native //: Thinker
 	action native A_SetRipMax(int maximum);
 	action native A_SetChaseThreshold(int threshold, bool def = false, int ptr = AAPTR_DEFAULT);
 	action native state A_CheckProximity(state jump, class<Actor> classname, float distance, int count = 1, int flags = 0, int ptr = AAPTR_DEFAULT);
-	action native state A_CheckBlock(state block, int flags = 0, int ptr = AAPTR_DEFAULT);
+	action native state A_CheckBlock(state block, int flags = 0, int ptr = AAPTR_DEFAULT, float xofs = 0, float yofs = 0, float zofs = 0, float angle = 0);
 	action native state A_CheckSightOrRange(float distance, state label, bool two_dimension = false);
 	action native state A_CheckRange(float distance, state label, bool two_dimension = false);
 	action native bool A_FaceMovementDirection(float offset = 0, float anglelimit = 0, float pitchlimit = 0, int flags = 0, int ptr = AAPTR_DEFAULT);

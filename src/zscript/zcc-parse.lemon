@@ -671,7 +671,7 @@ declarator(X) ::= decl_flags(A) type_list_or_void(B) variables_or_function(C).
 		X = NULL;
 	}
 }
-declarator_no_fun(X) ::= decl_flags(A) type(B) variable_list(C).
+declarator_no_fun(X) ::= decl_flags(A) type(B) variable_list(C) SEMICOLON.
 {
 	NEW_AST_NODE(VarDeclarator, decl, A.SourceLoc ? A.SourceLoc : B->SourceLoc);
 	decl->Type = B;

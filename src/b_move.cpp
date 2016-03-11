@@ -21,6 +21,7 @@
 #include "d_player.h"
 #include "p_spec.h"
 #include "p_checkposition.h"
+#include "math/cmath.h"
 
 static FRandom pr_botopendoor ("BotOpenDoor");
 static FRandom pr_bottrywalk ("BotTryWalk");
@@ -348,7 +349,7 @@ void DBot::Pitch (AActor *target)
 	double diff;
 
 	diff = target->Z() - player->mo->Z();
-	aim = atan(diff / (double)player->mo->AproxDistance(target));
+	aim = g_atan(diff / (double)player->mo->AproxDistance(target));
 	player->mo->pitch = -(int)(aim * ANGLE_180/M_PI);
 }
 

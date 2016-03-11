@@ -484,7 +484,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MacePL1Check)
 	self->velx = FixedMul(7*FRACUNIT, finecosine[angle]);
 	self->vely = FixedMul(7*FRACUNIT, finesine[angle]);
 #else
-	double velscale = sqrt ((double)self->velx * (double)self->velx +
+	double velscale = g_sqrt ((double)self->velx * (double)self->velx +
 							 (double)self->vely * (double)self->vely);
 	velscale = 458752 / velscale;
 	self->velx = (int)(self->velx * velscale);

@@ -52,6 +52,7 @@
 #include "teaminfo.h"
 #include "p_spec.h"
 #include "p_checkposition.h"
+#include "math/cmath.h"
 
 #include "gi.h"
 
@@ -2896,8 +2897,8 @@ void A_Face (AActor *self, AActor *other, angle_t max_turn, angle_t max_pitch, a
 		target_z += z_add;
 
 		double dist_z = target_z - source_z;
-		double ddist = sqrt(dist.X*dist.X + dist.Y*dist.Y + dist_z*dist_z);
-		int other_pitch = (int)RAD2ANGLE(asin(dist_z / ddist));
+		double ddist = g_sqrt(dist.X*dist.X + dist.Y*dist.Y + dist_z*dist_z);
+		int other_pitch = (int)RAD2ANGLE(g_asin(dist_z / ddist));
 		
 		if (max_pitch != 0)
 		{
@@ -3009,7 +3010,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
 		fixedvec2 pos = self->Vec2To(self->target);
 		DVector2 xydiff(pos.x, pos.y);
 		double zdiff = (self->target->Z() + (self->target->height>>1)) - (self->Z() + (self->height>>1) - self->floorclip);
-		self->pitch = int(atan2(zdiff, xydiff.Length()) * ANGLE_180 / -M_PI);
+		self->pitch = int(g_atan2(zdiff, xydiff.Length()) * ANGLE_180 / -M_PI);
 	}
 
 	// Let the aim trail behind the player

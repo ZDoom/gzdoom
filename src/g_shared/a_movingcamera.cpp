@@ -433,8 +433,8 @@ bool APathFollower::Interpolate ()
 				double fdx = FIXED2DBL(dx);
 				double fdy = FIXED2DBL(dy);
 				double fdz = FIXED2DBL(-dz);
-				double dist = sqrt (fdx*fdx + fdy*fdy);
-				double ang = dist != 0.f ? atan2 (fdz, dist) : 0;
+				double dist = g_sqrt (fdx*fdx + fdy*fdy);
+				double ang = dist != 0.f ? g_atan2 (fdz, dist) : 0;
 				pitch = (fixed_t)RAD2ANGLE(ang);
 			}
 		}
@@ -672,8 +672,8 @@ bool AMovingCamera::Interpolate ()
 			double dx = FIXED2DBL(X() - tracer->X());
 			double dy = FIXED2DBL(Y() - tracer->Y());
 			double dz = FIXED2DBL(Z() - tracer->Z() - tracer->height/2);
-			double dist = sqrt (dx*dx + dy*dy);
-			double ang = dist != 0.f ? atan2 (dz, dist) : 0;
+			double dist = g_sqrt (dx*dx + dy*dy);
+			double ang = dist != 0.f ? g_atan2 (dz, dist) : 0;
 			pitch = RAD2ANGLE(ang);
 		}
 

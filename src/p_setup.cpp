@@ -1324,7 +1324,7 @@ void P_LoadSegs (MapData * map)
 				segangle >>= (ANGLETOFINESHIFT-16);
 				dx = (li->v1->x - li->v2->x)>>FRACBITS;
 				dy = (li->v1->y - li->v2->y)>>FRACBITS;
-				dis = ((int) sqrt((double)(dx*dx + dy*dy)))<<FRACBITS;
+				dis = ((int) g_sqrt((double)(dx*dx + dy*dy)))<<FRACBITS;
 				dx = finecosine[segangle];
 				dy = finesine[segangle];
 				if ((vnum2 > vnum1) && (vertchanged[vnum2] == 0))
@@ -2024,7 +2024,7 @@ void P_FinishLoadingLineDef(line_t *ld, int alpha)
 	}
 
 	// [RH] Set some new sidedef properties
-	int len = (int)(sqrt (dx*dx + dy*dy) + 0.5f);
+	int len = (int)(g_sqrt (dx*dx + dy*dy) + 0.5f);
 
 	if (ld->sidedef[0] != NULL)
 	{

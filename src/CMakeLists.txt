@@ -1159,6 +1159,22 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	g_shared/sbar_mugshot.cpp
 	g_shared/shared_hud.cpp
 	g_shared/shared_sbar.cpp
+	math/asin.c
+	math/atan.c
+	math/const.c
+	math/cosh.c
+	math/exp.c
+	math/isnan.c
+	math/log.c
+	math/log10.c
+	math/mtherr.c
+	math/polevl.c
+	math/sin.c
+	math/sinh.c
+	math/sqrt.c
+	math/tan.c
+	math/tanh.c
+	math/fastsin.cpp
 	resourcefiles/ancientzip.cpp
 	resourcefiles/file_7z.cpp
 	resourcefiles/file_grp.cpp

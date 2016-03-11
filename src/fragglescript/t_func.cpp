@@ -69,6 +69,7 @@
 #include "farchive.h"
 #include "p_setup.h"
 #include "p_spec.h"
+#include "math/cmath.h"
 
 static FRandom pr_script("FScript");
 
@@ -1431,7 +1432,7 @@ void FParser::SF_PointToDist(void)
 		double y = floatvalue(t_argv[3]) - floatvalue(t_argv[1]);
    
 		t_return.type = svt_fixed;
-		t_return.value.f = FLOAT2FIXED(sqrt(x*x+y*y));
+		t_return.value.f = FLOAT2FIXED(g_sqrt(x*x+y*y));
 	}
 }
 
@@ -3830,7 +3831,7 @@ void FParser::SF_Sin()
 	if (CheckArgs(1))
 	{
 		t_return.type = svt_fixed;
-		t_return.value.f = FLOAT2FIXED(sin(floatvalue(t_argv[0])));
+		t_return.value.f = FLOAT2FIXED(g_sin(floatvalue(t_argv[0])));
 	}
 }
 
@@ -3840,7 +3841,7 @@ void FParser::SF_ASin()
 	if (CheckArgs(1))
 	{
 		t_return.type = svt_fixed;
-		t_return.value.f = FLOAT2FIXED(asin(floatvalue(t_argv[0])));
+		t_return.value.f = FLOAT2FIXED(g_asin(floatvalue(t_argv[0])));
 	}
 }
 
@@ -3850,7 +3851,7 @@ void FParser::SF_Cos()
 	if (CheckArgs(1))
 	{
 		t_return.type = svt_fixed;
-		t_return.value.f = FLOAT2FIXED(cos(floatvalue(t_argv[0])));
+		t_return.value.f = FLOAT2FIXED(g_cos(floatvalue(t_argv[0])));
 	}
 }
 
@@ -3860,7 +3861,7 @@ void FParser::SF_ACos()
 	if (CheckArgs(1))
 	{
 		t_return.type = svt_fixed;
-		t_return.value.f = FLOAT2FIXED(acos(floatvalue(t_argv[0])));
+		t_return.value.f = FLOAT2FIXED(g_acos(floatvalue(t_argv[0])));
 	}
 }
 
@@ -3870,7 +3871,7 @@ void FParser::SF_Tan()
 	if (CheckArgs(1))
 	{
 		t_return.type = svt_fixed;
-		t_return.value.f = FLOAT2FIXED(tan(floatvalue(t_argv[0])));
+		t_return.value.f = FLOAT2FIXED(g_tan(floatvalue(t_argv[0])));
 	}
 }
 
@@ -3880,7 +3881,7 @@ void FParser::SF_ATan()
 	if (CheckArgs(1))
 	{
 		t_return.type = svt_fixed;
-		t_return.value.f = FLOAT2FIXED(atan(floatvalue(t_argv[0])));
+		t_return.value.f = FLOAT2FIXED(g_atan(floatvalue(t_argv[0])));
 	}
 }
 
@@ -3890,7 +3891,7 @@ void FParser::SF_Exp()
 	if (CheckArgs(1))
 	{
 		t_return.type = svt_fixed;
-		t_return.value.f = FLOAT2FIXED(exp(floatvalue(t_argv[0])));
+		t_return.value.f = FLOAT2FIXED(g_exp(floatvalue(t_argv[0])));
 	}
 }
 
@@ -3899,7 +3900,7 @@ void FParser::SF_Log()
 	if (CheckArgs(1))
 	{
 		t_return.type = svt_fixed;
-		t_return.value.f = FLOAT2FIXED(log(floatvalue(t_argv[0])));
+		t_return.value.f = FLOAT2FIXED(g_log(floatvalue(t_argv[0])));
 	}
 }
 
@@ -3909,7 +3910,7 @@ void FParser::SF_Sqrt()
 	if (CheckArgs(1))
 	{
 		t_return.type = svt_fixed;
-		t_return.value.f = FLOAT2FIXED(sqrt(floatvalue(t_argv[0])));
+		t_return.value.f = FLOAT2FIXED(g_sqrt(floatvalue(t_argv[0])));
 	}
 }
 
@@ -4043,7 +4044,7 @@ void FParser::SF_SetCorona(void)
 			break;
 		case 6:
 			lspr[num].dynamic_radius = fval;
-			lspr[num].dynamic_sqrradius = sqrt(lspr[num].dynamic_radius);
+			lspr[num].dynamic_sqrradius = g_sqrt(lspr[num].dynamic_radius);
 			break;
 		default:
 			CONS_Printf("Error in setcorona\n");

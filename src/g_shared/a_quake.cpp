@@ -175,7 +175,7 @@ fixed_t DEarthquake::GetModWave(double waveMultiplier) const
 	//Named waveMultiplier because that's as the name implies: adds more waves per second.
 
 	double time = m_Countdown - FIXED2DBL(r_TicFrac);
-	return FLOAT2FIXED(sin(waveMultiplier * time * (M_PI * 2 / TICRATE)));
+	return FLOAT2FIXED(g_sin(waveMultiplier * time * (M_PI * 2 / TICRATE)));
 }
 
 //==========================================================================

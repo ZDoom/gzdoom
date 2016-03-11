@@ -6775,6 +6775,6 @@ void PrintMiscActorInfo(AActor *query)
 			FIXED2DBL(query->floorz), FIXED2DBL(query->ceilingz));
 		Printf("\nSpeed= %f, velocity= x:%f, y:%f, z:%f, combined:%f.\n",
 			FIXED2DBL(query->Speed), FIXED2DBL(query->velx), FIXED2DBL(query->vely), FIXED2DBL(query->velz),
-			sqrt(pow(FIXED2DBL(query->velx), 2) + pow(FIXED2DBL(query->vely), 2) + pow(FIXED2DBL(query->velz), 2)));
+			g_sqrt(pow(FIXED2DBL(query->velx), 2) + pow(FIXED2DBL(query->vely), 2) + pow(FIXED2DBL(query->velz), 2)));
 	}
 }

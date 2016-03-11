@@ -43,6 +43,7 @@
 #include <math.h>
 #include <string.h>
 #include "m_fixed.h"
+#include "math/cmath.h"
 
 
 #define EQUAL_EPSILON (1/65536.f)
@@ -227,7 +228,7 @@ struct TVector2
 	// Vector length
 	vec_t Length() const
 	{
-		return (vec_t)sqrt (X*X + Y*Y);
+		return (vec_t)g_sqrt (X*X + Y*Y);
 	}
 
 	vec_t LengthSquared() const
@@ -262,14 +263,23 @@ struct TVector2
 	// Returns the angle (in radians) that the ray (0,0)-(X,Y) faces
 	double Angle() const
 	{
-		return atan2 (X, Y);
+		return g_atan2 (X, Y);
 	}
 
-	// Returns a rotated vector. TAngle is in radians.
+	// Returns a rotated vector. angle is in radians.
 	TVector2 Rotated (double angle)
 	{
-		double cosval = cos (angle);
-		double sinval = sin (angle);
+		double cosval = g_cos (angle);
+		double sinval = g_sin (angle);
+		return TVector2(X*cosval - Y*sinval, Y*cosval + X*sinval);
+	}
+
+	// Returns a rotated vector. angle is in degrees.
+	template<class T>
+	TVector2 Rotated(TAngle<T> angle)
+	{
+		double cosval = angle.Cos();
+		double sinval = angle.Sin();
 		return TVector2(X*cosval - Y*sinval, Y*cosval + X*sinval);
 	}
 
@@ -490,7 +500,7 @@ struct TVector3
 	// Vector length
 	double Length() const
 	{
-		return sqrt (X*X + Y*Y + Z*Z);
+		return g_sqrt (X*X + Y*Y + Z*Z);
 	}
 
 	double LengthSquared() const
@@ -573,7 +583,7 @@ struct TMatrix3x3
 	// (The axis vector must be normalized.)
 	TMatrix3x3(const Vector3 &axis, double radians)
 	{
-		double c = cos(radians), s = sin(radians), t = 1 - c;
+		double c = g_cos(radians), s = g_sin(radians), t = 1 - c;
 /* In comments: A more readable version of the matrix setup.
 This was found in Diana Gruber's article "The Mathematics of the
 3D Rotation Matrix" at <http://www.makegames.com/3drotation/> and is
@@ -782,7 +792,8 @@ struct TAngle
 		return *this;
 	}
 
-	operator vec_t() const { return Degrees; }
+	// intentionally disabled so that common math functions cannot be accidentally called with a TAngle.
+	//operator vec_t() const { return Degrees; }
 
 	TAngle operator- () const
 	{
@@ -971,10 +982,26 @@ struct TAngle
 		return Degrees * (M_PI / 180.0);
 	}
 
-	unsigned BAM() const
+	unsigned BAMs() const
 	{
 		return FLOAT2ANGLE(Degrees);
 	}
+
+	double Cos() const
+	{
+		return g_cosdeg(Degrees);
+	}
+
+	double Sin() const
+	{
+		return g_sindeg(Degrees);
+	}
+
+	double Tan() const
+	{
+		return g_tan(Degrees);
+	}
+
 };
 
 template<class T>
@@ -990,24 +1017,6 @@ inline TAngle<T> ToDegrees (double rad)
 }
 
 template<class T>
-inline double cos (const TAngle<T> &deg)
-{
-	return cos(ToRadians(deg));
-}
-
-template<class T>
-inline double sin (const TAngle<T> &deg)
-{
-	return sin(ToRadians(deg));
-}
-
-template<class T>
-inline double tan (const TAngle<T> &deg)
-{
-	return tan(ToRadians(deg));
-}
-
-template<class T>
 inline TAngle<T> fabs (const TAngle<T> &deg)
 {
 	return TAngle<T>(fabs(deg.Degrees));
@@ -1016,13 +1025,13 @@ inline TAngle<T> fabs (const TAngle<T> &deg)
 template<class T>
 inline TAngle<T> vectoyaw (const TVector2<T> &vec)
 {
-	return (vec_t)atan2(vec.Y, vec.X) * (180.0 / M_PI);
+	return (vec_t)g_atan2(vec.Y, vec.X) * (180.0 / M_PI);
 }
 
 template<class T>
 inline TAngle<T> vectoyaw (const TVector3<T> &vec)
 {
-	return (vec_t)atan2(vec.Y, vec.X) * (180.0 / M_PI);
+	return (vec_t)g_atan2(vec.Y, vec.X) * (180.0 / M_PI);
 }
 
 // Much of this is copied from TVector3. Is all that functionality really appropriate?
@@ -1192,13 +1201,16 @@ struct TRotator
 
 template<class T>
 inline TVector3<T>::TVector3 (const TRotator<T> &rot)
-: X(cos(rot.Pitch)*cos(rot.Yaw)), Y(cos(rot.Pitch)*sin(rot.Yaw)), Z(-sin(rot.Pitch))
 {
+	double pcos = rot.Pitch.Cos();
+	X = pcos * rot.Yaw.Cos();
+	Y = pcos * rot.Yaw.Sin();
+	Z = rot.Pitch.Sin();
 }
 
 template<class T>
 inline TVector2<T>::TVector2(const TRotator<T> &rot)
-	: X(cos(rot.Yaw)), Y(sin(rot.Yaw))
+	: X(rot.Yaw.Cos()), Y(rot.Yaw.Sin())
 {
 }
 
@@ -1206,7 +1218,7 @@ inline TVector2<T>::TVector2(const TRotator<T> &rot)
 template<class T>
 inline TMatrix3x3<T>::TMatrix3x3(const TVector3<T> &axis, TAngle<T> degrees)
 {
-	double c = cos(degrees), s = sin(degrees), t = 1 - c;
+	double c = degrees.Cos(), s = degrees.Sin(), t = 1 - c;
 	double sx = s*axis.X, sy = s*axis.Y, sz = s*axis.Z;
 	double tx, ty, txx, tyy, u, v;
 

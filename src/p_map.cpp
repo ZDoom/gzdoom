@@ -31,6 +31,7 @@
 #include "m_random.h"
 #include "i_system.h"
 #include "c_dispatch.h"
+#include "math/cmath.h"
 
 #include "doomdef.h"
 #include "p_local.h"
@@ -3309,7 +3310,7 @@ bool FSlide::BounceWall(AActor *mo)
 
 	deltaangle >>= ANGLETOFINESHIFT;
 
-	movelen = fixed_t(sqrt(double(mo->velx)*mo->velx + double(mo->vely)*mo->vely));
+	movelen = fixed_t(g_sqrt(double(mo->velx)*mo->velx + double(mo->vely)*mo->vely));
 	movelen = FixedMul(movelen, mo->wallbouncefactor);
 
 	FBoundingBox box(mo->X(), mo->Y(), mo->radius);
@@ -4589,7 +4590,7 @@ void P_TraceBleed(int damage, AActor *target, AActor *missile)
 	{
 		double aim;
 
-		aim = atan((double)missile->velz / (double)target->AproxDistance(missile));
+		aim = g_atan((double)missile->velz / (double)target->AproxDistance(missile));
 		pitch = -(int)(aim * ANGLE_180 / PI);
 	}
 	else
@@ -5336,7 +5337,7 @@ void P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bo
 				else
 				{
 					len -= boxradius;
-					len = sqrt(len*len + dz*dz);
+					len = g_sqrt(len*len + dz*dz);
 				}
 			}
 			else

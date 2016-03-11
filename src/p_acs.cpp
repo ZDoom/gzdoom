@@ -5335,10 +5335,10 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 			return P_IsTIDUsed(args[0]);
 
 		case ACSF_Sqrt:
-			return xs_FloorToInt(sqrt(double(args[0])));
+			return xs_FloorToInt(g_sqrt(double(args[0])));
 
 		case ACSF_FixedSqrt:
-			return FLOAT2FIXED(sqrt(FIXED2DBL(args[0])));
+			return FLOAT2FIXED(g_sqrt(FIXED2DBL(args[0])));
 
 		case ACSF_VectorLength:
 			return FLOAT2FIXED(DVector2(FIXED2DBL(args[0]), FIXED2DBL(args[1])).Length());

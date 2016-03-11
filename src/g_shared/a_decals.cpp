@@ -414,7 +414,7 @@ static void GetWallStuff (side_t *wall, vertex_t *&v1, fixed_t &ldx, fixed_t &ld
 
 static fixed_t Length (fixed_t dx, fixed_t dy)
 {
-	return (fixed_t)sqrt ((double)dx*(double)dx+(double)dy*(double)dy);
+	return (fixed_t)g_sqrt ((double)dx*(double)dx+(double)dy*(double)dy);
 }
 
 static side_t *NextWall (const side_t *wall)

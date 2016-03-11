@@ -76,6 +76,7 @@
 #include "d_player.h"
 #include "p_maputl.h"
 #include "p_spec.h"
+#include "math/cmath.h"
 
 AActor *SingleActorFromTID(int tid, AActor *defactor);
 
@@ -1935,7 +1936,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 		DVector2 xydiff(pos.x, pos.y);
 		double zdiff = (self->target->Z() + (self->target->height>>1)) -
 						(self->Z() + (self->height>>1) - self->floorclip);
-		self->pitch = int(atan2(zdiff, xydiff.Length()) * ANGLE_180 / -M_PI);
+		self->pitch = int(g_atan2(zdiff, xydiff.Length()) * ANGLE_180 / -M_PI);
 	}
 	// Let the aim trail behind the player
 	if (aim)

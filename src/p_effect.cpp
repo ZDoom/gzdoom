@@ -662,7 +662,7 @@ void P_DrawRailTrail(AActor *source, const DVector3 &start, const DVector3 &end,
 
 	dir = end - start;
 	lengthsquared = dir | dir;
-	length = sqrt(lengthsquared);
+	length = g_sqrt(lengthsquared);
 	steps = xs_FloorToInt(length / 3);
 	fullbright = !!(flags & RAF_FULLBRIGHT);
 

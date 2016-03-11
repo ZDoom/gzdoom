@@ -57,6 +57,7 @@
 #include "r_utility.h"
 #include "d_player.h"
 #include "p_local.h"
+#include "math/cmath.h"
 
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -254,7 +255,7 @@ angle_t R_PointToAngle2 (fixed_t x1, fixed_t y1, fixed_t x, fixed_t y)
 	else
 	{
 		// we have to use the slower but more precise floating point atan2 function here.
-		return xs_RoundToUInt(atan2(double(y), double(x)) * (ANGLE_180/M_PI));
+		return xs_RoundToUInt(g_atan2(double(y), double(x)) * (ANGLE_180/M_PI));
 	}
 }
 
@@ -273,7 +274,7 @@ void R_InitPointToAngle (void)
 //
 	for (i = 0; i <= SLOPERANGE; i++)
 	{
-		f = atan2 ((double)i, (double)SLOPERANGE) / (6.28318530718 /* 2*pi */);
+		f = g_atan2 ((double)i, (double)SLOPERANGE) / (6.28318530718 /* 2*pi */);
 		tantoangle[i] = (angle_t)(0xffffffff*f);
 	}
 }
@@ -322,16 +323,16 @@ void R_InitTables (void)
 	const double pimul = PI*2/FINEANGLES;
 
 	// viewangle tangent table
-	finetangent[0] = (fixed_t)(FRACUNIT*tan ((0.5-FINEANGLES/4)*pimul)+0.5);
+	finetangent[0] = (fixed_t)(FRACUNIT*g_tan ((0.5-FINEANGLES/4)*pimul)+0.5);
 	for (i = 1; i < FINEANGLES/2; i++)
 	{
-		finetangent[i] = (fixed_t)(FRACUNIT*tan ((i-FINEANGLES/4)*pimul)+0.5);
+		finetangent[i] = (fixed_t)(FRACUNIT*g_tan ((i-FINEANGLES/4)*pimul)+0.5);
 	}
 	
 	// finesine table
 	for (i = 0; i < FINEANGLES/4; i++)
 	{
-		finesine[i] = (fixed_t)(FRACUNIT * sin (i*pimul));
+		finesine[i] = (fixed_t)(FRACUNIT * g_sin (i*pimul));
 	}
 	for (i = 0; i < FINEANGLES/4; i++)
 	{

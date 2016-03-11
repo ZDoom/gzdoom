@@ -50,6 +50,7 @@
 #include "d_player.h"
 #include "r_utility.h"
 #include "p_spec.h"
+#include "math/cmath.h"
 
 // Set of spawnable things for the Thing_Spawn and Thing_Projectile specials.
 FClassMap SpawnableThings;
@@ -283,9 +284,9 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 							double dist = aim.Length();
 							double targspeed = tvel.Length();
 							double ydotx = -aim | tvel;
-							double a = acos (clamp (ydotx / targspeed / dist, -1.0, 1.0));
+							double a = g_acos (clamp (ydotx / targspeed / dist, -1.0, 1.0));
 							double multiplier = double(pr_leadtarget.Random2())*0.1/255+1.1;
-							double sinb = -clamp (targspeed*multiplier * sin(a) / fspeed, -1.0, 1.0);
+							double sinb = -clamp (targspeed*multiplier * g_sin(a) / fspeed, -1.0, 1.0);
 
 							// Use the cross product of two of the triangle's sides to get a
 							// rotation vector.
@@ -293,7 +294,7 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 							// The vector must be normalized.
 							rv.MakeUnit();
 							// Now combine the rotation vector with angle b to get a rotation matrix.
-							DMatrix3x3 rm(rv, cos(asin(sinb)), sinb);
+							DMatrix3x3 rm(rv, g_cos(g_asin(sinb)), sinb);
 							// And multiply the original aim vector with the matrix to get a
 							// new aim vector that leads the target.
 							DVector3 aimvec = rm * aim;
@@ -328,7 +329,7 @@ nolead:
 					// Set the missile's speed to reflect the speed it was spawned at.
 					if (mobj->flags & MF_MISSILE)
 					{
-						mobj->Speed = fixed_t (sqrt (double(mobj->velx)*mobj->velx + double(mobj->vely)*mobj->vely + double(mobj->velz)*mobj->velz));
+						mobj->Speed = fixed_t (g_sqrt (double(mobj->velx)*mobj->velx + double(mobj->vely)*mobj->vely + double(mobj->velz)*mobj->velz));
 					}
 					// Hugger missiles don't have any vertical velocity
 					if (mobj->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER))

@@ -37,6 +37,7 @@
 #include "a_sharedglobal.h"
 #include "p_local.h"
 #include "farchive.h"
+#include "math/cmath.h"
 
 /*
 == SecurityCamera
@@ -180,7 +181,7 @@ void AAimingCamera::Tick ()
 			DVector2 vect(fv3.x, fv3.y);
 			double dz = Z() - tracer->Z() - tracer->height/2;
 			double dist = vect.Length();
-			double ang = dist != 0.f ? atan2 (dz, dist) : 0;
+			double ang = dist != 0.f ? g_atan2 (dz, dist) : 0;
 			int desiredpitch = (int)RAD2ANGLE(ang);
 			if (abs (desiredpitch - pitch) < MaxPitchChange)
 			{

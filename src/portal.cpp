@@ -53,6 +53,7 @@
 #include "p_maputl.h"
 #include "p_spec.h"
 #include "p_checkposition.h"
+#include "math/cmath.h"
 
 // simulation recurions maximum
 CVAR(Int, sv_portal_recursions, 4, CVAR_ARCHIVE|CVAR_SERVERINFO)
@@ -247,9 +248,9 @@ static void SetRotation(FLinePortal *port)
 {
 	line_t *dst = port->mDestination;
 	line_t *line = port->mOrigin;
-	double angle = atan2(dst->dy, dst->dx) - atan2(line->dy, line->dx) + M_PI;
-	port->mSinRot = FLOAT2FIXED(sin(angle));
-	port->mCosRot = FLOAT2FIXED(cos(angle));
+	double angle = g_atan2(dst->dy, dst->dx) - g_atan2(line->dy, line->dx) + M_PI;
+	port->mSinRot = FLOAT2FIXED(g_sin(angle));
+	port->mCosRot = FLOAT2FIXED(g_cos(angle));
 	port->mAngleDiff = RAD2ANGLE(angle);
 }
 
@@ -665,7 +666,7 @@ void P_NormalizeVXVY(fixed_t& vx, fixed_t& vy)
 {
 	double _vx = FIXED2DBL(vx);
 	double _vy = FIXED2DBL(vy);
-	double len = sqrt(_vx*_vx+_vy*_vy);
+	double len = g_sqrt(_vx*_vx+_vy*_vy);
 	vx = FLOAT2FIXED(_vx/len);
 	vy = FLOAT2FIXED(_vy/len);
 }

@@ -1778,7 +1778,7 @@ void PO_Init (void)
 		node_t *no = &nodes[i];
 		double fdx = (double)no->dx;
 		double fdy = (double)no->dy;
-		no->len = (float)sqrt(fdx * fdx + fdy * fdy);
+		no->len = (float)g_sqrt(fdx * fdx + fdy * fdy);
 	}
 
 	// mark all subsectors which have a seg belonging to a polyobj

@@ -1388,7 +1388,7 @@ static bool PointOnLine (int x, int y, int x1, int y1, int dx, int dy)
 		// Either the point is very near the line, or the segment defining
 		// the line is very short: Do a more expensive test to determine
 		// just how far from the line the point is.
-		double l = sqrt(d_dx*d_dx+d_dy*d_dy);
+		double l = g_sqrt(d_dx*d_dx+d_dy*d_dy);
 		double dist = fabs(s_num)/l;
 		if (dist < SIDE_EPSILON)
 		{

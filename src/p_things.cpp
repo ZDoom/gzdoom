@@ -257,7 +257,7 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 					{
 						fixedvec3 vect = mobj->Vec3To(targ);
 						vect.z += targ->height / 2;
-						TVector3<double> aim(vect.x, vect.y, vect.z);
+						DVector3 aim(vect.x, vect.y, vect.z);
 
 						if (leadTarget && speed > 0 && (targ->velx | targ->vely | targ->velz))
 						{
@@ -268,7 +268,7 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 							// with the math. I don't think I would have thought of using
 							// trig alone had I been left to solve it by myself.
 
-							TVector3<double> tvel(targ->velx, targ->vely, targ->velz);
+							DVector3 tvel(targ->velx, targ->vely, targ->velz);
 							if (!(targ->flags & MF_NOGRAVITY) && targ->waterlevel < 3)
 							{ // If the target is subject to gravity and not underwater,
 							  // assume that it isn't moving vertically. Thanks to gravity,
@@ -289,14 +289,14 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 
 							// Use the cross product of two of the triangle's sides to get a
 							// rotation vector.
-							TVector3<double> rv(tvel ^ aim);
+							DVector3 rv(tvel ^ aim);
 							// The vector must be normalized.
 							rv.MakeUnit();
 							// Now combine the rotation vector with angle b to get a rotation matrix.
-							TMatrix3x3<double> rm(rv, cos(asin(sinb)), sinb);
+							DMatrix3x3 rm(rv, cos(asin(sinb)), sinb);
 							// And multiply the original aim vector with the matrix to get a
 							// new aim vector that leads the target.
-							TVector3<double> aimvec = rm * aim;
+							DVector3 aimvec = rm * aim;
 							// And make the projectile follow that vector at the desired speed.
 							double aimscale = fspeed / dist;
 							mobj->velx = fixed_t (aimvec[0] * aimscale);

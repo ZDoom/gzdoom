@@ -77,7 +77,7 @@ static void P_SlopeLineToPoint (int lineid, fixed_t x, fixed_t y, fixed_t z, boo
 			plane = &sec->floorplane;
 		}
 
-		TVector3<double> p, v1, v2, cross;
+		DVector3 p, v1, v2, cross;
 
 		p[0] = FIXED2DBL (line->v1->x);
 		p[1] = FIXED2DBL (line->v1->y);
@@ -189,7 +189,7 @@ void P_SetSlope (secplane_t *plane, bool setCeil, int xyangi, int zangi,
 	}
 	xyang = (angle_t)Scale (xyangi, ANGLE_90, 90 << ANGLETOFINESHIFT);
 
-	TVector3<double> norm;
+	DVector3 norm;
 
 	if (ib_compatflags & BCOMPATF_SETSLOPEOVERFLOW)
 	{
@@ -228,7 +228,7 @@ void P_VavoomSlope(sector_t * sec, int id, fixed_t x, fixed_t y, fixed_t z, int 
 
 		if (l->args[0]==id)
 		{
-			TVector3<double> v1, v2, cross;
+			DVector3 v1, v2, cross;
 			secplane_t *srcplane = (which == 0) ? &sec->floorplane : &sec->ceilingplane;
 			fixed_t srcheight = (which == 0) ? sec->GetPlaneTexZ(sector_t::floor) : sec->GetPlaneTexZ(sector_t::ceiling);
 
@@ -336,8 +336,8 @@ static void P_SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt, 
 			sector_t *sec = &sectors[i];
 			if (sec->linecount != 3) continue;	// only works with triangular sectors
 
-			TVector3<double> vt1, vt2, vt3, cross;
-			TVector3<double> vec1, vec2;
+			DVector3 vt1, vt2, vt3, cross;
+			DVector3 vec1, vec2;
 			int vi1, vi2, vi3;
 
 			vi1 = int(sec->lines[0]->v1 - vertexes);
@@ -376,7 +376,7 @@ static void P_SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt, 
 					vec2 = vt2 - vt3;
 				}
 
-				TVector3<double> cross = vec1 ^ vec2;
+				DVector3 cross = vec1 ^ vec2;
 
 				double len = cross.Length();
 				if (len == 0)
@@ -521,7 +521,7 @@ static void P_AlignPlane (sector_t *sec, line_t *line, int which)
 
 	refsec = line->frontsector == sec ? line->backsector : line->frontsector;
 
-	TVector3<double> p, v1, v2, cross;
+	DVector3 p, v1, v2, cross;
 
 	secplane_t *srcplane;
 	fixed_t srcheight, destheight;

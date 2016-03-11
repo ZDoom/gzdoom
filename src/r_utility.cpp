@@ -615,7 +615,7 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 			{
 				fixedvec3a &start = i == 0 ? oldpos : InterpolationPath[i - 1];
 				fixedvec3a &end = InterpolationPath[i];
-				pathlen += xs_CRoundToInt(TVector2<double>(end.x - start.x, end.y - start.y).Length());
+				pathlen += xs_CRoundToInt(DVector2(end.x - start.x, end.y - start.y).Length());
 				totalzdiff += start.z;
 				totaladiff += start.angle;
 			}
@@ -625,7 +625,7 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 			{
 				fixedvec3a &start = i == 0 ? oldpos : InterpolationPath[i - 1];
 				fixedvec3a &end = InterpolationPath[i];
-				fixed_t fraglen = xs_CRoundToInt(TVector2<double>(end.x - start.x, end.y - start.y).Length());
+				fixed_t fraglen = xs_CRoundToInt(DVector2(end.x - start.x, end.y - start.y).Length());
 				zdiff += start.z;
 				adiff += start.angle;
 				if (fraglen <= interpolatedlen)

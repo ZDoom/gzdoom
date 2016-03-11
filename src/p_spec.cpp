@@ -2277,7 +2277,7 @@ void DPusher::Tick ()
 		// point pusher. Crosses sectors, so use blockmap.
 
 		FPortalGroupArray check(FPortalGroupArray::PGA_NoSectorPortals);	// no sector portals because this thing is utterly z-unaware.
-		FMultiBlockThingsIterator it(check, m_X, m_Y, 0, 0, m_Radius);
+		FMultiBlockThingsIterator it(check, m_X, m_Y, 0, 0, m_Radius, false, m_Source->Sector);
 		FMultiBlockThingsIterator::CheckResult cres;
 
 

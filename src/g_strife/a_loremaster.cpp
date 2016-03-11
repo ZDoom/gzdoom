@@ -25,7 +25,7 @@ int ALoreShot::DoSpecialDamage (AActor *victim, int damage, FName damagetype)
 	if (victim != NULL && target != NULL && !(victim->flags7 & MF7_DONTTHRUST))
 	{
 		fixedvec3 fixthrust = victim->Vec3To(target);
-		TVector3<double> thrust(fixthrust.x, fixthrust.y, fixthrust.z);
+		DVector3 thrust(fixthrust.x, fixthrust.y, fixthrust.z);
 
 		thrust.MakeUnit();
 		thrust *= double((255*50*FRACUNIT) / (victim->Mass ? victim->Mass : 1));

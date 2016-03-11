@@ -316,7 +316,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetDistance)
 			if (checkz)
 				diff.z += (target->height - self->height) / 2;
 
-			const double length = TVector3<double>(FIXED2DBL(diff.x), FIXED2DBL(diff.y), (checkz) ? FIXED2DBL(diff.z) : 0).Length();
+			const double length = DVector3(FIXED2DBL(diff.x), FIXED2DBL(diff.y), (checkz) ? FIXED2DBL(diff.z) : 0).Length();
 			ret->SetFloat(length);
 		}
 		return 1;
@@ -1260,7 +1260,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomMissile)
 				{
 					if (CMF_OFFSETPITCH & flags)
 					{
-							TVector2<double> velocity (missile->velx, missile->vely);
+							DVector2 velocity (missile->velx, missile->vely);
 							pitch += R_PointToAngle2(0,0, xs_CRoundToInt(velocity.Length()), missile->velz);
 					}
 					ang = pitch >> ANGLETOFINESHIFT;
@@ -1269,7 +1269,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomMissile)
 				}
 				else
 				{
-					TVector2<double> velocity (missile->velx, missile->vely);
+					DVector2 velocity (missile->velx, missile->vely);
 					missilespeed = xs_CRoundToInt(velocity.Length());
 				}
 
@@ -1677,7 +1677,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireCustomMissile)
 			{
 				// This original implementation is to aim straight ahead and then offset
 				// the angle from the resulting direction. 
-				TVector3<double> velocity(misl->velx, misl->vely, 0);
+				DVector3 velocity(misl->velx, misl->vely, 0);
 				fixed_t missilespeed = xs_CRoundToInt(velocity.Length());
 				misl->angle += angle;
 				angle_t an = misl->angle >> ANGLETOFINESHIFT;
@@ -1932,7 +1932,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 	{
 		// We probably won't hit the target, but aim at it anyway so we don't look stupid.
 		fixedvec2 pos = self->Vec2To(self->target);
-		TVector2<double> xydiff(pos.x, pos.y);
+		DVector2 xydiff(pos.x, pos.y);
 		double zdiff = (self->target->Z() + (self->target->height>>1)) -
 						(self->Z() + (self->height>>1) - self->floorclip);
 		self->pitch = int(atan2(zdiff, xydiff.Length()) * ANGLE_180 / -M_PI);
@@ -5514,7 +5514,7 @@ static bool DoRadiusGive(AActor *self, AActor *thing, PClassActor *item, int amo
 		{ // check if inside a sphere
 			double distsquared = double(distance) * double(distance);
 			double minsquared = double(mindist) * double(mindist);
-			double lengthsquared = TVector3<double>(diff.x, diff.y, diff.z).LengthSquared();
+			double lengthsquared = DVector3(diff.x, diff.y, diff.z).LengthSquared();
 			if (lengthsquared > distsquared || (minsquared && (lengthsquared < minsquared)))
 			{
 				return false;
@@ -5583,7 +5583,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusGive)
 	{
 		FPortalGroupArray check(FPortalGroupArray::PGA_Full3d);
 		fixed_t mid = self->Z() + self->height / 2;
-		FMultiBlockThingsIterator it(check, self->X(), self->Y(), mid-distance, mid+distance, distance);
+		FMultiBlockThingsIterator it(check, self->X(), self->Y(), mid-distance, mid+distance, distance, false, self->Sector);
 		FMultiBlockThingsIterator::CheckResult cres;
 
 		while ((it.Next(&cres)))
@@ -6814,7 +6814,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceMovementDirection)
 	if (!(flags & FMDF_NOPITCH))
 	{
 		fixed_t current = mobj->pitch;
-		const TVector2<double> velocity(mobj->velx, mobj->vely);
+		const DVector2 velocity(mobj->velx, mobj->vely);
 		const fixed_t pitch = R_PointToAngle2(0, 0, xs_CRoundToInt(velocity.Length()), -mobj->velz);
 		if (pitchlimit > 0)
 		{

@@ -563,8 +563,8 @@ bool P_Move (AActor *actor)
 	{
 		actor->SetOrigin(origx, origy, actor->Z(), false);
 		movefactor *= FRACUNIT / ORIG_FRICTION_FACTOR / 4;
-		actor->velx += FixedMul (deltax, movefactor);
-		actor->vely += FixedMul (deltay, movefactor);
+		actor->vel.x += FixedMul (deltax, movefactor);
+		actor->vel.y += FixedMul (deltay, movefactor);
 	}
 
 	// [RH] If a walking monster is no longer on the floor, move it down
@@ -1732,7 +1732,7 @@ bool P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 				player->mo->flags3 & MF3_GHOST)
 			{
 				if ((player->mo->AproxDistance (actor) > 2*MELEERANGE)
-					&& P_AproxDistance (player->mo->velx, player->mo->vely)	< 5*FRACUNIT)
+					&& P_AproxDistance (player->mo->vel.x, player->mo->vel.y)	< 5*FRACUNIT)
 				{ // Player is sneaking - can't detect
 					continue;
 				}
@@ -2455,8 +2455,8 @@ void A_DoChase (VMFrameStack *stack, AActor *actor, bool fastchase, FState *mele
 		else
 		{
 			actor->FastChaseStrafeCount = 0;
-			actor->velx = 0;
-			actor->vely = 0;
+			actor->vel.x = 0;
+			actor->vel.y = 0;
 			fixed_t dist = actor->AproxDistance (actor->target);
 			if (dist < CLASS_BOSS_STRAFE_RANGE)
 			{
@@ -2465,8 +2465,8 @@ void A_DoChase (VMFrameStack *stack, AActor *actor, bool fastchase, FState *mele
 					angle_t ang = actor->AngleTo(actor->target);
 					if (pr_chase() < 128) ang += ANGLE_90;
 					else ang -= ANGLE_90;
-					actor->velx = 13 * finecosine[ang>>ANGLETOFINESHIFT];
-					actor->vely = 13 * finesine[ang>>ANGLETOFINESHIFT];
+					actor->vel.x = 13 * finecosine[ang>>ANGLETOFINESHIFT];
+					actor->vel.y = 13 * finesine[ang>>ANGLETOFINESHIFT];
 					actor->FastChaseStrafeCount = 3;		// strafe time
 				}
 			}
@@ -2649,7 +2649,7 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 					}
 				}
 
-				corpsehit->velx = corpsehit->vely = 0;
+				corpsehit->vel.x = corpsehit->vel.y = 0;
 				// [RH] Check against real height and radius
 
 				fixed_t oldheight = corpsehit->height;
@@ -3013,7 +3013,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
 	}
 
 	// Let the aim trail behind the player
-	self->angle = self->AngleTo(self->target, -self->target->velx * 3, -self->target->vely * 3);
+	self->angle = self->AngleTo(self->target, -self->target->vel.x * 3, -self->target->vel.y * 3);
 
 	if (self->target->flags & MF_SHADOW && !(self->flags6 & MF6_SEEINVISIBLE))
 	{
@@ -3230,14 +3230,14 @@ void P_TossItem (AActor *item)
 	
 	if (style==2)
 	{
-		item->velx += pr_dropitem.Random2(7) << FRACBITS;
-		item->vely += pr_dropitem.Random2(7) << FRACBITS;
+		item->vel.x += pr_dropitem.Random2(7) << FRACBITS;
+		item->vel.y += pr_dropitem.Random2(7) << FRACBITS;
 	}
 	else
 	{
-		item->velx = pr_dropitem.Random2() << 8;
-		item->vely = pr_dropitem.Random2() << 8;
-		item->velz = FRACUNIT*5 + (pr_dropitem() << 10);
+		item->vel.x = pr_dropitem.Random2() << 8;
+		item->vel.y = pr_dropitem.Random2() << 8;
+		item->vel.z = FRACUNIT*5 + (pr_dropitem() << 10);
 	}
 }
 

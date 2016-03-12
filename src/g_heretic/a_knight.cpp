@@ -28,8 +28,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_DripBlood)
 	fixed_t xo = (pr_dripblood.Random2() << 11);
 	fixed_t yo = (pr_dripblood.Random2() << 11);
 	mo = Spawn ("Blood", self->Vec3Offset(xo, yo, 0), ALLOW_REPLACE);
-	mo->velx = pr_dripblood.Random2 () << 10;
-	mo->vely = pr_dripblood.Random2 () << 10;
+	mo->vel.x = pr_dripblood.Random2 () << 10;
+	mo->vel.y = pr_dripblood.Random2 () << 10;
 	mo->gravity = FRACUNIT/8;
 	return 0;
 }

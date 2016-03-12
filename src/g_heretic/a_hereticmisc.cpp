@@ -61,9 +61,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PodPain)
 	{
 		goo = Spawn(gootype, self->PosPlusZ(48*FRACUNIT), ALLOW_REPLACE);
 		goo->target = self;
-		goo->velx = pr_podpain.Random2() << 9;
-		goo->vely = pr_podpain.Random2() << 9;
-		goo->velz = FRACUNIT/2 + (pr_podpain() << 9);
+		goo->vel.x = pr_podpain.Random2() << 9;
+		goo->vel.y = pr_podpain.Random2() << 9;
+		goo->vel.z = FRACUNIT/2 + (pr_podpain() << 9);
 	}
 	return 0;
 }
@@ -139,7 +139,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_AccTeleGlitter)
 
 	if (++self->health > 35)
 	{
-		self->velz += self->velz/2;
+		self->vel.z += self->vel.z/2;
 	}
 	return 0;
 }
@@ -182,9 +182,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_VolcanoBlast)
 		angle = pr_blast () << 24;
 		blast->angle = angle;
 		angle >>= ANGLETOFINESHIFT;
-		blast->velx = FixedMul (1*FRACUNIT, finecosine[angle]);
-		blast->vely = FixedMul (1*FRACUNIT, finesine[angle]);
-		blast->velz = (FRACUNIT*5/2) + (pr_blast() << 10);
+		blast->vel.x = FixedMul (1*FRACUNIT, finecosine[angle]);
+		blast->vel.y = FixedMul (1*FRACUNIT, finesine[angle]);
+		blast->vel.z = (FRACUNIT*5/2) + (pr_blast() << 10);
 		S_Sound (blast, CHAN_BODY, "world/volcano/shoot", 1, ATTN_NORM);
 		P_CheckMissileSpawn (blast, self->radius);
 	}
@@ -210,7 +210,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_VolcBallImpact)
 		self->flags |= MF_NOGRAVITY;
 		self->gravity = FRACUNIT;
 		self->AddZ(28*FRACUNIT);
-		//self->velz = 3*FRACUNIT;
+		//self->vel.z = 3*FRACUNIT;
 	}
 	P_RadiusAttack (self, self->target, 25, 25, NAME_Fire, RADF_HURTSOURCE);
 	for (i = 0; i < 4; i++)
@@ -220,9 +220,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_VolcBallImpact)
 		angle = i*ANG90;
 		tiny->angle = angle;
 		angle >>= ANGLETOFINESHIFT;
-		tiny->velx = FixedMul (FRACUNIT*7/10, finecosine[angle]);
-		tiny->vely = FixedMul (FRACUNIT*7/10, finesine[angle]);
-		tiny->velz = FRACUNIT + (pr_volcimpact() << 9);
+		tiny->vel.x = FixedMul (FRACUNIT*7/10, finecosine[angle]);
+		tiny->vel.y = FixedMul (FRACUNIT*7/10, finesine[angle]);
+		tiny->vel.z = FRACUNIT + (pr_volcimpact() << 9);
 		P_CheckMissileSpawn (tiny, self->radius);
 	}
 	return 0;

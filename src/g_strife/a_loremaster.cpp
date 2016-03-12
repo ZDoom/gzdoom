@@ -30,9 +30,9 @@ int ALoreShot::DoSpecialDamage (AActor *victim, int damage, FName damagetype)
 		thrust.MakeUnit();
 		thrust *= double((255*50*FRACUNIT) / (victim->Mass ? victim->Mass : 1));
 	
-		victim->velx += fixed_t(thrust.X);
-		victim->vely += fixed_t(thrust.Y);
-		victim->velz += fixed_t(thrust.Z);
+		victim->vel.x += fixed_t(thrust.X);
+		victim->vel.y += fixed_t(thrust.Y);
+		victim->vel.z += fixed_t(thrust.Z);
 	}
 	return damage;
 }
@@ -43,7 +43,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LoremasterChain)
 
 	S_Sound (self, CHAN_BODY, "loremaster/active", 1, ATTN_NORM);
 	Spawn("LoreShot2", self->Pos(), ALLOW_REPLACE);
-	Spawn("LoreShot2", self->Vec3Offset(-(self->velx >> 1), -(self->vely >> 1), -(self->velz >> 1)), ALLOW_REPLACE);
-	Spawn("LoreShot2", self->Vec3Offset(-self->velx, -self->vely, -self->velz), ALLOW_REPLACE);
+	Spawn("LoreShot2", self->Vec3Offset(-(self->vel.x >> 1), -(self->vel.y >> 1), -(self->vel.z >> 1)), ALLOW_REPLACE);
+	Spawn("LoreShot2", self->Vec3Offset(-self->vel.x, -self->vel.y, -self->vel.z), ALLOW_REPLACE);
 	return 0;
 }

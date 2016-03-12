@@ -1000,7 +1000,7 @@ public:
 	FTextureID		ceilingpic;			// contacted sec ceilingpic
 	fixed_t			radius, height;		// for movement checking
 	fixed_t			projectilepassheight;	// height for clipping projectile movement against this actor
-	fixed_t			velx, vely, velz;	// velocity
+	fixedvec3		vel;
 	SDWORD			tics;				// state tic counter
 	FState			*state;
 	VMFunction		*Damage;			// For missiles and monster railgun

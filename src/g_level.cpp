@@ -1244,9 +1244,9 @@ void G_FinishTravel ()
 				pawn->pitch = pawndup->pitch;
 			}
 			pawn->SetXYZ(pawndup->X(), pawndup->Y(), pawndup->Z());
-			pawn->velx = pawndup->velx;
-			pawn->vely = pawndup->vely;
-			pawn->velz = pawndup->velz;
+			pawn->vel.x = pawndup->vel.x;
+			pawn->vel.y = pawndup->vel.y;
+			pawn->vel.z = pawndup->vel.z;
 			pawn->Sector = pawndup->Sector;
 			pawn->floorz = pawndup->floorz;
 			pawn->ceilingz = pawndup->ceilingz;

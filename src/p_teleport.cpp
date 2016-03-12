@@ -122,7 +122,7 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle, 
 	ceilingheight = destsect->ceilingplane.ZatPoint (x, y);
 	if (thing->flags & MF_MISSILE)
 	{ // We don't measure z velocity, because it doesn't change.
-		missilespeed = xs_CRoundToInt(DVector2(thing->velx, thing->vely).Length());
+		missilespeed = xs_CRoundToInt(DVector2(thing->vel.x, thing->vel.y).Length());
 	}
 	if (flags & TELF_KEEPHEIGHT)
 	{
@@ -215,16 +215,16 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle, 
 	if (thing->flags & MF_MISSILE)
 	{
 		angle >>= ANGLETOFINESHIFT;
-		thing->velx = FixedMul (missilespeed, finecosine[angle]);
-		thing->vely = FixedMul (missilespeed, finesine[angle]);
+		thing->vel.x = FixedMul (missilespeed, finecosine[angle]);
+		thing->vel.y = FixedMul (missilespeed, finesine[angle]);
 	}
 	// [BC] && bHaltVelocity.
 	else if (!(flags & TELF_KEEPORIENTATION) && !(flags & TELF_KEEPVELOCITY))
 	{ // no fog doesn't alter the player's momentum
-		thing->velx = thing->vely = thing->velz = 0;
+		thing->vel.x = thing->vel.y = thing->vel.z = 0;
 		// killough 10/98: kill all bobbing velocity too
 		if (player)
-			player->velx = player->vely = 0;
+			player->vel.x = player->vel.y = 0;
 	}
 	return true;
 }
@@ -330,7 +330,7 @@ bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, int f
 	fixed_t z;
 	angle_t angle = 0;
 	fixed_t s = 0, c = 0;
-	fixed_t velx = 0, vely = 0;
+	fixed_t vx = 0, vy = 0;
 	angle_t badangle = 0;
 
 	if (thing == NULL)
@@ -365,8 +365,8 @@ bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, int f
 		c = finecosine[angle>>ANGLETOFINESHIFT];
 
 		// Velocity of thing crossing teleporter linedef
-		velx = thing->velx;
-		vely = thing->vely;
+		vx = thing->vel.x;
+		vy = thing->vel.y;
 
 		z = searcher->Z();
 	}
@@ -391,10 +391,10 @@ bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, int f
 			thing->angle += angle;
 
 			// Rotate thing's velocity to come out of exit just like it entered
-			thing->velx = FixedMul(velx, c) - FixedMul(vely, s);
-			thing->vely = FixedMul(vely, c) + FixedMul(velx, s);
+			thing->vel.x = FixedMul(vx, c) - FixedMul(vy, s);
+			thing->vel.y = FixedMul(vy, c) + FixedMul(vx, s);
 		}
-		if ((velx | vely) == 0 && thing->player != NULL && thing->player->mo == thing && !predicting)
+		if ((vx | vy) == 0 && thing->player != NULL && thing->player->mo == thing && !predicting)
 		{
 			thing->player->mo->PlayIdle ();
 		}
@@ -554,21 +554,21 @@ bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id, INTBO
 			thing->angle += angle;
 
 			// Velocity of thing crossing teleporter linedef
-			x = thing->velx;
-			y = thing->vely;
+			x = thing->vel.x;
+			y = thing->vel.y;
 
 			// Rotate thing's velocity to come out of exit just like it entered
-			thing->velx = DMulScale16 (x, c, -y, s);
-			thing->vely = DMulScale16 (y, c,  x, s);
+			thing->vel.x = DMulScale16 (x, c, -y, s);
+			thing->vel.y = DMulScale16 (y, c,  x, s);
 
 			// Adjust a player's view, in case there has been a height change
 			if (player && player->mo == thing)
 			{
 				// Adjust player's local copy of velocity
-				x = player->velx;
-				y = player->vely;
-				player->velx = DMulScale16 (x, c, -y, s);
-				player->vely = DMulScale16 (y, c,  x, s);
+				x = player->vel.x;
+				y = player->vel.y;
+				player->vel.x = DMulScale16 (x, c, -y, s);
+				player->vel.y = DMulScale16 (y, c,  x, s);
 
 				// Save the current deltaviewheight, used in stepping
 				fixed_t deltaviewheight = player->deltaviewheight;

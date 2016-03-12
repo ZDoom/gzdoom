@@ -35,8 +35,8 @@ void BlastActor (AActor *victim, fixed_t strength, fixed_t speed, AActor *Owner,
 
 	angle = Owner->AngleTo(victim);
 	angle >>= ANGLETOFINESHIFT;
-	victim->velx = FixedMul (speed, finecosine[angle]);
-	victim->vely = FixedMul (speed, finesine[angle]);
+	victim->vel.x = FixedMul (speed, finecosine[angle]);
+	victim->vel.y = FixedMul (speed, finesine[angle]);
 
 	// Spawn blast puff
 	ang = victim->AngleTo(Owner);
@@ -48,21 +48,21 @@ void BlastActor (AActor *victim, fixed_t strength, fixed_t speed, AActor *Owner,
 	mo = Spawn (blasteffect, pos, ALLOW_REPLACE);
 	if (mo)
 	{
-		mo->velx = victim->velx;
-		mo->vely = victim->vely;
+		mo->vel.x = victim->vel.x;
+		mo->vel.y = victim->vel.y;
 	}
 	if (victim->flags & MF_MISSILE)
 	{
 		// [RH] Floor and ceiling huggers should not be blasted vertically.
 		if (!(victim->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER)))
 		{
-			victim->velz = 8*FRACUNIT;
-			mo->velz = victim->velz;
+			victim->vel.z = 8*FRACUNIT;
+			mo->vel.z = victim->vel.z;
 		}
 	}
 	else
 	{
-		victim->velz = (1000 / victim->Mass) << FRACBITS;
+		victim->vel.z = (1000 / victim->Mass) << FRACBITS;
 	}
 	if (victim->player)
 	{

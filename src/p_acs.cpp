@@ -4897,15 +4897,15 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 
 		case ACSF_GetActorVelX:
 			actor = SingleActorFromTID(args[0], activator);
-			return actor != NULL? actor->velx : 0;
+			return actor != NULL? actor->vel.x : 0;
 
 		case ACSF_GetActorVelY:
 			actor = SingleActorFromTID(args[0], activator);
-			return actor != NULL? actor->vely : 0;
+			return actor != NULL? actor->vel.y : 0;
 
 		case ACSF_GetActorVelZ:
 			actor = SingleActorFromTID(args[0], activator);
-			return actor != NULL? actor->velz : 0;
+			return actor != NULL? actor->vel.z : 0;
 
 		case ACSF_SetPointer:
 			if (activator)
@@ -5341,7 +5341,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 			return FLOAT2FIXED(sqrt(FIXED2DBL(args[0])));
 
 		case ACSF_VectorLength:
-			return FLOAT2FIXED(TVector2<double>(FIXED2DBL(args[0]), FIXED2DBL(args[1])).Length());
+			return FLOAT2FIXED(DVector2(FIXED2DBL(args[0]), FIXED2DBL(args[1])).Length());
 
 		case ACSF_SetHUDClipRect:
 			ClipRectLeft = argCount > 0 ? args[0] : 0;

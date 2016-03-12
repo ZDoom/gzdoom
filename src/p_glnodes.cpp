@@ -140,7 +140,7 @@ static int CheckForMissingSegs()
 		if (seg->sidedef!=NULL)
 		{
 			// check all the segs and calculate the length they occupy on their sidedef
-			TVector2<double> vec1(seg->v2->x - seg->v1->x, seg->v2->y - seg->v1->y);
+			DVector2 vec1(seg->v2->x - seg->v1->x, seg->v2->y - seg->v1->y);
 			added_seglen[seg->sidedef - sides] += float(vec1.Length());
 		}
 	}
@@ -150,7 +150,7 @@ static int CheckForMissingSegs()
 		side_t * side =&sides[i];
 		line_t * line = side->linedef;
 
-		TVector2<double> lvec(line->dx, line->dy);
+		DVector2 lvec(line->dx, line->dy);
 		float linelen = float(lvec.Length());
 
 		missing += (added_seglen[i] < linelen - FRACUNIT);

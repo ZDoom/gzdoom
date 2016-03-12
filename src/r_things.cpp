@@ -1700,8 +1700,8 @@ static bool sv_compare(vissprite_t *a, vissprite_t *b)
 // the viewpoint.
 static bool sv_compare2d(vissprite_t *a, vissprite_t *b)
 {
-	return TVector2<double>(a->deltax, a->deltay).LengthSquared() <
-		   TVector2<double>(b->deltax, b->deltay).LengthSquared();
+	return DVector2(a->deltax, a->deltay).LengthSquared() <
+		   DVector2(b->deltax, b->deltay).LengthSquared();
 }
 
 #if 0

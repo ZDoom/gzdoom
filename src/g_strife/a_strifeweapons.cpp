@@ -380,10 +380,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_RocketInFlight)
 
 	S_Sound (self, CHAN_VOICE, "misc/missileinflight", 1, ATTN_NORM);
 	P_SpawnPuff (self, PClass::FindActor("MiniMissilePuff"), self->Pos(), self->angle - ANGLE_180, 2, PF_HITTHING);
-	trail = Spawn("RocketTrail", self->Vec3Offset(-self->velx, -self->vely, 0), ALLOW_REPLACE);
+	trail = Spawn("RocketTrail", self->Vec3Offset(-self->vel.x, -self->vel.y, 0), ALLOW_REPLACE);
 	if (trail != NULL)
 	{
-		trail->velz = FRACUNIT;
+		trail->vel.z = FRACUNIT;
 	}
 	return 0;
 }
@@ -401,7 +401,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FlameDie)
 	PARAM_ACTION_PROLOGUE;
 
 	self->flags |= MF_NOGRAVITY;
-	self->velz = (pr_flamedie() & 3) << FRACBITS;
+	self->vel.z = (pr_flamedie() & 3) << FRACBITS;
 	return 0;
 }
 
@@ -432,7 +432,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireFlamer)
 	self = P_SpawnPlayerMissile (self, PClass::FindActor("FlameMissile"));
 	if (self != NULL)
 	{
-		self->velz += 5*FRACUNIT;
+		self->vel.z += 5*FRACUNIT;
 	}
 	return 0;
 }
@@ -578,8 +578,8 @@ AActor *P_SpawnSubMissile (AActor *source, PClassActor *type, AActor *target)
 	other->target = target;
 	other->angle = source->angle;
 
-	other->velx = FixedMul (other->Speed, finecosine[source->angle >> ANGLETOFINESHIFT]);
-	other->vely = FixedMul (other->Speed, finesine[source->angle >> ANGLETOFINESHIFT]);
+	other->vel.x = FixedMul (other->Speed, finecosine[source->angle >> ANGLETOFINESHIFT]);
+	other->vel.y = FixedMul (other->Speed, finesine[source->angle >> ANGLETOFINESHIFT]);
 
 	if (other->flags4 & MF4_SPECTRAL)
 	{
@@ -596,7 +596,7 @@ AActor *P_SpawnSubMissile (AActor *source, PClassActor *type, AActor *target)
 	if (P_CheckMissileSpawn (other, source->radius))
 	{
 		angle_t pitch = P_AimLineAttack (source, source->angle, 1024*FRACUNIT);
-		other->velz = FixedMul (-finesine[pitch>>ANGLETOFINESHIFT], other->Speed);
+		other->vel.z = FixedMul (-finesine[pitch>>ANGLETOFINESHIFT], other->Speed);
 		return other;
 	}
 	return NULL;
@@ -632,9 +632,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_Burnination)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	self->velz -= 8*FRACUNIT;
-	self->velx += (pr_phburn.Random2 (3)) << FRACBITS;
-	self->vely += (pr_phburn.Random2 (3)) << FRACBITS;
+	self->vel.z -= 8*FRACUNIT;
+	self->vel.x += (pr_phburn.Random2 (3)) << FRACBITS;
+	self->vel.y += (pr_phburn.Random2 (3)) << FRACBITS;
 	S_Sound (self, CHAN_VOICE, "world/largefire", 1, ATTN_NORM);
 
 	// Only the main fire spawns more.
@@ -675,9 +675,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_Burnination)
 			self->Z() + 4*FRACUNIT, ALLOW_REPLACE);
 		if (drop != NULL)
 		{
-			drop->velx = self->velx + ((pr_phburn.Random2 (7)) << FRACBITS);
-			drop->vely = self->vely + ((pr_phburn.Random2 (7)) << FRACBITS);
-			drop->velz = self->velz - FRACUNIT;
+			drop->vel.x = self->vel.x + ((pr_phburn.Random2 (7)) << FRACBITS);
+			drop->vel.y = self->vel.y + ((pr_phburn.Random2 (7)) << FRACBITS);
+			drop->vel.z = self->vel.z - FRACUNIT;
 			drop->reactiontime = (pr_phburn() & 3) + 2;
 			drop->flags |= MF_DROPPED;
 		}
@@ -728,7 +728,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireGrenade)
 			S_Sound (grenade, CHAN_VOICE, grenade->SeeSound, 1, ATTN_NORM);
 		}
 
-		grenade->velz = FixedMul (finetangent[FINEANGLES/4-(self->pitch>>ANGLETOFINESHIFT)], grenade->Speed) + 8*FRACUNIT;
+		grenade->vel.z = FixedMul (finetangent[FINEANGLES/4-(self->pitch>>ANGLETOFINESHIFT)], grenade->Speed) + 8*FRACUNIT;
 
 		fixedvec2 offset;
 
@@ -1000,8 +1000,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil1)
 		spot = Spawn("SpectralLightningSpot", self->Pos(), ALLOW_REPLACE);
 		if (spot != NULL)
 		{
-			spot->velx += 28 * finecosine[self->angle >> ANGLETOFINESHIFT];
-			spot->vely += 28 * finesine[self->angle >> ANGLETOFINESHIFT];
+			spot->vel.x += 28 * finecosine[self->angle >> ANGLETOFINESHIFT];
+			spot->vel.y += 28 * finesine[self->angle >> ANGLETOFINESHIFT];
 		}
 	}
 	if (spot != NULL)
@@ -1102,8 +1102,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil4)
 		spot = P_SpawnPlayerMissile (self, PClass::FindActor("SpectralLightningBigV1"));
 		if (spot != NULL)
 		{
-			spot->velx += FixedMul (spot->Speed, finecosine[self->angle >> ANGLETOFINESHIFT]);
-			spot->vely += FixedMul (spot->Speed, finesine[self->angle >> ANGLETOFINESHIFT]);
+			spot->vel.x += FixedMul (spot->Speed, finecosine[self->angle >> ANGLETOFINESHIFT]);
+			spot->vel.y += FixedMul (spot->Speed, finesine[self->angle >> ANGLETOFINESHIFT]);
 		}
 	}
 	return 0;

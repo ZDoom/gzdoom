@@ -211,8 +211,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurDecide)
 		}
 		A_FaceTarget (self);
 		angle = self->angle>>ANGLETOFINESHIFT;
-		self->velx = FixedMul (MNTR_CHARGE_SPEED, finecosine[angle]);
-		self->vely = FixedMul (MNTR_CHARGE_SPEED, finesine[angle]);
+		self->vel.x = FixedMul (MNTR_CHARGE_SPEED, finecosine[angle]);
+		self->vel.y = FixedMul (MNTR_CHARGE_SPEED, finesine[angle]);
 		self->special1 = TICRATE/2; // Charge duration
 	}
 	else if (target->Z() == target->floorz
@@ -260,7 +260,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurCharge)
 			type = PClass::FindActor("PunchPuff");
 		}
 		puff = Spawn (type, self->Pos(), ALLOW_REPLACE);
-		puff->velz = 2*FRACUNIT;
+		puff->vel.z = 2*FRACUNIT;
 		self->special1--;
 	}
 	else
@@ -286,7 +286,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurAtk2)
 
 	AActor *mo;
 	angle_t angle;
-	fixed_t velz;
+	fixed_t vz;
 	fixed_t z;
 	bool friendly = !!(self->flags5 & MF5_SUMMONEDMONSTER);
 
@@ -311,12 +311,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurAtk2)
 		if (mo != NULL)
 		{
 //			S_Sound (mo, CHAN_WEAPON, "minotaur/attack2", 1, ATTN_NORM);
-			velz = mo->velz;
+			vz = mo->vel.z;
 			angle = mo->angle;
-			P_SpawnMissileAngleZ (self, z, fx, angle-(ANG45/8), velz);
-			P_SpawnMissileAngleZ (self, z, fx, angle+(ANG45/8), velz);
-			P_SpawnMissileAngleZ (self, z, fx, angle-(ANG45/16), velz);
-			P_SpawnMissileAngleZ (self, z, fx, angle+(ANG45/16), velz);
+			P_SpawnMissileAngleZ (self, z, fx, angle-(ANG45/8), vz);
+			P_SpawnMissileAngleZ (self, z, fx, angle+(ANG45/8), vz);
+			P_SpawnMissileAngleZ (self, z, fx, angle-(ANG45/16), vz);
+			P_SpawnMissileAngleZ (self, z, fx, angle+(ANG45/16), vz);
 		}
 	}
 	return 0;
@@ -398,7 +398,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MntrFloorFire)
 		(pr_fire.Random2 () << 10));
 	mo = Spawn("MinotaurFX3", pos.x, pos.y, self->floorz, ALLOW_REPLACE);
 	mo->target = self->target;
-	mo->velx = 1; // Force block checking
+	mo->vel.x = 1; // Force block checking
 	P_CheckMissileSpawn (mo, self->radius);
 	return 0;
 }
@@ -418,8 +418,8 @@ void P_MinotaurSlam (AActor *source, AActor *target)
 	angle = source->AngleTo(target);
 	angle >>= ANGLETOFINESHIFT;
 	thrust = 16*FRACUNIT+(pr_minotaurslam()<<10);
-	target->velx += FixedMul (thrust, finecosine[angle]);
-	target->vely += FixedMul (thrust, finesine[angle]);
+	target->vel.x += FixedMul (thrust, finecosine[angle]);
+	target->vel.y += FixedMul (thrust, finesine[angle]);
 	damage = pr_minotaurslam.HitDice (static_cast<AMinotaur *>(source) ? 4 : 6);
 	int newdam = P_DamageMobj (target, NULL, NULL, damage, NAME_Melee);
 	P_TraceBleed (newdam > 0 ? newdam : damage, target, angle, 0);

@@ -37,7 +37,7 @@ void A_PainShootSkull (AActor *self, angle_t angle, PClassActor *spawntype, int 
 	{
 		if (self->flags & MF_FLOAT)
 		{
-			self->velz -= 2*FRACUNIT;
+			self->vel.z -= 2*FRACUNIT;
 			self->flags |= MF_INFLOAT;
 			self->flags4 |= MF4_VFRICTION;
 		}

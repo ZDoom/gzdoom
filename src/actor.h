@@ -851,14 +851,14 @@ public:
 	fixed_t Distance2D(AActor *other, bool absolute = false)
 	{
 		fixedvec3 otherpos = absolute ? other->Pos() : other->PosRelative(this);
-		return xs_RoundToInt(TVector2<double>(X() - otherpos.x, Y() - otherpos.y).Length());
+		return xs_RoundToInt(DVector2(X() - otherpos.x, Y() - otherpos.y).Length());
 	}
 
 	// a full 3D version of the above
 	fixed_t Distance3D(AActor *other, bool absolute = false)
 	{
 		fixedvec3 otherpos = absolute ? other->Pos() : other->PosRelative(this);
-		return xs_RoundToInt(TVector3<double>(X() - otherpos.x, Y() - otherpos.y, Z() - otherpos.z).Length());
+		return xs_RoundToInt(DVector3(X() - otherpos.x, Y() - otherpos.y, Z() - otherpos.z).Length());
 	}
 
 	angle_t AngleTo(AActor *other, bool absolute = false)
@@ -1000,7 +1000,7 @@ public:
 	FTextureID		ceilingpic;			// contacted sec ceilingpic
 	fixed_t			radius, height;		// for movement checking
 	fixed_t			projectilepassheight;	// height for clipping projectile movement against this actor
-	fixed_t			velx, vely, velz;	// velocity
+	fixedvec3		vel;
 	SDWORD			tics;				// state tic counter
 	FState			*state;
 	VMFunction		*Damage;			// For missiles and monster railgun

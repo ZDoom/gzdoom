@@ -135,10 +135,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_WraithFX2)
 			{
 				 angle = self->angle-(pr_wraithfx2()<<22);
 			}
-			mo->velz = 0;
-			mo->velx = FixedMul((pr_wraithfx2()<<7)+FRACUNIT,
+			mo->vel.z = 0;
+			mo->vel.x = FixedMul((pr_wraithfx2()<<7)+FRACUNIT,
 				 finecosine[angle>>ANGLETOFINESHIFT]);
-			mo->vely = FixedMul((pr_wraithfx2()<<7)+FRACUNIT, 
+			mo->vel.y = FixedMul((pr_wraithfx2()<<7)+FRACUNIT, 
 				 finesine[angle>>ANGLETOFINESHIFT]);
 			mo->target = self;
 			mo->floorclip = 10*FRACUNIT;

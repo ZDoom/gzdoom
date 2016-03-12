@@ -635,12 +635,12 @@ void InitThingdef()
 	symt.AddSymbol(new PField(NAME_X,			TypeFixed,	VARF_Native, myoffsetof(AActor,__pos.x)));	// must remain read-only!
 	symt.AddSymbol(new PField(NAME_Y,			TypeFixed,	VARF_Native, myoffsetof(AActor,__pos.y)));	// must remain read-only!
 	symt.AddSymbol(new PField(NAME_Z,			TypeFixed,	VARF_Native, myoffsetof(AActor,__pos.z)));	// must remain read-only!
-	symt.AddSymbol(new PField(NAME_VelX,		TypeFixed,	VARF_Native, myoffsetof(AActor,velx)));
-	symt.AddSymbol(new PField(NAME_VelY,		TypeFixed,	VARF_Native, myoffsetof(AActor,vely)));
-	symt.AddSymbol(new PField(NAME_VelZ,		TypeFixed,	VARF_Native, myoffsetof(AActor,velz)));
-	symt.AddSymbol(new PField(NAME_MomX,		TypeFixed,	VARF_Native, myoffsetof(AActor,velx)));
-	symt.AddSymbol(new PField(NAME_MomY,		TypeFixed,	VARF_Native, myoffsetof(AActor,vely)));
-	symt.AddSymbol(new PField(NAME_MomZ,		TypeFixed,	VARF_Native, myoffsetof(AActor,velz)));
+	symt.AddSymbol(new PField(NAME_VelX,		TypeFixed,	VARF_Native, myoffsetof(AActor,vel.x)));
+	symt.AddSymbol(new PField(NAME_VelY,		TypeFixed,	VARF_Native, myoffsetof(AActor,vel.y)));
+	symt.AddSymbol(new PField(NAME_VelZ,		TypeFixed,	VARF_Native, myoffsetof(AActor,vel.z)));
+	symt.AddSymbol(new PField(NAME_MomX,		TypeFixed,	VARF_Native, myoffsetof(AActor,vel.x)));
+	symt.AddSymbol(new PField(NAME_MomY,		TypeFixed,	VARF_Native, myoffsetof(AActor,vel.y)));
+	symt.AddSymbol(new PField(NAME_MomZ,		TypeFixed,	VARF_Native, myoffsetof(AActor,vel.z)));
 	symt.AddSymbol(new PField(NAME_ScaleX,		TypeFixed,	VARF_Native, myoffsetof(AActor,scaleX)));
 	symt.AddSymbol(new PField(NAME_ScaleY,		TypeFixed,	VARF_Native, myoffsetof(AActor,scaleY)));
 	symt.AddSymbol(new PField(NAME_Score,		TypeSInt32,	VARF_Native, myoffsetof(AActor,Score)));

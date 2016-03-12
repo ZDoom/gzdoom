@@ -55,7 +55,7 @@ struct subsector_t;
 struct particle_t
 {
 	fixed_t	x,y,z;
-	fixed_t velx,vely,velz;
+	fixedvec3 vel;
 	fixed_t accx,accy,accz;
 	BYTE	ttl;
 	BYTE	trans;
@@ -83,13 +83,13 @@ particle_t *JitterParticle (int ttl);
 particle_t *JitterParticle (int ttl, double drift);
 
 void P_ThinkParticles (void);
-void P_SpawnParticle(fixed_t x, fixed_t y, fixed_t z, fixed_t velx, fixed_t vely, fixed_t velz, PalEntry color, bool fullbright, BYTE startalpha, BYTE lifetime, WORD size, int fadestep, fixed_t accelx, fixed_t accely, fixed_t accelz);
+void P_SpawnParticle(fixed_t x, fixed_t y, fixed_t z, fixed_t vx, fixed_t vy, fixed_t vz, PalEntry color, bool fullbright, BYTE startalpha, BYTE lifetime, WORD size, int fadestep, fixed_t accelx, fixed_t accely, fixed_t accelz);
 void P_InitEffects (void);
 void P_RunEffects (void);
 
 void P_RunEffect (AActor *actor, int effects);
 
-void P_DrawRailTrail(AActor *source, const TVector3<double> &start, const TVector3<double> &end, int color1, int color2, double maxdiff = 0, int flags = 0, PClassActor *spawnclass = NULL, angle_t angle = 0, int duration = 35, double sparsity = 1.0, double drift = 1.0, int SpiralOffset = 270);
+void P_DrawRailTrail(AActor *source, const DVector3 &start, const DVector3 &end, int color1, int color2, double maxdiff = 0, int flags = 0, PClassActor *spawnclass = NULL, angle_t angle = 0, int duration = 35, double sparsity = 1.0, double drift = 1.0, int SpiralOffset = 270);
 void P_DrawSplash (int count, fixed_t x, fixed_t y, fixed_t z, angle_t angle, int kind);
 void P_DrawSplash2 (int count, fixed_t x, fixed_t y, fixed_t z, angle_t angle, int updown, int kind);
 void P_DisconnectEffect (AActor *actor);

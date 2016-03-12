@@ -146,8 +146,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopSpawnBlur)
 
 	if (!--self->special1)
 	{
-		self->velx = 0;
-		self->vely = 0;
+		self->vel.x = 0;
+		self->vel.y = 0;
 		if (pr_sblur() > 96)
 		{
 			self->SetState (self->SeeState);
@@ -197,7 +197,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopPuff)
 	mo = Spawn ("BishopPuff", self->PosPlusZ(40*FRACUNIT), ALLOW_REPLACE);
 	if (mo)
 	{
-		mo->velz = FRACUNIT/2;
+		mo->vel.z = FRACUNIT/2;
 	}
 	return 0;
 }

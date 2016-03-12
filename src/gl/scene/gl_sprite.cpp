@@ -517,7 +517,7 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 		if (viewz >= thingpos.z - 2 * FRACUNIT && viewz <= thingpos.z + thing->height + 2 * FRACUNIT)
 		{
 			// exclude vertically moving objects from this check.
-			if (!(thing->velx == 0 && thing->vely == 0 && thing->velz != 0))
+			if (!(thing->vel.x == 0 && thing->vel.y == 0 && thing->vel.z != 0))
 			{
 				if (!gl_FindModelFrame(thing->GetClass(), spritenum, thing->frame, false))
 				{

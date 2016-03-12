@@ -719,9 +719,9 @@ void gl_RenderModel(GLSprite * spr, int cm)
 	// [BB] Workaround for the missing pitch information.
 	if ( (smf->flags & MDL_PITCHFROMMOMENTUM) )
 	{
-		const double x = static_cast<double>(spr->actor->velx);
-		const double y = static_cast<double>(spr->actor->vely);
-		const double z = static_cast<double>(spr->actor->velz);
+		const double x = static_cast<double>(spr->actor->vel.x);
+		const double y = static_cast<double>(spr->actor->vel.y);
+		const double z = static_cast<double>(spr->actor->vel.z);
 		
 		// [BB] Calculate the pitch using spherical coordinates.
 		if(z || x || y) pitch = float(atan( z/sqrt(x*x+y*y) ) / M_PI * 180);

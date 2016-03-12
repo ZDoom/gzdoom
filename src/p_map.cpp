@@ -2287,9 +2287,12 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 	{
 		fixed_t bestfrac = FIXED_MAX;
 		spechit_t besthit;
+		int besthitnum;
 		// find the portal nearest to the crossing actor
-		for (auto &spec : portalhit)
+		for (unsigned i = 0; i < portalhit.Size();i++)
 		{
+			auto &spec = portalhit[i];
+
 			line_t *ld = spec.line;
 			if (ld->frontsector->PortalGroup != thing->Sector->PortalGroup) continue;	// must be in the same group to be considered valid.
 
@@ -2305,12 +2308,14 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 				{
 					besthit = spec;
 					bestfrac = frac;
+					besthitnum = i;
 				}
 			}
 		}
 
 		if (bestfrac < FIXED_MAX)
 		{
+			portalhit.Delete(besthitnum);
 			line_t *ld = besthit.line;
 			FLinePortal *port = ld->getPortal();
 			if (port->mType == PORTT_LINKED)
@@ -2370,7 +2375,10 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 				}
 				R_AddInterpolationPoint(hit);
 			}
-			if (port->mType == PORTT_LINKED) continue;
+			if (port->mType == PORTT_LINKED)
+			{
+				continue;
+			}
 		}
 		break;
 	}

@@ -19,7 +19,7 @@
 //==========================================================================
 
 ZCCCompiler::ZCCCompiler(ZCC_AST &ast, DObject *_outer, PSymbolTable &_symbols)
-: Outer(_outer), Symbols(_symbols), AST(ast), ErrorCount(0), WarnCount(0)
+: Outer(_outer), Symbols(&_symbols), AST(ast), ErrorCount(0), WarnCount(0)
 {
 	// Group top-level nodes by type
 	if (ast.TopNode != NULL)
@@ -30,28 +30,21 @@ ZCCCompiler::ZCCCompiler(ZCC_AST &ast, DObject *_outer, PSymbolTable &_symbols)
 			switch (node->NodeType)
 			{
 			case AST_Class:
-				if (AddNamedNode(static_cast<ZCC_Class *>(node)->ClassName, node))
-				{
-					Classes.Push(static_cast<ZCC_Class *>(node));
-				}
-				break;
-
 			case AST_Struct:
-				if (AddNamedNode(static_cast<ZCC_Struct *>(node)->StructName, node))
+			case AST_ConstantDef:
+				if (AddNamedNode(static_cast<ZCC_NamedNode *>(node)))
 				{
-					Structs.Push(static_cast<ZCC_Struct *>(node));
+					switch (node->NodeType)
+					{
+					case AST_Class:			Classes.Push(static_cast<ZCC_Class *>(node));			break;
+					case AST_Struct:		Structs.Push(static_cast<ZCC_Struct *>(node));			break;
+					case AST_ConstantDef:	Constants.Push(static_cast<ZCC_ConstantDef *>(node));	break;
+					}
 				}
 				break;
 
 			case AST_Enum:			break;
 			case AST_EnumTerminator:break;
-
-			case AST_ConstantDef:
-				if (AddNamedNode(static_cast<ZCC_ConstantDef *>(node)->Name, node))
-				{
-					Constants.Push(static_cast<ZCC_ConstantDef *>(node));
-				}
-				break;
 
 			default:
 				assert(0 && "Unhandled AST node type");
@@ -72,55 +65,76 @@ ZCCCompiler::ZCCCompiler(ZCC_AST &ast, DObject *_outer, PSymbolTable &_symbols)
 //
 //==========================================================================
 
-bool ZCCCompiler::AddNamedNode(FName name, ZCC_TreeNode *node)
+bool ZCCCompiler::AddNamedNode(ZCC_NamedNode *node)
 {
-	ZCC_TreeNode **check = NamedNodes.CheckKey(name);
-	if (check != NULL && *check != NULL)
+	FName name = node->NodeName;
+	PSymbol *check = Symbols->FindSymbol(name, false);
+	if (check != NULL)
 	{
-		Message(node, ERR_symbol_redefinition, "Attempt to redefine '%s'", name.GetChars());
-		Message(*check, ERR_original_definition, " Original definition is here");
+		assert(check->IsA(RUNTIME_CLASS(PSymbolTreeNode)));
+		Error(node, "Attempt to redefine '%s'", name.GetChars());
+		Error(static_cast<PSymbolTreeNode *>(check)->Node, " Original definition is here");
 		return false;
 	}
 	else
 	{
-		NamedNodes.Insert(name, node);
+		Symbols->AddSymbol(new PSymbolTreeNode(name, node));
 		return true;
 	}
 }
 
 //==========================================================================
 //
-// ZCCCompiler :: Message
+// ZCCCompiler :: Warn
 //
-// Prints a warning or error message, and increments the appropriate
-// counter.
+// Prints a warning message, and increments WarnCount.
 //
 //==========================================================================
 
-void ZCCCompiler::Message(ZCC_TreeNode *node, EZCCError errnum, const char *msg, ...)
+void ZCCCompiler::Warn(ZCC_TreeNode *node, const char *msg, ...)
+{
+	va_list argptr;
+	va_start(argptr, msg);
+	MessageV(node, TEXTCOLOR_ORANGE, msg, argptr);
+	va_end(argptr);
+
+	WarnCount++;
+}
+
+//==========================================================================
+//
+// ZCCCompiler :: Error
+//
+// Prints an error message, and increments ErrorCount.
+//
+//==========================================================================
+
+void ZCCCompiler::Error(ZCC_TreeNode *node, const char *msg, ...)
+{
+	va_list argptr;
+	va_start(argptr, msg);
+	MessageV(node, TEXTCOLOR_RED, msg, argptr);
+	va_end(argptr);
+
+	ErrorCount++;
+}
+
+//==========================================================================
+//
+// ZCCCompiler :: MessageV
+//
+// Prints a message, annotated with the source location for the tree node.
+//
+//==========================================================================
+
+void ZCCCompiler::MessageV(ZCC_TreeNode *node, const char *txtcolor, const char *msg, va_list argptr)
 {
 	FString composed;
 
-	composed.Format("%s%s, line %d: ",
-		errnum & ZCCERR_ERROR ? TEXTCOLOR_RED : TEXTCOLOR_ORANGE,
-		node->SourceName->GetChars(), node->SourceLoc);
-
-	va_list argptr;
-	va_start(argptr, msg);
+	composed.Format("%s%s, line %d: ", txtcolor, node->SourceName->GetChars(), node->SourceLoc);
 	composed.VAppendFormat(msg, argptr);
-	va_end(argptr);
-
 	composed += '\n';
 	PrintString(PRINT_HIGH, composed);
-
-	if (errnum & ZCCERR_ERROR)
-	{
-		ErrorCount++;
-	}
-	else
-	{
-		WarnCount++;
-	}
 }
 
 //==========================================================================
@@ -133,7 +147,7 @@ void ZCCCompiler::Message(ZCC_TreeNode *node, EZCCError errnum, const char *msg,
 
 int ZCCCompiler::Compile()
 {
-	CompileConstants();
+	CompileConstants(Constants);
 	return ErrorCount;
 }
 
@@ -145,14 +159,14 @@ int ZCCCompiler::Compile()
 //
 //==========================================================================
 
-void ZCCCompiler::CompileConstants()
+void ZCCCompiler::CompileConstants(const TArray<ZCC_ConstantDef *> &defs)
 {
-	for (unsigned i = 0; i < Constants.Size(); ++i)
+	for (unsigned i = 0; i < defs.Size(); ++i)
 	{
-		ZCC_ConstantDef *def = Constants[i];
+		ZCC_ConstantDef *def = defs[i];
 		if (def->Symbol == NULL)
 		{
-			CompileConstant(def);
+			PSymbolConst *sym = CompileConstant(def);
 		}
 	}
 }
@@ -180,33 +194,32 @@ PSymbolConst *ZCCCompiler::CompileConstant(ZCC_ConstantDef *def)
 		ZCC_ExprConstant *cval = static_cast<ZCC_ExprConstant *>(val);
 		if (cval->Type == TypeString)
 		{
-			sym = new PSymbolConstString(def->Name, *(cval->StringVal));
+			sym = new PSymbolConstString(def->NodeName, *(cval->StringVal));
 		}
 		else if (cval->Type->IsA(RUNTIME_CLASS(PInt)))
 		{
-			sym = new PSymbolConstNumeric(def->Name, cval->Type, cval->IntVal);
+			sym = new PSymbolConstNumeric(def->NodeName, cval->Type, cval->IntVal);
 		}
 		else if (cval->Type->IsA(RUNTIME_CLASS(PFloat)))
 		{
-			sym = new PSymbolConstNumeric(def->Name, cval->Type, cval->DoubleVal);
+			sym = new PSymbolConstNumeric(def->NodeName, cval->Type, cval->DoubleVal);
 		}
 		else
 		{
-			Message(def->Value, ERR_bad_const_def_type, "Bad type for constant definiton");
+			Error(def->Value, "Bad type for constant definiton");
 		}
 	}
 	else
 	{
-		Message(def->Value, ERR_const_def_not_constant, "Constant definition requires a constant value");
+		Error(def->Value, "Constant definition requires a constant value");
 	}
 	if (sym == NULL)
 	{
 		// Create a dummy constant so we don't make any undefined value warnings.
-		sym = new PSymbolConstNumeric(def->Name, TypeError, 0);
+		sym = new PSymbolConstNumeric(def->NodeName, TypeError, 0);
 	}
 	def->Symbol = sym;
-	PSymbol *addsym = Symbols.AddSymbol(sym);
-	assert(NULL != addsym && "Symbol was redefined (but we shouldn't have even had the chance to do so)");
+	Symbols->ReplaceSymbol(sym);
 	return sym;
 }
 
@@ -307,17 +320,18 @@ ZCC_Expression *ZCCCompiler::SimplifyMemberAccess(ZCC_ExprMemberAccess *dotop)
 	if (dotop->Left->Operation == PEX_TypeRef)
 	{ // Type refs can be evaluated now.
 		PType *ref = static_cast<ZCC_ExprTypeRef *>(dotop->Left)->RefType;
-		PSymbol *sym = ref->Symbols.FindSymbol(dotop->Right, true);
+		PSymbolTable *symtable;
+		PSymbol *sym = ref->Symbols.FindSymbolInTable(dotop->Right, symtable);
 		if (sym == NULL)
 		{
-			Message(dotop, ERR_not_a_member, "'%s' is not a valid member", FName(dotop->Right).GetChars());
+			Error(dotop, "'%s' is not a valid member", FName(dotop->Right).GetChars());
 		}
 		else
 		{
-			ZCC_Expression *expr = NodeFromSymbol(sym, dotop);
+			ZCC_Expression *expr = NodeFromSymbol(sym, dotop, symtable);
 			if (expr == NULL)
 			{
-				Message(dotop, ERR_bad_symbol, "Unhandled symbol type encountered");
+				Error(dotop, "Unhandled symbol type encountered");
 			}
 			else
 			{
@@ -361,7 +375,7 @@ ZCC_Expression *ZCCCompiler::SimplifyFunctionCall(ZCC_ExprFuncCall *callop)
 	{
 		if (parmcount != 1)
 		{
-			Message(callop, ERR_cast_needs_1_parm, "Type cast requires one parameter");
+			Error(callop, "Type cast requires one parameter");
 			callop->ToErrorNode();
 		}
 		else
@@ -371,8 +385,8 @@ ZCC_Expression *ZCCCompiler::SimplifyFunctionCall(ZCC_ExprFuncCall *callop)
 			int routelen = parm->Value->Type->FindConversion(dest, route, countof(route));
 			if (routelen < 0)
 			{
-				// FIXME: Need real type names
-				Message(callop, ERR_cast_not_possible, "Cannot convert type 1 to type 2");
+				///FIXME: Need real type names
+				Error(callop, "Cannot convert type 1 to type 2");
 				callop->ToErrorNode();
 			}
 			else
@@ -483,39 +497,20 @@ ZCC_Expression *ZCCCompiler::AddCastNode(PType *type, ZCC_Expression *expr)
 
 ZCC_Expression *ZCCCompiler::IdentifyIdentifier(ZCC_ExprID *idnode)
 {
-	// First things first: Check the symbol table.
-	PSymbol *sym;
-	if (NULL != (sym = Symbols.FindSymbol(idnode->Identifier, true)))
+	// Check the symbol table for the identifier.
+	PSymbolTable *table;
+	PSymbol *sym = Symbols->FindSymbolInTable(idnode->Identifier, table);
+	if (sym != NULL)
 	{
-		ZCC_Expression *node = NodeFromSymbol(sym, idnode);
+		ZCC_Expression *node = NodeFromSymbol(sym, idnode, table);
 		if (node != NULL)
 		{
 			return node;
 		}
 	}
 	else
-	{ // Check nodes that haven't had symbols created for them yet.
-		ZCC_TreeNode **node = NamedNodes.CheckKey(idnode->Identifier);
-		if (node != NULL && *node != NULL)
-		{
-			if ((*node)->NodeType == AST_ConstantDef)
-			{
-				ZCC_ConstantDef *def = static_cast<ZCC_ConstantDef *>(*node);
-				PSymbolConst *sym = def->Symbol;
-				
-				if (sym == DEFINING_CONST)
-				{
-					Message(idnode, ERR_recursive_definition, "Definition of '%s' is infinitely recursive", FName(idnode->Identifier).GetChars());
-					sym = NULL;
-				}
-				else
-				{
-					assert(sym == NULL);
-					sym = CompileConstant(def);
-				}
-				return NodeFromSymbolConst(sym, idnode);
-			}
-		}
+	{
+		Error(idnode, "Unknown identifier '%s'", FName(idnode->Identifier).GetChars());
 	}
 	// Identifier didn't refer to anything good, so type error it.
 	idnode->ToErrorNode();
@@ -524,12 +519,57 @@ ZCC_Expression *ZCCCompiler::IdentifyIdentifier(ZCC_ExprID *idnode)
 
 //==========================================================================
 //
+// ZCCCompiler :: CompileNode
+//
+//==========================================================================
+
+PSymbol *ZCCCompiler::CompileNode(ZCC_NamedNode *node)
+{
+	assert(node != NULL);
+	if (node->NodeType == AST_ConstantDef)
+	{
+		ZCC_ConstantDef *def = static_cast<ZCC_ConstantDef *>(node);
+		PSymbolConst *sym = def->Symbol;
+
+		if (sym == DEFINING_CONST)
+		{
+			Error(node, "Definition of '%s' is infinitely recursive", FName(node->NodeName).GetChars());
+			sym = NULL;
+		}
+		else
+		{
+			assert(sym == NULL);
+			sym = CompileConstant(def);
+		}
+		return sym;
+	}
+	else if (node->NodeType == AST_Struct)
+	{
+
+	}
+	return NULL;
+}
+
+//==========================================================================
+//
 // ZCCCompiler :: NodeFromSymbol
 //
 //==========================================================================
 
-ZCC_Expression *ZCCCompiler::NodeFromSymbol(PSymbol *sym, ZCC_Expression *source)
+ZCC_Expression *ZCCCompiler::NodeFromSymbol(PSymbol *sym, ZCC_Expression *source, PSymbolTable *table)
 {
+	assert(sym != NULL);
+	if (sym->IsA(RUNTIME_CLASS(PSymbolTreeNode)))
+	{
+		PSymbolTable *prevtable = Symbols;
+		Symbols = table;
+		sym = CompileNode(static_cast<PSymbolTreeNode *>(sym)->Node);
+		Symbols = prevtable;
+		if (sym == NULL)
+		{
+			return NULL;
+		}
+	}
 	if (sym->IsKindOf(RUNTIME_CLASS(PSymbolConst)))
 	{
 		return NodeFromSymbolConst(static_cast<PSymbolConst *>(sym), source);

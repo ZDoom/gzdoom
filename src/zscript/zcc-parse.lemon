@@ -174,7 +174,7 @@ class_definition(X) ::= class_head(A) class_body(B).
 class_head(X) ::= CLASS(T) IDENTIFIER(A) class_ancestry(B) class_flags(C).
 {
 	NEW_AST_NODE(Class,head,T);
-	head->ClassName = A.Name();
+	head->NodeName = A.Name();
 	head->ParentName = B;
 	head->Flags = C.Flags;
 	head->Replaces = C.Replaces;
@@ -248,7 +248,7 @@ class_member(X) ::= const_def(A).						{ X = A; }
 struct_def(X) ::= STRUCT(T) IDENTIFIER(A) LBRACE opt_struct_body(B) RBRACE opt_semicolon.
 {
 	NEW_AST_NODE(Struct,def,T);
-	def->StructName = A.Name();
+	def->NodeName = A.Name();
 	def->Body = B;
 	X = def;
 }
@@ -269,7 +269,7 @@ struct_member(X) ::= const_def(A).						{ X = A; }
 const_def(X) ::= CONST(T) IDENTIFIER(A) EQ expr(B) SEMICOLON.
 {
 	NEW_AST_NODE(ConstantDef,def,T);
-	def->Name = A.Name();
+	def->NodeName = A.Name();
 	def->Value = B;
 	def->Symbol = NULL;
 	X = def;
@@ -286,7 +286,7 @@ const_def(X) ::= CONST(T) IDENTIFIER(A) EQ expr(B) SEMICOLON.
 enum_def(X) ::= ENUM(T) IDENTIFIER(A) enum_type(B) LBRACE opt_enum_list(C) RBRACE(U) opt_semicolon.
 {
 	NEW_AST_NODE(Enum,def,T);
-	def->EnumName = A.Name();
+	def->NodeName = A.Name();
 	def->EnumType = (EZCCBuiltinType)B.Int;
 	def->Elements = C;
 
@@ -324,7 +324,7 @@ enum_def(X) ::= ENUM(T) IDENTIFIER(A) enum_type(B) LBRACE opt_enum_list(C) RBRAC
 				NEW_INTCONST_NODE(one, TypeSInt32, 1, T);
 				NEW_AST_NODE(ExprID, label, node);
 				label->Operation = PEX_ID;
-				label->Identifier = prev->Name;
+				label->Identifier = prev->NodeName;
 				label->Type = NULL;
 
 				BINARY_EXPR(label, one, PEX_Add);
@@ -355,7 +355,7 @@ opt_enum_list(X) ::= enum_list(A) opt_comma.			{ X = A; }
 enumerator(X) ::= IDENTIFIER(A).
 {
 	NEW_AST_NODE(ConstantDef,node,A);
-	node->Name = A.Name();
+	node->NodeName = A.Name();
 	node->Value = NULL;
 	node->Symbol = NULL;
 	X = node;
@@ -363,7 +363,7 @@ enumerator(X) ::= IDENTIFIER(A).
 enumerator(X) ::= IDENTIFIER(A) EQ expr(B).			/* Expression must be constant. */
 {
 	NEW_AST_NODE(ConstantDef,node,A);
-	node->Name = A.Name();
+	node->NodeName = A.Name();
 	node->Value = B;
 	node->Symbol = NULL;
 	X = node;

@@ -245,12 +245,15 @@ static line_t *FindDestination(line_t *src, int tag)
 
 static void SetRotation(FLinePortal *port)
 {
-	line_t *dst = port->mDestination;
-	line_t *line = port->mOrigin;
-	double angle = atan2(dst->dy, dst->dx) - atan2(line->dy, line->dx) + M_PI;
-	port->mSinRot = FLOAT2FIXED(sin(angle));
-	port->mCosRot = FLOAT2FIXED(cos(angle));
-	port->mAngleDiff = RAD2ANGLE(angle);
+	if (port != NULL && port->mDestination != NULL)
+	{
+		line_t *dst = port->mDestination;
+		line_t *line = port->mOrigin;
+		double angle = atan2(dst->dy, dst->dx) - atan2(line->dy, line->dx) + M_PI;
+		port->mSinRot = FLOAT2FIXED(sin(angle));
+		port->mCosRot = FLOAT2FIXED(cos(angle));
+		port->mAngleDiff = RAD2ANGLE(angle);
+	}
 }
 
 //============================================================================

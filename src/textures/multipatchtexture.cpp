@@ -1023,7 +1023,7 @@ void FMultiPatchTexture::ParsePatch(FScanner &sc, TexPart & part, bool silent, i
 	}
 	if (part.Texture == NULL)
 	{
-		if (!silent) Printf(TEXTCOLOR_RED "Unknown patch '%s' in texture '%s'\n", sc.String, Name.GetChars());
+		if (!silent) sc.ScriptMessage(TEXTCOLOR_RED "Unknown patch '%s' in texture '%s'\n", sc.String, Name.GetChars());
 	}
 	sc.MustGetStringName(",");
 	sc.MustGetNumber();

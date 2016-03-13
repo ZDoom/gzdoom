@@ -149,6 +149,8 @@ static const NSOpenGLPixelFormatAttribute NSOpenGLPFAAllowOfflineRenderers = NSO
 - (void)setCollectionBehavior:(NSUInteger)collectionBehavior;
 @end
 
+typedef NSUInteger NSWindowCollectionBehavior;
+
 #endif // prior to 10.5
 
 

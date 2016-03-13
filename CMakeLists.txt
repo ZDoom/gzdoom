@@ -167,6 +167,11 @@ else()
 	set( ALL_C_FLAGS "" )
 	set( REL_C_FLAGS "" )
 	set( DEB_C_FLAGS "" )
+
+	# If we're compiling with a custom GCC on the Mac (which we know since g++-4.2 doesn't support C++11) statically link libgcc.
+	if( APPLE AND "${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" )
+		set( ALL_C_FLAGS "-static-libgcc" )
+	endif()
 endif()
 
 set( CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} ${REL_LINKER_FLAGS}" )
@@ -193,7 +198,7 @@ option(FORCE_INTERNAL_GME "Use internal gme" ON)
 # Fast math flags, required by some subprojects
 set( ZD_FASTMATH_FLAG "" )
 if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
-	set( ZD_FASTMATH_FLAG "-ffast-math" )
+	set( ZD_FASTMATH_FLAG "-ffast-math -ffp-contract=fast" )
 elseif( MSVC )
 	set( ZD_FASTMATH_FLAG "/fp:fast" )
 endif()

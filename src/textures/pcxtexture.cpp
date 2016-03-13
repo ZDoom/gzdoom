@@ -72,7 +72,7 @@ struct PCXHeader
 
   BYTE padding[54];
 
-};
+} FORCE_PACKED;
 #pragma pack()
 
 //==========================================================================

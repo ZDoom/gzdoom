@@ -3793,7 +3793,7 @@ struct aim_t
 		intercept_t *in;
 
 		if (aimdebug)
-			Printf("Start AimTraverse, start = %f,%f,%f, vect = %f,%f,%f\n",
+			Printf("Start AimTraverse, start = %f,%f,%f, vect = %f,%f\n",
 				startpos.x / 65536., startpos.y / 65536., startpos.z / 65536.,
 				aimtrace.x / 65536., aimtrace.y / 65536.);
 		

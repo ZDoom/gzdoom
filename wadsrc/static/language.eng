@@ -108,4 +108,3 @@ CMPTMNU_SECTORSOUNDS = "Sector sounds use centre as source";
 OPTVAL_MAPDEFINEDCOLORSONLY = "Map defined colours only";
 C_GRAY = "\ccgrey";
 C_DARKGRAY = "\cudark grey";
-MNU_COLORPICKER = "SELECT COLOUR";

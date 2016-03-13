@@ -833,6 +833,7 @@ bool FMultiBlockLinesIterator::Next(FMultiBlockLinesIterator::CheckResult *item)
 	}
 	if (onlast)
 	{
+		cursector = startsector;
 		// We reached the end of the list. Check if we still need to check up- and downwards.
 		if (GoUp(checkpoint.x, checkpoint.y) ||
 			GoDown(checkpoint.x, checkpoint.y))

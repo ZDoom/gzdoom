@@ -66,6 +66,7 @@ Actor BetaSkull : LostSoul
 	Pain:
 		SKUL G 4
 		SKUL H 2 A_Pain
+		Goto See
 		SKUL I 4
 		Goto See
 	Death:

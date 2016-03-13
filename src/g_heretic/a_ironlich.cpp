@@ -31,8 +31,8 @@ int AWhirlwind::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 	if (!(target->flags7 & MF7_DONTTHRUST))
 	{
 		target->angle += pr_foo.Random2() << 20;
-		target->velx += pr_foo.Random2() << 10;
-		target->vely += pr_foo.Random2() << 10;
+		target->vel.x += pr_foo.Random2() << 10;
+		target->vel.y += pr_foo.Random2() << 10;
 	}
 
 	if ((level.time & 16) && !(target->flags2 & MF2_BOSS) && !(target->flags7 & MF7_DONTTHRUST))
@@ -42,10 +42,10 @@ int AWhirlwind::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 		{
 			randVal = 160;
 		}
-		target->velz += randVal << 11;
-		if (target->velz > 12*FRACUNIT)
+		target->vel.z += randVal << 11;
+		if (target->vel.z > 12*FRACUNIT)
 		{
-			target->velz = 12*FRACUNIT;
+			target->vel.z = 12*FRACUNIT;
 		}
 	}
 	if (!(level.time & 7))
@@ -115,9 +115,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_LichAttack)
 				}
 				fire->target = baseFire->target;
 				fire->angle = baseFire->angle;
-				fire->velx = baseFire->velx;
-				fire->vely = baseFire->vely;
-				fire->velz = baseFire->velz;
+				fire->vel.x = baseFire->vel.x;
+				fire->vel.y = baseFire->vel.y;
+				fire->vel.z = baseFire->vel.z;
 				fire->Damage = NULL;
 				fire->health = (i+1) * 2;
 				P_CheckMissileSpawn (fire, self->radius);
@@ -151,7 +151,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_WhirlwindSeek)
 	self->health -= 3;
 	if (self->health < 0)
 	{
-		self->velx = self->vely = self->velz = 0;
+		self->vel.x = self->vel.y = self->vel.z = 0;
 		self->SetState (self->FindState(NAME_Death));
 		self->flags &= ~MF_MISSILE;
 		return 0;
@@ -190,9 +190,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_LichIceImpact)
 		shard->target = self->target;
 		shard->angle = angle;
 		angle >>= ANGLETOFINESHIFT;
-		shard->velx = FixedMul (shard->Speed, finecosine[angle]);
-		shard->vely = FixedMul (shard->Speed, finesine[angle]);
-		shard->velz = -FRACUNIT*6/10;
+		shard->vel.x = FixedMul (shard->Speed, finecosine[angle]);
+		shard->vel.y = FixedMul (shard->Speed, finesine[angle]);
+		shard->vel.z = -FRACUNIT*6/10;
 		P_CheckMissileSpawn (shard, self->radius);
 	}
 	return 0;

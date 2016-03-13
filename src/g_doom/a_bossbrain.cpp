@@ -37,7 +37,7 @@ static void BrainishExplosion (fixed_t x, fixed_t y, fixed_t z)
 	if (boom != NULL)
 	{
 		boom->DeathSound = "misc/brainexplode";
-		boom->velz = pr_brainscream() << 9;
+		boom->vel.z = pr_brainscream() << 9;
 
 		PClassActor *cls = PClass::FindActor("BossBrain");
 		if (cls != NULL)
@@ -144,17 +144,17 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BrainSpit)
 			spit->master = self;
 			// [RH] Do this correctly for any trajectory. Doom would divide by 0
 			// if the target had the same y coordinate as the spitter.
-			if ((spit->velx | spit->vely) == 0)
+			if ((spit->vel.x | spit->vel.y) == 0)
 			{
 				spit->special2 = 0;
 			}
-			else if (abs(spit->vely) > abs(spit->velx))
+			else if (abs(spit->vel.y) > abs(spit->vel.x))
 			{
-				spit->special2 = (targ->Y() - self->Y()) / spit->vely;
+				spit->special2 = (targ->Y() - self->Y()) / spit->vel.y;
 			}
 			else
 			{
-				spit->special2 = (targ->X() - self->X()) / spit->velx;
+				spit->special2 = (targ->X() - self->X()) / spit->vel.x;
 			}
 			// [GZ] Calculates when the projectile will have reached destination
 			spit->special2 += level.maptime;

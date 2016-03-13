@@ -738,7 +738,7 @@ int P_GetMoveFactor(const AActor *mo, int *frictionp)
 		// phares 3/11/98: you start off slowly, then increase as
 		// you get better footing
 
-		int velocity = P_AproxDistance(mo->velx, mo->vely);
+		int velocity = P_AproxDistance(mo->vel.x, mo->vel.y);
 
 		if (velocity > MORE_FRICTION_VELOCITY << 2)
 			movefactor <<= 3;
@@ -1358,9 +1358,9 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 		if (!(thing->flags2 & MF2_BOSS) && (thing->flags3 & MF3_ISMONSTER) && !(thing->flags3 & MF3_DONTBLAST))
 		{
 			// ideally this should take the mass factor into account
-			thing->velx += tm.thing->velx;
-			thing->vely += tm.thing->vely;
-			if ((thing->velx + thing->vely) > 3 * FRACUNIT)
+			thing->vel.x += tm.thing->vel.x;
+			thing->vel.y += tm.thing->vel.y;
+			if ((thing->vel.x + thing->vel.y) > 3 * FRACUNIT)
 			{
 				int newdam;
 				damage = (tm.thing->Mass / 100) + 1;
@@ -1496,8 +1496,8 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 					{ // Push thing
 						if (thing->lastpush != tm.PushTime)
 						{
-							thing->velx += FixedMul(tm.thing->velx, thing->pushfactor);
-							thing->vely += FixedMul(tm.thing->vely, thing->pushfactor);
+							thing->vel.x += FixedMul(tm.thing->vel.x, thing->pushfactor);
+							thing->vel.y += FixedMul(tm.thing->vel.y, thing->pushfactor);
 							thing->lastpush = tm.PushTime;
 						}
 					}
@@ -1555,8 +1555,8 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 	{ // Push thing
 		if (thing->lastpush != tm.PushTime)
 		{
-			thing->velx += FixedMul(tm.thing->velx, thing->pushfactor);
-			thing->vely += FixedMul(tm.thing->vely, thing->pushfactor);
+			thing->vel.x += FixedMul(tm.thing->vel.x, thing->pushfactor);
+			thing->vel.y += FixedMul(tm.thing->vel.y, thing->pushfactor);
 			thing->lastpush = tm.PushTime;
 		}
 	}
@@ -1938,7 +1938,7 @@ void P_FakeZMovement(AActor *mo)
 	//
 	// adjust height
 	//
-	mo->AddZ(mo->velz);
+	mo->AddZ(mo->vel.z);
 	if ((mo->flags&MF_FLOAT) && mo->target)
 	{ // float down towards target if too close
 		if (!(mo->flags & MF_SKULLFLY) && !(mo->flags & MF_INFLOAT))
@@ -2127,12 +2127,12 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 			// is not blocked.
 			if (thing->Top() > tm.ceilingz)
 			{
-				thing->velz = -8 * FRACUNIT;
+				thing->vel.z = -8 * FRACUNIT;
 				goto pushline;
 			}
 			else if (thing->Z() < tm.floorz && tm.floorz - tm.dropoffz > thing->MaxDropOffHeight)
 			{
-				thing->velz = 8 * FRACUNIT;
+				thing->vel.z = 8 * FRACUNIT;
 				goto pushline;
 			}
 #endif
@@ -2162,7 +2162,7 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 				{
 					thing->SetZ(tm.floorz);
 					// If moving down, cancel vertical component of the velocity
-					if (thing->velz < 0)
+					if (thing->vel.z < 0)
 					{
 						// If it's a bouncer, let it bounce off its new floor, too.
 						if (thing->BounceFlags & BOUNCE_Floors)
@@ -2171,7 +2171,7 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 						}
 						else
 						{
-							thing->velz = 0;
+							thing->vel.z = 0;
 						}
 					}
 				}
@@ -2243,8 +2243,8 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 			{
 				thing->player->Bot->prev = thing->player->Bot->dest;
 				thing->player->Bot->dest = NULL;
-				thing->velx = 0;
-				thing->vely = 0;
+				thing->vel.x = 0;
+				thing->vel.y = 0;
 				thing->SetZ(oldz);
 				thing->flags6 &= ~MF6_INTRYMOVE;
 				return false;
@@ -2287,9 +2287,12 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 	{
 		fixed_t bestfrac = FIXED_MAX;
 		spechit_t besthit;
+		int besthitnum;
 		// find the portal nearest to the crossing actor
-		for (auto &spec : portalhit)
+		for (unsigned i = 0; i < portalhit.Size();i++)
 		{
+			auto &spec = portalhit[i];
+
 			line_t *ld = spec.line;
 			if (ld->frontsector->PortalGroup != thing->Sector->PortalGroup) continue;	// must be in the same group to be considered valid.
 
@@ -2305,12 +2308,14 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 				{
 					besthit = spec;
 					bestfrac = frac;
+					besthitnum = i;
 				}
 			}
 		}
 
 		if (bestfrac < FIXED_MAX)
 		{
+			portalhit.Delete(besthitnum);
 			line_t *ld = besthit.line;
 			FLinePortal *port = ld->getPortal();
 			if (port->mType == PORTT_LINKED)
@@ -2341,7 +2346,7 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 				}
 				thing->UnlinkFromWorld();
 				thing->SetXYZ(pos);
-				P_TranslatePortalVXVY(ld, thing->velx, thing->vely);
+				P_TranslatePortalVXVY(ld, thing->vel.x, thing->vel.y);
 				P_TranslatePortalAngle(ld, thing->angle);
 				thing->LinkToWorld();
 				P_FindFloorCeiling(thing);
@@ -2370,7 +2375,10 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 				}
 				R_AddInterpolationPoint(hit);
 			}
-			if (port->mType == PORTT_LINKED) continue;
+			if (port->mType == PORTT_LINKED)
+			{
+				continue;
+			}
 		}
 		break;
 	}
@@ -2890,7 +2898,7 @@ void FSlide::SlideTraverse(fixed_t startx, fixed_t starty, fixed_t endx, fixed_t
 //
 // P_SlideMove
 //
-// The velx / vely move is bad, so try to slide along a wall.
+// The vel.x / vel.y move is bad, so try to slide along a wall.
 //
 // Find the first line hit, move flush to it, and slide along it
 //
@@ -2971,14 +2979,14 @@ retry:
 		newy = FixedMul(tryy, bestslidefrac);
 
 		// [BL] We need to abandon this function if we end up going through a teleporter
-		const fixed_t startvelx = mo->velx;
-		const fixed_t startvely = mo->vely;
+		const fixed_t startvelx = mo->vel.x;
+		const fixed_t startvely = mo->vel.y;
 
 		// killough 3/15/98: Allow objects to drop off ledges
 		if (!P_TryMove(mo, mo->X() + newx, mo->Y() + newy, true))
 			goto stairstep;
 
-		if (mo->velx != startvelx || mo->vely != startvely)
+		if (mo->vel.x != startvelx || mo->vel.y != startvely)
 			return;
 	}
 
@@ -2994,16 +3002,16 @@ retry:
 
 	HitSlideLine(bestslideline); 	// clip the moves
 
-	mo->velx = tmxmove * numsteps;
-	mo->vely = tmymove * numsteps;
+	mo->vel.x = tmxmove * numsteps;
+	mo->vel.y = tmymove * numsteps;
 
 	// killough 10/98: affect the bobbing the same way (but not voodoo dolls)
 	if (mo->player && mo->player->mo == mo)
 	{
-		if (abs(mo->player->velx) > abs(mo->velx))
-			mo->player->velx = mo->velx;
-		if (abs(mo->player->vely) > abs(mo->vely))
-			mo->player->vely = mo->vely;
+		if (abs(mo->player->vel.x) > abs(mo->vel.x))
+			mo->player->vel.x = mo->vel.x;
+		if (abs(mo->player->vel.y) > abs(mo->vel.y))
+			mo->player->vel.y = mo->vel.y;
 	}
 
 	walkplane = P_CheckSlopeWalk(mo, tmxmove, tmymove);
@@ -3129,8 +3137,8 @@ const secplane_t * P_CheckSlopeWalk(AActor *actor, fixed_t &xmove, fixed_t &ymov
 					}
 					if (dopush)
 					{
-						xmove = actor->velx = plane->a * 2;
-						ymove = actor->vely = plane->b * 2;
+						xmove = actor->vel.x = plane->a * 2;
+						ymove = actor->vel.y = plane->b * 2;
 					}
 					return (actor->floorsector == actor->Sector) ? plane : NULL;
 				}
@@ -3245,7 +3253,7 @@ bool FSlide::BounceWall(AActor *mo)
 	//
 	// trace along the three leading corners
 	//
-	if (mo->velx > 0)
+	if (mo->vel.x > 0)
 	{
 		leadx = mo->X() + mo->radius;
 	}
@@ -3253,7 +3261,7 @@ bool FSlide::BounceWall(AActor *mo)
 	{
 		leadx = mo->X() - mo->radius;
 	}
-	if (mo->vely > 0)
+	if (mo->vel.y > 0)
 	{
 		leady = mo->Y() + mo->radius;
 	}
@@ -3263,7 +3271,7 @@ bool FSlide::BounceWall(AActor *mo)
 	}
 	bestslidefrac = FRACUNIT + 1;
 	bestslideline = mo->BlockingLine;
-	if (BounceTraverse(leadx, leady, leadx + mo->velx, leady + mo->vely) && mo->BlockingLine == NULL)
+	if (BounceTraverse(leadx, leady, leadx + mo->vel.x, leady + mo->vel.y) && mo->BlockingLine == NULL)
 	{ // Could not find a wall, so bounce off the floor/ceiling instead.
 		fixed_t floordist = mo->Z() - mo->floorz;
 		fixed_t ceildist = mo->ceilingz - mo->Z();
@@ -3303,13 +3311,13 @@ bool FSlide::BounceWall(AActor *mo)
 	{
 		lineangle += ANG180;
 	}
-	moveangle = R_PointToAngle2(0, 0, mo->velx, mo->vely);
+	moveangle = R_PointToAngle2(0, 0, mo->vel.x, mo->vel.y);
 	deltaangle = (2 * lineangle) - moveangle;
 	mo->angle = deltaangle;
 
 	deltaangle >>= ANGLETOFINESHIFT;
 
-	movelen = fixed_t(sqrt(double(mo->velx)*mo->velx + double(mo->vely)*mo->vely));
+	movelen = fixed_t(sqrt(double(mo->vel.x)*mo->vel.x + double(mo->vel.y)*mo->vel.y));
 	movelen = FixedMul(movelen, mo->wallbouncefactor);
 
 	FBoundingBox box(mo->X(), mo->Y(), mo->radius);
@@ -3325,8 +3333,8 @@ bool FSlide::BounceWall(AActor *mo)
 	{
 		movelen = 2 * FRACUNIT;
 	}
-	mo->velx = FixedMul(movelen, finecosine[deltaangle]);
-	mo->vely = FixedMul(movelen, finesine[deltaangle]);
+	mo->vel.x = FixedMul(movelen, finecosine[deltaangle]);
+	mo->vel.y = FixedMul(movelen, finesine[deltaangle]);
 	if (mo->BounceFlags & BOUNCE_UseBounceState)
 	{
 		FState *bouncestate = mo->FindState(NAME_Bounce, NAME_Wall);
@@ -3371,12 +3379,12 @@ bool P_BounceActor(AActor *mo, AActor *BlockingMobj, bool ontop)
 		{
 			fixed_t speed;
 			angle_t angle = BlockingMobj->AngleTo(mo) + ANGLE_1*((pr_bounce() % 16) - 8);
-			speed = P_AproxDistance(mo->velx, mo->vely);
+			speed = P_AproxDistance(mo->vel.x, mo->vel.y);
 			speed = FixedMul(speed, mo->wallbouncefactor); // [GZ] was 0.75, using wallbouncefactor seems more consistent
 			mo->angle = angle;
 			angle >>= ANGLETOFINESHIFT;
-			mo->velx = FixedMul(speed, finecosine[angle]);
-			mo->vely = FixedMul(speed, finesine[angle]);
+			mo->vel.x = FixedMul(speed, finecosine[angle]);
+			mo->vel.y = FixedMul(speed, finesine[angle]);
 			mo->PlayBounceSound(true);
 			if (mo->BounceFlags & BOUNCE_UseBounceState)
 			{
@@ -3397,11 +3405,11 @@ bool P_BounceActor(AActor *mo, AActor *BlockingMobj, bool ontop)
 		}
 		else
 		{
-			fixed_t dot = mo->velz;
+			fixed_t dot = mo->vel.z;
 
 			if (mo->BounceFlags & (BOUNCE_HereticType | BOUNCE_MBF))
 			{
-				mo->velz -= MulScale15(FRACUNIT, dot);
+				mo->vel.z -= MulScale15(FRACUNIT, dot);
 				if (!(mo->BounceFlags & BOUNCE_MBF)) // Heretic projectiles die, MBF projectiles don't.
 				{
 					mo->flags |= MF_INBOUNCE;
@@ -3411,24 +3419,24 @@ bool P_BounceActor(AActor *mo, AActor *BlockingMobj, bool ontop)
 				}
 				else
 				{
-					mo->velz = FixedMul(mo->velz, mo->bouncefactor);
+					mo->vel.z = FixedMul(mo->vel.z, mo->bouncefactor);
 				}
 			}
 			else // Don't run through this for MBF-style bounces
 			{
 				// The reflected velocity keeps only about 70% of its original speed
-				mo->velz = FixedMul(mo->velz - MulScale15(FRACUNIT, dot), mo->bouncefactor);
+				mo->vel.z = FixedMul(mo->vel.z - MulScale15(FRACUNIT, dot), mo->bouncefactor);
 			}
 
 			mo->PlayBounceSound(true);
 			if (mo->BounceFlags & BOUNCE_MBF) // Bring it to rest below a certain speed
 			{
-				if (abs(mo->velz) < (fixed_t)(mo->Mass * mo->GetGravity() / 64))
-					mo->velz = 0;
+				if (abs(mo->vel.z) < (fixed_t)(mo->Mass * mo->GetGravity() / 64))
+					mo->vel.z = 0;
 			}
 			else if (mo->BounceFlags & (BOUNCE_AutoOff | BOUNCE_AutoOffFloorOnly))
 			{
-				if (!(mo->flags & MF_NOGRAVITY) && (mo->velz < 3 * FRACUNIT))
+				if (!(mo->flags & MF_NOGRAVITY) && (mo->vel.z < 3 * FRACUNIT))
 					mo->BounceFlags &= ~BOUNCE_TypeMask;
 			}
 		}
@@ -4585,11 +4593,11 @@ void P_TraceBleed(int damage, AActor *target, AActor *missile)
 		return;
 	}
 
-	if (missile->velz != 0)
+	if (missile->vel.z != 0)
 	{
 		double aim;
 
-		aim = atan((double)missile->velz / (double)target->AproxDistance(missile));
+		aim = atan((double)missile->vel.z / (double)target->AproxDistance(missile));
 		pitch = -(int)(aim * ANGLE_180 / PI);
 	}
 	else
@@ -5357,7 +5365,7 @@ void P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bo
 			// points and bombdamage should be the same sign
 			if (((points * bombdamage) > 0) && P_CheckSight(thing, bombspot, SF_IGNOREVISIBILITY | SF_IGNOREWATERBOUNDARY))
 			{ // OK to damage; target is in direct path
-				double velz;
+				double vz;
 				double thrust;
 				int damage = abs((int)points);
 				int newdam = damage;
@@ -5384,20 +5392,20 @@ void P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bo
 								{
 									thrust *= selfthrustscale;
 								}
-								velz = (double)(thing->Z() + (thing->height >> 1) - bombspot->Z()) * thrust;
+								vz = (double)(thing->Z() + (thing->height >> 1) - bombspot->Z()) * thrust;
 								if (bombsource != thing)
 								{
-									velz *= 0.5f;
+									vz *= 0.5f;
 								}
 								else
 								{
-									velz *= 0.8f;
+									vz *= 0.8f;
 								}
 								angle_t ang = bombspot->AngleTo(thing) >> ANGLETOFINESHIFT;
-								thing->velx += fixed_t(finecosine[ang] * thrust);
-								thing->vely += fixed_t(finesine[ang] * thrust);
+								thing->vel.x += fixed_t(finecosine[ang] * thrust);
+								thing->vel.y += fixed_t(finesine[ang] * thrust);
 								if (!(flags & RADF_NODAMAGE))
-									thing->velz += (fixed_t)velz;	// this really doesn't work well
+									thing->vel.z += (fixed_t)vz;	// this really doesn't work well
 							}
 						}
 					}
@@ -5656,8 +5664,8 @@ void P_DoCrunch(AActor *thing, FChangePosition *cpos)
 
 					mo = Spawn(bloodcls, thing->PosPlusZ(thing->height / 2), ALLOW_REPLACE);
 
-					mo->velx = pr_crunch.Random2() << 12;
-					mo->vely = pr_crunch.Random2() << 12;
+					mo->vel.x = pr_crunch.Random2() << 12;
+					mo->vel.y = pr_crunch.Random2() << 12;
 					if (bloodcolor != 0 && !(mo->flags2 & MF2_DONTTRANSLATE))
 					{
 						mo->Translation = TRANSLATION(TRANSLATION_Blood, bloodcolor.a);
@@ -5805,7 +5813,7 @@ void PIT_FloorDrop(AActor *thing, FChangePosition *cpos)
 	if (oldfloorz == thing->floorz) return;
 	if (thing->flags4 & MF4_ACTLIKEBRIDGE) return; // do not move bridge things
 
-	if (thing->velz == 0 &&
+	if (thing->vel.z == 0 &&
 		(!(thing->flags & MF_NOGRAVITY) ||
 		(thing->Z() == oldfloorz && !(thing->flags & MF_NOLIFTDROP))))
 	{

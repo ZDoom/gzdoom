@@ -47,14 +47,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_ImpExplode)
 	self->flags &= ~MF_NOGRAVITY;
 
 	chunk = Spawn("HereticImpChunk1", self->Pos(), ALLOW_REPLACE);
-	chunk->velx = pr_imp.Random2 () << 10;
-	chunk->vely = pr_imp.Random2 () << 10;
-	chunk->velz = 9*FRACUNIT;
+	chunk->vel.x = pr_imp.Random2 () << 10;
+	chunk->vel.y = pr_imp.Random2 () << 10;
+	chunk->vel.z = 9*FRACUNIT;
 
 	chunk = Spawn("HereticImpChunk2", self->Pos(), ALLOW_REPLACE);
-	chunk->velx = pr_imp.Random2 () << 10;
-	chunk->vely = pr_imp.Random2 () << 10;
-	chunk->velz = 9*FRACUNIT;
+	chunk->vel.x = pr_imp.Random2 () << 10;
+	chunk->vel.y = pr_imp.Random2 () << 10;
+	chunk->vel.z = 9*FRACUNIT;
 	if (self->special1 == 666)
 	{ // Extreme death crash
 		self->SetState (self->FindState("XCrash"));

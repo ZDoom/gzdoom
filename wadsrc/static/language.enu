@@ -1880,6 +1880,7 @@ AUTOMAPMNU_DRAWMAPBACK			= "Draw map background";
 AUTOMAPMNU_SHOWKEYS				= "Show keys (cheat)";
 AUTOMAPMNU_SHOWTRIGGERLINES		= "Show trigger lines";
 AUTOMAPMNU_SHOWTHINGSPRITES		= "Show things as sprites";
+AUTOMAPMNU_PTOVERLAY			= "Overlay portals";
 
 // Automap Controls
 MAPCNTRLMNU_TITLE 			= "CUSTOMIZE MAP CONTROLS";
@@ -1925,6 +1926,7 @@ MAPCOLORMNU_ITEMCOLOR 					= "Items";
 MAPCOLORMNU_COUNTITEMCOLOR 				= "Count Items";
 MAPCOLORMNU_OVERLAY 					= "Overlay Mode";
 MAPCOLORMNU_OVCHEATMODE 				= "Overlay Cheat Mode";
+MAPCOLORMNU_PORTAL						= "Portal Overlays";
 
 // Message Options
 MSGMNU_TITLE				= "MESSAGES";

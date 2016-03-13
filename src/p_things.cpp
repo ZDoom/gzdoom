@@ -259,7 +259,7 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 						vect.z += targ->height / 2;
 						DVector3 aim(vect.x, vect.y, vect.z);
 
-						if (leadTarget && speed > 0 && (targ->velx | targ->vely | targ->velz))
+						if (leadTarget && speed > 0 && (targ->vel.x | targ->vel.y | targ->vel.z))
 						{
 							// Aiming at the target's position some time in the future
 							// is basically just an application of the law of sines:
@@ -268,14 +268,14 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 							// with the math. I don't think I would have thought of using
 							// trig alone had I been left to solve it by myself.
 
-							DVector3 tvel(targ->velx, targ->vely, targ->velz);
+							DVector3 tvel(targ->vel.x, targ->vel.y, targ->vel.z);
 							if (!(targ->flags & MF_NOGRAVITY) && targ->waterlevel < 3)
 							{ // If the target is subject to gravity and not underwater,
 							  // assume that it isn't moving vertically. Thanks to gravity,
 							  // even if we did consider the vertical component of the target's
 							  // velocity, we would still miss more often than not.
 								tvel.Z = 0.0;
-								if ((targ->velx | targ->vely) == 0)
+								if ((targ->vel.x | targ->vel.y) == 0)
 								{
 									goto nolead;
 								}
@@ -299,19 +299,19 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 							DVector3 aimvec = rm * aim;
 							// And make the projectile follow that vector at the desired speed.
 							double aimscale = fspeed / dist;
-							mobj->velx = fixed_t (aimvec[0] * aimscale);
-							mobj->vely = fixed_t (aimvec[1] * aimscale);
-							mobj->velz = fixed_t (aimvec[2] * aimscale);
-							mobj->angle = R_PointToAngle2 (0, 0, mobj->velx, mobj->vely);
+							mobj->vel.x = fixed_t (aimvec[0] * aimscale);
+							mobj->vel.y = fixed_t (aimvec[1] * aimscale);
+							mobj->vel.z = fixed_t (aimvec[2] * aimscale);
+							mobj->angle = R_PointToAngle2 (0, 0, mobj->vel.x, mobj->vel.y);
 						}
 						else
 						{
 nolead:
 							mobj->angle = mobj->AngleTo(targ);
 							aim.Resize (fspeed);
-							mobj->velx = fixed_t(aim[0]);
-							mobj->vely = fixed_t(aim[1]);
-							mobj->velz = fixed_t(aim[2]);
+							mobj->vel.x = fixed_t(aim[0]);
+							mobj->vel.y = fixed_t(aim[1]);
+							mobj->vel.z = fixed_t(aim[2]);
 						}
 						if (mobj->flags2 & MF2_SEEKERMISSILE)
 						{
@@ -321,19 +321,19 @@ nolead:
 					else
 					{
 						mobj->angle = angle;
-						mobj->velx = FixedMul (speed, finecosine[angle>>ANGLETOFINESHIFT]);
-						mobj->vely = FixedMul (speed, finesine[angle>>ANGLETOFINESHIFT]);
-						mobj->velz = vspeed;
+						mobj->vel.x = FixedMul (speed, finecosine[angle>>ANGLETOFINESHIFT]);
+						mobj->vel.y = FixedMul (speed, finesine[angle>>ANGLETOFINESHIFT]);
+						mobj->vel.z = vspeed;
 					}
 					// Set the missile's speed to reflect the speed it was spawned at.
 					if (mobj->flags & MF_MISSILE)
 					{
-						mobj->Speed = fixed_t (sqrt (double(mobj->velx)*mobj->velx + double(mobj->vely)*mobj->vely + double(mobj->velz)*mobj->velz));
+						mobj->Speed = fixed_t (sqrt (double(mobj->vel.x)*mobj->vel.x + double(mobj->vel.y)*mobj->vel.y + double(mobj->vel.z)*mobj->vel.z));
 					}
 					// Hugger missiles don't have any vertical velocity
 					if (mobj->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER))
 					{
-						mobj->velz = 0;
+						mobj->vel.z = 0;
 					}
 					if (mobj->flags & MF_SPECIAL)
 					{
@@ -427,7 +427,7 @@ bool P_Thing_Raise(AActor *thing, AActor *raiser)
 	
 	AActor *info = thing->GetDefault ();
 
-	thing->velx = thing->vely = 0;
+	thing->vel.x = thing->vel.y = 0;
 
 	// [RH] Check against real height and radius
 	fixed_t oldheight = thing->height;
@@ -500,16 +500,16 @@ void P_Thing_SetVelocity(AActor *actor, fixed_t vx, fixed_t vy, fixed_t vz, bool
 	{
 		if (!add)
 		{
-			actor->velx = actor->vely = actor->velz = 0;
-			if (actor->player != NULL) actor->player->velx = actor->player->vely = 0;
+			actor->vel.x = actor->vel.y = actor->vel.z = 0;
+			if (actor->player != NULL) actor->player->vel.x = actor->player->vel.y = 0;
 		}
-		actor->velx += vx;
-		actor->vely += vy;
-		actor->velz += vz;
+		actor->vel.x += vx;
+		actor->vel.y += vy;
+		actor->vel.z += vz;
 		if (setbob && actor->player != NULL)
 		{
-			actor->player->velx += vx;
-			actor->player->vely += vy;
+			actor->player->vel.x += vx;
+			actor->player->vel.y += vy;
 		}
 	}
 }
@@ -771,15 +771,15 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 			
 			if (flags & WARPF_COPYVELOCITY)
 			{
-				caller->velx = reference->velx;
-				caller->vely = reference->vely;
-				caller->velz = reference->velz;
+				caller->vel.x = reference->vel.x;
+				caller->vel.y = reference->vel.y;
+				caller->vel.z = reference->vel.z;
 			}
 			if (flags & WARPF_STOP)
 			{
-				caller->velx = 0;
-				caller->vely = 0;
-				caller->velz = 0;
+				caller->vel.x = 0;
+				caller->vel.y = 0;
+				caller->vel.z = 0;
 			}
 
 			// this is no fun with line portals 

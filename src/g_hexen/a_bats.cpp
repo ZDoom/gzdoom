@@ -83,8 +83,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_BatMove)
 
 	// Adjust velocity vector to new direction
 	newangle >>= ANGLETOFINESHIFT;
-	self->velx = FixedMul (self->Speed, finecosine[newangle]);
-	self->vely = FixedMul (self->Speed, finesine[newangle]);
+	self->vel.x = FixedMul (self->Speed, finecosine[newangle]);
+	self->vel.y = FixedMul (self->Speed, finesine[newangle]);
 
 	if (pr_batmove()<15)
 	{

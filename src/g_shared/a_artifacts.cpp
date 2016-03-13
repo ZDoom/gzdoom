@@ -981,9 +981,9 @@ void APowerFlight::InitEffect ()
 	Owner->flags |= MF_NOGRAVITY;
 	if (Owner->Z() <= Owner->floorz)
 	{
-		Owner->velz = 4*FRACUNIT;	// thrust the player in the air a bit
+		Owner->vel.z = 4*FRACUNIT;	// thrust the player in the air a bit
 	}
-	if (Owner->velz <= -35*FRACUNIT)
+	if (Owner->vel.z <= -35*FRACUNIT)
 	{ // stop falling scream
 		S_StopSound (Owner, CHAN_VOICE);
 	}
@@ -1261,7 +1261,7 @@ void APowerSpeed::DoEffect ()
 		}
 	}
 
-	if (P_AproxDistance (Owner->velx, Owner->vely) <= 12*FRACUNIT)
+	if (P_AproxDistance (Owner->vel.x, Owner->vel.y) <= 12*FRACUNIT)
 		return;
 
 	AActor *speedMo = Spawn<APlayerSpeedTrail> (Owner->Pos(), NO_REPLACE);

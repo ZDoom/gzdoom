@@ -66,13 +66,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_InquisitorAttack)
 	proj = P_SpawnMissileZAimed (self, self->Z(), self->target, PClass::FindActor("InquisitorShot"));
 	if (proj != NULL)
 	{
-		proj->velz += 9*FRACUNIT;
+		proj->vel.z += 9*FRACUNIT;
 	}
 	self->angle += ANGLE_45/16;
 	proj = P_SpawnMissileZAimed (self, self->Z(), self->target, PClass::FindActor("InquisitorShot"));
 	if (proj != NULL)
 	{
-		proj->velz += 16*FRACUNIT;
+		proj->vel.z += 16*FRACUNIT;
 	}
 	self->AddZ(-32*FRACUNIT);
 	return 0;
@@ -94,15 +94,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_InquisitorJump)
 	A_FaceTarget (self);
 	an = self->angle >> ANGLETOFINESHIFT;
 	speed = self->Speed * 2/3;
-	self->velx += FixedMul (speed, finecosine[an]);
-	self->vely += FixedMul (speed, finesine[an]);
+	self->vel.x += FixedMul (speed, finecosine[an]);
+	self->vel.y += FixedMul (speed, finesine[an]);
 	dist = self->AproxDistance (self->target);
 	dist /= speed;
 	if (dist < 1)
 	{
 		dist = 1;
 	}
-	self->velz = (self->target->Z() - self->Z()) / dist;
+	self->vel.z = (self->target->Z() - self->Z()) / dist;
 	self->reactiontime = 60;
 	self->flags |= MF_NOGRAVITY;
 	return 0;
@@ -114,8 +114,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_InquisitorCheckLand)
 
 	self->reactiontime--;
 	if (self->reactiontime < 0 ||
-		self->velx == 0 ||
-		self->vely == 0 ||
+		self->vel.x == 0 ||
+		self->vel.y == 0 ||
 		self->Z() <= self->floorz)
 	{
 		self->SetState (self->SeeState);
@@ -137,9 +137,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_TossArm)
 
 	AActor *foo = Spawn("InquisitorArm", self->PosPlusZ(24*FRACUNIT), ALLOW_REPLACE);
 	foo->angle = self->angle - ANGLE_90 + (pr_inq.Random2() << 22);
-	foo->velx = FixedMul (foo->Speed, finecosine[foo->angle >> ANGLETOFINESHIFT]) >> 3;
-	foo->vely = FixedMul (foo->Speed, finesine[foo->angle >> ANGLETOFINESHIFT]) >> 3;
-	foo->velz = pr_inq() << 10;
+	foo->vel.x = FixedMul (foo->Speed, finecosine[foo->angle >> ANGLETOFINESHIFT]) >> 3;
+	foo->vel.y = FixedMul (foo->Speed, finesine[foo->angle >> ANGLETOFINESHIFT]) >> 3;
+	foo->vel.z = pr_inq() << 10;
 	return 0;
 }
 

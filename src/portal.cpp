@@ -245,12 +245,15 @@ static line_t *FindDestination(line_t *src, int tag)
 
 static void SetRotation(FLinePortal *port)
 {
-	line_t *dst = port->mDestination;
-	line_t *line = port->mOrigin;
-	double angle = atan2(dst->dy, dst->dx) - atan2(line->dy, line->dx) + M_PI;
-	port->mSinRot = FLOAT2FIXED(sin(angle));
-	port->mCosRot = FLOAT2FIXED(cos(angle));
-	port->mAngleDiff = RAD2ANGLE(angle);
+	if (port != NULL && port->mDestination != NULL)
+	{
+		line_t *dst = port->mDestination;
+		line_t *line = port->mOrigin;
+		double angle = atan2(dst->dy, dst->dx) - atan2(line->dy, line->dx) + M_PI;
+		port->mSinRot = FLOAT2FIXED(sin(angle));
+		port->mCosRot = FLOAT2FIXED(cos(angle));
+		port->mAngleDiff = RAD2ANGLE(angle);
+	}
 }
 
 //============================================================================
@@ -933,7 +936,7 @@ void P_CreateLinkedPortals()
 	TThinkerIterator<AStackPoint> it;
 	AStackPoint *mo;
 	TArray<AStackPoint *> orgs;
-	int id = 0;
+	int id = 1;
 	bool bogus = false;
 
 	while ((mo = it.Next()))
@@ -952,36 +955,33 @@ void P_CreateLinkedPortals()
 			}
 		}
 	}
-	if (orgs.Size() == 0)
+	id = 1;
+	if (orgs.Size() != 0)
 	{
-		// Create the 0->0 translation which is always needed.
-		Displacements.Create(1);
-		return;
-	}
-	for (int i = 0; i < numsectors; i++)
-	{
-		for (int j = 0; j < 2; j++)
+		for (int i = 0; i < numsectors; i++)
 		{
-			AActor *box = sectors[i].SkyBoxes[j];
-			if (box != NULL && box->special1 == SKYBOX_LINKEDPORTAL)
+			for (int j = 0; j < 2; j++)
 			{
-				secplane_t &plane = j == 0 ? sectors[i].floorplane : sectors[i].ceilingplane;
-				if (plane.a || plane.b)
+				AActor *box = sectors[i].SkyBoxes[j];
+				if (box != NULL && box->special1 == SKYBOX_LINKEDPORTAL)
 				{
-					// The engine cannot deal with portals on a sloped plane.
-					sectors[i].SkyBoxes[j] = NULL;
-					Printf("Portal on %s of sector %d is sloped and will be disabled\n", j==0? "floor":"ceiling", i);
+					secplane_t &plane = j == 0 ? sectors[i].floorplane : sectors[i].ceilingplane;
+					if (plane.a || plane.b)
+					{
+						// The engine cannot deal with portals on a sloped plane.
+						sectors[i].SkyBoxes[j] = NULL;
+						Printf("Portal on %s of sector %d is sloped and will be disabled\n", j == 0 ? "floor" : "ceiling", i);
+					}
 				}
 			}
 		}
-	}
 
-	// Group all sectors, starting at each portal origin.
-	id = 1;
-	for (unsigned i = 0; i < orgs.Size(); i++)
-	{
-		if (CollectSectors(id, orgs[i]->Sector)) id++;
-		if (CollectSectors(id, orgs[i]->Mate->Sector)) id++;
+		// Group all sectors, starting at each portal origin.
+		for (unsigned i = 0; i < orgs.Size(); i++)
+		{
+			if (CollectSectors(id, orgs[i]->Sector)) id++;
+			if (CollectSectors(id, orgs[i]->Mate->Sector)) id++;
+		}
 	}
 	for (unsigned i = 0; i < linePortals.Size(); i++)
 	{

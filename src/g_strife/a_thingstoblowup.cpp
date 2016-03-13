@@ -112,9 +112,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightGoesOut)
 		if (foo != NULL)
 		{
 			int t = pr_lightout() & 15;
-			foo->velx = (t - (pr_lightout() & 7)) << FRACBITS;
-			foo->vely = (pr_lightout.Random2() & 7) << FRACBITS;
-			foo->velz = (7 + (pr_lightout() & 3)) << FRACBITS;
+			foo->vel.x = (t - (pr_lightout() & 7)) << FRACBITS;
+			foo->vel.y = (pr_lightout.Random2() & 7) << FRACBITS;
+			foo->vel.z = (7 + (pr_lightout() & 3)) << FRACBITS;
 		}
 	}
 	return 0;

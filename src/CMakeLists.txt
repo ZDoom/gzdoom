@@ -494,28 +494,28 @@ if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 		set( CMAKE_C_FLAGS "-Wno-unused-result ${CMAKE_C_FLAGS}" )
 		set( CMAKE_CXX_FLAGS "-Wno-unused-result ${CMAKE_CXX_FLAGS}" )
 	endif()
-	set( CMAKE_C_FLAGS "-Wall -Wextra -Wno-unused -Wno-unused-parameter -Wno-missing-field-initializers ${CMAKE_C_FLAGS}" )
-	set( CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-unused -Wno-unused-parameter -Wno-missing-field-initializers ${CMAKE_CXX_FLAGS}" )
+	set( CMAKE_C_FLAGS "-Wall -Wextra -Wno-unused -Wno-unused-parameter -Wno-missing-field-initializers -ffp-contract=off ${CMAKE_C_FLAGS}" )
+	set( CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-unused -Wno-unused-parameter -Wno-missing-field-initializers -ffp-contract=off ${CMAKE_CXX_FLAGS}" )
 
 	# Use the highest C++ standard available since VS2015 compiles with C++14
 	# but we only require C++11.  The recommended way to do this in CMake is to
 	# probably to use target_compile_features, but I don't feel like maintaining
 	# a list of features we use.
-	CHECK_CXX_COMPILER_FLAG( "-std=c++14" CAN_DO_CPP14 )
+	CHECK_CXX_COMPILER_FLAG( "-std=gnu++14" CAN_DO_CPP14 )
 	if ( CAN_DO_CPP14 )
-		set ( CMAKE_CXX_FLAGS "-std=c++14 ${CMAKE_CXX_FLAGS}" )
+		set ( CMAKE_CXX_FLAGS "-std=gnu++14 ${CMAKE_CXX_FLAGS}" )
 	else ()
-		CHECK_CXX_COMPILER_FLAG( "-std=c++1y" CAN_DO_CPP1Y )
+		CHECK_CXX_COMPILER_FLAG( "-std=gnu++1y" CAN_DO_CPP1Y )
 		if ( CAN_DO_CPP1Y )
-			set ( CMAKE_CXX_FLAGS "-std=c++1y ${CMAKE_CXX_FLAGS}" )
+			set ( CMAKE_CXX_FLAGS "-std=gnu++1y ${CMAKE_CXX_FLAGS}" )
 		else ()
-			CHECK_CXX_COMPILER_FLAG( "-std=c++11" CAN_DO_CPP11 )
+			CHECK_CXX_COMPILER_FLAG( "-std=gnu++11" CAN_DO_CPP11 )
 			if ( CAN_DO_CPP11 )
-				set ( CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}" )
+				set ( CMAKE_CXX_FLAGS "-std=gnu++11 ${CMAKE_CXX_FLAGS}" )
 			else ()
-				CHECK_CXX_COMPILER_FLAG( "-std=c++0x" CAN_DO_CPP0X )
+				CHECK_CXX_COMPILER_FLAG( "-std=gnu++0x" CAN_DO_CPP0X )
 				if ( CAN_DO_CPP0X )
-					set ( CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}" )
+					set ( CMAKE_CXX_FLAGS "-std=gnu++0x ${CMAKE_CXX_FLAGS}" )
 				endif ()
 			endif ()
 		endif ()
@@ -676,6 +676,7 @@ set( PLAT_COCOA_SOURCES
 	posix/cocoa/i_input.mm
 	posix/cocoa/i_joystick.cpp
 	posix/cocoa/i_main.mm
+	posix/cocoa/i_main_except.cpp
 	posix/cocoa/i_system.mm
 	posix/cocoa/i_timer.cpp
 	posix/cocoa/i_video.mm
@@ -712,6 +713,7 @@ elseif( APPLE )
 
 	set_source_files_properties( posix/osx/zdoom.icns PROPERTIES MACOSX_PACKAGE_LOCATION Resources )
 	set_source_files_properties( "${FMOD_LIBRARY}" PROPERTIES MACOSX_PACKAGE_LOCATION Frameworks )
+	set_source_files_properties( posix/osx/iwadpicker_cocoa.mm PROPERTIES COMPILE_FLAGS -fobjc-exceptions )
 else()
 	set( SYSTEM_SOURCES_DIR posix posix/sdl )
 	set( SYSTEM_SOURCES ${PLAT_POSIX_SOURCES} ${PLAT_SDL_SOURCES} )

@@ -175,9 +175,9 @@ class ARandomSpawner : public AActor
 			newmobj->SpawnFlags = SpawnFlags;
 			newmobj->tid        = tid;
 			newmobj->AddToHash();
-			newmobj->velx = velx;
-			newmobj->vely = vely;
-			newmobj->velz = velz;
+			newmobj->vel.x = vel.x;
+			newmobj->vel.y = vel.y;
+			newmobj->vel.z = vel.z;
 			newmobj->master = master;	// For things such as DamageMaster/DamageChildren, transfer mastery.
 			newmobj->target = target;
 			newmobj->tracer = tracer;

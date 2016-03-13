@@ -120,9 +120,9 @@ bool AArtiPoisonBag3::Use (bool pickup)
 		fixed_t speed = fixed_t(sqrt((double)mo->Speed*mo->Speed + (4.0*65536*4*65536)));
 		fixed_t xyscale = FixedMul(speed, finecosine[modpitch]);
 
-		mo->velz = FixedMul(speed, finesine[modpitch]);
-		mo->velx = FixedMul(xyscale, finecosine[angle]) + (Owner->velx >> 1);
-		mo->vely = FixedMul(xyscale, finesine[angle]) + (Owner->vely >> 1);
+		mo->vel.z = FixedMul(speed, finesine[modpitch]);
+		mo->vel.x = FixedMul(xyscale, finecosine[angle]) + (Owner->vel.x >> 1);
+		mo->vel.y = FixedMul(xyscale, finesine[angle]) + (Owner->vel.y >> 1);
 		mo->AddZ(FixedMul(mo->Speed, finesine[orgpitch]));
 
 		mo->target = Owner;
@@ -306,7 +306,7 @@ IMPLEMENT_CLASS (APoisonCloud)
 
 void APoisonCloud::BeginPlay ()
 {
-	velx = 1; // missile objects must move to impact other objects
+	vel.x = 1; // missile objects must move to impact other objects
 	special1 = 24+(pr_poisoncloud()&7);
 	special2 = 0;
 }
@@ -451,16 +451,16 @@ DEFINE_ACTION_FUNCTION(AActor, A_CheckThrowBomb2)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	// [RH] Check using actual velocity, although the velz < 2 check still stands
-	//if (abs(self->velx) < FRACUNIT*3/2 && abs(self->vely) < FRACUNIT*3/2
-	//	&& self->velz < 2*FRACUNIT)
-	if (self->velz < 2*FRACUNIT &&
-		TMulScale32 (self->velx, self->velx, self->vely, self->vely, self->velz, self->velz)
+	// [RH] Check using actual velocity, although the vel.z < 2 check still stands
+	//if (abs(self->vel.x) < FRACUNIT*3/2 && abs(self->vel.y) < FRACUNIT*3/2
+	//	&& self->vel.z < 2*FRACUNIT)
+	if (self->vel.z < 2*FRACUNIT &&
+		TMulScale32 (self->vel.x, self->vel.x, self->vel.y, self->vel.y, self->vel.z, self->vel.z)
 		< (3*3)/(2*2))
 	{
 		self->SetState (self->SpawnState + 6);
 		self->SetZ(self->floorz);
-		self->velz = 0;
+		self->vel.z = 0;
 		self->BounceFlags = BOUNCE_None;
 		self->flags &= ~MF_MISSILE;
 	}

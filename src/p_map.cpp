@@ -997,7 +997,7 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 		spec.oldrefpos = tm.thing->PosRelative(ld);
 		spechit.Push(spec);
 	}
-	if (ld->portalindex != UINT_MAX)
+	if (ld->isLinePortal())
 	{
 		spec.line = ld;
 		spec.refpos = cres.position;

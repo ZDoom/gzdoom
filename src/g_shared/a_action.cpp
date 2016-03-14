@@ -274,12 +274,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_FreezeDeathChunks)
 	int numChunks;
 	AActor *mo;
 	
-	if ((self->velx || self->vely || self->velz) && !(self->flags6 & MF6_SHATTERING))
+	if ((self->vel.x || self->vel.y || self->vel.z) && !(self->flags6 & MF6_SHATTERING))
 	{
 		self->tics = 3*TICRATE;
 		return 0;
 	}
-	self->velx = self->vely = self->velz = 0;
+	self->vel.x = self->vel.y = self->vel.z = 0;
 	S_Sound (self, CHAN_BODY, "misc/icebreak", 1, ATTN_NORM);
 
 	// [RH] In Hexen, this creates a random number of shards (range [24,56])
@@ -298,9 +298,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_FreezeDeathChunks)
 		if (mo)
 		{
 				mo->SetState (mo->SpawnState + (pr_freeze()%3));
-			mo->velz = FixedDiv(mo->Z() - self->Z(), self->height)<<2;
-			mo->velx = pr_freeze.Random2 () << (FRACBITS-7);
-			mo->vely = pr_freeze.Random2 () << (FRACBITS-7);
+			mo->vel.z = FixedDiv(mo->Z() - self->Z(), self->height)<<2;
+			mo->vel.x = pr_freeze.Random2 () << (FRACBITS-7);
+			mo->vel.y = pr_freeze.Random2 () << (FRACBITS-7);
 			CALL_ACTION(A_IceSetTics, mo); // set a random tic wait
 			mo->RenderStyle = self->RenderStyle;
 			mo->alpha = self->alpha;
@@ -311,9 +311,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_FreezeDeathChunks)
 		AActor *head = Spawn("IceChunkHead", self->PosPlusZ(self->player->mo->ViewHeight), ALLOW_REPLACE);
 		if (head != NULL)
 		{
-			head->velz = FixedDiv(head->Z() - self->Z(), self->height)<<2;
-			head->velx = pr_freeze.Random2 () << (FRACBITS-7);
-			head->vely = pr_freeze.Random2 () << (FRACBITS-7);
+			head->vel.z = FixedDiv(head->Z() - self->Z(), self->height)<<2;
+			head->vel.x = pr_freeze.Random2 () << (FRACBITS-7);
+			head->vel.y = pr_freeze.Random2 () << (FRACBITS-7);
 			head->health = self->health;
 			head->angle = self->angle;
 			if (head->IsKindOf(RUNTIME_CLASS(APlayerPawn)))

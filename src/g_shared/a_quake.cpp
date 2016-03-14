@@ -150,8 +150,8 @@ void DEarthquake::Tick ()
 						an >>= ANGLETOFINESHIFT;
 						// So this is actually completely wrong, but it ought to be good
 						// enough. Otherwise, I'd have to use tangents and square roots.
-						victim->velx += FixedMul(m_IntensityX << (FRACBITS-1), finecosine[an]);
-						victim->vely += FixedMul(m_IntensityY << (FRACBITS-1), finesine[an]);
+						victim->vel.x += FixedMul(m_IntensityX << (FRACBITS-1), finecosine[an]);
+						victim->vel.y += FixedMul(m_IntensityY << (FRACBITS-1), finesine[an]);
 					}
 				}
 			}

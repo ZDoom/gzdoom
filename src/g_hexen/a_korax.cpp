@@ -387,8 +387,8 @@ void A_KSpiritSeeker (AActor *actor, angle_t thresh, angle_t turnMax)
 		actor->angle -= delta;
 	}
 	angle = actor->angle>>ANGLETOFINESHIFT;
-	actor->velx = FixedMul (actor->Speed, finecosine[angle]);
-	actor->vely = FixedMul (actor->Speed, finesine[angle]);
+	actor->vel.x = FixedMul (actor->Speed, finecosine[angle]);
+	actor->vel.y = FixedMul (actor->Speed, finesine[angle]);
 
 	if (!(level.time&15) 
 		|| actor->Z() > target->Z()+(target->GetDefault()->height)
@@ -412,7 +412,7 @@ void A_KSpiritSeeker (AActor *actor, angle_t thresh, angle_t turnMax)
 		{
 			dist = 1;
 		}
-		actor->velz = deltaZ/dist;
+		actor->vel.z = deltaZ/dist;
 	}
 	return;
 }
@@ -520,13 +520,13 @@ AActor *P_SpawnKoraxMissile (fixed_t x, fixed_t y, fixed_t z,
 	}
 	th->angle = an;
 	an >>= ANGLETOFINESHIFT;
-	th->velx = FixedMul (th->Speed, finecosine[an]);
-	th->vely = FixedMul (th->Speed, finesine[an]);
+	th->vel.x = FixedMul (th->Speed, finecosine[an]);
+	th->vel.y = FixedMul (th->Speed, finesine[an]);
 	dist = dest->AproxDistance (th) / th->Speed;
 	if (dist < 1)
 	{
 		dist = 1;
 	}
-	th->velz = (dest->Z()-z+(30*FRACUNIT))/dist;
+	th->vel.z = (dest->Z()-z+(30*FRACUNIT))/dist;
 	return (P_CheckMissileSpawn(th, source->radius) ? th : NULL);
 }

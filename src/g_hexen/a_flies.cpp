@@ -95,15 +95,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_FlyBuzz)
 	}
 	if (self->args[0] & 2)
 	{
-		self->velx += (pr_fly() - 128) << BOBTOFINESHIFT;
-		self->vely += (pr_fly() - 128) << BOBTOFINESHIFT;
+		self->vel.x += (pr_fly() - 128) << BOBTOFINESHIFT;
+		self->vel.y += (pr_fly() - 128) << BOBTOFINESHIFT;
 	}
 	int zrand = pr_fly();
 	if (targ->Z() + 5*FRACUNIT < self->Z() && zrand > 150)
 	{
 		zrand = -zrand;
 	}
-	self->velz = zrand << BOBTOFINESHIFT;
+	self->vel.z = zrand << BOBTOFINESHIFT;
 	if (pr_fly() < 40)
 	{
 		S_Sound(self, CHAN_VOICE, self->ActiveSound, 0.5f, ATTN_STATIC);

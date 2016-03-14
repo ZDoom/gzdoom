@@ -974,7 +974,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 		{
 			target->tics = 1;
 			target->flags6 |= MF6_SHATTERING;
-			target->velx = target->vely = target->velz = 0;
+			target->vel.x = target->vel.y = target->vel.z = 0;
 		}
 		return -1;
 	}
@@ -1029,7 +1029,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 	}
 	if (target->flags & MF_SKULLFLY)
 	{
-		target->velx = target->vely = target->velz = 0;
+		target->vel.x = target->vel.y = target->vel.z = 0;
 	}
 
 	player = target->player;
@@ -1201,17 +1201,17 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 				(source->player->ReadyWeapon->WeaponFlags & WIF_STAFF2_KICKBACK))
 			{
 				// Staff power level 2
-				target->velx += FixedMul (10*FRACUNIT, finecosine[ang]);
-				target->vely += FixedMul (10*FRACUNIT, finesine[ang]);
+				target->vel.x += FixedMul (10*FRACUNIT, finecosine[ang]);
+				target->vel.y += FixedMul (10*FRACUNIT, finesine[ang]);
 				if (!(target->flags & MF_NOGRAVITY))
 				{
-					target->velz += 5*FRACUNIT;
+					target->vel.z += 5*FRACUNIT;
 				}
 			}
 			else
 			{
-				target->velx += FixedMul (thrust, finecosine[ang]);
-				target->vely += FixedMul (thrust, finesine[ang]);
+				target->vel.x += FixedMul (thrust, finecosine[ang]);
+				target->vel.y += FixedMul (thrust, finesine[ang]);
 			}
 		}
 	}

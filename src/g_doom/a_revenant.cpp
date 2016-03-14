@@ -33,7 +33,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SkelMissile)
 
 	if (missile != NULL)
 	{
-		missile->SetOrigin(missile->Vec3Offset(missile->velx, missile->vely, 0), false);
+		missile->SetOrigin(missile->Vec3Offset(missile->vel.x, missile->vel.y, 0), false);
 		missile->tracer = self->target;
 	}
 	return 0;
@@ -66,9 +66,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_Tracer)
 	// spawn a puff of smoke behind the rocket
 	P_SpawnPuff (self, PClass::FindActor(NAME_BulletPuff), self->Pos(), self->angle, self->angle, 3);
 		
-	smoke = Spawn ("RevenantTracerSmoke", self->Vec3Offset(-self->velx, -self->vely, 0), ALLOW_REPLACE);
+	smoke = Spawn ("RevenantTracerSmoke", self->Vec3Offset(-self->vel.x, -self->vel.y, 0), ALLOW_REPLACE);
 	
-	smoke->velz = FRACUNIT;
+	smoke->vel.z = FRACUNIT;
 	smoke->tics -= pr_tracer()&3;
 	if (smoke->tics < 1)
 		smoke->tics = 1;
@@ -99,8 +99,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_Tracer)
 	}
 		
 	exact = self->angle>>ANGLETOFINESHIFT;
-	self->velx = FixedMul (self->Speed, finecosine[exact]);
-	self->vely = FixedMul (self->Speed, finesine[exact]);
+	self->vel.x = FixedMul (self->Speed, finecosine[exact]);
+	self->vel.y = FixedMul (self->Speed, finesine[exact]);
 
 	if (!(self->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER)))
 	{
@@ -119,10 +119,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_Tracer)
 			slope = (dest->Z() + self->height*2/3 - self->Z()) / dist;
 		}
 
-		if (slope < self->velz)
-			self->velz -= FRACUNIT/8;
+		if (slope < self->vel.z)
+			self->vel.z -= FRACUNIT/8;
 		else
-			self->velz += FRACUNIT/8;
+			self->vel.z += FRACUNIT/8;
 	}
 	return 0;
 }

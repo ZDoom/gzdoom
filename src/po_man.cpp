@@ -900,8 +900,8 @@ void FPolyObj::ThrustMobj (AActor *actor, side_t *side)
 
 	thrustX = FixedMul (force, finecosine[thrustAngle]);
 	thrustY = FixedMul (force, finesine[thrustAngle]);
-	actor->velx += thrustX;
-	actor->vely += thrustY;
+	actor->vel.x += thrustX;
+	actor->vel.y += thrustY;
 	if (crush)
 	{
 		fixedvec2 pos = actor->Vec2Offset(thrustX, thrustY);

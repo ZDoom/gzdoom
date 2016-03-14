@@ -154,7 +154,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_VileAttack)
 	}
 	if (!(target->flags7 & MF7_DONTTHRUST))
 	{
-		target->velz = Scale(thrust, 1000, target->Mass);
+		target->vel.z = Scale(thrust, 1000, target->Mass);
 	}
 	return 0;
 }

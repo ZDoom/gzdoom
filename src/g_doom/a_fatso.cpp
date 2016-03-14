@@ -49,8 +49,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FatAttack1)
 	{
 		missile->angle += FATSPREAD;
 		an = missile->angle >> ANGLETOFINESHIFT;
-		missile->velx = FixedMul (missile->Speed, finecosine[an]);
-		missile->vely = FixedMul (missile->Speed, finesine[an]);
+		missile->vel.x = FixedMul (missile->Speed, finecosine[an]);
+		missile->vel.y = FixedMul (missile->Speed, finesine[an]);
 	}
 	return 0;
 }
@@ -78,8 +78,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FatAttack2)
 	{
 		missile->angle -= FATSPREAD*2;
 		an = missile->angle >> ANGLETOFINESHIFT;
-		missile->velx = FixedMul (missile->Speed, finecosine[an]);
-		missile->vely = FixedMul (missile->Speed, finesine[an]);
+		missile->vel.x = FixedMul (missile->Speed, finecosine[an]);
+		missile->vel.y = FixedMul (missile->Speed, finesine[an]);
 	}
 	return 0;
 }
@@ -104,8 +104,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FatAttack3)
 	{
 		missile->angle -= FATSPREAD/2;
 		an = missile->angle >> ANGLETOFINESHIFT;
-		missile->velx = FixedMul (missile->Speed, finecosine[an]);
-		missile->vely = FixedMul (missile->Speed, finesine[an]);
+		missile->vel.x = FixedMul (missile->Speed, finecosine[an]);
+		missile->vel.y = FixedMul (missile->Speed, finesine[an]);
 	}
 
 	missile = P_SpawnMissile (self, self->target, spawntype);
@@ -113,8 +113,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FatAttack3)
 	{
 		missile->angle += FATSPREAD/2;
 		an = missile->angle >> ANGLETOFINESHIFT;
-		missile->velx = FixedMul (missile->Speed, finecosine[an]);
-		missile->vely = FixedMul (missile->Speed, finesine[an]);
+		missile->vel.x = FixedMul (missile->Speed, finecosine[an]);
+		missile->vel.y = FixedMul (missile->Speed, finesine[an]);
 	}
 	return 0;
 }
@@ -178,9 +178,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Mushroom)
 			}
 			if (mo != NULL)
 			{	// Slow it down a bit
-				mo->velx = FixedMul(mo->velx, hrange);
-				mo->vely = FixedMul(mo->vely, hrange);
-				mo->velz = FixedMul(mo->velz, hrange);
+				mo->vel.x = FixedMul(mo->vel.x, hrange);
+				mo->vel.y = FixedMul(mo->vel.y, hrange);
+				mo->vel.z = FixedMul(mo->vel.z, hrange);
 				mo->flags &= ~MF_NOGRAVITY;   // Make debris fall under gravity
 			}
 		}

@@ -134,9 +134,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnProgrammerBase)
 	if (foo != NULL)
 	{
 		foo->angle = self->angle + ANGLE_180 + (pr_prog.Random2() << 22);
-		foo->velx = FixedMul (foo->Speed, finecosine[foo->angle >> ANGLETOFINESHIFT]);
-		foo->vely = FixedMul (foo->Speed, finesine[foo->angle >> ANGLETOFINESHIFT]);
-		foo->velz = pr_prog() << 9;
+		foo->vel.x = FixedMul (foo->Speed, finecosine[foo->angle >> ANGLETOFINESHIFT]);
+		foo->vel.y = FixedMul (foo->Speed, finesine[foo->angle >> ANGLETOFINESHIFT]);
+		foo->vel.z = pr_prog() << 9;
 	}
 	return 0;
 }

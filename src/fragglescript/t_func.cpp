@@ -1335,11 +1335,11 @@ void FParser::SF_MobjMomx(void)
 		if(t_argc > 1)
 		{
 			if(mo) 
-				mo->velx = fixedvalue(t_argv[1]);
+				mo->vel.x = fixedvalue(t_argv[1]);
 		}
 		
 		t_return.type = svt_fixed;
-		t_return.value.f = mo ? mo->velx : 0;
+		t_return.value.f = mo ? mo->vel.x : 0;
 	}
 }
 
@@ -1359,11 +1359,11 @@ void FParser::SF_MobjMomy(void)
 		if(t_argc > 1)
 		{
 			if(mo)
-				mo->vely = fixedvalue(t_argv[1]);
+				mo->vel.y = fixedvalue(t_argv[1]);
 		}
 		
 		t_return.type = svt_fixed;
-		t_return.value.f = mo ? mo->vely : 0;
+		t_return.value.f = mo ? mo->vel.y : 0;
 	}
 }
 
@@ -1383,11 +1383,11 @@ void FParser::SF_MobjMomz(void)
 		if(t_argc > 1)
 		{
 			if(mo)
-				mo->velz = fixedvalue(t_argv[1]);
+				mo->vel.z = fixedvalue(t_argv[1]);
 		}
 		
 		t_return.type = svt_fixed;
-		t_return.value.f = mo ? mo->velz : 0;
+		t_return.value.f = mo ? mo->vel.z : 0;
 	}
 }
 

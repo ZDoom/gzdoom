@@ -4184,12 +4184,12 @@ bool DLevelScript::DoCheckActorTexture(int tid, AActor *activator, int string, b
 
 	if (floor)
 	{
-		actor->Sector->NextLowestFloorAt(actor, actor->Z(), 0, &resultsec, &resffloor);
+		actor->Sector->NextLowestFloorAt(actor->X(), actor->Y(), actor->Z(), 0, actor->MaxStepHeight, &resultsec, &resffloor);
 		secpic = resffloor ? *resffloor->top.texture : resultsec->planes[sector_t::floor].Texture;
 	}
 	else
 	{
-		actor->Sector->NextHighestCeilingAt(actor, actor->Top(), 0, &resultsec, &resffloor);
+		actor->Sector->NextHighestCeilingAt(actor->X(), actor->Y(), actor->Z(), actor->Top(), 0, &resultsec, &resffloor);
 		secpic = resffloor ? *resffloor->bottom.texture : resultsec->planes[sector_t::ceiling].Texture;
 	}
 	return tex == TexMan[secpic];
@@ -4897,15 +4897,15 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 
 		case ACSF_GetActorVelX:
 			actor = SingleActorFromTID(args[0], activator);
-			return actor != NULL? actor->velx : 0;
+			return actor != NULL? actor->vel.x : 0;
 
 		case ACSF_GetActorVelY:
 			actor = SingleActorFromTID(args[0], activator);
-			return actor != NULL? actor->vely : 0;
+			return actor != NULL? actor->vel.y : 0;
 
 		case ACSF_GetActorVelZ:
 			actor = SingleActorFromTID(args[0], activator);
-			return actor != NULL? actor->velz : 0;
+			return actor != NULL? actor->vel.z : 0;
 
 		case ACSF_SetPointer:
 			if (activator)
@@ -5946,8 +5946,8 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 				reference = SingleActorFromTID(tid_dest, activator);
 			}
 
-			// If there is no actor to warp to, fail.
-			if (!reference)
+			// If there is no activator or actor to warp to, fail.
+			if (activator == NULL || !reference)
 				return false;
 
 			if (P_Thing_Warp(activator, reference, xofs, yofs, zofs, angle, flags, heightoffset, radiusoffset, pitch))

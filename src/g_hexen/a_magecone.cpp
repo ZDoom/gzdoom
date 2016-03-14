@@ -134,7 +134,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ShedShard)
 		{
 			mo->special1 = SHARDSPAWN_LEFT;
 			mo->special2 = spermcount;
-			mo->velz = self->velz;
+			mo->vel.z = self->vel.z;
 			mo->args[0] = (spermcount==3)?2:0;
 		}
 	}
@@ -146,7 +146,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ShedShard)
 		{
 			mo->special1 = SHARDSPAWN_RIGHT;
 			mo->special2 = spermcount;
-			mo->velz = self->velz;
+			mo->vel.z = self->vel.z;
 			mo->args[0] = (spermcount==3)?2:0;
 		}
 	}
@@ -156,7 +156,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ShedShard)
 											 0, (15+2*spermcount)<<FRACBITS, self->target);
 		if (mo)
 		{
-			mo->velz = self->velz;
+			mo->vel.z = self->vel.z;
 			if (spermcount & 1)			// Every other reproduction
 				mo->special1 = SHARDSPAWN_UP | SHARDSPAWN_LEFT | SHARDSPAWN_RIGHT;
 			else
@@ -171,7 +171,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ShedShard)
 											 0, (15+2*spermcount)<<FRACBITS, self->target);
 		if (mo)
 		{
-			mo->velz = self->velz;
+			mo->vel.z = self->vel.z;
 			if (spermcount & 1)			// Every other reproduction
 				mo->special1 = SHARDSPAWN_DOWN | SHARDSPAWN_LEFT | SHARDSPAWN_RIGHT;
 			else

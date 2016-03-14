@@ -982,6 +982,7 @@ OptionMenu AutomapOptions
 	Option "$AUTOMAPMNU_OVERLAY",				"am_overlay", "OverlayTypes"
 	Option "$AUTOMAPMNU_TEXTURED",				"am_textured", "OnOff"
 	Option "$AUTOMAPMNU_FOLLOW",				"am_followplayer", "OnOff"
+	Option "$AUTOMAPMNU_PTOVERLAY",				"am_portaloverlay", "OnOff"
 	StaticText " "
 	Option "$AUTOMAPMNU_SHOWITEMS",				"am_showitems", "OnOff"
 	Option "$AUTOMAPMNU_SHOWMONSTERS",			"am_showmonsters", "OnOff"
@@ -1048,6 +1049,7 @@ OptionMenu MapColorMenu
 	ColorPicker "$MAPCOLORMNU_INTERLEVELCOLOR",			"am_interlevelcolor"	
 	ColorPicker "$MAPCOLORMNU_SECRETSECTORCOLOR",		"am_secretsectorcolor"	
 	ColorPicker "$MAPCOLORMNU_SPECIALWALLCOLOR",		"am_specialwallcolor"
+	ColorPicker "$MAPCOLORMNU_PORTAL",					"am_portalcolor"
 	StaticText " "
 	StaticText "$MAPCOLORMNU_CHEATMODE", 1
 	ColorPicker "$MAPCOLORMNU_TSWALLCOLOR",				"am_tswallcolor"		
@@ -1071,6 +1073,7 @@ OptionMenu MapColorMenu
 	ColorPicker "$MAPCOLORMNU_INTERLEVELCOLOR",			"am_ovinterlevelcolor"	
 	ColorPicker "$MAPCOLORMNU_SECRETSECTORCOLOR",		"am_ovsecretsectorcolor"	
 	ColorPicker "$MAPCOLORMNU_SPECIALWALLCOLOR",		"am_ovspecialwallcolor"
+	ColorPicker "$MAPCOLORMNU_PORTAL",					"am_ovportalcolor"
 	StaticText " "
 	StaticText "$MAPCOLORMNU_OVCHEATMODE", 1
 	ColorPicker "$MAPCOLORMNU_TSWALLCOLOR",				"am_ovotherwallscolor"

@@ -123,6 +123,18 @@ typedef TMap<int, PClassActor *> FClassMap;
 #define NO_SANITIZE
 #endif
 
+#if defined(__GNUC__)
+// With versions of GCC newer than 4.2, it appears it was determined that the
+// cost of an unaligned pointer on PPC was high enough to add padding to the
+// end of packed structs.  For whatever reason __packed__ and pragma pack are
+// handled differently in this regard. Note that this only needs to be applied
+// to types which are used in arrays or sizeof is needed. This also prevents
+// code from taking references to the struct members.
+#define FORCE_PACKED __attribute__((__packed__))
+#else
+#define FORCE_PACKED
+#endif
+
 #include "basictypes.h"
 
 extern bool batchrun;

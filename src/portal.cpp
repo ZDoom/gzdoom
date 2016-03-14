@@ -955,6 +955,7 @@ void P_CreateLinkedPortals()
 			}
 		}
 	}
+	id = 1;
 	if (orgs.Size() != 0)
 	{
 		for (int i = 0; i < numsectors; i++)

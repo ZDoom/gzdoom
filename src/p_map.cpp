@@ -290,7 +290,7 @@ void P_GetFloorCeilingZ(FCheckPosition &tmf, int flags)
 	sector_t *sec = (!(flags & FFCF_SAMESECTOR) || tmf.thing->Sector == NULL)? P_PointInSector(tmf.x, tmf.y) : tmf.sector;
 	F3DFloor *ffc, *fff;
 
-	tmf.ceilingz = sec->NextHighestCeilingAt(tmf.x, tmf.y, tmf.z + tmf.thing->height, flags, &tmf.ceilingsector, &ffc);
+	tmf.ceilingz = sec->NextHighestCeilingAt(tmf.x, tmf.y, tmf.z, tmf.z + tmf.thing->height, flags, &tmf.ceilingsector, &ffc);
 	tmf.floorz = tmf.dropoffz = sec->NextLowestFloorAt(tmf.x, tmf.y, tmf.z, flags, tmf.thing->MaxStepHeight, &tmf.floorsector, &fff);
 
 	if (fff)
@@ -997,7 +997,7 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 		spec.oldrefpos = tm.thing->PosRelative(ld);
 		spechit.Push(spec);
 	}
-	if (ld->portalindex != UINT_MAX)
+	if (ld->isLinePortal())
 	{
 		spec.line = ld;
 		spec.refpos = cres.position;
@@ -3793,7 +3793,7 @@ struct aim_t
 		intercept_t *in;
 
 		if (aimdebug)
-			Printf("Start AimTraverse, start = %f,%f,%f, vect = %f,%f,%f\n",
+			Printf("Start AimTraverse, start = %f,%f,%f, vect = %f,%f\n",
 				startpos.x / 65536., startpos.y / 65536., startpos.z / 65536.,
 				aimtrace.x / 65536., aimtrace.y / 65536.);
 		

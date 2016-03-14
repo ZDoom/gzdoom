@@ -100,14 +100,14 @@ typedef struct tagITFILEHEADER
 	DWORD reserved2;
 	BYTE chnpan[64];
 	BYTE chnvol[64];
-} ITFILEHEADER, *PITFILEHEADER;
+} FORCE_PACKED ITFILEHEADER, *PITFILEHEADER;
 
 typedef struct MODMIDICFG
 {
 	char szMidiGlb[9*32];      // changed from CHAR
 	char szMidiSFXExt[16*32];  // changed from CHAR
 	char szMidiZXXExt[128*32]; // changed from CHAR
-} MODMIDICFG, *LPMODMIDICFG;
+} FORCE_PACKED MODMIDICFG, *LPMODMIDICFG;
 
 #pragma pack()
 

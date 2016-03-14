@@ -932,7 +932,7 @@ fixed_t sector_t::LowestFloorAt(fixed_t x, fixed_t y, sector_t **resultsec)
 }
 
 
-fixed_t sector_t::NextHighestCeilingAt(fixed_t x, fixed_t y, fixed_t z, int flags, sector_t **resultsec, F3DFloor **resultffloor)
+fixed_t sector_t::NextHighestCeilingAt(fixed_t x, fixed_t y, fixed_t bottomz, fixed_t topz, int flags, sector_t **resultsec, F3DFloor **resultffloor)
 {
 	sector_t *sec = this;
 	fixed_t planeheight = FIXED_MIN;
@@ -943,14 +943,20 @@ fixed_t sector_t::NextHighestCeilingAt(fixed_t x, fixed_t y, fixed_t z, int flag
 		fixed_t realceil = sec->ceilingplane.ZatPoint(x, y);
 		for (int i = sec->e->XFloor.ffloors.Size() - 1; i >= 0; --i)
 		{
-			F3DFloor *ff = sec->e->XFloor.ffloors[i];
+			F3DFloor *rover = sec->e->XFloor.ffloors[i];
+			if (!(rover->flags & FF_SOLID) || !(rover->flags & FF_EXISTS)) continue;
 
-			fixed_t ffz = ff->bottom.plane->ZatPoint(x, y);
-			if (ffz < realceil && ((ff->flags & (FF_EXISTS | FF_SOLID)) == (FF_EXISTS | FF_SOLID) && z <= ffz))
-			{ // This floor is above our eyes.
+			fixed_t ff_bottom = rover->bottom.plane->ZatPoint(x, y);
+			fixed_t ff_top = rover->top.plane->ZatPoint(x, y);
+
+			fixed_t delta1 = bottomz - (ff_bottom + ((ff_top - ff_bottom) / 2));
+			fixed_t delta2 = topz - (ff_bottom + ((ff_top - ff_bottom) / 2));
+
+			if (ff_bottom < realceil && abs(delta1) >= abs(delta2))
+			{ 
 				if (resultsec) *resultsec = sec;
-				if (resultffloor) *resultffloor = ff;
-				return ffz;
+				if (resultffloor) *resultffloor = rover;
+				return ff_bottom;
 			}
 		}
 		if ((flags & FFCF_NOPORTALS) || sec->PortalBlocksMovement(ceiling) || planeheight >= sec->SkyBoxes[ceiling]->threshold)

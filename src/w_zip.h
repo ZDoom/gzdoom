@@ -13,7 +13,7 @@ struct FZipEndOfCentralDirectory
 	DWORD	DirectorySize;
 	DWORD	DirectoryOffset;
 	WORD	ZipCommentLength;
-};
+} FORCE_PACKED;
 
 // FZipFileInfo
 struct FZipCentralDirectoryInfo
@@ -36,7 +36,7 @@ struct FZipCentralDirectoryInfo
 	DWORD	ExternalAttributes;
 	DWORD	LocalHeaderOffset;
 	// file name and other variable length info follows
-};
+} FORCE_PACKED;
 
 // FZipLocalHeader
 struct FZipLocalFileHeader
@@ -53,7 +53,7 @@ struct FZipLocalFileHeader
 	WORD	NameLength;
 	WORD	ExtraLength;
 	// file name and other variable length info follows
-};
+} FORCE_PACKED;
 
 
 #pragma pack()

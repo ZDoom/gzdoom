@@ -153,7 +153,11 @@ bool OpenGLFrameBuffer::WipeStartScreen(int type)
 	GLRenderer->mSamplerManager->Bind(1, CLAMP_NONE);
 	glFinish();
 	wipestartscreen->Bind(0, false, false);
+	GLint readbuffer = 0;
+	glGetIntegerv(GL_READ_BUFFER, &readbuffer);
+	glReadBuffer(GL_FRONT);
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, Width, Height);
+	glReadBuffer(readbuffer);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 

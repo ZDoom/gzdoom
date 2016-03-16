@@ -1087,19 +1087,19 @@ inline TAngle<T> diffangle(const TAngle<T> &a1, double a2)
 	return fabs((a1 - a2).Normalize180());
 }
 
-inline TAngle<double> vectoyaw(double x, double y)
+inline TAngle<double> VecToAngle(double x, double y)
 {
 	return g_atan2(y, x) * (180.0 / M_PI);
 }
 
 template<class T>
-inline TAngle<T> vectoyaw (const TVector2<T> &vec)
+inline TAngle<T> VecToAngle (const TVector2<T> &vec)
 {
 	return (T)g_atan2(vec.Y, vec.X) * (180.0 / M_PI);
 }
 
 template<class T>
-inline TAngle<T> vectoyaw (const TVector3<T> &vec)
+inline TAngle<T> VecToAngle (const TVector3<T> &vec)
 {
 	return (T)g_atan2(vec.Y, vec.X) * (180.0 / M_PI);
 }

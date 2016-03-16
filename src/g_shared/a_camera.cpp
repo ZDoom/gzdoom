@@ -177,7 +177,7 @@ void AAimingCamera::Tick ()
 			DVector2 vect(fv3.x, fv3.y);
 			double dz = Z() - tracer->Z() - tracer->height/2;
 			double dist = vect.Length();
-			DAngle desiredPitch = dist != 0.f ? vectoyaw(dist, dz) : 0.;
+			DAngle desiredPitch = dist != 0.f ? VecToAngle(dist, dz) : 0.;
 			DAngle diff = deltaangle(Angles.Pitch, desiredPitch);
 			if (fabs (diff) < MaxPitchChange)
 			{

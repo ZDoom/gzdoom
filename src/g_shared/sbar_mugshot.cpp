@@ -366,7 +366,7 @@ int FMugShot::UpdateState(player_t *player, StateFlags stateflags)
 				if (player->mo != NULL)
 				{
 					// The next 12 lines are from the Doom statusbar code.
-					badguyangle = player->mo->AngleTo(player->attacker);
+					badguyangle = player->mo->__f_AngleTo(player->attacker);
 					if (badguyangle > player->mo->_f_angle())
 					{
 						// whether right or left

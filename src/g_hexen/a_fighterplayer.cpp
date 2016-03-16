@@ -27,7 +27,7 @@ static FRandom pr_fpatk ("FPunchAttack");
 
 void AdjustPlayerAngle (AActor *pmo, FTranslatedLineTarget *t)
 {
-	DAngle difference = deltaangle(pmo->Angles.Yaw, pmo->_f_AngleTo(t->linetarget););
+	DAngle difference = deltaangle(pmo->Angles.Yaw, pmo->AngleTo(t->linetarget));
 	if (fabs(difference) > MAX_ANGLE_ADJUST)
 	{
 		if (difference > 0)

@@ -79,7 +79,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Tracer)
 		return 0;
 	
 	// change angle 	
-	DAngle exact = self->_f_AngleTo(dest);
+	DAngle exact = self->AngleTo(dest);
 	DAngle diff = deltaangle(self->Angles.Yaw, exact);
 
 	if (diff < 0)

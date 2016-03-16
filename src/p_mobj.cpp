@@ -1654,16 +1654,16 @@ int P_FaceMobj (AActor *source, AActor *target, DAngle *delta)
 {
 	DAngle diff;
 
-	diff = deltaangle(source->Angles.Yaw, source->_f_AngleTo(target));
+	diff = deltaangle(source->Angles.Yaw, source->AngleTo(target));
 	if (diff > 0)
 	{
 		*delta = diff;
-		return 0;
+		return 1;
 	}
 	else
 	{
 		*delta = -diff;
-		return 1;
+		return 0;
 	}
 }
 
@@ -2094,7 +2094,7 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 					// Don't change the angle if there's THRUREFLECT on the monster.
 					if (!(BlockingMobj->flags7 & MF7_THRUREFLECT))
 					{
-						DAngle angle = BlockingMobj->_f_AngleTo(mo);
+						DAngle angle = BlockingMobj->AngleTo(mo);
 						bool dontReflect = (mo->AdjustReflectionAngle(BlockingMobj, angle));
 						// Change angle for deflection/reflection
 
@@ -3188,7 +3188,7 @@ bool AActor::IsOkayToAttack (AActor *link)
 		// to only allow the check to succeed if the enemy was in a ~84� FOV of the player
 		if (flags3 & MF3_SCREENSEEKER)
 		{
-			angle_t angle = Friend->AngleTo(link) - Friend->_f_angle();
+			angle_t angle = Friend->__f_AngleTo(link) - Friend->_f_angle();
 			angle >>= 24;
 			if (angle>226 || angle<30)
 			{
@@ -5432,7 +5432,7 @@ void P_BloodSplatter (fixedvec3 pos, AActor *originator)
 	}
 	if (bloodtype >= 1)
 	{
-		P_DrawSplash2 (40, pos.x, pos.y, pos.z, 0u - originator->AngleTo(pos), 2, bloodcolor);
+		P_DrawSplash2 (40, pos.x, pos.y, pos.z, 0u - originator->__f_AngleTo(pos), 2, bloodcolor);
 	}
 }
 
@@ -5472,7 +5472,7 @@ void P_BloodSplatter2 (fixedvec3 pos, AActor *originator)
 	}
 	if (bloodtype >= 1)
 	{
-		P_DrawSplash2 (100, pos.x, pos.y, pos.z, 0u - originator->AngleTo(pos), 2, bloodcolor);
+		P_DrawSplash2 (100, pos.x, pos.y, pos.z, 0u - originator->__f_AngleTo(pos), 2, bloodcolor);
 	}
 }
 
@@ -6013,7 +6013,7 @@ AActor *P_OldSpawnMissile(AActor *source, AActor *owner, AActor *dest, PClassAct
 	P_PlaySpawnSound(th, source);
 	th->target = owner;		// record missile's originator
 
-	th->Angles.Yaw = source->_f_AngleTo(dest);
+	th->Angles.Yaw = source->AngleTo(dest);
 	th->VelFromAngle();
 
 	dist = source->AproxDistance (dest);

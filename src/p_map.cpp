@@ -3379,7 +3379,7 @@ bool P_BounceActor(AActor *mo, AActor *BlockingMobj, bool ontop)
 		if (!ontop)
 		{
 			fixed_t speed;
-			DAngle angle = BlockingMobj->_f_AngleTo(mo) + ((pr_bounce() % 16) - 8);
+			DAngle angle = BlockingMobj->AngleTo(mo) + ((pr_bounce() % 16) - 8);
 			speed = P_AproxDistance(mo->vel.x, mo->vel.y);
 			speed = FixedMul(speed, mo->wallbouncefactor); // [GZ] was 0.75, using wallbouncefactor seems more consistent
 			mo->Angles.Yaw = ANGLE2DBL(angle);
@@ -3531,7 +3531,7 @@ struct aim_t
 		{
 			res.linetarget = th;
 			res.pitch = pitch;
-			res.angleFromSource = vectoyaw(th->X() - startpos.x, th->Y() - startpos.y);
+			res.angleFromSource = VecToAngle(th->X() - startpos.x, th->Y() - startpos.y);
 			res.unlinked = unlinked;
 			res.frac = frac;
 		}
@@ -4604,7 +4604,7 @@ void P_TraceBleed(int damage, AActor *target, AActor *missile)
 		pitch = 0;
 	}
 	P_TraceBleed(damage, target->X(), target->Y(), target->Z() + target->height / 2,
-		target, missile->AngleTo(target),
+		target, missile->__f_AngleTo(target),
 		pitch);
 }
 
@@ -5400,7 +5400,7 @@ void P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bo
 								{
 									vz *= 0.8f;
 								}
-								angle_t ang = bombspot->AngleTo(thing) >> ANGLETOFINESHIFT;
+								angle_t ang = bombspot->__f_AngleTo(thing) >> ANGLETOFINESHIFT;
 								thing->vel.x += fixed_t(finecosine[ang] * thrust);
 								thing->vel.y += fixed_t(finesine[ang] * thrust);
 								if (!(flags & RADF_NODAMAGE))

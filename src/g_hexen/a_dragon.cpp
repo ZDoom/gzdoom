@@ -71,7 +71,7 @@ static void DragonSeek (AActor *actor, DAngle thresh, DAngle turnMax)
 	{ // attack the destination mobj if it's attackable
 		AActor *oldTarget;
 
-		if (absangle(actor->_f_angle() - actor->AngleTo(target)) < ANGLE_45/2)
+		if (absangle(actor->_f_angle() - actor->__f_AngleTo(target)) < ANGLE_45/2)
 		{
 			oldTarget = actor->target;
 			actor->target = target;
@@ -96,7 +96,7 @@ static void DragonSeek (AActor *actor, DAngle thresh, DAngle turnMax)
 		{
 			AActor *bestActor = NULL;
 			bestAngle = ANGLE_MAX;
-			angleToTarget = actor->AngleTo(actor->target);
+			angleToTarget = actor->__f_AngleTo(actor->target);
 			for (i = 0; i < 5; i++)
 			{
 				if (!target->args[i])
@@ -109,7 +109,7 @@ static void DragonSeek (AActor *actor, DAngle thresh, DAngle turnMax)
 				{
 					continue;
 				}
-				angleToSpot = actor->AngleTo(mo);
+				angleToSpot = actor->__f_AngleTo(mo);
 				if (absangle(angleToSpot-angleToTarget) < bestAngle)
 				{
 					bestAngle = absangle(angleToSpot-angleToTarget);
@@ -190,7 +190,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DragonFlight)
 			self->target = NULL;
 			return 0;
 		}
-		angle = self->AngleTo(self->target);
+		angle = self->__f_AngleTo(self->target);
 		if (absangle(self->_f_angle()-angle) < ANGLE_45/2 && self->CheckMeleeRange())
 		{
 			int damage = pr_dragonflight.HitDice (8);

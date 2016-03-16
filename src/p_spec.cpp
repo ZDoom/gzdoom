@@ -2279,7 +2279,7 @@ void DPusher::Tick ()
 
 				if ((speed > 0) && (P_CheckSight (thing, m_Source, SF_IGNOREVISIBILITY)))
 				{
-					angle_t pushangle = thing->AngleTo(sx, sy);
+					angle_t pushangle = thing->__f_AngleTo(sx, sy);
 					if (m_Source->GetClass()->TypeName == NAME_PointPusher)
 						pushangle += ANG180;    // away
 					pushangle >>= ANGLETOFINESHIFT;

@@ -102,7 +102,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Tracer2)
 	if (!dest || dest->health <= 0 || self->Speed == 0 || !self->CanSeek(dest))
 		return 0;
 
-	DAngle exact = self->_f_AngleTo(dest);
+	DAngle exact = self->AngleTo(dest);
 	DAngle diff = deltaangle(self->Angles.Yaw, exact);
 
 	if (diff < 0)

@@ -415,7 +415,7 @@ void P_MinotaurSlam (AActor *source, AActor *target)
 	fixed_t thrust;
 	int damage;
 
-	angle = source->AngleTo(target);
+	angle = source->__f_AngleTo(target);
 	angle >>= ANGLETOFINESHIFT;
 	thrust = 16*FRACUNIT+(pr_minotaurslam()<<10);
 	target->vel.x += FixedMul (thrust, finecosine[angle]);

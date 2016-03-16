@@ -173,7 +173,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FiredChase)
 		{
 			if (pr_firedemonchase() < 30)
 			{
-				ang = self->AngleTo(target);
+				ang = self->__f_AngleTo(target);
 				if (pr_firedemonchase() < 128)
 					ang += ANGLE_90;
 				else

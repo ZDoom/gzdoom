@@ -422,7 +422,7 @@ bool APathFollower::Interpolate ()
 			}
 			if (args[2] & 2)
 			{ // adjust yaw
-				Angles.Yaw = vectoyaw(dx, dy);
+				Angles.Yaw = VecToAngle(dx, dy);
 			}
 			if (args[2] & 4)
 			{ // adjust pitch; use floats for precision
@@ -430,7 +430,7 @@ bool APathFollower::Interpolate ()
 				double fdy = FIXED2DBL(dy);
 				double fdz = FIXED2DBL(-dz);
 				double dist = g_sqrt (fdx*fdx + fdy*fdy);
-				Angles.Pitch = dist != 0.f ? vectoyaw(dist, fdz) : 0.;
+				Angles.Pitch = dist != 0.f ? VecToAngle(dist, fdz) : 0.;
 			}
 		}
 		else
@@ -633,7 +633,7 @@ bool AMovingCamera::Interpolate ()
 
 	if (Super::Interpolate ())
 	{
-		Angles.Yaw = _f_AngleTo(tracer, true);
+		Angles.Yaw = AngleTo(tracer, true);
 
 		if (args[2] & 4)
 		{ // Also aim camera's pitch; use floats for precision
@@ -641,7 +641,7 @@ bool AMovingCamera::Interpolate ()
 			double dy = FIXED2DBL(Y() - tracer->Y());
 			double dz = FIXED2DBL(Z() - tracer->Z() - tracer->height/2);
 			double dist = g_sqrt (dx*dx + dy*dy);
-			Angles.Pitch = dist != 0.f ? vectoyaw(dist, dz) : 0.;
+			Angles.Pitch = dist != 0.f ? VecToAngle(dist, dz) : 0.;
 		}
 
 		return true;

@@ -818,12 +818,12 @@ public:
 		return P_AproxDistance(X() - otherx, Y() - othery);
 	}
 
-	fixed_t AngleTo(fixed_t otherx, fixed_t othery)
+	fixed_t __f_AngleTo(fixed_t otherx, fixed_t othery)
 	{
 		return R_PointToAngle2(X(), Y(), otherx, othery);
 	}
 
-	fixed_t AngleTo(fixedvec2 other)
+	fixed_t __f_AngleTo(fixedvec2 other)
 	{
 		return R_PointToAngle2(X(), Y(), other.x, other.y);
 	}
@@ -861,27 +861,27 @@ public:
 		return xs_RoundToInt(DVector3(X() - otherpos.x, Y() - otherpos.y, Z() - otherpos.z).Length());
 	}
 
-	angle_t AngleTo(AActor *other, bool absolute = false)
+	angle_t __f_AngleTo(AActor *other, bool absolute = false)
 	{
 		fixedvec3 otherpos = absolute ? other->Pos() : other->PosRelative(this);
 		return R_PointToAngle2(X(), Y(), otherpos.x, otherpos.y);
 	}
 
-	angle_t AngleTo(AActor *other, fixed_t oxofs, fixed_t oyofs, bool absolute = false) const
+	angle_t __f_AngleTo(AActor *other, fixed_t oxofs, fixed_t oyofs, bool absolute = false) const
 	{
 		return R_PointToAngle2(X(), Y(), other->X() + oxofs, other->Y() + oyofs);
 	}
 
-	DAngle _f_AngleTo(AActor *other, bool absolute = false)
+	DAngle AngleTo(AActor *other, bool absolute = false)
 	{
 		fixedvec3 otherpos = absolute ? other->Pos() : other->PosRelative(this);
-		return vectoyaw(otherpos.x - X(), otherpos.y - Y());
+		return VecToAngle(otherpos.x - X(), otherpos.y - Y());
 	}
 
-	DAngle _f_AngleTo(AActor *other, fixed_t oxofs, fixed_t oyofs, bool absolute = false) const
+	DAngle AngleTo(AActor *other, fixed_t oxofs, fixed_t oyofs, bool absolute = false) const
 	{
 		fixedvec3 otherpos = absolute ? other->Pos() : other->PosRelative(this);
-		return vectoyaw(otherpos.y + oxofs - Y(), otherpos.x + oyofs - X());
+		return VecToAngle(otherpos.y + oxofs - Y(), otherpos.x + oyofs - X());
 	}
 
 	fixedvec2 Vec2To(AActor *other) const
@@ -1321,7 +1321,7 @@ public:
 
 	void AngleFromVel()
 	{
-		Angles.Yaw = vectoyaw(vel.x, vel.y);
+		Angles.Yaw = VecToAngle(vel.x, vel.y);
 	}
 
 	void VelFromAngle()

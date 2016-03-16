@@ -1262,7 +1262,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomMissile)
 					if (CMF_OFFSETPITCH & flags)
 					{
 							DVector2 velocity (missile->vel.x, missile->vel.y);
-							Pitch += vectoyaw(velocity.Length(), missile->vel.z);
+							Pitch += VecToAngle(velocity.Length(), missile->vel.z);
 					}
 					missilespeed = abs(fixed_t(Pitch.Cos() * missile->Speed));
 					missile->vel.z = fixed_t(Pitch.Sin() * missile->Speed);
@@ -1921,7 +1921,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 
 	if (aim)
 	{
-		self->Angles.Yaw = self->_f_AngleTo(self->target);
+		self->Angles.Yaw = self->AngleTo(self->target);
 	}
 	self->Angles.Pitch = ANGLE2DBL(P_AimLineAttack (self, self->_f_angle(), MISSILERANGE, &t, ANGLE_1*60, 0, aim ? self->target : NULL));
 	if (t.linetarget == NULL && aim)
@@ -1931,12 +1931,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 		DVector2 xydiff(pos.x, pos.y);
 		double zdiff = (self->target->Z() + (self->target->height>>1)) -
 						(self->Z() + (self->height>>1) - self->floorclip);
-		self->Angles.Pitch = vectoyaw(xydiff.Length(), zdiff);
+		self->Angles.Pitch = VecToAngle(xydiff.Length(), zdiff);
 	}
 	// Let the aim trail behind the player
 	if (aim)
 	{
-		saved_angle = self->Angles.Yaw = self->_f_AngleTo(self->target, -self->target->vel.x * 3, -self->target->vel.y * 3);
+		saved_angle = self->Angles.Yaw = self->AngleTo(self->target, -self->target->vel.x * 3, -self->target->vel.y * 3);
 
 		if (aim == CRF_AIMDIRECT)
 		{
@@ -1946,7 +1946,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 				FLOAT2FIXED(spawnofs_xy * self->Angles.Yaw.Cos()),
 				FLOAT2FIXED(spawnofs_xy * self->Angles.Yaw.Sin())));
 			spawnofs_xy = 0;
-			self->Angles.Yaw = self->_f_AngleTo(self->target,- self->target->vel.x * 3, -self->target->vel.y * 3);
+			self->Angles.Yaw = self->AngleTo(self->target,- self->target->vel.x * 3, -self->target->vel.y * 3);
 		}
 
 		if (self->target->flags & MF_SHADOW)
@@ -3792,7 +3792,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
 				{
 					ang = self->_f_angle();
 				}
-				else ang = self->AngleTo (target);
+				else ang = self->__f_AngleTo (target);
 				
 				angle += ang;
 				
@@ -4041,7 +4041,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 
 	if (fov && (fov < ANGLE_MAX))
 	{
-		an = viewport->AngleTo(target) - viewport->_f_angle();
+		an = viewport->__f_AngleTo(target) - viewport->_f_angle();
 
 		if (an > (fov / 2) && an < (ANGLE_MAX - (fov / 2)))
 		{
@@ -4121,7 +4121,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfInTargetLOS)
 
 	if (fov && (fov < ANGLE_MAX))
 	{
-		an = target->AngleTo(self) - target->_f_angle();
+		an = target->__f_AngleTo(self) - target->_f_angle();
 
 		if (an > (fov / 2) && an < (ANGLE_MAX - (fov / 2)))
 		{
@@ -5097,7 +5097,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_WolfAttack)
 	A_FaceTarget (self);
 
 	// Target can dodge if it can see enemy
-	angle_t angle = self->target->AngleTo(self) - self->target->_f_angle();
+	angle_t angle = self->target->__f_AngleTo(self) - self->target->_f_angle();
 	angle >>= 24;
 	bool dodge = (P_CheckSight(self->target, self) && (angle>226 || angle<30));
 
@@ -5133,7 +5133,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_WolfAttack)
 	if (pr_cabullet() < hitchance)
 	{
 		// Compute position for spawning blood/puff
-		angle = self->target->AngleTo(self);
+		angle = self->target->__f_AngleTo(self);
 		
 		fixedvec3 bloodpos = self->target->Vec3Angle(self->target->radius, angle, self->target->height >> 1);
 

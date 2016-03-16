@@ -509,7 +509,7 @@ AActor *P_SpawnKoraxMissile (fixed_t x, fixed_t y, fixed_t z,
 	z -= source->floorclip;
 	th = Spawn (type, x, y, z, ALLOW_REPLACE);
 	th->target = source; // Originator
-	an = th->_f_AngleTo(dest);
+	an = th->AngleTo(dest);
 	if (dest->flags & MF_SHADOW)
 	{ // Invisible target
 		an += pr_kmissile.Random2() * (45/256.);

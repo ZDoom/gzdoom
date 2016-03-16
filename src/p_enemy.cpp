@@ -430,7 +430,7 @@ bool P_HitFriend(AActor * self)
 
 	if (self->flags&MF_FRIENDLY && self->target != NULL)
 	{
-		angle_t angle = self->AngleTo(self->target);
+		angle_t angle = self->__f_AngleTo(self->target);
 		fixed_t dist = self->AproxDistance (self->target);
 		P_AimLineAttack (self, angle, dist, &t, 0, true);
 		if (t.linetarget != NULL && t.linetarget != self->target)
@@ -1191,7 +1191,7 @@ bool P_IsVisible(AActor *lookee, AActor *other, INTBOOL allaround, FLookExParams
 
 	if (fov && fov < ANGLE_MAX)
 	{
-		angle_t an = lookee->AngleTo(other) - lookee->_f_angle();
+		angle_t an = lookee->__f_AngleTo(other) - lookee->_f_angle();
 
 		if (an > (fov / 2) && an < (ANGLE_MAX - (fov / 2)))
 		{
@@ -2462,7 +2462,7 @@ void A_DoChase (VMFrameStack *stack, AActor *actor, bool fastchase, FState *mele
 			{
 				if (pr_chase() < 100)
 				{
-					angle_t ang = actor->AngleTo(actor->target);
+					angle_t ang = actor->__f_AngleTo(actor->target);
 					if (pr_chase() < 128) ang += ANGLE_90;
 					else ang -= ANGLE_90;
 					actor->vel.x = 13 * finecosine[ang>>ANGLETOFINESHIFT];
@@ -2836,7 +2836,7 @@ void A_Face (AActor *self, AActor *other, angle_t _max_turn, angle_t _max_pitch,
 	DAngle ang_offset = ANGLE2DBL(_ang_offset);
 	DAngle max_pitch = ANGLE2DBL(_max_pitch);
 	DAngle pitch_offset = ANGLE2DBL(_pitch_offset);
-	DAngle other_angle = self->_f_AngleTo(other);
+	DAngle other_angle = self->AngleTo(other);
 
 	DAngle delta = deltaangle(self->Angles.Yaw, other_angle);
 
@@ -2993,7 +2993,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
 
 	self->flags &= ~MF_AMBUSH;
 		
-	self->Angles.Yaw = self->_f_AngleTo(self->target);
+	self->Angles.Yaw = self->AngleTo(self->target);
 
 	self->Angles.Pitch = ANGLE2DBL(P_AimLineAttack (self, self->_f_angle(), MISSILERANGE, &t, ANGLE_1*60, 0, self->target));
 	if (t.linetarget == NULL)
@@ -3002,11 +3002,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
 		fixedvec2 pos = self->Vec2To(self->target);
 		DVector2 xydiff(pos.x, pos.y);
 		double zdiff = (self->target->Z() + (self->target->height>>1)) - (self->Z() + (self->height>>1) - self->floorclip);
-		self->Angles.Pitch = -vectoyaw(xydiff.Length(), zdiff);
+		self->Angles.Pitch = -VecToAngle(xydiff.Length(), zdiff);
 	}
 
 	// Let the aim trail behind the player
-	self->Angles.Yaw = self->_f_AngleTo(self->target, -self->target->vel.x * 3, -self->target->vel.y * 3);
+	self->Angles.Yaw = self->AngleTo(self->target, -self->target->vel.x * 3, -self->target->vel.y * 3);
 
 	if (self->target->flags & MF_SHADOW && !(self->flags6 & MF6_SEEINVISIBLE))
 	{

@@ -356,7 +356,7 @@ bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, int f
 		// Rotate 90 degrees, so that walking perpendicularly across
 		// teleporter linedef causes thing to exit in the direction
 		// indicated by the exit thing.
-		angle = vectoyaw(line->dx, line->dy) - searcher->Angles.Yaw + 90;
+		angle = VecToAngle(line->dx, line->dy) - searcher->Angles.Yaw + 90;
 
 		// Sine, cosine of angle adjustment
 		s = FLOAT2FIXED(angle.Sin());

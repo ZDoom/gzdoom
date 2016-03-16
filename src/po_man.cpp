@@ -1043,7 +1043,7 @@ static void RotatePt (DAngle an, fixed_t *x, fixed_t *y, fixed_t startSpotX, fix
 	double c = an.Cos();
 
 	*x = (xs_CRoundToInt(tr_x * c - tr_y*s) & 0xfffffe00) + startSpotX;
-	*y = (xs_CRoundToInt(tr_x * s + tr_y*c) & 0xfffffe00) + startSpotX;
+	*y = (xs_CRoundToInt(tr_x * s + tr_y*c) & 0xfffffe00) + startSpotY;
 }
 
 //==========================================================================

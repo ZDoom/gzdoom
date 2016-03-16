@@ -1164,7 +1164,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 			}
 			else
 			{
-				ang = origin->AngleTo(target);
+				ang = origin->__f_AngleTo(target);
 			}
 
 			// Calculate this as float to avoid overflows so that the

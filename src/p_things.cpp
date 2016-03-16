@@ -308,7 +308,7 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 						else
 						{
 nolead:
-							mobj->Angles.Yaw = mobj->_f_AngleTo(targ);
+							mobj->Angles.Yaw = mobj->AngleTo(targ);
 							aim.Resize (fspeed);
 							mobj->vel.x = fixed_t(aim[0]);
 							mobj->vel.y = fixed_t(aim[1]);

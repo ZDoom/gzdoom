@@ -127,7 +127,7 @@ bool DBot::Check_LOS (AActor *to, angle_t vangle)
 	if (vangle == 0)
 		return false; //Looker seems to be blind.
 
-	return absangle(player->mo->AngleTo(to) - player->mo->_f_angle()) <= vangle/2;
+	return absangle(player->mo->__f_AngleTo(to) - player->mo->_f_angle()) <= vangle/2;
 }
 
 //-------------------------------------
@@ -224,14 +224,14 @@ shootmissile:
 		dist = player->mo->AproxDistance (enemy);
 		m = dist / GetDefaultByType (player->ReadyWeapon->ProjectileType)->Speed;
 		bglobal.SetBodyAt (enemy->X() + enemy->vel.x*m*2, enemy->Y() + enemy->vel.y*m*2, enemy->Z(), 1);
-		angle = player->mo->AngleTo(bglobal.body1);
+		angle = player->mo->__f_AngleTo(bglobal.body1);
 		if (Check_LOS (enemy, SHOOTFOV))
 			no_fire = false;
 	}
 	else
 	{
 		//Other weapons, mostly instant hit stuff.
-		angle = player->mo->AngleTo(enemy);
+		angle = player->mo->__f_AngleTo(enemy);
 		aiming_penalty = 0;
 		if (enemy->flags & MF_SHADOW)
 			aiming_penalty += (pr_botdofire()%25)+10;
@@ -519,7 +519,7 @@ angle_t DBot::FireRox (AActor *enemy, ticcmd_t *cmd)
 		{
 			if (bglobal.FakeFire (actor, bglobal.body1, cmd) >= SAFE_SELF_MISDIST)
 			{
-				ang = actor->AngleTo(bglobal.body1);
+				ang = actor->__f_AngleTo(bglobal.body1);
 				return ang;
 			}
 		}
@@ -529,7 +529,7 @@ angle_t DBot::FireRox (AActor *enemy, ticcmd_t *cmd)
 	{
 		if (bglobal.FakeFire (player->mo, enemy, cmd) >= SAFE_SELF_MISDIST)
 		{
-			ang = player->mo->AngleTo(enemy);
+			ang = player->mo->__f_AngleTo(enemy);
 			return ang;
 		}
 	}

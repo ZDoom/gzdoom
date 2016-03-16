@@ -195,7 +195,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningClip)
 		}
 		else
 		{
-			self->Angles.Yaw = self->_f_AngleTo(target);
+			self->Angles.Yaw = self->AngleTo(target);
 			self->vel.x = 0;
 			self->vel.y = 0;
 			P_ThrustMobj (self, self->Angles.Yaw, self->Speed>>1);

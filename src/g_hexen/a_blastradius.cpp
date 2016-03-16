@@ -33,13 +33,13 @@ void BlastActor (AActor *victim, fixed_t strength, fixed_t speed, AActor *Owner,
 		return;
 	}
 
-	angle = Owner->AngleTo(victim);
+	angle = Owner->__f_AngleTo(victim);
 	angle >>= ANGLETOFINESHIFT;
 	victim->vel.x = FixedMul (speed, finecosine[angle]);
 	victim->vel.y = FixedMul (speed, finesine[angle]);
 
 	// Spawn blast puff
-	ang = victim->AngleTo(Owner);
+	ang = victim->__f_AngleTo(Owner);
 	ang >>= ANGLETOFINESHIFT;
 	pos = victim->Vec3Offset(
 		FixedMul (victim->radius+FRACUNIT, finecosine[ang]),

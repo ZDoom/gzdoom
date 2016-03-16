@@ -30,7 +30,7 @@ void AdjustPlayerAngle (AActor *pmo, FTranslatedLineTarget *t)
 	angle_t angle;
 	int difference;
 
-	angle = t->angleFromSource;
+	angle = pmo->AngleTo(t->linetarget);
 	difference = (int)angle - (int)pmo->angle;
 	if (abs(difference) > MAX_ANGLE_ADJUST)
 	{

@@ -47,7 +47,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BatSpawn)
 
 	delta = self->args[1];
 	if (delta==0) delta=1;
-	angle = self->angle + (((pr_batspawn()%delta)-(delta>>1))<<24);
+	angle = self->_f_angle() + (((pr_batspawn()%delta)-(delta>>1))<<24);
 	mo = P_SpawnMissileAngle (self, PClass::FindActor("Bat"), angle, 0);
 	if (mo)
 	{
@@ -74,11 +74,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_BatMove)
 
 	if (pr_batmove()<128)
 	{
-		newangle = self->angle + ANGLE_1*self->args[4];
+		newangle = self->_f_angle() + ANGLE_1*self->args[4];
 	}
 	else
 	{
-		newangle = self->angle - ANGLE_1*self->args[4];
+		newangle = self->_f_angle() - ANGLE_1*self->args[4];
 	}
 
 	// Adjust velocity vector to new direction

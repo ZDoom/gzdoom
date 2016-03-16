@@ -735,7 +735,9 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 	{
 		P_TranslatePortalXY(pds->src, viewx, viewy);
 		P_TranslatePortalZ(pds->src, viewz);
-		P_TranslatePortalAngle(pds->src, viewangle);
+		DAngle va = ANGLE2DBL(viewangle);
+		P_TranslatePortalAngle(pds->src, va);
+		viewangle = va.BAMs();
 	}
 
 	viewsin = finesine[viewangle>>ANGLETOFINESHIFT];

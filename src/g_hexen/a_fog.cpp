@@ -51,7 +51,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FogSpawn)
 	{
 		delta = self->args[1];
 		if (delta==0) delta=1;
-		mo->angle = self->angle + (((pr_fogspawn()%delta)-(delta>>1))<<24);
+		mo->Angles.Yaw = self->Angles.Yaw + (((pr_fogspawn() % delta) - (delta >> 1)) * (360 / 256.));
 		mo->target = self;
 		if (self->args[0] < 1) self->args[0] = 1;
 		mo->args[0] = (pr_fogspawn() % (self->args[0]))+1;	// Random speed
@@ -94,7 +94,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FogMove)
 		self->special2 = (weaveindex + 1) & 63;
 	}
 
-	angle = self->angle>>ANGLETOFINESHIFT;
+	angle = self->_f_angle()>>ANGLETOFINESHIFT;
 	self->vel.x = FixedMul(speed, finecosine[angle]);
 	self->vel.y = FixedMul(speed, finesine[angle]);
 	return 0;

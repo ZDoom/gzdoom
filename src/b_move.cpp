@@ -305,13 +305,13 @@ bool FCajunMaster::CleanAhead (AActor *thing, fixed_t x, fixed_t y, ticcmd_t *cm
     return true;
 }
 
-#define OKAYRANGE (5*ANGLE_1) //counts *2, when angle is in range, turning is not executed.
-#define MAXTURN (15*ANGLE_1) //Max degrees turned in one tic. Lower is smother but may cause the bot not getting where it should = crash
+#define OKAYRANGE (5) //counts *2, when angle is in range, turning is not executed.
+#define MAXTURN (15) //Max degrees turned in one tic. Lower is smother but may cause the bot not getting where it should = crash
 #define TURNSENS 3 //Higher is smoother but slower turn.
 
 void DBot::TurnToAng ()
 {
-    int maxturn = MAXTURN;
+    double maxturn = MAXTURN;
 
 	if (player->ReadyWeapon != NULL)
 	{
@@ -331,16 +331,16 @@ void DBot::TurnToAng ()
 						maxturn = 3;
 	}
 
-	int distance = angle - player->mo->angle;
+	DAngle distance = deltaangle(player->mo->Angles.Yaw, ANGLE2DBL(angle));
 
-	if (abs (distance) < OKAYRANGE && !enemy)
+	if (fabs (distance) < OKAYRANGE && !enemy)
 		return;
 
 	distance /= TURNSENS;
-	if (abs (distance) > maxturn)
+	if (fabs (distance) > maxturn)
 		distance = distance < 0 ? -maxturn : maxturn;
 
-	player->mo->angle += distance;
+	player->mo->Angles.Yaw += distance;
 }
 
 void DBot::Pitch (AActor *target)
@@ -350,7 +350,7 @@ void DBot::Pitch (AActor *target)
 
 	diff = target->Z() - player->mo->Z();
 	aim = g_atan(diff / (double)player->mo->AproxDistance(target));
-	player->mo->pitch = -(int)(aim * ANGLE_180/M_PI);
+	player->mo->Angles.Pitch = ToDegrees(aim);
 }
 
 //Checks if a sector is dangerous.

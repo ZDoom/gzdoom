@@ -50,7 +50,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Punch)
 	if (self->FindInventory<APowerStrength>())	
 		damage *= 10;
 
-	angle = self->angle;
+	angle = self->_f_angle();
 
 	angle += pr_punch.Random2() << 18;
 	pitch = P_AimLineAttack (self, angle, MELEERANGE);
@@ -61,7 +61,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Punch)
 	if (t.linetarget)
 	{
 		S_Sound (self, CHAN_WEAPON, "*fist", 1, ATTN_NORM);
-		self->angle = t.angleFromSource;
+		self->Angles.Yaw = t.angleFromSource;
 	}
 	return 0;
 }
@@ -158,7 +158,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 		range = MELEERANGE+1;
 	}
 
-	angle = self->angle + (pr_saw.Random2() * (spread_xy / 255));
+	angle = self->_f_angle() + (pr_saw.Random2() * (spread_xy / 255));
 	slope = P_AimLineAttack (self, angle, range, &t) + (pr_saw.Random2() * (spread_z / 255));
 
 	AWeapon *weapon = self->player->ReadyWeapon;
@@ -232,20 +232,21 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 	// turn to face target
 	if (!(flags & SF_NOTURN))
 	{
-		angle = t.angleFromSource;
-		if (angle - self->angle > ANG180)
+		DAngle anglediff = deltaangle(self->Angles.Yaw, t.angleFromSource);
+
+		if (anglediff < 0.0)
 		{
-			if (angle - self->angle < (angle_t)(-ANG90 / 20))
-				self->angle = angle + ANG90 / 21;
+			if (anglediff < -4.5)
+				self->Angles.Yaw = angle + 90.0 / 21;
 			else
-				self->angle -= ANG90 / 20;
+				self->Angles.Yaw -= 4.5;
 		}
 		else
 		{
-			if (angle - self->angle > ANG90 / 20)
-				self->angle = angle - ANG90 / 21;
+			if (anglediff > 4.5)
+				self->Angles.Yaw = angle - 90.0 / 21;
 			else
-				self->angle += ANG90 / 20;
+				self->Angles.Yaw += 4.5;
 		}
 	}
 	if (!(flags & SF_NOPULLIN))
@@ -320,7 +321,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireShotgun2)
 	for (i=0 ; i<20 ; i++)
 	{
 		damage = 5*(pr_fireshotgun2()%3+1);
-		angle = self->angle;
+		angle = self->_f_angle();
 		angle += pr_fireshotgun2.Random2() << 19;
 
 		// Doom adjusts the bullet slope by shifting a random number [-255,255]
@@ -501,10 +502,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireSTGrenade)
 	}
 		
 	// Temporarily raise the pitch to send the grenade slightly upwards
-	fixed_t SavedPlayerPitch = self->pitch;
-	self->pitch -= (1152 << FRACBITS);
+	DAngle SavedPlayerPitch = self->Angles.Pitch;
+	self->Angles.Pitch -= 6.328125; //(1152 << FRACBITS);
 	P_SpawnPlayerMissile(self, grenade);
-	self->pitch = SavedPlayerPitch;
+	self->Angles.Pitch = SavedPlayerPitch;
 	return 0;
 }
 
@@ -619,7 +620,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireBFG)
 			return 0;
 	}
 
-	P_SpawnPlayerMissile (self,  0, 0, 0, PClass::FindActor("BFGBall"), self->angle, NULL, NULL, !!(dmflags2 & DF2_NO_FREEAIMBFG));
+	P_SpawnPlayerMissile (self,  0, 0, 0, PClass::FindActor("BFGBall"), self->_f_angle(), NULL, NULL, !!(dmflags2 & DF2_NO_FREEAIMBFG));
 	return 0;
 }
 
@@ -659,7 +660,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BFGSpray)
 	// offset angles from its attack angle
 	for (i = 0; i < numrays; i++)
 	{
-		an = self->angle - angle / 2 + angle / numrays*i;
+		an = self->_f_angle() - angle / 2 + angle / numrays*i;
 
 		// self->target is the originator (player) of the missile
 		P_AimLineAttack(self->target, an, distance, &t, vrange);
@@ -696,7 +697,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BFGSpray)
 				damage = defdamage;
 			}
 
-			int newdam = P_DamageMobj(t.linetarget, self->target, self->target, damage, dmgType, dmgFlags|DMG_USEANGLE, t.angleFromSource);
+			int newdam = P_DamageMobj(t.linetarget, self->target, self->target, damage, dmgType, dmgFlags|DMG_USEANGLE, FLOAT2ANGLE(t.angleFromSource.Degrees));
 			P_TraceBleed(newdam > 0 ? newdam : damage, &t, self);
 		}
 	}
@@ -749,16 +750,16 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireOldBFG)
 	self->player->extralight = 2;
 
 	// Save values temporarily
-	angle_t SavedPlayerAngle = self->angle;
-	fixed_t SavedPlayerPitch = self->pitch;
+	DAngle SavedPlayerAngle = self->Angles.Yaw;
+	DAngle SavedPlayerPitch = self->Angles.Pitch;
 	for (int i = 0; i < 2; i++) // Spawn two plasma balls in sequence
     {
-		self->angle += ((pr_oldbfg()&127) - 64) * (ANG90/768);
-		self->pitch += ((pr_oldbfg()&127) - 64) * (ANG90/640);
+		self->Angles.Yaw += ((pr_oldbfg()&127) - 64) * (90./768);
+		self->Angles.Pitch += ((pr_oldbfg()&127) - 64) * (90./640);
 		mo = P_SpawnPlayerMissile (self, plasma[i]);
 		// Restore saved values
-		self->angle = SavedPlayerAngle;
-		self->pitch = SavedPlayerPitch;
+		self->Angles.Yaw = SavedPlayerAngle;
+		self->Angles.Pitch = SavedPlayerPitch;
     }
 	if (doesautoaim && weapon != NULL)
 	{ // Restore autoaim setting

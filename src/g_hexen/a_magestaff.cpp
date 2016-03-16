@@ -139,7 +139,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MStaffAttack)
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return 0;
 	}
-	angle = self->angle;
+	angle = self->_f_angle();
 	
 	// [RH] Let's try and actually track what the player aimed at
 	P_AimLineAttack (self, angle, PLAYERMISSILERANGE, &t, ANGLE_1*32);
@@ -258,7 +258,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MageAttack)
 		return 0;
 	}
 	angle_t angle;
-	angle = self->angle;
+	angle = self->_f_angle();
 	MStaffSpawn2 (self, angle);
 	MStaffSpawn2 (self, angle-ANGLE_1*5);
 	MStaffSpawn2 (self, angle+ANGLE_1*5);

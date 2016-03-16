@@ -57,7 +57,7 @@ FClassMap SpawnableThings;
 
 static FRandom pr_leadtarget ("LeadTarget");
 
-bool P_Thing_Spawn (int tid, AActor *source, int type, angle_t angle, bool fog, int newtid)
+bool P_Thing_Spawn (int tid, AActor *source, int type, DAngle angle, bool fog, int newtid)
 {
 	int rtn = 0;
 	PClassActor *kind;
@@ -95,7 +95,7 @@ bool P_Thing_Spawn (int tid, AActor *source, int type, angle_t angle, bool fog, 
 			if (P_TestMobjLocation (mobj))
 			{
 				rtn++;
-				mobj->angle = (angle != ANGLE_MAX ? angle : spot->angle);
+				mobj->Angles.Yaw = (angle != 1000000. ? angle : spot->Angles.Yaw);
 				if (fog)
 				{
 					P_SpawnTeleportFog(mobj, spot->X(), spot->Y(), spot->Z() + TELEFOGHEIGHT, false, true);
@@ -172,7 +172,7 @@ bool P_Thing_Move (int tid, AActor *source, int mapspot, bool fog)
 	return false;
 }
 
-bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_name, angle_t angle,
+bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_name, DAngle angle,
 	fixed_t speed, fixed_t vspeed, int dest, AActor *forcedest, int gravity, int newtid,
 	bool leadTarget)
 {
@@ -303,12 +303,12 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 							mobj->vel.x = fixed_t (aimvec[0] * aimscale);
 							mobj->vel.y = fixed_t (aimvec[1] * aimscale);
 							mobj->vel.z = fixed_t (aimvec[2] * aimscale);
-							mobj->angle = R_PointToAngle2 (0, 0, mobj->vel.x, mobj->vel.y);
+							mobj->AngleFromVel();
 						}
 						else
 						{
 nolead:
-							mobj->angle = mobj->AngleTo(targ);
+							mobj->Angles.Yaw = mobj->_f_AngleTo(targ);
 							aim.Resize (fspeed);
 							mobj->vel.x = fixed_t(aim[0]);
 							mobj->vel.y = fixed_t(aim[1]);
@@ -321,9 +321,8 @@ nolead:
 					}
 					else
 					{
-						mobj->angle = angle;
-						mobj->vel.x = FixedMul (speed, finecosine[angle>>ANGLETOFINESHIFT]);
-						mobj->vel.y = FixedMul (speed, finesine[angle>>ANGLETOFINESHIFT]);
+						mobj->Angles.Yaw = angle;
+						mobj->VelFromAngle();
 						mobj->vel.z = vspeed;
 					}
 					// Set the missile's speed to reflect the speed it was spawned at.
@@ -701,7 +700,7 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 
 	if (!(flags & WARPF_ABSOLUTEANGLE))
 	{
-		angle += (flags & WARPF_USECALLERANGLE) ? caller->angle : reference->angle;
+		angle += (flags & WARPF_USECALLERANGLE) ? caller->_f_angle() : reference->_f_angle();
 	}
 
 	const fixed_t rad = FixedMul(radiusoffset, reference->radius);
@@ -762,13 +761,13 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 		}
 		else
 		{
-			caller->angle = angle;
+			caller->Angles.Yaw = ANGLE2DBL(angle);
 
 			if (flags & WARPF_COPYPITCH)
-				caller->SetPitch(reference->pitch, false);
+				caller->SetPitch(reference->Angles.Pitch, false);
 			
 			if (pitch)
-				caller->SetPitch(caller->pitch + pitch, false);
+				caller->SetPitch(caller->Angles.Pitch + ANGLE2DBL(pitch), false);
 			
 			if (flags & WARPF_COPYVELOCITY)
 			{

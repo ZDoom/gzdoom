@@ -25,6 +25,7 @@
 
 #include "doomtype.h"
 #include "tables.h"
+#include "vectors.h"
 
 class player_t;
 class AActor;
@@ -129,7 +130,12 @@ void	P_PredictionLerpReset();
 APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags=0);
 
 void P_ThrustMobj (AActor *mo, angle_t angle, fixed_t move);
-int P_FaceMobj (AActor *source, AActor *target, angle_t *delta);
+inline void P_ThrustMobj(AActor *mo, DAngle angle, fixed_t move)
+{
+	P_ThrustMobj(mo, FLOAT2ANGLE(angle.Degrees), move);
+}
+
+int P_FaceMobj (AActor *source, AActor *target, DAngle *delta);
 bool P_SeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax, bool precise = false, bool usecurspeed=false);
 
 enum EPuffFlags
@@ -187,8 +193,8 @@ AActor *P_SpawnSubMissile (AActor *source, PClassActor *type, AActor *target);	/
 extern FClassMap SpawnableThings;
 extern FClassMap StrifeTypes;
 
-bool	P_Thing_Spawn (int tid, AActor *source, int type, angle_t angle, bool fog, int newtid);
-bool	P_Thing_Projectile (int tid, AActor *source, int type, const char * type_name, angle_t angle,
+bool	P_Thing_Spawn (int tid, AActor *source, int type, DAngle angle, bool fog, int newtid);
+bool	P_Thing_Projectile (int tid, AActor *source, int type, const char * type_name, DAngle angle,
 			fixed_t speed, fixed_t vspeed, int dest, AActor *forcedest, int gravity, int newtid,
 			bool leadTarget);
 bool	P_MoveThing(AActor *source, fixed_t x, fixed_t y, fixed_t z, bool fog);

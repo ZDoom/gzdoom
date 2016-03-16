@@ -176,7 +176,7 @@ void AFastProjectile::Effect()
 				AActor *act = Spawn (trail, X(), Y(), hitz, ALLOW_REPLACE);
 				if (act != NULL)
 				{
-					act->angle = this->angle;
+					act->Angles.Yaw = Angles.Yaw;
 				}
 			}
 		}

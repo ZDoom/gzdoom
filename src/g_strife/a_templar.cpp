@@ -25,12 +25,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_TemplarAttack)
 
 	S_Sound (self, CHAN_WEAPON, "templar/shoot", 1, ATTN_NORM);
 	A_FaceTarget (self);
-	pitch = P_AimLineAttack (self, self->angle, MISSILERANGE);
+	pitch = P_AimLineAttack (self, self->_f_angle(), MISSILERANGE);
 
 	for (int i = 0; i < 10; ++i)
 	{
 		damage = (pr_templar() & 4) * 2;
-		angle = self->angle + (pr_templar.Random2() << 19);
+		angle = self->_f_angle() + (pr_templar.Random2() << 19);
 		pitchdiff = pr_templar.Random2() * 332063;
 		P_LineAttack (self, angle, MISSILERANGE+64*FRACUNIT, pitch+pitchdiff, damage, NAME_Hitscan, NAME_MaulerPuff);
 	}

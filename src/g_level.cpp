@@ -1240,8 +1240,7 @@ void G_FinishTravel ()
 		{
 			if (!(changeflags & CHANGELEVEL_KEEPFACING))
 			{
-				pawn->angle = pawndup->angle;
-				pawn->pitch = pawndup->pitch;
+				pawn->Angles = pawndup->Angles;
 			}
 			pawn->SetXYZ(pawndup->X(), pawndup->Y(), pawndup->Z());
 			pawn->vel.x = pawndup->vel.x;

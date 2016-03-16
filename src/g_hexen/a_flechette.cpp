@@ -39,7 +39,7 @@ IMPLEMENT_CLASS (AArtiPoisonBag1)
 
 bool AArtiPoisonBag1::Use (bool pickup)
 {
-	angle_t angle = Owner->angle >> ANGLETOFINESHIFT;
+	angle_t angle = Owner->_f_angle() >> ANGLETOFINESHIFT;
 	AActor *mo;
 
 	mo = Spawn ("PoisonBag", Owner->Vec3Offset(
@@ -67,7 +67,7 @@ IMPLEMENT_CLASS (AArtiPoisonBag2)
 
 bool AArtiPoisonBag2::Use (bool pickup)
 {
-	angle_t angle = Owner->angle >> ANGLETOFINESHIFT;
+	angle_t angle = Owner->_f_angle() >> ANGLETOFINESHIFT;
 	AActor *mo;
 
 	mo = Spawn ("FireBomb", Owner->Vec3Offset(
@@ -100,12 +100,12 @@ bool AArtiPoisonBag3::Use (bool pickup)
 	mo = Spawn("ThrowingBomb", Owner->PosPlusZ(-Owner->floorclip+35*FRACUNIT + (Owner->player? Owner->player->crouchoffset : 0)), ALLOW_REPLACE);
 	if (mo)
 	{
-		mo->angle = Owner->angle + (((pr_poisonbag()&7) - 4) << 24);
+		mo->Angles.Yaw = Owner->Angles.Yaw + (((pr_poisonbag() & 7) - 4) * 22.5f);
 
 		/* Original flight code from Hexen
 		 * mo->momz = 4*FRACUNIT+((player->lookdir)<<(FRACBITS-4));
 		 * mo->z += player->lookdir<<(FRACBITS-4);
-		 * P_ThrustMobj(mo, mo->angle, mo->info->speed);
+		 * P_ThrustMobj(mo, mo->_f_angle(), mo->info->speed);
 		 * mo->momx += player->mo->momx>>1;
 		 * mo->momy += player->mo->momy>>1;
 		 */
@@ -114,9 +114,9 @@ bool AArtiPoisonBag3::Use (bool pickup)
 		// is as set by the projectile. To accommodate this with a proper trajectory, we
 		// aim the projectile ~20 degrees higher than we're looking at and increase the
 		// speed we fire at accordingly.
-		angle_t orgpitch = angle_t(-Owner->pitch) >> ANGLETOFINESHIFT;
-		angle_t modpitch = angle_t(0xDC00000 - Owner->pitch) >> ANGLETOFINESHIFT;
-		angle_t angle = mo->angle >> ANGLETOFINESHIFT;
+		angle_t orgpitch = angle_t(-Owner->_f_pitch()) >> ANGLETOFINESHIFT;
+		angle_t modpitch = angle_t(0xDC00000 - Owner->_f_pitch()) >> ANGLETOFINESHIFT;
+		angle_t angle = mo->_f_angle() >> ANGLETOFINESHIFT;
 		fixed_t speed = fixed_t(g_sqrt((double)mo->Speed*mo->Speed + (4.0*65536*4*65536)));
 		fixed_t xyscale = FixedMul(speed, finecosine[modpitch]);
 

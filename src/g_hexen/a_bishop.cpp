@@ -118,15 +118,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopDoBlur)
 	self->special1 = (pr_doblur() & 3) + 3; // Random number of blurs
 	if (pr_doblur() < 120)
 	{
-		P_ThrustMobj (self, self->angle + ANG90, 11*FRACUNIT);
+		P_ThrustMobj (self, self->_f_angle() + ANG90, 11*FRACUNIT);
 	}
 	else if (pr_doblur() > 125)
 	{
-		P_ThrustMobj (self, self->angle - ANG90, 11*FRACUNIT);
+		P_ThrustMobj (self, self->_f_angle() - ANG90, 11*FRACUNIT);
 	}
 	else
 	{ // Thrust forward
-		P_ThrustMobj (self, self->angle, 11*FRACUNIT);
+		P_ThrustMobj (self, self->_f_angle(), 11*FRACUNIT);
 	}
 	S_Sound (self, CHAN_BODY, "BishopBlur", 1, ATTN_NORM);
 	return 0;
@@ -160,7 +160,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopSpawnBlur)
 	mo = Spawn ("BishopBlur", self->Pos(), ALLOW_REPLACE);
 	if (mo)
 	{
-		mo->angle = self->angle;
+		mo->Angles.Yaw = self->Angles.Yaw;
 	}
 	return 0;
 }
@@ -225,7 +225,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopPainBlur)
 	mo = Spawn ("BishopPainBlur", self->Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
 	if (mo)
 	{
-		mo->angle = self->angle;
+		mo->Angles.Yaw = self->Angles.Yaw;
 	}
 	return 0;
 }

@@ -275,14 +275,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_M_Saw)
 	A_FaceTarget (self);
 	if (self->CheckMeleeRange ())
 	{
-		angle_t 	angle;
+		angle_t 	Angle;
 		FTranslatedLineTarget t;
 
 		damage *= (pr_m_saw()%10+1);
-		angle = self->angle + (pr_m_saw.Random2() << 18);
+		Angle = self->_f_angle() + (pr_m_saw.Random2() << 18);
 		
-		P_LineAttack (self, angle, MELEERANGE+1,
-					P_AimLineAttack (self, angle, MELEERANGE+1), damage,
+		P_LineAttack (self, Angle, MELEERANGE+1,
+					P_AimLineAttack (self, Angle, MELEERANGE+1), damage,
 					NAME_Melee, pufftype, false, &t);
 
 		if (!t.linetarget)
@@ -293,20 +293,22 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_M_Saw)
 		S_Sound (self, CHAN_WEAPON, hitsound, 1, ATTN_NORM);
 			
 		// turn to face target
-		angle = t.angleFromSource;
-		if (angle - self->angle > ANG180)
+		DAngle angle = t.angleFromSource;
+		DAngle anglediff = deltaangle(self->Angles.Yaw, angle);
+
+		if (anglediff < 0.0)
 		{
-			if (angle - self->angle < (angle_t)(-ANG90/20))
-				self->angle = angle + ANG90/21;
+			if (anglediff < -4.5)
+				self->Angles.Yaw = angle + 90.0 / 21;
 			else
-				self->angle -= ANG90/20;
+				self->Angles.Yaw -= 4.5;
 		}
 		else
 		{
-			if (angle - self->angle > ANG90/20)
-				self->angle = angle - ANG90/21;
+			if (anglediff > 4.5)
+				self->Angles.Yaw = angle - 90.0 / 21;
 			else
-				self->angle += ANG90/20;
+				self->Angles.Yaw += 4.5;
 		}
 	}
 	else
@@ -336,7 +338,7 @@ static void MarinePunch(AActor *self, int damagemul)
 	damage = ((pr_m_punch()%10+1) << 1) * damagemul;
 
 	A_FaceTarget (self);
-	angle = self->angle + (pr_m_punch.Random2() << 18);
+	angle = self->_f_angle() + (pr_m_punch.Random2() << 18);
 	pitch = P_AimLineAttack (self, angle, MELEERANGE);
 	P_LineAttack (self, angle, MELEERANGE, pitch, damage, NAME_Melee, NAME_BulletPuff, true, &t);
 
@@ -344,7 +346,7 @@ static void MarinePunch(AActor *self, int damagemul)
 	if (t.linetarget)
 	{
 		S_Sound (self, CHAN_WEAPON, "*fist", 1, ATTN_NORM);
-		self->angle = t.angleFromSource;
+		self->Angles.Yaw = t.angleFromSource;
 	}
 }
 
@@ -369,7 +371,7 @@ void P_GunShot2 (AActor *mo, bool accurate, int pitch, PClassActor *pufftype)
 	int 		damage;
 		
 	damage = 5*(pr_m_gunshot()%3+1);
-	angle = mo->angle;
+	angle = mo->_f_angle();
 
 	if (!accurate)
 	{
@@ -395,7 +397,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_M_FirePistol)
 
 	S_Sound (self, CHAN_WEAPON, "weapons/pistol", 1, ATTN_NORM);
 	A_FaceTarget (self);
-	P_GunShot2 (self, accurate, P_AimLineAttack (self, self->angle, MISSILERANGE),
+	P_GunShot2 (self, accurate, P_AimLineAttack (self, self->_f_angle(), MISSILERANGE),
 		PClass::FindActor(NAME_BulletPuff));
 	return 0;
 }
@@ -417,7 +419,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_M_FireShotgun)
 
 	S_Sound (self, CHAN_WEAPON,  "weapons/shotgf", 1, ATTN_NORM);
 	A_FaceTarget (self);
-	pitch = P_AimLineAttack (self, self->angle, MISSILERANGE);
+	pitch = P_AimLineAttack (self, self->_f_angle(), MISSILERANGE);
 	for (int i = 0; i < 7; ++i)
 	{
 		P_GunShot2 (self, false, pitch, PClass::FindActor(NAME_BulletPuff));
@@ -464,11 +466,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_M_FireShotgun2)
 
 	S_Sound (self, CHAN_WEAPON, "weapons/sshotf", 1, ATTN_NORM);
 	A_FaceTarget (self);
-	pitch = P_AimLineAttack (self, self->angle, MISSILERANGE);
+	pitch = P_AimLineAttack (self, self->_f_angle(), MISSILERANGE);
 	for (int i = 0; i < 20; ++i)
 	{
 		int damage = 5*(pr_m_fireshotgun2()%3+1);
-		angle_t angle = self->angle + (pr_m_fireshotgun2.Random2() << 19);
+		angle_t angle = self->_f_angle() + (pr_m_fireshotgun2.Random2() << 19);
 
 		P_LineAttack (self, angle, MISSILERANGE,
 					  pitch + (pr_m_fireshotgun2.Random2() * 332063), damage,
@@ -494,7 +496,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_M_FireCGun)
 
 	S_Sound (self, CHAN_WEAPON, "weapons/chngun", 1, ATTN_NORM);
 	A_FaceTarget (self);
-	P_GunShot2 (self, accurate, P_AimLineAttack (self, self->angle, MISSILERANGE),
+	P_GunShot2 (self, accurate, P_AimLineAttack (self, self->_f_angle(), MISSILERANGE),
 		PClass::FindActor(NAME_BulletPuff));
 	return 0;
 }

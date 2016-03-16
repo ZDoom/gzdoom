@@ -3455,7 +3455,7 @@ int DLevelScript::DoSpawn (int type, fixed_t x, fixed_t y, fixed_t z, int tid, i
 			actor->flags2 |= MF2_PASSMOBJ;
 			if (force || P_TestMobjLocation (actor))
 			{
-				actor->angle = angle << 24;
+				actor->Angles.Yaw = angle * (360. / 256);
 				actor->tid = tid;
 				actor->AddToHash ();
 				if (actor->flags & MF_SPECIAL)
@@ -3508,12 +3508,12 @@ int DLevelScript::DoSpawnSpotFacing (int type, int spot, int tid, bool force)
 
 		while ( (aspot = iterator.Next ()) )
 		{
-			spawned += DoSpawn (type, aspot->X(), aspot->Y(), aspot->Z(), tid, aspot->angle >> 24, force);
+			spawned += DoSpawn (type, aspot->X(), aspot->Y(), aspot->Z(), tid, aspot->_f_angle() >> 24, force);
 		}
 	}
 	else if (activator != NULL)
 	{
-			spawned += DoSpawn (type, activator->X(), activator->Y(), activator->Z(), tid, activator->angle >> 24, force);
+			spawned += DoSpawn (type, activator->X(), activator->Y(), activator->Z(), tid, activator->_f_angle() >> 24, force);
 	}
 	return spawned;
 }
@@ -4736,7 +4736,7 @@ static bool DoSpawnDecal(AActor *actor, const FDecalTemplate *tpl, int flags, an
 {
 	if (!(flags & SDF_ABSANGLE))
 	{
-		angle += actor->angle;
+		angle += actor->_f_angle();
 	}
 	return NULL != ShootDecal(tpl, actor, actor->Sector, actor->X(), actor->Y(),
 		actor->Z() + (actor->height>>1) - actor->floorclip + actor->GetBobOffset() + zofs,
@@ -4745,11 +4745,12 @@ static bool DoSpawnDecal(AActor *actor, const FDecalTemplate *tpl, int flags, an
 
 static void SetActorAngle(AActor *activator, int tid, int angle, bool interpolate)
 {
+	DAngle an = angle * (360. / 65536);
 	if (tid == 0)
 	{
 		if (activator != NULL)
 		{
-			activator->SetAngle(angle << 16, interpolate);
+			activator->SetAngle(an, interpolate);
 		}
 	}
 	else
@@ -4759,18 +4760,19 @@ static void SetActorAngle(AActor *activator, int tid, int angle, bool interpolat
 
 		while ((actor = iterator.Next()))
 		{
-			actor->SetAngle(angle << 16, interpolate);
+			actor->SetAngle(an, interpolate);
 		}
 	}
 }
 
 static void SetActorPitch(AActor *activator, int tid, int angle, bool interpolate)
 {
+	DAngle an = angle * (360. / 65536);
 	if (tid == 0)
 	{
 		if (activator != NULL)
 		{
-			activator->SetPitch(angle << 16, interpolate);
+			activator->SetPitch(an, interpolate);
 		}
 	}
 	else
@@ -4780,18 +4782,19 @@ static void SetActorPitch(AActor *activator, int tid, int angle, bool interpolat
 
 		while ((actor = iterator.Next()))
 		{
-			actor->SetPitch(angle << 16, interpolate);
+			actor->SetPitch(an, interpolate);
 		}
 	}
 }
 
 static void SetActorRoll(AActor *activator, int tid, int angle, bool interpolate)
 {
+	DAngle an = angle * (360. / 65536);
 	if (tid == 0)
 	{
 		if (activator != NULL)
 		{
-			activator->SetRoll(angle << 16, interpolate);
+			activator->SetRoll(an, interpolate);
 		}
 	}
 	else
@@ -4801,7 +4804,7 @@ static void SetActorRoll(AActor *activator, int tid, int angle, bool interpolate
 
 		while ((actor = iterator.Next()))
 		{
-			actor->SetRoll(angle << 16, interpolate);
+			actor->SetRoll(an, interpolate);
 		}
 	}
 }
@@ -5901,11 +5904,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 
 		// [Nash] Actor roll functions. Let's roll!
 		case ACSF_SetActorRoll:
-			actor = SingleActorFromTID(args[0], activator);
-			if (actor != NULL)
-			{
-				actor->SetRoll(args[1] << 16, false);
-			}
+			SetActorRoll(activator, args[0], args[1], false);
 			return 0;
 
 		case ACSF_ChangeActorRoll:
@@ -5917,7 +5916,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 
 		case ACSF_GetActorRoll:
 			actor = SingleActorFromTID(args[0], activator);
-			return actor != NULL? actor->roll >> 16 : 0;
+			return actor != NULL? actor->Angles.Roll.FixedAngle() : 0;
 		
 		// [ZK] A_Warp in ACS
 		case ACSF_Warp:
@@ -8690,14 +8689,14 @@ scriptwait:
 		case PCD_GETACTORANGLE:
 			{
 				AActor *actor = SingleActorFromTID(STACK(1), activator);
-				STACK(1) = actor == NULL ? 0 : actor->angle >> 16;
+				STACK(1) = actor == NULL ? 0 : actor->Angles.Yaw.FixedAngle();
 			}
 			break;
 
 		case PCD_GETACTORPITCH:
 			{
 				AActor *actor = SingleActorFromTID(STACK(1), activator);
-				STACK(1) = actor == NULL ? 0 : actor->pitch >> 16;
+				STACK(1) = actor == NULL ? 0 : actor->Angles.Pitch.FixedAngle();
 			}
 			break;
 
@@ -9034,15 +9033,15 @@ scriptwait:
 			// Like Thing_Projectile(Gravity) specials, but you can give the
 			// projectile a TID.
 			// Thing_Projectile2 (tid, type, angle, speed, vspeed, gravity, newtid);
-			P_Thing_Projectile (STACK(7), activator, STACK(6), NULL, ((angle_t)(STACK(5)<<24)),
-				STACK(4)<<(FRACBITS-3), STACK(3)<<(FRACBITS-3), 0, NULL, STACK(2), STACK(1), false);
+			P_Thing_Projectile(STACK(7), activator, STACK(6), NULL, STACK(5) * (360. / 256.),
+				STACK(4) << (FRACBITS - 3), STACK(3) << (FRACBITS - 3), 0, NULL, STACK(2), STACK(1), false);
 			sp -= 7;
 			break;
 
 		case PCD_SPAWNPROJECTILE:
 			// Same, but takes an actor name instead of a spawn ID.
-			P_Thing_Projectile (STACK(7), activator, 0, FBehavior::StaticLookupString (STACK(6)), ((angle_t)(STACK(5)<<24)),
-				STACK(4)<<(FRACBITS-3), STACK(3)<<(FRACBITS-3), 0, NULL, STACK(2), STACK(1), false);
+			P_Thing_Projectile(STACK(7), activator, 0, FBehavior::StaticLookupString(STACK(6)), STACK(5) * (360. / 256.),
+				STACK(4) << (FRACBITS - 3), STACK(3) << (FRACBITS - 3), 0, NULL, STACK(2), STACK(1), false);
 			sp -= 7;
 			break;
 

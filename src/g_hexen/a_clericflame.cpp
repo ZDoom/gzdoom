@@ -56,7 +56,7 @@ void ACFlameMissile::Effect ()
 		AActor *mo = Spawn ("CFlameFloor", X(), Y(), newz, ALLOW_REPLACE);
 		if (mo)
 		{
-			mo->angle = angle;
+			mo->Angles.Yaw = Angles.Yaw;
 		}
 	}
 }
@@ -117,7 +117,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CFlameMissile)
 	PARAM_ACTION_PROLOGUE;
 
 	int i;
-	int an, an90;
+	DAngle an;
 	fixed_t dist;
 	AActor *mo;
 	
@@ -129,30 +129,29 @@ DEFINE_ACTION_FUNCTION(AActor, A_CFlameMissile)
 		dist = BlockingMobj->radius+18*FRACUNIT;
 		for (i = 0; i < 4; i++)
 		{
-			an = (i*ANG45)>>ANGLETOFINESHIFT;
-			an90 = (i*ANG45+ANG90)>>ANGLETOFINESHIFT;
+			an = i*45.;
 			mo = Spawn ("CircleFlame", BlockingMobj->Vec3Offset(
-				FixedMul(dist, finecosine[an]),
-				FixedMul(dist, finesine[an]), 
+				xs_CRoundToInt(an.Cos()*dist), xs_CRoundToInt(an.Sin()*dist),
 				5*FRACUNIT), ALLOW_REPLACE);
 			if (mo)
 			{
-				mo->angle = an<<ANGLETOFINESHIFT;
+				mo->Angles.Yaw = an;
 				mo->target = self->target;
-				mo->vel.x = mo->special1 = FixedMul(FLAMESPEED, finecosine[an]);
-				mo->vel.y = mo->special2 = FixedMul(FLAMESPEED, finesine[an]);
+				mo->VelFromAngle(FLAMESPEED);
+				mo->special1 = mo->vel.x;
+				mo->special2 = mo->vel.y;
 				mo->tics -= pr_missile()&3;
 			}
 			mo = Spawn ("CircleFlame", BlockingMobj->Vec3Offset(
-				-FixedMul(dist, finecosine[an]),
-				-FixedMul(dist, finesine[an]), 
+				-xs_CRoundToInt(an.Cos()*dist), -xs_CRoundToInt(an.Sin()*dist),
 				5*FRACUNIT), ALLOW_REPLACE);
 			if(mo)
 			{
-				mo->angle = ANG180+(an<<ANGLETOFINESHIFT);
+				mo->Angles.Yaw = an + 180.;
 				mo->target = self->target;
-				mo->vel.x = mo->special1 = FixedMul(-FLAMESPEED, finecosine[an]);
-				mo->vel.y = mo->special2 = FixedMul(-FLAMESPEED, finesine[an]);
+				mo->VelFromAngle(-FLAMESPEED);
+				mo->special1 = mo->vel.x;
+				mo->special2 = mo->vel.y;
 				mo->tics -= pr_missile()&3;
 			}
 		}
@@ -171,11 +170,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_CFlameRotate)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	int an;
+	DAngle an = self->Angles.Yaw + 90.;
+	self->VelFromAngle(an, FLAMEROTSPEED);
+	self->vel.x += self->special1;
+	self->vel.y += self->special2;
 
-	an = (self->angle+ANG90)>>ANGLETOFINESHIFT;
-	self->vel.x = self->special1+FixedMul(FLAMEROTSPEED, finecosine[an]);
-	self->vel.y = self->special2+FixedMul(FLAMEROTSPEED, finesine[an]);
-	self->angle += ANG90/15;
+	self->Angles.Yaw += 6.;
 	return 0;
 }

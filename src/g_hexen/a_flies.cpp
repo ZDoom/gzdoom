@@ -84,9 +84,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_FlyBuzz)
 		return 0;
 	}
 
-	angle_t ang = self->AngleTo(targ);
-	self->angle = ang;
+	self->Angles.Yaw = self->_f_AngleTo(targ);
 	self->args[0]++;
+	angle_t ang = self->AngleTo(targ);
 	ang >>= ANGLETOFINESHIFT;
 	if (!P_TryMove(self, self->X() + 6 * finecosine[ang], self->Y() + 6 * finesine[ang], true))
 	{

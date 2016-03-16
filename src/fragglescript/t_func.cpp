@@ -864,7 +864,7 @@ void FParser::SF_Spawn(void)
 {
 	int x, y, z;
 	PClassActor *pclass;
-	angle_t angle = 0;
+	DAngle angle = 0;
 	
 	if (CheckArgs(3))
 	{
@@ -890,7 +890,7 @@ void FParser::SF_Spawn(void)
 		
 		if(t_argc >= 4)
 		{
-			angle = intvalue(t_argv[3]) * (SQWORD)ANG45 / 45;
+			angle = floatvalue(t_argv[3]);
 		}
 		
 		t_return.type = svt_mobj;
@@ -898,7 +898,7 @@ void FParser::SF_Spawn(void)
 
 		if (t_return.value.mobj)		
 		{
-			t_return.value.mobj->angle = angle;
+			t_return.value.mobj->Angles.Yaw = angle;
 
 			if (!DFraggleThinker::ActiveThinker->nocheckposition)
 			{
@@ -1054,7 +1054,7 @@ void FParser::SF_ObjAngle(void)
 	}
 
 	t_return.type = svt_fixed; // haleyjd: fixed-point -- SoM again :)
-	t_return.value.f = mo ? (fixed_t)AngleToFixed(mo->angle) : 0;   // null ptr check
+	t_return.value.f = mo ? (fixed_t)AngleToFixed(mo->_f_angle()) : 0;   // null ptr check
 }
 
 
@@ -1449,7 +1449,7 @@ void FParser::SF_PointToDist(void)
 
 void FParser::SF_SetCamera(void)
 {
-	angle_t angle;
+	DAngle angle;
 	player_t * player;
 	AActor * newcamera;
 	
@@ -1465,20 +1465,14 @@ void FParser::SF_SetCamera(void)
 			return;         // nullptr check
 		}
 		
-		angle = t_argc < 2 ? newcamera->angle : (fixed_t)FixedToAngle(fixedvalue(t_argv[1]));
+		angle = t_argc < 2 ? newcamera->Angles.Yaw : floatvalue(t_argv[1]);
 
-		newcamera->special1=newcamera->angle;
+		newcamera->special1 = newcamera->Angles.Yaw.BAMs();
 		newcamera->special2=newcamera->Z();
 		newcamera->SetZ(t_argc < 3 ? (newcamera->Z() + (41 << FRACBITS)) : (intvalue(t_argv[2]) << FRACBITS));
-		newcamera->angle = angle;
-		if(t_argc < 4) newcamera->pitch = 0;
-		else
-		{
-			fixed_t pitch = fixedvalue(t_argv[3]);
-			if (pitch < -50 * FRACUNIT) pitch = -50 * FRACUNIT;
-			if (pitch > 50 * FRACUNIT)  pitch = 50 * FRACUNIT;
-			newcamera->pitch = xs_CRoundToUInt((pitch / 65536.0f)*(ANGLE_45 / 45.0f)*(20.0f / 32.0f));
-		}
+		newcamera->Angles.Yaw = angle;
+		if (t_argc < 4) newcamera->Angles.Pitch = 0;
+		else newcamera->Angles.Pitch = clamp(floatvalue(t_argv[3]), -50., 50.) * (20. / 32.);
 		player->camera=newcamera;
 	}
 }
@@ -1499,7 +1493,7 @@ void FParser::SF_ClearCamera(void)
 	if (cam)
 	{
 		player->camera=player->mo;
-		cam->angle=cam->special1;
+		cam->Angles.Yaw = ANGLE2DBL(cam->special1);
 		cam->SetZ(cam->special2);
 	}
 
@@ -3115,15 +3109,16 @@ void FParser::SF_MoveCamera(void)
 		//180--+--0  
 		//   Q2|Q3  
 		//    270
+		angle_t camangle = cam->Angles.Yaw.BAMs();
 		quad1 = targetangle / ANG90;
-		quad2 = cam->angle / ANG90;
-		bigangle = targetangle > cam->angle ? targetangle : cam->angle;
-		smallangle = targetangle < cam->angle ? targetangle : cam->angle;
+		quad2 = camangle / ANG90;
+		bigangle = targetangle > camangle ? targetangle : camangle;
+		smallangle = targetangle < camangle ? targetangle : camangle;
 		if((quad1 > quad2 && quad1 - 1 == quad2) || (quad2 > quad1 && quad2 - 1 == quad1) ||
 			quad1 == quad2)
 		{
 			angledist = bigangle - smallangle;
-			angledir = targetangle > cam->angle ? 1 : -1;
+			angledir = targetangle > cam->_f_angle() ? 1 : -1;
 		}
 		else
 		{
@@ -3145,10 +3140,10 @@ void FParser::SF_MoveCamera(void)
 				if(angledist > ANG180)
 				{
 					angledist = diff180;
-					angledir = targetangle > cam->angle ? -1 : 1;
+					angledir = targetangle > camangle ? -1 : 1;
 				}
 				else
-					angledir = targetangle > cam->angle ? 1 : -1;
+					angledir = targetangle > camangle ? 1 : -1;
 			}
 		}
 		
@@ -3203,17 +3198,17 @@ void FParser::SF_MoveCamera(void)
 		}
 		
 		if(anglestep >= angledist)
-			cam->angle = targetangle;
+			cam->Angles.Yaw = ANGLE2DBL(targetangle);
 		else
 		{
 			if(angledir == 1)
 			{
-				cam->angle += anglestep;
+				cam->Angles.Yaw += ANGLE2DBL(anglestep);
 				moved = 1;
 			}
 			else if(angledir == -1)
 			{
-				cam->angle -= anglestep;
+				cam->Angles.Yaw -= ANGLE2DBL(anglestep);
 				moved = 1;
 			}
 		}
@@ -4288,7 +4283,7 @@ void FParser::SF_SpawnShot2(void)
 		{
 			S_Sound (mo, CHAN_VOICE, mo->SeeSound, 1, ATTN_NORM);
 			mo->target = source;
-			P_ThrustMobj(mo, mo->angle = source->angle, mo->Speed);
+			P_ThrustMobj(mo, (mo->Angles.Yaw = source->Angles.Yaw), mo->Speed);
 			if (!P_CheckMissileSpawn(mo, source->radius)) mo = NULL;
 		}
 		t_return.value.mobj = mo;

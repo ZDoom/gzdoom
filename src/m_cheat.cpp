@@ -469,8 +469,8 @@ void cht_DoCheat (player_t *player, int cheat)
 		{
 			// Don't allow this in deathmatch even with cheats enabled, because it's
 			// a very very cheap kill.
-			P_LineAttack (player->mo, player->mo->angle, PLAYERMISSILERANGE,
-				P_AimLineAttack (player->mo, player->mo->angle, PLAYERMISSILERANGE), TELEFRAG_DAMAGE,
+			P_LineAttack (player->mo, player->mo->_f_angle(), PLAYERMISSILERANGE,
+				P_AimLineAttack (player->mo, player->mo->_f_angle(), PLAYERMISSILERANGE), TELEFRAG_DAMAGE,
 				NAME_MDK, NAME_BulletPuff);
 		}
 		break;

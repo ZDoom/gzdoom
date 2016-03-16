@@ -74,13 +74,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_Spectre3Attack)
 	foo->FriendPlayer = 0;
 	foo->tracer = self->target;
 
-	self->angle -= ANGLE_180 / 20 * 10;
+	self->Angles.Yaw -= 90.;
 	for (int i = 0; i < 20; ++i)
 	{
-		self->angle += ANGLE_180 / 20;
+		self->Angles.Yaw += 9.;
 		P_SpawnSubMissile (self, PClass::FindActor("SpectralLightningBall2"), self);
 	}
-	self->angle -= ANGLE_180 / 20 * 10;
+	self->Angles.Yaw -= 90.;
 	return 0;
 }
 

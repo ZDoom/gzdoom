@@ -491,7 +491,7 @@ void SDLFB::Update ()
 			return;
 
 		pixels = Surface->pixels;
-		pitch = Surface->pitch;
+		pitch = Surface->_f_pitch();
 	}
 
 	if (NotPaletted)

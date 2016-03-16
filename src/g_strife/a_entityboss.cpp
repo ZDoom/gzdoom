@@ -81,7 +81,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnEntity)
 	AActor *entity = Spawn("EntityBoss", self->PosPlusZ(70*FRACUNIT), ALLOW_REPLACE);
 	if (entity != NULL)
 	{
-		entity->angle = self->angle;
+		entity->Angles.Yaw = self->Angles.Yaw;
 		entity->CopyFriendliness(self, true);
 		entity->vel.z = 5*FRACUNIT;
 		entity->tracer = self;
@@ -100,19 +100,19 @@ DEFINE_ACTION_FUNCTION(AActor, A_EntityDeath)
 	AActor *spot = self->tracer;
 	if (spot == NULL) spot = self;
 
-	fixedvec3 pos = spot->Vec3Angle(secondRadius, self->angle, self->tracer? 70*FRACUNIT : 0);
+	fixedvec3 pos = spot->Vec3Angle(secondRadius, self->_f_angle(), self->tracer? 70*FRACUNIT : 0);
 	
-	an = self->angle >> ANGLETOFINESHIFT;
+	an = self->_f_angle() >> ANGLETOFINESHIFT;
 	second = Spawn("EntitySecond", pos, ALLOW_REPLACE);
 	second->CopyFriendliness(self, true);
 	//second->target = self->target;
 	A_FaceTarget (second);
-	an = second->angle >> ANGLETOFINESHIFT;
+	an = second->_f_angle() >> ANGLETOFINESHIFT;
 	second->vel.x += FixedMul (finecosine[an], 320000);
 	second->vel.y += FixedMul (finesine[an], 320000);
 
-	pos = spot->Vec3Angle(secondRadius, self->angle + ANGLE_90, self->tracer? 70*FRACUNIT : 0);
-	an = (self->angle + ANGLE_90) >> ANGLETOFINESHIFT;
+	pos = spot->Vec3Angle(secondRadius, self->_f_angle() + ANGLE_90, self->tracer? 70*FRACUNIT : 0);
+	an = (self->_f_angle() + ANGLE_90) >> ANGLETOFINESHIFT;
 	second = Spawn("EntitySecond", pos, ALLOW_REPLACE);
 	second->CopyFriendliness(self, true);
 	//second->target = self->target;
@@ -120,8 +120,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_EntityDeath)
 	second->vel.y = FixedMul (secondRadius, finesine[an]) << 2;
 	A_FaceTarget (second);
 
-	pos = spot->Vec3Angle(secondRadius, self->angle - ANGLE_90, self->tracer? 70*FRACUNIT : 0);
-	an = (self->angle - ANGLE_90) >> ANGLETOFINESHIFT;
+	pos = spot->Vec3Angle(secondRadius, self->_f_angle() - ANGLE_90, self->tracer? 70*FRACUNIT : 0);
+	an = (self->_f_angle() - ANGLE_90) >> ANGLETOFINESHIFT;
 	second = Spawn("EntitySecond", pos, ALLOW_REPLACE);
 	second->CopyFriendliness(self, true);
 	//second->target = self->target;

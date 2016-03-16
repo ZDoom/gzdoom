@@ -15,7 +15,7 @@
 // firing three missiles in three different directions?
 // Doesn't look like it.
 //
-#define FATSPREAD (ANG90/8)
+#define FATSPREAD (90./8)
 
 DEFINE_ACTION_FUNCTION(AActor, A_FatRaise)
 {
@@ -32,7 +32,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FatAttack1)
 	PARAM_CLASS_OPT(spawntype, AActor)	{ spawntype = NULL; }
 
 	AActor *missile;
-	angle_t an;
 
 	if (!self->target)
 		return 0;
@@ -41,16 +40,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FatAttack1)
 
 	A_FaceTarget (self);
 	// Change direction  to ...
-	self->angle += FATSPREAD;
+	self->Angles.Yaw += FATSPREAD;
 	P_SpawnMissile (self, self->target, spawntype);
 
 	missile = P_SpawnMissile (self, self->target, spawntype);
 	if (missile != NULL)
 	{
-		missile->angle += FATSPREAD;
-		an = missile->angle >> ANGLETOFINESHIFT;
-		missile->vel.x = FixedMul (missile->Speed, finecosine[an]);
-		missile->vel.y = FixedMul (missile->Speed, finesine[an]);
+		missile->Angles.Yaw += FATSPREAD;
+		missile->VelFromAngle();
 	}
 	return 0;
 }
@@ -61,7 +58,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FatAttack2)
 	PARAM_CLASS_OPT(spawntype, AActor)	{ spawntype = NULL; }
 
 	AActor *missile;
-	angle_t an;
 
 	if (!self->target)
 		return 0;
@@ -70,16 +66,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FatAttack2)
 
 	A_FaceTarget (self);
 	// Now here choose opposite deviation.
-	self->angle -= FATSPREAD;
+	self->Angles.Yaw -= FATSPREAD;
 	P_SpawnMissile (self, self->target, spawntype);
 
 	missile = P_SpawnMissile (self, self->target, spawntype);
 	if (missile != NULL)
 	{
-		missile->angle -= FATSPREAD*2;
-		an = missile->angle >> ANGLETOFINESHIFT;
-		missile->vel.x = FixedMul (missile->Speed, finecosine[an]);
-		missile->vel.y = FixedMul (missile->Speed, finesine[an]);
+		missile->Angles.Yaw -= FATSPREAD*2;
+		missile->VelFromAngle();
 	}
 	return 0;
 }
@@ -90,7 +84,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FatAttack3)
 	PARAM_CLASS_OPT(spawntype, AActor)	{ spawntype = NULL; }
 
 	AActor *missile;
-	angle_t an;
 
 	if (!self->target)
 		return 0;
@@ -102,19 +95,15 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FatAttack3)
 	missile = P_SpawnMissile (self, self->target, spawntype);
 	if (missile != NULL)
 	{
-		missile->angle -= FATSPREAD/2;
-		an = missile->angle >> ANGLETOFINESHIFT;
-		missile->vel.x = FixedMul (missile->Speed, finecosine[an]);
-		missile->vel.y = FixedMul (missile->Speed, finesine[an]);
+		missile->Angles.Yaw -= FATSPREAD/2;
+		missile->VelFromAngle();
 	}
 
 	missile = P_SpawnMissile (self, self->target, spawntype);
 	if (missile != NULL)
 	{
-		missile->angle += FATSPREAD/2;
-		an = missile->angle >> ANGLETOFINESHIFT;
-		missile->vel.x = FixedMul (missile->Speed, finecosine[an]);
-		missile->vel.y = FixedMul (missile->Speed, finesine[an]);
+		missile->Angles.Yaw += FATSPREAD/2;
+		missile->VelFromAngle();
 	}
 	return 0;
 }

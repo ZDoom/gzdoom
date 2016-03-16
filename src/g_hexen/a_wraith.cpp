@@ -129,11 +129,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_WraithFX2)
 		{
 			if (pr_wraithfx2 ()<128)
 			{
-				 angle = self->angle+(pr_wraithfx2()<<22);
+				 angle = self->_f_angle()+(pr_wraithfx2()<<22);
 			}
 			else
 			{
-				 angle = self->angle-(pr_wraithfx2()<<22);
+				 angle = self->_f_angle()-(pr_wraithfx2()<<22);
 			}
 			mo->vel.z = 0;
 			mo->vel.x = FixedMul((pr_wraithfx2()<<7)+FRACUNIT,

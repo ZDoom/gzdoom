@@ -95,11 +95,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_FSwordAttack)
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return 0;
 	}
-	P_SpawnPlayerMissile (self, 0, 0, -10*FRACUNIT, RUNTIME_CLASS(AFSwordMissile), self->angle+ANGLE_45/4);
-	P_SpawnPlayerMissile (self, 0, 0,  -5*FRACUNIT, RUNTIME_CLASS(AFSwordMissile), self->angle+ANGLE_45/8);
-	P_SpawnPlayerMissile (self, 0, 0,   0,		   RUNTIME_CLASS(AFSwordMissile), self->angle);
-	P_SpawnPlayerMissile (self, 0, 0,   5*FRACUNIT, RUNTIME_CLASS(AFSwordMissile), self->angle-ANGLE_45/8);
-	P_SpawnPlayerMissile (self, 0, 0,  10*FRACUNIT, RUNTIME_CLASS(AFSwordMissile), self->angle-ANGLE_45/4);
+	P_SpawnPlayerMissile (self, 0, 0, -10*FRACUNIT, RUNTIME_CLASS(AFSwordMissile), self->_f_angle()+ANGLE_45/4);
+	P_SpawnPlayerMissile (self, 0, 0,  -5*FRACUNIT, RUNTIME_CLASS(AFSwordMissile), self->_f_angle()+ANGLE_45/8);
+	P_SpawnPlayerMissile (self, 0, 0,   0,		   RUNTIME_CLASS(AFSwordMissile), self->_f_angle());
+	P_SpawnPlayerMissile (self, 0, 0,   5*FRACUNIT, RUNTIME_CLASS(AFSwordMissile), self->_f_angle()-ANGLE_45/8);
+	P_SpawnPlayerMissile (self, 0, 0,  10*FRACUNIT, RUNTIME_CLASS(AFSwordMissile), self->_f_angle()-ANGLE_45/4);
 	S_Sound (self, CHAN_WEAPON, "FighterSwordFire", 1, ATTN_NORM);
 	return 0;
 }
@@ -138,7 +138,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FighterAttack)
 
 	if (!self->target) return 0;
 
-	angle_t angle = self->angle;
+	angle_t angle = self->_f_angle();
 
 	P_SpawnMissileAngle (self, RUNTIME_CLASS(AFSwordMissile), angle+ANG45/4, 0);
 	P_SpawnMissileAngle (self, RUNTIME_CLASS(AFSwordMissile), angle+ANG45/8, 0);

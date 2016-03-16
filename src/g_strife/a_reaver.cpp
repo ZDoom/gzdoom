@@ -22,7 +22,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ReaverRanged)
 
 		A_FaceTarget (self);
 		S_Sound (self, CHAN_WEAPON, "reaver/attack", 1, ATTN_NORM);
-		bangle = self->angle;
+		bangle = self->_f_angle();
 		pitch = P_AimLineAttack (self, bangle, MISSILERANGE);
 
 		for (int i = 0; i < 3; ++i)

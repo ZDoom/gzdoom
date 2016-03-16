@@ -324,6 +324,8 @@ FArchive &operator<< (FArchive &arc, line_t *&line);
 FArchive &operator<< (FArchive &arc, vertex_t *&vert);
 FArchive &operator<< (FArchive &arc, side_t *&side);
 
+FArchive &operator<<(FArchive &arc, DAngle &ang);
+
 
 
 template<typename T, typename TT>

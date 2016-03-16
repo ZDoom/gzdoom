@@ -170,19 +170,19 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningClip)
 		zigZag = pr_lightningclip();
 		if((zigZag > 128 && self->special1 < 2) || self->special1 < -2)
 		{
-			P_ThrustMobj(self, self->angle+ANG90, ZAGSPEED);
+			P_ThrustMobj(self, self->_f_angle()+ANG90, ZAGSPEED);
 			if(cMo)
 			{
-				P_ThrustMobj(cMo, self->angle+ANG90, ZAGSPEED);
+				P_ThrustMobj(cMo, self->_f_angle()+ANG90, ZAGSPEED);
 			}
 			self->special1++;
 		}
 		else
 		{
-			P_ThrustMobj(self, self->angle-ANG90, ZAGSPEED);
+			P_ThrustMobj(self, self->_f_angle()-ANG90, ZAGSPEED);
 			if(cMo)
 			{
-				P_ThrustMobj(cMo, cMo->angle-ANG90, ZAGSPEED);
+				P_ThrustMobj(cMo, cMo->_f_angle()-ANG90, ZAGSPEED);
 			}
 			self->special1--;
 		}
@@ -195,10 +195,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningClip)
 		}
 		else
 		{
-			self->angle = self->AngleTo(target);
+			self->Angles.Yaw = self->_f_AngleTo(target);
 			self->vel.x = 0;
 			self->vel.y = 0;
-			P_ThrustMobj (self, self->angle, self->Speed>>1);
+			P_ThrustMobj (self, self->Angles.Yaw, self->Speed>>1);
 		}
 	}
 	return 0;

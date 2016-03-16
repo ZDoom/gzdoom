@@ -236,7 +236,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeAttack)
 	{
 		for (int j = 1; j >= -1; j -= 2)
 		{
-			angle = pmo->angle + j*i*(ANG45 / 16);
+			angle = pmo->_f_angle() + j*i*(ANG45 / 16);
 			slope = P_AimLineAttack(pmo, angle, AXERANGE, &t);
 			if (t.linetarget)
 			{
@@ -257,7 +257,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeAttack)
 	// didn't find any creatures, so try to strike any walls
 	pmo->weaponspecial = 0;
 
-	angle = pmo->angle;
+	angle = pmo->_f_angle();
 	slope = P_AimLineAttack (pmo, angle, MELEERANGE);
 	P_LineAttack (pmo, angle, MELEERANGE, slope, damage, NAME_Melee, pufftype, true);
 

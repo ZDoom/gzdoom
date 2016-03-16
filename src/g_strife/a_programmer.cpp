@@ -133,9 +133,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnProgrammerBase)
 	AActor *foo = Spawn("ProgrammerBase", self->PosPlusZ(24*FRACUNIT), ALLOW_REPLACE);
 	if (foo != NULL)
 	{
-		foo->angle = self->angle + ANGLE_180 + (pr_prog.Random2() << 22);
-		foo->vel.x = FixedMul (foo->Speed, finecosine[foo->angle >> ANGLETOFINESHIFT]);
-		foo->vel.y = FixedMul (foo->Speed, finesine[foo->angle >> ANGLETOFINESHIFT]);
+		foo->Angles.Yaw = self->Angles.Yaw + 180. + pr_prog.Random2() * (360. / 1024.);
+		foo->VelFromAngle();
 		foo->vel.z = pr_prog() << 9;
 	}
 	return 0;

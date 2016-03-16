@@ -62,13 +62,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_InquisitorAttack)
 	A_FaceTarget (self);
 
 	self->AddZ(32*FRACUNIT);
-	self->angle -= ANGLE_45/32;
+	self->Angles.Yaw -= 45./32;
 	proj = P_SpawnMissileZAimed (self, self->Z(), self->target, PClass::FindActor("InquisitorShot"));
 	if (proj != NULL)
 	{
 		proj->vel.z += 9*FRACUNIT;
 	}
-	self->angle += ANGLE_45/16;
+	self->Angles.Yaw += 45./16;
 	proj = P_SpawnMissileZAimed (self, self->Z(), self->target, PClass::FindActor("InquisitorShot"));
 	if (proj != NULL)
 	{
@@ -92,7 +92,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_InquisitorJump)
 	S_Sound (self, CHAN_ITEM|CHAN_LOOP, "inquisitor/jump", 1, ATTN_NORM);
 	self->AddZ(64*FRACUNIT);
 	A_FaceTarget (self);
-	an = self->angle >> ANGLETOFINESHIFT;
+	an = self->_f_angle() >> ANGLETOFINESHIFT;
 	speed = self->Speed * 2/3;
 	self->vel.x += FixedMul (speed, finecosine[an]);
 	self->vel.y += FixedMul (speed, finesine[an]);
@@ -136,9 +136,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_TossArm)
 	PARAM_ACTION_PROLOGUE;
 
 	AActor *foo = Spawn("InquisitorArm", self->PosPlusZ(24*FRACUNIT), ALLOW_REPLACE);
-	foo->angle = self->angle - ANGLE_90 + (pr_inq.Random2() << 22);
-	foo->vel.x = FixedMul (foo->Speed, finecosine[foo->angle >> ANGLETOFINESHIFT]) >> 3;
-	foo->vel.y = FixedMul (foo->Speed, finesine[foo->angle >> ANGLETOFINESHIFT]) >> 3;
+	foo->Angles.Yaw = self->Angles.Yaw - 90. + pr_inq.Random2() * (360./1024.);
+	foo->VelFromAngle(foo->Speed / 8);
 	foo->vel.z = pr_inq() << 10;
 	return 0;
 }

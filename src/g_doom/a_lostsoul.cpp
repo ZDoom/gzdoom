@@ -33,7 +33,7 @@ void A_SkullAttack(AActor *self, fixed_t speed)
 
 	S_Sound (self, CHAN_VOICE, self->AttackSound, 1, ATTN_NORM);
 	A_FaceTarget (self);
-	an = self->angle >> ANGLETOFINESHIFT;
+	an = self->_f_angle() >> ANGLETOFINESHIFT;
 	self->vel.x = FixedMul (speed, finecosine[an]);
 	self->vel.y = FixedMul (speed, finesine[an]);
 	dist = self->AproxDistance (dest);

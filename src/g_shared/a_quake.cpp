@@ -140,7 +140,7 @@ void DEarthquake::Tick ()
 						P_DamageMobj (victim, NULL, NULL, pr_quake.HitDice (1), NAME_None);
 					}
 					// Thrust player around
-					angle_t an = victim->angle + ANGLE_1*pr_quake();
+					angle_t an = victim->_f_angle() + ANGLE_1*pr_quake();
 					if (m_IntensityX == m_IntensityY)
 					{ // Thrust in a circle
 						P_ThrustMobj (victim, an, m_IntensityX << (FRACBITS-1));

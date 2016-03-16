@@ -488,8 +488,8 @@ public:
 
 	FString		LogText;	// [RH] Log for Strife
 
-	int			MinPitch;	// Viewpitch limits (negative is up, positive is down)
-	int			MaxPitch;
+	DAngle			MinPitch;	// Viewpitch limits (negative is up, positive is down)
+	DAngle			MaxPitch;
 
 	fixed_t crouchfactor;
 	fixed_t crouchoffset;
@@ -499,7 +499,7 @@ public:
 
 	// [CW] I moved these here for multiplayer conversation support.
 	TObjPtr<AActor> ConversationNPC, ConversationPC;
-	angle_t ConversationNPCAngle;
+	DAngle ConversationNPCAngle;
 	bool ConversationFaceTalker;
 
 	fixed_t GetDeltaViewHeight() const

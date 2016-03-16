@@ -1110,14 +1110,14 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 	pc->player->ConversationFaceTalker = facetalker;
 	if (saveangle)
 	{
-		pc->player->ConversationNPCAngle = npc->angle;
+		pc->player->ConversationNPCAngle = npc->Angles.Yaw;
 	}
 	oldtarget = npc->target;
 	npc->target = pc;
 	if (facetalker)
 	{
 		A_FaceTarget (npc);
-		pc->angle = pc->AngleTo(npc);
+		pc->Angles.Yaw = pc->_f_AngleTo(npc);
 	}
 	if ((npc->flags & MF_FRIENDLY) || (npc->flags4 & MF4_NOHATEPLAYERS))
 	{
@@ -1227,7 +1227,7 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 	if (reply == NULL)
 	{
 		// The default reply was selected
-		npc->angle = player->ConversationNPCAngle;
+		npc->Angles.Yaw = player->ConversationNPCAngle;
 		npc->flags5 &= ~MF5_INCONVERSATION;
 		return;
 	}
@@ -1243,7 +1243,7 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 				TerminalResponse(reply->QuickNo);
 			}
 			npc->ConversationAnimation(2);
-			npc->angle = player->ConversationNPCAngle;
+			npc->Angles.Yaw = player->ConversationNPCAngle;
 			npc->flags5 &= ~MF5_INCONVERSATION;
 			return;
 		}
@@ -1371,7 +1371,7 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 		}
 	}
 
-	npc->angle = player->ConversationNPCAngle;
+	npc->Angles.Yaw = player->ConversationNPCAngle;
 
 	// [CW] Set these to NULL because we're not using to them
 	// anymore. However, this can interfere with slideshows
@@ -1421,7 +1421,7 @@ void P_ConversationCommand (int netcode, int pnum, BYTE **stream)
 		assert(netcode == DEM_CONVNULL || netcode == DEM_CONVCLOSE);
 		if (player->ConversationNPC != NULL)
 		{
-			player->ConversationNPC->angle = player->ConversationNPCAngle;
+			player->ConversationNPC->Angles.Yaw = player->ConversationNPCAngle;
 			player->ConversationNPC->flags5 &= ~MF5_INCONVERSATION;
 		}
 		if (netcode == DEM_CONVNULL)

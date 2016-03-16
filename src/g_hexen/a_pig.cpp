@@ -73,7 +73,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SnoutAttack)
 	}
 
 	damage = 3+(pr_snoutattack()&3);
-	angle = player->mo->angle;
+	angle = player->mo->_f_angle();
 	slope = P_AimLineAttack(player->mo, angle, MELEERANGE);
 	puff = P_LineAttack(player->mo, angle, MELEERANGE, slope, damage, NAME_Melee, "SnoutPuff", true, &t);
 	S_Sound(player->mo, CHAN_VOICE, "PigActive", 1, ATTN_NORM);

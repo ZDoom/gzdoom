@@ -78,11 +78,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireConePL1)
 	damage = 90+(pr_cone()&15);
 	for (i = 0; i < 16; i++)
 	{
-		angle = self->angle+i*(ANG45/16);
+		angle = self->_f_angle()+i*(ANG45/16);
 		slope = P_AimLineAttack (self, angle, MELEERANGE, &t, 0, ALF_CHECK3D);
 		if (t.linetarget)
 		{
-			P_DamageMobj (t.linetarget, self, self, damage, NAME_Ice, DMG_USEANGLE, t.angleFromSource);
+			P_DamageMobj (t.linetarget, self, self, damage, NAME_Ice, DMG_USEANGLE, FLOAT2ANGLE(t.angleFromSource.Degrees));
 			conedone = true;
 			break;
 		}
@@ -128,7 +128,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ShedShard)
 	// every so many calls, spawn a new missile in its set directions
 	if (spawndir & SHARDSPAWN_LEFT)
 	{
-		mo = P_SpawnMissileAngleZSpeed (self, self->Z(), RUNTIME_CLASS(AFrostMissile), self->angle+(ANG45/9),
+		mo = P_SpawnMissileAngleZSpeed (self, self->Z(), RUNTIME_CLASS(AFrostMissile), self->_f_angle()+(ANG45/9),
 											 0, (20+2*spermcount)<<FRACBITS, self->target);
 		if (mo)
 		{
@@ -140,7 +140,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ShedShard)
 	}
 	if (spawndir & SHARDSPAWN_RIGHT)
 	{
-		mo = P_SpawnMissileAngleZSpeed (self, self->Z(), RUNTIME_CLASS(AFrostMissile), self->angle-(ANG45/9),
+		mo = P_SpawnMissileAngleZSpeed (self, self->Z(), RUNTIME_CLASS(AFrostMissile), self->_f_angle()-(ANG45/9),
 											 0, (20+2*spermcount)<<FRACBITS, self->target);
 		if (mo)
 		{
@@ -152,7 +152,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ShedShard)
 	}
 	if (spawndir & SHARDSPAWN_UP)
 	{
-		mo = P_SpawnMissileAngleZSpeed (self, self->Z()+8*FRACUNIT, RUNTIME_CLASS(AFrostMissile), self->angle, 
+		mo = P_SpawnMissileAngleZSpeed (self, self->Z()+8*FRACUNIT, RUNTIME_CLASS(AFrostMissile), self->_f_angle(), 
 											 0, (15+2*spermcount)<<FRACBITS, self->target);
 		if (mo)
 		{
@@ -167,7 +167,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ShedShard)
 	}
 	if (spawndir & SHARDSPAWN_DOWN)
 	{
-		mo = P_SpawnMissileAngleZSpeed (self, self->Z()-4*FRACUNIT, RUNTIME_CLASS(AFrostMissile), self->angle, 
+		mo = P_SpawnMissileAngleZSpeed (self, self->Z()-4*FRACUNIT, RUNTIME_CLASS(AFrostMissile), self->_f_angle(), 
 											 0, (15+2*spermcount)<<FRACBITS, self->target);
 		if (mo)
 		{

@@ -30,7 +30,7 @@ int AWhirlwind::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 
 	if (!(target->flags7 & MF7_DONTTHRUST))
 	{
-		target->angle += pr_foo.Random2() << 20;
+		target->Angles.Yaw += pr_foo.Random2() * (360 / 4096.);
 		target->vel.x += pr_foo.Random2() << 10;
 		target->vel.y += pr_foo.Random2() << 10;
 	}
@@ -114,10 +114,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_LichAttack)
 					S_Sound (self, CHAN_BODY, "ironlich/attack1", 1, ATTN_NORM);
 				}
 				fire->target = baseFire->target;
-				fire->angle = baseFire->angle;
-				fire->vel.x = baseFire->vel.x;
-				fire->vel.y = baseFire->vel.y;
-				fire->vel.z = baseFire->vel.z;
+				fire->Angles.Yaw = baseFire->Angles.Yaw;
+				fire->vel = baseFire->vel;
 				fire->Damage = NULL;
 				fire->health = (i+1) * 2;
 				P_CheckMissileSpawn (fire, self->radius);
@@ -180,18 +178,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_LichIceImpact)
 	PARAM_ACTION_PROLOGUE;
 
 	unsigned int i;
-	angle_t angle;
 	AActor *shard;
 
 	for (i = 0; i < 8; i++)
 	{
 		shard = Spawn("HeadFX2", self->Pos(), ALLOW_REPLACE);
-		angle = i*ANG45;
 		shard->target = self->target;
-		shard->angle = angle;
-		angle >>= ANGLETOFINESHIFT;
-		shard->vel.x = FixedMul (shard->Speed, finecosine[angle]);
-		shard->vel.y = FixedMul (shard->Speed, finesine[angle]);
+		shard->Angles.Yaw = i*45.;
+		shard->VelFromAngle();
 		shard->vel.z = -FRACUNIT*6/10;
 		P_CheckMissileSpawn (shard, self->radius);
 	}

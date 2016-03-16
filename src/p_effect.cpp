@@ -440,7 +440,7 @@ void P_RunEffect (AActor *actor, int effects)
 	}
 	else
 	{
-		moveangle = actor->angle;
+		moveangle = actor->_f_angle();
 	}
 
 	particle_t *particle;
@@ -878,7 +878,7 @@ void P_DrawRailTrail(AActor *source, const DVector3 &start, const DVector3 &end,
 
 			AActor *thing = Spawn (spawnclass, FLOAT2FIXED(postmp.X), FLOAT2FIXED(postmp.Y), FLOAT2FIXED(postmp.Z), ALLOW_REPLACE);
 			if (thing)
-				thing->angle = angle;
+				thing->Angles.Yaw = ANGLE2DBL(angle);
 			pos += trail_step;
 		}
 	}

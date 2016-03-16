@@ -1267,7 +1267,7 @@ void APowerSpeed::DoEffect ()
 	AActor *speedMo = Spawn<APlayerSpeedTrail> (Owner->Pos(), NO_REPLACE);
 	if (speedMo)
 	{
-		speedMo->angle = Owner->angle;
+		speedMo->Angles.Yaw = Owner->Angles.Yaw;
 		speedMo->Translation = Owner->Translation;
 		speedMo->target = Owner;
 		speedMo->sprite = Owner->sprite;

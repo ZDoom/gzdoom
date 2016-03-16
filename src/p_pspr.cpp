@@ -932,7 +932,7 @@ angle_t P_BulletSlope (AActor *mo, FTranslatedLineTarget *pLineTarget, int aimfl
 	i = 2;
 	do
 	{
-		an = mo->angle + angdiff[i];
+		an = mo->_f_angle() + angdiff[i];
 		pitch = P_AimLineAttack (mo, an, 16*64*FRACUNIT, pLineTarget, 0, aimflags);
 
 		if (mo->player != NULL &&
@@ -956,7 +956,7 @@ void P_GunShot (AActor *mo, bool accurate, PClassActor *pufftype, angle_t pitch)
 	int 		damage;
 		
 	damage = 5*(pr_gunshot()%3+1);
-	angle = mo->angle;
+	angle = mo->_f_angle();
 
 	if (!accurate)
 	{

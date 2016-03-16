@@ -1950,7 +1950,7 @@ static void S_SetListener(SoundListener &listener, AActor *listenactor)
 {
 	if (listenactor != NULL)
 	{
-		listener.angle = ANGLE2RADF(listenactor->angle);
+		listener.angle = ANGLE2RADF(listenactor->_f_angle());
 		/*
 		listener.velocity.X = listenactor->vel.x * (TICRATE/65536.f);
 		listener.velocity.Y = listenactor->vel.z * (TICRATE/65536.f);

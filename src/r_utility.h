@@ -67,7 +67,7 @@ inline angle_t R_PointToAnglePrecise (fixed_t viewx, fixed_t viewy, fixed_t x, f
 struct fixedvec3a
 {
 	fixed_t x, y, z;
-	angle_t angle;
+	DAngle angle;
 };
 
 

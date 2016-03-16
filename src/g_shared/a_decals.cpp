@@ -827,7 +827,7 @@ void ADecal::BeginPlay ()
 			// Look for a wall within 64 units behind the actor. If none can be
 			// found, then no decal is created, and this actor is destroyed
 			// without effectively doing anything.
-			if (NULL == ShootDecal(tpl, this, Sector, X(), Y(), Z(), angle + ANGLE_180, 64*FRACUNIT, true))
+			if (NULL == ShootDecal(tpl, this, Sector, X(), Y(), Z(), FLOAT2ANGLE(Angles.Yaw.Degrees) + ANGLE_180, 64*FRACUNIT, true))
 			{
 				DPrintf ("Could not find a wall to stick decal to at (%d,%d)\n", X()>>FRACBITS, Y()>>FRACBITS);
 			}

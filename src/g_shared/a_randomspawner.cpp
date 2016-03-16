@@ -160,7 +160,8 @@ class ARandomSpawner : public AActor
 		if (newmobj != NULL)
 		{
 			// copy everything relevant
-			newmobj->SpawnAngle = newmobj->angle = angle;
+			newmobj->SpawnAngle = SpawnAngle;
+			newmobj->Angles		= Angles;
 			newmobj->SpawnPoint[2] = SpawnPoint[2];
 			newmobj->special    = special;
 			newmobj->args[0]    = args[0];

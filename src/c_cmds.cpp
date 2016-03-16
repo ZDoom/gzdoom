@@ -875,7 +875,7 @@ CCMD(linetarget)
 	FTranslatedLineTarget t;
 
 	if (CheckCheatmode () || players[consoleplayer].mo == NULL) return;
-	P_AimLineAttack(players[consoleplayer].mo,players[consoleplayer].mo->angle,MISSILERANGE, &t, 0);
+	P_AimLineAttack(players[consoleplayer].mo,players[consoleplayer].mo->_f_angle(),MISSILERANGE, &t, 0);
 	if (t.linetarget)
 	{
 		Printf("Target=%s, Health=%d, Spawnhealth=%d\n",
@@ -892,7 +892,7 @@ CCMD(info)
 	FTranslatedLineTarget t;
 
 	if (CheckCheatmode () || players[consoleplayer].mo == NULL) return;
-	P_AimLineAttack(players[consoleplayer].mo,players[consoleplayer].mo->angle,MISSILERANGE, 
+	P_AimLineAttack(players[consoleplayer].mo,players[consoleplayer].mo->_f_angle(),MISSILERANGE, 
 		&t, 0,	ALF_CHECKNONSHOOTABLE|ALF_FORCENOSMART);
 	if (t.linetarget)
 	{
@@ -1087,7 +1087,7 @@ CCMD(currentpos)
 	if(mo)
 	{
 		Printf("Current player position: (%1.3f,%1.3f,%1.3f), angle: %1.3f, floorheight: %1.3f, sector:%d, lightlevel: %d\n",
-			FIXED2DBL(mo->X()), FIXED2DBL(mo->Y()), FIXED2DBL(mo->Z()), ANGLE2DBL(mo->angle), FIXED2DBL(mo->floorz), mo->Sector->sectornum, mo->Sector->lightlevel);
+			FIXED2DBL(mo->X()), FIXED2DBL(mo->Y()), FIXED2DBL(mo->Z()), ANGLE2DBL(mo->_f_angle()), FIXED2DBL(mo->floorz), mo->Sector->sectornum, mo->Sector->lightlevel);
 	}
 	else
 	{

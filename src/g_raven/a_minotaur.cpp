@@ -210,7 +210,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurDecide)
 			self->flags2 |= MF2_INVULNERABLE;
 		}
 		A_FaceTarget (self);
-		angle = self->angle>>ANGLETOFINESHIFT;
+		angle = self->_f_angle()>>ANGLETOFINESHIFT;
 		self->vel.x = FixedMul (MNTR_CHARGE_SPEED, finecosine[angle]);
 		self->vel.y = FixedMul (MNTR_CHARGE_SPEED, finesine[angle]);
 		self->special1 = TICRATE/2; // Charge duration
@@ -312,7 +312,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurAtk2)
 		{
 //			S_Sound (mo, CHAN_WEAPON, "minotaur/attack2", 1, ATTN_NORM);
 			vz = mo->vel.z;
-			angle = mo->angle;
+			angle = mo->_f_angle();
 			P_SpawnMissileAngleZ (self, z, fx, angle-(ANG45/8), vz);
 			P_SpawnMissileAngleZ (self, z, fx, angle+(ANG45/8), vz);
 			P_SpawnMissileAngleZ (self, z, fx, angle-(ANG45/16), vz);

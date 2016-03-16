@@ -70,9 +70,9 @@ IMPLEMENT_CLASS (AArtiTimeBomb)
 
 bool AArtiTimeBomb::Use (bool pickup)
 {
-	angle_t angle = Owner->angle >> ANGLETOFINESHIFT;
+	angle_t angle = Owner->_f_angle() >> ANGLETOFINESHIFT;
 	AActor *mo = Spawn("ActivatedTimeBomb",
-		Owner->Vec3Angle(24*FRACUNIT, Owner->angle, - Owner->floorclip), ALLOW_REPLACE);
+		Owner->Vec3Angle(24*FRACUNIT, Owner->_f_angle(), - Owner->floorclip), ALLOW_REPLACE);
 	mo->target = Owner;
 	return true;
 }

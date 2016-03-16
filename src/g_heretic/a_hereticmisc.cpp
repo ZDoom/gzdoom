@@ -172,18 +172,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_VolcanoBlast)
 	int i;
 	int count;
 	AActor *blast;
-	angle_t angle;
 
 	count = 1 + (pr_blast() % 3);
 	for (i = 0; i < count; i++)
 	{
 		blast = Spawn("VolcanoBlast", self->PosPlusZ(44*FRACUNIT), ALLOW_REPLACE);
 		blast->target = self;
-		angle = pr_blast () << 24;
-		blast->angle = angle;
-		angle >>= ANGLETOFINESHIFT;
-		blast->vel.x = FixedMul (1*FRACUNIT, finecosine[angle]);
-		blast->vel.y = FixedMul (1*FRACUNIT, finesine[angle]);
+		blast->Angles.Yaw = pr_blast() * (360 / 256.f);
+		blast->VelFromAngle(1 * FRACUNIT);
 		blast->vel.z = (FRACUNIT*5/2) + (pr_blast() << 10);
 		S_Sound (blast, CHAN_BODY, "world/volcano/shoot", 1, ATTN_NORM);
 		P_CheckMissileSpawn (blast, self->radius);
@@ -203,7 +199,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_VolcBallImpact)
 
 	unsigned int i;
 	AActor *tiny;
-	angle_t angle;
 
 	if (self->Z() <= self->floorz)
 	{
@@ -217,11 +212,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_VolcBallImpact)
 	{
 		tiny = Spawn("VolcanoTBlast", self->Pos(), ALLOW_REPLACE);
 		tiny->target = self;
-		angle = i*ANG90;
-		tiny->angle = angle;
-		angle >>= ANGLETOFINESHIFT;
-		tiny->vel.x = FixedMul (FRACUNIT*7/10, finecosine[angle]);
-		tiny->vel.y = FixedMul (FRACUNIT*7/10, finesine[angle]);
+		tiny->Angles.Yaw = 90.*i;
+		tiny->VelFromAngle(FRACUNIT * 7 / 10);
 		tiny->vel.z = FRACUNIT + (pr_volcimpact() << 9);
 		P_CheckMissileSpawn (tiny, self->radius);
 	}

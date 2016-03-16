@@ -68,7 +68,7 @@ void A_Fire(AActor *self, int height)
 	if (!P_CheckSight (self->target, dest, 0) )
 		return;
 
-	fixedvec3 newpos = dest->Vec3Angle(24 * FRACUNIT, dest->angle, height);
+	fixedvec3 newpos = dest->Vec3Angle(24 * FRACUNIT, dest->_f_angle(), height);
 	self->SetOrigin(newpos, true);
 }
 
@@ -147,7 +147,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_VileAttack)
 	if (fire != NULL)
 	{
 		// move the fire between the vile and the player
-		fixedvec3 pos = target->Vec3Angle(-24 * FRACUNIT, self->angle, 0);
+		fixedvec3 pos = target->Vec3Angle(-24 * FRACUNIT, self->_f_angle(), 0);
 		fire->SetOrigin (pos, true);
 		
 		P_RadiusAttack (fire, self, blastdmg, blastrad, dmgtype, 0);

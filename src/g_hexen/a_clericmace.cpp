@@ -36,7 +36,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CMaceAttack)
 	{
 		for (int j = 1; j >= -1; j -= 2)
 		{
-			angle = player->mo->angle + j*i*(ANG45 / 16);
+			angle = player->mo->_f_angle() + j*i*(ANG45 / 16);
 			slope = P_AimLineAttack(player->mo, angle, 2 * MELEERANGE, &t);
 			if (t.linetarget)
 			{
@@ -52,7 +52,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CMaceAttack)
 	// didn't find any creatures, so try to strike any walls
 	player->mo->weaponspecial = 0;
 
-	angle = player->mo->angle;
+	angle = player->mo->_f_angle();
 	slope = P_AimLineAttack (player->mo, angle, MELEERANGE);
 	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage, NAME_Melee, hammertime);
 macedone:

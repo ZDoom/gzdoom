@@ -1191,7 +1191,7 @@ bool P_IsVisible(AActor *lookee, AActor *other, INTBOOL allaround, FLookExParams
 
 	if (fov && fov < ANGLE_MAX)
 	{
-		angle_t an = lookee->AngleTo(other) - lookee->angle;
+		angle_t an = lookee->AngleTo(other) - lookee->_f_angle();
 
 		if (an > (fov / 2) && an < (ANGLE_MAX - (fov / 2)))
 		{
@@ -2135,15 +2135,15 @@ void A_Wander(AActor *self, int flags)
 	// turn towards movement direction if not there yet
 	if (!(flags & CHF_NODIRECTIONTURN) && (self->movedir < DI_NODIR))
 	{
-		self->angle &= (angle_t)(7 << 29);
-		int delta = self->angle - (self->movedir << 29);
-		if (delta > 0)
+		self->Angles.Yaw = floor(self->Angles.Yaw.Degrees / 45) * 45.;
+		DAngle delta = deltaangle(self->Angles.Yaw, (self->movedir * 45));
+		if (delta < 0)
 		{
-			self->angle -= ANG90 / 2;
+			self->Angles.Yaw -= 45;
 		}
-		else if (delta < 0)
+		else if (delta > 0)
 		{
-			self->angle += ANG90 / 2;
+			self->Angles.Yaw += 45;
 		}
 	}
 
@@ -2228,7 +2228,6 @@ nosee:
 
 void A_DoChase (VMFrameStack *stack, AActor *actor, bool fastchase, FState *meleestate, FState *missilestate, bool playactive, bool nightmarefast, bool dontmove, int flags)
 {
-	int delta;
 
 	if (actor->flags5 & MF5_INCONVERSATION)
 		return;
@@ -2290,15 +2289,15 @@ void A_DoChase (VMFrameStack *stack, AActor *actor, bool fastchase, FState *mele
 	}
 	else if (!(flags & CHF_NODIRECTIONTURN) && actor->movedir < 8)
 	{
-		actor->angle &= (angle_t)(7<<29);
-		delta = actor->angle - (actor->movedir << 29);
-		if (delta > 0)
+		actor->Angles.Yaw = floor(actor->Angles.Yaw.Degrees / 45) * 45.;
+		DAngle delta = deltaangle(actor->Angles.Yaw, (actor->movedir * 45));
+		if (delta < 0)
 		{
-			actor->angle -= ANG90/2;
+			actor->Angles.Yaw -= 45;
 		}
-		else if (delta < 0)
+		else if (delta > 0)
 		{
-			actor->angle += ANG90/2;
+			actor->Angles.Yaw += 45;
 		}
 	}
 
@@ -2414,7 +2413,7 @@ void A_DoChase (VMFrameStack *stack, AActor *actor, bool fastchase, FState *mele
 					spec->args[1], spec->args[2], spec->args[3], spec->args[4]);
 			}
 
-			angle_t lastgoalang = actor->goal->angle;
+			DAngle lastgoalang = actor->goal->Angles.Yaw;
 			int delay;
 			AActor * newgoal = iterator.Next ();
 			if (newgoal != NULL && actor->goal == actor->target)
@@ -2426,7 +2425,7 @@ void A_DoChase (VMFrameStack *stack, AActor *actor, bool fastchase, FState *mele
 			{
 				delay = 0;
 				actor->reactiontime = actor->GetDefault()->reactiontime;
-				actor->angle = lastgoalang;		// Look in direction of last goal
+				actor->Angles.Yaw = lastgoalang;		// Look in direction of last goal
 			}
 			if (actor->target == actor->goal) actor->target = NULL;
 			actor->flags |= MF_JUSTATTACKED;
@@ -2820,7 +2819,7 @@ enum FAF_Flags
 	FAF_TOP = 4,
 	FAF_NODISTFACTOR = 8,	// deprecated
 };
-void A_Face (AActor *self, AActor *other, angle_t max_turn, angle_t max_pitch, angle_t ang_offset, angle_t pitch_offset, int flags, fixed_t z_add)
+void A_Face (AActor *self, AActor *other, angle_t _max_turn, angle_t _max_pitch, angle_t _ang_offset, angle_t _pitch_offset, int flags, fixed_t z_add)
 {
 	if (!other)
 		return;
@@ -2833,43 +2832,35 @@ void A_Face (AActor *self, AActor *other, angle_t max_turn, angle_t max_pitch, a
 
 	self->flags &= ~MF_AMBUSH;
 
-	angle_t other_angle = self->AngleTo(other);
+	DAngle max_turn = ANGLE2DBL(_max_turn);
+	DAngle ang_offset = ANGLE2DBL(_ang_offset);
+	DAngle max_pitch = ANGLE2DBL(_max_pitch);
+	DAngle pitch_offset = ANGLE2DBL(_pitch_offset);
+	DAngle other_angle = self->_f_AngleTo(other);
+
+	DAngle delta = deltaangle(self->Angles.Yaw, other_angle);
 
 	// 0 means no limit. Also, if we turn in a single step anyways, no need to go through the algorithms.
 	// It also means that there is no need to check for going past the other.
-	if (max_turn && (max_turn < absangle(self->angle - other_angle)))
+	if (max_turn != 0 && (max_turn < fabs(delta)))
 	{
-		if (self->angle > other_angle)
+		if (delta > 0)
 		{
-			if (self->angle - other_angle < ANGLE_180)
-			{
-				self->angle -= max_turn + ang_offset;
-			}
-			else
-			{
-				self->angle += max_turn + ang_offset;
-			}
+			self->Angles.Yaw -= max_turn + ang_offset;
 		}
 		else
 		{
-			if (other_angle - self->angle < ANGLE_180)
-			{
-				self->angle += max_turn + ang_offset;
-			}
-			else
-			{
-				self->angle -= max_turn + ang_offset;
-			}
+			self->Angles.Yaw += max_turn + ang_offset;
 		}
 	}
 	else
 	{
-		self->angle = other_angle + ang_offset;
+		self->Angles.Yaw = other_angle + ang_offset;
 	}
 
 	// [DH] Now set pitch. In order to maintain compatibility, this can be
 	// disabled and is so by default.
-	if (max_pitch <= ANGLE_180)
+	if (max_pitch <= 180.)
 	{
 		fixedvec2 pos = self->Vec2To(other);
 		DVector2 dist(pos.x, pos.y);
@@ -2898,34 +2889,35 @@ void A_Face (AActor *self, AActor *other, angle_t max_turn, angle_t max_pitch, a
 
 		double dist_z = target_z - source_z;
 		double ddist = g_sqrt(dist.X*dist.X + dist.Y*dist.Y + dist_z*dist_z);
-		int other_pitch = (int)RAD2ANGLE(g_asin(dist_z / ddist));
+
+		DAngle other_pitch = DAngle(ToDegrees(g_asin(dist_z / ddist))).Normalized180();
 		
 		if (max_pitch != 0)
 		{
-			if (self->pitch > other_pitch)
+			if (self->Angles.Pitch > other_pitch)
 			{
-				max_pitch = MIN(max_pitch, unsigned(self->pitch - other_pitch));
-				self->pitch -= max_pitch;
+				max_pitch = MIN(max_pitch, (self->Angles.Pitch - other_pitch).Normalized360());
+				self->Angles.Pitch -= max_pitch;
 			}
 			else
 			{
-				max_pitch = MIN(max_pitch, unsigned(other_pitch - self->pitch));
-				self->pitch += max_pitch;
+				max_pitch = MIN(max_pitch, (other_pitch - self->Angles.Pitch).Normalized360());
+				self->Angles.Pitch += max_pitch;
 			}
 		}
 		else
 		{
-			self->pitch = other_pitch;
+			self->Angles.Pitch = other_pitch;
 		}
-		self->pitch += pitch_offset;
+		self->Angles.Pitch += pitch_offset;
 	}
 	
 
 
 	// This will never work well if the turn angle is limited.
-	if (max_turn == 0 && (self->angle == other_angle) && other->flags & MF_SHADOW && !(self->flags6 & MF6_SEEINVISIBLE) )
+	if (max_turn == 0 && (self->Angles.Yaw == other_angle) && other->flags & MF_SHADOW && !(self->flags6 & MF6_SEEINVISIBLE) )
     {
-		self->angle += pr_facetarget.Random2() << 21;
+		self->Angles.Yaw += pr_facetarget.Random2() * (45 / 256.);
     }
 }
 
@@ -2990,7 +2982,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
 	if (!self->target)
 		return 0;
 
-	fixed_t saved_pitch = self->pitch;
+	DAngle saved_pitch = self->Angles.Pitch;
 	FTranslatedLineTarget t;
 
 	// [RH] Andy Baker's stealth monsters
@@ -3001,28 +2993,28 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
 
 	self->flags &= ~MF_AMBUSH;
 		
-	self->angle = self->AngleTo(self->target);
+	self->Angles.Yaw = self->_f_AngleTo(self->target);
 
-	self->pitch = P_AimLineAttack (self, self->angle, MISSILERANGE, &t, ANGLE_1*60, 0, self->target);
+	self->Angles.Pitch = ANGLE2DBL(P_AimLineAttack (self, self->_f_angle(), MISSILERANGE, &t, ANGLE_1*60, 0, self->target));
 	if (t.linetarget == NULL)
 	{
 		// We probably won't hit the target, but aim at it anyway so we don't look stupid.
 		fixedvec2 pos = self->Vec2To(self->target);
 		DVector2 xydiff(pos.x, pos.y);
 		double zdiff = (self->target->Z() + (self->target->height>>1)) - (self->Z() + (self->height>>1) - self->floorclip);
-		self->pitch = int(g_atan2(zdiff, xydiff.Length()) * ANGLE_180 / -M_PI);
+		self->Angles.Pitch = -ToDegrees(g_atan2(zdiff, xydiff.Length()));
 	}
 
 	// Let the aim trail behind the player
-	self->angle = self->AngleTo(self->target, -self->target->vel.x * 3, -self->target->vel.y * 3);
+	self->Angles.Yaw = ANGLE2DBL(self->AngleTo(self->target, -self->target->vel.x * 3, -self->target->vel.y * 3));
 
 	if (self->target->flags & MF_SHADOW && !(self->flags6 & MF6_SEEINVISIBLE))
 	{
-		self->angle += pr_railface.Random2() << 21;
+		self->Angles.Yaw += pr_railface.Random2() * 45./256;
 	}
 
 	P_RailAttack (self, self->GetMissileDamage (0, 1), 0);
-	self->pitch = saved_pitch;
+	self->Angles.Pitch = saved_pitch;
 	return 0;
 }
 

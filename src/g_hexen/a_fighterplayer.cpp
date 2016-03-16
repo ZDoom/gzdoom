@@ -23,29 +23,25 @@ static FRandom pr_fpatk ("FPunchAttack");
 //
 //============================================================================
 
-#define MAX_ANGLE_ADJUST (5*ANGLE_1)
+#define MAX_ANGLE_ADJUST (5.)
 
 void AdjustPlayerAngle (AActor *pmo, FTranslatedLineTarget *t)
 {
-	angle_t angle;
-	int difference;
-
-	angle = t->angleFromSource;
-	difference = (int)angle - (int)pmo->angle;
-	if (abs(difference) > MAX_ANGLE_ADJUST)
+	DAngle difference = deltaangle(pmo->Angles.Yaw, t->angleFromSource);
+	if (fabs(difference) > MAX_ANGLE_ADJUST)
 	{
 		if (difference > 0)
 		{
-			pmo->angle += MAX_ANGLE_ADJUST;
+			pmo->Angles.Yaw += MAX_ANGLE_ADJUST;
 		}
 		else
 		{
-			pmo->angle -= MAX_ANGLE_ADJUST;
+			pmo->Angles.Yaw -= MAX_ANGLE_ADJUST;
 		}
 	}
 	else
 	{
-		pmo->angle = angle;
+		pmo->Angles.Yaw = t->angleFromSource;
 	}
 }
 
@@ -116,8 +112,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_FPunchAttack)
 	power = 2*FRACUNIT;
 	for (i = 0; i < 16; i++)
 	{
-		if (TryPunch(pmo, pmo->angle + i*(ANG45/16), damage, power) ||
-			TryPunch(pmo, pmo->angle - i*(ANG45/16), damage, power))
+		if (TryPunch(pmo, pmo->_f_angle() + i*(ANG45/16), damage, power) ||
+			TryPunch(pmo, pmo->_f_angle() - i*(ANG45/16), damage, power))
 		{ // hit something
 			if (pmo->weaponspecial >= 3)
 			{
@@ -131,7 +127,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FPunchAttack)
 	// didn't find any creatures, so try to strike any walls
 	pmo->weaponspecial = 0;
 
-	int slope = P_AimLineAttack (pmo, pmo->angle, MELEERANGE);
-	P_LineAttack (pmo, pmo->angle, MELEERANGE, slope, damage, NAME_Melee, PClass::FindActor("PunchPuff"), true);
+	int slope = P_AimLineAttack (pmo, pmo->_f_angle(), MELEERANGE);
+	P_LineAttack (pmo, pmo->_f_angle(), MELEERANGE, slope, damage, NAME_Melee, PClass::FindActor("PunchPuff"), true);
 	return 0;
 }

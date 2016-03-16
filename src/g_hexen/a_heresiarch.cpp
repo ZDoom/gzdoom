@@ -296,7 +296,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcBallOrbit)
 
 	baseangle = (angle_t)parent->special1;
 	angle = baseangle + actor->AngleOffset;
-	actor->angle = angle;
+	actor->Angles.Yaw = ANGLE2FLOAT(angle);
 	angle >>= ANGLETOFINESHIFT;
 
 	switch (mode)
@@ -318,13 +318,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcBallOrbit)
 	case SORC_STOPPING:			// Balls stopping
 		if ((parent->StopBall == actor->GetClass()) &&
 			 (parent->args[1] > SORCBALL_SPEED_ROTATIONS) &&
-			 (absangle(angle - (parent->angle>>ANGLETOFINESHIFT)) < (30<<5)))
+			 (absangle(angle - (parent->_f_angle()>>ANGLETOFINESHIFT)) < (30<<5)))
 		{
 			// Can stop now
 			actor->target->args[3] = SORC_FIRESPELL;
 			actor->target->args[4] = 0;
 			// Set angle so self angle == sorcerer angle
-			parent->special1 = (int)(parent->angle - actor->AngleOffset);
+			parent->special1 = (int)(parent->_f_angle() - actor->AngleOffset);
 		}
 		else
 		{
@@ -573,8 +573,8 @@ void ASorcBall3::CastSorcererSpell ()
 	angle_t ang1, ang2;
 	AActor *parent = target;
 
-	ang1 = angle - ANGLE_45;
-	ang2 = angle + ANGLE_45;
+	ang1 = FLOAT2ANGLE(Angles.Yaw.Degrees) - ANGLE_45;
+	ang2 = FLOAT2ANGLE(Angles.Yaw.Degrees) + ANGLE_45;
 	PClassActor *cls = PClass::FindActor("SorcFX3");
 	if (health < (SpawnHealth()/3))
 	{	// Spawn 2 at a time
@@ -622,8 +622,8 @@ void ASorcBall1::CastSorcererSpell ()
 	angle_t ang1, ang2;
 	AActor *parent = target;
 
-	ang1 = angle + ANGLE_1*70;
-	ang2 = angle - ANGLE_1*70;
+	ang1 = FLOAT2ANGLE(Angles.Yaw.Degrees) + ANGLE_1*70;
+	ang2 = FLOAT2ANGLE(Angles.Yaw.Degrees) - ANGLE_1*70;
 	PClassActor *cls = PClass::FindActor("SorcFX1");
 	mo = P_SpawnMissileAngle (parent, cls, ang1, 0);
 	if (mo)
@@ -670,7 +670,7 @@ void A_SorcOffense2(AActor *actor)
 	actor->args[4] = (actor->args[4] + 15) & 255;
 	delta = (finesine[index])*SORCFX4_SPREAD_ANGLE;
 	delta = (delta>>FRACBITS)*ANGLE_1;
-	ang1 = actor->angle + delta;
+	ang1 = actor->_f_angle() + delta;
 	mo = P_SpawnMissileAngle(parent, PClass::FindActor("SorcFX4"), ang1, 0);
 	if (mo)
 	{
@@ -715,13 +715,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnFizzle)
 	AActor *mo;
 	int ix;
 
-	fixedvec3 pos = self->Vec3Angle(dist, self->angle, -self->floorclip + (self->height >> 1));
+	fixedvec3 pos = self->Vec3Angle(dist, self->_f_angle(), -self->floorclip + (self->height >> 1));
 	for (ix=0; ix<5; ix++)
 	{
 		mo = Spawn("SorcSpark1", pos, ALLOW_REPLACE);
 		if (mo)
 		{
-			rangle = (self->angle >> ANGLETOFINESHIFT) + ((pr_heresiarch()%5) << 1);
+			rangle = (self->_f_angle() >> ANGLETOFINESHIFT) + ((pr_heresiarch()%5) << 1);
 			mo->vel.x = FixedMul(pr_heresiarch()%speed, finecosine[rangle]);
 			mo->vel.y = FixedMul(pr_heresiarch()%speed, finesine[rangle]);
 			mo->vel.z = FRACUNIT*2;
@@ -776,7 +776,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcFX2Split)
 	{
 		mo->target = self->target;
 		mo->args[0] = 0;									// CW
-		mo->special1 = self->angle;					// Set angle
+		mo->special1 = self->_f_angle();					// Set angle
 		mo->SetState (mo->FindState("Orbit"));
 	}
 	mo = Spawn(self->GetClass(), self->Pos(), NO_REPLACE);
@@ -784,7 +784,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcFX2Split)
 	{
 		mo->target = self->target;
 		mo->args[0] = 1;									// CCW
-		mo->special1 = self->angle;					// Set angle
+		mo->special1 = self->_f_angle();					// Set angle
 		mo->SetState (mo->FindState("Orbit"));
 	}
 	self->Destroy ();

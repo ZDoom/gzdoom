@@ -127,7 +127,7 @@ bool DBot::Check_LOS (AActor *to, angle_t vangle)
 	if (vangle == 0)
 		return false; //Looker seems to be blind.
 
-	return absangle(player->mo->AngleTo(to) - player->mo->angle) <= vangle/2;
+	return absangle(player->mo->AngleTo(to) - player->mo->_f_angle()) <= vangle/2;
 }
 
 //-------------------------------------
@@ -212,7 +212,7 @@ void DBot::Dofire (ticcmd_t *cmd)
 			{
 				angle = an;
 				//have to be somewhat precise. to avoid suicide.
-				if (absangle(angle - player->mo->angle) < 12*ANGLE_1)
+				if (absangle(angle - player->mo->_f_angle()) < 12*ANGLE_1)
 				{
 					t_rocket = 9;
 					no_fire = false;
@@ -254,7 +254,7 @@ shootmissile:
 				angle -= m;
 		}
 
-		if (absangle(angle - player->mo->angle) < 4*ANGLE_1)
+		if (absangle(angle - player->mo->_f_angle()) < 4*ANGLE_1)
 		{
 			increase = !increase;
 		}
@@ -456,7 +456,7 @@ void FCajunMaster::SetBodyAt (fixed_t x, fixed_t y, fixed_t z, int hostnum)
 //
 //Returns NULL if shouldn't fire
 //else an angle (in degrees) are given
-//This function assumes actor->player->angle
+//This function assumes actor->player->_f_angle()
 //has been set an is the main aiming angle.
 
 

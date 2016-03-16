@@ -102,11 +102,7 @@ void AInterpolationPoint::FormChain ()
 	if (Next == NULL && (args[3] | args[4]))
 		Printf ("Can't find target for camera node %d\n", tid);
 
-	pitch = (signed int)((char)args[0]) * ANGLE_1;
-	if (pitch <= -ANGLE_90)
-		pitch = -ANGLE_90 + ANGLE_1;
-	else if (pitch >= ANGLE_90)
-		pitch = ANGLE_90 - ANGLE_1;
+	Angles.Pitch = clamp<int>((signed char)args[0], -89, 89);
 
 	if (Next != NULL)
 		Next->FormChain ();
@@ -426,7 +422,7 @@ bool APathFollower::Interpolate ()
 			}
 			if (args[2] & 2)
 			{ // adjust yaw
-				angle = R_PointToAngle2 (0, 0, dx, dy);
+				Angles.Yaw = vectoyaw(DVector2(dx, dy));
 			}
 			if (args[2] & 4)
 			{ // adjust pitch; use floats for precision
@@ -435,57 +431,30 @@ bool APathFollower::Interpolate ()
 				double fdz = FIXED2DBL(-dz);
 				double dist = g_sqrt (fdx*fdx + fdy*fdy);
 				double ang = dist != 0.f ? g_atan2 (fdz, dist) : 0;
-				pitch = (fixed_t)RAD2ANGLE(ang);
+				Angles.Pitch = ToDegrees(ang);
 			}
 		}
 		else
 		{
 			if (args[2] & 2)
 			{ // interpolate angle
-				double angle1 = (double)CurrNode->angle;
-				double angle2 = (double)CurrNode->Next->angle;
-				if (angle2 - angle1 <= -2147483648.f)
-				{
-					double lerped = Lerp (angle1, angle2 + 4294967296.f);
-					if (lerped >= 4294967296.f)
-					{
-						angle = xs_CRoundToUInt(lerped - 4294967296.f);
-					}
-					else
-					{
-						angle = xs_CRoundToUInt(lerped);
-					}
-				}
-				else if (angle2 - angle1 >= 2147483648.f)
-				{
-					double lerped = Lerp (angle1, angle2 - 4294967296.f);
-					if (lerped < 0.f)
-					{
-						angle = xs_CRoundToUInt(lerped + 4294967296.f);
-					}
-					else
-					{
-						angle = xs_CRoundToUInt(lerped);
-					}
-				}
-				else
-				{
-					angle = xs_CRoundToUInt(Lerp (angle1, angle2));
-				}
+				DAngle angle1 = CurrNode->Angles.Yaw.Normalized180();
+				DAngle angle2 = angle1 + deltaangle(angle1, CurrNode->Next->Angles.Yaw);
+				Angles.Yaw = Lerp(angle1.Degrees, angle2.Degrees);
 			}
 			if (args[2] & 1)
 			{ // linear
 				if (args[2] & 4)
 				{ // interpolate pitch
-					pitch = FLOAT2FIXED(Lerp (FIXED2DBL(CurrNode->pitch), FIXED2DBL(CurrNode->Next->pitch)));
+					Angles.Pitch = Lerp(CurrNode->Angles.Pitch.Degrees, CurrNode->Next->Angles.Pitch.Degrees);
 				}
 			}
 			else
 			{ // spline
 				if (args[2] & 4)
 				{ // interpolate pitch
-					pitch = FLOAT2FIXED(Splerp (FIXED2DBL(PrevNode->pitch), FIXED2DBL(CurrNode->pitch),
-						FIXED2DBL(CurrNode->Next->pitch), FIXED2DBL(CurrNode->Next->Next->pitch)));
+					Angles.Pitch = Splerp(PrevNode->Angles.Pitch.Degrees, CurrNode->Angles.Pitch.Degrees,
+						CurrNode->Next->Angles.Pitch.Degrees, CurrNode->Next->Next->Angles.Pitch.Degrees);
 				}
 			}
 		}
@@ -558,9 +527,9 @@ bool AActorMover::Interpolate ()
 		}
 
 		if (args[2] & 2)
-			tracer->angle = angle;
+			tracer->Angles.Yaw = Angles.Yaw;
 		if (args[2] & 4)
-			tracer->pitch = pitch;
+			tracer->Angles.Pitch = Angles.Pitch;
 
 		return true;
 	}
@@ -665,7 +634,7 @@ bool AMovingCamera::Interpolate ()
 
 	if (Super::Interpolate ())
 	{
-		angle = AngleTo(tracer, true);
+		Angles.Yaw = _f_AngleTo(tracer, true);
 
 		if (args[2] & 4)
 		{ // Also aim camera's pitch; use floats for precision
@@ -674,7 +643,7 @@ bool AMovingCamera::Interpolate ()
 			double dz = FIXED2DBL(Z() - tracer->Z() - tracer->height/2);
 			double dist = g_sqrt (dx*dx + dy*dy);
 			double ang = dist != 0.f ? g_atan2 (dz, dist) : 0;
-			pitch = RAD2ANGLE(ang);
+			Angles.Pitch = ToDegrees(ang);
 		}
 
 		return true;

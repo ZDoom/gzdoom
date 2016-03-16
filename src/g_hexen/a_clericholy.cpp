@@ -160,8 +160,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_CHolyAttack2)
 				break;
 		}
 		mo->SetZ(self->Z());
-		mo->angle = self->angle+(ANGLE_45+ANGLE_45/2)-ANGLE_45*j;
-		P_ThrustMobj(mo, mo->angle, mo->Speed);
+		mo->Angles.Yaw = self->Angles.Yaw + 67.5 - 45.*j;
+		P_ThrustMobj(mo, mo->_f_angle(), mo->Speed);
 		mo->target = self->target;
 		mo->args[0] = 10; // initial turn value
 		mo->args[1] = 0; // initial look angle
@@ -225,7 +225,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CHolyAttack)
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return 0;
 	}
-	AActor *missile = P_SpawnPlayerMissile (self, 0,0,0, PClass::FindActor("HolyMissile"), self->angle, &t);
+	AActor *missile = P_SpawnPlayerMissile (self, 0,0,0, PClass::FindActor("HolyMissile"), self->_f_angle(), &t);
 	if (missile != NULL && !t.unlinked)
 	{
 		missile->tracer = t.linetarget;
@@ -342,8 +342,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_CHolyTail)
 	else
 	{
 		if (P_TryMove (self,
-			parent->X() - 14*finecosine[parent->angle>>ANGLETOFINESHIFT],
-			parent->Y() - 14*finesine[parent->angle>>ANGLETOFINESHIFT], true))
+			parent->X() - 14*finecosine[parent->_f_angle()>>ANGLETOFINESHIFT],
+			parent->Y() - 14*finesine[parent->_f_angle()>>ANGLETOFINESHIFT], true))
 		{
 			self->SetZ(parent->Z()-5*FRACUNIT);
 		}
@@ -377,12 +377,11 @@ static void CHolyFindTarget (AActor *actor)
 // 	 Similar to P_SeekerMissile, but seeks to a random Z on the target
 //============================================================================
 
-static void CHolySeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax)
+static void CHolySeekerMissile (AActor *actor, DAngle thresh, DAngle turnMax)
 {
 	int dir;
 	int dist;
-	angle_t delta;
-	angle_t angle;
+	DAngle delta;
 	AActor *target;
 	fixed_t newZ;
 	fixed_t deltaZ;
@@ -404,7 +403,7 @@ static void CHolySeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax)
 	dir = P_FaceMobj (actor, target, &delta);
 	if (delta > thresh)
 	{
-		delta >>= 1;
+		delta /= 2;
 		if (delta > turnMax)
 		{
 			delta = turnMax;
@@ -412,15 +411,14 @@ static void CHolySeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax)
 	}
 	if (dir)
 	{ // Turn clockwise
-		actor->angle += delta;
+		actor->Angles.Yaw += delta;
 	}
 	else
 	{ // Turn counter clockwise
-		actor->angle -= delta;
+		actor->Angles.Yaw -= delta;
 	}
-	angle = actor->angle>>ANGLETOFINESHIFT;
-	actor->vel.x = FixedMul (actor->Speed, finecosine[angle]);
-	actor->vel.y = FixedMul (actor->Speed, finesine[angle]);
+	actor->VelFromAngle();
+
 	if (!(level.time&15) 
 		|| actor->Z() > target->Top()
 		|| actor->Top() < target->Z())
@@ -463,7 +461,7 @@ void CHolyWeave (AActor *actor, FRandom &pr_random)
 
 	weaveXY = actor->special2 >> 16;
 	weaveZ = actor->special2 & FINEMASK;
-	angle = (actor->angle + ANG90) >> ANGLETOFINESHIFT;
+	angle = (actor->_f_angle() + ANG90) >> ANGLETOFINESHIFT;
 	newX = actor->X() - FixedMul(finecosine[angle], finesine[weaveXY] * 32);
 	newY = actor->Y() - FixedMul(finesine[angle], finesine[weaveXY] * 32);
 	weaveXY = (weaveXY + pr_random(5 << BOBTOFINESHIFT)) & FINEMASK;
@@ -500,8 +498,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CHolySeek)
 	}
 	if (self->tracer)
 	{
-		CHolySeekerMissile (self, self->args[0]*ANGLE_1,
-			self->args[0]*ANGLE_1*2);
+		CHolySeekerMissile (self, self->args[0], self->args[0]*2);
 		if (!((level.time+7)&15))
 		{
 			self->args[0] = 5+(pr_holyseek()/20);

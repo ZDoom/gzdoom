@@ -166,7 +166,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PainAttack)
 
 	if (!(flags & PAF_AIMFACING))
 		A_FaceTarget (self);
-	A_PainShootSkull (self, self->angle+angle, spawntype, flags, limit);
+	A_PainShootSkull (self, self->_f_angle()+angle, spawntype, flags, limit);
 	return 0;
 }
 
@@ -179,8 +179,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DualPainAttack)
 		return 0;
 
 	A_FaceTarget (self);
-	A_PainShootSkull (self, self->angle + ANG45, spawntype);
-	A_PainShootSkull (self, self->angle - ANG45, spawntype);
+	A_PainShootSkull (self, self->_f_angle() + ANG45, spawntype);
+	A_PainShootSkull (self, self->_f_angle() - ANG45, spawntype);
 	return 0;
 }
 
@@ -194,8 +194,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PainDie)
 		self->flags &= ~MF_FRIENDLY;
 	}
 	A_Unblock(self, true);
-	A_PainShootSkull (self, self->angle + ANG90, spawntype);
-	A_PainShootSkull (self, self->angle + ANG180, spawntype);
-	A_PainShootSkull (self, self->angle + ANG270, spawntype);
+	A_PainShootSkull (self, self->_f_angle() + ANG90, spawntype);
+	A_PainShootSkull (self, self->_f_angle() + ANG180, spawntype);
+	A_PainShootSkull (self, self->_f_angle() + ANG270, spawntype);
 	return 0;
 }

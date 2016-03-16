@@ -1532,3 +1532,18 @@ FArchive &operator<< (FArchive &arc, side_t *&side)
 {
 	return arc.SerializePointer (sides, (BYTE **)&side, sizeof(*sides));
 }
+
+FArchive &operator<<(FArchive &arc, DAngle &ang)
+{
+	if (SaveVersion >= 4534)
+	{
+		arc << ang.Degrees;
+	}
+	else
+	{
+		angle_t an;
+		arc << an;
+		ang.Degrees = ANGLE2DBL(an);
+	}
+	return arc;
+}

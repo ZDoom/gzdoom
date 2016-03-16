@@ -600,7 +600,7 @@ public:
 
 	// Adjusts the angle for deflection/reflection of incoming missiles
 	// Returns true if the missile should be allowed to explode anyway
-	bool AdjustReflectionAngle (AActor *thing, angle_t &angle);
+	bool AdjustReflectionAngle (AActor *thing, DAngle &angle);
 
 	// Returns true if this actor is within melee range of its target
 	bool CheckMeleeRange();
@@ -782,9 +782,9 @@ public:
 	}
 
 	// These also set CF_INTERPVIEW for players.
-	void SetPitch(int p, bool interpolate, bool forceclamp = false);
-	void SetAngle(angle_t ang, bool interpolate);
-	void SetRoll(angle_t roll, bool interpolate);
+	void SetPitch(DAngle p, bool interpolate, bool forceclamp = false);
+	void SetAngle(DAngle ang, bool interpolate);
+	void SetRoll(DAngle roll, bool interpolate);
 
 	PClassActor *GetBloodType(int type = 0) const
 	{
@@ -870,6 +870,18 @@ public:
 	angle_t AngleTo(AActor *other, fixed_t oxofs, fixed_t oyofs, bool absolute = false) const
 	{
 		return R_PointToAngle2(X(), Y(), other->X() + oxofs, other->Y() + oyofs);
+	}
+
+	DAngle _f_AngleTo(AActor *other, bool absolute = false)
+	{
+		fixedvec3 otherpos = absolute ? other->Pos() : other->PosRelative(this);
+		return g_atan2(otherpos.y - Y(), otherpos.x - X());
+	}
+
+	DAngle _f_AngleTo(AActor *other, fixed_t oxofs, fixed_t oyofs, bool absolute = false) const
+	{
+		fixedvec3 otherpos = absolute ? other->Pos() : other->PosRelative(this);
+		return g_atan2(otherpos.y + oxofs - Y(), otherpos.x + oyofs - X());
 	}
 
 	fixedvec2 Vec2To(AActor *other) const
@@ -973,7 +985,20 @@ public:
 	AActor			*snext, **sprev;	// links in sector (if needed)
 	fixedvec3		__pos;				// double underscores so that it won't get used by accident. Access to this should be exclusively through the designated access functions.
 
+	/*
 	angle_t			angle;
+	fixed_t			pitch;
+	angle_t			roll;	// This was fixed_t before, which is probably wrong
+	*/
+
+	DRotator		Angles;
+
+	// intentionally stange names so that searching for them is easier.
+	angle_t			_f_angle() { return FLOAT2ANGLE(Angles.Yaw.Degrees); }
+	int				_f_pitch() { return FLOAT2ANGLE(Angles.Pitch.Degrees); }
+	angle_t			_f_roll() { return FLOAT2ANGLE(Angles.Roll.Degrees); }
+
+
 	WORD			sprite;				// used to find patch_t and flip value
 	BYTE			frame;				// sprite frame to draw
 	fixed_t			scaleX, scaleY;		// Scaling values; FRACUNIT is normal size
@@ -985,8 +1010,6 @@ public:
 	DWORD			fillcolor;			// Color to draw when STYLE_Shaded
 
 // interaction info
-	fixed_t			pitch;
-	angle_t			roll;	// This was fixed_t before, which is probably wrong
 	FBlockNode		*BlockNode;			// links in blocks (if needed)
 	struct sector_t	*Sector;
 	subsector_t *		subsector;
@@ -1148,7 +1171,8 @@ public:
 
 	// [RH] Used to interpolate the view to get >35 FPS
 	fixed_t PrevX, PrevY, PrevZ;
-	angle_t PrevAngle;
+	//angle_t PrevAngle;
+	DRotator PrevAngles;
 	int PrevPortalGroup;
 
 	// ThingIDs
@@ -1284,6 +1308,56 @@ public:
 		__pos.y = npos.y;
 		__pos.z = npos.z;
 	}
+
+	fixed_t VelXYToSpeed() const
+	{
+		return xs_CRoundToInt(sqrt((double)vel.x * vel.x + (double)vel.y*vel.y));
+	}
+
+	fixed_t VelToSpeed() const
+	{
+		return xs_CRoundToInt(sqrt((double)vel.x * vel.x + (double)vel.y*vel.y + (double)vel.z*vel.z));
+	}
+
+	void AngleFromVel()
+	{
+		Angles.Yaw = vectoyaw(DVector2(vel.x, vel.y));
+	}
+
+	void VelFromAngle()
+	{
+		vel.x = xs_CRoundToInt(Speed * Angles.Yaw.Cos());
+		vel.y = xs_CRoundToInt(Speed * Angles.Yaw.Sin());
+	}
+
+	void VelFromAngle(fixed_t speed)
+	{
+		vel.x = xs_CRoundToInt(speed * Angles.Yaw.Cos());
+		vel.y = xs_CRoundToInt(speed * Angles.Yaw.Sin());
+	}
+
+	void VelFromAngle(DAngle angle, fixed_t speed)
+	{
+		vel.x = xs_CRoundToInt(speed * angle.Cos());
+		vel.y = xs_CRoundToInt(speed * angle.Sin());
+	}
+
+	void Vel3DFromAngle(DAngle angle, DAngle pitch, fixed_t speed)
+	{
+		double cospitch = pitch.Cos();
+		vel.x = xs_CRoundToInt(speed * cospitch * angle.Cos());
+		vel.y = xs_CRoundToInt(speed * cospitch * angle.Sin());
+		vel.z = xs_CRoundToInt(speed * -pitch.Sin());
+	}
+
+	void Vel3DFromAngle(DAngle pitch, fixed_t speed)
+	{
+		double cospitch = pitch.Cos();
+		vel.x = xs_CRoundToInt(speed * cospitch * Angles.Yaw.Cos());
+		vel.y = xs_CRoundToInt(speed * cospitch * Angles.Yaw.Sin());
+		vel.z = xs_CRoundToInt(speed * -pitch.Sin());
+	}
+
 };
 
 class FActorIterator
@@ -1394,6 +1468,11 @@ inline fixedvec2 Vec2Angle(fixed_t length, angle_t angle)
 	return ret;
 }
 
+inline fixedvec2 Vec2Angle(fixed_t length, DAngle angle)
+{
+	return { xs_CRoundToInt(length * angle.Cos()), xs_CRoundToInt(length * angle.Sin()) };
+}
+
 void PrintMiscActorInfo(AActor * query);
 AActor *P_LinePickActor(AActor *t1, angle_t angle, fixed_t distance, int pitch, ActorFlags actorMask, DWORD wallMask);
 
@@ -1401,7 +1480,7 @@ AActor *P_LinePickActor(AActor *t1, angle_t angle, fixed_t distance, int pitch, 
 struct FTranslatedLineTarget
 {
 	AActor *linetarget;
-	angle_t angleFromSource;
+	DAngle angleFromSource;
 	bool unlinked;	// found by a trace that went through an unlinked portal.
 };
 

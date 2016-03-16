@@ -143,8 +143,8 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno, fixedvec3 *optpo
 	fixedvec3 pos = optpos? *optpos : user->PosRelative(line);
 	dlu.x = pos.x;
 	dlu.y = pos.y;
-	dlu.dx = finecosine[user->angle >> ANGLETOFINESHIFT];
-	dlu.dy = finesine[user->angle >> ANGLETOFINESHIFT];
+	dlu.dx = finecosine[user->_f_angle() >> ANGLETOFINESHIFT];
+	dlu.dy = finesine[user->_f_angle() >> ANGLETOFINESHIFT];
 	inter = P_InterceptVector(&dll, &dlu);
 
 

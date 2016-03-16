@@ -807,11 +807,11 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 			angle_t rot;
 			if (sprframe->Texture[0] == sprframe->Texture[1])
 			{
-				rot = (ang - thing->angle + (angle_t)(ANGLE_45/2)*9) >> 28;
+				rot = (ang - thing->_f_angle() + (angle_t)(ANGLE_45/2)*9) >> 28;
 			}
 			else
 			{
-				rot = (ang - thing->angle + (angle_t)(ANGLE_45/2)*9-(angle_t)(ANGLE_180/16)) >> 28;
+				rot = (ang - thing->_f_angle() + (angle_t)(ANGLE_45/2)*9-(angle_t)(ANGLE_180/16)) >> 28;
 			}
 			picnum = sprframe->Texture[rot];
 			if (sprframe->Flip & (1 << rot))
@@ -846,11 +846,11 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 			angle_t rot;
 			if (sprframe->Texture[0] == sprframe->Texture[1])
 			{
-				rot = (ang - thing->angle + (angle_t)(ANGLE_45/2)*9) >> 28;
+				rot = (ang - thing->_f_angle() + (angle_t)(ANGLE_45/2)*9) >> 28;
 			}
 			else
 			{
-				rot = (ang - thing->angle + (angle_t)(ANGLE_45/2)*9-(angle_t)(ANGLE_180/16)) >> 28;
+				rot = (ang - thing->_f_angle() + (angle_t)(ANGLE_45/2)*9-(angle_t)(ANGLE_180/16)) >> 28;
 			}
 			picnum = sprframe->Texture[rot];
 			if (sprframe->Flip & (1 << rot))
@@ -999,7 +999,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 		vis->texturemid = (tex->TopOffset << FRACBITS) - FixedDiv (viewz - fz + thing->floorclip, yscale);
 		vis->x1 = x1 < WindowLeft ? WindowLeft : x1;
 		vis->x2 = x2 > WindowRight ? WindowRight : x2;
-		vis->angle = thing->angle;
+		vis->angle = thing->_f_angle();
 
 		if (renderflags & RF_XFLIP)
 		{
@@ -1029,7 +1029,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 
 		fz -= thing->floorclip;
 
-		vis->angle = thing->angle + voxel->AngleOffset;
+		vis->angle = thing->_f_angle() + voxel->AngleOffset;
 
 		int voxelspin = (thing->flags & MF_DROPPED) ? voxel->DroppedSpin : voxel->PlacedSpin;
 		if (voxelspin != 0)
@@ -1149,7 +1149,7 @@ static void R_ProjectWallSprite(AActor *thing, fixed_t fx, fixed_t fy, fixed_t f
 	fixed_t lx1, lx2, ly1, ly2;
 	fixed_t gzb, gzt, tz;
 	FTexture *pic = TexMan(picnum, true);
-	angle_t ang = (thing->angle + ANGLE_90) >> ANGLETOFINESHIFT;
+	angle_t ang = (thing->_f_angle() + ANGLE_90) >> ANGLETOFINESHIFT;
 	vissprite_t *vis;
 
 	// Determine left and right edges of sprite. The sprite's angle is its normal,

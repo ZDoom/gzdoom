@@ -1129,7 +1129,7 @@ static void AM_ClipRotatedExtents (fixed_t pivotx, fixed_t pivoty)
 		{
 			xs[i] -= pivotx;
 			ys[i] -= pivoty;
-			AM_rotate (&xs[i], &ys[i], ANG90 - players[consoleplayer].camera->angle);
+			AM_rotate (&xs[i], &ys[i], ANG90 - players[consoleplayer].camera->_f_angle());
 
 			if (i == 5)
 				break;
@@ -1150,7 +1150,7 @@ static void AM_ClipRotatedExtents (fixed_t pivotx, fixed_t pivoty)
 //			ys[4] = rmax_y;
 //		else if (ys[4] < rmin_y)
 //			ys[4] = rmin_y;
-		AM_rotate (&xs[4], &ys[4], ANG270 - players[consoleplayer].camera->angle);
+		AM_rotate (&xs[4], &ys[4], ANG270 - players[consoleplayer].camera->_f_angle());
 		m_x = xs[4] + pivotx - m_w/2;
 		m_y = ys[4] + pivoty - m_h/2;
 #endif
@@ -1216,7 +1216,7 @@ void AM_changeWindowLoc ()
 	oincy = incy = Scale(m_paninc.y, SCREENHEIGHT, 200);
 	if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 	{
-		AM_rotate(&incx, &incy, players[consoleplayer].camera->angle - ANG90);
+		AM_rotate(&incx, &incy, players[consoleplayer].camera->_f_angle() - ANG90);
 	}
 
 	m_x += incx;
@@ -1598,7 +1598,7 @@ void AM_doFollowPlayer ()
 		sy = (f_oldloc.y - players[consoleplayer].camera->Y()) >> FRACTOMAPBITS;
 		if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 		{
-			AM_rotate (&sx, &sy, players[consoleplayer].camera->angle - ANG90);
+			AM_rotate (&sx, &sy, players[consoleplayer].camera->_f_angle() - ANG90);
 		}
 		AM_ScrollParchment (sx, sy);
 
@@ -2042,7 +2042,7 @@ void AM_drawSubsectors()
 		// Apply the automap's rotation to the texture origin.
 		if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 		{
-			rotation += ANG90 - players[consoleplayer].camera->angle;
+			rotation += ANG90 - players[consoleplayer].camera->_f_angle();
 			AM_rotatePoint(&originpt.x, &originpt.y);
 		}
 		originx = f_x + ((originpt.x - m_x) * scale / float(1 << 24));
@@ -2588,7 +2588,7 @@ void AM_rotatePoint (fixed_t *x, fixed_t *y)
 	fixed_t pivoty = m_y + m_h/2;
 	*x -= pivotx;
 	*y -= pivoty;
-	AM_rotate (x, y, ANG90 - players[consoleplayer].camera->angle);
+	AM_rotate (x, y, ANG90 - players[consoleplayer].camera->_f_angle());
 	*x += pivotx;
 	*y += pivoty;
 }
@@ -2678,7 +2678,7 @@ void AM_drawPlayers ()
 		}
 		else
 		{
-			angle = players[consoleplayer].camera->angle;
+			angle = players[consoleplayer].camera->_f_angle();
 		}
 		
 		if (am_cheat != 0 && CheatMapArrow.Size() > 0)
@@ -2736,12 +2736,12 @@ void AM_drawPlayers ()
 			pt.x = pos.x >> FRACTOMAPBITS;
 			pt.y = pos.y >> FRACTOMAPBITS;
 
-			angle = p->mo->angle;
+			angle = p->mo->_f_angle();
 
 			if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 			{
 				AM_rotatePoint (&pt.x, &pt.y);
-				angle -= players[consoleplayer].camera->angle - ANG90;
+				angle -= players[consoleplayer].camera->_f_angle() - ANG90;
 			}
 
 			AM_drawLineCharacter(&MapArrow[0], MapArrow.Size(), 0, angle, color, pt.x, pt.y);
@@ -2770,12 +2770,12 @@ void AM_drawKeys ()
 		p.x = pos.x >> FRACTOMAPBITS;
 		p.y = pos.y >> FRACTOMAPBITS;
 
-		angle = key->angle;
+		angle = key->_f_angle();
 
 		if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 		{
 			AM_rotatePoint (&p.x, &p.y);
-			angle += ANG90 - players[consoleplayer].camera->angle;
+			angle += ANG90 - players[consoleplayer].camera->_f_angle();
 		}
 
 		if (key->flags & MF_SPECIAL)
@@ -2830,11 +2830,11 @@ void AM_drawThings ()
 						const size_t spriteIndex = sprite.spriteframes + (show > 1 ? t->frame : 0);
 
 						frame = &SpriteFrames[spriteIndex];
-						angle_t angle = ANGLE_270 - t->angle;
+						angle_t angle = ANGLE_270 - t->_f_angle();
 						if (frame->Texture[0] != frame->Texture[1]) angle += (ANGLE_180 / 16);
 						if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 						{
-							angle += players[consoleplayer].camera->angle - ANGLE_90;
+							angle += players[consoleplayer].camera->_f_angle() - ANGLE_90;
 						}
 						rotation = angle >> 28;
 
@@ -2853,12 +2853,12 @@ void AM_drawThings ()
 				else
 				{
 			drawTriangle:
-					angle = t->angle;
+					angle = t->_f_angle();
 
 					if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 					{
 						AM_rotatePoint (&p.x, &p.y);
-						angle += ANG90 - players[consoleplayer].camera->angle;
+						angle += ANG90 - players[consoleplayer].camera->_f_angle();
 					}
 
 					color = AMColors[AMColors.ThingColor];
@@ -2920,7 +2920,7 @@ void AM_drawThings ()
 							{ { -MAPUNIT,  MAPUNIT }, { -MAPUNIT, -MAPUNIT } },
 						};
 
-						AM_drawLineCharacter (box, 4, t->radius >> FRACTOMAPBITS, angle - t->angle, color, p.x, p.y);
+						AM_drawLineCharacter (box, 4, t->radius >> FRACTOMAPBITS, angle - t->_f_angle(), color, p.x, p.y);
 					}
 				}
 			}

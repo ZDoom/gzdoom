@@ -20,6 +20,7 @@
 #include "d_net.h"
 #include "d_event.h"
 #include "d_player.h"
+#include "vectors.h"
 
 static FRandom pr_botmove ("BotMove");
 
@@ -39,20 +40,21 @@ void DBot::Think ()
 		if (teamplay || !deathmatch)
 			mate = Choose_Mate ();
 
-		angle_t oldyaw = player->mo->angle;
-		int oldpitch = player->mo->pitch;
+		AActor *actor = player->mo;
+		DAngle oldyaw = actor->Angles.Yaw;
+		DAngle oldpitch = actor->Angles.Pitch;
 
 		Set_enemy ();
 		ThinkForMove (cmd);
 		TurnToAng ();
 
-		cmd->ucmd.yaw = (short)((player->mo->angle - oldyaw) >> 16) / ticdup;
-		cmd->ucmd.pitch = (short)((oldpitch - player->mo->pitch) >> 16);
+		cmd->ucmd.yaw = (short)((actor->Angles.Yaw - oldyaw).Degrees * (65536 / 360.f)) / ticdup;
+		cmd->ucmd.pitch = (short)((oldpitch - actor->Angles.Pitch).Degrees * (65536 / 360.f));
 		if (cmd->ucmd.pitch == -32768)
 			cmd->ucmd.pitch = -32767;
 		cmd->ucmd.pitch /= ticdup;
-		player->mo->angle = oldyaw + (cmd->ucmd.yaw << 16) * ticdup;
-		player->mo->pitch = oldpitch - (cmd->ucmd.pitch << 16) * ticdup;
+		actor->Angles.Yaw = oldyaw + DAngle(cmd->ucmd.yaw * ticdup * (360 / 65536.f));
+		actor->Angles.Pitch = oldpitch - DAngle(cmd->ucmd.pitch * ticdup * (360 / 65536.f));
 	}
 
 	if (t_active)	t_active--;
@@ -91,10 +93,10 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 		missile = NULL; //Probably ended its travel.
 	}
 
-	if (player->mo->pitch > 0)
-		player->mo->pitch -= 80;
-	else if (player->mo->pitch <= -60)
-		player->mo->pitch += 80;
+	if (player->mo->Angles.Pitch > 0)
+		player->mo->Angles.Pitch -= 80;
+	else if (player->mo->Angles.Pitch <= -60)
+		player->mo->Angles.Pitch += 80;
 
 	//HOW TO MOVE:
 	if (missile && (player->mo->AproxDistance(missile)<AVOID_DIST)) //try avoid missile got from P_Mobj.c thinking part.

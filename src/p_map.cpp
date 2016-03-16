@@ -2348,7 +2348,7 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 				thing->UnlinkFromWorld();
 				thing->SetXYZ(pos);
 				P_TranslatePortalVXVY(ld, thing->vel.x, thing->vel.y);
-				P_TranslatePortalAngle(ld, thing->angle);
+				P_TranslatePortalAngle(ld, thing->Angles.Yaw);
 				thing->LinkToWorld();
 				P_FindFloorCeiling(thing);
 				thing->ClearInterpolation();
@@ -3314,7 +3314,7 @@ bool FSlide::BounceWall(AActor *mo)
 	}
 	moveangle = R_PointToAngle2(0, 0, mo->vel.x, mo->vel.y);
 	deltaangle = (2 * lineangle) - moveangle;
-	mo->angle = deltaangle;
+	mo->Angles.Yaw = ANGLE2DBL(deltaangle);
 
 	deltaangle >>= ANGLETOFINESHIFT;
 
@@ -3379,13 +3379,11 @@ bool P_BounceActor(AActor *mo, AActor *BlockingMobj, bool ontop)
 		if (!ontop)
 		{
 			fixed_t speed;
-			angle_t angle = BlockingMobj->AngleTo(mo) + ANGLE_1*((pr_bounce() % 16) - 8);
+			DAngle angle = BlockingMobj->_f_AngleTo(mo) + ((pr_bounce() % 16) - 8);
 			speed = P_AproxDistance(mo->vel.x, mo->vel.y);
 			speed = FixedMul(speed, mo->wallbouncefactor); // [GZ] was 0.75, using wallbouncefactor seems more consistent
-			mo->angle = angle;
-			angle >>= ANGLETOFINESHIFT;
-			mo->vel.x = FixedMul(speed, finecosine[angle]);
-			mo->vel.y = FixedMul(speed, finesine[angle]);
+			mo->Angles.Yaw = ANGLE2DBL(angle);
+			mo->VelFromAngle(speed);
 			mo->PlayBounceSound(true);
 			if (mo->BounceFlags & BOUNCE_UseBounceState)
 			{
@@ -3533,7 +3531,7 @@ struct aim_t
 		{
 			res.linetarget = th;
 			res.pitch = pitch;
-			res.angleFromSource = R_PointToAngle2(startpos.x, startpos.y, th->X(), th->Y());
+			res.angleFromSource = vectoyaw(DVector2(th->X() - startpos.x, th->Y() - startpos.y));
 			res.unlinked = unlinked;
 			res.frac = frac;
 		}
@@ -4095,10 +4093,10 @@ fixed_t P_AimLineAttack(AActor *t1, angle_t angle, fixed_t distance, FTranslated
 	aim.startpos = t1->Pos();
 	aim.aimtrace = Vec2Angle(distance, angle);
 	aim.limitz = aim.shootz = shootz;
-	aim.toppitch = t1->pitch - vrange;
-	aim.bottompitch = t1->pitch + vrange;
+	aim.toppitch = t1->_f_pitch() - vrange;
+	aim.bottompitch = t1->_f_pitch() + vrange;
 	aim.attackrange = distance;
-	aim.aimpitch = t1->pitch;
+	aim.aimpitch = t1->_f_pitch();
 	aim.lastsector = t1->Sector;
 	aim.startfrac = 0;
 	aim.unlinked = false;
@@ -4112,7 +4110,7 @@ fixed_t P_AimLineAttack(AActor *t1, angle_t angle, fixed_t distance, FTranslated
 	{
 		*pLineTarget = *result;
 	}
-	return result->linetarget ? result->pitch : t1->pitch;
+	return result->linetarget ? result->pitch : t1->_f_pitch();
 }
 
 
@@ -4399,7 +4397,7 @@ AActor *P_LineAttack(AActor *t1, angle_t angle, fixed_t distance,
 			if (victim != NULL)
 			{
 				victim->linetarget = trace.Actor;
-				victim->angleFromSource = trace.SrcAngleToTarget;
+				victim->angleFromSource = ANGLE2DBL(trace.SrcAngleToTarget);
 				victim->unlinked = trace.unlinked;
 			}
 		}
@@ -4625,7 +4623,7 @@ void P_TraceBleed(int damage, FTranslatedLineTarget *t, AActor *puff)
 
 	fixed_t randpitch = (pr_tracebleed() - 128) << 16;
 	P_TraceBleed(damage, t->linetarget->X(), t->linetarget->Y(), t->linetarget->Z() + t->linetarget->height / 2,
-		t->linetarget, t->angleFromSource, 0);
+		t->linetarget, FLOAT2ANGLE(t->angleFromSource.Degrees), 0);
 }
 
 //==========================================================================
@@ -4722,8 +4720,8 @@ void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, i
 		puffclass = PClass::FindActor(NAME_BulletPuff);
 	}
 
-	pitch = ((angle_t)(-source->pitch) + pitchoffset) >> ANGLETOFINESHIFT;
-	angle = (source->angle + angleoffset) >> ANGLETOFINESHIFT;
+	pitch = ((angle_t)(-source->_f_pitch()) + pitchoffset) >> ANGLETOFINESHIFT;
+	angle = (source->_f_angle() + angleoffset) >> ANGLETOFINESHIFT;
 
 	vx = FixedMul(finecosine[pitch], finecosine[angle]);
 	vy = FixedMul(finecosine[pitch], finesine[angle]);
@@ -4743,7 +4741,7 @@ void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, i
 		}
 	}
 
-	angle = ((source->angle + angleoffset) - ANG90) >> ANGLETOFINESHIFT;
+	angle = ((source->_f_angle() + angleoffset) - ANG90) >> ANGLETOFINESHIFT;
 
 	fixedvec2 xy = source->Vec2Offset(offset_xy * finecosine[angle], offset_xy * finesine[angle]);
 
@@ -4822,7 +4820,7 @@ void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, i
 		if (bleed)
 		{
 			P_SpawnBlood(hitpos, hitangle, newdam > 0 ? newdam : damage, hitactor);
-			P_TraceBleed(newdam > 0 ? newdam : damage, hitpos, hitactor, source->angle, pitch);
+			P_TraceBleed(newdam > 0 ? newdam : damage, hitpos, hitactor, source->_f_angle(), pitch);
 		}
 	}
 
@@ -4874,7 +4872,7 @@ void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, i
 	end.X = FIXED2DBL(trace.HitPos.x);
 	end.Y = FIXED2DBL(trace.HitPos.y);
 	end.Z = FIXED2DBL(trace.HitPos.z);
-	P_DrawRailTrail(source, start, end, color1, color2, maxdiff, railflags, spawnclass, source->angle + angleoffset, duration, sparsity, drift, SpiralOffset);
+	P_DrawRailTrail(source, start, end, color1, color2, maxdiff, railflags, spawnclass, source->_f_angle() + angleoffset, duration, sparsity, drift, SpiralOffset);
 }
 
 //==========================================================================
@@ -4889,8 +4887,8 @@ CVAR(Float, chase_dist, 90.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 void P_AimCamera(AActor *t1, fixed_t &CameraX, fixed_t &CameraY, fixed_t &CameraZ, sector_t *&CameraSector, bool &unlinked)
 {
 	fixed_t distance = (fixed_t)(clamp<double>(chase_dist, 0, 30000) * FRACUNIT);
-	angle_t angle = (t1->angle - ANG180) >> ANGLETOFINESHIFT;
-	angle_t pitch = (angle_t)(t1->pitch) >> ANGLETOFINESHIFT;
+	angle_t angle = (t1->_f_angle() - ANG180) >> ANGLETOFINESHIFT;
+	angle_t pitch = (angle_t)(t1->_f_pitch()) >> ANGLETOFINESHIFT;
 	FTraceResults trace;
 	fixed_t vx, vy, vz, sz;
 
@@ -4937,7 +4935,7 @@ bool P_TalkFacing(AActor *player)
 
 	for (int angle : angleofs)
 	{
-		P_AimLineAttack(player, player->angle + angle, TALKRANGE, &t, ANGLE_1 * 35, ALF_FORCENOSMART | ALF_CHECKCONVERSATION | ALF_PORTALRESTRICT);
+		P_AimLineAttack(player, player->_f_angle() + angle, TALKRANGE, &t, ANGLE_1 * 35, ALF_FORCENOSMART | ALF_CHECKCONVERSATION | ALF_PORTALRESTRICT);
 		if (t.linetarget != NULL)
 		{
 			if (t.linetarget->health > 0 && // Dead things can't talk.
@@ -5133,7 +5131,7 @@ void P_UseLines(player_t *player)
 	// If the player is transitioning a portal, use the group that is at its vertical center.
 	fixedvec2 start = player->mo->GetPortalTransition(player->mo->height / 2);
 	// [NS] Now queries the Player's UseRange.
-	fixedvec2 end = start + Vec2Angle(userange > 0? fixed_t(userange<<FRACBITS) : player->mo->UseRange, player->mo->angle);
+	fixedvec2 end = start + Vec2Angle(userange > 0? fixed_t(userange<<FRACBITS) : player->mo->UseRange, player->mo->_f_angle());
 
 	// old code:
 	//
@@ -5167,7 +5165,7 @@ bool P_UsePuzzleItem(AActor *PuzzleItemUser, int PuzzleItemType)
 	int angle;
 	fixed_t x1, y1, x2, y2, usedist;
 
-	angle = PuzzleItemUser->angle >> ANGLETOFINESHIFT;
+	angle = PuzzleItemUser->_f_angle() >> ANGLETOFINESHIFT;
 	x1 = PuzzleItemUser->X();
 	y1 = PuzzleItemUser->Y();
 

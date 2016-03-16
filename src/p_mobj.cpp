@@ -237,7 +237,7 @@ void AActor::Serialize (FArchive &arc)
 	arc << __pos.x
 		<< __pos.y
 		<< __pos.z
-		<< angle
+		<< Angles.Yaw
 		<< frame
 		<< scaleX
 		<< scaleY
@@ -252,8 +252,8 @@ void AActor::Serialize (FArchive &arc)
 		<< effects
 		<< alpha
 		<< fillcolor
-		<< pitch
-		<< roll
+		<< Angles.Pitch	// move these up when savegame compatibility is broken!
+		<< Angles.Roll	// For now they have to remain here.
 		<< Sector
 		<< floorz
 		<< ceilingz
@@ -832,19 +832,17 @@ bool AActor::UseInventory (AInventory *item)
 
 AInventory *AActor::DropInventory (AInventory *item)
 {
-	angle_t an;
 	AInventory *drop = item->CreateTossable ();
 
 	if (drop == NULL)
 	{
 		return NULL;
 	}
-	an = angle >> ANGLETOFINESHIFT;
 	drop->SetOrigin(PosPlusZ(10*FRACUNIT), false);
-	drop->angle = angle;
-	drop->vel.x = vel.x + 5 * finecosine[an];
-	drop->vel.y = vel.y + 5 * finesine[an];
-	drop->vel.z = vel.z + FRACUNIT;
+	drop->Angles.Yaw = Angles.Yaw;
+	drop->VelFromAngle(5);
+	drop->vel.z = FRACUNIT;
+	drop->vel += vel;
 	drop->flags &= ~MF_NOGRAVITY;	// Don't float
 	drop->ClearCounters();	// do not count for statistics again
 	return drop;
@@ -1576,7 +1574,7 @@ bool AActor::FloorBounceMissile (secplane_t &plane)
 		vel.x -= MulScale15 (plane.a, dot);
 		vel.y -= MulScale15 (plane.b, dot);
 		vel.z -= MulScale15 (plane.c, dot);
-		angle = R_PointToAngle2 (0, 0, vel.x, vel.y);
+		AngleFromVel();
 		if (!(BounceFlags & BOUNCE_MBF)) // Heretic projectiles die, MBF projectiles don't.
 		{
 			flags |= MF_INBOUNCE;
@@ -1592,7 +1590,7 @@ bool AActor::FloorBounceMissile (secplane_t &plane)
 		vel.x = FixedMul (vel.x - MulScale15 (plane.a, dot), bouncefactor);
 		vel.y = FixedMul (vel.y - MulScale15 (plane.b, dot), bouncefactor);
 		vel.z = FixedMul (vel.z - MulScale15 (plane.c, dot), bouncefactor);
-		angle = R_PointToAngle2 (0, 0, vel.x, vel.y);
+		AngleFromVel();
 	}
 
 	PlayBounceSound(true);
@@ -1652,41 +1650,20 @@ void P_ThrustMobj (AActor *mo, angle_t angle, fixed_t move)
 //
 //----------------------------------------------------------------------------
 
-int P_FaceMobj (AActor *source, AActor *target, angle_t *delta)
+int P_FaceMobj (AActor *source, AActor *target, DAngle *delta)
 {
-	angle_t diff;
-	angle_t angle1;
-	angle_t angle2;
+	DAngle diff;
 
-	angle1 = source->angle;
-	angle2 = source->AngleTo(target);
-	if (angle2 > angle1)
+	diff = deltaangle(source->Angles.Yaw, source->_f_AngleTo(target));
+	if (diff > 0)
 	{
-		diff = angle2 - angle1;
-		if (diff > ANGLE_180)
-		{
-			*delta = ANGLE_MAX - diff;
-			return 0;
-		}
-		else
-		{
-			*delta = diff;
-			return 1;
-		}
+		*delta = diff;
+		return 0;
 	}
 	else
 	{
-		diff = angle1 - angle2;
-		if (diff > ANGLE_180)
-		{
-			*delta = ANGLE_MAX - diff;
-			return 1;
-		}
-		else
-		{
-			*delta = diff;
-			return 0;
-		}
+		*delta = -diff;
+		return 1;
 	}
 }
 
@@ -1719,16 +1696,18 @@ bool AActor::CanSeek(AActor *target) const
 //
 //----------------------------------------------------------------------------
 
-bool P_SeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax, bool precise, bool usecurspeed)
+bool P_SeekerMissile (AActor *actor, angle_t _thresh, angle_t _turnMax, bool precise, bool usecurspeed)
 {
+	DAngle thresh = ANGLE2DBL(_thresh);
+	DAngle turnMax = ANGLE2DBL(_turnMax);
+
 	int dir;
 	int dist;
-	angle_t delta;
-	angle_t angle;
+	DAngle delta;
 	AActor *target;
 	fixed_t speed;
 
-	speed = !usecurspeed ? actor->Speed : xs_CRoundToInt(DVector3(actor->vel.x, actor->vel.y, actor->vel.z).Length());
+	speed = !usecurspeed ? actor->Speed : actor->VelToSpeed();
 	target = actor->tracer;
 	if (target == NULL || !actor->CanSeek(target))
 	{
@@ -1746,7 +1725,7 @@ bool P_SeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax, bool preci
 	dir = P_FaceMobj (actor, target, &delta);
 	if (delta > thresh)
 	{
-		delta >>= 1;
+		delta /= 2;
 		if (delta > turnMax)
 		{
 			delta = turnMax;
@@ -1754,18 +1733,16 @@ bool P_SeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax, bool preci
 	}
 	if (dir)
 	{ // Turn clockwise
-		actor->angle += delta;
+		actor->Angles.Yaw += delta;
 	}
 	else
 	{ // Turn counter clockwise
-		actor->angle -= delta;
+		actor->Angles.Yaw -= delta;
 	}
-	angle = actor->angle>>ANGLETOFINESHIFT;
 	
 	if (!precise)
 	{
-		actor->vel.x = FixedMul (speed, finecosine[angle]);
-		actor->vel.y = FixedMul (speed, finesine[angle]);
+		actor->VelFromAngle(speed);
 
 		if (!(actor->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER)))
 		{
@@ -1783,25 +1760,19 @@ bool P_SeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax, bool preci
 	}
 	else
 	{
-		angle_t pitch = 0;
+		DAngle pitch = 0;
 		if (!(actor->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER)))
 		{ // Need to seek vertically
-			fixedvec2 vec = actor->Vec2To(target);
-			double dist = MAX(1.0, DVector2(vec.x, vec.y).Length());
+			fixed_t dist = MAX(1, actor->Distance2D(target));
 			// Aim at a player's eyes and at the middle of the actor for everything else.
 			fixed_t aimheight = target->height/2;
 			if (target->IsKindOf(RUNTIME_CLASS(APlayerPawn)))
 			{
 				aimheight = static_cast<APlayerPawn *>(target)->ViewHeight;
 			}
-			pitch = R_PointToAngle2(0, actor->Z() + actor->height/2, xs_CRoundToInt(dist), target->Z() + aimheight);
-			pitch >>= ANGLETOFINESHIFT;
+			pitch = ANGLE2DBL(R_PointToAngle2(0, actor->Z() + actor->height/2, dist, target->Z() + aimheight));
 		}
-
-		fixed_t xyscale = FixedMul(speed, finecosine[pitch]);
-		actor->vel.z = FixedMul(speed, finesine[pitch]);
-		actor->vel.x = FixedMul(xyscale, finecosine[angle]);
-		actor->vel.y = FixedMul(xyscale, finesine[angle]);
+		actor->Vel3DFromAngle(pitch, speed);
 	}
 
 	return true;
@@ -1820,7 +1791,7 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 {
 	static int pushtime = 0;
 	bool bForceSlide = scrollx || scrolly;
-	angle_t angle;
+	DAngle Angle;
 	fixed_t ptryx, ptryy;
 	player_t *player;
 	fixed_t xmove, ymove;
@@ -1983,7 +1954,7 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 
 	FCheckPosition tm(!!(mo->flags2 & MF2_RIP));
 
-	angle_t oldangle = mo->angle;
+	angle_t oldangle = mo->_f_angle();
 	do
 	{
 		if (i_compatflags & COMPATF_WALLRUN) pushtime++;
@@ -2123,7 +2094,7 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 					// Don't change the angle if there's THRUREFLECT on the monster.
 					if (!(BlockingMobj->flags7 & MF7_THRUREFLECT))
 					{
-						angle = BlockingMobj->AngleTo(mo);
+						DAngle angle = BlockingMobj->_f_AngleTo(mo);
 						bool dontReflect = (mo->AdjustReflectionAngle(BlockingMobj, angle));
 						// Change angle for deflection/reflection
 
@@ -2149,17 +2120,15 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 							{
 								if ((BlockingMobj->flags7 & MF7_MIRRORREFLECT) && (tg | blockingtg))
 								{
-									mo->angle += ANGLE_180;
+									mo->Angles.Yaw += 180.;
 									mo->vel.x = -mo->vel.x / 2;
 									mo->vel.y = -mo->vel.y / 2;
 									mo->vel.z = -mo->vel.z / 2;
 								}
 								else
 								{
-									mo->angle = angle;
-									angle >>= ANGLETOFINESHIFT;
-									mo->vel.x = FixedMul(mo->Speed >> 1, finecosine[angle]);
-									mo->vel.y = FixedMul(mo->Speed >> 1, finesine[angle]);
+									mo->Angles.Yaw = angle;
+									mo->VelFromAngle(mo->Speed / 2);
 									mo->vel.z = -mo->vel.z / 2;
 								}
 							}
@@ -2220,7 +2189,7 @@ explode:
 				}
 				else
 				{
-					angle_t anglediff = (mo->angle - oldangle) >> ANGLETOFINESHIFT;
+					angle_t anglediff = (mo->_f_angle() - oldangle) >> ANGLETOFINESHIFT;
 
 					if (anglediff != 0)
 					{
@@ -2229,7 +2198,7 @@ explode:
 
 						xmove = xnew;
 						ymove = ynew;
-						oldangle = mo->angle;	// in case more moves are needed this needs to be updated.
+						oldangle = mo->_f_angle();	// in case more moves are needed this needs to be updated.
 					}
 
 					startx = mo->X() - Scale (xmove, step, steps);
@@ -2855,7 +2824,7 @@ void P_NightmareRespawn (AActor *mobj)
 	mo->SpawnPoint[2] = mobj->SpawnPoint[2];
 	mo->SpawnAngle = mobj->SpawnAngle;
 	mo->SpawnFlags = mobj->SpawnFlags & ~MTF_DORMANT;	// It wasn't dormant when it died, so it's not dormant now, either.
-	mo->angle = ANG45 * (mobj->SpawnAngle/45);
+	mo->Angles.Yaw = mobj->SpawnAngle;
 
 	mo->HandleSpawnFlags ();
 	mo->reactiontime = 18;
@@ -3119,37 +3088,37 @@ int AActor::SpecialMissileHit (AActor *victim)
 	return -1;
 }
 
-bool AActor::AdjustReflectionAngle (AActor *thing, angle_t &angle)
+bool AActor::AdjustReflectionAngle (AActor *thing, DAngle &angle)
 {
 	if (flags2 & MF2_DONTREFLECT) return true;
 	if (thing->flags7 & MF7_THRUREFLECT) return false;
 	// Change angle for reflection
 	if (thing->flags4&MF4_SHIELDREFLECT)
 	{
-		// Shield reflection (from the Centaur
-		if (absangle(angle - thing->angle)>>24 > 45)
+		// Shield reflection (from the Centaur)
+		if (diffangle(angle, thing->Angles.Yaw) > 45)
 			return true;	// Let missile explode
 
 		if (thing->IsKindOf (RUNTIME_CLASS(AHolySpirit)))	// shouldn't this be handled by another flag???
 			return true;
 
 		if (pr_reflect () < 128)
-			angle += ANGLE_45;
+			angle += 45;
 		else
-			angle -= ANGLE_45;
+			angle -= 45;
 
 	}
 	else if (thing->flags4&MF4_DEFLECT)
 	{
 		// deflect (like the Heresiarch)
 		if(pr_reflect() < 128) 
-			angle += ANG45;
+			angle += 45;
 		else 
-			angle -= ANG45;
+			angle -= 45;
 	}
 	else
 	{
-		angle += ANGLE_1 * ((pr_reflect() % 16) - 8);
+		angle += ((pr_reflect() % 16) - 8);
 	}
 	//Always check for AIMREFLECT, no matter what else is checked above.
 	if (thing->flags7 & MF7_AIMREFLECT)
@@ -3219,7 +3188,7 @@ bool AActor::IsOkayToAttack (AActor *link)
 		// to only allow the check to succeed if the enemy was in a ~84� FOV of the player
 		if (flags3 & MF3_SCREENSEEKER)
 		{
-			angle_t angle = Friend->AngleTo(link) - Friend->angle;
+			angle_t angle = Friend->AngleTo(link) - Friend->_f_angle();
 			angle >>= 24;
 			if (angle>226 || angle<30)
 			{
@@ -3244,11 +3213,11 @@ void AActor::SetShade (int r, int g, int b)
 	fillcolor = MAKEARGB(ColorMatcher.Pick (r, g, b), r, g, b);
 }
 
-void AActor::SetPitch(int p, bool interpolate, bool forceclamp)
+void AActor::SetPitch(DAngle p, bool interpolate, bool forceclamp)
 {
 	if (player != NULL || forceclamp)
 	{ // clamp the pitch we set
-		int min, max;
+		DAngle min, max;
 
 		if (player != NULL)
 		{
@@ -3257,14 +3226,14 @@ void AActor::SetPitch(int p, bool interpolate, bool forceclamp)
 		}
 		else
 		{
-			min = -ANGLE_90 + (1 << ANGLETOFINESHIFT);
-			max = ANGLE_90 - (1 << ANGLETOFINESHIFT);
+			min = -89.;
+			max = 89.;
 		}
-		p = clamp<int>(p, min, max);
+		p = clamp(p, min, max);
 	}
-	if (p != pitch)
+	if (p != Angles.Pitch)
 	{
-		pitch = p;
+		Angles.Pitch = p;
 		if (player != NULL && interpolate)
 		{
 			player->cheats |= CF_INTERPVIEW;
@@ -3272,11 +3241,11 @@ void AActor::SetPitch(int p, bool interpolate, bool forceclamp)
 	}
 }
 
-void AActor::SetAngle(angle_t ang, bool interpolate)
+void AActor::SetAngle(DAngle ang, bool interpolate)
 {
-	if (ang != angle)
+	if (ang != Angles.Yaw)
 	{
-		angle = ang;
+		Angles.Yaw = ang;
 		if (player != NULL && interpolate)
 		{
 			player->cheats |= CF_INTERPVIEW;
@@ -3284,11 +3253,11 @@ void AActor::SetAngle(angle_t ang, bool interpolate)
 	}
 }
 
-void AActor::SetRoll(angle_t r, bool interpolate)
+void AActor::SetRoll(DAngle r, bool interpolate)
 {
-	if (r != roll)
+	if (r != Angles.Roll)
 	{
-		roll = r;
+		Angles.Roll = r;
 		if (player != NULL && interpolate)
 		{
 			player->cheats |= CF_INTERPVIEW;
@@ -4453,7 +4422,7 @@ void AActor::PostBeginPlay ()
 	{
 		Renderer->StateChanged(this);
 	}
-	PrevAngle = angle;
+	PrevAngles = Angles;
 	flags7 |= MF7_HANDLENODELAY;
 }
 
@@ -4613,7 +4582,7 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 	APlayerPawn *mobj, *oldactor;
 	BYTE	  state;
 	fixed_t spawn_x, spawn_y, spawn_z;
-	angle_t spawn_angle;
+	DAngle SpawnAngle;
 
 	if (mthing == NULL)
 	{
@@ -4672,25 +4641,18 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 		spawn_y = p->mo->Y();
 		spawn_z = p->mo->Z();
 
-		spawn_angle = p->mo->angle;
+		SpawnAngle = p->mo->Angles.Yaw;
 	}
 	else
 	{
 		spawn_x = mthing->x;
 		spawn_y = mthing->y;
 
-		// Allow full angular precision but avoid roundoff errors for multiples of 45 degrees.
-		if (mthing->angle % 45 != 0)
-		{
-			spawn_angle = mthing->angle * (ANG45 / 45);
-		}
-		else
-		{
-			spawn_angle = ANG45 * (mthing->angle / 45);
-		}
+		// Allow full angular precision
+		SpawnAngle = mthing->angle;
 		if (i_compatflags2 & COMPATF2_BADANGLES)
 		{
-			spawn_angle += 1 << ANGLETOFINESHIFT;
+			SpawnAngle += 0.01;
 		}
 
 		if (GetDefaultByType(p->cls)->flags & MF_SPAWNCEILING)
@@ -4741,8 +4703,8 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 		mobj->Translation = TRANSLATION(TRANSLATION_Players,playernum);
 	}
 
-	mobj->angle = spawn_angle;
-	mobj->pitch = mobj->roll = 0;
+	mobj->Angles.Yaw = SpawnAngle;
+	mobj->Angles.Pitch = mobj->Angles.Roll = 0;
 	mobj->health = p->health;
 
 	// [RH] Set player sprite based on skin
@@ -4829,7 +4791,7 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 
 	if (multiplayer)
 	{
-		unsigned an = mobj->angle >> ANGLETOFINESHIFT;
+		unsigned an = mobj->_f_angle() >> ANGLETOFINESHIFT;
 		Spawn ("TeleportFog", mobj->Vec3Offset(20*finecosine[an], 20*finesine[an], TELEFOGHEIGHT), ALLOW_REPLACE);
 	}
 
@@ -4946,7 +4908,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 		polyspawn->x = mthing->x;
 		polyspawn->y = mthing->y;
 		polyspawn->angle = mthing->angle;
-			polyspawn->type = mentry->Special;
+		polyspawn->type = mentry->Special;
 		polyspawns = polyspawn;
 			if (mentry->Special != SMT_PolyAnchor)
 			po_NumPolyobjs++;
@@ -5205,7 +5167,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	mobj->tid = mthing->thingid;
 	mobj->AddToHash ();
 
-	mobj->PrevAngle = mobj->angle = (DWORD)((mthing->angle * CONST64(0x100000000)) / 360);
+	mobj->PrevAngles.Yaw = mobj->Angles.Yaw = mthing->angle;
 
 	// Check if this actor's mapthing has a conversation defined
 	if (mthing->Conversation > 0)
@@ -5229,9 +5191,9 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	if (mthing->scaleY)
 		mobj->scaleY = FixedMul(mthing->scaleY, mobj->scaleY);
 	if (mthing->pitch)
-		mobj->pitch = ANGLE_1 * mthing->pitch;
+		mobj->Angles.Pitch = mthing->pitch;
 	if (mthing->roll)
-		mobj->roll = ANGLE_1 * mthing->roll;
+		mobj->Angles.Roll = mthing->roll;
 	if (mthing->score)
 		mobj->Score = mthing->score;
 	if (mthing->fillcolor)
@@ -5295,7 +5257,7 @@ AActor *P_SpawnPuff (AActor *source, PClassActor *pufftype, fixed_t x, fixed_t y
 		puff->target = source;
 	
 	// Angle is the opposite of the hit direction (i.e. the puff faces the source.)
-	puff->angle = hitdir + ANGLE_180;
+	puff->Angles.Yaw = ANGLE2DBL(hitdir + ANGLE_180);
 
 	// If a puff has a crash state and an actor was not hit,
 	// it will enter the crash state. This is used by the StrifeSpark
@@ -5361,7 +5323,7 @@ void P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage, AAc
 		z += pr_spawnblood.Random2 () << 10;
 		th = Spawn (bloodcls, x, y, z, NO_REPLACE); // GetBloodType already performed the replacement
 		th->vel.z = FRACUNIT*2;
-		th->angle = dir;
+		th->Angles.Yaw = ANGLE2DBL(dir);
 		// [NG] Applying PUFFGETSOWNER to the blood will make it target the owner
 		if (th->flags5 & MF5_PUFFGETSOWNER) th->target = originator;
 		if (gameinfo.gametype & GAME_DoomChex)
@@ -6029,7 +5991,7 @@ AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
 		th->vel.y = newy;
 	}
 
-	th->angle = R_PointToAngle2 (0, 0, th->vel.x, th->vel.y);
+	th->AngleFromVel();
 
 	if (th->flags4 & MF4_SPECTRAL)
 	{
@@ -6045,17 +6007,14 @@ AActor *P_OldSpawnMissile(AActor *source, AActor *owner, AActor *dest, PClassAct
 	{
 		return NULL;
 	}
-	angle_t an;
 	fixed_t dist;
 	AActor *th = Spawn (type, source->PosPlusZ(4*8*FRACUNIT), ALLOW_REPLACE);
 
 	P_PlaySpawnSound(th, source);
 	th->target = owner;		// record missile's originator
 
-	th->angle = an = source->AngleTo(dest);
-	an >>= ANGLETOFINESHIFT;
-	th->vel.x = FixedMul (th->Speed, finecosine[an]);
-	th->vel.y = FixedMul (th->Speed, finesine[an]);
+	th->Angles.Yaw = source->_f_AngleTo(dest);
+	th->VelFromAngle();
 
 	dist = source->AproxDistance (dest);
 	if (th->Speed) dist = dist / th->Speed;
@@ -6112,7 +6071,7 @@ AActor *P_SpawnMissileZAimed (AActor *source, fixed_t z, AActor *dest, PClassAct
 	fixed_t speed;
 	fixed_t vz;
 
-	an = source->angle;
+	an = source->_f_angle();
 
 	if (dest->flags & MF_SHADOW)
 	{
@@ -6164,10 +6123,8 @@ AActor *P_SpawnMissileAngleZSpeed (AActor *source, fixed_t z,
 	P_PlaySpawnSound(mo, source);
 	if (owner == NULL) owner = source;
 	mo->target = owner;
-	mo->angle = angle;
-	angle >>= ANGLETOFINESHIFT;
-	mo->vel.x = FixedMul (speed, finecosine[angle]);
-	mo->vel.y = FixedMul (speed, finesine[angle]);
+	mo->Angles.Yaw = ANGLE2DBL(angle);
+	mo->VelFromAngle(speed);
 	mo->vel.z = vz;
 
 	if (mo->flags4 & MF4_SPECTRAL)
@@ -6193,7 +6150,7 @@ AActor *P_SpawnPlayerMissile (AActor *source, PClassActor *type)
 	{
 		return NULL;
 	}
-	return P_SpawnPlayerMissile (source, 0, 0, 0, type, source->angle);
+	return P_SpawnPlayerMissile (source, 0, 0, 0, type, source->_f_angle());
 }
 
 AActor *P_SpawnPlayerMissile (AActor *source, PClassActor *type, angle_t angle)
@@ -6221,7 +6178,7 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 	{
 		// Keep exactly the same angle and pitch as the player's own aim
 		an = angle;
-		pitch = source->pitch;
+		pitch = source->_f_pitch();
 		pLineTarget->linetarget = NULL;
 	}
 	else // see which target is to be aimed at
@@ -6279,25 +6236,15 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 	if (pMissileActor) *pMissileActor = MissileActor;
 	P_PlaySpawnSound(MissileActor, source);
 	MissileActor->target = source;
-	MissileActor->angle = an;
-
-	fixed_t vx, vy, vz, speed;
-
-	vx = FixedMul (finecosine[pitch>>ANGLETOFINESHIFT], finecosine[an>>ANGLETOFINESHIFT]);
-	vy = FixedMul (finecosine[pitch>>ANGLETOFINESHIFT], finesine[an>>ANGLETOFINESHIFT]);
-	vz = -finesine[pitch>>ANGLETOFINESHIFT];
-	speed = MissileActor->Speed;
-
-	DVector3 vec(vx, vy, vz);
-
-	if (MissileActor->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER))
+	MissileActor->Angles.Yaw = ANGLE2DBL(an);
+	if (MissileActor->flags3 & (MF3_FLOORHUGGER | MF3_CEILINGHUGGER))
 	{
-		vec.Z = 0;
+		MissileActor->VelFromAngle();
 	}
-	vec.Resize(speed);
-	MissileActor->vel.x = xs_CRoundToInt(vec.X);
-	MissileActor->vel.y = xs_CRoundToInt(vec.Y);
-	MissileActor->vel.z = xs_CRoundToInt(vec.Z);
+	else
+	{
+		MissileActor->Vel3DFromAngle(ANGLE2DBL(pitch), MissileActor->Speed);
+	}
 
 	if (MissileActor->flags4 & MF4_SPECTRAL)
 	{

@@ -117,7 +117,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PotteryCheck)
 		if (playeringame[i])
 		{
 			AActor *pmo = players[i].mo;
-			if (P_CheckSight (self, pmo) && (absangle(pmo->AngleTo(self) - pmo->angle) <= ANGLE_45))
+			if (P_CheckSight (self, pmo) && (absangle(pmo->AngleTo(self) - pmo->_f_angle()) <= ANGLE_45))
 			{ // Previous state (pottery bit waiting state)
 				self->SetState (self->state - 1);
 				return 0;
@@ -222,7 +222,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LeafSpawn)
 
 		if (mo)
 		{
-			P_ThrustMobj (mo, self->angle, (pr_leaf()<<9)+3*FRACUNIT);
+			P_ThrustMobj (mo, self->_f_angle(), (pr_leaf()<<9)+3*FRACUNIT);
 			mo->target = self;
 			mo->special1 = 0;
 		}
@@ -263,7 +263,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LeafCheck)
 		self->SetState (NULL);
 		return 0;
 	}
-	angle_t ang = self->target ? self->target->angle : self->angle;
+	angle_t ang = self->target ? self->target->_f_angle() : self->_f_angle();
 	if (pr_leafcheck() > 64)
 	{
 		if (!self->vel.x && !self->vel.y)

@@ -620,14 +620,14 @@ void InitThingdef()
 	PSymbolTable &symt = RUNTIME_CLASS(AActor)->Symbols;
 	PType *array5 = NewArray(TypeSInt32, 5);
 	symt.AddSymbol(new PField(NAME_Alpha,		TypeFixed,	VARF_Native, myoffsetof(AActor,alpha)));
-	symt.AddSymbol(new PField(NAME_Angle,		TypeAngle,	VARF_Native, myoffsetof(AActor,angle)));
+	symt.AddSymbol(new PField(NAME_Angle,		TypeFloat64,VARF_Native, myoffsetof(AActor,Angles.Yaw)));
 	symt.AddSymbol(new PField(NAME_Args,		array5,		VARF_Native, myoffsetof(AActor,args)));
 	symt.AddSymbol(new PField(NAME_CeilingZ,	TypeFixed,	VARF_Native, myoffsetof(AActor,ceilingz)));
 	symt.AddSymbol(new PField(NAME_FloorZ,		TypeFixed,	VARF_Native, myoffsetof(AActor,floorz)));
 	symt.AddSymbol(new PField(NAME_Health,		TypeSInt32,	VARF_Native, myoffsetof(AActor,health)));
 	symt.AddSymbol(new PField(NAME_Mass,		TypeSInt32,	VARF_Native, myoffsetof(AActor,Mass)));
-	symt.AddSymbol(new PField(NAME_Pitch,		TypeAngle,	VARF_Native, myoffsetof(AActor,pitch)));
-	symt.AddSymbol(new PField(NAME_Roll,		TypeAngle,	VARF_Native, myoffsetof(AActor,roll)));
+	symt.AddSymbol(new PField(NAME_Pitch,		TypeFloat64,VARF_Native, myoffsetof(AActor,Angles.Pitch)));
+	symt.AddSymbol(new PField(NAME_Roll,		TypeFloat64,VARF_Native, myoffsetof(AActor,Angles.Roll)));
 	symt.AddSymbol(new PField(NAME_Special,		TypeSInt32,	VARF_Native, myoffsetof(AActor,special)));
 	symt.AddSymbol(new PField(NAME_TID,			TypeSInt32,	VARF_Native, myoffsetof(AActor,tid)));
 	symt.AddSymbol(new PField(NAME_TIDtoHate,	TypeSInt32,	VARF_Native, myoffsetof(AActor,TIDtoHate)));

@@ -47,7 +47,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FHammerAttack)
 	hammertime = PClass::FindActor("HammerPuff");
 	for (i = 0; i < 16; i++)
 	{
-		angle = pmo->angle + i*(ANG45/32);
+		angle = pmo->_f_angle() + i*(ANG45/32);
 		slope = P_AimLineAttack (pmo, angle, HAMMER_RANGE, &t, 0, ALF_CHECK3D);
 		if (t.linetarget != NULL)
 		{
@@ -63,7 +63,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FHammerAttack)
 				goto hammerdone;
 			}
 		}
-		angle = pmo->angle-i*(ANG45/32);
+		angle = pmo->_f_angle()-i*(ANG45/32);
 		slope = P_AimLineAttack(pmo, angle, HAMMER_RANGE, &t, 0, ALF_CHECK3D);
 		if (t.linetarget != NULL)
 		{
@@ -81,7 +81,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FHammerAttack)
 		}
 	}
 	// didn't find any targets in meleerange, so set to throw out a hammer
-	angle = pmo->angle;
+	angle = pmo->_f_angle();
 	slope = P_AimLineAttack (pmo, angle, HAMMER_RANGE, NULL, 0, ALF_CHECK3D);
 	if (P_LineAttack (pmo, angle, HAMMER_RANGE, slope, damage, NAME_Melee, hammertime, true) != NULL)
 	{

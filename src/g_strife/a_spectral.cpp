@@ -30,7 +30,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpectralLightningTail)
 
 	AActor *foo = Spawn("SpectralLightningHTail", self->Vec3Offset(-self->vel.x, -self->vel.y, 0), ALLOW_REPLACE);
 
-	foo->angle = self->angle;
+	foo->Angles.Yaw = self->Angles.Yaw;
 	foo->FriendPlayer = self->FriendPlayer;
 	return 0;
 }
@@ -42,11 +42,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpectralBigBallLightning)
 	PClassActor *cls = PClass::FindActor("SpectralLightningH3");
 	if (cls)
 	{
-		self->angle += ANGLE_90;
+		self->Angles.Yaw += 90.;
 		P_SpawnSubMissile (self, cls, self->target);
-		self->angle += ANGLE_180;
+		self->Angles.Yaw += 180.;
 		P_SpawnSubMissile (self, cls, self->target);
-		self->angle += ANGLE_90;
+		self->Angles.Yaw -= 270.;
 		P_SpawnSubMissile (self, cls, self->target);
 	}
 	return 0;
@@ -87,14 +87,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpectralLightning)
 
 // In Strife, this number is stored in the data segment, but it doesn't seem to be
 // altered anywhere.
-#define TRACEANGLE (0xe000000)
+#define TRACEANGLE (19.6875)
 
 DEFINE_ACTION_FUNCTION(AActor, A_Tracer2)
 {
 	PARAM_ACTION_PROLOGUE;
 
 	AActor *dest;
-	angle_t exact;
 	fixed_t dist;
 	fixed_t slope;
 
@@ -103,28 +102,23 @@ DEFINE_ACTION_FUNCTION(AActor, A_Tracer2)
 	if (!dest || dest->health <= 0 || self->Speed == 0 || !self->CanSeek(dest))
 		return 0;
 
-	// change angle
-	exact = self->AngleTo(dest);
+	DAngle exact = self->_f_AngleTo(dest);
+	DAngle diff = deltaangle(self->Angles.Yaw, exact);
 
-	if (exact != self->angle)
+	if (diff < 0)
 	{
-		if (exact - self->angle > 0x80000000)
-		{
-			self->angle -= TRACEANGLE;
-			if (exact - self->angle < 0x80000000)
-				self->angle = exact;
-		}
-		else
-		{
-			self->angle += TRACEANGLE;
-			if (exact - self->angle > 0x80000000)
-				self->angle = exact;
-		}
+		self->Angles.Yaw -= TRACEANGLE;
+		if (deltaangle(self->Angles.Yaw, exact) > 0)
+			self->Angles.Yaw = exact;
+	}
+	else if (diff > 0)
+	{
+		self->Angles.Yaw += TRACEANGLE;
+		if (deltaangle(self->Angles.Yaw, exact) < 0.)
+			self->Angles.Yaw = exact;
 	}
 
-	exact = self->angle >> ANGLETOFINESHIFT;
-	self->vel.x = FixedMul (self->Speed, finecosine[exact]);
-	self->vel.y = FixedMul (self->Speed, finesine[exact]);
+	self->VelFromAngle();
 
 	if (!(self->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER)))
 	{

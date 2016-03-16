@@ -43,7 +43,7 @@ void AChickenPlayer::MorphPlayerThink ()
 	}
 	if (!(vel.x | vel.y) && pr_chickenplayerthink () < 160)
 	{ // Twitch view angle
-		angle += pr_chickenplayerthink.Random2 () << 19;
+		Angles.Yaw += pr_chickenplayerthink.Random2() * (360. / 256. / 32.);
 	}
 	if ((Z() <= floorz) && (pr_chickenplayerthink() < 32))
 	{ // Jump and noise
@@ -184,12 +184,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_BeakAttackPL1)
 	}
 
 	damage = 1 + (pr_beakatkpl1()&3);
-	angle = player->mo->angle;
+	angle = player->mo->_f_angle();
 	slope = P_AimLineAttack (player->mo, angle, MELEERANGE);
 	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage, NAME_Melee, "BeakPuff", true, &t);
 	if (t.linetarget)
 	{
-		player->mo->angle = t.angleFromSource;
+		player->mo->Angles.Yaw = t.angleFromSource;
 	}
 	P_PlayPeck (player->mo);
 	player->chickenPeck = 12;
@@ -219,12 +219,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_BeakAttackPL2)
 	}
 
 	damage = pr_beakatkpl2.HitDice (4);
-	angle = player->mo->angle;
+	angle = player->mo->_f_angle();
 	slope = P_AimLineAttack (player->mo, angle, MELEERANGE);
 	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage, NAME_Melee, "BeakPuff", true, &t);
 	if (t.linetarget)
 	{
-		player->mo->angle = t.angleFromSource;
+		player->mo->Angles.Yaw = t.angleFromSource;
 	}
 	P_PlayPeck (player->mo);
 	player->chickenPeck = 12;

@@ -102,7 +102,7 @@ static int WriteTHINGS (FILE *file)
 
 	mt.x = LittleShort(short(mo->X() >> FRACBITS));
 	mt.y = LittleShort(short(mo->Y() >> FRACBITS));
-	mt.angle = LittleShort(short(MulScale32 (mo->angle >> ANGLETOFINESHIFT, 360)));
+	mt.angle = LittleShort(short(MulScale32 (mo->_f_angle() >> ANGLETOFINESHIFT, 360)));
 	mt.type = LittleShort((short)1);
 	mt.flags = LittleShort((short)(7|224|MTF_SINGLE));
 	fwrite (&mt, sizeof(mt), 1, file);

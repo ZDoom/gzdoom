@@ -179,7 +179,7 @@ struct FLinePortal
 	BYTE mFlags;
 	BYTE mDefFlags;
 	BYTE mAlign;
-	angle_t mAngleDiff;
+	DAngle mAngleDiff;
 	fixed_t mSinRot;
 	fixed_t mCosRot;
 };
@@ -203,7 +203,7 @@ inline int P_NumPortalGroups()
 bool P_ClipLineToPortal(line_t* line, line_t* portal, fixed_t viewx, fixed_t viewy, bool partial = true, bool samebehind = true);
 void P_TranslatePortalXY(line_t* src, fixed_t& x, fixed_t& y);
 void P_TranslatePortalVXVY(line_t* src, fixed_t& vx, fixed_t& vy);
-void P_TranslatePortalAngle(line_t* src, angle_t& angle);
+void P_TranslatePortalAngle(line_t* src, DAngle& angle);
 void P_TranslatePortalZ(line_t* src, fixed_t& z);
 void P_NormalizeVXVY(fixed_t& vx, fixed_t& vy);
 fixed_t P_PointLineDistance(line_t* line, fixed_t x, fixed_t y);

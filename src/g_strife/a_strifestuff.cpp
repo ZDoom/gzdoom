@@ -600,7 +600,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_TossGib)
 
 	const char *gibtype = (self->flags & MF_NOBLOOD) ? "Junk" : "Meat";
 	AActor *gib = Spawn (gibtype, self->PosPlusZ(24*FRACUNIT), ALLOW_REPLACE);
-	angle_t an;
 	int speed;
 
 	if (gib == NULL)
@@ -608,11 +607,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_TossGib)
 		return 0;
 	}
 
-	an = pr_gibtosser() << 24;
-	gib->angle = an;
+	gib->Angles.Yaw = pr_gibtosser() * (360 / 256.f);
 	speed = pr_gibtosser() & 15;
-	gib->vel.x = speed * finecosine[an >> ANGLETOFINESHIFT];
-	gib->vel.y = speed * finesine[an >> ANGLETOFINESHIFT];
+	gib->VelFromAngle(speed);
 	gib->vel.z = (pr_gibtosser() & 15) << FRACBITS;
 	return 0;
 }

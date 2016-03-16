@@ -39,13 +39,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_SkelMissile)
 	return 0;
 }
 
-#define TRACEANGLE (0xc000000)
+#define TRACEANGLE (16.875)
 
 DEFINE_ACTION_FUNCTION(AActor, A_Tracer)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	angle_t exact;
 	fixed_t dist;
 	fixed_t slope;
 	AActor *dest;
@@ -64,7 +63,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Tracer)
 		return 0;
 	
 	// spawn a puff of smoke behind the rocket
-	P_SpawnPuff (self, PClass::FindActor(NAME_BulletPuff), self->Pos(), self->angle, self->angle, 3);
+	P_SpawnPuff (self, PClass::FindActor(NAME_BulletPuff), self->Pos(), self->_f_angle(), self->_f_angle(), 3);
 		
 	smoke = Spawn ("RevenantTracerSmoke", self->Vec3Offset(-self->vel.x, -self->vel.y, 0), ALLOW_REPLACE);
 	
@@ -80,27 +79,23 @@ DEFINE_ACTION_FUNCTION(AActor, A_Tracer)
 		return 0;
 	
 	// change angle 	
-	exact = self->AngleTo(dest);
+	DAngle exact = self->_f_AngleTo(dest);
+	DAngle diff = deltaangle(self->Angles.Yaw, exact);
 
-	if (exact != self->angle)
+	if (diff < 0)
 	{
-		if (exact - self->angle > 0x80000000)
-		{
-			self->angle -= TRACEANGLE;
-			if (exact - self->angle < 0x80000000)
-				self->angle = exact;
-		}
-		else
-		{
-			self->angle += TRACEANGLE;
-			if (exact - self->angle > 0x80000000)
-				self->angle = exact;
-		}
+		self->Angles.Yaw -= TRACEANGLE;
+		if (deltaangle(self->Angles.Yaw, exact) > 0)
+			self->Angles.Yaw = exact;
 	}
-		
-	exact = self->angle>>ANGLETOFINESHIFT;
-	self->vel.x = FixedMul (self->Speed, finecosine[exact]);
-	self->vel.y = FixedMul (self->Speed, finesine[exact]);
+	else if (diff > 0)
+	{
+		self->Angles.Yaw += TRACEANGLE;
+		if (deltaangle(self->Angles.Yaw, exact) < 0.)
+			self->Angles.Yaw = exact;
+	}
+
+	self->VelFromAngle();
 
 	if (!(self->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER)))
 	{

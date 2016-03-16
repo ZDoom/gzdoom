@@ -970,6 +970,21 @@ struct TAngle
 		return *this;
 	}
 
+	// Same as above but doesn't alter the calling object itself
+
+	// Ensure the angle is between [0.0,360.0) degrees
+	TAngle Normalized360() const
+	{
+		
+		return (vec_t)ANGLE2DBL((unsigned int)FLOAT2ANGLE(Degrees));
+	}
+
+	// Ensures the angle is between (-180.0,180.0] degrees
+	TAngle Normalized180() const
+	{
+		return (vec_t)ANGLE2DBL((signed int)FLOAT2ANGLE(Degrees));
+	}
+
 	// Like Normalize360(), except the integer value is not converted back to a float.
 	// The steps parameter must be a power of 2.
 	int Quantize(int steps) const
@@ -985,6 +1000,11 @@ struct TAngle
 	unsigned BAMs() const
 	{
 		return FLOAT2ANGLE(Degrees);
+	}
+
+	int FixedAngle()	// for ACS. This must be normalized so it just converts to BAM first and then shifts 16 bits right.
+	{
+		return FLOAT2ANGLE(Degrees) >> 16;
 	}
 
 	double Cos() const
@@ -1010,10 +1030,10 @@ inline double ToRadians (const TAngle<T> &deg)
 	return double(deg.Degrees * (M_PI / 180.0));
 }
 
-template<class T>
-inline TAngle<T> ToDegrees (double rad)
+// If this gets templated there will be countless instantiation errors.
+inline TAngle<double> ToDegrees (double rad)
 {
-	return TAngle<T> (T(rad * (180.0 / M_PI)));
+	return TAngle<double> (double(rad * (180.0 / M_PI)));
 }
 
 template<class T>
@@ -1023,15 +1043,45 @@ inline TAngle<T> fabs (const TAngle<T> &deg)
 }
 
 template<class T>
+inline TAngle<T> deltaangle(const TAngle<T> &a1, const TAngle<T> &a2)
+{
+	return (a2 - a1).Normalize180();
+}
+
+template<class T>
+inline TAngle<T> deltaangle(const TAngle<T> &a1, double a2)
+{
+	return (a2 - a1).Normalize180();
+}
+
+template<class T>
+inline TAngle<T> deltaangle(double a1, const TAngle<T> &a2)
+{
+	return (a2 - a1).Normalize180();
+}
+
+template<class T>
+inline TAngle<T> diffangle(const TAngle<T> &a1, const TAngle<T> &a2)
+{
+	return fabs((a1 - a2).Normalize180());
+}
+
+template<class T>
+inline TAngle<T> diffangle(const TAngle<T> &a1, double a2)
+{
+	return fabs((a1 - a2).Normalize180());
+}
+
+template<class T>
 inline TAngle<T> vectoyaw (const TVector2<T> &vec)
 {
-	return (vec_t)g_atan2(vec.Y, vec.X) * (180.0 / M_PI);
+	return (T)g_atan2(vec.Y, vec.X) * (180.0 / M_PI);
 }
 
 template<class T>
 inline TAngle<T> vectoyaw (const TVector3<T> &vec)
 {
-	return (vec_t)g_atan2(vec.Y, vec.X) * (180.0 / M_PI);
+	return (T)g_atan2(vec.Y, vec.X) * (180.0 / M_PI);
 }
 
 // Much of this is copied from TVector3. Is all that functionality really appropriate?
@@ -1248,5 +1298,6 @@ typedef TVector2<double>		DVector2;
 typedef TVector3<double>		DVector3;
 typedef TRotator<double>		DRotator;
 typedef TMatrix3x3<double>		DMatrix3x3;
+typedef TAngle<double>			DAngle;
 
 #endif

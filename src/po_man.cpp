@@ -174,8 +174,6 @@ void PO_Init (void);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void RotatePt (int an, fixed_t *x, fixed_t *y, fixed_t startSpotX,
-	fixed_t startSpotY);
 static void UnLinkPolyobj (FPolyObj *po);
 static void LinkPolyobj (FPolyObj *po);
 static bool CheckMobjBlocking (side_t *seg, FPolyObj *po);
@@ -1036,13 +1034,16 @@ void FPolyObj::DoMovePolyobj (int x, int y)
 //
 //==========================================================================
 
-static void RotatePt (int an, fixed_t *x, fixed_t *y, fixed_t startSpotX, fixed_t startSpotY)
+static void RotatePt (DAngle an, fixed_t *x, fixed_t *y, fixed_t startSpotX, fixed_t startSpotY)
 {
 	fixed_t tr_x = *x;
 	fixed_t tr_y = *y;
 
-	*x = (DMulScale16 (tr_x, finecosine[an], -tr_y, finesine[an]) & 0xFFFFFE00) + startSpotX;
-	*y = (DMulScale16 (tr_x, finesine[an], tr_y, finecosine[an]) & 0xFFFFFE00) + startSpotY;
+	double s = an.Sin();
+	double c = an.Cos();
+
+	*x = (xs_CRoundToInt(tr_x * c - tr_y*s) & 0xfffffe00) + startSpotX;
+	*y = (xs_CRoundToInt(tr_x * s + tr_y*c) & 0xfffffe00) + startSpotX;
 }
 
 //==========================================================================
@@ -1053,11 +1054,11 @@ static void RotatePt (int an, fixed_t *x, fixed_t *y, fixed_t startSpotX, fixed_
 
 bool FPolyObj::RotatePolyobj (angle_t angle, bool fromsave)
 {
-	int an;
+	DAngle an;
 	bool blocked;
 	FBoundingBox oldbounds = Bounds;
 
-	an = (this->angle+angle)>>ANGLETOFINESHIFT;
+	an = ANGLE2DBL(this->angle + angle);
 
 	UnLinkPolyobj();
 

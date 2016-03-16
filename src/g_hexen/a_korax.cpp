@@ -99,7 +99,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_KoraxChase)
 		spot = iterator.Next ();
 		if (spot != NULL)
 		{
-			P_Teleport (self, spot->X(), spot->Y(), ONFLOORZ, spot->angle, TELF_SOURCEFOG | TELF_DESTFOG);
+			P_Teleport (self, spot->X(), spot->Y(), ONFLOORZ, spot->Angles.Yaw, TELF_SOURCEFOG | TELF_DESTFOG);
 		}
 
 		P_StartScript (self, NULL, 249, NULL, NULL, 0, 0);
@@ -141,7 +141,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_KoraxChase)
 			self->tracer = spot;
 			if (spot)
 			{
-				P_Teleport (self, spot->X(), spot->Y(), ONFLOORZ, spot->angle, TELF_SOURCEFOG | TELF_DESTFOG);
+				P_Teleport (self, spot->X(), spot->Y(), ONFLOORZ, spot->Angles.Yaw, TELF_SOURCEFOG | TELF_DESTFOG);
 			}
 		}
 	}
@@ -273,7 +273,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_KoraxCommand)
 	S_Sound (self, CHAN_VOICE, "KoraxCommand", 1, ATTN_NORM);
 
 	// Shoot stream of lightning to ceiling
-	ang = (self->angle - ANGLE_90) >> ANGLETOFINESHIFT;
+	ang = (self->_f_angle() - ANGLE_90) >> ANGLETOFINESHIFT;
 	fixedvec3 pos = self->Vec3Offset(
 		KORAX_COMMAND_OFFSET * finecosine[ang],
 		KORAX_COMMAND_OFFSET * finesine[ang],
@@ -331,7 +331,7 @@ void KoraxFire (AActor *actor, PClassActor *type, int arm)
 
 	angle_t ang;
 
-	ang = (actor->angle + (arm < 3 ? -KORAX_DELTAANGLE : KORAX_DELTAANGLE)) >> ANGLETOFINESHIFT;
+	ang = (actor->_f_angle() + (arm < 3 ? -KORAX_DELTAANGLE : KORAX_DELTAANGLE)) >> ANGLETOFINESHIFT;
 	fixedvec3 pos = actor->Vec3Offset(
 		extension[arm] * finecosine[ang],
 		extension[arm] * finesine[ang],
@@ -354,12 +354,11 @@ void CHolyWeave (AActor *actor, FRandom &pr_random);
 //
 //============================================================================
 
-void A_KSpiritSeeker (AActor *actor, angle_t thresh, angle_t turnMax)
+static void A_KSpiritSeeker (AActor *actor, DAngle thresh, DAngle turnMax)
 {
 	int dir;
 	int dist;
-	angle_t delta;
-	angle_t angle;
+	DAngle delta;
 	AActor *target;
 	fixed_t newZ;
 	fixed_t deltaZ;
@@ -372,7 +371,7 @@ void A_KSpiritSeeker (AActor *actor, angle_t thresh, angle_t turnMax)
 	dir = P_FaceMobj (actor, target, &delta);
 	if (delta > thresh)
 	{
-		delta >>= 1;
+		delta /= 2;
 		if(delta > turnMax)
 		{
 			delta = turnMax;
@@ -380,15 +379,13 @@ void A_KSpiritSeeker (AActor *actor, angle_t thresh, angle_t turnMax)
 	}
 	if(dir)
 	{ // Turn clockwise
-		actor->angle += delta;
+		actor->Angles.Yaw += delta;
 	}
 	else
 	{ // Turn counter clockwise
-		actor->angle -= delta;
+		actor->Angles.Yaw -= delta;
 	}
-	angle = actor->angle>>ANGLETOFINESHIFT;
-	actor->vel.x = FixedMul (actor->Speed, finecosine[angle]);
-	actor->vel.y = FixedMul (actor->Speed, finesine[angle]);
+	actor->VelFromAngle();
 
 	if (!(level.time&15) 
 		|| actor->Z() > target->Z()+(target->GetDefault()->height)
@@ -436,8 +433,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_KSpiritRoam)
 	{
 		if (self->tracer)
 		{
-			A_KSpiritSeeker (self, self->args[0]*ANGLE_1,
-							 self->args[0]*ANGLE_1*2);
+			A_KSpiritSeeker(self, self->args[0], self->args[0] * 2);
 		}
 		CHolyWeave(self, pr_kspiritweave);
 		if (pr_kspiritroam()<50)
@@ -507,7 +503,7 @@ AActor *P_SpawnKoraxMissile (fixed_t x, fixed_t y, fixed_t z,
 	AActor *source, AActor *dest, PClassActor *type)
 {
 	AActor *th;
-	angle_t an;
+	DAngle an;
 	int dist;
 
 	z -= source->floorclip;
@@ -516,12 +512,10 @@ AActor *P_SpawnKoraxMissile (fixed_t x, fixed_t y, fixed_t z,
 	an = th->AngleTo(dest);
 	if (dest->flags & MF_SHADOW)
 	{ // Invisible target
-		an += pr_kmissile.Random2()<<21;
+		an += pr_missile.Random2() * (45/256.);
 	}
-	th->angle = an;
-	an >>= ANGLETOFINESHIFT;
-	th->vel.x = FixedMul (th->Speed, finecosine[an]);
-	th->vel.y = FixedMul (th->Speed, finesine[an]);
+	th->Angles.Yaw = an;
+	th->VelFromAngle();
 	dist = dest->AproxDistance (th) / th->Speed;
 	if (dist < 1)
 	{

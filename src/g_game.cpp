@@ -1183,7 +1183,7 @@ void G_Ticker ()
 				if (players[i].mo)
 				{
 					DWORD sum = rngsum + players[i].mo->X() + players[i].mo->Y() + players[i].mo->Z()
-						+ players[i].mo->angle + players[i].mo->pitch;
+						+ players[i].mo->_f_angle() + players[i].mo->_f_pitch();
 					sum ^= players[i].health;
 					consistancy[i][buf] = sum;
 				}

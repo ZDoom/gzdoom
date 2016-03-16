@@ -253,7 +253,7 @@ static void SetRotation(FLinePortal *port)
 	double angle = g_atan2(dst->dy, dst->dx) - g_atan2(line->dy, line->dx) + M_PI;
 	port->mSinRot = FLOAT2FIXED(g_sin(angle));
 	port->mCosRot = FLOAT2FIXED(g_cos(angle));
-	port->mAngleDiff = RAD2ANGLE(angle);
+	port->mAngleDiff = ToDegrees(angle);
 	}
 }
 
@@ -606,12 +606,12 @@ void P_TranslatePortalVXVY(line_t* src, fixed_t& vx, fixed_t& vy)
 //
 //============================================================================
 
-void P_TranslatePortalAngle(line_t* src, angle_t& angle)
+void P_TranslatePortalAngle(line_t* src, DAngle& angle)
 {
 	if (!src) return;
 	FLinePortal *port = src->getPortal();
 	if (!port) return;
-	angle += port->mAngleDiff;
+	angle = (angle + port->mAngleDiff).Normalized360();
 }
 
 //============================================================================

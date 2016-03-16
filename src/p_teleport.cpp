@@ -99,7 +99,7 @@ void P_SpawnTeleportFog(AActor *mobj, fixed_t x, fixed_t y, fixed_t z, bool befo
 // TELEPORTATION
 //
 
-bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle, int flags)
+bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, DAngle angle, int flags)
 {
 	bool predicting = (thing->player && (thing->player->cheats & CF_PREDICTING));
 
@@ -171,16 +171,16 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle, 
 		player->viewz = thing->Z() + player->viewheight;
 		if (resetpitch)
 		{
-			player->mo->pitch = 0;
+			player->mo->Angles.Pitch = 0;
 		}
 	}
 	if (!(flags & TELF_KEEPORIENTATION))
 	{
-		thing->angle = angle;
+		thing->Angles.Yaw = angle;
 	}
 	else
 	{
-		angle = thing->angle;
+		angle = thing->Angles.Yaw;
 	}
 	// Spawn teleport fog at source and destination
 	if ((flags & TELF_SOURCEFOG) && !predicting)
@@ -214,9 +214,7 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle, 
 	}
 	if (thing->flags & MF_MISSILE)
 	{
-		angle >>= ANGLETOFINESHIFT;
-		thing->vel.x = FixedMul (missilespeed, finecosine[angle]);
-		thing->vel.y = FixedMul (missilespeed, finesine[angle]);
+		thing->VelFromAngle(missilespeed);
 	}
 	// [BC] && bHaltVelocity.
 	else if (!(flags & TELF_KEEPORIENTATION) && !(flags & TELF_KEEPVELOCITY))
@@ -328,10 +326,10 @@ bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, int f
 {
 	AActor *searcher;
 	fixed_t z;
-	angle_t angle = 0;
+	DAngle angle = 0;
 	fixed_t s = 0, c = 0;
 	fixed_t vx = 0, vy = 0;
-	angle_t badangle = 0;
+	DAngle badangle = 0;
 
 	if (thing == NULL)
 	{ // Teleport function called with an invalid actor
@@ -358,11 +356,11 @@ bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, int f
 		// Rotate 90 degrees, so that walking perpendicularly across
 		// teleporter linedef causes thing to exit in the direction
 		// indicated by the exit thing.
-		angle = R_PointToAngle2 (0, 0, line->dx, line->dy) - searcher->angle + ANG90;
+		angle = vectoyaw(DVector2(line->dx, line->dy)) - searcher->Angles.Yaw + 90;
 
 		// Sine, cosine of angle adjustment
-		s = finesine[angle>>ANGLETOFINESHIFT];
-		c = finecosine[angle>>ANGLETOFINESHIFT];
+		s = FLOAT2FIXED(angle.Sin());
+		c = FLOAT2FIXED(angle.Cos());
 
 		// Velocity of thing crossing teleporter linedef
 		vx = thing->vel.x;
@@ -380,15 +378,15 @@ bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, int f
 	}
 	if ((i_compatflags2 & COMPATF2_BADANGLES) && (thing->player != NULL))
 	{
-		badangle = 1 << ANGLETOFINESHIFT;
+		badangle = 0.01;
 	}
-	if (P_Teleport (thing, searcher->X(), searcher->Y(), z, searcher->angle + badangle, flags))
+	if (P_Teleport (thing, searcher->X(), searcher->Y(), z, searcher->Angles.Yaw + badangle, flags))
 	{
 		// [RH] Lee Killough's changes for silent teleporters from BOOM
 		if (!(flags & TELF_DESTFOG) && line && (flags & TELF_KEEPORIENTATION))
 		{
 			// Rotate thing according to difference in angles
-			thing->angle += angle;
+			thing->Angles.Yaw += angle;
 
 			// Rotate thing's velocity to come out of exit just like it entered
 			thing->vel.x = FixedMul(vx, c) - FixedMul(vy, s);
@@ -551,7 +549,7 @@ bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id, INTBO
 			}
 
 			// Rotate thing's orientation according to difference in linedef angles
-			thing->angle += angle;
+			thing->Angles.Yaw += ANGLE2DBL(angle);
 
 			// Velocity of thing crossing teleporter linedef
 			x = thing->vel.x;
@@ -611,10 +609,9 @@ bool EV_TeleportOther (int other_tid, int dest_tid, bool fog)
 
 static bool DoGroupForOne (AActor *victim, AActor *source, AActor *dest, bool floorz, bool fog)
 {
-	int an = (dest->angle - source->angle) >> ANGLETOFINESHIFT;
+	int an = (dest->_f_angle() - source->_f_angle()) >> ANGLETOFINESHIFT;
 	fixed_t offX = victim->X() - source->X();
 	fixed_t offY = victim->Y() - source->Y();
-	angle_t offAngle = victim->angle - source->angle;
 	fixed_t newX = DMulScale16 (offX, finecosine[an], -offY, finesine[an]);
 	fixed_t newY = DMulScale16 (offX, finesine[an], offY, finecosine[an]);
 
@@ -624,7 +621,7 @@ static bool DoGroupForOne (AActor *victim, AActor *source, AActor *dest, bool fl
 							floorz ? ONFLOORZ : dest->Z() + victim->Z() - source->Z(),
 							0, fog ? (TELF_DESTFOG | TELF_SOURCEFOG) : TELF_KEEPORIENTATION);
 	// P_Teleport only changes angle if fog is true
-	victim->angle = dest->angle + offAngle;
+	victim->Angles.Yaw = (dest->Angles.Yaw + victim->Angles.Yaw - source->Angles.Yaw).Normalized360();
 
 	return res;
 }
@@ -632,7 +629,7 @@ static bool DoGroupForOne (AActor *victim, AActor *source, AActor *dest, bool fl
 #if 0
 static void MoveTheDecal (DBaseDecal *decal, fixed_t z, AActor *source, AActor *dest)
 {
-	int an = (dest->angle - source->angle) >> ANGLETOFINESHIFT;
+	int an = (dest->_f_angle() - source->_f_angle()) >> ANGLETOFINESHIFT;
 	fixed_t offX = decal->x - source->x;
 	fixed_t offY = decal->y - source->y;
 	fixed_t newX = DMulScale16 (offX, finecosine[an], -offY, finesine[an]);
@@ -691,7 +688,7 @@ bool EV_TeleportGroup (int group_tid, AActor *victim, int source_tid, int dest_t
 		didSomething |=
 			P_Teleport (sourceOrigin, destOrigin->X(), destOrigin->Y(),
 				floorz ? ONFLOORZ : destOrigin->Z(), 0, TELF_KEEPORIENTATION);
-		sourceOrigin->angle = destOrigin->angle;
+		sourceOrigin->Angles.Yaw = destOrigin->Angles.Yaw;
 	}
 
 	return didSomething;

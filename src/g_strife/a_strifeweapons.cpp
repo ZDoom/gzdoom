@@ -110,7 +110,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_JabDagger)
 		damage *= 10;
 	}
 
-	angle = self->angle + (pr_jabdagger.Random2() << 18);
+	angle = self->_f_angle() + (pr_jabdagger.Random2() << 18);
 	pitch = P_AimLineAttack (self, angle, 80*FRACUNIT);
 	P_LineAttack (self, angle, 80*FRACUNIT, pitch, damage, NAME_Melee, "StrifeSpark", true, &t);
 
@@ -120,7 +120,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_JabDagger)
 		S_Sound (self, CHAN_WEAPON,
 			t.linetarget->flags & MF_NOBLOOD ? "misc/metalhit" : "misc/meathit",
 			1, ATTN_NORM);
-		self->angle = t.angleFromSource;
+		self->Angles.Yaw = t.angleFromSource;
 		self->flags |= MF_JUSTATTACKED;
 		P_DaggerAlert (self, t.linetarget);
 	}
@@ -265,11 +265,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireArrow)
 
 	if (ti) 
 	{
-		savedangle = self->angle;
-		self->angle += pr_electric.Random2 () << (18 - self->player->mo->accuracy * 5 / 100);
+		savedangle = self->_f_angle();
+		self->Angles.Yaw += ANGLE2DBL(pr_electric.Random2() * (1 << (18 - self->player->mo->accuracy * 5 / 100)));
 		self->player->mo->PlayAttacking2 ();
 		P_SpawnPlayerMissile (self, ti);
-		self->angle = savedangle;
+		self->Angles.Yaw = savedangle;
 		S_Sound (self, CHAN_WEAPON, "weapons/xbowshoot", 1, ATTN_NORM);
 	}
 	return 0;
@@ -289,7 +289,7 @@ void P_StrifeGunShot (AActor *mo, bool accurate, angle_t pitch)
 	int damage;
 
 	damage = 4*(pr_sgunshot()%3+1);
-	angle = mo->angle;
+	angle = mo->_f_angle();
 
 	if (mo->player != NULL && !accurate)
 	{
@@ -358,11 +358,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMiniMissile)
 			return 0;
 	}
 
-	savedangle = self->angle;
-	self->angle += pr_minimissile.Random2() << (19 - player->mo->accuracy * 5 / 100);
+	savedangle = self->_f_angle();
+	self->Angles.Yaw += ANGLE2DBL(pr_minimissile.Random2() << (19 - player->mo->accuracy * 5 / 100));
 	player->mo->PlayAttacking2 ();
 	P_SpawnPlayerMissile (self, PClass::FindActor("MiniMissile"));
-	self->angle = savedangle;
+	self->Angles.Yaw = savedangle;
 	return 0;
 }
 
@@ -379,7 +379,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RocketInFlight)
 	AActor *trail;
 
 	S_Sound (self, CHAN_VOICE, "misc/missileinflight", 1, ATTN_NORM);
-	P_SpawnPuff (self, PClass::FindActor("MiniMissilePuff"), self->Pos(), self->angle - ANGLE_180, 2, PF_HITTHING);
+	P_SpawnPuff (self, PClass::FindActor("MiniMissilePuff"), self->Pos(), self->_f_angle() - ANGLE_180, 2, PF_HITTHING);
 	trail = Spawn("RocketTrail", self->Vec3Offset(-self->vel.x, -self->vel.y, 0), ALLOW_REPLACE);
 	if (trail != NULL)
 	{
@@ -428,7 +428,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireFlamer)
 		player->mo->PlayAttacking2 ();
 	}
 
-	self->angle += pr_flamethrower.Random2() << 18;
+	self->Angles.Yaw += pr_flamethrower.Random2() * (5.625/256.);
 	self = P_SpawnPlayerMissile (self, PClass::FindActor("FlameMissile"));
 	if (self != NULL)
 	{
@@ -472,7 +472,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMauler1)
 	for (int i = 0; i < 20; ++i)
 	{
 		int damage = 5 * (pr_mauler1() % 3 + 1);
-		angle_t angle = self->angle + (pr_mauler1.Random2() << 19);
+		angle_t angle = self->_f_angle() + (pr_mauler1.Random2() << 19);
 		int pitch = bpitch + (pr_mauler1.Random2() * 332063);
 		
 		// Strife used a range of 2112 units for the mauler to signal that
@@ -530,7 +530,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMauler2)
 	}
 	P_SpawnPlayerMissile (self, PClass::FindActor("MaulerTorpedo"));
 	P_DamageMobj (self, self, NULL, 20, self->DamageType);
-	P_ThrustMobj (self, self->angle + ANGLE_180, 0x7D000);
+	P_ThrustMobj (self, self->_f_angle() + ANGLE_180, 0x7D000);
 	return 0;
 }
 
@@ -548,7 +548,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MaulerTorpedoWave)
 
 	AActor *wavedef = GetDefaultByName("MaulerTorpedoWave");
 	fixed_t savedz;
-	self->angle += ANGLE_180;
+	self->Angles.Yaw += 180.;
 
 	// If the torpedo hit the ceiling, it should still spawn the wave
 	savedz = self->Z();
@@ -559,7 +559,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MaulerTorpedoWave)
 
 	for (int i = 0; i < 80; ++i)
 	{
-		self->angle += ANGLE_45/10;
+		self->Angles.Yaw += 4.5;
 		P_SpawnSubMissile (self, PClass::FindActor("MaulerTorpedoWave"), self->target);
 	}
 	self->SetZ(savedz);
@@ -576,10 +576,8 @@ AActor *P_SpawnSubMissile (AActor *source, PClassActor *type, AActor *target)
 	}
 
 	other->target = target;
-	other->angle = source->angle;
-
-	other->vel.x = FixedMul (other->Speed, finecosine[source->angle >> ANGLETOFINESHIFT]);
-	other->vel.y = FixedMul (other->Speed, finesine[source->angle >> ANGLETOFINESHIFT]);
+	other->Angles.Yaw = source->Angles.Yaw;
+	other->VelFromAngle();
 
 	if (other->flags4 & MF4_SPECTRAL)
 	{
@@ -595,7 +593,7 @@ AActor *P_SpawnSubMissile (AActor *source, PClassActor *type, AActor *target)
 
 	if (P_CheckMissileSpawn (other, source->radius))
 	{
-		angle_t pitch = P_AimLineAttack (source, source->angle, 1024*FRACUNIT);
+		angle_t pitch = P_AimLineAttack (source, source->_f_angle(), 1024*FRACUNIT);
 		other->vel.z = FixedMul (-finesine[pitch>>ANGLETOFINESHIFT], other->Speed);
 		return other;
 	}
@@ -728,16 +726,16 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireGrenade)
 			S_Sound (grenade, CHAN_VOICE, grenade->SeeSound, 1, ATTN_NORM);
 		}
 
-		grenade->vel.z = FixedMul (finetangent[FINEANGLES/4-(self->pitch>>ANGLETOFINESHIFT)], grenade->Speed) + 8*FRACUNIT;
+		grenade->vel.z = FixedMul (finetangent[FINEANGLES/4-(self->_f_pitch()>>ANGLETOFINESHIFT)], grenade->Speed) + 8*FRACUNIT;
 
 		fixedvec2 offset;
 
-		an = self->angle >> ANGLETOFINESHIFT;
+		an = self->_f_angle() >> ANGLETOFINESHIFT;
 		tworadii = self->radius + grenade->radius;
 		offset.x = FixedMul (finecosine[an], tworadii);
 		offset.y = FixedMul (finesine[an], tworadii);
 
-		an = self->angle + angleofs;
+		an = self->_f_angle() + angleofs;
 		an >>= ANGLETOFINESHIFT;
 		offset.x += FixedMul (finecosine[an], 15*FRACUNIT);
 		offset.y += FixedMul (finesine[an], 15*FRACUNIT);
@@ -1000,8 +998,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil1)
 		spot = Spawn("SpectralLightningSpot", self->Pos(), ALLOW_REPLACE);
 		if (spot != NULL)
 		{
-			spot->vel.x += 28 * finecosine[self->angle >> ANGLETOFINESHIFT];
-			spot->vel.y += 28 * finesine[self->angle >> ANGLETOFINESHIFT];
+			spot->vel.x += 28 * finecosine[self->_f_angle() >> ANGLETOFINESHIFT];
+			spot->vel.y += 28 * finesine[self->_f_angle() >> ANGLETOFINESHIFT];
 		}
 	}
 	if (spot != NULL)
@@ -1054,17 +1052,17 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil3)
 	P_DamageMobj (self, self, NULL, 3*4, 0, DMG_NO_ARMOR);
 	S_Sound (self, CHAN_WEAPON, "weapons/sigilcharge", 1, ATTN_NORM);
 
-	self->angle -= ANGLE_90;
+	self->Angles.Yaw -= 90.;
 	for (i = 0; i < 20; ++i)
 	{
-		self->angle += ANGLE_180/20;
+		self->Angles.Yaw += 9.;
 		spot = P_SpawnSubMissile (self, PClass::FindActor("SpectralLightningBall1"), self);
 		if (spot != NULL)
 		{
 			spot->SetZ(self->Z() + 32*FRACUNIT);
 		}
 	}
-	self->angle -= (ANGLE_180/20)*10;
+	self->Angles.Yaw -= 90.;
 	return 0;
 }
 
@@ -1091,7 +1089,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil4)
 	P_BulletSlope (self, &t, ALF_PORTALRESTRICT);
 	if (t.linetarget != NULL)
 	{
-		spot = P_SpawnPlayerMissile (self, 0,0,0, PClass::FindActor("SpectralLightningBigV1"), self->angle, &t, NULL, false, false, ALF_PORTALRESTRICT);
+		spot = P_SpawnPlayerMissile (self, 0,0,0, PClass::FindActor("SpectralLightningBigV1"), self->_f_angle(), &t, NULL, false, false, ALF_PORTALRESTRICT);
 		if (spot != NULL)
 		{
 			spot->tracer = t.linetarget;
@@ -1102,8 +1100,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil4)
 		spot = P_SpawnPlayerMissile (self, PClass::FindActor("SpectralLightningBigV1"));
 		if (spot != NULL)
 		{
-			spot->vel.x += FixedMul (spot->Speed, finecosine[self->angle >> ANGLETOFINESHIFT]);
-			spot->vel.y += FixedMul (spot->Speed, finesine[self->angle >> ANGLETOFINESHIFT]);
+			spot->vel.x += FixedMul (spot->Speed, finecosine[self->_f_angle() >> ANGLETOFINESHIFT]);
+			spot->vel.y += FixedMul (spot->Speed, finesine[self->_f_angle() >> ANGLETOFINESHIFT]);
 		}
 	}
 	return 0;

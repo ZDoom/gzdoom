@@ -72,14 +72,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffCheck)
 	{
 		for (int j = 1; j >= -1; j -= 2)
 		{
-			angle = pmo->angle + j*i*(ANG45 / 16);
+			angle = pmo->_f_angle() + j*i*(ANG45 / 16);
 			slope = P_AimLineAttack(pmo, angle, fixed_t(1.5*MELEERANGE), &t, 0, ALF_CHECK3D);
 			if (t.linetarget)
 			{
 				P_LineAttack(pmo, angle, fixed_t(1.5*MELEERANGE), slope, damage, NAME_Melee, puff, false, &t);
 				if (t.linetarget != NULL)
 				{
-					pmo->angle = t.angleFromSource;
+					pmo->Angles.Yaw = t.angleFromSource;
 					if (((t.linetarget->player && (!t.linetarget->IsTeammate(pmo) || level.teamdamage != 0)) || t.linetarget->flags3&MF3_ISMONSTER)
 						&& (!(t.linetarget->flags2&(MF2_DORMANT | MF2_INVULNERABLE))))
 					{
@@ -131,12 +131,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffAttack)
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return 0;
 	}
-	mo = P_SpawnPlayerMissile (self, RUNTIME_CLASS(ACStaffMissile), self->angle-(ANG45/15));
+	mo = P_SpawnPlayerMissile (self, RUNTIME_CLASS(ACStaffMissile), self->_f_angle()-(ANG45/15));
 	if (mo)
 	{
 		mo->WeaveIndexXY = 32;
 	}
-	mo = P_SpawnPlayerMissile (self, RUNTIME_CLASS(ACStaffMissile), self->angle+(ANG45/15));
+	mo = P_SpawnPlayerMissile (self, RUNTIME_CLASS(ACStaffMissile), self->_f_angle()+(ANG45/15));
 	if (mo)
 	{
 		mo->WeaveIndexXY = 0;

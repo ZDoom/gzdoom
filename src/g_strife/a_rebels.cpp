@@ -31,8 +31,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_ShootGun)
 
 	S_Sound (self, CHAN_WEAPON, "monsters/rifle", 1, ATTN_NORM);
 	A_FaceTarget (self);
-	pitch = P_AimLineAttack (self, self->angle, MISSILERANGE);
-	P_LineAttack (self, self->angle + (pr_shootgun.Random2() << 19),
+	pitch = P_AimLineAttack (self, self->_f_angle(), MISSILERANGE);
+	P_LineAttack (self, self->_f_angle() + (pr_shootgun.Random2() << 19),
 		MISSILERANGE, pitch,
 		3*(pr_shootgun() % 5 + 1), NAME_Hitscan, NAME_StrifePuff);
 	return 0;
@@ -115,8 +115,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_Beacon)
 	}
 
 	rebel->SetState (rebel->SeeState);
-	rebel->angle = self->angle;
-	an = self->angle >> ANGLETOFINESHIFT;
+	rebel->Angles.Yaw = self->Angles.Yaw;
+	an = self->_f_angle() >> ANGLETOFINESHIFT;
 	Spawn<ATeleportFog> (rebel->Vec3Offset(20*finecosine[an], 20*finesine[an], TELEFOGHEIGHT), ALLOW_REPLACE);
 	if (--self->health < 0)
 	{

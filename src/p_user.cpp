@@ -1660,7 +1660,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SkullPop)
 	mo->ObtainInventory (self);
 	mo->player = player;
 	mo->health = self->health;
-	mo->angle = self->angle;
+	mo->Angles.Yaw = self->Angles.Yaw;
 	if (player != NULL)
 	{
 		player->mo = mo;
@@ -1768,9 +1768,9 @@ void P_ForwardThrust (player_t *player, angle_t angle, fixed_t move)
 	angle >>= ANGLETOFINESHIFT;
 
 	if ((player->mo->waterlevel || (player->mo->flags & MF_NOGRAVITY))
-		&& player->mo->pitch != 0)
+		&& player->mo->_f_pitch() != 0)
 	{
-		angle_t pitch = (angle_t)player->mo->pitch >> ANGLETOFINESHIFT;
+		angle_t pitch = (angle_t)player->mo->_f_pitch() >> ANGLETOFINESHIFT;
 		fixed_t zpush = FixedMul (move, finesine[pitch]);
 		if (player->mo->waterlevel && player->mo->waterlevel < 2 && zpush < 0)
 			zpush = 0;
@@ -1796,9 +1796,9 @@ void P_Bob (player_t *player, angle_t angle, fixed_t move, bool forward)
 {
 	if (forward
 		&& (player->mo->waterlevel || (player->mo->flags & MF_NOGRAVITY))
-		&& player->mo->pitch != 0)
+		&& player->mo->_f_pitch() != 0)
 	{
-		angle_t pitch = (angle_t)player->mo->pitch >> ANGLETOFINESHIFT;
+		angle_t pitch = (angle_t)player->mo->_f_pitch() >> ANGLETOFINESHIFT;
 		move = FixedMul (move, finecosine[pitch]);
 	}
 
@@ -1956,11 +1956,11 @@ void P_MovePlayer (player_t *player)
 	if (player->turnticks)
 	{
 		player->turnticks--;
-		mo->angle += (ANGLE_180 / TURN180_TICKS);
+		mo->Angles.Yaw += (180. / TURN180_TICKS);
 	}
 	else
 	{
-		mo->angle += cmd->ucmd.yaw << 16;
+		mo->Angles.Yaw += cmd->ucmd.yaw * (360./65536.);
 	}
 
 	player->onground = (mo->Z() <= mo->floorz) || (mo->flags2 & MF2_ONMOBJ) || (mo->BounceFlags & BOUNCE_MBF) || (player->cheats & CF_NOCLIP2);
@@ -2007,13 +2007,13 @@ void P_MovePlayer (player_t *player)
 
 		if (forwardmove)
 		{
-			P_Bob (player, mo->angle, (cmd->ucmd.forwardmove * bobfactor) >> 8, true);
-			P_ForwardThrust (player, mo->angle, forwardmove);
+			P_Bob (player, mo->_f_angle(), (cmd->ucmd.forwardmove * bobfactor) >> 8, true);
+			P_ForwardThrust (player, mo->_f_angle(), forwardmove);
 		}
 		if (sidemove)
 		{
-			P_Bob (player, mo->angle-ANG90, (cmd->ucmd.sidemove * bobfactor) >> 8, false);
-			P_SideThrust (player, mo->angle, sidemove);
+			P_Bob (player, mo->_f_angle()-ANG90, (cmd->ucmd.sidemove * bobfactor) >> 8, false);
+			P_SideThrust (player, mo->_f_angle(), sidemove);
 		}
 
 		if (debugfile)
@@ -2147,8 +2147,7 @@ void P_FallingDamage (AActor *actor)
 void P_DeathThink (player_t *player)
 {
 	int dir;
-	angle_t delta;
-	int lookDelta;
+	DAngle delta;
 
 	P_MovePsprites (player);
 
@@ -2159,10 +2158,10 @@ void P_DeathThink (player_t *player)
 		player->deltaviewheight = 0;
 		if (player->onground)
 		{
-			if (player->mo->pitch > -(int)ANGLE_1*19)
+			if (player->mo->Angles.Pitch > -19.)
 			{
-				lookDelta = (-(int)ANGLE_1*19 - player->mo->pitch) / 8;
-				player->mo->pitch += lookDelta;
+				DAngle lookDelta = (-19. - player->mo->Angles.Pitch) / 8;
+				player->mo->Angles.Pitch += lookDelta;
 			}
 		}
 	}
@@ -2177,17 +2176,17 @@ void P_DeathThink (player_t *player)
 		{
 			player->viewheight = 6*FRACUNIT;
 		}
-		if (player->mo->pitch < 0)
+		if (player->mo->Angles.Pitch < 0)
 		{
-			player->mo->pitch += ANGLE_1*3;
+			player->mo->Angles.Pitch += 3;
 		}
-		else if (player->mo->pitch > 0)
+		else if (player->mo->Angles.Pitch > 0)
 		{
-			player->mo->pitch -= ANGLE_1*3;
+			player->mo->Angles.Pitch -= 3;
 		}
-		if (abs(player->mo->pitch) < ANGLE_1*3)
+		if (fabs(player->mo->Angles.Pitch) < 3)
 		{
-			player->mo->pitch = 0;
+			player->mo->Angles.Pitch = 0;
 		}
 	}
 	P_CalcHeight (player);
@@ -2195,7 +2194,7 @@ void P_DeathThink (player_t *player)
 	if (player->attacker && player->attacker != player->mo)
 	{ // Watch killer
 		dir = P_FaceMobj (player->mo, player->attacker, &delta);
-		if (delta < ANGLE_1*10)
+		if (delta < 10)
 		{ // Looking at killer, so fade damage and poison counters
 			if (player->damagecount)
 			{
@@ -2207,17 +2206,17 @@ void P_DeathThink (player_t *player)
 			}
 		}
 		delta /= 8;
-		if (delta > ANGLE_1*5)
+		if (delta > 5)
 		{
-			delta = ANGLE_1*5;
+			delta = 5;
 		}
 		if (dir)
 		{ // Turn clockwise
-			player->mo->angle += delta;
+			player->mo->Angles.Yaw += delta;
 		}
 		else
 		{ // Turn counter clockwise
-			player->mo->angle -= delta;
+			player->mo->Angles.Yaw -= delta;
 		}
 	}
 	else
@@ -2304,7 +2303,7 @@ void P_PlayerThink (player_t *player)
 	{
 		fprintf (debugfile, "tic %d for pl %d: (%d, %d, %d, %u) b:%02x p:%d y:%d f:%d s:%d u:%d\n",
 			gametic, (int)(player-players), player->mo->X(), player->mo->Y(), player->mo->Z(),
-			player->mo->angle>>ANGLETOFINESHIFT, player->cmd.ucmd.buttons,
+			player->mo->_f_angle()>>ANGLETOFINESHIFT, player->cmd.ucmd.buttons,
 			player->cmd.ucmd.pitch, player->cmd.ucmd.yaw, player->cmd.ucmd.forwardmove,
 			player->cmd.ucmd.sidemove, player->cmd.ucmd.upmove);
 	}
@@ -2493,54 +2492,38 @@ void P_PlayerThink (player_t *player)
 	// [RH] Look up/down stuff
 	if (!level.IsFreelookAllowed())
 	{
-		player->mo->pitch = 0;
+		player->mo->Angles.Pitch = 0;
 	}
 	else
 	{
-		int look = cmd->ucmd.pitch << 16;
-
 		// The player's view pitch is clamped between -32 and +56 degrees,
 		// which translates to about half a screen height up and (more than)
 		// one full screen height down from straight ahead when view panning
 		// is used.
-		if (look)
+		int clook = cmd->ucmd.pitch;
+		if (clook != 0)
 		{
-			if (look == -32768 << 16)
+			if (clook == -32768)
 			{ // center view
 				player->centering = true;
 			}
 			else if (!player->centering)
 			{
-				fixed_t oldpitch = player->mo->pitch;
-				player->mo->pitch -= look;
-				if (look > 0)
-				{ // look up
-					player->mo->pitch = MAX(player->mo->pitch, player->MinPitch);
-					if (player->mo->pitch > oldpitch)
-					{
-						player->mo->pitch = player->MinPitch;
-					}
-				}
-				else
-				{ // look down
-					player->mo->pitch = MIN(player->mo->pitch, player->MaxPitch);
-					if (player->mo->pitch < oldpitch)
-					{
-						player->mo->pitch = player->MaxPitch;
-					}
-				}
+				// no more overflows with floating point. Yay! :)
+				player->mo->Angles.Pitch = clamp(player->mo->Angles.Pitch - clook * (360. / 65536.), player->MinPitch, player->MaxPitch);
 			}
 		}
 	}
 	if (player->centering)
 	{
-		if (abs(player->mo->pitch) > 2*ANGLE_1)
+		player->mo->Angles.Pitch.Normalize180();	// make sure we are in the proper range here for the following code.
+		if (fabs(player->mo->Angles.Pitch) > 2.)
 		{
-			player->mo->pitch = FixedMul(player->mo->pitch, FRACUNIT*2/3);
+			player->mo->Angles.Pitch *= (2. / 3.);
 		}
 		else
 		{
-			player->mo->pitch = 0;
+			player->mo->Angles.Pitch = 0;
 			player->centering = false;
 			if (player - players == consoleplayer)
 			{
@@ -3158,7 +3141,7 @@ void player_t::Serialize (FArchive &arc)
 	arc << LogText
 		<< ConversationNPC
 		<< ConversationPC
-		<< ConversationNPCAngle
+		<< ConversationNPCAngle.Degrees
 		<< ConversationFaceTalker;
 
 	for (i = 0; i < MAXPLAYERS; i++)

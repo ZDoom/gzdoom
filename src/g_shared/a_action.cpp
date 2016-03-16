@@ -315,7 +315,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FreezeDeathChunks)
 			head->vel.x = pr_freeze.Random2 () << (FRACBITS-7);
 			head->vel.y = pr_freeze.Random2 () << (FRACBITS-7);
 			head->health = self->health;
-			head->angle = self->angle;
+			head->Angles.Yaw = self->Angles.Yaw;
 			if (head->IsKindOf(RUNTIME_CLASS(APlayerPawn)))
 			{
 				head->player = self->player;
@@ -323,7 +323,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FreezeDeathChunks)
 				self->player = NULL;
 				head->ObtainInventory (self);
 			}
-			head->pitch = 0;
+			head->Angles.Pitch = 0;
 			head->RenderStyle = self->RenderStyle;
 			head->alpha = self->alpha;
 			if (head->player->camera == self)
@@ -638,32 +638,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_LowGravity)
 
 void FaceMovementDirection (AActor *actor)
 {
-	switch (actor->movedir)
+	if (actor->movedir >= DI_EAST && actor->movedir <= DI_NORTHEAST)
 	{
-	case DI_EAST:
-		actor->angle = 0<<24;
-		break;
-	case DI_NORTHEAST:
-		actor->angle = 32<<24;
-		break;
-	case DI_NORTH:
-		actor->angle = 64<<24;
-		break;
-	case DI_NORTHWEST:
-		actor->angle = 96<<24;
-		break;
-	case DI_WEST:
-		actor->angle = 128<<24;
-		break;
-	case DI_SOUTHWEST:
-		actor->angle = 160<<24;
-		break;
-	case DI_SOUTH:
-		actor->angle = 192<<24;
-		break;
-	case DI_SOUTHEAST:
-		actor->angle = 224<<24;
-		break;
+		actor->Angles.Yaw = 45. * actor->movedir;
 	}
 }
 

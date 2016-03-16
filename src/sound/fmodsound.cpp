@@ -109,6 +109,18 @@ CUSTOM_CVAR (Float, snd_waterlp, 250, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	}
 }
 
+CUSTOM_CVAR (Int, snd_streambuffersize, 64, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	if (self < 16)
+	{
+		self = 16;
+	}
+	else if (self > 1024)
+	{
+		self = 1024;
+	}
+}
+
 #ifndef NO_FMOD
 #if FMOD_VERSION < 0x43400
 #define FMOD_OPENSTATE_PLAYING FMOD_OPENSTATE_STREAMING
@@ -1168,9 +1180,7 @@ bool FMODSoundRenderer::Init()
 	}
 	Sys->set3DSettings(0.5f, 96.f, 1.f);
 	Sys->set3DRolloffCallback(RolloffCallback);
-	// The default is 16k, which periodically starves later FMOD versions
-	// when streaming FLAC files.
-	Sys->setStreamBufferSize(64*1024, FMOD_TIMEUNIT_RAWBYTES);
+	Sys->setStreamBufferSize(snd_streambuffersize * 1024, FMOD_TIMEUNIT_RAWBYTES);
 	snd_sfxvolume.Callback ();
 	return true;
 }

@@ -102,7 +102,7 @@ void AInterpolationPoint::FormChain ()
 	if (Next == NULL && (args[3] | args[4]))
 		Printf ("Can't find target for camera node %d\n", tid);
 
-	Angles.Pitch = clamp<int>((signed char)args[0], -89, 89);
+	Angles.Pitch = (double)clamp<int>((signed char)args[0], -89, 89);
 
 	if (Next != NULL)
 		Next->FormChain ();
@@ -422,7 +422,7 @@ bool APathFollower::Interpolate ()
 			}
 			if (args[2] & 2)
 			{ // adjust yaw
-				Angles.Yaw = vectoyaw(DVector2(dx, dy));
+				Angles.Yaw = vectoyaw(dx, dy);
 			}
 			if (args[2] & 4)
 			{ // adjust pitch; use floats for precision
@@ -430,8 +430,7 @@ bool APathFollower::Interpolate ()
 				double fdy = FIXED2DBL(dy);
 				double fdz = FIXED2DBL(-dz);
 				double dist = g_sqrt (fdx*fdx + fdy*fdy);
-				double ang = dist != 0.f ? g_atan2 (fdz, dist) : 0;
-				Angles.Pitch = ToDegrees(ang);
+				Angles.Pitch = dist != 0.f ? vectoyaw(dist, fdz) : 0.;
 			}
 		}
 		else
@@ -642,8 +641,7 @@ bool AMovingCamera::Interpolate ()
 			double dy = FIXED2DBL(Y() - tracer->Y());
 			double dz = FIXED2DBL(Z() - tracer->Z() - tracer->height/2);
 			double dist = g_sqrt (dx*dx + dy*dy);
-			double ang = dist != 0.f ? g_atan2 (dz, dist) : 0;
-			Angles.Pitch = ToDegrees(ang);
+			Angles.Pitch = dist != 0.f ? vectoyaw(dist, dz) : 0.;
 		}
 
 		return true;

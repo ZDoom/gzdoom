@@ -251,7 +251,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireArrow)
 	PARAM_ACTION_PROLOGUE;
 	PARAM_CLASS(ti, AActor);
 
-	angle_t savedangle;
+	DAngle savedangle;
 
 	if (self->player == NULL)
 		return 0;
@@ -265,7 +265,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireArrow)
 
 	if (ti) 
 	{
-		savedangle = self->_f_angle();
+		savedangle = self->Angles.Yaw;
 		self->Angles.Yaw += ANGLE2DBL(pr_electric.Random2() << (18 - self->player->mo->accuracy * 5 / 100));
 		self->player->mo->PlayAttacking2 ();
 		P_SpawnPlayerMissile (self, ti);
@@ -346,7 +346,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMiniMissile)
 	PARAM_ACTION_PROLOGUE;
 
 	player_t *player = self->player;
-	angle_t savedangle;
+	DAngle savedangle;
 
 	if (self->player == NULL)
 		return 0;
@@ -358,7 +358,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMiniMissile)
 			return 0;
 	}
 
-	savedangle = self->_f_angle();
+	savedangle = self->Angles.Yaw;
 	self->Angles.Yaw += ANGLE2DBL(pr_minimissile.Random2() << (19 - player->mo->accuracy * 5 / 100));
 	player->mo->PlayAttacking2 ();
 	P_SpawnPlayerMissile (self, PClass::FindActor("MiniMissile"));

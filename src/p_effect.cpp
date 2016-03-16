@@ -744,7 +744,7 @@ void P_DrawRailTrail(AActor *source, const DVector3 &start, const DVector3 &end,
 		
 		color1 = color1 == 0 ? -1 : ParticleColor(color1);
 		pos = start;
-		deg = TAngle<double>(SpiralOffset);
+		deg = (double)SpiralOffset;
 		for (i = spiral_steps; i; i--)
 		{
 			particle_t *p = NewParticle ();
@@ -770,7 +770,7 @@ void P_DrawRailTrail(AActor *source, const DVector3 &start, const DVector3 &end,
 			p->y = FLOAT2FIXED(tempvec.Y);
 			p->z = FLOAT2FIXED(tempvec.Z);
 			pos += spiral_step;
-			deg += TAngle<double>(r_rail_spiralsparsity * 14);
+			deg += double(r_rail_spiralsparsity * 14);
 
 			if (color1 == -1)
 			{

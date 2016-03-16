@@ -864,7 +864,7 @@ void FParser::SF_Spawn(void)
 {
 	int x, y, z;
 	PClassActor *pclass;
-	DAngle angle = 0;
+	DAngle angle = 0.;
 	
 	if (CheckArgs(3))
 	{
@@ -1470,7 +1470,7 @@ void FParser::SF_SetCamera(void)
 		newcamera->special2=newcamera->Z();
 		newcamera->SetZ(t_argc < 3 ? (newcamera->Z() + (41 << FRACBITS)) : (intvalue(t_argv[2]) << FRACBITS));
 		newcamera->Angles.Yaw = angle;
-		if (t_argc < 4) newcamera->Angles.Pitch = 0;
+		if (t_argc < 4) newcamera->Angles.Pitch = 0.;
 		else newcamera->Angles.Pitch = clamp(floatvalue(t_argv[3]), -50., 50.) * (20. / 32.);
 		player->camera=newcamera;
 	}
@@ -3865,7 +3865,8 @@ void FParser::SF_Tan()
 	if (CheckArgs(1))
 	{
 		t_return.type = svt_fixed;
-		t_return.value.f = FLOAT2FIXED(g_tan(floatvalue(t_argv[0])));
+		t_return.value.f = FLOAT2FIXED(
+			g_tan(floatvalue(t_argv[0])));
 	}
 }
 

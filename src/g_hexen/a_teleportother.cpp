@@ -171,7 +171,7 @@ void P_TeleportToPlayerStarts (AActor *victim)
 	FPlayerStart *start = G_PickPlayerStart(0, PPS_FORCERANDOM | PPS_NOBLOCKINGCHECK);
 	destX = start->x;
 	destY = start->y;
-	P_Teleport (victim, destX, destY, ONFLOORZ, start->angle, TELF_SOURCEFOG | TELF_DESTFOG);
+	P_Teleport (victim, destX, destY, ONFLOORZ, (double)start->angle, TELF_SOURCEFOG | TELF_DESTFOG);
 }
 
 //===========================================================================
@@ -191,7 +191,7 @@ void P_TeleportToDeathmatchStarts (AActor *victim)
 		i = pr_teledm() % selections;
 		destX = deathmatchstarts[i].x;
 		destY = deathmatchstarts[i].y;
-		P_Teleport (victim, destX, destY, ONFLOORZ, deathmatchstarts[i].angle, TELF_SOURCEFOG | TELF_DESTFOG);
+		P_Teleport (victim, destX, destY, ONFLOORZ, (double)deathmatchstarts[i].angle, TELF_SOURCEFOG | TELF_DESTFOG);
 	}
 	else
 	{

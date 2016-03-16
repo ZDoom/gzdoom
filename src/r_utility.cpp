@@ -608,8 +608,8 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 			angle_t totaladiff = 0;
 			fixed_t oviewz = iview->oviewz;
 			fixed_t nviewz = iview->nviewz;
-			fixedvec3a oldpos = { iview->oviewx, iview->oviewy, 0, 0 };
-			fixedvec3a newpos = { iview->nviewx, iview->nviewy, 0, 0 };
+			fixedvec3a oldpos = { iview->oviewx, iview->oviewy, 0, 0. };
+			fixedvec3a newpos = { iview->nviewx, iview->nviewy, 0, 0. };
 			InterpolationPath.Push(newpos);	// add this to  the array to simplify the loops below
 
 			for (unsigned i = 0; i < InterpolationPath.Size(); i += 2)

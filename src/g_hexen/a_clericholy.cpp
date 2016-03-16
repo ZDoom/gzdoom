@@ -498,7 +498,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CHolySeek)
 	}
 	if (self->tracer)
 	{
-		CHolySeekerMissile (self, self->args[0], self->args[0]*2);
+		CHolySeekerMissile (self, (double)self->args[0], self->args[0]*2.);
 		if (!((level.time+7)&15))
 		{
 			self->args[0] = 5+(pr_holyseek()/20);

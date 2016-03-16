@@ -875,13 +875,13 @@ public:
 	DAngle _f_AngleTo(AActor *other, bool absolute = false)
 	{
 		fixedvec3 otherpos = absolute ? other->Pos() : other->PosRelative(this);
-		return g_atan2(otherpos.y - Y(), otherpos.x - X());
+		return vectoyaw(otherpos.x - X(), otherpos.y - Y());
 	}
 
 	DAngle _f_AngleTo(AActor *other, fixed_t oxofs, fixed_t oyofs, bool absolute = false) const
 	{
 		fixedvec3 otherpos = absolute ? other->Pos() : other->PosRelative(this);
-		return g_atan2(otherpos.y + oxofs - Y(), otherpos.x + oyofs - X());
+		return vectoyaw(otherpos.y + oxofs - Y(), otherpos.x + oyofs - X());
 	}
 
 	fixedvec2 Vec2To(AActor *other) const
@@ -1321,7 +1321,7 @@ public:
 
 	void AngleFromVel()
 	{
-		Angles.Yaw = vectoyaw(DVector2(vel.x, vel.y));
+		Angles.Yaw = vectoyaw(vel.x, vel.y);
 	}
 
 	void VelFromAngle()

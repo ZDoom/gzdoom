@@ -840,7 +840,7 @@ AInventory *AActor::DropInventory (AInventory *item)
 	}
 	drop->SetOrigin(PosPlusZ(10*FRACUNIT), false);
 	drop->Angles.Yaw = Angles.Yaw;
-	drop->VelFromAngle(5);
+	drop->VelFromAngle(5*FRACUNIT);
 	drop->vel.z = FRACUNIT;
 	drop->vel += vel;
 	drop->flags &= ~MF_NOGRAVITY;	// Don't float
@@ -1760,7 +1760,7 @@ bool P_SeekerMissile (AActor *actor, angle_t _thresh, angle_t _turnMax, bool pre
 	}
 	else
 	{
-		DAngle pitch = 0;
+		DAngle pitch = 0.;
 		if (!(actor->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER)))
 		{ // Need to seek vertically
 			fixed_t dist = MAX(1, actor->Distance2D(target));
@@ -2824,7 +2824,7 @@ void P_NightmareRespawn (AActor *mobj)
 	mo->SpawnPoint[2] = mobj->SpawnPoint[2];
 	mo->SpawnAngle = mobj->SpawnAngle;
 	mo->SpawnFlags = mobj->SpawnFlags & ~MTF_DORMANT;	// It wasn't dormant when it died, so it's not dormant now, either.
-	mo->Angles.Yaw = mobj->SpawnAngle;
+	mo->Angles.Yaw = (double)mobj->SpawnAngle;
 
 	mo->HandleSpawnFlags ();
 	mo->reactiontime = 18;
@@ -4649,7 +4649,7 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 		spawn_y = mthing->y;
 
 		// Allow full angular precision
-		SpawnAngle = mthing->angle;
+		SpawnAngle = (double)mthing->angle;
 		if (i_compatflags2 & COMPATF2_BADANGLES)
 		{
 			SpawnAngle += 0.01;
@@ -4704,7 +4704,7 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 	}
 
 	mobj->Angles.Yaw = SpawnAngle;
-	mobj->Angles.Pitch = mobj->Angles.Roll = 0;
+	mobj->Angles.Pitch = mobj->Angles.Roll = 0.;
 	mobj->health = p->health;
 
 	// [RH] Set player sprite based on skin
@@ -4735,7 +4735,7 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 	p->BlendR = p->BlendG = p->BlendB = p->BlendA = 0.f;
 	p->mo->ResetAirSupply(false);
 	p->Uncrouch();
-	p->MinPitch = p->MaxPitch = 0;	// will be filled in by PostBeginPlay()/netcode
+	p->MinPitch = p->MaxPitch = 0.;	// will be filled in by PostBeginPlay()/netcode
 	p->MUSINFOactor = NULL;
 	p->MUSINFOtics = -1;
 
@@ -5167,7 +5167,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	mobj->tid = mthing->thingid;
 	mobj->AddToHash ();
 
-	mobj->PrevAngles.Yaw = mobj->Angles.Yaw = mthing->angle;
+	mobj->PrevAngles.Yaw = mobj->Angles.Yaw = (double)mthing->angle;
 
 	// Check if this actor's mapthing has a conversation defined
 	if (mthing->Conversation > 0)
@@ -5191,9 +5191,9 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	if (mthing->scaleY)
 		mobj->scaleY = FixedMul(mthing->scaleY, mobj->scaleY);
 	if (mthing->pitch)
-		mobj->Angles.Pitch = mthing->pitch;
+		mobj->Angles.Pitch = (double)mthing->pitch;
 	if (mthing->roll)
-		mobj->Angles.Roll = mthing->roll;
+		mobj->Angles.Roll = (double)mthing->roll;
 	if (mthing->score)
 		mobj->Score = mthing->score;
 	if (mthing->fillcolor)

@@ -1203,9 +1203,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomMissile)
 	PARAM_CLASS		(ti, AActor);
 	PARAM_FIXED_OPT	(spawnheight) { spawnheight = 32*FRACUNIT; }
 	PARAM_INT_OPT	(spawnofs_xy) { spawnofs_xy = 0; }
-	PARAM_DANGLE_OPT(Angle)		  { Angle = 0; }
+	PARAM_DANGLE_OPT(Angle)		  { Angle = 0.; }
 	PARAM_INT_OPT	(flags)		  { flags = 0; }
-	PARAM_DANGLE_OPT(Pitch)		  { Pitch = 0; }
+	PARAM_DANGLE_OPT(Pitch)		  { Pitch = 0.; }
 	PARAM_INT_OPT	(ptr)		  { ptr = AAPTR_TARGET; }
 
 	AActor *ref = COPY_AAPTR(self, ptr);
@@ -1262,7 +1262,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomMissile)
 					if (CMF_OFFSETPITCH & flags)
 					{
 							DVector2 velocity (missile->vel.x, missile->vel.y);
-							Pitch += vectoyaw(DVector2(velocity.Length(), (double)missile->vel.z));
+							Pitch += vectoyaw(velocity.Length(), missile->vel.z);
 					}
 					missilespeed = abs(fixed_t(Pitch.Cos() * missile->Speed));
 					missile->vel.z = fixed_t(Pitch.Sin() * missile->Speed);
@@ -1627,12 +1627,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireCustomMissile)
 {
 	PARAM_ACTION_PROLOGUE;
 	PARAM_CLASS		(ti, AActor);
-	PARAM_DANGLE_OPT(angle)			{ angle = 0; }
+	PARAM_DANGLE_OPT(angle)			{ angle = 0.; }
 	PARAM_BOOL_OPT	(useammo)		{ useammo = true; }
 	PARAM_INT_OPT	(spawnofs_xy)	{ spawnofs_xy = 0; }
 	PARAM_FIXED_OPT	(spawnheight)	{ spawnheight = 0; }
 	PARAM_INT_OPT	(flags)			{ flags = 0; }
-	PARAM_DANGLE_OPT(pitch)			{ pitch = 0; }
+	PARAM_DANGLE_OPT(pitch)			{ pitch = 0.; }
 
 	if (!self->player)
 		return 0;
@@ -1931,7 +1931,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 		DVector2 xydiff(pos.x, pos.y);
 		double zdiff = (self->target->Z() + (self->target->height>>1)) -
 						(self->Z() + (self->height>>1) - self->floorclip);
-		self->Angles.Pitch = vectoyaw(DVector2(xydiff.Length(), zdiff));
+		self->Angles.Pitch = vectoyaw(xydiff.Length(), zdiff);
 	}
 	// Let the aim trail behind the player
 	if (aim)
@@ -2452,7 +2452,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItemEx)
 	PARAM_FIXED_OPT	(xvel)		{ xvel = 0; }
 	PARAM_FIXED_OPT	(yvel)		{ yvel = 0; }
 	PARAM_FIXED_OPT	(zvel)		{ zvel = 0; }
-	PARAM_DANGLE_OPT(angle)		{ angle = 0; }
+	PARAM_DANGLE_OPT(angle)		{ angle = 0.; }
 	PARAM_INT_OPT	(flags)		{ flags = 0; }
 	PARAM_INT_OPT	(chance)	{ chance = 0; }
 	PARAM_INT_OPT	(tid)		{ tid = 0; }

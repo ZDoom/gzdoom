@@ -182,7 +182,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DragonFlight)
 
 	angle_t angle;
 
-	DragonSeek (self, 4, 8);
+	DragonSeek (self, 4., 8.);
 	if (self->target)
 	{
 		if(!(self->target->flags&MF_SHOOTABLE))

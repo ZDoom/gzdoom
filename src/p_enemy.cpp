@@ -3002,7 +3002,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
 		fixedvec2 pos = self->Vec2To(self->target);
 		DVector2 xydiff(pos.x, pos.y);
 		double zdiff = (self->target->Z() + (self->target->height>>1)) - (self->Z() + (self->height>>1) - self->floorclip);
-		self->Angles.Pitch = -ToDegrees(g_atan2(zdiff, xydiff.Length()));
+		self->Angles.Pitch = -vectoyaw(xydiff.Length(), zdiff);
 	}
 
 	// Let the aim trail behind the player

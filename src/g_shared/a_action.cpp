@@ -323,7 +323,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FreezeDeathChunks)
 				self->player = NULL;
 				head->ObtainInventory (self);
 			}
-			head->Angles.Pitch = 0;
+			head->Angles.Pitch = 0.;
 			head->RenderStyle = self->RenderStyle;
 			head->alpha = self->alpha;
 			if (head->player->camera == self)

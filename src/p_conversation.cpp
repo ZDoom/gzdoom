@@ -1382,7 +1382,7 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 		player->ConversationFaceTalker = false;
 		player->ConversationNPC = NULL;
 		player->ConversationPC = NULL;
-		player->ConversationNPCAngle = 0;
+		player->ConversationNPCAngle = 0.;
 	}
 
 	if (isconsole)
@@ -1429,7 +1429,7 @@ void P_ConversationCommand (int netcode, int pnum, BYTE **stream)
 			player->ConversationFaceTalker = false;
 			player->ConversationNPC = NULL;
 			player->ConversationPC = NULL;
-			player->ConversationNPCAngle = 0;
+			player->ConversationNPCAngle = 0.;
 		}
 	}
 }

@@ -22,7 +22,6 @@
 void A_SkullAttack(AActor *self, fixed_t speed)
 {
 	AActor *dest;
-	angle_t an;
 	int dist;
 
 	if (!self->target)

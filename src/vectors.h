@@ -263,11 +263,11 @@ struct TVector2
 		return g_atan2 (X, Y);
 	}
 
-	// Returns a rotated vector. angle is in radians.
+	// Returns a rotated vector. angle is in degrees.
 	TVector2 Rotated (double angle)
 	{
-		double cosval = g_cos (angle);
-		double sinval = g_sin (angle);
+		double cosval = g_cosdeg (angle);
+		double sinval = g_sindeg (angle);
 		return TVector2(X*cosval - Y*sinval, Y*cosval + X*sinval);
 	}
 
@@ -758,6 +758,17 @@ struct TAngle
 {
 	vec_t Degrees;
 
+
+	// This is to catch any accidental attempt to assign an angle_t to this type. Any explicit exception will require a type cast.
+	TAngle(int) = delete;
+	TAngle(unsigned int) = delete;
+	TAngle(long) = delete;
+	TAngle(unsigned long) = delete;
+	TAngle &operator= (int other) = delete;
+	TAngle &operator= (unsigned other) = delete;
+	TAngle &operator= (long other) = delete;
+	TAngle &operator= (unsigned long other) = delete;
+
 	TAngle ()
 	{
 	}
@@ -767,10 +778,12 @@ struct TAngle
 	{
 	}
 
+	/*
 	TAngle (int amt)
 		: Degrees(vec_t(amt))
 	{
 	}
+	*/
 
 	TAngle (const TAngle &other)
 		: Degrees(other.Degrees)
@@ -999,7 +1012,7 @@ struct TAngle
 		return FLOAT2ANGLE(Degrees);
 	}
 
-	TVector2<vec_t> ToDirection(vec_t length) const
+	TVector2<vec_t> ToVector(vec_t length) const
 	{
 		return TVector2(length * Cos(), length * Sin());
 	}
@@ -1021,7 +1034,7 @@ struct TAngle
 
 	double Tan() const
 	{
-		return g_tan(Degrees);
+		return g_tan(Degrees * (M_PI / 180.));
 	}
 
 };
@@ -1072,6 +1085,11 @@ template<class T>
 inline TAngle<T> diffangle(const TAngle<T> &a1, double a2)
 {
 	return fabs((a1 - a2).Normalize180());
+}
+
+inline TAngle<double> vectoyaw(double x, double y)
+{
+	return g_atan2(y, x) * (180.0 / M_PI);
 }
 
 template<class T>

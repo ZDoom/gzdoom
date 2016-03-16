@@ -403,7 +403,7 @@ void FireMacePL1B (AActor *actor)
 			return;
 	}
 	ball = Spawn("MaceFX2", actor->PosPlusZ(28*FRACUNIT - actor->floorclip), ALLOW_REPLACE);
-	ball->vel.z = FLOAT2FIXED(2 + g_tan(-actor->Angles.Pitch.Degrees));
+	ball->vel.z = FLOAT2FIXED(2 - actor->Angles.Pitch.Tan());
 	ball->target = actor;
 	ball->Angles.Yaw = actor->Angles.Yaw;
 	ball->AddZ(ball->vel.z);
@@ -631,7 +631,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DeathBallImpact)
 
 	int i;
 	AActor *target;
-	DAngle angle = 0;
+	DAngle angle = 0.;
 	bool newAngle;
 	FTranslatedLineTarget t;
 
@@ -664,7 +664,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DeathBallImpact)
 		}
 		else
 		{ // Find new target
-			angle = 0;
+			angle = 0.;
 			for (i = 0; i < 16; i++)
 			{
 				P_AimLineAttack (self, FLOAT2ANGLE(angle.Degrees), 10*64*FRACUNIT, &t, 0, ALF_NOFRIENDS|ALF_PORTALRESTRICT, NULL, self->target);
@@ -1337,7 +1337,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePhoenixPL2)
 		return 0;
 	}
 
-	slope = FLOAT2FIXED(g_tan(-self->Angles.Pitch.Degrees));
+	slope = FLOAT2FIXED(-self->Angles.Pitch.Tan());
 	fixed_t xo = (pr_fp2.Random2() << 9);
 	fixed_t yo = (pr_fp2.Random2() << 9);
 	fixedvec3 pos = self->Vec3Offset(xo, yo,

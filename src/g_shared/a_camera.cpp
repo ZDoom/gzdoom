@@ -78,12 +78,12 @@ void ASecurityCamera::PostBeginPlay ()
 	if (args[2])
 		Delta = 360. / (args[2] * TICRATE / 8);
 	else
-		Delta = 0;
+		Delta = 0.;
 	if (args[1])
 		Delta /= 2;
-	Acc = 0;
-	Angles.Pitch = clamp<int>((signed int)((signed char)args[0]), -89, 89);
-	Range = args[1];
+	Acc = 0.;
+	Angles.Pitch = (double)clamp<int>((signed char)args[0], -89, 89);
+	Range = (double)args[1];
 }
 
 void ASecurityCamera::Tick ()
@@ -133,7 +133,7 @@ void AAimingCamera::PostBeginPlay ()
 
 	args[2] = 0;
 	Super::PostBeginPlay ();
-	MaxPitchChange = changepitch / TICRATE;
+	MaxPitchChange = double(changepitch / TICRATE);
 	Range /= TICRATE;
 
 	TActorIterator<AActor> iterator (args[3]);
@@ -177,8 +177,7 @@ void AAimingCamera::Tick ()
 			DVector2 vect(fv3.x, fv3.y);
 			double dz = Z() - tracer->Z() - tracer->height/2;
 			double dist = vect.Length();
-			double ang = dist != 0.f ? g_atan2 (dz, dist) : 0;
-			DAngle desiredPitch = ToDegrees(ang);
+			DAngle desiredPitch = dist != 0.f ? vectoyaw(dist, dz) : 0.;
 			DAngle diff = deltaangle(Angles.Pitch, desiredPitch);
 			if (fabs (diff) < MaxPitchChange)
 			{

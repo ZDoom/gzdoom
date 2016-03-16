@@ -73,7 +73,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_FogMove)
 	PARAM_ACTION_PROLOGUE;
 
 	int speed = self->args[0]<<FRACBITS;
-	angle_t angle;
 	int weaveindex;
 
 	if (!self->args[4])

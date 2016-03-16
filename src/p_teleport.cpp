@@ -171,7 +171,7 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, DAngle angle, i
 		player->viewz = thing->Z() + player->viewheight;
 		if (resetpitch)
 		{
-			player->mo->Angles.Pitch = 0;
+			player->mo->Angles.Pitch = 0.;
 		}
 	}
 	if (!(flags & TELF_KEEPORIENTATION))
@@ -326,10 +326,10 @@ bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, int f
 {
 	AActor *searcher;
 	fixed_t z;
-	DAngle angle = 0;
+	DAngle angle = 0.;
 	fixed_t s = 0, c = 0;
 	fixed_t vx = 0, vy = 0;
-	DAngle badangle = 0;
+	DAngle badangle = 0.;
 
 	if (thing == NULL)
 	{ // Teleport function called with an invalid actor
@@ -356,7 +356,7 @@ bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, int f
 		// Rotate 90 degrees, so that walking perpendicularly across
 		// teleporter linedef causes thing to exit in the direction
 		// indicated by the exit thing.
-		angle = vectoyaw(DVector2(line->dx, line->dy)) - searcher->Angles.Yaw + 90;
+		angle = vectoyaw(line->dx, line->dy) - searcher->Angles.Yaw + 90;
 
 		// Sine, cosine of angle adjustment
 		s = FLOAT2FIXED(angle.Sin());
@@ -619,7 +619,7 @@ static bool DoGroupForOne (AActor *victim, AActor *source, AActor *dest, bool fl
 		P_Teleport (victim, dest->X() + newX,
 							dest->Y() + newY,
 							floorz ? ONFLOORZ : dest->Z() + victim->Z() - source->Z(),
-							0, fog ? (TELF_DESTFOG | TELF_SOURCEFOG) : TELF_KEEPORIENTATION);
+							0., fog ? (TELF_DESTFOG | TELF_SOURCEFOG) : TELF_KEEPORIENTATION);
 	// P_Teleport only changes angle if fog is true
 	victim->Angles.Yaw = (dest->Angles.Yaw + victim->Angles.Yaw - source->Angles.Yaw).Normalized360();
 
@@ -687,7 +687,7 @@ bool EV_TeleportGroup (int group_tid, AActor *victim, int source_tid, int dest_t
 	{
 		didSomething |=
 			P_Teleport (sourceOrigin, destOrigin->X(), destOrigin->Y(),
-				floorz ? ONFLOORZ : destOrigin->Z(), 0, TELF_KEEPORIENTATION);
+				floorz ? ONFLOORZ : destOrigin->Z(), 0., TELF_KEEPORIENTATION);
 		sourceOrigin->Angles.Yaw = destOrigin->Angles.Yaw;
 	}
 

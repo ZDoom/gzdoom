@@ -313,7 +313,7 @@ player_t::player_t()
   crouchviewdelta(0),
   ConversationNPC(0),
   ConversationPC(0),
-  ConversationNPCAngle(0),
+  ConversationNPCAngle(0.),
   ConversationFaceTalker(0)
 {
 	memset (&cmd, 0, sizeof(cmd));
@@ -2186,7 +2186,7 @@ void P_DeathThink (player_t *player)
 		}
 		if (fabs(player->mo->Angles.Pitch) < 3)
 		{
-			player->mo->Angles.Pitch = 0;
+			player->mo->Angles.Pitch = 0.;
 		}
 	}
 	P_CalcHeight (player);
@@ -2206,9 +2206,9 @@ void P_DeathThink (player_t *player)
 			}
 		}
 		delta /= 8;
-		if (delta > 5)
+		if (delta > 5.)
 		{
-			delta = 5;
+			delta = 5.;
 		}
 		if (dir)
 		{ // Turn clockwise
@@ -2492,7 +2492,7 @@ void P_PlayerThink (player_t *player)
 	// [RH] Look up/down stuff
 	if (!level.IsFreelookAllowed())
 	{
-		player->mo->Angles.Pitch = 0;
+		player->mo->Angles.Pitch = 0.;
 	}
 	else
 	{
@@ -2523,7 +2523,7 @@ void P_PlayerThink (player_t *player)
 		}
 		else
 		{
-			player->mo->Angles.Pitch = 0;
+			player->mo->Angles.Pitch = 0.;
 			player->centering = false;
 			if (player - players == consoleplayer)
 			{

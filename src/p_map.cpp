@@ -2359,7 +2359,7 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 			if (thing == players[consoleplayer].camera)
 			{
 				divline_t dl1 = { besthit.oldrefpos.x,besthit. oldrefpos.y, besthit.refpos.x - besthit.oldrefpos.x, besthit.refpos.y - besthit.oldrefpos.y };
-				fixedvec3a hit = { dl1.x + FixedMul(dl1.dx, bestfrac), dl1.y + FixedMul(dl1.dy, bestfrac), 0, 0 };
+				fixedvec3a hit = { dl1.x + FixedMul(dl1.dx, bestfrac), dl1.y + FixedMul(dl1.dy, bestfrac), 0, 0. };
 
 				R_AddInterpolationPoint(hit);
 				if (port->mType == PORTT_LINKED)
@@ -3531,7 +3531,7 @@ struct aim_t
 		{
 			res.linetarget = th;
 			res.pitch = pitch;
-			res.angleFromSource = vectoyaw(DVector2(th->X() - startpos.x, th->Y() - startpos.y));
+			res.angleFromSource = vectoyaw(th->X() - startpos.x, th->Y() - startpos.y);
 			res.unlinked = unlinked;
 			res.frac = frac;
 		}

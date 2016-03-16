@@ -636,11 +636,33 @@ DEFINE_ACTION_FUNCTION(AActor, A_LowGravity)
 //
 //===========================================================================
 
-void FaceMovementDirection (AActor *actor)
+void FaceMovementDirection(AActor *actor)
 {
-	if (actor->movedir >= DI_EAST && actor->movedir <= DI_NORTHEAST)
+	switch (actor->movedir)
 	{
-		actor->Angles.Yaw = 45. * actor->movedir;
+	case DI_EAST:
+		actor->Angles.Yaw = 0.;
+		break;
+	case DI_NORTHEAST:
+		actor->Angles.Yaw = 45.;
+		break;
+	case DI_NORTH:
+		actor->Angles.Yaw = 90.;
+		break;
+	case DI_NORTHWEST:
+		actor->Angles.Yaw = 135.;
+		break;
+	case DI_WEST:
+		actor->Angles.Yaw = 180.;
+		break;
+	case DI_SOUTHWEST:
+		actor->Angles.Yaw = 225.;
+		break;
+	case DI_SOUTH:
+		actor->Angles.Yaw = 270.;
+		break;
+	case DI_SOUTHEAST:
+		actor->Angles.Yaw = 315.;
+		break;
 	}
 }
-

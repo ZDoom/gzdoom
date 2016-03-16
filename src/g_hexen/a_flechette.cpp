@@ -100,7 +100,7 @@ bool AArtiPoisonBag3::Use (bool pickup)
 	mo = Spawn("ThrowingBomb", Owner->PosPlusZ(-Owner->floorclip+35*FRACUNIT + (Owner->player? Owner->player->crouchoffset : 0)), ALLOW_REPLACE);
 	if (mo)
 	{
-		mo->Angles.Yaw = Owner->Angles.Yaw + (((pr_poisonbag() & 7) - 4) * 22.5f);
+		mo->Angles.Yaw = Owner->Angles.Yaw + (((pr_poisonbag() & 7) - 4) * (360./256.));
 
 		/* Original flight code from Hexen
 		 * mo->momz = 4*FRACUNIT+((player->lookdir)<<(FRACBITS-4));

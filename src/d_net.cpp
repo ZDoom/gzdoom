@@ -2348,7 +2348,7 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 						}
 						if (type >= DEM_SUMMON2 && type <= DEM_SUMMONFOE2)
 						{
-							spawned->Angles.Yaw -= angle;
+							spawned->Angles.Yaw = source->Angles.Yaw - angle;
 							spawned->tid = tid;
 							spawned->special = special;
 							for(i = 0; i < 5; i++) {

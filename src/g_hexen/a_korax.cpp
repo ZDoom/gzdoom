@@ -512,7 +512,7 @@ AActor *P_SpawnKoraxMissile (fixed_t x, fixed_t y, fixed_t z,
 	an = th->AngleTo(dest);
 	if (dest->flags & MF_SHADOW)
 	{ // Invisible target
-		an += pr_missile.Random2() * (45/256.);
+		an += pr_kmissile.Random2() * (45/256.);
 	}
 	th->Angles.Yaw = an;
 	th->VelFromAngle();

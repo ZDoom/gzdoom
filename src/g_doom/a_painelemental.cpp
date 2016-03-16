@@ -10,8 +10,6 @@
 #include "doomstat.h"
 */
 
-DECLARE_ACTION(A_SkullAttack)
-
 enum PA_Flags
 {
 	PAF_NOSKULLATTACK = 1,

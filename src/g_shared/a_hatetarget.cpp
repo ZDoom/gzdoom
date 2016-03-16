@@ -40,24 +40,37 @@
 
 class AHateTarget : public AActor
 {
-	DECLARE_CLASS (AHateTarget, AActor)
+	DECLARE_CLASS(AHateTarget, AActor)
 public:
-	void BeginPlay ();
+	void BeginPlay();
+	int TakeSpecialDamage(AActor *inflictor, AActor *source, int damage, FName damagetype);
 };
 
-IMPLEMENT_CLASS (AHateTarget)
+IMPLEMENT_CLASS(AHateTarget)
 
-void AHateTarget::BeginPlay ()
+void AHateTarget::BeginPlay()
 {
-	Super::BeginPlay ();
+	Super::BeginPlay();
 	if (SpawnAngle != 0)
 	{	// Each degree translates into 10 units of health
 		health = SpawnAngle * 10;
 	}
 	else
 	{
-		flags5 |= MF5_NODAMAGE;
+		special2 = 1;
 		health = 1000001;
+	}
+}
+
+int AHateTarget::TakeSpecialDamage(AActor *inflictor, AActor *source, int damage, FName damagetype)
+{
+	if (special2 != 0)
+	{
+		return 0;
+	}
+	else
+	{
+		return damage;
 	}
 }
 

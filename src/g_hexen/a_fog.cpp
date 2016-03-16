@@ -94,9 +94,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FogMove)
 		self->special2 = (weaveindex + 1) & 63;
 	}
 
-	angle = self->_f_angle()>>ANGLETOFINESHIFT;
-	self->vel.x = FixedMul(speed, finecosine[angle]);
-	self->vel.y = FixedMul(speed, finesine[angle]);
+	self->VelFromAngle(speed);
 	return 0;
 }
 

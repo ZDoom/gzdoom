@@ -3006,7 +3006,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
 	}
 
 	// Let the aim trail behind the player
-	self->Angles.Yaw = ANGLE2DBL(self->AngleTo(self->target, -self->target->vel.x * 3, -self->target->vel.y * 3));
+	self->Angles.Yaw = self->_f_AngleTo(self->target, -self->target->vel.x * 3, -self->target->vel.y * 3);
 
 	if (self->target->flags & MF_SHADOW && !(self->flags6 & MF6_SEEINVISIBLE))
 	{

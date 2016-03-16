@@ -80,9 +80,6 @@ struct TVector2
 	{
 	}
 
-	TVector2(const TRotator<vec_t> &rot);
-
-
 	void Zero()
 	{
 		Y = X = 0;
@@ -1002,6 +999,11 @@ struct TAngle
 		return FLOAT2ANGLE(Degrees);
 	}
 
+	TVector2<vec_t> ToDirection(vec_t length) const
+	{
+		return TVector2(length * Cos(), length * Sin());
+	}
+
 	int FixedAngle()	// for ACS. This must be normalized so it just converts to BAM first and then shifts 16 bits right.
 	{
 		return FLOAT2ANGLE(Degrees) >> 16;
@@ -1257,13 +1259,6 @@ inline TVector3<T>::TVector3 (const TRotator<T> &rot)
 	Y = pcos * rot.Yaw.Sin();
 	Z = rot.Pitch.Sin();
 }
-
-template<class T>
-inline TVector2<T>::TVector2(const TRotator<T> &rot)
-	: X(rot.Yaw.Cos()), Y(rot.Yaw.Sin())
-{
-}
-
 
 template<class T>
 inline TMatrix3x3<T>::TMatrix3x3(const TVector3<T> &axis, TAngle<T> degrees)

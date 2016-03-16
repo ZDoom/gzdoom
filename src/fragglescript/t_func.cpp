@@ -1053,8 +1053,7 @@ void FParser::SF_ObjAngle(void)
 		mo = Script->trigger;
 	}
 
-	t_return.type = svt_fixed; // haleyjd: fixed-point -- SoM again :)
-	t_return.value.f = mo ? (fixed_t)AngleToFixed(mo->_f_angle()) : 0;   // null ptr check
+	t_return.setDouble(mo ? mo->Angles.Yaw.Degrees : 0.);
 }
 
 
@@ -3118,7 +3117,7 @@ void FParser::SF_MoveCamera(void)
 			quad1 == quad2)
 		{
 			angledist = bigangle - smallangle;
-			angledir = targetangle > cam->_f_angle() ? 1 : -1;
+			angledir = targetangle > camangle ? 1 : -1;
 		}
 		else
 		{

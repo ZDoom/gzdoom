@@ -106,6 +106,24 @@ struct svalue_t
 		string = other.string;
 		value = other.value;
 	}
+
+	void setInt(int ip)
+	{
+		value.i = ip;
+		type = svt_int;
+	}
+
+	void setFixed(fixed_t fp)
+	{
+		value.f = fp;
+		type = svt_fixed;
+	}
+
+	void setDouble(double dp)
+	{
+		value.f = FLOAT2FIXED(dp);
+		type = svt_fixed;
+	}
 };
 
 int intvalue(const svalue_t & v);

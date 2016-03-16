@@ -266,7 +266,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireArrow)
 	if (ti) 
 	{
 		savedangle = self->_f_angle();
-		self->Angles.Yaw += ANGLE2DBL(pr_electric.Random2() * (1 << (18 - self->player->mo->accuracy * 5 / 100)));
+		self->Angles.Yaw += ANGLE2DBL(pr_electric.Random2() << (18 - self->player->mo->accuracy * 5 / 100));
 		self->player->mo->PlayAttacking2 ();
 		P_SpawnPlayerMissile (self, ti);
 		self->Angles.Yaw = savedangle;

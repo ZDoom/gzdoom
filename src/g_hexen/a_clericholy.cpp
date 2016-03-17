@@ -225,7 +225,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CHolyAttack)
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return 0;
 	}
-	AActor *missile = P_SpawnPlayerMissile (self, 0,0,0, PClass::FindActor("HolyMissile"), self->_f_angle(), &t);
+	AActor *missile = P_SpawnPlayerMissile (self, 0,0,0, PClass::FindActor("HolyMissile"), self->Angles.Yaw, &t);
 	if (missile != NULL && !t.unlinked)
 	{
 		missile->tracer = t.linetarget;

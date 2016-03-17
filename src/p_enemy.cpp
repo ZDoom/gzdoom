@@ -308,13 +308,14 @@ bool P_CheckMeleeRange2 (AActor *actor)
 	AActor *mo;
 	fixed_t dist;
 
+
 	if (!actor->target)
 	{
 		return false;
 	}
 	mo = actor->target;
 	dist = mo->AproxDistance (actor);
-	if (dist >= MELEERANGE*2 || dist < MELEERANGE-20*FRACUNIT + mo->radius)
+	if (dist >= (128 << FRACBITS) || dist < actor->meleerange + mo->radius)
 	{
 		return false;
 	}
@@ -430,9 +431,9 @@ bool P_HitFriend(AActor * self)
 
 	if (self->flags&MF_FRIENDLY && self->target != NULL)
 	{
-		angle_t angle = self->__f_AngleTo(self->target);
-		fixed_t dist = self->AproxDistance (self->target);
-		P_AimLineAttack (self, angle, dist, &t, 0, true);
+		DAngle angle = self->AngleTo(self->target);
+		double dist = self->Distance2D(self->target);
+		P_AimLineAttack (self, angle, dist, &t, 0., true);
 		if (t.linetarget != NULL && t.linetarget != self->target)
 		{
 			return self->IsFriend (t.linetarget);
@@ -973,7 +974,7 @@ void P_NewChaseDir(AActor * actor)
 			{
 				// melee range of player weapon is a parameter of the action function and cannot be checked here.
 				// Add a new weapon property?
-				ismeleeattacker = (target->player->ReadyWeapon->WeaponFlags & WIF_MELEEWEAPON && dist < MELEERANGE*3);
+				ismeleeattacker = (target->player->ReadyWeapon->WeaponFlags & WIF_MELEEWEAPON && dist < (192 << FRACBITS));
 			}
 			if (ismeleeattacker)
 			{
@@ -1197,7 +1198,7 @@ bool P_IsVisible(AActor *lookee, AActor *other, INTBOOL allaround, FLookExParams
 		{
 			// if real close, react anyway
 			// [KS] but respect minimum distance rules
-			if (mindist || dist > MELEERANGE)
+			if (mindist || dist > lookee->meleerange + lookee->radius)
 				return false;	// outside of fov
 		}
 	}
@@ -1732,7 +1733,7 @@ bool P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 			if ((player->mo->flags & MF_SHADOW && !(i_compatflags & COMPATF_INVISIBILITY)) ||
 				player->mo->flags3 & MF3_GHOST)
 			{
-				if ((player->mo->AproxDistance (actor) > 2*MELEERANGE)
+				if ((player->mo->AproxDistance (actor) > (128 << FRACBITS))
 					&& P_AproxDistance (player->mo->vel.x, player->mo->vel.y)	< 5*FRACUNIT)
 				{ // Player is sneaking - can't detect
 					continue;
@@ -2995,7 +2996,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
 		
 	self->Angles.Yaw = self->AngleTo(self->target);
 
-	self->Angles.Pitch = ANGLE2DBL(P_AimLineAttack (self, self->_f_angle(), MISSILERANGE, &t, ANGLE_1*60, 0, self->target));
+	self->Angles.Pitch = P_AimLineAttack (self, self->Angles.Yaw, MISSILERANGE, &t, 60., 0, self->target);
 	if (t.linetarget == NULL)
 	{
 		// We probably won't hit the target, but aim at it anyway so we don't look stupid.

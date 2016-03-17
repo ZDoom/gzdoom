@@ -192,7 +192,7 @@ void DBot::Dofire (ticcmd_t *cmd)
 		else
 		{
 			//*4 is for atmosphere,  the chainsaws sounding and all..
-			no_fire = (dist > (MELEERANGE*4));
+			no_fire = (dist > (FLOAT2FIXED(MELEERANGE)*4));
 		}
 	}
 	else if (player->ReadyWeapon->WeaponFlags & WIF_BOT_BFG)

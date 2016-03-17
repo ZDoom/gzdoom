@@ -292,7 +292,7 @@ struct userinfo_t : TMap<FName,FBaseCVar *>
 {
 	~userinfo_t();
 
-	int GetAimDist() const
+	double GetAimDist() const
 	{
 		if (dmflags2 & DF2_NOAUTOAIM)
 		{
@@ -302,11 +302,11 @@ struct userinfo_t : TMap<FName,FBaseCVar *>
 		float aim = *static_cast<FFloatCVar *>(*CheckKey(NAME_Autoaim));
 		if (aim > 35 || aim < 0)
 		{
-			return ANGLE_1*35;
+			return 35.;
 		}
 		else
 		{
-			return xs_RoundToInt(fabs(aim * ANGLE_1));
+			return aim;
 		}
 	}
 	const char *GetName() const

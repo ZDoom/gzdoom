@@ -848,10 +848,10 @@ public:
 	}
 
 	// more precise, but slower version, being used in a few places
-	fixed_t Distance2D(AActor *other, bool absolute = false)
+	double Distance2D(AActor *other, bool absolute = false)
 	{
 		fixedvec3 otherpos = absolute ? other->Pos() : other->PosRelative(this);
-		return xs_RoundToInt(DVector2(X() - otherpos.x, Y() - otherpos.y).Length());
+		return (DVector2(X() - otherpos.x, Y() - otherpos.y).Length())/FRACUNIT;
 	}
 
 	// a full 3D version of the above
@@ -949,6 +949,11 @@ public:
 			fixedvec3 pos = { op.x, op.y, Z() + dz };
 			return pos;
 		}
+	}
+
+	double AccuracyFactor()
+	{
+		return 1. / (1 << (accuracy * 5 / 100));
 	}
 
 	void ClearInterpolation();

@@ -896,7 +896,7 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 #define PARAM_FLOAT_AT(p,x)			assert((p) < numparam); assert(param[p].Type == REGT_FLOAT); double x = param[p].f;
 #define PARAM_FIXED_AT(p,x)			assert((p) < numparam); assert(param[p].Type == REGT_FLOAT); fixed_t x = FLOAT2FIXED(param[p].f);
 #define PARAM_ANGLE_AT(p,x)			assert((p) < numparam); assert(param[p].Type == REGT_FLOAT); angle_t x = FLOAT2ANGLE(param[p].f);
-#define PARAM_DANGLE_AT(p,x)		assert((p) < numparam); assert(param[p].Type == REGT_FLOAT); angle_t x = param[p].f;
+#define PARAM_DANGLE_AT(p,x)		assert((p) < numparam); assert(param[p].Type == REGT_FLOAT); DAngle x = param[p].f;
 #define PARAM_STRING_AT(p,x)		assert((p) < numparam); assert(param[p].Type == REGT_STRING); FString x = param[p].s();
 #define PARAM_STATE_AT(p,x)			assert((p) < numparam); assert(param[p].Type == REGT_POINTER && (param[p].atag == ATAG_STATE || param[p].a == NULL)); FState *x = (FState *)param[p].a;
 #define PARAM_POINTER_AT(p,x,type)	assert((p) < numparam); assert(param[p].Type == REGT_POINTER); type *x = (type *)param[p].a;

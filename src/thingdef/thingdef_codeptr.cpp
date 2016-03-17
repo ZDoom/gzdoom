@@ -824,20 +824,17 @@ DEFINE_ACTION_FUNCTION(AActor, A_BulletAttack)
 	PARAM_ACTION_PROLOGUE;
 
 	int i;
-	int bangle;
-	int slope;
 		
 	if (!self->target) return 0;
 
 	A_FaceTarget (self);
-	bangle = self->_f_angle();
 
-	slope = P_AimLineAttack (self, bangle, MISSILERANGE);
+	DAngle slope = P_AimLineAttack (self, self->Angles.Yaw, MISSILERANGE);
 
 	S_Sound (self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NORM);
 	for (i = self->GetMissileDamage (0, 1); i > 0; --i)
     {
-		int angle = bangle + (pr_cabullet.Random2() << 20);
+		DAngle angle = self->Angles.Yaw + pr_cabullet.Random2() * (5.625 / 256.);
 		int damage = ((pr_cabullet()%5)+1)*3;
 		P_LineAttack(self, angle, MISSILERANGE, slope, damage,
 			NAME_Hitscan, NAME_BulletPuff);
@@ -1095,12 +1092,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Explode)
 
 	if (nails)
 	{
-		angle_t ang;
+		DAngle ang;
 		for (int i = 0; i < nails; i++)
 		{
-			ang = i*(ANGLE_MAX/nails);
+			ang = i*360./nails;
 			// Comparing the results of a test wad with Eternity, it seems A_NailBomb does not aim
-			P_LineAttack (self, ang, MISSILERANGE, 0,
+			P_LineAttack (self, ang, MISSILERANGE, 0.,
 				//P_AimLineAttack (self, ang, MISSILERANGE), 
 				naildamage, NAME_Hitscan, pufftype);
 		}
@@ -1347,12 +1344,12 @@ enum CBA_Flags
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomBulletAttack)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_ANGLE		(spread_xy);
-	PARAM_ANGLE		(spread_z);
+	PARAM_DANGLE	(spread_xy);
+	PARAM_DANGLE	(spread_z);
 	PARAM_INT		(numbullets);
 	PARAM_INT		(damageperbullet);
 	PARAM_CLASS_OPT	(pufftype, AActor) { pufftype = PClass::FindActor(NAME_BulletPuff); }
-	PARAM_FIXED_OPT	(range)			   { range = MISSILERANGE; }
+	PARAM_FLOAT_OPT	(range)			   { range = 0; }
 	PARAM_INT_OPT	(flags)			   { flags = 0; }
 	PARAM_INT_OPT	(ptr)			   { ptr = AAPTR_TARGET; }
 
@@ -1362,8 +1359,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomBulletAttack)
 		range = MISSILERANGE;
 
 	int i;
-	int bangle;
-	int bslope = 0;
+	DAngle bangle;
+	DAngle bslope = 0.;
 	int laflags = (flags & CBAF_NORANDOMPUFFZ)? LAF_NORANDOMPUFFZ : 0;
 
 	if (ref != NULL || (flags & CBAF_AIMFACING))
@@ -1372,15 +1369,15 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomBulletAttack)
 		{
 			A_Face(self, ref);
 		}
-		bangle = self->_f_angle();
+		bangle = self->Angles.Yaw;
 
 		if (!(flags & CBAF_NOPITCH)) bslope = P_AimLineAttack (self, bangle, MISSILERANGE);
 
 		S_Sound (self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NORM);
 		for (i = 0; i < numbullets; i++)
 		{
-			int angle = bangle;
-			int slope = bslope;
+			DAngle angle = bangle;
+			DAngle slope = bslope;
 
 			if (flags & CBAF_EXPLICITANGLE)
 			{
@@ -1389,8 +1386,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomBulletAttack)
 			}
 			else
 			{
-				angle += pr_cwbullet.Random2() * (spread_xy / 255);
-				slope += pr_cwbullet.Random2() * (spread_z / 255);
+				angle += spread_xy * (pr_cwbullet.Random2() / 255.);
+				slope += spread_z * (pr_cwbullet.Random2() / 255.);
 			}
 
 			int damage = damageperbullet;
@@ -1531,13 +1528,13 @@ enum FB_Flags
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireBullets)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_ANGLE		(spread_xy);
-	PARAM_ANGLE		(spread_z);
+	PARAM_DANGLE		(spread_xy);
+	PARAM_DANGLE		(spread_z);
 	PARAM_INT		(numbullets);
 	PARAM_INT		(damageperbullet);
 	PARAM_CLASS_OPT	(pufftype, AActor)	{ pufftype = NULL; }
 	PARAM_INT_OPT	(flags)				{ flags = FBF_USEAMMO; }
-	PARAM_FIXED_OPT	(range)				{ range = 0; }
+	PARAM_FLOAT_OPT	(range)				{ range = 0; }
 
 	if (!self->player) return 0;
 
@@ -1545,8 +1542,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireBullets)
 	AWeapon *weapon = player->ReadyWeapon;
 
 	int i;
-	int bangle;
-	int bslope = 0;
+	DAngle bangle;
+	DAngle bslope = 0.;
 	int laflags = (flags & FBF_NORANDOMPUFFZ)? LAF_NORANDOMPUFFZ : 0;
 
 	if ((flags & FBF_USEAMMO) && weapon && ACTION_CALL_FROM_WEAPON())
@@ -1561,7 +1558,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireBullets)
 	if (!(flags & FBF_NOFLASH)) static_cast<APlayerPawn *>(self)->PlayAttacking2 ();
 
 	if (!(flags & FBF_NOPITCH)) bslope = P_BulletSlope(self);
-	bangle = self->_f_angle();
+	bangle = self->Angles.Yaw;
 
 	if (pufftype == NULL)
 		pufftype = PClass::FindActor(NAME_BulletPuff);
@@ -1586,8 +1583,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireBullets)
 			numbullets = 1;
 		for (i = 0; i < numbullets; i++)
 		{
-			int angle = bangle;
-			int slope = bslope;
+			DAngle angle = bangle;
+			DAngle slope = bslope;
 
 			if (flags & FBF_EXPLICITANGLE)
 			{
@@ -1596,8 +1593,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireBullets)
 			}
 			else
 			{
-				angle += pr_cwbullet.Random2() * (spread_xy / 255);
-				slope += pr_cwbullet.Random2() * (spread_z / 255);
+				angle += spread_xy * (pr_cwbullet.Random2() / 255.);
+				slope += spread_z * (pr_cwbullet.Random2() / 255.);
 			}
 
 			int damage = damageperbullet;
@@ -1661,7 +1658,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireCustomMissile)
 		// Temporarily adjusts the pitch
 		DAngle saved_player_pitch = self->Angles.Pitch;
 		self->Angles.Pitch -= pitch;
-		AActor * misl=P_SpawnPlayerMissile (self, x, y, z, ti, FLOAT2ANGLE(shootangle.Degrees), &t, NULL, false, (flags & FPF_NOAUTOAIM) != 0);
+		AActor * misl=P_SpawnPlayerMissile (self, x, y, z, ti, shootangle, &t, NULL, false, (flags & FPF_NOAUTOAIM) != 0);
 		self->Angles.Pitch = saved_player_pitch;
 
 		// automatic handling of seeker missiles
@@ -1711,7 +1708,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
 	PARAM_BOOL_OPT	(norandom)			{ norandom = false; }
 	PARAM_INT_OPT	(flags)				{ flags = CPF_USEAMMO; }
 	PARAM_CLASS_OPT	(pufftype, AActor)	{ pufftype = NULL; }
-	PARAM_FIXED_OPT	(range)				{ range = 0; }
+	PARAM_FLOAT_OPT	(range)				{ range = 0; }
 	PARAM_FIXED_OPT	(lifesteal)			{ lifesteal = 0; }
 	PARAM_INT_OPT	(lifestealmax)		{ lifestealmax = 0; }
 	PARAM_CLASS_OPT	(armorbonustype, ABasicArmorBonus)	{ armorbonustype = NULL; }
@@ -1725,17 +1722,16 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
 	AWeapon *weapon = player->ReadyWeapon;
 
 
-	angle_t 	angle;
-	int 		pitch;
+	DAngle angle;
+	DAngle pitch;
 	FTranslatedLineTarget t;
 	int			actualdamage;
 
 	if (!norandom)
 		damage *= pr_cwpunch() % 8 + 1;
 
-	angle = self->_f_angle() + (pr_cwpunch.Random2() << 18);
-	if (range == 0)
-		range = MELEERANGE;
+	angle = self->Angles.Yaw + pr_cwpunch.Random2() * (5.625 / 256);
+	if (range == 0) range = MELEERANGE;
 	pitch = P_AimLineAttack (self, angle, range, &t);
 
 	// only use ammo when actually hitting something!
@@ -1923,7 +1919,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 	{
 		self->Angles.Yaw = self->AngleTo(self->target);
 	}
-	self->Angles.Pitch = ANGLE2DBL(P_AimLineAttack (self, self->_f_angle(), MISSILERANGE, &t, ANGLE_1*60, 0, aim ? self->target : NULL));
+	self->Angles.Pitch = P_AimLineAttack (self, self->Angles.Yaw, MISSILERANGE, &t, 60., 0, aim ? self->target : NULL);
 	if (t.linetarget == NULL && aim)
 	{
 		// We probably won't hit the target, but aim at it anyway so we don't look stupid.
@@ -3725,11 +3721,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
 	PARAM_ACTION_PROLOGUE;
 	PARAM_STATE		(jump);
 	PARAM_INT_OPT	(flags)			{ flags = 0; }
-	PARAM_FIXED_OPT	(range)			{ range = 0; }
-	PARAM_FIXED_OPT	(minrange)		{ minrange = 0; }
+	PARAM_FLOAT_OPT	(range)			{ range = 0; }
+	PARAM_FLOAT_OPT	(minrange)		{ minrange = 0; }
 	{
-		PARAM_ANGLE_OPT	(angle)			{ angle = 0; }
-		PARAM_ANGLE_OPT	(pitch)			{ pitch = 0; }
+		PARAM_DANGLE_OPT(angle)			{ angle = 0.; }
+		PARAM_DANGLE_OPT(pitch)			{ pitch = 0.; }
 		PARAM_FIXED_OPT	(offsetheight)	{ offsetheight = 0; }
 		PARAM_FIXED_OPT	(offsetwidth)	{ offsetwidth = 0; }
 		PARAM_INT_OPT	(ptr_target)	{ ptr_target = AAPTR_DEFAULT; }
@@ -3774,11 +3770,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
 
 		if (target)
 		{
-			fixed_t xydist = self->Distance2D(target);
-			fixed_t distance = P_AproxDistance(xydist, target->Z() - pos.z);
-
-			if (range && !(flags & CLOFF_CHECKPARTIAL))
+			if (range > 0 && !(flags & CLOFF_CHECKPARTIAL))
 			{
+				double distance = self->Distance3D(target);
 				if (distance > range)
 				{
 					ACTION_RETURN_STATE(NULL);
@@ -3786,49 +3780,48 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
 			}
 
 			{
-				angle_t ang;
+				DAngle ang;
 
 				if (flags & CLOFF_NOAIM_HORZ)
 				{
-					ang = self->_f_angle();
+					ang = self->Angles.Yaw;
 				}
-				else ang = self->__f_AngleTo (target);
+				else ang = self->AngleTo (target);
 				
 				angle += ang;
-				
-				ang >>= ANGLETOFINESHIFT;
 
-				fixedvec2 xy = self->Vec2Offset(
-					FixedMul(offsetforward, finecosine[ang]) + FixedMul(offsetwidth, finesine[ang]),
-					FixedMul(offsetforward, finesine[ang]) - FixedMul(offsetwidth, finecosine[ang]));
+				double s = ang.Sin();
+				double c = ang.Cos();
+				
+				fixedvec2 xy = self->Vec2Offset(fixed_t(offsetforward * c + offsetwidth * s), fixed_t(offsetforward * s - offsetwidth * c));
 
 				pos.x = xy.x;
 				pos.y = xy.y;
 			}
 
+			double xydist = self->Distance2D(target);
 			if (flags & CLOFF_NOAIM_VERT)
 			{
-				pitch += self->_f_pitch();
+				pitch += self->Angles.Pitch;
 			}
 			else if (flags & CLOFF_AIM_VERT_NOOFFSET)
 			{
-				pitch -= R_PointToAngle2 (0,0, xydist, target->Z() - pos.z + offsetheight + target->height / 2);
+				pitch -= VecToAngle(xydist, FIXED2FLOAT(target->Z() - pos.z + offsetheight + target->height / 2));
 			}
 			else
 			{
-				pitch -= R_PointToAngle2 (0,0, xydist, target->Z() - pos.z + target->height / 2);
+				pitch -= VecToAngle(xydist, FIXED2FLOAT(target->Z() - pos.z + target->height / 2));
 			}
 		}
 		else if (flags & CLOFF_ALLOWNULL)
 		{
-			angle += self->_f_angle();
-			pitch += self->_f_pitch();
+			angle += self->Angles.Yaw;
+			pitch += self->Angles.Pitch;
 
-			angle_t ang = self->_f_angle() >> ANGLETOFINESHIFT;
+			double s = angle.Sin();
+			double c = angle.Cos();
 
-			fixedvec2 xy = self->Vec2Offset(
-				FixedMul(offsetforward, finecosine[ang]) + FixedMul(offsetwidth, finesine[ang]),
-				FixedMul(offsetforward, finesine[ang]) - FixedMul(offsetwidth, finecosine[ang]));
+			fixedvec2 xy = self->Vec2Offset(fixed_t(offsetforward * c + offsetwidth * s), fixed_t(offsetforward * s - offsetwidth * c));
 
 			pos.x = xy.x;
 			pos.y = xy.y;
@@ -3838,12 +3831,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
 			ACTION_RETURN_STATE(NULL);
 		}
 
-		angle >>= ANGLETOFINESHIFT;
-		pitch >>= ANGLETOFINESHIFT;
+		double cp = pitch.Cos();
 
-		vx = FixedMul (finecosine[pitch], finecosine[angle]);
-		vy = FixedMul (finecosine[pitch], finesine[angle]);
-		vz = -finesine[pitch];
+		vx = FLOAT2FIXED(cp * angle.Cos());
+		vy = FLOAT2FIXED(cp * angle.Sin());
+		vz = FLOAT2FIXED(-pitch.Sin());
 	}
 
 	/* Variable set:
@@ -3869,13 +3861,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
 	lof_data.Flags = flags;
 	lof_data.BadActor = false;
 
-	Trace(pos.x, pos.y, pos.z, sec, vx, vy, vz, range, ActorFlags::FromInt(0xFFFFFFFF), ML_BLOCKEVERYTHING, self, trace, TRACE_PortalRestrict,
+	Trace(pos.x, pos.y, pos.z, sec, vx, vy, vz, FLOAT2FIXED(range), ActorFlags::FromInt(0xFFFFFFFF), ML_BLOCKEVERYTHING, self, trace, TRACE_PortalRestrict,
 		CheckLOFTraceFunc, &lof_data);
 
 	if (trace.HitType == TRACE_HitActor ||
 		((flags & CLOFF_JUMP_ON_MISS) && !lof_data.BadActor && trace.HitType != TRACE_HitNone))
 	{
-		if (minrange > 0 && trace.Distance < minrange)
+		if (minrange > 0 && trace.Distance < FLOAT2FIXED(minrange))
 		{
 			ACTION_RETURN_STATE(NULL);
 		}
@@ -3969,7 +3961,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 	else
 	{
 		// Does the player aim at something that can be shot?
-		P_AimLineAttack(self, self->_f_angle(), MISSILERANGE, &t, (flags & JLOSF_NOAUTOAIM) ? ANGLE_1/2 : 0, ALF_PORTALRESTRICT);
+		P_AimLineAttack(self, self->Angles.Yaw, MISSILERANGE, &t, (flags & JLOSF_NOAUTOAIM) ? 0.5 : 0., ALF_PORTALRESTRICT);
 		
 		if (!t.linetarget)
 		{

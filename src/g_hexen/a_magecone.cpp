@@ -53,9 +53,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireConePL1)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	angle_t angle;
+	DAngle angle;
 	int damage;
-	int slope;
+	DAngle slope;
 	int i;
 	AActor *mo;
 	bool conedone=false;
@@ -78,8 +78,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireConePL1)
 	damage = 90+(pr_cone()&15);
 	for (i = 0; i < 16; i++)
 	{
-		angle = self->_f_angle()+i*(ANG45/16);
-		slope = P_AimLineAttack (self, angle, MELEERANGE, &t, 0, ALF_CHECK3D);
+		angle = self->Angles.Yaw + i*(45./16);
+		slope = P_AimLineAttack (self, angle, MELEERANGE, &t, 0., ALF_CHECK3D);
 		if (t.linetarget)
 		{
 			P_DamageMobj (t.linetarget, self, self, damage, NAME_Ice, DMG_USEANGLE, FLOAT2ANGLE(t.angleFromSource.Degrees));

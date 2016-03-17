@@ -24,15 +24,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_ShootGun)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	int pitch;
+	DAngle pitch;
 
 	if (self->target == NULL)
 		return 0;
 
 	S_Sound (self, CHAN_WEAPON, "monsters/rifle", 1, ATTN_NORM);
 	A_FaceTarget (self);
-	pitch = P_AimLineAttack (self, self->_f_angle(), MISSILERANGE);
-	P_LineAttack (self, self->_f_angle() + (pr_shootgun.Random2() << 19),
+	pitch = P_AimLineAttack (self, self->Angles.Yaw, MISSILERANGE);
+	P_LineAttack (self, self->Angles.Yaw + pr_shootgun.Random2() * (11.25 / 256),
 		MISSILERANGE, pitch,
 		3*(pr_shootgun() % 5 + 1), NAME_Hitscan, NAME_StrifePuff);
 	return 0;

@@ -4045,7 +4045,7 @@ struct aim_t
 //
 //============================================================================
 
-fixed_t P_AimLineAttack(AActor *t1, angle_t angle, fixed_t distance, FTranslatedLineTarget *pLineTarget, fixed_t vrange,
+DAngle P_AimLineAttack(AActor *t1, DAngle angle, double distance, FTranslatedLineTarget *pLineTarget, DAngle vrange,
 	int flags, AActor *target, AActor *friender)
 {
 	fixed_t shootz = t1->Z() + (t1->height >> 1) - t1->floorclip;
@@ -4063,7 +4063,7 @@ fixed_t P_AimLineAttack(AActor *t1, angle_t angle, fixed_t distance, FTranslated
 	{
 		if (t1->player == NULL || !level.IsFreelookAllowed())
 		{
-			vrange = ANGLE_1 * 35;
+			vrange = 35.;
 		}
 		else
 		{
@@ -4071,7 +4071,7 @@ fixed_t P_AimLineAttack(AActor *t1, angle_t angle, fixed_t distance, FTranslated
 			AWeapon *weapon = t1->player->ReadyWeapon;
 			if (weapon && (weapon->WeaponFlags & WIF_NOAUTOAIM))
 			{
-				vrange = ANGLE_1 / 2;
+				vrange = 0.5;
 			}
 			else
 			{
@@ -4079,7 +4079,7 @@ fixed_t P_AimLineAttack(AActor *t1, angle_t angle, fixed_t distance, FTranslated
 				// vrange of 0 degrees, because then toppitch and bottompitch will
 				// be equal, and PTR_AimTraverse will never find anything to shoot at
 				// if it crosses a line.
-				vrange = clamp(t1->player->userinfo.GetAimDist(), ANGLE_1 / 2, ANGLE_1 * 35);
+				vrange = clamp(t1->player->userinfo.GetAimDist(), 0.5, 35.);
 			}
 		}
 	}
@@ -4091,11 +4091,11 @@ fixed_t P_AimLineAttack(AActor *t1, angle_t angle, fixed_t distance, FTranslated
 	aim.friender = (friender == NULL) ? t1 : friender;
 	aim.aimdir = aim_t::aim_up | aim_t::aim_down;
 	aim.startpos = t1->Pos();
-	aim.aimtrace = Vec2Angle(distance, angle);
+	aim.aimtrace = Vec2Angle(FLOAT2FIXED(distance), angle);
 	aim.limitz = aim.shootz = shootz;
-	aim.toppitch = t1->_f_pitch() - vrange;
-	aim.bottompitch = t1->_f_pitch() + vrange;
-	aim.attackrange = distance;
+	aim.toppitch = (t1->Angles.Pitch - vrange).BAMs();
+	aim.bottompitch = (t1->Angles.Pitch + vrange).BAMs();
+	aim.attackrange = FLOAT2FIXED(distance);
 	aim.aimpitch = t1->_f_pitch();
 	aim.lastsector = t1->Sector;
 	aim.startfrac = 0;
@@ -4110,7 +4110,7 @@ fixed_t P_AimLineAttack(AActor *t1, angle_t angle, fixed_t distance, FTranslated
 	{
 		*pLineTarget = *result;
 	}
-	return result->linetarget ? result->pitch : t1->_f_pitch();
+	return result->linetarget ? DAngle(ANGLE2DBL(result->pitch)) : t1->Angles.Pitch;
 }
 
 
@@ -4162,15 +4162,15 @@ static ETraceStatus CheckForActor(FTraceResults &res, void *userdata)
 //
 //==========================================================================
 
-AActor *P_LineAttack(AActor *t1, angle_t angle, fixed_t distance,
-	int pitch, int damage, FName damageType, PClassActor *pufftype, int flags, FTranslatedLineTarget*victim, int *actualdamage)
+AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
+	DAngle pitch, int damage, FName damageType, PClassActor *pufftype, int flags, FTranslatedLineTarget*victim, int *actualdamage)
 {
 	fixed_t vx, vy, vz, shootz;
 	FTraceResults trace;
 	Origin TData;
 	TData.Caller = t1;
-	angle_t srcangle = angle;
-	int srcpitch = pitch;
+	angle_t srcangle = angle.BAMs();
+	int srcpitch = pitch.BAMs();
 	bool killPuff = false;
 	AActor *puff = NULL;
 	int pflag = 0;
@@ -4187,12 +4187,11 @@ AActor *P_LineAttack(AActor *t1, angle_t angle, fixed_t distance,
 		*actualdamage = 0;
 	}
 
-	angle >>= ANGLETOFINESHIFT;
-	pitch = (angle_t)(pitch) >> ANGLETOFINESHIFT;
+	double pc = pitch.Cos();
 
-	vx = FixedMul(finecosine[pitch], finecosine[angle]);
-	vy = FixedMul(finecosine[pitch], finesine[angle]);
-	vz = -finesine[pitch];
+	vx = FLOAT2FIXED(pc * angle.Cos());
+	vy = FLOAT2FIXED(pc * angle.Sin());
+	vz = FLOAT2FIXED(-pitch.Sin());
 
 	shootz = t1->Z() - t1->floorclip + (t1->height >> 1);
 	if (t1->player != NULL)
@@ -4232,7 +4231,7 @@ AActor *P_LineAttack(AActor *t1, angle_t angle, fixed_t distance,
 	if (puffDefaults != NULL && puffDefaults->flags6 & MF6_NOTRIGGER) tflags = TRACE_NoSky;
 	else tflags = TRACE_NoSky | TRACE_Impact;
 
-	if (!Trace(t1->X(), t1->Y(), shootz, t1->Sector, vx, vy, vz, distance,
+	if (!Trace(t1->X(), t1->Y(), shootz, t1->Sector, vx, vy, vz, FLOAT2FIXED(distance),
 		MF_SHOOTABLE, ML_BLOCKEVERYTHING | ML_BLOCKHITSCAN, t1, trace,
 		tflags, CheckForActor, &TData))
 	{ // hit nothing
@@ -4419,8 +4418,8 @@ AActor *P_LineAttack(AActor *t1, angle_t angle, fixed_t distance,
 	return puff;
 }
 
-AActor *P_LineAttack(AActor *t1, angle_t angle, fixed_t distance,
-	int pitch, int damage, FName damageType, FName pufftype, int flags, FTranslatedLineTarget *victim, int *actualdamage)
+AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
+	DAngle pitch, int damage, FName damageType, FName pufftype, int flags, FTranslatedLineTarget *victim, int *actualdamage)
 {
 	PClassActor *type = PClass::FindActor(pufftype);
 	if (type == NULL)
@@ -4930,12 +4929,12 @@ void P_AimCamera(AActor *t1, fixed_t &CameraX, fixed_t &CameraY, fixed_t &Camera
 
 bool P_TalkFacing(AActor *player)
 {
-	static const int angleofs[] = { 0, ANGLE_90 >> 4, - ANGLE_90 >> 4 };
+	static const double angleofs[] = { 0, 90./16, -90./16 };
 	FTranslatedLineTarget t;
 
-	for (int angle : angleofs)
+	for (double angle : angleofs)
 	{
-		P_AimLineAttack(player, player->_f_angle() + angle, TALKRANGE, &t, ANGLE_1 * 35, ALF_FORCENOSMART | ALF_CHECKCONVERSATION | ALF_PORTALRESTRICT);
+		P_AimLineAttack(player, player->Angles.Yaw + angle, TALKRANGE, &t, 35., ALF_FORCENOSMART | ALF_CHECKCONVERSATION | ALF_PORTALRESTRICT);
 		if (t.linetarget != NULL)
 		{
 			if (t.linetarget->health > 0 && // Dead things can't talk.

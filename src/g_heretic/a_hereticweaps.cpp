@@ -63,8 +63,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_StaffAttack)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	angle_t angle;
-	int slope;
+	DAngle angle;
+	DAngle slope;
 	player_t *player;
 	FTranslatedLineTarget t;
 
@@ -86,8 +86,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_StaffAttack)
 	{
 		puff = PClass::FindActor(NAME_BulletPuff);	// just to be sure
 	}
-	angle = self->_f_angle();
-	angle += pr_sap.Random2() << 18;
+	angle = self->Angles.Yaw + pr_sap.Random2() * (5.625 / 256);
 	slope = P_AimLineAttack (self, angle, MELEERANGE);
 	P_LineAttack (self, angle, MELEERANGE, slope, damage, NAME_Melee, puff, true, &t);
 	if (t.linetarget)
@@ -110,7 +109,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireGoldWandPL1)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	angle_t angle;
+	DAngle angle;
 	int damage;
 	player_t *player;
 
@@ -125,12 +124,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireGoldWandPL1)
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return 0;
 	}
-	angle_t pitch = P_BulletSlope(self);
+	DAngle pitch = P_BulletSlope(self);
 	damage = 7+(pr_fgw()&7);
-	angle = self->_f_angle();
+	angle = self->Angles.Yaw;
 	if (player->refire)
 	{
-		angle += pr_fgw.Random2() << 18;
+		angle += pr_fgw.Random2() * (5.625 / 256);
 	}
 	P_LineAttack (self, angle, PLAYERMISSILERANGE, pitch, damage, NAME_Hitscan, "GoldWandPuff1");
 	S_Sound (self, CHAN_WEAPON, "weapons/wandhit", 1, ATTN_NORM);
@@ -148,7 +147,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireGoldWandPL2)
 	PARAM_ACTION_PROLOGUE;
 
 	int i;
-	angle_t angle;
+	DAngle angle;
 	int damage;
 	fixed_t vz;
 	player_t *player;
@@ -164,17 +163,18 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireGoldWandPL2)
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return 0;
 	}
-	angle_t pitch = P_BulletSlope(self);
-	vz = FixedMul (GetDefaultByName("GoldWandFX2")->Speed,
-		finetangent[FINEANGLES/4-((signed)pitch>>ANGLETOFINESHIFT)]);
+	DAngle pitch = P_BulletSlope(self);
+	//momz = GetDefault<AGoldWandFX2>()->Speed * tan(-bulletpitch);
+
+	vz = fixed_t(GetDefaultByName("GoldWandFX2")->Speed * (-pitch).Tan());
 	P_SpawnMissileAngle (self, PClass::FindActor("GoldWandFX2"), self->_f_angle()-(ANG45/8), vz);
 	P_SpawnMissileAngle (self, PClass::FindActor("GoldWandFX2"), self->_f_angle()+(ANG45/8), vz);
-	angle = self->_f_angle()-(ANG45/8);
+	angle = self->Angles.Yaw - (45. / 8);
 	for(i = 0; i < 5; i++)
 	{
 		damage = 1+(pr_fgw2()&7);
 		P_LineAttack (self, angle, PLAYERMISSILERANGE, pitch, damage, NAME_Hitscan, "GoldWandPuff2");
-		angle += ((ANG45/8)*2)/4;
+		angle += ((45. / 8) * 2) / 4;
 	}
 	S_Sound (self, CHAN_WEAPON, "weapons/wandhit", 1, ATTN_NORM);
 	return 0;
@@ -204,8 +204,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireCrossbowPL1)
 			return 0;
 	}
 	P_SpawnPlayerMissile (self, PClass::FindActor("CrossbowFX1"));
-	P_SpawnPlayerMissile (self, PClass::FindActor("CrossbowFX3"), self->_f_angle()-(ANG45/10));
-	P_SpawnPlayerMissile (self, PClass::FindActor("CrossbowFX3"), self->_f_angle()+(ANG45/10));
+	P_SpawnPlayerMissile (self, PClass::FindActor("CrossbowFX3"), self->Angles.Yaw - 4.5);
+	P_SpawnPlayerMissile (self, PClass::FindActor("CrossbowFX3"), self->Angles.Yaw + 4.5);
 	return 0;
 }
 
@@ -233,10 +233,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireCrossbowPL2)
 			return 0;
 	}
 	P_SpawnPlayerMissile (self, PClass::FindActor("CrossbowFX2"));
-	P_SpawnPlayerMissile (self, PClass::FindActor("CrossbowFX2"), self->_f_angle()-(ANG45/10));
-	P_SpawnPlayerMissile (self, PClass::FindActor("CrossbowFX2"), self->_f_angle()+(ANG45/10));
-	P_SpawnPlayerMissile (self, PClass::FindActor("CrossbowFX3"), self->_f_angle()-(ANG45/5));
-	P_SpawnPlayerMissile (self, PClass::FindActor("CrossbowFX3"), self->_f_angle()+(ANG45/5));
+	P_SpawnPlayerMissile (self, PClass::FindActor("CrossbowFX2"), self->Angles.Yaw - 4.5);
+	P_SpawnPlayerMissile (self, PClass::FindActor("CrossbowFX2"), self->Angles.Yaw + 4.5);
+	P_SpawnPlayerMissile (self, PClass::FindActor("CrossbowFX3"), self->Angles.Yaw - 9.);
+	P_SpawnPlayerMissile (self, PClass::FindActor("CrossbowFX3"), self->Angles.Yaw + 9.);
 	return 0;
 }
 
@@ -250,11 +250,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GauntletAttack)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	angle_t Angle;
+	DAngle Angle;
 	int damage;
-	int slope;
+	DAngle slope;
 	int randVal;
-	fixed_t dist;
+	double dist;
 	player_t *player;
 	PClassActor *pufftype;
 	FTranslatedLineTarget t;
@@ -275,19 +275,19 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GauntletAttack)
 	}
 	player->psprites[ps_weapon].sx = ((pr_gatk()&3)-2) * FRACUNIT;
 	player->psprites[ps_weapon].sy = WEAPONTOP + (pr_gatk()&3) * FRACUNIT;
-	Angle = self->_f_angle();
+	Angle = self->Angles.Yaw;
 	if (power)
 	{
 		damage = pr_gatk.HitDice (2);
 		dist = 4*MELEERANGE;
-		Angle += pr_gatk.Random2() << 17;
+		Angle += pr_gatk.Random2() * (2.8125 / 256);
 		pufftype = PClass::FindActor("GauntletPuff2");
 	}
 	else
 	{
 		damage = pr_gatk.HitDice (2);
-		dist = MELEERANGE+1;
-		Angle += pr_gatk.Random2() << 18;
+		dist = SAWRANGE;
+		Angle += pr_gatk.Random2() * (5.625 / 256);
 		pufftype = PClass::FindActor("GauntletPuff1");
 	}
 	slope = P_AimLineAttack (self, Angle, dist);
@@ -445,8 +445,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMacePL1)
 	}
 	player->psprites[ps_weapon].sx = ((pr_maceatk()&3)-2)*FRACUNIT;
 	player->psprites[ps_weapon].sy = WEAPONTOP+(pr_maceatk()&3)*FRACUNIT;
-	ball = P_SpawnPlayerMissile (self, PClass::FindActor("MaceFX1"),
-		self->_f_angle()+(((pr_maceatk()&7)-4)<<24));
+	ball = P_SpawnPlayerMissile (self, PClass::FindActor("MaceFX1"), self->Angles.Yaw + (((pr_maceatk()&7)-4) * (360./256)));
 	if (ball)
 	{
 		ball->special1 = 16; // tics till dropoff
@@ -603,7 +602,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMacePL2)
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return 0;
 	}
-	mo = P_SpawnPlayerMissile (self, 0,0,0, RUNTIME_CLASS(AMaceFX4), self->_f_angle(), &t);
+	mo = P_SpawnPlayerMissile (self, 0,0,0, RUNTIME_CLASS(AMaceFX4), self->Angles.Yaw, &t);
 	if (mo)
 	{
 		mo->vel.x += self->vel.x;
@@ -667,7 +666,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DeathBallImpact)
 			angle = 0.;
 			for (i = 0; i < 16; i++)
 			{
-				P_AimLineAttack (self, FLOAT2ANGLE(angle.Degrees), 10*64*FRACUNIT, &t, 0, ALF_NOFRIENDS|ALF_PORTALRESTRICT, NULL, self->target);
+				P_AimLineAttack (self, angle, 640., &t, 0., ALF_NOFRIENDS|ALF_PORTALRESTRICT, NULL, self->target);
 				if (t.linetarget && self->target != t.linetarget)
 				{
 					self->tracer = t.linetarget;
@@ -772,7 +771,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireBlasterPL1)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	angle_t angle;
+	DAngle angle;
 	int damage;
 	player_t *player;
 
@@ -787,12 +786,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireBlasterPL1)
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return 0;
 	}
-	angle_t pitch = P_BulletSlope(self);
+	DAngle pitch = P_BulletSlope(self);
 	damage = pr_fb1.HitDice (4);
-	angle = self->_f_angle();
+	angle = self->Angles.Yaw;
 	if (player->refire)
 	{
-		angle += pr_fb1.Random2() << 18;
+		angle += pr_fb1.Random2() * (5.625 / 256);
 	}
 	P_LineAttack (self, angle, PLAYERMISSILERANGE, pitch, damage, NAME_Hitscan, "BlasterPuff");
 	S_Sound (self, CHAN_WEAPON, "weapons/blastershoot", 1, ATTN_NORM);
@@ -947,7 +946,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSkullRodPL2)
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return 0;
 	}
-	P_SpawnPlayerMissile (self, 0,0,0, RUNTIME_CLASS(AHornRodFX2), self->_f_angle(), &t, &MissileActor);
+	P_SpawnPlayerMissile (self, 0,0,0, RUNTIME_CLASS(AHornRodFX2), self->Angles.Yaw, &t, &MissileActor);
 	// Use MissileActor instead of the return value from
 	// P_SpawnPlayerMissile because we need to give info to the mobj
 	// even if it exploded immediately.

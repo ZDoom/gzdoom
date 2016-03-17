@@ -4745,7 +4745,7 @@ static bool DoSpawnDecal(AActor *actor, const FDecalTemplate *tpl, int flags, an
 
 static void SetActorAngle(AActor *activator, int tid, int angle, bool interpolate)
 {
-	DAngle an = angle * (360. / 65536);
+	DAngle an = angle * (360. / 65536.);
 	if (tid == 0)
 	{
 		if (activator != NULL)
@@ -5411,12 +5411,12 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 		//[RC] A bullet firing function for ACS. Thanks to DavidPH.
 		case ACSF_LineAttack:
 			{
-				fixed_t	angle		= args[1] << FRACBITS;
-				fixed_t	pitch		= args[2] << FRACBITS;
+				DAngle angle		= args[1] * (360. / 65536.);
+				DAngle pitch		= args[2] * (360. / 65536.);
 				int	damage			= args[3];
 				FName pufftype		= argCount > 4 && args[4]? FName(FBehavior::StaticLookupString(args[4])) : NAME_BulletPuff;
 				FName damagetype	= argCount > 5 && args[5]? FName(FBehavior::StaticLookupString(args[5])) : NAME_None;
-				fixed_t	range		= argCount > 6 && args[6]? args[6] : MISSILERANGE;
+				double range		= argCount > 6 && args[6]? FIXED2DBL(args[6]) : MISSILERANGE;
 				int flags			= argCount > 7 && args[7]? args[7] : 0;
 				int pufftid			= argCount > 8 && args[8]? args[8] : 0;
 
@@ -9220,7 +9220,7 @@ scriptwait:
 				switch (STACK(1))
 				{
 				case PLAYERINFO_TEAM:			STACK(2) = userinfo->GetTeam(); break;
-				case PLAYERINFO_AIMDIST:		STACK(2) = userinfo->GetAimDist(); break;
+				case PLAYERINFO_AIMDIST:		STACK(2) = FLOAT2ANGLE(userinfo->GetAimDist()); break;	// Yes, this has been returning a BAM since its creation.
 				case PLAYERINFO_COLOR:			STACK(2) = userinfo->GetColor(); break;
 				case PLAYERINFO_GENDER:			STACK(2) = userinfo->GetGender(); break;
 				case PLAYERINFO_NEVERSWITCH:	STACK(2) = userinfo->GetNeverSwitch(); break;

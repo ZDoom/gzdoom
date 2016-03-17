@@ -96,9 +96,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_JabDagger)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	angle_t 	angle;
+	DAngle 	angle;
 	int 		damage;
-	int 		pitch;
+	DAngle 		pitch;
 	int			power;
 	FTranslatedLineTarget t;
 
@@ -110,9 +110,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_JabDagger)
 		damage *= 10;
 	}
 
-	angle = self->_f_angle() + (pr_jabdagger.Random2() << 18);
-	pitch = P_AimLineAttack (self, angle, 80*FRACUNIT);
-	P_LineAttack (self, angle, 80*FRACUNIT, pitch, damage, NAME_Melee, "StrifeSpark", true, &t);
+	angle = self->Angles.Yaw + pr_jabdagger.Random2() * (5.625 / 256);
+	pitch = P_AimLineAttack (self, angle, 80.);
+	P_LineAttack (self, angle, 80., pitch, damage, NAME_Melee, "StrifeSpark", true, &t);
 
 	// turn to face target
 	if (t.linetarget)
@@ -266,7 +266,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireArrow)
 	if (ti) 
 	{
 		savedangle = self->Angles.Yaw;
-		self->Angles.Yaw += ANGLE2DBL(pr_electric.Random2() << (18 - self->player->mo->accuracy * 5 / 100));
+		self->Angles.Yaw += pr_electric.Random2() * (5.625/256) * self->player->mo->AccuracyFactor();
 		self->player->mo->PlayAttacking2 ();
 		P_SpawnPlayerMissile (self, ti);
 		self->Angles.Yaw = savedangle;
@@ -283,17 +283,17 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireArrow)
 //
 //============================================================================
 
-void P_StrifeGunShot (AActor *mo, bool accurate, angle_t pitch)
+void P_StrifeGunShot (AActor *mo, bool accurate, DAngle pitch)
 {
-	angle_t angle;
+	DAngle angle;
 	int damage;
 
 	damage = 4*(pr_sgunshot()%3+1);
-	angle = mo->_f_angle();
+	angle = mo->Angles.Yaw;
 
 	if (mo->player != NULL && !accurate)
 	{
-		angle += pr_sgunshot.Random2() << (20 - mo->player->mo->accuracy * 5 / 100);
+		angle += pr_sgunshot.Random2() * (5.625 / 256) * mo->player->mo->AccuracyFactor();
 	}
 
 	P_LineAttack (mo, angle, PLAYERMISSILERANGE, pitch, damage, NAME_Hitscan, NAME_StrifePuff);
@@ -359,7 +359,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMiniMissile)
 	}
 
 	savedangle = self->Angles.Yaw;
-	self->Angles.Yaw += ANGLE2DBL(pr_minimissile.Random2() << (19 - player->mo->accuracy * 5 / 100));
+	self->Angles.Yaw += pr_minimissile.Random2() * (11.25 / 256) * player->mo->AccuracyFactor();
 	player->mo->PlayAttacking2 ();
 	P_SpawnPlayerMissile (self, PClass::FindActor("MiniMissile"));
 	self->Angles.Yaw = savedangle;
@@ -467,13 +467,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMauler1)
 	S_Sound (self, CHAN_WEAPON, "weapons/mauler1", 1, ATTN_NORM);
 
 
-	int bpitch = P_BulletSlope (self);
+	DAngle bpitch = P_BulletSlope (self);
 
 	for (int i = 0; i < 20; ++i)
 	{
 		int damage = 5 * (pr_mauler1() % 3 + 1);
-		angle_t angle = self->_f_angle() + (pr_mauler1.Random2() << 19);
-		int pitch = bpitch + (pr_mauler1.Random2() * 332063);
+		DAngle angle = self->Angles.Yaw + pr_mauler1.Random2() * (11.25 / 256);
+		DAngle pitch = bpitch + pr_mauler1.Random2() * (7.097 / 256);
 		
 		// Strife used a range of 2112 units for the mauler to signal that
 		// it should use a different puff. ZDoom's default range is longer
@@ -593,8 +593,8 @@ AActor *P_SpawnSubMissile (AActor *source, PClassActor *type, AActor *target)
 
 	if (P_CheckMissileSpawn (other, source->radius))
 	{
-		angle_t pitch = P_AimLineAttack (source, source->_f_angle(), 1024*FRACUNIT);
-		other->vel.z = FixedMul (-finesine[pitch>>ANGLETOFINESHIFT], other->Speed);
+		DAngle pitch = P_AimLineAttack (source, source->Angles.Yaw, 1024.);
+		other->vel.z = fixed_t(-other->Speed * pitch.Cos());
 		return other;
 	}
 	return NULL;
@@ -1089,7 +1089,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil4)
 	P_BulletSlope (self, &t, ALF_PORTALRESTRICT);
 	if (t.linetarget != NULL)
 	{
-		spot = P_SpawnPlayerMissile (self, 0,0,0, PClass::FindActor("SpectralLightningBigV1"), self->_f_angle(), &t, NULL, false, false, ALF_PORTALRESTRICT);
+		spot = P_SpawnPlayerMissile (self, 0,0,0, PClass::FindActor("SpectralLightningBigV1"), self->Angles.Yaw, &t, NULL, false, false, ALF_PORTALRESTRICT);
 		if (spot != NULL)
 		{
 			spot->tracer = t.linetarget;

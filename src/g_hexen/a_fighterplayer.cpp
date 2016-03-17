@@ -53,11 +53,11 @@ void AdjustPlayerAngle (AActor *pmo, FTranslatedLineTarget *t)
 //
 //============================================================================
 
-static bool TryPunch(APlayerPawn *pmo, angle_t angle, int damage, fixed_t power)
+static bool TryPunch(APlayerPawn *pmo, DAngle angle, int damage, fixed_t power)
 {
 	PClassActor *pufftype;
 	FTranslatedLineTarget t;
-	int slope;
+	DAngle slope;
 
 	slope = P_AimLineAttack (pmo, angle, 2*MELEERANGE, &t);
 	if (t.linetarget != NULL)
@@ -112,8 +112,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_FPunchAttack)
 	power = 2*FRACUNIT;
 	for (i = 0; i < 16; i++)
 	{
-		if (TryPunch(pmo, pmo->_f_angle() + i*(ANG45/16), damage, power) ||
-			TryPunch(pmo, pmo->_f_angle() - i*(ANG45/16), damage, power))
+		if (TryPunch(pmo, pmo->Angles.Yaw + i*(45./16), damage, power) ||
+			TryPunch(pmo, pmo->Angles.Yaw - i*(45./16), damage, power))
 		{ // hit something
 			if (pmo->weaponspecial >= 3)
 			{
@@ -127,7 +127,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FPunchAttack)
 	// didn't find any creatures, so try to strike any walls
 	pmo->weaponspecial = 0;
 
-	int slope = P_AimLineAttack (pmo, pmo->_f_angle(), MELEERANGE);
-	P_LineAttack (pmo, pmo->_f_angle(), MELEERANGE, slope, damage, NAME_Melee, PClass::FindActor("PunchPuff"), true);
+	DAngle slope = P_AimLineAttack (pmo, pmo->Angles.Yaw, MELEERANGE);
+	P_LineAttack (pmo, pmo->Angles.Yaw, MELEERANGE, slope, damage, NAME_Melee, PClass::FindActor("PunchPuff"), true);
 	return 0;
 }

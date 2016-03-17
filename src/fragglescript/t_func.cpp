@@ -3070,7 +3070,8 @@ void FParser::SF_MoveCamera(void)
 	fixed_t    zdist, xydist, movespeed;
 	fixed_t    xstep, ystep, zstep, targetheight;
 	angle_t    anglespeed, anglestep, angledist, targetangle, 
-		mobjangle, bigangle, smallangle;
+		bigangle, smallangle;
+	DAngle mobjangle;
 	
 	// I have to use floats for the math where angles are divided 
 	// by fixed values.  
@@ -3147,11 +3148,11 @@ void FParser::SF_MoveCamera(void)
 		}
 		
 		// set step variables based on distance and speed
-		mobjangle = cam->__f_AngleTo(target);
-		xydist = cam->Distance2D(target);
+		mobjangle = cam->AngleTo(target);
+		xydist = FLOAT2FIXED(cam->Distance2D(target, true));
 		
-		xstep = FixedMul(finecosine[mobjangle >> ANGLETOFINESHIFT], movespeed);
-		ystep = FixedMul(finesine[mobjangle >> ANGLETOFINESHIFT], movespeed);
+		xstep = (fixed_t)(movespeed * mobjangle.Cos());
+		ystep = (fixed_t)(movespeed * mobjangle.Sin());
 		
 		if(xydist && movespeed)
 			zstep = FixedDiv(zdist, FixedDiv(xydist, movespeed));
@@ -3767,14 +3768,15 @@ void FParser::SF_Resurrect()
 void FParser::SF_LineAttack()
 {
 	AActor	*mo;
-	int		damage, angle, slope;
+	int		damage;
+	DAngle angle, slope;
 
 	if (CheckArgs(3))
 	{
 		mo = actorvalue(t_argv[0]);
 		damage = intvalue(t_argv[2]);
 
-		angle = (intvalue(t_argv[1]) * (ANG45 / 45));
+		angle = floatvalue(t_argv[1]);
 		slope = P_AimLineAttack(mo, angle, MISSILERANGE);
 
 		P_LineAttack(mo, angle, MISSILERANGE, slope, damage, NAME_Hitscan, NAME_BulletPuff);

@@ -919,12 +919,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_GunFlash)
 // the height of the intended target
 //
 
-angle_t P_BulletSlope (AActor *mo, FTranslatedLineTarget *pLineTarget, int aimflags)
+DAngle P_BulletSlope (AActor *mo, FTranslatedLineTarget *pLineTarget, int aimflags)
 {
-	static const int angdiff[3] = { -(1<<26), 1<<26, 0 };
+	static const double angdiff[3] = { -5.625f, 5.625f, 0 };
 	int i;
-	angle_t an;
-	angle_t pitch;
+	DAngle an;
+	DAngle pitch;
 	FTranslatedLineTarget scratch;
 
 	if (pLineTarget == NULL) pLineTarget = &scratch;
@@ -932,12 +932,12 @@ angle_t P_BulletSlope (AActor *mo, FTranslatedLineTarget *pLineTarget, int aimfl
 	i = 2;
 	do
 	{
-		an = mo->_f_angle() + angdiff[i];
-		pitch = P_AimLineAttack (mo, an, 16*64*FRACUNIT, pLineTarget, 0, aimflags);
+		an = mo->Angles.Yaw + angdiff[i];
+		pitch = P_AimLineAttack (mo, an, 16.*64, pLineTarget, 0., aimflags);
 
 		if (mo->player != NULL &&
 			level.IsFreelookAllowed() &&
-			mo->player->userinfo.GetAimDist() <= ANGLE_1/2)
+			mo->player->userinfo.GetAimDist() <= 0.5)
 		{
 			break;
 		}
@@ -950,17 +950,17 @@ angle_t P_BulletSlope (AActor *mo, FTranslatedLineTarget *pLineTarget, int aimfl
 //
 // P_GunShot
 //
-void P_GunShot (AActor *mo, bool accurate, PClassActor *pufftype, angle_t pitch)
+void P_GunShot (AActor *mo, bool accurate, PClassActor *pufftype, DAngle pitch)
 {
-	angle_t 	angle;
+	DAngle 	angle;
 	int 		damage;
 		
 	damage = 5*(pr_gunshot()%3+1);
-	angle = mo->_f_angle();
+	angle = mo->Angles.Yaw;
 
 	if (!accurate)
 	{
-		angle += pr_gunshot.Random2 () << 18;
+		angle += pr_gunshot.Random2 () * (5.625 / 256);
 	}
 
 	P_LineAttack (mo, angle, PLAYERMISSILERANGE, pitch, damage, NAME_Hitscan, pufftype);

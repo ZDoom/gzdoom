@@ -1763,7 +1763,7 @@ bool P_SeekerMissile (AActor *actor, angle_t _thresh, angle_t _turnMax, bool pre
 		DAngle pitch = 0.;
 		if (!(actor->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER)))
 		{ // Need to seek vertically
-			fixed_t dist = MAX(1, actor->Distance2D(target));
+			fixed_t dist = MAX(1, FLOAT2FIXED(actor->Distance2D(target)));
 			// Aim at a player's eyes and at the middle of the actor for everything else.
 			fixed_t aimheight = target->height/2;
 			if (target->IsKindOf(RUNTIME_CLASS(APlayerPawn)))
@@ -6150,24 +6150,25 @@ AActor *P_SpawnPlayerMissile (AActor *source, PClassActor *type)
 	{
 		return NULL;
 	}
-	return P_SpawnPlayerMissile (source, 0, 0, 0, type, source->_f_angle());
+	return P_SpawnPlayerMissile (source, 0, 0, 0, type, source->Angles.Yaw);
 }
 
-AActor *P_SpawnPlayerMissile (AActor *source, PClassActor *type, angle_t angle)
+AActor *P_SpawnPlayerMissile (AActor *source, PClassActor *type, DAngle angle)
 {
 	return P_SpawnPlayerMissile (source, 0, 0, 0, type, angle);
 }
 
 AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
-							  PClassActor *type, angle_t angle, FTranslatedLineTarget *pLineTarget, AActor **pMissileActor,
+							  PClassActor *type, DAngle angle, FTranslatedLineTarget *pLineTarget, AActor **pMissileActor,
 							  bool nofreeaim, bool noautoaim, int aimflags)
 {
+	//static const double angdiff[3] = { -5.625, 5.625, 0 };
 	static const int angdiff[3] = { -(1<<26), 1<<26, 0 };
-	angle_t an = angle;
-	angle_t pitch;
+	DAngle an = angle;
+	DAngle pitch;
 	FTranslatedLineTarget scratch;
 	AActor *defaultobject = GetDefaultByType(type);
-	int vrange = nofreeaim ? ANGLE_1*35 : 0;
+	DAngle vrange = nofreeaim ? 35. : 0.;
 
 	if (source == NULL)
 	{
@@ -6178,7 +6179,7 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 	{
 		// Keep exactly the same angle and pitch as the player's own aim
 		an = angle;
-		pitch = source->_f_pitch();
+		pitch = source->Angles.Pitch;
 		pLineTarget->linetarget = NULL;
 	}
 	else // see which target is to be aimed at
@@ -6186,7 +6187,7 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 		// [XA] If MaxTargetRange is defined in the spawned projectile, use this as the
 		//      maximum range for the P_AimLineAttack call later; this allows MaxTargetRange
 		//      to function as a "maximum tracer-acquisition range" for seeker missiles.
-		fixed_t linetargetrange = defaultobject->maxtargetrange > 0 ? defaultobject->maxtargetrange*64 : 16*64*FRACUNIT;
+		double linetargetrange = defaultobject->maxtargetrange > 0 ? FIXED2DBL(defaultobject->maxtargetrange*64) : 16*64.;
 
 		int i = 2;
 		do
@@ -6197,7 +6198,7 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 			if (source->player != NULL &&
 				!nofreeaim &&
 				level.IsFreelookAllowed() &&
-				source->player->userinfo.GetAimDist() <= ANGLE_1/2)
+				source->player->userinfo.GetAimDist() <= 0.5)
 			{
 				break;
 			}
@@ -6208,7 +6209,7 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 			an = angle;
 			if (nofreeaim || !level.IsFreelookAllowed())
 			{
-				pitch = 0;
+				pitch = 0.;
 			}
 		}
 	}
@@ -6236,14 +6237,14 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 	if (pMissileActor) *pMissileActor = MissileActor;
 	P_PlaySpawnSound(MissileActor, source);
 	MissileActor->target = source;
-	MissileActor->Angles.Yaw = ANGLE2DBL(an);
+	MissileActor->Angles.Yaw = an;
 	if (MissileActor->flags3 & (MF3_FLOORHUGGER | MF3_CEILINGHUGGER))
 	{
 		MissileActor->VelFromAngle();
 	}
 	else
 	{
-		MissileActor->Vel3DFromAngle(ANGLE2DBL(pitch), MissileActor->Speed);
+		MissileActor->Vel3DFromAngle(pitch, MissileActor->Speed);
 	}
 
 	if (MissileActor->flags4 & MF4_SPECTRAL)

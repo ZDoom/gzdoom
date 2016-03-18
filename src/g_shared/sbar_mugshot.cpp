@@ -339,8 +339,6 @@ CVAR(Bool,st_oldouch,false,CVAR_ARCHIVE)
 int FMugShot::UpdateState(player_t *player, StateFlags stateflags)
 {
 	int 		i;
-	angle_t 	badguyangle;
-	angle_t 	diffang;
 	FString		full_state_name;
 
 	if (player->health > 0)
@@ -366,25 +364,14 @@ int FMugShot::UpdateState(player_t *player, StateFlags stateflags)
 				if (player->mo != NULL)
 				{
 					// The next 12 lines are from the Doom statusbar code.
-					badguyangle = player->mo->__f_AngleTo(player->attacker);
-					if (badguyangle > player->mo->_f_angle())
-					{
-						// whether right or left
-						diffang = badguyangle - player->mo->_f_angle();
-						i = diffang > ANG180;
-					}
-					else
-					{
-						// whether left or right
-						diffang = player->mo->_f_angle() - badguyangle;
-						i = diffang <= ANG180;
-					} // confusing, aint it?
-					if (i && diffang >= ANG45)
-					{
+					DAngle badguyangle = player->mo->AngleTo(player->attacker);
+					DAngle diffang = deltaangle(player->mo->Angles.Yaw, badguyangle);
+					if (diffang > 45.)
+					{ // turn face right
 						damage_angle = 0;
 					}
-					else if (!i && diffang >= ANG45)
-					{
+					else if (diffang < -45.)
+					{ // turn face left
 						damage_angle = 2;
 					}
 				}

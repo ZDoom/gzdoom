@@ -143,7 +143,7 @@ void DEarthquake::Tick ()
 					DAngle an = victim->Angles.Yaw + pr_quake();
 					if (m_IntensityX == m_IntensityY)
 					{ // Thrust in a circle
-						P_ThrustMobj (victim, an, m_IntensityX << (FRACBITS-1));
+						P_ThrustMobj (victim, an, m_IntensityX/2);
 					}
 					else
 					{ // Thrust in an ellipse

@@ -2711,6 +2711,7 @@ END_POINTERS
 IMPLEMENT_POINTY_CLASS(PSymbolVMFunction)
  DECLARE_POINTER(Function)
 END_POINTERS
+IMPLEMENT_CLASS(PSymbolTreeNode)
 
 //==========================================================================
 //
@@ -2773,6 +2774,22 @@ PSymbol *PSymbolTable::FindSymbol (FName symname, bool searchparents) const
 	return value != NULL ? *value : NULL;
 }
 
+PSymbol *PSymbolTable::FindSymbolInTable(FName symname, PSymbolTable *&symtable)
+{
+	PSymbol * const *value = Symbols.CheckKey(symname);
+	if (value == NULL)
+	{
+		if (ParentSymbolTable != NULL)
+		{
+			return ParentSymbolTable->FindSymbolInTable(symname, symtable);
+		}
+		symtable = NULL;
+		return NULL;
+	}
+	symtable = this;
+	return *value;
+}
+
 PSymbol *PSymbolTable::AddSymbol (PSymbol *sym)
 {
 	// Symbols that already exist are not inserted.
@@ -2782,4 +2799,20 @@ PSymbol *PSymbolTable::AddSymbol (PSymbol *sym)
 	}
 	Symbols.Insert(sym->SymbolName, sym);
 	return sym;
+}
+
+PSymbol *PSymbolTable::ReplaceSymbol(PSymbol *newsym)
+{
+	// If a symbol with a matching name exists, take its place and return it.
+	PSymbol **symslot = Symbols.CheckKey(newsym->SymbolName);
+	if (symslot != NULL)
+	{
+		PSymbol *oldsym = *symslot;
+		*symslot = newsym;
+		return oldsym;
+	}
+	// Else, just insert normally and return NULL since there was no
+	// symbol to replace.
+	Symbols.Insert(newsym->SymbolName, newsym);
+	return NULL;
 }

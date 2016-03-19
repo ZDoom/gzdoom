@@ -31,8 +31,8 @@ int AWhirlwind::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 	if (!(target->flags7 & MF7_DONTTHRUST))
 	{
 		target->Angles.Yaw += pr_foo.Random2() * (360 / 4096.);
-		target->vel.x += pr_foo.Random2() << 10;
-		target->vel.y += pr_foo.Random2() << 10;
+		target->Vel.X += pr_foo.Random2() / 64.;
+		target->Vel.Y += pr_foo.Random2() / 64.;
 	}
 
 	if ((level.time & 16) && !(target->flags2 & MF2_BOSS) && !(target->flags7 & MF7_DONTTHRUST))
@@ -42,10 +42,10 @@ int AWhirlwind::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 		{
 			randVal = 160;
 		}
-		target->vel.z += randVal << 11;
-		if (target->vel.z > 12*FRACUNIT)
+		target->Vel.Z += randVal / 32.;
+		if (target->Vel.Z > 12)
 		{
-			target->vel.z = 12*FRACUNIT;
+			target->Vel.Z = 12;
 		}
 	}
 	if (!(level.time & 7))
@@ -115,7 +115,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LichAttack)
 				}
 				fire->target = baseFire->target;
 				fire->Angles.Yaw = baseFire->Angles.Yaw;
-				fire->vel = baseFire->vel;
+				fire->Vel = baseFire->Vel;
 				fire->Damage = NULL;
 				fire->health = (i+1) * 2;
 				P_CheckMissileSpawn (fire, self->radius);
@@ -127,7 +127,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LichAttack)
 		mo = P_SpawnMissile (self, target, RUNTIME_CLASS(AWhirlwind));
 		if (mo != NULL)
 		{
-			mo->AddZ(-32*FRACUNIT, false);
+			mo->_f_AddZ(-32*FRACUNIT, false);
 			mo->tracer = target;
 			mo->health = 20*TICRATE; // Duration
 			S_Sound (self, CHAN_BODY, "ironlich/attack3", 1, ATTN_NORM);
@@ -149,7 +149,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_WhirlwindSeek)
 	self->health -= 3;
 	if (self->health < 0)
 	{
-		self->vel.x = self->vel.y = self->vel.z = 0;
+		self->Vel.Zero();
 		self->SetState (self->FindState(NAME_Death));
 		self->flags &= ~MF_MISSILE;
 		return 0;
@@ -186,7 +186,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LichIceImpact)
 		shard->target = self->target;
 		shard->Angles.Yaw = i*45.;
 		shard->VelFromAngle();
-		shard->vel.z = -FRACUNIT*6/10;
+		shard->Vel.Z = -.6;
 		P_CheckMissileSpawn (shard, self->radius);
 	}
 	return 0;
@@ -203,7 +203,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LichFireGrow)
 	PARAM_ACTION_PROLOGUE;
 
 	self->health--;
-	self->AddZ(9*FRACUNIT);
+	self->_f_AddZ(9*FRACUNIT);
 	if (self->health == 0)
 	{
 		self->Damage = self->GetDefault()->Damage;

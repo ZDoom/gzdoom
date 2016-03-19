@@ -257,11 +257,8 @@ struct TVector2
 		return X*other.X + Y*other.Y;
 	}
 
-	// Returns the angle (in radians) that the ray (0,0)-(X,Y) faces
-	double Angle() const
-	{
-		return g_atan2 (X, Y);
-	}
+	// Returns the angle that the ray (0,0)-(X,Y) faces
+	TAngle<vec_t> Angle() const;
 
 	// Returns a rotated vector. angle is in degrees.
 	TVector2 Rotated (double angle)
@@ -324,6 +321,11 @@ struct TVector3
 	void Zero()
 	{
 		Z = Y = X = 0;
+	}
+
+	bool isZero() const
+	{
+		return X == 0 && Y == 0 && Z == 0;
 	}
 
 	TVector3 &operator= (const TVector3 &other)
@@ -470,11 +472,16 @@ struct TVector3
 		return *this;
 	}
 
-	// Add a 3D vector and a 2D vector.
-	// Discards the Z component of the 3D vector and returns a 2D vector.
-	friend Vector2 operator+ (const TVector3 &v3, const Vector2 &v2)
+	// returns the XY fields as a 2D-vector.
+	Vector2 XY() const
 	{
-		return Vector2(v3.X + v2.X, v3.Y + v2.Y);
+		return{ X, Y };
+	}
+
+	// Add a 3D vector and a 2D vector.
+	friend TVector3 operator+ (const TVector3 &v3, const Vector2 &v2)
+	{
+		return TVector3(v3.X + v2.X, v3.Y + v2.Y, v3.Z);
 	}
 
 	friend Vector2 operator+ (const Vector2 &v2, const TVector3 &v3)
@@ -493,6 +500,12 @@ struct TVector3
 	{
 		return Vector2(v2.X - v3.X, v2.Y - v3.Y);
 	}
+
+
+
+	// Returns the angle (in radians) that the ray (0,0)-(X,Y) faces
+	TAngle<vec_t> Angle() const;
+	TAngle<vec_t> Pitch() const;
 
 	// Vector length
 	double Length() const
@@ -522,13 +535,19 @@ struct TVector3
 	}
 
 	// Resizes this vector to be the specified length (if it is not 0)
-	TVector3 &Resize(double len)
+	TVector3 &MakeResize(double len)
 	{
-		double nowlen = Length();
-		X = vec_t(X * (len /= nowlen));
-		Y = vec_t(Y * len);
-		Z = vec_t(Z * len);
+		double scale = len / Length();
+		X = vec_t(X * scale);
+		Y = vec_t(Y * scale);
+		Z = vec_t(Z * scale);
 		return *this;
+	}
+
+	TVector3 Resized(double len)
+	{
+		double scale = len / Length();
+		return{ vec_t(X * scale), vec_t(Y * scale), vec_t(Z * scale) };
 	}
 
 	// Dot product
@@ -1014,7 +1033,7 @@ struct TAngle
 
 	TVector2<vec_t> ToVector(vec_t length) const
 	{
-		return TVector2(length * Cos(), length * Sin());
+		return TVector2<vec_t>(length * Cos(), length * Sin());
 	}
 
 	int FixedAngle()	// for ACS. This must be normalized so it just converts to BAM first and then shifts 16 bits right.
@@ -1035,6 +1054,12 @@ struct TAngle
 	double Tan() const
 	{
 		return g_tan(Degrees * (M_PI / 180.));
+	}
+
+	// This is for calculating vertical velocity. For high pitches the tangent will become too large to be useful.
+	double TanClamped(double max = 5.) const
+	{
+		return clamp(Tan(), -max, max);
 	}
 
 };
@@ -1102,6 +1127,24 @@ template<class T>
 inline TAngle<T> VecToAngle (const TVector3<T> &vec)
 {
 	return (T)g_atan2(vec.Y, vec.X) * (180.0 / M_PI);
+}
+
+template<class T>
+TAngle<T> TVector2<T>::Angle() const
+{
+	return VecToAngle(X, Y);
+}
+
+template<class T>
+TAngle<T> TVector3<T>::Angle() const
+{
+	return VecToAngle(X, Y);
+}
+
+template<class T>
+TAngle<T> TVector3<T>::Pitch() const
+{
+	return VecToAngle(TVector2<T>(X, Y).Length(), Z);
 }
 
 // Much of this is copied from TVector3. Is all that functionality really appropriate?

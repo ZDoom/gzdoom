@@ -658,7 +658,7 @@ void A_SorcOffense2(AActor *actor)
 	int delta, index;
 	AActor *parent = actor->target;
 	AActor *dest = parent->target;
-	int dist;
+	double dist;
 
 	// [RH] If no enemy, then don't try to shoot.
 	if (dest == NULL)
@@ -675,9 +675,8 @@ void A_SorcOffense2(AActor *actor)
 	if (mo)
 	{
 		mo->special2 = 35*5/2;		// 5 seconds
-		dist = mo->AproxDistance(dest) / mo->Speed;
-		if(dist < 1) dist = 1;
-		mo->vel.z = (dest->Z() - mo->Z()) / dist;
+		dist = mo->DistanceBySpeed(dest, mo->Speed);
+		mo->Vel.Z = (dest->Z() - mo->Z()) / dist;
 	}
 }
 
@@ -710,21 +709,21 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnFizzle)
 {
 	PARAM_ACTION_PROLOGUE;
 	fixed_t dist = 5*FRACUNIT;
-	fixed_t speed = self->Speed;
-	angle_t rangle;
+	int speed = (int)self->Speed;
+	DAngle rangle;
 	AActor *mo;
 	int ix;
 
-	fixedvec3 pos = self->Vec3Angle(dist, self->_f_angle(), -self->floorclip + (self->height >> 1));
+	fixedvec3 pos = self->_f_Vec3Angle(dist, self->_f_angle(), -self->floorclip + (self->height >> 1));
 	for (ix=0; ix<5; ix++)
 	{
 		mo = Spawn("SorcSpark1", pos, ALLOW_REPLACE);
 		if (mo)
 		{
-			rangle = (self->_f_angle() >> ANGLETOFINESHIFT) + ((pr_heresiarch()%5) << 1);
-			mo->vel.x = FixedMul(pr_heresiarch()%speed, finecosine[rangle]);
-			mo->vel.y = FixedMul(pr_heresiarch()%speed, finesine[rangle]);
-			mo->vel.z = FRACUNIT*2;
+			rangle = self->Angles.Yaw + (pr_heresiarch() % 5) * (4096 / 360.);
+			mo->Vel.X = (pr_heresiarch() % speed) * rangle.Cos();
+			mo->Vel.Y = (pr_heresiarch() % speed) * rangle.Sin();
+			mo->Vel.Z = 2;
 		}
 	}
 	return 0;
@@ -944,9 +943,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcBallPop)
 	S_Sound (self, CHAN_BODY, "SorcererBallPop", 1, ATTN_NONE);
 	self->flags &= ~MF_NOGRAVITY;
 	self->gravity = FRACUNIT/8;
-	self->vel.x = ((pr_heresiarch()%10)-5) << FRACBITS;
-	self->vel.y = ((pr_heresiarch()%10)-5) << FRACBITS;
-	self->vel.z = (2+(pr_heresiarch()%3)) << FRACBITS;
+	
+	self->Vel.X = ((pr_heresiarch()%10)-5);
+	self->Vel.Y = ((pr_heresiarch()%10)-5);
+	self->Vel.Z = (2+(pr_heresiarch()%3));
 	self->special2 = 4*FRACUNIT;		// Initial bounce factor
 	self->args[4] = BOUNCE_TIME_UNIT;	// Bounce time unit
 	self->args[3] = 5;					// Bounce time in seconds

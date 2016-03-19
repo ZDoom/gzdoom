@@ -338,7 +338,6 @@ bool FMugShot::SetState(const char *state_name, bool wait_till_done, bool reset)
 CVAR(Bool,st_oldouch,false,CVAR_ARCHIVE)
 int FMugShot::UpdateState(player_t *player, StateFlags stateflags)
 {
-	int 		i;
 	FString		full_state_name;
 
 	if (player->health > 0)

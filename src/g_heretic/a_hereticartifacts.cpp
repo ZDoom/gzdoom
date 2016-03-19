@@ -49,8 +49,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_TimeBomb)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	self->AddZ(32*FRACUNIT, false);
-	self->PrevZ = self->Z();	// no interpolation!
+	self->_f_AddZ(32*FRACUNIT, false);
+	self->PrevZ = self->_f_Z();	// no interpolation!
 	self->RenderStyle = STYLE_Add;
 	self->alpha = FRACUNIT;
 	P_RadiusAttack (self, self->target, 128, 128, self->DamageType, RADF_HURTSOURCE);
@@ -72,7 +72,7 @@ bool AArtiTimeBomb::Use (bool pickup)
 {
 	angle_t angle = Owner->_f_angle() >> ANGLETOFINESHIFT;
 	AActor *mo = Spawn("ActivatedTimeBomb",
-		Owner->Vec3Angle(24*FRACUNIT, Owner->_f_angle(), - Owner->floorclip), ALLOW_REPLACE);
+		Owner->_f_Vec3Angle(24*FRACUNIT, Owner->_f_angle(), - Owner->floorclip), ALLOW_REPLACE);
 	mo->target = Owner;
 	return true;
 }

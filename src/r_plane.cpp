@@ -1251,8 +1251,8 @@ void R_DrawSkyBoxes ()
 		{
 			extralight = pl->extralight;
 			R_SetVisibility (pl->visibility);
-			viewx = pl->viewx - sky->Mate->X() + sky->X();
-			viewy = pl->viewy - sky->Mate->Y() + sky->Y();
+			viewx = pl->viewx - sky->Mate->_f_X() + sky->_f_X();
+			viewy = pl->viewy - sky->Mate->_f_Y() + sky->_f_Y();
 			viewz = pl->viewz;
 			viewangle = pl->viewangle;
 		}

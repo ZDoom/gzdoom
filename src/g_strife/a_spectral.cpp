@@ -28,7 +28,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpectralLightningTail)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	AActor *foo = Spawn("SpectralLightningHTail", self->Vec3Offset(-self->vel.x, -self->vel.y, 0), ALLOW_REPLACE);
+	AActor *foo = Spawn("SpectralLightningHTail", self->Vec3Offset(-self->_f_velx(), -self->_f_vely(), 0), ALLOW_REPLACE);
 
 	foo->Angles.Yaw = self->Angles.Yaw;
 	foo->FriendPlayer = self->FriendPlayer;
@@ -63,8 +63,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpectralLightning)
 	if (self->threshold != 0)
 		--self->threshold;
 
-	self->vel.x += pr_zap5.Random2(3) << FRACBITS;
-	self->vel.y += pr_zap5.Random2(3) << FRACBITS;
+	self->Vel.X += pr_zap5.Random2(3);
+	self->Vel.Y += pr_zap5.Random2(3);
 
 	fixedvec2 pos = self->Vec2Offset(
 		pr_zap5.Random2(3) * FRACUNIT * 50,
@@ -74,13 +74,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpectralLightning)
 		PClass::FindActor(NAME_SpectralLightningV1), pos.x, pos.y, ONCEILINGZ, ALLOW_REPLACE);
 
 	flash->target = self->target;
-	flash->vel.z = -18*FRACUNIT;
+	flash->Vel.Z = -18*FRACUNIT;
 	flash->FriendPlayer = self->FriendPlayer;
 
-	flash = Spawn(NAME_SpectralLightningV2, self->X(), self->Y(), ONCEILINGZ, ALLOW_REPLACE);
+	flash = Spawn(NAME_SpectralLightningV2, self->_f_X(), self->_f_Y(), ONCEILINGZ, ALLOW_REPLACE);
 
 	flash->target = self->target;
-	flash->vel.z = -18*FRACUNIT;
+	flash->Vel.Z = -18 * FRACUNIT;
 	flash->FriendPlayer = self->FriendPlayer;
 	return 0;
 }
@@ -123,7 +123,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Tracer2)
 	if (!(self->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER)))
 	{
 		// change slope
-		dist = self->AproxDistance (dest) / self->Speed;
+		dist = self->AproxDistance (dest) / self->_f_speed();
 
 		if (dist < 1)
 		{
@@ -131,19 +131,19 @@ DEFINE_ACTION_FUNCTION(AActor, A_Tracer2)
 		}
 		if (dest->height >= 56*FRACUNIT)
 		{
-			slope = (dest->Z()+40*FRACUNIT - self->Z()) / dist;
+			slope = (dest->_f_Z()+40*FRACUNIT - self->_f_Z()) / dist;
 		}
 		else
 		{
-			slope = (dest->Z() + self->height*2/3 - self->Z()) / dist;
+			slope = (dest->_f_Z() + self->height*2/3 - self->_f_Z()) / dist;
 		}
-		if (slope < self->vel.z)
+		if (slope < self->_f_velz())
 		{
-			self->vel.z -= FRACUNIT/8;
+			self->Vel.Z -= 1 / 8.;
 		}
 		else
 		{
-			self->vel.z += FRACUNIT/8;
+			self->Vel.Z += 1 / 8.;
 		}
 	}
 	return 0;

@@ -22,9 +22,9 @@
 //
 //==========================================================================
 
-void BlastActor (AActor *victim, fixed_t strength, fixed_t speed, AActor *Owner, PClassActor *blasteffect, bool dontdamage)
+void BlastActor (AActor *victim, fixed_t strength, double speed, AActor *Owner, PClassActor *blasteffect, bool dontdamage)
 {
-	angle_t angle,ang;
+	DAngle angle;
 	AActor *mo;
 	fixedvec3 pos;
 
@@ -33,36 +33,34 @@ void BlastActor (AActor *victim, fixed_t strength, fixed_t speed, AActor *Owner,
 		return;
 	}
 
-	angle = Owner->__f_AngleTo(victim);
-	angle >>= ANGLETOFINESHIFT;
-	victim->vel.x = FixedMul (speed, finecosine[angle]);
-	victim->vel.y = FixedMul (speed, finesine[angle]);
+	angle = Owner->AngleTo(victim);
+	DVector2 move = angle.ToVector(speed);
+	victim->Vel.X = move.X;
+	victim->Vel.Y = move.Y;
 
 	// Spawn blast puff
-	ang = victim->__f_AngleTo(Owner);
-	ang >>= ANGLETOFINESHIFT;
+	angle -= 180.;
 	pos = victim->Vec3Offset(
-		FixedMul (victim->radius+FRACUNIT, finecosine[ang]),
-		FixedMul (victim->radius+FRACUNIT, finesine[ang]),
+		fixed_t((victim->radius + FRACUNIT) * angle.Cos()),
+		fixed_t((victim->radius + FRACUNIT) * angle.Sin()),
 		-victim->floorclip + (victim->height>>1));
 	mo = Spawn (blasteffect, pos, ALLOW_REPLACE);
 	if (mo)
 	{
-		mo->vel.x = victim->vel.x;
-		mo->vel.y = victim->vel.y;
+		mo->Vel.X = victim->Vel.X;
+		mo->Vel.Y = victim->Vel.Y;
 	}
 	if (victim->flags & MF_MISSILE)
 	{
 		// [RH] Floor and ceiling huggers should not be blasted vertically.
 		if (!(victim->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER)))
 		{
-			victim->vel.z = 8*FRACUNIT;
-			mo->vel.z = victim->vel.z;
+			mo->Vel.Z = victim->Vel.Z = 8;
 		}
 	}
 	else
 	{
-		victim->vel.z = (1000 / victim->Mass) << FRACBITS;
+		victim->Vel.Z = 1000. / victim->Mass;
 	}
 	if (victim->player)
 	{
@@ -101,7 +99,7 @@ DEFINE_ACTION_FUNCTION_PARAMS (AActor, A_Blast)
 	PARAM_INT_OPT	(blastflags)			{ blastflags = 0; }
 	PARAM_FIXED_OPT	(strength)				{ strength = 255*FRACUNIT; }
 	PARAM_FIXED_OPT	(radius)				{ radius = 255*FRACUNIT; }
-	PARAM_FIXED_OPT	(speed)					{ speed = 20*FRACUNIT; }
+	PARAM_FLOAT_OPT	(speed)					{ speed = 20; }
 	PARAM_CLASS_OPT	(blasteffect, AActor)	{ blasteffect = PClass::FindActor("BlastEffect"); }
 	PARAM_SOUND_OPT	(blastsound)			{ blastsound = "BlastRadius"; }
 

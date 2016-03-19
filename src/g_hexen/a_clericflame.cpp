@@ -13,9 +13,9 @@
 #include "thingdef/thingdef.h"
 */
 
-const fixed_t FLAMESPEED	= fixed_t(0.45*FRACUNIT);
+const double FLAMESPEED	= 0.45;
 const fixed_t CFLAMERANGE	= 12*64*FRACUNIT;
-const fixed_t FLAMEROTSPEED	= 2*FRACUNIT;
+const double FLAMEROTSPEED	= 2.;
 
 static FRandom pr_missile ("CFlameMissile");
 
@@ -48,12 +48,12 @@ void ACFlameMissile::Effect ()
 	if (!--special1)
 	{
 		special1 = 4;
-		newz = Z()-12*FRACUNIT;
+		newz = _f_Z()-12*FRACUNIT;
 		if (newz < floorz)
 		{
 			newz = floorz;
 		}
-		AActor *mo = Spawn ("CFlameFloor", X(), Y(), newz, ALLOW_REPLACE);
+		AActor *mo = Spawn ("CFlameFloor", _f_X(), _f_Y(), newz, ALLOW_REPLACE);
 		if (mo)
 		{
 			mo->Angles.Yaw = Angles.Yaw;
@@ -99,9 +99,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CFlamePuff)
 	PARAM_ACTION_PROLOGUE;
 
 	self->renderflags &= ~RF_INVISIBLE;
-	self->vel.x = 0;
-	self->vel.y = 0;
-	self->vel.z = 0;
+	self->Vel.Zero();
 	S_Sound (self, CHAN_BODY, "ClericFlameExplode", 1, ATTN_NORM);
 	return 0;
 }
@@ -138,8 +136,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_CFlameMissile)
 				mo->Angles.Yaw = an;
 				mo->target = self->target;
 				mo->VelFromAngle(FLAMESPEED);
-				mo->special1 = mo->vel.x;
-				mo->special2 = mo->vel.y;
+				mo->special1 = FLOAT2FIXED(mo->Vel.X);
+				mo->special2 = FLOAT2FIXED(mo->Vel.Y);
 				mo->tics -= pr_missile()&3;
 			}
 			mo = Spawn ("CircleFlame", BlockingMobj->Vec3Offset(
@@ -150,8 +148,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_CFlameMissile)
 				mo->Angles.Yaw = an + 180.;
 				mo->target = self->target;
 				mo->VelFromAngle(-FLAMESPEED);
-				mo->special1 = mo->vel.x;
-				mo->special2 = mo->vel.y;
+				mo->special1 = FLOAT2FIXED(mo->Vel.X);
+				mo->special2 = FLOAT2FIXED(mo->Vel.Y);
 				mo->tics -= pr_missile()&3;
 			}
 		}
@@ -172,8 +170,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CFlameRotate)
 
 	DAngle an = self->Angles.Yaw + 90.;
 	self->VelFromAngle(an, FLAMEROTSPEED);
-	self->vel.x += self->special1;
-	self->vel.y += self->special2;
+	self->Vel += DVector2(FIXED2DBL(self->special1), FIXED2DBL(self->special2));
 
 	self->Angles.Yaw += 6.;
 	return 0;

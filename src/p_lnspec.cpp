@@ -168,7 +168,7 @@ FUNC(LS_Polyobj_MoveToSpot)
 	FActorIterator iterator (arg2);
 	AActor *spot = iterator.Next();
 	if (spot == NULL) return false;
-	return EV_MovePolyTo (ln, arg0, SPEED(arg1), spot->X(), spot->Y(), false);
+	return EV_MovePolyTo (ln, arg0, SPEED(arg1), spot->_f_X(), spot->_f_Y(), false);
 }
 
 FUNC(LS_Polyobj_DoorSwing)
@@ -219,7 +219,7 @@ FUNC(LS_Polyobj_OR_MoveToSpot)
 	FActorIterator iterator (arg2);
 	AActor *spot = iterator.Next();
 	if (spot == NULL) return false;
-	return EV_MovePolyTo (ln, arg0, SPEED(arg1), spot->X(), spot->Y(), true);
+	return EV_MovePolyTo (ln, arg0, SPEED(arg1), spot->_f_X(), spot->_f_Y(), true);
 }
 
 FUNC(LS_Polyobj_Stop)
@@ -1101,7 +1101,16 @@ FUNC(LS_Teleport_Line)
 	return EV_SilentLineTeleport (ln, backSide, it, arg1, arg2);
 }
 
-static void ThrustThingHelper (AActor *it, DAngle angle, int force, INTBOOL nolimit);
+static void ThrustThingHelper(AActor *it, DAngle angle, double force, INTBOOL nolimit)
+{
+	it->VelFromAngle(angle, force);
+	if (!nolimit)
+	{
+		it->Vel.X = clamp(it->Vel.X, -MAXMOVE, MAXMOVE);
+		it->Vel.Y = clamp(it->Vel.Y, -MAXMOVE, MAXMOVE);
+	}
+}
+
 FUNC(LS_ThrustThing)
 // ThrustThing (angle, force, nolimit, tid)
 {
@@ -1126,21 +1135,11 @@ FUNC(LS_ThrustThing)
 	return false;
 }
 
-static void ThrustThingHelper (AActor *it, DAngle angle, int force, INTBOOL nolimit)
-{
-	it->VelFromAngle(angle, force << FRACBITS);
-	if (!nolimit)
-	{
-		it->vel.x = clamp<fixed_t> (it->vel.x, -MAXMOVE, MAXMOVE);
-		it->vel.y = clamp<fixed_t> (it->vel.y, -MAXMOVE, MAXMOVE);
-	}
-}
-
 FUNC(LS_ThrustThingZ)	// [BC]
 // ThrustThingZ (tid, zthrust, down/up, set)
 {
 	AActor *victim;
-	fixed_t thrust = arg1*FRACUNIT/4;
+	double thrust = arg1/4.;
 
 	// [BC] Up is default
 	if (arg2)
@@ -1153,18 +1152,18 @@ FUNC(LS_ThrustThingZ)	// [BC]
 		while ( (victim = iterator.Next ()) )
 		{
 			if (!arg3)
-				victim->vel.z = thrust;
+				victim->Vel.Z = thrust;
 			else
-				victim->vel.z += thrust;
+				victim->Vel.Z += thrust;
 		}
 		return true;
 	}
 	else if (it)
 	{
 		if (!arg3)
-			it->vel.z = thrust;
+			it->Vel.Z = thrust;
 		else
-			it->vel.z += thrust;
+			it->Vel.Z += thrust;
 		return true;
 	}
 	return false;
@@ -1695,8 +1694,8 @@ FUNC(LS_Thing_Stop)
 	{
 		if (it != NULL)
 		{
-			it->vel.x = it->vel.y = it->vel.z = 0;
-			if (it->player != NULL) it->player->vel.x = it->player->vel.y = 0;
+			it->Vel.Zero();
+			if (it->player != NULL) it->player->Vel.Zero();
 			ok = true;
 		}
 	}
@@ -1706,8 +1705,8 @@ FUNC(LS_Thing_Stop)
 
 		while ( (target = iterator.Next ()) )
 		{
-			target->vel.x = target->vel.y = target->vel.z = 0;
-			if (target->player != NULL) target->player->vel.x = target->player->vel.y = 0;
+			target->Vel.Zero();
+			if (target->player != NULL) target->player->Vel.Zero();
 			ok = true;
 		}
 	}
@@ -3281,12 +3280,12 @@ FUNC(LS_GlassBreak)
 			{
 				glass = Spawn("GlassJunk", x, y, ONFLOORZ, ALLOW_REPLACE);
 
-				glass->AddZ(24 * FRACUNIT);
+				glass->_f_AddZ(24 * FRACUNIT);
 				glass->SetState (glass->SpawnState + (pr_glass() % glass->health));
 
 				glass->Angles.Yaw = pr_glass() * (360 / 256.);
 				glass->VelFromAngle(pr_glass() & 3);
-				glass->vel.z = (pr_glass() & 7) << FRACBITS;
+				glass->Vel.Z = (pr_glass() & 7);
 				// [RH] Let the shards stick around longer than they did in Strife.
 				glass->tics += pr_glass();
 			}

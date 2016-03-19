@@ -828,9 +828,9 @@ static void DrawCoordinates(player_t * CPlayer)
 	
 	if (!map_point_coordinates || !automapactive) 
 	{
-		x=CPlayer->mo->X();
-		y=CPlayer->mo->Y();                     
-		z=CPlayer->mo->Z();
+		x=CPlayer->mo->_f_X();
+		y=CPlayer->mo->_f_Y();                     
+		z=CPlayer->mo->_f_Z();
 	}
 	else 
 	{

@@ -236,8 +236,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_SerpentSpawnGibs)
 			self->floorz+FRACUNIT, ALLOW_REPLACE);
 		if (mo)
 		{
-			mo->vel.x = (pr_serpentgibs()-128)<<6;
-			mo->vel.y = (pr_serpentgibs()-128)<<6;
+			mo->Vel.X = (pr_serpentgibs() - 128) / 1024.f;
+			mo->Vel.Y = (pr_serpentgibs() - 128) / 1024.f;
 			mo->floorclip = 6*FRACUNIT;
 		}
 	}
@@ -296,7 +296,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SerpentHeadCheck)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	if (self->Z() <= self->floorz)
+	if (self->_f_Z() <= self->floorz)
 	{
 		if (Terrains[P_GetThingFloorType(self)].IsLiquid)
 		{

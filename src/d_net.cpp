@@ -2321,7 +2321,7 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 					else
 					{
 						const AActor *def = GetDefaultByType (typeinfo);
-						fixedvec3 spawnpos = source->Vec3Angle(def->radius * 2 + source->radius, source->_f_angle(), 8 * FRACUNIT);
+						fixedvec3 spawnpos = source->_f_Vec3Angle(def->radius * 2 + source->radius, source->_f_angle(), 8 * FRACUNIT);
 
 						AActor *spawned = Spawn (typeinfo, spawnpos, ALLOW_REPLACE);
 						if (spawned != NULL)
@@ -2374,8 +2374,8 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 
 			s = ReadString (stream);
 
-			if (Trace (players[player].mo->X(), players[player].mo->Y(),
-				players[player].mo->Top() - (players[player].mo->height>>2),
+			if (Trace (players[player].mo->_f_X(), players[player].mo->_f_Y(),
+				players[player].mo->_f_Top() - (players[player].mo->height>>2),
 				players[player].mo->Sector,
 				vx, vy, vz, 172*FRACUNIT, 0, ML_BLOCKEVERYTHING, players[player].mo,
 				trace, TRACE_NoSky))

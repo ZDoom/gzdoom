@@ -109,10 +109,10 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, DAngle angle, i
 	sector_t *destsect;
 	bool resetpitch = false;
 	fixed_t floorheight, ceilingheight;
-	fixed_t missilespeed = 0;
+	double missilespeed = 0;
 
-	old = thing->Pos();
-	aboveFloor = thing->Z() - thing->floorz;
+	old = thing->_f_Pos();
+	aboveFloor = thing->_f_Z() - thing->floorz;
 	destsect = P_PointInSector (x, y);
 	// killough 5/12/98: exclude voodoo dolls:
 	player = thing->player;
@@ -122,7 +122,7 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, DAngle angle, i
 	ceilingheight = destsect->ceilingplane.ZatPoint (x, y);
 	if (thing->flags & MF_MISSILE)
 	{ // We don't measure z velocity, because it doesn't change.
-		missilespeed = xs_CRoundToInt(DVector2(thing->vel.x, thing->vel.y).Length());
+		missilespeed = thing->VelXYToSpeed();
 	}
 	if (flags & TELF_KEEPHEIGHT)
 	{
@@ -168,7 +168,7 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, DAngle angle, i
 	}
 	if (player)
 	{
-		player->viewz = thing->Z() + player->viewheight;
+		player->viewz = thing->_f_Z() + player->viewheight;
 		if (resetpitch)
 		{
 			player->mo->Angles.Pitch = 0.;
@@ -194,7 +194,7 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, DAngle angle, i
 			fixed_t fogDelta = thing->flags & MF_MISSILE ? 0 : TELEFOGHEIGHT;
 			fixedvec2 vector = Vec2Angle(20 * FRACUNIT, angle);
 			fixedvec2 fogpos = P_GetOffsetPosition(x, y, vector.x, vector.y);
-			P_SpawnTeleportFog(thing, fogpos.x, fogpos.y, thing->Z() + fogDelta, false, true);
+			P_SpawnTeleportFog(thing, fogpos.x, fogpos.y, thing->_f_Z() + fogDelta, false, true);
 
 		}
 		if (thing->player)
@@ -219,10 +219,9 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, DAngle angle, i
 	// [BC] && bHaltVelocity.
 	else if (!(flags & TELF_KEEPORIENTATION) && !(flags & TELF_KEEPVELOCITY))
 	{ // no fog doesn't alter the player's momentum
-		thing->vel.x = thing->vel.y = thing->vel.z = 0;
+		thing->Vel.Zero();
 		// killough 10/98: kill all bobbing velocity too
-		if (player)
-			player->vel.x = player->vel.y = 0;
+		if (player)	player->Vel.Zero();
 	}
 	return true;
 }
@@ -327,8 +326,8 @@ bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, int f
 	AActor *searcher;
 	fixed_t z;
 	DAngle angle = 0.;
-	fixed_t s = 0, c = 0;
-	fixed_t vx = 0, vy = 0;
+	double s = 0, c = 0;
+	double vx = 0, vy = 0;
 	DAngle badangle = 0.;
 
 	if (thing == NULL)
@@ -359,18 +358,18 @@ bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, int f
 		angle = VecToAngle(line->dx, line->dy) - searcher->Angles.Yaw + 90;
 
 		// Sine, cosine of angle adjustment
-		s = FLOAT2FIXED(angle.Sin());
-		c = FLOAT2FIXED(angle.Cos());
+		s = angle.Sin();
+		c = angle.Cos();
 
 		// Velocity of thing crossing teleporter linedef
-		vx = thing->vel.x;
-		vy = thing->vel.y;
+		vx = thing->Vel.X;
+		vy = thing->Vel.Y;
 
-		z = searcher->Z();
+		z = searcher->_f_Z();
 	}
 	else if (searcher->IsKindOf (PClass::FindClass(NAME_TeleportDest2)))
 	{
-		z = searcher->Z();
+		z = searcher->_f_Z();
 	}
 	else
 	{
@@ -380,7 +379,7 @@ bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, int f
 	{
 		badangle = 0.01;
 	}
-	if (P_Teleport (thing, searcher->X(), searcher->Y(), z, searcher->Angles.Yaw + badangle, flags))
+	if (P_Teleport (thing, searcher->_f_X(), searcher->_f_Y(), z, searcher->Angles.Yaw + badangle, flags))
 	{
 		// [RH] Lee Killough's changes for silent teleporters from BOOM
 		if (!(flags & TELF_DESTFOG) && line && (flags & TELF_KEEPORIENTATION))
@@ -389,10 +388,10 @@ bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, int f
 			thing->Angles.Yaw += angle;
 
 			// Rotate thing's velocity to come out of exit just like it entered
-			thing->vel.x = FixedMul(vx, c) - FixedMul(vy, s);
-			thing->vel.y = FixedMul(vy, c) + FixedMul(vx, s);
+			thing->Vel.X = vx*c - vy*s;
+			thing->Vel.Y = vy*c + vx*s;
 		}
-		if ((vx | vy) == 0 && thing->player != NULL && thing->player->mo == thing && !predicting)
+		if (vx == 0 && vy == 0 && thing->player != NULL && thing->player->mo == thing && !predicting)
 		{
 			thing->player->mo->PlayIdle ();
 		}
@@ -427,65 +426,57 @@ bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id, INTBO
 		if ((l=lines+i) != line && l->backsector)
 		{
 			// Get the thing's position along the source linedef
-			SDWORD pos;				// 30.2 fixed
-			fixed_t nposx, nposy;	// offsets from line
-			{
-				SQWORD den;
+			double pos;
+			DVector2 npos;			// offsets from line
+			double den;
 
-				den = (SQWORD)line->dx*line->dx + (SQWORD)line->dy*line->dy;
-				if (den == 0)
+			den = line->Delta().LengthSquared();
+			if (den == 0)
+			{
+				pos = 0;
+				npos.Zero();
+			}
+			else
+			{
+				double num = (thing->Pos().XY() - line->V1()) | line->Delta();
+				if (num <= 0)
 				{
 					pos = 0;
-					nposx = 0;
-					nposy = 0;
+				}
+				else if (num >= den)
+				{
+					pos = 1;
 				}
 				else
 				{
-					SQWORD num = (SQWORD)(thing->X()-line->v1->x)*line->dx + 
-								 (SQWORD)(thing->Y()-line->v1->y)*line->dy;
-					if (num <= 0)
-					{
-						pos = 0;
-					}
-					else if (num >= den)
-					{
-						pos = 1<<30;
-					}
-					else
-					{
-						pos = (SDWORD)(num / (den>>30));
-					}
-					nposx = thing->X() - line->v1->x - MulScale30 (line->dx, pos);
-					nposy = thing->Y() - line->v1->y - MulScale30 (line->dy, pos);
+					pos = num / den;
 				}
+				npos = thing->Pos().XY() - line->V1() - line->Delta() * pos;
 			}
 
 			// Get the angle between the two linedefs, for rotating
 			// orientation and velocity. Rotate 180 degrees, and flip
 			// the position across the exit linedef, if reversed.
-			angle_t angle =
-				R_PointToAngle2(0, 0, l->dx, l->dy) -
-				R_PointToAngle2(0, 0, line->dx, line->dy);
+			DAngle angle = VecToAngle(l->Delta()) - VecToAngle(line->Delta());
 
 			if (!reverse)
 			{
-				angle += ANGLE_180;
-				pos = (1<<30) - pos;
+				angle += 180.;
+				pos = 1 - pos;
 			}
 
 			// Sine, cosine of angle adjustment
-			fixed_t s = finesine[angle>>ANGLETOFINESHIFT];
-			fixed_t c = finecosine[angle>>ANGLETOFINESHIFT];
+			double s = angle.Sin();
+			double c = angle.Cos();
 
-			fixed_t x, y;
+			DVector2 p;
 
 			// Rotate position along normal to match exit linedef
-			x = DMulScale16 (nposx, c, -nposy, s);
-			y = DMulScale16 (nposy, c,  nposx, s);
+			p.X = npos.X*c - npos.Y*s;
+			p.Y = npos.Y*c + npos.X*s;
 
 			// Interpolate position across the exit linedef
-			x += l->v1->x + MulScale30 (pos, l->dx);
-			y += l->v1->y + MulScale30 (pos, l->dy);
+			p += l->V1() + pos*l->Delta();
 
 			// Whether this is a player, and if so, a pointer to its player_t.
 			// Voodoo dolls are excluded by making sure thing->player->mo==thing.
@@ -493,10 +484,12 @@ bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id, INTBO
 				thing->player : NULL;
 
 			// Whether walking towards first side of exit linedef steps down
+			fixed_t x = FLOAT2FIXED(p.X);
+			fixed_t y = FLOAT2FIXED(p.Y);
 			bool stepdown = l->frontsector->floorplane.ZatPoint(x, y) < l->backsector->floorplane.ZatPoint(x, y);
 
 			// Height of thing above ground
-			fixed_t z = thing->Z() - thing->floorz;
+			fixed_t z = thing->_f_Z() - thing->floorz;
 
 			// Side to exit the linedef on positionally.
 			//
@@ -549,24 +542,22 @@ bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id, INTBO
 			}
 
 			// Rotate thing's orientation according to difference in linedef angles
-			thing->Angles.Yaw += ANGLE2DBL(angle);
+			thing->Angles.Yaw += angle;
 
 			// Velocity of thing crossing teleporter linedef
-			x = thing->vel.x;
-			y = thing->vel.y;
+			p = thing->Vel.XY();
 
 			// Rotate thing's velocity to come out of exit just like it entered
-			thing->vel.x = DMulScale16 (x, c, -y, s);
-			thing->vel.y = DMulScale16 (y, c,  x, s);
+			thing->Vel.X = p.X*c - p.Y*s;
+			thing->Vel.Y = p.Y*c + p.X*s;
 
 			// Adjust a player's view, in case there has been a height change
 			if (player && player->mo == thing)
 			{
 				// Adjust player's local copy of velocity
-				x = player->vel.x;
-				y = player->vel.y;
-				player->vel.x = DMulScale16 (x, c, -y, s);
-				player->vel.y = DMulScale16 (y, c,  x, s);
+				p = player->Vel;
+				player->Vel.X = p.X*c - p.Y*s;
+				player->Vel.Y = p.Y*c + p.X*s;
 
 				// Save the current deltaviewheight, used in stepping
 				fixed_t deltaviewheight = player->deltaviewheight;
@@ -610,15 +601,15 @@ bool EV_TeleportOther (int other_tid, int dest_tid, bool fog)
 static bool DoGroupForOne (AActor *victim, AActor *source, AActor *dest, bool floorz, bool fog)
 {
 	int an = (dest->_f_angle() - source->_f_angle()) >> ANGLETOFINESHIFT;
-	fixed_t offX = victim->X() - source->X();
-	fixed_t offY = victim->Y() - source->Y();
+	fixed_t offX = victim->_f_X() - source->_f_X();
+	fixed_t offY = victim->_f_Y() - source->_f_Y();
 	fixed_t newX = DMulScale16 (offX, finecosine[an], -offY, finesine[an]);
 	fixed_t newY = DMulScale16 (offX, finesine[an], offY, finecosine[an]);
 
 	bool res =
-		P_Teleport (victim, dest->X() + newX,
-							dest->Y() + newY,
-							floorz ? ONFLOORZ : dest->Z() + victim->Z() - source->Z(),
+		P_Teleport (victim, dest->_f_X() + newX,
+							dest->_f_Y() + newY,
+							floorz ? ONFLOORZ : dest->_f_Z() + victim->_f_Z() - source->_f_Z(),
 							0., fog ? (TELF_DESTFOG | TELF_SOURCEFOG) : TELF_KEEPORIENTATION);
 	// P_Teleport only changes angle if fog is true
 	victim->Angles.Yaw = (dest->Angles.Yaw + victim->Angles.Yaw - source->Angles.Yaw).Normalized360();
@@ -686,8 +677,8 @@ bool EV_TeleportGroup (int group_tid, AActor *victim, int source_tid, int dest_t
 	if (moveSource && didSomething)
 	{
 		didSomething |=
-			P_Teleport (sourceOrigin, destOrigin->X(), destOrigin->Y(),
-				floorz ? ONFLOORZ : destOrigin->Z(), 0., TELF_KEEPORIENTATION);
+			P_Teleport (sourceOrigin, destOrigin->_f_X(), destOrigin->_f_Y(),
+				floorz ? ONFLOORZ : destOrigin->_f_Z(), 0., TELF_KEEPORIENTATION);
 		sourceOrigin->Angles.Yaw = destOrigin->Angles.Yaw;
 	}
 

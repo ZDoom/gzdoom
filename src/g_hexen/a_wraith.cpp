@@ -31,12 +31,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_WraithInit)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	self->AddZ(48<<FRACBITS);
+	self->_f_AddZ(48<<FRACBITS);
 
 	// [RH] Make sure the wraith didn't go into the ceiling
-	if (self->Top() > self->ceilingz)
+	if (self->_f_Top() > self->ceilingz)
 	{
-		self->SetZ(self->ceilingz - self->height);
+		self->_f_SetZ(self->ceilingz - self->height);
 	}
 
 	self->special1 = 0;			// index into floatbob
@@ -119,7 +119,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_WraithFX2)
 	PARAM_ACTION_PROLOGUE;
 
 	AActor *mo;
-	angle_t angle;
+	DAngle angle;
 	int i;
 
 	for (i = 2; i; --i)
@@ -127,19 +127,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_WraithFX2)
 		mo = Spawn ("WraithFX2", self->Pos(), ALLOW_REPLACE);
 		if(mo)
 		{
-			if (pr_wraithfx2 ()<128)
+			angle = pr_wraithfx2() * (360 / 1024.f);
+			if (pr_wraithfx2() >= 128)
 			{
-				 angle = self->_f_angle()+(pr_wraithfx2()<<22);
+				angle = -angle;
 			}
-			else
-			{
-				 angle = self->_f_angle()-(pr_wraithfx2()<<22);
-			}
-			mo->vel.z = 0;
-			mo->vel.x = FixedMul((pr_wraithfx2()<<7)+FRACUNIT,
-				 finecosine[angle>>ANGLETOFINESHIFT]);
-			mo->vel.y = FixedMul((pr_wraithfx2()<<7)+FRACUNIT, 
-				 finesine[angle>>ANGLETOFINESHIFT]);
+			angle += self->Angles.Yaw;
+			mo->Vel.X = ((pr_wraithfx2() << 7) + 1) * angle.Cos();
+			mo->Vel.Y = ((pr_wraithfx2() << 7) + 1) * angle.Sin();
+			mo->Vel.Z = 0;
 			mo->target = self;
 			mo->floorclip = 10*FRACUNIT;
 		}
@@ -255,7 +251,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_WraithChase)
 	PARAM_ACTION_PROLOGUE;
 
 	int weaveindex = self->special1;
-	self->AddZ(finesine[weaveindex << BOBTOFINESHIFT] * 8);
+	self->_f_AddZ(finesine[weaveindex << BOBTOFINESHIFT] * 8);
 	self->special1 = (weaveindex + 2) & 63;
 //	if (self->floorclip > 0)
 //	{

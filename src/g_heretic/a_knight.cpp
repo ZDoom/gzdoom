@@ -28,8 +28,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_DripBlood)
 	fixed_t xo = (pr_dripblood.Random2() << 11);
 	fixed_t yo = (pr_dripblood.Random2() << 11);
 	mo = Spawn ("Blood", self->Vec3Offset(xo, yo, 0), ALLOW_REPLACE);
-	mo->vel.x = pr_dripblood.Random2 () << 10;
-	mo->vel.y = pr_dripblood.Random2 () << 10;
+	mo->Vel.X = pr_dripblood.Random2 () / 64.;
+	mo->Vel.Y = pr_dripblood.Random2() / 64.;
 	mo->gravity = FRACUNIT/8;
 	return 0;
 }
@@ -60,11 +60,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_KnightAttack)
 	S_Sound (self, CHAN_BODY, self->AttackSound, 1, ATTN_NORM);
 	if (self->flags & MF_SHADOW || pr_knightatk () < 40)
 	{ // Red axe
-		P_SpawnMissileZ (self, self->Z() + 36*FRACUNIT, self->target, PClass::FindActor("RedAxe"));
+		P_SpawnMissileZ (self, self->_f_Z() + 36*FRACUNIT, self->target, PClass::FindActor("RedAxe"));
 		return 0;
 	}
 	// Green axe
-	P_SpawnMissileZ (self, self->Z() + 36*FRACUNIT, self->target, PClass::FindActor("KnightAxe"));
+	P_SpawnMissileZ (self, self->_f_Z() + 36*FRACUNIT, self->target, PClass::FindActor("KnightAxe"));
 	return 0;
 }
 

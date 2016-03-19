@@ -983,8 +983,7 @@ void FParser::SF_ObjX(void)
 		mo = Script->trigger;
 	}
 
-	t_return.type = svt_fixed;           // haleyjd: SoM's fixed-point fix
-	t_return.value.f = mo ? mo->X() : 0;   // null ptr check
+	t_return.setDouble(mo ? mo->X() : 0.);
 }
 
 //==========================================================================
@@ -1006,8 +1005,7 @@ void FParser::SF_ObjY(void)
 		mo = Script->trigger;
 	}
 
-	t_return.type = svt_fixed;         // haleyjd
-	t_return.value.f = mo ? mo->Y() : 0; // null ptr check
+	t_return.setDouble(mo ? mo->Y() : 0.);
 }
 
 //==========================================================================
@@ -1029,8 +1027,7 @@ void FParser::SF_ObjZ(void)
 		mo = Script->trigger;	
 	}
 
-	t_return.type = svt_fixed;         // haleyjd
-	t_return.value.f = mo ? mo->Z() : 0; // null ptr check
+	t_return.setDouble(mo ? mo->Z() : 0.);
 }
 
 
@@ -1334,11 +1331,10 @@ void FParser::SF_MobjMomx(void)
 		if(t_argc > 1)
 		{
 			if(mo) 
-				mo->vel.x = fixedvalue(t_argv[1]);
+				mo->Vel.X = floatvalue(t_argv[1]);
 		}
 		
-		t_return.type = svt_fixed;
-		t_return.value.f = mo ? mo->vel.x : 0;
+		t_return.setDouble(mo ? mo->Vel.X : 0.);
 	}
 }
 
@@ -1357,12 +1353,11 @@ void FParser::SF_MobjMomy(void)
 		mo = actorvalue(t_argv[0]);
 		if(t_argc > 1)
 		{
-			if(mo)
-				mo->vel.y = fixedvalue(t_argv[1]);
+			if(mo) 
+				mo->Vel.Y = floatvalue(t_argv[1]);
 		}
 		
-		t_return.type = svt_fixed;
-		t_return.value.f = mo ? mo->vel.y : 0;
+		t_return.setDouble(mo ? mo->Vel.Y : 0.);
 	}
 }
 
@@ -1379,14 +1374,13 @@ void FParser::SF_MobjMomz(void)
 	if (CheckArgs(1))
 	{
 		mo = actorvalue(t_argv[0]);
-		if(t_argc > 1)
+		if (t_argc > 1)
 		{
-			if(mo)
-				mo->vel.z = fixedvalue(t_argv[1]);
+			if (mo)
+				mo->Vel.Z = floatvalue(t_argv[1]);
 		}
-		
-		t_return.type = svt_fixed;
-		t_return.value.f = mo ? mo->vel.z : 0;
+
+		t_return.setDouble(mo ? mo->Vel.Z : 0.);
 	}
 }
 
@@ -1467,8 +1461,8 @@ void FParser::SF_SetCamera(void)
 		angle = t_argc < 2 ? newcamera->Angles.Yaw : floatvalue(t_argv[1]);
 
 		newcamera->special1 = newcamera->Angles.Yaw.BAMs();
-		newcamera->special2=newcamera->Z();
-		newcamera->SetZ(t_argc < 3 ? (newcamera->Z() + (41 << FRACBITS)) : (intvalue(t_argv[2]) << FRACBITS));
+		newcamera->special2=newcamera->_f_Z();
+		newcamera->_f_SetZ(t_argc < 3 ? (newcamera->_f_Z() + (41 << FRACBITS)) : (intvalue(t_argv[2]) << FRACBITS));
 		newcamera->Angles.Yaw = angle;
 		if (t_argc < 4) newcamera->Angles.Pitch = 0.;
 		else newcamera->Angles.Pitch = clamp(floatvalue(t_argv[3]), -50., 50.) * (20. / 32.);
@@ -1493,7 +1487,7 @@ void FParser::SF_ClearCamera(void)
 	{
 		player->camera=player->mo;
 		cam->Angles.Yaw = ANGLE2DBL(cam->special1);
-		cam->SetZ(cam->special2);
+		cam->_f_SetZ(cam->special2);
 	}
 
 }
@@ -3100,8 +3094,8 @@ void FParser::SF_MoveCamera(void)
 		anglespeed   = (angle_t)FixedToAngle(fixedvalue(t_argv[5]));
 		
 		// figure out how big one step will be
-		fixedvec2 dist = cam->Vec2To(target);
-		zdist = targetheight - cam->Z();
+		fixedvec2 dist = cam->_f_Vec2To(target);
+		zdist = targetheight - cam->_f_Z();
 		
 		// Angle checking...  
 		//    90  
@@ -3174,18 +3168,18 @@ void FParser::SF_MoveCamera(void)
 			anglestep = anglespeed;
 		
 		if(abs(xstep) >= (abs(dist.x) - 1))
-			x = cam->X() + dist.x;
+			x = cam->_f_X() + dist.x;
 		else
 		{
-			x = cam->X() + xstep;
+			x = cam->_f_X() + xstep;
 			moved = 1;
 		}
 		
 		if(abs(ystep) >= (abs(dist.y) - 1))
-			y = cam->Y() + dist.y;
+			y = cam->_f_Y() + dist.y;
 		else
 		{
-			y = cam->Y() + ystep;
+			y = cam->_f_Y() + ystep;
 			moved = 1;
 		}
 		
@@ -3193,7 +3187,7 @@ void FParser::SF_MoveCamera(void)
 			z = targetheight;
 		else
 		{
-			z = cam->Z() + zstep;
+			z = cam->_f_Z() + zstep;
 			moved = 1;
 		}
 		
@@ -3215,12 +3209,12 @@ void FParser::SF_MoveCamera(void)
 
 		cam->radius=8;
 		cam->height=8;
-		if ((x != cam->X() || y != cam->Y()) && !P_TryMove(cam, x, y, true))
+		if ((x != cam->_f_X() || y != cam->_f_Y()) && !P_TryMove(cam, x, y, true))
 		{
 			Printf("Illegal camera move to (%f, %f)\n", x/65536.f, y/65536.f);
 			return;
 		}
-		cam->SetZ(z);
+		cam->_f_SetZ(z);
 
 		t_return.type = svt_int;
 		t_return.value.i = moved;
@@ -3415,8 +3409,8 @@ void FParser::SF_SetObjPosition()
 
 		mobj->SetOrigin(
 			fixedvalue(t_argv[1]),
-			(t_argc >= 3)? fixedvalue(t_argv[2]) : mobj->Y(),
-			(t_argc >= 4)? fixedvalue(t_argv[3]) : mobj->Z(), false);
+			(t_argc >= 3)? fixedvalue(t_argv[2]) : mobj->_f_Y(),
+			(t_argc >= 4)? fixedvalue(t_argv[3]) : mobj->_f_Z(), false);
 	}
 }
 
@@ -4285,7 +4279,8 @@ void FParser::SF_SpawnShot2(void)
 		{
 			S_Sound (mo, CHAN_VOICE, mo->SeeSound, 1, ATTN_NORM);
 			mo->target = source;
-			P_ThrustMobj(mo, (mo->Angles.Yaw = source->Angles.Yaw), mo->Speed);
+			mo->Angles.Yaw = source->Angles.Yaw;
+			mo->Thrust();
 			if (!P_CheckMissileSpawn(mo, source->radius)) mo = NULL;
 		}
 		t_return.value.mobj = mo;

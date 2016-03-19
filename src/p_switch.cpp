@@ -170,7 +170,7 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno, fixedvec3 *optpo
 	onesided:
 		fixed_t sectorc = front->ceilingplane.ZatPoint(checkx, checky);
 		fixed_t sectorf = front->floorplane.ZatPoint(checkx, checky);
-		return (user->Top() >= sectorf && user->Z() <= sectorc);
+		return (user->_f_Top() >= sectorf && user->_f_Z() <= sectorc);
 	}
 
 	// Now get the information from the line.
@@ -190,8 +190,8 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno, fixedvec3 *optpo
 				if (!(rover->flags & FF_EXISTS)) continue;
 				if (!(rover->flags & FF_UPPERTEXTURE)) continue;
 
-				if (user->Z() > rover->top.plane->ZatPoint(checkx, checky) ||
-					user->Top() < rover->bottom.plane->ZatPoint(checkx, checky))
+				if (user->_f_Z() > rover->top.plane->ZatPoint(checkx, checky) ||
+					user->_f_Top() < rover->bottom.plane->ZatPoint(checkx, checky))
 					continue;
 
 				// This 3D floor depicts a switch texture in front of the player's eyes
@@ -199,7 +199,7 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno, fixedvec3 *optpo
 			}
 		}
 
-		return (user->Top() > open.top);
+		return (user->_f_Top() > open.top);
 	}
 	else if ((TexMan.FindSwitch(side->GetTexture(side_t::bottom))) != NULL)
 	{
@@ -212,8 +212,8 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno, fixedvec3 *optpo
 				if (!(rover->flags & FF_EXISTS)) continue;
 				if (!(rover->flags & FF_LOWERTEXTURE)) continue;
 
-				if (user->Z() > rover->top.plane->ZatPoint(checkx, checky) ||
-					user->Top() < rover->bottom.plane->ZatPoint(checkx, checky))
+				if (user->_f_Z() > rover->top.plane->ZatPoint(checkx, checky) ||
+					user->_f_Top() < rover->bottom.plane->ZatPoint(checkx, checky))
 					continue;
 
 				// This 3D floor depicts a switch texture in front of the player's eyes
@@ -221,7 +221,7 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno, fixedvec3 *optpo
 			}
 		}
 
-		return (user->Z() < open.bottom);
+		return (user->_f_Z() < open.bottom);
 	}
 	else if ((flags & ML_3DMIDTEX) || (TexMan.FindSwitch(side->GetTexture(side_t::mid))) != NULL)
 	{
@@ -229,12 +229,12 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno, fixedvec3 *optpo
 		// to keep compatibility with Eternity's implementation.
 		if (!P_GetMidTexturePosition(line, sideno, &checktop, &checkbot))
 			return false;
-		return user->Z() < checktop && user->Top() > checkbot;
+		return user->_f_Z() < checktop && user->_f_Top() > checkbot;
 	}
 	else
 	{
 		// no switch found. Check whether the player can touch either top or bottom texture
-		return (user->Top() > open.top) || (user->Z() < open.bottom);
+		return (user->_f_Top() > open.top) || (user->_f_Z() < open.bottom);
 	}
 }
 

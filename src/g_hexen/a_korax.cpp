@@ -99,7 +99,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_KoraxChase)
 		spot = iterator.Next ();
 		if (spot != NULL)
 		{
-			P_Teleport (self, spot->X(), spot->Y(), ONFLOORZ, spot->Angles.Yaw, TELF_SOURCEFOG | TELF_DESTFOG);
+			P_Teleport (self, spot->_f_X(), spot->_f_Y(), ONFLOORZ, spot->Angles.Yaw, TELF_SOURCEFOG | TELF_DESTFOG);
 		}
 
 		P_StartScript (self, NULL, 249, NULL, NULL, 0, 0);
@@ -141,7 +141,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_KoraxChase)
 			self->tracer = spot;
 			if (spot)
 			{
-				P_Teleport (self, spot->X(), spot->Y(), ONFLOORZ, spot->Angles.Yaw, TELF_SOURCEFOG | TELF_DESTFOG);
+				P_Teleport (self, spot->_f_X(), spot->_f_Y(), ONFLOORZ, spot->Angles.Yaw, TELF_SOURCEFOG | TELF_DESTFOG);
 			}
 		}
 	}
@@ -388,11 +388,11 @@ static void A_KSpiritSeeker (AActor *actor, DAngle thresh, DAngle turnMax)
 	actor->VelFromAngle();
 
 	if (!(level.time&15) 
-		|| actor->Z() > target->Z()+(target->GetDefault()->height)
-		|| actor->Top() < target->Z())
+		|| actor->_f_Z() > target->_f_Z()+(target->GetDefault()->height)
+		|| actor->_f_Top() < target->_f_Z())
 	{
-		newZ = target->Z()+((pr_kspiritseek()*target->GetDefault()->height)>>8);
-		deltaZ = newZ-actor->Z();
+		newZ = target->_f_Z()+((pr_kspiritseek()*target->GetDefault()->height)>>8);
+		deltaZ = newZ-actor->_f_Z();
 		if (abs(deltaZ) > 15*FRACUNIT)
 		{
 			if(deltaZ > 0)
@@ -404,12 +404,12 @@ static void A_KSpiritSeeker (AActor *actor, DAngle thresh, DAngle turnMax)
 				deltaZ = -15*FRACUNIT;
 			}
 		}
-		dist = actor->AproxDistance (target) / actor->Speed;
+		dist = actor->AproxDistance (target) / actor->_f_speed();
 		if (dist < 1)
 		{
 			dist = 1;
 		}
-		actor->vel.z = deltaZ/dist;
+		actor->Vel.Z = FIXED2DBL(deltaZ/dist);
 	}
 	return;
 }
@@ -476,11 +476,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_KBoltRaise)
 	fixed_t z;
 
 	// Spawn a child upward
-	z = self->Z() + KORAX_BOLT_HEIGHT;
+	z = self->_f_Z() + KORAX_BOLT_HEIGHT;
 
 	if ((z + KORAX_BOLT_HEIGHT) < self->ceilingz)
 	{
-		mo = Spawn("KoraxBolt", self->X(), self->Y(), z, ALLOW_REPLACE);
+		mo = Spawn("KoraxBolt", self->_f_X(), self->_f_Y(), z, ALLOW_REPLACE);
 		if (mo)
 		{
 			mo->special1 = KORAX_BOLT_LIFETIME;
@@ -516,11 +516,11 @@ AActor *P_SpawnKoraxMissile (fixed_t x, fixed_t y, fixed_t z,
 	}
 	th->Angles.Yaw = an;
 	th->VelFromAngle();
-	dist = dest->AproxDistance (th) / th->Speed;
+	dist = dest->AproxDistance (th) / th->_f_speed();
 	if (dist < 1)
 	{
 		dist = 1;
 	}
-	th->vel.z = (dest->Z()-z+(30*FRACUNIT))/dist;
+	th->Vel.Z = FIXED2DBL((dest->_f_Z()-z+(30*FRACUNIT))/dist);
 	return (P_CheckMissileSpawn(th, source->radius) ? th : NULL);
 }

@@ -453,7 +453,7 @@ bool P_Move (AActor *actor)
 
 	fixed_t tryx, tryy, deltax, deltay, origx, origy;
 	bool try_ok;
-	int speed = actor->Speed;
+	int speed = actor->_f_speed();
 	int movefactor = ORIG_FRICTION_FACTOR;
 	int friction = ORIG_FRICTION;
 	int dropoff = 0;
@@ -473,7 +473,7 @@ bool P_Move (AActor *actor)
 	// it difficult to thrust them vertically in a reasonable manner.
 	// [GZ] Let jumping actors jump.
 	if (!((actor->flags & MF_NOGRAVITY) || (actor->flags6 & MF6_CANJUMP))
-		&& actor->Z() > actor->floorz && !(actor->flags2 & MF2_ONMOBJ))
+		&& actor->_f_Z() > actor->floorz && !(actor->flags2 & MF2_ONMOBJ))
 	{
 		return false;
 	}
@@ -507,13 +507,13 @@ bool P_Move (AActor *actor)
 			   * speed) / ORIG_FRICTION_FACTOR;
 			if (speed == 0)
 			{ // always give the monster a little bit of speed
-				speed = ksgn(actor->Speed);
+				speed = ksgn(actor->_f_speed());
 			}
 		}
 	}
 
-	tryx = (origx = actor->X()) + (deltax = FixedMul (speed, xspeed[actor->movedir]));
-	tryy = (origy = actor->Y()) + (deltay = FixedMul (speed, yspeed[actor->movedir]));
+	tryx = (origx = actor->_f_X()) + (deltax = FixedMul (speed, xspeed[actor->movedir]));
+	tryy = (origy = actor->_f_Y()) + (deltay = FixedMul (speed, yspeed[actor->movedir]));
 
 	// Like P_XYMovement this should do multiple moves if the step size is too large
 
@@ -563,10 +563,10 @@ bool P_Move (AActor *actor)
 
 	if (try_ok && friction > ORIG_FRICTION)
 	{
-		actor->SetOrigin(origx, origy, actor->Z(), false);
+		actor->SetOrigin(origx, origy, actor->_f_Z(), false);
 		movefactor *= FRACUNIT / ORIG_FRICTION_FACTOR / 4;
-		actor->vel.x += FixedMul (deltax, movefactor);
-		actor->vel.y += FixedMul (deltay, movefactor);
+		actor->Vel.X += FIXED2DBL(FixedMul (deltax, movefactor));
+		actor->Vel.Y += FIXED2DBL(FixedMul (deltay, movefactor));
 	}
 
 	// [RH] If a walking monster is no longer on the floor, move it down
@@ -574,17 +574,17 @@ bool P_Move (AActor *actor)
 	// actually walking down a step.
 	if (try_ok &&
 		!((actor->flags & MF_NOGRAVITY) || (actor->flags6 & MF6_CANJUMP))
-		&& actor->Z() > actor->floorz && !(actor->flags2 & MF2_ONMOBJ))
+		&& actor->_f_Z() > actor->floorz && !(actor->flags2 & MF2_ONMOBJ))
 	{
-		if (actor->Z() <= actor->floorz + actor->MaxStepHeight)
+		if (actor->_f_Z() <= actor->floorz + actor->MaxStepHeight)
 		{
-			fixed_t savedz = actor->Z();
-			actor->SetZ(actor->floorz);
+			fixed_t savedz = actor->_f_Z();
+			actor->_f_SetZ(actor->floorz);
 			// Make sure that there isn't some other actor between us and
 			// the floor we could get stuck in. The old code did not do this.
 			if (!P_TestMobjZ(actor))
 			{
-				actor->SetZ(savedz);
+				actor->_f_SetZ(savedz);
 			}
 			else
 			{ // The monster just hit the floor, so trigger any actions.
@@ -602,12 +602,12 @@ bool P_Move (AActor *actor)
 	{
 		if (((actor->flags6 & MF6_CANJUMP)||(actor->flags & MF_FLOAT)) && tm.floatok)
 		{ // must adjust height
-			fixed_t savedz = actor->Z();
+			fixed_t savedz = actor->_f_Z();
 
-			if (actor->Z() < tm.floorz)
-				actor->AddZ(actor->FloatSpeed);
+			if (actor->_f_Z() < tm.floorz)
+				actor->_f_AddZ(actor->_f_floatspeed());
 			else
-				actor->AddZ(-actor->FloatSpeed);
+				actor->_f_AddZ(-actor->_f_floatspeed());
 
 
 			// [RH] Check to make sure there's nothing in the way of the float
@@ -616,7 +616,7 @@ bool P_Move (AActor *actor)
 				actor->flags |= MF_INFLOAT;
 				return true;
 			}
-			actor->SetZ(savedz);
+			actor->_f_SetZ(savedz);
 		}
 
 		if (!spechit.Size ())
@@ -854,11 +854,11 @@ void P_NewChaseDir(AActor * actor)
 
 	if ((actor->flags5&MF5_CHASEGOAL || actor->goal == actor->target) && actor->goal!=NULL)
 	{
-		delta = actor->Vec2To(actor->goal);
+		delta = actor->_f_Vec2To(actor->goal);
 	}
 	else if (actor->target != NULL)
 	{
-		delta = actor->Vec2To(actor->target);
+		delta = actor->_f_Vec2To(actor->target);
 
 		if (!(actor->flags6 & MF6_NOFEAR))
 		{
@@ -880,11 +880,11 @@ void P_NewChaseDir(AActor * actor)
 	
 	// Try to move away from a dropoff
 	if (actor->floorz - actor->dropoffz > actor->MaxDropOffHeight && 
-		actor->Z() <= actor->floorz && !(actor->flags & MF_DROPOFF) && 
+		actor->_f_Z() <= actor->floorz && !(actor->flags & MF_DROPOFF) && 
 		!(actor->flags2 & MF2_ONMOBJ) &&
 		!(actor->flags & MF_FLOAT) && !(i_compatflags & COMPATF_DROPOFF))
 	{
-		FBoundingBox box(actor->X(), actor->Y(), actor->radius);
+		FBoundingBox box(actor->_f_X(), actor->_f_Y(), actor->radius);
 		FBlockLinesIterator it(box);
 		line_t *line;
 
@@ -906,11 +906,11 @@ void P_NewChaseDir(AActor * actor)
 				// The monster must contact one of the two floors,
 				// and the other must be a tall dropoff.
 				
-				if (back == actor->Z() && front < actor->Z() - actor->MaxDropOffHeight)
+				if (back == actor->_f_Z() && front < actor->_f_Z() - actor->MaxDropOffHeight)
 				{
 					angle = R_PointToAngle2(0,0,line->dx,line->dy);   // front side dropoff
 				}
-				else if (front == actor->Z() && back < actor->Z() - actor->MaxDropOffHeight)
+				else if (front == actor->_f_Z() && back < actor->_f_Z() - actor->MaxDropOffHeight)
 				{
 					angle = R_PointToAngle2(line->dx,line->dy,0,0); // back side dropoff
 				}
@@ -1038,7 +1038,7 @@ void P_RandomChaseDir (AActor *actor)
 		{
 			if (pr_newchasedir() & 1 || !P_CheckSight (actor, player))
 			{
-				delta = actor->Vec2To(player);
+				delta = actor->_f_Vec2To(player);
 
 				if (delta.x>128*FRACUNIT)
 					d[1]= DI_EAST;
@@ -1734,7 +1734,7 @@ bool P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 				player->mo->flags3 & MF3_GHOST)
 			{
 				if ((player->mo->AproxDistance (actor) > (128 << FRACBITS))
-					&& P_AproxDistance (player->mo->vel.x, player->mo->vel.y)	< 5*FRACUNIT)
+					&& P_AproxDistance (player->mo->_f_velx(), player->mo->_f_vely())	< 5*FRACUNIT)
 				{ // Player is sneaking - can't detect
 					continue;
 				}
@@ -2456,18 +2456,16 @@ void A_DoChase (VMFrameStack *stack, AActor *actor, bool fastchase, FState *mele
 		else
 		{
 			actor->FastChaseStrafeCount = 0;
-			actor->vel.x = 0;
-			actor->vel.y = 0;
+			actor->Vel.X = actor->Vel.Y = 0;
 			fixed_t dist = actor->AproxDistance (actor->target);
 			if (dist < CLASS_BOSS_STRAFE_RANGE)
 			{
 				if (pr_chase() < 100)
 				{
-					angle_t ang = actor->__f_AngleTo(actor->target);
-					if (pr_chase() < 128) ang += ANGLE_90;
-					else ang -= ANGLE_90;
-					actor->vel.x = 13 * finecosine[ang>>ANGLETOFINESHIFT];
-					actor->vel.y = 13 * finesine[ang>>ANGLETOFINESHIFT];
+					DAngle ang = actor->AngleTo(actor->target);
+					if (pr_chase() < 128) ang += 90.;
+					else ang -= 90.;
+					actor->VelFromAngle(ang, 13.);
 					actor->FastChaseStrafeCount = 3;		// strafe time
 				}
 			}
@@ -2548,8 +2546,8 @@ void A_DoChase (VMFrameStack *stack, AActor *actor, bool fastchase, FState *mele
 	if ((!fastchase || !actor->FastChaseStrafeCount) && !dontmove)
 	{
 		// CANTLEAVEFLOORPIC handling was completely missing in the non-serpent functions.
-		fixed_t oldX = actor->X();
-		fixed_t oldY = actor->Y();
+		fixed_t oldX = actor->_f_X();
+		fixed_t oldY = actor->_f_Y();
 		int oldgroup = actor->PrevPortalGroup;
 		FTextureID oldFloor = actor->floorpic;
 
@@ -2601,14 +2599,14 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 		
 	if (self->movedir != DI_NODIR)
 	{
-		const fixed_t absSpeed = abs (self->Speed);
+		const fixed_t absSpeed = abs (self->_f_speed());
 		fixedvec2 viletry = self->Vec2Offset(
 			FixedMul (absSpeed, xspeed[self->movedir]),
 			FixedMul (absSpeed, yspeed[self->movedir]), true);
 
 		FPortalGroupArray check(FPortalGroupArray::PGA_Full3d);
 
-		FMultiBlockThingsIterator it(check, viletry.x, viletry.y, self->Z() - 64* FRACUNIT, self->Top() + 64 * FRACUNIT, 32 * FRACUNIT, false, NULL);
+		FMultiBlockThingsIterator it(check, viletry.x, viletry.y, self->_f_Z() - 64* FRACUNIT, self->_f_Top() + 64 * FRACUNIT, 32 * FRACUNIT, false, NULL);
 		FMultiBlockThingsIterator::CheckResult cres;
 		while (it.Next(&cres))
 		{
@@ -2619,8 +2617,8 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 				// use the current actor's radius instead of the Arch Vile's default.
 				fixed_t maxdist = corpsehit->GetDefault()->radius + self->radius;
 
-				if (abs(corpsehit->Pos().x - cres.position.x) > maxdist ||
-					abs(corpsehit->Pos().y - cres.position.y) > maxdist)
+				if (abs(corpsehit->_f_Pos().x - cres.position.x) > maxdist ||
+					abs(corpsehit->_f_Pos().y - cres.position.y) > maxdist)
 					continue;			// not actually touching
 				// Let's check if there are floors in between the archvile and its target
 
@@ -2640,17 +2638,17 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 					if (testsec)
 					{
 						fixed_t zdist1, zdist2;
-						if (P_Find3DFloor(testsec, corpsehit->Pos(), false, true, zdist1)
-							!= P_Find3DFloor(testsec, self->Pos(), false, true, zdist2))
+						if (P_Find3DFloor(testsec, corpsehit->_f_Pos(), false, true, zdist1)
+							!= P_Find3DFloor(testsec, self->_f_Pos(), false, true, zdist2))
 						{
 							// Not on same floor
-							if (vilesec == corpsec || abs(zdist1 - self->Z()) > self->height)
+							if (vilesec == corpsec || abs(zdist1 - self->_f_Z()) > self->height)
 								continue;
 						}
 					}
 				}
 
-				corpsehit->vel.x = corpsehit->vel.y = 0;
+				corpsehit->Vel.X = corpsehit->Vel.Y = 0;
 				// [RH] Check against real height and radius
 
 				fixed_t oldheight = corpsehit->height;
@@ -2659,7 +2657,7 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 
 				corpsehit->flags |= MF_SOLID;
 				corpsehit->height = corpsehit->GetDefault()->height;
-				bool check = P_CheckPosition(corpsehit, corpsehit->Pos());
+				bool check = P_CheckPosition(corpsehit, corpsehit->_f_Pos());
 				corpsehit->flags = oldflags;
 				corpsehit->radius = oldradius;
 				corpsehit->height = oldheight;
@@ -2863,28 +2861,28 @@ void A_Face (AActor *self, AActor *other, angle_t _max_turn, angle_t _max_pitch,
 	// disabled and is so by default.
 	if (max_pitch <= 180.)
 	{
-		fixedvec2 pos = self->Vec2To(other);
+		fixedvec2 pos = self->_f_Vec2To(other);
 		DVector2 dist(pos.x, pos.y);
 		
 		// Positioning ala missile spawning, 32 units above foot level
-		fixed_t source_z = self->Z() + 32*FRACUNIT + self->GetBobOffset();
-		fixed_t target_z = other->Z() + 32*FRACUNIT + other->GetBobOffset();
+		fixed_t source_z = self->_f_Z() + 32*FRACUNIT + self->GetBobOffset();
+		fixed_t target_z = other->_f_Z() + 32*FRACUNIT + other->GetBobOffset();
 
 		// If the target z is above the target's head, reposition to the middle of
 		// its body.		
-		if (target_z >= other->Top())
+		if (target_z >= other->_f_Top())
 		{
-			target_z = other->Z() + (other->height / 2);
+			target_z = other->_f_Z() + (other->height / 2);
 		}
 
 		//Note there is no +32*FRACUNIT on purpose. This is for customization sake. 
 		//If one doesn't want this behavior, just don't use FAF_BOTTOM.
 		if (flags & FAF_BOTTOM)
-			target_z = other->Z() + other->GetBobOffset(); 
+			target_z = other->_f_Z() + other->GetBobOffset(); 
 		if (flags & FAF_MIDDLE)
-			target_z = other->Z() + (other->height / 2) + other->GetBobOffset();
+			target_z = other->_f_Z() + (other->height / 2) + other->GetBobOffset();
 		if (flags & FAF_TOP)
-			target_z = other->Z() + (other->height) + other->GetBobOffset();
+			target_z = other->_f_Z() + (other->height) + other->GetBobOffset();
 
 		target_z += z_add;
 
@@ -3000,14 +2998,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
 	if (t.linetarget == NULL)
 	{
 		// We probably won't hit the target, but aim at it anyway so we don't look stupid.
-		fixedvec2 pos = self->Vec2To(self->target);
+		fixedvec2 pos = self->_f_Vec2To(self->target);
 		DVector2 xydiff(pos.x, pos.y);
-		double zdiff = (self->target->Z() + (self->target->height>>1)) - (self->Z() + (self->height>>1) - self->floorclip);
+		double zdiff = (self->target->_f_Z() + (self->target->height>>1)) - (self->_f_Z() + (self->height>>1) - self->floorclip);
 		self->Angles.Pitch = -VecToAngle(xydiff.Length(), zdiff);
 	}
 
 	// Let the aim trail behind the player
-	self->Angles.Yaw = self->AngleTo(self->target, -self->target->vel.x * 3, -self->target->vel.y * 3);
+	self->Angles.Yaw = self->AngleTo(self->target, -self->target->_f_velx() * 3, -self->target->_f_vely() * 3);
 
 	if (self->target->flags & MF_SHADOW && !(self->flags6 & MF6_SEEINVISIBLE))
 	{
@@ -3166,7 +3164,7 @@ AInventory *P_DropItem (AActor *source, PClassActor *type, int dropamount, int c
 		AActor *mo;
 		fixed_t spawnz;
 
-		spawnz = source->Z();
+		spawnz = source->_f_Z();
 		if (!(i_compatflags & COMPATF_NOTOSSDROPS))
 		{
 			int style = sv_dropstyle;
@@ -3183,7 +3181,7 @@ AInventory *P_DropItem (AActor *source, PClassActor *type, int dropamount, int c
 				spawnz += source->height / 2;
 			}
 		}
-		mo = Spawn(type, source->X(), source->Y(), spawnz, ALLOW_REPLACE);
+		mo = Spawn(type, source->_f_X(), source->_f_Y(), spawnz, ALLOW_REPLACE);
 		if (mo != NULL)
 		{
 			mo->flags |= MF_DROPPED;
@@ -3224,14 +3222,14 @@ void P_TossItem (AActor *item)
 	
 	if (style==2)
 	{
-		item->vel.x += pr_dropitem.Random2(7) << FRACBITS;
-		item->vel.y += pr_dropitem.Random2(7) << FRACBITS;
+		item->Vel.X += pr_dropitem.Random2(7);
+		item->Vel.Y += pr_dropitem.Random2(7);
 	}
 	else
 	{
-		item->vel.x = pr_dropitem.Random2() << 8;
-		item->vel.y = pr_dropitem.Random2() << 8;
-		item->vel.z = FRACUNIT*5 + (pr_dropitem() << 10);
+		item->Vel.X += pr_dropitem.Random2() / 256.;
+		item->Vel.Y += pr_dropitem.Random2() / 256.;
+		item->Vel.Z = 5. + pr_dropitem() / 64.;
 	}
 }
 

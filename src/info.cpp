@@ -229,7 +229,7 @@ PClassActor::PClassActor()
 	GibHealth = INT_MIN;
 	WoundHealth = 6;
 	PoisonDamage = 0;
-	FastSpeed = FIXED_MIN;
+	FastSpeed = -1.;
 	RDFactor = FRACUNIT;
 	CameraHeight = FIXED_MIN;
 

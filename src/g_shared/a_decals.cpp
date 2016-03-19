@@ -92,7 +92,7 @@ DBaseDecal::DBaseDecal (int statnum, fixed_t z)
 
 DBaseDecal::DBaseDecal (const AActor *basis)
 : DThinker(STAT_DECAL),
-  WallNext(0), WallPrev(0), LeftDistance(0), Z(basis->Z()), ScaleX(basis->scaleX), ScaleY(basis->scaleY),
+  WallNext(0), WallPrev(0), LeftDistance(0), Z(basis->_f_Z()), ScaleX(basis->scaleX), ScaleY(basis->scaleY),
   Alpha(basis->alpha), AlphaColor(basis->fillcolor), Translation(basis->Translation), PicNum(basis->picnum),
   RenderFlags(basis->renderflags), RenderStyle(basis->RenderStyle)
 {
@@ -820,22 +820,22 @@ void ADecal::BeginPlay ()
 	{
 		if (!tpl->PicNum.Exists())
 		{
-			Printf("Decal actor at (%d,%d) does not have a valid texture\n", X()>>FRACBITS, Y()>>FRACBITS);
+			Printf("Decal actor at (%f,%f) does not have a valid texture\n", X(), Y());
 		}
 		else
 		{
 			// Look for a wall within 64 units behind the actor. If none can be
 			// found, then no decal is created, and this actor is destroyed
 			// without effectively doing anything.
-			if (NULL == ShootDecal(tpl, this, Sector, X(), Y(), Z(), FLOAT2ANGLE(Angles.Yaw.Degrees) + ANGLE_180, 64*FRACUNIT, true))
+			if (NULL == ShootDecal(tpl, this, Sector, _f_X(), _f_Y(), _f_Z(), FLOAT2ANGLE(Angles.Yaw.Degrees) + ANGLE_180, 64*FRACUNIT, true))
 			{
-				DPrintf ("Could not find a wall to stick decal to at (%d,%d)\n", X()>>FRACBITS, Y()>>FRACBITS);
+				DPrintf ("Could not find a wall to stick decal to at (%f,%f)\n", X(), Y());
 			}
 		}
 	}
 	else
 	{
-		DPrintf ("Decal actor at (%d,%d) does not have a good template\n", X()>>FRACBITS, Y()>>FRACBITS);
+		DPrintf ("Decal actor at (%f,%f) does not have a good template\n", X(), Y());
 	}
 	// This actor doesn't need to stick around anymore.
 	Destroy();

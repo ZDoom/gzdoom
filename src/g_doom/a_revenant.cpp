@@ -28,12 +28,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_SkelMissile)
 		return 0;
 				
 	A_FaceTarget (self);
-	missile = P_SpawnMissileZ (self, self->Z() + 48*FRACUNIT,
+	missile = P_SpawnMissileZ (self, self->_f_Z() + 48*FRACUNIT,
 		self->target, PClass::FindActor("RevenantTracer"));
 
 	if (missile != NULL)
 	{
-		missile->SetOrigin(missile->Vec3Offset(missile->vel.x, missile->vel.y, 0), false);
+		missile->SetOrigin(missile->Vec3Offset(missile->_f_velx(), missile->_f_vely(), 0), false);
 		missile->tracer = self->target;
 	}
 	return 0;
@@ -45,8 +45,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_Tracer)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	fixed_t dist;
-	fixed_t slope;
+	double dist;
+	double slope;
 	AActor *dest;
 	AActor *smoke;
 				
@@ -63,11 +63,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_Tracer)
 		return 0;
 	
 	// spawn a puff of smoke behind the rocket
-	P_SpawnPuff (self, PClass::FindActor(NAME_BulletPuff), self->Pos(), self->_f_angle(), self->_f_angle(), 3);
+	P_SpawnPuff (self, PClass::FindActor(NAME_BulletPuff), self->_f_Pos(), self->_f_angle(), self->_f_angle(), 3);
 		
-	smoke = Spawn ("RevenantTracerSmoke", self->Vec3Offset(-self->vel.x, -self->vel.y, 0), ALLOW_REPLACE);
+	smoke = Spawn ("RevenantTracerSmoke", self->Vec3Offset(-self->_f_velx(), -self->_f_vely(), 0), ALLOW_REPLACE);
 	
-	smoke->vel.z = FRACUNIT;
+	smoke->Vel.Z = 1.;
 	smoke->tics -= pr_tracer()&3;
 	if (smoke->tics < 1)
 		smoke->tics = 1;
@@ -100,24 +100,21 @@ DEFINE_ACTION_FUNCTION(AActor, A_Tracer)
 	if (!(self->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER)))
 	{
 		// change slope
-		dist = self->AproxDistance (dest) / self->Speed;
+		dist = self->DistanceBySpeed(dest, self->Speed);
 
-		if (dist < 1)
-			dist = 1;
-
-		if (dest->height >= 56*FRACUNIT)
+		if (dest->_Height() >= 56.)
 		{
-			slope = (dest->Z()+40*FRACUNIT - self->Z()) / dist;
+			slope = (dest->Z() + 40. - self->Z()) / dist;
 		}
 		else
 		{
-			slope = (dest->Z() + self->height*2/3 - self->Z()) / dist;
+			slope = (dest->Z() + self->_Height()*(2./3) - self->Z()) / dist;
 		}
 
-		if (slope < self->vel.z)
-			self->vel.z -= FRACUNIT/8;
+		if (slope < self->Vel.Z)
+			self->Vel.Z -= 1. / 8;
 		else
-			self->vel.z += FRACUNIT/8;
+			self->Vel.Z += 1. / 8;
 	}
 	return 0;
 }

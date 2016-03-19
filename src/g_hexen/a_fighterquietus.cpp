@@ -31,19 +31,16 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DropWeaponPieces)
 	PARAM_CLASS(p2, AActor);
 	PARAM_CLASS(p3, AActor);
 
-	for (int i = 0, j = 0, fineang = 0; i < 3; ++i)
+	for (int i = 0, j = 0; i < 3; ++i)
 	{
 		PClassActor *cls = j == 0 ?  p1 : j == 1 ? p2 : p3;
 		if (cls)
 		{
-			AActor *piece = Spawn (cls, self->Pos(), ALLOW_REPLACE);
+			AActor *piece = Spawn (cls, self->_f_Pos(), ALLOW_REPLACE);
 			if (piece != NULL)
 			{
-				piece->vel.x = self->vel.x + finecosine[fineang];
-				piece->vel.y = self->vel.y + finesine[fineang];
-				piece->vel.z = self->vel.z;
+				piece->Vel = self->Vel + DAngle(i*120.).ToVector(1);
 				piece->flags |= MF_DROPPED;
-				fineang += FINEANGLES/3;
 				j = (j == 0) ? (pr_quietusdrop() & 1) + 1 : 3-j;
 			}
 		}

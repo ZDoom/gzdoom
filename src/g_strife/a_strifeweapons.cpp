@@ -379,11 +379,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_RocketInFlight)
 	AActor *trail;
 
 	S_Sound (self, CHAN_VOICE, "misc/missileinflight", 1, ATTN_NORM);
-	P_SpawnPuff (self, PClass::FindActor("MiniMissilePuff"), self->Pos(), self->_f_angle() - ANGLE_180, 2, PF_HITTHING);
-	trail = Spawn("RocketTrail", self->Vec3Offset(-self->vel.x, -self->vel.y, 0), ALLOW_REPLACE);
+	P_SpawnPuff (self, PClass::FindActor("MiniMissilePuff"), self->_f_Pos(), self->_f_angle() - ANGLE_180, 2, PF_HITTHING);
+	trail = Spawn("RocketTrail", self->Vec3Offset(-self->_f_velx(), -self->_f_vely(), 0), ALLOW_REPLACE);
 	if (trail != NULL)
 	{
-		trail->vel.z = FRACUNIT;
+		trail->Vel.Z = 1;
 	}
 	return 0;
 }
@@ -401,7 +401,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FlameDie)
 	PARAM_ACTION_PROLOGUE;
 
 	self->flags |= MF_NOGRAVITY;
-	self->vel.z = (pr_flamedie() & 3) << FRACBITS;
+	self->Vel.Z = pr_flamedie() & 3;
 	return 0;
 }
 
@@ -432,7 +432,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireFlamer)
 	self = P_SpawnPlayerMissile (self, PClass::FindActor("FlameMissile"));
 	if (self != NULL)
 	{
-		self->vel.z += 5*FRACUNIT;
+		self->Vel.Z += 5;
 	}
 	return 0;
 }
@@ -551,10 +551,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_MaulerTorpedoWave)
 	self->Angles.Yaw += 180.;
 
 	// If the torpedo hit the ceiling, it should still spawn the wave
-	savedz = self->Z();
-	if (wavedef && self->ceilingz - self->Z() < wavedef->height)
+	savedz = self->_f_Z();
+	if (wavedef && self->ceilingz - self->_f_Z() < wavedef->height)
 	{
-		self->SetZ(self->ceilingz - wavedef->height);
+		self->_f_SetZ(self->ceilingz - wavedef->height);
 	}
 
 	for (int i = 0; i < 80; ++i)
@@ -562,13 +562,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_MaulerTorpedoWave)
 		self->Angles.Yaw += 4.5;
 		P_SpawnSubMissile (self, PClass::FindActor("MaulerTorpedoWave"), self->target);
 	}
-	self->SetZ(savedz);
+	self->_f_SetZ(savedz);
 	return 0;
 }
 
 AActor *P_SpawnSubMissile (AActor *source, PClassActor *type, AActor *target)
 {
-	AActor *other = Spawn (type, source->Pos(), ALLOW_REPLACE);
+	AActor *other = Spawn (type, source->_f_Pos(), ALLOW_REPLACE);
 
 	if (other == NULL)
 	{
@@ -594,7 +594,7 @@ AActor *P_SpawnSubMissile (AActor *source, PClassActor *type, AActor *target)
 	if (P_CheckMissileSpawn (other, source->radius))
 	{
 		DAngle pitch = P_AimLineAttack (source, source->Angles.Yaw, 1024.);
-		other->vel.z = fixed_t(-other->Speed * pitch.Cos());
+		other->Vel.Z = -other->Speed * pitch.Cos();
 		return other;
 	}
 	return NULL;
@@ -630,9 +630,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_Burnination)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	self->vel.z -= 8*FRACUNIT;
-	self->vel.x += (pr_phburn.Random2 (3)) << FRACBITS;
-	self->vel.y += (pr_phburn.Random2 (3)) << FRACBITS;
+	self->Vel.Z -= 8;
+	self->Vel.X += (pr_phburn.Random2 (3));
+	self->Vel.Y += (pr_phburn.Random2 (3));
 	S_Sound (self, CHAN_VOICE, "world/largefire", 1, ATTN_NORM);
 
 	// Only the main fire spawns more.
@@ -662,20 +662,20 @@ DEFINE_ACTION_FUNCTION(AActor, A_Burnination)
 		sector_t * sector = P_PointInSector(pos.x, pos.y);
 
 		// The sector's floor is too high so spawn the flame elsewhere.
-		if (sector->floorplane.ZatPoint(pos.x, pos.y) > self->Z() + self->MaxStepHeight)
+		if (sector->floorplane.ZatPoint(pos.x, pos.y) > self->_f_Z() + self->MaxStepHeight)
 		{
-			pos.x = self->X();
-			pos.y = self->Y();
+			pos.x = self->_f_X();
+			pos.y = self->_f_Y();
 		}
 
 		AActor *drop = Spawn<APhosphorousFire> (
 			pos.x, pos.y,
-			self->Z() + 4*FRACUNIT, ALLOW_REPLACE);
+			self->_f_Z() + 4*FRACUNIT, ALLOW_REPLACE);
 		if (drop != NULL)
 		{
-			drop->vel.x = self->vel.x + ((pr_phburn.Random2 (7)) << FRACBITS);
-			drop->vel.y = self->vel.y + ((pr_phburn.Random2 (7)) << FRACBITS);
-			drop->vel.z = self->vel.z - FRACUNIT;
+			drop->Vel.X = self->Vel.X + pr_phburn.Random2 (7);
+			drop->Vel.Y = self->Vel.Y + pr_phburn.Random2 (7);
+			drop->Vel.Z = self->Vel.Z - 1;
 			drop->reactiontime = (pr_phburn() & 3) + 2;
 			drop->flags |= MF_DROPPED;
 		}
@@ -715,9 +715,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireGrenade)
 
 	if (grenadetype != NULL)
 	{
-		self->AddZ(32*FRACUNIT);
+		self->_f_AddZ(32*FRACUNIT);
 		grenade = P_SpawnSubMissile (self, grenadetype, self);
-		self->AddZ(-32*FRACUNIT);
+		self->_f_AddZ(-32*FRACUNIT);
 		if (grenade == NULL)
 			return 0;
 
@@ -726,7 +726,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireGrenade)
 			S_Sound (grenade, CHAN_VOICE, grenade->SeeSound, 1, ATTN_NORM);
 		}
 
-		grenade->vel.z = FixedMul (finetangent[FINEANGLES/4-(self->_f_pitch()>>ANGLETOFINESHIFT)], grenade->Speed) + 8*FRACUNIT;
+		grenade->Vel.Z = (-self->Angles.Pitch.TanClamped()) * grenade->Speed + 8;
 
 		fixedvec2 offset;
 
@@ -741,7 +741,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireGrenade)
 		offset.y += FixedMul (finesine[an], 15*FRACUNIT);
 
 		fixedvec2 newpos = grenade->Vec2Offset(offset.x, offset.y);
-		grenade->SetOrigin(newpos.x, newpos.y, grenade->Z(), false);
+		grenade->SetOrigin(newpos.x, newpos.y, grenade->_f_Z(), false);
 	}
 	return 0;
 }
@@ -987,7 +987,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil1)
 	P_BulletSlope (self, &t, ALF_PORTALRESTRICT);
 	if (t.linetarget != NULL)
 	{
-		spot = Spawn("SpectralLightningSpot", t.linetarget->X(), t.linetarget->Y(), t.linetarget->floorz, ALLOW_REPLACE);
+		spot = Spawn("SpectralLightningSpot", t.linetarget->_f_X(), t.linetarget->_f_Y(), t.linetarget->floorz, ALLOW_REPLACE);
 		if (spot != NULL)
 		{
 			spot->tracer = t.linetarget;
@@ -995,11 +995,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil1)
 	}
 	else
 	{
-		spot = Spawn("SpectralLightningSpot", self->Pos(), ALLOW_REPLACE);
+		spot = Spawn("SpectralLightningSpot", self->_f_Pos(), ALLOW_REPLACE);
 		if (spot != NULL)
 		{
-			spot->vel.x += 28 * finecosine[self->_f_angle() >> ANGLETOFINESHIFT];
-			spot->vel.y += 28 * finesine[self->_f_angle() >> ANGLETOFINESHIFT];
+			spot->VelFromAngle(self->Angles.Yaw, 28.);
 		}
 	}
 	if (spot != NULL)
@@ -1059,7 +1058,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil3)
 		spot = P_SpawnSubMissile (self, PClass::FindActor("SpectralLightningBall1"), self);
 		if (spot != NULL)
 		{
-			spot->SetZ(self->Z() + 32*FRACUNIT);
+			spot->_f_SetZ(self->_f_Z() + 32*FRACUNIT);
 		}
 	}
 	self->Angles.Yaw -= 90.;
@@ -1100,8 +1099,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil4)
 		spot = P_SpawnPlayerMissile (self, PClass::FindActor("SpectralLightningBigV1"));
 		if (spot != NULL)
 		{
-			spot->vel.x += FixedMul (spot->Speed, finecosine[self->_f_angle() >> ANGLETOFINESHIFT]);
-			spot->vel.y += FixedMul (spot->Speed, finesine[self->_f_angle() >> ANGLETOFINESHIFT]);
+			spot->VelFromAngle(self->Angles.Yaw, spot->Speed);
 		}
 	}
 	return 0;

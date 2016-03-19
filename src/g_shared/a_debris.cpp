@@ -15,7 +15,7 @@ public:
 	{
 		if (!Super::FloorBounceMissile (plane))
 		{
-			if (abs (vel.z) < (FRACUNIT/2))
+			if (fabs (Vel.Z) < 0.5)
 			{
 				Destroy ();
 			}
@@ -35,7 +35,7 @@ void P_SpawnDirt (AActor *actor, fixed_t radius)
 	AActor *mo;
 
 	fixed_t zo = (pr_dirt() << 9) + FRACUNIT;
-	fixedvec3 pos = actor->Vec3Angle(radius, pr_dirt() << 24, zo);
+	fixedvec3 pos = actor->_f_Vec3Angle(radius, pr_dirt() << 24, zo);
 
 	char fmt[8];
 	mysnprintf(fmt, countof(fmt), "Dirt%d", 1 + pr_dirt()%6);
@@ -45,7 +45,7 @@ void P_SpawnDirt (AActor *actor, fixed_t radius)
 		mo = Spawn (dtype, pos, ALLOW_REPLACE);
 		if (mo)
 		{
-			mo->vel.z = pr_dirt()<<10;
+			mo->Vel.Z = pr_dirt() / 64.;
 		}
 	}
 }

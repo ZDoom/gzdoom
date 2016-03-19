@@ -943,9 +943,8 @@ static void PrintFilteredActorList(const ActorTypeChecker IsActorType, const cha
 	{
 		if ((FilterClass == NULL || mo->IsA(FilterClass)) && IsActorType(mo))
 		{
-			Printf ("%s at (%d,%d,%d)\n",
-				mo->GetClass()->TypeName.GetChars(),
-				mo->X() >> FRACBITS, mo->Y() >> FRACBITS, mo->Z() >> FRACBITS);
+			Printf ("%s at (%f,%f,%f)\n",
+				mo->GetClass()->TypeName.GetChars(), mo->X(), mo->Y(), mo->Z());
 		}
 	}
 }
@@ -1087,7 +1086,7 @@ CCMD(currentpos)
 	if(mo)
 	{
 		Printf("Current player position: (%1.3f,%1.3f,%1.3f), angle: %1.3f, floorheight: %1.3f, sector:%d, lightlevel: %d\n",
-			FIXED2DBL(mo->X()), FIXED2DBL(mo->Y()), FIXED2DBL(mo->Z()), ANGLE2DBL(mo->_f_angle()), FIXED2DBL(mo->floorz), mo->Sector->sectornum, mo->Sector->lightlevel);
+			mo->X(), mo->Y(), mo->Z(), mo->Angles.Yaw, FIXED2DBL(mo->floorz), mo->Sector->sectornum, mo->Sector->lightlevel);
 	}
 	else
 	{

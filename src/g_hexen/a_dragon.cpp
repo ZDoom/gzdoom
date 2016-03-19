@@ -25,7 +25,7 @@ DECLARE_ACTION(A_DragonFlight)
 static void DragonSeek (AActor *actor, DAngle thresh, DAngle turnMax)
 {
 	int dir;
-	int dist;
+	double dist;
 	DAngle delta;
 	AActor *target;
 	int i;
@@ -57,15 +57,11 @@ static void DragonSeek (AActor *actor, DAngle thresh, DAngle turnMax)
 	}
 	actor->VelFromAngle();
 
-	dist = actor->AproxDistance (target) / actor->Speed;
+	dist = actor->DistanceBySpeed(target, actor->Speed);
 	if (actor->Top() < target->Z() ||
 		target->Top() < actor->Z())
 	{
-		if (dist < 1)
-		{
-			dist = 1;
-		}
-		actor->vel.z = (target->Z() - actor->Z())/dist;
+		actor->Vel.Z = (target->Z() - actor->Z()) / dist;
 	}
 	if (target->flags&MF_SHOOTABLE && pr_dragonseek() < 64)
 	{ // attack the destination mobj if it's attackable
@@ -306,7 +302,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DragonCheckCrash)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	if (self->Z() <= self->floorz)
+	if (self->_f_Z() <= self->floorz)
 	{
 		self->SetState (self->FindState ("Crash"));
 	}

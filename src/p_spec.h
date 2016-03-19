@@ -95,7 +95,8 @@ private:
 
 // Factor to scale scrolling effect into mobj-carrying properties = 3/32.
 // (This is so scrolling floors and objects on them can move at same speed.)
-enum { CARRYFACTOR = (3*FRACUNIT >> 5) };
+enum { _f_CARRYFACTOR = (3*FRACUNIT >> 5) };
+const double CARRYFACTOR = 3 / 32.;
 
 // phares 3/20/98: added new model of Pushers for push/pull effects
 
@@ -118,9 +119,8 @@ public:
 	int CheckForSectorMatch (EPusher type, int tag);
 	void ChangeValues (int magnitude, int angle)
 	{
-		angle_t ang = ((angle_t)(angle<<24)) >> ANGLETOFINESHIFT;
-		m_Xmag = (magnitude * finecosine[ang]) >> FRACBITS;
-		m_Ymag = (magnitude * finesine[ang]) >> FRACBITS;
+		DAngle ang = angle * (360. / 256.);
+		m_PushVec = ang.ToVector(magnitude);
 		m_Magnitude = magnitude;
 	}
 
@@ -129,12 +129,9 @@ public:
 protected:
 	EPusher m_Type;
 	TObjPtr<AActor> m_Source;// Point source if point pusher
-	int m_Xmag;				// X Strength
-	int m_Ymag;				// Y Strength
-	int m_Magnitude;		// Vector strength for point pusher
-	int m_Radius;			// Effective radius for point pusher
-	int m_X;				// X of point source if point pusher
-	int m_Y;				// Y of point source if point pusher
+	DVector2 m_PushVec;
+	double m_Magnitude;		// Vector strength for point pusher
+	double m_Radius;		// Effective radius for point pusher
 	int m_Affectee;			// Number of affected sector
 
 	friend bool PIT_PushThing (AActor *thing);

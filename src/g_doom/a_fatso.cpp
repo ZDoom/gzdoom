@@ -127,7 +127,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Mushroom)
 	PARAM_INT_OPT	(n)						{ n = 0; }
 	PARAM_INT_OPT	(flags)					{ flags = 0; }
 	PARAM_FIXED_OPT	(vrange)				{ vrange = 4*FRACUNIT; }
-	PARAM_FIXED_OPT	(hrange)				{ hrange = FRACUNIT/2; }
+	PARAM_FLOAT_OPT	(hrange)				{ hrange = 0.5; }
 
 	int i, j;
 
@@ -153,9 +153,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Mushroom)
 		{
 			AActor *mo;
 			target->SetXYZ(
-				self->X() + (i << FRACBITS),    // Aim in many directions from source
-				self->Y() + (j << FRACBITS),
-				self->Z() + (P_AproxDistance(i,j) * vrange)); // Aim up fairly high
+				self->_f_X() + (i << FRACBITS),    // Aim in many directions from source
+				self->_f_Y() + (j << FRACBITS),
+				self->_f_Z() + (P_AproxDistance(i,j) * vrange)); // Aim up fairly high
 			if ((flags & MSF_Classic) || // Flag explicitely set, or no flags and compat options
 				(flags == 0 && (self->state->DefineFlags & SDF_DEHACKED) && (i_compatflags & COMPATF_MUSHROOM)))
 			{	// Use old function for MBF compatibility
@@ -167,9 +167,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Mushroom)
 			}
 			if (mo != NULL)
 			{	// Slow it down a bit
-				mo->vel.x = FixedMul(mo->vel.x, hrange);
-				mo->vel.y = FixedMul(mo->vel.y, hrange);
-				mo->vel.z = FixedMul(mo->vel.z, hrange);
+				mo->Vel *= hrange;
 				mo->flags &= ~MF_NOGRAVITY;   // Make debris fall under gravity
 			}
 		}

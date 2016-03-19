@@ -337,13 +337,13 @@ void P_PlayerOnSpecial3DFloor(player_t* player)
 		if(rover->flags & FF_SOLID)
 		{
 			// Player must be on top of the floor to be affected...
-			if(player->mo->Z() != rover->top.plane->ZatPoint(player->mo)) continue;
+			if(player->mo->_f_Z() != rover->top.plane->ZatPoint(player->mo)) continue;
 		}
 		else
 		{
 			//Water and DEATH FOG!!! heh
-			if (player->mo->Z() > rover->top.plane->ZatPoint(player->mo) || 
-				player->mo->Top() < rover->bottom.plane->ZatPoint(player->mo))
+			if (player->mo->_f_Z() > rover->top.plane->ZatPoint(player->mo) || 
+				player->mo->_f_Top() < rover->bottom.plane->ZatPoint(player->mo))
 				continue;
 		}
 
@@ -759,7 +759,7 @@ void P_LineOpening_XFloors (FLineOpening &open, AActor * thing, const line_t *li
     {
 		fixed_t thingbot, thingtop;
 		
-		thingbot = thing->Z();
+		thingbot = thing->_f_Z();
 		thingtop = thingbot + (thing->height==0? 1:thing->height);
 
 		extsector_t::xfloor *xf[2] = {&linedef->frontsector->e->XFloor, &linedef->backsector->e->XFloor};
@@ -803,7 +803,7 @@ void P_LineOpening_XFloors (FLineOpening &open, AActor * thing, const line_t *li
 						lowestceilingsec = j == 0 ? linedef->frontsector : linedef->backsector;
 					}
 					
-					if(ff_top > highestfloor && delta1 < delta2 && (!restrict || thing->Z() >= ff_top))
+					if(ff_top > highestfloor && delta1 < delta2 && (!restrict || thing->_f_Z() >= ff_top))
 					{
 						highestfloor = ff_top;
 						highestfloorpic = *rover->top.texture;
@@ -811,7 +811,7 @@ void P_LineOpening_XFloors (FLineOpening &open, AActor * thing, const line_t *li
 						highestfloorsec = j == 0 ? linedef->frontsector : linedef->backsector;
 						highestfloorplanes[j] = rover->top.plane;
 					}
-					if(ff_top > lowestfloor[j] && ff_top <= thing->Z() + thing->MaxStepHeight) lowestfloor[j] = ff_top;
+					if(ff_top > lowestfloor[j] && ff_top <= thing->_f_Z() + thing->MaxStepHeight) lowestfloor[j] = ff_top;
 				}
 			}
 			

@@ -1091,8 +1091,8 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 			return;
 	}
 
-	pc->vel.x = pc->vel.y = 0;	// Stop moving
-	pc->player->vel.x = pc->player->vel.y = 0;
+	pc->Vel.Zero();
+	pc->player->Vel.Zero();
 	static_cast<APlayerPawn*>(pc)->PlayIdle ();
 
 	pc->player->ConversationPC = pc;

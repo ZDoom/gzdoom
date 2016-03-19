@@ -421,12 +421,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialPosition)
 	self->UnlinkFromWorld();
 	self->SetXY(_x, _y);
 	self->LinkToWorld(true);
-	self->SetZ(self->Sector->floorplane.ZatPoint(_x, _y));
+	self->_f_SetZ(self->Sector->floorplane.ZatPoint(_x, _y));
 	P_FindFloorCeiling(self, FFCF_ONLYSPAWNPOS | FFCF_NOPORTALS);	// no portal checks here so that things get spawned in this sector.
 
 	if (self->flags & MF_SPAWNCEILING)
 	{
-		self->SetZ(self->ceilingz - self->height - self->SpawnPoint[2]);
+		self->_f_SetZ(self->ceilingz - self->height - self->SpawnPoint[2]);
 	}
 	else if (self->flags2 & MF2_SPAWNFLOAT)
 	{
@@ -434,27 +434,27 @@ DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialPosition)
 		if (space > 48*FRACUNIT)
 		{
 			space -= 40*FRACUNIT;
-			self->SetZ(((space * pr_restore())>>8) + self->floorz + 40*FRACUNIT);
+			self->_f_SetZ(((space * pr_restore())>>8) + self->floorz + 40*FRACUNIT);
 		}
 		else
 		{
-			self->SetZ(self->floorz);
+			self->_f_SetZ(self->floorz);
 		}
 	}
 	else
 	{
-		self->SetZ(self->SpawnPoint[2] + self->floorz);
+		self->_f_SetZ(self->SpawnPoint[2] + self->floorz);
 	}
 	// Redo floor/ceiling check, in case of 3D floors and portals
 	P_FindFloorCeiling(self, FFCF_SAMESECTOR | FFCF_ONLY3DFLOORS | FFCF_3DRESTRICT);
-	if (self->Z() < self->floorz)
+	if (self->_f_Z() < self->floorz)
 	{ // Do not reappear under the floor, even if that's where we were for the
 	  // initial spawn.
-		self->SetZ(self->floorz);
+		self->_f_SetZ(self->floorz);
 	}
-	if ((self->flags & MF_SOLID) && (self->Top() > self->ceilingz))
+	if ((self->flags & MF_SOLID) && (self->_f_Top() > self->ceilingz))
 	{ // Do the same for the ceiling.
-		self->SetZ(self->ceilingz - self->height);
+		self->_f_SetZ(self->ceilingz - self->height);
 	}
 	// Do not interpolate from the position the actor was at when it was
 	// picked up, in case that is different from where it is now.
@@ -790,7 +790,7 @@ AInventory *AInventory::CreateTossable ()
 		flags &= ~(MF_SPECIAL|MF_SOLID);
 		return this;
 	}
-	copy = static_cast<AInventory *>(Spawn (GetClass(), Owner->Pos(), NO_REPLACE));
+	copy = static_cast<AInventory *>(Spawn (GetClass(), Owner->_f_Pos(), NO_REPLACE));
 	if (copy != NULL)
 	{
 		copy->MaxAmount = MaxAmount;
@@ -902,7 +902,7 @@ void AInventory::ModifyDamage (int damage, FName damageType, int &newdamage, boo
 //
 //===========================================================================
 
-fixed_t AInventory::GetSpeedFactor ()
+double AInventory::GetSpeedFactor ()
 {
 	if (Inventory != NULL)
 	{
@@ -910,7 +910,7 @@ fixed_t AInventory::GetSpeedFactor ()
 	}
 	else
 	{
-		return FRACUNIT;
+		return 1.;
 	}
 }
 
@@ -1354,7 +1354,7 @@ bool AInventory::DoRespawn ()
 		if (spot != NULL) 
 		{
 			SetOrigin (spot->Pos(), false);
-			SetZ(floorz);
+			_f_SetZ(floorz);
 		}
 	}
 	return true;

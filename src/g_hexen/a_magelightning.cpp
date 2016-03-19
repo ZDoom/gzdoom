@@ -42,8 +42,8 @@ int ALightning::SpecialMissileHit (AActor *thing)
 	{
 		if (thing->Mass != INT_MAX)
 		{
-			thing->vel.x += vel.x>>4;
-			thing->vel.y += vel.y>>4;
+			thing->Vel.X += Vel.X / 16;
+			thing->Vel.Y += Vel.Y / 16;
 		}
 		if ((!thing->player && !(thing->flags2&MF2_BOSS))
 			|| !(level.time&1))
@@ -156,12 +156,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningClip)
 		{
 			return 0;
 		}
-		self->SetZ(self->floorz);
+		self->_f_SetZ(self->floorz);
 		target = self->lastenemy->tracer;
 	}
 	else if (self->flags3 & MF3_CEILINGHUGGER)
 	{
-		self->SetZ(self->ceilingz-self->height);
+		self->_f_SetZ(self->ceilingz-self->height);
 		target = self->tracer;
 	}
 	if (self->flags3 & MF3_FLOORHUGGER)
@@ -196,9 +196,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningClip)
 		else
 		{
 			self->Angles.Yaw = self->AngleTo(target);
-			self->vel.x = 0;
-			self->vel.y = 0;
-			P_ThrustMobj (self, self->Angles.Yaw, self->Speed>>1);
+			self->Vel.X = self->Vel.Y = 0;
+			P_ThrustMobj (self, self->Angles.Yaw, self->_f_speed()>>1);
 		}
 	}
 	return 0;
@@ -247,16 +246,16 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningZap)
 	if (mo)
 	{
 		mo->lastenemy = self;
-		mo->vel.x = self->vel.x;
-		mo->vel.y = self->vel.y;
+		mo->Vel.X = self->Vel.X;
+		mo->Vel.Y = self->Vel.Y;
 		mo->target = self->target;
 		if (self->flags3 & MF3_FLOORHUGGER)
 		{
-			mo->vel.z = 20*FRACUNIT;
+			mo->Vel.Z = 20;
 		}
 		else 
 		{
-			mo->vel.z = -20*FRACUNIT;
+			mo->Vel.Z = -20;
 		}
 	}
 	if ((self->flags3 & MF3_FLOORHUGGER) && pr_zapf() < 160)
@@ -328,8 +327,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_ZapMimic)
 		}
 		else
 		{
-			self->vel.x = mo->vel.x;
-			self->vel.y = mo->vel.y;
+			self->Vel.X = mo->Vel.X;
+			self->Vel.Y = mo->Vel.Y;
 		}
 	}
 	return 0;
@@ -356,7 +355,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LastZap)
 	if (mo)
 	{
 		mo->SetState (mo->FindState (NAME_Death));
-		mo->vel.z = 40*FRACUNIT;
+		mo->Vel.Z = 40;
 		mo->Damage = NULL;
 	}
 	return 0;

@@ -146,8 +146,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopSpawnBlur)
 
 	if (!--self->special1)
 	{
-		self->vel.x = 0;
-		self->vel.y = 0;
+		self->Vel.X = self->Vel.Y = 0;
 		if (pr_sblur() > 96)
 		{
 			self->SetState (self->SeeState);
@@ -175,10 +174,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopChase)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	fixed_t newz = self->Z() - finesine[self->special2 << BOBTOFINESHIFT] * 4;
+	fixed_t newz = self->_f_Z() - finesine[self->special2 << BOBTOFINESHIFT] * 4;
 	self->special2 = (self->special2 + 4) & 63;
 	newz += finesine[self->special2 << BOBTOFINESHIFT] * 4;
-	self->SetZ(newz);
+	self->_f_SetZ(newz);
 	return 0;
 }
 
@@ -197,7 +196,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopPuff)
 	mo = Spawn ("BishopPuff", self->PosPlusZ(40*FRACUNIT), ALLOW_REPLACE);
 	if (mo)
 	{
-		mo->vel.z = FRACUNIT/2;
+		mo->Vel.Z = -.5;
 	}
 	return 0;
 }

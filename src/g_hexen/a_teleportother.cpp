@@ -57,9 +57,7 @@ static void TeloSpawn (AActor *source, const char *type)
 		fx->special1 = TELEPORT_LIFE;			// Lifetime countdown
 		fx->Angles.Yaw = source->Angles.Yaw;
 		fx->target = source->target;
-		fx->vel.x = source->vel.x >> 1;
-		fx->vel.y = source->vel.y >> 1;
-		fx->vel.z = source->vel.z >> 1;
+		fx->Vel = source->Vel / 2;
 	}
 }
 

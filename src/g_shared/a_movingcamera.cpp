@@ -298,7 +298,7 @@ void APathFollower::Tick ()
 		if (CurrNode->args[2])
 		{
 			HoldTime = level.time + CurrNode->args[2] * TICRATE / 8;
-			SetXYZ(CurrNode->X(), CurrNode->Y(), CurrNode->Z());
+			SetXYZ(CurrNode->_f_X(), CurrNode->_f_Y(), CurrNode->_f_Z());
 		}
 	}
 
@@ -356,9 +356,9 @@ bool APathFollower::Interpolate ()
 
 	if ((args[2] & 8) && Time > 0.f)
 	{
-		dx = X();
-		dy = Y();
-		dz = Z();
+		dx = _f_X();
+		dy = _f_Y();
+		dz = _f_Z();
 	}
 
 	if (CurrNode->Next==NULL) return false;
@@ -367,20 +367,20 @@ bool APathFollower::Interpolate ()
 	fixed_t x, y, z;
 	if (args[2] & 1)
 	{	// linear
-		x = FLOAT2FIXED(Lerp (FIXED2DBL(CurrNode->X()), FIXED2DBL(CurrNode->Next->X())));
-		y = FLOAT2FIXED(Lerp (FIXED2DBL(CurrNode->Y()), FIXED2DBL(CurrNode->Next->Y())));
-		z = FLOAT2FIXED(Lerp (FIXED2DBL(CurrNode->Z()), FIXED2DBL(CurrNode->Next->Z())));
+		x = FLOAT2FIXED(Lerp (FIXED2DBL(CurrNode->_f_X()), FIXED2DBL(CurrNode->Next->_f_X())));
+		y = FLOAT2FIXED(Lerp (FIXED2DBL(CurrNode->_f_Y()), FIXED2DBL(CurrNode->Next->_f_Y())));
+		z = FLOAT2FIXED(Lerp (FIXED2DBL(CurrNode->_f_Z()), FIXED2DBL(CurrNode->Next->_f_Z())));
 	}
 	else
 	{	// spline
 		if (CurrNode->Next->Next==NULL) return false;
 
-		x = FLOAT2FIXED(Splerp (FIXED2DBL(PrevNode->X()), FIXED2DBL(CurrNode->X()),
-								FIXED2DBL(CurrNode->Next->X()), FIXED2DBL(CurrNode->Next->Next->X())));
-		y = FLOAT2FIXED(Splerp (FIXED2DBL(PrevNode->Y()), FIXED2DBL(CurrNode->Y()),
-								FIXED2DBL(CurrNode->Next->Y()), FIXED2DBL(CurrNode->Next->Next->Y())));
-		z = FLOAT2FIXED(Splerp (FIXED2DBL(PrevNode->Z()), FIXED2DBL(CurrNode->Z()),
-								FIXED2DBL(CurrNode->Next->Z()), FIXED2DBL(CurrNode->Next->Next->Z())));
+		x = FLOAT2FIXED(Splerp (FIXED2DBL(PrevNode->_f_X()), FIXED2DBL(CurrNode->_f_X()),
+								FIXED2DBL(CurrNode->Next->_f_X()), FIXED2DBL(CurrNode->Next->Next->_f_X())));
+		y = FLOAT2FIXED(Splerp (FIXED2DBL(PrevNode->_f_Y()), FIXED2DBL(CurrNode->_f_Y()),
+								FIXED2DBL(CurrNode->Next->_f_Y()), FIXED2DBL(CurrNode->Next->Next->_f_Y())));
+		z = FLOAT2FIXED(Splerp (FIXED2DBL(PrevNode->_f_Z()), FIXED2DBL(CurrNode->_f_Z()),
+								FIXED2DBL(CurrNode->Next->_f_Z()), FIXED2DBL(CurrNode->Next->Next->_f_Z())));
 	}
 	SetXYZ(x, y, z);
 	LinkToWorld ();
@@ -391,9 +391,9 @@ bool APathFollower::Interpolate ()
 		{
 			if (args[2] & 1)
 			{ // linear
-				dx = CurrNode->Next->X() - CurrNode->X();
-				dy = CurrNode->Next->Y() - CurrNode->Y();
-				dz = CurrNode->Next->Z() - CurrNode->Z();
+				dx = CurrNode->Next->_f_X() - CurrNode->_f_X();
+				dy = CurrNode->Next->_f_Y() - CurrNode->_f_Y();
+				dz = CurrNode->Next->_f_Z() - CurrNode->_f_Z();
 			}
 			else if (Time > 0.f)
 			{ // spline
@@ -517,11 +517,11 @@ bool AActorMover::Interpolate ()
 
 	if (Super::Interpolate ())
 	{
-		fixed_t savedz = tracer->Z();
-		tracer->SetZ(Z());
-		if (!P_TryMove (tracer, X(), Y(), true))
+		fixed_t savedz = tracer->_f_Z();
+		tracer->_f_SetZ(_f_Z());
+		if (!P_TryMove (tracer, _f_X(), _f_Y(), true))
 		{
-			tracer->SetZ(savedz);
+			tracer->_f_SetZ(savedz);
 			return false;
 		}
 
@@ -637,9 +637,9 @@ bool AMovingCamera::Interpolate ()
 
 		if (args[2] & 4)
 		{ // Also aim camera's pitch; use floats for precision
-			double dx = FIXED2DBL(X() - tracer->X());
-			double dy = FIXED2DBL(Y() - tracer->Y());
-			double dz = FIXED2DBL(Z() - tracer->Z() - tracer->height/2);
+			double dx = FIXED2DBL(_f_X() - tracer->_f_X());
+			double dy = FIXED2DBL(_f_Y() - tracer->_f_Y());
+			double dz = FIXED2DBL(_f_Z() - tracer->_f_Z() - tracer->height/2);
 			double dist = g_sqrt (dx*dx + dy*dy);
 			Angles.Pitch = dist != 0.f ? VecToAngle(dist, dz) : 0.;
 		}

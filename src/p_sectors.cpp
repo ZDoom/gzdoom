@@ -1027,6 +1027,32 @@ fixed_t sector_t::NextLowestFloorAt(fixed_t x, fixed_t y, fixed_t z, int flags, 
 //
 //===========================================================================
 
+fixed_t sector_t::GetFriction(int plane, fixed_t *pMoveFac) const
+{
+	if (Flags & SECF_FRICTION) 
+	{ 
+		if (pMoveFac) *pMoveFac = movefactor;
+		return friction; 
+	}
+	FTerrainDef *terrain = &Terrains[GetTerrain(plane)];
+	if (terrain->Friction != 0)
+	{
+		if (pMoveFac) *pMoveFac = terrain->MoveFactor;
+		return terrain->Friction;
+	}
+	else
+	{
+		if (pMoveFac) *pMoveFac = ORIG_FRICTION_FACTOR;
+		return ORIG_FRICTION;
+	}
+}
+
+//===========================================================================
+//
+// 
+//
+//===========================================================================
+
 FArchive &operator<< (FArchive &arc, secspecial_t &p)
 {
 	if (SaveVersion < 4529)

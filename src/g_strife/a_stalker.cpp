@@ -19,7 +19,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_StalkerChaseDecide)
 	{
 		self->SetState (self->FindState("SeeFloor"));
 	}
-	else if (self->ceilingz > self->Top())
+	else if (self->ceilingz > self->_f_Top())
 	{
 		self->SetState (self->FindState("Drop"));
 	}

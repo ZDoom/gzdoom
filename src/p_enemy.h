@@ -82,7 +82,7 @@ bool CheckBossDeath (AActor *);
 int P_Massacre ();
 bool P_CheckMissileRange (AActor *actor);
 
-#define SKULLSPEED (20*FRACUNIT)
-void A_SkullAttack(AActor *self, fixed_t speed);
+#define SKULLSPEED (20.)
+void A_SkullAttack(AActor *self, double speed);
 
 #endif //__P_ENEMY_H__

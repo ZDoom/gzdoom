@@ -139,12 +139,9 @@ void DPusher::Serialize (FArchive &arc)
 	Super::Serialize (arc);
 	arc << m_Type
 		<< m_Source
-		<< m_Xmag
-		<< m_Ymag
+		<< m_PushVec
 		<< m_Magnitude
 		<< m_Radius
-		<< m_X
-		<< m_Y
 		<< m_Affectee;
 }
 
@@ -439,7 +436,7 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 	{
 		// Falling, not all the way down yet?
 		sector = player->mo->Sector;
-		if (player->mo->Z() != sector->LowestFloorAt(player->mo)
+		if (player->mo->_f_Z() != sector->LowestFloorAt(player->mo)
 			&& !player->mo->waterlevel)
 		{
 			return;
@@ -516,7 +513,7 @@ static void DoSectorDamage(AActor *actor, sector_t *sec, int amount, FName type,
 	if (!(flags & DAMAGE_PLAYERS) && actor->player != NULL)
 		return;
 
-	if (!(flags & DAMAGE_IN_AIR) && actor->Z() != sec->floorplane.ZatPoint(actor) && !actor->waterlevel)
+	if (!(flags & DAMAGE_IN_AIR) && actor->_f_Z() != sec->floorplane.ZatPoint(actor) && !actor->waterlevel)
 		return;
 
 	if (protectClass != NULL)
@@ -562,12 +559,12 @@ void P_SectorDamage(int tag, int amount, FName type, PClassActor *protectClass, 
 					z1 = z2;
 					z2 = zz;
 				}
-				if (actor->Z() + actor->height > z1)
+				if (actor->_f_Z() + actor->height > z1)
 				{
 					// If DAMAGE_IN_AIR is used, anything not beneath the 3D floor will be
 					// damaged (so, anything touching it or above it). Other 3D floors between
 					// the actor and this one will not stop this effect.
-					if ((flags & DAMAGE_IN_AIR) || actor->Z() <= z2)
+					if ((flags & DAMAGE_IN_AIR) || actor->_f_Z() <= z2)
 					{
 						// Here we pass the DAMAGE_IN_AIR flag to disable the floor check, since it
 						// only works with the real sector's floor. We did the appropriate height checks
@@ -1078,7 +1075,7 @@ void P_SpawnSkybox(ASkyViewpoint *origin)
 	if (Sector == NULL)
 	{
 		Printf("Sector not initialized for SkyCamCompat\n");
-		origin->Sector = Sector = P_PointInSector(origin->X(), origin->Y());
+		origin->Sector = Sector = P_PointInSector(origin->_f_X(), origin->_f_Y());
 	}
 	if (Sector)
 	{
@@ -1466,7 +1463,7 @@ void P_SpawnSpecials (void)
 			{
 			case Init_Gravity:
 				{
-					float grav = ((float)P_AproxDistance (lines[i].dx, lines[i].dy)) / (FRACUNIT * 100.0f);
+					double grav = lines[i].Delta().Length() / 100.;
 					FSectorTagIterator itr(lines[i].args[0]);
 					while ((s = itr.Next()) >= 0)
 						sectors[s].gravity = grav;
@@ -2162,7 +2159,7 @@ void P_SetSectorFriction (int tag, int amount, bool alterFlag)
 // types 1 & 2 is the sector containing the MT_PUSH/MT_PULL Thing.
 
 
-#define PUSH_FACTOR 7
+#define PUSH_FACTOR 128
 
 /////////////////////////////
 //
@@ -2175,9 +2172,8 @@ DPusher::DPusher (DPusher::EPusher type, line_t *l, int magnitude, int angle,
 	m_Type = type;
 	if (l)
 	{
-		m_Xmag = l->dx>>FRACBITS;
-		m_Ymag = l->dy>>FRACBITS;
-		m_Magnitude = P_AproxDistance (m_Xmag, m_Ymag);
+		m_PushVec = l->Delta();
+		m_Magnitude = m_PushVec.Length();
 	}
 	else
 	{ // [RH] Allow setting magnitude and angle with parameters
@@ -2185,9 +2181,7 @@ DPusher::DPusher (DPusher::EPusher type, line_t *l, int magnitude, int angle,
 	}
 	if (source) // point source exist?
 	{
-		m_Radius = (m_Magnitude) << (FRACBITS+1); // where force goes to zero
-		m_X = m_Source->X();
-		m_Y = m_Source->Y();
+		m_Radius = m_Magnitude * 2; // where force goes to zero
 	}
 	m_Affectee = affectee;
 }
@@ -2211,7 +2205,6 @@ void DPusher::Tick ()
 	sector_t *sec;
 	AActor *thing;
 	msecnode_t *node;
-	int xspeed,yspeed;
 	int ht;
 
 	if (!var_pushers)
@@ -2250,7 +2243,7 @@ void DPusher::Tick ()
 		// point pusher. Crosses sectors, so use blockmap.
 
 		FPortalGroupArray check(FPortalGroupArray::PGA_NoSectorPortals);	// no sector portals because this thing is utterly z-unaware.
-		FMultiBlockThingsIterator it(check, m_X, m_Y, 0, 0, m_Radius, false, m_Source->Sector);
+		FMultiBlockThingsIterator it(check, m_Source, FLOAT2FIXED(m_Radius));
 		FMultiBlockThingsIterator::CheckResult cres;
 
 
@@ -2269,22 +2262,18 @@ void DPusher::Tick ()
 
 			if ((pusharound) )
 			{
-				int sx = m_X;
-				int sy = m_Y;
-				int dist = thing->AproxDistance (sx, sy);
-				int speed = (m_Magnitude - ((dist>>FRACBITS)>>1))<<(FRACBITS-PUSH_FACTOR-1);
+				DVector2 pos = m_Source->Vec2To(thing);
+				double dist = pos.Length();
+				double speed = (m_Magnitude - (dist/2)) / (PUSH_FACTOR * 2);
 
 				// If speed <= 0, you're outside the effective radius. You also have
 				// to be able to see the push/pull source point.
 
 				if ((speed > 0) && (P_CheckSight (thing, m_Source, SF_IGNOREVISIBILITY)))
 				{
-					angle_t pushangle = thing->__f_AngleTo(sx, sy);
-					if (m_Source->GetClass()->TypeName == NAME_PointPusher)
-						pushangle += ANG180;    // away
-					pushangle >>= ANGLETOFINESHIFT;
-					thing->vel.x += FixedMul (speed, finecosine[pushangle]);
-					thing->vel.y += FixedMul (speed, finesine[pushangle]);
+					DAngle pushangle = pos.Angle();
+					if (m_Source->GetClass()->TypeName == NAME_PointPuller) pushangle += 180;  
+					thing->Thrust(pushangle, speed);
 				}
 			}
 		}
@@ -2302,37 +2291,34 @@ void DPusher::Tick ()
 
 		sector_t *hsec = sec->GetHeightSec();
 		fixedvec3 pos = thing->PosRelative(sec);
+		DVector2 pushvel;
 		if (m_Type == p_wind)
 		{
 			if (hsec == NULL)
 			{ // NOT special water sector
-				if (thing->Z() > thing->floorz) // above ground
+				if (thing->_f_Z() > thing->floorz) // above ground
 				{
-					xspeed = m_Xmag; // full force
-					yspeed = m_Ymag;
+					pushvel = m_PushVec; // full force
 				}
 				else // on ground
 				{
-					xspeed = (m_Xmag)>>1; // half force
-					yspeed = (m_Ymag)>>1;
+					pushvel = m_PushVec / 2; // half force
 				}
 			}
 			else // special water sector
 			{
 				ht = hsec->floorplane.ZatPoint(pos);
-				if (thing->Z() > ht) // above ground
+				if (thing->_f_Z() > ht) // above ground
 				{
-					xspeed = m_Xmag; // full force
-					yspeed = m_Ymag;
+					pushvel = m_PushVec; // full force
 				}
 				else if (thing->player->viewz < ht) // underwater
 				{
-					xspeed = yspeed = 0; // no force
+					pushvel.Zero(); // no force
 				}
 				else // wading in water
 				{
-					xspeed = (m_Xmag)>>1; // half force
-					yspeed = (m_Ymag)>>1;
+					pushvel = m_PushVec / 2; // full force
 				}
 			}
 		}
@@ -2348,18 +2334,16 @@ void DPusher::Tick ()
 			{ // special water sector
 				floor = &hsec->floorplane;
 			}
-			if (thing->Z() > floor->ZatPoint(pos))
+			if (thing->_f_Z() > floor->ZatPoint(pos))
 			{ // above ground
-				xspeed = yspeed = 0; // no force
+				pushvel.Zero(); // no force
 			}
 			else
 			{ // on ground/underwater
-				xspeed = m_Xmag; // full force
-				yspeed = m_Ymag;
+				pushvel = m_PushVec; // full force
 			}
 		}
-		thing->vel.x += xspeed<<(FRACBITS-PUSH_FACTOR);
-		thing->vel.y += yspeed<<(FRACBITS-PUSH_FACTOR);
+		thing->Vel += pushvel / PUSH_FACTOR;
 	}
 }
 

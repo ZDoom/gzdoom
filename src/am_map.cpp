@@ -1012,8 +1012,8 @@ void AM_restoreScaleAndLoc ()
     }
 	else
 	{
-		m_x = (players[consoleplayer].camera->X() >> FRACTOMAPBITS) - m_w/2;
-		m_y = (players[consoleplayer].camera->Y() >> FRACTOMAPBITS)- m_h/2;
+		m_x = (players[consoleplayer].camera->_f_X() >> FRACTOMAPBITS) - m_w/2;
+		m_y = (players[consoleplayer].camera->_f_Y() >> FRACTOMAPBITS)- m_h/2;
     }
 	m_x2 = m_x + m_w;
 	m_y2 = m_y + m_h;
@@ -1263,8 +1263,8 @@ void AM_initVariables ()
 			if (playeringame[pnum])
 				break;
 	assert(pnum >= 0 && pnum < MAXPLAYERS);
-	m_x = (players[pnum].camera->X() >> FRACTOMAPBITS) - m_w/2;
-	m_y = (players[pnum].camera->Y() >> FRACTOMAPBITS) - m_h/2;
+	m_x = (players[pnum].camera->_f_X() >> FRACTOMAPBITS) - m_w/2;
+	m_y = (players[pnum].camera->_f_Y() >> FRACTOMAPBITS) - m_h/2;
 	AM_changeWindowLoc();
 
 	// for saving & restoring
@@ -1585,25 +1585,25 @@ void AM_doFollowPlayer ()
 	fixed_t sx, sy;
 
     if (players[consoleplayer].camera != NULL &&
-		(f_oldloc.x != players[consoleplayer].camera->X() ||
-		 f_oldloc.y != players[consoleplayer].camera->Y()))
+		(f_oldloc.x != players[consoleplayer].camera->_f_X() ||
+		 f_oldloc.y != players[consoleplayer].camera->_f_Y()))
 	{
-		m_x = (players[consoleplayer].camera->X() >> FRACTOMAPBITS) - m_w/2;
-		m_y = (players[consoleplayer].camera->Y() >> FRACTOMAPBITS) - m_h/2;
+		m_x = (players[consoleplayer].camera->_f_X() >> FRACTOMAPBITS) - m_w/2;
+		m_y = (players[consoleplayer].camera->_f_Y() >> FRACTOMAPBITS) - m_h/2;
 		m_x2 = m_x + m_w;
 		m_y2 = m_y + m_h;
 
   		// do the parallax parchment scrolling.
-		sx = (players[consoleplayer].camera->X() - f_oldloc.x) >> FRACTOMAPBITS;
-		sy = (f_oldloc.y - players[consoleplayer].camera->Y()) >> FRACTOMAPBITS;
+		sx = (players[consoleplayer].camera->_f_X() - f_oldloc.x) >> FRACTOMAPBITS;
+		sy = (f_oldloc.y - players[consoleplayer].camera->_f_Y()) >> FRACTOMAPBITS;
 		if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 		{
 			AM_rotate (&sx, &sy, players[consoleplayer].camera->_f_angle() - ANG90);
 		}
 		AM_ScrollParchment (sx, sy);
 
-		f_oldloc.x = players[consoleplayer].camera->X();
-		f_oldloc.y = players[consoleplayer].camera->Y();
+		f_oldloc.x = players[consoleplayer].camera->_f_X();
+		f_oldloc.y = players[consoleplayer].camera->_f_Y();
 	}
 }
 
@@ -2668,7 +2668,7 @@ void AM_drawPlayers ()
 		mline_t *arrow;
 		int numarrowlines;
 
-		fixedvec2 pos = am_portaloverlay? players[consoleplayer].camera->GetPortalTransition(players[consoleplayer].viewheight) : (fixedvec2)players[consoleplayer].camera->Pos();
+		fixedvec2 pos = am_portaloverlay? players[consoleplayer].camera->GetPortalTransition(players[consoleplayer].viewheight) : (fixedvec2)players[consoleplayer].camera->_f_Pos();
 		pt.x = pos.x >> FRACTOMAPBITS;
 		pt.y = pos.y >> FRACTOMAPBITS;
 		if (am_rotate == 1 || (am_rotate == 2 && viewactive))
@@ -3041,7 +3041,7 @@ void AM_drawAuthorMarkers ()
 				 marked->subsector->flags & SSECF_DRAWN :
 				 marked->Sector->MoreFlags & SECF_DRAWN)))
 			{
-				DrawMarker (tex, marked->X() >> FRACTOMAPBITS, marked->Y() >> FRACTOMAPBITS, 0,
+				DrawMarker (tex, marked->_f_X() >> FRACTOMAPBITS, marked->_f_Y() >> FRACTOMAPBITS, 0,
 					flip, mark->scaleX, mark->scaleY, mark->Translation,
 					mark->alpha, mark->fillcolor, mark->RenderStyle);
 			}

@@ -86,7 +86,7 @@ bool P_Thing_Spawn (int tid, AActor *source, int type, DAngle angle, bool fog, i
 	}
 	while (spot != NULL)
 	{
-		mobj = Spawn (kind, spot->Pos(), ALLOW_REPLACE);
+		mobj = Spawn (kind, spot->_f_Pos(), ALLOW_REPLACE);
 
 		if (mobj != NULL)
 		{
@@ -98,7 +98,7 @@ bool P_Thing_Spawn (int tid, AActor *source, int type, DAngle angle, bool fog, i
 				mobj->Angles.Yaw = (angle != 1000000. ? angle : spot->Angles.Yaw);
 				if (fog)
 				{
-					P_SpawnTeleportFog(mobj, spot->X(), spot->Y(), spot->Z() + TELEFOGHEIGHT, false, true);
+					P_SpawnTeleportFog(mobj, spot->_f_X(), spot->_f_Y(), spot->_f_Z() + TELEFOGHEIGHT, false, true);
 				}
 				if (mobj->flags & MF_SPECIAL)
 					mobj->flags |= MF_DROPPED;	// Don't respawn
@@ -127,9 +127,9 @@ bool P_MoveThing(AActor *source, fixed_t x, fixed_t y, fixed_t z, bool fog)
 {
 	fixed_t oldx, oldy, oldz;
 
-	oldx = source->X();
-	oldy = source->Y();
-	oldz = source->Z();
+	oldx = source->_f_X();
+	oldy = source->_f_Y();
+	oldz = source->_f_Z();
 
 	source->SetOrigin (x, y, z, true);
 	if (P_TestMobjLocation (source))
@@ -167,20 +167,21 @@ bool P_Thing_Move (int tid, AActor *source, int mapspot, bool fog)
 
 	if (source != NULL && target != NULL)
 	{
-		return P_MoveThing(source, target->X(), target->Y(), target->Z(), fog);
+		return P_MoveThing(source, target->_f_X(), target->_f_Y(), target->_f_Z(), fog);
 	}
 	return false;
 }
 
 bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_name, DAngle angle,
-	fixed_t speed, fixed_t vspeed, int dest, AActor *forcedest, int gravity, int newtid,
+	fixed_t _speed, fixed_t _vspeed, int dest, AActor *forcedest, int gravity, int newtid,
 	bool leadTarget)
 {
 	int rtn = 0;
 	PClassActor *kind;
 	AActor *spot, *mobj, *targ = forcedest;
 	FActorIterator iterator (tid);
-	double fspeed = speed;
+	double speed = FIXED2DBL(_speed);
+	double vspeed = FIXED2DBL(_vspeed);
 	int defflags3;
 
 	if (type_name == NULL)
@@ -220,7 +221,7 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 		{
 			do
 			{
-				fixed_t z = spot->Z();
+				fixed_t z = spot->_f_Z();
 				if (defflags3 & MF3_FLOORHUGGER)
 				{
 					z = ONFLOORZ;
@@ -233,7 +234,7 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 				{
 					z -= spot->floorclip;
 				}
-				mobj = Spawn (kind, spot->X(), spot->Y(), z, ALLOW_REPLACE);
+				mobj = Spawn (kind, spot->_f_X(), spot->_f_Y(), z, ALLOW_REPLACE);
 
 				if (mobj)
 				{
@@ -256,11 +257,10 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 
 					if (targ != NULL)
 					{
-						fixedvec3 vect = mobj->Vec3To(targ);
-						vect.z += targ->height / 2;
-						DVector3 aim(vect.x, vect.y, vect.z);
+						DVector3 aim = mobj->Vec3To(targ);
+						aim.Z += targ->_Height() / 2;
 
-						if (leadTarget && speed > 0 && (targ->vel.x | targ->vel.y | targ->vel.z))
+						if (leadTarget && speed > 0 && !targ->Vel.isZero())
 						{
 							// Aiming at the target's position some time in the future
 							// is basically just an application of the law of sines:
@@ -269,14 +269,14 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 							// with the math. I don't think I would have thought of using
 							// trig alone had I been left to solve it by myself.
 
-							DVector3 tvel(targ->vel.x, targ->vel.y, targ->vel.z);
+							DVector3 tvel = targ->Vel;
 							if (!(targ->flags & MF_NOGRAVITY) && targ->waterlevel < 3)
 							{ // If the target is subject to gravity and not underwater,
 							  // assume that it isn't moving vertically. Thanks to gravity,
 							  // even if we did consider the vertical component of the target's
 							  // velocity, we would still miss more often than not.
 								tvel.Z = 0.0;
-								if ((targ->vel.x | targ->vel.y) == 0)
+								if (targ->Vel.X == 0 && targ->Vel.Y == 0)
 								{
 									goto nolead;
 								}
@@ -286,7 +286,7 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 							double ydotx = -aim | tvel;
 							double a = g_acos (clamp (ydotx / targspeed / dist, -1.0, 1.0));
 							double multiplier = double(pr_leadtarget.Random2())*0.1/255+1.1;
-							double sinb = -clamp (targspeed*multiplier * g_sin(a) / fspeed, -1.0, 1.0);
+							double sinb = -clamp (targspeed*multiplier * g_sin(a) / speed, -1.0, 1.0);
 
 							// Use the cross product of two of the triangle's sides to get a
 							// rotation vector.
@@ -299,20 +299,14 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 							// new aim vector that leads the target.
 							DVector3 aimvec = rm * aim;
 							// And make the projectile follow that vector at the desired speed.
-							double aimscale = fspeed / dist;
-							mobj->vel.x = fixed_t (aimvec[0] * aimscale);
-							mobj->vel.y = fixed_t (aimvec[1] * aimscale);
-							mobj->vel.z = fixed_t (aimvec[2] * aimscale);
+							mobj->Vel = aimvec * (speed / dist);
 							mobj->AngleFromVel();
 						}
 						else
 						{
 nolead:
 							mobj->Angles.Yaw = mobj->AngleTo(targ);
-							aim.Resize (fspeed);
-							mobj->vel.x = fixed_t(aim[0]);
-							mobj->vel.y = fixed_t(aim[1]);
-							mobj->vel.z = fixed_t(aim[2]);
+							mobj->Vel = aim.Resized (speed);
 						}
 						if (mobj->flags2 & MF2_SEEKERMISSILE)
 						{
@@ -322,18 +316,18 @@ nolead:
 					else
 					{
 						mobj->Angles.Yaw = angle;
-						mobj->VelFromAngle();
-						mobj->vel.z = vspeed;
+						mobj->VelFromAngle(speed);
+						mobj->Vel.Z = vspeed;
 					}
 					// Set the missile's speed to reflect the speed it was spawned at.
 					if (mobj->flags & MF_MISSILE)
 					{
-						mobj->Speed = fixed_t (g_sqrt (double(mobj->vel.x)*mobj->vel.x + double(mobj->vel.y)*mobj->vel.y + double(mobj->vel.z)*mobj->vel.z));
+						mobj->Speed = mobj->VelToSpeed();
 					}
 					// Hugger missiles don't have any vertical velocity
 					if (mobj->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER))
 					{
-						mobj->vel.z = 0;
+						mobj->Vel.Z = 0;
 					}
 					if (mobj->flags & MF_SPECIAL)
 					{
@@ -427,7 +421,7 @@ bool P_Thing_Raise(AActor *thing, AActor *raiser)
 	
 	AActor *info = thing->GetDefault ();
 
-	thing->vel.x = thing->vel.y = 0;
+	thing->Vel.X = thing->Vel.Y = 0;
 
 	// [RH] Check against real height and radius
 	fixed_t oldheight = thing->height;
@@ -437,7 +431,7 @@ bool P_Thing_Raise(AActor *thing, AActor *raiser)
 	thing->flags |= MF_SOLID;
 	thing->height = info->height;	// [RH] Use real height
 	thing->radius = info->radius;	// [RH] Use real radius
-	if (!P_CheckPosition (thing, thing->Pos()))
+	if (!P_CheckPosition (thing, thing->_f_Pos()))
 	{
 		thing->flags = oldflags;
 		thing->radius = oldradius;
@@ -479,7 +473,7 @@ bool P_Thing_CanRaise(AActor *thing)
 	thing->height = info->height;
 	thing->radius = info->radius;
 
-	bool check = P_CheckPosition (thing, thing->Pos());
+	bool check = P_CheckPosition (thing, thing->_f_Pos());
 
 	// Restore checked properties
 	thing->flags = oldflags;
@@ -494,22 +488,19 @@ bool P_Thing_CanRaise(AActor *thing)
 	return true;
 }
 
-void P_Thing_SetVelocity(AActor *actor, fixed_t vx, fixed_t vy, fixed_t vz, bool add, bool setbob)
+void P_Thing_SetVelocity(AActor *actor, const DVector3 &vec, bool add, bool setbob)
 {
 	if (actor != NULL)
 	{
 		if (!add)
 		{
-			actor->vel.x = actor->vel.y = actor->vel.z = 0;
-			if (actor->player != NULL) actor->player->vel.x = actor->player->vel.y = 0;
+			actor->Vel.Zero();
+			if (actor->player != NULL) actor->player->Vel.Zero();
 		}
-		actor->vel.x += vx;
-		actor->vel.y += vy;
-		actor->vel.z += vz;
+		actor->Vel += vec;
 		if (setbob && actor->player != NULL)
 		{
-			actor->player->vel.x += vx;
-			actor->player->vel.y += vy;
+			actor->player->Vel += vec.XY();
 		}
 	}
 }
@@ -692,7 +683,7 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 		caller = temp;
 	}
 
-	fixedvec3 old = caller->Pos();
+	fixedvec3 old = caller->_f_Pos();
 	int oldpgroup = caller->Sector->PortalGroup;
 
 	zofs += FixedMul(reference->height, heightoffset);
@@ -730,7 +721,7 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 				xofs + FixedMul(rad, finecosine[fineangle]),
 				yofs + FixedMul(rad, finesine[fineangle]),
 				0), true);
-			caller->SetZ(caller->floorz + zofs);
+			caller->_f_SetZ(caller->floorz + zofs);
 		}
 		else
 		{
@@ -745,7 +736,7 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 		if (flags & WARPF_TOFLOOR)
 		{
 			caller->SetOrigin(xofs + FixedMul(rad, finecosine[fineangle]), yofs + FixedMul(rad, finesine[fineangle]), zofs, true);
-			caller->SetZ(caller->floorz + zofs);
+			caller->_f_SetZ(caller->floorz + zofs);
 		}
 		else
 		{
@@ -771,15 +762,11 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 			
 			if (flags & WARPF_COPYVELOCITY)
 			{
-				caller->vel.x = reference->vel.x;
-				caller->vel.y = reference->vel.y;
-				caller->vel.z = reference->vel.z;
+				caller->Vel = reference->Vel;
 			}
 			if (flags & WARPF_STOP)
 			{
-				caller->vel.x = 0;
-				caller->vel.y = 0;
-				caller->vel.z = 0;
+				caller->Vel.Zero();
 			}
 
 			// this is no fun with line portals 
@@ -787,9 +774,9 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 			{
 				// This just translates the movement but doesn't change the vector
 				fixedvec3 displacedold  = old + Displacements.getOffset(oldpgroup, caller->Sector->PortalGroup);
-				caller->PrevX += caller->X() - displacedold.x;
-				caller->PrevY += caller->Y() - displacedold.y;
-				caller->PrevZ += caller->Z() - displacedold.z;
+				caller->PrevX += caller->_f_X() - displacedold.x;
+				caller->PrevY += caller->_f_Y() - displacedold.y;
+				caller->PrevZ += caller->_f_Z() - displacedold.z;
 				caller->PrevPortalGroup = caller->Sector->PortalGroup;
 			}
 			else if (flags & WARPF_COPYINTERPOLATION)
@@ -797,9 +784,9 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 				// Map both positions of the reference actor to the current portal group
 				fixedvec3 displacedold = old + Displacements.getOffset(reference->PrevPortalGroup, caller->Sector->PortalGroup);
 				fixedvec3 displacedref = old + Displacements.getOffset(reference->Sector->PortalGroup, caller->Sector->PortalGroup);
-				caller->PrevX = caller->X() + displacedold.x - displacedref.x;
-				caller->PrevY = caller->Y() + displacedold.y - displacedref.y;
-				caller->PrevZ = caller->Z() + displacedold.z - displacedref.z;
+				caller->PrevX = caller->_f_X() + displacedold.x - displacedref.x;
+				caller->PrevY = caller->_f_Y() + displacedold.y - displacedref.y;
+				caller->PrevZ = caller->_f_Z() + displacedold.z - displacedref.z;
 				caller->PrevPortalGroup = caller->Sector->PortalGroup;
 			}
 			else if (!(flags & WARPF_INTERPOLATE))
@@ -808,7 +795,7 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 			}
 			if ((flags & WARPF_BOB) && (reference->flags2 & MF2_FLOATBOB))
 			{
-				caller->AddZ(reference->GetBobOffset());
+				caller->_f_AddZ(reference->GetBobOffset());
 			}
 		}
 		return true;

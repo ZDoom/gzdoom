@@ -230,6 +230,11 @@ struct secplane_t
 
 	fixed_t a, b, c, d, ic;
 
+	DVector3 Normal() const
+	{
+		return{ FIXED2FLOAT(a), FIXED2FLOAT(b), FIXED2FLOAT(c) };
+	}
+
 	// Returns < 0 : behind; == 0 : on; > 0 : in front
 	int PointOnSide (fixed_t x, fixed_t y, fixed_t z) const
 	{
@@ -272,7 +277,7 @@ struct secplane_t
 
 	fixed_t ZatPoint (const AActor *ac) const
 	{
-		return FixedMul (ic, -d - DMulScale16 (a, ac->X(), b, ac->Y()));
+		return FixedMul (ic, -d - DMulScale16 (a, ac->_f_X(), b, ac->_f_Y()));
 	}
 
 	// Returns the value of z at (x,y) if d is equal to dist
@@ -544,6 +549,7 @@ struct sector_t
 	int GetFloorLight () const;
 	int GetCeilingLight () const;
 	sector_t *GetHeightSec() const;
+	fixed_t GetFriction(int plane = sector_t::floor, fixed_t *movefac = NULL) const;
 
 	DInterpolation *SetInterpolation(int position, bool attach);
 
@@ -812,12 +818,12 @@ struct sector_t
 
 	fixed_t HighestCeilingAt(AActor *a, sector_t **resultsec = NULL)
 	{
-		return HighestCeilingAt(a->X(), a->Y(), resultsec);
+		return HighestCeilingAt(a->_f_X(), a->_f_Y(), resultsec);
 	}
 
 	fixed_t LowestFloorAt(AActor *a, sector_t **resultsec = NULL)
 	{
-		return LowestFloorAt(a->X(), a->Y(), resultsec);
+		return LowestFloorAt(a->_f_X(), a->_f_Y(), resultsec);
 	}
 
 	fixed_t NextHighestCeilingAt(fixed_t x, fixed_t y, fixed_t bottomz, fixed_t topz, int flags = 0, sector_t **resultsec = NULL, F3DFloor **resultffloor = NULL);
@@ -888,7 +894,7 @@ struct sector_t
 	// thinglist is a subset of touching_thinglist
 	struct msecnode_t *touching_thinglist;				// phares 3/14/98
 
-	float gravity;			// [RH] Sector gravity (1.0 is normal)
+	double gravity;			// [RH] Sector gravity (1.0 is normal)
 	FNameNoInit damagetype;		// [RH] Means-of-death for applied damage
 	int damageamount;			// [RH] Damage to do while standing on floor
 	short damageinterval;	// Interval for damage application
@@ -1085,6 +1091,21 @@ struct line_t
 	int 		validcount;	// if == validcount, already checked
 	int			locknumber;	// [Dusk] lock number for special
 	unsigned	portalindex;
+
+	DVector2 V1() const
+	{
+		return{ FIXED2DBL(v1->x), FIXED2DBL(v1->y) };
+	}
+
+	DVector2 V2() const
+	{
+		return{ FIXED2DBL(v2->x), FIXED2DBL(v2->y) };
+	}
+
+	DVector2 Delta() const
+	{
+		return{ FIXED2DBL(dx), FIXED2DBL(dy) };
+	}
 
 	FLinePortal *getPortal() const
 	{
@@ -1284,13 +1305,14 @@ inline fixedvec3 PosRelative(const fixedvec3 &pos, line_t *line, sector_t *refse
 
 inline void AActor::ClearInterpolation()
 {
-	PrevX = X();
-	PrevY = Y();
-	PrevZ = Z();
+	PrevX = _f_X();
+	PrevY = _f_Y();
+	PrevZ = _f_Z();
 	PrevAngles = Angles;
 	if (Sector) PrevPortalGroup = Sector->PortalGroup;
 	else PrevPortalGroup = 0;
 }
+
 
 
 #endif

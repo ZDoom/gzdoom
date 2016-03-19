@@ -514,7 +514,7 @@ static void ParseInsideDecoration (Baggage &bag, AActor *defaults,
 		else if (def == DEF_Projectile && sc.Compare ("Speed"))
 		{
 			sc.MustGetFloat ();
-			defaults->Speed = fixed_t(sc.Float * 65536.f);
+			defaults->Speed = sc.Float;
 		}
 		else if (sc.Compare ("Mass"))
 		{

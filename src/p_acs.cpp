@@ -3487,12 +3487,12 @@ int DLevelScript::DoSpawnSpot (int type, int spot, int tid, int angle, bool forc
 
 		while ( (aspot = iterator.Next ()) )
 		{
-			spawned += DoSpawn (type, aspot->X(), aspot->Y(), aspot->Z(), tid, angle, force);
+			spawned += DoSpawn (type, aspot->_f_X(), aspot->_f_Y(), aspot->_f_Z(), tid, angle, force);
 		}
 	}
 	else if (activator != NULL)
 	{
-			spawned += DoSpawn (type, activator->X(), activator->Y(), activator->Z(), tid, angle, force);
+			spawned += DoSpawn (type, activator->_f_X(), activator->_f_Y(), activator->_f_Z(), tid, angle, force);
 	}
 	return spawned;
 }
@@ -3508,12 +3508,12 @@ int DLevelScript::DoSpawnSpotFacing (int type, int spot, int tid, bool force)
 
 		while ( (aspot = iterator.Next ()) )
 		{
-			spawned += DoSpawn (type, aspot->X(), aspot->Y(), aspot->Z(), tid, aspot->_f_angle() >> 24, force);
+			spawned += DoSpawn (type, aspot->_f_X(), aspot->_f_Y(), aspot->_f_Z(), tid, aspot->_f_angle() >> 24, force);
 		}
 	}
 	else if (activator != NULL)
 	{
-			spawned += DoSpawn (type, activator->X(), activator->Y(), activator->Z(), tid, activator->_f_angle() >> 24, force);
+			spawned += DoSpawn (type, activator->_f_X(), activator->_f_Y(), activator->_f_Z(), tid, activator->_f_angle() >> 24, force);
 	}
 	return spawned;
 }
@@ -3805,7 +3805,7 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		break;
 
 	case APROP_Speed:
-		actor->Speed = value;
+		actor->Speed = FIXED2DBL(value);
 		break;
 
 	case APROP_Damage:
@@ -3849,7 +3849,7 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 
 	case APROP_JumpZ:
 		if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
-			static_cast<APlayerPawn *>(actor)->JumpZ = value;
+			static_cast<APlayerPawn *>(actor)->JumpZ = FIXED2DBL(value);
 		break; 	// [GRB]
 
 	case APROP_ChaseGoal:
@@ -4005,7 +4005,7 @@ int DLevelScript::GetActorProperty (int tid, int property)
 	switch (property)
 	{
 	case APROP_Health:		return actor->health;
-	case APROP_Speed:		return actor->Speed;
+	case APROP_Speed:		return FLOAT2FIXED(actor->Speed);
 	case APROP_Damage:		return actor->GetMissileDamage(0,1);
 	case APROP_DamageFactor:return actor->DamageFactor;
 	case APROP_DamageMultiplier: return actor->DamageMultiply;
@@ -4041,7 +4041,7 @@ int DLevelScript::GetActorProperty (int tid, int property)
 
 	case APROP_JumpZ:		if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
 							{
-								return static_cast<APlayerPawn *>(actor)->JumpZ;	// [GRB]
+								return FLOAT2FIXED(static_cast<APlayerPawn *>(actor)->JumpZ);	// [GRB]
 							}
 							else
 							{
@@ -4184,12 +4184,12 @@ bool DLevelScript::DoCheckActorTexture(int tid, AActor *activator, int string, b
 
 	if (floor)
 	{
-		actor->Sector->NextLowestFloorAt(actor->X(), actor->Y(), actor->Z(), 0, actor->MaxStepHeight, &resultsec, &resffloor);
+		actor->Sector->NextLowestFloorAt(actor->_f_X(), actor->_f_Y(), actor->_f_Z(), 0, actor->MaxStepHeight, &resultsec, &resffloor);
 		secpic = resffloor ? *resffloor->top.texture : resultsec->planes[sector_t::floor].Texture;
 	}
 	else
 	{
-		actor->Sector->NextHighestCeilingAt(actor->X(), actor->Y(), actor->Z(), actor->Top(), 0, &resultsec, &resffloor);
+		actor->Sector->NextHighestCeilingAt(actor->_f_X(), actor->_f_Y(), actor->_f_Z(), actor->_f_Top(), 0, &resultsec, &resffloor);
 		secpic = resffloor ? *resffloor->bottom.texture : resultsec->planes[sector_t::ceiling].Texture;
 	}
 	return tex == TexMan[secpic];
@@ -4738,8 +4738,8 @@ static bool DoSpawnDecal(AActor *actor, const FDecalTemplate *tpl, int flags, an
 	{
 		angle += actor->_f_angle();
 	}
-	return NULL != ShootDecal(tpl, actor, actor->Sector, actor->X(), actor->Y(),
-		actor->Z() + (actor->height>>1) - actor->floorclip + actor->GetBobOffset() + zofs,
+	return NULL != ShootDecal(tpl, actor, actor->Sector, actor->_f_X(), actor->_f_Y(),
+		actor->_f_Z() + (actor->height>>1) - actor->floorclip + actor->GetBobOffset() + zofs,
 		angle, distance, !!(flags & SDF_PERMANENT));
 }
 
@@ -4900,15 +4900,15 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 
 		case ACSF_GetActorVelX:
 			actor = SingleActorFromTID(args[0], activator);
-			return actor != NULL? actor->vel.x : 0;
+			return actor != NULL? FLOAT2FIXED(actor->Vel.X) : 0;
 
 		case ACSF_GetActorVelY:
 			actor = SingleActorFromTID(args[0], activator);
-			return actor != NULL? actor->vel.y : 0;
+			return actor != NULL? FLOAT2FIXED(actor->Vel.Y) : 0;
 
 		case ACSF_GetActorVelZ:
 			actor = SingleActorFromTID(args[0], activator);
-			return actor != NULL? actor->vel.z : 0;
+			return actor != NULL? FLOAT2FIXED(actor->Vel.Z) : 0;
 
 		case ACSF_SetPointer:
 			if (activator)
@@ -5078,20 +5078,23 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 			return (CheckActorProperty(args[0], args[1], args[2]));
         
         case ACSF_SetActorVelocity:
-            if (args[0] == 0)
-            {
-				P_Thing_SetVelocity(activator, args[1], args[2], args[3], !!args[4], !!args[5]);
-            }
-            else
-            {
-                TActorIterator<AActor> iterator (args[0]);
-                
-                while ( (actor = iterator.Next ()) )
-                {
-					P_Thing_SetVelocity(actor, args[1], args[2], args[3], !!args[4], !!args[5]);
-                }
-            }
-			return 0;
+		{
+			DVector3 vel(FIXED2DBL(args[1]), FIXED2DBL(args[2]), FIXED2DBL(args[3]));
+			if (args[0] == 0)
+			{
+				P_Thing_SetVelocity(activator, vel, !!args[4], !!args[5]);
+			}
+			else
+			{
+				TActorIterator<AActor> iterator(args[0]);
+
+				while ((actor = iterator.Next()))
+				{
+					P_Thing_SetVelocity(actor, vel, !!args[4], !!args[5]);
+				}
+			}
+			return 0; 
+		}
 
 		case ACSF_SetUserVariable:
 		{
@@ -8349,23 +8352,23 @@ scriptwait:
 			break;
 
 		case PCD_SETGRAVITY:
-			level.gravity = (float)STACK(1) / 65536.f;
+			level.gravity = FIXED2DBL(STACK(1));
 			sp--;
 			break;
 
 		case PCD_SETGRAVITYDIRECT:
-			level.gravity = (float)uallong(pc[0]) / 65536.f;
+			level.gravity = FIXED2DBL(uallong(pc[0]));
 			pc++;
 			break;
 
 		case PCD_SETAIRCONTROL:
-			level.aircontrol = STACK(1);
+			level.aircontrol = FIXED2DBL(STACK(1));
 			sp--;
 			G_AirControlChanged ();
 			break;
 
 		case PCD_SETAIRCONTROLDIRECT:
-			level.aircontrol = uallong(pc[0]);
+			level.aircontrol = FIXED2DBL(uallong(pc[0]));
 			pc++;
 			G_AirControlChanged ();
 			break;
@@ -8663,11 +8666,11 @@ scriptwait:
 				}
 				else if (pcd == PCD_GETACTORZ)
 				{
-					STACK(1) = actor->Z() + actor->GetBobOffset();
+					STACK(1) = actor->_f_Z() + actor->GetBobOffset();
 				}
 				else
 				{
-					STACK(1) = pcd == PCD_GETACTORX ? actor->X() : pcd == PCD_GETACTORY ? actor->Y() : actor->Z();
+					STACK(1) = pcd == PCD_GETACTORX ? actor->_f_X() : pcd == PCD_GETACTORY ? actor->_f_Y() : actor->_f_Z();
 				}
 			}
 			break;
@@ -9224,8 +9227,8 @@ scriptwait:
 				case PLAYERINFO_COLOR:			STACK(2) = userinfo->GetColor(); break;
 				case PLAYERINFO_GENDER:			STACK(2) = userinfo->GetGender(); break;
 				case PLAYERINFO_NEVERSWITCH:	STACK(2) = userinfo->GetNeverSwitch(); break;
-				case PLAYERINFO_MOVEBOB:		STACK(2) = userinfo->GetMoveBob(); break;
-				case PLAYERINFO_STILLBOB:		STACK(2) = userinfo->GetStillBob(); break;
+				case PLAYERINFO_MOVEBOB:		STACK(2) = FLOAT2FIXED(userinfo->GetMoveBob()); break;
+				case PLAYERINFO_STILLBOB:		STACK(2) = FLOAT2FIXED(userinfo->GetStillBob()); break;
 				case PLAYERINFO_PLAYERCLASS:	STACK(2) = userinfo->GetPlayerClassNum(); break;
 				case PLAYERINFO_DESIREDFOV:		STACK(2) = (int)pl->DesiredFOV; break;
 				case PLAYERINFO_FOV:			STACK(2) = (int)pl->FOV; break;

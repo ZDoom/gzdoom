@@ -304,8 +304,8 @@ struct level_info_t
 	DWORD		outsidefog;
 	int			cdtrack;
 	unsigned int cdid;
-	float		gravity;
-	float		aircontrol;
+	double		gravity;
+	double		aircontrol;
 	int			WarpTrans;
 	int			airsupply;
 	DWORD		compatflags, compatflags2;
@@ -429,9 +429,9 @@ struct FLevelLocals
 	int			total_monsters;
 	int			killed_monsters;
 
-	float		gravity;
-	fixed_t		aircontrol;
-	fixed_t		airfriction;
+	double		gravity;
+	double		aircontrol;
+	double		airfriction;
 	int			airsupply;
 	int			DefaultEnvironment;		// Default sound environment.
 

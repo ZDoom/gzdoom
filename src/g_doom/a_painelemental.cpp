@@ -31,11 +31,11 @@ void A_PainShootSkull (AActor *self, angle_t angle, PClassActor *spawntype, int 
 	if (self->DamageType == NAME_Massacre) return;
 
 	// [RH] check to make sure it's not too close to the ceiling
-	if (self->Top() + 8*FRACUNIT > self->ceilingz)
+	if (self->_f_Top() + 8*FRACUNIT > self->ceilingz)
 	{
 		if (self->flags & MF_FLOAT)
 		{
-			self->vel.z -= 2*FRACUNIT;
+			self->Vel.Z -= 2;
 			self->flags |= MF_INFLOAT;
 			self->flags4 |= MF4_VFRICTION;
 		}
@@ -69,7 +69,7 @@ void A_PainShootSkull (AActor *self, angle_t angle, PClassActor *spawntype, int 
 
 	fixedvec2 dist = Vec2Angle(prestep, angle);
 	fixedvec3 pos = self->Vec3Offset(dist.x, dist.y, 8 * FRACUNIT, true);
-	fixedvec3 src = self->Pos();
+	fixedvec3 src = self->_f_Pos();
 
 	for (int i = 0; i < 2; i++)
 	{
@@ -120,9 +120,9 @@ void A_PainShootSkull (AActor *self, angle_t angle, PClassActor *spawntype, int 
 	// Check to see if the new Lost Soul's z value is above the
 	// ceiling of its new sector, or below the floor. If so, kill it.
 
-	if ((other->Top() >
+	if ((other->_f_Top() >
          (other->Sector->HighestCeilingAt(other))) ||
-        (other->Z() < other->Sector->LowestFloorAt(other)))
+        (other->_f_Z() < other->Sector->LowestFloorAt(other)))
 	{
 		// kill it immediately
 		P_DamageMobj (other, self, self, TELEFRAG_DAMAGE, NAME_None);//  ^
@@ -131,7 +131,7 @@ void A_PainShootSkull (AActor *self, angle_t angle, PClassActor *spawntype, int 
 
 	// Check for movements.
 
-	if (!P_CheckPosition (other, other->Pos()))
+	if (!P_CheckPosition (other, other->_f_Pos()))
 	{
 		// kill it immediately
 		P_DamageMobj (other, self, self, TELEFRAG_DAMAGE, NAME_None);		

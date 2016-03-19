@@ -109,7 +109,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpotLightning)
 	if (self->target == NULL)
 		return 0;
 
-	spot = Spawn("SpectralLightningSpot", self->target->X(), self->target->Y(), self->target->floorz, ALLOW_REPLACE);
+	spot = Spawn("SpectralLightningSpot", self->target->_f_X(), self->target->_f_Y(), self->target->floorz, ALLOW_REPLACE);
 	if (spot != NULL)
 	{
 		spot->threshold = 25;
@@ -135,7 +135,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnProgrammerBase)
 	{
 		foo->Angles.Yaw = self->Angles.Yaw + 180. + pr_prog.Random2() * (360. / 1024.);
 		foo->VelFromAngle();
-		foo->vel.z = pr_prog() << 9;
+		foo->Vel.Z = pr_prog() / 128.;
 	}
 	return 0;
 }

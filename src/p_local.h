@@ -81,7 +81,8 @@ inline int GetSafeBlockY(long long blocky)
 }
 
 //#define GRAVITY 		FRACUNIT
-#define MAXMOVE 		(30*FRACUNIT)
+#define _f_MAXMOVE 		(30*FRACUNIT)
+#define MAXMOVE 		(30.)
 
 #define TALKRANGE		(128.)
 #define USERANGE		(64*FRACUNIT)
@@ -197,7 +198,7 @@ bool	P_Thing_Projectile (int tid, AActor *source, int type, const char * type_na
 bool	P_MoveThing(AActor *source, fixed_t x, fixed_t y, fixed_t z, bool fog);
 bool	P_Thing_Move (int tid, AActor *source, int mapspot, bool fog);
 int		P_Thing_Damage (int tid, AActor *whofor0, int amount, FName type);
-void	P_Thing_SetVelocity(AActor *actor, fixed_t vx, fixed_t vy, fixed_t vz, bool add, bool setbob);
+void	P_Thing_SetVelocity(AActor *actor, const DVector3 &vec, bool add, bool setbob);
 void P_RemoveThing(AActor * actor);
 bool P_Thing_Raise(AActor *thing, AActor *raiser);
 bool P_Thing_CanRaise(AActor *thing);
@@ -337,6 +338,10 @@ inline void	P_TraceBleed(int damage, const fixedvec3 &pos, AActor *target, angle
 	P_TraceBleed(damage, pos.x, pos.y, pos.z, target, angle, pitch);
 }
 void	P_TraceBleed (int damage, AActor *target, angle_t angle, int pitch);
+inline void	P_TraceBleed(int damage, AActor *target, DAngle angle, DAngle pitch)
+{
+	P_TraceBleed(damage, target, angle.BAMs(), pitch.BAMs());
+}
 void	P_TraceBleed (int damage, AActor *target, AActor *missile);		// missile version
 void	P_TraceBleed(int damage, FTranslatedLineTarget *t, AActor *puff);		// hitscan version
 void	P_TraceBleed (int damage, AActor *target);		// random direction version
@@ -381,6 +386,14 @@ void	P_DelSeclist(msecnode_t *);							// phares 3/16/98
 msecnode_t*	P_DelSecnode(msecnode_t *);
 void	P_CreateSecNodeList(AActor*,fixed_t,fixed_t);		// phares 3/14/98
 int		P_GetMoveFactor(const AActor *mo, int *frictionp);	// phares  3/6/98
+inline double 	P_GetMoveFactor(const AActor *mo, double *frictionp)
+{
+	int rv, fp;
+	rv = P_GetMoveFactor(mo, &fp);
+	*frictionp = FIXED2DBL(fp);
+	return FIXED2DBL(rv);
+}
+
 int		P_GetFriction(const AActor *mo, int *frictionfactor);
 bool	Check_Sides(AActor *, int, int);					// phares
 
@@ -398,7 +411,7 @@ extern BYTE*			rejectmatrix;	// for fast sight rejection
 // P_INTER
 //
 void P_TouchSpecialThing (AActor *special, AActor *toucher);
-int  P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage, FName mod, int flags=0, angle_t angle = 0);
+int  P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage, FName mod, int flags=0, DAngle angle = 0.);
 void P_PoisonMobj (AActor *target, AActor *inflictor, AActor *source, int damage, int duration, int period, FName type);
 bool P_GiveBody (AActor *actor, int num, int max=0);
 bool P_PoisonPlayer (player_t *player, AActor *poisoner, AActor *source, int poison);

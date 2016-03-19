@@ -71,8 +71,8 @@ bool DBot::Move (ticcmd_t *cmd)
 	if ((unsigned)player->mo->movedir >= 8)
 		I_Error ("Weird bot movedir!");
 
-	tryx = player->mo->X() + 8*xspeed[player->mo->movedir];
-	tryy = player->mo->Y() + 8*yspeed[player->mo->movedir];
+	tryx = player->mo->_f_X() + 8*xspeed[player->mo->movedir];
+	tryy = player->mo->_f_Y() + 8*yspeed[player->mo->movedir];
 
 	try_ok = bglobal.CleanAhead (player->mo, tryx, tryy, cmd);
 
@@ -148,7 +148,7 @@ void DBot::NewChaseDir (ticcmd_t *cmd)
     olddir = (dirtype_t)player->mo->movedir;
     turnaround = opposite[olddir];
 
-	fixedvec2 delta = player->mo->Vec2To(dest);
+	fixedvec2 delta = player->mo->_f_Vec2To(dest);
 
     if (delta.x > 10*FRACUNIT)
         d[1] = DI_EAST;
@@ -284,7 +284,7 @@ bool FCajunMaster::CleanAhead (AActor *thing, fixed_t x, fixed_t y, ticcmd_t *cm
 
 
 	        if ( !(thing->flags & MF_TELEPORT) &&
-	             tm.ceilingz - thing->Z() < thing->height)
+	             tm.ceilingz - thing->_f_Z() < thing->height)
 	            return false;       // mobj must lower itself to fit
 
 	        // jump out of water
@@ -292,7 +292,7 @@ bool FCajunMaster::CleanAhead (AActor *thing, fixed_t x, fixed_t y, ticcmd_t *cm
 //	            maxstep=37*FRACUNIT;
 
 	        if ( !(thing->flags & MF_TELEPORT) &&
-	             (tm.floorz - thing->Z() > maxstep ) )
+	             (tm.floorz - thing->_f_Z() > maxstep ) )
 	            return false;       // too big a step up
 
 
@@ -348,7 +348,7 @@ void DBot::Pitch (AActor *target)
 	double aim;
 	double diff;
 
-	diff = target->Z() - player->mo->Z();
+	diff = target->_f_Z() - player->mo->_f_Z();
 	aim = g_atan(diff / (double)player->mo->AproxDistance(target));
 	player->mo->Angles.Pitch = ToDegrees(aim);
 }

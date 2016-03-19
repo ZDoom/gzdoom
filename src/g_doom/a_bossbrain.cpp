@@ -37,7 +37,7 @@ static void BrainishExplosion (fixed_t x, fixed_t y, fixed_t z)
 	if (boom != NULL)
 	{
 		boom->DeathSound = "misc/brainexplode";
-		boom->vel.z = pr_brainscream() << 9;
+		boom->Vel.Z = pr_brainscream() /128.;
 
 		PClassActor *cls = PClass::FindActor("BossBrain");
 		if (cls != NULL)
@@ -59,9 +59,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_BrainScream)
 	PARAM_ACTION_PROLOGUE;
 	fixed_t x;
 		
-	for (x = self->X() - 196*FRACUNIT; x < self->X() + 320*FRACUNIT; x += 8*FRACUNIT)
+	for (x = self->_f_X() - 196*FRACUNIT; x < self->_f_X() + 320*FRACUNIT; x += 8*FRACUNIT)
 	{
-		BrainishExplosion (x, self->Y() - 320*FRACUNIT,
+		BrainishExplosion (x, self->_f_Y() - 320*FRACUNIT,
 			128 + (pr_brainscream() << (FRACBITS + 1)));
 	}
 	S_Sound (self, CHAN_VOICE, "brain/death", 1, ATTN_NONE);
@@ -71,9 +71,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_BrainScream)
 DEFINE_ACTION_FUNCTION(AActor, A_BrainExplode)
 {
 	PARAM_ACTION_PROLOGUE;
-	fixed_t x = self->X() + pr_brainexplode.Random2()*2048;
+	fixed_t x = self->_f_X() + pr_brainexplode.Random2()*2048;
 	fixed_t z = 128 + pr_brainexplode()*2*FRACUNIT;
-	BrainishExplosion (x, self->Y(), z);
+	BrainishExplosion (x, self->_f_Y(), z);
 	return 0;
 }
 
@@ -144,17 +144,17 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BrainSpit)
 			spit->master = self;
 			// [RH] Do this correctly for any trajectory. Doom would divide by 0
 			// if the target had the same y coordinate as the spitter.
-			if ((spit->vel.x | spit->vel.y) == 0)
+			if (spit->Vel.X == 0 && spit->Vel.Y == 0)
 			{
 				spit->special2 = 0;
 			}
-			else if (abs(spit->vel.y) > abs(spit->vel.x))
+			else if (fabs(spit->Vel.X) > fabs(spit->Vel.Y))
 			{
-				spit->special2 = (targ->Y() - self->Y()) / spit->vel.y;
+				spit->special2 = int((targ->Y() - self->Y()) / spit->Vel.Y);
 			}
 			else
 			{
-				spit->special2 = (targ->X() - self->X()) / spit->vel.x;
+				spit->special2 = int((targ->X() - self->X()) / spit->Vel.X);
 			}
 			// [GZ] Calculates when the projectile will have reached destination
 			spit->special2 += level.maptime;
@@ -286,7 +286,7 @@ static void SpawnFly(AActor *self, PClassActor *spawntype, FSoundID sound)
 			if (!(newmobj->ObjectFlags & OF_EuthanizeMe))
 			{
 				// telefrag anything in this spot
-				P_TeleportMove (newmobj, newmobj->Pos(), true);
+				P_TeleportMove (newmobj, newmobj->_f_Pos(), true);
 			}
 			newmobj->flags4 |= MF4_BOSSSPAWNED;
 		}

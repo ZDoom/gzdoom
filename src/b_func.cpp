@@ -44,7 +44,7 @@ bool DBot::Reachable (AActor *rtarget)
 	fixed_t estimated_dist = player->mo->AproxDistance(rtarget);
 	bool reachable = true;
 
-	FPathTraverse it(player->mo->X()+player->mo->vel.x, player->mo->Y()+player->mo->vel.y, rtarget->X(), rtarget->Y(), PT_ADDLINES|PT_ADDTHINGS);
+	FPathTraverse it(player->mo->_f_X()+player->mo->_f_velx(), player->mo->_f_Y()+player->mo->_f_vely(), rtarget->_f_X(), rtarget->_f_Y(), PT_ADDLINES|PT_ADDTHINGS);
 	intercept_t *in;
 	while ((in = it.Next()))
 	{
@@ -58,8 +58,8 @@ bool DBot::Reachable (AActor *rtarget)
 		frac = in->frac - FixedDiv (4*FRACUNIT, MAX_TRAVERSE_DIST);
 		dist = FixedMul (frac, MAX_TRAVERSE_DIST);
 
-		hitx = it.Trace().x + FixedMul (player->mo->vel.x, frac);
-		hity = it.Trace().y + FixedMul (player->mo->vel.y, frac);
+		hitx = it.Trace().x + FixedMul (player->mo->_f_velx(), frac);
+		hity = it.Trace().y + FixedMul (player->mo->_f_vely(), frac);
 
 		if (in->isaline)
 		{
@@ -170,7 +170,7 @@ void DBot::Dofire (ticcmd_t *cmd)
 
 	no_fire = true;
 	//Distance to enemy.
-	dist = player->mo->AproxDistance(enemy, player->mo->vel.x - enemy->vel.x, player->mo->vel.y - enemy->vel.y);
+	dist = player->mo->AproxDistance(enemy, player->mo->_f_velx() - enemy->_f_velx(), player->mo->_f_vely() - enemy->_f_vely());
 
 	//FIRE EACH TYPE OF WEAPON DIFFERENT: Here should all the different weapons go.
 	if (player->ReadyWeapon->WeaponFlags & WIF_MELEEWEAPON)
@@ -222,8 +222,8 @@ void DBot::Dofire (ticcmd_t *cmd)
 		// prediction aiming
 shootmissile:
 		dist = player->mo->AproxDistance (enemy);
-		m = dist / GetDefaultByType (player->ReadyWeapon->ProjectileType)->Speed;
-		bglobal.SetBodyAt (enemy->X() + enemy->vel.x*m*2, enemy->Y() + enemy->vel.y*m*2, enemy->Z(), 1);
+		m = dist / GetDefaultByType (player->ReadyWeapon->ProjectileType)->_f_speed();
+		bglobal.SetBodyAt (enemy->_f_X() + enemy->_f_velx()*m*2, enemy->_f_Y() + enemy->_f_vely()*m*2, enemy->_f_Z(), 1);
 		angle = player->mo->__f_AngleTo(bglobal.body1);
 		if (Check_LOS (enemy, SHOOTFOV))
 			no_fire = false;
@@ -467,22 +467,16 @@ fixed_t FCajunMaster::FakeFire (AActor *source, AActor *dest, ticcmd_t *cmd)
 	
 	th->target = source;		// where it came from
 
-	float speed = (float)th->Speed;
 
-	fixedvec3 fixvel = source->Vec3To(dest);
-	DVector3 velocity(fixvel.x, fixvel.y, fixvel.z);
-	velocity.MakeUnit();
-	th->vel.x = FLOAT2FIXED(velocity[0] * speed);
-	th->vel.y = FLOAT2FIXED(velocity[1] * speed);
-	th->vel.z = FLOAT2FIXED(velocity[2] * speed);
+	th->Vel = source->Vec3To(dest).Resized(th->Speed);
 
 	fixed_t dist = 0;
 
 	while (dist < SAFE_SELF_MISDIST)
 	{
-		dist += th->Speed;
-		th->Move(th->vel.x, th->vel.y, th->vel.z);
-		if (!CleanAhead (th, th->X(), th->Y(), cmd))
+		dist += th->_f_speed();
+		th->Move(th->_f_velx(), th->_f_vely(), th->_f_velz());
+		if (!CleanAhead (th, th->_f_X(), th->_f_Y(), cmd))
 			break;
 	}
 	th->Destroy ();
@@ -496,9 +490,9 @@ angle_t DBot::FireRox (AActor *enemy, ticcmd_t *cmd)
 	AActor *actor;
 	int m;
 
-	bglobal.SetBodyAt (player->mo->X() + FixedMul(player->mo->vel.x, 5*FRACUNIT),
-					   player->mo->Y() + FixedMul(player->mo->vel.y, 5*FRACUNIT),
-					   player->mo->Z() + (player->mo->height / 2), 2);
+	bglobal.SetBodyAt (player->mo->_f_X() + FixedMul(player->mo->_f_velx(), 5*FRACUNIT),
+					   player->mo->_f_Y() + FixedMul(player->mo->_f_vely(), 5*FRACUNIT),
+					   player->mo->_f_Z() + (player->mo->height / 2), 2);
 
 	actor = bglobal.body2;
 
@@ -506,16 +500,16 @@ angle_t DBot::FireRox (AActor *enemy, ticcmd_t *cmd)
 	if (dist < SAFE_SELF_MISDIST)
 		return 0;
 	//Predict.
-	m = (((dist+1)/FRACUNIT) / GetDefaultByName("Rocket")->Speed);
+	m = (((dist+1)/FRACUNIT) / GetDefaultByName("Rocket")->_f_speed());
 
-	bglobal.SetBodyAt (enemy->X() + FixedMul(enemy->vel.x, (m+2*FRACUNIT)),
-					   enemy->Y() + FixedMul(enemy->vel.y, (m+2*FRACUNIT)), ONFLOORZ, 1);
+	bglobal.SetBodyAt (enemy->_f_X() + FixedMul(enemy->_f_velx(), (m+2*FRACUNIT)),
+					   enemy->_f_Y() + FixedMul(enemy->_f_vely(), (m+2*FRACUNIT)), ONFLOORZ, 1);
 	
 	//try the predicted location
 	if (P_CheckSight (actor, bglobal.body1, SF_IGNOREVISIBILITY)) //See the predicted location, so give a test missile
 	{
 		FCheckPosition tm;
-		if (bglobal.SafeCheckPosition (player->mo, actor->X(), actor->Y(), tm))
+		if (bglobal.SafeCheckPosition (player->mo, actor->_f_X(), actor->_f_Y(), tm))
 		{
 			if (bglobal.FakeFire (actor, bglobal.body1, cmd) >= SAFE_SELF_MISDIST)
 			{

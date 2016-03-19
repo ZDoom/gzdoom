@@ -36,7 +36,7 @@ bool AArtiDarkServant::Use (bool pickup)
 	{
 		mo->target = Owner;
 		mo->tracer = Owner;
-		mo->vel.z = 5*FRACUNIT;
+		mo->Vel.Z = 5;
 	}
 	return true;
 }
@@ -59,7 +59,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Summon)
 		if (P_TestMobjLocation(mo) == false || !self->tracer)
 		{ // Didn't fit - change back to artifact
 			mo->Destroy ();
-			AActor *arti = Spawn<AArtiDarkServant> (self->Pos(), ALLOW_REPLACE);
+			AActor *arti = Spawn<AArtiDarkServant> (self->_f_Pos(), ALLOW_REPLACE);
 			if (arti) arti->flags |= MF_DROPPED;
 			return 0;
 		}

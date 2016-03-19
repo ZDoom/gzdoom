@@ -112,7 +112,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BridgeOrbit)
 	if (self->target->args[4]) rotationradius = ((self->target->args[4] * self->target->radius) / 100);
 
 	self->Angles.Yaw += rotationspeed;
-	self->SetOrigin(self->target->Vec3Angle(rotationradius*FRACUNIT, self->_f_angle(), 0), true);
+	self->SetOrigin(self->target->Vec3Angle(rotationradius*FRACUNIT, self->Angles.Yaw, 0), true);
 	self->floorz = self->target->floorz;
 	self->ceilingz = self->target->ceilingz;
 	return 0;

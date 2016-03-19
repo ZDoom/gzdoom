@@ -856,9 +856,7 @@ int FPolyObj::GetMirror()
 
 void FPolyObj::ThrustMobj (AActor *actor, side_t *side)
 {
-	int thrustAngle;
-	int thrustX;
-	int thrustY;
+	DAngle thrustAngle;
 	DPolyAction *pe;
 
 	int force;
@@ -869,7 +867,7 @@ void FPolyObj::ThrustMobj (AActor *actor, side_t *side)
 	}
 	vertex_t *v1 = side->V1();
 	vertex_t *v2 = side->V2();
-	thrustAngle = (R_PointToAngle2 (v1->x, v1->y, v2->x, v2->y) - ANGLE_90) >> ANGLETOFINESHIFT;
+	thrustAngle = VecToAngle(v2->x - v1->x, v2->y - v1->y) - 90.;
 
 	pe = static_cast<DPolyAction *>(specialdata);
 	if (pe)
@@ -896,13 +894,12 @@ void FPolyObj::ThrustMobj (AActor *actor, side_t *side)
 		force = FRACUNIT;
 	}
 
-	thrustX = FixedMul (force, finecosine[thrustAngle]);
-	thrustY = FixedMul (force, finesine[thrustAngle]);
-	actor->vel.x += thrustX;
-	actor->vel.y += thrustY;
+	DVector2 thrust = thrustAngle.ToVector(FIXED2FLOAT(force));
+	actor->Vel += thrust;
+
 	if (crush)
 	{
-		fixedvec2 pos = actor->Vec2Offset(thrustX, thrustY);
+		fixedvec2 pos = actor->Vec2Offset(FLOAT2FIXED(thrust.X), FLOAT2FIXED(thrust.Y));
 		if (bHurtOnTouch || !P_CheckMove (actor, pos.x, pos.y))
 		{
 			int newdam = P_DamageMobj (actor, NULL, NULL, crush, NAME_Crush);
@@ -1204,8 +1201,8 @@ bool FPolyObj::CheckMobjBlocking (side_t *sd)
 							&& !((mobj->flags & MF_FLOAT) && (ld->flags & ML_BLOCK_FLOATERS))
 							&& (!(ld->flags & ML_3DMIDTEX) ||
 								(!P_LineOpening_3dMidtex(mobj, ld, open) &&
-									(mobj->Top() < open.top)
-								) || (open.abovemidtex && mobj->Z() > mobj->floorz))
+									(mobj->_f_Top() < open.top)
+								) || (open.abovemidtex && mobj->_f_Z() > mobj->floorz))
 							)
 						{
 							// [BL] We can't just continue here since we must
@@ -1218,7 +1215,7 @@ bool FPolyObj::CheckMobjBlocking (side_t *sd)
 							performBlockingThrust = true;
 						}
 
-						FBoundingBox box(mobj->X(), mobj->Y(), mobj->radius);
+						FBoundingBox box(mobj->_f_X(), mobj->_f_Y(), mobj->radius);
 
 						if (box.Right() <= ld->bbox[BOXLEFT]
 							|| box.Left() >= ld->bbox[BOXRIGHT]
@@ -1236,15 +1233,15 @@ bool FPolyObj::CheckMobjBlocking (side_t *sd)
 						// Best use the one facing the player and ignore the back side.
 						if (ld->sidedef[1] != NULL)
 						{
-							int side = P_PointOnLineSidePrecise(mobj->X(), mobj->Y(), ld);
+							int side = P_PointOnLineSidePrecise(mobj->_f_X(), mobj->_f_Y(), ld);
 							if (ld->sidedef[side] != sd)
 							{
 								continue;
 							}
 							// [BL] See if we hit below the floor/ceiling of the poly.
 							else if(!performBlockingThrust && (
-									mobj->Z() < ld->sidedef[!side]->sector->GetSecPlane(sector_t::floor).ZatPoint(mobj) ||
-									mobj->Top() > ld->sidedef[!side]->sector->GetSecPlane(sector_t::ceiling).ZatPoint(mobj)
+									mobj->_f_Z() < ld->sidedef[!side]->sector->GetSecPlane(sector_t::floor).ZatPoint(mobj) ||
+									mobj->_f_Top() > ld->sidedef[!side]->sector->GetSecPlane(sector_t::ceiling).ZatPoint(mobj)
 								))
 							{
 								performBlockingThrust = true;

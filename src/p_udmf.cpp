@@ -1306,7 +1306,7 @@ public:
 		if (floordrop) sec->Flags = SECF_FLOORDROP;
 		// killough 3/7/98: end changes
 
-		sec->gravity = 1.f;	// [RH] Default sector gravity of 1.0
+		sec->gravity = 1.;	// [RH] Default sector gravity of 1.0
 		sec->ZoneNumber = 0xFFFF;
 
 		// killough 8/28/98: initialize all sectors to normal friction
@@ -1444,7 +1444,7 @@ public:
 					continue;
 
 				case NAME_Gravity:
-					sec->gravity = float(CheckFloat(key));
+					sec->gravity = CheckFloat(key);
 					continue;
 
 				case NAME_Lightcolor:

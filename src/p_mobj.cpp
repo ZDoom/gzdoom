@@ -73,10 +73,10 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define WATER_SINK_FACTOR		3
-#define WATER_SINK_SMALL_FACTOR	4
-#define WATER_SINK_SPEED		(FRACUNIT/2)
-#define WATER_JUMP_SPEED		(FRACUNIT*7/2)
+#define WATER_SINK_FACTOR		0.125
+#define WATER_SINK_SMALL_FACTOR	0.25
+#define WATER_SINK_SPEED		0.5
+#define WATER_JUMP_SPEED		3.5
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -221,17 +221,17 @@ static VMFunction *UncalcDamageValue(int dmg, VMFunction *def)
 //
 //==========================================================================
 
-void AActor::Serialize (FArchive &arc)
+void AActor::Serialize(FArchive &arc)
 {
-	Super::Serialize (arc);
+	Super::Serialize(arc);
 
-	if (arc.IsStoring ())
+	if (arc.IsStoring())
 	{
-		arc.WriteSprite (sprite);
+		arc.WriteSprite(sprite);
 	}
 	else
 	{
-		sprite = arc.ReadSprite ();
+		sprite = arc.ReadSprite();
 	}
 
 	arc << __pos.x
@@ -263,9 +263,7 @@ void AActor::Serialize (FArchive &arc)
 		<< radius
 		<< height
 		<< projectilepassheight
-		<< vel.x
-		<< vel.y
-		<< vel.z
+		<< Vel
 		<< tics
 		<< state;
 	if (arc.IsStoring())
@@ -474,7 +472,7 @@ void AActor::Serialize (FArchive &arc)
 			}
 		}
 		ClearInterpolation();
-		UpdateWaterLevel(Z(), false);
+		UpdateWaterLevel(_f_Z(), false);
 	}
 }
 
@@ -840,9 +838,9 @@ AInventory *AActor::DropInventory (AInventory *item)
 	}
 	drop->SetOrigin(PosPlusZ(10*FRACUNIT), false);
 	drop->Angles.Yaw = Angles.Yaw;
-	drop->VelFromAngle(5*FRACUNIT);
-	drop->vel.z = FRACUNIT;
-	drop->vel += vel;
+	drop->VelFromAngle(5.);
+	drop->Vel.Z = 1.;
+	drop->Vel += Vel;
 	drop->flags &= ~MF_NOGRAVITY;	// Don't float
 	drop->ClearCounters();	// do not count for statistics again
 	return drop;
@@ -1283,7 +1281,7 @@ bool AActor::Grind(bool items)
 		if (flags & MF_ICECORPSE)
 		{
 			tics = 1;
-			vel.x = vel.y = vel.z = 0;
+			Vel.Zero();
 		}
 		else if (player)
 		{
@@ -1360,7 +1358,7 @@ void P_ExplodeMissile (AActor *mo, line_t *line, AActor *target)
 			return;
 		}
 	}
-	mo->vel.x = mo->vel.y = mo->vel.z = 0;
+	mo->Vel.Zero();
 	mo->effects = 0;		// [RH]
 	mo->flags &= ~MF_SHOOTABLE;
 	
@@ -1528,7 +1526,7 @@ void AActor::PlayBounceSound(bool onfloor)
 
 bool AActor::FloorBounceMissile (secplane_t &plane)
 {
-	if (Z() <= floorz && P_HitFloor (this))
+	if (_f_Z() <= floorz && P_HitFloor (this))
 	{
 		// Landed in some sort of liquid
 		if (BounceFlags & BOUNCE_ExplodeOnWater)
@@ -1567,13 +1565,11 @@ bool AActor::FloorBounceMissile (secplane_t &plane)
 		return true;
 	}
 
-	fixed_t dot = TMulScale16 (vel.x, plane.a, vel.y, plane.b, vel.z, plane.c);
+	double dot = (Vel | plane.Normal()) * 2;
 
 	if (BounceFlags & (BOUNCE_HereticType | BOUNCE_MBF))
 	{
-		vel.x -= MulScale15 (plane.a, dot);
-		vel.y -= MulScale15 (plane.b, dot);
-		vel.z -= MulScale15 (plane.c, dot);
+		Vel -= plane.Normal() * dot;
 		AngleFromVel();
 		if (!(BounceFlags & BOUNCE_MBF)) // Heretic projectiles die, MBF projectiles don't.
 		{
@@ -1582,14 +1578,12 @@ bool AActor::FloorBounceMissile (secplane_t &plane)
 			flags &= ~MF_INBOUNCE;
 			return false;
 		}
-		else vel.z = FixedMul(vel.z, bouncefactor);
+		else Vel.Z *= _bouncefactor();
 	}
 	else // Don't run through this for MBF-style bounces
 	{
 		// The reflected velocity keeps only about 70% of its original speed
-		vel.x = FixedMul (vel.x - MulScale15 (plane.a, dot), bouncefactor);
-		vel.y = FixedMul (vel.y - MulScale15 (plane.b, dot), bouncefactor);
-		vel.z = FixedMul (vel.z - MulScale15 (plane.c, dot), bouncefactor);
+		Vel = (Vel - plane.Normal() * dot) * _bouncefactor();
 		AngleFromVel();
 	}
 
@@ -1612,15 +1606,15 @@ bool AActor::FloorBounceMissile (secplane_t &plane)
 
 	if (BounceFlags & BOUNCE_MBF) // Bring it to rest below a certain speed
 	{
-		if (abs(vel.z) < (fixed_t)(Mass * GetGravity() / 64))
-			vel.z = 0;
+		if (fabs(Vel.Z) < Mass * GetGravity() / 64)
+			Vel.Z = 0;
 	}
 	else if (BounceFlags & (BOUNCE_AutoOff|BOUNCE_AutoOffFloorOnly))
 	{
 		if (plane.c > 0 || (BounceFlags & BOUNCE_AutoOff))
 		{
 			// AutoOff only works when bouncing off a floor, not a ceiling (or in compatibility mode.)
-			if (!(flags & MF_NOGRAVITY) && (vel.z < 3*FRACUNIT))
+			if (!(flags & MF_NOGRAVITY) && (Vel.Z < 3))
 				BounceFlags &= ~BOUNCE_TypeMask;
 		}
 	}
@@ -1633,11 +1627,12 @@ bool AActor::FloorBounceMissile (secplane_t &plane)
 //
 //----------------------------------------------------------------------------
 
-void P_ThrustMobj (AActor *mo, angle_t angle, fixed_t move)
+void P_ThrustMobj (AActor *mo, angle_t _angle, fixed_t _move)
 {
-	angle >>= ANGLETOFINESHIFT;
-	mo->vel.x += FixedMul (move, finecosine[angle]);
-	mo->vel.y += FixedMul (move, finesine[angle]);
+	DAngle angle = ANGLE2DBL(_angle);
+	double move = FIXED2DBL(_move);
+
+	mo->Vel += angle.ToVector(move);
 }
 
 //----------------------------------------------------------------------------
@@ -1702,10 +1697,9 @@ bool P_SeekerMissile (AActor *actor, angle_t _thresh, angle_t _turnMax, bool pre
 	DAngle turnMax = ANGLE2DBL(_turnMax);
 
 	int dir;
-	int dist;
 	DAngle delta;
 	AActor *target;
-	fixed_t speed;
+	double speed;
 
 	speed = !usecurspeed ? actor->Speed : actor->VelToSpeed();
 	target = actor->tracer;
@@ -1749,12 +1743,7 @@ bool P_SeekerMissile (AActor *actor, angle_t _thresh, angle_t _turnMax, bool pre
 			if (actor->Top() < target->Z() ||
 				target->Top() < actor->Z())
 			{ // Need to seek vertically
-				dist = actor->AproxDistance (target) / speed;
-				if (dist < 1)
-				{
-					dist = 1;
-				}
-				actor->vel.z = ((target->Z() + target->height / 2) - (actor->Z() + actor->height / 2)) / dist;
+				actor->Vel.Z = (target->Center() - actor->Center()) / actor->DistanceBySpeed(target, speed);
 			}
 		}
 	}
@@ -1770,7 +1759,7 @@ bool P_SeekerMissile (AActor *actor, angle_t _thresh, angle_t _turnMax, bool pre
 			{
 				aimheight = static_cast<APlayerPawn *>(target)->ViewHeight;
 			}
-			pitch = ANGLE2DBL(R_PointToAngle2(0, actor->Z() + actor->height/2, dist, target->Z() + aimheight));
+			pitch = ANGLE2DBL(R_PointToAngle2(0, actor->_f_Z() + actor->height/2, dist, target->_f_Z() + aimheight));
 		}
 		actor->Vel3DFromAngle(pitch, speed);
 	}
@@ -1784,8 +1773,8 @@ bool P_SeekerMissile (AActor *actor, angle_t _thresh, angle_t _turnMax, bool pre
 //
 // Returns the actor's old floorz.
 //
-#define STOPSPEED			0x1000
-#define CARRYSTOPSPEED		(STOPSPEED*32/3)
+#define STOPSPEED			(0x1000/65536.)
+#define CARRYSTOPSPEED		(0x1000*32/3)
 
 fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly) 
 {
@@ -1800,9 +1789,9 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 	int steps, step, totalsteps;
 	fixed_t startx, starty;
 	fixed_t oldfloorz = mo->floorz;
-	fixed_t oldz = mo->Z();
+	fixed_t oldz = mo->_f_Z();
 
-	fixed_t maxmove = (mo->waterlevel < 1) || (mo->flags & MF_MISSILE) || 
+	double maxmove = (mo->waterlevel < 1) || (mo->flags & MF_MISSILE) || 
 					  (mo->player && mo->player->crouchoffset<-10*FRACUNIT) ? MAXMOVE : MAXMOVE/4;
 
 	if (mo->flags2 & MF2_WINDTHRUST && mo->waterlevel < 2 && !(mo->flags & MF_NOCLIP))
@@ -1830,24 +1819,18 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 	// running depends on the player's original movement continuing even after
 	// it gets blocked.
 	if ((mo->player != NULL && (i_compatflags & COMPATF_WALLRUN)) || (mo->waterlevel >= 1) ||
-		(mo->player != NULL && mo->player->crouchfactor < FRACUNIT*3/4))
+		(mo->player != NULL && mo->player->crouchfactor < 0.75))
 	{
 		// preserve the direction instead of clamping x and y independently.
-		xmove = clamp (mo->vel.x, -maxmove, maxmove);
-		ymove = clamp (mo->vel.y, -maxmove, maxmove);
+		double cx = mo->Vel.X == 0 ? 1. : clamp(mo->Vel.X, -maxmove, maxmove) / mo->Vel.X;
+		double cy = mo->Vel.Y == 0 ? 1. : clamp(mo->Vel.Y, -maxmove, maxmove) / mo->Vel.Y;
+		double fac = MIN(cx, cy);
 
-		fixed_t xfac = FixedDiv(xmove, mo->vel.x);
-		fixed_t yfac = FixedDiv(ymove, mo->vel.y);
-		fixed_t fac = MIN(xfac, yfac);
-
-		xmove = mo->vel.x = FixedMul(mo->vel.x, fac);
-		ymove = mo->vel.y = FixedMul(mo->vel.y, fac);
+		mo->Vel.X *= fac;
+		mo->Vel.Y *= fac;
 	}
-	else
-	{
-		xmove = mo->vel.x;
-		ymove = mo->vel.y;
-	}
+	xmove = mo->_f_velx();
+	ymove = mo->_f_vely();
 	// [RH] Carrying sectors didn't work with low speeds in BOOM. This is
 	// because BOOM relied on the speed being fast enough to accumulate
 	// despite friction. If the speed is too low, then its movement will get
@@ -1855,14 +1838,14 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 	mo->flags4 &= ~MF4_SCROLLMOVE;
 	if (abs(scrollx) > CARRYSTOPSPEED)
 	{
-		scrollx = FixedMul (scrollx, CARRYFACTOR);
-		mo->vel.x += scrollx;
+		scrollx = FixedMul (scrollx, _f_CARRYFACTOR);
+		mo->Vel.X += FIXED2DBL(scrollx);
 		mo->flags4 |= MF4_SCROLLMOVE;
 	}
 	if (abs(scrolly) > CARRYSTOPSPEED)
 	{
-		scrolly = FixedMul (scrolly, CARRYFACTOR);
-		mo->vel.y += scrolly;
+		scrolly = FixedMul (scrolly, _f_CARRYFACTOR);
+		mo->Vel.Y += FIXED2DBL(scrolly);
 		mo->flags4 |= MF4_SCROLLMOVE;
 	}
 	xmove += scrollx;
@@ -1874,7 +1857,7 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 		{
 			// the skull slammed into something
 			mo->flags &= ~MF_SKULLFLY;
-			mo->vel.x = mo->vel.y = mo->vel.z = 0;
+			mo->Vel.Zero();
 			if (!(mo->flags2 & MF2_DORMANT))
 			{
 				if (mo->SeeState != NULL) mo->SetState (mo->SeeState);
@@ -1903,11 +1886,11 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 	// through the actor.
 
 	{
-		maxmove = mo->radius - FRACUNIT;
+		fixed_t maxmove = mo->radius - FRACUNIT;
 
 		if (maxmove <= 0)
 		{ // gibs can have radius 0, so don't divide by zero below!
-			maxmove = MAXMOVE;
+			maxmove = _f_MAXMOVE;
 		}
 
 		const fixed_t xspeed = abs (xmove);
@@ -1936,8 +1919,8 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 	fixed_t onestepx = startxmove / steps;
 	fixed_t onestepy = startymove / steps;
 
-	startx = mo->X();
-	starty = mo->Y();
+	startx = mo->_f_X();
+	starty = mo->_f_Y();
 	step = 1;
 	totalsteps = steps;
 
@@ -1968,7 +1951,7 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 */
 		// [RH] If walking on a slope, stay on the slope
 		// killough 3/15/98: Allow objects to drop off
-		fixed_t startvelx = mo->vel.x, startvely = mo->vel.y;
+		fixed_t startvelx = mo->_f_velx(), startvely = mo->_f_vely();
 
 		if (!P_TryMove (mo, ptryx, ptryy, true, walkplane, tm))
 		{
@@ -1991,11 +1974,11 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 						(mo->player->cmd.ucmd.forwardmove | mo->player->cmd.ucmd.sidemove) &&
 						mo->BlockingLine->sidedef[1] != NULL)
 					{
-						mo->vel.z = WATER_JUMP_SPEED;
+						mo->Vel.Z = WATER_JUMP_SPEED;
 					}
 					// If the blocked move executed any push specials that changed the
 					// actor's velocity, do not attempt to slide.
-					if (mo->vel.x == startvelx && mo->vel.y == startvely)
+					if (mo->_f_velx() == startvelx && mo->_f_vely() == startvely)
 					{
 						if (player && (i_compatflags & COMPATF_WALLRUN))
 						{
@@ -2003,13 +1986,13 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 						// If the move is done a second time (because it was too fast for one move), it
 						// is still clipped against the wall at its full speed, so you effectively
 						// execute two moves in one tic.
-							P_SlideMove (mo, mo->vel.x, mo->vel.y, 1);
+							P_SlideMove (mo, mo->_f_velx(), mo->_f_vely(), 1);
 						}
 						else
 						{
 							P_SlideMove (mo, onestepx, onestepy, totalsteps);
 						}
-						if ((mo->vel.x | mo->vel.y) == 0)
+						if ((mo->_f_velx() | mo->_f_vely()) == 0)
 						{
 							steps = 0;
 						}
@@ -2017,14 +2000,14 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 						{
 							if (!player || !(i_compatflags & COMPATF_WALLRUN))
 							{
-								xmove = mo->vel.x;
-								ymove = mo->vel.y;
+								xmove = mo->_f_velx();
+								ymove = mo->_f_vely();
 								onestepx = xmove / steps;
 								onestepy = ymove / steps;
 								P_CheckSlopeWalk (mo, xmove, ymove);
 							}
-							startx = mo->X() - Scale (xmove, step, steps);
-							starty = mo->Y() - Scale (ymove, step, steps);
+							startx = mo->_f_X() - Scale (xmove, step, steps);
+							starty = mo->_f_Y() - Scale (ymove, step, steps);
 						}
 					}
 					else
@@ -2037,29 +2020,29 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 					fixed_t tx, ty;
 					tx = 0, ty = onestepy;
 					walkplane = P_CheckSlopeWalk (mo, tx, ty);
-					if (P_TryMove (mo, mo->X() + tx, mo->Y() + ty, true, walkplane, tm))
+					if (P_TryMove (mo, mo->_f_X() + tx, mo->_f_Y() + ty, true, walkplane, tm))
 					{
-						mo->vel.x = 0;
+						mo->Vel.X = 0;
 					}
 					else
 					{
 						tx = onestepx, ty = 0;
 						walkplane = P_CheckSlopeWalk (mo, tx, ty);
-						if (P_TryMove (mo, mo->X() + tx, mo->Y() + ty, true, walkplane, tm))
+						if (P_TryMove (mo, mo->_f_X() + tx, mo->_f_Y() + ty, true, walkplane, tm))
 						{
-							mo->vel.y = 0;
+							mo->Vel.Y = 0;
 						}
 						else
 						{
-							mo->vel.x = mo->vel.y = 0;
+							mo->Vel.X = mo->Vel.Y = 0;
 						}
 					}
 					if (player && player->mo == mo)
 					{
-						if (mo->vel.x == 0)
-							player->vel.x = 0;
-						if (mo->vel.y == 0)
-							player->vel.y = 0;
+						if (mo->Vel.X == 0)
+							player->Vel.X = 0;
+						if (mo->Vel.Y == 0)
+							player->Vel.Y = 0;
 					}
 					steps = 0;
 				}
@@ -2106,30 +2089,23 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 							{
 								AActor *origin = tg ? mo->target : BlockingMobj->target;
 
-								float speed = (float)(mo->Speed);
 								//dest->x - source->x
-								fixedvec3 vect = mo->Vec3To(origin);
-								vect.z += origin->height / 2;
-								DVector3 velocity(vect.x, vect.y, vect.z);
-								velocity.Resize(speed);
-								mo->vel.x = (fixed_t)(velocity.X);
-								mo->vel.y = (fixed_t)(velocity.Y);
-								mo->vel.z = (fixed_t)(velocity.Z);
+								DVector3 vect = mo->Vec3To(origin);
+								vect.Z += origin->_Height() / 2;
+								mo->Vel = vect.Resized(mo->Speed);
 							}
 							else
 							{
 								if ((BlockingMobj->flags7 & MF7_MIRRORREFLECT) && (tg | blockingtg))
 								{
 									mo->Angles.Yaw += 180.;
-									mo->vel.x = -mo->vel.x / 2;
-									mo->vel.y = -mo->vel.y / 2;
-									mo->vel.z = -mo->vel.z / 2;
+									mo->Vel *= -.5;
 								}
 								else
 								{
 									mo->Angles.Yaw = angle;
 									mo->VelFromAngle(mo->Speed / 2);
-									mo->vel.z = -mo->vel.z / 2;
+									mo->Vel.Z *= -.5;
 								}
 							}
 						}
@@ -2152,7 +2128,7 @@ explode:
 					if (tm.ceilingline &&
 						tm.ceilingline->backsector &&
 						tm.ceilingline->backsector->GetTexture(sector_t::ceiling) == skyflatnum &&
-						mo->Z() >= tm.ceilingline->backsector->ceilingplane.ZatPoint(mo->PosRelative(tm.ceilingline)))
+						mo->_f_Z() >= tm.ceilingline->backsector->ceilingplane.ZatPoint(mo->PosRelative(tm.ceilingline)))
 					{
 						// Hack to prevent missiles exploding against the sky.
 						// Does not handle sky floors.
@@ -2171,19 +2147,19 @@ explode:
 			}
 			else
 			{
-				mo->vel.x = mo->vel.y = 0;
+				mo->Vel.X = mo->Vel.Y = 0;
 				steps = 0;
 			}
 		}
 		else
 		{
-			if (mo->X() != ptryx || mo->Y() != ptryy)
+			if (mo->_f_X() != ptryx || mo->_f_Y() != ptryy)
 			{
 				// If the new position does not match the desired position, the player
 				// must have gone through a teleporter, so stop moving right now if it
 				// was a regular teleporter. If it was a line-to-line or fogless teleporter,
 				// the move should continue, but startx, starty and xmove, ymove need to change.
-				if (mo->vel.x == 0 && mo->vel.y == 0)
+				if (mo->Vel.X == 0 && mo->Vel.Y == 0)
 				{
 					step = steps;
 				}
@@ -2201,8 +2177,8 @@ explode:
 						oldangle = mo->_f_angle();	// in case more moves are needed this needs to be updated.
 					}
 
-					startx = mo->X() - Scale (xmove, step, steps);
-					starty = mo->Y() - Scale (ymove, step, steps);
+					startx = mo->_f_X() - Scale (xmove, step, steps);
+					starty = mo->_f_Y() - Scale (ymove, step, steps);
 				}
 			}
 		}
@@ -2212,8 +2188,8 @@ explode:
 
 	if (player && player->mo == mo && player->cheats & CF_NOVELOCITY)
 	{ // debug option for no sliding at all
-		mo->vel.x = mo->vel.y = 0;
-		player->vel.x = player->vel.y = 0;
+		mo->Vel.X = mo->Vel.Y = 0;
+		player->Vel.X = player->Vel.Y = 0;
 		return oldfloorz;
 	}
 
@@ -2222,20 +2198,20 @@ explode:
 		return oldfloorz;
 	}
 
-	if (mo->Z() > mo->floorz && !(mo->flags2 & MF2_ONMOBJ) &&
+	if (mo->_f_Z() > mo->floorz && !(mo->flags2 & MF2_ONMOBJ) &&
 		!mo->IsNoClip2() &&
 		(!(mo->flags2 & MF2_FLY) || !(mo->flags & MF_NOGRAVITY)) &&
 		!mo->waterlevel)
 	{ // [RH] Friction when falling is available for larger aircontrols
-		if (player != NULL && level.airfriction != FRACUNIT)
+		if (player != NULL && level.airfriction != 1.)
 		{
-			mo->vel.x = FixedMul (mo->vel.x, level.airfriction);
-			mo->vel.y = FixedMul (mo->vel.y, level.airfriction);
+			mo->Vel.X *= level.airfriction;
+			mo->Vel.Y *= level.airfriction;
 
 			if (player->mo == mo)		//  Not voodoo dolls
 			{
-				player->vel.x = FixedMul (player->vel.x, level.airfriction);
-				player->vel.y = FixedMul (player->vel.y, level.airfriction);
+				player->Vel.X *= level.airfriction;
+				player->Vel.Y *= level.airfriction;
 			}
 		}
 		return oldfloorz;
@@ -2244,9 +2220,9 @@ explode:
 	// killough 8/11/98: add bouncers
 	// killough 9/15/98: add objects falling off ledges
 	// killough 11/98: only include bouncers hanging off ledges
-	if ((mo->flags & MF_CORPSE) || (mo->BounceFlags & BOUNCE_MBF && mo->Z() > mo->dropoffz) || (mo->flags6 & MF6_FALLING))
+	if ((mo->flags & MF_CORPSE) || (mo->BounceFlags & BOUNCE_MBF && mo->_f_Z() > mo->dropoffz) || (mo->flags6 & MF6_FALLING))
 	{ // Don't stop sliding if halfway off a step with some velocity
-		if (mo->vel.x > FRACUNIT/4 || mo->vel.x < -FRACUNIT/4 || mo->vel.y > FRACUNIT/4 || mo->vel.y < -FRACUNIT/4)
+		if (mo->_f_velx() > FRACUNIT/4 || mo->_f_velx() < -FRACUNIT/4 || mo->_f_vely() > FRACUNIT/4 || mo->_f_vely() < -FRACUNIT/4)
 		{
 			if (mo->floorz > mo->Sector->floorplane.ZatPoint(mo))
 			{
@@ -2271,8 +2247,7 @@ explode:
 	// killough 11/98:
 	// Stop voodoo dolls that have come to rest, despite any
 	// moving corresponding player:
-	if (mo->vel.x > -STOPSPEED && mo->vel.x < STOPSPEED
-		&& mo->vel.y > -STOPSPEED && mo->vel.y < STOPSPEED
+	if (fabs(mo->Vel.X) < STOPSPEED && fabs(mo->Vel.Y) < STOPSPEED
 		&& (!player || (player->mo != mo)
 			|| !(player->cmd.ucmd.forwardmove | player->cmd.ucmd.sidemove)))
 	{
@@ -2284,12 +2259,12 @@ explode:
 			player->mo->PlayIdle ();
 		}
 
-		mo->vel.x = mo->vel.y = 0;
+		mo->Vel.X = mo->Vel.Y = 0;
 		mo->flags4 &= ~MF4_SCROLLMOVE;
 
 		// killough 10/98: kill any bobbing velocity too (except in voodoo dolls)
 		if (player && player->mo == mo)
-			player->vel.x = player->vel.y = 0; 
+			player->Vel.X = player->Vel.Y = 0;
 	}
 	else
 	{
@@ -2306,10 +2281,10 @@ explode:
 		// Reducing player velocity is no longer needed to reduce
 		// bobbing, so ice works much better now.
 
-		fixed_t friction = P_GetFriction (mo, NULL);
+		double friction = FIXED2DBL(P_GetFriction (mo, NULL));
 
-		mo->vel.x = FixedMul (mo->vel.x, friction);
-		mo->vel.y = FixedMul (mo->vel.y, friction);
+		mo->Vel.X *= friction;
+		mo->Vel.Y *= friction;
 
 		// killough 10/98: Always decrease player bobbing by ORIG_FRICTION.
 		// This prevents problems with bobbing on ice, where it was not being
@@ -2317,8 +2292,17 @@ explode:
 
 		if (player && player->mo == mo)		//  Not voodoo dolls
 		{
-			player->vel.x = FixedMul (player->vel.x, ORIG_FRICTION);
-			player->vel.y = FixedMul (player->vel.y, ORIG_FRICTION);
+			player->Vel.X *= fORIG_FRICTION;
+			player->Vel.Y *= fORIG_FRICTION;
+		}
+
+		// Don't let the velocity become less than the smallest representable fixed point value.
+		if (fabs(mo->Vel.X) < MinVel) mo->Vel.X = 0;
+		if (fabs(mo->Vel.Y) < MinVel) mo->Vel.Y = 0;
+		if (player && player->mo == mo)		//  Not voodoo dolls
+		{
+			if (fabs(player->Vel.X) < MinVel) player->Vel.X = 0;
+			if (fabs(player->Vel.Y) < MinVel) player->Vel.Y = 0;
 		}
 	}
 	return oldfloorz;
@@ -2335,7 +2319,7 @@ void P_MonsterFallingDamage (AActor *mo)
 	if (mo->floorsector->Flags & SECF_NOFALLINGDAMAGE)
 		return;
 
-	vel = abs(mo->vel.z);
+	vel = abs(mo->_f_velz());
 	if (vel > 35*FRACUNIT)
 	{ // automatic death
 		damage = TELEFRAG_DAMAGE;
@@ -2356,46 +2340,46 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 {
 	fixed_t dist;
 	fixed_t delta;
-	fixed_t oldz = mo->Z();
-	fixed_t grav = mo->GetGravity();
+	fixed_t oldz = mo->_f_Z();
+	double grav = mo->GetGravity();
 
 //
 // check for smooth step up
 //
-	if (mo->player && mo->player->mo == mo && mo->Z() < mo->floorz)
+	if (mo->player && mo->player->mo == mo && mo->_f_Z() < mo->floorz)
 	{
-		mo->player->viewheight -= mo->floorz - mo->Z();
+		mo->player->viewheight -= mo->floorz - mo->_f_Z();
 		mo->player->deltaviewheight = mo->player->GetDeltaViewHeight();
 	}
 
-	mo->AddZ(mo->vel.z);
+	mo->AddZ(mo->Vel.Z);
 
 //
 // apply gravity
 //
-	if (mo->Z() > mo->floorz && !(mo->flags & MF_NOGRAVITY))
+	if (mo->_f_Z() > mo->floorz && !(mo->flags & MF_NOGRAVITY))
 	{
-		fixed_t startvelz = mo->vel.z;
+		double startvelz = mo->Vel.Z;
 
 		if (mo->waterlevel == 0 || (mo->player &&
 			!(mo->player->cmd.ucmd.forwardmove | mo->player->cmd.ucmd.sidemove)))
 		{
 			// [RH] Double gravity only if running off a ledge. Coming down from
 			// an upward thrust (e.g. a jump) should not double it.
-			if (mo->vel.z == 0 && oldfloorz > mo->floorz && mo->Z() == oldfloorz)
+			if (mo->_f_velz() == 0 && oldfloorz > mo->floorz && mo->_f_Z() == oldfloorz)
 			{
-				mo->vel.z -= grav + grav;
+				mo->Vel.Z -= grav + grav;
 			}
 			else
 			{
-				mo->vel.z -= grav;
+				mo->Vel.Z -= grav;
 			}
 		}
 		if (mo->player == NULL)
 		{
 			if (mo->waterlevel >= 1)
 			{
-				fixed_t sinkspeed;
+				double sinkspeed;
 
 				if ((mo->flags & MF_SPECIAL) && !(mo->flags3 & MF3_ISMONSTER))
 				{ // Pickup items don't sink if placed and drop slowly if dropped
@@ -2409,23 +2393,23 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 					// 100 being equivalent to a player.
 					if (mo->player == NULL)
 					{
-						sinkspeed = Scale(sinkspeed, clamp(mo->Mass, 1, 4000), 100);
+						sinkspeed = sinkspeed * clamp(mo->Mass, 1, 4000) / 100;
 					}
 				}
-				if (mo->vel.z < sinkspeed)
+				if (mo->Vel.Z < sinkspeed)
 				{ // Dropping too fast, so slow down toward sinkspeed.
-					mo->vel.z -= MAX(sinkspeed*2, -FRACUNIT*8);
-					if (mo->vel.z > sinkspeed)
+					mo->Vel.Z -= MAX(sinkspeed*2, -8.);
+					if (mo->Vel.Z > sinkspeed)
 					{
-						mo->vel.z = sinkspeed;
+						mo->Vel.Z = sinkspeed;
 					}
 				}
-				else if (mo->vel.z > sinkspeed)
+				else if (mo->Vel.Z > sinkspeed)
 				{ // Dropping too slow/going up, so trend toward sinkspeed.
-					mo->vel.z = startvelz + MAX(sinkspeed/3, -FRACUNIT*8);
-					if (mo->vel.z < sinkspeed)
+					mo->Vel.Z = startvelz + MAX(sinkspeed/3, -8.);
+					if (mo->Vel.Z < sinkspeed)
 					{
-						mo->vel.z = sinkspeed;
+						mo->Vel.Z = sinkspeed;
 					}
 				}
 			}
@@ -2434,15 +2418,15 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 		{
 			if (mo->waterlevel > 1)
 			{
-				fixed_t sinkspeed = -WATER_SINK_SPEED;
+				double sinkspeed = -WATER_SINK_SPEED;
 
-				if (mo->vel.z < sinkspeed)
+				if (mo->Vel.Z < sinkspeed)
 				{
-					mo->vel.z = (startvelz < sinkspeed) ? startvelz : sinkspeed;
+					mo->Vel.Z = (startvelz < sinkspeed) ? startvelz : sinkspeed;
 				}
 				else
 				{
-					mo->vel.z = startvelz + ((mo->vel.z - startvelz) >>
+					mo->Vel.Z = startvelz + ((mo->Vel.Z - startvelz) *
 						(mo->waterlevel == 1 ? WATER_SINK_SMALL_FACTOR : WATER_SINK_FACTOR));
 				}
 			}
@@ -2455,7 +2439,7 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 	// Do this only if the item was actually spawned by the map above ground to avoid problems.
 	if (mo->special1 > 0 && (mo->flags2 & MF2_FLOATBOB) && (ib_compatflags & BCOMPATF_FLOATBOB))
 	{
-		mo->SetZ(mo->floorz + mo->special1);
+		mo->_f_SetZ(mo->floorz + mo->special1);
 	}
 
 
@@ -2467,30 +2451,48 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 		if (!(mo->flags & (MF_SKULLFLY | MF_INFLOAT)))
 		{
 			dist = mo->AproxDistance (mo->target);
-			delta = (mo->target->Z() + (mo->height>>1)) - mo->Z();
+			delta = (mo->target->_f_Z() + (mo->height>>1)) - mo->_f_Z();
 			if (delta < 0 && dist < -(delta*3))
-				mo->AddZ(-mo->FloatSpeed);
+				mo->_f_AddZ(-mo->_f_floatspeed());
 			else if (delta > 0 && dist < (delta*3))
-				mo->AddZ(mo->FloatSpeed);
+				mo->_f_AddZ(mo->_f_floatspeed());
 		}
 	}
-	if (mo->player && (mo->flags & MF_NOGRAVITY) && (mo->Z() > mo->floorz))
+	if (mo->player && (mo->flags & MF_NOGRAVITY) && (mo->_f_Z() > mo->floorz))
 	{
 		if (!mo->IsNoClip2())
 		{
-			mo->AddZ(finesine[(FINEANGLES/80*level.maptime)&FINEMASK]/8);
+			mo->_f_AddZ(finesine[(FINEANGLES/80*level.maptime)&FINEMASK]/8);
 		}
-		mo->vel.z = FixedMul (mo->vel.z, FRICTION_FLY);
+		mo->Vel.Z *= fFRICTION_FLY;
 	}
 	if (mo->waterlevel && !(mo->flags & MF_NOGRAVITY))
 	{
-		mo->vel.z = FixedMul (mo->vel.z, mo->Sector->friction);
+		fixed_t friction = FIXED_MIN;
+
+		// Check 3D floors -- might be the source of the waterlevel
+		for (auto rover : mo->Sector->e->XFloor.ffloors)
+		{
+			if (!(rover->flags & FF_EXISTS)) continue;
+			if (!(rover->flags & FF_SWIMMABLE)) continue;
+
+			if (mo->_f_Z() >= rover->top.plane->ZatPoint(mo) ||
+				mo->_f_Z() + mo->height/2 < rover->bottom.plane->ZatPoint(mo))
+				continue;
+
+			friction = rover->model->GetFriction(rover->top.isceiling);
+			break;
+		}
+		if (friction == FIXED_MIN)
+			friction = mo->Sector->GetFriction();	// get real friction, even if from a terrain definition
+
+		mo->Vel.Z *= FIXED2DBL(friction);
 	}
 
 //
 // clip movement
 //
-	if (mo->Z() <= mo->floorz)
+	if (mo->_f_Z() <= mo->floorz)
 	{	// Hit the floor
 		if ((!mo->player || !(mo->player->cheats & CF_PREDICTING)) &&
 			mo->Sector->SecActTarget != NULL &&
@@ -2501,11 +2503,11 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 		P_CheckFor3DFloorHit(mo);
 		// [RH] Need to recheck this because the sector action might have
 		// teleported the actor so it is no longer below the floor.
-		if (mo->Z() <= mo->floorz)
+		if (mo->_f_Z() <= mo->floorz)
 		{
 			if ((mo->flags & MF_MISSILE) && !(mo->flags & MF_NOCLIP))
 			{
-				mo->SetZ(mo->floorz);
+				mo->_f_SetZ(mo->floorz);
 				if (mo->BounceFlags & BOUNCE_Floors)
 				{
 					mo->FloorBounceMissile (mo->floorsector->floorplane);
@@ -2514,7 +2516,7 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 				else if (mo->flags3 & MF3_NOEXPLODEFLOOR)
 				{
 					P_HitFloor (mo);
-					mo->vel.z = 0;
+					mo->Vel.Z = 0;
 					return;
 				}
 				else if (mo->flags3 & MF3_FLOORHUGGER)
@@ -2535,41 +2537,39 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 					return;
 				}
 			}
-			else if (mo->BounceFlags & BOUNCE_MBF && mo->vel.z) // check for MBF-like bounce on non-missiles
+			else if (mo->BounceFlags & BOUNCE_MBF && mo->_f_velz()) // check for MBF-like bounce on non-missiles
 			{
 				mo->FloorBounceMissile(mo->floorsector->floorplane);
 			}
 			if (mo->flags3 & MF3_ISMONSTER)		// Blasted mobj falling
 			{
-				if (mo->vel.z < -(23*FRACUNIT))
+				if (mo->_f_velz() < -(23*FRACUNIT))
 				{
 					P_MonsterFallingDamage (mo);
 				}
 			}
-			mo->SetZ(mo->floorz);
-			if (mo->vel.z < 0)
+			mo->_f_SetZ(mo->floorz);
+			if (mo->_f_velz() < 0)
 			{
 				const fixed_t minvel = -8*FRACUNIT;	// landing speed from a jump with normal gravity
 
 				// Spawn splashes, etc.
 				P_HitFloor (mo);
-				if (mo->DamageType == NAME_Ice && mo->vel.z < minvel)
+				if (mo->DamageType == NAME_Ice && mo->_f_velz() < minvel)
 				{
 					mo->tics = 1;
-					mo->vel.x = 0;
-					mo->vel.y = 0;
-					mo->vel.z = 0;
+					mo->Vel.Zero();
 					return;
 				}
 				// Let the actor do something special for hitting the floor
 				mo->HitFloor ();
 				if (mo->player)
 				{
-					if (mo->player->jumpTics < 0 || mo->vel.z < minvel)
+					if (mo->player->jumpTics < 0 || mo->_f_velz() < minvel)
 					{ // delay any jumping for a short while
 						mo->player->jumpTics = 7;
 					}
-					if (mo->vel.z < minvel && !(mo->flags & MF_NOGRAVITY))
+					if (mo->_f_velz() < minvel && !(mo->flags & MF_NOGRAVITY))
 					{
 						// Squat down.
 						// Decrease viewheight for a moment after hitting the ground (hard),
@@ -2577,11 +2577,11 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 						PlayerLandedOnThing (mo, NULL);
 					}
 				}
-				mo->vel.z = 0;
+				mo->Vel.Z = 0;
 			}
 			if (mo->flags & MF_SKULLFLY)
 			{ // The skull slammed into something
-				mo->vel.z = -mo->vel.z;
+				mo->Vel.Z = -mo->Vel.Z;
 			}
 			mo->Crash();
 		}
@@ -2592,7 +2592,7 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 		mo->AdjustFloorClip ();
 	}
 
-	if (mo->Top() > mo->ceilingz)
+	if (mo->_f_Top() > mo->ceilingz)
 	{ // hit the ceiling
 		if ((!mo->player || !(mo->player->cheats & CF_PREDICTING)) &&
 			mo->Sector->SecActTarget != NULL &&
@@ -2603,9 +2603,9 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 		P_CheckFor3DCeilingHit(mo);
 		// [RH] Need to recheck this because the sector action might have
 		// teleported the actor so it is no longer above the ceiling.
-		if (mo->Top() > mo->ceilingz)
+		if (mo->_f_Top() > mo->ceilingz)
 		{
-			mo->SetZ(mo->ceilingz - mo->height);
+			mo->_f_SetZ(mo->ceilingz - mo->height);
 			if (mo->BounceFlags & BOUNCE_Ceilings)
 			{	// ceiling bounce
 				mo->FloorBounceMissile (mo->ceilingsector->ceilingplane);
@@ -2613,10 +2613,10 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 			}
 			if (mo->flags & MF_SKULLFLY)
 			{	// the skull slammed into something
-				mo->vel.z = -mo->vel.z;
+				mo->Vel.Z = -mo->Vel.Z;
 			}
-			if (mo->vel.z > 0)
-				mo->vel.z = 0;
+			if (mo->Vel.Z > 0)
+				mo->Vel.Z = 0;
 			if ((mo->flags & MF_MISSILE) && !(mo->flags & MF_NOCLIP))
 			{
 				if (mo->flags3 & MF3_CEILINGHUGGER)
@@ -2664,12 +2664,12 @@ void P_CheckFakeFloorTriggers (AActor *mo, fixed_t oldz, bool oldz_has_viewheigh
 			viewheight = mo->height / 2;
 		}
 
-		if (oldz > waterz && mo->Z() <= waterz)
+		if (oldz > waterz && mo->_f_Z() <= waterz)
 		{ // Feet hit fake floor
 			sec->SecActTarget->TriggerAction (mo, SECSPAC_HitFakeFloor);
 		}
 
-		newz = mo->Z() + viewheight;
+		newz = mo->_f_Z() + viewheight;
 		if (!oldz_has_viewheight)
 		{
 			oldz += viewheight;
@@ -2714,7 +2714,7 @@ static void PlayerLandedOnThing (AActor *mo, AActor *onmobj)
 
 	if (mo->player->mo == mo)
 	{
-		mo->player->deltaviewheight = mo->vel.z >> 3;
+		mo->player->deltaviewheight = mo->_f_velz() >> 3;
 	}
 
 	if (mo->player->cheats & CF_PREDICTING)
@@ -2727,7 +2727,7 @@ static void PlayerLandedOnThing (AActor *mo, AActor *onmobj)
 	{
 		grunted = false;
 		// Why should this number vary by gravity?
-		if (mo->health > 0 && mo->vel.z < -mo->player->mo->GruntSpeed)
+		if (mo->health > 0 && mo->_f_velz() < -mo->player->mo->GruntSpeed)
 		{
 			S_Sound (mo, CHAN_VOICE, "*grunt", 1, ATTN_NORM);
 			grunted = true;
@@ -2771,22 +2771,22 @@ void P_NightmareRespawn (AActor *mobj)
 
 	if (z == ONFLOORZ)
 	{
-		mo->AddZ(mobj->SpawnPoint[2]);
-		if (mo->Z() < mo->floorz)
+		mo->_f_AddZ(mobj->SpawnPoint[2]);
+		if (mo->_f_Z() < mo->floorz)
 		{ // Do not respawn monsters in the floor, even if that's where they
 		  // started. The initial P_ZMovement() call would have put them on
 		  // the floor right away, but we need them on the floor now so we
 		  // can use P_CheckPosition() properly.
-			mo->SetZ(mo->floorz);
+			mo->_f_SetZ(mo->floorz);
 		}
-		if (mo->Top() > mo->ceilingz)
+		if (mo->_f_Top() > mo->ceilingz)
 		{
-			mo->SetZ(mo->ceilingz - mo->height);
+			mo->_f_SetZ(mo->ceilingz - mo->height);
 		}
 	}
 	else if (z == ONCEILINGZ)
 	{
-		mo->AddZ(-mobj->SpawnPoint[2]);
+		mo->_f_AddZ(-mobj->SpawnPoint[2]);
 	}
 
 	// If there are 3D floors, we need to find floor/ceiling again.
@@ -2794,21 +2794,21 @@ void P_NightmareRespawn (AActor *mobj)
 
 	if (z == ONFLOORZ)
 	{
-		if (mo->Z() < mo->floorz)
+		if (mo->_f_Z() < mo->floorz)
 		{ // Do not respawn monsters in the floor, even if that's where they
 		  // started. The initial P_ZMovement() call would have put them on
 		  // the floor right away, but we need them on the floor now so we
 		  // can use P_CheckPosition() properly.
-			mo->SetZ(mo->floorz);
+			mo->_f_SetZ(mo->floorz);
 		}
-		if (mo->Top() > mo->ceilingz)
+		if (mo->_f_Top() > mo->ceilingz)
 		{ // Do the same for the ceiling.
-			mo->SetZ(mo->ceilingz - mo->height);
+			mo->_f_SetZ(mo->ceilingz - mo->height);
 		}
 	}
 
 	// something is occupying its position?
-	if (!P_CheckPosition(mo, mo->X(), mo->Y(), true))
+	if (!P_CheckPosition(mo, mo->_f_X(), mo->_f_Y(), true))
 	{
 		//[GrafZahl] MF_COUNTKILL still needs to be checked here.
 		mo->ClearCounters();
@@ -2816,7 +2816,7 @@ void P_NightmareRespawn (AActor *mobj)
 		return;		// no respawn
 	}
 
-	z = mo->Z();
+	z = mo->_f_Z();
 
 	// inherit attributes from deceased one
 	mo->SpawnPoint[0] = mobj->SpawnPoint[0];
@@ -3054,7 +3054,7 @@ void AActor::HitFloor ()
 bool AActor::Slam (AActor *thing)
 {
 	flags &= ~MF_SKULLFLY;
-	vel.x = vel.y = vel.z = 0;
+	Vel.Zero();
 	if (health > 0)
 	{
 		if (!(flags2 & MF2_DORMANT))
@@ -3270,8 +3270,8 @@ fixedvec3 AActor::GetPortalTransition(fixed_t byoffset, sector_t **pSec)
 {
 	bool moved = false;
 	sector_t *sec = Sector;
-	fixed_t testz = Z() + byoffset;
-	fixedvec3 pos = Pos();
+	fixed_t testz = _f_Z() + byoffset;
+	fixedvec3 pos = _f_Pos();
 
 	while (!sec->PortalBlocksMovement(sector_t::ceiling))
 	{
@@ -3309,15 +3309,15 @@ void AActor::CheckPortalTransition(bool islinked)
 	while (!Sector->PortalBlocksMovement(sector_t::ceiling))
 	{
 		AActor *port = Sector->SkyBoxes[sector_t::ceiling];
-		if (Z() > port->threshold)
+		if (_f_Z() > port->threshold)
 		{
-			fixedvec3 oldpos = Pos();
+			fixedvec3 oldpos = _f_Pos();
 			if (islinked && !moved) UnlinkFromWorld();
 			SetXYZ(PosRelative(port->Sector));
-			PrevX += X() - oldpos.x;
-			PrevY += Y() - oldpos.y;
-			PrevZ += Z() - oldpos.z;
-			Sector = P_PointInSector(X(), Y());
+			PrevX += _f_X() - oldpos.x;
+			PrevY += _f_Y() - oldpos.y;
+			PrevZ += _f_Z() - oldpos.z;
+			Sector = P_PointInSector(_f_X(), _f_Y());
 			PrevPortalGroup = Sector->PortalGroup;
 			moved = true;
 		}
@@ -3328,15 +3328,15 @@ void AActor::CheckPortalTransition(bool islinked)
 		while (!Sector->PortalBlocksMovement(sector_t::floor))
 		{
 			AActor *port = Sector->SkyBoxes[sector_t::floor];
-			if (Z() < port->threshold && floorz < port->threshold)
+			if (_f_Z() < port->threshold && floorz < port->threshold)
 			{
-				fixedvec3 oldpos = Pos();
+				fixedvec3 oldpos = _f_Pos();
 				if (islinked && !moved) UnlinkFromWorld();
 				SetXYZ(PosRelative(port->Sector));
-				PrevX += X() - oldpos.x;
-				PrevY += Y() - oldpos.y;
-				PrevZ += Z() - oldpos.z;
-				Sector = P_PointInSector(X(), Y());
+				PrevX += _f_X() - oldpos.x;
+				PrevY += _f_Y() - oldpos.y;
+				PrevZ += _f_Z() - oldpos.z;
+				Sector = P_PointInSector(_f_X(), _f_Y());
 				PrevPortalGroup = Sector->PortalGroup;
 				moved = true;
 			}
@@ -3376,8 +3376,7 @@ void AActor::Tick ()
 	//assert (state != NULL);
 	if (state == NULL)
 	{
-		Printf("Actor of type %s at (%f,%f) left without a state\n", GetClass()->TypeName.GetChars(),
-			X()/65536., Y()/65536.);
+		Printf("Actor of type %s at (%f,%f) left without a state\n", GetClass()->TypeName.GetChars(), X(), Y());
 		Destroy();
 		return;
 	}
@@ -3409,7 +3408,7 @@ void AActor::Tick ()
 
 		UnlinkFromWorld ();
 		flags |= MF_NOBLOCKMAP;
-		SetXYZ(Vec3Offset(vel.x, vel.y, vel.z));
+		SetXYZ(Vec3Offset(_f_velx(), _f_vely(), _f_velz()));
 		CheckPortalTransition(false);
 		LinkToWorld ();
 	}
@@ -3457,7 +3456,7 @@ void AActor::Tick ()
 			{
 				// add some smoke behind the rocket 
 				smokecounter = 0;
-				AActor *th = Spawn("RocketSmokeTrail", Vec3Offset(-vel.x, -vel.y, -vel.z), ALLOW_REPLACE);
+				AActor *th = Spawn("RocketSmokeTrail", Vec3Offset(-_f_velx(), -_f_vely(), -_f_velz()), ALLOW_REPLACE);
 				if (th)
 				{
 					th->tics -= pr_rockettrail()&3;
@@ -3471,10 +3470,10 @@ void AActor::Tick ()
 			if (++smokecounter == 8)
 			{
 				smokecounter = 0;
-				angle_t moveangle = R_PointToAngle2(0,0,vel.x,vel.y);
+				angle_t moveangle = R_PointToAngle2(0,0,_f_velx(),_f_vely());
 				fixed_t xo = -FixedMul(finecosine[(moveangle) >> ANGLETOFINESHIFT], radius * 2) + (pr_rockettrail() << 10);
 				fixed_t yo = -FixedMul(finesine[(moveangle) >> ANGLETOFINESHIFT], radius * 2) + (pr_rockettrail() << 10);
-				AActor * th = Spawn("GrenadeSmokeTrail", Vec3Offset(xo, yo, - (height>>3) * (vel.z>>16) + (2*height)/3), ALLOW_REPLACE);
+				AActor * th = Spawn("GrenadeSmokeTrail", Vec3Offset(xo, yo, - (height>>3) * (_f_velz()>>16) + (2*height)/3), ALLOW_REPLACE);
 				if (th)
 				{
 					th->tics -= pr_rockettrail()&3;
@@ -3484,7 +3483,7 @@ void AActor::Tick ()
 			}
 		}
 
-		fixed_t oldz = Z();
+		fixed_t oldz = _f_Z();
 
 		// [RH] Give the pain elemental vertical friction
 		// This used to be in APainElemental::Tick but in order to use
@@ -3493,14 +3492,14 @@ void AActor::Tick ()
 		{
 			if (health >0)
 			{
-				if (abs (vel.z) < FRACUNIT/4)
+				if (abs (_f_velz()) < FRACUNIT/4)
 				{
-					vel.z = 0;
+					Vel.Z = 0;
 					flags4 &= ~MF4_VFRICTION;
 				}
 				else
 				{
-					vel.z = FixedMul (vel.z, 0xe800);
+					Vel.Z *= (0xe800 / 65536.);
 				}
 			}
 		}
@@ -3639,7 +3638,7 @@ void AActor::Tick ()
 						if (i_compatflags&COMPATF_RAVENSCROLL)
 						{
 							angle_t fineangle = HexenScrollDirs[scrolltype / 3] * 32;
-							fixed_t carryspeed = DivScale32 (HexenSpeedMuls[scrolltype % 3], 32*CARRYFACTOR);
+							fixed_t carryspeed = DivScale32 (HexenSpeedMuls[scrolltype % 3], 32*_f_CARRYFACTOR);
 							scrollx += FixedMul (carryspeed, finecosine[fineangle]);
 							scrolly += FixedMul (carryspeed, finesine[fineangle]);
 						}
@@ -3655,7 +3654,7 @@ void AActor::Tick ()
 					{ // Heretic scroll special
 						scrolltype -= Carry_East5;
 						BYTE dir = HereticScrollDirs[scrolltype / 5];
-						fixed_t carryspeed = DivScale32 (HereticSpeedMuls[scrolltype % 5], 32*CARRYFACTOR);
+						fixed_t carryspeed = DivScale32 (HereticSpeedMuls[scrolltype % 5], 32*_f_CARRYFACTOR);
 						if (scrolltype<=Carry_East35 && !(i_compatflags&COMPATF_RAVENSCROLL)) 
 						{
 							// Use speeds that actually match the scrolling textures!
@@ -3668,18 +3667,18 @@ void AActor::Tick ()
 					{ // Special Heretic scroll special
 						if (i_compatflags&COMPATF_RAVENSCROLL)
 						{
-							scrollx += DivScale32 (28, 32*CARRYFACTOR);
+							scrollx += DivScale32 (28, 32*_f_CARRYFACTOR);
 						}
 						else
 						{
 							// Use a speed that actually matches the scrolling texture!
-							scrollx += DivScale32 (12, 32*CARRYFACTOR);
+							scrollx += DivScale32 (12, 32*_f_CARRYFACTOR);
 						}
 					}
 					else if (scrolltype == Scroll_StrifeCurrent)
 					{ // Strife scroll special
 						int anglespeed = tagManager.GetFirstSectorTag(sec) - 100;
-						fixed_t carryspeed = DivScale32 (anglespeed % 10, 16*CARRYFACTOR);
+						fixed_t carryspeed = DivScale32 (anglespeed % 10, 16*_f_CARRYFACTOR);
 						angle_t fineangle = (anglespeed / 10) << (32-3);
 						fineangle >>= ANGLETOFINESHIFT;
 						scrollx += FixedMul (carryspeed, finecosine[fineangle]);
@@ -3698,7 +3697,7 @@ void AActor::Tick ()
 				}
 				fixedvec3 pos = PosRelative(sec);
 				height = sec->floorplane.ZatPoint (pos);
-				if (Z() > height)
+				if (_f_Z() > height)
 				{
 					if (heightsec == NULL)
 					{
@@ -3706,7 +3705,7 @@ void AActor::Tick ()
 					}
 
 					waterheight = heightsec->floorplane.ZatPoint (pos);
-					if (waterheight > height && Z() >= waterheight)
+					if (waterheight > height && _f_Z() >= waterheight)
 					{
 						continue;
 					}
@@ -3737,13 +3736,13 @@ void AActor::Tick ()
 		// [RH] If standing on a steep slope, fall down it
 		if ((flags & MF_SOLID) && !(flags & (MF_NOCLIP|MF_NOGRAVITY)) &&
 			!(flags & MF_NOBLOCKMAP) &&
-			vel.z <= 0 &&
-			floorz == Z())
+			_f_velz() <= 0 &&
+			floorz == _f_Z())
 		{
 			secplane_t floorplane;
 
 			// Check 3D floors as well
-			floorplane = P_FindFloorPlane(floorsector, X(), Y(), floorz);
+			floorplane = P_FindFloorPlane(floorsector, _f_X(), _f_Y(), floorz);
 
 			if (floorplane.c < STEEPSLOPE &&
 				floorplane.ZatPoint (PosRelative(floorsector)) <= floorz)
@@ -3758,7 +3757,7 @@ void AActor::Tick ()
 						const sector_t *sec = node->m_sector;
 						if (sec->floorplane.c >= STEEPSLOPE)
 						{
-							if (floorplane.ZatPoint (PosRelative(node->m_sector)) >= Z() - MaxStepHeight)
+							if (floorplane.ZatPoint (PosRelative(node->m_sector)) >= _f_Z() - MaxStepHeight)
 							{
 								dopush = false;
 								break;
@@ -3768,8 +3767,7 @@ void AActor::Tick ()
 				}
 				if (dopush)
 				{
-					vel.x += floorplane.a;
-					vel.y += floorplane.b;
+					Vel += floorplane.Normal().XY();
 				}
 			}
 		}
@@ -3779,19 +3777,21 @@ void AActor::Tick ()
 		// still have missiles that go straight up and down through actors without
 		// damaging anything.
 		// (for backwards compatibility this must check for lack of damage function, not for zero damage!)
-		if ((flags & MF_MISSILE) && (vel.x|vel.y) == 0 && Damage != NULL)
+		if ((flags & MF_MISSILE) && Vel.X == 0 && Vel.Y == 0 && Damage != NULL)
 		{
-			vel.x = 1;
+			Vel.X = MinVel;
 		}
 
 		// Handle X and Y velocities
 		BlockingMobj = NULL;
+		assert(!player || !isnan(Vel.X));
 		fixed_t oldfloorz = P_XYMovement (this, cummx, cummy);
+		assert(!player || !isnan(Vel.X));
 		if (ObjectFlags & OF_EuthanizeMe)
 		{ // actor was destroyed
 			return;
 		}
-		if ((vel.x | vel.y) == 0) // Actors at rest
+		if (Vel.X == 0 && Vel.Y == 0) // Actors at rest
 		{
 			if (flags2 & MF2_BLASTED)
 			{ // Reset to not blasted when velocities are gone
@@ -3803,7 +3803,7 @@ void AActor::Tick ()
 			}
 
 		}
-		if (vel.z || BlockingMobj || Z() != floorz)
+		if (Vel.Z != 0 || BlockingMobj || _f_Z() != floorz)
 		{	// Handle Z velocity and gravity
 			if (((flags2 & MF2_PASSMOBJ) || (flags & MF_SPECIAL)) && !(i_compatflags & COMPATF_NO_PASSMOBJ))
 			{
@@ -3816,24 +3816,24 @@ void AActor::Tick ()
 				{
 					if (player)
 					{
-						if (vel.z < (fixed_t)(level.gravity * Sector->gravity * -655.36f)
+						if (_f_velz() < (fixed_t)(level.gravity * Sector->gravity * -655.36f)
 							&& !(flags&MF_NOGRAVITY))
 						{
 							PlayerLandedOnThing (this, onmo);
 						}
 					}
-					if (onmo->Top() - Z() <= MaxStepHeight)
+					if (onmo->_f_Top() - _f_Z() <= MaxStepHeight)
 					{
 						if (player && player->mo == this)
 						{
-							player->viewheight -= onmo->Top() - Z();
+							player->viewheight -= onmo->_f_Top() - _f_Z();
 							fixed_t deltaview = player->GetDeltaViewHeight();
 							if (deltaview > player->deltaviewheight)
 							{
 								player->deltaviewheight = deltaview;
 							}
 						} 
-						SetZ(onmo->Top());
+						_f_SetZ(onmo->_f_Top());
 					}
 					// Check for MF6_BUMPSPECIAL
 					// By default, only players can activate things by bumping into them
@@ -3852,14 +3852,14 @@ void AActor::Tick ()
 								onmo->lastbump = level.maptime + TICRATE;
 						}
 					}
-					if (vel.z != 0 && (BounceFlags & BOUNCE_Actors))
+					if (_f_velz() != 0 && (BounceFlags & BOUNCE_Actors))
 					{
 						P_BounceActor(this, onmo, true);
 					}
 					else
 					{
 						flags2 |= MF2_ONMOBJ;
-						vel.z = 0;
+						Vel.Z = 0;
 						Crash();
 					}
 				}
@@ -3872,7 +3872,7 @@ void AActor::Tick ()
 			if (ObjectFlags & OF_EuthanizeMe)
 				return;		// actor was destroyed
 		}
-		else if (Z() <= floorz)
+		else if (_f_Z() <= floorz)
 		{
 			Crash();
 		}
@@ -3999,25 +3999,25 @@ void AActor::CheckSectorTransition(sector_t *oldsec)
 		if (Sector->SecActTarget != NULL)
 		{
 			int act = SECSPAC_Enter;
-			if (Z() <= Sector->floorplane.ZatPoint(this))
+			if (_f_Z() <= Sector->floorplane.ZatPoint(this))
 			{
 				act |= SECSPAC_HitFloor;
 			}
-			if (Z() + height >= Sector->ceilingplane.ZatPoint(this))
+			if (_f_Z() + height >= Sector->ceilingplane.ZatPoint(this))
 			{
 				act |= SECSPAC_HitCeiling;
 			}
-			if (Sector->heightsec != NULL && Z() == Sector->heightsec->floorplane.ZatPoint(this))
+			if (Sector->heightsec != NULL && _f_Z() == Sector->heightsec->floorplane.ZatPoint(this))
 			{
 				act |= SECSPAC_HitFakeFloor;
 			}
 			Sector->SecActTarget->TriggerAction(this, act);
 		}
-		if (Z() == floorz)
+		if (_f_Z() == floorz)
 		{
 			P_CheckFor3DFloorHit(this);
 		}
-		if (Top() == ceilingz)
+		if (_f_Top() == ceilingz)
 		{
 			P_CheckFor3DCeilingHit(this);
 		}
@@ -4057,20 +4057,20 @@ bool AActor::UpdateWaterLevel (fixed_t oldz, bool dosplash)
 			fh = hsec->floorplane.ZatPoint (this);
 			//if (hsec->MoreFlags & SECF_UNDERWATERMASK)	// also check Boom-style non-swimmable sectors
 			{
-				if (Z() < fh)
+				if (_f_Z() < fh)
 				{
 					waterlevel = 1;
-					if (Z() + height/2 < fh)
+					if (_f_Z() + height/2 < fh)
 					{
 						waterlevel = 2;
-						if ((player && Z() + player->viewheight <= fh) ||
-							(Z() + height <= fh))
+						if ((player && _f_Z() + player->viewheight <= fh) ||
+							(_f_Z() + height <= fh))
 						{
 							waterlevel = 3;
 						}
 					}
 				}
-				else if (!(hsec->MoreFlags & SECF_FAKEFLOORONLY) && (Top() > hsec->ceilingplane.ZatPoint (this)))
+				else if (!(hsec->MoreFlags & SECF_FAKEFLOORONLY) && (_f_Top() > hsec->ceilingplane.ZatPoint (this)))
 				{
 					waterlevel = 3;
 				}
@@ -4099,17 +4099,17 @@ bool AActor::UpdateWaterLevel (fixed_t oldz, bool dosplash)
 				fixed_t ff_bottom=rover->bottom.plane->ZatPoint(this);
 				fixed_t ff_top=rover->top.plane->ZatPoint(this);
 
-				if(ff_top <= Z() || ff_bottom > (Z() + (height >> 1))) continue;
+				if(ff_top <= _f_Z() || ff_bottom > (_f_Z() + (height >> 1))) continue;
 				
 				fh=ff_top;
-				if (Z() < fh)
+				if (_f_Z() < fh)
 				{
 					waterlevel = 1;
-					if (Z() + height/2 < fh)
+					if (_f_Z() + height/2 < fh)
 					{
 						waterlevel = 2;
-						if ((player && Z() + player->viewheight <= fh) ||
-							(Z() + height <= fh))
+						if ((player && _f_Z() + player->viewheight <= fh) ||
+							(_f_Z() + height <= fh))
 						{
 							waterlevel = 3;
 						}
@@ -4199,7 +4199,7 @@ AActor *AActor::StaticSpawn (PClassActor *type, fixed_t ix, fixed_t iy, fixed_t 
 	actor->renderflags = (actor->renderflags & ~RF_FULLBRIGHT) | ActorRenderFlags::FromInt (st->GetFullbright());
 	actor->touching_sectorlist = NULL;	// NULL head of sector list // phares 3/13/98
 	if (G_SkillProperty(SKILLP_FastMonsters) && actor->GetClass()->FastSpeed >= 0)
-		actor->Speed = actor->GetClass()->FastSpeed;
+	actor->Speed = actor->GetClass()->FastSpeed;
 	actor->DamageMultiply = FRACUNIT;
 
 	// set subsector and/or block links
@@ -4214,11 +4214,11 @@ AActor *AActor::StaticSpawn (PClassActor *type, fixed_t ix, fixed_t iy, fixed_t 
 	// For FLOATRANDZ just use the floor here.
 	if (iz == ONFLOORZ || iz == FLOATRANDZ)
 	{
-		actor->SetZ(actor->floorz, false);
+		actor->_f_SetZ(actor->floorz, false);
 	}
 	else if (iz == ONCEILINGZ)
 	{
-		actor->SetZ(actor->ceilingz - actor->height);
+		actor->_f_SetZ(actor->ceilingz - actor->height);
 	}
 
 	if (SpawningMapThing || !type->IsDescendantOf (RUNTIME_CLASS(APlayerPawn)))
@@ -4257,11 +4257,11 @@ AActor *AActor::StaticSpawn (PClassActor *type, fixed_t ix, fixed_t iy, fixed_t 
 
 	if (iz == ONFLOORZ)
 	{
-		actor->SetZ(actor->floorz);
+		actor->_f_SetZ(actor->floorz);
 	}
 	else if (iz == ONCEILINGZ)
 	{
-		actor->SetZ(actor->ceilingz - actor->height);
+		actor->_f_SetZ(actor->ceilingz - actor->height);
 	}
 	else if (iz == FLOATRANDZ)
 	{
@@ -4269,16 +4269,16 @@ AActor *AActor::StaticSpawn (PClassActor *type, fixed_t ix, fixed_t iy, fixed_t 
 		if (space > 48*FRACUNIT)
 		{
 			space -= 40*FRACUNIT;
-			actor->SetZ(MulScale8 (space, rng()) + actor->floorz + 40*FRACUNIT);
+			actor->_f_SetZ(MulScale8 (space, rng()) + actor->floorz + 40*FRACUNIT);
 		}
 		else
 		{
-			actor->SetZ(actor->floorz);
+			actor->_f_SetZ(actor->floorz);
 		}
 	}
 	else
 	{
-		actor->SpawnPoint[2] = (actor->Z() - actor->Sector->floorplane.ZatPoint(actor));
+		actor->SpawnPoint[2] = (actor->_f_Z() - actor->Sector->floorplane.ZatPoint(actor));
 	}
 
 	if (actor->FloatBobPhase == (BYTE)-1) actor->FloatBobPhase = rng();	// Don't make everything bob in sync (unless deliberately told to do)
@@ -4290,7 +4290,7 @@ AActor *AActor::StaticSpawn (PClassActor *type, fixed_t ix, fixed_t iy, fixed_t 
 	{
 		actor->floorclip = 0;
 	}
-	actor->UpdateWaterLevel (actor->Z(), false);
+	actor->UpdateWaterLevel (actor->_f_Z(), false);
 	if (!SpawningMapThing)
 	{
 		actor->BeginPlay ();
@@ -4534,7 +4534,7 @@ void AActor::AdjustFloorClip ()
 	const msecnode_t *m;
 
 	// possibly standing on a 3D-floor
-	if (Sector->e->XFloor.ffloors.Size() && Z() > Sector->floorplane.ZatPoint(this)) floorclip = 0;
+	if (Sector->e->XFloor.ffloors.Size() && _f_Z() > Sector->floorplane.ZatPoint(this)) floorclip = 0;
 
 	// [RH] clip based on shallowest floor player is standing on
 	// If the sector has a deep water effect, then let that effect
@@ -4543,7 +4543,7 @@ void AActor::AdjustFloorClip ()
 	{
 		fixedvec3 pos = PosRelative(m->m_sector);
 		sector_t *hsec = m->m_sector->GetHeightSec();
-		if (hsec == NULL && m->m_sector->floorplane.ZatPoint (pos) == Z())
+		if (hsec == NULL && m->m_sector->floorplane.ZatPoint (pos) == _f_Z())
 		{
 			fixed_t clip = Terrains[m->m_sector->GetTerrain(sector_t::floor)].FootClip;
 			if (clip < shallowestclip)
@@ -4637,9 +4637,9 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 		( NULL != p->attacker ) &&							// don't respawn on damaging floors
 		( p->mo->Sector->damageamount < TELEFRAG_DAMAGE ))	// this really should be a bit smarter...
 	{
-		spawn_x = p->mo->X();
-		spawn_y = p->mo->Y();
-		spawn_z = p->mo->Z();
+		spawn_x = p->mo->_f_X();
+		spawn_y = p->mo->_f_Y();
+		spawn_z = p->mo->_f_Z();
 
 		SpawnAngle = p->mo->Angles.Yaw;
 	}
@@ -4669,9 +4669,9 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 	if (level.flags & LEVEL_USEPLAYERSTARTZ)
 	{
 		if (spawn_z == ONFLOORZ)
-			mobj->AddZ(mthing->z);
+			mobj->_f_AddZ(mthing->z);
 		else if (spawn_z == ONCEILINGZ)
-			mobj->AddZ(-mthing->z);
+			mobj->_f_AddZ(-mthing->z);
 		P_FindFloorCeiling(mobj, FFCF_SAMESECTOR | FFCF_ONLY3DFLOORS | FFCF_3DRESTRICT);
 	}
 
@@ -4739,7 +4739,7 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 	p->MUSINFOactor = NULL;
 	p->MUSINFOtics = -1;
 
-	p->vel.x = p->vel.y = 0;		// killough 10/98: initialize bobbing to 0.
+	p->Vel.Zero();	// killough 10/98: initialize bobbing to 0.
 
 	for (int ii = 0; ii < MAXPLAYERS; ++ii)
 	{
@@ -4797,9 +4797,9 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 
 	// "Fix" for one of the starts on exec.wad MAP01: If you start inside the ceiling,
 	// drop down below it, even if that means sinking into the floor.
-	if (mobj->Top() > mobj->ceilingz)
+	if (mobj->_f_Top() > mobj->ceilingz)
 	{
-		mobj->SetZ(mobj->ceilingz - mobj->height, false);
+		mobj->_f_SetZ(mobj->ceilingz - mobj->height, false);
 	}
 
 	// [BC] Do script stuff
@@ -5130,14 +5130,14 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 
 	if (z == ONFLOORZ)
 	{
-		mobj->AddZ(mthing->z);
+		mobj->_f_AddZ(mthing->z);
 		if ((mobj->flags2 & MF2_FLOATBOB) && (ib_compatflags & BCOMPATF_FLOATBOB))
 		{
 			mobj->special1 = mthing->z;
 		}
 	}
 	else if (z == ONCEILINGZ)
-		mobj->AddZ(-mthing->z);
+		mobj->_f_AddZ(-mthing->z);
 
 	mobj->SpawnPoint[0] = mthing->x;
 	mobj->SpawnPoint[1] = mthing->y;
@@ -5322,7 +5322,7 @@ void P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage, AAc
 	{
 		z += pr_spawnblood.Random2 () << 10;
 		th = Spawn (bloodcls, x, y, z, NO_REPLACE); // GetBloodType already performed the replacement
-		th->vel.z = FRACUNIT*2;
+		th->Vel.Z = 2;
 		th->Angles.Yaw = ANGLE2DBL(dir);
 		// [NG] Applying PUFFGETSOWNER to the blood will make it target the owner
 		if (th->flags5 & MF5_PUFFGETSOWNER) th->target = originator;
@@ -5418,9 +5418,9 @@ void P_BloodSplatter (fixedvec3 pos, AActor *originator)
 
 		mo = Spawn(bloodcls, pos, NO_REPLACE); // GetBloodType already performed the replacement
 		mo->target = originator;
-		mo->vel.x = pr_splatter.Random2 () << 10;
-		mo->vel.y = pr_splatter.Random2 () << 10;
-		mo->vel.z = 3*FRACUNIT;
+		mo->Vel.X = pr_splatter.Random2 () / 64.;
+		mo->Vel.Y = pr_splatter.Random2() / 64.;
+		mo->Vel.Z = 3;
 
 		// colorize the blood!
 		if (bloodcolor!=0 && !(mo->flags2 & MF2_DONTTRANSLATE)) 
@@ -5505,8 +5505,8 @@ void P_RipperBlood (AActor *mo, AActor *bleeder)
 		if (th->flags5 & MF5_PUFFGETSOWNER) th->target = bleeder;
 		if (gameinfo.gametype == GAME_Heretic)
 			th->flags |= MF_NOGRAVITY;
-		th->vel.x = mo->vel.x >> 1;
-		th->vel.y = mo->vel.y >> 1;
+		th->Vel.X = mo->Vel.X / 2;
+		th->Vel.Y = mo->Vel.Y / 2;
 		th->tics += pr_ripperblood () & 3;
 
 		// colorize the blood!
@@ -5561,17 +5561,17 @@ bool P_HitWater (AActor * thing, sector_t * sec, fixed_t x, fixed_t y, fixed_t z
 	int terrainnum;
 	sector_t *hsec = NULL;
 	
-	if (x == FIXED_MIN) x = thing->X();
-	if (y == FIXED_MIN) y = thing->Y();
-	if (z == FIXED_MIN) z = thing->Z();
+	if (x == FIXED_MIN) x = thing->_f_X();
+	if (y == FIXED_MIN) y = thing->_f_Y();
+	if (z == FIXED_MIN) z = thing->_f_Z();
 	// don't splash above the object
 	if (checkabove)
 	{
-		fixed_t compare_z = thing->Z() + (thing->height >> 1);
+		fixed_t compare_z = thing->_f_Z() + (thing->height >> 1);
 		// Missiles are typically small and fast, so they might
 		// end up submerged by the move that calls P_HitWater.
 		if (thing->flags & MF_MISSILE)
-			compare_z -= thing->vel.z;
+			compare_z -= thing->_f_velz();
 		if (z > compare_z) 
 			return false;
 	}
@@ -5635,7 +5635,7 @@ foundone:
 
 	// Don't splash for living things with small vertical velocities.
 	// There are levels where the constant splashing from the monsters gets extremely annoying
-	if (((thing->flags3&MF3_ISMONSTER || thing->player) && thing->vel.z >= -6*FRACUNIT) && !force)
+	if (((thing->flags3&MF3_ISMONSTER || thing->player) && thing->_f_velz() >= -6*FRACUNIT) && !force)
 		return Terrains[terrainnum].IsLiquid;
 
 	splash = &Splashes[splashnum];
@@ -5657,13 +5657,13 @@ foundone:
 			mo->target = thing;
 			if (splash->ChunkXVelShift != 255)
 			{
-				mo->vel.x = pr_chunk.Random2() << splash->ChunkXVelShift;
+				mo->Vel.X = (pr_chunk.Random2() << splash->ChunkXVelShift) / 65536.;
 			}
 			if (splash->ChunkYVelShift != 255)
 			{
-				mo->vel.y = pr_chunk.Random2() << splash->ChunkYVelShift;
+				mo->Vel.Y = (pr_chunk.Random2() << splash->ChunkYVelShift) / 65536.;
 			}
-			mo->vel.z = splash->ChunkBaseZVel + (pr_chunk() << splash->ChunkZVelShift);
+			mo->Vel.Z = splash->ChunkBaseZVel + (pr_chunk() << splash->ChunkZVelShift) / 65536.;
 		}
 		if (splash->SplashBase)
 		{
@@ -5704,7 +5704,7 @@ bool P_HitFloor (AActor *thing)
 
 	// killough 11/98: touchy objects explode on impact
 	// Allow very short drops to be safe, so that a touchy can be summoned without exploding.
-	if (thing->flags6 & MF6_TOUCHY && ((thing->flags6 & MF6_ARMED) || thing->IsSentient()) && ((thing->vel.z) < (-5 * FRACUNIT)))
+	if (thing->flags6 & MF6_TOUCHY && ((thing->flags6 & MF6_ARMED) || thing->IsSentient()) && ((thing->_f_velz()) < (-5 * FRACUNIT)))
 	{
 		thing->flags6 &= ~MF6_ARMED; // Disarm
 		P_DamageMobj (thing, NULL, NULL, thing->health, NAME_Crush, DMG_FORCED);  // kill object
@@ -5719,7 +5719,7 @@ bool P_HitFloor (AActor *thing)
 	for (m = thing->touching_sectorlist; m; m = m->m_tnext)
 	{
 		pos = thing->PosRelative(m->m_sector);
-		if (thing->Z() == m->m_sector->floorplane.ZatPoint(pos.x, pos.y))
+		if (thing->_f_Z() == m->m_sector->floorplane.ZatPoint(pos.x, pos.y))
 		{
 			break;
 		}
@@ -5731,7 +5731,7 @@ bool P_HitFloor (AActor *thing)
 			if (!(rover->flags & FF_EXISTS)) continue;
 			if (rover->flags & (FF_SOLID|FF_SWIMMABLE))
 			{
-				if (rover->top.plane->ZatPoint(pos.x, pos.y) == thing->Z())
+				if (rover->top.plane->ZatPoint(pos.x, pos.y) == thing->_f_Z())
 				{
 					return P_HitWater (thing, m->m_sector, pos);
 				}
@@ -5758,7 +5758,7 @@ void P_CheckSplash(AActor *self, fixed_t distance)
 {
 	sector_t *floorsec;
 	self->Sector->LowestFloorAt(self, &floorsec);
-	if (self->Z() <= self->floorz + distance && self->floorsector == floorsec && self->Sector->GetHeightSec() == NULL && floorsec->heightsec == NULL)
+	if (self->_f_Z() <= self->floorz + distance && self->floorsector == floorsec && self->Sector->GetHeightSec() == NULL && floorsec->heightsec == NULL)
 	{
 		// Explosion splashes never alert monsters. This is because A_Explode has
 		// a separate parameter for that so this would get in the way of proper 
@@ -5790,7 +5790,7 @@ bool P_CheckMissileSpawn (AActor* th, fixed_t maxdist)
 	if (maxdist > 0)
 	{
 		// move a little forward so an angle can be computed if it immediately explodes
-		DVector3 advance(FIXED2DBL(th->vel.x), FIXED2DBL(th->vel.y), FIXED2DBL(th->vel.z));
+		DVector3 advance(FIXED2DBL(th->_f_velx()), FIXED2DBL(th->_f_vely()), FIXED2DBL(th->_f_velz()));
 		double maxsquared = FIXED2DBL(maxdist);
 		maxsquared *= maxsquared;
 
@@ -5802,9 +5802,9 @@ bool P_CheckMissileSpawn (AActor* th, fixed_t maxdist)
 		}
 		while (DVector2(advance).LengthSquared() >= maxsquared);
 		th->SetXYZ(
-			th->X() + FLOAT2FIXED(advance.X),
-			th->Y() + FLOAT2FIXED(advance.Y),
-			th->Z() + FLOAT2FIXED(advance.Z));
+			th->_f_X() + FLOAT2FIXED(advance.X),
+			th->_f_Y() + FLOAT2FIXED(advance.Y),
+			th->_f_Z() + FLOAT2FIXED(advance.Z));
 	}
 
 	FCheckPosition tm(!!(th->flags2 & MF2_RIP));
@@ -5828,7 +5828,7 @@ bool P_CheckMissileSpawn (AActor* th, fixed_t maxdist)
 	bool MBFGrenade = (!(th->flags & MF_MISSILE) || (th->BounceFlags & BOUNCE_MBF));
 
 	// killough 3/15/98: no dropoff (really = don't care for missiles)
-	if (!(P_TryMove (th, th->X(), th->Y(), false, NULL, tm, true)))
+	if (!(P_TryMove (th, th->_f_X(), th->_f_Y(), false, NULL, tm, true)))
 	{
 		// [RH] Don't explode ripping missiles that spawn inside something
 		if (th->BlockingMobj == NULL || !(th->flags2 & MF2_RIP) || (th->BlockingMobj->flags5 & MF5_DONTRIP))
@@ -5882,7 +5882,7 @@ void P_PlaySpawnSound(AActor *missile, AActor *spawner)
 			// If there is no spawner use the spawn position.
 			// But not in a silenced sector.
 			if (!(missile->Sector->Flags & SECF_SILENT))
-				S_Sound (missile->X(), missile->Y(), missile->Z(), CHAN_WEAPON, missile->SeeSound, 1, ATTN_NORM);
+				S_Sound (missile->_f_X(), missile->_f_Y(), missile->_f_Z(), CHAN_WEAPON, missile->SeeSound, 1, ATTN_NORM);
 		}
 	}
 }
@@ -5892,9 +5892,9 @@ static fixed_t GetDefaultSpeed(PClassActor *type)
 	if (type == NULL)
 		return 0;
 	else if (G_SkillProperty(SKILLP_FastMonsters) && type->FastSpeed >= 0)
-		return type->FastSpeed;
+		return FLOAT2FIXED(type->FastSpeed);
 	else
-		return GetDefaultByType(type)->Speed;
+		return GetDefaultByType(type)->_f_speed();
 }
 
 //---------------------------------------------------------------------------
@@ -5912,7 +5912,7 @@ AActor *P_SpawnMissile (AActor *source, AActor *dest, PClassActor *type, AActor 
 	{
 		return NULL;
 	}
-	return P_SpawnMissileXYZ (source->X(), source->Y(), source->Z() + 32*FRACUNIT + source->GetBobOffset(),
+	return P_SpawnMissileXYZ (source->_f_X(), source->_f_Y(), source->_f_Z() + 32*FRACUNIT + source->GetBobOffset(),
 		source, dest, type, true, owner);
 }
 
@@ -5922,7 +5922,7 @@ AActor *P_SpawnMissileZ (AActor *source, fixed_t z, AActor *dest, PClassActor *t
 	{
 		return NULL;
 	}
-	return P_SpawnMissileXYZ (source->X(), source->Y(), z, source, dest, type);
+	return P_SpawnMissileXYZ (source->_f_X(), source->_f_Y(), z, source, dest, type);
 }
 
 AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
@@ -5953,7 +5953,7 @@ AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
 	if (owner == NULL) owner = source;
 	th->target = owner;
 
-	float speed = (float)(th->Speed);
+	double speed = th->Speed;
 
 	// [RH]
 	// Hexen calculates the missile velocity based on the source's location.
@@ -5961,34 +5961,32 @@ AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
 	// missile?
 	// Answer: No, because this way, you can set up sets of parallel missiles.
 
-	fixedvec3 fixvel = source->Vec3To(dest);
-	DVector3 velocity(fixvel.x, fixvel.y, fixvel.z);
+	DVector3 velocity = source->Vec3To(dest);
 	// Floor and ceiling huggers should never have a vertical component to their velocity
 	if (th->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER))
 	{
 		velocity.Z = 0;
 	}
 	// [RH] Adjust the trajectory if the missile will go over the target's head.
-	else if (z - source->Z() >= dest->height)
+	else if (FIXED2FLOAT(z) - source->Z() >= dest->_Height())
 	{
-		velocity.Z += (dest->height - z + source->Z());
+		velocity.Z += (dest->_Height() - FIXED2FLOAT(z) + source->Z());
 	}
-	velocity.Resize (speed);
-	th->vel.x = xs_CRoundToInt(velocity.X);
-	th->vel.y = xs_CRoundToInt(velocity.Y);
-	th->vel.z = xs_CRoundToInt(velocity.Z);
+	th->Vel = velocity.Resized(speed);
 
 	// invisible target: rotate velocity vector in 2D
 	// [RC] Now monsters can aim at invisible player as if they were fully visible.
 	if (dest->flags & MF_SHADOW && !(source->flags6 & MF6_SEEINVISIBLE))
 	{
-		angle_t an = pr_spawnmissile.Random2 () << 20;
-		an >>= ANGLETOFINESHIFT;
+		DAngle an = pr_spawnmissile.Random2() * (22.5 / 256);
+		double c = an.Cos();
+		double s = an.Sin();
 		
-		fixed_t newx = DMulScale16 (th->vel.x, finecosine[an], -th->vel.y, finesine[an]);
-		fixed_t newy = DMulScale16 (th->vel.x, finesine[an], th->vel.y, finecosine[an]);
-		th->vel.x = newx;
-		th->vel.y = newy;
+		double newx = th->Vel.X * c - th->Vel.Y * s;
+		double newy = th->Vel.X * s + th->Vel.Y * c;
+
+		th->Vel.X = newx;
+		th->Vel.Y = newy;
 	}
 
 	th->AngleFromVel();
@@ -6007,7 +6005,6 @@ AActor *P_OldSpawnMissile(AActor *source, AActor *owner, AActor *dest, PClassAct
 	{
 		return NULL;
 	}
-	fixed_t dist;
 	AActor *th = Spawn (type, source->PosPlusZ(4*8*FRACUNIT), ALLOW_REPLACE);
 
 	P_PlaySpawnSound(th, source);
@@ -6016,13 +6013,9 @@ AActor *P_OldSpawnMissile(AActor *source, AActor *owner, AActor *dest, PClassAct
 	th->Angles.Yaw = source->AngleTo(dest);
 	th->VelFromAngle();
 
-	dist = source->AproxDistance (dest);
-	if (th->Speed) dist = dist / th->Speed;
 
-	if (dist < 1)
-		dist = 1;
-
-	th->vel.z = (dest->Z() - source->Z()) / dist;
+	double dist = source->DistanceBySpeed(dest, MAX(1., th->Speed));
+	th->Vel.Z = (dest->Z() - source->Z()) / dist;
 
 	if (th->flags4 & MF4_SPECTRAL)
 	{
@@ -6049,7 +6042,7 @@ AActor *P_SpawnMissileAngle (AActor *source, PClassActor *type,
 	{
 		return NULL;
 	}
-	return P_SpawnMissileAngleZSpeed (source, source->Z() + 32*FRACUNIT + source->GetBobOffset(),
+	return P_SpawnMissileAngleZSpeed (source, source->_f_Z() + 32*FRACUNIT + source->GetBobOffset(),
 		type, angle, vz, GetDefaultSpeed (type));
 }
 
@@ -6080,7 +6073,7 @@ AActor *P_SpawnMissileZAimed (AActor *source, fixed_t z, AActor *dest, PClassAct
 	dist = source->AproxDistance (dest);
 	speed = GetDefaultSpeed (type);
 	dist /= speed;
-	vz = dist != 0 ? (dest->Z() - source->Z())/dist : speed;
+	vz = dist != 0 ? (dest->_f_Z() - source->_f_Z())/dist : speed;
 	return P_SpawnMissileAngleZSpeed (source, z, type, an, vz, speed);
 }
 
@@ -6100,7 +6093,7 @@ AActor *P_SpawnMissileAngleSpeed (AActor *source, PClassActor *type,
 	{
 		return NULL;
 	}
-	return P_SpawnMissileAngleZSpeed (source, source->Z() + 32*FRACUNIT + source->GetBobOffset(),
+	return P_SpawnMissileAngleZSpeed (source, source->_f_Z() + 32*FRACUNIT + source->GetBobOffset(),
 		type, angle, vz, speed);
 }
 
@@ -6118,14 +6111,14 @@ AActor *P_SpawnMissileAngleZSpeed (AActor *source, fixed_t z,
 		z -= source->floorclip;
 	}
 
-	mo = Spawn (type, source->X(), source->Y(), z, ALLOW_REPLACE);
+	mo = Spawn (type, source->_f_X(), source->_f_Y(), z, ALLOW_REPLACE);
 
 	P_PlaySpawnSound(mo, source);
 	if (owner == NULL) owner = source;
 	mo->target = owner;
 	mo->Angles.Yaw = ANGLE2DBL(angle);
-	mo->VelFromAngle(speed);
-	mo->vel.z = vz;
+	mo->VelFromAngle(FIXED2DBL(speed));
+	mo->Vel.Z = FIXED2DBL(vz);
 
 	if (mo->flags4 & MF4_SPECTRAL)
 	{
@@ -6217,10 +6210,10 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 	if (z != ONFLOORZ && z != ONCEILINGZ)
 	{
 		// Doom spawns missiles 4 units lower than hitscan attacks for players.
-		z += source->Z() + (source->height>>1) - source->floorclip;
+		z += source->_f_Z() + (source->height>>1) - source->floorclip;
 		if (source->player != NULL)	// Considering this is for player missiles, it better not be NULL.
 		{
-			z += FixedMul (source->player->mo->AttackZOffset - 4*FRACUNIT, source->player->crouchfactor);
+			z += fixed_t ((source->player->mo->AttackZOffset - 4*FRACUNIT) * source->player->crouchfactor);
 		}
 		else
 		{
@@ -6577,10 +6570,10 @@ DDropItem *AActor::GetDropItems() const
 	return GetClass()->DropItems;
 }
 
-fixed_t AActor::GetGravity() const
+double AActor::GetGravity() const
 {
 	if (flags & MF_NOGRAVITY) return 0;
-	return fixed_t(level.gravity * Sector->gravity * FIXED2DBL(gravity) * 81.92);
+	return level.gravity * Sector->gravity * FIXED2DBL(gravity) * 0.00125;
 }
 
 // killough 11/98:
@@ -6719,10 +6712,9 @@ void PrintMiscActorInfo(AActor *query)
 			query->args[4],	query->special1, query->special2);
 		Printf("\nTID: %d", query->tid);
 		Printf("\nCoord= x: %f, y: %f, z:%f, floor:%f, ceiling:%f.",
-			FIXED2DBL(query->X()), FIXED2DBL(query->Y()), FIXED2DBL(query->Z()),
+			query->X(), query->Y(), query->Z(),
 			FIXED2DBL(query->floorz), FIXED2DBL(query->ceilingz));
 		Printf("\nSpeed= %f, velocity= x:%f, y:%f, z:%f, combined:%f.\n",
-			FIXED2DBL(query->Speed), FIXED2DBL(query->vel.x), FIXED2DBL(query->vel.y), FIXED2DBL(query->vel.z),
-			g_sqrt(pow(FIXED2DBL(query->vel.x), 2) + pow(FIXED2DBL(query->vel.y), 2) + pow(FIXED2DBL(query->vel.z), 2)));
+			query->Speed, query->Vel.X, query->Vel.Y, query->Vel.Z, query->Vel.Length());
 	}
 }

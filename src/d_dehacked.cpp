@@ -915,7 +915,7 @@ static int PatchThing (int thingy)
 		{
 			if (stricmp (Line1, "Speed") == 0)
 			{
-				info->Speed = val;
+				info->Speed = val;	// handle fixed point later.
 			}
 			else if (stricmp (Line1, "Width") == 0)
 			{
@@ -1278,9 +1278,9 @@ static int PatchThing (int thingy)
 		}
 		// If this thing's speed is really low (i.e. meant to be a monster),
 		// bump it up, because all speeds are fixed point now.
-		if (abs(info->Speed) < 256)
+		if (fabs(info->Speed) >= 256)
 		{
-			info->Speed <<= FRACBITS;
+			info->Speed /= FRACUNIT;
 		}
 
 		if (info->flags & MF_SPECIAL)

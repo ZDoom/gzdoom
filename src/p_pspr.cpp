@@ -394,7 +394,7 @@ void P_BobWeapon (player_t *player, pspdef_t *psp, fixed_t *x, fixed_t *y)
 	// [RH] Smooth transitions between bobbing and not-bobbing frames.
 	// This also fixes the bug where you can "stick" a weapon off-center by
 	// shooting it when it's at the peak of its swing.
-	bobtarget = (player->WeaponState & WF_WEAPONBOBBING) ? player->bob : 0;
+	bobtarget = (player->WeaponState & WF_WEAPONBOBBING) ? FLOAT2FIXED(player->bob) : 0;
 	if (curbob != bobtarget)
 	{
 		if (abs (bobtarget - curbob) <= 1*FRACUNIT)
@@ -417,8 +417,8 @@ void P_BobWeapon (player_t *player, pspdef_t *psp, fixed_t *x, fixed_t *y)
 
 	if (curbob != 0)
 	{
-		fixed_t bobx = FixedMul(player->bob, rangex);
-		fixed_t boby = FixedMul(player->bob, rangey);
+		fixed_t bobx = fixed_t(player->bob * rangex);
+		fixed_t boby = fixed_t(player->bob * rangey);
 		switch (bobstyle)
 		{
 		case AWeapon::BobNormal:

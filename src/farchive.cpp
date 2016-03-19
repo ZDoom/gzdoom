@@ -1535,15 +1535,18 @@ FArchive &operator<< (FArchive &arc, side_t *&side)
 
 FArchive &operator<<(FArchive &arc, DAngle &ang)
 {
-	if (SaveVersion >= 4534)
-	{
-		arc << ang.Degrees;
-	}
-	else
-	{
-		angle_t an;
-		arc << an;
-		ang.Degrees = ANGLE2DBL(an);
-	}
+	arc << ang.Degrees;
+	return arc;
+}
+
+FArchive &operator<<(FArchive &arc, DVector3 &vec)
+{
+	arc << vec.X << vec.Y << vec.Z;
+	return arc;
+}
+
+FArchive &operator<<(FArchive &arc, DVector2 &vec)
+{
+	arc << vec.X << vec.Y;
 	return arc;
 }

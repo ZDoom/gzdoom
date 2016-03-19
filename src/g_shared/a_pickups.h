@@ -207,7 +207,7 @@ public:
 
 	virtual void AbsorbDamage (int damage, FName damageType, int &newdamage);
 	virtual void ModifyDamage (int damage, FName damageType, int &newdamage, bool passive);
-	virtual fixed_t GetSpeedFactor();
+	virtual double GetSpeedFactor();
 	virtual bool GetNoTeleportFreeze();
 	virtual int AlterWeaponSprite (visstyle_t *vis);
 

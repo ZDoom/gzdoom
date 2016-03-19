@@ -661,8 +661,8 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 		player - players == consoleplayer &&
 		camera == player->mo &&
 		!demoplayback &&
-		iview->nviewx == camera->X() &&
-		iview->nviewy == camera->Y() && 
+		iview->nviewx == camera->_f_X() &&
+		iview->nviewy == camera->_f_Y() && 
 		!(player->cheats & (CF_TOTALLYFROZEN|CF_FROZEN)) &&
 		player->playerstate == PST_LIVE &&
 		player->mo->reactiontime == 0 &&
@@ -983,9 +983,9 @@ void R_SetupFrame (AActor *actor)
 	}
 	else
 	{
-		iview->nviewx = camera->X();
-		iview->nviewy = camera->Y();
-		iview->nviewz = camera->player ? camera->player->viewz : camera->Z() + camera->GetCameraHeight();
+		iview->nviewx = camera->_f_X();
+		iview->nviewy = camera->_f_Y();
+		iview->nviewz = camera->player ? camera->player->viewz : camera->_f_Z() + camera->GetCameraHeight();
 		viewsector = camera->Sector;
 		r_showviewer = false;
 	}

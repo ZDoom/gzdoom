@@ -17,7 +17,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SentinelBob)
 
 	if (self->flags & MF_INFLOAT)
 	{
-		self->vel.z = 0;
+		self->Vel.Z = 0;
 		return 0;
 	}
 	if (self->threshold != 0)
@@ -29,15 +29,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_SentinelBob)
 	{
 		minz = maxz;
 	}
-	if (minz < self->Z())
+	if (minz < self->_f_Z())
 	{
-		self->vel.z -= FRACUNIT;
+		self->Vel.Z -= 1;
 	}
 	else
 	{
-		self->vel.z += FRACUNIT;
+		self->Vel.Z += 1;
 	}
-	self->reactiontime = (minz >= self->Z()) ? 4 : 0;
+	self->reactiontime = (minz >= self->_f_Z()) ? 4 : 0;
 	return 0;
 }
 
@@ -53,24 +53,22 @@ DEFINE_ACTION_FUNCTION(AActor, A_SentinelAttack)
 		return 0;
 	}
 
-	missile = P_SpawnMissileZAimed (self, self->Z() + 32*FRACUNIT, self->target, PClass::FindActor("SentinelFX2"));
+	missile = P_SpawnMissileZAimed (self, self->_f_Z() + 32*FRACUNIT, self->target, PClass::FindActor("SentinelFX2"));
 
-	if (missile != NULL && (missile->vel.x | missile->vel.y) != 0)
+	if (missile != NULL && (missile->Vel.X != 0 || missile->Vel.Y != 0))
 	{
 		for (int i = 8; i > 1; --i)
 		{
 			trail = Spawn("SentinelFX1",
-				self->Vec3Angle(missile->radius*i, missile->_f_angle(), (missile->vel.z / 4 * i)), ALLOW_REPLACE);
+				self->_f_Vec3Angle(missile->radius*i, missile->_f_angle(), (missile->_f_velz() / 4 * i)), ALLOW_REPLACE);
 			if (trail != NULL)
 			{
 				trail->target = self;
-				trail->vel.x = missile->vel.x;
-				trail->vel.y = missile->vel.y;
-				trail->vel.z = missile->vel.z;
+				trail->Vel = missile->Vel;
 				P_CheckMissileSpawn (trail, self->radius);
 			}
 		}
-		missile->AddZ(missile->vel.z >> 2);
+		missile->_f_AddZ(missile->_f_velz() >> 2);
 	}
 	return 0;
 }

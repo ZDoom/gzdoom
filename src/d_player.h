@@ -114,7 +114,7 @@ public:
 	virtual void PlayIdle ();
 	virtual void PlayRunning ();
 	virtual void ThrowPoisonBag ();
-	virtual void TweakSpeeds (int &forwardmove, int &sidemove);
+	virtual void TweakSpeeds (double &forwardmove, double &sidemove);
 	virtual void MorphPlayerThink ();
 	virtual void ActivateMorphWeapon ();
 	AWeapon *PickNewWeapon (PClassAmmo *ammotype);
@@ -149,12 +149,12 @@ public:
 	TObjPtr<AInventory> InvSel;			// selected inventory item
 
 	// [GRB] Player class properties
-	fixed_t		JumpZ;
+	double		JumpZ;
 	fixed_t		GruntSpeed;
 	fixed_t		FallingScreamMinSpeed, FallingScreamMaxSpeed;
 	fixed_t		ViewHeight;
-	fixed_t		ForwardMove1, ForwardMove2;
-	fixed_t		SideMove1, SideMove2;
+	double		ForwardMove1, ForwardMove2;
+	double		SideMove1, SideMove2;
 	FTextureID	ScoreIcon;
 	int			SpawnMask;
 	FNameNoInit	MorphWeapon;
@@ -329,13 +329,13 @@ struct userinfo_t : TMap<FName,FBaseCVar *>
 	{
 		return *static_cast<FBoolCVar *>(*CheckKey(NAME_NeverSwitchOnPickup));
 	}
-	fixed_t GetMoveBob() const
+	double GetMoveBob() const
 	{
-		return FLOAT2FIXED(*static_cast<FFloatCVar *>(*CheckKey(NAME_MoveBob)));
+		return *static_cast<FFloatCVar *>(*CheckKey(NAME_MoveBob));
 	}
-	fixed_t GetStillBob() const
+	double GetStillBob() const
 	{
-		return FLOAT2FIXED(*static_cast<FFloatCVar *>(*CheckKey(NAME_StillBob)));
+		return *static_cast<FFloatCVar *>(*CheckKey(NAME_StillBob));
 	}
 	int GetPlayerClassNum() const
 	{
@@ -405,13 +405,13 @@ public:
 	fixed_t		viewz;					// focal origin above r.z
 	fixed_t		viewheight;				// base height above floor for viewz
 	fixed_t		deltaviewheight;		// squat speed.
-	fixed_t		bob;					// bounded/scaled total velocity
+	double		bob;					// bounded/scaled total velocity
 
 	// killough 10/98: used for realistic bobbing (i.e. not simply overall speed)
-	// mo->vel.x and mo->vel.y represent true velocity experienced by player.
+	// mo->velx and mo->vely represent true velocity experienced by player.
 	// This only represents the thrust that the player applies himself.
 	// This avoids anomalies with such things as Boom ice and conveyors.
-	fixedvec2	vel;
+	DVector2 Vel;
 
 	bool		centering;
 	BYTE		turnticks;
@@ -491,7 +491,7 @@ public:
 	DAngle			MinPitch;	// Viewpitch limits (negative is up, positive is down)
 	DAngle			MaxPitch;
 
-	fixed_t crouchfactor;
+	double crouchfactor;
 	fixed_t crouchoffset;
 	fixed_t crouchviewdelta;
 
@@ -509,9 +509,9 @@ public:
 
 	void Uncrouch()
 	{
-		if (crouchfactor != FRACUNIT)
+		if (crouchfactor != 1)
 		{
-			crouchfactor = FRACUNIT;
+			crouchfactor = 1;
 			crouchoffset = 0;
 			crouchdir = 0;
 			crouching = 0;
@@ -556,7 +556,7 @@ inline bool AActor::IsNoClip2() const
 	return false;
 }
 
-#define CROUCHSPEED (FRACUNIT/12)
+#define CROUCHSPEED (1./12)
 
 bool P_IsPlayerTotallyFrozen(const player_t *player);
 

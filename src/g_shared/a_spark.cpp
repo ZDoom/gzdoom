@@ -50,6 +50,6 @@ IMPLEMENT_CLASS (ASpark)
 void ASpark::Activate (AActor *activator)
 {
 	Super::Activate (activator);
-	P_DrawSplash (args[0] ? args[0] : 32, X(), Y(), Z(), FLOAT2ANGLE(Angles.Yaw.Degrees), 1);
+	P_DrawSplash (args[0] ? args[0] : 32, _f_X(), _f_Y(), _f_Z(), FLOAT2ANGLE(Angles.Yaw.Degrees), 1);
 	S_Sound (this, CHAN_AUTO, "world/spark", 1, ATTN_STATIC);
 }

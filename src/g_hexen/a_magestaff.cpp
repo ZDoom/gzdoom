@@ -144,8 +144,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_MStaffAttack)
 	P_AimLineAttack (self, angle, PLAYERMISSILERANGE, &t, 32.);
 	if (t.linetarget == NULL)
 	{
-		BlockCheckLine.x = self->X();
-		BlockCheckLine.y = self->Y();
+		BlockCheckLine.x = self->_f_X();
+		BlockCheckLine.y = self->_f_Y();
 		BlockCheckLine.dx = FLOAT2FIXED(-angle.Sin());
 		BlockCheckLine.dy = FLOAT2FIXED(-angle.Cos());
 		t.linetarget = P_BlockmapSearch (self, 10, FrontBlockCheck);
@@ -213,7 +213,7 @@ static AActor *FrontBlockCheck (AActor *mo, int index, void *)
 	{
 		if (link->Me != mo)
 		{
-			if (P_PointOnDivlineSide (link->Me->X(), link->Me->Y(), &BlockCheckLine) == 0 &&
+			if (P_PointOnDivlineSide (link->Me->_f_X(), link->Me->_f_Y(), &BlockCheckLine) == 0 &&
 				mo->IsOkayToAttack (link->Me))
 			{
 				return link->Me;
@@ -233,7 +233,7 @@ void MStaffSpawn2 (AActor *actor, angle_t angle)
 {
 	AActor *mo;
 
-	mo = P_SpawnMissileAngleZ (actor, actor->Z()+40*FRACUNIT,
+	mo = P_SpawnMissileAngleZ (actor, actor->_f_Z()+40*FRACUNIT,
 		RUNTIME_CLASS(AMageStaffFX2), angle, 0);
 	if (mo)
 	{

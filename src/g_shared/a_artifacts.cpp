@@ -979,11 +979,11 @@ void APowerFlight::InitEffect ()
 	Super::InitEffect();
 	Owner->flags2 |= MF2_FLY;
 	Owner->flags |= MF_NOGRAVITY;
-	if (Owner->Z() <= Owner->floorz)
+	if (Owner->_f_Z() <= Owner->floorz)
 	{
-		Owner->vel.z = 4*FRACUNIT;	// thrust the player in the air a bit
+		Owner->Vel.Z = 4;;	// thrust the player in the air a bit
 	}
-	if (Owner->vel.z <= -35*FRACUNIT)
+	if (Owner->Vel.Z <= -35)
 	{ // stop falling scream
 		S_StopSound (Owner, CHAN_VOICE);
 	}
@@ -1026,7 +1026,7 @@ void APowerFlight::EndEffect ()
 
 	if (!(Owner->flags7 & MF7_FLYCHEAT))
 	{
-		if (Owner->Z() != Owner->floorz)
+		if (Owner->_f_Z() != Owner->floorz)
 		{
 			Owner->player->centering = true;
 		}
@@ -1220,10 +1220,10 @@ void APowerSpeed::Serialize(FArchive &arc)
 //
 //===========================================================================
 
-fixed_t APowerSpeed ::GetSpeedFactor ()
+double APowerSpeed ::GetSpeedFactor ()
 {
 	if (Inventory != NULL)
-		return FixedMul(Speed, Inventory->GetSpeedFactor());
+		return Speed * Inventory->GetSpeedFactor();
 	else
 		return Speed;
 }
@@ -1261,10 +1261,10 @@ void APowerSpeed::DoEffect ()
 		}
 	}
 
-	if (P_AproxDistance (Owner->vel.x, Owner->vel.y) <= 12*FRACUNIT)
+	if (P_AproxDistance (Owner->_f_velx(), Owner->_f_vely()) <= 12*FRACUNIT)
 		return;
 
-	AActor *speedMo = Spawn<APlayerSpeedTrail> (Owner->Pos(), NO_REPLACE);
+	AActor *speedMo = Spawn<APlayerSpeedTrail> (Owner->_f_Pos(), NO_REPLACE);
 	if (speedMo)
 	{
 		speedMo->Angles.Yaw = Owner->Angles.Yaw;

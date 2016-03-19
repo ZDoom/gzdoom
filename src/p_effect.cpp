@@ -431,17 +431,7 @@ static void MakeFountain (AActor *actor, int color1, int color2)
 
 void P_RunEffect (AActor *actor, int effects)
 {
-	angle_t moveangle;
-	
-	// 512 is the limit below which R_PointToAngle2 does no longer returns usable values.
-	if (abs(actor->vel.x) > 512 || abs(actor->vel.y) > 512)
-	{
-		moveangle = R_PointToAngle2(0,0,actor->vel.x,actor->vel.y);
-	}
-	else
-	{
-		moveangle = actor->_f_angle();
-	}
+	DAngle moveangle = actor->Vel.Angle();
 
 	particle_t *particle;
 	int i;
@@ -449,28 +439,26 @@ void P_RunEffect (AActor *actor, int effects)
 	if ((effects & FX_ROCKET) && (cl_rockettrails & 1))
 	{
 		// Rocket trail
+		double backx = -actor->_Radius() * 2 * moveangle.Cos();
+		double backy = -actor->_Radius() * 2 * moveangle.Sin();
+		double backz = actor->_Height() * ((2. / 3) - actor->Vel.Z / 8);
 
-
-		fixed_t backx = - FixedMul (finecosine[(moveangle)>>ANGLETOFINESHIFT], actor->radius*2);
-		fixed_t backy = - FixedMul (finesine[(moveangle)>>ANGLETOFINESHIFT], actor->radius*2);
-		fixed_t backz = - (actor->height>>3) * (actor->vel.z>>16) + (2*actor->height)/3;
-
-		angle_t an = (moveangle + ANG90) >> ANGLETOFINESHIFT;
+		DAngle an = moveangle + 90.;
 		int speed;
 
 		particle = JitterParticle (3 + (M_Random() & 31));
 		if (particle) {
 			fixed_t pathdist = M_Random()<<8;
 			fixedvec3 pos = actor->Vec3Offset(
-				backx - FixedMul(actor->vel.x, pathdist),
-				backy - FixedMul(actor->vel.y, pathdist),
-				backz - FixedMul(actor->vel.z, pathdist));
+				FLOAT2FIXED(backx) - fixed_t(actor->Vel.X * pathdist),
+				FLOAT2FIXED(backy) - fixed_t(actor->Vel.Y * pathdist),
+				FLOAT2FIXED(backz) - fixed_t(actor->Vel.Z * pathdist));
 			particle->x = pos.x;
 			particle->y = pos.y;
 			particle->z = pos.z;
 			speed = (M_Random () - 128) * (FRACUNIT/200);
-			particle->vel.x += FixedMul (speed, finecosine[an]);
-			particle->vel.y += FixedMul (speed, finesine[an]);
+			particle->vel.x += fixed_t(speed * an.Cos());
+			particle->vel.y += fixed_t(speed * an.Sin());
 			particle->vel.z -= FRACUNIT/36;
 			particle->accz -= FRACUNIT/20;
 			particle->color = yellow;
@@ -481,15 +469,15 @@ void P_RunEffect (AActor *actor, int effects)
 			if (particle) {
 				fixed_t pathdist = M_Random()<<8;
 				fixedvec3 pos = actor->Vec3Offset(
-					backx - FixedMul(actor->vel.x, pathdist),
-					backy - FixedMul(actor->vel.y, pathdist),
-					backz - FixedMul(actor->vel.z, pathdist) + (M_Random() << 10));
+					FLOAT2FIXED(backx) - fixed_t(actor->Vel.X * pathdist),
+					FLOAT2FIXED(backy) - fixed_t(actor->Vel.Y * pathdist),
+					FLOAT2FIXED(backz) - fixed_t(actor->Vel.Z * pathdist) + (M_Random() << 10));
 				particle->x = pos.x;
 				particle->y = pos.y;
 				particle->z = pos.z;
 				speed = (M_Random () - 128) * (FRACUNIT/200);
-				particle->vel.x += FixedMul (speed, finecosine[an]);
-				particle->vel.y += FixedMul (speed, finesine[an]);
+				particle->vel.x += fixed_t(speed * an.Cos());
+				particle->vel.y += fixed_t(speed * an.Sin());
 				particle->vel.z += FRACUNIT/80;
 				particle->accz += FRACUNIT/40;
 				if (M_Random () & 7)
@@ -505,11 +493,11 @@ void P_RunEffect (AActor *actor, int effects)
 	{
 		// Grenade trail
 
-		fixedvec3 pos = actor->Vec3Angle(-actor->radius * 2, moveangle,
-			-(actor->height >> 3) * (actor->vel.z >> 16) + (2 * actor->height) / 3);
+		fixedvec3 pos = actor->_f_Vec3Angle(-actor->radius * 2, moveangle.BAMs(),
+			fixed_t(-(actor->height >> 3) * (actor->Vel.Z) + (2 * actor->height) / 3));
 
 		P_DrawSplash2 (6, pos.x, pos.y, pos.z,
-			moveangle + ANG180, 2, 2);
+			moveangle.BAMs() + ANG180, 2, 2);
 	}
 	if (effects & FX_FOUNTAINMASK)
 	{
@@ -685,8 +673,8 @@ void P_DrawRailTrail(AActor *source, const DVector3 &start, const DVector3 &end,
 			double r;
 			double dirz;
 
-			if (abs(mo->X() - FLOAT2FIXED(start.X)) < 20 * FRACUNIT
-				&& (mo->Y() - FLOAT2FIXED(start.Y)) < 20 * FRACUNIT)
+			if (fabs(mo->X() - start.X) < 20
+				&& fabs(mo->Y() - start.Y) < 20)
 			{ // This player (probably) fired the railgun
 				S_Sound (mo, CHAN_WEAPON, sound, 1, ATTN_NORM);
 			}
@@ -696,7 +684,7 @@ void P_DrawRailTrail(AActor *source, const DVector3 &start, const DVector3 &end,
 				// Only consider sound in 2D (for now, anyway)
 				// [BB] You have to divide by lengthsquared here, not multiply with it.
 
-				r = ((start.Y - FIXED2DBL(mo->Y())) * (-dir.Y) - (start.X - FIXED2DBL(mo->X())) * (dir.X)) / lengthsquared;
+				r = ((start.Y - mo->Y()) * (-dir.Y) - (start.X - mo->X()) * (dir.X)) / lengthsquared;
 				r = clamp<double>(r, 0., 1.);
 
 				dirz = dir.Z;

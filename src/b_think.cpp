@@ -87,7 +87,7 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 	dist = dest ? player->mo->AproxDistance(dest) : 0;
 
 	if (missile &&
-		((!missile->vel.x || !missile->vel.y) || !Check_LOS(missile, SHOOTFOV*3/2)))
+		((!missile->_f_velx() || !missile->_f_vely()) || !Check_LOS(missile, SHOOTFOV*3/2)))
 	{
 		sleft = !sleft;
 		missile = NULL; //Probably ended its travel.
@@ -306,8 +306,8 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 	if (t_fight<(AFTERTICS/2))
 		player->mo->flags |= MF_DROPOFF;
 
-	oldx = player->mo->X();
-	oldy = player->mo->Y();
+	oldx = player->mo->_f_X();
+	oldy = player->mo->_f_Y();
 }
 
 //BOT_WhatToGet

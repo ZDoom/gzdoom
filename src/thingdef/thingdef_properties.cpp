@@ -606,7 +606,7 @@ DEFINE_PROPERTY(projectilekickback, I, Actor)
 //==========================================================================
 DEFINE_PROPERTY(speed, F, Actor)
 {
-	PROP_FIXED_PARM(id, 0);
+	PROP_DOUBLE_PARM(id, 0);
 	defaults->Speed = id;
 }
 
@@ -615,8 +615,8 @@ DEFINE_PROPERTY(speed, F, Actor)
 //==========================================================================
 DEFINE_PROPERTY(floatspeed, F, Actor)
 {
-	PROP_FIXED_PARM(id, 0);
-	defaults->FloatSpeed=id;
+	PROP_DOUBLE_PARM(id, 0);
+	defaults->FloatSpeed = id;
 }
 
 //==========================================================================
@@ -1300,7 +1300,7 @@ DEFINE_PROPERTY(poisondamagetype, S, Actor)
 //==========================================================================
 DEFINE_PROPERTY(fastspeed, F, Actor)
 {
-	PROP_FIXED_PARM(i, 0);
+	PROP_DOUBLE_PARM(i, 0);
 	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
 	static_cast<PClassActor *>(info)->FastSpeed = i;
 }
@@ -1330,8 +1330,8 @@ DEFINE_PROPERTY(cameraheight, F, Actor)
 //==========================================================================
 DEFINE_PROPERTY(vspeed, F, Actor)
 {
-	PROP_FIXED_PARM(i, 0);
-	defaults->vel.z = i;
+	PROP_DOUBLE_PARM(i, 0);
+	defaults->Vel.Z = i;
 }
 
 //==========================================================================
@@ -2513,7 +2513,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, attackzoffset, F, PlayerPawn)
 //==========================================================================
 DEFINE_CLASS_PROPERTY_PREFIX(player, jumpz, F, PlayerPawn)
 {
-	PROP_FIXED_PARM(z, 0);
+	PROP_DOUBLE_PARM(z, 0);
 	defaults->JumpZ = z;
 }
 
@@ -2600,11 +2600,11 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, aircapacity, F, PlayerPawn)
 //==========================================================================
 DEFINE_CLASS_PROPERTY_PREFIX(player, forwardmove, F_f, PlayerPawn)
 {
-	PROP_FIXED_PARM(m, 0);
+	PROP_DOUBLE_PARM(m, 0);
 	defaults->ForwardMove1 = defaults->ForwardMove2 = m;
 	if (PROP_PARM_COUNT > 1)
 	{
-		PROP_FIXED_PARM(m2, 1);
+		PROP_DOUBLE_PARM(m2, 1);
 		defaults->ForwardMove2 = m2;
 	}
 }
@@ -2614,11 +2614,11 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, forwardmove, F_f, PlayerPawn)
 //==========================================================================
 DEFINE_CLASS_PROPERTY_PREFIX(player, sidemove, F_f, PlayerPawn)
 {
-	PROP_FIXED_PARM(m, 0);
+	PROP_DOUBLE_PARM(m, 0);
 	defaults->SideMove1 = defaults->SideMove2 = m;
 	if (PROP_PARM_COUNT > 1)
 	{
-		PROP_FIXED_PARM(m2, 1);
+		PROP_DOUBLE_PARM(m2, 1);
 		defaults->SideMove2 = m2;
 	}
 }

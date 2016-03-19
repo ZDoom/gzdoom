@@ -698,13 +698,13 @@ bool FTraceInfo::ThingCheck(intercept_t *in)
 	fixed_t hity = StartY + FixedMul(Vy, dist);
 	fixed_t hitz = StartZ + FixedMul(Vz, dist);
 
-	if (hitz > in->d.thing->Top())
+	if (hitz > in->d.thing->_f_Top())
 	{
 		// trace enters above actor
 		if (Vz >= 0) return true;      // Going up: can't hit
 
 		// Does it hit the top of the actor?
-		dist = FixedDiv(in->d.thing->Top() - StartZ, Vz);
+		dist = FixedDiv(in->d.thing->_f_Top() - StartZ, Vz);
 
 		if (dist > MaxDist) return true;
 		in->frac = FixedDiv(dist, MaxDist);
@@ -714,15 +714,15 @@ bool FTraceInfo::ThingCheck(intercept_t *in)
 		hitz = StartZ + FixedMul(Vz, dist);
 
 		// calculated coordinate is outside the actor's bounding box
-		if (abs(hitx - in->d.thing->X()) > in->d.thing->radius ||
-			abs(hity - in->d.thing->Y()) > in->d.thing->radius) return true;
+		if (abs(hitx - in->d.thing->_f_X()) > in->d.thing->radius ||
+			abs(hity - in->d.thing->_f_Y()) > in->d.thing->radius) return true;
 	}
-	else if (hitz < in->d.thing->Z())
+	else if (hitz < in->d.thing->_f_Z())
 	{ // trace enters below actor
 		if (Vz <= 0) return true;      // Going down: can't hit
 
 		// Does it hit the bottom of the actor?
-		dist = FixedDiv(in->d.thing->Z() - StartZ, Vz);
+		dist = FixedDiv(in->d.thing->_f_Z() - StartZ, Vz);
 		if (dist > MaxDist) return true;
 		in->frac = FixedDiv(dist, MaxDist);
 
@@ -731,8 +731,8 @@ bool FTraceInfo::ThingCheck(intercept_t *in)
 		hitz = StartZ + FixedMul(Vz, dist);
 
 		// calculated coordinate is outside the actor's bounding box
-		if (abs(hitx - in->d.thing->X()) > in->d.thing->radius ||
-			abs(hity - in->d.thing->Y()) > in->d.thing->radius) return true;
+		if (abs(hitx - in->d.thing->_f_X()) > in->d.thing->radius ||
+			abs(hity - in->d.thing->_f_Y()) > in->d.thing->radius) return true;
 	}
 
 	if (CurSector->e->XFloor.ffloors.Size())

@@ -66,9 +66,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_PotteryExplode)
 		if (mo)
 		{
 			mo->SetState (mo->SpawnState + (pr_pottery()%5));
-			mo->vel.z = ((pr_pottery()&7)+5)*(3*FRACUNIT/4);
-			mo->vel.x = (pr_pottery.Random2())<<(FRACBITS-6);
-			mo->vel.y = (pr_pottery.Random2())<<(FRACBITS-6);
+			mo->Vel.X = pr_pottery.Random2() / 64.;
+			mo->Vel.Y = pr_pottery.Random2() / 64.;
+			mo->Vel.Z = ((pr_pottery() & 7) + 5) * 0.75;
 		}
 	}
 	S_Sound (mo, CHAN_BODY, "PotteryExplode", 1, ATTN_NORM);
@@ -141,7 +141,7 @@ IMPLEMENT_CLASS (AZCorpseLynchedNoHeart)
 void AZCorpseLynchedNoHeart::PostBeginPlay ()
 {
 	Super::PostBeginPlay ();
-	Spawn ("BloodPool", X(), Y(), floorz, ALLOW_REPLACE);
+	Spawn ("BloodPool", _f_X(), _f_Y(), floorz, ALLOW_REPLACE);
 }
 
 //============================================================================
@@ -180,19 +180,19 @@ DEFINE_ACTION_FUNCTION(AActor, A_CorpseExplode)
 		if (mo)
 		{
 			mo->SetState (mo->SpawnState + (pr_foo()%3));
-			mo->vel.z = ((pr_foo()&7)+5)*(3*FRACUNIT/4);
-			mo->vel.x = pr_foo.Random2()<<(FRACBITS-6);
-			mo->vel.y = pr_foo.Random2()<<(FRACBITS-6);
+			mo->Vel.X = pr_foo.Random2() / 64.;
+			mo->Vel.Y = pr_foo.Random2() / 64.;
+			mo->Vel.Z = ((pr_foo() & 7) + 5) * 0.75;
 		}
 	}
 	// Spawn a skull
-	mo = Spawn ("CorpseBit", self->Pos(), ALLOW_REPLACE);
+	mo = Spawn ("CorpseBit", self->_f_Pos(), ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->SetState (mo->SpawnState + 3);
-		mo->vel.z = ((pr_foo()&7)+5)*(3*FRACUNIT/4);
-		mo->vel.x = pr_foo.Random2()<<(FRACBITS-6);
-		mo->vel.y = pr_foo.Random2()<<(FRACBITS-6);
+		mo->Vel.X = pr_foo.Random2() / 64.;
+		mo->Vel.Y = pr_foo.Random2() / 64.;
+		mo->Vel.Z = ((pr_foo() & 7) + 5) * 0.75;
 	}
 	S_Sound (self, CHAN_BODY, self->DeathSound, 1, ATTN_IDLE);
 	self->Destroy ();
@@ -242,7 +242,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LeafThrust)
 
 	if (pr_leafthrust() <= 96)
 	{
-		self->vel.z += (pr_leafthrust()<<9)+FRACUNIT;
+		self->Vel.Z += pr_leafthrust() / 128. + 1;
 	}
 	return 0;
 }
@@ -266,14 +266,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_LeafCheck)
 	angle_t ang = self->target ? self->target->_f_angle() : self->_f_angle();
 	if (pr_leafcheck() > 64)
 	{
-		if (!self->vel.x && !self->vel.y)
+		if (self->Vel.X == 0 && self->Vel.Y == 0)
 		{
 			P_ThrustMobj (self, ang, (pr_leafcheck()<<9)+FRACUNIT);
 		}
 		return 0;
 	}
 	self->SetState (self->SpawnState + 7);
-	self->vel.z = (pr_leafcheck()<<9)+FRACUNIT;
+	self->Vel.Z = pr_leafcheck() / 128. + 1;
 	P_ThrustMobj (self, ang, (pr_leafcheck()<<9)+2*FRACUNIT);
 	self->flags |= MF_MISSILE;
 	return 0;
@@ -315,9 +315,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_SoAExplode)
 		if (mo)
 		{
 			mo->SetState (mo->SpawnState + i);
-			mo->vel.z = ((pr_soaexplode()&7)+5)*FRACUNIT;
-			mo->vel.x = pr_soaexplode.Random2()<<(FRACBITS-6);
-			mo->vel.y = pr_soaexplode.Random2()<<(FRACBITS-6);
+			mo->Vel.X = pr_soaexplode.Random2() / 64.;
+			mo->Vel.Y = pr_soaexplode.Random2() / 64.;
+			mo->Vel.Z = (pr_soaexplode() & 7) + 5;
 		}
 	}
 	// Spawn an item?

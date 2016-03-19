@@ -429,7 +429,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnSingleItem)
 	if (spawned)
 	{
 		spawned->SetOrigin (spot->Pos(), false);
-		spawned->SetZ(spawned->floorz);
+		spawned->_f_SetZ(spawned->floorz);
 		// We want this to respawn.
 		if (!(self->flags & MF_DROPPED)) 
 		{

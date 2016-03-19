@@ -248,7 +248,7 @@ public:
 	int GibHealth;			// Negative health below which this monster dies an extreme death
 	int WoundHealth;		// Health needed to enter wound state
 	int PoisonDamage;		// Amount of poison damage
-	fixed_t FastSpeed;		// Speed in fast mode
+	double FastSpeed;		// speed in fast mode
 	fixed_t RDFactor;		// Radius damage factor
 	fixed_t CameraHeight;	// Height of camera when used as such
 	FSoundID HowlSound;		// Sound being played when electrocuted or poisoned

@@ -710,7 +710,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnFizzle)
 {
 	PARAM_ACTION_PROLOGUE;
 	fixed_t dist = 5*FRACUNIT;
-	fixed_t speed = self->Speed;
+	fixed_t speed = self->Speed >> FRACBITS;
 	angle_t rangle;
 	AActor *mo;
 	int ix;

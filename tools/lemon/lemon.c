@@ -273,7 +273,7 @@ struct plink {
 /* The state vector for the entire parser generator is recorded as
 ** follows.  (LEMON uses no global variables and makes little use of
 ** static variables.  Fields in the following structure can be thought
-** of as begin global variables in the program.) */
+** of as being global variables in the program.) */
 struct lemon {
   struct state **sorted;   /* Table of states sorted by state number */
   struct rule *rule;       /* List of all rules */
@@ -302,6 +302,7 @@ struct lemon {
   char *tokendest;         /* Code to execute to destroy token data */
   char *vardest;           /* Code for the default non-terminal destructor */
   char *filename;          /* Name of the input file */
+  char *outbasefilename;   /* Name of the input file, with the output dir's path */
   char *outname;           /* Name of the current output file */
   char *tokenprefix;       /* A prefix added to token names in the .h file */
   int nconflict;           /* Number of parsing conflicts */
@@ -1416,6 +1417,72 @@ static void handle_T_option(char *z){
   strcpy(user_templatename, z);
 }
 
+/* Routines for routing output to a different directory than the one
+** the source file resides in.
+*/
+static char *output_dir = NULL;
+
+static inline Boolean is_seperator(int c)
+{
+  if (c == '/')
+    return LEMON_TRUE;
+#if defined(_WIN32) || defined(DOS)
+  if (c == '\\' || c == ':')
+    return LEMON_TRUE;
+#endif
+  return LEMON_FALSE;
+}
+
+/* Returns the file part of a pathname.
+*/
+const char *file_base(const char *path)
+{
+  const char *src = path + strlen(path) - 1;
+  if( src >= path ){
+    // back up until a / or the start
+    while (src != path && !is_seperator(*(src - 1)))
+      src--;
+
+    // Check for files with drive specification but no path
+#if defined(_WIN32) || defined(DOS)
+    if( src == path && src[0] != 0 ){
+      if( src[1] == ':' )
+        src += 2;
+    }
+#endif
+    return src;
+  }
+  return NULL;
+}
+
+static char *stitch_outdir(char *path)
+{
+  if( output_dir ){
+    const char *base = file_base(path);
+    char *newpath = (char *) malloc( lemonStrlen(output_dir) + lemonStrlen(path) + 1 );
+    if( newpath==0 ){
+      memory_error();
+    }
+    strcpy(newpath, output_dir);
+    strcat(newpath, base);
+    return newpath;
+  }
+  return path;
+}
+
+static void handle_C_option(char *z){
+  int len = lemonStrlen(z);
+  output_dir = (char *) malloc( len+2 );
+  if( output_dir==0 ){
+    memory_error();
+  }
+  strcpy(output_dir, z);
+  if( !is_seperator(output_dir[len-1]) ){
+    output_dir[len] = '/';
+    output_dir[len+1] = '\0';
+  }
+}
+
 /* Merge together to lists of rules order by rule.iRule */
 static struct rule *Rule_merge(struct rule *pA, struct rule *pB){
   struct rule *pFirst = 0;
@@ -1491,6 +1558,7 @@ int main(int argc, char **argv)
   static struct s_options options[] = {
     {OPT_FLAG, "b", (char*)&basisflag, "Print only the basis in report."},
     {OPT_FLAG, "c", (char*)&compress, "Don't compress the action table."},
+    {OPT_FSTR, "C", (char*)handle_C_option, "Write output files to a different directory."},
     {OPT_FSTR, "D", (char*)handle_D_option, "Define an %ifdef macro."},
     {OPT_FSTR, "f", 0, "Ignored.  (Placeholder for -f compiler options.)"},
     {OPT_FLAG, "g", (char*)&rpflag, "Print grammar without actions."},
@@ -1531,6 +1599,7 @@ int main(int argc, char **argv)
   State_init();
   lem.argv0 = argv[0];
   lem.filename = OptArg(0);
+  lem.outbasefilename = stitch_outdir(lem.filename);
   lem.basisflag = basisflag;
   lem.nolinenosflag = nolinenosflag;
   Symbol_new("$");
@@ -2877,12 +2946,12 @@ PRIVATE char *file_makename(struct lemon *lemp, const char *suffix)
   char *name;
   char *cp;
 
-  name = (char*)malloc( lemonStrlen(lemp->filename) + lemonStrlen(suffix) + 5 );
+  name = (char*)malloc( lemonStrlen(lemp->outbasefilename) + lemonStrlen(suffix) + 5 );
   if( name==0 ){
     fprintf(stderr,"Can't allocate space for a filename.\n");
     exit(1);
   }
-  strcpy(name,lemp->filename);
+  strcpy(name,lemp->outbasefilename);
   cp = strrchr(name,'.');
   if( cp ) *cp = 0;
   strcat(name,suffix);

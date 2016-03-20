@@ -301,6 +301,8 @@ void AActor::Serialize(FArchive &arc)
 	}
 	arc	<< special1
 		<< special2
+		<< specialf1
+		<< specialf2
 		<< health
 		<< movedir
 		<< visdir
@@ -3258,13 +3260,13 @@ fixedvec3 AActor::GetPortalTransition(fixed_t byoffset, sector_t **pSec)
 {
 	bool moved = false;
 	sector_t *sec = Sector;
-	fixed_t testz = _f_Z() + byoffset;
+	double testz = Z() + FIXED2FLOAT(byoffset);
 	fixedvec3 pos = _f_Pos();
 
 	while (!sec->PortalBlocksMovement(sector_t::ceiling))
 	{
 		AActor *port = sec->SkyBoxes[sector_t::ceiling];
-		if (testz > port->threshold)
+		if (testz > port->specialf1)
 		{
 			pos = PosRelative(port->Sector);
 			sec = P_PointInSector(pos.x, pos.y);
@@ -3277,7 +3279,7 @@ fixedvec3 AActor::GetPortalTransition(fixed_t byoffset, sector_t **pSec)
 		while (!sec->PortalBlocksMovement(sector_t::floor))
 		{
 			AActor *port = sec->SkyBoxes[sector_t::floor];
-			if (testz <= port->threshold)
+			if (testz <= port->specialf1)
 			{
 				pos = PosRelative(port->Sector);
 				sec = P_PointInSector(pos.x, pos.y);
@@ -3297,7 +3299,7 @@ void AActor::CheckPortalTransition(bool islinked)
 	while (!Sector->PortalBlocksMovement(sector_t::ceiling))
 	{
 		AActor *port = Sector->SkyBoxes[sector_t::ceiling];
-		if (_f_Z() > port->threshold)
+		if (Z() > port->specialf1)
 		{
 			fixedvec3 oldpos = _f_Pos();
 			if (islinked && !moved) UnlinkFromWorld();
@@ -3316,7 +3318,7 @@ void AActor::CheckPortalTransition(bool islinked)
 		while (!Sector->PortalBlocksMovement(sector_t::floor))
 		{
 			AActor *port = Sector->SkyBoxes[sector_t::floor];
-			if (_f_Z() < port->threshold && _f_floorz() < port->threshold)
+			if (Z() < port->specialf1 && floorz < port->specialf1)
 			{
 				fixedvec3 oldpos = _f_Pos();
 				if (islinked && !moved) UnlinkFromWorld();

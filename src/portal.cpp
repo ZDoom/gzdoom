@@ -1089,8 +1089,8 @@ void P_CreateLinkedPortals()
 		}
 		if (sectors[i].PortalIsLinked(sector_t::ceiling) && sectors[i].PortalIsLinked(sector_t::floor))
 		{
-			fixed_t cz = sectors[i].SkyBoxes[sector_t::ceiling]->threshold;
-			fixed_t fz = sectors[i].SkyBoxes[sector_t::floor]->threshold;
+			double cz = sectors[i].SkyBoxes[sector_t::ceiling]->specialf1;
+			double fz = sectors[i].SkyBoxes[sector_t::floor]->specialf1;
 			if (cz < fz)
 			{
 				// This is a fatal condition. We have to remove one of the two portals. Choose the one that doesn't match the current plane
@@ -1204,7 +1204,7 @@ bool P_CollectConnectedGroups(int startgroup, const fixedvec3 &position, fixed_t
 	{
 		sector_t *sec = P_PointInSector(position.x, position.y);
 		sector_t *wsec = sec;
-		while (!wsec->PortalBlocksMovement(sector_t::ceiling) && upperz > wsec->SkyBoxes[sector_t::ceiling]->threshold)
+		while (!wsec->PortalBlocksMovement(sector_t::ceiling) && upperz > FLOAT2FIXED(wsec->SkyBoxes[sector_t::ceiling]->specialf1))
 		{
 			sector_t *othersec = wsec->SkyBoxes[sector_t::ceiling]->Sector;
 			fixedvec2 pos = Displacements.getOffset(startgroup, othersec->PortalGroup);
@@ -1216,7 +1216,7 @@ bool P_CollectConnectedGroups(int startgroup, const fixedvec3 &position, fixed_t
 			retval = true;
 		}
 		wsec = sec;
-		while (!wsec->PortalBlocksMovement(sector_t::floor) && position.z < wsec->SkyBoxes[sector_t::floor]->threshold)
+		while (!wsec->PortalBlocksMovement(sector_t::floor) && position.z < FLOAT2FIXED(wsec->SkyBoxes[sector_t::floor]->specialf1))
 		{
 			sector_t *othersec = wsec->SkyBoxes[sector_t::floor]->Sector;
 			fixedvec2 pos = Displacements.getOffset(startgroup, othersec->PortalGroup);
@@ -1256,7 +1256,7 @@ bool P_CollectConnectedGroups(int startgroup, const fixedvec3 &position, fixed_t
 							sector_t *sec = s ? ld->backsector : ld->frontsector;
 							if (sec && !(sec->PortalBlocksMovement(sector_t::ceiling)))
 							{
-								if (sec->SkyBoxes[sector_t::ceiling]->threshold < upperz)
+								if (FLOAT2FIXED(sec->SkyBoxes[sector_t::ceiling]->specialf1) < upperz)
 								{
 									int grp = sec->SkyBoxes[sector_t::ceiling]->Sector->PortalGroup;
 									if (!(processMask.getBit(grp)))
@@ -1275,7 +1275,7 @@ bool P_CollectConnectedGroups(int startgroup, const fixedvec3 &position, fixed_t
 							sector_t *sec = s ? ld->backsector : ld->frontsector;
 							if (sec && !(sec->PortalBlocksMovement(sector_t::floor)))
 							{
-								if (sec->SkyBoxes[sector_t::floor]->threshold > position.z)
+								if (FLOAT2FIXED(sec->SkyBoxes[sector_t::floor]->specialf1) > position.z)
 								{
 									int grp = sec->SkyBoxes[sector_t::floor]->Sector->PortalGroup;
 									if (!(processMask.getBit(grp)))

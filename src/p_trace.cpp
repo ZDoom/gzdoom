@@ -195,8 +195,8 @@ void FTraceInfo::EnterSectorPortal(int position, fixed_t frac, sector_t *enterse
 	if (aimdir != -1 && aimdir != position) return;
 	AActor *portal = entersec->SkyBoxes[position];
 
-	if (aimdir == sector_t::ceiling && portal->threshold < limitz) return;
-	else if (aimdir == sector_t::floor && portal->threshold > limitz) return;
+	if (aimdir == sector_t::ceiling && FLOAT2FIXED(portal->specialf1) < limitz) return;
+	else if (aimdir == sector_t::floor && FLOAT2FIXED(portal->specialf1) > limitz) return;
 
 	FTraceInfo newtrace;
 	FTraceResults results;
@@ -229,7 +229,7 @@ void FTraceInfo::EnterSectorPortal(int position, fixed_t frac, sector_t *enterse
 	newtrace.inshootthrough = true;
 	newtrace.startfrac = frac;
 	newtrace.aimdir = position;
-	newtrace.limitz = portal->threshold;
+	newtrace.limitz = FLOAT2FIXED(portal->specialf1);
 	newtrace.sectorsel = 0;
 
 	if (newtrace.TraceTraverse(ActorMask ? PT_ADDLINES | PT_ADDTHINGS | PT_COMPATIBLE : PT_ADDLINES))

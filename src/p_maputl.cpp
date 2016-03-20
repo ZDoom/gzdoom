@@ -214,7 +214,7 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef,
 			{
 				// We must check through the portal for the actual dropoff.
 				// If there's no lines in the lower sections we'd never get a usable value otherwise.
-				open.lowfloor = back->NextLowestFloorAt(refx, refy, back->SkyBoxes[sector_t::floor]->threshold-1);
+				open.lowfloor = back->NextLowestFloorAt(refx, refy, FLOAT2FIXED(back->SkyBoxes[sector_t::floor]->specialf1)-1);
 			}
 		}
 		else
@@ -228,7 +228,7 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef,
 			{
 				// We must check through the portal for the actual dropoff.
 				// If there's no lines in the lower sections we'd never get a usable value otherwise.
-				open.lowfloor = front->NextLowestFloorAt(refx, refy, front->SkyBoxes[sector_t::floor]->threshold - 1);
+				open.lowfloor = front->NextLowestFloorAt(refx, refy, FLOAT2FIXED(front->SkyBoxes[sector_t::floor]->specialf1) - 1);
 			}
 		}
 		open.frontfloorplane = front->floorplane;

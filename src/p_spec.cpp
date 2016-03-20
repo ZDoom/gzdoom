@@ -1051,7 +1051,7 @@ void P_SpawnPortal(line_t *line, int sectortag, int plane, int alpha, int linked
 			// store the portal displacement in the unused scaleX/Y members of the portal reference actor.
 			anchor->Scale.X = -(reference->Scale.X = FIXED2DBL(x2 - x1));
 			anchor->Scale.Y = -(reference->Scale.Y = FIXED2DBL(y2 - y1));
-			anchor->threshold = reference->threshold = z;
+			anchor->specialf1 = reference->specialf1 = FIXED2FLOAT(z);
 
 			reference->Mate = anchor;
 			anchor->Mate = reference;

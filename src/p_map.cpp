@@ -752,14 +752,14 @@ static int LineIsAbove(line_t *line, AActor *actor)
 {
 	AActor *point = line->frontsector->SkyBoxes[sector_t::floor];
 	if (point == NULL) return -1;
-	return point->threshold >= actor->_f_Top();
+	return point->specialf1 >= actor->Top();
 }
 
 static int LineIsBelow(line_t *line, AActor *actor)
 {
 	AActor *point = line->frontsector->SkyBoxes[sector_t::ceiling];
 	if (point == NULL) return -1;
-	return point->threshold <= actor->_f_Z();
+	return point->specialf1 <= actor->Z();
 }
 
 //
@@ -858,7 +858,7 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 				if (state == 1)
 				{
 					// the line should not block but we should set the ceilingz to the portal boundary so that we can't float up into that line.
-					double portalz = FIXED2FLOAT(cres.line->frontsector->SkyBoxes[sector_t::floor]->threshold);
+					double portalz = cres.line->frontsector->SkyBoxes[sector_t::floor]->specialf1;
 					if (portalz < tm.ceilingz)
 					{
 						tm.ceilingz = portalz;
@@ -874,7 +874,7 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 				if (state == -1) return true;
 				if (state == 1)
 				{
-					double portalz = FIXED2DBL(cres.line->frontsector->SkyBoxes[sector_t::ceiling]->threshold);
+					double portalz = cres.line->frontsector->SkyBoxes[sector_t::ceiling]->specialf1;
 					if (portalz > tm.floorz)
 					{
 						tm.floorz = portalz;
@@ -3661,8 +3661,8 @@ struct aim_t
 	{
 		AActor *portal = entersec->SkyBoxes[position];
 
-		if (position == sector_t::ceiling && portal->threshold < limitz) return;
-		else if (position == sector_t::floor && portal->threshold > limitz) return;
+		if (position == sector_t::ceiling && FLOAT2FIXED(portal->specialf1) < limitz) return;
+		else if (position == sector_t::floor && FLOAT2FIXED(portal->specialf1) > limitz) return;
 		aim_t newtrace = Clone();
 
 
@@ -3672,7 +3672,7 @@ struct aim_t
 		newtrace.startpos = { startpos.x + FLOAT2FIXED(portal->Scale.X), startpos.y + FLOAT2FIXED(portal->Scale.Y), startpos.z };
 		newtrace.startfrac = frac + FixedDiv(FRACUNIT, attackrange);	// this is to skip the transition line to the portal which would produce a bogus opening
 		newtrace.lastsector = P_PointInSector(newtrace.startpos.x + FixedMul(aimtrace.x, newtrace.startfrac) , newtrace.startpos.y + FixedMul(aimtrace.y, newtrace.startfrac));
-		newtrace.limitz = portal->threshold;
+		newtrace.limitz = FLOAT2FIXED(portal->specialf1);
 		if (aimdebug)
 			Printf("-----Entering %s portal from sector %d to sector %d\n", position ? "ceiling" : "floor", lastsector->sectornum, newtrace.lastsector->sectornum);
 		newtrace.AimTraverse();

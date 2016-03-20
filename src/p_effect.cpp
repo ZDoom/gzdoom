@@ -292,7 +292,7 @@ void P_ThinkParticles ()
 		if (!particle->subsector->sector->PortalBlocksMovement(sector_t::ceiling))
 		{
 			AActor *skybox = particle->subsector->sector->SkyBoxes[sector_t::ceiling];
-			if (particle->z > skybox->threshold)
+			if (particle->z > FLOAT2FIXED(skybox->specialf1))
 			{
 				particle->x += FLOAT2FIXED(skybox->Scale.X);
 				particle->y += FLOAT2FIXED(skybox->Scale.Y);
@@ -302,7 +302,7 @@ void P_ThinkParticles ()
 		else if (!particle->subsector->sector->PortalBlocksMovement(sector_t::floor))
 		{
 			AActor *skybox = particle->subsector->sector->SkyBoxes[sector_t::floor];
-			if (particle->z < skybox->threshold)
+			if (particle->z < FLOAT2FIXED(skybox->specialf1))
 			{
 				particle->x += FLOAT2FIXED(skybox->Scale.X);
 				particle->y += FLOAT2FIXED(skybox->Scale.Y);

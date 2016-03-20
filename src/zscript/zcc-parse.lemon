@@ -90,7 +90,7 @@ static void SetNodeLine(ZCC_TreeNode *name, int line)
 		for (int j = 1; j < YYERRORSYMBOL; ++j)
 		{
 			int k = i + j;
-			if (k >= 0 && k < YY_SZ_ACTTAB && yy_lookahead[k] == j)
+			if (k >= 0 && k < YY_ACTTAB_COUNT && yy_lookahead[k] == j)
 			{
 				expecting << (expecting.IsEmpty() ? "Expecting " : " or ") << ZCCTokenName(j);
 			}

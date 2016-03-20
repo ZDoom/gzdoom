@@ -156,7 +156,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningClip)
 		{
 			return 0;
 		}
-		self->_f_SetZ(self->floorz);
+		self->SetZ(self->floorz);
 		target = self->lastenemy->tracer;
 	}
 	else if (self->flags3 & MF3_CEILINGHUGGER)

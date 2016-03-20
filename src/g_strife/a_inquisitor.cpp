@@ -108,7 +108,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_InquisitorCheckLand)
 	if (self->reactiontime < 0 ||
 		self->Vel.X == 0 ||
 		self->Vel.Y == 0 ||
-		self->_f_Z() <= self->floorz)
+		self->Z() <= self->floorz)
 	{
 		self->SetState (self->SeeState);
 		self->reactiontime = 0;

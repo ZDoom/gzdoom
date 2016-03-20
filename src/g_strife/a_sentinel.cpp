@@ -24,7 +24,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SentinelBob)
 		return 0;
 
 	maxz =  self->ceilingz - self->_Height() - 16;
-	minz = FIXED2FLOAT(self->floorz) + 96;
+	minz = self->floorz + 96;
 	if (minz > maxz)
 	{
 		minz = maxz;

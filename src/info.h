@@ -266,7 +266,7 @@ public:
 	int MeleeDamage;
 	FSoundID MeleeSound;
 	FName MissileName;
-	fixed_t MissileHeight;
+	double MissileHeight;
 
 	// For those times when being able to scan every kind of actor is convenient
 	static TArray<PClassActor *> AllActorClasses;

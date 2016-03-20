@@ -1202,7 +1202,7 @@ bool FPolyObj::CheckMobjBlocking (side_t *sd)
 							&& (!(ld->flags & ML_3DMIDTEX) ||
 								(!P_LineOpening_3dMidtex(mobj, ld, open) &&
 									(mobj->_f_Top() < open.top)
-								) || (open.abovemidtex && mobj->_f_Z() > mobj->floorz))
+								) || (open.abovemidtex && mobj->Z() > mobj->floorz))
 							)
 						{
 							// [BL] We can't just continue here since we must

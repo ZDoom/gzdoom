@@ -212,7 +212,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurDecide)
 		self->VelFromAngle(MNTR_CHARGE_SPEED);
 		self->special1 = TICRATE/2; // Charge duration
 	}
-	else if (target->_f_Z() == target->floorz
+	else if (target->Z() == target->floorz
 		&& dist < 9*64*FRACUNIT
 		&& pr_minotaurdecide() < (friendly ? 100 : 220))
 	{ // Floor fire attack
@@ -389,11 +389,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_MntrFloorFire)
 
 	AActor *mo;
 
-	self->_f_SetZ(self->floorz);
-	fixedvec2 pos = self->Vec2Offset(
-		(pr_fire.Random2 () << 10),
-		(pr_fire.Random2 () << 10));
-	mo = Spawn("MinotaurFX3", pos.x, pos.y, self->floorz, ALLOW_REPLACE);
+	self->SetZ(self->floorz);
+	double x = pr_fire.Random2() / 64.;
+	double y = pr_fire.Random2() / 64.;
+	
+	mo = Spawn("MinotaurFX3", self->Vec2OffsetZ(x, y, self->floorz), ALLOW_REPLACE);
 	mo->target = self->target;
 	mo->Vel.X = MinVel; // Force block checking
 	P_CheckMissileSpawn (mo, self->radius);

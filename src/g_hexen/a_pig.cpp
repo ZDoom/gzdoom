@@ -99,7 +99,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PigPain)
 	PARAM_ACTION_PROLOGUE;
 
 	CALL_ACTION(A_Pain, self);
-	if (self->_f_Z() <= self->floorz)
+	if (self->Z() <= self->floorz)
 	{
 		self->Vel.Z = 3.5;
 	}

@@ -56,7 +56,7 @@ void AFastProjectile::Tick ()
 	}
 
 	// Handle movement
-	if (Vel.X != 0 || Vel.Y != 0 || (_f_Z() != floorz) || _f_velz())
+	if (!Vel.isZero() || (Z() != floorz))
 	{
 		xfrac = _f_velx() >> shift;
 		yfrac = _f_vely() >> shift;
@@ -101,7 +101,7 @@ void AFastProjectile::Tick ()
 			_f_AddZ(zfrac);
 			UpdateWaterLevel (oldz);
 			oldz = _f_Z();
-			if (_f_Z() <= floorz)
+			if (Z() <= floorz)
 			{ // Hit the floor
 
 				if (floorpic == skyflatnum && !(flags3 & MF3_SKYEXPLODE))
@@ -112,7 +112,7 @@ void AFastProjectile::Tick ()
 					return;
 				}
 
-				_f_SetZ(floorz);
+				SetZ(floorz);
 				P_HitFloor (this);
 				P_ExplodeMissile (this, NULL, NULL);
 				return;
@@ -156,28 +156,25 @@ void AFastProjectile::Tick ()
 
 void AFastProjectile::Effect()
 {
-	//if (pr_smoke() < 128)	// [RH] I think it looks better if it's consistent
+	FName name = GetClass()->MissileName;
+	if (name != NAME_None)
 	{
-		FName name = GetClass()->MissileName;
-		if (name != NAME_None)
-		{
-			fixed_t hitz = _f_Z()-8*FRACUNIT;
+		double hitz = Z()-8;
 
-			if (hitz < floorz)
-			{
-				hitz = floorz;
-			}
-			// Do not clip this offset to the floor.
-			hitz += GetClass()->MissileHeight;
+		if (hitz < floorz)
+		{
+			hitz = floorz;
+		}
+		// Do not clip this offset to the floor.
+		hitz += GetClass()->MissileHeight;
 		
-			PClassActor *trail = PClass::FindActor(name);
-			if (trail != NULL)
+		PClassActor *trail = PClass::FindActor(name);
+		if (trail != NULL)
+		{
+			AActor *act = Spawn (trail, PosAtZ(hitz), ALLOW_REPLACE);
+			if (act != NULL)
 			{
-				AActor *act = Spawn (trail, _f_X(), _f_Y(), hitz, ALLOW_REPLACE);
-				if (act != NULL)
-				{
-					act->Angles.Yaw = Angles.Yaw;
-				}
+				act->Angles.Yaw = Angles.Yaw;
 			}
 		}
 	}

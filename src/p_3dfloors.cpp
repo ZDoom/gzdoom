@@ -378,7 +378,7 @@ bool P_CheckFor3DFloorHit(AActor * mo)
 
 		if(rover->flags & FF_SOLID && rover->model->SecActTarget)
 		{
-			if(mo->floorz == rover->top.plane->ZatPoint(mo)) 
+			if(mo->_f_floorz() == rover->top.plane->ZatPoint(mo)) 
 			{
 				rover->model->SecActTarget->TriggerAction (mo, SECSPAC_HitFloor);
 				return true;

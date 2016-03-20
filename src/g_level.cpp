@@ -1242,7 +1242,7 @@ void G_FinishTravel ()
 			{
 				pawn->Angles = pawndup->Angles;
 			}
-			pawn->SetXYZ(pawndup->_f_X(), pawndup->_f_Y(), pawndup->_f_Z());
+			pawn->SetXYZ(pawndup->Pos());
 			pawn->Vel = pawndup->Vel;
 			pawn->Sector = pawndup->Sector;
 			pawn->floorz = pawndup->floorz;

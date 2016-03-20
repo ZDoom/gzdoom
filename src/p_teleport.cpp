@@ -112,7 +112,7 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, DAngle angle, i
 	double missilespeed = 0;
 
 	old = thing->_f_Pos();
-	aboveFloor = thing->_f_Z() - thing->floorz;
+	aboveFloor = thing->_f_Z() - thing->_f_floorz();
 	destsect = P_PointInSector (x, y);
 	// killough 5/12/98: exclude voodoo dolls:
 	player = thing->player;
@@ -489,7 +489,7 @@ bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id, INTBO
 			bool stepdown = l->frontsector->floorplane.ZatPoint(x, y) < l->backsector->floorplane.ZatPoint(x, y);
 
 			// Height of thing above ground
-			fixed_t z = thing->_f_Z() - thing->floorz;
+			fixed_t z = thing->_f_Z() - thing->_f_floorz();
 
 			// Side to exit the linedef on positionally.
 			//

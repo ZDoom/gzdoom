@@ -599,7 +599,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_UnsetFloat)
 //
 //==========================================================================
 static void DoAttack (AActor *self, bool domelee, bool domissile,
-					  int MeleeDamage, FSoundID MeleeSound, PClassActor *MissileType,fixed_t MissileHeight)
+					  int MeleeDamage, FSoundID MeleeSound, PClassActor *MissileType,double MissileHeight)
 {
 	if (self->target == NULL) return;
 
@@ -614,9 +614,10 @@ static void DoAttack (AActor *self, bool domelee, bool domissile,
 	else if (domissile && MissileType != NULL)
 	{
 		// This seemingly senseless code is needed for proper aiming.
-		self->_f_AddZ(MissileHeight + self->GetBobOffset() - 32*FRACUNIT);
+		double add = MissileHeight + FIXED2FLOAT(self->GetBobOffset()) - 32;
+		self->AddZ(add);
 		AActor *missile = P_SpawnMissileXYZ (self->PosPlusZ(32*FRACUNIT), self, self->target, MissileType, false);
-		self->_f_AddZ(-(MissileHeight + self->GetBobOffset() - 32*FRACUNIT));
+		self->AddZ(-add);
 
 		if (missile)
 		{
@@ -643,8 +644,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MissileAttack)
 {
 	PARAM_ACTION_PROLOGUE;
 	PClassActor *MissileType = PClass::FindActor(self->GetClass()->MissileName);
-	fixed_t MissileHeight = self->GetClass()->MissileHeight;
-	DoAttack(self, false, true, 0, 0, MissileType, MissileHeight);
+	DoAttack(self, false, true, 0, 0, MissileType, self->GetClass()->MissileHeight);
 	return 0;
 }
 
@@ -654,8 +654,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ComboAttack)
 	int MeleeDamage = self->GetClass()->MeleeDamage;
 	FSoundID MeleeSound = self->GetClass()->MeleeSound;
 	PClassActor *MissileType = PClass::FindActor(self->GetClass()->MissileName);
-	fixed_t MissileHeight = self->GetClass()->MissileHeight;
-	DoAttack(self, true, true, MeleeDamage, MeleeSound, MissileType, MissileHeight);
+	DoAttack(self, true, true, MeleeDamage, MeleeSound, MissileType, self->GetClass()->MissileHeight);
 	return 0;
 }
 
@@ -3364,7 +3363,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckFloor)
 	PARAM_ACTION_PROLOGUE;
 	PARAM_STATE(jump);
 
-	if (self->_f_Z() <= self->floorz)
+	if (self->Z() <= self->floorz)
 	{
 		ACTION_RETURN_STATE(jump);
 	}
@@ -4783,28 +4782,30 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Teleport)
 	// of the spot.
 	if (flags & TF_SENSITIVEZ)
 	{
-		fixed_t posz = (flags & TF_USESPOTZ) ? spot->_f_Z() : spot->floorz;
-		if ((posz + ref->height > spot->_f_ceilingz()) || (posz < spot->floorz))
+		double posz = (flags & TF_USESPOTZ) ? spot->Z() : spot->floorz;
+		if ((posz + ref->_Height() > spot->ceilingz) || (posz < spot->floorz))
 		{
 			return numret;
 		}
 	}
-	fixedvec3 prev = ref->_f_Pos();
-	fixed_t aboveFloor = spot->_f_Z() - spot->floorz;
-	fixed_t finalz = spot->floorz + aboveFloor;
+	DVector3 prev = ref->Pos();
+	double aboveFloor = spot->Z() - spot->floorz;
+	double finalz = spot->floorz + aboveFloor;
 
-	if (spot->Z() + ref->_Height() > spot->ceilingz)
-		finalz = spot->_f_ceilingz() - ref->height;
-	else if (spot->_f_Z() < spot->floorz)
+	if (spot->Top() > spot->ceilingz)
+		finalz = spot->ceilingz - ref->_Height();
+	else if (spot->Z() < spot->floorz)
 		finalz = spot->floorz;
 
+	DVector3 tpos = spot->PosAtZ(finalz);
+
 	//Take precedence and cooperate with telefragging first.
-	bool tele_result = P_TeleportMove(ref, spot->_f_X(), spot->_f_Y(), finalz, !!(flags & TF_TELEFRAG));
+	bool tele_result = P_TeleportMove(ref, tpos, !!(flags & TF_TELEFRAG));
 
 	if (!tele_result && (flags & TF_FORCED))
 	{
 		//If for some reason the original move didn't work, regardless of telefrag, force it to move.
-		ref->SetOrigin(spot->_f_X(), spot->_f_Y(), finalz, false);
+		ref->SetOrigin(tpos, false);
 		tele_result = true;
 	}
 
@@ -4829,17 +4830,17 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Teleport)
 			if (!(flags & TF_NODESTFOG))
 			{
 				if (flags & TF_USEACTORFOG)
-					P_SpawnTeleportFog(ref, ref->_f_Pos(), false, true);
+					P_SpawnTeleportFog(ref, ref->Pos(), false, true);
 				else
 				{
-					fog2 = Spawn(fog_type, ref->_f_Pos(), ALLOW_REPLACE);
+					fog2 = Spawn(fog_type, ref->Pos(), ALLOW_REPLACE);
 					if (fog2 != NULL)
 						fog2->target = ref;
 				}
 			}
 		}
 		
-		ref->_f_SetZ((flags & TF_USESPOTZ) ? spot->_f_Z() : ref->floorz, false);
+		ref->SetZ((flags & TF_USESPOTZ) ? spot->Z() : ref->floorz, false);
 
 		if (!(flags & TF_KEEPANGLE))
 			ref->Angles.Yaw = spot->Angles.Yaw;

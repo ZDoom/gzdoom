@@ -43,17 +43,15 @@ void ACFlameMissile::BeginPlay ()
 
 void ACFlameMissile::Effect ()
 {
-	fixed_t newz;
-
 	if (!--special1)
 	{
 		special1 = 4;
-		newz = _f_Z()-12*FRACUNIT;
+		double newz = Z()-12;
 		if (newz < floorz)
 		{
 			newz = floorz;
 		}
-		AActor *mo = Spawn ("CFlameFloor", _f_X(), _f_Y(), newz, ALLOW_REPLACE);
+		AActor *mo = Spawn ("CFlameFloor", PosAtZ(newz), ALLOW_REPLACE);
 		if (mo)
 		{
 			mo->Angles.Yaw = Angles.Yaw;

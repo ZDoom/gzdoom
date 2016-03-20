@@ -302,7 +302,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DragonCheckCrash)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	if (self->_f_Z() <= self->floorz)
+	if (self->Z() <= self->floorz)
 	{
 		self->SetState (self->FindState ("Crash"));
 	}

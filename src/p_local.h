@@ -279,6 +279,10 @@ AActor	*P_CheckOnmobj (AActor *thing);
 void	P_FakeZMovement (AActor *mo);
 bool	P_TryMove (AActor* thing, fixed_t x, fixed_t y, int dropoff, const secplane_t * onfloor, FCheckPosition &tm, bool missileCheck = false);
 bool	P_TryMove (AActor* thing, fixed_t x, fixed_t y, int dropoff, const secplane_t * onfloor = NULL);
+inline bool	P_TryMove(AActor* thing, double x, double y, int dropoff, const secplane_t * onfloor = NULL)
+{
+	return P_TryMove(thing, FLOAT2FIXED(x), FLOAT2FIXED(y), dropoff, onfloor);
+}
 bool	P_CheckMove(AActor *thing, fixed_t x, fixed_t y);
 void	P_ApplyTorque(AActor *mo);
 bool	P_TeleportMove (AActor* thing, fixed_t x, fixed_t y, fixed_t z, bool telefrag, bool modifyactor = true);	// [RH] Added z and telefrag parameters

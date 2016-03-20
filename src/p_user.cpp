@@ -768,7 +768,7 @@ void APlayerPawn::PostBeginPlay()
 	if (player == NULL || player->mo != this)
 	{
 		P_FindFloorCeiling(this, FFCF_ONLYSPAWNPOS|FFCF_NOPORTALS);
-		_f_SetZ(floorz);
+		SetZ(floorz);
 		P_FindFloorCeiling(this, FFCF_ONLYSPAWNPOS);
 	}
 	else
@@ -1907,7 +1907,7 @@ void P_CalcHeight (player_t *player)
 	}
 	player->viewz = player->mo->_f_Z() + player->viewheight + FLOAT2FIXED(bob);
 	if (player->mo->floorclip && player->playerstate != PST_DEAD
-		&& player->mo->_f_Z() <= player->mo->floorz)
+		&& player->mo->Z() <= player->mo->floorz)
 	{
 		player->viewz -= player->mo->floorclip;
 	}
@@ -1915,9 +1915,9 @@ void P_CalcHeight (player_t *player)
 	{
 		player->viewz = player->mo->_f_ceilingz() - 4*FRACUNIT;
 	}
-	if (player->viewz < player->mo->floorz + 4*FRACUNIT)
+	if (player->viewz < player->mo->_f_floorz() + 4*FRACUNIT)
 	{
-		player->viewz = player->mo->floorz + 4*FRACUNIT;
+		player->viewz = player->mo->_f_floorz() + 4*FRACUNIT;
 	}
 }
 
@@ -1950,7 +1950,7 @@ void P_MovePlayer (player_t *player)
 		mo->Angles.Yaw += cmd->ucmd.yaw * (360./65536.);
 	}
 
-	player->onground = (mo->_f_Z() <= mo->floorz) || (mo->flags2 & MF2_ONMOBJ) || (mo->BounceFlags & BOUNCE_MBF) || (player->cheats & CF_NOCLIP2);
+	player->onground = (mo->Z() <= mo->floorz) || (mo->flags2 & MF2_ONMOBJ) || (mo->BounceFlags & BOUNCE_MBF) || (player->cheats & CF_NOCLIP2);
 
 	// killough 10/98:
 	//
@@ -2138,7 +2138,7 @@ void P_DeathThink (player_t *player)
 
 	P_MovePsprites (player);
 
-	player->onground = (player->mo->_f_Z() <= player->mo->floorz);
+	player->onground = (player->mo->Z() <= player->mo->floorz);
 	if (player->mo->IsKindOf (RUNTIME_CLASS(APlayerChunk)))
 	{ // Flying bloody skull or flying ice chunk
 		player->viewheight = 6 * FRACUNIT;
@@ -3180,7 +3180,7 @@ void player_t::Serialize (FArchive &arc)
 	}
 	else
 	{
-		onground = (mo->_f_Z() <= mo->floorz) || (mo->flags2 & MF2_ONMOBJ) || (mo->BounceFlags & BOUNCE_MBF) || (cheats & CF_NOCLIP2);
+		onground = (mo->Z() <= mo->floorz) || (mo->flags2 & MF2_ONMOBJ) || (mo->BounceFlags & BOUNCE_MBF) || (cheats & CF_NOCLIP2);
 	}
 
 	if (SaveVersion < 4514 && IsBot)

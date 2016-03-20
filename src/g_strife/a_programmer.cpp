@@ -109,7 +109,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpotLightning)
 	if (self->target == NULL)
 		return 0;
 
-	spot = Spawn("SpectralLightningSpot", self->target->_f_X(), self->target->_f_Y(), self->target->floorz, ALLOW_REPLACE);
+	spot = Spawn("SpectralLightningSpot", self->target->PosAtZ(self->target->floorz), ALLOW_REPLACE);
 	if (spot != NULL)
 	{
 		spot->threshold = 25;

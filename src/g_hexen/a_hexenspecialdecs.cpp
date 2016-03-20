@@ -141,7 +141,7 @@ IMPLEMENT_CLASS (AZCorpseLynchedNoHeart)
 void AZCorpseLynchedNoHeart::PostBeginPlay ()
 {
 	Super::PostBeginPlay ();
-	Spawn ("BloodPool", _f_X(), _f_Y(), floorz, ALLOW_REPLACE);
+	Spawn ("BloodPool", PosAtZ(floorz), ALLOW_REPLACE);
 }
 
 //============================================================================

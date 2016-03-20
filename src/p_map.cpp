@@ -253,16 +253,16 @@ static bool PIT_FindFloorCeiling(FMultiBlockLinesIterator &mit, FMultiBlockLines
 
 	if (!(flags & FFCF_NOFLOOR))
 	{
-		if (open.bottom > tmf.floorz)
+		if (open.bottom > tmf._f_floorz())
 		{
-			tmf.floorz = open.bottom;
+			tmf.floorz = FIXED2DBL(open.bottom);
 			if (open.bottomsec != NULL) tmf.floorsector = open.bottomsec;
 			tmf.touchmidtex = open.touchmidtex;
 			tmf.abovemidtex = open.abovemidtex;
 			if (ffcf_verbose) Printf("    Adjust floorz to %f\n", FIXED2FLOAT(open.bottom));
-			if (tmf.floorz > tmf.dropoffz + tmf.thing->MaxDropOffHeight) mit.StopDown();
+			if (tmf._f_floorz() > tmf.dropoffz + tmf.thing->MaxDropOffHeight) mit.StopDown();
 		}
-		else if (open.bottom == tmf.floorz)
+		else if (open.bottom == tmf._f_floorz())
 		{
 			tmf.touchmidtex |= open.touchmidtex;
 			tmf.abovemidtex |= open.abovemidtex;
@@ -272,7 +272,7 @@ static bool PIT_FindFloorCeiling(FMultiBlockLinesIterator &mit, FMultiBlockLines
 		{
 			tmf.dropoffz = open.lowfloor;
 			if (ffcf_verbose) Printf("    Adjust dropoffz to %f\n", FIXED2FLOAT(open.bottom));
-			if (tmf.floorz > tmf.dropoffz + tmf.thing->MaxDropOffHeight) mit.StopDown();
+			if (tmf._f_floorz() > tmf.dropoffz + tmf.thing->MaxDropOffHeight) mit.StopDown();
 		}
 	}
 	return true;
@@ -292,7 +292,8 @@ void P_GetFloorCeilingZ(FCheckPosition &tmf, int flags)
 	F3DFloor *ffc, *fff;
 
 	tmf.ceilingz = FIXED2DBL(sec->NextHighestCeilingAt(tmf.x, tmf.y, tmf.z, tmf.z + tmf.thing->height, flags, &tmf.ceilingsector, &ffc));
-	tmf.floorz = tmf.dropoffz = sec->NextLowestFloorAt(tmf.x, tmf.y, tmf.z, flags, tmf.thing->MaxStepHeight, &tmf.floorsector, &fff);
+	tmf.dropoffz = sec->NextLowestFloorAt(tmf.x, tmf.y, tmf.z, flags, tmf.thing->MaxStepHeight, &tmf.floorsector, &fff);
+	tmf.floorz = FIXED2DBL(tmf.dropoffz);
 
 	if (fff)
 	{
@@ -343,7 +344,7 @@ void P_FindFloorCeiling(AActor *actor, int flags)
 	actor->floorsector = tmf.floorsector;
 	actor->ceilingpic = tmf.ceilingpic;
 	actor->ceilingsector = tmf.ceilingsector;
-	if (ffcf_verbose) Printf("Starting with ceilingz = %f, floorz = %f\n", tmf.ceilingz, FIXED2FLOAT(tmf.floorz));
+	if (ffcf_verbose) Printf("Starting with ceilingz = %f, floorz = %f\n", tmf.ceilingz, tmf.floorz);
 
 	tmf.touchmidtex = false;
 	tmf.abovemidtex = false;
@@ -363,9 +364,9 @@ void P_FindFloorCeiling(AActor *actor, int flags)
 		PIT_FindFloorCeiling(mit, cres, mit.Box(), tmf, flags|cres.portalflags);
 	}
 
-	if (tmf.touchmidtex) tmf.dropoffz = tmf.floorz;
+	if (tmf.touchmidtex) tmf.dropoffz = tmf._f_floorz();
 
-	bool usetmf = !(flags & FFCF_ONLYSPAWNPOS) || (tmf.abovemidtex && (tmf.floorz <= actor->_f_Z()));
+	bool usetmf = !(flags & FFCF_ONLYSPAWNPOS) || (tmf.abovemidtex && (tmf.floorz <= actor->Z()));
 
 	// when actual floor or ceiling are beyond a portal plane we also need to use the result of the blockmap iterator, regardless of the flags being specified.
 	if (usetmf || tmf.floorsector->PortalGroup != actor->Sector->PortalGroup)
@@ -444,7 +445,7 @@ bool P_TeleportMove(AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefra
 	}
 	thing->_f_SetZ(savedz);
 
-	if (tmf.touchmidtex) tmf.dropoffz = tmf.floorz;
+	if (tmf.touchmidtex) tmf.dropoffz = tmf._f_floorz();
 
 	FMultiBlockThingsIterator mit2(grouplist, x, y, z, thing->height, thing->_f_radius(), false, sector);
 	FMultiBlockThingsIterator::CheckResult cres2;
@@ -605,7 +606,7 @@ int P_GetFriction(const AActor *mo, int *frictionfactor)
 		friction = FRICTION_FLY;
 	}
 	else if ((!(mo->flags & MF_NOGRAVITY) && mo->waterlevel > 1) ||
-		(mo->waterlevel == 1 && mo->_f_Z() > mo->floorz + 6 * FRACUNIT))
+		(mo->waterlevel == 1 && mo->Z() > mo->floorz+ 6))
 	{
 		friction = mo->Sector->GetFriction(sector_t::floor, &movefactor);
 		movefactor >>= 1;
@@ -873,7 +874,7 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 				if (state == -1) return true;
 				if (state == 1)
 				{
-					fixed_t portalz = cres.line->frontsector->SkyBoxes[sector_t::ceiling]->threshold;
+					double portalz = FIXED2DBL(cres.line->frontsector->SkyBoxes[sector_t::ceiling]->threshold);
 					if (portalz > tm.floorz)
 					{
 						tm.floorz = portalz;
@@ -948,9 +949,9 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 
 	if (!(cres.portalflags & FFCF_NOFLOOR))
 	{
-		if (open.bottom > tm.floorz)
+		if (open.bottom > tm._f_floorz())
 		{
-			tm.floorz = open.bottom;
+			tm.floorz = FIXED2DBL(open.bottom);
 			tm.floorsector = open.bottomsec;
 			tm.floorpic = open.floorpic;
 			tm.floorterrain = open.floorterrain;
@@ -958,7 +959,7 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 			tm.abovemidtex = open.abovemidtex;
 			tm.thing->BlockingLine = ld;
 		}
-		else if (open.bottom == tm.floorz)
+		else if (open.bottom == tm._f_floorz())
 		{
 			tm.touchmidtex |= open.touchmidtex;
 			tm.abovemidtex |= open.abovemidtex;
@@ -1069,9 +1070,9 @@ static bool PIT_CheckPortal(FMultiBlockLinesIterator &mit, FMultiBlockLinesItera
 			ret = true;
 		}
 
-		if (open.bottom - zofs > tm.floorz)
+		if (open.bottom - zofs > tm._f_floorz())
 		{
-			tm.floorz = open.bottom - zofs;
+			tm.floorz = FIXED2DBL(open.bottom - zofs);
 			tm.floorpic = open.floorpic;
 			tm.floorterrain = open.floorterrain;
 			/*
@@ -1223,18 +1224,18 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 		{
 			// [RH] Let monsters walk on actors as well as floors
 			if ((tm.thing->flags3 & MF3_ISMONSTER) &&
-				topz >= tm.floorz && topz <= tm.thing->_f_Z() + tm.thing->MaxStepHeight)
+				topz >= tm._f_floorz() && topz <= tm.thing->_f_Z() + tm.thing->MaxStepHeight)
 			{
 				// The commented-out if is an attempt to prevent monsters from walking off a
 				// thing further than they would walk off a ledge. I can't think of an easy
 				// way to do this, so I restrict them to only walking on bridges instead.
 				// Uncommenting the if here makes it almost impossible for them to walk on
 				// anything, bridge or otherwise.
-				//			if (abs(thing->x - tmx) <= thing->_f_radius() &&
-				//				abs(thing->y - tmy) <= thing->_f_radius())
+				//			if (abs(thing->x - tmx) <= thing->radius &&
+				//				abs(thing->y - tmy) <= thing->radius)
 				{
 					tm.stepthing = thing;
-					tm.floorz = topz;
+					tm.floorz = FIXED2DBL(topz);
 				}
 			}
 		}
@@ -1590,7 +1591,7 @@ MOVEMENT CLIPPING
 //
 // out:
 //	newsubsec
-//	floorz
+//	_f_floorz()
 //	ceilingz
 //	tmdropoffz = the lowest point contacted (monsters won't move to a dropoff)
 //	speciallines[]
@@ -1624,7 +1625,8 @@ bool P_CheckPosition(AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm, bo
 	else
 	{
 		// With noclip2, we must ignore 3D floors and go right to the uppermost ceiling and lowermost floor.
-		tm.floorz = tm.dropoffz = newsec->_f_LowestFloorAt(x, y, &tm.floorsector);
+		tm.dropoffz = newsec->_f_LowestFloorAt(x, y, &tm.floorsector);
+		tm.floorz = FIXED2DBL(tm.dropoffz);
 		tm.ceilingz = FIXED2DBL(newsec->_f_HighestCeilingAt(x, y, &tm.ceilingsector));
 		tm.floorpic = tm.floorsector->GetTexture(sector_t::floor);
 		tm.floorterrain = tm.floorsector->GetTerrain(sector_t::floor);
@@ -1723,9 +1725,9 @@ bool P_CheckPosition(AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm, bo
 	FMultiBlockLinesIterator it(pcheck, x, y, thing->_f_Z(), thing->height, thing->_f_radius(), newsec);
 	FMultiBlockLinesIterator::CheckResult lcres;
 
-	fixed_t thingdropoffz = tm.floorz;
+	fixed_t thingdropoffz = tm._f_floorz();
 	//bool onthing = (thingdropoffz != tmdropoffz);
-	tm.floorz = tm.dropoffz;
+	tm.floorz = FIXED2DBL(tm.dropoffz);
 
 	bool good = true;
 
@@ -1752,13 +1754,13 @@ bool P_CheckPosition(AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm, bo
 	{
 		return false;
 	}
-	if (tm._f_ceilingz() - tm.floorz < thing->height)
+	if (tm.ceilingz - tm.floorz < thing->_Height())
 	{
 		return false;
 	}
 	if (tm.touchmidtex)
 	{
-		tm.dropoffz = tm.floorz;
+		tm.dropoffz = tm._f_floorz();
 	}
 	else if (tm.stepthing != NULL)
 	{
@@ -1789,10 +1791,10 @@ bool P_TestMobjLocation(AActor *mobj)
 
 	flags = mobj->flags;
 	mobj->flags &= ~MF_PICKUP;
-	if (P_CheckPosition(mobj, mobj->_f_X(), mobj->_f_Y()))
+	if (P_CheckPosition(mobj, mobj->Pos()))
 	{ // XY is ok, now check Z
 		mobj->flags = flags;
-		if ((mobj->_f_Z() < mobj->floorz) || (mobj->Top() > mobj->ceilingz))
+		if ((mobj->Z() < mobj->floorz) || (mobj->Top() > mobj->ceilingz))
 		{ // Bad Z
 			return false;
 		}
@@ -1930,7 +1932,7 @@ void P_FakeZMovement(AActor *mo)
 				mo->_f_AddZ(mo->_f_floatspeed());
 		}
 	}
-	if (mo->player && mo->flags&MF_NOGRAVITY && (mo->_f_Z() > mo->floorz) && !mo->IsNoClip2())
+	if (mo->player && mo->flags&MF_NOGRAVITY && (mo->Z() > mo->floorz) && !mo->IsNoClip2())
 	{
 		mo->_f_AddZ(finesine[(FINEANGLES / 80 * level.maptime)&FINEMASK] / 8);
 	}
@@ -1938,9 +1940,9 @@ void P_FakeZMovement(AActor *mo)
 	//
 	// clip movement
 	//
-	if (mo->_f_Z() <= mo->floorz)
+	if (mo->Z() <= mo->floorz)
 	{ // hit the floor
-		mo->_f_SetZ(mo->floorz);
+		mo->SetZ(mo->floorz);
 	}
 
 	if (mo->Top() > mo->ceilingz)
@@ -2069,7 +2071,7 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 
 	if (thing->flags3 & MF3_FLOORHUGGER)
 	{
-		thing->_f_SetZ(tm.floorz);
+		thing->SetZ(tm.floorz);
 	}
 	else if (thing->flags3 & MF3_CEILINGHUGGER)
 	{
@@ -2078,11 +2080,11 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 
 	if (onfloor && tm.floorsector == thing->floorsector)
 	{
-		thing->_f_SetZ(tm.floorz);
+		thing->SetZ(tm.floorz);
 	}
 	if (!(thing->flags & MF_NOCLIP))
 	{
-		if (tm._f_ceilingz() - tm.floorz < thing->height)
+		if (tm.ceilingz - tm.floorz < thing->_Height())
 		{
 			goto pushline;		// doesn't fit
 		}
@@ -2106,42 +2108,42 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 			// is not blocked.
 			if (thing->Top() > tm.ceilingz)
 			{
-				thing->_f_velz() = -8 * FRACUNIT;
+				thing->Vel.Z = -8;
 				goto pushline;
 			}
-			else if (thing->_f_Z() < tm.floorz && tm.floorz - tm.dropoffz > thing->MaxDropOffHeight)
+			else if (thing->Z() < tm.floorz && tm._f_floorz() - tm.dropoffz > thing->MaxDropOffHeight)
 			{
-				thing->_f_velz() = 8 * FRACUNIT;
+				thing->Vel.Z = 8;
 				goto pushline;
 			}
 #endif
 		}
 		if (!(thing->flags & MF_TELEPORT) && !(thing->flags3 & MF3_FLOORHUGGER))
 		{
-			if ((thing->flags & MF_MISSILE) && !(thing->flags6 & MF6_STEPMISSILE) && tm.floorz > thing->_f_Z())
+			if ((thing->flags & MF_MISSILE) && !(thing->flags6 & MF6_STEPMISSILE) && tm.floorz > thing->Z())
 			{ // [RH] Don't let normal missiles climb steps
 				goto pushline;
 			}
-			if (tm.floorz - thing->_f_Z() > thing->MaxStepHeight)
+			if (tm._f_floorz() - thing->_f_Z() > thing->MaxStepHeight)
 			{ // too big a step up
 				goto pushline;
 			}
-			else if (thing->_f_Z() < tm.floorz)
+			else if (thing->Z() < tm.floorz)
 			{ // [RH] Check to make sure there's nothing in the way for the step up
-				fixed_t savedz = thing->_f_Z();
+				double savedz = thing->Z();
 				bool good;
-				thing->_f_SetZ(tm.floorz);
+				thing->SetZ(tm.floorz);
 				good = P_TestMobjZ(thing);
-				thing->_f_SetZ(savedz);
+				thing->SetZ(savedz);
 				if (!good)
 				{
 					goto pushline;
 				}
 				if (thing->flags6 & MF6_STEPMISSILE)
 				{
-					thing->_f_SetZ(tm.floorz);
+					thing->SetZ(tm.floorz);
 					// If moving down, cancel vertical component of the velocity
-					if (thing->_f_velz() < 0)
+					if (thing->Vel.Z < 0)
 					{
 						// If it's a bouncer, let it bounce off its new floor, too.
 						if (thing->BounceFlags & BOUNCE_Floors)
@@ -2165,7 +2167,7 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 		}
 
 		if (dropoff == 2 &&  // large jump down (e.g. dogs)
-			(tm.floorz - tm.dropoffz > 128 * FRACUNIT || thing->target == NULL || thing->target->_f_Z() >tm.dropoffz))
+			(tm._f_floorz() - tm.dropoffz > 128 * FRACUNIT || thing->target == NULL || thing->target->_f_Z() >tm.dropoffz))
 		{
 			dropoff = false;
 		}
@@ -2176,15 +2178,15 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 		{
 			if (!(thing->flags5&MF5_AVOIDINGDROPOFF))
 			{
-				fixed_t floorz = tm.floorz;
+				double floorz = tm.floorz;
 				// [RH] If the thing is standing on something, use its current z as the floorz.
 				// This is so that it does not walk off of things onto a drop off.
 				if (thing->flags2 & MF2_ONMOBJ)
 				{
-					floorz = MAX(thing->_f_Z(), tm.floorz);
+					floorz = MAX(thing->Z(), tm.floorz);
 				}
 
-				if (floorz - tm.dropoffz > thing->MaxDropOffHeight &&
+				if (FLOAT2FIXED(floorz) - tm.dropoffz > thing->MaxDropOffHeight &&
 					!(thing->flags2 & MF2_BLASTED) && !missileCheck)
 				{ // Can't move over a dropoff unless it's been blasted
 					// [GZ] Or missile-spawned
@@ -2197,7 +2199,7 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 			{
 				// special logic to move a monster off a dropoff
 				// this intentionally does not check for standing on things.
-				if (thing->floorz - tm.floorz > thing->MaxDropOffHeight ||
+				if (thing->_f_floorz() - tm._f_floorz() > thing->MaxDropOffHeight ||
 					thing->dropoffz - tm.dropoffz > thing->MaxDropOffHeight)
 				{
 					thing->flags6 &= ~MF6_INTRYMOVE;
@@ -2207,7 +2209,7 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 		}
 		if (thing->flags2 & MF2_CANTLEAVEFLOORPIC
 			&& (tm.floorpic != thing->floorpic
-			|| tm.floorz - thing->_f_Z() != 0))
+			|| tm.floorz - thing->Z() != 0))
 		{ // must stay within a sector of a certain floor type
 			thing->_f_SetZ(oldz);
 			thing->flags6 &= ~MF6_INTRYMOVE;
@@ -2250,7 +2252,7 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 	// Borrowed from MBF: 
 	if (thing->BounceFlags & BOUNCE_MBF &&  // killough 8/13/98
 		!(thing->flags & (MF_MISSILE | MF_NOGRAVITY)) &&
-		!thing->IsSentient() && tm.floorz - thing->_f_Z() > 16 * FRACUNIT)
+		!thing->IsSentient() && tm.floorz - thing->Z() > 16)
 	{ // too big a step up for MBF bouncers under gravity
 		thing->flags6 &= ~MF6_INTRYMOVE;
 		return false;
@@ -2539,7 +2541,7 @@ bool P_CheckMove(AActor *thing, fixed_t x, fixed_t y)
 
 	if (thing->flags3 & MF3_FLOORHUGGER)
 	{
-		newz = tm.floorz;
+		newz = tm._f_floorz();
 	}
 	else if (thing->flags3 & MF3_CEILINGHUGGER)
 	{
@@ -2548,7 +2550,7 @@ bool P_CheckMove(AActor *thing, fixed_t x, fixed_t y)
 
 	if (!(thing->flags & MF_NOCLIP))
 	{
-		if (tm._f_ceilingz() - tm.floorz < thing->height)
+		if (tm.ceilingz - tm.floorz < thing->_Height())
 		{
 			return false;
 		}
@@ -2567,18 +2569,18 @@ bool P_CheckMove(AActor *thing, fixed_t x, fixed_t y)
 		}
 		if (!(thing->flags & MF_TELEPORT) && !(thing->flags3 & MF3_FLOORHUGGER))
 		{
-			if (tm.floorz - newz > thing->MaxStepHeight)
+			if (tm._f_floorz() - newz > thing->MaxStepHeight)
 			{ // too big a step up
 				return false;
 			}
-			else if ((thing->flags & MF_MISSILE) && !(thing->flags6 & MF6_STEPMISSILE) && tm.floorz > newz)
+			else if ((thing->flags & MF_MISSILE) && !(thing->flags6 & MF6_STEPMISSILE) && tm._f_floorz() > newz)
 			{ // [RH] Don't let normal missiles climb steps
 				return false;
 			}
-			else if (newz < tm.floorz)
+			else if (newz < tm._f_floorz())
 			{ // [RH] Check to make sure there's nothing in the way for the step up
 				fixed_t savedz = thing->_f_Z();
-				thing->_f_SetZ(newz = tm.floorz);
+				thing->_f_SetZ(newz = tm._f_floorz());
 				bool good = P_TestMobjZ(thing);
 				thing->_f_SetZ(savedz);
 				if (!good)
@@ -2590,7 +2592,7 @@ bool P_CheckMove(AActor *thing, fixed_t x, fixed_t y)
 
 		if (thing->flags2 & MF2_CANTLEAVEFLOORPIC
 			&& (tm.floorpic != thing->floorpic
-			|| tm.floorz - newz != 0))
+			|| tm._f_floorz() - newz != 0))
 		{ // must stay within a sector of a certain floor type
 			return false;
 		}
@@ -2661,7 +2663,7 @@ void FSlide::HitSlideLine(line_t* ld)
 	icyfloor =
 		(P_AproxDistance(tmxmove, tmymove) > 4 * FRACUNIT) &&
 		var_friction &&  // killough 8/28/98: calc friction on demand
-		slidemo->_f_Z() <= slidemo->floorz &&
+		slidemo->Z() <= slidemo->floorz &&
 		P_GetFriction(slidemo, NULL) > ORIG_FRICTION;
 
 	if (ld->dx == 0)
@@ -3063,7 +3065,7 @@ const secplane_t * P_CheckSlopeWalk(AActor *actor, fixed_t &xmove, fixed_t &ymov
 	if (actor->floorsector != actor->Sector)
 	{
 		// this additional check prevents sliding on sloped dropoffs
-		if (planezhere>actor->floorz + 4 * FRACUNIT)
+		if (planezhere>actor->_f_floorz() + 4 * FRACUNIT)
 			return NULL;
 	}
 
@@ -3253,8 +3255,8 @@ bool FSlide::BounceWall(AActor *mo)
 	bestslideline = mo->BlockingLine;
 	if (BounceTraverse(leadx, leady, leadx + mo->_f_velx(), leady + mo->_f_vely()) && mo->BlockingLine == NULL)
 	{ // Could not find a wall, so bounce off the floor/ceiling instead.
-		fixed_t floordist = mo->_f_Z() - mo->floorz;
-		fixed_t ceildist = mo->_f_ceilingz() - mo->_f_Z();
+		double floordist = mo->Z() - mo->floorz;
+		double ceildist = mo->ceilingz - mo->Z();
 		if (floordist <= ceildist)
 		{
 			mo->FloorBounceMissile(mo->Sector->floorplane);
@@ -5736,7 +5738,7 @@ int P_PushDown(AActor *thing, FChangePosition *cpos)
 	unsigned int lastintersect;
 	int mymass = thing->Mass;
 
-	if (thing->_f_Z() <= thing->floorz)
+	if (thing->Z() <= thing->floorz)
 	{
 		return 1;
 	}
@@ -5778,12 +5780,12 @@ int P_PushDown(AActor *thing, FChangePosition *cpos)
 
 void PIT_FloorDrop(AActor *thing, FChangePosition *cpos)
 {
-	fixed_t oldfloorz = thing->floorz;
+	fixed_t oldfloorz = thing->_f_floorz();
 	fixed_t oldz = thing->_f_Z();
 
 	P_AdjustFloorCeil(thing, cpos);
 
-	if (oldfloorz == thing->floorz) return;
+	if (oldfloorz == thing->_f_floorz()) return;
 	if (thing->flags4 & MF4_ACTLIKEBRIDGE) return; // do not move bridge things
 
 	if (thing->_f_velz() == 0 &&
@@ -5794,9 +5796,9 @@ void PIT_FloorDrop(AActor *thing, FChangePosition *cpos)
 
 		if ((thing->flags & MF_NOGRAVITY) || (thing->flags5 & MF5_MOVEWITHSECTOR) ||
 			(((cpos->sector->Flags & SECF_FLOORDROP) || cpos->moveamt < 9 * FRACUNIT)
-			&& thing->_f_Z() - thing->floorz <= cpos->moveamt))
+			&& thing->_f_Z() - thing->_f_floorz() <= cpos->moveamt))
 		{
-			thing->_f_SetZ(thing->floorz);
+			thing->SetZ(thing->floorz);
 			P_CheckFakeFloorTriggers(thing, oldz);
 		}
 	}
@@ -5805,7 +5807,7 @@ void PIT_FloorDrop(AActor *thing, FChangePosition *cpos)
 		fixed_t oldz = thing->_f_Z();
 		if ((thing->flags & MF_NOGRAVITY) && (thing->flags6 & MF6_RELATIVETOFLOOR))
 		{
-			thing->_f_AddZ(-oldfloorz + thing->floorz);
+			thing->_f_AddZ(-oldfloorz + thing->_f_floorz());
 			P_CheckFakeFloorTriggers(thing, oldz);
 		}
 	}
@@ -5823,15 +5825,15 @@ void PIT_FloorDrop(AActor *thing, FChangePosition *cpos)
 
 void PIT_FloorRaise(AActor *thing, FChangePosition *cpos)
 {
-	fixed_t oldfloorz = thing->floorz;
+	fixed_t oldfloorz = thing->_f_floorz();
 	fixed_t oldz = thing->_f_Z();
 
 	P_AdjustFloorCeil(thing, cpos);
 
-	if (oldfloorz == thing->floorz) return;
+	if (oldfloorz == thing->_f_floorz()) return;
 
 	// Move things intersecting the floor up
-	if (thing->_f_Z() <= thing->floorz)
+	if (thing->Z() <= thing->floorz)
 	{
 		if (thing->flags4 & MF4_ACTLIKEBRIDGE)
 		{
@@ -5839,14 +5841,14 @@ void PIT_FloorRaise(AActor *thing, FChangePosition *cpos)
 			return; // do not move bridge things
 		}
 		intersectors.Clear();
-		thing->_f_SetZ(thing->floorz);
+		thing->SetZ(thing->floorz);
 	}
 	else
 	{
 		if ((thing->flags & MF_NOGRAVITY) && (thing->flags6 & MF6_RELATIVETOFLOOR))
 		{
 			intersectors.Clear();
-			thing->_f_AddZ(-oldfloorz + thing->floorz);
+			thing->_f_AddZ(-oldfloorz + thing->_f_floorz());
 		}
 		else return;
 	}
@@ -5881,7 +5883,7 @@ void PIT_CeilingLower(AActor *thing, FChangePosition *cpos)
 	bool onfloor;
 	fixed_t oldz = thing->_f_Z();
 
-	onfloor = thing->_f_Z() <= thing->floorz;
+	onfloor = thing->Z() <= thing->floorz;
 	P_AdjustFloorCeil(thing, cpos);
 
 	if (thing->Top() > thing->ceilingz)
@@ -5893,13 +5895,13 @@ void PIT_CeilingLower(AActor *thing, FChangePosition *cpos)
 		}
 		intersectors.Clear();
 		fixed_t oldz = thing->_f_Z();
-		if (thing->_f_ceilingz() - thing->height >= thing->floorz)
+		if (thing->ceilingz - thing->_Height() >= thing->floorz)
 		{
 			thing->SetZ(thing->ceilingz - thing->_Height());
 		}
 		else
 		{
-			thing->_f_SetZ(thing->floorz);
+			thing->SetZ(thing->floorz);
 		}
 		switch (P_PushDown(thing, cpos))
 		{
@@ -5907,7 +5909,7 @@ void PIT_CeilingLower(AActor *thing, FChangePosition *cpos)
 			// intentional fall-through
 		case 1:
 			if (onfloor)
-				thing->_f_SetZ(thing->floorz);
+				thing->SetZ(thing->floorz);
 			P_DoCrunch(thing, cpos);
 			P_CheckFakeFloorTriggers(thing, oldz);
 			break;
@@ -5938,12 +5940,12 @@ void PIT_CeilingRaise(AActor *thing, FChangePosition *cpos)
 	// For DOOM compatibility, only move things that are inside the floor.
 	// (or something else?) Things marked as hanging from the ceiling will
 	// stay where they are.
-	if (thing->_f_Z() < thing->floorz &&
+	if (thing->_f_Z() < thing->_f_floorz() &&
 		thing->_f_Top() >= thing->_f_ceilingz() - cpos->moveamt &&
 		!(thing->flags & MF_NOLIFTDROP))
 	{
 		fixed_t oldz = thing->_f_Z();
-		thing->_f_SetZ(thing->floorz);
+		thing->SetZ(thing->floorz);
 		if (thing->Top() > thing->ceilingz)
 		{
 			thing->SetZ(thing->ceilingz - thing->_Height());

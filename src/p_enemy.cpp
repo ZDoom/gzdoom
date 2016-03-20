@@ -473,7 +473,7 @@ bool P_Move (AActor *actor)
 	// it difficult to thrust them vertically in a reasonable manner.
 	// [GZ] Let jumping actors jump.
 	if (!((actor->flags & MF_NOGRAVITY) || (actor->flags6 & MF6_CANJUMP))
-		&& actor->_f_Z() > actor->floorz && !(actor->flags2 & MF2_ONMOBJ))
+		&& actor->Z() > actor->floorz && !(actor->flags2 & MF2_ONMOBJ))
 	{
 		return false;
 	}
@@ -574,22 +574,22 @@ bool P_Move (AActor *actor)
 	// actually walking down a step.
 	if (try_ok &&
 		!((actor->flags & MF_NOGRAVITY) || (actor->flags6 & MF6_CANJUMP))
-		&& actor->_f_Z() > actor->floorz && !(actor->flags2 & MF2_ONMOBJ))
+			&& actor->Z() > actor->floorz && !(actor->flags2 & MF2_ONMOBJ))
 	{
-		if (actor->_f_Z() <= actor->floorz + actor->MaxStepHeight)
+		if (actor->_f_Z() <= actor->_f_floorz() + actor->MaxStepHeight)
 		{
-			fixed_t savedz = actor->_f_Z();
-			actor->_f_SetZ(actor->floorz);
+			double savedz = actor->Z();
+			actor->SetZ(actor->floorz);
 			// Make sure that there isn't some other actor between us and
 			// the floor we could get stuck in. The old code did not do this.
 			if (!P_TestMobjZ(actor))
 			{
-				actor->_f_SetZ(savedz);
+				actor->SetZ(savedz);
 			}
 			else
 			{ // The monster just hit the floor, so trigger any actions.
 				if (actor->floorsector->SecActTarget != NULL &&
-					actor->floorz == actor->floorsector->floorplane.ZatPoint(actor->PosRelative(actor->floorsector)))
+					actor->_f_floorz() == actor->floorsector->floorplane.ZatPoint(actor->PosRelative(actor->floorsector)))
 				{
 					actor->floorsector->SecActTarget->TriggerAction(actor, SECSPAC_HitFloor);
 				}
@@ -602,12 +602,12 @@ bool P_Move (AActor *actor)
 	{
 		if (((actor->flags6 & MF6_CANJUMP)||(actor->flags & MF_FLOAT)) && tm.floatok)
 		{ // must adjust height
-			fixed_t savedz = actor->_f_Z();
+			double savedz = actor->Z();
 
-			if (actor->_f_Z() < tm.floorz)
-				actor->_f_AddZ(actor->_f_floatspeed());
+			if (actor->Z() < tm.floorz)
+				actor->AddZ(actor->FloatSpeed);
 			else
-				actor->_f_AddZ(-actor->_f_floatspeed());
+				actor->AddZ(-actor->FloatSpeed);
 
 
 			// [RH] Check to make sure there's nothing in the way of the float
@@ -616,7 +616,7 @@ bool P_Move (AActor *actor)
 				actor->flags |= MF_INFLOAT;
 				return true;
 			}
-			actor->_f_SetZ(savedz);
+			actor->SetZ(savedz);
 		}
 
 		if (!spechit.Size ())
@@ -879,8 +879,8 @@ void P_NewChaseDir(AActor * actor)
 	}
 	
 	// Try to move away from a dropoff
-	if (actor->floorz - actor->dropoffz > actor->MaxDropOffHeight && 
-		actor->_f_Z() <= actor->floorz && !(actor->flags & MF_DROPOFF) && 
+	if (actor->_f_floorz() - actor->dropoffz > actor->MaxDropOffHeight && 
+		actor->Z() <= actor->floorz && !(actor->flags & MF_DROPOFF) && 
 		!(actor->flags2 & MF2_ONMOBJ) &&
 		!(actor->flags & MF_FLOAT) && !(i_compatflags & COMPATF_DROPOFF))
 	{

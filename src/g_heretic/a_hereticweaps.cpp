@@ -528,7 +528,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MaceBallImpact2)
 
 	AActor *tiny;
 
-	if ((self->_f_Z() <= self->floorz) && P_HitFloor (self))
+	if ((self->Z() <= self->floorz) && P_HitFloor (self))
 	{ // Landed in some sort of liquid
 		self->Destroy ();
 		return 0;
@@ -624,7 +624,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DeathBallImpact)
 	bool newAngle;
 	FTranslatedLineTarget t;
 
-	if ((self->_f_Z() <= self->floorz) && P_HitFloor (self))
+	if ((self->Z() <= self->floorz) && P_HitFloor (self))
 	{ // Landed in some sort of liquid
 		self->Destroy ();
 		return 0;
@@ -720,7 +720,7 @@ void ABlasterFX1::Effect ()
 {
 	if (pr_bfx1t() < 64)
 	{
-		Spawn("BlasterSmoke", PosAtZ(MAX(Z() - 8., FIXED2DBL(floorz))), ALLOW_REPLACE);
+		Spawn("BlasterSmoke", PosAtZ(MAX(Z() - 8., floorz)), ALLOW_REPLACE);
 	}
 }
 
@@ -1095,7 +1095,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SkullRodStorm)
 DEFINE_ACTION_FUNCTION(AActor, A_RainImpact)
 {
 	PARAM_ACTION_PROLOGUE;
-	if (self->_f_Z() > self->floorz)
+	if (self->Z() > self->floorz)
 	{
 		self->SetState (self->FindState("NotFloor"));
 	}

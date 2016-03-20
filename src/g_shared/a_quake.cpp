@@ -133,7 +133,7 @@ void DEarthquake::Tick ()
 
 				dist = m_Spot->AproxDistance (victim, true);
 				// Check if in damage _f_radius()
-				if (dist < m_DamageRadius && victim->_f_Z() <= victim->floorz)
+				if (dist < m_DamageRadius && victim->Z() <= victim->floorz)
 				{
 					if (pr_quake() < 50)
 					{

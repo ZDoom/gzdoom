@@ -430,27 +430,27 @@ DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialPosition)
 	}
 	else if (self->flags2 & MF2_SPAWNFLOAT)
 	{
-		fixed_t space = self->_f_ceilingz() - self->height - self->floorz;
-		if (space > 48*FRACUNIT)
+		double space = self->ceilingz - self->_Height() - self->floorz;
+		if (space > 48)
 		{
-			space -= 40*FRACUNIT;
-			self->_f_SetZ(((space * pr_restore())>>8) + self->floorz + 40*FRACUNIT);
+			space -= 40;
+			self->SetZ((space * pr_restore()) / 256. + self->floorz + 40);
 		}
 		else
 		{
-			self->_f_SetZ(self->floorz);
+			self->SetZ(self->floorz);
 		}
 	}
 	else
 	{
-		self->_f_SetZ(self->SpawnPoint[2] + self->floorz);
+		self->_f_SetZ(self->SpawnPoint[2] + self->_f_floorz());
 	}
 	// Redo floor/ceiling check, in case of 3D floors and portals
 	P_FindFloorCeiling(self, FFCF_SAMESECTOR | FFCF_ONLY3DFLOORS | FFCF_3DRESTRICT);
-	if (self->_f_Z() < self->floorz)
+	if (self->Z() < self->floorz)
 	{ // Do not reappear under the floor, even if that's where we were for the
 	  // initial spawn.
-		self->_f_SetZ(self->floorz);
+		self->SetZ(self->floorz);
 	}
 	if ((self->flags & MF_SOLID) && (self->Top() > self->ceilingz))
 	{ // Do the same for the ceiling.
@@ -1354,7 +1354,7 @@ bool AInventory::DoRespawn ()
 		if (spot != NULL) 
 		{
 			SetOrigin (spot->Pos(), false);
-			_f_SetZ(floorz);
+			_f_SetZ(_f_floorz());
 		}
 	}
 	return true;

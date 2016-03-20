@@ -987,7 +987,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil1)
 	P_BulletSlope (self, &t, ALF_PORTALRESTRICT);
 	if (t.linetarget != NULL)
 	{
-		spot = Spawn("SpectralLightningSpot", t.linetarget->_f_X(), t.linetarget->_f_Y(), t.linetarget->floorz, ALLOW_REPLACE);
+		spot = Spawn("SpectralLightningSpot", t.linetarget->PosAtZ(t.linetarget->floorz), ALLOW_REPLACE);
 		if (spot != NULL)
 		{
 			spot->tracer = t.linetarget;

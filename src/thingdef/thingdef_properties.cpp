@@ -993,7 +993,7 @@ DEFINE_PROPERTY(missiletype, S, Actor)
 //==========================================================================
 DEFINE_PROPERTY(missileheight, F, Actor)
 {
-	PROP_FIXED_PARM(id, 0);
+	PROP_DOUBLE_PARM(id, 0);
 	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
 	static_cast<PClassActor *>(info)->MissileHeight = id;
 }

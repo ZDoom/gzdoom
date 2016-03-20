@@ -1106,11 +1106,15 @@ public:
 	FBlockNode		*BlockNode;			// links in blocks (if needed)
 	struct sector_t	*Sector;
 	subsector_t *		subsector;
-	fixed_t			floorz; double ceilingz;	// closest together of contacted secs
+	double			floorz, ceilingz;	// closest together of contacted secs
 
 	inline fixed_t _f_ceilingz()
 	{
 		return FLOAT2FIXED(ceilingz);
+	}
+	inline fixed_t _f_floorz()
+	{
+		return FLOAT2FIXED(floorz);
 	}
 
 	fixed_t			dropoffz;		// killough 11/98: the lowest floor over all contacted Sectors.

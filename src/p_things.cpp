@@ -721,7 +721,7 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 				xofs + FixedMul(rad, finecosine[fineangle]),
 				yofs + FixedMul(rad, finesine[fineangle]),
 				0), true);
-			caller->_f_SetZ(caller->floorz + zofs);
+			caller->_f_SetZ(caller->_f_floorz() + zofs);
 		}
 		else
 		{
@@ -736,7 +736,7 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 		if (flags & WARPF_TOFLOOR)
 		{
 			caller->SetOrigin(xofs + FixedMul(rad, finecosine[fineangle]), yofs + FixedMul(rad, finesine[fineangle]), zofs, true);
-			caller->_f_SetZ(caller->floorz + zofs);
+			caller->_f_SetZ(caller->_f_floorz() + zofs);
 		}
 		else
 		{

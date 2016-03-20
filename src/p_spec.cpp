@@ -2296,7 +2296,7 @@ void DPusher::Tick ()
 		{
 			if (hsec == NULL)
 			{ // NOT special water sector
-				if (thing->_f_Z() > thing->floorz) // above ground
+				if (thing->Z() > thing->floorz) // above ground
 				{
 					pushvel = m_PushVec; // full force
 				}

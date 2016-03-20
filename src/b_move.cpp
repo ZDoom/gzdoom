@@ -270,16 +270,16 @@ bool FCajunMaster::CleanAhead (AActor *thing, fixed_t x, fixed_t y, ticcmd_t *cm
     if (!(thing->flags & MF_NOCLIP) )
     {
 		fixed_t maxstep = thing->MaxStepHeight;
-        if (tm._f_ceilingz() - tm.floorz < thing->height)
+        if (tm.ceilingz - tm.floorz < thing->_Height())
             return false;       // doesn't fit
 
 		if (!(thing->flags&MF_MISSILE))
 		{
-			if(tm.floorz > (thing->Sector->floorplane.ZatPoint (x, y)+MAXMOVEHEIGHT)) //Too high wall
+			if(tm._f_floorz() > (thing->Sector->floorplane.ZatPoint (x, y)+MAXMOVEHEIGHT)) //Too high wall
 				return false;
 
 			//Jumpable
-			if(tm.floorz>(thing->Sector->floorplane.ZatPoint (x, y)+thing->MaxStepHeight))
+			if(tm._f_floorz()>(thing->Sector->floorplane.ZatPoint (x, y)+thing->MaxStepHeight))
 				cmd->ucmd.buttons |= BT_JUMP;
 
 
@@ -292,12 +292,12 @@ bool FCajunMaster::CleanAhead (AActor *thing, fixed_t x, fixed_t y, ticcmd_t *cm
 //	            maxstep=37*FRACUNIT;
 
 	        if ( !(thing->flags & MF_TELEPORT) &&
-	             (tm.floorz - thing->_f_Z() > maxstep ) )
+	             (tm._f_floorz() - thing->_f_Z() > maxstep ) )
 	            return false;       // too big a step up
 
 
 			if ( !(thing->flags&(MF_DROPOFF|MF_FLOAT))
-			&& tm.floorz - tm.dropoffz > thing->MaxDropOffHeight )
+			&& tm._f_floorz() - tm.dropoffz > thing->MaxDropOffHeight )
 				return false;       // don't stand over a dropoff
 
 		}

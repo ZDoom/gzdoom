@@ -979,7 +979,7 @@ void APowerFlight::InitEffect ()
 	Super::InitEffect();
 	Owner->flags2 |= MF2_FLY;
 	Owner->flags |= MF_NOGRAVITY;
-	if (Owner->_f_Z() <= Owner->floorz)
+	if (Owner->Z() <= Owner->floorz)
 	{
 		Owner->Vel.Z = 4;;	// thrust the player in the air a bit
 	}
@@ -1026,7 +1026,7 @@ void APowerFlight::EndEffect ()
 
 	if (!(Owner->flags7 & MF7_FLYCHEAT))
 	{
-		if (Owner->_f_Z() != Owner->floorz)
+		if (Owner->Z() != Owner->floorz)
 		{
 			Owner->player->centering = true;
 		}

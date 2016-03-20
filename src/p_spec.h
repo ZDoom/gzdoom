@@ -924,6 +924,10 @@ inline void P_SpawnTeleportFog(AActor *mobj, const fixedvec3 &pos, bool beforeTe
 {
 	P_SpawnTeleportFog(mobj, pos.x, pos.y, pos.z, beforeTele, setTarget);
 }
+inline void P_SpawnTeleportFog(AActor *mobj, const DVector3 &pos, bool beforeTele = true, bool setTarget = false)
+{
+	P_SpawnTeleportFog(mobj, FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), FLOAT2FIXED(pos.Z), beforeTele, setTarget);
+}
 bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, DAngle angle, int flags); // bool useFog, bool sourceFog, bool keepOrientation, bool haltVelocity = true, bool keepHeight = false
 bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, int flags);
 bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id, INTBOOL reverse);

@@ -457,7 +457,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CheckThrowBomb2)
 	if (self->Vel.Z < 2 && self->Vel.LengthSquared() < (9./4.))
 	{
 		self->SetState (self->SpawnState + 6);
-		self->_f_SetZ(self->floorz);
+		self->SetZ(self->floorz);
 		self->Vel.Z = 0;
 		self->BounceFlags = BOUNCE_None;
 		self->flags &= ~MF_MISSILE;

@@ -159,7 +159,7 @@ void P_DSparilTeleport (AActor *actor)
 		S_Sound (mo, CHAN_BODY, "misc/teleport", 1, ATTN_NORM);
 		actor->SetState (actor->FindState("Teleport"));
 		S_Sound (actor, CHAN_BODY, "misc/teleport", 1, ATTN_NORM);
-		actor->_f_SetZ(actor->floorz, false);
+		actor->SetZ(actor->floorz);
 		actor->Angles.Yaw = spot->Angles.Yaw;
 		actor->Vel.Zero();
 	}

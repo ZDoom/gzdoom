@@ -196,7 +196,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_VolcBallImpact)
 	unsigned int i;
 	AActor *tiny;
 
-	if (self->_f_Z() <= self->floorz)
+	if (self->Z() <= self->floorz)
 	{
 		self->flags |= MF_NOGRAVITY;
 		self->gravity = FRACUNIT;

@@ -8708,7 +8708,7 @@ scriptwait:
 		case PCD_GETACTORFLOORZ:
 			{
 				AActor *actor = SingleActorFromTID(STACK(1), activator);
-				STACK(1) = actor == NULL ? 0 : actor->floorz;
+				STACK(1) = actor == NULL ? 0 : DoubleToACS(actor->floorz);
 			}
 			break;
 

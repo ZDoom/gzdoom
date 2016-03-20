@@ -45,7 +45,7 @@ void AChickenPlayer::MorphPlayerThink ()
 	{ // Twitch view angle
 		Angles.Yaw += pr_chickenplayerthink.Random2() * (360. / 256. / 32.);
 	}
-	if ((_f_Z() <= floorz) && (pr_chickenplayerthink() < 32))
+	if ((Z() <= floorz) && (pr_chickenplayerthink() < 32))
 	{ // Jump and noise
 		Vel.Z += JumpZ;
 

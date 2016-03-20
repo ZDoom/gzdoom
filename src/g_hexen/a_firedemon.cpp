@@ -101,7 +101,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SmBounce)
 	PARAM_ACTION_PROLOGUE;
 
 	// give some more velocity (x,y,&z)
-	self->_f_SetZ(self->floorz + FRACUNIT);
+	self->SetZ(self->floorz + 1);
 	self->Vel.Z = 2. + pr_smbounce() / 64.;
 	self->Vel.X = pr_smbounce() % 3;
 	self->Vel.Y = pr_smbounce() % 3;
@@ -148,9 +148,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_FiredChase)
 	self->special1 = (weaveindex + 2) & 63;
 
 	// Ensure it stays above certain height
-	if (self->_f_Z() < self->floorz + (64*FRACUNIT))
+	if (self->Z() < self->floorz + 64)
 	{
-		self->_f_AddZ(2*FRACUNIT);
+		self->AddZ(2);
 	}
 
 	if(!self->target || !(self->target->flags&MF_SHOOTABLE))

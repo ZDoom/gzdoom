@@ -192,11 +192,11 @@ class ARandomSpawner : public AActor
 			}
 			else if (newmobj->flags2 & MF2_SPAWNFLOAT) 
 			{
-				fixed_t space = newmobj->_f_ceilingz() - newmobj->height - newmobj->floorz;
-				if (space > 48*FRACUNIT)
+				double space = newmobj->ceilingz - newmobj->_Height() - newmobj->floorz;
+				if (space > 48)
 				{
-					space -= 40*FRACUNIT;
-					newmobj->_f_SetZ(MulScale8 (space, pr_randomspawn()) + newmobj->floorz + 40*FRACUNIT);
+					space -= 40;
+					newmobj->SetZ((space * pr_randomspawn()) / 256. + newmobj->floorz + 40);
 				}
 				newmobj->_f_AddZ(SpawnPoint[2]);
 			}

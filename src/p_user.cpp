@@ -1852,8 +1852,8 @@ void P_CalcHeight (player_t *player)
 	{
 		player->viewz = player->mo->_f_Z() + defaultviewheight;
 
-		if (player->viewz > player->mo->ceilingz-4*FRACUNIT)
-			player->viewz = player->mo->ceilingz-4*FRACUNIT;
+		if (player->viewz > player->mo->_f_ceilingz()-4*FRACUNIT)
+			player->viewz = player->mo->_f_ceilingz()-4*FRACUNIT;
 
 		return;
 	}
@@ -1911,9 +1911,9 @@ void P_CalcHeight (player_t *player)
 	{
 		player->viewz -= player->mo->floorclip;
 	}
-	if (player->viewz > player->mo->ceilingz - 4*FRACUNIT)
+	if (player->viewz > player->mo->_f_ceilingz() - 4*FRACUNIT)
 	{
-		player->viewz = player->mo->ceilingz - 4*FRACUNIT;
+		player->viewz = player->mo->_f_ceilingz() - 4*FRACUNIT;
 	}
 	if (player->viewz < player->mo->floorz + 4*FRACUNIT)
 	{
@@ -2415,7 +2415,7 @@ void P_PlayerThink (player_t *player)
 				player->crouching = 0;
 			}
 			if (crouchdir == 1 && player->crouchfactor < 1 &&
-				player->mo->_f_Top() < player->mo->ceilingz)
+				player->mo->Top() < player->mo->ceilingz)
 			{
 				P_CrouchMove(player, 1);
 			}

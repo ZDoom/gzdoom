@@ -20,7 +20,7 @@ struct FCheckPosition
 	// out
 	sector_t		*sector;
 	fixed_t			floorz;
-	fixed_t			ceilingz;
+	double			ceilingz;
 	fixed_t			dropoffz;
 	FTextureID		floorpic;
 	int				floorterrain;
@@ -46,6 +46,12 @@ struct FCheckPosition
 		PushTime = 0;
 		FromPMove = false;
 	}
+
+	inline fixed_t _f_ceilingz()
+	{
+		return FLOAT2FIXED(ceilingz);
+	}
+
 };
 
 

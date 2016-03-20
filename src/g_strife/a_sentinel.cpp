@@ -13,7 +13,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SentinelBob)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	fixed_t minz, maxz;
+	double minz, maxz;
 
 	if (self->flags & MF_INFLOAT)
 	{
@@ -23,13 +23,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_SentinelBob)
 	if (self->threshold != 0)
 		return 0;
 
-	maxz =  self->ceilingz - self->height - 16*FRACUNIT;
-	minz = self->floorz + 96*FRACUNIT;
+	maxz =  self->ceilingz - self->_Height() - 16;
+	minz = FIXED2FLOAT(self->floorz) + 96;
 	if (minz > maxz)
 	{
 		minz = maxz;
 	}
-	if (minz < self->_f_Z())
+	if (minz < self->Z())
 	{
 		self->Vel.Z -= 1;
 	}
@@ -37,7 +37,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SentinelBob)
 	{
 		self->Vel.Z += 1;
 	}
-	self->reactiontime = (minz >= self->_f_Z()) ? 4 : 0;
+	self->reactiontime = (minz >= self->Z()) ? 4 : 0;
 	return 0;
 }
 

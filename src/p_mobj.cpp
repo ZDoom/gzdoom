@@ -2577,20 +2577,20 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 		mo->AdjustFloorClip ();
 	}
 
-	if (mo->_f_Top() > mo->ceilingz)
+	if (mo->Top() > mo->ceilingz)
 	{ // hit the ceiling
 		if ((!mo->player || !(mo->player->cheats & CF_PREDICTING)) &&
 			mo->Sector->SecActTarget != NULL &&
-			mo->Sector->ceilingplane.ZatPoint(mo) == mo->ceilingz)
+			mo->Sector->ceilingplane.ZatPoint(mo) == mo->_f_ceilingz())
 		{ // [RH] Let the sector do something to the actor
 			mo->Sector->SecActTarget->TriggerAction (mo, SECSPAC_HitCeiling);
 		}
 		P_CheckFor3DCeilingHit(mo);
 		// [RH] Need to recheck this because the sector action might have
 		// teleported the actor so it is no longer above the ceiling.
-		if (mo->_f_Top() > mo->ceilingz)
+		if (mo->Top() > mo->ceilingz)
 		{
-			mo->_f_SetZ(mo->ceilingz - mo->height);
+			mo->SetZ(mo->ceilingz - mo->_Height());
 			if (mo->BounceFlags & BOUNCE_Ceilings)
 			{	// ceiling bounce
 				mo->FloorBounceMissile (mo->ceilingsector->ceilingplane);
@@ -2764,9 +2764,9 @@ void P_NightmareRespawn (AActor *mobj)
 		  // can use P_CheckPosition() properly.
 			mo->_f_SetZ(mo->floorz);
 		}
-		if (mo->_f_Top() > mo->ceilingz)
+		if (mo->Top() > mo->ceilingz)
 		{
-			mo->_f_SetZ(mo->ceilingz - mo->height);
+			mo->SetZ(mo->ceilingz- mo->_Height());
 		}
 	}
 	else if (z == ONCEILINGZ)
@@ -2786,9 +2786,9 @@ void P_NightmareRespawn (AActor *mobj)
 		  // can use P_CheckPosition() properly.
 			mo->_f_SetZ(mo->floorz);
 		}
-		if (mo->_f_Top() > mo->ceilingz)
+		if (mo->Top() > mo->ceilingz)
 		{ // Do the same for the ceiling.
-			mo->_f_SetZ(mo->ceilingz - mo->height);
+			mo->SetZ(mo->ceilingz - mo->_Height());
 		}
 	}
 
@@ -4002,7 +4002,7 @@ void AActor::CheckSectorTransition(sector_t *oldsec)
 		{
 			P_CheckFor3DFloorHit(this);
 		}
-		if (_f_Top() == ceilingz)
+		if (Top() == ceilingz)
 		{
 			P_CheckFor3DCeilingHit(this);
 		}
@@ -4193,7 +4193,7 @@ AActor *AActor::StaticSpawn (PClassActor *type, fixed_t ix, fixed_t iy, fixed_t 
 
 	actor->dropoffz =			// killough 11/98: for tracking dropoffs
 	actor->floorz = actor->Sector->floorplane.ZatPoint (ix, iy);
-	actor->ceilingz = actor->Sector->ceilingplane.ZatPoint (ix, iy);
+	actor->ceilingz = FIXED2DBL(actor->Sector->ceilingplane.ZatPoint (ix, iy));
 
 	// The z-coordinate needs to be set once before calling P_FindFloorCeiling
 	// For FLOATRANDZ just use the floor here.
@@ -4203,7 +4203,7 @@ AActor *AActor::StaticSpawn (PClassActor *type, fixed_t ix, fixed_t iy, fixed_t 
 	}
 	else if (iz == ONCEILINGZ)
 	{
-		actor->_f_SetZ(actor->ceilingz - actor->height);
+		actor->SetZ(actor->ceilingz - actor->_Height());
 	}
 
 	if (SpawningMapThing || !type->IsDescendantOf (RUNTIME_CLASS(APlayerPawn)))
@@ -4246,11 +4246,11 @@ AActor *AActor::StaticSpawn (PClassActor *type, fixed_t ix, fixed_t iy, fixed_t 
 	}
 	else if (iz == ONCEILINGZ)
 	{
-		actor->_f_SetZ(actor->ceilingz - actor->height);
+		actor->SetZ(actor->ceilingz - actor->_Height());
 	}
 	else if (iz == FLOATRANDZ)
 	{
-		fixed_t space = actor->ceilingz - actor->height - actor->floorz;
+		fixed_t space = actor->_f_ceilingz() - actor->height - actor->floorz;
 		if (space > 48*FRACUNIT)
 		{
 			space -= 40*FRACUNIT;
@@ -4782,9 +4782,9 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 
 	// "Fix" for one of the starts on exec.wad MAP01: If you start inside the ceiling,
 	// drop down below it, even if that means sinking into the floor.
-	if (mobj->_f_Top() > mobj->ceilingz)
+	if (mobj->Top() > mobj->ceilingz)
 	{
-		mobj->_f_SetZ(mobj->ceilingz - mobj->height, false);
+		mobj->SetZ(mobj->ceilingz - mobj->_Height(), false);
 	}
 
 	// [BC] Do script stuff
@@ -6698,7 +6698,7 @@ void PrintMiscActorInfo(AActor *query)
 		Printf("\nTID: %d", query->tid);
 		Printf("\nCoord= x: %f, y: %f, z:%f, floor:%f, ceiling:%f.",
 			query->X(), query->Y(), query->Z(),
-			FIXED2DBL(query->floorz), FIXED2DBL(query->ceilingz));
+			FIXED2DBL(query->floorz), query->ceilingz);
 		Printf("\nSpeed= %f, velocity= x:%f, y:%f, z:%f, combined:%f.\n",
 			query->Speed, query->Vel.X, query->Vel.Y, query->Vel.Z, query->Vel.Length());
 	}

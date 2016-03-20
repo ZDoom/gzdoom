@@ -45,7 +45,7 @@
 struct sectortype
 {
 	SWORD wallptr, wallnum;
-	SDWORD ceilingz, floorz;
+	SDWORD ceilingZ, floorZ;
 	SWORD ceilingstat, floorstat;
 	SWORD ceilingpicnum, ceilingheinum;
 	SBYTE ceilingshade;
@@ -402,7 +402,7 @@ static void LoadSectors (sectortype *bsec)
 		bsec->floorstat = WORD(bsec->floorstat);
 
 		sec->e = &sectors[0].e[i];
-		sec->SetPlaneTexZ(sector_t::floor, -(LittleLong(bsec->floorz) << 8));
+		sec->SetPlaneTexZ(sector_t::floor, -(LittleLong(bsec->floorZ) << 8));
 		sec->floorplane.d = -sec->GetPlaneTexZ(sector_t::floor);
 		sec->floorplane.c = FRACUNIT;
 		sec->floorplane.ic = FRACUNIT;
@@ -415,7 +415,7 @@ static void LoadSectors (sectortype *bsec)
 		sec->SetPlaneLight(sector_t::floor, SHADE2LIGHT (bsec->floorshade));
 		sec->ChangeFlags(sector_t::floor, 0, PLANEF_ABSLIGHTING);
 
-		sec->SetPlaneTexZ(sector_t::ceiling, -(LittleLong(bsec->ceilingz) << 8));
+		sec->SetPlaneTexZ(sector_t::ceiling, -(LittleLong(bsec->ceilingZ) << 8));
 		sec->ceilingplane.d = sec->GetPlaneTexZ(sector_t::ceiling);
 		sec->ceilingplane.c = -FRACUNIT;
 		sec->ceilingplane.ic = -FRACUNIT;
@@ -647,13 +647,13 @@ static void LoadWalls (walltype *walls, int numwalls, sectortype *bsec)
 		if ((bsec->floorstat & 2) && (bsec->floorheinum != 0))
 		{ // floor is sloped
 			slope.heinum = -LittleShort(bsec->floorheinum);
-			slope.z[0] = slope.z[1] = slope.z[2] = -bsec->floorz;
+			slope.z[0] = slope.z[1] = slope.z[2] = -bsec->floorZ;
 			CalcPlane (slope, sectors[i].floorplane);
 		}
 		if ((bsec->ceilingstat & 2) && (bsec->ceilingheinum != 0))
 		{ // ceiling is sloped
 			slope.heinum = -LittleShort(bsec->ceilingheinum);
-			slope.z[0] = slope.z[1] = slope.z[2] = -bsec->ceilingz;
+			slope.z[0] = slope.z[1] = slope.z[2] = -bsec->ceilingZ;
 			CalcPlane (slope, sectors[i].ceilingplane);
 		}
 		int linenum = int(intptr_t(sides[bsec->wallptr].linedef));
@@ -699,7 +699,7 @@ static int LoadSprites (spritetype *sprites, Xsprite *xsprites, int numsprites,
 		mapthings[count].thingid = 0;
 		mapthings[count].x = (sprites[i].x << 12);
 		mapthings[count].y = -(sprites[i].y << 12);
-		mapthings[count].z = (bsectors[sprites[i].sectnum].floorz - sprites[i].z) << 8;
+		mapthings[count].z = (bsectors[sprites[i].sectnum].floorZ - sprites[i].z) << 8;
 		mapthings[count].angle = (((2048-sprites[i].ang) & 2047) * 360) >> 11;
 		mapthings[count].ClassFilter = 0xffff;
 		mapthings[count].SkillFilter = 0xffff;

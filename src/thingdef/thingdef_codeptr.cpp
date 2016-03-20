@@ -939,8 +939,8 @@ static int DoJumpIfCloser(AActor *target, VM_ARGS)
 	}
 	if (self->AproxDistance(target) < dist &&
 		(noz || 
-		((self->_f_Z() > target->_f_Z() && self->_f_Z() - target->_f_Top() < dist) ||
-		(self->_f_Z() <= target->_f_Z() && target->_f_Z() - self->_f_Top() < dist))))
+		((self->Z() > target->Z() && self->Z() - target->Top() < dist) ||
+		(self->Z() <= target->Z() && target->Z() - self->Top() < dist))))
 	{
 		ACTION_RETURN_STATE(jump);
 	}
@@ -3383,7 +3383,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckCeiling)
 	PARAM_ACTION_PROLOGUE;
 	PARAM_STATE(jump);
 
-	if (self->_f_Top() >= self->ceilingz) // Height needs to be counted
+	if (self->Top() >= self->ceilingz) // Height needs to be counted
 	{
 		ACTION_RETURN_STATE(jump);
 	}
@@ -4784,7 +4784,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Teleport)
 	if (flags & TF_SENSITIVEZ)
 	{
 		fixed_t posz = (flags & TF_USESPOTZ) ? spot->_f_Z() : spot->floorz;
-		if ((posz + ref->height > spot->ceilingz) || (posz < spot->floorz))
+		if ((posz + ref->height > spot->_f_ceilingz()) || (posz < spot->floorz))
 		{
 			return numret;
 		}
@@ -4793,8 +4793,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Teleport)
 	fixed_t aboveFloor = spot->_f_Z() - spot->floorz;
 	fixed_t finalz = spot->floorz + aboveFloor;
 
-	if (spot->_f_Z() + ref->height > spot->ceilingz)
-		finalz = spot->ceilingz - ref->height;
+	if (spot->Z() + ref->_Height() > spot->ceilingz)
+		finalz = spot->_f_ceilingz() - ref->height;
 	else if (spot->_f_Z() < spot->floorz)
 		finalz = spot->floorz;
 

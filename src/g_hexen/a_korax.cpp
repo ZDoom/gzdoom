@@ -48,7 +48,7 @@ const int KORAX_ARM4_HEIGHT			= 104*FRACUNIT;
 const int KORAX_ARM5_HEIGHT			= 86*FRACUNIT;
 const int KORAX_ARM6_HEIGHT			= 53*FRACUNIT;
 
-const int KORAX_BOLT_HEIGHT			= 48*FRACUNIT;
+const double KORAX_BOLT_HEIGHT		= 48.;
 const int KORAX_BOLT_LIFETIME		= 3;
 
 
@@ -473,14 +473,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_KBoltRaise)
 	PARAM_ACTION_PROLOGUE;
 
 	AActor *mo;
-	fixed_t z;
 
 	// Spawn a child upward
-	z = self->_f_Z() + KORAX_BOLT_HEIGHT;
+	double z = self->Z() + KORAX_BOLT_HEIGHT;
 
 	if ((z + KORAX_BOLT_HEIGHT) < self->ceilingz)
 	{
-		mo = Spawn("KoraxBolt", self->_f_X(), self->_f_Y(), z, ALLOW_REPLACE);
+		mo = Spawn("KoraxBolt", self->PosAtZ(z), ALLOW_REPLACE);
 		if (mo)
 		{
 			mo->special1 = KORAX_BOLT_LIFETIME;

@@ -117,7 +117,7 @@ void AFastProjectile::Tick ()
 				P_ExplodeMissile (this, NULL, NULL);
 				return;
 			}
-			if (_f_Top() > ceilingz)
+			if (Top() > ceilingz)
 			{ // Hit the ceiling
 
 				if (ceilingpic == skyflatnum &&  !(flags3 & MF3_SKYEXPLODE))
@@ -126,7 +126,7 @@ void AFastProjectile::Tick ()
 					return;
 				}
 
-				_f_SetZ(ceilingz - height);
+				SetZ(ceilingz - _Height());
 				P_ExplodeMissile (this, NULL, NULL);
 				return;
 			}

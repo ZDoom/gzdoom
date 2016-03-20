@@ -236,7 +236,7 @@ AActor *P_RoughMonsterSearch (AActor *mo, int distance, bool onlyseekable=false)
 
 
 // If "floatok" true, move would be ok
-// if within "tmfloorz - tmceilingz".
+// if within "tmfloorz - tm_f_ceilingz()".
 extern msecnode_t		*sector_list;		// phares 3/16/98
 
 struct spechit_t

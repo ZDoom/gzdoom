@@ -622,7 +622,7 @@ void InitThingdef()
 	symt.AddSymbol(new PField(NAME_Alpha,		TypeFixed,	VARF_Native, myoffsetof(AActor,alpha)));
 	symt.AddSymbol(new PField(NAME_Angle,		TypeFloat64,	VARF_Native, myoffsetof(AActor,Angles.Yaw)));
 	symt.AddSymbol(new PField(NAME_Args,		array5,			VARF_Native, myoffsetof(AActor,args)));
-	symt.AddSymbol(new PField(NAME_CeilingZ,	TypeFixed,	VARF_Native, myoffsetof(AActor,ceilingz)));
+	symt.AddSymbol(new PField(NAME_CeilingZ,	TypeFloat64,	VARF_Native, myoffsetof(AActor,ceilingz)));
 	symt.AddSymbol(new PField(NAME_FloorZ,		TypeFixed,	VARF_Native, myoffsetof(AActor,floorz)));
 	symt.AddSymbol(new PField(NAME_Health,		TypeSInt32,		VARF_Native, myoffsetof(AActor,health)));
 	symt.AddSymbol(new PField(NAME_Mass,		TypeSInt32,		VARF_Native, myoffsetof(AActor,Mass)));

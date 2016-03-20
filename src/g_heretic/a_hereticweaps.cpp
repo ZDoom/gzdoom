@@ -1132,7 +1132,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_HideInCeiling)
 		}
 	}
 	self->bouncecount = -1;
-	self->_f_SetZ(self->ceilingz + 4*FRACUNIT, false);
+	self->SetZ(self->ceilingz + 4, false);
 	return 0;
 }
 

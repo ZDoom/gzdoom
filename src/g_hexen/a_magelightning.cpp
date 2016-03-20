@@ -161,7 +161,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningClip)
 	}
 	else if (self->flags3 & MF3_CEILINGHUGGER)
 	{
-		self->_f_SetZ(self->ceilingz-self->height);
+		self->SetZ(self->ceilingz - self->_Height());
 		target = self->tracer;
 	}
 	if (self->flags3 & MF3_FLOORHUGGER)

@@ -552,9 +552,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_MaulerTorpedoWave)
 
 	// If the torpedo hit the ceiling, it should still spawn the wave
 	savedz = self->_f_Z();
-	if (wavedef && self->ceilingz - self->_f_Z() < wavedef->height)
+	if (wavedef && self->ceilingz < wavedef->Top())
 	{
-		self->_f_SetZ(self->ceilingz - wavedef->height);
+		self->SetZ(self->ceilingz - wavedef->_Height());
 	}
 
 	for (int i = 0; i < 80; ++i)

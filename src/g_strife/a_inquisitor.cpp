@@ -42,7 +42,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_InquisitorDecide)
 	}
 	if (self->target->Z() != self->Z())
 	{
-		if (self->_f_Top() + 54*FRACUNIT < self->ceilingz)
+		if (self->Top() + 54 < self->ceilingz)
 		{
 			self->SetState (self->FindState("Jump"));
 		}

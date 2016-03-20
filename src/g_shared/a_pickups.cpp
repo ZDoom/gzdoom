@@ -426,11 +426,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialPosition)
 
 	if (self->flags & MF_SPAWNCEILING)
 	{
-		self->_f_SetZ(self->ceilingz - self->height - self->SpawnPoint[2]);
+		self->_f_SetZ(self->_f_ceilingz() - self->height - self->SpawnPoint[2]);
 	}
 	else if (self->flags2 & MF2_SPAWNFLOAT)
 	{
-		fixed_t space = self->ceilingz - self->height - self->floorz;
+		fixed_t space = self->_f_ceilingz() - self->height - self->floorz;
 		if (space > 48*FRACUNIT)
 		{
 			space -= 40*FRACUNIT;
@@ -452,9 +452,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialPosition)
 	  // initial spawn.
 		self->_f_SetZ(self->floorz);
 	}
-	if ((self->flags & MF_SOLID) && (self->_f_Top() > self->ceilingz))
+	if ((self->flags & MF_SOLID) && (self->Top() > self->ceilingz))
 	{ // Do the same for the ceiling.
-		self->_f_SetZ(self->ceilingz - self->height);
+		self->SetZ(self->ceilingz - self->_Height());
 	}
 	// Do not interpolate from the position the actor was at when it was
 	// picked up, in case that is different from where it is now.

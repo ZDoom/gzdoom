@@ -270,7 +270,7 @@ bool FCajunMaster::CleanAhead (AActor *thing, fixed_t x, fixed_t y, ticcmd_t *cm
     if (!(thing->flags & MF_NOCLIP) )
     {
 		fixed_t maxstep = thing->MaxStepHeight;
-        if (tm.ceilingz - tm.floorz < thing->height)
+        if (tm._f_ceilingz() - tm.floorz < thing->height)
             return false;       // doesn't fit
 
 		if (!(thing->flags&MF_MISSILE))
@@ -284,7 +284,7 @@ bool FCajunMaster::CleanAhead (AActor *thing, fixed_t x, fixed_t y, ticcmd_t *cm
 
 
 	        if ( !(thing->flags & MF_TELEPORT) &&
-	             tm.ceilingz - thing->_f_Z() < thing->height)
+	             tm.ceilingz < thing->Top())
 	            return false;       // mobj must lower itself to fit
 
 	        // jump out of water

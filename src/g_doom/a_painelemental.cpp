@@ -31,7 +31,7 @@ void A_PainShootSkull (AActor *self, DAngle Angle, PClassActor *spawntype, int f
 	if (self->DamageType == NAME_Massacre) return;
 
 	// [RH] check to make sure it's not too close to the ceiling
-	if (self->Top() + 8 > FIXED2FLOAT(self->ceilingz))
+	if (self->Top() + 8 > self->ceilingz)
 	{
 		if (self->flags & MF_FLOAT)
 		{

@@ -2115,8 +2115,8 @@ void R_DrawSprite (vissprite_t *spr)
 
 			if (spr->fakeceiling != NULL)
 			{
-				fixed_t ceilingz = spr->fakeceiling->bottom.plane->Zat0();
-				if (viewz < ceilingz && ceilingz == sclipTop)
+				fixed_t ceilingZ = spr->fakeceiling->bottom.plane->Zat0();
+				if (viewz < ceilingZ && ceilingZ == sclipTop)
 				{
 					h = spr->fakeceiling->top.plane->Zat0();
 				}

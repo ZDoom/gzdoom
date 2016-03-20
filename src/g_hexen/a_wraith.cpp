@@ -31,12 +31,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_WraithInit)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	self->_f_AddZ(48<<FRACBITS);
+	self->AddZ(48);
 
 	// [RH] Make sure the wraith didn't go into the ceiling
-	if (self->_f_Top() > self->ceilingz)
+	if (self->Top() > self->ceilingz)
 	{
-		self->_f_SetZ(self->ceilingz - self->height);
+		self->SetZ(self->ceilingz - self->_Height());
 	}
 
 	self->special1 = 0;			// index into floatbob

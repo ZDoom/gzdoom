@@ -3784,7 +3784,7 @@ void print_stack_union(
         break;
       }
       hash++;
-      if( hash>=arraysize ) hash = 0;
+      if( hash>=(unsigned)arraysize ) hash = 0;
     }
     if( types[hash]==0 ){
       sp->dtnum = hash + 1;
@@ -3912,7 +3912,7 @@ void ReportTable(
   struct action *ap;
   struct rule *rp;
   struct acttab *pActtab;
-  int i, j, k, n, sz;
+  int i, j, n, sz;
   int szActionType;     /* sizeof(YYACTIONTYPE) */
   int szCodeType;       /* sizeof(YYCODETYPE) */
   const char *name;
@@ -4429,7 +4429,7 @@ void CompressTables(struct lemon *lemp)
   struct state *stp;
   struct action *ap, *ap2;
   struct rule *rp, *rp2, *rbest;
-  int nbest, n, nshift;
+  int nbest, n;
   int i;
   int usesWildcard;
 

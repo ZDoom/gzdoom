@@ -128,15 +128,15 @@ main ::= translation_unit(A). { stat->TopNode = A; stat->sc.ScriptMessage("Parse
 
 %type translation_unit {ZCC_TreeNode *}
 translation_unit(X) ::= .												{ X = NULL; }
-translation_unit(X) ::= translation_unit(A) external_declaration(B).	{ SAFE_APPEND(A,B); X = A; }
+translation_unit(X) ::= translation_unit(A) external_declaration(B).	{ SAFE_APPEND(A,B); X = A; /*X-overwrites-A*/ }
 translation_unit(X) ::= translation_unit(X) EOF.
 translation_unit(X) ::= error.											{ X = NULL; }
 
 %type external_declaration {ZCC_TreeNode *}
-external_declaration(X) ::= class_definition(A).						{ X = A; }
-external_declaration(X) ::= struct_def(A).								{ X = A; }
-external_declaration(X) ::= enum_def(A).								{ X = A; }
-external_declaration(X) ::= const_def(A).								{ X = A; }
+external_declaration(X) ::= class_definition(A).						{ X = A; /*X-overwrites-A*/ }
+external_declaration(X) ::= struct_def(A).								{ X = A; /*X-overwrites-A*/ }
+external_declaration(X) ::= enum_def(A).								{ X = A; /*X-overwrites-A*/ }
+external_declaration(X) ::= const_def(A).								{ X = A; /*X-overwrites-A*/ }
 
 /* Optional bits. */
 opt_semicolon ::= .
@@ -165,7 +165,7 @@ opt_expr(X) ::= expr(X).
 class_definition(X) ::= class_head(A) class_body(B).
 {
 	A->Body = B;
-	X = A;
+	X = A; /*X-overwrites-A*/
 }
 
 class_head(X) ::= CLASS(T) IDENTIFIER(A) class_ancestry(B) class_flags(C).
@@ -180,7 +180,7 @@ class_head(X) ::= CLASS(T) IDENTIFIER(A) class_ancestry(B) class_flags(C).
 
 %type class_ancestry{ZCC_Identifier *}
 class_ancestry(X) ::= .						{ X = NULL; }
-class_ancestry(X) ::= COLON dottable_id(A).	{ X = A; }
+class_ancestry(X) ::= COLON dottable_id(A).	{ X = A; /*X-overwrites-A*/ }
 
 %type class_flags{ClassFlagsBlock}
 class_flags(X) ::= .										{ X.Flags = 0; X.Replaces = NULL; }
@@ -204,7 +204,7 @@ dottable_id(X) ::= dottable_id(A) DOT IDENTIFIER(B).
 	NEW_AST_NODE(Identifier,id2,A);
 	id2->Id = B.Name();
 	A->AppendSibling(id2);
-	X = A;
+	X = A; /*X-overwrites-A*/
 }
 
 /*------ Class Body ------*/
@@ -217,23 +217,23 @@ dottable_id(X) ::= dottable_id(A) DOT IDENTIFIER(B).
 //  * constants
 //  * defaults
 
-class_body(X) ::= SEMICOLON class_innards(A) EOF.		{ X = A; }
-class_body(X) ::= LBRACE class_innards(A) RBRACE.		{ X = A; }
+class_body(X) ::= SEMICOLON class_innards(A) EOF.		{ X = A; /*X-overwrites-A*/ }
+class_body(X) ::= LBRACE class_innards(A) RBRACE.		{ X = A; /*X-overwrites-A*/ }
 
 class_innards(X) ::= .									{ X = NULL; }
-class_innards(X) ::= class_innards(A) class_member(B).	{ SAFE_APPEND(A,B); X = A; }
+class_innards(X) ::= class_innards(A) class_member(B).	{ SAFE_APPEND(A,B); X = A; /*X-overwrites-A*/ }
 
 %type struct_def{ZCC_Struct *}
 %type enum_def {ZCC_Enum *}
 %type states_def {ZCC_States *}
 %type const_def {ZCC_ConstantDef *}
 
-class_member(X) ::= declarator(A).						{ X = A; }
-class_member(X) ::= enum_def(A).						{ X = A; }
-class_member(X) ::= struct_def(A).						{ X = A; }
-class_member(X) ::= states_def(A).						{ X = A; }
-class_member(X) ::= default_def(A).						{ X = A; }
-class_member(X) ::= const_def(A).						{ X = A; }
+class_member(X) ::= declarator(A).						{ X = A; /*X-overwrites-A*/ }
+class_member(X) ::= enum_def(A).						{ X = A; /*X-overwrites-A*/ }
+class_member(X) ::= struct_def(A).						{ X = A; /*X-overwrites-A*/ }
+class_member(X) ::= states_def(A).						{ X = A; /*X-overwrites-A*/ }
+class_member(X) ::= default_def(A).						{ X = A; /*X-overwrites-A*/ }
+class_member(X) ::= const_def(A).						{ X = A; /*X-overwrites-A*/ }
 
 /*----- Struct Definition -----*/
 /* Structs can define variables and enums. */
@@ -255,11 +255,11 @@ opt_struct_body(X) ::= struct_body(X).
 
 struct_body(X) ::= error.								{ X = NULL; }
 struct_body(X) ::= struct_member(X).
-struct_body(X) ::= struct_member(A) struct_body(B).		{ X = A; A->AppendSibling(B); }
+struct_body(X) ::= struct_member(A) struct_body(B).		{ X = A; /*X-overwrites-A*/ X->AppendSibling(B); }
 
-struct_member(X) ::= declarator_no_fun(A).				{ X = A; }
-struct_member(X) ::= enum_def(A).						{ X = A; }
-struct_member(X) ::= const_def(A).						{ X = A; }
+struct_member(X) ::= declarator_no_fun(A).				{ X = A; /*X-overwrites-A*/ }
+struct_member(X) ::= enum_def(A).						{ X = A; /*X-overwrites-A*/ }
+struct_member(X) ::= const_def(A).						{ X = A; /*X-overwrites-A*/ }
 
 /*----- Constant Definition ------*/
 /* Like UnrealScript, a constant's type is implied by its value's type. */
@@ -340,11 +340,11 @@ enum_def(X) ::= ENUM(T) IDENTIFIER(A) enum_type(B) LBRACE opt_enum_list(C) RBRAC
 }
 
 enum_type(X) ::= .										{ X.Int = ZCC_IntAuto; X.SourceLoc = stat->sc.GetMessageLine(); }
-enum_type(X) ::= COLON int_type(A).						{ X = A; }
+enum_type(X) ::= COLON int_type(A).						{ X = A; /*X-overwrites-A*/ }
 
 enum_list(X) ::= error.									{ X = NULL; }
 enum_list(X) ::= enumerator(X).
-enum_list(X) ::= enum_list(A) COMMA enumerator(B).		{ X = A; A->AppendSibling(B); }
+enum_list(X) ::= enum_list(A) COMMA enumerator(B).		{ X = A; /*X-overwrites-A*/ X->AppendSibling(B); }
 
 opt_enum_list(X) ::= .									{ X = NULL; }
 opt_enum_list(X) ::= enum_list(X) opt_comma.
@@ -402,9 +402,9 @@ scanner_mode ::= . { stat->sc.SetStateMode(true); }
 
 states_body(X) ::= .								{ X = NULL; }
 states_body(X) ::= error.							{ X = NULL; }
-states_body(X) ::= states_body(A) state_line(B).	{ SAFE_APPEND(A,B); X = A; }
-states_body(X) ::= states_body(A) state_label(B).	{ SAFE_APPEND(A,B); X = A; }
-states_body(X) ::= states_body(A) state_flow(B).	{ SAFE_APPEND(A,B); X = A; }
+states_body(X) ::= states_body(A) state_line(B).	{ SAFE_APPEND(A,B); X = A; /*X-overwrites-A*/ }
+states_body(X) ::= states_body(A) state_label(B).	{ SAFE_APPEND(A,B); X = A; /*X-overwrites-A*/ }
+states_body(X) ::= states_body(A) state_flow(B).	{ SAFE_APPEND(A,B); X = A; /*X-overwrites-A*/ }
 
 state_label(X) ::= NWS(A) COLON.
 {
@@ -428,7 +428,7 @@ state_flow_type(X) ::= GOTO(T) dottable_id(A) state_goto_offset(B).
 }
 
 state_goto_offset(X) ::= .				{ X = NULL; }
-state_goto_offset(X) ::= PLUS expr(A).	{ X = A; }	/* Must evaluate to a non-negative integer constant. */
+state_goto_offset(X) ::= PLUS expr(A).	{ X = A; /*X-overwrites-A*/ }	/* Must evaluate to a non-negative integer constant. */
 
 state_line(X) ::= NWS(A) NWS(B) expr state_opts(C) state_action(D).
 {
@@ -454,21 +454,21 @@ state_line(X) ::= NWS(A) NWS(B) expr state_opts(C) state_action(D).
 }
 
 state_opts(X) ::= .													{ StateOpts opts; opts.Zero(); X = opts; }
-state_opts(X) ::= state_opts(A) BRIGHT.								{ A.Bright = true; X = A; }
-state_opts(X) ::= state_opts(A) FAST.								{ A.Fast = true; X = A; }
-state_opts(X) ::= state_opts(A) SLOW.								{ A.Slow = true; X = A; }
-state_opts(X) ::= state_opts(A) NODELAY.							{ A.NoDelay = true; X = A; }
-state_opts(X) ::= state_opts(A) CANRAISE.							{ A.CanRaise = true; X = A; }
-state_opts(X) ::= state_opts(A) OFFSET LPAREN expr(B) COMMA expr(C) RPAREN.	{ A.Offset = B; B->AppendSibling(C); X = A; }
-state_opts(X) ::= state_opts(A) LIGHT LPAREN light_list RPAREN.		{ X = A; }	///FIXME: GZDoom would want to know this
+state_opts(X) ::= state_opts(A) BRIGHT.								{ A.Bright = true; X = A; /*X-overwrites-A*/ }
+state_opts(X) ::= state_opts(A) FAST.								{ A.Fast = true; X = A; /*X-overwrites-A*/ }
+state_opts(X) ::= state_opts(A) SLOW.								{ A.Slow = true; X = A; /*X-overwrites-A*/ }
+state_opts(X) ::= state_opts(A) NODELAY.							{ A.NoDelay = true; X = A; /*X-overwrites-A*/ }
+state_opts(X) ::= state_opts(A) CANRAISE.							{ A.CanRaise = true; X = A; /*X-overwrites-A*/ }
+state_opts(X) ::= state_opts(A) OFFSET LPAREN expr(B) COMMA expr(C) RPAREN.	{ A.Offset = B; B->AppendSibling(C); X = A; /*X-overwrites-A*/ }
+state_opts(X) ::= state_opts(A) LIGHT LPAREN light_list RPAREN.		{ X = A; /*X-overwrites-A*/ }	///FIXME: GZDoom would want to know this
 
 light_list ::= STRCONST.
 light_list ::= light_list COMMA STRCONST.
 
 /* A state action can be either a compound statement or a single action function call. */
-state_action(X) ::= LBRACE statement_list(A) scanner_mode RBRACE.	{ X = A; }
+state_action(X) ::= LBRACE statement_list(A) scanner_mode RBRACE.	{ X = A; /*X-overwrites-A*/ }
 state_action(X) ::= LBRACE error scanner_mode RBRACE.				{ X = NULL; }
-state_action(X) ::= state_call(A) scanner_mode SEMICOLON.			{ X = A; }
+state_action(X) ::= state_call(A) scanner_mode SEMICOLON.			{ X = A; /*X-overwrites-A*/ }
 
 state_call(X) ::= .											{ X = NULL; }
 state_call(X) ::= IDENTIFIER(A) state_call_params(B).
@@ -485,11 +485,11 @@ state_call(X) ::= IDENTIFIER(A) state_call_params(B).
 }
 
 state_call_params(X) ::= .									{ X = NULL; }
-state_call_params(X) ::= LPAREN func_expr_list(A) RPAREN.	{ X = A; }
+state_call_params(X) ::= LPAREN func_expr_list(A) RPAREN.	{ X = A; /*X-overwrites-A*/ }
 
 /* Definition of a default class instance. */
 %type default_def {ZCC_CompoundStmt *}
-default_def(X) ::= DEFAULT compound_statement(A).			{ X = A; }
+default_def(X) ::= DEFAULT compound_statement(A).			{ X = A; /*X-overwrites-A*/ }
 
 /* Type names */
 %type type_name {ZCC_BasicType *}
@@ -590,16 +590,16 @@ aggregate_type(X) ::= CLASS(T) class_restrictor(A).							/* class<type> */
 	X = cls;
 }
 class_restrictor(X) ::= .						{ X = NULL; }
-class_restrictor(X) ::= LT dottable_id(A) GT.	{ X = A; }
+class_restrictor(X) ::= LT dottable_id(A) GT.	{ X = A; /*X-overwrites-A*/ }
 
-type(X) ::= type_name(A).					{ X = A; A->ArraySize = NULL; }
-type(X) ::= aggregate_type(A).				{ X = A; A->ArraySize = NULL; }
+type(X) ::= type_name(A).					{ X = A; /*X-overwrites-A*/ X->ArraySize = NULL; }
+type(X) ::= aggregate_type(A).				{ X = A; /*X-overwrites-A*/ X->ArraySize = NULL; }
 
 type_or_array(X) ::= type(X).
-type_or_array(X) ::= type(A) array_size(B).	{ X = A; A->ArraySize = B; }
+type_or_array(X) ::= type(A) array_size(B).	{ X = A; /*X-overwrites-A*/ X->ArraySize = B; }
 
 type_list(X) ::= type_or_array(X).			/* A comma-separated list of types */
-type_list(X) ::= type_list(A) COMMA type_or_array(B). { X = A; A->AppendSibling(B); }
+type_list(X) ::= type_list(A) COMMA type_or_array(B). { X = A; /*X-overwrites-A*/ X->AppendSibling(B); }
 
 type_list_or_void(X) ::= VOID.				{ X = NULL; }
 type_list_or_void(X) ::= type_list(X).
@@ -622,7 +622,7 @@ array_size(X) ::= array_size_expr(X).
 array_size(X) ::= array_size(A) array_size_expr(B).
 {
 	A->AppendSibling(B);
-	X = A;
+	X = A; /*X-overwrites-A*/
 }
 
 %type variables_or_function {VarOrFun}
@@ -735,7 +735,7 @@ variable_list(X) ::= variable_name(X).
 variable_list(X) ::= variable_list(A) COMMA variable_name(B).
 {
 	A->AppendSibling(B);
-	X = A;
+	X = A; /*X-overwrites-A*/
 }
 
 decl_flags(X) ::= .								{ X.Int = 0; X.SourceLoc = 0; }
@@ -765,7 +765,7 @@ func_params(X) ::= VOID.					{ X = NULL; }
 func_params(X) ::= func_param_list(X).
 
 func_param_list(X) ::= func_param(X).
-func_param_list(X) ::= func_param_list(A) COMMA func_param(B).	{ X = A; A->AppendSibling(B); }
+func_param_list(X) ::= func_param_list(A) COMMA func_param(B).	{ X = A; /*X-overwrites-A*/ X->AppendSibling(B); }
 
 func_param(X) ::= func_param_flags(A) type(B) IDENTIFIER(C).
 {
@@ -809,7 +809,7 @@ primary(X) ::= SUPER(T).
 	expr->Type = NULL;
 	X = expr;
 }
-primary(X) ::= constant(A).				{ X = A; }
+primary(X) ::= constant(A).				{ X = A; /*X-overwrites-A*/ }
 primary(X) ::= SELF(T).
 {
 	NEW_AST_NODE(Expression, expr, T);
@@ -819,7 +819,7 @@ primary(X) ::= SELF(T).
 }
 primary(X) ::= LPAREN expr(A) RPAREN.
 {
-	X = A;
+	X = A; /*X-overwrites-A*/
 }
 primary ::= LPAREN error RPAREN.
 primary(X) ::= primary(A) LPAREN func_expr_list(B) RPAREN. [DOT]		// Function call
@@ -1102,8 +1102,8 @@ expr(X) ::= expr(A) QUESTION expr(B) COLON expr(C).
 expr_list(X) ::= expr(X).
 expr_list(X) ::= expr_list(A) COMMA expr(B).
 {
-	X = A;
-	A->AppendSibling(B);
+	X = A;	/*X-overwrites-A*/
+	X->AppendSibling(B);
 }
 
 /*----- Function argument lists -----*/
@@ -1133,8 +1133,8 @@ func_expr_list(X) ::= func_expr_list(A) COMMA(T) func_expr_item(B).
 		nil_b->Label = NAME_None;
 		B = nil_b;
 	}
-	X = A;
-	A->AppendSibling(B);
+	X = A;	/*X-overwrites-A*/
+	X->AppendSibling(B);
 }
 
 func_expr_item(X) ::= .
@@ -1224,14 +1224,14 @@ function_body(X) ::= compound_statement(X).
 
 %type statement{ZCC_Statement *}
 statement(X) ::= SEMICOLON.							{ X = NULL; }
-statement(X) ::= labeled_statement(A).				{ X = A; }
-statement(X) ::= compound_statement(A).				{ X = A; }
-statement(X) ::= expression_statement(A) SEMICOLON.	{ X = A; }
+statement(X) ::= labeled_statement(A).				{ X = A; /*X-overwrites-A*/ }
+statement(X) ::= compound_statement(A).				{ X = A; /*X-overwrites-A*/ }
+statement(X) ::= expression_statement(A) SEMICOLON.	{ X = A; /*X-overwrites-A*/ }
 statement(X) ::= selection_statement(X).
 statement(X) ::= iteration_statement(X).
 statement(X) ::= jump_statement(X).
-statement(X) ::= assign_statement(A) SEMICOLON.		{ X = A; }
-statement(X) ::= local_var(A) SEMICOLON.			{ X = A; }
+statement(X) ::= assign_statement(A) SEMICOLON.		{ X = A; /*X-overwrites-A*/ }
+statement(X) ::= local_var(A) SEMICOLON.			{ X = A; /*X-overwrites-A*/ }
 statement(X) ::= error SEMICOLON.					{ X = NULL; }
 
 /*----- Jump Statements -----*/
@@ -1287,12 +1287,12 @@ compound_statement(X) ::= LBRACE(T) error RBRACE.
 
 statement_list(X) ::= statement(A).
 {
-	X = A;
+	X = A; /*X-overwrites-A*/
 }
 statement_list(X) ::= statement_list(A) statement(B).
 {
 	SAFE_APPEND(A,B);
-	X = A;
+	X = A; /*X-overwrites-A*/
 }
 
 /*----- Expression Statements -----*/
@@ -1376,13 +1376,13 @@ while_or_until(X) ::= UNTIL(T).
 }
 
 %type for_init{ZCC_Statement *}
-for_init(X) ::= local_var(A).						{ X = A; }
-for_init(X) ::= for_bump(A).						{ X = A; }
+for_init(X) ::= local_var(A).						{ X = A /*X-overwrites-A*/; }
+for_init(X) ::= for_bump(A).						{ X = A /*X-overwrites-A*/; }
 
 %type for_bump{ZCC_Statement *}
 for_bump(X) ::= .									{ X = NULL; }
-for_bump(X) ::= expression_statement(A).			{ X = A; }
-for_bump(X) ::= assign_statement(A).				{ X = A; }
+for_bump(X) ::= expression_statement(A).			{ X = A; /*X-overwrites-A*/ }
+for_bump(X) ::= assign_statement(A).				{ X = A; /*X-overwrites-A*/ }
 
 /*----- If Statements -----*/
 
@@ -1397,12 +1397,12 @@ for_bump(X) ::= assign_statement(A).				{ X = A; }
 
 selection_statement(X) ::= if_front(A). [IF]
 {
-	X = A;
+	X = A; /*X-overwrites-A*/
 }
 selection_statement(X) ::= if_front(A) ELSE statement(B). [ELSE]
 {
 	A->FalsePath = B;
-	X = A;
+	X = A; /*X-overwrites-A*/
 }
 
 if_front(X) ::= IF(T) LPAREN expr(A) RPAREN statement(B).
@@ -1481,4 +1481,4 @@ local_var(X) ::= type(A) variable_list(B) var_init(C).
 
 %type var_init{ZCC_Expression *}
 var_init(X) ::= .						{ X = NULL; }
-var_init(X) ::= EQ expr_list(A).		{ X = A; }
+var_init(X) ::= EQ expr_list(A).		{ X = A; /*X-overwrites-A*/ }

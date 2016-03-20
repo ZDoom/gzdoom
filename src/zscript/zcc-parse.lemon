@@ -537,6 +537,7 @@ type_name(X) ::= DOT dottable_id(A).
  * (Well, actually, I'm not sure if 4D ones are going to happen
  * straight away.)
  */
+%token_class intconst INTCONST|UINTCONST.
 vector_size(X) ::= .						{ X.Int = ZCC_Vector3; X.SourceLoc = stat->sc.GetMessageLine(); }
 vector_size(X) ::= LT intconst(A) GT.
 {
@@ -551,8 +552,6 @@ vector_size(X) ::= LT intconst(A) GT.
 	}
 	X.SourceLoc = A.SourceLoc;
 }
-intconst(X) ::= INTCONST(X).
-intconst(X) ::= UINTCONST(X).
 
 /* Type names can also be used as identifiers in contexts where type names
  * are not normally allowed. */

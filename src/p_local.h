@@ -158,14 +158,27 @@ void	P_ExplodeMissile (AActor *missile, line_t *explodeline, AActor *target);
 AActor *P_OldSpawnMissile(AActor *source, AActor *owner, AActor *dest, PClassActor *type);
 AActor *P_SpawnMissile (AActor* source, AActor* dest, PClassActor *type, AActor* owner = NULL);
 AActor *P_SpawnMissileZ (AActor* source, fixed_t z, AActor* dest, PClassActor *type);
+inline AActor *P_SpawnMissileZ(AActor* source, double z, AActor* dest, PClassActor *type)
+{
+	return P_SpawnMissileZ(source, FLOAT2FIXED(z), dest, type);
+}
+
 AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z, AActor *source, AActor *dest, PClassActor *type, bool checkspawn = true, AActor *owner = NULL);
 inline AActor *P_SpawnMissileXYZ(const fixedvec3 &pos, AActor *source, AActor *dest, PClassActor *type, bool checkspawn = true, AActor *owner = NULL)
 {
 	return P_SpawnMissileXYZ(pos.x, pos.y, pos.z, source, dest, type, checkspawn, owner);
 }
 AActor *P_SpawnMissileAngle (AActor *source, PClassActor *type, angle_t angle, fixed_t vz);
+inline AActor *P_SpawnMissileAngle(AActor *source, PClassActor *type, DAngle angle, double vz)
+{
+	return P_SpawnMissileAngle(source, type, angle.BAMs(), FLOAT2FIXED(vz));
+}
 AActor *P_SpawnMissileAngleSpeed (AActor *source, PClassActor *type, angle_t angle, fixed_t vz, fixed_t speed);
 AActor *P_SpawnMissileAngleZ (AActor *source, fixed_t z, PClassActor *type, angle_t angle, fixed_t vz);
+inline AActor *P_SpawnMissileAngleZ(AActor *source, double z, PClassActor *type, DAngle angle, double vz)
+{
+	return P_SpawnMissileAngleZ(source, FLOAT2FIXED(z), type, angle.BAMs(), FLOAT2FIXED(vz));
+}
 AActor *P_SpawnMissileAngleZSpeed (AActor *source, fixed_t z, PClassActor *type, angle_t angle, fixed_t vz, fixed_t speed, AActor *owner=NULL, bool checkspawn = true);
 AActor *P_SpawnMissileZAimed (AActor *source, fixed_t z, AActor *dest, PClassActor *type);
 
@@ -353,11 +366,7 @@ inline bool	P_HitWater(AActor *thing, sector_t *sec, const fixedvec3 &pos, bool 
 {
 	return P_HitWater(thing, sec, pos.x, pos.y, pos.z, checkabove, alert, force);
 }
-void	P_CheckSplash(AActor *self, fixed_t distance);
-inline void P_CheckSplash(AActor *self, double distance)
-{
-	return P_CheckSplash(self, FLOAT2FIXED(distance));
-}
+void	P_CheckSplash(AActor *self, double distance);
 void	P_RailAttack (AActor *source, int damage, int offset_xy, fixed_t offset_z = 0, int color1 = 0, int color2 = 0, double maxdiff = 0, int flags = 0, PClassActor *puff = NULL, angle_t angleoffset = 0, angle_t pitchoffset = 0, fixed_t distance = 8192*FRACUNIT, int duration = 0, double sparsity = 1.0, double drift = 1.0, PClassActor *spawnclass = NULL, int SpiralOffset = 270);	// [RH] Shoot a railgun
 
 enum	// P_RailAttack / A_RailAttack / A_CustomRailgun / P_DrawRailTrail flags

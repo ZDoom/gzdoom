@@ -500,7 +500,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireSTGrenade)
 		
 	// Temporarily raise the pitch to send the grenade slightly upwards
 	DAngle SavedPlayerPitch = self->Angles.Pitch;
-	self->Angles.Pitch -= 6.328125; //(1152 << FRACBITS);
+	self->Angles.Pitch -= 6.328125; //(1152 << F RACBITS);
 	P_SpawnPlayerMissile(self, grenade);
 	self->Angles.Pitch = SavedPlayerPitch;
 	return 0;

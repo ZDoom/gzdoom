@@ -5742,11 +5742,11 @@ bool P_HitFloor (AActor *thing)
 //
 //---------------------------------------------------------------------------
 
-void P_CheckSplash(AActor *self, fixed_t distance)
+void P_CheckSplash(AActor *self, double distance)
 {
 	sector_t *floorsec;
 	self->Sector->_f_LowestFloorAt(self, &floorsec);
-	if (self->_f_Z() <= self->floorz + distance && self->floorsector == floorsec && self->Sector->GetHeightSec() == NULL && floorsec->heightsec == NULL)
+	if (self->_f_Z() <= self->floorz + FLOAT2FIXED(distance) && self->floorsector == floorsec && self->Sector->GetHeightSec() == NULL && floorsec->heightsec == NULL)
 	{
 		// Explosion splashes never alert monsters. This is because A_Explode has
 		// a separate parameter for that so this would get in the way of proper 

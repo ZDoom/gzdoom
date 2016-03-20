@@ -67,8 +67,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Srcr1Attack)
 	PARAM_ACTION_PROLOGUE;
 
 	AActor *mo;
-	fixed_t vz;
-	angle_t angle;
+	DAngle angle;
 
 	if (!self->target)
 	{
@@ -86,17 +85,16 @@ DEFINE_ACTION_FUNCTION(AActor, A_Srcr1Attack)
 	PClassActor *fx = PClass::FindActor("SorcererFX1");
 	if (self->health > (self->SpawnHealth()/3)*2)
 	{ // Spit one fireball
-		P_SpawnMissileZ (self, self->_f_Z() + 48*FRACUNIT, self->target, fx );
+		P_SpawnMissileZ (self, self->Z() + 48, self->target, fx );
 	}
 	else
 	{ // Spit three fireballs
-		mo = P_SpawnMissileZ (self, self->_f_Z() + 48*FRACUNIT, self->target, fx);
+		mo = P_SpawnMissileZ (self, self->Z() + 48, self->target, fx);
 		if (mo != NULL)
 		{
-			vz = mo->_f_velz();
-			angle = mo->_f_angle();
-			P_SpawnMissileAngleZ (self, self->_f_Z() + 48*FRACUNIT, fx, angle-ANGLE_1*3, vz);
-			P_SpawnMissileAngleZ (self, self->_f_Z() + 48*FRACUNIT, fx, angle+ANGLE_1*3, vz);
+			angle = mo->Angles.Yaw;
+			P_SpawnMissileAngleZ(self, self->Z() + 48, fx, angle - 3, mo->Vel.Z);
+			P_SpawnMissileAngleZ(self, self->Z() + 48, fx, angle + 3, mo->Vel.Z);
 		}
 		if (self->health < self->SpawnHealth()/3)
 		{ // Maybe attack again
@@ -143,24 +141,20 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcererRise)
 
 void P_DSparilTeleport (AActor *actor)
 {
-	fixed_t prevX;
-	fixed_t prevY;
-	fixed_t prevZ;
+	DVector3 prev;
 	AActor *mo;
 	AActor *spot;
 
 	DSpotState *state = DSpotState::GetSpotState();
 	if (state == NULL) return;
 
-	spot = state->GetSpotWithMinMaxDistance(PClass::FindClass("BossSpot"), actor->_f_X(), actor->_f_Y(), 128*FRACUNIT, 0);
+	spot = state->GetSpotWithMinMaxDistance(PClass::FindClass("BossSpot"), actor->X(), actor->Y(), 128, 0);
 	if (spot == NULL) return;
 
-	prevX = actor->_f_X();
-	prevY = actor->_f_Y();
-	prevZ = actor->_f_Z();
-	if (P_TeleportMove (actor, spot->_f_Pos(), false))
+	prev = actor->Pos();
+	if (P_TeleportMove (actor, spot->Pos(), false))
 	{
-		mo = Spawn("Sorcerer2Telefade", prevX, prevY, prevZ, ALLOW_REPLACE);
+		mo = Spawn("Sorcerer2Telefade", prev, ALLOW_REPLACE);
 		if (mo) mo->Translation = actor->Translation;
 		S_Sound (mo, CHAN_BODY, "misc/teleport", 1, ATTN_NORM);
 		actor->SetState (actor->FindState("Teleport"));
@@ -230,8 +224,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_Srcr2Attack)
 		PClassActor *fx = PClass::FindActor("Sorcerer2FX2");
 		if (fx)
 		{
-			P_SpawnMissileAngle (self, fx, self->_f_angle()-ANG45, FRACUNIT/2);
-			P_SpawnMissileAngle (self, fx, self->_f_angle()+ANG45, FRACUNIT/2);
+			P_SpawnMissileAngle(self, fx, self->Angles.Yaw - 45, 0.5);
+			P_SpawnMissileAngle(self, fx, self->Angles.Yaw + 45, 0.5);
 		}
 	}
 	else
@@ -279,7 +273,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_GenWizard)
 	mo = Spawn("Wizard", self->Pos(), ALLOW_REPLACE);
 	if (mo != NULL)
 	{
-		mo->_f_AddZ(-mo->GetDefault()->height / 2, false);
+		mo->AddZ(-mo->GetDefault()->_Height() / 2, false);
 		if (!P_TestMobjLocation (mo))
 		{ // Didn't fit
 			mo->ClearCounters();

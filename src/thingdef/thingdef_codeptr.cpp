@@ -1104,7 +1104,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Explode)
 	}
 
 	P_RadiusAttack (self, self->target, damage, distance, self->DamageType, flags, fulldmgdistance);
-	P_CheckSplash(self, distance<<FRACBITS);
+	P_CheckSplash(self, distance);
 	if (alert && self->target != NULL && self->target->player != NULL)
 	{
 		validcount++;
@@ -1147,7 +1147,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusThrust)
 	}
 
 	P_RadiusAttack (self, self->target, force, distance, self->DamageType, flags | RADF_NODAMAGE, fullthrustdistance);
-	P_CheckSplash(self, distance << FRACBITS);
+	P_CheckSplash(self, distance);
 
 	if (sourcenothrust)
 	{
@@ -4711,8 +4711,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Teleport)
 	PARAM_CLASS_OPT		(target_type, ASpecialSpot)	{ target_type = PClass::FindActor("BossSpot"); }
 	PARAM_CLASS_OPT		(fog_type, AActor)			{ fog_type = PClass::FindActor("TeleportFog"); }
 	PARAM_INT_OPT		(flags)						{ flags = 0; }
-	PARAM_FIXED_OPT		(mindist)					{ mindist = 128 << FRACBITS; }
-	PARAM_FIXED_OPT		(maxdist)					{ maxdist = 128 << FRACBITS; }
+	PARAM_FLOAT_OPT		(mindist)					{ mindist = 128; }
+	PARAM_FLOAT_OPT		(maxdist)					{ maxdist = 0; }
 	PARAM_INT_OPT		(ptr)						{ ptr = AAPTR_DEFAULT; }
 
 	AActor *ref = COPY_AAPTR(self, ptr);
@@ -4771,7 +4771,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Teleport)
 		target_type = PClass::FindActor("BossSpot");
 	}
 
-	AActor *spot = state->GetSpotWithMinMaxDistance(target_type, ref->_f_X(), ref->_f_Y(), mindist, maxdist);
+	AActor *spot = state->GetSpotWithMinMaxDistance(target_type, ref->X(), ref->Y(), mindist, maxdist);
 	if (spot == NULL)
 	{
 		return numret;

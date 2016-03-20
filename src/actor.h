@@ -860,6 +860,11 @@ public:
 		return (DVector2(_f_X() - otherpos.x, _f_Y() - otherpos.y).Length())/FRACUNIT;
 	}
 
+	double Distance2D(double x, double y) const
+	{
+		return DVector2(X() - x, Y() - y).Length();
+	}
+
 	// a full 3D version of the above
 	fixed_t Distance3D(AActor *other, bool absolute = false)
 	{
@@ -1438,6 +1443,7 @@ public:
 	void AddZ(double newz, bool moving = true)
 	{
 		__pos.z += FLOAT2FIXED(newz);
+		if (!moving) PrevZ = __pos.z;
 	}
 
 	// These are not for general use as they do not link the actor into the world!

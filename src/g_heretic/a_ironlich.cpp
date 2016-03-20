@@ -127,7 +127,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LichAttack)
 		mo = P_SpawnMissile (self, target, RUNTIME_CLASS(AWhirlwind));
 		if (mo != NULL)
 		{
-			mo->_f_AddZ(-32*FRACUNIT, false);
+			mo->AddZ(-32);
 			mo->tracer = target;
 			mo->health = 20*TICRATE; // Duration
 			S_Sound (self, CHAN_BODY, "ironlich/attack3", 1, ATTN_NORM);
@@ -150,20 +150,20 @@ DEFINE_ACTION_FUNCTION(AActor, A_WhirlwindSeek)
 	if (self->health < 0)
 	{
 		self->Vel.Zero();
-		self->SetState (self->FindState(NAME_Death));
+		self->SetState(self->FindState(NAME_Death));
 		self->flags &= ~MF_MISSILE;
 		return 0;
 	}
 	if ((self->threshold -= 3) < 0)
 	{
 		self->threshold = 58 + (pr_seek() & 31);
-		S_Sound (self, CHAN_BODY, "ironlich/attack3", 1, ATTN_NORM);
+		S_Sound(self, CHAN_BODY, "ironlich/attack3", 1, ATTN_NORM);
 	}
 	if (self->tracer && self->tracer->flags&MF_SHADOW)
 	{
 		return 0;
 	}
-	P_SeekerMissile (self, ANGLE_1*10, ANGLE_1*30);
+	P_SeekerMissile(self, ANGLE_1 * 10, ANGLE_1 * 30);
 	return 0;
 }
 
@@ -203,7 +203,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LichFireGrow)
 	PARAM_ACTION_PROLOGUE;
 
 	self->health--;
-	self->_f_AddZ(9*FRACUNIT);
+	self->AddZ(9.);
 	if (self->health == 0)
 	{
 		self->Damage = self->GetDefault()->Damage;

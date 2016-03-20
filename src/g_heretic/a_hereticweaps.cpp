@@ -121,18 +121,18 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireGoldWandPL1)
 	AWeapon *weapon = player->ReadyWeapon;
 	if (weapon != NULL)
 	{
-		if (!weapon->DepleteAmmo (weapon->bAltFire))
+		if (!weapon->DepleteAmmo(weapon->bAltFire))
 			return 0;
 	}
 	DAngle pitch = P_BulletSlope(self);
-	damage = 7+(pr_fgw()&7);
+	damage = 7 + (pr_fgw() & 7);
 	angle = self->Angles.Yaw;
 	if (player->refire)
 	{
 		angle += pr_fgw.Random2() * (5.625 / 256);
 	}
-	P_LineAttack (self, angle, PLAYERMISSILERANGE, pitch, damage, NAME_Hitscan, "GoldWandPuff1");
-	S_Sound (self, CHAN_WEAPON, "weapons/wandhit", 1, ATTN_NORM);
+	P_LineAttack(self, angle, PLAYERMISSILERANGE, pitch, damage, NAME_Hitscan, "GoldWandPuff1");
+	S_Sound(self, CHAN_WEAPON, "weapons/wandhit", 1, ATTN_NORM);
 	return 0;
 }
 
@@ -149,7 +149,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireGoldWandPL2)
 	int i;
 	DAngle angle;
 	int damage;
-	fixed_t vz;
+	double vz;
 	player_t *player;
 
 	if (NULL == (player = self->player))
@@ -164,11 +164,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireGoldWandPL2)
 			return 0;
 	}
 	DAngle pitch = P_BulletSlope(self);
-	//momz = GetDefault<AGoldWandFX2>()->Speed * tan(-bulletpitch);
 
-	vz = fixed_t(GetDefaultByName("GoldWandFX2")->_f_speed() * -pitch.TanClamped());
-	P_SpawnMissileAngle (self, PClass::FindActor("GoldWandFX2"), self->_f_angle()-(ANG45/8), vz);
-	P_SpawnMissileAngle (self, PClass::FindActor("GoldWandFX2"), self->_f_angle()+(ANG45/8), vz);
+	vz = -GetDefaultByName("GoldWandFX2")->Speed * pitch.TanClamped();
+	P_SpawnMissileAngle(self, PClass::FindActor("GoldWandFX2"), self->Angles.Yaw - (45. / 8), vz);
+	P_SpawnMissileAngle(self, PClass::FindActor("GoldWandFX2"), self->Angles.Yaw + (45. / 8), vz);
 	angle = self->Angles.Yaw - (45. / 8);
 	for(i = 0; i < 5; i++)
 	{
@@ -406,7 +405,7 @@ void FireMacePL1B (AActor *actor)
 	ball->Vel.Z = 2 - player->mo->Angles.Pitch.TanClamped();
 	ball->target = actor;
 	ball->Angles.Yaw = actor->Angles.Yaw;
-	ball->_f_AddZ(ball->_f_velz());
+	ball->AddZ(ball->Vel.Z);
 	ball->VelFromAngle();
 	ball->Vel += actor->Vel.XY()/2;
 	S_Sound (ball, CHAN_BODY, "weapons/maceshoot", 1, ATTN_NORM);
@@ -433,18 +432,18 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMacePL1)
 
 	if (pr_maceatk() < 28)
 	{
-		FireMacePL1B (self);
+		FireMacePL1B(self);
 		return 0;
 	}
 	AWeapon *weapon = player->ReadyWeapon;
 	if (weapon != NULL)
 	{
-		if (!weapon->DepleteAmmo (weapon->bAltFire))
+		if (!weapon->DepleteAmmo(weapon->bAltFire))
 			return 0;
 	}
-	player->psprites[ps_weapon].sx = ((pr_maceatk()&3)-2)*FRACUNIT;
-	player->psprites[ps_weapon].sy = WEAPONTOP+(pr_maceatk()&3)*FRACUNIT;
-	ball = P_SpawnPlayerMissile (self, PClass::FindActor("MaceFX1"), self->Angles.Yaw + (((pr_maceatk()&7)-4) * (360./256)));
+	player->psprites[ps_weapon].sx = ((pr_maceatk() & 3) - 2)*FRACUNIT;
+	player->psprites[ps_weapon].sy = WEAPONTOP + (pr_maceatk() & 3)*FRACUNIT;
+	ball = P_SpawnPlayerMissile(self, PClass::FindActor("MaceFX1"), self->Angles.Yaw + (((pr_maceatk() & 7) - 4) * (360. / 256)));
 	if (ball)
 	{
 		ball->special1 = 16; // tics till dropoff
@@ -477,9 +476,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_MacePL1Check)
 	// [RH] Avoid some precision loss by scaling the velocity directly
 #if 0
 	// This is the original code, for reference.
-	angle_t angle = self->_f_angle()>>ANGLETOFINESHIFT;
-	self->vel.x = FixedMul(7*FRACUNIT, finecosine[angle]);
-	self->vel.y = FixedMul(7*FRACUNIT, finesine[angle]);
+	a.ngle_t angle = self->_f_angle()>>ANGLETOF.INESHIFT;
+	self->vel.x = F.ixedMul(7*F.RACUNIT, f.inecosine[angle]);
+	self->vel.y = F.ixedMul(7*F.RACUNIT, f.inesine[angle]);
 #else
 	double velscale = 7 / self->Vel.XY().Length();
 	self->Vel.X *= velscale;
@@ -721,7 +720,7 @@ void ABlasterFX1::Effect ()
 {
 	if (pr_bfx1t() < 64)
 	{
-		Spawn("BlasterSmoke", _f_X(), _f_Y(), MAX<fixed_t> (_f_Z() - 8 * FRACUNIT, floorz), ALLOW_REPLACE);
+		Spawn("BlasterSmoke", PosAtZ(MAX(Z() - 8., FIXED2DBL(floorz))), ALLOW_REPLACE);
 	}
 }
 
@@ -1319,10 +1318,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePhoenixPL2)
 	}
 
 	slope = -self->Angles.Pitch.TanClamped();
-	fixed_t xo = (pr_fp2.Random2() << 9);
-	fixed_t yo = (pr_fp2.Random2() << 9);
-	fixedvec3 pos = self->Vec3Offset(xo, yo,
-		26*FRACUNIT + FLOAT2FIXED(slope) - self->floorclip);
+	double xo = pr_fp2.Random2() / 128.;
+	double yo = pr_fp2.Random2() / 128.;
+	DVector3 pos = self->Vec3Offset(xo, yo, 26 + slope - FIXED2FLOAT(self->floorclip));
 
 	slope += 0.1;
 	mo = Spawn("PhoenixFX2", pos, ALLOW_REPLACE);

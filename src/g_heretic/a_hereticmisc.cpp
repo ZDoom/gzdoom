@@ -59,7 +59,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PodPain)
 	}
 	for (count = chance > 240 ? 2 : 1; count; count--)
 	{
-		goo = Spawn(gootype, self->PosPlusZ(48*FRACUNIT), ALLOW_REPLACE);
+		goo = Spawn(gootype, self->PosPlusZ(48.), ALLOW_REPLACE);
 		goo->target = self;
 		goo->Vel.X = pr_podpain.Random2() / 128.;
 		goo->Vel.Y = pr_podpain.Random2() / 128.;
@@ -104,17 +104,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_MakePod)
 	PARAM_CLASS_OPT(podtype, AActor)	{ podtype = PClass::FindActor("Pod"); }
 
 	AActor *mo;
-	fixed_t x;
-	fixed_t y;
 
 	if (self->special1 == MAX_GEN_PODS)
 	{ // Too many generated pods
 		return 0;
 	}
-	x = self->_f_X();
-	y = self->_f_Y();
-	mo = Spawn(podtype, x, y, ONFLOORZ, ALLOW_REPLACE);
-	if (!P_CheckPosition (mo, x, y))
+	mo = Spawn(podtype, self->PosAtZ(ONFLOORZ), ALLOW_REPLACE);
+	if (!P_CheckPosition (mo, mo->Pos()))
 	{ // Didn't fit
 		mo->Destroy ();
 		return 0;

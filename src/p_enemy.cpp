@@ -3301,7 +3301,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Detonate)
 	PARAM_ACTION_PROLOGUE;
 	int damage = self->GetMissileDamage(0, 1);
 	P_RadiusAttack (self, self->target, damage, damage, self->DamageType, RADF_HURTSOURCE);
-	P_CheckSplash(self, damage<<FRACBITS);
+	P_CheckSplash(self, damage);
 	return 0;
 }
 

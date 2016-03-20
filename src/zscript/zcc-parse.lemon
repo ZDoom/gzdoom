@@ -129,7 +129,7 @@ main ::= translation_unit(A). { stat->TopNode = A; stat->sc.ScriptMessage("Parse
 %type translation_unit {ZCC_TreeNode *}
 translation_unit(X) ::= .												{ X = NULL; }
 translation_unit(X) ::= translation_unit(A) external_declaration(B).	{ SAFE_APPEND(A,B); X = A; }
-translation_unit(X) ::= translation_unit(A) EOF.						{ X = A; }
+translation_unit(X) ::= translation_unit(X) EOF.
 translation_unit(X) ::= error.											{ X = NULL; }
 
 %type external_declaration {ZCC_TreeNode *}
@@ -150,10 +150,7 @@ opt_expr(X) ::= .
 {
 	X = NULL;
 }
-opt_expr(X) ::= expr(A).
-{
-	X = A;
-}
+opt_expr(X) ::= expr(X).
 
 
 /************ Class Definition ************/
@@ -254,10 +251,10 @@ struct_def(X) ::= STRUCT(T) IDENTIFIER(A) LBRACE opt_struct_body(B) RBRACE opt_s
 }
 
 opt_struct_body(X) ::= .								{ X = NULL; }
-opt_struct_body(X) ::= struct_body(A).					{ X = A; }
+opt_struct_body(X) ::= struct_body(X).
 
 struct_body(X) ::= error.								{ X = NULL; }
-struct_body(X) ::= struct_member(A).					{ X = A; }
+struct_body(X) ::= struct_member(X).
 struct_body(X) ::= struct_member(A) struct_body(B).		{ X = A; A->AppendSibling(B); }
 
 struct_member(X) ::= declarator_no_fun(A).				{ X = A; }
@@ -346,11 +343,11 @@ enum_type(X) ::= .										{ X.Int = ZCC_IntAuto; X.SourceLoc = stat->sc.GetMes
 enum_type(X) ::= COLON int_type(A).						{ X = A; }
 
 enum_list(X) ::= error.									{ X = NULL; }
-enum_list(X) ::= enumerator(A).							{ X = A; }
+enum_list(X) ::= enumerator(X).
 enum_list(X) ::= enum_list(A) COMMA enumerator(B).		{ X = A; A->AppendSibling(B); }
 
 opt_enum_list(X) ::= .									{ X = NULL; }
-opt_enum_list(X) ::= enum_list(A) opt_comma.			{ X = A; }
+opt_enum_list(X) ::= enum_list(X) opt_comma.
 
 enumerator(X) ::= IDENTIFIER(A).
 {
@@ -416,7 +413,7 @@ state_label(X) ::= NWS(A) COLON.
 	X = label;
 }
 
-state_flow(X) ::= state_flow_type(A) scanner_mode SEMICOLON.	{ X = A; }
+state_flow(X) ::= state_flow_type(X) scanner_mode SEMICOLON.
 
 state_flow_type(X) ::= STOP(A).			{ NEW_AST_NODE(StateStop, flow, A); X = flow; }
 state_flow_type(X) ::= WAIT(A).			{ NEW_AST_NODE(StateWait, flow, A); X = flow; }
@@ -505,7 +502,7 @@ int_type(X) ::= INT(T).						{ X.Int = ZCC_SInt32; X.SourceLoc = T.SourceLoc; }
 int_type(X) ::= UINT(T).					{ X.Int = ZCC_UInt32; X.SourceLoc = T.SourceLoc; }
 
 type_name1(X) ::= BOOL(T).					{ X.Int = ZCC_Bool; X.SourceLoc = T.SourceLoc; }
-type_name1(X) ::= int_type(A).				{ X = A; }
+type_name1(X) ::= int_type(X).
 type_name1(X) ::= FLOAT(T).					{ X.Int = ZCC_FloatAuto; X.SourceLoc = T.SourceLoc; }
 type_name1(X) ::= DOUBLE(T).				{ X.Int = ZCC_Float64; X.SourceLoc = T.SourceLoc; }
 type_name1(X) ::= STRING(T).				{ X.Int = ZCC_String; X.SourceLoc = T.SourceLoc; }
@@ -554,8 +551,8 @@ vector_size(X) ::= LT intconst(A) GT.
 	}
 	X.SourceLoc = A.SourceLoc;
 }
-intconst(X) ::= INTCONST(A).				{ X = A; }
-intconst(X) ::= UINTCONST(A).				{ X = A; }
+intconst(X) ::= INTCONST(X).
+intconst(X) ::= UINTCONST(X).
 
 /* Type names can also be used as identifiers in contexts where type names
  * are not normally allowed. */
@@ -599,14 +596,14 @@ class_restrictor(X) ::= LT dottable_id(A) GT.	{ X = A; }
 type(X) ::= type_name(A).					{ X = A; A->ArraySize = NULL; }
 type(X) ::= aggregate_type(A).				{ X = A; A->ArraySize = NULL; }
 
-type_or_array(X) ::= type(A).				{ X = A; }
+type_or_array(X) ::= type(X).
 type_or_array(X) ::= type(A) array_size(B).	{ X = A; A->ArraySize = B; }
 
-type_list(X) ::= type_or_array(A).			{ X = A; }/* A comma-separated list of types */
+type_list(X) ::= type_or_array(X).			/* A comma-separated list of types */
 type_list(X) ::= type_list(A) COMMA type_or_array(B). { X = A; A->AppendSibling(B); }
 
 type_list_or_void(X) ::= VOID.				{ X = NULL; }
-type_list_or_void(X) ::= type_list(A).		{ X = A; }
+type_list_or_void(X) ::= type_list(X).
 
 array_size_expr(X) ::= LBRACKET opt_expr(A) RBRACKET.
 {
@@ -622,10 +619,7 @@ array_size_expr(X) ::= LBRACKET opt_expr(A) RBRACKET.
 		X = A;
 	}
 }
-array_size(X) ::= array_size_expr(A).
-{
-	X = A;
-}
+array_size(X) ::= array_size_expr(X).
 array_size(X) ::= array_size(A) array_size_expr(B).
 {
 	A->AppendSibling(B);
@@ -738,10 +732,7 @@ variable_name(X) ::= IDENTIFIER(A) array_size(B).
 	X = var;
 }
 
-variable_list(X) ::= variable_name(A).
-{
-	X = A;
-}
+variable_list(X) ::= variable_name(X).
 variable_list(X) ::= variable_list(A) COMMA variable_name(B).
 {
 	A->AppendSibling(B);
@@ -764,7 +755,7 @@ func_const(X) ::= .							{ X.Int = 0; X.SourceLoc = stat->sc.GetMessageLine(); 
 func_const(X) ::= CONST(T).					{ X.Int = ZCC_FuncConst; X.SourceLoc = T.SourceLoc; }
 
 opt_func_body(X) ::= SEMICOLON.				{ X = NULL; }
-opt_func_body(X) ::= function_body(A).		{ X = A; }
+opt_func_body(X) ::= function_body(X).
 
 %type func_params {ZCC_FuncParamDecl *}
 %type func_param_list {ZCC_FuncParamDecl *}
@@ -772,9 +763,9 @@ opt_func_body(X) ::= function_body(A).		{ X = A; }
 
 func_params(X) ::= .	/* empty */			{ X = NULL; }
 func_params(X) ::= VOID.					{ X = NULL; }
-func_params(X) ::= func_param_list(A).		{ X = A; }
+func_params(X) ::= func_param_list(X).
 
-func_param_list(X) ::= func_param(A).		{ X = A; }
+func_param_list(X) ::= func_param(X).
 func_param_list(X) ::= func_param_list(A) COMMA func_param(B).	{ X = A; A->AppendSibling(B); }
 
 func_param(X) ::= func_param_flags(A) type(B) IDENTIFIER(C).
@@ -819,10 +810,7 @@ primary(X) ::= SUPER(T).
 	expr->Type = NULL;
 	X = expr;
 }
-primary(X) ::= constant(A).
-{
-	X = A;
-}
+primary(X) ::= constant(A).				{ X = A; }
 primary(X) ::= SELF(T).
 {
 	NEW_AST_NODE(Expression, expr, T);
@@ -881,10 +869,7 @@ primary(X) ::= SCOPE primary(B).
 */
 /*----- Unary Expressions -----*/
 
-unary_expr(X) ::= primary(A).
-{
-	X = A;
-}
+unary_expr(X) ::= primary(X).
 unary_expr(X) ::= SUB unary_expr(A). [UNARY]
 {
 	ZCC_ExprConstant *con = static_cast<ZCC_ExprConstant *>(A);
@@ -959,10 +944,7 @@ unary_expr(X) ::= ALIGNOF unary_expr(A). [UNARY]
 
 /*----- Binary Expressions -----*/
 
-expr(X) ::= unary_expr(A).
-{
-	X = A;
-}
+expr(X) ::= unary_expr(X).
 expr(X) ::= expr(A) ADD expr(B).		/* a + b */
 {
 	BINARY_EXPR(A,B,PEX_Add);
@@ -1118,10 +1100,7 @@ expr(X) ::= expr(A) QUESTION expr(B) COLON expr(C).
 
 %type expr_list{ZCC_Expression *}
 
-expr_list(X) ::= expr(A).
-{
-	X = A;
-}
+expr_list(X) ::= expr(X).
 expr_list(X) ::= expr_list(A) COMMA expr(B).
 {
 	X = A;
@@ -1137,10 +1116,7 @@ expr_list(X) ::= expr_list(A) COMMA expr(B).
 %type func_expr_item{ZCC_FuncParm *}
 %type named_expr{ZCC_FuncParm *}
 
-func_expr_list(X) ::= func_expr_item(A).
-{
-	X = A;
-}
+func_expr_list(X) ::= func_expr_item(X).
 func_expr_list(X) ::= func_expr_list(A) COMMA(T) func_expr_item(B).
 {
 	// Omitted parameters still need to appear as nodes in the list.
@@ -1166,10 +1142,7 @@ func_expr_item(X) ::= .
 {
 	X = NULL;
 }
-func_expr_item(X) ::= named_expr(A).
-{
-	X = A;
-}
+func_expr_item(X) ::= named_expr(X).
 
 named_expr(X) ::= IDENTIFIER(A) COLON expr(B).
 {
@@ -1208,10 +1181,7 @@ string_constant(X) ::= string_constant(A) STRCONST(B).
 	X = strconst;
 }
 
-constant(X) ::= string_constant(A).
-{
-	X = A;
-}
+constant(X) ::= string_constant(X).
 constant(X) ::= INTCONST(A).
 {
 	NEW_INTCONST_NODE(intconst, TypeSInt32, A.Int, A);
@@ -1251,16 +1221,16 @@ constant(X) ::= TRUE(A).
 
 /************ Statements ************/
 
-function_body(X) ::= compound_statement(A).			{ X = A; }
+function_body(X) ::= compound_statement(X).
 
 %type statement{ZCC_Statement *}
 statement(X) ::= SEMICOLON.							{ X = NULL; }
 statement(X) ::= labeled_statement(A).				{ X = A; }
 statement(X) ::= compound_statement(A).				{ X = A; }
 statement(X) ::= expression_statement(A) SEMICOLON.	{ X = A; }
-statement(X) ::= selection_statement(A).			{ X = A; }
-statement(X) ::= iteration_statement(A).			{ X = A; }
-statement(X) ::= jump_statement(A).					{ X = A; }
+statement(X) ::= selection_statement(X).
+statement(X) ::= iteration_statement(X).
+statement(X) ::= jump_statement(X).
 statement(X) ::= assign_statement(A) SEMICOLON.		{ X = A; }
 statement(X) ::= local_var(A) SEMICOLON.			{ X = A; }
 statement(X) ::= error SEMICOLON.					{ X = NULL; }

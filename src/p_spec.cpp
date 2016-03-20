@@ -559,7 +559,7 @@ void P_SectorDamage(int tag, int amount, FName type, PClassActor *protectClass, 
 					z1 = z2;
 					z2 = zz;
 				}
-				if (actor->_f_Z() + actor->height > z1)
+				if (actor->_f_Z() + actor->_f_height() > z1)
 				{
 					// If DAMAGE_IN_AIR is used, anything not beneath the 3D floor will be
 					// damaged (so, anything touching it or above it). Other 3D floors between

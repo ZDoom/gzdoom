@@ -135,9 +135,9 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, DAngle angle, i
 			if (thing->flags & MF_NOGRAVITY && aboveFloor)
 			{
 				z = floorheight + aboveFloor;
-				if (z + thing->height > ceilingheight)
+				if (z + thing->_f_height() > ceilingheight)
 				{
-					z = ceilingheight - thing->height;
+					z = ceilingheight - thing->_f_height();
 				}
 			}
 			else
@@ -152,9 +152,9 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, DAngle angle, i
 		else if (thing->flags & MF_MISSILE)
 		{
 			z = floorheight + aboveFloor;
-			if (z + thing->height > ceilingheight)
+			if (z + thing->_f_height() > ceilingheight)
 			{
-				z = ceilingheight - thing->height;
+				z = ceilingheight - thing->_f_height();
 			}
 		}
 		else

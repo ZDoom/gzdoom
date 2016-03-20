@@ -156,7 +156,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CorpseBloodDrip)
 
 	if (pr_drip() <= 128)
 	{
-		Spawn ("CorpseBloodDrip", self->PosPlusZ(self->height/2), ALLOW_REPLACE);
+		Spawn ("CorpseBloodDrip", self->PosPlusZ(self->_f_height()/2), ALLOW_REPLACE);
 	}
 	return 0;
 }
@@ -310,7 +310,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SoAExplode)
 	{
 		fixed_t xo = ((pr_soaexplode() - 128) << 12);
 		fixed_t yo = ((pr_soaexplode() - 128) << 12);
-		fixed_t zo = (pr_soaexplode()*self->height / 256);
+		fixed_t zo = (pr_soaexplode()*self->_f_height() / 256);
 		mo = Spawn ("ZArmorChunk", self->Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
 		if (mo)
 		{
@@ -365,7 +365,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BellReset1)
 	PARAM_ACTION_PROLOGUE;
 
 	self->flags |= MF_NOGRAVITY;
-	self->height <<= 2;
+	self->Height *= 4;
 	if (self->special)
 	{ // Initiate death action
 		P_ExecuteSpecial(self->special, NULL, NULL, false, self->args[0],

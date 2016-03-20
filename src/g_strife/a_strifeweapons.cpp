@@ -554,7 +554,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MaulerTorpedoWave)
 	savedz = self->_f_Z();
 	if (wavedef && self->ceilingz < wavedef->Top())
 	{
-		self->SetZ(self->ceilingz - wavedef->_Height());
+		self->SetZ(self->ceilingz - wavedef->Height);
 	}
 
 	for (int i = 0; i < 80; ++i)

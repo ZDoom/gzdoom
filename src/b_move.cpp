@@ -270,7 +270,7 @@ bool FCajunMaster::CleanAhead (AActor *thing, fixed_t x, fixed_t y, ticcmd_t *cm
     if (!(thing->flags & MF_NOCLIP) )
     {
 		fixed_t maxstep = thing->MaxStepHeight;
-        if (tm.ceilingz - tm.floorz < thing->_Height())
+        if (tm.ceilingz - tm.floorz < thing->Height)
             return false;       // doesn't fit
 
 		if (!(thing->flags&MF_MISSILE))

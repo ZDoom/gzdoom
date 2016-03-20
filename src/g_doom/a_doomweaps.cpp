@@ -664,7 +664,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BFGSpray)
 
 		if (t.linetarget != NULL)
 		{
-			AActor *spray = Spawn(spraytype, t.linetarget->PosPlusZ(t.linetarget->height >> 2), ALLOW_REPLACE);
+			AActor *spray = Spawn(spraytype, t.linetarget->PosPlusZ(t.linetarget->Height / 4), ALLOW_REPLACE);
 
 			int dmgFlags = 0;
 			FName dmgType = NAME_BFGSplash;

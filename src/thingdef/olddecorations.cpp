@@ -63,7 +63,7 @@ struct FExtraInfo
 	bool bSolidOnDeath, bSolidOnBurn;
 	bool bBurnAway, bDiesAway, bGenericIceDeath;
 	bool bExplosive;
-	fixed_t DeathHeight, BurnHeight;
+	double DeathHeight, BurnHeight;
 };
 
 class AFakeInventory : public AInventory
@@ -256,7 +256,7 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 
 				if (extra.DeathHeight == 0)
 				{
-					extra.DeathHeight = ((AActor*)(type->Defaults))->height;
+					extra.DeathHeight = ((AActor*)(type->Defaults))->Height;
 				}
 				type->DeathHeight = extra.DeathHeight;
 			}
@@ -296,7 +296,7 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def)
 				type->OwnedStates[extra.FireDeathStart].SetAction("A_ActiveAndUnblock");
 			}
 
-			if (extra.BurnHeight == 0) extra.BurnHeight = ((AActor*)(type->Defaults))->height;
+			if (extra.BurnHeight == 0) extra.BurnHeight = ((AActor*)(type->Defaults))->Height;
 			type->BurnHeight = extra.BurnHeight;
 
 			bag.statedef.SetStateLabel("Burn", &type->OwnedStates[extra.FireDeathStart]);
@@ -460,17 +460,17 @@ static void ParseInsideDecoration (Baggage &bag, AActor *defaults,
 		else if (sc.Compare ("Height"))
 		{
 			sc.MustGetFloat ();
-			defaults->height = int(sc.Float * FRACUNIT);
+			defaults->Height = sc.Float;
 		}
 		else if (def == DEF_BreakableDecoration && sc.Compare ("DeathHeight"))
 		{
 			sc.MustGetFloat ();
-			extra.DeathHeight = int(sc.Float * FRACUNIT);
+			extra.DeathHeight = sc.Float;
 		}
 		else if (def == DEF_BreakableDecoration && sc.Compare ("BurnHeight"))
 		{
 			sc.MustGetFloat ();
-			extra.BurnHeight = int(sc.Float * FRACUNIT);
+			extra.BurnHeight = sc.Float;
 		}
 		else if (def == DEF_BreakableDecoration && sc.Compare ("Health"))
 		{

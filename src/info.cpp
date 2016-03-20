@@ -231,7 +231,7 @@ PClassActor::PClassActor()
 	PoisonDamage = 0;
 	FastSpeed = -1.;
 	RDFactor = FRACUNIT;
-	CameraHeight = FIXED_MIN;
+	CameraHeight = INT_MIN;
 
 	DropItems = NULL;
 

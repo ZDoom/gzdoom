@@ -260,7 +260,7 @@ void AActor::Serialize(FArchive &arc)
 		<< floorsector
 		<< ceilingsector
 		<< radius
-		<< height
+		<< Height
 		<< projectilepassheight
 		<< Vel
 		<< tics
@@ -1198,7 +1198,7 @@ bool AActor::Grind(bool items)
 		{
 			flags &= ~MF_SOLID;
 			flags3 |= MF3_DONTGIB;
-			height = 0;
+			Height = 0;
 			radius = 0;
 			return false;
 		}
@@ -1225,7 +1225,7 @@ bool AActor::Grind(bool items)
 			}
 			flags &= ~MF_SOLID;
 			flags3 |= MF3_DONTGIB;
-			height = 0;
+			Height = 0;
 			radius = 0;
 			SetState (state);
 			if (isgeneric)	// Not a custom crush state, so colorize it appropriately.
@@ -1261,7 +1261,7 @@ bool AActor::Grind(bool items)
 				// if there's no gib sprite don't crunch it.
 				flags &= ~MF_SOLID;
 				flags3 |= MF3_DONTGIB;
-				height = 0;
+				Height = 0;
 				radius = 0;
 				return false;
 			}
@@ -1271,7 +1271,7 @@ bool AActor::Grind(bool items)
 			{
 				gib->RenderStyle = RenderStyle;
 				gib->alpha = alpha;
-				gib->height = 0;
+				gib->Height = 0;
 				gib->radius = 0;
 
 				PalEntry bloodcolor = GetBloodColor();
@@ -1742,12 +1742,12 @@ bool P_SeekerMissile (AActor *actor, angle_t _thresh, angle_t _turnMax, bool pre
 		{ // Need to seek vertically
 			fixed_t dist = MAX(1, FLOAT2FIXED(actor->Distance2D(target)));
 			// Aim at a player's eyes and at the middle of the actor for everything else.
-			fixed_t aimheight = target->height/2;
+			fixed_t aimheight = target->_f_height()/2;
 			if (target->IsKindOf(RUNTIME_CLASS(APlayerPawn)))
 			{
 				aimheight = static_cast<APlayerPawn *>(target)->ViewHeight;
 			}
-			pitch = ANGLE2DBL(R_PointToAngle2(0, actor->_f_Z() + actor->height/2, dist, target->_f_Z() + aimheight));
+			pitch = ANGLE2DBL(R_PointToAngle2(0, actor->_f_Z() + actor->_f_height()/2, dist, target->_f_Z() + aimheight));
 		}
 		actor->Vel3DFromAngle(pitch, speed);
 	}
@@ -2079,7 +2079,7 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 
 								//dest->x - source->x
 								DVector3 vect = mo->Vec3To(origin);
-								vect.Z += origin->_Height() / 2;
+								vect.Z += origin->Height / 2;
 								mo->Vel = vect.Resized(mo->Speed);
 							}
 							else
@@ -2439,7 +2439,7 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 		if (!(mo->flags & (MF_SKULLFLY | MF_INFLOAT)))
 		{
 			dist = mo->AproxDistance (mo->target);
-			delta = (mo->target->_f_Z() + (mo->height>>1)) - mo->_f_Z();
+			delta = (mo->target->_f_Z() + (mo->_f_height()>>1)) - mo->_f_Z();
 			if (delta < 0 && dist < -(delta*3))
 				mo->_f_AddZ(-mo->_f_floatspeed());
 			else if (delta > 0 && dist < (delta*3))
@@ -2465,7 +2465,7 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 			if (!(rover->flags & FF_SWIMMABLE)) continue;
 
 			if (mo->_f_Z() >= rover->top.plane->ZatPoint(mo) ||
-				mo->_f_Z() + mo->height/2 < rover->bottom.plane->ZatPoint(mo))
+				mo->_f_Z() + mo->_f_height()/2 < rover->bottom.plane->ZatPoint(mo))
 				continue;
 
 			friction = rover->model->GetFriction(rover->top.isceiling);
@@ -2593,7 +2593,7 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 		// teleported the actor so it is no longer above the ceiling.
 		if (mo->Top() > mo->ceilingz)
 		{
-			mo->SetZ(mo->ceilingz - mo->_Height());
+			mo->SetZ(mo->ceilingz - mo->Height);
 			if (mo->BounceFlags & BOUNCE_Ceilings)
 			{	// ceiling bounce
 				mo->FloorBounceMissile (mo->ceilingsector->ceilingplane);
@@ -2649,7 +2649,7 @@ void P_CheckFakeFloorTriggers (AActor *mo, fixed_t oldz, bool oldz_has_viewheigh
 		}
 		else
 		{
-			viewheight = mo->height / 2;
+			viewheight = mo->_f_height() / 2;
 		}
 
 		if (oldz > waterz && mo->_f_Z() <= waterz)
@@ -2769,7 +2769,7 @@ void P_NightmareRespawn (AActor *mobj)
 		}
 		if (mo->Top() > mo->ceilingz)
 		{
-			mo->SetZ(mo->ceilingz- mo->_Height());
+			mo->SetZ(mo->ceilingz- mo->Height);
 		}
 	}
 	else if (z == ONCEILINGZ)
@@ -2791,7 +2791,7 @@ void P_NightmareRespawn (AActor *mobj)
 		}
 		if (mo->Top() > mo->ceilingz)
 		{ // Do the same for the ceiling.
-			mo->SetZ(mo->ceilingz - mo->_Height());
+			mo->SetZ(mo->ceilingz - mo->Height);
 		}
 	}
 
@@ -3458,10 +3458,11 @@ void AActor::Tick ()
 			if (++smokecounter == 8)
 			{
 				smokecounter = 0;
-				angle_t moveangle = R_PointToAngle2(0,0,_f_velx(),_f_vely());
-				fixed_t xo = -FixedMul(finecosine[(moveangle) >> ANGLETOFINESHIFT], _f_radius() * 2) + (pr_rockettrail() << 10);
-				fixed_t yo = -FixedMul(finesine[(moveangle) >> ANGLETOFINESHIFT], _f_radius() * 2) + (pr_rockettrail() << 10);
-				AActor * th = Spawn("GrenadeSmokeTrail", Vec3Offset(xo, yo, - (height>>3) * (_f_velz()>>16) + (2*height)/3), ALLOW_REPLACE);
+				DAngle moveangle = Vel.Angle();
+				double xo = -moveangle.Cos() * radius * 2 + pr_rockettrail() / 64.;
+				double yo = -moveangle.Sin() * radius * 2 + pr_rockettrail() / 64.;
+				double zo = -Height * Vel.Z / 8. + Height * (2 / 3.);
+				AActor * th = Spawn("GrenadeSmokeTrail", Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
 				if (th)
 				{
 					th->tics -= pr_rockettrail()&3;
@@ -3991,7 +3992,7 @@ void AActor::CheckSectorTransition(sector_t *oldsec)
 			{
 				act |= SECSPAC_HitFloor;
 			}
-			if (_f_Z() + height >= Sector->ceilingplane.ZatPoint(this))
+			if (_f_Z() + _f_height() >= Sector->ceilingplane.ZatPoint(this))
 			{
 				act |= SECSPAC_HitCeiling;
 			}
@@ -4048,11 +4049,11 @@ bool AActor::UpdateWaterLevel (fixed_t oldz, bool dosplash)
 				if (_f_Z() < fh)
 				{
 					waterlevel = 1;
-					if (_f_Z() + height/2 < fh)
+					if (_f_Z() + _f_height()/2 < fh)
 					{
 						waterlevel = 2;
 						if ((player && _f_Z() + player->viewheight <= fh) ||
-							(_f_Z() + height <= fh))
+							(_f_Z() + _f_height() <= fh))
 						{
 							waterlevel = 3;
 						}
@@ -4087,17 +4088,17 @@ bool AActor::UpdateWaterLevel (fixed_t oldz, bool dosplash)
 				fixed_t ff_bottom=rover->bottom.plane->ZatPoint(this);
 				fixed_t ff_top=rover->top.plane->ZatPoint(this);
 
-				if(ff_top <= _f_Z() || ff_bottom > (_f_Z() + (height >> 1))) continue;
+				if(ff_top <= _f_Z() || ff_bottom > (_f_Z() + (_f_height() >> 1))) continue;
 				
 				fh=ff_top;
 				if (_f_Z() < fh)
 				{
 					waterlevel = 1;
-					if (_f_Z() + height/2 < fh)
+					if (_f_Z() + _f_height()/2 < fh)
 					{
 						waterlevel = 2;
 						if ((player && _f_Z() + player->viewheight <= fh) ||
-							(_f_Z() + height <= fh))
+							(_f_Z() + _f_height() <= fh))
 						{
 							waterlevel = 3;
 						}
@@ -4207,7 +4208,7 @@ AActor *AActor::StaticSpawn (PClassActor *type, fixed_t ix, fixed_t iy, fixed_t 
 	}
 	else if (iz == ONCEILINGZ)
 	{
-		actor->SetZ(actor->ceilingz - actor->_Height());
+		actor->SetZ(actor->ceilingz - actor->Height);
 	}
 
 	if (SpawningMapThing || !type->IsDescendantOf (RUNTIME_CLASS(APlayerPawn)))
@@ -4250,11 +4251,11 @@ AActor *AActor::StaticSpawn (PClassActor *type, fixed_t ix, fixed_t iy, fixed_t 
 	}
 	else if (iz == ONCEILINGZ)
 	{
-		actor->SetZ(actor->ceilingz - actor->_Height());
+		actor->SetZ(actor->ceilingz - actor->Height);
 	}
 	else if (iz == FLOATRANDZ)
 	{
-		double space = actor->ceilingz - actor->_Height() - actor->floorz;
+		double space = actor->ceilingz - actor->Height - actor->floorz;
 		if (space > 48)
 		{
 			space -= 40;
@@ -4788,7 +4789,7 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 	// drop down below it, even if that means sinking into the floor.
 	if (mobj->Top() > mobj->ceilingz)
 	{
-		mobj->SetZ(mobj->ceilingz - mobj->_Height(), false);
+		mobj->SetZ(mobj->ceilingz - mobj->Height, false);
 	}
 
 	// [BC] Do script stuff
@@ -5556,7 +5557,7 @@ bool P_HitWater (AActor * thing, sector_t * sec, fixed_t x, fixed_t y, fixed_t z
 	// don't splash above the object
 	if (checkabove)
 	{
-		fixed_t compare_z = thing->_f_Z() + (thing->height >> 1);
+		fixed_t compare_z = thing->_f_Z() + (thing->_f_height() >> 1);
 		// Missiles are typically small and fast, so they might
 		// end up submerged by the move that calls P_HitWater.
 		if (thing->flags & MF_MISSILE)
@@ -5953,9 +5954,9 @@ AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
 		velocity.Z = 0;
 	}
 	// [RH] Adjust the trajectory if the missile will go over the target's head.
-	else if (FIXED2FLOAT(z) - source->Z() >= dest->_Height())
+	else if (FIXED2FLOAT(z) - source->Z() >= dest->Height)
 	{
-		velocity.Z += (dest->_Height() - FIXED2FLOAT(z) + source->Z());
+		velocity.Z += (dest->Height - FIXED2FLOAT(z) + source->Z());
 	}
 	th->Vel = velocity.Resized(speed);
 
@@ -6195,7 +6196,7 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 	if (z != ONFLOORZ && z != ONCEILINGZ)
 	{
 		// Doom spawns missiles 4 units lower than hitscan attacks for players.
-		z += source->_f_Z() + (source->height>>1) - source->floorclip;
+		z += source->_f_Z() + (source->_f_height()>>1) - source->floorclip;
 		if (source->player != NULL)	// Considering this is for player missiles, it better not be NULL.
 		{
 			z += fixed_t ((source->player->mo->AttackZOffset - 4*FRACUNIT) * source->player->crouchfactor);
@@ -6545,9 +6546,9 @@ int AActor::GetGibHealth() const
 	}
 }
 
-fixed_t AActor::GetCameraHeight() const
+double AActor::GetCameraHeight() const
 {
-	return GetClass()->CameraHeight == FIXED_MIN ? height / 2 : GetClass()->CameraHeight;
+	return GetClass()->CameraHeight == INT_MIN ? Height / 2 : GetClass()->CameraHeight;
 }
 
 DDropItem *AActor::GetDropItems() const

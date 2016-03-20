@@ -43,7 +43,7 @@ void BlastActor (AActor *victim, fixed_t strength, double speed, AActor *Owner, 
 	pos = victim->Vec3Offset(
 		fixed_t((victim->_f_radius() + FRACUNIT) * angle.Cos()),
 		fixed_t((victim->_f_radius() + FRACUNIT) * angle.Sin()),
-		-victim->floorclip + (victim->height>>1));
+		-victim->floorclip + (victim->_f_height()>>1));
 	mo = Spawn (blasteffect, pos, ALLOW_REPLACE);
 	if (mo)
 	{

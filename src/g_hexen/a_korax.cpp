@@ -388,10 +388,10 @@ static void A_KSpiritSeeker (AActor *actor, DAngle thresh, DAngle turnMax)
 	actor->VelFromAngle();
 
 	if (!(level.time&15) 
-		|| actor->_f_Z() > target->_f_Z()+(target->GetDefault()->height)
+		|| actor->_f_Z() > target->_f_Z()+(target->GetDefault()->_f_height())
 		|| actor->_f_Top() < target->_f_Z())
 	{
-		newZ = target->_f_Z()+((pr_kspiritseek()*target->GetDefault()->height)>>8);
+		newZ = target->_f_Z()+((pr_kspiritseek()*target->GetDefault()->_f_height())>>8);
 		deltaZ = newZ-actor->_f_Z();
 		if (abs(deltaZ) > 15*FRACUNIT)
 		{

@@ -95,7 +95,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ThrustInitDn)
 
 	self->special2 = 5;	// Raise speed
 	self->args[0] = 0;		// Mark as down
-	self->floorclip = self->GetDefault()->height;
+	self->floorclip = self->GetDefault()->_f_height();
 	self->flags = 0;
 	self->flags2 = MF2_NOTELEPORT|MF2_FLOORCLIP;
 	self->renderflags = RF_INVISIBLE;
@@ -121,7 +121,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ThrustRaise)
 	}
 
 	// Lose the dirt clump
-	if ((actor->floorclip < actor->height) && actor->DirtClump)
+	if ((actor->floorclip < actor->_f_height()) && actor->DirtClump)
 	{
 		actor->DirtClump->Destroy ();
 		actor->DirtClump = NULL;

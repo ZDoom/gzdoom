@@ -410,7 +410,7 @@ static void MakeFountain (AActor *actor, int color1, int color2)
 		angle_t an = M_Random()<<(24-ANGLETOFINESHIFT);
 		fixed_t out = FixedMul (actor->_f_radius(), M_Random()<<8);
 
-		fixedvec3 pos = actor->Vec3Offset(FixedMul(out, finecosine[an]), FixedMul(out, finesine[an]), actor->height + FRACUNIT);
+		fixedvec3 pos = actor->Vec3Offset(FixedMul(out, finecosine[an]), FixedMul(out, finesine[an]), actor->_f_height() + FRACUNIT);
 		particle->x = pos.x;
 		particle->y = pos.y;
 		particle->z = pos.z;
@@ -439,9 +439,9 @@ void P_RunEffect (AActor *actor, int effects)
 	if ((effects & FX_ROCKET) && (cl_rockettrails & 1))
 	{
 		// Rocket trail
-		double backx = -actor->_Radius() * 2 * moveangle.Cos();
-		double backy = -actor->_Radius() * 2 * moveangle.Sin();
-		double backz = actor->_Height() * ((2. / 3) - actor->Vel.Z / 8);
+		double backx = -actor->radius * 2 * moveangle.Cos();
+		double backy = -actor->radius * 2 * moveangle.Sin();
+		double backz = actor->Height * ((2. / 3) - actor->Vel.Z / 8);
 
 		DAngle an = moveangle + 90.;
 		int speed;
@@ -494,7 +494,7 @@ void P_RunEffect (AActor *actor, int effects)
 		// Grenade trail
 
 		fixedvec3 pos = actor->_f_Vec3Angle(-actor->_f_radius() * 2, moveangle.BAMs(),
-			fixed_t(-(actor->height >> 3) * (actor->Vel.Z) + (2 * actor->height) / 3));
+			fixed_t(-(actor->_f_height() >> 3) * (actor->Vel.Z) + (2 * actor->_f_height()) / 3));
 
 		P_DrawSplash2 (6, pos.x, pos.y, pos.z,
 			moveangle.BAMs() + ANG180, 2, 2);
@@ -538,7 +538,7 @@ void P_RunEffect (AActor *actor, int effects)
 				particle->size = 1;
 				if (M_Random () < 128)
 				{ // make particle fall from top of actor
-					particle->z += actor->height;
+					particle->z += actor->_f_height();
 					particle->vel.z = -particle->vel.z;
 					particle->accz = -particle->accz;
 				}
@@ -889,7 +889,7 @@ void P_DisconnectEffect (AActor *actor)
 		
 		fixed_t xo = ((M_Random() - 128) << 9) * (actor->_f_radius() >> FRACBITS);
 		fixed_t yo = ((M_Random() - 128) << 9) * (actor->_f_radius() >> FRACBITS);
-		fixed_t zo = (M_Random() << 8) * (actor->height >> FRACBITS);
+		fixed_t zo = (M_Random() << 8) * (actor->_f_height() >> FRACBITS);
 		fixedvec3 pos = actor->Vec3Offset(xo, yo, zo);
 		p->x = pos.x;
 		p->y = pos.y;

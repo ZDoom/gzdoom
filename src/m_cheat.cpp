@@ -333,7 +333,7 @@ void cht_DoCheat (player_t *player, int cheat)
 				player->mo->flags6 = player->mo->GetDefault()->flags6;
 				player->mo->flags7 = player->mo->GetDefault()->flags7;
 				player->mo->renderflags &= ~RF_INVISIBLE;
-				player->mo->height = player->mo->GetDefault()->height;
+				player->mo->Height = player->mo->GetDefault()->Height;
 				player->mo->radius = player->mo->GetDefault()->radius;
 				player->mo->special1 = 0;	// required for the Hexen fighter's fist attack. 
 											// This gets set by AActor::Die as flag for the wimpy death and must be reset here.

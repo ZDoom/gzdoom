@@ -126,7 +126,7 @@ void AFastProjectile::Tick ()
 					return;
 				}
 
-				SetZ(ceilingz - _Height());
+				SetZ(ceilingz - Height);
 				P_ExplodeMissile (this, NULL, NULL);
 				return;
 			}

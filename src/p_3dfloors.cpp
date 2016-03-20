@@ -760,7 +760,7 @@ void P_LineOpening_XFloors (FLineOpening &open, AActor * thing, const line_t *li
 		fixed_t thingbot, thingtop;
 		
 		thingbot = thing->_f_Z();
-		thingtop = thingbot + (thing->height==0? 1:thing->height);
+		thingtop = thingbot + (thing->_f_height()==0? 1:thing->_f_height());
 
 		extsector_t::xfloor *xf[2] = {&linedef->frontsector->e->XFloor, &linedef->backsector->e->XFloor};
 

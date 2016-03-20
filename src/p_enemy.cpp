@@ -2642,7 +2642,7 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 							!= P_Find3DFloor(testsec, self->_f_Pos(), false, true, zdist2))
 						{
 							// Not on same floor
-							if (vilesec == corpsec || abs(zdist1 - self->_f_Z()) > self->height)
+							if (vilesec == corpsec || abs(zdist1 - self->_f_Z()) > self->_f_height())
 								continue;
 						}
 					}
@@ -2651,16 +2651,16 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 				corpsehit->Vel.X = corpsehit->Vel.Y = 0;
 				// [RH] Check against real height and _f_radius()
 
-				fixed_t oldheight = corpsehit->height;
+				double oldheight = corpsehit->Height;
 				double oldradius = corpsehit->radius;
 				ActorFlags oldflags = corpsehit->flags;
 
 				corpsehit->flags |= MF_SOLID;
-				corpsehit->height = corpsehit->GetDefault()->height;
+				corpsehit->Height = corpsehit->GetDefault()->Height;
 				bool check = P_CheckPosition(corpsehit, corpsehit->Pos());
 				corpsehit->flags = oldflags;
 				corpsehit->radius = oldradius;
-				corpsehit->height = oldheight;
+				corpsehit->Height = oldheight;
 				if (!check) continue;
 
 				// got one!
@@ -2702,10 +2702,10 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 				}
 				if (ib_compatflags & BCOMPATF_VILEGHOSTS)
 				{
-					corpsehit->height <<= 2;
+					corpsehit->Height *= 4;
 					// [GZ] This was a commented-out feature, so let's make use of it,
 					// but only for ghost monsters so that they are visibly different.
-					if (corpsehit->height == 0)
+					if (corpsehit->Height == 0)
 					{
 						// Make raised corpses look ghostly
 						if (corpsehit->alpha > TRANSLUC50)
@@ -2721,7 +2721,7 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 				}
 				else
 				{
-					corpsehit->height = info->height;	// [RH] Use real mobj height
+					corpsehit->Height = info->Height;	// [RH] Use real mobj height
 					corpsehit->radius = info->radius;	// [RH] Use real radius
 				}
 
@@ -2872,7 +2872,7 @@ void A_Face (AActor *self, AActor *other, angle_t _max_turn, angle_t _max_pitch,
 		// its body.		
 		if (target_z >= other->_f_Top())
 		{
-			target_z = other->_f_Z() + (other->height / 2);
+			target_z = other->_f_Z() + (other->_f_height() / 2);
 		}
 
 		//Note there is no +32*FRACUNIT on purpose. This is for customization sake. 
@@ -2880,9 +2880,9 @@ void A_Face (AActor *self, AActor *other, angle_t _max_turn, angle_t _max_pitch,
 		if (flags & FAF_BOTTOM)
 			target_z = other->_f_Z() + other->GetBobOffset(); 
 		if (flags & FAF_MIDDLE)
-			target_z = other->_f_Z() + (other->height / 2) + other->GetBobOffset();
+			target_z = other->_f_Z() + (other->_f_height() / 2) + other->GetBobOffset();
 		if (flags & FAF_TOP)
-			target_z = other->_f_Z() + (other->height) + other->GetBobOffset();
+			target_z = other->_f_Z() + (other->_f_height()) + other->GetBobOffset();
 
 		target_z += z_add;
 
@@ -3000,7 +3000,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
 		// We probably won't hit the target, but aim at it anyway so we don't look stupid.
 		fixedvec2 pos = self->_f_Vec2To(self->target);
 		DVector2 xydiff(pos.x, pos.y);
-		double zdiff = (self->target->_f_Z() + (self->target->height>>1)) - (self->_f_Z() + (self->height>>1) - self->floorclip);
+		double zdiff = (self->target->_f_Z() + (self->target->_f_height()>>1)) - (self->_f_Z() + (self->_f_height()>>1) - self->floorclip);
 		self->Angles.Pitch = -VecToAngle(xydiff.Length(), zdiff);
 	}
 
@@ -3178,7 +3178,7 @@ AInventory *P_DropItem (AActor *source, PClassActor *type, int dropamount, int c
 			}
 			else
 			{
-				spawnz += source->height / 2;
+				spawnz += source->_f_height() / 2;
 			}
 		}
 		mo = Spawn(type, source->_f_X(), source->_f_Y(), spawnz, ALLOW_REPLACE);
@@ -3483,7 +3483,7 @@ int P_Massacre ()
 
 bool A_SinkMobj (AActor *actor, fixed_t speed)
 {
-	if (actor->floorclip < actor->height)
+	if (actor->floorclip < actor->_f_height())
 	{
 		actor->floorclip += speed;
 		return false;

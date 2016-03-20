@@ -242,7 +242,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcSpinBalls)
 	self->args[4] = SORCBALL_INITIAL_SPEED;		// Initial orbit speed
 	self->special1 = ANGLE_1;
 
-	fixedvec3 pos = self->PosPlusZ(-self->floorclip + self->height);
+	fixedvec3 pos = self->PosPlusZ(-self->floorclip + self->_f_height());
 	
 	mo = Spawn("SorcBall1", pos, NO_REPLACE);
 	if (mo)
@@ -378,7 +378,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcBallOrbit)
 	fixedvec3 pos = parent->Vec3Offset(
 		FixedMul(dist, finecosine[angle]),
 		FixedMul(dist, finesine[angle]),
-		-parent->floorclip + parent->height);
+		-parent->floorclip + parent->_f_height());
 	actor->SetOrigin (pos, true);
 	actor->floorz = parent->floorz;
 	actor->ceilingz = parent->ceilingz;
@@ -714,7 +714,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnFizzle)
 	AActor *mo;
 	int ix;
 
-	fixedvec3 pos = self->_f_Vec3Angle(dist, self->_f_angle(), -self->floorclip + (self->height >> 1));
+	fixedvec3 pos = self->_f_Vec3Angle(dist, self->_f_angle(), -self->floorclip + (self->_f_height() >> 1));
 	for (ix=0; ix<5; ix++)
 	{
 		mo = Spawn("SorcSpark1", pos, ALLOW_REPLACE);

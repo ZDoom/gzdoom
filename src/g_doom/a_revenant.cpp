@@ -103,13 +103,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_Tracer)
 		// change slope
 		dist = self->DistanceBySpeed(dest, self->Speed);
 
-		if (dest->_Height() >= 56.)
+		if (dest->Height >= 56.)
 		{
 			slope = (dest->Z() + 40. - self->Z()) / dist;
 		}
 		else
 		{
-			slope = (dest->Z() + self->_Height()*(2./3) - self->Z()) / dist;
+			slope = (dest->Z() + self->Height*(2./3) - self->Z()) / dist;
 		}
 
 		if (slope < self->Vel.Z)

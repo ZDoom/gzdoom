@@ -188,11 +188,11 @@ class ARandomSpawner : public AActor
 			// Handle special altitude flags
 			if (newmobj->flags & MF_SPAWNCEILING)
 			{
-				newmobj->_f_SetZ(newmobj->_f_ceilingz() - newmobj->height - SpawnPoint[2]);
+				newmobj->_f_SetZ(newmobj->_f_ceilingz() - newmobj->_f_height() - SpawnPoint[2]);
 			}
 			else if (newmobj->flags2 & MF2_SPAWNFLOAT) 
 			{
-				double space = newmobj->ceilingz - newmobj->_Height() - newmobj->floorz;
+				double space = newmobj->ceilingz - newmobj->Height - newmobj->floorz;
 				if (space > 48)
 				{
 					space -= 40;

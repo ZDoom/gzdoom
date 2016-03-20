@@ -242,15 +242,15 @@ public:
 
 	FString Obituary;		// Player was killed by this actor
 	FString HitObituary;	// Player was killed by this actor in melee
-	fixed_t DeathHeight;	// Height on normal death
-	fixed_t BurnHeight;		// Height on burning death
+	double DeathHeight;	// Height on normal death
+	double BurnHeight;		// Height on burning death
 	PalEntry BloodColor;	// Colorized blood
 	int GibHealth;			// Negative health below which this monster dies an extreme death
 	int WoundHealth;		// Health needed to enter wound state
 	int PoisonDamage;		// Amount of poison damage
 	double FastSpeed;		// speed in fast mode
 	fixed_t RDFactor;		// Radius damage factor
-	fixed_t CameraHeight;	// Height of camera when used as such
+	double CameraHeight;	// Height of camera when used as such
 	FSoundID HowlSound;		// Sound being played when electrocuted or poisoned
 	FName BloodType;		// Blood replacement type
 	FName BloodType2;		// Bloopsplatter replacement type

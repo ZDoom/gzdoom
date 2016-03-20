@@ -3207,7 +3207,7 @@ void FParser::SF_MoveCamera(void)
 		}
 
 		cam->radius = 1 / 8192.;
-		cam->height=8;
+		cam->Height = 1 / 8192.;
 		if ((x != cam->_f_X() || y != cam->_f_Y()) && !P_TryMove(cam, x, y, true))
 		{
 			Printf("Illegal camera move to (%f, %f)\n", x/65536.f, y/65536.f);
@@ -3740,7 +3740,7 @@ void FParser::SF_Resurrect()
 			return;
 
 		mo->SetState(state);
-		mo->height = mo->GetDefault()->height;
+		mo->Height = mo->GetDefault()->Height;
 		mo->radius = mo->GetDefault()->radius;
 		mo->flags =  mo->GetDefault()->flags;
 		mo->flags2 = mo->GetDefault()->flags2;
@@ -4123,11 +4123,9 @@ void FParser::SF_MobjHeight(void)
 		if(t_argc > 1)
 		{
 			if(mo) 
-				mo->height = fixedvalue(t_argv[1]);
+				mo->Height = floatvalue(t_argv[1]);
 		}
-		
-		t_return.type = svt_fixed;
-		t_return.value.f = mo ? mo->height : 0;
+		t_return.setDouble(mo ? mo->Height : 0.);
 	}
 }
 

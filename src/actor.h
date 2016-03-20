@@ -769,7 +769,7 @@ public:
 	// Return starting health adjusted by skill level
 	int SpawnHealth() const;
 	int GetGibHealth() const;
-	fixed_t GetCameraHeight() const;
+	double GetCameraHeight() const;
 
 	inline bool isMissile(bool precise=true)
 	{
@@ -1124,15 +1124,18 @@ public:
 	int				floorterrain;
 	struct sector_t	*ceilingsector;
 	FTextureID		ceilingpic;			// contacted sec ceilingpic
-	double			radius;
+	double			radius, Height;		// for movement checking
 
 	inline fixed_t _f_radius() const
 	{
 		return FLOAT2FIXED(radius);
 	}
+	inline fixed_t _f_height() const
+	{
+		return FLOAT2FIXED(Height);
+	}
 
-	fixed_t			height;		// for movement checking
-	fixed_t			projectilepassheight;	// height for clipping projectile movement against this actor
+	double			projectilepassheight;	// height for clipping projectile movement against this actor
 	SDWORD			tics;				// state tic counter
 	FState			*state;
 	VMFunction		*Damage;			// For missiles and monster railgun
@@ -1406,7 +1409,7 @@ public:
 	}
 	fixed_t _f_Top() const
 	{
-		return _f_Z() + height;
+		return _f_Z() + FLOAT2FIXED(Height);
 	}
 	void _f_SetZ(fixed_t newz, bool moving = true)
 	{
@@ -1418,19 +1421,11 @@ public:
 	}
 	double Top() const
 	{
-		return Z() + FIXED2DBL(height);
+		return Z() + Height;
 	}
 	double Center() const
 	{
-		return Z() + FIXED2DBL(height/2);
-	}
-	double _Height() const
-	{
-		return FIXED2DBL(height);
-	}
-	double _Radius() const
-	{
-		return FIXED2DBL(_f_radius());
+		return Z() + Height/2;
 	}
 	double _pushfactor() const
 	{

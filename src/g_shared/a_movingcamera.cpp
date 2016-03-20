@@ -639,7 +639,7 @@ bool AMovingCamera::Interpolate ()
 		{ // Also aim camera's pitch; use floats for precision
 			double dx = FIXED2DBL(_f_X() - tracer->_f_X());
 			double dy = FIXED2DBL(_f_Y() - tracer->_f_Y());
-			double dz = FIXED2DBL(_f_Z() - tracer->_f_Z() - tracer->height/2);
+			double dz = FIXED2DBL(_f_Z() - tracer->_f_Z() - tracer->_f_height()/2);
 			double dist = g_sqrt (dx*dx + dy*dy);
 			Angles.Pitch = dist != 0.f ? VecToAngle(dist, dz) : 0.;
 		}

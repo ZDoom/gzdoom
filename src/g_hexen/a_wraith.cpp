@@ -36,7 +36,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_WraithInit)
 	// [RH] Make sure the wraith didn't go into the ceiling
 	if (self->Top() > self->ceilingz)
 	{
-		self->SetZ(self->ceilingz - self->_Height());
+		self->SetZ(self->ceilingz - self->Height);
 	}
 
 	self->special1 = 0;			// index into floatbob
@@ -57,7 +57,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_WraithRaiseInit)
 	self->flags2 &= ~MF2_NONSHOOTABLE;
 	self->flags3 &= ~MF3_DONTBLAST;
 	self->flags |= MF_SHOOTABLE|MF_SOLID;
-	self->floorclip = self->height;
+	self->floorclip = self->_f_height();
 	return 0;
 }
 

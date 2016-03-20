@@ -903,7 +903,7 @@ static int PatchThing (int thingy)
 		}
 		else if (linelen == 6 && stricmp (Line1, "Height") == 0)
 		{
-			info->height = val;
+			info->Height = FIXED2DBL(val);
 			info->projectilepassheight = 0;	// needs to be disabled
 			hadHeight = true;
 		}
@@ -1257,7 +1257,7 @@ static int PatchThing (int thingy)
 			!hadHeight &&
 			thingy <= (int)OrgHeights.Size() && thingy > 0)
 		{
-			info->height = OrgHeights[thingy - 1] * FRACUNIT;
+			info->Height = OrgHeights[thingy - 1];
 			info->projectilepassheight = 0;
 		}
 		// If the thing's shadow changed, change its fuzziness if not already specified

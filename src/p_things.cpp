@@ -258,7 +258,7 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 					if (targ != NULL)
 					{
 						DVector3 aim = mobj->Vec3To(targ);
-						aim.Z += targ->_Height() / 2;
+						aim.Z += targ->Height / 2;
 
 						if (leadTarget && speed > 0 && !targ->Vel.isZero())
 						{
@@ -424,18 +424,18 @@ bool P_Thing_Raise(AActor *thing, AActor *raiser)
 	thing->Vel.X = thing->Vel.Y = 0;
 
 	// [RH] Check against real height and radius
-	fixed_t oldheight = thing->height;
+	double oldheight = thing->Height;
 	double oldradius = thing->radius;
 	ActorFlags oldflags = thing->flags;
 
 	thing->flags |= MF_SOLID;
-	thing->height = info->height;	// [RH] Use real height
+	thing->Height = info->Height;	// [RH] Use real height
 	thing->radius = info->radius;	// [RH] Use real radius
 	if (!P_CheckPosition (thing, thing->_f_Pos()))
 	{
 		thing->flags = oldflags;
 		thing->radius = oldradius;
-		thing->height = oldheight;
+		thing->Height = oldheight;
 		return false;
 	}
 
@@ -466,11 +466,11 @@ bool P_Thing_CanRaise(AActor *thing)
 
 	// Check against real height and radius
 	ActorFlags oldflags = thing->flags;
-	fixed_t oldheight = thing->height;
+	double oldheight = thing->Height;
 	double oldradius = thing->radius;
 
 	thing->flags |= MF_SOLID;
-	thing->height = info->height;
+	thing->Height = info->Height;
 	thing->radius = info->radius;
 
 	bool check = P_CheckPosition (thing, thing->Pos());
@@ -478,7 +478,7 @@ bool P_Thing_CanRaise(AActor *thing)
 	// Restore checked properties
 	thing->flags = oldflags;
 	thing->radius = oldradius;
-	thing->height = oldheight;
+	thing->Height = oldheight;
 
 	if (!check)
 	{
@@ -686,7 +686,7 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 	fixedvec3 old = caller->_f_Pos();
 	int oldpgroup = caller->Sector->PortalGroup;
 
-	zofs += FixedMul(reference->height, heightoffset);
+	zofs += FixedMul(reference->_f_height(), heightoffset);
 	
 
 	if (!(flags & WARPF_ABSOLUTEANGLE))

@@ -49,12 +49,12 @@ void ACustomBridge::BeginPlay ()
 	{
 		SetState(SeeState);
 		radius = args[0] ? args[0] : 32;
-		height = args[1] ? args[1] << FRACBITS : 2 * FRACUNIT;
+		Height = args[1] ? args[1] : 2;
 	}
 	else // No balls? Then a Doom bridge.
 	{
 		radius = args[0] ? args[0] : 36;
-		height = args[1] ? args[1] << FRACBITS : 4 * FRACUNIT;
+		Height = args[1] ? args[1] : 4;
 		RenderStyle = STYLE_Normal;
 	}
 }
@@ -164,6 +164,6 @@ void AInvisibleBridge::BeginPlay ()
 	if (args[0])
 		radius = args[0];
 	if (args[1])
-		height = args[1] << FRACBITS;
+		Height = args[1];
 }
 

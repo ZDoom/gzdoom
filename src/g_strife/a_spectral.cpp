@@ -129,13 +129,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_Tracer2)
 		{
 			dist = 1;
 		}
-		if (dest->height >= 56*FRACUNIT)
+		if (dest->_f_height() >= 56*FRACUNIT)
 		{
 			slope = (dest->_f_Z()+40*FRACUNIT - self->_f_Z()) / dist;
 		}
 		else
 		{
-			slope = (dest->_f_Z() + self->height*2/3 - self->_f_Z()) / dist;
+			slope = (dest->_f_Z() + self->_f_height()*2/3 - self->_f_Z()) / dist;
 		}
 		if (slope < self->_f_velz())
 		{

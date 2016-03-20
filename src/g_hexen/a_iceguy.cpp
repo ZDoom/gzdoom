@@ -109,7 +109,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_IceGuyDie)
 	PARAM_ACTION_PROLOGUE;
 
 	self->Vel.Zero();
-	self->height = self->GetDefault()->height;
+	self->Height = self->GetDefault()->Height;
 	CALL_ACTION(A_FreezeDeathChunks, self);
 	return 0;
 }

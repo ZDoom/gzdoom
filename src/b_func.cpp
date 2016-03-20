@@ -36,7 +36,7 @@ bool DBot::Reachable (AActor *rtarget)
 
 	if ((rtarget->Sector->ceilingplane.ZatPoint (rtarget) -
 		 rtarget->Sector->floorplane.ZatPoint (rtarget))
-		< player->mo->height) //Where rtarget is, player->mo can't be.
+		< player->mo->_f_height()) //Where rtarget is, player->mo can't be.
 		return false;
 
 	sector_t *last_s = player->mo->Sector;
@@ -79,7 +79,7 @@ bool DBot::Reachable (AActor *rtarget)
 				if (!bglobal.IsDangerous (s) &&		//Any nukage/lava?
 					(floorheight <= (last_z+MAXMOVEHEIGHT)
 					&& ((ceilingheight == floorheight && line->special)
-						|| (ceilingheight - floorheight) >= player->mo->height))) //Does it fit?
+						|| (ceilingheight - floorheight) >= player->mo->_f_height()))) //Does it fit?
 				{
 					last_z = floorheight;
 					last_s = s;
@@ -492,7 +492,7 @@ angle_t DBot::FireRox (AActor *enemy, ticcmd_t *cmd)
 
 	bglobal.SetBodyAt (player->mo->_f_X() + FixedMul(player->mo->_f_velx(), 5*FRACUNIT),
 					   player->mo->_f_Y() + FixedMul(player->mo->_f_vely(), 5*FRACUNIT),
-					   player->mo->_f_Z() + (player->mo->height / 2), 2);
+					   player->mo->_f_Z() + (player->mo->_f_height() / 2), 2);
 
 	actor = bglobal.body2;
 

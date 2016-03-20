@@ -1071,7 +1071,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SkullRodStorm)
 		newz = self->Sector->ceilingplane.ZatPoint(mo);
 	int moceiling = P_Find3DFloor(NULL, pos.x, pos.y, newz, false, false, newz);
 	if (moceiling >= 0)
-		mo->_f_SetZ(newz - mo->height, false);
+		mo->_f_SetZ(newz - mo->_f_height(), false);
 	mo->Translation = multiplayer ?
 		TRANSLATION(TRANSLATION_RainPillar,self->special2) : 0;
 	mo->target = self->target;

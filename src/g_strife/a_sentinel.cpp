@@ -23,7 +23,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SentinelBob)
 	if (self->threshold != 0)
 		return 0;
 
-	maxz =  self->ceilingz - self->_Height() - 16;
+	maxz =  self->ceilingz - self->Height - 16;
 	minz = self->floorz + 96;
 	if (minz > maxz)
 	{

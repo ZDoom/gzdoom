@@ -89,7 +89,7 @@ void P_TouchSpecialThing (AActor *special, AActor *toucher)
 
 	// The pickup is at or above the toucher's feet OR
 	// The pickup is below the toucher.
-	if (delta > toucher->height || delta < MIN(-32*FRACUNIT, -special->height))
+	if (delta > toucher->_f_height() || delta < MIN(-32*FRACUNIT, -special->_f_height()))
 	{ // out of reach
 		return;
 	}
@@ -393,7 +393,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 	flags6 |= MF6_KILLED;
 
 	// [RH] Allow the death height to be overridden using metadata.
-	fixed_t metaheight = -1;
+	double metaheight = -1;
 	if (DamageType == NAME_Fire)
 	{
 		metaheight = GetClass()->BurnHeight;
@@ -404,11 +404,11 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 	}
 	if (metaheight < 0)
 	{
-		height >>= 2;
+		Height *= 0.25;
 	}
 	else
 	{
-		height = MAX<fixed_t> (metaheight, 0);
+		Height = MAX<double> (metaheight, 0);
 	}
 
 	// [RH] If the thing has a special, execute and remove it

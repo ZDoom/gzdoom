@@ -189,7 +189,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FreezeDeath)
 	self->flags |= MF_SOLID|MF_SHOOTABLE|MF_NOBLOOD|MF_ICECORPSE;
 	self->flags2 |= MF2_PUSHABLE|MF2_TELESTOMP|MF2_PASSMOBJ|MF2_SLIDE;
 	self->flags3 |= MF3_CRASHED;
-	self->height = self->GetDefault()->height;
+	self->Height = self->GetDefault()->Height;
 	// Remove fuzz effects from frozen actors.
 	if (self->RenderStyle.BlendOp >= STYLEOP_Fuzz && self->RenderStyle.BlendOp <= STYLEOP_FuzzOrRevSub)
 	{
@@ -287,20 +287,20 @@ DEFINE_ACTION_FUNCTION(AActor, A_FreezeDeathChunks)
 	// base the number of shards on the size of the dead thing, so bigger
 	// things break up into more shards than smaller things.
 	// An actor with _f_radius() 20 and height 64 creates ~40 chunks.
-	numChunks = MAX<int> (4, (self->_f_radius()>>FRACBITS)*(self->height>>FRACBITS)/32);
+	numChunks = MAX<int> (4, (self->_f_radius()>>FRACBITS)*(self->_f_height()>>FRACBITS)/32);
 	i = (pr_freeze.Random2()) % (numChunks/4);
 	for (i = MAX (24, numChunks + i); i >= 0; i--)
 	{
 		fixed_t xo = (((pr_freeze() - 128)*self->_f_radius()) >> 7);
 		fixed_t yo = (((pr_freeze() - 128)*self->_f_radius()) >> 7);
-		fixed_t zo = (pr_freeze()*self->height / 255);
+		fixed_t zo = (pr_freeze()*self->_f_height() / 255);
 		mo = Spawn("IceChunk", self->Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
 		if (mo)
 		{
 			mo->SetState (mo->SpawnState + (pr_freeze()%3));
 			mo->Vel.X = pr_freeze.Random2() / 128.;
 			mo->Vel.Y = pr_freeze.Random2() / 128.;
-			mo->Vel.Z = (mo->Z() - self->Z()) / self->_Height() * 4;
+			mo->Vel.Z = (mo->Z() - self->Z()) / self->Height * 4;
 			CALL_ACTION(A_IceSetTics, mo); // set a random tic wait
 			mo->RenderStyle = self->RenderStyle;
 			mo->alpha = self->alpha;
@@ -313,7 +313,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FreezeDeathChunks)
 		{
 			head->Vel.X = pr_freeze.Random2() / 128.;
 			head->Vel.Y = pr_freeze.Random2() / 128.;
-			head->Vel.Z = (mo->Z() - self->Z()) / self->_Height() * 4;
+			head->Vel.Z = (mo->Z() - self->Z()) / self->Height * 4;
 
 			head->health = self->health;
 			head->Angles.Yaw = self->Angles.Yaw;

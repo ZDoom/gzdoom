@@ -744,11 +744,11 @@ void APlayerPawn::Tick()
 {
 	if (player != NULL && player->mo == this && player->CanCrouch() && player->playerstate != PST_DEAD)
 	{
-		height = fixed_t(GetDefault()->height * player->crouchfactor);
+		Height = GetDefault()->Height * player->crouchfactor;
 	}
 	else
 	{
-		if (health > 0) height = GetDefault()->height;
+		if (health > 0) Height = GetDefault()->Height;
 	}
 	Super::Tick();
 }
@@ -2241,8 +2241,8 @@ void P_DeathThink (player_t *player)
 
 void P_CrouchMove(player_t * player, int direction)
 {
-	fixed_t defaultheight = player->mo->GetDefault()->height;
-	fixed_t savedheight = player->mo->height;
+	double defaultheight = player->mo->GetDefault()->Height;
+	double savedheight = player->mo->Height;
 	double crouchspeed = direction * CROUCHSPEED;
 	fixed_t oldheight = player->viewheight;
 
@@ -2250,10 +2250,10 @@ void P_CrouchMove(player_t * player, int direction)
 	player->crouchfactor += crouchspeed;
 
 	// check whether the move is ok
-	player->mo->height = fixed_t(defaultheight * player->crouchfactor);
+	player->mo->Height  = defaultheight * player->crouchfactor;
 	if (!P_TryMove(player->mo, player->mo->_f_X(), player->mo->_f_Y(), false, NULL))
 	{
-		player->mo->height = savedheight;
+		player->mo->Height = savedheight;
 		if (direction > 0)
 		{
 			// doesn't fit
@@ -2261,7 +2261,7 @@ void P_CrouchMove(player_t * player, int direction)
 			return;
 		}
 	}
-	player->mo->height = savedheight;
+	player->mo->Height = savedheight;
 
 	player->crouchfactor = clamp(player->crouchfactor, 0.5, 1.);
 	player->viewheight = fixed_t(player->mo->ViewHeight * player->crouchfactor);

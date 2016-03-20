@@ -646,7 +646,7 @@ void InitThingdef()
 	symt.AddSymbol(new PField(NAME_Score,		TypeSInt32,		VARF_Native, myoffsetof(AActor,Score)));
 	symt.AddSymbol(new PField(NAME_Accuracy,	TypeSInt32,		VARF_Native, myoffsetof(AActor,accuracy)));
 	symt.AddSymbol(new PField(NAME_Stamina,		TypeSInt32,		VARF_Native, myoffsetof(AActor,stamina)));
-	symt.AddSymbol(new PField(NAME_Height,		TypeFixed,	VARF_Native, myoffsetof(AActor,height)));
+	symt.AddSymbol(new PField(NAME_Height,		TypeFloat64,	VARF_Native, myoffsetof(AActor,Height)));
 	symt.AddSymbol(new PField(NAME_Radius,		TypeFloat64,	VARF_Native, myoffsetof(AActor,radius)));
 	symt.AddSymbol(new PField(NAME_ReactionTime,TypeSInt32,		VARF_Native, myoffsetof(AActor,reactiontime)));
 	symt.AddSymbol(new PField(NAME_MeleeRange,	TypeFixed,	VARF_Native, myoffsetof(AActor,meleerange)));

@@ -423,7 +423,7 @@ static void CHolySeekerMissile (AActor *actor, DAngle thresh, DAngle turnMax)
 		|| actor->Z() > target->Top()
 		|| actor->Top() < target->Z())
 	{
-		newZ = target->_f_Z()+((pr_holyseeker()*target->height)>>8);
+		newZ = target->_f_Z()+((pr_holyseeker()*target->_f_height())>>8);
 		deltaZ = newZ - actor->_f_Z();
 		if (abs(deltaZ) > 15*FRACUNIT)
 		{

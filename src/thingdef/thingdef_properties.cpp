@@ -633,8 +633,8 @@ DEFINE_PROPERTY(radius, F, Actor)
 //==========================================================================
 DEFINE_PROPERTY(height, F, Actor)
 {
-	PROP_FIXED_PARM(id, 0);
-	defaults->height=id;
+	PROP_DOUBLE_PARM(id, 0);
+	defaults->Height=id;
 }
 
 //==========================================================================
@@ -642,7 +642,7 @@ DEFINE_PROPERTY(height, F, Actor)
 //==========================================================================
 DEFINE_PROPERTY(projectilepassheight, F, Actor)
 {
-	PROP_FIXED_PARM(id, 0);
+	PROP_DOUBLE_PARM(id, 0);
 	defaults->projectilepassheight=id;
 }
 
@@ -916,9 +916,9 @@ DEFINE_PROPERTY(explosiondamage, I, Actor)
 //==========================================================================
 DEFINE_PROPERTY(deathheight, F, Actor)
 {
-	PROP_FIXED_PARM(h, 0);
+	PROP_DOUBLE_PARM(h, 0);
 	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	static_cast<PClassActor *>(info)->DeathHeight = MAX(0, h);
+	static_cast<PClassActor *>(info)->DeathHeight = MAX(0., h);
 }
 
 //==========================================================================
@@ -926,9 +926,9 @@ DEFINE_PROPERTY(deathheight, F, Actor)
 //==========================================================================
 DEFINE_PROPERTY(burnheight, F, Actor)
 {
-	PROP_FIXED_PARM(h, 0);
+	PROP_DOUBLE_PARM(h, 0);
 	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
-	static_cast<PClassActor *>(info)->BurnHeight = MAX(0, h);
+	static_cast<PClassActor *>(info)->BurnHeight = MAX(0., h);
 }
 
 //==========================================================================
@@ -1320,7 +1320,7 @@ DEFINE_PROPERTY(radiusdamagefactor, F, Actor)
 //==========================================================================
 DEFINE_PROPERTY(cameraheight, F, Actor)
 {
-	PROP_FIXED_PARM(i, 0);
+	PROP_DOUBLE_PARM(i, 0);
 	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
 	static_cast<PClassActor *>(info)->CameraHeight = i;
 }

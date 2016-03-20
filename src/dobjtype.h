@@ -67,6 +67,18 @@ public:
 	PSymbolType() : PSymbol(NAME_None) {}
 };
 
+// A symbol for a compiler tree node ----------------------------------------
+
+class PSymbolTreeNode : public PSymbol
+{
+	DECLARE_CLASS(PSymbolTreeNode, PSymbol);
+public:
+	struct ZCC_NamedNode *Node;
+
+	PSymbolTreeNode(FName name, struct ZCC_NamedNode *node) : PSymbol(name), Node(node) {}
+	PSymbolTreeNode() : PSymbol(NAME_None) {}
+};
+
 // A symbol table -----------------------------------------------------------
 
 struct PSymbolTable
@@ -85,10 +97,18 @@ struct PSymbolTable
 	// as well.
 	PSymbol *FindSymbol (FName symname, bool searchparents) const;
 
+	// Like FindSymbol with searchparents set true, but also returns the
+	// specific symbol table the symbol was found in.
+	PSymbol *FindSymbolInTable(FName symname, PSymbolTable *&symtable);
+
 	// Places the symbol in the table and returns a pointer to it or NULL if
 	// a symbol with the same name is already in the table. This symbol is
 	// not copied and will be freed when the symbol table is destroyed.
 	PSymbol *AddSymbol (PSymbol *sym);
+
+	// Similar to AddSymbol but always succeeds. Returns the symbol that used
+	// to be in the table with this name, if any.
+	PSymbol *ReplaceSymbol(PSymbol *sym);
 
 	// Frees all symbols from this table.
 	void ReleaseSymbols();

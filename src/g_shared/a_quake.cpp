@@ -143,15 +143,15 @@ void DEarthquake::Tick ()
 					angle_t an = victim->angle + ANGLE_1*pr_quake();
 					if (m_IntensityX == m_IntensityY)
 					{ // Thrust in a circle
-						P_ThrustMobj (victim, an, m_IntensityX << (FRACBITS-1));
+						P_ThrustMobj (victim, an, m_IntensityX/2);
 					}
 					else
 					{ // Thrust in an ellipse
 						an >>= ANGLETOFINESHIFT;
 						// So this is actually completely wrong, but it ought to be good
 						// enough. Otherwise, I'd have to use tangents and square roots.
-						victim->vel.x += FixedMul(m_IntensityX << (FRACBITS-1), finecosine[an]);
-						victim->vel.y += FixedMul(m_IntensityY << (FRACBITS-1), finesine[an]);
+						victim->vel.x += FixedMul(m_IntensityX/2, finecosine[an]);
+						victim->vel.y += FixedMul(m_IntensityY/2, finesine[an]);
 					}
 				}
 			}

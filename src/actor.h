@@ -1136,6 +1136,7 @@ public:
 	}
 
 	double			projectilepassheight;	// height for clipping projectile movement against this actor
+	
 	SDWORD			tics;				// state tic counter
 	FState			*state;
 	VMFunction		*Damage;			// For missiles and monster railgun
@@ -1153,6 +1154,9 @@ public:
 
 	int				special1;		// Special info
 	int				special2;		// Special info
+	double			specialf1;		// With floats we cannot use the int versions for storing position or angle data without reverting to fixed point (which we do not want.)
+	double			specialf2;
+
 	int				weaponspecial;	// Special info for weapons.
 	int 			health;
 	BYTE			movedir;		// 0-7
@@ -1289,6 +1293,7 @@ public:
 	static void ClearTIDHashes ();
 	void AddToHash ();
 	void RemoveFromHash ();
+
 
 private:
 	static AActor *TIDHash[128];

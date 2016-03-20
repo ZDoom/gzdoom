@@ -1459,9 +1459,9 @@ void FParser::SF_SetCamera(void)
 		
 		angle = t_argc < 2 ? newcamera->Angles.Yaw : floatvalue(t_argv[1]);
 
-		newcamera->special1 = newcamera->Angles.Yaw.BAMs();
-		newcamera->special2=newcamera->_f_Z();
-		newcamera->_f_SetZ(t_argc < 3 ? (newcamera->_f_Z() + (41 << FRACBITS)) : (intvalue(t_argv[2]) << FRACBITS));
+		newcamera->specialf1 = newcamera->Angles.Yaw.Degrees;
+		newcamera->specialf2 = newcamera->Z();
+		newcamera->SetZ(t_argc < 3 ? newcamera->Z() + 41 : floatvalue(t_argv[2]));
 		newcamera->Angles.Yaw = angle;
 		if (t_argc < 4) newcamera->Angles.Pitch = 0.;
 		else newcamera->Angles.Pitch = clamp(floatvalue(t_argv[3]), -50., 50.) * (20. / 32.);
@@ -1485,8 +1485,8 @@ void FParser::SF_ClearCamera(void)
 	if (cam)
 	{
 		player->camera=player->mo;
-		cam->Angles.Yaw = ANGLE2DBL(cam->special1);
-		cam->_f_SetZ(cam->special2);
+		cam->Angles.Yaw = cam->specialf1;
+		cam->SetZ(cam->specialf2);
 	}
 
 }

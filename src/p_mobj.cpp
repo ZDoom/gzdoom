@@ -2425,9 +2425,9 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 	// Hexen yanked all items to the floor, except those being spawned at map start in the air.
 	// Those were kept at their original height.
 	// Do this only if the item was actually spawned by the map above ground to avoid problems.
-	if (mo->special1 > 0 && (mo->flags2 & MF2_FLOATBOB) && (ib_compatflags & BCOMPATF_FLOATBOB))
+	if (mo->specialf1 > 0 && (mo->flags2 & MF2_FLOATBOB) && (ib_compatflags & BCOMPATF_FLOATBOB))
 	{
-		mo->_f_SetZ(mo->_f_floorz() + mo->special1);
+		mo->SetZ(mo->floorz + mo->specialf1);
 	}
 
 
@@ -5123,7 +5123,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 		mobj->_f_AddZ(mthing->z);
 		if ((mobj->flags2 & MF2_FLOATBOB) && (ib_compatflags & BCOMPATF_FLOATBOB))
 		{
-			mobj->special1 = mthing->z;
+			mobj->specialf1 = FIXED2DBL(mthing->z);
 		}
 	}
 	else if (z == ONCEILINGZ)
@@ -5140,7 +5140,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	else mobj->flags &= ~MF_NOGRAVITY;
 
 	// For Hexen floatbob 'compatibility' we do not really want to alter the floorz.
-	if (mobj->special1 == 0 || !(mobj->flags2 & MF2_FLOATBOB) || !(ib_compatflags & BCOMPATF_FLOATBOB))
+	if (mobj->specialf1 == 0 || !(mobj->flags2 & MF2_FLOATBOB) || !(ib_compatflags & BCOMPATF_FLOATBOB))
 	{
 		P_FindFloorCeiling(mobj, FFCF_SAMESECTOR | FFCF_ONLY3DFLOORS | FFCF_3DRESTRICT);
 	}

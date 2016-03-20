@@ -134,8 +134,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_CFlameMissile)
 				mo->Angles.Yaw = an;
 				mo->target = self->target;
 				mo->VelFromAngle(FLAMESPEED);
-				mo->special1 = FLOAT2FIXED(mo->Vel.X);
-				mo->special2 = FLOAT2FIXED(mo->Vel.Y);
+				mo->specialf1 = mo->Vel.X;
+				mo->specialf2 = mo->Vel.Y;
 				mo->tics -= pr_missile()&3;
 			}
 			mo = Spawn ("CircleFlame", BlockingMobj->Vec3Offset(
@@ -146,8 +146,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_CFlameMissile)
 				mo->Angles.Yaw = an + 180.;
 				mo->target = self->target;
 				mo->VelFromAngle(-FLAMESPEED);
-				mo->special1 = FLOAT2FIXED(mo->Vel.X);
-				mo->special2 = FLOAT2FIXED(mo->Vel.Y);
+				mo->specialf1 = mo->Vel.X;
+				mo->specialf2 = mo->Vel.Y;
 				mo->tics -= pr_missile()&3;
 			}
 		}
@@ -168,7 +168,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CFlameRotate)
 
 	DAngle an = self->Angles.Yaw + 90.;
 	self->VelFromAngle(an, FLAMEROTSPEED);
-	self->Vel += DVector2(FIXED2DBL(self->special1), FIXED2DBL(self->special2));
+	self->Vel += DVector2(self->specialf1, self->specialf2);
 
 	self->Angles.Yaw += 6.;
 	return 0;

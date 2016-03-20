@@ -120,7 +120,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_MakePod)
 		return 0;
 	}
 	mo->SetState (mo->FindState("Grow"));
-	P_ThrustMobj (mo, pr_makepod()<<24, (fixed_t)(4.5*FRACUNIT));
+	mo->Thrust(pr_makepod() * (360. / 256), 4.5);
 	S_Sound (mo, CHAN_BODY, self->AttackSound, 1, ATTN_IDLE);
 	self->special1++; // Increment generated pod count
 	mo->master = self; // Link the generator to the pod

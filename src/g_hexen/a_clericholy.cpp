@@ -161,7 +161,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CHolyAttack2)
 		}
 		mo->_f_SetZ(self->_f_Z());
 		mo->Angles.Yaw = self->Angles.Yaw + 67.5 - 45.*j;
-		P_ThrustMobj(mo, mo->_f_angle(), mo->_f_speed());
+		mo->Thrust();
 		mo->target = self->target;
 		mo->args[0] = 10; // initial turn value
 		mo->args[1] = 0; // initial look angle

@@ -141,15 +141,8 @@ void DEarthquake::Tick ()
 					}
 					// Thrust player around
 					DAngle an = victim->Angles.Yaw + pr_quake();
-					if (m_IntensityX == m_IntensityY)
-					{ // Thrust in a circle
-						P_ThrustMobj (victim, an, m_IntensityX/2);
-					}
-					else
-					{ // Thrust in an ellipse
-						victim->Vel.X += FIXED2DBL(m_IntensityX) * an.Cos() * 0.5;
-						victim->Vel.Y += FIXED2DBL(m_IntensityY) * an.Sin() * 0.5;
-					}
+					victim->Vel.X += FIXED2DBL(m_IntensityX) * an.Cos() * 0.5;
+					victim->Vel.Y += FIXED2DBL(m_IntensityY) * an.Sin() * 0.5;
 				}
 			}
 		}

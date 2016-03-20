@@ -14,7 +14,7 @@
 #include "g_level.h"
 */
 
-#define ZAGSPEED	FRACUNIT
+#define ZAGSPEED	1.
 
 static FRandom pr_lightningready ("LightningReady");
 static FRandom pr_lightningclip ("LightningClip");
@@ -170,19 +170,19 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningClip)
 		zigZag = pr_lightningclip();
 		if((zigZag > 128 && self->special1 < 2) || self->special1 < -2)
 		{
-			P_ThrustMobj(self, self->_f_angle()+ANG90, ZAGSPEED);
+			self->Thrust(self->Angles.Yaw + 90, ZAGSPEED);
 			if(cMo)
 			{
-				P_ThrustMobj(cMo, self->_f_angle()+ANG90, ZAGSPEED);
+				cMo->Thrust(self->Angles.Yaw + 90, ZAGSPEED);
 			}
 			self->special1++;
 		}
 		else
 		{
-			P_ThrustMobj(self, self->_f_angle()-ANG90, ZAGSPEED);
+			self->Thrust(self->Angles.Yaw - 90, ZAGSPEED);
 			if(cMo)
 			{
-				P_ThrustMobj(cMo, cMo->_f_angle()-ANG90, ZAGSPEED);
+				cMo->Thrust(self->Angles.Yaw - 90, ZAGSPEED);
 			}
 			self->special1--;
 		}
@@ -196,8 +196,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningClip)
 		else
 		{
 			self->Angles.Yaw = self->AngleTo(target);
-			self->Vel.X = self->Vel.Y = 0;
-			P_ThrustMobj (self, self->Angles.Yaw, self->_f_speed()>>1);
+			self->VelFromAngle(self->Speed / 2);
 		}
 	}
 	return 0;

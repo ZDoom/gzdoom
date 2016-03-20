@@ -222,7 +222,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LeafSpawn)
 
 		if (mo)
 		{
-			P_ThrustMobj (mo, self->_f_angle(), (pr_leaf()<<9)+3*FRACUNIT);
+			mo->Thrust(pr_leaf() / 128. + 3);
 			mo->target = self;
 			mo->special1 = 0;
 		}
@@ -263,18 +263,18 @@ DEFINE_ACTION_FUNCTION(AActor, A_LeafCheck)
 		self->SetState (NULL);
 		return 0;
 	}
-	angle_t ang = self->target ? self->target->_f_angle() : self->_f_angle();
+	DAngle ang = self->target ? self->target->Angles.Yaw : self->Angles.Yaw;
 	if (pr_leafcheck() > 64)
 	{
 		if (self->Vel.X == 0 && self->Vel.Y == 0)
 		{
-			P_ThrustMobj (self, ang, (pr_leafcheck()<<9)+FRACUNIT);
+			self->Thrust(ang, pr_leafcheck() / 128. + 1);
 		}
 		return 0;
 	}
 	self->SetState (self->SpawnState + 7);
 	self->Vel.Z = pr_leafcheck() / 128. + 1;
-	P_ThrustMobj (self, ang, (pr_leafcheck()<<9)+2*FRACUNIT);
+	self->Thrust(ang, pr_leafcheck() / 128. + 2);
 	self->flags |= MF_MISSILE;
 	return 0;
 }

@@ -127,12 +127,6 @@ void	P_PredictionLerpReset();
 
 APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags=0);
 
-void P_ThrustMobj (AActor *mo, angle_t angle, fixed_t move);
-inline void P_ThrustMobj(AActor *mo, DAngle angle, fixed_t move)
-{
-	P_ThrustMobj(mo, FLOAT2ANGLE(angle.Degrees), move);
-}
-
 int P_FaceMobj (AActor *source, AActor *target, DAngle *delta);
 bool P_SeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax, bool precise = false, bool usecurspeed=false);
 

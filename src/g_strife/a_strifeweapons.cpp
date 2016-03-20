@@ -530,7 +530,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMauler2)
 	}
 	P_SpawnPlayerMissile (self, PClass::FindActor("MaulerTorpedo"));
 	P_DamageMobj (self, self, NULL, 20, self->DamageType);
-	P_ThrustMobj (self, self->_f_angle() + ANGLE_180, 0x7D000);
+	self->Thrust(self->Angles.Yaw+180., 7.8125);
 	return 0;
 }
 

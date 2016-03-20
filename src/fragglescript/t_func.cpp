@@ -1254,10 +1254,9 @@ void FParser::SF_PushThing(void)
 		AActor * mo = actorvalue(t_argv[0]);
 		if(!mo) return;
 	
-		angle_t angle = (angle_t)FixedToAngle(fixedvalue(t_argv[1]));
-		fixed_t force = fixedvalue(t_argv[2]);
-	
-		P_ThrustMobj(mo, angle, force);
+		DAngle angle = floatvalue(t_argv[1]);
+		double force = floatvalue(t_argv[2]);
+		mo->Thrust(angle, force);
 	}
 }
 

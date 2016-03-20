@@ -53,7 +53,7 @@ void AdjustPlayerAngle (AActor *pmo, FTranslatedLineTarget *t)
 //
 //============================================================================
 
-static bool TryPunch(APlayerPawn *pmo, DAngle angle, int damage, fixed_t power)
+static bool TryPunch(APlayerPawn *pmo, DAngle angle, int damage, int power)
 {
 	PClassActor *pufftype;
 	FTranslatedLineTarget t;
@@ -78,7 +78,7 @@ static bool TryPunch(APlayerPawn *pmo, DAngle angle, int damage, fixed_t power)
 			if (t.linetarget->player != NULL || 
 				(t.linetarget->Mass != INT_MAX && (t.linetarget->flags3 & MF3_ISMONSTER)))
 			{
-				P_ThrustMobj (t.linetarget, t.angleFromSource, power);
+				t.linetarget->Thrust(t.angleFromSource, power);
 			}
 			AdjustPlayerAngle (pmo, &t);
 			return true;
@@ -98,7 +98,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_FPunchAttack)
 	PARAM_ACTION_PROLOGUE;
 
 	int damage;
-	fixed_t power;
 	int i;
 	player_t *player;
 
@@ -109,11 +108,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_FPunchAttack)
 	APlayerPawn *pmo = player->mo;
 
 	damage = 40+(pr_fpatk()&15);
-	power = 2*FRACUNIT;
 	for (i = 0; i < 16; i++)
 	{
-		if (TryPunch(pmo, pmo->Angles.Yaw + i*(45./16), damage, power) ||
-			TryPunch(pmo, pmo->Angles.Yaw - i*(45./16), damage, power))
+		if (TryPunch(pmo, pmo->Angles.Yaw + i*(45./16), damage, 2) ||
+			TryPunch(pmo, pmo->Angles.Yaw - i*(45./16), damage, 2))
 		{ // hit something
 			if (pmo->weaponspecial >= 3)
 			{

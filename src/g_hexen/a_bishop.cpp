@@ -118,15 +118,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopDoBlur)
 	self->special1 = (pr_doblur() & 3) + 3; // Random number of blurs
 	if (pr_doblur() < 120)
 	{
-		P_ThrustMobj (self, self->_f_angle() + ANG90, 11*FRACUNIT);
+		self->Thrust(self->Angles.Yaw + 90, 11);
 	}
 	else if (pr_doblur() > 125)
 	{
-		P_ThrustMobj (self, self->_f_angle() - ANG90, 11*FRACUNIT);
+		self->Thrust(self->Angles.Yaw - 90, 11);
 	}
 	else
 	{ // Thrust forward
-		P_ThrustMobj (self, self->_f_angle(), 11*FRACUNIT);
+		self->Thrust(11);
 	}
 	S_Sound (self, CHAN_BODY, "BishopBlur", 1, ATTN_NORM);
 	return 0;

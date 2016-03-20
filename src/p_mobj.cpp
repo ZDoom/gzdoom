@@ -1623,20 +1623,6 @@ bool AActor::FloorBounceMissile (secplane_t &plane)
 
 //----------------------------------------------------------------------------
 //
-// PROC P_ThrustMobj
-//
-//----------------------------------------------------------------------------
-
-void P_ThrustMobj (AActor *mo, angle_t _angle, fixed_t _move)
-{
-	DAngle angle = ANGLE2DBL(_angle);
-	double move = FIXED2DBL(_move);
-
-	mo->Vel += angle.ToVector(move);
-}
-
-//----------------------------------------------------------------------------
-//
 // FUNC P_FaceMobj
 //
 // Returns 1 if 'source' needs to turn clockwise, or 0 if 'source' needs
@@ -1785,7 +1771,7 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 	player_t *player;
 	fixed_t xmove, ymove;
 	const secplane_t * walkplane;
-	static const int windTab[3] = {2048*5, 2048*10, 2048*25};
+	static const double windTab[3] = { 5 / 32., 10 / 32., 25 / 32. };
 	int steps, step, totalsteps;
 	fixed_t startx, starty;
 	fixed_t oldfloorz = mo->floorz;
@@ -1800,16 +1786,16 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 		switch (special)
 		{
 			case 40: case 41: case 42: // Wind_East
-				P_ThrustMobj (mo, 0, windTab[special-40]);
+				mo->Thrust(0., windTab[special-40]);
 				break;
 			case 43: case 44: case 45: // Wind_North
-				P_ThrustMobj (mo, ANG90, windTab[special-43]);
+				mo->Thrust(90., windTab[special-43]);
 				break;
 			case 46: case 47: case 48: // Wind_South
-				P_ThrustMobj (mo, ANG270, windTab[special-46]);
+				mo->Thrust(270., windTab[special-46]);
 				break;
 			case 49: case 50: case 51: // Wind_West
-				P_ThrustMobj (mo, ANG180, windTab[special-49]);
+				mo->Thrust(180., windTab[special-49]);
 				break;
 		}
 	}

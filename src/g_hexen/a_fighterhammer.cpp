@@ -29,7 +29,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_FHammerAttack)
 
 	DAngle angle;
 	int damage;
-	fixed_t power;
 	DAngle slope;
 	int i;
 	player_t *player;
@@ -43,7 +42,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_FHammerAttack)
 	AActor *pmo=player->mo;
 
 	damage = 60+(pr_hammeratk()&63);
-	power = 10*FRACUNIT;
 	hammertime = PClass::FindActor("HammerPuff");
 	for (i = 0; i < 16; i++)
 	{
@@ -59,7 +57,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FHammerAttack)
 					AdjustPlayerAngle(pmo, &t);
 					if (t.linetarget->flags3 & MF3_ISMONSTER || t.linetarget->player)
 					{
-						P_ThrustMobj(t.linetarget, t.angleFromSource, power);
+						t.linetarget->Thrust(t.angleFromSource, 10);
 					}
 					pmo->weaponspecial = false; // Don't throw a hammer
 					goto hammerdone;

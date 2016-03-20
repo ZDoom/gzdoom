@@ -3215,7 +3215,7 @@ FUNC(LS_ForceField)
 	if (it != NULL)
 	{
 		P_DamageMobj (it, NULL, NULL, 16, NAME_None);
-		P_ThrustMobj (it, it->_f_angle() + ANGLE_180, 0x7D000);
+		it->Thrust(it->Angles.Yaw + 180, 7.8125);
 	}
 	return true;
 }

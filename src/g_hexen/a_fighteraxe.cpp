@@ -200,7 +200,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeAttack)
 	PARAM_ACTION_PROLOGUE;
 
 	DAngle angle;
-	fixed_t power;
+	int power;
 	int damage;
 	DAngle slope;
 	int i;
@@ -223,7 +223,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeAttack)
 	if (player->ReadyWeapon->Ammo1->Amount > 0)
 	{
 		damage <<= 1;
-		power = 6*FRACUNIT;
+		power = 6;
 		pufftype = PClass::FindActor ("AxePuffGlow");
 		useMana = 1;
 	}
@@ -245,7 +245,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeAttack)
 				{
 					if (t.linetarget->flags3&MF3_ISMONSTER || t.linetarget->player)
 					{
-						P_ThrustMobj(t.linetarget, t.angleFromSource, power);
+						t.linetarget->Thrust(t.angleFromSource, power);
 					}
 					AdjustPlayerAngle(pmo, &t);
 					useMana++;

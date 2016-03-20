@@ -128,7 +128,7 @@ main ::= translation_unit(A). { stat->TopNode = A; stat->sc.ScriptMessage("Parse
 
 %type translation_unit {ZCC_TreeNode *}
 translation_unit(X) ::= .												{ X = NULL; }
-translation_unit(X) ::= translation_unit(A) external_declaration(B).	{ SAFE_APPEND(A,B); X = A; /*X-overwrites-A*/ }
+translation_unit(X) ::= translation_unit(X) external_declaration(B).	{ SAFE_APPEND(X,B); }
 translation_unit(X) ::= translation_unit(X) EOF.
 translation_unit(X) ::= error.											{ X = NULL; }
 
@@ -221,7 +221,7 @@ class_body(X) ::= SEMICOLON class_innards(A) EOF.		{ X = A; /*X-overwrites-A*/ }
 class_body(X) ::= LBRACE class_innards(A) RBRACE.		{ X = A; /*X-overwrites-A*/ }
 
 class_innards(X) ::= .									{ X = NULL; }
-class_innards(X) ::= class_innards(A) class_member(B).	{ SAFE_APPEND(A,B); X = A; /*X-overwrites-A*/ }
+class_innards(X) ::= class_innards(X) class_member(B).	{ SAFE_APPEND(X,B); }
 
 %type struct_def{ZCC_Struct *}
 %type enum_def {ZCC_Enum *}
@@ -402,9 +402,9 @@ scanner_mode ::= . { stat->sc.SetStateMode(true); }
 
 states_body(X) ::= .								{ X = NULL; }
 states_body(X) ::= error.							{ X = NULL; }
-states_body(X) ::= states_body(A) state_line(B).	{ SAFE_APPEND(A,B); X = A; /*X-overwrites-A*/ }
-states_body(X) ::= states_body(A) state_label(B).	{ SAFE_APPEND(A,B); X = A; /*X-overwrites-A*/ }
-states_body(X) ::= states_body(A) state_flow(B).	{ SAFE_APPEND(A,B); X = A; /*X-overwrites-A*/ }
+states_body(X) ::= states_body(X) state_line(B).	{ SAFE_APPEND(X,B); }
+states_body(X) ::= states_body(X) state_label(B).	{ SAFE_APPEND(X,B); }
+states_body(X) ::= states_body(X) state_flow(B).	{ SAFE_APPEND(X,B); }
 
 state_label(X) ::= NWS(A) COLON.
 {
@@ -1289,10 +1289,9 @@ statement_list(X) ::= statement(A).
 {
 	X = A; /*X-overwrites-A*/
 }
-statement_list(X) ::= statement_list(A) statement(B).
+statement_list(X) ::= statement_list(X) statement(B).
 {
-	SAFE_APPEND(A,B);
-	X = A; /*X-overwrites-A*/
+	SAFE_APPEND(X,B);
 }
 
 /*----- Expression Statements -----*/

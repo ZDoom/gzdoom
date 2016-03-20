@@ -105,7 +105,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Feathers)
 	}
 	for (i = 0; i < count; i++)
 	{
-		mo = Spawn("Feather", self->PosPlusZ(20*FRACUNIT), NO_REPLACE);
+		mo = Spawn("Feather", self->PosPlusZ(20.), NO_REPLACE);
 		mo->target = self;
 		mo->Vel.X = pr_feathers.Random2() / 256.;
 		mo->Vel.Y = pr_feathers.Random2() / 256.;

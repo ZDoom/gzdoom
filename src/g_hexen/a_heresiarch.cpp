@@ -942,8 +942,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcBallPop)
 
 	S_Sound (self, CHAN_BODY, "SorcererBallPop", 1, ATTN_NONE);
 	self->flags &= ~MF_NOGRAVITY;
-	self->gravity = FRACUNIT/8;
-	
+	self->Gravity = 1. / 8;;
+
 	self->Vel.X = ((pr_heresiarch()%10)-5);
 	self->Vel.Y = ((pr_heresiarch()%10)-5);
 	self->Vel.Z = (2+(pr_heresiarch()%3));

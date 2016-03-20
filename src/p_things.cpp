@@ -246,7 +246,7 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 						mobj->flags &= ~MF_NOGRAVITY;
 						if (!(mobj->flags3 & MF3_ISMONSTER) && gravity == 1)
 						{
-							mobj->gravity = FRACUNIT/8;
+							mobj->Gravity = 1./8;
 						}
 					}
 					else

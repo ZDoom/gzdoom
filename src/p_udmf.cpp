@@ -471,7 +471,7 @@ public:
 		FString arg0str, arg1str;
 
 		memset(th, 0, sizeof(*th));
-		th->gravity = FRACUNIT;
+		th->Gravity = 1;
 		th->RenderStyle = STYLE_Count;
 		th->alpha = -1;
 		th->health = 1;
@@ -519,7 +519,7 @@ public:
 
 			case NAME_Gravity:
 				CHECK_N(Zd | Zdt)
-				th->gravity = CheckFixed(key);
+				th->Gravity = CheckFloat(key);
 				break;
 
 			case NAME_Arg0:

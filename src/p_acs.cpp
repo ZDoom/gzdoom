@@ -3918,7 +3918,7 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		break;
 
 	case APROP_Gravity:
-		actor->gravity = value;
+		actor->Gravity = ACSToDouble(value);
 		break;
 
 	case APROP_SeeSound:
@@ -4050,7 +4050,7 @@ int DLevelScript::GetActorProperty (int tid, int property)
 							// The current render style isn't expressable as a legacy style,
 							// so pretends it's normal.
 							return STYLE_Normal;
-	case APROP_Gravity:		return actor->gravity;
+	case APROP_Gravity:		return DoubleToACS(actor->Gravity);
 	case APROP_Invulnerable:return !!(actor->flags2 & MF2_INVULNERABLE);
 	case APROP_Ambush:		return !!(actor->flags & MF_AMBUSH);
 	case APROP_Dropped:		return !!(actor->flags & MF_DROPPED);

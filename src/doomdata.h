@@ -358,7 +358,7 @@ struct FMapThing
 	int			special;
 	int			args[5];
 	int			Conversation;
-	fixed_t		gravity;
+	double		Gravity;
 	fixed_t		alpha;
 	DWORD		fillcolor;
 	DVector2	Scale;

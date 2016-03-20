@@ -472,13 +472,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_MacePL1Check)
 	}
 	self->special1 = 0;
 	self->flags &= ~MF_NOGRAVITY;
-	self->gravity = FRACUNIT/8;
+	self->Gravity = 1. / 8;;
 	// [RH] Avoid some precision loss by scaling the velocity directly
 #if 0
 	// This is the original code, for reference.
-	a.ngle_t angle = self->_f_angle()>>ANGLETOF.INESHIFT;
-	self->vel.x = F.ixedMul(7*F.RACUNIT, f.inecosine[angle]);
-	self->vel.y = F.ixedMul(7*F.RACUNIT, f.inesine[angle]);
+	a.ngle_t angle = self->angle>>ANGLETOF.INESHIFT;
+	self->velx = F.ixedMul(7*F.RACUNIT, f.inecosine[angle]);
+	self->vely = F.ixedMul(7*F.RACUNIT, f.inesine[angle]);
 #else
 	double velscale = 7 / self->Vel.XY().Length();
 	self->Vel.X *= velscale;
@@ -510,7 +510,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MaceBallImpact)
 	{ // Explode
 		self->Vel.Zero();
 		self->flags |= MF_NOGRAVITY;
-		self->gravity = FRACUNIT;
+		self->Gravity = 1;
 		S_Sound (self, CHAN_BODY, "weapons/macehit", 1, ATTN_NORM);
 	}
 	return 0;
@@ -564,7 +564,7 @@ boom:
 		self->Vel.Zero();
 		self->flags |= MF_NOGRAVITY;
 		self->BounceFlags = BOUNCE_None;
-		self->gravity = FRACUNIT;
+		self->Gravity = 1;
 	}
 	return 0;
 }
@@ -680,7 +680,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DeathBallImpact)
 boom:
 		self->Vel.Zero();
 		self->flags |= MF_NOGRAVITY;
-		self->gravity = FRACUNIT;
+		self->Gravity = 1;
 		S_Sound (self, CHAN_BODY, "weapons/maceexplode", 1, ATTN_NORM);
 	}
 	return 0;

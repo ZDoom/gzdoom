@@ -242,7 +242,7 @@ void HandleDeprecatedFlags(AActor *defaults, PClassActor *info, bool set, int in
 		defaults->DamageType = set? NAME_Ice : NAME_None;
 		break;
 	case DEPF_LOWGRAVITY:
-		defaults->gravity = set? FRACUNIT/8 : FRACUNIT;
+		defaults->Gravity = set ? 1. / 8 : 1.;
 		break;
 	case DEPF_SHORTMISSILERANGE:
 		defaults->maxtargetrange = set? 896*FRACUNIT : 0;
@@ -251,7 +251,7 @@ void HandleDeprecatedFlags(AActor *defaults, PClassActor *info, bool set, int in
 		defaults->meleethreshold = set? 196*FRACUNIT : 0;
 		break;
 	case DEPF_QUARTERGRAVITY:
-		defaults->gravity = set? FRACUNIT/4 : FRACUNIT;
+		defaults->Gravity = set ? 1. / 4 : 1.;
 		break;
 	case DEPF_FIRERESIST:
 		info->SetDamageFactor(NAME_Fire, set? FRACUNIT/2 : FRACUNIT);
@@ -312,13 +312,13 @@ bool CheckDeprecatedFlags(const AActor *actor, PClassActor *info, int index)
 	case DEPF_ICEDAMAGE:
 		return actor->DamageType == NAME_Ice;
 	case DEPF_LOWGRAVITY:
-		return actor->gravity == FRACUNIT/8;
+		return actor->Gravity == 1./8;
 	case DEPF_SHORTMISSILERANGE:
 		return actor->maxtargetrange == 896*FRACUNIT;
 	case DEPF_LONGMELEERANGE:
 		return actor->meleethreshold == 196*FRACUNIT;
 	case DEPF_QUARTERGRAVITY:
-		return actor->gravity == FRACUNIT/4;
+		return actor->Gravity == 1./4;
 	case DEPF_FIRERESIST:
 		if (info->DamageFactors)
 		{
@@ -1339,10 +1339,10 @@ DEFINE_PROPERTY(vspeed, F, Actor)
 //==========================================================================
 DEFINE_PROPERTY(gravity, F, Actor)
 {
-	PROP_FIXED_PARM(i, 0);
+	PROP_DOUBLE_PARM(i, 0);
 
 	if (i < 0) I_Error ("Gravity must not be negative.");
-	defaults->gravity = i;
+	defaults->Gravity = i;
 }
 
 //==========================================================================

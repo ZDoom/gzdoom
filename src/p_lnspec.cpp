@@ -2464,11 +2464,11 @@ FUNC(LS_Sector_SetDamage)
 FUNC(LS_Sector_SetGravity)
 // Sector_SetGravity (tag, intpart, fracpart)
 {
-	float gravity;
+	double gravity;
 
 	if (arg2 > 99)
 		arg2 = 99;
-	gravity = (float)arg1 + (float)arg2 * 0.01f;
+	gravity = (double)arg1 + (double)arg2 * 0.01;
 
 	FSectorTagIterator itr(arg0);
 	int secnum;

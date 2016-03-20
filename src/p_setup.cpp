@@ -1755,7 +1755,7 @@ void P_LoadThings (MapData * map)
 
 		memset (&mti[i], 0, sizeof(mti[i]));
 
-		mti[i].gravity = FRACUNIT;
+		mti[i].Gravity = 1;
 		mti[i].Conversation = 0;
 		mti[i].SkillFilter = MakeSkill(flags);
 		mti[i].ClassFilter = 0xffff;	// Doom map format doesn't have class flags so spawn for all player classes
@@ -1854,7 +1854,7 @@ void P_LoadThings2 (MapData * map)
 			mti[i].flags &= 0x7ff;	// mask out Strife flags if playing an original Hexen map.
 		}
 
-		mti[i].gravity = FRACUNIT;
+		mti[i].Gravity = 1;
 		mti[i].RenderStyle = STYLE_Count;
 		mti[i].alpha = -1;
 		mti[i].health = 1;

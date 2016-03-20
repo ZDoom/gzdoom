@@ -388,7 +388,7 @@ void AActor::Serialize(FArchive &arc)
 		<< PainType
 		<< DeathType;
 	}
-	arc	<< gravity
+	arc	<< Gravity
 		<< FastChaseStrafeCount
 		<< master
 		<< smokecounter
@@ -3807,7 +3807,7 @@ void AActor::Tick ()
 				{
 					if (player)
 					{
-						if (_f_velz() < (fixed_t)(level.gravity * Sector->gravity * -655.36f)
+						if (Vel.Z < level.gravity * Sector->gravity * (-1./100)// -655.36f)
 							&& !(flags&MF_NOGRAVITY))
 						{
 							PlayerLandedOnThing (this, onmo);
@@ -4165,7 +4165,7 @@ AActor *AActor::StaticSpawn (PClassActor *type, fixed_t ix, fixed_t iy, fixed_t 
 	actor->health = actor->SpawnHealth();
 
 	// Actors with zero gravity need the NOGRAVITY flag set.
-	if (actor->gravity == 0) actor->flags |= MF_NOGRAVITY;
+	if (actor->Gravity == 0) actor->flags |= MF_NOGRAVITY;
 
 	FRandom &rng = bglobal.m_Thinking ? pr_botspawnmobj : pr_spawnmobj;
 
@@ -5137,8 +5137,8 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	mobj->SpawnAngle = mthing->angle;
 	mobj->SpawnFlags = mthing->flags;
 	if (mthing->FloatbobPhase >= 0 && mthing->FloatbobPhase < 64) mobj->FloatBobPhase = mthing->FloatbobPhase;
-	if (mthing->gravity < 0) mobj->gravity = -mthing->gravity;
-	else if (mthing->gravity > 0) mobj->gravity = FixedMul(mobj->gravity, mthing->gravity);
+	if (mthing->Gravity < 0) mobj->Gravity = -mthing->Gravity;
+	else if (mthing->Gravity > 0) mobj->Gravity *= mthing->Gravity;
 	else mobj->flags &= ~MF_NOGRAVITY;
 
 	// For Hexen floatbob 'compatibility' we do not really want to alter the floorz.
@@ -6561,7 +6561,7 @@ DDropItem *AActor::GetDropItems() const
 double AActor::GetGravity() const
 {
 	if (flags & MF_NOGRAVITY) return 0;
-	return level.gravity * Sector->gravity * FIXED2DBL(gravity) * 0.00125;
+	return level.gravity * Sector->gravity * Gravity * 0.00125;
 }
 
 // killough 11/98:

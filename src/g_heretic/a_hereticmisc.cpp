@@ -199,9 +199,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_VolcBallImpact)
 	if (self->Z() <= self->floorz)
 	{
 		self->flags |= MF_NOGRAVITY;
-		self->gravity = FRACUNIT;
-		self->_f_AddZ(28*FRACUNIT);
-		//self->Vel.Z = 3*FRACUNIT;
+		self->Gravity = 1;
+		self->AddZ(28);
+		//self->Vel.Z = 3;
 	}
 	P_RadiusAttack (self, self->target, 25, 25, NAME_Fire, RADF_HURTSOURCE);
 	for (i = 0; i < 4; i++)

@@ -1215,7 +1215,7 @@ static int PatchThing (int thingy)
 					}
 					if (value[1] & 0x00000001)
 					{
-						info->gravity = FRACUNIT/4;
+						info->Gravity = 1./4;
 						value[1] &= ~0x00000001;
 					}
 					info->flags2 = ActorFlags2::FromInt (value[1]);

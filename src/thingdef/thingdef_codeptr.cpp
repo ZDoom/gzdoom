@@ -3531,9 +3531,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PlayerSkinCheck)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetGravity)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_FIXED(gravity);
+	PARAM_FLOAT(gravity);
 	
-	self->gravity = clamp<fixed_t>(gravity, 0, FRACUNIT*10); 
+	self->Gravity = clamp(gravity, 0., 10.); 
 	return 0;
 }
 

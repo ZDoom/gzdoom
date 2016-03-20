@@ -612,7 +612,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Gravity)
 	PARAM_ACTION_PROLOGUE;
 
 	self->flags &= ~MF_NOGRAVITY;
-	self->gravity = FRACUNIT;
+	self->Gravity = 1;
 	return 0;
 }
 
@@ -627,7 +627,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LowGravity)
 	PARAM_ACTION_PROLOGUE;
 
 	self->flags &= ~MF_NOGRAVITY;
-	self->gravity = FRACUNIT/8;
+	self->Gravity = 1. / 8;;
 	return 0;
 }
 

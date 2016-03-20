@@ -148,6 +148,36 @@ enum
 	PICKAF_RETURNTID = 2,
 };
 
+// ACS specific conversion functions to and from fixed point.
+// These should be used to convert from and to sctipt variables
+// so that there is a clear distinction between leftover fixed point code
+// and genuinely needed conversions.
+
+inline double ACSToDouble(int acsval)
+{
+	return acsval / 65536.;
+}
+
+inline float ACSToFloat(int acsval)
+{
+	return acsval / 65536.f;
+}
+
+inline int DoubleToACS(double val)
+{
+	return xs_Fix<16>::ToFix(val);
+}
+
+inline DAngle ACSToAngle(int acsval)
+{
+	return acsval * (360. / 65536.);
+}
+
+inline int AngleToACS(DAngle ang)
+{
+	xs_CRoundToInt(ang.Degrees * (65536. / 360.));
+}
+
 struct CallReturn
 {
 	CallReturn(int pc, ScriptFunction *func, FBehavior *module, SDWORD *locals, ACSLocalArrays *arrays, bool discard, unsigned int runaway)
@@ -3805,7 +3835,7 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		break;
 
 	case APROP_Speed:
-		actor->Speed = FIXED2DBL(value);
+		actor->Speed = ACSToDouble(value);
 		break;
 
 	case APROP_Damage:
@@ -3849,7 +3879,7 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 
 	case APROP_JumpZ:
 		if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
-			static_cast<APlayerPawn *>(actor)->JumpZ = FIXED2DBL(value);
+			static_cast<APlayerPawn *>(actor)->JumpZ = ACSToDouble(value);
 		break; 	// [GRB]
 
 	case APROP_ChaseGoal:
@@ -3938,11 +3968,11 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		break;
 
 	case APROP_ScaleX:
-		actor->Scale.X = FIXED2DBL(value);
+		actor->Scale.X = ACSToDouble(value);
 		break;
 
 	case APROP_ScaleY:
-		actor->Scale.Y = FIXED2DBL(value);
+		actor->Scale.Y = ACSToDouble(value);
 		break;
 
 	case APROP_Mass:
@@ -4005,7 +4035,7 @@ int DLevelScript::GetActorProperty (int tid, int property)
 	switch (property)
 	{
 	case APROP_Health:		return actor->health;
-	case APROP_Speed:		return FLOAT2FIXED(actor->Speed);
+	case APROP_Speed:		return DoubleToACS(actor->Speed);
 	case APROP_Damage:		return actor->GetMissileDamage(0,1);
 	case APROP_DamageFactor:return actor->DamageFactor;
 	case APROP_DamageMultiplier: return actor->DamageMultiply;
@@ -4041,7 +4071,7 @@ int DLevelScript::GetActorProperty (int tid, int property)
 
 	case APROP_JumpZ:		if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
 							{
-								return FLOAT2FIXED(static_cast<APlayerPawn *>(actor)->JumpZ);	// [GRB]
+								return DoubleToACS(static_cast<APlayerPawn *>(actor)->JumpZ);	// [GRB]
 							}
 							else
 							{
@@ -4052,8 +4082,8 @@ int DLevelScript::GetActorProperty (int tid, int property)
 	case APROP_TargetTID:	return (actor->target != NULL)? actor->target->tid : 0;
 	case APROP_TracerTID:	return (actor->tracer != NULL)? actor->tracer->tid : 0;
 	case APROP_WaterLevel:	return actor->waterlevel;
-	case APROP_ScaleX: 		return FLOAT2FIXED(actor->Scale.X);
-	case APROP_ScaleY: 		return FLOAT2FIXED(actor->Scale.Y);
+	case APROP_ScaleX: 		return DoubleToACS(actor->Scale.X);
+	case APROP_ScaleY: 		return DoubleToACS(actor->Scale.Y);
 	case APROP_Mass: 		return actor->Mass;
 	case APROP_Accuracy:    return actor->accuracy;
 	case APROP_Stamina:     return actor->stamina;
@@ -4603,7 +4633,7 @@ static void DoSetCVar(FBaseCVar *cvar, int value, bool is_string, bool force=fal
 	}
 	else if (cvar->GetRealType() == CVAR_Float)
 	{
-		val.Float = FIXED2FLOAT(value);
+		val.Float = ACSToFloat(value);
 		type = CVAR_Float;
 	}
 	else
@@ -4634,7 +4664,7 @@ static int DoGetCVar(FBaseCVar *cvar, bool is_string)
 	else if (cvar->GetRealType() == CVAR_Float)
 	{
 		val = cvar->GetGenericRep(CVAR_Float);
-		return FLOAT2FIXED(val.Float);
+		return DoubleToACS(val.Float);
 	}
 	else
 	{
@@ -4745,7 +4775,7 @@ static bool DoSpawnDecal(AActor *actor, const FDecalTemplate *tpl, int flags, an
 
 static void SetActorAngle(AActor *activator, int tid, int angle, bool interpolate)
 {
-	DAngle an = angle * (360. / 65536.);
+	DAngle an = ACSToAngle(angle);
 	if (tid == 0)
 	{
 		if (activator != NULL)
@@ -4767,7 +4797,7 @@ static void SetActorAngle(AActor *activator, int tid, int angle, bool interpolat
 
 static void SetActorPitch(AActor *activator, int tid, int angle, bool interpolate)
 {
-	DAngle an = angle * (360. / 65536);
+	DAngle an = ACSToAngle(angle);
 	if (tid == 0)
 	{
 		if (activator != NULL)
@@ -4789,7 +4819,7 @@ static void SetActorPitch(AActor *activator, int tid, int angle, bool interpolat
 
 static void SetActorRoll(AActor *activator, int tid, int angle, bool interpolate)
 {
-	DAngle an = angle * (360. / 65536);
+	DAngle an = ACSToAngle(angle);
 	if (tid == 0)
 	{
 		if (activator != NULL)
@@ -4900,15 +4930,15 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 
 		case ACSF_GetActorVelX:
 			actor = SingleActorFromTID(args[0], activator);
-			return actor != NULL? FLOAT2FIXED(actor->Vel.X) : 0;
+			return actor != NULL? DoubleToACS(actor->Vel.X) : 0;
 
 		case ACSF_GetActorVelY:
 			actor = SingleActorFromTID(args[0], activator);
-			return actor != NULL? FLOAT2FIXED(actor->Vel.Y) : 0;
+			return actor != NULL? DoubleToACS(actor->Vel.Y) : 0;
 
 		case ACSF_GetActorVelZ:
 			actor = SingleActorFromTID(args[0], activator);
-			return actor != NULL? FLOAT2FIXED(actor->Vel.Z) : 0;
+			return actor != NULL? DoubleToACS(actor->Vel.Z) : 0;
 
 		case ACSF_SetPointer:
 			if (activator)
@@ -5013,8 +5043,8 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 
 		case ACSF_SetSkyScrollSpeed:
 		{
-			if (args[0] == 1) level.skyspeed1 = FIXED2FLOAT(args[1]);
-			else if (args[0] == 2) level.skyspeed2 = FIXED2FLOAT(args[1]);
+			if (args[0] == 1) level.skyspeed1 = ACSToFloat(args[1]);
+			else if (args[0] == 2) level.skyspeed2 = ACSToFloat(args[1]);
 			return 1;
 		}
 
@@ -5079,7 +5109,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
         
         case ACSF_SetActorVelocity:
 		{
-			DVector3 vel(FIXED2DBL(args[1]), FIXED2DBL(args[2]), FIXED2DBL(args[3]));
+			DVector3 vel(ACSToDouble(args[1]), ACSToDouble(args[2]), ACSToDouble(args[3]));
 			if (args[0] == 0)
 			{
 				P_Thing_SetVelocity(activator, vel, !!args[4], !!args[5]);
@@ -5344,10 +5374,10 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 			return xs_FloorToInt(g_sqrt(double(args[0])));
 
 		case ACSF_FixedSqrt:
-			return FLOAT2FIXED(g_sqrt(FIXED2DBL(args[0])));
+			return DoubleToACS(g_sqrt(ACSToDouble(args[0])));
 
 		case ACSF_VectorLength:
-			return FLOAT2FIXED(DVector2(FIXED2DBL(args[0]), FIXED2DBL(args[1])).Length());
+			return DoubleToACS(DVector2(ACSToDouble(args[0]), ACSToDouble(args[1])).Length());
 
 		case ACSF_SetHUDClipRect:
 			ClipRectLeft = argCount > 0 ? args[0] : 0;
@@ -5414,12 +5444,12 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 		//[RC] A bullet firing function for ACS. Thanks to DavidPH.
 		case ACSF_LineAttack:
 			{
-				DAngle angle		= args[1] * (360. / 65536.);
-				DAngle pitch		= args[2] * (360. / 65536.);
+				DAngle angle		= ACSToAngle(args[1]);
+				DAngle pitch		= ACSToAngle(args[2]);
 				int	damage			= args[3];
 				FName pufftype		= argCount > 4 && args[4]? FName(FBehavior::StaticLookupString(args[4])) : NAME_BulletPuff;
 				FName damagetype	= argCount > 5 && args[5]? FName(FBehavior::StaticLookupString(args[5])) : NAME_None;
-				double range		= argCount > 6 && args[6]? FIXED2DBL(args[6]) : MISSILERANGE;
+				double range		= argCount > 6 && args[6]? ACSToDouble(args[6]) : MISSILERANGE;
 				int flags			= argCount > 7 && args[7]? args[7] : 0;
 				int pufftid			= argCount > 8 && args[8]? args[8] : 0;
 
@@ -5474,9 +5504,9 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 					AActor *spot;
 
 					int chan = argCount > 2 ? args[2] : CHAN_BODY;
-					float vol = argCount > 3 ? FIXED2FLOAT(args[3]) : 1.f;
+					float vol = argCount > 3 ? ACSToFloat(args[3]) : 1.f;
 					INTBOOL looping = argCount > 4 ? args[4] : false;
-					float atten = argCount > 5 ? FIXED2FLOAT(args[5]) : ATTN_NORM;
+					float atten = argCount > 5 ? ACSToFloat(args[5]) : ATTN_NORM;
 
 					if (args[0] == 0)
 					{
@@ -5530,7 +5560,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			// SoundVolume(int tid, int channel, fixed volume)
 			{
 				int chan = args[1];
-				float volume = FIXED2FLOAT(args[2]);
+				float volume = ACSToFloat(args[2]);
 
 				if (args[0] == 0)
 				{
@@ -5751,9 +5781,9 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 		{
 			return P_StartQuakeXYZ(activator, args[0], args[1], args[2], args[3], args[4], args[5], args[6], FBehavior::StaticLookupString(args[7]), 
 				argCount > 8 ? args[8] : 0,
-				argCount > 9 ? FIXED2DBL(args[9]) : 1.0, 
-				argCount > 10 ? FIXED2DBL(args[10]) : 1.0, 
-				argCount > 11 ? FIXED2DBL(args[11]) : 1.0 );
+				argCount > 9 ? ACSToDouble(args[9]) : 1.0,
+				argCount > 10 ? ACSToDouble(args[10]) : 1.0,
+				argCount > 11 ? ACSToDouble(args[11]) : 1.0 );
 		}
 
 		case ACSF_SetLineActivation:
@@ -7739,7 +7769,7 @@ scriptwait:
 			break;
 
 		case PCD_PRINTFIXED:
-			work.AppendFormat ("%g", FIXED2FLOAT(STACK(1)));
+			work.AppendFormat ("%g", ACSToDouble(STACK(1)));
 			--sp;
 			break;
 
@@ -7952,9 +7982,9 @@ scriptwait:
 					int type = Stack[optstart-6];
 					int id = Stack[optstart-5];
 					EColorRange color;
-					float x = FIXED2FLOAT(Stack[optstart-3]);
-					float y = FIXED2FLOAT(Stack[optstart-2]);
-					float holdTime = FIXED2FLOAT(Stack[optstart-1]);
+					float x = ACSToFloat(Stack[optstart-3]);
+					float y = ACSToFloat(Stack[optstart-2]);
+					float holdTime = ACSToFloat(Stack[optstart-1]);
 					fixed_t alpha;
 					DHUDMessage *msg;
 
@@ -7975,23 +8005,23 @@ scriptwait:
 						break;
 					case 1:		// fade out
 						{
-							float fadeTime = (optstart < sp) ? FIXED2FLOAT(Stack[optstart]) : 0.5f;
+							float fadeTime = (optstart < sp) ? ACSToFloat(Stack[optstart]) : 0.5f;
 							alpha = (optstart < sp-1) ? Stack[optstart+1] : FRACUNIT;
 							msg = new DHUDMessageFadeOut (activefont, work, x, y, hudwidth, hudheight, color, holdTime, fadeTime);
 						}
 						break;
 					case 2:		// type on, then fade out
 						{
-							float typeTime = (optstart < sp) ? FIXED2FLOAT(Stack[optstart]) : 0.05f;
-							float fadeTime = (optstart < sp-1) ? FIXED2FLOAT(Stack[optstart+1]) : 0.5f;
+							float typeTime = (optstart < sp) ? ACSToFloat(Stack[optstart]) : 0.05f;
+							float fadeTime = (optstart < sp-1) ? ACSToFloat(Stack[optstart+1]) : 0.5f;
 							alpha = (optstart < sp-2) ? Stack[optstart+2] : FRACUNIT;
 							msg = new DHUDMessageTypeOnFadeOut (activefont, work, x, y, hudwidth, hudheight, color, typeTime, holdTime, fadeTime);
 						}
 						break;
 					case 3:		// fade in, then fade out
 						{
-							float inTime = (optstart < sp) ? FIXED2FLOAT(Stack[optstart]) : 0.5f;
-							float outTime = (optstart < sp-1) ? FIXED2FLOAT(Stack[optstart+1]) : 0.5f;
+							float inTime = (optstart < sp) ? ACSToFloat(Stack[optstart]) : 0.5f;
+							float outTime = (optstart < sp-1) ? ACSToFloat(Stack[optstart+1]) : 0.5f;
 							alpha = (optstart < sp-2) ? Stack[optstart+2] : FRACUNIT;
 							msg = new DHUDMessageFadeInOut (activefont, work, x, y, hudwidth, hudheight, color, holdTime, inTime, outTime);
 						}
@@ -8352,23 +8382,23 @@ scriptwait:
 			break;
 
 		case PCD_SETGRAVITY:
-			level.gravity = FIXED2DBL(STACK(1));
+			level.gravity = ACSToDouble(STACK(1));
 			sp--;
 			break;
 
 		case PCD_SETGRAVITYDIRECT:
-			level.gravity = FIXED2DBL(uallong(pc[0]));
+			level.gravity = ACSToDouble(uallong(pc[0]));
 			pc++;
 			break;
 
 		case PCD_SETAIRCONTROL:
-			level.aircontrol = FIXED2DBL(STACK(1));
+			level.aircontrol = ACSToDouble(STACK(1));
 			sp--;
 			G_AirControlChanged ();
 			break;
 
 		case PCD_SETAIRCONTROLDIRECT:
-			level.aircontrol = FIXED2DBL(uallong(pc[0]));
+			level.aircontrol = ACSToDouble(uallong(pc[0]));
 			pc++;
 			G_AirControlChanged ();
 			break;
@@ -8835,8 +8865,8 @@ scriptwait:
 
 				if (translation != NULL)
 					translation->AddDesaturation(start, end,
-						FIXED2DBL(r1), FIXED2DBL(g1), FIXED2DBL(b1),
-						FIXED2DBL(r2), FIXED2DBL(g2), FIXED2DBL(b2));
+						ACSToDouble(r1), ACSToDouble(g1), ACSToDouble(b1),
+						ACSToDouble(r2), ACSToDouble(g2), ACSToDouble(b2));
 			}
 			break;
 
@@ -9223,12 +9253,12 @@ scriptwait:
 				switch (STACK(1))
 				{
 				case PLAYERINFO_TEAM:			STACK(2) = userinfo->GetTeam(); break;
-				case PLAYERINFO_AIMDIST:		STACK(2) = FLOAT2ANGLE(userinfo->GetAimDist()); break;	// Yes, this has been returning a BAM since its creation.
+				case PLAYERINFO_AIMDIST:		STACK(2) = userinfo->GetAimDist() * (0x40000000/90.); break;	// Yes, this has been returning a BAM since its creation.
 				case PLAYERINFO_COLOR:			STACK(2) = userinfo->GetColor(); break;
 				case PLAYERINFO_GENDER:			STACK(2) = userinfo->GetGender(); break;
 				case PLAYERINFO_NEVERSWITCH:	STACK(2) = userinfo->GetNeverSwitch(); break;
-				case PLAYERINFO_MOVEBOB:		STACK(2) = FLOAT2FIXED(userinfo->GetMoveBob()); break;
-				case PLAYERINFO_STILLBOB:		STACK(2) = FLOAT2FIXED(userinfo->GetStillBob()); break;
+				case PLAYERINFO_MOVEBOB:		STACK(2) = DoubleToACS(userinfo->GetMoveBob()); break;
+				case PLAYERINFO_STILLBOB:		STACK(2) = DoubleToACS(userinfo->GetStillBob()); break;
 				case PLAYERINFO_PLAYERCLASS:	STACK(2) = userinfo->GetPlayerClassNum(); break;
 				case PLAYERINFO_DESIREDFOV:		STACK(2) = (int)pl->DesiredFOV; break;
 				case PLAYERINFO_FOV:			STACK(2) = (int)pl->FOV; break;

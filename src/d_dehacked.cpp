@@ -919,7 +919,7 @@ static int PatchThing (int thingy)
 			}
 			else if (stricmp (Line1, "Width") == 0)
 			{
-				info->radius = val;
+				info->radius = FIXED2FLOAT(val);
 			}
 			else if (stricmp (Line1, "Alpha") == 0)
 			{

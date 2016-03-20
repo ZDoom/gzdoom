@@ -45,9 +45,9 @@ void AFastProjectile::Tick ()
 
 	int shift = 3;
 	int count = 8;
-	if (radius > 0)
+	if (_f_radius() > 0)
 	{
-		while ( ((abs(_f_velx()) >> shift) > radius) || ((abs(_f_vely()) >> shift) > radius))
+		while ( ((abs(_f_velx()) >> shift) > _f_radius()) || ((abs(_f_vely()) >> shift) > _f_radius()))
 		{
 			// we need to take smaller steps.
 			shift++;

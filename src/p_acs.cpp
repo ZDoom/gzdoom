@@ -4088,7 +4088,7 @@ int DLevelScript::GetActorProperty (int tid, int property)
 	case APROP_Accuracy:    return actor->accuracy;
 	case APROP_Stamina:     return actor->stamina;
 	case APROP_Height:		return actor->height;
-	case APROP_Radius:		return actor->radius;
+	case APROP_Radius:		return actor->_f_radius();
 	case APROP_ReactionTime:return actor->reactiontime;
 	case APROP_MeleeRange:	return actor->meleerange;
 	case APROP_ViewHeight:	if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))

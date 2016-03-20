@@ -131,7 +131,7 @@ protected:
 	TObjPtr<AActor> m_Source;// Point source if point pusher
 	DVector2 m_PushVec;
 	double m_Magnitude;		// Vector strength for point pusher
-	double m_Radius;		// Effective radius for point pusher
+	double m_Radius;		// Effective _f_radius() for point pusher
 	int m_Affectee;			// Number of affected sector
 
 	friend bool PIT_PushThing (AActor *thing);

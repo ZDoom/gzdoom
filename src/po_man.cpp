@@ -1215,7 +1215,7 @@ bool FPolyObj::CheckMobjBlocking (side_t *sd)
 							performBlockingThrust = true;
 						}
 
-						FBoundingBox box(mobj->_f_X(), mobj->_f_Y(), mobj->radius);
+						FBoundingBox box(mobj->_f_X(), mobj->_f_Y(), mobj->_f_radius());
 
 						if (box.Right() <= ld->bbox[BOXLEFT]
 							|| box.Left() >= ld->bbox[BOXRIGHT]

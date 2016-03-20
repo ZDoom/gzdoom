@@ -648,7 +648,7 @@ CUSTOM_CVAR (Int, am_cheat, 0, 0)
 
 #define AM_NUMMARKPOINTS 10
 
-// player radius for automap checking
+// player _f_radius() for automap checking
 #define PLAYERRADIUS	16*MAPUNIT
 
 // how much the automap moves window per tic in frame-buffer coordinates
@@ -2920,7 +2920,7 @@ void AM_drawThings ()
 							{ { -MAPUNIT,  MAPUNIT }, { -MAPUNIT, -MAPUNIT } },
 						};
 
-						AM_drawLineCharacter (box, 4, t->radius >> FRACTOMAPBITS, angle - t->_f_angle(), color, p.x, p.y);
+						AM_drawLineCharacter (box, 4, t->_f_radius() >> FRACTOMAPBITS, angle - t->_f_angle(), color, p.x, p.y);
 					}
 				}
 			}

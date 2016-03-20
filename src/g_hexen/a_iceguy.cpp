@@ -34,7 +34,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_IceGuyLook)
 	CALL_ACTION(A_Look, self);
 	if (pr_iceguylook() < 64)
 	{
-		dist = ((pr_iceguylook()-128)*self->radius)>>7;
+		dist = ((pr_iceguylook()-128)*self->_f_radius())>>7;
 		an = (self->_f_angle()+ANG90)>>ANGLETOFINESHIFT;
 
 		Spawn(WispTypes[pr_iceguylook() & 1], self->Vec3Offset(
@@ -62,7 +62,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_IceGuyChase)
 	A_Chase (stack, self);
 	if (pr_iceguychase() < 128)
 	{
-		dist = ((pr_iceguychase()-128)*self->radius)>>7;
+		dist = ((pr_iceguychase()-128)*self->_f_radius())>>7;
 		an = (self->_f_angle()+ANG90)>>ANGLETOFINESHIFT;
 
 		mo = Spawn(WispTypes[pr_iceguychase() & 1], self->Vec3Offset(
@@ -92,8 +92,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_IceGuyAttack)
 	{
 		return 0;
 	}
-	P_SpawnMissileXYZ(self->_f_Vec3Angle(self->radius>>1, self->_f_angle()+ANG90, 40*FRACUNIT), self, self->target, PClass::FindActor ("IceGuyFX"));
-	P_SpawnMissileXYZ(self->_f_Vec3Angle(self->radius>>1, self->_f_angle()-ANG90, 40*FRACUNIT), self, self->target, PClass::FindActor ("IceGuyFX"));
+	P_SpawnMissileXYZ(self->_f_Vec3Angle(self->_f_radius()>>1, self->_f_angle()+ANG90, 40*FRACUNIT), self, self->target, PClass::FindActor ("IceGuyFX"));
+	P_SpawnMissileXYZ(self->_f_Vec3Angle(self->_f_radius()>>1, self->_f_angle()-ANG90, 40*FRACUNIT), self, self->target, PClass::FindActor ("IceGuyFX"));
 	S_Sound (self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NORM);
 	return 0;
 }

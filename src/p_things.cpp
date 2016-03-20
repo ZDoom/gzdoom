@@ -425,7 +425,7 @@ bool P_Thing_Raise(AActor *thing, AActor *raiser)
 
 	// [RH] Check against real height and radius
 	fixed_t oldheight = thing->height;
-	fixed_t oldradius = thing->radius;
+	double oldradius = thing->radius;
 	ActorFlags oldflags = thing->flags;
 
 	thing->flags |= MF_SOLID;
@@ -467,13 +467,13 @@ bool P_Thing_CanRaise(AActor *thing)
 	// Check against real height and radius
 	ActorFlags oldflags = thing->flags;
 	fixed_t oldheight = thing->height;
-	fixed_t oldradius = thing->radius;
+	double oldradius = thing->radius;
 
 	thing->flags |= MF_SOLID;
 	thing->height = info->height;
 	thing->radius = info->radius;
 
-	bool check = P_CheckPosition (thing, thing->_f_Pos());
+	bool check = P_CheckPosition (thing, thing->Pos());
 
 	// Restore checked properties
 	thing->flags = oldflags;
@@ -694,7 +694,7 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 		angle += (flags & WARPF_USECALLERANGLE) ? caller->_f_angle() : reference->_f_angle();
 	}
 
-	const fixed_t rad = FixedMul(radiusoffset, reference->radius);
+	const fixed_t rad = FixedMul(radiusoffset, reference->_f_radius());
 	const angle_t fineangle = angle >> ANGLETOFINESHIFT;
 
 	if (!(flags & WARPF_ABSOLUTEPOSITION))

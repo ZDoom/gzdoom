@@ -29,13 +29,13 @@ IMPLEMENT_CLASS(AGlassShard)
 
 // Dirt stuff
 
-void P_SpawnDirt (AActor *actor, fixed_t radius)
+void P_SpawnDirt (AActor *actor, double radius)
 {
 	PClassActor *dtype = NULL;
 	AActor *mo;
 
-	fixed_t zo = (pr_dirt() << 9) + FRACUNIT;
-	fixedvec3 pos = actor->_f_Vec3Angle(radius, pr_dirt() << 24, zo);
+	double zo = pr_dirt() / 128. + 1;
+	DVector3 pos = actor->Vec3Angle(radius, pr_dirt() * (360./256), zo);
 
 	char fmt[8];
 	mysnprintf(fmt, countof(fmt), "Dirt%d", 1 + pr_dirt()%6);

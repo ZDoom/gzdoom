@@ -9,7 +9,7 @@ static FRandom pr_orbit ("Orbit");
 
 // Custom bridge --------------------------------------------------------
 /*
-	args[0]: Bridge radius, in mapunits
+	args[0]: Bridge _f_radius(), in mapunits
 	args[1]: Bridge height, in mapunits
 	args[2]: Amount of bridge balls (if 0: Doom bridge)
 	args[3]: Rotation speed of bridge balls, in byte angle per seconds, sorta:
@@ -28,8 +28,8 @@ static FRandom pr_orbit ("Orbit");
 		233: -30° / seconds
 		244: -15° / seconds
 		This value only matters if args[2] is not zero.
-	args[4]: Rotation radius of bridge balls, in bridge radius %.
-		If 0, use Hexen default: ORBIT_RADIUS, regardless of bridge radius.
+	args[4]: Rotation _f_radius() of bridge balls, in bridge _f_radius() %.
+		If 0, use Hexen default: ORBIT_RADIUS, regardless of bridge _f_radius().
 		This value only matters if args[2] is not zero.
 */
 
@@ -48,12 +48,12 @@ void ACustomBridge::BeginPlay ()
 	if (args[2]) // Hexen bridge if there are balls
 	{
 		SetState(SeeState);
-		radius = args[0] ? args[0] << FRACBITS : 32 * FRACUNIT;
+		radius = args[0] ? args[0] : 32;
 		height = args[1] ? args[1] << FRACBITS : 2 * FRACUNIT;
 	}
 	else // No balls? Then a Doom bridge.
 	{
-		radius = args[0] ? args[0] << FRACBITS : 36 * FRACUNIT;
+		radius = args[0] ? args[0] : 36;
 		height = args[1] ? args[1] << FRACBITS : 4 * FRACUNIT;
 		RenderStyle = STYLE_Normal;
 	}
@@ -108,8 +108,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_BridgeOrbit)
 	// Set angular speed; 1--128: counterclockwise rotation ~=1--180°; 129--255: clockwise rotation ~= 180--1°
 	if (self->target->args[3] > 128) rotationspeed = 45./32 * (self->target->args[3]-256) / TICRATE;
 	else if (self->target->args[3] > 0) rotationspeed = 45./32 * (self->target->args[3]) / TICRATE;
-	// Set rotation radius
-	if (self->target->args[4]) rotationradius = ((self->target->args[4] * self->target->radius) / 100);
+	// Set rotation _f_radius()
+	if (self->target->args[4]) rotationradius = ((self->target->args[4] * self->target->_f_radius()) / 100);
 
 	self->Angles.Yaw += rotationspeed;
 	self->SetOrigin(self->target->Vec3Angle(rotationradius*FRACUNIT, self->Angles.Yaw, 0), true);
@@ -162,7 +162,7 @@ void AInvisibleBridge::BeginPlay ()
 {
 	Super::BeginPlay ();
 	if (args[0])
-		radius = args[0] << FRACBITS;
+		radius = args[0];
 	if (args[1])
 		height = args[1] << FRACBITS;
 }

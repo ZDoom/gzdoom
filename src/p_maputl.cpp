@@ -380,10 +380,10 @@ bool AActor::FixMapthingPos()
 			}
 
 			// Not inside the line's bounding box
-			if (_f_X() + radius <= ldef->bbox[BOXLEFT]
-				|| _f_X() - radius >= ldef->bbox[BOXRIGHT]
-				|| _f_Y() + radius <= ldef->bbox[BOXBOTTOM]
-				|| _f_Y() - radius >= ldef->bbox[BOXTOP])
+			if (_f_X() + _f_radius() <= ldef->bbox[BOXLEFT]
+				|| _f_X() - _f_radius() >= ldef->bbox[BOXRIGHT]
+				|| _f_Y() + _f_radius() <= ldef->bbox[BOXBOTTOM]
+				|| _f_Y() - _f_radius() >= ldef->bbox[BOXTOP])
 				continue;
 
 			// Get the exact distance to the line
@@ -399,7 +399,7 @@ bool AActor::FixMapthingPos()
 
 			fixed_t distance = abs(P_InterceptVector(&dlv, &dll));
 
-			if (distance < radius)
+			if (distance < _f_radius())
 			{
 				DPrintf("%s at (%d,%d) lies on %s line %td, distance = %f\n",
 					this->GetClass()->TypeName.GetChars(), _f_X() >> FRACBITS, _f_Y() >> FRACBITS,
@@ -417,7 +417,7 @@ bool AActor::FixMapthingPos()
 				finean >>= ANGLETOFINESHIFT;
 
 				// Get the distance we have to move the object away from the wall
-				distance = radius - distance;
+				distance = _f_radius() - distance;
 				SetXY(_f_X() + FixedMul(distance, finecosine[finean]), _f_Y() + FixedMul(distance, finesine[finean]));
 				ClearInterpolation();
 				success = true;
@@ -493,16 +493,16 @@ void AActor::LinkToWorld(bool spawningmapthing, sector_t *sector)
 	{
 		FPortalGroupArray check(FPortalGroupArray::PGA_NoSectorPortals);
 
-		P_CollectConnectedGroups(Sector->PortalGroup, _f_Pos(), _f_Top(), radius, check);
+		P_CollectConnectedGroups(Sector->PortalGroup, _f_Pos(), _f_Top(), _f_radius(), check);
 
 		for (int i = -1; i < (int)check.Size(); i++)
 		{
 			fixedvec3 pos = i==-1? _f_Pos() : PosRelative(check[i]);
 
-			int x1 = GetSafeBlockX(pos.x - radius - bmaporgx);
-			int x2 = GetSafeBlockX(pos.x + radius - bmaporgx);
-			int y1 = GetSafeBlockY(pos.y - radius - bmaporgy);
-			int y2 = GetSafeBlockY(pos.y + radius - bmaporgy);
+			int x1 = GetSafeBlockX(pos.x - _f_radius() - bmaporgx);
+			int x2 = GetSafeBlockX(pos.x + _f_radius() - bmaporgx);
+			int y1 = GetSafeBlockY(pos.y - _f_radius() - bmaporgy);
+			int y2 = GetSafeBlockY(pos.y + _f_radius() - bmaporgy);
 
 			if (x1 >= bmapwidth || x2 < 0 || y1 >= bmapheight || y2 < 0)
 			{ // thing is off the map
@@ -739,7 +739,7 @@ FMultiBlockLinesIterator::FMultiBlockLinesIterator(FPortalGroupArray &check, AAc
 {
 	checkpoint = origin->_f_Pos();
 	if (!check.inited) P_CollectConnectedGroups(origin->Sector->PortalGroup, checkpoint, origin->_f_Top(), checkradius, checklist);
-	checkpoint.z = checkradius == -1? origin->radius : checkradius;
+	checkpoint.z = checkradius == -1? origin->_f_radius() : checkradius;
 	basegroup = origin->Sector->PortalGroup;
 	startsector = origin->Sector;
 	Reset();
@@ -1074,7 +1074,7 @@ FMultiBlockThingsIterator::FMultiBlockThingsIterator(FPortalGroupArray &check, A
 {
 	checkpoint = origin->_f_Pos();
 	if (!check.inited) P_CollectConnectedGroups(origin->Sector->PortalGroup, checkpoint, origin->_f_Top(), checkradius, checklist);
-	checkpoint.z = checkradius == -1? origin->radius : checkradius;
+	checkpoint.z = checkradius == -1? origin->_f_radius() : checkradius;
 	basegroup = origin->Sector->PortalGroup;
 	Reset();
 }
@@ -1260,31 +1260,31 @@ void FPathTraverse::AddThingIntercepts (int bx, int by, FBlockThingsIterator &it
 				switch (i)
 				{
 				case 0:		// Top edge
-					line.x = thing->_f_X() + thing->radius;
-					line.y = thing->_f_Y() + thing->radius;
-					line.dx = -thing->radius * 2;
+					line.x = thing->_f_X() + thing->_f_radius();
+					line.y = thing->_f_Y() + thing->_f_radius();
+					line.dx = -thing->_f_radius() * 2;
 					line.dy = 0;
 					break;
 
 				case 1:		// Right edge
-					line.x = thing->_f_X() + thing->radius;
-					line.y = thing->_f_Y() - thing->radius;
+					line.x = thing->_f_X() + thing->_f_radius();
+					line.y = thing->_f_Y() - thing->_f_radius();
 					line.dx = 0;
-					line.dy = thing->radius * 2;
+					line.dy = thing->_f_radius() * 2;
 					break;
 
 				case 2:		// Bottom edge
-					line.x = thing->_f_X() - thing->radius;
-					line.y = thing->_f_Y() - thing->radius;
-					line.dx = thing->radius * 2;
+					line.x = thing->_f_X() - thing->_f_radius();
+					line.y = thing->_f_Y() - thing->_f_radius();
+					line.dx = thing->_f_radius() * 2;
 					line.dy = 0;
 					break;
 
 				case 3:		// Left edge
-					line.x = thing->_f_X() - thing->radius;
-					line.y = thing->_f_Y() + thing->radius;
+					line.x = thing->_f_X() - thing->_f_radius();
+					line.y = thing->_f_Y() + thing->_f_radius();
 					line.dx = 0;
-					line.dy = thing->radius * -2;
+					line.dy = thing->_f_radius() * -2;
 					break;
 				}
 				// Check if this side is facing the trace origin
@@ -1306,19 +1306,19 @@ void FPathTraverse::AddThingIntercepts (int bx, int by, FBlockThingsIterator &it
 								switch (i)
 								{
 								case 0:
-									line.y -= 2 * thing->radius;
+									line.y -= 2 * thing->_f_radius();
 									break;
 
 								case 1:
-									line.x -= 2 * thing->radius;
+									line.x -= 2 * thing->_f_radius();
 									break;
 
 								case 2:
-									line.y += 2 * thing->radius;
+									line.y += 2 * thing->_f_radius();
 									break;
 
 								case 3:
-									line.x += 2 * thing->radius;
+									line.x += 2 * thing->_f_radius();
 									break;
 								}
 								fixed_t frac2 = P_InterceptVector(&trace, &line);
@@ -1363,19 +1363,19 @@ void FPathTraverse::AddThingIntercepts (int bx, int by, FBlockThingsIterator &it
 			// check a corner to corner crossection for hit
 			if (tracepositive)
 			{
-				x1 = thing->_f_X() - thing->radius;
-				y1 = thing->_f_Y() + thing->radius;
+				x1 = thing->_f_X() - thing->_f_radius();
+				y1 = thing->_f_Y() + thing->_f_radius();
 						
-				x2 = thing->_f_X() + thing->radius;
-				y2 = thing->_f_Y() - thing->radius;					
+				x2 = thing->_f_X() + thing->_f_radius();
+				y2 = thing->_f_Y() - thing->_f_radius();					
 			}
 			else
 			{
-				x1 = thing->_f_X() - thing->radius;
-				y1 = thing->_f_Y() - thing->radius;
+				x1 = thing->_f_X() - thing->_f_radius();
+				y1 = thing->_f_Y() - thing->_f_radius();
 						
-				x2 = thing->_f_X() + thing->radius;
-				y2 = thing->_f_Y() + thing->radius;					
+				x2 = thing->_f_X() + thing->_f_radius();
+				y2 = thing->_f_Y() + thing->_f_radius();					
 			}
 			
 			s1 = P_PointOnDivlineSide (x1, y1, &trace);

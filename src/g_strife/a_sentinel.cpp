@@ -60,7 +60,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SentinelAttack)
 		for (int i = 8; i > 1; --i)
 		{
 			trail = Spawn("SentinelFX1",
-				self->_f_Vec3Angle(missile->radius*i, missile->_f_angle(), (missile->_f_velz() / 4 * i)), ALLOW_REPLACE);
+				self->_f_Vec3Angle(missile->_f_radius()*i, missile->_f_angle(), (missile->_f_velz() / 4 * i)), ALLOW_REPLACE);
 			if (trail != NULL)
 			{
 				trail->target = self;

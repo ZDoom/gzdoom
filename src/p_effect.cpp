@@ -408,13 +408,13 @@ static void MakeFountain (AActor *actor, int color1, int color2)
 	if (particle)
 	{
 		angle_t an = M_Random()<<(24-ANGLETOFINESHIFT);
-		fixed_t out = FixedMul (actor->radius, M_Random()<<8);
+		fixed_t out = FixedMul (actor->_f_radius(), M_Random()<<8);
 
 		fixedvec3 pos = actor->Vec3Offset(FixedMul(out, finecosine[an]), FixedMul(out, finesine[an]), actor->height + FRACUNIT);
 		particle->x = pos.x;
 		particle->y = pos.y;
 		particle->z = pos.z;
-		if (out < actor->radius/8)
+		if (out < actor->_f_radius()/8)
 			particle->vel.z += FRACUNIT*10/3;
 		else
 			particle->vel.z += FRACUNIT*3;
@@ -493,7 +493,7 @@ void P_RunEffect (AActor *actor, int effects)
 	{
 		// Grenade trail
 
-		fixedvec3 pos = actor->_f_Vec3Angle(-actor->radius * 2, moveangle.BAMs(),
+		fixedvec3 pos = actor->_f_Vec3Angle(-actor->_f_radius() * 2, moveangle.BAMs(),
 			fixed_t(-(actor->height >> 3) * (actor->Vel.Z) + (2 * actor->height) / 3));
 
 		P_DrawSplash2 (6, pos.x, pos.y, pos.z,
@@ -528,7 +528,7 @@ void P_RunEffect (AActor *actor, int effects)
 			if (particle != NULL)
 			{
 				angle_t ang = M_Random () << (32-ANGLETOFINESHIFT-8);
-				fixedvec3 pos = actor->Vec3Offset(FixedMul (actor->radius, finecosine[ang]), FixedMul (actor->radius, finesine[ang]), 0);
+				fixedvec3 pos = actor->Vec3Offset(FixedMul (actor->_f_radius(), finecosine[ang]), FixedMul (actor->_f_radius(), finesine[ang]), 0);
 				particle->x = pos.x;
 				particle->y = pos.y;
 				particle->z = pos.z;
@@ -887,8 +887,8 @@ void P_DisconnectEffect (AActor *actor)
 			break;
 
 		
-		fixed_t xo = ((M_Random() - 128) << 9) * (actor->radius >> FRACBITS);
-		fixed_t yo = ((M_Random() - 128) << 9) * (actor->radius >> FRACBITS);
+		fixed_t xo = ((M_Random() - 128) << 9) * (actor->_f_radius() >> FRACBITS);
+		fixed_t yo = ((M_Random() - 128) << 9) * (actor->_f_radius() >> FRACBITS);
 		fixed_t zo = (M_Random() << 8) * (actor->height >> FRACBITS);
 		fixedvec3 pos = actor->Vec3Offset(xo, yo, zo);
 		p->x = pos.x;

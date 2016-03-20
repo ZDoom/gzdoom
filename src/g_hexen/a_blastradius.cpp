@@ -41,8 +41,8 @@ void BlastActor (AActor *victim, fixed_t strength, double speed, AActor *Owner, 
 	// Spawn blast puff
 	angle -= 180.;
 	pos = victim->Vec3Offset(
-		fixed_t((victim->radius + FRACUNIT) * angle.Cos()),
-		fixed_t((victim->radius + FRACUNIT) * angle.Sin()),
+		fixed_t((victim->_f_radius() + FRACUNIT) * angle.Cos()),
+		fixed_t((victim->_f_radius() + FRACUNIT) * angle.Sin()),
 		-victim->floorclip + (victim->height>>1));
 	mo = Spawn (blasteffect, pos, ALLOW_REPLACE);
 	if (mo)
@@ -98,14 +98,13 @@ DEFINE_ACTION_FUNCTION_PARAMS (AActor, A_Blast)
 	PARAM_ACTION_PROLOGUE;
 	PARAM_INT_OPT	(blastflags)			{ blastflags = 0; }
 	PARAM_FIXED_OPT	(strength)				{ strength = 255*FRACUNIT; }
-	PARAM_FIXED_OPT	(radius)				{ radius = 255*FRACUNIT; }
+	PARAM_FLOAT_OPT	(radius)				{ radius = 255; }
 	PARAM_FLOAT_OPT	(speed)					{ speed = 20; }
 	PARAM_CLASS_OPT	(blasteffect, AActor)	{ blasteffect = PClass::FindActor("BlastEffect"); }
 	PARAM_SOUND_OPT	(blastsound)			{ blastsound = "BlastRadius"; }
 
 	AActor *mo;
 	TThinkerIterator<AActor> iterator;
-	fixed_t dist;
 
 	if (self->player && (blastflags & BF_USEAMMO) && ACTION_CALL_FROM_WEAPON())
 	{
@@ -144,8 +143,7 @@ DEFINE_ACTION_FUNCTION_PARAMS (AActor, A_Blast)
 		{	// Must be monster, player, missile, touchy or vulnerable
 			continue;
 		}
-		dist = self->AproxDistance (mo);
-		if (dist > radius)
+		if (self->Distance2D(mo) > radius)
 		{ // Out of range
 			continue;
 		}

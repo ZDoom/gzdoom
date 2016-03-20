@@ -1115,7 +1115,14 @@ public:
 	int				floorterrain;
 	struct sector_t	*ceilingsector;
 	FTextureID		ceilingpic;			// contacted sec ceilingpic
-	fixed_t			radius, height;		// for movement checking
+	double			radius;
+
+	inline fixed_t _f_radius() const
+	{
+		return FLOAT2FIXED(radius);
+	}
+
+	fixed_t			height;		// for movement checking
 	fixed_t			projectilepassheight;	// height for clipping projectile movement against this actor
 	SDWORD			tics;				// state tic counter
 	FState			*state;
@@ -1414,7 +1421,7 @@ public:
 	}
 	double _Radius() const
 	{
-		return FIXED2DBL(radius);
+		return FIXED2DBL(_f_radius());
 	}
 	double _pushfactor() const
 	{

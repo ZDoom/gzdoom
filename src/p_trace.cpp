@@ -714,8 +714,8 @@ bool FTraceInfo::ThingCheck(intercept_t *in)
 		hitz = StartZ + FixedMul(Vz, dist);
 
 		// calculated coordinate is outside the actor's bounding box
-		if (abs(hitx - in->d.thing->_f_X()) > in->d.thing->radius ||
-			abs(hity - in->d.thing->_f_Y()) > in->d.thing->radius) return true;
+		if (abs(hitx - in->d.thing->_f_X()) > in->d.thing->_f_radius() ||
+			abs(hity - in->d.thing->_f_Y()) > in->d.thing->_f_radius()) return true;
 	}
 	else if (hitz < in->d.thing->_f_Z())
 	{ // trace enters below actor
@@ -731,8 +731,8 @@ bool FTraceInfo::ThingCheck(intercept_t *in)
 		hitz = StartZ + FixedMul(Vz, dist);
 
 		// calculated coordinate is outside the actor's bounding box
-		if (abs(hitx - in->d.thing->_f_X()) > in->d.thing->radius ||
-			abs(hity - in->d.thing->_f_Y()) > in->d.thing->radius) return true;
+		if (abs(hitx - in->d.thing->_f_X()) > in->d.thing->_f_radius() ||
+			abs(hity - in->d.thing->_f_Y()) > in->d.thing->_f_radius()) return true;
 	}
 
 	if (CurSector->e->XFloor.ffloors.Size())

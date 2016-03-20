@@ -57,7 +57,17 @@ public:
 		setBox(x, y, radius);
 	}
 
+	FBoundingBox(double x, double y, double radius)
+	{
+		setBox(x, y, radius);
+	}
+
 	void setBox(fixed_t x, fixed_t y, fixed_t radius);
+
+	void setBox(double x, double y, double radius)
+	{
+		setBox(FLOAT2FIXED(x), FLOAT2FIXED(y), FLOAT2FIXED(radius));
+	}
 
 	void ClearBox ()
 	{

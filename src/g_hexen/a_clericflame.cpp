@@ -124,7 +124,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CFlameMissile)
 	AActor *BlockingMobj = self->BlockingMobj;
 	if (BlockingMobj && BlockingMobj->flags&MF_SHOOTABLE)
 	{ // Hit something, so spawn the flame circle around the thing
-		dist = BlockingMobj->radius+18*FRACUNIT;
+		dist = BlockingMobj->_f_radius()+18*FRACUNIT;
 		for (i = 0; i < 4; i++)
 		{
 			an = i*45.;

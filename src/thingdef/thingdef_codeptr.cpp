@@ -2401,7 +2401,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItem)
 	if (distance == 0) 
 	{
 		// use the minimum distance that does not result in an overlap
-		distance = (self->radius + GetDefaultByType(missile)->radius) >> FRACBITS;
+		distance = (self->_f_radius() + GetDefaultByType(missile)->_f_radius()) >> FRACBITS;
 	}
 
 	if (ACTION_CALL_FROM_WEAPON())
@@ -3321,13 +3321,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Burst)
 	// with no relation to the size of the self shattering. I think it should
 	// base the number of shards on the size of the dead thing, so bigger
 	// things break up into more shards than smaller things.
-	// An self with radius 20 and height 64 creates ~40 chunks.
-	numChunks = MAX<int> (4, (self->radius>>FRACBITS)*(self->height>>FRACBITS)/32);
+	// An self with _f_radius() 20 and height 64 creates ~40 chunks.
+	numChunks = MAX<int> (4, (self->_f_radius()>>FRACBITS)*(self->height>>FRACBITS)/32);
 	i = (pr_burst.Random2()) % (numChunks/4);
 	for (i = MAX (24, numChunks + i); i >= 0; i--)
 	{
-		fixed_t xo = (((pr_burst() - 128)*self->radius) >> 7);
-		fixed_t yo = (((pr_burst() - 128)*self->radius) >> 7);
+		fixed_t xo = (((pr_burst() - 128)*self->_f_radius()) >> 7);
+		fixed_t yo = (((pr_burst() - 128)*self->_f_radius()) >> 7);
 		fixed_t zo = (pr_burst()*self->height / 255 + self->GetBobOffset());
 		mo = Spawn(chunk, self->Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
 
@@ -3727,8 +3727,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
 		}
 		if (flags & CLOFF_MUL_WIDTH)
 		{
-			offsetforward = FixedMul(self->radius, offsetforward);
-			offsetwidth = FixedMul(self->radius, offsetwidth);
+			offsetforward = FixedMul(self->_f_radius(), offsetforward);
+			offsetwidth = FixedMul(self->_f_radius(), offsetwidth);
 		}
 		
 		pos = self->PosPlusZ(offsetheight - self->floorclip);
@@ -5100,7 +5100,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_WolfAttack)
 		// Compute position for spawning blood/puff
 		angle = self->target->__f_AngleTo(self);
 		
-		fixedvec3 bloodpos = self->target->_f_Vec3Angle(self->target->radius, angle, self->target->height >> 1);
+		fixedvec3 bloodpos = self->target->_f_Vec3Angle(self->target->_f_radius(), angle, self->target->height >> 1);
 
 
 		int damage = flags & WAF_NORANDOM ? maxdamage : (1 + (pr_cabullet() % maxdamage));

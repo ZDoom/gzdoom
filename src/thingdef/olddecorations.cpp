@@ -455,7 +455,7 @@ static void ParseInsideDecoration (Baggage &bag, AActor *defaults,
 		else if (sc.Compare ("Radius"))
 		{
 			sc.MustGetFloat ();
-			defaults->radius = int(sc.Float * FRACUNIT);
+			defaults->radius = sc.Float;
 		}
 		else if (sc.Compare ("Height"))
 		{

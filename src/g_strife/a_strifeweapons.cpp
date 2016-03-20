@@ -731,7 +731,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireGrenade)
 		fixedvec2 offset;
 
 		an = self->_f_angle() >> ANGLETOFINESHIFT;
-		tworadii = self->radius + grenade->radius;
+		tworadii = self->_f_radius() + grenade->_f_radius();
 		offset.x = FixedMul (finecosine[an], tworadii);
 		offset.y = FixedMul (finesine[an], tworadii);
 

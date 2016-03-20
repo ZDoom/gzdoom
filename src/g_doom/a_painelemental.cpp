@@ -62,7 +62,7 @@ void A_PainShootSkull (AActor *self, DAngle Angle, PClassActor *spawntype, int f
 	}
 
 	// okay, there's room for another one
-	prestep = 4 + FIXED2FLOAT(self->radius + GetDefaultByType(spawntype)->radius) * 1.5;
+	prestep = 4 + (self->radius + GetDefaultByType(spawntype)->radius) * 1.5;
 
 	// NOTE: The following code contains some advance work for line-to-line portals which is currenty inactive.
 

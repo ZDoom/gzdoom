@@ -2197,7 +2197,7 @@ int DPusher::CheckForSectorMatch (EPusher type, int tag)
 
 /////////////////////////////
 //
-// T_Pusher looks for all objects that are inside the radius of
+// T_Pusher looks for all objects that are inside the _f_radius() of
 // the effect.
 //
 void DPusher::Tick ()
@@ -2239,7 +2239,7 @@ void DPusher::Tick ()
 
 	if (m_Type == p_push)
 	{
-		// Seek out all pushable things within the force radius of this
+		// Seek out all pushable things within the force _f_radius() of this
 		// point pusher. Crosses sectors, so use blockmap.
 
 		FPortalGroupArray check(FPortalGroupArray::PGA_NoSectorPortals);	// no sector portals because this thing is utterly z-unaware.
@@ -2266,7 +2266,7 @@ void DPusher::Tick ()
 				double dist = pos.Length();
 				double speed = (m_Magnitude - (dist/2)) / (PUSH_FACTOR * 2);
 
-				// If speed <= 0, you're outside the effective radius. You also have
+				// If speed <= 0, you're outside the effective _f_radius(). You also have
 				// to be able to see the push/pull source point.
 
 				if ((speed > 0) && (P_CheckSight (thing, m_Source, SF_IGNOREVISIBILITY)))

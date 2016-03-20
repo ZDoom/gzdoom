@@ -435,7 +435,7 @@ bool P_TeleportMove(AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefra
 	sector_t *sector = P_PointInSector(x, y);
 
 	FPortalGroupArray grouplist;
-	FMultiBlockLinesIterator mit(grouplist, x, y, z, thing->height, thing->radius, sector);
+	FMultiBlockLinesIterator mit(grouplist, x, y, z, thing->height, thing->_f_radius(), sector);
 	FMultiBlockLinesIterator::CheckResult cres;
 
 	while (mit.Next(&cres))
@@ -446,7 +446,7 @@ bool P_TeleportMove(AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefra
 
 	if (tmf.touchmidtex) tmf.dropoffz = tmf.floorz;
 
-	FMultiBlockThingsIterator mit2(grouplist, x, y, z, thing->height, thing->radius, false, sector);
+	FMultiBlockThingsIterator mit2(grouplist, x, y, z, thing->height, thing->_f_radius(), false, sector);
 	FMultiBlockThingsIterator::CheckResult cres2;
 
 	while (mit2.Next(&cres2))
@@ -460,7 +460,7 @@ bool P_TeleportMove(AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefra
 		if (th == thing)
 			continue;
 
-		fixed_t blockdist = th->radius + tmf.thing->radius;
+		fixed_t blockdist = th->_f_radius() + tmf.thing->_f_radius();
 		if (abs(th->_f_X() - cres2.position.x) >= blockdist || abs(th->_f_Y() - cres2.position.y) >= blockdist)
 			continue;
 
@@ -557,7 +557,7 @@ void P_PlayerStartStomp(AActor *actor, bool mononly)
 		if (th == actor || (th->player == actor->player && th->player != NULL))
 			continue;
 
-		fixed_t blockdist = th->radius + actor->radius;
+		fixed_t blockdist = th->_f_radius() + actor->_f_radius();
 		if (abs(th->_f_X() - cres.position.x) >= blockdist || abs(th->_f_Y() - cres.position.y) >= blockdist)
 			continue;
 
@@ -1031,7 +1031,7 @@ static bool PIT_CheckPortal(FMultiBlockLinesIterator &mit, FMultiBlockLinesItera
 	if (lp->backsector == NULL) lp->backsector = lp->frontsector;
 	tm.thing->_f_AddZ(zofs);
 
-	FBoundingBox pbox(cres.position.x, cres.position.y, tm.thing->radius);
+	FBoundingBox pbox(cres.position.x, cres.position.y, tm.thing->_f_radius());
 	FBlockLinesIterator it(pbox);
 	bool ret = false;
 	line_t *ld;
@@ -1199,7 +1199,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 	if (!((thing->flags & (MF_SOLID | MF_SPECIAL | MF_SHOOTABLE)) || thing->flags6 & MF6_TOUCHY))
 		return true;	// can't hit thing
 
-	fixed_t blockdist = thing->radius + tm.thing->radius;
+	fixed_t blockdist = thing->_f_radius() + tm.thing->_f_radius();
 	if (abs(thing->_f_X() - cres.position.x) >= blockdist || abs(thing->_f_Y() - cres.position.y) >= blockdist)
 		return true;
 
@@ -1230,8 +1230,8 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 				// way to do this, so I restrict them to only walking on bridges instead.
 				// Uncommenting the if here makes it almost impossible for them to walk on
 				// anything, bridge or otherwise.
-				//			if (abs(thing->x - tmx) <= thing->radius &&
-				//				abs(thing->y - tmy) <= thing->radius)
+				//			if (abs(thing->x - tmx) <= thing->_f_radius() &&
+				//				abs(thing->y - tmy) <= thing->_f_radius())
 				{
 					tm.stepthing = thing;
 					tm.floorz = topz;
@@ -1248,8 +1248,8 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 			{
 				unblocking = true;
 			}
-			else if (abs(thing->_f_X() - oldpos.x) < (thing->radius + tm.thing->radius) &&
-				abs(thing->_f_Y() - oldpos.y) < (thing->radius + tm.thing->radius))
+			else if (abs(thing->_f_X() - oldpos.x) < (thing->_f_radius() + tm.thing->_f_radius()) &&
+				abs(thing->_f_Y() - oldpos.y) < (thing->_f_radius() + tm.thing->_f_radius()))
 
 			{
 				fixed_t newdist = thing->AproxDistance(cres.position.x, cres.position.y);
@@ -1647,10 +1647,10 @@ bool P_CheckPosition(AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm, bo
 	}
 
 	tm.stepthing = NULL;
-	FBoundingBox box(x, y, thing->radius);
+	FBoundingBox box(x, y, thing->_f_radius());
 
 	FPortalGroupArray pcheck;
-	FMultiBlockThingsIterator it2(pcheck, x, y, thing->_f_Z(), thing->height, thing->radius, false, newsec);
+	FMultiBlockThingsIterator it2(pcheck, x, y, thing->_f_Z(), thing->height, thing->_f_radius(), false, newsec);
 	FMultiBlockThingsIterator::CheckResult tcres;
 
 	while ((it2.Next(&tcres)))
@@ -1720,7 +1720,7 @@ bool P_CheckPosition(AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm, bo
 	spechit.Clear();
 	portalhit.Clear();
 
-	FMultiBlockLinesIterator it(pcheck, x, y, thing->_f_Z(), thing->height, thing->radius, newsec);
+	FMultiBlockLinesIterator it(pcheck, x, y, thing->_f_Z(), thing->height, thing->_f_radius(), newsec);
 	FMultiBlockLinesIterator::CheckResult lcres;
 
 	fixed_t thingdropoffz = tm.floorz;
@@ -1847,7 +1847,7 @@ bool P_TestMobjZ(AActor *actor, bool quick, AActor **pOnmobj)
 	{
 		AActor *thing = cres.thing;
 
-		fixed_t blockdist = thing->radius + actor->radius;
+		fixed_t blockdist = thing->_f_radius() + actor->_f_radius();
 		if (abs(thing->_f_X() - cres.position.x) >= blockdist || abs(thing->_f_Y() - cres.position.y) >= blockdist)
 		{
 			continue;
@@ -2906,24 +2906,24 @@ retry:
 	// trace along the three leading corners
 	if (tryx > 0)
 	{
-		leadx = mo->_f_X() + mo->radius;
-		trailx = mo->_f_X() - mo->radius;
+		leadx = mo->_f_X() + mo->_f_radius();
+		trailx = mo->_f_X() - mo->_f_radius();
 	}
 	else
 	{
-		leadx = mo->_f_X() - mo->radius;
-		trailx = mo->_f_X() + mo->radius;
+		leadx = mo->_f_X() - mo->_f_radius();
+		trailx = mo->_f_X() + mo->_f_radius();
 	}
 
 	if (tryy > 0)
 	{
-		leady = mo->_f_Y() + mo->radius;
-		traily = mo->_f_Y() - mo->radius;
+		leady = mo->_f_Y() + mo->_f_radius();
+		traily = mo->_f_Y() - mo->_f_radius();
 	}
 	else
 	{
-		leady = mo->_f_Y() - mo->radius;
-		traily = mo->_f_Y() + mo->radius;
+		leady = mo->_f_Y() - mo->_f_radius();
+		traily = mo->_f_Y() + mo->_f_radius();
 	}
 
 	bestslidefrac = FRACUNIT + 1;
@@ -3235,19 +3235,19 @@ bool FSlide::BounceWall(AActor *mo)
 	//
 	if (mo->Vel.X > 0)
 	{
-		leadx = mo->_f_X() + mo->radius;
+		leadx = mo->_f_X() + mo->_f_radius();
 	}
 	else
 	{
-		leadx = mo->_f_X() - mo->radius;
+		leadx = mo->_f_X() - mo->_f_radius();
 	}
 	if (mo->Vel.Y > 0)
 	{
-		leady = mo->_f_Y() + mo->radius;
+		leady = mo->_f_Y() + mo->_f_radius();
 	}
 	else
 	{
-		leady = mo->_f_Y() - mo->radius;
+		leady = mo->_f_Y() - mo->_f_radius();
 	}
 	bestslidefrac = FRACUNIT + 1;
 	bestslideline = mo->BlockingLine;
@@ -3300,12 +3300,12 @@ bool FSlide::BounceWall(AActor *mo)
 	movelen = fixed_t(g_sqrt(double(mo->_f_velx())*mo->_f_velx() + double(mo->_f_vely())*mo->_f_vely()));
 	movelen = FixedMul(movelen, mo->wallbouncefactor);
 
-	FBoundingBox box(mo->_f_X(), mo->_f_Y(), mo->radius);
+	FBoundingBox box(mo->_f_X(), mo->_f_Y(), mo->_f_radius());
 	if (box.BoxOnLineSide(line) == -1)
 	{
 		fixedvec3 pos = mo->Vec3Offset(
-			FixedMul(mo->radius, finecosine[deltaangle]),
-			FixedMul(mo->radius, finesine[deltaangle]), 0);
+			FixedMul(mo->_f_radius(), finecosine[deltaangle]),
+			FixedMul(mo->_f_radius(), finesine[deltaangle]), 0);
 		mo->SetOrigin(pos, true);
 
 	}
@@ -4238,7 +4238,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 				fixedvec2 pos = P_GetOffsetPosition(trace.HitPos.x, trace.HitPos.y, -trace.HitVector.x * 4, -trace.HitVector.y * 4);
 				puff = P_SpawnPuff(t1, pufftype, pos.x, pos.y, trace.HitPos.z - trace.HitVector.z * 4, trace.SrcAngleToTarget,
 					trace.SrcAngleToTarget - ANGLE_90, 0, puffFlags);
-				puff->radius = 1;
+				puff->radius = 1/65536.;
 			}
 
 			// [RH] Spawn a decal
@@ -5253,7 +5253,7 @@ void P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bo
 	while ((it.Next(&cres)))
 	{
 		AActor *thing = cres.thing;
-		// Vulnerable actors can be damaged by radius attacks even if not shootable
+		// Vulnerable actors can be damaged by _f_radius() attacks even if not shootable
 		// Used to emulate MBF's vulnerability of non-missile bouncers to explosions.
 		if (!((thing->flags & MF_SHOOTABLE) || (thing->flags6 & MF6_VULNERABLE)))
 			continue;
@@ -5295,7 +5295,7 @@ void P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bo
 			fixedvec2 vec = bombspot->_f_Vec2To(thing);
 			dx = abs(vec.x);
 			dy = abs(vec.y);
-			boxradius = double(thing->radius);
+			boxradius = double(thing->_f_radius());
 
 			// The damage pattern is square, not circular.
 			len = double(dx > dy ? dx : dy);
@@ -5395,7 +5395,7 @@ void P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bo
 			dy = abs(vec.y);
 
 			dist = dx>dy ? dx : dy;
-			dist = (dist - thing->radius) >> FRACBITS;
+			dist = (dist - thing->_f_radius()) >> FRACBITS;
 
 			if (dist < 0)
 				dist = 0;
@@ -5515,7 +5515,7 @@ void P_FindAboveIntersectors(AActor *actor)
 	while (it.Next(&cres))
 	{
 		AActor *thing = cres.thing;
-		fixed_t blockdist = actor->radius + thing->radius;
+		fixed_t blockdist = actor->_f_radius() + thing->_f_radius();
 		if (abs(thing->_f_X() - cres.position.x) >= blockdist || abs(thing->_f_Y() - cres.position.y) >= blockdist)
 			continue;
 
@@ -5571,7 +5571,7 @@ void P_FindBelowIntersectors(AActor *actor)
 	while (it.Next(&cres))
 	{
 		AActor *thing = cres.thing;
-		fixed_t blockdist = actor->radius + thing->radius;
+		fixed_t blockdist = actor->_f_radius() + thing->_f_radius();
 		if (abs(thing->_f_X() - cres.position.x) >= blockdist || abs(thing->_f_Y() - cres.position.y) >= blockdist)
 			continue;
 
@@ -6340,7 +6340,7 @@ void P_CreateSecNodeList(AActor *thing, fixed_t x, fixed_t y)
 		node = node->m_tnext;
 	}
 
-	FBoundingBox box(thing->_f_X(), thing->_f_Y(), thing->radius);
+	FBoundingBox box(thing->_f_X(), thing->_f_Y(), thing->_f_radius());
 	FBlockLinesIterator it(box);
 	line_t *ld;
 
@@ -6365,7 +6365,7 @@ void P_CreateSecNodeList(AActor *thing, fixed_t x, fixed_t y)
 		sector_list = P_AddSecnode(ld->frontsector, thing, sector_list);
 
 		// Don't assume all lines are 2-sided, since some Things
-		// like MT_TFOG are allowed regardless of whether their radius takes
+		// like MT_TFOG are allowed regardless of whether their _f_radius() takes
 		// them beyond an impassable linedef.
 
 		// killough 3/27/98, 4/4/98:

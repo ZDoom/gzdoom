@@ -3206,7 +3206,7 @@ void FParser::SF_MoveCamera(void)
 			}
 		}
 
-		cam->radius=8;
+		cam->radius = 1 / 8192.;
 		cam->height=8;
 		if ((x != cam->_f_X() || y != cam->_f_Y()) && !P_TryMove(cam, x, y, true))
 		{
@@ -4100,11 +4100,9 @@ void FParser::SF_MobjRadius(void)
 		if(t_argc > 1)
 		{
 			if(mo) 
-				mo->radius = fixedvalue(t_argv[1]);
+				mo->radius = floatvalue(t_argv[1]);
 		}
-		
-		t_return.type = svt_fixed;
-		t_return.value.f = mo ? mo->radius : 0;
+		t_return.setDouble(mo ? mo->radius : 0.);
 	}
 }
 

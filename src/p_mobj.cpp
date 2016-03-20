@@ -1198,7 +1198,8 @@ bool AActor::Grind(bool items)
 		{
 			flags &= ~MF_SOLID;
 			flags3 |= MF3_DONTGIB;
-			height = radius = 0;
+			height = 0;
+			radius = 0;
 			return false;
 		}
 
@@ -1224,7 +1225,8 @@ bool AActor::Grind(bool items)
 			}
 			flags &= ~MF_SOLID;
 			flags3 |= MF3_DONTGIB;
-			height = radius = 0;
+			height = 0;
+			radius = 0;
 			SetState (state);
 			if (isgeneric)	// Not a custom crush state, so colorize it appropriately.
 			{
@@ -1259,7 +1261,8 @@ bool AActor::Grind(bool items)
 				// if there's no gib sprite don't crunch it.
 				flags &= ~MF_SOLID;
 				flags3 |= MF3_DONTGIB;
-				height = radius = 0;
+				height = 0;
+				radius = 0;
 				return false;
 			}
 
@@ -1871,10 +1874,10 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 	// through the actor.
 
 	{
-		fixed_t maxmove = mo->radius - FRACUNIT;
+		fixed_t maxmove = mo->_f_radius() - FRACUNIT;
 
 		if (maxmove <= 0)
-		{ // gibs can have radius 0, so don't divide by zero below!
+		{ // gibs can have _f_radius() 0, so don't divide by zero below!
 			maxmove = _f_MAXMOVE;
 		}
 
@@ -3456,8 +3459,8 @@ void AActor::Tick ()
 			{
 				smokecounter = 0;
 				angle_t moveangle = R_PointToAngle2(0,0,_f_velx(),_f_vely());
-				fixed_t xo = -FixedMul(finecosine[(moveangle) >> ANGLETOFINESHIFT], radius * 2) + (pr_rockettrail() << 10);
-				fixed_t yo = -FixedMul(finesine[(moveangle) >> ANGLETOFINESHIFT], radius * 2) + (pr_rockettrail() << 10);
+				fixed_t xo = -FixedMul(finecosine[(moveangle) >> ANGLETOFINESHIFT], _f_radius() * 2) + (pr_rockettrail() << 10);
+				fixed_t yo = -FixedMul(finesine[(moveangle) >> ANGLETOFINESHIFT], _f_radius() * 2) + (pr_rockettrail() << 10);
 				AActor * th = Spawn("GrenadeSmokeTrail", Vec3Offset(xo, yo, - (height>>3) * (_f_velz()>>16) + (2*height)/3), ALLOW_REPLACE);
 				if (th)
 				{
@@ -5762,7 +5765,7 @@ void P_CheckSplash(AActor *self, fixed_t distance)
 //
 //---------------------------------------------------------------------------
 
-bool P_CheckMissileSpawn (AActor* th, fixed_t maxdist)
+bool P_CheckMissileSpawn (AActor* th, double maxdist)
 {
 	// [RH] Don't decrement tics if they are already less than 1
 	if ((th->flags4 & MF4_RANDOMIZE) && th->tics > 0)
@@ -5775,9 +5778,8 @@ bool P_CheckMissileSpawn (AActor* th, fixed_t maxdist)
 	if (maxdist > 0)
 	{
 		// move a little forward so an angle can be computed if it immediately explodes
-		DVector3 advance(FIXED2DBL(th->_f_velx()), FIXED2DBL(th->_f_vely()), FIXED2DBL(th->_f_velz()));
-		double maxsquared = FIXED2DBL(maxdist);
-		maxsquared *= maxsquared;
+		DVector3 advance = th->Vel;
+		double maxsquared = maxdist*maxdist;
 
 		// Keep halving the advance vector until we get something less than maxdist
 		// units away, since we still want to spawn the missile inside the shooter.
@@ -5785,11 +5787,8 @@ bool P_CheckMissileSpawn (AActor* th, fixed_t maxdist)
 		{
 			advance *= 0.5f;
 		}
-		while (DVector2(advance).LengthSquared() >= maxsquared);
-		th->SetXYZ(
-			th->_f_X() + FLOAT2FIXED(advance.X),
-			th->_f_Y() + FLOAT2FIXED(advance.Y),
-			th->_f_Z() + FLOAT2FIXED(advance.Z));
+		while (advance.XY().LengthSquared() >= maxsquared);
+		th->SetXYZ(th->Pos() + advance);
 	}
 
 	FCheckPosition tm(!!(th->flags2 & MF2_RIP));

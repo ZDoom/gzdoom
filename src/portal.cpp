@@ -1118,7 +1118,7 @@ void P_CreateLinkedPortals()
 			if (!(actor->flags & MF_NOBLOCKMAP))
 			{
 				FPortalGroupArray check(FPortalGroupArray::PGA_NoSectorPortals);
-				P_CollectConnectedGroups(actor->Sector->PortalGroup, actor->_f_Pos(), actor->_f_Top(), actor->radius, check);
+				P_CollectConnectedGroups(actor->Sector->PortalGroup, actor->_f_Pos(), actor->_f_Top(), actor->_f_radius(), check);
 				if (check.Size() > 0)
 				{
 					actor->UnlinkFromWorld();

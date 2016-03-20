@@ -279,7 +279,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcBallOrbit)
 	angle_t angle, baseangle;
 	int mode = self->target->args[3];
 	AHeresiarch *parent = barrier_cast<AHeresiarch *>(self->target);
-	int dist = parent->radius - (self->radius<<1);
+	int dist = parent->_f_radius() - (self->_f_radius()<<1);
 	angle_t prevangle = self->special1;
 
 	if (!self->IsKindOf (RUNTIME_CLASS(ASorcBall)))
@@ -813,7 +813,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcFX2Orbit)
 		return 0;
 	}
 
-	fixed_t dist = parent->radius;
+	fixed_t dist = parent->_f_radius();
 
 	if ((parent->health <= 0) ||		// Sorcerer is dead
 		(!parent->args[0]))				// Time expired

@@ -903,7 +903,7 @@ CCMD(info)
 		PrintMiscActorInfo(t.linetarget);
 	}
 	else Printf("No target found. Info cannot find actors that have "
-				"the NOBLOCKMAP flag or have height/radius of 0.\n");
+				"the NOBLOCKMAP flag or have height/_f_radius() of 0.\n");
 }
 
 typedef bool (*ActorTypeChecker) (AActor *);

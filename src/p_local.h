@@ -370,7 +370,8 @@ enum	// P_RailAttack / A_RailAttack / A_CustomRailgun / P_DrawRailTrail flags
 };
 
 
-bool	P_CheckMissileSpawn (AActor *missile, fixed_t maxdist);
+bool	P_CheckMissileSpawn(AActor *missile, double maxdist);
+
 void	P_PlaySpawnSound(AActor *missile, AActor *spawner);
 
 // [RH] Position the chasecam

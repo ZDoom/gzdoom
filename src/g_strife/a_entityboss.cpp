@@ -94,7 +94,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_EntityDeath)
 	PARAM_ACTION_PROLOGUE;
 
 	AActor *second;
-	double secondRadius = FIXED2DBL(GetDefaultByName("EntitySecond")->radius * 2);
+	double secondRadius = FIXED2DBL(GetDefaultByName("EntitySecond")->_f_radius() * 2);
 
 	static const double turns[3] = { 0, 90, -90 };
 	const double velmul[3] = { 4.8828125f, secondRadius*4, secondRadius*4 };

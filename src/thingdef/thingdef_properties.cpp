@@ -624,8 +624,8 @@ DEFINE_PROPERTY(floatspeed, F, Actor)
 //==========================================================================
 DEFINE_PROPERTY(radius, F, Actor)
 {
-	PROP_FIXED_PARM(id, 0);
-	defaults->radius=id;
+	PROP_DOUBLE_PARM(id, 0);
+	defaults->radius = id;
 }
 
 //==========================================================================

@@ -271,7 +271,7 @@ bool AActor::CheckMeleeRange ()
 				
 	dist = AproxDistance (pl);
 
-	if (dist >= meleerange + pl->radius)
+	if (dist >= meleerange + pl->_f_radius())
 		return false;
 
 	// [RH] If moving toward goal, then we've reached it.
@@ -315,7 +315,7 @@ bool P_CheckMeleeRange2 (AActor *actor)
 	}
 	mo = actor->target;
 	dist = mo->AproxDistance (actor);
-	if (dist >= (128 << FRACBITS) || dist < actor->meleerange + mo->radius)
+	if (dist >= (128 << FRACBITS) || dist < actor->meleerange + mo->_f_radius())
 	{
 		return false;
 	}
@@ -517,7 +517,7 @@ bool P_Move (AActor *actor)
 
 	// Like P_XYMovement this should do multiple moves if the step size is too large
 
-	fixed_t maxmove = actor->radius - FRACUNIT;
+	fixed_t maxmove = actor->_f_radius() - FRACUNIT;
 	int steps = 1;
 
 	if (maxmove > 0)
@@ -884,7 +884,7 @@ void P_NewChaseDir(AActor * actor)
 		!(actor->flags2 & MF2_ONMOBJ) &&
 		!(actor->flags & MF_FLOAT) && !(i_compatflags & COMPATF_DROPOFF))
 	{
-		FBoundingBox box(actor->_f_X(), actor->_f_Y(), actor->radius);
+		FBoundingBox box(actor->_f_X(), actor->_f_Y(), actor->_f_radius());
 		FBlockLinesIterator it(box);
 		line_t *line;
 
@@ -968,7 +968,7 @@ void P_NewChaseDir(AActor * actor)
 			fixed_t dist = actor->AproxDistance(target);
 			if (target->player == NULL)
 			{
-				ismeleeattacker = (target->MissileState == NULL && dist < (target->meleerange + target->radius)*2);
+				ismeleeattacker = (target->MissileState == NULL && dist < (target->meleerange + target->_f_radius())*2);
 			}
 			else if (target->player->ReadyWeapon != NULL)
 			{
@@ -1198,7 +1198,7 @@ bool P_IsVisible(AActor *lookee, AActor *other, INTBOOL allaround, FLookExParams
 		{
 			// if real close, react anyway
 			// [KS] but respect minimum distance rules
-			if (mindist || dist > lookee->meleerange + lookee->radius)
+			if (mindist || dist > lookee->meleerange + lookee->_f_radius())
 				return false;	// outside of fov
 		}
 	}
@@ -2614,8 +2614,8 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 			FState *raisestate = corpsehit->GetRaiseState();
 			if (raisestate != NULL)
 			{
-				// use the current actor's radius instead of the Arch Vile's default.
-				fixed_t maxdist = corpsehit->GetDefault()->radius + self->radius;
+				// use the current actor's _f_radius() instead of the Arch Vile's default.
+				fixed_t maxdist = corpsehit->GetDefault()->_f_radius() + self->_f_radius();
 
 				if (abs(corpsehit->_f_Pos().x - cres.position.x) > maxdist ||
 					abs(corpsehit->_f_Pos().y - cres.position.y) > maxdist)
@@ -2649,15 +2649,15 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 				}
 
 				corpsehit->Vel.X = corpsehit->Vel.Y = 0;
-				// [RH] Check against real height and radius
+				// [RH] Check against real height and _f_radius()
 
 				fixed_t oldheight = corpsehit->height;
-				fixed_t oldradius = corpsehit->radius;
+				double oldradius = corpsehit->radius;
 				ActorFlags oldflags = corpsehit->flags;
 
 				corpsehit->flags |= MF_SOLID;
 				corpsehit->height = corpsehit->GetDefault()->height;
-				bool check = P_CheckPosition(corpsehit, corpsehit->_f_Pos());
+				bool check = P_CheckPosition(corpsehit, corpsehit->Pos());
 				corpsehit->flags = oldflags;
 				corpsehit->radius = oldradius;
 				corpsehit->height = oldheight;

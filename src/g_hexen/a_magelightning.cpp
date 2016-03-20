@@ -238,8 +238,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningZap)
 	{
 		deltaZ = -10*FRACUNIT;
 	}			
-	fixed_t xo = ((pr_zap() - 128)*self->radius / 256);
-	fixed_t yo = ((pr_zap() - 128)*self->radius / 256);
+	fixed_t xo = ((pr_zap() - 128)*self->_f_radius() / 256);
+	fixed_t yo = ((pr_zap() - 128)*self->_f_radius() / 256);
 
 	mo = Spawn(lightning, self->Vec3Offset(xo, yo, deltaZ), ALLOW_REPLACE);
 	if (mo)

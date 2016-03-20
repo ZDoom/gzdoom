@@ -1624,8 +1624,8 @@ bool P_CheckPosition(AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm, bo
 	else
 	{
 		// With noclip2, we must ignore 3D floors and go right to the uppermost ceiling and lowermost floor.
-		tm.floorz = tm.dropoffz = newsec->LowestFloorAt(x, y, &tm.floorsector);
-		tm.ceilingz = newsec->HighestCeilingAt(x, y, &tm.ceilingsector);
+		tm.floorz = tm.dropoffz = newsec->_f_LowestFloorAt(x, y, &tm.floorsector);
+		tm.ceilingz = newsec->_f_HighestCeilingAt(x, y, &tm.ceilingsector);
 		tm.floorpic = tm.floorsector->GetTexture(sector_t::floor);
 		tm.floorterrain = tm.floorsector->GetTerrain(sector_t::floor);
 		tm.ceilingpic = tm.ceilingsector->GetTexture(sector_t::ceiling);

@@ -124,7 +124,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 	PARAM_FLOAT_OPT	(range)				{ range = 0; }
 	PARAM_DANGLE_OPT(spread_xy)			{ spread_xy = 2.8125; }
 	PARAM_DANGLE_OPT(spread_z)			{ spread_z = 0.; }
-	PARAM_FIXED_OPT	(lifesteal)			{ lifesteal = 0; }
+	PARAM_FLOAT_OPT	(lifesteal)			{ lifesteal = 0; }
 	PARAM_INT_OPT	(lifestealmax)		{ lifestealmax = 0; }
 	PARAM_CLASS_OPT	(armorbonustype, ABasicArmorBonus)	{ armorbonustype = NULL; }
 
@@ -207,7 +207,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 			{
 				assert(armorbonustype->IsDescendantOf (RUNTIME_CLASS(ABasicArmorBonus)));
 				ABasicArmorBonus *armorbonus = static_cast<ABasicArmorBonus *>(Spawn(armorbonustype, 0,0,0, NO_REPLACE));
-				armorbonus->SaveAmount *= (actualdamage * lifesteal) >> FRACBITS;
+				armorbonus->SaveAmount = int(armorbonus->SaveAmount * actualdamage * lifesteal);
 				armorbonus->MaxSaveAmount = lifestealmax <= 0 ? armorbonus->MaxSaveAmount : lifestealmax;
 				armorbonus->flags |= MF_DROPPED;
 				armorbonus->ClearCounters();
@@ -221,7 +221,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 
 		else
 		{
-			P_GiveBody (self, (actualdamage * lifesteal) >> FRACBITS, lifestealmax);
+			P_GiveBody (self, int(actualdamage * lifesteal), lifestealmax);
 		}
 	}
 

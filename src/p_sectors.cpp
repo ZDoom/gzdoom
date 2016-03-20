@@ -889,7 +889,7 @@ void sector_t::CheckPortalPlane(int plane)
 //
 //===========================================================================
 
-fixed_t sector_t::HighestCeilingAt(fixed_t x, fixed_t y, sector_t **resultsec)
+fixed_t sector_t::_f_HighestCeilingAt(fixed_t x, fixed_t y, sector_t **resultsec)
 {
 	sector_t *check = this;
 	fixed_t planeheight = FIXED_MIN;
@@ -913,7 +913,7 @@ fixed_t sector_t::HighestCeilingAt(fixed_t x, fixed_t y, sector_t **resultsec)
 //
 //===========================================================================
 
-fixed_t sector_t::LowestFloorAt(fixed_t x, fixed_t y, sector_t **resultsec)
+fixed_t sector_t::_f_LowestFloorAt(fixed_t x, fixed_t y, sector_t **resultsec)
 {
 	sector_t *check = this;
 	fixed_t planeheight = FIXED_MAX;

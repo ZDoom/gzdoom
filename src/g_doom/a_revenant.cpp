@@ -28,12 +28,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_SkelMissile)
 		return 0;
 				
 	A_FaceTarget (self);
-	missile = P_SpawnMissileZ (self, self->_f_Z() + 48*FRACUNIT,
-		self->target, PClass::FindActor("RevenantTracer"));
+	self->AddZ(16.);
+	missile = P_SpawnMissile(self, self->target, PClass::FindActor("RevenantTracer"));
+	self->AddZ(-16.);
 
 	if (missile != NULL)
 	{
-		missile->SetOrigin(missile->Vec3Offset(missile->_f_velx(), missile->_f_vely(), 0), false);
+		missile->SetOrigin(missile->Vec3Offset(missile->Vel.X, missile->Vel.Y, 0.), false);
 		missile->tracer = self->target;
 	}
 	return 0;
@@ -63,9 +64,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_Tracer)
 		return 0;
 	
 	// spawn a puff of smoke behind the rocket
-	P_SpawnPuff (self, PClass::FindActor(NAME_BulletPuff), self->_f_Pos(), self->_f_angle(), self->_f_angle(), 3);
+	P_SpawnPuff (self, PClass::FindActor(NAME_BulletPuff), self->Pos(), self->Angles.Yaw, self->Angles.Yaw, 3);
 		
-	smoke = Spawn ("RevenantTracerSmoke", self->Vec3Offset(-self->_f_velx(), -self->_f_vely(), 0), ALLOW_REPLACE);
+	smoke = Spawn ("RevenantTracerSmoke", self->Vec3Offset(-self->Vel.X, -self->Vel.Y, 0.), ALLOW_REPLACE);
 	
 	smoke->Vel.Z = 1.;
 	smoke->tics -= pr_tracer()&3;

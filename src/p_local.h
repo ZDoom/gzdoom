@@ -118,10 +118,6 @@ void	P_PredictionLerpReset();
 // P_MOBJ
 //
 
-#define ONFLOORZ		FIXED_MIN
-#define ONCEILINGZ		FIXED_MAX
-#define FLOATRANDZ		(FIXED_MAX-1)
-
 #define SPF_TEMPPLAYER		1	// spawning a short-lived dummy player
 #define SPF_WEAPONFULLYUP	2	// spawn with weapon already raised
 
@@ -143,6 +139,10 @@ AActor *P_SpawnPuff (AActor *source, PClassActor *pufftype, fixed_t x, fixed_t y
 inline AActor *P_SpawnPuff(AActor *source, PClassActor *pufftype, const fixedvec3 &pos, angle_t hitdir, angle_t particledir, int updown, int flags = 0, AActor *vict = NULL)
 {
 	return P_SpawnPuff(source, pufftype, pos.x, pos.y, pos.z, hitdir, particledir, updown, flags, vict);
+}
+inline AActor *P_SpawnPuff(AActor *source, PClassActor *pufftype, const DVector3 &pos, DAngle hitdir, DAngle particledir, int updown, int flags = 0, AActor *vict = NULL)
+{
+	return P_SpawnPuff(source, pufftype, FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), FLOAT2FIXED(pos.Z), hitdir.BAMs(), particledir.BAMs(), updown, flags, vict);
 }
 void	P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage, AActor *originator);
 inline void	P_SpawnBlood(const fixedvec3 &pos, angle_t dir, int damage, AActor *originator)
@@ -258,6 +258,10 @@ inline bool P_CheckPosition(AActor *thing, const fixedvec3 &pos, bool actorsonly
 {
 	return P_CheckPosition(thing, pos.x, pos.y, actorsonly);
 }
+inline bool P_CheckPosition(AActor *thing, const DVector3 &pos, bool actorsonly = false)
+{
+	return P_CheckPosition(thing, FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), actorsonly);
+}
 AActor	*P_CheckOnmobj (AActor *thing);
 void	P_FakeZMovement (AActor *mo);
 bool	P_TryMove (AActor* thing, fixed_t x, fixed_t y, int dropoff, const secplane_t * onfloor, FCheckPosition &tm, bool missileCheck = false);
@@ -268,6 +272,10 @@ bool	P_TeleportMove (AActor* thing, fixed_t x, fixed_t y, fixed_t z, bool telefr
 inline bool	P_TeleportMove(AActor* thing, const fixedvec3 &pos, bool telefrag, bool modifyactor = true)
 {
 	return P_TeleportMove(thing, pos.x, pos.y, pos.z, telefrag, modifyactor);
+}
+inline bool	P_TeleportMove(AActor* thing, const DVector3 &pos, bool telefrag, bool modifyactor = true)
+{
+	return P_TeleportMove(thing, FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), FLOAT2FIXED(pos.Z), telefrag, modifyactor);
 }
 void	P_PlayerStartStomp (AActor *actor, bool mononly=false);		// [RH] Stomp on things for a newly spawned player
 void	P_SlideMove (AActor* mo, fixed_t tryx, fixed_t tryy, int numsteps);
@@ -346,6 +354,10 @@ inline bool	P_HitWater(AActor *thing, sector_t *sec, const fixedvec3 &pos, bool 
 	return P_HitWater(thing, sec, pos.x, pos.y, pos.z, checkabove, alert, force);
 }
 void	P_CheckSplash(AActor *self, fixed_t distance);
+inline void P_CheckSplash(AActor *self, double distance)
+{
+	return P_CheckSplash(self, FLOAT2FIXED(distance));
+}
 void	P_RailAttack (AActor *source, int damage, int offset_xy, fixed_t offset_z = 0, int color1 = 0, int color2 = 0, double maxdiff = 0, int flags = 0, PClassActor *puff = NULL, angle_t angleoffset = 0, angle_t pitchoffset = 0, fixed_t distance = 8192*FRACUNIT, int duration = 0, double sparsity = 1.0, double drift = 1.0, PClassActor *spawnclass = NULL, int SpiralOffset = 270);	// [RH] Shoot a railgun
 
 enum	// P_RailAttack / A_RailAttack / A_CustomRailgun / P_DrawRailTrail flags

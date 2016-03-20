@@ -31,9 +31,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_BrainPain)
 	return 0;
 }
 
-static void BrainishExplosion (fixed_t x, fixed_t y, fixed_t z)
+static void BrainishExplosion (const DVector3 &pos)
 {
-	AActor *boom = Spawn("Rocket", x, y, z, NO_REPLACE);
+	AActor *boom = Spawn("Rocket", pos, NO_REPLACE);
 	if (boom != NULL)
 	{
 		boom->DeathSound = "misc/brainexplode";
@@ -57,12 +57,11 @@ static void BrainishExplosion (fixed_t x, fixed_t y, fixed_t z)
 DEFINE_ACTION_FUNCTION(AActor, A_BrainScream)
 {
 	PARAM_ACTION_PROLOGUE;
-	fixed_t x;
-		
-	for (x = self->_f_X() - 196*FRACUNIT; x < self->_f_X() + 320*FRACUNIT; x += 8*FRACUNIT)
+
+	for (double x = -196; x < +320; x += 8)
 	{
-		BrainishExplosion (x, self->_f_Y() - 320*FRACUNIT,
-			128 + (pr_brainscream() << (FRACBITS + 1)));
+		// (1 / 512.) is actually what the original value of 128 did, even though it probably meant 128 map units.
+		BrainishExplosion(self->Vec2OffsetZ(x, -320, (1 / 512.) + pr_brainexplode() * 2));
 	}
 	S_Sound (self, CHAN_VOICE, "brain/death", 1, ATTN_NONE);
 	return 0;
@@ -71,9 +70,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_BrainScream)
 DEFINE_ACTION_FUNCTION(AActor, A_BrainExplode)
 {
 	PARAM_ACTION_PROLOGUE;
-	fixed_t x = self->_f_X() + pr_brainexplode.Random2()*2048;
-	fixed_t z = 128 + pr_brainexplode()*2*FRACUNIT;
-	BrainishExplosion (x, self->_f_Y(), z);
+	double x = pr_brainexplode.Random2() / 32.;
+	DVector3 pos = self->Vec2OffsetZ(x, 0, 1 / 512. + pr_brainexplode() * 2);
+	BrainishExplosion(pos);
 	return 0;
 }
 
@@ -286,7 +285,7 @@ static void SpawnFly(AActor *self, PClassActor *spawntype, FSoundID sound)
 			if (!(newmobj->ObjectFlags & OF_EuthanizeMe))
 			{
 				// telefrag anything in this spot
-				P_TeleportMove (newmobj, newmobj->_f_Pos(), true);
+				P_TeleportMove (newmobj, newmobj->Pos(), true);
 			}
 			newmobj->flags4 |= MF4_BOSSSPAWNED;
 		}

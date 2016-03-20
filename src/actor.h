@@ -534,6 +534,10 @@ enum EThingSpecialActivationType
 	THINGSPEC_Switch			= 1<<10,	// The thing is alternatively activated and deactivated when triggered
 };
 
+#define ONFLOORZ		FIXED_MIN
+#define ONCEILINGZ		FIXED_MAX
+#define FLOATRANDZ		(FIXED_MAX-1)
+
 
 class FDecalBase;
 class AInventory;
@@ -922,6 +926,31 @@ public:
 		else return P_GetOffsetPosition(_f_X(), _f_Y(), dx, dy);
 	}
 
+	DVector2 Vec2Offset(double dx, double dy, bool absolute = false)
+	{
+		if (absolute)
+		{
+			return { X() + dx, Y() + dy };
+		}
+		else
+		{
+			fixedvec2 v = P_GetOffsetPosition(_f_X(), _f_Y(), FLOAT2FIXED(dx), FLOAT2FIXED(dy));
+			return{ FIXED2DBL(v.x), FIXED2DBL(v.y) };
+		}
+	}
+
+	DVector3 Vec2OffsetZ(double dx, double dy, double atz, bool absolute = false)
+	{
+		if (absolute)
+		{
+			return{ X() + dx, Y() + dy, atz };
+		}
+		else
+		{
+			fixedvec2 v = P_GetOffsetPosition(_f_X(), _f_Y(), FLOAT2FIXED(dx), FLOAT2FIXED(dy));
+			return{ FIXED2DBL(v.x), FIXED2DBL(v.y), atz };
+		}
+	}
 
 	fixedvec2 Vec2Angle(fixed_t length, angle_t angle, bool absolute = false)
 	{
@@ -946,6 +975,19 @@ public:
 			fixedvec2 op = P_GetOffsetPosition(_f_X(), _f_Y(), dx, dy);
 			fixedvec3 pos = { op.x, op.y, _f_Z() + dz };
 			return pos;
+		}
+	}
+
+	DVector3 Vec3Offset(double dx, double dy, double dz, bool absolute = false)
+	{
+		if (absolute)
+		{
+			return { X() + dx, Y() + dy, Z() + dz };
+		}
+		else
+		{
+			fixedvec2 v = P_GetOffsetPosition(_f_X(), _f_Y(), FLOAT2FIXED(dx), FLOAT2FIXED(dy));
+			return{ FIXED2DBL(v.x), FIXED2DBL(v.y), Z() + dz };
 		}
 	}
 
@@ -1332,6 +1374,14 @@ public:
 		fixedvec3 ret = { _f_X(), _f_Y(), _f_Z() + zadd };
 		return ret;
 	}
+	DVector3 PosPlusZ(double zadd) const
+	{
+		return { X(), Y(), Z() + zadd };
+	}
+	DVector3 PosAtZ(double zadd) const
+	{
+		return{ X(), Y(), zadd };
+	}
 	fixed_t _f_Top() const
 	{
 		return _f_Z() + height;
@@ -1389,6 +1439,12 @@ public:
 		__pos.y = yy;
 		__pos.z = zz;
 	}
+	void SetXYZ(double xx, double yy, double zz)
+	{
+		__pos.x = FLOAT2FIXED(xx);
+		__pos.y = FLOAT2FIXED(yy);
+		__pos.z = FLOAT2FIXED(zz);
+	}
 	void SetXY(const fixedvec2 &npos)
 	{
 		__pos.x = npos.x;
@@ -1399,6 +1455,12 @@ public:
 		__pos.x = npos.x;
 		__pos.y = npos.y;
 		__pos.z = npos.z;
+	}
+	void SetXYZ(const DVector3 &npos)
+	{
+		__pos.x = FLOAT2FIXED(npos.X);
+		__pos.y = FLOAT2FIXED(npos.Y);
+		__pos.z = FLOAT2FIXED(npos.Z);
 	}
 
 	double VelXYToSpeed() const
@@ -1554,7 +1616,10 @@ inline AActor *Spawn (PClassActor *type, const fixedvec3 &pos, replace_t allowre
 
 inline AActor *Spawn(PClassActor *type, const DVector3 &pos, replace_t allowreplacement)
 {
-	return Spawn(type, FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), FLOAT2FIXED(pos.Z), allowreplacement);
+	fixed_t zz;
+	if (pos.Z != ONFLOORZ && pos.Z != ONCEILINGZ && pos.Z != FLOATRANDZ) zz = FLOAT2FIXED(pos.Z);
+	else zz = (int)pos.Z;
+	return Spawn(type, FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), zz, allowreplacement);
 }
 
 AActor *Spawn (const char *type, fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement);
@@ -1567,7 +1632,10 @@ inline AActor *Spawn (const char *type, const fixedvec3 &pos, replace_t allowrep
 
 inline AActor *Spawn(const char *type, const DVector3 &pos, replace_t allowreplacement)
 {
-	return Spawn(type, FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), FLOAT2FIXED(pos.Z), allowreplacement);
+	fixed_t zz;
+	if (pos.Z != ONFLOORZ && pos.Z != ONCEILINGZ && pos.Z != FLOATRANDZ) zz = FLOAT2FIXED(pos.Z);
+	else zz = (int)pos.Z;
+	return Spawn(type, FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), zz, allowreplacement);
 }
 
 inline AActor *Spawn (FName classname, const fixedvec3 &pos, replace_t allowreplacement)
@@ -1577,7 +1645,10 @@ inline AActor *Spawn (FName classname, const fixedvec3 &pos, replace_t allowrepl
 
 inline AActor *Spawn(FName type, const DVector3 &pos, replace_t allowreplacement)
 {
-	return Spawn(type, FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), FLOAT2FIXED(pos.Z), allowreplacement);
+	fixed_t zz;
+	if (pos.Z != ONFLOORZ && pos.Z != ONCEILINGZ && pos.Z != FLOATRANDZ) zz = FLOAT2FIXED(pos.Z);
+	else zz = (int)pos.Z;
+	return Spawn(type, FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), zz, allowreplacement);
 }
 
 
@@ -1596,7 +1667,10 @@ inline T *Spawn (const fixedvec3 &pos, replace_t allowreplacement)
 template<class T>
 inline T *Spawn(const DVector3 &pos, replace_t allowreplacement)
 {
-	return static_cast<T *>(AActor::StaticSpawn(RUNTIME_TEMPLATE_CLASS(T), FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), FLOAT2FIXED(pos.Z), allowreplacement));
+	fixed_t zz;
+	if (pos.Z != ONFLOORZ && pos.Z != ONCEILINGZ && pos.Z != FLOATRANDZ) zz = FLOAT2FIXED(pos.Z);
+	else zz = (int)pos.Z;
+	return static_cast<T *>(AActor::StaticSpawn(RUNTIME_TEMPLATE_CLASS(T), FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), zz, allowreplacement));
 }
 
 inline fixedvec2 Vec2Angle(fixed_t length, angle_t angle)

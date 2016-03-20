@@ -26,6 +26,7 @@
 #include "doomdef.h"
 #include "templates.h"
 #include "memarena.h"
+#include "m_bbox.h"
 
 // Some more or less basic data types
 // we depend on.
@@ -813,17 +814,27 @@ struct sector_t
 	bool PlaneMoving(int pos);
 
 	// Portal-aware height calculation
-	fixed_t HighestCeilingAt(fixed_t x, fixed_t y, sector_t **resultsec = NULL);
-	fixed_t LowestFloorAt(fixed_t x, fixed_t y, sector_t **resultsec = NULL);
+	fixed_t _f_HighestCeilingAt(fixed_t x, fixed_t y, sector_t **resultsec = NULL);
+	fixed_t _f_LowestFloorAt(fixed_t x, fixed_t y, sector_t **resultsec = NULL);
 
-	fixed_t HighestCeilingAt(AActor *a, sector_t **resultsec = NULL)
+	fixed_t _f_HighestCeilingAt(AActor *a, sector_t **resultsec = NULL)
 	{
-		return HighestCeilingAt(a->_f_X(), a->_f_Y(), resultsec);
+		return _f_HighestCeilingAt(a->_f_X(), a->_f_Y(), resultsec);
 	}
 
-	fixed_t LowestFloorAt(AActor *a, sector_t **resultsec = NULL)
+	double HighestCeilingAt(AActor *a, sector_t **resultsec = NULL)
 	{
-		return LowestFloorAt(a->_f_X(), a->_f_Y(), resultsec);
+		return FIXED2DBL(_f_HighestCeilingAt(a->_f_X(), a->_f_Y(), resultsec));
+	}
+
+	fixed_t _f_LowestFloorAt(AActor *a, sector_t **resultsec = NULL)
+	{
+		return _f_LowestFloorAt(a->_f_X(), a->_f_Y(), resultsec);
+	}
+
+	double LowestFloorAt(AActor *a, sector_t **resultsec = NULL)
+	{
+		return FIXED2DBL(_f_LowestFloorAt(a->_f_X(), a->_f_Y(), resultsec));
 	}
 
 	fixed_t NextHighestCeilingAt(fixed_t x, fixed_t y, fixed_t bottomz, fixed_t topz, int flags = 0, sector_t **resultsec = NULL, F3DFloor **resultffloor = NULL);
@@ -1311,6 +1322,14 @@ inline void AActor::ClearInterpolation()
 	PrevAngles = Angles;
 	if (Sector) PrevPortalGroup = Sector->PortalGroup;
 	else PrevPortalGroup = 0;
+}
+
+inline bool FBoundingBox::inRange(const line_t *ld) const
+{
+	return (!(Left() > ld->bbox[BOXRIGHT] ||
+		Right() < ld->bbox[BOXLEFT] ||
+		Top() < ld->bbox[BOXBOTTOM] ||
+		Bottom() > ld->bbox[BOXTOP]));
 }
 
 

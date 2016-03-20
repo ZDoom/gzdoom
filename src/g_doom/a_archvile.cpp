@@ -13,7 +13,7 @@
 // PIT_VileCheck
 // Detect a corpse that could be raised.
 //
-void A_Fire(AActor *self, int height);
+void A_Fire(AActor *self, double height);
 
 
 //
@@ -50,13 +50,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireCrackle)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Fire)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_FIXED_OPT(height)		{ height = 0; }
+	PARAM_FLOAT_OPT(height)		{ height = 0; }
 	
 	A_Fire(self, height);
 	return 0;
 }
 
-void A_Fire(AActor *self, int height)
+void A_Fire(AActor *self, double height)
 {
 	AActor *dest;
 				
@@ -116,7 +116,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_VileAttack)
 	PARAM_INT_OPT	(dmg)		{ dmg = 20; }
 	PARAM_INT_OPT	(blastdmg)	{ blastdmg = 70; }
 	PARAM_INT_OPT	(blastrad)	{ blastrad = 70; }
-	PARAM_FIXED_OPT	(thrust)	{ thrust = FRACUNIT; }
+	PARAM_FLOAT_OPT	(thrust)	{ thrust = 1; }
 	PARAM_NAME_OPT	(dmgtype)	{ dmgtype = NAME_Fire; }
 	PARAM_INT_OPT	(flags)		{ flags = 0; }
 
@@ -154,7 +154,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_VileAttack)
 	}
 	if (!(target->flags7 & MF7_DONTTHRUST))
 	{
-		target->Vel.Z = FIXED2FLOAT(Scale(thrust, 1000, target->Mass));
+		target->Vel.Z = thrust * 1000 / MAX(1, target->Mass);
 	}
 	return 0;
 }

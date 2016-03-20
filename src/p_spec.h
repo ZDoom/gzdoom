@@ -568,6 +568,14 @@ bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
 				int tag, int speed, int delay, int lock,
 				int lightTag, bool boomgen = false, int topcountdown = 0);
 
+inline bool EV_DoDoor(DDoor::EVlDoor type, line_t *line, AActor *thing,
+	int tag, double speed, int delay, int lock,
+	int lightTag, bool boomgen = false, int topcountdown = 0)
+{
+	return EV_DoDoor(type, line, thing, tag, FLOAT2FIXED(speed), delay, lock, lightTag, boomgen, topcountdown);
+}
+
+
 class DAnimatedDoor : public DMovingCeiling
 {
 	DECLARE_CLASS (DAnimatedDoor, DMovingCeiling)

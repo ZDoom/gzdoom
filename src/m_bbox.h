@@ -23,6 +23,7 @@
 #define __M_BBOX_H__
 
 #include "doomtype.h"
+#include "m_fixed.h"
 
 struct line_t;
 struct node_t;
@@ -41,6 +42,14 @@ public:
 		m_Box[BOXLEFT] = left;
 		m_Box[BOXRIGHT] = right;
 		m_Box[BOXBOTTOM] = bottom;
+	}
+
+	FBoundingBox(double left, double bottom, double right, double top)
+	{
+		m_Box[BOXTOP] = FLOAT2FIXED(top);
+		m_Box[BOXLEFT] = FLOAT2FIXED(left);
+		m_Box[BOXRIGHT] = FLOAT2FIXED(right);
+		m_Box[BOXBOTTOM] = FLOAT2FIXED(bottom);
 	}
 
 	FBoundingBox(fixed_t x, fixed_t y, fixed_t radius)
@@ -71,6 +80,8 @@ public:
 	inline fixed_t Bottom () const { return m_Box[BOXBOTTOM]; }
 	inline fixed_t Left () const { return m_Box[BOXLEFT]; }
 	inline fixed_t Right () const { return m_Box[BOXRIGHT]; }
+
+	bool inRange(const line_t *ld) const;
 
 	int BoxOnLineSide (const line_t *ld) const;
 

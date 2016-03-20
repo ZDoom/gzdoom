@@ -126,7 +126,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Mushroom)
 	PARAM_CLASS_OPT	(spawntype, AActor)		{ spawntype = NULL; }
 	PARAM_INT_OPT	(n)						{ n = 0; }
 	PARAM_INT_OPT	(flags)					{ flags = 0; }
-	PARAM_FIXED_OPT	(vrange)				{ vrange = 4*FRACUNIT; }
+	PARAM_FLOAT_OPT	(vrange)				{ vrange = 4; }
 	PARAM_FLOAT_OPT	(hrange)				{ hrange = 0.5; }
 
 	int i, j;
@@ -141,7 +141,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Mushroom)
 	}
 
 	P_RadiusAttack (self, self->target, 128, 128, self->DamageType, (flags & MSF_DontHurt) ? 0 : RADF_HURTSOURCE);
-	P_CheckSplash(self, 128<<FRACBITS);
+	P_CheckSplash(self, 128.);
 
 	// Now launch mushroom cloud
 	AActor *target = Spawn("Mapspot", self->Pos(), NO_REPLACE);	// We need something to aim at.
@@ -153,9 +153,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Mushroom)
 		{
 			AActor *mo;
 			target->SetXYZ(
-				self->_f_X() + (i << FRACBITS),    // Aim in many directions from source
-				self->_f_Y() + (j << FRACBITS),
-				self->_f_Z() + (P_AproxDistance(i,j) * vrange)); // Aim up fairly high
+				self->X() + i,    // Aim in many directions from source
+				self->Y() + j,
+				self->Z() + (P_AproxDistance(i,j) * vrange)); // Aim up fairly high
 			if ((flags & MSF_Classic) || // Flag explicitely set, or no flags and compat options
 				(flags == 0 && (self->state->DefineFlags & SDF_DEHACKED) && (i_compatflags & COMPATF_MUSHROOM)))
 			{	// Use old function for MBF compatibility

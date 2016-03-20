@@ -1049,8 +1049,8 @@ void P_SpawnPortal(line_t *line, int sectortag, int plane, int alpha, int linked
 			reference->special1 = linked ? SKYBOX_LINKEDPORTAL : SKYBOX_PORTAL;
 			anchor->special1 = SKYBOX_ANCHOR;
 			// store the portal displacement in the unused scaleX/Y members of the portal reference actor.
-			anchor->scaleX = -(reference->scaleX = x2 - x1);
-			anchor->scaleY = -(reference->scaleY = y2 - y1);
+			anchor->Scale.X = -(reference->Scale.X = FIXED2DBL(x2 - x1));
+			anchor->Scale.Y = -(reference->Scale.Y = FIXED2DBL(y2 - y1));
 			anchor->threshold = reference->threshold = z;
 
 			reference->Mate = anchor;

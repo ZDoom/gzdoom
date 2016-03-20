@@ -294,8 +294,8 @@ void P_ThinkParticles ()
 			AActor *skybox = particle->subsector->sector->SkyBoxes[sector_t::ceiling];
 			if (particle->z > skybox->threshold)
 			{
-				particle->x += skybox->scaleX;
-				particle->y += skybox->scaleY;
+				particle->x += FLOAT2FIXED(skybox->Scale.X);
+				particle->y += FLOAT2FIXED(skybox->Scale.Y);
 				particle->subsector = NULL;
 			}
 		}
@@ -304,8 +304,8 @@ void P_ThinkParticles ()
 			AActor *skybox = particle->subsector->sector->SkyBoxes[sector_t::floor];
 			if (particle->z < skybox->threshold)
 			{
-				particle->x += skybox->scaleX;
-				particle->y += skybox->scaleY;
+				particle->x += FLOAT2FIXED(skybox->Scale.X);
+				particle->y += FLOAT2FIXED(skybox->Scale.Y);
 				particle->subsector = NULL;
 			}
 		}

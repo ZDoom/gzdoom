@@ -649,13 +649,11 @@ void AScriptedMarine::SetSprite (PClassActor *source)
 	{ // A valid actor class wasn't passed, so use the standard sprite
 		SpriteOverride = sprite = GetClass()->OwnedStates[0].sprite;
 		// Copy the standard scaling
-		scaleX = GetDefault()->scaleX;
-		scaleY = GetDefault()->scaleY;
+		Scale = GetDefault()->Scale;
 	}
 	else
 	{ // Use the same sprite and scaling the passed class spawns with
 		SpriteOverride = sprite = GetDefaultByType (source)->SpawnState->sprite;
-		scaleX = GetDefaultByType(source)->scaleX;
-		scaleY = GetDefaultByType(source)->scaleY;
+		Scale = GetDefaultByType(source)->Scale;
 	}
 }

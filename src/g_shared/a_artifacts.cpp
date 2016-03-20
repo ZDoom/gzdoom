@@ -1275,8 +1275,7 @@ void APowerSpeed::DoEffect ()
 		speedMo->floorclip = Owner->floorclip;
 
 		// [BC] Also get the scale from the owner.
-		speedMo->scaleX = Owner->scaleX;
-		speedMo->scaleY = Owner->scaleY;
+		speedMo->Scale = Owner->Scale;
 
 		if (Owner == players[consoleplayer].camera &&
 			!(Owner->player->cheats & CF_CHASECAM))

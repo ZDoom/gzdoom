@@ -3667,7 +3667,7 @@ struct aim_t
 		newtrace.toppitch = newtoppitch;
 		newtrace.bottompitch = newbottompitch;
 		newtrace.aimdir = position == sector_t::ceiling? aim_t::aim_up : aim_t::aim_down;
-		newtrace.startpos = { startpos.x + portal->scaleX, startpos.y + portal->scaleY, startpos.z };
+		newtrace.startpos = { startpos.x + FLOAT2FIXED(portal->Scale.X), startpos.y + FLOAT2FIXED(portal->Scale.Y), startpos.z };
 		newtrace.startfrac = frac + FixedDiv(FRACUNIT, attackrange);	// this is to skip the transition line to the portal which would produce a bogus opening
 		newtrace.lastsector = P_PointInSector(newtrace.startpos.x + FixedMul(aimtrace.x, newtrace.startfrac) , newtrace.startpos.y + FixedMul(aimtrace.y, newtrace.startfrac));
 		newtrace.limitz = portal->threshold;

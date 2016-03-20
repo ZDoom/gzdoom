@@ -533,7 +533,7 @@ extern player_t players[MAXPLAYERS];
 
 FArchive &operator<< (FArchive &arc, player_t *&p);
 
-void P_CheckPlayerSprite(AActor *mo, int &spritenum, fixed_t &scalex, fixed_t &scaley);
+void P_CheckPlayerSprite(AActor *mo, int &spritenum, DVector2 &scale);
 
 inline void AActor::SetFriendPlayer(player_t *player)
 {

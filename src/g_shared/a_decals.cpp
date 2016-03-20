@@ -92,7 +92,7 @@ DBaseDecal::DBaseDecal (int statnum, fixed_t z)
 
 DBaseDecal::DBaseDecal (const AActor *basis)
 : DThinker(STAT_DECAL),
-  WallNext(0), WallPrev(0), LeftDistance(0), Z(basis->_f_Z()), ScaleX(basis->scaleX), ScaleY(basis->scaleY),
+  WallNext(0), WallPrev(0), LeftDistance(0), Z(basis->_f_Z()), ScaleX(FLOAT2FIXED(basis->Scale.X)), ScaleY(FLOAT2FIXED(basis->Scale.Y)),
   Alpha(basis->alpha), AlphaColor(basis->fillcolor), Translation(basis->Translation), PicNum(basis->picnum),
   RenderFlags(basis->renderflags), RenderStyle(basis->RenderStyle)
 {

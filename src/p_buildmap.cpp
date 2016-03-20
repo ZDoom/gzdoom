@@ -883,8 +883,8 @@ void ACustomSprite::BeginPlay ()
 	mysnprintf (name, countof(name), "BTIL%04d", args[0] & 0xffff);
 	picnum = TexMan.GetTexture (name, FTexture::TEX_Build);
 
-	scaleX = args[2] * (FRACUNIT/64);
-	scaleY = args[3] * (FRACUNIT/64);
+	Scale.X = args[2] / 64.;
+	Scale.Y = args[3] / 64.;
 
 	int cstat = args[4];
 	if (cstat & 2)

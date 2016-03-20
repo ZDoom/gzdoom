@@ -660,8 +660,8 @@ DEFINE_PROPERTY(mass, I, Actor)
 //==========================================================================
 DEFINE_PROPERTY(xscale, F, Actor)
 {
-	PROP_FIXED_PARM(id, 0);
-	defaults->scaleX = id;
+	PROP_DOUBLE_PARM(id, 0);
+	defaults->Scale.X = id;
 }
 
 //==========================================================================
@@ -669,8 +669,8 @@ DEFINE_PROPERTY(xscale, F, Actor)
 //==========================================================================
 DEFINE_PROPERTY(yscale, F, Actor)
 {
-	PROP_FIXED_PARM(id, 0);
-	defaults->scaleY = id;
+	PROP_DOUBLE_PARM(id, 0);
+	defaults->Scale.Y = id;
 }
 
 //==========================================================================
@@ -678,8 +678,8 @@ DEFINE_PROPERTY(yscale, F, Actor)
 //==========================================================================
 DEFINE_PROPERTY(scale, F, Actor)
 {
-	PROP_FIXED_PARM(id, 0);
-	defaults->scaleX = defaults->scaleY = id;
+	PROP_DOUBLE_PARM(id, 0);
+	defaults->Scale.X = defaults->Scale.Y = id;
 }
 
 //==========================================================================

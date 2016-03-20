@@ -715,8 +715,8 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 		AActor *point = viewsector->SkyBoxes[sector_t::ceiling];
 		if (viewz > point->threshold)
 		{
-			viewx += point->scaleX;
-			viewy += point->scaleY;
+			viewx += FLOAT2FIXED(point->Scale.X);
+			viewy += FLOAT2FIXED(point->Scale.Y);
 			viewsector = R_PointInSubsector(viewx, viewy)->sector;
 			moved = true;
 		}
@@ -729,8 +729,8 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 			AActor *point = viewsector->SkyBoxes[sector_t::floor];
 			if (viewz < point->threshold)
 			{
-				viewx += point->scaleX;
-				viewy += point->scaleY;
+				viewx += FLOAT2FIXED(point->Scale.X);
+				viewy += FLOAT2FIXED(point->Scale.Y);
 				viewsector = R_PointInSubsector(viewx, viewy)->sector;
 				moved = true;
 			}

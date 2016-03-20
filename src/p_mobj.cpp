@@ -239,8 +239,7 @@ void AActor::Serialize(FArchive &arc)
 		<< __pos.z
 		<< Angles.Yaw
 		<< frame
-		<< scaleX
-		<< scaleY
+		<< Scale
 		<< RenderStyle
 		<< renderflags
 		<< picnum
@@ -5172,10 +5171,10 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 		mobj->alpha = mthing->alpha;
 	if (mthing->RenderStyle != STYLE_Count)
 		mobj->RenderStyle = (ERenderStyle)mthing->RenderStyle;
-	if (mthing->scaleX)
-		mobj->scaleX = FixedMul(mthing->scaleX, mobj->scaleX);
-	if (mthing->scaleY)
-		mobj->scaleY = FixedMul(mthing->scaleY, mobj->scaleY);
+	if (mthing->Scale.X != 0)
+		mobj->Scale.X = mthing->Scale.X * mobj->Scale.X;
+	if (mthing->Scale.Y != 0)
+		mobj->Scale.X = mthing->Scale.Y * mobj->Scale.Y;
 	if (mthing->pitch)
 		mobj->Angles.Pitch = (double)mthing->pitch;
 	if (mthing->roll)

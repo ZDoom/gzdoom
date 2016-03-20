@@ -813,13 +813,13 @@ static void AddDisplacementForPortal(AStackPoint *portal)
 	FDisplacement & disp = Displacements(thisgroup, othergroup);
 	if (!disp.isSet)
 	{
-		disp.pos.x = portal->scaleX;
-		disp.pos.y = portal->scaleY;
+		disp.pos.x = FLOAT2FIXED(portal->Scale.X);
+		disp.pos.y = FLOAT2FIXED(portal->Scale.Y);
 		disp.isSet = true;
 	}
 	else
 	{
-		if (disp.pos.x != portal->scaleX || disp.pos.y != portal->scaleY)
+		if (disp.pos.x != FLOAT2FIXED(portal->Scale.X) || disp.pos.y != FLOAT2FIXED(portal->Scale.Y))
 		{
 			Printf("Portal between sectors %d and %d has displacement mismatch and will be disabled\n", portal->Sector->sectornum, portal->Mate->Sector->sectornum);
 			portal->special1 = portal->Mate->special1 = SKYBOX_PORTAL;

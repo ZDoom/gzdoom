@@ -3938,11 +3938,11 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		break;
 
 	case APROP_ScaleX:
-		actor->scaleX = value;
+		actor->Scale.X = FIXED2DBL(value);
 		break;
 
 	case APROP_ScaleY:
-		actor->scaleY = value;
+		actor->Scale.Y = FIXED2DBL(value);
 		break;
 
 	case APROP_Mass:
@@ -4052,8 +4052,8 @@ int DLevelScript::GetActorProperty (int tid, int property)
 	case APROP_TargetTID:	return (actor->target != NULL)? actor->target->tid : 0;
 	case APROP_TracerTID:	return (actor->tracer != NULL)? actor->tracer->tid : 0;
 	case APROP_WaterLevel:	return actor->waterlevel;
-	case APROP_ScaleX: 		return actor->scaleX;
-	case APROP_ScaleY: 		return actor->scaleY;
+	case APROP_ScaleX: 		return FLOAT2FIXED(actor->Scale.X);
+	case APROP_ScaleY: 		return FLOAT2FIXED(actor->Scale.Y);
 	case APROP_Mass: 		return actor->Mass;
 	case APROP_Accuracy:    return actor->accuracy;
 	case APROP_Stamina:     return actor->stamina;

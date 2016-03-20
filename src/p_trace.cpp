@@ -203,8 +203,8 @@ void FTraceInfo::EnterSectorPortal(int position, fixed_t frac, sector_t *enterse
 
 	memset(&results, 0, sizeof(results));
 
-	newtrace.StartX = StartX + portal->scaleX;
-	newtrace.StartY = StartY + portal->scaleY;
+	newtrace.StartX = StartX + FLOAT2FIXED(portal->Scale.X);
+	newtrace.StartY = StartY + FLOAT2FIXED(portal->Scale.Y);
 	newtrace.StartZ = StartZ;
 
 	frac += FixedDiv(FRACUNIT, MaxDist);

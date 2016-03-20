@@ -718,15 +718,15 @@ public:
 				break;
 
 			case NAME_ScaleX:
-				th->scaleX = CheckFixed(key);
+				th->Scale.X = CheckFloat(key);
 				break;
 
 			case NAME_ScaleY:
-				th->scaleY = CheckFixed(key);
+				th->Scale.Y = CheckFloat(key);
 				break;
 
 			case NAME_Scale:
-				th->scaleX = th->scaleY = CheckFixed(key);
+				th->Scale.X = th->Scale.Y = CheckFloat(key);
 				break;
 
 			default:

@@ -520,9 +520,9 @@ void AHexenArmor::AbsorbDamage (int damage, FName damageType, int &newdamage)
 						// -O1 optimizer bug work around. Only needed for
 						// GCC 4.2.1 on OS X for 10.4/10.5 tools compatibility.
 						volatile fixed_t tmp = 300;
-						Slots[i] -= Scale (damage, SlotsIncrement[i], tmp);
+						Slots[i] -= ::Scale (damage, SlotsIncrement[i], tmp);
 #else
-						Slots[i] -= Scale (damage, SlotsIncrement[i], 300);
+						Slots[i] -= ::Scale (damage, SlotsIncrement[i], 300);
 #endif
 						if (Slots[i] < 2*FRACUNIT)
 						{
@@ -535,7 +535,7 @@ void AHexenArmor::AbsorbDamage (int damage, FName damageType, int &newdamage)
 					}
 				}
 			}
-			int saved = Scale (damage, savedPercent, 100*FRACUNIT);
+			int saved = ::Scale (damage, savedPercent, 100*FRACUNIT);
 			if (saved > savedPercent >> (FRACBITS-1))
 			{	
 				saved = savedPercent >> (FRACBITS-1);

@@ -776,17 +776,16 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	voxel = NULL;
 
 	int spritenum = thing->sprite;
-	fixed_t spritescaleX = thing->scaleX;
-	fixed_t spritescaleY = thing->scaleY;
+	DVector2 spriteScale = thing->Scale;
 	int renderflags = thing->renderflags;
-	if (spritescaleY < 0)
+	if (spriteScale.Y < 0)
 	{
-		spritescaleY = -spritescaleY;
+		spriteScale.Y = -spriteScale.Y;
 		renderflags ^= RF_YFLIP;
 	}
 	if (thing->player != NULL)
 	{
-		P_CheckPlayerSprite(thing, spritenum, spritescaleX, spritescaleY);
+		P_CheckPlayerSprite(thing, spritenum, spriteScale);
 	}
 
 	if (thing->picnum.isValid())
@@ -864,9 +863,9 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 			}
 		}
 	}
-	if (spritescaleX < 0)
+	if (spriteScale.X < 0)
 	{
-		spritescaleX = -spritescaleX;
+		spriteScale.X = -spriteScale.X;
 		renderflags ^= RF_XFLIP;
 	}
 	if (voxel == NULL && (tex == NULL || tex->UseType == FTexture::TEX_Null))
@@ -874,6 +873,8 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 		return;
 	}
 
+	fixed_t spritescaleX = FLOAT2FIXED(spriteScale.X);
+	fixed_t spritescaleY = FLOAT2FIXED(spriteScale.Y);
 	if ((renderflags & RF_SPRITETYPEMASK) == RF_WALLSPRITE)
 	{
 		R_ProjectWallSprite(thing, fx, fy, fz, picnum, spritescaleX, spritescaleY, renderflags);

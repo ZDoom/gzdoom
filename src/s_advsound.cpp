@@ -2281,7 +2281,7 @@ void AAmbientSound::Activate (AActor *activator)
 				Destroy ();
 				return;
 			}
-			amb->periodmin = Scale(S_GetMSLength(sndnum), TICRATE, 1000);
+			amb->periodmin = ::Scale(S_GetMSLength(sndnum), TICRATE, 1000);
 		}
 
 		NextCheck = level.maptime;

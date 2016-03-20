@@ -2844,8 +2844,8 @@ void AM_drawThings ()
 
 					if (texture == NULL) goto drawTriangle;	// fall back to standard display if no sprite can be found.
 
-					const fixed_t spriteXScale = FixedMul(t->scaleX, 10 * scale_mtof);
-					const fixed_t spriteYScale = FixedMul(t->scaleY, 10 * scale_mtof);
+					const fixed_t spriteXScale = fixed_t(t->Scale.X * 10 * scale_mtof);
+					const fixed_t spriteYScale = fixed_t(t->Scale.Y * 10 * scale_mtof);
 
 					DrawMarker (texture, p.x, p.y, 0, !!(frame->Flip & (1 << rotation)),
 						spriteXScale, spriteYScale, t->Translation, FRACUNIT, 0, LegacyRenderStyles[STYLE_Normal]);
@@ -3042,7 +3042,7 @@ void AM_drawAuthorMarkers ()
 				 marked->Sector->MoreFlags & SECF_DRAWN)))
 			{
 				DrawMarker (tex, marked->_f_X() >> FRACTOMAPBITS, marked->_f_Y() >> FRACTOMAPBITS, 0,
-					flip, mark->scaleX, mark->scaleY, mark->Translation,
+					flip, FLOAT2FIXED(mark->Scale.X), FLOAT2FIXED(mark->Scale.Y), mark->Translation,
 					mark->alpha, mark->fillcolor, mark->RenderStyle);
 			}
 			marked = mark->args[0] != 0 ? it.Next() : NULL;

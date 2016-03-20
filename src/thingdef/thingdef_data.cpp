@@ -620,18 +620,18 @@ void InitThingdef()
 	PSymbolTable &symt = RUNTIME_CLASS(AActor)->Symbols;
 	PType *array5 = NewArray(TypeSInt32, 5);
 	symt.AddSymbol(new PField(NAME_Alpha,		TypeFixed,	VARF_Native, myoffsetof(AActor,alpha)));
-	symt.AddSymbol(new PField(NAME_Angle,		TypeFloat64,VARF_Native, myoffsetof(AActor,Angles.Yaw)));
-	symt.AddSymbol(new PField(NAME_Args,		array5,		VARF_Native, myoffsetof(AActor,args)));
+	symt.AddSymbol(new PField(NAME_Angle,		TypeFloat64,	VARF_Native, myoffsetof(AActor,Angles.Yaw)));
+	symt.AddSymbol(new PField(NAME_Args,		array5,			VARF_Native, myoffsetof(AActor,args)));
 	symt.AddSymbol(new PField(NAME_CeilingZ,	TypeFixed,	VARF_Native, myoffsetof(AActor,ceilingz)));
 	symt.AddSymbol(new PField(NAME_FloorZ,		TypeFixed,	VARF_Native, myoffsetof(AActor,floorz)));
-	symt.AddSymbol(new PField(NAME_Health,		TypeSInt32,	VARF_Native, myoffsetof(AActor,health)));
-	symt.AddSymbol(new PField(NAME_Mass,		TypeSInt32,	VARF_Native, myoffsetof(AActor,Mass)));
-	symt.AddSymbol(new PField(NAME_Pitch,		TypeFloat64,VARF_Native, myoffsetof(AActor,Angles.Pitch)));
-	symt.AddSymbol(new PField(NAME_Roll,		TypeFloat64,VARF_Native, myoffsetof(AActor,Angles.Roll)));
-	symt.AddSymbol(new PField(NAME_Special,		TypeSInt32,	VARF_Native, myoffsetof(AActor,special)));
-	symt.AddSymbol(new PField(NAME_TID,			TypeSInt32,	VARF_Native, myoffsetof(AActor,tid)));
-	symt.AddSymbol(new PField(NAME_TIDtoHate,	TypeSInt32,	VARF_Native, myoffsetof(AActor,TIDtoHate)));
-	symt.AddSymbol(new PField(NAME_WaterLevel,	TypeSInt32,	VARF_Native, myoffsetof(AActor,waterlevel)));
+	symt.AddSymbol(new PField(NAME_Health,		TypeSInt32,		VARF_Native, myoffsetof(AActor,health)));
+	symt.AddSymbol(new PField(NAME_Mass,		TypeSInt32,		VARF_Native, myoffsetof(AActor,Mass)));
+	symt.AddSymbol(new PField(NAME_Pitch,		TypeFloat64,	VARF_Native, myoffsetof(AActor,Angles.Pitch)));
+	symt.AddSymbol(new PField(NAME_Roll,		TypeFloat64,	VARF_Native, myoffsetof(AActor,Angles.Roll)));
+	symt.AddSymbol(new PField(NAME_Special,		TypeSInt32,		VARF_Native, myoffsetof(AActor,special)));
+	symt.AddSymbol(new PField(NAME_TID,			TypeSInt32,		VARF_Native, myoffsetof(AActor,tid)));
+	symt.AddSymbol(new PField(NAME_TIDtoHate,	TypeSInt32,		VARF_Native, myoffsetof(AActor,TIDtoHate)));
+	symt.AddSymbol(new PField(NAME_WaterLevel,	TypeSInt32,		VARF_Native, myoffsetof(AActor,waterlevel)));
 	symt.AddSymbol(new PField(NAME_X,			TypeFixed,	VARF_Native, myoffsetof(AActor,__pos.x)));	// must remain read-only!
 	symt.AddSymbol(new PField(NAME_Y,			TypeFixed,	VARF_Native, myoffsetof(AActor,__pos.y)));	// must remain read-only!
 	symt.AddSymbol(new PField(NAME_Z,			TypeFixed,	VARF_Native, myoffsetof(AActor,__pos.z)));	// must remain read-only!
@@ -641,16 +641,16 @@ void InitThingdef()
 	symt.AddSymbol(new PField(NAME_MomX,		TypeFloat64,	VARF_Native, myoffsetof(AActor, Vel.X)));
 	symt.AddSymbol(new PField(NAME_MomY,		TypeFloat64,	VARF_Native, myoffsetof(AActor, Vel.Y)));
 	symt.AddSymbol(new PField(NAME_MomZ,		TypeFloat64,	VARF_Native, myoffsetof(AActor, Vel.Z)));
-	symt.AddSymbol(new PField(NAME_ScaleX,		TypeFixed,	VARF_Native, myoffsetof(AActor,scaleX)));
-	symt.AddSymbol(new PField(NAME_ScaleY,		TypeFixed,	VARF_Native, myoffsetof(AActor,scaleY)));
-	symt.AddSymbol(new PField(NAME_Score,		TypeSInt32,	VARF_Native, myoffsetof(AActor,Score)));
-	symt.AddSymbol(new PField(NAME_Accuracy,	TypeSInt32,	VARF_Native, myoffsetof(AActor,accuracy)));
-	symt.AddSymbol(new PField(NAME_Stamina,		TypeSInt32,	VARF_Native, myoffsetof(AActor,stamina)));
+	symt.AddSymbol(new PField(NAME_ScaleX,		TypeFloat64,	VARF_Native, myoffsetof(AActor, Scale.X)));
+	symt.AddSymbol(new PField(NAME_ScaleY,		TypeFloat64,	VARF_Native, myoffsetof(AActor, Scale.Y)));
+	symt.AddSymbol(new PField(NAME_Score,		TypeSInt32,		VARF_Native, myoffsetof(AActor,Score)));
+	symt.AddSymbol(new PField(NAME_Accuracy,	TypeSInt32,		VARF_Native, myoffsetof(AActor,accuracy)));
+	symt.AddSymbol(new PField(NAME_Stamina,		TypeSInt32,		VARF_Native, myoffsetof(AActor,stamina)));
 	symt.AddSymbol(new PField(NAME_Height,		TypeFixed,	VARF_Native, myoffsetof(AActor,height)));
 	symt.AddSymbol(new PField(NAME_Radius,		TypeFixed,	VARF_Native, myoffsetof(AActor,radius)));
-	symt.AddSymbol(new PField(NAME_ReactionTime,TypeSInt32,	VARF_Native, myoffsetof(AActor,reactiontime)));
+	symt.AddSymbol(new PField(NAME_ReactionTime,TypeSInt32,		VARF_Native, myoffsetof(AActor,reactiontime)));
 	symt.AddSymbol(new PField(NAME_MeleeRange,	TypeFixed,	VARF_Native, myoffsetof(AActor,meleerange)));
 	symt.AddSymbol(new PField(NAME_Speed,		TypeFloat64,	VARF_Native, myoffsetof(AActor,Speed)));
-	symt.AddSymbol(new PField(NAME_Threshold,	TypeSInt32, VARF_Native, myoffsetof(AActor,threshold)));
-	symt.AddSymbol(new PField(NAME_DefThreshold,TypeSInt32, VARF_Native, myoffsetof(AActor,DefThreshold)));
+	symt.AddSymbol(new PField(NAME_Threshold,	TypeSInt32,		VARF_Native, myoffsetof(AActor,threshold)));
+	symt.AddSymbol(new PField(NAME_DefThreshold,TypeSInt32,		VARF_Native, myoffsetof(AActor,DefThreshold)));
 }

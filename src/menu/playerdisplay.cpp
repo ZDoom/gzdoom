@@ -563,21 +563,19 @@ void FListMenuItemPlayerDisplay::Drawer(bool selected)
 	V_DrawFrame (x, y, 72*CleanXfac, 80*CleanYfac-1);
 
 	spriteframe_t *sprframe = NULL;
-	fixed_t scaleX, scaleY;
+	DVector2 Scale;
 
 	if (mPlayerState != NULL)
 	{
 		if (mSkin == 0)
 		{
 			sprframe = &SpriteFrames[sprites[mPlayerState->sprite].spriteframes + mPlayerState->GetFrame()];
-			scaleX = GetDefaultByType(mPlayerClass->Type)->scaleX;
-			scaleY = GetDefaultByType(mPlayerClass->Type)->scaleY;
+			Scale = GetDefaultByType(mPlayerClass->Type)->Scale;
 		}
 		else
 		{
 			sprframe = &SpriteFrames[sprites[skins[mSkin].sprite].spriteframes + mPlayerState->GetFrame()];
-			scaleX = skins[mSkin].ScaleX;
-			scaleY = skins[mSkin].ScaleY;
+			Scale = skins[mSkin].Scale;
 		}
 	}
 
@@ -590,8 +588,8 @@ void FListMenuItemPlayerDisplay::Drawer(bool selected)
 			if (mTranslate) trans = translationtables[TRANSLATION_Players](MAXPLAYERS);
 			screen->DrawTexture (tex,
 				x + 36*CleanXfac, y + 71*CleanYfac,
-				DTA_DestWidth, MulScale16 (tex->GetScaledWidth() * CleanXfac, scaleX),
-				DTA_DestHeight, MulScale16 (tex->GetScaledHeight() * CleanYfac, scaleY),
+				DTA_DestWidthF, tex->GetScaledWidthDouble() * CleanXfac * Scale.X,
+				DTA_DestHeightF, tex->GetScaledHeightDouble() * CleanYfac * Scale.Y,
 				DTA_Translation, trans,
 				DTA_FlipX, sprframe->Flip & (1 << mRotation),
 				TAG_DONE);

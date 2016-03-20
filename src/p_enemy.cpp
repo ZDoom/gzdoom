@@ -162,16 +162,16 @@ void P_RecursiveSound (sector_t *sec, AActor *soundtarget, bool splash, int soun
 		if (checkabove)
 		{
 			sector_t *upper =
-				P_PointInSector(check->v1->x + check->dx / 2 + sec->SkyBoxes[sector_t::ceiling]->scaleX,
-					check->v1->y + check->dy / 2 + sec->SkyBoxes[sector_t::ceiling]->scaleY);
+				P_PointInSector(check->v1->x + check->dx / 2 + FLOAT2FIXED(sec->SkyBoxes[sector_t::ceiling]->Scale.X),
+					check->v1->y + check->dy / 2 + FLOAT2FIXED(sec->SkyBoxes[sector_t::ceiling]->Scale.Y));
 
 			P_RecursiveSound(upper, soundtarget, splash, soundblocks, emitter, maxdist);
 		}
 		if (checkbelow)
 		{
 			sector_t *lower =
-				P_PointInSector(check->v1->x + check->dx / 2 + sec->SkyBoxes[sector_t::floor]->scaleX,
-					check->v1->y + check->dy / 2 + sec->SkyBoxes[sector_t::floor]->scaleY);
+				P_PointInSector(check->v1->x + check->dx / 2 + FLOAT2FIXED(sec->SkyBoxes[sector_t::ceiling]->Scale.X),
+					check->v1->y + check->dy / 2 + FLOAT2FIXED(sec->SkyBoxes[sector_t::ceiling]->Scale.Y));
 
 			P_RecursiveSound(lower, soundtarget, splash, soundblocks, emitter, maxdist);
 		}

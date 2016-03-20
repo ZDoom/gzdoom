@@ -928,7 +928,7 @@ static int PatchThing (int thingy)
 			}
 			else if (stricmp (Line1, "Scale") == 0)
 			{
-				info->scaleY = info->scaleX = clamp<fixed_t> (FLOAT2FIXED(atof (Line2)), 1, 256*FRACUNIT);
+				info->Scale.Y = info->Scale.X = clamp(atof (Line2), 1./65536, 256.);
 			}
 			else if (stricmp (Line1, "Decal") == 0)
 			{

@@ -1645,8 +1645,8 @@ static void G_QueueBody (AActor *body)
 		const AActor *const defaultActor = body->GetDefault();
 		const FPlayerSkin &skin = skins[skinidx];
 
-		body->scaleX = Scale(body->scaleX, skin.ScaleX, defaultActor->scaleX);
-		body->scaleY = Scale(body->scaleY, skin.ScaleY, defaultActor->scaleY);
+		body->Scale.X *= skin.Scale.X / defaultActor->Scale.X;
+		body->Scale.Y *= skin.Scale.Y / defaultActor->Scale.Y;
 	}
 
 	bodyqueslot++;

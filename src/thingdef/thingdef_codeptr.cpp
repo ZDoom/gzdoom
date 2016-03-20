@@ -2310,8 +2310,7 @@ static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
 	}
 	if (flags & SIXF_TRANSFERSCALE)
 	{
-		mo->scaleX = self->scaleX;
-		mo->scaleY = self->scaleY;
+		mo->Scale = self->Scale;
 	}
 	if (flags & SIXF_TRANSFERAMBUSHFLAG)
 	{
@@ -2884,8 +2883,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FadeTo)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetScale)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_FIXED		(scalex);
-	PARAM_FIXED_OPT	(scaley)	{ scaley = scalex; }
+	PARAM_FLOAT		(scalex);
+	PARAM_FLOAT_OPT	(scaley)	{ scaley = scalex; }
 	PARAM_INT_OPT	(ptr)		{ ptr = AAPTR_DEFAULT; }
 	PARAM_BOOL_OPT	(usezero)	{ usezero = false; }
 
@@ -2897,8 +2896,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetScale)
 		{
 			scaley = scalex;
 		}
-		ref->scaleX = scalex;
-		ref->scaleY = scaley;
+		ref->Scale = { scalex, scaley };
 	}
 	return 0;
 }

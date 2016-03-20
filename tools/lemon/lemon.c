@@ -44,6 +44,7 @@ extern int access(char *path, int mode);
 #define MAXRHS 1000
 #endif
 
+static int showPrecedenceConflict = 0;
 static void *msort(void *list, void *next, int (*cmp)());
 
 /*
@@ -1419,6 +1420,8 @@ int main(int argc, char **argv)
     {OPT_FLAG, "g", (char*)&rpflag, "Print grammar without actions."},
     {OPT_FLAG, "m", (char*)&mhflag, "Output a makeheaders compatible file."},
     {OPT_FLAG, "l", (char*)&nolinenosflag, "Do not print #line statements."},
+    {OPT_FLAG, "p", (char*)&showPrecedenceConflict,
+                    "Show conflicts resolved by precedence rules"},
     {OPT_FLAG, "q", (char*)&quiet, "(Quiet) Don't print the report file."},
     {OPT_FLAG, "s", (char*)&statistics,
                                    "Print parser stats to standard output."},
@@ -2896,7 +2899,21 @@ int PrintAction(struct action *ap, FILE *fp, int indent){
         indent,ap->sp->name,ap->x.stp->statenum);
       break;
     case SH_RESOLVED:
+      if( showPrecedenceConflict ){
+        fprintf(fp,"%*s shift  %d -- dropped by precedence",
+                indent,ap->sp->name,ap->x.stp->statenum);
+      }else{
+        result = 0;
+      }
+      break;
     case RD_RESOLVED:
+      if( showPrecedenceConflict ){
+        fprintf(fp,"%*s reduce %d -- dropped by precedence",
+                indent,ap->sp->name,ap->x.rp->index);
+      }else{
+        result = 0;
+      }
+      break;
     case NOT_USED:
       result = 0;
       break;

@@ -636,8 +636,6 @@ static void yy_reduce(
   }
 #endif /* NDEBUG */
 
-  /*  yygotominor = yyzerominor; */
-
   /* Check that the stack is large enough to grow by a single entry
   ** if the RHS of the rule is empty.  This ensures that there is room
   ** enough on the stack to push the LHS value */

@@ -335,7 +335,7 @@ void KoraxFire (AActor *actor, PClassActor *type, int arm)
 	fixedvec3 pos = actor->Vec3Offset(
 		extension[arm] * finecosine[ang],
 		extension[arm] * finesine[ang],
-		-actor->floorclip + armheight[arm]);
+		-actor->_f_floorclip() + armheight[arm]);
 	P_SpawnKoraxMissile (pos.x, pos.y, pos.z, actor, actor->target, type);
 }
 
@@ -505,7 +505,7 @@ AActor *P_SpawnKoraxMissile (fixed_t x, fixed_t y, fixed_t z,
 	DAngle an;
 	int dist;
 
-	z -= source->floorclip;
+	z -= source->_f_floorclip();
 	th = Spawn (type, x, y, z, ALLOW_REPLACE);
 	th->target = source; // Originator
 	an = th->AngleTo(dest);

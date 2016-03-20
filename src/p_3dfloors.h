@@ -147,6 +147,13 @@ inline int	P_Find3DFloor(sector_t * sec, const fixedvec3 &pos, bool above, bool 
 {
 	return P_Find3DFloor(sec, pos.x, pos.y, pos.z, above, floor, cmpz);
 }
-							
+inline int	P_Find3DFloor(sector_t * sec, const DVector3 &pos, bool above, bool floor, double &cmpz)
+{
+	fixed_t fr = FLOAT2FIXED(cmpz);
+	int ret = P_Find3DFloor(sec, FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), FLOAT2FIXED(pos.Z), above, floor, fr);
+	cmpz = FIXED2DBL(fr);
+	return ret;
+}
+
 
 #endif

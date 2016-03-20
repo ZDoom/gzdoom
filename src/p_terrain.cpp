@@ -213,7 +213,7 @@ static FGenericParse TerrainParser[] =
 	{ GEN_Int,    {myoffsetof(FTerrainDef, DamageAmount)} },
 	{ GEN_Custom, {(size_t)ParseDamage} },
 	{ GEN_Int,    {myoffsetof(FTerrainDef, DamageTimeMask)} },
-	{ GEN_Fixed,  {myoffsetof(FTerrainDef, FootClip)} },
+	{ GEN_Double, {myoffsetof(FTerrainDef, FootClip)} },
 	{ GEN_Float,  {myoffsetof(FTerrainDef, StepVolume)} },
 	{ GEN_Time,   {myoffsetof(FTerrainDef, WalkStepTics)} },
 	{ GEN_Time,   {myoffsetof(FTerrainDef, RunStepTics)} },

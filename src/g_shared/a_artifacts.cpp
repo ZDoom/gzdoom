@@ -1261,10 +1261,10 @@ void APowerSpeed::DoEffect ()
 		}
 	}
 
-	if (P_AproxDistance (Owner->_f_velx(), Owner->_f_vely()) <= 12*FRACUNIT)
+	if (Owner->Vel.LengthSquared() <= 12*12)
 		return;
 
-	AActor *speedMo = Spawn<APlayerSpeedTrail> (Owner->_f_Pos(), NO_REPLACE);
+	AActor *speedMo = Spawn<APlayerSpeedTrail> (Owner->Pos(), NO_REPLACE);
 	if (speedMo)
 	{
 		speedMo->Angles.Yaw = Owner->Angles.Yaw;
@@ -1272,7 +1272,7 @@ void APowerSpeed::DoEffect ()
 		speedMo->target = Owner;
 		speedMo->sprite = Owner->sprite;
 		speedMo->frame = Owner->frame;
-		speedMo->floorclip = Owner->floorclip;
+		speedMo->Floorclip = Owner->Floorclip;
 
 		// [BC] Also get the scale from the owner.
 		speedMo->Scale = Owner->Scale;

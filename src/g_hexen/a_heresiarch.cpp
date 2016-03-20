@@ -242,7 +242,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcSpinBalls)
 	self->args[4] = SORCBALL_INITIAL_SPEED;		// Initial orbit speed
 	self->special1 = ANGLE_1;
 
-	fixedvec3 pos = self->PosPlusZ(-self->floorclip + self->_f_height());
+	DVector3 pos = self->PosPlusZ(-self->Floorclip + self->Height);
 	
 	mo = Spawn("SorcBall1", pos, NO_REPLACE);
 	if (mo)
@@ -378,7 +378,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcBallOrbit)
 	fixedvec3 pos = parent->Vec3Offset(
 		FixedMul(dist, finecosine[angle]),
 		FixedMul(dist, finesine[angle]),
-		-parent->floorclip + parent->_f_height());
+		-parent->_f_floorclip() + parent->_f_height());
 	actor->SetOrigin (pos, true);
 	actor->floorz = parent->floorz;
 	actor->ceilingz = parent->ceilingz;
@@ -551,7 +551,7 @@ void ASorcBall2::CastSorcererSpell ()
 	AActor *parent = target;
 	AActor *mo;
 
-	mo = Spawn("SorcFX2", PosPlusZ(-parent->floorclip + SORC_DEFENSE_HEIGHT*FRACUNIT), ALLOW_REPLACE);
+	mo = Spawn("SorcFX2", PosPlusZ(-parent->_f_floorclip() + SORC_DEFENSE_HEIGHT*FRACUNIT), ALLOW_REPLACE);
 	parent->flags2 |= MF2_REFLECTIVE|MF2_INVULNERABLE;
 	parent->args[0] = SORC_DEFENSE_TIME;
 	if (mo) mo->target = parent;
@@ -714,7 +714,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnFizzle)
 	AActor *mo;
 	int ix;
 
-	fixedvec3 pos = self->_f_Vec3Angle(dist, self->_f_angle(), -self->floorclip + (self->_f_height() >> 1));
+	fixedvec3 pos = self->_f_Vec3Angle(dist, self->_f_angle(), -self->_f_floorclip() + (self->_f_height() >> 1));
 	for (ix=0; ix<5; ix++)
 	{
 		mo = Spawn("SorcSpark1", pos, ALLOW_REPLACE);
@@ -839,7 +839,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcFX2Orbit)
 		pos = parent->Vec3Offset(
 			FixedMul(dist, finecosine[angle]),
 			FixedMul(dist, finesine[angle]),
-			parent->floorclip + SORC_DEFENSE_HEIGHT*FRACUNIT);
+			parent->_f_floorclip() + SORC_DEFENSE_HEIGHT*FRACUNIT);
 		pos.z += FixedMul(15*FRACUNIT,finecosine[angle]);
 		// Spawn trailer
 		Spawn("SorcFX2T1", pos, ALLOW_REPLACE);
@@ -851,7 +851,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcFX2Orbit)
 		pos = parent->Vec3Offset(
 			FixedMul(dist, finecosine[angle]),
 			FixedMul(dist, finesine[angle]),
-			parent->floorclip + SORC_DEFENSE_HEIGHT*FRACUNIT);
+			parent->_f_floorclip() + SORC_DEFENSE_HEIGHT*FRACUNIT);
 		pos.z += FixedMul(20*FRACUNIT,finesine[angle]);
 		// Spawn trailer
 		Spawn("SorcFX2T1", pos, ALLOW_REPLACE);

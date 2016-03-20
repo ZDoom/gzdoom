@@ -1906,10 +1906,10 @@ void P_CalcHeight (player_t *player)
 		bob = 0;
 	}
 	player->viewz = player->mo->_f_Z() + player->viewheight + FLOAT2FIXED(bob);
-	if (player->mo->floorclip && player->playerstate != PST_DEAD
+	if (player->mo->Floorclip && player->playerstate != PST_DEAD
 		&& player->mo->Z() <= player->mo->floorz)
 	{
-		player->viewz -= player->mo->floorclip;
+		player->viewz -= player->mo->_f_floorclip();
 	}
 	if (player->viewz > player->mo->_f_ceilingz() - 4*FRACUNIT)
 	{

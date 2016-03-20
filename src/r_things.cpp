@@ -920,7 +920,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	{
 		xscale = FixedMul(spritescaleX, voxel->Scale);
 		yscale = FixedMul(spritescaleY, voxel->Scale);
-		gzt = fz + MulScale8(yscale, voxel->Voxel->Mips[0].PivotZ) - thing->floorclip;
+		gzt = fz + MulScale8(yscale, voxel->Voxel->Mips[0].PivotZ) - FLOAT2FIXED(thing->Floorclip);
 		gzb = fz + MulScale8(yscale, voxel->Voxel->Mips[0].PivotZ - (voxel->Voxel->Mips[0].SizeZ << 8));
 		if (gzt <= gzb)
 			return;
@@ -996,8 +996,8 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 		vis->xscale = xscale;
 		vis->yscale = Scale(InvZtoScale, yscale, tz << 4);
 		vis->idepth = (unsigned)DivScale32(1, tz) >> 1;	// tz is 20.12, so idepth ought to be 12.20, but signed math makes it 13.19
-		vis->floorclip = FixedDiv (thing->floorclip, yscale);
-		vis->texturemid = (tex->TopOffset << FRACBITS) - FixedDiv (viewz - fz + thing->floorclip, yscale);
+		vis->floorclip = FixedDiv (FLOAT2FIXED(thing->Floorclip), yscale);
+		vis->texturemid = (tex->TopOffset << FRACBITS) - FixedDiv (viewz - fz + FLOAT2FIXED(thing->Floorclip), yscale);
 		vis->x1 = x1 < WindowLeft ? WindowLeft : x1;
 		vis->x2 = x2 > WindowRight ? WindowRight : x2;
 		vis->angle = thing->_f_angle();
@@ -1026,9 +1026,9 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 		vis->x1 = WindowLeft;
 		vis->x2 = WindowRight;
 		vis->idepth = (unsigned)DivScale32(1, MAX(tz, MINZ)) >> 1;
-		vis->floorclip = thing->floorclip;
+		vis->floorclip = FLOAT2FIXED(thing->Floorclip);
 
-		fz -= thing->floorclip;
+		fz -= FLOAT2FIXED(thing->Floorclip);
 
 		vis->angle = thing->_f_angle() + voxel->AngleOffset;
 

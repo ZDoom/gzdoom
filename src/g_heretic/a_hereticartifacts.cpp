@@ -70,7 +70,7 @@ IMPLEMENT_CLASS (AArtiTimeBomb)
 bool AArtiTimeBomb::Use (bool pickup)
 {
 	AActor *mo = Spawn("ActivatedTimeBomb",
-		Owner->Vec3Angle(24., Owner->Angles.Yaw, - FIXED2FLOAT(Owner->floorclip)), ALLOW_REPLACE);
+		Owner->Vec3Angle(24., Owner->Angles.Yaw, - Owner->Floorclip), ALLOW_REPLACE);
 	mo->target = Owner;
 	return true;
 }

@@ -1892,7 +1892,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 
 	FTranslatedLineTarget t;
 
-	fixedvec3 savedpos = self->_f_Pos();
+	DVector3 savedpos = self->Pos();
 	DAngle saved_angle = self->Angles.Yaw;
 	DAngle saved_pitch = self->Angles.Pitch;
 
@@ -1917,16 +1917,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 	if (t.linetarget == NULL && aim)
 	{
 		// We probably won't hit the target, but aim at it anyway so we don't look stupid.
-		fixedvec2 pos = self->_f_Vec2To(self->target);
-		DVector2 xydiff(pos.x, pos.y);
-		double zdiff = (self->target->_f_Z() + (self->target->_f_height()>>1)) -
-						(self->_f_Z() + (self->_f_height()>>1) - self->floorclip);
+		DVector2 xydiff = self->Vec2To(self->target);
+		double zdiff = self->target->Center() - self->Center() - self->Floorclip;
 		self->Angles.Pitch = VecToAngle(xydiff.Length(), zdiff);
 	}
 	// Let the aim trail behind the player
 	if (aim)
 	{
-		saved_angle = self->Angles.Yaw = self->AngleTo(self->target, -self->target->_f_velx() * 3, -self->target->_f_vely() * 3);
+		saved_angle = self->Angles.Yaw = self->AngleTo(self->target, -self->target->Vel.X * 3, -self->target->Vel.Y * 3);
 
 		if (aim == CRF_AIMDIRECT)
 		{
@@ -1936,7 +1934,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 				FLOAT2FIXED(spawnofs_xy * self->Angles.Yaw.Cos()),
 				FLOAT2FIXED(spawnofs_xy * self->Angles.Yaw.Sin())));
 			spawnofs_xy = 0;
-			self->Angles.Yaw = self->AngleTo(self->target,- self->target->_f_velx() * 3, -self->target->_f_vely() * 3);
+			self->Angles.Yaw = self->AngleTo(self->target,- self->target->Vel.X * 3, -self->target->Vel.Y * 3);
 		}
 
 		if (self->target->flags & MF_SHADOW)
@@ -2418,7 +2416,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItem)
 		}
 	}
 
-	AActor *mo = Spawn( missile, self->_f_Vec3Angle(distance, self->_f_angle(), -self->floorclip + self->GetBobOffset() + zheight), ALLOW_REPLACE);
+	AActor *mo = Spawn( missile, self->_f_Vec3Angle(distance, self->_f_angle(), -self->_f_floorclip() + self->GetBobOffset() + zheight), ALLOW_REPLACE);
 
 	int flags = (transfer_translation ? SIXF_TRANSFERTRANSLATION : 0) + (useammo ? SIXF_SETMASTER : 0);
 	ACTION_RETURN_BOOL(InitSpawnedItem(self, mo, flags));	// for an inventory item's use state
@@ -2488,7 +2486,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItemEx)
 		xvel = newxvel;
 	}
 
-	AActor *mo = Spawn(missile, pos.x, pos.y, self->_f_Z() - self->floorclip + self->GetBobOffset() + zofs, ALLOW_REPLACE);
+	AActor *mo = Spawn(missile, pos.x, pos.y, self->_f_Z() - self->_f_floorclip() + self->GetBobOffset() + zofs, ALLOW_REPLACE);
 	bool res = InitSpawnedItem(self, mo, flags);
 	if (res)
 	{
@@ -2546,7 +2544,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ThrowGrenade)
 	AActor *bo;
 
 	bo = Spawn(missile, 
-			self->PosPlusZ(-self->floorclip + self->GetBobOffset() + zheight + 35*FRACUNIT + (self->player? self->player->crouchoffset : 0)),
+			self->PosPlusZ(-self->_f_floorclip() + self->GetBobOffset() + zheight + 35*FRACUNIT + (self->player? self->player->crouchoffset : 0)),
 			ALLOW_REPLACE);
 	if (bo)
 	{
@@ -3730,7 +3728,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
 			offsetwidth = FixedMul(self->_f_radius(), offsetwidth);
 		}
 		
-		pos = self->PosPlusZ(offsetheight - self->floorclip);
+		pos = self->PosPlusZ(offsetheight - self->_f_floorclip());
 
 		if (!(flags & CLOFF_FROMBASE))
 		{ // default to hitscan origin

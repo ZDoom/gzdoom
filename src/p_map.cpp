@@ -4027,7 +4027,7 @@ struct aim_t
 DAngle P_AimLineAttack(AActor *t1, DAngle angle, double distance, FTranslatedLineTarget *pLineTarget, DAngle vrange,
 	int flags, AActor *target, AActor *friender)
 {
-	fixed_t shootz = t1->_f_Z() + (t1->_f_height() >> 1) - t1->floorclip;
+	fixed_t shootz = t1->_f_Z() + (t1->_f_height() >> 1) - t1->_f_floorclip();
 	if (t1->player != NULL)
 	{
 		shootz += fixed_t(t1->player->mo->AttackZOffset * t1->player->crouchfactor);
@@ -4172,7 +4172,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 	vy = FLOAT2FIXED(pc * angle.Sin());
 	vz = FLOAT2FIXED(-pitch.Sin());
 
-	shootz = t1->_f_Z() - t1->floorclip + (t1->_f_height() >> 1);
+	shootz = t1->_f_Z() - t1->_f_floorclip() + (t1->_f_height() >> 1);
 	if (t1->player != NULL)
 	{
 		shootz += fixed_t(t1->player->mo->AttackZOffset * t1->player->crouchfactor);
@@ -4434,7 +4434,7 @@ AActor *P_LinePickActor(AActor *t1, angle_t angle, fixed_t distance, int pitch,
 	vy = FixedMul(finecosine[pitch], finesine[angle]);
 	vz = -finesine[pitch];
 
-	shootz = t1->_f_Z() - t1->floorclip + (t1->_f_height() >> 1);
+	shootz = t1->_f_Z() - t1->_f_floorclip() + (t1->_f_height() >> 1);
 	if (t1->player != NULL)
 	{
 		shootz += fixed_t(t1->player->mo->AttackZOffset * t1->player->crouchfactor);
@@ -4705,7 +4705,7 @@ void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, i
 	vy = FixedMul(finecosine[pitch], finesine[angle]);
 	vz = finesine[pitch];
 
-	shootz = source->_f_Z() - source->floorclip + (source->_f_height() >> 1) + offset_z;
+	shootz = source->_f_Z() - source->_f_floorclip() + (source->_f_height() >> 1) + offset_z;
 
 	if (!(railflags & RAF_CENTERZ))
 	{
@@ -4874,7 +4874,7 @@ void P_AimCamera(AActor *t1, fixed_t &CameraX, fixed_t &CameraY, fixed_t &Camera
 	vy = FixedMul(finecosine[pitch], finesine[angle]);
 	vz = finesine[pitch];
 
-	sz = t1->_f_Z() - t1->floorclip + t1->_f_height() + (fixed_t)(clamp<double>(chase_height, -1000, 1000) * FRACUNIT);
+	sz = t1->_f_Z() - t1->_f_floorclip() + t1->_f_height() + (fixed_t)(clamp<double>(chase_height, -1000, 1000) * FRACUNIT);
 
 	if (Trace(t1->_f_X(), t1->_f_Y(), sz, t1->Sector,
 		vx, vy, vz, distance, 0, 0, NULL, trace) &&

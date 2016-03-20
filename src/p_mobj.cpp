@@ -320,7 +320,7 @@ void AActor::Serialize(FArchive &arc)
 	}
 	arc << skillrespawncount
 		<< tracer
-		<< floorclip
+		<< Floorclip
 		<< tid
 		<< special;
 	if (P_IsACSSpecial(special))
@@ -4278,7 +4278,7 @@ AActor *AActor::StaticSpawn (PClassActor *type, fixed_t ix, fixed_t iy, fixed_t 
 	}
 	else
 	{
-		actor->floorclip = 0;
+		actor->Floorclip = 0;
 	}
 	actor->UpdateWaterLevel (actor->_f_Z(), false);
 	if (!SpawningMapThing)
@@ -4519,12 +4519,12 @@ void AActor::AdjustFloorClip ()
 		return;
 	}
 
-	fixed_t oldclip = floorclip;
-	fixed_t shallowestclip = FIXED_MAX;
+	double oldclip = _f_floorclip();
+	double shallowestclip = INT_MAX;
 	const msecnode_t *m;
 
 	// possibly standing on a 3D-floor
-	if (Sector->e->XFloor.ffloors.Size() && _f_Z() > Sector->floorplane.ZatPoint(this)) floorclip = 0;
+	if (Sector->e->XFloor.ffloors.Size() && Z() > Sector->floorplane.ZatPointF(this)) Floorclip = 0;
 
 	// [RH] clip based on shallowest floor player is standing on
 	// If the sector has a deep water effect, then let that effect
@@ -4535,24 +4535,24 @@ void AActor::AdjustFloorClip ()
 		sector_t *hsec = m->m_sector->GetHeightSec();
 		if (hsec == NULL && m->m_sector->floorplane.ZatPoint (pos) == _f_Z())
 		{
-			fixed_t clip = Terrains[m->m_sector->GetTerrain(sector_t::floor)].FootClip;
+			double clip = Terrains[m->m_sector->GetTerrain(sector_t::floor)].FootClip;
 			if (clip < shallowestclip)
 			{
 				shallowestclip = clip;
 			}
 		}
 	}
-	if (shallowestclip == FIXED_MAX)
+	if (shallowestclip == INT_MAX)
 	{
-		floorclip = 0;
+		Floorclip = 0;
 	}
 	else
 	{
-		floorclip = shallowestclip;
+		Floorclip = shallowestclip;
 	}
-	if (player && player->mo == this && oldclip != floorclip)
+	if (player && player->mo == this && oldclip != Floorclip)
 	{
-		player->viewheight -= oldclip - floorclip;
+		player->viewheight -= FLOAT2FIXED(oldclip - Floorclip);
 		player->deltaviewheight = player->GetDeltaViewHeight();
 	}
 }
@@ -5637,7 +5637,7 @@ foundone:
 	if (smallsplash && splash->SmallSplash)
 	{
 		mo = Spawn (splash->SmallSplash, x, y, z, ALLOW_REPLACE);
-		if (mo) mo->floorclip += splash->SmallSplashClip;
+		if (mo) mo->Floorclip += FIXED2DBL(splash->SmallSplashClip);
 	}
 	else
 	{
@@ -5928,7 +5928,7 @@ AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
 
 	if (z != ONFLOORZ && z != ONCEILINGZ) 
 	{
-		z -= source->floorclip;
+		z -= source->_f_floorclip();
 	}
 
 	AActor *th = Spawn (type, x, y, z, ALLOW_REPLACE);
@@ -6094,7 +6094,7 @@ AActor *P_SpawnMissileAngleZSpeed (AActor *source, fixed_t z,
 
 	if (z != ONFLOORZ && z != ONCEILINGZ) 
 	{
-		z -= source->floorclip;
+		z -= source->_f_floorclip();
 	}
 
 	mo = Spawn (type, source->_f_X(), source->_f_Y(), z, ALLOW_REPLACE);
@@ -6196,7 +6196,7 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 	if (z != ONFLOORZ && z != ONCEILINGZ)
 	{
 		// Doom spawns missiles 4 units lower than hitscan attacks for players.
-		z += source->_f_Z() + (source->_f_height()>>1) - source->floorclip;
+		z += source->_f_Z() + (source->_f_height()>>1) - source->_f_floorclip();
 		if (source->player != NULL)	// Considering this is for player missiles, it better not be NULL.
 		{
 			z += fixed_t ((source->player->mo->AttackZOffset - 4*FRACUNIT) * source->player->crouchfactor);

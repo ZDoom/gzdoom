@@ -75,8 +75,8 @@ void A_Chase(VMFrameStack *stack, AActor *self);
 void A_FaceTarget(AActor *actor);
 void A_Face(AActor *self, AActor *other, angle_t max_turn = 0, angle_t max_pitch = ANGLE_270, angle_t ang_offset = 0, angle_t pitch_offset = 0, int flags = 0, fixed_t z_add = 0);
 
-bool A_RaiseMobj (AActor *, fixed_t speed);
-bool A_SinkMobj (AActor *, fixed_t speed);
+bool A_RaiseMobj (AActor *, double speed);
+bool A_SinkMobj (AActor *, double speed);
 
 bool CheckBossDeath (AActor *);
 int P_Massacre ();

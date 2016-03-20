@@ -42,10 +42,10 @@ bool AArtiPoisonBag1::Use (bool pickup)
 	angle_t angle = Owner->_f_angle() >> ANGLETOFINESHIFT;
 	AActor *mo;
 
-	mo = Spawn ("PoisonBag", Owner->Vec3Offset(
-		16*finecosine[angle],
-		24*finesine[angle], 
-		-Owner->floorclip+8*FRACUNIT), ALLOW_REPLACE);
+	mo = Spawn("PoisonBag", Owner->Vec3Offset(
+		16 * Owner->Angles.Yaw.Cos(),
+		24 * Owner->Angles.Yaw.Sin(),
+		-Owner->Floorclip + 8), ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->target = Owner;
@@ -70,10 +70,10 @@ bool AArtiPoisonBag2::Use (bool pickup)
 	angle_t angle = Owner->_f_angle() >> ANGLETOFINESHIFT;
 	AActor *mo;
 
-	mo = Spawn ("FireBomb", Owner->Vec3Offset(
-		16*finecosine[angle],
-		24*finesine[angle], 
-		-Owner->floorclip+8*FRACUNIT), ALLOW_REPLACE);
+	mo = Spawn("FireBomb", Owner->Vec3Offset(
+		16 * Owner->Angles.Yaw.Cos(),
+		24 * Owner->Angles.Yaw.Sin(),
+		-Owner->Floorclip + 8), ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->target = Owner;
@@ -97,7 +97,7 @@ bool AArtiPoisonBag3::Use (bool pickup)
 {
 	AActor *mo;
 
-	mo = Spawn("ThrowingBomb", Owner->PosPlusZ(-Owner->floorclip+35*FRACUNIT + (Owner->player? Owner->player->crouchoffset : 0)), ALLOW_REPLACE);
+	mo = Spawn("ThrowingBomb", Owner->PosPlusZ(-Owner->_f_floorclip()+35*FRACUNIT + (Owner->player? Owner->player->crouchoffset : 0)), ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->Angles.Yaw = Owner->Angles.Yaw + (((pr_poisonbag() & 7) - 4) * (360./256.));

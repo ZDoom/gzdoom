@@ -142,7 +142,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_UnSetFloorClip)
 	PARAM_ACTION_PROLOGUE;
 
 	self->flags2 &= ~MF2_FLOORCLIP;
-	self->floorclip = 0;
+	self->Floorclip = 0;
 	return 0;
 }
 

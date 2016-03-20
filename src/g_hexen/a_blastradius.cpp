@@ -26,7 +26,7 @@ void BlastActor (AActor *victim, fixed_t strength, double speed, AActor *Owner, 
 {
 	DAngle angle;
 	AActor *mo;
-	fixedvec3 pos;
+	DVector3 pos;
 
 	if (!victim->SpecialBlastHandling (Owner, strength))
 	{
@@ -41,9 +41,9 @@ void BlastActor (AActor *victim, fixed_t strength, double speed, AActor *Owner, 
 	// Spawn blast puff
 	angle -= 180.;
 	pos = victim->Vec3Offset(
-		fixed_t((victim->_f_radius() + FRACUNIT) * angle.Cos()),
-		fixed_t((victim->_f_radius() + FRACUNIT) * angle.Sin()),
-		-victim->floorclip + (victim->_f_height()>>1));
+		(victim->radius + 1) * angle.Cos(),
+		(victim->radius + 1) * angle.Sin(),
+		(victim->Height / 2) - victim->Floorclip);
 	mo = Spawn (blasteffect, pos, ALLOW_REPLACE);
 	if (mo)
 	{

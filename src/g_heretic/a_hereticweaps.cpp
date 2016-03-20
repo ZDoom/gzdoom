@@ -401,7 +401,7 @@ void FireMacePL1B (AActor *actor)
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return;
 	}
-	ball = Spawn("MaceFX2", actor->PosPlusZ(28*FRACUNIT - actor->floorclip), ALLOW_REPLACE);
+	ball = Spawn("MaceFX2", actor->PosPlusZ(28 - actor->Floorclip), ALLOW_REPLACE);
 	ball->Vel.Z = 2 - player->mo->Angles.Pitch.TanClamped();
 	ball->target = actor;
 	ball->Angles.Yaw = actor->Angles.Yaw;
@@ -1052,10 +1052,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_SkullRodStorm)
 	{ // Fudge rain frequency
 		return 0;
 	}
-	fixedvec2 pos = self->Vec2Offset(
-		((pr_storm()&127) - 64) * FRACUNIT,
-		((pr_storm()&127) - 64) * FRACUNIT);
-	mo = Spawn<ARainPillar> (pos.x, pos.y, ONCEILINGZ, ALLOW_REPLACE);
+	double xo = ((pr_storm() & 127) - 64);
+	double yo = ((pr_storm() & 127) - 64);
+	DVector3 pos = self->Vec2OffsetZ(xo, yo, ONCEILINGZ);
+	mo = Spawn<ARainPillar> (pos, ALLOW_REPLACE);
 	// We used bouncecount to store the 3D floor index in A_HideInCeiling
 	if (!mo) return 0;
 	if (mo->Sector->PortalGroup != self->Sector->PortalGroup)
@@ -1064,16 +1064,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_SkullRodStorm)
 		mo->Destroy();
 		return 0;
 	}
-	fixed_t newz;
 	if (self->bouncecount >= 0 && (unsigned)self->bouncecount < self->Sector->e->XFloor.ffloors.Size())
-		newz = self->Sector->e->XFloor.ffloors[self->bouncecount]->bottom.plane->ZatPoint(mo);// - 40 * FRACUNIT;
+		pos.Z = self->Sector->e->XFloor.ffloors[self->bouncecount]->bottom.plane->ZatPointF(mo);// - 40 * FRACUNIT;
 	else
-		newz = self->Sector->ceilingplane.ZatPoint(mo);
-	int moceiling = P_Find3DFloor(NULL, pos.x, pos.y, newz, false, false, newz);
-	if (moceiling >= 0)
-		mo->_f_SetZ(newz - mo->_f_height(), false);
-	mo->Translation = multiplayer ?
-		TRANSLATION(TRANSLATION_RainPillar,self->special2) : 0;
+		pos.Z = self->Sector->ceilingplane.ZatPointF(mo);
+	int moceiling = P_Find3DFloor(NULL, pos, false, false, pos.Z);
+	if (moceiling >= 0) mo->SetZ(pos.Z - mo->Height);
+	mo->Translation = multiplayer ?	TRANSLATION(TRANSLATION_RainPillar,self->special2) : 0;
 	mo->target = self->target;
 	mo->Vel.X = MinVel; // Force collision detection
 	mo->Vel.Z = -mo->Speed;
@@ -1117,15 +1114,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_HideInCeiling)
 	PARAM_ACTION_PROLOGUE;
 
 	// We use bouncecount to store the 3D floor index
-	fixed_t foo;
-	for (unsigned int i=0; i< self->Sector->e->XFloor.ffloors.Size(); i++)
+	double foo;
+	for (int i = self->Sector->e->XFloor.ffloors.Size() - 1; i >= 0; i--)
 	{
 		F3DFloor * rover = self->Sector->e->XFloor.ffloors[i];
-		if(!(rover->flags & FF_SOLID) || !(rover->flags & FF_EXISTS)) continue;
-		 
-		if ((foo = rover->bottom.plane->ZatPoint(self)) >= (self->_f_Top()))
+		if (!(rover->flags & FF_SOLID) || !(rover->flags & FF_EXISTS)) continue;
+
+		if ((foo = rover->bottom.plane->ZatPointF(self)) >= self->Top())
 		{
-			self->_f_SetZ(foo + 4*FRACUNIT, false);
+			self->SetZ(foo + 4, false);
 			self->bouncecount = i;
 			return 0;
 		}
@@ -1320,7 +1317,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePhoenixPL2)
 	slope = -self->Angles.Pitch.TanClamped();
 	double xo = pr_fp2.Random2() / 128.;
 	double yo = pr_fp2.Random2() / 128.;
-	DVector3 pos = self->Vec3Offset(xo, yo, 26 + slope - FIXED2FLOAT(self->floorclip));
+	DVector3 pos = self->Vec3Offset(xo, yo, 26 + slope - self->Floorclip);
 
 	slope += 0.1;
 	mo = Spawn("PhoenixFX2", pos, ALLOW_REPLACE);

@@ -57,7 +57,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_WraithRaiseInit)
 	self->flags2 &= ~MF2_NONSHOOTABLE;
 	self->flags3 &= ~MF3_DONTBLAST;
 	self->flags |= MF_SHOOTABLE|MF_SOLID;
-	self->floorclip = self->_f_height();
+	self->Floorclip = self->Height;
 	return 0;
 }
 
@@ -137,7 +137,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_WraithFX2)
 			mo->Vel.Y = ((pr_wraithfx2() << 7) + 1) * angle.Sin();
 			mo->Vel.Z = 0;
 			mo->target = self;
-			mo->floorclip = 10*FRACUNIT;
+			mo->Floorclip = 10;
 		}
 	}
 	return 0;
@@ -253,7 +253,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_WraithChase)
 	int weaveindex = self->special1;
 	self->_f_AddZ(finesine[weaveindex << BOBTOFINESHIFT] * 8);
 	self->special1 = (weaveindex + 2) & 63;
-//	if (self->floorclip > 0)
+//	if (self->Floorclip > 0)
 //	{
 //		P_SetMobjState(self, S_WRAITH_RAISE2);
 //		return;

@@ -895,6 +895,11 @@ public:
 		return VecToAngle(otherpos.y + oxofs - _f_Y(), otherpos.x + oyofs - _f_X());
 	}
 
+	DAngle AngleTo(AActor *other, double oxofs, double oyofs, bool absolute = false) const
+	{
+		return FIXED2DBL(AngleTo(other, FLOAT2FIXED(oxofs), FLOAT2FIXED(oyofs), absolute));
+	}
+
 	fixedvec2 _f_Vec2To(AActor *other) const
 	{
 		fixedvec3 otherpos = other->PosRelative(this);
@@ -1184,7 +1189,12 @@ public:
 	FNameNoInit		Species;		// For monster families
 	TObjPtr<AActor>	tracer;			// Thing being chased/attacked for tracers
 	TObjPtr<AActor>	master;			// Thing which spawned this one (prevents mutual attacks)
-	fixed_t			floorclip;		// value to use for floor clipping
+	double			Floorclip;		// value to use for floor clipping
+	fixed_t			_f_floorclip()
+	{
+		return FLOAT2FIXED(Floorclip);
+	}
+
 	int				tid;			// thing identifier
 	int				special;		// special
 	int				args[5];		// special arguments

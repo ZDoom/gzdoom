@@ -1253,7 +1253,7 @@ void G_FinishTravel ()
 			pawn->floorterrain = pawndup->floorterrain;
 			pawn->ceilingsector = pawndup->ceilingsector;
 			pawn->ceilingpic = pawndup->ceilingpic;
-			pawn->floorclip = pawndup->floorclip;
+			pawn->Floorclip = pawndup->Floorclip;
 			pawn->waterlevel = pawndup->waterlevel;
 		}
 		else

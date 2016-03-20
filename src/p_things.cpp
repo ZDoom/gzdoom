@@ -232,7 +232,7 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 				}
 				else if (z != ONFLOORZ)
 				{
-					z -= spot->floorclip;
+					z -= spot->_f_floorclip();
 				}
 				mobj = Spawn (kind, spot->_f_X(), spot->_f_Y(), z, ALLOW_REPLACE);
 

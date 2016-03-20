@@ -2998,14 +2998,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
 	if (t.linetarget == NULL)
 	{
 		// We probably won't hit the target, but aim at it anyway so we don't look stupid.
-		fixedvec2 pos = self->_f_Vec2To(self->target);
-		DVector2 xydiff(pos.x, pos.y);
-		double zdiff = (self->target->_f_Z() + (self->target->_f_height()>>1)) - (self->_f_Z() + (self->_f_height()>>1) - self->floorclip);
+		DVector2 xydiff = self->Vec2To(self->target);
+		double zdiff = self->target->Center() - self->Center() - self->Floorclip;
 		self->Angles.Pitch = -VecToAngle(xydiff.Length(), zdiff);
 	}
 
 	// Let the aim trail behind the player
-	self->Angles.Yaw = self->AngleTo(self->target, -self->target->_f_velx() * 3, -self->target->_f_vely() * 3);
+	self->Angles.Yaw = self->AngleTo(self->target, -self->target->Vel.X * 3, -self->target->Vel.Y * 3);
 
 	if (self->target->flags & MF_SHADOW && !(self->flags6 & MF6_SEEINVISIBLE))
 	{
@@ -3481,11 +3480,11 @@ int P_Massacre ()
 // Sink a mobj incrementally into the floor
 //
 
-bool A_SinkMobj (AActor *actor, fixed_t speed)
+bool A_SinkMobj (AActor *actor, double speed)
 {
-	if (actor->floorclip < actor->_f_height())
+	if (actor->Floorclip < actor->Height)
 	{
-		actor->floorclip += speed;
+		actor->Floorclip += speed;
 		return false;
 	}
 	return true;
@@ -3496,17 +3495,17 @@ bool A_SinkMobj (AActor *actor, fixed_t speed)
 // Raise a mobj incrementally from the floor to 
 // 
 
-bool A_RaiseMobj (AActor *actor, fixed_t speed)
+bool A_RaiseMobj (AActor *actor, double speed)
 {
 	bool done = true;
 
 	// Raise a mobj from the ground
-	if (actor->floorclip > 0)
+	if (actor->Floorclip > 0)
 	{
-		actor->floorclip -= speed;
-		if (actor->floorclip <= 0)
+		actor->Floorclip -= speed;
+		if (actor->Floorclip <= 0)
 		{
-			actor->floorclip = 0;
+			actor->Floorclip = 0;
 			done = true;
 		}
 		else

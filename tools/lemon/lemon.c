@@ -3411,11 +3411,13 @@ PRIVATE char *append_str(const char *zText, int n, int p1, int p2, int bNoSubst)
 PRIVATE int translate_code(struct lemon *lemp, struct rule *rp){
   char *cp, *xp;
   int i;
-  int rc = 0;          /* True if yylhsminor is used */
-  char lhsused = 0;    /* True if the LHS element has been used */
-  char lhsdirect;      /* True if LHS writes directly into stack */
-  char used[MAXRHS];   /* True for each RHS element which is used */
-  char zLhs[50];       /* Convert the LHS symbol into this string */
+  int rc = 0;            /* True if yylhsminor is used */
+  const char *zSkip = 0; /* The zOvwrt comment within rp->code, or NULL */
+  char lhsused = 0;      /* True if the LHS element has been used */
+  char lhsdirect;        /* True if LHS writes directly into stack */
+  char used[MAXRHS];     /* True for each RHS element which is used */
+  char zLhs[50];         /* Convert the LHS symbol into this string */
+  char zOvwrt[900];      /* Comment that to allow LHS to overwrite RHS */
 
   for(i=0; i<rp->nrhs; i++) used[i] = 0;
   lhsused = 0;
@@ -3456,7 +3458,15 @@ PRIVATE int translate_code(struct lemon *lemp, struct rule *rp){
       lemp->errorcnt++;
     }
   }else{
-    lhsdirect = 0;
+    sprintf(zOvwrt, "/*%s-overwrites-%s*/", rp->lhsalias, rp->rhsalias[0]);
+    zSkip = strstr(rp->code, zOvwrt);
+    if( zSkip!=0 ){
+      /* The code contains a special comment that indicates that it is safe
+      ** for the LHS label to overwrite left-most RHS label. */
+      lhsdirect = 1;
+    }else{
+      lhsdirect = 0;
+    }
   }
   if( lhsdirect ){
     sprintf(zLhs, "yymsp[%d].minor.yy%d",1-rp->nrhs,rp->lhs->dtnum);
@@ -3469,6 +3479,11 @@ PRIVATE int translate_code(struct lemon *lemp, struct rule *rp){
 
   /* This const cast is wrong but harmless, if we're careful. */
   for(cp=(char *)rp->code; *cp; cp++){
+    if( cp==zSkip ){
+      append_str(zOvwrt,0,0,0,0);
+      cp += lemonStrlen(zOvwrt)-1;
+      continue;
+    }
     if( ISALPHA(*cp) && (cp==rp->code || (!ISALNUM(cp[-1]) && cp[-1]!='_')) ){
       char saved;
       for(xp= &cp[1]; ISALNUM(*xp) || *xp=='_'; xp++);

@@ -122,8 +122,6 @@ void ResortStates(struct lemon *);
 void  SetSize(int);             /* All sets will be of size N */
 char *SetNew(void);               /* A new set for element 0..N */
 void  SetFree(char*);             /* Deallocate a set */
-
-char *SetNew(void);               /* A new set for element 0..N */
 int SetAdd(char*,int);            /* Add element to a set */
 int SetUnion(char *,char *);    /* A <- A U B, thru element N */
 #define SetFind(X,Y) (X[Y])       /* True if Y is in set X */
@@ -973,7 +971,7 @@ void FindFollowSets(struct lemon *lemp)
   }while( progress );
 }
 
-static int resolve_conflict(struct action *,struct action *, struct symbol *);
+static int resolve_conflict(struct action *,struct action *);
 
 /* Compute the reduce actions, and resolve conflicts.
 */
@@ -1027,7 +1025,7 @@ void FindActions(struct lemon *lemp)
       for(nap=ap->next; nap && nap->sp==ap->sp; nap=nap->next){
          /* The two actions "ap" and "nap" have the same lookahead.
          ** Figure out which one should be used */
-         lemp->nconflict += resolve_conflict(ap,nap,lemp->errsym);
+         lemp->nconflict += resolve_conflict(ap,nap);
       }
     }
   }
@@ -1062,8 +1060,7 @@ void FindActions(struct lemon *lemp)
 */
 static int resolve_conflict(
   struct action *apx,
-  struct action *apy,
-  struct symbol *errsym   /* The error symbol (if defined.  NULL otherwise) */
+  struct action *apy
 ){
   struct symbol *spx, *spy;
   int errcnt = 0;

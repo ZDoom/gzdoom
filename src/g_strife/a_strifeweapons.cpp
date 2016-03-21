@@ -814,7 +814,7 @@ bool ASigil::HandlePickup (AInventory *item)
 
 AInventory *ASigil::CreateCopy (AActor *other)
 {
-	ASigil *copy = Spawn<ASigil> (0,0,0, NO_REPLACE);
+	ASigil *copy = Spawn<ASigil> ();
 	copy->Amount = Amount;
 	copy->MaxAmount = MaxAmount;
 	copy->NumPieces = NumPieces;
@@ -1167,7 +1167,7 @@ int ASigil::GiveSigilPiece (AActor *receiver)
 	sigil = receiver->FindInventory<ASigil> ();
 	if (sigil == NULL)
 	{
-		sigil = static_cast<ASigil*>(Spawn("Sigil1", 0,0,0, NO_REPLACE));
+		sigil = static_cast<ASigil*>(Spawn("Sigil1"));
 		if (!sigil->CallTryPickup (receiver))
 		{
 			sigil->Destroy ();

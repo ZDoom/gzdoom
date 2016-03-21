@@ -898,7 +898,7 @@ AInventory *AActor::GiveInventoryType (PClassActor *type)
 
 	if (type != NULL)
 	{
-		item = static_cast<AInventory *>(Spawn (type, 0,0,0, NO_REPLACE));
+		item = static_cast<AInventory *>(Spawn (type));
 		if (!item->CallTryPickup (this))
 		{
 			item->Destroy ();
@@ -920,7 +920,7 @@ bool AActor::GiveAmmo (PClassAmmo *type, int amount)
 {
 	if (type != NULL)
 	{
-		AInventory *item = static_cast<AInventory *>(Spawn (type, 0, 0, 0, NO_REPLACE));
+		AInventory *item = static_cast<AInventory *>(Spawn (type));
 		if (item)
 		{
 			item->Amount = amount;
@@ -3068,7 +3068,7 @@ bool AActor::Slam (AActor *thing)
 	return false;			// stop moving
 }
 
-bool AActor::SpecialBlastHandling (AActor *source, fixed_t strength)
+bool AActor::SpecialBlastHandling (AActor *source, double strength)
 {
 	return true;
 }

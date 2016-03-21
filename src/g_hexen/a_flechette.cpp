@@ -265,7 +265,7 @@ AInventory *AArtiPoisonBag::CreateCopy (AActor *other)
 
 	AInventory *copy;
 	PClassActor *spawntype = GetFlechetteType(other);
-	copy = static_cast<AInventory *>(Spawn (spawntype, 0, 0, 0, NO_REPLACE));
+	copy = static_cast<AInventory *>(Spawn (spawntype));
 	copy->Amount = Amount;
 	copy->MaxAmount = MaxAmount;
 	GoAwayAndDie ();

@@ -109,7 +109,7 @@ public:
 		arc << AngleOffset;
 	}
 
-	bool SpecialBlastHandling (AActor *source, fixed_t strength)
+	bool SpecialBlastHandling (AActor *source, double strength)
 	{ // don't blast sorcerer balls
 		return false;
 	}

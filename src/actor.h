@@ -638,7 +638,7 @@ public:
 
 	// Called when an actor is to be reflected by a disc of repulsion.
 	// Returns true to continue normal blast processing.
-	virtual bool SpecialBlastHandling (AActor *source, fixed_t strength);
+	virtual bool SpecialBlastHandling (AActor *source, double strength);
 
 	// Called by RoughBlockCheck
 	bool IsOkayToAttack (AActor *target);
@@ -937,6 +937,7 @@ public:
 		}
 	}
 
+
 	DVector3 Vec2OffsetZ(double dx, double dy, double atz, bool absolute = false)
 	{
 		if (absolute)
@@ -959,6 +960,19 @@ public:
 			return ret;
 		}
 		else return P_GetOffsetPosition(_f_X(), _f_Y(), FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]), FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]));
+	}
+
+	DVector2 Vec2Angle(double length, DAngle angle, bool absolute = false)
+	{
+		if (absolute)
+		{
+			return{ X() + length * angle.Cos(), Y() + length * angle.Sin() };
+		}
+		else
+		{
+			fixedvec2 op = P_GetOffsetPosition(_f_X(), _f_Y(), FLOAT2FIXED(length*angle.Cos()), FLOAT2FIXED(length*angle.Sin()));
+			return{ FIXED2DBL(op.x), FIXED2DBL(op.y) };
+		}
 	}
 
 	fixedvec3 Vec3Offset(fixed_t dx, fixed_t dy, fixed_t dz, bool absolute = false)
@@ -1454,6 +1468,16 @@ public:
 		__pos.x = xx;
 		__pos.y = yy;
 	}
+	void SetXY(const fixedvec2 &npos)
+	{
+		__pos.x = npos.x;
+		__pos.y = npos.y;
+	}
+	void SetXY(const DVector2 &npos)
+	{
+		__pos.x = FLOAT2FIXED(npos.X);
+		__pos.y = FLOAT2FIXED(npos.Y);
+	}
 	void SetXYZ(fixed_t xx, fixed_t yy, fixed_t zz)
 	{
 		__pos.x = xx;
@@ -1465,11 +1489,6 @@ public:
 		__pos.x = FLOAT2FIXED(xx);
 		__pos.y = FLOAT2FIXED(yy);
 		__pos.z = FLOAT2FIXED(zz);
-	}
-	void SetXY(const fixedvec2 &npos)
-	{
-		__pos.x = npos.x;
-		__pos.y = npos.y;
 	}
 	void SetXYZ(const fixedvec3 &npos)
 	{
@@ -1630,6 +1649,10 @@ inline AActor *Spawn (PClassActor *type, fixed_t x, fixed_t y, fixed_t z, replac
 {
 	return AActor::StaticSpawn (type, x, y, z, allowreplacement);
 }
+inline AActor *Spawn(PClassActor *type)
+{
+	return AActor::StaticSpawn(type, 0, 0, 0, NO_REPLACE);
+}
 inline AActor *Spawn (PClassActor *type, const fixedvec3 &pos, replace_t allowreplacement)
 {
 	return AActor::StaticSpawn (type, pos.x, pos.y, pos.z, allowreplacement);
@@ -1645,6 +1668,11 @@ inline AActor *Spawn(PClassActor *type, const DVector3 &pos, replace_t allowrepl
 
 AActor *Spawn (const char *type, fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement);
 AActor *Spawn (FName classname, fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement);
+
+inline AActor *Spawn(FName type)
+{
+	return Spawn(type, 0, 0, 0, NO_REPLACE);
+}
 
 inline AActor *Spawn (const char *type, const fixedvec3 &pos, replace_t allowreplacement)
 {
@@ -1692,6 +1720,12 @@ inline T *Spawn(const DVector3 &pos, replace_t allowreplacement)
 	if (pos.Z != ONFLOORZ && pos.Z != ONCEILINGZ && pos.Z != FLOATRANDZ) zz = FLOAT2FIXED(pos.Z);
 	else zz = (int)pos.Z;
 	return static_cast<T *>(AActor::StaticSpawn(RUNTIME_TEMPLATE_CLASS(T), FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), zz, allowreplacement));
+}
+
+template<class T>
+inline T *Spawn()	// for inventory items we do not need coordinates and replacement info.
+{
+	return static_cast<T *>(AActor::StaticSpawn(RUNTIME_TEMPLATE_CLASS(T), 0, 0, 0, NO_REPLACE));
 }
 
 inline fixedvec2 Vec2Angle(fixed_t length, angle_t angle)

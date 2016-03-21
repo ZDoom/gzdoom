@@ -14,7 +14,6 @@
 */
 
 const double FLAMESPEED	= 0.45;
-const fixed_t CFLAMERANGE	= 12*64*FRACUNIT;
 const double FLAMEROTSPEED	= 2.;
 
 static FRandom pr_missile ("CFlameMissile");
@@ -46,7 +45,7 @@ void ACFlameMissile::Effect ()
 	if (!--special1)
 	{
 		special1 = 4;
-		double newz = Z()-12;
+		double newz = Z() - 12;
 		if (newz < floorz)
 		{
 			newz = floorz;
@@ -114,7 +113,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CFlameMissile)
 
 	int i;
 	DAngle an;
-	fixed_t dist;
+	double dist;
 	AActor *mo;
 	
 	self->renderflags &= ~RF_INVISIBLE;
@@ -122,13 +121,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_CFlameMissile)
 	AActor *BlockingMobj = self->BlockingMobj;
 	if (BlockingMobj && BlockingMobj->flags&MF_SHOOTABLE)
 	{ // Hit something, so spawn the flame circle around the thing
-		dist = BlockingMobj->_f_radius()+18*FRACUNIT;
+		dist = BlockingMobj->radius + 18;
 		for (i = 0; i < 4; i++)
 		{
 			an = i*45.;
-			mo = Spawn ("CircleFlame", BlockingMobj->Vec3Offset(
-				xs_CRoundToInt(an.Cos()*dist), xs_CRoundToInt(an.Sin()*dist),
-				5*FRACUNIT), ALLOW_REPLACE);
+			mo = Spawn ("CircleFlame", BlockingMobj->Vec3Angle(dist, an, 5), ALLOW_REPLACE);
 			if (mo)
 			{
 				mo->Angles.Yaw = an;
@@ -138,9 +135,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CFlameMissile)
 				mo->specialf2 = mo->Vel.Y;
 				mo->tics -= pr_missile()&3;
 			}
-			mo = Spawn ("CircleFlame", BlockingMobj->Vec3Offset(
-				-xs_CRoundToInt(an.Cos()*dist), -xs_CRoundToInt(an.Sin()*dist),
-				5*FRACUNIT), ALLOW_REPLACE);
+			mo = Spawn("CircleFlame", BlockingMobj->Vec3Angle(dist, an, 5), ALLOW_REPLACE);
 			if(mo)
 			{
 				mo->Angles.Yaw = an + 180.;

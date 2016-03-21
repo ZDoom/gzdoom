@@ -1758,7 +1758,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
 				if (armorbonustype != NULL)
 				{
 					assert(armorbonustype->IsDescendantOf(RUNTIME_CLASS(ABasicArmorBonus)));
-					ABasicArmorBonus *armorbonus = static_cast<ABasicArmorBonus *>(Spawn(armorbonustype, 0,0,0, NO_REPLACE));
+					ABasicArmorBonus *armorbonus = static_cast<ABasicArmorBonus *>(Spawn(armorbonustype));
 					armorbonus->SaveAmount *= (actualdamage * lifesteal) >> FRACBITS;
 					armorbonus->MaxSaveAmount = lifestealmax <= 0 ? armorbonus->MaxSaveAmount : lifestealmax;
 					armorbonus->flags |= MF_DROPPED;
@@ -1996,7 +1996,7 @@ static bool DoGiveInventory(AActor *receiver, bool orresult, VM_ARGS)
 	}
 	if (mi) 
 	{
-		AInventory *item = static_cast<AInventory *>(Spawn(mi, 0, 0, 0, NO_REPLACE));
+		AInventory *item = static_cast<AInventory *>(Spawn(mi));
 		if (item == NULL)
 		{
 			return false;
@@ -4936,47 +4936,44 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_QuakeEx)
 //
 //===========================================================================
 
-void A_Weave(AActor *self, int xyspeed, int zspeed, fixed_t xydist, fixed_t zdist)
+void A_Weave(AActor *self, int xyspeed, int zspeed, double xydist, double zdist)
 {
-	fixed_t newX, newY;
+	DVector2 newpos;
 	int weaveXY, weaveZ;
-	int angle;
-	fixed_t dist;
+	DAngle angle;
+	double dist;
 
 	weaveXY = self->WeaveIndexXY & 63;
 	weaveZ = self->WeaveIndexZ & 63;
-	angle = (self->_f_angle() + ANG90) >> ANGLETOFINESHIFT;
+	angle = self->Angles.Yaw + 90;
 
 	if (xydist != 0 && xyspeed != 0)
 	{
-		dist = MulScale13(finesine[weaveXY << BOBTOFINESHIFT], xydist);
-		newX = self->_f_X() - FixedMul (finecosine[angle], dist);
-		newY = self->_f_Y() - FixedMul (finesine[angle], dist);
+		dist = BobSin(weaveXY) * xydist;
+		newpos = self->Pos().XY() - angle.ToVector(dist);
 		weaveXY = (weaveXY + xyspeed) & 63;
-		dist = MulScale13(finesine[weaveXY << BOBTOFINESHIFT], xydist);
-		newX += FixedMul (finecosine[angle], dist);
-		newY += FixedMul (finesine[angle], dist);
+		dist = BobSin(weaveXY) * xydist;
+		newpos += angle.ToVector(dist);
 		if (!(self->flags5 & MF5_NOINTERACTION))
 		{
-			P_TryMove (self, newX, newY, true);
+			P_TryMove (self, newpos, true);
 		}
 		else
 		{
 			self->UnlinkFromWorld ();
 			self->flags |= MF_NOBLOCKMAP;
 			// We need to do portal offsetting here explicitly, because SetXY cannot do that.
-			newX -= self->_f_X();
-			newY -= self->_f_Y();
-			self->SetXY(self->Vec2Offset(newX, newY));
+			newpos -= self->Pos().XY();
+			self->SetXY(self->Vec2Offset(newpos.X, newpos.Y));
 			self->LinkToWorld ();
 		}
 		self->WeaveIndexXY = weaveXY;
 	}
 	if (zdist != 0 && zspeed != 0)
 	{
-		self->_f_AddZ(-MulScale13(finesine[weaveZ << BOBTOFINESHIFT], zdist));
+		self->AddZ(-BobSin(weaveZ) * zdist);
 		weaveZ = (weaveZ + zspeed) & 63;
-		self->_f_AddZ(MulScale13(finesine[weaveZ << BOBTOFINESHIFT], zdist));
+		self->AddZ(BobSin(weaveZ) * zdist);
 		self->WeaveIndexZ = weaveZ;
 	}
 }
@@ -4986,8 +4983,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Weave)
 	PARAM_ACTION_PROLOGUE;
 	PARAM_INT	(xspeed);
 	PARAM_INT	(yspeed);
-	PARAM_FIXED	(xdist);
-	PARAM_FIXED	(ydist);
+	PARAM_FLOAT	(xdist);
+	PARAM_FLOAT	(ydist);
 	A_Weave(self, xspeed, yspeed, xdist, ydist);
 	return 0;
 }
@@ -5463,7 +5460,7 @@ static bool DoRadiusGive(AActor *self, AActor *thing, PClassActor *item, int amo
 
 		if ((flags & RGF_NOSIGHT) || P_CheckSight(thing, self, SF_IGNOREVISIBILITY | SF_IGNOREWATERBOUNDARY))
 		{ // OK to give; target is in direct path, or the monster doesn't care about it being in line of sight.
-			AInventory *gift = static_cast<AInventory *>(Spawn(item, 0, 0, 0, NO_REPLACE));
+			AInventory *gift = static_cast<AInventory *>(Spawn(item));
 			if (gift->IsKindOf(RUNTIME_CLASS(AHealth)))
 			{
 				gift->Amount *= amount;

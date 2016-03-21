@@ -64,7 +64,7 @@ class AMageStaffFX2 : public AActor
 	DECLARE_CLASS(AMageStaffFX2, AActor)
 public:
 	int SpecialMissileHit (AActor *victim);
-	bool SpecialBlastHandling (AActor *source, fixed_t strength);
+	bool SpecialBlastHandling (AActor *source, double strength);
 };
 
 IMPLEMENT_CLASS (AMageStaffFX2)
@@ -81,7 +81,7 @@ int AMageStaffFX2::SpecialMissileHit (AActor *victim)
 	return -1;
 }
 
-bool AMageStaffFX2::SpecialBlastHandling (AActor *source, fixed_t strength)
+bool AMageStaffFX2::SpecialBlastHandling (AActor *source, double strength)
 {
 	// Reflect to originator
 	tracer = target;	

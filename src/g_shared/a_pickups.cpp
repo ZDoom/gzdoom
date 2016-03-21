@@ -204,7 +204,7 @@ AInventory *AAmmo::CreateCopy (AActor *other)
 			Destroy ();
 		}
 
-		copy = static_cast<AInventory *>(Spawn (type, 0, 0, 0, NO_REPLACE));
+		copy = static_cast<AInventory *>(Spawn (type));
 		copy->Amount = amount;
 		copy->BecomeItem ();
 	}
@@ -747,7 +747,7 @@ AInventory *AInventory::CreateCopy (AActor *other)
 	Amount = MIN(Amount, MaxAmount);
 	if (GoAway ())
 	{
-		copy = static_cast<AInventory *>(Spawn (GetClass(), 0, 0, 0, NO_REPLACE));
+		copy = static_cast<AInventory *>(Spawn (GetClass()));
 		copy->Amount = Amount;
 		copy->MaxAmount = MaxAmount;
 	}
@@ -1861,7 +1861,7 @@ AInventory *ABackpackItem::CreateCopy (AActor *other)
 			if (amount < 0) amount = 0;
 			if (ammo == NULL)
 			{ // The player did not have the ammo. Add it.
-				ammo = static_cast<AAmmo *>(Spawn(atype, 0, 0, 0, NO_REPLACE));
+				ammo = static_cast<AAmmo *>(Spawn(atype));
 				ammo->Amount = bDepleted ? 0 : amount;
 				if (ammo->BackpackMaxAmount > ammo->MaxAmount)
 				{

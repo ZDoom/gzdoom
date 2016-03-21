@@ -38,7 +38,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GiveQuestItem)
 		{
 			if (playeringame[i])
 			{
-				AInventory *item = static_cast<AInventory *>(Spawn (QuestItemClasses[questitem - 1], 0,0,0, NO_REPLACE));
+				AInventory *item = static_cast<AInventory *>(Spawn (QuestItemClasses[questitem - 1]));
 				if (!item->CallTryPickup (players[i].mo))
 				{
 					item->Destroy ();

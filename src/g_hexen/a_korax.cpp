@@ -341,15 +341,6 @@ void KoraxFire (AActor *actor, PClassActor *type, int arm)
 
 //============================================================================
 //
-// A_KSpiritWeave
-// [BL] Was identical to CHolyWeave so lets just use that
-//
-//============================================================================
-
-void CHolyWeave (AActor *actor, FRandom &pr_random);
-
-//============================================================================
-//
 // A_KSpiritSeeker
 //
 //============================================================================
@@ -435,7 +426,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_KSpiritRoam)
 		{
 			A_KSpiritSeeker(self, (double)self->args[0], self->args[0] * 2.);
 		}
-		CHolyWeave(self, pr_kspiritweave);
+		int xyspeed = (pr_kspiritweave() % 5);
+		int zspeed = (pr_kspiritweave() % 5);
+		A_Weave(self, xyspeed, zspeed, 4., 2.);
+
 		if (pr_kspiritroam()<50)
 		{
 			S_Sound (self, CHAN_VOICE, "SpiritActive", 1, ATTN_NONE);

@@ -82,7 +82,7 @@ bool AHealthTraining::TryPickup (AActor *&toucher)
 	if (Super::TryPickup (toucher))
 	{
 		toucher->GiveInventoryType (PClass::FindActor("GunTraining"));
-		AInventory *coin = Spawn<ACoin> (0,0,0, NO_REPLACE);
+		AInventory *coin = Spawn<ACoin> ();
 		if (coin != NULL)
 		{
 			coin->Amount = toucher->player->mo->accuracy*5 + 300;

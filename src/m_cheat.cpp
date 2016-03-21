@@ -694,7 +694,7 @@ void cht_Give (player_t *player, const char *name, int amount)
 				AInventory *ammo = player->mo->FindInventory(atype);
 				if (ammo == NULL)
 				{
-					ammo = static_cast<AInventory *>(Spawn (atype, 0, 0, 0, NO_REPLACE));
+					ammo = static_cast<AInventory *>(Spawn (atype));
 					ammo->AttachToOwner (player->mo);
 					ammo->Amount = ammo->MaxAmount;
 				}
@@ -713,7 +713,7 @@ void cht_Give (player_t *player, const char *name, int amount)
 	{
 		if (gameinfo.gametype != GAME_Hexen)
 		{
-			ABasicArmorPickup *armor = Spawn<ABasicArmorPickup> (0,0,0, NO_REPLACE);
+			ABasicArmorPickup *armor = Spawn<ABasicArmorPickup> ();
 			armor->SaveAmount = 100*deh.BlueAC;
 			armor->SavePercent = gameinfo.Armor2Percent > 0? gameinfo.Armor2Percent : FRACUNIT/2;
 			if (!armor->CallTryPickup (player->mo))
@@ -725,7 +725,7 @@ void cht_Give (player_t *player, const char *name, int amount)
 		{
 			for (i = 0; i < 4; ++i)
 			{
-				AHexenArmor *armor = Spawn<AHexenArmor> (0,0,0, NO_REPLACE);
+				AHexenArmor *armor = Spawn<AHexenArmor> ();
 				armor->health = i;
 				armor->Amount = 0;
 				if (!armor->CallTryPickup (player->mo))
@@ -748,7 +748,7 @@ void cht_Give (player_t *player, const char *name, int amount)
 				AKey *key = (AKey *)GetDefaultByType (PClassActor::AllActorClasses[i]);
 				if (key->KeyNumber != 0)
 				{
-					key = static_cast<AKey *>(Spawn(static_cast<PClassActor *>(PClassActor::AllActorClasses[i]), 0,0,0, NO_REPLACE));
+					key = static_cast<AKey *>(Spawn(static_cast<PClassActor *>(PClassActor::AllActorClasses[i])));
 					if (!key->CallTryPickup (player->mo))
 					{
 						key->Destroy ();

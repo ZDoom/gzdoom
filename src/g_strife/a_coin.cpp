@@ -54,7 +54,7 @@ AInventory *ACoin::CreateCopy (AActor *other)
 	{
 		return Super::CreateCopy (other);
 	}
-	AInventory *copy = Spawn<ACoin> (0,0,0, NO_REPLACE);
+	AInventory *copy = Spawn<ACoin> ();
 	copy->Amount = Amount;
 	copy->BecomeItem ();
 	GoAwayAndDie ();

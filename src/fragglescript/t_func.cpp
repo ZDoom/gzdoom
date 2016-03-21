@@ -2575,7 +2575,7 @@ static void FS_GiveInventory (AActor *actor, const char * type, int amount)
 	AWeapon *savedPendingWeap = actor->player != NULL? actor->player->PendingWeapon : NULL;
 	bool hadweap = actor->player != NULL ? actor->player->ReadyWeapon != NULL : true;
 
-	AInventory *item = static_cast<AInventory *>(Spawn (info, 0,0,0, NO_REPLACE));
+	AInventory *item = static_cast<AInventory *>(Spawn (info));
 
 	// This shouldn't count for the item statistics!
 	item->ClearCounters();
@@ -2783,7 +2783,7 @@ void FParser::SF_MaxPlayerAmmo()
 			if(amount < 0) amount = 0;
 			if (!iammo) 
 			{
-				iammo = static_cast<AAmmo *>(Spawn (ammotype, 0, 0, 0, NO_REPLACE));
+				iammo = static_cast<AAmmo *>(Spawn (ammotype));
 				iammo->Amount = 0;
 				iammo->AttachToOwner (players[playernum].mo);
 			}

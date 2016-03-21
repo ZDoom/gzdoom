@@ -57,7 +57,7 @@ void P_NewChaseDir (AActor *actor);
 AInventory *P_DropItem (AActor *source, PClassActor *type, int special, int chance);
 void P_TossItem (AActor *item);
 bool P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params);
-void A_Weave(AActor *self, int xyspeed, int zspeed, fixed_t xydist, fixed_t zdist);
+void A_Weave(AActor *self, int xyspeed, int zspeed, double xydist, double zdist);
 void A_Unblock(AActor *self, bool drop);
 
 DECLARE_ACTION(A_Look)

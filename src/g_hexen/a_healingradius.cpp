@@ -52,7 +52,7 @@ bool AArtiHealingRadius::Use (bool pickup)
 			case NAME_Armor:
 				for (int j = 0; j < 4; ++j)
 				{
-					AHexenArmor *armor = Spawn<AHexenArmor> (0,0,0, NO_REPLACE);
+					AHexenArmor *armor = Spawn<AHexenArmor> ();
 					armor->health = j;
 					armor->Amount = 1;
 					if (!armor->CallTryPickup (players[i].mo))

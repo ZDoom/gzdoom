@@ -1150,7 +1150,7 @@ static void DoGiveInv (AActor *actor, PClassActor *info, int amount)
 		? actor->player->PendingWeapon : NULL;
 	bool hadweap = actor->player != NULL ? actor->player->ReadyWeapon != NULL : true;
 
-	AInventory *item = static_cast<AInventory *>(Spawn (info, 0,0,0, NO_REPLACE));
+	AInventory *item = static_cast<AInventory *>(Spawn (info));
 
 	// This shouldn't count for the item statistics!
 	item->ClearCounters();

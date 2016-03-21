@@ -51,7 +51,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_TimeBomb)
 
 	self->AddZ(32, false);
 	self->RenderStyle = STYLE_Add;
-	self->alpha = FRACUNIT;
+	self->alpha = OPAQUE;
 	P_RadiusAttack (self, self->target, 128, 128, self->DamageType, RADF_HURTSOURCE);
 	P_CheckSplash(self, 128);
 	return 0;

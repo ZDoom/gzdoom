@@ -1,8 +1,6 @@
 #ifndef ZCC_COMPILE_H
 #define ZCC_COMPILE_H
 
-#include "zcc_errors.h"
-
 class ZCCCompiler
 {
 public:
@@ -10,15 +8,14 @@ public:
 	int Compile();
 
 private:
-	void CompileConstants();
+	void CompileConstants(const TArray<ZCC_ConstantDef *> &defs);
 	PSymbolConst *CompileConstant(ZCC_ConstantDef *def);
 
 	TArray<ZCC_ConstantDef *> Constants;
 	TArray<ZCC_Struct *> Structs;
 	TArray<ZCC_Class *> Classes;
-	TMap<FName, ZCC_TreeNode *> NamedNodes;
 
-	bool AddNamedNode(FName name, ZCC_TreeNode *node);
+	bool AddNamedNode(ZCC_NamedNode *node);
 
 	ZCC_Expression *Simplify(ZCC_Expression *root);
 	ZCC_Expression *SimplifyUnary(ZCC_ExprUnary *unary);
@@ -37,14 +34,18 @@ private:
 	ZCC_Expression *AddCastNode(PType *type, ZCC_Expression *expr);
 
 	ZCC_Expression *IdentifyIdentifier(ZCC_ExprID *idnode);
-	ZCC_Expression *NodeFromSymbol(PSymbol *sym, ZCC_Expression *source);
+	ZCC_Expression *NodeFromSymbol(PSymbol *sym, ZCC_Expression *source, PSymbolTable *table);
 	ZCC_ExprConstant *NodeFromSymbolConst(PSymbolConst *sym, ZCC_Expression *idnode);
 	ZCC_ExprTypeRef *NodeFromSymbolType(PSymbolType *sym, ZCC_Expression *idnode);
+	PSymbol *CompileNode(ZCC_NamedNode *node);
 
-	void Message(ZCC_TreeNode *node, EZCCError errnum, const char *msg, ...);
+
+	void Warn(ZCC_TreeNode *node, const char *msg, ...);
+	void Error(ZCC_TreeNode *node, const char *msg, ...);
+	void MessageV(ZCC_TreeNode *node, const char *txtcolor, const char *msg, va_list argptr);
 
 	DObject *Outer;
-	PSymbolTable &Symbols;
+	PSymbolTable *Symbols;
 	ZCC_AST &AST;
 	int ErrorCount;
 	int WarnCount;

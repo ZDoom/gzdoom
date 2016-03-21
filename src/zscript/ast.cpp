@@ -281,7 +281,7 @@ static void PrintClass(FLispString &out, ZCC_TreeNode *node)
 	ZCC_Class *cnode = (ZCC_Class *)node;
 	out.Break();
 	out.Open("class");
-	out.AddName(cnode->ClassName);
+	out.AddName(cnode->NodeName);
 	PrintNodes(out, cnode->ParentName);
 	PrintNodes(out, cnode->Replaces);
 	out.AddHex(cnode->Flags);
@@ -294,7 +294,7 @@ static void PrintStruct(FLispString &out, ZCC_TreeNode *node)
 	ZCC_Struct *snode = (ZCC_Struct *)node;
 	out.Break();
 	out.Open("struct");
-	out.AddName(snode->StructName);
+	out.AddName(snode->NodeName);
 	PrintNodes(out, snode->Body, false, true);
 	out.Close();
 }
@@ -304,7 +304,7 @@ static void PrintEnum(FLispString &out, ZCC_TreeNode *node)
 	ZCC_Enum *enode = (ZCC_Enum *)node;
 	out.Break();
 	out.Open("enum");
-	out.AddName(enode->EnumName);
+	out.AddName(enode->NodeName);
 	PrintBuiltInType(out, enode->EnumType);
 	out.Add(enode->Elements == NULL ? "nil" : "...", 3);
 	out.Close();
@@ -733,7 +733,7 @@ static void PrintConstantDef(FLispString &out, ZCC_TreeNode *node)
 	ZCC_ConstantDef *dnode = (ZCC_ConstantDef *)node;
 	out.Break();
 	out.Open("constant-def");
-	out.AddName(dnode->Name);
+	out.AddName(dnode->NodeName);
 	PrintNodes(out, dnode->Value, false);
 	out.Close();
 }

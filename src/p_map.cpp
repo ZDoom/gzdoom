@@ -4940,7 +4940,7 @@ bool P_TalkFacing(AActor *player)
 		if (t.linetarget != NULL)
 		{
 			if (t.linetarget->health > 0 && // Dead things can't talk.
-				t.linetarget->flags4 & MF4_INCOMBAT && // Fighting things don't talk either.
+				!(t.linetarget->flags4 & MF4_INCOMBAT) && // Fighting things don't talk either.
 				t.linetarget->Conversation != NULL)
 			{
 				// Give the NPC a chance to play a brief animation

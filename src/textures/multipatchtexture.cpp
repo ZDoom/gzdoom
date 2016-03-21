@@ -1148,7 +1148,7 @@ void FMultiPatchTexture::ParsePatch(FScanner &sc, TexPart & part, bool silent, i
 					sc.MustGetStringName(",");
 					sc.MustGetNumber();
 					b = sc.Number;
-					sc.MustGetStringName(",");
+					//sc.MustGetStringName(","); This was never supposed to be here. 
 					part.Blend = MAKERGB(r, g, b);
 				}
 				// Blend.a may never be 0 here.

@@ -385,7 +385,7 @@ bool P_MorphMonster (AActor *actor, PClassActor *spawntype, int duration, int st
 	morphed->tid = actor->tid;
 	morphed->Angles.Yaw = actor->Angles.Yaw;
 	morphed->UnmorphedMe = actor;
-	morphed->alpha = actor->alpha;
+	morphed->Alpha = actor->Alpha;
 	morphed->RenderStyle = actor->RenderStyle;
 	morphed->Score = actor->Score;
 

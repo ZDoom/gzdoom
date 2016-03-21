@@ -1024,7 +1024,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 	// [RH] Andy Baker's Stealth monsters
 	if (target->flags & MF_STEALTH)
 	{
-		target->alpha = OPAQUE;
+		target->Alpha = 1.;
 		target->visdir = -1;
 	}
 	if (target->flags & MF_SKULLFLY)

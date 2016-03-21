@@ -755,7 +755,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	// Don't waste time projecting sprites that are definitely not visible.
 	if (thing == NULL ||
 		(thing->renderflags & RF_INVISIBLE) ||
-		!thing->RenderStyle.IsVisible(thing->alpha) ||
+		!thing->RenderStyle.IsVisible(thing->Alpha) ||
 		!thing->IsVisibleToPlayer())
 	{
 		return;
@@ -1063,7 +1063,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	vis->FillColor = thing->fillcolor;
 	vis->Translation = thing->Translation;		// [RH] thing translation table
 	vis->FakeFlatStat = fakeside;
-	vis->Style.alpha = thing->alpha;
+	vis->Style.alpha = FLOAT2FIXED(thing->Alpha);
 	vis->fakefloor = fakefloor;
 	vis->fakeceiling = fakeceiling;
 	vis->ColormapNum = 0;
@@ -1204,7 +1204,7 @@ static void R_ProjectWallSprite(AActor *thing, fixed_t fx, fixed_t fy, fixed_t f
 	vis->FillColor = thing->fillcolor;
 	vis->Translation = thing->Translation;
 	vis->FakeFlatStat = 0;
-	vis->Style.alpha = thing->alpha;
+	vis->Style.alpha = FLOAT2FIXED(thing->Alpha);
 	vis->fakefloor = NULL;
 	vis->fakeceiling = NULL;
 	vis->ColormapNum = 0;
@@ -1388,7 +1388,7 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, fixed_t sx, fixed_
 	noaccel = false;
 	if (pspnum <= ps_flash)
 	{
-		vis->Style.alpha = owner->alpha;
+		vis->Style.alpha = FLOAT2FIXED(owner->Alpha);
 		vis->Style.RenderStyle = owner->RenderStyle;
 
 		// The software renderer cannot invert the source without inverting the overlay

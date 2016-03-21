@@ -2708,9 +2708,9 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 					if (corpsehit->Height == 0)
 					{
 						// Make raised corpses look ghostly
-						if (corpsehit->alpha > TRANSLUC50)
+						if (corpsehit->Alpha > 0.5)
 						{
-							corpsehit->alpha /= 2;
+							corpsehit->Alpha /= 2;
 						}
 						// This will only work if the render style is changed as well.
 						if (corpsehit->RenderStyle == LegacyRenderStyles[STYLE_Normal])

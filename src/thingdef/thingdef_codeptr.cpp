@@ -2334,7 +2334,7 @@ static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
 	}
 	if (flags & SIXF_TRANSFERALPHA)
 	{
-		mo->alpha = self->alpha;
+		mo->Alpha = self->Alpha;
 	}
 	if (flags & SIXF_TRANSFERRENDERSTYLE)
 	{
@@ -2739,13 +2739,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_LogInt)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetTranslucent)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_FIXED		(alpha);
+	PARAM_FLOAT		(alpha);
 	PARAM_INT_OPT	(mode)	{ mode = 0; }
 
 	mode = mode == 0 ? STYLE_Translucent : mode == 2 ? STYLE_Fuzzy : STYLE_Add;
 
 	self->RenderStyle.Flags &= ~STYLEF_Alpha1;
-	self->alpha = clamp<fixed_t>(alpha, 0, FRACUNIT);
+	self->Alpha = clamp(alpha, 0., 1.);
 	self->RenderStyle = ERenderStyle(mode);
 	return 0;
 }
@@ -2767,21 +2767,21 @@ enum FadeFlags
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FadeIn)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_FIXED_OPT(reduce)	{ reduce = FRACUNIT/10; }
+	PARAM_FLOAT_OPT(reduce)	{ reduce = 0.1; }
 	PARAM_INT_OPT(flags)	{ flags = 0; }
 
 	if (reduce == 0)
 	{
-		reduce = FRACUNIT / 10;
+		reduce = 0.1;
 	}
 	self->RenderStyle.Flags &= ~STYLEF_Alpha1;
-	self->alpha += reduce;
+	self->Alpha += reduce;
 
-	if (self->alpha >= FRACUNIT)
+	if (self->Alpha >= 1.)
 	{
 		if (flags & FTF_CLAMP)
 		{
-			self->alpha = FRACUNIT;
+			self->Alpha = 1.;
 		}
 		if (flags & FTF_REMOVE)
 		{
@@ -2801,20 +2801,20 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FadeIn)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FadeOut)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_FIXED_OPT(reduce)	{ reduce = FRACUNIT/10; }
+	PARAM_FLOAT_OPT(reduce)	{ reduce = 0.1; }
 	PARAM_INT_OPT(flags)	{ flags = FTF_REMOVE; }
 
 	if (reduce == 0)
 	{
-		reduce = FRACUNIT/10;
+		reduce = 0.1;
 	}
 	self->RenderStyle.Flags &= ~STYLEF_Alpha1;
-	self->alpha -= reduce;
-	if (self->alpha <= 0)
+	self->Alpha -= reduce;
+	if (self->Alpha <= 0)
 	{
 		if (flags & FTF_CLAMP)
 		{
-			self->alpha = 0;
+			self->Alpha = 0;
 		}
 		if (flags & FTF_REMOVE)
 		{
@@ -2835,35 +2835,35 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FadeOut)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FadeTo)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_FIXED		(target);
-	PARAM_FIXED_OPT	(amount)		{ amount = fixed_t(0.1*FRACUNIT); }
+	PARAM_FLOAT		(target);
+	PARAM_FLOAT_OPT	(amount)		{ amount = 0.1; }
 	PARAM_INT_OPT	(flags)			{ flags = 0; }
 
 	self->RenderStyle.Flags &= ~STYLEF_Alpha1;
 
-	if (self->alpha > target)
+	if (self->Alpha > target)
 	{
-		self->alpha -= amount;
+		self->Alpha -= amount;
 
-		if (self->alpha < target)
+		if (self->Alpha < target)
 		{
-			self->alpha = target;
+			self->Alpha = target;
 		}
 	}
-	else if (self->alpha < target)
+	else if (self->Alpha < target)
 	{
-		self->alpha += amount;
+		self->Alpha += amount;
 
-		if (self->alpha > target)
+		if (self->Alpha > target)
 		{
-			self->alpha = target;
+			self->Alpha = target;
 		}
 	}
 	if (flags & FTF_CLAMP)
 	{
-		self->alpha = clamp(self->alpha, 0, FRACUNIT);
+		self->Alpha = clamp(self->Alpha, 0., 1.);
 	}
-	if (self->alpha == target && (flags & FTF_REMOVE))
+	if (self->Alpha == target && (flags & FTF_REMOVE))
 	{
 		P_RemoveThing(self);
 	}
@@ -3334,7 +3334,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Burst)
 			mo->Vel.X = pr_burst.Random2() / 128.;
 			mo->Vel.Y = pr_burst.Random2() / 128.;
 			mo->RenderStyle = self->RenderStyle;
-			mo->alpha = self->alpha;
+			mo->Alpha = self->Alpha;
 			mo->CopyFriendliness(self, true);
 		}
 	}

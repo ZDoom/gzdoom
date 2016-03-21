@@ -438,7 +438,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SetShadow)
 
 	self->flags |= MF_STRIFEx8000000|MF_SHADOW;
 	self->RenderStyle = STYLE_Translucent;
-	self->alpha = HR_SHADOW;
+	self->Alpha = HR_SHADOW;
 	return 0;
 }
 
@@ -448,7 +448,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ClearShadow)
 
 	self->flags &= ~(MF_STRIFEx8000000|MF_SHADOW);
 	self->RenderStyle = STYLE_Normal;
-	self->alpha = OPAQUE;
+	self->Alpha = 1.;
 	return 0;
 }
 

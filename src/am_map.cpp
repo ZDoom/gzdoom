@@ -802,7 +802,7 @@ static bool stopped = true;
 static void AM_calcMinMaxMtoF();
 
 static void DrawMarker (FTexture *tex, fixed_t x, fixed_t y, int yadjust,
-	INTBOOL flip, fixed_t xscale, fixed_t yscale, int translation, fixed_t alpha, DWORD fillcolor, FRenderStyle renderstyle);
+	INTBOOL flip, fixed_t xscale, fixed_t yscale, int translation, double alpha, DWORD fillcolor, FRenderStyle renderstyle);
 
 void AM_rotatePoint (fixed_t *x, fixed_t *y);
 void AM_rotate (fixed_t *x, fixed_t *y, angle_t an);
@@ -2716,7 +2716,7 @@ void AM_drawPlayers ()
 			continue;
 		}
 
-		if (p->mo->alpha < OPAQUE)
+		if (p->mo->Alpha < 1.)
 		{
 			color = AMColors[AMColors.AlmostBackgroundColor];
 		}
@@ -2848,7 +2848,7 @@ void AM_drawThings ()
 					const fixed_t spriteYScale = fixed_t(t->Scale.Y * 10 * scale_mtof);
 
 					DrawMarker (texture, p.x, p.y, 0, !!(frame->Flip & (1 << rotation)),
-						spriteXScale, spriteYScale, t->Translation, FRACUNIT, 0, LegacyRenderStyles[STYLE_Normal]);
+						spriteXScale, spriteYScale, t->Translation, 1., 0, LegacyRenderStyles[STYLE_Normal]);
 				}
 				else
 				{
@@ -2936,7 +2936,7 @@ void AM_drawThings ()
 //=============================================================================
 
 static void DrawMarker (FTexture *tex, fixed_t x, fixed_t y, int yadjust,
-	INTBOOL flip, fixed_t xscale, fixed_t yscale, int translation, fixed_t alpha, DWORD fillcolor, FRenderStyle renderstyle)
+	INTBOOL flip, fixed_t xscale, fixed_t yscale, int translation, double alpha, DWORD fillcolor, FRenderStyle renderstyle)
 {
 	if (tex == NULL || tex->UseType == FTexture::TEX_Null)
 	{
@@ -2955,7 +2955,7 @@ static void DrawMarker (FTexture *tex, fixed_t x, fixed_t y, int yadjust,
 		DTA_ClipRight, f_x + f_w,
 		DTA_FlipX, flip,
 		DTA_Translation, TranslationToTable(translation),
-		DTA_Alpha, alpha,
+		DTA_AlphaF, alpha,
 		DTA_FillColor, fillcolor,
 		DTA_RenderStyle, DWORD(renderstyle),
 		TAG_DONE);
@@ -3043,7 +3043,7 @@ void AM_drawAuthorMarkers ()
 			{
 				DrawMarker (tex, marked->_f_X() >> FRACTOMAPBITS, marked->_f_Y() >> FRACTOMAPBITS, 0,
 					flip, FLOAT2FIXED(mark->Scale.X), FLOAT2FIXED(mark->Scale.Y), mark->Translation,
-					mark->alpha, mark->fillcolor, mark->RenderStyle);
+					mark->Alpha, mark->fillcolor, mark->RenderStyle);
 			}
 			marked = mark->args[0] != 0 ? it.Next() : NULL;
 		}

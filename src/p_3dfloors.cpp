@@ -189,7 +189,7 @@ static void P_Add3DFloor(sector_t* sec, sector_t* sec2, line_t* master, int flag
 	// The engine cannot handle sloped translucent floors. Sorry
 	if (ffloor->top.plane->a || ffloor->top.plane->b || ffloor->bottom.plane->a || ffloor->bottom.plane->b)
 	{
-		ffloor->alpha = FRACUNIT;
+		ffloor->alpha = OPAQUE;
 		ffloor->flags &= ~FF_ADDITIVETRANS;
 	}
 

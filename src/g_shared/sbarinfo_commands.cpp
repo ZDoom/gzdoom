@@ -48,7 +48,7 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 			translatable(false), type(NORMAL_IMAGE), image(-1), maxwidth(-1),
 			maxheight(-1), spawnScaleX(1.0f), spawnScaleY(1.0f), flags(0),
 			applyscale(false), offset(static_cast<Offset> (TOP|LEFT)),
-			texture(NULL), alpha(FRACUNIT)
+			texture(NULL), alpha(OPAQUE)
 		{
 		}
 
@@ -63,9 +63,7 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 			int w = maxwidth, h = maxheight;
 			
 			// We must calculate this per frame in order to prevent glitches with cl_capfps true.
-			fixed_t frameAlpha = block->Alpha();
-			if(alpha != FRACUNIT)
-				frameAlpha = fixed_t(((double) block->Alpha() / (double) FRACUNIT) * ((double) alpha / (double) OPAQUE) * FRACUNIT);
+			fixed_t frameAlpha = FixedMul(block->Alpha(), alpha);
 			
 			if(flags & DI_DRAWINBOX)
 			{
@@ -236,7 +234,7 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 			SBarInfoCommandFlowControl::Tick(block, statusBar, hudChanged);
 
 			texture = NULL;
-			alpha = FRACUNIT;
+			alpha = OPAQUE;
 			if (applyscale)
 			{
 				spawnScaleX = spawnScaleY = 1.0f;
@@ -284,7 +282,7 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 					if (harmor->Slots[armorType] > 0 && harmor->SlotsIncrement[armorType] > 0)
 					{
 						//combine the alpha values
-						alpha = fixed_t(((double) alpha / (double) FRACUNIT) * ((double) MIN<fixed_t> (OPAQUE, Scale(harmor->Slots[armorType], OPAQUE, harmor->SlotsIncrement[armorType])) / (double) OPAQUE) * FRACUNIT);
+						alpha = FixedMul(alpha, MIN<fixed_t> (OPAQUE, Scale(harmor->Slots[armorType], OPAQUE, harmor->SlotsIncrement[armorType])));
 						texture = statusBar->Images[image];
 					}
 					else
@@ -1645,7 +1643,7 @@ class CommandDrawSelectedInventory : public CommandDrawImage, private CommandDra
 				{
 					if(itemflash && itemflashFade)
 					{
-						fixed_t flashAlpha = fixed_t(((double) block->Alpha() / (double) FRACUNIT) * ((double) itemflashFade / (double) OPAQUE) * FRACUNIT);
+						fixed_t flashAlpha = FixedMul(block->Alpha(), itemflashFade);
 						statusBar->DrawGraphic(statusBar->Images[statusBar->invBarOffset + imgCURSOR], imgx-4, imgy+2, block->XOffset(), block->YOffset(), flashAlpha, block->FullScreenOffsets(),
 							translatable, false, offset);
 					}
@@ -2114,7 +2112,7 @@ class CommandDrawInventoryBar : public SBarInfoCommand
 		
 			int bgalpha = block->Alpha();
 			if(translucent)
-				bgalpha = fixed_t((((double) block->Alpha() / (double) FRACUNIT) * ((double) HX_SHADOW / (double) FRACUNIT)) * FRACUNIT);
+				bgalpha = fixed_t(block->Alpha() * HX_SHADOW);
 		
 			AInventory *item;
 			unsigned int i = 0;

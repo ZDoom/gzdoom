@@ -454,7 +454,7 @@ private:
 				screen->DrawTexture (Images[CursorImage],
 					42 + 35*i + ST_X, 12 + ST_Y,
 					DTA_Bottom320x200, Scaled,
-					DTA_Alpha, FRACUNIT - ItemFlash,
+					DTA_Alpha, OPAQUE - ItemFlash,
 					TAG_DONE);
 			}
 			if (item->Icon.isValid())

@@ -593,7 +593,7 @@ int FMultiPatchTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rota
 
 		memset (&info, 0, sizeof(info));
 		info.alpha = Parts[i].Alpha;
-		info.invalpha = FRACUNIT - info.alpha;
+		info.invalpha = OPAQUE - info.alpha;
 		info.op = ECopyOp(Parts[i].op);
 		PalEntry b = Parts[i].Blend;
 		if (b.a == 0 && b != BLEND_NONE)
@@ -1165,7 +1165,7 @@ void FMultiPatchTexture::ParsePatch(FScanner &sc, TexPart & part, bool silent, i
 			else if (sc.Compare("alpha"))
 			{
 				sc.MustGetFloat();
-				part.Alpha = clamp(FLOAT2FIXED(sc.Float), 0, FRACUNIT);
+				part.Alpha = clamp<fixed_t>(FLOAT2FIXED(sc.Float), 0, OPAQUE);
 				// bComplex is not set because it is only needed when the style is not OP_COPY.
 			}
 			else if (sc.Compare("style"))

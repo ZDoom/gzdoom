@@ -3843,7 +3843,7 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		break;
 
 	case APROP_Alpha:
-		actor->alpha = value;
+		actor->Alpha = ACSToDouble(value);
 		break;
 
 	case APROP_RenderStyle:
@@ -4039,7 +4039,7 @@ int DLevelScript::GetActorProperty (int tid, int property)
 	case APROP_Damage:		return actor->GetMissileDamage(0,1);
 	case APROP_DamageFactor:return actor->DamageFactor;
 	case APROP_DamageMultiplier: return actor->DamageMultiply;
-	case APROP_Alpha:		return actor->alpha;
+	case APROP_Alpha:		return DoubleToACS(actor->Alpha);
 	case APROP_RenderStyle:	for (int style = STYLE_None; style < STYLE_Count; ++style)
 							{ // Check for a legacy render style that matches.
 								if (LegacyRenderStyles[style] == actor->RenderStyle)
@@ -8000,13 +8000,13 @@ scriptwait:
 					switch (type & 0xFF)
 					{
 					default:	// normal
-						alpha = (optstart < sp) ? Stack[optstart] : FRACUNIT;
+						alpha = (optstart < sp) ? Stack[optstart] : OPAQUE;
 						msg = new DHUDMessage (activefont, work, x, y, hudwidth, hudheight, color, holdTime);
 						break;
 					case 1:		// fade out
 						{
 							float fadeTime = (optstart < sp) ? ACSToFloat(Stack[optstart]) : 0.5f;
-							alpha = (optstart < sp-1) ? Stack[optstart+1] : FRACUNIT;
+							alpha = (optstart < sp-1) ? Stack[optstart+1] : OPAQUE;
 							msg = new DHUDMessageFadeOut (activefont, work, x, y, hudwidth, hudheight, color, holdTime, fadeTime);
 						}
 						break;
@@ -8022,7 +8022,7 @@ scriptwait:
 						{
 							float inTime = (optstart < sp) ? ACSToFloat(Stack[optstart]) : 0.5f;
 							float outTime = (optstart < sp-1) ? ACSToFloat(Stack[optstart+1]) : 0.5f;
-							alpha = (optstart < sp-2) ? Stack[optstart+2] : FRACUNIT;
+							alpha = (optstart < sp-2) ? Stack[optstart+2] : OPAQUE;
 							msg = new DHUDMessageFadeInOut (activefont, work, x, y, hudwidth, hudheight, color, holdTime, inTime, outTime);
 						}
 						break;

@@ -415,24 +415,12 @@ enum ActorRenderFlag
 	RF_FORCEXYBILLBOARD		= 0x20000,	// [BB] OpenGL only: draw with xy axis billboard, i.e. unanchored (overrides gl_billboard_mode setting)
 };
 
-#define TRANSLUC25			(FRACUNIT/4)
-#define TRANSLUC33			(FRACUNIT/3)
-#define TRANSLUC50			(FRACUNIT/2)
-#define TRANSLUC66			((FRACUNIT*2)/3)
-#define TRANSLUC75			((FRACUNIT*3)/4)
-
-// <wingdi.h> also #defines OPAQUE
-#ifndef OPAQUE
-#define OPAQUE				(FRACUNIT)
-#endif
-
 // This translucency value produces the closest match to Heretic's TINTTAB.
 // ~40% of the value of the overlaid image shows through.
-#define HR_SHADOW			(0x6800)
-
+const double HR_SHADOW = (0x6800 / 65536.);
 // Hexen's TINTTAB is the same as Heretic's, just reversed.
-#define HX_SHADOW			(0x9800)
-#define HX_ALTSHADOW		(0x6800)
+const double HX_SHADOW = (0x9800 / 65536.);
+const double HX_ALTSHADOW = (0x6800 / 65536.);
 
 // This could easily be a bool but then it'd be much harder to find later. ;)
 enum replace_t
@@ -1104,7 +1092,7 @@ public:
 	ActorRenderFlags	renderflags;		// Different rendering flags
 	FTextureID		picnum;				// Draw this instead of sprite if valid
 	DWORD			effects;			// [RH] see p_effect.h
-	fixed_t			alpha;
+	double			Alpha;				// Since P_CheckSight makes an alpha check this can't be a float. It has to be a double.
 	DWORD			fillcolor;			// Color to draw when STYLE_Shaded
 
 // interaction info

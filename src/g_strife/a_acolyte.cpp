@@ -95,7 +95,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BeShadowyFoe)
 	PARAM_ACTION_PROLOGUE;
 
 	self->RenderStyle = STYLE_Translucent;
-	self->alpha = HR_SHADOW;
+	self->Alpha = HR_SHADOW;
 	self->flags &= ~MF_FRIENDLY;
 	return 0;
 }

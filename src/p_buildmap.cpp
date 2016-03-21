@@ -595,11 +595,11 @@ static void LoadWalls (walltype *walls, int numwalls, sectortype *bsec)
 		{
 			if (walls[i].cstat & 512)
 			{
-				lines[j].Alpha = FRACUNIT/3;
+				lines[j].Alpha = TRANSLUC33;
 			}
 			else
 			{
-				lines[j].Alpha = FRACUNIT*2/3;
+				lines[j].Alpha = TRANSLUC66;
 			}
 		}
 		if (walls[i].cstat & 1)
@@ -707,7 +707,7 @@ static int LoadSprites (spritetype *sprites, Xsprite *xsprites, int numsprites,
 		mapthings[count].special = 0;
 		mapthings[count].Gravity = 1.;
 		mapthings[count].RenderStyle = STYLE_Count;
-		mapthings[count].alpha = -1;
+		mapthings[count].Alpha = -1;
 		mapthings[count].health = -1;
 		mapthings[count].FloatbobPhase = -1;
 
@@ -890,7 +890,7 @@ void ACustomSprite::BeginPlay ()
 	if (cstat & 2)
 	{
 		RenderStyle = STYLE_Translucent;
-		alpha = (cstat & 512) ? TRANSLUC66 : TRANSLUC33;
+		Alpha = (cstat & 512) ? 0.6666 : 0.3333;
 	}
 	if (cstat & 4)
 		renderflags |= RF_XFLIP;

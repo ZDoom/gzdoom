@@ -115,7 +115,7 @@ void DHUDPicManager::DoDraw (int linenum, int x, int y, int hudheight, float tra
 	{
 		FTexture * tex = TexMan[piclist[i].texturenum];
 		if (tex) screen->DrawTexture(tex, piclist[i].xpos, piclist[i].ypos, DTA_320x200, true, 
-										DTA_Alpha, (fixed_t)(translucent*basetrans*FRACUNIT), TAG_DONE);
+										DTA_AlphaF, translucent*basetrans, TAG_DONE);
 	}
 }
 

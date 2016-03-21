@@ -625,7 +625,7 @@ visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightl
 		if (fake3D & (FAKE3D_FAKEFLOOR|FAKE3D_FAKECEILING)) sky = 0x80000000 | fakeAlpha;
 		else sky = 0;	// not skyflatnum so it can't be a sky
 		skybox = NULL;
-		alpha = FRACUNIT;
+		alpha = OPAQUE;
 	}
 
 	// New visplane algorithm uses hash table -- killough

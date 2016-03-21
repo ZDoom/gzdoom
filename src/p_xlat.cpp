@@ -87,10 +87,10 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld, int lineindexforid)
 				passthrough = true;
 				break;
 			case -2:
-				ld->Alpha = FRACUNIT*3/4;
+				ld->Alpha = TRANSLUC75;
 				break;
 			case -3:
-				ld->Alpha = FRACUNIT / 4;
+				ld->Alpha = TRANSLUC25;
 				break;
 			default:
 				newflags |= LineFlagTranslations[i].newvalue;

@@ -63,7 +63,7 @@ void A_Unblock(AActor *self, bool drop)
 	// [RH] Andy Baker's stealth monsters
 	if (self->flags & MF_STEALTH)
 	{
-		self->alpha = OPAQUE;
+		self->Alpha = 1.;
 		self->visdir = 0;
 	}
 
@@ -201,7 +201,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FreezeDeath)
 	// [RH] Andy Baker's stealth monsters
 	if (self->flags & MF_STEALTH)
 	{
-		self->alpha = OPAQUE;
+		self->Alpha = 1;
 		self->visdir = 0;
 	}
 
@@ -303,7 +303,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FreezeDeathChunks)
 			mo->Vel.Z = (mo->Z() - self->Z()) / self->Height * 4;
 			CALL_ACTION(A_IceSetTics, mo); // set a random tic wait
 			mo->RenderStyle = self->RenderStyle;
-			mo->alpha = self->alpha;
+			mo->Alpha = self->Alpha;
 		}
 	}
 	if (self->player)
@@ -326,7 +326,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FreezeDeathChunks)
 			}
 			head->Angles.Pitch = 0.;
 			head->RenderStyle = self->RenderStyle;
-			head->alpha = self->alpha;
+			head->Alpha = self->Alpha;
 			if (head->player->camera == self)
 			{
 				head->player->camera = head;

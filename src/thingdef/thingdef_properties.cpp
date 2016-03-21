@@ -850,7 +850,7 @@ DEFINE_PROPERTY(renderstyle, S, Actor)
 //==========================================================================
 DEFINE_PROPERTY(defaultalpha, 0, Actor)
 {
-	defaults->alpha = gameinfo.gametype == GAME_Heretic ? HR_SHADOW : HX_SHADOW;
+	defaults->Alpha = gameinfo.gametype == GAME_Heretic ? HR_SHADOW : HX_SHADOW;
 }
 
 //==========================================================================
@@ -858,8 +858,8 @@ DEFINE_PROPERTY(defaultalpha, 0, Actor)
 //==========================================================================
 DEFINE_PROPERTY(alpha, F, Actor)
 {
-	PROP_FIXED_PARM(id, 0);
-	defaults->alpha = id;
+	PROP_DOUBLE_PARM(id, 0);
+	defaults->Alpha = id;
 }
 
 //==========================================================================

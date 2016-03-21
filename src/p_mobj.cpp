@@ -238,6 +238,8 @@ void AActor::Serialize(FArchive &arc)
 		<< __pos.y
 		<< __pos.z
 		<< Angles.Yaw
+		<< Angles.Pitch
+		<< Angles.Roll
 		<< frame
 		<< Scale
 		<< RenderStyle
@@ -249,10 +251,8 @@ void AActor::Serialize(FArchive &arc)
 		<< LastLookPlayerNumber
 		<< LastLookActor
 		<< effects
-		<< alpha
+		<< Alpha
 		<< fillcolor
-		<< Angles.Pitch	// move these up when savegame compatibility is broken!
-		<< Angles.Roll	// For now they have to remain here.
 		<< Sector
 		<< floorz
 		<< ceilingz
@@ -1272,7 +1272,7 @@ bool AActor::Grind(bool items)
 			if (gib != NULL)
 			{
 				gib->RenderStyle = RenderStyle;
-				gib->alpha = alpha;
+				gib->Alpha = Alpha;
 				gib->Height = 0;
 				gib->radius = 0;
 
@@ -1469,18 +1469,18 @@ void P_ExplodeMissile (AActor *mo, line_t *line, AActor *target)
 				if (addrocketexplosion)
 				{
 					mo->RenderStyle = STYLE_Add;
-					mo->alpha = FRACUNIT;
+					mo->Alpha = 1.;
 				}
 				else
 				{
 					mo->RenderStyle = STYLE_Translucent;
-					mo->alpha = FRACUNIT*2/3;
+					mo->Alpha = 0.6666;
 				}
 			}
 			else
 			{
 				mo->RenderStyle = ERenderStyle(deh.ExplosionStyle);
-				mo->alpha = deh.ExplosionAlpha;
+				mo->Alpha = deh.ExplosionAlpha;
 			}
 		}
 
@@ -1666,7 +1666,7 @@ bool AActor::CanSeek(AActor *target) const
 	if ((flags2 & MF2_DONTSEEKINVISIBLE) && 
 		((target->flags & MF_SHADOW) || 
 		 (target->renderflags & RF_INVISIBLE) || 
-		 !target->RenderStyle.IsVisible(target->alpha)
+		 !target->RenderStyle.IsVisible(target->Alpha)
 		)
 	   ) return false;
 	return true;
@@ -3500,19 +3500,19 @@ void AActor::Tick ()
 		{
 			if (visdir > 0)
 			{
-				alpha += 0x800;
-				if (alpha >= OPAQUE)
+				Alpha += 1/32.;
+				if (Alpha >= 1.)
 				{
-					alpha = OPAQUE;
+					Alpha = 1.;
 					visdir = -1;
 				}
 			}
 			else
 			{
-				alpha -= 0x800;
-				if (alpha <= TRANSLUC25)
+				Alpha -= 1/32.;
+				if (Alpha <= 0.25)
 				{
-					alpha = TRANSLUC25;
+					Alpha = 0.25;
 					visdir = 1;
 				}
 			}
@@ -3523,19 +3523,19 @@ void AActor::Tick ()
 			RenderStyle.Flags &= ~STYLEF_Alpha1;
 			if (visdir > 0)
 			{
-				alpha += 2*FRACUNIT/TICRATE;
-				if (alpha > OPAQUE)
+				Alpha += 2./TICRATE;
+				if (Alpha > 1.)
 				{
-					alpha = OPAQUE;
+					Alpha = 1.;
 					visdir = 0;
 				}
 			}
 			else if (visdir < 0)
 			{
-				alpha -= 3*FRACUNIT/TICRATE/2;
-				if (alpha < 0)
+				Alpha -= 1.5/TICRATE;
+				if (Alpha < 0)
 				{
-					alpha = 0;
+					Alpha = 0;
 					visdir = 0;
 				}
 			}
@@ -4380,7 +4380,7 @@ void AActor::HandleSpawnFlags ()
 	{
 		flags |= MF_SHADOW;
 		RenderStyle = STYLE_Translucent;
-		alpha = TRANSLUC25;
+		Alpha = 0.25;
 	}
 	else if (SpawnFlags & MTF_ALTSHADOW)
 	{
@@ -5174,8 +5174,8 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	}
 
 	// Set various UDMF options
-	if (mthing->alpha != -1)
-		mobj->alpha = mthing->alpha;
+	if (mthing->Alpha >= 0)
+		mobj->Alpha = mthing->Alpha;
 	if (mthing->RenderStyle != STYLE_Count)
 		mobj->RenderStyle = (ERenderStyle)mthing->RenderStyle;
 	if (mthing->Scale.X != 0)
@@ -6691,7 +6691,7 @@ void PrintMiscActorInfo(AActor *query)
 			if (query->BounceFlags & 1<<flagi) Printf(" %s", flagnamesb[flagi]);*/
 		Printf("\nRender style = %i:%s, alpha %f\nRender flags: %x", 
 			querystyle, (querystyle < STYLE_Count ? renderstyles[querystyle] : "Unknown"),
-			FIXED2DBL(query->alpha), query->renderflags.GetValue());
+			query->Alpha, query->renderflags.GetValue());
 		/*for (flagi = 0; flagi < 31; flagi++)
 			if (query->renderflags & 1<<flagi) Printf(" %s", flagnamesr[flagi]);*/
 		Printf("\nSpecial+args: %s(%i, %i, %i, %i, %i)\nspecial1: %i, special2: %i.",

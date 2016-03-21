@@ -1288,7 +1288,7 @@ void G_PlayerFinishLevel (int player, EFinishLevelType mode, int flags)
 		p->mo->flags &= ~MF_SHADOW;
 	}
 	p->mo->RenderStyle = p->mo->GetDefault()->RenderStyle;
-	p->mo->alpha = p->mo->GetDefault()->alpha;
+	p->mo->Alpha = p->mo->GetDefault()->Alpha;
 	p->extralight = 0;					// cancel gun flashes
 	p->fixedcolormap = NOFIXEDCOLORMAP;	// cancel ir goggles
 	p->fixedlightlevel = -1;

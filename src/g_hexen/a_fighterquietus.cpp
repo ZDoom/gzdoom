@@ -36,7 +36,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DropWeaponPieces)
 		PClassActor *cls = j == 0 ?  p1 : j == 1 ? p2 : p3;
 		if (cls)
 		{
-			AActor *piece = Spawn (cls, self->_f_Pos(), ALLOW_REPLACE);
+			AActor *piece = Spawn (cls, self->Pos(), ALLOW_REPLACE);
 			if (piece != NULL)
 			{
 				piece->Vel = self->Vel + DAngle(i*120.).ToVector(1);
@@ -92,11 +92,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_FSwordAttack)
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return 0;
 	}
-	P_SpawnPlayerMissile (self, 0, 0, -10*FRACUNIT, RUNTIME_CLASS(AFSwordMissile), self->Angles.Yaw + (45./4));
-	P_SpawnPlayerMissile (self, 0, 0,  -5*FRACUNIT, RUNTIME_CLASS(AFSwordMissile), self->Angles.Yaw + (45./8));
-	P_SpawnPlayerMissile (self, 0, 0,   0,		   RUNTIME_CLASS(AFSwordMissile),  self->Angles.Yaw);
-	P_SpawnPlayerMissile (self, 0, 0,   5*FRACUNIT, RUNTIME_CLASS(AFSwordMissile), self->Angles.Yaw - (45./8));
-	P_SpawnPlayerMissile (self, 0, 0,  10*FRACUNIT, RUNTIME_CLASS(AFSwordMissile), self->Angles.Yaw - (45./4));
+	P_SpawnPlayerMissile (self, 0, 0, -10, RUNTIME_CLASS(AFSwordMissile), self->Angles.Yaw + (45./4));
+	P_SpawnPlayerMissile (self, 0, 0,  -5, RUNTIME_CLASS(AFSwordMissile), self->Angles.Yaw + (45./8));
+	P_SpawnPlayerMissile (self, 0, 0,   0, RUNTIME_CLASS(AFSwordMissile),  self->Angles.Yaw);
+	P_SpawnPlayerMissile (self, 0, 0,   5, RUNTIME_CLASS(AFSwordMissile), self->Angles.Yaw - (45./8));
+	P_SpawnPlayerMissile (self, 0, 0,  10, RUNTIME_CLASS(AFSwordMissile), self->Angles.Yaw - (45./4));
 	S_Sound (self, CHAN_WEAPON, "FighterSwordFire", 1, ATTN_NORM);
 	return 0;
 }

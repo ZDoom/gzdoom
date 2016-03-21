@@ -65,7 +65,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_WraithRaise)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	if (A_RaiseMobj (self, 2*FRACUNIT))
+	if (A_RaiseMobj (self, 2))
 	{
 		// Reached it's target height
 		// [RH] Once a buried wraith is fully raised, it should be

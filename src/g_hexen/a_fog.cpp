@@ -37,7 +37,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FogSpawn)
 	};
 
 	AActor *mo = NULL;
-	angle_t delta;
+	int delta;
 
 	if (self->special1-- > 0)
 	{

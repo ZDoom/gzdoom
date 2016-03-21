@@ -102,7 +102,7 @@ void MStaffSpawn (AActor *pmo, DAngle angle, AActor *alttarget)
 	AActor *mo;
 	FTranslatedLineTarget t;
 
-	mo = P_SpawnPlayerMissile (pmo, 0, 0, 8*FRACUNIT, RUNTIME_CLASS(AMageStaffFX2), angle, &t);
+	mo = P_SpawnPlayerMissile (pmo, 0, 0, 8, RUNTIME_CLASS(AMageStaffFX2), angle, &t);
 	if (mo)
 	{
 		mo->target = pmo;

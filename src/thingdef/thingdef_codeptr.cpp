@@ -1622,8 +1622,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireCustomMissile)
 	PARAM_CLASS		(ti, AActor);
 	PARAM_DANGLE_OPT(angle)			{ angle = 0.; }
 	PARAM_BOOL_OPT	(useammo)		{ useammo = true; }
-	PARAM_INT_OPT	(spawnofs_xy)	{ spawnofs_xy = 0; }
-	PARAM_FIXED_OPT	(spawnheight)	{ spawnheight = 0; }
+	PARAM_FLOAT_OPT	(spawnofs_xy)	{ spawnofs_xy = 0; }
+	PARAM_FLOAT_OPT	(spawnheight)	{ spawnheight = 0; }
 	PARAM_INT_OPT	(flags)			{ flags = 0; }
 	PARAM_DANGLE_OPT(pitch)			{ pitch = 0.; }
 
@@ -1643,10 +1643,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireCustomMissile)
 
 	if (ti) 
 	{
-		angle_t ang = (self->_f_angle() - ANGLE_90) >> ANGLETOFINESHIFT;
-		fixed_t x = spawnofs_xy * finecosine[ang];
-		fixed_t y = spawnofs_xy * finesine[ang];
-		fixed_t z = spawnheight;
+		DAngle ang = self->Angles.Yaw - 90;
+		DVector3 ofs = self->Vec3Angle(spawnofs_xy, ang, spawnheight);
 		DAngle shootangle = self->Angles.Yaw;
 
 		if (flags & FPF_AIMATANGLE) shootangle += angle;
@@ -1654,7 +1652,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireCustomMissile)
 		// Temporarily adjusts the pitch
 		DAngle saved_player_pitch = self->Angles.Pitch;
 		self->Angles.Pitch -= pitch;
-		AActor * misl=P_SpawnPlayerMissile (self, x, y, z, ti, shootangle, &t, NULL, false, (flags & FPF_NOAUTOAIM) != 0);
+		AActor * misl=P_SpawnPlayerMissile (self, ofs.X, ofs.Y, ofs.Z, ti, shootangle, &t, NULL, false, (flags & FPF_NOAUTOAIM) != 0);
 		self->Angles.Pitch = saved_player_pitch;
 
 		// automatic handling of seeker missiles

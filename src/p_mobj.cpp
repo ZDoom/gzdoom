@@ -6136,7 +6136,7 @@ AActor *P_SpawnPlayerMissile (AActor *source, PClassActor *type, DAngle angle)
 	return P_SpawnPlayerMissile (source, 0, 0, 0, type, angle);
 }
 
-AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
+AActor *P_SpawnPlayerMissile (AActor *source, double x, double y, double z,
 							  PClassActor *type, DAngle angle, FTranslatedLineTarget *pLineTarget, AActor **pMissileActor,
 							  bool nofreeaim, bool noautoaim, int aimflags)
 {
@@ -6195,23 +6195,23 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 	if (z != ONFLOORZ && z != ONCEILINGZ)
 	{
 		// Doom spawns missiles 4 units lower than hitscan attacks for players.
-		z += source->_f_Z() + (source->_f_height()>>1) - source->_f_floorclip();
+		z += source->Center() - source->Floorclip;
 		if (source->player != NULL)	// Considering this is for player missiles, it better not be NULL.
 		{
-			z += fixed_t ((source->player->mo->AttackZOffset - 4*FRACUNIT) * source->player->crouchfactor);
+			z += ((FIXED2DBL(source->player->mo->AttackZOffset) - 4) * source->player->crouchfactor);
 		}
 		else
 		{
-			z += 4*FRACUNIT;
+			z += 4;
 		}
 		// Do not fire beneath the floor.
-		if (z < source->_f_floorz())
+		if (z < source->floorz)
 		{
-			z = source->_f_floorz();
+			z = source->floorz;
 		}
 	}
-	fixedvec2 pos = source->Vec2Offset(x, y);
-	AActor *MissileActor = Spawn (type, pos.x, pos.y, z, ALLOW_REPLACE);
+	DVector3 pos = source->Vec2OffsetZ(x, y, z);
+	AActor *MissileActor = Spawn (type, pos, ALLOW_REPLACE);
 	if (pMissileActor) *pMissileActor = MissileActor;
 	P_PlaySpawnSound(MissileActor, source);
 	MissileActor->target = source;

@@ -39,10 +39,7 @@ IMPLEMENT_CLASS (AArtiPoisonBag1)
 
 bool AArtiPoisonBag1::Use (bool pickup)
 {
-	angle_t angle = Owner->_f_angle() >> ANGLETOFINESHIFT;
-	AActor *mo;
-
-	mo = Spawn("PoisonBag", Owner->Vec3Offset(
+	AActor *mo = Spawn("PoisonBag", Owner->Vec3Offset(
 		16 * Owner->Angles.Yaw.Cos(),
 		24 * Owner->Angles.Yaw.Sin(),
 		-Owner->Floorclip + 8), ALLOW_REPLACE);
@@ -100,9 +97,9 @@ bool AArtiPoisonBag3::Use (bool pickup)
 		mo->Angles.Yaw = Owner->Angles.Yaw + (((pr_poisonbag() & 7) - 4) * (360./256.));
 
 		/* Original flight code from Hexen
-		 * mo->momz = 4*FRACUNIT+((player->lookdir)<<(FRACBITS-4));
-		 * mo->z += player->lookdir<<(FRACBITS-4);
-		 * P_ThrustMobj(mo, mo->_f_angle(), mo->info->speed);
+		 * mo->momz = 4*F.RACUNIT+((player->lookdir)<<(F.RACBITS-4));
+		 * mo->z += player->lookdir<<(F.RACBITS-4);
+		 * P_ThrustMobj(mo, mo->angle, mo->info->speed);
 		 * mo->momx += player->mo->momx>>1;
 		 * mo->momy += player->mo->momy>>1;
 		 */
@@ -445,8 +442,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_CheckThrowBomb2)
 	PARAM_ACTION_PROLOGUE;
 
 	// [RH] Check using actual velocity, although the vel.z < 2 check still stands
-	//if (abs(self->vel.x) < FRACUNIT*3/2 && abs(self->vel.y) < FRACUNIT*3/2
-	//	&& self->vel.z < 2*FRACUNIT)
 	if (self->Vel.Z < 2 && self->Vel.LengthSquared() < (9./4.))
 	{
 		self->SetState (self->SpawnState + 6);

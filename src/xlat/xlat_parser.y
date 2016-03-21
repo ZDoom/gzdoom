@@ -202,10 +202,7 @@ special_args(Z) ::= . /* empty */
 	Z.args[3] = 0;
 	Z.args[4] = 0;
 }
-special_args(Z) ::= multi_special_arg(A).
-{
-	Z = A;
-}
+special_args(Z) ::= multi_special_arg(Z).
 
 //==========================================================================
 //

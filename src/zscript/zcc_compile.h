@@ -37,7 +37,7 @@ private:
 	ZCC_Expression *NodeFromSymbol(PSymbol *sym, ZCC_Expression *source, PSymbolTable *table);
 	ZCC_ExprConstant *NodeFromSymbolConst(PSymbolConst *sym, ZCC_Expression *idnode);
 	ZCC_ExprTypeRef *NodeFromSymbolType(PSymbolType *sym, ZCC_Expression *idnode);
-	PSymbol *ZCCCompiler::CompileNode(ZCC_NamedNode *node);
+	PSymbol *CompileNode(ZCC_NamedNode *node);
 
 
 	void Warn(ZCC_TreeNode *node, const char *msg, ...);

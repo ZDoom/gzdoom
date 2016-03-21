@@ -117,7 +117,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PotteryCheck)
 		if (playeringame[i])
 		{
 			AActor *pmo = players[i].mo;
-			if (P_CheckSight (self, pmo) && (absangle(pmo->__f_AngleTo(self) - pmo->_f_angle()) <= ANGLE_45))
+			if (P_CheckSight (self, pmo) && (absangle(pmo->AngleTo(self), pmo->Angles.Yaw) <= 45))
 			{ // Previous state (pottery bit waiting state)
 				self->SetState (self->state - 1);
 				return 0;
@@ -156,7 +156,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CorpseBloodDrip)
 
 	if (pr_drip() <= 128)
 	{
-		Spawn ("CorpseBloodDrip", self->PosPlusZ(self->_f_height()/2), ALLOW_REPLACE);
+		Spawn ("CorpseBloodDrip", self->PosPlusZ(self->Height / 2), ALLOW_REPLACE);
 	}
 	return 0;
 }
@@ -186,7 +186,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CorpseExplode)
 		}
 	}
 	// Spawn a skull
-	mo = Spawn ("CorpseBit", self->_f_Pos(), ALLOW_REPLACE);
+	mo = Spawn ("CorpseBit", self->Pos(), ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->SetState (mo->SpawnState + 3);
@@ -214,9 +214,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_LeafSpawn)
 
 	for (i = (pr_leaf()&3)+1; i; i--)
 	{
-		fixed_t xo = (pr_leaf.Random2() << 14);
-		fixed_t yo = (pr_leaf.Random2() << 14);
-		fixed_t zo = (pr_leaf() << 14);
+		double xo = pr_leaf.Random2() / 4.;
+		double yo = pr_leaf.Random2() / 4.;
+		double zo = pr_leaf() / 4.;
 		mo = Spawn (pr_leaf()&1 ? PClass::FindActor ("Leaf1") : PClass::FindActor ("Leaf2"),
 			self->Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
 
@@ -289,7 +289,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PoisonShroom)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	self->tics = 128+(pr_shroom()<<1);
+	self->tics = 128 + (pr_shroom() << 1);
 	return 0;
 }
 
@@ -308,9 +308,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_SoAExplode)
 
 	for (i = 0; i < 10; i++)
 	{
-		fixed_t xo = ((pr_soaexplode() - 128) << 12);
-		fixed_t yo = ((pr_soaexplode() - 128) << 12);
-		fixed_t zo = (pr_soaexplode()*self->_f_height() / 256);
+		double xo = (pr_soaexplode() - 128) / 16.;
+		double yo = (pr_soaexplode() - 128) / 16.;
+		double zo = pr_soaexplode()*self->Height / 256.;
 		mo = Spawn ("ZArmorChunk", self->Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
 		if (mo)
 		{

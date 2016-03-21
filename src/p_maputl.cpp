@@ -1106,6 +1106,9 @@ bool FMultiBlockThingsIterator::Next(FMultiBlockThingsIterator::CheckResult *ite
 		item->thing = thing;
 		item->position = checkpoint + Displacements.getOffset(basegroup, thing->Sector->PortalGroup);
 		item->portalflags = portalflags;
+
+		// same as above in floating point. This is here so that this stuff can be converted piece by piece.
+		item->Position = { FIXED2DBL(item->position.x), FIXED2DBL(item->position.y), FIXED2DBL(item->position.z) };
 		return true;
 	}
 	bool onlast = unsigned(index + 1) >= checklist.Size();

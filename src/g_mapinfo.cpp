@@ -1150,7 +1150,7 @@ DEFINE_MAP_OPTION(teamdamage, true)
 {
 	parse.ParseAssign();
 	parse.sc.MustGetFloat();
-	info->teamdamage = float(parse.sc.Float);
+	info->teamdamage = parse.sc.Float;
 }
 
 DEFINE_MAP_OPTION(mapbackground, true)

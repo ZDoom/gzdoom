@@ -329,7 +329,7 @@ struct level_info_t
 	FString		SoundInfo;
 	FString		SndSeq;
 
-	float		teamdamage;
+	double		teamdamage;
 
 	FOptData	optdata;
 	FMusicMap	MusicMap;
@@ -444,7 +444,7 @@ struct FLevelLocals
 
 	bool		FromSnapshot;			// The current map was restored from a snapshot
 
-	float		teamdamage;
+	double		teamdamage;
 
 	bool		IsJumpingAllowed() const;
 	bool		IsCrouchingAllowed() const;

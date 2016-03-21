@@ -15,6 +15,14 @@ struct divline_t
 	fixed_t 	dy;
 };
 
+struct fdivline_t
+{
+	fixed_t 	x;
+	fixed_t 	y;
+	fixed_t 	dx;
+	fixed_t 	dy;
+};
+
 struct intercept_t
 {
 	fixed_t 	frac;			// along trace line
@@ -336,7 +344,8 @@ public:
 	struct CheckResult
 	{
 		AActor *thing;
-		fixedvec3 position;
+		fixedvec3 position;	// keep these both until the fixed version can be removed.
+		DVector3 Position;
 		int portalflags;
 	};
 

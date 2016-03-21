@@ -1221,7 +1221,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 		//Use the original damage to check for telefrag amount. Don't let the now-amplified damagetypes do it.
 		if (rawdamage < TELEFRAG_DAMAGE || (target->flags7 & MF7_LAXTELEFRAGDMG)) 
 		{ // Still allow telefragging :-(
-			damage = (int)((float)damage * level.teamdamage);
+			damage = (int)(damage * level.teamdamage);
 			if (damage < 0)
 			{
 				return damage;
@@ -1672,7 +1672,7 @@ bool P_PoisonPlayer (player_t *player, AActor *poisoner, AActor *source, int poi
 	}
 	if (source != NULL && source->player != player && player->mo->IsTeammate (source))
 	{
-		poison = (int)((float)poison * level.teamdamage);
+		poison = (int)(poison * level.teamdamage);
 	}
 	if (poison > 0)
 	{

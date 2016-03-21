@@ -1681,11 +1681,8 @@ bool AActor::CanSeek(AActor *target) const
 //
 //----------------------------------------------------------------------------
 
-bool P_SeekerMissile (AActor *actor, angle_t _thresh, angle_t _turnMax, bool precise, bool usecurspeed)
+bool P_SeekerMissile (AActor *actor, double thresh, double turnMax, bool precise, bool usecurspeed)
 {
-	DAngle thresh = ANGLE2DBL(_thresh);
-	DAngle turnMax = ANGLE2DBL(_turnMax);
-
 	int dir;
 	DAngle delta;
 	AActor *target;
@@ -3086,7 +3083,7 @@ bool AActor::AdjustReflectionAngle (AActor *thing, DAngle &angle)
 	if (thing->flags4&MF4_SHIELDREFLECT)
 	{
 		// Shield reflection (from the Centaur)
-		if (diffangle(angle, thing->Angles.Yaw) > 45)
+		if (absangle(angle, thing->Angles.Yaw) > 45)
 			return true;	// Let missile explode
 
 		if (thing->IsKindOf (RUNTIME_CLASS(AHolySpirit)))	// shouldn't this be handled by another flag???

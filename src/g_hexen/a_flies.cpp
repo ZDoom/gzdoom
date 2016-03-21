@@ -86,9 +86,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FlyBuzz)
 
 	self->Angles.Yaw = self->AngleTo(targ);
 	self->args[0]++;
-	angle_t ang = self->__f_AngleTo(targ);
-	ang >>= ANGLETOFINESHIFT;
-	if (!P_TryMove(self, self->_f_X() + 6 * finecosine[ang], self->_f_Y() + 6 * finesine[ang], true))
+	if (!P_TryMove(self, self->Pos().XY() + self->Angles.Yaw.ToVector(6), true))
 	{
 		self->SetIdle(true);
 		return 0;

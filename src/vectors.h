@@ -1107,13 +1107,13 @@ inline TAngle<T> deltaangle(double a1, const TAngle<T> &a2)
 }
 
 template<class T>
-inline TAngle<T> diffangle(const TAngle<T> &a1, const TAngle<T> &a2)
+inline TAngle<T> absangle(const TAngle<T> &a1, const TAngle<T> &a2)
 {
 	return fabs((a1 - a2).Normalize180());
 }
 
 template<class T>
-inline TAngle<T> diffangle(const TAngle<T> &a1, double a2)
+inline TAngle<T> absangle(const TAngle<T> &a1, double a2)
 {
 	return fabs((a1 - a2).Normalize180());
 }

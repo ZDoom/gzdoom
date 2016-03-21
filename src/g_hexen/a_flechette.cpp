@@ -67,10 +67,7 @@ IMPLEMENT_CLASS (AArtiPoisonBag2)
 
 bool AArtiPoisonBag2::Use (bool pickup)
 {
-	angle_t angle = Owner->_f_angle() >> ANGLETOFINESHIFT;
-	AActor *mo;
-
-	mo = Spawn("FireBomb", Owner->Vec3Offset(
+	AActor *mo = Spawn("FireBomb", Owner->Vec3Offset(
 		16 * Owner->Angles.Yaw.Cos(),
 		24 * Owner->Angles.Yaw.Sin(),
 		-Owner->Floorclip + 8), ALLOW_REPLACE);
@@ -97,7 +94,7 @@ bool AArtiPoisonBag3::Use (bool pickup)
 {
 	AActor *mo;
 
-	mo = Spawn("ThrowingBomb", Owner->PosPlusZ(-Owner->_f_floorclip()+35*FRACUNIT + (Owner->player? Owner->player->crouchoffset : 0)), ALLOW_REPLACE);
+	mo = Spawn("ThrowingBomb", Owner->PosPlusZ(-Owner->Floorclip+35. + FIXED2FLOAT(Owner->player? Owner->player->crouchoffset : 0)), ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->Angles.Yaw = Owner->Angles.Yaw + (((pr_poisonbag() & 7) - 4) * (360./256.));
@@ -324,7 +321,7 @@ int APoisonCloud::DoSpecialDamage (AActor *victim, int damage, FName damagetype)
 		}
 		else
 		{
-			dopoison = victim->player->poisoncount < (int)(4.f * level.teamdamage);
+			dopoison = victim->player->poisoncount < (int)(4. * level.teamdamage);
 		}
 
 		if (dopoison)
@@ -332,7 +329,7 @@ int APoisonCloud::DoSpecialDamage (AActor *victim, int damage, FName damagetype)
 			int damage = 15 + (pr_poisoncloudd()&15);
 			if (mate)
 			{
-				damage = (int)((double)damage * level.teamdamage);
+				damage = (int)(damage * level.teamdamage);
 			}
 			// Handle passive damage modifiers (e.g. PowerProtection)
 			if (victim->Inventory != NULL)
@@ -376,7 +373,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PoisonBagInit)
 
 	AActor *mo;
 	
-	mo = Spawn<APoisonCloud> (self->PosPlusZ(28*FRACUNIT), ALLOW_REPLACE);
+	mo = Spawn<APoisonCloud> (self->PosPlusZ(28.), ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->target = self->target;
@@ -419,7 +416,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PoisonBagDamage)
 	
 	P_RadiusAttack (self, self->target, 4, 40, self->DamageType, RADF_HURTSOURCE);
 	bobIndex = self->special2;
-	self->_f_AddZ(finesine[bobIndex << BOBTOFINESHIFT] >> 1);
+	self->AddZ(BobSin(bobIndex) / 16);
 	self->special2 = (bobIndex + 1) & 63;
 	return 0;
 }

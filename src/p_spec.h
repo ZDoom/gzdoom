@@ -95,7 +95,8 @@ private:
 
 // Factor to scale scrolling effect into mobj-carrying properties = 3/32.
 // (This is so scrolling floors and objects on them can move at same speed.)
-enum { CARRYFACTOR = (3*FRACUNIT >> 5) };
+enum { _f_CARRYFACTOR = (3*FRACUNIT >> 5) };
+const double CARRYFACTOR = 3 / 32.;
 
 // phares 3/20/98: added new model of Pushers for push/pull effects
 
@@ -118,9 +119,8 @@ public:
 	int CheckForSectorMatch (EPusher type, int tag);
 	void ChangeValues (int magnitude, int angle)
 	{
-		angle_t ang = ((angle_t)(angle<<24)) >> ANGLETOFINESHIFT;
-		m_Xmag = (magnitude * finecosine[ang]) >> FRACBITS;
-		m_Ymag = (magnitude * finesine[ang]) >> FRACBITS;
+		DAngle ang = angle * (360. / 256.);
+		m_PushVec = ang.ToVector(magnitude);
 		m_Magnitude = magnitude;
 	}
 
@@ -129,12 +129,9 @@ public:
 protected:
 	EPusher m_Type;
 	TObjPtr<AActor> m_Source;// Point source if point pusher
-	int m_Xmag;				// X Strength
-	int m_Ymag;				// Y Strength
-	int m_Magnitude;		// Vector strength for point pusher
-	int m_Radius;			// Effective radius for point pusher
-	int m_X;				// X of point source if point pusher
-	int m_Y;				// Y of point source if point pusher
+	DVector2 m_PushVec;
+	double m_Magnitude;		// Vector strength for point pusher
+	double m_Radius;		// Effective _f_radius() for point pusher
 	int m_Affectee;			// Number of affected sector
 
 	friend bool PIT_PushThing (AActor *thing);
@@ -571,6 +568,14 @@ bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
 				int tag, int speed, int delay, int lock,
 				int lightTag, bool boomgen = false, int topcountdown = 0);
 
+inline bool EV_DoDoor(DDoor::EVlDoor type, line_t *line, AActor *thing,
+	int tag, double speed, int delay, int lock,
+	int lightTag, bool boomgen = false, int topcountdown = 0)
+{
+	return EV_DoDoor(type, line, thing, tag, FLOAT2FIXED(speed), delay, lock, lightTag, boomgen, topcountdown);
+}
+
+
 class DAnimatedDoor : public DMovingCeiling
 {
 	DECLARE_CLASS (DAnimatedDoor, DMovingCeiling)
@@ -919,7 +924,11 @@ inline void P_SpawnTeleportFog(AActor *mobj, const fixedvec3 &pos, bool beforeTe
 {
 	P_SpawnTeleportFog(mobj, pos.x, pos.y, pos.z, beforeTele, setTarget);
 }
-bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle, int flags); // bool useFog, bool sourceFog, bool keepOrientation, bool haltVelocity = true, bool keepHeight = false
+inline void P_SpawnTeleportFog(AActor *mobj, const DVector3 &pos, bool beforeTele = true, bool setTarget = false)
+{
+	P_SpawnTeleportFog(mobj, FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), FLOAT2FIXED(pos.Z), beforeTele, setTarget);
+}
+bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, DAngle angle, int flags); // bool useFog, bool sourceFog, bool keepOrientation, bool haltVelocity = true, bool keepHeight = false
 bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, int flags);
 bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id, INTBOOL reverse);
 bool EV_TeleportOther (int other_tid, int dest_tid, bool fog);

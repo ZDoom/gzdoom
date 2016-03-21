@@ -1182,8 +1182,8 @@ void G_Ticker ()
 				}
 				if (players[i].mo)
 				{
-					DWORD sum = rngsum + players[i].mo->X() + players[i].mo->Y() + players[i].mo->Z()
-						+ players[i].mo->angle + players[i].mo->pitch;
+					DWORD sum = rngsum + players[i].mo->_f_X() + players[i].mo->_f_Y() + players[i].mo->_f_Z()
+						+ players[i].mo->_f_angle() + players[i].mo->_f_pitch();
 					sum ^= players[i].health;
 					consistancy[i][buf] = sum;
 				}
@@ -1443,13 +1443,13 @@ bool G_CheckSpot (int playernum, FPlayerStart *mthing)
 	if (!players[playernum].mo)
 	{ // first spawn of level, before corpses
 		for (i = 0; i < playernum; i++)
-			if (players[i].mo && players[i].mo->X() == x && players[i].mo->Y() == y)
+			if (players[i].mo && players[i].mo->_f_X() == x && players[i].mo->_f_Y() == y)
 				return false;
 		return true;
 	}
 
-	oldz = players[playernum].mo->Z();	// [RH] Need to save corpse's z-height
-	players[playernum].mo->SetZ(z);		// [RH] Checks are now full 3-D
+	oldz = players[playernum].mo->_f_Z();	// [RH] Need to save corpse's z-height
+	players[playernum].mo->_f_SetZ(z);		// [RH] Checks are now full 3-D
 
 	// killough 4/2/98: fix bug where P_CheckPosition() uses a non-solid
 	// corpse to detect collisions with other players in DM starts
@@ -1461,7 +1461,7 @@ bool G_CheckSpot (int playernum, FPlayerStart *mthing)
 	players[playernum].mo->flags |=  MF_SOLID;
 	i = P_CheckPosition(players[playernum].mo, x, y);
 	players[playernum].mo->flags &= ~MF_SOLID;
-	players[playernum].mo->SetZ(oldz);	// [RH] Restore corpse's height
+	players[playernum].mo->_f_SetZ(oldz);	// [RH] Restore corpse's height
 	if (!i)
 		return false;
 
@@ -1645,8 +1645,8 @@ static void G_QueueBody (AActor *body)
 		const AActor *const defaultActor = body->GetDefault();
 		const FPlayerSkin &skin = skins[skinidx];
 
-		body->scaleX = Scale(body->scaleX, skin.ScaleX, defaultActor->scaleX);
-		body->scaleY = Scale(body->scaleY, skin.ScaleY, defaultActor->scaleY);
+		body->Scale.X *= skin.Scale.X / defaultActor->Scale.X;
+		body->Scale.Y *= skin.Scale.Y / defaultActor->Scale.Y;
 	}
 
 	bodyqueslot++;

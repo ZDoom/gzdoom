@@ -195,16 +195,16 @@ void FTraceInfo::EnterSectorPortal(int position, fixed_t frac, sector_t *enterse
 	if (aimdir != -1 && aimdir != position) return;
 	AActor *portal = entersec->SkyBoxes[position];
 
-	if (aimdir == sector_t::ceiling && portal->threshold < limitz) return;
-	else if (aimdir == sector_t::floor && portal->threshold > limitz) return;
+	if (aimdir == sector_t::ceiling && FLOAT2FIXED(portal->specialf1) < limitz) return;
+	else if (aimdir == sector_t::floor && FLOAT2FIXED(portal->specialf1) > limitz) return;
 
 	FTraceInfo newtrace;
 	FTraceResults results;
 
 	memset(&results, 0, sizeof(results));
 
-	newtrace.StartX = StartX + portal->scaleX;
-	newtrace.StartY = StartY + portal->scaleY;
+	newtrace.StartX = StartX + FLOAT2FIXED(portal->Scale.X);
+	newtrace.StartY = StartY + FLOAT2FIXED(portal->Scale.Y);
 	newtrace.StartZ = StartZ;
 
 	frac += FixedDiv(FRACUNIT, MaxDist);
@@ -229,7 +229,7 @@ void FTraceInfo::EnterSectorPortal(int position, fixed_t frac, sector_t *enterse
 	newtrace.inshootthrough = true;
 	newtrace.startfrac = frac;
 	newtrace.aimdir = position;
-	newtrace.limitz = portal->threshold;
+	newtrace.limitz = FLOAT2FIXED(portal->specialf1);
 	newtrace.sectorsel = 0;
 
 	if (newtrace.TraceTraverse(ActorMask ? PT_ADDLINES | PT_ADDTHINGS | PT_COMPATIBLE : PT_ADDLINES))
@@ -698,13 +698,13 @@ bool FTraceInfo::ThingCheck(intercept_t *in)
 	fixed_t hity = StartY + FixedMul(Vy, dist);
 	fixed_t hitz = StartZ + FixedMul(Vz, dist);
 
-	if (hitz > in->d.thing->Top())
+	if (hitz > in->d.thing->_f_Top())
 	{
 		// trace enters above actor
 		if (Vz >= 0) return true;      // Going up: can't hit
 
 		// Does it hit the top of the actor?
-		dist = FixedDiv(in->d.thing->Top() - StartZ, Vz);
+		dist = FixedDiv(in->d.thing->_f_Top() - StartZ, Vz);
 
 		if (dist > MaxDist) return true;
 		in->frac = FixedDiv(dist, MaxDist);
@@ -714,15 +714,15 @@ bool FTraceInfo::ThingCheck(intercept_t *in)
 		hitz = StartZ + FixedMul(Vz, dist);
 
 		// calculated coordinate is outside the actor's bounding box
-		if (abs(hitx - in->d.thing->X()) > in->d.thing->radius ||
-			abs(hity - in->d.thing->Y()) > in->d.thing->radius) return true;
+		if (abs(hitx - in->d.thing->_f_X()) > in->d.thing->_f_radius() ||
+			abs(hity - in->d.thing->_f_Y()) > in->d.thing->_f_radius()) return true;
 	}
-	else if (hitz < in->d.thing->Z())
+	else if (hitz < in->d.thing->_f_Z())
 	{ // trace enters below actor
 		if (Vz <= 0) return true;      // Going down: can't hit
 
 		// Does it hit the bottom of the actor?
-		dist = FixedDiv(in->d.thing->Z() - StartZ, Vz);
+		dist = FixedDiv(in->d.thing->_f_Z() - StartZ, Vz);
 		if (dist > MaxDist) return true;
 		in->frac = FixedDiv(dist, MaxDist);
 
@@ -731,8 +731,8 @@ bool FTraceInfo::ThingCheck(intercept_t *in)
 		hitz = StartZ + FixedMul(Vz, dist);
 
 		// calculated coordinate is outside the actor's bounding box
-		if (abs(hitx - in->d.thing->X()) > in->d.thing->radius ||
-			abs(hity - in->d.thing->Y()) > in->d.thing->radius) return true;
+		if (abs(hitx - in->d.thing->_f_X()) > in->d.thing->_f_radius() ||
+			abs(hity - in->d.thing->_f_Y()) > in->d.thing->_f_radius()) return true;
 	}
 
 	if (CurSector->e->XFloor.ffloors.Size())

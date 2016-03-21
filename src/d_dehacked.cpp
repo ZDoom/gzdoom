@@ -903,7 +903,7 @@ static int PatchThing (int thingy)
 		}
 		else if (linelen == 6 && stricmp (Line1, "Height") == 0)
 		{
-			info->height = val;
+			info->Height = FIXED2DBL(val);
 			info->projectilepassheight = 0;	// needs to be disabled
 			hadHeight = true;
 		}
@@ -915,11 +915,11 @@ static int PatchThing (int thingy)
 		{
 			if (stricmp (Line1, "Speed") == 0)
 			{
-				info->Speed = val;
+				info->Speed = val;	// handle fixed point later.
 			}
 			else if (stricmp (Line1, "Width") == 0)
 			{
-				info->radius = val;
+				info->radius = FIXED2FLOAT(val);
 			}
 			else if (stricmp (Line1, "Alpha") == 0)
 			{
@@ -928,7 +928,7 @@ static int PatchThing (int thingy)
 			}
 			else if (stricmp (Line1, "Scale") == 0)
 			{
-				info->scaleY = info->scaleX = clamp<fixed_t> (FLOAT2FIXED(atof (Line2)), 1, 256*FRACUNIT);
+				info->Scale.Y = info->Scale.X = clamp(atof (Line2), 1./65536, 256.);
 			}
 			else if (stricmp (Line1, "Decal") == 0)
 			{
@@ -1215,7 +1215,7 @@ static int PatchThing (int thingy)
 					}
 					if (value[1] & 0x00000001)
 					{
-						info->gravity = FRACUNIT/4;
+						info->Gravity = 1./4;
 						value[1] &= ~0x00000001;
 					}
 					info->flags2 = ActorFlags2::FromInt (value[1]);
@@ -1257,7 +1257,7 @@ static int PatchThing (int thingy)
 			!hadHeight &&
 			thingy <= (int)OrgHeights.Size() && thingy > 0)
 		{
-			info->height = OrgHeights[thingy - 1] * FRACUNIT;
+			info->Height = OrgHeights[thingy - 1];
 			info->projectilepassheight = 0;
 		}
 		// If the thing's shadow changed, change its fuzziness if not already specified
@@ -1278,9 +1278,9 @@ static int PatchThing (int thingy)
 		}
 		// If this thing's speed is really low (i.e. meant to be a monster),
 		// bump it up, because all speeds are fixed point now.
-		if (abs(info->Speed) < 256)
+		if (fabs(info->Speed) >= 256)
 		{
-			info->Speed <<= FRACBITS;
+			info->Speed /= FRACUNIT;
 		}
 
 		if (info->flags & MF_SPECIAL)
@@ -1342,7 +1342,7 @@ static int PatchSound (int soundNum)
 		else CHECKKEY ("Zero/One",			info->singularity)
 		else CHECKKEY ("Value",				info->priority)
 		else CHECKKEY ("Zero 1",			info->link)
-		else CHECKKEY ("Neg. One 1",		info->pitch)
+		else CHECKKEY ("Neg. One 1",		info->_f_pitch())
 		else CHECKKEY ("Neg. One 2",		info->volume)
 		else CHECKKEY ("Zero 2",			info->data)
 		else CHECKKEY ("Zero 3",			info->usefulness)

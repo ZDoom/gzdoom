@@ -1532,3 +1532,21 @@ FArchive &operator<< (FArchive &arc, side_t *&side)
 {
 	return arc.SerializePointer (sides, (BYTE **)&side, sizeof(*sides));
 }
+
+FArchive &operator<<(FArchive &arc, DAngle &ang)
+{
+	arc << ang.Degrees;
+	return arc;
+}
+
+FArchive &operator<<(FArchive &arc, DVector3 &vec)
+{
+	arc << vec.X << vec.Y << vec.Z;
+	return arc;
+}
+
+FArchive &operator<<(FArchive &arc, DVector2 &vec)
+{
+	arc << vec.X << vec.Y;
+	return arc;
+}

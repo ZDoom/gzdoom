@@ -600,20 +600,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_TossGib)
 
 	const char *gibtype = (self->flags & MF_NOBLOOD) ? "Junk" : "Meat";
 	AActor *gib = Spawn (gibtype, self->PosPlusZ(24*FRACUNIT), ALLOW_REPLACE);
-	angle_t an;
-	int speed;
 
 	if (gib == NULL)
 	{
 		return 0;
 	}
 
-	an = pr_gibtosser() << 24;
-	gib->angle = an;
-	speed = pr_gibtosser() & 15;
-	gib->vel.x = speed * finecosine[an >> ANGLETOFINESHIFT];
-	gib->vel.y = speed * finesine[an >> ANGLETOFINESHIFT];
-	gib->vel.z = (pr_gibtosser() & 15) << FRACBITS;
+	gib->Angles.Yaw = pr_gibtosser() * (360 / 256.f);
+	gib->VelFromAngle(pr_gibtosser() & 15);
+	gib->Vel.Z = pr_gibtosser() & 15;
 	return 0;
 }
 
@@ -659,7 +654,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CheckTerrain)
 
 	sector_t *sec = self->Sector;
 
-	if (self->Z() == sec->floorplane.ZatPoint(self) && sec->PortalBlocksMovement(sector_t::floor))
+	if (self->_f_Z() == sec->floorplane.ZatPoint(self) && sec->PortalBlocksMovement(sector_t::floor))
 	{
 		if (sec->special == Damage_InstantDeath)
 		{
@@ -668,11 +663,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_CheckTerrain)
 		else if (sec->special == Scroll_StrifeCurrent)
 		{
 			int anglespeed = tagManager.GetFirstSectorTag(sec) - 100;
-			fixed_t speed = (anglespeed % 10) << (FRACBITS - 4);
-			angle_t finean = (anglespeed / 10) << (32-3);
-			finean >>= ANGLETOFINESHIFT;
-			self->vel.x += FixedMul (speed, finecosine[finean]);
-			self->vel.y += FixedMul (speed, finesine[finean]);
+			double speed = (anglespeed % 10) / 16.;
+			DAngle an = (anglespeed / 10) * (360 / 8.);
+			self->VelFromAngle(an, speed);
 		}
 	}
 	return 0;
@@ -722,7 +715,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_DropFire)
 	PARAM_ACTION_PROLOGUE;
 
 	AActor *drop = Spawn("FireDroplet", self->PosPlusZ(24*FRACUNIT), ALLOW_REPLACE);
-	drop->vel.z = -FRACUNIT;
+	drop->Vel.Z = -FRACUNIT;
 	P_RadiusAttack (self, self, 64, 64, NAME_Fire, 0);
 	return 0;
 }
@@ -748,7 +741,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_HandLower)
 	if (self->player != NULL)
 	{
 		pspdef_t *psp = &self->player->psprites[ps_weapon];
-		psp->sy += FRACUNIT*9;
+		psp->sy += 9;
 		if (psp->sy > WEAPONBOTTOM*2)
 		{
 			P_SetPsprite (self->player, ps_weapon, NULL);

@@ -92,7 +92,7 @@ DBaseDecal::DBaseDecal (int statnum, fixed_t z)
 
 DBaseDecal::DBaseDecal (const AActor *basis)
 : DThinker(STAT_DECAL),
-  WallNext(0), WallPrev(0), LeftDistance(0), Z(basis->Z()), ScaleX(basis->scaleX), ScaleY(basis->scaleY),
+  WallNext(0), WallPrev(0), LeftDistance(0), Z(basis->_f_Z()), ScaleX(FLOAT2FIXED(basis->Scale.X)), ScaleY(FLOAT2FIXED(basis->Scale.Y)),
   Alpha(basis->alpha), AlphaColor(basis->fillcolor), Translation(basis->Translation), PicNum(basis->picnum),
   RenderFlags(basis->renderflags), RenderStyle(basis->RenderStyle)
 {
@@ -414,7 +414,7 @@ static void GetWallStuff (side_t *wall, vertex_t *&v1, fixed_t &ldx, fixed_t &ld
 
 static fixed_t Length (fixed_t dx, fixed_t dy)
 {
-	return (fixed_t)sqrt ((double)dx*(double)dx+(double)dy*(double)dy);
+	return (fixed_t)g_sqrt ((double)dx*(double)dx+(double)dy*(double)dy);
 }
 
 static side_t *NextWall (const side_t *wall)
@@ -820,22 +820,22 @@ void ADecal::BeginPlay ()
 	{
 		if (!tpl->PicNum.Exists())
 		{
-			Printf("Decal actor at (%d,%d) does not have a valid texture\n", X()>>FRACBITS, Y()>>FRACBITS);
+			Printf("Decal actor at (%f,%f) does not have a valid texture\n", X(), Y());
 		}
 		else
 		{
 			// Look for a wall within 64 units behind the actor. If none can be
 			// found, then no decal is created, and this actor is destroyed
 			// without effectively doing anything.
-			if (NULL == ShootDecal(tpl, this, Sector, X(), Y(), Z(), angle + ANGLE_180, 64*FRACUNIT, true))
+			if (NULL == ShootDecal(tpl, this, Sector, _f_X(), _f_Y(), _f_Z(), FLOAT2ANGLE(Angles.Yaw.Degrees) + ANGLE_180, 64*FRACUNIT, true))
 			{
-				DPrintf ("Could not find a wall to stick decal to at (%d,%d)\n", X()>>FRACBITS, Y()>>FRACBITS);
+				DPrintf ("Could not find a wall to stick decal to at (%f,%f)\n", X(), Y());
 			}
 		}
 	}
 	else
 	{
-		DPrintf ("Decal actor at (%d,%d) does not have a good template\n", X()>>FRACBITS, Y()>>FRACBITS);
+		DPrintf ("Decal actor at (%f,%f) does not have a good template\n", X(), Y());
 	}
 	// This actor doesn't need to stick around anymore.
 	Destroy();

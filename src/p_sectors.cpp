@@ -877,9 +877,9 @@ void sector_t::CheckPortalPlane(int plane)
 	AActor *portal = SkyBoxes[plane];
 	if (!portal || portal->special1 != SKYBOX_LINKEDPORTAL) return;
 
-	fixed_t planeh = planes[plane].TexZ;
+	double planeh = FIXED2DBL(planes[plane].TexZ);
 	int obstructed = PLANEF_OBSTRUCTED * (plane == sector_t::floor ?
-		planeh > portal->threshold : planeh < portal->threshold);
+		planeh > portal->specialf1 : planeh < portal->specialf1);
 	planes[plane].Flags = (planes[plane].Flags  & ~PLANEF_OBSTRUCTED) | obstructed;
 }
 
@@ -889,18 +889,18 @@ void sector_t::CheckPortalPlane(int plane)
 //
 //===========================================================================
 
-fixed_t sector_t::HighestCeilingAt(fixed_t x, fixed_t y, sector_t **resultsec)
+fixed_t sector_t::_f_HighestCeilingAt(fixed_t x, fixed_t y, sector_t **resultsec)
 {
 	sector_t *check = this;
 	fixed_t planeheight = FIXED_MIN;
 
 	// Continue until we find a blocking portal or a portal below where we actually are.
-	while (!check->PortalBlocksMovement(ceiling) && planeheight < check->SkyBoxes[ceiling]->threshold)
+	while (!check->PortalBlocksMovement(ceiling) && planeheight < FLOAT2FIXED(check->SkyBoxes[ceiling]->specialf1))
 	{
 		fixedvec2 pos = check->CeilingDisplacement();
 		x += pos.x;
 		y += pos.y;
-		planeheight = check->SkyBoxes[ceiling]->threshold;
+		planeheight = FLOAT2FIXED(check->SkyBoxes[ceiling]->specialf1);
 		check = P_PointInSector(x, y);
 	}
 	if (resultsec) *resultsec = check;
@@ -913,18 +913,18 @@ fixed_t sector_t::HighestCeilingAt(fixed_t x, fixed_t y, sector_t **resultsec)
 //
 //===========================================================================
 
-fixed_t sector_t::LowestFloorAt(fixed_t x, fixed_t y, sector_t **resultsec)
+fixed_t sector_t::_f_LowestFloorAt(fixed_t x, fixed_t y, sector_t **resultsec)
 {
 	sector_t *check = this;
 	fixed_t planeheight = FIXED_MAX;
 
 	// Continue until we find a blocking portal or a portal above where we actually are.
-	while (!check->PortalBlocksMovement(floor) && planeheight > check->SkyBoxes[floor]->threshold)
+	while (!check->PortalBlocksMovement(floor) && planeheight > FLOAT2FIXED(check->SkyBoxes[floor]->specialf1))
 	{
 		fixedvec2 pos = check->FloorDisplacement();
 		x += pos.x;
 		y += pos.y;
-		planeheight = check->SkyBoxes[floor]->threshold;
+		planeheight = FLOAT2FIXED(check->SkyBoxes[floor]->specialf1);
 		check = P_PointInSector(x, y);
 	}
 	if (resultsec) *resultsec = check;
@@ -959,7 +959,7 @@ fixed_t sector_t::NextHighestCeilingAt(fixed_t x, fixed_t y, fixed_t bottomz, fi
 				return ff_bottom;
 			}
 		}
-		if ((flags & FFCF_NOPORTALS) || sec->PortalBlocksMovement(ceiling) || planeheight >= sec->SkyBoxes[ceiling]->threshold)
+		if ((flags & FFCF_NOPORTALS) || sec->PortalBlocksMovement(ceiling) || planeheight >= FLOAT2FIXED(sec->SkyBoxes[ceiling]->specialf1))
 		{ // Use sector's floor
 			if (resultffloor) *resultffloor = NULL;
 			if (resultsec) *resultsec = sec;
@@ -970,7 +970,7 @@ fixed_t sector_t::NextHighestCeilingAt(fixed_t x, fixed_t y, fixed_t bottomz, fi
 			fixedvec2 pos = sec->CeilingDisplacement();
 			x += pos.x;
 			y += pos.y;
-			planeheight = sec->SkyBoxes[ceiling]->threshold;
+			planeheight = FLOAT2FIXED(sec->SkyBoxes[ceiling]->specialf1);
 			sec = P_PointInSector(x, y);
 		}
 	}
@@ -1004,7 +1004,7 @@ fixed_t sector_t::NextLowestFloorAt(fixed_t x, fixed_t y, fixed_t z, int flags, 
 				}
 			}
 		}
-		if ((flags & FFCF_NOPORTALS) || sec->PortalBlocksMovement(sector_t::floor) || planeheight <= sec->SkyBoxes[floor]->threshold)
+		if ((flags & FFCF_NOPORTALS) || sec->PortalBlocksMovement(sector_t::floor) || planeheight <= FLOAT2FIXED(sec->SkyBoxes[floor]->specialf1))
 		{ // Use sector's floor
 			if (resultffloor) *resultffloor = NULL;
 			if (resultsec) *resultsec = sec;
@@ -1015,9 +1015,35 @@ fixed_t sector_t::NextLowestFloorAt(fixed_t x, fixed_t y, fixed_t z, int flags, 
 			fixedvec2 pos = sec->FloorDisplacement();
 			x += pos.x;
 			y += pos.y;
-			planeheight = sec->SkyBoxes[floor]->threshold;
+			planeheight = FLOAT2FIXED(sec->SkyBoxes[floor]->specialf1);
 			sec = P_PointInSector(x, y);
 		}
+	}
+}
+
+//===========================================================================
+//
+// 
+//
+//===========================================================================
+
+fixed_t sector_t::GetFriction(int plane, fixed_t *pMoveFac) const
+{
+	if (Flags & SECF_FRICTION) 
+	{ 
+		if (pMoveFac) *pMoveFac = movefactor;
+		return friction; 
+	}
+	FTerrainDef *terrain = &Terrains[GetTerrain(plane)];
+	if (terrain->Friction != 0)
+	{
+		if (pMoveFac) *pMoveFac = terrain->MoveFactor;
+		return terrain->Friction;
+	}
+	else
+	{
+		if (pMoveFac) *pMoveFac = ORIG_FRICTION_FACTOR;
+		return ORIG_FRICTION;
 	}
 }
 

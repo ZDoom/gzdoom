@@ -1324,7 +1324,7 @@ void P_LoadSegs (MapData * map)
 				segangle >>= (ANGLETOFINESHIFT-16);
 				dx = (li->v1->x - li->v2->x)>>FRACBITS;
 				dy = (li->v1->y - li->v2->y)>>FRACBITS;
-				dis = ((int) sqrt((double)(dx*dx + dy*dy)))<<FRACBITS;
+				dis = ((int) g_sqrt((double)(dx*dx + dy*dy)))<<FRACBITS;
 				dx = finecosine[segangle];
 				dy = finesine[segangle];
 				if ((vnum2 > vnum1) && (vertchanged[vnum2] == 0))
@@ -1755,7 +1755,7 @@ void P_LoadThings (MapData * map)
 
 		memset (&mti[i], 0, sizeof(mti[i]));
 
-		mti[i].gravity = FRACUNIT;
+		mti[i].Gravity = 1;
 		mti[i].Conversation = 0;
 		mti[i].SkillFilter = MakeSkill(flags);
 		mti[i].ClassFilter = 0xffff;	// Doom map format doesn't have class flags so spawn for all player classes
@@ -1854,7 +1854,7 @@ void P_LoadThings2 (MapData * map)
 			mti[i].flags &= 0x7ff;	// mask out Strife flags if playing an original Hexen map.
 		}
 
-		mti[i].gravity = FRACUNIT;
+		mti[i].Gravity = 1;
 		mti[i].RenderStyle = STYLE_Count;
 		mti[i].alpha = -1;
 		mti[i].health = 1;
@@ -2024,7 +2024,7 @@ void P_FinishLoadingLineDef(line_t *ld, int alpha)
 	}
 
 	// [RH] Set some new sidedef properties
-	int len = (int)(sqrt (dx*dx + dy*dy) + 0.5f);
+	int len = (int)(g_sqrt (dx*dx + dy*dy) + 0.5f);
 
 	if (ld->sidedef[0] != NULL)
 	{

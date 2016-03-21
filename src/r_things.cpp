@@ -763,7 +763,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 
 	// [ZZ] Or less definitely not visible (hue)
 	// [ZZ] 10.01.2016: don't try to clip stuff inside a skybox against the current portal.
-	if (!CurrentPortalInSkybox && CurrentPortal && !!P_PointOnLineSidePrecise(thing->X(), thing->Y(), CurrentPortal->dst))
+	if (!CurrentPortalInSkybox && CurrentPortal && !!P_PointOnLineSidePrecise(thing->_f_X(), thing->_f_Y(), CurrentPortal->dst))
 		return;
 
 	// [RH] Interpolate the sprite's position to make it look smooth
@@ -776,17 +776,16 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	voxel = NULL;
 
 	int spritenum = thing->sprite;
-	fixed_t spritescaleX = thing->scaleX;
-	fixed_t spritescaleY = thing->scaleY;
+	DVector2 spriteScale = thing->Scale;
 	int renderflags = thing->renderflags;
-	if (spritescaleY < 0)
+	if (spriteScale.Y < 0)
 	{
-		spritescaleY = -spritescaleY;
+		spriteScale.Y = -spriteScale.Y;
 		renderflags ^= RF_YFLIP;
 	}
 	if (thing->player != NULL)
 	{
-		P_CheckPlayerSprite(thing, spritenum, spritescaleX, spritescaleY);
+		P_CheckPlayerSprite(thing, spritenum, spriteScale);
 	}
 
 	if (thing->picnum.isValid())
@@ -807,11 +806,11 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 			angle_t rot;
 			if (sprframe->Texture[0] == sprframe->Texture[1])
 			{
-				rot = (ang - thing->angle + (angle_t)(ANGLE_45/2)*9) >> 28;
+				rot = (ang - thing->_f_angle() + (angle_t)(ANGLE_45/2)*9) >> 28;
 			}
 			else
 			{
-				rot = (ang - thing->angle + (angle_t)(ANGLE_45/2)*9-(angle_t)(ANGLE_180/16)) >> 28;
+				rot = (ang - thing->_f_angle() + (angle_t)(ANGLE_45/2)*9-(angle_t)(ANGLE_180/16)) >> 28;
 			}
 			picnum = sprframe->Texture[rot];
 			if (sprframe->Flip & (1 << rot))
@@ -846,11 +845,11 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 			angle_t rot;
 			if (sprframe->Texture[0] == sprframe->Texture[1])
 			{
-				rot = (ang - thing->angle + (angle_t)(ANGLE_45/2)*9) >> 28;
+				rot = (ang - thing->_f_angle() + (angle_t)(ANGLE_45/2)*9) >> 28;
 			}
 			else
 			{
-				rot = (ang - thing->angle + (angle_t)(ANGLE_45/2)*9-(angle_t)(ANGLE_180/16)) >> 28;
+				rot = (ang - thing->_f_angle() + (angle_t)(ANGLE_45/2)*9-(angle_t)(ANGLE_180/16)) >> 28;
 			}
 			picnum = sprframe->Texture[rot];
 			if (sprframe->Flip & (1 << rot))
@@ -864,9 +863,9 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 			}
 		}
 	}
-	if (spritescaleX < 0)
+	if (spriteScale.X < 0)
 	{
-		spritescaleX = -spritescaleX;
+		spriteScale.X = -spriteScale.X;
 		renderflags ^= RF_XFLIP;
 	}
 	if (voxel == NULL && (tex == NULL || tex->UseType == FTexture::TEX_Null))
@@ -874,6 +873,8 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 		return;
 	}
 
+	fixed_t spritescaleX = FLOAT2FIXED(spriteScale.X);
+	fixed_t spritescaleY = FLOAT2FIXED(spriteScale.Y);
 	if ((renderflags & RF_SPRITETYPEMASK) == RF_WALLSPRITE)
 	{
 		R_ProjectWallSprite(thing, fx, fy, fz, picnum, spritescaleX, spritescaleY, renderflags);
@@ -919,7 +920,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	{
 		xscale = FixedMul(spritescaleX, voxel->Scale);
 		yscale = FixedMul(spritescaleY, voxel->Scale);
-		gzt = fz + MulScale8(yscale, voxel->Voxel->Mips[0].PivotZ) - thing->floorclip;
+		gzt = fz + MulScale8(yscale, voxel->Voxel->Mips[0].PivotZ) - FLOAT2FIXED(thing->Floorclip);
 		gzb = fz + MulScale8(yscale, voxel->Voxel->Mips[0].PivotZ - (voxel->Voxel->Mips[0].SizeZ << 8));
 		if (gzt <= gzb)
 			return;
@@ -995,11 +996,11 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 		vis->xscale = xscale;
 		vis->yscale = Scale(InvZtoScale, yscale, tz << 4);
 		vis->idepth = (unsigned)DivScale32(1, tz) >> 1;	// tz is 20.12, so idepth ought to be 12.20, but signed math makes it 13.19
-		vis->floorclip = FixedDiv (thing->floorclip, yscale);
-		vis->texturemid = (tex->TopOffset << FRACBITS) - FixedDiv (viewz - fz + thing->floorclip, yscale);
+		vis->floorclip = FixedDiv (FLOAT2FIXED(thing->Floorclip), yscale);
+		vis->texturemid = (tex->TopOffset << FRACBITS) - FixedDiv (viewz - fz + FLOAT2FIXED(thing->Floorclip), yscale);
 		vis->x1 = x1 < WindowLeft ? WindowLeft : x1;
 		vis->x2 = x2 > WindowRight ? WindowRight : x2;
-		vis->angle = thing->angle;
+		vis->angle = thing->_f_angle();
 
 		if (renderflags & RF_XFLIP)
 		{
@@ -1025,11 +1026,11 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 		vis->x1 = WindowLeft;
 		vis->x2 = WindowRight;
 		vis->idepth = (unsigned)DivScale32(1, MAX(tz, MINZ)) >> 1;
-		vis->floorclip = thing->floorclip;
+		vis->floorclip = FLOAT2FIXED(thing->Floorclip);
 
-		fz -= thing->floorclip;
+		fz -= FLOAT2FIXED(thing->Floorclip);
 
-		vis->angle = thing->angle + voxel->AngleOffset;
+		vis->angle = thing->_f_angle() + voxel->AngleOffset;
 
 		int voxelspin = (thing->flags & MF_DROPPED) ? voxel->DroppedSpin : voxel->PlacedSpin;
 		if (voxelspin != 0)
@@ -1149,7 +1150,7 @@ static void R_ProjectWallSprite(AActor *thing, fixed_t fx, fixed_t fy, fixed_t f
 	fixed_t lx1, lx2, ly1, ly2;
 	fixed_t gzb, gzt, tz;
 	FTexture *pic = TexMan(picnum, true);
-	angle_t ang = (thing->angle + ANGLE_90) >> ANGLETOFINESHIFT;
+	angle_t ang = (thing->_f_angle() + ANGLE_90) >> ANGLETOFINESHIFT;
 	vissprite_t *vis;
 
 	// Determine left and right edges of sprite. The sprite's angle is its normal,
@@ -1254,12 +1255,12 @@ void R_AddSprites (sector_t *sec, int lightlevel, int fakeside)
 			{
 				if(!(rover->top.plane->a) && !(rover->top.plane->b))
 				{
-					if(rover->top.plane->Zat0() <= thing->Z()) fakefloor = rover;
+					if(rover->top.plane->Zat0() <= thing->_f_Z()) fakefloor = rover;
 				}
 			}
 			if(!(rover->bottom.plane->a) && !(rover->bottom.plane->b))
 			{
-				if(rover->bottom.plane->Zat0() >= thing->Top()) fakeceiling = rover;
+				if(rover->bottom.plane->Zat0() >= thing->_f_Top()) fakeceiling = rover;
 			}
 		}	
 		R_ProjectSprite (thing, fakeside, fakefloor, fakeceiling);
@@ -1589,7 +1590,7 @@ void R_DrawPlayerSprites ()
 			// [RH] Don't draw the targeter's crosshair if the player already has a crosshair set.
 			if (psp->state && (i != ps_targetcenter || CrosshairImage == NULL))
 			{
-				R_DrawPSprite (psp, i, camera, psp->sx + ofsx, psp->sy + ofsy);
+				R_DrawPSprite (psp, i, camera, FLOAT2FIXED(psp->sx) + ofsx, FLOAT2FIXED(psp->sy) + ofsy);
 			}
 			// [RH] Don't bob the targeter.
 			if (i == ps_flash)
@@ -2114,8 +2115,8 @@ void R_DrawSprite (vissprite_t *spr)
 
 			if (spr->fakeceiling != NULL)
 			{
-				fixed_t ceilingz = spr->fakeceiling->bottom.plane->Zat0();
-				if (viewz < ceilingz && ceilingz == sclipTop)
+				fixed_t ceilingZ = spr->fakeceiling->bottom.plane->Zat0();
+				if (viewz < ceilingZ && ceilingZ == sclipTop)
 				{
 					h = spr->fakeceiling->top.plane->Zat0();
 				}

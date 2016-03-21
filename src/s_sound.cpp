@@ -736,9 +736,9 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 		// Only actors maintain velocity information.
 		if (type == SOURCE_Actor && actor != NULL)
 		{
-			vel->X = FIXED2FLOAT(actor->vel.x) * TICRATE;
-			vel->Y = FIXED2FLOAT(actor->vel.z) * TICRATE;
-			vel->Z = FIXED2FLOAT(actor->vel.y) * TICRATE;
+			vel->X = float(actor->Vel.X * TICRATE);
+			vel->Y = float(actor->Vel.Y * TICRATE);
+			vel->Z = float(actor->Vel.Z * TICRATE);
 		}
 		else
 		{
@@ -1950,7 +1950,7 @@ static void S_SetListener(SoundListener &listener, AActor *listenactor)
 {
 	if (listenactor != NULL)
 	{
-		listener.angle = ANGLE2RADF(listenactor->angle);
+		listener.angle = ANGLE2RADF(listenactor->_f_angle());
 		/*
 		listener.velocity.X = listenactor->vel.x * (TICRATE/65536.f);
 		listener.velocity.Y = listenactor->vel.z * (TICRATE/65536.f);

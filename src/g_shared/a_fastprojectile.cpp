@@ -28,7 +28,7 @@ void AFastProjectile::Tick ()
 	int changexy;
 
 	ClearInterpolation();
-	fixed_t oldz = Z();
+	fixed_t oldz = _f_Z();
 
 	if (!(flags5 & MF5_NOTIMEFREEZE))
 	{
@@ -45,9 +45,9 @@ void AFastProjectile::Tick ()
 
 	int shift = 3;
 	int count = 8;
-	if (radius > 0)
+	if (_f_radius() > 0)
 	{
-		while ( ((abs(vel.x) >> shift) > radius) || ((abs(vel.y) >> shift) > radius))
+		while ( ((abs(_f_velx()) >> shift) > _f_radius()) || ((abs(_f_vely()) >> shift) > _f_radius()))
 		{
 			// we need to take smaller steps.
 			shift++;
@@ -56,11 +56,11 @@ void AFastProjectile::Tick ()
 	}
 
 	// Handle movement
-	if (vel.x || vel.y || (Z() != floorz) || vel.z)
+	if (!Vel.isZero() || (Z() != floorz))
 	{
-		xfrac = vel.x >> shift;
-		yfrac = vel.y >> shift;
-		zfrac = vel.z >> shift;
+		xfrac = _f_velx() >> shift;
+		yfrac = _f_vely() >> shift;
+		zfrac = _f_velz() >> shift;
 		changexy = xfrac || yfrac;
 		int ripcount = count >> 3;
 		for (i = 0; i < count; i++)
@@ -72,14 +72,14 @@ void AFastProjectile::Tick ()
 					tm.LastRipped.Clear();	// [RH] Do rip damage each step, like Hexen
 				}
 				
-				if (!P_TryMove (this, X() + xfrac,Y() + yfrac, true, NULL, tm))
+				if (!P_TryMove (this, _f_X() + xfrac,_f_Y() + yfrac, true, NULL, tm))
 				{ // Blocked move
 					if (!(flags3 & MF3_SKYEXPLODE))
 					{
 						if (tm.ceilingline &&
 							tm.ceilingline->backsector &&
 							tm.ceilingline->backsector->GetTexture(sector_t::ceiling) == skyflatnum &&
-							Z() >= tm.ceilingline->backsector->ceilingplane.ZatPoint(PosRelative(tm.ceilingline)))
+							_f_Z() >= tm.ceilingline->backsector->ceilingplane.ZatPoint(PosRelative(tm.ceilingline)))
 						{
 							// Hack to prevent missiles exploding against the sky.
 							// Does not handle sky floors.
@@ -98,9 +98,9 @@ void AFastProjectile::Tick ()
 					return;
 				}
 			}
-			AddZ(zfrac);
+			_f_AddZ(zfrac);
 			UpdateWaterLevel (oldz);
-			oldz = Z();
+			oldz = _f_Z();
 			if (Z() <= floorz)
 			{ // Hit the floor
 
@@ -126,7 +126,7 @@ void AFastProjectile::Tick ()
 					return;
 				}
 
-				SetZ(ceilingz - height);
+				SetZ(ceilingz - Height);
 				P_ExplodeMissile (this, NULL, NULL);
 				return;
 			}
@@ -156,28 +156,25 @@ void AFastProjectile::Tick ()
 
 void AFastProjectile::Effect()
 {
-	//if (pr_smoke() < 128)	// [RH] I think it looks better if it's consistent
+	FName name = GetClass()->MissileName;
+	if (name != NAME_None)
 	{
-		FName name = GetClass()->MissileName;
-		if (name != NAME_None)
-		{
-			fixed_t hitz = Z()-8*FRACUNIT;
+		double hitz = Z()-8;
 
-			if (hitz < floorz)
-			{
-				hitz = floorz;
-			}
-			// Do not clip this offset to the floor.
-			hitz += GetClass()->MissileHeight;
+		if (hitz < floorz)
+		{
+			hitz = floorz;
+		}
+		// Do not clip this offset to the floor.
+		hitz += GetClass()->MissileHeight;
 		
-			PClassActor *trail = PClass::FindActor(name);
-			if (trail != NULL)
+		PClassActor *trail = PClass::FindActor(name);
+		if (trail != NULL)
+		{
+			AActor *act = Spawn (trail, PosAtZ(hitz), ALLOW_REPLACE);
+			if (act != NULL)
 			{
-				AActor *act = Spawn (trail, X(), Y(), hitz, ALLOW_REPLACE);
-				if (act != NULL)
-				{
-					act->angle = this->angle;
-				}
+				act->Angles.Yaw = Angles.Yaw;
 			}
 		}
 	}

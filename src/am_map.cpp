@@ -648,7 +648,7 @@ CUSTOM_CVAR (Int, am_cheat, 0, 0)
 
 #define AM_NUMMARKPOINTS 10
 
-// player radius for automap checking
+// player _f_radius() for automap checking
 #define PLAYERRADIUS	16*MAPUNIT
 
 // how much the automap moves window per tic in frame-buffer coordinates
@@ -1012,8 +1012,8 @@ void AM_restoreScaleAndLoc ()
     }
 	else
 	{
-		m_x = (players[consoleplayer].camera->X() >> FRACTOMAPBITS) - m_w/2;
-		m_y = (players[consoleplayer].camera->Y() >> FRACTOMAPBITS)- m_h/2;
+		m_x = (players[consoleplayer].camera->_f_X() >> FRACTOMAPBITS) - m_w/2;
+		m_y = (players[consoleplayer].camera->_f_Y() >> FRACTOMAPBITS)- m_h/2;
     }
 	m_x2 = m_x + m_w;
 	m_y2 = m_y + m_h;
@@ -1129,7 +1129,7 @@ static void AM_ClipRotatedExtents (fixed_t pivotx, fixed_t pivoty)
 		{
 			xs[i] -= pivotx;
 			ys[i] -= pivoty;
-			AM_rotate (&xs[i], &ys[i], ANG90 - players[consoleplayer].camera->angle);
+			AM_rotate (&xs[i], &ys[i], ANG90 - players[consoleplayer].camera->_f_angle());
 
 			if (i == 5)
 				break;
@@ -1150,7 +1150,7 @@ static void AM_ClipRotatedExtents (fixed_t pivotx, fixed_t pivoty)
 //			ys[4] = rmax_y;
 //		else if (ys[4] < rmin_y)
 //			ys[4] = rmin_y;
-		AM_rotate (&xs[4], &ys[4], ANG270 - players[consoleplayer].camera->angle);
+		AM_rotate (&xs[4], &ys[4], ANG270 - players[consoleplayer].camera->_f_angle());
 		m_x = xs[4] + pivotx - m_w/2;
 		m_y = ys[4] + pivoty - m_h/2;
 #endif
@@ -1216,7 +1216,7 @@ void AM_changeWindowLoc ()
 	oincy = incy = Scale(m_paninc.y, SCREENHEIGHT, 200);
 	if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 	{
-		AM_rotate(&incx, &incy, players[consoleplayer].camera->angle - ANG90);
+		AM_rotate(&incx, &incy, players[consoleplayer].camera->_f_angle() - ANG90);
 	}
 
 	m_x += incx;
@@ -1263,8 +1263,8 @@ void AM_initVariables ()
 			if (playeringame[pnum])
 				break;
 	assert(pnum >= 0 && pnum < MAXPLAYERS);
-	m_x = (players[pnum].camera->X() >> FRACTOMAPBITS) - m_w/2;
-	m_y = (players[pnum].camera->Y() >> FRACTOMAPBITS) - m_h/2;
+	m_x = (players[pnum].camera->_f_X() >> FRACTOMAPBITS) - m_w/2;
+	m_y = (players[pnum].camera->_f_Y() >> FRACTOMAPBITS) - m_h/2;
 	AM_changeWindowLoc();
 
 	// for saving & restoring
@@ -1585,25 +1585,25 @@ void AM_doFollowPlayer ()
 	fixed_t sx, sy;
 
     if (players[consoleplayer].camera != NULL &&
-		(f_oldloc.x != players[consoleplayer].camera->X() ||
-		 f_oldloc.y != players[consoleplayer].camera->Y()))
+		(f_oldloc.x != players[consoleplayer].camera->_f_X() ||
+		 f_oldloc.y != players[consoleplayer].camera->_f_Y()))
 	{
-		m_x = (players[consoleplayer].camera->X() >> FRACTOMAPBITS) - m_w/2;
-		m_y = (players[consoleplayer].camera->Y() >> FRACTOMAPBITS) - m_h/2;
+		m_x = (players[consoleplayer].camera->_f_X() >> FRACTOMAPBITS) - m_w/2;
+		m_y = (players[consoleplayer].camera->_f_Y() >> FRACTOMAPBITS) - m_h/2;
 		m_x2 = m_x + m_w;
 		m_y2 = m_y + m_h;
 
   		// do the parallax parchment scrolling.
-		sx = (players[consoleplayer].camera->X() - f_oldloc.x) >> FRACTOMAPBITS;
-		sy = (f_oldloc.y - players[consoleplayer].camera->Y()) >> FRACTOMAPBITS;
+		sx = (players[consoleplayer].camera->_f_X() - f_oldloc.x) >> FRACTOMAPBITS;
+		sy = (f_oldloc.y - players[consoleplayer].camera->_f_Y()) >> FRACTOMAPBITS;
 		if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 		{
-			AM_rotate (&sx, &sy, players[consoleplayer].camera->angle - ANG90);
+			AM_rotate (&sx, &sy, players[consoleplayer].camera->_f_angle() - ANG90);
 		}
 		AM_ScrollParchment (sx, sy);
 
-		f_oldloc.x = players[consoleplayer].camera->X();
-		f_oldloc.y = players[consoleplayer].camera->Y();
+		f_oldloc.x = players[consoleplayer].camera->_f_X();
+		f_oldloc.y = players[consoleplayer].camera->_f_Y();
 	}
 }
 
@@ -2042,7 +2042,7 @@ void AM_drawSubsectors()
 		// Apply the automap's rotation to the texture origin.
 		if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 		{
-			rotation += ANG90 - players[consoleplayer].camera->angle;
+			rotation += ANG90 - players[consoleplayer].camera->_f_angle();
 			AM_rotatePoint(&originpt.x, &originpt.y);
 		}
 		originx = f_x + ((originpt.x - m_x) * scale / float(1 << 24));
@@ -2588,7 +2588,7 @@ void AM_rotatePoint (fixed_t *x, fixed_t *y)
 	fixed_t pivoty = m_y + m_h/2;
 	*x -= pivotx;
 	*y -= pivoty;
-	AM_rotate (x, y, ANG90 - players[consoleplayer].camera->angle);
+	AM_rotate (x, y, ANG90 - players[consoleplayer].camera->_f_angle());
 	*x += pivotx;
 	*y += pivoty;
 }
@@ -2668,7 +2668,7 @@ void AM_drawPlayers ()
 		mline_t *arrow;
 		int numarrowlines;
 
-		fixedvec2 pos = am_portaloverlay? players[consoleplayer].camera->GetPortalTransition(players[consoleplayer].viewheight) : (fixedvec2)players[consoleplayer].camera->Pos();
+		fixedvec2 pos = am_portaloverlay? players[consoleplayer].camera->GetPortalTransition(players[consoleplayer].viewheight) : (fixedvec2)players[consoleplayer].camera->_f_Pos();
 		pt.x = pos.x >> FRACTOMAPBITS;
 		pt.y = pos.y >> FRACTOMAPBITS;
 		if (am_rotate == 1 || (am_rotate == 2 && viewactive))
@@ -2678,7 +2678,7 @@ void AM_drawPlayers ()
 		}
 		else
 		{
-			angle = players[consoleplayer].camera->angle;
+			angle = players[consoleplayer].camera->_f_angle();
 		}
 		
 		if (am_cheat != 0 && CheatMapArrow.Size() > 0)
@@ -2736,12 +2736,12 @@ void AM_drawPlayers ()
 			pt.x = pos.x >> FRACTOMAPBITS;
 			pt.y = pos.y >> FRACTOMAPBITS;
 
-			angle = p->mo->angle;
+			angle = p->mo->_f_angle();
 
 			if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 			{
 				AM_rotatePoint (&pt.x, &pt.y);
-				angle -= players[consoleplayer].camera->angle - ANG90;
+				angle -= players[consoleplayer].camera->_f_angle() - ANG90;
 			}
 
 			AM_drawLineCharacter(&MapArrow[0], MapArrow.Size(), 0, angle, color, pt.x, pt.y);
@@ -2770,12 +2770,12 @@ void AM_drawKeys ()
 		p.x = pos.x >> FRACTOMAPBITS;
 		p.y = pos.y >> FRACTOMAPBITS;
 
-		angle = key->angle;
+		angle = key->_f_angle();
 
 		if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 		{
 			AM_rotatePoint (&p.x, &p.y);
-			angle += ANG90 - players[consoleplayer].camera->angle;
+			angle += ANG90 - players[consoleplayer].camera->_f_angle();
 		}
 
 		if (key->flags & MF_SPECIAL)
@@ -2830,11 +2830,11 @@ void AM_drawThings ()
 						const size_t spriteIndex = sprite.spriteframes + (show > 1 ? t->frame : 0);
 
 						frame = &SpriteFrames[spriteIndex];
-						angle_t angle = ANGLE_270 - t->angle;
+						angle_t angle = ANGLE_270 - t->_f_angle();
 						if (frame->Texture[0] != frame->Texture[1]) angle += (ANGLE_180 / 16);
 						if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 						{
-							angle += players[consoleplayer].camera->angle - ANGLE_90;
+							angle += players[consoleplayer].camera->_f_angle() - ANGLE_90;
 						}
 						rotation = angle >> 28;
 
@@ -2844,8 +2844,8 @@ void AM_drawThings ()
 
 					if (texture == NULL) goto drawTriangle;	// fall back to standard display if no sprite can be found.
 
-					const fixed_t spriteXScale = FixedMul(t->scaleX, 10 * scale_mtof);
-					const fixed_t spriteYScale = FixedMul(t->scaleY, 10 * scale_mtof);
+					const fixed_t spriteXScale = fixed_t(t->Scale.X * 10 * scale_mtof);
+					const fixed_t spriteYScale = fixed_t(t->Scale.Y * 10 * scale_mtof);
 
 					DrawMarker (texture, p.x, p.y, 0, !!(frame->Flip & (1 << rotation)),
 						spriteXScale, spriteYScale, t->Translation, FRACUNIT, 0, LegacyRenderStyles[STYLE_Normal]);
@@ -2853,12 +2853,12 @@ void AM_drawThings ()
 				else
 				{
 			drawTriangle:
-					angle = t->angle;
+					angle = t->_f_angle();
 
 					if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 					{
 						AM_rotatePoint (&p.x, &p.y);
-						angle += ANG90 - players[consoleplayer].camera->angle;
+						angle += ANG90 - players[consoleplayer].camera->_f_angle();
 					}
 
 					color = AMColors[AMColors.ThingColor];
@@ -2920,7 +2920,7 @@ void AM_drawThings ()
 							{ { -MAPUNIT,  MAPUNIT }, { -MAPUNIT, -MAPUNIT } },
 						};
 
-						AM_drawLineCharacter (box, 4, t->radius >> FRACTOMAPBITS, angle - t->angle, color, p.x, p.y);
+						AM_drawLineCharacter (box, 4, t->_f_radius() >> FRACTOMAPBITS, angle - t->_f_angle(), color, p.x, p.y);
 					}
 				}
 			}
@@ -3041,8 +3041,8 @@ void AM_drawAuthorMarkers ()
 				 marked->subsector->flags & SSECF_DRAWN :
 				 marked->Sector->MoreFlags & SECF_DRAWN)))
 			{
-				DrawMarker (tex, marked->X() >> FRACTOMAPBITS, marked->Y() >> FRACTOMAPBITS, 0,
-					flip, mark->scaleX, mark->scaleY, mark->Translation,
+				DrawMarker (tex, marked->_f_X() >> FRACTOMAPBITS, marked->_f_Y() >> FRACTOMAPBITS, 0,
+					flip, FLOAT2FIXED(mark->Scale.X), FLOAT2FIXED(mark->Scale.Y), mark->Translation,
 					mark->alpha, mark->fillcolor, mark->RenderStyle);
 			}
 			marked = mark->args[0] != 0 ? it.Next() : NULL;

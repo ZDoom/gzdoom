@@ -49,6 +49,20 @@ inline int P_PointOnLineSidePrecise (fixed_t x, fixed_t y, const line_t *line)
 	return DMulScale32 (y-line->v1->y, line->dx, line->v1->x-x, line->dy) > 0;
 }
 
+inline int P_PointOnLineSidePrecise(double x, double y, const line_t *line)
+{
+	return DMulScale32(FLOAT2FIXED(y) - line->v1->y, line->dx, line->v1->x - FLOAT2FIXED(x), line->dy) > 0;
+}
+
+inline int P_PointOnLineSidePrecise(const DVector2 &pt, const line_t *line)
+{
+	return DMulScale32(FLOAT2FIXED(pt.Y) - line->v1->y, line->dx, line->v1->x - FLOAT2FIXED(pt.X), line->dy) > 0;
+}
+
+inline int P_PointOnLineSidePrecise(const DVector3 &pt, const line_t *line)
+{
+	return DMulScale32(FLOAT2FIXED(pt.Y) - line->v1->y, line->dx, line->v1->x - FLOAT2FIXED(pt.X), line->dy) > 0;
+}
 
 //==========================================================================
 //

@@ -86,7 +86,8 @@ int LS_SetGlobalFogParameter(line_t *ln, AActor *it, bool backSide, int arg0, in
 #define SPEED(a)		((a)*(FRACUNIT/8))
 #define TICS(a)			(((a)*TICRATE)/35)
 #define OCTICS(a)		(((a)*TICRATE)/8)
-#define	BYTEANGLE(a)	((angle_t)((a)<<24))
+#define	_f_BYTEANGLE(a)	((angle_t)((a)<<24))
+#define BYTEANGLE(a)	((a) * (360./256.))
 #define CRUSH(a)		((a) > 0? (a) : -1)
 #define CRUSHTYPE(a)	((a)==1? false : (a)==2? true : gameinfo.gametype == GAME_Hexen)
 #define CHANGE(a)		(((a) >= 0 && (a)<=7)? ChangeMap[a]:0)
@@ -150,13 +151,13 @@ FUNC(LS_Polyobj_RotateRight)
 FUNC(LS_Polyobj_Move)
 // Polyobj_Move (po, speed, angle, distance)
 {
-	return EV_MovePoly (ln, arg0, SPEED(arg1), BYTEANGLE(arg2), arg3 * FRACUNIT, false);
+	return EV_MovePoly (ln, arg0, SPEED(arg1), _f_BYTEANGLE(arg2), arg3 * FRACUNIT, false);
 }
 
 FUNC(LS_Polyobj_MoveTimes8)
 // Polyobj_MoveTimes8 (po, speed, angle, distance)
 {
-	return EV_MovePoly (ln, arg0, SPEED(arg1), BYTEANGLE(arg2), arg3 * FRACUNIT * 8, false);
+	return EV_MovePoly (ln, arg0, SPEED(arg1), _f_BYTEANGLE(arg2), arg3 * FRACUNIT * 8, false);
 }
 
 FUNC(LS_Polyobj_MoveTo)
@@ -171,19 +172,19 @@ FUNC(LS_Polyobj_MoveToSpot)
 	FActorIterator iterator (arg2);
 	AActor *spot = iterator.Next();
 	if (spot == NULL) return false;
-	return EV_MovePolyTo (ln, arg0, SPEED(arg1), spot->X(), spot->Y(), false);
+	return EV_MovePolyTo (ln, arg0, SPEED(arg1), spot->_f_X(), spot->_f_Y(), false);
 }
 
 FUNC(LS_Polyobj_DoorSwing)
 // Polyobj_DoorSwing (po, speed, angle, delay)
 {
-	return EV_OpenPolyDoor (ln, arg0, arg1, BYTEANGLE(arg2), arg3, 0, PODOOR_SWING);
+	return EV_OpenPolyDoor (ln, arg0, arg1, _f_BYTEANGLE(arg2), arg3, 0, PODOOR_SWING);
 }
 
 FUNC(LS_Polyobj_DoorSlide)
 // Polyobj_DoorSlide (po, speed, angle, distance, delay)
 {
-	return EV_OpenPolyDoor (ln, arg0, SPEED(arg1), BYTEANGLE(arg2), arg4, arg3*FRACUNIT, PODOOR_SLIDE);
+	return EV_OpenPolyDoor (ln, arg0, SPEED(arg1), _f_BYTEANGLE(arg2), arg4, arg3*FRACUNIT, PODOOR_SLIDE);
 }
 
 FUNC(LS_Polyobj_OR_RotateLeft)
@@ -201,13 +202,13 @@ FUNC(LS_Polyobj_OR_RotateRight)
 FUNC(LS_Polyobj_OR_Move)
 // Polyobj_OR_Move (po, speed, angle, distance)
 {
-	return EV_MovePoly (ln, arg0, SPEED(arg1), BYTEANGLE(arg2), arg3 * FRACUNIT, true);
+	return EV_MovePoly (ln, arg0, SPEED(arg1), _f_BYTEANGLE(arg2), arg3 * FRACUNIT, true);
 }
 
 FUNC(LS_Polyobj_OR_MoveTimes8)
 // Polyobj_OR_MoveTimes8 (po, speed, angle, distance)
 {
-	return EV_MovePoly (ln, arg0, SPEED(arg1), BYTEANGLE(arg2), arg3 * FRACUNIT * 8, true);
+	return EV_MovePoly (ln, arg0, SPEED(arg1), _f_BYTEANGLE(arg2), arg3 * FRACUNIT * 8, true);
 }
 
 FUNC(LS_Polyobj_OR_MoveTo)
@@ -222,7 +223,7 @@ FUNC(LS_Polyobj_OR_MoveToSpot)
 	FActorIterator iterator (arg2);
 	AActor *spot = iterator.Next();
 	if (spot == NULL) return false;
-	return EV_MovePolyTo (ln, arg0, SPEED(arg1), spot->X(), spot->Y(), true);
+	return EV_MovePolyTo (ln, arg0, SPEED(arg1), spot->_f_X(), spot->_f_Y(), true);
 }
 
 FUNC(LS_Polyobj_Stop)
@@ -1104,7 +1105,16 @@ FUNC(LS_Teleport_Line)
 	return EV_SilentLineTeleport (ln, backSide, it, arg1, arg2);
 }
 
-static void ThrustThingHelper (AActor *it, angle_t angle, int force, INTBOOL nolimit);
+static void ThrustThingHelper(AActor *it, DAngle angle, double force, INTBOOL nolimit)
+{
+	it->VelFromAngle(angle, force);
+	if (!nolimit)
+	{
+		it->Vel.X = clamp(it->Vel.X, -MAXMOVE, MAXMOVE);
+		it->Vel.Y = clamp(it->Vel.Y, -MAXMOVE, MAXMOVE);
+	}
+}
+
 FUNC(LS_ThrustThing)
 // ThrustThing (angle, force, nolimit, tid)
 {
@@ -1129,23 +1139,11 @@ FUNC(LS_ThrustThing)
 	return false;
 }
 
-static void ThrustThingHelper (AActor *it, angle_t angle, int force, INTBOOL nolimit)
-{
-	angle >>= ANGLETOFINESHIFT;
-	it->vel.x += force * finecosine[angle];
-	it->vel.y += force * finesine[angle];
-	if (!nolimit)
-	{
-		it->vel.x = clamp<fixed_t> (it->vel.x, -MAXMOVE, MAXMOVE);
-		it->vel.y = clamp<fixed_t> (it->vel.y, -MAXMOVE, MAXMOVE);
-	}
-}
-
 FUNC(LS_ThrustThingZ)	// [BC]
 // ThrustThingZ (tid, zthrust, down/up, set)
 {
 	AActor *victim;
-	fixed_t thrust = arg1*FRACUNIT/4;
+	double thrust = arg1/4.;
 
 	// [BC] Up is default
 	if (arg2)
@@ -1158,18 +1156,18 @@ FUNC(LS_ThrustThingZ)	// [BC]
 		while ( (victim = iterator.Next ()) )
 		{
 			if (!arg3)
-				victim->vel.z = thrust;
+				victim->Vel.Z = thrust;
 			else
-				victim->vel.z += thrust;
+				victim->Vel.Z += thrust;
 		}
 		return true;
 	}
 	else if (it)
 	{
 		if (!arg3)
-			it->vel.z = thrust;
+			it->Vel.Z = thrust;
 		else
-			it->vel.z += thrust;
+			it->Vel.Z += thrust;
 		return true;
 	}
 	return false;
@@ -1640,13 +1638,13 @@ FUNC(LS_Thing_Hate)
 FUNC(LS_Thing_ProjectileAimed)
 // Thing_ProjectileAimed (tid, type, speed, target, newtid)
 {
-	return P_Thing_Projectile (arg0, it, arg1, NULL, 0, arg2<<(FRACBITS-3), 0, arg3, it, 0, arg4, false);
+	return P_Thing_Projectile (arg0, it, arg1, NULL, 0., arg2<<(FRACBITS-3), 0, arg3, it, 0, arg4, false);
 }
 
 FUNC(LS_Thing_ProjectileIntercept)
 // Thing_ProjectileIntercept (tid, type, speed, target, newtid)
 {
-	return P_Thing_Projectile (arg0, it, arg1, NULL, 0, arg2<<(FRACBITS-3), 0, arg3, it, 0, arg4, true);
+	return P_Thing_Projectile (arg0, it, arg1, NULL, 0., arg2<<(FRACBITS-3), 0, arg3, it, 0, arg4, true);
 }
 
 // [BC] added newtid for next two
@@ -1665,7 +1663,7 @@ FUNC(LS_Thing_SpawnNoFog)
 FUNC(LS_Thing_SpawnFacing)
 // Thing_SpawnFacing (tid, type, nofog, newtid)
 {
-	return P_Thing_Spawn (arg0, it, arg1, ANGLE_MAX, arg2 ? false : true, arg3);
+	return P_Thing_Spawn (arg0, it, arg1, 1000000., arg2 ? false : true, arg3);
 }
 
 FUNC(LS_Thing_Raise)
@@ -1700,8 +1698,8 @@ FUNC(LS_Thing_Stop)
 	{
 		if (it != NULL)
 		{
-			it->vel.x = it->vel.y = it->vel.z = 0;
-			if (it->player != NULL) it->player->vel.x = it->player->vel.y = 0;
+			it->Vel.Zero();
+			if (it->player != NULL) it->player->Vel.Zero();
 			ok = true;
 		}
 	}
@@ -1711,8 +1709,8 @@ FUNC(LS_Thing_Stop)
 
 		while ( (target = iterator.Next ()) )
 		{
-			target->vel.x = target->vel.y = target->vel.z = 0;
-			if (target->player != NULL) target->player->vel.x = target->player->vel.y = 0;
+			target->Vel.Zero();
+			if (target->player != NULL) target->player->Vel.Zero();
 			ok = true;
 		}
 	}
@@ -2470,11 +2468,11 @@ FUNC(LS_Sector_SetDamage)
 FUNC(LS_Sector_SetGravity)
 // Sector_SetGravity (tag, intpart, fracpart)
 {
-	float gravity;
+	double gravity;
 
 	if (arg2 > 99)
 		arg2 = 99;
-	gravity = (float)arg1 + (float)arg2 * 0.01f;
+	gravity = (double)arg1 + (double)arg2 * 0.01;
 
 	FSectorTagIterator itr(arg0);
 	int secnum;
@@ -3221,7 +3219,7 @@ FUNC(LS_ForceField)
 	if (it != NULL)
 	{
 		P_DamageMobj (it, NULL, NULL, 16, NAME_None);
-		P_ThrustMobj (it, it->angle + ANGLE_180, 0x7D000);
+		it->Thrust(it->Angles.Yaw + 180, 7.8125);
 	}
 	return true;
 }
@@ -3276,8 +3274,6 @@ FUNC(LS_GlassBreak)
 		{ // Break some glass
 			fixed_t x, y;
 			AActor *glass;
-			angle_t an;
-			int speed;
 
 			x = ln->v1->x + ln->dx/2;
 			y = ln->v1->y + ln->dy/2;
@@ -3288,15 +3284,12 @@ FUNC(LS_GlassBreak)
 			{
 				glass = Spawn("GlassJunk", x, y, ONFLOORZ, ALLOW_REPLACE);
 
-				glass->AddZ(24 * FRACUNIT);
+				glass->_f_AddZ(24 * FRACUNIT);
 				glass->SetState (glass->SpawnState + (pr_glass() % glass->health));
-				an = pr_glass() << (32-8);
-				glass->angle = an;
-				an >>= ANGLETOFINESHIFT;
-				speed = pr_glass() & 3;
-				glass->vel.x = finecosine[an] * speed;
-				glass->vel.y = finesine[an] * speed;
-				glass->vel.z = (pr_glass() & 7) << FRACBITS;
+
+				glass->Angles.Yaw = pr_glass() * (360 / 256.);
+				glass->VelFromAngle(pr_glass() & 3);
+				glass->Vel.Z = (pr_glass() & 7);
 				// [RH] Let the shards stick around longer than they did in Strife.
 				glass->tics += pr_glass();
 			}

@@ -53,6 +53,7 @@
 #include "p_maputl.h"
 #include "p_spec.h"
 #include "p_checkposition.h"
+#include "math/cmath.h"
 
 // simulation recurions maximum
 CVAR(Int, sv_portal_recursions, 4, CVAR_ARCHIVE|CVAR_SERVERINFO)
@@ -247,12 +248,12 @@ static void SetRotation(FLinePortal *port)
 {
 	if (port != NULL && port->mDestination != NULL)
 	{
-		line_t *dst = port->mDestination;
-		line_t *line = port->mOrigin;
-		double angle = atan2(dst->dy, dst->dx) - atan2(line->dy, line->dx) + M_PI;
-		port->mSinRot = FLOAT2FIXED(sin(angle));
-		port->mCosRot = FLOAT2FIXED(cos(angle));
-		port->mAngleDiff = RAD2ANGLE(angle);
+	line_t *dst = port->mDestination;
+	line_t *line = port->mOrigin;
+	double angle = g_atan2(dst->dy, dst->dx) - g_atan2(line->dy, line->dx) + M_PI;
+	port->mSinRot = FLOAT2FIXED(g_sin(angle));
+	port->mCosRot = FLOAT2FIXED(g_cos(angle));
+	port->mAngleDiff = ToDegrees(angle);
 	}
 }
 
@@ -605,12 +606,12 @@ void P_TranslatePortalVXVY(line_t* src, fixed_t& vx, fixed_t& vy)
 //
 //============================================================================
 
-void P_TranslatePortalAngle(line_t* src, angle_t& angle)
+void P_TranslatePortalAngle(line_t* src, DAngle& angle)
 {
 	if (!src) return;
 	FLinePortal *port = src->getPortal();
 	if (!port) return;
-	angle += port->mAngleDiff;
+	angle = (angle + port->mAngleDiff).Normalized360();
 }
 
 //============================================================================
@@ -668,7 +669,7 @@ void P_NormalizeVXVY(fixed_t& vx, fixed_t& vy)
 {
 	double _vx = FIXED2DBL(vx);
 	double _vy = FIXED2DBL(vy);
-	double len = sqrt(_vx*_vx+_vy*_vy);
+	double len = g_sqrt(_vx*_vx+_vy*_vy);
 	vx = FLOAT2FIXED(_vx/len);
 	vy = FLOAT2FIXED(_vy/len);
 }
@@ -812,13 +813,13 @@ static void AddDisplacementForPortal(AStackPoint *portal)
 	FDisplacement & disp = Displacements(thisgroup, othergroup);
 	if (!disp.isSet)
 	{
-		disp.pos.x = portal->scaleX;
-		disp.pos.y = portal->scaleY;
+		disp.pos.x = FLOAT2FIXED(portal->Scale.X);
+		disp.pos.y = FLOAT2FIXED(portal->Scale.Y);
 		disp.isSet = true;
 	}
 	else
 	{
-		if (disp.pos.x != portal->scaleX || disp.pos.y != portal->scaleY)
+		if (disp.pos.x != FLOAT2FIXED(portal->Scale.X) || disp.pos.y != FLOAT2FIXED(portal->Scale.Y))
 		{
 			Printf("Portal between sectors %d and %d has displacement mismatch and will be disabled\n", portal->Sector->sectornum, portal->Mate->Sector->sectornum);
 			portal->special1 = portal->Mate->special1 = SKYBOX_PORTAL;
@@ -958,30 +959,30 @@ void P_CreateLinkedPortals()
 	id = 1;
 	if (orgs.Size() != 0)
 	{
-		for (int i = 0; i < numsectors; i++)
+	for (int i = 0; i < numsectors; i++)
+	{
+		for (int j = 0; j < 2; j++)
 		{
-			for (int j = 0; j < 2; j++)
+			AActor *box = sectors[i].SkyBoxes[j];
+			if (box != NULL && box->special1 == SKYBOX_LINKEDPORTAL)
 			{
-				AActor *box = sectors[i].SkyBoxes[j];
-				if (box != NULL && box->special1 == SKYBOX_LINKEDPORTAL)
+				secplane_t &plane = j == 0 ? sectors[i].floorplane : sectors[i].ceilingplane;
+				if (plane.a || plane.b)
 				{
-					secplane_t &plane = j == 0 ? sectors[i].floorplane : sectors[i].ceilingplane;
-					if (plane.a || plane.b)
-					{
-						// The engine cannot deal with portals on a sloped plane.
-						sectors[i].SkyBoxes[j] = NULL;
+					// The engine cannot deal with portals on a sloped plane.
+					sectors[i].SkyBoxes[j] = NULL;
 						Printf("Portal on %s of sector %d is sloped and will be disabled\n", j == 0 ? "floor" : "ceiling", i);
-					}
 				}
 			}
 		}
+	}
 
-		// Group all sectors, starting at each portal origin.
-		for (unsigned i = 0; i < orgs.Size(); i++)
-		{
-			if (CollectSectors(id, orgs[i]->Sector)) id++;
-			if (CollectSectors(id, orgs[i]->Mate->Sector)) id++;
-		}
+	// Group all sectors, starting at each portal origin.
+	for (unsigned i = 0; i < orgs.Size(); i++)
+	{
+		if (CollectSectors(id, orgs[i]->Sector)) id++;
+		if (CollectSectors(id, orgs[i]->Mate->Sector)) id++;
+	}
 	}
 	for (unsigned i = 0; i < linePortals.Size(); i++)
 	{
@@ -1088,8 +1089,8 @@ void P_CreateLinkedPortals()
 		}
 		if (sectors[i].PortalIsLinked(sector_t::ceiling) && sectors[i].PortalIsLinked(sector_t::floor))
 		{
-			fixed_t cz = sectors[i].SkyBoxes[sector_t::ceiling]->threshold;
-			fixed_t fz = sectors[i].SkyBoxes[sector_t::floor]->threshold;
+			double cz = sectors[i].SkyBoxes[sector_t::ceiling]->specialf1;
+			double fz = sectors[i].SkyBoxes[sector_t::floor]->specialf1;
 			if (cz < fz)
 			{
 				// This is a fatal condition. We have to remove one of the two portals. Choose the one that doesn't match the current plane
@@ -1117,7 +1118,7 @@ void P_CreateLinkedPortals()
 			if (!(actor->flags & MF_NOBLOCKMAP))
 			{
 				FPortalGroupArray check(FPortalGroupArray::PGA_NoSectorPortals);
-				P_CollectConnectedGroups(actor->Sector->PortalGroup, actor->Pos(), actor->Top(), actor->radius, check);
+				P_CollectConnectedGroups(actor->Sector->PortalGroup, actor->_f_Pos(), actor->_f_Top(), actor->_f_radius(), check);
 				if (check.Size() > 0)
 				{
 					actor->UnlinkFromWorld();
@@ -1203,7 +1204,7 @@ bool P_CollectConnectedGroups(int startgroup, const fixedvec3 &position, fixed_t
 	{
 		sector_t *sec = P_PointInSector(position.x, position.y);
 		sector_t *wsec = sec;
-		while (!wsec->PortalBlocksMovement(sector_t::ceiling) && upperz > wsec->SkyBoxes[sector_t::ceiling]->threshold)
+		while (!wsec->PortalBlocksMovement(sector_t::ceiling) && upperz > FLOAT2FIXED(wsec->SkyBoxes[sector_t::ceiling]->specialf1))
 		{
 			sector_t *othersec = wsec->SkyBoxes[sector_t::ceiling]->Sector;
 			fixedvec2 pos = Displacements.getOffset(startgroup, othersec->PortalGroup);
@@ -1215,7 +1216,7 @@ bool P_CollectConnectedGroups(int startgroup, const fixedvec3 &position, fixed_t
 			retval = true;
 		}
 		wsec = sec;
-		while (!wsec->PortalBlocksMovement(sector_t::floor) && position.z < wsec->SkyBoxes[sector_t::floor]->threshold)
+		while (!wsec->PortalBlocksMovement(sector_t::floor) && position.z < FLOAT2FIXED(wsec->SkyBoxes[sector_t::floor]->specialf1))
 		{
 			sector_t *othersec = wsec->SkyBoxes[sector_t::floor]->Sector;
 			fixedvec2 pos = Displacements.getOffset(startgroup, othersec->PortalGroup);
@@ -1255,7 +1256,7 @@ bool P_CollectConnectedGroups(int startgroup, const fixedvec3 &position, fixed_t
 							sector_t *sec = s ? ld->backsector : ld->frontsector;
 							if (sec && !(sec->PortalBlocksMovement(sector_t::ceiling)))
 							{
-								if (sec->SkyBoxes[sector_t::ceiling]->threshold < upperz)
+								if (FLOAT2FIXED(sec->SkyBoxes[sector_t::ceiling]->specialf1) < upperz)
 								{
 									int grp = sec->SkyBoxes[sector_t::ceiling]->Sector->PortalGroup;
 									if (!(processMask.getBit(grp)))
@@ -1274,7 +1275,7 @@ bool P_CollectConnectedGroups(int startgroup, const fixedvec3 &position, fixed_t
 							sector_t *sec = s ? ld->backsector : ld->frontsector;
 							if (sec && !(sec->PortalBlocksMovement(sector_t::floor)))
 							{
-								if (sec->SkyBoxes[sector_t::floor]->threshold > position.z)
+								if (FLOAT2FIXED(sec->SkyBoxes[sector_t::floor]->specialf1) > position.z)
 								{
 									int grp = sec->SkyBoxes[sector_t::floor]->Sector->PortalGroup;
 									if (!(processMask.getBit(grp)))

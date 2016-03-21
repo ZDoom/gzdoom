@@ -24,15 +24,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_ShootGun)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	int pitch;
+	DAngle pitch;
 
 	if (self->target == NULL)
 		return 0;
 
 	S_Sound (self, CHAN_WEAPON, "monsters/rifle", 1, ATTN_NORM);
 	A_FaceTarget (self);
-	pitch = P_AimLineAttack (self, self->angle, MISSILERANGE);
-	P_LineAttack (self, self->angle + (pr_shootgun.Random2() << 19),
+	pitch = P_AimLineAttack (self, self->Angles.Yaw, MISSILERANGE);
+	P_LineAttack (self, self->Angles.Yaw + pr_shootgun.Random2() * (11.25 / 256),
 		MISSILERANGE, pitch,
 		3*(pr_shootgun() % 5 + 1), NAME_Hitscan, NAME_StrifePuff);
 	return 0;
@@ -80,7 +80,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Beacon)
 	AActor *rebel;
 	angle_t an;
 
-	rebel = Spawn("Rebel1", self->X(), self->Y(), self->floorz, ALLOW_REPLACE);
+	rebel = Spawn("Rebel1", self->PosAtZ(self->floorz), ALLOW_REPLACE);
 	if (!P_TryMove (rebel, rebel->X(), rebel->Y(), true))
 	{
 		rebel->Destroy ();
@@ -115,8 +115,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_Beacon)
 	}
 
 	rebel->SetState (rebel->SeeState);
-	rebel->angle = self->angle;
-	an = self->angle >> ANGLETOFINESHIFT;
+	rebel->Angles.Yaw = self->Angles.Yaw;
+	an = self->_f_angle() >> ANGLETOFINESHIFT;
 	Spawn<ATeleportFog> (rebel->Vec3Offset(20*finecosine[an], 20*finesine[an], TELEFOGHEIGHT), ALLOW_REPLACE);
 	if (--self->health < 0)
 	{

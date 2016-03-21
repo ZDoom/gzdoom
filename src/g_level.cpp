@@ -1228,7 +1228,7 @@ void G_FinishTravel ()
 			{
 				Printf(TEXTCOLOR_RED "No player %d start to travel to!\n", pnum + 1);
 				// Move to the coordinates this player had when they left the level.
-				pawn->SetXYZ(pawndup->X(), pawndup->Y(), pawndup->Z());
+				pawn->SetXYZ(pawndup->_f_X(), pawndup->_f_Y(), pawndup->_f_Z());
 			}
 		}
 		oldpawn = pawndup;
@@ -1240,13 +1240,10 @@ void G_FinishTravel ()
 		{
 			if (!(changeflags & CHANGELEVEL_KEEPFACING))
 			{
-				pawn->angle = pawndup->angle;
-				pawn->pitch = pawndup->pitch;
+				pawn->Angles = pawndup->Angles;
 			}
-			pawn->SetXYZ(pawndup->X(), pawndup->Y(), pawndup->Z());
-			pawn->vel.x = pawndup->vel.x;
-			pawn->vel.y = pawndup->vel.y;
-			pawn->vel.z = pawndup->vel.z;
+			pawn->SetXYZ(pawndup->Pos());
+			pawn->Vel = pawndup->Vel;
 			pawn->Sector = pawndup->Sector;
 			pawn->floorz = pawndup->floorz;
 			pawn->ceilingz = pawndup->ceilingz;
@@ -1256,7 +1253,7 @@ void G_FinishTravel ()
 			pawn->floorterrain = pawndup->floorterrain;
 			pawn->ceilingsector = pawndup->ceilingsector;
 			pawn->ceilingpic = pawndup->ceilingpic;
-			pawn->floorclip = pawndup->floorclip;
+			pawn->Floorclip = pawndup->Floorclip;
 			pawn->waterlevel = pawndup->waterlevel;
 		}
 		else
@@ -1316,7 +1313,7 @@ void G_InitLevelLocals ()
 	NormalLight.ChangeColor (PalEntry (255, 255, 255), 0);
 
 	level.gravity = sv_gravity * 35/TICRATE;
-	level.aircontrol = (fixed_t)(sv_aircontrol * 65536.f);
+	level.aircontrol = sv_aircontrol;
 	level.teamdamage = teamdamage;
 	level.flags = 0;
 	level.flags2 = 0;
@@ -1357,7 +1354,7 @@ void G_InitLevelLocals ()
 	}
 	if (info->aircontrol != 0.f)
 	{
-		level.aircontrol = (fixed_t)(info->aircontrol * 65536.f);
+		level.aircontrol = info->aircontrol;
 	}
 	if (info->teamdamage != 0.f)
 	{
@@ -1462,15 +1459,14 @@ FString CalcMapName (int episode, int level)
 
 void G_AirControlChanged ()
 {
-	if (level.aircontrol <= 256)
+	if (level.aircontrol <= 1/256.)
 	{
-		level.airfriction = FRACUNIT;
+		level.airfriction = 1.;
 	}
 	else
 	{
 		// Friction is inversely proportional to the amount of control
-		float fric = ((float)level.aircontrol/65536.f) * -0.0941f + 1.0004f;
-		level.airfriction = (fixed_t)(fric * 65536.f);
+		level.airfriction = level.aircontrol * -0.0941 + 1.0004;
 	}
 }
 

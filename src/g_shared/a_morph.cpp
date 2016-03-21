@@ -88,7 +88,7 @@ bool P_MorphPlayer (player_t *activator, player_t *p, PClassPlayerPawn *spawntyp
 		actor->RemoveFromHash ();
 		actor->tid = 0;
 	}
-	morphed->angle = actor->angle;
+	morphed->Angles.Yaw = actor->Angles.Yaw;
 	morphed->target = actor->target;
 	morphed->tracer = actor;
 	morphed->Score = actor->Score;
@@ -120,7 +120,7 @@ bool P_MorphPlayer (player_t *activator, player_t *p, PClassPlayerPawn *spawntyp
 	p->MorphExitFlash = (exit_flash) ? exit_flash : RUNTIME_CLASS(ATeleportFog);
 	p->health = morphed->health;
 	p->mo = morphed;
-	p->vel.x = p->vel.y = 0;
+	p->Vel.X = p->Vel.Y = 0;
 	morphed->ObtainInventory (actor);
 	// Remove all armor
 	for (item = morphed->Inventory; item != NULL; )
@@ -223,15 +223,13 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 		mo->tid = pmo->tid;
 		mo->AddToHash ();
 	}
-	mo->angle = pmo->angle;
+	mo->Angles.Yaw = pmo->Angles.Yaw;
 	mo->player = player;
 	mo->reactiontime = 18;
 	mo->flags = ActorFlags::FromInt (pmo->special2) & ~MF_JUSTHIT;
-	mo->vel.x = 0;
-	mo->vel.y = 0;
-	player->vel.x = 0;
-	player->vel.y = 0;
-	mo->vel.z = pmo->vel.z;
+	mo->Vel.X = mo->Vel.Y = 0;
+	player->Vel.Zero();
+	mo->Vel.Z = pmo->Vel.Z;
 	if (!(pmo->special2 & MF_JUSTHIT))
 	{
 		mo->renderflags &= ~RF_INVISIBLE;
@@ -307,7 +305,7 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 		}
 	}
 
-	angle = mo->angle >> ANGLETOFINESHIFT;
+	angle = mo->_f_angle() >> ANGLETOFINESHIFT;
 	AActor *eflash = NULL;
 	if (exit_flash != NULL)
 	{
@@ -385,7 +383,7 @@ bool P_MorphMonster (AActor *actor, PClassActor *spawntype, int duration, int st
 	morphed = static_cast<AMorphedMonster *>(Spawn (spawntype, actor->Pos(), NO_REPLACE));
 	DObject::StaticPointerSubstitution (actor, morphed);
 	morphed->tid = actor->tid;
-	morphed->angle = actor->angle;
+	morphed->Angles.Yaw = actor->Angles.Yaw;
 	morphed->UnmorphedMe = actor;
 	morphed->alpha = actor->alpha;
 	morphed->RenderStyle = actor->RenderStyle;
@@ -450,7 +448,7 @@ bool P_UndoMonsterMorph (AMorphedMonster *beast, bool force)
 		beast->UnmorphTime = level.time + 5*TICRATE; // Next try in 5 seconds
 		return false;
 	}
-	actor->angle = beast->angle;
+	actor->Angles.Yaw = beast->Angles.Yaw;
 	actor->target = beast->target;
 	actor->FriendPlayer = beast->FriendPlayer;
 	actor->flags = beast->FlagsSave & ~MF_JUSTHIT;
@@ -461,9 +459,7 @@ bool P_UndoMonsterMorph (AMorphedMonster *beast, bool force)
 	if (!(beast->FlagsSave & MF_JUSTHIT))
 		actor->renderflags &= ~RF_INVISIBLE;
 	actor->health = actor->SpawnHealth();
-	actor->vel.x = beast->vel.x;
-	actor->vel.y = beast->vel.y;
-	actor->vel.z = beast->vel.z;
+	actor->Vel = beast->Vel;
 	actor->tid = beast->tid;
 	actor->special = beast->special;
 	actor->Score = beast->Score;

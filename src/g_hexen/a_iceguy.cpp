@@ -34,8 +34,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_IceGuyLook)
 	CALL_ACTION(A_Look, self);
 	if (pr_iceguylook() < 64)
 	{
-		dist = ((pr_iceguylook()-128)*self->radius)>>7;
-		an = (self->angle+ANG90)>>ANGLETOFINESHIFT;
+		dist = ((pr_iceguylook()-128)*self->_f_radius())>>7;
+		an = (self->_f_angle()+ANG90)>>ANGLETOFINESHIFT;
 
 		Spawn(WispTypes[pr_iceguylook() & 1], self->Vec3Offset(
 			FixedMul(dist, finecosine[an]),
@@ -62,8 +62,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_IceGuyChase)
 	A_Chase (stack, self);
 	if (pr_iceguychase() < 128)
 	{
-		dist = ((pr_iceguychase()-128)*self->radius)>>7;
-		an = (self->angle+ANG90)>>ANGLETOFINESHIFT;
+		dist = ((pr_iceguychase()-128)*self->_f_radius())>>7;
+		an = (self->_f_angle()+ANG90)>>ANGLETOFINESHIFT;
 
 		mo = Spawn(WispTypes[pr_iceguychase() & 1], self->Vec3Offset(
 			FixedMul(dist, finecosine[an]),
@@ -71,9 +71,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_IceGuyChase)
 			60 * FRACUNIT), ALLOW_REPLACE);
 		if (mo)
 		{
-			mo->vel.x = self->vel.x;
-			mo->vel.y = self->vel.y;
-			mo->vel.z = self->vel.z;
+			mo->Vel = self->Vel;
 			mo->target = self;
 		}
 	}
@@ -94,8 +92,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_IceGuyAttack)
 	{
 		return 0;
 	}
-	P_SpawnMissileXYZ(self->Vec3Angle(self->radius>>1, self->angle+ANG90, 40*FRACUNIT), self, self->target, PClass::FindActor ("IceGuyFX"));
-	P_SpawnMissileXYZ(self->Vec3Angle(self->radius>>1, self->angle-ANG90, 40*FRACUNIT), self, self->target, PClass::FindActor ("IceGuyFX"));
+	P_SpawnMissileXYZ(self->_f_Vec3Angle(self->_f_radius()>>1, self->_f_angle()+ANG90, 40*FRACUNIT), self, self->target, PClass::FindActor ("IceGuyFX"));
+	P_SpawnMissileXYZ(self->_f_Vec3Angle(self->_f_radius()>>1, self->_f_angle()-ANG90, 40*FRACUNIT), self, self->target, PClass::FindActor ("IceGuyFX"));
 	S_Sound (self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NORM);
 	return 0;
 }
@@ -110,10 +108,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_IceGuyDie)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	self->vel.x = 0;
-	self->vel.y = 0;
-	self->vel.z = 0;
-	self->height = self->GetDefault()->height;
+	self->Vel.Zero();
+	self->Height = self->GetDefault()->Height;
 	CALL_ACTION(A_FreezeDeathChunks, self);
 	return 0;
 }
@@ -133,7 +129,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_IceGuyMissileExplode)
 
 	for (i = 0; i < 8; i++)
 	{
-		mo = P_SpawnMissileAngleZ (self, self->Z()+3*FRACUNIT, 
+		mo = P_SpawnMissileAngleZ (self, self->_f_Z()+3*FRACUNIT, 
 			PClass::FindActor("IceGuyFX2"), i*ANG45, (fixed_t)(-0.3*FRACUNIT));
 		if (mo)
 		{

@@ -114,7 +114,7 @@ public:
 	{
 		sightstart = t1->PosRelative(task->portalgroup);
 		sightend = t2->PosRelative(task->portalgroup);
-		sightstart.z += t1->height - (t1->height >> 2);
+		sightstart.z += t1->_f_height() - (t1->_f_height() >> 2);
 
 		startfrac = task->frac;
 		trace = { sightstart.x, sightstart.y, sightend.x - sightstart.x, sightend.y - sightstart.y };
@@ -863,16 +863,16 @@ sightcounts[0]++;
 	if (!(flags & SF_IGNOREWATERBOUNDARY))
 	{
 		if ((s1->GetHeightSec() &&
-			((t1->Z() + t1->height <= s1->heightsec->floorplane.ZatPoint(t1) &&
-			  t2->Z() >= s1->heightsec->floorplane.ZatPoint(t2)) ||
-			 (t1->Z() >= s1->heightsec->ceilingplane.ZatPoint(t1) &&
-			  t2->Z() + t1->height <= s1->heightsec->ceilingplane.ZatPoint(t2))))
+			((t1->_f_Z() + t1->_f_height() <= s1->heightsec->floorplane.ZatPoint(t1) &&
+			  t2->_f_Z() >= s1->heightsec->floorplane.ZatPoint(t2)) ||
+			 (t1->_f_Z() >= s1->heightsec->ceilingplane.ZatPoint(t1) &&
+			  t2->_f_Z() + t1->_f_height() <= s1->heightsec->ceilingplane.ZatPoint(t2))))
 			||
 			(s2->GetHeightSec() &&
-			 ((t2->Z() + t2->height <= s2->heightsec->floorplane.ZatPoint(t2) &&
-			   t1->Z() >= s2->heightsec->floorplane.ZatPoint(t1)) ||
-			  (t2->Z() >= s2->heightsec->ceilingplane.ZatPoint(t2) &&
-			   t1->Z() + t2->height <= s2->heightsec->ceilingplane.ZatPoint(t1)))))
+			 ((t2->_f_Z() + t2->_f_height() <= s2->heightsec->floorplane.ZatPoint(t2) &&
+			   t1->_f_Z() >= s2->heightsec->floorplane.ZatPoint(t1)) ||
+			  (t2->_f_Z() >= s2->heightsec->ceilingplane.ZatPoint(t2) &&
+			   t1->_f_Z() + t2->_f_height() <= s2->heightsec->ceilingplane.ZatPoint(t1)))))
 		{
 			res = false;
 			goto done;
@@ -886,11 +886,11 @@ sightcounts[0]++;
 	portals.Clear();
 	{
 		sector_t *sec;
-		fixed_t lookheight = t1->height - (t1->height >> 2);
+		fixed_t lookheight = t1->_f_height() - (t1->_f_height() >> 2);
 		t1->GetPortalTransition(lookheight, &sec);
 
-		fixed_t bottomslope = t2->Z() - (t1->Z() + lookheight);
-		fixed_t topslope = bottomslope + t2->height;
+		fixed_t bottomslope = t2->_f_Z() - (t1->_f_Z() + lookheight);
+		fixed_t topslope = bottomslope + t2->_f_height();
 		SightTask task = { 0, topslope, bottomslope, -1, sec->PortalGroup };
 
 

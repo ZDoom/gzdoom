@@ -35,6 +35,7 @@
 #define __V_VIDEO_H__
 
 #include "doomtype.h"
+#include "vectors.h"
 
 #include "doomdef.h"
 #include "dobject.h"

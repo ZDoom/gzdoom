@@ -989,14 +989,14 @@ DEFINE_MAP_OPTION(gravity, true)
 {
 	parse.ParseAssign();
 	parse.sc.MustGetFloat();
-	info->gravity = float(parse.sc.Float);
+	info->gravity = parse.sc.Float;
 }
 
 DEFINE_MAP_OPTION(aircontrol, true)
 {
 	parse.ParseAssign();
 	parse.sc.MustGetFloat();
-	info->aircontrol = float(parse.sc.Float);
+	info->aircontrol = parse.sc.Float;
 }
 
 DEFINE_MAP_OPTION(airsupply, true)

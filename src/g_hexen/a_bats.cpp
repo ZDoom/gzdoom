@@ -47,7 +47,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BatSpawn)
 
 	delta = self->args[1];
 	if (delta==0) delta=1;
-	angle = self->angle + (((pr_batspawn()%delta)-(delta>>1))<<24);
+	angle = self->_f_angle() + (((pr_batspawn()%delta)-(delta>>1))<<24);
 	mo = P_SpawnMissileAngle (self, PClass::FindActor("Bat"), angle, 0);
 	if (mo)
 	{
@@ -64,7 +64,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BatMove)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	angle_t newangle;
+	DAngle newangle;
 
 	if (self->special2 < 0)
 	{
@@ -74,17 +74,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_BatMove)
 
 	if (pr_batmove()<128)
 	{
-		newangle = self->angle + ANGLE_1*self->args[4];
+		newangle = self->Angles.Yaw + self->args[4];
 	}
 	else
 	{
-		newangle = self->angle - ANGLE_1*self->args[4];
+		newangle = self->Angles.Yaw - self->args[4];
 	}
 
 	// Adjust velocity vector to new direction
-	newangle >>= ANGLETOFINESHIFT;
-	self->vel.x = FixedMul (self->Speed, finecosine[newangle]);
-	self->vel.y = FixedMul (self->Speed, finesine[newangle]);
+	self->VelFromAngle(newangle, self->Speed);
 
 	if (pr_batmove()<15)
 	{
@@ -92,7 +90,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BatMove)
 	}
 
 	// Handle Z movement
-	self->SetZ(self->target->Z() + 16*finesine[self->args[0] << BOBTOFINESHIFT]);
+	self->SetZ(self->target->Z() + 16 * g_sin(BOBTORAD(self->args[0])));
 	self->args[0] = (self->args[0]+3)&63;	
 	return 0;
 }

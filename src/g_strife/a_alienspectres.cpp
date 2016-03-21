@@ -29,12 +29,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpectreChunkSmall)
 		int t;
 
 		t = pr_spectrechunk() & 15;
-		foo->vel.x = (t - (pr_spectrechunk() & 7)) << FRACBITS;
+		foo->Vel.X = (t - (pr_spectrechunk() & 7));
 		
 		t = pr_spectrechunk() & 15;
-		foo->vel.y = (t - (pr_spectrechunk() & 7)) << FRACBITS;
+		foo->Vel.Y = (t - (pr_spectrechunk() & 7));
 
-		foo->vel.z = (pr_spectrechunk() & 15) << FRACBITS;
+		foo->Vel.Z = (pr_spectrechunk() & 15);
 	}
 	return 0;
 }
@@ -50,12 +50,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpectreChunkLarge)
 		int t;
 
 		t = pr_spectrechunk() & 7;
-		foo->vel.x = (t - (pr_spectrechunk() & 15)) << FRACBITS;
+		foo->Vel.X = (t - (pr_spectrechunk() & 15));
 		
 		t = pr_spectrechunk() & 7;
-		foo->vel.y = (t - (pr_spectrechunk() & 15)) << FRACBITS;
+		foo->Vel.Y = (t - (pr_spectrechunk() & 15));
 
-		foo->vel.z = (pr_spectrechunk() & 7) << FRACBITS;
+		foo->Vel.Z = (pr_spectrechunk() & 7);
 	}
 	return 0;
 }
@@ -69,18 +69,18 @@ DEFINE_ACTION_FUNCTION(AActor, A_Spectre3Attack)
 
 	AActor *foo = Spawn("SpectralLightningV2", self->PosPlusZ(32*FRACUNIT), ALLOW_REPLACE);
 
-	foo->vel.z = -12*FRACUNIT;
+	foo->Vel.Z = -12;
 	foo->target = self;
 	foo->FriendPlayer = 0;
 	foo->tracer = self->target;
 
-	self->angle -= ANGLE_180 / 20 * 10;
+	self->Angles.Yaw -= 90.;
 	for (int i = 0; i < 20; ++i)
 	{
-		self->angle += ANGLE_180 / 20;
+		self->Angles.Yaw += 9.;
 		P_SpawnSubMissile (self, PClass::FindActor("SpectralLightningBall2"), self);
 	}
-	self->angle -= ANGLE_180 / 20 * 10;
+	self->Angles.Yaw -= 90.;
 	return 0;
 }
 

@@ -60,14 +60,14 @@ angle_t R_PointToAngle2 (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2);
 inline angle_t R_PointToAngle (fixed_t x, fixed_t y) { return R_PointToAngle2 (viewx, viewy, x, y); }
 inline angle_t R_PointToAnglePrecise (fixed_t viewx, fixed_t viewy, fixed_t x, fixed_t y)
 {
-	return xs_RoundToUInt(atan2(double(y-viewy), double(x-viewx)) * (ANGLE_180/M_PI));
+	return xs_RoundToUInt(g_atan2(double(y-viewy), double(x-viewx)) * (ANGLE_180/M_PI));
 }
 
 // Used for interpolation waypoints.
 struct fixedvec3a
 {
 	fixed_t x, y, z;
-	angle_t angle;
+	DAngle angle;
 };
 
 

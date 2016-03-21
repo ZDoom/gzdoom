@@ -132,7 +132,7 @@ void DEarthquake::Tick ()
 				fixed_t dist;
 
 				dist = m_Spot->AproxDistance (victim, true);
-				// Check if in damage radius
+				// Check if in damage _f_radius()
 				if (dist < m_DamageRadius && victim->Z() <= victim->floorz)
 				{
 					if (pr_quake() < 50)
@@ -140,19 +140,9 @@ void DEarthquake::Tick ()
 						P_DamageMobj (victim, NULL, NULL, pr_quake.HitDice (1), NAME_None);
 					}
 					// Thrust player around
-					angle_t an = victim->angle + ANGLE_1*pr_quake();
-					if (m_IntensityX == m_IntensityY)
-					{ // Thrust in a circle
-						P_ThrustMobj (victim, an, m_IntensityX/2);
-					}
-					else
-					{ // Thrust in an ellipse
-						an >>= ANGLETOFINESHIFT;
-						// So this is actually completely wrong, but it ought to be good
-						// enough. Otherwise, I'd have to use tangents and square roots.
-						victim->vel.x += FixedMul(m_IntensityX/2, finecosine[an]);
-						victim->vel.y += FixedMul(m_IntensityY/2, finesine[an]);
-					}
+					DAngle an = victim->Angles.Yaw + pr_quake();
+					victim->Vel.X += FIXED2DBL(m_IntensityX) * an.Cos() * 0.5;
+					victim->Vel.Y += FIXED2DBL(m_IntensityY) * an.Sin() * 0.5;
 				}
 			}
 		}
@@ -175,7 +165,7 @@ fixed_t DEarthquake::GetModWave(double waveMultiplier) const
 	//Named waveMultiplier because that's as the name implies: adds more waves per second.
 
 	double time = m_Countdown - FIXED2DBL(r_TicFrac);
-	return FLOAT2FIXED(sin(waveMultiplier * time * (M_PI * 2 / TICRATE)));
+	return FLOAT2FIXED(g_sin(waveMultiplier * time * (M_PI * 2 / TICRATE)));
 }
 
 //==========================================================================

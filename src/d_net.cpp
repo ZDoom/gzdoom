@@ -2321,7 +2321,7 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 					else
 					{
 						const AActor *def = GetDefaultByType (typeinfo);
-						fixedvec3 spawnpos = source->Vec3Angle(def->radius * 2 + source->radius, source->angle, 8 * FRACUNIT);
+						fixedvec3 spawnpos = source->_f_Vec3Angle(def->_f_radius() * 2 + source->_f_radius(), source->_f_angle(), 8 * FRACUNIT);
 
 						AActor *spawned = Spawn (typeinfo, spawnpos, ALLOW_REPLACE);
 						if (spawned != NULL)
@@ -2348,7 +2348,7 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 						}
 						if (type >= DEM_SUMMON2 && type <= DEM_SUMMONFOE2)
 						{
-							spawned->angle = source->angle - (ANGLE_1 * angle);
+							spawned->Angles.Yaw = source->Angles.Yaw - angle;
 							spawned->tid = tid;
 							spawned->special = special;
 							for(i = 0; i < 5; i++) {
@@ -2366,16 +2366,16 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 		{
 			FTraceResults trace;
 
-			angle_t ang = players[player].mo->angle  >> ANGLETOFINESHIFT;
-			angle_t pitch = (angle_t)(players[player].mo->pitch) >> ANGLETOFINESHIFT;
+			angle_t ang = players[player].mo->_f_angle()  >> ANGLETOFINESHIFT;
+			angle_t pitch = (angle_t)(players[player].mo->_f_pitch()) >> ANGLETOFINESHIFT;
 			fixed_t vx = FixedMul (finecosine[pitch], finecosine[ang]);
 			fixed_t vy = FixedMul (finecosine[pitch], finesine[ang]);
 			fixed_t vz = -finesine[pitch];
 
 			s = ReadString (stream);
 
-			if (Trace (players[player].mo->X(), players[player].mo->Y(),
-				players[player].mo->Top() - (players[player].mo->height>>2),
+			if (Trace (players[player].mo->_f_X(), players[player].mo->_f_Y(),
+				players[player].mo->_f_Top() - (players[player].mo->_f_height()>>2),
 				players[player].mo->Sector,
 				vx, vy, vz, 172*FRACUNIT, 0, ML_BLOCKEVERYTHING, players[player].mo,
 				trace, TRACE_NoSky))
@@ -2656,8 +2656,8 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 		break;
 
 	case DEM_SETPITCHLIMIT:
-		players[player].MinPitch = ReadByte(stream) * -ANGLE_1;		// up
-		players[player].MaxPitch = ReadByte(stream) *  ANGLE_1;		// down
+		players[player].MinPitch = -(double)ReadByte(stream);		// up
+		players[player].MaxPitch = (double)ReadByte(stream);		// down
 		break;
 
 	case DEM_ADVANCEINTER:

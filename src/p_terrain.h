@@ -95,9 +95,9 @@ struct FSplashDef
 	BYTE ChunkXVelShift;
 	BYTE ChunkYVelShift;
 	BYTE ChunkZVelShift;
-	fixed_t ChunkBaseZVel;
-	fixed_t SmallSplashClip;
 	bool NoAlert;
+	double ChunkBaseZVel;
+	fixed_t SmallSplashClip;
 };
 
 struct FTerrainDef
@@ -107,7 +107,7 @@ struct FTerrainDef
 	int DamageAmount;
 	FName DamageMOD;
 	int DamageTimeMask;
-	fixed_t FootClip;
+	double FootClip;
 	float StepVolume;
 	int WalkStepTics;
 	int RunStepTics;

@@ -25,6 +25,7 @@
 
 // Basics.
 #include "tables.h"
+#include "templates.h"
 
 // We need the thinker_t stuff.
 #include "dthinker.h"
@@ -533,6 +534,10 @@ enum EThingSpecialActivationType
 	THINGSPEC_Switch			= 1<<10,	// The thing is alternatively activated and deactivated when triggered
 };
 
+#define ONFLOORZ		FIXED_MIN
+#define ONCEILINGZ		FIXED_MAX
+#define FLOATRANDZ		(FIXED_MAX-1)
+
 
 class FDecalBase;
 class AInventory;
@@ -571,6 +576,7 @@ public:
 fixed_t P_AproxDistance (fixed_t dx, fixed_t dy);	// since we cannot include p_local here...
 angle_t R_PointToAngle2 (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2); // same reason here with r_defs.h
 
+const double MinVel = 1. / 65536;
 
 // Map Object definition.
 class AActor : public DThinker
@@ -600,7 +606,7 @@ public:
 
 	// Adjusts the angle for deflection/reflection of incoming missiles
 	// Returns true if the missile should be allowed to explode anyway
-	bool AdjustReflectionAngle (AActor *thing, angle_t &angle);
+	bool AdjustReflectionAngle (AActor *thing, DAngle &angle);
 
 	// Returns true if this actor is within melee range of its target
 	bool CheckMeleeRange();
@@ -763,7 +769,7 @@ public:
 	// Return starting health adjusted by skill level
 	int SpawnHealth() const;
 	int GetGibHealth() const;
-	fixed_t GetCameraHeight() const;
+	double GetCameraHeight() const;
 
 	inline bool isMissile(bool precise=true)
 	{
@@ -782,9 +788,9 @@ public:
 	}
 
 	// These also set CF_INTERPVIEW for players.
-	void SetPitch(int p, bool interpolate, bool forceclamp = false);
-	void SetAngle(angle_t ang, bool interpolate);
-	void SetRoll(angle_t roll, bool interpolate);
+	void SetPitch(DAngle p, bool interpolate, bool forceclamp = false);
+	void SetAngle(DAngle ang, bool interpolate);
+	void SetRoll(DAngle roll, bool interpolate);
 
 	PClassActor *GetBloodType(int type = 0) const
 	{
@@ -815,140 +821,235 @@ public:
 
 	fixed_t AproxDistance(fixed_t otherx, fixed_t othery)
 	{
-		return P_AproxDistance(X() - otherx, Y() - othery);
+		return P_AproxDistance(_f_X() - otherx, _f_Y() - othery);
 	}
 
-	fixed_t AngleTo(fixed_t otherx, fixed_t othery)
+	fixed_t __f_AngleTo(fixed_t otherx, fixed_t othery)
 	{
-		return R_PointToAngle2(X(), Y(), otherx, othery);
+		return R_PointToAngle2(_f_X(), _f_Y(), otherx, othery);
 	}
 
-	fixed_t AngleTo(fixedvec2 other)
+	fixed_t __f_AngleTo(fixedvec2 other)
 	{
-		return R_PointToAngle2(X(), Y(), other.x, other.y);
+		return R_PointToAngle2(_f_X(), _f_Y(), other.x, other.y);
 	}
 
 	// 'absolute' is reserved for a linked portal implementation which needs
 	// to distinguish between portal-aware and portal-unaware distance calculation.
 	fixed_t AproxDistance(AActor *other, bool absolute = false)
 	{
-		fixedvec3 otherpos = absolute ? other->Pos() : other->PosRelative(this);
-		return P_AproxDistance(X() - otherpos.x, Y() - otherpos.y);
+		fixedvec3 otherpos = absolute ? other->_f_Pos() : other->PosRelative(this);
+		return P_AproxDistance(_f_X() - otherpos.x, _f_Y() - otherpos.y);
 	}
 
 	fixed_t AproxDistance(AActor *other, fixed_t xadd, fixed_t yadd, bool absolute = false)
 	{
-		fixedvec3 otherpos = absolute ? other->Pos() : other->PosRelative(this);
-		return P_AproxDistance(X() - otherpos.x + xadd, Y() - otherpos.y + yadd);
+		fixedvec3 otherpos = absolute ? other->_f_Pos() : other->PosRelative(this);
+		return P_AproxDistance(_f_X() - otherpos.x + xadd, _f_Y() - otherpos.y + yadd);
 	}
 
 	fixed_t AproxDistance3D(AActor *other, bool absolute = false)
 	{
-		return P_AproxDistance(AproxDistance(other), Z() - other->Z());
+		return P_AproxDistance(AproxDistance(other), _f_Z() - other->_f_Z());
 	}
 
 	// more precise, but slower version, being used in a few places
-	fixed_t Distance2D(AActor *other, bool absolute = false)
+	double Distance2D(AActor *other, bool absolute = false)
 	{
-		fixedvec3 otherpos = absolute ? other->Pos() : other->PosRelative(this);
-		return xs_RoundToInt(DVector2(X() - otherpos.x, Y() - otherpos.y).Length());
+		fixedvec3 otherpos = absolute ? other->_f_Pos() : other->PosRelative(this);
+		return (DVector2(_f_X() - otherpos.x, _f_Y() - otherpos.y).Length())/FRACUNIT;
+	}
+
+	double Distance2D(double x, double y) const
+	{
+		return DVector2(X() - x, Y() - y).Length();
 	}
 
 	// a full 3D version of the above
 	fixed_t Distance3D(AActor *other, bool absolute = false)
 	{
-		fixedvec3 otherpos = absolute ? other->Pos() : other->PosRelative(this);
-		return xs_RoundToInt(DVector3(X() - otherpos.x, Y() - otherpos.y, Z() - otherpos.z).Length());
+		fixedvec3 otherpos = absolute ? other->_f_Pos() : other->PosRelative(this);
+		return xs_RoundToInt(DVector3(_f_X() - otherpos.x, _f_Y() - otherpos.y, _f_Z() - otherpos.z).Length());
 	}
 
-	angle_t AngleTo(AActor *other, bool absolute = false)
+	angle_t __f_AngleTo(AActor *other, bool absolute = false)
 	{
-		fixedvec3 otherpos = absolute ? other->Pos() : other->PosRelative(this);
-		return R_PointToAngle2(X(), Y(), otherpos.x, otherpos.y);
+		fixedvec3 otherpos = absolute ? other->_f_Pos() : other->PosRelative(this);
+		return R_PointToAngle2(_f_X(), _f_Y(), otherpos.x, otherpos.y);
 	}
 
-	angle_t AngleTo(AActor *other, fixed_t oxofs, fixed_t oyofs, bool absolute = false) const
+	angle_t __f_AngleTo(AActor *other, fixed_t oxofs, fixed_t oyofs, bool absolute = false) const
 	{
-		return R_PointToAngle2(X(), Y(), other->X() + oxofs, other->Y() + oyofs);
+		return R_PointToAngle2(_f_X(), _f_Y(), other->_f_X() + oxofs, other->_f_Y() + oyofs);
 	}
 
-	fixedvec2 Vec2To(AActor *other) const
+	DAngle AngleTo(AActor *other, bool absolute = false)
+	{
+		fixedvec3 otherpos = absolute ? other->_f_Pos() : other->PosRelative(this);
+		return VecToAngle(otherpos.x - _f_X(), otherpos.y - _f_Y());
+	}
+
+	DAngle AngleTo(AActor *other, fixed_t oxofs, fixed_t oyofs, bool absolute = false) const
+	{
+		fixedvec3 otherpos = absolute ? other->_f_Pos() : other->PosRelative(this);
+		return VecToAngle(otherpos.y + oxofs - _f_Y(), otherpos.x + oyofs - _f_X());
+	}
+
+	DAngle AngleTo(AActor *other, double oxofs, double oyofs, bool absolute = false) const
+	{
+		return FIXED2DBL(AngleTo(other, FLOAT2FIXED(oxofs), FLOAT2FIXED(oyofs), absolute));
+	}
+
+	fixedvec2 _f_Vec2To(AActor *other) const
 	{
 		fixedvec3 otherpos = other->PosRelative(this);
-		fixedvec2 ret = { otherpos.x - X(), otherpos.y - Y() };
+		fixedvec2 ret = { otherpos.x - _f_X(), otherpos.y - _f_Y() };
 		return ret;
 	}
 
-	fixedvec3 Vec3To(AActor *other) const
+	fixedvec3 _f_Vec3To(AActor *other) const
 	{
 		fixedvec3 otherpos = other->PosRelative(this);
-		fixedvec3 ret = { otherpos.x - X(), otherpos.y - Y(), otherpos.z - Z() };
+		fixedvec3 ret = { otherpos.x - _f_X(), otherpos.y - _f_Y(), otherpos.z - _f_Z() };
 		return ret;
+	}
+
+	DVector2 Vec2To(AActor *other) const
+	{
+		fixedvec3 otherpos = other->PosRelative(this);
+		return{ FIXED2DBL(otherpos.x - _f_X()), FIXED2DBL(otherpos.y - _f_Y()) };
+	}
+
+	DVector3 Vec3To(AActor *other) const
+	{
+		fixedvec3 otherpos = other->PosRelative(this);
+		return { FIXED2DBL(otherpos.x - _f_X()), FIXED2DBL(otherpos.y - _f_Y()), FIXED2DBL(otherpos.z - _f_Z()) };
 	}
 
 	fixedvec2 Vec2Offset(fixed_t dx, fixed_t dy, bool absolute = false)
 	{
 		if (absolute)
 		{
-			fixedvec2 ret = { X() + dx, Y() + dy };
+			fixedvec2 ret = { _f_X() + dx, _f_Y() + dy };
 			return ret;
 		}
-		else return P_GetOffsetPosition(X(), Y(), dx, dy);
+		else return P_GetOffsetPosition(_f_X(), _f_Y(), dx, dy);
 	}
 
+	DVector2 Vec2Offset(double dx, double dy, bool absolute = false)
+	{
+		if (absolute)
+		{
+			return { X() + dx, Y() + dy };
+		}
+		else
+		{
+			fixedvec2 v = P_GetOffsetPosition(_f_X(), _f_Y(), FLOAT2FIXED(dx), FLOAT2FIXED(dy));
+			return{ FIXED2DBL(v.x), FIXED2DBL(v.y) };
+		}
+	}
+
+	DVector3 Vec2OffsetZ(double dx, double dy, double atz, bool absolute = false)
+	{
+		if (absolute)
+		{
+			return{ X() + dx, Y() + dy, atz };
+		}
+		else
+		{
+			fixedvec2 v = P_GetOffsetPosition(_f_X(), _f_Y(), FLOAT2FIXED(dx), FLOAT2FIXED(dy));
+			return{ FIXED2DBL(v.x), FIXED2DBL(v.y), atz };
+		}
+	}
 
 	fixedvec2 Vec2Angle(fixed_t length, angle_t angle, bool absolute = false)
 	{
 		if (absolute)
 		{
-			fixedvec2 ret = { X() + FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]),
-							  Y() + FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]) };
+			fixedvec2 ret = { _f_X() + FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]),
+							  _f_Y() + FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]) };
 			return ret;
 		}
-		else return P_GetOffsetPosition(X(), Y(), FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]), FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]));
+		else return P_GetOffsetPosition(_f_X(), _f_Y(), FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]), FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]));
 	}
 
 	fixedvec3 Vec3Offset(fixed_t dx, fixed_t dy, fixed_t dz, bool absolute = false)
 	{
 		if (absolute)
 		{
-			fixedvec3 ret = { X() + dx, Y() + dy, Z() + dz };
+			fixedvec3 ret = { _f_X() + dx, _f_Y() + dy, _f_Z() + dz };
 			return ret;
 		}
 		else
 		{
-			fixedvec2 op = P_GetOffsetPosition(X(), Y(), dx, dy);
-			fixedvec3 pos = { op.x, op.y, Z() + dz };
+			fixedvec2 op = P_GetOffsetPosition(_f_X(), _f_Y(), dx, dy);
+			fixedvec3 pos = { op.x, op.y, _f_Z() + dz };
 			return pos;
 		}
 	}
 
-	fixedvec3 Vec3Angle(fixed_t length, angle_t angle, fixed_t dz, bool absolute = false)
+	DVector3 Vec3Offset(double dx, double dy, double dz, bool absolute = false)
 	{
 		if (absolute)
 		{
-			fixedvec3 ret = { X() + FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]),
-						  Y() + FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]), Z() + dz };
+			return { X() + dx, Y() + dy, Z() + dz };
+		}
+		else
+		{
+			fixedvec2 v = P_GetOffsetPosition(_f_X(), _f_Y(), FLOAT2FIXED(dx), FLOAT2FIXED(dy));
+			return{ FIXED2DBL(v.x), FIXED2DBL(v.y), Z() + dz };
+		}
+	}
+
+	fixedvec3 _f_Vec3Angle(fixed_t length, angle_t angle, fixed_t dz, bool absolute = false)
+	{
+		if (absolute)
+		{
+			fixedvec3 ret = { _f_X() + FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]),
+						  _f_Y() + FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]), _f_Z() + dz };
 			return ret;
 		}
 		else
 		{
-			fixedvec2 op = P_GetOffsetPosition(X(), Y(), FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]), FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]));
-			fixedvec3 pos = { op.x, op.y, Z() + dz };
+			fixedvec2 op = P_GetOffsetPosition(_f_X(), _f_Y(), FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]), FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]));
+			fixedvec3 pos = { op.x, op.y, _f_Z() + dz };
 			return pos;
 		}
+	}
+
+	DVector3 Vec3Angle(double length, DAngle angle, double dz, bool absolute = false)
+	{
+		if (absolute)
+		{
+			return{ X() + length * angle.Cos(), Y() + length * angle.Sin(), Z() + dz };
+		}
+		else
+		{
+			fixedvec2 op = P_GetOffsetPosition(_f_X(), _f_Y(), FLOAT2FIXED(length*angle.Cos()), FLOAT2FIXED(length*angle.Sin()));
+			return{ FIXED2DBL(op.x), FIXED2DBL(op.y), Z() + dz };
+		}
+	}
+
+	double AccuracyFactor()
+	{
+		return 1. / (1 << (accuracy * 5 / 100));
 	}
 
 	void ClearInterpolation();
 
 	void Move(fixed_t dx, fixed_t dy, fixed_t dz)
 	{
-		SetOrigin(X() + dx, Y() + dy, Z() + dz, true);
+		SetOrigin(_f_X() + dx, _f_Y() + dy, _f_Z() + dz, true);
 	}
 
 	void SetOrigin(const fixedvec3 & npos, bool moving)
 	{
 		SetOrigin(npos.x, npos.y, npos.z, moving);
+	}
+
+	void SetOrigin(const DVector3 & npos, bool moving)
+	{
+		SetOrigin(FLOAT2FIXED(npos.X), FLOAT2FIXED(npos.Y), FLOAT2FIXED(npos.Z), moving);
 	}
 
 	inline void SetFriendPlayer(player_t *player);
@@ -960,7 +1061,7 @@ public:
 
 	bool CanSeek(AActor *target) const;
 
-	fixed_t GetGravity() const;
+	double GetGravity() const;
 	bool IsSentient() const;
 	const char *GetTag(const char *def = NULL) const;
 	void SetTag(const char *def);
@@ -973,10 +1074,32 @@ public:
 	AActor			*snext, **sprev;	// links in sector (if needed)
 	fixedvec3		__pos;				// double underscores so that it won't get used by accident. Access to this should be exclusively through the designated access functions.
 
+	/*
 	angle_t			angle;
+	fixed_t			pitch;
+	angle_t			roll;	// This was fixed_t before, which is probably wrong
+	fixedvec3		vel;
+	*/
+
+	DRotator		Angles;
+	DVector3		Vel;
+	double			Speed;
+	double			FloatSpeed;
+
+	// intentionally stange names so that searching for them is easier.
+	angle_t			_f_angle() { return FLOAT2ANGLE(Angles.Yaw.Degrees); }
+	int				_f_pitch() { return FLOAT2ANGLE(Angles.Pitch.Degrees); }
+	angle_t			_f_roll() { return FLOAT2ANGLE(Angles.Roll.Degrees); }
+	fixed_t			_f_velx() {	return FLOAT2FIXED(Vel.X); }
+	fixed_t			_f_vely() { return FLOAT2FIXED(Vel.Y); }
+	fixed_t			_f_velz() { return FLOAT2FIXED(Vel.Z); }
+	fixed_t			_f_speed() { return FLOAT2FIXED(Speed); }
+	fixed_t			_f_floatspeed() { return FLOAT2FIXED(FloatSpeed); }
+
+
 	WORD			sprite;				// used to find patch_t and flip value
 	BYTE			frame;				// sprite frame to draw
-	fixed_t			scaleX, scaleY;		// Scaling values; FRACUNIT is normal size
+	DVector2		Scale;				// Scaling values; 1 is normal size
 	FRenderStyle	RenderStyle;		// Style to draw this actor with
 	ActorRenderFlags	renderflags;		// Different rendering flags
 	FTextureID		picnum;				// Draw this instead of sprite if valid
@@ -985,12 +1108,20 @@ public:
 	DWORD			fillcolor;			// Color to draw when STYLE_Shaded
 
 // interaction info
-	fixed_t			pitch;
-	angle_t			roll;	// This was fixed_t before, which is probably wrong
 	FBlockNode		*BlockNode;			// links in blocks (if needed)
 	struct sector_t	*Sector;
 	subsector_t *		subsector;
-	fixed_t			floorz, ceilingz;	// closest together of contacted secs
+	double			floorz, ceilingz;	// closest together of contacted secs
+
+	inline fixed_t _f_ceilingz()
+	{
+		return FLOAT2FIXED(ceilingz);
+	}
+	inline fixed_t _f_floorz()
+	{
+		return FLOAT2FIXED(floorz);
+	}
+
 	fixed_t			dropoffz;		// killough 11/98: the lowest floor over all contacted Sectors.
 
 	struct sector_t	*floorsector;
@@ -998,9 +1129,19 @@ public:
 	int				floorterrain;
 	struct sector_t	*ceilingsector;
 	FTextureID		ceilingpic;			// contacted sec ceilingpic
-	fixed_t			radius, height;		// for movement checking
-	fixed_t			projectilepassheight;	// height for clipping projectile movement against this actor
-	fixedvec3		vel;
+	double			radius, Height;		// for movement checking
+
+	inline fixed_t _f_radius() const
+	{
+		return FLOAT2FIXED(radius);
+	}
+	inline fixed_t _f_height() const
+	{
+		return FLOAT2FIXED(Height);
+	}
+
+	double			projectilepassheight;	// height for clipping projectile movement against this actor
+	
 	SDWORD			tics;				// state tic counter
 	FState			*state;
 	VMFunction		*Damage;			// For missiles and monster railgun
@@ -1018,6 +1159,9 @@ public:
 
 	int				special1;		// Special info
 	int				special2;		// Special info
+	double			specialf1;		// With floats we cannot use the int versions for storing position or angle data without reverting to fixed point (which we do not want.)
+	double			specialf2;
+
 	int				weaponspecial;	// Special info for weapons.
 	int 			health;
 	BYTE			movedir;		// 0-7
@@ -1045,7 +1189,12 @@ public:
 	FNameNoInit		Species;		// For monster families
 	TObjPtr<AActor>	tracer;			// Thing being chased/attacked for tracers
 	TObjPtr<AActor>	master;			// Thing which spawned this one (prevents mutual attacks)
-	fixed_t			floorclip;		// value to use for floor clipping
+	double			Floorclip;		// value to use for floor clipping
+	fixed_t			_f_floorclip()
+	{
+		return FLOAT2FIXED(Floorclip);
+	}
+
 	int				tid;			// thing identifier
 	int				special;		// special
 	int				args[5];		// special arguments
@@ -1068,7 +1217,7 @@ public:
 	fixed_t			bouncefactor;	// Strife's grenades use 50%, Hexen's Flechettes 70.
 	fixed_t			wallbouncefactor;	// The bounce factor for walls can be different.
 	int				bouncecount;	// Strife's grenades only bounce twice before exploding
-	fixed_t			gravity;		// [GRB] Gravity factor
+	double			Gravity;		// [GRB] Gravity factor
 	fixed_t			Friction;
 	int 			FastChaseStrafeCount;
 	fixed_t			pushfactor;
@@ -1115,8 +1264,6 @@ public:
 	FSoundIDNoInit WallBounceSound;
 	FSoundIDNoInit CrushPainSound;
 
-	fixed_t Speed;
-	fixed_t FloatSpeed;
 	fixed_t MaxDropOffHeight, MaxStepHeight;
 	SDWORD Mass;
 	SWORD PainChance;
@@ -1148,13 +1295,15 @@ public:
 
 	// [RH] Used to interpolate the view to get >35 FPS
 	fixed_t PrevX, PrevY, PrevZ;
-	angle_t PrevAngle;
+	//angle_t PrevAngle;
+	DRotator PrevAngles;
 	int PrevPortalGroup;
 
 	// ThingIDs
 	static void ClearTIDHashes ();
 	void AddToHash ();
 	void RemoveFromHash ();
+
 
 private:
 	static AActor *TIDHash[128];
@@ -1200,21 +1349,38 @@ public:
 
 	bool HasSpecialDeathStates () const;
 
-	fixed_t X() const
+	fixed_t _f_X() const
 	{
 		return __pos.x;
 	}
-	fixed_t Y() const
+	fixed_t _f_Y() const
 	{
 		return __pos.y;
 	}
-	fixed_t Z() const
+	fixed_t _f_Z() const
 	{
 		return __pos.z;
 	}
-	fixedvec3 Pos() const
+	fixedvec3 _f_Pos() const
 	{
 		return __pos;
+	}
+
+	double X() const
+	{
+		return FIXED2DBL(__pos.x);
+	}
+	double Y() const
+	{
+		return FIXED2DBL(__pos.y);
+	}
+	double Z() const
+	{
+		return FIXED2DBL(__pos.z);
+	}
+	DVector3 Pos() const
+	{
+		return DVector3(X(), Y(), Z());
 	}
 
 	fixedvec3 PosRelative(int grp) const;
@@ -1224,41 +1390,74 @@ public:
 
 	fixed_t SoundX() const
 	{
-		return X();
+		return _f_X();
 	}
 	fixed_t SoundY() const
 	{
-		return Y();
+		return _f_Y();
 	}
 	fixed_t SoundZ() const
 	{
-		return Z();
+		return _f_Z();
 	}
 	fixedvec3 InterpolatedPosition(fixed_t ticFrac) const
 	{
 		fixedvec3 ret;
 
-		ret.x = PrevX + FixedMul (ticFrac, X() - PrevX);
-		ret.y = PrevY + FixedMul (ticFrac, Y() - PrevY);
-		ret.z = PrevZ + FixedMul (ticFrac, Z() - PrevZ);
+		ret.x = PrevX + FixedMul (ticFrac, _f_X() - PrevX);
+		ret.y = PrevY + FixedMul (ticFrac, _f_Y() - PrevY);
+		ret.z = PrevZ + FixedMul (ticFrac, _f_Z() - PrevZ);
 		return ret;
 	}
 	fixedvec3 PosPlusZ(fixed_t zadd) const
 	{
-		fixedvec3 ret = { X(), Y(), Z() + zadd };
+		fixedvec3 ret = { _f_X(), _f_Y(), _f_Z() + zadd };
 		return ret;
 	}
-	fixed_t Top() const
+	DVector3 PosPlusZ(double zadd) const
 	{
-		return Z() + height;
+		return { X(), Y(), Z() + zadd };
 	}
-	void SetZ(fixed_t newz, bool moving = true)
+	DVector3 PosAtZ(double zadd) const
+	{
+		return{ X(), Y(), zadd };
+	}
+	fixed_t _f_Top() const
+	{
+		return _f_Z() + FLOAT2FIXED(Height);
+	}
+	void _f_SetZ(fixed_t newz, bool moving = true)
 	{
 		__pos.z = newz;
 	}
-	void AddZ(fixed_t newz, bool moving = true)
+	void _f_AddZ(fixed_t newz, bool moving = true)
 	{
 		__pos.z += newz;
+	}
+	double Top() const
+	{
+		return Z() + Height;
+	}
+	double Center() const
+	{
+		return Z() + Height/2;
+	}
+	double _pushfactor() const
+	{
+		return FIXED2DBL(pushfactor);
+	}
+	double _bouncefactor() const
+	{
+		return FIXED2DBL(bouncefactor);
+	}
+	void SetZ(double newz, bool moving = true)
+	{
+		__pos.z = FLOAT2FIXED(newz);
+	}
+	void AddZ(double newz, bool moving = true)
+	{
+		__pos.z += FLOAT2FIXED(newz);
+		if (!moving) PrevZ = __pos.z;
 	}
 
 	// These are not for general use as they do not link the actor into the world!
@@ -1273,6 +1472,12 @@ public:
 		__pos.y = yy;
 		__pos.z = zz;
 	}
+	void SetXYZ(double xx, double yy, double zz)
+	{
+		__pos.x = FLOAT2FIXED(xx);
+		__pos.y = FLOAT2FIXED(yy);
+		__pos.z = FLOAT2FIXED(zz);
+	}
 	void SetXY(const fixedvec2 &npos)
 	{
 		__pos.x = npos.x;
@@ -1284,6 +1489,87 @@ public:
 		__pos.y = npos.y;
 		__pos.z = npos.z;
 	}
+	void SetXYZ(const DVector3 &npos)
+	{
+		__pos.x = FLOAT2FIXED(npos.X);
+		__pos.y = FLOAT2FIXED(npos.Y);
+		__pos.z = FLOAT2FIXED(npos.Z);
+	}
+
+	double VelXYToSpeed() const
+	{
+		return DVector2(Vel.X, Vel.Y).Length();
+	}
+
+	double VelToSpeed() const
+	{
+		return Vel.Length();
+	}
+
+	void AngleFromVel()
+	{
+		Angles.Yaw = VecToAngle(Vel.X, Vel.Y);
+	}
+
+	void VelFromAngle()
+	{
+		Vel.X = Speed * Angles.Yaw.Cos();
+		Vel.Y = Speed * Angles.Yaw.Sin();
+	}
+
+	void VelFromAngle(double speed)
+	{
+		Vel.X = speed * Angles.Yaw.Cos();
+		Vel.Y = speed * Angles.Yaw.Sin();
+	}
+
+	void VelFromAngle(DAngle angle, double speed)
+	{
+		Vel.X = speed * angle.Cos();
+		Vel.Y = speed * angle.Sin();
+	}
+
+	void Thrust()
+	{
+		Vel.X += Speed * Angles.Yaw.Cos();
+		Vel.Y += Speed * Angles.Yaw.Sin();
+	}
+
+	void Thrust(double speed)
+	{
+		Vel.X += speed * Angles.Yaw.Cos();
+		Vel.Y += speed * Angles.Yaw.Sin();
+	}
+
+	void Thrust(DAngle angle, double speed)
+	{
+		Vel.X += speed * angle.Cos();
+		Vel.Y += speed * angle.Sin();
+	}
+
+	void Vel3DFromAngle(DAngle angle, DAngle pitch, double speed)
+	{
+		double cospitch = pitch.Cos();
+		Vel.X = speed * cospitch * angle.Cos();
+		Vel.Y = speed * cospitch * angle.Sin();
+		Vel.Z = speed * -pitch.Sin();
+	}
+
+	void Vel3DFromAngle(DAngle pitch, double speed)
+	{
+		double cospitch = pitch.Cos();
+		Vel.X = speed * cospitch * Angles.Yaw.Cos();
+		Vel.Y = speed * cospitch * Angles.Yaw.Sin();
+		Vel.Z = speed * -pitch.Sin();
+	}
+
+	// This is used by many vertical velocity calculations.
+	// Better have it in one place, if something needs to be changed about the formula.
+	double DistanceBySpeed(AActor *dest, double speed)
+	{
+		return MAX(1., Distance2D(dest) / speed);
+	}
+
 
 	// begin of GZDoom specific additions
 	TArray<TObjPtr<AActor> >		dynamiclights;
@@ -1369,6 +1655,14 @@ inline AActor *Spawn (PClassActor *type, const fixedvec3 &pos, replace_t allowre
 	return AActor::StaticSpawn (type, pos.x, pos.y, pos.z, allowreplacement);
 }
 
+inline AActor *Spawn(PClassActor *type, const DVector3 &pos, replace_t allowreplacement)
+{
+	fixed_t zz;
+	if (pos.Z != ONFLOORZ && pos.Z != ONCEILINGZ && pos.Z != FLOATRANDZ) zz = FLOAT2FIXED(pos.Z);
+	else zz = (int)pos.Z;
+	return Spawn(type, FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), zz, allowreplacement);
+}
+
 AActor *Spawn (const char *type, fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement);
 AActor *Spawn (FName classname, fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement);
 
@@ -1377,9 +1671,25 @@ inline AActor *Spawn (const char *type, const fixedvec3 &pos, replace_t allowrep
 	return Spawn (type, pos.x, pos.y, pos.z, allowreplacement);
 }
 
+inline AActor *Spawn(const char *type, const DVector3 &pos, replace_t allowreplacement)
+{
+	fixed_t zz;
+	if (pos.Z != ONFLOORZ && pos.Z != ONCEILINGZ && pos.Z != FLOATRANDZ) zz = FLOAT2FIXED(pos.Z);
+	else zz = (int)pos.Z;
+	return Spawn(type, FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), zz, allowreplacement);
+}
+
 inline AActor *Spawn (FName classname, const fixedvec3 &pos, replace_t allowreplacement)
 {
 	return Spawn (classname, pos.x, pos.y, pos.z, allowreplacement);
+}
+
+inline AActor *Spawn(FName type, const DVector3 &pos, replace_t allowreplacement)
+{
+	fixed_t zz;
+	if (pos.Z != ONFLOORZ && pos.Z != ONCEILINGZ && pos.Z != FLOATRANDZ) zz = FLOAT2FIXED(pos.Z);
+	else zz = (int)pos.Z;
+	return Spawn(type, FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), zz, allowreplacement);
 }
 
 
@@ -1395,11 +1705,25 @@ inline T *Spawn (const fixedvec3 &pos, replace_t allowreplacement)
 	return static_cast<T *>(AActor::StaticSpawn (RUNTIME_TEMPLATE_CLASS(T), pos.x, pos.y, pos.z, allowreplacement));
 }
 
-inline fixedvec2 Vec2Angle(fixed_t length, angle_t angle) 
+template<class T>
+inline T *Spawn(const DVector3 &pos, replace_t allowreplacement)
+{
+	fixed_t zz;
+	if (pos.Z != ONFLOORZ && pos.Z != ONCEILINGZ && pos.Z != FLOATRANDZ) zz = FLOAT2FIXED(pos.Z);
+	else zz = (int)pos.Z;
+	return static_cast<T *>(AActor::StaticSpawn(RUNTIME_TEMPLATE_CLASS(T), FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), zz, allowreplacement));
+}
+
+inline fixedvec2 Vec2Angle(fixed_t length, angle_t angle)
 {
 	fixedvec2 ret = { FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]),
 						FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]) };
 	return ret;
+}
+
+inline fixedvec2 Vec2Angle(fixed_t length, DAngle angle)
+{
+	return { xs_CRoundToInt(length * angle.Cos()), xs_CRoundToInt(length * angle.Sin()) };
 }
 
 void PrintMiscActorInfo(AActor * query);
@@ -1409,7 +1733,7 @@ AActor *P_LinePickActor(AActor *t1, angle_t angle, fixed_t distance, int pitch, 
 struct FTranslatedLineTarget
 {
 	AActor *linetarget;
-	angle_t angleFromSource;
+	DAngle angleFromSource;
 	bool unlinked;	// found by a trace that went through an unlinked portal.
 };
 

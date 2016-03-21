@@ -95,6 +95,7 @@ enum EGenericType
 	GEN_Class,
 	GEN_Splash,
 	GEN_Float,
+	GEN_Double,
 	GEN_Time,
 	GEN_Bool,
 	GEN_Int,
@@ -201,7 +202,7 @@ static FGenericParse SplashParser[] =
 	{ GEN_Byte,   {myoffsetof(FSplashDef, ChunkXVelShift)} },
 	{ GEN_Byte,   {myoffsetof(FSplashDef, ChunkYVelShift)} },
 	{ GEN_Byte,   {myoffsetof(FSplashDef, ChunkZVelShift)} },
-	{ GEN_Fixed,  {myoffsetof(FSplashDef, ChunkBaseZVel)} },
+	{ GEN_Double,  {myoffsetof(FSplashDef, ChunkBaseZVel)} },
 	{ GEN_Bool,	  {myoffsetof(FSplashDef, NoAlert)} }
 };
 
@@ -212,7 +213,7 @@ static FGenericParse TerrainParser[] =
 	{ GEN_Int,    {myoffsetof(FTerrainDef, DamageAmount)} },
 	{ GEN_Custom, {(size_t)ParseDamage} },
 	{ GEN_Int,    {myoffsetof(FTerrainDef, DamageTimeMask)} },
-	{ GEN_Fixed,  {myoffsetof(FTerrainDef, FootClip)} },
+	{ GEN_Double, {myoffsetof(FTerrainDef, FootClip)} },
 	{ GEN_Float,  {myoffsetof(FTerrainDef, StepVolume)} },
 	{ GEN_Time,   {myoffsetof(FTerrainDef, WalkStepTics)} },
 	{ GEN_Time,   {myoffsetof(FTerrainDef, RunStepTics)} },
@@ -360,7 +361,7 @@ static void SetSplashDefaults (FSplashDef *splashdef)
 	splashdef->ChunkXVelShift =
 		splashdef->ChunkYVelShift =
 		splashdef->ChunkZVelShift = 8;
-	splashdef->ChunkBaseZVel = FRACUNIT;
+	splashdef->ChunkBaseZVel = 1;
 	splashdef->SmallSplashClip = 12*FRACUNIT;
 	splashdef->NoAlert = false;
 }
@@ -593,6 +594,11 @@ static void GenericParse (FScanner &sc, FGenericParse *parser, const char **keyw
 		case GEN_Float:
 			sc.MustGetFloat ();
 			SET_FIELD (float, float(sc.Float));
+			break;
+
+		case GEN_Double:
+			sc.MustGetFloat();
+			SET_FIELD(double, sc.Float);
 			break;
 
 		case GEN_Time:

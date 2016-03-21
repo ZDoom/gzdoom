@@ -13,7 +13,7 @@
 // PIT_VileCheck
 // Detect a corpse that could be raised.
 //
-void A_Fire(AActor *self, int height);
+void A_Fire(AActor *self, double height);
 
 
 //
@@ -50,13 +50,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireCrackle)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Fire)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_FIXED_OPT(height)		{ height = 0; }
+	PARAM_FLOAT_OPT(height)		{ height = 0; }
 	
 	A_Fire(self, height);
 	return 0;
 }
 
-void A_Fire(AActor *self, int height)
+void A_Fire(AActor *self, double height)
 {
 	AActor *dest;
 				
@@ -68,7 +68,7 @@ void A_Fire(AActor *self, int height)
 	if (!P_CheckSight (self->target, dest, 0) )
 		return;
 
-	fixedvec3 newpos = dest->Vec3Angle(24 * FRACUNIT, dest->angle, height);
+	DVector3 newpos = dest->Vec3Angle(24., dest->Angles.Yaw, height);
 	self->SetOrigin(newpos, true);
 }
 
@@ -116,7 +116,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_VileAttack)
 	PARAM_INT_OPT	(dmg)		{ dmg = 20; }
 	PARAM_INT_OPT	(blastdmg)	{ blastdmg = 70; }
 	PARAM_INT_OPT	(blastrad)	{ blastrad = 70; }
-	PARAM_FIXED_OPT	(thrust)	{ thrust = FRACUNIT; }
+	PARAM_FLOAT_OPT	(thrust)	{ thrust = 1; }
 	PARAM_NAME_OPT	(dmgtype)	{ dmgtype = NAME_Fire; }
 	PARAM_INT_OPT	(flags)		{ flags = 0; }
 
@@ -147,14 +147,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_VileAttack)
 	if (fire != NULL)
 	{
 		// move the fire between the vile and the player
-		fixedvec3 pos = target->Vec3Angle(-24 * FRACUNIT, self->angle, 0);
+		DVector3 pos = target->Vec3Angle(-24., self->Angles.Yaw, 0);
 		fire->SetOrigin (pos, true);
 		
 		P_RadiusAttack (fire, self, blastdmg, blastrad, dmgtype, 0);
 	}
 	if (!(target->flags7 & MF7_DONTTHRUST))
 	{
-		target->vel.z = Scale(thrust, 1000, target->Mass);
+		target->Vel.Z = thrust * 1000 / MAX(1, target->Mass);
 	}
 	return 0;
 }

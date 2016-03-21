@@ -26,6 +26,7 @@
 
 // The most basic types we use, portability.
 #include "doomtype.h"
+#include "vectors.h"
 
 // Some global defines, that configure the game.
 #include "doomdef.h"
@@ -357,11 +358,10 @@ struct FMapThing
 	int			special;
 	int			args[5];
 	int			Conversation;
-	fixed_t		gravity;
+	double		Gravity;
 	fixed_t		alpha;
 	DWORD		fillcolor;
-	fixed_t		scaleX;
-	fixed_t		scaleY;
+	DVector2	Scale;
 	int			health;
 	int			score;
 	short		pitch;

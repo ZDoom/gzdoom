@@ -875,7 +875,7 @@ CCMD(linetarget)
 	FTranslatedLineTarget t;
 
 	if (CheckCheatmode () || players[consoleplayer].mo == NULL) return;
-	P_AimLineAttack(players[consoleplayer].mo,players[consoleplayer].mo->angle,MISSILERANGE, &t, 0);
+	P_AimLineAttack(players[consoleplayer].mo,players[consoleplayer].mo->Angles.Yaw, MISSILERANGE, &t, 0.);
 	if (t.linetarget)
 	{
 		Printf("Target=%s, Health=%d, Spawnhealth=%d\n",
@@ -892,8 +892,8 @@ CCMD(info)
 	FTranslatedLineTarget t;
 
 	if (CheckCheatmode () || players[consoleplayer].mo == NULL) return;
-	P_AimLineAttack(players[consoleplayer].mo,players[consoleplayer].mo->angle,MISSILERANGE, 
-		&t, 0,	ALF_CHECKNONSHOOTABLE|ALF_FORCENOSMART);
+	P_AimLineAttack(players[consoleplayer].mo,players[consoleplayer].mo->Angles.Yaw, MISSILERANGE,
+		&t, 0.,	ALF_CHECKNONSHOOTABLE|ALF_FORCENOSMART);
 	if (t.linetarget)
 	{
 		Printf("Target=%s, Health=%d, Spawnhealth=%d\n",
@@ -903,7 +903,7 @@ CCMD(info)
 		PrintMiscActorInfo(t.linetarget);
 	}
 	else Printf("No target found. Info cannot find actors that have "
-				"the NOBLOCKMAP flag or have height/radius of 0.\n");
+				"the NOBLOCKMAP flag or have height/_f_radius() of 0.\n");
 }
 
 typedef bool (*ActorTypeChecker) (AActor *);
@@ -943,9 +943,8 @@ static void PrintFilteredActorList(const ActorTypeChecker IsActorType, const cha
 	{
 		if ((FilterClass == NULL || mo->IsA(FilterClass)) && IsActorType(mo))
 		{
-			Printf ("%s at (%d,%d,%d)\n",
-				mo->GetClass()->TypeName.GetChars(),
-				mo->X() >> FRACBITS, mo->Y() >> FRACBITS, mo->Z() >> FRACBITS);
+			Printf ("%s at (%f,%f,%f)\n",
+				mo->GetClass()->TypeName.GetChars(), mo->X(), mo->Y(), mo->Z());
 		}
 	}
 }
@@ -1087,7 +1086,7 @@ CCMD(currentpos)
 	if(mo)
 	{
 		Printf("Current player position: (%1.3f,%1.3f,%1.3f), angle: %1.3f, floorheight: %1.3f, sector:%d, lightlevel: %d\n",
-			FIXED2DBL(mo->X()), FIXED2DBL(mo->Y()), FIXED2DBL(mo->Z()), ANGLE2DBL(mo->angle), FIXED2DBL(mo->floorz), mo->Sector->sectornum, mo->Sector->lightlevel);
+			mo->X(), mo->Y(), mo->Z(), mo->Angles.Yaw, mo->floorz, mo->Sector->sectornum, mo->Sector->lightlevel);
 	}
 	else
 	{

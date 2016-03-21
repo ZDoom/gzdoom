@@ -57,6 +57,7 @@
 #include "r_utility.h"
 #include "d_player.h"
 #include "p_local.h"
+#include "math/cmath.h"
 
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -254,7 +255,7 @@ angle_t R_PointToAngle2 (fixed_t x1, fixed_t y1, fixed_t x, fixed_t y)
 	else
 	{
 		// we have to use the slower but more precise floating point atan2 function here.
-		return xs_RoundToUInt(atan2(double(y), double(x)) * (ANGLE_180/M_PI));
+		return xs_RoundToUInt(g_atan2(double(y), double(x)) * (ANGLE_180/M_PI));
 	}
 }
 
@@ -273,7 +274,7 @@ void R_InitPointToAngle (void)
 //
 	for (i = 0; i <= SLOPERANGE; i++)
 	{
-		f = atan2 ((double)i, (double)SLOPERANGE) / (6.28318530718 /* 2*pi */);
+		f = g_atan2 ((double)i, (double)SLOPERANGE) / (6.28318530718 /* 2*pi */);
 		tantoangle[i] = (angle_t)(0xffffffff*f);
 	}
 }
@@ -322,16 +323,16 @@ void R_InitTables (void)
 	const double pimul = PI*2/FINEANGLES;
 
 	// viewangle tangent table
-	finetangent[0] = (fixed_t)(FRACUNIT*tan ((0.5-FINEANGLES/4)*pimul)+0.5);
+	finetangent[0] = (fixed_t)(FRACUNIT*g_tan ((0.5-FINEANGLES/4)*pimul)+0.5);
 	for (i = 1; i < FINEANGLES/2; i++)
 	{
-		finetangent[i] = (fixed_t)(FRACUNIT*tan ((i-FINEANGLES/4)*pimul)+0.5);
+		finetangent[i] = (fixed_t)(FRACUNIT*g_tan ((i-FINEANGLES/4)*pimul)+0.5);
 	}
 	
 	// finesine table
 	for (i = 0; i < FINEANGLES/4; i++)
 	{
-		finesine[i] = (fixed_t)(FRACUNIT * sin (i*pimul));
+		finesine[i] = (fixed_t)(FRACUNIT * g_sin (i*pimul));
 	}
 	for (i = 0; i < FINEANGLES/4; i++)
 	{
@@ -607,8 +608,8 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 			angle_t totaladiff = 0;
 			fixed_t oviewz = iview->oviewz;
 			fixed_t nviewz = iview->nviewz;
-			fixedvec3a oldpos = { iview->oviewx, iview->oviewy, 0, 0 };
-			fixedvec3a newpos = { iview->nviewx, iview->nviewy, 0, 0 };
+			fixedvec3a oldpos = { iview->oviewx, iview->oviewy, 0, 0. };
+			fixedvec3a newpos = { iview->nviewx, iview->nviewy, 0, 0. };
 			InterpolationPath.Push(newpos);	// add this to  the array to simplify the loops below
 
 			for (unsigned i = 0; i < InterpolationPath.Size(); i += 2)
@@ -617,7 +618,7 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 				fixedvec3a &end = InterpolationPath[i];
 				pathlen += xs_CRoundToInt(DVector2(end.x - start.x, end.y - start.y).Length());
 				totalzdiff += start.z;
-				totaladiff += start.angle;
+				totaladiff += FLOAT2ANGLE(start.angle.Degrees);
 			}
 			fixed_t interpolatedlen = FixedMul(frac, pathlen);
 
@@ -627,7 +628,7 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 				fixedvec3a &end = InterpolationPath[i];
 				fixed_t fraglen = xs_CRoundToInt(DVector2(end.x - start.x, end.y - start.y).Length());
 				zdiff += start.z;
-				adiff += start.angle;
+				adiff += FLOAT2ANGLE(start.angle.Degrees);
 				if (fraglen <= interpolatedlen)
 				{
 					interpolatedlen -= fraglen;
@@ -660,8 +661,8 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 		player - players == consoleplayer &&
 		camera == player->mo &&
 		!demoplayback &&
-		iview->nviewx == camera->X() &&
-		iview->nviewy == camera->Y() && 
+		iview->nviewx == camera->_f_X() &&
+		iview->nviewy == camera->_f_Y() && 
 		!(player->cheats & (CF_TOTALLYFROZEN|CF_FROZEN)) &&
 		player->playerstate == PST_LIVE &&
 		player->mo->reactiontime == 0 &&
@@ -680,11 +681,11 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 			// Avoid overflowing viewpitch (can happen when a netgame is stalled)
 			if (viewpitch > INT_MAX - delta)
 			{
-				viewpitch = player->MaxPitch;
+				viewpitch = FLOAT2ANGLE(player->MaxPitch.Degrees);
 			}
 			else
 			{
-				viewpitch = MIN(viewpitch + delta, player->MaxPitch);
+				viewpitch = MIN<int>(viewpitch + delta, FLOAT2ANGLE(player->MaxPitch.Degrees));
 			}
 		}
 		else if (delta < 0)
@@ -692,11 +693,11 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 			// Avoid overflowing viewpitch (can happen when a netgame is stalled)
 			if (viewpitch < INT_MIN - delta)
 			{
-				viewpitch = player->MinPitch;
+				viewpitch = FLOAT2ANGLE(player->MinPitch.Degrees);
 			}
 			else
 			{
-				viewpitch = MAX(viewpitch + delta, player->MinPitch);
+				viewpitch = MAX<int>(viewpitch + delta, FLOAT2ANGLE(player->MinPitch.Degrees));
 			}
 		}
 	}
@@ -712,10 +713,10 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 	while (!viewsector->PortalBlocksMovement(sector_t::ceiling))
 	{
 		AActor *point = viewsector->SkyBoxes[sector_t::ceiling];
-		if (viewz > point->threshold)
+		if (viewz > FLOAT2FIXED(point->specialf1))
 		{
-			viewx += point->scaleX;
-			viewy += point->scaleY;
+			viewx += FLOAT2FIXED(point->Scale.X);
+			viewy += FLOAT2FIXED(point->Scale.Y);
 			viewsector = R_PointInSubsector(viewx, viewy)->sector;
 			moved = true;
 		}
@@ -726,10 +727,10 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 		while (!viewsector->PortalBlocksMovement(sector_t::floor))
 		{
 			AActor *point = viewsector->SkyBoxes[sector_t::floor];
-			if (viewz < point->threshold)
+			if (viewz < FLOAT2FIXED(point->specialf1))
 			{
-				viewx += point->scaleX;
-				viewy += point->scaleY;
+				viewx += FLOAT2FIXED(point->Scale.X);
+				viewy += FLOAT2FIXED(point->Scale.Y);
 				viewsector = R_PointInSubsector(viewx, viewy)->sector;
 				moved = true;
 			}
@@ -982,19 +983,19 @@ void R_SetupFrame (AActor *actor)
 	}
 	else
 	{
-		iview->nviewx = camera->X();
-		iview->nviewy = camera->Y();
-		iview->nviewz = camera->player ? camera->player->viewz : camera->Z() + camera->GetCameraHeight();
+		iview->nviewx = camera->_f_X();
+		iview->nviewy = camera->_f_Y();
+		iview->nviewz = camera->player ? camera->player->viewz : FLOAT2FIXED(camera->Z() + camera->GetCameraHeight());
 		viewsector = camera->Sector;
 		r_showviewer = false;
 	}
-	iview->nviewpitch = camera->pitch;
+	iview->nviewpitch = camera->_f_pitch();
 	if (camera->player != 0)
 	{
 		player = camera->player;
 	}
 
-	iview->nviewangle = camera->angle;
+	iview->nviewangle = camera->_f_angle();
 	if (iview->otic == -1 || r_NoInterpolate)
 	{
 		R_ResetViewInterpolation ();
@@ -1049,14 +1050,14 @@ void R_SetupFrame (AActor *actor)
 
 			if ((jiggers.RelIntensityX | jiggers.RelOffsetX) != 0)
 			{
-				int ang = (camera->angle) >> ANGLETOFINESHIFT;
+				int ang = (camera->_f_angle()) >> ANGLETOFINESHIFT;
 				fixed_t power = QuakePower(quakefactor, jiggers.RelIntensityX, jiggers.RelOffsetX);
 				viewx += FixedMul(finecosine[ang], power);
 				viewy += FixedMul(finesine[ang], power);
 			}
 			if ((jiggers.RelIntensityY | jiggers.RelOffsetY) != 0)
 			{
-				int ang = (camera->angle + ANG90) >> ANGLETOFINESHIFT;
+				int ang = (camera->_f_angle() + ANG90) >> ANGLETOFINESHIFT;
 				fixed_t power = QuakePower(quakefactor, jiggers.RelIntensityY, jiggers.RelOffsetY);
 				viewx += FixedMul(finecosine[ang], power);
 				viewy += FixedMul(finesine[ang], power);

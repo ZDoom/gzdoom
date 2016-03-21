@@ -13,7 +13,7 @@
 #include "thingdef/thingdef.h"
 */
 
-#define AXERANGE	((fixed_t)(2.25*MELEERANGE))
+#define AXERANGE	(2.25 * MELEERANGE)
 
 static FRandom pr_axeatk ("FAxeAtk");
 
@@ -199,10 +199,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeAttack)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	angle_t angle;
-	fixed_t power;
+	DAngle angle;
+	int power;
 	int damage;
-	int slope;
+	DAngle slope;
 	int i;
 	int useMana;
 	player_t *player;
@@ -223,7 +223,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeAttack)
 	if (player->ReadyWeapon->Ammo1->Amount > 0)
 	{
 		damage <<= 1;
-		power = 6*FRACUNIT;
+		power = 6;
 		pufftype = PClass::FindActor ("AxePuffGlow");
 		useMana = 1;
 	}
@@ -236,7 +236,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeAttack)
 	{
 		for (int j = 1; j >= -1; j -= 2)
 		{
-			angle = pmo->angle + j*i*(ANG45 / 16);
+			angle = pmo->Angles.Yaw + j*i*(45. / 16);
 			slope = P_AimLineAttack(pmo, angle, AXERANGE, &t);
 			if (t.linetarget)
 			{
@@ -245,7 +245,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeAttack)
 				{
 					if (t.linetarget->flags3&MF3_ISMONSTER || t.linetarget->player)
 					{
-						P_ThrustMobj(t.linetarget, t.angleFromSource, power);
+						t.linetarget->Thrust(t.angleFromSource, power);
 					}
 					AdjustPlayerAngle(pmo, &t);
 					useMana++;
@@ -257,7 +257,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeAttack)
 	// didn't find any creatures, so try to strike any walls
 	pmo->weaponspecial = 0;
 
-	angle = pmo->angle;
+	angle = pmo->Angles.Yaw;
 	slope = P_AimLineAttack (pmo, angle, MELEERANGE);
 	P_LineAttack (pmo, angle, MELEERANGE, slope, damage, NAME_Melee, pufftype, true);
 

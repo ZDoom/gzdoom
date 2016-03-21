@@ -727,7 +727,7 @@ void CalculateCPUSpeed()
 		PerfToMillisec = PerfToSec * 1000.0;
 	}
 
-	if (!batchrun) Printf ("CPU Speed: %.0f MHz\n", 0.001 / PerfToMillisec);
+	if (!batchrun) Printf ("CPU _f_speed(): %.0f MHz\n", 0.001 / PerfToMillisec);
 }
 
 //==========================================================================

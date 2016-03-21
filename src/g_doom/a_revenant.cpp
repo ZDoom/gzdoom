@@ -28,27 +28,26 @@ DEFINE_ACTION_FUNCTION(AActor, A_SkelMissile)
 		return 0;
 				
 	A_FaceTarget (self);
-	self->AddZ(16*FRACUNIT);
-	missile = P_SpawnMissile (self, self->target, PClass::FindActor("RevenantTracer"));
-	self->AddZ(-16*FRACUNIT);
+	self->AddZ(16.);
+	missile = P_SpawnMissile(self, self->target, PClass::FindActor("RevenantTracer"));
+	self->AddZ(-16.);
 
 	if (missile != NULL)
 	{
-		missile->SetOrigin(missile->Vec3Offset(missile->vel.x, missile->vel.y, 0), false);
+		missile->SetOrigin(missile->Vec3Offset(missile->Vel.X, missile->Vel.Y, 0.), false);
 		missile->tracer = self->target;
 	}
 	return 0;
 }
 
-#define TRACEANGLE (0xc000000)
+#define TRACEANGLE (16.875)
 
 DEFINE_ACTION_FUNCTION(AActor, A_Tracer)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	angle_t exact;
-	fixed_t dist;
-	fixed_t slope;
+	double dist;
+	double slope;
 	AActor *dest;
 	AActor *smoke;
 				
@@ -65,11 +64,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_Tracer)
 		return 0;
 	
 	// spawn a puff of smoke behind the rocket
-	P_SpawnPuff (self, PClass::FindActor(NAME_BulletPuff), self->Pos(), self->angle, self->angle, 3);
+	P_SpawnPuff (self, PClass::FindActor(NAME_BulletPuff), self->Pos(), self->Angles.Yaw, self->Angles.Yaw, 3);
 		
-	smoke = Spawn ("RevenantTracerSmoke", self->Vec3Offset(-self->vel.x, -self->vel.y, 0), ALLOW_REPLACE);
+	smoke = Spawn ("RevenantTracerSmoke", self->Vec3Offset(-self->Vel.X, -self->Vel.Y, 0.), ALLOW_REPLACE);
 	
-	smoke->vel.z = FRACUNIT;
+	smoke->Vel.Z = 1.;
 	smoke->tics -= pr_tracer()&3;
 	if (smoke->tics < 1)
 		smoke->tics = 1;
@@ -81,49 +80,42 @@ DEFINE_ACTION_FUNCTION(AActor, A_Tracer)
 		return 0;
 	
 	// change angle 	
-	exact = self->AngleTo(dest);
+	DAngle exact = self->AngleTo(dest);
+	DAngle diff = deltaangle(self->Angles.Yaw, exact);
 
-	if (exact != self->angle)
+	if (diff < 0)
 	{
-		if (exact - self->angle > 0x80000000)
-		{
-			self->angle -= TRACEANGLE;
-			if (exact - self->angle < 0x80000000)
-				self->angle = exact;
-		}
-		else
-		{
-			self->angle += TRACEANGLE;
-			if (exact - self->angle > 0x80000000)
-				self->angle = exact;
-		}
+		self->Angles.Yaw -= TRACEANGLE;
+		if (deltaangle(self->Angles.Yaw, exact) > 0)
+			self->Angles.Yaw = exact;
 	}
-		
-	exact = self->angle>>ANGLETOFINESHIFT;
-	self->vel.x = FixedMul (self->Speed, finecosine[exact]);
-	self->vel.y = FixedMul (self->Speed, finesine[exact]);
+	else if (diff > 0)
+	{
+		self->Angles.Yaw += TRACEANGLE;
+		if (deltaangle(self->Angles.Yaw, exact) < 0.)
+			self->Angles.Yaw = exact;
+	}
+
+	self->VelFromAngle();
 
 	if (!(self->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER)))
 	{
 		// change slope
-		dist = self->AproxDistance (dest) / self->Speed;
+		dist = self->DistanceBySpeed(dest, self->Speed);
 
-		if (dist < 1)
-			dist = 1;
-
-		if (dest->height >= 56*FRACUNIT)
+		if (dest->Height >= 56.)
 		{
-			slope = (dest->Z()+40*FRACUNIT - self->Z()) / dist;
+			slope = (dest->Z() + 40. - self->Z()) / dist;
 		}
 		else
 		{
-			slope = (dest->Z() + self->height*2/3 - self->Z()) / dist;
+			slope = (dest->Z() + self->Height*(2./3) - self->Z()) / dist;
 		}
 
-		if (slope < self->vel.z)
-			self->vel.z -= FRACUNIT/8;
+		if (slope < self->Vel.Z)
+			self->Vel.Z -= 1. / 8;
 		else
-			self->vel.z += FRACUNIT/8;
+			self->Vel.Z += 1. / 8;
 	}
 	return 0;
 }

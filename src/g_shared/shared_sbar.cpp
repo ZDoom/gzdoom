@@ -1286,7 +1286,7 @@ void DBaseStatusBar::Draw (EHudState state)
 				y -= height * 2;
 		}
 
-		fixedvec3 pos = CPlayer->mo->Pos();
+		fixedvec3 pos = CPlayer->mo->_f_Pos();
 		for (i = 2, value = &pos.z; i >= 0; y -= height, --value, --i)
 		{
 			mysnprintf (line, countof(line), "%c: %d", labels[i], *value >> FRACBITS);

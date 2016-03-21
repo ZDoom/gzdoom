@@ -1,6 +1,7 @@
 #include <math.h>
 #include "vm.h"
 #include "xs_Float.h"
+#include "math/cmath.h"
 
 #define IMPLEMENT_VMEXEC
 

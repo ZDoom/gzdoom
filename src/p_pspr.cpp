@@ -33,8 +33,8 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define LOWERSPEED				FRACUNIT*6
-#define RAISESPEED				FRACUNIT*6
+#define LOWERSPEED				6.
+#define RAISESPEED				6.
 
 // TYPES -------------------------------------------------------------------
 
@@ -169,11 +169,11 @@ void P_SetPsprite (player_t *player, int position, FState *state, bool nofunctio
 
 		if (state->GetMisc1())
 		{ // Set coordinates.
-			psp->sx = state->GetMisc1()<<FRACBITS;
+			psp->sx = state->GetMisc1();
 		}
 		if (state->GetMisc2())
 		{
-			psp->sy = state->GetMisc2()<<FRACBITS;
+			psp->sy = state->GetMisc2();
 		}
 
 		if (!nofunction && player->mo != NULL)
@@ -394,7 +394,7 @@ void P_BobWeapon (player_t *player, pspdef_t *psp, fixed_t *x, fixed_t *y)
 	// [RH] Smooth transitions between bobbing and not-bobbing frames.
 	// This also fixes the bug where you can "stick" a weapon off-center by
 	// shooting it when it's at the peak of its swing.
-	bobtarget = (player->WeaponState & WF_WEAPONBOBBING) ? player->bob : 0;
+	bobtarget = (player->WeaponState & WF_WEAPONBOBBING) ? FLOAT2FIXED(player->bob) : 0;
 	if (curbob != bobtarget)
 	{
 		if (abs (bobtarget - curbob) <= 1*FRACUNIT)
@@ -417,8 +417,8 @@ void P_BobWeapon (player_t *player, pspdef_t *psp, fixed_t *x, fixed_t *y)
 
 	if (curbob != 0)
 	{
-		fixed_t bobx = FixedMul(player->bob, rangex);
-		fixed_t boby = FixedMul(player->bob, rangey);
+		fixed_t bobx = fixed_t(player->bob * rangex);
+		fixed_t boby = fixed_t(player->bob * rangey);
 		switch (bobstyle)
 		{
 		case AWeapon::BobNormal:
@@ -919,12 +919,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_GunFlash)
 // the height of the intended target
 //
 
-angle_t P_BulletSlope (AActor *mo, FTranslatedLineTarget *pLineTarget, int aimflags)
+DAngle P_BulletSlope (AActor *mo, FTranslatedLineTarget *pLineTarget, int aimflags)
 {
-	static const int angdiff[3] = { -(1<<26), 1<<26, 0 };
+	static const double angdiff[3] = { -5.625f, 5.625f, 0 };
 	int i;
-	angle_t an;
-	angle_t pitch;
+	DAngle an;
+	DAngle pitch;
 	FTranslatedLineTarget scratch;
 
 	if (pLineTarget == NULL) pLineTarget = &scratch;
@@ -932,12 +932,12 @@ angle_t P_BulletSlope (AActor *mo, FTranslatedLineTarget *pLineTarget, int aimfl
 	i = 2;
 	do
 	{
-		an = mo->angle + angdiff[i];
-		pitch = P_AimLineAttack (mo, an, 16*64*FRACUNIT, pLineTarget, 0, aimflags);
+		an = mo->Angles.Yaw + angdiff[i];
+		pitch = P_AimLineAttack (mo, an, 16.*64, pLineTarget, 0., aimflags);
 
 		if (mo->player != NULL &&
 			level.IsFreelookAllowed() &&
-			mo->player->userinfo.GetAimDist() <= ANGLE_1/2)
+			mo->player->userinfo.GetAimDist() <= 0.5)
 		{
 			break;
 		}
@@ -950,17 +950,17 @@ angle_t P_BulletSlope (AActor *mo, FTranslatedLineTarget *pLineTarget, int aimfl
 //
 // P_GunShot
 //
-void P_GunShot (AActor *mo, bool accurate, PClassActor *pufftype, angle_t pitch)
+void P_GunShot (AActor *mo, bool accurate, PClassActor *pufftype, DAngle pitch)
 {
-	angle_t 	angle;
+	DAngle 	angle;
 	int 		damage;
 		
 	damage = 5*(pr_gunshot()%3+1);
-	angle = mo->angle;
+	angle = mo->Angles.Yaw;
 
 	if (!accurate)
 	{
-		angle += pr_gunshot.Random2 () << 18;
+		angle += pr_gunshot.Random2 () * (5.625 / 256);
 	}
 
 	P_LineAttack (mo, angle, PLAYERMISSILERANGE, pitch, damage, NAME_Hitscan, pufftype);

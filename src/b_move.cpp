@@ -21,6 +21,7 @@
 #include "d_player.h"
 #include "p_spec.h"
 #include "p_checkposition.h"
+#include "math/cmath.h"
 
 static FRandom pr_botopendoor ("BotOpenDoor");
 static FRandom pr_bottrywalk ("BotTryWalk");
@@ -38,7 +39,7 @@ void DBot::Roam (ticcmd_t *cmd)
 
 	if (Reachable(dest))
 	{ // Straight towards it.
-		angle = player->mo->AngleTo(dest);
+		angle = player->mo->__f_AngleTo(dest);
 	}
 	else if (player->mo->movedir < 8) // turn towards movement direction if not there yet
 	{
@@ -70,8 +71,8 @@ bool DBot::Move (ticcmd_t *cmd)
 	if ((unsigned)player->mo->movedir >= 8)
 		I_Error ("Weird bot movedir!");
 
-	tryx = player->mo->X() + 8*xspeed[player->mo->movedir];
-	tryy = player->mo->Y() + 8*yspeed[player->mo->movedir];
+	tryx = player->mo->_f_X() + 8*xspeed[player->mo->movedir];
+	tryy = player->mo->_f_Y() + 8*yspeed[player->mo->movedir];
 
 	try_ok = bglobal.CleanAhead (player->mo, tryx, tryy, cmd);
 
@@ -147,7 +148,7 @@ void DBot::NewChaseDir (ticcmd_t *cmd)
     olddir = (dirtype_t)player->mo->movedir;
     turnaround = opposite[olddir];
 
-	fixedvec2 delta = player->mo->Vec2To(dest);
+	fixedvec2 delta = player->mo->_f_Vec2To(dest);
 
     if (delta.x > 10*FRACUNIT)
         d[1] = DI_EAST;
@@ -269,21 +270,21 @@ bool FCajunMaster::CleanAhead (AActor *thing, fixed_t x, fixed_t y, ticcmd_t *cm
     if (!(thing->flags & MF_NOCLIP) )
     {
 		fixed_t maxstep = thing->MaxStepHeight;
-        if (tm.ceilingz - tm.floorz < thing->height)
+        if (tm.ceilingz - tm.floorz < thing->Height)
             return false;       // doesn't fit
 
 		if (!(thing->flags&MF_MISSILE))
 		{
-			if(tm.floorz > (thing->Sector->floorplane.ZatPoint (x, y)+MAXMOVEHEIGHT)) //Too high wall
+			if(tm._f_floorz() > (thing->Sector->floorplane.ZatPoint (x, y)+MAXMOVEHEIGHT)) //Too high wall
 				return false;
 
 			//Jumpable
-			if(tm.floorz>(thing->Sector->floorplane.ZatPoint (x, y)+thing->MaxStepHeight))
+			if(tm._f_floorz()>(thing->Sector->floorplane.ZatPoint (x, y)+thing->MaxStepHeight))
 				cmd->ucmd.buttons |= BT_JUMP;
 
 
 	        if ( !(thing->flags & MF_TELEPORT) &&
-	             tm.ceilingz - thing->Z() < thing->height)
+	             tm.ceilingz < thing->Top())
 	            return false;       // mobj must lower itself to fit
 
 	        // jump out of water
@@ -291,12 +292,12 @@ bool FCajunMaster::CleanAhead (AActor *thing, fixed_t x, fixed_t y, ticcmd_t *cm
 //	            maxstep=37*FRACUNIT;
 
 	        if ( !(thing->flags & MF_TELEPORT) &&
-	             (tm.floorz - thing->Z() > maxstep ) )
+	             (tm._f_floorz() - thing->_f_Z() > maxstep ) )
 	            return false;       // too big a step up
 
 
 			if ( !(thing->flags&(MF_DROPOFF|MF_FLOAT))
-			&& tm.floorz - tm.dropoffz > thing->MaxDropOffHeight )
+			&& tm._f_floorz() - tm.dropoffz > thing->MaxDropOffHeight )
 				return false;       // don't stand over a dropoff
 
 		}
@@ -304,13 +305,13 @@ bool FCajunMaster::CleanAhead (AActor *thing, fixed_t x, fixed_t y, ticcmd_t *cm
     return true;
 }
 
-#define OKAYRANGE (5*ANGLE_1) //counts *2, when angle is in range, turning is not executed.
-#define MAXTURN (15*ANGLE_1) //Max degrees turned in one tic. Lower is smother but may cause the bot not getting where it should = crash
+#define OKAYRANGE (5) //counts *2, when angle is in range, turning is not executed.
+#define MAXTURN (15) //Max degrees turned in one tic. Lower is smother but may cause the bot not getting where it should = crash
 #define TURNSENS 3 //Higher is smoother but slower turn.
 
 void DBot::TurnToAng ()
 {
-    int maxturn = MAXTURN;
+    double maxturn = MAXTURN;
 
 	if (player->ReadyWeapon != NULL)
 	{
@@ -330,16 +331,16 @@ void DBot::TurnToAng ()
 						maxturn = 3;
 	}
 
-	int distance = angle - player->mo->angle;
+	DAngle distance = deltaangle(player->mo->Angles.Yaw, ANGLE2DBL(angle));
 
-	if (abs (distance) < OKAYRANGE && !enemy)
+	if (fabs (distance) < OKAYRANGE && !enemy)
 		return;
 
 	distance /= TURNSENS;
-	if (abs (distance) > maxturn)
+	if (fabs (distance) > maxturn)
 		distance = distance < 0 ? -maxturn : maxturn;
 
-	player->mo->angle += distance;
+	player->mo->Angles.Yaw += distance;
 }
 
 void DBot::Pitch (AActor *target)
@@ -347,9 +348,9 @@ void DBot::Pitch (AActor *target)
 	double aim;
 	double diff;
 
-	diff = target->Z() - player->mo->Z();
-	aim = atan(diff / (double)player->mo->AproxDistance(target));
-	player->mo->pitch = -(int)(aim * ANGLE_180/M_PI);
+	diff = target->_f_Z() - player->mo->_f_Z();
+	aim = g_atan(diff / (double)player->mo->AproxDistance(target));
+	player->mo->Angles.Pitch = ToDegrees(aim);
 }
 
 //Checks if a sector is dangerous.

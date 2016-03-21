@@ -1106,7 +1106,7 @@ void R_DrawHeightPlanes(fixed_t height)
 
 void R_DrawSinglePlane (visplane_t *pl, fixed_t alpha, bool additive, bool masked)
 {
-//	pl->angle = pa<<ANGLETOFINESHIFT;
+//	pl->_f_angle() = pa<<ANGLETOFINESHIFT;
 
 	if (pl->left >= pl->right)
 		return;
@@ -1243,7 +1243,7 @@ void R_DrawSkyBoxes ()
 			viewx = viewpos.x;
 			viewy = viewpos.y;
 			viewz = viewpos.z;
-			viewangle = savedangle + sky->PrevAngle + FixedMul(r_TicFrac, sky->angle - sky->PrevAngle);
+			viewangle = savedangle + FLOAT2ANGLE(sky->PrevAngles.Yaw.Degrees) + FixedMul(r_TicFrac, sky->_f_angle() - FLOAT2ANGLE(sky->PrevAngles.Yaw.Degrees));
 
 			R_CopyStackedViewParameters();
 		}
@@ -1251,8 +1251,8 @@ void R_DrawSkyBoxes ()
 		{
 			extralight = pl->extralight;
 			R_SetVisibility (pl->visibility);
-			viewx = pl->viewx - sky->Mate->X() + sky->X();
-			viewy = pl->viewy - sky->Mate->Y() + sky->Y();
+			viewx = pl->viewx - sky->Mate->_f_X() + sky->_f_X();
+			viewy = pl->viewy - sky->Mate->_f_Y() + sky->_f_Y();
 			viewz = pl->viewz;
 			viewangle = pl->viewangle;
 		}

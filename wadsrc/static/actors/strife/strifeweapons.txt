@@ -740,7 +740,7 @@ ACTOR StrifeGrenadeLauncher : StrifeWeapon
 	Tag "$TAG_GLAUNCHER1"
 	Inventory.PickupMessage "$TXT_GLAUNCHER"
 
-	action native A_FireGrenade (class<Actor> grenadetype, int angleofs, state flash);
+	action native A_FireGrenade (class<Actor> grenadetype, float angleofs, state flash);
 
 	States
 	{

@@ -97,13 +97,12 @@ bool AMageStaffFX2::SpecialBlastHandling (AActor *source, fixed_t strength)
 //
 //============================================================================
 
-void MStaffSpawn (AActor *pmo, angle_t angle, AActor *alttarget)
+void MStaffSpawn (AActor *pmo, DAngle angle, AActor *alttarget)
 {
 	AActor *mo;
 	FTranslatedLineTarget t;
 
-	mo = P_SpawnPlayerMissile (pmo, 0, 0, 8*FRACUNIT,
-		RUNTIME_CLASS(AMageStaffFX2), angle, &t);
+	mo = P_SpawnPlayerMissile (pmo, 0, 0, 8*FRACUNIT, RUNTIME_CLASS(AMageStaffFX2), angle, &t);
 	if (mo)
 	{
 		mo->target = pmo;
@@ -124,7 +123,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MStaffAttack)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	angle_t angle;
+	DAngle angle;
 	player_t *player;
 	FTranslatedLineTarget t;
 
@@ -139,21 +138,21 @@ DEFINE_ACTION_FUNCTION(AActor, A_MStaffAttack)
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return 0;
 	}
-	angle = self->angle;
+	angle = self->Angles.Yaw;
 	
 	// [RH] Let's try and actually track what the player aimed at
-	P_AimLineAttack (self, angle, PLAYERMISSILERANGE, &t, ANGLE_1*32);
+	P_AimLineAttack (self, angle, PLAYERMISSILERANGE, &t, 32.);
 	if (t.linetarget == NULL)
 	{
-		BlockCheckLine.x = self->X();
-		BlockCheckLine.y = self->Y();
-		BlockCheckLine.dx = -finesine[angle >> ANGLETOFINESHIFT];
-		BlockCheckLine.dy = -finecosine[angle >> ANGLETOFINESHIFT];
+		BlockCheckLine.x = self->_f_X();
+		BlockCheckLine.y = self->_f_Y();
+		BlockCheckLine.dx = FLOAT2FIXED(-angle.Sin());
+		BlockCheckLine.dy = FLOAT2FIXED(-angle.Cos());
 		t.linetarget = P_BlockmapSearch (self, 10, FrontBlockCheck);
 	}
 	MStaffSpawn (self, angle, t.linetarget);
-	MStaffSpawn (self, angle-ANGLE_1*5, t.linetarget);
-	MStaffSpawn (self, angle+ANGLE_1*5, t.linetarget);
+	MStaffSpawn (self, angle-5, t.linetarget);
+	MStaffSpawn (self, angle+5, t.linetarget);
 	S_Sound (self, CHAN_WEAPON, "MageStaffFire", 1, ATTN_NORM);
 	weapon->MStaffCount = 3;
 	return 0;
@@ -214,7 +213,7 @@ static AActor *FrontBlockCheck (AActor *mo, int index, void *)
 	{
 		if (link->Me != mo)
 		{
-			if (P_PointOnDivlineSide (link->Me->X(), link->Me->Y(), &BlockCheckLine) == 0 &&
+			if (P_PointOnDivlineSide (link->Me->_f_X(), link->Me->_f_Y(), &BlockCheckLine) == 0 &&
 				mo->IsOkayToAttack (link->Me))
 			{
 				return link->Me;
@@ -234,7 +233,7 @@ void MStaffSpawn2 (AActor *actor, angle_t angle)
 {
 	AActor *mo;
 
-	mo = P_SpawnMissileAngleZ (actor, actor->Z()+40*FRACUNIT,
+	mo = P_SpawnMissileAngleZ (actor, actor->_f_Z()+40*FRACUNIT,
 		RUNTIME_CLASS(AMageStaffFX2), angle, 0);
 	if (mo)
 	{
@@ -258,7 +257,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MageAttack)
 		return 0;
 	}
 	angle_t angle;
-	angle = self->angle;
+	angle = self->_f_angle();
 	MStaffSpawn2 (self, angle);
 	MStaffSpawn2 (self, angle-ANGLE_1*5);
 	MStaffSpawn2 (self, angle+ANGLE_1*5);

@@ -36,7 +36,7 @@ bool DBot::Reachable (AActor *rtarget)
 
 	if ((rtarget->Sector->ceilingplane.ZatPoint (rtarget) -
 		 rtarget->Sector->floorplane.ZatPoint (rtarget))
-		< player->mo->height) //Where rtarget is, player->mo can't be.
+		< player->mo->_f_height()) //Where rtarget is, player->mo can't be.
 		return false;
 
 	sector_t *last_s = player->mo->Sector;
@@ -44,7 +44,7 @@ bool DBot::Reachable (AActor *rtarget)
 	fixed_t estimated_dist = player->mo->AproxDistance(rtarget);
 	bool reachable = true;
 
-	FPathTraverse it(player->mo->X()+player->mo->vel.x, player->mo->Y()+player->mo->vel.y, rtarget->X(), rtarget->Y(), PT_ADDLINES|PT_ADDTHINGS);
+	FPathTraverse it(player->mo->_f_X()+player->mo->_f_velx(), player->mo->_f_Y()+player->mo->_f_vely(), rtarget->_f_X(), rtarget->_f_Y(), PT_ADDLINES|PT_ADDTHINGS);
 	intercept_t *in;
 	while ((in = it.Next()))
 	{
@@ -58,8 +58,8 @@ bool DBot::Reachable (AActor *rtarget)
 		frac = in->frac - FixedDiv (4*FRACUNIT, MAX_TRAVERSE_DIST);
 		dist = FixedMul (frac, MAX_TRAVERSE_DIST);
 
-		hitx = it.Trace().x + FixedMul (player->mo->vel.x, frac);
-		hity = it.Trace().y + FixedMul (player->mo->vel.y, frac);
+		hitx = it.Trace().x + FixedMul (player->mo->_f_velx(), frac);
+		hity = it.Trace().y + FixedMul (player->mo->_f_vely(), frac);
 
 		if (in->isaline)
 		{
@@ -79,7 +79,7 @@ bool DBot::Reachable (AActor *rtarget)
 				if (!bglobal.IsDangerous (s) &&		//Any nukage/lava?
 					(floorheight <= (last_z+MAXMOVEHEIGHT)
 					&& ((ceilingheight == floorheight && line->special)
-						|| (ceilingheight - floorheight) >= player->mo->height))) //Does it fit?
+						|| (ceilingheight - floorheight) >= player->mo->_f_height()))) //Does it fit?
 				{
 					last_z = floorheight;
 					last_s = s;
@@ -127,7 +127,7 @@ bool DBot::Check_LOS (AActor *to, angle_t vangle)
 	if (vangle == 0)
 		return false; //Looker seems to be blind.
 
-	return absangle(player->mo->AngleTo(to) - player->mo->angle) <= vangle/2;
+	return absangle(player->mo->__f_AngleTo(to) - player->mo->_f_angle()) <= vangle/2;
 }
 
 //-------------------------------------
@@ -170,7 +170,7 @@ void DBot::Dofire (ticcmd_t *cmd)
 
 	no_fire = true;
 	//Distance to enemy.
-	dist = player->mo->AproxDistance(enemy, player->mo->vel.x - enemy->vel.x, player->mo->vel.y - enemy->vel.y);
+	dist = player->mo->AproxDistance(enemy, player->mo->_f_velx() - enemy->_f_velx(), player->mo->_f_vely() - enemy->_f_vely());
 
 	//FIRE EACH TYPE OF WEAPON DIFFERENT: Here should all the different weapons go.
 	if (player->ReadyWeapon->WeaponFlags & WIF_MELEEWEAPON)
@@ -192,7 +192,7 @@ void DBot::Dofire (ticcmd_t *cmd)
 		else
 		{
 			//*4 is for atmosphere,  the chainsaws sounding and all..
-			no_fire = (dist > (MELEERANGE*4));
+			no_fire = (dist > (FLOAT2FIXED(MELEERANGE)*4));
 		}
 	}
 	else if (player->ReadyWeapon->WeaponFlags & WIF_BOT_BFG)
@@ -212,7 +212,7 @@ void DBot::Dofire (ticcmd_t *cmd)
 			{
 				angle = an;
 				//have to be somewhat precise. to avoid suicide.
-				if (absangle(angle - player->mo->angle) < 12*ANGLE_1)
+				if (absangle(angle - player->mo->_f_angle()) < 12*ANGLE_1)
 				{
 					t_rocket = 9;
 					no_fire = false;
@@ -222,16 +222,16 @@ void DBot::Dofire (ticcmd_t *cmd)
 		// prediction aiming
 shootmissile:
 		dist = player->mo->AproxDistance (enemy);
-		m = dist / GetDefaultByType (player->ReadyWeapon->ProjectileType)->Speed;
-		bglobal.SetBodyAt (enemy->X() + enemy->vel.x*m*2, enemy->Y() + enemy->vel.y*m*2, enemy->Z(), 1);
-		angle = player->mo->AngleTo(bglobal.body1);
+		m = dist / GetDefaultByType (player->ReadyWeapon->ProjectileType)->_f_speed();
+		bglobal.SetBodyAt (enemy->_f_X() + enemy->_f_velx()*m*2, enemy->_f_Y() + enemy->_f_vely()*m*2, enemy->_f_Z(), 1);
+		angle = player->mo->__f_AngleTo(bglobal.body1);
 		if (Check_LOS (enemy, SHOOTFOV))
 			no_fire = false;
 	}
 	else
 	{
 		//Other weapons, mostly instant hit stuff.
-		angle = player->mo->AngleTo(enemy);
+		angle = player->mo->__f_AngleTo(enemy);
 		aiming_penalty = 0;
 		if (enemy->flags & MF_SHADOW)
 			aiming_penalty += (pr_botdofire()%25)+10;
@@ -254,7 +254,7 @@ shootmissile:
 				angle -= m;
 		}
 
-		if (absangle(angle - player->mo->angle) < 4*ANGLE_1)
+		if (absangle(angle - player->mo->_f_angle()) < 4*ANGLE_1)
 		{
 			increase = !increase;
 		}
@@ -456,7 +456,7 @@ void FCajunMaster::SetBodyAt (fixed_t x, fixed_t y, fixed_t z, int hostnum)
 //
 //Returns NULL if shouldn't fire
 //else an angle (in degrees) are given
-//This function assumes actor->player->angle
+//This function assumes actor->player->_f_angle()
 //has been set an is the main aiming angle.
 
 
@@ -467,22 +467,16 @@ fixed_t FCajunMaster::FakeFire (AActor *source, AActor *dest, ticcmd_t *cmd)
 	
 	th->target = source;		// where it came from
 
-	float speed = (float)th->Speed;
 
-	fixedvec3 fixvel = source->Vec3To(dest);
-	DVector3 velocity(fixvel.x, fixvel.y, fixvel.z);
-	velocity.MakeUnit();
-	th->vel.x = FLOAT2FIXED(velocity[0] * speed);
-	th->vel.y = FLOAT2FIXED(velocity[1] * speed);
-	th->vel.z = FLOAT2FIXED(velocity[2] * speed);
+	th->Vel = source->Vec3To(dest).Resized(th->Speed);
 
 	fixed_t dist = 0;
 
 	while (dist < SAFE_SELF_MISDIST)
 	{
-		dist += th->Speed;
-		th->Move(th->vel.x, th->vel.y, th->vel.z);
-		if (!CleanAhead (th, th->X(), th->Y(), cmd))
+		dist += th->_f_speed();
+		th->Move(th->_f_velx(), th->_f_vely(), th->_f_velz());
+		if (!CleanAhead (th, th->_f_X(), th->_f_Y(), cmd))
 			break;
 	}
 	th->Destroy ();
@@ -496,9 +490,9 @@ angle_t DBot::FireRox (AActor *enemy, ticcmd_t *cmd)
 	AActor *actor;
 	int m;
 
-	bglobal.SetBodyAt (player->mo->X() + FixedMul(player->mo->vel.x, 5*FRACUNIT),
-					   player->mo->Y() + FixedMul(player->mo->vel.y, 5*FRACUNIT),
-					   player->mo->Z() + (player->mo->height / 2), 2);
+	bglobal.SetBodyAt (player->mo->_f_X() + FixedMul(player->mo->_f_velx(), 5*FRACUNIT),
+					   player->mo->_f_Y() + FixedMul(player->mo->_f_vely(), 5*FRACUNIT),
+					   player->mo->_f_Z() + (player->mo->_f_height() / 2), 2);
 
 	actor = bglobal.body2;
 
@@ -506,20 +500,20 @@ angle_t DBot::FireRox (AActor *enemy, ticcmd_t *cmd)
 	if (dist < SAFE_SELF_MISDIST)
 		return 0;
 	//Predict.
-	m = (((dist+1)/FRACUNIT) / GetDefaultByName("Rocket")->Speed);
+	m = (((dist+1)/FRACUNIT) / GetDefaultByName("Rocket")->_f_speed());
 
-	bglobal.SetBodyAt (enemy->X() + FixedMul(enemy->vel.x, (m+2*FRACUNIT)),
-					   enemy->Y() + FixedMul(enemy->vel.y, (m+2*FRACUNIT)), ONFLOORZ, 1);
+	bglobal.SetBodyAt (enemy->_f_X() + FixedMul(enemy->_f_velx(), (m+2*FRACUNIT)),
+					   enemy->_f_Y() + FixedMul(enemy->_f_vely(), (m+2*FRACUNIT)), ONFLOORZ, 1);
 	
 	//try the predicted location
 	if (P_CheckSight (actor, bglobal.body1, SF_IGNOREVISIBILITY)) //See the predicted location, so give a test missile
 	{
 		FCheckPosition tm;
-		if (bglobal.SafeCheckPosition (player->mo, actor->X(), actor->Y(), tm))
+		if (bglobal.SafeCheckPosition (player->mo, actor->_f_X(), actor->_f_Y(), tm))
 		{
 			if (bglobal.FakeFire (actor, bglobal.body1, cmd) >= SAFE_SELF_MISDIST)
 			{
-				ang = actor->AngleTo(bglobal.body1);
+				ang = actor->__f_AngleTo(bglobal.body1);
 				return ang;
 			}
 		}
@@ -529,7 +523,7 @@ angle_t DBot::FireRox (AActor *enemy, ticcmd_t *cmd)
 	{
 		if (bglobal.FakeFire (player->mo, enemy, cmd) >= SAFE_SELF_MISDIST)
 		{
-			ang = player->mo->AngleTo(enemy);
+			ang = player->mo->__f_AngleTo(enemy);
 			return ang;
 		}
 	}

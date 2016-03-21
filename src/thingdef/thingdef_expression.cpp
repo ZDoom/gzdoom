@@ -53,6 +53,7 @@
 #include "m_fixed.h"
 #include "vmbuilder.h"
 #include "v_text.h"
+#include "math/cmath.h"
 
 struct FLOP
 {
@@ -65,23 +66,23 @@ struct FLOP
 // degrees to radians for those that work with angles.
 static const FLOP FxFlops[] =
 {
-	{ NAME_Exp,		FLOP_EXP,		[](double v) { return exp(v); } },
-	{ NAME_Log,		FLOP_LOG,		[](double v) { return log(v); } },
-	{ NAME_Log10,	FLOP_LOG10,		[](double v) { return log10(v); } },
-	{ NAME_Sqrt,	FLOP_SQRT,		[](double v) { return sqrt(v); } },
+	{ NAME_Exp,		FLOP_EXP,		[](double v) { return g_exp(v); } },
+	{ NAME_Log,		FLOP_LOG,		[](double v) { return g_log(v); } },
+	{ NAME_Log10,	FLOP_LOG10,		[](double v) { return g_log10(v); } },
+	{ NAME_Sqrt,	FLOP_SQRT,		[](double v) { return g_sqrt(v); } },
 	{ NAME_Ceil,	FLOP_CEIL,		[](double v) { return ceil(v); } },
 	{ NAME_Floor,	FLOP_FLOOR,		[](double v) { return floor(v); } },
 
-	{ NAME_ACos,	FLOP_ACOS_DEG,	[](double v) { return acos(v) * (180.0 / M_PI); } },
-	{ NAME_ASin,	FLOP_ASIN_DEG,	[](double v) { return asin(v) * (180.0 / M_PI); } },
-	{ NAME_ATan,	FLOP_ATAN_DEG,	[](double v) { return atan(v) * (180.0 / M_PI); } },
-	{ NAME_Cos,		FLOP_COS_DEG,	[](double v) { return cos(v * (M_PI / 180.0)); } },
-	{ NAME_Sin,		FLOP_SIN_DEG,	[](double v) { return sin(v * (M_PI / 180.0)); } },
-	{ NAME_Tan,		FLOP_TAN_DEG,	[](double v) { return tan(v * (M_PI / 180.0)); } },
+	{ NAME_ACos,	FLOP_ACOS_DEG,	[](double v) { return g_acos(v) * (180.0 / M_PI); } },
+	{ NAME_ASin,	FLOP_ASIN_DEG,	[](double v) { return g_asin(v) * (180.0 / M_PI); } },
+	{ NAME_ATan,	FLOP_ATAN_DEG,	[](double v) { return g_atan(v) * (180.0 / M_PI); } },
+	{ NAME_Cos,		FLOP_COS_DEG,	[](double v) { return g_cosdeg(v); } },
+	{ NAME_Sin,		FLOP_SIN_DEG,	[](double v) { return g_sindeg(v); } },
+	{ NAME_Tan,		FLOP_TAN_DEG,	[](double v) { return g_tan(v * (M_PI / 180.0)); } },
 
-	{ NAME_CosH,	FLOP_COSH,		[](double v) { return cosh(v); } },
-	{ NAME_SinH,	FLOP_SINH,		[](double v) { return sinh(v); } },
-	{ NAME_TanH,	FLOP_TANH,		[](double v) { return tanh(v); } },
+	{ NAME_CosH,	FLOP_COSH,		[](double v) { return g_cosh(v); } },
+	{ NAME_SinH,	FLOP_SINH,		[](double v) { return g_sinh(v); } },
+	{ NAME_TanH,	FLOP_TANH,		[](double v) { return g_tanh(v); } },
 };
 
 ExpEmit::ExpEmit(VMFunctionBuilder *build, int type)

@@ -23,29 +23,25 @@ static FRandom pr_fpatk ("FPunchAttack");
 //
 //============================================================================
 
-#define MAX_ANGLE_ADJUST (5*ANGLE_1)
+#define MAX_ANGLE_ADJUST (5.)
 
 void AdjustPlayerAngle (AActor *pmo, FTranslatedLineTarget *t)
 {
-	angle_t angle;
-	int difference;
-
-	angle = pmo->AngleTo(t->linetarget);
-	difference = (int)angle - (int)pmo->angle;
-	if (abs(difference) > MAX_ANGLE_ADJUST)
+	DAngle difference = deltaangle(pmo->Angles.Yaw, pmo->AngleTo(t->linetarget));
+	if (fabs(difference) > MAX_ANGLE_ADJUST)
 	{
 		if (difference > 0)
 		{
-			pmo->angle += MAX_ANGLE_ADJUST;
+			pmo->Angles.Yaw += MAX_ANGLE_ADJUST;
 		}
 		else
 		{
-			pmo->angle -= MAX_ANGLE_ADJUST;
+			pmo->Angles.Yaw -= MAX_ANGLE_ADJUST;
 		}
 	}
 	else
 	{
-		pmo->angle = angle;
+		pmo->Angles.Yaw = t->angleFromSource;
 	}
 }
 
@@ -57,11 +53,11 @@ void AdjustPlayerAngle (AActor *pmo, FTranslatedLineTarget *t)
 //
 //============================================================================
 
-static bool TryPunch(APlayerPawn *pmo, angle_t angle, int damage, fixed_t power)
+static bool TryPunch(APlayerPawn *pmo, DAngle angle, int damage, int power)
 {
 	PClassActor *pufftype;
 	FTranslatedLineTarget t;
-	int slope;
+	DAngle slope;
 
 	slope = P_AimLineAttack (pmo, angle, 2*MELEERANGE, &t);
 	if (t.linetarget != NULL)
@@ -82,7 +78,7 @@ static bool TryPunch(APlayerPawn *pmo, angle_t angle, int damage, fixed_t power)
 			if (t.linetarget->player != NULL || 
 				(t.linetarget->Mass != INT_MAX && (t.linetarget->flags3 & MF3_ISMONSTER)))
 			{
-				P_ThrustMobj (t.linetarget, t.angleFromSource, power);
+				t.linetarget->Thrust(t.angleFromSource, power);
 			}
 			AdjustPlayerAngle (pmo, &t);
 			return true;
@@ -102,7 +98,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_FPunchAttack)
 	PARAM_ACTION_PROLOGUE;
 
 	int damage;
-	fixed_t power;
 	int i;
 	player_t *player;
 
@@ -113,11 +108,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_FPunchAttack)
 	APlayerPawn *pmo = player->mo;
 
 	damage = 40+(pr_fpatk()&15);
-	power = 2*FRACUNIT;
 	for (i = 0; i < 16; i++)
 	{
-		if (TryPunch(pmo, pmo->angle + i*(ANG45/16), damage, power) ||
-			TryPunch(pmo, pmo->angle - i*(ANG45/16), damage, power))
+		if (TryPunch(pmo, pmo->Angles.Yaw + i*(45./16), damage, 2) ||
+			TryPunch(pmo, pmo->Angles.Yaw - i*(45./16), damage, 2))
 		{ // hit something
 			if (pmo->weaponspecial >= 3)
 			{
@@ -131,7 +125,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FPunchAttack)
 	// didn't find any creatures, so try to strike any walls
 	pmo->weaponspecial = 0;
 
-	int slope = P_AimLineAttack (pmo, pmo->angle, MELEERANGE);
-	P_LineAttack (pmo, pmo->angle, MELEERANGE, slope, damage, NAME_Melee, PClass::FindActor("PunchPuff"), true);
+	DAngle slope = P_AimLineAttack (pmo, pmo->Angles.Yaw, MELEERANGE);
+	P_LineAttack (pmo, pmo->Angles.Yaw, MELEERANGE, slope, damage, NAME_Melee, PClass::FindActor("PunchPuff"), true);
 	return 0;
 }

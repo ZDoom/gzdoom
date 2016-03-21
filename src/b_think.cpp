@@ -20,6 +20,7 @@
 #include "d_net.h"
 #include "d_event.h"
 #include "d_player.h"
+#include "vectors.h"
 
 static FRandom pr_botmove ("BotMove");
 
@@ -39,20 +40,21 @@ void DBot::Think ()
 		if (teamplay || !deathmatch)
 			mate = Choose_Mate ();
 
-		angle_t oldyaw = player->mo->angle;
-		int oldpitch = player->mo->pitch;
+		AActor *actor = player->mo;
+		DAngle oldyaw = actor->Angles.Yaw;
+		DAngle oldpitch = actor->Angles.Pitch;
 
 		Set_enemy ();
 		ThinkForMove (cmd);
 		TurnToAng ();
 
-		cmd->ucmd.yaw = (short)((player->mo->angle - oldyaw) >> 16) / ticdup;
-		cmd->ucmd.pitch = (short)((oldpitch - player->mo->pitch) >> 16);
+		cmd->ucmd.yaw = (short)((actor->Angles.Yaw - oldyaw).Degrees * (65536 / 360.f)) / ticdup;
+		cmd->ucmd.pitch = (short)((oldpitch - actor->Angles.Pitch).Degrees * (65536 / 360.f));
 		if (cmd->ucmd.pitch == -32768)
 			cmd->ucmd.pitch = -32767;
 		cmd->ucmd.pitch /= ticdup;
-		player->mo->angle = oldyaw + (cmd->ucmd.yaw << 16) * ticdup;
-		player->mo->pitch = oldpitch - (cmd->ucmd.pitch << 16) * ticdup;
+		actor->Angles.Yaw = oldyaw + DAngle(cmd->ucmd.yaw * ticdup * (360 / 65536.f));
+		actor->Angles.Pitch = oldpitch - DAngle(cmd->ucmd.pitch * ticdup * (360 / 65536.f));
 	}
 
 	if (t_active)	t_active--;
@@ -85,22 +87,22 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 	dist = dest ? player->mo->AproxDistance(dest) : 0;
 
 	if (missile &&
-		((!missile->vel.x || !missile->vel.y) || !Check_LOS(missile, SHOOTFOV*3/2)))
+		((!missile->_f_velx() || !missile->_f_vely()) || !Check_LOS(missile, SHOOTFOV*3/2)))
 	{
 		sleft = !sleft;
 		missile = NULL; //Probably ended its travel.
 	}
 
-	if (player->mo->pitch > 0)
-		player->mo->pitch -= 80;
-	else if (player->mo->pitch <= -60)
-		player->mo->pitch += 80;
+	if (player->mo->Angles.Pitch > 0)
+		player->mo->Angles.Pitch -= 80;
+	else if (player->mo->Angles.Pitch <= -60)
+		player->mo->Angles.Pitch += 80;
 
 	//HOW TO MOVE:
 	if (missile && (player->mo->AproxDistance(missile)<AVOID_DIST)) //try avoid missile got from P_Mobj.c thinking part.
 	{
 		Pitch (missile);
-		angle = player->mo->AngleTo(missile);
+		angle = player->mo->__f_AngleTo(missile);
 		cmd->ucmd.sidemove = sleft ? -SIDERUN : SIDERUN;
 		cmd->ucmd.forwardmove = -FORWARDRUN; //Back IS best.
 
@@ -166,7 +168,7 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 			sleft = !sleft;
 		}
 
-		angle = player->mo->AngleTo(enemy);
+		angle = player->mo->__f_AngleTo(enemy);
 
 		if (player->ReadyWeapon == NULL ||
 			player->mo->AproxDistance(enemy) >
@@ -207,7 +209,7 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 			goto roam;
 		}
 
-		angle = player->mo->AngleTo(mate);
+		angle = player->mo->__f_AngleTo(mate);
 
 		matedist = player->mo->AproxDistance(mate);
 		if (matedist > (FRIEND_DIST*2))
@@ -242,7 +244,7 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 						(pr_botmove()%100)>skill.isp) && player->ReadyWeapon != NULL && !(player->ReadyWeapon->WeaponFlags & WIF_WIMPY_WEAPON))
 						dest = enemy;//Dont let enemy kill the bot by supressive fire. So charge enemy.
 					else //hide while t_fight, but keep view at enemy.
-						angle = player->mo->AngleTo(enemy);
+						angle = player->mo->__f_AngleTo(enemy);
 				} //Just a monster, so kill it.
 				else
 					dest = enemy;
@@ -304,8 +306,8 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 	if (t_fight<(AFTERTICS/2))
 		player->mo->flags |= MF_DROPOFF;
 
-	oldx = player->mo->X();
-	oldy = player->mo->Y();
+	oldx = player->mo->_f_X();
+	oldy = player->mo->_f_Y();
 }
 
 //BOT_WhatToGet

@@ -88,7 +88,7 @@ FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb)
 	mMirrorCount = 0;
 	mPlaneMirrorCount = 0;
 	mLightCount = 0;
-	mAngles = FRotator(0,0,0);
+	mAngles = FRotator(0.f, 0.f, 0.f);
 	mViewVector = FVector2(0,0);
 	mVBO = NULL;
 	mSkyVBO = NULL;

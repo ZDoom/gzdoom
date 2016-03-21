@@ -3,6 +3,7 @@
 #define __GLC_DATA_H
 
 #include "doomtype.h"
+#include "vectors.h"
 
 struct GLRenderSettings
 {

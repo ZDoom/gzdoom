@@ -93,7 +93,7 @@ void gl_SetPlaneTextureRotation(const GLSectorPlane * secplane, FMaterial * glte
 		{
 			yscale1 = 0 - yscale1;
 		}
-		float angle=-ANGLE_TO_FLOAT(secplane->angle);
+		float angle=-ANGLE2FLOAT(secplane->angle);
 
 		float xscale2=64.f/gltexture->TextureWidth();
 		float yscale2=64.f/gltexture->TextureHeight();
@@ -143,7 +143,7 @@ void GLFlat::SetupSubsectorLights(int pass, subsector_t * sub, int *dli)
 		// we must do the side check here because gl_SetupLight needs the correct plane orientation
 		// which we don't have for Legacy-style 3D-floors
 		fixed_t planeh = plane.plane.ZatPoint(light);
-		if (gl_lights_checkside && ((planeh<light->Z() && ceiling) || (planeh>light->Z() && !ceiling)))
+		if (gl_lights_checkside && ((planeh<light->_f_Z() && ceiling) || (planeh>light->_f_Z() && !ceiling)))
 		{
 			node=node->nextLight;
 			continue;

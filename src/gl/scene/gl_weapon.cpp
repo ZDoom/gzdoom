@@ -71,7 +71,7 @@ EXTERN_CVAR (Bool, r_deathcamera)
 //
 //==========================================================================
 
-void FGLRenderer::DrawPSprite (player_t * player,pspdef_t *psp,fixed_t sx, fixed_t sy, bool hudModelStep, int OverrideShader, bool alphatexture)
+void FGLRenderer::DrawPSprite (player_t * player,pspdef_t *psp, float sx, float sy, bool hudModelStep, int OverrideShader, bool alphatexture)
 {
 	float			fU1,fV1;
 	float			fU2,fV2;
@@ -109,7 +109,7 @@ void FGLRenderer::DrawPSprite (player_t * player,pspdef_t *psp,fixed_t sx, fixed
 	// calculate edges of the shape
 	scalex = xratio[WidescreenRatio] * vw / 320;
 
-	tx = FIXED2FLOAT(sx) - (160 - r.left);
+	tx = sx - (160 - r.left);
 	x1 = tx * scalex + vw/2;
 	if (x1 > vw)	return; // off the right side
 	x1 += viewwindowx;
@@ -121,7 +121,7 @@ void FGLRenderer::DrawPSprite (player_t * player,pspdef_t *psp,fixed_t sx, fixed
 
 
 	// killough 12/98: fix psprite positioning problem
-	ftexturemid = 100.f - FIXED2FLOAT(sy) - r.top;
+	ftexturemid = 100.f - sy - r.top;
 
 	AWeapon * wi=player->ReadyWeapon;
 	if (wi && wi->YAdjust)
@@ -188,7 +188,7 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 	unsigned int i;
 	pspdef_t *psp;
 	int lightlevel=0;
-	fixed_t ofsx, ofsy;
+	float ofsx, ofsy;
 	FColormap cm;
 	sector_t * fakesec, fs;
 	AActor * playermo=players[consoleplayer].camera;
@@ -202,7 +202,10 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 		(r_deathcamera && camera->health <= 0))
 		return;
 
-	P_BobWeapon (player, &player->psprites[ps_weapon], &ofsx, &ofsy);
+	fixed_t ox, oy;
+	P_BobWeapon (player, &player->psprites[ps_weapon], &ox, &oy);
+	ofsx = FIXED2FLOAT(ox);
+	ofsy = FIXED2FLOAT(oy);
 
 	// check for fullbright
 	if (player->fixedcolormap==NOFIXEDCOLORMAP)
@@ -250,7 +253,7 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 
 			lightlevel = (1.0 - min_L) * 255;
 		}
-		lightlevel = gl_CheckSpriteGlow(viewsector, lightlevel, playermo->X(), playermo->Y(), playermo->Z());
+		lightlevel = gl_CheckSpriteGlow(viewsector, lightlevel, playermo->_f_X(), playermo->_f_Y(), playermo->_f_Z());
 
 		// calculate colormap for weapon sprites
 		if (viewsector->e->XFloor.ffloors.Size() && !glset.nocoloredspritelighting)

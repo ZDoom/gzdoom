@@ -659,7 +659,7 @@ void GLSkyboxPortal::DrawContents()
 	viewx = viewpos.x;
 	viewy = viewpos.y;
 	viewz = viewpos.z;
-	viewangle += origin->PrevAngle + FixedMul(r_TicFrac, origin->angle - origin->PrevAngle);
+	viewangle += (origin->PrevAngles.Yaw + deltaangle(origin->PrevAngles.Yaw, origin->Angles.Yaw) * FIXED2DBL(r_TicFrac)).BAMs();
 
 	// Don't let the viewpoint be too close to a floor or ceiling
 	fixed_t floorh = origin->Sector->floorplane.ZatPoint(origin);
@@ -1003,7 +1003,9 @@ void GLLineToLinePortal::DrawContents()
 
 	line_t *origin = glport->reference->mOrigin;
 	P_TranslatePortalXY(origin, viewx, viewy);
-	P_TranslatePortalAngle(origin, viewangle);
+	DAngle va = ANGLE2DBL(viewangle);
+	P_TranslatePortalAngle(origin, va);
+	viewangle = va.BAMs();
 	P_TranslatePortalZ(origin, viewz);
 
 	SaveMapSection();

@@ -110,7 +110,7 @@ void gl_ParseDefs();
 //-----------------------------------------------------------------------------
 angle_t FGLRenderer::FrustumAngle()
 {
-	float tilt= fabs(mAngles.Pitch);
+	float tilt= fabs(mAngles.Pitch.Degrees);
 
 	// If the pitch is larger than this you can look all around at a FOV of 90°
 	if (tilt>46.0f) return 0xffffffff;
@@ -118,7 +118,7 @@ angle_t FGLRenderer::FrustumAngle()
 	// ok, this is a gross hack that barely works...
 	// but at least it doesn't overestimate too much...
 	double floatangle=2.0+(45.0+((tilt/1.9)))*mCurrentFoV*48.0/BaseRatioSizes[WidescreenRatio][3]/90.0;
-	angle_t a1 = FLOAT_TO_ANGLE(floatangle);
+	angle_t a1 = FLOAT2ANGLE(floatangle);
 	if (a1>=ANGLE_180) return 0xffffffff;
 	return a1;
 }
@@ -264,9 +264,9 @@ void FGLRenderer::SetViewMatrix(fixed_t viewx, fixed_t viewy, fixed_t viewz, boo
 	float planemult = planemirror? -glset.pixelstretch : glset.pixelstretch;
 
 	gl_RenderState.mViewMatrix.loadIdentity();
-	gl_RenderState.mViewMatrix.rotate(GLRenderer->mAngles.Roll,  0.0f, 0.0f, 1.0f);
-	gl_RenderState.mViewMatrix.rotate(GLRenderer->mAngles.Pitch, 1.0f, 0.0f, 0.0f);
-	gl_RenderState.mViewMatrix.rotate(GLRenderer->mAngles.Yaw,   0.0f, mult, 0.0f);
+	gl_RenderState.mViewMatrix.rotate(GLRenderer->mAngles.Roll.Degrees,  0.0f, 0.0f, 1.0f);
+	gl_RenderState.mViewMatrix.rotate(GLRenderer->mAngles.Pitch.Degrees, 1.0f, 0.0f, 0.0f);
+	gl_RenderState.mViewMatrix.rotate(GLRenderer->mAngles.Yaw.Degrees,   0.0f, mult, 0.0f);
 	gl_RenderState.mViewMatrix.translate(FIXED2FLOAT(viewx) * mult, -FIXED2FLOAT(viewz) * planemult , -FIXED2FLOAT(viewy));
 	gl_RenderState.mViewMatrix.scale(-mult, planemult, 1);
 }
@@ -780,7 +780,7 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 	double alen = sqrt(angx*angx + angy*angy);
 
 	mAngles.Pitch = (float)RAD2DEG(asin(angy / alen));
-	mAngles.Roll = (float)(camera->roll>>ANGLETOFINESHIFT)*360.0f/FINEANGLES; 
+	mAngles.Roll.Degrees = camera->Angles.Roll.Degrees;
 
 	// Scroll the sky
 	mSky1Pos = (float)fmod(gl_frameMS * level.skyspeed1, 1024.f) * 90.f/256.f;
@@ -817,7 +817,7 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 		// SetProjection(fov, ratio, fovratio);	// switch to perspective mode and set up clipper
 		SetViewAngle(viewangle);
 		// Stereo mode specific viewpoint adjustment - temporarily shifts global viewx, viewy, viewz
-		eye->GetViewShift(GLRenderer->mAngles.Yaw, viewShift);
+		eye->GetViewShift(GLRenderer->mAngles.Yaw.Degrees, viewShift);
 		s3d::ScopedViewShifter viewShifter(viewShift);
 		SetViewMatrix(viewx, viewy, viewz, false, false);
 		gl_RenderState.ApplyMatrices();

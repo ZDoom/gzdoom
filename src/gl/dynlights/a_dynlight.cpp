@@ -35,6 +35,8 @@
 **
 */
 
+#include "gl/system/gl_system.h"
+
 #include "templates.h"
 #include "m_random.h"
 #include "p_local.h"
@@ -174,7 +176,7 @@ void ADynamicLight::PostBeginPlay()
 		Activate (NULL);
 	}
 
-	subsector = R_PointInSubsector(X(), Y());
+	subsector = R_PointInSubsector(_f_X(), _f_Y());
 }
 
 
@@ -193,7 +195,7 @@ void ADynamicLight::Activate(AActor *activator)
 
 	if (lighttype == PulseLight)
 	{
-		float pulseTime = ANGLE_TO_FLOAT(this->angle) / TICRATE;
+		float pulseTime = Angles.Yaw.Degrees / TICRATE;
 		
 		m_lastUpdate = level.maptime;
 		m_cycler.SetParams(float(m_intensity[1]), float(m_intensity[0]), pulseTime);
@@ -257,7 +259,7 @@ void ADynamicLight::Tick()
 	case FlickerLight:
 	{
 		BYTE rnd = randLight();
-		float pct = ANGLE_TO_FLOAT(angle)/360.f;
+		float pct = Angles.Yaw.Degrees / 360.f;
 		
 		m_currentIntensity = float(m_intensity[rnd >= pct * 255]);
 		break;
@@ -270,7 +272,7 @@ void ADynamicLight::Tick()
 		
 		m_tickCount++;
 		
-		if (m_tickCount > ANGLE_TO_FLOAT(angle))
+		if (m_tickCount > Angles.Yaw.Degrees)
 		{
 			m_currentIntensity = float(m_intensity[0] + (amt * flickerRange));
 			m_tickCount = 0;
@@ -283,7 +285,7 @@ void ADynamicLight::Tick()
 	case ColorFlickerLight:
 	{
 		BYTE rnd = randLight();
-		float pct = ANGLE_TO_FLOAT(angle)/360.f;
+		float pct = ANGLE2FLOAT(angle)/360.f;
 		
 		m_currentIntensity = m_intensity[rnd >= pct * 255];
 		break;
@@ -296,7 +298,7 @@ void ADynamicLight::Tick()
 		
 		m_tickCount++;
 		
-		if (m_tickCount > ANGLE_TO_FLOAT(angle))
+		if (m_tickCount > ANGLE2FLOAT(angle))
 		{
 			m_currentIntensity = m_intensity[0] + (amt * flickerRange);
 			m_tickCount = 0;
@@ -337,16 +339,16 @@ void ADynamicLight::Tick()
 //==========================================================================
 void ADynamicLight::UpdateLocation()
 {
-	fixed_t oldx=X();
-	fixed_t oldy=Y();
-	fixed_t oldradius=radius;
+	double oldx= X();
+	double oldy= Y();
+	double oldradius= radius;
 	float intensity;
 
 	if (IsActive())
 	{
 		if (target)
 		{
-			angle_t angle = target->angle>>ANGLETOFINESHIFT;
+			angle_t angle = target->_f_angle() >> ANGLETOFINESHIFT;
 			fixedvec3 pos = target->Vec3Offset(
 				FixedMul(m_offX, finecosine[angle]) + FixedMul(m_offZ, finesine[angle]),
 				FixedMul(m_offX, finesine[angle]) - FixedMul(m_offZ, finecosine[angle]),
@@ -363,7 +365,7 @@ void ADynamicLight::UpdateLocation()
 		// The radius being used here is always the maximum possible with the
 		// current settings. This avoids constant relinking of flickering lights
 
-		if (lighttype == FlickerLight || lighttype == RandomFlickerLight) 
+		if (lighttype == FlickerLight || lighttype == RandomFlickerLight)
 		{
 			intensity = float(MAX(m_intensity[0], m_intensity[1]));
 		}
@@ -371,9 +373,9 @@ void ADynamicLight::UpdateLocation()
 		{
 			intensity = m_currentIntensity;
 		}
-		radius = FLOAT2FIXED(intensity * 2.0f * gl_lights_size);
+		radius = intensity * 2.0f * gl_lights_size;
 
-		if (X()!=oldx || Y()!=oldy || radius!=oldradius) 
+		if (X() != oldx || Y() != oldy || radius != oldradius)
 		{
 			//Update the light lists
 			LinkLight();
@@ -599,9 +601,9 @@ void ADynamicLight::CollectWithinRadius(const fixedvec3 &pos, subsector_t *subSe
 	{
 		line_t *other = subSec->firstline->linedef;
 		AActor *sb = subSec->sector->SkyBoxes[sector_t::ceiling];
-		if (sb->threshold < Z() + radius)
+		if (sb->specialf1 < Z() + radius)
 		{
-			fixedvec2 refpos = { other->v1->x + other->dx / 2 + sb->scaleX, other->v1->y + other->dy / 2 + sb->scaleY };
+			fixedvec2 refpos = { other->v1->x + other->dx / 2 + FLOAT2FIXED(sb->Scale.X), other->v1->y + other->dy / 2 + FLOAT2FIXED(sb->Scale.Y) };
 			subsector_t *othersub = R_PointInSubsector(refpos.x, refpos.y);
 			if (othersub->validcount != ::validcount) CollectWithinRadius(PosRelative(othersub->sector), othersub, radius);
 		}
@@ -610,9 +612,9 @@ void ADynamicLight::CollectWithinRadius(const fixedvec3 &pos, subsector_t *subSe
 	{
 		line_t *other = subSec->firstline->linedef;
 		AActor *sb = subSec->sector->SkyBoxes[sector_t::floor];
-		if (sb->threshold > Z() - radius)
+		if (sb->specialf1 > Z() - radius)
 		{
-			fixedvec2 refpos = { other->v1->x + other->dx / 2 + sb->scaleX, other->v1->y + other->dy / 2 + sb->scaleY };
+			fixedvec2 refpos = { other->v1->x + other->dx / 2 + FLOAT2FIXED(sb->Scale.X), other->v1->y + other->dy / 2 + FLOAT2FIXED(sb->Scale.Y) };
 			subsector_t *othersub = R_PointInSubsector(refpos.x, refpos.y);
 			if (othersub->validcount != ::validcount) CollectWithinRadius(PosRelative(othersub->sector), othersub, radius);
 		}
@@ -652,10 +654,9 @@ void ADynamicLight::LinkLight()
 	if (radius>0)
 	{
 		// passing in radius*radius allows us to do a distance check without any calls to sqrtf
-		subsector_t * subSec = R_PointInSubsector(X(), Y());
-		float fradius = FIXED2FLOAT(radius);
+		subsector_t * subSec = R_PointInSubsector(_f_X(), _f_Y());
 		::validcount++;
-		CollectWithinRadius(Pos(), subSec, fradius*fradius);
+		CollectWithinRadius(_f_Pos(), subSec, radius*radius);
 
 	}
 		
@@ -760,8 +761,8 @@ CCMD(listlights)
 		subsecs = 0;
 		Printf("%s at (%f, %f, %f), color = 0x%02x%02x%02x, radius = %f ",
 			dl->target? dl->target->GetClass()->TypeName.GetChars() : dl->GetClass()->TypeName.GetChars(),
-			FIXED2FLOAT(dl->X()), FIXED2FLOAT(dl->Y()), FIXED2FLOAT(dl->Z()), dl->args[LIGHT_RED], 
-			dl->args[LIGHT_GREEN], dl->args[LIGHT_BLUE], FIXED2FLOAT(dl->radius));
+			dl->X(), dl->Y(), dl->Z(), dl->args[LIGHT_RED], 
+			dl->args[LIGHT_GREEN], dl->args[LIGHT_BLUE], dl->radius);
 		i++;
 
 		if (dl->target)

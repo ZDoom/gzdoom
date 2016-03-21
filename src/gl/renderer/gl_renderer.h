@@ -19,6 +19,16 @@ class GLPortal;
 class FLightBuffer;
 class FSamplerManager;
 
+inline float DEG2RAD(float deg)
+{
+	return deg * float(M_PI / 180.0);
+}
+
+inline float RAD2DEG(float deg)
+{
+	return deg * float(180. / M_PI);
+}
+
 enum SectorRenderFlags
 {
 	// This is used to avoid creating too many drawinfos
@@ -94,7 +104,7 @@ public:
 	void DrawScene(bool toscreen = false);
 	void DrawBlend(sector_t * viewsector);
 
-	void DrawPSprite (player_t * player,pspdef_t *psp,fixed_t sx, fixed_t sy, bool hudModelStep, int OverrideShader, bool alphatexture);
+	void DrawPSprite (player_t * player,pspdef_t *psp,float sx, float sy, bool hudModelStep, int OverrideShader, bool alphatexture);
 	void DrawPlayerSprites(sector_t * viewsector, bool hudModelStep);
 	void DrawTargeterSprites();
 

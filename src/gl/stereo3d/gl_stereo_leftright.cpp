@@ -37,6 +37,7 @@
 #include "vectors.h" // RAD2DEG
 #include "doomtype.h" // M_PI
 #include "gl/system/gl_cvars.h"
+#include "gl/renderer/gl_renderer.h"
 #include <cmath>
 
 EXTERN_CVAR(Float, vr_screendist)

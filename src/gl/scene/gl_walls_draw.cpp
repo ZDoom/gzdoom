@@ -117,9 +117,9 @@ void GLWall::SetupLights()
 
 			Vector fn, pos;
 
-			float x = FIXED2FLOAT(node->lightsource->X());
-			float y = FIXED2FLOAT(node->lightsource->Y());
-			float z = FIXED2FLOAT(node->lightsource->Z());
+			float x = node->lightsource->X();
+			float y = node->lightsource->Y();
+			float z = node->lightsource->Z();
 			float dist = fabsf(p.DistToPoint(x, z, y));
 			float radius = (node->lightsource->GetRadius() * gl_lights_size);
 			float scale = 1.0f / ((2.f * radius) - dist);

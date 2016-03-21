@@ -92,7 +92,7 @@ void GLSkyInfo::init(int sky1, PalEntry FadeColor)
 		texture[0] = FMaterial::ValidateTexture(texno, false, true);
 		if (!texture[0] || texture[0]->tex->UseType == FTexture::TEX_Null) goto normalsky;
 		skytexno1 = texno;
-		x_offset[0] = ANGLE_TO_FLOAT(s->GetTextureXOffset(pos));
+		x_offset[0] = ANGLE2FLOAT(s->GetTextureXOffset(pos));
 		y_offset = FIXED2FLOAT(s->GetTextureYOffset(pos));
 		mirrored = !l->args[2];
 	}

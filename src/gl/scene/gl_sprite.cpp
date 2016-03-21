@@ -281,12 +281,12 @@ void GLSprite::Draw(int pass)
 				float xcenter = (x1 + x2)*0.5;
 				float ycenter = (y1 + y2)*0.5;
 				float zcenter = (z1 + z2)*0.5;
-				float angleRad = DEG2RAD(270. - float(GLRenderer->mAngles.Yaw));
+				float angleRad = ToRadians(270. - GLRenderer->mAngles.Yaw);
 
 				Matrix3x4 mat;
 				mat.MakeIdentity();
 				mat.Translate(xcenter, zcenter, ycenter);
-				mat.Rotate(-sin(angleRad), 0, cos(angleRad), -GLRenderer->mAngles.Pitch);
+				mat.Rotate(-sin(angleRad), 0, cos(angleRad), -GLRenderer->mAngles.Pitch.Degrees);
 				mat.Translate(-xcenter, -zcenter, -ycenter);
 				v1 = mat * Vector(x1, z1, y1);
 				v2 = mat * Vector(x2, z1, y2);
@@ -387,8 +387,8 @@ void GLSprite::PerformSpriteClipAdjustment(AActor *thing, fixed_t thingx, fixed_
 		thing->IsKindOf(RUNTIME_CLASS(AInventory))) && (thing->flags&MF_ICECORPSE ||
 		!(thing->flags&MF_CORPSE))) || (gl_spriteclip == 3 && (smarterclip = true)) || gl_spriteclip > 1)
 	{
-		float btm = 1000000.0f;
-		float top = -1000000.0f;
+		float btm = 100000000.0f;
+		float top = -100000000.0f;
 		extsector_t::xfloor &x = thing->Sector->e->XFloor;
 
 		if (x.ffloors.Size())
@@ -396,17 +396,17 @@ void GLSprite::PerformSpriteClipAdjustment(AActor *thing, fixed_t thingx, fixed_
 			for (unsigned int i = 0; i < x.ffloors.Size(); i++)
 			{
 				F3DFloor * ff = x.ffloors[i];
-				fixed_t floorh = ff->top.plane->ZatPoint(thingx, thingy);
-				fixed_t ceilingh = ff->bottom.plane->ZatPoint(thingx, thingy);
+				float floorh = FIXED2FLOAT(ff->top.plane->ZatPoint(thingx, thingy));
+				float ceilingh = FIXED2FLOAT(ff->bottom.plane->ZatPoint(thingx, thingy));
 				if (floorh == thing->floorz)
 				{
-					btm = FIXED2FLOAT(floorh);
+					btm = floorh;
 				}
 				if (ceilingh == thing->ceilingz)
 				{
-					top = FIXED2FLOAT(ceilingh);
+					top = ceilingh;
 				}
-				if (btm != 1000000.0f && top != -1000000.0f)
+				if (btm != 100000000.0f && top != -100000000.0f)
 				{
 					break;
 				}
@@ -415,14 +415,14 @@ void GLSprite::PerformSpriteClipAdjustment(AActor *thing, fixed_t thingx, fixed_
 		else if (thing->Sector->heightsec && !(thing->Sector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
 		{
 			if (thing->flags2&MF2_ONMOBJ && thing->floorz ==
-				thing->Sector->heightsec->floorplane.ZatPoint(thingx, thingy))
+				FIXED2FLOAT(thing->Sector->heightsec->floorplane.ZatPoint(thingx, thingy)))
 			{
-				btm = FIXED2FLOAT(thing->floorz);
-				top = FIXED2FLOAT(thing->ceilingz);
+				btm = thing->floorz;
+				top = thing->ceilingz;
 			}
 		}
 		if (btm == 1000000.0f)
-			btm = FIXED2FLOAT(thing->Sector->floorplane.ZatPoint(thingx, thingy) - thing->floorclip);
+			btm = FIXED2FLOAT(thing->Sector->floorplane.ZatPoint(thing)) - thing->Floorclip;
 		if (top == -1000000.0f)
 			top = FIXED2FLOAT(thing->Sector->ceilingplane.ZatPoint(thingx, thingy));
 
@@ -492,11 +492,10 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 	}
 
 	int spritenum = thing->sprite;
-	fixed_t spritescaleX = thing->scaleX;
-	fixed_t spritescaleY = thing->scaleY;
+	DVector2 sprscale = thing->Scale;
 	if (thing->player != NULL)
 	{
-		P_CheckPlayerSprite(thing, spritenum, spritescaleX, spritescaleY);
+		P_CheckPlayerSprite(thing, spritenum, sprscale);
 	}
 
 	if (thing->renderflags & RF_INVISIBLE || !thing->RenderStyle.IsVisible(thing->alpha)) 
@@ -514,10 +513,10 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 	// Too close to the camera. This doesn't look good if it is a sprite.
 	if (P_AproxDistance(thingpos.x-viewx, thingpos.y-viewy)<2*FRACUNIT)
 	{
-		if (viewz >= thingpos.z - 2 * FRACUNIT && viewz <= thingpos.z + thing->height + 2 * FRACUNIT)
+		if (viewz >= thingpos.z - 2 * FRACUNIT && viewz <= thingpos.z + FLOAT2FIXED(thing->Height) + 2 * FRACUNIT)
 		{
 			// exclude vertically moving objects from this check.
-			if (!(thing->vel.x == 0 && thing->vel.y == 0 && thing->vel.z != 0))
+			if (!thing->Vel.isZero())
 			{
 				if (!gl_FindModelFrame(thing->GetClass(), spritenum, thing->frame, false))
 				{
@@ -532,7 +531,7 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 	{
 		if (!(thing->flags7 & MF7_FLYCHEAT) && thing->target==GLRenderer->mViewActor && GLRenderer->mViewActor != NULL)
 		{
-			fixed_t clipdist = clamp(thing->Speed, thing->target->radius, thing->target->radius*2);
+			fixed_t clipdist = FLOAT2FIXED(clamp(thing->Speed, thing->target->radius, thing->target->radius*2));
 			if (P_AproxDistance(thingpos.x-viewx, thingpos.y-viewy) < clipdist) return;
 		}
 		thing->flags7 |= MF7_FLYCHEAT;	// do this only once for the very first frame, but not if it gets into range again.
@@ -558,7 +557,7 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 	
 
 	x = FIXED2FLOAT(thingpos.x);
-	z = FIXED2FLOAT(thingpos.z-thing->floorclip);
+	z = FIXED2FLOAT(thingpos.z)-thing->Floorclip;
 	y = FIXED2FLOAT(thingpos.y);
 
 	// [RH] Make floatbobbing a renderer-only effect.
@@ -574,7 +573,7 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 		angle_t ang = R_PointToAngle(thingpos.x, thingpos.y);
 
 		bool mirror;
-		FTextureID patch = gl_GetSpriteFrame(spritenum, thing->frame, -1, ang - thing->angle, &mirror);
+		FTextureID patch = gl_GetSpriteFrame(spritenum, thing->frame, -1, ang - thing->Angles.Yaw.BAMs(), &mirror);
 		if (!patch.isValid()) return;
 		int type = thing->renderflags & RF_SPRITETYPEMASK;
 		gltexture = FMaterial::ValidateTexture(patch, (type == RF_FACESPRITE), false);
@@ -595,7 +594,7 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 			ur = gltexture->GetSpriteUL();
 		}
 
-		r.Scale(FIXED2FLOAT(spritescaleX), FIXED2FLOAT(spritescaleY));
+		r.Scale(sprscale.X, sprscale.Y);
 
 		float rightfac = -r.left;
 		float leftfac = rightfac - r.width;
@@ -603,7 +602,7 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 		z1 = z - r.top;
 		z2 = z1 - r.height;
 
-		float spriteheight = FIXED2FLOAT(spritescaleY) * r.height;
+		float spriteheight = sprscale.Y * r.height;
 
 		// Tests show that this doesn't look good for many decorations and corpses
 		if (spriteheight > 0 && gl_spriteclip > 0 && (thing->renderflags & RF_SPRITETYPEMASK) == RF_FACESPRITE)
@@ -626,8 +625,8 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 			break;
 
 		case RF_WALLSPRITE:
-			viewvecX = FIXED2FLOAT(finecosine[thing->angle >> ANGLETOFINESHIFT]);
-			viewvecY = FIXED2FLOAT(finesine[thing->angle >> ANGLETOFINESHIFT]);
+			viewvecX = thing->Angles.Yaw.Cos();
+			viewvecY = thing->Angles.Yaw.Sin();
 
 			x1 = x + viewvecY*leftfac;
 			x2 = x + viewvecY*rightfac;

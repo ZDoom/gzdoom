@@ -171,7 +171,7 @@ FLightDefaults::FLightDefaults(FName name, ELightType type)
 void FLightDefaults::ApplyProperties(ADynamicLight * light) const
 {
 	light->lighttype = m_type;
-	light->angle = m_Angle;
+	light->Angles.Yaw = ANGLE2DBL(m_Angle);
 	light->SetOffset(m_X, m_Y, m_Z);
 	light->halo = m_halo;
 	for (int a = 0; a < 3; a++) light->args[a] = clamp<int>((int)(m_Args[a] * gl_lights_intensity), 0, 255);
@@ -423,7 +423,7 @@ void gl_ParsePulseLight(FScanner &sc)
 				break;
 			case LIGHTTAG_INTERVAL:
 				floatVal = gl_ParseFloat(sc);
-				defaults->SetAngle(FLOAT_TO_ANGLE(floatVal * TICRATE));
+				defaults->SetAngle(FLOAT2ANGLE(floatVal * TICRATE));
 				break;
 			case LIGHTTAG_SUBTRACTIVE:
 				defaults->SetSubtractive(gl_ParseInt(sc) != 0);

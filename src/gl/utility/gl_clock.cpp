@@ -185,7 +185,7 @@ void CheckBench()
 
 		compose.Format("Map %s: \"%s\",\nx = %1.4f, y = %1.4f, z = %1.4f, angle = %1.4f, pitch = %1.4f\n",
 			level.MapName.GetChars(), level.LevelName.GetChars(), FIXED2FLOAT(viewx), FIXED2FLOAT(viewy), FIXED2FLOAT(viewz),
-			ANGLE_TO_FLOAT(viewangle), ANGLE_TO_FLOAT(viewpitch));
+			ANGLE2FLOAT(viewangle), ANGLE2FLOAT(viewpitch));
 
 		AppendRenderStats(compose);
 		AppendRenderTimes(compose);

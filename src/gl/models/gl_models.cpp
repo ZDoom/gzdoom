@@ -523,7 +523,7 @@ void gl_InitModels()
 					else if (sc.Compare("angleoffset"))
 					{
 						sc.MustGetFloat();
-						smf.angleoffset = FLOAT_TO_ANGLE(sc.Float);
+						smf.angleoffset = FLOAT2ANGLE(sc.Float);
 					}
 					else if (sc.Compare("pitchoffset"))
 					{
@@ -854,20 +854,20 @@ void gl_RenderModel(GLSprite * spr)
 
 
 	// y scale for a sprite means height, i.e. z in the world!
-	float scaleFactorX = FIXED2FLOAT(spr->actor->scaleX) * smf->xscale;
-	float scaleFactorY = FIXED2FLOAT(spr->actor->scaleX) * smf->yscale;
-	float scaleFactorZ = FIXED2FLOAT(spr->actor->scaleY) * smf->zscale;
+	float scaleFactorX = spr->actor->Scale.X * smf->xscale;
+	float scaleFactorY = spr->actor->Scale.X * smf->yscale;
+	float scaleFactorZ = spr->actor->Scale.Y * smf->zscale;
 	float pitch = 0;
 	float roll = 0;
 	float rotateOffset = 0;
-	float angle = ANGLE_TO_FLOAT(spr->actor->angle);
+	float angle = spr->actor->Angles.Yaw.Degrees;
 
 	// [BB] Workaround for the missing pitch information.
 	if ( (smf->flags & MDL_PITCHFROMMOMENTUM) )
 	{
-		const double x = static_cast<double>(spr->actor->vel.x);
-		const double y = static_cast<double>(spr->actor->vel.y);
-		const double z = static_cast<double>(spr->actor->vel.z);
+		const double x = spr->actor->Vel.X;
+		const double y = spr->actor->Vel.Y;
+		const double z = spr->actor->Vel.Z;
 		
 		// [BB] Calculate the pitch using spherical coordinates.
 		if(z || x || y) pitch = float(atan( z/sqrt(x*x+y*y) ) / M_PI * 180);
@@ -888,9 +888,8 @@ void gl_RenderModel(GLSprite * spr)
 
 	// Added MDL_INHERITACTORPITCH and MDL_INHERITACTORROLL flags processing.
 	// If both flags MDL_INHERITACTORPITCH and MDL_PITCHFROMMOMENTUM are set, the pitch sums up the actor pitch and the momentum vector pitch.
-	// This is rather crappy way to transfer fixet_t type into angle in degrees, but its works!
-	if(smf->flags & MDL_INHERITACTORPITCH) pitch += float(static_cast<double>(spr->actor->pitch >> 16) / (1 << 13) * 45 + static_cast<double>(spr->actor->pitch & 0x0000FFFF) / (1 << 29) * 45);
-	if(smf->flags & MDL_INHERITACTORROLL) roll += float(static_cast<double>(spr->actor->roll >> 16) / (1 << 13) * 45 + static_cast<double>(spr->actor->roll & 0x0000FFFF) / (1 << 29) * 45);
+	if(smf->flags & MDL_INHERITACTORPITCH) pitch += spr->actor->Angles.Pitch.Degrees;
+	if(smf->flags & MDL_INHERITACTORROLL) roll += spr->actor->Angles.Roll.Degrees;
 
 	gl_RenderState.mModelMatrix.loadIdentity();
 
@@ -920,7 +919,7 @@ void gl_RenderModel(GLSprite * spr)
 	gl_RenderState.mModelMatrix.translate(smf->xoffset / smf->xscale, smf->zoffset / smf->zscale, smf->yoffset / smf->yscale);
 	
 	// 5) Applying model rotations.
-	gl_RenderState.mModelMatrix.rotate(-ANGLE_TO_FLOAT(smf->angleoffset), 0, 1, 0);
+	gl_RenderState.mModelMatrix.rotate(-ANGLE2FLOAT(smf->angleoffset), 0, 1, 0);
 	gl_RenderState.mModelMatrix.rotate(smf->pitchoffset, 0, 0, 1);
 	gl_RenderState.mModelMatrix.rotate(-smf->rolloffset, 1, 0, 0);
 
@@ -983,7 +982,7 @@ void gl_RenderHUDModel(pspdef_t *psp, fixed_t ofsx, fixed_t ofsy)
 	gl_RenderState.mViewMatrix.rotate(90.f, 0, 1, 0);
 
 	// Applying angleoffset, pitchoffset, rolloffset.
-	gl_RenderState.mViewMatrix.rotate(-ANGLE_TO_FLOAT(smf->angleoffset), 0, 1, 0);
+	gl_RenderState.mViewMatrix.rotate(-ANGLE2FLOAT(smf->angleoffset), 0, 1, 0);
 	gl_RenderState.mViewMatrix.rotate(smf->pitchoffset, 0, 0, 1);
 	gl_RenderState.mViewMatrix.rotate(-smf->rolloffset, 1, 0, 0);
 	gl_RenderState.ApplyMatrices();

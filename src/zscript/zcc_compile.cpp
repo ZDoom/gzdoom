@@ -39,6 +39,7 @@ ZCCCompiler::ZCCCompiler(ZCC_AST &ast, DObject *_outer, PSymbolTable &_symbols)
 					case AST_Class:			Classes.Push(static_cast<ZCC_Class *>(node));			break;
 					case AST_Struct:		Structs.Push(static_cast<ZCC_Struct *>(node));			break;
 					case AST_ConstantDef:	Constants.Push(static_cast<ZCC_ConstantDef *>(node));	break;
+					default: assert(0 && "Default case is just here to make GCC happy. It should never be reached");
 					}
 				}
 				break;

@@ -293,7 +293,7 @@ void P_StrifeGunShot (AActor *mo, bool accurate, DAngle pitch)
 
 	if (mo->player != NULL && !accurate)
 	{
-		angle += pr_sgunshot.Random2() * (5.625 / 256) * mo->player->mo->AccuracyFactor();
+		angle += pr_sgunshot.Random2() * (22.5 / 256) * mo->player->mo->AccuracyFactor();
 	}
 
 	P_LineAttack (mo, angle, PLAYERMISSILERANGE, pitch, damage, NAME_Hitscan, NAME_StrifePuff);

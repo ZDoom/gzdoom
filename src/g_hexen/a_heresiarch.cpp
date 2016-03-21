@@ -171,26 +171,6 @@ IMPLEMENT_CLASS (ASorcBall3)
 
 // Sorcerer spell 1 (The burning, bouncing head thing) ----------------------
 
-/*
-class ASorcFX1 : public AActor
-{
-	DECLARE_CLASS (ASorcFX1, AActor)
-public:
-	bool FloorBounceMissile (secplane_t &plane)
-	{
-		fixed_t orgvelz = vel.z;
-
-		if (!Super::FloorBounceMissile (plane))
-		{
-			vel.z = -orgvelz;		// no energy absorbed
-			return false;
-		}
-		return true;
-	}
-};
-IMPLEMENT_CLASS (ASorcFX1)
-*/
-
 //============================================================================
 //
 // SorcBall::DoFireSpell

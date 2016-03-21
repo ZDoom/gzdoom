@@ -2281,8 +2281,8 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 			side = P_PointOnLineSide(spec.refpos.x, spec.refpos.y, ld);
 			if (oldside == 0 && side == 1)
 			{
-				divline_t dl2 = { ld->v1->x, ld->v1->y, ld->dx, ld->dy };
-				divline_t dl1 = { spec.oldrefpos.x, spec.oldrefpos.y, spec.refpos.x - spec.oldrefpos.x, spec.refpos.y - spec.oldrefpos.y };
+				fdivline_t dl2 = { ld->v1->x, ld->v1->y, ld->dx, ld->dy };
+				fdivline_t dl1 = { spec.oldrefpos.x, spec.oldrefpos.y, spec.refpos.x - spec.oldrefpos.x, spec.refpos.y - spec.oldrefpos.y };
 				fixed_t frac = P_InterceptVector(&dl1, &dl2);
 				if (frac < bestfrac)
 				{
@@ -2337,7 +2337,7 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 			// so that the renderer can properly calculate an interpolated position along the movement path.
 			if (thing == players[consoleplayer].camera)
 			{
-				divline_t dl1 = { besthit.oldrefpos.x,besthit. oldrefpos.y, besthit.refpos.x - besthit.oldrefpos.x, besthit.refpos.y - besthit.oldrefpos.y };
+				fdivline_t dl1 = { besthit.oldrefpos.x,besthit. oldrefpos.y, besthit.refpos.x - besthit.oldrefpos.x, besthit.refpos.y - besthit.oldrefpos.y };
 				fixedvec3a hit = { dl1.x + FixedMul(dl1.dx, bestfrac), dl1.y + FixedMul(dl1.dy, bestfrac), 0, 0. };
 
 				R_AddInterpolationPoint(hit);
@@ -2749,7 +2749,7 @@ void FSlide::HitSlideLine(line_t* ld)
 		}
 		else
 		{
-			divline_t dll, dlv;
+			fdivline_t dll, dlv;
 			fixed_t inter1, inter2, inter3;
 
 			P_MakeDivline(ld, &dll);
@@ -3554,7 +3554,7 @@ struct aim_t
 	//
 	//============================================================================
 
-	bool AimTraverse3DFloors(const divline_t &trace, intercept_t * in, int frontflag, int *planestocheck)
+	bool AimTraverse3DFloors(const fdivline_t &trace, intercept_t * in, int frontflag, int *planestocheck)
 	{
 		sector_t * nextsector;
 		secplane_t * nexttopplane, *nextbottomplane;

@@ -1218,7 +1218,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomMissile)
 			angle_t ang = (self->_f_angle() - ANGLE_90) >> ANGLETOFINESHIFT;
 			fixed_t x = spawnofs_xy * finecosine[ang];
 			fixed_t y = spawnofs_xy * finesine[ang];
-			fixed_t z = spawnheight + self->GetBobOffset() - 32*FRACUNIT + (self->player? self->player->crouchoffset : 0);
+			fixed_t z = spawnheight + self->GetBobOffset() - 32*FRACUNIT + (self->player? FLOAT2FIXED(self->player->crouchoffset) : 0);
 
 			fixedvec3 pos = self->_f_Pos();
 			switch (aimmode)
@@ -2544,7 +2544,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ThrowGrenade)
 	AActor *bo;
 
 	bo = Spawn(missile, 
-			self->PosPlusZ(-self->_f_floorclip() + self->GetBobOffset() + zheight + 35*FRACUNIT + (self->player? self->player->crouchoffset : 0)),
+			self->PosPlusZ(-self->_f_floorclip() + self->GetBobOffset() + zheight + 35*FRACUNIT + (self->player? FLOAT2FIXED(self->player->crouchoffset) : 0)),
 			ALLOW_REPLACE);
 	if (bo)
 	{

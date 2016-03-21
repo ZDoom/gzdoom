@@ -1779,7 +1779,7 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 	fixed_t oldz = mo->_f_Z();
 
 	double maxmove = (mo->waterlevel < 1) || (mo->flags & MF_MISSILE) || 
-					  (mo->player && mo->player->crouchoffset<-10*FRACUNIT) ? MAXMOVE : MAXMOVE/4;
+					  (mo->player && mo->player->crouchoffset<-10) ? MAXMOVE : MAXMOVE/4;
 
 	if (mo->flags2 & MF2_WINDTHRUST && mo->waterlevel < 2 && !(mo->flags & MF_NOCLIP))
 	{
@@ -4634,8 +4634,8 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 	}
 	else
 	{
-		spawn_x = mthing->x;
-		spawn_y = mthing->y;
+		spawn_x = mthing->_f_X();
+		spawn_y = mthing->_f_Y();
 
 		// Allow full angular precision
 		SpawnAngle = (double)mthing->angle;
@@ -4658,9 +4658,9 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 	if (level.flags & LEVEL_USEPLAYERSTARTZ)
 	{
 		if (spawn_z == ONFLOORZ)
-			mobj->_f_AddZ(mthing->z);
+			mobj->AddZ(mthing->pos.Z);
 		else if (spawn_z == ONCEILINGZ)
-			mobj->_f_AddZ(-mthing->z);
+			mobj->AddZ(-mthing->pos.Z);
 		P_FindFloorCeiling(mobj, FFCF_SAMESECTOR | FFCF_ONLY3DFLOORS | FFCF_3DRESTRICT);
 	}
 
@@ -6628,6 +6628,17 @@ void AActor::ClearCounters()
 		level.total_secrets--;
 		flags5 &= ~MF5_COUNTSECRET;
 	}
+}
+
+
+int AActor::ApplyDamageFactor(FName damagetype, int damage) const
+{
+	damage = int(damage * DamageFactor);
+	if (damage > 0)
+	{
+		damage = DamageTypeDefinition::ApplyMobjDamageFactor(damage, damagetype, GetClass()->DamageFactors);
+	}
+	return damage;
 }
 
 

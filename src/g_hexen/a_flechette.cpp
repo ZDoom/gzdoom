@@ -94,7 +94,7 @@ bool AArtiPoisonBag3::Use (bool pickup)
 {
 	AActor *mo;
 
-	mo = Spawn("ThrowingBomb", Owner->PosPlusZ(-Owner->Floorclip+35. + FIXED2FLOAT(Owner->player? Owner->player->crouchoffset : 0)), ALLOW_REPLACE);
+	mo = Spawn("ThrowingBomb", Owner->PosPlusZ(35. - Owner->Floorclip + (Owner->player? Owner->player->crouchoffset : 0)), ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->Angles.Yaw = Owner->Angles.Yaw + (((pr_poisonbag() & 7) - 4) * (360./256.));
@@ -337,11 +337,7 @@ int APoisonCloud::DoSpecialDamage (AActor *victim, int damage, FName damagetype)
 				victim->Inventory->ModifyDamage(damage, damagetype, damage, true);
 			}
 			// Modify with damage factors
-			damage = FixedMul(damage, victim->DamageFactor);
-			if (damage > 0)
-			{
-				damage = DamageTypeDefinition::ApplyMobjDamageFactor(damage, damagetype, victim->GetClass()->DamageFactors);
-			}
+			damage = victim->ApplyDamageFactor(damagetype, damage);
 			if (damage > 0)
 			{
 				P_PoisonDamage (victim->player, this,

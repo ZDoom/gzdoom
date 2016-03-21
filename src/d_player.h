@@ -492,7 +492,7 @@ public:
 	DAngle			MaxPitch;
 
 	double crouchfactor;
-	fixed_t crouchoffset;
+	double crouchoffset;
 	fixed_t crouchviewdelta;
 
 	FWeaponSlots weapons;

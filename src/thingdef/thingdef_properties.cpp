@@ -1217,7 +1217,7 @@ DEFINE_PROPERTY(deathtype, S, Actor)
 DEFINE_PROPERTY(damagefactor, ZF, Actor)
 {
 	PROP_STRING_PARM(str, 0);
-	PROP_FIXED_PARM(id, 1);
+	PROP_DOUBLE_PARM(id, 1);
 
 	if (str == NULL)
 	{
@@ -1229,7 +1229,7 @@ DEFINE_PROPERTY(damagefactor, ZF, Actor)
 		if (!stricmp(str, "Normal")) dmgType = NAME_None;
 		else dmgType=str;
 
-		info->SetDamageFactor(dmgType, id);
+		info->SetDamageFactor(dmgType, FLOAT2FIXED(id));
 	}
 }
 

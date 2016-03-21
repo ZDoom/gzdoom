@@ -1272,7 +1272,7 @@ public:
 	int PainThreshold;
 	FNameNoInit DamageType;
 	FNameNoInit DamageTypeReceived;
-	fixed_t DamageFactor;
+	double DamageFactor;
 	fixed_t DamageMultiply;
 
 	FNameNoInit PainType;
@@ -1576,6 +1576,8 @@ public:
 	{
 		return MAX(1., Distance2D(dest) / speed);
 	}
+
+	int ApplyDamageFactor(FName damagetype, int damage) const;
 
 };
 

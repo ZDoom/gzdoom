@@ -428,15 +428,19 @@ enum EMapThingFlags
 // A simplified mapthing for player starts
 struct FPlayerStart
 {
-	fixed_t x, y, z;
+	DVector3 pos;
 	short angle, type;
 
 	FPlayerStart() { }
 	FPlayerStart(const FMapThing *mthing, int pnum)
-	: x(mthing->x), y(mthing->y), z(mthing->z),
+	: pos(FIXED2DBL(mthing->x), FIXED2DBL(mthing->y), FIXED2DBL(mthing->z)),
 	  angle(mthing->angle),
 	  type(pnum)
 	{ }
+
+	fixed_t _f_X() { return FLOAT2FIXED(pos.X); }
+	fixed_t _f_Y() { return FLOAT2FIXED(pos.Y); }
+	fixed_t _f_Z() { return FLOAT2FIXED(pos.Z); }
 };
 // Player spawn spots for deathmatch.
 extern TArray<FPlayerStart> deathmatchstarts;

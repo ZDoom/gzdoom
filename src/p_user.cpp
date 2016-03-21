@@ -2430,7 +2430,7 @@ void P_PlayerThink (player_t *player)
 		player->Uncrouch();
 	}
 
-	player->crouchoffset = -fixed_t(player->mo->ViewHeight * (1 - player->crouchfactor));
+	player->crouchoffset = -(FIXED2DBL(player->mo->ViewHeight) * (1 - player->crouchfactor));
 
 	// MUSINFO stuff
 	if (player->MUSINFOtics >= 0 && player->MUSINFOactor != NULL)

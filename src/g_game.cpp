@@ -1430,9 +1430,9 @@ bool G_CheckSpot (int playernum, FPlayerStart *mthing)
 
 	if (mthing->type == 0) return false;
 
-	x = mthing->x;
-	y = mthing->y;
-	z = mthing->z;
+	x = mthing->_f_X();
+	y = mthing->_f_Y();
+	z = mthing->_f_Z();
 
 	if (!(level.flags & LEVEL_USEPLAYERSTARTZ))
 	{
@@ -1476,10 +1476,10 @@ bool G_CheckSpot (int playernum, FPlayerStart *mthing)
 //
 
 // [RH] Returns the distance of the closest player to the given mapthing
-static fixed_t PlayersRangeFromSpot (FPlayerStart *spot)
+static double PlayersRangeFromSpot (FPlayerStart *spot)
 {
-	fixed_t closest = INT_MAX;
-	fixed_t distance;
+	double closest = INT_MAX;
+	double distance;
 	int i;
 
 	for (i = 0; i < MAXPLAYERS; i++)
@@ -1487,7 +1487,7 @@ static fixed_t PlayersRangeFromSpot (FPlayerStart *spot)
 		if (!playeringame[i] || !players[i].mo || players[i].health <= 0)
 			continue;
 
-		distance = players[i].mo->AproxDistance (spot->x, spot->y);
+		distance = players[i].mo->Distance2D(spot->pos.X, spot->pos.Y);
 
 		if (distance < closest)
 			closest = distance;
@@ -1499,13 +1499,13 @@ static fixed_t PlayersRangeFromSpot (FPlayerStart *spot)
 // [RH] Select the deathmatch spawn spot farthest from everyone.
 static FPlayerStart *SelectFarthestDeathmatchSpot (size_t selections)
 {
-	fixed_t bestdistance = 0;
+	double bestdistance = 0;
 	FPlayerStart *bestspot = NULL;
 	unsigned int i;
 
 	for (i = 0; i < selections; i++)
 	{
-		fixed_t distance = PlayersRangeFromSpot (&deathmatchstarts[i]);
+		double distance = PlayersRangeFromSpot (&deathmatchstarts[i]);
 
 		if (distance > bestdistance)
 		{

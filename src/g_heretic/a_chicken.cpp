@@ -125,8 +125,7 @@ void P_UpdateBeak (AActor *self)
 {
 	if (self->player != NULL)
 	{
-		self->player->psprites[ps_weapon].sy = WEAPONTOP +
-			(self->player->chickenPeck << (FRACBITS-1));
+		self->player->psprites[ps_weapon].sy = WEAPONTOP + self->player->chickenPeck / 2;
 	}
 }
 

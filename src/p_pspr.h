@@ -28,12 +28,12 @@
 #include "tables.h"
 #include "thingdef/thingdef.h"
 
-#define WEAPONBOTTOM			128*FRACUNIT
+#define WEAPONBOTTOM			128.
 
 // [RH] +0x6000 helps it meet the screen bottom
 //		at higher resolutions while still being in
 //		the right spot at 320x200.
-#define WEAPONTOP				(32*FRACUNIT+0x6000)
+#define WEAPONTOP				(32+6./16)
 
 
 //
@@ -66,8 +66,8 @@ struct pspdef_t
 {
 	FState*		state;	// a NULL state means not active
 	int 		tics;
-	fixed_t 	sx;
-	fixed_t 	sy;
+	double	 	sx;
+	double 		sy;
 	int			sprite;
 	int			frame;
 	bool		processPending; // true: waiting for periodic processing on this tick

@@ -1316,10 +1316,10 @@ void APowerTargeter::InitEffect ()
 		P_SetPsprite (player, ps_targetright, state + 2);
 	}
 
-	player->psprites[ps_targetcenter].sx = (160-3)*FRACUNIT;
+	player->psprites[ps_targetcenter].sx = (160-3);
 	player->psprites[ps_targetcenter].sy =
 		player->psprites[ps_targetleft].sy =
-		player->psprites[ps_targetright].sy = (100-3)*FRACUNIT;
+		player->psprites[ps_targetright].sy = (100-3);
 	PositionAccuracy ();
 }
 
@@ -1382,8 +1382,8 @@ void APowerTargeter::PositionAccuracy ()
 
 	if (player != NULL)
 	{
-		player->psprites[ps_targetleft].sx = (160-3)*FRACUNIT - ((100 - player->mo->accuracy) << FRACBITS);
-		player->psprites[ps_targetright].sx = (160-3)*FRACUNIT + ((100 - player->mo->accuracy) << FRACBITS);
+		player->psprites[ps_targetleft].sx = (160-3) - ((100 - player->mo->accuracy));
+		player->psprites[ps_targetright].sx = (160-3)+ ((100 - player->mo->accuracy));
 	}
 }
 

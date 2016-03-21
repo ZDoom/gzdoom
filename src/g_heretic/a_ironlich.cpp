@@ -73,7 +73,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_LichAttack)
 	int randAttack;
 	static const int atkResolve1[] = { 50, 150 };
 	static const int atkResolve2[] = { 150, 200 };
-	int dist;
 
 	// Ice ball		(close 20% : far 60%)
 	// Fire column	(close 40% : far 20%)
@@ -93,7 +92,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LichAttack)
 		P_TraceBleed (newdam > 0 ? newdam : damage, target, self);
 		return 0;
 	}
-	dist = self->AproxDistance (target) > 8*64*FRACUNIT;
+	int dist = self->Distance2D(target) > 8 * 64;
 	randAttack = pr_atk ();
 	if (randAttack < atkResolve1[dist])
 	{ // Ice ball

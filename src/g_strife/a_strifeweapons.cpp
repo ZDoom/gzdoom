@@ -500,8 +500,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMauler2Pre)
 
 	if (self->player != NULL)
 	{
-		self->player->psprites[ps_weapon].sx += pr_mauler2.Random2() << 10;
-		self->player->psprites[ps_weapon].sy += pr_mauler2.Random2() << 10;
+		self->player->psprites[ps_weapon].sx += pr_mauler2.Random2() / 64.;
+		self->player->psprites[ps_weapon].sy += pr_mauler2.Random2() / 64.;
 	}
 	return 0;
 }

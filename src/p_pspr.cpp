@@ -33,8 +33,8 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define LOWERSPEED				FRACUNIT*6
-#define RAISESPEED				FRACUNIT*6
+#define LOWERSPEED				6.
+#define RAISESPEED				6.
 
 // TYPES -------------------------------------------------------------------
 
@@ -169,11 +169,11 @@ void P_SetPsprite (player_t *player, int position, FState *state, bool nofunctio
 
 		if (state->GetMisc1())
 		{ // Set coordinates.
-			psp->sx = state->GetMisc1()<<FRACBITS;
+			psp->sx = state->GetMisc1();
 		}
 		if (state->GetMisc2())
 		{
-			psp->sy = state->GetMisc2()<<FRACBITS;
+			psp->sy = state->GetMisc2();
 		}
 
 		if (!nofunction && player->mo != NULL)

@@ -272,8 +272,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GauntletAttack)
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return 0;
 	}
-	player->psprites[ps_weapon].sx = ((pr_gatk()&3)-2) * FRACUNIT;
-	player->psprites[ps_weapon].sy = WEAPONTOP + (pr_gatk()&3) * FRACUNIT;
+	player->psprites[ps_weapon].sx = ((pr_gatk()&3)-2);
+	player->psprites[ps_weapon].sy = WEAPONTOP + (pr_gatk()&3);
 	Angle = self->Angles.Yaw;
 	if (power)
 	{
@@ -441,8 +441,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMacePL1)
 		if (!weapon->DepleteAmmo(weapon->bAltFire))
 			return 0;
 	}
-	player->psprites[ps_weapon].sx = ((pr_maceatk() & 3) - 2)*FRACUNIT;
-	player->psprites[ps_weapon].sy = WEAPONTOP + (pr_maceatk() & 3)*FRACUNIT;
+	player->psprites[ps_weapon].sx = ((pr_maceatk() & 3) - 2);
+	player->psprites[ps_weapon].sy = WEAPONTOP + (pr_maceatk() & 3);
 	ball = P_SpawnPlayerMissile(self, PClass::FindActor("MaceFX1"), self->Angles.Yaw + (((pr_maceatk() & 7) - 4) * (360. / 256)));
 	if (ball)
 	{
@@ -1065,7 +1065,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SkullRodStorm)
 		return 0;
 	}
 	if (self->bouncecount >= 0 && (unsigned)self->bouncecount < self->Sector->e->XFloor.ffloors.Size())
-		pos.Z = self->Sector->e->XFloor.ffloors[self->bouncecount]->bottom.plane->ZatPointF(mo);// - 40 * FRACUNIT;
+		pos.Z = self->Sector->e->XFloor.ffloors[self->bouncecount]->bottom.plane->ZatPointF(mo);
 	else
 		pos.Z = self->Sector->ceilingplane.ZatPointF(mo);
 	int moceiling = P_Find3DFloor(NULL, pos, false, false, pos.Z);

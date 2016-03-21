@@ -741,7 +741,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_HandLower)
 	if (self->player != NULL)
 	{
 		pspdef_t *psp = &self->player->psprites[ps_weapon];
-		psp->sy += FRACUNIT*9;
+		psp->sy += 9;
 		if (psp->sy > WEAPONBOTTOM*2)
 		{
 			P_SetPsprite (self->player, ps_weapon, NULL);

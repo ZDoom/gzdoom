@@ -4768,9 +4768,9 @@ static bool DoSpawnDecal(AActor *actor, const FDecalTemplate *tpl, int flags, an
 	{
 		angle += actor->_f_angle();
 	}
-	return NULL != ShootDecal(tpl, actor, actor->Sector, actor->_f_X(), actor->_f_Y(),
-		actor->_f_Z() + (actor->_f_height()>>1) - actor->_f_floorclip() + actor->GetBobOffset() + zofs,
-		angle, distance, !!(flags & SDF_PERMANENT));
+	return NULL != ShootDecal(tpl, actor, actor->Sector, actor->X(), actor->Y(),
+		actor->Center() - actor->Floorclip + actor->GetBobOffset() + FIXED2DBL(zofs),
+		DAngle(ANGLE2DBL(angle)), FIXED2DBL(distance), !!(flags & SDF_PERMANENT));
 }
 
 static void SetActorAngle(AActor *activator, int tid, int angle, bool interpolate)

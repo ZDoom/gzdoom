@@ -4540,7 +4540,8 @@ void P_TraceBleed(int damage, fixed_t x, fixed_t y, fixed_t z, AActor *actor, an
 					bloodcolor.a = 1;
 				}
 
-				DImpactDecal::StaticCreate(bloodType, bleedtrace.HitPos, 
+				DVector3 hp(FIXED2DBL(bleedtrace.HitPos.x), FIXED2DBL(bleedtrace.HitPos.y), FIXED2DBL(bleedtrace.HitPos.z));
+				DImpactDecal::StaticCreate(bloodType, hp,
 					bleedtrace.Line->sidedef[bleedtrace.Side], bleedtrace.ffloor, bloodcolor);
 			}
 		}
@@ -6418,8 +6419,9 @@ void SpawnShootDecal(AActor *t1, const FTraceResults &trace)
 	}
 	if (decalbase != NULL)
 	{
+		DVector3 hp(FIXED2DBL(trace.HitPos.x), FIXED2DBL(trace.HitPos.y), FIXED2DBL(trace.HitPos.z));
 		DImpactDecal::StaticCreate(decalbase->GetDecal(),
-			trace.HitPos, trace.Line->sidedef[trace.Side], trace.ffloor);
+			hp, trace.Line->sidedef[trace.Side], trace.ffloor);
 	}
 }
 

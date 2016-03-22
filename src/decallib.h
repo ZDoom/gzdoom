@@ -74,13 +74,13 @@ public:
 	const FDecalTemplate *GetDecal () const;
 	void ReplaceDecalRef (FDecalBase *from, FDecalBase *to);
 
-	fixed_t ScaleX, ScaleY;
+	double ScaleX, ScaleY;
 	DWORD ShadeColor;
 	DWORD Translation;
 	FRenderStyle RenderStyle;
 	FTextureID PicNum;
 	WORD RenderFlags;
-	WORD Alpha;				// same as (actor->alpha >> 1)
+	double Alpha;				// same as actor->alpha
 	const FDecalAnimator *Animator;
 	const FDecalBase *LowerDecal;
 

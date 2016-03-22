@@ -28,8 +28,8 @@ static FRandom pr_orbit ("Orbit");
 		233: -30° / seconds
 		244: -15° / seconds
 		This value only matters if args[2] is not zero.
-	args[4]: Rotation _f_radius() of bridge balls, in bridge _f_radius() %.
-		If 0, use Hexen default: ORBIT_RADIUS, regardless of bridge _f_radius().
+	args[4]: Rotation radius of bridge balls, in bridge radius %.
+		If 0, use Hexen default: ORBIT_RADIUS, regardless of bridge radius.
 		This value only matters if args[2] is not zero.
 */
 
@@ -102,17 +102,17 @@ DEFINE_ACTION_FUNCTION(AActor, A_BridgeOrbit)
 	// Set default values
 	// Every five tics, Hexen moved the ball 3/256th of a revolution.
 	DAngle rotationspeed  = 45./32*3/5;
-	int rotationradius = ORBIT_RADIUS;
+	double rotationradius = ORBIT_RADIUS;
 	// If the bridge is custom, set non-default values if any.
 
 	// Set angular speed; 1--128: counterclockwise rotation ~=1--180°; 129--255: clockwise rotation ~= 180--1°
 	if (self->target->args[3] > 128) rotationspeed = 45./32 * (self->target->args[3]-256) / TICRATE;
 	else if (self->target->args[3] > 0) rotationspeed = 45./32 * (self->target->args[3]) / TICRATE;
-	// Set rotation _f_radius()
-	if (self->target->args[4]) rotationradius = ((self->target->args[4] * self->target->_f_radius()) / 100);
+	// Set rotation radius
+	if (self->target->args[4]) rotationradius = ((self->target->args[4] * self->target->radius) / 100);
 
 	self->Angles.Yaw += rotationspeed;
-	self->SetOrigin(self->target->Vec3Angle(rotationradius*FRACUNIT, self->Angles.Yaw, 0), true);
+	self->SetOrigin(self->target->Vec3Angle(rotationradius, self->Angles.Yaw, 0), true);
 	self->floorz = self->target->floorz;
 	self->ceilingz = self->target->ceilingz;
 	return 0;

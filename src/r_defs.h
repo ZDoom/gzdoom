@@ -95,6 +95,16 @@ struct vertex_t
 {
 	fixed_t x, y;
 
+	double fX() const
+	{
+		return FIXED2DBL(x);
+	}
+
+	double fY() const
+	{
+		return FIXED2DBL(y);
+	}
+
 	bool operator== (const vertex_t &other)
 	{
 		return x == other.x && y == other.y;
@@ -722,6 +732,11 @@ struct sector_t
 	fixed_t GetPlaneTexZ(int pos) const
 	{
 		return planes[pos].TexZ;
+	}
+
+	double GetPlaneTexZF(int pos) const
+	{
+		return FIXED2DBL(planes[pos].TexZ);
 	}
 
 	void SetPlaneTexZ(int pos, fixed_t val)

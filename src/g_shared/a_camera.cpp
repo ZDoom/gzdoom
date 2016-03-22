@@ -173,9 +173,8 @@ void AAimingCamera::Tick ()
 		}
 		if (MaxPitchChange != 0)
 		{ // Aim camera's pitch; use floats for precision
-			fixedvec2 fv3 = tracer->_f_Vec2To(this);
-			DVector2 vect(fv3.x, fv3.y);
-			double dz = _f_Z() - tracer->_f_Z() - tracer->_f_height()/2;
+			DVector2 vect = tracer->Vec2To(this);
+			double dz = Z() - tracer->Z() - tracer->Height/2;
 			double dist = vect.Length();
 			DAngle desiredPitch = dist != 0.f ? VecToAngle(dist, dz) : 0.;
 			DAngle diff = deltaangle(Angles.Pitch, desiredPitch);

@@ -1445,7 +1445,7 @@ void P_ExplodeMissile (AActor *mo, line_t *line, AActor *target)
 						}
 					}
 
-					DImpactDecal::StaticCreate(base->GetDecal(), { x, y, z }, line->sidedef[side], ffloor);
+					DImpactDecal::StaticCreate(base->GetDecal(), DVector3(FIXED2DBL(x), FIXED2DBL(y), FIXED2DBL(z)), line->sidedef[side], ffloor);
 				}
 			}
 		}

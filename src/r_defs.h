@@ -258,6 +258,11 @@ struct secplane_t
 		return FixedMul(ic, -d - DMulScale16(a, spot.x, b, spot.y));
 	}
 
+	double ZatPointF(const fixedvec3 &spot) const
+	{
+		return FIXED2DBL(FixedMul(ic, -d - DMulScale16(a, spot.x, b, spot.y)));
+	}
+
 	// Returns the value of z at (x,y)
 	fixed_t ZatPoint (fixed_t x, fixed_t y) const
 	{

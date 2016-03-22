@@ -2205,7 +2205,7 @@ void DPusher::Tick ()
 	sector_t *sec;
 	AActor *thing;
 	msecnode_t *node;
-	int ht;
+	double ht;
 
 	if (!var_pushers)
 		return;
@@ -2307,8 +2307,8 @@ void DPusher::Tick ()
 			}
 			else // special water sector
 			{
-				ht = hsec->floorplane.ZatPoint(pos);
-				if (thing->_f_Z() > ht) // above ground
+				ht = hsec->floorplane.ZatPointF(pos);
+				if (thing->Z() > ht) // above ground
 				{
 					pushvel = m_PushVec; // full force
 				}
@@ -2334,7 +2334,7 @@ void DPusher::Tick ()
 			{ // special water sector
 				floor = &hsec->floorplane;
 			}
-			if (thing->_f_Z() > floor->ZatPoint(pos))
+			if (thing->Z() > floor->ZatPointF(pos))
 			{ // above ground
 				pushvel.Zero(); // no force
 			}

@@ -24,6 +24,7 @@
 
 
 #include <math.h>
+#include <float.h>
 #ifdef _MSC_VER
 #include <malloc.h>		// for alloca()
 #endif
@@ -3608,7 +3609,7 @@ void P_SetupLevel (const char *lumpname, int position)
 	translationtables[TRANSLATION_LevelScripted].Clear();
 
 	// Initial height of PointOfView will be set by player think.
-	players[consoleplayer].viewz = 1; 
+	players[consoleplayer].viewz = -FLT_MAX; 
 
 	// Make sure all sounds are stopped before Z_FreeTags.
 	S_Start ();

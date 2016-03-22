@@ -985,7 +985,7 @@ void R_SetupFrame (AActor *actor)
 	{
 		iview->nviewx = camera->_f_X();
 		iview->nviewy = camera->_f_Y();
-		iview->nviewz = camera->player ? camera->player->viewz : FLOAT2FIXED(camera->Z() + camera->GetCameraHeight());
+		iview->nviewz = FLOAT2FIXED(camera->player ? camera->player->viewz : camera->Z() + camera->GetCameraHeight());
 		viewsector = camera->Sector;
 		r_showviewer = false;
 	}

@@ -1846,14 +1846,14 @@ void P_CalcHeight (player_t *player)
 		}
 	}
 
-	fixed_t defaultviewheight = player->mo->ViewHeight + player->crouchviewdelta;
+	double defaultviewheight = player->mo->ViewHeight + player->crouchviewdelta;
 
 	if (player->cheats & CF_NOVELOCITY)
 	{
-		player->viewz = player->mo->_f_Z() + defaultviewheight;
+		player->viewz = player->mo->Z() + defaultviewheight;
 
-		if (player->viewz > player->mo->_f_ceilingz()-4*FRACUNIT)
-			player->viewz = player->mo->_f_ceilingz()-4*FRACUNIT;
+		if (player->viewz > player->mo->ceilingz-4)
+			player->viewz = player->mo->ceilingz-4;
 
 		return;
 	}
@@ -1879,16 +1879,16 @@ void P_CalcHeight (player_t *player)
 	// move viewheight
 	if (player->playerstate == PST_LIVE)
 	{
-		player->viewheight += FLOAT2FIXED(player->deltaviewheight);
+		player->viewheight += player->deltaviewheight;
 
 		if (player->viewheight > defaultviewheight)
 		{
 			player->viewheight = defaultviewheight;
 			player->deltaviewheight = 0;
 		}
-		else if (player->viewheight < (defaultviewheight>>1))
+		else if (player->viewheight < (defaultviewheight/2))
 		{
-			player->viewheight = defaultviewheight>>1;
+			player->viewheight = defaultviewheight/2;
 			if (player->deltaviewheight <= 0)
 				player->deltaviewheight = 1 / 65536.;
 		}
@@ -1905,19 +1905,19 @@ void P_CalcHeight (player_t *player)
 	{
 		bob = 0;
 	}
-	player->viewz = player->mo->_f_Z() + player->viewheight + FLOAT2FIXED(bob);
+	player->viewz = player->mo->Z() + player->viewheight + bob;
 	if (player->mo->Floorclip && player->playerstate != PST_DEAD
 		&& player->mo->Z() <= player->mo->floorz)
 	{
-		player->viewz -= player->mo->_f_floorclip();
+		player->viewz -= player->mo->Floorclip;
 	}
-	if (player->viewz > player->mo->_f_ceilingz() - 4*FRACUNIT)
+	if (player->viewz > player->mo->ceilingz - 4)
 	{
-		player->viewz = player->mo->_f_ceilingz() - 4*FRACUNIT;
+		player->viewz = player->mo->ceilingz - 4;
 	}
-	if (player->viewz < player->mo->_f_floorz() + 4*FRACUNIT)
+	if (player->viewz < player->mo->floorz + 4)
 	{
-		player->viewz = player->mo->_f_floorz() + 4*FRACUNIT;
+		player->viewz = player->mo->floorz + 4;
 	}
 }
 
@@ -2141,7 +2141,7 @@ void P_DeathThink (player_t *player)
 	player->onground = (player->mo->Z() <= player->mo->floorz);
 	if (player->mo->IsKindOf (RUNTIME_CLASS(APlayerChunk)))
 	{ // Flying bloody skull or flying ice chunk
-		player->viewheight = 6 * FRACUNIT;
+		player->viewheight = 6;
 		player->deltaviewheight = 0;
 		if (player->onground)
 		{
@@ -2155,13 +2155,13 @@ void P_DeathThink (player_t *player)
 	else if (!(player->mo->flags & MF_ICECORPSE))
 	{ // Fall to ground (if not frozen)
 		player->deltaviewheight = 0;
-		if (player->viewheight > 6*FRACUNIT)
+		if (player->viewheight > 6)
 		{
-			player->viewheight -= FRACUNIT;
+			player->viewheight -= 1;
 		}
-		if (player->viewheight < 6*FRACUNIT)
+		if (player->viewheight < 6)
 		{
-			player->viewheight = 6*FRACUNIT;
+			player->viewheight = 6;
 		}
 		if (player->mo->Angles.Pitch < 0)
 		{
@@ -2244,14 +2244,14 @@ void P_CrouchMove(player_t * player, int direction)
 	double defaultheight = player->mo->GetDefault()->Height;
 	double savedheight = player->mo->Height;
 	double crouchspeed = direction * CROUCHSPEED;
-	fixed_t oldheight = player->viewheight;
+	double oldheight = player->viewheight;
 
 	player->crouchdir = (signed char) direction;
 	player->crouchfactor += crouchspeed;
 
 	// check whether the move is ok
 	player->mo->Height  = defaultheight * player->crouchfactor;
-	if (!P_TryMove(player->mo, player->mo->_f_X(), player->mo->_f_Y(), false, NULL))
+	if (!P_TryMove(player->mo, player->mo->Pos(), false, NULL))
 	{
 		player->mo->Height = savedheight;
 		if (direction > 0)
@@ -2264,11 +2264,11 @@ void P_CrouchMove(player_t * player, int direction)
 	player->mo->Height = savedheight;
 
 	player->crouchfactor = clamp(player->crouchfactor, 0.5, 1.);
-	player->viewheight = fixed_t(player->mo->ViewHeight * player->crouchfactor);
+	player->viewheight = player->mo->ViewHeight * player->crouchfactor;
 	player->crouchviewdelta = player->viewheight - player->mo->ViewHeight;
 
 	// Check for eyes going above/below fake floor due to crouching motion.
-	P_CheckFakeFloorTriggers(player->mo, player->mo->_f_Z() + oldheight, true);
+	P_CheckFakeFloorTriggers(player->mo, player->mo->_f_Z() + FLOAT2FIXED(oldheight), true);
 }
 
 //----------------------------------------------------------------------------
@@ -2430,7 +2430,7 @@ void P_PlayerThink (player_t *player)
 		player->Uncrouch();
 	}
 
-	player->crouchoffset = -(FIXED2DBL(player->mo->ViewHeight) * (1 - player->crouchfactor));
+	player->crouchoffset = -(player->mo->ViewHeight) * (1 - player->crouchfactor);
 
 	// MUSINFO stuff
 	if (player->MUSINFOtics >= 0 && player->MUSINFOactor != NULL)

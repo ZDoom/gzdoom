@@ -715,7 +715,7 @@ void cht_Give (player_t *player, const char *name, int amount)
 		{
 			ABasicArmorPickup *armor = Spawn<ABasicArmorPickup> ();
 			armor->SaveAmount = 100*deh.BlueAC;
-			armor->SavePercent = gameinfo.Armor2Percent > 0? gameinfo.Armor2Percent : FRACUNIT/2;
+			armor->SavePercent = gameinfo.Armor2Percent > 0? gameinfo.Armor2Percent : 0.5;
 			if (!armor->CallTryPickup (player->mo))
 			{
 				armor->Destroy ();

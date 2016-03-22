@@ -282,7 +282,7 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 					if (harmor->Slots[armorType] > 0 && harmor->SlotsIncrement[armorType] > 0)
 					{
 						//combine the alpha values
-						alpha = FixedMul(alpha, MIN<fixed_t> (OPAQUE, Scale(harmor->Slots[armorType], OPAQUE, harmor->SlotsIncrement[armorType])));
+						alpha = int(alpha * MIN(1., harmor->Slots[armorType] / harmor->SlotsIncrement[armorType]));
 						texture = statusBar->Images[image];
 					}
 					else
@@ -1377,21 +1377,21 @@ class CommandDrawNumber : public CommandDrawString
 				case ARMORCLASS:
 				case SAVEPERCENT:
 				{
+					double add = 0;
 					AHexenArmor *harmor = statusBar->CPlayer->mo->FindInventory<AHexenArmor>();
 					if(harmor != NULL)
 					{
-						num = harmor->Slots[0] + harmor->Slots[1] +
+						add = harmor->Slots[0] + harmor->Slots[1] +
 							harmor->Slots[2] + harmor->Slots[3] + harmor->Slots[4];
 					}
 					//Hexen counts basic armor also so we should too.
 					if(statusBar->armor != NULL)
 					{
-						num += FixedMul(statusBar->armor->SavePercent, 100*FRACUNIT);
+						add += statusBar->armor->SavePercent * 100;
 					}
 					if(value == ARMORCLASS)
-						num /= (5*FRACUNIT);
-					else
-						num >>= FRACBITS;
+						add /= 5;
+					num = int(add);
 					break;
 				}
 				case GLOBALVAR:
@@ -2770,18 +2770,19 @@ class CommandDrawBar : public SBarInfoCommand
 				}
 				case SAVEPERCENT:
 				{
+					double add = 0;
 					AHexenArmor *harmor = statusBar->CPlayer->mo->FindInventory<AHexenArmor>();
 					if(harmor != NULL)
 					{
-						value = harmor->Slots[0] + harmor->Slots[1] +
+						add = harmor->Slots[0] + harmor->Slots[1] +
 							harmor->Slots[2] + harmor->Slots[3] + harmor->Slots[4];
 					}
 					//Hexen counts basic armor also so we should too.
 					if(statusBar->armor != NULL)
 					{
-						value += FixedMul(statusBar->armor->SavePercent, 100*FRACUNIT);
+						add += statusBar->armor->SavePercent * 100;
 					}
-					value >>= FRACBITS;
+					value = int(add);
 					max = 100;
 					break;
 				}

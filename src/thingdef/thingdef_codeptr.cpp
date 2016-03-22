@@ -3317,13 +3317,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Burst)
 	// base the number of shards on the size of the dead thing, so bigger
 	// things break up into more shards than smaller things.
 	// An self with _f_radius() 20 and height 64 creates ~40 chunks.
-	numChunks = MAX<int> (4, int(self->radius * self->Height));
+	numChunks = MAX<int> (4, int(self->radius * self->Height)/32);
 	i = (pr_burst.Random2()) % (numChunks/4);
 	for (i = MAX (24, numChunks + i); i >= 0; i--)
 	{
-		fixed_t xo = (((pr_burst() - 128)*self->_f_radius()) >> 7);
-		fixed_t yo = (((pr_burst() - 128)*self->_f_radius()) >> 7);
-		fixed_t zo = (pr_burst()*self->_f_height() / 255 + self->GetBobOffset());
+		double xo = (pr_burst() - 128) * self->radius / 128;
+		double yo = (pr_burst() - 128) * self->radius / 128;
+		double zo = (pr_burst() * self->Height / 255);
 		mo = Spawn(chunk, self->Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
 
 		if (mo)

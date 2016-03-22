@@ -158,9 +158,9 @@ FArchive &operator<< (FArchive &arc, FState *&state);
 
 #include "gametype.h"
 
-struct DmgFactors : public TMap<FName, fixed_t>
+struct DmgFactors : public TMap<FName, double>
 {
-	fixed_t *CheckFactor(FName type);
+	int Apply(FName type, int damage);
 };
 typedef TMap<FName, int> PainChanceList;
 
@@ -169,20 +169,21 @@ struct DamageTypeDefinition
 public:
 	DamageTypeDefinition() { Clear(); }
 
-	fixed_t DefaultFactor;
+	double DefaultFactor;
 	bool ReplaceFactor;
 	bool NoArmor;
 
 	void Apply(FName type);
 	void Clear()
 	{
-		DefaultFactor = FRACUNIT;
+		DefaultFactor = 1.;
 		ReplaceFactor = false;
 		NoArmor = false;
 	}
 
 	static DamageTypeDefinition *Get(FName type);
 	static bool IgnoreArmor(FName type);
+	static double GetMobjDamageFactor(FName type, DmgFactors const * const factors);
 	static int ApplyMobjDamageFactor(int damage, FName type, DmgFactors const * const factors);
 };
 
@@ -206,7 +207,7 @@ public:
 	void BuildDefaults();
 	void ApplyDefaults(BYTE *defaults);
 	void RegisterIDs();
-	void SetDamageFactor(FName type, fixed_t factor);
+	void SetDamageFactor(FName type, double factor);
 	void SetPainChance(FName type, int chance);
 	size_t PropagateMark();
 	void InitializeNativeDefaults();

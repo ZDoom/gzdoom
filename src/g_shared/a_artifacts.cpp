@@ -1630,25 +1630,20 @@ void APowerDamage::EndEffect( )
 
 void APowerDamage::ModifyDamage(int damage, FName damageType, int &newdamage, bool passive)
 {
-	static const fixed_t def = 4*FRACUNIT;
 	if (!passive && damage > 0)
 	{
-		const fixed_t *pdf = NULL;
+		int newdam;
 		DmgFactors *df = GetClass()->DamageFactors;
 		if (df != NULL && df->CountUsed() != 0)
 		{
-			pdf = df->CheckFactor(damageType);
+			newdam = MIN(1, df->Apply(damageType, damage));// don't allow zero damage as result of an underflow
 		}
 		else
 		{
-			pdf = &def;
+			newdam = damage * 4;
 		}
-		if (pdf != NULL)
-		{
-			damage = newdamage = FixedMul(damage, *pdf);
-			if (*pdf > 0 && damage == 0) damage = newdamage = 1;	// don't allow zero damage as result of an underflow
-			if (Owner != NULL && *pdf > FRACUNIT) S_Sound(Owner, 5, ActiveSound, 1.0f, ATTN_NONE);
-		}
+		if (Owner != NULL && newdam > damage) S_Sound(Owner, 5, ActiveSound, 1.0f, ATTN_NONE);
+		newdamage = newdam;
 	}
 	if (Inventory != NULL) Inventory->ModifyDamage(damage, damageType, newdamage, passive);
 }
@@ -1710,22 +1705,20 @@ void APowerProtection::EndEffect( )
 
 void APowerProtection::ModifyDamage(int damage, FName damageType, int &newdamage, bool passive)
 {
-	static const fixed_t def = FRACUNIT/4;
 	if (passive && damage > 0)
 	{
-		const fixed_t *pdf = NULL;
+		int newdam;
 		DmgFactors *df = GetClass()->DamageFactors;
 		if (df != NULL && df->CountUsed() != 0)
 		{
-			pdf = df->CheckFactor(damageType);
+			newdam = MIN(0, df->Apply(damageType, damage));
 		}
-		else pdf = &def;
-
-		if (pdf != NULL)
+		else
 		{
-			damage = newdamage = FixedMul(damage, *pdf);
-			if (Owner != NULL && *pdf < FRACUNIT) S_Sound(Owner, CHAN_AUTO, ActiveSound, 1.0f, ATTN_NONE);
+			newdam = damage / 4;
 		}
+		if (Owner != NULL && newdam < damage) S_Sound(Owner, CHAN_AUTO, ActiveSound, 1.0f, ATTN_NONE);
+		newdamage = newdam;
 	}
 	if (Inventory != NULL)
 	{

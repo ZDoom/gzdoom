@@ -287,13 +287,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_FreezeDeathChunks)
 	// base the number of shards on the size of the dead thing, so bigger
 	// things break up into more shards than smaller things.
 	// An actor with _f_radius() 20 and height 64 creates ~40 chunks.
-	numChunks = MAX<int> (4, (self->_f_radius()>>FRACBITS)*(self->_f_height()>>FRACBITS)/32);
+	numChunks = MAX<int>(4, int(self->radius * self->Height)/32);
 	i = (pr_freeze.Random2()) % (numChunks/4);
 	for (i = MAX (24, numChunks + i); i >= 0; i--)
 	{
-		fixed_t xo = (((pr_freeze() - 128)*self->_f_radius()) >> 7);
-		fixed_t yo = (((pr_freeze() - 128)*self->_f_radius()) >> 7);
-		fixed_t zo = (pr_freeze()*self->_f_height() / 255);
+		double xo = (pr_freeze() - 128)*self->radius / 128;
+		double yo = (pr_freeze() - 128)*self->radius / 128;
+		double zo = (pr_freeze()*self->Height / 255);
+
 		mo = Spawn("IceChunk", self->Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
 		if (mo)
 		{

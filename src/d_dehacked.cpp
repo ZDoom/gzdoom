@@ -1940,13 +1940,13 @@ static int PatchMisc (int dummy)
 	if (armor!=NULL)
 	{
 		armor->SaveAmount = 100 * deh.GreenAC;
-		armor->SavePercent = deh.GreenAC == 1 ? FRACUNIT/3 : FRACUNIT/2;
+		armor->SavePercent = deh.GreenAC == 1 ? 0.33335 : 0.5;
 	}
 	armor = static_cast<ABasicArmorPickup *> (GetDefaultByName ("BlueArmor"));
 	if (armor!=NULL)
 	{
 		armor->SaveAmount = 100 * deh.BlueAC;
-		armor->SavePercent = deh.BlueAC == 1 ? FRACUNIT/3 : FRACUNIT/2;
+		armor->SavePercent = deh.BlueAC == 1 ? 0.33335 : 0.5;
 	}
 
 	ABasicArmorBonus *barmor;

@@ -313,9 +313,8 @@ static void DrawArmor(ABasicArmor * barmor, AHexenArmor * harmor, int x, int y)
 
 	if (harmor)
 	{
-		int ac = (harmor->Slots[0] + harmor->Slots[1] + harmor->Slots[2] + harmor->Slots[3] + harmor->Slots[4]);
-		ac >>= FRACBITS;
-		ap += ac;
+		auto ac = (harmor->Slots[0] + harmor->Slots[1] + harmor->Slots[2] + harmor->Slots[3] + harmor->Slots[4]);
+		ap += int(ac);
 		
 		if (ac)
 		{

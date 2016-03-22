@@ -89,7 +89,7 @@ public:
 	FString Slot[10];
 	FName InvulMode;
 	FName HealingRadiusType;
-	fixed_t HexenArmor[5];
+	double HexenArmor[5];
 	BYTE ColorRangeStart;	// Skin color range
 	BYTE ColorRangeEnd;
 	FPlayerColorSetMap ColorSets;

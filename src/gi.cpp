@@ -279,7 +279,7 @@ void FMapInfoParser::ParseGameInfo()
 			if (sc.CheckToken(','))
 			{
 				sc.MustGetToken(TK_FloatConst);
-				gameinfo.Armor2Percent = FLOAT2FIXED(sc.Float);
+				gameinfo.Armor2Percent = sc.Float;
 				sc.MustGetToken(',');
 				sc.MustGetToken(TK_StringConst);
 				gameinfo.ArmorIcon2 = sc.String;

@@ -5080,7 +5080,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 						return equippedarmor->MaxAmount;
 
 					case ARMORINFO_SAVEPERCENT:
-						return equippedarmor->SavePercent;
+						return DoubleToACS(equippedarmor->SavePercent);
 
 					case ARMORINFO_MAXABSORB:
 						return equippedarmor->MaxAbsorb;

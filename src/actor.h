@@ -1049,6 +1049,10 @@ public:
 		SetOrigin(npos.x, npos.y, npos.z, moving);
 	}
 
+	void SetOrigin(double x, double y, double z, bool moving)
+	{
+		SetOrigin(FLOAT2FIXED(x), FLOAT2FIXED(y), FLOAT2FIXED(z), moving);
+	}
 	void SetOrigin(const DVector3 & npos, bool moving)
 	{
 		SetOrigin(FLOAT2FIXED(npos.X), FLOAT2FIXED(npos.Y), FLOAT2FIXED(npos.Z), moving);

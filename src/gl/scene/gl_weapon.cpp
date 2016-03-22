@@ -300,7 +300,7 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 	visstyle_t vis;
 
 	vis.RenderStyle=playermo->RenderStyle;
-	vis.alpha=playermo->alpha;
+	vis.alpha=playermo->Alpha;
 	vis.colormap = NULL;
 	if (playermo->Inventory) 
 	{

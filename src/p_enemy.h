@@ -50,6 +50,11 @@ void P_DaggerAlert (AActor *target, AActor *emitter);
 void P_RecursiveSound (sector_t *sec, AActor *soundtarget, bool splash, int soundblocks, AActor *emitter=NULL, fixed_t maxdist=0);
 bool P_HitFriend (AActor *self);
 void P_NoiseAlert (AActor *target, AActor *emmiter, bool splash=false, fixed_t maxdist=0);
+inline void P_NoiseAlert(AActor *target, AActor *emmiter, bool splash, double maxdist)
+{
+	P_NoiseAlert(target, emmiter, splash, FLOAT2FIXED(maxdist));
+}
+
 bool P_CheckMeleeRange2 (AActor *actor);
 bool P_Move (AActor *actor);
 bool P_TryWalk (AActor *actor);

@@ -299,7 +299,7 @@ bool P_LineOpening_3dMidtex(AActor *thing, const line_t *linedef, FLineOpening &
 
 			}
 			// returns true if it touches the midtexture
-			return (abs(thing->_f_Z() - tt) <= thing->MaxStepHeight);
+			return (abs(thing->_f_Z() - tt) <= thing->_f_MaxStepHeight());
 		}
 	}
 	return false;

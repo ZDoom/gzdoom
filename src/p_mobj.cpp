@@ -2701,7 +2701,7 @@ static void PlayerLandedOnThing (AActor *mo, AActor *onmobj)
 
 	if (mo->player->mo == mo)
 	{
-		mo->player->deltaviewheight = mo->_f_velz() >> 3;
+		mo->player->deltaviewheight = mo->Vel.Z / 8.;
 	}
 
 	if (mo->player->cheats & CF_PREDICTING)
@@ -2826,7 +2826,7 @@ void P_NightmareRespawn (AActor *mobj)
 	P_SpawnTeleportFog(mobj, mobj->PosPlusZ(TELEFOGHEIGHT), true, true);
 
 	// spawn a teleport fog at the new spot
-	P_SpawnTeleportFog(mobj, x, y, z + TELEFOGHEIGHT, false, true);
+	P_SpawnTeleportFog(mobj, FIXED2DBL(x), FIXED2DBL(y), FIXED2DBL(z) + TELEFOGHEIGHT, false, true);
 
 	// remove the old monster
 	mobj->Destroy ();
@@ -3745,7 +3745,7 @@ void AActor::Tick ()
 						const sector_t *sec = node->m_sector;
 						if (sec->floorplane.c >= STEEPSLOPE)
 						{
-							if (floorplane.ZatPoint (PosRelative(node->m_sector)) >= _f_Z() - MaxStepHeight)
+							if (floorplane.ZatPoint (PosRelative(node->m_sector)) >= _f_Z() - _f_MaxStepHeight())
 							{
 								dopush = false;
 								break;
@@ -3810,12 +3810,12 @@ void AActor::Tick ()
 							PlayerLandedOnThing (this, onmo);
 						}
 					}
-					if (onmo->_f_Top() - _f_Z() <= MaxStepHeight)
+					if (onmo->Top() - Z() <= MaxStepHeight)
 					{
 						if (player && player->mo == this)
 						{
 							player->viewheight -= onmo->_f_Top() - _f_Z();
-							fixed_t deltaview = player->GetDeltaViewHeight();
+							double deltaview = player->GetDeltaViewHeight();
 							if (deltaview > player->deltaviewheight)
 							{
 								player->deltaviewheight = deltaview;
@@ -4780,8 +4780,7 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 
 	if (multiplayer)
 	{
-		unsigned an = mobj->_f_angle() >> ANGLETOFINESHIFT;
-		Spawn ("TeleportFog", mobj->Vec3Offset(20*finecosine[an], 20*finesine[an], TELEFOGHEIGHT), ALLOW_REPLACE);
+		Spawn ("TeleportFog", mobj->Vec3Angle(20, mobj->Angles.Yaw, TELEFOGHEIGHT), ALLOW_REPLACE);
 	}
 
 	// "Fix" for one of the starts on exec.wad MAP01: If you start inside the ceiling,

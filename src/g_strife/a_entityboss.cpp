@@ -27,8 +27,7 @@ void A_SpectralMissile (AActor *self, const char *missilename)
 {
 	if (self->target != NULL)
 	{
-		AActor *missile = P_SpawnMissileXYZ (self->PosPlusZ(32*FRACUNIT), 
-			self, self->target, PClass::FindActor(missilename), false);
+		AActor *missile = P_SpawnMissileXYZ (self->PosPlusZ(32.), self, self->target, PClass::FindActor(missilename), false);
 		if (missile != NULL)
 		{
 			missile->tracer = self->target;
@@ -78,7 +77,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnEntity)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	AActor *entity = Spawn("EntityBoss", self->PosPlusZ(70*FRACUNIT), ALLOW_REPLACE);
+	AActor *entity = Spawn("EntityBoss", self->PosPlusZ(70), ALLOW_REPLACE);
 	if (entity != NULL)
 	{
 		entity->Angles.Yaw = self->Angles.Yaw;
@@ -94,7 +93,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_EntityDeath)
 	PARAM_ACTION_PROLOGUE;
 
 	AActor *second;
-	double secondRadius = FIXED2DBL(GetDefaultByName("EntitySecond")->_f_radius() * 2);
+	double secondRadius = GetDefaultByName("EntitySecond")->radius * 2;
 
 	static const double turns[3] = { 0, 90, -90 };
 	const double velmul[3] = { 4.8828125f, secondRadius*4, secondRadius*4 };

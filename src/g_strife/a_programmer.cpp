@@ -130,7 +130,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnProgrammerBase)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	AActor *foo = Spawn("ProgrammerBase", self->PosPlusZ(24*FRACUNIT), ALLOW_REPLACE);
+	AActor *foo = Spawn("ProgrammerBase", self->PosPlusZ(24), ALLOW_REPLACE);
 	if (foo != NULL)
 	{
 		foo->Angles.Yaw = self->Angles.Yaw + 180. + pr_prog.Random2() * (360. / 1024.);

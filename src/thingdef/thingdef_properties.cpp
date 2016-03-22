@@ -1247,7 +1247,7 @@ DEFINE_PROPERTY(decal, S, Actor)
 //==========================================================================
 DEFINE_PROPERTY(maxstepheight, F, Actor)
 {
-	PROP_FIXED_PARM(i, 0);
+	PROP_DOUBLE_PARM(i, 0);
 	defaults->MaxStepHeight = i;
 }
 

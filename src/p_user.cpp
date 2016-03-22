@@ -1879,7 +1879,7 @@ void P_CalcHeight (player_t *player)
 	// move viewheight
 	if (player->playerstate == PST_LIVE)
 	{
-		player->viewheight += player->deltaviewheight;
+		player->viewheight += FLOAT2FIXED(player->deltaviewheight);
 
 		if (player->viewheight > defaultviewheight)
 		{
@@ -1890,14 +1890,14 @@ void P_CalcHeight (player_t *player)
 		{
 			player->viewheight = defaultviewheight>>1;
 			if (player->deltaviewheight <= 0)
-				player->deltaviewheight = 1;
+				player->deltaviewheight = 1 / 65536.;
 		}
 		
 		if (player->deltaviewheight)	
 		{
-			player->deltaviewheight += FRACUNIT/4;
+			player->deltaviewheight += 0.25;
 			if (!player->deltaviewheight)
-				player->deltaviewheight = 1;
+				player->deltaviewheight = 1/65536.;
 		}
 	}
 

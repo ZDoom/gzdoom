@@ -189,6 +189,10 @@ inline AActor *P_SpawnMissileAngleZSpeed(AActor *source, double z, PClassActor *
 	return P_SpawnMissileAngleZSpeed(source, FLOAT2FIXED(z), type, angle.BAMs(), FLOAT2FIXED(vz), FLOAT2FIXED(speed), owner, checkspawn);
 }
 AActor *P_SpawnMissileZAimed (AActor *source, fixed_t z, AActor *dest, PClassActor *type);
+inline AActor *P_SpawnMissileZAimed(AActor *source, double z, AActor *dest, PClassActor *type)
+{
+	return P_SpawnMissileZAimed(source, FLOAT2FIXED(z), dest, type);
+}
 
 AActor *P_SpawnPlayerMissile (AActor* source, PClassActor *type);
 AActor *P_SpawnPlayerMissile (AActor *source, PClassActor *type, DAngle angle);

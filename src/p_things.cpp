@@ -86,7 +86,7 @@ bool P_Thing_Spawn (int tid, AActor *source, int type, DAngle angle, bool fog, i
 	}
 	while (spot != NULL)
 	{
-		mobj = Spawn (kind, spot->_f_Pos(), ALLOW_REPLACE);
+		mobj = Spawn (kind, spot->Pos(), ALLOW_REPLACE);
 
 		if (mobj != NULL)
 		{
@@ -98,7 +98,7 @@ bool P_Thing_Spawn (int tid, AActor *source, int type, DAngle angle, bool fog, i
 				mobj->Angles.Yaw = (angle != 1000000. ? angle : spot->Angles.Yaw);
 				if (fog)
 				{
-					P_SpawnTeleportFog(mobj, spot->_f_X(), spot->_f_Y(), spot->_f_Z() + TELEFOGHEIGHT, false, true);
+					P_SpawnTeleportFog(mobj, spot->PosPlusZ(TELEFOGHEIGHT), false, true);
 				}
 				if (mobj->flags & MF_SPECIAL)
 					mobj->flags |= MF_DROPPED;	// Don't respawn

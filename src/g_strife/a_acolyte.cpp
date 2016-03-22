@@ -29,7 +29,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_HideDecepticon)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	EV_DoDoor (DDoor::doorClose, NULL, self, 999, 8*FRACUNIT, 0, 0, 0);
+	EV_DoDoor (DDoor::doorClose, NULL, self, 999, 8., 0, 0, 0);
 	if (self->target != NULL && self->target->player != NULL)
 	{
 		P_NoiseAlert (self->target, self);

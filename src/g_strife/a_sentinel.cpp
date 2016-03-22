@@ -53,14 +53,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_SentinelAttack)
 		return 0;
 	}
 
-	missile = P_SpawnMissileZAimed (self, self->_f_Z() + 32*FRACUNIT, self->target, PClass::FindActor("SentinelFX2"));
+	missile = P_SpawnMissileZAimed (self, self->Z() + 32, self->target, PClass::FindActor("SentinelFX2"));
 
 	if (missile != NULL && (missile->Vel.X != 0 || missile->Vel.Y != 0))
 	{
 		for (int i = 8; i > 1; --i)
 		{
 			trail = Spawn("SentinelFX1",
-				self->_f_Vec3Angle(missile->_f_radius()*i, missile->_f_angle(), (missile->_f_velz() / 4 * i)), ALLOW_REPLACE);
+				self->Vec3Angle(missile->radius*i, missile->Angles.Yaw, missile->Vel.Z / 4 * i), ALLOW_REPLACE);
 			if (trail != NULL)
 			{
 				trail->target = self;

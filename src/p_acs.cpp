@@ -4214,7 +4214,7 @@ bool DLevelScript::DoCheckActorTexture(int tid, AActor *activator, int string, b
 
 	if (floor)
 	{
-		actor->Sector->NextLowestFloorAt(actor->_f_X(), actor->_f_Y(), actor->_f_Z(), 0, actor->MaxStepHeight, &resultsec, &resffloor);
+		actor->Sector->NextLowestFloorAt(actor->_f_X(), actor->_f_Y(), actor->_f_Z(), 0, actor->_f_MaxStepHeight(), &resultsec, &resffloor);
 		secpic = resffloor ? *resffloor->top.texture : resultsec->planes[sector_t::floor].Texture;
 	}
 	else

@@ -138,7 +138,7 @@ struct gameinfo_t
 	fixed_t Armor2Percent;
 	FString quitSound;
 	gameborder_t Border;
-	int telefogheight;
+	double telefogheight;
 	int defKickback;
 	FString translator;
 	DWORD defaultbloodcolor;

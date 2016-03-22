@@ -18,9 +18,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_Bang4Cloud)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	fixed_t xo = (pr_bang4cloud.Random2() & 3) * 10240;
-	fixed_t yo = (pr_bang4cloud.Random2() & 3) * 10240;
-	Spawn("Bang4Cloud", self->Vec3Offset(xo, yo, 0), ALLOW_REPLACE);
+	double xo = (pr_bang4cloud.Random2() & 3) * (10. / 64);
+	double yo = (pr_bang4cloud.Random2() & 3) * (10. / 64);
+	Spawn("Bang4Cloud", self->Vec3Offset(xo, yo, 0.), ALLOW_REPLACE);
 	return 0;
 }
 

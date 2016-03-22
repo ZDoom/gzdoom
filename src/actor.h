@@ -1003,6 +1003,11 @@ public:
 		}
 	}
 
+	DVector3 Vec3Offset(const DVector3 &ofs, bool absolute = false)
+	{
+		return Vec3Offset(ofs.X, ofs.Y, ofs.Z, absolute);
+	}
+
 	fixedvec3 _f_Vec3Angle(fixed_t length, angle_t angle, fixed_t dz, bool absolute = false)
 	{
 		if (absolute)
@@ -1270,7 +1275,13 @@ public:
 	FSoundIDNoInit WallBounceSound;
 	FSoundIDNoInit CrushPainSound;
 
-	fixed_t MaxDropOffHeight, MaxStepHeight;
+	fixed_t MaxDropOffHeight;
+	double MaxStepHeight;
+
+	fixed_t _f_MaxStepHeight()
+	{
+		return FLOAT2FIXED(MaxStepHeight);
+	}
 	SDWORD Mass;
 	SWORD PainChance;
 	int PainThreshold;
@@ -1726,6 +1737,15 @@ inline T *Spawn(const DVector3 &pos, replace_t allowreplacement)
 	if (pos.Z != ONFLOORZ && pos.Z != ONCEILINGZ && pos.Z != FLOATRANDZ) zz = FLOAT2FIXED(pos.Z);
 	else zz = (int)pos.Z;
 	return static_cast<T *>(AActor::StaticSpawn(RUNTIME_TEMPLATE_CLASS(T), FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), zz, allowreplacement));
+}
+
+template<class T>
+inline T *Spawn(double x, double y, double z, replace_t allowreplacement)
+{
+	fixed_t zz;
+	if (z != ONFLOORZ && z != ONCEILINGZ && z != FLOATRANDZ) zz = FLOAT2FIXED(z);
+	else zz = (int)z;
+	return static_cast<T *>(AActor::StaticSpawn(RUNTIME_TEMPLATE_CLASS(T), FLOAT2FIXED(x), FLOAT2FIXED(y), zz, allowreplacement));
 }
 
 template<class T>

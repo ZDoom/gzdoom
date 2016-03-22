@@ -269,17 +269,17 @@ bool FCajunMaster::CleanAhead (AActor *thing, fixed_t x, fixed_t y, ticcmd_t *cm
 
     if (!(thing->flags & MF_NOCLIP) )
     {
-		fixed_t maxstep = thing->MaxStepHeight;
         if (tm.ceilingz - tm.floorz < thing->Height)
             return false;       // doesn't fit
 
+		double maxmove = FIXED2FLOAT(MAXMOVEHEIGHT);
 		if (!(thing->flags&MF_MISSILE))
 		{
-			if(tm._f_floorz() > (thing->Sector->floorplane.ZatPoint (x, y)+MAXMOVEHEIGHT)) //Too high wall
+			if(tm.floorz > (thing->Sector->floorplane._f_ZatPointF(x, y)+maxmove)) //Too high wall
 				return false;
 
 			//Jumpable
-			if(tm._f_floorz()>(thing->Sector->floorplane.ZatPoint (x, y)+thing->MaxStepHeight))
+			if(tm.floorz > (thing->Sector->floorplane._f_ZatPointF(x, y)+thing->MaxStepHeight))
 				cmd->ucmd.buttons |= BT_JUMP;
 
 
@@ -292,7 +292,7 @@ bool FCajunMaster::CleanAhead (AActor *thing, fixed_t x, fixed_t y, ticcmd_t *cm
 //	            maxstep=37*FRACUNIT;
 
 	        if ( !(thing->flags & MF_TELEPORT) &&
-	             (tm._f_floorz() - thing->_f_Z() > maxstep ) )
+	             (tm.floorz - thing->Z() > thing->MaxStepHeight) )
 	            return false;       // too big a step up
 
 

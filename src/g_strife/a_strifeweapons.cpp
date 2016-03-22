@@ -147,7 +147,7 @@ enum
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_AlertMonsters)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_FIXED_OPT(maxdist) { maxdist = 0; }
+	PARAM_FLOAT_OPT(maxdist) { maxdist = 0; }
 	PARAM_INT_OPT(Flags) { Flags = 0; }
 
 	AActor * target = NULL;
@@ -379,8 +379,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_RocketInFlight)
 	AActor *trail;
 
 	S_Sound (self, CHAN_VOICE, "misc/missileinflight", 1, ATTN_NORM);
-	P_SpawnPuff (self, PClass::FindActor("MiniMissilePuff"), self->_f_Pos(), self->_f_angle() - ANGLE_180, 2, PF_HITTHING);
-	trail = Spawn("RocketTrail", self->Vec3Offset(-self->_f_velx(), -self->_f_vely(), 0), ALLOW_REPLACE);
+	P_SpawnPuff (self, PClass::FindActor("MiniMissilePuff"), self->Pos(), self->Angles.Yaw - 180, self->Angles.Yaw - 180, 2, PF_HITTHING);
+	trail = Spawn("RocketTrail", self->Vec3Offset(-self->Vel.X, -self->Vel.Y, 0.), ALLOW_REPLACE);
 	if (trail != NULL)
 	{
 		trail->Vel.Z = 1;
@@ -547,11 +547,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_MaulerTorpedoWave)
 	PARAM_ACTION_PROLOGUE;
 
 	AActor *wavedef = GetDefaultByName("MaulerTorpedoWave");
-	fixed_t savedz;
+	double savedz;
 	self->Angles.Yaw += 180.;
 
 	// If the torpedo hit the ceiling, it should still spawn the wave
-	savedz = self->_f_Z();
+	savedz = self->Z();
 	if (wavedef && self->ceilingz < wavedef->Top())
 	{
 		self->SetZ(self->ceilingz - wavedef->Height);
@@ -562,7 +562,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MaulerTorpedoWave)
 		self->Angles.Yaw += 4.5;
 		P_SpawnSubMissile (self, PClass::FindActor("MaulerTorpedoWave"), self->target);
 	}
-	self->_f_SetZ(savedz);
+	self->SetZ(savedz);
 	return 0;
 }
 
@@ -639,7 +639,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Burnination)
 	if (!(self->flags & MF_DROPPED))
 	{
 		// Original x and y offsets seemed to be like this:
-		//		x + (((pr_phburn() + 12) & 31) << FRACBITS);
+		//		x + (((pr_phburn() + 12) & 31) << F.RACBITS);
 		//
 		// But that creates a lop-sided burn because it won't use negative offsets.
 		int xofs, xrand = pr_phburn();
@@ -658,19 +658,16 @@ DEFINE_ACTION_FUNCTION(AActor, A_Burnination)
 			yofs = -yofs;
 		}
 
-		fixedvec2 pos = self->Vec2Offset(xofs << FRACBITS, yofs << FRACBITS);
-		sector_t * sector = P_PointInSector(pos.x, pos.y);
+		DVector2 pos = self->Vec2Offset((double)xofs, (double)yofs);
+		sector_t * sector = P_PointInSector(pos);
 
 		// The sector's floor is too high so spawn the flame elsewhere.
-		if (sector->floorplane.ZatPoint(pos.x, pos.y) > self->_f_Z() + self->MaxStepHeight)
+		if (sector->floorplane.ZatPoint(pos) > self->Z() + self->MaxStepHeight)
 		{
-			pos.x = self->_f_X();
-			pos.y = self->_f_Y();
+			pos = self->Pos();
 		}
 
-		AActor *drop = Spawn<APhosphorousFire> (
-			pos.x, pos.y,
-			self->_f_Z() + 4*FRACUNIT, ALLOW_REPLACE);
+		AActor *drop = Spawn<APhosphorousFire> (pos.X, pos.Y, self->Z() + 4., ALLOW_REPLACE);
 		if (drop != NULL)
 		{
 			drop->Vel.X = self->Vel.X + pr_phburn.Random2 (7);
@@ -693,13 +690,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireGrenade)
 {
 	PARAM_ACTION_PROLOGUE;
 	PARAM_CLASS(grenadetype, AActor);
-	PARAM_ANGLE(angleofs);
+	PARAM_DANGLE(angleofs);
 	PARAM_STATE(flash)
 
 	player_t *player = self->player;
 	AActor *grenade;
-	angle_t an;
-	fixed_t tworadii;
+	DAngle an;
 	AWeapon *weapon;
 
 	if (player == NULL || grenadetype == NULL)
@@ -715,9 +711,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireGrenade)
 
 	if (grenadetype != NULL)
 	{
-		self->_f_AddZ(32*FRACUNIT);
+		self->AddZ(32);
 		grenade = P_SpawnSubMissile (self, grenadetype, self);
-		self->_f_AddZ(-32*FRACUNIT);
+		self->AddZ(-32);
 		if (grenade == NULL)
 			return 0;
 
@@ -728,20 +724,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireGrenade)
 
 		grenade->Vel.Z = (-self->Angles.Pitch.TanClamped()) * grenade->Speed + 8;
 
-		fixedvec2 offset;
-
-		an = self->_f_angle() >> ANGLETOFINESHIFT;
-		tworadii = self->_f_radius() + grenade->_f_radius();
-		offset.x = FixedMul (finecosine[an], tworadii);
-		offset.y = FixedMul (finesine[an], tworadii);
-
-		an = self->_f_angle() + angleofs;
-		an >>= ANGLETOFINESHIFT;
-		offset.x += FixedMul (finecosine[an], 15*FRACUNIT);
-		offset.y += FixedMul (finesine[an], 15*FRACUNIT);
-
-		fixedvec2 newpos = grenade->Vec2Offset(offset.x, offset.y);
-		grenade->SetOrigin(newpos.x, newpos.y, grenade->_f_Z(), false);
+		DVector2 offset = self->Angles.Yaw.ToVector(self->radius + grenade->radius);
+		DAngle an = self->Angles.Yaw + angleofs;
+		offset += an.ToVector(15);
+		grenade->SetOrigin(grenade->Vec3Offset(offset.X, offset.Y, 0.), false);
 	}
 	return 0;
 }
@@ -995,7 +981,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil1)
 	}
 	else
 	{
-		spot = Spawn("SpectralLightningSpot", self->_f_Pos(), ALLOW_REPLACE);
+		spot = Spawn("SpectralLightningSpot", self->Pos(), ALLOW_REPLACE);
 		if (spot != NULL)
 		{
 			spot->VelFromAngle(self->Angles.Yaw, 28.);

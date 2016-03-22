@@ -811,7 +811,7 @@ void P_LineOpening_XFloors (FLineOpening &open, AActor * thing, const line_t *li
 						highestfloorsec = j == 0 ? linedef->frontsector : linedef->backsector;
 						highestfloorplanes[j] = rover->top.plane;
 					}
-					if(ff_top > lowestfloor[j] && ff_top <= thing->_f_Z() + thing->MaxStepHeight) lowestfloor[j] = ff_top;
+					if(ff_top > lowestfloor[j] && ff_top <= thing->_f_Z() + thing->_f_MaxStepHeight()) lowestfloor[j] = ff_top;
 				}
 			}
 			

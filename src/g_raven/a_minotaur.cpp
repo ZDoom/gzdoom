@@ -161,7 +161,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurAtk1)
 		if ((player = self->target->player) != NULL &&
 			player->mo == self->target)
 		{ // Squish the player
-			player->deltaviewheight = -16*FRACUNIT;
+			player->deltaviewheight = -16;
 		}
 	}
 	return 0;
@@ -350,7 +350,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurAtk3)
 		if ((player = self->target->player) != NULL &&
 			player->mo == self->target)
 		{ // Squish the player
-			player->deltaviewheight = -16*FRACUNIT;
+			player->deltaviewheight = -16;
 		}
 	}
 	else

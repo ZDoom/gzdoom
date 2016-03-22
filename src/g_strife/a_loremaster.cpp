@@ -37,7 +37,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LoremasterChain)
 
 	S_Sound (self, CHAN_BODY, "loremaster/active", 1, ATTN_NORM);
 	Spawn("LoreShot2", self->Pos(), ALLOW_REPLACE);
-	Spawn("LoreShot2", self->Vec3Offset(-(self->_f_velx() >> 1), -(self->_f_vely() >> 1), -(self->_f_velz() >> 1)), ALLOW_REPLACE);
-	Spawn("LoreShot2", self->Vec3Offset(-self->_f_velx(), -self->_f_vely(), -self->_f_velz()), ALLOW_REPLACE);
+	Spawn("LoreShot2", self->Vec3Offset(-self->Vel/2.), ALLOW_REPLACE);
+	Spawn("LoreShot2", self->Vec3Offset(-self->Vel), ALLOW_REPLACE);
 	return 0;
 }

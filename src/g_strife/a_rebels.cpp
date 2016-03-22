@@ -78,10 +78,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_Beacon)
 
 	AActor *owner = self->target;
 	AActor *rebel;
-	angle_t an;
 
 	rebel = Spawn("Rebel1", self->PosAtZ(self->floorz), ALLOW_REPLACE);
-	if (!P_TryMove (rebel, rebel->X(), rebel->Y(), true))
+	if (!P_TryMove (rebel, rebel->Pos(), true))
 	{
 		rebel->Destroy ();
 		return 0;
@@ -116,8 +115,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Beacon)
 
 	rebel->SetState (rebel->SeeState);
 	rebel->Angles.Yaw = self->Angles.Yaw;
-	an = self->_f_angle() >> ANGLETOFINESHIFT;
-	Spawn<ATeleportFog> (rebel->Vec3Offset(20*finecosine[an], 20*finesine[an], TELEFOGHEIGHT), ALLOW_REPLACE);
+	Spawn<ATeleportFog> (rebel->Vec3Angle(20., self->Angles.Yaw, TELEFOGHEIGHT), ALLOW_REPLACE);
 	if (--self->health < 0)
 	{
 		self->SetState(self->FindState(NAME_Death));

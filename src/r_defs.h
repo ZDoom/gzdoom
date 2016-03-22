@@ -295,10 +295,20 @@ struct secplane_t
 		return FixedMul (ic, -d - DMulScale16 (a, x, b, y));
 	}
 
+	double _f_ZatPointF(fixed_t x, fixed_t y) const
+	{
+		return FIXED2DBL(FixedMul(ic, -d - DMulScale16(a, x, b, y)));
+	}
+
 	// Returns the value of z at (x,y) as a double
 	double ZatPoint (double x, double y) const
 	{
 		return (d + a*x + b*y) * ic / (-65536.0 * 65536.0);
+	}
+
+	double ZatPoint(const DVector2 &pos) const
+	{
+		return (d + a*pos.X + b*pos.Y) * ic / (-65536.0 * 65536.0);
 	}
 
 	// Returns the value of z at vertex v
@@ -1404,6 +1414,11 @@ subsector_t *P_PointInSubsector(fixed_t x, fixed_t y);
 inline sector_t *P_PointInSector(fixed_t x, fixed_t y)
 {
 	return P_PointInSubsector(x, y)->sector;
+}
+
+inline sector_t *P_PointInSector(const DVector2 &pos)
+{
+	return P_PointInSubsector(FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y))->sector;
 }
 
 inline fixedvec3 AActor::PosRelative(int portalgroup) const

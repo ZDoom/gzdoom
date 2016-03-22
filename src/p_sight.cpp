@@ -95,7 +95,7 @@ class SightCheck
 	sector_t * lastsector;			// last sector being entered by trace
 	fixed_t topslope, bottomslope;	// slopes to top and bottom of target
 	int Flags;
-	divline_t trace;
+	fdivline_t trace;
 	int portaldir;
 	int portalgroup;
 	bool portalfound;
@@ -372,7 +372,7 @@ bool SightCheck::PTR_SightTraverse (intercept_t *in)
 
 bool SightCheck::P_SightCheckLine (line_t *ld)
 {
-	divline_t dl;
+	fdivline_t dl;
 
 	if (ld->validcount == validcount)
 	{
@@ -508,7 +508,7 @@ bool SightCheck::P_SightTraverseIntercepts ()
 	fixed_t dist;
 	intercept_t *scan, *in;
 	unsigned scanpos;
-	divline_t dl;
+	fdivline_t dl;
 
 	count = intercepts.Size ();
 //
@@ -849,7 +849,7 @@ sightcounts[0]++;
 //
 	// [RH] Andy Baker's stealth monsters:
 	// Cannot see an invisible object
-	if ((flags & SF_IGNOREVISIBILITY) == 0 && ((t2->renderflags & RF_INVISIBLE) || !t2->RenderStyle.IsVisible(t2->alpha)))
+	if ((flags & SF_IGNOREVISIBILITY) == 0 && ((t2->renderflags & RF_INVISIBLE) || !t2->RenderStyle.IsVisible(t2->Alpha)))
 	{ // small chance of an attack being made anyway
 		if ((bglobal.m_Thinking ? pr_botchecksight() : pr_checksight()) > 50)
 		{

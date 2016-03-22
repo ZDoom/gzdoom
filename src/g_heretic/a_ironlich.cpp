@@ -162,7 +162,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_WhirlwindSeek)
 	{
 		return 0;
 	}
-	P_SeekerMissile(self, ANGLE_1 * 10, ANGLE_1 * 30);
+	P_SeekerMissile(self, 10, 30);
 	return 0;
 }
 

@@ -275,7 +275,7 @@ static void parseSector(FScanner &sc)
 	EDSector sec;
 
 	memset(&sec, 0, sizeof(sec));
-	sec.overlayalpha[sector_t::floor] = sec.overlayalpha[sector_t::ceiling] = FRACUNIT;
+	sec.overlayalpha[sector_t::floor] = sec.overlayalpha[sector_t::ceiling] = OPAQUE;
 	sec.floorterrain = sec.ceilingterrain = -1;
 
 	sc.MustGetStringName("{");

@@ -7,12 +7,20 @@
 
 extern int validcount;
 
-struct divline_t
+struct fdivline_t
 {
 	fixed_t 	x;
 	fixed_t 	y;
 	fixed_t 	dx;
 	fixed_t 	dy;
+};
+
+struct divline_t
+{
+	double 	x;
+	double 	y;
+	double 	dx;
+	double 	dy;
 };
 
 struct intercept_t
@@ -73,18 +81,23 @@ inline int P_PointOnLineSidePrecise(const DVector3 &pt, const line_t *line)
 //
 //==========================================================================
 
-inline int P_PointOnDivlineSide (fixed_t x, fixed_t y, const divline_t *line)
+inline int P_PointOnDivlineSide (fixed_t x, fixed_t y, const fdivline_t *line)
 {
-	extern int P_VanillaPointOnDivlineSide(fixed_t x, fixed_t y, const divline_t* line);
+	extern int P_VanillaPointOnDivlineSide(fixed_t x, fixed_t y, const fdivline_t* line);
 
 	return (i_compatflags2 & COMPATF2_POINTONLINE)
 		? P_VanillaPointOnDivlineSide(x, y, line)
 		: (DMulScale32 (y-line->y, line->dx, line->x-x, line->dy) > 0);
 }
 
-inline int P_PointOnDivlineSidePrecise (fixed_t x, fixed_t y, const divline_t *line)
+inline int P_PointOnDivlineSidePrecise (fixed_t x, fixed_t y, const fdivline_t *line)
 {
 	return DMulScale32 (y-line->y, line->dx, line->x-x, line->dy) > 0;
+}
+
+inline int P_PointOnDivlineSidePrecise(double x, double y, const divline_t *line)
+{
+	return (y - line->y) * line->dx + (line->x - x) * line->dy > 0;
 }
 
 
@@ -94,7 +107,7 @@ inline int P_PointOnDivlineSidePrecise (fixed_t x, fixed_t y, const divline_t *l
 //
 //==========================================================================
 
-inline void P_MakeDivline (const line_t *li, divline_t *dl)
+inline void P_MakeDivline (const line_t *li, fdivline_t *dl)
 {
 	dl->x = li->v1->x;
 	dl->y = li->v1->y;
@@ -336,7 +349,8 @@ public:
 	struct CheckResult
 	{
 		AActor *thing;
-		fixedvec3 position;
+		fixedvec3 position;	// keep these both until the fixed version can be removed.
+		DVector3 Position;
 		int portalflags;
 	};
 
@@ -357,7 +371,7 @@ class FPathTraverse
 protected:
 	static TArray<intercept_t> intercepts;
 
-	divline_t trace;
+	fdivline_t trace;
 	fixed_t startfrac;
 	unsigned int intercept_index;
 	unsigned int intercept_count;
@@ -377,7 +391,7 @@ public:
 	void init(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int flags, fixed_t startfrac = 0);
 	int PortalRelocate(intercept_t *in, int flags, fixedvec3 *optpos = NULL);
 	virtual ~FPathTraverse();
-	const divline_t &Trace() const { return trace; }
+	const fdivline_t &Trace() const { return trace; }
 
 	inline fixedvec2 InterceptPoint(const intercept_t *in)
 	{
@@ -418,7 +432,7 @@ typedef bool(*traverser_t) (intercept_t *in);
 fixed_t P_AproxDistance (fixed_t dx, fixed_t dy);
 
 
-fixed_t P_InterceptVector (const divline_t *v2, const divline_t *v1);
+fixed_t P_InterceptVector (const fdivline_t *v2, const fdivline_t *v1);
 
 #define PT_ADDLINES 	1
 #define PT_ADDTHINGS	2

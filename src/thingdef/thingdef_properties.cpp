@@ -850,7 +850,7 @@ DEFINE_PROPERTY(renderstyle, S, Actor)
 //==========================================================================
 DEFINE_PROPERTY(defaultalpha, 0, Actor)
 {
-	defaults->alpha = gameinfo.gametype == GAME_Heretic ? HR_SHADOW : HX_SHADOW;
+	defaults->Alpha = gameinfo.gametype == GAME_Heretic ? HR_SHADOW : HX_SHADOW;
 }
 
 //==========================================================================
@@ -858,8 +858,8 @@ DEFINE_PROPERTY(defaultalpha, 0, Actor)
 //==========================================================================
 DEFINE_PROPERTY(alpha, F, Actor)
 {
-	PROP_FIXED_PARM(id, 0);
-	defaults->alpha = id;
+	PROP_DOUBLE_PARM(id, 0);
+	defaults->Alpha = id;
 }
 
 //==========================================================================
@@ -1217,7 +1217,7 @@ DEFINE_PROPERTY(deathtype, S, Actor)
 DEFINE_PROPERTY(damagefactor, ZF, Actor)
 {
 	PROP_STRING_PARM(str, 0);
-	PROP_FIXED_PARM(id, 1);
+	PROP_DOUBLE_PARM(id, 1);
 
 	if (str == NULL)
 	{
@@ -1229,7 +1229,7 @@ DEFINE_PROPERTY(damagefactor, ZF, Actor)
 		if (!stricmp(str, "Normal")) dmgType = NAME_None;
 		else dmgType=str;
 
-		info->SetDamageFactor(dmgType, id);
+		info->SetDamageFactor(dmgType, FLOAT2FIXED(id));
 	}
 }
 
@@ -1247,7 +1247,7 @@ DEFINE_PROPERTY(decal, S, Actor)
 //==========================================================================
 DEFINE_PROPERTY(maxstepheight, F, Actor)
 {
-	PROP_FIXED_PARM(i, 0);
+	PROP_DOUBLE_PARM(i, 0);
 	defaults->MaxStepHeight = i;
 }
 

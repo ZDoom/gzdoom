@@ -1076,6 +1076,12 @@ inline TAngle<double> ToDegrees (double rad)
 	return TAngle<double> (double(rad * (180.0 / M_PI)));
 }
 
+// Emulates the old floatbob offset table with direct calls to trig functions.
+inline double BobSin(double fb)
+{
+	return TAngle<double>(double(fb * (180.0 / 32))).Sin() * 8;
+}
+
 template<class T>
 inline TAngle<T> fabs (const TAngle<T> &deg)
 {
@@ -1101,13 +1107,13 @@ inline TAngle<T> deltaangle(double a1, const TAngle<T> &a2)
 }
 
 template<class T>
-inline TAngle<T> diffangle(const TAngle<T> &a1, const TAngle<T> &a2)
+inline TAngle<T> absangle(const TAngle<T> &a1, const TAngle<T> &a2)
 {
 	return fabs((a1 - a2).Normalize180());
 }
 
 template<class T>
-inline TAngle<T> diffangle(const TAngle<T> &a1, double a2)
+inline TAngle<T> absangle(const TAngle<T> &a1, double a2)
 {
 	return fabs((a1 - a2).Normalize180());
 }

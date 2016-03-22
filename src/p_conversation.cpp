@@ -989,10 +989,10 @@ public:
 
 			mysnprintf (goldstr, countof(goldstr), "%d", coin != NULL ? coin->Amount : 0);
 			screen->DrawText (SmallFont, CR_GRAY, 21, 191, goldstr, DTA_320x200, true,
-				DTA_FillColor, 0, DTA_Alpha, HR_SHADOW, TAG_DONE);
+				DTA_FillColor, 0, DTA_AlphaF, HR_SHADOW, TAG_DONE);
 			screen->DrawTexture (TexMan(((AInventory *)GetDefaultByType (RUNTIME_CLASS(ACoin)))->Icon),
 				3, 190, DTA_320x200, true,
-				DTA_FillColor, 0, DTA_Alpha, HR_SHADOW, TAG_DONE);
+				DTA_FillColor, 0, DTA_AlphaF, HR_SHADOW, TAG_DONE);
 			screen->DrawText (SmallFont, CR_GRAY, 20, 190, goldstr, DTA_320x200, true, TAG_DONE);
 			screen->DrawTexture (TexMan(((AInventory *)GetDefaultByType (RUNTIME_CLASS(ACoin)))->Icon),
 				2, 189, DTA_320x200, true, TAG_DONE);
@@ -1268,7 +1268,7 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 	
 			if (takestuff)
 			{
-				AInventory *item = static_cast<AInventory *>(Spawn(reply->GiveType, 0, 0, 0, NO_REPLACE));
+				AInventory *item = static_cast<AInventory *>(Spawn(reply->GiveType));
 				// Items given here should not count as items!
 				item->ClearCounters();
 				if (item->GetClass()->TypeName == NAME_FlameThrower)

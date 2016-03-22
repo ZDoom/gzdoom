@@ -168,7 +168,6 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 	AWeapon *beastweap;
 	APlayerPawn *mo;
 	APlayerPawn *pmo;
-	angle_t angle;
 
 	pmo = player->mo;
 	// [MH]
@@ -305,11 +304,10 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 		}
 	}
 
-	angle = mo->_f_angle() >> ANGLETOFINESHIFT;
 	AActor *eflash = NULL;
 	if (exit_flash != NULL)
 	{
-		eflash = Spawn(exit_flash, pmo->Vec3Offset(20*finecosine[angle], 20*finesine[angle], TELEFOGHEIGHT), ALLOW_REPLACE);
+		eflash = Spawn(exit_flash, pmo->Vec3Angle(20., mo->Angles.Yaw, TELEFOGHEIGHT), ALLOW_REPLACE);
 		if (eflash)	eflash->target = mo;
 	}
 	mo->SetupWeaponSlots();		// Use original class's weapon slots.
@@ -385,7 +383,7 @@ bool P_MorphMonster (AActor *actor, PClassActor *spawntype, int duration, int st
 	morphed->tid = actor->tid;
 	morphed->Angles.Yaw = actor->Angles.Yaw;
 	morphed->UnmorphedMe = actor;
-	morphed->alpha = actor->alpha;
+	morphed->Alpha = actor->Alpha;
 	morphed->RenderStyle = actor->RenderStyle;
 	morphed->Score = actor->Score;
 

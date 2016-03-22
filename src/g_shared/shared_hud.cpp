@@ -767,7 +767,7 @@ static void DrawInventory(player_t * CPlayer, int x,int y)
 
 				if (AltIcon.Exists() && (rover->Icon.isValid() || AltIcon.isValid()) )
 				{
-					int trans = rover==CPlayer->mo->InvSel ? FRACUNIT : 0x6666;
+					int trans = rover==CPlayer->mo->InvSel ? OPAQUE : 0x6666;
 
 					DrawImageToBox(TexMan[AltIcon.isValid()? AltIcon : rover->Icon], x, y, 19, 25, trans);
 					if (rover->Amount>1)
@@ -934,7 +934,7 @@ static void DrawTime()
 	const int width  = SmallFont->GetCharWidth('0') * characterCount + 2; // small offset from screen's border
 	const int height = SmallFont->GetHeight();
 
-	DrawHudText(SmallFont, hud_timecolor, timeString, hudwidth - width, height, FRACUNIT);
+	DrawHudText(SmallFont, hud_timecolor, timeString, hudwidth - width, height, OPAQUE);
 }
 
 static bool IsAltHUDTextVisible()
@@ -992,7 +992,7 @@ static void DrawLatency()
 	const int width = SmallFont->GetCharWidth('0') * characterCount + 2; // small offset from screen's border
 	const int height = SmallFont->GetHeight() * (ST_IsTimeVisible() ? 2 : 1);
 
-	DrawHudText(SmallFont, color, tempstr, hudwidth - width, height, FRACUNIT);
+	DrawHudText(SmallFont, color, tempstr, hudwidth - width, height, OPAQUE);
 }
 
 bool ST_IsLatencyVisible()
@@ -1083,7 +1083,7 @@ void DrawHUD()
 		{
 			seconds = Tics2Seconds(level.totaltime);
 			mysnprintf(printstr, countof(printstr), "%02i:%02i:%02i", seconds/3600, (seconds%3600)/60, seconds%60);
-			DrawHudText(SmallFont, hudcolor_ttim, printstr, hudwidth-length, bottom, FRACUNIT);
+			DrawHudText(SmallFont, hudcolor_ttim, printstr, hudwidth-length, bottom, OPAQUE);
 			bottom -= fonth;
 		}
 
@@ -1093,14 +1093,14 @@ void DrawHUD()
 			{
 				seconds = Tics2Seconds(level.time);
 				mysnprintf(printstr, countof(printstr), "%02i:%02i:%02i", seconds/3600, (seconds%3600)/60, seconds%60);
-				DrawHudText(SmallFont, hudcolor_time, printstr, hudwidth-length, bottom, FRACUNIT);
+				DrawHudText(SmallFont, hudcolor_time, printstr, hudwidth-length, bottom, OPAQUE);
 				bottom -= fonth;
 			}
 
 			// Single level time for hubs
 			seconds= Tics2Seconds(level.maptime);
 			mysnprintf(printstr, countof(printstr), "%02i:%02i:%02i", seconds/3600, (seconds%3600)/60, seconds%60);
-			DrawHudText(SmallFont, hudcolor_ltim, printstr, hudwidth-length, bottom, FRACUNIT);
+			DrawHudText(SmallFont, hudcolor_ltim, printstr, hudwidth-length, bottom, OPAQUE);
 		}
 
 		ST_FormatMapName(mapname);

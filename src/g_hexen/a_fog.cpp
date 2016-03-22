@@ -15,7 +15,7 @@ static FRandom pr_fogspawn ("FogSpawn");
 //		args[3]		Lifetime countdown
 //		args[4]		Boolean: fog moving?
 //		special1	Internal:  Counter for spawn frequency
-//		special2	Internal:  Index into floatbob table
+//		WeaveIndexZ	Internal:  Index into floatbob table
 //
 //==========================================================================
 
@@ -37,7 +37,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FogSpawn)
 	};
 
 	AActor *mo = NULL;
-	angle_t delta;
+	int delta;
 
 	if (self->special1-- > 0)
 	{
@@ -57,7 +57,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FogSpawn)
 		mo->args[0] = (pr_fogspawn() % (self->args[0]))+1;	// Random speed
 		mo->args[3] = self->args[3];						// Set lifetime
 		mo->args[4] = 1;									// Set to moving
-		mo->special2 = pr_fogspawn()&63;
+		mo->WeaveIndexZ = pr_fogspawn()&63;
 	}
 	return 0;
 }
@@ -72,7 +72,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FogMove)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	int speed = self->args[0]<<FRACBITS;
+	double speed = self->args[0];
 	int weaveindex;
 
 	if (!self->args[4])
@@ -88,9 +88,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_FogMove)
 
 	if ((self->args[3] % 4) == 0)
 	{
-		weaveindex = self->special2;
-		self->_f_AddZ(finesine[weaveindex << BOBTOFINESHIFT] * 4);
-		self->special2 = (weaveindex + 1) & 63;
+		weaveindex = self->WeaveIndexZ;
+		self->AddZ(BobSin(weaveindex) / 2);
+		self->WeaveIndexZ = (weaveindex + 1) & 63;
 	}
 
 	self->VelFromAngle(speed);

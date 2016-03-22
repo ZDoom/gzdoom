@@ -124,7 +124,7 @@ void	P_PredictionLerpReset();
 APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags=0);
 
 int P_FaceMobj (AActor *source, AActor *target, DAngle *delta);
-bool P_SeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax, bool precise = false, bool usecurspeed=false);
+bool P_SeekerMissile (AActor *actor, double thresh, double turnMax, bool precise = false, bool usecurspeed=false);
 
 enum EPuffFlags
 {
@@ -168,6 +168,10 @@ inline AActor *P_SpawnMissileXYZ(const fixedvec3 &pos, AActor *source, AActor *d
 {
 	return P_SpawnMissileXYZ(pos.x, pos.y, pos.z, source, dest, type, checkspawn, owner);
 }
+inline AActor *P_SpawnMissileXYZ(const DVector3 &pos, AActor *source, AActor *dest, PClassActor *type, bool checkspawn = true, AActor *owner = NULL)
+{
+	return P_SpawnMissileXYZ(FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), FLOAT2FIXED(pos.Z), source, dest, type, checkspawn, owner);
+}
 AActor *P_SpawnMissileAngle (AActor *source, PClassActor *type, angle_t angle, fixed_t vz);
 inline AActor *P_SpawnMissileAngle(AActor *source, PClassActor *type, DAngle angle, double vz)
 {
@@ -180,12 +184,22 @@ inline AActor *P_SpawnMissileAngleZ(AActor *source, double z, PClassActor *type,
 	return P_SpawnMissileAngleZ(source, FLOAT2FIXED(z), type, angle.BAMs(), FLOAT2FIXED(vz));
 }
 AActor *P_SpawnMissileAngleZSpeed (AActor *source, fixed_t z, PClassActor *type, angle_t angle, fixed_t vz, fixed_t speed, AActor *owner=NULL, bool checkspawn = true);
+inline AActor *P_SpawnMissileAngleZSpeed(AActor *source, double z, PClassActor *type, DAngle angle, double vz, double speed, AActor *owner = NULL, bool checkspawn = true)
+{
+	return P_SpawnMissileAngleZSpeed(source, FLOAT2FIXED(z), type, angle.BAMs(), FLOAT2FIXED(vz), FLOAT2FIXED(speed), owner, checkspawn);
+}
 AActor *P_SpawnMissileZAimed (AActor *source, fixed_t z, AActor *dest, PClassActor *type);
+inline AActor *P_SpawnMissileZAimed(AActor *source, double z, AActor *dest, PClassActor *type)
+{
+	return P_SpawnMissileZAimed(source, FLOAT2FIXED(z), dest, type);
+}
 
 AActor *P_SpawnPlayerMissile (AActor* source, PClassActor *type);
 AActor *P_SpawnPlayerMissile (AActor *source, PClassActor *type, DAngle angle);
-AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z, PClassActor *type, DAngle angle, 
+
+AActor *P_SpawnPlayerMissile (AActor *source, double x, double y, double z, PClassActor *type, DAngle angle, 
 							  FTranslatedLineTarget *pLineTarget = NULL, AActor **MissileActor = NULL, bool nofreeaim = false, bool noautoaim = false, int aimflags = 0);
+
 
 void P_CheckFakeFloorTriggers (AActor *mo, fixed_t oldz, bool oldz_has_viewheight=false);
 
@@ -282,6 +296,10 @@ bool	P_TryMove (AActor* thing, fixed_t x, fixed_t y, int dropoff, const secplane
 inline bool	P_TryMove(AActor* thing, double x, double y, int dropoff, const secplane_t * onfloor = NULL)
 {
 	return P_TryMove(thing, FLOAT2FIXED(x), FLOAT2FIXED(y), dropoff, onfloor);
+}
+inline bool	P_TryMove(AActor* thing, const DVector2 &pos, int dropoff, const secplane_t * onfloor = NULL)
+{
+	return P_TryMove(thing, FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), dropoff, onfloor);
 }
 bool	P_CheckMove(AActor *thing, fixed_t x, fixed_t y);
 void	P_ApplyTorque(AActor *mo);

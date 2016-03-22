@@ -172,9 +172,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_VolcanoBlast)
 	count = 1 + (pr_blast() % 3);
 	for (i = 0; i < count; i++)
 	{
-		blast = Spawn("VolcanoBlast", self->PosPlusZ(44*FRACUNIT), ALLOW_REPLACE);
+		blast = Spawn("VolcanoBlast", self->PosPlusZ(44.), ALLOW_REPLACE);
 		blast->target = self;
-		blast->Angles.Yaw = pr_blast() * (360 / 256.f);
+		blast->Angles.Yaw = pr_blast() * (360 / 256.);
 		blast->VelFromAngle(1.);
 		blast->Vel.Z = 2.5 + pr_blast() / 64.;
 		S_Sound (blast, CHAN_BODY, "world/volcano/shoot", 1, ATTN_NORM);

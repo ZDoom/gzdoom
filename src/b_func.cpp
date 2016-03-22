@@ -127,7 +127,7 @@ bool DBot::Check_LOS (AActor *to, angle_t vangle)
 	if (vangle == 0)
 		return false; //Looker seems to be blind.
 
-	return absangle(player->mo->__f_AngleTo(to) - player->mo->_f_angle()) <= vangle/2;
+	return absangle(player->mo->AngleTo(to), player->mo->Angles.Yaw) <= ANGLE2FLOAT(vangle/2);
 }
 
 //-------------------------------------

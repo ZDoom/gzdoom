@@ -1024,7 +1024,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 	// [RH] Andy Baker's Stealth monsters
 	if (target->flags & MF_STEALTH)
 	{
-		target->alpha = OPAQUE;
+		target->Alpha = 1.;
 		target->visdir = -1;
 	}
 	if (target->flags & MF_SKULLFLY)
@@ -1046,7 +1046,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 			if (player && damage > 1)
 			{
 				// Take half damage in trainer mode
-				damage = FixedMul(damage, G_SkillProperty(SKILLP_DamageFactor));
+				damage = int(damage * G_SkillProperty(SKILLP_DamageFactor));
 			}
 			// Special damage types
 			if (inflictor)
@@ -1091,11 +1091,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 			}
 			if (damage > 0 && !(flags & DMG_NO_FACTOR))
 			{
-				damage = FixedMul(damage, target->DamageFactor);
-				if (damage > 0)
-				{
-					damage = DamageTypeDefinition::ApplyMobjDamageFactor(damage, mod, target->GetClass()->DamageFactors);
-				}
+				damage = target->ApplyDamageFactor(mod, damage);
 			}
 
 			if (damage >= 0)
@@ -1221,7 +1217,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 		//Use the original damage to check for telefrag amount. Don't let the now-amplified damagetypes do it.
 		if (rawdamage < TELEFRAG_DAMAGE || (target->flags7 & MF7_LAXTELEFRAGDMG)) 
 		{ // Still allow telefragging :-(
-			damage = (int)((float)damage * level.teamdamage);
+			damage = (int)(damage * level.teamdamage);
 			if (damage < 0)
 			{
 				return damage;
@@ -1672,7 +1668,7 @@ bool P_PoisonPlayer (player_t *player, AActor *poisoner, AActor *source, int poi
 	}
 	if (source != NULL && source->player != player && player->mo->IsTeammate (source))
 	{
-		poison = (int)((float)poison * level.teamdamage);
+		poison = (int)(poison * level.teamdamage);
 	}
 	if (poison > 0)
 	{
@@ -1721,18 +1717,15 @@ void P_PoisonDamage (player_t *player, AActor *source, int damage,
 		return;
 	}
 	// Take half damage in trainer mode
-	damage = FixedMul(damage, G_SkillProperty(SKILLP_DamageFactor));
+	damage = int(damage * G_SkillProperty(SKILLP_DamageFactor));
 	// Handle passive damage modifiers (e.g. PowerProtection)
 	if (target->Inventory != NULL)
 	{
 		target->Inventory->ModifyDamage(damage, player->poisontype, damage, true);
 	}
 	// Modify with damage factors
-	damage = FixedMul(damage, target->DamageFactor);
-	if (damage > 0)
-	{
-		damage = DamageTypeDefinition::ApplyMobjDamageFactor(damage, player->poisontype, target->GetClass()->DamageFactors);
-	}
+	damage = target->ApplyDamageFactor(player->poisontype, damage);
+
 	if (damage <= 0)
 	{ // Damage was reduced to 0, so don't bother further.
 		return;

@@ -215,7 +215,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningZap)
 
 	PClassActor *lightning = PClass::FindActor(self->GetClass()->MissileName);
 	AActor *mo;
-	fixed_t deltaZ;
 
 	if (lightning == NULL)
 	{
@@ -230,32 +229,18 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningZap)
 		self->SetState (self->FindState(NAME_Death));
 		return 0;
 	}
-	if (self->flags3 & MF3_FLOORHUGGER)
-	{
-		deltaZ = 10*FRACUNIT;
-	}
-	else
-	{
-		deltaZ = -10*FRACUNIT;
-	}			
-	fixed_t xo = ((pr_zap() - 128)*self->_f_radius() / 256);
-	fixed_t yo = ((pr_zap() - 128)*self->_f_radius() / 256);
+	double deltaX = (pr_zap() - 128) * self->radius / 256;
+	double deltaY = (pr_zap() - 128) * self->radius / 256;
+	double deltaZ = (self->flags3 & MF3_FLOORHUGGER) ? 10 : -10;
 
-	mo = Spawn(lightning, self->Vec3Offset(xo, yo, deltaZ), ALLOW_REPLACE);
+	mo = Spawn(lightning, self->Vec3Offset(deltaX, deltaY, deltaZ), ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->lastenemy = self;
 		mo->Vel.X = self->Vel.X;
 		mo->Vel.Y = self->Vel.Y;
+		mo->Vel.Z = (self->flags3 & MF3_FLOORHUGGER) ? 20 : -20;
 		mo->target = self->target;
-		if (self->flags3 & MF3_FLOORHUGGER)
-		{
-			mo->Vel.Z = 20;
-		}
-		else 
-		{
-			mo->Vel.Z = -20;
-		}
 	}
 	if ((self->flags3 & MF3_FLOORHUGGER) && pr_zapf() < 160)
 	{

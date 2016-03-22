@@ -128,8 +128,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_ShedShard)
 	// every so many calls, spawn a new missile in its set directions
 	if (spawndir & SHARDSPAWN_LEFT)
 	{
-		mo = P_SpawnMissileAngleZSpeed (self, self->_f_Z(), RUNTIME_CLASS(AFrostMissile), self->_f_angle()+(ANG45/9),
-											 0, (20+2*spermcount)<<FRACBITS, self->target);
+		mo = P_SpawnMissileAngleZSpeed(self, self->Z(), RUNTIME_CLASS(AFrostMissile), 
+			self->Angles.Yaw + 5, 0, (20. + 2 * spermcount), self->target);
 		if (mo)
 		{
 			mo->special1 = SHARDSPAWN_LEFT;
@@ -140,8 +140,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_ShedShard)
 	}
 	if (spawndir & SHARDSPAWN_RIGHT)
 	{
-		mo = P_SpawnMissileAngleZSpeed (self, self->_f_Z(), RUNTIME_CLASS(AFrostMissile), self->_f_angle()-(ANG45/9),
-											 0, (20+2*spermcount)<<FRACBITS, self->target);
+		mo = P_SpawnMissileAngleZSpeed(self, self->Z(), RUNTIME_CLASS(AFrostMissile),
+			self->Angles.Yaw - 5, 0, (20. + 2 * spermcount), self->target);
 		if (mo)
 		{
 			mo->special1 = SHARDSPAWN_RIGHT;
@@ -152,8 +152,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_ShedShard)
 	}
 	if (spawndir & SHARDSPAWN_UP)
 	{
-		mo = P_SpawnMissileAngleZSpeed (self, self->_f_Z()+8*FRACUNIT, RUNTIME_CLASS(AFrostMissile), self->_f_angle(), 
-											 0, (15+2*spermcount)<<FRACBITS, self->target);
+		mo = P_SpawnMissileAngleZSpeed(self, self->Z() + 8., RUNTIME_CLASS(AFrostMissile),
+			self->Angles.Yaw, 0, (15. + 2 * spermcount), self->target);
 		if (mo)
 		{
 			mo->Vel.Z = self->Vel.Z;
@@ -167,8 +167,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_ShedShard)
 	}
 	if (spawndir & SHARDSPAWN_DOWN)
 	{
-		mo = P_SpawnMissileAngleZSpeed (self, self->_f_Z()-4*FRACUNIT, RUNTIME_CLASS(AFrostMissile), self->_f_angle(), 
-											 0, (15+2*spermcount)<<FRACBITS, self->target);
+		mo = P_SpawnMissileAngleZSpeed(self, self->Z() - 4., RUNTIME_CLASS(AFrostMissile),
+			self->Angles.Yaw, 0, (15. + 2 * spermcount), self->target);
 		if (mo)
 		{
 			mo->Vel.Z = self->Vel.Z;

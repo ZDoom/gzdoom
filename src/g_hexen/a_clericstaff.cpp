@@ -155,7 +155,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffMissileSlither)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	A_Weave(self, 3, 0, FRACUNIT, 0);
+	A_Weave(self, 3, 0, 1., 0.);
 	return 0;
 }
 

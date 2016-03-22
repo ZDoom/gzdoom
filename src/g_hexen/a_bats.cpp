@@ -39,7 +39,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BatSpawn)
 
 	AActor *mo;
 	int delta;
-	angle_t angle;
+	DAngle angle;
 
 	// Countdown until next spawn
 	if (self->special1-- > 0) return 0;
@@ -47,7 +47,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_BatSpawn)
 
 	delta = self->args[1];
 	if (delta==0) delta=1;
-	angle = self->_f_angle() + (((pr_batspawn()%delta)-(delta>>1))<<24);
+
+	angle = self->Angles.Yaw + (((pr_batspawn() % delta) - (delta >> 1)) * (360 / 256.));
+
 	mo = P_SpawnMissileAngle (self, PClass::FindActor("Bat"), angle, 0);
 	if (mo)
 	{
@@ -90,7 +92,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BatMove)
 	}
 
 	// Handle Z movement
-	self->SetZ(self->target->Z() + 16 * g_sin(BOBTORAD(self->args[0])));
+	self->SetZ(self->target->Z() + 2 * BobSin(self->args[0]));
 	self->args[0] = (self->args[0]+3)&63;	
 	return 0;
 }

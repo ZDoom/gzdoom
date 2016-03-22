@@ -29,7 +29,7 @@ bool AArtiBoostArmor::Use (bool pickup)
 
 		for (int i = 0; i < 4; ++i)
 		{
-			armor = Spawn<AHexenArmor> (0,0,0, NO_REPLACE);
+			armor = Spawn<AHexenArmor>();
 			armor->flags |= MF_DROPPED;
 			armor->health = i;
 			armor->Amount = 1;
@@ -46,7 +46,7 @@ bool AArtiBoostArmor::Use (bool pickup)
 	}
 	else
 	{
-		ABasicArmorBonus *armor = Spawn<ABasicArmorBonus> (0,0,0, NO_REPLACE);
+		ABasicArmorBonus *armor = Spawn<ABasicArmorBonus>();
 		armor->flags |= MF_DROPPED;
 		armor->SaveAmount = 50;
 		armor->MaxSaveAmount = 300;

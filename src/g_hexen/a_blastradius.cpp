@@ -9,8 +9,8 @@
 */
 
 /* For reference, the default values:
-#define BLAST_RADIUS_DIST	255*FRACUNIT
-#define BLAST_SPEED			20*FRACUNIT
+#define BLAST_RADIUS_DIST	255*F.RACUNIT
+#define BLAST_SPEED			20*F.RACUNIT
 #define BLAST_FULLSTRENGTH	255
 */
 
@@ -22,7 +22,7 @@
 //
 //==========================================================================
 
-void BlastActor (AActor *victim, fixed_t strength, double speed, AActor *Owner, PClassActor *blasteffect, bool dontdamage)
+void BlastActor (AActor *victim, double strength, double speed, AActor *Owner, PClassActor *blasteffect, bool dontdamage)
 {
 	DAngle angle;
 	AActor *mo;
@@ -97,7 +97,7 @@ DEFINE_ACTION_FUNCTION_PARAMS (AActor, A_Blast)
 {
 	PARAM_ACTION_PROLOGUE;
 	PARAM_INT_OPT	(blastflags)			{ blastflags = 0; }
-	PARAM_FIXED_OPT	(strength)				{ strength = 255*FRACUNIT; }
+	PARAM_FLOAT_OPT	(strength)				{ strength = 255; }
 	PARAM_FLOAT_OPT	(radius)				{ radius = 255; }
 	PARAM_FLOAT_OPT	(speed)					{ speed = 20; }
 	PARAM_CLASS_OPT	(blasteffect, AActor)	{ blasteffect = PClass::FindActor("BlastEffect"); }

@@ -404,7 +404,7 @@ public:
 	float		FOV;					// current field of vision
 	fixed_t		viewz;					// focal origin above r.z
 	fixed_t		viewheight;				// base height above floor for viewz
-	fixed_t		deltaviewheight;		// squat speed.
+	double		deltaviewheight;		// squat speed.
 	double		bob;					// bounded/scaled total velocity
 
 	// killough 10/98: used for realistic bobbing (i.e. not simply overall speed)
@@ -492,7 +492,7 @@ public:
 	DAngle			MaxPitch;
 
 	double crouchfactor;
-	fixed_t crouchoffset;
+	double crouchoffset;
 	fixed_t crouchviewdelta;
 
 	FWeaponSlots weapons;
@@ -502,9 +502,9 @@ public:
 	DAngle ConversationNPCAngle;
 	bool ConversationFaceTalker;
 
-	fixed_t GetDeltaViewHeight() const
+	double GetDeltaViewHeight() const
 	{
-		return (mo->ViewHeight + crouchviewdelta - viewheight) >> 3;
+		return FIXED2DBL((mo->ViewHeight + crouchviewdelta - viewheight) >> 3);
 	}
 
 	void Uncrouch()

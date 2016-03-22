@@ -23,7 +23,7 @@ bool InquisitorCheckDistance (AActor *self)
 {
 	if (self->reactiontime == 0 && P_CheckSight (self, self->target))
 	{
-		return self->AproxDistance (self->target) < 264*FRACUNIT;
+		return self->Distance2D (self->target) < 264.;
 	}
 	return false;
 }
@@ -61,20 +61,20 @@ DEFINE_ACTION_FUNCTION(AActor, A_InquisitorAttack)
 
 	A_FaceTarget (self);
 
-	self->_f_AddZ(32*FRACUNIT);
+	self->AddZ(32);
 	self->Angles.Yaw -= 45./32;
-	proj = P_SpawnMissileZAimed (self, self->_f_Z(), self->target, PClass::FindActor("InquisitorShot"));
+	proj = P_SpawnMissileZAimed (self, self->Z(), self->target, PClass::FindActor("InquisitorShot"));
 	if (proj != NULL)
 	{
 		proj->Vel.Z += 9;
 	}
 	self->Angles.Yaw += 45./16;
-	proj = P_SpawnMissileZAimed (self, self->_f_Z(), self->target, PClass::FindActor("InquisitorShot"));
+	proj = P_SpawnMissileZAimed (self, self->Z(), self->target, PClass::FindActor("InquisitorShot"));
 	if (proj != NULL)
 	{
 		proj->Vel.Z += 16;
 	}
-	self->_f_AddZ(-32*FRACUNIT);
+	self->AddZ(-32);
 	return 0;
 }
 
@@ -89,7 +89,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_InquisitorJump)
 		return 0;
 
 	S_Sound (self, CHAN_ITEM|CHAN_LOOP, "inquisitor/jump", 1, ATTN_NORM);
-	self->_f_AddZ(64*FRACUNIT);
+	self->AddZ(64);
 	A_FaceTarget (self);
 	speed = self->Speed * (2./3);
 	self->VelFromAngle(speed);
@@ -127,7 +127,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_TossArm)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	AActor *foo = Spawn("InquisitorArm", self->PosPlusZ(24*FRACUNIT), ALLOW_REPLACE);
+	AActor *foo = Spawn("InquisitorArm", self->PosPlusZ(24), ALLOW_REPLACE);
 	foo->Angles.Yaw = self->Angles.Yaw - 90. + pr_inq.Random2() * (360./1024.);
 	foo->VelFromAngle(foo->Speed / 8);
 	foo->Vel.Z = pr_inq() / 64.;

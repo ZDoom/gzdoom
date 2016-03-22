@@ -9,7 +9,7 @@
 #include "thingdef/thingdef.h"
 */
 
-#define FIREDEMON_ATTACK_RANGE	64*8*FRACUNIT
+#define FIREDEMON_ATTACK_RANGE	(64*8.)
 
 static FRandom pr_firedemonrock ("FireDemonRock");
 static FRandom pr_smbounce ("SMBounce");
@@ -54,9 +54,9 @@ void A_FiredSpawnRock (AActor *actor)
 			break;
 	}
 
-	fixed_t xo = ((pr_firedemonrock() - 128) << 12);
-	fixed_t yo = ((pr_firedemonrock() - 128) << 12);
-	fixed_t zo = (pr_firedemonrock() << 11);
+	double xo = (pr_firedemonrock() - 128) / 16.;
+	double yo = (pr_firedemonrock() - 128) / 16.;
+	double zo = pr_firedemonrock() / 32.;
 	mo = Spawn (rtype, actor->Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
 	if (mo)
 	{
@@ -138,13 +138,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_FiredChase)
 	int weaveindex = self->special1;
 	AActor *target = self->target;
 	DAngle ang;
-	fixed_t dist;
+	double dist;
 
 	if (self->reactiontime) self->reactiontime--;
 	if (self->threshold) self->threshold--;
 
 	// Float up and down
-	self->_f_AddZ(finesine[weaveindex << BOBTOFINESHIFT] * 8);
+	self->AddZ(BobSin(weaveindex));
 	self->special1 = (weaveindex + 2) & 63;
 
 	// Ensure it stays above certain height
@@ -168,7 +168,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FiredChase)
 	{
 		self->special2 = 0;
 		self->Vel.X = self->Vel.Y = 0;
-		dist = self->AproxDistance (target);
+		dist = self->Distance2D(target);
 		if (dist < FIREDEMON_ATTACK_RANGE)
 		{
 			if (pr_firedemonchase() < 30)

@@ -53,7 +53,6 @@
 #define ANGLETOFINESHIFT		19
 
 #define BOBTOFINESHIFT			(FINEANGLEBITS - 6)
-#define BOBTORAD(v)		((v) * (M_PI/32))	// from FloatBobTable to radians.
 
 // Effective size is 10240.
 extern	fixed_t 		finesine[5*FINEANGLES/4];

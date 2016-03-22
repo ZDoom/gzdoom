@@ -292,7 +292,7 @@ void P_GetFloorCeilingZ(FCheckPosition &tmf, int flags)
 	F3DFloor *ffc, *fff;
 
 	tmf.ceilingz = FIXED2DBL(sec->NextHighestCeilingAt(tmf.x, tmf.y, tmf.z, tmf.z + tmf.thing->_f_height(), flags, &tmf.ceilingsector, &ffc));
-	tmf.dropoffz = sec->NextLowestFloorAt(tmf.x, tmf.y, tmf.z, flags, tmf.thing->MaxStepHeight, &tmf.floorsector, &fff);
+	tmf.dropoffz = sec->NextLowestFloorAt(tmf.x, tmf.y, tmf.z, flags, tmf.thing->_f_MaxStepHeight(), &tmf.floorsector, &fff);
 	tmf.floorz = FIXED2DBL(tmf.dropoffz);
 
 	if (fff)
@@ -1224,7 +1224,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 		{
 			// [RH] Let monsters walk on actors as well as floors
 			if ((tm.thing->flags3 & MF3_ISMONSTER) &&
-				topz >= tm._f_floorz() && topz <= tm.thing->_f_Z() + tm.thing->MaxStepHeight)
+				topz >= tm._f_floorz() && topz <= tm.thing->_f_Z() + tm.thing->_f_MaxStepHeight())
 			{
 				// The commented-out if is an attempt to prevent monsters from walking off a
 				// thing further than they would walk off a ledge. I can't think of an easy
@@ -1549,7 +1549,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 		// [RH] The next condition is to compensate for the extra height
 		// that gets added by P_CheckPosition() so that you cannot pick
 		// up things that are above your true height.
-		&& thing->_f_Z() < tm.thing->_f_Top() - tm.thing->MaxStepHeight)
+		&& thing->Z() < tm.thing->Top() - tm.thing->MaxStepHeight)
 	{ // Can be picked up by tmthing
 		P_TouchSpecialThing(thing, tm.thing);	// can remove thing
 	}
@@ -1645,7 +1645,7 @@ bool P_CheckPosition(AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm, bo
 	thingblocker = NULL;
 	if (thing->player)
 	{ // [RH] Fake taller height to catch stepping up into things.
-		thing->Height = realHeight + FIXED2DBL(thing->MaxStepHeight);
+		thing->Height = realHeight + thing->MaxStepHeight;
 	}
 
 	tm.stepthing = NULL;
@@ -1671,17 +1671,17 @@ bool P_CheckPosition(AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm, bo
 				return false;
 			}
 			else if (!BlockingMobj->player && !(thing->flags & (MF_FLOAT | MF_MISSILE | MF_SKULLFLY)) &&
-				BlockingMobj->_f_Top() - thing->_f_Z() <= thing->MaxStepHeight)
+				BlockingMobj->Top() - thing->Z() <= thing->MaxStepHeight)
 			{
 				if (thingblocker == NULL ||
-					BlockingMobj->_f_Z() > thingblocker->_f_Z())
+					BlockingMobj->Z() > thingblocker->Z())
 				{
 					thingblocker = BlockingMobj;
 				}
 				thing->BlockingMobj = NULL;
 			}
 			else if (thing->player &&
-				thing->_f_Top() - BlockingMobj->_f_Z() <= thing->MaxStepHeight)
+				thing->Top() - BlockingMobj->Z() <= thing->MaxStepHeight)
 			{
 				if (thingblocker)
 				{ // There is something to step up on. Return this thing as
@@ -2054,8 +2054,8 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 			{
 				goto pushline;
 			}
-			else if (BlockingMobj->_f_Top() - thing->_f_Z() > thing->MaxStepHeight
-				|| (BlockingMobj->Sector->ceilingplane.ZatPoint(x, y) - (BlockingMobj->_f_Top()) < thing->_f_height())
+			else if (BlockingMobj->Top() - thing->Z() > thing->MaxStepHeight
+				|| (BlockingMobj->Sector->ceilingplane._f_ZatPointF(x, y) - (BlockingMobj->Top()) < thing->Height)
 				|| (tm.ceilingz - (BlockingMobj->Top()) < thing->Height))
 			{
 				goto pushline;
@@ -2124,7 +2124,7 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 			{ // [RH] Don't let normal missiles climb steps
 				goto pushline;
 			}
-			if (tm._f_floorz() - thing->_f_Z() > thing->MaxStepHeight)
+			if (tm.floorz - thing->Z() > thing->MaxStepHeight)
 			{ // too big a step up
 				goto pushline;
 			}
@@ -2281,8 +2281,8 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 			side = P_PointOnLineSide(spec.refpos.x, spec.refpos.y, ld);
 			if (oldside == 0 && side == 1)
 			{
-				divline_t dl2 = { ld->v1->x, ld->v1->y, ld->dx, ld->dy };
-				divline_t dl1 = { spec.oldrefpos.x, spec.oldrefpos.y, spec.refpos.x - spec.oldrefpos.x, spec.refpos.y - spec.oldrefpos.y };
+				fdivline_t dl2 = { ld->v1->x, ld->v1->y, ld->dx, ld->dy };
+				fdivline_t dl1 = { spec.oldrefpos.x, spec.oldrefpos.y, spec.refpos.x - spec.oldrefpos.x, spec.refpos.y - spec.oldrefpos.y };
 				fixed_t frac = P_InterceptVector(&dl1, &dl2);
 				if (frac < bestfrac)
 				{
@@ -2337,7 +2337,7 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 			// so that the renderer can properly calculate an interpolated position along the movement path.
 			if (thing == players[consoleplayer].camera)
 			{
-				divline_t dl1 = { besthit.oldrefpos.x,besthit. oldrefpos.y, besthit.refpos.x - besthit.oldrefpos.x, besthit.refpos.y - besthit.oldrefpos.y };
+				fdivline_t dl1 = { besthit.oldrefpos.x,besthit. oldrefpos.y, besthit.refpos.x - besthit.oldrefpos.x, besthit.refpos.y - besthit.oldrefpos.y };
 				fixedvec3a hit = { dl1.x + FixedMul(dl1.dx, bestfrac), dl1.y + FixedMul(dl1.dy, bestfrac), 0, 0. };
 
 				R_AddInterpolationPoint(hit);
@@ -2569,7 +2569,7 @@ bool P_CheckMove(AActor *thing, fixed_t x, fixed_t y)
 		}
 		if (!(thing->flags & MF_TELEPORT) && !(thing->flags3 & MF3_FLOORHUGGER))
 		{
-			if (tm._f_floorz() - newz > thing->MaxStepHeight)
+			if (tm._f_floorz() - newz > thing->_f_MaxStepHeight())
 			{ // too big a step up
 				return false;
 			}
@@ -2749,7 +2749,7 @@ void FSlide::HitSlideLine(line_t* ld)
 		}
 		else
 		{
-			divline_t dll, dlv;
+			fdivline_t dll, dlv;
 			fixed_t inter1, inter2, inter3;
 
 			P_MakeDivline(ld, &dll);
@@ -3034,7 +3034,7 @@ const secplane_t * P_CheckSlopeWalk(AActor *actor, fixed_t &xmove, fixed_t &ymov
 
 		fixed_t thisplanez = rover->top.plane->ZatPoint(pos);
 
-		if (thisplanez>planezhere && thisplanez <= actor->_f_Z() + actor->MaxStepHeight)
+		if (thisplanez>planezhere && thisplanez <= actor->_f_Z() + actor->_f_MaxStepHeight())
 		{
 			copyplane = *rover->top.plane;
 			if (copyplane.c<0) copyplane.FlipVert();
@@ -3052,7 +3052,7 @@ const secplane_t * P_CheckSlopeWalk(AActor *actor, fixed_t &xmove, fixed_t &ymov
 
 			fixed_t thisplanez = rover->top.plane->ZatPoint(actor);
 
-			if (thisplanez>planezhere && thisplanez <= actor->_f_Z() + actor->MaxStepHeight)
+			if (thisplanez>planezhere && thisplanez <= actor->_f_Z() + actor->_f_MaxStepHeight())
 			{
 				copyplane = *rover->top.plane;
 				if (copyplane.c<0) copyplane.FlipVert();
@@ -3107,7 +3107,7 @@ const secplane_t * P_CheckSlopeWalk(AActor *actor, fixed_t &xmove, fixed_t &ymov
 								pos.x += xmove;
 								pos.y += ymove;
 
-								if (sec->floorplane.ZatPoint(pos) >= actor->_f_Z() - actor->MaxStepHeight)
+								if (sec->floorplane.ZatPoint(pos) >= actor->_f_Z() - actor->_f_MaxStepHeight())
 								{
 									dopush = false;
 									break;
@@ -3554,7 +3554,7 @@ struct aim_t
 	//
 	//============================================================================
 
-	bool AimTraverse3DFloors(const divline_t &trace, intercept_t * in, int frontflag, int *planestocheck)
+	bool AimTraverse3DFloors(const fdivline_t &trace, intercept_t * in, int frontflag, int *planestocheck)
 	{
 		sector_t * nextsector;
 		secplane_t * nexttopplane, *nextbottomplane;
@@ -5086,7 +5086,7 @@ bool P_NoWayTraverse(AActor *usething, fixed_t startx, fixed_t starty, fixed_t e
 		if (ld->flags&(ML_BLOCKING | ML_BLOCKEVERYTHING | ML_BLOCK_PLAYERS)) return true;
 		P_LineOpening(open, NULL, ld, it.InterceptPoint(in));
 		if (open.range <= 0 ||
-			open.bottom > usething->_f_Z() + usething->MaxStepHeight ||
+			open.bottom > usething->_f_Z() + usething->_f_MaxStepHeight() ||
 			open.top < usething->_f_Top()) return true;
 	}
 	return false;

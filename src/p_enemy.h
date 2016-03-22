@@ -50,6 +50,11 @@ void P_DaggerAlert (AActor *target, AActor *emitter);
 void P_RecursiveSound (sector_t *sec, AActor *soundtarget, bool splash, int soundblocks, AActor *emitter=NULL, fixed_t maxdist=0);
 bool P_HitFriend (AActor *self);
 void P_NoiseAlert (AActor *target, AActor *emmiter, bool splash=false, fixed_t maxdist=0);
+inline void P_NoiseAlert(AActor *target, AActor *emmiter, bool splash, double maxdist)
+{
+	P_NoiseAlert(target, emmiter, splash, FLOAT2FIXED(maxdist));
+}
+
 bool P_CheckMeleeRange2 (AActor *actor);
 bool P_Move (AActor *actor);
 bool P_TryWalk (AActor *actor);
@@ -57,7 +62,7 @@ void P_NewChaseDir (AActor *actor);
 AInventory *P_DropItem (AActor *source, PClassActor *type, int special, int chance);
 void P_TossItem (AActor *item);
 bool P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params);
-void A_Weave(AActor *self, int xyspeed, int zspeed, fixed_t xydist, fixed_t zdist);
+void A_Weave(AActor *self, int xyspeed, int zspeed, double xydist, double zdist);
 void A_Unblock(AActor *self, bool drop);
 
 DECLARE_ACTION(A_Look)

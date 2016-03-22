@@ -164,12 +164,12 @@ int ATelOtherFX1::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 
 void P_TeleportToPlayerStarts (AActor *victim)
 {
-	fixed_t destX,destY;
+	DVector3 dest;
 
 	FPlayerStart *start = G_PickPlayerStart(0, PPS_FORCERANDOM | PPS_NOBLOCKINGCHECK);
-	destX = start->x;
-	destY = start->y;
-	P_Teleport (victim, destX, destY, ONFLOORZ, (double)start->angle, TELF_SOURCEFOG | TELF_DESTFOG);
+	dest = start->pos;
+	dest.Z = ONFLOORZ;
+	P_Teleport (victim, dest, (double)start->angle, TELF_SOURCEFOG | TELF_DESTFOG);
 }
 
 //===========================================================================
@@ -181,15 +181,15 @@ void P_TeleportToPlayerStarts (AActor *victim)
 void P_TeleportToDeathmatchStarts (AActor *victim)
 {
 	unsigned int i, selections;
-	fixed_t destX,destY;
+	DVector3 dest;
 
 	selections = deathmatchstarts.Size ();
 	if (selections > 0)
 	{
 		i = pr_teledm() % selections;
-		destX = deathmatchstarts[i].x;
-		destY = deathmatchstarts[i].y;
-		P_Teleport (victim, destX, destY, ONFLOORZ, (double)deathmatchstarts[i].angle, TELF_SOURCEFOG | TELF_DESTFOG);
+		dest = deathmatchstarts[i].pos;
+		dest.Z = ONFLOORZ;
+		P_Teleport (victim, dest, (double)deathmatchstarts[i].angle, TELF_SOURCEFOG | TELF_DESTFOG);
 	}
 	else
 	{

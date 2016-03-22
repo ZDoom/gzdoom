@@ -162,7 +162,7 @@ void FLinePortalTraverse::AddLineIntercepts(int bx, int by)
 	{
 		line_t *ld = block.portallines[i];
 		fixed_t frac;
-		divline_t dl;
+		fdivline_t dl;
 
 		if (ld->validcount == validcount) continue;	// already processed
 

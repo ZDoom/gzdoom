@@ -191,7 +191,7 @@ static void P_Add3DFloor(sector_t* sec, sector_t* sec2, line_t* master, int flag
 	// The engine cannot handle sloped translucent floors. Sorry
 	if (ffloor->top.plane->a || ffloor->top.plane->b || ffloor->bottom.plane->a || ffloor->bottom.plane->b)
 	{
-		ffloor->alpha = FRACUNIT;
+		ffloor->alpha = OPAQUE;
 		ffloor->flags &= ~FF_ADDITIVETRANS;
 	}
 
@@ -813,7 +813,7 @@ void P_LineOpening_XFloors (FLineOpening &open, AActor * thing, const line_t *li
 						highestfloorsec = j == 0 ? linedef->frontsector : linedef->backsector;
 						highestfloorplanes[j] = rover->top.plane;
 					}
-					if(ff_top > lowestfloor[j] && ff_top <= thing->_f_Z() + thing->MaxStepHeight) lowestfloor[j] = ff_top;
+					if(ff_top > lowestfloor[j] && ff_top <= thing->_f_Z() + thing->_f_MaxStepHeight()) lowestfloor[j] = ff_top;
 				}
 			}
 			

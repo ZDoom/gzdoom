@@ -62,7 +62,7 @@ void FMapInfoParser::ParseSkill ()
 	skill.AmmoFactor = FRACUNIT;
 	skill.DoubleAmmoFactor = 2*FRACUNIT;
 	skill.DropAmmoFactor = -1;
-	skill.DamageFactor = FRACUNIT;
+	skill.DamageFactor = 1.;
 	skill.FastMonsters = false;
 	skill.SlowMonsters = false;
 	skill.DisableCheats = false;
@@ -115,7 +115,7 @@ void FMapInfoParser::ParseSkill ()
 		{
 			ParseAssign();
 			sc.MustGetFloat ();
-			skill.DamageFactor = FLOAT2FIXED(sc.Float);
+			skill.DamageFactor = sc.Float;
 		}
 		else if (sc.Compare ("fastmonsters"))
 		{
@@ -351,9 +351,6 @@ int G_SkillProperty(ESkillProperty prop)
 		case SKILLP_DropAmmoFactor:
 			return AllSkills[gameskill].DropAmmoFactor;
 
-		case SKILLP_DamageFactor:
-			return AllSkills[gameskill].DamageFactor;
-
 		case SKILLP_FastMonsters:
 			return AllSkills[gameskill].FastMonsters  || (dmflags & DF_FAST_MONSTERS);
 
@@ -415,6 +412,28 @@ int G_SkillProperty(ESkillProperty prop)
 	}
 	return 0;
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+double G_SkillProperty(EFSkillProperty prop)
+{
+	if (AllSkills.Size() > 0)
+	{
+		switch (prop)
+		{
+		case SKILLP_DamageFactor:
+			return AllSkills[gameskill].DamageFactor;
+			break;
+		}
+	}
+	return 0;
+}
+
+
 
 //==========================================================================
 //

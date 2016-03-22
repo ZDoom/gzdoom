@@ -1150,7 +1150,7 @@ static void DoGiveInv (AActor *actor, PClassActor *info, int amount)
 		? actor->player->PendingWeapon : NULL;
 	bool hadweap = actor->player != NULL ? actor->player->ReadyWeapon != NULL : true;
 
-	AInventory *item = static_cast<AInventory *>(Spawn (info, 0,0,0, NO_REPLACE));
+	AInventory *item = static_cast<AInventory *>(Spawn (info));
 
 	// This shouldn't count for the item statistics!
 	item->ClearCounters();
@@ -3843,7 +3843,7 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		break;
 
 	case APROP_Alpha:
-		actor->alpha = value;
+		actor->Alpha = ACSToDouble(value);
 		break;
 
 	case APROP_RenderStyle:
@@ -3954,7 +3954,7 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		break;
 
 	case APROP_DamageFactor:
-		actor->DamageFactor = value;
+		actor->DamageFactor = ACSToDouble(value);
 		break;
 
 	case APROP_DamageMultiplier:
@@ -4037,9 +4037,9 @@ int DLevelScript::GetActorProperty (int tid, int property)
 	case APROP_Health:		return actor->health;
 	case APROP_Speed:		return DoubleToACS(actor->Speed);
 	case APROP_Damage:		return actor->GetMissileDamage(0,1);
-	case APROP_DamageFactor:return actor->DamageFactor;
+	case APROP_DamageFactor:return DoubleToACS(actor->DamageFactor);
 	case APROP_DamageMultiplier: return actor->DamageMultiply;
-	case APROP_Alpha:		return actor->alpha;
+	case APROP_Alpha:		return DoubleToACS(actor->Alpha);
 	case APROP_RenderStyle:	for (int style = STYLE_None; style < STYLE_Count; ++style)
 							{ // Check for a legacy render style that matches.
 								if (LegacyRenderStyles[style] == actor->RenderStyle)
@@ -4214,7 +4214,7 @@ bool DLevelScript::DoCheckActorTexture(int tid, AActor *activator, int string, b
 
 	if (floor)
 	{
-		actor->Sector->NextLowestFloorAt(actor->_f_X(), actor->_f_Y(), actor->_f_Z(), 0, actor->MaxStepHeight, &resultsec, &resffloor);
+		actor->Sector->NextLowestFloorAt(actor->_f_X(), actor->_f_Y(), actor->_f_Z(), 0, actor->_f_MaxStepHeight(), &resultsec, &resffloor);
 		secpic = resffloor ? *resffloor->top.texture : resultsec->planes[sector_t::floor].Texture;
 	}
 	else
@@ -8000,13 +8000,13 @@ scriptwait:
 					switch (type & 0xFF)
 					{
 					default:	// normal
-						alpha = (optstart < sp) ? Stack[optstart] : FRACUNIT;
+						alpha = (optstart < sp) ? Stack[optstart] : OPAQUE;
 						msg = new DHUDMessage (activefont, work, x, y, hudwidth, hudheight, color, holdTime);
 						break;
 					case 1:		// fade out
 						{
 							float fadeTime = (optstart < sp) ? ACSToFloat(Stack[optstart]) : 0.5f;
-							alpha = (optstart < sp-1) ? Stack[optstart+1] : FRACUNIT;
+							alpha = (optstart < sp-1) ? Stack[optstart+1] : OPAQUE;
 							msg = new DHUDMessageFadeOut (activefont, work, x, y, hudwidth, hudheight, color, holdTime, fadeTime);
 						}
 						break;
@@ -8022,7 +8022,7 @@ scriptwait:
 						{
 							float inTime = (optstart < sp) ? ACSToFloat(Stack[optstart]) : 0.5f;
 							float outTime = (optstart < sp-1) ? ACSToFloat(Stack[optstart+1]) : 0.5f;
-							alpha = (optstart < sp-2) ? Stack[optstart+2] : FRACUNIT;
+							alpha = (optstart < sp-2) ? Stack[optstart+2] : OPAQUE;
 							msg = new DHUDMessageFadeInOut (activefont, work, x, y, hudwidth, hudheight, color, holdTime, inTime, outTime);
 						}
 						break;

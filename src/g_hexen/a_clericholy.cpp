@@ -63,7 +63,7 @@ IMPLEMENT_CLASS (ACWeapWraithverge)
 
 IMPLEMENT_CLASS (AHolySpirit)
 
-bool AHolySpirit::Slam (AActor *thing)
+bool AHolySpirit::Slam(AActor *thing)
 {
 	if (thing->flags&MF_SHOOTABLE && thing != target)
 	{
@@ -91,14 +91,14 @@ bool AHolySpirit::Slam (AActor *thing)
 				// ghost burns out faster when attacking players/bosses
 				health -= 6;
 			}
-			P_DamageMobj (thing, this, target, dam, NAME_Melee);
+			P_DamageMobj(thing, this, target, dam, NAME_Melee);
 			if (pr_spiritslam() < 128)
 			{
-				Spawn ("HolyPuff", Pos(), ALLOW_REPLACE);
-				S_Sound (this, CHAN_WEAPON, "SpiritAttack", 1, ATTN_NORM);
+				Spawn("HolyPuff", Pos(), ALLOW_REPLACE);
+				S_Sound(this, CHAN_WEAPON, "SpiritAttack", 1, ATTN_NORM);
 				if (thing->flags3&MF3_ISMONSTER && pr_spiritslam() < 128)
 				{
-					thing->Howl ();
+					thing->Howl();
 				}
 			}
 		}
@@ -110,7 +110,7 @@ bool AHolySpirit::Slam (AActor *thing)
 	return true;
 }
 
-bool AHolySpirit::SpecialBlastHandling (AActor *source, fixed_t strength)
+bool AHolySpirit::SpecialBlastHandling (AActor *source, double strength)
 {
 	if (tracer == source)
 	{
@@ -133,7 +133,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_CHolyAttack2)
 	PARAM_ACTION_PROLOGUE;
 
 	int j;
-	int i;
 	AActor *mo;
 
 	for (j = 0; j < 4; j++)
@@ -145,21 +144,22 @@ DEFINE_ACTION_FUNCTION(AActor, A_CHolyAttack2)
 		}
 		switch (j)
 		{ // float bob index
+
 			case 0:
-				mo->special2 = pr_holyatk2(8 << BOBTOFINESHIFT); // upper-left
+				mo->WeaveIndexZ = pr_holyatk2() & 7; // upper-left
 				break;
 			case 1:
-				mo->special2 = FINEANGLES/2 + pr_holyatk2(8 << BOBTOFINESHIFT); // upper-right
+				mo->WeaveIndexZ = 32 + (pr_holyatk2() & 7); // upper-right
 				break;
 			case 2:
-				mo->special2 = (FINEANGLES/2 + pr_holyatk2(8 << BOBTOFINESHIFT)) << 16; // lower-left
+				mo->WeaveIndexXY = 32 + (pr_holyatk2() & 7); // lower-left
 				break;
 			case 3:
-				i = pr_holyatk2(8 << BOBTOFINESHIFT);
-				mo->special2 = ((FINEANGLES/2 + i) << 16) + FINEANGLES/2 + pr_holyatk2(8 << BOBTOFINESHIFT);
+				mo->WeaveIndexXY = 32 + (pr_holyatk2() & 7);
+				mo->WeaveIndexZ = 32 + (pr_holyatk2() & 7);
 				break;
 		}
-		mo->_f_SetZ(self->_f_Z());
+		mo->SetZ(self->Z());
 		mo->Angles.Yaw = self->Angles.Yaw + 67.5 - 45.*j;
 		mo->Thrust();
 		mo->target = self->target;
@@ -263,42 +263,41 @@ DEFINE_ACTION_FUNCTION(AActor, A_CHolyPalette)
 //
 //============================================================================
 
-static void CHolyTailFollow (AActor *actor, fixed_t dist)
+static void CHolyTailFollow(AActor *actor, double dist)
 {
 	AActor *child;
-	int an;
-	fixed_t oldDistance, newDistance;
+	DAngle an;
+	double oldDistance, newDistance;
 
 	while (actor)
 	{
 		child = actor->tracer;
 		if (child)
 		{
-			an = actor->__f_AngleTo(child) >> ANGLETOFINESHIFT;
-			oldDistance = child->AproxDistance (actor);
-			if (P_TryMove (child, actor->_f_X()+FixedMul(dist, finecosine[an]), 
-				actor->_f_Y()+FixedMul(dist, finesine[an]), true))
+			an = actor->AngleTo(child);
+			oldDistance = child->Distance2D(actor);
+			if (P_TryMove(child, actor->Pos().XY() + an.ToVector(dist), true))
 			{
-				newDistance = child->AproxDistance (actor)-FRACUNIT;
-				if (oldDistance < FRACUNIT)
+				newDistance = child->Distance2D(actor) - 1;
+				if (oldDistance < 1)
 				{
 					if (child->Z() < actor->Z())
 					{
-						child->_f_SetZ(actor->_f_Z()-dist);
+						child->SetZ(actor->Z() - dist);
 					}
 					else
 					{
-						child->_f_SetZ(actor->_f_Z()+dist);
+						child->SetZ(actor->Z() + dist);
 					}
 				}
 				else
 				{
-					child->_f_SetZ(actor->_f_Z() + Scale (newDistance, child->_f_Z()-actor->_f_Z(), oldDistance));
+					child->SetZ(actor->Z() + (newDistance * (child->Z() - actor->Z()) / oldDistance));
 				}
 			}
 		}
 		actor = child;
-		dist -= FRACUNIT;
+		dist -= 1;
 	}
 }
 
@@ -341,13 +340,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_CHolyTail)
 	}
 	else
 	{
-		if (P_TryMove (self,
-			parent->_f_X() - 14*finecosine[parent->_f_angle()>>ANGLETOFINESHIFT],
-			parent->_f_Y() - 14*finesine[parent->_f_angle()>>ANGLETOFINESHIFT], true))
+		if (P_TryMove(self, parent->Vec2Angle(14., parent->Angles.Yaw, true), true))
 		{
-			self->_f_SetZ(parent->_f_Z()-5*FRACUNIT);
+			self->SetZ(parent->Z() - 5.);
 		}
-		CHolyTailFollow (self, 10*FRACUNIT);
+		CHolyTailFollow(self, 10);
 	}
 	return 0;
 }
@@ -380,24 +377,23 @@ static void CHolyFindTarget (AActor *actor)
 static void CHolySeekerMissile (AActor *actor, DAngle thresh, DAngle turnMax)
 {
 	int dir;
-	int dist;
 	DAngle delta;
 	AActor *target;
-	fixed_t newZ;
-	fixed_t deltaZ;
+	double newZ;
+	double deltaZ;
 
 	target = actor->tracer;
 	if (target == NULL)
 	{
 		return;
 	}
-	if(!(target->flags&MF_SHOOTABLE) 
-	|| (!(target->flags3&MF3_ISMONSTER) && !target->player))
+	if (!(target->flags&MF_SHOOTABLE)
+		|| (!(target->flags3&MF3_ISMONSTER) && !target->player))
 	{ // Target died/target isn't a player or creature
 		actor->tracer = NULL;
-		actor->flags &= ~(MF_NOCLIP|MF_SKULLFLY);
+		actor->flags &= ~(MF_NOCLIP | MF_SKULLFLY);
 		actor->flags |= MF_MISSILE;
-		CHolyFindTarget (actor);
+		CHolyFindTarget(actor);
 		return;
 	}
 	dir = P_FaceMobj (actor, target, &delta);
@@ -423,57 +419,22 @@ static void CHolySeekerMissile (AActor *actor, DAngle thresh, DAngle turnMax)
 		|| actor->Z() > target->Top()
 		|| actor->Top() < target->Z())
 	{
-		newZ = target->_f_Z()+((pr_holyseeker()*target->_f_height())>>8);
-		deltaZ = newZ - actor->_f_Z();
-		if (abs(deltaZ) > 15*FRACUNIT)
+		newZ = target->Z() + ((pr_holyseeker()*target->Height) / 256.);
+		deltaZ = newZ - actor->Z();
+		if (fabs(deltaZ) > 15)
 		{
 			if (deltaZ > 0)
 			{
-				deltaZ = 15*FRACUNIT;
+				deltaZ = 15;
 			}
 			else
 			{
-				deltaZ = -15*FRACUNIT;
+				deltaZ = -15;
 			}
 		}
-		dist = actor->AproxDistance (target);
-		dist = dist / actor->_f_speed();
-		if (dist < 1)
-		{
-			dist = 1;
-		}
-		actor->Vel.Z = FIXED2DBL(deltaZ / dist);
+		actor->Vel.Z = deltaZ / actor->DistanceBySpeed(target, actor->Speed);
 	}
 	return;
-}
-
-//============================================================================
-//
-// A_CHolyWeave
-//
-//============================================================================
-
-void CHolyWeave (AActor *actor, FRandom &pr_random)
-{
-	fixed_t newX, newY, newZ;
-	int weaveXY, weaveZ;
-	int angle;
-
-	weaveXY = actor->special2 >> 16;
-	weaveZ = actor->special2 & FINEMASK;
-	angle = (actor->_f_angle() + ANG90) >> ANGLETOFINESHIFT;
-	newX = actor->_f_X() - FixedMul(finecosine[angle], finesine[weaveXY] * 32);
-	newY = actor->_f_Y() - FixedMul(finesine[angle], finesine[weaveXY] * 32);
-	weaveXY = (weaveXY + pr_random(5 << BOBTOFINESHIFT)) & FINEMASK;
-	newX += FixedMul(finecosine[angle], finesine[weaveXY] * 32);
-	newY += FixedMul(finesine[angle], finesine[weaveXY] * 32);
-	P_TryMove(actor, newX, newY, true);
-	newZ = actor->_f_Z();
-	newZ -= finesine[weaveZ] * 16;
-	weaveZ = (weaveZ + pr_random(5 << BOBTOFINESHIFT)) & FINEMASK;
-	newZ += finesine[weaveZ] * 16;
-	actor->_f_SetZ(newZ);
-	actor->special2 = weaveZ + (weaveXY << 16);
 }
 
 //============================================================================
@@ -504,7 +465,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_CHolySeek)
 			self->args[0] = 5+(pr_holyseek()/20);
 		}
 	}
-	CHolyWeave (self, pr_holyweave);
+
+	int xyspeed = (pr_holyweave() % 5);
+	int zspeed = (pr_holyweave() % 5);
+	A_Weave(self, xyspeed, zspeed, 4., 2.);
 	return 0;
 }
 
@@ -543,7 +507,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ClericAttack)
 
 	if (!self->target) return 0;
 
-	AActor * missile = P_SpawnMissileZ (self, self->_f_Z() + 40*FRACUNIT, self->target, PClass::FindActor ("HolyMissile"));
+	AActor * missile = P_SpawnMissileZ (self, self->Z() + 40., self->target, PClass::FindActor ("HolyMissile"));
 	if (missile != NULL) missile->tracer = NULL;	// No initial target
 	S_Sound (self, CHAN_WEAPON, "HolySymbolFire", 1, ATTN_NORM);
 	return 0;

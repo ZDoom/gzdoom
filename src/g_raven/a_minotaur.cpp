@@ -161,7 +161,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurAtk1)
 		if ((player = self->target->player) != NULL &&
 			player->mo == self->target)
 		{ // Squish the player
-			player->deltaviewheight = -16*FRACUNIT;
+			player->deltaviewheight = -16;
 		}
 	}
 	return 0;
@@ -183,7 +183,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurDecide)
 
 	bool friendly = !!(self->flags5 & MF5_SUMMONEDMONSTER);
 	AActor *target;
-	int dist;
+	double dist;
 
 	target = self->target;
 	if (!target)
@@ -194,11 +194,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurDecide)
 	{
 		S_Sound (self, CHAN_WEAPON, "minotaur/sight", 1, ATTN_NORM);
 	}
-	dist = self->AproxDistance (target);
+	dist = self->Distance2D(target);
 	if (target->Top() > self->Z()
 		&& target->Top() < self->Top()
-		&& dist < (friendly ? 16*64*FRACUNIT : 8*64*FRACUNIT)
-		&& dist > 1*64*FRACUNIT
+		&& dist < (friendly ? 16*64. : 8*64.)
+		&& dist > 1*64.
 		&& pr_minotaurdecide() < 150)
 	{ // Charge attack
 		// Don't call the state function right away
@@ -213,7 +213,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurDecide)
 		self->special1 = TICRATE/2; // Charge duration
 	}
 	else if (target->Z() == target->floorz
-		&& dist < 9*64*FRACUNIT
+		&& dist < 9*64.
 		&& pr_minotaurdecide() < (friendly ? 100 : 220))
 	{ // Floor fire attack
 		self->SetState (self->FindState ("Hammer"));
@@ -282,9 +282,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurAtk2)
 	PARAM_ACTION_PROLOGUE;
 
 	AActor *mo;
-	angle_t angle;
-	fixed_t vz;
-	fixed_t z;
+	DAngle angle;
+	double vz;
+	double z;
 	bool friendly = !!(self->flags5 & MF5_SUMMONEDMONSTER);
 
 	if (self->target == NULL)
@@ -300,7 +300,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurAtk2)
 		P_TraceBleed (newdam > 0 ? newdam : damage, self->target, self);
 		return 0;
 	}
-	z = self->_f_Z() + 40*FRACUNIT;
+	z = self->Z() + 40;
 	PClassActor *fx = PClass::FindActor("MinotaurFX1");
 	if (fx)
 	{
@@ -308,12 +308,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurAtk2)
 		if (mo != NULL)
 		{
 //			S_Sound (mo, CHAN_WEAPON, "minotaur/attack2", 1, ATTN_NORM);
-			vz = mo->_f_velz();
-			angle = mo->_f_angle();
-			P_SpawnMissileAngleZ (self, z, fx, angle-(ANG45/8), vz);
-			P_SpawnMissileAngleZ (self, z, fx, angle+(ANG45/8), vz);
-			P_SpawnMissileAngleZ (self, z, fx, angle-(ANG45/16), vz);
-			P_SpawnMissileAngleZ (self, z, fx, angle+(ANG45/16), vz);
+			vz = mo->Vel.Z;
+			angle = mo->Angles.Yaw;
+			P_SpawnMissileAngleZ (self, z, fx, angle-(45./8), vz);
+			P_SpawnMissileAngleZ (self, z, fx, angle+(45./8), vz);
+			P_SpawnMissileAngleZ (self, z, fx, angle-(45./16), vz);
+			P_SpawnMissileAngleZ (self, z, fx, angle+(45./16), vz);
 		}
 	}
 	return 0;
@@ -350,7 +350,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurAtk3)
 		if ((player = self->target->player) != NULL &&
 			player->mo == self->target)
 		{ // Squish the player
-			player->deltaviewheight = -16*FRACUNIT;
+			player->deltaviewheight = -16;
 		}
 	}
 	else
@@ -486,7 +486,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurRoam)
 //
 // Look for enemy of player
 //----------------------------------------------------------------------------
-#define MINOTAUR_LOOK_DIST		(16*54*FRACUNIT)
+#define MINOTAUR_LOOK_DIST		(16*54.)
 
 DEFINE_ACTION_FUNCTION(AActor, A_MinotaurLook)
 {
@@ -500,7 +500,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurLook)
 
 	AActor *mo = NULL;
 	player_t *player;
-	fixed_t dist;
+	double dist;
 	int i;
 	AActor *master = self->tracer;
 
@@ -514,7 +514,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurLook)
 			mo = player->mo;
 			if (mo == master) continue;
 			if (mo->health <= 0) continue;
-			dist = self->AproxDistance(mo);
+			dist = self->Distance2D(mo);
 			if (dist > MINOTAUR_LOOK_DIST) continue;
 			self->target = mo;
 			break;
@@ -539,7 +539,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MinotaurLook)
 			if (!(mo->flags3 & MF3_ISMONSTER)) continue;
 			if (mo->health <= 0) continue;
 			if (!(mo->flags & MF_SHOOTABLE)) continue;
-			dist = self->AproxDistance(mo);
+			dist = self->Distance2D(mo);
 			if (dist > MINOTAUR_LOOK_DIST) continue;
 			if ((mo == master) || (mo == self)) continue;
 			if ((mo->flags5 & MF5_SUMMONEDMONSTER) && (mo->tracer == master)) continue;

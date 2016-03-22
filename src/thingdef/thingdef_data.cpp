@@ -619,7 +619,7 @@ void InitThingdef()
 	// Define some member variables we feel like exposing to the user
 	PSymbolTable &symt = RUNTIME_CLASS(AActor)->Symbols;
 	PType *array5 = NewArray(TypeSInt32, 5);
-	symt.AddSymbol(new PField(NAME_Alpha,		TypeFixed,	VARF_Native, myoffsetof(AActor,alpha)));
+	symt.AddSymbol(new PField(NAME_Alpha,		TypeFloat64,	VARF_Native, myoffsetof(AActor,Alpha)));
 	symt.AddSymbol(new PField(NAME_Angle,		TypeFloat64,	VARF_Native, myoffsetof(AActor,Angles.Yaw)));
 	symt.AddSymbol(new PField(NAME_Args,		array5,			VARF_Native, myoffsetof(AActor,args)));
 	symt.AddSymbol(new PField(NAME_CeilingZ,	TypeFloat64,	VARF_Native, myoffsetof(AActor,ceilingz)));

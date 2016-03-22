@@ -1053,7 +1053,7 @@ void APlayerPawn::GiveDeathmatchInventory()
 			AKey *key = (AKey *)GetDefaultByType (PClassActor::AllActorClasses[i]);
 			if (key->KeyNumber != 0)
 			{
-				key = static_cast<AKey *>(Spawn(static_cast<PClassActor *>(PClassActor::AllActorClasses[i]), 0,0,0, NO_REPLACE));
+				key = static_cast<AKey *>(Spawn(static_cast<PClassActor *>(PClassActor::AllActorClasses[i])));
 				if (!key->CallTryPickup (this))
 				{
 					key->Destroy ();
@@ -1327,7 +1327,7 @@ void APlayerPawn::GiveDefaultInventory ()
 	// BasicArmor must come right after that. It should not affect any
 	// other protection item as well but needs to process the damage
 	// before the HexenArmor does.
-	ABasicArmor *barmor = Spawn<ABasicArmor> (0,0,0, NO_REPLACE);
+	ABasicArmor *barmor = Spawn<ABasicArmor> ();
 	barmor->BecomeItem ();
 	barmor->SavePercent = 0;
 	barmor->Amount = 0;
@@ -1350,7 +1350,7 @@ void APlayerPawn::GiveDefaultInventory ()
 			}
 			else
 			{
-				item = static_cast<AInventory *>(Spawn (ti, 0,0,0, NO_REPLACE));
+				item = static_cast<AInventory *>(Spawn (ti));
 				item->ItemFlags |= IF_IGNORESKILL;	// no skill multiplicators here
 				item->Amount = di->Amount;
 				if (item->IsKindOf (RUNTIME_CLASS (AWeapon)))
@@ -1879,7 +1879,7 @@ void P_CalcHeight (player_t *player)
 	// move viewheight
 	if (player->playerstate == PST_LIVE)
 	{
-		player->viewheight += player->deltaviewheight;
+		player->viewheight += FLOAT2FIXED(player->deltaviewheight);
 
 		if (player->viewheight > defaultviewheight)
 		{
@@ -1890,14 +1890,14 @@ void P_CalcHeight (player_t *player)
 		{
 			player->viewheight = defaultviewheight>>1;
 			if (player->deltaviewheight <= 0)
-				player->deltaviewheight = 1;
+				player->deltaviewheight = 1 / 65536.;
 		}
 		
 		if (player->deltaviewheight)	
 		{
-			player->deltaviewheight += FRACUNIT/4;
+			player->deltaviewheight += 0.25;
 			if (!player->deltaviewheight)
-				player->deltaviewheight = 1;
+				player->deltaviewheight = 1/65536.;
 		}
 	}
 
@@ -2430,7 +2430,7 @@ void P_PlayerThink (player_t *player)
 		player->Uncrouch();
 	}
 
-	player->crouchoffset = -fixed_t(player->mo->ViewHeight * (1 - player->crouchfactor));
+	player->crouchoffset = -(FIXED2DBL(player->mo->ViewHeight) * (1 - player->crouchfactor));
 
 	// MUSINFO stuff
 	if (player->MUSINFOtics >= 0 && player->MUSINFOactor != NULL)

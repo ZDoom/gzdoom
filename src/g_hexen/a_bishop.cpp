@@ -80,7 +80,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopMissileWeave)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	A_Weave(self, 2, 2, 2*FRACUNIT, FRACUNIT);
+	A_Weave(self, 2, 2, 2., 1.);
 	return 0;
 }
 
@@ -174,10 +174,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopChase)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	fixed_t newz = self->_f_Z() - finesine[self->special2 << BOBTOFINESHIFT] * 4;
+	double newz = self->Z() - BobSin(self->special2) / 2.;
 	self->special2 = (self->special2 + 4) & 63;
-	newz += finesine[self->special2 << BOBTOFINESHIFT] * 4;
-	self->_f_SetZ(newz);
+	newz += BobSin(self->special2) / 2.;
+	self->SetZ(newz);
 	return 0;
 }
 
@@ -193,7 +193,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopPuff)
 
 	AActor *mo;
 
-	mo = Spawn ("BishopPuff", self->PosPlusZ(40*FRACUNIT), ALLOW_REPLACE);
+	mo = Spawn ("BishopPuff", self->PosPlusZ(40.), ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->Vel.Z = -.5;
@@ -218,9 +218,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopPainBlur)
 		self->SetState (self->FindState ("Blur"));
 		return 0;
 	}
-	fixed_t xo = (pr_pain.Random2() << 12);
-	fixed_t yo = (pr_pain.Random2() << 12);
-	fixed_t zo = (pr_pain.Random2() << 11);
+	double xo = pr_pain.Random2() / 16.;
+	double yo = pr_pain.Random2() / 16.;
+	double zo = pr_pain.Random2() / 32.;
 	mo = Spawn ("BishopPainBlur", self->Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
 	if (mo)
 	{

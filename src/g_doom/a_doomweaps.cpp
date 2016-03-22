@@ -206,7 +206,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 			if (armorbonustype != NULL)
 			{
 				assert(armorbonustype->IsDescendantOf (RUNTIME_CLASS(ABasicArmorBonus)));
-				ABasicArmorBonus *armorbonus = static_cast<ABasicArmorBonus *>(Spawn(armorbonustype, 0,0,0, NO_REPLACE));
+				ABasicArmorBonus *armorbonus = static_cast<ABasicArmorBonus *>(Spawn(armorbonustype));
 				armorbonus->SaveAmount = int(armorbonus->SaveAmount * actualdamage * lifesteal);
 				armorbonus->MaxSaveAmount = lifestealmax <= 0 ? armorbonus->MaxSaveAmount : lifestealmax;
 				armorbonus->flags |= MF_DROPPED;

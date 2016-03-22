@@ -217,4 +217,11 @@ void P_NormalizeVXVY(fixed_t& vx, fixed_t& vy);
 fixed_t P_PointLineDistance(line_t* line, fixed_t x, fixed_t y);
 fixedvec2 P_GetOffsetPosition(fixed_t x, fixed_t y, fixed_t dx, fixed_t dy);
 
+inline DVector2 P_GetOffsetPosition(double x, double y, double dx, double dy)
+{
+	fixedvec2 v = P_GetOffsetPosition(FLOAT2FIXED(x), FLOAT2FIXED(y), FLOAT2FIXED(dx), FLOAT2FIXED(dy));
+	return{ FIXED2DBL(v.x), FIXED2DBL(v.y) };
+}
+
+
 #endif

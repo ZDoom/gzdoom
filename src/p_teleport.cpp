@@ -191,10 +191,10 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, DAngle angle, i
 	{
 		if (!predicting)
 		{
-			fixed_t fogDelta = thing->flags & MF_MISSILE ? 0 : TELEFOGHEIGHT;
-			fixedvec2 vector = Vec2Angle(20 * FRACUNIT, angle);
-			fixedvec2 fogpos = P_GetOffsetPosition(x, y, vector.x, vector.y);
-			P_SpawnTeleportFog(thing, fogpos.x, fogpos.y, thing->_f_Z() + fogDelta, false, true);
+			double fogDelta = thing->flags & MF_MISSILE ? 0 : TELEFOGHEIGHT;
+			DVector2 vector = angle.ToVector(20);
+			DVector2 fogpos = P_GetOffsetPosition(FIXED2DBL(x), FIXED2DBL(y), vector.X, vector.Y);
+			P_SpawnTeleportFog(thing, fogpos.X, fogpos.Y, thing->Z() + fogDelta, false, true);
 
 		}
 		if (thing->player)
@@ -560,7 +560,7 @@ bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id, INTBO
 				player->Vel.Y = p.Y*c + p.X*s;
 
 				// Save the current deltaviewheight, used in stepping
-				fixed_t deltaviewheight = player->deltaviewheight;
+				double deltaviewheight = player->deltaviewheight;
 
 				// Clear deltaviewheight, since we don't want any changes now
 				player->deltaviewheight = 0;

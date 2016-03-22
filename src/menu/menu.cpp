@@ -680,12 +680,12 @@ void M_Ticker (void)
 		}
 		if (BackbuttonTime > 0)
 		{
-			if (BackbuttonAlpha < FRACUNIT) BackbuttonAlpha += FRACUNIT/10;
+			if (BackbuttonAlpha < OPAQUE) BackbuttonAlpha += OPAQUE/10;
 			BackbuttonTime--;
 		}
 		else
 		{
-			if (BackbuttonAlpha > 0) BackbuttonAlpha -= FRACUNIT/10;
+			if (BackbuttonAlpha > 0) BackbuttonAlpha -= OPAQUE/10;
 			if (BackbuttonAlpha < 0) BackbuttonAlpha = 0;
 		}
 	}

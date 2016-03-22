@@ -1247,7 +1247,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PhoenixPuff)
 	DAngle angle;
 
 	//[RH] Heretic never sets the target for seeking
-	//P_SeekerMissile (self, ANGLE_1*5, ANGLE_1*10);
+	//P_SeekerMissile (self, 5, 10);
 	puff = Spawn("PhoenixPuff", self->Pos(), ALLOW_REPLACE);
 	angle = self->Angles.Yaw + 90;
 	puff->Vel = DVector3(angle.ToVector(1.3), 0);

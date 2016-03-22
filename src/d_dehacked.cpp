@@ -896,7 +896,7 @@ static int PatchThing (int thingy)
 		}
 		else if (linelen == 12 && stricmp (Line1, "Translucency") == 0)
 		{
-			info->alpha = val;
+			info->Alpha = FIXED2DBL(val);
 			info->RenderStyle = STYLE_Translucent;
 			hadTranslucency = true;
 			hadStyle = true;
@@ -923,7 +923,7 @@ static int PatchThing (int thingy)
 			}
 			else if (stricmp (Line1, "Alpha") == 0)
 			{
-				info->alpha = (fixed_t)(atof (Line2) * FRACUNIT);
+				info->Alpha = atof (Line2);
 				hadTranslucency = true;
 			}
 			else if (stricmp (Line1, "Scale") == 0)
@@ -1226,11 +1226,11 @@ static int PatchThing (int thingy)
 					{
 						hadTranslucency = true;
 						if (value[2] & 1)
-							info->alpha = TRANSLUC25;
+							info->Alpha = 0.25;
 						else if (value[2] & 2)
-							info->alpha = TRANSLUC50;
+							info->Alpha = 0.5;
 						else if (value[2] & 4)
-							info->alpha = TRANSLUC75;
+							info->Alpha = 0.75;
 						info->RenderStyle = STYLE_Translucent;
 					}
 					if (value[2] & 8)
@@ -1268,7 +1268,7 @@ static int PatchThing (int thingy)
 				if (!hadStyle)
 					info->RenderStyle = STYLE_OptFuzzy;
 				if (!hadTranslucency)
-					info->alpha = FRACUNIT/5;
+					info->Alpha = 0.5;
 			}
 			else
 			{ // changed from shadow
@@ -1853,7 +1853,7 @@ static int PatchMisc (int dummy)
 			}
 			else if (stricmp (Line1, "Rocket Explosion Alpha") == 0)
 			{
-				deh.ExplosionAlpha = (fixed_t)(atof (Line2) * FRACUNIT);
+				deh.ExplosionAlpha = atof (Line2);
 			}
 			else if (stricmp (Line1, "Monsters Infight") == 0)
 			{

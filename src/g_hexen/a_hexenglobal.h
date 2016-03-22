@@ -10,7 +10,7 @@ class AHolySpirit : public AActor
 	DECLARE_CLASS (AHolySpirit, AActor)
 public:
 	bool Slam (AActor *thing);
-	bool SpecialBlastHandling (AActor *source, fixed_t strength);
+	bool SpecialBlastHandling (AActor *source, double strength);
 };
 
 class AFighterWeapon : public AWeapon

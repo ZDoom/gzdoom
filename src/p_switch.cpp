@@ -135,7 +135,7 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno, fixedvec3 *optpo
 		return true;
 
 	// calculate the point where the user would touch the wall.
-	divline_t dll, dlu;
+	fdivline_t dll, dlu;
 	fixed_t inter, checkx, checky;
 
 	P_MakeDivline (line, &dll);

@@ -576,7 +576,7 @@ bool P_Move (AActor *actor)
 		!((actor->flags & MF_NOGRAVITY) || (actor->flags6 & MF6_CANJUMP))
 			&& actor->Z() > actor->floorz && !(actor->flags2 & MF2_ONMOBJ))
 	{
-		if (actor->_f_Z() <= actor->_f_floorz() + actor->MaxStepHeight)
+		if (actor->Z() <= actor->floorz + actor->MaxStepHeight)
 		{
 			double savedz = actor->Z();
 			actor->SetZ(actor->floorz);
@@ -2708,9 +2708,9 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 					if (corpsehit->Height == 0)
 					{
 						// Make raised corpses look ghostly
-						if (corpsehit->alpha > TRANSLUC50)
+						if (corpsehit->Alpha > 0.5)
 						{
-							corpsehit->alpha /= 2;
+							corpsehit->Alpha /= 2;
 						}
 						// This will only work if the render style is changed as well.
 						if (corpsehit->RenderStyle == LegacyRenderStyles[STYLE_Normal])

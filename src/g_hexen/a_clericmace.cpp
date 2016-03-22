@@ -44,7 +44,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CMaceAttack)
 				if (t.linetarget != NULL)
 				{
 					AdjustPlayerAngle(player->mo, &t);
-					goto macedone;
+					return 0;
 				}
 			}
 		}
@@ -55,6 +55,5 @@ DEFINE_ACTION_FUNCTION(AActor, A_CMaceAttack)
 	angle = player->mo->Angles.Yaw;
 	slope = P_AimLineAttack (player->mo, angle, MELEERANGE);
 	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage, NAME_Melee, hammertime);
-macedone:
 	return 0;		
 }

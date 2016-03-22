@@ -627,7 +627,7 @@ void DIntermissionScreenCast::Drawer ()
 			DTA_DestHeightF, pic->GetScaledHeightDouble() * castscale.Y,
 			DTA_DestWidthF, pic->GetScaledWidthDouble() * castscale.X,
 			DTA_RenderStyle, mDefaults->RenderStyle,
-			DTA_Alpha, mDefaults->alpha,
+			DTA_AlphaF, mDefaults->Alpha,
 			DTA_Translation, casttranslation,
 			TAG_DONE);
 	}

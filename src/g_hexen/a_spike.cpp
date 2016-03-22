@@ -160,8 +160,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_ThrustImpale)
 	FMultiBlockThingsIterator::CheckResult cres;
 	while (it.Next(&cres))
 	{
-		fixed_t blockdist = self->_f_radius() + cres.thing->_f_radius();
-		if (abs(cres.thing->_f_X() - cres.position.x) >= blockdist || abs(cres.thing->_f_Y() - cres.position.y) >= blockdist)
+		double blockdist = self->radius + cres.thing->radius;
+		if (fabs(cres.thing->X() - cres.Position.X) >= blockdist || fabs(cres.thing->Y() - cres.Position.Y) >= blockdist)
 			continue;
 
 		// Q: Make this z-aware for everything? It never was before.

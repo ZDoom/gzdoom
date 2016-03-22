@@ -53,7 +53,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_WizAtk2)
 	PARAM_ACTION_PROLOGUE;
 
 	A_FaceTarget (self);
-	self->alpha = HR_SHADOW;
+	self->Alpha = HR_SHADOW;
 	self->RenderStyle = STYLE_Translucent;
 	self->flags3 |= MF3_GHOST;
 	return 0;

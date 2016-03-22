@@ -568,7 +568,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MaulerTorpedoWave)
 
 AActor *P_SpawnSubMissile (AActor *source, PClassActor *type, AActor *target)
 {
-	AActor *other = Spawn (type, source->_f_Pos(), ALLOW_REPLACE);
+	AActor *other = Spawn (type, source->Pos(), ALLOW_REPLACE);
 
 	if (other == NULL)
 	{
@@ -594,7 +594,7 @@ AActor *P_SpawnSubMissile (AActor *source, PClassActor *type, AActor *target)
 	if (P_CheckMissileSpawn (other, source->radius))
 	{
 		DAngle pitch = P_AimLineAttack (source, source->Angles.Yaw, 1024.);
-		other->Vel.Z = -other->Speed * pitch.Cos();
+		other->Vel.Z = -other->Speed * pitch.Sin();
 		return other;
 	}
 	return NULL;
@@ -1058,7 +1058,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireSigil3)
 		spot = P_SpawnSubMissile (self, PClass::FindActor("SpectralLightningBall1"), self);
 		if (spot != NULL)
 		{
-			spot->_f_SetZ(self->_f_Z() + 32*FRACUNIT);
+			spot->SetZ(self->Z() + 32);
 		}
 	}
 	self->Angles.Yaw -= 90.;

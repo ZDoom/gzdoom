@@ -28,7 +28,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpectralLightningTail)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	AActor *foo = Spawn("SpectralLightningHTail", self->Vec3Offset(-self->_f_velx(), -self->_f_vely(), 0), ALLOW_REPLACE);
+	AActor *foo = Spawn("SpectralLightningHTail", self->Vec3Offset(-self->Vel.X, -self->Vel.Y, 0.), ALLOW_REPLACE);
 
 	foo->Angles.Yaw = self->Angles.Yaw;
 	foo->FriendPlayer = self->FriendPlayer;
@@ -66,21 +66,20 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpectralLightning)
 	self->Vel.X += pr_zap5.Random2(3);
 	self->Vel.Y += pr_zap5.Random2(3);
 
-	fixedvec2 pos = self->Vec2Offset(
-		pr_zap5.Random2(3) * FRACUNIT * 50,
-		pr_zap5.Random2(3) * FRACUNIT * 50);
+	double xo = pr_zap5.Random2(3) * 50.;
+	double yo = pr_zap5.Random2(3) * 50.;
 
 	flash = Spawn (self->threshold > 25 ? PClass::FindActor(NAME_SpectralLightningV2) :
-		PClass::FindActor(NAME_SpectralLightningV1), pos.x, pos.y, ONCEILINGZ, ALLOW_REPLACE);
+		PClass::FindActor(NAME_SpectralLightningV1), self->Vec2OffsetZ(xo, yo, ONCEILINGZ), ALLOW_REPLACE);
 
 	flash->target = self->target;
-	flash->Vel.Z = -18*FRACUNIT;
+	flash->Vel.Z = -18;
 	flash->FriendPlayer = self->FriendPlayer;
 
-	flash = Spawn(NAME_SpectralLightningV2, self->_f_X(), self->_f_Y(), ONCEILINGZ, ALLOW_REPLACE);
+	flash = Spawn(NAME_SpectralLightningV2, self->PosAtZ(ONCEILINGZ), ALLOW_REPLACE);
 
 	flash->target = self->target;
-	flash->Vel.Z = -18 * FRACUNIT;
+	flash->Vel.Z = -18;
 	flash->FriendPlayer = self->FriendPlayer;
 	return 0;
 }
@@ -94,8 +93,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_Tracer2)
 	PARAM_ACTION_PROLOGUE;
 
 	AActor *dest;
-	fixed_t dist;
-	fixed_t slope;
+	double dist;
+	double slope;
 
 	dest = self->tracer;
 
@@ -123,21 +122,16 @@ DEFINE_ACTION_FUNCTION(AActor, A_Tracer2)
 	if (!(self->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER)))
 	{
 		// change slope
-		dist = self->AproxDistance (dest) / self->_f_speed();
-
-		if (dist < 1)
+		dist = self->DistanceBySpeed (dest, self->Speed);
+		if (dest->Height >= 56)
 		{
-			dist = 1;
-		}
-		if (dest->_f_height() >= 56*FRACUNIT)
-		{
-			slope = (dest->_f_Z()+40*FRACUNIT - self->_f_Z()) / dist;
+			slope = (dest->Z()+40 - self->Z()) / dist;
 		}
 		else
 		{
-			slope = (dest->_f_Z() + self->_f_height()*2/3 - self->_f_Z()) / dist;
+			slope = (dest->Z() + self->Height*(2./3) - self->Z()) / dist;
 		}
-		if (slope < self->_f_velz())
+		if (slope < self->Vel.Z)
 		{
 			self->Vel.Z -= 1 / 8.;
 		}

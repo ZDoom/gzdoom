@@ -1401,7 +1401,7 @@ void FParser::SF_PointToAngle(void)
 		double x2 = floatvalue(t_argv[2]);
 		double y2 = floatvalue(t_argv[3]);
 		
-		t_return.setDouble(DVector2(x2 - x1, y2 - y1).Angle().BAMs);
+		t_return.setDouble(DVector2(x2 - x1, y2 - y1).Angle().Normalized360().Degrees);
 	}
 }
 

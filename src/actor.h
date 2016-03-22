@@ -1190,7 +1190,7 @@ public:
 									// no matter what (even if shot)
 	player_t		*player;		// only valid if type of APlayerPawn
 	TObjPtr<AActor>	LastLookActor;	// Actor last looked for (if TIDtoHate != 0)
-	fixed_t			SpawnPoint[3]; 	// For nightmare respawn
+	DVector3		SpawnPoint; 	// For nightmare respawn
 	WORD			SpawnAngle;
 	int				StartHealth;
 	BYTE			WeaveIndexXY;	// Separated from special2 because it's used by globally accessible functions.
@@ -1341,6 +1341,10 @@ public:
 	int GetTics(FState * newstate);
 	bool SetState (FState *newstate, bool nofunction=false);
 	virtual bool UpdateWaterLevel (fixed_t oldz, bool splash=true);
+	bool UpdateWaterLevel(double oldz, bool splash = true)
+	{
+		return UpdateWaterLevel(FLOAT2FIXED(oldz), splash);
+	}
 	bool isFast();
 	bool isSlow();
 	void SetIdle(bool nofunction=false);

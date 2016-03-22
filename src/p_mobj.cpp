@@ -315,7 +315,7 @@ void AActor::Serialize(FArchive &arc)
 		<< reactiontime
 		<< threshold
 		<< player
-		<< SpawnPoint[0] << SpawnPoint[1] << SpawnPoint[2]
+		<< SpawnPoint
 		<< SpawnAngle;
 	if (SaveVersion >= 4506)
 	{
@@ -2739,7 +2739,7 @@ static void PlayerLandedOnThing (AActor *mo, AActor *onmobj)
 //
 void P_NightmareRespawn (AActor *mobj)
 {
-	fixed_t x, y, z;
+	double z;
 	AActor *mo;
 	AActor *info = mobj->GetDefault();
 
@@ -2754,13 +2754,11 @@ void P_NightmareRespawn (AActor *mobj)
 		z = ONFLOORZ;
 
 	// spawn it
-	x = mobj->SpawnPoint[0];
-	y = mobj->SpawnPoint[1];
-	mo = AActor::StaticSpawn(mobj->GetClass(), x, y, z, NO_REPLACE, true);
+	mo = AActor::StaticSpawn(mobj->GetClass(), mobj->SpawnPoint.X, mobj->SpawnPoint.Y, z, NO_REPLACE, true);
 
 	if (z == ONFLOORZ)
 	{
-		mo->_f_AddZ(mobj->SpawnPoint[2]);
+		mo->AddZ(mobj->SpawnPoint.Z);
 		if (mo->Z() < mo->floorz)
 		{ // Do not respawn monsters in the floor, even if that's where they
 		  // started. The initial P_ZMovement() call would have put them on
@@ -2775,7 +2773,7 @@ void P_NightmareRespawn (AActor *mobj)
 	}
 	else if (z == ONCEILINGZ)
 	{
-		mo->_f_AddZ(-mobj->SpawnPoint[2]);
+		mo->AddZ(-mobj->SpawnPoint.Z);
 	}
 
 	// If there are 3D floors, we need to find floor/ceiling again.
@@ -2797,7 +2795,7 @@ void P_NightmareRespawn (AActor *mobj)
 	}
 
 	// something is occupying its position?
-	if (!P_CheckPosition(mo, mo->_f_X(), mo->_f_Y(), true))
+	if (!P_CheckPosition(mo, mo->Pos(), true))
 	{
 		//[GrafZahl] MF_COUNTKILL still needs to be checked here.
 		mo->ClearCounters();
@@ -2808,9 +2806,7 @@ void P_NightmareRespawn (AActor *mobj)
 	z = mo->_f_Z();
 
 	// inherit attributes from deceased one
-	mo->SpawnPoint[0] = mobj->SpawnPoint[0];
-	mo->SpawnPoint[1] = mobj->SpawnPoint[1];
-	mo->SpawnPoint[2] = mobj->SpawnPoint[2];
+	mo->SpawnPoint = mobj->SpawnPoint;
 	mo->SpawnAngle = mobj->SpawnAngle;
 	mo->SpawnFlags = mobj->SpawnFlags & ~MTF_DORMANT;	// It wasn't dormant when it died, so it's not dormant now, either.
 	mo->Angles.Yaw = (double)mobj->SpawnAngle;
@@ -2822,13 +2818,13 @@ void P_NightmareRespawn (AActor *mobj)
 
 	mo->skillrespawncount = mobj->skillrespawncount;
 
-	mo->PrevZ = z;		// Do not interpolate Z position if we changed it since spawning.
+	mo->PrevZ = FLOAT2FIXED(z);		// Do not interpolate Z position if we changed it since spawning.
 
 	// spawn a teleport fog at old spot because of removal of the body?
 	P_SpawnTeleportFog(mobj, mobj->PosPlusZ(TELEFOGHEIGHT), true, true);
 
 	// spawn a teleport fog at the new spot
-	P_SpawnTeleportFog(mobj, FIXED2DBL(x), FIXED2DBL(y), FIXED2DBL(z) + TELEFOGHEIGHT, false, true);
+	P_SpawnTeleportFog(mobj, mobj->SpawnPoint.X, mobj->SpawnPoint.Y, z + TELEFOGHEIGHT, false, true);
 
 	// remove the old monster
 	mobj->Destroy ();
@@ -4132,8 +4128,12 @@ bool AActor::UpdateWaterLevel (fixed_t oldz, bool dosplash)
 //
 //==========================================================================
 
-AActor *AActor::StaticSpawn (PClassActor *type, fixed_t ix, fixed_t iy, fixed_t iz, replace_t allowreplacement, bool SpawningMapThing)
+AActor *AActor::StaticSpawn (PClassActor *type, fixed_t _ix, fixed_t _iy, fixed_t _iz, replace_t allowreplacement, bool SpawningMapThing)
 {
+	double ix = FIXED2DBL(_ix);
+	double iy = FIXED2DBL(_iy);
+	double iz = FIXED2DBL(_iz);
+
 	if (type == NULL)
 	{
 		I_Error ("Tried to spawn a class-less actor\n");
@@ -4196,10 +4196,9 @@ AActor *AActor::StaticSpawn (PClassActor *type, fixed_t ix, fixed_t iy, fixed_t 
 	actor->LinkToWorld (SpawningMapThing);
 	actor->ClearInterpolation();
 
-	actor->dropoffz =			// killough 11/98: for tracking dropoffs
-		actor->Sector->floorplane.ZatPoint (ix, iy);
-	actor->floorz = FIXED2DBL(actor->dropoffz);
-	actor->ceilingz = FIXED2DBL(actor->Sector->ceilingplane.ZatPoint (ix, iy));
+	actor->floorz = actor->Sector->floorplane.ZatPoint (ix, iy);
+	actor->dropoffz = FLOAT2FIXED(actor->floorz);			// killough 11/98: for tracking dropoffs
+	actor->ceilingz = actor->Sector->ceilingplane.ZatPoint (ix, iy);
 
 	// The z-coordinate needs to be set once before calling P_FindFloorCeiling
 	// For FLOATRANDZ just use the floor here.
@@ -4243,8 +4242,8 @@ AActor *AActor::StaticSpawn (PClassActor *type, fixed_t ix, fixed_t iy, fixed_t 
 		actor->ceilingsector = actor->Sector;
 	}
 
-	actor->SpawnPoint[0] = ix;
-	actor->SpawnPoint[1] = iy;
+	actor->SpawnPoint.X = ix;
+	actor->SpawnPoint.Y = iy;
 
 	if (iz == ONFLOORZ)
 	{
@@ -4269,7 +4268,7 @@ AActor *AActor::StaticSpawn (PClassActor *type, fixed_t ix, fixed_t iy, fixed_t 
 	}
 	else
 	{
-		actor->SpawnPoint[2] = (actor->_f_Z() - actor->Sector->floorplane.ZatPoint(actor));
+		actor->SpawnPoint.Z = (actor->Z() - actor->Sector->floorplane.ZatPointF(actor));
 	}
 
 	if (actor->FloatBobPhase == (BYTE)-1) actor->FloatBobPhase = rng();	// Don't make everything bob in sync (unless deliberately told to do)
@@ -5129,9 +5128,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	else if (z == ONCEILINGZ)
 		mobj->_f_AddZ(-mthing->z);
 
-	mobj->SpawnPoint[0] = mthing->x;
-	mobj->SpawnPoint[1] = mthing->y;
-	mobj->SpawnPoint[2] = mthing->z;
+	mobj->SpawnPoint = { FIXED2DBL(mthing->x), FIXED2DBL(mthing->y),FIXED2DBL(mthing->z) };
 	mobj->SpawnAngle = mthing->angle;
 	mobj->SpawnFlags = mthing->flags;
 	if (mthing->FloatbobPhase >= 0 && mthing->FloatbobPhase < 64) mobj->FloatBobPhase = mthing->FloatbobPhase;

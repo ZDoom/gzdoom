@@ -167,7 +167,7 @@ void STACK_ARGS DCanvas::DrawTextureV(FTexture *img, double x, double y, uint32 
 	}
 
 	fixedcolormap = dc_colormap;
-	ESPSResult mode = R_SetPatchStyle (parms.style, parms.alpha, 0, parms.fillcolor);
+	ESPSResult mode = R_SetPatchStyle (parms.style, parms.Alpha, 0, parms.fillcolor);
 
 	BYTE *destorgsave = dc_destorg;
 	dc_destorg = screen->GetBuffer();
@@ -363,7 +363,7 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, double x, double y, DWORD tag
 	parms->destheight = parms->texheight;
 	parms->top = img->GetScaledTopOffset();
 	parms->left = img->GetScaledLeftOffset();
-	parms->alpha = FRACUNIT;
+	parms->Alpha = 1.f;
 	parms->fillcolor = -1;
 	parms->remap = NULL;
 	parms->translation = NULL;
@@ -531,11 +531,11 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, double x, double y, DWORD tag
 			break;
 
 		case DTA_Alpha:
-			parms->alpha = MIN<fixed_t>(OPAQUE, va_arg (tags, fixed_t));
+			parms->Alpha = FIXED2FLOAT(MIN<fixed_t>(OPAQUE, va_arg (tags, fixed_t)));
 			break;
 
 		case DTA_AlphaF:
-			parms->alpha = FLOAT2FIXED(MIN<double>(1., va_arg(tags, double)));
+			parms->Alpha = (float)(MIN<double>(1., va_arg(tags, double)));
 			break;
 
 		case DTA_AlphaChannel:
@@ -723,7 +723,7 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, double x, double y, DWORD tag
 			{
 				parms->style = STYLE_Shaded;
 			}
-			else if (parms->alpha < OPAQUE)
+			else if (parms->Alpha < 1.f)
 			{
 				parms->style = STYLE_TranslucentStencil;
 			}
@@ -732,7 +732,7 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, double x, double y, DWORD tag
 				parms->style = STYLE_Stencil;
 			}
 		}
-		else if (parms->alpha < OPAQUE)
+		else if (parms->Alpha < 1.f)
 		{
 			parms->style = STYLE_Translucent;
 		}

@@ -105,7 +105,7 @@ ACTOR BasicArmorBonus : Armor native
 	+Inventory.AUTOACTIVATE
 	+Inventory.ALWAYSPICKUP
 	Inventory.MaxAmount 0
-	Armor.SavePercent 0.333333
+	Armor.SavePercent 33.335
 
 }
 

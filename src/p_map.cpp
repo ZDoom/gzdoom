@@ -2236,9 +2236,7 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 	// it slopes or the player's eyes are bobbing in and out.
 
 	bool oldAboveFakeFloor, oldAboveFakeCeiling;
-	fixed_t viewheight;
-
-	viewheight = thing->player ? thing->player->viewheight : thing->_f_height() / 2;
+	double _viewheight = thing->player ? thing->player->viewheight : thing->Height / 2;
 	oldAboveFakeFloor = oldAboveFakeCeiling = false;	// pacify GCC
 
 	if (oldsec->heightsec)
@@ -2350,7 +2348,7 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 				{
 					P_TranslatePortalXY(ld, hit.x, hit.y);
 					P_TranslatePortalZ(ld, hit.z);
-					players[consoleplayer].viewz += hit.z;	// needs to be done here because otherwise the renderer will not catch the change.
+					players[consoleplayer].viewz += FIXED2DBL(hit.z);	// needs to be done here because otherwise the renderer will not catch the change.
 					P_TranslatePortalAngle(ld, hit.angle);
 				}
 				R_AddInterpolationPoint(hit);
@@ -4542,7 +4540,8 @@ void P_TraceBleed(int damage, fixed_t x, fixed_t y, fixed_t z, AActor *actor, an
 					bloodcolor.a = 1;
 				}
 
-				DImpactDecal::StaticCreate(bloodType, bleedtrace.HitPos, 
+				DVector3 hp(FIXED2DBL(bleedtrace.HitPos.x), FIXED2DBL(bleedtrace.HitPos.y), FIXED2DBL(bleedtrace.HitPos.z));
+				DImpactDecal::StaticCreate(bloodType, hp,
 					bleedtrace.Line->sidedef[bleedtrace.Side], bleedtrace.ffloor, bloodcolor);
 			}
 		}
@@ -5868,7 +5867,7 @@ void PIT_FloorRaise(AActor *thing, FChangePosition *cpos)
 	}
 	if (thing->player && thing->player->mo == thing)
 	{
-		thing->player->viewz += thing->_f_Z() - oldz;
+		thing->player->viewz += thing->Z() - FIXED2DBL(oldz);
 	}
 }
 
@@ -5920,7 +5919,7 @@ void PIT_CeilingLower(AActor *thing, FChangePosition *cpos)
 	}
 	if (thing->player && thing->player->mo == thing)
 	{
-		thing->player->viewz += thing->_f_Z() - oldz;
+		thing->player->viewz += thing->Z() - FIXED2DBL(oldz);
 	}
 }
 
@@ -5962,7 +5961,7 @@ void PIT_CeilingRaise(AActor *thing, FChangePosition *cpos)
 	}
 	if (thing->player && thing->player->mo == thing)
 	{
-		thing->player->viewz += thing->_f_Z() - oldz;
+		thing->player->viewz += thing->Z() - FIXED2DBL(oldz);
 	}
 }
 
@@ -6420,8 +6419,9 @@ void SpawnShootDecal(AActor *t1, const FTraceResults &trace)
 	}
 	if (decalbase != NULL)
 	{
+		DVector3 hp(FIXED2DBL(trace.HitPos.x), FIXED2DBL(trace.HitPos.y), FIXED2DBL(trace.HitPos.z));
 		DImpactDecal::StaticCreate(decalbase->GetDecal(),
-			trace.HitPos, trace.Line->sidedef[trace.Side], trace.ffloor);
+			hp, trace.Line->sidedef[trace.Side], trace.ffloor);
 	}
 }
 

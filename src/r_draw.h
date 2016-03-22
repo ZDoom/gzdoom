@@ -269,6 +269,10 @@ enum ESPSResult
 	DoDraw1,	// draw this as if r_columnmethod is 1
 };
 ESPSResult R_SetPatchStyle (FRenderStyle style, fixed_t alpha, int translation, DWORD color);
+inline ESPSResult R_SetPatchStyle(FRenderStyle style, float alpha, int translation, DWORD color)
+{
+	return R_SetPatchStyle(style, FLOAT2FIXED(alpha), translation, color);
+}
 
 // Call this after finished drawing the current thing, in case its
 // style was STYLE_Shade

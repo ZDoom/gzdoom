@@ -135,7 +135,7 @@ struct gameinfo_t
 	FString ArmorIcon2;
 	FString PauseSign;
 	FString Endoom;
-	fixed_t Armor2Percent;
+	double Armor2Percent;
 	FString quitSound;
 	gameborder_t Border;
 	double telefogheight;

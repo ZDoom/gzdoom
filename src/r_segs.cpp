@@ -3022,7 +3022,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 	fixed_t xscale, yscale;
 	fixed_t topoff;
 	BYTE flipx;
-	fixed_t zpos;
+	double zpos;
 	int needrepeat = 0;
 	sector_t *front, *back;
 	bool calclighting;
@@ -3044,36 +3044,36 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 	case RF_RELUPPER:
 		if (curline->linedef->flags & ML_DONTPEGTOP)
 		{
-			zpos = decal->Z + front->GetPlaneTexZ(sector_t::ceiling);
+			zpos = decal->Z + front->GetPlaneTexZF(sector_t::ceiling);
 		}
 		else
 		{
-			zpos = decal->Z + back->GetPlaneTexZ(sector_t::ceiling);
+			zpos = decal->Z + back->GetPlaneTexZF(sector_t::ceiling);
 		}
 		break;
 	case RF_RELLOWER:
 		if (curline->linedef->flags & ML_DONTPEGBOTTOM)
 		{
-			zpos = decal->Z + front->GetPlaneTexZ(sector_t::ceiling);
+			zpos = decal->Z + front->GetPlaneTexZF(sector_t::ceiling);
 		}
 		else
 		{
-			zpos = decal->Z + back->GetPlaneTexZ(sector_t::floor);
+			zpos = decal->Z + back->GetPlaneTexZF(sector_t::floor);
 		}
 		break;
 	case RF_RELMID:
 		if (curline->linedef->flags & ML_DONTPEGBOTTOM)
 		{
-			zpos = decal->Z + front->GetPlaneTexZ(sector_t::floor);
+			zpos = decal->Z + front->GetPlaneTexZF(sector_t::floor);
 		}
 		else
 		{
-			zpos = decal->Z + front->GetPlaneTexZ(sector_t::ceiling);
+			zpos = decal->Z + front->GetPlaneTexZF(sector_t::ceiling);
 		}
 	}
 
-	xscale = decal->ScaleX;
-	yscale = decal->ScaleY;
+	xscale = FLOAT2FIXED(decal->ScaleX);
+	yscale = FLOAT2FIXED(decal->ScaleY);
 
 	WallSpriteTile = TexMan(decal->PicNum, true);
 	flipx = (BYTE)(decal->RenderFlags & RF_XFLIP);
@@ -3096,7 +3096,10 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 	x1 *= xscale;
 	x2 *= xscale;
 
-	decal->GetXY (wall, decalx, decaly);
+	double dcx, dcy;
+	decal->GetXY(wall, dcx, dcy);
+	decalx = FLOAT2FIXED(dcx);
+	decaly = FLOAT2FIXED(dcy);
 
 	angle_t ang = R_PointToAngle2 (curline->v1->x, curline->v1->y, curline->v2->x, curline->v2->y) >> ANGLETOFINESHIFT;
 	lx  = decalx - FixedMul (x1, finecosine[ang]) - viewx;
@@ -3169,8 +3172,9 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 		break;
 	}
 
+	fixed_t fzpos = FLOAT2FIXED(zpos);
 	topoff = WallSpriteTile->TopOffset << FRACBITS;
-	dc_texturemid = topoff + FixedDiv (zpos - viewz, yscale);
+	dc_texturemid = topoff + FixedDiv (fzpos - viewz, yscale);
 
 	// Clip sprite to drawseg
 	x1 = MAX<int>(clipper->x1, x1);
@@ -3235,7 +3239,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 		dc_x = x1;
 		ESPSResult mode;
 
-		mode = R_SetPatchStyle (decal->RenderStyle, decal->Alpha, decal->Translation, decal->AlphaColor);
+		mode = R_SetPatchStyle (decal->RenderStyle, (float)decal->Alpha, decal->Translation, decal->AlphaColor);
 
 		// R_SetPatchStyle can modify basecolormap.
 		if (rereadcolormap)

@@ -254,7 +254,7 @@ void HandleDeprecatedFlags(AActor *defaults, PClassActor *info, bool set, int in
 		defaults->Gravity = set ? 1. / 4 : 1.;
 		break;
 	case DEPF_FIRERESIST:
-		info->SetDamageFactor(NAME_Fire, set? FRACUNIT/2 : FRACUNIT);
+		info->SetDamageFactor(NAME_Fire, set ? 0.5 : 1.);
 		break;
 	// the bounce flags will set the compatibility bounce modes to remain compatible
 	case DEPF_HERETICBOUNCE:
@@ -322,8 +322,8 @@ bool CheckDeprecatedFlags(const AActor *actor, PClassActor *info, int index)
 	case DEPF_FIRERESIST:
 		if (info->DamageFactors)
 		{
-			fixed_t *df = info->DamageFactors->CheckKey(NAME_Fire);
-			return df && (*df) == FRACUNIT / 2;
+			double *df = info->DamageFactors->CheckKey(NAME_Fire);
+			return df && (*df) == 0.5;
 		}
 		return false;
 
@@ -1229,7 +1229,7 @@ DEFINE_PROPERTY(damagefactor, ZF, Actor)
 		if (!stricmp(str, "Normal")) dmgType = NAME_None;
 		else dmgType=str;
 
-		info->SetDamageFactor(dmgType, FLOAT2FIXED(id));
+		info->SetDamageFactor(dmgType, id);
 	}
 }
 
@@ -1639,9 +1639,9 @@ DEFINE_CLASS_PROPERTY(saveamount, I, Armor)
 //==========================================================================
 DEFINE_CLASS_PROPERTY(savepercent, F, Armor)
 {
-	PROP_FIXED_PARM(i, 0);
+	PROP_DOUBLE_PARM(i, 0);
 
-	i = clamp(i, 0, 100*FRACUNIT)/100;
+	i = clamp(i, 0., 100.)/100.;
 	// Special case here because this property has to work for 2 unrelated classes
 	if (info->IsDescendantOf(RUNTIME_CLASS(ABasicArmorPickup)))
 	{
@@ -2258,7 +2258,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, duration, I, Inventory)
 //==========================================================================
 DEFINE_CLASS_PROPERTY_PREFIX(powerup, strength, F, Inventory)
 {
-	fixed_t *pStrength;
+	double *pStrength;
 
 	if (info->IsDescendantOf(RUNTIME_CLASS(APowerup)))
 	{
@@ -2273,7 +2273,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, strength, F, Inventory)
 		I_Error("\"powerup.strength\" requires an actor of type \"Powerup\"\n");
 		return;
 	}
-	PROP_FIXED_PARM(f, 0);
+	PROP_DOUBLE_PARM(f, 0);
 	*pStrength = f;
 }
 
@@ -2573,7 +2573,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, spawnclass, L, PlayerPawn)
 //==========================================================================
 DEFINE_CLASS_PROPERTY_PREFIX(player, viewheight, F, PlayerPawn)
 {
-	PROP_FIXED_PARM(z, 0);
+	PROP_DOUBLE_PARM(z, 0);
 	defaults->ViewHeight = z;
 }
 
@@ -2793,7 +2793,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, hexenarmor, FFFFF, PlayerPawn)
 	assert(info->IsKindOf(RUNTIME_CLASS(PClassPlayerPawn)));
 	for (int i = 0; i < 5; i++)
 	{
-		PROP_FIXED_PARM(val, i);
+		PROP_DOUBLE_PARM(val, i);
 		static_cast<PClassPlayerPawn *>(info)->HexenArmor[i] = val;
 	}
 }

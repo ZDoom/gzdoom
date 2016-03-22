@@ -168,7 +168,7 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, DAngle angle, i
 	}
 	if (player)
 	{
-		player->viewz = thing->_f_Z() + player->viewheight;
+		player->viewz = thing->Z() + player->viewheight;
 		if (resetpitch)
 		{
 			player->mo->Angles.Pitch = 0.;

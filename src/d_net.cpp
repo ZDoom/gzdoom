@@ -2382,7 +2382,8 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 			{
 				if (trace.HitType == TRACE_HitWall)
 				{
-					DImpactDecal::StaticCreate (s, trace.HitPos, trace.Line->sidedef[trace.Side], NULL);
+					DVector3 hp(FIXED2DBL(trace.HitPos.x), FIXED2DBL(trace.HitPos.y), FIXED2DBL(trace.HitPos.z));
+					DImpactDecal::StaticCreate (s, hp, trace.Line->sidedef[trace.Side], NULL);
 				}
 			}
 		}

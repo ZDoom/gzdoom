@@ -67,8 +67,8 @@ AInventory *ABasicArmor::CreateCopy (AActor *other)
 {
 	// BasicArmor that is in use is stored in the inventory as BasicArmor.
 	// BasicArmor that is in reserve is not.
-	ABasicArmor *copy = Spawn<ABasicArmor> (0, 0, 0, NO_REPLACE);
-	copy->SavePercent = SavePercent != 0 ? SavePercent : FRACUNIT/3;
+	ABasicArmor *copy = Spawn<ABasicArmor> ();
+	copy->SavePercent = SavePercent != 0 ? SavePercent : 0.33335;	// slightly more than 1/3 to avoid roundoff errors.
 	copy->Amount = Amount;
 	copy->MaxAmount = MaxAmount;
 	copy->Icon = Icon;
@@ -130,7 +130,7 @@ void ABasicArmor::AbsorbDamage (int damage, FName damageType, int &newdamage)
 		}
 		else
 		{
-			saved = full + FixedMul (damage - full, SavePercent);
+			saved = full + int((damage - full) * SavePercent);
 			if (MaxAbsorb > 0 && saved + AbsorbCount > MaxAbsorb) 
 			{
 				saved = MAX(0,  MaxAbsorb - AbsorbCount);
@@ -179,15 +179,10 @@ void ABasicArmor::AbsorbDamage (int damage, FName damageType, int &newdamage)
 		// This code is taken and adapted from APowerProtection::ModifyDamage().
 		// The differences include not using a default value, and of course the way
 		// the damage factor info is obtained.
-		const fixed_t *pdf = NULL;
 		DmgFactors *df = PClass::FindActor(ArmorType)->DamageFactors;
-		if (df != NULL && df->CountUsed() != 0)
+		if (df != NULL)
 		{
-			pdf = df->CheckFactor(damageType);
-			if (pdf != NULL)
-			{
-				damage = newdamage = FixedMul(damage, *pdf);
-			}
+			damage = newdamage = df->Apply(damageType, damage);
 		}
 	}
 	if (Inventory != NULL)
@@ -401,7 +396,7 @@ AInventory *AHexenArmor::CreateCopy (AActor *other)
 	// Like BasicArmor, HexenArmor is used in the inventory but not the map.
 	// health is the slot this armor occupies.
 	// Amount is the quantity to give (0 = normal max).
-	AHexenArmor *copy = Spawn<AHexenArmor> (0, 0, 0, NO_REPLACE);
+	AHexenArmor *copy = Spawn<AHexenArmor> ();
 	copy->AddArmorToSlot (other, health, Amount);
 	GoAwayAndDie ();
 	return copy;
@@ -452,7 +447,7 @@ bool AHexenArmor::HandlePickup (AInventory *item)
 bool AHexenArmor::AddArmorToSlot (AActor *actor, int slot, int amount)
 {
 	APlayerPawn *ppawn;
-	int hits;
+	double hits;
 
 	if (actor->player != NULL)
 	{
@@ -478,9 +473,9 @@ bool AHexenArmor::AddArmorToSlot (AActor *actor, int slot, int amount)
 	}
 	else
 	{
-		hits = amount * 5 * FRACUNIT;
-		fixed_t total = Slots[0]+Slots[1]+Slots[2]+Slots[3]+Slots[4];
-		fixed_t max = SlotsIncrement[0]+SlotsIncrement[1]+SlotsIncrement[2]+SlotsIncrement[3]+Slots[4]+4*5*FRACUNIT;
+		hits = amount * 5;
+		auto total = Slots[0] + Slots[1] + Slots[2] + Slots[3] + Slots[4];
+		auto max = SlotsIncrement[0] + SlotsIncrement[1] + SlotsIncrement[2] + SlotsIncrement[3] + Slots[4] + 4 * 5;
 		if (total < max)
 		{
 			Slots[slot] += hits;
@@ -500,13 +495,13 @@ void AHexenArmor::AbsorbDamage (int damage, FName damageType, int &newdamage)
 {
 	if (!DamageTypeDefinition::IgnoreArmor(damageType))
 	{
-		fixed_t savedPercent = Slots[0] + Slots[1] + Slots[2] + Slots[3] + Slots[4];
+		double savedPercent = Slots[0] + Slots[1] + Slots[2] + Slots[3] + Slots[4];
 
 		if (savedPercent)
 		{ // armor absorbed some damage
-			if (savedPercent > 100*FRACUNIT)
+			if (savedPercent > 100)
 			{
-				savedPercent = 100*FRACUNIT;
+				savedPercent = 100;
 			}
 			for (int i = 0; i < 4; i++)
 			{
@@ -516,15 +511,8 @@ void AHexenArmor::AbsorbDamage (int damage, FName damageType, int &newdamage)
 					// with the dragon skin bracers.
 					if (damage < 10000)
 					{
-#if __APPLE__ && __GNUC__ == 4 && __GNUC_MINOR__ == 2 && __GNUC_PATCHLEVEL__  == 1
-						// -O1 optimizer bug work around. Only needed for
-						// GCC 4.2.1 on OS X for 10.4/10.5 tools compatibility.
-						volatile fixed_t tmp = 300;
-						Slots[i] -= ::Scale (damage, SlotsIncrement[i], tmp);
-#else
-						Slots[i] -= ::Scale (damage, SlotsIncrement[i], 300);
-#endif
-						if (Slots[i] < 2*FRACUNIT)
+						Slots[i] -= damage * SlotsIncrement[i] / 300.;
+						if (Slots[i] < 2)
 						{
 							Slots[i] = 0;
 						}
@@ -535,10 +523,10 @@ void AHexenArmor::AbsorbDamage (int damage, FName damageType, int &newdamage)
 					}
 				}
 			}
-			int saved = ::Scale (damage, savedPercent, 100*FRACUNIT);
-			if (saved > savedPercent >> (FRACBITS-1))
+			int saved = int(damage * savedPercent / 100.);
+			if (saved > savedPercent*2)
 			{	
-				saved = savedPercent >> (FRACBITS-1);
+				saved = int(savedPercent*2);
 			}
 			newdamage -= saved;
 			damage = newdamage;

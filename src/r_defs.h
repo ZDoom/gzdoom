@@ -98,6 +98,16 @@ struct vertex_t
 {
 	fixed_t x, y;
 
+	double fX() const
+	{
+		return FIXED2DBL(x);
+	}
+
+	double fY() const
+	{
+		return FIXED2DBL(y);
+	}
+
 	float fx, fy;		// Floating point coordinates of this vertex (excluding polyoblect translation!)
 	angle_t viewangle;	// precalculated angle for clipping
 	int angletime;		// recalculation time for view angle
@@ -287,6 +297,11 @@ struct secplane_t
 	fixed_t ZatPoint(const fixedvec3 &spot) const
 	{
 		return FixedMul(ic, -d - DMulScale16(a, spot.x, b, spot.y));
+	}
+
+	double ZatPointF(const fixedvec3 &spot) const
+	{
+		return FIXED2DBL(FixedMul(ic, -d - DMulScale16(a, spot.x, b, spot.y)));
 	}
 
 	// Returns the value of z at (x,y)
@@ -758,8 +773,12 @@ struct sector_t
 		return planes[pos].TexZ;
 	}
 
-	void SetVerticesDirty()
+	double GetPlaneTexZF(int pos) const
 	{
+		return FIXED2DBL(planes[pos].TexZ);
+	}
+
+	void SetVerticesDirty()	{
 		for (unsigned i = 0; i < e->vertices.Size(); i++) e->vertices[i]->dirty = true;
 	}
 
@@ -1399,7 +1418,7 @@ typedef BYTE lighttable_t;	// This could be wider for >8 bit display.
 struct visstyle_t
 {
 	lighttable_t	*colormap;
-	fixed_t			alpha;
+	float			Alpha;
 	FRenderStyle	RenderStyle;
 };
 

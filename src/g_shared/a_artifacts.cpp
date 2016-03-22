@@ -499,8 +499,7 @@ int APowerInvulnerable::AlterWeaponSprite (visstyle_t *vis)
 	{
 		if (Mode == NAME_Ghost && !(Owner->flags & MF_SHADOW))
 		{
-			double wp_alpha = MIN<double>(0.25 + Owner->Alpha*0.75, 1.);
-			vis->alpha = FLOAT2FIXED(wp_alpha);
+			vis->Alpha = MIN<float>(0.25f + (float)Owner->Alpha*0.75f, 1.f);
 		}
 	}
 	return changed;
@@ -616,7 +615,7 @@ void APowerInvisibility::DoEffect ()
 	Super::DoEffect();
 	// Due to potential interference with other PowerInvisibility items
 	// the effect has to be refreshed each tic.
-	double ts = FIXED2DBL((Strength/100) * (special1 + 1)); 
+	double ts = (Strength / 100) * (special1 + 1);
 	
 	if (ts > 1.) ts = 1.;
 	Owner->Alpha = clamp((1. - ts), 0., 1.);
@@ -698,14 +697,14 @@ int APowerInvisibility::AlterWeaponSprite (visstyle_t *vis)
 	if (changed == 0 && EffectTics < 4*32 && !(EffectTics & 8))
 	{
 		vis->RenderStyle = STYLE_Normal;
-		vis->alpha = OPAQUE;
+		vis->Alpha = 1.f;
 		return 1;
 	}
 	else if (changed == 1)
 	{
 		// something else set the weapon sprite back to opaque but this item is still active.
-		fixed_t ts = (Strength/100) * (special1 + 1); if (ts > FRACUNIT) ts = FRACUNIT;
-		vis->alpha = clamp<fixed_t>((OPAQUE - ts), 0, OPAQUE);
+		float ts = float((Strength / 100) * (special1 + 1));
+		vis->Alpha = clamp<>((1.f - ts), 0.f, 1.f);
 		switch (Mode)
 		{
 		case (NAME_Fuzzy):
@@ -735,9 +734,9 @@ int APowerInvisibility::AlterWeaponSprite (visstyle_t *vis)
 		}
 	}
 	// Handling of Strife-like cumulative invisibility powerups, the weapon itself shouldn't become invisible
-	if ((vis->alpha < TRANSLUC25 && special1 > 0) || (vis->alpha == 0))
+	if ((vis->Alpha < 0.25f && special1 > 0) || (vis->Alpha == 0))
 	{
-		vis->alpha = clamp<fixed_t>((OPAQUE - (Strength/100)), 0, OPAQUE);
+		vis->Alpha = clamp((1.f - float(Strength/100)), 0.f, 1.f);
 		vis->colormap = SpecialColormaps[INVERSECOLORMAP].Colormap;
 	}
 	return -1;	// This item is valid so another one shouldn't reset the translucency
@@ -754,7 +753,7 @@ int APowerInvisibility::AlterWeaponSprite (visstyle_t *vis)
 
 bool APowerInvisibility::HandlePickup (AInventory *item)
 {
-	if (Mode == NAME_Cumulative && ((Strength * special1) < FRACUNIT) && item->GetClass() == GetClass())
+	if (Mode == NAME_Cumulative && ((Strength * special1) < 1.) && item->GetClass() == GetClass())
 	{
 		APowerup *power = static_cast<APowerup *>(item);
 		if (power->EffectTics == 0)
@@ -1631,25 +1630,20 @@ void APowerDamage::EndEffect( )
 
 void APowerDamage::ModifyDamage(int damage, FName damageType, int &newdamage, bool passive)
 {
-	static const fixed_t def = 4*FRACUNIT;
 	if (!passive && damage > 0)
 	{
-		const fixed_t *pdf = NULL;
+		int newdam;
 		DmgFactors *df = GetClass()->DamageFactors;
 		if (df != NULL && df->CountUsed() != 0)
 		{
-			pdf = df->CheckFactor(damageType);
+			newdam = MIN(1, df->Apply(damageType, damage));// don't allow zero damage as result of an underflow
 		}
 		else
 		{
-			pdf = &def;
+			newdam = damage * 4;
 		}
-		if (pdf != NULL)
-		{
-			damage = newdamage = FixedMul(damage, *pdf);
-			if (*pdf > 0 && damage == 0) damage = newdamage = 1;	// don't allow zero damage as result of an underflow
-			if (Owner != NULL && *pdf > FRACUNIT) S_Sound(Owner, 5, ActiveSound, 1.0f, ATTN_NONE);
-		}
+		if (Owner != NULL && newdam > damage) S_Sound(Owner, 5, ActiveSound, 1.0f, ATTN_NONE);
+		newdamage = newdam;
 	}
 	if (Inventory != NULL) Inventory->ModifyDamage(damage, damageType, newdamage, passive);
 }
@@ -1711,22 +1705,20 @@ void APowerProtection::EndEffect( )
 
 void APowerProtection::ModifyDamage(int damage, FName damageType, int &newdamage, bool passive)
 {
-	static const fixed_t def = FRACUNIT/4;
 	if (passive && damage > 0)
 	{
-		const fixed_t *pdf = NULL;
+		int newdam;
 		DmgFactors *df = GetClass()->DamageFactors;
 		if (df != NULL && df->CountUsed() != 0)
 		{
-			pdf = df->CheckFactor(damageType);
+			newdam = MIN(0, df->Apply(damageType, damage));
 		}
-		else pdf = &def;
-
-		if (pdf != NULL)
+		else
 		{
-			damage = newdamage = FixedMul(damage, *pdf);
-			if (Owner != NULL && *pdf < FRACUNIT) S_Sound(Owner, CHAN_AUTO, ActiveSound, 1.0f, ATTN_NONE);
+			newdam = damage / 4;
 		}
+		if (Owner != NULL && newdam < damage) S_Sound(Owner, CHAN_AUTO, ActiveSound, 1.0f, ATTN_NONE);
+		newdamage = newdam;
 	}
 	if (Inventory != NULL)
 	{
@@ -1789,7 +1781,7 @@ void APowerRegeneration::DoEffect()
 	Super::DoEffect();
 	if (Owner != NULL && Owner->health > 0 && (level.time & 31) == 0)
 	{
-		if (P_GiveBody(Owner, Strength/FRACUNIT))
+		if (P_GiveBody(Owner, int(Strength)))
 		{
 			S_Sound(Owner, CHAN_ITEM, "*regenerate", 1, ATTN_NORM );
 		}

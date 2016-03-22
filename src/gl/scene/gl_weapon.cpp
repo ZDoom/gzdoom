@@ -300,7 +300,7 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 	visstyle_t vis;
 
 	vis.RenderStyle=playermo->RenderStyle;
-	vis.alpha=playermo->Alpha;
+	vis.Alpha=playermo->Alpha;
 	vis.colormap = NULL;
 	if (playermo->Inventory) 
 	{
@@ -350,7 +350,7 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 	}
 	else if (trans == 0.f)
 	{
-		trans = FIXED2FLOAT(vis.alpha);
+		trans = vis.Alpha;
 	}
 
 	// now draw the different layers of the weapon

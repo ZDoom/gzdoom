@@ -63,7 +63,7 @@
 //
 //==========================================================================
 
-void gl_SetDynSpriteLight(AActor *self, fixed_t x, fixed_t y, fixed_t z, subsector_t * subsec)
+void gl_SetDynSpriteLight(AActor *self, float x, float y, float z, subsector_t * subsec)
 {
 	ADynamicLight *light;
 	float frac, lr, lg, lb;
@@ -80,7 +80,28 @@ void gl_SetDynSpriteLight(AActor *self, fixed_t x, fixed_t y, fixed_t z, subsect
 			if (!(light->flags2&MF2_DORMANT) &&
 				(!(light->flags4&MF4_DONTLIGHTSELF) || light->target != self))
 			{
-				float dist = FVector3(FIXED2FLOAT(x - light->_f_X()), FIXED2FLOAT(y - light->_f_Y()), FIXED2FLOAT(z - light->_f_Z())).Length();
+				float dist;
+
+				// This is a performance critical section of code where we cannot afford to let the compiler decide whether to inline the function or not.
+				// This will do the calculations explicitly rather than calling one of AActor's utility functions.
+				if (Displacements.size > 0)
+				{
+					int fromgroup = light->Sector->PortalGroup;
+					int togroup = subsec->sector->PortalGroup;
+					if (fromgroup == togroup || fromgroup == 0 || togroup == 0) goto direct;	
+
+					fixedvec2 offset = Displacements.getOffset(fromgroup, togroup);
+					dist = FVector3(x - light->X() - FIXED2FLOAT(offset.x), y - light->Y() - FIXED2FLOAT(offset.y), z - light->Z()).LengthSquared();
+				}
+				else
+				{
+				direct:
+					dist = FVector3(x - light->X(), y - light->Y(), z - light->Z()).LengthSquared();
+				}
+				// This is to avoid calling the software-implemented sqrt function which gets used by FVector3::Length().
+				// With fast math on in this module this call will be mapped to a machine instruction on most platforms.
+				dist = sqrtf(dist);
+
 				radius = light->GetRadius() * gl_lights_size;
 
 				if (dist < radius)
@@ -117,10 +138,10 @@ void gl_SetDynSpriteLight(AActor *thing, particle_t *particle)
 {
 	if (thing != NULL)
 	{
-		gl_SetDynSpriteLight(thing, thing->_f_X(), thing->_f_Y(), thing->_f_Z() + (thing->_f_height() >> 1), thing->subsector);
+		gl_SetDynSpriteLight(thing, thing->X(), thing->Y(), thing->Center(), thing->subsector);
 	}
 	else if (particle != NULL)
 	{
-		gl_SetDynSpriteLight(NULL, particle->x, particle->y, particle->z, particle->subsector);
+		gl_SetDynSpriteLight(NULL, FIXED2FLOAT(particle->x), FIXED2FLOAT(particle->y), FIXED2FLOAT(particle->z), particle->subsector);
 	}
 }

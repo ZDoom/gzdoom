@@ -71,7 +71,7 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 	line_t * line=seg->linedef;
 	side_t * side=seg->sidedef;
 	int i;
-	fixed_t zpos;
+	float zpos;
 	int light;
 	int rel;
 	float a;
@@ -129,33 +129,33 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 		if (type!=RENDERWALL_TOP) return;
 		if (line->flags & ML_DONTPEGTOP)
 		{
-			zpos = decal->Z + frontsector->GetPlaneTexZ(sector_t::ceiling);
+			zpos = decal->Z + frontsector->GetPlaneTexZF(sector_t::ceiling);
 		}
 		else
 		{
-			zpos = decal->Z + seg->backsector->GetPlaneTexZ(sector_t::ceiling);
+			zpos = decal->Z + seg->backsector->GetPlaneTexZF(sector_t::ceiling);
 		}
 		break;
 	case RF_RELLOWER:
 		if (type!=RENDERWALL_BOTTOM) return;
 		if (line->flags & ML_DONTPEGBOTTOM)
 		{
-			zpos = decal->Z + frontsector->GetPlaneTexZ(sector_t::ceiling);
+			zpos = decal->Z + frontsector->GetPlaneTexZF(sector_t::ceiling);
 		}
 		else
 		{
-			zpos = decal->Z + seg->backsector->GetPlaneTexZ(sector_t::floor);
+			zpos = decal->Z + seg->backsector->GetPlaneTexZF(sector_t::floor);
 		}
 		break;
 	case RF_RELMID:
 		if (type==RENDERWALL_TOP || type==RENDERWALL_BOTTOM) return;
 		if (line->flags & ML_DONTPEGBOTTOM)
 		{
-			zpos = decal->Z + frontsector->GetPlaneTexZ(sector_t::floor);
+			zpos = decal->Z + frontsector->GetPlaneTexZF(sector_t::floor);
 		}
 		else
 		{
-			zpos = decal->Z + frontsector->GetPlaneTexZ(sector_t::ceiling);
+			zpos = decal->Z + frontsector->GetPlaneTexZF(sector_t::ceiling);
 		}
 	}
 	
@@ -179,20 +179,20 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 	
 	
 	
-	a = FIXED2FLOAT(decal->Alpha);
+	a = decal->Alpha;
 	
 	// now clip the decal to the actual polygon
-	float decalwidth = tex->TextureWidth()  * FIXED2FLOAT(decal->ScaleX);
-	float decalheight= tex->TextureHeight() * FIXED2FLOAT(decal->ScaleY);
-	float decallefto = tex->GetLeftOffset() * FIXED2FLOAT(decal->ScaleX);
-	float decaltopo  = tex->GetTopOffset()  * FIXED2FLOAT(decal->ScaleY);
+	float decalwidth = tex->TextureWidth()  * decal->ScaleX;
+	float decalheight= tex->TextureHeight() * decal->ScaleY;
+	float decallefto = tex->GetLeftOffset() * decal->ScaleX;
+	float decaltopo  = tex->GetTopOffset()  * decal->ScaleY;
 
 	
 	float leftedge = glseg.fracleft * side->TexelLength;
 	float linelength = glseg.fracright * side->TexelLength - leftedge;
 
 	// texel index of the decal's left edge
-	float decalpixpos = (float)side->TexelLength * decal->LeftDistance / (1<<30) - (flipx? decalwidth-decallefto : decallefto) - leftedge;
+	float decalpixpos = (float)side->TexelLength * decal->LeftDistance - (flipx? decalwidth-decallefto : decallefto) - leftedge;
 
 	float left,right;
 	float lefttex,righttex;
@@ -232,14 +232,14 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 	dv[3].x=dv[2].x=glseg.x1+vx*right;
 	dv[3].y=dv[2].y=glseg.y1+vy*right;
 		
-	zpos+= FRACUNIT*(flipy? decalheight-decaltopo : decaltopo);
+	zpos+= (flipy? decalheight-decaltopo : decaltopo);
 
-	dv[1].z=dv[2].z = FIXED2FLOAT(zpos);
+	dv[1].z=dv[2].z = zpos;
 	dv[0].z=dv[3].z = dv[1].z - decalheight;
 	dv[1].v=dv[2].v = tex->GetVT();
 
-	dv[1].u=dv[0].u = tex->GetU(lefttex / FIXED2FLOAT(decal->ScaleX));
-	dv[3].u=dv[2].u = tex->GetU(righttex / FIXED2FLOAT(decal->ScaleX));
+	dv[1].u=dv[0].u = tex->GetU(lefttex / decal->ScaleX);
+	dv[3].u=dv[2].u = tex->GetU(righttex / decal->ScaleX);
 	dv[0].v=dv[3].v = tex->GetVB();
 
 
@@ -297,7 +297,7 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 	if (gl_lights && GLRenderer->mLightCount && !gl_fixedcolormap && gl_light_sprites)
 	{
 		// Note: This should be replaced with proper shader based lighting.
-		fixed_t x, y;
+		double x, y;
 		decal->GetXY(seg->sidedef, x, y);
 		gl_SetDynSpriteLight(NULL, x, y, zpos, sub);
 	}

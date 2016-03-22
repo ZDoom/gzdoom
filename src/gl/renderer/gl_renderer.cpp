@@ -375,7 +375,7 @@ void FGLRenderer::DrawTexture(FTexture *img, DCanvas::DrawParms &parms)
 	{
 		color = PalEntry(light, light, light);
 	}
-	color.a = Scale(parms.alpha, 255, FRACUNIT);
+	color.a = (BYTE)(parms.Alpha * 255);
 
 	// scissor test doesn't use the current viewport for the coordinates, so use real screen coordinates
 	int btm = (SCREENHEIGHT - screen->GetHeight()) / 2;

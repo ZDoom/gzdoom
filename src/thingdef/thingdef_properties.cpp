@@ -2258,7 +2258,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, duration, I, Inventory)
 //==========================================================================
 DEFINE_CLASS_PROPERTY_PREFIX(powerup, strength, F, Inventory)
 {
-	fixed_t *pStrength;
+	double *pStrength;
 
 	if (info->IsDescendantOf(RUNTIME_CLASS(APowerup)))
 	{
@@ -2273,7 +2273,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, strength, F, Inventory)
 		I_Error("\"powerup.strength\" requires an actor of type \"Powerup\"\n");
 		return;
 	}
-	PROP_FIXED_PARM(f, 0);
+	PROP_DOUBLE_PARM(f, 0);
 	*pStrength = f;
 }
 

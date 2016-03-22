@@ -1287,7 +1287,7 @@ typedef BYTE lighttable_t;	// This could be wider for >8 bit display.
 struct visstyle_t
 {
 	lighttable_t	*colormap;
-	fixed_t			alpha;
+	float			Alpha;
 	FRenderStyle	RenderStyle;
 };
 

@@ -408,7 +408,7 @@ void R_DrawVisSprite (vissprite_t *vis)
 
 	dc_colormap = vis->Style.colormap;
 
-	mode = R_SetPatchStyle (vis->Style.RenderStyle, vis->Style.alpha, vis->Translation, vis->FillColor);
+	mode = R_SetPatchStyle (vis->Style.RenderStyle, vis->Style.Alpha, vis->Translation, vis->FillColor);
 
 	if (vis->Style.RenderStyle == LegacyRenderStyles[STYLE_Shaded])
 	{ // For shaded sprites, R_SetPatchStyle sets a dc_colormap to an alpha table, but
@@ -564,7 +564,7 @@ void R_DrawWallSprite(vissprite_t *spr)
 	dc_x = x1;
 	ESPSResult mode;
 
-	mode = R_SetPatchStyle (spr->Style.RenderStyle, spr->Style.alpha, spr->Translation, spr->FillColor);
+	mode = R_SetPatchStyle (spr->Style.RenderStyle, spr->Style.Alpha, spr->Translation, spr->FillColor);
 
 	// R_SetPatchStyle can modify basecolormap.
 	if (rereadcolormap)
@@ -655,7 +655,7 @@ void R_DrawVisVoxel(vissprite_t *spr, int minslabz, int maxslabz, short *cliptop
 
 	// Do setup for blending.
 	dc_colormap = spr->Style.colormap;
-	mode = R_SetPatchStyle(spr->Style.RenderStyle, spr->Style.alpha, spr->Translation, spr->FillColor);
+	mode = R_SetPatchStyle(spr->Style.RenderStyle, spr->Style.Alpha, spr->Translation, spr->FillColor);
 
 	if (mode == DontDraw)
 	{
@@ -1063,7 +1063,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	vis->FillColor = thing->fillcolor;
 	vis->Translation = thing->Translation;		// [RH] thing translation table
 	vis->FakeFlatStat = fakeside;
-	vis->Style.alpha = FLOAT2FIXED(thing->Alpha);
+	vis->Style.Alpha = float(thing->Alpha);
 	vis->fakefloor = fakefloor;
 	vis->fakeceiling = fakeceiling;
 	vis->ColormapNum = 0;
@@ -1204,7 +1204,7 @@ static void R_ProjectWallSprite(AActor *thing, fixed_t fx, fixed_t fy, fixed_t f
 	vis->FillColor = thing->fillcolor;
 	vis->Translation = thing->Translation;
 	vis->FakeFlatStat = 0;
-	vis->Style.alpha = FLOAT2FIXED(thing->Alpha);
+	vis->Style.Alpha = float(thing->Alpha);
 	vis->fakefloor = NULL;
 	vis->fakeceiling = NULL;
 	vis->ColormapNum = 0;
@@ -1388,7 +1388,7 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, fixed_t sx, fixed_
 	noaccel = false;
 	if (pspnum <= ps_flash)
 	{
-		vis->Style.alpha = FLOAT2FIXED(owner->Alpha);
+		vis->Style.Alpha = float(owner->Alpha);
 		vis->Style.RenderStyle = owner->RenderStyle;
 
 		// The software renderer cannot invert the source without inverting the overlay
@@ -1665,7 +1665,7 @@ void R_DrawRemainingPlayerSprites()
 				DTA_ClipTop, viewwindowy,
 				DTA_ClipRight, viewwindowx + viewwidth,
 				DTA_ClipBottom, viewwindowy + viewheight,
-				DTA_Alpha, vis->Style.alpha,
+				DTA_AlphaF, vis->Style.Alpha,
 				DTA_RenderStyle, vis->Style.RenderStyle,
 				DTA_FillColor, vis->FillColor,
 				DTA_SpecialColormap, special,

@@ -3535,7 +3535,7 @@ bool D3DFB::SetStyle(D3DTex *tex, DrawParms &parms, D3DCOLOR &color0, D3DCOLOR &
 	}
 	else
 	{
-		alpha = clamp<fixed_t> (parms.alpha, 0, FRACUNIT) / 65536.f;
+		alpha = clamp(parms.Alpha, 0.f, 1.f);
 	}
 
 	style.CheckFuzz();

@@ -240,7 +240,7 @@ public:
 		int rclip;
 		double top;
 		double left;
-		fixed_t alpha;
+		float Alpha;
 		uint32 fillcolor;
 		FRemapTable *remap;
 		const BYTE *translation;

@@ -171,7 +171,7 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 		angle = player->mo->__f_AngleTo(enemy);
 
 		if (player->ReadyWeapon == NULL ||
-			player->mo->AproxDistance(enemy) >
+			player->mo->Distance2D(enemy) >
 			player->ReadyWeapon->MoveCombatDist)
 		{
 			// If a monster, use lower speed (just for cooler apperance while strafing down doomed monster)

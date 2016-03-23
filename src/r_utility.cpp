@@ -897,19 +897,18 @@ void R_AddInterpolationPoint(const fixedvec3a &vec)
 //
 //==========================================================================
 
-static fixed_t QuakePower(fixed_t factor, fixed_t intensity, fixed_t offset, fixed_t falloff, fixed_t wfalloff)
+static double QuakePower(double factor, double intensity, double offset, double falloff, double wfalloff)
 { 
-	fixed_t randumb;
+	double randumb;
 	if (intensity == 0)
 	{
 		randumb = 0;
 	}
 	else
 	{
-		randumb = pr_torchflicker(intensity * 2) - intensity;
+		randumb = pr_torchflicker.GenRand_Real2() * (intensity * 2) - intensity;
 	}
-	fixed_t rn2 = (FixedMul(wfalloff,offset) + FixedMul(falloff, randumb));
-	return FixedMul(factor, rn2);
+	return factor * (wfalloff * offset + falloff * randumb);
 }
 
 //==========================================================================
@@ -1046,42 +1045,44 @@ void R_SetupFrame (AActor *actor)
 
 	if (!paused)
 	{
-		FQuakeJiggers jiggers = { 0, };
+		FQuakeJiggers jiggers;
 
+		memset(&jiggers, 0, sizeof(jiggers));
 		if (DEarthquake::StaticGetQuakeIntensities(camera, jiggers) > 0)
 		{
-			fixed_t quakefactor = FLOAT2FIXED(r_quakeintensity);
+			double quakefactor = r_quakeintensity;
+			DAngle an;
 
-			if ((jiggers.RelIntensityX | jiggers.RelOffsetX) != 0)
+			if (jiggers.RelIntensity.X != 0 || jiggers.RelOffset.X != 0)
 			{
-				int ang = (camera->_f_angle()) >> ANGLETOFINESHIFT;
-				fixed_t power = QuakePower(quakefactor, jiggers.RelIntensityX, jiggers.RelOffsetX, jiggers.Falloff, jiggers.WFalloff);
-				viewx += FixedMul(finecosine[ang], power);
-				viewy += FixedMul(finesine[ang], power);
+				an = camera->Angles.Yaw;
+				double power = QuakePower(quakefactor, jiggers.RelIntensity.X, jiggers.RelOffset.X, jiggers.Falloff, jiggers.WFalloff);
+				viewx += FLOAT2FIXED(an.Cos() * power);
+				viewy += FLOAT2FIXED(an.Sin() * power);
 			}
-			if ((jiggers.RelIntensityY | jiggers.RelOffsetY) != 0)
+			if (jiggers.RelIntensity.Y != 0 || jiggers.RelOffset.Y != 0)
 			{
-				int ang = (camera->_f_angle() + ANG90) >> ANGLETOFINESHIFT;
-				fixed_t power = QuakePower(quakefactor, jiggers.RelIntensityY, jiggers.RelOffsetY, jiggers.Falloff, jiggers.WFalloff);
-				viewx += FixedMul(finecosine[ang], power);
-				viewy += FixedMul(finesine[ang], power);
+				an = camera->Angles.Yaw + 90;
+				double power = QuakePower(quakefactor, jiggers.RelIntensity.Y, jiggers.RelOffset.Y, jiggers.Falloff, jiggers.WFalloff);
+				viewx += FLOAT2FIXED(an.Cos() * power);
+				viewy += FLOAT2FIXED(an.Sin() * power);
 			}
 			// FIXME: Relative Z is not relative
-			if ((jiggers.RelIntensityZ | jiggers.RelOffsetZ) != 0)
+			if (jiggers.RelIntensity.Z != 0 || jiggers.RelOffset.Z != 0)
 			{
-				viewz += QuakePower(quakefactor, jiggers.RelIntensityZ, jiggers.RelOffsetZ, jiggers.Falloff, jiggers.WFalloff);
+				viewz += FLOAT2FIXED(QuakePower(quakefactor, jiggers.RelIntensity.Z, jiggers.RelOffset.Z, jiggers.Falloff, jiggers.WFalloff));
 			}
-			if ((jiggers.IntensityX | jiggers.OffsetX) != 0)
+			if (jiggers.Intensity.X != 0 || jiggers.Offset.X != 0)
 			{
-				viewx += QuakePower(quakefactor, jiggers.IntensityX, jiggers.OffsetX, jiggers.Falloff, jiggers.WFalloff);
+				viewx += FLOAT2FIXED(QuakePower(quakefactor, jiggers.Intensity.X, jiggers.Offset.X, jiggers.Falloff, jiggers.WFalloff));
 			}
-			if ((jiggers.IntensityY | jiggers.OffsetY) != 0)
+			if (jiggers.Intensity.Y != 0 || jiggers.Offset.Y != 0)
 			{
-				viewy += QuakePower(quakefactor, jiggers.IntensityY, jiggers.OffsetY, jiggers.Falloff, jiggers.WFalloff);
+				viewy += FLOAT2FIXED(QuakePower(quakefactor, jiggers.Intensity.Y, jiggers.Offset.Y, jiggers.Falloff, jiggers.WFalloff));
 			}
-			if ((jiggers.IntensityZ | jiggers.OffsetZ) != 0)
+			if (jiggers.Intensity.Z != 0 || jiggers.Offset.Z != 0)
 			{
-				viewz += QuakePower(quakefactor, jiggers.IntensityZ, jiggers.OffsetZ, jiggers.Falloff, jiggers.WFalloff);
+				viewz += FLOAT2FIXED(QuakePower(quakefactor, jiggers.Intensity.Z, jiggers.Offset.Z, jiggers.Falloff, jiggers.WFalloff));
 			}
 		}
 	}

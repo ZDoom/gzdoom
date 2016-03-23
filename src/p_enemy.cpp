@@ -3130,7 +3130,7 @@ void ModifyDropAmount(AInventory *inv, int dropamount)
 	}
 	else if (inv->IsKindOf (RUNTIME_CLASS(AWeaponGiver)))
 	{
-		static_cast<AWeaponGiver *>(inv)->DropAmmoFactor = dropammofactor;
+		static_cast<AWeaponGiver *>(inv)->DropAmmoFactor = FIXED2DBL(dropammofactor);
 		inv->ItemFlags |= flagmask;
 	}
 	else if (inv->IsKindOf (RUNTIME_CLASS(AWeapon)))

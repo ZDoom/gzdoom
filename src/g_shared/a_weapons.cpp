@@ -41,7 +41,7 @@ IMPLEMENT_CLASS(PClassWeapon)
 PClassWeapon::PClassWeapon()
 {
 	SlotNumber = -1;
-	SlotPriority = FIXED_MAX;
+	SlotPriority = INT_MAX;
 }
 
 void PClassWeapon::DeriveData(PClass *newclass)
@@ -762,8 +762,8 @@ bool AWeaponGiver::TryPickup(AActor *&toucher)
 					// If DropAmmoFactor is non-negative, modify the given ammo amounts.
 					if (DropAmmoFactor > 0)
 					{
-						weap->AmmoGive1 = FixedMul(weap->AmmoGive1, DropAmmoFactor);
-						weap->AmmoGive2 = FixedMul(weap->AmmoGive2, DropAmmoFactor);
+						weap->AmmoGive1 = int(weap->AmmoGive1 * DropAmmoFactor);
+						weap->AmmoGive2 = int(weap->AmmoGive2 * DropAmmoFactor);
 					}
 					weap->BecomeItem();
 				}
@@ -984,7 +984,7 @@ void FWeaponSlot::Sort()
 
 	for (i = 1; i < (int)Weapons.Size(); ++i)
 	{
-		fixed_t pos = Weapons[i].Position;
+		int pos = Weapons[i].Position;
 		PClassWeapon *type = Weapons[i].Type;
 		for (j = i - 1; j >= 0 && Weapons[j].Position > pos; --j)
 		{

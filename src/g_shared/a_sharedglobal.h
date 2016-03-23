@@ -154,11 +154,12 @@ enum
 
 struct FQuakeJiggers
 {
-	int IntensityX, IntensityY, IntensityZ;
-	int RelIntensityX, RelIntensityY, RelIntensityZ;
-	int OffsetX, OffsetY, OffsetZ;
-	int RelOffsetX, RelOffsetY, RelOffsetZ;
-	int Falloff, WFalloff;
+	DVector3 Intensity;
+	DVector3 RelIntensity;
+	DVector3 Offset;
+	DVector3 RelOffset;
+	double Falloff;
+	double WFalloff;
 };
 
 class DEarthquake : public DThinker
@@ -173,19 +174,19 @@ public:
 	void Serialize (FArchive &arc);
 	void Tick ();
 	TObjPtr<AActor> m_Spot;
-	fixed_t m_TremorRadius, m_DamageRadius;
+	double m_TremorRadius, m_DamageRadius;
 	int m_Countdown;
 	int m_CountdownStart;
 	FSoundID m_QuakeSFX;
 	int m_Flags;
-	fixed_t m_IntensityX, m_IntensityY, m_IntensityZ;
-	float m_WaveSpeedX, m_WaveSpeedY, m_WaveSpeedZ;
-	fixed_t m_Falloff;
+	DVector3 m_Intensity;
+	DVector3 m_WaveSpeed;
+	double m_Falloff;
 	int m_Highpoint, m_MiniCount;
 
-	fixed_t GetModIntensity(int intensity) const;
-	fixed_t GetModWave(double waveMultiplier) const;
-	fixed_t GetFalloff(fixed_t dist) const;
+	double GetModIntensity(double intensity) const;
+	double GetModWave(double waveMultiplier) const;
+	double GetFalloff(double dist) const;
 
 	static int StaticGetQuakeIntensities(AActor *viewer, FQuakeJiggers &jiggers);
 

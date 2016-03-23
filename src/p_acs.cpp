@@ -5789,7 +5789,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 				argCount > 8 ? args[8] : 0,
 				argCount > 9 ? ACSToDouble(args[9]) : 1.0,
 				argCount > 10 ? ACSToDouble(args[10]) : 1.0,
-				argCount > 11 ? ACSToDouble(args[11]) : 1.0 );
+				argCount > 11 ? ACSToDouble(args[11]) : 1.0,
 				argCount > 12 ? args[12] : 0,
 				argCount > 13 ? args[13] : 0);
 		}

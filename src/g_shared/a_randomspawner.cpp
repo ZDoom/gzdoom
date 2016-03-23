@@ -151,7 +151,7 @@ class ARandomSpawner : public AActor
 			{
 				tracer = target->target;
 			}
-			newmobj = P_SpawnMissileXYZ(_f_Pos(), target, target->target, cls, false);
+			newmobj = P_SpawnMissileXYZ(Pos(), target, target->target, cls, false);
 		}
 		else 
 		{		

@@ -3843,7 +3843,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
 	if (trace.HitType == TRACE_HitActor ||
 		((flags & CLOFF_JUMP_ON_MISS) && !lof_data.BadActor && trace.HitType != TRACE_HitNone))
 	{
-		if (minrange > 0 && trace.Distance < FLOAT2FIXED(minrange))
+		if (minrange > 0 && trace.Distance < minrange)
 		{
 			ACTION_RETURN_STATE(NULL);
 		}

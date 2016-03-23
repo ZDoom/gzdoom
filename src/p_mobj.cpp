@@ -5203,7 +5203,7 @@ AActor *P_SpawnPuff (AActor *source, PClassActor *pufftype, const DVector3 &pos,
 	if (!(flags & PF_NORANDOMZ))
 		z = pr_spawnpuff.Random2() / 64.;
 
-	puff = Spawn(pufftype, pos + Vector3(0, 0, z), ALLOW_REPLACE);
+	puff = Spawn(pufftype, pos + DVector3(0, 0, z), ALLOW_REPLACE);
 	if (puff == NULL) return NULL;
 
 	if ((puff->flags4 & MF4_RANDOMIZE) && puff->tics > 0)

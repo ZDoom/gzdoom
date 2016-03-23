@@ -777,20 +777,20 @@ DBaseDecal *ShootDecal(const FDecalTemplate *tpl, AActor *basisactor, sector_t *
 	{
 		if (permanent)
 		{
-			decal = new DBaseDecal(FIXED2DBL(trace.HitPos.z));
+			decal = new DBaseDecal(trace.HitPos.Z);
 			wall = trace.Line->sidedef[trace.Side];
-			decal->StickToWall(wall, FIXED2DBL(trace.HitPos.x), FIXED2DBL(trace.HitPos.y), trace.ffloor);
+			decal->StickToWall(wall, trace.HitPos.X, trace.HitPos.Y, trace.ffloor);
 			tpl->ApplyToDecal(decal, wall);
 			// Spread decal to nearby walls if it does not all fit on this one
 			if (cl_spreaddecals)
 			{
-				decal->Spread(tpl, wall, FIXED2DBL(trace.HitPos.x), FIXED2DBL(trace.HitPos.y), FIXED2DBL(trace.HitPos.z), trace.ffloor);
+				decal->Spread(tpl, wall,  trace.HitPos.X, trace.HitPos.Y, trace.HitPos.Z, trace.ffloor);
 			}
 			return decal;
 		}
 		else
 		{
-			return DImpactDecal::StaticCreate(tpl, DVector3(FIXED2DBL(trace.HitPos.x), FIXED2DBL(trace.HitPos.y), FIXED2DBL(trace.HitPos.z)), trace.Line->sidedef[trace.Side], NULL);
+			return DImpactDecal::StaticCreate(tpl, trace.HitPos, trace.Line->sidedef[trace.Side], NULL);
 		}
 	}
 	return NULL;

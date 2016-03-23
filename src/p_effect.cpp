@@ -545,7 +545,7 @@ void P_RunEffect (AActor *actor, int effects)
 	}
 }
 
-void P_DrawSplash (int count, fixed_t x, fixed_t y, fixed_t z, angle_t angle, int kind)
+void P_DrawSplash (int count, const DVector3 &pos, DAngle angle, int kind)
 {
 	int color1, color2;
 
@@ -562,7 +562,6 @@ void P_DrawSplash (int count, fixed_t x, fixed_t y, fixed_t z, angle_t angle, in
 	for (; count; count--)
 	{
 		particle_t *p = JitterParticle (10);
-		angle_t an;
 
 		if (!p)
 			break;
@@ -573,10 +572,10 @@ void P_DrawSplash (int count, fixed_t x, fixed_t y, fixed_t z, angle_t angle, in
 		p->accz -= FRACUNIT/8;
 		p->accx += (M_Random () - 128) * 8;
 		p->accy += (M_Random () - 128) * 8;
-		p->z = z - M_Random () * 1024;
-		an = (angle + (M_Random() << 21)) >> ANGLETOFINESHIFT;
-		p->x = x + (M_Random () & 15)*finecosine[an];
-		p->y = y + (M_Random () & 15)*finesine[an];
+		p->z = FLOAT2FIXED(pos.Z) - M_Random () * 1024;
+		angle += M_Random() * (45./256);
+		p->x = FLOAT2FIXED(pos.X + (M_Random() & 15)*angle.Cos());
+		p->y = FLOAT2FIXED(pos.Y + (M_Random() & 15)*angle.Sin());
 	}
 }
 

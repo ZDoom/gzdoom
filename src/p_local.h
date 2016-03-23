@@ -374,6 +374,10 @@ inline void	P_TraceBleed(int damage, const fixedvec3 &pos, AActor *target, angle
 {
 	P_TraceBleed(damage, pos.x, pos.y, pos.z, target, angle, pitch);
 }
+inline void	P_TraceBleed(int damage, const DVector3 &pos, AActor *target, DAngle angle, DAngle pitch)
+{
+	P_TraceBleed(damage, FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), FLOAT2FIXED(pos.Z), target,angle.BAMs(), pitch.BAMs());
+}
 void	P_TraceBleed (int damage, AActor *target, angle_t angle, int pitch);
 inline void	P_TraceBleed(int damage, AActor *target, DAngle angle, DAngle pitch)
 {
@@ -407,7 +411,7 @@ bool	P_CheckMissileSpawn(AActor *missile, double maxdist);
 void	P_PlaySpawnSound(AActor *missile, AActor *spawner);
 
 // [RH] Position the chasecam
-void	P_AimCamera (AActor *t1, fixed_t &x, fixed_t &y, fixed_t &z, sector_t *&sec, bool &unlinked);
+void	P_AimCamera (AActor *t1, DVector3 &, sector_t *&sec, bool &unlinked);
 
 // [RH] Means of death
 enum

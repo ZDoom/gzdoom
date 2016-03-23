@@ -966,7 +966,11 @@ void R_SetupFrame (AActor *actor)
 	{
 		sector_t *oldsector = R_PointInSubsector(iview->oviewx, iview->oviewy)->sector;
 		// [RH] Use chasecam view
-		P_AimCamera (camera, iview->nviewx, iview->nviewy, iview->nviewz, viewsector, unlinked);
+		DVector3 campos;
+		P_AimCamera (camera, campos, viewsector, unlinked);
+		iview->nviewx = FLOAT2FIXED(campos.X);
+		iview->nviewy = FLOAT2FIXED(campos.Y);
+		iview->nviewz = FLOAT2FIXED(campos.Z);
 		r_showviewer = true;
 		// Interpolating this is a very complicated thing because nothing keeps track of the aim camera's movement, so whenever we detect a portal transition
 		// it's probably best to just reset the interpolation for this move.

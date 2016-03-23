@@ -742,7 +742,18 @@ public:
 	// What species am I?
 	virtual FName GetSpecies();
 
-	fixed_t GetBobOffset(fixed_t ticfrac=0) const
+	double GetBobOffset(fixed_t ticfrac = 0) const
+	{
+		if (!(flags2 & MF2_FLOATBOB))
+		{
+			return 0;
+		}
+		return BobSin(FloatBobPhase + level.maptime + FIXED2FLOAT(ticfrac));
+	}
+
+
+
+	fixed_t _f_GetBobOffset(fixed_t ticfrac=0) const
 	{
 		 if (!(flags2 & MF2_FLOATBOB))
 		 {
@@ -1123,6 +1134,7 @@ public:
 	struct sector_t	*Sector;
 	subsector_t *		subsector;
 	double			floorz, ceilingz;	// closest together of contacted secs
+	double			dropoffz;		// killough 11/98: the lowest floor over all contacted Sectors.
 
 	inline fixed_t _f_ceilingz()
 	{
@@ -1132,8 +1144,11 @@ public:
 	{
 		return FLOAT2FIXED(floorz);
 	}
+	inline fixed_t _f_dropoffz()
+	{
+		return FLOAT2FIXED(dropoffz);
+	}
 
-	fixed_t			dropoffz;		// killough 11/98: the lowest floor over all contacted Sectors.
 
 	struct sector_t	*floorsector;
 	FTextureID		floorpic;			// contacted sec floorpic
@@ -1275,7 +1290,7 @@ public:
 	FSoundIDNoInit WallBounceSound;
 	FSoundIDNoInit CrushPainSound;
 
-	fixed_t MaxDropOffHeight;
+	double MaxDropOffHeight;
 	double MaxStepHeight;
 
 	fixed_t _f_MaxStepHeight()

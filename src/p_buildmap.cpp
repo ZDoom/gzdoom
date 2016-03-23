@@ -697,9 +697,9 @@ static int LoadSprites (spritetype *sprites, Xsprite *xsprites, int numsprites,
 	for (int i = 0; i < numsprites; ++i)
 	{
 		mapthings[count].thingid = 0;
-		mapthings[count].x = (sprites[i].x << 12);
-		mapthings[count].y = -(sprites[i].y << 12);
-		mapthings[count].z = (bsectors[sprites[i].sectnum].floorZ - sprites[i].z) << 8;
+		mapthings[count].pos.X = sprites[i].x / 16.;
+		mapthings[count].pos.Y = -sprites[i].y / 16.;
+		mapthings[count].pos.Z = (bsectors[sprites[i].sectnum].floorZ - sprites[i].z) / 256.;
 		mapthings[count].angle = (((2048-sprites[i].ang) & 2047) * 360) >> 11;
 		mapthings[count].ClassFilter = 0xffff;
 		mapthings[count].SkillFilter = 0xffff;
@@ -786,8 +786,8 @@ static void CreateStartSpot (fixed_t *pos, FMapThing *start)
 	short angle = LittleShort(*(WORD *)(&pos[3]));
 	FMapThing mt = { 0, };
 
-	mt.x = LittleLong(pos[0])<<12;
-	mt.y = (-LittleLong(pos[1]))<<12;
+	mt.pos.X = LittleLong(pos[0]) / 16.;
+	mt.pos.Y = -LittleLong(pos[1]) / 16.;
 	mt.angle = short(Scale((2048-angle)&2047, 360, 2048));
 	mt.info = DoomEdMap.CheckKey(1);
 	mt.EdNum = 1;

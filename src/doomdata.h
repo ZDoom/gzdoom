@@ -346,9 +346,7 @@ struct FDoomEdEntry;
 struct FMapThing
 {
 	int			thingid;
-	fixed_t		x;
-	fixed_t		y;
-	fixed_t		z;
+	DVector3	pos;
 	short		angle;
 	WORD		SkillFilter;
 	WORD		ClassFilter;
@@ -433,7 +431,7 @@ struct FPlayerStart
 
 	FPlayerStart() { }
 	FPlayerStart(const FMapThing *mthing, int pnum)
-	: pos(FIXED2DBL(mthing->x), FIXED2DBL(mthing->y), FIXED2DBL(mthing->z)),
+	: pos(mthing->pos),
 	  angle(mthing->angle),
 	  type(pnum)
 	{ }

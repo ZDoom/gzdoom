@@ -312,7 +312,7 @@ void ParseCompatibility()
 				sc.MustGetNumber();
 				CompatParams.Push(sc.Number);
 				sc.MustGetFloat();
-				CompatParams.Push(FLOAT2FIXED(sc.Float));
+				CompatParams.Push(int(sc.Float*256));	// do not use full fixed here so that it can eventually handle larger levels
 			}
 			else if (sc.Compare("setsectortag"))
 			{
@@ -545,7 +545,7 @@ void SetCompatibilityParams()
 					// When this is called, the things haven't been spawned yet so we can alter the position inside the MapThings array.
 					if ((unsigned)CompatParams[i+1] < MapThingsConverted.Size())
 					{
-						MapThingsConverted[CompatParams[i+1]].z = CompatParams[i+2];
+						MapThingsConverted[CompatParams[i+1]].pos.Z = CompatParams[i+2]/256.;
 					}
 					i += 3;
 					break;

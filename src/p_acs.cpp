@@ -4768,15 +4768,15 @@ static int SetCVar(AActor *activator, const char *cvarname, int value, bool is_s
 	return 1;
 }
 
-static bool DoSpawnDecal(AActor *actor, const FDecalTemplate *tpl, int flags, angle_t angle, fixed_t zofs, fixed_t distance)
+static bool DoSpawnDecal(AActor *actor, const FDecalTemplate *tpl, int flags, DAngle angle, double zofs, double distance)
 {
 	if (!(flags & SDF_ABSANGLE))
 	{
-		angle += actor->_f_angle();
+		angle += actor->Angles.Yaw;
 	}
 	return NULL != ShootDecal(tpl, actor, actor->Sector, actor->X(), actor->Y(),
-		actor->Center() - actor->Floorclip + actor->GetBobOffset() + FIXED2DBL(zofs),
-		DAngle(ANGLE2DBL(angle)), FIXED2DBL(distance), !!(flags & SDF_PERMANENT));
+		actor->Center() - actor->Floorclip + actor->GetBobOffset() + zofs,
+		angle, distance, !!(flags & SDF_PERMANENT));
 }
 
 static void SetActorAngle(AActor *activator, int tid, int angle, bool interpolate)
@@ -5674,9 +5674,9 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 				if (tpl != NULL)
 				{
 					int flags = (argCount > 2) ? args[2] : 0;
-					angle_t angle = (argCount > 3) ? (args[3] << FRACBITS) : 0;
-					fixed_t zoffset = (argCount > 4) ? (args[4] << FRACBITS) : 0;
-					fixed_t distance = (argCount > 5) ? (args[5] << FRACBITS) : 64*FRACUNIT;
+					DAngle angle = ACSToAngle((argCount > 3) ? args[3] : 0);
+					int zoffset = (argCount > 4) ? args[4]: 0;
+					int distance = (argCount > 5) ? args[5] : 64;
 
 					if (args[0] == 0)
 					{
@@ -8702,11 +8702,11 @@ scriptwait:
 				}
 				else if (pcd == PCD_GETACTORZ)
 				{
-					STACK(1) = actor->_f_Z() + actor->GetBobOffset();
+					STACK(1) = DoubleToACS(actor->Z() + actor->GetBobOffset());
 				}
 				else
 				{
-					STACK(1) = pcd == PCD_GETACTORX ? actor->_f_X() : pcd == PCD_GETACTORY ? actor->_f_Y() : actor->_f_Z();
+					STACK(1) = DoubleToACS(pcd == PCD_GETACTORX ? actor->X() : pcd == PCD_GETACTORY ? actor->Y() : actor->Z());
 				}
 			}
 			break;

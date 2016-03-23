@@ -260,7 +260,7 @@ static bool PIT_FindFloorCeiling(FMultiBlockLinesIterator &mit, FMultiBlockLines
 			tmf.touchmidtex = open.touchmidtex;
 			tmf.abovemidtex = open.abovemidtex;
 			if (ffcf_verbose) Printf("    Adjust floorz to %f\n", FIXED2FLOAT(open.bottom));
-			if (tmf._f_floorz() > tmf.dropoffz + tmf.thing->MaxDropOffHeight) mit.StopDown();
+			if (tmf.floorz > tmf.dropoffz + tmf.thing->MaxDropOffHeight) mit.StopDown();
 		}
 		else if (open.bottom == tmf._f_floorz())
 		{
@@ -268,11 +268,11 @@ static bool PIT_FindFloorCeiling(FMultiBlockLinesIterator &mit, FMultiBlockLines
 			tmf.abovemidtex |= open.abovemidtex;
 		}
 
-		if (open.lowfloor < tmf.dropoffz && open.lowfloor > FIXED_MIN)
+		if (open.lowfloor < tmf._f_dropoffz() && open.lowfloor > FIXED_MIN)
 		{
-			tmf.dropoffz = open.lowfloor;
+			tmf.dropoffz = FIXED2DBL(open.lowfloor);
 			if (ffcf_verbose) Printf("    Adjust dropoffz to %f\n", FIXED2FLOAT(open.bottom));
-			if (tmf._f_floorz() > tmf.dropoffz + tmf.thing->MaxDropOffHeight) mit.StopDown();
+			if (tmf.floorz > tmf.dropoffz + tmf.thing->MaxDropOffHeight) mit.StopDown();
 		}
 	}
 	return true;
@@ -292,8 +292,7 @@ void P_GetFloorCeilingZ(FCheckPosition &tmf, int flags)
 	F3DFloor *ffc, *fff;
 
 	tmf.ceilingz = FIXED2DBL(sec->NextHighestCeilingAt(tmf.x, tmf.y, tmf.z, tmf.z + tmf.thing->_f_height(), flags, &tmf.ceilingsector, &ffc));
-	tmf.dropoffz = sec->NextLowestFloorAt(tmf.x, tmf.y, tmf.z, flags, tmf.thing->_f_MaxStepHeight(), &tmf.floorsector, &fff);
-	tmf.floorz = FIXED2DBL(tmf.dropoffz);
+	tmf.floorz = tmf.dropoffz = FIXED2DBL(sec->NextLowestFloorAt(tmf.x, tmf.y, tmf.z, flags, tmf.thing->_f_MaxStepHeight(), &tmf.floorsector, &fff));
 
 	if (fff)
 	{
@@ -364,7 +363,7 @@ void P_FindFloorCeiling(AActor *actor, int flags)
 		PIT_FindFloorCeiling(mit, cres, mit.Box(), tmf, flags|cres.portalflags);
 	}
 
-	if (tmf.touchmidtex) tmf.dropoffz = tmf._f_floorz();
+	if (tmf.touchmidtex) tmf.dropoffz = tmf.floorz;
 
 	bool usetmf = !(flags & FFCF_ONLYSPAWNPOS) || (tmf.abovemidtex && (tmf.floorz <= actor->Z()));
 
@@ -445,7 +444,7 @@ bool P_TeleportMove(AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefra
 	}
 	thing->_f_SetZ(savedz);
 
-	if (tmf.touchmidtex) tmf.dropoffz = tmf._f_floorz();
+	if (tmf.touchmidtex) tmf.dropoffz = tmf.floorz;
 
 	FMultiBlockThingsIterator mit2(grouplist, x, y, z, thing->_f_height(), thing->_f_radius(), false, sector);
 	FMultiBlockThingsIterator::CheckResult cres2;
@@ -965,9 +964,9 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 			tm.abovemidtex |= open.abovemidtex;
 		}
 
-		if (open.lowfloor < tm.dropoffz)
+		if (open.lowfloor < tm._f_dropoffz())
 		{
-			tm.dropoffz = open.lowfloor;
+			tm.dropoffz = FIXED2FLOAT(open.lowfloor);
 		}
 	}
 
@@ -1084,8 +1083,8 @@ static bool PIT_CheckPortal(FMultiBlockLinesIterator &mit, FMultiBlockLinesItera
 			ret = true;
 		}
 
-		if (open.lowfloor - zofs < tm.dropoffz)
-			tm.dropoffz = open.lowfloor - zofs;
+		if (open.lowfloor - zofs < tm._f_dropoffz())
+			tm.dropoffz = FIXED2FLOAT(open.lowfloor - zofs);
 	}
 	tm.thing->_f_AddZ(-zofs);
 	lp->backsector = sec;
@@ -1224,7 +1223,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 		{
 			// [RH] Let monsters walk on actors as well as floors
 			if ((tm.thing->flags3 & MF3_ISMONSTER) &&
-				topz >= tm._f_floorz() && topz <= tm.thing->_f_Z() + tm.thing->_f_MaxStepHeight())
+				topz >= tm.floorz && topz <= tm.thing->Z() + tm.thing->MaxStepHeight)
 			{
 				// The commented-out if is an attempt to prevent monsters from walking off a
 				// thing further than they would walk off a ledge. I can't think of an easy
@@ -1625,8 +1624,7 @@ bool P_CheckPosition(AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm, bo
 	else
 	{
 		// With noclip2, we must ignore 3D floors and go right to the uppermost ceiling and lowermost floor.
-		tm.dropoffz = newsec->_f_LowestFloorAt(x, y, &tm.floorsector);
-		tm.floorz = FIXED2DBL(tm.dropoffz);
+		tm.floorz = tm.dropoffz = FIXED2FLOAT(newsec->_f_LowestFloorAt(x, y, &tm.floorsector));
 		tm.ceilingz = FIXED2DBL(newsec->_f_HighestCeilingAt(x, y, &tm.ceilingsector));
 		tm.floorpic = tm.floorsector->GetTexture(sector_t::floor);
 		tm.floorterrain = tm.floorsector->GetTerrain(sector_t::floor);
@@ -1727,7 +1725,7 @@ bool P_CheckPosition(AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm, bo
 
 	fixed_t thingdropoffz = tm._f_floorz();
 	//bool onthing = (thingdropoffz != tmdropoffz);
-	tm.floorz = FIXED2DBL(tm.dropoffz);
+	tm.floorz = tm.dropoffz;
 
 	bool good = true;
 
@@ -1760,11 +1758,11 @@ bool P_CheckPosition(AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm, bo
 	}
 	if (tm.touchmidtex)
 	{
-		tm.dropoffz = tm._f_floorz();
+		tm.dropoffz = tm.floorz;
 	}
 	else if (tm.stepthing != NULL)
 	{
-		tm.dropoffz = thingdropoffz;
+		tm.dropoffz = FIXED2FLOAT(thingdropoffz);
 	}
 
 	return (thing->BlockingMobj = thingblocker) == NULL;
@@ -2111,7 +2109,7 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 				thing->Vel.Z = -8;
 				goto pushline;
 			}
-			else if (thing->Z() < tm.floorz && tm._f_floorz() - tm.dropoffz > thing->MaxDropOffHeight)
+			else if (thing->Z() < tm.floorz && tm.floorz - tm.dropoffz > thing->MaxDropOffHeight)
 			{
 				thing->Vel.Z = 8;
 				goto pushline;
@@ -2167,7 +2165,7 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 		}
 
 		if (dropoff == 2 &&  // large jump down (e.g. dogs)
-			(tm._f_floorz() - tm.dropoffz > 128 * FRACUNIT || thing->target == NULL || thing->target->_f_Z() >tm.dropoffz))
+			(tm.floorz - tm.dropoffz > 128. || thing->target == NULL || thing->target->Z() >tm.dropoffz))
 		{
 			dropoff = false;
 		}
@@ -2186,7 +2184,7 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 					floorz = MAX(thing->Z(), tm.floorz);
 				}
 
-				if (FLOAT2FIXED(floorz) - tm.dropoffz > thing->MaxDropOffHeight &&
+				if (floorz - tm.dropoffz > thing->MaxDropOffHeight &&
 					!(thing->flags2 & MF2_BLASTED) && !missileCheck)
 				{ // Can't move over a dropoff unless it's been blasted
 					// [GZ] Or missile-spawned
@@ -2199,7 +2197,7 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 			{
 				// special logic to move a monster off a dropoff
 				// this intentionally does not check for standing on things.
-				if (thing->_f_floorz() - tm._f_floorz() > thing->MaxDropOffHeight ||
+				if (thing->floorz - tm.floorz > thing->MaxDropOffHeight ||
 					thing->dropoffz - tm.dropoffz > thing->MaxDropOffHeight)
 				{
 					thing->flags6 &= ~MF6_INTRYMOVE;
@@ -3105,7 +3103,7 @@ const secplane_t * P_CheckSlopeWalk(AActor *actor, fixed_t &xmove, fixed_t &ymov
 								pos.x += xmove;
 								pos.y += ymove;
 
-								if (sec->floorplane.ZatPoint(pos) >= actor->_f_Z() - actor->_f_MaxStepHeight())
+								if (sec->floorplane.ZatPointF(pos) >= actor->Z() - actor->MaxStepHeight)
 								{
 									dopush = false;
 									break;

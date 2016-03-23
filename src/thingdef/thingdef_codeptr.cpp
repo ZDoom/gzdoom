@@ -614,7 +614,7 @@ static void DoAttack (AActor *self, bool domelee, bool domissile,
 	else if (domissile && MissileType != NULL)
 	{
 		// This seemingly senseless code is needed for proper aiming.
-		double add = MissileHeight + FIXED2FLOAT(self->GetBobOffset()) - 32;
+		double add = MissileHeight + self->GetBobOffset() - 32;
 		self->AddZ(add);
 		AActor *missile = P_SpawnMissileXYZ (self->PosPlusZ(32.), self, self->target, MissileType, false);
 		self->AddZ(-add);
@@ -1197,8 +1197,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomMissile)
 {
 	PARAM_ACTION_PROLOGUE;
 	PARAM_CLASS		(ti, AActor);
-	PARAM_FIXED_OPT	(spawnheight) { spawnheight = 32*FRACUNIT; }
-	PARAM_INT_OPT	(spawnofs_xy) { spawnofs_xy = 0; }
+	PARAM_FLOAT_OPT	(Spawnheight) { Spawnheight = 32; }
+	PARAM_FLOAT_OPT	(Spawnofs_xy) { Spawnofs_xy = 0; }
 	PARAM_DANGLE_OPT(Angle)		  { Angle = 0.; }
 	PARAM_INT_OPT	(flags)		  { flags = 0; }
 	PARAM_DANGLE_OPT(Pitch)		  { Pitch = 0.; }
@@ -1215,12 +1215,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomMissile)
 	{
 		if (ti) 
 		{
-			angle_t ang = (self->_f_angle() - ANGLE_90) >> ANGLETOFINESHIFT;
-			fixed_t x = spawnofs_xy * finecosine[ang];
-			fixed_t y = spawnofs_xy * finesine[ang];
-			fixed_t z = spawnheight + self->GetBobOffset() - 32*FRACUNIT + (self->player? FLOAT2FIXED(self->player->crouchoffset) : 0);
+			DAngle angle = self->Angles.Yaw - 90;
+			double x = Spawnofs_xy * angle.Cos();
+			double y = Spawnofs_xy * angle.Sin();
+			double z = Spawnheight + self->GetBobOffset() - 32 + (self->player? self->player->crouchoffset : 0.);
 
-			fixedvec3 pos = self->_f_Pos();
+			DVector3 pos = self->Pos();
 			switch (aimmode)
 			{
 			case 0:
@@ -1232,12 +1232,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomMissile)
 				break;
 
 			case 1:
-				missile = P_SpawnMissileXYZ(self->Vec3Offset(x, y, self->GetBobOffset() + spawnheight), self, ref, ti, false);
+				missile = P_SpawnMissileXYZ(self->Vec3Offset(x, y, self->GetBobOffset() + Spawnheight), self, ref, ti, false);
 				break;
 
 			case 2:
-				self->SetXYZ(self->Vec3Offset(x, y, 0));
-				missile = P_SpawnMissileAngleZSpeed(self, self->_f_Z() + self->GetBobOffset() + spawnheight, ti, self->_f_angle(), 0, GetDefaultByType(ti)->_f_speed(), self, false);
+				self->SetXYZ(self->Vec3Offset(x, y, 0.));
+				missile = P_SpawnMissileAngleZSpeed(self, self->Z() + self->GetBobOffset() + Spawnheight, ti, self->Angles.Yaw, 0, GetDefaultByType(ti)->Speed, self, false);
 				self->SetXYZ(pos);
 
 				flags |= CMF_ABSOLUTEPITCH;
@@ -1443,7 +1443,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomComboAttack)
 {
 	PARAM_ACTION_PROLOGUE;
 	PARAM_CLASS		(ti, AActor);
-	PARAM_FIXED		(spawnheight);
+	PARAM_FLOAT		(spawnheight);
 	PARAM_INT		(damage);
 	PARAM_SOUND_OPT	(meleesound)	{ meleesound = 0; }
 	PARAM_NAME_OPT	(damagetype)	{ damagetype = NAME_Melee; }
@@ -1466,9 +1466,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomComboAttack)
 	else if (ti) 
 	{
 		// This seemingly senseless code is needed for proper aiming.
-		self->_f_AddZ(spawnheight + self->GetBobOffset() - 32*FRACUNIT);
+		double add = spawnheight + self->GetBobOffset() - 32;
+		self->AddZ(add);
 		AActor *missile = P_SpawnMissileXYZ (self->PosPlusZ(32.), self, self->target, ti, false);
-		self->_f_AddZ(-(spawnheight + self->GetBobOffset() - 32*FRACUNIT));
+		self->AddZ(-add);
 
 		if (missile)
 		{

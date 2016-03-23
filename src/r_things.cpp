@@ -770,7 +770,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	fixedvec3 pos = thing->InterpolatedPosition(r_TicFrac);
 	fx = pos.x;
 	fy = pos.y;
-	fz = pos.z + thing->GetBobOffset(r_TicFrac);
+	fz = pos.z + thing->_f_GetBobOffset(r_TicFrac);
 
 	tex = NULL;
 	voxel = NULL;

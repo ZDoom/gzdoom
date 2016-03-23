@@ -1671,8 +1671,8 @@ AActor *SpawnMapThing(int index, FMapThing *mt, int position)
 	AActor *spawned = P_SpawnMapThing(mt, position);
 	if (dumpspawnedthings)
 	{
-		Printf("%5d: (%5d, %5d, %5d), doomednum = %5d, flags = %04x, type = %s\n",
-			index, mt->x>>FRACBITS, mt->y>>FRACBITS, mt->z>>FRACBITS, mt->EdNum, mt->flags, 
+		Printf("%5d: (%5f, %5f, %5f), doomednum = %5d, flags = %04x, type = %s\n",
+			index, mt->pos.X, mt->pos.Y, mt->pos.Z, mt->EdNum, mt->flags, 
 			spawned? spawned->GetClass()->TypeName.GetChars() : "(none)");
 	}
 	T_AddSpawnedThing(spawned);
@@ -1765,8 +1765,8 @@ void P_LoadThings (MapData * map)
 		mti[i].health = 1;
 		mti[i].FloatbobPhase = -1;
 
-		mti[i].x = LittleShort(mt->x) << FRACBITS;
-		mti[i].y = LittleShort(mt->y) << FRACBITS;
+		mti[i].pos.X = LittleShort(mt->x);
+		mti[i].pos.Y = LittleShort(mt->y);
 		mti[i].angle = LittleShort(mt->angle);
 		mti[i].EdNum = LittleShort(mt->type);
 		mti[i].info = DoomEdMap.CheckKey(mti[i].EdNum);
@@ -1838,9 +1838,9 @@ void P_LoadThings2 (MapData * map)
 		memset (&mti[i], 0, sizeof(mti[i]));
 
 		mti[i].thingid = LittleShort(mth[i].thingid);
-		mti[i].x = LittleShort(mth[i].x)<<FRACBITS;
-		mti[i].y = LittleShort(mth[i].y)<<FRACBITS;
-		mti[i].z = LittleShort(mth[i].z)<<FRACBITS;
+		mti[i].pos.X = LittleShort(mth[i].x);
+		mti[i].pos.Y = LittleShort(mth[i].y);
+		mti[i].pos.Z = LittleShort(mth[i].z);
 		mti[i].angle = LittleShort(mth[i].angle);
 		mti[i].EdNum = LittleShort(mth[i].type);
 		mti[i].info = DoomEdMap.CheckKey(mti[i].EdNum);
@@ -3368,8 +3368,8 @@ void P_GetPolySpots (MapData * map, TArray<FNodeBuilder::FPolyStart> &spots, TAr
 			if (mentry != NULL && mentry->Type == NULL && mentry->Special >= SMT_PolyAnchor && mentry->Special <= SMT_PolySpawnHurt)
 			{
 				FNodeBuilder::FPolyStart newvert;
-				newvert.x = MapThingsConverted[i].x;
-				newvert.y = MapThingsConverted[i].y;
+				newvert.x = FLOAT2FIXED(MapThingsConverted[i].pos.X);
+				newvert.y = FLOAT2FIXED(MapThingsConverted[i].pos.Y);
 				newvert.polynum = MapThingsConverted[i].angle;
 				if (mentry->Special == SMT_PolyAnchor)
 				{

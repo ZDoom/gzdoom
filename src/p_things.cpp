@@ -792,7 +792,7 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 			}
 			if ((flags & WARPF_BOB) && (reference->flags2 & MF2_FLOATBOB))
 			{
-				caller->_f_AddZ(reference->GetBobOffset());
+				caller->_f_AddZ(reference->_f_GetBobOffset());
 			}
 		}
 		return true;

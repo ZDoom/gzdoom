@@ -487,15 +487,15 @@ public:
 				break;
 
 			case NAME_X:
-				th->x = CheckFixed(key);
+				th->pos.X = CheckFloat(key);
 				break;
 
 			case NAME_Y:
-				th->y = CheckFixed(key);
+				th->pos.Y = CheckFloat(key);
 				break;
 
 			case NAME_Height:
-				th->z = CheckFixed(key);
+				th->pos.Z = CheckFloat(key);
 				break;
 
 			case NAME_Angle:

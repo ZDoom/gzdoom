@@ -369,7 +369,7 @@ void AActor::Serialize(FArchive &arc)
 		<< SeeState
 		<< MeleeState
 		<< MissileState
-		<< MaxDropOffHeight 
+		<< MaxDropOffHeight
 		<< MaxStepHeight
 		<< BounceFlags
 		<< bouncefactor
@@ -2208,13 +2208,13 @@ explode:
 	// killough 8/11/98: add bouncers
 	// killough 9/15/98: add objects falling off ledges
 	// killough 11/98: only include bouncers hanging off ledges
-	if ((mo->flags & MF_CORPSE) || (mo->BounceFlags & BOUNCE_MBF && mo->_f_Z() > mo->dropoffz) || (mo->flags6 & MF6_FALLING))
+	if ((mo->flags & MF_CORPSE) || (mo->BounceFlags & BOUNCE_MBF && mo->Z() > mo->dropoffz) || (mo->flags6 & MF6_FALLING))
 	{ // Don't stop sliding if halfway off a step with some velocity
-		if (mo->_f_velx() > FRACUNIT/4 || mo->_f_velx() < -FRACUNIT/4 || mo->_f_vely() > FRACUNIT/4 || mo->_f_vely() < -FRACUNIT/4)
+		if (fabs(mo->Vel.X) > 0.25 || fabs(mo->Vel.Y) > 0.25)
 		{
-			if (mo->_f_floorz() > mo->Sector->floorplane.ZatPoint(mo))
+			if (mo->floorz > mo->Sector->floorplane.ZatPointF(mo))
 			{
-				if (mo->dropoffz != mo->_f_floorz()) // 3DMidtex or other special cases that must be excluded
+				if (mo->dropoffz != mo->floorz) // 3DMidtex or other special cases that must be excluded
 				{
 					unsigned i;
 					for(i=0;i<mo->Sector->e->XFloor.ffloors.Size();i++)
@@ -3743,7 +3743,7 @@ void AActor::Tick ()
 						const sector_t *sec = node->m_sector;
 						if (sec->floorplane.c >= STEEPSLOPE)
 						{
-							if (floorplane.ZatPoint (PosRelative(node->m_sector)) >= _f_Z() - _f_MaxStepHeight())
+							if (floorplane.ZatPointF (PosRelative(node->m_sector)) >= Z() - MaxStepHeight)
 							{
 								dopush = false;
 								break;
@@ -4192,8 +4192,7 @@ AActor *AActor::StaticSpawn (PClassActor *type, const DVector3 &pos, replace_t a
 	actor->LinkToWorld (SpawningMapThing);
 	actor->ClearInterpolation();
 
-	actor->floorz = actor->Sector->floorplane.ZatPoint(pos);
-	actor->dropoffz = FLOAT2FIXED(actor->floorz);			// killough 11/98: for tracking dropoffs
+	actor->dropoffz = actor->floorz = actor->Sector->floorplane.ZatPoint(pos);
 	actor->ceilingz = actor->Sector->ceilingplane.ZatPoint(pos);
 
 	// The z-coordinate needs to be set once before calling P_FindFloorCeiling
@@ -4824,7 +4823,6 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	PClassActor *i;
 	int mask;
 	AActor *mobj;
-	fixed_t x, y, z;
 
 	if (mthing->EdNum == 0 || mthing->EdNum == -1)
 		return NULL;
@@ -4835,9 +4833,8 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	if (mentry == NULL)
 	{
 		// [RH] Don't die if the map tries to spawn an unknown thing
-		Printf ("Unknown type %i at (%i, %i)\n",
-				 mthing->EdNum,
-				 mthing->x>>FRACBITS, mthing->y>>FRACBITS);
+		Printf("Unknown type %i at (%.1f, %.1f)\n",
+			mthing->EdNum, mthing->pos.X, mthing->pos.Y);
 		mentry = DoomEdMap.CheckKey(0);
 		if (mentry == NULL)	// we need a valid entry for the rest of this function so if we can't find a default, let's exit right away.
 		{
@@ -4878,8 +4875,8 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	{
 		polyspawns_t *polyspawn = new polyspawns_t;
 		polyspawn->next = polyspawns;
-		polyspawn->x = mthing->x;
-		polyspawn->y = mthing->y;
+		polyspawn->x = FLOAT2FIXED(mthing->pos.X);
+		polyspawn->y = FLOAT2FIXED(mthing->pos.Y);
 		polyspawn->angle = mthing->angle;
 		polyspawn->type = mentry->Special;
 		polyspawns = polyspawn;
@@ -5013,7 +5010,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 		}
 		else
 		{
-			P_PointInSector (mthing->x,	mthing->y)->seqType = type;
+			P_PointInSector (mthing->pos)->seqType = type;
 		}
 		return NULL;
 	}
@@ -5034,8 +5031,8 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 			if (gameinfo.flags & GI_SHAREWARE)
 				return NULL;
 
-			Printf ("%s at (%i, %i) has no frames\n",
-					i->TypeName.GetChars(), mthing->x>>FRACBITS, mthing->y>>FRACBITS);
+			Printf ("%s at (%.1f, %.1f) has no frames\n",
+					i->TypeName.GetChars(), mthing->pos.X, mthing->pos.Y);
 			i = PClass::FindActor("Unknown");
 			assert(i->IsKindOf(RUNTIME_CLASS(PClassActor)));
 		}
@@ -5089,30 +5086,29 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	}
 
 	// spawn it
-	x = mthing->x;
-	y = mthing->y;
+	double sz;
 
 	if (info->flags & MF_SPAWNCEILING)
-		z = ONCEILINGZ;
+		sz = ONCEILINGZ;
 	else if (info->flags2 & MF2_SPAWNFLOAT)
-		z = FLOATRANDZ;
+		sz = FLOATRANDZ;
 	else
-		z = ONFLOORZ;
+		sz = ONFLOORZ;
 
-	mobj = AActor::StaticSpawn (i, DVector3(FIXED2DBL(mthing->x), FIXED2DBL(mthing->y), z), NO_REPLACE, true);
+	mobj = AActor::StaticSpawn (i, DVector3(mthing->pos, sz), NO_REPLACE, true);
 
-	if (z == ONFLOORZ)
+	if (sz == ONFLOORZ)
 	{
-		mobj->_f_AddZ(mthing->z);
+		mobj->AddZ(mthing->pos.Z);
 		if ((mobj->flags2 & MF2_FLOATBOB) && (ib_compatflags & BCOMPATF_FLOATBOB))
 		{
-			mobj->specialf1 = FIXED2DBL(mthing->z);
+			mobj->specialf1 = mthing->pos.Z;
 		}
 	}
-	else if (z == ONCEILINGZ)
-		mobj->_f_AddZ(-mthing->z);
+	else if (sz == ONCEILINGZ)
+		mobj->AddZ(-mthing->pos.Z);
 
-	mobj->SpawnPoint = { FIXED2DBL(mthing->x), FIXED2DBL(mthing->y),FIXED2DBL(mthing->z) };
+	mobj->SpawnPoint = mthing->pos;
 	mobj->SpawnAngle = mthing->angle;
 	mobj->SpawnFlags = mthing->flags;
 	if (mthing->FloatbobPhase >= 0 && mthing->FloatbobPhase < 64) mobj->FloatBobPhase = mthing->FloatbobPhase;
@@ -5884,7 +5880,7 @@ AActor *P_SpawnMissile (AActor *source, AActor *dest, PClassActor *type, AActor 
 	{
 		return NULL;
 	}
-	return P_SpawnMissileXYZ (source->_f_X(), source->_f_Y(), source->_f_Z() + 32*FRACUNIT + source->GetBobOffset(),
+	return P_SpawnMissileXYZ (source->_f_X(), source->_f_Y(), source->_f_Z() + 32*FRACUNIT + source->_f_GetBobOffset(),
 		source, dest, type, true, owner);
 }
 
@@ -6015,7 +6011,7 @@ AActor *P_SpawnMissileAngle (AActor *source, PClassActor *type,
 	{
 		return NULL;
 	}
-	return P_SpawnMissileAngleZSpeed (source, source->_f_Z() + 32*FRACUNIT + source->GetBobOffset(),
+	return P_SpawnMissileAngleZSpeed (source, source->_f_Z() + 32*FRACUNIT + source->_f_GetBobOffset(),
 		type, angle, vz, GetDefaultSpeed (type));
 }
 
@@ -6066,7 +6062,7 @@ AActor *P_SpawnMissileAngleSpeed (AActor *source, PClassActor *type,
 	{
 		return NULL;
 	}
-	return P_SpawnMissileAngleZSpeed (source, source->_f_Z() + 32*FRACUNIT + source->GetBobOffset(),
+	return P_SpawnMissileAngleZSpeed (source, source->_f_Z() + 32*FRACUNIT + source->_f_GetBobOffset(),
 		type, angle, vz, speed);
 }
 

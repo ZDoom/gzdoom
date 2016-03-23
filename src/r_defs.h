@@ -105,6 +105,11 @@ struct vertex_t
 		return FIXED2DBL(y);
 	}
 
+	DVector2 fPos()
+	{
+		return{ fX(), fY() };
+	}
+
 	bool operator== (const vertex_t &other)
 	{
 		return x == other.x && y == other.y;

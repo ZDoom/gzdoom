@@ -297,7 +297,7 @@ bool FCajunMaster::CleanAhead (AActor *thing, fixed_t x, fixed_t y, ticcmd_t *cm
 
 
 			if ( !(thing->flags&(MF_DROPOFF|MF_FLOAT))
-			&& tm._f_floorz() - tm.dropoffz > thing->MaxDropOffHeight )
+			&& tm.floorz - tm.dropoffz > thing->MaxDropOffHeight )
 				return false;       // don't stand over a dropoff
 
 		}

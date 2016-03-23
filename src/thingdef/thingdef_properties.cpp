@@ -1256,7 +1256,7 @@ DEFINE_PROPERTY(maxstepheight, F, Actor)
 //==========================================================================
 DEFINE_PROPERTY(maxdropoffheight, F, Actor)
 {
-	PROP_FIXED_PARM(i, 0);
+	PROP_DOUBLE_PARM(i, 0);
 	defaults->MaxDropOffHeight = i;
 }
 

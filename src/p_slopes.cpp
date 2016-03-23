@@ -277,7 +277,7 @@ void P_VavoomSlope(sector_t * sec, int id, fixed_t x, fixed_t y, fixed_t z, int 
 
 static void P_SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt, const int *oldvertextable)
 {
-	TMap<int, fixed_t> vt_heights[2];
+	TMap<int, double> vt_heights[2];
 	FMapThing *mt;
 	bool vt_found = false;
 
@@ -289,15 +289,15 @@ static void P_SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt, 
 			{
 				for (int i = 0; i < numvertexes; i++)
 				{
-					if (vertexes[i].x == mt->x && vertexes[i].y == mt->y)
+					if (vertexes[i].fX() == mt->pos.X && vertexes[i].fY() == mt->pos.Y)
 					{
 						if (mt->info->Special == SMT_VertexFloorZ)
 						{
-							vt_heights[0][i] = mt->z;
+							vt_heights[0][i] = mt->pos.Z;
 						}
 						else
 						{
-							vt_heights[1][i] = mt->z;
+							vt_heights[1][i] = mt->pos.Z;
 						}
 						vt_found = true;
 					}
@@ -345,25 +345,20 @@ static void P_SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt, 
 			vi3 = (sec->lines[1]->v1 == sec->lines[0]->v1 || sec->lines[1]->v1 == sec->lines[0]->v2)?
 				int(sec->lines[1]->v2 - vertexes) : int(sec->lines[1]->v1 - vertexes);
 
-			vt1.X = FIXED2DBL(vertexes[vi1].x);
-			vt1.Y = FIXED2DBL(vertexes[vi1].y);
-			vt2.X = FIXED2DBL(vertexes[vi2].x);
-			vt2.Y = FIXED2DBL(vertexes[vi2].y);
-			vt3.X = FIXED2DBL(vertexes[vi3].x);
-			vt3.Y = FIXED2DBL(vertexes[vi3].y);
+			vt1 = DVector3(vertexes[vi1].fPos(), 0);
+			vt2 = DVector3(vertexes[vi2].fPos(), 0);
+			vt3 = DVector3(vertexes[vi3].fPos(), 0);
 
 			for(int j=0; j<2; j++)
 			{
-				fixed_t *h1 = vt_heights[j].CheckKey(vi1);
-				fixed_t *h2 = vt_heights[j].CheckKey(vi2);
-				fixed_t *h3 = vt_heights[j].CheckKey(vi3);
-				fixed_t z3;
+				double *h1 = vt_heights[j].CheckKey(vi1);
+				double *h2 = vt_heights[j].CheckKey(vi2);
+				double *h3 = vt_heights[j].CheckKey(vi3);
 				if (h1==NULL && h2==NULL && h3==NULL) continue;
 
-				vt1.Z = FIXED2DBL(h1? *h1 : j==0? sec->GetPlaneTexZ(sector_t::floor) : sec->GetPlaneTexZ(sector_t::ceiling));
-				vt2.Z = FIXED2DBL(h2? *h2 : j==0? sec->GetPlaneTexZ(sector_t::floor) : sec->GetPlaneTexZ(sector_t::ceiling));
-				z3 = h3? *h3 : j==0? sec->GetPlaneTexZ(sector_t::floor) : sec->GetPlaneTexZ(sector_t::ceiling);
-				vt3.Z = FIXED2DBL(z3);
+				vt1.Z = h1? *h1 : j==0? sec->GetPlaneTexZF(sector_t::floor) : sec->GetPlaneTexZF(sector_t::ceiling);
+				vt2.Z = h2? *h2 : j==0? sec->GetPlaneTexZF(sector_t::floor) : sec->GetPlaneTexZF(sector_t::ceiling);
+				vt3.Z = h3? *h3 : j==0? sec->GetPlaneTexZF(sector_t::floor) : sec->GetPlaneTexZF(sector_t::ceiling);
 
 				if (P_PointOnLineSidePrecise(vertexes[vi3].x, vertexes[vi3].y, sec->lines[0]) == 0)
 				{
@@ -401,7 +396,7 @@ static void P_SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt, 
 				srcplane->ic = DivScale32 (1, srcplane->c);
 				srcplane->d = -TMulScale16 (srcplane->a, vertexes[vi3].x,
 											srcplane->b, vertexes[vi3].y,
-											srcplane->c, z3);
+											srcplane->c, FLOAT2FIXED(vt3.Z));
 			}
 		}
 	}
@@ -422,14 +417,12 @@ void P_SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt, const int *oldve
 		if (mt->info != NULL && mt->info->Type == NULL &&
 		   (mt->info->Special >= SMT_SlopeFloorPointLine && mt->info->Special <= SMT_VavoomCeiling))
 		{
-			fixed_t x, y, z;
+			DVector3 pos = mt->pos;
 			secplane_t *refplane;
 			sector_t *sec;
 			bool ceiling;
 
-			x = mt->x;
-			y = mt->y;
-			sec = P_PointInSector (x, y);
+			sec = P_PointInSector (mt->pos);
 			if (mt->info->Special == SMT_SlopeCeilingPointLine || mt->info->Special == SMT_VavoomCeiling || mt->info->Special == SMT_SetCeilingSlope)
 			{
 				refplane = &sec->ceilingplane;
@@ -440,7 +433,12 @@ void P_SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt, const int *oldve
 				refplane = &sec->floorplane;
 				ceiling = false;
 			}
-			z = refplane->ZatPoint (x, y) + (mt->z);
+			pos.Z = refplane->ZatPoint (mt->pos) + mt->pos.Z;
+
+			fixed_t x = FLOAT2FIXED(pos.X);
+			fixed_t y = FLOAT2FIXED(pos.Y);
+			fixed_t z = FLOAT2FIXED(pos.Z);
+
 			if (mt->info->Special <= SMT_SlopeCeilingPointLine)
 			{ // SlopeFloorPointLine and SlopCeilingPointLine
 				P_SlopeLineToPoint (mt->args[0], x, y, z, ceiling);
@@ -451,7 +449,7 @@ void P_SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt, const int *oldve
 			}
 			else 
 			{ // VavoomFloor and VavoomCeiling
-				P_VavoomSlope(sec, mt->thingid, x, y, mt->z, ceiling); 
+				P_VavoomSlope(sec, mt->thingid, x, y, FLOAT2FIXED(mt->pos.Z), ceiling); 
 			}
 			mt->EdNum = 0;
 		}
@@ -462,7 +460,7 @@ void P_SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt, const int *oldve
 		if (mt->info != NULL && mt->info->Type == NULL &&
 			(mt->info->Special == SMT_CopyFloorPlane || mt->info->Special == SMT_CopyCeilingPlane))
 		{
-			P_CopyPlane (mt->args[0], mt->x, mt->y, mt->info->Special == SMT_CopyCeilingPlane);
+			P_CopyPlane (mt->args[0], FLOAT2FIXED(mt->pos.X), FLOAT2FIXED(mt->pos.Y), mt->info->Special == SMT_CopyCeilingPlane);
 			mt->EdNum = 0;
 		}
 	}

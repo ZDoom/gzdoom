@@ -88,7 +88,7 @@ enum
 };
 struct vertexdata_t
 {
-	fixed_t zCeiling, zFloor;
+	double zCeiling, zFloor;
 	DWORD flags;
 };
 struct vertex_t

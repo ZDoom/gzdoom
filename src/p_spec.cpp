@@ -476,7 +476,7 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 				}
 				if (sector->Flags & SECF_DMGTERRAINFX)
 				{
-					P_HitWater(player->mo, player->mo->Sector, INT_MIN, INT_MIN, INT_MIN, false, true, true);
+					P_HitWater(player->mo, player->mo->Sector, player->mo->Pos(), false, true, true);
 				}
 			}
 		}

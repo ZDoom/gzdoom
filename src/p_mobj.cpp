@@ -4111,7 +4111,7 @@ bool AActor::UpdateWaterLevel (fixed_t oldz, bool dosplash)
 	// the water flags. 
 	if (boomwaterlevel == 0 && waterlevel != 0 && dosplash) 
 	{
-		P_HitWater(this, Sector, FIXED_MIN, FIXED_MIN, FLOAT2FIXED(fh), true);
+		P_HitWater(this, Sector, PosAtZ(fh), true);
 	}
 	boomwaterlevel = waterlevel;
 	if (reset)
@@ -5195,15 +5195,15 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 // P_SpawnPuff
 //
 
-AActor *P_SpawnPuff (AActor *source, PClassActor *pufftype, fixed_t x, fixed_t y, fixed_t z, angle_t hitdir, angle_t particledir, int updown, int flags, AActor *vict)
+AActor *P_SpawnPuff (AActor *source, PClassActor *pufftype, const DVector3 &pos, DAngle hitdir, DAngle particledir, int updown, int flags, AActor *vict)
 {
 	AActor *puff;
+	double z = 0;
 	
 	if (!(flags & PF_NORANDOMZ))
-		z += pr_spawnpuff.Random2 () << 10;
+		z = pr_spawnpuff.Random2() / 64.;
 
-	DVector3 pos(FIXED2DBL(x), FIXED2DBL(y), FIXED2DBL(z));
-	puff = Spawn (pufftype, pos, ALLOW_REPLACE);
+	puff = Spawn(pufftype, pos + Vector3(0, 0, z), ALLOW_REPLACE);
 	if (puff == NULL) return NULL;
 
 	if ((puff->flags4 & MF4_RANDOMIZE) && puff->tics > 0)
@@ -5225,7 +5225,7 @@ AActor *P_SpawnPuff (AActor *source, PClassActor *pufftype, fixed_t x, fixed_t y
 		puff->target = source;
 	
 	// Angle is the opposite of the hit direction (i.e. the puff faces the source.)
-	puff->Angles.Yaw = ANGLE2DBL(hitdir + ANGLE_180);
+	puff->Angles.Yaw = hitdir + 180;
 
 	// If a puff has a crash state and an actor was not hit,
 	// it will enter the crash state. This is used by the StrifeSpark
@@ -5250,7 +5250,7 @@ AActor *P_SpawnPuff (AActor *source, PClassActor *pufftype, fixed_t x, fixed_t y
 	{
 		if (cl_pufftype && updown != 3 && (puff->flags4 & MF4_ALLOWPARTICLES))
 		{
-			P_DrawSplash2 (32, x, y, z, particledir, updown, 1);
+			P_DrawSplash2 (32, pos, particledir, updown, 1);
 			puff->renderflags |= RF_INVISIBLE;
 		}
 
@@ -5275,9 +5275,8 @@ AActor *P_SpawnPuff (AActor *source, PClassActor *pufftype, fixed_t x, fixed_t y
 // 
 //---------------------------------------------------------------------------
 
-void P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage, AActor *originator)
+void P_SpawnBlood (const DVector3 &pos, DAngle dir, int damage, AActor *originator)
 {
-	DVector3 pos(FIXED2DBL(x), FIXED2DBL(y), FIXED2DBL(z));
 	AActor *th;
 	PalEntry bloodcolor = originator->GetBloodColor();
 	PClassActor *bloodcls = originator->GetBloodType();
@@ -5289,8 +5288,8 @@ void P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage, AAc
 
 	if (bloodcls != NULL)
 	{
-		z += pr_spawnblood.Random2 () << 10;
-		th = Spawn (bloodcls, pos, NO_REPLACE); // GetBloodType already performed the replacement
+		double z = pr_spawnblood.Random2 () / 64.;
+		th = Spawn(bloodcls, pos + DVector3(0, 0, z), NO_REPLACE); // GetBloodType already performed the replacement
 		th->Vel.Z = 2;
 		th->Angles.Yaw = ANGLE2DBL(dir);
 		// [NG] Applying PUFFGETSOWNER to the blood will make it target the owner
@@ -5362,7 +5361,7 @@ void P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage, AAc
 	}
 
 	if (bloodtype >= 1)
-		P_DrawSplash2 (40, x, y, z, dir, 2, bloodcolor);
+		P_DrawSplash2 (40, pos, ANGLE2DBL(dir), 2, bloodcolor);
 }
 
 //---------------------------------------------------------------------------
@@ -5371,9 +5370,8 @@ void P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage, AAc
 //
 //---------------------------------------------------------------------------
 
-void P_BloodSplatter (fixedvec3 _pos, AActor *originator)
+void P_BloodSplatter (const DVector3 &pos, AActor *originator, DAngle hitangle)
 {
-	DVector3 pos(FIXED2DBL(_pos.x), FIXED2DBL(_pos.y), FIXED2DBL(_pos.z));
 	PalEntry bloodcolor = originator->GetBloodColor();
 	PClassActor *bloodcls = originator->GetBloodType(1); 
 
@@ -5402,7 +5400,7 @@ void P_BloodSplatter (fixedvec3 _pos, AActor *originator)
 	}
 	if (bloodtype >= 1)
 	{
-		//P_DrawSplash2 (40, pos.X, pos.Y, pos.Z, -originator->AngleTo(pos), 2, bloodcolor);
+		P_DrawSplash2 (40, pos, hitangle-180., 2, bloodcolor);
 	}
 }
 
@@ -5412,9 +5410,8 @@ void P_BloodSplatter (fixedvec3 _pos, AActor *originator)
 //
 //===========================================================================
 
-void P_BloodSplatter2 (fixedvec3 _pos, AActor *originator)
+void P_BloodSplatter2 (const DVector3 &pos, AActor *originator, DAngle hitangle)
 {
-	DVector3 pos(FIXED2DBL(_pos.x), FIXED2DBL(_pos.y), FIXED2DBL(_pos.z));
 	PalEntry bloodcolor = originator->GetBloodColor();
 	PClassActor *bloodcls = originator->GetBloodType(2);
 
@@ -5426,11 +5423,12 @@ void P_BloodSplatter2 (fixedvec3 _pos, AActor *originator)
 	if (bloodcls != NULL)
 	{
 		AActor *mo;
-		
-		pos.X += (pr_splat()-128) / 32.;
-		pos.Y += (pr_splat()-128) / 32.;
 
-		mo = Spawn (bloodcls, pos, NO_REPLACE); // GetBloodType already performed the replacement
+		DVector2 add;
+		add.X = (pr_splat()-128) / 32.;
+		add.Y = (pr_splat()-128) / 32.;
+
+		mo = Spawn (bloodcls, pos + add, NO_REPLACE); // GetBloodType already performed the replacement
 		mo->target = originator;
 
 		// colorize the blood!
@@ -5443,7 +5441,7 @@ void P_BloodSplatter2 (fixedvec3 _pos, AActor *originator)
 	}
 	if (bloodtype >= 1)
 	{
-		//P_DrawSplash2 (100, pos.x, pos.y, pos.z, 0u - originator->__f_AngleTo(pos), 2, bloodcolor);
+		P_DrawSplash2(40, pos, hitangle - 180., 2, bloodcolor);
 	}
 }
 
@@ -5490,7 +5488,7 @@ void P_RipperBlood (AActor *mo, AActor *bleeder)
 	}
 	if (bloodtype >= 1)
 	{
-		//P_DrawSplash2 (28, pos.X, pos.Y, pos.Z, 0, 0, bloodcolor);
+		P_DrawSplash2(28, pos, bleeder->AngleTo(mo) + 180., 0, bloodcolor);
 	}
 }
 
@@ -5519,7 +5517,7 @@ int P_GetThingFloorType (AActor *thing)
 // Returns true if hit liquid and splashed, false if not.
 //---------------------------------------------------------------------------
 
-bool P_HitWater (AActor * thing, sector_t * sec, fixed_t x, fixed_t y, fixed_t z, bool checkabove, bool alert, bool force)
+bool P_HitWater (AActor * thing, sector_t * sec, const DVector3 &pos, bool checkabove, bool alert, bool force)
 {
 	if (thing->flags3 & MF3_DONTSPLASH)
 		return false;
@@ -5532,21 +5530,17 @@ bool P_HitWater (AActor * thing, sector_t * sec, fixed_t x, fixed_t y, fixed_t z
 	int terrainnum;
 	sector_t *hsec = NULL;
 	
-	if (x == FIXED_MIN) x = thing->_f_X();
-	if (y == FIXED_MIN) y = thing->_f_Y();
-	if (z == FIXED_MIN) z = thing->_f_Z();
 	// don't splash above the object
 	if (checkabove)
 	{
-		fixed_t compare_z = thing->_f_Z() + (thing->_f_height() >> 1);
+		double compare_z = thing->Center();
 		// Missiles are typically small and fast, so they might
 		// end up submerged by the move that calls P_HitWater.
 		if (thing->flags & MF_MISSILE)
-			compare_z -= thing->_f_velz();
-		if (z > compare_z) 
+			compare_z -= thing->Vel.Z;
+		if (pos.Z > compare_z) 
 			return false;
 	}
-	DVector3 pos(FIXED2DBL(x), FIXED2DBL(y), FIXED2DBL(z));
 
 #if 0 // needs some rethinking before activation
 
@@ -5555,10 +5549,10 @@ bool P_HitWater (AActor * thing, sector_t * sec, fixed_t x, fixed_t y, fixed_t z
 	// it is not guaranteed that all players have GL nodes loaded.
 	if (!multiplayer && thing->subsector->sector != thing->subsector->render_sector)
 	{
-		fixed_t zs = thing->subsector->sector->floorplane.ZatPoint(x, y);
-		fixed_t zr = thing->subsector->render_sector->floorplane.ZatPoint(x, y);
+		double zs = thing->subsector->sector->floorplane.ZatPoint(pos);
+		double zr = thing->subsector->render_sector->floorplane.ZatPoint(pos);
 
-		if (zs > zr && thing->z >= zs) return false;
+		if (zs > zr && thing->Z() >= zs) return false;
 	}
 #endif
 
@@ -5567,20 +5561,20 @@ bool P_HitWater (AActor * thing, sector_t * sec, fixed_t x, fixed_t y, fixed_t z
 	{
 		for (unsigned int i = 0; i<sec->e->XFloor.ffloors.Size(); i++)
 		{
-		F3DFloor * rover = sec->e->XFloor.ffloors[i];
-		if (!(rover->flags & FF_EXISTS)) continue;
-		fixed_t planez = rover->top.plane->ZatPoint(x, y);
-			if (z > planez - FRACUNIT / 2 && z < planez + FRACUNIT / 2)	// allow minor imprecisions
-		{
-			if (rover->flags & (FF_SOLID | FF_SWIMMABLE))
+			F3DFloor * rover = sec->e->XFloor.ffloors[i];
+			if (!(rover->flags & FF_EXISTS)) continue;
+			double planez = rover->top.plane->ZatPoint(pos);
+				if (pos.Z > planez - 0.5 && pos.Z < planez + 0.5)	// allow minor imprecisions
 			{
-				terrainnum = rover->model->GetTerrain(rover->top.isceiling);
-				goto foundone;
+				if (rover->flags & (FF_SOLID | FF_SWIMMABLE))
+				{
+					terrainnum = rover->model->GetTerrain(rover->top.isceiling);
+					goto foundone;
+				}
 			}
+			planez = rover->bottom.plane->ZatPoint(pos);
+			if (planez < pos.Z && !(planez < thing->floorz)) return false;
 		}
-		planez = rover->bottom.plane->ZatPoint(x, y);
-		if (planez < z && !(planez < thing->_f_floorz())) return false;
-	}
 	}
 	hsec = sec->GetHeightSec();
 	if (force || hsec == NULL || !(hsec->MoreFlags & SECF_CLIPFAKEPLANES))
@@ -5601,13 +5595,13 @@ foundone:
 		return Terrains[terrainnum].IsLiquid;
 
 	// don't splash when touching an underwater floor
-	if (thing->waterlevel>=1 && z<=thing->_f_floorz()) return Terrains[terrainnum].IsLiquid;
+	if (thing->waterlevel >= 1 && pos.Z <= thing->floorz) return Terrains[terrainnum].IsLiquid;
 
 	plane = hsec != NULL? &sec->heightsec->floorplane : &sec->floorplane;
 
 	// Don't splash for living things with small vertical velocities.
 	// There are levels where the constant splashing from the monsters gets extremely annoying
-	if (((thing->flags3&MF3_ISMONSTER || thing->player) && thing->_f_velz() >= -6*FRACUNIT) && !force)
+	if (((thing->flags3&MF3_ISMONSTER || thing->player) && thing->Vel.Z >= -6) && !force)
 		return Terrains[terrainnum].IsLiquid;
 
 	splash = &Splashes[splashnum];
@@ -5654,7 +5648,7 @@ foundone:
 	}
 	else
 	{
-		S_Sound (x, y, z, CHAN_ITEM, smallsplash ?
+		S_Sound (pos, CHAN_ITEM, smallsplash ?
 			splash->SmallSplashSound : splash->NormalSplashSound,
 			1, ATTN_IDLE);
 	}
@@ -5736,7 +5730,8 @@ void P_CheckSplash(AActor *self, double distance)
 		// a separate parameter for that so this would get in the way of proper 
 		// behavior.
 		fixedvec3 pos = self->PosRelative(floorsec);
-		P_HitWater (self, floorsec, pos.x, pos.y, self->_f_floorz(), false, false);
+		pos.z = self->_f_floorz();
+		P_HitWater (self, floorsec, pos, false, false);
 	}
 }
 

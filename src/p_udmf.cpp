@@ -1678,32 +1678,28 @@ public:
 	{
 		vt->x = vt->y = 0;
 		vd->zCeiling = vd->zFloor = vd->flags = 0;
-		sc.MustGetStringName("{");
-		while (!sc.CheckString("}"))
+
+		sc.MustGetToken('{');
+		while (!sc.CheckToken('}'))
 		{
-			sc.MustGetString();
-			FName key = sc.String;
-			sc.MustGetStringName("=");
-			sc.MustGetString();
-			FString value = sc.String;
-			sc.MustGetStringName(";");
-			switch(key)
+			FName key = ParseKey();
+			switch (key)
 			{
 			case NAME_X:
-				vt->x = FLOAT2FIXED(strtod(value, NULL));
+				vt->x = CheckFixed(key);
 				break;
 
 			case NAME_Y:
-				vt->y = FLOAT2FIXED(strtod(value, NULL));
+				vt->y = CheckFixed(key);
 				break;
 
 			case NAME_ZCeiling:
-				vd->zCeiling = FLOAT2FIXED(strtod(value, NULL));
+				vd->zCeiling = CheckFloat(key);
 				vd->flags |= VERTEXFLAG_ZCeilingEnabled;
 				break;
 
 			case NAME_ZFloor:
-				vd->zFloor = FLOAT2FIXED(strtod(value, NULL));
+				vd->zFloor = CheckFloat(key);
 				vd->flags |= VERTEXFLAG_ZFloorEnabled;
 				break;
 

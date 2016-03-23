@@ -8685,7 +8685,7 @@ scriptwait:
 				bool result = false;
 				AActor *actor = SingleActorFromTID (STACK(5), activator);
 				if (actor != NULL)
-					result = P_MoveThing(actor, STACK(4), STACK(3), STACK(2), !!STACK(1));
+					result = P_MoveThing(actor, DVector3(ACSToDouble(STACK(4)), ACSToDouble(STACK(3)), ACSToDouble(STACK(2))), !!STACK(1));
 				sp -= 4;
 				STACK(1) = result;
 			}

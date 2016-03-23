@@ -493,11 +493,9 @@ void P_RunEffect (AActor *actor, int effects)
 	{
 		// Grenade trail
 
-		fixedvec3 pos = actor->_f_Vec3Angle(-actor->_f_radius() * 2, moveangle.BAMs(),
-			fixed_t(-(actor->_f_height() >> 3) * (actor->Vel.Z) + (2 * actor->_f_height()) / 3));
+		DVector3 pos = actor->Vec3Angle(-actor->radius * 2, moveangle, -actor->Height * actor->Vel.Z / 8 + actor->Height * (2. / 3));
 
-		P_DrawSplash2 (6, pos.x, pos.y, pos.z,
-			moveangle.BAMs() + ANG180, 2, 2);
+		P_DrawSplash2 (6, pos, moveangle + 180, 2, 2);
 	}
 	if (effects & FX_FOUNTAINMASK)
 	{
@@ -582,7 +580,7 @@ void P_DrawSplash (int count, fixed_t x, fixed_t y, fixed_t z, angle_t angle, in
 	}
 }
 
-void P_DrawSplash2 (int count, fixed_t x, fixed_t y, fixed_t z, angle_t angle, int updown, int kind)
+void P_DrawSplash2 (int count, const DVector3 &pos, DAngle angle, int updown, int kind)
 {
 	int color1, color2, zvel, zspread, zadd;
 
@@ -626,16 +624,16 @@ void P_DrawSplash2 (int count, fixed_t x, fixed_t y, fixed_t z, angle_t angle, i
 		p->vel.z = M_Random () * zvel;
 		p->accz = -FRACUNIT/22;
 		if (kind) {
-			an = (angle + ((M_Random() - 128) << 23)) >> ANGLETOFINESHIFT;
+			an = (angle.BAMs() + ((M_Random() - 128) << 23)) >> ANGLETOFINESHIFT;
 			p->vel.x = (M_Random () * finecosine[an]) >> 11;
 			p->vel.y = (M_Random () * finesine[an]) >> 11;
 			p->accx = p->vel.x >> 4;
 			p->accy = p->vel.y >> 4;
 		}
-		p->z = z + (M_Random () + zadd - 128) * zspread;
-		an = (angle + ((M_Random() - 128) << 22)) >> ANGLETOFINESHIFT;
-		p->x = x + ((M_Random () & 31)-15)*finecosine[an];
-		p->y = y + ((M_Random () & 31)-15)*finesine[an];
+		p->z = FLOAT2FIXED(pos.Z) + (M_Random () + zadd - 128) * zspread;
+		an = (angle.BAMs() + ((M_Random() - 128) << 22)) >> ANGLETOFINESHIFT;
+		p->x = FLOAT2FIXED(pos.X) + ((M_Random () & 31)-15)*finecosine[an];
+		p->y = FLOAT2FIXED(pos.X) + ((M_Random () & 31)-15)*finesine[an];
 	}
 }
 

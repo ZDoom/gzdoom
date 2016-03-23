@@ -5095,8 +5095,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_WolfAttack)
 		// Compute position for spawning blood/puff
 		angle = self->target->__f_AngleTo(self);
 		
-		fixedvec3 bloodpos = self->target->_f_Vec3Angle(self->target->_f_radius(), angle, self->target->_f_height() >> 1);
-
+		DVector3 BloodPos = self->target->Vec3Angle(self->target->radius, ANGLE2DBL(angle), self->target->Height/2);
 
 		int damage = flags & WAF_NORANDOM ? maxdamage : (1 + (pr_cabullet() % maxdamage));
 		if (dist >= pointblank)
@@ -5117,7 +5116,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_WolfAttack)
 			if ((0 && dpuff->flags3 & MF3_PUFFONACTORS) || !spawnblood)
 			{
 				spawnblood = false;
-				P_SpawnPuff(self, pufftype, bloodpos, angle, angle, 0);
+				P_SpawnPuff(self, pufftype, BloodPos, ANGLE2DBL(angle), ANGLE2DBL(angle), 0);
 			}
 		}
 		else if (self->target->flags3 & MF3_GHOST)
@@ -5127,7 +5126,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_WolfAttack)
 			int newdam = P_DamageMobj(self->target, self, self, damage, mod, DMG_THRUSTLESS);
 			if (spawnblood)
 			{
-				P_SpawnBlood(bloodpos, angle, newdam > 0 ? newdam : damage, self->target);
+				P_SpawnBlood(BloodPos, ANGLE2DBL(angle), newdam > 0 ? newdam : damage, self->target);
 				P_TraceBleed(newdam > 0 ? newdam : damage, self->target, self);
 			}
 		}

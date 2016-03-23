@@ -1507,7 +1507,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 					!(tm.thing->flags3 & MF3_BLOODLESSIMPACT) &&
 					(pr_checkthing() < 192))
 				{
-					P_BloodSplatter(tm.thing->_f_Pos(), thing);
+					P_BloodSplatter(tm.thing->Pos(), thing, tm.thing->AngleTo(thing));
 				}
 				if (!(tm.thing->flags3 & MF3_BLOODLESSIMPACT))
 				{
@@ -4234,7 +4234,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 			if (trace.HitType != TRACE_HitWall || trace.Line->special != Line_Horizon)
 			{
 				fixedvec2 pos = P_GetOffsetPosition(trace.HitPos.x, trace.HitPos.y, -trace.HitVector.x * 4, -trace.HitVector.y * 4);
-				puff = P_SpawnPuff(t1, pufftype, pos.x, pos.y, trace.HitPos.z - trace.HitVector.z * 4, trace.SrcAngleToTarget,
+				puff = P_SpawnPuff(t1, pufftype, { pos.x, pos.y, trace.HitPos.z - trace.HitVector.z * 4 }, trace.SrcAngleToTarget,
 					trace.SrcAngleToTarget - ANGLE_90, 0, puffFlags);
 				puff->radius = 1/65536.;
 			}
@@ -4292,6 +4292,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 				bleedpos.y = ofs.y;
 				bleedpos.z -= -10 * trace.HitVector.z;
 			}
+			DVector3 bleedposf(FIXED2DBL(bleedpos.x), FIXED2DBL(bleedpos.y), FIXED2DBL(bleedpos.z));
 
 			// Spawn bullet puffs or blood spots, depending on target type.
 			if ((puffDefaults != NULL && puffDefaults->flags3 & MF3_PUFFONACTORS) ||
@@ -4343,7 +4344,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 					!(trace.Actor->flags & MF_NOBLOOD) &&
 					!(trace.Actor->flags2 & (MF2_INVULNERABLE | MF2_DORMANT)))
 				{
-					P_SpawnBlood(bleedpos, trace.SrcAngleToTarget, newdam > 0 ? newdam : damage, trace.Actor);
+					P_SpawnBlood(bleedposf, ANGLE2DBL(trace.SrcAngleToTarget), newdam > 0 ? newdam : damage, trace.Actor);
 				}
 
 				if (damage)
@@ -4355,11 +4356,11 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 						{
 							if (axeBlood)
 							{
-								P_BloodSplatter2(bleedpos, trace.Actor);
+								P_BloodSplatter2(bleedposf, trace.Actor, ANGLE2DBL(trace.SrcAngleToTarget));
 							}
 							if (pr_lineattack() < 192)
 							{
-								P_BloodSplatter(bleedpos, trace.Actor);
+								P_BloodSplatter(bleedposf, trace.Actor, ANGLE2DBL(trace.SrcAngleToTarget));
 							}
 						}
 					}
@@ -4794,7 +4795,8 @@ void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, i
 
 		if (bleed)
 		{
-			P_SpawnBlood(hitpos, hitangle, newdam > 0 ? newdam : damage, hitactor);
+			DVector3 h(FIXED2DBL(hitpos.x), FIXED2DBL(hitpos.y), FIXED2DBL(hitpos.z));
+			P_SpawnBlood(h, ANGLE2DBL(hitangle), newdam > 0 ? newdam : damage, hitactor);
 			P_TraceBleed(newdam > 0 ? newdam : damage, hitpos, hitactor, source->_f_angle(), pitch);
 		}
 	}
@@ -5646,11 +5648,10 @@ void P_DoCrunch(AActor *thing, FChangePosition *cpos)
 					if (!(cl_bloodtype <= 1)) mo->renderflags |= RF_INVISIBLE;
 				}
 
-				angle_t an;
-				an = (M_Random() - 128) << 24;
+				DAngle an = (M_Random() - 128) * (360./256);
 				if (cl_bloodtype >= 1)
 				{
-					P_DrawSplash2(32, thing->_f_X(), thing->_f_Y(), thing->_f_Z() + thing->_f_height() / 2, an, 2, bloodcolor);
+					P_DrawSplash2(32,  thing->PosPlusZ(thing->Height/2), an, 2, bloodcolor);
 				}
 			}
 			if (thing->CrushPainSound != 0 && !S_GetSoundPlayingInfo(thing, thing->CrushPainSound))

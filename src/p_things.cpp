@@ -123,9 +123,8 @@ bool P_Thing_Spawn (int tid, AActor *source, int type, DAngle angle, bool fog, i
 // [BC] Added
 // [RH] Fixed
 
-bool P_MoveThing(AActor *source, fixed_t x, fixed_t y, fixed_t z, bool fog)
+bool P_MoveThing(AActor *source, const DVector3 &pos, bool fog)
 {
-	DVector3 pos(FIXED2DBL(x), FIXED2DBL(y), FIXED2DBL(z));
 	DVector3 old = source->Pos();
 
 	source->SetOrigin (pos, true);
@@ -164,7 +163,7 @@ bool P_Thing_Move (int tid, AActor *source, int mapspot, bool fog)
 
 	if (source != NULL && target != NULL)
 	{
-		return P_MoveThing(source, target->_f_X(), target->_f_Y(), target->_f_Z(), fog);
+		return P_MoveThing(source, target->Pos(), fog);
 	}
 	return false;
 }

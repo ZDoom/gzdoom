@@ -23,9 +23,12 @@
 #ifndef __P_LOCAL__
 #define __P_LOCAL__
 
+#include <float.h>
 #include "doomtype.h"
 #include "tables.h"
 #include "vectors.h"
+
+const double NO_VALUE = FLT_MAX;
 
 class player_t;
 class AActor;
@@ -300,6 +303,10 @@ inline bool	P_TryMove(AActor* thing, double x, double y, int dropoff, const secp
 inline bool	P_TryMove(AActor* thing, const DVector2 &pos, int dropoff, const secplane_t * onfloor = NULL)
 {
 	return P_TryMove(thing, FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), dropoff, onfloor);
+}
+inline bool	P_TryMove(AActor* thing, const DVector2 &pos, int dropoff, const secplane_t * onfloor, FCheckPosition &tm, bool missileCheck = false)
+{
+	return P_TryMove(thing, FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), dropoff, onfloor, tm, missileCheck);
 }
 bool	P_CheckMove(AActor *thing, fixed_t x, fixed_t y);
 void	P_ApplyTorque(AActor *mo);

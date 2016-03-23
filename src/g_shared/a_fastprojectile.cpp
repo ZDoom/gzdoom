@@ -66,7 +66,7 @@ void AFastProjectile::Tick ()
 					tm.LastRipped.Clear();	// [RH] Do rip damage each step, like Hexen
 				}
 				
-				if (!P_TryMove (this, X() + frac.X, Y() + frac.Y, true, NULL, tm))
+				if (!P_TryMove (this, Pos() + frac, true, NULL, tm))
 				{ // Blocked move
 					if (!(flags3 & MF3_SKYEXPLODE))
 					{

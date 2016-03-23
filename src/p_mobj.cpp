@@ -838,7 +838,7 @@ AInventory *AActor::DropInventory (AInventory *item)
 	{
 		return NULL;
 	}
-	drop->SetOrigin(PosPlusZ(10*FRACUNIT), false);
+	drop->SetOrigin(PosPlusZ(10.), false);
 	drop->Angles.Yaw = Angles.Yaw;
 	drop->VelFromAngle(5.);
 	drop->Vel.Z = 1.;
@@ -2754,7 +2754,7 @@ void P_NightmareRespawn (AActor *mobj)
 		z = ONFLOORZ;
 
 	// spawn it
-	mo = AActor::StaticSpawn(mobj->GetClass(), mobj->SpawnPoint.X, mobj->SpawnPoint.Y, z, NO_REPLACE, true);
+	mo = AActor::StaticSpawn(mobj->GetClass(), DVector3(mobj->SpawnPoint.X, mobj->SpawnPoint.Y, z), NO_REPLACE, true);
 
 	if (z == ONFLOORZ)
 	{
@@ -2803,7 +2803,7 @@ void P_NightmareRespawn (AActor *mobj)
 		return;		// no respawn
 	}
 
-	z = mo->_f_Z();
+	z = mo->Z();
 
 	// inherit attributes from deceased one
 	mo->SpawnPoint = mobj->SpawnPoint;
@@ -2824,7 +2824,7 @@ void P_NightmareRespawn (AActor *mobj)
 	P_SpawnTeleportFog(mobj, mobj->PosPlusZ(TELEFOGHEIGHT), true, true);
 
 	// spawn a teleport fog at the new spot
-	P_SpawnTeleportFog(mobj, mobj->SpawnPoint.X, mobj->SpawnPoint.Y, z + TELEFOGHEIGHT, false, true);
+	P_SpawnTeleportFog(mobj, DVector3(mobj->SpawnPoint, z + TELEFOGHEIGHT), false, true);
 
 	// remove the old monster
 	mobj->Destroy ();
@@ -3441,7 +3441,7 @@ void AActor::Tick ()
 			{
 				// add some smoke behind the rocket 
 				smokecounter = 0;
-				AActor *th = Spawn("RocketSmokeTrail", Vec3Offset(-_f_velx(), -_f_vely(), -_f_velz()), ALLOW_REPLACE);
+				AActor *th = Spawn("RocketSmokeTrail", Vec3Offset(-Vel), ALLOW_REPLACE);
 				if (th)
 				{
 					th->tics -= pr_rockettrail()&3;
@@ -4128,12 +4128,8 @@ bool AActor::UpdateWaterLevel (fixed_t oldz, bool dosplash)
 //
 //==========================================================================
 
-AActor *AActor::StaticSpawn (PClassActor *type, fixed_t _ix, fixed_t _iy, fixed_t _iz, replace_t allowreplacement, bool SpawningMapThing)
+AActor *AActor::StaticSpawn (PClassActor *type, const DVector3 &pos, replace_t allowreplacement, bool SpawningMapThing)
 {
-	double ix = FIXED2DBL(_ix);
-	double iy = FIXED2DBL(_iy);
-	double iz = FIXED2DBL(_iz);
-
 	if (type == NULL)
 	{
 		I_Error ("Tried to spawn a class-less actor\n");
@@ -4159,7 +4155,7 @@ AActor *AActor::StaticSpawn (PClassActor *type, fixed_t _ix, fixed_t _iy, fixed_
 		actor->Conversation = NULL;
 	}
 
-	actor->SetXYZ(ix, iy, iz);
+	actor->SetXYZ(pos);
 	actor->picnum.SetInvalid();
 	actor->health = actor->SpawnHealth();
 
@@ -4196,17 +4192,17 @@ AActor *AActor::StaticSpawn (PClassActor *type, fixed_t _ix, fixed_t _iy, fixed_
 	actor->LinkToWorld (SpawningMapThing);
 	actor->ClearInterpolation();
 
-	actor->floorz = actor->Sector->floorplane.ZatPoint (ix, iy);
+	actor->floorz = actor->Sector->floorplane.ZatPoint(pos);
 	actor->dropoffz = FLOAT2FIXED(actor->floorz);			// killough 11/98: for tracking dropoffs
-	actor->ceilingz = actor->Sector->ceilingplane.ZatPoint (ix, iy);
+	actor->ceilingz = actor->Sector->ceilingplane.ZatPoint(pos);
 
 	// The z-coordinate needs to be set once before calling P_FindFloorCeiling
 	// For FLOATRANDZ just use the floor here.
-	if (iz == ONFLOORZ || iz == FLOATRANDZ)
+	if (pos.Z == ONFLOORZ || pos.Z == FLOATRANDZ)
 	{
 		actor->SetZ(actor->floorz);
 	}
-	else if (iz == ONCEILINGZ)
+	else if (pos.Z == ONCEILINGZ)
 	{
 		actor->SetZ(actor->ceilingz - actor->Height);
 	}
@@ -4242,18 +4238,19 @@ AActor *AActor::StaticSpawn (PClassActor *type, fixed_t _ix, fixed_t _iy, fixed_
 		actor->ceilingsector = actor->Sector;
 	}
 
-	actor->SpawnPoint.X = ix;
-	actor->SpawnPoint.Y = iy;
+	actor->SpawnPoint.X = pos.X;
+	actor->SpawnPoint.Y = pos.Y;
+	// do not copy Z!
 
-	if (iz == ONFLOORZ)
+	if (pos.Z == ONFLOORZ)
 	{
 		actor->SetZ(actor->floorz);
 	}
-	else if (iz == ONCEILINGZ)
+	else if (pos.Z == ONCEILINGZ)
 	{
 		actor->SetZ(actor->ceilingz - actor->Height);
 	}
-	else if (iz == FLOATRANDZ)
+	else if (pos.Z == FLOATRANDZ)
 	{
 		double space = actor->ceilingz - actor->Height - actor->floorz;
 		if (space > 48)
@@ -4280,7 +4277,7 @@ AActor *AActor::StaticSpawn (PClassActor *type, fixed_t _ix, fixed_t _iy, fixed_
 	{
 		actor->Floorclip = 0;
 	}
-	actor->UpdateWaterLevel (actor->_f_Z(), false);
+	actor->UpdateWaterLevel (actor->Z(), false);
 	if (!SpawningMapThing)
 	{
 		actor->BeginPlay ();
@@ -4311,20 +4308,10 @@ AActor *AActor::StaticSpawn (PClassActor *type, fixed_t _ix, fixed_t _iy, fixed_
 	return actor;
 }
 
-AActor *Spawn (const char *type, fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement)
+PClassActor *ClassForSpawn(FName classname)
 {
-	FName classname(type, true);
-	if (classname == NAME_None)
-	{
-		I_Error("Attempt to spawn actor of unknown type '%s'\n", type);
-	}
-	return Spawn(classname, x, y, z, allowreplacement);
-}
-
-AActor *Spawn (FName classname, fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement)
-{
-	const PClass *cls = PClass::FindClass(classname);
-	if (cls == NULL) 
+	PClass *cls = PClass::FindClass(classname);
+	if (cls == NULL)
 	{
 		I_Error("Attempt to spawn actor of unknown type '%s'\n", classname.GetChars());
 	}
@@ -4332,7 +4319,7 @@ AActor *Spawn (FName classname, fixed_t x, fixed_t y, fixed_t z, replace_t allow
 	{
 		I_Error("Attempt to spawn non-actor of type '%s'\n", classname.GetChars());
 	}
-	return AActor::StaticSpawn (const_cast<PClassActor *>(static_cast<const PClassActor *>(cls)), x, y, z, allowreplacement);
+	return static_cast<PClassActor*>(cls);
 }
 
 void AActor::LevelSpawned ()
@@ -4571,7 +4558,7 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 	player_t *p;
 	APlayerPawn *mobj, *oldactor;
 	BYTE	  state;
-	fixed_t spawn_x, spawn_y, spawn_z;
+	DVector3 spawn;
 	DAngle SpawnAngle;
 
 	if (mthing == NULL)
@@ -4627,16 +4614,13 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 		( NULL != p->attacker ) &&							// don't respawn on damaging floors
 		( p->mo->Sector->damageamount < TELEFRAG_DAMAGE ))	// this really should be a bit smarter...
 	{
-		spawn_x = p->mo->_f_X();
-		spawn_y = p->mo->_f_Y();
-		spawn_z = p->mo->_f_Z();
-
+		spawn = p->mo->Pos();
 		SpawnAngle = p->mo->Angles.Yaw;
 	}
 	else
 	{
-		spawn_x = mthing->_f_X();
-		spawn_y = mthing->_f_Y();
+		spawn.X = mthing->pos.X;
+		spawn.Y = mthing->pos.Y;
 
 		// Allow full angular precision
 		SpawnAngle = (double)mthing->angle;
@@ -4646,21 +4630,21 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 		}
 
 		if (GetDefaultByType(p->cls)->flags & MF_SPAWNCEILING)
-			spawn_z = ONCEILINGZ;
+			spawn.Z = ONCEILINGZ;
 		else if (GetDefaultByType(p->cls)->flags2 & MF2_SPAWNFLOAT)
-			spawn_z = FLOATRANDZ;
+			spawn.Z = FLOATRANDZ;
 		else
-			spawn_z = ONFLOORZ;
+			spawn.Z = ONFLOORZ;
 	}
 
 	mobj = static_cast<APlayerPawn *>
-		(Spawn (p->cls, spawn_x, spawn_y, spawn_z, NO_REPLACE));
+		(Spawn (p->cls, spawn, NO_REPLACE));
 
 	if (level.flags & LEVEL_USEPLAYERSTARTZ)
 	{
-		if (spawn_z == ONFLOORZ)
+		if (spawn.Z == ONFLOORZ)
 			mobj->AddZ(mthing->pos.Z);
-		else if (spawn_z == ONCEILINGZ)
+		else if (spawn.Z == ONCEILINGZ)
 			mobj->AddZ(-mthing->pos.Z);
 		P_FindFloorCeiling(mobj, FFCF_SAMESECTOR | FFCF_ONLY3DFLOORS | FFCF_3DRESTRICT);
 	}
@@ -4781,7 +4765,7 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 
 	if (multiplayer)
 	{
-		Spawn ("TeleportFog", mobj->Vec3Angle(20, mobj->Angles.Yaw, TELEFOGHEIGHT), ALLOW_REPLACE);
+		Spawn ("TeleportFog", mobj->Vec3Angle(20., mobj->Angles.Yaw, TELEFOGHEIGHT), ALLOW_REPLACE);
 	}
 
 	// "Fix" for one of the starts on exec.wad MAP01: If you start inside the ceiling,
@@ -5115,7 +5099,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	else
 		z = ONFLOORZ;
 
-	mobj = AActor::StaticSpawn (i, x, y, z, NO_REPLACE, true);
+	mobj = AActor::StaticSpawn (i, DVector3(FIXED2DBL(mthing->x), FIXED2DBL(mthing->y), z), NO_REPLACE, true);
 
 	if (z == ONFLOORZ)
 	{
@@ -5222,7 +5206,8 @@ AActor *P_SpawnPuff (AActor *source, PClassActor *pufftype, fixed_t x, fixed_t y
 	if (!(flags & PF_NORANDOMZ))
 		z += pr_spawnpuff.Random2 () << 10;
 
-	puff = Spawn (pufftype, x, y, z, ALLOW_REPLACE);
+	DVector3 pos(FIXED2DBL(x), FIXED2DBL(y), FIXED2DBL(z));
+	puff = Spawn (pufftype, pos, ALLOW_REPLACE);
 	if (puff == NULL) return NULL;
 
 	if ((puff->flags4 & MF4_RANDOMIZE) && puff->tics > 0)
@@ -5296,6 +5281,7 @@ AActor *P_SpawnPuff (AActor *source, PClassActor *pufftype, fixed_t x, fixed_t y
 
 void P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage, AActor *originator)
 {
+	DVector3 pos(FIXED2DBL(x), FIXED2DBL(y), FIXED2DBL(z));
 	AActor *th;
 	PalEntry bloodcolor = originator->GetBloodColor();
 	PClassActor *bloodcls = originator->GetBloodType();
@@ -5308,7 +5294,7 @@ void P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage, AAc
 	if (bloodcls != NULL)
 	{
 		z += pr_spawnblood.Random2 () << 10;
-		th = Spawn (bloodcls, x, y, z, NO_REPLACE); // GetBloodType already performed the replacement
+		th = Spawn (bloodcls, pos, NO_REPLACE); // GetBloodType already performed the replacement
 		th->Vel.Z = 2;
 		th->Angles.Yaw = ANGLE2DBL(dir);
 		// [NG] Applying PUFFGETSOWNER to the blood will make it target the owner
@@ -5389,8 +5375,9 @@ void P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage, AAc
 //
 //---------------------------------------------------------------------------
 
-void P_BloodSplatter (fixedvec3 pos, AActor *originator)
+void P_BloodSplatter (fixedvec3 _pos, AActor *originator)
 {
+	DVector3 pos(FIXED2DBL(_pos.x), FIXED2DBL(_pos.y), FIXED2DBL(_pos.z));
 	PalEntry bloodcolor = originator->GetBloodColor();
 	PClassActor *bloodcls = originator->GetBloodType(1); 
 
@@ -5419,7 +5406,7 @@ void P_BloodSplatter (fixedvec3 pos, AActor *originator)
 	}
 	if (bloodtype >= 1)
 	{
-		P_DrawSplash2 (40, pos.x, pos.y, pos.z, 0u - originator->__f_AngleTo(pos), 2, bloodcolor);
+		//P_DrawSplash2 (40, pos.X, pos.Y, pos.Z, -originator->AngleTo(pos), 2, bloodcolor);
 	}
 }
 
@@ -5429,8 +5416,9 @@ void P_BloodSplatter (fixedvec3 pos, AActor *originator)
 //
 //===========================================================================
 
-void P_BloodSplatter2 (fixedvec3 pos, AActor *originator)
+void P_BloodSplatter2 (fixedvec3 _pos, AActor *originator)
 {
+	DVector3 pos(FIXED2DBL(_pos.x), FIXED2DBL(_pos.y), FIXED2DBL(_pos.z));
 	PalEntry bloodcolor = originator->GetBloodColor();
 	PClassActor *bloodcls = originator->GetBloodType(2);
 
@@ -5443,8 +5431,8 @@ void P_BloodSplatter2 (fixedvec3 pos, AActor *originator)
 	{
 		AActor *mo;
 		
-		pos.x += ((pr_splat()-128)<<11);
-		pos.y += ((pr_splat()-128)<<11);
+		pos.X += (pr_splat()-128) / 32.;
+		pos.Y += (pr_splat()-128) / 32.;
 
 		mo = Spawn (bloodcls, pos, NO_REPLACE); // GetBloodType already performed the replacement
 		mo->target = originator;
@@ -5459,7 +5447,7 @@ void P_BloodSplatter2 (fixedvec3 pos, AActor *originator)
 	}
 	if (bloodtype >= 1)
 	{
-		P_DrawSplash2 (100, pos.x, pos.y, pos.z, 0u - originator->__f_AngleTo(pos), 2, bloodcolor);
+		//P_DrawSplash2 (100, pos.x, pos.y, pos.z, 0u - originator->__f_AngleTo(pos), 2, bloodcolor);
 	}
 }
 
@@ -5474,10 +5462,10 @@ void P_RipperBlood (AActor *mo, AActor *bleeder)
 	PalEntry bloodcolor = bleeder->GetBloodColor();
 	PClassActor *bloodcls = bleeder->GetBloodType();
 
-	fixed_t xo = (pr_ripperblood.Random2() << 12);
-	fixed_t yo = (pr_ripperblood.Random2() << 12);
-	fixed_t zo = (pr_ripperblood.Random2() << 12);
-	fixedvec3 pos = mo->Vec3Offset(xo, yo, zo);
+	double xo = pr_ripperblood.Random2() / 16.;
+	double yo = pr_ripperblood.Random2() / 16.;
+	double zo = pr_ripperblood.Random2() / 16.;
+	DVector3 pos = mo->Vec3Offset(xo, yo, zo);
 
 	int bloodtype = cl_bloodtype;
 	
@@ -5506,7 +5494,7 @@ void P_RipperBlood (AActor *mo, AActor *bleeder)
 	}
 	if (bloodtype >= 1)
 	{
-		P_DrawSplash2 (28, pos.x, pos.y, pos.z, 0, 0, bloodcolor);
+		//P_DrawSplash2 (28, pos.X, pos.Y, pos.Z, 0, 0, bloodcolor);
 	}
 }
 
@@ -5562,6 +5550,7 @@ bool P_HitWater (AActor * thing, sector_t * sec, fixed_t x, fixed_t y, fixed_t z
 		if (z > compare_z) 
 			return false;
 	}
+	DVector3 pos(FIXED2DBL(x), FIXED2DBL(y), FIXED2DBL(z));
 
 #if 0 // needs some rethinking before activation
 
@@ -5633,14 +5622,14 @@ foundone:
 
 	if (smallsplash && splash->SmallSplash)
 	{
-		mo = Spawn (splash->SmallSplash, x, y, z, ALLOW_REPLACE);
+		mo = Spawn (splash->SmallSplash, pos, ALLOW_REPLACE);
 		if (mo) mo->Floorclip += FIXED2DBL(splash->SmallSplashClip);
 	}
 	else
 	{
 		if (splash->SplashChunk)
 		{
-			mo = Spawn (splash->SplashChunk, x, y, z, ALLOW_REPLACE);
+			mo = Spawn (splash->SplashChunk, pos, ALLOW_REPLACE);
 			mo->target = thing;
 			if (splash->ChunkXVelShift != 255)
 			{
@@ -5654,7 +5643,7 @@ foundone:
 		}
 		if (splash->SplashBase)
 		{
-			mo = Spawn (splash->SplashBase, x, y, z, ALLOW_REPLACE);
+			mo = Spawn (splash->SplashBase, pos, ALLOW_REPLACE);
 		}
 		if (thing->player && !splash->NoAlert && alert)
 		{
@@ -5928,7 +5917,8 @@ AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
 		z -= source->_f_floorclip();
 	}
 
-	AActor *th = Spawn (type, x, y, z, ALLOW_REPLACE);
+	DVector3 pos(FIXED2DBL(x), FIXED2DBL(y), FIXED2DBL(z));
+	AActor *th = Spawn (type, pos, ALLOW_REPLACE);
 	
 	P_PlaySpawnSound(th, source);
 
@@ -5988,7 +5978,7 @@ AActor *P_OldSpawnMissile(AActor *source, AActor *owner, AActor *dest, PClassAct
 	{
 		return NULL;
 	}
-	AActor *th = Spawn (type, source->PosPlusZ(4*8*FRACUNIT), ALLOW_REPLACE);
+	AActor *th = Spawn (type, source->PosPlusZ(32.), ALLOW_REPLACE);
 
 	P_PlaySpawnSound(th, source);
 	th->target = owner;		// record missile's originator
@@ -6094,7 +6084,7 @@ AActor *P_SpawnMissileAngleZSpeed (AActor *source, fixed_t z,
 		z -= source->_f_floorclip();
 	}
 
-	mo = Spawn (type, source->_f_X(), source->_f_Y(), z, ALLOW_REPLACE);
+	mo = Spawn (type, source->PosAtZ(FIXED2FLOAT(z)), ALLOW_REPLACE);
 
 	P_PlaySpawnSound(mo, source);
 	if (owner == NULL) owner = source;

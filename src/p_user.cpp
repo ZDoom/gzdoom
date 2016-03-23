@@ -1650,7 +1650,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SkullPop)
 	}
 
 	self->flags &= ~MF_SOLID;
-	mo = (APlayerPawn *)Spawn (spawntype, self->PosPlusZ(48*FRACUNIT), NO_REPLACE);
+	mo = (APlayerPawn *)Spawn (spawntype, self->PosPlusZ(48.), NO_REPLACE);
 	//mo->target = self;
 	mo->Vel.X = pr_skullpop.Random2() / 128.;
 	mo->Vel.Y = pr_skullpop.Random2() / 128.;

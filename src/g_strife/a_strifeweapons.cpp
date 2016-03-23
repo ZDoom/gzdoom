@@ -667,7 +667,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Burnination)
 			pos = self->Pos();
 		}
 
-		AActor *drop = Spawn<APhosphorousFire> (pos.X, pos.Y, self->Z() + 4., ALLOW_REPLACE);
+		AActor *drop = Spawn<APhosphorousFire> (DVector3(pos, self->Z() + 4.), ALLOW_REPLACE);
 		if (drop != NULL)
 		{
 			drop->Vel.X = self->Vel.X + pr_phburn.Random2 (7);

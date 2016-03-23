@@ -251,7 +251,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_TossGib)
 	PARAM_ACTION_PROLOGUE;
 
 	const char *gibtype = (self->flags & MF_NOBLOOD) ? "Junk" : "Meat";
-	AActor *gib = Spawn (gibtype, self->PosPlusZ(24), ALLOW_REPLACE);
+	AActor *gib = Spawn (gibtype, self->PosPlusZ(24.), ALLOW_REPLACE);
 
 	if (gib == NULL)
 	{

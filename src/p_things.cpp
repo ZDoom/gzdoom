@@ -125,19 +125,16 @@ bool P_Thing_Spawn (int tid, AActor *source, int type, DAngle angle, bool fog, i
 
 bool P_MoveThing(AActor *source, fixed_t x, fixed_t y, fixed_t z, bool fog)
 {
-	fixed_t oldx, oldy, oldz;
+	DVector3 pos(FIXED2DBL(x), FIXED2DBL(y), FIXED2DBL(z));
+	DVector3 old = source->Pos();
 
-	oldx = source->_f_X();
-	oldy = source->_f_Y();
-	oldz = source->_f_Z();
-
-	source->SetOrigin (x, y, z, true);
+	source->SetOrigin (pos, true);
 	if (P_TestMobjLocation (source))
 	{
 		if (fog)
 		{
-			P_SpawnTeleportFog(source, x, y, z, false, true);
-			P_SpawnTeleportFog(source, oldx, oldy, oldz, true, true);
+			P_SpawnTeleportFog(source, pos, false, true);
+			P_SpawnTeleportFog(source, old, true, true);
 		}
 		source->ClearInterpolation();
 		if (source == players[consoleplayer].camera)
@@ -148,7 +145,7 @@ bool P_MoveThing(AActor *source, fixed_t x, fixed_t y, fixed_t z, bool fog)
 	}
 	else
 	{
-		source->SetOrigin (oldx, oldy, oldz, true);
+		source->SetOrigin (old, true);
 		return false;
 	}
 }
@@ -221,7 +218,7 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 		{
 			do
 			{
-				fixed_t z = spot->_f_Z();
+				double z = spot->Z();
 				if (defflags3 & MF3_FLOORHUGGER)
 				{
 					z = ONFLOORZ;
@@ -232,9 +229,9 @@ bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_nam
 				}
 				else if (z != ONFLOORZ)
 				{
-					z -= spot->_f_floorclip();
+					z -= spot->Floorclip;
 				}
-				mobj = Spawn (kind, spot->_f_X(), spot->_f_Y(), z, ALLOW_REPLACE);
+				mobj = Spawn (kind, spot->PosAtZ(z), ALLOW_REPLACE);
 
 				if (mobj)
 				{

@@ -924,19 +924,18 @@ enum
 	TELF_KEEPHEIGHT			= 16,
 };
 
-void P_SpawnTeleportFog(AActor *mobj, fixed_t x, fixed_t y, fixed_t z, bool beforeTele = true, bool setTarget = false); //Spawns teleport fog. Pass the actor to pluck TeleFogFromType and TeleFogToType. 'from' determines if this is the fog to spawn at the old position (true) or new (false).
-inline void P_SpawnTeleportFog(AActor *mobj, const fixedvec3 &pos, bool beforeTele = true, bool setTarget = false)
-{
-	P_SpawnTeleportFog(mobj, pos.x, pos.y, pos.z, beforeTele, setTarget);
-}
-inline void P_SpawnTeleportFog(AActor *mobj, const DVector3 &pos, bool beforeTele = true, bool setTarget = false)
-{
-	P_SpawnTeleportFog(mobj, FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), FLOAT2FIXED(pos.Z), beforeTele, setTarget);
-}
-inline void P_SpawnTeleportFog(AActor *mobj, double x, double y, double z, bool beforeTele = true, bool setTarget = false)
+//Spawns teleport fog. Pass the actor to pluck TeleFogFromType and TeleFogToType. 'from' determines if this is the fog to spawn at the old position (true) or new (false).
+void P_SpawnTeleportFog(AActor *mobj, const DVector3 &pos, bool beforeTele = true, bool setTarget = false);
+
+void P_SpawnTeleportFog(AActor *mobj, fixed_t x, fixed_t y, fixed_t z, bool beforeTele = true, bool setTarget = false) = delete;
+inline void P_SpawnTeleportFog(AActor *mobj, const fixedvec3 &pos, bool beforeTele = true, bool setTarget = false) = delete;
+inline void P_SpawnTeleportFog(AActor *mobj, double x, double y, double z, bool beforeTele = true, bool setTarget = false) = delete;
+/*
 {
 	P_SpawnTeleportFog(mobj, FLOAT2FIXED(x), FLOAT2FIXED(y), FLOAT2FIXED(z), beforeTele, setTarget);
 }
+*/
+
 bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, DAngle angle, int flags); // bool useFog, bool sourceFog, bool keepOrientation, bool haltVelocity = true, bool keepHeight = false
 inline bool P_Teleport(AActor *thing, const DVector3 &pos, DAngle angle, int flags)
 {

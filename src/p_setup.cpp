@@ -3609,7 +3609,7 @@ void P_SetupLevel (const char *lumpname, int position)
 	translationtables[TRANSLATION_LevelScripted].Clear();
 
 	// Initial height of PointOfView will be set by player think.
-	players[consoleplayer].viewz = -FLT_MAX; 
+	players[consoleplayer].viewz = NO_VALUE; 
 
 	// Make sure all sounds are stopped before Z_FreeTags.
 	S_Start ();

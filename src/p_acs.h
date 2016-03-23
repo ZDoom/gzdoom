@@ -907,7 +907,8 @@ protected:
 	static int CountPlayers ();
 	static void SetLineTexture (int lineid, int side, int position, int name);
 	static void ReplaceTextures (int fromname, int toname, int flags);
-	static int DoSpawn (int type, fixed_t x, fixed_t y, fixed_t z, int tid, int angle, bool force);
+	static int DoSpawn (int type, const DVector3 &pos, int tid, DAngle angle, bool force);
+	static int DoSpawn(int type, int x, int y, int z, int tid, int angle, bool force);
 	static bool DoCheckActorTexture(int tid, AActor *activator, int string, bool floor);
 	int DoSpawnSpot (int type, int spot, int tid, int angle, bool forced);
 	int DoSpawnSpotFacing (int type, int spot, int tid, bool forced);

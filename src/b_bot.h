@@ -103,7 +103,7 @@ public:
 	void StartTravel ();
 	void FinishTravel ();
 	bool IsLeader (player_t *player);
-	void SetBodyAt (fixed_t x, fixed_t y, fixed_t z, int hostnum);
+	void SetBodyAt (const DVector3 &pos, int hostnum);
 	fixed_t FakeFire (AActor *source, AActor *dest, ticcmd_t *cmd);
 	bool SafeCheckPosition (AActor *actor, fixed_t x, fixed_t y, FCheckPosition &tm);
 

@@ -3462,7 +3462,7 @@ void DLevelScript::ReplaceTextures (int fromnamei, int tonamei, int flags)
 	}
 }
 
-int DLevelScript::DoSpawn (int type, fixed_t x, fixed_t y, fixed_t z, int tid, int angle, bool force)
+int DLevelScript::DoSpawn (int type, const DVector3 &pos, int tid, DAngle angle, bool force)
 {
 	PClassActor *info = PClass::FindActor(FBehavior::StaticLookupString (type));
 	AActor *actor = NULL;
@@ -3478,14 +3478,14 @@ int DLevelScript::DoSpawn (int type, fixed_t x, fixed_t y, fixed_t z, int tid, i
 			return 0;
 		}
 
-		actor = Spawn (info, x, y, z, ALLOW_REPLACE);
+		actor = Spawn (info, pos, ALLOW_REPLACE);
 		if (actor != NULL)
 		{
 			ActorFlags2 oldFlags2 = actor->flags2;
 			actor->flags2 |= MF2_PASSMOBJ;
 			if (force || P_TestMobjLocation (actor))
 			{
-				actor->Angles.Yaw = angle * (360. / 256);
+				actor->Angles.Yaw = angle;
 				actor->tid = tid;
 				actor->AddToHash ();
 				if (actor->flags & MF_SPECIAL)
@@ -3506,6 +3506,12 @@ int DLevelScript::DoSpawn (int type, fixed_t x, fixed_t y, fixed_t z, int tid, i
 	return spawncount;
 }
 
+int DLevelScript::DoSpawn(int type, int x, int y, int z, int tid, int angle, bool force)
+{
+	return DoSpawn(type, DVector3(ACSToDouble(x), ACSToDouble(y), ACSToDouble(z)), tid, angle * (360. / 256), force);
+}
+
+
 int DLevelScript::DoSpawnSpot (int type, int spot, int tid, int angle, bool force)
 {
 	int spawned = 0;
@@ -3517,12 +3523,12 @@ int DLevelScript::DoSpawnSpot (int type, int spot, int tid, int angle, bool forc
 
 		while ( (aspot = iterator.Next ()) )
 		{
-			spawned += DoSpawn (type, aspot->_f_X(), aspot->_f_Y(), aspot->_f_Z(), tid, angle, force);
+			spawned += DoSpawn (type, aspot->Pos(), tid, angle * (360. / 256), force);
 		}
 	}
 	else if (activator != NULL)
 	{
-			spawned += DoSpawn (type, activator->_f_X(), activator->_f_Y(), activator->_f_Z(), tid, angle, force);
+		spawned += DoSpawn (type, activator->Pos(), tid, angle * (360. / 256), force);
 	}
 	return spawned;
 }
@@ -3538,12 +3544,12 @@ int DLevelScript::DoSpawnSpotFacing (int type, int spot, int tid, bool force)
 
 		while ( (aspot = iterator.Next ()) )
 		{
-			spawned += DoSpawn (type, aspot->_f_X(), aspot->_f_Y(), aspot->_f_Z(), tid, aspot->_f_angle() >> 24, force);
+			spawned += DoSpawn (type, aspot->Pos(), tid, aspot->Angles.Yaw, force);
 		}
 	}
 	else if (activator != NULL)
 	{
-			spawned += DoSpawn (type, activator->_f_X(), activator->_f_Y(), activator->_f_Z(), tid, activator->_f_angle() >> 24, force);
+			spawned += DoSpawn (type, activator->Pos(), tid, activator->Angles.Yaw, force);
 	}
 	return spawned;
 }

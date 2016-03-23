@@ -4749,7 +4749,7 @@ void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, i
 	// used as damage inflictor
 	AActor *thepuff = NULL;
 
-	if (puffclass != NULL) thepuff = Spawn(puffclass, source->_f_Pos(), ALLOW_REPLACE);
+	if (puffclass != NULL) thepuff = Spawn(puffclass, source->Pos(), ALLOW_REPLACE);
 
 	for (i = 0; i < rail_data.RailHits.Size(); i++)
 	{
@@ -5636,7 +5636,7 @@ void P_DoCrunch(AActor *thing, FChangePosition *cpos)
 				{
 					AActor *mo;
 
-					mo = Spawn(bloodcls, thing->PosPlusZ(thing->_f_height() / 2), ALLOW_REPLACE);
+					mo = Spawn(bloodcls, thing->PosPlusZ(thing->Height / 2), ALLOW_REPLACE);
 
 					mo->Vel.X = pr_crunch.Random2() / 16.;
 					mo->Vel.Y = pr_crunch.Random2() / 16.;

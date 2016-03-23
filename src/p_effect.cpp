@@ -862,9 +862,7 @@ void P_DrawRailTrail(AActor *source, const DVector3 &start, const DVector3 &end,
 				if (rnd & 4)
 					diff.Z = clamp<double>(diff.Z + ((rnd & 32) ? 1 : -1), -maxdiff, maxdiff);
 			}			
-			DVector3 postmp = pos + diff;
-
-			AActor *thing = Spawn (spawnclass, FLOAT2FIXED(postmp.X), FLOAT2FIXED(postmp.Y), FLOAT2FIXED(postmp.Z), ALLOW_REPLACE);
+			AActor *thing = Spawn (spawnclass, pos + diff, ALLOW_REPLACE);
 			if (thing)
 				thing->Angles.Yaw = ANGLE2DBL(angle);
 			pos += trail_step;

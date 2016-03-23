@@ -862,7 +862,7 @@ void FParser::SF_Player(void)
 
 void FParser::SF_Spawn(void)
 {
-	int x, y, z;
+	DVector3 pos;
 	PClassActor *pclass;
 	DAngle angle = 0.;
 	
@@ -870,22 +870,22 @@ void FParser::SF_Spawn(void)
 	{
 		if (!(pclass=T_GetMobjType(t_argv[0]))) return;
 		
-		x = fixedvalue(t_argv[1]);
-		y = fixedvalue(t_argv[2]);
+		pos.X = floatvalue(t_argv[1]);
+		pos.Y = floatvalue(t_argv[2]);
 
 		if(t_argc >= 5)
 		{
-			z = fixedvalue(t_argv[4]);
+			pos.Z = floatvalue(t_argv[4]);
 			// [Graf Zahl] added option of spawning with a relative z coordinate
 			if(t_argc > 5)
 			{
-				if (intvalue(t_argv[5])) z+=P_PointInSector(x, y)->floorplane.ZatPoint(x,y);
+				if (intvalue(t_argv[5])) pos.Z += P_PointInSector(pos)->floorplane.ZatPoint(pos);
 			}
 		}
 		else
 		{
 			// Legacy compatibility is more important than correctness.
-			z = ONFLOORZ;// (GetDefaultByType(PClass)->flags & MF_SPAWNCEILING) ? ONCEILINGZ : ONFLOORZ;
+			pos.Z = ONFLOORZ;// (GetDefaultByType(PClass)->flags & MF_SPAWNCEILING) ? ONCEILINGZ : ONFLOORZ;
 		}
 		
 		if(t_argc >= 4)
@@ -894,7 +894,7 @@ void FParser::SF_Spawn(void)
 		}
 		
 		t_return.type = svt_mobj;
-		t_return.value.mobj = Spawn(pclass, x, y, z, ALLOW_REPLACE);
+		t_return.value.mobj = Spawn(pclass, pos, ALLOW_REPLACE);
 
 		if (t_return.value.mobj)		
 		{
@@ -3340,7 +3340,7 @@ void FParser::SF_FixedValue(void)
 
 void FParser::SF_SpawnExplosion()
 {
-	fixed_t   x, y, z;
+	DVector3 pos;
 	AActor*   spawn;
 	PClassActor * pclass;
 	
@@ -3348,14 +3348,14 @@ void FParser::SF_SpawnExplosion()
 	{
 		if (!(pclass=T_GetMobjType(t_argv[0]))) return;
 		
-		x = fixedvalue(t_argv[1]);
-		y = fixedvalue(t_argv[2]);
+		pos.X = floatvalue(t_argv[1]);
+		pos.Y = floatvalue(t_argv[2]);
 		if(t_argc > 3)
-			z = fixedvalue(t_argv[3]);
+			pos.Z = floatvalue(t_argv[3]);
 		else
-			z = P_PointInSector(x, y)->floorplane.ZatPoint(x,y);
+			pos.Z = P_PointInSector(pos)->floorplane.ZatPoint(pos);
 		
-		spawn = Spawn (pclass, x, y, z, ALLOW_REPLACE);
+		spawn = Spawn (pclass, pos, ALLOW_REPLACE);
 		t_return.type = svt_int;
 		t_return.value.i=0;
 		if (spawn)
@@ -4239,31 +4239,31 @@ void FParser::SF_SpawnShot2(void)
 {
 	AActor *source = NULL;
 	PClassActor * pclass;
-	int z=0;
-	
+	double z = 0;
+
 	// t_argv[0] = type to spawn
 	// t_argv[1] = source mobj, optional, -1 to default
 	// shoots at source's angle
-	
+
 	if (CheckArgs(2))
 	{
-		if(t_argv[1].type == svt_int && t_argv[1].value.i < 0)
+		if (t_argv[1].type == svt_int && t_argv[1].value.i < 0)
 			source = Script->trigger;
 		else
 			source = actorvalue(t_argv[1]);
 
-		if (t_argc>2) z=fixedvalue(t_argv[2]);
-		
-		if(!source)	return;
-		
-		if (!(pclass=T_GetMobjType(t_argv[0]))) return;
-		
+		if (t_argc > 2) z = floatvalue(t_argv[2]);
+
+		if (!source)	return;
+
+		if (!(pclass = T_GetMobjType(t_argv[0]))) return;
+
 		t_return.type = svt_mobj;
 
-		AActor *mo = Spawn (pclass, source->PosPlusZ(z), ALLOW_REPLACE);
-		if (mo) 
+		AActor *mo = Spawn(pclass, source->PosPlusZ(z), ALLOW_REPLACE);
+		if (mo)
 		{
-			S_Sound (mo, CHAN_VOICE, mo->SeeSound, 1, ATTN_NORM);
+			S_Sound(mo, CHAN_VOICE, mo->SeeSound, 1, ATTN_NORM);
 			mo->target = source;
 			mo->Angles.Yaw = source->Angles.Yaw;
 			mo->Thrust();

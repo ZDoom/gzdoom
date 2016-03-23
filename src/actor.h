@@ -580,7 +580,7 @@ public:
 
 	void Serialize (FArchive &arc);
 
-	static AActor *StaticSpawn (PClassActor *type, fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement, bool SpawningMapThing = false);
+	static AActor *StaticSpawn (PClassActor *type, const DVector3 &pos, replace_t allowreplacement, bool SpawningMapThing = false);
 
 	inline AActor *GetDefault () const
 	{
@@ -1666,96 +1666,36 @@ public:
 bool P_IsTIDUsed(int tid);
 int P_FindUniqueTID(int start_tid, int limit);
 
-inline AActor *Spawn (PClassActor *type, fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement)
-{
-	return AActor::StaticSpawn (type, x, y, z, allowreplacement);
-}
+PClassActor *ClassForSpawn(FName classname);
+
 inline AActor *Spawn(PClassActor *type)
 {
-	return AActor::StaticSpawn(type, 0, 0, 0, NO_REPLACE);
-}
-inline AActor *Spawn (PClassActor *type, const fixedvec3 &pos, replace_t allowreplacement)
-{
-	return AActor::StaticSpawn (type, pos.x, pos.y, pos.z, allowreplacement);
+	return AActor::StaticSpawn(type, DVector3(0, 0, 0), NO_REPLACE);
 }
 
 inline AActor *Spawn(PClassActor *type, const DVector3 &pos, replace_t allowreplacement)
 {
-	fixed_t zz;
-	if (pos.Z != ONFLOORZ && pos.Z != ONCEILINGZ && pos.Z != FLOATRANDZ) zz = FLOAT2FIXED(pos.Z);
-	else zz = (int)pos.Z;
-	return Spawn(type, FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), zz, allowreplacement);
+	return AActor::StaticSpawn(type, pos, allowreplacement);
 }
-
-AActor *Spawn (const char *type, fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement);
-AActor *Spawn (FName classname, fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement);
 
 inline AActor *Spawn(FName type)
 {
-	return Spawn(type, 0, 0, 0, NO_REPLACE);
-}
-
-inline AActor *Spawn (const char *type, const fixedvec3 &pos, replace_t allowreplacement)
-{
-	return Spawn (type, pos.x, pos.y, pos.z, allowreplacement);
-}
-
-inline AActor *Spawn(const char *type, const DVector3 &pos, replace_t allowreplacement)
-{
-	fixed_t zz;
-	if (pos.Z != ONFLOORZ && pos.Z != ONCEILINGZ && pos.Z != FLOATRANDZ) zz = FLOAT2FIXED(pos.Z);
-	else zz = (int)pos.Z;
-	return Spawn(type, FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), zz, allowreplacement);
-}
-
-inline AActor *Spawn (FName classname, const fixedvec3 &pos, replace_t allowreplacement)
-{
-	return Spawn (classname, pos.x, pos.y, pos.z, allowreplacement);
+	return AActor::StaticSpawn(ClassForSpawn(type), DVector3(0, 0, 0), NO_REPLACE);
 }
 
 inline AActor *Spawn(FName type, const DVector3 &pos, replace_t allowreplacement)
 {
-	fixed_t zz;
-	if (pos.Z != ONFLOORZ && pos.Z != ONCEILINGZ && pos.Z != FLOATRANDZ) zz = FLOAT2FIXED(pos.Z);
-	else zz = (int)pos.Z;
-	return Spawn(type, FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), zz, allowreplacement);
+	return AActor::StaticSpawn(ClassForSpawn(type), pos, allowreplacement);
 }
 
-
-template<class T>
-inline T *Spawn (fixed_t x, fixed_t y, fixed_t z, replace_t allowreplacement)
+template<class T> inline T *Spawn(const DVector3 &pos, replace_t allowreplacement)
 {
-	return static_cast<T *>(AActor::StaticSpawn (RUNTIME_TEMPLATE_CLASS(T), x, y, z, allowreplacement));
+	return static_cast<T *>(AActor::StaticSpawn(RUNTIME_TEMPLATE_CLASS(T), pos, allowreplacement));
 }
 
-template<class T>
-inline T *Spawn (const fixedvec3 &pos, replace_t allowreplacement)
+template<class T> inline T *Spawn()	// for inventory items we do not need coordinates and replacement info.
 {
-	return static_cast<T *>(AActor::StaticSpawn (RUNTIME_TEMPLATE_CLASS(T), pos.x, pos.y, pos.z, allowreplacement));
-}
-
-template<class T>
-inline T *Spawn(const DVector3 &pos, replace_t allowreplacement)
-{
-	fixed_t zz;
-	if (pos.Z != ONFLOORZ && pos.Z != ONCEILINGZ && pos.Z != FLOATRANDZ) zz = FLOAT2FIXED(pos.Z);
-	else zz = (int)pos.Z;
-	return static_cast<T *>(AActor::StaticSpawn(RUNTIME_TEMPLATE_CLASS(T), FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), zz, allowreplacement));
-}
-
-template<class T>
-inline T *Spawn(double x, double y, double z, replace_t allowreplacement)
-{
-	fixed_t zz;
-	if (z != ONFLOORZ && z != ONCEILINGZ && z != FLOATRANDZ) zz = FLOAT2FIXED(z);
-	else zz = (int)z;
-	return static_cast<T *>(AActor::StaticSpawn(RUNTIME_TEMPLATE_CLASS(T), FLOAT2FIXED(x), FLOAT2FIXED(y), zz, allowreplacement));
-}
-
-template<class T>
-inline T *Spawn()	// for inventory items we do not need coordinates and replacement info.
-{
-	return static_cast<T *>(AActor::StaticSpawn(RUNTIME_TEMPLATE_CLASS(T), 0, 0, 0, NO_REPLACE));
+	return static_cast<T *>(AActor::StaticSpawn(RUNTIME_TEMPLATE_CLASS(T), DVector3(0, 0, 0), NO_REPLACE));
 }
 
 inline fixedvec2 Vec2Angle(fixed_t length, angle_t angle)

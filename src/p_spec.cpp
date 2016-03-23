@@ -1036,22 +1036,19 @@ void P_SpawnPortal(line_t *line, int sectortag, int plane, int alpha, int linked
 			lines[i].args[3] == 1)
 		{
 			// beware of overflows.
-			fixed_t x1 = fixed_t((SQWORD(line->v1->x) + SQWORD(line->v2->x)) >> 1);
-			fixed_t y1 = fixed_t((SQWORD(line->v1->y) + SQWORD(line->v2->y)) >> 1);
-			fixed_t x2 = fixed_t((SQWORD(lines[i].v1->x) + SQWORD(lines[i].v2->x)) >> 1);
-			fixed_t y2 = fixed_t((SQWORD(lines[i].v1->y) + SQWORD(lines[i].v2->y)) >> 1);
-			fixed_t z = linked ? line->frontsector->planes[plane].TexZ : 0;	// the map's sector height defines the portal plane for linked portals
+			DVector3 pos1((line->v1->fX() + line->v2->fX()) / 2, (line->v1->fY() + line->v2->fY()) / 2, 0);
+			DVector3 pos2((lines[i].v1->fX() + lines[i].v2->fX()) / 2, (lines[i].v1->fY() + lines[i].v2->fY()) / 2, 0);
+			double z = linked ? line->frontsector->GetPlaneTexZF(plane) : 0;	// the map's sector height defines the portal plane for linked portals
 
 			fixed_t alpha = Scale (lines[i].args[4], OPAQUE, 255);
 
-			AStackPoint *anchor = Spawn<AStackPoint>(x1, y1, 0, NO_REPLACE);
-			AStackPoint *reference = Spawn<AStackPoint>(x2, y2, 0, NO_REPLACE);
+			AStackPoint *anchor = Spawn<AStackPoint>(pos1, NO_REPLACE);
+			AStackPoint *reference = Spawn<AStackPoint>(pos2, NO_REPLACE);
 			reference->special1 = linked ? SKYBOX_LINKEDPORTAL : SKYBOX_PORTAL;
 			anchor->special1 = SKYBOX_ANCHOR;
 			// store the portal displacement in the unused scaleX/Y members of the portal reference actor.
-			anchor->Scale.X = -(reference->Scale.X = FIXED2DBL(x2 - x1));
-			anchor->Scale.Y = -(reference->Scale.Y = FIXED2DBL(y2 - y1));
-			anchor->specialf1 = reference->specialf1 = FIXED2FLOAT(z);
+			anchor->Scale = -(reference->Scale = pos2 - pos1);
+			anchor->specialf1 = reference->specialf1 = z;
 
 			reference->Mate = anchor;
 			anchor->Mate = reference;

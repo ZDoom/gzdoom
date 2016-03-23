@@ -3161,9 +3161,8 @@ AInventory *P_DropItem (AActor *source, PClassActor *type, int dropamount, int c
 	if (type != NULL && pr_dropitem() <= chance)
 	{
 		AActor *mo;
-		fixed_t spawnz;
+		double spawnz = 0;
 
-		spawnz = source->_f_Z();
 		if (!(i_compatflags & COMPATF_NOTOSSDROPS))
 		{
 			int style = sv_dropstyle;
@@ -3173,14 +3172,14 @@ AInventory *P_DropItem (AActor *source, PClassActor *type, int dropamount, int c
 			}
 			if (style == 2)
 			{
-				spawnz += 24*FRACUNIT;
+				spawnz = 24*FRACUNIT;
 			}
 			else
 			{
-				spawnz += source->_f_height() / 2;
+				spawnz = source->Height / 2;
 			}
 		}
-		mo = Spawn(type, source->_f_X(), source->_f_Y(), spawnz, ALLOW_REPLACE);
+		mo = Spawn(type, source->PosPlusZ(spawnz), ALLOW_REPLACE);
 		if (mo != NULL)
 		{
 			mo->flags |= MF_DROPPED;

@@ -3268,19 +3268,23 @@ FUNC(LS_GlassBreak)
 	{
 		if (!arg0)
 		{ // Break some glass
-			fixed_t x, y;
 			AActor *glass;
 
-			x = ln->v1->x + ln->dx/2;
-			y = ln->v1->y + ln->dy/2;
+			DVector2 linemid((ln->v1->fX() + ln->v2->fX()) / 2, (ln->v1->fY() + ln->v2->fY()) / 2);
+
+			// remove dependence on sector size and always spawn 2 map units in front of the line.
+			DVector2 normal(ln->Delta().Y, -ln->Delta().X);
+			linemid += normal.Unit() * 2;
+			/* old code:
 			x += (ln->frontsector->centerspot.x - x) / 5;
 			y += (ln->frontsector->centerspot.y - y) / 5;
+			*/
 
 			for (int i = 0; i < 7; ++i)
 			{
-				glass = Spawn("GlassJunk", x, y, ONFLOORZ, ALLOW_REPLACE);
+				glass = Spawn("GlassJunk", DVector3(linemid, ONFLOORZ), ALLOW_REPLACE);
 
-				glass->_f_AddZ(24 * FRACUNIT);
+				glass->AddZ(24.);
 				glass->SetState (glass->SpawnState + (pr_glass() % glass->health));
 
 				glass->Angles.Yaw = pr_glass() * (360 / 256.);

@@ -787,7 +787,7 @@ AInventory *AInventory::CreateTossable ()
 		flags &= ~(MF_SPECIAL|MF_SOLID);
 		return this;
 	}
-	copy = static_cast<AInventory *>(Spawn (GetClass(), Owner->_f_Pos(), NO_REPLACE));
+	copy = static_cast<AInventory *>(Spawn (GetClass(), Owner->Pos(), NO_REPLACE));
 	if (copy != NULL)
 	{
 		copy->MaxAmount = MaxAmount;

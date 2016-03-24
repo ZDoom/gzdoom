@@ -74,10 +74,6 @@
 
 static FRandom pr_script("FScript");
 
-
-#define AngleToFixed(x)  ((((double) x) / ((double) ANG45/45)) * FRACUNIT)
-#define FixedToAngle(x)  ((((double) x) / FRACUNIT) * ANG45/45)
-
 // functions. FParser::SF_ means Script Function not, well.. heh, me
 
 /////////// actually running a function /////////////
@@ -1420,9 +1416,7 @@ void FParser::SF_PointToDist(void)
 		// Doing this in floating point is actually faster with modern computers!
 		double x = floatvalue(t_argv[2]) - floatvalue(t_argv[0]);
 		double y = floatvalue(t_argv[3]) - floatvalue(t_argv[1]);
-   
-		t_return.type = svt_fixed;
-		t_return.value.f = FLOAT2FIXED(g_sqrt(x*x+y*y));
+		t_return.setDouble(g_sqrt(x*x+y*y));
 	}
 }
 
@@ -2177,7 +2171,7 @@ void FParser::SF_OpenDoor(void)
 		if(t_argc > 2) speed = intvalue(t_argv[2]);
 		else speed = 1;    // 1= normal speed
 
-		EV_DoDoor(wait_time? DDoor::doorRaise:DDoor::doorOpen,NULL,NULL,sectag,2*FRACUNIT*clamp(speed,1,127),wait_time,0,0);
+		EV_DoDoor(wait_time ? DDoor::doorRaise : DDoor::doorOpen, NULL, NULL, sectag, 2. * clamp(speed, 1, 127), wait_time, 0, 0);
 	}
 }
 
@@ -2202,7 +2196,7 @@ void FParser::SF_CloseDoor(void)
 		if(t_argc > 1) speed = intvalue(t_argv[1]);
 		else speed = 1;    // 1= normal speed
 		
-		EV_DoDoor(DDoor::doorClose,NULL,NULL,sectag,2*FRACUNIT*clamp(speed,1,127),0,0,0);
+		EV_DoDoor(DDoor::doorClose, NULL, NULL, sectag, 2.*clamp(speed, 1, 127), 0, 0, 0);
 	}
 }
 
@@ -2416,12 +2410,10 @@ void FParser::SF_SetLineTexture(void)
 
 void FParser::SF_Max(void)
 {
-	fixed_t n1, n2;
-	
 	if (CheckArgs(2))
 	{
-		n1 = fixedvalue(t_argv[0]);
-		n2 = fixedvalue(t_argv[1]);
+		auto n1 = fixedvalue(t_argv[0]);
+		auto n2 = fixedvalue(t_argv[1]);
 		
 		t_return.type = svt_fixed;
 		t_return.value.f = (n1 > n2) ? n1 : n2;
@@ -2437,12 +2429,10 @@ void FParser::SF_Max(void)
 
 void FParser::SF_Min(void)
 {
-	fixed_t   n1, n2;
-	
 	if (CheckArgs(1))
 	{
-		n1 = fixedvalue(t_argv[0]);
-		n2 = fixedvalue(t_argv[1]);
+		auto n1 = fixedvalue(t_argv[0]);
+		auto n2 = fixedvalue(t_argv[1]);
 		
 		t_return.type = svt_fixed;
 		t_return.value.f = (n1 < n2) ? n1 : n2;
@@ -2458,11 +2448,10 @@ void FParser::SF_Min(void)
 
 void FParser::SF_Abs(void)
 {
-	fixed_t   n1;
 	
 	if (CheckArgs(1))
 	{
-		n1 = fixedvalue(t_argv[0]);
+		auto n1 = fixedvalue(t_argv[0]);
 		
 		t_return.type = svt_fixed;
 		t_return.value.f = (n1 < 0) ? -n1 : n1;
@@ -3877,10 +3866,9 @@ void FParser::SF_SetCorona(void)
 		return;
 	}
 	
-	int num = t_argv[0].value.i;    // which corona we want to modify
-	int what = t_argv[1].value.i;   // what we want to modify (type, color, offset,...)
-	int ival = t_argv[2].value.i;   // the value of what we modify
-	double fval = ((double) t_argv[2].value.f / FRACUNIT);
+	int num = intvalue(t_argv[0]);    // which corona we want to modify
+	int what = intvalue(t_argv[1]);   // what we want to modify (type, color, offset,...)
+	double val = floatvalue(t_argv[2]);   // the value of what we modify
 
   	/*
 	switch (what)

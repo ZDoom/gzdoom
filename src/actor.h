@@ -1244,7 +1244,7 @@ public:
 	double			wallbouncefactor;	// The bounce factor for walls can be different.
 	int				bouncecount;	// Strife's grenades only bounce twice before exploding
 	double			Gravity;		// [GRB] Gravity factor
-	fixed_t			Friction;
+	double			Friction;
 	int 			FastChaseStrafeCount;
 	double			pushfactor;
 	int				lastpush;

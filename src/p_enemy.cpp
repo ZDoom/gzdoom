@@ -453,9 +453,9 @@ bool P_Move (AActor *actor)
 
 	fixed_t tryx, tryy, deltax, deltay, origx, origy;
 	bool try_ok;
-	int speed = actor->_f_speed();
-	int movefactor = ORIG_FRICTION_FACTOR;
-	int friction = ORIG_FRICTION;
+	fixed_t speed = actor->_f_speed();
+	double movefactor = ORIG_FRICTION_FACTOR;
+	double friction = ORIG_FRICTION;
 	int dropoff = 0;
 
 	if (actor->flags2 & MF2_BLASTED)
@@ -503,8 +503,7 @@ bool P_Move (AActor *actor)
 
 		if (friction < ORIG_FRICTION)
 		{ // sludge
-			speed = ((ORIG_FRICTION_FACTOR - (ORIG_FRICTION_FACTOR-movefactor)/2)
-			   * speed) / ORIG_FRICTION_FACTOR;
+			speed = fixed_t(speed * ((ORIG_FRICTION_FACTOR - (ORIG_FRICTION_FACTOR-movefactor)/2)) / ORIG_FRICTION_FACTOR);
 			if (speed == 0)
 			{ // always give the monster a little bit of speed
 				speed = ksgn(actor->_f_speed());
@@ -564,9 +563,9 @@ bool P_Move (AActor *actor)
 	if (try_ok && friction > ORIG_FRICTION)
 	{
 		actor->SetOrigin(origx, origy, actor->_f_Z(), false);
-		movefactor *= FRACUNIT / ORIG_FRICTION_FACTOR / 4;
-		actor->Vel.X += FIXED2DBL(FixedMul (deltax, movefactor));
-		actor->Vel.Y += FIXED2DBL(FixedMul (deltay, movefactor));
+		movefactor *= 1.f / ORIG_FRICTION_FACTOR / 4;
+		actor->Vel.X += FIXED2DBL(deltax * movefactor);
+		actor->Vel.Y += FIXED2DBL(deltay * movefactor);
 	}
 
 	// [RH] If a walking monster is no longer on the floor, move it down

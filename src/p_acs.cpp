@@ -4022,7 +4022,7 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		break;
 
 	case APROP_Friction:
-		actor->Friction = value;
+		actor->Friction = ACSToDouble(value);
 
 	default:
 		// do nothing.
@@ -4123,7 +4123,7 @@ int DLevelScript::GetActorProperty (int tid, int property)
 	case APROP_Species:		return GlobalACSStrings.AddString(actor->GetSpecies());
 	case APROP_NameTag:		return GlobalACSStrings.AddString(actor->GetTag());
 	case APROP_StencilColor:return actor->fillcolor;
-	case APROP_Friction:	return actor->Friction;
+	case APROP_Friction:	return DoubleToACS(actor->Friction);
 
 	default:				return 0;
 	}

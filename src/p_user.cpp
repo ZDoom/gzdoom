@@ -1967,7 +1967,7 @@ void P_MovePlayer (player_t *player)
 		double fm, sm;
 
 		movefactor = P_GetMoveFactor (mo, &friction);
-		bobfactor = friction < ORIG_FRICTION ? movefactor : fORIG_FRICTION_FACTOR;
+		bobfactor = friction < ORIG_FRICTION ? movefactor : ORIG_FRICTION_FACTOR;
 		if (!player->onground && !(player->mo->flags & MF_NOGRAVITY) && !player->mo->waterlevel)
 		{
 			// [RH] allow very limited movement if not on ground.

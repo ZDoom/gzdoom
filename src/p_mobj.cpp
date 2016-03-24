@@ -2269,7 +2269,7 @@ explode:
 		// Reducing player velocity is no longer needed to reduce
 		// bobbing, so ice works much better now.
 
-		double friction = FIXED2DBL(P_GetFriction (mo, NULL));
+		double friction = P_GetFriction (mo, NULL);
 
 		mo->Vel.X *= friction;
 		mo->Vel.Y *= friction;
@@ -2280,8 +2280,8 @@ explode:
 
 		if (player && player->mo == mo)		//  Not voodoo dolls
 		{
-			player->Vel.X *= fORIG_FRICTION;
-			player->Vel.Y *= fORIG_FRICTION;
+			player->Vel.X *= ORIG_FRICTION;
+			player->Vel.Y *= ORIG_FRICTION;
 		}
 
 		// Don't let the velocity become less than the smallest representable fixed point value.
@@ -2452,11 +2452,11 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 		{
 			mo->_f_AddZ(finesine[(FINEANGLES/80*level.maptime)&FINEMASK]/8);
 		}
-		mo->Vel.Z *= fFRICTION_FLY;
+		mo->Vel.Z *= FRICTION_FLY;
 	}
 	if (mo->waterlevel && !(mo->flags & MF_NOGRAVITY))
 	{
-		fixed_t friction = FIXED_MIN;
+		double friction = -1;
 
 		// Check 3D floors -- might be the source of the waterlevel
 		for (auto rover : mo->Sector->e->XFloor.ffloors)
@@ -2464,17 +2464,17 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 			if (!(rover->flags & FF_EXISTS)) continue;
 			if (!(rover->flags & FF_SWIMMABLE)) continue;
 
-			if (mo->_f_Z() >= rover->top.plane->ZatPoint(mo) ||
-				mo->_f_Z() + mo->_f_height()/2 < rover->bottom.plane->ZatPoint(mo))
+			if (mo->Z() >= rover->top.plane->ZatPointF(mo) ||
+				mo->Center() < rover->bottom.plane->ZatPointF(mo))
 				continue;
 
 			friction = rover->model->GetFriction(rover->top.isceiling);
 			break;
 		}
-		if (friction == FIXED_MIN)
+		if (friction < 0)
 			friction = mo->Sector->GetFriction();	// get real friction, even if from a terrain definition
 
-		mo->Vel.Z *= FIXED2DBL(friction);
+		mo->Vel.Z *= friction;
 	}
 
 //

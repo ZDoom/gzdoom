@@ -585,7 +585,7 @@ struct sector_t
 	int GetFloorLight () const;
 	int GetCeilingLight () const;
 	sector_t *GetHeightSec() const;
-	fixed_t GetFriction(int plane = sector_t::floor, fixed_t *movefac = NULL) const;
+	double GetFriction(int plane = sector_t::floor, double *movefac = NULL) const;
 
 	DInterpolation *SetInterpolation(int position, bool attach);
 
@@ -907,7 +907,7 @@ struct sector_t
 	// killough 8/28/98: friction is a sector property, not an mobj property.
 	// these fields used to be in AActor, but presented performance problems
 	// when processed as mobj properties. Fix is to make them sector properties.
-	fixed_t		friction, movefactor;
+	double		friction, movefactor;
 
 	int			terrainnum[2];
 

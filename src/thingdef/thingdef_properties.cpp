@@ -1350,7 +1350,7 @@ DEFINE_PROPERTY(gravity, F, Actor)
 //==========================================================================
 DEFINE_PROPERTY(friction, F, Actor)
 {
-	PROP_FIXED_PARM(i, 0);
+	PROP_DOUBLE_PARM(i, 0);
 
 	if (i < 0) I_Error ("Friction must not be negative.");
 	defaults->Friction = i;

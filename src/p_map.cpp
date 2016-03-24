@@ -587,14 +587,15 @@ void P_PlayerStartStomp(AActor *actor, bool mononly)
 //
 //==========================================================================
 
-int P_GetFriction(const AActor *mo, int *frictionfactor)
+double P_GetFriction(const AActor *mo, double *frictionfactor)
 {
-	int friction = ORIG_FRICTION;
-	int movefactor = ORIG_FRICTION_FACTOR;
-	fixed_t newfriction;
+	double friction = ORIG_FRICTION;
+	double movefactor = ORIG_FRICTION_FACTOR;
+	double newfriction;
+	double newmf;
+
 	const msecnode_t *m;
 	sector_t *sec;
-	fixed_t newmf;
 
 	if (mo->IsNoClip2())
 	{
@@ -608,7 +609,7 @@ int P_GetFriction(const AActor *mo, int *frictionfactor)
 		(mo->waterlevel == 1 && mo->Z() > mo->floorz+ 6))
 	{
 		friction = mo->Sector->GetFriction(sector_t::floor, &movefactor);
-		movefactor >>= 1;
+		movefactor *= 0.5;
 
 		// Check 3D floors -- might be the source of the waterlevel
 		for (unsigned i = 0; i < mo->Sector->e->XFloor.ffloors.Size(); i++)
@@ -625,7 +626,7 @@ int P_GetFriction(const AActor *mo, int *frictionfactor)
 			if (newfriction < friction || friction == ORIG_FRICTION)
 			{
 				friction = newfriction;
-				movefactor = newmf >> 1;
+				movefactor = newmf * 0.5;
 			}
 		}
 	}
@@ -648,13 +649,13 @@ int P_GetFriction(const AActor *mo, int *frictionfactor)
 				if (rover->flags & FF_SOLID)
 				{
 					// Must be standing on a solid floor
-					if (mo->_f_Z() != rover->top.plane->ZatPoint(pos)) continue;
+					if (mo->Z() != rover->top.plane->ZatPointF(pos)) continue;
 				}
 				else if (rover->flags & FF_SWIMMABLE)
 				{
 					// Or on or inside a swimmable floor (e.g. in shallow water)
-					if (mo->_f_Z() > rover->top.plane->ZatPoint(pos) ||
-						(mo->_f_Top()) < rover->bottom.plane->ZatPoint(pos))
+					if (mo->Z() > rover->top.plane->ZatPointF(pos) ||
+						(mo->Top()) < rover->bottom.plane->ZatPointF(pos))
 						continue;
 				}
 				else
@@ -664,7 +665,7 @@ int P_GetFriction(const AActor *mo, int *frictionfactor)
 				if (newfriction < friction || friction == ORIG_FRICTION)
 				{
 					friction = newfriction;
-					movefactor = newmf >> 1;
+					movefactor = newmf * 0.5;
 				}
 			}
 
@@ -675,9 +676,9 @@ int P_GetFriction(const AActor *mo, int *frictionfactor)
 			}
 			newfriction = sec->GetFriction(sector_t::floor, &newmf);
 			if ((newfriction < friction || friction == ORIG_FRICTION) &&
-				(mo->_f_Z() <= sec->floorplane.ZatPoint(pos) ||
+				(mo->Z() <= sec->floorplane.ZatPointF(pos) ||
 				(sec->GetHeightSec() != NULL &&
-				mo->_f_Z() <= sec->heightsec->floorplane.ZatPoint(pos))))
+				mo->Z() <= sec->heightsec->floorplane.ZatPointF(pos))))
 			{
 				friction = newfriction;
 				movefactor = newmf;
@@ -685,9 +686,9 @@ int P_GetFriction(const AActor *mo, int *frictionfactor)
 		}
 	}
 
-	if (mo->Friction != FRACUNIT)
+	if (mo->Friction != 1)
 	{
-		friction = clamp(FixedMul(friction, mo->Friction), 0, FRACUNIT);
+		friction = clamp((friction * mo->Friction), 0., 1.);
 		movefactor = FrictionToMoveFactor(friction);
 	}
 
@@ -707,9 +708,9 @@ int P_GetFriction(const AActor *mo, int *frictionfactor)
 //
 //==========================================================================
 
-int P_GetMoveFactor(const AActor *mo, int *frictionp)
+double P_GetMoveFactor(const AActor *mo, double *frictionp)
 {
-	int movefactor, friction;
+	double movefactor, friction;
 
 	// If the floor is icy or muddy, it's harder to get moving. This is where
 	// the different friction factors are applied to 'trying to move'. In
@@ -723,11 +724,11 @@ int P_GetMoveFactor(const AActor *mo, int *frictionp)
 		double velocity = mo->VelXYToSpeed();
 
 		if (velocity > MORE_FRICTION_VELOCITY * 4)
-			movefactor <<= 3;
+			movefactor *= 8;
 		else if (velocity > MORE_FRICTION_VELOCITY * 2)
-			movefactor <<= 2;
+			movefactor *= 4;
 		else if (velocity > MORE_FRICTION_VELOCITY)
-			movefactor <<= 1;
+			movefactor *= 2;
 	}
 
 	if (frictionp)

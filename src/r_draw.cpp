@@ -2350,6 +2350,18 @@ static bool R_SetBlendFunc (int op, fixed_t fglevel, fixed_t bglevel, int flags)
 	}
 }
 
+static fixed_t GetAlpha(int type, fixed_t alpha)
+{
+	switch (type)
+	{
+	case STYLEALPHA_Zero:		return 0;
+	case STYLEALPHA_One:		return OPAQUE;
+	case STYLEALPHA_Src:		return alpha;
+	case STYLEALPHA_InvSrc:		return OPAQUE - alpha;
+	default:					return 0;
+	}
+}
+
 ESPSResult R_SetPatchStyle (FRenderStyle style, fixed_t alpha, int translation, DWORD color)
 {
 	fixed_t fglevel, bglevel;

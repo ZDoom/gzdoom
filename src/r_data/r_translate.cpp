@@ -310,7 +310,7 @@ FNativePalette *FRemapTable::GetNative()
 
 void FRemapTable::AddIndexRange(int start, int end, int pal1, int pal2)
 {
-	fixed_t palcol, palstep;
+	double palcol, palstep;
 
 	if (start > end)
 	{
@@ -326,11 +326,11 @@ void FRemapTable::AddIndexRange(int start, int end, int pal1, int pal2)
 		Palette[start].a = start == 0 ? 0 : 255;
 		return;
 	}
-	palcol = pal1 << FRACBITS;
-	palstep = ((pal2 << FRACBITS) - palcol) / (end - start);
+	palcol = pal1;
+	palstep = (pal2 - palcol) / (end - start);
 	for (int i = start; i <= end; palcol += palstep, ++i)
 	{
-		int j = GPalette.Remap[i], k = GPalette.Remap[palcol >> FRACBITS];
+		int j = GPalette.Remap[i], k = GPalette.Remap[int(palcol)];
 		Remap[j] = k;
 		Palette[j] = GPalette.BaseColors[k];
 		Palette[j].a = j == 0 ? 0 : 255;
@@ -345,14 +345,14 @@ void FRemapTable::AddIndexRange(int start, int end, int pal1, int pal2)
 
 void FRemapTable::AddColorRange(int start, int end, int _r1,int _g1, int _b1, int _r2, int _g2, int _b2)
 {
-	fixed_t r1 = _r1 << FRACBITS;
-	fixed_t g1 = _g1 << FRACBITS;
-	fixed_t b1 = _b1 << FRACBITS;
-	fixed_t r2 = _r2 << FRACBITS;
-	fixed_t g2 = _g2 << FRACBITS;
-	fixed_t b2 = _b2 << FRACBITS;
-	fixed_t r, g, b;
-	fixed_t rs, gs, bs;
+	double r1 = _r1;
+	double g1 = _g1;
+	double b1 = _b1;
+	double r2 = _r2;
+	double g2 = _g2;
+	double b2 = _b2;
+	double r, g, b;
+	double rs, gs, bs;
 
 	if (start > end)
 	{
@@ -376,9 +376,8 @@ void FRemapTable::AddColorRange(int start, int end, int _r1,int _g1, int _b1, in
 	if (start == end)
 	{
 		start = GPalette.Remap[start];
-		Remap[start] = ColorMatcher.Pick(r >> FRACBITS, g >> FRACBITS, b >> FRACBITS);
-		Palette[start] = PalEntry(r >> FRACBITS, g >> FRACBITS, b >> FRACBITS);
-		Palette[start].a = start == 0 ? 0 : 255;
+		Palette[start] = PalEntry(start == 0 ? 0 : 255, int(r), int(g), int(b));
+		Remap[start] = ColorMatcher.Pick(Palette[start]);
 	}
 	else
 	{
@@ -388,8 +387,8 @@ void FRemapTable::AddColorRange(int start, int end, int _r1,int _g1, int _b1, in
 		for (int i = start; i <= end; ++i)
 		{
 			int j = GPalette.Remap[i];
-			Remap[j] = ColorMatcher.Pick(r >> FRACBITS, g >> FRACBITS, b >> FRACBITS);
-			Palette[j] = PalEntry(j == 0 ? 0 : 255, r >> FRACBITS, g >> FRACBITS, b >> FRACBITS);
+			Palette[j] = PalEntry(j == 0 ? 0 : 255, int(r), int(g), int(b));
+			Remap[j] = ColorMatcher.Pick(Palette[j]);
 			r += rs;
 			g += gs;
 			b += bs;

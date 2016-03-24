@@ -3071,7 +3071,7 @@ void D3DFB::FlatFill(int left, int top, int right, int bottom, FTexture *src, bo
 
 void D3DFB::FillSimplePoly(FTexture *texture, FVector2 *points, int npoints,
 	double originx, double originy, double scalex, double scaley,
-	angle_t rotation, FDynamicColormap *colormap, int lightlevel)
+	DAngle rotation, FDynamicColormap *colormap, int lightlevel)
 {
 	// Use an equation similar to player sprites to determine shade
 	fixed_t shade = LIGHT2SHADE(lightlevel) - 12*FRACUNIT;
@@ -3083,8 +3083,7 @@ void D3DFB::FillSimplePoly(FTexture *texture, FVector2 *points, int npoints,
 	D3DCOLOR color0, color1;
 	float ox, oy;
 	float cosrot, sinrot;
-	float rot = float(rotation * M_PI / float(1u << 31));
-	bool dorotate = rot != 0;
+	bool dorotate = rotation != 0;
 
 	if (npoints < 3)
 	{ // This is no polygon.
@@ -3105,8 +3104,8 @@ void D3DFB::FillSimplePoly(FTexture *texture, FVector2 *points, int npoints,
 		return;
 	}
 
-	cosrot = (float)cos(rot);
-	sinrot = (float)sin(rot);
+	cosrot = (float)cos(ToRadians(rotation));
+	sinrot = (float)sin(ToRadians(rotation));
 
 	CheckQuadBatch(npoints - 2, npoints);
 	quad = &QuadExtra[QuadBatchPos];

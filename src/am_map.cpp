@@ -2070,7 +2070,7 @@ void AM_drawSubsectors()
 				originx, originy,
 				scale / (FIXED2DBL(scalex) * float(1 << MAPBITS)),
 				scale / (FIXED2DBL(scaley) * float(1 << MAPBITS)),
-				rotation,
+				ANGLE2DBL(rotation),
 				colormap,
 				floorlight
 				);

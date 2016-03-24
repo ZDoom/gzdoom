@@ -964,7 +964,7 @@ DEFINE_PROPERTY(meleedamage, I, Actor)
 //==========================================================================
 DEFINE_PROPERTY(meleerange, F, Actor)
 {
-	PROP_FIXED_PARM(id, 0);
+	PROP_DOUBLE_PARM(id, 0);
 	defaults->meleerange = id;
 }
 
@@ -1003,7 +1003,7 @@ DEFINE_PROPERTY(missileheight, F, Actor)
 //==========================================================================
 DEFINE_PROPERTY(pushfactor, F, Actor)
 {
-	PROP_FIXED_PARM(id, 0);
+	PROP_DOUBLE_PARM(id, 0);
 	defaults->pushfactor = id;
 }
 
@@ -1310,7 +1310,7 @@ DEFINE_PROPERTY(fastspeed, F, Actor)
 //==========================================================================
 DEFINE_PROPERTY(radiusdamagefactor, F, Actor)
 {
-	PROP_FIXED_PARM(i, 0);
+	PROP_DOUBLE_PARM(i, 0);
 	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
 	static_cast<PClassActor *>(info)->RDFactor = i;
 }

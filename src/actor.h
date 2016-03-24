@@ -1235,7 +1235,7 @@ public:
 	SBYTE			LastLookPlayerNumber;// Player number last looked for (if TIDtoHate == 0)
 	ActorBounceFlags	BounceFlags;	// which bouncing type?
 	DWORD			SpawnFlags;		// Increased to DWORD because of Doom 64
-	fixed_t			meleerange;		// specifies how far a melee attack reaches.
+	double			meleerange;		// specifies how far a melee attack reaches.
 	double			meleethreshold;	// Distance below which a monster doesn't try to shoot missiles anynore
 									// but instead tries to come closer for a melee attack.
 									// This is not the same as meleerange
@@ -1246,7 +1246,7 @@ public:
 	double			Gravity;		// [GRB] Gravity factor
 	fixed_t			Friction;
 	int 			FastChaseStrafeCount;
-	fixed_t			pushfactor;
+	double			pushfactor;
 	int				lastpush;
 	int				activationtype;	// How the thing behaves when activated with USESPECIAL or BUMPSPECIAL
 	int				lastbump;		// Last time the actor was bumped, used to control BUMPSPECIAL
@@ -1477,10 +1477,6 @@ public:
 	double Center() const
 	{
 		return Z() + Height/2;
-	}
-	double _pushfactor() const
-	{
-		return FIXED2DBL(pushfactor);
 	}
 	void SetZ(double newz, bool moving = true)
 	{

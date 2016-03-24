@@ -264,14 +264,14 @@ bool AActor::CheckMeleeRange ()
 {
 	AActor *pl = target;
 
-	fixed_t dist;
+	double dist;
 		
 	if (!pl)
 		return false;
 				
-	dist = AproxDistance (pl);
+	dist = Distance2D (pl);
 
-	if (dist >= meleerange + pl->_f_radius())
+	if (dist >= meleerange + pl->radius)
 		return false;
 
 	// [RH] If moving toward goal, then we've reached it.
@@ -306,7 +306,7 @@ bool AActor::CheckMeleeRange ()
 bool P_CheckMeleeRange2 (AActor *actor)
 {
 	AActor *mo;
-	fixed_t dist;
+	double dist;
 
 
 	if (!actor->target)
@@ -314,8 +314,8 @@ bool P_CheckMeleeRange2 (AActor *actor)
 		return false;
 	}
 	mo = actor->target;
-	dist = mo->AproxDistance (actor);
-	if (dist >= (128 << FRACBITS) || dist < actor->meleerange + mo->_f_radius())
+	dist = mo->Distance2D (actor);
+	if (dist >= 128 || dist < actor->meleerange + mo->radius)
 	{
 		return false;
 	}
@@ -965,16 +965,16 @@ void P_NewChaseDir(AActor * actor)
 		if (actor->flags3 & MF3_AVOIDMELEE)
 		{
 			bool ismeleeattacker = false;
-			fixed_t dist = actor->AproxDistance(target);
+			double dist = actor->Distance2D(target);
 			if (target->player == NULL)
 			{
-				ismeleeattacker = (target->MissileState == NULL && dist < (target->meleerange + target->_f_radius())*2);
+				ismeleeattacker = (target->MissileState == NULL && dist < (target->meleerange + target->radius)*2);
 			}
 			else if (target->player->ReadyWeapon != NULL)
 			{
 				// melee range of player weapon is a parameter of the action function and cannot be checked here.
 				// Add a new weapon property?
-				ismeleeattacker = (target->player->ReadyWeapon->WeaponFlags & WIF_MELEEWEAPON && dist < (192 << FRACBITS));
+				ismeleeattacker = ((target->player->ReadyWeapon->WeaponFlags & WIF_MELEEWEAPON) && dist < 192);
 			}
 			if (ismeleeattacker)
 			{
@@ -1198,7 +1198,7 @@ bool P_IsVisible(AActor *lookee, AActor *other, INTBOOL allaround, FLookExParams
 		{
 			// if real close, react anyway
 			// [KS] but respect minimum distance rules
-			if (mindist || dist > lookee->meleerange + lookee->_f_radius())
+			if (mindist || dist > FLOAT2FIXED(lookee->meleerange + lookee->radius))
 				return false;	// outside of fov
 		}
 	}

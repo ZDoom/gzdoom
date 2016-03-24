@@ -1477,7 +1477,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 					{ // Push thing
 						if (thing->lastpush != tm.PushTime)
 						{
-							thing->Vel += tm.thing->Vel.XY() * thing->_pushfactor();
+							thing->Vel += tm.thing->Vel.XY() * thing->pushfactor;
 							thing->lastpush = tm.PushTime;
 						}
 					}
@@ -1535,7 +1535,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 	{ // Push thing
 		if (thing->lastpush != tm.PushTime)
 		{
-			thing->Vel += tm.thing->Vel.XY() * thing->_pushfactor();
+			thing->Vel += tm.thing->Vel.XY() * thing->pushfactor;
 			thing->lastpush = tm.PushTime;
 		}
 	}
@@ -5328,7 +5328,7 @@ void P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bo
 			{
 				points = points * splashfactor;
 			}
-			points *= thing->GetClass()->RDFactor / (float)FRACUNIT;
+			points *= thing->GetClass()->RDFactor;
 
 			// points and bombdamage should be the same sign
 			if (((points * bombdamage) > 0) && P_CheckSight(thing, bombspot, SF_IGNOREVISIBILITY | SF_IGNOREWATERBOUNDARY))
@@ -5400,9 +5400,9 @@ void P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bo
 			{ // OK to damage; target is in direct path
 				dist = clamp<int>(dist - fulldamagedistance, 0, dist);
 				int damage = Scale(bombdamage, bombdistance - dist, bombdistance);
-				damage = (int)((double)damage * splashfactor);
 
-				damage = Scale(damage, thing->GetClass()->RDFactor, FRACUNIT);
+				double factor = splashfactor * thing->GetClass()->RDFactor;
+				damage = int(damage * factor);
 				if (damage > 0)
 				{
 					int newdam = P_DamageMobj(thing, bombspot, bombsource, damage, bombmod);

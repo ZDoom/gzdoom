@@ -382,7 +382,7 @@ AAmmo *AWeapon::AddAmmo (AActor *other, PClassActor *ammotype, int amount)
 	// extra ammo in baby mode and nightmare mode
 	if (!(this->ItemFlags&IF_IGNORESKILL))
 	{
-		amount = FixedMul(amount, G_SkillProperty(SKILLP_AmmoFactor));
+		amount = int(amount * G_SkillProperty(SKILLP_AmmoFactor));
 	}
 	ammo = static_cast<AAmmo *>(other->FindInventory (ammotype));
 	if (ammo == NULL)
@@ -418,7 +418,7 @@ bool AWeapon::AddExistingAmmo (AAmmo *ammo, int amount)
 		// extra ammo in baby mode and nightmare mode
 		if (!(ItemFlags&IF_IGNORESKILL))
 		{
-			amount = FixedMul(amount, G_SkillProperty(SKILLP_AmmoFactor));
+			amount = int(amount * G_SkillProperty(SKILLP_AmmoFactor));
 		}
 		ammo->Amount += amount;
 		if (ammo->Amount > ammo->MaxAmount && !sv_unlimited_pickup)

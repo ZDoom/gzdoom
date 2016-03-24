@@ -126,6 +126,7 @@ fixed_t 		viewsin, viewtansin;
 AActor			*camera;	// [RH] camera to draw from. doesn't have to be a player
 
 fixed_t			r_TicFrac;			// [RH] Fractional tic to render
+double			r_TicFracF;			// same as floating point
 DWORD			r_FrameTime;		// [RH] Time this frame started drawing (in ms)
 bool			r_NoInterpolate;
 bool			r_showviewer;
@@ -1010,6 +1011,7 @@ void R_SetupFrame (AActor *actor)
 	{
 		r_TicFrac = FRACUNIT;
 	}
+	r_TicFracF = FIXED2DBL(r_TicFrac);
 
 	R_InterpolateView (player, r_TicFrac, iview);
 

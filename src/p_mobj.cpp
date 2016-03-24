@@ -6457,12 +6457,12 @@ int AActor::SpawnHealth() const
 	}
 	else if (flags & MF_FRIENDLY)
 	{
-		int adj = FixedMul(defhealth, G_SkillProperty(SKILLP_FriendlyHealth));
+		int adj = int(defhealth * G_SkillProperty(SKILLP_FriendlyHealth));
 		return (adj <= 0) ? 1 : adj;
 	}
 	else
 	{
-		int adj = FixedMul(defhealth, G_SkillProperty(SKILLP_MonsterHealth));
+		int adj = int(defhealth * G_SkillProperty(SKILLP_MonsterHealth));
 		return (adj <= 0) ? 1 : adj;
 	}
 }

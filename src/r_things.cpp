@@ -1354,8 +1354,7 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, fixed_t sx, fixed_
 			}
 			else
 			{
-				vis->texturemid -= FixedMul (StatusBar->GetDisplacement (),
-					FLOAT2FIXED(weapon->YAdjust));
+				vis->texturemid -= FLOAT2FIXED(StatusBar->GetDisplacement () * weapon->YAdjust);
 			}
 		}
 	}

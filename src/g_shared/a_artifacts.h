@@ -91,8 +91,6 @@ protected:
 	void DoEffect ();
 	void EndEffect ();
 	int AlterWeaponSprite (visstyle_t *vis);
-//	FRenderStyle OwnersNormalStyle;
-//	fixed_t OwnersNormalAlpha;
 };
 
 class APowerIronFeet : public APowerup

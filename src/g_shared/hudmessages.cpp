@@ -146,7 +146,7 @@ DHUDMessage::DHUDMessage (FFont *font, const char *text, float x, float y, int h
 	Font = font;
 	VisibilityFlags = 0;
 	Style = STYLE_Translucent;
-	Alpha = FRACUNIT;
+	Alpha = 1.;
 	ResetText (SourceText);
 }
 
@@ -221,7 +221,7 @@ void DHUDMessage::Serialize (FArchive &arc)
 	if (SaveVersion < 3824)
 	{
 		Style = STYLE_Translucent;
-		Alpha = FRACUNIT;
+		Alpha = 1.;
 	}
 	else
 	{
@@ -474,7 +474,7 @@ void DHUDMessage::DoDraw (int linenum, int x, int y, bool clean, int hudheight)
 		{
 			screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
 				DTA_CleanNoMove, clean,
-				DTA_Alpha, Alpha,
+				DTA_AlphaF, Alpha,
 				DTA_RenderStyle, Style,
 				TAG_DONE);
 		}
@@ -483,7 +483,7 @@ void DHUDMessage::DoDraw (int linenum, int x, int y, bool clean, int hudheight)
 			screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
 				DTA_VirtualWidth, SCREENWIDTH/2,
 				DTA_VirtualHeight, SCREENHEIGHT/2,
-				DTA_Alpha, Alpha,
+				DTA_AlphaF, Alpha,
 				DTA_RenderStyle, Style,
 				DTA_KeepRatio, true,
 				TAG_DONE);
@@ -498,7 +498,7 @@ void DHUDMessage::DoDraw (int linenum, int x, int y, bool clean, int hudheight)
 			DTA_ClipRight, ClipRight,
 			DTA_ClipTop, ClipTop,
 			DTA_ClipBottom, ClipBot,
-			DTA_Alpha, Alpha,
+			DTA_AlphaF, Alpha,
 			DTA_RenderStyle, Style,
 			TAG_DONE);
 	}
@@ -570,15 +570,14 @@ void DHUDMessageFadeOut::DoDraw (int linenum, int x, int y, bool clean, int hudh
 	}
 	else
 	{
-		fixed_t trans = -(Tics - FadeOutTics) * FRACUNIT / FadeOutTics;
-		trans = FixedMul(trans, Alpha);
+		float trans = float(Alpha * -(Tics - FadeOutTics) / FadeOutTics);
 		if (hudheight == 0)
 		{
 			if (con_scaletext <= 1)
 			{
 				screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
 					DTA_CleanNoMove, clean,
-					DTA_Alpha, trans,
+					DTA_AlphaF, trans,
 					DTA_RenderStyle, Style,
 					TAG_DONE);
 			}
@@ -587,7 +586,7 @@ void DHUDMessageFadeOut::DoDraw (int linenum, int x, int y, bool clean, int hudh
 				screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
 					DTA_VirtualWidth, SCREENWIDTH/2,
 					DTA_VirtualHeight, SCREENHEIGHT/2,
-					DTA_Alpha, trans,
+					DTA_AlphaF, trans,
 					DTA_RenderStyle, Style,
 					DTA_KeepRatio, true,
 					TAG_DONE);
@@ -602,7 +601,7 @@ void DHUDMessageFadeOut::DoDraw (int linenum, int x, int y, bool clean, int hudh
 				DTA_ClipRight, ClipRight,
 				DTA_ClipTop, ClipTop,
 				DTA_ClipBottom, ClipBot,
-				DTA_Alpha, trans,
+				DTA_AlphaF, trans,
 				DTA_RenderStyle, Style,
 				TAG_DONE);
 		}
@@ -671,15 +670,14 @@ void DHUDMessageFadeInOut::DoDraw (int linenum, int x, int y, bool clean, int hu
 {
 	if (State == 0)
 	{
-		fixed_t trans = Tics * FRACUNIT / FadeInTics;
-		trans = FixedMul(trans, Alpha);
+		float trans = float(Alpha * Tics / FadeInTics);
 		if (hudheight == 0)
 		{
 			if (con_scaletext <= 1)
 			{
 				screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
 					DTA_CleanNoMove, clean,
-					DTA_Alpha, trans,
+					DTA_AlphaF, trans,
 					DTA_RenderStyle, Style,
 					TAG_DONE);
 			}
@@ -688,7 +686,7 @@ void DHUDMessageFadeInOut::DoDraw (int linenum, int x, int y, bool clean, int hu
 				screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
 					DTA_VirtualWidth, SCREENWIDTH/2,
 					DTA_VirtualHeight, SCREENHEIGHT/2,
-					DTA_Alpha, trans,
+					DTA_AlphaF, trans,
 					DTA_RenderStyle, Style,
 					DTA_KeepRatio, true,
 					TAG_DONE);
@@ -703,7 +701,7 @@ void DHUDMessageFadeInOut::DoDraw (int linenum, int x, int y, bool clean, int hu
 				DTA_ClipRight, ClipRight,
 				DTA_ClipTop, ClipTop,
 				DTA_ClipBottom, ClipBot,
-				DTA_Alpha, trans,
+				DTA_AlphaF, trans,
 				DTA_RenderStyle, Style,
 				TAG_DONE);
 		}
@@ -858,7 +856,7 @@ void DHUDMessageTypeOnFadeOut::DoDraw (int linenum, int x, int y, bool clean, in
 					screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
 						DTA_CleanNoMove, clean,
 						DTA_TextLen, LineVisible,
-						DTA_Alpha, Alpha,
+						DTA_AlphaF, Alpha,
 						DTA_RenderStyle, Style,
 						TAG_DONE);
 				}
@@ -869,7 +867,7 @@ void DHUDMessageTypeOnFadeOut::DoDraw (int linenum, int x, int y, bool clean, in
 						DTA_VirtualHeight, SCREENHEIGHT/2,
 						DTA_KeepRatio, true,
 						DTA_TextLen, LineVisible,
-						DTA_Alpha, Alpha,
+						DTA_AlphaF, Alpha,
 						DTA_RenderStyle, Style,
 						TAG_DONE);
 				}
@@ -883,7 +881,7 @@ void DHUDMessageTypeOnFadeOut::DoDraw (int linenum, int x, int y, bool clean, in
 					DTA_ClipRight, ClipRight,
 					DTA_ClipTop, ClipTop,
 					DTA_ClipBottom, ClipBot,
-					DTA_Alpha, Alpha,
+					DTA_AlphaF, Alpha,
 					DTA_TextLen, LineVisible,
 					DTA_RenderStyle, Style,
 					TAG_DONE);

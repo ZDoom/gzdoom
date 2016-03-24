@@ -410,7 +410,7 @@ bool AActor::SuggestMissileAttack (fixed_t dist)
 	if (flags4 & MF4_MISSILEMORE) dist >>= 1;
 	if (flags4 & MF4_MISSILEEVENMORE) dist >>= 3;
 	
-	int mmc = FixedMul(MinMissileChance, G_SkillProperty(SKILLP_Aggressiveness));
+	int mmc = int(MinMissileChance * G_SkillProperty(SKILLP_Aggressiveness));
 	return pr_checkmissilerange() >= MIN<int> (dist >> FRACBITS, mmc);
 }
 
@@ -3097,11 +3097,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_ActiveAndUnblock)
 void ModifyDropAmount(AInventory *inv, int dropamount)
 {
 	int flagmask = IF_IGNORESKILL;
-	fixed_t dropammofactor = G_SkillProperty(SKILLP_DropAmmoFactor);
+	double dropammofactor = G_SkillProperty(SKILLP_DropAmmoFactor);
 	// Default drop amount is half of regular amount * regular ammo multiplication
 	if (dropammofactor == -1) 
 	{
-		dropammofactor = FRACUNIT/2;
+		dropammofactor = 0.5;
 		flagmask = 0;
 	}
 
@@ -3109,7 +3109,7 @@ void ModifyDropAmount(AInventory *inv, int dropamount)
 	{
 		if (flagmask != 0 && inv->IsKindOf(RUNTIME_CLASS(AAmmo)))
 		{
-			inv->Amount = FixedMul(dropamount, dropammofactor);
+			inv->Amount = int(dropamount * dropammofactor);
 			inv->ItemFlags |= IF_IGNORESKILL;
 		}
 		else
@@ -3123,21 +3123,21 @@ void ModifyDropAmount(AInventory *inv, int dropamount)
 		int amount = static_cast<PClassAmmo *>(inv->GetClass())->DropAmount;
 		if (amount <= 0)
 		{
-			amount = MAX(1, FixedMul(inv->Amount, dropammofactor));
+			amount = MAX(1, int(inv->Amount * dropammofactor));
 		}
 		inv->Amount = amount;
 		inv->ItemFlags |= flagmask;
 	}
 	else if (inv->IsKindOf (RUNTIME_CLASS(AWeaponGiver)))
 	{
-		static_cast<AWeaponGiver *>(inv)->DropAmmoFactor = FIXED2DBL(dropammofactor);
+		static_cast<AWeaponGiver *>(inv)->DropAmmoFactor = dropammofactor;
 		inv->ItemFlags |= flagmask;
 	}
 	else if (inv->IsKindOf (RUNTIME_CLASS(AWeapon)))
 	{
 		// The same goes for ammo from a weapon.
-		static_cast<AWeapon *>(inv)->AmmoGive1 = FixedMul(static_cast<AWeapon *>(inv)->AmmoGive1, dropammofactor);
-		static_cast<AWeapon *>(inv)->AmmoGive2 = FixedMul(static_cast<AWeapon *>(inv)->AmmoGive2, dropammofactor);
+		static_cast<AWeapon *>(inv)->AmmoGive1 = int(static_cast<AWeapon *>(inv)->AmmoGive1 * dropammofactor);
+		static_cast<AWeapon *>(inv)->AmmoGive2 = int(static_cast<AWeapon *>(inv)->AmmoGive2 * dropammofactor);
 		inv->ItemFlags |= flagmask;
 	}			
 	else if (inv->IsKindOf (RUNTIME_CLASS(ADehackedPickup)))

@@ -1031,7 +1031,7 @@ struct TAngle
 		return FLOAT2ANGLE(Degrees);
 	}
 
-	TVector2<vec_t> ToVector(vec_t length) const
+	TVector2<vec_t> ToVector(vec_t length = 1) const
 	{
 		return TVector2<vec_t>(length * Cos(), length * Sin());
 	}

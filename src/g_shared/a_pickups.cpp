@@ -141,7 +141,7 @@ bool AAmmo::HandlePickup (AInventory *item)
 
 			if (!(item->ItemFlags & IF_IGNORESKILL))
 			{ // extra ammo in baby mode and nightmare mode
-				receiving = FixedMul(receiving, G_SkillProperty(SKILLP_AmmoFactor));
+				receiving = int(receiving * G_SkillProperty(SKILLP_AmmoFactor));
 			}
 			int oldamount = Amount;
 
@@ -193,7 +193,7 @@ AInventory *AAmmo::CreateCopy (AActor *other)
 	// extra ammo in baby mode and nightmare mode
 	if (!(ItemFlags&IF_IGNORESKILL))
 	{
-		amount = FixedMul(amount, G_SkillProperty(SKILLP_AmmoFactor));
+		amount = int(amount * G_SkillProperty(SKILLP_AmmoFactor));
 	}
 
 	if (GetClass()->ParentClass != RUNTIME_CLASS(AAmmo) && GetClass() != RUNTIME_CLASS(AAmmo))
@@ -298,7 +298,7 @@ bool P_GiveBody (AActor *actor, int num, int max)
 		{
 			if (player->health < max)
 			{
-				num = FixedMul(num, G_SkillProperty(SKILLP_HealthFactor));
+				num = int(num * G_SkillProperty(SKILLP_HealthFactor));
 				if (num < 1) num = 1;
 				player->health += num;
 				if (player->health > max)
@@ -1853,7 +1853,7 @@ AInventory *ABackpackItem::CreateCopy (AActor *other)
 			// extra ammo in baby mode and nightmare mode
 			if (!(ItemFlags&IF_IGNORESKILL))
 			{
-				amount = FixedMul(amount, G_SkillProperty(SKILLP_AmmoFactor));
+				amount = int(amount * G_SkillProperty(SKILLP_AmmoFactor));
 			}
 			if (amount < 0) amount = 0;
 			if (ammo == NULL)
@@ -1916,7 +1916,7 @@ bool ABackpackItem::HandlePickup (AInventory *item)
 					// extra ammo in baby mode and nightmare mode
 					if (!(item->ItemFlags&IF_IGNORESKILL))
 					{
-						amount = FixedMul(amount, G_SkillProperty(SKILLP_AmmoFactor));
+						amount = int(amount * G_SkillProperty(SKILLP_AmmoFactor));
 					}
 					probe->Amount += amount;
 					if (probe->Amount > probe->MaxAmount && !sv_unlimited_pickup)

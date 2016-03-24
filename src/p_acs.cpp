@@ -7993,7 +7993,7 @@ scriptwait:
 					float x = ACSToFloat(Stack[optstart-3]);
 					float y = ACSToFloat(Stack[optstart-2]);
 					float holdTime = ACSToFloat(Stack[optstart-1]);
-					fixed_t alpha;
+					float alpha;
 					DHUDMessage *msg;
 
 					if (type & HUDMSG_COLORSTRING)
@@ -8008,13 +8008,13 @@ scriptwait:
 					switch (type & 0xFF)
 					{
 					default:	// normal
-						alpha = (optstart < sp) ? Stack[optstart] : OPAQUE;
+						alpha = (optstart < sp) ? ACSToFloat(Stack[optstart]) : 1.f;
 						msg = new DHUDMessage (activefont, work, x, y, hudwidth, hudheight, color, holdTime);
 						break;
 					case 1:		// fade out
 						{
 							float fadeTime = (optstart < sp) ? ACSToFloat(Stack[optstart]) : 0.5f;
-							alpha = (optstart < sp-1) ? Stack[optstart+1] : OPAQUE;
+							alpha = (optstart < sp-1) ? ACSToFloat(Stack[optstart+1]) : 1.f;
 							msg = new DHUDMessageFadeOut (activefont, work, x, y, hudwidth, hudheight, color, holdTime, fadeTime);
 						}
 						break;
@@ -8022,7 +8022,7 @@ scriptwait:
 						{
 							float typeTime = (optstart < sp) ? ACSToFloat(Stack[optstart]) : 0.05f;
 							float fadeTime = (optstart < sp-1) ? ACSToFloat(Stack[optstart+1]) : 0.5f;
-							alpha = (optstart < sp-2) ? Stack[optstart+2] : FRACUNIT;
+							alpha = (optstart < sp-2) ? ACSToFloat(Stack[optstart+2]) : 1.f;
 							msg = new DHUDMessageTypeOnFadeOut (activefont, work, x, y, hudwidth, hudheight, color, typeTime, holdTime, fadeTime);
 						}
 						break;
@@ -8030,7 +8030,7 @@ scriptwait:
 						{
 							float inTime = (optstart < sp) ? ACSToFloat(Stack[optstart]) : 0.5f;
 							float outTime = (optstart < sp-1) ? ACSToFloat(Stack[optstart+1]) : 0.5f;
-							alpha = (optstart < sp-2) ? Stack[optstart+2] : OPAQUE;
+							alpha = (optstart < sp-2) ? ACSToFloat(Stack[optstart + 2]) : 1.f;
 							msg = new DHUDMessageFadeInOut (activefont, work, x, y, hudwidth, hudheight, color, holdTime, inTime, outTime);
 						}
 						break;

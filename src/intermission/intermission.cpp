@@ -262,7 +262,7 @@ void DIntermissionScreenFader::Drawer ()
 	{
 		double factor = clamp(double(mTicker) / mDuration, 0., 1.);
 		if (mType == FADE_In) factor = 1.0 - factor;
-		int color = MAKEARGB(xs_RoundToInt(factor*255), 0,0,0);
+		int color = MAKEARGB(int(factor*255), 0,0,0);
 
 		if (screen->Begin2D(false))
 		{

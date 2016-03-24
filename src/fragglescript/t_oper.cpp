@@ -360,8 +360,7 @@ void FParser::OPmultiply(svalue_t &result,int start, int n, int stop)
 	// haleyjd: 8-17
 	if(left.type == svt_fixed || right.type == svt_fixed)
 	{
-		result.type = svt_fixed;
-		result.value.f = FixedMul(fixedvalue(left), fixedvalue(right));
+		result.setDouble(floatvalue(left) * floatvalue(right));
 	}
 	else
 	{

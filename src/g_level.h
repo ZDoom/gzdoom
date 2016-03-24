@@ -545,30 +545,31 @@ void G_ClearHubInfo();
 
 enum ESkillProperty
 {
-	SKILLP_AmmoFactor,
-	SKILLP_DropAmmoFactor,
 	SKILLP_FastMonsters,
 	SKILLP_Respawn,
 	SKILLP_RespawnLimit,
-	SKILLP_Aggressiveness,
 	SKILLP_DisableCheats,
 	SKILLP_AutoUseHealth,
 	SKILLP_SpawnFilter,
 	SKILLP_EasyBossBrain,
 	SKILLP_ACSReturn,
-	SKILLP_MonsterHealth,
-	SKILLP_FriendlyHealth,
 	SKILLP_NoPain,
-	SKILLP_ArmorFactor,
-	SKILLP_HealthFactor,
 	SKILLP_EasyKey,
 	SKILLP_SlowMonsters,
 	SKILLP_Infight,
 };
 enum EFSkillProperty	// floating point properties
 {
+	SKILLP_AmmoFactor,
+	SKILLP_DropAmmoFactor,
+	SKILLP_ArmorFactor,
+	SKILLP_HealthFactor,
 	SKILLP_DamageFactor,
+	SKILLP_Aggressiveness,
+	SKILLP_MonsterHealth,
+	SKILLP_FriendlyHealth,
 };
+
 int G_SkillProperty(ESkillProperty prop);
 double G_SkillProperty(EFSkillProperty prop);
 const char * G_SkillName();
@@ -580,8 +581,11 @@ typedef TMap<FName, FName> SkillActorReplacement;
 struct FSkillInfo
 {
 	FName Name;
-	fixed_t AmmoFactor, DoubleAmmoFactor, DropAmmoFactor;
+	double AmmoFactor, DoubleAmmoFactor, DropAmmoFactor;
 	double DamageFactor;
+	double ArmorFactor;
+	double HealthFactor;
+
 	bool FastMonsters;
 	bool SlowMonsters;
 	bool DisableCheats;
@@ -591,7 +595,7 @@ struct FSkillInfo
 	bool EasyKey;
 	int RespawnCounter;
 	int RespawnLimit;
-	fixed_t Aggressiveness;
+	double Aggressiveness;
 	int SpawnFilter;
 	int ACSReturn;
 	FString MenuName;
@@ -603,12 +607,10 @@ struct FSkillInfo
 	FString TextColor;
 	SkillActorReplacement Replace;
 	SkillActorReplacement Replaced;
-	fixed_t MonsterHealth;
-	fixed_t FriendlyHealth;
+	double MonsterHealth;
+	double FriendlyHealth;
 	bool NoPain;
 	int Infighting;
-	fixed_t ArmorFactor;
-	fixed_t HealthFactor;
 
 	FSkillInfo() {}
 	FSkillInfo(const FSkillInfo &other)

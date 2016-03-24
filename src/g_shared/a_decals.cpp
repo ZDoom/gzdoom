@@ -769,9 +769,7 @@ DBaseDecal *ShootDecal(const FDecalTemplate *tpl, AActor *basisactor, sector_t *
 	DBaseDecal *decal;
 	side_t *wall;
 
-	Trace(FLOAT2FIXED(x), FLOAT2FIXED(y), FLOAT2FIXED(z), sec,
-		FLOAT2FIXED(angle.Cos()), FLOAT2FIXED(angle.Sin()), 0,
-		FLOAT2FIXED(tracedist), 0, 0, NULL, trace, TRACE_NoSky);
+	Trace(DVector3(x,y,z), sec, DVector3(angle.ToVector(), 0), tracedist, 0, 0, NULL, trace, TRACE_NoSky);
 
 	if (trace.HitType == TRACE_HitWall)
 	{

@@ -76,6 +76,7 @@ EXTERN_CVAR(Bool, vid_fps)
 EXTERN_CVAR(Bool, hud_scale)
 
 class DSBarInfo;
+static double nulclip[] = { 0,0,0,0 };
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -294,22 +295,22 @@ class SBarInfoMainBlock : public SBarInfoCommandFlowControl
 {
 	public:
 		SBarInfoMainBlock(SBarInfo *script) : SBarInfoCommandFlowControl(script),
-			alpha(OPAQUE), currentAlpha(OPAQUE), forceScaled(false),
+			alpha(1.), currentAlpha(1.), forceScaled(false),
 			fullScreenOffsets(false)
 		{
 			SetTruth(true, NULL, NULL);
 		}
 
-		int		Alpha() const { return currentAlpha; }
+		double	Alpha() const { return currentAlpha; }
 		// Same as Draw but takes into account ForceScaled and temporarily sets the scaling if needed.
-		void	DrawAux(const SBarInfoMainBlock *block, DSBarInfo *statusBar, int xOffset, int yOffset, int alpha);
+		void	DrawAux(const SBarInfoMainBlock *block, DSBarInfo *statusBar, int xOffset, int yOffset, double alpha);
 		// Silence hidden overload warning since this is a special use class.
 		using SBarInfoCommandFlowControl::Draw;
-		void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, int xOffset, int yOffset, int alpha)
+		void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, int xOffset, int yOffset, double alpha)
 		{
 			this->xOffset = xOffset;
 			this->yOffset = yOffset;
-			this->currentAlpha = FixedMul(this->alpha, alpha);
+			this->currentAlpha = this->alpha * alpha;
 			SBarInfoCommandFlowControl::Draw(this, statusBar);
 		}
 		bool	ForceScaled() const { return forceScaled; }
@@ -334,7 +335,7 @@ class SBarInfoMainBlock : public SBarInfoCommandFlowControl
 					}
 				}
 				sc.MustGetToken(TK_FloatConst);
-				alpha = fixed_t(OPAQUE * sc.Float);
+				alpha = sc.Float;
 			}
 			SBarInfoCommandFlowControl::Parse(sc, this->fullScreenOffsets);
 		}
@@ -343,8 +344,8 @@ class SBarInfoMainBlock : public SBarInfoCommandFlowControl
 		int		YOffset() const { return yOffset; }
 
 	protected:
-		int		alpha;
-		int		currentAlpha;
+		double	alpha;
+		double	currentAlpha;
 		bool	forceScaled;
 		bool	fullScreenOffsets;
 		int		xOffset;
@@ -698,24 +699,24 @@ void SBarInfo::ParseSBarInfo(int lump)
 						popup.transition = Popup::TRANSITION_SLIDEINBOTTOM;
 						sc.MustGetToken(',');
 						sc.MustGetToken(TK_IntConst);
-						popup.speed = sc.Number;
+						popup.ispeed = sc.Number;
 					}
 					else if(sc.Compare("pushup"))
 					{
 						popup.transition = Popup::TRANSITION_PUSHUP;
 						sc.MustGetToken(',');
 						sc.MustGetToken(TK_IntConst);
-						popup.speed = sc.Number;
+						popup.ispeed = sc.Number;
 					}
 					else if(sc.Compare("fade"))
 					{
 						popup.transition = Popup::TRANSITION_FADE;
 						sc.MustGetToken(',');
 						sc.MustGetToken(TK_FloatConst);
-						popup.speed = fixed_t(FRACUNIT * (1.0 / (35.0 * sc.Float)));
+						popup.speed = 1.0 / (35.0 * sc.Float);
 						sc.MustGetToken(',');
 						sc.MustGetToken(TK_FloatConst);
-						popup.speed2 = fixed_t(FRACUNIT * (1.0 / (35.0 * sc.Float)));
+						popup.speed2 = 1.0 / (35.0 * sc.Float);
 					}
 					else
 						sc.ScriptError("Unkown transition type: '%s'", sc.String);
@@ -820,7 +821,7 @@ SBarInfo::~SBarInfo()
 
 //Popup
 Popup::Popup() : transition(TRANSITION_NONE), opened(false), moving(false),
-	height(320), width(200), speed(0), speed2(0), alpha(FRACUNIT), x(320),
+	height(320), width(200), ispeed(0), speed(0), speed2(0), alpha(1.), x(320),
 	y(200), displacementX(0), displacementY(0)
 {
 }
@@ -855,9 +856,9 @@ void Popup::tick()
 			{
 				int oldY = y;
 				if(opened)
-					y -= clamp(height + (y - height), 1, speed);
+					y -= clamp(height + (y - height), 1, ispeed);
 				else
-					y += clamp(height - y, 1, speed);
+					y += clamp(height - y, 1, ispeed);
 				if(transition == TRANSITION_PUSHUP)
 					displacementY += y - oldY;
 			}
@@ -870,11 +871,11 @@ void Popup::tick()
 			if(moving)
 			{
 				if(opened)
-					alpha = clamp<int>(alpha + speed, 0, OPAQUE);
+					alpha = clamp(alpha + speed, 0., 1.);
 				else
-					alpha = clamp<int>(alpha - speed2, 0, OPAQUE);
+					alpha = clamp(alpha - speed2, 0., 1.);
 			}
-			if(alpha == 0 || alpha == OPAQUE)
+			if(alpha == 0 || alpha == 1.)
 				moving = false;
 			else
 				moving = true;
@@ -910,9 +911,9 @@ int Popup::getYOffset()
 	return y;
 }
 
-int Popup::getAlpha(int maxAlpha)
+double Popup::getAlpha(double maxAlpha)
 {
-	return FixedMul(alpha, maxAlpha);
+	return alpha * maxAlpha;
 }
 
 int Popup::getXDisplacement()
@@ -1057,9 +1058,9 @@ public:
 			}
 
 			if(currentPopup != POP_None && !script->huds[hud]->FullScreenOffsets())
-				script->huds[hud]->Draw(NULL, this, script->popups[currentPopup-1].getXDisplacement(), script->popups[currentPopup-1].getYDisplacement(), FRACUNIT);
+				script->huds[hud]->Draw(NULL, this, script->popups[currentPopup-1].getXDisplacement(), script->popups[currentPopup-1].getYDisplacement(), 1.);
 			else
-				script->huds[hud]->Draw(NULL, this, 0, 0, FRACUNIT);
+				script->huds[hud]->Draw(NULL, this, 0, 0, 1.);
 			lastHud = hud;
 
 			// Handle inventory bar drawing
@@ -1073,7 +1074,7 @@ public:
 				if(inventoryBar->NumCommands() == 0)
 					CPlayer->inventorytics = 0;
 				else
-					inventoryBar->DrawAux(NULL, this, 0, 0, FRACUNIT);
+					inventoryBar->DrawAux(NULL, this, 0, 0, 1.);
 			}
 		}
 
@@ -1177,7 +1178,7 @@ public:
 	}
 
 	//draws an image with the specified flags
-	void DrawGraphic(FTexture* texture, SBarInfoCoordinate x, SBarInfoCoordinate y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, bool translate=false, bool dim=false, int offsetflags=0, bool alphaMap=false, int forceWidth=-1, int forceHeight=-1, fixed_t cx=0, fixed_t cy=0, fixed_t cr=0, fixed_t cb=0, bool clearDontDraw=false) const
+	void DrawGraphic(FTexture* texture, SBarInfoCoordinate x, SBarInfoCoordinate y, int xOffset, int yOffset, double Alpha, bool fullScreenOffsets, bool translate=false, bool dim=false, int offsetflags=0, bool alphaMap=false, int forceWidth=-1, int forceHeight=-1, const double *clip = nulclip, bool clearDontDraw=false) const
 	{
 		if (texture == NULL)
 			return;
@@ -1205,20 +1206,20 @@ public:
 			dy += ST_Y - (Scaled ? script->resH : 200) + script->height;
 			w = forceWidth < 0 ? texture->GetScaledWidthDouble() : forceWidth;
 			h = forceHeight < 0 ? texture->GetScaledHeightDouble() : forceHeight;
-			double dcx = cx == 0 ? 0 : dx + ((double) cx / FRACUNIT) - texture->GetScaledLeftOffsetDouble();
-			double dcy = cy == 0 ? 0 : dy + ((double) cy / FRACUNIT) - texture->GetScaledTopOffsetDouble();
-			double dcr = cr == 0 ? INT_MAX : dx + w - ((double) cr / FRACUNIT) - texture->GetScaledLeftOffsetDouble();
-			double dcb = cb == 0 ? INT_MAX : dy + h - ((double) cb / FRACUNIT) - texture->GetScaledTopOffsetDouble();
+			double dcx = clip[0] == 0 ? 0 : dx + clip[0] - texture->GetScaledLeftOffsetDouble();
+			double dcy = clip[1] == 0 ? 0 : dy + clip[1] - texture->GetScaledTopOffsetDouble();
+			double dcr = clip[2] == 0 ? INT_MAX : dx + w - clip[2] - texture->GetScaledLeftOffsetDouble();
+			double dcb = clip[3] == 0 ? INT_MAX : dy + h - clip[3] - texture->GetScaledTopOffsetDouble();
 
 			if(Scaled)
 			{
-				if(cx != 0 || cy != 0)
+				if(clip[0] != 0 || clip[1] != 0)
 				{
 					screen->VirtualToRealCoords(dcx, dcy, tmp, tmp, script->resW, script->resH, true);
-					if (cx == 0) dcx = 0;
-					if (cy == 0) dcy = 0;
+					if (clip[0] == 0) dcx = 0;
+					if (clip[1] == 0) dcy = 0;
 				}
-				if(cr != 0 || cb != 0 || clearDontDraw)
+				if(clip[2] != 0 || clip[3] != 0 || clearDontDraw)
 					screen->VirtualToRealCoords(dcr, dcb, tmp, tmp, script->resW, script->resH, true);
 				screen->VirtualToRealCoords(dx, dy, w, h, script->resW, script->resH, true);
 			}
@@ -1245,7 +1246,7 @@ public:
 						DTA_Translation, translate ? GetTranslation() : 0,
 						DTA_ColorOverlay, dim ? DIM_OVERLAY : 0,
 						DTA_CenterBottomOffset, (offsetflags & SBarInfoCommand::CENTER_BOTTOM) == SBarInfoCommand::CENTER_BOTTOM,
-						DTA_Alpha, alpha,
+						DTA_AlphaF, Alpha,
 						DTA_AlphaChannel, alphaMap,
 						DTA_FillColor, 0,
 						TAG_DONE);
@@ -1262,7 +1263,7 @@ public:
 						DTA_Translation, translate ? GetTranslation() : 0,
 						DTA_ColorOverlay, dim ? DIM_OVERLAY : 0,
 						DTA_CenterBottomOffset, (offsetflags & SBarInfoCommand::CENTER_BOTTOM) == SBarInfoCommand::CENTER_BOTTOM,
-						DTA_Alpha, alpha,
+						DTA_AlphaF, Alpha,
 						TAG_DONE);
 				}
 			}
@@ -1298,12 +1299,12 @@ public:
 				ry = SCREENHEIGHT + ry;
 
 			// Check for clipping
-			if(cx != 0 || cy != 0 || cr != 0 || cb != 0)
+			if(clip[0] != 0 || clip[1] != 0 || clip[2] != 0 || clip[3] != 0)
 			{
-				rcx = cx == 0 ? 0 : rx+((((double) cx/FRACUNIT) - texture->GetScaledLeftOffsetDouble())*xScale);
-				rcy = cy == 0 ? 0 : ry+((((double) cy/FRACUNIT) - texture->GetScaledTopOffsetDouble())*yScale);
-				rcr = cr == 0 ? INT_MAX : rx+w-((((double) cr/FRACUNIT) + texture->GetScaledLeftOffsetDouble())*xScale);
-				rcb = cb == 0 ? INT_MAX : ry+h-((((double) cb/FRACUNIT) + texture->GetScaledTopOffsetDouble())*yScale);
+				rcx = clip[0] == 0 ? 0 : rx+((clip[0] - texture->GetScaledLeftOffsetDouble())*xScale);
+				rcy = clip[1] == 0 ? 0 : ry+((clip[1] - texture->GetScaledTopOffsetDouble())*yScale);
+				rcr = clip[2] == 0 ? INT_MAX : rx+w-((clip[2] + texture->GetScaledLeftOffsetDouble())*xScale);
+				rcb = clip[3] == 0 ? INT_MAX : ry+h-((clip[3] + texture->GetScaledTopOffsetDouble())*yScale);
 			}
 
 			if(clearDontDraw)
@@ -1322,7 +1323,7 @@ public:
 						DTA_Translation, translate ? GetTranslation() : 0,
 						DTA_ColorOverlay, dim ? DIM_OVERLAY : 0,
 						DTA_CenterBottomOffset, (offsetflags & SBarInfoCommand::CENTER_BOTTOM) == SBarInfoCommand::CENTER_BOTTOM,
-						DTA_Alpha, alpha,
+						DTA_AlphaF, Alpha,
 						DTA_AlphaChannel, alphaMap,
 						DTA_FillColor, 0,
 						TAG_DONE);
@@ -1339,14 +1340,14 @@ public:
 						DTA_Translation, translate ? GetTranslation() : 0,
 						DTA_ColorOverlay, dim ? DIM_OVERLAY : 0,
 						DTA_CenterBottomOffset, (offsetflags & SBarInfoCommand::CENTER_BOTTOM) == SBarInfoCommand::CENTER_BOTTOM,
-						DTA_Alpha, alpha,
+						DTA_AlphaF, Alpha,
 						TAG_DONE);
 				}
 			}
 		}
 	}
 
-	void DrawString(FFont *font, const char* cstring, SBarInfoCoordinate x, SBarInfoCoordinate y, int xOffset, int yOffset, int alpha, bool fullScreenOffsets, EColorRange translation, int spacing=0, bool drawshadow=false, int shadowX=2, int shadowY=2) const
+	void DrawString(FFont *font, const char* cstring, SBarInfoCoordinate x, SBarInfoCoordinate y, int xOffset, int yOffset, double Alpha, bool fullScreenOffsets, EColorRange translation, int spacing=0, bool drawshadow=false, int shadowX=2, int shadowY=2) const
 	{
 		x += spacing;
 		double ax = *x;
@@ -1456,13 +1457,13 @@ public:
 			}
 			if(drawshadow)
 			{
-				fixed_t salpha = fixed_t(alpha *HR_SHADOW);
+				double salpha = (Alpha *HR_SHADOW);
 				double srx = rx + (shadowX*xScale);
 				double sry = ry + (shadowY*yScale);
 				screen->DrawTexture(character, srx, sry,
 					DTA_DestWidthF, rw,
 					DTA_DestHeightF, rh,
-					DTA_Alpha, salpha,
+					DTA_AlphaF, salpha,
 					DTA_FillColor, 0,
 					TAG_DONE);
 			}
@@ -1470,7 +1471,7 @@ public:
 				DTA_DestWidthF, rw,
 				DTA_DestHeightF, rh,
 				DTA_Translation, remap,
-				DTA_Alpha, alpha,
+				DTA_AlphaF, Alpha,
 				TAG_DONE);
 			if(script->spacingCharacter == '\0')
 				ax += width + spacing - (character->LeftOffset+1);
@@ -1516,7 +1517,7 @@ DBaseStatusBar *CreateCustomStatusBar (int script)
 	return new DSBarInfo(SBarInfoScript[script]);
 }
 
-void SBarInfoMainBlock::DrawAux(const SBarInfoMainBlock *block, DSBarInfo *statusBar, int xOffset, int yOffset, int alpha)
+void SBarInfoMainBlock::DrawAux(const SBarInfoMainBlock *block, DSBarInfo *statusBar, int xOffset, int yOffset, double alpha)
 {
 	// Popups can also be forced to scale
 	bool rescale = false;

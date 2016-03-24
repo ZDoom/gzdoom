@@ -2,6 +2,7 @@
 #define __TEXTURES_H
 
 #include "doomtype.h"
+#include "m_fixed.h"
 
 class FBitmap;
 struct FRemapTable;
@@ -204,9 +205,10 @@ public:
 
 	int GetScaledWidth () { int foo = (Width << 17) / xScale; return (foo >> 1) + (foo & 1); }
 	int GetScaledHeight () { int foo = (Height << 17) / yScale; return (foo >> 1) + (foo & 1); }
-	int GetScaledHeight(fixed_t scale) { int foo = (Height << 17) / scale; return (foo >> 1) + (foo & 1); }
+	int GetScaledHeight(double scale) { return GetScaledHeight(FLOAT2FIXED(scale)); }
 	double GetScaledWidthDouble () { return (Width * 65536.) / xScale; }
 	double GetScaledHeightDouble () { return (Height * 65536.) / yScale; }
+	double GetScaleY() const { return FIXED2DBL(yScale); }
 
 	int GetScaledLeftOffset () { int foo = (LeftOffset << 17) / xScale; return (foo >> 1) + (foo & 1); }
 	int GetScaledTopOffset () { int foo = (TopOffset << 17) / yScale; return (foo >> 1) + (foo & 1); }

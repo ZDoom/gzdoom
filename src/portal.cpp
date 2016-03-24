@@ -155,6 +155,8 @@ static void BuildBlockmap()
 
 void FLinePortalTraverse::AddLineIntercepts(int bx, int by)
 {
+	if (by < 0 || by >= bmapheight || bx < 0 || bx >= bmapwidth) return;
+
 	FPortalBlock &block = PortalBlockmap(bx, by);
 
 	for (unsigned i = 0; i<block.portallines.Size(); i++)

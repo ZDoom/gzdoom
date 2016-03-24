@@ -769,28 +769,26 @@ DBaseDecal *ShootDecal(const FDecalTemplate *tpl, AActor *basisactor, sector_t *
 	DBaseDecal *decal;
 	side_t *wall;
 
-	Trace(FLOAT2FIXED(x), FLOAT2FIXED(y), FLOAT2FIXED(z), sec,
-		FLOAT2FIXED(angle.Cos()), FLOAT2FIXED(angle.Sin()), 0,
-		FLOAT2FIXED(tracedist), 0, 0, NULL, trace, TRACE_NoSky);
+	Trace(DVector3(x,y,z), sec, DVector3(angle.ToVector(), 0), tracedist, 0, 0, NULL, trace, TRACE_NoSky);
 
 	if (trace.HitType == TRACE_HitWall)
 	{
 		if (permanent)
 		{
-			decal = new DBaseDecal(FIXED2DBL(trace.HitPos.z));
+			decal = new DBaseDecal(trace.HitPos.Z);
 			wall = trace.Line->sidedef[trace.Side];
-			decal->StickToWall(wall, FIXED2DBL(trace.HitPos.x), FIXED2DBL(trace.HitPos.y), trace.ffloor);
+			decal->StickToWall(wall, trace.HitPos.X, trace.HitPos.Y, trace.ffloor);
 			tpl->ApplyToDecal(decal, wall);
 			// Spread decal to nearby walls if it does not all fit on this one
 			if (cl_spreaddecals)
 			{
-				decal->Spread(tpl, wall, FIXED2DBL(trace.HitPos.x), FIXED2DBL(trace.HitPos.y), FIXED2DBL(trace.HitPos.z), trace.ffloor);
+				decal->Spread(tpl, wall,  trace.HitPos.X, trace.HitPos.Y, trace.HitPos.Z, trace.ffloor);
 			}
 			return decal;
 		}
 		else
 		{
-			return DImpactDecal::StaticCreate(tpl, DVector3(FIXED2DBL(trace.HitPos.x), FIXED2DBL(trace.HitPos.y), FIXED2DBL(trace.HitPos.z)), trace.Line->sidedef[trace.Side], NULL);
+			return DImpactDecal::StaticCreate(tpl, trace.HitPos, trace.Line->sidedef[trace.Side], NULL);
 		}
 	}
 	return NULL;

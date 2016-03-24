@@ -57,8 +57,8 @@
 
 #include "../version.h"
 
-#define XHAIRSHRINKSIZE		(FRACUNIT/18)
-#define XHAIRPICKUPSIZE		(FRACUNIT*2+XHAIRSHRINKSIZE)
+#define XHAIRSHRINKSIZE		(1./18)
+#define XHAIRPICKUPSIZE		(2+XHAIRSHRINKSIZE)
 #define POWERUPICONSIZE		32
 
 IMPLEMENT_POINTY_CLASS(DBaseStatusBar)
@@ -233,7 +233,7 @@ DBaseStatusBar::DBaseStatusBar (int reltop, int hres, int vres)
 	CompleteBorder = false;
 	Centering = false;
 	FixedOrigin = false;
-	CrosshairSize = FRACUNIT;
+	CrosshairSize = 1.;
 	RelTop = reltop;
 	memset(Messages, 0, sizeof(Messages));
 	Displacement = 0;
@@ -287,7 +287,7 @@ void DBaseStatusBar::SetScaled (bool scale, bool force)
 		::ST_Y = ST_Y;
 		if (RelTop > 0)
 		{
-			Displacement = ((ST_Y * VirticalResolution / SCREENHEIGHT) - (VirticalResolution - RelTop))*FRACUNIT/RelTop;
+			Displacement = double((ST_Y * VirticalResolution / SCREENHEIGHT) - (VirticalResolution - RelTop))/RelTop;
 		}
 		else
 		{
@@ -377,12 +377,12 @@ void DBaseStatusBar::Tick ()
 		}
 
 		// If the crosshair has been enlarged, shrink it.
-		if (CrosshairSize > FRACUNIT)
+		if (CrosshairSize > 1.)
 		{
 			CrosshairSize -= XHAIRSHRINKSIZE;
-			if (CrosshairSize < FRACUNIT)
+			if (CrosshairSize < 1.)
 			{
-				CrosshairSize = FRACUNIT;
+				CrosshairSize = 1.;
 			}
 		}
 	}
@@ -562,27 +562,6 @@ void DBaseStatusBar::DrawDimImage (FTexture *img,
 	{
 		screen->DrawTexture (img, x + ST_X, y + ST_Y,
 			DTA_ColorOverlay, dimmed ? DIM_OVERLAY : 0,
-			DTA_Bottom320x200, Scaled,
-			TAG_DONE);
-	}
-}
-
-//---------------------------------------------------------------------------
-//
-// PROC DrawImage
-//
-// Draws a translucent image with the status bar's upper-left corner as the
-// origin.
-//
-//---------------------------------------------------------------------------
-
-void DBaseStatusBar::DrawFadedImage (FTexture *img,
-	int x, int y, fixed_t shade) const
-{
-	if (img != NULL)
-	{
-		screen->DrawTexture (img, x + ST_X, y + ST_Y,
-			DTA_Alpha, shade,
 			DTA_Bottom320x200, Scaled,
 			TAG_DONE);
 	}
@@ -1113,7 +1092,7 @@ void DBaseStatusBar::DrawCrosshair ()
 	static int palettecolor = 0;
 
 	DWORD color;
-	fixed_t size;
+	double size;
 	int w, h;
 
 	// Don't draw the crosshair in chasecam mode
@@ -1130,19 +1109,19 @@ void DBaseStatusBar::DrawCrosshair ()
 
 	if (crosshairscale)
 	{
-		size = SCREENHEIGHT * FRACUNIT / 200;
+		size = SCREENHEIGHT / 200.;
 	}
 	else
 	{
-		size = FRACUNIT;
+		size = 1.;
 	}
 
 	if (crosshairgrow)
 	{
-		size = FixedMul (size, CrosshairSize);
+		size *= CrosshairSize;
 	}
-	w = (CrosshairImage->GetWidth() * size) >> FRACBITS;
-	h = (CrosshairImage->GetHeight() * size) >> FRACBITS;
+	w = int(CrosshairImage->GetWidth() * size);
+	h = int(CrosshairImage->GetHeight() * size);
 
 	if (crosshairhealth)
 	{
@@ -1255,7 +1234,6 @@ void DBaseStatusBar::Draw (EHudState state)
 	{ // Draw current coordinates
 		int height = SmallFont->GetHeight();
 		char labels[3] = { 'X', 'Y', 'Z' };
-		fixed_t *value;
 		int i;
 
 		int vwidth;
@@ -1286,10 +1264,10 @@ void DBaseStatusBar::Draw (EHudState state)
 				y -= height * 2;
 		}
 
-		fixedvec3 pos = CPlayer->mo->_f_Pos();
-		for (i = 2, value = &pos.z; i >= 0; y -= height, --value, --i)
+		DVector3 pos = CPlayer->mo->Pos();
+		for (i = 2; i >= 0; y -= height, --i)
 		{
-			mysnprintf (line, countof(line), "%c: %d", labels[i], *value >> FRACBITS);
+			mysnprintf (line, countof(line), "%c: %d", labels[i], int(pos[i]));
 			screen->DrawText (SmallFont, CR_GREEN, xpos, y, line, 
 				DTA_KeepRatio, true,
 				DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, 				

@@ -527,6 +527,8 @@ enum
 	CBF_SETONPTR		= 1 << 4,	//Sets the pointer change on the actor doing the checking instead of self.
 	CBF_DROPOFF			= 1 << 5,	//Check for dropoffs.
 	CBF_NOACTORS		= 1 << 6,	//Don't check actors.
+	CBF_ABSOLUTEPOS		= 1 << 7,	//Absolute position for offsets.
+	CBF_ABSOLUTEANGLE	= 1 << 8,	//Absolute angle for offsets.
 };
 
 enum

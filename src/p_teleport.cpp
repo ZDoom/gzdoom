@@ -78,7 +78,7 @@ void ATeleportFog::PostBeginPlay ()
 //
 //==========================================================================
 
-void P_SpawnTeleportFog(AActor *mobj, fixed_t x, fixed_t y, fixed_t z, bool beforeTele, bool setTarget)
+void P_SpawnTeleportFog(AActor *mobj, const DVector3 &pos, bool beforeTele, bool setTarget)
 {
 	AActor *mo;
 	if ((beforeTele ? mobj->TeleFogSourceType : mobj->TeleFogDestType) == NULL)
@@ -88,7 +88,7 @@ void P_SpawnTeleportFog(AActor *mobj, fixed_t x, fixed_t y, fixed_t z, bool befo
 	}
 	else
 	{
-		mo = Spawn((beforeTele ? mobj->TeleFogSourceType : mobj->TeleFogDestType), x, y, z, ALLOW_REPLACE);
+		mo = Spawn((beforeTele ? mobj->TeleFogSourceType : mobj->TeleFogDestType), pos, ALLOW_REPLACE);
 	}
 
 	if (mo != NULL && setTarget)
@@ -103,7 +103,7 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, DAngle angle, i
 {
 	bool predicting = (thing->player && (thing->player->cheats & CF_PREDICTING));
 
-	fixedvec3 old;
+	DVector3 old;
 	fixed_t aboveFloor;
 	player_t *player;
 	sector_t *destsect;
@@ -111,7 +111,7 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, DAngle angle, i
 	fixed_t floorheight, ceilingheight;
 	double missilespeed = 0;
 
-	old = thing->_f_Pos();
+	old = thing->Pos();
 	aboveFloor = thing->_f_Z() - thing->_f_floorz();
 	destsect = P_PointInSector (x, y);
 	// killough 5/12/98: exclude voodoo dolls:
@@ -194,7 +194,7 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, DAngle angle, i
 			double fogDelta = thing->flags & MF_MISSILE ? 0 : TELEFOGHEIGHT;
 			DVector2 vector = angle.ToVector(20);
 			DVector2 fogpos = P_GetOffsetPosition(FIXED2DBL(x), FIXED2DBL(y), vector.X, vector.Y);
-			P_SpawnTeleportFog(thing, fogpos.X, fogpos.Y, thing->Z() + fogDelta, false, true);
+			P_SpawnTeleportFog(thing, DVector3(fogpos, thing->Z() + fogDelta), false, true);
 
 		}
 		if (thing->player)

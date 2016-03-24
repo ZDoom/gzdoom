@@ -231,6 +231,10 @@ void S_SoundMinMaxDist (AActor *ent, int channel, FSoundID sfxid, float volume, 
 void S_Sound (const FPolyObj *poly, int channel, FSoundID sfxid, float volume, float attenuation);
 void S_Sound (const sector_t *sec, int channel, FSoundID sfxid, float volume, float attenuation);
 void S_Sound (fixed_t x, fixed_t y, fixed_t z, int channel, FSoundID sfxid, float volume, float attenuation);
+inline void S_Sound(const DVector3 &pos, int channel, FSoundID sfxid, float volume, float attenuation)
+{
+	S_Sound(FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), FLOAT2FIXED(pos.Z), channel, sfxid, volume, attenuation);
+}
 
 // sound channels
 // channel 0 never willingly overrides

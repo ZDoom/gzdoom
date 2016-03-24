@@ -260,7 +260,7 @@ static bool PIT_FindFloorCeiling(FMultiBlockLinesIterator &mit, FMultiBlockLines
 			tmf.touchmidtex = open.touchmidtex;
 			tmf.abovemidtex = open.abovemidtex;
 			if (ffcf_verbose) Printf("    Adjust floorz to %f\n", FIXED2FLOAT(open.bottom));
-			if (tmf._f_floorz() > tmf.dropoffz + tmf.thing->MaxDropOffHeight) mit.StopDown();
+			if (tmf.floorz > tmf.dropoffz + tmf.thing->MaxDropOffHeight) mit.StopDown();
 		}
 		else if (open.bottom == tmf._f_floorz())
 		{
@@ -268,11 +268,11 @@ static bool PIT_FindFloorCeiling(FMultiBlockLinesIterator &mit, FMultiBlockLines
 			tmf.abovemidtex |= open.abovemidtex;
 		}
 
-		if (open.lowfloor < tmf.dropoffz && open.lowfloor > FIXED_MIN)
+		if (open.lowfloor < tmf._f_dropoffz() && open.lowfloor > FIXED_MIN)
 		{
-			tmf.dropoffz = open.lowfloor;
+			tmf.dropoffz = FIXED2DBL(open.lowfloor);
 			if (ffcf_verbose) Printf("    Adjust dropoffz to %f\n", FIXED2FLOAT(open.bottom));
-			if (tmf._f_floorz() > tmf.dropoffz + tmf.thing->MaxDropOffHeight) mit.StopDown();
+			if (tmf.floorz > tmf.dropoffz + tmf.thing->MaxDropOffHeight) mit.StopDown();
 		}
 	}
 	return true;
@@ -292,8 +292,7 @@ void P_GetFloorCeilingZ(FCheckPosition &tmf, int flags)
 	F3DFloor *ffc, *fff;
 
 	tmf.ceilingz = FIXED2DBL(sec->NextHighestCeilingAt(tmf.x, tmf.y, tmf.z, tmf.z + tmf.thing->_f_height(), flags, &tmf.ceilingsector, &ffc));
-	tmf.dropoffz = sec->NextLowestFloorAt(tmf.x, tmf.y, tmf.z, flags, tmf.thing->_f_MaxStepHeight(), &tmf.floorsector, &fff);
-	tmf.floorz = FIXED2DBL(tmf.dropoffz);
+	tmf.floorz = tmf.dropoffz = FIXED2DBL(sec->NextLowestFloorAt(tmf.x, tmf.y, tmf.z, flags, tmf.thing->_f_MaxStepHeight(), &tmf.floorsector, &fff));
 
 	if (fff)
 	{
@@ -364,7 +363,7 @@ void P_FindFloorCeiling(AActor *actor, int flags)
 		PIT_FindFloorCeiling(mit, cres, mit.Box(), tmf, flags|cres.portalflags);
 	}
 
-	if (tmf.touchmidtex) tmf.dropoffz = tmf._f_floorz();
+	if (tmf.touchmidtex) tmf.dropoffz = tmf.floorz;
 
 	bool usetmf = !(flags & FFCF_ONLYSPAWNPOS) || (tmf.abovemidtex && (tmf.floorz <= actor->Z()));
 
@@ -445,7 +444,7 @@ bool P_TeleportMove(AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefra
 	}
 	thing->_f_SetZ(savedz);
 
-	if (tmf.touchmidtex) tmf.dropoffz = tmf._f_floorz();
+	if (tmf.touchmidtex) tmf.dropoffz = tmf.floorz;
 
 	FMultiBlockThingsIterator mit2(grouplist, x, y, z, thing->_f_height(), thing->_f_radius(), false, sector);
 	FMultiBlockThingsIterator::CheckResult cres2;
@@ -965,9 +964,9 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 			tm.abovemidtex |= open.abovemidtex;
 		}
 
-		if (open.lowfloor < tm.dropoffz)
+		if (open.lowfloor < tm._f_dropoffz())
 		{
-			tm.dropoffz = open.lowfloor;
+			tm.dropoffz = FIXED2FLOAT(open.lowfloor);
 		}
 	}
 
@@ -1084,8 +1083,8 @@ static bool PIT_CheckPortal(FMultiBlockLinesIterator &mit, FMultiBlockLinesItera
 			ret = true;
 		}
 
-		if (open.lowfloor - zofs < tm.dropoffz)
-			tm.dropoffz = open.lowfloor - zofs;
+		if (open.lowfloor - zofs < tm._f_dropoffz())
+			tm.dropoffz = FIXED2FLOAT(open.lowfloor - zofs);
 	}
 	tm.thing->_f_AddZ(-zofs);
 	lp->backsector = sec;
@@ -1224,7 +1223,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 		{
 			// [RH] Let monsters walk on actors as well as floors
 			if ((tm.thing->flags3 & MF3_ISMONSTER) &&
-				topz >= tm._f_floorz() && topz <= tm.thing->_f_Z() + tm.thing->_f_MaxStepHeight())
+				topz >= tm.floorz && topz <= tm.thing->Z() + tm.thing->MaxStepHeight)
 			{
 				// The commented-out if is an attempt to prevent monsters from walking off a
 				// thing further than they would walk off a ledge. I can't think of an easy
@@ -1508,7 +1507,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 					!(tm.thing->flags3 & MF3_BLOODLESSIMPACT) &&
 					(pr_checkthing() < 192))
 				{
-					P_BloodSplatter(tm.thing->_f_Pos(), thing);
+					P_BloodSplatter(tm.thing->Pos(), thing, tm.thing->AngleTo(thing));
 				}
 				if (!(tm.thing->flags3 & MF3_BLOODLESSIMPACT))
 				{
@@ -1625,8 +1624,7 @@ bool P_CheckPosition(AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm, bo
 	else
 	{
 		// With noclip2, we must ignore 3D floors and go right to the uppermost ceiling and lowermost floor.
-		tm.dropoffz = newsec->_f_LowestFloorAt(x, y, &tm.floorsector);
-		tm.floorz = FIXED2DBL(tm.dropoffz);
+		tm.floorz = tm.dropoffz = FIXED2FLOAT(newsec->_f_LowestFloorAt(x, y, &tm.floorsector));
 		tm.ceilingz = FIXED2DBL(newsec->_f_HighestCeilingAt(x, y, &tm.ceilingsector));
 		tm.floorpic = tm.floorsector->GetTexture(sector_t::floor);
 		tm.floorterrain = tm.floorsector->GetTerrain(sector_t::floor);
@@ -1727,7 +1725,7 @@ bool P_CheckPosition(AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm, bo
 
 	fixed_t thingdropoffz = tm._f_floorz();
 	//bool onthing = (thingdropoffz != tmdropoffz);
-	tm.floorz = FIXED2DBL(tm.dropoffz);
+	tm.floorz = tm.dropoffz;
 
 	bool good = true;
 
@@ -1760,11 +1758,11 @@ bool P_CheckPosition(AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm, bo
 	}
 	if (tm.touchmidtex)
 	{
-		tm.dropoffz = tm._f_floorz();
+		tm.dropoffz = tm.floorz;
 	}
 	else if (tm.stepthing != NULL)
 	{
-		tm.dropoffz = thingdropoffz;
+		tm.dropoffz = FIXED2FLOAT(thingdropoffz);
 	}
 
 	return (thing->BlockingMobj = thingblocker) == NULL;
@@ -2111,7 +2109,7 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 				thing->Vel.Z = -8;
 				goto pushline;
 			}
-			else if (thing->Z() < tm.floorz && tm._f_floorz() - tm.dropoffz > thing->MaxDropOffHeight)
+			else if (thing->Z() < tm.floorz && tm.floorz - tm.dropoffz > thing->MaxDropOffHeight)
 			{
 				thing->Vel.Z = 8;
 				goto pushline;
@@ -2167,7 +2165,7 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 		}
 
 		if (dropoff == 2 &&  // large jump down (e.g. dogs)
-			(tm._f_floorz() - tm.dropoffz > 128 * FRACUNIT || thing->target == NULL || thing->target->_f_Z() >tm.dropoffz))
+			(tm.floorz - tm.dropoffz > 128. || thing->target == NULL || thing->target->Z() >tm.dropoffz))
 		{
 			dropoff = false;
 		}
@@ -2186,7 +2184,7 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 					floorz = MAX(thing->Z(), tm.floorz);
 				}
 
-				if (FLOAT2FIXED(floorz) - tm.dropoffz > thing->MaxDropOffHeight &&
+				if (floorz - tm.dropoffz > thing->MaxDropOffHeight &&
 					!(thing->flags2 & MF2_BLASTED) && !missileCheck)
 				{ // Can't move over a dropoff unless it's been blasted
 					// [GZ] Or missile-spawned
@@ -2199,7 +2197,7 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 			{
 				// special logic to move a monster off a dropoff
 				// this intentionally does not check for standing on things.
-				if (thing->_f_floorz() - tm._f_floorz() > thing->MaxDropOffHeight ||
+				if (thing->floorz - tm.floorz > thing->MaxDropOffHeight ||
 					thing->dropoffz - tm.dropoffz > thing->MaxDropOffHeight)
 				{
 					thing->flags6 &= ~MF6_INTRYMOVE;
@@ -3105,7 +3103,7 @@ const secplane_t * P_CheckSlopeWalk(AActor *actor, fixed_t &xmove, fixed_t &ymov
 								pos.x += xmove;
 								pos.y += ymove;
 
-								if (sec->floorplane.ZatPoint(pos) >= actor->_f_Z() - actor->_f_MaxStepHeight())
+								if (sec->floorplane.ZatPointF(pos) >= actor->Z() - actor->MaxStepHeight)
 								{
 									dopush = false;
 									break;
@@ -4221,7 +4219,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 		}
 		if (puffDefaults != NULL && puffDefaults->flags3 & MF3_ALWAYSPUFF)
 		{ // Spawn the puff anyway
-			puff = P_SpawnPuff(t1, pufftype, trace.HitPos, trace.SrcAngleToTarget, trace.SrcAngleToTarget, 2, puffFlags);
+			puff = P_SpawnPuff(t1, pufftype, trace.HitPos, trace.SrcAngleFromTarget, trace.SrcAngleFromTarget, 2, puffFlags);
 		}
 		else
 		{
@@ -4235,9 +4233,9 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 			// position a bit closer for puffs
 			if (trace.HitType != TRACE_HitWall || trace.Line->special != Line_Horizon)
 			{
-				fixedvec2 pos = P_GetOffsetPosition(trace.HitPos.x, trace.HitPos.y, -trace.HitVector.x * 4, -trace.HitVector.y * 4);
-				puff = P_SpawnPuff(t1, pufftype, pos.x, pos.y, trace.HitPos.z - trace.HitVector.z * 4, trace.SrcAngleToTarget,
-					trace.SrcAngleToTarget - ANGLE_90, 0, puffFlags);
+				DVector2 pos = P_GetOffsetPosition(trace.HitPos.X, trace.HitPos.Y, -trace.HitVector.X * 4, -trace.HitVector.Y * 4);
+				puff = P_SpawnPuff(t1, pufftype, DVector3(pos, trace.HitPos.Z - trace.HitVector.Z * 4), trace.SrcAngleFromTarget,
+					trace.SrcAngleFromTarget - 90, 0, puffFlags);
 				puff->radius = 1/65536.;
 			}
 
@@ -4285,14 +4283,14 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 				(t1->player->ReadyWeapon->WeaponFlags & WIF_AXEBLOOD));
 
 			// Hit a thing, so it could be either a puff or blood
-			fixedvec3 bleedpos = trace.HitPos;
+			DVector3 bleedpos = trace.HitPos;
 			// position a bit closer for puffs/blood if using compatibility mode.
 			if (i_compatflags & COMPATF_HITSCAN)
 			{
-				fixedvec2 ofs = P_GetOffsetPosition(bleedpos.x, bleedpos.y, -10 * trace.HitVector.x, -10 * trace.HitVector.y);
-				bleedpos.x = ofs.x;
-				bleedpos.y = ofs.y;
-				bleedpos.z -= -10 * trace.HitVector.z;
+				DVector2 ofs = P_GetOffsetPosition(bleedpos.X, bleedpos.Y, -10 * trace.HitVector.X, -10 * trace.HitVector.Y);
+				bleedpos.X = ofs.X;
+				bleedpos.Y = ofs.Y;
+				bleedpos.Z -= -10 * trace.HitVector.Z;
 			}
 
 			// Spawn bullet puffs or blood spots, depending on target type.
@@ -4304,7 +4302,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 					puffFlags |= PF_HITTHINGBLEED;
 
 				// We must pass the unreplaced puff type here 
-				puff = P_SpawnPuff(t1, pufftype, bleedpos, trace.SrcAngleToTarget, trace.SrcAngleToTarget - ANGLE_90, 2, puffFlags | PF_HITTHING, trace.Actor);
+				puff = P_SpawnPuff(t1, pufftype, bleedpos, trace.SrcAngleFromTarget, trace.SrcAngleFromTarget - 90, 2, puffFlags | PF_HITTHING, trace.Actor);
 			}
 
 			// Allow puffs to inflict poison damage, so that hitscans can poison, too.
@@ -4330,10 +4328,10 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 				{
 					// Since the puff is the damage inflictor we need it here 
 					// regardless of whether it is displayed or not.
-					puff = P_SpawnPuff(t1, pufftype, bleedpos, 0, 0, 2, puffFlags | PF_HITTHING | PF_TEMPORARY);
+					puff = P_SpawnPuff(t1, pufftype, bleedpos, 0., 0., 2, puffFlags | PF_HITTHING | PF_TEMPORARY);
 					killPuff = true;
 				}
-				newdam = P_DamageMobj(trace.Actor, puff ? puff : t1, t1, damage, damageType, dmgflags|DMG_USEANGLE, ANGLE2DBL(trace.SrcAngleToTarget));
+				newdam = P_DamageMobj(trace.Actor, puff ? puff : t1, t1, damage, damageType, dmgflags|DMG_USEANGLE, trace.SrcAngleFromTarget);
 				if (actualdamage != NULL)
 				{
 					*actualdamage = newdam;
@@ -4345,7 +4343,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 					!(trace.Actor->flags & MF_NOBLOOD) &&
 					!(trace.Actor->flags2 & (MF2_INVULNERABLE | MF2_DORMANT)))
 				{
-					P_SpawnBlood(bleedpos, trace.SrcAngleToTarget, newdam > 0 ? newdam : damage, trace.Actor);
+					P_SpawnBlood(bleedpos, trace.SrcAngleFromTarget, newdam > 0 ? newdam : damage, trace.Actor);
 				}
 
 				if (damage)
@@ -4357,23 +4355,22 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 						{
 							if (axeBlood)
 							{
-								P_BloodSplatter2(bleedpos, trace.Actor);
+								P_BloodSplatter2(bleedpos, trace.Actor, trace.SrcAngleFromTarget);
 							}
 							if (pr_lineattack() < 192)
 							{
-								P_BloodSplatter(bleedpos, trace.Actor);
+								P_BloodSplatter(bleedpos, trace.Actor, trace.SrcAngleFromTarget);
 							}
 						}
 					}
 					// [RH] Stick blood to walls
-					P_TraceBleed(newdam > 0 ? newdam : damage, trace.HitPos,
-						trace.Actor, trace.SrcAngleToTarget, srcpitch);
+					P_TraceBleed(newdam > 0 ? newdam : damage, trace.HitPos, trace.Actor, trace.SrcAngleFromTarget, ANGLE2DBL(srcpitch));
 				}
 			}
 			if (victim != NULL)
 			{
 				victim->linetarget = trace.Actor;
-				victim->angleFromSource = ANGLE2DBL(trace.SrcAngleToTarget);
+				victim->angleFromSource = trace.SrcAngleFromTarget;
 				victim->unlinked = trace.unlinked;
 			}
 		}
@@ -4381,7 +4378,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 		{
 			if (puff == NULL)
 			{ // Spawn puff just to get a mass for the splash
-				puff = P_SpawnPuff(t1, pufftype, trace.HitPos, 0, 0, 2, puffFlags | PF_HITTHING | PF_TEMPORARY);
+				puff = P_SpawnPuff(t1, pufftype, trace.HitPos, 0., 0., 2, puffFlags | PF_HITTHING | PF_TEMPORARY);
 				killPuff = true;
 			}
 			SpawnDeepSplash(t1, trace, puff);
@@ -4540,8 +4537,7 @@ void P_TraceBleed(int damage, fixed_t x, fixed_t y, fixed_t z, AActor *actor, an
 					bloodcolor.a = 1;
 				}
 
-				DVector3 hp(FIXED2DBL(bleedtrace.HitPos.x), FIXED2DBL(bleedtrace.HitPos.y), FIXED2DBL(bleedtrace.HitPos.z));
-				DImpactDecal::StaticCreate(bloodType, hp,
+				DImpactDecal::StaticCreate(bloodType, bleedtrace.HitPos,
 					bleedtrace.Line->sidedef[bleedtrace.Side], bleedtrace.ffloor, bloodcolor);
 			}
 		}
@@ -4630,8 +4626,8 @@ void P_TraceBleed(int damage, AActor *target)
 struct SRailHit
 {
 	AActor *HitActor;
-	fixedvec3 HitPos;
-	angle_t HitAngle;
+	DVector3 HitPos;
+	DAngle HitAngle;
 };
 struct RailData
 {
@@ -4666,13 +4662,13 @@ static ETraceStatus ProcessRailHit(FTraceResults &res, void *userdata)
 	SRailHit newhit;
 	newhit.HitActor = res.Actor;
 	newhit.HitPos = res.HitPos;
-	newhit.HitAngle = res.SrcAngleToTarget;
+	newhit.HitAngle = res.SrcAngleFromTarget;
 	if (i_compatflags & COMPATF_HITSCAN)
 	{
-		fixedvec2 ofs = P_GetOffsetPosition(newhit.HitPos.x, newhit.HitPos.y, -10 * res.HitVector.x, -10 * res.HitVector.y);
-		newhit.HitPos.x = ofs.x;
-		newhit.HitPos.y = ofs.y;
-		newhit.HitPos.z -= -10 * res.HitVector.z;
+		DVector2 ofs = P_GetOffsetPosition(newhit.HitPos.X, newhit.HitPos.Y, -10 * res.HitVector.X, -10 * res.HitVector.Y);
+		newhit.HitPos.X = ofs.X;
+		newhit.HitPos.Y = ofs.Y;
+		newhit.HitPos.Z -= -10 * res.HitVector.Z;
 	}
 	data->RailHits.Push(newhit);
 
@@ -4749,7 +4745,7 @@ void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, i
 	// used as damage inflictor
 	AActor *thepuff = NULL;
 
-	if (puffclass != NULL) thepuff = Spawn(puffclass, source->_f_Pos(), ALLOW_REPLACE);
+	if (puffclass != NULL) thepuff = Spawn(puffclass, source->Pos(), ALLOW_REPLACE);
 
 	for (i = 0; i < rail_data.RailHits.Size(); i++)
 	{
@@ -4760,8 +4756,8 @@ void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, i
 
 		int puffflags = PF_HITTHING;
 		AActor *hitactor = rail_data.RailHits[i].HitActor;
-		fixedvec3 &hitpos = rail_data.RailHits[i].HitPos;
-		angle_t hitangle = rail_data.RailHits[i].HitAngle;
+		DVector3 &hitpos = rail_data.RailHits[i].HitPos;
+		DAngle hitangle = rail_data.RailHits[i].HitAngle;
 
 		if ((hitactor->flags & MF_NOBLOOD) ||
 			(hitactor->flags2 & MF2_DORMANT || ((hitactor->flags2 & MF2_INVULNERABLE) && !(puffDefaults->flags3 & MF3_FOILINVUL))))
@@ -4779,7 +4775,7 @@ void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, i
 		}
 		if (spawnpuff)
 		{
-			P_SpawnPuff(source, puffclass, hitpos, trace.SrcAngleToTarget, trace.SrcAngleToTarget - ANGLE_90, 1, puffflags, hitactor);
+			P_SpawnPuff(source, puffclass, hitpos, hitangle, hitangle - 90, 1, puffflags, hitactor);
 		}
 		
 		int dmgFlagPass = DMG_INFLICTOR_IS_PUFF;
@@ -4792,12 +4788,12 @@ void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, i
 			if (puffDefaults->flags3 & MF3_FOILINVUL) dmgFlagPass |= DMG_FOILINVUL;
 			if (puffDefaults->flags7 & MF7_FOILBUDDHA) dmgFlagPass |= DMG_FOILBUDDHA;
 		}
-		int newdam = P_DamageMobj(hitactor, thepuff ? thepuff : source, source, damage, damagetype, dmgFlagPass|DMG_USEANGLE, ANGLE2DBL(hitangle));
+		int newdam = P_DamageMobj(hitactor, thepuff ? thepuff : source, source, damage, damagetype, dmgFlagPass|DMG_USEANGLE, hitangle);
 
 		if (bleed)
 		{
 			P_SpawnBlood(hitpos, hitangle, newdam > 0 ? newdam : damage, hitactor);
-			P_TraceBleed(newdam > 0 ? newdam : damage, hitpos, hitactor, source->_f_angle(), pitch);
+			P_TraceBleed(newdam > 0 ? newdam : damage, hitpos, hitactor, hitangle, ANGLE2DBL(pitch));
 		}
 	}
 
@@ -4808,7 +4804,7 @@ void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, i
 
 		if (puffclass != NULL && puffDefaults->flags3 & MF3_ALWAYSPUFF)
 		{
-			puff = P_SpawnPuff(source, puffclass, trace.HitPos, trace.SrcAngleToTarget, trace.SrcAngleToTarget - ANGLE_90, 1, 0);
+			puff = P_SpawnPuff(source, puffclass, trace.HitPos, trace.SrcAngleFromTarget, trace.SrcAngleFromTarget - 90, 1, 0);
 			if (puff && (trace.Line != NULL) && (trace.Line->special == Line_Horizon) && !(puff->flags3 & MF3_SKYEXPLODE))
 				puff->Destroy();
 		}
@@ -4823,7 +4819,7 @@ void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, i
 		AActor* puff = NULL;
 		if (puffclass != NULL && puffDefaults->flags3 & MF3_ALWAYSPUFF)
 		{
-			puff = P_SpawnPuff(source, puffclass, trace.HitPos, trace.SrcAngleToTarget, trace.SrcAngleToTarget - ANGLE_90, 1, 0);
+			puff = P_SpawnPuff(source, puffclass, trace.HitPos, trace.SrcAngleFromTarget, trace.SrcAngleFromTarget - 90, 1, 0);
 			if (puff && !(puff->flags3 & MF3_SKYEXPLODE) &&
 				(((trace.HitType == TRACE_HitFloor) && (puff->floorpic == skyflatnum)) ||
 				((trace.HitType == TRACE_HitCeiling) && (puff->ceilingpic == skyflatnum))))
@@ -4846,9 +4842,7 @@ void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, i
 	}
 
 	// Draw the slug's trail.
-	end.X = FIXED2DBL(trace.HitPos.x);
-	end.Y = FIXED2DBL(trace.HitPos.y);
-	end.Z = FIXED2DBL(trace.HitPos.z);
+	end = trace.HitPos;
 	P_DrawRailTrail(source, start, end, color1, color2, maxdiff, railflags, spawnclass, source->_f_angle() + angleoffset, duration, sparsity, drift, SpiralOffset);
 }
 
@@ -4861,7 +4855,7 @@ void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, i
 CVAR(Float, chase_height, -8.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Float, chase_dist, 90.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
-void P_AimCamera(AActor *t1, fixed_t &CameraX, fixed_t &CameraY, fixed_t &CameraZ, sector_t *&CameraSector, bool &unlinked)
+void P_AimCamera(AActor *t1, DVector3 &campos, sector_t *&CameraSector, bool &unlinked)
 {
 	fixed_t distance = (fixed_t)(clamp<double>(chase_dist, 0, 30000) * FRACUNIT);
 	angle_t angle = (t1->_f_angle() - ANG180) >> ANGLETOFINESHIFT;
@@ -4873,23 +4867,21 @@ void P_AimCamera(AActor *t1, fixed_t &CameraX, fixed_t &CameraY, fixed_t &Camera
 	vy = FixedMul(finecosine[pitch], finesine[angle]);
 	vz = finesine[pitch];
 
+	DVector3 vvec(vx, vy, vz);
+	vvec.MakeUnit();
+
 	sz = t1->_f_Z() - t1->_f_floorclip() + t1->_f_height() + (fixed_t)(clamp<double>(chase_height, -1000, 1000) * FRACUNIT);
 
 	if (Trace(t1->_f_X(), t1->_f_Y(), sz, t1->Sector,
 		vx, vy, vz, distance, 0, 0, NULL, trace) &&
-		trace.Distance > 10 * FRACUNIT)
+		trace.Distance > 10)
 	{
 		// Position camera slightly in front of hit thing
-		fixed_t dist = trace.Distance - 5 * FRACUNIT;
-		CameraX = t1->_f_X() + FixedMul(vx, dist);
-		CameraY = t1->_f_Y() + FixedMul(vy, dist);
-		CameraZ = sz + FixedMul(vz, dist);
+		campos = t1->PosAtZ(FIXED2DBL(sz)) + vvec *(trace.Distance - 5);
 	}
 	else
 	{
-		CameraX = trace.HitPos.x;
-		CameraY = trace.HitPos.y;
-		CameraZ = trace.HitPos.z;
+		campos = trace.HitPos;
 	}
 	CameraSector = trace.Sector;
 	unlinked = trace.unlinked;
@@ -5636,7 +5628,7 @@ void P_DoCrunch(AActor *thing, FChangePosition *cpos)
 				{
 					AActor *mo;
 
-					mo = Spawn(bloodcls, thing->PosPlusZ(thing->_f_height() / 2), ALLOW_REPLACE);
+					mo = Spawn(bloodcls, thing->PosPlusZ(thing->Height / 2), ALLOW_REPLACE);
 
 					mo->Vel.X = pr_crunch.Random2() / 16.;
 					mo->Vel.Y = pr_crunch.Random2() / 16.;
@@ -5648,11 +5640,10 @@ void P_DoCrunch(AActor *thing, FChangePosition *cpos)
 					if (!(cl_bloodtype <= 1)) mo->renderflags |= RF_INVISIBLE;
 				}
 
-				angle_t an;
-				an = (M_Random() - 128) << 24;
+				DAngle an = (M_Random() - 128) * (360./256);
 				if (cl_bloodtype >= 1)
 				{
-					P_DrawSplash2(32, thing->_f_X(), thing->_f_Y(), thing->_f_Z() + thing->_f_height() / 2, an, 2, bloodcolor);
+					P_DrawSplash2(32,  thing->PosPlusZ(thing->Height/2), an, 2, bloodcolor);
 				}
 			}
 			if (thing->CrushPainSound != 0 && !S_GetSoundPlayingInfo(thing, thing->CrushPainSound))
@@ -6419,9 +6410,8 @@ void SpawnShootDecal(AActor *t1, const FTraceResults &trace)
 	}
 	if (decalbase != NULL)
 	{
-		DVector3 hp(FIXED2DBL(trace.HitPos.x), FIXED2DBL(trace.HitPos.y), FIXED2DBL(trace.HitPos.z));
 		DImpactDecal::StaticCreate(decalbase->GetDecal(),
-			hp, trace.Line->sidedef[trace.Side], trace.ffloor);
+			trace.HitPos, trace.Line->sidedef[trace.Side], trace.ffloor);
 	}
 }
 
@@ -6433,7 +6423,7 @@ void SpawnShootDecal(AActor *t1, const FTraceResults &trace)
 
 static void SpawnDeepSplash(AActor *t1, const FTraceResults &trace, AActor *puff)
 {
-	const fixedvec3 *hitpos;
+	const DVector3 *hitpos;
 	if (trace.Crossed3DWater)
 	{
 		hitpos = &trace.Crossed3DWaterPos;
@@ -6444,7 +6434,7 @@ static void SpawnDeepSplash(AActor *t1, const FTraceResults &trace, AActor *puff
 	}
 	else return;
 
-	P_HitWater(puff != NULL ? puff : t1, P_PointInSector(hitpos->x, hitpos->y), *hitpos);
+	P_HitWater(puff != NULL ? puff : t1, P_PointInSector(*hitpos), *hitpos);
 }
 
 //=============================================================================

@@ -46,7 +46,7 @@ private:
 	struct WeaponInfo
 	{
 		PClassWeapon *Type;
-		fixed_t Position;
+		int Position;
 	};
 	void SetInitialPositions();
 	void Sort();
@@ -274,7 +274,7 @@ public:
 	virtual void ReplaceClassRef(PClass *oldclass, PClass *newclass);
 
 	int SlotNumber;
-	fixed_t SlotPriority;
+	int SlotPriority;
 };
 
 class AWeapon : public AInventory
@@ -288,18 +288,18 @@ public:
 	int MinAmmo1, MinAmmo2;					// Minimum ammo needed to switch to this weapon
 	int AmmoUse1, AmmoUse2;					// How much ammo to use with each shot
 	int Kickback;
-	fixed_t YAdjust;						// For viewing the weapon fullscreen
+	float YAdjust;							// For viewing the weapon fullscreen (visual only so no need to be a double)
 	FSoundIDNoInit UpSound, ReadySound;		// Sounds when coming up and idle
 	PClassWeapon *SisterWeaponType;			// Another weapon to pick up with this one
 	PClassActor *ProjectileType;			// Projectile used by primary attack
 	PClassActor *AltProjectileType;			// Projectile used by alternate attack
 	int SelectionOrder;						// Lower-numbered weapons get picked first
 	int MinSelAmmo1, MinSelAmmo2;			// Ignore in BestWeapon() if inadequate ammo
-	fixed_t MoveCombatDist;					// Used by bots, but do they *really* need it?
+	double MoveCombatDist;					// Used by bots, but do they *really* need it?
 	int ReloadCounter;						// For A_CheckForReload
-	int BobStyle;							// [XA] Bobbing style. Defines type of bobbing (e.g. Normal, Alpha)
-	fixed_t BobSpeed;						// [XA] Bobbing speed. Defines how quickly a weapon bobs.
-	fixed_t BobRangeX, BobRangeY;			// [XA] Bobbing range. Defines how far a weapon bobs in either direction.
+	int BobStyle;							// [XA] Bobbing style. Defines type of bobbing (e.g. Normal, Alpha)  (visual only so no need to be a double)
+	float BobSpeed;							// [XA] Bobbing speed. Defines how quickly a weapon bobs.
+	float BobRangeX, BobRangeY;				// [XA] Bobbing range. Defines how far a weapon bobs in either direction.
 
 	// In-inventory instance variables
 	TObjPtr<AAmmo> Ammo1, Ammo2;
@@ -395,7 +395,7 @@ public:
 	bool TryPickup(AActor *&toucher);
 	void Serialize(FArchive &arc);
 
-	fixed_t DropAmmoFactor;
+	double DropAmmoFactor;
 };
 
 

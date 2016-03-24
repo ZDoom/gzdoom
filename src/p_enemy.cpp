@@ -410,7 +410,7 @@ bool AActor::SuggestMissileAttack (fixed_t dist)
 	if (flags4 & MF4_MISSILEMORE) dist >>= 1;
 	if (flags4 & MF4_MISSILEEVENMORE) dist >>= 3;
 	
-	int mmc = FixedMul(MinMissileChance, G_SkillProperty(SKILLP_Aggressiveness));
+	int mmc = int(MinMissileChance * G_SkillProperty(SKILLP_Aggressiveness));
 	return pr_checkmissilerange() >= MIN<int> (dist >> FRACBITS, mmc);
 }
 
@@ -879,7 +879,7 @@ void P_NewChaseDir(AActor * actor)
 	}
 	
 	// Try to move away from a dropoff
-	if (actor->_f_floorz() - actor->dropoffz > actor->MaxDropOffHeight && 
+	if (actor->floorz - actor->dropoffz > actor->MaxDropOffHeight && 
 		actor->Z() <= actor->floorz && !(actor->flags & MF_DROPOFF) && 
 		!(actor->flags2 & MF2_ONMOBJ) &&
 		!(actor->flags & MF_FLOAT) && !(i_compatflags & COMPATF_DROPOFF))
@@ -888,8 +888,8 @@ void P_NewChaseDir(AActor * actor)
 		FBlockLinesIterator it(box);
 		line_t *line;
 
-		fixed_t deltax = 0;
-		fixed_t deltay = 0;
+		double deltax = 0;
+		double deltay = 0;
 		while ((line = it.Next()))
 		{
 			if (line->backsector                     && // Ignore one-sided linedefs
@@ -899,31 +899,31 @@ void P_NewChaseDir(AActor * actor)
 				box.Bottom() < line->bbox[BOXTOP]    &&
 				box.BoxOnLineSide(line) == -1)
 		    {
-				fixed_t front = line->frontsector->floorplane.ZatPoint(actor->PosRelative(line));
-				fixed_t back  = line->backsector->floorplane.ZatPoint(actor->PosRelative(line));
-				angle_t angle;
+				double front = line->frontsector->floorplane.ZatPointF(actor->PosRelative(line));
+				double back  = line->backsector->floorplane.ZatPointF(actor->PosRelative(line));
+				DAngle angle;
 		
 				// The monster must contact one of the two floors,
 				// and the other must be a tall dropoff.
 				
-				if (back == actor->_f_Z() && front < actor->_f_Z() - actor->MaxDropOffHeight)
+				if (back == actor->Z() && front < actor->Z() - actor->MaxDropOffHeight)
 				{
-					angle = R_PointToAngle2(0,0,line->dx,line->dy);   // front side dropoff
+					angle = line->Delta().Angle();   // front side dropoff
 				}
-				else if (front == actor->_f_Z() && back < actor->_f_Z() - actor->MaxDropOffHeight)
+				else if (front == actor->Z() && back < actor->Z() - actor->MaxDropOffHeight)
 				{
-					angle = R_PointToAngle2(line->dx,line->dy,0,0); // back side dropoff
+					angle = line->Delta().Angle() + 180.; // back side dropoff
 				}
 				else continue;
 		
 				// Move away from dropoff at a standard speed.
 				// Multiple contacted linedefs are cumulative (e.g. hanging over corner)
-				deltax -= finesine[angle >> ANGLETOFINESHIFT]*32;
-				deltay += finecosine[angle >> ANGLETOFINESHIFT]*32;
+				deltax -= 32 * angle.Sin();
+				deltay += 32 * angle.Cos();
 			}
 		}
 
-		if (deltax || deltay) 
+		if (deltax != 0 || deltay != 0) 
 		{
 			// [Graf Zahl] I have changed P_TryMove to only apply this logic when
 			// being called from here. AVOIDINGDROPOFF activates the code that
@@ -933,7 +933,7 @@ void P_NewChaseDir(AActor * actor)
 
 			// use different dropoff movement logic in P_TryMove
 			actor->flags5|=MF5_AVOIDINGDROPOFF;
-			P_DoNewChaseDir(actor, deltax, deltay);
+			P_DoNewChaseDir(actor, FLOAT2FIXED(deltax), FLOAT2FIXED(deltay));
 			actor->flags5&=~MF5_AVOIDINGDROPOFF;
 		
 			// If moving away from dropoff, set movecount to 1 so that 
@@ -2861,30 +2861,29 @@ void A_Face (AActor *self, AActor *other, angle_t _max_turn, angle_t _max_pitch,
 	// disabled and is so by default.
 	if (max_pitch <= 180.)
 	{
-		fixedvec2 pos = self->_f_Vec2To(other);
-		DVector2 dist(pos.x, pos.y);
+		DVector2 dist = self->Vec2To(other);
 		
 		// Positioning ala missile spawning, 32 units above foot level
-		fixed_t source_z = self->_f_Z() + 32*FRACUNIT + self->GetBobOffset();
-		fixed_t target_z = other->_f_Z() + 32*FRACUNIT + other->GetBobOffset();
+		double source_z = self->Z() + 32 + self->GetBobOffset();
+		double target_z = other->Z() + 32 + other->GetBobOffset();
 
 		// If the target z is above the target's head, reposition to the middle of
 		// its body.		
-		if (target_z >= other->_f_Top())
+		if (target_z >= other->Top())
 		{
-			target_z = other->_f_Z() + (other->_f_height() / 2);
+			target_z = other->Center();
 		}
 
 		//Note there is no +32*FRACUNIT on purpose. This is for customization sake. 
 		//If one doesn't want this behavior, just don't use FAF_BOTTOM.
 		if (flags & FAF_BOTTOM)
-			target_z = other->_f_Z() + other->GetBobOffset(); 
+			target_z = other->Z() + other->GetBobOffset(); 
 		if (flags & FAF_MIDDLE)
-			target_z = other->_f_Z() + (other->_f_height() / 2) + other->GetBobOffset();
+			target_z = other->Center() + other->GetBobOffset();
 		if (flags & FAF_TOP)
-			target_z = other->_f_Z() + (other->_f_height()) + other->GetBobOffset();
+			target_z = other->Top() + other->GetBobOffset();
 
-		target_z += z_add;
+		target_z += FIXED2FLOAT(z_add);
 
 		double dist_z = target_z - source_z;
 		double ddist = g_sqrt(dist.X*dist.X + dist.Y*dist.Y + dist_z*dist_z);
@@ -3098,11 +3097,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_ActiveAndUnblock)
 void ModifyDropAmount(AInventory *inv, int dropamount)
 {
 	int flagmask = IF_IGNORESKILL;
-	fixed_t dropammofactor = G_SkillProperty(SKILLP_DropAmmoFactor);
+	double dropammofactor = G_SkillProperty(SKILLP_DropAmmoFactor);
 	// Default drop amount is half of regular amount * regular ammo multiplication
 	if (dropammofactor == -1) 
 	{
-		dropammofactor = FRACUNIT/2;
+		dropammofactor = 0.5;
 		flagmask = 0;
 	}
 
@@ -3110,7 +3109,7 @@ void ModifyDropAmount(AInventory *inv, int dropamount)
 	{
 		if (flagmask != 0 && inv->IsKindOf(RUNTIME_CLASS(AAmmo)))
 		{
-			inv->Amount = FixedMul(dropamount, dropammofactor);
+			inv->Amount = int(dropamount * dropammofactor);
 			inv->ItemFlags |= IF_IGNORESKILL;
 		}
 		else
@@ -3124,7 +3123,7 @@ void ModifyDropAmount(AInventory *inv, int dropamount)
 		int amount = static_cast<PClassAmmo *>(inv->GetClass())->DropAmount;
 		if (amount <= 0)
 		{
-			amount = MAX(1, FixedMul(inv->Amount, dropammofactor));
+			amount = MAX(1, int(inv->Amount * dropammofactor));
 		}
 		inv->Amount = amount;
 		inv->ItemFlags |= flagmask;
@@ -3137,8 +3136,8 @@ void ModifyDropAmount(AInventory *inv, int dropamount)
 	else if (inv->IsKindOf (RUNTIME_CLASS(AWeapon)))
 	{
 		// The same goes for ammo from a weapon.
-		static_cast<AWeapon *>(inv)->AmmoGive1 = FixedMul(static_cast<AWeapon *>(inv)->AmmoGive1, dropammofactor);
-		static_cast<AWeapon *>(inv)->AmmoGive2 = FixedMul(static_cast<AWeapon *>(inv)->AmmoGive2, dropammofactor);
+		static_cast<AWeapon *>(inv)->AmmoGive1 = int(static_cast<AWeapon *>(inv)->AmmoGive1 * dropammofactor);
+		static_cast<AWeapon *>(inv)->AmmoGive2 = int(static_cast<AWeapon *>(inv)->AmmoGive2 * dropammofactor);
 		inv->ItemFlags |= flagmask;
 	}			
 	else if (inv->IsKindOf (RUNTIME_CLASS(ADehackedPickup)))
@@ -3161,9 +3160,8 @@ AInventory *P_DropItem (AActor *source, PClassActor *type, int dropamount, int c
 	if (type != NULL && pr_dropitem() <= chance)
 	{
 		AActor *mo;
-		fixed_t spawnz;
+		double spawnz = 0;
 
-		spawnz = source->_f_Z();
 		if (!(i_compatflags & COMPATF_NOTOSSDROPS))
 		{
 			int style = sv_dropstyle;
@@ -3173,14 +3171,14 @@ AInventory *P_DropItem (AActor *source, PClassActor *type, int dropamount, int c
 			}
 			if (style == 2)
 			{
-				spawnz += 24*FRACUNIT;
+				spawnz = 24*FRACUNIT;
 			}
 			else
 			{
-				spawnz += source->_f_height() / 2;
+				spawnz = source->Height / 2;
 			}
 		}
-		mo = Spawn(type, source->_f_X(), source->_f_Y(), spawnz, ALLOW_REPLACE);
+		mo = Spawn(type, source->PosPlusZ(spawnz), ALLOW_REPLACE);
 		if (mo != NULL)
 		{
 			mo->flags |= MF_DROPPED;

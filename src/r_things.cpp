@@ -770,7 +770,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	fixedvec3 pos = thing->InterpolatedPosition(r_TicFrac);
 	fx = pos.x;
 	fy = pos.y;
-	fz = pos.z + thing->GetBobOffset(r_TicFrac);
+	fz = pos.z + thing->_f_GetBobOffset(r_TicFrac);
 
 	tex = NULL;
 	voxel = NULL;
@@ -1350,12 +1350,11 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, fixed_t sx, fixed_
 		{
 			if (RenderTarget != screen || viewheight == RenderTarget->GetHeight())
 			{
-				vis->texturemid -= weapon->YAdjust;
+				vis->texturemid -= FLOAT2FIXED(weapon->YAdjust);
 			}
 			else
 			{
-				vis->texturemid -= FixedMul (StatusBar->GetDisplacement (),
-					weapon->YAdjust);
+				vis->texturemid -= FLOAT2FIXED(StatusBar->GetDisplacement () * weapon->YAdjust);
 			}
 		}
 	}
@@ -1575,7 +1574,7 @@ void R_DrawPlayerSprites ()
 	if (camera->player != NULL)
 	{
 		fixed_t centerhack = centeryfrac;
-		fixed_t ofsx, ofsy;
+		float ofsx, ofsy;
 
 		centery = viewheight >> 1;
 		centeryfrac = centery << FRACBITS;
@@ -1590,7 +1589,7 @@ void R_DrawPlayerSprites ()
 			// [RH] Don't draw the targeter's crosshair if the player already has a crosshair set.
 			if (psp->state && (i != ps_targetcenter || CrosshairImage == NULL))
 			{
-				R_DrawPSprite (psp, i, camera, FLOAT2FIXED(psp->sx) + ofsx, FLOAT2FIXED(psp->sy) + ofsy);
+				R_DrawPSprite (psp, i, camera, FLOAT2FIXED(psp->sx + ofsx), FLOAT2FIXED(psp->sy + ofsy));
 			}
 			// [RH] Don't bob the targeter.
 			if (i == ps_flash)

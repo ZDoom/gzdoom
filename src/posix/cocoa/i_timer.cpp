@@ -186,7 +186,7 @@ unsigned int I_FPSTime()
 }
 
 
-fixed_t I_GetTimeFrac(uint32* ms)
+double I_GetTimeFrac(uint32* ms)
 {
 	const uint32_t now = I_MSTime();
 
@@ -196,8 +196,8 @@ fixed_t I_GetTimeFrac(uint32* ms)
 	}
 
 	return 0 == s_ticStart
-		? FRACUNIT
-		: clamp<fixed_t>( (now - s_ticStart) * FRACUNIT * TICRATE / 1000, 0, FRACUNIT);
+		? 1.
+		: clamp<double>( (now - s_ticStart) * TICRATE / 1000., 0, 1);
 }
 
 

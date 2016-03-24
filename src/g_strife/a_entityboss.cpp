@@ -77,7 +77,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnEntity)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	AActor *entity = Spawn("EntityBoss", self->PosPlusZ(70), ALLOW_REPLACE);
+	AActor *entity = Spawn("EntityBoss", self->PosPlusZ(70.), ALLOW_REPLACE);
 	if (entity != NULL)
 	{
 		entity->Angles.Yaw = self->Angles.Yaw;

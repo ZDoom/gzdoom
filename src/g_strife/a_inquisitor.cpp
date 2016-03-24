@@ -127,7 +127,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_TossArm)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	AActor *foo = Spawn("InquisitorArm", self->PosPlusZ(24), ALLOW_REPLACE);
+	AActor *foo = Spawn("InquisitorArm", self->PosPlusZ(24.), ALLOW_REPLACE);
 	foo->Angles.Yaw = self->Angles.Yaw - 90. + pr_inq.Random2() * (360./1024.);
 	foo->VelFromAngle(foo->Speed / 8);
 	foo->Vel.Z = pr_inq() / 64.;

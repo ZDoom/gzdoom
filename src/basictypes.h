@@ -1,16 +1,6 @@
 #ifndef __BASICTYPES_H
 #define __BASICTYPES_H
 
-#ifdef _MSC_VER
-typedef __int8					SBYTE;
-typedef unsigned __int8			BYTE;
-typedef __int16					SWORD;
-typedef unsigned __int16		WORD;
-typedef __int32					SDWORD;
-typedef unsigned __int32		uint32;
-typedef __int64					SQWORD;
-typedef unsigned __int64		QWORD;
-#else
 #include <stdint.h>
 
 typedef int8_t					SBYTE;
@@ -21,7 +11,6 @@ typedef int32_t					SDWORD;
 typedef uint32_t				uint32;
 typedef int64_t					SQWORD;
 typedef uint64_t				QWORD;
-#endif
 
 typedef SDWORD					int32;
 typedef float					real32;

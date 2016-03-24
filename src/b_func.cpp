@@ -141,8 +141,10 @@ void DBot::Dofire (ticcmd_t *cmd)
 	int aiming_penalty=0; //For shooting at shading target, if screen is red, MAKEME: When screen red.
 	int aiming_value; //The final aiming value.
 	fixed_t dist;
+	double fdist;
 	angle_t an;
 	int m;
+	double fm;
 
 	if (!enemy || !(enemy->flags & MF_SHOOTABLE) || enemy->health <= 0)
 		return;
@@ -221,9 +223,9 @@ void DBot::Dofire (ticcmd_t *cmd)
 		}
 		// prediction aiming
 shootmissile:
-		dist = player->mo->AproxDistance (enemy);
-		m = dist / GetDefaultByType (player->ReadyWeapon->ProjectileType)->_f_speed();
-		bglobal.SetBodyAt (enemy->_f_X() + enemy->_f_velx()*m*2, enemy->_f_Y() + enemy->_f_vely()*m*2, enemy->_f_Z(), 1);
+		fdist = player->mo->Distance2D(enemy);
+		fm = fdist / GetDefaultByType (player->ReadyWeapon->ProjectileType)->Speed;
+		bglobal.SetBodyAt(enemy->Pos() + enemy->Vel.XY() * fm * 2, 1);
 		angle = player->mo->__f_AngleTo(bglobal.body1);
 		if (Check_LOS (enemy, SHOOTFOV))
 			no_fire = false;
@@ -425,28 +427,28 @@ AActor *DBot::Find_enemy ()
 
 
 //Creates a temporary mobj (invisible) at the given location.
-void FCajunMaster::SetBodyAt (fixed_t x, fixed_t y, fixed_t z, int hostnum)
+void FCajunMaster::SetBodyAt (const DVector3 &pos, int hostnum)
 {
 	if (hostnum == 1)
 	{
 		if (body1)
 		{
-			body1->SetOrigin (x, y, z, false);
+			body1->SetOrigin (pos, false);
 		}
 		else
 		{
-			body1 = Spawn ("CajunBodyNode", x, y, z, NO_REPLACE);
+			body1 = Spawn ("CajunBodyNode", pos, NO_REPLACE);
 		}
 	}
 	else if (hostnum == 2)
 	{
 		if (body2)
 		{
-			body2->SetOrigin (x, y, z, false);
+			body2->SetOrigin (pos, false);
 		}
 		else
 		{
-			body2 = Spawn ("CajunBodyNode", x, y, z, NO_REPLACE);
+			body2 = Spawn ("CajunBodyNode", pos, NO_REPLACE);
 		}
 	}
 }
@@ -463,7 +465,7 @@ void FCajunMaster::SetBodyAt (fixed_t x, fixed_t y, fixed_t z, int hostnum)
 //Emulates missile travel. Returns distance travelled.
 fixed_t FCajunMaster::FakeFire (AActor *source, AActor *dest, ticcmd_t *cmd)
 {
-	AActor *th = Spawn ("CajunTrace", source->PosPlusZ(4*8*FRACUNIT), NO_REPLACE);
+	AActor *th = Spawn ("CajunTrace", source->PosPlusZ(4*8.), NO_REPLACE);
 	
 	th->target = source;		// where it came from
 
@@ -485,25 +487,22 @@ fixed_t FCajunMaster::FakeFire (AActor *source, AActor *dest, ticcmd_t *cmd)
 
 angle_t DBot::FireRox (AActor *enemy, ticcmd_t *cmd)
 {
-	fixed_t dist;
+	double dist;
 	angle_t ang;
 	AActor *actor;
-	int m;
+	double m;
 
-	bglobal.SetBodyAt (player->mo->_f_X() + FixedMul(player->mo->_f_velx(), 5*FRACUNIT),
-					   player->mo->_f_Y() + FixedMul(player->mo->_f_vely(), 5*FRACUNIT),
-					   player->mo->_f_Z() + (player->mo->_f_height() / 2), 2);
+	bglobal.SetBodyAt(player->mo->PosPlusZ(player->mo->Height / 2) + player->mo->Vel.XY() * 5, 2);
 
 	actor = bglobal.body2;
 
-	dist = actor->AproxDistance (enemy);
-	if (dist < SAFE_SELF_MISDIST)
+	dist = actor->Distance2D (enemy);
+	if (dist < SAFE_SELF_MISDIST/FRACUNIT)
 		return 0;
 	//Predict.
-	m = (((dist+1)/FRACUNIT) / GetDefaultByName("Rocket")->_f_speed());
+	m = ((dist+1) / GetDefaultByName("Rocket")->Speed);
 
-	bglobal.SetBodyAt (enemy->_f_X() + FixedMul(enemy->_f_velx(), (m+2*FRACUNIT)),
-					   enemy->_f_Y() + FixedMul(enemy->_f_vely(), (m+2*FRACUNIT)), ONFLOORZ, 1);
+	bglobal.SetBodyAt(DVector3((enemy->Pos() + enemy->Vel * (m + 2)), ONFLOORZ), 1);
 	
 	//try the predicted location
 	if (P_CheckSight (actor, bglobal.body1, SF_IGNOREVISIBILITY)) //See the predicted location, so give a test missile

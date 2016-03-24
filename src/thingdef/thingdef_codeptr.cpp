@@ -614,9 +614,9 @@ static void DoAttack (AActor *self, bool domelee, bool domissile,
 	else if (domissile && MissileType != NULL)
 	{
 		// This seemingly senseless code is needed for proper aiming.
-		double add = MissileHeight + FIXED2FLOAT(self->GetBobOffset()) - 32;
+		double add = MissileHeight + self->GetBobOffset() - 32;
 		self->AddZ(add);
-		AActor *missile = P_SpawnMissileXYZ (self->PosPlusZ(32*FRACUNIT), self, self->target, MissileType, false);
+		AActor *missile = P_SpawnMissileXYZ (self->PosPlusZ(32.), self, self->target, MissileType, false);
 		self->AddZ(-add);
 
 		if (missile)
@@ -1197,8 +1197,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomMissile)
 {
 	PARAM_ACTION_PROLOGUE;
 	PARAM_CLASS		(ti, AActor);
-	PARAM_FIXED_OPT	(spawnheight) { spawnheight = 32*FRACUNIT; }
-	PARAM_INT_OPT	(spawnofs_xy) { spawnofs_xy = 0; }
+	PARAM_FLOAT_OPT	(Spawnheight) { Spawnheight = 32; }
+	PARAM_FLOAT_OPT	(Spawnofs_xy) { Spawnofs_xy = 0; }
 	PARAM_DANGLE_OPT(Angle)		  { Angle = 0.; }
 	PARAM_INT_OPT	(flags)		  { flags = 0; }
 	PARAM_DANGLE_OPT(Pitch)		  { Pitch = 0.; }
@@ -1215,29 +1215,29 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomMissile)
 	{
 		if (ti) 
 		{
-			angle_t ang = (self->_f_angle() - ANGLE_90) >> ANGLETOFINESHIFT;
-			fixed_t x = spawnofs_xy * finecosine[ang];
-			fixed_t y = spawnofs_xy * finesine[ang];
-			fixed_t z = spawnheight + self->GetBobOffset() - 32*FRACUNIT + (self->player? FLOAT2FIXED(self->player->crouchoffset) : 0);
+			DAngle angle = self->Angles.Yaw - 90;
+			double x = Spawnofs_xy * angle.Cos();
+			double y = Spawnofs_xy * angle.Sin();
+			double z = Spawnheight + self->GetBobOffset() - 32 + (self->player? self->player->crouchoffset : 0.);
 
-			fixedvec3 pos = self->_f_Pos();
+			DVector3 pos = self->Pos();
 			switch (aimmode)
 			{
 			case 0:
 			default:
 				// same adjustment as above (in all 3 directions this time) - for better aiming!
 				self->SetXYZ(self->Vec3Offset(x, y, z));
-				missile = P_SpawnMissileXYZ(self->PosPlusZ(32*FRACUNIT), self, ref, ti, false);
+				missile = P_SpawnMissileXYZ(self->PosPlusZ(32.), self, ref, ti, false);
 				self->SetXYZ(pos);
 				break;
 
 			case 1:
-				missile = P_SpawnMissileXYZ(self->Vec3Offset(x, y, self->GetBobOffset() + spawnheight), self, ref, ti, false);
+				missile = P_SpawnMissileXYZ(self->Vec3Offset(x, y, self->GetBobOffset() + Spawnheight), self, ref, ti, false);
 				break;
 
 			case 2:
-				self->SetXYZ(self->Vec3Offset(x, y, 0));
-				missile = P_SpawnMissileAngleZSpeed(self, self->_f_Z() + self->GetBobOffset() + spawnheight, ti, self->_f_angle(), 0, GetDefaultByType(ti)->_f_speed(), self, false);
+				self->SetXYZ(self->Vec3Offset(x, y, 0.));
+				missile = P_SpawnMissileAngleZSpeed(self, self->Z() + self->GetBobOffset() + Spawnheight, ti, self->Angles.Yaw, 0, GetDefaultByType(ti)->Speed, self, false);
 				self->SetXYZ(pos);
 
 				flags |= CMF_ABSOLUTEPITCH;
@@ -1443,7 +1443,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomComboAttack)
 {
 	PARAM_ACTION_PROLOGUE;
 	PARAM_CLASS		(ti, AActor);
-	PARAM_FIXED		(spawnheight);
+	PARAM_FLOAT		(spawnheight);
 	PARAM_INT		(damage);
 	PARAM_SOUND_OPT	(meleesound)	{ meleesound = 0; }
 	PARAM_NAME_OPT	(damagetype)	{ damagetype = NAME_Melee; }
@@ -1466,9 +1466,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomComboAttack)
 	else if (ti) 
 	{
 		// This seemingly senseless code is needed for proper aiming.
-		self->_f_AddZ(spawnheight + self->GetBobOffset() - 32*FRACUNIT);
-		AActor *missile = P_SpawnMissileXYZ (self->PosPlusZ(32*FRACUNIT), self, self->target, ti, false);
-		self->_f_AddZ(-(spawnheight + self->GetBobOffset() - 32*FRACUNIT));
+		double add = spawnheight + self->GetBobOffset() - 32;
+		self->AddZ(add);
+		AActor *missile = P_SpawnMissileXYZ (self->PosPlusZ(32.), self, self->target, ti, false);
+		self->AddZ(-add);
 
 		if (missile)
 		{
@@ -2378,7 +2379,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItem)
 	PARAM_ACTION_PROLOGUE;
 	PARAM_CLASS_OPT	(missile, AActor)		{ missile = PClass::FindActor("Unknown"); }
 	PARAM_FIXED_OPT	(distance)				{ distance = 0; }
-	PARAM_FIXED_OPT	(zheight)				{ zheight = 0; }
+	PARAM_FLOAT_OPT	(zheight)				{ zheight = 0; }
 	PARAM_BOOL_OPT	(useammo)				{ useammo = true; }
 	PARAM_BOOL_OPT	(transfer_translation)	{ transfer_translation = false; }
 
@@ -2414,7 +2415,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItem)
 		}
 	}
 
-	AActor *mo = Spawn( missile, self->_f_Vec3Angle(distance, self->_f_angle(), -self->_f_floorclip() + self->GetBobOffset() + zheight), ALLOW_REPLACE);
+	AActor *mo = Spawn( missile, self->Vec3Angle(distance, self->Angles.Yaw, -self->Floorclip + self->GetBobOffset() + zheight), ALLOW_REPLACE);
 
 	int flags = (transfer_translation ? SIXF_TRANSFERTRANSLATION : 0) + (useammo ? SIXF_SETMASTER : 0);
 	ACTION_RETURN_BOOL(InitSpawnedItem(self, mo, flags));	// for an inventory item's use state
@@ -2431,9 +2432,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItemEx)
 {
 	PARAM_ACTION_PROLOGUE;
 	PARAM_CLASS		(missile, AActor);
-	PARAM_FIXED_OPT	(xofs)		{ xofs = 0; }
-	PARAM_FIXED_OPT	(yofs)		{ yofs = 0; }
-	PARAM_FIXED_OPT	(zofs)		{ zofs = 0; }
+	PARAM_FLOAT_OPT	(xofs)		{ xofs = 0; }
+	PARAM_FLOAT_OPT	(yofs)		{ yofs = 0; }
+	PARAM_FLOAT_OPT	(zofs)		{ zofs = 0; }
 	PARAM_FLOAT_OPT	(xvel)		{ xvel = 0; }
 	PARAM_FLOAT_OPT	(yvel)		{ yvel = 0; }
 	PARAM_FLOAT_OPT	(zvel)		{ zvel = 0; }
@@ -2456,7 +2457,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItemEx)
 		ACTION_RETURN_BOOL(true);
 	}
 
-	fixedvec2 pos;
+	DVector2 pos;
 
 	if (!(flags & SIXF_ABSOLUTEANGLE))
 	{
@@ -2473,7 +2474,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItemEx)
 	{
 		// in relative mode negative y values mean 'left' and positive ones mean 'right'
 		// This is the inverse orientation of the absolute mode!
-		pos = self->Vec2Offset(fixed_t(xofs * c + yofs * s), fixed_t(xofs * s - yofs*c));
+		pos = self->Vec2Offset(xofs * c + yofs * s, xofs * s - yofs*c);
 	}
 
 	if (!(flags & SIXF_ABSOLUTEVELOCITY))
@@ -2484,7 +2485,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItemEx)
 		xvel = newxvel;
 	}
 
-	AActor *mo = Spawn(missile, pos.x, pos.y, self->_f_Z() - self->_f_floorclip() + self->GetBobOffset() + zofs, ALLOW_REPLACE);
+	AActor *mo = Spawn(missile, DVector3(pos, self->Z() - self->Floorclip + self->GetBobOffset() + zofs), ALLOW_REPLACE);
 	bool res = InitSpawnedItem(self, mo, flags);
 	if (res)
 	{
@@ -2542,7 +2543,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ThrowGrenade)
 	AActor *bo;
 
 	bo = Spawn(missile, 
-			self->PosPlusZ(-self->_f_floorclip() + self->GetBobOffset() + zheight + 35*FRACUNIT + (self->player? FLOAT2FIXED(self->player->crouchoffset) : 0)),
+			self->PosPlusZ(-self->Floorclip + self->GetBobOffset() + zheight + 35 + (self->player? self->player->crouchoffset : 0.)),
 			ALLOW_REPLACE);
 	if (bo)
 	{
@@ -2936,9 +2937,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnDebris)
 	
 	for (i = 0; i < GetDefaultByType(debris)->health; i++)
 	{
-		fixed_t xo = ((pr_spawndebris() - 128) << 12);
-		fixed_t yo = ((pr_spawndebris() - 128) << 12);
-		fixed_t zo = (pr_spawndebris()*self->_f_height() / 256 + self->GetBobOffset());
+		double xo = (pr_spawndebris() - 128) / 16.;
+		double yo = (pr_spawndebris() - 128) / 16.;
+		double zo = pr_spawndebris()*self->Height / 256 + self->GetBobOffset();
 		mo = Spawn(debris, self->Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
 		if (mo)
 		{
@@ -3435,7 +3436,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Respawn)
 	PARAM_INT_OPT(flags) { flags = RSF_FOG; }
 
 	bool oktorespawn = false;
-	fixedvec3 pos = self->_f_Pos();
+	DVector3 pos = self->Pos();
 
 	self->flags |= MF_SOLID;
 	self->Height = self->GetDefault()->Height;
@@ -3445,11 +3446,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Respawn)
 	if (flags & RSF_TELEFRAG)
 	{
 		// [KS] DIE DIE DIE DIE erm *ahem* =)
-		oktorespawn = P_TeleportMove(self, self->_f_Pos(), true, false);
+		oktorespawn = P_TeleportMove(self, self->Pos(), true, false);
 	}
 	else
 	{
-		oktorespawn = P_CheckPosition(self, self->_f_X(), self->_f_Y(), true);
+		oktorespawn = P_CheckPosition(self, self->Pos(), true);
 	}
 
 	if (oktorespawn)
@@ -3487,7 +3488,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Respawn)
 		if (flags & RSF_FOG)
 		{
 			P_SpawnTeleportFog(self, pos, true, true);
-			P_SpawnTeleportFog(self, self->_f_Pos(), false, true);
+			P_SpawnTeleportFog(self, self->Pos(), false, true);
 		}
 		if (self->CountsAsKill())
 		{
@@ -3842,7 +3843,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
 	if (trace.HitType == TRACE_HitActor ||
 		((flags & CLOFF_JUMP_ON_MISS) && !lof_data.BadActor && trace.HitType != TRACE_HitNone))
 	{
-		if (minrange > 0 && trace.Distance < FLOAT2FIXED(minrange))
+		if (minrange > 0 && trace.Distance < minrange)
 		{
 			ACTION_RETURN_STATE(NULL);
 		}
@@ -4907,7 +4908,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Quake)
 // A_QuakeEx
 //
 // Extended version of A_Quake. Takes individual axis into account and can
-// take a flag.
+// take flags.
 //===========================================================================
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_QuakeEx)
@@ -4924,7 +4925,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_QuakeEx)
 	PARAM_FLOAT_OPT(mulWaveX) { mulWaveX = 1.; }
 	PARAM_FLOAT_OPT(mulWaveY) { mulWaveY = 1.; }
 	PARAM_FLOAT_OPT(mulWaveZ) { mulWaveZ = 1.; }
-	P_StartQuakeXYZ(self, 0, intensityX, intensityY, intensityZ, duration, damrad, tremrad, sound, flags, mulWaveX, mulWaveY, mulWaveZ);
+	PARAM_INT_OPT(falloff) { falloff = 0; }
+	PARAM_INT_OPT(highpoint) { highpoint = 0; }
+	P_StartQuakeXYZ(self, 0, intensityX, intensityY, intensityZ, duration, damrad, tremrad, sound, flags, mulWaveX, mulWaveY, mulWaveZ, falloff, highpoint);
 	return 0;
 }
 
@@ -5094,8 +5097,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_WolfAttack)
 		// Compute position for spawning blood/puff
 		angle = self->target->__f_AngleTo(self);
 		
-		fixedvec3 bloodpos = self->target->_f_Vec3Angle(self->target->_f_radius(), angle, self->target->_f_height() >> 1);
-
+		DVector3 BloodPos = self->target->Vec3Angle(self->target->radius, ANGLE2DBL(angle), self->target->Height/2);
 
 		int damage = flags & WAF_NORANDOM ? maxdamage : (1 + (pr_cabullet() % maxdamage));
 		if (dist >= pointblank)
@@ -5116,7 +5118,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_WolfAttack)
 			if ((0 && dpuff->flags3 & MF3_PUFFONACTORS) || !spawnblood)
 			{
 				spawnblood = false;
-				P_SpawnPuff(self, pufftype, bloodpos, angle, angle, 0);
+				P_SpawnPuff(self, pufftype, BloodPos, ANGLE2DBL(angle), ANGLE2DBL(angle), 0);
 			}
 		}
 		else if (self->target->flags3 & MF3_GHOST)
@@ -5126,7 +5128,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_WolfAttack)
 			int newdam = P_DamageMobj(self->target, self, self, damage, mod, DMG_THRUSTLESS);
 			if (spawnblood)
 			{
-				P_SpawnBlood(bloodpos, angle, newdam > 0 ? newdam : damage, self->target);
+				P_SpawnBlood(BloodPos, ANGLE2DBL(angle), newdam > 0 ? newdam : damage, self->target);
 				P_TraceBleed(newdam > 0 ? newdam : damage, self->target, self);
 			}
 		}
@@ -6629,6 +6631,8 @@ enum CBF
 	CBF_SETONPTR		= 1 << 4,	//Sets the pointer change on the actor doing the checking instead of self.
 	CBF_DROPOFF			= 1 << 5,	//Check for dropoffs.
 	CBF_NOACTORS		= 1 << 6,	//Don't check actors.
+	CBF_ABSOLUTEPOS		= 1 << 7,	//Absolute position for offsets.
+	CBF_ABSOLUTEANGLE	= 1 << 8,	//Absolute angle for offsets.
 };
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckBlock)
@@ -6636,7 +6640,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckBlock)
 	PARAM_ACTION_PROLOGUE;
 	PARAM_STATE(block)
 	PARAM_INT_OPT(flags) { flags = 0; }
-	PARAM_INT_OPT(ptr) 	{ ptr = AAPTR_DEFAULT; }	
+	PARAM_INT_OPT(ptr)		{ ptr = AAPTR_DEFAULT; }
+	PARAM_FIXED_OPT(xofs)	{ xofs = 0; }
+	PARAM_FIXED_OPT(yofs)	{ yofs = 0; }
+	PARAM_FIXED_OPT(zofs)	{ zofs = 0; }
+	PARAM_ANGLE_OPT(angle)	{ angle = 0; }
 
 	AActor *mobj = COPY_AAPTR(self, ptr);
 
@@ -6646,6 +6654,49 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckBlock)
 		ACTION_RETURN_STATE(NULL);
 	}
 
+#if 0 // this needs some work.
+	if (!(flags & CBF_ABSOLUTEANGLE))
+	{
+		angle += self->angle;
+	}
+
+	angle_t ang = angle >> ANGLETOFINESHIFT;
+	fixedvec3 oldpos = mobj->Pos();
+	fixedvec3 pos;
+
+	if (flags & CBF_ABSOLUTEPOS)
+	{
+		pos.x = xofs;
+		pos.y = yofs;
+		pos.z = zofs;
+	}
+	else
+	{
+		pos = mobj->Vec3Offset(
+			FixedMul(xofs, finecosine[ang]) + FixedMul(yofs, finesine[ang]),
+			FixedMul(xofs, finesine[ang]) - FixedMul(yofs, finecosine[ang]),
+			mobj->Z() + zofs);
+	}
+	
+	// Next, try checking the position based on the sensitivity desired.
+	// If checking for dropoffs, set the z so we can have maximum flexibility.
+	// Otherwise, set origin and set it back after testing.
+
+	bool checker = false;
+	if (flags & CBF_DROPOFF)
+	{
+		mobj->SetZ(pos.z);
+		checker = P_CheckMove(mobj, pos.x, pos.y);
+		mobj->SetZ(oldpos.z);
+	}
+	else
+	{
+		mobj->SetOrigin(pos, true);
+		checker = P_TestMobjLocation(mobj);
+		mobj->SetOrigin(oldpos, true);
+	}
+#endif
+	
 	//Nothing to block it so skip the rest.
 	bool checker = (flags & CBF_DROPOFF) ? P_CheckMove(mobj, mobj->_f_X(), mobj->_f_Y()) : P_TestMobjLocation(mobj);
 	if (checker)

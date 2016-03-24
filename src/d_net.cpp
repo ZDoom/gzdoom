@@ -2321,7 +2321,7 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 					else
 					{
 						const AActor *def = GetDefaultByType (typeinfo);
-						fixedvec3 spawnpos = source->_f_Vec3Angle(def->_f_radius() * 2 + source->_f_radius(), source->_f_angle(), 8 * FRACUNIT);
+						DVector3 spawnpos = source->Vec3Angle(def->radius * 2 + source->radius, source->Angles.Yaw, 8.);
 
 						AActor *spawned = Spawn (typeinfo, spawnpos, ALLOW_REPLACE);
 						if (spawned != NULL)
@@ -2382,8 +2382,7 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 			{
 				if (trace.HitType == TRACE_HitWall)
 				{
-					DVector3 hp(FIXED2DBL(trace.HitPos.x), FIXED2DBL(trace.HitPos.y), FIXED2DBL(trace.HitPos.z));
-					DImpactDecal::StaticCreate (s, hp, trace.Line->sidedef[trace.Side], NULL);
+					DImpactDecal::StaticCreate (s, trace.HitPos, trace.Line->sidedef[trace.Side], NULL);
 				}
 			}
 		}

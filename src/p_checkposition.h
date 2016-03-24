@@ -21,7 +21,7 @@ struct FCheckPosition
 	sector_t		*sector;
 	double			floorz;
 	double			ceilingz;
-	fixed_t			dropoffz;
+	double			dropoffz;
 	FTextureID		floorpic;
 	int				floorterrain;
 	sector_t		*floorsector;
@@ -54,6 +54,10 @@ struct FCheckPosition
 	inline fixed_t _f_floorz()
 	{
 		return FLOAT2FIXED(floorz);
+	}
+	inline fixed_t _f_dropoffz()
+	{
+		return FLOAT2FIXED(dropoffz);
 	}
 
 };

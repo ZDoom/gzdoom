@@ -91,7 +91,7 @@ enum
 };
 struct vertexdata_t
 {
-	fixed_t zCeiling, zFloor;
+	double zCeiling, zFloor;
 	DWORD flags;
 };
 struct vertex_t
@@ -106,6 +106,11 @@ struct vertex_t
 	double fY() const
 	{
 		return FIXED2DBL(y);
+	}
+
+	DVector2 fPos()
+	{
+		return{ fX(), fY() };
 	}
 
 	float fx, fy;		// Floating point coordinates of this vertex (excluding polyoblect translation!)

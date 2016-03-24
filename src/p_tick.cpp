@@ -57,7 +57,7 @@ bool P_CheckTickerPaused ()
 			 ConsoleState == c_down || ConsoleState == c_falling)
 		 && !demoplayback
 		 && !demorecording
-		 && players[consoleplayer].viewz != -FLT_MAX
+		 && players[consoleplayer].viewz != NO_VALUE
 		 && wipegamestate == gamestate)
 	{
 		S_PauseSound (!(level.flags2 & LEVEL2_PAUSE_MUSIC_IN_MENUS), false);

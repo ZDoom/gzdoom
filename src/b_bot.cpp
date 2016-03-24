@@ -269,7 +269,7 @@ void InitBotStuff()
 			AWeapon *w = (AWeapon*)GetDefaultByType(cls);
 			if (w != NULL)
 			{
-				w->MoveCombatDist = botinits[i].movecombatdist;
+				w->MoveCombatDist = botinits[i].movecombatdist/65536.;
 				w->WeaponFlags |= botinits[i].weaponflags;
 				w->ProjectileType = PClass::FindActor(botinits[i].projectile);
 			}

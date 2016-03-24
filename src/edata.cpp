@@ -92,7 +92,7 @@ struct EDMapthing
 	int recordnum;
 	int tid;
 	int type;
-	fixed_t height;
+	double height;
 	int args[5];
 	WORD skillfilter;
 	DWORD flags;
@@ -585,7 +585,7 @@ static void parseMapthing(FScanner &sc)
 		{
 			sc.CheckString("=");
 			sc.MustGetFloat();	// no idea if Eternity allows fractional numbers. Better be safe and do it anyway.
-			mt.height = FLOAT2FIXED(sc.Float);
+			mt.height = sc.Float;
 		}
 		else if (sc.Compare("options"))
 		{
@@ -682,7 +682,7 @@ void ProcessEDMapthing(FMapThing *mt, int recordnum)
 	mt->thingid = emt->tid;
 	mt->EdNum = emt->type;
 	mt->info = DoomEdMap.CheckKey(mt->EdNum);
-	mt->z = emt->height;
+	mt->pos.Z = emt->height;
 	memcpy(mt->args, emt->args, sizeof(mt->args));
 	mt->SkillFilter = emt->skillfilter;
 	mt->flags = emt->flags;

@@ -957,10 +957,9 @@ void AM_StaticInit()
 //
 //=============================================================================
 
-void AM_GetPosition(fixed_t &x, fixed_t &y)
+DVector2 AM_GetPosition()
 {
-	x = (m_x + m_w/2) << FRACTOMAPBITS;
-	y = (m_y + m_h/2) << FRACTOMAPBITS;
+	return DVector2((m_x + m_w / 2) / MAPUNIT, (m_y + m_h / 2) / MAPUNIT);
 }
 
 //=============================================================================

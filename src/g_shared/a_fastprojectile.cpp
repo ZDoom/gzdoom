@@ -22,13 +22,11 @@ IMPLEMENT_CLASS(AFastProjectile)
 void AFastProjectile::Tick ()
 {
 	int i;
-	fixed_t xfrac;
-	fixed_t yfrac;
-	fixed_t zfrac;
+	DVector3 frac;
 	int changexy;
 
 	ClearInterpolation();
-	fixed_t oldz = _f_Z();
+	double oldz = Z();
 
 	if (!(flags5 & MF5_NOTIMEFREEZE))
 	{
@@ -43,26 +41,22 @@ void AFastProjectile::Tick ()
 	// [RH] Ripping is a little different than it was in Hexen
 	FCheckPosition tm(!!(flags2 & MF2_RIP));
 
-	int shift = 3;
 	int count = 8;
-	if (_f_radius() > 0)
+	if (radius > 0)
 	{
-		while ( ((abs(_f_velx()) >> shift) > _f_radius()) || ((abs(_f_vely()) >> shift) > _f_radius()))
+		while ( fabs(Vel.X) > radius * count || fabs(Vel.Y) > radius * count)
 		{
 			// we need to take smaller steps.
-			shift++;
-			count<<=1;
+			count += count;
 		}
 	}
 
 	// Handle movement
 	if (!Vel.isZero() || (Z() != floorz))
 	{
-		xfrac = _f_velx() >> shift;
-		yfrac = _f_vely() >> shift;
-		zfrac = _f_velz() >> shift;
-		changexy = xfrac || yfrac;
-		int ripcount = count >> 3;
+		frac = Vel / count;
+		changexy = frac.X != 0 || frac.Y != 0;
+		int ripcount = count / 8;
 		for (i = 0; i < count; i++)
 		{
 			if (changexy)
@@ -72,14 +66,14 @@ void AFastProjectile::Tick ()
 					tm.LastRipped.Clear();	// [RH] Do rip damage each step, like Hexen
 				}
 				
-				if (!P_TryMove (this, _f_X() + xfrac,_f_Y() + yfrac, true, NULL, tm))
+				if (!P_TryMove (this, Pos() + frac, true, NULL, tm))
 				{ // Blocked move
 					if (!(flags3 & MF3_SKYEXPLODE))
 					{
 						if (tm.ceilingline &&
 							tm.ceilingline->backsector &&
 							tm.ceilingline->backsector->GetTexture(sector_t::ceiling) == skyflatnum &&
-							_f_Z() >= tm.ceilingline->backsector->ceilingplane.ZatPoint(PosRelative(tm.ceilingline)))
+							Z() >= tm.ceilingline->backsector->ceilingplane.ZatPointF(PosRelative(tm.ceilingline)))
 						{
 							// Hack to prevent missiles exploding against the sky.
 							// Does not handle sky floors.
@@ -98,10 +92,10 @@ void AFastProjectile::Tick ()
 					return;
 				}
 			}
-			_f_AddZ(zfrac);
+			AddZ(frac.Z);
 			UpdateWaterLevel (oldz);
-			oldz = _f_Z();
-			if (Z() <= floorz)
+			oldz = Z();
+			if (oldz <= floorz)
 			{ // Hit the floor
 
 				if (floorpic == skyflatnum && !(flags3 & MF3_SKYEXPLODE))

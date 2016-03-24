@@ -1031,7 +1031,7 @@ struct TAngle
 		return FLOAT2ANGLE(Degrees);
 	}
 
-	TVector2<vec_t> ToVector(vec_t length) const
+	TVector2<vec_t> ToVector(vec_t length = 1) const
 	{
 		return TVector2<vec_t>(length * Cos(), length * Sin());
 	}
@@ -1041,14 +1041,14 @@ struct TAngle
 		return FLOAT2ANGLE(Degrees) >> 16;
 	}
 
-	double Cos() const
+	vec_t Cos() const
 	{
-		return g_cosdeg(Degrees);
+		return vec_t(g_cosdeg(Degrees));
 	}
 
-	double Sin() const
+	vec_t Sin() const
 	{
-		return g_sindeg(Degrees);
+		return vec_t(g_sindeg(Degrees));
 	}
 
 	double Tan() const
@@ -1354,7 +1354,7 @@ typedef TVector2<float>		FVector2;
 typedef TVector3<float>		FVector3;
 typedef TRotator<float>		FRotator;
 typedef TMatrix3x3<float>	FMatrix3x3;
-//typedef TAngle<float>		FAngle;
+typedef TAngle<float>		FAngle;
 
 typedef TVector2<double>		DVector2;
 typedef TVector3<double>		DVector3;

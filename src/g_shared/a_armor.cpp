@@ -96,13 +96,13 @@ bool ABasicArmor::HandlePickup (AInventory *item)
 	{
 		ABasicArmorBonus *armor = static_cast<ABasicArmorBonus*>(item);
 
-		armor->SaveAmount = FixedMul(armor->SaveAmount, G_SkillProperty(SKILLP_ArmorFactor));
+		armor->SaveAmount = int(armor->SaveAmount * G_SkillProperty(SKILLP_ArmorFactor));
 	}
 	else if (item->IsKindOf(RUNTIME_CLASS(ABasicArmorPickup)) && !(item->ItemFlags & IF_IGNORESKILL))
 	{
 		ABasicArmorPickup *armor = static_cast<ABasicArmorPickup*>(item);
 
-		armor->SaveAmount = FixedMul(armor->SaveAmount, G_SkillProperty(SKILLP_ArmorFactor));
+		armor->SaveAmount = int(armor->SaveAmount * G_SkillProperty(SKILLP_ArmorFactor));
 	}
 	if (Inventory != NULL)
 	{
@@ -216,7 +216,7 @@ AInventory *ABasicArmorPickup::CreateCopy (AActor *other)
 
 	if (!(ItemFlags & IF_IGNORESKILL))
 	{
-		SaveAmount = FixedMul(SaveAmount, G_SkillProperty(SKILLP_ArmorFactor));
+		SaveAmount = int(SaveAmount * G_SkillProperty(SKILLP_ArmorFactor));
 	}
 
 	copy->SavePercent = SavePercent;
@@ -298,7 +298,7 @@ AInventory *ABasicArmorBonus::CreateCopy (AActor *other)
 
 	if (!(ItemFlags & IF_IGNORESKILL))
 	{
-		SaveAmount = FixedMul(SaveAmount, G_SkillProperty(SKILLP_ArmorFactor));
+		SaveAmount = int(SaveAmount * G_SkillProperty(SKILLP_ArmorFactor));
 	}
 
 	copy->SavePercent = SavePercent;

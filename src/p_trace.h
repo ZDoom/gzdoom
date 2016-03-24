@@ -65,13 +65,13 @@ struct FTraceResults
 {
 	sector_t *Sector;
 	FTextureID HitTexture;
-	fixedvec3 HitPos;
-	fixedvec3 HitVector;
-	fixedvec3 SrcFromTarget;
-	angle_t SrcAngleToTarget;
+	DVector3 HitPos;
+	DVector3 HitVector;
+	DVector3 SrcFromTarget;
+	DAngle SrcAngleFromTarget;
 
-	fixed_t Distance;
-	fixed_t Fraction;
+	double Distance;
+	double Fraction;
 
 	AActor *Actor;		// valid if hit an actor
 
@@ -83,9 +83,9 @@ struct FTraceResults
 	F3DFloor *ffloor;
 
 	sector_t *CrossedWater;		// For Boom-style, Transfer_Heights-based deep water
-	fixedvec3 CrossedWaterPos;	// remember the position so that we can use it for spawning the splash
+	DVector3 CrossedWaterPos;	// remember the position so that we can use it for spawning the splash
 	F3DFloor *Crossed3DWater;	// For 3D floor-based deep water
-	fixedvec3 Crossed3DWaterPos;
+	DVector3 Crossed3DWaterPos;
 
 	void CopyIfCloser(FTraceResults *other)
 	{
@@ -130,5 +130,14 @@ bool Trace (fixed_t x, fixed_t y, fixed_t z, sector_t *sector,
 			FTraceResults &res,
 			DWORD traceFlags=0,
 			ETraceStatus (*callback)(FTraceResults &res, void *)=NULL, void *callbackdata=NULL);
+
+inline bool Trace(const DVector3 &start, sector_t *sector, const DVector3 &direction, double maxDist,
+	ActorFlags ActorMask, DWORD WallMask, AActor *ignore, FTraceResults &res, DWORD traceFlags = 0,
+	ETraceStatus(*callback)(FTraceResults &res, void *) = NULL, void *callbackdata = NULL)
+{
+	return Trace(FLOAT2FIXED(start.X), FLOAT2FIXED(start.Y), FLOAT2FIXED(start.Z), sector,
+		FLOAT2FIXED(direction.X), FLOAT2FIXED(direction.Y), FLOAT2FIXED(direction.Z), FLOAT2FIXED(maxDist),
+		ActorMask, WallMask, ignore, res, traceFlags, callback, callbackdata);
+}
 
 #endif //__P_TRACE_H__

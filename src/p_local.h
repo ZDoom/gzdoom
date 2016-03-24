@@ -23,9 +23,12 @@
 #ifndef __P_LOCAL__
 #define __P_LOCAL__
 
+#include <float.h>
 #include "doomtype.h"
 #include "tables.h"
 #include "vectors.h"
+
+const double NO_VALUE = FLT_MAX;
 
 class player_t;
 class AActor;
@@ -135,22 +138,15 @@ enum EPuffFlags
 	PF_NORANDOMZ = 16
 };
 
-AActor *P_SpawnPuff (AActor *source, PClassActor *pufftype, fixed_t x, fixed_t y, fixed_t z, angle_t hitdir, angle_t particledir, int updown, int flags = 0, AActor *vict = NULL);
+AActor *P_SpawnPuff(AActor *source, PClassActor *pufftype, const DVector3 &pos, DAngle hitdir, DAngle particledir, int updown, int flags = 0, AActor *vict = NULL);
 inline AActor *P_SpawnPuff(AActor *source, PClassActor *pufftype, const fixedvec3 &pos, angle_t hitdir, angle_t particledir, int updown, int flags = 0, AActor *vict = NULL)
 {
-	return P_SpawnPuff(source, pufftype, pos.x, pos.y, pos.z, hitdir, particledir, updown, flags, vict);
+	DVector3 _pos(FIXED2DBL(pos.x), FIXED2DBL(pos.y), FIXED2DBL(pos.z));
+	return P_SpawnPuff(source, pufftype, _pos, ANGLE2DBL(hitdir), ANGLE2DBL(particledir), updown, flags, vict);
 }
-inline AActor *P_SpawnPuff(AActor *source, PClassActor *pufftype, const DVector3 &pos, DAngle hitdir, DAngle particledir, int updown, int flags = 0, AActor *vict = NULL)
-{
-	return P_SpawnPuff(source, pufftype, FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), FLOAT2FIXED(pos.Z), hitdir.BAMs(), particledir.BAMs(), updown, flags, vict);
-}
-void	P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage, AActor *originator);
-inline void	P_SpawnBlood(const fixedvec3 &pos, angle_t dir, int damage, AActor *originator)
-{
-	P_SpawnBlood(pos.x, pos.y, pos.z, dir, damage, originator);
-}
-void	P_BloodSplatter (fixedvec3 pos, AActor *originator);
-void	P_BloodSplatter2 (fixedvec3 pos, AActor *originator);
+void	P_SpawnBlood (const DVector3 &pos, DAngle angle, int damage, AActor *originator);
+void	P_BloodSplatter (const DVector3 &pos, AActor *originator, DAngle hitangle);
+void	P_BloodSplatter2 (const DVector3 &pos, AActor *originator, DAngle hitangle);
 void	P_RipperBlood (AActor *mo, AActor *bleeder);
 int		P_GetThingFloorType (AActor *thing);
 void	P_ExplodeMissile (AActor *missile, line_t *explodeline, AActor *target);
@@ -216,7 +212,7 @@ bool	P_Thing_Spawn (int tid, AActor *source, int type, DAngle angle, bool fog, i
 bool	P_Thing_Projectile (int tid, AActor *source, int type, const char * type_name, DAngle angle,
 			fixed_t speed, fixed_t vspeed, int dest, AActor *forcedest, int gravity, int newtid,
 			bool leadTarget);
-bool	P_MoveThing(AActor *source, fixed_t x, fixed_t y, fixed_t z, bool fog);
+bool	P_MoveThing(AActor *source, const DVector3 &pos, bool fog);
 bool	P_Thing_Move (int tid, AActor *source, int mapspot, bool fog);
 int		P_Thing_Damage (int tid, AActor *whofor0, int amount, FName type);
 void	P_Thing_SetVelocity(AActor *actor, const DVector3 &vec, bool add, bool setbob);
@@ -301,6 +297,10 @@ inline bool	P_TryMove(AActor* thing, const DVector2 &pos, int dropoff, const sec
 {
 	return P_TryMove(thing, FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), dropoff, onfloor);
 }
+inline bool	P_TryMove(AActor* thing, const DVector2 &pos, int dropoff, const secplane_t * onfloor, FCheckPosition &tm, bool missileCheck = false)
+{
+	return P_TryMove(thing, FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), dropoff, onfloor, tm, missileCheck);
+}
 bool	P_CheckMove(AActor *thing, fixed_t x, fixed_t y);
 void	P_ApplyTorque(AActor *mo);
 bool	P_TeleportMove (AActor* thing, fixed_t x, fixed_t y, fixed_t z, bool telefrag, bool modifyactor = true);	// [RH] Added z and telefrag parameters
@@ -374,6 +374,10 @@ inline void	P_TraceBleed(int damage, const fixedvec3 &pos, AActor *target, angle
 {
 	P_TraceBleed(damage, pos.x, pos.y, pos.z, target, angle, pitch);
 }
+inline void	P_TraceBleed(int damage, const DVector3 &pos, AActor *target, DAngle angle, DAngle pitch)
+{
+	P_TraceBleed(damage, FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), FLOAT2FIXED(pos.Z), target,angle.BAMs(), pitch.BAMs());
+}
 void	P_TraceBleed (int damage, AActor *target, angle_t angle, int pitch);
 inline void	P_TraceBleed(int damage, AActor *target, DAngle angle, DAngle pitch)
 {
@@ -383,10 +387,11 @@ void	P_TraceBleed (int damage, AActor *target, AActor *missile);		// missile ver
 void	P_TraceBleed(int damage, FTranslatedLineTarget *t, AActor *puff);		// hitscan version
 void	P_TraceBleed (int damage, AActor *target);		// random direction version
 bool	P_HitFloor (AActor *thing);
-bool	P_HitWater (AActor *thing, sector_t *sec, fixed_t splashx = FIXED_MIN, fixed_t splashy = FIXED_MIN, fixed_t splashz=FIXED_MIN, bool checkabove = false, bool alert = true, bool force = false);
+bool	P_HitWater (AActor *thing, sector_t *sec, const DVector3 &pos, bool checkabove = false, bool alert = true, bool force = false);
 inline bool	P_HitWater(AActor *thing, sector_t *sec, const fixedvec3 &pos, bool checkabove = false, bool alert = true, bool force = false)
 {
-	return P_HitWater(thing, sec, pos.x, pos.y, pos.z, checkabove, alert, force);
+	DVector3 fpos(FIXED2DBL(pos.x), FIXED2DBL(pos.y), FIXED2DBL(pos.z));
+	return P_HitWater(thing, sec, fpos, checkabove, alert, force);
 }
 void	P_CheckSplash(AActor *self, double distance);
 void	P_RailAttack (AActor *source, int damage, int offset_xy, fixed_t offset_z = 0, int color1 = 0, int color2 = 0, double maxdiff = 0, int flags = 0, PClassActor *puff = NULL, angle_t angleoffset = 0, angle_t pitchoffset = 0, fixed_t distance = 8192*FRACUNIT, int duration = 0, double sparsity = 1.0, double drift = 1.0, PClassActor *spawnclass = NULL, int SpiralOffset = 270);	// [RH] Shoot a railgun
@@ -406,7 +411,7 @@ bool	P_CheckMissileSpawn(AActor *missile, double maxdist);
 void	P_PlaySpawnSound(AActor *missile, AActor *spawner);
 
 // [RH] Position the chasecam
-void	P_AimCamera (AActor *t1, fixed_t &x, fixed_t &y, fixed_t &z, sector_t *&sec, bool &unlinked);
+void	P_AimCamera (AActor *t1, DVector3 &, sector_t *&sec, bool &unlinked);
 
 // [RH] Means of death
 enum

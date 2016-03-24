@@ -298,7 +298,7 @@ void APathFollower::Tick ()
 		if (CurrNode->args[2])
 		{
 			HoldTime = level.time + CurrNode->args[2] * TICRATE / 8;
-			SetXYZ(CurrNode->_f_X(), CurrNode->_f_Y(), CurrNode->_f_Z());
+			SetXYZ(CurrNode->Pos());
 		}
 	}
 
@@ -352,37 +352,32 @@ void APathFollower::NewNode ()
 
 bool APathFollower::Interpolate ()
 {
-	fixed_t dx = 0, dy = 0, dz = 0;
+	DVector3 dpos(0, 0, 0);
 
 	if ((args[2] & 8) && Time > 0.f)
 	{
-		dx = _f_X();
-		dy = _f_Y();
-		dz = _f_Z();
+		dpos = Pos();
 	}
 
 	if (CurrNode->Next==NULL) return false;
 
 	UnlinkFromWorld ();
-	fixed_t x, y, z;
+	DVector3 newpos;
 	if (args[2] & 1)
 	{	// linear
-		x = FLOAT2FIXED(Lerp (FIXED2DBL(CurrNode->_f_X()), FIXED2DBL(CurrNode->Next->_f_X())));
-		y = FLOAT2FIXED(Lerp (FIXED2DBL(CurrNode->_f_Y()), FIXED2DBL(CurrNode->Next->_f_Y())));
-		z = FLOAT2FIXED(Lerp (FIXED2DBL(CurrNode->_f_Z()), FIXED2DBL(CurrNode->Next->_f_Z())));
+		newpos.X = Lerp(CurrNode->X(), CurrNode->Next->X());
+		newpos.Y = Lerp(CurrNode->Y(), CurrNode->Next->Y());
+		newpos.Z = Lerp(CurrNode->Z(), CurrNode->Next->Z());
 	}
 	else
 	{	// spline
 		if (CurrNode->Next->Next==NULL) return false;
 
-		x = FLOAT2FIXED(Splerp (FIXED2DBL(PrevNode->_f_X()), FIXED2DBL(CurrNode->_f_X()),
-								FIXED2DBL(CurrNode->Next->_f_X()), FIXED2DBL(CurrNode->Next->Next->_f_X())));
-		y = FLOAT2FIXED(Splerp (FIXED2DBL(PrevNode->_f_Y()), FIXED2DBL(CurrNode->_f_Y()),
-								FIXED2DBL(CurrNode->Next->_f_Y()), FIXED2DBL(CurrNode->Next->Next->_f_Y())));
-		z = FLOAT2FIXED(Splerp (FIXED2DBL(PrevNode->_f_Z()), FIXED2DBL(CurrNode->_f_Z()),
-								FIXED2DBL(CurrNode->Next->_f_Z()), FIXED2DBL(CurrNode->Next->Next->_f_Z())));
+		newpos.X = Splerp(PrevNode->X(), CurrNode->X(), CurrNode->Next->X(), CurrNode->Next->Next->X());
+		newpos.X = Splerp(PrevNode->Y(), CurrNode->Y(), CurrNode->Next->Y(), CurrNode->Next->Next->Y());
+		newpos.X = Splerp(PrevNode->Z(), CurrNode->Z(), CurrNode->Next->Z(), CurrNode->Next->Next->Z());
 	}
-	SetXYZ(x, y, z);
+	SetXYZ(newpos);
 	LinkToWorld ();
 
 	if (args[2] & 6)
@@ -391,46 +386,35 @@ bool APathFollower::Interpolate ()
 		{
 			if (args[2] & 1)
 			{ // linear
-				dx = CurrNode->Next->_f_X() - CurrNode->_f_X();
-				dy = CurrNode->Next->_f_Y() - CurrNode->_f_Y();
-				dz = CurrNode->Next->_f_Z() - CurrNode->_f_Z();
+				dpos.X = CurrNode->Next->X() - CurrNode->X();
+				dpos.Y = CurrNode->Next->Y() - CurrNode->Y();
+				dpos.Z = CurrNode->Next->Z() - CurrNode->Z();
 			}
 			else if (Time > 0.f)
 			{ // spline
-				dx = x - dx;
-				dy = y - dy;
-				dz = z - dz;
+				dpos = newpos - dpos;
 			}
 			else
 			{
 				int realarg = args[2];
 				args[2] &= ~(2|4|8);
 				Time += 0.1f;
-				dx = x;
-				dy = y;
-				dz = z;
+				dpos = newpos;
 				Interpolate ();
 				Time -= 0.1f;
 				args[2] = realarg;
-				dx = x - dx;
-				dy = y - dy;
-				dz = z - dz;
-				x -= dx;
-				y -= dy;
-				z -= dz;
-				SetXYZ(x, y, z);
+				dpos = newpos - dpos;
+				newpos -= dpos;
+				SetXYZ(newpos);
 			}
 			if (args[2] & 2)
 			{ // adjust yaw
-				Angles.Yaw = VecToAngle(dx, dy);
+				Angles.Yaw = dpos.Angle();
 			}
 			if (args[2] & 4)
 			{ // adjust pitch; use floats for precision
-				double fdx = FIXED2DBL(dx);
-				double fdy = FIXED2DBL(dy);
-				double fdz = FIXED2DBL(-dz);
-				double dist = g_sqrt (fdx*fdx + fdy*fdy);
-				Angles.Pitch = dist != 0.f ? VecToAngle(dist, fdz) : 0.;
+				double dist = dpos.XY().Length();
+				Angles.Pitch = dist != 0.f ? VecToAngle(dist, -dpos.Z) : 0.;
 			}
 		}
 		else
@@ -517,11 +501,11 @@ bool AActorMover::Interpolate ()
 
 	if (Super::Interpolate ())
 	{
-		fixed_t savedz = tracer->_f_Z();
-		tracer->_f_SetZ(_f_Z());
-		if (!P_TryMove (tracer, _f_X(), _f_Y(), true))
+		double savedz = tracer->Z();
+		tracer->SetZ(Z());
+		if (!P_TryMove (tracer, Pos(), true))
 		{
-			tracer->_f_SetZ(savedz);
+			tracer->SetZ(savedz);
 			return false;
 		}
 
@@ -636,12 +620,10 @@ bool AMovingCamera::Interpolate ()
 		Angles.Yaw = AngleTo(tracer, true);
 
 		if (args[2] & 4)
-		{ // Also aim camera's pitch; use floats for precision
-			double dx = FIXED2DBL(_f_X() - tracer->_f_X());
-			double dy = FIXED2DBL(_f_Y() - tracer->_f_Y());
-			double dz = FIXED2DBL(_f_Z() - tracer->_f_Z() - tracer->_f_height()/2);
-			double dist = g_sqrt (dx*dx + dy*dy);
-			Angles.Pitch = dist != 0.f ? VecToAngle(dist, dz) : 0.;
+		{ // Also aim camera's pitch;
+			DVector3 diff = Pos() - tracer->PosPlusZ(tracer->Height / 2);
+			double dist = diff.XY().Length();
+			Angles.Pitch = dist != 0.f ? VecToAngle(dist, diff.Z) : 0.;
 		}
 
 		return true;

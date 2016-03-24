@@ -141,7 +141,7 @@ bool AAmmo::HandlePickup (AInventory *item)
 
 			if (!(item->ItemFlags & IF_IGNORESKILL))
 			{ // extra ammo in baby mode and nightmare mode
-				receiving = FixedMul(receiving, G_SkillProperty(SKILLP_AmmoFactor));
+				receiving = int(receiving * G_SkillProperty(SKILLP_AmmoFactor));
 			}
 			int oldamount = Amount;
 
@@ -193,7 +193,7 @@ AInventory *AAmmo::CreateCopy (AActor *other)
 	// extra ammo in baby mode and nightmare mode
 	if (!(ItemFlags&IF_IGNORESKILL))
 	{
-		amount = FixedMul(amount, G_SkillProperty(SKILLP_AmmoFactor));
+		amount = int(amount * G_SkillProperty(SKILLP_AmmoFactor));
 	}
 
 	if (GetClass()->ParentClass != RUNTIME_CLASS(AAmmo) && GetClass() != RUNTIME_CLASS(AAmmo))
@@ -298,7 +298,7 @@ bool P_GiveBody (AActor *actor, int num, int max)
 		{
 			if (player->health < max)
 			{
-				num = FixedMul(num, G_SkillProperty(SKILLP_HealthFactor));
+				num = int(num * G_SkillProperty(SKILLP_HealthFactor));
 				if (num < 1) num = 1;
 				player->health += num;
 				if (player->health > max)
@@ -413,20 +413,17 @@ DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialPosition)
 	PARAM_ACTION_PROLOGUE;
 
 	// Move item back to its original location
-	fixed_t _x, _y;
-
-	_x = self->SpawnPoint[0];
-	_y = self->SpawnPoint[1];
+	DVector2 sp = self->SpawnPoint;
 
 	self->UnlinkFromWorld();
-	self->SetXY(_x, _y);
+	self->SetXY(sp);
 	self->LinkToWorld(true);
-	self->_f_SetZ(self->Sector->floorplane.ZatPoint(_x, _y));
+	self->SetZ(self->Sector->floorplane.ZatPoint(sp));
 	P_FindFloorCeiling(self, FFCF_ONLYSPAWNPOS | FFCF_NOPORTALS);	// no portal checks here so that things get spawned in this sector.
 
 	if (self->flags & MF_SPAWNCEILING)
 	{
-		self->_f_SetZ(self->_f_ceilingz() - self->_f_height() - self->SpawnPoint[2]);
+		self->SetZ(self->ceilingz - self->Height - self->SpawnPoint.Z);
 	}
 	else if (self->flags2 & MF2_SPAWNFLOAT)
 	{
@@ -443,7 +440,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_RestoreSpecialPosition)
 	}
 	else
 	{
-		self->_f_SetZ(self->SpawnPoint[2] + self->_f_floorz());
+		self->SetZ(self->SpawnPoint.Z + self->floorz);
 	}
 	// Redo floor/ceiling check, in case of 3D floors and portals
 	P_FindFloorCeiling(self, FFCF_SAMESECTOR | FFCF_ONLY3DFLOORS | FFCF_3DRESTRICT);
@@ -790,7 +787,7 @@ AInventory *AInventory::CreateTossable ()
 		flags &= ~(MF_SPECIAL|MF_SOLID);
 		return this;
 	}
-	copy = static_cast<AInventory *>(Spawn (GetClass(), Owner->_f_Pos(), NO_REPLACE));
+	copy = static_cast<AInventory *>(Spawn (GetClass(), Owner->Pos(), NO_REPLACE));
 	if (copy != NULL)
 	{
 		copy->MaxAmount = MaxAmount;
@@ -1354,7 +1351,7 @@ bool AInventory::DoRespawn ()
 		if (spot != NULL) 
 		{
 			SetOrigin (spot->Pos(), false);
-			_f_SetZ(_f_floorz());
+			SetZ(floorz);
 		}
 	}
 	return true;
@@ -1856,7 +1853,7 @@ AInventory *ABackpackItem::CreateCopy (AActor *other)
 			// extra ammo in baby mode and nightmare mode
 			if (!(ItemFlags&IF_IGNORESKILL))
 			{
-				amount = FixedMul(amount, G_SkillProperty(SKILLP_AmmoFactor));
+				amount = int(amount * G_SkillProperty(SKILLP_AmmoFactor));
 			}
 			if (amount < 0) amount = 0;
 			if (ammo == NULL)
@@ -1919,7 +1916,7 @@ bool ABackpackItem::HandlePickup (AInventory *item)
 					// extra ammo in baby mode and nightmare mode
 					if (!(item->ItemFlags&IF_IGNORESKILL))
 					{
-						amount = FixedMul(amount, G_SkillProperty(SKILLP_AmmoFactor));
+						amount = int(amount * G_SkillProperty(SKILLP_AmmoFactor));
 					}
 					probe->Amount += amount;
 					if (probe->Amount > probe->MaxAmount && !sv_unlimited_pickup)

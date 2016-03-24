@@ -126,6 +126,7 @@ fixed_t 		viewsin, viewtansin;
 AActor			*camera;	// [RH] camera to draw from. doesn't have to be a player
 
 fixed_t			r_TicFrac;			// [RH] Fractional tic to render
+double			r_TicFracF;			// same as floating point
 DWORD			r_FrameTime;		// [RH] Time this frame started drawing (in ms)
 bool			r_NoInterpolate;
 bool			r_showviewer;
@@ -897,19 +898,18 @@ void R_AddInterpolationPoint(const fixedvec3a &vec)
 //
 //==========================================================================
 
-static fixed_t QuakePower(fixed_t factor, fixed_t intensity, fixed_t offset)
+static double QuakePower(double factor, double intensity, double offset, double falloff, double wfalloff)
 { 
-	fixed_t randumb;
-
+	double randumb;
 	if (intensity == 0)
 	{
 		randumb = 0;
 	}
 	else
 	{
-		randumb = pr_torchflicker(intensity * 2) - intensity;
+		randumb = pr_torchflicker.GenRand_Real2() * (intensity * 2) - intensity;
 	}
-	return FixedMul(factor, randumb + offset);
+	return factor * (wfalloff * offset + falloff * randumb);
 }
 
 //==========================================================================
@@ -966,7 +966,11 @@ void R_SetupFrame (AActor *actor)
 	{
 		sector_t *oldsector = R_PointInSubsector(iview->oviewx, iview->oviewy)->sector;
 		// [RH] Use chasecam view
-		P_AimCamera (camera, iview->nviewx, iview->nviewy, iview->nviewz, viewsector, unlinked);
+		DVector3 campos;
+		P_AimCamera (camera, campos, viewsector, unlinked);
+		iview->nviewx = FLOAT2FIXED(campos.X);
+		iview->nviewy = FLOAT2FIXED(campos.Y);
+		iview->nviewz = FLOAT2FIXED(campos.Z);
 		r_showviewer = true;
 		// Interpolating this is a very complicated thing because nothing keeps track of the aim camera's movement, so whenever we detect a portal transition
 		// it's probably best to just reset the interpolation for this move.
@@ -1002,11 +1006,12 @@ void R_SetupFrame (AActor *actor)
 		iview->otic = nowtic;
 	}
 
-	r_TicFrac = I_GetTimeFrac (&r_FrameTime);
+	r_TicFracF = I_GetTimeFrac (&r_FrameTime);
 	if (cl_capfps || r_NoInterpolate)
 	{
-		r_TicFrac = FRACUNIT;
+		r_TicFracF = 1.;
 	}
+	r_TicFrac = FLOAT2FIXED(r_TicFracF);
 
 	R_InterpolateView (player, r_TicFrac, iview);
 
@@ -1042,43 +1047,44 @@ void R_SetupFrame (AActor *actor)
 
 	if (!paused)
 	{
-		FQuakeJiggers jiggers = { 0, };
+		FQuakeJiggers jiggers;
 
+		memset(&jiggers, 0, sizeof(jiggers));
 		if (DEarthquake::StaticGetQuakeIntensities(camera, jiggers) > 0)
 		{
-			fixed_t quakefactor = FLOAT2FIXED(r_quakeintensity);
+			double quakefactor = r_quakeintensity;
+			DAngle an;
 
-			if ((jiggers.RelIntensityX | jiggers.RelOffsetX) != 0)
+			if (jiggers.RelIntensity.X != 0 || jiggers.RelOffset.X != 0)
 			{
-				int ang = (camera->_f_angle()) >> ANGLETOFINESHIFT;
-				fixed_t power = QuakePower(quakefactor, jiggers.RelIntensityX, jiggers.RelOffsetX);
-				viewx += FixedMul(finecosine[ang], power);
-				viewy += FixedMul(finesine[ang], power);
+				an = camera->Angles.Yaw;
+				double power = QuakePower(quakefactor, jiggers.RelIntensity.X, jiggers.RelOffset.X, jiggers.Falloff, jiggers.WFalloff);
+				viewx += FLOAT2FIXED(an.Cos() * power);
+				viewy += FLOAT2FIXED(an.Sin() * power);
 			}
-			if ((jiggers.RelIntensityY | jiggers.RelOffsetY) != 0)
+			if (jiggers.RelIntensity.Y != 0 || jiggers.RelOffset.Y != 0)
 			{
-				int ang = (camera->_f_angle() + ANG90) >> ANGLETOFINESHIFT;
-				fixed_t power = QuakePower(quakefactor, jiggers.RelIntensityY, jiggers.RelOffsetY);
-				viewx += FixedMul(finecosine[ang], power);
-				viewy += FixedMul(finesine[ang], power);
+				an = camera->Angles.Yaw + 90;
+				double power = QuakePower(quakefactor, jiggers.RelIntensity.Y, jiggers.RelOffset.Y, jiggers.Falloff, jiggers.WFalloff);
+				viewx += FLOAT2FIXED(an.Cos() * power);
+				viewy += FLOAT2FIXED(an.Sin() * power);
 			}
 			// FIXME: Relative Z is not relative
-			// [MC]On it! Will be introducing pitch after QF_WAVE.
-			if ((jiggers.RelIntensityZ | jiggers.RelOffsetZ) != 0)
+			if (jiggers.RelIntensity.Z != 0 || jiggers.RelOffset.Z != 0)
 			{
-				viewz += QuakePower(quakefactor, jiggers.RelIntensityZ, jiggers.RelOffsetZ);
+				viewz += FLOAT2FIXED(QuakePower(quakefactor, jiggers.RelIntensity.Z, jiggers.RelOffset.Z, jiggers.Falloff, jiggers.WFalloff));
 			}
-			if ((jiggers.IntensityX | jiggers.OffsetX) != 0)
+			if (jiggers.Intensity.X != 0 || jiggers.Offset.X != 0)
 			{
-				viewx += QuakePower(quakefactor, jiggers.IntensityX, jiggers.OffsetX);
+				viewx += FLOAT2FIXED(QuakePower(quakefactor, jiggers.Intensity.X, jiggers.Offset.X, jiggers.Falloff, jiggers.WFalloff));
 			}
-			if ((jiggers.IntensityY | jiggers.OffsetY) != 0)
+			if (jiggers.Intensity.Y != 0 || jiggers.Offset.Y != 0)
 			{
-				viewy += QuakePower(quakefactor, jiggers.IntensityY, jiggers.OffsetY);
+				viewy += FLOAT2FIXED(QuakePower(quakefactor, jiggers.Intensity.Y, jiggers.Offset.Y, jiggers.Falloff, jiggers.WFalloff));
 			}
-			if ((jiggers.IntensityZ | jiggers.OffsetZ) != 0)
+			if (jiggers.Intensity.Z != 0 || jiggers.Offset.Z != 0)
 			{
-				viewz += QuakePower(quakefactor, jiggers.IntensityZ, jiggers.OffsetZ);
+				viewz += FLOAT2FIXED(QuakePower(quakefactor, jiggers.Intensity.Z, jiggers.Offset.Z, jiggers.Falloff, jiggers.WFalloff));
 			}
 		}
 	}

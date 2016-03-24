@@ -3462,7 +3462,7 @@ void DLevelScript::ReplaceTextures (int fromnamei, int tonamei, int flags)
 	}
 }
 
-int DLevelScript::DoSpawn (int type, fixed_t x, fixed_t y, fixed_t z, int tid, int angle, bool force)
+int DLevelScript::DoSpawn (int type, const DVector3 &pos, int tid, DAngle angle, bool force)
 {
 	PClassActor *info = PClass::FindActor(FBehavior::StaticLookupString (type));
 	AActor *actor = NULL;
@@ -3478,14 +3478,14 @@ int DLevelScript::DoSpawn (int type, fixed_t x, fixed_t y, fixed_t z, int tid, i
 			return 0;
 		}
 
-		actor = Spawn (info, x, y, z, ALLOW_REPLACE);
+		actor = Spawn (info, pos, ALLOW_REPLACE);
 		if (actor != NULL)
 		{
 			ActorFlags2 oldFlags2 = actor->flags2;
 			actor->flags2 |= MF2_PASSMOBJ;
 			if (force || P_TestMobjLocation (actor))
 			{
-				actor->Angles.Yaw = angle * (360. / 256);
+				actor->Angles.Yaw = angle;
 				actor->tid = tid;
 				actor->AddToHash ();
 				if (actor->flags & MF_SPECIAL)
@@ -3506,6 +3506,12 @@ int DLevelScript::DoSpawn (int type, fixed_t x, fixed_t y, fixed_t z, int tid, i
 	return spawncount;
 }
 
+int DLevelScript::DoSpawn(int type, int x, int y, int z, int tid, int angle, bool force)
+{
+	return DoSpawn(type, DVector3(ACSToDouble(x), ACSToDouble(y), ACSToDouble(z)), tid, angle * (360. / 256), force);
+}
+
+
 int DLevelScript::DoSpawnSpot (int type, int spot, int tid, int angle, bool force)
 {
 	int spawned = 0;
@@ -3517,12 +3523,12 @@ int DLevelScript::DoSpawnSpot (int type, int spot, int tid, int angle, bool forc
 
 		while ( (aspot = iterator.Next ()) )
 		{
-			spawned += DoSpawn (type, aspot->_f_X(), aspot->_f_Y(), aspot->_f_Z(), tid, angle, force);
+			spawned += DoSpawn (type, aspot->Pos(), tid, angle * (360. / 256), force);
 		}
 	}
 	else if (activator != NULL)
 	{
-			spawned += DoSpawn (type, activator->_f_X(), activator->_f_Y(), activator->_f_Z(), tid, angle, force);
+		spawned += DoSpawn (type, activator->Pos(), tid, angle * (360. / 256), force);
 	}
 	return spawned;
 }
@@ -3538,12 +3544,12 @@ int DLevelScript::DoSpawnSpotFacing (int type, int spot, int tid, bool force)
 
 		while ( (aspot = iterator.Next ()) )
 		{
-			spawned += DoSpawn (type, aspot->_f_X(), aspot->_f_Y(), aspot->_f_Z(), tid, aspot->_f_angle() >> 24, force);
+			spawned += DoSpawn (type, aspot->Pos(), tid, aspot->Angles.Yaw, force);
 		}
 	}
 	else if (activator != NULL)
 	{
-			spawned += DoSpawn (type, activator->_f_X(), activator->_f_Y(), activator->_f_Z(), tid, activator->_f_angle() >> 24, force);
+			spawned += DoSpawn (type, activator->Pos(), tid, activator->Angles.Yaw, force);
 	}
 	return spawned;
 }
@@ -4762,15 +4768,15 @@ static int SetCVar(AActor *activator, const char *cvarname, int value, bool is_s
 	return 1;
 }
 
-static bool DoSpawnDecal(AActor *actor, const FDecalTemplate *tpl, int flags, angle_t angle, fixed_t zofs, fixed_t distance)
+static bool DoSpawnDecal(AActor *actor, const FDecalTemplate *tpl, int flags, DAngle angle, double zofs, double distance)
 {
 	if (!(flags & SDF_ABSANGLE))
 	{
-		angle += actor->_f_angle();
+		angle += actor->Angles.Yaw;
 	}
 	return NULL != ShootDecal(tpl, actor, actor->Sector, actor->X(), actor->Y(),
-		actor->Center() - actor->Floorclip + actor->GetBobOffset() + FIXED2DBL(zofs),
-		DAngle(ANGLE2DBL(angle)), FIXED2DBL(distance), !!(flags & SDF_PERMANENT));
+		actor->Center() - actor->Floorclip + actor->GetBobOffset() + zofs,
+		angle, distance, !!(flags & SDF_PERMANENT));
 }
 
 static void SetActorAngle(AActor *activator, int tid, int angle, bool interpolate)
@@ -5668,9 +5674,9 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 				if (tpl != NULL)
 				{
 					int flags = (argCount > 2) ? args[2] : 0;
-					angle_t angle = (argCount > 3) ? (args[3] << FRACBITS) : 0;
-					fixed_t zoffset = (argCount > 4) ? (args[4] << FRACBITS) : 0;
-					fixed_t distance = (argCount > 5) ? (args[5] << FRACBITS) : 64*FRACUNIT;
+					DAngle angle = ACSToAngle((argCount > 3) ? args[3] : 0);
+					int zoffset = (argCount > 4) ? args[4]: 0;
+					int distance = (argCount > 5) ? args[5] : 64;
 
 					if (args[0] == 0)
 					{
@@ -5783,7 +5789,9 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 				argCount > 8 ? args[8] : 0,
 				argCount > 9 ? ACSToDouble(args[9]) : 1.0,
 				argCount > 10 ? ACSToDouble(args[10]) : 1.0,
-				argCount > 11 ? ACSToDouble(args[11]) : 1.0 );
+				argCount > 11 ? ACSToDouble(args[11]) : 1.0,
+				argCount > 12 ? args[12] : 0,
+				argCount > 13 ? args[13] : 0);
 		}
 
 		case ACSF_SetLineActivation:
@@ -7985,7 +7993,7 @@ scriptwait:
 					float x = ACSToFloat(Stack[optstart-3]);
 					float y = ACSToFloat(Stack[optstart-2]);
 					float holdTime = ACSToFloat(Stack[optstart-1]);
-					fixed_t alpha;
+					float alpha;
 					DHUDMessage *msg;
 
 					if (type & HUDMSG_COLORSTRING)
@@ -8000,13 +8008,13 @@ scriptwait:
 					switch (type & 0xFF)
 					{
 					default:	// normal
-						alpha = (optstart < sp) ? Stack[optstart] : OPAQUE;
+						alpha = (optstart < sp) ? ACSToFloat(Stack[optstart]) : 1.f;
 						msg = new DHUDMessage (activefont, work, x, y, hudwidth, hudheight, color, holdTime);
 						break;
 					case 1:		// fade out
 						{
 							float fadeTime = (optstart < sp) ? ACSToFloat(Stack[optstart]) : 0.5f;
-							alpha = (optstart < sp-1) ? Stack[optstart+1] : OPAQUE;
+							alpha = (optstart < sp-1) ? ACSToFloat(Stack[optstart+1]) : 1.f;
 							msg = new DHUDMessageFadeOut (activefont, work, x, y, hudwidth, hudheight, color, holdTime, fadeTime);
 						}
 						break;
@@ -8014,7 +8022,7 @@ scriptwait:
 						{
 							float typeTime = (optstart < sp) ? ACSToFloat(Stack[optstart]) : 0.05f;
 							float fadeTime = (optstart < sp-1) ? ACSToFloat(Stack[optstart+1]) : 0.5f;
-							alpha = (optstart < sp-2) ? Stack[optstart+2] : FRACUNIT;
+							alpha = (optstart < sp-2) ? ACSToFloat(Stack[optstart+2]) : 1.f;
 							msg = new DHUDMessageTypeOnFadeOut (activefont, work, x, y, hudwidth, hudheight, color, typeTime, holdTime, fadeTime);
 						}
 						break;
@@ -8022,7 +8030,7 @@ scriptwait:
 						{
 							float inTime = (optstart < sp) ? ACSToFloat(Stack[optstart]) : 0.5f;
 							float outTime = (optstart < sp-1) ? ACSToFloat(Stack[optstart+1]) : 0.5f;
-							alpha = (optstart < sp-2) ? Stack[optstart+2] : OPAQUE;
+							alpha = (optstart < sp-2) ? ACSToFloat(Stack[optstart + 2]) : 1.f;
 							msg = new DHUDMessageFadeInOut (activefont, work, x, y, hudwidth, hudheight, color, holdTime, inTime, outTime);
 						}
 						break;
@@ -8679,7 +8687,7 @@ scriptwait:
 				bool result = false;
 				AActor *actor = SingleActorFromTID (STACK(5), activator);
 				if (actor != NULL)
-					result = P_MoveThing(actor, STACK(4), STACK(3), STACK(2), !!STACK(1));
+					result = P_MoveThing(actor, DVector3(ACSToDouble(STACK(4)), ACSToDouble(STACK(3)), ACSToDouble(STACK(2))), !!STACK(1));
 				sp -= 4;
 				STACK(1) = result;
 			}
@@ -8696,11 +8704,11 @@ scriptwait:
 				}
 				else if (pcd == PCD_GETACTORZ)
 				{
-					STACK(1) = actor->_f_Z() + actor->GetBobOffset();
+					STACK(1) = DoubleToACS(actor->Z() + actor->GetBobOffset());
 				}
 				else
 				{
-					STACK(1) = pcd == PCD_GETACTORX ? actor->_f_X() : pcd == PCD_GETACTORY ? actor->_f_Y() : actor->_f_Z();
+					STACK(1) = DoubleToACS(pcd == PCD_GETACTORX ? actor->X() : pcd == PCD_GETACTORY ? actor->Y() : actor->Z());
 				}
 			}
 			break;

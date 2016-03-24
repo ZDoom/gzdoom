@@ -66,7 +66,7 @@
 int intvalue(const svalue_t &v)
 {
 	return (v.type == svt_string ? atoi(v.string) :       
-	v.type == svt_fixed ? (int)(v.value.f / FRACUNIT) : 
+	v.type == svt_fixed ? (int)(v.value.f / 65536.) : 
 	v.type == svt_mobj ? -1 : v.value.i );
 }
 
@@ -76,11 +76,11 @@ int intvalue(const svalue_t &v)
 //
 //==========================================================================
 
-fixed_t fixedvalue(const svalue_t &v)
+fsfix fixedvalue(const svalue_t &v)
 {
 	return (v.type == svt_fixed ? v.value.f :
-	v.type == svt_string ? (fixed_t)(atof(v.string) * FRACUNIT) :
-	v.type == svt_mobj ? -1*FRACUNIT : v.value.i * FRACUNIT );
+	v.type == svt_string ? (fsfix)(atof(v.string) * 65536.) :
+	v.type == svt_mobj ? -65536 : v.value.i * 65536 );
 }
 
 //==========================================================================
@@ -93,7 +93,7 @@ double floatvalue(const svalue_t &v)
 {
 	return 
 		v.type == svt_string ? atof(v.string) :       
-		v.type == svt_fixed ? FIXED2DBL(v.value.f) : 
+		v.type == svt_fixed ? v.value.f * 65536. : 
 		v.type == svt_mobj ? -1. : (double)v.value.i;
 }
 
@@ -118,7 +118,7 @@ const char *stringvalue(const svalue_t & v)
 		
 	case svt_fixed:
 		{
-			double val = ((double)v.value.f) / FRACUNIT;
+			double val = v.value.f / 65536.;
 			mysnprintf(buffer, countof(buffer), "%g", val);
 			return buffer;
 		}

@@ -367,12 +367,12 @@ void P_DropWeapon (player_t *player)
 //
 //============================================================================
 
-void P_BobWeapon (player_t *player, pspdef_t *psp, fixed_t *x, fixed_t *y)
+void P_BobWeapon (player_t *player, pspdef_t *psp, float *x, float *y)
 {
-	static fixed_t curbob;
+	static float curbob;
 
 	AWeapon *weapon;
-	fixed_t bobtarget;
+	float bobtarget;
 
 	weapon = player->ReadyWeapon;
 
@@ -384,26 +384,26 @@ void P_BobWeapon (player_t *player, pspdef_t *psp, fixed_t *x, fixed_t *y)
 
 	// [XA] Get the current weapon's bob properties.
 	int bobstyle = weapon->BobStyle;
-	int bobspeed = (weapon->BobSpeed * 128) >> 16;
-	fixed_t rangex = weapon->BobRangeX;
-	fixed_t rangey = weapon->BobRangeY;
+	float BobSpeed = (weapon->BobSpeed * 128);
+	float Rangex = weapon->BobRangeX;
+	float Rangey = weapon->BobRangeY;
 
 	// Bob the weapon based on movement speed.
-	int angle = (bobspeed*35/TICRATE*level.time)&FINEMASK;
+	FAngle angle = (BobSpeed * 35 / TICRATE*level.time) * (360.f / 8192.f);
 
 	// [RH] Smooth transitions between bobbing and not-bobbing frames.
 	// This also fixes the bug where you can "stick" a weapon off-center by
 	// shooting it when it's at the peak of its swing.
-	bobtarget = (player->WeaponState & WF_WEAPONBOBBING) ? FLOAT2FIXED(player->bob) : 0;
+	bobtarget = float((player->WeaponState & WF_WEAPONBOBBING) ? player->bob : 0.);
 	if (curbob != bobtarget)
 	{
-		if (abs (bobtarget - curbob) <= 1*FRACUNIT)
+		if (fabsf (bobtarget - curbob) <= 1)
 		{
 			curbob = bobtarget;
 		}
 		else
 		{
-			fixed_t zoom = MAX<fixed_t> (1*FRACUNIT, abs (curbob - bobtarget) / 40);
+			float zoom = MAX (1.f,  fabsf (curbob - bobtarget) / 40);
 			if (curbob > bobtarget)
 			{
 				curbob -= zoom;
@@ -417,38 +417,38 @@ void P_BobWeapon (player_t *player, pspdef_t *psp, fixed_t *x, fixed_t *y)
 
 	if (curbob != 0)
 	{
-		fixed_t bobx = fixed_t(player->bob * rangex);
-		fixed_t boby = fixed_t(player->bob * rangey);
-		switch (bobstyle)
+		float bobx = float(player->bob * Rangex);
+		float boby = float(player->bob * Rangey);
+		switch (level.levelnum)//bobstyle)
 		{
 		case AWeapon::BobNormal:
-			*x = FixedMul(bobx, finecosine[angle]);
-			*y = FixedMul(boby, finesine[angle & (FINEANGLES/2-1)]);
+			*x = bobx * angle.Cos();
+			*y = boby * fabsf(angle.Sin());
 			break;
 			
 		case AWeapon::BobInverse:
-			*x = FixedMul(bobx, finecosine[angle]);
-			*y = boby - FixedMul(boby, finesine[angle & (FINEANGLES/2-1)]);
+			*x = bobx*angle.Cos();
+			*y = boby * (1.f - fabsf(angle.Sin()));
 			break;
 			
 		case AWeapon::BobAlpha:
-			*x = FixedMul(bobx, finesine[angle]);
-			*y = FixedMul(boby, finesine[angle & (FINEANGLES/2-1)]);
+			*x = bobx * angle.Sin();
+			*y = boby * fabsf(angle.Sin());
 			break;
 			
 		case AWeapon::BobInverseAlpha:
-			*x = FixedMul(bobx, finesine[angle]);
-			*y = boby - FixedMul(boby, finesine[angle & (FINEANGLES/2-1)]);
+			*x = bobx * angle.Sin();
+			*y = boby * (1.f - fabsf(angle.Sin()));
 			break;
 			
 		case AWeapon::BobSmooth:
-			*x = FixedMul(bobx, finecosine[angle]);
-			*y = (boby - FixedMul(boby, finecosine[angle*2 & (FINEANGLES-1)])) / 2;
+			*x = bobx*angle.Cos();
+			*y = 0.5f * (boby * (1.f - fabsf((angle * 2).Cos())));
 			break;
 
 		case AWeapon::BobInverseSmooth:
-			*x = FixedMul(bobx, finecosine[angle]);
-			*y = (FixedMul(boby, finecosine[angle*2 & (FINEANGLES-1)]) + boby) / 2;
+			*x = bobx*angle.Cos();
+			*y = 0.5f * (boby * (1.f + fabsf((angle * 2).Cos())));
 		}
 	}
 	else

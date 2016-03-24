@@ -9,7 +9,7 @@ static FRandom pr_orbit ("Orbit");
 
 // Custom bridge --------------------------------------------------------
 /*
-	args[0]: Bridge _f_radius(), in mapunits
+	args[0]: Bridge radius, in mapunits
 	args[1]: Bridge height, in mapunits
 	args[2]: Amount of bridge balls (if 0: Doom bridge)
 	args[3]: Rotation speed of bridge balls, in byte angle per seconds, sorta:

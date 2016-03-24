@@ -4969,7 +4969,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Quake)
 // A_QuakeEx
 //
 // Extended version of A_Quake. Takes individual axis into account and can
-// take a flag.
+// take flags.
 //===========================================================================
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_QuakeEx)
@@ -4986,7 +4986,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_QuakeEx)
 	PARAM_FLOAT_OPT(mulWaveX) { mulWaveX = 1.; }
 	PARAM_FLOAT_OPT(mulWaveY) { mulWaveY = 1.; }
 	PARAM_FLOAT_OPT(mulWaveZ) { mulWaveZ = 1.; }
-	P_StartQuakeXYZ(self, 0, intensityX, intensityY, intensityZ, duration, damrad, tremrad, sound, flags, mulWaveX, mulWaveY, mulWaveZ);
+	PARAM_INT_OPT(falloff) { falloff = 0; }
+	PARAM_INT_OPT(highpoint) { highpoint = 0; }
+	P_StartQuakeXYZ(self, 0, intensityX, intensityY, intensityZ, duration, damrad, tremrad, sound, flags, mulWaveX, mulWaveY, mulWaveZ, falloff, highpoint);
 	return 0;
 }
 
@@ -6694,14 +6696,20 @@ enum CBF
 	CBF_SETONPTR		= 1 << 4,	//Sets the pointer change on the actor doing the checking instead of self.
 	CBF_DROPOFF			= 1 << 5,	//Check for dropoffs.
 	CBF_NOACTORS		= 1 << 6,	//Don't check actors.
+	CBF_ABSOLUTEPOS		= 1 << 7,	//Absolute position for offsets.
+	CBF_ABSOLUTEANGLE	= 1 << 8,	//Absolute angle for offsets.
 };
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckBlock)
 {
 	PARAM_ACTION_PROLOGUE;
 	PARAM_STATE(block)
-	PARAM_INT_OPT(flags) { flags = 0; }
-	PARAM_INT_OPT(ptr) 	{ ptr = AAPTR_DEFAULT; }	
+	PARAM_INT_OPT(flags)	{ flags = 0; }
+	PARAM_INT_OPT(ptr)		{ ptr = AAPTR_DEFAULT; }
+	PARAM_FIXED_OPT(xofs)	{ xofs = 0; }
+	PARAM_FIXED_OPT(yofs)	{ yofs = 0; }
+	PARAM_FIXED_OPT(zofs)	{ zofs = 0; }
+	PARAM_ANGLE_OPT(angle)	{ angle = 0; }
 
 	AActor *mobj = COPY_AAPTR(self, ptr);
 
@@ -6711,8 +6719,48 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckBlock)
 		ACTION_RETURN_STATE(NULL);
 	}
 
+	if (!(flags & CBF_ABSOLUTEANGLE))
+	{
+		angle += self->angle;
+	}
+
+	angle_t ang = angle >> ANGLETOFINESHIFT;
+	fixedvec3 oldpos = mobj->Pos();
+	fixedvec3 pos;
+
+	if (flags & CBF_ABSOLUTEPOS)
+	{
+		pos.x = xofs;
+		pos.y = yofs;
+		pos.z = zofs;
+	}
+	else
+	{
+		pos = mobj->Vec3Offset(
+			FixedMul(xofs, finecosine[ang]) + FixedMul(yofs, finesine[ang]),
+			FixedMul(xofs, finesine[ang]) - FixedMul(yofs, finecosine[ang]),
+			mobj->Z() + zofs);
+	}
+	
+	// Next, try checking the position based on the sensitivity desired.
+	// If checking for dropoffs, set the z so we can have maximum flexibility.
+	// Otherwise, set origin and set it back after testing.
+
+	bool checker = false;
+	if (flags & CBF_DROPOFF)
+	{
+		mobj->SetZ(pos.z);
+		checker = P_CheckMove(mobj, pos.x, pos.y);
+		mobj->SetZ(oldpos.z);
+	}
+	else
+	{
+		mobj->SetOrigin(pos, true);
+		checker = P_TestMobjLocation(mobj);
+		mobj->SetOrigin(oldpos, true);
+	}
+	
 	//Nothing to block it so skip the rest.
-	bool checker = (flags & CBF_DROPOFF) ? P_CheckMove(mobj, mobj->X(), mobj->Y()) : P_TestMobjLocation(mobj);
 	if (checker)
 	{
 		ACTION_RETURN_STATE(NULL);

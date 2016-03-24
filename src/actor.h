@@ -590,7 +590,7 @@ public:
 	DDropItem *GetDropItems() const;
 
 	// Return true if the monster should use a missile attack, false for melee
-	bool SuggestMissileAttack (fixed_t dist);
+	bool SuggestMissileAttack (double dist);
 
 	// Adjusts the angle for deflection/reflection of incoming missiles
 	// Returns true if the missile should be allowed to explode anyway
@@ -1236,10 +1236,10 @@ public:
 	ActorBounceFlags	BounceFlags;	// which bouncing type?
 	DWORD			SpawnFlags;		// Increased to DWORD because of Doom 64
 	fixed_t			meleerange;		// specifies how far a melee attack reaches.
-	fixed_t			meleethreshold;	// Distance below which a monster doesn't try to shoot missiles anynore
+	double			meleethreshold;	// Distance below which a monster doesn't try to shoot missiles anynore
 									// but instead tries to come closer for a melee attack.
 									// This is not the same as meleerange
-	fixed_t			maxtargetrange;	// any target farther away cannot be attacked
+	double			maxtargetrange;	// any target farther away cannot be attacked
 	double			bouncefactor;	// Strife's grenades use 50%, Hexen's Flechettes 70.
 	double			wallbouncefactor;	// The bounce factor for walls can be different.
 	int				bouncecount;	// Strife's grenades only bounce twice before exploding

@@ -6144,7 +6144,7 @@ AActor *P_SpawnPlayerMissile (AActor *source, double x, double y, double z,
 		// [XA] If MaxTargetRange is defined in the spawned projectile, use this as the
 		//      maximum range for the P_AimLineAttack call later; this allows MaxTargetRange
 		//      to function as a "maximum tracer-acquisition range" for seeker missiles.
-		double linetargetrange = defaultobject->maxtargetrange > 0 ? FIXED2DBL(defaultobject->maxtargetrange*64) : 16*64.;
+		double linetargetrange = defaultobject->maxtargetrange > 0 ? defaultobject->maxtargetrange*64 : 16*64.;
 
 		int i = 2;
 		do

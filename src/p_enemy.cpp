@@ -348,7 +348,7 @@ bool P_CheckMeleeRange2 (AActor *actor)
 //=============================================================================
 bool P_CheckMissileRange (AActor *actor)
 {
-	fixed_t dist;
+	double dist;
 		
 	if (!P_CheckSight (actor, actor->target, SF_SEEPASTBLOCKEVERYTHING))
 		return false;
@@ -387,15 +387,15 @@ bool P_CheckMissileRange (AActor *actor)
 
 	// OPTIMIZE: get this from a global checksight
 	// [RH] What?
-	dist = actor->AproxDistance (actor->target) - 64*FRACUNIT;
+	dist = actor->Distance2D (actor->target) - 64;
 	
 	if (actor->MeleeState == NULL)
-		dist -= 128*FRACUNIT;	// no melee attack, so fire more
+		dist -= 128;	// no melee attack, so fire more
 
 	return actor->SuggestMissileAttack (dist);
 }
 
-bool AActor::SuggestMissileAttack (fixed_t dist)
+bool AActor::SuggestMissileAttack (double dist)
 {
 	// new version encapsulates the different behavior in flags instead of virtual functions
 	// The advantage is that this allows inheriting the missile attack attributes from the
@@ -407,11 +407,11 @@ bool AActor::SuggestMissileAttack (fixed_t dist)
 	if (MeleeState != NULL && dist < meleethreshold)
 		return false;	// From the Revenant: close enough for fist attack
 
-	if (flags4 & MF4_MISSILEMORE) dist >>= 1;
-	if (flags4 & MF4_MISSILEEVENMORE) dist >>= 3;
+	if (flags4 & MF4_MISSILEMORE) dist *= 0.5;
+	if (flags4 & MF4_MISSILEEVENMORE) dist *= 0.125;
 	
 	int mmc = int(MinMissileChance * G_SkillProperty(SKILLP_Aggressiveness));
-	return pr_checkmissilerange() >= MIN<int> (dist >> FRACBITS, mmc);
+	return pr_checkmissilerange() >= MIN<int> (int(dist), mmc);
 }
 
 //=============================================================================

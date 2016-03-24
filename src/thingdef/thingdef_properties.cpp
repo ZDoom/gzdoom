@@ -1,7 +1,7 @@
 /*
 ** thingdef-properties.cpp
 **
-** Actor definitions - properties and flags handling
+** Actor denitions - properties and flags handling
 **
 **---------------------------------------------------------------------------
 ** Copyright 2002-2007 Christoph Oelckers
@@ -245,10 +245,10 @@ void HandleDeprecatedFlags(AActor *defaults, PClassActor *info, bool set, int in
 		defaults->Gravity = set ? 1. / 8 : 1.;
 		break;
 	case DEPF_SHORTMISSILERANGE:
-		defaults->maxtargetrange = set? 896*FRACUNIT : 0;
+		defaults->maxtargetrange = set? 896. : 0.;
 		break;
 	case DEPF_LONGMELEERANGE:
-		defaults->meleethreshold = set? 196*FRACUNIT : 0;
+		defaults->meleethreshold = set? 196. : 0.;
 		break;
 	case DEPF_QUARTERGRAVITY:
 		defaults->Gravity = set ? 1. / 4 : 1.;
@@ -314,9 +314,9 @@ bool CheckDeprecatedFlags(const AActor *actor, PClassActor *info, int index)
 	case DEPF_LOWGRAVITY:
 		return actor->Gravity == 1./8;
 	case DEPF_SHORTMISSILERANGE:
-		return actor->maxtargetrange == 896*FRACUNIT;
+		return actor->maxtargetrange == 896.;
 	case DEPF_LONGMELEERANGE:
-		return actor->meleethreshold == 196*FRACUNIT;
+		return actor->meleethreshold == 196.;
 	case DEPF_QUARTERGRAVITY:
 		return actor->Gravity == 1./4;
 	case DEPF_FIRERESIST:
@@ -936,7 +936,7 @@ DEFINE_PROPERTY(burnheight, F, Actor)
 //==========================================================================
 DEFINE_PROPERTY(maxtargetrange, F, Actor)
 {
-	PROP_FIXED_PARM(id, 0);
+	PROP_DOUBLE_PARM(id, 0);
 	defaults->maxtargetrange = id;
 }
 
@@ -945,7 +945,7 @@ DEFINE_PROPERTY(maxtargetrange, F, Actor)
 //==========================================================================
 DEFINE_PROPERTY(meleethreshold, F, Actor)
 {
-	PROP_FIXED_PARM(id, 0);
+	PROP_DOUBLE_PARM(id, 0);
 	defaults->meleethreshold = id;
 }
 

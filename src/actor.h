@@ -1240,8 +1240,8 @@ public:
 									// but instead tries to come closer for a melee attack.
 									// This is not the same as meleerange
 	fixed_t			maxtargetrange;	// any target farther away cannot be attacked
-	fixed_t			bouncefactor;	// Strife's grenades use 50%, Hexen's Flechettes 70.
-	fixed_t			wallbouncefactor;	// The bounce factor for walls can be different.
+	double			bouncefactor;	// Strife's grenades use 50%, Hexen's Flechettes 70.
+	double			wallbouncefactor;	// The bounce factor for walls can be different.
 	int				bouncecount;	// Strife's grenades only bounce twice before exploding
 	double			Gravity;		// [GRB] Gravity factor
 	fixed_t			Friction;
@@ -1481,10 +1481,6 @@ public:
 	double _pushfactor() const
 	{
 		return FIXED2DBL(pushfactor);
-	}
-	double _bouncefactor() const
-	{
-		return FIXED2DBL(bouncefactor);
 	}
 	void SetZ(double newz, bool moving = true)
 	{

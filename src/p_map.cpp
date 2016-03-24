@@ -3296,7 +3296,7 @@ bool FSlide::BounceWall(AActor *mo)
 	deltaangle >>= ANGLETOFINESHIFT;
 
 	movelen = fixed_t(g_sqrt(double(mo->_f_velx())*mo->_f_velx() + double(mo->_f_vely())*mo->_f_vely()));
-	movelen = FixedMul(movelen, mo->wallbouncefactor);
+	movelen = fixed_t(movelen * mo->wallbouncefactor);
 
 	FBoundingBox box(mo->_f_X(), mo->_f_Y(), mo->_f_radius());
 	if (box.BoxOnLineSide(line) == -1)
@@ -3356,7 +3356,7 @@ bool P_BounceActor(AActor *mo, AActor *BlockingMobj, bool ontop)
 		if (!ontop)
 		{
 			DAngle angle = BlockingMobj->AngleTo(mo) + ((pr_bounce() % 16) - 8);
-			double speed = mo->VelXYToSpeed() * FIXED2DBL(mo->wallbouncefactor); // [GZ] was 0.75, using wallbouncefactor seems more consistent
+			double speed = mo->VelXYToSpeed() * mo->wallbouncefactor; // [GZ] was 0.75, using wallbouncefactor seems more consistent
 			mo->Angles.Yaw = ANGLE2DBL(angle);
 			mo->VelFromAngle(speed);
 			mo->PlayBounceSound(true);
@@ -3393,13 +3393,13 @@ bool P_BounceActor(AActor *mo, AActor *BlockingMobj, bool ontop)
 				}
 				else
 				{
-					mo->Vel.Z *= mo->_bouncefactor();
+					mo->Vel.Z *= mo->bouncefactor;
 				}
 			}
 			else // Don't run through this for MBF-style bounces
 			{
 				// The reflected velocity keeps only about 70% of its original speed
-				mo->Vel.Z = (mo->Vel.Z - 2. / dot) * mo->_bouncefactor();
+				mo->Vel.Z = (mo->Vel.Z - 2. / dot) * mo->bouncefactor;
 			}
 
 			mo->PlayBounceSound(true);

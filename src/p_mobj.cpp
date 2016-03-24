@@ -1583,12 +1583,12 @@ bool AActor::FloorBounceMissile (secplane_t &plane)
 			flags &= ~MF_INBOUNCE;
 			return false;
 		}
-		else Vel.Z *= _bouncefactor();
+		else Vel.Z *= bouncefactor;
 	}
 	else // Don't run through this for MBF-style bounces
 	{
 		// The reflected velocity keeps only about 70% of its original speed
-		Vel = (Vel - plane.Normal() * dot) * _bouncefactor();
+		Vel = (Vel - plane.Normal() * dot) * bouncefactor;
 		AngleFromVel();
 	}
 
@@ -6672,8 +6672,8 @@ void PrintMiscActorInfo(AActor *query)
 		for (flagi = 0; flagi <= 31; flagi++)
 			if (query->flags7 & ActorFlags7::FromInt(1<<flagi)) Printf(" %s", FLAG_NAME(1<<flagi, flags7));
 		Printf("\nBounce flags: %x\nBounce factors: f:%f, w:%f", 
-			query->BounceFlags.GetValue(), FIXED2DBL(query->bouncefactor),
-			FIXED2DBL(query->wallbouncefactor));
+			query->BounceFlags.GetValue(), query->bouncefactor,
+			query->wallbouncefactor);
 		/*for (flagi = 0; flagi < 31; flagi++)
 			if (query->BounceFlags & 1<<flagi) Printf(" %s", flagnamesb[flagi]);*/
 		Printf("\nRender style = %i:%s, alpha %f\nRender flags: %x", 

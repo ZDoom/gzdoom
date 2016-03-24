@@ -468,7 +468,7 @@ static void CALLBACK TimerTicked(UINT id, UINT msg, DWORD_PTR user, DWORD_PTR dw
 //
 //==========================================================================
 
-fixed_t I_GetTimeFrac(uint32 *ms)
+double I_GetTimeFrac(uint32 *ms)
 {
 	DWORD now = timeGetTime();
 	if (ms != NULL)
@@ -478,12 +478,11 @@ fixed_t I_GetTimeFrac(uint32 *ms)
 	DWORD step = TicNext - TicStart;
 	if (step == 0)
 	{
-		return FRACUNIT;
+		return 1.;
 	}
 	else
 	{
-		fixed_t frac = clamp<fixed_t> ((now - TicStart)*FRACUNIT/step, 0, FRACUNIT);
-		return frac;
+		return clamp<double>(double(now - TicStart) / step, 0, 1);
 	}
 }
 

@@ -1006,12 +1006,12 @@ void R_SetupFrame (AActor *actor)
 		iview->otic = nowtic;
 	}
 
-	r_TicFrac = I_GetTimeFrac (&r_FrameTime);
+	r_TicFracF = I_GetTimeFrac (&r_FrameTime);
 	if (cl_capfps || r_NoInterpolate)
 	{
-		r_TicFrac = FRACUNIT;
+		r_TicFracF = 1.;
 	}
-	r_TicFracF = FIXED2DBL(r_TicFrac);
+	r_TicFrac = FLOAT2FIXED(r_TicFracF);
 
 	R_InterpolateView (player, r_TicFrac, iview);
 

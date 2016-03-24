@@ -3736,7 +3736,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
 			pos.z += (self->_f_height() >> 1);
 			if (self->player != NULL)
 			{
-				pos.z += fixed_t (self->player->mo->AttackZOffset * self->player->crouchfactor);
+				pos.z += FLOAT2FIXED(self->player->mo->AttackZOffset * self->player->crouchfactor);
 			}
 			else
 			{

@@ -4027,7 +4027,7 @@ DAngle P_AimLineAttack(AActor *t1, DAngle angle, double distance, FTranslatedLin
 	fixed_t shootz = t1->_f_Z() + (t1->_f_height() >> 1) - t1->_f_floorclip();
 	if (t1->player != NULL)
 	{
-		shootz += fixed_t(t1->player->mo->AttackZOffset * t1->player->crouchfactor);
+		shootz += FLOAT2FIXED(t1->player->mo->AttackZOffset * t1->player->crouchfactor);
 	}
 	else
 	{
@@ -4172,7 +4172,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 	shootz = t1->_f_Z() - t1->_f_floorclip() + (t1->_f_height() >> 1);
 	if (t1->player != NULL)
 	{
-		shootz += fixed_t(t1->player->mo->AttackZOffset * t1->player->crouchfactor);
+		shootz += FLOAT2FIXED(t1->player->mo->AttackZOffset * t1->player->crouchfactor);
 		if (damageType == NAME_Melee || damageType == NAME_Hitscan)
 		{
 			// this is coming from a weapon attack function which needs to transfer information to the obituary code,
@@ -4433,7 +4433,7 @@ AActor *P_LinePickActor(AActor *t1, angle_t angle, fixed_t distance, int pitch,
 	shootz = t1->_f_Z() - t1->_f_floorclip() + (t1->_f_height() >> 1);
 	if (t1->player != NULL)
 	{
-		shootz += fixed_t(t1->player->mo->AttackZOffset * t1->player->crouchfactor);
+		shootz += FLOAT2FIXED(t1->player->mo->AttackZOffset * t1->player->crouchfactor);
 	}
 	else
 	{
@@ -4707,7 +4707,7 @@ void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, i
 	{
 		if (source->player != NULL)
 		{
-			shootz += fixed_t(source->player->mo->AttackZOffset * source->player->crouchfactor);
+			shootz += FLOAT2FIXED(source->player->mo->AttackZOffset * source->player->crouchfactor);
 		}
 		else
 		{
@@ -5092,8 +5092,6 @@ bool P_NoWayTraverse(AActor *usething, fixed_t startx, fixed_t starty, fixed_t e
 //
 //==========================================================================
 
-CVAR(Int, userange, 0, 0);
-
 void P_UseLines(player_t *player)
 {
 	bool foundline = false;
@@ -5101,7 +5099,7 @@ void P_UseLines(player_t *player)
 	// If the player is transitioning a portal, use the group that is at its vertical center.
 	fixedvec2 start = player->mo->GetPortalTransition(player->mo->_f_height() / 2);
 	// [NS] Now queries the Player's UseRange.
-	fixedvec2 end = start + Vec2Angle(userange > 0? fixed_t(userange<<FRACBITS) : player->mo->UseRange, player->mo->_f_angle());
+	fixedvec2 end = start + Vec2Angle(FLOAT2FIXED(player->mo->UseRange), player->mo->_f_angle());
 
 	// old code:
 	//
@@ -5141,7 +5139,7 @@ bool P_UsePuzzleItem(AActor *PuzzleItemUser, int PuzzleItemType)
 
 	// [NS] If it's a Player, get their UseRange.
 	if (PuzzleItemUser->player)
-		usedist = PuzzleItemUser->player->mo->UseRange;
+		usedist = FLOAT2FIXED(PuzzleItemUser->player->mo->UseRange);
 	else
 		usedist = USERANGE;
 

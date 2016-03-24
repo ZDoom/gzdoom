@@ -648,9 +648,9 @@ void APlayerPawn::Serialize (FArchive &arc)
 		<< FlechetteType;
 	if (SaveVersion < 3829)
 	{
-		GruntSpeed = 12*FRACUNIT;
-		FallingScreamMinSpeed = 35*FRACUNIT;
-		FallingScreamMaxSpeed = 40*FRACUNIT;
+		GruntSpeed = 12;
+		FallingScreamMinSpeed = 35;
+		FallingScreamMaxSpeed = 40;
 	}
 	else
 	{
@@ -1265,7 +1265,7 @@ bool APlayerPawn::ResetAirSupply (bool playgasp)
 	{
 		S_Sound (this, CHAN_VOICE, "*gasp", 1, ATTN_NORM);
 	}
-	if (level.airsupply> 0 && player->mo->AirCapacity > 0) player->air_finished = level.time + FixedMul(level.airsupply, player->mo->AirCapacity);
+	if (level.airsupply> 0 && player->mo->AirCapacity > 0) player->air_finished = level.time + int(level.airsupply * player->mo->AirCapacity);
 	else player->air_finished = INT_MAX;
 	return wasdrowning;
 }
@@ -2618,8 +2618,8 @@ void P_PlayerThink (player_t *player)
 			// Player must be touching the floor
 			P_PlayerOnSpecialFlat(player, P_GetThingFloorType(player->mo));
 		}
-		if (player->mo->_f_velz() <= -player->mo->FallingScreamMinSpeed &&
-			player->mo->_f_velz() >= -player->mo->FallingScreamMaxSpeed && !player->morphTics &&
+		if (player->mo->Vel.Z <= -player->mo->FallingScreamMinSpeed &&
+			player->mo->Vel.Z >= -player->mo->FallingScreamMaxSpeed && !player->morphTics &&
 			player->mo->waterlevel == 0)
 		{
 			int id = S_FindSkinnedSound (player->mo, "*falling");

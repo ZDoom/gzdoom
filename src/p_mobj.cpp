@@ -2716,7 +2716,7 @@ static void PlayerLandedOnThing (AActor *mo, AActor *onmobj)
 	{
 		grunted = false;
 		// Why should this number vary by gravity?
-		if (mo->health > 0 && mo->_f_velz() < -mo->player->mo->GruntSpeed)
+		if (mo->health > 0 && mo->Vel.Z < -mo->player->mo->GruntSpeed)
 		{
 			S_Sound (mo, CHAN_VOICE, "*grunt", 1, ATTN_NORM);
 			grunted = true;
@@ -6177,7 +6177,7 @@ AActor *P_SpawnPlayerMissile (AActor *source, double x, double y, double z,
 		z += source->Center() - source->Floorclip;
 		if (source->player != NULL)	// Considering this is for player missiles, it better not be NULL.
 		{
-			z += ((FIXED2DBL(source->player->mo->AttackZOffset) - 4) * source->player->crouchfactor);
+			z += ((source->player->mo->AttackZOffset - 4) * source->player->crouchfactor);
 		}
 		else
 		{

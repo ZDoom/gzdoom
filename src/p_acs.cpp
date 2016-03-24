@@ -4014,7 +4014,7 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 
 	case APROP_AttackZOffset:
 		if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
-			static_cast<APlayerPawn *>(actor)->AttackZOffset = value;
+			static_cast<APlayerPawn *>(actor)->AttackZOffset = ACSToDouble(value);
 		break;
 
 	case APROP_StencilColor:
@@ -4108,7 +4108,7 @@ int DLevelScript::GetActorProperty (int tid, int property)
 	case APROP_AttackZOffset:
 							if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
 							{
-								return static_cast<APlayerPawn *>(actor)->AttackZOffset;
+								return DoubleToACS(static_cast<APlayerPawn *>(actor)->AttackZOffset);
 							}
 							else
 							{

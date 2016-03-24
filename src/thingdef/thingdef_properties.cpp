@@ -2093,9 +2093,9 @@ DEFINE_CLASS_PROPERTY(slotnumber, I, Weapon)
 //==========================================================================
 DEFINE_CLASS_PROPERTY(slotpriority, F, Weapon)
 {
-	PROP_FIXED_PARM(i, 0);
+	PROP_DOUBLE_PARM(i, 0);
 	assert(info->IsKindOf(RUNTIME_CLASS(PClassWeapon)));
-	static_cast<PClassWeapon *>(info)->SlotPriority = i;
+	static_cast<PClassWeapon *>(info)->SlotPriority = int(i*65536);
 }
 
 //==========================================================================
@@ -2504,7 +2504,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, clearcolorset, I, PlayerPawn)
 //==========================================================================
 DEFINE_CLASS_PROPERTY_PREFIX(player, attackzoffset, F, PlayerPawn)
 {
-	PROP_FIXED_PARM(z, 0);
+	PROP_DOUBLE_PARM(z, 0);
 	defaults->AttackZOffset = z;
 }
 
@@ -2522,7 +2522,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, jumpz, F, PlayerPawn)
 //==========================================================================
 DEFINE_CLASS_PROPERTY_PREFIX(player, GruntSpeed, F, PlayerPawn)
 {
-	PROP_FIXED_PARM(z, 0);
+	PROP_DOUBLE_PARM(z, 0);
 	defaults->GruntSpeed = z;
 }
 
@@ -2531,8 +2531,8 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, GruntSpeed, F, PlayerPawn)
 //==========================================================================
 DEFINE_CLASS_PROPERTY_PREFIX(player, FallingScreamSpeed, FF, PlayerPawn)
 {
-	PROP_FIXED_PARM(minz, 0);
-	PROP_FIXED_PARM(maxz, 1);
+	PROP_DOUBLE_PARM(minz, 0);
+	PROP_DOUBLE_PARM(maxz, 1);
 	defaults->FallingScreamMinSpeed = minz;
 	defaults->FallingScreamMaxSpeed = maxz;
 }
@@ -2582,7 +2582,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, viewheight, F, PlayerPawn)
 //==========================================================================
 DEFINE_CLASS_PROPERTY_PREFIX(player, userange, F, PlayerPawn)
 {
-	PROP_FIXED_PARM(z, 0);
+	PROP_DOUBLE_PARM(z, 0);
 	defaults->UseRange = z;
 }
 
@@ -2591,7 +2591,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, userange, F, PlayerPawn)
 //==========================================================================
 DEFINE_CLASS_PROPERTY_PREFIX(player, aircapacity, F, PlayerPawn)
 {
-	PROP_FIXED_PARM(z, 0);
+	PROP_DOUBLE_PARM(z, 0);
 	defaults->AirCapacity = z;
 }
 

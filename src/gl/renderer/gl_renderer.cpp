@@ -569,7 +569,7 @@ void FGLRenderer::Clear(int left, int top, int right, int bottom, int palcolor, 
 
 void FGLRenderer::FillSimplePoly(FTexture *texture, FVector2 *points, int npoints,
 	double originx, double originy, double scalex, double scaley,
-	angle_t rotation, FDynamicColormap *colormap, int lightlevel)
+	DAngle rotation, FDynamicColormap *colormap, int lightlevel)
 {
 	if (npoints < 3)
 	{ // This is no polygon.
@@ -597,11 +597,10 @@ void FGLRenderer::FillSimplePoly(FTexture *texture, FVector2 *points, int npoint
 	gl_RenderState.SetMaterial(gltexture, CLAMP_NONE, 0, -1, false);
 
 	int i;
-	float rot = float(rotation * M_PI / float(1u << 31));
-	bool dorotate = rot != 0;
+	bool dorotate = rotation != 0;
 
-	float cosrot = cos(rot);
-	float sinrot = sin(rot);
+	float cosrot = cos(ToRadians(rotation));
+	float sinrot = sin(ToRadians(rotation));
 
 	//float yoffs = GatheringWipeScreen ? 0 : LBOffset;
 	float uscale = float(1.f / (texture->GetScaledWidth() * scalex));

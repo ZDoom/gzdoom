@@ -105,6 +105,18 @@ FArchive &operator<< (FArchive &arc, FRenderStyle &style)
 	return arc;
 }
 
+double GetAlpha(int type, double alpha)
+{
+	switch (type)
+	{
+	case STYLEALPHA_Zero:		return 0;
+	case STYLEALPHA_One:		return OPAQUE;
+	case STYLEALPHA_Src:		return alpha;
+	case STYLEALPHA_InvSrc:		return 1. - alpha;
+	default:					return 0;
+	}
+}
+
 //==========================================================================
 //
 // FRenderStyle :: IsVisible
@@ -130,7 +142,7 @@ bool FRenderStyle::IsVisible(double alpha) const throw()
 		{
 			alpha = clamp(alpha, 0., 1.);
 		}
-		return GetAlpha(SrcAlpha, alpha) != 0 || GetAlpha(DestAlpha, alpha) != OPAQUE;
+		return GetAlpha(SrcAlpha, alpha) != 0 || GetAlpha(DestAlpha, alpha) != 1;
 	}
 	// Treat anything else as visible.
 	return true;
@@ -186,29 +198,3 @@ void FRenderStyle::CheckFuzz()
 		BlendOp = STYLEOP_Fuzz;
 	}
 }
-
-fixed_t GetAlpha(int type, fixed_t alpha)
-{
-	switch (type)
-	{
-	case STYLEALPHA_Zero:		return 0;
-	case STYLEALPHA_One:		return OPAQUE;
-	case STYLEALPHA_Src:		return alpha;
-	case STYLEALPHA_InvSrc:		return OPAQUE - alpha;
-	default:					return 0;
-	}
-}
-
-fixed_t GetAlpha(int type, double alpha)
-{
-	switch (type)
-	{
-	case STYLEALPHA_Zero:		return 0;
-	case STYLEALPHA_One:		return OPAQUE;
-	case STYLEALPHA_Src:		return FLOAT2FIXED(alpha);
-	case STYLEALPHA_InvSrc:		return FLOAT2FIXED(1. - alpha);
-	default:					return 0;
-	}
-}
-
-

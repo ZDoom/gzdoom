@@ -918,10 +918,11 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	}
 	else
 	{
-		xscale = FixedMul(spritescaleX, voxel->Scale);
-		yscale = FixedMul(spritescaleY, voxel->Scale);
-		gzt = fz + MulScale8(yscale, voxel->Voxel->Mips[0].PivotZ) - FLOAT2FIXED(thing->Floorclip);
-		gzb = fz + MulScale8(yscale, voxel->Voxel->Mips[0].PivotZ - (voxel->Voxel->Mips[0].SizeZ << 8));
+		xscale = fixed_t(spritescaleX * voxel->Scale);
+		yscale = fixed_t(spritescaleY * voxel->Scale);
+		fixed_t piv = fixed_t(voxel->Voxel->Mips[0].Pivot.Z*256.);
+		gzt = fz + MulScale8(yscale, piv) - FLOAT2FIXED(thing->Floorclip);
+		gzb = fz + MulScale8(yscale, piv - (voxel->Voxel->Mips[0].SizeZ << 8));
 		if (gzt <= gzb)
 			return;
 	}
@@ -1030,7 +1031,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 
 		fz -= FLOAT2FIXED(thing->Floorclip);
 
-		vis->angle = thing->_f_angle() + voxel->AngleOffset;
+		vis->angle = thing->Angles.Yaw.BAMs() + voxel->AngleOffset.BAMs();
 
 		int voxelspin = (thing->flags & MF_DROPPED) ? voxel->DroppedSpin : voxel->PlacedSpin;
 		if (voxelspin != 0)
@@ -2728,18 +2729,22 @@ void R_DrawVoxel(fixed_t globalposx, fixed_t globalposy, fixed_t globalposz, ang
 	daxscalerecip = (1<<30) / daxscale;
 	dayscalerecip = (1<<30) / dayscale;
 
+	fixed_t piv_x = fixed_t(mip->Pivot.X*256.);
+	fixed_t piv_y = fixed_t(mip->Pivot.Y*256.);
+	fixed_t piv_z = fixed_t(mip->Pivot.Z*256.);
+
 	x = FixedMul(globalposx - dasprx, daxscalerecip);
 	y = FixedMul(globalposy - daspry, daxscalerecip);
-	backx = (DMulScale10(x, sprcosang, y,  sprsinang) + mip->PivotX) >> 8;
-	backy = (DMulScale10(y, sprcosang, x, -sprsinang) + mip->PivotY) >> 8;
+	backx = (DMulScale10(x, sprcosang, y,  sprsinang) + piv_x) >> 8;
+	backy = (DMulScale10(y, sprcosang, x, -sprsinang) + piv_y) >> 8;
 	cbackx = clamp(backx, 0, mip->SizeX - 1);
 	cbacky = clamp(backy, 0, mip->SizeY - 1);
 
 	sprcosang = MulScale14(daxscale, sprcosang);
 	sprsinang = MulScale14(daxscale, sprsinang);
 
-	x = (dasprx - globalposx) - DMulScale18(mip->PivotX, sprcosang, mip->PivotY, -sprsinang);
-	y = (daspry - globalposy) - DMulScale18(mip->PivotY, sprcosang, mip->PivotX,  sprsinang);
+	x = (dasprx - globalposx) - DMulScale18(piv_x, sprcosang, piv_y, -sprsinang);
+	y = (daspry - globalposy) - DMulScale18(piv_y, sprcosang, piv_x,  sprsinang);
 
 	cosang = FixedMul(cosang, dayscalerecip);
 	sinang = FixedMul(sinang, dayscalerecip);
@@ -2759,7 +2764,7 @@ void R_DrawVoxel(fixed_t globalposx, fixed_t globalposy, fixed_t globalposz, ang
 		ggyinc[i] = y; y += gyinc;
 	}
 
-	syoff = DivScale21(globalposz - dasprz, FixedMul(dazscale, 0xE800)) + (mip->PivotZ << 7);
+	syoff = DivScale21(globalposz - dasprz, FixedMul(dazscale, 0xE800)) + (piv_z << 7);
 	yoff = (abs(gxinc) + abs(gyinc)) >> 1;
 
 	for (cnt = 0; cnt < 8; cnt++)

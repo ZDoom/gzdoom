@@ -354,7 +354,7 @@ struct FSpriteModelFrame
 	short frame;
 	FState * state;	// for later!
 	int hashnext;
-	angle_t angleoffset;
+	float angleoffset;
 	// added pithoffset, rolloffset.
 	float pitchoffset, rolloffset; // I don't want to bother with type transformations, so I made this variables float.
 };

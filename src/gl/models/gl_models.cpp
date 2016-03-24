@@ -421,8 +421,8 @@ void gl_InitModels()
 		memset(&smf, 0, sizeof(smf));
 		smf.models[0] = md;
 		smf.skins[0] = md->GetPaletteTexture();
-		smf.xscale = smf.yscale = smf.zscale = FIXED2FLOAT(VoxelDefs[i]->Scale);
-		smf.angleoffset = VoxelDefs[i]->AngleOffset;
+		smf.xscale = smf.yscale = smf.zscale = VoxelDefs[i]->Scale;
+		smf.angleoffset = VoxelDefs[i]->AngleOffset.Degrees;
 		if (VoxelDefs[i]->PlacedSpin != 0)
 		{
 			smf.yrotate = 1.f;
@@ -523,7 +523,7 @@ void gl_InitModels()
 					else if (sc.Compare("angleoffset"))
 					{
 						sc.MustGetFloat();
-						smf.angleoffset = FLOAT2ANGLE(sc.Float);
+						smf.angleoffset = sc.Float;
 					}
 					else if (sc.Compare("pitchoffset"))
 					{
@@ -919,7 +919,7 @@ void gl_RenderModel(GLSprite * spr)
 	gl_RenderState.mModelMatrix.translate(smf->xoffset / smf->xscale, smf->zoffset / smf->zscale, smf->yoffset / smf->yscale);
 	
 	// 5) Applying model rotations.
-	gl_RenderState.mModelMatrix.rotate(-ANGLE2FLOAT(smf->angleoffset), 0, 1, 0);
+	gl_RenderState.mModelMatrix.rotate(-smf->angleoffset, 0, 1, 0);
 	gl_RenderState.mModelMatrix.rotate(smf->pitchoffset, 0, 0, 1);
 	gl_RenderState.mModelMatrix.rotate(-smf->rolloffset, 1, 0, 0);
 
@@ -982,7 +982,7 @@ void gl_RenderHUDModel(pspdef_t *psp, fixed_t ofsx, fixed_t ofsy)
 	gl_RenderState.mViewMatrix.rotate(90.f, 0, 1, 0);
 
 	// Applying angleoffset, pitchoffset, rolloffset.
-	gl_RenderState.mViewMatrix.rotate(-ANGLE2FLOAT(smf->angleoffset), 0, 1, 0);
+	gl_RenderState.mViewMatrix.rotate(-smf->angleoffset, 0, 1, 0);
 	gl_RenderState.mViewMatrix.rotate(smf->pitchoffset, 0, 0, 1);
 	gl_RenderState.mViewMatrix.rotate(-smf->rolloffset, 1, 0, 0);
 	gl_RenderState.ApplyMatrices();

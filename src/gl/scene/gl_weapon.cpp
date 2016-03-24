@@ -124,16 +124,16 @@ void FGLRenderer::DrawPSprite (player_t * player,pspdef_t *psp, float sx, float 
 	ftexturemid = 100.f - sy - r.top;
 
 	AWeapon * wi=player->ReadyWeapon;
-	if (wi && wi->YAdjust)
+	if (wi && wi->YAdjust != 0)
 	{
-		float fYAd = FIXED2FLOAT(wi->YAdjust);
+		float fYAd = wi->YAdjust;
 		if (screenblocks >= 11)
 		{
 			ftexturemid -= fYAd;
 		}
 		else if (!st_scale)
 		{
-			ftexturemid -= FIXED2FLOAT(StatusBar->GetDisplacement ()) * fYAd;
+			ftexturemid -= StatusBar->GetDisplacement () * fYAd;
 		}
 	}
 

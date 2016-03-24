@@ -532,7 +532,7 @@ public:
 	};
 
 	DDoor (sector_t *sector);
-	DDoor (sector_t *sec, EVlDoor type, fixed_t speed, int delay, int topcountdown, int lightTag);
+	DDoor (sector_t *sec, EVlDoor type, fixed_t speed, int delay, int lightTag, int topcountdown);
 
 	void Serialize (FArchive &arc);
 	void Tick ();

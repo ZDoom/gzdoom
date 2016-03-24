@@ -285,7 +285,7 @@ void ADynamicLight::Tick()
 	case ColorFlickerLight:
 	{
 		BYTE rnd = randLight();
-		float pct = ANGLE2FLOAT(angle)/360.f;
+		float pct = Angles.Yaw.Degrees/360.f;
 		
 		m_currentIntensity = m_intensity[rnd >= pct * 255];
 		break;
@@ -298,7 +298,7 @@ void ADynamicLight::Tick()
 		
 		m_tickCount++;
 		
-		if (m_tickCount > ANGLE2FLOAT(angle))
+		if (m_tickCount > Angles.Yaw.Degrees)
 		{
 			m_currentIntensity = m_intensity[0] + (amt * flickerRange);
 			m_tickCount = 0;
@@ -348,16 +348,16 @@ void ADynamicLight::UpdateLocation()
 	{
 		if (target)
 		{
-			angle_t angle = target->_f_angle() >> ANGLETOFINESHIFT;
-			fixedvec3 pos = target->Vec3Offset(
-				FixedMul(m_offX, finecosine[angle]) + FixedMul(m_offZ, finesine[angle]),
-				FixedMul(m_offX, finesine[angle]) - FixedMul(m_offZ, finecosine[angle]),
-				m_offY + target->GetBobOffset());
+			DAngle angle = target->Angles.Yaw;
+			double s = angle.Sin();
+			double c = angle.Cos();
+
+			DVector3 pos = target->Vec3Offset(m_off.X * c + m_off.Y * s, m_off.X * s - m_off.Y * c, m_off.Z + target->GetBobOffset());
 			SetXYZ(pos); // attached lights do not need to go into the regular blockmap
-			PrevX = pos.x;
-			PrevY = pos.y;
-			PrevZ = pos.z;
-			subsector = R_PointInSubsector(pos.x, pos.y);
+			PrevX = target->_f_X();
+			PrevY = target->_f_Y();
+			PrevZ = target->_f_Z();
+			subsector = R_PointInSubsector(target->_f_X(), target->_f_Y());
 			Sector = subsector->sector;
 		}
 
@@ -402,11 +402,9 @@ void ADynamicLight::SetOrigin(fixed_t x, fixed_t y, fixed_t z, bool moving)
 //
 //==========================================================================
 
-void ADynamicLight::SetOffset(fixed_t x, fixed_t y, fixed_t z)
+void ADynamicLight::SetOffset(const DVector3 &pos)
 {
-	m_offX = x;
-	m_offY = y;
-	m_offZ = z;
+	m_off = pos;
 	UpdateLocation();
 }
 

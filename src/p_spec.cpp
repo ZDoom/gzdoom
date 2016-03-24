@@ -1469,7 +1469,7 @@ void P_SpawnSpecials (void)
 			else if (lines[i].args[1] == 3 || lines[i].args[1] == 4)
 			{
 				line_t *line = &lines[i];
-				ASkyViewpoint *origin = Spawn<ASkyViewpoint>(0, 0, 0, NO_REPLACE);
+				ASkyViewpoint *origin = Spawn<ASkyViewpoint>();
 				origin->Sector = line->frontsector;
 				origin->special1 = line->args[1] == 3? SKYBOX_PLANE:SKYBOX_HORIZON;
 

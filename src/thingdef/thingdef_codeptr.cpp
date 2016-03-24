@@ -313,12 +313,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetDistance)
 		}
 		else
 		{
-			fixedvec3 diff = self->_f_Vec3To(target);
+			DVector3 diff = self->Vec3To(target);
 			if (checkz)
-				diff.z += (target->_f_height() - self->_f_height()) / 2;
+				diff.Z += (target->Height - self->Height) / 2;
 
-			const double length = DVector3(FIXED2DBL(diff.x), FIXED2DBL(diff.y), (checkz) ? FIXED2DBL(diff.z) : 0).Length();
-			ret->SetFloat(length);
+			ret->SetFloat(diff.Length());
 		}
 		return 1;
 	}
@@ -664,7 +663,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BasicAttack)
 	PARAM_INT	(melee_damage);
 	PARAM_SOUND	(melee_sound);
 	PARAM_CLASS	(missile_type, AActor);
-	PARAM_FIXED	(missile_height);
+	PARAM_FLOAT	(missile_height);
 
 	if (missile_type != NULL)
 	{
@@ -928,7 +927,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInsideMeleeRange)
 static int DoJumpIfCloser(AActor *target, VM_ARGS)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_FIXED	(dist);
+	PARAM_FLOAT	(dist);
 	PARAM_STATE	(jump);
 	PARAM_BOOL_OPT(noz) { noz = false; }
 
@@ -936,7 +935,7 @@ static int DoJumpIfCloser(AActor *target, VM_ARGS)
 	{ // No target - no jump
 		ACTION_RETURN_STATE(NULL);
 	}
-	if (self->AproxDistance(target) < dist &&
+	if (self->Distance2D(target) < dist &&
 		(noz || 
 		((self->Z() > target->Z() && self->Z() - target->Top() < dist) ||
 		(self->Z() <= target->Z() && target->Z() - self->Top() < dist))))
@@ -1549,16 +1548,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireBullets)
 			return 0;	// out of ammo
 	}
 	
-	if (range == 0)
-		range = PLAYERMISSILERANGE;
+	if (range == 0)	range = PLAYERMISSILERANGE;
 
 	if (!(flags & FBF_NOFLASH)) static_cast<APlayerPawn *>(self)->PlayAttacking2 ();
 
 	if (!(flags & FBF_NOPITCH)) bslope = P_BulletSlope(self);
 	bangle = self->Angles.Yaw;
 
-	if (pufftype == NULL)
-		pufftype = PClass::FindActor(NAME_BulletPuff);
+	if (pufftype == NULL) pufftype = PClass::FindActor(NAME_BulletPuff);
 
 	if (weapon != NULL)
 	{
@@ -1702,7 +1699,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
 	PARAM_INT_OPT	(flags)				{ flags = CPF_USEAMMO; }
 	PARAM_CLASS_OPT	(pufftype, AActor)	{ pufftype = NULL; }
 	PARAM_FLOAT_OPT	(range)				{ range = 0; }
-	PARAM_FIXED_OPT	(lifesteal)			{ lifesteal = 0; }
+	PARAM_FLOAT_OPT	(lifesteal)			{ lifesteal = 0; }
 	PARAM_INT_OPT	(lifestealmax)		{ lifestealmax = 0; }
 	PARAM_CLASS_OPT	(armorbonustype, ABasicArmorBonus)	{ armorbonustype = NULL; }
 	PARAM_SOUND_OPT	(MeleeSound)		{ MeleeSound = ""; }
@@ -1746,7 +1743,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
 	}
 	else
 	{
-		if (lifesteal && !(t.linetarget->flags5 & MF5_DONTDRAIN))
+		if (lifesteal > 0 && !(t.linetarget->flags5 & MF5_DONTDRAIN))
 		{
 			if (flags & CPF_STEALARMOR)
 			{
@@ -1758,7 +1755,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
 				{
 					assert(armorbonustype->IsDescendantOf(RUNTIME_CLASS(ABasicArmorBonus)));
 					ABasicArmorBonus *armorbonus = static_cast<ABasicArmorBonus *>(Spawn(armorbonustype));
-					armorbonus->SaveAmount *= (actualdamage * lifesteal) >> FRACBITS;
+					armorbonus->SaveAmount *= int(actualdamage * lifesteal);
 					armorbonus->MaxSaveAmount = lifestealmax <= 0 ? armorbonus->MaxSaveAmount : lifestealmax;
 					armorbonus->flags |= MF_DROPPED;
 					armorbonus->ClearCounters();
@@ -1771,7 +1768,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
 			}
 			else
 			{
-				P_GiveBody (self, (actualdamage * lifesteal) >> FRACBITS, lifestealmax);
+				P_GiveBody (self, int(actualdamage * lifesteal), lifestealmax);
 			}
 		}
 		if (weapon != NULL)
@@ -1809,17 +1806,17 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RailAttack)
 	PARAM_INT_OPT	(flags)				{ flags = 0; }
 	PARAM_FLOAT_OPT	(maxdiff)			{ maxdiff = 0; }
 	PARAM_CLASS_OPT	(pufftype, AActor)	{ pufftype = PClass::FindActor(NAME_BulletPuff); }
-	PARAM_ANGLE_OPT	(spread_xy)			{ spread_xy = 0; }
-	PARAM_ANGLE_OPT	(spread_z)			{ spread_z = 0; }
-	PARAM_FIXED_OPT	(range)				{ range = 0; }
+	PARAM_DANGLE_OPT(spread_xy)			{ spread_xy = 0.; }
+	PARAM_DANGLE_OPT(spread_z)			{ spread_z = 0.; }
+	PARAM_FLOAT_OPT	(range)				{ range = 0; }
 	PARAM_INT_OPT	(duration)			{ duration = 0; }
 	PARAM_FLOAT_OPT	(sparsity)			{ sparsity = 1; }
 	PARAM_FLOAT_OPT	(driftspeed)		{ driftspeed = 1; }
 	PARAM_CLASS_OPT	(spawnclass, AActor){ spawnclass = NULL; }
-	PARAM_FIXED_OPT	(spawnofs_z)		{ spawnofs_z = 0; }
+	PARAM_FLOAT_OPT	(spawnofs_z)		{ spawnofs_z = 0; }
 	PARAM_INT_OPT	(SpiralOffset)		{ SpiralOffset = 270; }
 	
-	if (range == 0) range = 8192*FRACUNIT;
+	if (range == 0) range = 8192;
 	if (sparsity == 0) sparsity=1.0;
 
 	if (self->player == NULL)
@@ -1834,21 +1831,31 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RailAttack)
 			return 0;	// out of ammo
 	}
 
-	angle_t angle;
-	angle_t slope;
-
-	if (flags & RAF_EXPLICITANGLE)
+	if (!(flags & RAF_EXPLICITANGLE))
 	{
-		angle = spread_xy;
-		slope = spread_z;
-	}
-	else
-	{
-		angle = pr_crailgun.Random2() * (spread_xy / 255);
-		slope = pr_crailgun.Random2() * (spread_z / 255);
+		spread_xy = spread_xy * pr_crailgun.Random2() / 255;
+		spread_z = spread_z * pr_crailgun.Random2() / 255;
 	}
 
-	P_RailAttack (self, damage, spawnofs_xy, spawnofs_z, color1, color2, maxdiff, flags, pufftype, angle, slope, range, duration, sparsity, driftspeed, spawnclass, SpiralOffset);
+	FRailParams p;
+	p.source = self;
+	p.damage = damage;
+	p.offset_xy = spawnofs_xy;
+	p.offset_z = spawnofs_z;
+	p.color1 = color1;
+	p.color2 = color2;
+	p.maxdiff = maxdiff;
+	p.flags = flags;
+	p.puff = pufftype;
+	p.angleoffset = spread_xy;
+	p.pitchoffset = spread_z;
+	p.distance = range;
+	p.duration = duration;
+	p.sparsity = sparsity;
+	p.drift = driftspeed;
+	p.spawnclass = spawnclass;
+	p.SpiralOffset = SpiralOffset;
+	P_RailAttack(&p);
 	return 0;
 }
 
@@ -1876,14 +1883,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 	PARAM_INT_OPT	(aim)				{ aim = CRF_DONTAIM; }
 	PARAM_FLOAT_OPT	(maxdiff)			{ maxdiff = 0; }
 	PARAM_CLASS_OPT	(pufftype, AActor)	{ pufftype = PClass::FindActor(NAME_BulletPuff); }
-	PARAM_ANGLE_OPT	(spread_xy)			{ spread_xy = 0; }
-	PARAM_ANGLE_OPT	(spread_z)			{ spread_z = 0; }
-	PARAM_FIXED_OPT	(range)				{ range = 0; }
+	PARAM_DANGLE_OPT(spread_xy)			{ spread_xy = 0.; }
+	PARAM_DANGLE_OPT(spread_z)			{ spread_z = 0.; }
+	PARAM_FLOAT_OPT	(range)				{ range = 0; }
 	PARAM_INT_OPT	(duration)			{ duration = 0; }
 	PARAM_FLOAT_OPT	(sparsity)			{ sparsity = 1; }
 	PARAM_FLOAT_OPT	(driftspeed)		{ driftspeed = 1; }
 	PARAM_CLASS_OPT	(spawnclass, AActor){ spawnclass = NULL; }
-	PARAM_FIXED_OPT	(spawnofs_z)		{ spawnofs_z = 0; }
+	PARAM_FLOAT_OPT	(spawnofs_z)		{ spawnofs_z = 0; }
 	PARAM_INT_OPT	(SpiralOffset)		{ SpiralOffset = 270; }
 
 	if (range == 0) range = 8192*FRACUNIT;
@@ -1930,8 +1937,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 			// Tricky: We must offset to the angle of the current position
 			// but then change the angle again to ensure proper aim.
 			self->SetXY(self->Vec2Offset(
-				FLOAT2FIXED(spawnofs_xy * self->Angles.Yaw.Cos()),
-				FLOAT2FIXED(spawnofs_xy * self->Angles.Yaw.Sin())));
+				spawnofs_xy * self->Angles.Yaw.Cos(),
+				spawnofs_xy * self->Angles.Yaw.Sin()));
 			spawnofs_xy = 0;
 			self->Angles.Yaw = self->AngleTo(self->target,- self->target->Vel.X * 3, -self->target->Vel.Y * 3);
 		}
@@ -1943,23 +1950,31 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 		}
 	}
 
-	angle_t angle = (self->_f_angle() - ANG90) >> ANGLETOFINESHIFT;
-
-	angle_t angleoffset;
-	angle_t slopeoffset;
-
-	if (flags & CRF_EXPLICITANGLE)
+	if (!(flags & CRF_EXPLICITANGLE))
 	{
-		angleoffset = spread_xy;
-		slopeoffset = spread_z;
-	}
-	else
-	{
-		angleoffset = pr_crailgun.Random2() * (spread_xy / 255);
-		slopeoffset = pr_crailgun.Random2() * (spread_z / 255);
+		spread_xy = spread_xy * pr_crailgun.Random2() / 255;
+		spread_z = spread_z * pr_crailgun.Random2() / 255;
 	}
 
-	P_RailAttack (self, damage, spawnofs_xy, spawnofs_z, color1, color2, maxdiff, flags, pufftype, angleoffset, slopeoffset, range, duration, sparsity, driftspeed, spawnclass,SpiralOffset);
+	FRailParams p;
+	p.source = self;
+	p.damage = damage;
+	p.offset_xy = spawnofs_xy;
+	p.offset_z = spawnofs_z;
+	p.color1 = color1;
+	p.color2 = color2;
+	p.maxdiff = maxdiff;
+	p.flags = flags;
+	p.puff = pufftype;
+	p.angleoffset = spread_xy;
+	p.pitchoffset = spread_z;
+	p.distance = range;
+	p.duration = duration;
+	p.sparsity = sparsity;
+	p.drift = driftspeed;
+	p.spawnclass = spawnclass;
+	p.SpiralOffset = SpiralOffset;
+	P_RailAttack(&p);
 
 	self->SetXYZ(savedpos);
 	self->Angles.Yaw = saved_angle;

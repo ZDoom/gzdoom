@@ -394,7 +394,28 @@ inline bool	P_HitWater(AActor *thing, sector_t *sec, const fixedvec3 &pos, bool 
 	return P_HitWater(thing, sec, fpos, checkabove, alert, force);
 }
 void	P_CheckSplash(AActor *self, double distance);
-void	P_RailAttack (AActor *source, int damage, int offset_xy, fixed_t offset_z = 0, int color1 = 0, int color2 = 0, double maxdiff = 0, int flags = 0, PClassActor *puff = NULL, angle_t angleoffset = 0, angle_t pitchoffset = 0, fixed_t distance = 8192*FRACUNIT, int duration = 0, double sparsity = 1.0, double drift = 1.0, PClassActor *spawnclass = NULL, int SpiralOffset = 270);	// [RH] Shoot a railgun
+
+struct FRailParams
+{
+	AActor *source = nullptr;
+	int damage = 0;
+	double offset_xy = 0;
+	double offset_z = 0;
+	int color1 = 0, color2 = 0;
+	double maxdiff = 0;
+	int flags = 0;
+	PClassActor *puff = nullptr;
+	DAngle angleoffset = 0.;
+	DAngle pitchoffset = 0.;
+	double distance = 8192;
+	int duration = 0;
+	double sparsity = 1.0;
+	double drift = 1.0;
+	PClassActor *spawnclass = nullptr;
+	int SpiralOffset = 270;
+};	// [RH] Shoot a railgun
+
+void P_RailAttack(FRailParams *params);
 
 enum	// P_RailAttack / A_RailAttack / A_CustomRailgun / P_DrawRailTrail flags
 {	

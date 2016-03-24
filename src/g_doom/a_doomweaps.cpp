@@ -564,7 +564,11 @@ static void FireRailgun(AActor *self, int offset_xy, bool fromweapon)
 
 	damage = deathmatch ? 100 : 150;
 
-	P_RailAttack (self, damage, offset_xy);
+	FRailParams p;
+	p.source = self;
+	p.damage = damage;
+	p.offset_xy = offset_xy;
+	P_RailAttack (&p);
 }
 
 

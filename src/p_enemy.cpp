@@ -3009,7 +3009,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
 		self->Angles.Yaw += pr_railface.Random2() * 45./256;
 	}
 
-	P_RailAttack (self, self->GetMissileDamage (0, 1), 0);
+	FRailParams p;
+
+	p.source = self;
+	p.damage = self->GetMissileDamage(0, 1);
+	P_RailAttack (&p);
 	self->Angles.Pitch = saved_pitch;
 	return 0;
 }

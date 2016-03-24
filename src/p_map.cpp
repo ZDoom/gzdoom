@@ -4681,51 +4681,45 @@ static ETraceStatus ProcessRailHit(FTraceResults &res, void *userdata)
 //
 //
 //==========================================================================
-void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, int color1, int color2, double maxdiff, int railflags, PClassActor *puffclass, angle_t angleoffset, angle_t pitchoffset, fixed_t distance, int duration, double sparsity, double drift, PClassActor *spawnclass, int SpiralOffset)
+void P_RailAttack(FRailParams *p)
 {
-	fixed_t vx, vy, vz;
-	angle_t angle, pitch;
-	DVector3 start, end;
+	DVector3 start;
 	FTraceResults trace;
-	fixed_t shootz;
 
+	PClassActor *puffclass = p->puff;
 	if (puffclass == NULL)
 	{
 		puffclass = PClass::FindActor(NAME_BulletPuff);
 	}
 
-	pitch = ((angle_t)(-source->_f_pitch()) + pitchoffset) >> ANGLETOFINESHIFT;
-	angle = (source->_f_angle() + angleoffset) >> ANGLETOFINESHIFT;
+	AActor *source = p->source;
+	DAngle pitch = -source->Angles.Pitch + p->pitchoffset;
+	DAngle angle = source->Angles.Yaw + p->angleoffset;
 
-	vx = FixedMul(finecosine[pitch], finecosine[angle]);
-	vy = FixedMul(finecosine[pitch], finesine[angle]);
-	vz = finesine[pitch];
+	DVector3 vec(DRotator(pitch, angle, angle));
+	double shootz = source->Center() - source->FloatSpeed + p->offset_z;
 
-	shootz = source->_f_Z() - source->_f_floorclip() + (source->_f_height() >> 1) + offset_z;
-
-	if (!(railflags & RAF_CENTERZ))
+	if (!(p->flags & RAF_CENTERZ))
 	{
 		if (source->player != NULL)
 		{
-			shootz += FLOAT2FIXED(source->player->mo->AttackZOffset * source->player->crouchfactor);
+			shootz += source->player->mo->AttackZOffset * source->player->crouchfactor;
 		}
 		else
 		{
-			shootz += 8 * FRACUNIT;
+			shootz += 8;
 		}
 	}
 
-	angle = ((source->_f_angle() + angleoffset) - ANG90) >> ANGLETOFINESHIFT;
-
-	fixedvec2 xy = source->Vec2Offset(offset_xy * finecosine[angle], offset_xy * finesine[angle]);
+	DVector2 xy = source->Vec2Angle(p->offset_xy, angle - 90.);
 
 	RailData rail_data;
 	rail_data.Caller = source;
 	
-	rail_data.StopAtOne = !!(railflags & RAF_NOPIERCE);
-	start.X = FIXED2DBL(xy.x);
-	start.Y = FIXED2DBL(xy.y);
-	start.Z = FIXED2DBL(shootz);
+	rail_data.StopAtOne = !!(p->flags & RAF_NOPIERCE);
+	start.X = xy.X;
+	start.Y = xy.Y;
+	start.Z = shootz;
 
 	int flags;
 
@@ -4735,9 +4729,7 @@ void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, i
 	flags = (puffDefaults->flags6 & MF6_NOTRIGGER) ? 0 : TRACE_PCross | TRACE_Impact;
 	rail_data.StopAtInvul = (puffDefaults->flags3 & MF3_FOILINVUL) ? false : true;
 	rail_data.ThruSpecies = (puffDefaults->flags6 & MF6_MTHRUSPECIES) ? true : false;
-	Trace(xy.x, xy.y, shootz, source->Sector, vx, vy, vz,
-		distance, MF_SHOOTABLE, ML_BLOCKEVERYTHING, source, trace,
-		flags, ProcessRailHit, &rail_data);
+	Trace(start, source->Sector, vec, p->distance, MF_SHOOTABLE, ML_BLOCKEVERYTHING, source, trace,	flags, ProcessRailHit, &rail_data);
 
 	// Hurt anything the trace hit
 	unsigned int i;
@@ -4750,8 +4742,6 @@ void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, i
 
 	for (i = 0; i < rail_data.RailHits.Size(); i++)
 	{
-		
-
 		bool spawnpuff;
 		bool bleed = false;
 
@@ -4789,12 +4779,12 @@ void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, i
 			if (puffDefaults->flags3 & MF3_FOILINVUL) dmgFlagPass |= DMG_FOILINVUL;
 			if (puffDefaults->flags7 & MF7_FOILBUDDHA) dmgFlagPass |= DMG_FOILBUDDHA;
 		}
-		int newdam = P_DamageMobj(hitactor, thepuff ? thepuff : source, source, damage, damagetype, dmgFlagPass|DMG_USEANGLE, hitangle);
+		int newdam = P_DamageMobj(hitactor, thepuff ? thepuff : source, source, p->damage, damagetype, dmgFlagPass|DMG_USEANGLE, hitangle);
 
 		if (bleed)
 		{
-			P_SpawnBlood(hitpos, hitangle, newdam > 0 ? newdam : damage, hitactor);
-			P_TraceBleed(newdam > 0 ? newdam : damage, hitpos, hitactor, hitangle, ANGLE2DBL(pitch));
+			P_SpawnBlood(hitpos, hitangle, newdam > 0 ? newdam : p->damage, hitactor);
+			P_TraceBleed(newdam > 0 ? newdam : p->damage, hitpos, hitactor, hitangle, ANGLE2DBL(pitch));
 		}
 	}
 
@@ -4843,8 +4833,7 @@ void P_RailAttack(AActor *source, int damage, int offset_xy, fixed_t offset_z, i
 	}
 
 	// Draw the slug's trail.
-	end = trace.HitPos;
-	P_DrawRailTrail(source, start, end, color1, color2, maxdiff, railflags, spawnclass, source->_f_angle() + angleoffset, duration, sparsity, drift, SpiralOffset);
+	P_DrawRailTrail(source, start, trace.HitPos, p->color1, p->color2, p->maxdiff, p->flags, p->spawnclass, angle.BAMs(), p->duration, p->sparsity, p->drift, p->SpiralOffset);
 }
 
 //==========================================================================

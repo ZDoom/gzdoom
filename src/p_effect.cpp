@@ -313,7 +313,7 @@ void P_ThinkParticles ()
 	}
 }
 
-void P_SpawnParticle(fixed_t x, fixed_t y, fixed_t z, fixed_t vx, fixed_t vy, fixed_t vz, PalEntry color, bool fullbright, BYTE startalpha, BYTE lifetime, WORD size, int fadestep, fixed_t accelx, fixed_t accely, fixed_t accelz)
+void P_SpawnParticle(fixed_t x, fixed_t y, fixed_t z, fixed_t vx, fixed_t vy, fixed_t vz, PalEntry color, bool fullbright, BYTE startalpha, BYTE lifetime, int size, int fadestep, fixed_t accelx, fixed_t accely, fixed_t accelz)
 {
 	particle_t *particle = NewParticle();
 
@@ -334,7 +334,7 @@ void P_SpawnParticle(fixed_t x, fixed_t y, fixed_t z, fixed_t vx, fixed_t vy, fi
 		particle->accy = accely;
 		particle->accz = accelz;
 		particle->bright = fullbright;
-		particle->size = size;
+		particle->size = (WORD)size;
 	}
 }
 

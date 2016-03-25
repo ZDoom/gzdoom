@@ -1165,23 +1165,23 @@ void P_RandomChaseDir (AActor *actor)
 
 bool P_IsVisible(AActor *lookee, AActor *other, INTBOOL allaround, FLookExParams *params)
 {
-	fixed_t maxdist;
-	fixed_t mindist;
-	angle_t fov;
+	double maxdist;
+	double mindist;
+	DAngle fov;
 
 	if (params != NULL)
 	{
-		maxdist = params->maxdist;
-		mindist = params->mindist;
-		fov = params->fov;
+		maxdist = params->maxDist;
+		mindist = params->minDist;
+		fov = params->Fov;
 	}
 	else
 	{
 		mindist = maxdist = 0;
-		fov = allaround ? 0 : ANGLE_180;
+		fov = allaround ? 0. : 180.;
 	}
 
-	fixed_t dist = lookee->AproxDistance (other);
+	double dist = lookee->Distance2D (other);
 
 	if (maxdist && dist > maxdist)
 		return false;			// [KS] too far
@@ -1189,15 +1189,15 @@ bool P_IsVisible(AActor *lookee, AActor *other, INTBOOL allaround, FLookExParams
 	if (mindist && dist < mindist)
 		return false;			// [KS] too close
 
-	if (fov && fov < ANGLE_MAX)
+	if (fov != 0)
 	{
-		angle_t an = lookee->__f_AngleTo(other) - lookee->_f_angle();
+		DAngle an = absangle(lookee->AngleTo(other), lookee->Angles.Yaw);
 
-		if (an > (fov / 2) && an < (ANGLE_MAX - (fov / 2)))
+		if (an > (fov / 2))
 		{
 			// if real close, react anyway
 			// [KS] but respect minimum distance rules
-			if (mindist || dist > FLOAT2FIXED(lookee->meleerange + lookee->radius))
+			if (mindist || dist > lookee->meleerange + lookee->radius)
 				return false;	// outside of fov
 		}
 	}
@@ -1887,15 +1887,15 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_LookEx)
 {
 	PARAM_ACTION_PROLOGUE;
 	PARAM_INT_OPT	(flags)			{ flags = 0; }
-	PARAM_FIXED_OPT	(minseedist)	{ minseedist = 0; }
-	PARAM_FIXED_OPT	(maxseedist)	{ maxseedist = 0; }
-	PARAM_FIXED_OPT (maxheardist)	{ maxheardist = 0; }
-	PARAM_FLOAT_OPT (fov_f)			{ fov_f = 0; }
+	PARAM_FLOAT_OPT	(minseedist)	{ minseedist = 0; }
+	PARAM_FLOAT_OPT	(maxseedist)	{ maxseedist = 0; }
+	PARAM_FLOAT_OPT (maxheardist)	{ maxheardist = 0; }
+	PARAM_DANGLE_OPT (fov)			{ fov = 0.; }
 	PARAM_STATE_OPT	(seestate)		{ seestate = NULL; }
 
 	AActor *targ = NULL; // Shuts up gcc
 	fixed_t dist;
-	angle_t fov = (fov_f == 0) ? ANGLE_180 : FLOAT2ANGLE(fov_f);
+	if (fov == 0) fov = 180.;
 	FLookExParams params = { fov, minseedist, maxseedist, maxheardist, flags, seestate };
 
 	if (self->flags5 & MF5_INCONVERSATION)
@@ -2817,7 +2817,7 @@ enum FAF_Flags
 	FAF_TOP = 4,
 	FAF_NODISTFACTOR = 8,	// deprecated
 };
-void A_Face (AActor *self, AActor *other, angle_t _max_turn, angle_t _max_pitch, angle_t _ang_offset, angle_t _pitch_offset, int flags, fixed_t z_add)
+void A_Face(AActor *self, AActor *other, DAngle max_turn, DAngle max_pitch, DAngle ang_offset, DAngle pitch_offset, int flags, double z_add)
 {
 	if (!other)
 		return;
@@ -2830,12 +2830,7 @@ void A_Face (AActor *self, AActor *other, angle_t _max_turn, angle_t _max_pitch,
 
 	self->flags &= ~MF_AMBUSH;
 
-	DAngle max_turn = ANGLE2DBL(_max_turn);
-	DAngle ang_offset = ANGLE2DBL(_ang_offset);
-	DAngle max_pitch = ANGLE2DBL(_max_pitch);
-	DAngle pitch_offset = ANGLE2DBL(_pitch_offset);
 	DAngle other_angle = self->AngleTo(other);
-
 	DAngle delta = deltaangle(self->Angles.Yaw, other_angle);
 
 	// 0 means no limit. Also, if we turn in a single step anyways, no need to go through the algorithms.
@@ -2882,7 +2877,7 @@ void A_Face (AActor *self, AActor *other, angle_t _max_turn, angle_t _max_pitch,
 		if (flags & FAF_TOP)
 			target_z = other->Top() + other->GetBobOffset();
 
-		target_z += FIXED2FLOAT(z_add);
+		target_z += z_add;
 
 		double dist_z = target_z - source_z;
 		double ddist = g_sqrt(dist.X*dist.X + dist.Y*dist.Y + dist_z*dist_z);
@@ -2926,12 +2921,12 @@ void A_FaceTarget(AActor *self)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceTarget)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_ANGLE_OPT(max_turn)		{ max_turn = 0; }
-	PARAM_ANGLE_OPT(max_pitch)		{ max_pitch = 270; }
-	PARAM_ANGLE_OPT(ang_offset)		{ ang_offset = 0; }
-	PARAM_ANGLE_OPT(pitch_offset)	{ pitch_offset = 0; }
+	PARAM_DANGLE_OPT(max_turn)		{ max_turn = 0.; }
+	PARAM_DANGLE_OPT(max_pitch)		{ max_pitch = 270.; }
+	PARAM_DANGLE_OPT(ang_offset)	{ ang_offset = 0.; }
+	PARAM_DANGLE_OPT(pitch_offset)	{ pitch_offset = 0.; }
 	PARAM_INT_OPT(flags)			{ flags = 0; }
-	PARAM_FIXED_OPT(z_add)			{ z_add = 0; }
+	PARAM_FLOAT_OPT(z_add)			{ z_add = 0; }
 
 	A_Face(self, self->target, max_turn, max_pitch, ang_offset, pitch_offset, flags, z_add);
 	return 0;
@@ -2940,12 +2935,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceTarget)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceMaster)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_ANGLE_OPT(max_turn)		{ max_turn = 0; }
-	PARAM_ANGLE_OPT(max_pitch)		{ max_pitch = 270; }
-	PARAM_ANGLE_OPT(ang_offset)		{ ang_offset = 0; }
-	PARAM_ANGLE_OPT(pitch_offset)	{ pitch_offset = 0; }
-	PARAM_INT_OPT(flags)			{ flags = 0; }
-	PARAM_FIXED_OPT(z_add)			{ z_add = 0; }
+	PARAM_DANGLE_OPT(max_turn) { max_turn = 0.; }
+	PARAM_DANGLE_OPT(max_pitch) { max_pitch = 270.; }
+	PARAM_DANGLE_OPT(ang_offset) { ang_offset = 0.; }
+	PARAM_DANGLE_OPT(pitch_offset) { pitch_offset = 0.; }
+	PARAM_INT_OPT(flags) { flags = 0; }
+	PARAM_FLOAT_OPT(z_add) { z_add = 0; }
 
 	A_Face(self, self->master, max_turn, max_pitch, ang_offset, pitch_offset, flags, z_add);
 	return 0;
@@ -2954,12 +2949,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceMaster)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceTracer)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_ANGLE_OPT(max_turn)		{ max_turn = 0; }
-	PARAM_ANGLE_OPT(max_pitch)		{ max_pitch = 270; }
-	PARAM_ANGLE_OPT(ang_offset)		{ ang_offset = 0; }
-	PARAM_ANGLE_OPT(pitch_offset)	{ pitch_offset = 0; }
-	PARAM_INT_OPT(flags)			{ flags = 0; }
-	PARAM_FIXED_OPT(z_add)			{ z_add = 0; }
+	PARAM_DANGLE_OPT(max_turn) { max_turn = 0.; }
+	PARAM_DANGLE_OPT(max_pitch) { max_pitch = 270.; }
+	PARAM_DANGLE_OPT(ang_offset) { ang_offset = 0.; }
+	PARAM_DANGLE_OPT(pitch_offset) { pitch_offset = 0.; }
+	PARAM_INT_OPT(flags) { flags = 0; }
+	PARAM_FLOAT_OPT(z_add) { z_add = 0; }
 
 	A_Face(self, self->tracer, max_turn, max_pitch, ang_offset, pitch_offset, flags, z_add);
 	return 0;

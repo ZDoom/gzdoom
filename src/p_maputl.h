@@ -356,6 +356,10 @@ public:
 
 	FMultiBlockThingsIterator(FPortalGroupArray &check, AActor *origin, fixed_t checkradius = -1, bool ignorerestricted = false);
 	FMultiBlockThingsIterator(FPortalGroupArray &check, fixed_t checkx, fixed_t checky, fixed_t checkz, fixed_t checkh, fixed_t checkradius, bool ignorerestricted, sector_t *newsec);
+	FMultiBlockThingsIterator(FPortalGroupArray &check, double checkx, double checky, double checkz, double checkh, double checkradius, bool ignorerestricted, sector_t *newsec)
+		: FMultiBlockThingsIterator(check, FLOAT2FIXED(checkx), FLOAT2FIXED(checky), FLOAT2FIXED(checkz), FLOAT2FIXED(checkh), FLOAT2FIXED(checkradius), ignorerestricted, newsec)
+	{
+	}
 	bool Next(CheckResult *item);
 	void Reset();
 	const FBoundingBox &Box() const

@@ -83,7 +83,12 @@ particle_t *JitterParticle (int ttl);
 particle_t *JitterParticle (int ttl, double drift);
 
 void P_ThinkParticles (void);
-void P_SpawnParticle(fixed_t x, fixed_t y, fixed_t z, fixed_t vx, fixed_t vy, fixed_t vz, PalEntry color, bool fullbright, BYTE startalpha, BYTE lifetime, WORD size, int fadestep, fixed_t accelx, fixed_t accely, fixed_t accelz);
+void P_SpawnParticle(fixed_t x, fixed_t y, fixed_t z, fixed_t vx, fixed_t vy, fixed_t vz, PalEntry color, bool fullbright, BYTE startalpha, BYTE lifetime, int size, int fadestep, fixed_t accelx, fixed_t accely, fixed_t accelz);
+inline void P_SpawnParticle(const DVector3 &pos, const DVector3 &vel, const DVector3 &accel, PalEntry color, bool fullbright, double startalpha, int lifetime, WORD size, double fadestep)
+{
+	P_SpawnParticle(FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), FLOAT2FIXED(pos.Z), FLOAT2FIXED(vel.X), FLOAT2FIXED(vel.Y), FLOAT2FIXED(vel.Z),
+		color, fullbright, BYTE(startalpha * 255), BYTE(lifetime), WORD(size), fadestep < 0 ? -1 : int(fadestep * 255), FLOAT2FIXED(accel.X), FLOAT2FIXED(accel.Y), FLOAT2FIXED(accel.Z));
+}
 void P_InitEffects (void);
 void P_RunEffects (void);
 

@@ -5990,7 +5990,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			if (activator == NULL || !reference)
 				return false;
 
-			if (P_Thing_Warp(activator, reference, xofs, yofs, zofs, angle, flags, heightoffset, radiusoffset, pitch))
+			if (P_Thing_Warp(activator, reference, ACSToDouble(xofs), ACSToDouble(yofs), ACSToDouble(zofs), ACSToAngle(angle), flags, ACSToDouble(heightoffset), ACSToDouble(radiusoffset), ACSToAngle(pitch)))
 			{
 				if (state && argCount > 6)
 				{

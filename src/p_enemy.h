@@ -38,10 +38,10 @@ enum LO_Flags
 
 struct FLookExParams
 {
-	angle_t fov;
-	fixed_t mindist;
-	fixed_t maxdist;
-	fixed_t maxheardist;
+	DAngle Fov;
+	double minDist;
+	double maxDist;
+	double maxHeardist;
 	int flags;
 	FState *seestate;
 };
@@ -78,7 +78,7 @@ void A_BossDeath(AActor *self);
 void A_Wander(AActor *self, int flags = 0);
 void A_Chase(VMFrameStack *stack, AActor *self);
 void A_FaceTarget(AActor *actor);
-void A_Face(AActor *self, AActor *other, angle_t max_turn = 0, angle_t max_pitch = ANGLE_270, angle_t ang_offset = 0, angle_t pitch_offset = 0, int flags = 0, fixed_t z_add = 0);
+void A_Face(AActor *self, AActor *other, DAngle max_turn = 0., DAngle max_pitch = 270., DAngle ang_offset = 0., DAngle pitch_offset = 0., int flags = 0, double z_add = 0);
 
 bool A_RaiseMobj (AActor *, double speed);
 bool A_SinkMobj (AActor *, double speed);

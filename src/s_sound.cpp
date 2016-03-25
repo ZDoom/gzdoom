@@ -173,9 +173,7 @@ void S_NoiseDebug (void)
 	}
 
 
-	listener.X = FIXED2FLOAT(players[consoleplayer].camera->SoundX());
-	listener.Y = FIXED2FLOAT(players[consoleplayer].camera->SoundZ());
-	listener.Z = FIXED2FLOAT(players[consoleplayer].camera->SoundY());
+	listener = players[consoleplayer].camera->SoundPos();
 
 	// Display the oldest channel first.
 	for (chan = Channels; chan->NextChan != NULL; chan = chan->NextChan)
@@ -664,9 +662,10 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 
 		if (players[consoleplayer].camera != NULL)
 		{
-			x = players[consoleplayer].camera->SoundX();
-			y = players[consoleplayer].camera->SoundZ();
-			z = players[consoleplayer].camera->SoundY();
+			FVector3 v = players[consoleplayer].camera->SoundPos();
+			x = FLOAT2FIXED(v.X);
+			y = FLOAT2FIXED(v.Y);
+			z = FLOAT2FIXED(v.Z);
 		}
 		else
 		{
@@ -693,9 +692,10 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 				//assert(actor != NULL);
 				if (actor != NULL)
 				{
-					x = actor->SoundX();
-					y = actor->SoundZ();
-					z = actor->SoundY();
+					FVector3 v = actor->SoundPos();
+					x = FLOAT2FIXED(v.X);
+					y = FLOAT2FIXED(v.Y);
+					z = FLOAT2FIXED(v.Z);
 				}
 				break;
 
@@ -764,8 +764,9 @@ static void CalcSectorSoundOrg(const sector_t *sec, int channum, fixed_t *x, fix
 		// Are we inside the sector? If yes, the closest point is the one we're on.
 		if (P_PointInSector(*x, *y) == sec)
 		{
-			*x = players[consoleplayer].camera->SoundX();
-			*y = players[consoleplayer].camera->SoundY();
+			FVector3 p = players[consoleplayer].camera->SoundPos();
+			*x = FLOAT2FIXED(p.X);
+			*y = FLOAT2FIXED(p.Y);
 		}
 		else
 		{
@@ -1568,9 +1569,10 @@ void S_RelinkSound (AActor *from, AActor *to)
 			{
 				chan->Actor = NULL;
 				chan->SourceType = SOURCE_Unattached;
-				chan->Point[0] = FIXED2FLOAT(from->SoundX());
-				chan->Point[1] = FIXED2FLOAT(from->SoundZ());
-				chan->Point[2] = FIXED2FLOAT(from->SoundY());
+				FVector3 p = from->SoundPos();
+				chan->Point[0] = p.X;
+				chan->Point[1] = p.Y;
+				chan->Point[2] = p.Z;
 			}
 			else
 			{
@@ -1950,16 +1952,14 @@ static void S_SetListener(SoundListener &listener, AActor *listenactor)
 {
 	if (listenactor != NULL)
 	{
-		listener.angle = ANGLE2RADF(listenactor->_f_angle());
+		listener.angle = ToRadians(listenactor->Angles.Yaw);
 		/*
 		listener.velocity.X = listenactor->vel.x * (TICRATE/65536.f);
 		listener.velocity.Y = listenactor->vel.z * (TICRATE/65536.f);
 		listener.velocity.Z = listenactor->vel.y * (TICRATE/65536.f);
 		*/
 		listener.velocity.Zero();
-		listener.position.X = FIXED2FLOAT(listenactor->SoundX());
-		listener.position.Y = FIXED2FLOAT(listenactor->SoundZ());
-		listener.position.Z = FIXED2FLOAT(listenactor->SoundY());
+		listener.position = listenactor->SoundPos();
 		listener.underwater = listenactor->waterlevel == 3;
 		assert(zones != NULL);
 		listener.Environment = zones[listenactor->Sector->ZoneNumber].Environment;

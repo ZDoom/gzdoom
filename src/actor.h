@@ -1415,17 +1415,10 @@ public:
 	DVector3 PosRelative(sector_t *sec) const;
 	DVector3 PosRelative(line_t *line) const;
 
-	fixed_t SoundX() const
+	FVector3 SoundPos() const
 	{
-		return _f_X();
-	}
-	fixed_t SoundY() const
-	{
-		return _f_Y();
-	}
-	fixed_t SoundZ() const
-	{
-		return _f_Z();
+		// fixme: This still needs portal handling
+		return{ float(X()), float(Y()), float(Z()) };
 	}
 	DVector3 InterpolatedPosition(double ticFrac) const
 	{

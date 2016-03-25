@@ -57,6 +57,16 @@ inline int P_PointOnLineSidePrecise (fixed_t x, fixed_t y, const line_t *line)
 	return DMulScale32 (y-line->v1->y, line->dx, line->v1->x-x, line->dy) > 0;
 }
 
+inline int P_PointOnLineSide(double x, double y, const line_t *line)
+{
+	return P_PointOnLineSide(FLOAT2FIXED(x), FLOAT2FIXED(y), line);
+}
+
+inline int P_PointOnLineSide(const DVector2 & p, const line_t *line)
+{
+	return P_PointOnLineSide(FLOAT2FIXED(p.X), FLOAT2FIXED(p.Y), line);
+}
+
 inline int P_PointOnLineSidePrecise(double x, double y, const line_t *line)
 {
 	return DMulScale32(FLOAT2FIXED(y) - line->v1->y, line->dx, line->v1->x - FLOAT2FIXED(x), line->dy) > 0;
@@ -67,10 +77,6 @@ inline int P_PointOnLineSidePrecise(const DVector2 &pt, const line_t *line)
 	return DMulScale32(FLOAT2FIXED(pt.Y) - line->v1->y, line->dx, line->v1->x - FLOAT2FIXED(pt.X), line->dy) > 0;
 }
 
-inline int P_PointOnLineSidePrecise(const DVector3 &pt, const line_t *line)
-{
-	return DMulScale32(FLOAT2FIXED(pt.Y) - line->v1->y, line->dx, line->v1->x - FLOAT2FIXED(pt.X), line->dy) > 0;
-}
 
 //==========================================================================
 //
@@ -117,10 +123,10 @@ inline void P_MakeDivline (const line_t *li, fdivline_t *dl)
 
 struct FLineOpening
 {
-	fixed_t			top;
-	fixed_t			bottom;
-	fixed_t			range;
-	fixed_t			lowfloor;
+	double			top;
+	double			bottom;
+	double			range;
+	double			lowfloor;
 	sector_t		*bottomsec;
 	sector_t		*topsec;
 	FTextureID		ceilingpic;
@@ -132,11 +138,20 @@ struct FLineOpening
 	bool			abovemidtex;
 };
 
-void	P_LineOpening (FLineOpening &open, AActor *thing, const line_t *linedef, fixed_t x, fixed_t y, fixed_t refx=FIXED_MIN, fixed_t refy=0, int flags=0);
+static const double LINEOPEN_MIN = -FLT_MAX;
+static const double LINEOPEN_MAX = FLT_MAX;
+
+void P_LineOpening(FLineOpening &open, AActor *thing, const line_t *linedef, const DVector2 &xy, const DVector2 *ref = NULL, int flags = 0);
+
+inline void P_LineOpening(FLineOpening &open, AActor *thing, const line_t *linedef, fixed_t x, fixed_t y, fixed_t refx = FIXED_MIN, fixed_t refy = 0, int flags = 0)
+{
+	P_LineOpening(open, thing, linedef, DVector2(FIXED2DBL(x), FIXED2DBL(y)), &DVector2(FIXED2DBL(refx), FIXED2DBL(refy)), flags);
+}
 inline void	P_LineOpening(FLineOpening &open, AActor *thing, const line_t *linedef, fixedvec2 xy, fixed_t refx = FIXED_MIN, fixed_t refy = 0, int flags = 0)
 {
 	P_LineOpening(open, thing, linedef, xy.x, xy.y, refx, refy, flags);
 }
+void P_LineOpening(FLineOpening &open, AActor *thing, const line_t *linedef, const DVector2 &xy, fixed_t refx = FIXED_MIN, const DVector2 *ref = NULL, int flags = 0);
 
 class FBoundingBox;
 struct polyblock_t;

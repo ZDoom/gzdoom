@@ -68,7 +68,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SentinelAttack)
 				P_CheckMissileSpawn (trail, self->radius);
 			}
 		}
-		missile->_f_AddZ(missile->_f_velz() >> 2);
+		missile->AddZ(missile->Vel.Z / 4);
 	}
 	return 0;
 }

@@ -36,6 +36,7 @@
 
 
 #include "templates.h"
+#include "p_3dmidtex.h"
 #include "p_local.h"
 #include "p_terrain.h"
 #include "p_maputl.h"
@@ -256,6 +257,19 @@ bool P_GetMidTexturePosition(const line_t *line, int sideno, fixed_t *ptextop, f
 }
 
 
+bool P_GetMidTexturePosition(const line_t *line, int sideno, double *ptextop, double *ptexbot)
+{
+	fixed_t t, b;
+	if (P_GetMidTexturePosition(line, sideno, &t, &b))
+	{
+		*ptextop = FIXED2DBL(t);
+		*ptexbot = FIXED2DBL(b);
+		return true;
+	}
+	return false;
+}
+
+
 //============================================================================
 //
 // P_LineOpening_3dMidtex
@@ -273,12 +287,12 @@ bool P_LineOpening_3dMidtex(AActor *thing, const line_t *linedef, FLineOpening &
 		return false;
 	}
 
-	fixed_t tt, tb;
+	double tt, tb;
 
 	open.abovemidtex = false;
 	if (P_GetMidTexturePosition(linedef, 0, &tt, &tb))
 	{
-		if (thing->_f_Z() + (thing->_f_height()/2) < (tt + tb)/2)
+		if (thing->Center() < (tt + tb)/2)
 		{
 			if (tb < open.top)
 			{
@@ -288,18 +302,18 @@ bool P_LineOpening_3dMidtex(AActor *thing, const line_t *linedef, FLineOpening &
 		}
 		else
 		{
-			if (tt > open.bottom && (!restrict || thing->_f_Z() >= tt))
+			if (tt > open.bottom && (!restrict || thing->Z() >= tt))
 			{
 				open.bottom = tt;
 				open.abovemidtex = true;
 				open.floorpic = linedef->sidedef[0]->GetTexture(side_t::mid);
 				open.floorterrain = TerrainTypes[open.floorpic];
-				open.frontfloorplane.SetAtHeight(tt, sector_t::floor);
-				open.backfloorplane.SetAtHeight(tt, sector_t::floor);
+				open.frontfloorplane.SetAtHeight(FLOAT2FIXED(tt), sector_t::floor);
+				open.backfloorplane.SetAtHeight(FLOAT2FIXED(tt), sector_t::floor);
 
 			}
 			// returns true if it touches the midtexture
-			return (abs(thing->_f_Z() - tt) <= thing->_f_MaxStepHeight());
+			return (fabs(thing->Z() - tt) <= thing->MaxStepHeight);
 		}
 	}
 	return false;

@@ -1106,8 +1106,6 @@ void R_DrawHeightPlanes(fixed_t height)
 
 void R_DrawSinglePlane (visplane_t *pl, fixed_t alpha, bool additive, bool masked)
 {
-//	pl->_f_angle() = pa<<ANGLETOFINESHIFT;
-
 	if (pl->left >= pl->right)
 		return;
 

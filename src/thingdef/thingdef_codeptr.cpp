@@ -3297,7 +3297,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Burst)
 	// with no relation to the size of the self shattering. I think it should
 	// base the number of shards on the size of the dead thing, so bigger
 	// things break up into more shards than smaller things.
-	// An self with _f_radius() 20 and height 64 creates ~40 chunks.
+	// An self with radius 20 and height 64 creates ~40 chunks.
 	numChunks = MAX<int> (4, int(self->radius * self->Height)/32);
 	i = (pr_burst.Random2()) % (numChunks/4);
 	for (i = MAX (24, numChunks + i); i >= 0; i--)
@@ -3713,7 +3713,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
 		if (!(flags & CLOFF_FROMBASE))
 		{ // default to hitscan origin
 
-			// Synced with hitscan: self->_f_height() is strangely NON-conscientious about getting the right actor for player
+			// Synced with hitscan: self->Height is strangely NON-conscientious about getting the right actor for player
 			pos.Z += self->Height *0.5;
 			if (self->player != NULL)
 			{

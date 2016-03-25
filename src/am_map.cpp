@@ -648,7 +648,7 @@ CUSTOM_CVAR (Int, am_cheat, 0, 0)
 
 #define AM_NUMMARKPOINTS 10
 
-// player _f_radius() for automap checking
+// player radius for automap checking
 #define PLAYERRADIUS	16*MAPUNIT
 
 // how much the automap moves window per tic in frame-buffer coordinates

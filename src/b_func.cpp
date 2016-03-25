@@ -458,7 +458,7 @@ void FCajunMaster::SetBodyAt (const DVector3 &pos, int hostnum)
 //
 //Returns NULL if shouldn't fire
 //else an angle (in degrees) are given
-//This function assumes actor->player->_f_angle()
+//This function assumes actor->player->angle
 //has been set an is the main aiming angle.
 
 

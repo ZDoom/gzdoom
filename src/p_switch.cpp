@@ -199,7 +199,7 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno, fixedvec3 *optpo
 			}
 		}
 
-		return (user->_f_Top() > open.top);
+		return (user->Top() > open.top);
 	}
 	else if ((TexMan.FindSwitch(side->GetTexture(side_t::bottom))) != NULL)
 	{
@@ -221,7 +221,7 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno, fixedvec3 *optpo
 			}
 		}
 
-		return (user->_f_Z() < open.bottom);
+		return (user->Z() < open.bottom);
 	}
 	else if ((flags & ML_3DMIDTEX) || (TexMan.FindSwitch(side->GetTexture(side_t::mid))) != NULL)
 	{
@@ -234,7 +234,7 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno, fixedvec3 *optpo
 	else
 	{
 		// no switch found. Check whether the player can touch either top or bottom texture
-		return (user->_f_Top() > open.top) || (user->_f_Z() < open.bottom);
+		return (user->Top() > open.top) || (user->Z() < open.bottom);
 	}
 }
 

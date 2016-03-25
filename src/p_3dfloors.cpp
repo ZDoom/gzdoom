@@ -753,23 +753,24 @@ lightlist_t * P_GetPlaneLight(sector_t * sector, secplane_t * plane, bool unders
 //==========================================================================
 
 void P_LineOpening_XFloors (FLineOpening &open, AActor * thing, const line_t *linedef, 
-							fixed_t x, fixed_t y, fixed_t refx, fixed_t refy, bool restrict)
+	double x, double y, bool restrict)
 {
     if(thing)
     {
-		fixed_t thingbot, thingtop;
+		double thingbot, thingtop;
 		
-		thingbot = thing->_f_Z();
-		thingtop = thingbot + (thing->_f_height()==0? 1:thing->_f_height());
+		thingbot = thing->Z();
+		thingtop = thing->Top();
+		
 
 		extsector_t::xfloor *xf[2] = {&linedef->frontsector->e->XFloor, &linedef->backsector->e->XFloor};
 
 		// Check for 3D-floors in the sector (mostly identical to what Legacy does here)
 		if(xf[0]->ffloors.Size() || xf[1]->ffloors.Size())
 		{
-			fixed_t    lowestceiling = open.top;
-			fixed_t    highestfloor = open.bottom;
-			fixed_t    lowestfloor[2] = {
+			double    lowestceiling = open.top;
+			double    highestfloor = open.bottom;
+			double    lowestfloor[2] = {
 				linedef->frontsector->floorplane.ZatPoint(x, y), 
 				linedef->backsector->floorplane.ZatPoint(x, y) };
 			FTextureID highestfloorpic;
@@ -790,20 +791,20 @@ void P_LineOpening_XFloors (FLineOpening &open, AActor * thing, const line_t *li
 					if (!(rover->flags & FF_EXISTS)) continue;
 					if (!(rover->flags & FF_SOLID)) continue;
 					
-					fixed_t ff_bottom=rover->bottom.plane->ZatPoint(x, y);
-					fixed_t ff_top=rover->top.plane->ZatPoint(x, y);
+					double ff_bottom=rover->bottom.plane->ZatPoint(x, y);
+					double ff_top=rover->top.plane->ZatPoint(x, y);
 					
-					fixed_t delta1 = abs(thingbot - ((ff_bottom + ff_top) / 2));
-					fixed_t delta2 = abs(thingtop - ((ff_bottom + ff_top) / 2));
+					double delta1 = fabs(thingbot - ((ff_bottom + ff_top) / 2));
+					double delta2 = fabs(thingtop - ((ff_bottom + ff_top) / 2));
 					
-					if(ff_bottom < lowestceiling && delta1 >= delta2) 
+					if(ff_bottom < lowestceiling && delta1 > delta2) 
 					{
 						lowestceiling = ff_bottom;
 						lowestceilingpic = *rover->bottom.texture;
 						lowestceilingsec = j == 0 ? linedef->frontsector : linedef->backsector;
 					}
 					
-					if(ff_top > highestfloor && delta1 < delta2 && (!restrict || thing->_f_Z() >= ff_top))
+					if(ff_top > highestfloor && delta1 < delta2 && (!restrict || thing->Z() >= ff_top))
 					{
 						highestfloor = ff_top;
 						highestfloorpic = *rover->top.texture;
@@ -811,7 +812,7 @@ void P_LineOpening_XFloors (FLineOpening &open, AActor * thing, const line_t *li
 						highestfloorsec = j == 0 ? linedef->frontsector : linedef->backsector;
 						highestfloorplanes[j] = rover->top.plane;
 					}
-					if(ff_top > lowestfloor[j] && ff_top <= thing->_f_Z() + thing->_f_MaxStepHeight()) lowestfloor[j] = ff_top;
+					if(ff_top > lowestfloor[j] && ff_top <= thing->Z() + thing->MaxStepHeight) lowestfloor[j] = ff_top;
 				}
 			}
 			

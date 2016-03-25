@@ -1191,8 +1191,8 @@ bool FPolyObj::CheckMobjBlocking (side_t *sd)
 					if ((mobj->flags&MF_SOLID) && !(mobj->flags&MF_NOCLIP))
 					{
 						FLineOpening open;
-						open.top = INT_MAX;
-						open.bottom = -INT_MAX;
+						open.top = LINEOPEN_MAX;
+						open.bottom = LINEOPEN_MIN;
 						// [TN] Check wether this actor gets blocked by the line.
 						if (ld->backsector != NULL &&
 							!(ld->flags & (ML_BLOCKING|ML_BLOCKEVERYTHING))
@@ -1201,7 +1201,7 @@ bool FPolyObj::CheckMobjBlocking (side_t *sd)
 							&& !((mobj->flags & MF_FLOAT) && (ld->flags & ML_BLOCK_FLOATERS))
 							&& (!(ld->flags & ML_3DMIDTEX) ||
 								(!P_LineOpening_3dMidtex(mobj, ld, open) &&
-									(mobj->_f_Top() < open.top)
+									(mobj->Top() < open.top)
 								) || (open.abovemidtex && mobj->Z() > mobj->floorz))
 							)
 						{
@@ -1233,7 +1233,7 @@ bool FPolyObj::CheckMobjBlocking (side_t *sd)
 						// Best use the one facing the player and ignore the back side.
 						if (ld->sidedef[1] != NULL)
 						{
-							int side = P_PointOnLineSidePrecise(mobj->_f_X(), mobj->_f_Y(), ld);
+							int side = P_PointOnLineSidePrecise(mobj->Pos(), ld);
 							if (ld->sidedef[side] != sd)
 							{
 								continue;

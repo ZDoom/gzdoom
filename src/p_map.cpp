@@ -242,36 +242,36 @@ static bool PIT_FindFloorCeiling(FMultiBlockLinesIterator &mit, FMultiBlockLines
 	// adjust floor / ceiling heights
 	if (!(flags & FFCF_NOCEILING))
 	{
-		if (open.top < tmf._f_ceilingz())
+		if (open.top < tmf.ceilingz)
 		{
 			tmf.ceilingz = open.top;
 			if (open.topsec != NULL) tmf.ceilingsector = open.topsec;
-			if (ffcf_verbose) Printf("    Adjust ceilingz to %f\n", FIXED2FLOAT(open.top));
+			if (ffcf_verbose) Printf("    Adjust ceilingz to %f\n", open.top);
 			mit.StopUp();
 		}
 	}
 
 	if (!(flags & FFCF_NOFLOOR))
 	{
-		if (open.bottom > tmf._f_floorz())
+		if (open.bottom > tmf.floorz)
 		{
-			tmf.floorz = FIXED2DBL(open.bottom);
+			tmf.floorz = open.bottom;
 			if (open.bottomsec != NULL) tmf.floorsector = open.bottomsec;
 			tmf.touchmidtex = open.touchmidtex;
 			tmf.abovemidtex = open.abovemidtex;
-			if (ffcf_verbose) Printf("    Adjust floorz to %f\n", FIXED2FLOAT(open.bottom));
+			if (ffcf_verbose) Printf("    Adjust floorz to %f\n", open.bottom);
 			if (tmf.floorz > tmf.dropoffz + tmf.thing->MaxDropOffHeight) mit.StopDown();
 		}
-		else if (open.bottom == tmf._f_floorz())
+		else if (open.bottom == tmf.floorz)
 		{
 			tmf.touchmidtex |= open.touchmidtex;
 			tmf.abovemidtex |= open.abovemidtex;
 		}
 
-		if (open.lowfloor < tmf._f_dropoffz() && open.lowfloor > FIXED_MIN)
+		if (open.lowfloor < tmf.dropoffz && open.lowfloor > LINEOPEN_MIN)
 		{
-			tmf.dropoffz = FIXED2DBL(open.lowfloor);
-			if (ffcf_verbose) Printf("    Adjust dropoffz to %f\n", FIXED2FLOAT(open.bottom));
+			tmf.dropoffz = open.lowfloor;
+			if (ffcf_verbose) Printf("    Adjust dropoffz to %f\n", open.bottom);
 			if (tmf.floorz > tmf.dropoffz + tmf.thing->MaxDropOffHeight) mit.StopDown();
 		}
 	}
@@ -915,9 +915,9 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 
 	// If the floor planes on both sides match we should recalculate open.bottom at the actual position we are checking
 	// This is to avoid bumpy movement when crossing a linedef with the same slope on both sides.
-	if (open.frontfloorplane == open.backfloorplane && open.bottom > FIXED_MIN)
+	if (open.frontfloorplane == open.backfloorplane && open.bottom > LINEOPEN_MIN)
 	{
-		open.bottom = open.frontfloorplane.ZatPoint(cres.position.x, cres.position.y);
+		open.bottom = open.frontfloorplane._f_ZatPointF(cres.position.x, cres.position.y);
 	}
 
 	if (rail &&
@@ -929,17 +929,17 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 		// from either side. How long until somebody reports this as a bug and I'm
 		// forced to say, "It's not a bug. It's a feature?" Ugh.
 		(!(level.flags2 & LEVEL2_RAILINGHACK) ||
-		open.bottom == tm.thing->Sector->floorplane.ZatPoint(ref.x, ref.y)))
+		open.bottom == tm.thing->Sector->floorplane._f_ZatPointF(ref.x, ref.y)))
 	{
-		open.bottom += 32 * FRACUNIT;
+		open.bottom += 32;
 	}
 
 	// adjust floor / ceiling heights
 	if (!(cres.portalflags & FFCF_NOCEILING))
 	{
-		if (open.top < tm._f_ceilingz())
+		if (open.top < tm.ceilingz)
 		{
-			tm.ceilingz = FIXED2DBL(open.top);
+			tm.ceilingz = open.top;
 			tm.ceilingsector = open.topsec;
 			tm.ceilingpic = open.ceilingpic;
 			tm.ceilingline = ld;
@@ -949,9 +949,9 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 
 	if (!(cres.portalflags & FFCF_NOFLOOR))
 	{
-		if (open.bottom > tm._f_floorz())
+		if (open.bottom > tm.floorz)
 		{
-			tm.floorz = FIXED2DBL(open.bottom);
+			tm.floorz = open.bottom;
 			tm.floorsector = open.bottomsec;
 			tm.floorpic = open.floorpic;
 			tm.floorterrain = open.floorterrain;
@@ -959,15 +959,15 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 			tm.abovemidtex = open.abovemidtex;
 			tm.thing->BlockingLine = ld;
 		}
-		else if (open.bottom == tm._f_floorz())
+		else if (open.bottom == tm.floorz)
 		{
 			tm.touchmidtex |= open.touchmidtex;
 			tm.abovemidtex |= open.abovemidtex;
 		}
 
-		if (open.lowfloor < tm._f_dropoffz())
+		if (open.lowfloor < tm.dropoffz)
 		{
-			tm.dropoffz = FIXED2FLOAT(open.lowfloor);
+			tm.dropoffz = open.lowfloor;
 		}
 	}
 
@@ -1022,15 +1022,16 @@ static bool PIT_CheckPortal(FMultiBlockLinesIterator &mit, FMultiBlockLinesItera
 		return false;
 
 	line_t *lp = cres.line->getPortalDestination();
-	fixed_t zofs = 0;
+	fixed_t _zofs = 0;
 
 	P_TranslatePortalXY(cres.line, cres.position.x, cres.position.y);
-	P_TranslatePortalZ(cres.line, zofs);
+	P_TranslatePortalZ(cres.line, _zofs);
+	double zofs = FIXED2DBL(_zofs);
 
 	// fudge a bit with the portal line so that this gets included in the checks that normally only get run on two-sided lines
 	sector_t *sec = lp->backsector;
 	if (lp->backsector == NULL) lp->backsector = lp->frontsector;
-	tm.thing->_f_AddZ(zofs);
+	tm.thing->AddZ(zofs);
 
 	FBoundingBox pbox(cres.position.x, cres.position.y, tm.thing->_f_radius());
 	FBlockLinesIterator it(pbox);
@@ -1058,9 +1059,9 @@ static bool PIT_CheckPortal(FMultiBlockLinesIterator &mit, FMultiBlockLinesItera
 		P_LineOpening(open, tm.thing, ld, ref.x, ref.y, cres.position.x, cres.position.y, 0);
 
 		// adjust floor / ceiling heights
-		if (open.top - zofs < tm._f_ceilingz())
+		if (open.top - zofs < tm.ceilingz)
 		{
-			tm.ceilingz = FIXED2FLOAT(open.top - zofs);
+			tm.ceilingz = open.top - zofs;
 			tm.ceilingpic = open.ceilingpic;
 			/*
 			tm.ceilingsector = open.topsec;
@@ -1070,9 +1071,9 @@ static bool PIT_CheckPortal(FMultiBlockLinesIterator &mit, FMultiBlockLinesItera
 			ret = true;
 		}
 
-		if (open.bottom - zofs > tm._f_floorz())
+		if (open.bottom - zofs > tm.floorz)
 		{
-			tm.floorz = FIXED2DBL(open.bottom - zofs);
+			tm.floorz = open.bottom - zofs;
 			tm.floorpic = open.floorpic;
 			tm.floorterrain = open.floorterrain;
 			/*
@@ -1084,10 +1085,10 @@ static bool PIT_CheckPortal(FMultiBlockLinesIterator &mit, FMultiBlockLinesItera
 			ret = true;
 		}
 
-		if (open.lowfloor - zofs < tm._f_dropoffz())
-			tm.dropoffz = FIXED2FLOAT(open.lowfloor - zofs);
+		if (open.lowfloor - zofs < tm.dropoffz)
+			tm.dropoffz = open.lowfloor - zofs;
 	}
-	tm.thing->_f_AddZ(-zofs);
+	tm.thing->AddZ(-zofs);
 	lp->backsector = sec;
 
 	return ret;
@@ -2829,22 +2830,22 @@ void FSlide::SlideTraverse(fixed_t startx, fixed_t starty, fixed_t endx, fixed_t
 		// set openrange, opentop, openbottom
 		P_LineOpening(open, slidemo, li, it.InterceptPoint(in));
 
-		if (open.range < slidemo->_f_height())
+		if (open.range < slidemo->Height)
 			goto isblocking;				// doesn't fit
 
-		if (open.top - slidemo->_f_Z() < slidemo->_f_height())
+		if (open.top < slidemo->Top())
 			goto isblocking;				// mobj is too high
 
-		if (open.bottom - slidemo->_f_Z() > slidemo->MaxStepHeight)
+		if (open.bottom - slidemo->Z() > slidemo->MaxStepHeight)
 		{
 			goto isblocking;				// too big a step up
 		}
-		else if (slidemo->_f_Z() < open.bottom)
+		else if (slidemo->Z() < open.bottom)
 		{ // [RH] Check to make sure there's nothing in the way for the step up
-			fixed_t savedz = slidemo->_f_Z();
-			slidemo->_f_SetZ(open.bottom);
+			double savedz = slidemo->Z();
+			slidemo->SetZ(open.bottom);
 			bool good = P_TestMobjZ(slidemo);
-			slidemo->_f_SetZ(savedz);
+			slidemo->SetZ(savedz);
 			if (!good)
 			{
 				goto isblocking;
@@ -3184,13 +3185,13 @@ bool FSlide::BounceTraverse(fixed_t startx, fixed_t starty, fixed_t endx, fixed_
 
 
 		P_LineOpening(open, slidemo, li, it.InterceptPoint(in));	// set openrange, opentop, openbottom
-		if (open.range < slidemo->_f_height())
+		if (open.range < slidemo->Height)
 			goto bounceblocking;				// doesn't fit
 
-		if (open.top - slidemo->_f_Z() < slidemo->_f_height())
+		if (open.top < slidemo->Top())
 			goto bounceblocking;				// mobj is too high
 
-		if (open.bottom > slidemo->_f_Z())
+		if (open.bottom > slidemo->Z())
 			goto bounceblocking;				// mobj is too low
 
 		continue;			// this line doesn't block movement
@@ -3809,20 +3810,20 @@ struct aim_t
 
 				// The following code assumes that portals on the front of the line have already been processed.
 
-				if (open.range <= 0 || open.bottom >= open.top) 
+				if (open.range <= 0 || open.bottom >= open.top)
 					return;
 					
 				dist = FixedMul(attackrange, in->frac);
 
-				if (open.bottom != FIXED_MIN)
+				if (open.bottom != LINEOPEN_MIN)
 				{
-					pitch = -(int)R_PointToAngle2(0, shootz, dist, open.bottom);
+					pitch = -(int)R_PointToAngle2(0, shootz, dist, FLOAT2FIXED(open.bottom));
 					if (pitch < bottompitch) bottompitch = pitch;
 				}
 
-				if (open.top != FIXED_MAX)
+				if (open.top != LINEOPEN_MAX)
 				{
-					pitch = -(int)R_PointToAngle2(0, shootz, dist, open.top);
+					pitch = -(int)R_PointToAngle2(0, shootz, dist, FLOAT2FIXED(open.top));
 					if (pitch > toppitch) toppitch = pitch;
 				}
 
@@ -3840,11 +3841,11 @@ struct aim_t
 				sector_t *exitsec = frontflag ? li->backsector : li->frontsector;
 				lastsector = entersec;
 				// check portal in backsector when aiming up/downward is possible, the line doesn't have portals on both sides and there's actually a portal in the backsector
-				if ((planestocheck & aim_up) && toppitch < 0 && open.top != FIXED_MAX && !entersec->PortalBlocksMovement(sector_t::ceiling))
+				if ((planestocheck & aim_up) && toppitch < 0 && open.top != LINEOPEN_MAX && !entersec->PortalBlocksMovement(sector_t::ceiling))
 				{
 					EnterSectorPortal(sector_t::ceiling, in->frac, entersec, toppitch, MIN(0, bottompitch));
 				}
-				if ((planestocheck & aim_down) && bottompitch > 0 && open.bottom != FIXED_MIN && !entersec->PortalBlocksMovement(sector_t::floor))
+				if ((planestocheck & aim_down) && bottompitch > 0 && open.bottom != LINEOPEN_MIN && !entersec->PortalBlocksMovement(sector_t::floor))
 				{
 					EnterSectorPortal(sector_t::floor, in->frac, entersec, MAX(0, toppitch), bottompitch);
 				}
@@ -5067,8 +5068,8 @@ bool P_NoWayTraverse(AActor *usething, fixed_t startx, fixed_t starty, fixed_t e
 		if (ld->flags&(ML_BLOCKING | ML_BLOCKEVERYTHING | ML_BLOCK_PLAYERS)) return true;
 		P_LineOpening(open, NULL, ld, it.InterceptPoint(in));
 		if (open.range <= 0 ||
-			open.bottom > usething->_f_Z() + usething->_f_MaxStepHeight() ||
-			open.top < usething->_f_Top()) return true;
+			open.bottom > usething->Z() + usething->MaxStepHeight ||
+			open.top < usething->Top()) return true;
 	}
 	return false;
 }
@@ -6345,7 +6346,7 @@ void P_CreateSecNodeList(AActor *thing, fixed_t x, fixed_t y)
 		sector_list = P_AddSecnode(ld->frontsector, thing, sector_list);
 
 		// Don't assume all lines are 2-sided, since some Things
-		// like MT_TFOG are allowed regardless of whether their _f_radius() takes
+		// like MT_TFOG are allowed regardless of whether their radius takes
 		// them beyond an impassable linedef.
 
 		// killough 3/27/98, 4/4/98:

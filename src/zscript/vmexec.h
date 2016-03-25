@@ -210,16 +210,6 @@ begin:
 			reg.f[a+2] = v[2];
 		}
 		NEXTOP;
-	OP(LX):
-		ASSERTF(a); ASSERTA(B); ASSERTKD(C);
-		GETADDR(PB,KC,X_READ_NIL);
-		reg.f[a] = *(VM_SWORD *)ptr / 65536.0;
-		NEXTOP;
-	OP(LX_R):
-		ASSERTF(a); ASSERTA(B); ASSERTD(C);
-		GETADDR(PB,RC,X_READ_NIL);
-		reg.f[a] = *(VM_SWORD *)ptr / 65536.0;
-		NEXTOP;
 	OP(LBIT):
 		ASSERTD(a); ASSERTA(B);
 		GETADDR(PB,0,X_READ_NIL);
@@ -315,16 +305,6 @@ begin:
 			v[1] = (float)reg.f[B+1];
 			v[2] = (float)reg.f[B+2];
 		}
-		NEXTOP;
-	OP(SX):
-		ASSERTA(a); ASSERTF(B); ASSERTKD(C);
-		GETADDR(PA,KC,X_WRITE_NIL);
-		*(VM_SWORD *)ptr = (VM_SWORD)(reg.f[B] * 65536.0);
-		NEXTOP;
-	OP(SX_R):
-		ASSERTA(a); ASSERTF(B); ASSERTD(C);
-		GETADDR(PA,RC,X_WRITE_NIL);
-		*(VM_SWORD *)ptr = (VM_SWORD)(reg.f[B] * 65536.0);
 		NEXTOP;
 	OP(SBIT):
 		ASSERTA(a); ASSERTD(B);

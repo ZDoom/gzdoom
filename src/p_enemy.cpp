@@ -99,8 +99,9 @@ dirtype_t diags[4] =
 	DI_NORTHWEST, DI_NORTHEAST, DI_SOUTHWEST, DI_SOUTHEAST
 };
 
-fixed_t xspeed[8] = {FRACUNIT,46341,0,-46341,-FRACUNIT,-46341,0,46341};
-fixed_t yspeed[8] = {0,46341,FRACUNIT,46341,0,-46341,-FRACUNIT,-46341};
+#define SQRTHALF 0.7071075439453125
+double xspeed[8] = {1,SQRTHALF,0,-SQRTHALF,-1,-SQRTHALF,0,SQRTHALF};
+double yspeed[8] = {0,SQRTHALF,1,SQRTHALF,0,-SQRTHALF,-1,-SQRTHALF};
 
 void P_RandomChaseDir (AActor *actor);
 
@@ -511,8 +512,8 @@ bool P_Move (AActor *actor)
 		}
 	}
 
-	tryx = (origx = actor->_f_X()) + (deltax = FixedMul (speed, xspeed[actor->movedir]));
-	tryy = (origy = actor->_f_Y()) + (deltay = FixedMul (speed, yspeed[actor->movedir]));
+	tryx = (origx = actor->_f_X()) + (deltax = fixed_t (speed * xspeed[actor->movedir]));
+	tryy = (origy = actor->_f_Y()) + (deltay = fixed_t (speed * yspeed[actor->movedir]));
 
 	// Like P_XYMovement this should do multiple moves if the step size is too large
 
@@ -2599,8 +2600,8 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 	{
 		const fixed_t absSpeed = abs (self->_f_speed());
 		fixedvec2 viletry = self->Vec2Offset(
-			FixedMul (absSpeed, xspeed[self->movedir]),
-			FixedMul (absSpeed, yspeed[self->movedir]), true);
+			int (absSpeed * xspeed[self->movedir]),
+			int (absSpeed * yspeed[self->movedir]), true);
 
 		FPortalGroupArray check(FPortalGroupArray::PGA_Full3d);
 

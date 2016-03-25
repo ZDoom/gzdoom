@@ -3183,37 +3183,6 @@ void player_t::Serialize (FArchive &arc)
 		onground = (mo->Z() <= mo->floorz) || (mo->flags2 & MF2_ONMOBJ) || (mo->BounceFlags & BOUNCE_MBF) || (cheats & CF_NOCLIP2);
 	}
 
-	if (SaveVersion < 4514 && IsBot)
-	{
-		Bot = new DBot;
-
-		arc	<< Bot->angle
-			<< Bot->dest
-			<< Bot->prev
-			<< Bot->enemy
-			<< Bot->missile
-			<< Bot->mate
-			<< Bot->last_mate
-			<< Bot->skill
-			<< Bot->t_active
-			<< Bot->t_respawn
-			<< Bot->t_strafe
-			<< Bot->t_react
-			<< Bot->t_fight
-			<< Bot->t_roam
-			<< Bot->t_rocket
-			<< Bot->first_shot
-			<< Bot->sleft
-			<< Bot->allround
-			<< Bot->oldx
-			<< Bot->oldy;
-	}
-
-	if (SaveVersion < 4516 && Bot != NULL)
-	{
-		Bot->player = this;
-	}
-
 	if (arc.IsLoading ())
 	{
 		// If the player reloaded because they pressed +use after dying, we

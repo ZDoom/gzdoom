@@ -350,7 +350,7 @@ enum
 {
 	BCOMPATF_SETSLOPEOVERFLOW	= 1 << 0,	// SetSlope things can overflow
 	BCOMPATF_RESETPLAYERSPEED	= 1 << 1,	// Set player speed to 1.0 when changing maps
-	BCOMPATF_VILEGHOSTS			= 1 << 2,	// Monsters' _f_radius() and height aren't restored properly when resurrected.
+	BCOMPATF_VILEGHOSTS			= 1 << 2,	// Monsters' radius and height aren't restored properly when resurrected.
 	BCOMPATF_BADTELEPORTERS		= 1 << 3,	// Ignore tags on Teleport specials
 	BCOMPATF_BADPORTALS			= 1 << 4,	// Restores the old unstable portal behavior
 	BCOMPATF_REBUILDNODES		= 1 << 5,	// Force node rebuild

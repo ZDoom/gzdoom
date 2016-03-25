@@ -281,9 +281,13 @@ inline bool P_CheckPosition(AActor *thing, const fixedvec3 &pos, bool actorsonly
 {
 	return P_CheckPosition(thing, pos.x, pos.y, actorsonly);
 }
-inline bool P_CheckPosition(AActor *thing, const DVector3 &pos, bool actorsonly = false)
+inline bool P_CheckPosition(AActor *thing, const DVector2 &pos, bool actorsonly = false)
 {
 	return P_CheckPosition(thing, FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), actorsonly);
+}
+inline bool P_CheckPosition(AActor *thing, const DVector2 &pos, FCheckPosition &tm, bool actorsonly = false)
+{
+	return P_CheckPosition(thing, FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), tm, actorsonly);
 }
 AActor	*P_CheckOnmobj (AActor *thing);
 void	P_FakeZMovement (AActor *mo);

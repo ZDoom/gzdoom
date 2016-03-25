@@ -34,32 +34,32 @@ bool DBot::Reachable (AActor *rtarget)
 	if (player->mo == rtarget)
 		return false;
 
-	if ((rtarget->Sector->ceilingplane.ZatPoint (rtarget) -
-		 rtarget->Sector->floorplane.ZatPoint (rtarget))
-		< player->mo->_f_height()) //Where rtarget is, player->mo can't be.
+	if ((rtarget->Sector->ceilingplane.ZatPointF (rtarget) -
+		 rtarget->Sector->floorplane.ZatPointF (rtarget))
+		< player->mo->Height) //Where rtarget is, player->mo can't be.
 		return false;
 
 	sector_t *last_s = player->mo->Sector;
-	fixed_t last_z = last_s->floorplane.ZatPoint (player->mo);
-	fixed_t estimated_dist = player->mo->AproxDistance(rtarget);
+	double last_z = last_s->floorplane.ZatPointF (player->mo);
+	double estimated_dist = player->mo->Distance2D(rtarget);
 	bool reachable = true;
 
-	FPathTraverse it(player->mo->_f_X()+player->mo->_f_velx(), player->mo->_f_Y()+player->mo->_f_vely(), rtarget->_f_X(), rtarget->_f_Y(), PT_ADDLINES|PT_ADDTHINGS);
+	FPathTraverse it(player->mo->X()+player->mo->Vel.X, player->mo->Y()+player->mo->Vel.Y, rtarget->X(), rtarget->Y(), PT_ADDLINES|PT_ADDTHINGS);
 	intercept_t *in;
 	while ((in = it.Next()))
 	{
-		fixed_t hitx, hity;
-		fixed_t frac;
+		double hitx, hity;
+		double frac;
 		line_t *line;
 		AActor *thing;
-		fixed_t dist;
+		double dist;
 		sector_t *s;
 
-		frac = in->frac - FixedDiv (4*FRACUNIT, MAX_TRAVERSE_DIST);
-		dist = FixedMul (frac, MAX_TRAVERSE_DIST);
+		frac = in->Frac - 4 /MAX_TRAVERSE_DIST;
+		dist = frac * MAX_TRAVERSE_DIST;
 
-		hitx = it.Trace().x + FixedMul (player->mo->_f_velx(), frac);
-		hity = it.Trace().y + FixedMul (player->mo->_f_vely(), frac);
+		hitx = it.Trace().x + player->mo->Vel.X * frac;
+		hity = it.Trace().y + player->mo->Vel.Y * frac;
 
 		if (in->isaline)
 		{
@@ -73,13 +73,13 @@ bool DBot::Reachable (AActor *rtarget)
 			{
 				//Determine if going to use backsector/frontsector.
 				s = (line->backsector == last_s) ? line->frontsector : line->backsector;
-				fixed_t ceilingheight = s->ceilingplane.ZatPoint (hitx, hity);
-				fixed_t floorheight = s->floorplane.ZatPoint (hitx, hity);
+				double ceilingheight = s->ceilingplane.ZatPoint (hitx, hity);
+				double floorheight = s->floorplane.ZatPoint (hitx, hity);
 
 				if (!bglobal.IsDangerous (s) &&		//Any nukage/lava?
 					(floorheight <= (last_z+MAXMOVEHEIGHT)
 					&& ((ceilingheight == floorheight && line->special)
-						|| (ceilingheight - floorheight) >= player->mo->_f_height()))) //Does it fit?
+						|| (ceilingheight - floorheight) >= player->mo->Height))) //Does it fit?
 				{
 					last_z = floorheight;
 					last_s = s;
@@ -100,7 +100,7 @@ bool DBot::Reachable (AActor *rtarget)
 		thing = in->d.thing;
 		if (thing == player->mo) //Can't reach self in this case.
 			continue;
-		if (thing == rtarget && (rtarget->Sector->floorplane.ZatPoint (rtarget) <= (last_z+MAXMOVEHEIGHT)))
+		if (thing == rtarget && (rtarget->Sector->floorplane.ZatPointF (rtarget) <= (last_z+MAXMOVEHEIGHT)))
 		{
 			return true;
 		}
@@ -118,16 +118,16 @@ bool DBot::Reachable (AActor *rtarget)
 //if these conditions are true, the function returns true.
 //GOOD TO KNOW is that the player's view angle
 //in doom is 90 degrees infront.
-bool DBot::Check_LOS (AActor *to, angle_t vangle)
+bool DBot::Check_LOS (AActor *to, DAngle vangle)
 {
 	if (!P_CheckSight (player->mo, to, SF_SEEPASTBLOCKEVERYTHING))
 		return false; // out of sight
-	if (vangle == ANGLE_MAX)
+	if (vangle >= 360.)
 		return true;
 	if (vangle == 0)
 		return false; //Looker seems to be blind.
 
-	return absangle(player->mo->AngleTo(to), player->mo->Angles.Yaw) <= ANGLE2FLOAT(vangle/2);
+	return absangle(player->mo->AngleTo(to), player->mo->Angles.Yaw) <= (vangle/2);
 }
 
 //-------------------------------------
@@ -140,10 +140,9 @@ void DBot::Dofire (ticcmd_t *cmd)
 	bool no_fire; //used to prevent bot from pumping rockets into nearby walls.
 	int aiming_penalty=0; //For shooting at shading target, if screen is red, MAKEME: When screen red.
 	int aiming_value; //The final aiming value.
-	fixed_t dist;
-	double fdist;
-	angle_t an;
-	int m;
+	double Dist;
+	DAngle an;
+	DAngle m;
 	double fm;
 
 	if (!enemy || !(enemy->flags & MF_SHOOTABLE) || enemy->health <= 0)
@@ -172,7 +171,7 @@ void DBot::Dofire (ticcmd_t *cmd)
 
 	no_fire = true;
 	//Distance to enemy.
-	dist = player->mo->AproxDistance(enemy, player->mo->_f_velx() - enemy->_f_velx(), player->mo->_f_vely() - enemy->_f_vely());
+	Dist = player->mo->Distance2D(enemy, player->mo->Vel.X - enemy->Vel.X, player->mo->Vel.Y - enemy->Vel.Y);
 
 	//FIRE EACH TYPE OF WEAPON DIFFERENT: Here should all the different weapons go.
 	if (player->ReadyWeapon->WeaponFlags & WIF_MELEEWEAPON)
@@ -194,7 +193,7 @@ void DBot::Dofire (ticcmd_t *cmd)
 		else
 		{
 			//*4 is for atmosphere,  the chainsaws sounding and all..
-			no_fire = (dist > (FLOAT2FIXED(MELEERANGE)*4));
+			no_fire = (Dist > MELEERANGE*4);
 		}
 	}
 	else if (player->ReadyWeapon->WeaponFlags & WIF_BOT_BFG)
@@ -210,11 +209,11 @@ void DBot::Dofire (ticcmd_t *cmd)
 		{
 			//Special rules for RL
 			an = FireRox (enemy, cmd);
-			if(an)
+			if(an != 0)
 			{
-				angle = an;
+				Angle = an;
 				//have to be somewhat precise. to avoid suicide.
-				if (absangle(angle - player->mo->_f_angle()) < 12*ANGLE_1)
+				if (absangle(an, player->mo->Angles.Yaw) < 12.)
 				{
 					t_rocket = 9;
 					no_fire = false;
@@ -223,17 +222,17 @@ void DBot::Dofire (ticcmd_t *cmd)
 		}
 		// prediction aiming
 shootmissile:
-		fdist = player->mo->Distance2D(enemy);
-		fm = fdist / GetDefaultByType (player->ReadyWeapon->ProjectileType)->Speed;
+		Dist = player->mo->Distance2D(enemy);
+		fm = Dist / GetDefaultByType (player->ReadyWeapon->ProjectileType)->Speed;
 		bglobal.SetBodyAt(enemy->Pos() + enemy->Vel.XY() * fm * 2, 1);
-		angle = player->mo->__f_AngleTo(bglobal.body1);
+		Angle = player->mo->AngleTo(bglobal.body1);
 		if (Check_LOS (enemy, SHOOTFOV))
 			no_fire = false;
 	}
 	else
 	{
 		//Other weapons, mostly instant hit stuff.
-		angle = player->mo->__f_AngleTo(enemy);
+		Angle = player->mo->AngleTo(enemy);
 		aiming_penalty = 0;
 		if (enemy->flags & MF_SHADOW)
 			aiming_penalty += (pr_botdofire()%25)+10;
@@ -246,17 +245,17 @@ shootmissile:
 			aiming_value = 1;
 		m = ((SHOOTFOV/2)-(aiming_value*SHOOTFOV/200)); //Higher skill is more accurate
 		if (m <= 0)
-			m = 1; //Prevents lock.
+			m = 1.; //Prevents lock.
 
-		if (m)
+		if (m != 0)
 		{
 			if (increase)
-				angle += m;
+				Angle += m;
 			else
-				angle -= m;
+				Angle -= m;
 		}
 
-		if (absangle(angle - player->mo->_f_angle()) < 4*ANGLE_1)
+		if (absangle(Angle, player->mo->Angles.Yaw) < 4.)
 		{
 			increase = !increase;
 		}
@@ -291,7 +290,7 @@ bool FCajunMaster::IsLeader (player_t *player)
 AActor *DBot::Choose_Mate ()
 {
 	int count;
-	fixed_t closest_dist, test;
+	double closest_dist, test;
 	AActor *target;
 	AActor *observer;
 
@@ -312,7 +311,7 @@ AActor *DBot::Choose_Mate ()
 			last_mate = NULL;
 
 	target = NULL;
-	closest_dist = FIXED_MAX;
+	closest_dist = FLT_MAX;
 	if (bot_observer)
 		observer = players[consoleplayer].mo;
 	else
@@ -334,7 +333,7 @@ AActor *DBot::Choose_Mate ()
 		{
 			if (P_CheckSight (player->mo, client->mo, SF_IGNOREVISIBILITY))
 			{
-				test = client->mo->AproxDistance(player->mo);
+				test = client->mo->Distance2D(player->mo);
 
 				if (test < closest_dist)
 				{
@@ -368,9 +367,9 @@ AActor *DBot::Choose_Mate ()
 AActor *DBot::Find_enemy ()
 {
 	int count;
-	fixed_t closest_dist, temp; //To target.
+	double closest_dist, temp; //To target.
 	AActor *target;
-	angle_t vangle;
+	DAngle vangle;
 	AActor *observer;
 
 	if (!deathmatch)
@@ -380,13 +379,13 @@ AActor *DBot::Find_enemy ()
 
 	//Note: It's hard to ambush a bot who is not alone
 	if (allround || mate)
-		vangle = ANGLE_MAX;
+		vangle = 360.;
 	else
 		vangle = ENEMY_SCAN_FOV;
 	allround = false;
 
 	target = NULL;
-	closest_dist = FIXED_MAX;
+	closest_dist = FLT_MAX;
 	if (bot_observer)
 		observer = players[consoleplayer].mo;
 	else
@@ -404,7 +403,7 @@ AActor *DBot::Find_enemy ()
 			if (Check_LOS (client->mo, vangle)) //Here's a strange one, when bot is standing still, the P_CheckSight within Check_LOS almost always returns false. tought it should be the same checksight as below but.. (below works) something must be fuckin wierd screded up. 
 			//if(P_CheckSight(player->mo, players[count].mo))
 			{
-				temp = client->mo->AproxDistance(player->mo);
+				temp = client->mo->Distance2D(player->mo);
 
 				//Too dark?
 				if (temp > DARK_DIST &&
@@ -463,7 +462,7 @@ void FCajunMaster::SetBodyAt (const DVector3 &pos, int hostnum)
 
 
 //Emulates missile travel. Returns distance travelled.
-fixed_t FCajunMaster::FakeFire (AActor *source, AActor *dest, ticcmd_t *cmd)
+double FCajunMaster::FakeFire (AActor *source, AActor *dest, ticcmd_t *cmd)
 {
 	AActor *th = Spawn ("CajunTrace", source->PosPlusZ(4*8.), NO_REPLACE);
 	
@@ -472,23 +471,22 @@ fixed_t FCajunMaster::FakeFire (AActor *source, AActor *dest, ticcmd_t *cmd)
 
 	th->Vel = source->Vec3To(dest).Resized(th->Speed);
 
-	fixed_t dist = 0;
+	double dist = 0;
 
 	while (dist < SAFE_SELF_MISDIST)
 	{
-		dist += th->_f_speed();
-		th->Move(th->_f_velx(), th->_f_vely(), th->_f_velz());
-		if (!CleanAhead (th, th->_f_X(), th->_f_Y(), cmd))
+		dist += th->Speed;
+		th->Move(th->Vel);
+		if (!CleanAhead (th, th->X(), th->Y(), cmd))
 			break;
 	}
 	th->Destroy ();
 	return dist;
 }
 
-angle_t DBot::FireRox (AActor *enemy, ticcmd_t *cmd)
+DAngle DBot::FireRox (AActor *enemy, ticcmd_t *cmd)
 {
 	double dist;
-	angle_t ang;
 	AActor *actor;
 	double m;
 
@@ -497,8 +495,8 @@ angle_t DBot::FireRox (AActor *enemy, ticcmd_t *cmd)
 	actor = bglobal.body2;
 
 	dist = actor->Distance2D (enemy);
-	if (dist < SAFE_SELF_MISDIST/FRACUNIT)
-		return 0;
+	if (dist < SAFE_SELF_MISDIST)
+		return 0.;
 	//Predict.
 	m = ((dist+1) / GetDefaultByName("Rocket")->Speed);
 
@@ -508,12 +506,11 @@ angle_t DBot::FireRox (AActor *enemy, ticcmd_t *cmd)
 	if (P_CheckSight (actor, bglobal.body1, SF_IGNOREVISIBILITY)) //See the predicted location, so give a test missile
 	{
 		FCheckPosition tm;
-		if (bglobal.SafeCheckPosition (player->mo, actor->_f_X(), actor->_f_Y(), tm))
+		if (bglobal.SafeCheckPosition (player->mo, actor->X(), actor->Y(), tm))
 		{
 			if (bglobal.FakeFire (actor, bglobal.body1, cmd) >= SAFE_SELF_MISDIST)
 			{
-				ang = actor->__f_AngleTo(bglobal.body1);
-				return ang;
+				return actor->AngleTo(bglobal.body1);
 			}
 		}
 	}
@@ -522,21 +519,20 @@ angle_t DBot::FireRox (AActor *enemy, ticcmd_t *cmd)
 	{
 		if (bglobal.FakeFire (player->mo, enemy, cmd) >= SAFE_SELF_MISDIST)
 		{
-			ang = player->mo->__f_AngleTo(enemy);
-			return ang;
+			return player->mo->AngleTo(enemy);
 		}
 	}
-	return 0;
+	return 0.;
 }
 
 // [RH] We absolutely do not want to pick things up here. The bot code is
 // executed apart from all the other simulation code, so we don't want it
 // creating side-effects during gameplay.
-bool FCajunMaster::SafeCheckPosition (AActor *actor, fixed_t x, fixed_t y, FCheckPosition &tm)
+bool FCajunMaster::SafeCheckPosition (AActor *actor, double x, double y, FCheckPosition &tm)
 {
 	ActorFlags savedFlags = actor->flags;
 	actor->flags &= ~MF_PICKUP;
-	bool res = P_CheckPosition (actor, x, y, tm);
+	bool res = P_CheckPosition (actor, DVector2(x, y), tm);
 	actor->flags = savedFlags;
 	return res;
 }

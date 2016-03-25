@@ -25,6 +25,7 @@ struct divline_t
 
 struct intercept_t
 {
+	double		Frac;
 	fixed_t 	frac;			// along trace line
 	bool	 	isaline;
 	bool		done;
@@ -390,6 +391,7 @@ class FPathTraverse
 protected:
 	static TArray<intercept_t> intercepts;
 
+	divline_t ftrace;
 	fdivline_t trace;
 	fixed_t startfrac;
 	unsigned int intercept_index;
@@ -407,17 +409,30 @@ public:
 	{
 		init(x1, y1, x2, y2, flags, startfrac);
 	}
+	FPathTraverse(double x1, double y1, double x2, double y2, int flags, double startfrac = 0)
+	{
+		init(FLOAT2FIXED(x1), FLOAT2FIXED(y1), FLOAT2FIXED(x2), FLOAT2FIXED(y2), flags, FLOAT2FIXED(startfrac));
+	}
 	void init(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int flags, fixed_t startfrac = 0);
 	int PortalRelocate(intercept_t *in, int flags, fixedvec3 *optpos = NULL);
 	virtual ~FPathTraverse();
-	const fdivline_t &Trace() const { return trace; }
+	const fdivline_t &_f_Trace() const { return trace; }
+	const divline_t &Trace() const { return ftrace; }
 
-	inline fixedvec2 InterceptPoint(const intercept_t *in)
+	inline fixedvec2 _f_InterceptPoint(const intercept_t *in)
 	{
 		return
 		{
 			trace.x + FixedMul(trace.dx, in->frac),
 			trace.y + FixedMul(trace.dy, in->frac) 
+		};
+	}
+	inline DVector2 InterceptPoint(const intercept_t *in)
+	{
+		return
+		{
+			FIXED2DBL(trace.x + FixedMul(trace.dx, in->frac)),
+			FIXED2DBL(trace.y + FixedMul(trace.dy, in->frac))
 		};
 	}
 

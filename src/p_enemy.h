@@ -24,7 +24,7 @@ enum dirtype_t
 	NUMDIRS
 };
 
-extern fixed_t xspeed[8], yspeed[8];
+extern double xspeed[8], yspeed[8];
 
 enum LO_Flags
 {

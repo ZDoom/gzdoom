@@ -828,16 +828,6 @@ public:
 		return P_AproxDistance(_f_X() - otherx, _f_Y() - othery);
 	}
 
-	fixed_t __f_AngleTo(fixed_t otherx, fixed_t othery)
-	{
-		return R_PointToAngle2(_f_X(), _f_Y(), otherx, othery);
-	}
-
-	fixed_t __f_AngleTo(fixedvec2 other)
-	{
-		return R_PointToAngle2(_f_X(), _f_Y(), other.x, other.y);
-	}
-
 	// 'absolute' is reserved for a linked portal implementation which needs
 	// to distinguish between portal-aware and portal-unaware distance calculation.
 	fixed_t AproxDistance(AActor *other, bool absolute = false)
@@ -846,13 +836,14 @@ public:
 		return P_AproxDistance(_f_X() - otherpos.x, _f_Y() - otherpos.y);
 	}
 
+	/*
 	fixed_t AproxDistance(AActor *other, fixed_t xadd, fixed_t yadd, bool absolute = false)
 	{
 		fixedvec3 otherpos = absolute ? other->_f_Pos() : other->_f_PosRelative(this);
 		return P_AproxDistance(_f_X() - otherpos.x + xadd, _f_Y() - otherpos.y + yadd);
 	}
+	*/
 
-	// more precise, but slower version, being used in a few places
 	double Distance2D(AActor *other, bool absolute = false)
 	{
 		DVector2 otherpos = absolute ? other->Pos() : other->PosRelative(this);
@@ -864,22 +855,18 @@ public:
 		return DVector2(X() - x, Y() - y).Length();
 	}
 
+	double Distance2D(AActor *other, double xadd, double yadd, bool absolute = false)
+	{
+		DVector3 otherpos = absolute ? other->Pos() : other->PosRelative(this);
+		return DVector2(X() - otherpos.X + xadd, Y() - otherpos.Y + yadd).Length();
+	}
+
+
 	// a full 3D version of the above
 	double Distance3D(AActor *other, bool absolute = false)
 	{
 		DVector3 otherpos = absolute ? other->Pos() : other->PosRelative(this);
 		return (Pos() - otherpos).Length();
-	}
-
-	angle_t __f_AngleTo(AActor *other, bool absolute = false)
-	{
-		fixedvec3 otherpos = absolute ? other->_f_Pos() : other->_f_PosRelative(this);
-		return R_PointToAngle2(_f_X(), _f_Y(), otherpos.x, otherpos.y);
-	}
-
-	angle_t __f_AngleTo(AActor *other, fixed_t oxofs, fixed_t oyofs, bool absolute = false) const
-	{
-		return R_PointToAngle2(_f_X(), _f_Y(), other->_f_X() + oxofs, other->_f_Y() + oyofs);
 	}
 
 	DAngle AngleTo(AActor *other, bool absolute = false)
@@ -1064,6 +1051,10 @@ public:
 		SetOrigin(npos.x, npos.y, npos.z, moving);
 	}
 
+	void Move(const DVector3 &vel)
+	{
+		SetOrigin(Pos() + vel, true);
+	}
 	void SetOrigin(double x, double y, double z, bool moving)
 	{
 		SetOrigin(FLOAT2FIXED(x), FLOAT2FIXED(y), FLOAT2FIXED(z), moving);

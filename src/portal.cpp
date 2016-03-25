@@ -716,7 +716,7 @@ fixedvec2 P_GetOffsetPosition(fixed_t x, fixed_t y, fixed_t dx, fixed_t dy)
 				// Teleport portals are intentionally ignored since skipping this stuff is their entire reason for existence.
 				if (port->mFlags & PORTF_INTERACTIVE)
 				{
-					fixedvec2 hit = it.InterceptPoint(in);
+					fixedvec2 hit = it._f_InterceptPoint(in);
 
 					if (port->mType == PORTT_LINKED)
 					{

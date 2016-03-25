@@ -1425,6 +1425,7 @@ intercept_t *FPathTraverse::Next()
 		{
 			dist = scan->frac;
 			in = scan;
+			in->Frac = FIXED2FLOAT(in->frac);
 		}
 	}
 	
@@ -1658,6 +1659,10 @@ void FPathTraverse::init (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int fl
 			break;
 		}
 	}
+	ftrace.dx = FIXED2DBL(trace.dx);
+	ftrace.dy = FIXED2DBL(trace.dy);
+	ftrace.x = FIXED2DBL(trace.x);
+	ftrace.y = FIXED2DBL(trace.y);
 }
 
 //===========================================================================

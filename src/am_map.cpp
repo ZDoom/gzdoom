@@ -815,7 +815,7 @@ CVAR(Bool, am_portaloverlay, true, CVAR_ARCHIVE)
 CCMD(am_togglefollow)
 {
 	am_followplayer = !am_followplayer;
-	f_oldloc.x = FIXED_MAX;
+	f_oldloc.x = FLT_MAX;
 	Printf ("%s\n", GStrings(am_followplayer ? "AMSTR_FOLLOWON" : "AMSTR_FOLLOWOFF"));
 }
 
@@ -1022,7 +1022,7 @@ bool AM_addMark ()
 
 static void AM_findMinMaxBoundaries ()
 {
-	min_x = min_y = FIXED_MAX;
+	min_x = min_y = FLT_MAX;
 	max_x = max_y = FIXED_MIN;
   
 	for (int i = 0; i < numvertexes; i++)
@@ -1094,7 +1094,7 @@ static void AM_ClipRotatedExtents (double pivotx, double pivoty)
 		xs[2] = max_x;	ys[2] = max_y;
 		xs[3] = min_x;	ys[3] = max_y;
 		xs[4] = m_x + m_w/2; ys[4] = m_y + m_h/2;
-		rmin_x = rmin_y = FIXED_MAX;
+		rmin_x = rmin_y = FLT_MAX;
 		rmax_x = rmax_y = FIXED_MIN;
 
 		for (i = 0; i < 5; ++i)
@@ -1175,7 +1175,7 @@ void AM_changeWindowLoc ()
 	if (m_paninc.x || m_paninc.y)
 	{
 		am_followplayer = false;
-		f_oldloc.x = FIXED_MAX;
+		f_oldloc.x = FLT_MAX;
 	}
 
 	double oldmx = m_x, oldmy = m_y;
@@ -1220,7 +1220,7 @@ void AM_initVariables ()
 	Button_AM_ZoomOut.Reset();
 
 
-	f_oldloc.x = FIXED_MAX;
+	f_oldloc.x = FLT_MAX;
 	amclock = 0;
 
 	m_paninc.x = m_paninc.y = 0;

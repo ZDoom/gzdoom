@@ -3171,9 +3171,8 @@ bool AActor::IsOkayToAttack (AActor *link)
 		// to only allow the check to succeed if the enemy was in a ~84� FOV of the player
 		if (flags3 & MF3_SCREENSEEKER)
 		{
-			angle_t angle = Friend->__f_AngleTo(link) - Friend->_f_angle();
-			angle >>= 24;
-			if (angle>226 || angle<30)
+			DAngle angle = absangle(Friend->AngleTo(link), Friend->Angles.Yaw);
+			if (angle < 30 * (256./360.))
 			{
 				return true;
 			}
@@ -3562,7 +3561,7 @@ void AActor::Tick ()
 				{
 					if (!players[i].Bot->missile && (flags3 & MF3_WARNBOT))
 					{ //warn for incoming missiles.
-						if (target != players[i].mo && players[i].Bot->Check_LOS (this, ANGLE_90))
+						if (target != players[i].mo && players[i].Bot->Check_LOS (this, 90.))
 							players[i].Bot->missile = this;
 					}
 				}

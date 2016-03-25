@@ -2828,7 +2828,7 @@ void FSlide::SlideTraverse(fixed_t startx, fixed_t starty, fixed_t endx, fixed_t
 		}
 
 		// set openrange, opentop, openbottom
-		P_LineOpening(open, slidemo, li, it.InterceptPoint(in));
+		P_LineOpening(open, slidemo, li, it._f_InterceptPoint(in));
 
 		if (open.range < slidemo->Height)
 			goto isblocking;				// doesn't fit
@@ -3184,7 +3184,7 @@ bool FSlide::BounceTraverse(fixed_t startx, fixed_t starty, fixed_t endx, fixed_
 		}
 
 
-		P_LineOpening(open, slidemo, li, it.InterceptPoint(in));	// set openrange, opentop, openbottom
+		P_LineOpening(open, slidemo, li, it._f_InterceptPoint(in));	// set openrange, opentop, openbottom
 		if (open.range < slidemo->Height)
 			goto bounceblocking;				// doesn't fit
 
@@ -3806,7 +3806,7 @@ struct aim_t
 				// Crosses a two sided line.
 				// A two sided line will restrict the possible target ranges.
 				FLineOpening open;
-				P_LineOpening(open, NULL, li, it.InterceptPoint(in), FIXED_MIN, 0, FFCF_NODROPOFF);
+				P_LineOpening(open, NULL, li, it._f_InterceptPoint(in), FIXED_MIN, 0, FFCF_NODROPOFF);
 
 				// The following code assumes that portals on the front of the line have already been processed.
 
@@ -3831,7 +3831,7 @@ struct aim_t
 					return;
 
 				int planestocheck;
-				if (!AimTraverse3DFloors(it.Trace(), in, frontflag, &planestocheck))
+				if (!AimTraverse3DFloors(it._f_Trace(), in, frontflag, &planestocheck))
 					return;
 
 				if (aimdebug)
@@ -3961,7 +3961,7 @@ struct aim_t
 				fixed_t cosine = finecosine[thingpitch >> ANGLETOFINESHIFT];
 				if (cosine != 0)
 				{
-					fixed_t d3 = FixedDiv(FixedMul(P_AproxDistance(it.Trace().dx, it.Trace().dy), in->frac), cosine);
+					fixed_t d3 = FixedDiv(FixedMul(P_AproxDistance(it._f_Trace().dx, it._f_Trace().dy), in->frac), cosine);
 					if (d3 > attackrange)
 					{
 						return;
@@ -4560,7 +4560,7 @@ void P_TraceBleed(int damage, AActor *target, angle_t angle, int pitch)
 
 void P_TraceBleed(int damage, AActor *target, AActor *missile)
 {
-	int pitch;
+	DAngle pitch;
 
 	if (target == NULL || missile->flags3 & MF3_BLOODLESSIMPACT)
 	{
@@ -4572,15 +4572,13 @@ void P_TraceBleed(int damage, AActor *target, AActor *missile)
 		double aim;
 
 		aim = g_atan((double)missile->_f_velz() / (double)target->AproxDistance(missile));
-		pitch = -(int)(aim * ANGLE_180 / PI);
+		pitch = -ToDegrees(aim);
 	}
 	else
 	{
-		pitch = 0;
+		pitch = 0.;
 	}
-	P_TraceBleed(damage, target->_f_X(), target->_f_Y(), target->_f_Z() + target->_f_height() / 2,
-		target, missile->__f_AngleTo(target),
-		pitch);
+	P_TraceBleed(damage, target->PosPlusZ(target->Height/2), target, missile->AngleTo(target), pitch);
 }
 
 //==========================================================================
@@ -4958,7 +4956,7 @@ bool P_UseTraverse(AActor *usething, fixed_t startx, fixed_t starty, fixed_t end
 			}
 			else
 			{
-				P_LineOpening(open, NULL, in->d.line, it.InterceptPoint(in));
+				P_LineOpening(open, NULL, in->d.line, it._f_InterceptPoint(in));
 			}
 			if (open.range <= 0 ||
 				(in->d.line->special != 0 && (i_compatflags & COMPATF_USEBLOCKING)))
@@ -5066,7 +5064,7 @@ bool P_NoWayTraverse(AActor *usething, fixed_t startx, fixed_t starty, fixed_t e
 		if (ld->special) continue;
 		if (ld->isLinePortal()) return false;
 		if (ld->flags&(ML_BLOCKING | ML_BLOCKEVERYTHING | ML_BLOCK_PLAYERS)) return true;
-		P_LineOpening(open, NULL, ld, it.InterceptPoint(in));
+		P_LineOpening(open, NULL, ld, it._f_InterceptPoint(in));
 		if (open.range <= 0 ||
 			open.bottom > usething->Z() + usething->MaxStepHeight ||
 			open.top < usething->Top()) return true;
@@ -5148,7 +5146,7 @@ bool P_UsePuzzleItem(AActor *PuzzleItemUser, int PuzzleItemType)
 		{ // Check line
 			if (in->d.line->special != UsePuzzleItem)
 			{
-				P_LineOpening(open, NULL, in->d.line, it.InterceptPoint(in));
+				P_LineOpening(open, NULL, in->d.line, it._f_InterceptPoint(in));
 				if (open.range <= 0)
 				{
 					return false; // can't use through a wall

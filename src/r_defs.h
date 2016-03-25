@@ -624,7 +624,7 @@ struct sector_t
 	int GetFloorLight () const;
 	int GetCeilingLight () const;
 	sector_t *GetHeightSec() const;
-	fixed_t GetFriction(int plane = sector_t::floor, fixed_t *movefac = NULL) const;
+	double GetFriction(int plane = sector_t::floor, double *movefac = NULL) const;
 
 	DInterpolation *SetInterpolation(int position, bool attach);
 
@@ -959,7 +959,7 @@ struct sector_t
 	// killough 8/28/98: friction is a sector property, not an mobj property.
 	// these fields used to be in AActor, but presented performance problems
 	// when processed as mobj properties. Fix is to make them sector properties.
-	fixed_t		friction, movefactor;
+	double		friction, movefactor;
 
 	int			terrainnum[2];
 
@@ -1445,27 +1445,27 @@ inline sector_t *P_PointInSector(const DVector2 &pos)
 	return P_PointInSubsector(FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y))->sector;
 }
 
-inline fixedvec3 AActor::PosRelative(int portalgroup) const
+inline fixedvec3 AActor::_f_PosRelative(int portalgroup) const
 {
 	return __pos + Displacements.getOffset(Sector->PortalGroup, portalgroup);
 }
 
-inline fixedvec3 AActor::PosRelative(const AActor *other) const
+inline fixedvec3 AActor::_f_PosRelative(const AActor *other) const
 {
 	return __pos + Displacements.getOffset(Sector->PortalGroup, other->Sector->PortalGroup);
 }
 
-inline fixedvec3 AActor::PosRelative(sector_t *sec) const
+inline fixedvec3 AActor::_f_PosRelative(sector_t *sec) const
 {
 	return __pos + Displacements.getOffset(Sector->PortalGroup, sec->PortalGroup);
 }
 
-inline fixedvec3 AActor::PosRelative(line_t *line) const
+inline fixedvec3 AActor::_f_PosRelative(line_t *line) const
 {
 	return __pos + Displacements.getOffset(Sector->PortalGroup, line->frontsector->PortalGroup);
 }
 
-inline fixedvec3 PosRelative(const fixedvec3 &pos, line_t *line, sector_t *refsec = NULL)
+inline fixedvec3 _f_PosRelative(const fixedvec3 &pos, line_t *line, sector_t *refsec = NULL)
 {
 	return pos + Displacements.getOffset(refsec->PortalGroup, line->frontsector->PortalGroup);
 }

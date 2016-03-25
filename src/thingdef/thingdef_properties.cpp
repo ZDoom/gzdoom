@@ -1,7 +1,7 @@
 /*
 ** thingdef-properties.cpp
 **
-** Actor definitions - properties and flags handling
+** Actor denitions - properties and flags handling
 **
 **---------------------------------------------------------------------------
 ** Copyright 2002-2007 Christoph Oelckers
@@ -245,10 +245,10 @@ void HandleDeprecatedFlags(AActor *defaults, PClassActor *info, bool set, int in
 		defaults->Gravity = set ? 1. / 8 : 1.;
 		break;
 	case DEPF_SHORTMISSILERANGE:
-		defaults->maxtargetrange = set? 896*FRACUNIT : 0;
+		defaults->maxtargetrange = set? 896. : 0.;
 		break;
 	case DEPF_LONGMELEERANGE:
-		defaults->meleethreshold = set? 196*FRACUNIT : 0;
+		defaults->meleethreshold = set? 196. : 0.;
 		break;
 	case DEPF_QUARTERGRAVITY:
 		defaults->Gravity = set ? 1. / 4 : 1.;
@@ -314,9 +314,9 @@ bool CheckDeprecatedFlags(const AActor *actor, PClassActor *info, int index)
 	case DEPF_LOWGRAVITY:
 		return actor->Gravity == 1./8;
 	case DEPF_SHORTMISSILERANGE:
-		return actor->maxtargetrange == 896*FRACUNIT;
+		return actor->maxtargetrange == 896.;
 	case DEPF_LONGMELEERANGE:
-		return actor->meleethreshold == 196*FRACUNIT;
+		return actor->meleethreshold == 196.;
 	case DEPF_QUARTERGRAVITY:
 		return actor->Gravity == 1./4;
 	case DEPF_FIRERESIST:
@@ -936,7 +936,7 @@ DEFINE_PROPERTY(burnheight, F, Actor)
 //==========================================================================
 DEFINE_PROPERTY(maxtargetrange, F, Actor)
 {
-	PROP_FIXED_PARM(id, 0);
+	PROP_DOUBLE_PARM(id, 0);
 	defaults->maxtargetrange = id;
 }
 
@@ -945,7 +945,7 @@ DEFINE_PROPERTY(maxtargetrange, F, Actor)
 //==========================================================================
 DEFINE_PROPERTY(meleethreshold, F, Actor)
 {
-	PROP_FIXED_PARM(id, 0);
+	PROP_DOUBLE_PARM(id, 0);
 	defaults->meleethreshold = id;
 }
 
@@ -964,7 +964,7 @@ DEFINE_PROPERTY(meleedamage, I, Actor)
 //==========================================================================
 DEFINE_PROPERTY(meleerange, F, Actor)
 {
-	PROP_FIXED_PARM(id, 0);
+	PROP_DOUBLE_PARM(id, 0);
 	defaults->meleerange = id;
 }
 
@@ -1003,7 +1003,7 @@ DEFINE_PROPERTY(missileheight, F, Actor)
 //==========================================================================
 DEFINE_PROPERTY(pushfactor, F, Actor)
 {
-	PROP_FIXED_PARM(id, 0);
+	PROP_DOUBLE_PARM(id, 0);
 	defaults->pushfactor = id;
 }
 
@@ -1132,8 +1132,8 @@ DEFINE_PROPERTY(bouncetype, S, Actor)
 //==========================================================================
 DEFINE_PROPERTY(bouncefactor, F, Actor)
 {
-	PROP_FIXED_PARM(id, 0);
-	defaults->bouncefactor = clamp<fixed_t>(id, 0, FRACUNIT);
+	PROP_DOUBLE_PARM(id, 0);
+	defaults->bouncefactor = clamp<double>(id, 0, 1);
 }
 
 //==========================================================================
@@ -1141,8 +1141,8 @@ DEFINE_PROPERTY(bouncefactor, F, Actor)
 //==========================================================================
 DEFINE_PROPERTY(wallbouncefactor, F, Actor)
 {
-	PROP_FIXED_PARM(id, 0);
-	defaults->wallbouncefactor = clamp<fixed_t>(id, 0, FRACUNIT);
+	PROP_DOUBLE_PARM(id, 0);
+	defaults->wallbouncefactor = clamp<double>(id, 0, 1);
 }
 
 //==========================================================================
@@ -1310,7 +1310,7 @@ DEFINE_PROPERTY(fastspeed, F, Actor)
 //==========================================================================
 DEFINE_PROPERTY(radiusdamagefactor, F, Actor)
 {
-	PROP_FIXED_PARM(i, 0);
+	PROP_DOUBLE_PARM(i, 0);
 	assert(info->IsKindOf(RUNTIME_CLASS(PClassActor)));
 	static_cast<PClassActor *>(info)->RDFactor = i;
 }
@@ -1350,7 +1350,7 @@ DEFINE_PROPERTY(gravity, F, Actor)
 //==========================================================================
 DEFINE_PROPERTY(friction, F, Actor)
 {
-	PROP_FIXED_PARM(i, 0);
+	PROP_DOUBLE_PARM(i, 0);
 
 	if (i < 0) I_Error ("Friction must not be negative.");
 	defaults->Friction = i;
@@ -2093,9 +2093,9 @@ DEFINE_CLASS_PROPERTY(slotnumber, I, Weapon)
 //==========================================================================
 DEFINE_CLASS_PROPERTY(slotpriority, F, Weapon)
 {
-	PROP_FIXED_PARM(i, 0);
+	PROP_DOUBLE_PARM(i, 0);
 	assert(info->IsKindOf(RUNTIME_CLASS(PClassWeapon)));
-	static_cast<PClassWeapon *>(info)->SlotPriority = i;
+	static_cast<PClassWeapon *>(info)->SlotPriority = int(i*65536);
 }
 
 //==========================================================================
@@ -2504,7 +2504,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, clearcolorset, I, PlayerPawn)
 //==========================================================================
 DEFINE_CLASS_PROPERTY_PREFIX(player, attackzoffset, F, PlayerPawn)
 {
-	PROP_FIXED_PARM(z, 0);
+	PROP_DOUBLE_PARM(z, 0);
 	defaults->AttackZOffset = z;
 }
 
@@ -2522,7 +2522,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, jumpz, F, PlayerPawn)
 //==========================================================================
 DEFINE_CLASS_PROPERTY_PREFIX(player, GruntSpeed, F, PlayerPawn)
 {
-	PROP_FIXED_PARM(z, 0);
+	PROP_DOUBLE_PARM(z, 0);
 	defaults->GruntSpeed = z;
 }
 
@@ -2531,8 +2531,8 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, GruntSpeed, F, PlayerPawn)
 //==========================================================================
 DEFINE_CLASS_PROPERTY_PREFIX(player, FallingScreamSpeed, FF, PlayerPawn)
 {
-	PROP_FIXED_PARM(minz, 0);
-	PROP_FIXED_PARM(maxz, 1);
+	PROP_DOUBLE_PARM(minz, 0);
+	PROP_DOUBLE_PARM(maxz, 1);
 	defaults->FallingScreamMinSpeed = minz;
 	defaults->FallingScreamMaxSpeed = maxz;
 }
@@ -2582,7 +2582,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, viewheight, F, PlayerPawn)
 //==========================================================================
 DEFINE_CLASS_PROPERTY_PREFIX(player, userange, F, PlayerPawn)
 {
-	PROP_FIXED_PARM(z, 0);
+	PROP_DOUBLE_PARM(z, 0);
 	defaults->UseRange = z;
 }
 
@@ -2591,7 +2591,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, userange, F, PlayerPawn)
 //==========================================================================
 DEFINE_CLASS_PROPERTY_PREFIX(player, aircapacity, F, PlayerPawn)
 {
-	PROP_FIXED_PARM(z, 0);
+	PROP_DOUBLE_PARM(z, 0);
 	defaults->AirCapacity = z;
 }
 

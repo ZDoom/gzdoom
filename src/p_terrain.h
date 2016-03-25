@@ -115,8 +115,8 @@ struct FTerrainDef
 	FSoundID RightStepSound;
 	bool IsLiquid;
 	bool AllowProtection;
-	fixed_t Friction;
-	fixed_t MoveFactor;
+	double Friction;
+	double MoveFactor;
 };
 
 extern TArray<FSplashDef> Splashes;

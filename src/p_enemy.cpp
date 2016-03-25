@@ -264,14 +264,14 @@ bool AActor::CheckMeleeRange ()
 {
 	AActor *pl = target;
 
-	fixed_t dist;
+	double dist;
 		
 	if (!pl)
 		return false;
 				
-	dist = AproxDistance (pl);
+	dist = Distance2D (pl);
 
-	if (dist >= meleerange + pl->_f_radius())
+	if (dist >= meleerange + pl->radius)
 		return false;
 
 	// [RH] If moving toward goal, then we've reached it.
@@ -306,7 +306,7 @@ bool AActor::CheckMeleeRange ()
 bool P_CheckMeleeRange2 (AActor *actor)
 {
 	AActor *mo;
-	fixed_t dist;
+	double dist;
 
 
 	if (!actor->target)
@@ -314,8 +314,8 @@ bool P_CheckMeleeRange2 (AActor *actor)
 		return false;
 	}
 	mo = actor->target;
-	dist = mo->AproxDistance (actor);
-	if (dist >= (128 << FRACBITS) || dist < actor->meleerange + mo->_f_radius())
+	dist = mo->Distance2D (actor);
+	if (dist >= 128 || dist < actor->meleerange + mo->radius)
 	{
 		return false;
 	}
@@ -348,7 +348,7 @@ bool P_CheckMeleeRange2 (AActor *actor)
 //=============================================================================
 bool P_CheckMissileRange (AActor *actor)
 {
-	fixed_t dist;
+	double dist;
 		
 	if (!P_CheckSight (actor, actor->target, SF_SEEPASTBLOCKEVERYTHING))
 		return false;
@@ -387,15 +387,15 @@ bool P_CheckMissileRange (AActor *actor)
 
 	// OPTIMIZE: get this from a global checksight
 	// [RH] What?
-	dist = actor->AproxDistance (actor->target) - 64*FRACUNIT;
+	dist = actor->Distance2D (actor->target) - 64;
 	
 	if (actor->MeleeState == NULL)
-		dist -= 128*FRACUNIT;	// no melee attack, so fire more
+		dist -= 128;	// no melee attack, so fire more
 
 	return actor->SuggestMissileAttack (dist);
 }
 
-bool AActor::SuggestMissileAttack (fixed_t dist)
+bool AActor::SuggestMissileAttack (double dist)
 {
 	// new version encapsulates the different behavior in flags instead of virtual functions
 	// The advantage is that this allows inheriting the missile attack attributes from the
@@ -407,11 +407,11 @@ bool AActor::SuggestMissileAttack (fixed_t dist)
 	if (MeleeState != NULL && dist < meleethreshold)
 		return false;	// From the Revenant: close enough for fist attack
 
-	if (flags4 & MF4_MISSILEMORE) dist >>= 1;
-	if (flags4 & MF4_MISSILEEVENMORE) dist >>= 3;
+	if (flags4 & MF4_MISSILEMORE) dist *= 0.5;
+	if (flags4 & MF4_MISSILEEVENMORE) dist *= 0.125;
 	
 	int mmc = int(MinMissileChance * G_SkillProperty(SKILLP_Aggressiveness));
-	return pr_checkmissilerange() >= MIN<int> (dist >> FRACBITS, mmc);
+	return pr_checkmissilerange() >= MIN<int> (int(dist), mmc);
 }
 
 //=============================================================================
@@ -453,9 +453,9 @@ bool P_Move (AActor *actor)
 
 	fixed_t tryx, tryy, deltax, deltay, origx, origy;
 	bool try_ok;
-	int speed = actor->_f_speed();
-	int movefactor = ORIG_FRICTION_FACTOR;
-	int friction = ORIG_FRICTION;
+	fixed_t speed = actor->_f_speed();
+	double movefactor = ORIG_FRICTION_FACTOR;
+	double friction = ORIG_FRICTION;
 	int dropoff = 0;
 
 	if (actor->flags2 & MF2_BLASTED)
@@ -503,8 +503,7 @@ bool P_Move (AActor *actor)
 
 		if (friction < ORIG_FRICTION)
 		{ // sludge
-			speed = ((ORIG_FRICTION_FACTOR - (ORIG_FRICTION_FACTOR-movefactor)/2)
-			   * speed) / ORIG_FRICTION_FACTOR;
+			speed = fixed_t(speed * ((ORIG_FRICTION_FACTOR - (ORIG_FRICTION_FACTOR-movefactor)/2)) / ORIG_FRICTION_FACTOR);
 			if (speed == 0)
 			{ // always give the monster a little bit of speed
 				speed = ksgn(actor->_f_speed());
@@ -564,9 +563,9 @@ bool P_Move (AActor *actor)
 	if (try_ok && friction > ORIG_FRICTION)
 	{
 		actor->SetOrigin(origx, origy, actor->_f_Z(), false);
-		movefactor *= FRACUNIT / ORIG_FRICTION_FACTOR / 4;
-		actor->Vel.X += FIXED2DBL(FixedMul (deltax, movefactor));
-		actor->Vel.Y += FIXED2DBL(FixedMul (deltay, movefactor));
+		movefactor *= 1.f / ORIG_FRICTION_FACTOR / 4;
+		actor->Vel.X += FIXED2DBL(deltax * movefactor);
+		actor->Vel.Y += FIXED2DBL(deltay * movefactor);
 	}
 
 	// [RH] If a walking monster is no longer on the floor, move it down
@@ -589,7 +588,7 @@ bool P_Move (AActor *actor)
 			else
 			{ // The monster just hit the floor, so trigger any actions.
 				if (actor->floorsector->SecActTarget != NULL &&
-					actor->_f_floorz() == actor->floorsector->floorplane.ZatPoint(actor->PosRelative(actor->floorsector)))
+					actor->_f_floorz() == actor->floorsector->floorplane.ZatPoint(actor->_f_PosRelative(actor->floorsector)))
 				{
 					actor->floorsector->SecActTarget->TriggerAction(actor, SECSPAC_HitFloor);
 				}
@@ -899,8 +898,8 @@ void P_NewChaseDir(AActor * actor)
 				box.Bottom() < line->bbox[BOXTOP]    &&
 				box.BoxOnLineSide(line) == -1)
 		    {
-				double front = line->frontsector->floorplane.ZatPointF(actor->PosRelative(line));
-				double back  = line->backsector->floorplane.ZatPointF(actor->PosRelative(line));
+				double front = line->frontsector->floorplane.ZatPointF(actor->_f_PosRelative(line));
+				double back  = line->backsector->floorplane.ZatPointF(actor->_f_PosRelative(line));
 				DAngle angle;
 		
 				// The monster must contact one of the two floors,
@@ -965,16 +964,16 @@ void P_NewChaseDir(AActor * actor)
 		if (actor->flags3 & MF3_AVOIDMELEE)
 		{
 			bool ismeleeattacker = false;
-			fixed_t dist = actor->AproxDistance(target);
+			double dist = actor->Distance2D(target);
 			if (target->player == NULL)
 			{
-				ismeleeattacker = (target->MissileState == NULL && dist < (target->meleerange + target->_f_radius())*2);
+				ismeleeattacker = (target->MissileState == NULL && dist < (target->meleerange + target->radius)*2);
 			}
 			else if (target->player->ReadyWeapon != NULL)
 			{
 				// melee range of player weapon is a parameter of the action function and cannot be checked here.
 				// Add a new weapon property?
-				ismeleeattacker = (target->player->ReadyWeapon->WeaponFlags & WIF_MELEEWEAPON && dist < (192 << FRACBITS));
+				ismeleeattacker = ((target->player->ReadyWeapon->WeaponFlags & WIF_MELEEWEAPON) && dist < 192);
 			}
 			if (ismeleeattacker)
 			{
@@ -1166,23 +1165,23 @@ void P_RandomChaseDir (AActor *actor)
 
 bool P_IsVisible(AActor *lookee, AActor *other, INTBOOL allaround, FLookExParams *params)
 {
-	fixed_t maxdist;
-	fixed_t mindist;
-	angle_t fov;
+	double maxdist;
+	double mindist;
+	DAngle fov;
 
 	if (params != NULL)
 	{
-		maxdist = params->maxdist;
-		mindist = params->mindist;
-		fov = params->fov;
+		maxdist = params->maxDist;
+		mindist = params->minDist;
+		fov = params->Fov;
 	}
 	else
 	{
 		mindist = maxdist = 0;
-		fov = allaround ? 0 : ANGLE_180;
+		fov = allaround ? 0. : 180.;
 	}
 
-	fixed_t dist = lookee->AproxDistance (other);
+	double dist = lookee->Distance2D (other);
 
 	if (maxdist && dist > maxdist)
 		return false;			// [KS] too far
@@ -1190,15 +1189,15 @@ bool P_IsVisible(AActor *lookee, AActor *other, INTBOOL allaround, FLookExParams
 	if (mindist && dist < mindist)
 		return false;			// [KS] too close
 
-	if (fov && fov < ANGLE_MAX)
+	if (fov != 0)
 	{
-		angle_t an = lookee->__f_AngleTo(other) - lookee->_f_angle();
+		DAngle an = absangle(lookee->AngleTo(other), lookee->Angles.Yaw);
 
-		if (an > (fov / 2) && an < (ANGLE_MAX - (fov / 2)))
+		if (an > (fov / 2))
 		{
 			// if real close, react anyway
 			// [KS] but respect minimum distance rules
-			if (mindist || dist > lookee->meleerange + lookee->_f_radius())
+			if (mindist || dist > lookee->meleerange + lookee->radius)
 				return false;	// outside of fov
 		}
 	}
@@ -1888,15 +1887,15 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_LookEx)
 {
 	PARAM_ACTION_PROLOGUE;
 	PARAM_INT_OPT	(flags)			{ flags = 0; }
-	PARAM_FIXED_OPT	(minseedist)	{ minseedist = 0; }
-	PARAM_FIXED_OPT	(maxseedist)	{ maxseedist = 0; }
-	PARAM_FIXED_OPT (maxheardist)	{ maxheardist = 0; }
-	PARAM_FLOAT_OPT (fov_f)			{ fov_f = 0; }
+	PARAM_FLOAT_OPT	(minseedist)	{ minseedist = 0; }
+	PARAM_FLOAT_OPT	(maxseedist)	{ maxseedist = 0; }
+	PARAM_FLOAT_OPT (maxheardist)	{ maxheardist = 0; }
+	PARAM_ANGLE_OPT (fov)			{ fov = 0.; }
 	PARAM_STATE_OPT	(seestate)		{ seestate = NULL; }
 
 	AActor *targ = NULL; // Shuts up gcc
 	fixed_t dist;
-	angle_t fov = (fov_f == 0) ? ANGLE_180 : FLOAT2ANGLE(fov_f);
+	if (fov == 0) fov = 180.;
 	FLookExParams params = { fov, minseedist, maxseedist, maxheardist, flags, seestate };
 
 	if (self->flags5 & MF5_INCONVERSATION)
@@ -2818,7 +2817,7 @@ enum FAF_Flags
 	FAF_TOP = 4,
 	FAF_NODISTFACTOR = 8,	// deprecated
 };
-void A_Face (AActor *self, AActor *other, angle_t _max_turn, angle_t _max_pitch, angle_t _ang_offset, angle_t _pitch_offset, int flags, fixed_t z_add)
+void A_Face(AActor *self, AActor *other, DAngle max_turn, DAngle max_pitch, DAngle ang_offset, DAngle pitch_offset, int flags, double z_add)
 {
 	if (!other)
 		return;
@@ -2831,12 +2830,7 @@ void A_Face (AActor *self, AActor *other, angle_t _max_turn, angle_t _max_pitch,
 
 	self->flags &= ~MF_AMBUSH;
 
-	DAngle max_turn = ANGLE2DBL(_max_turn);
-	DAngle ang_offset = ANGLE2DBL(_ang_offset);
-	DAngle max_pitch = ANGLE2DBL(_max_pitch);
-	DAngle pitch_offset = ANGLE2DBL(_pitch_offset);
 	DAngle other_angle = self->AngleTo(other);
-
 	DAngle delta = deltaangle(self->Angles.Yaw, other_angle);
 
 	// 0 means no limit. Also, if we turn in a single step anyways, no need to go through the algorithms.
@@ -2883,7 +2877,7 @@ void A_Face (AActor *self, AActor *other, angle_t _max_turn, angle_t _max_pitch,
 		if (flags & FAF_TOP)
 			target_z = other->Top() + other->GetBobOffset();
 
-		target_z += FIXED2FLOAT(z_add);
+		target_z += z_add;
 
 		double dist_z = target_z - source_z;
 		double ddist = g_sqrt(dist.X*dist.X + dist.Y*dist.Y + dist_z*dist_z);
@@ -2927,12 +2921,12 @@ void A_FaceTarget(AActor *self)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceTarget)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_ANGLE_OPT(max_turn)		{ max_turn = 0; }
-	PARAM_ANGLE_OPT(max_pitch)		{ max_pitch = 270; }
-	PARAM_ANGLE_OPT(ang_offset)		{ ang_offset = 0; }
-	PARAM_ANGLE_OPT(pitch_offset)	{ pitch_offset = 0; }
+	PARAM_ANGLE_OPT(max_turn)		{ max_turn = 0.; }
+	PARAM_ANGLE_OPT(max_pitch)		{ max_pitch = 270.; }
+	PARAM_ANGLE_OPT(ang_offset)	{ ang_offset = 0.; }
+	PARAM_ANGLE_OPT(pitch_offset)	{ pitch_offset = 0.; }
 	PARAM_INT_OPT(flags)			{ flags = 0; }
-	PARAM_FIXED_OPT(z_add)			{ z_add = 0; }
+	PARAM_FLOAT_OPT(z_add)			{ z_add = 0; }
 
 	A_Face(self, self->target, max_turn, max_pitch, ang_offset, pitch_offset, flags, z_add);
 	return 0;
@@ -2941,12 +2935,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceTarget)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceMaster)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_ANGLE_OPT(max_turn)		{ max_turn = 0; }
-	PARAM_ANGLE_OPT(max_pitch)		{ max_pitch = 270; }
-	PARAM_ANGLE_OPT(ang_offset)		{ ang_offset = 0; }
-	PARAM_ANGLE_OPT(pitch_offset)	{ pitch_offset = 0; }
-	PARAM_INT_OPT(flags)			{ flags = 0; }
-	PARAM_FIXED_OPT(z_add)			{ z_add = 0; }
+	PARAM_ANGLE_OPT(max_turn) { max_turn = 0.; }
+	PARAM_ANGLE_OPT(max_pitch) { max_pitch = 270.; }
+	PARAM_ANGLE_OPT(ang_offset) { ang_offset = 0.; }
+	PARAM_ANGLE_OPT(pitch_offset) { pitch_offset = 0.; }
+	PARAM_INT_OPT(flags) { flags = 0; }
+	PARAM_FLOAT_OPT(z_add) { z_add = 0; }
 
 	A_Face(self, self->master, max_turn, max_pitch, ang_offset, pitch_offset, flags, z_add);
 	return 0;
@@ -2955,12 +2949,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceMaster)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceTracer)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_ANGLE_OPT(max_turn)		{ max_turn = 0; }
-	PARAM_ANGLE_OPT(max_pitch)		{ max_pitch = 270; }
-	PARAM_ANGLE_OPT(ang_offset)		{ ang_offset = 0; }
-	PARAM_ANGLE_OPT(pitch_offset)	{ pitch_offset = 0; }
-	PARAM_INT_OPT(flags)			{ flags = 0; }
-	PARAM_FIXED_OPT(z_add)			{ z_add = 0; }
+	PARAM_ANGLE_OPT(max_turn) { max_turn = 0.; }
+	PARAM_ANGLE_OPT(max_pitch) { max_pitch = 270.; }
+	PARAM_ANGLE_OPT(ang_offset) { ang_offset = 0.; }
+	PARAM_ANGLE_OPT(pitch_offset) { pitch_offset = 0.; }
+	PARAM_INT_OPT(flags) { flags = 0; }
+	PARAM_FLOAT_OPT(z_add) { z_add = 0; }
 
 	A_Face(self, self->tracer, max_turn, max_pitch, ang_offset, pitch_offset, flags, z_add);
 	return 0;
@@ -3010,7 +3004,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRail)
 		self->Angles.Yaw += pr_railface.Random2() * 45./256;
 	}
 
-	P_RailAttack (self, self->GetMissileDamage (0, 1), 0);
+	FRailParams p;
+
+	p.source = self;
+	p.damage = self->GetMissileDamage(0, 1);
+	P_RailAttack (&p);
 	self->Angles.Pitch = saved_pitch;
 	return 0;
 }

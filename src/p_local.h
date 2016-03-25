@@ -221,7 +221,7 @@ bool P_Thing_Raise(AActor *thing, AActor *raiser);
 bool P_Thing_CanRaise(AActor *thing);
 PClassActor *P_GetSpawnableType(int spawnnum);
 void InitSpawnablesFromMapinfo();
-int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, fixed_t zofs, angle_t angle, int flags, fixed_t heightoffset, fixed_t radiusoffset, angle_t pitch);
+int P_Thing_Warp(AActor *caller, AActor *reference, double xofs, double yofs, double zofs, DAngle angle, int flags, double heightoffset, double radiusoffset, DAngle pitch);
 
 enum WARPF
 {
@@ -302,6 +302,10 @@ inline bool	P_TryMove(AActor* thing, const DVector2 &pos, int dropoff, const sec
 	return P_TryMove(thing, FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), dropoff, onfloor, tm, missileCheck);
 }
 bool	P_CheckMove(AActor *thing, fixed_t x, fixed_t y);
+inline bool	P_CheckMove(AActor *thing, double x, double y)
+{
+	return P_CheckMove(thing, FLOAT2FIXED(x), FLOAT2FIXED(y));
+}
 void	P_ApplyTorque(AActor *mo);
 bool	P_TeleportMove (AActor* thing, fixed_t x, fixed_t y, fixed_t z, bool telefrag, bool modifyactor = true);	// [RH] Added z and telefrag parameters
 inline bool	P_TeleportMove(AActor* thing, const fixedvec3 &pos, bool telefrag, bool modifyactor = true)
@@ -394,7 +398,28 @@ inline bool	P_HitWater(AActor *thing, sector_t *sec, const fixedvec3 &pos, bool 
 	return P_HitWater(thing, sec, fpos, checkabove, alert, force);
 }
 void	P_CheckSplash(AActor *self, double distance);
-void	P_RailAttack (AActor *source, int damage, int offset_xy, fixed_t offset_z = 0, int color1 = 0, int color2 = 0, double maxdiff = 0, int flags = 0, PClassActor *puff = NULL, angle_t angleoffset = 0, angle_t pitchoffset = 0, fixed_t distance = 8192*FRACUNIT, int duration = 0, double sparsity = 1.0, double drift = 1.0, PClassActor *spawnclass = NULL, int SpiralOffset = 270);	// [RH] Shoot a railgun
+
+struct FRailParams
+{
+	AActor *source = nullptr;
+	int damage = 0;
+	double offset_xy = 0;
+	double offset_z = 0;
+	int color1 = 0, color2 = 0;
+	double maxdiff = 0;
+	int flags = 0;
+	PClassActor *puff = nullptr;
+	DAngle angleoffset = 0.;
+	DAngle pitchoffset = 0.;
+	double distance = 8192;
+	int duration = 0;
+	double sparsity = 1.0;
+	double drift = 1.0;
+	PClassActor *spawnclass = nullptr;
+	int SpiralOffset = 270;
+};	// [RH] Shoot a railgun
+
+void P_RailAttack(FRailParams *params);
 
 enum	// P_RailAttack / A_RailAttack / A_CustomRailgun / P_DrawRailTrail flags
 {	
@@ -428,16 +453,8 @@ void	P_DelSector_List();
 void	P_DelSeclist(msecnode_t *);							// phares 3/16/98
 msecnode_t*	P_DelSecnode(msecnode_t *);
 void	P_CreateSecNodeList(AActor*,fixed_t,fixed_t);		// phares 3/14/98
-int		P_GetMoveFactor(const AActor *mo, int *frictionp);	// phares  3/6/98
-inline double 	P_GetMoveFactor(const AActor *mo, double *frictionp)
-{
-	int rv, fp;
-	rv = P_GetMoveFactor(mo, &fp);
-	*frictionp = FIXED2DBL(fp);
-	return FIXED2DBL(rv);
-}
-
-int		P_GetFriction(const AActor *mo, int *frictionfactor);
+double	P_GetMoveFactor(const AActor *mo, double *frictionp);	// phares  3/6/98
+double		P_GetFriction(const AActor *mo, double *frictionfactor);
 bool	Check_Sides(AActor *, int, int);					// phares
 
 // [RH] 

@@ -3998,7 +3998,7 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		break;
 
 	case APROP_MeleeRange:
-		actor->meleerange = value;
+		actor->meleerange = ACSToDouble(value);
 		break;
 
 	case APROP_ViewHeight:
@@ -4014,7 +4014,7 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 
 	case APROP_AttackZOffset:
 		if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
-			static_cast<APlayerPawn *>(actor)->AttackZOffset = value;
+			static_cast<APlayerPawn *>(actor)->AttackZOffset = ACSToDouble(value);
 		break;
 
 	case APROP_StencilColor:
@@ -4022,7 +4022,7 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		break;
 
 	case APROP_Friction:
-		actor->Friction = value;
+		actor->Friction = ACSToDouble(value);
 
 	default:
 		// do nothing.
@@ -4093,10 +4093,10 @@ int DLevelScript::GetActorProperty (int tid, int property)
 	case APROP_Mass: 		return actor->Mass;
 	case APROP_Accuracy:    return actor->accuracy;
 	case APROP_Stamina:     return actor->stamina;
-	case APROP_Height:		return actor->_f_height();
-	case APROP_Radius:		return actor->_f_radius();
+	case APROP_Height:		return DoubleToACS(actor->Height);
+	case APROP_Radius:		return DoubleToACS(actor->radius);
 	case APROP_ReactionTime:return actor->reactiontime;
-	case APROP_MeleeRange:	return actor->meleerange;
+	case APROP_MeleeRange:	return DoubleToACS(actor->meleerange);
 	case APROP_ViewHeight:	if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
 							{
 								return DoubleToACS(static_cast<APlayerPawn *>(actor)->ViewHeight);
@@ -4108,7 +4108,7 @@ int DLevelScript::GetActorProperty (int tid, int property)
 	case APROP_AttackZOffset:
 							if (actor->IsKindOf (RUNTIME_CLASS (APlayerPawn)))
 							{
-								return static_cast<APlayerPawn *>(actor)->AttackZOffset;
+								return DoubleToACS(static_cast<APlayerPawn *>(actor)->AttackZOffset);
 							}
 							else
 							{
@@ -4123,7 +4123,7 @@ int DLevelScript::GetActorProperty (int tid, int property)
 	case APROP_Species:		return GlobalACSStrings.AddString(actor->GetSpecies());
 	case APROP_NameTag:		return GlobalACSStrings.AddString(actor->GetTag());
 	case APROP_StencilColor:return actor->fillcolor;
-	case APROP_Friction:	return actor->Friction;
+	case APROP_Friction:	return DoubleToACS(actor->Friction);
 
 	default:				return 0;
 	}
@@ -5990,7 +5990,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			if (activator == NULL || !reference)
 				return false;
 
-			if (P_Thing_Warp(activator, reference, xofs, yofs, zofs, angle, flags, heightoffset, radiusoffset, pitch))
+			if (P_Thing_Warp(activator, reference, ACSToDouble(xofs), ACSToDouble(yofs), ACSToDouble(zofs), ACSToAngle(angle), flags, ACSToDouble(heightoffset), ACSToDouble(radiusoffset), ACSToAngle(pitch)))
 			{
 				if (state && argCount > 6)
 				{

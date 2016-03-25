@@ -230,7 +230,7 @@ PClassActor::PClassActor()
 	WoundHealth = 6;
 	PoisonDamage = 0;
 	FastSpeed = -1.;
-	RDFactor = FRACUNIT;
+	RDFactor = 1.;
 	CameraHeight = INT_MIN;
 
 	DropItems = NULL;

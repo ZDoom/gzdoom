@@ -112,8 +112,8 @@ public:
 
 	void init(AActor * t1, AActor * t2, sector_t *startsector, SightTask *task, int flags)
 	{
-		sightstart = t1->PosRelative(task->portalgroup);
-		sightend = t2->PosRelative(task->portalgroup);
+		sightstart = t1->_f_PosRelative(task->portalgroup);
+		sightend = t2->_f_PosRelative(task->portalgroup);
 		sightstart.z += t1->_f_height() - (t1->_f_height() >> 2);
 
 		startfrac = task->frac;

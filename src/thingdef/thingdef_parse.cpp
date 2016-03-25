@@ -486,10 +486,6 @@ static void ParseNativeFunction(FScanner &sc, PClassActor *cls)
 		rets.Push(TypeFloat64);
 		break;
 
-	case TK_Angle_t:
-		rets.Push(TypeAngle);
-		break;
-
 	case TK_Fixed_t:
 		rets.Push(TypeFixed);
 		break;

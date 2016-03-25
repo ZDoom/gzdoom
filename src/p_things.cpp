@@ -670,7 +670,7 @@ void InitSpawnablesFromMapinfo()
 }
 
 
-int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, fixed_t zofs, angle_t angle, int flags, fixed_t heightoffset, fixed_t radiusoffset, angle_t pitch)
+int P_Thing_Warp(AActor *caller, AActor *reference, double xofs, double yofs, double zofs, DAngle angle, int flags, double heightoffset, double radiusoffset, DAngle pitch)
 {
 	if (flags & WARPF_MOVEPTR)
 	{
@@ -679,32 +679,33 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 		caller = temp;
 	}
 
-	fixedvec3 old = caller->_f_Pos();
+	DVector3 old = caller->Pos();
 	int oldpgroup = caller->Sector->PortalGroup;
 
-	zofs += FixedMul(reference->_f_height(), heightoffset);
+	zofs += reference->Height * heightoffset;
 	
 
 	if (!(flags & WARPF_ABSOLUTEANGLE))
 	{
-		angle += (flags & WARPF_USECALLERANGLE) ? caller->_f_angle() : reference->_f_angle();
+		angle += (flags & WARPF_USECALLERANGLE) ? caller->Angles.Yaw: reference->Angles.Yaw;
 	}
 
-	const fixed_t rad = FixedMul(radiusoffset, reference->_f_radius());
-	const angle_t fineangle = angle >> ANGLETOFINESHIFT;
+	const double rad = radiusoffset * reference->radius;
+	const double s = angle.Sin();
+	const double c = angle.Cos();
 
 	if (!(flags & WARPF_ABSOLUTEPOSITION))
 	{
 		if (!(flags & WARPF_ABSOLUTEOFFSET))
 		{
-			fixed_t xofs1 = xofs;
+			double xofs1 = xofs;
 
 			// (borrowed from A_SpawnItemEx, assumed workable)
 			// in relative mode negative y values mean 'left' and positive ones mean 'right'
 			// This is the inverse orientation of the absolute mode!
 			
-			xofs = FixedMul(xofs1, finecosine[fineangle]) + FixedMul(yofs, finesine[fineangle]);
-			yofs = FixedMul(xofs1, finesine[fineangle]) - FixedMul(yofs, finecosine[fineangle]);
+			xofs = xofs1 * c + yofs * s;
+			yofs = xofs1 * s - yofs * c;
 		}
 
 		if (flags & WARPF_TOFLOOR)
@@ -713,30 +714,21 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 			// now the caller's floorz should be appropriate for the assigned xy-position
 			// assigning position again with.
 			// extra unlink, link and environment calculation
-			caller->SetOrigin(reference->Vec3Offset(
-				xofs + FixedMul(rad, finecosine[fineangle]),
-				yofs + FixedMul(rad, finesine[fineangle]),
-				0), true);
-			caller->_f_SetZ(caller->_f_floorz() + zofs);
+			caller->SetOrigin(reference->Vec3Offset(xofs + rad * c, yofs + rad * s, 0.), true);
+			// The two-step process is important.
+			caller->SetZ(caller->floorz + zofs);
 		}
 		else
 		{
-			caller->SetOrigin(reference->Vec3Offset(
-				 xofs + FixedMul(rad, finecosine[fineangle]),
-				 yofs + FixedMul(rad, finesine[fineangle]),
-				 zofs), true);
+			caller->SetOrigin(reference->Vec3Offset(xofs + rad * c, yofs + rad * s, zofs), true);
 		}
 	}
 	else // [MC] The idea behind "absolute" is meant to be "absolute". Override everything, just like A_SpawnItemEx's.
 	{
+		caller->SetOrigin(xofs + rad * c, yofs + rad * s, zofs, true);
 		if (flags & WARPF_TOFLOOR)
 		{
-			caller->SetOrigin(xofs + FixedMul(rad, finecosine[fineangle]), yofs + FixedMul(rad, finesine[fineangle]), zofs, true);
-			caller->_f_SetZ(caller->_f_floorz() + zofs);
-		}
-		else
-		{
-			caller->SetOrigin(xofs + FixedMul(rad, finecosine[fineangle]), yofs + FixedMul(rad, finesine[fineangle]), zofs, true);
+			caller->SetZ(caller->floorz + zofs);
 		}
 	}
 
@@ -748,13 +740,13 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 		}
 		else
 		{
-			caller->Angles.Yaw = ANGLE2DBL(angle);
+			caller->Angles.Yaw = angle;
 
 			if (flags & WARPF_COPYPITCH)
 				caller->SetPitch(reference->Angles.Pitch, false);
 			
-			if (pitch)
-				caller->SetPitch(caller->Angles.Pitch + ANGLE2DBL(pitch), false);
+			if (pitch != 0)
+				caller->SetPitch(caller->Angles.Pitch + pitch, false);
 			
 			if (flags & WARPF_COPYVELOCITY)
 			{
@@ -765,6 +757,7 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 				caller->Vel.Zero();
 			}
 
+#if 0	// needs fixing
 			// this is no fun with line portals 
 			if (flags & WARPF_WARPINTERPOLATION)
 			{
@@ -789,9 +782,11 @@ int P_Thing_Warp(AActor *caller, AActor *reference, fixed_t xofs, fixed_t yofs, 
 			{
 				caller->ClearInterpolation();
 			}
+#endif
+
 			if ((flags & WARPF_BOB) && (reference->flags2 & MF2_FLOATBOB))
 			{
-				caller->_f_AddZ(reference->_f_GetBobOffset());
+				caller->AddZ(reference->GetBobOffset());
 			}
 		}
 		return true;

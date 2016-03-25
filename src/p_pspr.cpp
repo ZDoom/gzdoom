@@ -419,7 +419,7 @@ void P_BobWeapon (player_t *player, pspdef_t *psp, float *x, float *y)
 	{
 		float bobx = float(player->bob * Rangex);
 		float boby = float(player->bob * Rangey);
-		switch (level.levelnum)//bobstyle)
+		switch (bobstyle)
 		{
 		case AWeapon::BobNormal:
 			*x = bobx * angle.Cos();

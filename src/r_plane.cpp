@@ -1243,7 +1243,7 @@ void R_DrawSkyBoxes ()
 			viewx = viewpos.x;
 			viewy = viewpos.y;
 			viewz = viewpos.z;
-			viewangle = savedangle + FLOAT2ANGLE(sky->PrevAngles.Yaw.Degrees) + FixedMul(r_TicFrac, sky->_f_angle() - FLOAT2ANGLE(sky->PrevAngles.Yaw.Degrees));
+			viewangle = savedangle + (sky->PrevAngles.Yaw + (sky->Angles.Yaw * r_TicFracF) - sky->PrevAngles.Yaw).BAMs();
 
 			R_CopyStackedViewParameters();
 		}

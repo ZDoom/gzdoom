@@ -150,17 +150,17 @@ public:
 
 	// [GRB] Player class properties
 	double		JumpZ;
-	fixed_t		GruntSpeed;
-	fixed_t		FallingScreamMinSpeed, FallingScreamMaxSpeed;
+	double		GruntSpeed;
+	double		FallingScreamMinSpeed, FallingScreamMaxSpeed;
 	double		ViewHeight;
 	double		ForwardMove1, ForwardMove2;
 	double		SideMove1, SideMove2;
 	FTextureID	ScoreIcon;
 	int			SpawnMask;
 	FNameNoInit	MorphWeapon;
-	fixed_t		AttackZOffset;			// attack height, relative to player center
-	fixed_t		UseRange;				// [NS] Distance at which player can +use
-	fixed_t		AirCapacity;			// Multiplier for air supply underwater.
+	double		AttackZOffset;			// attack height, relative to player center
+	double		UseRange;				// [NS] Distance at which player can +use
+	double		AirCapacity;			// Multiplier for air supply underwater.
 	PClassActor *FlechetteType;
 
 

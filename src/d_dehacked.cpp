@@ -1141,14 +1141,12 @@ static int PatchThing (int thingy)
 						}
 
 						// MBF bounce factors depend on flag combos:
-						enum
-						{
-							MBF_BOUNCE_NOGRAVITY	= FRACUNIT,				// With NOGRAVITY: full momentum
-							MBF_BOUNCE_FLOATDROPOFF	= (FRACUNIT * 85) / 100,// With FLOAT and DROPOFF: 85%
-							MBF_BOUNCE_FLOAT		= (FRACUNIT * 70) / 100,// With FLOAT alone: 70%
-							MBF_BOUNCE_DEFAULT		= (FRACUNIT * 45) / 100,// Without the above flags: 45%
-							MBF_BOUNCE_WALL			= (FRACUNIT * 50) / 100,// Bouncing off walls: 50%
-						};
+						const double MBF_BOUNCE_NOGRAVITY = 1;				// With NOGRAVITY: full momentum
+						const double MBF_BOUNCE_FLOATDROPOFF = 0.85;		// With FLOAT and DROPOFF: 85%
+						const double MBF_BOUNCE_FLOAT = 0.7;				// With FLOAT alone: 70%
+						const double MBF_BOUNCE_DEFAULT = 0.45;				// Without the above flags: 45%
+						const double MBF_BOUNCE_WALL = 0.5;					// Bouncing off walls: 50%
+
 						info->bouncefactor = ((value[0] & MF_NOGRAVITY) ? MBF_BOUNCE_NOGRAVITY
 							: (value[0] & MF_FLOAT) ? (value[0] & MF_DROPOFF) ? MBF_BOUNCE_FLOATDROPOFF
 							: MBF_BOUNCE_FLOAT : MBF_BOUNCE_DEFAULT);

@@ -1027,7 +1027,7 @@ fixed_t sector_t::NextLowestFloorAt(fixed_t x, fixed_t y, fixed_t z, int flags, 
 //
 //===========================================================================
 
-fixed_t sector_t::GetFriction(int plane, fixed_t *pMoveFac) const
+ double sector_t::GetFriction(int plane, double *pMoveFac) const
 {
 	if (Flags & SECF_FRICTION) 
 	{ 

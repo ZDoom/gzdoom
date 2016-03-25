@@ -590,7 +590,7 @@ public:
 	DDropItem *GetDropItems() const;
 
 	// Return true if the monster should use a missile attack, false for melee
-	bool SuggestMissileAttack (fixed_t dist);
+	bool SuggestMissileAttack (double dist);
 
 	// Adjusts the angle for deflection/reflection of incoming missiles
 	// Returns true if the missile should be allowed to explode anyway
@@ -837,25 +837,20 @@ public:
 	// to distinguish between portal-aware and portal-unaware distance calculation.
 	fixed_t AproxDistance(AActor *other, bool absolute = false)
 	{
-		fixedvec3 otherpos = absolute ? other->_f_Pos() : other->PosRelative(this);
+		fixedvec3 otherpos = absolute ? other->_f_Pos() : other->_f_PosRelative(this);
 		return P_AproxDistance(_f_X() - otherpos.x, _f_Y() - otherpos.y);
 	}
 
 	fixed_t AproxDistance(AActor *other, fixed_t xadd, fixed_t yadd, bool absolute = false)
 	{
-		fixedvec3 otherpos = absolute ? other->_f_Pos() : other->PosRelative(this);
+		fixedvec3 otherpos = absolute ? other->_f_Pos() : other->_f_PosRelative(this);
 		return P_AproxDistance(_f_X() - otherpos.x + xadd, _f_Y() - otherpos.y + yadd);
-	}
-
-	fixed_t AproxDistance3D(AActor *other, bool absolute = false)
-	{
-		return P_AproxDistance(AproxDistance(other), _f_Z() - other->_f_Z());
 	}
 
 	// more precise, but slower version, being used in a few places
 	double Distance2D(AActor *other, bool absolute = false)
 	{
-		fixedvec3 otherpos = absolute ? other->_f_Pos() : other->PosRelative(this);
+		fixedvec3 otherpos = absolute ? other->_f_Pos() : other->_f_PosRelative(this);
 		return (DVector2(_f_X() - otherpos.x, _f_Y() - otherpos.y).Length())/FRACUNIT;
 	}
 
@@ -867,13 +862,13 @@ public:
 	// a full 3D version of the above
 	fixed_t Distance3D(AActor *other, bool absolute = false)
 	{
-		fixedvec3 otherpos = absolute ? other->_f_Pos() : other->PosRelative(this);
+		fixedvec3 otherpos = absolute ? other->_f_Pos() : other->_f_PosRelative(this);
 		return xs_RoundToInt(DVector3(_f_X() - otherpos.x, _f_Y() - otherpos.y, _f_Z() - otherpos.z).Length());
 	}
 
 	angle_t __f_AngleTo(AActor *other, bool absolute = false)
 	{
-		fixedvec3 otherpos = absolute ? other->_f_Pos() : other->PosRelative(this);
+		fixedvec3 otherpos = absolute ? other->_f_Pos() : other->_f_PosRelative(this);
 		return R_PointToAngle2(_f_X(), _f_Y(), otherpos.x, otherpos.y);
 	}
 
@@ -884,13 +879,13 @@ public:
 
 	DAngle AngleTo(AActor *other, bool absolute = false)
 	{
-		fixedvec3 otherpos = absolute ? other->_f_Pos() : other->PosRelative(this);
+		fixedvec3 otherpos = absolute ? other->_f_Pos() : other->_f_PosRelative(this);
 		return VecToAngle(otherpos.x - _f_X(), otherpos.y - _f_Y());
 	}
 
 	DAngle AngleTo(AActor *other, fixed_t oxofs, fixed_t oyofs, bool absolute = false) const
 	{
-		fixedvec3 otherpos = absolute ? other->_f_Pos() : other->PosRelative(this);
+		fixedvec3 otherpos = absolute ? other->_f_Pos() : other->_f_PosRelative(this);
 		return VecToAngle(otherpos.y + oxofs - _f_Y(), otherpos.x + oyofs - _f_X());
 	}
 
@@ -901,27 +896,27 @@ public:
 
 	fixedvec2 _f_Vec2To(AActor *other) const
 	{
-		fixedvec3 otherpos = other->PosRelative(this);
+		fixedvec3 otherpos = other->_f_PosRelative(this);
 		fixedvec2 ret = { otherpos.x - _f_X(), otherpos.y - _f_Y() };
 		return ret;
 	}
 
 	fixedvec3 _f_Vec3To(AActor *other) const
 	{
-		fixedvec3 otherpos = other->PosRelative(this);
+		fixedvec3 otherpos = other->_f_PosRelative(this);
 		fixedvec3 ret = { otherpos.x - _f_X(), otherpos.y - _f_Y(), otherpos.z - _f_Z() };
 		return ret;
 	}
 
 	DVector2 Vec2To(AActor *other) const
 	{
-		fixedvec3 otherpos = other->PosRelative(this);
+		fixedvec3 otherpos = other->_f_PosRelative(this);
 		return{ FIXED2DBL(otherpos.x - _f_X()), FIXED2DBL(otherpos.y - _f_Y()) };
 	}
 
 	DVector3 Vec3To(AActor *other) const
 	{
-		fixedvec3 otherpos = other->PosRelative(this);
+		fixedvec3 otherpos = other->_f_PosRelative(this);
 		return { FIXED2DBL(otherpos.x - _f_X()), FIXED2DBL(otherpos.y - _f_Y()), FIXED2DBL(otherpos.z - _f_Z()) };
 	}
 
@@ -1235,18 +1230,18 @@ public:
 	SBYTE			LastLookPlayerNumber;// Player number last looked for (if TIDtoHate == 0)
 	ActorBounceFlags	BounceFlags;	// which bouncing type?
 	DWORD			SpawnFlags;		// Increased to DWORD because of Doom 64
-	fixed_t			meleerange;		// specifies how far a melee attack reaches.
-	fixed_t			meleethreshold;	// Distance below which a monster doesn't try to shoot missiles anynore
+	double			meleerange;		// specifies how far a melee attack reaches.
+	double			meleethreshold;	// Distance below which a monster doesn't try to shoot missiles anynore
 									// but instead tries to come closer for a melee attack.
 									// This is not the same as meleerange
-	fixed_t			maxtargetrange;	// any target farther away cannot be attacked
-	fixed_t			bouncefactor;	// Strife's grenades use 50%, Hexen's Flechettes 70.
-	fixed_t			wallbouncefactor;	// The bounce factor for walls can be different.
+	double			maxtargetrange;	// any target farther away cannot be attacked
+	double			bouncefactor;	// Strife's grenades use 50%, Hexen's Flechettes 70.
+	double			wallbouncefactor;	// The bounce factor for walls can be different.
 	int				bouncecount;	// Strife's grenades only bounce twice before exploding
 	double			Gravity;		// [GRB] Gravity factor
-	fixed_t			Friction;
+	double			Friction;
 	int 			FastChaseStrafeCount;
-	fixed_t			pushfactor;
+	double			pushfactor;
 	int				lastpush;
 	int				activationtype;	// How the thing behaves when activated with USESPECIAL or BUMPSPECIAL
 	int				lastbump;		// Last time the actor was bumped, used to control BUMPSPECIAL
@@ -1419,10 +1414,10 @@ public:
 		return DVector3(X(), Y(), Z());
 	}
 
-	fixedvec3 PosRelative(int grp) const;
-	fixedvec3 PosRelative(const AActor *other) const;
-	fixedvec3 PosRelative(sector_t *sec) const;
-	fixedvec3 PosRelative(line_t *line) const;
+	fixedvec3 _f_PosRelative(int grp) const;
+	fixedvec3 _f_PosRelative(const AActor *other) const;
+	fixedvec3 _f_PosRelative(sector_t *sec) const;
+	fixedvec3 _f_PosRelative(line_t *line) const;
 
 	fixed_t SoundX() const
 	{
@@ -1477,14 +1472,6 @@ public:
 	double Center() const
 	{
 		return Z() + Height/2;
-	}
-	double _pushfactor() const
-	{
-		return FIXED2DBL(pushfactor);
-	}
-	double _bouncefactor() const
-	{
-		return FIXED2DBL(bouncefactor);
 	}
 	void SetZ(double newz, bool moving = true)
 	{

@@ -153,7 +153,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PainAttack)
 		return 0;
 
 	PARAM_CLASS_OPT (spawntype, AActor)	{ spawntype = NULL; }
-	PARAM_DANGLE_OPT (angle)				{ angle = 0.; }
+	PARAM_ANGLE_OPT (angle)				{ angle = 0.; }
 	PARAM_INT_OPT   (flags)				{ flags = 0; }
 	PARAM_INT_OPT   (limit)				{ limit = -1; }
 

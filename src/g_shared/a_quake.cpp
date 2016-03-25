@@ -238,9 +238,8 @@ double DEarthquake::GetFalloff(double dist) const
 	else if ((dist > m_Falloff) && (dist < m_TremorRadius))
 	{ //Player inside the radius, and outside the min distance for falloff.
 		double tremorsize = m_TremorRadius - m_Falloff;
-		double tremordist = dist - m_Falloff;
 		assert(tremorsize > 0);
-		return (1. - tremordist) / tremorsize;
+		return (1. - ((dist - m_Falloff) / tremorsize));
 	}
 	else 
 	{ //Shouldn't happen.

@@ -1224,12 +1224,12 @@ void P_InitSectorSpecial(sector_t *sector, int special, bool nothinkers)
 		break;
 
 	case dSector_DoorRaiseIn5Mins:
-		new DDoor (sector, DDoor::doorWaitRaise, 2*FRACUNIT, TICRATE*30/7, 5*60*TICRATE, 0);
+		new DDoor (sector, DDoor::doorWaitRaise, 2*FRACUNIT, TICRATE*30/7, 0, 5*60*TICRATE);
 		break;
 
 	case dFriction_Low:
 		sector->friction = FRICTION_LOW;
-		sector->movefactor = 0x269;
+		sector->movefactor = 0x269/65536.;
 		sector->Flags |= SECF_FRICTION;
 		break;
 
@@ -2076,7 +2076,7 @@ static void P_SpawnFriction(void)
 			}
 			else
 			{
-				length = P_AproxDistance(l->dx,l->dy)>>FRACBITS;
+				length = int(l->Delta().Length());
 			}
 
 			P_SetSectorFriction (l->args[0], length, false);
@@ -2088,14 +2088,14 @@ static void P_SpawnFriction(void)
 void P_SetSectorFriction (int tag, int amount, bool alterFlag)
 {
 	int s;
-	fixed_t friction, movefactor;
+	double friction, movefactor;
 
 	// An amount of 100 should result in a friction of
 	// ORIG_FRICTION (0xE800)
-	friction = (0x1EB8*amount)/0x80 + 0xD001;
+	friction = ((0x1EB8 * amount) / 0x80 + 0xD001) / 65536.;
 
 	// killough 8/28/98: prevent odd situations
-	friction = clamp(friction, 0, FRACUNIT);
+	friction = clamp(friction, 0., 1.);
 
 	// The following check might seem odd. At the time of movement,
 	// the move distance is multiplied by 'friction/0x10000', so a
@@ -2132,6 +2132,26 @@ void P_SetSectorFriction (int tag, int amount, bool alterFlag)
 		}
 	}
 }
+
+double FrictionToMoveFactor(double friction)
+{
+	double movefactor;
+
+	// [RH] Twiddled these values so that velocity on ice (with
+	//		friction 0xf900) is the same as in Heretic/Hexen.
+	if (friction >= ORIG_FRICTION)	// ice
+									//movefactor = ((0x10092 - friction)*(0x70))/0x158;
+		movefactor = (((0x10092 - friction * 65536) * 1024) / 4352 + 568) / 65536.;
+	else
+		movefactor = (((friction*65536. - 0xDB34)*(0xA)) / 0x80) / 65536.;
+
+	// killough 8/28/98: prevent odd situations
+	if (movefactor < 1 / 2048.)
+		movefactor = 1 / 2048.;
+
+	return movefactor;
+}
+
 
 //
 // phares 3/12/98: End of friction effects
@@ -2314,7 +2334,7 @@ void DPusher::Tick ()
 			continue;
 
 		sector_t *hsec = sec->GetHeightSec();
-		fixedvec3 pos = thing->PosRelative(sec);
+		fixedvec3 pos = thing->_f_PosRelative(sec);
 		DVector2 pushvel;
 		if (m_Type == p_wind)
 		{

@@ -80,7 +80,6 @@ PSound *TypeSound;
 PColor *TypeColor;
 PStatePointer *TypeState;
 PFixed *TypeFixed;
-PAngle *TypeAngle;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -507,7 +506,6 @@ void PType::StaticInit()
 	RUNTIME_CLASS(PClass)->TypeTableType = RUNTIME_CLASS(PClass);
 	RUNTIME_CLASS(PStatePointer)->TypeTableType = RUNTIME_CLASS(PStatePointer);
 	RUNTIME_CLASS(PFixed)->TypeTableType = RUNTIME_CLASS(PFixed);
-	RUNTIME_CLASS(PAngle)->TypeTableType = RUNTIME_CLASS(PAngle);
 
 	// Create types and add them type the type table.
 	TypeTable.AddType(TypeError = new PErrorType);
@@ -527,7 +525,6 @@ void PType::StaticInit()
 	TypeTable.AddType(TypeColor = new PColor);
 	TypeTable.AddType(TypeState = new PStatePointer);
 	TypeTable.AddType(TypeFixed = new PFixed);
-	TypeTable.AddType(TypeAngle = new PAngle);
 
 	GlobalSymbols.AddSymbol(new PSymbolType(NAME_sByte, TypeSInt8));
 	GlobalSymbols.AddSymbol(new PSymbolType(NAME_Byte, TypeUInt8));
@@ -546,7 +543,6 @@ void PType::StaticInit()
 	GlobalSymbols.AddSymbol(new PSymbolType(NAME_Color, TypeColor));
 	GlobalSymbols.AddSymbol(new PSymbolType(NAME_State, TypeState));
 	GlobalSymbols.AddSymbol(new PSymbolType(NAME_Fixed, TypeFixed));
-	GlobalSymbols.AddSymbol(new PSymbolType(NAME_Angle, TypeAngle));
 }
 
 
@@ -1144,67 +1140,6 @@ int PFixed::GetStoreOp() const
 int PFixed::GetLoadOp() const
 {
 	return OP_LX;
-}
-
-/* PAngle *****************************************************************/
-
-IMPLEMENT_CLASS(PAngle)
-
-//==========================================================================
-//
-// PAngle Default Constructor
-//
-//==========================================================================
-
-PAngle::PAngle()
-: PFloat(sizeof(angle_t))
-{
-}
-
-//==========================================================================
-//
-// PAngle :: SetValue
-//
-//==========================================================================
-
-void PAngle::SetValue(void *addr, int val)
-{
-	assert(((intptr_t)addr & (Align - 1)) == 0 && "unaligned address");
-	*(angle_t *)addr = Scale(val, ANGLE_90, 90);
-}
-
-//==========================================================================
-//
-// PAngle :: GetValueInt
-//
-//==========================================================================
-
-int PAngle::GetValueInt(void *addr) const
-{
-	assert(((intptr_t)addr & (Align - 1)) == 0 && "unaligned address");
-	return *(angle_t *)addr / ANGLE_1;
-}
-
-//==========================================================================
-//
-// PAngle :: GetStoreOp
-//
-//==========================================================================
-
-int PAngle::GetStoreOp() const
-{
-	return OP_SANG;
-}
-
-//==========================================================================
-//
-// PAngle :: GetLoadOp
-//
-//==========================================================================
-
-int PAngle::GetLoadOp() const
-{
-	return OP_LANG;
 }
 
 /* PStatePointer **********************************************************/

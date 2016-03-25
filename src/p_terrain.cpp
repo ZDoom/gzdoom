@@ -488,15 +488,15 @@ static void ParseDamage (FScanner &sc, int keyword, void *fields)
 static void ParseFriction (FScanner &sc, int keyword, void *fields)
 {
 	FTerrainDef *def = (FTerrainDef *)fields;
-	fixed_t friction, movefactor;
+	double friction, movefactor;
 
 	sc.MustGetFloat ();
 
 	// These calculations should match those in P_SetSectorFriction().
 	// A friction of 1.0 is equivalent to ORIG_FRICTION.
 
-	friction = (fixed_t)(0x1EB8*(sc.Float*100))/0x80 + 0xD001;
-	friction = clamp<fixed_t> (friction, 0, FRACUNIT);
+	friction = (0x1EB8*(sc.Float*100))/0x80 + 0xD001;
+	friction = clamp<double> (friction, 0, 65536.);
 
 	if (friction > ORIG_FRICTION)	// ice
 		movefactor = ((0x10092 - friction) * 1024) / 4352 + 568;
@@ -506,8 +506,8 @@ static void ParseFriction (FScanner &sc, int keyword, void *fields)
 	if (movefactor < 32)
 		movefactor = 32;
 
-	def->Friction = friction;
-	def->MoveFactor = movefactor;
+	def->Friction = friction / 65536.;
+	def->MoveFactor = movefactor / 65536.;
 }
 
 //==========================================================================

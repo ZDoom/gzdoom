@@ -847,11 +847,6 @@ public:
 		return P_AproxDistance(_f_X() - otherpos.x + xadd, _f_Y() - otherpos.y + yadd);
 	}
 
-	fixed_t AproxDistance3D(AActor *other, bool absolute = false)
-	{
-		return P_AproxDistance(AproxDistance(other), _f_Z() - other->_f_Z());
-	}
-
 	// more precise, but slower version, being used in a few places
 	double Distance2D(AActor *other, bool absolute = false)
 	{

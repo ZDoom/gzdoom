@@ -415,18 +415,6 @@ public:
 	virtual int GetLoadOp() const;
 };
 
-class PAngle : public PFloat
-{
-	DECLARE_CLASS(PAngle, PFloat);
-public:
-	PAngle();
-
-	virtual void SetValue(void *addr, int val);
-	virtual int GetValueInt(void *addr) const;
-	virtual int GetStoreOp() const;
-	virtual int GetLoadOp() const;
-};
-
 // Pointers -----------------------------------------------------------------
 
 class PStatePointer : public PBasicType
@@ -784,7 +772,6 @@ extern PSound *TypeSound;
 extern PColor *TypeColor;
 extern PStatePointer *TypeState;
 extern PFixed *TypeFixed;
-extern PAngle *TypeAngle;
 
 // A constant value ---------------------------------------------------------
 

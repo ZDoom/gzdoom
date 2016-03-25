@@ -220,16 +220,6 @@ begin:
 		GETADDR(PB,RC,X_READ_NIL);
 		reg.f[a] = *(VM_SWORD *)ptr / 65536.0;
 		NEXTOP;
-	OP(LANG):
-		ASSERTF(a); ASSERTA(B); ASSERTKD(C);
-		GETADDR(PB,KC,X_READ_NIL);
-		reg.f[a] = (*(VM_UWORD *)ptr >> 1) * (180.0 / 0x40000000);	// BAM -> deg
-		NEXTOP;
-	OP(LANG_R):
-		ASSERTF(a); ASSERTA(B); ASSERTD(C);
-		GETADDR(PB,RC,X_READ_NIL);
-		reg.f[a] = (*(VM_UWORD *)ptr >> 1) * (180.0 / 0x40000000);
-		NEXTOP;
 	OP(LBIT):
 		ASSERTD(a); ASSERTA(B);
 		GETADDR(PB,0,X_READ_NIL);
@@ -335,16 +325,6 @@ begin:
 		ASSERTA(a); ASSERTF(B); ASSERTD(C);
 		GETADDR(PA,RC,X_WRITE_NIL);
 		*(VM_SWORD *)ptr = (VM_SWORD)(reg.f[B] * 65536.0);
-		NEXTOP;
-	OP(SANG):
-		ASSERTA(a); ASSERTF(B); ASSERTKD(C);
-		GETADDR(PA,KC,X_WRITE_NIL);
-		*(VM_UWORD *)ptr = (VM_UWORD)(xs_CRoundToInt((reg.f[B]) * (0x40000000/90.)));	// deg -> BAM
-		NEXTOP;
-	OP(SANG_R):
-		ASSERTA(a); ASSERTF(B); ASSERTD(C);
-		GETADDR(PA,RC,X_WRITE_NIL);
-		*(VM_UWORD *)ptr = (VM_UWORD)(xs_CRoundToInt((reg.f[B]) * (0x40000000/90.)));
 		NEXTOP;
 	OP(SBIT):
 		ASSERTA(a); ASSERTD(B);

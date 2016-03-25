@@ -652,7 +652,7 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 	}
 	else
 	{
-		fixedvec2 disp = Displacements.getOffset(oldgroup, newgroup);
+		fixedvec2 disp = Displacements._f_getOffset(oldgroup, newgroup);
 		viewx = iview->oviewx + FixedMul(frac, iview->nviewx - iview->oviewx - disp.x);
 		viewy = iview->oviewy + FixedMul(frac, iview->nviewy - iview->oviewy - disp.y);
 		viewz = iview->oviewz + FixedMul(frac, iview->nviewz - iview->oviewz);

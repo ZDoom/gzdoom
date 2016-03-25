@@ -838,12 +838,12 @@ struct sector_t
 	// These may only be called if the portal has been validated
 	fixedvec2 FloorDisplacement()
 	{
-		return Displacements.getOffset(PortalGroup, SkyBoxes[sector_t::floor]->Sector->PortalGroup);
+		return Displacements._f_getOffset(PortalGroup, SkyBoxes[sector_t::floor]->Sector->PortalGroup);
 	}
 
 	fixedvec2 CeilingDisplacement()
 	{
-		return Displacements.getOffset(PortalGroup, SkyBoxes[sector_t::ceiling]->Sector->PortalGroup);
+		return Displacements._f_getOffset(PortalGroup, SkyBoxes[sector_t::ceiling]->Sector->PortalGroup);
 	}
 
 	int GetTerrain(int pos) const;
@@ -1336,34 +1336,58 @@ inline sector_t *P_PointInSector(const DVector2 &pos)
 
 inline fixedvec3 AActor::_f_PosRelative(int portalgroup) const
 {
-	return _f_Pos() + Displacements.getOffset(Sector->PortalGroup, portalgroup);
+	return _f_Pos() + Displacements._f_getOffset(Sector->PortalGroup, portalgroup);
 }
 
 inline fixedvec3 AActor::_f_PosRelative(const AActor *other) const
 {
-	return _f_Pos() + Displacements.getOffset(Sector->PortalGroup, other->Sector->PortalGroup);
+	return _f_Pos() + Displacements._f_getOffset(Sector->PortalGroup, other->Sector->PortalGroup);
 }
 
 inline fixedvec3 AActor::_f_PosRelative(sector_t *sec) const
 {
-	return _f_Pos() + Displacements.getOffset(Sector->PortalGroup, sec->PortalGroup);
+	return _f_Pos() + Displacements._f_getOffset(Sector->PortalGroup, sec->PortalGroup);
 }
 
 inline fixedvec3 AActor::_f_PosRelative(line_t *line) const
 {
-	return _f_Pos() + Displacements.getOffset(Sector->PortalGroup, line->frontsector->PortalGroup);
+	return _f_Pos() + Displacements._f_getOffset(Sector->PortalGroup, line->frontsector->PortalGroup);
 }
 
 inline fixedvec3 _f_PosRelative(const fixedvec3 &pos, line_t *line, sector_t *refsec = NULL)
 {
+	return pos + Displacements._f_getOffset(refsec->PortalGroup, line->frontsector->PortalGroup);
+}
+
+inline DVector3 AActor::PosRelative(int portalgroup) const
+{
+	return Pos() + Displacements.getOffset(Sector->PortalGroup, portalgroup);
+}
+
+inline DVector3 AActor::PosRelative(const AActor *other) const
+{
+	return Pos() + Displacements.getOffset(Sector->PortalGroup, other->Sector->PortalGroup);
+}
+
+inline DVector3 AActor::PosRelative(sector_t *sec) const
+{
+	return Pos() + Displacements.getOffset(Sector->PortalGroup, sec->PortalGroup);
+}
+
+inline DVector3 AActor::PosRelative(line_t *line) const
+{
+	return Pos() + Displacements.getOffset(Sector->PortalGroup, line->frontsector->PortalGroup);
+}
+
+inline DVector3 PosRelative(const DVector3 &pos, line_t *line, sector_t *refsec = NULL)
+{
 	return pos + Displacements.getOffset(refsec->PortalGroup, line->frontsector->PortalGroup);
 }
 
+
 inline void AActor::ClearInterpolation()
 {
-	PrevX = _f_X();
-	PrevY = _f_Y();
-	PrevZ = _f_Z();
+	Prev = Pos();
 	PrevAngles = Angles;
 	if (Sector) PrevPortalGroup = Sector->PortalGroup;
 	else PrevPortalGroup = 0;

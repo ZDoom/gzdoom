@@ -2816,7 +2816,7 @@ void P_NightmareRespawn (AActor *mobj)
 
 	mo->skillrespawncount = mobj->skillrespawncount;
 
-	mo->PrevZ = FLOAT2FIXED(z);		// Do not interpolate Z position if we changed it since spawning.
+	mo->Prev.Z = z;		// Do not interpolate Z position if we changed it since spawning.
 
 	// spawn a teleport fog at old spot because of removal of the body?
 	P_SpawnTeleportFog(mobj, mobj->PosPlusZ(TELEFOGHEIGHT), true, true);
@@ -3294,13 +3294,11 @@ void AActor::CheckPortalTransition(bool islinked)
 		AActor *port = Sector->SkyBoxes[sector_t::ceiling];
 		if (Z() > port->specialf1)
 		{
-			fixedvec3 oldpos = _f_Pos();
+			DVector3 oldpos = Pos();
 			if (islinked && !moved) UnlinkFromWorld();
-			SetXYZ(_f_PosRelative(port->Sector));
-			PrevX += _f_X() - oldpos.x;
-			PrevY += _f_Y() - oldpos.y;
-			PrevZ += _f_Z() - oldpos.z;
-			Sector = P_PointInSector(_f_X(), _f_Y());
+			SetXYZ(PosRelative(port->Sector));
+			Prev = Pos() - oldpos;
+			Sector = P_PointInSector(Pos());
 			PrevPortalGroup = Sector->PortalGroup;
 			moved = true;
 		}
@@ -3313,13 +3311,11 @@ void AActor::CheckPortalTransition(bool islinked)
 			AActor *port = Sector->SkyBoxes[sector_t::floor];
 			if (Z() < port->specialf1 && floorz < port->specialf1)
 			{
-				fixedvec3 oldpos = _f_Pos();
+				DVector3 oldpos = Pos();
 				if (islinked && !moved) UnlinkFromWorld();
-				SetXYZ(_f_PosRelative(port->Sector));
-				PrevX += _f_X() - oldpos.x;
-				PrevY += _f_Y() - oldpos.y;
-				PrevZ += _f_Z() - oldpos.z;
-				Sector = P_PointInSector(_f_X(), _f_Y());
+				SetXYZ(PosRelative(port->Sector));
+				Prev = Pos() - oldpos;
+				Sector = P_PointInSector(Pos());
 				PrevPortalGroup = Sector->PortalGroup;
 				moved = true;
 			}

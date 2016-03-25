@@ -1209,7 +1209,7 @@ bool P_CollectConnectedGroups(int startgroup, const fixedvec3 &position, fixed_t
 		while (!wsec->PortalBlocksMovement(sector_t::ceiling) && upperz > FLOAT2FIXED(wsec->SkyBoxes[sector_t::ceiling]->specialf1))
 		{
 			sector_t *othersec = wsec->SkyBoxes[sector_t::ceiling]->Sector;
-			fixedvec2 pos = Displacements.getOffset(startgroup, othersec->PortalGroup);
+			fixedvec2 pos = Displacements._f_getOffset(startgroup, othersec->PortalGroup);
 			fixed_t dx = position.x + pos.x;
 			fixed_t dy = position.y + pos.y;
 			processMask.setBit(othersec->PortalGroup);
@@ -1221,7 +1221,7 @@ bool P_CollectConnectedGroups(int startgroup, const fixedvec3 &position, fixed_t
 		while (!wsec->PortalBlocksMovement(sector_t::floor) && position.z < FLOAT2FIXED(wsec->SkyBoxes[sector_t::floor]->specialf1))
 		{
 			sector_t *othersec = wsec->SkyBoxes[sector_t::floor]->Sector;
-			fixedvec2 pos = Displacements.getOffset(startgroup, othersec->PortalGroup);
+			fixedvec2 pos = Displacements._f_getOffset(startgroup, othersec->PortalGroup);
 			fixed_t dx = position.x + pos.x;
 			fixed_t dy = position.y + pos.y;
 			processMask.setBit(othersec->PortalGroup | FPortalGroupArray::LOWER);
@@ -1236,7 +1236,7 @@ bool P_CollectConnectedGroups(int startgroup, const fixedvec3 &position, fixed_t
 			int thisgroup = startgroup;
 			for (unsigned i = 0; i < groupsToCheck.Size();i++)
 			{
-				fixedvec2 disp = Displacements.getOffset(startgroup, thisgroup & ~FPortalGroupArray::FLAT);
+				fixedvec2 disp = Displacements._f_getOffset(startgroup, thisgroup & ~FPortalGroupArray::FLAT);
 				FBoundingBox box(position.x + disp.x, position.y + disp.y, checkradius);
 				FBlockLinesIterator it(box);
 				line_t *ld;

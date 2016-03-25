@@ -2545,8 +2545,7 @@ void A_DoChase (VMFrameStack *stack, AActor *actor, bool fastchase, FState *mele
 	if ((!fastchase || !actor->FastChaseStrafeCount) && !dontmove)
 	{
 		// CANTLEAVEFLOORPIC handling was completely missing in the non-serpent functions.
-		fixed_t oldX = actor->_f_X();
-		fixed_t oldY = actor->_f_Y();
+		DVector2 old = actor->Pos();
 		int oldgroup = actor->PrevPortalGroup;
 		FTextureID oldFloor = actor->floorpic;
 
@@ -2559,12 +2558,12 @@ void A_DoChase (VMFrameStack *stack, AActor *actor, bool fastchase, FState *mele
 		// (copied from A_SerpentChase - it applies to everything with CANTLEAVEFLOORPIC!)
 		if (actor->flags2&MF2_CANTLEAVEFLOORPIC && actor->floorpic != oldFloor )
 		{
-			if (P_TryMove(actor, oldX, oldY, false))
+			if (P_TryMove(actor, old, false))
 			{
 				if (nomonsterinterpolation)
 				{
-					actor->PrevX = oldX;
-					actor->PrevY = oldY;
+					actor->Prev.X = old.X;
+					actor->Prev.Y = old.Y;
 					actor->PrevPortalGroup = oldgroup;
 				}
 			}

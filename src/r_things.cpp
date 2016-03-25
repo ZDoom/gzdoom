@@ -767,10 +767,10 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 		return;
 
 	// [RH] Interpolate the sprite's position to make it look smooth
-	fixedvec3 pos = thing->InterpolatedPosition(r_TicFrac);
-	fx = pos.x;
-	fy = pos.y;
-	fz = pos.z + thing->_f_GetBobOffset(r_TicFrac);
+	DVector3 pos = thing->InterpolatedPosition(r_TicFracF);
+	fx = FLOAT2FIXED(pos.X);
+	fy = FLOAT2FIXED(pos.Y);
+	fz = FLOAT2FIXED(pos.Z + thing->GetBobOffset(r_TicFracF));
 
 	tex = NULL;
 	voxel = NULL;

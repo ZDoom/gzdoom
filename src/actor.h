@@ -742,13 +742,13 @@ public:
 	// What species am I?
 	virtual FName GetSpecies();
 
-	double GetBobOffset(fixed_t ticfrac = 0) const
+	double GetBobOffset(double ticfrac = 0) const
 	{
 		if (!(flags2 & MF2_FLOATBOB))
 		{
 			return 0;
 		}
-		return BobSin(FloatBobPhase + level.maptime + FIXED2FLOAT(ticfrac));
+		return BobSin(FloatBobPhase + level.maptime + ticfrac);
 	}
 
 
@@ -850,8 +850,8 @@ public:
 	// more precise, but slower version, being used in a few places
 	double Distance2D(AActor *other, bool absolute = false)
 	{
-		fixedvec3 otherpos = absolute ? other->_f_Pos() : other->_f_PosRelative(this);
-		return (DVector2(_f_X() - otherpos.x, _f_Y() - otherpos.y).Length())/FRACUNIT;
+		DVector2 otherpos = absolute ? other->Pos() : other->PosRelative(this);
+		return (Pos().XY() - otherpos).Length();
 	}
 
 	double Distance2D(double x, double y) const
@@ -860,10 +860,10 @@ public:
 	}
 
 	// a full 3D version of the above
-	fixed_t Distance3D(AActor *other, bool absolute = false)
+	double Distance3D(AActor *other, bool absolute = false)
 	{
-		fixedvec3 otherpos = absolute ? other->_f_Pos() : other->_f_PosRelative(this);
-		return xs_RoundToInt(DVector3(_f_X() - otherpos.x, _f_Y() - otherpos.y, _f_Z() - otherpos.z).Length());
+		DVector3 otherpos = absolute ? other->Pos() : other->PosRelative(this);
+		return (Pos() - otherpos).Length();
 	}
 
 	angle_t __f_AngleTo(AActor *other, bool absolute = false)
@@ -879,19 +879,20 @@ public:
 
 	DAngle AngleTo(AActor *other, bool absolute = false)
 	{
-		fixedvec3 otherpos = absolute ? other->_f_Pos() : other->_f_PosRelative(this);
-		return VecToAngle(otherpos.x - _f_X(), otherpos.y - _f_Y());
+		DVector2 otherpos = absolute ? other->Pos() : other->PosRelative(this);
+		return VecToAngle(otherpos - Pos().XY());
 	}
 
 	DAngle AngleTo(AActor *other, fixed_t oxofs, fixed_t oyofs, bool absolute = false) const
 	{
 		fixedvec3 otherpos = absolute ? other->_f_Pos() : other->_f_PosRelative(this);
-		return VecToAngle(otherpos.y + oxofs - _f_Y(), otherpos.x + oyofs - _f_X());
+		return VecToAngle(otherpos.x + oxofs - _f_X(), otherpos.y + oyofs - _f_Y());
 	}
 
 	DAngle AngleTo(AActor *other, double oxofs, double oyofs, bool absolute = false) const
 	{
-		return FIXED2DBL(AngleTo(other, FLOAT2FIXED(oxofs), FLOAT2FIXED(oyofs), absolute));
+		DVector2 otherpos = absolute ? other->Pos() : other->PosRelative(this);
+		return VecToAngle(otherpos - Pos() + DVector2(oxofs, oyofs));
 	}
 
 	fixedvec2 _f_Vec2To(AActor *other) const
@@ -910,14 +911,12 @@ public:
 
 	DVector2 Vec2To(AActor *other) const
 	{
-		fixedvec3 otherpos = other->_f_PosRelative(this);
-		return{ FIXED2DBL(otherpos.x - _f_X()), FIXED2DBL(otherpos.y - _f_Y()) };
+		return other->PosRelative(this) - Pos();
 	}
 
 	DVector3 Vec3To(AActor *other) const
 	{
-		fixedvec3 otherpos = other->_f_PosRelative(this);
-		return { FIXED2DBL(otherpos.x - _f_X()), FIXED2DBL(otherpos.y - _f_Y()), FIXED2DBL(otherpos.z - _f_Z()) };
+		return other->PosRelative(this) - Pos();
 	}
 
 	fixedvec2 Vec2Offset(fixed_t dx, fixed_t dy, bool absolute = false)
@@ -1089,14 +1088,7 @@ public:
 // info for drawing
 // NOTE: The first member variable *must* be snext.
 	AActor			*snext, **sprev;	// links in sector (if needed)
-	DVector3		__Pos;				// double underscores so that it won't get used by accident. Access to this should be exclusively through the designated access functions.
-
-	/*
-	angle_t			angle;
-	fixed_t			pitch;
-	angle_t			roll;	// This was fixed_t before, which is probably wrong
-	fixedvec3		vel;
-	*/
+	DVector3		__Pos;		// double underscores so that it won't get used by accident. Access to this should be exclusively through the designated access functions.
 
 	DRotator		Angles;
 	DVector3		Vel;
@@ -1321,8 +1313,7 @@ public:
 	FDecalBase *DecalGenerator;
 
 	// [RH] Used to interpolate the view to get >35 FPS
-	fixed_t PrevX, PrevY, PrevZ;
-	//angle_t PrevAngle;
+	DVector3 Prev;
 	DRotator PrevAngles;
 	int PrevPortalGroup;
 
@@ -1419,6 +1410,11 @@ public:
 	fixedvec3 _f_PosRelative(sector_t *sec) const;
 	fixedvec3 _f_PosRelative(line_t *line) const;
 
+	DVector3 PosRelative(int grp) const;
+	DVector3 PosRelative(const AActor *other) const;
+	DVector3 PosRelative(sector_t *sec) const;
+	DVector3 PosRelative(line_t *line) const;
+
 	fixed_t SoundX() const
 	{
 		return _f_X();
@@ -1431,14 +1427,9 @@ public:
 	{
 		return _f_Z();
 	}
-	fixedvec3 InterpolatedPosition(fixed_t ticFrac) const
+	DVector3 InterpolatedPosition(double ticFrac) const
 	{
-		fixedvec3 ret;
-
-		ret.x = PrevX + FixedMul (ticFrac, _f_X() - PrevX);
-		ret.y = PrevY + FixedMul (ticFrac, _f_Y() - PrevY);
-		ret.z = PrevZ + FixedMul (ticFrac, _f_Z() - PrevZ);
-		return ret;
+		return Prev + (ticFrac * (Pos() - Prev));
 	}
 	fixedvec3 PosPlusZ(fixed_t zadd) const
 	{
@@ -1480,7 +1471,7 @@ public:
 	void AddZ(double newz, bool moving = true)
 	{
 		__Pos.Z += newz;
-		if (!moving) PrevZ = _f_Z();
+		if (!moving) Prev.Z = Z();
 	}
 
 	// These are not for general use as they do not link the actor into the world!

@@ -54,7 +54,7 @@ struct FDisplacementTable
 		return data[x + size*y];
 	}
 
-	fixedvec2 getOffset(int x, int y) const
+	fixedvec2 _f_getOffset(int x, int y) const
 	{
 		if (x == y)
 		{
@@ -63,6 +63,18 @@ struct FDisplacementTable
 		}
 		return data[x + size*y].pos;
 	}
+
+	DVector2 getOffset(int x, int y) const
+	{
+		if (x == y)
+		{
+			DVector2 nulvec = { 0,0 };
+			return nulvec;	// shortcut for the most common case
+		}
+		fixedvec2 &p = data[x + size*y].pos;
+		return{ FIXED2DBL(p.x), FIXED2DBL(p.y) };
+	}
+
 };
 
 extern FDisplacementTable Displacements;

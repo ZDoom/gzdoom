@@ -870,7 +870,7 @@ bool FMultiBlockLinesIterator::Next(FMultiBlockLinesIterator::CheckResult *item)
 
 void FMultiBlockLinesIterator::startIteratorForGroup(int group)
 {
-	offset = Displacements.getOffset(basegroup, group);
+	offset = Displacements._f_getOffset(basegroup, group);
 	offset.x += checkpoint.x;
 	offset.y += checkpoint.y;
 	cursector = group == startsector->PortalGroup ? startsector : P_PointInSector(offset.x, offset.y);
@@ -1104,7 +1104,7 @@ bool FMultiBlockThingsIterator::Next(FMultiBlockThingsIterator::CheckResult *ite
 	if (thing != NULL)
 	{
 		item->thing = thing;
-		item->position = checkpoint + Displacements.getOffset(basegroup, thing->Sector->PortalGroup);
+		item->position = checkpoint + Displacements._f_getOffset(basegroup, thing->Sector->PortalGroup);
 		item->portalflags = portalflags;
 
 		// same as above in floating point. This is here so that this stuff can be converted piece by piece.
@@ -1146,7 +1146,7 @@ bool FMultiBlockThingsIterator::Next(FMultiBlockThingsIterator::CheckResult *ite
 
 void FMultiBlockThingsIterator::startIteratorForGroup(int group)
 {
-	fixedvec2 offset = Displacements.getOffset(basegroup, group);
+	fixedvec2 offset = Displacements._f_getOffset(basegroup, group);
 	offset.x += checkpoint.x;
 	offset.y += checkpoint.y;
 	bbox.setBox(offset.x, offset.y, checkpoint.z);

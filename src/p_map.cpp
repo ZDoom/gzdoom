@@ -2299,8 +2299,8 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 			{
 				thing->UnlinkFromWorld();
 				thing->SetXY(tm.x + port->mXDisplacement, tm.y + port->mYDisplacement);
-				thing->PrevX += port->mXDisplacement;
-				thing->PrevY += port->mYDisplacement;
+				thing->Prev.X += FIXED2DBL(port->mXDisplacement);
+				thing->Prev.Y += FIXED2DBL(port->mYDisplacement);
 				thing->LinkToWorld();
 				P_FindFloorCeiling(thing);
 				portalcrossed = true;

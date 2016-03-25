@@ -1239,10 +1239,10 @@ void R_DrawSkyBoxes ()
 			extralight = 0;
 			R_SetVisibility (sky->args[0] * 0.25f);
 
-			fixedvec3 viewpos = sky->InterpolatedPosition(r_TicFrac);
-			viewx = viewpos.x;
-			viewy = viewpos.y;
-			viewz = viewpos.z;
+			DVector3 viewpos = sky->InterpolatedPosition(r_TicFracF);
+			viewx = FLOAT2FIXED(viewpos.X);
+			viewy = FLOAT2FIXED(viewpos.Y);
+			viewz = FLOAT2FIXED(viewpos.Z);
 			viewangle = savedangle + (sky->PrevAngles.Yaw + (sky->Angles.Yaw * r_TicFracF) - sky->PrevAngles.Yaw).BAMs();
 
 			R_CopyStackedViewParameters();
@@ -1251,8 +1251,8 @@ void R_DrawSkyBoxes ()
 		{
 			extralight = pl->extralight;
 			R_SetVisibility (pl->visibility);
-			viewx = pl->viewx - sky->Mate->_f_X() + sky->_f_X();
-			viewy = pl->viewy - sky->Mate->_f_Y() + sky->_f_Y();
+			viewx = pl->viewx - FLOAT2FIXED(sky->Mate->X() + sky->X());
+			viewy = pl->viewy - FLOAT2FIXED(sky->Mate->Y() + sky->Y());
 			viewz = pl->viewz;
 			viewangle = pl->viewangle;
 		}

@@ -5087,7 +5087,7 @@ void P_UseLines(player_t *player)
 	bool foundline = false;
 
 	// If the player is transitioning a portal, use the group that is at its vertical center.
-	fixedvec2 start = player->mo->GetPortalTransition(player->mo->_f_height() / 2);
+	fixedvec2 start = player->mo->_f_GetPortalTransition(player->mo->_f_height() / 2);
 	// [NS] Now queries the Player's UseRange.
 	fixedvec2 end = start + Vec2Angle(FLOAT2FIXED(player->mo->UseRange), player->mo->_f_angle());
 

@@ -626,6 +626,11 @@ struct sector_t
 		return planes[pos].xform.xoffs;
 	}
 
+	double GetXOffsetF(int pos) const
+	{
+		return FIXED2DBL(planes[pos].xform.xoffs);
+	}
+
 	void SetYOffset(int pos, fixed_t o)
 	{
 		planes[pos].xform.yoffs = o;
@@ -648,6 +653,18 @@ struct sector_t
 		}
 	}
 
+	double GetYOffsetF(int pos, bool addbase = true) const
+	{
+		if (!addbase)
+		{
+			return FIXED2DBL(planes[pos].xform.yoffs);
+		}
+		else
+		{
+			return FIXED2DBL(planes[pos].xform.yoffs + planes[pos].xform.base_yoffs);
+		}
+	}
+
 	void SetXScale(int pos, fixed_t o)
 	{
 		planes[pos].xform.xscale = o;
@@ -658,6 +675,11 @@ struct sector_t
 		return planes[pos].xform.xscale;
 	}
 
+	double GetXScaleF(int pos) const
+	{
+		return FIXED2DBL(planes[pos].xform.xscale);
+	}
+
 	void SetYScale(int pos, fixed_t o)
 	{
 		planes[pos].xform.yscale = o;
@@ -666,6 +688,11 @@ struct sector_t
 	fixed_t GetYScale(int pos) const
 	{
 		return planes[pos].xform.yscale;
+	}
+
+	double GetYScaleF(int pos) const
+	{
+		return FIXED2DBL(planes[pos].xform.yscale);
 	}
 
 	void SetAngle(int pos, angle_t o)
@@ -682,6 +709,18 @@ struct sector_t
 		else
 		{
 			return planes[pos].xform.angle + planes[pos].xform.base_angle;
+		}
+	}
+
+	DAngle GetAngleF(int pos, bool addbase = true) const
+	{
+		if (!addbase)
+		{
+			return ANGLE2DBL(planes[pos].xform.angle);
+		}
+		else
+		{
+			return ANGLE2DBL(planes[pos].xform.angle + planes[pos].xform.base_angle);
 		}
 	}
 
@@ -1342,6 +1381,11 @@ inline sector_t *P_PointInSector(fixed_t x, fixed_t y)
 inline sector_t *P_PointInSector(const DVector2 &pos)
 {
 	return P_PointInSubsector(FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y))->sector;
+}
+
+inline sector_t *P_PointInSector(double X, double Y)
+{
+	return P_PointInSubsector(FLOAT2FIXED(X), FLOAT2FIXED(Y))->sector;
 }
 
 inline fixedvec3 AActor::_f_PosRelative(int portalgroup) const

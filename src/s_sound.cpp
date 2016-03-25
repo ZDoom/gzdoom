@@ -724,7 +724,7 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 
 			if ((chanflags & CHAN_LISTENERZ) && players[consoleplayer].camera != NULL)
 			{
-				y = players[consoleplayer].camera != NULL ? players[consoleplayer].camera->SoundZ() : 0;
+				y = players[consoleplayer].camera != NULL ? FLOAT2FIXED(players[consoleplayer].camera->SoundPos().Z) : 0;
 			}
 			pos->X = FIXED2FLOAT(x);
 			pos->Y = FIXED2FLOAT(y);
@@ -1952,7 +1952,7 @@ static void S_SetListener(SoundListener &listener, AActor *listenactor)
 {
 	if (listenactor != NULL)
 	{
-		listener.angle = ToRadians(listenactor->Angles.Yaw);
+		listener.angle = (float)ToRadians(listenactor->Angles.Yaw);
 		/*
 		listener.velocity.X = listenactor->vel.x * (TICRATE/65536.f);
 		listener.velocity.Y = listenactor->vel.z * (TICRATE/65536.f);

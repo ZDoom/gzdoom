@@ -3249,7 +3249,7 @@ void AActor::SetRoll(DAngle r, bool interpolate)
 }
 
 
-fixedvec3 AActor::GetPortalTransition(fixed_t byoffset, sector_t **pSec)
+fixedvec3 AActor::_f_GetPortalTransition(fixed_t byoffset, sector_t **pSec)
 {
 	bool moved = false;
 	sector_t *sec = Sector;

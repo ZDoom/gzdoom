@@ -235,9 +235,7 @@ void AActor::Serialize(FArchive &arc)
 		sprite = arc.ReadSprite();
 	}
 
-	arc << __pos.x
-		<< __pos.y
-		<< __pos.z
+	arc << __Pos
 		<< Angles.Yaw
 		<< Angles.Pitch
 		<< Angles.Roll

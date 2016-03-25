@@ -1089,7 +1089,7 @@ public:
 // info for drawing
 // NOTE: The first member variable *must* be snext.
 	AActor			*snext, **sprev;	// links in sector (if needed)
-	fixedvec3		__pos;				// double underscores so that it won't get used by accident. Access to this should be exclusively through the designated access functions.
+	DVector3		__Pos;				// double underscores so that it won't get used by accident. Access to this should be exclusively through the designated access functions.
 
 	/*
 	angle_t			angle;
@@ -1382,36 +1382,36 @@ public:
 
 	fixed_t _f_X() const
 	{
-		return __pos.x;
+		return FLOAT2FIXED(__Pos.X);
 	}
 	fixed_t _f_Y() const
 	{
-		return __pos.y;
+		return FLOAT2FIXED(__Pos.Y);
 	}
 	fixed_t _f_Z() const
 	{
-		return __pos.z;
+		return FLOAT2FIXED(__Pos.Z);
 	}
 	fixedvec3 _f_Pos() const
 	{
-		return __pos;
+		return{ _f_X(), _f_Y(), _f_Z() };
 	}
 
 	double X() const
 	{
-		return FIXED2DBL(__pos.x);
+		return __Pos.X;
 	}
 	double Y() const
 	{
-		return FIXED2DBL(__pos.y);
+		return __Pos.Y;
 	}
 	double Z() const
 	{
-		return FIXED2DBL(__pos.z);
+		return __Pos.Z;
 	}
 	DVector3 Pos() const
 	{
-		return DVector3(X(), Y(), Z());
+		return __Pos;
 	}
 
 	fixedvec3 _f_PosRelative(int grp) const;
@@ -1459,11 +1459,11 @@ public:
 	}
 	void _f_SetZ(fixed_t newz, bool moving = true)
 	{
-		__pos.z = newz;
+		__Pos.Z = FIXED2DBL(newz);
 	}
 	void _f_AddZ(fixed_t newz, bool moving = true)
 	{
-		__pos.z += newz;
+		__Pos.Z += FIXED2DBL(newz);
 	}
 	double Top() const
 	{
@@ -1475,53 +1475,49 @@ public:
 	}
 	void SetZ(double newz, bool moving = true)
 	{
-		__pos.z = FLOAT2FIXED(newz);
+		__Pos.Z = newz;
 	}
 	void AddZ(double newz, bool moving = true)
 	{
-		__pos.z += FLOAT2FIXED(newz);
-		if (!moving) PrevZ = __pos.z;
+		__Pos.Z += newz;
+		if (!moving) PrevZ = _f_Z();
 	}
 
 	// These are not for general use as they do not link the actor into the world!
 	void SetXY(fixed_t xx, fixed_t yy)
 	{
-		__pos.x = xx;
-		__pos.y = yy;
+		__Pos.X = FIXED2DBL(xx);
+		__Pos.Y = FIXED2DBL(yy);
 	}
 	void SetXY(const fixedvec2 &npos)
 	{
-		__pos.x = npos.x;
-		__pos.y = npos.y;
+		__Pos.X = FIXED2DBL(npos.x);
+		__Pos.Y = FIXED2DBL(npos.y);
 	}
 	void SetXY(const DVector2 &npos)
 	{
-		__pos.x = FLOAT2FIXED(npos.X);
-		__pos.y = FLOAT2FIXED(npos.Y);
+		__Pos.X = npos.X;
+		__Pos.Y = npos.Y;
 	}
 	void SetXYZ(fixed_t xx, fixed_t yy, fixed_t zz)
 	{
-		__pos.x = xx;
-		__pos.y = yy;
-		__pos.z = zz;
+		__Pos.X = FIXED2DBL(xx);
+		__Pos.Y = FIXED2DBL(yy);
+		__Pos.Z = FIXED2DBL(zz);
 	}
 	void SetXYZ(double xx, double yy, double zz)
 	{
-		__pos.x = FLOAT2FIXED(xx);
-		__pos.y = FLOAT2FIXED(yy);
-		__pos.z = FLOAT2FIXED(zz);
+		__Pos = { xx,yy,zz };
 	}
 	void SetXYZ(const fixedvec3 &npos)
 	{
-		__pos.x = npos.x;
-		__pos.y = npos.y;
-		__pos.z = npos.z;
+		__Pos.X = FIXED2DBL(npos.x);
+		__Pos.Y = FIXED2DBL(npos.y);
+		__Pos.Z = FIXED2DBL(npos.z);
 	}
 	void SetXYZ(const DVector3 &npos)
 	{
-		__pos.x = FLOAT2FIXED(npos.X);
-		__pos.y = FLOAT2FIXED(npos.Y);
-		__pos.z = FLOAT2FIXED(npos.Z);
+		__Pos = npos;
 	}
 
 	double VelXYToSpeed() const

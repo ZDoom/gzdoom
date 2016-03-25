@@ -122,8 +122,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 	PARAM_CLASS_OPT	(pufftype, AActor)	{ pufftype = NULL; }
 	PARAM_INT_OPT	(flags)				{ flags = 0; }
 	PARAM_FLOAT_OPT	(range)				{ range = 0; }
-	PARAM_DANGLE_OPT(spread_xy)			{ spread_xy = 2.8125; }
-	PARAM_DANGLE_OPT(spread_z)			{ spread_z = 0.; }
+	PARAM_ANGLE_OPT	(spread_xy)			{ spread_xy = 2.8125; }
+	PARAM_ANGLE_OPT	(spread_z)			{ spread_z = 0.; }
 	PARAM_FLOAT_OPT	(lifesteal)			{ lifesteal = 0; }
 	PARAM_INT_OPT	(lifestealmax)		{ lifestealmax = 0; }
 	PARAM_CLASS_OPT	(armorbonustype, ABasicArmorBonus)	{ armorbonustype = NULL; }
@@ -636,9 +636,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BFGSpray)
 	PARAM_CLASS_OPT	(spraytype, AActor)		{ spraytype = NULL; }
 	PARAM_INT_OPT	(numrays)				{ numrays = 0; }
 	PARAM_INT_OPT	(damagecnt)				{ damagecnt = 0; }
-	PARAM_DANGLE_OPT(angle)					{ angle = 0.; }
+	PARAM_ANGLE_OPT	(angle)					{ angle = 0.; }
 	PARAM_FLOAT_OPT	(distance)				{ distance = 0; }
-	PARAM_DANGLE_OPT(vrange)				{ vrange = 0.; }
+	PARAM_ANGLE_OPT	(vrange)				{ vrange = 0.; }
 	PARAM_INT_OPT	(defdamage)				{ defdamage = 0; }
 
 	int 				i;

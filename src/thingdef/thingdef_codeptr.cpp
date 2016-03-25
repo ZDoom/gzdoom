@@ -1198,9 +1198,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomMissile)
 	PARAM_CLASS		(ti, AActor);
 	PARAM_FLOAT_OPT	(Spawnheight) { Spawnheight = 32; }
 	PARAM_FLOAT_OPT	(Spawnofs_xy) { Spawnofs_xy = 0; }
-	PARAM_DANGLE_OPT(Angle)		  { Angle = 0.; }
+	PARAM_ANGLE_OPT	(Angle)		  { Angle = 0.; }
 	PARAM_INT_OPT	(flags)		  { flags = 0; }
-	PARAM_DANGLE_OPT(Pitch)		  { Pitch = 0.; }
+	PARAM_ANGLE_OPT	(Pitch)		  { Pitch = 0.; }
 	PARAM_INT_OPT	(ptr)		  { ptr = AAPTR_TARGET; }
 
 	AActor *ref = COPY_AAPTR(self, ptr);
@@ -1339,8 +1339,8 @@ enum CBA_Flags
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomBulletAttack)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_DANGLE	(spread_xy);
-	PARAM_DANGLE	(spread_z);
+	PARAM_ANGLE		(spread_xy);
+	PARAM_ANGLE		(spread_z);
 	PARAM_INT		(numbullets);
 	PARAM_INT		(damageperbullet);
 	PARAM_CLASS_OPT	(pufftype, AActor) { pufftype = PClass::FindActor(NAME_BulletPuff); }
@@ -1524,8 +1524,8 @@ enum FB_Flags
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireBullets)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_DANGLE		(spread_xy);
-	PARAM_DANGLE		(spread_z);
+	PARAM_ANGLE		(spread_xy);
+	PARAM_ANGLE		(spread_z);
 	PARAM_INT		(numbullets);
 	PARAM_INT		(damageperbullet);
 	PARAM_CLASS_OPT	(pufftype, AActor)	{ pufftype = NULL; }
@@ -1618,12 +1618,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireCustomMissile)
 {
 	PARAM_ACTION_PROLOGUE;
 	PARAM_CLASS		(ti, AActor);
-	PARAM_DANGLE_OPT(angle)			{ angle = 0.; }
+	PARAM_ANGLE_OPT	(angle)			{ angle = 0.; }
 	PARAM_BOOL_OPT	(useammo)		{ useammo = true; }
 	PARAM_FLOAT_OPT	(spawnofs_xy)	{ spawnofs_xy = 0; }
 	PARAM_FLOAT_OPT	(spawnheight)	{ spawnheight = 0; }
 	PARAM_INT_OPT	(flags)			{ flags = 0; }
-	PARAM_DANGLE_OPT(pitch)			{ pitch = 0.; }
+	PARAM_ANGLE_OPT	(pitch)			{ pitch = 0.; }
 
 	if (!self->player)
 		return 0;
@@ -1806,8 +1806,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RailAttack)
 	PARAM_INT_OPT	(flags)				{ flags = 0; }
 	PARAM_FLOAT_OPT	(maxdiff)			{ maxdiff = 0; }
 	PARAM_CLASS_OPT	(pufftype, AActor)	{ pufftype = PClass::FindActor(NAME_BulletPuff); }
-	PARAM_DANGLE_OPT(spread_xy)			{ spread_xy = 0.; }
-	PARAM_DANGLE_OPT(spread_z)			{ spread_z = 0.; }
+	PARAM_ANGLE_OPT	(spread_xy)			{ spread_xy = 0.; }
+	PARAM_ANGLE_OPT	(spread_z)			{ spread_z = 0.; }
 	PARAM_FLOAT_OPT	(range)				{ range = 0; }
 	PARAM_INT_OPT	(duration)			{ duration = 0; }
 	PARAM_FLOAT_OPT	(sparsity)			{ sparsity = 1; }
@@ -1883,8 +1883,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 	PARAM_INT_OPT	(aim)				{ aim = CRF_DONTAIM; }
 	PARAM_FLOAT_OPT	(maxdiff)			{ maxdiff = 0; }
 	PARAM_CLASS_OPT	(pufftype, AActor)	{ pufftype = PClass::FindActor(NAME_BulletPuff); }
-	PARAM_DANGLE_OPT(spread_xy)			{ spread_xy = 0.; }
-	PARAM_DANGLE_OPT(spread_z)			{ spread_z = 0.; }
+	PARAM_ANGLE_OPT	(spread_xy)			{ spread_xy = 0.; }
+	PARAM_ANGLE_OPT	(spread_z)			{ spread_z = 0.; }
 	PARAM_FLOAT_OPT	(range)				{ range = 0; }
 	PARAM_INT_OPT	(duration)			{ duration = 0; }
 	PARAM_FLOAT_OPT	(sparsity)			{ sparsity = 1; }
@@ -2453,7 +2453,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItemEx)
 	PARAM_FLOAT_OPT	(xvel)		{ xvel = 0; }
 	PARAM_FLOAT_OPT	(yvel)		{ yvel = 0; }
 	PARAM_FLOAT_OPT	(zvel)		{ zvel = 0; }
-	PARAM_DANGLE_OPT(angle)		{ angle = 0.; }
+	PARAM_ANGLE_OPT	(angle)		{ angle = 0.; }
 	PARAM_INT_OPT	(flags)		{ flags = 0; }
 	PARAM_INT_OPT	(chance)	{ chance = 0; }
 	PARAM_INT_OPT	(tid)		{ tid = 0; }
@@ -2995,7 +2995,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnParticle)
 	PARAM_INT_OPT	(flags)			{ flags = 0; }
 	PARAM_INT_OPT	(lifetime)		{ lifetime = 35; }
 	PARAM_INT_OPT	(size)			{ size = 1; }
-	PARAM_DANGLE_OPT(angle)			{ angle = 0.; }
+	PARAM_ANGLE_OPT	(angle)			{ angle = 0.; }
 	PARAM_FLOAT_OPT	(xoff)			{ xoff = 0; }
 	PARAM_FLOAT_OPT	(yoff)			{ yoff = 0; }
 	PARAM_FLOAT_OPT	(zoff)			{ zoff = 0; }
@@ -3679,8 +3679,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
 	PARAM_INT_OPT	(flags)			{ flags = 0; }
 	PARAM_FLOAT_OPT	(range)			{ range = 0; }
 	PARAM_FLOAT_OPT	(minrange)		{ minrange = 0; }
-	PARAM_DANGLE_OPT(angle)			{ angle = 0.; }
-	PARAM_DANGLE_OPT(pitch)			{ pitch = 0.; }
+	PARAM_ANGLE_OPT	(angle)			{ angle = 0.; }
+	PARAM_ANGLE_OPT	(pitch)			{ pitch = 0.; }
 	PARAM_FLOAT_OPT	(offsetheight)	{ offsetheight = 0; }
 	PARAM_FLOAT_OPT	(offsetwidth)	{ offsetwidth = 0; }
 	PARAM_INT_OPT	(ptr_target)	{ ptr_target = AAPTR_DEFAULT; }
@@ -3868,7 +3868,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 {
 	PARAM_ACTION_PROLOGUE;
 	PARAM_STATE		(jump);
-	PARAM_DANGLE_OPT(fov)			{ fov = 0.; }
+	PARAM_ANGLE_OPT	(fov)			{ fov = 0.; }
 	PARAM_INT_OPT	(flags)			{ flags = 0; }
 	PARAM_FLOAT_OPT	(dist_max)		{ dist_max = 0; }
 	PARAM_FLOAT_OPT	(dist_close)	{ dist_close = 0; }
@@ -4004,7 +4004,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfInTargetLOS)
 {
 	PARAM_ACTION_PROLOGUE;
 	PARAM_STATE		(jump);
-	PARAM_DANGLE_OPT(fov)			{ fov = 0.; }
+	PARAM_ANGLE_OPT	(fov)			{ fov = 0.; }
 	PARAM_INT_OPT	(flags)			{ flags = 0; }
 	PARAM_FLOAT_OPT	(dist_max)		{ dist_max = 0; }
 	PARAM_FLOAT_OPT	(dist_close)	{ dist_close = 0; }
@@ -5118,12 +5118,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Warp)
 	PARAM_FLOAT_OPT(xofs)				{ xofs = 0; }
 	PARAM_FLOAT_OPT(yofs)				{ yofs = 0; }
 	PARAM_FLOAT_OPT(zofs)				{ zofs = 0; }
-	PARAM_DANGLE_OPT(angle)				{ angle = 0.; }
+	PARAM_ANGLE_OPT(angle)				{ angle = 0.; }
 	PARAM_INT_OPT(flags)				{ flags = 0; }
 	PARAM_STATE_OPT(success_state)		{ success_state = NULL; }
 	PARAM_FLOAT_OPT(heightoffset)		{ heightoffset = 0; }
 	PARAM_FLOAT_OPT(radiusoffset)		{ radiusoffset = 0; }
-	PARAM_DANGLE_OPT(pitch)				{ pitch = 0.; }
+	PARAM_ANGLE_OPT(pitch)				{ pitch = 0.; }
 	
 	AActor *reference;
 
@@ -6605,7 +6605,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckBlock)
 	PARAM_FLOAT_OPT(xofs)	{ xofs = 0; }
 	PARAM_FLOAT_OPT(yofs)	{ yofs = 0; }
 	PARAM_FLOAT_OPT(zofs)	{ zofs = 0; }
-	PARAM_DANGLE_OPT(angle)	{ angle = 0.; }
+	PARAM_ANGLE_OPT(angle)	{ angle = 0.; }
 
 	AActor *mobj = COPY_AAPTR(self, ptr);
 
@@ -6700,9 +6700,9 @@ enum FMDFlags
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceMovementDirection)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_DANGLE_OPT(offset)			{ offset = 0.; }
-	PARAM_DANGLE_OPT(anglelimit)		{ anglelimit = 0.; }
-	PARAM_DANGLE_OPT(pitchlimit)		{ pitchlimit = 0.; }
+	PARAM_ANGLE_OPT(offset)			{ offset = 0.; }
+	PARAM_ANGLE_OPT(anglelimit)		{ anglelimit = 0.; }
+	PARAM_ANGLE_OPT(pitchlimit)		{ pitchlimit = 0.; }
 	PARAM_INT_OPT(flags)			{ flags = 0; }
 	PARAM_INT_OPT(ptr)				{ ptr = AAPTR_DEFAULT; }
 

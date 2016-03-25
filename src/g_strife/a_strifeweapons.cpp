@@ -690,7 +690,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireGrenade)
 {
 	PARAM_ACTION_PROLOGUE;
 	PARAM_CLASS(grenadetype, AActor);
-	PARAM_DANGLE(angleofs);
+	PARAM_ANGLE(angleofs);
 	PARAM_STATE(flash)
 
 	player_t *player = self->player;

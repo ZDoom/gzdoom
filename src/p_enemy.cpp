@@ -1890,7 +1890,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_LookEx)
 	PARAM_FLOAT_OPT	(minseedist)	{ minseedist = 0; }
 	PARAM_FLOAT_OPT	(maxseedist)	{ maxseedist = 0; }
 	PARAM_FLOAT_OPT (maxheardist)	{ maxheardist = 0; }
-	PARAM_DANGLE_OPT (fov)			{ fov = 0.; }
+	PARAM_ANGLE_OPT (fov)			{ fov = 0.; }
 	PARAM_STATE_OPT	(seestate)		{ seestate = NULL; }
 
 	AActor *targ = NULL; // Shuts up gcc
@@ -2921,10 +2921,10 @@ void A_FaceTarget(AActor *self)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceTarget)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_DANGLE_OPT(max_turn)		{ max_turn = 0.; }
-	PARAM_DANGLE_OPT(max_pitch)		{ max_pitch = 270.; }
-	PARAM_DANGLE_OPT(ang_offset)	{ ang_offset = 0.; }
-	PARAM_DANGLE_OPT(pitch_offset)	{ pitch_offset = 0.; }
+	PARAM_ANGLE_OPT(max_turn)		{ max_turn = 0.; }
+	PARAM_ANGLE_OPT(max_pitch)		{ max_pitch = 270.; }
+	PARAM_ANGLE_OPT(ang_offset)	{ ang_offset = 0.; }
+	PARAM_ANGLE_OPT(pitch_offset)	{ pitch_offset = 0.; }
 	PARAM_INT_OPT(flags)			{ flags = 0; }
 	PARAM_FLOAT_OPT(z_add)			{ z_add = 0; }
 
@@ -2935,10 +2935,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceTarget)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceMaster)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_DANGLE_OPT(max_turn) { max_turn = 0.; }
-	PARAM_DANGLE_OPT(max_pitch) { max_pitch = 270.; }
-	PARAM_DANGLE_OPT(ang_offset) { ang_offset = 0.; }
-	PARAM_DANGLE_OPT(pitch_offset) { pitch_offset = 0.; }
+	PARAM_ANGLE_OPT(max_turn) { max_turn = 0.; }
+	PARAM_ANGLE_OPT(max_pitch) { max_pitch = 270.; }
+	PARAM_ANGLE_OPT(ang_offset) { ang_offset = 0.; }
+	PARAM_ANGLE_OPT(pitch_offset) { pitch_offset = 0.; }
 	PARAM_INT_OPT(flags) { flags = 0; }
 	PARAM_FLOAT_OPT(z_add) { z_add = 0; }
 
@@ -2949,10 +2949,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceMaster)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceTracer)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_DANGLE_OPT(max_turn) { max_turn = 0.; }
-	PARAM_DANGLE_OPT(max_pitch) { max_pitch = 270.; }
-	PARAM_DANGLE_OPT(ang_offset) { ang_offset = 0.; }
-	PARAM_DANGLE_OPT(pitch_offset) { pitch_offset = 0.; }
+	PARAM_ANGLE_OPT(max_turn) { max_turn = 0.; }
+	PARAM_ANGLE_OPT(max_pitch) { max_pitch = 270.; }
+	PARAM_ANGLE_OPT(ang_offset) { ang_offset = 0.; }
+	PARAM_ANGLE_OPT(pitch_offset) { pitch_offset = 0.; }
 	PARAM_INT_OPT(flags) { flags = 0; }
 	PARAM_FLOAT_OPT(z_add) { z_add = 0; }
 

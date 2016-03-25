@@ -3964,7 +3964,7 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 		break;
 
 	case APROP_DamageMultiplier:
-		actor->DamageMultiply = value;
+		actor->DamageMultiply = ACSToDouble(value);
 		break;
 
 	case APROP_MasterTID:
@@ -4044,7 +4044,7 @@ int DLevelScript::GetActorProperty (int tid, int property)
 	case APROP_Speed:		return DoubleToACS(actor->Speed);
 	case APROP_Damage:		return actor->GetMissileDamage(0,1);
 	case APROP_DamageFactor:return DoubleToACS(actor->DamageFactor);
-	case APROP_DamageMultiplier: return actor->DamageMultiply;
+	case APROP_DamageMultiplier: return DoubleToACS(actor->DamageMultiply);
 	case APROP_Alpha:		return DoubleToACS(actor->Alpha);
 	case APROP_RenderStyle:	for (int style = STYLE_None; style < STYLE_Count; ++style)
 							{ // Check for a legacy render style that matches.

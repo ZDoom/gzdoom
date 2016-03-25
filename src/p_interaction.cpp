@@ -1076,7 +1076,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 
 			if (damage > 0 && source != NULL)
 			{
-				damage = FixedMul(damage, source->DamageMultiply);
+				damage = int(damage * source->DamageMultiply);
 
 				// Handle active damage modifiers (e.g. PowerDamage)
 				if (damage > 0 && source->Inventory != NULL)

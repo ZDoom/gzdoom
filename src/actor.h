@@ -1290,7 +1290,7 @@ public:
 	FNameNoInit DamageType;
 	FNameNoInit DamageTypeReceived;
 	double DamageFactor;
-	fixed_t DamageMultiply;
+	double DamageMultiply;
 
 	FNameNoInit PainType;
 	FNameNoInit DeathType;

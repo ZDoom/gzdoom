@@ -575,7 +575,7 @@ void ADynamicLight::CollectWithinRadius(const fixedvec3 &pos, subsector_t *subSe
 					if (other->validcount != ::validcount)
 					{
 						subsector_t *othersub = R_PointInSubsector(other->v1->x + other->dx / 2, other->v1->y + other->dy / 2);
-						if (othersub->validcount != ::validcount) CollectWithinRadius(PosRelative(other), othersub, radius);
+						if (othersub->validcount != ::validcount) CollectWithinRadius(_f_PosRelative(other), othersub, radius);
 					}
 				}
 			}
@@ -603,7 +603,7 @@ void ADynamicLight::CollectWithinRadius(const fixedvec3 &pos, subsector_t *subSe
 		{
 			fixedvec2 refpos = { other->v1->x + other->dx / 2 + FLOAT2FIXED(sb->Scale.X), other->v1->y + other->dy / 2 + FLOAT2FIXED(sb->Scale.Y) };
 			subsector_t *othersub = R_PointInSubsector(refpos.x, refpos.y);
-			if (othersub->validcount != ::validcount) CollectWithinRadius(PosRelative(othersub->sector), othersub, radius);
+			if (othersub->validcount != ::validcount) CollectWithinRadius(_f_PosRelative(othersub->sector), othersub, radius);
 		}
 	}
 	if (!subSec->sector->PortalBlocksSight(sector_t::floor))
@@ -614,7 +614,7 @@ void ADynamicLight::CollectWithinRadius(const fixedvec3 &pos, subsector_t *subSe
 		{
 			fixedvec2 refpos = { other->v1->x + other->dx / 2 + FLOAT2FIXED(sb->Scale.X), other->v1->y + other->dy / 2 + FLOAT2FIXED(sb->Scale.Y) };
 			subsector_t *othersub = R_PointInSubsector(refpos.x, refpos.y);
-			if (othersub->validcount != ::validcount) CollectWithinRadius(PosRelative(othersub->sector), othersub, radius);
+			if (othersub->validcount != ::validcount) CollectWithinRadius(_f_PosRelative(othersub->sector), othersub, radius);
 		}
 	}
 }

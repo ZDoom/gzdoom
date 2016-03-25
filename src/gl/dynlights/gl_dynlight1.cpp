@@ -90,7 +90,7 @@ bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, bo
 	Vector fn, pos;
 	int i = 0;
 
-	fixedvec3 lpos = light->PosRelative(group);
+	fixedvec3 lpos = light->_f_PosRelative(group);
     float x = FIXED2FLOAT(lpos.x);
 	float y = FIXED2FLOAT(lpos.y);
 	float z = FIXED2FLOAT(lpos.z);

@@ -140,7 +140,7 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno, fixedvec3 *optpo
 
 	P_MakeDivline (line, &dll);
 
-	fixedvec3 pos = optpos? *optpos : user->PosRelative(line);
+	fixedvec3 pos = optpos? *optpos : user->_f_PosRelative(line);
 	dlu.x = pos.x;
 	dlu.y = pos.y;
 	dlu.dx = finecosine[user->_f_angle() >> ANGLETOFINESHIFT];

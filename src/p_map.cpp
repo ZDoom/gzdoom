@@ -638,7 +638,7 @@ double P_GetFriction(const AActor *mo, double *frictionfactor)
 		for (m = mo->touching_sectorlist; m; m = m->m_tnext)
 		{
 			sec = m->m_sector;
-			fixedvec3 pos = mo->PosRelative(sec);
+			fixedvec3 pos = mo->_f_PosRelative(sec);
 
 			// 3D floors must be checked, too
 			for (unsigned i = 0; i < sec->e->XFloor.ffloors.Size(); i++)
@@ -809,7 +809,7 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 			spechit_t spec;
 			spec.line = ld;
 			spec.refpos = cres.position;
-			spec.oldrefpos = tm.thing->PosRelative(ld);
+			spec.oldrefpos = tm.thing->_f_PosRelative(ld);
 			portalhit.Push(spec);
 			return true;
 		}
@@ -977,14 +977,14 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 	{
 		spec.line = ld;
 		spec.refpos = cres.position;
-		spec.oldrefpos = tm.thing->PosRelative(ld);
+		spec.oldrefpos = tm.thing->_f_PosRelative(ld);
 		spechit.Push(spec);
 	}
 	if (ld->isLinePortal())
 	{
 		spec.line = ld;
 		spec.refpos = cres.position;
-		spec.oldrefpos = tm.thing->PosRelative(ld);
+		spec.oldrefpos = tm.thing->_f_PosRelative(ld);
 		portalhit.Push(spec);
 	}
 
@@ -1242,7 +1242,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 
 		if (((tm.FromPMove || tm.thing->player != NULL) && thing->flags&MF_SOLID))
 		{
-			fixedvec3 oldpos = tm.thing->PosRelative(thing);
+			fixedvec3 oldpos = tm.thing->_f_PosRelative(thing);
 			// Both actors already overlap. To prevent them from remaining stuck allow the move if it
 			// takes them further apart or the move does not change the position (when called from P_ChangeSector.)
 			if (oldpos.x == thing->_f_X() && oldpos.y == thing->_f_Y())
@@ -1963,7 +1963,7 @@ static void CheckForPushSpecial(line_t *line, int side, AActor *mobj, fixedvec2 
 		if (posforwindowcheck && !(ib_compatflags & BCOMPATF_NOWINDOWCHECK) && line->backsector != NULL)
 		{ // Make sure this line actually blocks us and is not a window
 			// or similar construct we are standing inside of.
-			fixedvec3 pos = mobj->PosRelative(line);
+			fixedvec3 pos = mobj->_f_PosRelative(line);
 			fixed_t fzt = line->frontsector->ceilingplane.ZatPoint(*posforwindowcheck);
 			fixed_t fzb = line->frontsector->floorplane.ZatPoint(*posforwindowcheck);
 			fixed_t bzt = line->backsector->ceilingplane.ZatPoint(*posforwindowcheck);
@@ -2698,7 +2698,7 @@ void FSlide::HitSlideLine(line_t* ld)
 	// The wall is angled. Bounce if the angle of approach is		// phares
 	// less than 45 degrees.										// phares
 
-	fixedvec3 pos = slidemo->PosRelative(ld);
+	fixedvec3 pos = slidemo->_f_PosRelative(ld);
 	side = P_PointOnLineSide(pos.x, pos.y, ld);
 
 	lineangle = R_PointToAngle2(0, 0, ld->dx, ld->dy);
@@ -2804,7 +2804,7 @@ void FSlide::SlideTraverse(fixed_t startx, fixed_t starty, fixed_t endx, fixed_t
 
 		if (!(li->flags & ML_TWOSIDED) || !li->backsector)
 		{
-			fixedvec3 pos = slidemo->PosRelative(li);
+			fixedvec3 pos = slidemo->_f_PosRelative(li);
 			if (P_PointOnLineSide(pos.x, pos.y, li))
 			{
 				// don't hit the back side
@@ -3020,7 +3020,7 @@ const secplane_t * P_CheckSlopeWalk(AActor *actor, fixed_t &xmove, fixed_t &ymov
 		return NULL;
 	}
 
-	fixedvec3 pos = actor->PosRelative(actor->floorsector);
+	fixedvec3 pos = actor->_f_PosRelative(actor->floorsector);
 	const secplane_t *plane = &actor->floorsector->floorplane;
 	fixed_t planezhere = plane->ZatPoint(pos);
 
@@ -3100,7 +3100,7 @@ const secplane_t * P_CheckSlopeWalk(AActor *actor, fixed_t &xmove, fixed_t &ymov
 							sector_t *sec = node->m_sector;
 							if (sec->floorplane.c >= STEEPSLOPE)
 							{
-								fixedvec3 pos = actor->PosRelative(sec);
+								fixedvec3 pos = actor->_f_PosRelative(sec);
 								pos.x += xmove;
 								pos.y += ymove;
 

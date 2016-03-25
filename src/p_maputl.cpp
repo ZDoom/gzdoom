@@ -497,7 +497,7 @@ void AActor::LinkToWorld(bool spawningmapthing, sector_t *sector)
 
 		for (int i = -1; i < (int)check.Size(); i++)
 		{
-			fixedvec3 pos = i==-1? _f_Pos() : PosRelative(check[i]);
+			fixedvec3 pos = i==-1? _f_Pos() : _f_PosRelative(check[i]);
 
 			int x1 = GetSafeBlockX(pos.x - _f_radius() - bmaporgx);
 			int x2 = GetSafeBlockX(pos.x + _f_radius() - bmaporgx);

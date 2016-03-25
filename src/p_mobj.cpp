@@ -1388,7 +1388,7 @@ void P_ExplodeMissile (AActor *mo, line_t *line, AActor *target)
 
 	if (line != NULL && cl_missiledecals)
 	{
-		fixedvec3 pos = mo->PosRelative(line);
+		fixedvec3 pos = mo->_f_PosRelative(line);
 		int side = P_PointOnLineSidePrecise (pos.x, pos.y, line);
 		if (line->sidedef[side] == NULL)
 			side ^= 1;
@@ -2116,7 +2116,7 @@ explode:
 					if (tm.ceilingline &&
 						tm.ceilingline->backsector &&
 						tm.ceilingline->backsector->GetTexture(sector_t::ceiling) == skyflatnum &&
-						mo->_f_Z() >= tm.ceilingline->backsector->ceilingplane.ZatPoint(mo->PosRelative(tm.ceilingline)))
+						mo->_f_Z() >= tm.ceilingline->backsector->ceilingplane.ZatPoint(mo->_f_PosRelative(tm.ceilingline)))
 					{
 						// Hack to prevent missiles exploding against the sky.
 						// Does not handle sky floors.
@@ -3263,7 +3263,7 @@ fixedvec3 AActor::GetPortalTransition(fixed_t byoffset, sector_t **pSec)
 		AActor *port = sec->SkyBoxes[sector_t::ceiling];
 		if (testz > port->specialf1)
 		{
-			pos = PosRelative(port->Sector);
+			pos = _f_PosRelative(port->Sector);
 			sec = P_PointInSector(pos.x, pos.y);
 			moved = true;
 		}
@@ -3276,7 +3276,7 @@ fixedvec3 AActor::GetPortalTransition(fixed_t byoffset, sector_t **pSec)
 			AActor *port = sec->SkyBoxes[sector_t::floor];
 			if (testz <= port->specialf1)
 			{
-				pos = PosRelative(port->Sector);
+				pos = _f_PosRelative(port->Sector);
 				sec = P_PointInSector(pos.x, pos.y);
 			}
 			else break;
@@ -3298,7 +3298,7 @@ void AActor::CheckPortalTransition(bool islinked)
 		{
 			fixedvec3 oldpos = _f_Pos();
 			if (islinked && !moved) UnlinkFromWorld();
-			SetXYZ(PosRelative(port->Sector));
+			SetXYZ(_f_PosRelative(port->Sector));
 			PrevX += _f_X() - oldpos.x;
 			PrevY += _f_Y() - oldpos.y;
 			PrevZ += _f_Z() - oldpos.z;
@@ -3317,7 +3317,7 @@ void AActor::CheckPortalTransition(bool islinked)
 			{
 				fixedvec3 oldpos = _f_Pos();
 				if (islinked && !moved) UnlinkFromWorld();
-				SetXYZ(PosRelative(port->Sector));
+				SetXYZ(_f_PosRelative(port->Sector));
 				PrevX += _f_X() - oldpos.x;
 				PrevY += _f_Y() - oldpos.y;
 				PrevZ += _f_Z() - oldpos.z;
@@ -3681,7 +3681,7 @@ void AActor::Tick ()
 				{
 					continue;
 				}
-				fixedvec3 pos = PosRelative(sec);
+				fixedvec3 pos = _f_PosRelative(sec);
 				height = sec->floorplane.ZatPoint (pos);
 				if (_f_Z() > height)
 				{
@@ -3731,7 +3731,7 @@ void AActor::Tick ()
 			floorplane = P_FindFloorPlane(floorsector, _f_X(), _f_Y(), _f_floorz());
 
 			if (floorplane.c < STEEPSLOPE &&
-				floorplane.ZatPoint (PosRelative(floorsector)) <= _f_floorz())
+				floorplane.ZatPoint (_f_PosRelative(floorsector)) <= _f_floorz())
 			{
 				const msecnode_t *node;
 				bool dopush = true;
@@ -3743,7 +3743,7 @@ void AActor::Tick ()
 						const sector_t *sec = node->m_sector;
 						if (sec->floorplane.c >= STEEPSLOPE)
 						{
-							if (floorplane.ZatPointF (PosRelative(node->m_sector)) >= Z() - MaxStepHeight)
+							if (floorplane.ZatPointF (_f_PosRelative(node->m_sector)) >= Z() - MaxStepHeight)
 							{
 								dopush = false;
 								break;
@@ -4517,7 +4517,7 @@ void AActor::AdjustFloorClip ()
 	// do the floorclipping instead of the terrain type.
 	for (m = touching_sectorlist; m; m = m->m_tnext)
 	{
-		fixedvec3 pos = PosRelative(m->m_sector);
+		fixedvec3 pos = _f_PosRelative(m->m_sector);
 		sector_t *hsec = m->m_sector->GetHeightSec();
 		if (hsec == NULL && m->m_sector->floorplane.ZatPoint (pos) == _f_Z())
 		{
@@ -5684,7 +5684,7 @@ bool P_HitFloor (AActor *thing)
 	fixedvec3 pos;
 	for (m = thing->touching_sectorlist; m; m = m->m_tnext)
 	{
-		pos = thing->PosRelative(m->m_sector);
+		pos = thing->_f_PosRelative(m->m_sector);
 		if (thing->_f_Z() == m->m_sector->floorplane.ZatPoint(pos.x, pos.y))
 		{
 			break;
@@ -5729,7 +5729,7 @@ void P_CheckSplash(AActor *self, double distance)
 		// Explosion splashes never alert monsters. This is because A_Explode has
 		// a separate parameter for that so this would get in the way of proper 
 		// behavior.
-		fixedvec3 pos = self->PosRelative(floorsec);
+		fixedvec3 pos = self->_f_PosRelative(floorsec);
 		pos.z = self->_f_floorz();
 		P_HitWater (self, floorsec, pos, false, false);
 	}

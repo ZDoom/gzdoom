@@ -837,13 +837,13 @@ public:
 	// to distinguish between portal-aware and portal-unaware distance calculation.
 	fixed_t AproxDistance(AActor *other, bool absolute = false)
 	{
-		fixedvec3 otherpos = absolute ? other->_f_Pos() : other->PosRelative(this);
+		fixedvec3 otherpos = absolute ? other->_f_Pos() : other->_f_PosRelative(this);
 		return P_AproxDistance(_f_X() - otherpos.x, _f_Y() - otherpos.y);
 	}
 
 	fixed_t AproxDistance(AActor *other, fixed_t xadd, fixed_t yadd, bool absolute = false)
 	{
-		fixedvec3 otherpos = absolute ? other->_f_Pos() : other->PosRelative(this);
+		fixedvec3 otherpos = absolute ? other->_f_Pos() : other->_f_PosRelative(this);
 		return P_AproxDistance(_f_X() - otherpos.x + xadd, _f_Y() - otherpos.y + yadd);
 	}
 
@@ -855,7 +855,7 @@ public:
 	// more precise, but slower version, being used in a few places
 	double Distance2D(AActor *other, bool absolute = false)
 	{
-		fixedvec3 otherpos = absolute ? other->_f_Pos() : other->PosRelative(this);
+		fixedvec3 otherpos = absolute ? other->_f_Pos() : other->_f_PosRelative(this);
 		return (DVector2(_f_X() - otherpos.x, _f_Y() - otherpos.y).Length())/FRACUNIT;
 	}
 
@@ -867,13 +867,13 @@ public:
 	// a full 3D version of the above
 	fixed_t Distance3D(AActor *other, bool absolute = false)
 	{
-		fixedvec3 otherpos = absolute ? other->_f_Pos() : other->PosRelative(this);
+		fixedvec3 otherpos = absolute ? other->_f_Pos() : other->_f_PosRelative(this);
 		return xs_RoundToInt(DVector3(_f_X() - otherpos.x, _f_Y() - otherpos.y, _f_Z() - otherpos.z).Length());
 	}
 
 	angle_t __f_AngleTo(AActor *other, bool absolute = false)
 	{
-		fixedvec3 otherpos = absolute ? other->_f_Pos() : other->PosRelative(this);
+		fixedvec3 otherpos = absolute ? other->_f_Pos() : other->_f_PosRelative(this);
 		return R_PointToAngle2(_f_X(), _f_Y(), otherpos.x, otherpos.y);
 	}
 
@@ -884,13 +884,13 @@ public:
 
 	DAngle AngleTo(AActor *other, bool absolute = false)
 	{
-		fixedvec3 otherpos = absolute ? other->_f_Pos() : other->PosRelative(this);
+		fixedvec3 otherpos = absolute ? other->_f_Pos() : other->_f_PosRelative(this);
 		return VecToAngle(otherpos.x - _f_X(), otherpos.y - _f_Y());
 	}
 
 	DAngle AngleTo(AActor *other, fixed_t oxofs, fixed_t oyofs, bool absolute = false) const
 	{
-		fixedvec3 otherpos = absolute ? other->_f_Pos() : other->PosRelative(this);
+		fixedvec3 otherpos = absolute ? other->_f_Pos() : other->_f_PosRelative(this);
 		return VecToAngle(otherpos.y + oxofs - _f_Y(), otherpos.x + oyofs - _f_X());
 	}
 
@@ -901,27 +901,27 @@ public:
 
 	fixedvec2 _f_Vec2To(AActor *other) const
 	{
-		fixedvec3 otherpos = other->PosRelative(this);
+		fixedvec3 otherpos = other->_f_PosRelative(this);
 		fixedvec2 ret = { otherpos.x - _f_X(), otherpos.y - _f_Y() };
 		return ret;
 	}
 
 	fixedvec3 _f_Vec3To(AActor *other) const
 	{
-		fixedvec3 otherpos = other->PosRelative(this);
+		fixedvec3 otherpos = other->_f_PosRelative(this);
 		fixedvec3 ret = { otherpos.x - _f_X(), otherpos.y - _f_Y(), otherpos.z - _f_Z() };
 		return ret;
 	}
 
 	DVector2 Vec2To(AActor *other) const
 	{
-		fixedvec3 otherpos = other->PosRelative(this);
+		fixedvec3 otherpos = other->_f_PosRelative(this);
 		return{ FIXED2DBL(otherpos.x - _f_X()), FIXED2DBL(otherpos.y - _f_Y()) };
 	}
 
 	DVector3 Vec3To(AActor *other) const
 	{
-		fixedvec3 otherpos = other->PosRelative(this);
+		fixedvec3 otherpos = other->_f_PosRelative(this);
 		return { FIXED2DBL(otherpos.x - _f_X()), FIXED2DBL(otherpos.y - _f_Y()), FIXED2DBL(otherpos.z - _f_Z()) };
 	}
 
@@ -1419,10 +1419,10 @@ public:
 		return DVector3(X(), Y(), Z());
 	}
 
-	fixedvec3 PosRelative(int grp) const;
-	fixedvec3 PosRelative(const AActor *other) const;
-	fixedvec3 PosRelative(sector_t *sec) const;
-	fixedvec3 PosRelative(line_t *line) const;
+	fixedvec3 _f_PosRelative(int grp) const;
+	fixedvec3 _f_PosRelative(const AActor *other) const;
+	fixedvec3 _f_PosRelative(sector_t *sec) const;
+	fixedvec3 _f_PosRelative(line_t *line) const;
 
 	fixed_t SoundX() const
 	{

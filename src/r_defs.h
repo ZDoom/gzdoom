@@ -1334,27 +1334,27 @@ inline sector_t *P_PointInSector(const DVector2 &pos)
 	return P_PointInSubsector(FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y))->sector;
 }
 
-inline fixedvec3 AActor::PosRelative(int portalgroup) const
+inline fixedvec3 AActor::_f_PosRelative(int portalgroup) const
 {
 	return __pos + Displacements.getOffset(Sector->PortalGroup, portalgroup);
 }
 
-inline fixedvec3 AActor::PosRelative(const AActor *other) const
+inline fixedvec3 AActor::_f_PosRelative(const AActor *other) const
 {
 	return __pos + Displacements.getOffset(Sector->PortalGroup, other->Sector->PortalGroup);
 }
 
-inline fixedvec3 AActor::PosRelative(sector_t *sec) const
+inline fixedvec3 AActor::_f_PosRelative(sector_t *sec) const
 {
 	return __pos + Displacements.getOffset(Sector->PortalGroup, sec->PortalGroup);
 }
 
-inline fixedvec3 AActor::PosRelative(line_t *line) const
+inline fixedvec3 AActor::_f_PosRelative(line_t *line) const
 {
 	return __pos + Displacements.getOffset(Sector->PortalGroup, line->frontsector->PortalGroup);
 }
 
-inline fixedvec3 PosRelative(const fixedvec3 &pos, line_t *line, sector_t *refsec = NULL)
+inline fixedvec3 _f_PosRelative(const fixedvec3 &pos, line_t *line, sector_t *refsec = NULL)
 {
 	return pos + Displacements.getOffset(refsec->PortalGroup, line->frontsector->PortalGroup);
 }

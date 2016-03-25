@@ -2307,7 +2307,7 @@ void DPusher::Tick ()
 			continue;
 
 		sector_t *hsec = sec->GetHeightSec();
-		fixedvec3 pos = thing->PosRelative(sec);
+		fixedvec3 pos = thing->_f_PosRelative(sec);
 		DVector2 pushvel;
 		if (m_Type == p_wind)
 		{

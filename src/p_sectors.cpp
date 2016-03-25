@@ -952,7 +952,7 @@ fixed_t sector_t::NextHighestCeilingAt(fixed_t x, fixed_t y, fixed_t bottomz, fi
 			fixed_t delta1 = bottomz - (ff_bottom + ((ff_top - ff_bottom) / 2));
 			fixed_t delta2 = topz - (ff_bottom + ((ff_top - ff_bottom) / 2));
 
-			if (ff_bottom < realceil && abs(delta1) >= abs(delta2))
+			if (ff_bottom < realceil && abs(delta1) > abs(delta2))
 			{ 
 				if (resultsec) *resultsec = sec;
 				if (resultffloor) *resultffloor = rover;

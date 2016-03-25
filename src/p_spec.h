@@ -535,7 +535,7 @@ public:
 	};
 
 	DDoor (sector_t *sector);
-	DDoor (sector_t *sec, EVlDoor type, fixed_t speed, int delay, int topcountdown, int lightTag);
+	DDoor (sector_t *sec, EVlDoor type, fixed_t speed, int delay, int lightTag, int topcountdown);
 
 	void Serialize (FArchive &arc);
 	void Tick ();
@@ -647,6 +647,14 @@ public:
 		genCeilingChg
 	};
 
+	enum class ECrushMode
+	{
+		crushDoom = 0,
+		crushHexen = 1,
+		crushSlowdown = 2
+	};
+
+
 	DCeiling (sector_t *sec);
 	DCeiling (sector_t *sec, fixed_t speed1, fixed_t speed2, int silent);
 
@@ -655,7 +663,7 @@ public:
 
 	static DCeiling *Create(sector_t *sec, DCeiling::ECeiling type, line_t *line, int tag,
 						fixed_t speed, fixed_t speed2, fixed_t height,
-						int crush, int silent, int change, bool hexencrush);
+						int crush, int silent, int change, ECrushMode hexencrush);
 
 protected:
 	ECeiling	m_Type;
@@ -665,7 +673,7 @@ protected:
 	fixed_t		m_Speed1;		// [RH] dnspeed of crushers
 	fixed_t		m_Speed2;		// [RH] upspeed of crushers
 	int 		m_Crush;
-	bool		m_Hexencrush;
+	ECrushMode	m_CrushMode;
 	int			m_Silent;
 	int 		m_Direction;	// 1 = up, 0 = waiting, -1 = down
 
@@ -688,7 +696,7 @@ private:
 
 bool EV_DoCeiling (DCeiling::ECeiling type, line_t *line,
 	int tag, fixed_t speed, fixed_t speed2, fixed_t height,
-	int crush, int silent, int change, bool hexencrush);
+	int crush, int silent, int change, DCeiling::ECrushMode hexencrush = DCeiling::ECrushMode::crushDoom);
 bool EV_CeilingCrushStop (int tag);
 void P_ActivateInStasisCeiling (int tag);
 

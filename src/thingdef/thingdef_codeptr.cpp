@@ -6724,7 +6724,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceMovementDirection)
 		//Code borrowed from A_Face*.
 		if (anglelimit > 0)
 		{
-			DAngle delta = deltaangle(current, angle);
+			DAngle delta = -deltaangle(current, angle);
 			if (fabs(delta) > anglelimit)
 			{
 				if (delta < 0)

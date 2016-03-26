@@ -4458,7 +4458,7 @@ void AActor::AdjustFloorClip ()
 		return;
 	}
 
-	double oldclip = _f_floorclip();
+	double oldclip = Floorclip;
 	double shallowestclip = INT_MAX;
 	const msecnode_t *m;
 

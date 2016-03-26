@@ -787,6 +787,11 @@ inline bool EV_DoFloor(DFloor::EFloor floortype, line_t *line, int tag,
 {
 	return EV_DoFloor(floortype, line, tag, FLOAT2FIXED(speed), FLOAT2FIXED(height), crush, change, hexencrush, hereticlower);
 }
+inline bool EV_DoFloor(DFloor::EFloor floortype, line_t *line, int tag,
+	double speed, int height, int crush, int change, bool hexencrush, bool hereticlower = false)
+{
+	return EV_DoFloor(floortype, line, tag, FLOAT2FIXED(speed), height, crush, change, hexencrush, hereticlower);
+}
 bool EV_FloorCrushStop (int tag);
 bool EV_DoDonut (int tag, line_t *line, fixed_t pillarspeed, fixed_t slimespeed);
 

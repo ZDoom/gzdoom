@@ -124,7 +124,7 @@ void P_RandomChaseDir (AActor *actor);
 // sound blocking lines cut off traversal.
 //----------------------------------------------------------------------------
 
-void P_RecursiveSound (sector_t *sec, AActor *soundtarget, bool splash, int soundblocks, AActor *emitter, fixed_t maxdist)
+void P_RecursiveSound (sector_t *sec, AActor *soundtarget, bool splash, int soundblocks, AActor *emitter, double maxdist)
 {
 	int 		i;
 	line_t* 	check;
@@ -146,7 +146,7 @@ void P_RecursiveSound (sector_t *sec, AActor *soundtarget, bool splash, int soun
 	for (actor = sec->thinglist; actor != NULL; actor = actor->snext)
 	{
 		if (actor != soundtarget && (!splash || !(actor->flags4 & MF4_NOSPLASHALERT)) &&
-			(!maxdist || (actor->AproxDistance(emitter) <= maxdist)))
+			(!maxdist || (actor->Distance2D(emitter) <= maxdist)))
 		{
 			actor->LastHeard = soundtarget;
 		}
@@ -162,18 +162,12 @@ void P_RecursiveSound (sector_t *sec, AActor *soundtarget, bool splash, int soun
 		// I wish there was a better method to do this than randomly looking through the portal at a few places...
 		if (checkabove)
 		{
-			sector_t *upper =
-				P_PointInSector(check->v1->x + check->dx / 2 + FLOAT2FIXED(sec->SkyBoxes[sector_t::ceiling]->Scale.X),
-					check->v1->y + check->dy / 2 + FLOAT2FIXED(sec->SkyBoxes[sector_t::ceiling]->Scale.Y));
-
+			sector_t *upper = P_PointInSector(check->v1->fPos() + check->Delta() / 2 + sec->SkyBoxes[sector_t::ceiling]->Scale);
 			P_RecursiveSound(upper, soundtarget, splash, soundblocks, emitter, maxdist);
 		}
 		if (checkbelow)
 		{
-			sector_t *lower =
-				P_PointInSector(check->v1->x + check->dx / 2 + FLOAT2FIXED(sec->SkyBoxes[sector_t::ceiling]->Scale.X),
-					check->v1->y + check->dy / 2 + FLOAT2FIXED(sec->SkyBoxes[sector_t::ceiling]->Scale.Y));
-
+			sector_t *lower = P_PointInSector(check->v1->fPos() + check->Delta() / 2 + sec->SkyBoxes[sector_t::floor]->Scale);
 			P_RecursiveSound(lower, soundtarget, splash, soundblocks, emitter, maxdist);
 		}
 		FLinePortal *port = check->getPortal();
@@ -201,18 +195,18 @@ void P_RecursiveSound (sector_t *sec, AActor *soundtarget, bool splash, int soun
 			other = check->sidedef[0]->sector;
 
 		// check for closed door
-		if ((sec->floorplane.ZatPoint (check->v1->x, check->v1->y) >=
-			 other->ceilingplane.ZatPoint (check->v1->x, check->v1->y) &&
-			 sec->floorplane.ZatPoint (check->v2->x, check->v2->y) >=
-			 other->ceilingplane.ZatPoint (check->v2->x, check->v2->y))
-		 || (other->floorplane.ZatPoint (check->v1->x, check->v1->y) >=
-			 sec->ceilingplane.ZatPoint (check->v1->x, check->v1->y) &&
-			 other->floorplane.ZatPoint (check->v2->x, check->v2->y) >=
-			 sec->ceilingplane.ZatPoint (check->v2->x, check->v2->y))
-		 || (other->floorplane.ZatPoint (check->v1->x, check->v1->y) >=
-			 other->ceilingplane.ZatPoint (check->v1->x, check->v1->y) &&
-			 other->floorplane.ZatPoint (check->v2->x, check->v2->y) >=
-			 other->ceilingplane.ZatPoint (check->v2->x, check->v2->y)))
+		if ((sec->floorplane.ZatPoint (check->v1->fPos()) >=
+			 other->ceilingplane.ZatPoint (check->v1->fPos()) &&
+			 sec->floorplane.ZatPoint (check->v2->fPos()) >=
+			 other->ceilingplane.ZatPoint (check->v2->fPos()))
+		 || (other->floorplane.ZatPoint (check->v1->fPos()) >=
+			 sec->ceilingplane.ZatPoint (check->v1->fPos()) &&
+			 other->floorplane.ZatPoint (check->v2->fPos()) >=
+			 sec->ceilingplane.ZatPoint (check->v2->fPos()))
+		 || (other->floorplane.ZatPoint (check->v1->fPos()) >=
+			 other->ceilingplane.ZatPoint (check->v1->fPos()) &&
+			 other->floorplane.ZatPoint (check->v2->fPos()) >=
+			 other->ceilingplane.ZatPoint (check->v2->fPos())))
 		{
 			continue;
 		}
@@ -240,7 +234,7 @@ void P_RecursiveSound (sector_t *sec, AActor *soundtarget, bool splash, int soun
 //
 //----------------------------------------------------------------------------
 
-void P_NoiseAlert (AActor *target, AActor *emitter, bool splash, fixed_t maxdist)
+void P_NoiseAlert (AActor *target, AActor *emitter, bool splash, double maxdist)
 {
 	if (emitter == NULL)
 		return;
@@ -452,9 +446,9 @@ bool P_HitFriend(AActor * self)
 bool P_Move (AActor *actor)
 {
 
-	fixed_t tryx, tryy, deltax, deltay, origx, origy;
+	double tryx, tryy, deltax, deltay, origx, origy;
 	bool try_ok;
-	fixed_t speed = actor->_f_speed();
+	double speed = actor->Speed;
 	double movefactor = ORIG_FRICTION_FACTOR;
 	double friction = ORIG_FRICTION;
 	int dropoff = 0;
@@ -489,7 +483,7 @@ bool P_Move (AActor *actor)
 
 	if ((actor->flags6 & MF6_JUMPDOWN) && target &&
 			!(target->IsFriend(actor)) &&
-			actor->AproxDistance(target) < FRACUNIT*144 &&
+			actor->Distance2D(target) < 144 &&
 			pr_dropoff() < 235)
 	{
 		dropoff = 2;
@@ -504,39 +498,39 @@ bool P_Move (AActor *actor)
 
 		if (friction < ORIG_FRICTION)
 		{ // sludge
-			speed = fixed_t(speed * ((ORIG_FRICTION_FACTOR - (ORIG_FRICTION_FACTOR-movefactor)/2)) / ORIG_FRICTION_FACTOR);
+			speed = speed * ((ORIG_FRICTION_FACTOR - (ORIG_FRICTION_FACTOR-movefactor)/2)) / ORIG_FRICTION_FACTOR;
 			if (speed == 0)
 			{ // always give the monster a little bit of speed
-				speed = ksgn(actor->_f_speed());
+				speed = actor->Speed;
 			}
 		}
 	}
 
-	tryx = (origx = actor->_f_X()) + (deltax = fixed_t (speed * xspeed[actor->movedir]));
-	tryy = (origy = actor->_f_Y()) + (deltay = fixed_t (speed * yspeed[actor->movedir]));
+	tryx = (origx = actor->X()) + (deltax = (speed * xspeed[actor->movedir]));
+	tryy = (origy = actor->Y()) + (deltay = (speed * yspeed[actor->movedir]));
 
 	// Like P_XYMovement this should do multiple moves if the step size is too large
 
-	fixed_t maxmove = actor->_f_radius() - FRACUNIT;
+	double maxmove = actor->radius - 1;
 	int steps = 1;
 
 	if (maxmove > 0)
 	{ 
-		const fixed_t xspeed = abs (deltax);
-		const fixed_t yspeed = abs (deltay);
+		const double xspeed = fabs (deltax);
+		const double yspeed = fabs (deltay);
 
 		if (xspeed > yspeed)
 		{
 			if (xspeed > maxmove)
 			{
-				steps = 1 + xspeed / maxmove;
+				steps = 1 + int(xspeed / maxmove);
 			}
 		}
 		else
 		{
 			if (yspeed > maxmove)
 			{
-				steps = 1 + yspeed / maxmove;
+				steps = 1 + int(yspeed / maxmove);
 			}
 		}
 	}
@@ -547,12 +541,12 @@ bool P_Move (AActor *actor)
 	try_ok = true;
 	for(int i=1; i < steps; i++)
 	{
-		try_ok = P_TryMove(actor, origx + Scale(deltax, i, steps), origy + Scale(deltay, i, steps), dropoff, NULL, tm);
+		try_ok = P_TryMove(actor, DVector2(origx + deltax * i / steps, origy + deltay * i / steps), dropoff, NULL, tm);
 		if (!try_ok) break;
 	}
 
 	// killough 3/15/98: don't jump over dropoffs:
-	if (try_ok) try_ok = P_TryMove (actor, tryx, tryy, dropoff, NULL, tm);
+	if (try_ok) try_ok = P_TryMove (actor, DVector2(tryx, tryy), dropoff, NULL, tm);
 
 	// [GrafZahl] Interpolating monster movement as it is done here just looks bad
 	// so make it switchable
@@ -563,10 +557,10 @@ bool P_Move (AActor *actor)
 
 	if (try_ok && friction > ORIG_FRICTION)
 	{
-		actor->SetOrigin(origx, origy, actor->_f_Z(), false);
+		actor->SetOrigin(origx, origy, actor->Z(), false);
 		movefactor *= 1.f / ORIG_FRICTION_FACTOR / 4;
-		actor->Vel.X += FIXED2DBL(deltax * movefactor);
-		actor->Vel.Y += FIXED2DBL(deltay * movefactor);
+		actor->Vel.X += deltax * movefactor;
+		actor->Vel.Y += deltay * movefactor;
 	}
 
 	// [RH] If a walking monster is no longer on the floor, move it down
@@ -589,7 +583,7 @@ bool P_Move (AActor *actor)
 			else
 			{ // The monster just hit the floor, so trigger any actions.
 				if (actor->floorsector->SecActTarget != NULL &&
-					actor->_f_floorz() == actor->floorsector->floorplane.ZatPoint(actor->_f_PosRelative(actor->floorsector)))
+					actor->floorz == actor->floorsector->floorplane.ZatPoint(actor->PosRelative(actor->floorsector)))
 				{
 					actor->floorsector->SecActTarget->TriggerAction(actor, SECSPAC_HitFloor);
 				}
@@ -704,7 +698,7 @@ bool P_TryWalk (AActor *actor)
 //
 //=============================================================================
 
-void P_DoNewChaseDir (AActor *actor, fixed_t deltax, fixed_t deltay)
+void P_DoNewChaseDir (AActor *actor, double deltax, double deltay)
 {
 	dirtype_t	d[2];
 	int			tdir;
@@ -715,19 +709,19 @@ void P_DoNewChaseDir (AActor *actor, fixed_t deltax, fixed_t deltay)
 	olddir = (dirtype_t)actor->movedir;
 	turnaround = opposite[olddir];
 
-	if (deltax>10*FRACUNIT)
-		d[0]= DI_EAST;
-	else if (deltax<-10*FRACUNIT)
-		d[0]= DI_WEST;
+	if (deltax > 10)
+		d[0] = DI_EAST;
+	else if (deltax < -10)
+		d[0] = DI_WEST;
 	else
-		d[0]=DI_NODIR;
+		d[0] = DI_NODIR;
 
-	if (deltay<-10*FRACUNIT)
-		d[1]= DI_SOUTH;
-	else if (deltay>10*FRACUNIT)
-		d[1]= DI_NORTH;
+	if (deltay < -10)
+		d[1] = DI_SOUTH;
+	else if (deltay>10)
+		d[1] = DI_NORTH;
 	else
-		d[1]=DI_NODIR;
+		d[1] = DI_NODIR; 
 
 	// try direct route
 	if (d[0] != DI_NODIR && d[1] != DI_NODIR)
@@ -744,7 +738,7 @@ void P_DoNewChaseDir (AActor *actor, fixed_t deltax, fixed_t deltay)
 	// try other directions
 	if (!(actor->flags5 & MF5_AVOIDINGDROPOFF))
 	{
-		if ((pr_newchasedir() > 200 || abs(deltay) > abs(deltax)))
+		if ((pr_newchasedir() > 200 || fabs(deltay) > fabs(deltax)))
 		{
 			swapvalues (d[0], d[1]);
 		}
@@ -848,25 +842,24 @@ void P_DoNewChaseDir (AActor *actor, fixed_t deltax, fixed_t deltay)
 
 void P_NewChaseDir(AActor * actor)
 {
-	fixedvec2 delta;
+	DVector2 delta;
 
 	actor->strafecount = 0;
 
 	if ((actor->flags5&MF5_CHASEGOAL || actor->goal == actor->target) && actor->goal!=NULL)
 	{
-		delta = actor->_f_Vec2To(actor->goal);
+		delta = actor->Vec2To(actor->goal);
 	}
 	else if (actor->target != NULL)
 	{
-		delta = actor->_f_Vec2To(actor->target);
+		delta = actor->Vec2To(actor->target);
 
 		if (!(actor->flags6 & MF6_NOFEAR))
 		{
 			if ((actor->target->player != NULL && (actor->target->player->cheats & CF_FRIGHTENING)) || 
 				(actor->flags4 & MF4_FRIGHTENED))
 			{
-				delta.x = -delta.x;
-				delta.y = -delta.y;
+				delta = -delta;
 			}
 		}
 	}
@@ -884,7 +877,7 @@ void P_NewChaseDir(AActor * actor)
 		!(actor->flags2 & MF2_ONMOBJ) &&
 		!(actor->flags & MF_FLOAT) && !(i_compatflags & COMPATF_DROPOFF))
 	{
-		FBoundingBox box(actor->_f_X(), actor->_f_Y(), actor->_f_radius());
+		FBoundingBox box(actor->X(), actor->Y(), actor->radius);
 		FBlockLinesIterator it(box);
 		line_t *line;
 
@@ -899,8 +892,8 @@ void P_NewChaseDir(AActor * actor)
 				box.Bottom() < line->bbox[BOXTOP]    &&
 				box.BoxOnLineSide(line) == -1)
 		    {
-				double front = line->frontsector->floorplane.ZatPointF(actor->_f_PosRelative(line));
-				double back  = line->backsector->floorplane.ZatPointF(actor->_f_PosRelative(line));
+				double front = line->frontsector->floorplane.ZatPoint(actor->PosRelative(line));
+				double back  = line->backsector->floorplane.ZatPoint(actor->PosRelative(line));
 				DAngle angle;
 		
 				// The monster must contact one of the two floors,
@@ -933,7 +926,7 @@ void P_NewChaseDir(AActor * actor)
 
 			// use different dropoff movement logic in P_TryMove
 			actor->flags5|=MF5_AVOIDINGDROPOFF;
-			P_DoNewChaseDir(actor, FLOAT2FIXED(deltax), FLOAT2FIXED(deltay));
+			P_DoNewChaseDir(actor, deltax, deltay);
 			actor->flags5&=~MF5_AVOIDINGDROPOFF;
 		
 			// If moving away from dropoff, set movecount to 1 so that 
@@ -950,7 +943,7 @@ void P_NewChaseDir(AActor * actor)
 	// MBF code for friends. Cannot be done in ZDoom but left here as a reminder for later implementation.
 
 	if (actor->flags & target->flags & MF_FRIEND &&
-	    distfriend << FRACBITS > dist && 
+	    distfriend > dist && 
 	    !P_IsOnLift(target) && !P_IsUnderDamage(actor))
 	  deltax = -deltax, deltay = -deltay;
 	else
@@ -979,12 +972,12 @@ void P_NewChaseDir(AActor * actor)
 			if (ismeleeattacker)
 			{
 				actor->strafecount = pr_enemystrafe() & 15;
-				delta.x = -delta.x, delta.y = -delta.y;
+				delta = -delta;
 			}
 	    }
 	}
 
-	P_DoNewChaseDir(actor, delta.x, delta.y);
+	P_DoNewChaseDir(actor, delta.X, delta.Y);
 
 	// If strafing, set movecount to strafecount so that old Doom
 	// logic still works the same, except in the strafing part
@@ -1016,7 +1009,7 @@ void P_RandomChaseDir (AActor *actor)
 	if (actor->flags & MF_FRIENDLY)
 	{
 		AActor *player;
-		fixedvec2 delta;
+		DVector2 delta;
 		dirtype_t d[3];
 
 		if (actor->FriendPlayer != 0)
@@ -1038,18 +1031,18 @@ void P_RandomChaseDir (AActor *actor)
 		{
 			if (pr_newchasedir() & 1 || !P_CheckSight (actor, player))
 			{
-				delta = actor->_f_Vec2To(player);
+				delta = actor->Vec2To(player);
 
-				if (delta.x>128*FRACUNIT)
+				if (delta.X>128)
 					d[1]= DI_EAST;
-				else if (delta.x<-128*FRACUNIT)
+				else if (delta.X<-128)
 					d[1]= DI_WEST;
 				else
 					d[1]=DI_NODIR;
 
-				if (delta.y<-128*FRACUNIT)
+				if (delta.Y<-128)
 					d[2]= DI_SOUTH;
-				else if (delta.y>128*FRACUNIT)
+				else if (delta.Y>128)
 					d[2]= DI_NORTH;
 				else
 					d[2]=DI_NODIR;
@@ -1057,13 +1050,13 @@ void P_RandomChaseDir (AActor *actor)
 				// try direct route
 				if (d[1] != DI_NODIR && d[2] != DI_NODIR)
 				{
-					actor->movedir = diags[((delta.y<0)<<1) + (delta.x>0)];
+					actor->movedir = diags[((delta.Y<0)<<1) + (delta.X>0)];
 					if (actor->movedir != turnaround && P_TryWalk(actor))
 						return;
 				}
 
 				// try other directions
-				if (pr_newchasedir() > 200 || abs(delta.y) > abs(delta.x))
+				if (pr_newchasedir() > 200 || fabs(delta.Y) > fabs(delta.X))
 				{
 					swapvalues (d[1], d[2]);
 				}
@@ -1213,7 +1206,7 @@ bool P_IsVisible(AActor *lookee, AActor *other, INTBOOL allaround, FLookExParams
 //
 //---------------------------------------------------------------------------
 
-#define MONS_LOOK_RANGE (20*64*FRACUNIT)
+#define MONS_LOOK_RANGE (20*64)
 #define MONS_LOOK_LIMIT 64
 
 bool P_LookForMonsters (AActor *actor)
@@ -1233,7 +1226,7 @@ bool P_LookForMonsters (AActor *actor)
 		{ // Not a valid monster
 			continue;
 		}
-		if (mo->AproxDistance (actor) > MONS_LOOK_RANGE)
+		if (mo->Distance2D (actor) > MONS_LOOK_RANGE)
 		{ // Out of range
 			continue;
 		}
@@ -1733,8 +1726,7 @@ bool P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 			if ((player->mo->flags & MF_SHADOW && !(i_compatflags & COMPATF_INVISIBILITY)) ||
 				player->mo->flags3 & MF3_GHOST)
 			{
-				if ((player->mo->AproxDistance (actor) > (128 << FRACBITS))
-					&& P_AproxDistance (player->mo->_f_velx(), player->mo->_f_vely())	< 5*FRACUNIT)
+				if (player->mo->Distance2D (actor) > 128 && player->mo->Vel.XY().LengthSquared() < 5*5)
 				{ // Player is sneaking - can't detect
 					continue;
 				}
@@ -1895,7 +1887,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_LookEx)
 	PARAM_STATE_OPT	(seestate)		{ seestate = NULL; }
 
 	AActor *targ = NULL; // Shuts up gcc
-	fixed_t dist;
+	double dist;
 	if (fov == 0) fov = 180.;
 	FLookExParams params = { fov, minseedist, maxseedist, maxheardist, flags, seestate };
 
@@ -1936,7 +1928,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_LookEx)
 				}
 				else
 				{
-					dist = self->AproxDistance (targ);
+					dist = self->Distance2D (targ);
 
 					// [KS] If the target is too far away, don't respond to the sound.
 					if (maxheardist && dist > maxheardist)
@@ -2225,7 +2217,7 @@ nosee:
 // enhancements.
 //
 //=============================================================================
-#define CLASS_BOSS_STRAFE_RANGE	64*10*FRACUNIT
+#define CLASS_BOSS_STRAFE_RANGE	64*10
 
 void A_DoChase (VMFrameStack *stack, AActor *actor, bool fastchase, FState *meleestate, FState *missilestate, bool playactive, bool nightmarefast, bool dontmove, int flags)
 {
@@ -2598,14 +2590,14 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 		
 	if (self->movedir != DI_NODIR)
 	{
-		const fixed_t absSpeed = abs (self->_f_speed());
-		fixedvec2 viletry = self->Vec2Offset(
-			int (absSpeed * xspeed[self->movedir]),
-			int (absSpeed * yspeed[self->movedir]), true);
+		const double absSpeed = fabs (self->Speed);
+		DVector2 viletry = self->Vec2Offset(
+			absSpeed * xspeed[self->movedir],
+			absSpeed * yspeed[self->movedir], true);
 
 		FPortalGroupArray check(FPortalGroupArray::PGA_Full3d);
 
-		FMultiBlockThingsIterator it(check, viletry.x, viletry.y, self->_f_Z() - 64* FRACUNIT, self->_f_Top() + 64 * FRACUNIT, 32 * FRACUNIT, false, NULL);
+		FMultiBlockThingsIterator it(check, viletry.X, viletry.Y, self->Z() - 64, self->Top() + 64, 32., false, NULL);
 		FMultiBlockThingsIterator::CheckResult cres;
 		while (it.Next(&cres))
 		{
@@ -2614,10 +2606,10 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 			if (raisestate != NULL)
 			{
 				// use the current actor's _f_radius() instead of the Arch Vile's default.
-				fixed_t maxdist = corpsehit->GetDefault()->_f_radius() + self->_f_radius();
+				double maxdist = corpsehit->GetDefault()->radius + self->radius;
 
-				if (abs(corpsehit->_f_Pos().x - cres.position.x) > maxdist ||
-					abs(corpsehit->_f_Pos().y - cres.position.y) > maxdist)
+				if (fabs(corpsehit->X() - cres.Position.X) > maxdist ||
+					fabs(corpsehit->Y() - cres.Position.Y) > maxdist)
 					continue;			// not actually touching
 				// Let's check if there are floors in between the archvile and its target
 
@@ -2868,7 +2860,7 @@ void A_Face(AActor *self, AActor *other, DAngle max_turn, DAngle max_pitch, DAng
 			target_z = other->Center();
 		}
 
-		//Note there is no +32*FRACUNIT on purpose. This is for customization sake. 
+		//Note there is no +32 on purpose. This is for customization sake. 
 		//If one doesn't want this behavior, just don't use FAF_BOTTOM.
 		if (flags & FAF_BOTTOM)
 			target_z = other->Z() + other->GetBobOffset(); 
@@ -3169,7 +3161,7 @@ AInventory *P_DropItem (AActor *source, PClassActor *type, int dropamount, int c
 			}
 			if (style == 2)
 			{
-				spawnz = 24*FRACUNIT;
+				spawnz = 24;
 			}
 			else
 			{
@@ -3399,13 +3391,13 @@ void A_BossDeath(AActor *self)
 	{
 		if (type == NAME_Fatso)
 		{
-			EV_DoFloor (DFloor::floorLowerToLowest, NULL, 666, FRACUNIT, 0, -1, 0, false);
+			EV_DoFloor (DFloor::floorLowerToLowest, NULL, 666, 1., 0, -1, 0, false);
 			return;
 		}
 		
 		if (type == NAME_Arachnotron)
 		{
-			EV_DoFloor (DFloor::floorRaiseByTexture, NULL, 667, FRACUNIT, 0, -1, 0, false);
+			EV_DoFloor (DFloor::floorRaiseByTexture, NULL, 667, 1., 0, -1, 0, false);
 			return;
 		}
 	}
@@ -3414,15 +3406,15 @@ void A_BossDeath(AActor *self)
 		switch (level.flags & LEVEL_SPECACTIONSMASK)
 		{
 		case LEVEL_SPECLOWERFLOOR:
-			EV_DoFloor (DFloor::floorLowerToLowest, NULL, 666, FRACUNIT, 0, -1, 0, false);
+			EV_DoFloor (DFloor::floorLowerToLowest, NULL, 666, 1., 0, -1, 0, false);
 			return;
 		
 		case LEVEL_SPECLOWERFLOORTOHIGHEST:
-			EV_DoFloor (DFloor::floorLowerToHighest, NULL, 666, FRACUNIT, 0, -1, 0, false);
+			EV_DoFloor (DFloor::floorLowerToHighest, NULL, 666, 1., 0, -1, 0, false);
 			return;
 		
 		case LEVEL_SPECOPENDOOR:
-			EV_DoDoor (DDoor::doorOpen, NULL, NULL, 666, 8*FRACUNIT, 0, 0, 0);
+			EV_DoDoor (DDoor::doorOpen, NULL, NULL, 666, 8., 0, 0, 0);
 			return;
 		}
 	}

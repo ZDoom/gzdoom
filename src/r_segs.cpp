@@ -601,8 +601,8 @@ void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover)
 		scaledside = rover->master->sidedef[0];
 		scaledpart = side_t::mid;
 	}
-	xscale = FixedMul(rw_pic->xScale, scaledside->GetTextureXScale(scaledpart));
-	yscale = FixedMul(rw_pic->yScale, scaledside->GetTextureYScale(scaledpart));
+	xscale = fixed_t(rw_pic->Scale.X * scaledside->GetTextureXScale(scaledpart));
+	yscale = fixed_t(rw_pic->Scale.Y * scaledside->GetTextureYScale(scaledpart));
 
 	fixed_t rowoffset = curline->sidedef->GetTextureYOffset(side_t::mid) + rover->master->sidedef[0]->GetTextureYOffset(side_t::mid);
 	dc_texturemid = rover->model->GetPlaneTexZ(sector_t::ceiling);
@@ -1861,8 +1861,8 @@ void R_RenderSegLoop ()
 		{
 			dc_texturemid = rw_midtexturemid;
 			rw_pic = midtexture;
-			xscale = FixedMul(rw_pic->xScale, rw_midtexturescalex);
-			yscale = FixedMul(rw_pic->yScale, rw_midtexturescaley);
+			xscale = fixed_t(rw_pic->Scale.X * rw_midtexturescalex);
+			yscale = fixed_t(rw_pic->Scale.Y * rw_midtexturescaley);
 			if (xscale != lwallscale)
 			{
 				PrepLWall (lwall, curline->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2);
@@ -1904,8 +1904,8 @@ void R_RenderSegLoop ()
 			{
 				dc_texturemid = rw_toptexturemid;
 				rw_pic = toptexture;
-				xscale = FixedMul(rw_pic->xScale, rw_toptexturescalex);
-				yscale = FixedMul(rw_pic->yScale, rw_toptexturescaley);
+				xscale = fixed_t(rw_pic->Scale.X * rw_toptexturescalex);
+				yscale = fixed_t(rw_pic->Scale.Y * rw_toptexturescaley);
 				if (xscale != lwallscale)
 				{
 					PrepLWall (lwall, curline->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2);
@@ -1950,8 +1950,8 @@ void R_RenderSegLoop ()
 			{
 				dc_texturemid = rw_bottomtexturemid;
 				rw_pic = bottomtexture;
-				xscale = FixedMul(rw_pic->xScale, rw_bottomtexturescalex);
-				yscale = FixedMul(rw_pic->yScale, rw_bottomtexturescaley);
+				xscale = fixed_t(rw_pic->Scale.X * rw_bottomtexturescalex);
+				yscale = fixed_t(rw_pic->Scale.Y * rw_bottomtexturescaley);
 				if (xscale != lwallscale)
 				{
 					PrepLWall (lwall, curline->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2);
@@ -2021,7 +2021,7 @@ void R_NewWall (bool needlights)
 			rowoffset = sidedef->GetTextureYOffset(side_t::mid);
 			rw_midtexturescalex = sidedef->GetTextureXScale(side_t::mid);
 			rw_midtexturescaley = sidedef->GetTextureYScale(side_t::mid);
-			yrepeat = FixedMul(midtexture->yScale, rw_midtexturescaley);
+			yrepeat = fixed_t(midtexture->Scale.Y * rw_midtexturescaley);
 			if (yrepeat >= 0)
 			{ // normal orientation
 				if (linedef->flags & ML_DONTPEGBOTTOM)
@@ -2176,7 +2176,7 @@ void R_NewWall (bool needlights)
 			rowoffset = sidedef->GetTextureYOffset(side_t::top);
 			rw_toptexturescalex = sidedef->GetTextureXScale(side_t::top);
 			rw_toptexturescaley = sidedef->GetTextureYScale(side_t::top);
-			yrepeat = FixedMul(toptexture->yScale, rw_toptexturescaley);
+			yrepeat = fixed_t(toptexture->Scale.Y * rw_toptexturescaley);
 			if (yrepeat >= 0)
 			{ // normal orientation
 				if (linedef->flags & ML_DONTPEGTOP)
@@ -2221,7 +2221,7 @@ void R_NewWall (bool needlights)
 			rowoffset = sidedef->GetTextureYOffset(side_t::bottom);
 			rw_bottomtexturescalex = sidedef->GetTextureXScale(side_t::bottom);
 			rw_bottomtexturescaley = sidedef->GetTextureYScale(side_t::bottom);
-			yrepeat = FixedMul(bottomtexture->yScale, rw_bottomtexturescaley);
+			yrepeat = fixed_t(bottomtexture->Scale.Y * rw_bottomtexturescaley);
 			if (yrepeat >= 0)
 			{ // normal orientation
 				if (linedef->flags & ML_DONTPEGBOTTOM)
@@ -2292,9 +2292,9 @@ void R_NewWall (bool needlights)
 	if (needlights && (segtextured || (backsector && IsFogBoundary(frontsector, backsector))))
 	{
 		lwallscale =
-			midtex ? FixedMul(midtex->xScale, sidedef->GetTextureXScale(side_t::mid)) :
-			toptexture ? FixedMul(toptexture->xScale, sidedef->GetTextureXScale(side_t::top)) :
-			bottomtexture ? FixedMul(bottomtexture->xScale, sidedef->GetTextureXScale(side_t::bottom)) :
+			midtex ? int(midtex->Scale.X * sidedef->GetTextureXScale(side_t::mid)) :
+			toptexture ? int(toptexture->Scale.X * sidedef->GetTextureXScale(side_t::top)) :
+			bottomtexture ? int(bottomtexture->Scale.X * sidedef->GetTextureXScale(side_t::bottom)) :
 			FRACUNIT;
 
 		PrepWall (swall, lwall, sidedef->TexelLength * lwallscale, WallC.sx1, WallC.sx2);
@@ -2507,7 +2507,7 @@ void R_StoreWallRange (int start, int stop)
 				lwal = (fixed_t *)(openings + ds_p->maskedtexturecol);
 				swal = (fixed_t *)(openings + ds_p->swall);
 				FTexture *pic = TexMan(sidedef->GetTexture(side_t::mid), true);
-				fixed_t yrepeat = FixedMul(pic->yScale, sidedef->GetTextureYScale(side_t::mid));
+				fixed_t yrepeat = int(pic->Scale.X * sidedef->GetTextureYScale(side_t::mid));
 				fixed_t xoffset = sidedef->GetTextureXOffset(side_t::mid);
 
 				if (pic->bWorldPanning)

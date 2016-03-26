@@ -1201,8 +1201,8 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 		return;
 	}
 
-	scalex /= FIXED2DBL(tex->xScale);
-	scaley /= FIXED2DBL(tex->yScale);
+	scalex /= tex->Scale.X;
+	scaley /= tex->Scale.Y;
 
 	// Use the CRT's functions here.
 	cosrot = cos(ToRadians(rotation));

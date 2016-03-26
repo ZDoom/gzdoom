@@ -969,7 +969,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 		renderflags ^= MirrorFlags & RF_XFLIP;
 
 		// calculate edges of the shape
-		const fixed_t thingxscalemul = DivScale16(spritescaleX, tex->xScale);
+		const fixed_t thingxscalemul = fixed_t(spritescaleX / tex->Scale.X);
 
 		tx -= ((renderflags & RF_XFLIP) ? (tex->GetWidth() - tex->LeftOffset - 1) : tex->LeftOffset) * thingxscalemul;
 		x1 = centerx + MulScale32 (tx, xscale);
@@ -985,10 +985,10 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 		if ((x2 < WindowLeft || x2 <= x1))
 			return;
 
-		xscale = FixedDiv(FixedMul(spritescaleX, xscale), tex->xScale);
+		xscale = fixed_t(FixedMul(spritescaleX, xscale) / tex->Scale.X);
 		iscale = (tex->GetWidth() << FRACBITS) / (x2 - x1);
 
-		fixed_t yscale = SafeDivScale16(spritescaleY, tex->yScale);
+		fixed_t yscale = fixed_t(spritescaleY / tex->Scale.Y);
 
 		// store information in a vissprite
 		vis = R_NewVisSprite();
@@ -1335,7 +1335,7 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, fixed_t sx, fixed_
 	vis->floorclip = 0;
 
 
-	vis->texturemid = MulScale16((BASEYCENTER<<FRACBITS) - sy, tex->yScale) + (tex->TopOffset << FRACBITS);
+	vis->texturemid = int(((BASEYCENTER<<FRACBITS) - sy) * tex->Scale.Y) + (tex->TopOffset << FRACBITS);
 
 
 	if (camera->player && (RenderTarget != screen ||
@@ -1365,20 +1365,20 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, fixed_t sx, fixed_
 	}
 	vis->x1 = x1 < 0 ? 0 : x1;
 	vis->x2 = x2 >= viewwidth ? viewwidth : x2;
-	vis->xscale = DivScale16(pspritexscale, tex->xScale);
-	vis->yscale = DivScale16(pspriteyscale, tex->yScale);
+	vis->xscale = fixed_t(pspritexscale / tex->Scale.X);
+	vis->yscale = fixed_t(pspriteyscale / tex->Scale.Y);
 	vis->Translation = 0;		// [RH] Use default colors
 	vis->pic = tex;
 	vis->ColormapNum = 0;
 
 	if (flip)
 	{
-		vis->xiscale = -MulScale16(pspritexiscale, tex->xScale);
+		vis->xiscale = -int(pspritexiscale * tex->Scale.X);
 		vis->startfrac = (tex->GetWidth() << FRACBITS) - 1;
 	}
 	else
 	{
-		vis->xiscale = MulScale16(pspritexiscale, tex->xScale);
+		vis->xiscale = int(pspritexiscale * tex->Scale.X);
 		vis->startfrac = 0;
 	}
 

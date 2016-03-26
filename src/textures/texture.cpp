@@ -118,12 +118,12 @@ FTexture * FTexture::CreateTexture (int lumpnum, int usetype)
 					// Now we're stuck with this stupid behaviour.
 					if (w==128 && h==128) 
 					{
-						tex->xScale = tex->yScale = 2*FRACUNIT;
+						tex->Scale.X = tex->Scale.Y = 2;
 						tex->bWorldPanning = true;
 					}
 					else if (w==256 && h==256) 
 					{
-						tex->xScale = tex->yScale = 4*FRACUNIT;
+						tex->Scale.X = tex->Scale.Y = 4;
 						tex->bWorldPanning = true;
 					}
 				}
@@ -147,7 +147,7 @@ FTexture * FTexture::CreateTexture (const char *name, int lumpnum, int usetype)
 
 FTexture::FTexture (const char *name, int lumpnum)
 : LeftOffset(0), TopOffset(0),
-  WidthBits(0), HeightBits(0), xScale(FRACUNIT), yScale(FRACUNIT), SourceLump(lumpnum),
+  WidthBits(0), HeightBits(0), Scale(1,1), SourceLump(lumpnum),
   UseType(TEX_Any), bNoDecals(false), bNoRemap0(false), bWorldPanning(false),
   bMasked(true), bAlphaTexture(false), bHasCanvas(false), bWarped(0), bComplex(false), bMultiPatch(false), bKeepAround(false),
   Rotations(0xFFFF), SkyOffset(0), Width(0), Height(0), WidthMask(0), Native(NULL)
@@ -562,11 +562,11 @@ FTexture *FTexture::GetRawTexture()
 
 void FTexture::SetScaledSize(int fitwidth, int fitheight)
 {
-	xScale = FLOAT2FIXED(float(Width) / fitwidth);
-	yScale = FLOAT2FIXED(float(Height) / fitheight);
+	Scale.X = double(Width) / fitwidth;
+	Scale.Y =double(Height) / fitheight;
 	// compensate for roundoff errors
-	if (MulScale16(xScale, fitwidth) != Width) xScale++;
-	if (MulScale16(yScale, fitheight) != Height) yScale++;
+	if (int(Scale.X * fitwidth) != Width) Scale.X += (1 / 65536.);
+	if (int(Scale.Y * fitheight) != Height) Scale.Y += (1 / 65536.);
 }
 
 

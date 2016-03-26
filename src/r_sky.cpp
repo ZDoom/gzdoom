@@ -107,7 +107,7 @@ void R_InitSkyMap ()
 	}
 	else if (skyheight > 200)
 	{
-		skytexturemid = FixedMul((200 - skyheight) << FRACBITS, skytex1->yScale);
+		skytexturemid = FLOAT2FIXED((200 - skyheight) * skytex1->Scale.Y);
 	}
 
 	if (viewwidth != 0 && viewheight != 0)
@@ -131,8 +131,8 @@ void R_InitSkyMap ()
 	// giving a total sky width of 1024 pixels. So if the sky texture is no wider than 1024,
 	// we map it to a cylinder with circumfrence 1024. For larger ones, we use the width of
 	// the texture as the cylinder's circumfrence.
-	sky1cyl = MAX(skytex1->GetWidth(), skytex1->xScale >> (16 - 10));
-	sky2cyl = MAX(skytex2->GetWidth(), skytex2->xScale >> (16 - 10));
+	sky1cyl = MAX(skytex1->GetWidth(), fixed_t(skytex1->Scale.X * 1024));
+	sky2cyl = MAX(skytex2->GetWidth(), fixed_t(skytex2->Scale.Y * 1024));
 }
 
 

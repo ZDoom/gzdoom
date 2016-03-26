@@ -3349,7 +3349,6 @@ void AActor::Tick ()
 
 
 	AActor *onmo;
-	int i;
 
 	//assert (state != NULL);
 	if (state == NULL)
@@ -6474,7 +6473,7 @@ int AActor::GetGibHealth() const
 	}
 	else
 	{
-		return -FixedMul(SpawnHealth(), gameinfo.gibfactor);
+		return -int(SpawnHealth() * gameinfo.gibfactor);
 	}
 }
 

@@ -163,7 +163,7 @@ struct gameinfo_t
 	FName mFontColorHighlight;
 	FName mFontColorSelection;
 	FString mBackButton;
-	fixed_t gibfactor;
+	double gibfactor;
 	int TextScreenX;
 	int TextScreenY;
 	FName DefaultEndSequence;

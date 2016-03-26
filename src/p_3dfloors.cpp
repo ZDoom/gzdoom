@@ -324,12 +324,8 @@ static int P_Set3DFloor(line_t * line, int param, int param2, int alpha)
 
 void P_PlayerOnSpecial3DFloor(player_t* player)
 {
-	sector_t * sector = player->mo->Sector;
-
-	for(unsigned i=0;i<sector->e->XFloor.ffloors.Size();i++)
+	for(auto rover : player->mo->Sector->e->XFloor.ffloors)
 	{
-		F3DFloor* rover=sector->e->XFloor.ffloors[i];
-
 		if (!(rover->flags & FF_EXISTS)) continue;
 		if (rover->flags & FF_FIX) continue;
 
@@ -337,13 +333,13 @@ void P_PlayerOnSpecial3DFloor(player_t* player)
 		if(rover->flags & FF_SOLID)
 		{
 			// Player must be on top of the floor to be affected...
-			if(player->mo->_f_Z() != rover->top.plane->ZatPoint(player->mo)) continue;
+			if(player->mo->Z() != rover->top.plane->ZatPointF(player->mo)) continue;
 		}
 		else
 		{
 			//Water and DEATH FOG!!! heh
-			if (player->mo->_f_Z() > rover->top.plane->ZatPoint(player->mo) || 
-				player->mo->_f_Top() < rover->bottom.plane->ZatPoint(player->mo))
+			if (player->mo->Z() > rover->top.plane->ZatPointF(player->mo) || 
+				player->mo->Top() < rover->bottom.plane->ZatPointF(player->mo))
 				continue;
 		}
 
@@ -366,19 +362,15 @@ void P_PlayerOnSpecial3DFloor(player_t* player)
 //==========================================================================
 bool P_CheckFor3DFloorHit(AActor * mo)
 {
-	sector_t * sector = mo->Sector;
-
 	if ((mo->player && (mo->player->cheats & CF_PREDICTING))) return false;
 
-	for(unsigned i=0;i<sector->e->XFloor.ffloors.Size();i++)
+	for (auto rover : mo->Sector->e->XFloor.ffloors)
 	{
-		F3DFloor* rover=sector->e->XFloor.ffloors[i];
-
 		if (!(rover->flags & FF_EXISTS)) continue;
 
 		if(rover->flags & FF_SOLID && rover->model->SecActTarget)
 		{
-			if(mo->_f_floorz() == rover->top.plane->ZatPoint(mo)) 
+			if(mo->Z() == rover->top.plane->ZatPointF(mo)) 
 			{
 				rover->model->SecActTarget->TriggerAction (mo, SECSPAC_HitFloor);
 				return true;
@@ -396,19 +388,15 @@ bool P_CheckFor3DFloorHit(AActor * mo)
 //==========================================================================
 bool P_CheckFor3DCeilingHit(AActor * mo)
 {
-	sector_t * sector = mo->Sector;
-
 	if ((mo->player && (mo->player->cheats & CF_PREDICTING))) return false;
 
-	for(unsigned i=0;i<sector->e->XFloor.ffloors.Size();i++)
+	for (auto rover : mo->Sector->e->XFloor.ffloors)
 	{
-		F3DFloor* rover=sector->e->XFloor.ffloors[i];
-
 		if (!(rover->flags & FF_EXISTS)) continue;
 
 		if(rover->flags & FF_SOLID && rover->model->SecActTarget)
 		{
-			if(mo->_f_ceilingz() == rover->bottom.plane->ZatPoint(mo)) 
+			if(mo->Top() == rover->bottom.plane->ZatPointF(mo)) 
 			{
 				rover->model->SecActTarget->TriggerAction (mo, SECSPAC_HitCeiling);
 				return true;

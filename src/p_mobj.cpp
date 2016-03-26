@@ -472,7 +472,7 @@ void AActor::Serialize(FArchive &arc)
 			}
 		}
 		ClearInterpolation();
-		UpdateWaterLevel(_f_Z(), false);
+		UpdateWaterLevel(false);
 	}
 }
 
@@ -3462,7 +3462,7 @@ void AActor::Tick ()
 			}
 		}
 
-		fixed_t oldz = _f_Z();
+		double oldz = Z();
 
 		// [RH] Give the pain elemental vertical friction
 		// This used to be in APainElemental::Tick but in order to use
@@ -3736,7 +3736,7 @@ void AActor::Tick ()
 						const sector_t *sec = node->m_sector;
 						if (sec->floorplane.c >= STEEPSLOPE)
 						{
-							if (floorplane.ZatPointF (_f_PosRelative(node->m_sector)) >= Z() - MaxStepHeight)
+							if (floorplane.ZatPoint(PosRelative(node->m_sector)) >= Z() - MaxStepHeight)
 							{
 								dopush = false;
 								break;
@@ -3858,7 +3858,7 @@ void AActor::Tick ()
 
 		CheckPortalTransition(true);
 
-		UpdateWaterLevel (oldz);
+		UpdateWaterLevel ();
 
 		// [RH] Don't advance if predicting a player
 		if (player && (player->cheats & CF_PREDICTING))
@@ -4011,7 +4011,7 @@ void AActor::CheckSectorTransition(sector_t *oldsec)
 //
 //==========================================================================
 
-bool AActor::UpdateWaterLevel (fixed_t oldz, bool dosplash)
+bool AActor::UpdateWaterLevel (bool dosplash)
 {
 	BYTE lastwaterlevel = waterlevel;
 	double fh = -FLT_MAX;
@@ -4068,10 +4068,8 @@ bool AActor::UpdateWaterLevel (fixed_t oldz, bool dosplash)
 		else
 		{
 			// Check 3D floors as well!
-			for(unsigned int i=0;i<Sector->e->XFloor.ffloors.Size();i++)
+			for(auto rover : Sector->e->XFloor.ffloors)
 			{
-				F3DFloor*  rover=Sector->e->XFloor.ffloors[i];
-
 				if (!(rover->flags & FF_EXISTS)) continue;
 				if(!(rover->flags & FF_SWIMMABLE) || rover->flags & FF_SOLID) continue;
 
@@ -4269,7 +4267,7 @@ AActor *AActor::StaticSpawn (PClassActor *type, const DVector3 &pos, replace_t a
 	{
 		actor->Floorclip = 0;
 	}
-	actor->UpdateWaterLevel (actor->Z(), false);
+	actor->UpdateWaterLevel (false);
 	if (!SpawningMapThing)
 	{
 		actor->BeginPlay ();

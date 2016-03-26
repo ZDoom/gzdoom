@@ -93,7 +93,7 @@ void AFastProjectile::Tick ()
 				}
 			}
 			AddZ(frac.Z);
-			UpdateWaterLevel (oldz);
+			UpdateWaterLevel ();
 			oldz = Z();
 			if (oldz <= floorz)
 			{ // Hit the floor

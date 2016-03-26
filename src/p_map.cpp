@@ -6098,7 +6098,7 @@ bool P_ChangeSector(sector_t *sector, int crunch, int amt, int floorOrCeil, bool
 					{
 						n->visited = true; 							// mark thing as processed
 
-						n->m_thing->UpdateWaterLevel(n->m_thing->_f_Z(), false);
+						n->m_thing->UpdateWaterLevel(false);
 						P_CheckFakeFloorTriggers(n->m_thing, n->m_thing->_f_Z() - amt);
 					}
 				}

@@ -50,9 +50,6 @@
 #define NETD_ID		BIGE_ID('N','E','T','D')
 #define WEAP_ID		BIGE_ID('W','E','A','P')
 
-#define	ANGLE2SHORT(x)	((((x)/360) & 65535)
-#define	SHORT2ANGLE(x)	((x)*360)
-
 
 struct zdemoheader_s {
 	BYTE	demovermajor;

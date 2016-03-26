@@ -353,6 +353,11 @@ static bool ReadChars (char **stuff, int size);
 static char *igets (void);
 static int GetLine (void);
 
+inline double DEHToDouble(int acsval)
+{
+	return acsval / 65536.;
+}
+
 static void PushTouchedActor(PClassActor *cls)
 {
 	for(unsigned i = 0; i < TouchedActors.Size(); i++)
@@ -647,7 +652,7 @@ static int CreateMushroomFunc(VMFunctionBuilder &buildit, int value1, int value2
 	}
 	else
 	{
-		buildit.Emit(OP_PARAM, 0, REGT_FLOAT | REGT_KONST, buildit.GetConstantFloat(FIXED2DBL(value1)));
+		buildit.Emit(OP_PARAM, 0, REGT_FLOAT | REGT_KONST, buildit.GetConstantFloat(DEHToDouble(value1)));
 	}
 	// hrange
 	if (value2 == 0)
@@ -656,7 +661,7 @@ static int CreateMushroomFunc(VMFunctionBuilder &buildit, int value1, int value2
 	}
 	else
 	{
-		buildit.Emit(OP_PARAM, 0, REGT_FLOAT | REGT_KONST, buildit.GetConstantFloat(FIXED2DBL(value2)));
+		buildit.Emit(OP_PARAM, 0, REGT_FLOAT | REGT_KONST, buildit.GetConstantFloat(DEHToDouble(value2)));
 	}
 	return 5;
 }
@@ -896,14 +901,14 @@ static int PatchThing (int thingy)
 		}
 		else if (linelen == 12 && stricmp (Line1, "Translucency") == 0)
 		{
-			info->Alpha = FIXED2DBL(val);
+			info->Alpha = DEHToDouble(val);
 			info->RenderStyle = STYLE_Translucent;
 			hadTranslucency = true;
 			hadStyle = true;
 		}
 		else if (linelen == 6 && stricmp (Line1, "Height") == 0)
 		{
-			info->Height = FIXED2DBL(val);
+			info->Height = DEHToDouble(val);
 			info->projectilepassheight = 0;	// needs to be disabled
 			hadHeight = true;
 		}
@@ -919,7 +924,7 @@ static int PatchThing (int thingy)
 			}
 			else if (stricmp (Line1, "Width") == 0)
 			{
-				info->radius = FIXED2FLOAT(val);
+				info->radius = DEHToDouble(val);
 			}
 			else if (stricmp (Line1, "Alpha") == 0)
 			{

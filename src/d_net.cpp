@@ -2369,7 +2369,7 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 			DAngle ang = players[player].mo->Angles.Yaw;
 			DAngle pitch = players[player].mo->Angles.Pitch;
 			double c = pitch.Cos();
-			DVector3 vec(c * ang.Cos(), c * ang.Sin(), -pitch.Sin);
+			DVector3 vec(c * ang.Cos(), c * ang.Sin(), -pitch.Sin());
 
 			s = ReadString (stream);
 

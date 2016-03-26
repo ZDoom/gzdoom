@@ -1337,11 +1337,7 @@ public:
 	bool InStateSequence(FState * newstate, FState * basestate);
 	int GetTics(FState * newstate);
 	bool SetState (FState *newstate, bool nofunction=false);
-	virtual bool UpdateWaterLevel (fixed_t oldz, bool splash=true);
-	bool UpdateWaterLevel(double oldz, bool splash = true)
-	{
-		return UpdateWaterLevel(FLOAT2FIXED(oldz), splash);
-	}
+	virtual bool UpdateWaterLevel (bool splash=true);
 	bool isFast();
 	bool isSlow();
 	void SetIdle(bool nofunction=false);

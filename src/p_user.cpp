@@ -1225,10 +1225,10 @@ int APlayerPawn::GetMaxHealth() const
 //
 //===========================================================================
 
-bool APlayerPawn::UpdateWaterLevel (fixed_t oldz, bool splash)
+bool APlayerPawn::UpdateWaterLevel (bool splash)
 {
 	int oldlevel = waterlevel;
-	bool retval = Super::UpdateWaterLevel (oldz, splash);
+	bool retval = Super::UpdateWaterLevel (splash);
 	if (player != NULL)
 	{
 		if (oldlevel < 3 && waterlevel == 3)

@@ -474,9 +474,9 @@ void EV_LightTurnOn (int tag, int bright)
 //
 //-----------------------------------------------------------------------------
 
-void EV_LightTurnOnPartway (int tag, fixed_t frac)
+void EV_LightTurnOnPartway (int tag, double frac)
 {
-	frac = clamp<fixed_t> (frac, 0, FRACUNIT);
+	frac = clamp(frac, 0., 1.);
 
 	// Search all sectors for ones with same tag as activating line
 	int secnum;
@@ -500,7 +500,7 @@ void EV_LightTurnOnPartway (int tag, fixed_t frac)
 				}
 			}
 		}
-		sector->SetLightLevel(DMulScale16 (frac, bright, FRACUNIT-frac, min));
+		sector->SetLightLevel(int(frac * bright + (1 - frac) * min));
 	}
 }
 

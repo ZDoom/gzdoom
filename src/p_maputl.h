@@ -143,6 +143,10 @@ static const double LINEOPEN_MIN = -FLT_MAX;
 static const double LINEOPEN_MAX = FLT_MAX;
 
 void P_LineOpening(FLineOpening &open, AActor *thing, const line_t *linedef, const DVector2 &xy, const DVector2 *ref = NULL, int flags = 0);
+inline void P_LineOpening(FLineOpening &open, AActor *thing, const line_t *linedef, const DVector2 &xy, const DVector3 *ref = NULL, int flags = 0)
+{
+	P_LineOpening(open, thing, linedef, xy, reinterpret_cast<const DVector2*>(ref), flags);
+}
 
 inline void P_LineOpening(FLineOpening &open, AActor *thing, const line_t *linedef, fixed_t x, fixed_t y, fixed_t refx = FIXED_MIN, fixed_t refy = 0, int flags = 0)
 {
@@ -152,7 +156,6 @@ inline void	P_LineOpening(FLineOpening &open, AActor *thing, const line_t *lined
 {
 	P_LineOpening(open, thing, linedef, xy.x, xy.y, refx, refy, flags);
 }
-void P_LineOpening(FLineOpening &open, AActor *thing, const line_t *linedef, const DVector2 &xy, fixed_t refx = FIXED_MIN, const DVector2 *ref = NULL, int flags = 0);
 
 class FBoundingBox;
 struct polyblock_t;
@@ -281,11 +284,18 @@ public:
 	{
 		line_t *line;
 		fixedvec3 position;
+		DVector3 Position;
 		int portalflags;
 	};
 
 	FMultiBlockLinesIterator(FPortalGroupArray &check, AActor *origin, fixed_t checkradius = -1);
 	FMultiBlockLinesIterator(FPortalGroupArray &check, fixed_t checkx, fixed_t checky, fixed_t checkz, fixed_t checkh, fixed_t checkradius, sector_t *newsec);
+
+	FMultiBlockLinesIterator(FPortalGroupArray &check, double checkx, double checky, double checkz, double checkh, double checkradius, sector_t *newsec)
+		: FMultiBlockLinesIterator(check, FLOAT2FIXED(checkx), FLOAT2FIXED(checky), FLOAT2FIXED(checkz), FLOAT2FIXED(checkh), FLOAT2FIXED(checkradius), newsec)
+	{
+	}
+
 	bool Next(CheckResult *item);
 	void Reset();
 	// for stopping group traversal through portals. Only the calling code can decide whether this is needed so this needs to be set from the outside.
@@ -467,6 +477,7 @@ fixed_t P_AproxDistance (fixed_t dx, fixed_t dy);
 
 
 fixed_t P_InterceptVector (const fdivline_t *v2, const fdivline_t *v1);
+double P_InterceptVector(const divline_t *v2, const divline_t *v1);
 
 #define PT_ADDLINES 	1
 #define PT_ADDTHINGS	2

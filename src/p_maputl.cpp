@@ -73,6 +73,30 @@ fixed_t P_AproxDistance (fixed_t dx, fixed_t dy)
 //
 //==========================================================================
 
+double P_InterceptVector(const divline_t *v2, const divline_t *v1)
+{
+	double num;
+	double den;
+
+	double v1x = v1->x;
+	double v1y = v1->y;
+	double v1dx = v1->dx;
+	double v1dy = v1->dy;
+	double v2x = v2->x;
+	double v2y = v2->y;
+	double v2dx = v2->dx;
+	double v2dy = v2->dy;
+
+	den = v1dy*v2dx - v1dx*v2dy;
+
+	if (den == 0)
+		return 0;		// parallel
+
+	num = (v1x - v2x)*v1dy + (v2y - v1y)*v1dx;
+	return num / den;
+}
+
+
 fixed_t P_InterceptVector (const fdivline_t *v2, const fdivline_t *v1)
 {
 #if 0	// [RH] Use 64 bit ints, so long divlines don't overflow
@@ -814,6 +838,8 @@ bool FMultiBlockLinesIterator::Next(FMultiBlockLinesIterator::CheckResult *item)
 		item->line = line;
 		item->position.x = offset.x;
 		item->position.y = offset.y;
+		// same as above in floating point. This is here so that this stuff can be converted piece by piece.
+		item->Position = { FIXED2DBL(item->position.x), FIXED2DBL(item->position.y), FIXED2DBL(item->position.z) };
 		item->portalflags = portalflags;
 		return true;
 	}

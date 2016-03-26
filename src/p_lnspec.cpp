@@ -498,7 +498,7 @@ FUNC(LS_Floor_TransferNumeric)
 FUNC(LS_Floor_Donut)
 // Floor_Donut (pillartag, pillarspeed, slimespeed)
 {
-	return EV_DoDonut (arg0, ln, SPEED(arg1), SPEED(arg2));
+	return EV_DoDonut (arg0, ln, _f_SPEED(arg1), _f_SPEED(arg2));
 }
 
 FUNC(LS_Generic_Floor)

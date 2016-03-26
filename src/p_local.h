@@ -266,8 +266,8 @@ extern msecnode_t		*sector_list;		// phares 3/16/98
 struct spechit_t
 {
 	line_t *line;
-	fixedvec2 oldrefpos;
-	fixedvec2 refpos;
+	DVector2 Oldrefpos;
+	DVector2 Refpos;
 };
 
 extern TArray<spechit_t> spechit;
@@ -312,15 +312,18 @@ inline bool	P_CheckMove(AActor *thing, double x, double y)
 	return P_CheckMove(thing, FLOAT2FIXED(x), FLOAT2FIXED(y));
 }
 void	P_ApplyTorque(AActor *mo);
-bool	P_TeleportMove (AActor* thing, fixed_t x, fixed_t y, fixed_t z, bool telefrag, bool modifyactor = true);	// [RH] Added z and telefrag parameters
+
+bool	P_TeleportMove(AActor* thing, const DVector3 &pos, bool telefrag, bool modifyactor = true);	// [RH] Added z and telefrag parameters
+
+inline bool	P_TeleportMove (AActor* thing, fixed_t x, fixed_t y, fixed_t z, bool telefrag, bool modifyactor = true)
+{
+	return P_TeleportMove(thing, DVector3(FIXED2DBL(x), FIXED2DBL(y), FIXED2DBL(z)), telefrag, modifyactor);
+}
 inline bool	P_TeleportMove(AActor* thing, const fixedvec3 &pos, bool telefrag, bool modifyactor = true)
 {
-	return P_TeleportMove(thing, pos.x, pos.y, pos.z, telefrag, modifyactor);
+	return P_TeleportMove(thing, DVector3(FIXED2DBL(pos.x), FIXED2DBL(pos.y), FIXED2DBL(pos.z)), telefrag, modifyactor);
 }
-inline bool	P_TeleportMove(AActor* thing, const DVector3 &pos, bool telefrag, bool modifyactor = true)
-{
-	return P_TeleportMove(thing, FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), FLOAT2FIXED(pos.Z), telefrag, modifyactor);
-}
+
 void	P_PlayerStartStomp (AActor *actor, bool mononly=false);		// [RH] Stomp on things for a newly spawned player
 void	P_SlideMove (AActor* mo, fixed_t tryx, fixed_t tryy, int numsteps);
 bool	P_BounceWall (AActor *mo);

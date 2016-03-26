@@ -246,6 +246,11 @@ struct secplane_t
 
 	fixed_t a, b, c, d, ic;
 
+	bool isSlope() const
+	{
+		return a != 0 || b != 0;
+	}
+
 	DVector3 Normal() const
 	{
 		return{ FIXED2FLOAT(a), FIXED2FLOAT(b), FIXED2FLOAT(c) };

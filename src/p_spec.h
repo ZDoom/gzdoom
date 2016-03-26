@@ -365,7 +365,7 @@ void	EV_StartLightStrobing (int tag, int upper, int lower, int utics, int ltics)
 void	EV_StartLightStrobing (int tag, int utics, int ltics);
 void	EV_TurnTagLightsOff (int tag);
 void	EV_LightTurnOn (int tag, int bright);
-void	EV_LightTurnOnPartway (int tag, fixed_t frac);	// killough 10/98
+void	EV_LightTurnOnPartway (int tag, double frac);	// killough 10/98
 void	EV_LightChange (int tag, int value);
 void	EV_StopLightEffect (int tag);
 

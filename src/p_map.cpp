@@ -64,7 +64,7 @@ CVAR(Bool, cl_bloodsplats, true, CVAR_ARCHIVE)
 CVAR(Int, sv_smartaim, 0, CVAR_ARCHIVE | CVAR_SERVERINFO)
 CVAR(Bool, cl_doautoaim, false, CVAR_ARCHIVE)
 
-static void CheckForPushSpecial(line_t *line, int side, AActor *mobj, fixedvec2 * posforwindowcheck = NULL);
+static void CheckForPushSpecial(line_t *line, int side, AActor *mobj, DVector2 * posforwindowcheck = NULL);
 static void SpawnShootDecal(AActor *t1, const FTraceResults &trace);
 static void SpawnDeepSplash(AActor *t1, const FTraceResults &trace, AActor *puff);
 
@@ -81,77 +81,6 @@ TArray<spechit_t> portalhit;
 // Temporary holder for thing_sectorlist threads
 msecnode_t* sector_list = NULL;		// phares 3/16/98
 
-
-//==========================================================================
-//
-// GetCoefficientClosestPointInLine24
-//
-// Formula: (dotProduct(ldv1 - tm, ld) << 24) / dotProduct(ld, ld)
-// with: ldv1 = (ld->v1->x, ld->v1->y), tm = (tm.x, tm.y)
-// and ld = (ld->dx, ld->dy)
-// Returns truncated to range [0, 1 << 24].
-//
-//==========================================================================
-
-static inline fixed_t GetCoefficientClosestPointInLine24(line_t *ld, fixedvec2 pos)
-{
-#ifndef USE_FLOAT
-	// [EP] Use 64 bit integers in order to keep the exact result of the
-	// multiplication, because in the case the vertexes have both the
-	// distance coordinates equal to the map limit (32767 units, which is
-	// 2147418112 in fixed_t notation), the product result would occupy
-	// 62 bits and the sum of two products would occupy 63 bits
-	// in the worst case. If instead the vertexes are very close (1 in
-	// fixed_t notation, which is 1.52587890625e-05 in float notation), the
-	// product and the sum can be 1 in the worst case, which is very tiny.
-
-	SQWORD r_num = ((SQWORD(pos.x - ld->v1->x)*ld->dx) +
-		(SQWORD(pos.y - ld->v1->y)*ld->dy));
-
-	// The denominator is always positive. Use this to avoid useless
-	// calculations.
-	SQWORD r_den = (SQWORD(ld->dx)*ld->dx + SQWORD(ld->dy)*ld->dy);
-
-	if (r_num <= 0) {
-		// [EP] The numerator is less or equal to zero, hence the closest
-		// point on the line is the first vertex. Truncate the result to 0.
-		return 0;
-	}
-
-	if (r_num >= r_den) {
-		// [EP] The division is greater or equal to 1, hence the closest
-		// point on the line is the second vertex. Truncate the result to
-		// 1 << 24.
-		return (1 << 24);
-	}
-
-	// [EP] Deal with the limited bits. The original formula is:
-	// r = (r_num << 24) / r_den,
-	// but r_num might be big enough to make the shift overflow.
-	// Since the numerator can't be saved in a 128bit integer,
-	// the denominator must be right shifted. If the denominator is
-	// less than (1 << 24), there would be a division by zero.
-	// Thanks to the fact that in this code path the denominator is greater
-	// than the numerator, it's possible to avoid this bad situation by
-	// just checking the last 24 bits of the numerator.
-	if ((r_num >> (63 - 24)) != 0) {
-		// [EP] In fact, if the numerator is greater than
-		// (1 << (63-24)), the denominator must be greater than
-		// (1 << (63-24)), hence the denominator won't be zero after
-		// the right shift by 24 places.
-		return (fixed_t)(r_num / (r_den >> 24));
-	}
-	// [EP] Having the last 24 bits all zero allows left shifting
-	// the numerator by 24 bits without overflow.
-	return (fixed_t)((r_num << 24) / r_den);
-#else
-	double dx = ld->dx;
-	double dy = ld->dy;
-	return xs_CRoundToInt(((double)(pos.x - ld->v1->x) * dx + (double)(pos.y - ld->v1->y) * dy) / (dx*dx + dy*dy) * 16777216.f);
-#endif
-}
-
-
 //==========================================================================
 //
 // FindRefPoint
@@ -160,41 +89,30 @@ static inline fixed_t GetCoefficientClosestPointInLine24(line_t *ld, fixedvec2 p
 //
 //==========================================================================
 
-static inline fixedvec2 FindRefPoint(line_t *ld, fixedvec2 pos)
+static DVector2 FindRefPoint(line_t *ld, const DVector2 &pos)
 {
 	// If there's any chance of slopes getting in the way we need to get a proper refpoint, otherwise we can save the work.
 	// Slopes can get in here when:
 	// - the actual sector planes are sloped
 	// - there's 3D floors in this sector
 	// - there's a crossable floor portal (for which the dropoff needs to be calculated within P_LineOpening, and the lower sector can easily have slopes)
-	if (
-		(((ld->frontsector->floorplane.a | ld->frontsector->floorplane.b) |
-			(ld->backsector->floorplane.a | ld->backsector->floorplane.b) |
-			(ld->frontsector->ceilingplane.a | ld->frontsector->ceilingplane.b) |
-			(ld->backsector->ceilingplane.a | ld->backsector->ceilingplane.b)) != 0)
-		||
-			ld->backsector->e->XFloor.ffloors.Size() != 0 
-		||
-			ld->frontsector->e->XFloor.ffloors.Size() != 0
-		|| 
+	//
+	// Todo: check if this bootload of checks even helps or if it adds more than it saves
+	//
+	if 	(ld->frontsector->floorplane.isSlope() ||
+			ld->backsector->floorplane.isSlope() ||
+			ld->frontsector->ceilingplane.isSlope() ||
+			ld->backsector->ceilingplane. isSlope() ||
+			ld->backsector->e->XFloor.ffloors.Size() != 0 ||
+			ld->frontsector->e->XFloor.ffloors.Size() != 0 ||
+			!ld->frontsector->PortalBlocksMovement(sector_t::ceiling) ||
 			!ld->frontsector->PortalBlocksMovement(sector_t::floor))
 	{
-		fixed_t r = GetCoefficientClosestPointInLine24(ld, pos);
-		if (r <= 0)
-		{
-			pos.x = ld->v1->x;
-			pos.y = ld->v1->y;
-		}
-		else if (r >= (1 << 24))
-		{
-			pos.x = ld->v2->x;
-			pos.y = ld->v2->y;
-		}
-		else
-		{
-			pos.x = ld->v1->x + MulScale24(r, ld->dx);
-			pos.y = ld->v1->y + MulScale24(r, ld->dy);
-		}
+
+		DVector2 v1 = ld->v1->fPos();
+		DVector2 d = ld->Delta();
+		double r = clamp(((pos.X - v1.X) * d.X + (pos.Y - v1.Y) * d.Y) / (d.X*d.X + d.Y*d.Y), 0., 1.);
+		return v1 + d*r;
 	}
 	return pos;
 }
@@ -212,13 +130,7 @@ static bool PIT_FindFloorCeiling(FMultiBlockLinesIterator &mit, FMultiBlockLines
 {
 	line_t *ld = cres.line;
 
-	if (box.Right() <= ld->bbox[BOXLEFT]
-		|| box.Left() >= ld->bbox[BOXRIGHT]
-		|| box.Top() <= ld->bbox[BOXBOTTOM]
-		|| box.Bottom() >= ld->bbox[BOXTOP])
-		return true;
-
-	if (box.BoxOnLineSide(ld) != -1)
+	if (!box.inRange(ld) || box.BoxOnLineSide(ld) != -1)
 		return true;
 
 	// A line has been hit
@@ -226,7 +138,7 @@ static bool PIT_FindFloorCeiling(FMultiBlockLinesIterator &mit, FMultiBlockLines
 	if (ffcf_verbose)
 	{
 		Printf("Hit line %d at position %f,%f, group %d\n",
-			int(ld - lines), FIXED2FLOAT(cres.position.x), FIXED2FLOAT(cres.position.y), ld->frontsector->PortalGroup);
+			int(ld - lines), cres.Position.X, cres.Position.Y, ld->frontsector->PortalGroup);
 	}
 
 	if (!ld->backsector)
@@ -234,10 +146,10 @@ static bool PIT_FindFloorCeiling(FMultiBlockLinesIterator &mit, FMultiBlockLines
 		return true;
 	}
 
-	fixedvec2 refpoint = FindRefPoint(ld, cres.position);
+	DVector2 refpoint = FindRefPoint(ld, cres.Position);
 	FLineOpening open;
 
-	P_LineOpening(open, tmf.thing, ld, refpoint.x, refpoint.y, cres.position.x, cres.position.y, flags);
+	P_LineOpening(open, tmf.thing, ld, refpoint, &cres.Position, flags);
 
 	// adjust floor / ceiling heights
 	if (!(flags & FFCF_NOCEILING))
@@ -288,11 +200,11 @@ static bool PIT_FindFloorCeiling(FMultiBlockLinesIterator &mit, FMultiBlockLines
 
 void P_GetFloorCeilingZ(FCheckPosition &tmf, int flags)
 {
-	sector_t *sec = (!(flags & FFCF_SAMESECTOR) || tmf.thing->Sector == NULL)? P_PointInSector(tmf.x, tmf.y) : tmf.sector;
+	sector_t *sec = (!(flags & FFCF_SAMESECTOR) || tmf.thing->Sector == NULL)? P_PointInSector(tmf.pos) : tmf.sector;
 	F3DFloor *ffc, *fff;
 
-	tmf.ceilingz = FIXED2DBL(sec->NextHighestCeilingAt(tmf.x, tmf.y, tmf.z, tmf.z + tmf.thing->_f_height(), flags, &tmf.ceilingsector, &ffc));
-	tmf.floorz = tmf.dropoffz = FIXED2DBL(sec->NextLowestFloorAt(tmf.x, tmf.y, tmf.z, flags, tmf.thing->_f_MaxStepHeight(), &tmf.floorsector, &fff));
+	tmf.ceilingz = sec->NextHighestCeilingAt(tmf.pos.X, tmf.pos.Y, tmf.pos.Z, tmf.pos.Z + tmf.thing->Height, flags, &tmf.ceilingsector, &ffc);
+	tmf.floorz = tmf.dropoffz = sec->NextLowestFloorAt(tmf.pos.X, tmf.pos.Y, tmf.pos.Z, flags, tmf.thing->MaxStepHeight, &tmf.floorsector, &fff);
 
 	if (fff)
 	{
@@ -320,9 +232,7 @@ void P_FindFloorCeiling(AActor *actor, int flags)
 	FCheckPosition tmf;
 
 	tmf.thing = actor;
-	tmf.x = actor->_f_X();
-	tmf.y = actor->_f_Y();
-	tmf.z = actor->_f_Z();
+	tmf.pos = actor->Pos();
 
 	if (flags & FFCF_ONLYSPAWNPOS)
 	{
@@ -409,7 +319,7 @@ CCMD(ffcf)
 //
 //==========================================================================
 
-bool P_TeleportMove(AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefrag, bool modifyactor)
+bool	P_TeleportMove(AActor* thing, const DVector3 &pos, bool telefrag, bool modifyactor) 
 {
 	FCheckPosition tmf;
 	sector_t *oldsec = thing->Sector;
@@ -420,9 +330,7 @@ bool P_TeleportMove(AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefra
 	// The base floor/ceiling is from the subsector that contains the point.
 	// Any contacted lines the step closer together will adjust them.
 	tmf.thing = thing;
-	tmf.x = x;
-	tmf.y = y;
-	tmf.z = z;
+	tmf.pos = pos;
 	tmf.touchmidtex = false;
 	tmf.abovemidtex = false;
 	P_GetFloorCeilingZ(tmf, 0);
@@ -430,23 +338,23 @@ bool P_TeleportMove(AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefra
 	bool StompAlwaysFrags = ((thing->flags2 & MF2_TELESTOMP) || (level.flags & LEVEL_MONSTERSTELEFRAG) || telefrag) && !(thing->flags7 & MF7_NOTELESTOMP);
 
 	// P_LineOpening requires the thing's z to be the destination z in order to work.
-	fixed_t savedz = thing->_f_Z();
-	thing->_f_SetZ(z);
-	sector_t *sector = P_PointInSector(x, y);
+	double savedz = thing->Z();
+	thing->SetZ(pos.Z);
+	sector_t *sector = P_PointInSector(pos);
 
 	FPortalGroupArray grouplist;
-	FMultiBlockLinesIterator mit(grouplist, x, y, z, thing->_f_height(), thing->_f_radius(), sector);
+	FMultiBlockLinesIterator mit(grouplist, pos.X, pos.Y, pos.Z, thing->Height, thing->radius, sector);
 	FMultiBlockLinesIterator::CheckResult cres;
 
 	while (mit.Next(&cres))
 	{
 		PIT_FindFloorCeiling(mit, cres, mit.Box(), tmf, 0);
 	}
-	thing->_f_SetZ(savedz);
+	thing->SetZ(savedz);
 
 	if (tmf.touchmidtex) tmf.dropoffz = tmf.floorz;
 
-	FMultiBlockThingsIterator mit2(grouplist, x, y, z, thing->_f_height(), thing->_f_radius(), false, sector);
+	FMultiBlockThingsIterator mit2(grouplist, pos.X, pos.Y, pos.Z, thing->Height, thing->radius, false, sector);
 	FMultiBlockThingsIterator::CheckResult cres2;
 
 	while (mit2.Next(&cres2))
@@ -460,8 +368,8 @@ bool P_TeleportMove(AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefra
 		if (th == thing)
 			continue;
 
-		fixed_t blockdist = th->_f_radius() + tmf.thing->_f_radius();
-		if (abs(th->_f_X() - cres2.position.x) >= blockdist || abs(th->_f_Y() - cres2.position.y) >= blockdist)
+		double blockdist = th->radius + tmf.thing->radius;
+		if (fabs(th->X() - cres2.Position.X) >= blockdist || fabs(th->Y() - cres2.Position.Y) >= blockdist)
 			continue;
 
 		if ((th->flags2 | tmf.thing->flags2) & MF2_THRUACTORS)
@@ -477,8 +385,8 @@ bool P_TeleportMove(AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefra
 		{
 			if (!(th->flags3 & thing->flags3 & MF3_DONTOVERLAP))
 			{
-				if (z > th->_f_Top() ||	// overhead
-					z + thing->_f_height() < th->_f_Z())	// underneath
+				if (pos.Z > th->Top() ||	// overhead
+					pos.Z + thing->Height < th->Z())	// underneath
 					continue;
 			}
 		}
@@ -499,7 +407,7 @@ bool P_TeleportMove(AActor *thing, fixed_t x, fixed_t y, fixed_t z, bool telefra
 	if (modifyactor)
 	{
 		// the move is ok, so link the thing into its new position
-		thing->SetOrigin(x, y, z, false);
+		thing->SetOrigin(pos, false);
 		thing->floorz = tmf.floorz;
 		thing->ceilingz = tmf.ceilingz;
 		thing->floorsector = tmf.floorsector;
@@ -557,8 +465,8 @@ void P_PlayerStartStomp(AActor *actor, bool mononly)
 		if (th == actor || (th->player == actor->player && th->player != NULL))
 			continue;
 
-		fixed_t blockdist = th->_f_radius() + actor->_f_radius();
-		if (abs(th->_f_X() - cres.position.x) >= blockdist || abs(th->_f_Y() - cres.position.y) >= blockdist)
+		double blockdist = th->radius + actor->radius;
+		if (fabs(th->X() - cres.Position.X) >= blockdist || fabs(th->Y() - cres.Position.Y) >= blockdist)
 			continue;
 
 		// only kill monsters and other players
@@ -618,8 +526,8 @@ double P_GetFriction(const AActor *mo, double *frictionfactor)
 			if (!(rover->flags & FF_EXISTS)) continue;
 			if (!(rover->flags & FF_SWIMMABLE)) continue;
 
-			if (mo->_f_Z() > rover->top.plane->ZatPoint(mo) ||
-				mo->_f_Z() < rover->bottom.plane->ZatPoint(mo))
+			if (mo->Z() > rover->top.plane->ZatPointF(mo) ||
+				mo->Z() < rover->bottom.plane->ZatPointF(mo))
 				continue;
 
 			newfriction = rover->model->GetFriction(rover->top.isceiling, &newmf);
@@ -638,7 +546,7 @@ double P_GetFriction(const AActor *mo, double *frictionfactor)
 		for (m = mo->touching_sectorlist; m; m = m->m_tnext)
 		{
 			sec = m->m_sector;
-			fixedvec3 pos = mo->_f_PosRelative(sec);
+			DVector3 pos = mo->PosRelative(sec);
 
 			// 3D floors must be checked, too
 			for (unsigned i = 0; i < sec->e->XFloor.ffloors.Size(); i++)
@@ -649,13 +557,13 @@ double P_GetFriction(const AActor *mo, double *frictionfactor)
 				if (rover->flags & FF_SOLID)
 				{
 					// Must be standing on a solid floor
-					if (mo->Z() != rover->top.plane->ZatPointF(pos)) continue;
+					if (mo->Z() != rover->top.plane->ZatPoint(pos)) continue;
 				}
 				else if (rover->flags & FF_SWIMMABLE)
 				{
 					// Or on or inside a swimmable floor (e.g. in shallow water)
-					if (mo->Z() > rover->top.plane->ZatPointF(pos) ||
-						(mo->Top()) < rover->bottom.plane->ZatPointF(pos))
+					if (mo->Z() > rover->top.plane->ZatPoint(pos) ||
+						(mo->Top()) < rover->bottom.plane->ZatPoint(pos))
 						continue;
 				}
 				else
@@ -676,9 +584,9 @@ double P_GetFriction(const AActor *mo, double *frictionfactor)
 			}
 			newfriction = sec->GetFriction(sector_t::floor, &newmf);
 			if ((newfriction < friction || friction == ORIG_FRICTION) &&
-				(mo->Z() <= sec->floorplane.ZatPointF(pos) ||
+				(mo->Z() <= sec->floorplane.ZatPoint(pos) ||
 				(sec->GetHeightSec() != NULL &&
-				mo->Z() <= sec->heightsec->floorplane.ZatPointF(pos))))
+				mo->Z() <= sec->heightsec->floorplane.ZatPoint(pos))))
 			{
 				friction = newfriction;
 				movefactor = newmf;
@@ -781,13 +689,7 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 	line_t *ld = cres.line;
 	bool rail = false;
 
-	if (box.Right() <= ld->bbox[BOXLEFT]
-		|| box.Left() >= ld->bbox[BOXRIGHT]
-		|| box.Top() <= ld->bbox[BOXBOTTOM]
-		|| box.Bottom() >= ld->bbox[BOXTOP])
-		return true;
-
-	if (box.BoxOnLineSide(ld) != -1)
+	if (!box.inRange(ld) || box.BoxOnLineSide(ld) != -1)
 		return true;
 
 	// A line has been hit
@@ -808,8 +710,8 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 		{
 			spechit_t spec;
 			spec.line = ld;
-			spec.refpos = cres.position;
-			spec.oldrefpos = tm.thing->_f_PosRelative(ld);
+			spec.Refpos = cres.Position;
+			spec.Oldrefpos = tm.thing->PosRelative(ld);
 			portalhit.Push(spec);
 			return true;
 		}
@@ -892,15 +794,15 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 				}
 				tm.thing->BlockingLine = ld;
 				// Calculate line side based on the actor's original position, not the new one.
-				CheckForPushSpecial(ld, P_PointOnLineSide(cres.position.x, cres.position.y, ld), tm.thing);
+				CheckForPushSpecial(ld, P_PointOnLineSide(cres.Position, ld), tm.thing);
 				return false;
 			}
 		}
 	}
-	fixedvec2 ref = FindRefPoint(ld, cres.position);
+	DVector2 ref = FindRefPoint(ld, cres.Position);
 	FLineOpening open;
 
-	P_LineOpening(open, tm.thing, ld, ref.x, ref.y, cres.position.x, cres.position.y, cres.portalflags);
+	P_LineOpening(open, tm.thing, ld, ref, &cres.Position, cres.portalflags);
 
 	// [RH] Steep sectors count as dropoffs, if the actor touches the boundary between a steep slope and something else
 	if (!(tm.thing->flags & MF_DROPOFF) &&
@@ -917,7 +819,7 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 	// This is to avoid bumpy movement when crossing a linedef with the same slope on both sides.
 	if (open.frontfloorplane == open.backfloorplane && open.bottom > LINEOPEN_MIN)
 	{
-		open.bottom = open.frontfloorplane._f_ZatPointF(cres.position.x, cres.position.y);
+		open.bottom = open.frontfloorplane.ZatPoint(cres.Position);
 	}
 
 	if (rail &&
@@ -929,7 +831,7 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 		// from either side. How long until somebody reports this as a bug and I'm
 		// forced to say, "It's not a bug. It's a feature?" Ugh.
 		(!(level.flags2 & LEVEL2_RAILINGHACK) ||
-		open.bottom == tm.thing->Sector->floorplane._f_ZatPointF(ref.x, ref.y)))
+		open.bottom == tm.thing->Sector->floorplane.ZatPoint(ref)))
 	{
 		open.bottom += 32;
 	}
@@ -976,15 +878,15 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 	if (ld->special)
 	{
 		spec.line = ld;
-		spec.refpos = cres.position;
-		spec.oldrefpos = tm.thing->_f_PosRelative(ld);
+		spec.Refpos = cres.Position;
+		spec.Oldrefpos = tm.thing->PosRelative(ld);
 		spechit.Push(spec);
 	}
 	if (ld->isLinePortal())
 	{
 		spec.line = ld;
-		spec.refpos = cres.position;
-		spec.oldrefpos = tm.thing->_f_PosRelative(ld);
+		spec.Refpos = cres.Position;
+		spec.Oldrefpos = tm.thing->PosRelative(ld);
 		portalhit.Push(spec);
 	}
 
@@ -1012,13 +914,7 @@ static bool PIT_CheckPortal(FMultiBlockLinesIterator &mit, FMultiBlockLinesItera
 	// if in another vertical section let's just ignore it.
 	if (cres.portalflags & (FFCF_NOCEILING | FFCF_NOFLOOR)) return false;
 
-	if (box.Right() <= cres.line->bbox[BOXLEFT]
-		|| box.Left() >= cres.line->bbox[BOXRIGHT]
-		|| box.Top() <= cres.line->bbox[BOXBOTTOM]
-		|| box.Bottom() >= cres.line->bbox[BOXTOP])
-		return false;
-
-	if (box.BoxOnLineSide(cres.line) != -1)
+	if (!box.inRange(cres.line) || box.BoxOnLineSide(cres.line) != -1)
 		return false;
 
 	line_t *lp = cres.line->getPortalDestination();
@@ -1033,7 +929,7 @@ static bool PIT_CheckPortal(FMultiBlockLinesIterator &mit, FMultiBlockLinesItera
 	if (lp->backsector == NULL) lp->backsector = lp->frontsector;
 	tm.thing->AddZ(zofs);
 
-	FBoundingBox pbox(cres.position.x, cres.position.y, tm.thing->_f_radius());
+	FBoundingBox pbox(cres.Position.X, cres.Position.Y, tm.thing->radius);
 	FBlockLinesIterator it(pbox);
 	bool ret = false;
 	line_t *ld;
@@ -1041,22 +937,16 @@ static bool PIT_CheckPortal(FMultiBlockLinesIterator &mit, FMultiBlockLinesItera
 	// Check all lines at the destination
 	while ((ld = it.Next()))
 	{
-		if (pbox.Right() <= ld->bbox[BOXLEFT]
-			|| pbox.Left() >= ld->bbox[BOXRIGHT]
-			|| pbox.Top() <= ld->bbox[BOXBOTTOM]
-			|| pbox.Bottom() >= ld->bbox[BOXTOP])
-			continue;
-
-		if (pbox.BoxOnLineSide(ld) != -1)
+		if (!pbox.inRange(ld) || pbox.BoxOnLineSide(ld) != -1)
 			continue;
 
 		if (ld->backsector == NULL) 
 			continue;
 
-		fixedvec2 ref = FindRefPoint(ld, cres.position);
+		DVector2 ref = FindRefPoint(ld, cres.Position);
 		FLineOpening open;
 
-		P_LineOpening(open, tm.thing, ld, ref.x, ref.y, cres.position.x, cres.position.y, 0);
+		P_LineOpening(open, tm.thing, ld, ref, &cres.Position, 0);
 
 		// adjust floor / ceiling heights
 		if (open.top - zofs < tm.ceilingz)
@@ -1610,9 +1500,9 @@ bool P_CheckPosition(AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm, bo
 
 	tm.thing = thing;
 
-	tm.x = x;
-	tm.y = y;
-	tm.z = thing->_f_Z();
+	tm.pos.X = FIXED2DBL(x);
+	tm.pos.Y = FIXED2DBL(y);
+	tm.pos.Z = thing->Z();
 
 	newsec = tm.sector = P_PointInSector(x, y);
 	tm.ceilingline = thing->BlockingLine = NULL;
@@ -1957,32 +1847,30 @@ void P_FakeZMovement(AActor *mo)
 //
 //===========================================================================
 
-static void CheckForPushSpecial(line_t *line, int side, AActor *mobj, fixedvec2 *posforwindowcheck)
+static void CheckForPushSpecial(line_t *line, int side, AActor *mobj, DVector2 *posforwindowcheck)
 {
 	if (line->special && !(mobj->flags6 & MF6_NOTRIGGER))
 	{
 		if (posforwindowcheck && !(ib_compatflags & BCOMPATF_NOWINDOWCHECK) && line->backsector != NULL)
 		{ // Make sure this line actually blocks us and is not a window
 			// or similar construct we are standing inside of.
-			fixedvec3 pos = mobj->_f_PosRelative(line);
-			fixed_t fzt = line->frontsector->ceilingplane.ZatPoint(*posforwindowcheck);
-			fixed_t fzb = line->frontsector->floorplane.ZatPoint(*posforwindowcheck);
-			fixed_t bzt = line->backsector->ceilingplane.ZatPoint(*posforwindowcheck);
-			fixed_t bzb = line->backsector->floorplane.ZatPoint(*posforwindowcheck);
-			if (fzt >= mobj->_f_Top() && bzt >= mobj->_f_Top() &&
-				fzb <= mobj->_f_Z() && bzb <= mobj->_f_Z())
+			DVector3 pos = mobj->PosRelative(line);
+			double fzt = line->frontsector->ceilingplane.ZatPoint(*posforwindowcheck);
+			double fzb = line->frontsector->floorplane.ZatPoint(*posforwindowcheck);
+			double bzt = line->backsector->ceilingplane.ZatPoint(*posforwindowcheck);
+			double bzb = line->backsector->floorplane.ZatPoint(*posforwindowcheck);
+			if (fzt >= mobj->Top() && bzt >= mobj->Top() &&
+				fzb <= mobj->Z() && bzb <= mobj->Z())
 			{
 				// we must also check if some 3D floor in the backsector may be blocking
-				for (unsigned int i = 0; i<line->backsector->e->XFloor.ffloors.Size(); i++)
+				for (auto rover : line->backsector->e->XFloor.ffloors)
 				{
-					F3DFloor* rover = line->backsector->e->XFloor.ffloors[i];
-
 					if (!(rover->flags & FF_SOLID) || !(rover->flags & FF_EXISTS)) continue;
 
-					fixed_t ff_bottom = rover->bottom.plane->ZatPoint(*posforwindowcheck);
-					fixed_t ff_top = rover->top.plane->ZatPoint(*posforwindowcheck);
+					double ff_bottom = rover->bottom.plane->ZatPoint(*posforwindowcheck);
+					double ff_top = rover->top.plane->ZatPoint(*posforwindowcheck);
 
-					if (ff_bottom < mobj->_f_Top() && ff_top > mobj->_f_Z())
+					if (ff_bottom < mobj->Top() && ff_top > mobj->Z())
 					{
 						goto isblocking;
 					}
@@ -2275,13 +2163,13 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 			if (ld->frontsector->PortalGroup != thing->Sector->PortalGroup) continue;	// must be in the same group to be considered valid.
 
 			// see if the line was crossed
-			oldside = P_PointOnLineSide(spec.oldrefpos.x, spec.oldrefpos.y, ld);
-			side = P_PointOnLineSide(spec.refpos.x, spec.refpos.y, ld);
+			oldside = P_PointOnLineSide(spec.Oldrefpos, ld);
+			side = P_PointOnLineSide(spec.Refpos, ld);
 			if (oldside == 0 && side == 1)
 			{
-				fdivline_t dl2 = { ld->v1->x, ld->v1->y, ld->dx, ld->dy };
-				fdivline_t dl1 = { spec.oldrefpos.x, spec.oldrefpos.y, spec.refpos.x - spec.oldrefpos.x, spec.refpos.y - spec.oldrefpos.y };
-				fixed_t frac = P_InterceptVector(&dl1, &dl2);
+				divline_t dl2 = { ld->v1->fX(), ld->v1->fY(), ld->Delta().X, ld->Delta().Y };
+				divline_t dl1 = { spec.Oldrefpos.X, spec.Oldrefpos.Y, spec.Refpos.X - spec.Oldrefpos.X, spec.Refpos.Y - spec.Oldrefpos.Y };
+				fixed_t frac = FLOAT2FIXED(P_InterceptVector(&dl1, &dl2));
 				if (frac < bestfrac)
 				{
 					besthit = spec;
@@ -2299,7 +2187,7 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 			if (port->mType == PORTT_LINKED)
 			{
 				thing->UnlinkFromWorld();
-				thing->SetXY(tm.x + port->mXDisplacement, tm.y + port->mYDisplacement);
+				thing->SetXY(tm._f_X() + port->mXDisplacement, tm._f_Y() + port->mYDisplacement);
 				thing->Prev.X += FIXED2DBL(port->mXDisplacement);
 				thing->Prev.Y += FIXED2DBL(port->mYDisplacement);
 				thing->LinkToWorld();
@@ -2308,7 +2196,7 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 			}
 			else if (!portalcrossed)
 			{
-				fixedvec3 pos = { tm.x, tm.y, thing->_f_Z() };
+				fixedvec3 pos = { tm._f_X(), tm._f_Y(), thing->_f_Z() };
 				fixedvec3 oldthingpos = thing->_f_Pos();
 				fixedvec2 thingpos = oldthingpos;
 				
@@ -2335,7 +2223,9 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 			// so that the renderer can properly calculate an interpolated position along the movement path.
 			if (thing == players[consoleplayer].camera)
 			{
-				fdivline_t dl1 = { besthit.oldrefpos.x,besthit. oldrefpos.y, besthit.refpos.x - besthit.oldrefpos.x, besthit.refpos.y - besthit.oldrefpos.y };
+				//divline_t dl1 = { besthit.Oldrefpos.X,besthit.Oldrefpos.Y, besthit.Refpos.X - besthit.Oldrefpos.Y, besthit.Refpos.Y - besthit.Oldrefpos.Y };
+				//DVector3 hit = { dl1.x + dl1.dx * bestfrac, dl1.y + dl1.dy * bestfrac, 0.,0. };
+				fdivline_t dl1 = { FLOAT2FIXED(besthit.Oldrefpos.X),FLOAT2FIXED(besthit.Oldrefpos.Y), FLOAT2FIXED(besthit.Refpos.X - besthit.Oldrefpos.Y), FLOAT2FIXED(besthit.Refpos.Y - besthit.Oldrefpos.Y) };
 				fixedvec3a hit = { dl1.x + FixedMul(dl1.dx, bestfrac), dl1.y + FixedMul(dl1.dy, bestfrac), 0, 0. };
 
 				R_AddInterpolationPoint(hit);
@@ -2392,7 +2282,7 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 	if (!(thing->flags & (MF_TELEPORT | MF_NOCLIP)))
 	{
 		spechit_t spec;
-		fixedvec3 lastpos = thing->_f_Pos();
+		DVector2 lastpos = thing->Pos();
 		while (spechit.Pop(spec))
 		{
 			line_t *ld = spec.line;
@@ -2402,9 +2292,9 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 			// If the reference position is the same as the actor's position before checking the spechits,
 			// we use the thing's actual position, including all the side effects of the original.
 			// If some portal transition has to be considered here, we cannot do that and use the reference position stored with the spechit.
-			bool posisoriginal = (spec.refpos.x == lastpos.x && spec.refpos.y == lastpos.y);
-			side = posisoriginal? P_PointOnLineSide(thing->_f_X(), thing->_f_Y(), ld) : P_PointOnLineSide(spec.refpos.x, spec.refpos.y, ld);
-			oldside = P_PointOnLineSide(spec.oldrefpos.x, spec.oldrefpos.y, ld);
+			bool posisoriginal = (spec.Refpos == lastpos);
+			side = posisoriginal? P_PointOnLineSide(thing->Pos(), ld) : P_PointOnLineSide(spec.Refpos, ld);
+			oldside = P_PointOnLineSide(spec.Oldrefpos, ld);
 			if (side != oldside && ld->special && !(thing->flags6 & MF6_NOTRIGGER))
 			{
 				if (thing->player && (thing->player->cheats & CF_PREDICTING))
@@ -2503,8 +2393,8 @@ pushline:
 		{
 			// see which lines were pushed
 			spechit_t &spec = spechit[--numSpecHitTemp];
-			side = P_PointOnLineSide(spec.refpos.x, spec.refpos.y, spec.line);
-			CheckForPushSpecial(spec.line, side, thing, &spec.refpos);
+			side = P_PointOnLineSide(spec.Refpos, spec.line);
+			CheckForPushSpecial(spec.line, side, thing, &spec.Refpos);
 		}
 	}
 	return false;

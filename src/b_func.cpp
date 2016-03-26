@@ -284,6 +284,48 @@ bool FCajunMaster::IsLeader (player_t *player)
 	return false;
 }
 
+extern int BotWTG;
+
+void FCajunMaster::BotTick(AActor *mo)
+{
+	BotSupportCycles.Clock();
+	bglobal.m_Thinking = true;
+	for (int i = 0; i < MAXPLAYERS; i++)
+	{
+		if (!playeringame[i] || players[i].Bot == NULL)
+			continue;
+
+		if (mo->flags3 & MF3_ISMONSTER)
+		{
+			if (mo->health > 0
+				&& !players[i].Bot->enemy
+				&& mo->player ? !mo->IsTeammate(players[i].mo) : true
+				&& mo->Distance2D(players[i].mo) < MAX_MONSTER_TARGET_DIST
+				&& P_CheckSight(players[i].mo, mo, SF_SEEPASTBLOCKEVERYTHING))
+			{ //Probably a monster, so go kill it.
+				players[i].Bot->enemy = mo;
+			}
+		}
+		else if (mo->flags & MF_SPECIAL)
+		{ //Item pickup time
+		  //clock (BotWTG);
+			players[i].Bot->WhatToGet(mo);
+			//unclock (BotWTG);
+			BotWTG++;
+		}
+		else if (mo->flags & MF_MISSILE)
+		{
+			if (!players[i].Bot->missile && (mo->flags3 & MF3_WARNBOT))
+			{ //warn for incoming missiles.
+				if (mo->target != players[i].mo && players[i].Bot->Check_LOS(mo, 90.))
+					players[i].Bot->missile = mo;
+			}
+		}
+	}
+	bglobal.m_Thinking = false;
+	BotSupportCycles.Unclock();
+}
+
 //This function is called every
 //tick (for each bot) to set
 //the mate (teammate coop mate).

@@ -106,6 +106,7 @@ public:
 	void SetBodyAt (const DVector3 &pos, int hostnum);
 	double FakeFire (AActor *source, AActor *dest, ticcmd_t *cmd);
 	bool SafeCheckPosition (AActor *actor, double x, double y, FCheckPosition &tm);
+	void BotTick(AActor *mo);
 
 	//(b_move.cpp)
 	bool CleanAhead (AActor *thing, double x, double y, ticcmd_t *cmd);

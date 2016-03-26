@@ -3532,45 +3532,8 @@ void AActor::Tick ()
 		if (bglobal.botnum && !demoplayback &&
 			((flags & (MF_SPECIAL|MF_MISSILE)) || (flags3 & MF3_ISMONSTER)))
 		{
-			BotSupportCycles.Clock();
-			bglobal.m_Thinking = true;
-			for (i = 0; i < MAXPLAYERS; i++)
-			{
-				if (!playeringame[i] || players[i].Bot == NULL)
-					continue;
-
-				if (flags3 & MF3_ISMONSTER)
-				{
-					if (health > 0
-						&& !players[i].Bot->enemy
-						&& player ? !IsTeammate (players[i].mo) : true
-						&& AproxDistance (players[i].mo) < MAX_MONSTER_TARGET_DIST
-						&& P_CheckSight (players[i].mo, this, SF_SEEPASTBLOCKEVERYTHING))
-					{ //Probably a monster, so go kill it.
-						players[i].Bot->enemy = this;
-					}
-				}
-				else if (flags & MF_SPECIAL)
-				{ //Item pickup time
-					//clock (BotWTG);
-					players[i].Bot->WhatToGet (this);
-					//unclock (BotWTG);
-					BotWTG++;
-				}
-				else if (flags & MF_MISSILE)
-				{
-					if (!players[i].Bot->missile && (flags3 & MF3_WARNBOT))
-					{ //warn for incoming missiles.
-						if (target != players[i].mo && players[i].Bot->Check_LOS (this, 90.))
-							players[i].Bot->missile = this;
-					}
-				}
-			}
-			bglobal.m_Thinking = false;
-			BotSupportCycles.Unclock();
+			bglobal.BotTick(this);
 		}
-
-		//End of MC
 
 		// [RH] Consider carrying sectors here
 		fixed_t cummx = 0, cummy = 0;

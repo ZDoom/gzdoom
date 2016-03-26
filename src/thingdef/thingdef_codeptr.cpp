@@ -6505,7 +6505,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckProximity)
 
 			if (ptrWillChange)
 			{
-				current = ref->AproxDistance(mo);
+				current = ref->Distance2D(mo);
 
 				if ((flags & CPXF_CLOSEST) && (current < closer))
 				{

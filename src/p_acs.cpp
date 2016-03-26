@@ -175,7 +175,7 @@ inline DAngle ACSToAngle(int acsval)
 
 inline int AngleToACS(DAngle ang)
 {
-	xs_CRoundToInt(ang.Degrees * (65536. / 360.));
+	return ang.BAMs() >> 16;
 }
 
 struct CallReturn
@@ -722,7 +722,7 @@ void ACSStringPool::ReadStrings(PNGHandle *png, DWORD id)
 	if (len != 0)
 	{
 		FPNGChunkArchive arc(png->File->GetFile(), id, len);
-		int32 i, j, poolsize;
+		int32_t i, j, poolsize;
 		unsigned int h, bucketnum;
 		char *str = NULL;
 
@@ -768,7 +768,7 @@ void ACSStringPool::ReadStrings(PNGHandle *png, DWORD id)
 
 void ACSStringPool::WriteStrings(FILE *file, DWORD id) const
 {
-	int32 i, poolsize = (int32)Pool.Size();
+	int32_t i, poolsize = (int32_t)Pool.Size();
 	
 	if (poolsize == 0)
 	{ // No need to write if we don't have anything.
@@ -3554,13 +3554,13 @@ int DLevelScript::DoSpawnSpotFacing (int type, int spot, int tid, bool force)
 	return spawned;
 }
 
-void DLevelScript::DoFadeTo (int r, int g, int b, int a, fixed_t time)
+void DLevelScript::DoFadeTo (int r, int g, int b, int a, int time)
 {
-	DoFadeRange (0, 0, 0, -1, clamp(r, 0, 255), clamp(g, 0, 255), clamp(b, 0, 255), clamp(a, 0, FRACUNIT), time);
+	DoFadeRange (0, 0, 0, -1, clamp(r, 0, 255), clamp(g, 0, 255), clamp(b, 0, 255), clamp(a, 0, 65536), time);
 }
 
 void DLevelScript::DoFadeRange (int r1, int g1, int b1, int a1,
-								int r2, int g2, int b2, int a2, fixed_t time)
+								int r2, int g2, int b2, int a2, int time)
 {
 	player_t *viewer;
 	float ftime = (float)time / 65536.f;
@@ -4220,12 +4220,12 @@ bool DLevelScript::DoCheckActorTexture(int tid, AActor *activator, int string, b
 
 	if (floor)
 	{
-		actor->Sector->NextLowestFloorAt(actor->_f_X(), actor->_f_Y(), actor->_f_Z(), 0, actor->_f_MaxStepHeight(), &resultsec, &resffloor);
+		actor->Sector->NextLowestFloorAt(actor->X(), actor->Y(), actor->Z(), 0, actor->MaxStepHeight, &resultsec, &resffloor);
 		secpic = resffloor ? *resffloor->top.texture : resultsec->planes[sector_t::floor].Texture;
 	}
 	else
 	{
-		actor->Sector->NextHighestCeilingAt(actor->_f_X(), actor->_f_Y(), actor->_f_Z(), actor->_f_Top(), 0, &resultsec, &resffloor);
+		actor->Sector->NextHighestCeilingAt(actor->X(), actor->Y(), actor->Z(), actor->Top(), 0, &resultsec, &resffloor);
 		secpic = resffloor ? *resffloor->bottom.texture : resultsec->planes[sector_t::ceiling].Texture;
 	}
 	return tex == TexMan[secpic];
@@ -5957,22 +5957,22 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 
 		case ACSF_GetActorRoll:
 			actor = SingleActorFromTID(args[0], activator);
-			return actor != NULL? actor->Angles.Roll.FixedAngle() : 0;
+			return actor != NULL? AngleToACS(actor->Angles.Roll) : 0;
 		
 		// [ZK] A_Warp in ACS
 		case ACSF_Warp:
 		{
 			int tid_dest = args[0];
-			fixed_t xofs = args[1];
-			fixed_t yofs = args[2];
-			fixed_t zofs = args[3];
-			angle_t angle = args[4];
+			int xofs = args[1];
+			int yofs = args[2];
+			int zofs = args[3];
+			int angle = args[4];
 			int flags = args[5];
 			const char *statename = argCount > 6 ? FBehavior::StaticLookupString(args[6]) : "";
 			bool exact = argCount > 7 ? !!args[7] : false;
-			fixed_t heightoffset = argCount > 8 ? args[8] : 0;
-			fixed_t radiusoffset = argCount > 9 ? args[9] : 0;
-			fixed_t pitch = argCount > 10 ? args[10] : 0;
+			int heightoffset = argCount > 8 ? args[8] : 0;
+			int radiusoffset = argCount > 9 ? args[9] : 0;
+			int pitch = argCount > 10 ? args[10] : 0;
 
 			FState *state = argCount > 6 ? activator->GetClass()->FindStateByString(statename, exact) : 0;
 
@@ -6047,15 +6047,15 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			bool fullbright = argCount > 1 ? !!args[1] : false;
 			int lifetime = argCount > 2 ? args[2] : 35;
 			int size = argCount > 3 ? args[3] : 1;
-			fixed_t x = argCount > 4 ? args[4] : 0;
-			fixed_t y = argCount > 5 ? args[5] : 0;
-			fixed_t z = argCount > 6 ? args[6] : 0;
-			fixed_t xvel = argCount > 7 ? args[7] : 0;
-			fixed_t yvel = argCount > 8 ? args[8] : 0;
-			fixed_t zvel = argCount > 9 ? args[9] : 0;
-			fixed_t accelx = argCount > 10 ? args[10] : 0;
-			fixed_t accely = argCount > 11 ? args[11] : 0;
-			fixed_t accelz = argCount > 12 ? args[12] : 0;
+			int x = argCount > 4 ? args[4] : 0;
+			int y = argCount > 5 ? args[5] : 0;
+			int z = argCount > 6 ? args[6] : 0;
+			int xvel = argCount > 7 ? args[7] : 0;
+			int yvel = argCount > 8 ? args[8] : 0;
+			int zvel = argCount > 9 ? args[9] : 0;
+			int accelx = argCount > 10 ? args[10] : 0;
+			int accely = argCount > 11 ? args[11] : 0;
+			int accelz = argCount > 12 ? args[12] : 0;
 			int startalpha = argCount > 13 ? args[13] : 0xFF; // Byte trans			
 			int fadestep = argCount > 14 ? args[14] : -1;
 
@@ -6065,7 +6065,10 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			size = clamp<int>(size, 0, 65535); // Clamp to word
 
 			if (lifetime != 0)
-				P_SpawnParticle(x, y, z, xvel, yvel, zvel, color, fullbright, startalpha, lifetime, size, fadestep, accelx, accely, accelz);
+				P_SpawnParticle(DVector3(ACSToDouble(x), ACSToDouble(y), ACSToDouble(z)), 
+								DVector3(ACSToDouble(xvel), ACSToDouble(yvel), ACSToDouble(zvel)),
+								DVector3(ACSToDouble(accelx), ACSToDouble(accely), ACSToDouble(accelz)),
+								color, fullbright, startalpha/255., lifetime, size, fadestep/255.);
 		}
 		break;
 		
@@ -8730,21 +8733,21 @@ scriptwait:
 		case PCD_GETACTORANGLE:
 			{
 				AActor *actor = SingleActorFromTID(STACK(1), activator);
-				STACK(1) = actor == NULL ? 0 : actor->Angles.Yaw.FixedAngle();
+				STACK(1) = actor == NULL ? 0 : AngleToACS(actor->Angles.Yaw);
 			}
 			break;
 
 		case PCD_GETACTORPITCH:
 			{
 				AActor *actor = SingleActorFromTID(STACK(1), activator);
-				STACK(1) = actor == NULL ? 0 : actor->Angles.Pitch.FixedAngle();
+				STACK(1) = actor == NULL ? 0 : AngleToACS(actor->Angles.Pitch);
 			}
 			break;
 
 		case PCD_GETLINEROWOFFSET:
 			if (activationline != NULL)
 			{
-				PushToStack (activationline->sidedef[0]->GetTextureYOffset(side_t::mid) >> FRACBITS);
+				PushToStack (int(activationline->sidedef[0]->GetTextureYOffsetF(side_t::mid)));
 			}
 			else
 			{
@@ -8761,28 +8764,27 @@ scriptwait:
 			{
 				int tag = STACK(3);
 				int secnum;
-				fixed_t x = STACK(2) << FRACBITS;
-				fixed_t y = STACK(1) << FRACBITS;
-				fixed_t z = 0;
+				DVector2 pos(ACSToDouble(STACK(2)), ACSToDouble(STACK(1)));
+				double z = 0;
 
 				if (tag != 0)
 					secnum = P_FindFirstSectorFromTag (tag);
 				else
-					secnum = int(P_PointInSector (x, y) - sectors);
+					secnum = int(P_PointInSector (pos) - sectors);
 
 				if (secnum >= 0)
 				{
 					if (pcd == PCD_GETSECTORFLOORZ)
 					{
-						z = sectors[secnum].floorplane.ZatPoint (x, y);
+						z = sectors[secnum].floorplane.ZatPoint (pos);
 					}
 					else
 					{
-						z = sectors[secnum].ceilingplane.ZatPoint (x, y);
+						z = sectors[secnum].ceilingplane.ZatPoint (pos);
 					}
 				}
 				sp -= 2;
-				STACK(1) = z;
+				STACK(1) = DoubleToACS(z);
 			}
 			break;
 
@@ -8863,12 +8865,12 @@ scriptwait:
 			{ // translation using desaturation
 				int start = STACK(8);
 				int end = STACK(7);
-				fixed_t r1 = STACK(6);
-				fixed_t g1 = STACK(5);
-				fixed_t b1 = STACK(4);
-				fixed_t r2 = STACK(3);
-				fixed_t g2 = STACK(2);
-				fixed_t b2 = STACK(1);
+				int r1 = STACK(6);
+				int g1 = STACK(5);
+				int b1 = STACK(4);
+				int r2 = STACK(3);
+				int g2 = STACK(2);
+				int b2 = STACK(1);
 				sp -= 8;
 
 				if (translation != NULL)
@@ -8886,15 +8888,15 @@ scriptwait:
 			break;
 
 		case PCD_SIN:
-			STACK(1) = finesine[angle_t(STACK(1)<<16)>>ANGLETOFINESHIFT];
+			STACK(1) = DoubleToACS(ACSToAngle(STACK(1)).Sin());
 			break;
 
 		case PCD_COS:
-			STACK(1) = finecosine[angle_t(STACK(1)<<16)>>ANGLETOFINESHIFT];
+			STACK(1) = DoubleToACS(ACSToAngle(STACK(1)).Cos());
 			break;
 
 		case PCD_VECTORANGLE:
-			STACK(2) = R_PointToAngle2 (0, 0, STACK(2), STACK(1)) >> 16;
+			STACK(2) = AngleToACS(VecToAngle(STACK(2), STACK(1)).Degrees);
 			sp--;
 			break;
 
@@ -9075,14 +9077,14 @@ scriptwait:
 			// projectile a TID.
 			// Thing_Projectile2 (tid, type, angle, speed, vspeed, gravity, newtid);
 			P_Thing_Projectile(STACK(7), activator, STACK(6), NULL, STACK(5) * (360. / 256.),
-				STACK(4) << (FRACBITS - 3), STACK(3) << (FRACBITS - 3), 0, NULL, STACK(2), STACK(1), false);
+				ACSToDouble(STACK(4)) / 8., ACSToDouble(STACK(3)) / 8., 0, NULL, STACK(2), STACK(1), false);
 			sp -= 7;
 			break;
 
 		case PCD_SPAWNPROJECTILE:
 			// Same, but takes an actor name instead of a spawn ID.
 			P_Thing_Projectile(STACK(7), activator, 0, FBehavior::StaticLookupString(STACK(6)), STACK(5) * (360. / 256.),
-				STACK(4) << (FRACBITS - 3), STACK(3) << (FRACBITS - 3), 0, NULL, STACK(2), STACK(1), false);
+				ACSToDouble(STACK(4)) / 8., ACSToDouble(STACK(3)) / 8., 0, NULL, STACK(2), STACK(1), false);
 			sp -= 7;
 			break;
 

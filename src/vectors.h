@@ -43,6 +43,7 @@
 #include <math.h>
 #include <string.h>
 #include "m_fixed.h"
+#include "tables.h"
 #include "math/cmath.h"
 
 
@@ -1034,11 +1035,6 @@ struct TAngle
 	TVector2<vec_t> ToVector(vec_t length = 1) const
 	{
 		return TVector2<vec_t>(length * Cos(), length * Sin());
-	}
-
-	int FixedAngle()	// for ACS. This must be normalized so it just converts to BAM first and then shifts 16 bits right.
-	{
-		return FLOAT2ANGLE(Degrees) >> 16;
 	}
 
 	vec_t Cos() const

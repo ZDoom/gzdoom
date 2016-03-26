@@ -210,8 +210,9 @@ extern FClassMap StrifeTypes;
 
 bool	P_Thing_Spawn (int tid, AActor *source, int type, DAngle angle, bool fog, int newtid);
 bool	P_Thing_Projectile (int tid, AActor *source, int type, const char * type_name, DAngle angle,
-			fixed_t speed, fixed_t vspeed, int dest, AActor *forcedest, int gravity, int newtid,
+			double speed, double vspeed, int dest, AActor *forcedest, int gravity, int newtid,
 			bool leadTarget);
+
 bool	P_MoveThing(AActor *source, const DVector3 &pos, bool fog);
 bool	P_Thing_Move (int tid, AActor *source, int mapspot, bool fog);
 int		P_Thing_Damage (int tid, AActor *whofor0, int amount, FName type);

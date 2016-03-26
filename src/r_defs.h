@@ -405,6 +405,11 @@ struct secplane_t
 		}
 	}
 
+	inline void SetAtHeight(double height, int ceiling)
+	{
+		SetAtHeight(FLOAT2FIXED(clamp(height, -32767., 32767.)), ceiling);
+	}
+
 	bool CopyPlaneIfValid (secplane_t *dest, const secplane_t *opp) const;
 
 };
@@ -1113,6 +1118,10 @@ struct side_t
 	{
 		return textures[which].xoffset;
 	}
+	double GetTextureXOffsetF(int which) const
+	{
+		return FIXED2DBL(textures[which].xoffset);
+	}
 	void AddTextureXOffset(int which, fixed_t delta)
 	{
 		textures[which].xoffset += delta;
@@ -1131,6 +1140,10 @@ struct side_t
 	fixed_t GetTextureYOffset(int which) const
 	{
 		return textures[which].yoffset;
+	}
+	double GetTextureYOffsetF(int which) const
+	{
+		return FIXED2DBL(textures[which].yoffset);
 	}
 	void AddTextureYOffset(int which, fixed_t delta)
 	{
@@ -1166,6 +1179,10 @@ struct side_t
 	fixed_t GetTextureYScale(int which) const
 	{
 		return textures[which].yscale;
+	}
+	double GetTextureYScaleF(int which) const
+	{
+		return FIXED2DBL(textures[which].yscale);
 	}
 	void MultiplyTextureYScale(int which, fixed_t delta)
 	{

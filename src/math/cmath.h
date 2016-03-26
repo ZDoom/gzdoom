@@ -1,10 +1,9 @@
 #ifndef __CMATH_H
 #define __CMATH_H
 
-#include "tables.h"
-#include "m_fixed.h"
+#include "xs_Float.h"
 
-#define USE_CUSTOM_MATH	// we want reoreducably reliable results, even at the cost of performance
+#define USE_CUSTOM_MATH	// we want repreducably reliable results, even at the cost of performance
 #define USE_FAST_MATH	// use faster table-based sin and cos variants with limited precision (sufficient for Doom gameplay)
 
 extern"C"
@@ -49,42 +48,49 @@ public:
 
 extern FFastTrig fasttrig;
 
+#define DEG2BAM(f)		((unsigned)xs_CRoundToInt((f) * (0x40000000/90.)))
+#define RAD2BAM(f)		((unsigned)xs_CRoundToInt((f) * (0x80000000/3.14159265358979323846)))
+
 
 inline double fastcosdeg(double v)
 {
-	return fasttrig.cos(FLOAT2ANGLE(v));
+	return fasttrig.cos(DEG2BAM(v));
 }
 
 inline double fastsindeg(double v)
 {
-	return fasttrig.sin(FLOAT2ANGLE(v));
+	return fasttrig.sin(DEG2BAM(v));
 }
 
 inline double fastcos(double v)
 {
-	return fasttrig.cos(RAD2ANGLE(v));
+	return fasttrig.cos(RAD2BAM(v));
 }
 
 inline double fastsin(double v)
 {
-	return fasttrig.sin(RAD2ANGLE(v));
+	return fasttrig.sin(RAD2BAM(v));
 }
+
+// these are supposed to be local to this file.
+#undef DEG2BAM
+#undef RAD2BAM
 
 inline double sindeg(double v)
 {
 #ifdef USE_CUSTOM_MATH
-	return c_sin(v * (M_PI / 180.));
+	return c_sin(v * (3.14159265358979323846 / 180.));
 #else
-	return sin(v * (M_PI / 180.));
+	return sin(v * (3.14159265358979323846 / 180.));
 #endif
 }
 
 inline double cosdeg(double v)
 {
 #ifdef USE_CUSTOM_MATH
-	return c_cos(v * (M_PI / 180.));
+	return c_cos(v * (3.14159265358979323846 / 180.));
 #else
-	return cos(v * (M_PI / 180.));
+	return cos(v * (3.14159265358979323846 / 180.));
 #endif
 }
 

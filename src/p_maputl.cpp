@@ -243,8 +243,8 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef, co
 		open.floorterrain = -1;
 		open.bottom = LINEOPEN_MIN;
 		open.lowfloor = LINEOPEN_MAX;
-		open.frontfloorplane.SetAtHeight(FIXED_MIN, sector_t::floor);
-		open.backfloorplane.SetAtHeight(FIXED_MIN, sector_t::floor);
+		open.frontfloorplane.SetAtHeight(LINEOPEN_MIN, sector_t::floor);
+		open.backfloorplane.SetAtHeight(LINEOPEN_MIN, sector_t::floor);
 	}
 
 	// Check 3D floors

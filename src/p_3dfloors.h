@@ -86,8 +86,6 @@ struct F3DFloor
 
 	short				*toplightlevel;
 	
-	fixed_t				delta;
-	
 	unsigned int		flags;
 	line_t*				master;
 	
@@ -125,7 +123,6 @@ struct lightlist_t
 class player_s;
 void P_PlayerOnSpecial3DFloor(player_t* player);
 
-void P_Get3DFloorAndCeiling(AActor * thing, sector_t * sector, fixed_t * floorz, fixed_t * ceilingz, int * floorpic);
 bool P_CheckFor3DFloorHit(AActor * mo);
 bool P_CheckFor3DCeilingHit(AActor * mo);
 void P_Recalculate3DFloors(sector_t *);
@@ -141,19 +138,7 @@ struct FLineOpening;
 void P_LineOpening_XFloors (FLineOpening &open, AActor * thing, const line_t *linedef, 
 							double x, double y, bool restrict);
 
-secplane_t P_FindFloorPlane(sector_t * sector, fixed_t x, fixed_t y, fixed_t z);
-int	P_Find3DFloor(sector_t * sec, fixed_t x, fixed_t y, fixed_t z, bool above, bool floor, fixed_t &cmpz);
-inline int	P_Find3DFloor(sector_t * sec, const fixedvec3 &pos, bool above, bool floor, fixed_t &cmpz)
-{
-	return P_Find3DFloor(sec, pos.x, pos.y, pos.z, above, floor, cmpz);
-}
-inline int	P_Find3DFloor(sector_t * sec, const DVector3 &pos, bool above, bool floor, double &cmpz)
-{
-	fixed_t fr = FLOAT2FIXED(cmpz);
-	int ret = P_Find3DFloor(sec, FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), FLOAT2FIXED(pos.Z), above, floor, fr);
-	cmpz = FIXED2DBL(fr);
-	return ret;
-}
-
+secplane_t P_FindFloorPlane(sector_t * sector, const DVector3 &pos);
+int	P_Find3DFloor(sector_t * sec, const DVector3 &pos, bool above, bool floor, double &cmpz);
 
 #endif

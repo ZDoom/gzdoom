@@ -119,8 +119,8 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno, fixedvec3 *optpo
 	if (side == NULL)
 		return true;
 
-	fixed_t checktop;
-	fixed_t checkbot;
+	double checktop;
+	double checkbot;
 	sector_t *front = side->sector;
 	FLineOpening open;
 	int flags = line->flags;
@@ -229,7 +229,7 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno, fixedvec3 *optpo
 		// to keep compatibility with Eternity's implementation.
 		if (!P_GetMidTexturePosition(line, sideno, &checktop, &checkbot))
 			return false;
-		return user->_f_Z() < checktop && user->_f_Top() > checkbot;
+		return user->Z() < checktop && user->Top() > checkbot;
 	}
 	else
 	{

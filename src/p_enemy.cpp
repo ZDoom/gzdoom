@@ -2636,12 +2636,12 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 						(vilesec != corpsec && corpsec->e->XFloor.ffloors.Size()) ? corpsec : NULL;
 					if (testsec)
 					{
-						fixed_t zdist1, zdist2;
-						if (P_Find3DFloor(testsec, corpsehit->_f_Pos(), false, true, zdist1)
-							!= P_Find3DFloor(testsec, self->_f_Pos(), false, true, zdist2))
+						double zdist1, zdist2;
+						if (P_Find3DFloor(testsec, corpsehit->Pos(), false, true, zdist1)
+							!= P_Find3DFloor(testsec, self->Pos(), false, true, zdist2))
 						{
 							// Not on same floor
-							if (vilesec == corpsec || abs(zdist1 - self->_f_Z()) > self->_f_height())
+							if (vilesec == corpsec || fabs(zdist1 - self->Z()) > self->Height)
 								continue;
 						}
 					}

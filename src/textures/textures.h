@@ -205,7 +205,6 @@ public:
 
 	int GetScaledWidth () { int foo = (Width << 17) / xScale; return (foo >> 1) + (foo & 1); }
 	int GetScaledHeight () { int foo = (Height << 17) / yScale; return (foo >> 1) + (foo & 1); }
-	int GetScaledHeight(double scale) { int foo = (Height << 17) / FLOAT2FIXED(scale); return (foo >> 1) + (foo & 1); }
 	double GetScaledWidthDouble () { return (Width * 65536.) / xScale; }
 	double GetScaledHeightDouble () { return (Height * 65536.) / yScale; }
 	double GetScaleY() const { return FIXED2DBL(yScale); }

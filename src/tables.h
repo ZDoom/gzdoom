@@ -100,7 +100,7 @@ typedef uint32			angle_t;
 //   note: remove the call to 'abs' since unsigned values cannot be negative
 inline angle_t absangle(angle_t a)
 {
-	return (angle_t)abs((int32)a);
+	return (angle_t)abs((int32_t)a);
 }
 
 // Effective size is 2049;

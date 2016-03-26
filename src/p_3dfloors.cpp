@@ -422,10 +422,10 @@ void P_Recalculate3DFloors(sector_t * sector)
 	unsigned		pickindex;
 	F3DFloor *		clipped=NULL;
 	F3DFloor *		solid=NULL;
-	fixed_t			solid_bottom=0;
-	fixed_t			clipped_top;
-	fixed_t			clipped_bottom=0;
-	fixed_t			maxheight, minheight;
+	double			solid_bottom=0;
+	double			clipped_top;
+	double			clipped_bottom=0;
+	double			maxheight, minheight;
 	unsigned		i, j;
 	lightlist_t newlight;
 	lightlist_t resetlight;	// what it goes back to after FF_DOUBLESHADOW
@@ -464,13 +464,13 @@ void P_Recalculate3DFloors(sector_t * sector)
 		while (oldlist.Size())
 		{
 			pick=oldlist[0];
-			fixed_t height=pick->top.plane->ZatPoint(sector->_f_centerspot());
+			double height=pick->top.plane->ZatPoint(sector->centerspot);
 
 			// find highest starting ffloor - intersections are not supported!
 			pickindex=0;
 			for (j=1;j<oldlist.Size();j++)
 			{
-				fixed_t h2=oldlist[j]->top.plane->ZatPoint(sector->_f_centerspot());
+				double h2=oldlist[j]->top.plane->ZatPoint(sector->centerspot);
 
 				if (h2>height)
 				{
@@ -481,7 +481,7 @@ void P_Recalculate3DFloors(sector_t * sector)
 			}
 
 			oldlist.Delete(pickindex);
-			fixed_t pick_bottom=pick->bottom.plane->ZatPoint(sector->_f_centerspot());
+			double pick_bottom=pick->bottom.plane->ZatPoint(sector->centerspot);
 
 			if (pick->flags & FF_THISINSIDE)
 			{
@@ -586,8 +586,8 @@ void P_Recalculate3DFloors(sector_t * sector)
 
 		resetlight = lightlist[0];
 
-		maxheight = sector->CenterCeiling();
-		minheight = sector->CenterFloor();
+		maxheight = sector->ceilingplane.ZatPoint(sector->centerspot);
+		minheight = sector->floorplane.ZatPoint(sector->centerspot);
 		for(i = 0; i < ffloors.Size(); i++)
 		{
 			rover=ffloors[i];
@@ -595,7 +595,7 @@ void P_Recalculate3DFloors(sector_t * sector)
 			if ( !(rover->flags & FF_EXISTS) || rover->flags & FF_NOSHADE )
 				continue;
 				
-			fixed_t ff_top=rover->top.plane->ZatPoint(sector->_f_centerspot());
+			double ff_top=rover->top.plane->ZatPoint(sector->centerspot);
 			if (ff_top < minheight) break;	// reached the floor
 			if (ff_top < maxheight)
 			{
@@ -610,7 +610,7 @@ void P_Recalculate3DFloors(sector_t * sector)
 			}
 			else
 			{
-				fixed_t ff_bottom=rover->bottom.plane->ZatPoint(sector->_f_centerspot());
+				double ff_bottom=rover->bottom.plane->ZatPoint(sector->centerspot);
 				if (ff_bottom<maxheight)
 				{
 					// this segment begins over the ceiling and extends beyond it
@@ -636,7 +636,7 @@ void P_Recalculate3DFloors(sector_t * sector)
 
 			if (rover->flags&FF_DOUBLESHADOW)
 			{
-				fixed_t ff_bottom=rover->bottom.plane->ZatPoint(sector->_f_centerspot());
+				double ff_bottom=rover->bottom.plane->ZatPoint(sector->centerspot);
 				if(ff_bottom < maxheight && ff_bottom>minheight)
 				{
 					newlight.caster = rover;
@@ -724,11 +724,11 @@ lightlist_t * P_GetPlaneLight(sector_t * sector, secplane_t * plane, bool unders
 	unsigned   i;
 	TArray<lightlist_t> &lightlist = sector->e->XFloor.lightlist;
 
-	fixed_t planeheight=plane->ZatPoint(sector->_f_centerspot());
+	double planeheight=plane->ZatPoint(sector->centerspot);
 	if(underside) planeheight--;
 	
 	for(i = 1; i < lightlist.Size(); i++)
-		if (lightlist[i].plane.ZatPoint(sector->_f_centerspot()) <= planeheight) 
+		if (lightlist[i].plane.ZatPoint(sector->centerspot) <= planeheight) 
 			return &lightlist[i - 1];
 		
 	return &lightlist[lightlist.Size() - 1];
@@ -851,12 +851,6 @@ void P_Spawn3DFloors (void)
 		switch(line->special)
 		{
 		case ExtraFloor_LightOnly:
-			// Note: I am spawning both this and ZDoom's ExtraLight data
-			// I don't want to mess with both at the same time during rendering
-			// so inserting this into the 3D-floor table as well seemed to be
-			// the best option.
-			//
-			// This does not yet handle case 0 properly!
 			if (line->args[1] < 0 || line->args[1] > 2) line->args[1] = 0;
 			P_Set3DFloor(line, 3, flagvals[line->args[1]], 0);
 			break;
@@ -900,17 +894,16 @@ void P_Spawn3DFloors (void)
 //
 //==========================================================================
 
-secplane_t P_FindFloorPlane(sector_t * sector, fixed_t x, fixed_t y, fixed_t z)
+secplane_t P_FindFloorPlane(sector_t * sector, const DVector3 &pos)
 {
 	secplane_t retplane = sector->floorplane;
 	if (sector->e)	// apparently this can be called when the data is already gone
 	{
-		for(unsigned int i=0;i<sector->e->XFloor.ffloors.Size();i++)
+		for(auto rover : sector->e->XFloor.ffloors)
 		{
-			F3DFloor * rover= sector->e->XFloor.ffloors[i];
 			if(!(rover->flags & FF_SOLID) || !(rover->flags & FF_EXISTS)) continue;
 
-			if (rover->top.plane->ZatPoint(x, y) == z)
+			if (rover->top.plane->ZatPoint(pos) == pos.Z)
 			{
 				retplane = *rover->top.plane;
 				if (retplane.c<0) retplane.FlipVert();
@@ -928,20 +921,20 @@ secplane_t P_FindFloorPlane(sector_t * sector, fixed_t x, fixed_t y, fixed_t z)
 //
 //==========================================================================
 
-int	P_Find3DFloor(sector_t * sec, fixed_t x, fixed_t y, fixed_t z, bool above, bool floor, fixed_t &cmpz)
+int	P_Find3DFloor(sector_t * sec, const DVector3 &pos, bool above, bool floor, double &cmpz)
 {
 	// If no sector given, find the one appropriate
 	if (sec == NULL)
-		sec = R_PointInSubsector(x, y)->sector;
+		sec = P_PointInSector(pos);
 
 	// Above normal ceiling
-	cmpz = sec->ceilingplane.ZatPoint(x, y);
-	if (z >= cmpz)
+	cmpz = sec->ceilingplane.ZatPoint(pos);
+	if (pos.Z >= cmpz)
 		return -1;
 
 	// Below normal floor
-	cmpz = sec->floorplane.ZatPoint(x, y);
-	if (z <= cmpz)
+	cmpz = sec->floorplane.ZatPoint(pos);
+	if (pos.Z <= cmpz)
 		return -1;
 
 	// Looking through planes from top to bottom
@@ -955,19 +948,19 @@ int	P_Find3DFloor(sector_t * sec, fixed_t x, fixed_t y, fixed_t z, bool above, b
 		if (above)
 		{
 			// z is above that floor
-			if (floor && (z >= (cmpz = rover->top.plane->ZatPoint(x, y))))
+			if (floor && (pos.Z >= (cmpz = rover->top.plane->ZatPoint(pos))))
 				return i - 1;
 			// z is above that ceiling
-			if (z >= (cmpz = rover->bottom.plane->ZatPoint(x, y)))
+			if (pos.Z >= (cmpz = rover->bottom.plane->ZatPoint(pos)))
 				return i - 1;
 		}
 		else // below
 		{
 			// z is below that ceiling
-			if (!floor && (z <= (cmpz = rover->bottom.plane->ZatPoint(x, y))))
+			if (!floor && (pos.Z <= (cmpz = rover->bottom.plane->ZatPoint(pos))))
 				return i;
 			// z is below that floor
-			if (z <= (cmpz = rover->top.plane->ZatPoint(x, y)))
+			if (pos.Z <= (cmpz = rover->top.plane->ZatPoint(pos)))
 				return i;
 		}
 	}
@@ -989,13 +982,13 @@ CCMD (dump3df)
 
 		for (unsigned int i = 0; i < ffloors.Size(); i++)
 		{
-			fixed_t height=ffloors[i]->top.plane->ZatPoint(sector->_f_centerspot());
-			fixed_t bheight=ffloors[i]->bottom.plane->ZatPoint(sector->_f_centerspot());
+			double height=ffloors[i]->top.plane->ZatPoint(sector->centerspot);
+			double bheight=ffloors[i]->bottom.plane->ZatPoint(sector->centerspot);
 
 			IGNORE_FORMAT_PRE
 			Printf("FFloor %d @ top = %f (model = %d), bottom = %f (model = %d), flags = %B, alpha = %d %s %s\n", 
-				i, height / 65536., ffloors[i]->top.model->sectornum, 
-				bheight / 65536., ffloors[i]->bottom.model->sectornum,
+				i, height, ffloors[i]->top.model->sectornum, 
+				bheight, ffloors[i]->bottom.model->sectornum,
 				ffloors[i]->flags, ffloors[i]->alpha, (ffloors[i]->flags&FF_EXISTS)? "Exists":"", (ffloors[i]->flags&FF_DYNAMIC)? "Dynamic":"");
 			IGNORE_FORMAT_POST
 		}

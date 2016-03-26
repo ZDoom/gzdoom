@@ -3683,7 +3683,7 @@ void AActor::Tick ()
 			secplane_t floorplane;
 
 			// Check 3D floors as well
-			floorplane = P_FindFloorPlane(floorsector, _f_X(), _f_Y(), _f_floorz());
+			floorplane = P_FindFloorPlane(floorsector, PosAtZ(floorz));
 
 			if (floorplane.c < STEEPSLOPE &&
 				floorplane.ZatPoint (_f_PosRelative(floorsector)) <= _f_floorz())

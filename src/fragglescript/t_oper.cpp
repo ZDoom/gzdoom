@@ -384,14 +384,13 @@ void FParser::OPdivide(svalue_t &result, int start, int n, int stop)
 	// haleyjd: 8-17
 	if(left.type == svt_fixed || right.type == svt_fixed)
 	{
-		auto fr = fixedvalue(right);
+		auto fr = floatvalue(right);
 		
 		if(fr == 0)
 			script_error("divide by zero\n");
 		else
 		{
-			result.type = svt_fixed;
-			result.value.f = FixedDiv(fixedvalue(left), fr);
+			result.setDouble(floatvalue(left) / fr);
 		}
 	}
 	else

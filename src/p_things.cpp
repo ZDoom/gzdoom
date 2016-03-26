@@ -169,15 +169,13 @@ bool P_Thing_Move (int tid, AActor *source, int mapspot, bool fog)
 }
 
 bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_name, DAngle angle,
-	fixed_t _speed, fixed_t _vspeed, int dest, AActor *forcedest, int gravity, int newtid,
+	double speed, double vspeed, int dest, AActor *forcedest, int gravity, int newtid,
 	bool leadTarget)
 {
 	int rtn = 0;
 	PClassActor *kind;
 	AActor *spot, *mobj, *targ = forcedest;
 	FActorIterator iterator (tid);
-	double speed = FIXED2DBL(_speed);
-	double vspeed = FIXED2DBL(_vspeed);
 	int defflags3;
 
 	if (type_name == NULL)

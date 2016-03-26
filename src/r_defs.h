@@ -930,8 +930,8 @@ struct sector_t
 	}
 
 	// Member variables
-	fixed_t		CenterFloor () const { return floorplane.ZatPoint (centerspot); }
-	fixed_t		CenterCeiling () const { return ceilingplane.ZatPoint (centerspot); }
+	fixed_t		CenterFloor () const { return floorplane.ZatPoint (_f_centerspot()); }
+	fixed_t		CenterCeiling () const { return ceilingplane.ZatPoint (_f_centerspot()); }
 
 	// [RH] store floor and ceiling planes instead of heights
 	secplane_t	floorplane, ceilingplane;
@@ -949,9 +949,14 @@ struct sector_t
 	int			sky;
 	FNameNoInit	SeqName;		// Sound sequence name. Setting seqType non-negative will override this.
 
-	fixedvec2	centerspot;		// origin for any sounds played by the sector
+	DVector2	centerspot;		// origin for any sounds played by the sector
 	int 		validcount;		// if == validcount, already checked
 	AActor* 	thinglist;		// list of mobjs in sector
+
+	fixedvec2 _f_centerspot() const
+	{
+		return{ FLOAT2FIXED(centerspot.X), FLOAT2FIXED(centerspot.Y) };
+	}
 
 	// killough 8/28/98: friction is a sector property, not an mobj property.
 	// these fields used to be in AActor, but presented performance problems

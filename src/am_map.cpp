@@ -1962,8 +1962,8 @@ void AM_drawSubsectors()
 			}
 			else
 			{
-				secx = FIXED2DBL(sec->centerspot.x);
-				secy = FIXED2DBL(sec->centerspot.y);
+				secx = sec->centerspot.X;
+				secy = sec->centerspot.Y;
 			}
 			seczb = floorplane->ZatPoint(secx, secy);
 			seczt = sec->ceilingplane.ZatPoint(secx, secy);

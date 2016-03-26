@@ -1182,9 +1182,9 @@ void R_Subsector (subsector_t *sub)
 				fakeFloor->validcount = validcount;
 				R_3D_NewClip();
 			}
-			fakeHeight = fakeFloor->top.plane->ZatPoint(frontsector->centerspot);
+			fakeHeight = FLOAT2FIXED(fakeFloor->top.plane->ZatPoint(frontsector->centerspot));
 			if (fakeHeight < viewz &&
-				fakeHeight > frontsector->floorplane.ZatPoint(frontsector->centerspot))
+				fakeHeight > FLOAT2FIXED(frontsector->floorplane.ZatPoint(frontsector->centerspot)))
 			{
 				fake3D = FAKE3D_FAKEFLOOR;
 				tempsec = *fakeFloor->model;
@@ -1244,9 +1244,9 @@ void R_Subsector (subsector_t *sub)
 				fakeFloor->validcount = validcount;
 				R_3D_NewClip();
 			}
-			fakeHeight = fakeFloor->bottom.plane->ZatPoint(frontsector->centerspot);
+			fakeHeight = FLOAT2FIXED(fakeFloor->bottom.plane->ZatPoint(frontsector->centerspot));
 			if (fakeHeight > viewz &&
-				fakeHeight < frontsector->ceilingplane.ZatPoint(frontsector->centerspot))
+				fakeHeight < FLOAT2FIXED(frontsector->ceilingplane.ZatPoint(frontsector->centerspot)))
 			{
 				fake3D = FAKE3D_FAKECEILING;
 				tempsec = *fakeFloor->model;

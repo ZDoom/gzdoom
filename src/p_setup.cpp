@@ -3223,8 +3223,8 @@ static void P_GroupLines (bool buildmap)
 		}
 
 		// set the center to the middle of the bounding box
-		sector->centerspot.x = bbox.Right()/2 + bbox.Left()/2;
-		sector->centerspot.y = bbox.Top()/2 + bbox.Bottom()/2;
+		sector->centerspot.X = FIXED2DBL(bbox.Right()/2 + bbox.Left()/2);
+		sector->centerspot.Y = FIXED2DBL(bbox.Top()/2 + bbox.Bottom()/2);
 
 		// For triangular sectors the above does not calculate good points unless the longest of the triangle's lines is perfectly horizontal and vertical
 		if (sector->linecount == 3)
@@ -3246,8 +3246,8 @@ static void P_GroupLines (bool buildmap)
 					if (DMulScale32 (v->y - Triangle[0]->y, dx,
 									Triangle[0]->x - v->x, dy) != 0)
 					{
-						sector->centerspot.x = Triangle[0]->x / 3 + Triangle[1]->x / 3 + v->x / 3;
-						sector->centerspot.y = Triangle[0]->y / 3 + Triangle[1]->y / 3 + v->y / 3;
+						sector->centerspot.X = FIXED2DBL(Triangle[0]->x / 3 + Triangle[1]->x / 3 + v->x / 3);
+						sector->centerspot.Y = FIXED2DBL(Triangle[0]->y / 3 + Triangle[1]->y / 3 + v->y / 3);
 						break;
 					}
 				}

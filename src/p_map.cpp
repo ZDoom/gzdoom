@@ -5043,13 +5043,12 @@ void P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bo
 	if (bombdistance <= 0)
 		return;
 	fulldamagedistance = clamp<int>(fulldamagedistance, 0, bombdistance - 1);
-	fixed_t bombdistfix = bombdistance << FRACBITS;
 
-	double bombdistancefloat = 1.f / (double)(bombdistance - fulldamagedistance);
+	double bombdistancefloat = 1. / (double)(bombdistance - fulldamagedistance);
 	double bombdamagefloat = (double)bombdamage;
 
 	FPortalGroupArray grouplist(FPortalGroupArray::PGA_Full3d);
-	FMultiBlockThingsIterator it(grouplist, bombspot->_f_X(), bombspot->_f_Y(), bombspot->_f_Z() - bombdistfix, bombspot->_f_height() + bombdistfix*2, bombdistfix, false, bombspot->Sector);
+	FMultiBlockThingsIterator it(grouplist, bombspot->X(), bombspot->Y(), bombspot->Z() - bombdistance, bombspot->Height + bombdistance*2, bombdistancefloat, false, bombspot->Sector);
 	FMultiBlockThingsIterator::CheckResult cres;
 
 	if (flags & RADF_SOURCEISSPOT)
@@ -5096,28 +5095,28 @@ void P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bo
 			// height of the thing and not the height of the map.
 			double points;
 			double len;
-			fixed_t dx, dy;
+			double dx, dy;
 			double boxradius;
 
-			fixedvec2 vec = bombspot->_f_Vec2To(thing);
-			dx = abs(vec.x);
-			dy = abs(vec.y);
-			boxradius = double(thing->_f_radius());
+			DVector2 vec = bombspot->Vec2To(thing);
+			dx = fabs(vec.X);
+			dy = fabs(vec.Y);
+			boxradius = thing->radius;
 
 			// The damage pattern is square, not circular.
 			len = double(dx > dy ? dx : dy);
 
-			if (bombspot->_f_Z() < thing->_f_Z() || bombspot->_f_Z() >= thing->_f_Top())
+			if (bombspot->Z() < thing->Z() || bombspot->Z() >= thing->Top())
 			{
 				double dz;
 
-				if (bombspot->_f_Z() > thing->_f_Z())
+				if (bombspot->Z() > thing->Z())
 				{
-					dz = double(bombspot->_f_Z() - thing->_f_Top());
+					dz = double(bombspot->Z() - thing->Top());
 				}
 				else
 				{
-					dz = double(thing->_f_Z() - bombspot->_f_Z());
+					dz = double(thing->Z() - bombspot->Z());
 				}
 				if (len <= boxradius)
 				{
@@ -5135,9 +5134,8 @@ void P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bo
 				if (len < 0.f)
 					len = 0.f;
 			}
-			len /= FRACUNIT;
 			len = clamp<double>(len - (double)fulldamagedistance, 0, len);
-			points = bombdamagefloat * (1.f - len * bombdistancefloat);
+			points = bombdamagefloat * (1. - len * bombdistancefloat);
 			if (thing == bombsource)
 			{
 				points = points * splashfactor;
@@ -5195,14 +5193,14 @@ void P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bo
 		else
 		{
 			// [RH] Old code just for barrels
-			fixed_t dx, dy, dist;
+			double dx, dy, dist;
 
-			fixedvec2 vec = bombspot->_f_Vec2To(thing);
-			dx = abs(vec.x);
-			dy = abs(vec.y);
+			DVector2 vec = bombspot->Vec2To(thing);
+			dx = fabs(vec.X);
+			dy = fabs(vec.Y);
 
 			dist = dx>dy ? dx : dy;
-			dist = (dist - thing->_f_radius()) >> FRACBITS;
+			dist -= thing->radius;
 
 			if (dist < 0)
 				dist = 0;
@@ -5212,8 +5210,8 @@ void P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bo
 
 			if (P_CheckSight(thing, bombspot, SF_IGNOREVISIBILITY | SF_IGNOREWATERBOUNDARY))
 			{ // OK to damage; target is in direct path
-				dist = clamp<int>(dist - fulldamagedistance, 0, dist);
-				int damage = Scale(bombdamage, bombdistance - dist, bombdistance);
+				dist = clamp<double>(dist - fulldamagedistance, 0, dist);
+				int damage = Scale(bombdamage, bombdistance - int(dist), bombdistance);
 
 				double factor = splashfactor * thing->GetClass()->RDFactor;
 				damage = int(damage * factor);

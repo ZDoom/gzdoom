@@ -1642,7 +1642,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireCustomMissile)
 	if (ti) 
 	{
 		DAngle ang = self->Angles.Yaw - 90;
-		DVector3 ofs = self->Vec3Angle(spawnofs_xy, ang, spawnheight);
+		DVector2 ofs = ang.ToVector(spawnofs_xy);
 		DAngle shootangle = self->Angles.Yaw;
 
 		if (flags & FPF_AIMATANGLE) shootangle += angle;
@@ -1650,7 +1650,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireCustomMissile)
 		// Temporarily adjusts the pitch
 		DAngle saved_player_pitch = self->Angles.Pitch;
 		self->Angles.Pitch -= pitch;
-		AActor * misl=P_SpawnPlayerMissile (self, ofs.X, ofs.Y, ofs.Z, ti, shootangle, &t, NULL, false, (flags & FPF_NOAUTOAIM) != 0);
+		AActor * misl=P_SpawnPlayerMissile (self, ofs.X, ofs.Y, spawnheight, ti, shootangle, &t, NULL, false, (flags & FPF_NOAUTOAIM) != 0);
 		self->Angles.Pitch = saved_player_pitch;
 
 		// automatic handling of seeker missiles

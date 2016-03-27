@@ -88,7 +88,7 @@ inline int GetSafeBlockY(long long blocky)
 #define MAXMOVE 		(30.)
 
 #define TALKRANGE		(128.)
-#define USERANGE		(64*FRACUNIT)
+#define USERANGE		(64.)
 
 #define MELEERANGE		(64.)
 #define SAWRANGE		(64.+(1./65536.))	// use meleerange + 1 so the puff doesn't skip the flash (i.e. plays all states)
@@ -360,20 +360,9 @@ enum	// P_LineAttack flags
 AActor *P_LineAttack(AActor *t1, DAngle angle, double distance, DAngle pitch, int damage, FName damageType, PClassActor *pufftype, int flags = 0, FTranslatedLineTarget *victim = NULL, int *actualdamage = NULL);
 AActor *P_LineAttack(AActor *t1, DAngle angle, double distance, DAngle pitch, int damage, FName damageType, FName pufftype, int flags = 0, FTranslatedLineTarget *victim = NULL, int *actualdamage = NULL);
 
-void	P_TraceBleed (int damage, fixed_t x, fixed_t y, fixed_t z, AActor *target, angle_t angle, int pitch);
-inline void	P_TraceBleed(int damage, const fixedvec3 &pos, AActor *target, angle_t angle, int pitch)
-{
-	P_TraceBleed(damage, pos.x, pos.y, pos.z, target, angle, pitch);
-}
-inline void	P_TraceBleed(int damage, const DVector3 &pos, AActor *target, DAngle angle, DAngle pitch)
-{
-	P_TraceBleed(damage, FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), FLOAT2FIXED(pos.Z), target,angle.BAMs(), pitch.BAMs());
-}
-void	P_TraceBleed (int damage, AActor *target, angle_t angle, int pitch);
-inline void	P_TraceBleed(int damage, AActor *target, DAngle angle, DAngle pitch)
-{
-	P_TraceBleed(damage, target, angle.BAMs(), pitch.BAMs());
-}
+void	P_TraceBleed(int damage, const DVector3 &pos, AActor *target, DAngle angle, DAngle pitch);
+void	P_TraceBleed(int damage, AActor *target, DAngle angle, DAngle pitch);
+
 void	P_TraceBleed (int damage, AActor *target, AActor *missile);		// missile version
 void	P_TraceBleed(int damage, FTranslatedLineTarget *t, AActor *puff);		// hitscan version
 void	P_TraceBleed (int damage, AActor *target);		// random direction version

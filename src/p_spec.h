@@ -162,8 +162,8 @@ void	P_SpawnSpecials (void);
 void	P_UpdateSpecials (void);
 
 // when needed
-bool	P_ActivateLine (line_t *ld, AActor *mo, int side, int activationType, fixedvec3 *optpos = NULL);
-bool	P_TestActivateLine (line_t *ld, AActor *mo, int side, int activationType, fixedvec3 *optpos = NULL);
+bool	P_ActivateLine (line_t *ld, AActor *mo, int side, int activationType, DVector3 *optpos = NULL);
+bool	P_TestActivateLine (line_t *ld, AActor *mo, int side, int activationType, DVector3 *optpos = NULL);
 bool	P_PredictLine (line_t *ld, AActor *mo, int side, int activationType);
 
 void 	P_PlayerInSpecialSector (player_t *player, sector_t * sector=NULL);
@@ -382,7 +382,7 @@ void	EV_StartLightFading (int tag, int value, int tics);
 #define BUTTONTIME TICRATE		// 1 second, in ticks. 
 
 bool	P_ChangeSwitchTexture (side_t *side, int useAgain, BYTE special, bool *quest=NULL);
-bool	P_CheckSwitchRange(AActor *user, line_t *line, int sideno, fixedvec3 *optpos = NULL);
+bool	P_CheckSwitchRange(AActor *user, line_t *line, int sideno, const DVector3 *optpos = NULL);
 
 //
 // P_PLATS

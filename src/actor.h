@@ -1679,13 +1679,8 @@ inline fixedvec2 Vec2Angle(fixed_t length, angle_t angle)
 	return ret;
 }
 
-inline fixedvec2 Vec2Angle(fixed_t length, DAngle angle)
-{
-	return { xs_CRoundToInt(length * angle.Cos()), xs_CRoundToInt(length * angle.Sin()) };
-}
-
 void PrintMiscActorInfo(AActor * query);
-AActor *P_LinePickActor(AActor *t1, angle_t angle, fixed_t distance, int pitch, ActorFlags actorMask, DWORD wallMask);
+AActor *P_LinePickActor(AActor *t1, DAngle angle, double distance, DAngle pitch, ActorFlags actorMask, DWORD wallMask);
 
 // If we want to make P_AimLineAttack capable of handling arbitrary portals, it needs to pass a lot more info than just the linetarget actor.
 struct FTranslatedLineTarget

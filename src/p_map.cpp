@@ -3535,7 +3535,6 @@ struct aim_t
 	//============================================================================
 	//
 	// traverses a line portal
-	// simply calling PortalRelocate does not work here because more needs to be set up
 	//
 	//============================================================================
 
@@ -3993,12 +3992,11 @@ static ETraceStatus CheckForActor(FTraceResults &res, void *userdata)
 AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 	DAngle pitch, int damage, FName damageType, PClassActor *pufftype, int flags, FTranslatedLineTarget*victim, int *actualdamage)
 {
-	fixed_t vx, vy, vz, shootz;
+	DVector3 direction;
+	double shootz;
 	FTraceResults trace;
 	Origin TData;
 	TData.Caller = t1;
-	angle_t srcangle = angle.BAMs();
-	int srcpitch = pitch.BAMs();
 	bool killPuff = false;
 	AActor *puff = NULL;
 	int pflag = 0;
@@ -4017,14 +4015,12 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 
 	double pc = pitch.Cos();
 
-	vx = FLOAT2FIXED(pc * angle.Cos());
-	vy = FLOAT2FIXED(pc * angle.Sin());
-	vz = FLOAT2FIXED(-pitch.Sin());
+	direction = { pc * angle.Cos(), pc * angle.Sin(), -pitch.Sin() };
+	shootz = t1->Center() - t1->Floorclip;
 
-	shootz = t1->_f_Z() - t1->_f_floorclip() + (t1->_f_height() >> 1);
 	if (t1->player != NULL)
 	{
-		shootz += FLOAT2FIXED(t1->player->mo->AttackZOffset * t1->player->crouchfactor);
+		shootz += t1->player->mo->AttackZOffset * t1->player->crouchfactor;
 		if (damageType == NAME_Melee || damageType == NAME_Hitscan)
 		{
 			// this is coming from a weapon attack function which needs to transfer information to the obituary code,
@@ -4034,7 +4030,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 	}
 	else
 	{
-		shootz += 8 * FRACUNIT;
+		shootz += 8;
 	}
 
 	// We need to check the defaults of the replacement here
@@ -4059,9 +4055,8 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 	if (puffDefaults != NULL && puffDefaults->flags6 & MF6_NOTRIGGER) tflags = TRACE_NoSky;
 	else tflags = TRACE_NoSky | TRACE_Impact;
 
-	if (!Trace(t1->_f_X(), t1->_f_Y(), shootz, t1->Sector, vx, vy, vz, FLOAT2FIXED(distance),
-		MF_SHOOTABLE, ML_BLOCKEVERYTHING | ML_BLOCKHITSCAN, t1, trace,
-		tflags, CheckForActor, &TData))
+	if (!Trace(t1->PosAtZ(shootz), t1->Sector, direction, distance, MF_SHOOTABLE, 
+		ML_BLOCKEVERYTHING | ML_BLOCKHITSCAN, t1, trace, tflags, CheckForActor, &TData))
 	{ // hit nothing
 		if (puffDefaults == NULL)
 		{
@@ -4217,7 +4212,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 						}
 					}
 					// [RH] Stick blood to walls
-					P_TraceBleed(newdam > 0 ? newdam : damage, trace.HitPos, trace.Actor, trace.SrcAngleFromTarget, ANGLE2DBL(srcpitch));
+					P_TraceBleed(newdam > 0 ? newdam : damage, trace.HitPos, trace.Actor, trace.SrcAngleFromTarget, pitch);
 				}
 			}
 			if (victim != NULL)
@@ -4270,26 +4265,22 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 //
 //==========================================================================
 
-AActor *P_LinePickActor(AActor *t1, angle_t angle, fixed_t distance, int pitch,
-						ActorFlags actorMask, DWORD wallMask)
+AActor *P_LinePickActor(AActor *t1, DAngle angle, double distance, DAngle pitch, ActorFlags actorMask, DWORD wallMask) 
 {
-	fixed_t vx, vy, vz, shootz;
-	
-	angle >>= ANGLETOFINESHIFT;
-	pitch = (angle_t)(pitch) >> ANGLETOFINESHIFT;
+	DVector3 direction;
+	double shootz;
 
-	vx = FixedMul(finecosine[pitch], finecosine[angle]);
-	vy = FixedMul(finecosine[pitch], finesine[angle]);
-	vz = -finesine[pitch];
+	double pc = pitch.Cos();
+	direction = { pc * angle.Cos(), pc * angle.Sin(), -pitch.Sin() };
+	shootz = t1->Center() - t1->Floorclip;
 
-	shootz = t1->_f_Z() - t1->_f_floorclip() + (t1->_f_height() >> 1);
 	if (t1->player != NULL)
 	{
-		shootz += FLOAT2FIXED(t1->player->mo->AttackZOffset * t1->player->crouchfactor);
+		shootz += t1->player->mo->AttackZOffset * t1->player->crouchfactor;
 	}
 	else
 	{
-		shootz += 8 * FRACUNIT;
+		shootz += 8;
 	}
 
 	FTraceResults trace;
@@ -4298,7 +4289,7 @@ AActor *P_LinePickActor(AActor *t1, angle_t angle, fixed_t distance, int pitch,
 	TData.Caller = t1;
 	TData.hitGhosts = true;
 	
-	if (Trace(t1->_f_X(), t1->_f_Y(), shootz, t1->Sector, vx, vy, vz, distance,
+	if (Trace(t1->PosAtZ(shootz), t1->Sector, direction, distance,
 		actorMask, wallMask, t1, trace, TRACE_NoSky | TRACE_PortalRestrict, CheckForActor, &TData))
 	{
 		if (trace.HitType == TRACE_HitActor)
@@ -4316,14 +4307,14 @@ AActor *P_LinePickActor(AActor *t1, angle_t angle, fixed_t distance, int pitch,
 //
 //==========================================================================
 
-void P_TraceBleed(int damage, fixed_t x, fixed_t y, fixed_t z, AActor *actor, angle_t angle, int pitch)
+void P_TraceBleed(int damage, const DVector3 &pos, AActor *actor, DAngle angle, DAngle pitch)
 {
 	if (!cl_bloodsplats)
 		return;
 
 	const char *bloodType = "BloodSplat";
 	int count;
-	int noise;
+	double noise;
 
 
 	if ((actor->flags & MF_NOBLOOD) ||
@@ -4333,6 +4324,7 @@ void P_TraceBleed(int damage, fixed_t x, fixed_t y, fixed_t z, AActor *actor, an
 	{
 		return;
 	}
+
 	if (damage < 15)
 	{	// For low damages, there is a chance to not spray blood at all
 		if (damage <= 10)
@@ -4343,12 +4335,12 @@ void P_TraceBleed(int damage, fixed_t x, fixed_t y, fixed_t z, AActor *actor, an
 			}
 		}
 		count = 1;
-		noise = 18;
+		noise = 11.25 / 256.;
 	}
 	else if (damage < 25)
 	{
 		count = 2;
-		noise = 19;
+		noise = 22.5 / 256.;
 	}
 	else
 	{	// For high damages, there is a chance to spray just one big glob of blood
@@ -4356,12 +4348,12 @@ void P_TraceBleed(int damage, fixed_t x, fixed_t y, fixed_t z, AActor *actor, an
 		{
 			bloodType = "BloodSmear";
 			count = 1;
-			noise = 20;
+			noise = 45. / 256.;
 		}
 		else
 		{
 			count = 3;
-			noise = 20;
+			noise = 45. / 256.;
 		}
 	}
 
@@ -4369,15 +4361,12 @@ void P_TraceBleed(int damage, fixed_t x, fixed_t y, fixed_t z, AActor *actor, an
 	{
 		FTraceResults bleedtrace;
 
-		angle_t bleedang = (angle + ((pr_tracebleed() - 128) << noise)) >> ANGLETOFINESHIFT;
-		angle_t bleedpitch = (angle_t)(pitch + ((pr_tracebleed() - 128) << noise)) >> ANGLETOFINESHIFT;
-		fixed_t vx = FixedMul(finecosine[bleedpitch], finecosine[bleedang]);
-		fixed_t vy = FixedMul(finecosine[bleedpitch], finesine[bleedang]);
-		fixed_t vz = -finesine[bleedpitch];
+		DAngle bleedang = angle + (pr_tracebleed() - 128) * noise;
+		DAngle bleedpitch = pitch + (pr_tracebleed() - 128) * noise;
+		double cosp = bleedpitch.Cos();
+		DVector3 vdir = DVector3(cosp * bleedang.Cos(), cosp * bleedang.Sin(), -bleedpitch.Sin());
 
-		if (Trace(x, y, z, actor->Sector,
-			vx, vy, vz, 172 * FRACUNIT, 0, ML_BLOCKEVERYTHING, actor,
-			bleedtrace, TRACE_NoSky))
+		if (Trace(pos, actor->Sector, vdir, 172 * FRACUNIT, 0, ML_BLOCKEVERYTHING, actor, bleedtrace, TRACE_NoSky))
 		{
 			if (bleedtrace.HitType == TRACE_HitWall)
 			{
@@ -4397,10 +4386,9 @@ void P_TraceBleed(int damage, fixed_t x, fixed_t y, fixed_t z, AActor *actor, an
 	}
 }
 
-void P_TraceBleed(int damage, AActor *target, angle_t angle, int pitch)
+void P_TraceBleed(int damage, AActor *target, DAngle angle, DAngle pitch)
 {
-	P_TraceBleed(damage, target->_f_X(), target->_f_Y(), target->_f_Z() + target->_f_height() / 2,
-		target, angle, pitch);
+	P_TraceBleed(damage, target->PosPlusZ(target->Height/2), target, angle, pitch);
 }
 
 //==========================================================================
@@ -4422,7 +4410,7 @@ void P_TraceBleed(int damage, AActor *target, AActor *missile)
 	{
 		double aim;
 
-		aim = g_atan((double)missile->_f_velz() / (double)target->AproxDistance(missile));
+		aim = g_atan(missile->Vel.Z / target->Distance2D(missile));
 		pitch = -ToDegrees(aim);
 	}
 	else
@@ -4445,9 +4433,8 @@ void P_TraceBleed(int damage, FTranslatedLineTarget *t, AActor *puff)
 		return;
 	}
 
-	fixed_t randpitch = (pr_tracebleed() - 128) << 16;
-	P_TraceBleed(damage, t->linetarget->_f_X(), t->linetarget->_f_Y(), t->linetarget->_f_Z() + t->linetarget->_f_height() / 2,
-		t->linetarget, FLOAT2ANGLE(t->angleFromSource.Degrees), 0);
+	DAngle pitch = (pr_tracebleed() - 128) * (360 / 65536.);
+	P_TraceBleed(damage, t->linetarget->PosPlusZ(t->linetarget->Height/2), t->linetarget, t->angleFromSource, pitch);
 }
 
 //==========================================================================
@@ -4460,11 +4447,9 @@ void P_TraceBleed(int damage, AActor *target)
 {
 	if (target != NULL)
 	{
-		fixed_t one = pr_tracebleed() << 24;
-		fixed_t two = (pr_tracebleed() - 128) << 16;
-
-		P_TraceBleed(damage, target->_f_X(), target->_f_Y(), target->_f_Z() + target->_f_height() / 2,
-			target, one, two);
+		DAngle angle = pr_tracebleed() * (360 / 256.);
+		DAngle pitch = (pr_tracebleed() - 128) * (360 / 65536.);
+		P_TraceBleed(damage, target->PosPlusZ(target->Height / 2), target, angle, pitch);
 	}
 }
 
@@ -4683,7 +4668,7 @@ void P_RailAttack(FRailParams *p)
 	}
 
 	// Draw the slug's trail.
-	P_DrawRailTrail(source, start, trace.HitPos, p->color1, p->color2, p->maxdiff, p->flags, p->spawnclass, angle.BAMs(), p->duration, p->sparsity, p->drift, p->SpiralOffset);
+	P_DrawRailTrail(source, start, trace.HitPos, p->color1, p->color2, p->maxdiff, p->flags, p->spawnclass, angle, p->duration, p->sparsity, p->drift, p->SpiralOffset);
 }
 
 //==========================================================================
@@ -4697,27 +4682,23 @@ CVAR(Float, chase_dist, 90.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 void P_AimCamera(AActor *t1, DVector3 &campos, sector_t *&CameraSector, bool &unlinked)
 {
-	fixed_t distance = (fixed_t)(clamp<double>(chase_dist, 0, 30000) * FRACUNIT);
-	angle_t angle = (t1->_f_angle() - ANG180) >> ANGLETOFINESHIFT;
-	angle_t pitch = (angle_t)(t1->_f_pitch()) >> ANGLETOFINESHIFT;
+	double distance = clamp<double>(chase_dist, 0, 30000);
+	DAngle angle = t1->Angles.Yaw - 180;
+	DAngle pitch = t1->Angles.Pitch;
 	FTraceResults trace;
-	fixed_t vx, vy, vz, sz;
+	DVector3 vvec;
+	double sz;
 
-	vx = FixedMul(finecosine[pitch], finecosine[angle]);
-	vy = FixedMul(finecosine[pitch], finesine[angle]);
-	vz = finesine[pitch];
+	double pc = pitch.Cos();
 
-	DVector3 vvec(vx, vy, vz);
-	vvec.MakeUnit();
+	vvec = { pc * angle.Cos(), pc * angle.Sin(), -pitch.Sin() };
+	sz = t1->Top() - t1->Floorclip + clamp<double>(chase_height, -1000, 1000);
 
-	sz = t1->_f_Z() - t1->_f_floorclip() + t1->_f_height() + (fixed_t)(clamp<double>(chase_height, -1000, 1000) * FRACUNIT);
-
-	if (Trace(t1->_f_X(), t1->_f_Y(), sz, t1->Sector,
-		vx, vy, vz, distance, 0, 0, NULL, trace) &&
+	if (Trace(t1->PosAtZ(sz), t1->Sector, vvec, distance, 0, 0, NULL, trace) &&
 		trace.Distance > 10)
 	{
 		// Position camera slightly in front of hit thing
-		campos = t1->PosAtZ(FIXED2DBL(sz)) + vvec *(trace.Distance - 5);
+		campos = t1->PosAtZ(sz) + vvec *(trace.Distance - 5);
 	}
 	else
 	{
@@ -4768,11 +4749,11 @@ bool P_TalkFacing(AActor *player)
 //
 //==========================================================================
 
-bool P_UseTraverse(AActor *usething, fixed_t startx, fixed_t starty, fixed_t endx, fixed_t endy, bool &foundline)
+bool P_UseTraverse(AActor *usething, const DVector2 &start, const DVector2 &end, bool &foundline)
 {
-	FPathTraverse it(startx, starty, endx, endy, PT_ADDLINES | PT_ADDTHINGS);
+	FPathTraverse it(start.X, start.Y, end.X, end.Y, PT_ADDLINES | PT_ADDTHINGS);
 	intercept_t *in;
-	fixedvec3 xpos = { startx, starty, usething->_f_Z() };
+	DVector3 xpos = { start.X, start.Y, usething->Z() };
 
 	while ((in = it.Next()))
 	{
@@ -4792,6 +4773,7 @@ bool P_UseTraverse(AActor *usething, fixed_t startx, fixed_t starty, fixed_t end
 			}
 			continue;
 		}
+
 		if (it.PortalRelocate(in, PT_ADDLINES | PT_ADDTHINGS, &xpos))
 		{
 			continue;
@@ -4807,7 +4789,7 @@ bool P_UseTraverse(AActor *usething, fixed_t startx, fixed_t starty, fixed_t end
 			}
 			else
 			{
-				P_LineOpening(open, NULL, in->d.line, it._f_InterceptPoint(in));
+				P_LineOpening(open, NULL, in->d.line, it.InterceptPoint(in));
 			}
 			if (open.range <= 0 ||
 				(in->d.line->special != 0 && (i_compatflags & COMPATF_USEBLOCKING)))
@@ -4823,7 +4805,7 @@ bool P_UseTraverse(AActor *usething, fixed_t startx, fixed_t starty, fixed_t end
 					return true;
 				}
 
-				sec = P_PointOnLineSide(xpos.x, xpos.y, in->d.line) == 0 ?
+				sec = P_PointOnLineSide(xpos, in->d.line) == 0 ?
 					in->d.line->frontsector : in->d.line->backsector;
 
 				if (sec != NULL && sec->SecActTarget &&
@@ -4842,7 +4824,7 @@ bool P_UseTraverse(AActor *usething, fixed_t startx, fixed_t starty, fixed_t end
 			continue;			// not a special line, but keep checking
 		}
 
-		if (P_PointOnLineSide(xpos.x, xpos.y, in->d.line) == 1)
+		if (P_PointOnLineSide(xpos, in->d.line) == 1)
 		{
 			if (!(in->d.line->activation & SPAC_UseBack))
 			{
@@ -4900,9 +4882,9 @@ bool P_UseTraverse(AActor *usething, fixed_t startx, fixed_t starty, fixed_t end
 //
 //==========================================================================
 
-bool P_NoWayTraverse(AActor *usething, fixed_t startx, fixed_t starty, fixed_t endx, fixed_t endy)
+bool P_NoWayTraverse(AActor *usething, const DVector2 &start, const DVector2 &end)
 {
-	FPathTraverse it(startx, starty, endx, endy, PT_ADDLINES);
+	FPathTraverse it(start.X, start.Y, end.X, end.Y, PT_ADDLINES);
 	intercept_t *in;
 
 	while ((in = it.Next()))
@@ -4915,7 +4897,7 @@ bool P_NoWayTraverse(AActor *usething, fixed_t startx, fixed_t starty, fixed_t e
 		if (ld->special) continue;
 		if (ld->isLinePortal()) return false;
 		if (ld->flags&(ML_BLOCKING | ML_BLOCKEVERYTHING | ML_BLOCK_PLAYERS)) return true;
-		P_LineOpening(open, NULL, ld, it._f_InterceptPoint(in));
+		P_LineOpening(open, NULL, ld, it.InterceptPoint(in));
 		if (open.range <= 0 ||
 			open.bottom > usething->Z() + usething->MaxStepHeight ||
 			open.top < usething->Top()) return true;
@@ -4936,23 +4918,20 @@ void P_UseLines(player_t *player)
 	bool foundline = false;
 
 	// If the player is transitioning a portal, use the group that is at its vertical center.
-	fixedvec2 start = player->mo->_f_GetPortalTransition(player->mo->_f_height() / 2);
+	DVector2 start = player->mo->GetPortalTransition(player->mo->Height / 2);
 	// [NS] Now queries the Player's UseRange.
-	fixedvec2 end = start + Vec2Angle(FLOAT2FIXED(player->mo->UseRange), player->mo->_f_angle());
+	DVector2 end = start + player->mo->Angles.Yaw.ToVector(player->mo->UseRange);
 
 	// old code:
-	//
-	// P_PathTraverse ( x1, y1, x2, y2, PT_ADDLINES, PTR_UseTraverse );
-	//
 	// This added test makes the "oof" sound work on 2s lines -- killough:
 
-	if (!P_UseTraverse(player->mo, start.x, start.y, end.x, end.y, foundline))
+	if (!P_UseTraverse(player->mo, start, end, foundline))
 	{ // [RH] Give sector a chance to eat the use
 		sector_t *sec = player->mo->Sector;
 		int spac = SECSPAC_Use;
 		if (foundline) spac |= SECSPAC_UseWall;
 		if ((!sec->SecActTarget || !sec->SecActTarget->TriggerAction(player->mo, spac)) &&
-			P_NoWayTraverse(player->mo, start.x, start.y, end.x, end.y))
+			P_NoWayTraverse(player->mo, start, end))
 		{
 			S_Sound(player->mo, CHAN_VOICE, "*usefail", 1, ATTN_IDLE);
 		}
@@ -4969,23 +4948,20 @@ void P_UseLines(player_t *player)
 
 bool P_UsePuzzleItem(AActor *PuzzleItemUser, int PuzzleItemType)
 {
-	int angle;
-	fixed_t x1, y1, x2, y2, usedist;
-
-	angle = PuzzleItemUser->_f_angle() >> ANGLETOFINESHIFT;
-	x1 = PuzzleItemUser->_f_X();
-	y1 = PuzzleItemUser->_f_Y();
+	DVector2 start;
+	DVector2 end;
+	double usedist;
 
 	// [NS] If it's a Player, get their UseRange.
 	if (PuzzleItemUser->player)
-		usedist = FLOAT2FIXED(PuzzleItemUser->player->mo->UseRange);
+		usedist = PuzzleItemUser->player->mo->UseRange;
 	else
 		usedist = USERANGE;
 
-	x2 = x1 + FixedMul(usedist, finecosine[angle]);
-	y2 = y1 + FixedMul(usedist, finesine[angle]);
+	start = PuzzleItemUser->GetPortalTransition(PuzzleItemUser->Height / 2);
+	end = PuzzleItemUser->Angles.Yaw.ToVector(usedist);
 
-	FPathTraverse it(x1, y1, x2, y2, PT_ADDLINES | PT_ADDTHINGS);
+	FPathTraverse it(start.X, start.Y, end.X, end.Y, PT_ADDLINES | PT_ADDTHINGS);
 	intercept_t *in;
 
 	while ((in = it.Next()))
@@ -4997,14 +4973,14 @@ bool P_UsePuzzleItem(AActor *PuzzleItemUser, int PuzzleItemType)
 		{ // Check line
 			if (in->d.line->special != UsePuzzleItem)
 			{
-				P_LineOpening(open, NULL, in->d.line, it._f_InterceptPoint(in));
+				P_LineOpening(open, NULL, in->d.line, it.InterceptPoint(in));
 				if (open.range <= 0)
 				{
 					return false; // can't use through a wall
 				}
 				continue;
 			}
-			if (P_PointOnLineSide(PuzzleItemUser->_f_X(), PuzzleItemUser->_f_Y(), in->d.line) == 1)
+			if (P_PointOnLineSide(PuzzleItemUser->Pos(), in->d.line) == 1)
 			{ // Don't use back sides
 				return false;
 			}

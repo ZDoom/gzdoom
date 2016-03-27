@@ -5885,7 +5885,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 					flags = args[7];
 				}
 
-				AActor* pickedActor = P_LinePickActor(actor, args[1] << 16, args[3], args[2] << 16, actorMask, wallMask);
+				AActor* pickedActor = P_LinePickActor(actor, ACSToAngle(args[1]), ACSToDouble(args[3]), ACSToAngle(args[2]), actorMask, wallMask);
 				if (pickedActor == NULL) {
 					return 0;
 				}

@@ -432,7 +432,7 @@ public:
 		init(FLOAT2FIXED(x1), FLOAT2FIXED(y1), FLOAT2FIXED(x2), FLOAT2FIXED(y2), flags, FLOAT2FIXED(startfrac));
 	}
 	void init(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int flags, fixed_t startfrac = 0);
-	int PortalRelocate(intercept_t *in, int flags, fixedvec3 *optpos = NULL);
+	int PortalRelocate(intercept_t *in, int flags, DVector3 *optpos = NULL);
 	virtual ~FPathTraverse();
 	const fdivline_t &_f_Trace() const { return trace; }
 	const divline_t &Trace() const { return ftrace; }

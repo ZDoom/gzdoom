@@ -2605,7 +2605,7 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 			FState *raisestate = corpsehit->GetRaiseState();
 			if (raisestate != NULL)
 			{
-				// use the current actor's _f_radius() instead of the Arch Vile's default.
+				// use the current actor's radius instead of the Arch Vile's default.
 				double maxdist = corpsehit->GetDefault()->radius + self->radius;
 
 				if (fabs(corpsehit->X() - cres.Position.X) > maxdist ||
@@ -2640,7 +2640,7 @@ static bool P_CheckForResurrection(AActor *self, bool usevilestates)
 				}
 
 				corpsehit->Vel.X = corpsehit->Vel.Y = 0;
-				// [RH] Check against real height and _f_radius()
+				// [RH] Check against real height and radius
 
 				double oldheight = corpsehit->Height;
 				double oldradius = corpsehit->radius;

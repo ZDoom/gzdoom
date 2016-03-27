@@ -355,7 +355,7 @@ bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, int f
 		// Rotate 90 degrees, so that walking perpendicularly across
 		// teleporter linedef causes thing to exit in the direction
 		// indicated by the exit thing.
-		angle = VecToAngle(line->dx, line->dy) - searcher->Angles.Yaw + 90;
+		angle = line->Delta().Angle() - searcher->Angles.Yaw + 90.;
 
 		// Sine, cosine of angle adjustment
 		s = angle.Sin();
@@ -457,7 +457,7 @@ bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id, INTBO
 			// Get the angle between the two linedefs, for rotating
 			// orientation and velocity. Rotate 180 degrees, and flip
 			// the position across the exit linedef, if reversed.
-			DAngle angle = VecToAngle(l->Delta()) - VecToAngle(line->Delta());
+			DAngle angle = l->Delta().Angle() - line->Delta().Angle();
 
 			if (!reverse)
 			{

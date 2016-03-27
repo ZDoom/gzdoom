@@ -637,7 +637,7 @@ void P_DrawSplash2 (int count, const DVector3 &pos, DAngle angle, int updown, in
 	}
 }
 
-void P_DrawRailTrail(AActor *source, const DVector3 &start, const DVector3 &end, int color1, int color2, double maxdiff_d, int flags, PClassActor *spawnclass, angle_t angle, int duration, double sparsity, double drift, int SpiralOffset)
+void P_DrawRailTrail(AActor *source, const DVector3 &start, const DVector3 &end, int color1, int color2, double maxdiff_d, int flags, PClassActor *spawnclass, DAngle angle, int duration, double sparsity, double drift, int SpiralOffset)
 {
 	double length, lengthsquared;
 	int steps, i;
@@ -645,6 +645,7 @@ void P_DrawRailTrail(AActor *source, const DVector3 &start, const DVector3 &end,
 	DVector3 step, dir, pos, extend;
 	bool fullbright;
 	float maxdiff = (float)maxdiff_d;
+
 
 	dir = end - start;
 	lengthsquared = dir | dir;
@@ -862,7 +863,7 @@ void P_DrawRailTrail(AActor *source, const DVector3 &start, const DVector3 &end,
 			}			
 			AActor *thing = Spawn (spawnclass, pos + diff, ALLOW_REPLACE);
 			if (thing)
-				thing->Angles.Yaw = ANGLE2DBL(angle);
+				thing->Angles.Yaw = angle;
 			pos += trail_step;
 		}
 	}

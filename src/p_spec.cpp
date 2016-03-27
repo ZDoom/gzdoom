@@ -198,7 +198,7 @@ bool CheckIfExitIsGood (AActor *self, level_info_t *info)
 //
 //============================================================================
 
-bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType, fixedvec3 *optpos)
+bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType, DVector3 *optpos)
 {
 	int lineActivation;
 	INTBOOL repeat;
@@ -259,7 +259,7 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType, fix
 //
 //============================================================================
 
-bool P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType, fixedvec3 *optpos)
+bool P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType, DVector3 *optpos)
 {
  	int lineActivation = line->activation;
 

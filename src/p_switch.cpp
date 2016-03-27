@@ -112,7 +112,7 @@ static bool P_StartButton (side_t *side, int Where, FSwitchDef *Switch, fixed_t 
 //
 //==========================================================================
 
-bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno, fixedvec3 *optpos)
+bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno, const DVector3 *optpos)
 {
 	// Activated from an empty side -> always succeed
 	side_t *side = line->sidedef[sideno];
@@ -135,16 +135,17 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno, fixedvec3 *optpo
 		return true;
 
 	// calculate the point where the user would touch the wall.
-	fdivline_t dll, dlu;
-	fixed_t inter, checkx, checky;
+	divline_t dll, dlu;
+	double inter;
+	DVector2 check;
 
 	P_MakeDivline (line, &dll);
 
-	fixedvec3 pos = optpos? *optpos : user->_f_PosRelative(line);
-	dlu.x = pos.x;
-	dlu.y = pos.y;
-	dlu.dx = finecosine[user->_f_angle() >> ANGLETOFINESHIFT];
-	dlu.dy = finesine[user->_f_angle() >> ANGLETOFINESHIFT];
+	DVector3 pos = optpos? *optpos : user->PosRelative(line);
+	dlu.x = pos.X;
+	dlu.y = pos.Y;
+	dlu.dx = user->Angles.Yaw.Cos();
+	dlu.dy = user->Angles.Yaw.Sin();
 	inter = P_InterceptVector(&dll, &dlu);
 
 
@@ -153,14 +154,14 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno, fixedvec3 *optpo
 	{
 		// Get a check point slightly inside the polyobject so that this still works
 		// if the polyobject lies directly on a sector boundary
-		checkx = dll.x + FixedMul(dll.dx, inter + (FRACUNIT/100));
-		checky = dll.y + FixedMul(dll.dy, inter + (FRACUNIT/100));
-		front = P_PointInSector(checkx, checky);
+		check.X = dll.x + dll.dx * (inter + 0.01);
+		check.Y = dll.y + dll.dy * (inter + 0.01);
+		front = P_PointInSector(check);
 	}
 	else
 	{
-		checkx = dll.x + FixedMul(dll.dx, inter);
-		checky = dll.y + FixedMul(dll.dy, inter);
+		check.X = dll.x + dll.dx * inter;
+		check.Y = dll.y + dll.dy * inter;
 	}
 
 
@@ -168,13 +169,13 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno, fixedvec3 *optpo
 	if (line->sidedef[1] == NULL || (line->sidedef[0]->Flags & WALLF_POLYOBJ))
 	{
 	onesided:
-		fixed_t sectorc = front->ceilingplane.ZatPoint(checkx, checky);
-		fixed_t sectorf = front->floorplane.ZatPoint(checkx, checky);
-		return (user->_f_Top() >= sectorf && user->_f_Z() <= sectorc);
+		double sectorc = front->ceilingplane.ZatPoint(check);
+		double sectorf = front->floorplane.ZatPoint(check);
+		return (user->Top() >= sectorf && user->Z() <= sectorc);
 	}
 
 	// Now get the information from the line.
-	P_LineOpening(open, NULL, line, checkx, checky, pos.x, pos.y);
+	P_LineOpening(open, NULL, line, check, &pos);
 	if (open.range <= 0)
 		goto onesided;
 
@@ -190,8 +191,8 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno, fixedvec3 *optpo
 				if (!(rover->flags & FF_EXISTS)) continue;
 				if (!(rover->flags & FF_UPPERTEXTURE)) continue;
 
-				if (user->_f_Z() > rover->top.plane->ZatPoint(checkx, checky) ||
-					user->_f_Top() < rover->bottom.plane->ZatPoint(checkx, checky))
+				if (user->Z() > rover->top.plane->ZatPoint(check) ||
+					user->Top() < rover->bottom.plane->ZatPoint(check))
 					continue;
 
 				// This 3D floor depicts a switch texture in front of the player's eyes
@@ -212,8 +213,8 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno, fixedvec3 *optpo
 				if (!(rover->flags & FF_EXISTS)) continue;
 				if (!(rover->flags & FF_LOWERTEXTURE)) continue;
 
-				if (user->_f_Z() > rover->top.plane->ZatPoint(checkx, checky) ||
-					user->_f_Top() < rover->bottom.plane->ZatPoint(checkx, checky))
+				if (user->Z() > rover->top.plane->ZatPoint(check) ||
+					user->Top() < rover->bottom.plane->ZatPoint(check))
 					continue;
 
 				// This 3D floor depicts a switch texture in front of the player's eyes

@@ -1697,7 +1697,7 @@ void FPathTraverse::init (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int fl
 //
 //===========================================================================
 
-int FPathTraverse::PortalRelocate(intercept_t *in, int flags, fixedvec3 *optpos)
+int FPathTraverse::PortalRelocate(intercept_t *in, int flags, DVector3 *optpos)
 {
 	if (!in->isaline || !in->d.line->isLinePortal()) return false;
 	if (P_PointOnLineSidePrecise(trace.x, trace.y, in->d.line) == 1) return false;
@@ -1711,8 +1711,8 @@ int FPathTraverse::PortalRelocate(intercept_t *in, int flags, fixedvec3 *optpos)
 	P_TranslatePortalXY(in->d.line, endx, endy);
 	if (optpos != NULL)
 	{
-		P_TranslatePortalXY(in->d.line, optpos->x, optpos->y);
-		P_TranslatePortalZ(in->d.line, optpos->z);
+		P_TranslatePortalXY(in->d.line, optpos->X, optpos->Y);
+		P_TranslatePortalZ(in->d.line, optpos->Z);
 	}
 	line_t *saved = in->d.line;	// this gets overwriitten by the init call.
 	intercepts.Resize(intercept_index);

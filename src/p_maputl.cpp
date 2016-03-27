@@ -505,7 +505,7 @@ void AActor::LinkToWorld(bool spawningmapthing, sector_t *sector)
 		// When a node is deleted, its sector links (the links starting
 		// at sector_t->touching_thinglist) are broken. When a node is
 		// added, new sector links are created.
-		P_CreateSecNodeList(this, _f_X(), _f_Y());
+		P_CreateSecNodeList(this);
 		touching_sectorlist = sector_list;	// Attach to thing
 		sector_list = NULL;		// clear for next time
 	}

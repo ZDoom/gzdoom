@@ -678,7 +678,7 @@ static int LineIsBelow(line_t *line, AActor *actor)
 //
 //
 // PIT_CheckLine
-// Adjusts tmfloorz and tm_f_ceilingz() as lines are contacted
+// Adjusts tmfloorz and tmceilingz as lines are contacted
 //
 //
 //==========================================================================
@@ -2593,7 +2593,7 @@ void FSlide::HitSlideLine(line_t* ld)
 	moveangle = tmmove.Angle();
 
 	// prevents sudden path reversal due to rounding error |	// phares
-	moveangle += 3600/65536.*65536.;		// Boom added 10 to the angle_t here.
+	moveangle += 3600/65536.*65536.;		// Boom added 10 to the angle here.
 	
 	deltaangle = ::deltaangle(lineangle, moveangle);								//   V
 	movelen = tmmove.Length();
@@ -2820,7 +2820,7 @@ retry:
 	}
 
 	// fudge a bit to make sure it doesn't hit
-	bestSlidefrac -= FRACUNIT / 32;
+	bestSlidefrac -= 1. / 32;
 	if (bestSlidefrac > 0)
 	{
 		newpos = tryp * bestSlidefrac;
@@ -3037,13 +3037,13 @@ bool FSlide::BounceTraverse(const DVector2 &start, const DVector2 &end)
 		}
 		if (!(li->flags&ML_TWOSIDED) || !li->backsector)
 		{
-			if (P_PointOnLineSide(slidemo->_f_X(), slidemo->_f_Y(), li))
+			if (P_PointOnLineSide(slidemo->Pos(), li))
 				continue;			// don't hit the back side
 			goto bounceblocking;
 		}
 
 
-		P_LineOpening(open, slidemo, li, it._f_InterceptPoint(in));	// set openrange, opentop, openbottom
+		P_LineOpening(open, slidemo, li, it.InterceptPoint(in));	// set openrange, opentop, openbottom
 		if (open.range < slidemo->Height)
 			goto bounceblocking;				// doesn't fit
 
@@ -3215,7 +3215,7 @@ bool P_BounceActor(AActor *mo, AActor *BlockingMobj, bool ontop)
 		{
 			DAngle angle = BlockingMobj->AngleTo(mo) + ((pr_bounce() % 16) - 8);
 			double speed = mo->VelXYToSpeed() * mo->wallbouncefactor; // [GZ] was 0.75, using wallbouncefactor seems more consistent
-			mo->Angles.Yaw = ANGLE2DBL(angle);
+			mo->Angles.Yaw = angle;
 			mo->VelFromAngle(speed);
 			mo->PlayBounceSound(true);
 			if (mo->BounceFlags & BOUNCE_UseBounceState)
@@ -4366,7 +4366,7 @@ void P_TraceBleed(int damage, const DVector3 &pos, AActor *actor, DAngle angle, 
 		double cosp = bleedpitch.Cos();
 		DVector3 vdir = DVector3(cosp * bleedang.Cos(), cosp * bleedang.Sin(), -bleedpitch.Sin());
 
-		if (Trace(pos, actor->Sector, vdir, 172 * FRACUNIT, 0, ML_BLOCKEVERYTHING, actor, bleedtrace, TRACE_NoSky))
+		if (Trace(pos, actor->Sector, vdir, 172, 0, ML_BLOCKEVERYTHING, actor, bleedtrace, TRACE_NoSky))
 		{
 			if (bleedtrace.HitType == TRACE_HitWall)
 			{
@@ -4619,7 +4619,7 @@ void P_RailAttack(FRailParams *p)
 		if (bleed)
 		{
 			P_SpawnBlood(hitpos, hitangle, newdam > 0 ? newdam : p->damage, hitactor);
-			P_TraceBleed(newdam > 0 ? newdam : p->damage, hitpos, hitactor, hitangle, ANGLE2DBL(pitch));
+			P_TraceBleed(newdam > 0 ? newdam : p->damage, hitpos, hitactor, hitangle, pitch);
 		}
 	}
 
@@ -5059,7 +5059,7 @@ void P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bo
 	while ((it.Next(&cres)))
 	{
 		AActor *thing = cres.thing;
-		// Vulnerable actors can be damaged by _f_radius() attacks even if not shootable
+		// Vulnerable actors can be damaged by radius attacks even if not shootable
 		// Used to emulate MBF's vulnerability of non-missile bouncers to explosions.
 		if (!((thing->flags & MF_SHOOTABLE) || (thing->flags6 & MF6_VULNERABLE)))
 			continue;
@@ -6122,7 +6122,7 @@ void P_DelSeclist(msecnode_t *node)
 //
 //=============================================================================
 
-void P_CreateSecNodeList(AActor *thing, fixed_t x, fixed_t y)
+void P_CreateSecNodeList(AActor *thing)
 {
 	msecnode_t *node;
 
@@ -6138,19 +6138,13 @@ void P_CreateSecNodeList(AActor *thing, fixed_t x, fixed_t y)
 		node = node->m_tnext;
 	}
 
-	FBoundingBox box(thing->_f_X(), thing->_f_Y(), thing->_f_radius());
+	FBoundingBox box(thing->X(), thing->Y(), thing->radius);
 	FBlockLinesIterator it(box);
 	line_t *ld;
 
 	while ((ld = it.Next()))
 	{
-		if (box.Right() <= ld->bbox[BOXLEFT] ||
-			box.Left() >= ld->bbox[BOXRIGHT] ||
-			box.Top() <= ld->bbox[BOXBOTTOM] ||
-			box.Bottom() >= ld->bbox[BOXTOP])
-			continue;
-
-		if (box.BoxOnLineSide(ld) != -1)
+		if (!box.inRange(ld) || box.BoxOnLineSide(ld) != -1)
 			continue;
 
 		// This line crosses through the object.

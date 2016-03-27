@@ -5676,7 +5676,7 @@ bool P_HitFloor (AActor *thing)
 void P_CheckSplash(AActor *self, double distance)
 {
 	sector_t *floorsec;
-	self->Sector->_f_LowestFloorAt(self, &floorsec);
+	self->Sector->LowestFloorAt(self, &floorsec);
 	if (self->Z() <= self->floorz + distance && self->floorsector == floorsec && self->Sector->GetHeightSec() == NULL && floorsec->heightsec == NULL)
 	{
 		// Explosion splashes never alert monsters. This is because A_Explode has

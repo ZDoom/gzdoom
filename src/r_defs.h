@@ -885,14 +885,14 @@ struct sector_t
 	}
 
 	// These may only be called if the portal has been validated
-	fixedvec2 FloorDisplacement()
+	DVector2 FloorDisplacement()
 	{
-		return Displacements._f_getOffset(PortalGroup, SkyBoxes[sector_t::floor]->Sector->PortalGroup);
+		return Displacements.getOffset(PortalGroup, SkyBoxes[sector_t::floor]->Sector->PortalGroup);
 	}
 
-	fixedvec2 CeilingDisplacement()
+	DVector2 CeilingDisplacement()
 	{
-		return Displacements._f_getOffset(PortalGroup, SkyBoxes[sector_t::ceiling]->Sector->PortalGroup);
+		return Displacements.getOffset(PortalGroup, SkyBoxes[sector_t::ceiling]->Sector->PortalGroup);
 	}
 
 	int GetTerrain(int pos) const;
@@ -903,27 +903,18 @@ struct sector_t
 	bool PlaneMoving(int pos);
 
 	// Portal-aware height calculation
-	fixed_t _f_HighestCeilingAt(fixed_t x, fixed_t y, sector_t **resultsec = NULL);
-	fixed_t _f_LowestFloorAt(fixed_t x, fixed_t y, sector_t **resultsec = NULL);
+	double HighestCeilingAt(const DVector2 &a, sector_t **resultsec = NULL);
+	double LowestFloorAt(const DVector2 &a, sector_t **resultsec = NULL);
 
-	fixed_t _f_HighestCeilingAt(AActor *a, sector_t **resultsec = NULL)
-	{
-		return _f_HighestCeilingAt(a->_f_X(), a->_f_Y(), resultsec);
-	}
 
 	double HighestCeilingAt(AActor *a, sector_t **resultsec = NULL)
 	{
-		return FIXED2DBL(_f_HighestCeilingAt(a->_f_X(), a->_f_Y(), resultsec));
-	}
-
-	fixed_t _f_LowestFloorAt(AActor *a, sector_t **resultsec = NULL)
-	{
-		return _f_LowestFloorAt(a->_f_X(), a->_f_Y(), resultsec);
+		return HighestCeilingAt(a->Pos(), resultsec);
 	}
 
 	double LowestFloorAt(AActor *a, sector_t **resultsec = NULL)
 	{
-		return FIXED2DBL(_f_LowestFloorAt(a->_f_X(), a->_f_Y(), resultsec));
+		return LowestFloorAt(a->Pos(), resultsec);
 	}
 
 	fixed_t NextHighestCeilingAt(fixed_t x, fixed_t y, fixed_t bottomz, fixed_t topz, int flags = 0, sector_t **resultsec = NULL, F3DFloor **resultffloor = NULL);

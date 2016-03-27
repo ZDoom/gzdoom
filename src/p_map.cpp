@@ -918,11 +918,10 @@ static bool PIT_CheckPortal(FMultiBlockLinesIterator &mit, FMultiBlockLinesItera
 		return false;
 
 	line_t *lp = cres.line->getPortalDestination();
-	fixed_t _zofs = 0;
+	double zofs = 0;
 
-	P_TranslatePortalXY(cres.line, cres.position.x, cres.position.y);
-	P_TranslatePortalZ(cres.line, _zofs);
-	double zofs = FIXED2DBL(_zofs);
+	P_TranslatePortalXY(cres.line, cres.Position.X, cres.Position.Y);
+	P_TranslatePortalZ(cres.line, zofs);
 
 	// fudge a bit with the portal line so that this gets included in the checks that normally only get run on two-sided lines
 	sector_t *sec = lp->backsector;
@@ -1080,7 +1079,7 @@ static bool CanAttackHurt(AActor *victim, AActor *shooter)
 bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::CheckResult &cres, const FBoundingBox &box, FCheckPosition &tm)
 {
 	AActor *thing = cres.thing;
-	fixed_t topz;
+	double topz;
 	bool 	solid;
 	int 	damage;
 
@@ -1091,8 +1090,8 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 	if (!((thing->flags & (MF_SOLID | MF_SPECIAL | MF_SHOOTABLE)) || thing->flags6 & MF6_TOUCHY))
 		return true;	// can't hit thing
 
-	fixed_t blockdist = thing->_f_radius() + tm.thing->_f_radius();
-	if (abs(thing->_f_X() - cres.position.x) >= blockdist || abs(thing->_f_Y() - cres.position.y) >= blockdist)
+	double blockdist = thing->radius + tm.thing->radius;
+	if (fabs(thing->X() - cres.Position.X) >= blockdist || fabs(thing->Y() - cres.Position.Y) >= blockdist)
 		return true;
 
 	if ((thing->flags2 | tm.thing->flags2) & MF2_THRUACTORS)
@@ -1102,7 +1101,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 		return true;
 
 	tm.thing->BlockingMobj = thing;
-	topz = thing->_f_Top();
+	topz = thing->Top();
 
 	// Both things overlap in x or y direction
 	bool unblocking = false;
@@ -1126,31 +1125,31 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 				//				abs(thing->y - tmy) <= thing->radius)
 				{
 					tm.stepthing = thing;
-					tm.floorz = FIXED2DBL(topz);
+					tm.floorz = topz;
 				}
 			}
 		}
 
 		if (((tm.FromPMove || tm.thing->player != NULL) && thing->flags&MF_SOLID))
 		{
-			fixedvec3 oldpos = tm.thing->_f_PosRelative(thing);
+			DVector3 oldpos = tm.thing->PosRelative(thing);
 			// Both actors already overlap. To prevent them from remaining stuck allow the move if it
 			// takes them further apart or the move does not change the position (when called from P_ChangeSector.)
-			if (oldpos.x == thing->_f_X() && oldpos.y == thing->_f_Y())
+			if (oldpos.X == thing->X() && oldpos.Y == thing->Y())
 			{
 				unblocking = true;
 			}
-			else if (abs(thing->_f_X() - oldpos.x) < (thing->_f_radius() + tm.thing->_f_radius()) &&
-				abs(thing->_f_Y() - oldpos.y) < (thing->_f_radius() + tm.thing->_f_radius()))
+			else if (fabs(thing->X() - oldpos.X) < (thing->radius + tm.thing->radius) &&
+				fabs(thing->Y() - oldpos.Y) < (thing->radius + tm.thing->radius))
 
 			{
-				fixed_t newdist = thing->AproxDistance(cres.position.x, cres.position.y);
-				fixed_t olddist = thing->AproxDistance(oldpos.x, oldpos.y);
+				double newdist = thing->Distance2D(cres.Position.X, cres.Position.Y);
+				double olddist = thing->Distance2D(oldpos.X, oldpos.Y);
 
 				if (newdist > olddist)
 				{
 					// unblock only if there's already a vertical overlap (or both actors are flagged not to overlap)
-					unblocking = (tm.thing->_f_Top() > thing->_f_Z() && tm.thing->_f_Z() < topz) || (tm.thing->flags3 & thing->flags3 & MF3_DONTOVERLAP);
+					unblocking = (tm.thing->Top() > thing->Z() && tm.thing->Z() < topz) || (tm.thing->flags3 & thing->flags3 & MF3_DONTOVERLAP);
 				}
 			}
 		}
@@ -1169,7 +1168,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 			{ // Some things prefer not to overlap each other, if possible
 				return unblocking;
 			}
-			if ((tm.thing->_f_Z() >= topz) || (tm.thing->_f_Top() <= thing->_f_Z()))
+			if ((tm.thing->Z() >= topz) || (tm.thing->Top() <= thing->Z()))
 				return true;
 		}
 	}
@@ -1185,7 +1184,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 			// or different species if DONTHARMSPECIES
 			(!(thing->flags6 & MF6_DONTHARMSPECIES) || thing->GetSpecies() != tm.thing->GetSpecies()) &&
 			// touches vertically
-			topz >= tm.thing->_f_Z() && tm.thing->_f_Top() >= thing->_f_Z() &&
+			topz >= tm.thing->Z() && tm.thing->Top() >= thing->Z() &&
 			// prevents lost souls from exploding when fired by pain elementals
 			(thing->master != tm.thing && tm.thing->master != thing))
 			// Difference with MBF: MBF hardcodes the LS/PE check and lets actors of the same species
@@ -1492,7 +1491,7 @@ MOVEMENT CLIPPING
 //
 //==========================================================================
 
-bool P_CheckPosition(AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm, bool actorsonly)
+bool P_CheckPosition(AActor *thing, const DVector2 &pos, FCheckPosition &tm, bool actorsonly)
 {
 	sector_t *newsec;
 	AActor *thingblocker;
@@ -1500,11 +1499,11 @@ bool P_CheckPosition(AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm, bo
 
 	tm.thing = thing;
 
-	tm.pos.X = FIXED2DBL(x);
-	tm.pos.Y = FIXED2DBL(y);
+	tm.pos.X = pos.X;
+	tm.pos.Y = pos.Y;
 	tm.pos.Z = thing->Z();
 
-	newsec = tm.sector = P_PointInSector(x, y);
+	newsec = tm.sector = P_PointInSector(pos);
 	tm.ceilingline = thing->BlockingLine = NULL;
 
 	// Retrieve the base floor / ceiling from the target location.
@@ -1516,8 +1515,8 @@ bool P_CheckPosition(AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm, bo
 	else
 	{
 		// With noclip2, we must ignore 3D floors and go right to the uppermost ceiling and lowermost floor.
-		tm.floorz = tm.dropoffz = FIXED2FLOAT(newsec->_f_LowestFloorAt(x, y, &tm.floorsector));
-		tm.ceilingz = FIXED2DBL(newsec->_f_HighestCeilingAt(x, y, &tm.ceilingsector));
+		tm.floorz = tm.dropoffz = newsec->LowestFloorAt(pos, &tm.floorsector);
+		tm.ceilingz = newsec->HighestCeilingAt(pos, &tm.ceilingsector);
 		tm.floorpic = tm.floorsector->GetTexture(sector_t::floor);
 		tm.floorterrain = tm.floorsector->GetTerrain(sector_t::floor);
 		tm.ceilingpic = tm.ceilingsector->GetTexture(sector_t::ceiling);
@@ -1539,10 +1538,10 @@ bool P_CheckPosition(AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm, bo
 	}
 
 	tm.stepthing = NULL;
-	FBoundingBox box(x, y, thing->_f_radius());
+	FBoundingBox box(pos.X, pos.Y, thing->radius);
 
 	FPortalGroupArray pcheck;
-	FMultiBlockThingsIterator it2(pcheck, x, y, thing->_f_Z(), thing->_f_height(), thing->_f_radius(), false, newsec);
+	FMultiBlockThingsIterator it2(pcheck, pos.X, pos.Y, thing->Z(), thing->Height, thing->radius, false, newsec);
 	FMultiBlockThingsIterator::CheckResult tcres;
 
 	while ((it2.Next(&tcres)))
@@ -1612,10 +1611,10 @@ bool P_CheckPosition(AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm, bo
 	spechit.Clear();
 	portalhit.Clear();
 
-	FMultiBlockLinesIterator it(pcheck, x, y, thing->_f_Z(), thing->_f_height(), thing->_f_radius(), newsec);
+	FMultiBlockLinesIterator it(pcheck, pos.X, pos.Y, thing->Z(), thing->Height, thing->radius, newsec);
 	FMultiBlockLinesIterator::CheckResult lcres;
 
-	fixed_t thingdropoffz = tm._f_floorz();
+	double thingdropoffz = tm.floorz;
 	//bool onthing = (thingdropoffz != tmdropoffz);
 	tm.floorz = tm.dropoffz;
 
@@ -1654,16 +1653,16 @@ bool P_CheckPosition(AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm, bo
 	}
 	else if (tm.stepthing != NULL)
 	{
-		tm.dropoffz = FIXED2FLOAT(thingdropoffz);
+		tm.dropoffz = thingdropoffz;
 	}
 
 	return (thing->BlockingMobj = thingblocker) == NULL;
 }
 
-bool P_CheckPosition(AActor *thing, fixed_t x, fixed_t y, bool actorsonly)
+bool P_CheckPosition(AActor *thing, const DVector2 &pos, bool actorsonly)
 {
 	FCheckPosition tm;
-	return P_CheckPosition(thing, x, y, tm, actorsonly);
+	return P_CheckPosition(thing, pos, tm, actorsonly);
 }
 
 //----------------------------------------------------------------------------
@@ -1928,7 +1927,8 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 		thing->_f_SetZ(onfloor->ZatPoint(x, y));
 	}
 	thing->flags6 |= MF6_INTRYMOVE;
-	if (!P_CheckPosition(thing, x, y, tm))
+	DVector2 pos = { FIXED2DBL(x), FIXED2DBL(y) };
+	if (!P_CheckPosition(thing, pos, tm))
 	{
 		AActor *BlockingMobj = thing->BlockingMobj;
 		// Solid wall or thing
@@ -2196,15 +2196,15 @@ bool P_TryMove(AActor *thing, fixed_t x, fixed_t y,
 			}
 			else if (!portalcrossed)
 			{
-				fixedvec3 pos = { tm._f_X(), tm._f_Y(), thing->_f_Z() };
-				fixedvec3 oldthingpos = thing->_f_Pos();
-				fixedvec2 thingpos = oldthingpos;
+				DVector3 pos(tm.pos, thing->Z());
+				DVector3 oldthingpos = thing->Pos();
+				DVector2 thingpos = oldthingpos;
 				
-				P_TranslatePortalXY(ld, pos.x, pos.y);
-				P_TranslatePortalXY(ld, thingpos.x, thingpos.y);
-				P_TranslatePortalZ(ld, pos.z);
-				thing->SetXYZ(thingpos.x, thingpos.y, pos.z);
-				if (!P_CheckPosition(thing, pos.x, pos.y, true))	// check if some actor blocks us on the other side. (No line checks, because of the mess that'd create.)
+				P_TranslatePortalXY(ld, pos.X, pos.Y);
+				P_TranslatePortalXY(ld, thingpos.X, thingpos.Y);
+				P_TranslatePortalZ(ld, pos.Z);
+				thing->SetXYZ(thingpos.X, thingpos.Y, pos.Z);
+				if (!P_CheckPosition(thing, pos, true))	// check if some actor blocks us on the other side. (No line checks, because of the mess that'd create.)
 				{
 					thing->SetXYZ(oldthingpos);
 					thing->flags6 &= ~MF6_INTRYMOVE;
@@ -2422,7 +2422,8 @@ bool P_CheckMove(AActor *thing, fixed_t x, fixed_t y)
 	FCheckPosition tm;
 	fixed_t		newz = thing->_f_Z();
 
-	if (!P_CheckPosition(thing, x, y, tm))
+	DVector2 pos = { FIXED2DBL(x), FIXED2DBL(y) };
+	if (!P_CheckPosition(thing, pos, tm))
 	{
 		return false;
 	}
@@ -5349,7 +5350,7 @@ bool P_AdjustFloorCeil(AActor *thing, FChangePosition *cpos)
 		thing->flags2 |= MF2_PASSMOBJ;
 	}
 
-	bool isgood = P_CheckPosition(thing, thing->_f_X(), thing->_f_Y(), tm);
+	bool isgood = P_CheckPosition(thing, thing->Pos(), tm);
 	thing->floorz = tm.floorz;
 	thing->ceilingz = tm.ceilingz;
 	thing->dropoffz = tm.dropoffz;		// killough 11/98: remember dropoffs

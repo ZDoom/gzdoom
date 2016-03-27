@@ -276,20 +276,8 @@ extern TArray<spechit_t> portalhit;
 
 bool	P_TestMobjLocation (AActor *mobj);
 bool	P_TestMobjZ (AActor *mobj, bool quick=true, AActor **pOnmobj = NULL);
-bool	P_CheckPosition (AActor *thing, fixed_t x, fixed_t y, FCheckPosition &tm, bool actorsonly=false);
-bool	P_CheckPosition (AActor *thing, fixed_t x, fixed_t y, bool actorsonly=false);
-inline bool P_CheckPosition(AActor *thing, const fixedvec3 &pos, bool actorsonly = false)
-{
-	return P_CheckPosition(thing, pos.x, pos.y, actorsonly);
-}
-inline bool P_CheckPosition(AActor *thing, const DVector2 &pos, bool actorsonly = false)
-{
-	return P_CheckPosition(thing, FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), actorsonly);
-}
-inline bool P_CheckPosition(AActor *thing, const DVector2 &pos, FCheckPosition &tm, bool actorsonly = false)
-{
-	return P_CheckPosition(thing, FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), tm, actorsonly);
-}
+bool P_CheckPosition(AActor *thing, const DVector2 &pos, bool actorsonly = false);
+inline bool P_CheckPosition(AActor *thing, const DVector2 &pos, FCheckPosition &tm, bool actorsonly = false);
 AActor	*P_CheckOnmobj (AActor *thing);
 void	P_FakeZMovement (AActor *mo);
 bool	P_TryMove (AActor* thing, fixed_t x, fixed_t y, int dropoff, const secplane_t * onfloor, FCheckPosition &tm, bool missileCheck = false);

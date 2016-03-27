@@ -889,22 +889,21 @@ void sector_t::CheckPortalPlane(int plane)
 //
 //===========================================================================
 
-fixed_t sector_t::_f_HighestCeilingAt(fixed_t x, fixed_t y, sector_t **resultsec)
+double sector_t::HighestCeilingAt(const DVector2 &p, sector_t **resultsec)
 {
 	sector_t *check = this;
 	fixed_t planeheight = FIXED_MIN;
+	DVector2 pos = p;
 
 	// Continue until we find a blocking portal or a portal below where we actually are.
 	while (!check->PortalBlocksMovement(ceiling) && planeheight < FLOAT2FIXED(check->SkyBoxes[ceiling]->specialf1))
 	{
-		fixedvec2 pos = check->CeilingDisplacement();
-		x += pos.x;
-		y += pos.y;
+		pos += check->CeilingDisplacement();
 		planeheight = FLOAT2FIXED(check->SkyBoxes[ceiling]->specialf1);
-		check = P_PointInSector(x, y);
+		check = P_PointInSector(pos);
 	}
 	if (resultsec) *resultsec = check;
-	return check->ceilingplane.ZatPoint(x, y);
+	return check->ceilingplane.ZatPoint(pos);
 }
 
 //===========================================================================
@@ -913,22 +912,21 @@ fixed_t sector_t::_f_HighestCeilingAt(fixed_t x, fixed_t y, sector_t **resultsec
 //
 //===========================================================================
 
-fixed_t sector_t::_f_LowestFloorAt(fixed_t x, fixed_t y, sector_t **resultsec)
+double sector_t::LowestFloorAt(const DVector2 &p, sector_t **resultsec)
 {
 	sector_t *check = this;
 	fixed_t planeheight = FIXED_MAX;
+	DVector2 pos = p;
 
 	// Continue until we find a blocking portal or a portal above where we actually are.
 	while (!check->PortalBlocksMovement(floor) && planeheight > FLOAT2FIXED(check->SkyBoxes[floor]->specialf1))
 	{
-		fixedvec2 pos = check->FloorDisplacement();
-		x += pos.x;
-		y += pos.y;
+		pos += check->FloorDisplacement();
 		planeheight = FLOAT2FIXED(check->SkyBoxes[floor]->specialf1);
-		check = P_PointInSector(x, y);
+		check = P_PointInSector(pos);
 	}
 	if (resultsec) *resultsec = check;
-	return check->floorplane.ZatPoint(x, y);
+	return check->floorplane.ZatPoint(pos);
 }
 
 
@@ -967,9 +965,9 @@ fixed_t sector_t::NextHighestCeilingAt(fixed_t x, fixed_t y, fixed_t bottomz, fi
 		}
 		else
 		{
-			fixedvec2 pos = sec->CeilingDisplacement();
-			x += pos.x;
-			y += pos.y;
+			DVector2 pos = sec->CeilingDisplacement();
+			x += FLOAT2FIXED(pos.X);
+			y += FLOAT2FIXED(pos.Y);
 			planeheight = FLOAT2FIXED(sec->SkyBoxes[ceiling]->specialf1);
 			sec = P_PointInSector(x, y);
 		}
@@ -1012,9 +1010,9 @@ fixed_t sector_t::NextLowestFloorAt(fixed_t x, fixed_t y, fixed_t z, int flags, 
 		}
 		else
 		{
-			fixedvec2 pos = sec->FloorDisplacement();
-			x += pos.x;
-			y += pos.y;
+			DVector2 pos = sec->FloorDisplacement();
+			x += FLOAT2FIXED(pos.X);
+			y += FLOAT2FIXED(pos.Y);
 			planeheight = FLOAT2FIXED(sec->SkyBoxes[floor]->specialf1);
 			sec = P_PointInSector(x, y);
 		}

@@ -436,7 +436,7 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 	{
 		// Falling, not all the way down yet?
 		sector = player->mo->Sector;
-		if (player->mo->_f_Z() != sector->_f_LowestFloorAt(player->mo)
+		if (player->mo->Z() != sector->LowestFloorAt(player->mo)
 			&& !player->mo->waterlevel)
 		{
 			return;

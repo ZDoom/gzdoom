@@ -2268,7 +2268,7 @@ void P_CrouchMove(player_t * player, int direction)
 	player->crouchviewdelta = player->viewheight - player->mo->ViewHeight;
 
 	// Check for eyes going above/below fake floor due to crouching motion.
-	P_CheckFakeFloorTriggers(player->mo, player->mo->_f_Z() + FLOAT2FIXED(oldheight), true);
+	P_CheckFakeFloorTriggers(player->mo, player->mo->Z() + oldheight, true);
 }
 
 //----------------------------------------------------------------------------

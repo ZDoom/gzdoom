@@ -5250,7 +5250,7 @@ void P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bo
 struct FChangePosition
 {
 	sector_t *sector;
-	int moveamt;
+	double moveamt;
 	int crushchange;
 	bool nofit;
 	bool movemidtex;
@@ -5320,8 +5320,8 @@ void P_FindAboveIntersectors(AActor *actor)
 	while (it.Next(&cres))
 	{
 		AActor *thing = cres.thing;
-		fixed_t blockdist = actor->_f_radius() + thing->_f_radius();
-		if (abs(thing->_f_X() - cres.position.x) >= blockdist || abs(thing->_f_Y() - cres.position.y) >= blockdist)
+		double blockdist = actor->radius + thing->radius;
+		if (fabs(thing->X() - cres.Position.X) >= blockdist || fabs(thing->Y() - cres.Position.Y) >= blockdist)
 			continue;
 
 		if (!(thing->flags & MF_SOLID))
@@ -5376,8 +5376,8 @@ void P_FindBelowIntersectors(AActor *actor)
 	while (it.Next(&cres))
 	{
 		AActor *thing = cres.thing;
-		fixed_t blockdist = actor->_f_radius() + thing->_f_radius();
-		if (abs(thing->_f_X() - cres.position.x) >= blockdist || abs(thing->_f_Y() - cres.position.y) >= blockdist)
+		double blockdist = actor->radius + thing->radius;
+		if (fabs(thing->X() - cres.Position.X) >= blockdist || fabs(thing->Y() - cres.Position.Y) >= blockdist)
 			continue;
 
 		if (!(thing->flags & MF_SOLID))
@@ -5511,14 +5511,13 @@ int P_PushUp(AActor *thing, FChangePosition *cpos)
 			// Can't push bridges or things more massive than ourself
 			return 2;
 		}
-		fixed_t oldz;
-		oldz = intersect->_f_Z();
+		double oldz = intersect->Z();
 		P_AdjustFloorCeil(intersect, cpos);
-		intersect->_f_SetZ(thing->_f_Top() + 1);
+		intersect->SetZ(thing->Top() + 1/65536.);
 		if (P_PushUp(intersect, cpos))
 		{ // Move blocked
 			P_DoCrunch(intersect, cpos);
-			intersect->_f_SetZ(oldz);
+			intersect->SetZ(oldz);
 			return 2;
 		}
 	}
@@ -5557,15 +5556,15 @@ int P_PushDown(AActor *thing, FChangePosition *cpos)
 			// Can't push bridges or things more massive than ourself
 			return 2;
 		}
-		fixed_t oldz = intersect->_f_Z();
+		double oldz = intersect->Z();
 		P_AdjustFloorCeil(intersect, cpos);
-		if (oldz > thing->_f_Z() - intersect->_f_height())
+		if (oldz > thing->Z() - intersect->Height)
 		{ // Only push things down, not up.
-			intersect->_f_SetZ(thing->_f_Z() - intersect->_f_height());
+			intersect->SetZ(thing->Z() - intersect->Height);
 			if (P_PushDown(intersect, cpos))
 			{ // Move blocked
 				P_DoCrunch(intersect, cpos);
-				intersect->_f_SetZ(oldz);
+				intersect->SetZ(oldz);
 				return 2;
 			}
 		}
@@ -5582,40 +5581,37 @@ int P_PushDown(AActor *thing, FChangePosition *cpos)
 
 void PIT_FloorDrop(AActor *thing, FChangePosition *cpos)
 {
-	fixed_t oldfloorz = thing->_f_floorz();
-	fixed_t oldz = thing->_f_Z();
+	double oldfloorz = thing->floorz;
+	double oldz = thing->Z();
 
 	P_AdjustFloorCeil(thing, cpos);
 
-	if (oldfloorz == thing->_f_floorz()) return;
+	if (oldfloorz == thing->floorz) return;
 	if (thing->flags4 & MF4_ACTLIKEBRIDGE) return; // do not move bridge things
 
-	if (thing->_f_velz() == 0 &&
+	if (thing->Vel.Z == 0 &&
 		(!(thing->flags & MF_NOGRAVITY) ||
-		(thing->_f_Z() == oldfloorz && !(thing->flags & MF_NOLIFTDROP))))
+		(thing->Z() == oldfloorz && !(thing->flags & MF_NOLIFTDROP))))
 	{
-		fixed_t oldz = thing->_f_Z();
-
 		if ((thing->flags & MF_NOGRAVITY) || (thing->flags5 & MF5_MOVEWITHSECTOR) ||
-			(((cpos->sector->Flags & SECF_FLOORDROP) || cpos->moveamt < 9 * FRACUNIT)
-			&& thing->_f_Z() - thing->_f_floorz() <= cpos->moveamt))
+			(((cpos->sector->Flags & SECF_FLOORDROP) || cpos->moveamt < 9)
+			&& thing->Z() - thing->floorz <= cpos->moveamt))
 		{
 			thing->SetZ(thing->floorz);
 			P_CheckFakeFloorTriggers(thing, oldz);
 		}
 	}
-	else if ((thing->_f_Z() != oldfloorz && !(thing->flags & MF_NOLIFTDROP)))
+	else if ((thing->Z() != oldfloorz && !(thing->flags & MF_NOLIFTDROP)))
 	{
-		fixed_t oldz = thing->_f_Z();
 		if ((thing->flags & MF_NOGRAVITY) && (thing->flags6 & MF6_RELATIVETOFLOOR))
 		{
-			thing->_f_AddZ(-oldfloorz + thing->_f_floorz());
+			thing->AddZ(-oldfloorz + thing->floorz);
 			P_CheckFakeFloorTriggers(thing, oldz);
 		}
 	}
 	if (thing->player && thing->player->mo == thing)
 	{
-		//thing->player->viewz += thing->_f_Z() - oldz;
+		thing->player->viewz += thing->Z() - oldz;
 	}
 }
 
@@ -5627,12 +5623,12 @@ void PIT_FloorDrop(AActor *thing, FChangePosition *cpos)
 
 void PIT_FloorRaise(AActor *thing, FChangePosition *cpos)
 {
-	fixed_t oldfloorz = thing->_f_floorz();
-	fixed_t oldz = thing->_f_Z();
+	double oldfloorz = thing->floorz;
+	double oldz = thing->Z();
 
 	P_AdjustFloorCeil(thing, cpos);
 
-	if (oldfloorz == thing->_f_floorz()) return;
+	if (oldfloorz == thing->floorz) return;
 
 	// Move things intersecting the floor up
 	if (thing->Z() <= thing->floorz)
@@ -5650,7 +5646,7 @@ void PIT_FloorRaise(AActor *thing, FChangePosition *cpos)
 		if ((thing->flags & MF_NOGRAVITY) && (thing->flags6 & MF6_RELATIVETOFLOOR))
 		{
 			intersectors.Clear();
-			thing->_f_AddZ(-oldfloorz + thing->_f_floorz());
+			thing->AddZ(-oldfloorz + thing->floorz);
 		}
 		else return;
 	}
@@ -5665,12 +5661,12 @@ void PIT_FloorRaise(AActor *thing, FChangePosition *cpos)
 		break;
 	case 2:
 		P_DoCrunch(thing, cpos);
-		thing->_f_SetZ(oldz);
+		thing->SetZ(oldz);
 		break;
 	}
 	if (thing->player && thing->player->mo == thing)
 	{
-		thing->player->viewz += thing->Z() - FIXED2DBL(oldz);
+		thing->player->viewz += thing->Z() - oldz;
 	}
 }
 
@@ -5683,7 +5679,7 @@ void PIT_FloorRaise(AActor *thing, FChangePosition *cpos)
 void PIT_CeilingLower(AActor *thing, FChangePosition *cpos)
 {
 	bool onfloor;
-	fixed_t oldz = thing->_f_Z();
+	double oldz = thing->Z();
 
 	onfloor = thing->Z() <= thing->floorz;
 	P_AdjustFloorCeil(thing, cpos);
@@ -5696,7 +5692,6 @@ void PIT_CeilingLower(AActor *thing, FChangePosition *cpos)
 			return; // do not move bridge things
 		}
 		intersectors.Clear();
-		fixed_t oldz = thing->_f_Z();
 		if (thing->ceilingz - thing->Height >= thing->floorz)
 		{
 			thing->SetZ(thing->ceilingz - thing->Height);
@@ -5722,7 +5717,7 @@ void PIT_CeilingLower(AActor *thing, FChangePosition *cpos)
 	}
 	if (thing->player && thing->player->mo == thing)
 	{
-		thing->player->viewz += thing->Z() - FIXED2DBL(oldz);
+		thing->player->viewz += thing->Z() - oldz;
 	}
 }
 
@@ -5735,18 +5730,17 @@ void PIT_CeilingLower(AActor *thing, FChangePosition *cpos)
 void PIT_CeilingRaise(AActor *thing, FChangePosition *cpos)
 {
 	bool isgood = P_AdjustFloorCeil(thing, cpos);
-	fixed_t oldz = thing->_f_Z();
+	double oldz = thing->Z();
 
 	if (thing->flags4 & MF4_ACTLIKEBRIDGE) return; // do not move bridge things
 
 	// For DOOM compatibility, only move things that are inside the floor.
 	// (or something else?) Things marked as hanging from the ceiling will
 	// stay where they are.
-	if (thing->_f_Z() < thing->_f_floorz() &&
-		thing->_f_Top() >= thing->_f_ceilingz() - cpos->moveamt &&
+	if (thing->Z() < thing->floorz &&
+		thing->Top() >= thing->ceilingz - cpos->moveamt &&
 		!(thing->flags & MF_NOLIFTDROP))
 	{
-		fixed_t oldz = thing->_f_Z();
 		thing->SetZ(thing->floorz);
 		if (thing->Top() > thing->ceilingz)
 		{
@@ -5764,7 +5758,7 @@ void PIT_CeilingRaise(AActor *thing, FChangePosition *cpos)
 	}
 	if (thing->player && thing->player->mo == thing)
 	{
-		thing->player->viewz += thing->Z() - FIXED2DBL(oldz);
+		thing->player->viewz += thing->Z() - oldz;
 	}
 }
 
@@ -5778,7 +5772,7 @@ void PIT_CeilingRaise(AActor *thing, FChangePosition *cpos)
 //
 //=============================================================================
 
-bool P_ChangeSector(sector_t *sector, int crunch, int amt, int floorOrCeil, bool isreset)
+bool P_ChangeSector(sector_t *sector, int crunch, double amt, int floorOrCeil, bool isreset)
 {
 	FChangePosition cpos;
 	void(*iterator)(AActor *, FChangePosition *);
@@ -5787,7 +5781,7 @@ bool P_ChangeSector(sector_t *sector, int crunch, int amt, int floorOrCeil, bool
 
 	cpos.nofit = false;
 	cpos.crushchange = crunch;
-	cpos.moveamt = abs(amt);
+	cpos.moveamt = fabs(amt);
 	cpos.movemidtex = false;
 	cpos.sector = sector;
 
@@ -5924,7 +5918,7 @@ bool P_ChangeSector(sector_t *sector, int crunch, int amt, int floorOrCeil, bool
 						n->visited = true; 							// mark thing as processed
 
 						n->m_thing->UpdateWaterLevel(false);
-						P_CheckFakeFloorTriggers(n->m_thing, n->m_thing->_f_Z() - amt);
+						P_CheckFakeFloorTriggers(n->m_thing, n->m_thing->Z() - amt);
 					}
 				}
 			} while (n);	// repeat from scratch until all things left are marked valid

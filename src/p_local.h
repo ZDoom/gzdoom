@@ -197,7 +197,7 @@ AActor *P_SpawnPlayerMissile (AActor *source, double x, double y, double z, PCla
 							  FTranslatedLineTarget *pLineTarget = NULL, AActor **MissileActor = NULL, bool nofreeaim = false, bool noautoaim = false, int aimflags = 0);
 
 
-void P_CheckFakeFloorTriggers (AActor *mo, fixed_t oldz, bool oldz_has_viewheight=false);
+void P_CheckFakeFloorTriggers(AActor *mo, double oldz, bool oldz_has_viewheight = false);
 
 AActor *P_SpawnSubMissile (AActor *source, PClassActor *type, AActor *target);	// Strife uses it
 
@@ -336,7 +336,11 @@ enum
 };
 void	P_FindFloorCeiling (AActor *actor, int flags=0);
 
-bool	P_ChangeSector (sector_t* sector, int crunch, int amt, int floorOrCeil, bool isreset);
+bool	P_ChangeSector (sector_t* sector, int crunch, double amt, int floorOrCeil, bool isreset);
+inline bool	P_ChangeSector(sector_t* sector, int crunch, int amt, int floorOrCeil, bool isreset)
+{
+	return P_ChangeSector(sector, crunch, FIXED2DBL(amt), floorOrCeil, isreset);
+}
 
 DAngle P_AimLineAttack(AActor *t1, DAngle angle, double distance, FTranslatedLineTarget *pLineTarget = NULL, DAngle vrange = 0., int flags = 0, AActor *target = NULL, AActor *friender = NULL);
 

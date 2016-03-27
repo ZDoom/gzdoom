@@ -2619,12 +2619,11 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 			}
 		}
 	}
-	P_CheckFakeFloorTriggers (mo, oldz);
+	P_CheckFakeFloorTriggers (mo, FIXED2DBL(oldz));
 }
 
-void P_CheckFakeFloorTriggers (AActor *mo, fixed_t _oldz, bool oldz_has_viewheight)
+void P_CheckFakeFloorTriggers (AActor *mo, double oldz, bool oldz_has_viewheight)
 {
-	double oldz = FIXED2FLOAT(_oldz);
 	if (mo->player && (mo->player->cheats & CF_PREDICTING))
 	{
 		return;

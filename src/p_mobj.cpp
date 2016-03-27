@@ -1939,7 +1939,7 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 		// killough 3/15/98: Allow objects to drop off
 		fixed_t startvelx = mo->_f_velx(), startvely = mo->_f_vely();
 
-		if (!P_TryMove (mo, ptryx, ptryy, true, walkplane, tm))
+		if (!P_TryMove (mo, DVector2(FIXED2DBL(ptryx), FIXED2DBL(ptryy)), true, walkplane, tm))
 		{
 			// blocked move
 			AActor *BlockingMobj = mo->BlockingMobj;
@@ -1972,11 +1972,11 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 						// If the move is done a second time (because it was too fast for one move), it
 						// is still clipped against the wall at its full speed, so you effectively
 						// execute two moves in one tic.
-							P_SlideMove (mo, mo->_f_velx(), mo->_f_vely(), 1);
+							P_SlideMove (mo, mo->Vel, 1);
 						}
 						else
 						{
-							P_SlideMove (mo, onestepx, onestepy, totalsteps);
+							P_SlideMove (mo, DVector2(FIXED2DBL(onestepx), FIXED2DBL(onestepy)), totalsteps);
 						}
 						if ((mo->_f_velx() | mo->_f_vely()) == 0)
 						{
@@ -2006,7 +2006,7 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 					fixed_t tx, ty;
 					tx = 0, ty = onestepy;
 					walkplane = P_CheckSlopeWalk (mo, tx, ty);
-					if (P_TryMove (mo, mo->_f_X() + tx, mo->_f_Y() + ty, true, walkplane, tm))
+					if (P_TryMove (mo, mo->Pos() + DVector2(FIXED2DBL(tx), FIXED2DBL(ty)), true, walkplane, tm))
 					{
 						mo->Vel.X = 0;
 					}
@@ -2014,7 +2014,7 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 					{
 						tx = onestepx, ty = 0;
 						walkplane = P_CheckSlopeWalk (mo, tx, ty);
-						if (P_TryMove (mo, mo->_f_X() + tx, mo->_f_Y() + ty, true, walkplane, tm))
+						if (P_TryMove (mo, mo->Pos() + DVector2(FIXED2DBL(tx), FIXED2DBL(ty)), true, walkplane, tm))
 						{
 							mo->Vel.Y = 0;
 						}
@@ -5744,7 +5744,7 @@ bool P_CheckMissileSpawn (AActor* th, double maxdist)
 	bool MBFGrenade = (!(th->flags & MF_MISSILE) || (th->BounceFlags & BOUNCE_MBF));
 
 	// killough 3/15/98: no dropoff (really = don't care for missiles)
-	if (!(P_TryMove (th, th->_f_X(), th->_f_Y(), false, NULL, tm, true)))
+	if (!(P_TryMove (th, th->Pos(), false, NULL, tm, true)))
 	{
 		// [RH] Don't explode ripping missiles that spawn inside something
 		if (th->BlockingMobj == NULL || !(th->flags2 & MF2_RIP) || (th->BlockingMobj->flags5 & MF5_DONTRIP))

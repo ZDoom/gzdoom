@@ -122,6 +122,14 @@ inline void P_MakeDivline (const line_t *li, fdivline_t *dl)
 	dl->dy = li->dy;
 }
 
+inline void P_MakeDivline(const line_t *li, divline_t *dl)
+{
+	dl->x = li->v1->fX();
+	dl->y = li->v1->fY();
+	dl->dx = li->Delta().X;
+	dl->dy = li->Delta().Y;
+}
+
 struct FLineOpening
 {
 	double			top;
@@ -143,7 +151,7 @@ static const double LINEOPEN_MIN = -FLT_MAX;
 static const double LINEOPEN_MAX = FLT_MAX;
 
 void P_LineOpening(FLineOpening &open, AActor *thing, const line_t *linedef, const DVector2 &xy, const DVector2 *ref = NULL, int flags = 0);
-inline void P_LineOpening(FLineOpening &open, AActor *thing, const line_t *linedef, const DVector2 &xy, const DVector3 *ref = NULL, int flags = 0)
+inline void P_LineOpening(FLineOpening &open, AActor *thing, const line_t *linedef, const DVector2 &xy, const DVector3 *ref, int flags = 0)
 {
 	P_LineOpening(open, thing, linedef, xy, reinterpret_cast<const DVector2*>(ref), flags);
 }

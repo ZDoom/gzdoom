@@ -205,8 +205,7 @@ FArchive &operator<< (FArchive &arc, FLinePortal &port)
 {
 	arc << port.mOrigin
 		<< port.mDestination
-		<< port.mXDisplacement
-		<< port.mYDisplacement
+		<< port.mDisplacement
 		<< port.mType
 		<< port.mFlags
 		<< port.mDefFlags
@@ -385,8 +384,8 @@ void P_UpdatePortal(FLinePortal *port)
 			}
 			else
 			{
-				port->mXDisplacement = port->mDestination->v2->x - port->mOrigin->v1->x;
-				port->mYDisplacement = port->mDestination->v2->y - port->mOrigin->v1->y;
+				port->mDisplacement.X = port->mDestination->v2->fX() - port->mOrigin->v1->fX();
+				port->mDisplacement.Y = port->mDestination->v2->fY() - port->mOrigin->v1->fY();
 			}
 		}
  	}
@@ -721,10 +720,10 @@ fixedvec2 P_GetOffsetPosition(fixed_t x, fixed_t y, fixed_t dx, fixed_t dy)
 					if (port->mType == PORTT_LINKED)
 					{
 						// optimized handling for linked portals where we only need to add an offset.
-						hit.x += port->mXDisplacement;
-						hit.y += port->mYDisplacement;
-						dest.x += port->mXDisplacement;
-						dest.y += port->mYDisplacement;
+						hit.x += FLOAT2FIXED(port->mDisplacement.X);
+						hit.y += FLOAT2FIXED(port->mDisplacement.Y);
+						dest.x += FLOAT2FIXED(port->mDisplacement.X);
+						dest.y += FLOAT2FIXED(port->mDisplacement.Y);
 					}
 					else
 					{
@@ -851,13 +850,13 @@ static void AddDisplacementForPortal(FLinePortal *portal)
 	FDisplacement & disp = Displacements(thisgroup, othergroup);
 	if (!disp.isSet)
 	{
-		disp.pos.x = portal->mXDisplacement;
-		disp.pos.y = portal->mYDisplacement;
+		disp.pos.x = FLOAT2FIXED(portal->mDisplacement.X);
+		disp.pos.y = FLOAT2FIXED(portal->mDisplacement.Y);
 		disp.isSet = true;
 	}
 	else
 	{
-		if (disp.pos.x != portal->mXDisplacement || disp.pos.y != portal->mYDisplacement)
+		if (disp.pos.x != FLOAT2FIXED(portal->mDisplacement.X) || disp.pos.y != FLOAT2FIXED(portal->mDisplacement.Y))
 		{
 			Printf("Portal between lines %d and %d has displacement mismatch\n", int(portal->mOrigin - lines), int(portal->mDestination - lines));
 			portal->mType = linePortals[portal->mDestination->portalindex].mType = PORTT_TELEPORT;

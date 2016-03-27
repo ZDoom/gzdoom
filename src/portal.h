@@ -185,8 +185,7 @@ struct FLinePortal
 {
 	line_t *mOrigin;
 	line_t *mDestination;
-	fixed_t mXDisplacement;
-	fixed_t mYDisplacement;
+	DVector2 mDisplacement;
 	BYTE mType;
 	BYTE mFlags;
 	BYTE mDefFlags;

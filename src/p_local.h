@@ -280,25 +280,16 @@ bool P_CheckPosition(AActor *thing, const DVector2 &pos, bool actorsonly = false
 inline bool P_CheckPosition(AActor *thing, const DVector2 &pos, FCheckPosition &tm, bool actorsonly = false);
 AActor	*P_CheckOnmobj (AActor *thing);
 void	P_FakeZMovement (AActor *mo);
-bool	P_TryMove (AActor* thing, fixed_t x, fixed_t y, int dropoff, const secplane_t * onfloor, FCheckPosition &tm, bool missileCheck = false);
-bool	P_TryMove (AActor* thing, fixed_t x, fixed_t y, int dropoff, const secplane_t * onfloor = NULL);
+bool	P_TryMove(AActor* thing, const DVector2 &pos, int dropoff, const secplane_t * onfloor, FCheckPosition &tm, bool missileCheck = false);
+bool	P_TryMove(AActor* thing, const DVector2 &pos, int dropoff, const secplane_t * onfloor = NULL);
+/*
 inline bool	P_TryMove(AActor* thing, double x, double y, int dropoff, const secplane_t * onfloor = NULL)
 {
 	return P_TryMove(thing, FLOAT2FIXED(x), FLOAT2FIXED(y), dropoff, onfloor);
 }
-inline bool	P_TryMove(AActor* thing, const DVector2 &pos, int dropoff, const secplane_t * onfloor = NULL)
-{
-	return P_TryMove(thing, FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), dropoff, onfloor);
-}
-inline bool	P_TryMove(AActor* thing, const DVector2 &pos, int dropoff, const secplane_t * onfloor, FCheckPosition &tm, bool missileCheck = false)
-{
-	return P_TryMove(thing, FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), dropoff, onfloor, tm, missileCheck);
-}
-bool	P_CheckMove(AActor *thing, fixed_t x, fixed_t y);
-inline bool	P_CheckMove(AActor *thing, double x, double y)
-{
-	return P_CheckMove(thing, FLOAT2FIXED(x), FLOAT2FIXED(y));
-}
+*/
+
+bool	P_CheckMove(AActor *thing, const DVector2 &pos);
 void	P_ApplyTorque(AActor *mo);
 
 bool	P_TeleportMove(AActor* thing, const DVector3 &pos, bool telefrag, bool modifyactor = true);	// [RH] Added z and telefrag parameters
@@ -313,7 +304,7 @@ inline bool	P_TeleportMove(AActor* thing, const fixedvec3 &pos, bool telefrag, b
 }
 
 void	P_PlayerStartStomp (AActor *actor, bool mononly=false);		// [RH] Stomp on things for a newly spawned player
-void	P_SlideMove (AActor* mo, fixed_t tryx, fixed_t tryy, int numsteps);
+void	P_SlideMove (AActor* mo, const DVector2 &pos, int numsteps);
 bool	P_BounceWall (AActor *mo);
 bool	P_BounceActor (AActor *mo, AActor *BlockingMobj, bool ontop);
 bool	P_CheckSight (AActor *t1, AActor *t2, int flags=0);
@@ -455,6 +446,13 @@ bool	Check_Sides(AActor *, int, int);					// phares
 
 // [RH] 
 const secplane_t * P_CheckSlopeWalk (AActor *actor, fixed_t &xmove, fixed_t &ymove);
+inline const secplane_t * P_CheckSlopeWalk(AActor *actor, DVector2 &move)
+{
+	fixedvec2 mov = { FLOAT2FIXED(move.X), FLOAT2FIXED(move.Y) };
+	const secplane_t *ret = P_CheckSlopeWalk(actor, mov.x, mov.y);
+	move = { FIXED2DBL(mov.x), FIXED2DBL(mov.y) };
+	return ret;
+}
 
 //
 // P_SETUP

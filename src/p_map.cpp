@@ -2880,7 +2880,7 @@ void P_SlideMove(AActor *mo, const DVector2 &pos, int numsteps)
 //
 //============================================================================
 
-const secplane_t * P_CheckSlopeWalk(AActor *actor, fixed_t &xmove, fixed_t &ymove)
+const secplane_t * P_CheckSlopeWalk(AActor *actor, DVector2 &move)
 {
 	static secplane_t copyplane;
 	if (actor->flags & MF_NOGRAVITY)
@@ -2888,21 +2888,20 @@ const secplane_t * P_CheckSlopeWalk(AActor *actor, fixed_t &xmove, fixed_t &ymov
 		return NULL;
 	}
 
-	fixedvec3 pos = actor->_f_PosRelative(actor->floorsector);
+	DVector3 pos = actor->PosRelative(actor->floorsector);
 	const secplane_t *plane = &actor->floorsector->floorplane;
-	fixed_t planezhere = plane->ZatPoint(pos);
+	double planezhere = plane->ZatPoint(pos);
 
-	for (unsigned int i = 0; i<actor->floorsector->e->XFloor.ffloors.Size(); i++)
+	for (auto rover : actor->floorsector->e->XFloor.ffloors)
 	{
-		F3DFloor * rover = actor->floorsector->e->XFloor.ffloors[i];
 		if (!(rover->flags & FF_SOLID) || !(rover->flags & FF_EXISTS)) continue;
 
-		fixed_t thisplanez = rover->top.plane->ZatPoint(pos);
+		double thisplanez = rover->top.plane->ZatPoint(pos);
 
-		if (thisplanez>planezhere && thisplanez <= actor->_f_Z() + actor->_f_MaxStepHeight())
+		if (thisplanez > planezhere && thisplanez <= actor->Z() + actor->MaxStepHeight)
 		{
 			copyplane = *rover->top.plane;
-			if (copyplane.c<0) copyplane.FlipVert();
+			if (copyplane.c < 0) copyplane.FlipVert();
 			plane = &copyplane;
 			planezhere = thisplanez;
 		}
@@ -2910,17 +2909,16 @@ const secplane_t * P_CheckSlopeWalk(AActor *actor, fixed_t &xmove, fixed_t &ymov
 
 	if (actor->floorsector != actor->Sector)
 	{
-		for (unsigned int i = 0; i<actor->Sector->e->XFloor.ffloors.Size(); i++)
+		for (auto rover : actor->Sector->e->XFloor.ffloors)
 		{
-			F3DFloor * rover = actor->Sector->e->XFloor.ffloors[i];
 			if (!(rover->flags & FF_SOLID) || !(rover->flags & FF_EXISTS)) continue;
 
-			fixed_t thisplanez = rover->top.plane->ZatPoint(actor);
+			double thisplanez = rover->top.plane->ZatPointF(actor);
 
-			if (thisplanez>planezhere && thisplanez <= actor->_f_Z() + actor->_f_MaxStepHeight())
+			if (thisplanez > planezhere && thisplanez <= actor->Z() + actor->MaxStepHeight)
 			{
 				copyplane = *rover->top.plane;
-				if (copyplane.c<0) copyplane.FlipVert();
+				if (copyplane.c < 0) copyplane.FlipVert();
 				plane = &copyplane;
 				planezhere = thisplanez;
 			}
@@ -2930,23 +2928,22 @@ const secplane_t * P_CheckSlopeWalk(AActor *actor, fixed_t &xmove, fixed_t &ymov
 	if (actor->floorsector != actor->Sector)
 	{
 		// this additional check prevents sliding on sloped dropoffs
-		if (planezhere>actor->_f_floorz() + 4 * FRACUNIT)
+		if (planezhere>actor->floorz + 4)
 			return NULL;
 	}
 
-	if (actor->_f_Z() - planezhere > FRACUNIT)
+	if (actor->Z() - planezhere > 1)
 	{ // not on floor
 		return NULL;
 	}
 
-	if ((plane->a | plane->b) != 0)
+	if (plane->isSlope())
 	{
-		fixed_t destx, desty;
-		fixed_t t;
+		DVector2 dest;
+		double t;
 
-		destx = actor->_f_X() + xmove;
-		desty = actor->_f_Y() + ymove;
-		t = TMulScale16(plane->a, destx, plane->b, desty, plane->c, actor->_f_Z()) + plane->d;
+		dest = actor->Pos() + move;
+		t = plane->fA() * dest.X + plane->fB() * dest.Y + plane->fC() * actor->Z() + plane->fD();
 		if (t < 0)
 		{ // Desired location is behind (below) the plane
 			// (i.e. Walking up the plane)
@@ -2968,11 +2965,9 @@ const secplane_t * P_CheckSlopeWalk(AActor *actor, fixed_t &xmove, fixed_t &ymov
 							sector_t *sec = node->m_sector;
 							if (sec->floorplane.c >= STEEPSLOPE)
 							{
-								fixedvec3 pos = actor->_f_PosRelative(sec);
-								pos.x += xmove;
-								pos.y += ymove;
+								DVector3 pos = actor->PosRelative(sec) +move;
 
-								if (sec->floorplane.ZatPointF(pos) >= actor->Z() - actor->MaxStepHeight)
+								if (sec->floorplane.ZatPoint(pos) >= actor->Z() - actor->MaxStepHeight)
 								{
 									dopush = false;
 									break;
@@ -2982,31 +2977,28 @@ const secplane_t * P_CheckSlopeWalk(AActor *actor, fixed_t &xmove, fixed_t &ymov
 					}
 					if (dopush)
 					{
-						xmove = plane->a * 2;
-						ymove = plane->b * 2;
-						actor->Vel.X = FIXED2DBL(xmove);
-						actor->Vel.Y = FIXED2DBL(ymove);
+						actor->Vel.X = move.X = plane->fA() * 2;
+						actor->Vel.Y = move.Y = plane->fB() * 2;
 					}
 					return (actor->floorsector == actor->Sector) ? plane : NULL;
 				}
 			}
 			// Slide the desired location along the plane's normal
 			// so that it lies on the plane's surface
-			destx -= FixedMul(plane->a, t);
-			desty -= FixedMul(plane->b, t);
-			xmove = destx - actor->_f_X();
-			ymove = desty - actor->_f_Y();
+			dest.X -= plane->fA() * t;
+			dest.Y -= plane->fB() * t;
+			move = dest - actor->Pos().XY();
 			return (actor->floorsector == actor->Sector) ? plane : NULL;
 		}
 		else if (t > 0)
 		{ // Desired location is in front of (above) the plane
-			if (planezhere == actor->_f_Z())
-			{ // Actor's current spot is on/in the plane, so walk down it
+			if (fabs(planezhere - actor->Z() < (1/65536.)))	// it is very important not to be too precise here.
+			{ 
+				// Actor's current spot is on/in the plane, so walk down it
 				// Same principle as walking up, except reversed
-				destx += FixedMul(plane->a, t);
-				desty += FixedMul(plane->b, t);
-				xmove = destx - actor->_f_X();
-				ymove = desty - actor->_f_Y();
+				dest.X += plane->fA() * t;
+				dest.Y += plane->fB() * t;
+				move = dest - actor->Pos().XY();
 				return (actor->floorsector == actor->Sector) ? plane : NULL;
 			}
 		}

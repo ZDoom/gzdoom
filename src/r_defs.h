@@ -246,6 +246,23 @@ struct secplane_t
 
 	fixed_t a, b, c, d, ic;
 
+	double fA() const
+	{
+		return FIXED2FLOAT(a);
+	}
+	double fB() const
+	{
+		return FIXED2FLOAT(b);
+	}
+	double fC() const
+	{
+		return FIXED2FLOAT(c);
+	}
+	double fD() const
+	{
+		return FIXED2FLOAT(d);
+	}
+
 	bool isSlope() const
 	{
 		return a != 0 || b != 0;

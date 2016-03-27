@@ -445,12 +445,14 @@ double		P_GetFriction(const AActor *mo, double *frictionfactor);
 bool	Check_Sides(AActor *, int, int);					// phares
 
 // [RH] 
-const secplane_t * P_CheckSlopeWalk (AActor *actor, fixed_t &xmove, fixed_t &ymove);
-inline const secplane_t * P_CheckSlopeWalk(AActor *actor, DVector2 &move)
+const secplane_t * P_CheckSlopeWalk(AActor *actor, DVector2 &move);
+
+inline const secplane_t * P_CheckSlopeWalk(AActor *actor, fixed_t &xmove, fixed_t &ymove)
 {
-	fixedvec2 mov = { FLOAT2FIXED(move.X), FLOAT2FIXED(move.Y) };
-	const secplane_t *ret = P_CheckSlopeWalk(actor, mov.x, mov.y);
-	move = { FIXED2DBL(mov.x), FIXED2DBL(mov.y) };
+	DVector2 move = { FIXED2DBL(xmove), FIXED2DBL(ymove) };
+	const secplane_t *ret = P_CheckSlopeWalk(actor, move);
+	xmove = FLOAT2FIXED(move.X);
+	ymove = FLOAT2FIXED(move.Y);
 	return ret;
 }
 

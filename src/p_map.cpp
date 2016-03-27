@@ -3287,13 +3287,13 @@ CVAR(Bool, aimdebug, false, 0)
 
 struct AimTarget : public FTranslatedLineTarget
 {
-	angle_t pitch;
-	fixed_t frac;
+	DAngle pitch;
+	double frac;
 
 	void Clear()
 	{
 		memset(this, 0, sizeof(*this));
-		frac = FIXED_MAX;
+		frac = FLT_MAX;
 	}
 };
 
@@ -3305,15 +3305,15 @@ struct aim_t
 		aim_down = 2
 	};
 
-	fixed_t			aimpitch;
-	fixed_t			attackrange;
-	fixed_t			shootz;			// Height if not aiming up or down
-	fixed_t			limitz;			// height limit for portals to avoid bad setups
+	DAngle			aimpitch;
+	double			attackrange;
+	double			shootz;			// Height if not aiming up or down
+	double			limitz;			// height limit for portals to avoid bad setups
 	AActor*			shootthing;
 	AActor*			friender;		// actor to check friendliness again
 	AActor*			aimtarget;		// if we want to aim at precisely this target.
 
-	fixed_t			toppitch, bottompitch;
+	DAngle			toppitch, bottompitch;
 	AimTarget		linetarget;
 	AimTarget		thing_friend, thing_other;
 
@@ -3323,9 +3323,9 @@ struct aim_t
 	secplane_t *	lastceilingplane;
 
 	int				aimdir;
-	fixedvec3		startpos;
-	fixedvec2		aimtrace;
-	fixed_t			startfrac;
+	DVector3		startpos;
+	DVector2		aimtrace;
+	double			startfrac;
 
 	bool			crossedffloors;
 	bool			unlinked;
@@ -3347,24 +3347,19 @@ struct aim_t
 		return cloned;
 	}
 
-	// Crosing a line portal does not require a recursive call. We can just alter the current set of data
-	void CrossLinePortal(line_t *line)
-	{
-	}
-
 	//============================================================================
 	//
 	// SetResult
 	//
 	//============================================================================
 
-	void SetResult(AimTarget &res, fixed_t frac, AActor *th, fixed_t pitch)
+	void SetResult(AimTarget &res, double frac, AActor *th, DAngle pitch)
 	{
 		if (res.frac > frac)
 		{
 			res.linetarget = th;
 			res.pitch = pitch;
-			res.angleFromSource = VecToAngle(th->_f_X() - startpos.x, th->_f_Y() - startpos.y);
+			res.angleFromSource = (th->Pos() - startpos).Angle();
 			res.unlinked = unlinked;
 			res.frac = frac;
 		}
@@ -3408,7 +3403,7 @@ struct aim_t
 	//
 	//============================================================================
 
-	bool AimTraverse3DFloors(const fdivline_t &trace, intercept_t * in, int frontflag, int *planestocheck)
+	bool AimTraverse3DFloors(const divline_t &trace, intercept_t * in, int frontflag, int *planestocheck)
 	{
 		sector_t * nextsector;
 		secplane_t * nexttopplane, *nextbottomplane;
@@ -3422,11 +3417,11 @@ struct aim_t
 		if (li->frontsector->e->XFloor.ffloors.Size() || li->backsector->e->XFloor.ffloors.Size())
 		{
 			F3DFloor* rover;
-			int    highpitch, lowpitch;
+			DAngle highpitch, lowpitch;
 
-			fixed_t trX = trace.x + FixedMul(trace.dx, in->frac);
-			fixed_t trY = trace.y + FixedMul(trace.dy, in->frac);
-			fixed_t dist = FixedMul(attackrange, in->frac);
+			double trX = trace.x + trace.dx * in->Frac;
+			double trY = trace.y + trace.dy * in->Frac;
+			double dist = attackrange * in->Frac;
 
 			// 3D floor check. This is not 100% accurate but normally sufficient when
 			// combined with a final sight check
@@ -3441,12 +3436,12 @@ struct aim_t
 
 					if ((rover->flags & FF_SHOOTTHROUGH) || !(rover->flags & FF_EXISTS)) continue;
 
-					fixed_t ff_bottom = rover->bottom.plane->ZatPoint(trX, trY);
-					fixed_t ff_top = rover->top.plane->ZatPoint(trX, trY);
+					double ff_bottom = rover->bottom.plane->ZatPoint(trX, trY);
+					double ff_top = rover->top.plane->ZatPoint(trX, trY);
 
 
-					highpitch = -(int)R_PointToAngle2(0, shootz, dist, ff_top);
-					lowpitch = -(int)R_PointToAngle2(0, shootz, dist, ff_bottom);
+					highpitch = -VecToAngle(dist, ff_top - shootz);
+					lowpitch = -VecToAngle(dist, ff_bottom - shootz);
 
 					if (highpitch <= toppitch)
 					{
@@ -3466,7 +3461,7 @@ struct aim_t
 					else if (lowpitch >= bottompitch)
 					{
 						// blocks lower edge of view
-						if (highpitch<bottompitch)
+						if (highpitch < bottompitch)
 						{
 							bottompitch = highpitch;
 							if (frontflag != i - 1)
@@ -3511,22 +3506,22 @@ struct aim_t
 	//
 	//============================================================================
 
-	void EnterSectorPortal(int position, fixed_t frac, sector_t *entersec, fixed_t newtoppitch, fixed_t newbottompitch)
+	void EnterSectorPortal(int position, double frac, sector_t *entersec, DAngle newtoppitch, DAngle newbottompitch)
 	{
 		AActor *portal = entersec->SkyBoxes[position];
 
-		if (position == sector_t::ceiling && FLOAT2FIXED(portal->specialf1) < limitz) return;
-		else if (position == sector_t::floor && FLOAT2FIXED(portal->specialf1) > limitz) return;
+		if (position == sector_t::ceiling && portal->specialf1 < limitz) return;
+		else if (position == sector_t::floor && portal->specialf1 > limitz) return;
 		aim_t newtrace = Clone();
 
 
 		newtrace.toppitch = newtoppitch;
 		newtrace.bottompitch = newbottompitch;
 		newtrace.aimdir = position == sector_t::ceiling? aim_t::aim_up : aim_t::aim_down;
-		newtrace.startpos = { startpos.x + FLOAT2FIXED(portal->Scale.X), startpos.y + FLOAT2FIXED(portal->Scale.Y), startpos.z };
-		newtrace.startfrac = frac + FixedDiv(FRACUNIT, attackrange);	// this is to skip the transition line to the portal which would produce a bogus opening
-		newtrace.lastsector = P_PointInSector(newtrace.startpos.x + FixedMul(aimtrace.x, newtrace.startfrac) , newtrace.startpos.y + FixedMul(aimtrace.y, newtrace.startfrac));
-		newtrace.limitz = FLOAT2FIXED(portal->specialf1);
+		newtrace.startpos = startpos + portal->Scale;
+		newtrace.startfrac = frac + 1. / attackrange;	// this is to skip the transition line to the portal which would produce a bogus opening
+		newtrace.lastsector = P_PointInSector(newtrace.startpos + aimtrace * newtrace.startfrac);
+		newtrace.limitz = portal->specialf1;
 		if (aimdebug)
 			Printf("-----Entering %s portal from sector %d to sector %d\n", position ? "ceiling" : "floor", lastsector->sectornum, newtrace.lastsector->sectornum);
 		newtrace.AimTraverse();
@@ -3544,7 +3539,7 @@ struct aim_t
 	//
 	//============================================================================
 
-	void EnterLinePortal(line_t *li, fixed_t frac)
+	void EnterLinePortal(line_t *li, double frac)
 	{
 		aim_t newtrace = Clone();
 
@@ -3557,16 +3552,15 @@ struct aim_t
 		newtrace.unlinked = (port->mType != PORTT_LINKED);
 		newtrace.startpos = startpos;
 		newtrace.aimtrace = aimtrace;
-		P_TranslatePortalXY(li, newtrace.startpos.x, newtrace.startpos.y);
-		P_TranslatePortalZ(li, newtrace.startpos.z);
-		P_TranslatePortalVXVY(li, newtrace.aimtrace.x, newtrace.aimtrace.y);
+		P_TranslatePortalXY(li, newtrace.startpos.X, newtrace.startpos.Y);
+		P_TranslatePortalZ(li, newtrace.startpos.Z);
+		P_TranslatePortalVXVY(li, newtrace.aimtrace.X, newtrace.aimtrace.Y);
 
-		newtrace.startfrac = frac + FixedDiv(FRACUNIT, attackrange);	// this is to skip the transition line to the portal which would produce a bogus opening
+		newtrace.startfrac = frac + 1 / attackrange;	// this is to skip the transition line to the portal which would produce a bogus opening
 
-		fixed_t x = newtrace.startpos.x + FixedMul(newtrace.aimtrace.x, newtrace.startfrac);
-		fixed_t y = newtrace.startpos.y + FixedMul(newtrace.aimtrace.y, newtrace.startfrac);
+		DVector2 pos = newtrace.startpos + newtrace.aimtrace * newtrace.startfrac;
 
-		newtrace.lastsector = P_PointInSector(x, y);
+		newtrace.lastsector = P_PointInSector(pos);
 		P_TranslatePortalZ(li, limitz);
 		if (aimdebug)
 			Printf("-----Entering line portal from sector %d to sector %d\n", lastsector->sectornum, newtrace.lastsector->sectornum);
@@ -3601,9 +3595,9 @@ struct aim_t
 		{
 			if ((rover->flags & FF_SHOOTTHROUGH) || !(rover->flags & FF_EXISTS)) continue;
 
-			fixed_t bottomz = rover->bottom.plane->ZatPoint(startpos);
+			double bottomz = rover->bottom.plane->ZatPoint(startpos);
 
-			if (bottomz >= startpos.z + shootthing->_f_height())
+			if (bottomz >= startpos.Z + shootthing->Height)
 			{
 				lastceilingplane = rover->bottom.plane;
 				// no ceiling portal if below a 3D floor
@@ -3611,47 +3605,47 @@ struct aim_t
 			}
 
 			bottomz = rover->top.plane->ZatPoint(startpos);
-			if (bottomz <= startpos.z)
+			if (bottomz <= startpos.Z)
 			{
 				lastfloorplane = rover->top.plane;
 				// no floor portal if above a 3D floor
 				floorportalstate = false;
 			}
 		}
-		if (ceilingportalstate) EnterSectorPortal(sector_t::ceiling, 0, lastsector, toppitch, MIN(0, bottompitch));
-		if (floorportalstate) EnterSectorPortal(sector_t::floor, 0, lastsector, MAX(0, toppitch), bottompitch);
+		if (ceilingportalstate) EnterSectorPortal(sector_t::ceiling, 0, lastsector, toppitch, MIN<DAngle>(0., bottompitch));
+		if (floorportalstate) EnterSectorPortal(sector_t::floor, 0, lastsector, MAX<DAngle>(0., toppitch), bottompitch);
 
-		FPathTraverse it(startpos.x, startpos.y, aimtrace.x, aimtrace.y, PT_ADDLINES | PT_ADDTHINGS | PT_COMPATIBLE | PT_DELTA, startfrac);
+		FPathTraverse it(startpos.X, startpos.Y, aimtrace.X, aimtrace.Y, PT_ADDLINES | PT_ADDTHINGS | PT_COMPATIBLE | PT_DELTA, startfrac);
 		intercept_t *in;
 
 		if (aimdebug)
 			Printf("Start AimTraverse, start = %f,%f,%f, vect = %f,%f\n",
-				startpos.x / 65536., startpos.y / 65536., startpos.z / 65536.,
-				aimtrace.x / 65536., aimtrace.y / 65536.);
+				startpos.X / 65536., startpos.Y / 65536., startpos.Z / 65536.,
+				aimtrace.X / 65536., aimtrace.Y / 65536.);
 		
 		while ((in = it.Next()))
 		{
 			line_t* 			li;
 			AActor* 			th;
-			fixed_t 			pitch;
-			fixed_t 			thingtoppitch;
-			fixed_t 			thingbottompitch;
-			fixed_t 			dist;
-			int					thingpitch;
+			DAngle	 			pitch;
+			DAngle				thingtoppitch;
+			DAngle 				thingbottompitch;
+			double 				dist;
+			DAngle				thingpitch;
 
-			if (linetarget.linetarget != NULL && in->frac > linetarget.frac) return;	// we already found something better in another portal section.
+			if (linetarget.linetarget != NULL && in->Frac > linetarget.frac) return;	// we already found something better in another portal section.
 
 			if (in->isaline)
 			{
 				li = in->d.line;
-				int frontflag = P_PointOnLineSidePrecise(startpos.x, startpos.y, li);
+				int frontflag = P_PointOnLineSidePrecise(startpos, li);
 
 				if (aimdebug)
-					Printf("Found line %d: toppitch = %f, bottompitch = %f\n", int(li - lines), ANGLE2DBL(toppitch), ANGLE2DBL(bottompitch));
+					Printf("Found line %d: ___toppitch = %f, ___bottompitch = %f\n", int(li - lines), toppitch.Degrees, bottompitch.Degrees);
 
 				if (li->isLinePortal() && frontflag == 0)
 				{
-					EnterLinePortal(li, in->frac);
+					EnterLinePortal(li, in->Frac);
 					return;
 				}
 
@@ -3662,24 +3656,24 @@ struct aim_t
 				// Crosses a two sided line.
 				// A two sided line will restrict the possible target ranges.
 				FLineOpening open;
-				P_LineOpening(open, NULL, li, it._f_InterceptPoint(in), FIXED_MIN, 0, FFCF_NODROPOFF);
+				P_LineOpening(open, NULL, li, it.InterceptPoint(in), (DVector2*)nullptr, FFCF_NODROPOFF);
 
 				// The following code assumes that portals on the front of the line have already been processed.
 
 				if (open.range <= 0 || open.bottom >= open.top)
 					return;
 					
-				dist = FixedMul(attackrange, in->frac);
+				dist = attackrange * in->Frac;
 
 				if (open.bottom != LINEOPEN_MIN)
 				{
-					pitch = -(int)R_PointToAngle2(0, shootz, dist, FLOAT2FIXED(open.bottom));
+					pitch = -VecToAngle(dist, open.bottom - shootz);
 					if (pitch < bottompitch) bottompitch = pitch;
 				}
 
 				if (open.top != LINEOPEN_MAX)
 				{
-					pitch = -(int)R_PointToAngle2(0, shootz, dist, FLOAT2FIXED(open.top));
+					pitch = -VecToAngle(dist, open.top - shootz);
 					if (pitch > toppitch) toppitch = pitch;
 				}
 
@@ -3687,11 +3681,11 @@ struct aim_t
 					return;
 
 				int planestocheck;
-				if (!AimTraverse3DFloors(it._f_Trace(), in, frontflag, &planestocheck))
+				if (!AimTraverse3DFloors(it.Trace(), in, frontflag, &planestocheck))
 					return;
 
 				if (aimdebug)
-					Printf("After line %d: toppitch = %f, bottompitch = %f, planestocheck = %d\n", int(li - lines), ANGLE2DBL(toppitch), ANGLE2DBL(bottompitch), planestocheck);
+					Printf("After line %d: toppitch = %f, bottompitch = %f, planestocheck = %d\n", int(li - lines), toppitch.Degrees, bottompitch.Degrees, planestocheck);
 
 				sector_t *entersec = frontflag ? li->frontsector : li->backsector;
 				sector_t *exitsec = frontflag ? li->backsector : li->frontsector;
@@ -3699,11 +3693,11 @@ struct aim_t
 				// check portal in backsector when aiming up/downward is possible, the line doesn't have portals on both sides and there's actually a portal in the backsector
 				if ((planestocheck & aim_up) && toppitch < 0 && open.top != LINEOPEN_MAX && !entersec->PortalBlocksMovement(sector_t::ceiling))
 				{
-					EnterSectorPortal(sector_t::ceiling, in->frac, entersec, toppitch, MIN(0, bottompitch));
+					EnterSectorPortal(sector_t::ceiling, in->Frac, entersec, toppitch, MIN<DAngle>(0., bottompitch));
 				}
 				if ((planestocheck & aim_down) && bottompitch > 0 && open.bottom != LINEOPEN_MIN && !entersec->PortalBlocksMovement(sector_t::floor))
 				{
-					EnterSectorPortal(sector_t::floor, in->frac, entersec, MAX(0, toppitch), bottompitch);
+					EnterSectorPortal(sector_t::floor, in->Frac, entersec, MAX<DAngle>(0., toppitch), bottompitch);
 				}
 				continue;					// shot continues
 			}
@@ -3735,7 +3729,7 @@ struct aim_t
 					}
 				}
 			}
-			dist = FixedMul(attackrange, in->frac);
+			dist = attackrange * in->Frac;
 
 			// Don't autoaim certain special actors
 			if (!cl_doautoaim && th->flags6 & MF6_NOTAUTOAIMED)
@@ -3748,8 +3742,8 @@ struct aim_t
 			{
 				if (lastceilingplane)
 				{
-					fixed_t ff_top = lastceilingplane->ZatPoint(th);
-					fixed_t pitch = -(int)R_PointToAngle2(0, shootz, dist, ff_top);
+					double ff_top = lastceilingplane->ZatPointF(th);
+					DAngle pitch = -VecToAngle(dist, ff_top - shootz);
 					// upper slope intersects with this 3d-floor
 					if (pitch > toppitch)
 					{
@@ -3758,8 +3752,8 @@ struct aim_t
 				}
 				if (lastfloorplane)
 				{
-					fixed_t ff_bottom = lastfloorplane->ZatPoint(th);
-					fixed_t pitch = -(int)R_PointToAngle2(0, shootz, dist, ff_bottom);
+					double ff_bottom = lastfloorplane->ZatPointF(th);
+					DAngle pitch = -VecToAngle(dist, ff_bottom - shootz);
 					// lower slope intersects with this 3d-floor
 					if (pitch < bottompitch)
 					{
@@ -3770,12 +3764,12 @@ struct aim_t
 
 			// check angles to see if the thing can be aimed at
 
-			thingtoppitch = -(int)R_PointToAngle2(0, shootz, dist, th->_f_Z() + th->_f_height());
+			thingtoppitch = -VecToAngle(dist, th->Top() - shootz);
 
 			if (thingtoppitch > bottompitch)
 				continue;					// shot over the thing
 
-			thingbottompitch = -(int)R_PointToAngle2(0, shootz, dist, th->_f_Z());
+			thingbottompitch = -VecToAngle(dist, th->Z() - shootz);
 
 			if (thingbottompitch < toppitch)
 				continue;					// shot under the thing
@@ -3814,10 +3808,11 @@ struct aim_t
 				// combination with P_LineAttack. P_LineAttack uses 3D distance but FPathTraverse
 				// only 2D. This causes some problems with Hexen's weapons that use different
 				// attack modes based on distance to target
-				fixed_t cosine = finecosine[thingpitch >> ANGLETOFINESHIFT];
+				double cosine = thingpitch.Cos();
 				if (cosine != 0)
 				{
-					fixed_t d3 = FixedDiv(FixedMul(P_AproxDistance(it._f_Trace().dx, it._f_Trace().dy), in->frac), cosine);
+					double tracelen = DVector2(it.Trace().dx, it.Trace().dy).Length();
+					double d3 = tracelen * in->Frac / cosine;
 					if (d3 > attackrange)
 					{
 						return;
@@ -3840,7 +3835,7 @@ struct aim_t
 						// friends don't aim at friends (except players), at least not first
 						if (aimdebug)
 							Printf("Hit friend %s at %f,%f,%f\n", th->GetClass()->TypeName.GetChars(), th->X(), th->Y(), th->Z());
-						SetResult(thing_friend, in->frac, th, thingpitch);
+						SetResult(thing_friend, in->Frac, th, thingpitch);
 					}
 				}
 				else if (!(th->flags3 & MF3_ISMONSTER) && th->player == NULL)
@@ -3850,14 +3845,14 @@ struct aim_t
 						// don't autoaim at barrels and other shootable stuff unless no monsters have been found
 						if (aimdebug)
 							Printf("Hit other %s at %f,%f,%f\n", th->GetClass()->TypeName.GetChars(), th->X(), th->Y(), th->Z());
-						SetResult(thing_other, in->frac, th, thingpitch);
+						SetResult(thing_other, in->Frac, th, thingpitch);
 					}
 				}
 				else
 				{
 					if (aimdebug)
 						Printf("Hit target %s at %f,%f,%f\n", th->GetClass()->TypeName.GetChars(), th->X(), th->Y(), th->Z());
-					SetResult(linetarget, in->frac, th, thingpitch);
+					SetResult(linetarget, in->Frac, th, thingpitch);
 					return;
 				}
 			}
@@ -3865,7 +3860,7 @@ struct aim_t
 			{
 				if (aimdebug)
 					Printf("Hit target %s at %f,%f,%f\n", th->GetClass()->TypeName.GetChars(), th->X(), th->Y(), th->Z());
-				SetResult(linetarget, in->frac, th, thingpitch);
+				SetResult(linetarget, in->Frac, th, thingpitch);
 				return;
 			}
 		}
@@ -3881,14 +3876,14 @@ struct aim_t
 DAngle P_AimLineAttack(AActor *t1, DAngle angle, double distance, FTranslatedLineTarget *pLineTarget, DAngle vrange,
 	int flags, AActor *target, AActor *friender)
 {
-	fixed_t shootz = t1->_f_Z() + (t1->_f_height() >> 1) - t1->_f_floorclip();
+	double shootz = t1->Center() - t1->Floorclip;
 	if (t1->player != NULL)
 	{
-		shootz += FLOAT2FIXED(t1->player->mo->AttackZOffset * t1->player->crouchfactor);
+		shootz += t1->player->mo->AttackZOffset * t1->player->crouchfactor;
 	}
 	else
 	{
-		shootz += 8 * FRACUNIT;
+		shootz += 8;
 	}
 
 	// can't shoot outside view angles
@@ -3923,13 +3918,13 @@ DAngle P_AimLineAttack(AActor *t1, DAngle angle, double distance, FTranslatedLin
 	aim.shootthing = t1;
 	aim.friender = (friender == NULL) ? t1 : friender;
 	aim.aimdir = aim_t::aim_up | aim_t::aim_down;
-	aim.startpos = t1->_f_Pos();
-	aim.aimtrace = Vec2Angle(FLOAT2FIXED(distance), angle);
+	aim.startpos = t1->Pos();
+	aim.aimtrace = angle.ToVector(distance);
 	aim.limitz = aim.shootz = shootz;
-	aim.toppitch = (t1->Angles.Pitch - vrange).BAMs();
-	aim.bottompitch = (t1->Angles.Pitch + vrange).BAMs();
-	aim.attackrange = FLOAT2FIXED(distance);
-	aim.aimpitch = t1->_f_pitch();
+	aim.toppitch = t1->Angles.Pitch - vrange;
+	aim.bottompitch = t1->Angles.Pitch + vrange;
+	aim.attackrange = distance;
+	aim.aimpitch = t1->Angles.Pitch;
 	aim.lastsector = t1->Sector;
 	aim.startfrac = 0;
 	aim.unlinked = false;
@@ -3943,7 +3938,7 @@ DAngle P_AimLineAttack(AActor *t1, DAngle angle, double distance, FTranslatedLin
 	{
 		*pLineTarget = *result;
 	}
-	return result->linetarget ? DAngle(ANGLE2DBL(result->pitch)) : t1->Angles.Pitch;
+	return result->linetarget ? result->pitch : t1->Angles.Pitch;
 }
 
 

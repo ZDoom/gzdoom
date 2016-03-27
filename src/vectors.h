@@ -86,6 +86,11 @@ struct TVector2
 		Y = X = 0;
 	}
 
+	bool isZero() const
+	{
+		return X == 0 && Y == 0;
+	}
+
 	TVector2 &operator= (const TVector2 &other)
 	{
 		// This might seem backwards, but this helps produce smaller code when a newly

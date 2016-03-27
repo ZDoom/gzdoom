@@ -1,5 +1,4 @@
 // Emacs style mode select	 -*- C++ -*- 
-// Emacs style mode select	 -*- C++ -*- 
 //-----------------------------------------------------------------------------
 //
 // $Id:$
@@ -1386,8 +1385,8 @@ void P_ExplodeMissile (AActor *mo, line_t *line, AActor *target)
 
 	if (line != NULL && cl_missiledecals)
 	{
-		fixedvec3 pos = mo->_f_PosRelative(line);
-		int side = P_PointOnLineSidePrecise (pos.x, pos.y, line);
+		DVector3 pos = mo->PosRelative(line);
+		int side = P_PointOnLineSidePrecise (pos, line);
 		if (line->sidedef[side] == NULL)
 			side ^= 1;
 		if (line->sidedef[side] != NULL)
@@ -1396,31 +1395,15 @@ void P_ExplodeMissile (AActor *mo, line_t *line, AActor *target)
 			if (base != NULL)
 			{
 				// Find the nearest point on the line, and stick a decal there
-				fixed_t x, y, z;
-				SQWORD num, den;
+				DVector3 linepos;
+				double num, den, frac;
 
-				den = (SQWORD)line->dx*line->dx + (SQWORD)line->dy*line->dy;
+				den = line->Delta().LengthSquared();
 				if (den != 0)
 				{
-					SDWORD frac;
+					frac = clamp<double>((mo->Pos() - line->v1->fPos()) | line->Delta(), 0, den) / den;
 
-					num = (SQWORD)(pos.x-line->v1->x)*line->dx+(SQWORD)(pos.y-line->v1->y)*line->dy;
-					if (num <= 0)
-					{
-						frac = 0;
-					}
-					else if (num >= den)
-					{
-						frac = 1<<30;
-					}
-					else
-					{
-						frac = (SDWORD)(num / (den>>30));
-					}
-
-					x = line->v1->x + MulScale30 (line->dx, frac);
-					y = line->v1->y + MulScale30 (line->dy, frac);
-					z = pos.z;
+					linepos = DVector3(line->v1->fPos() + line->Delta() * frac, pos.Z);
 
 					F3DFloor * ffloor=NULL;
 					if (line->sidedef[side^1] != NULL)
@@ -1434,16 +1417,16 @@ void P_ExplodeMissile (AActor *mo, line_t *line, AActor *target)
 
 							if ((rover->flags&(FF_EXISTS|FF_SOLID|FF_RENDERSIDES))==(FF_EXISTS|FF_SOLID|FF_RENDERSIDES))
 							{
-								if (z<=rover->top.plane->ZatPoint(x, y) && z>=rover->bottom.plane->ZatPoint( x, y))
+								if (pos.Z <= rover->top.plane->ZatPoint(linepos) && pos.Z >= rover->bottom.plane->ZatPoint(linepos))
 								{
-									ffloor=rover;
+									ffloor = rover;
 									break;
 								}
 							}
 						}
 					}
 
-					DImpactDecal::StaticCreate(base->GetDecal(), DVector3(FIXED2DBL(x), FIXED2DBL(y), FIXED2DBL(z)), line->sidedef[side], ffloor);
+					DImpactDecal::StaticCreate(base->GetDecal(), linepos, line->sidedef[side], ffloor);
 				}
 			}
 		}
@@ -1529,7 +1512,7 @@ void AActor::PlayBounceSound(bool onfloor)
 
 bool AActor::FloorBounceMissile (secplane_t &plane)
 {
-	if (_f_Z() <= _f_floorz() && P_HitFloor (this))
+	if (Z() <= floorz && P_HitFloor (this))
 	{
 		// Landed in some sort of liquid
 		if (BounceFlags & BOUNCE_ExplodeOnWater)
@@ -1760,22 +1743,22 @@ bool P_SeekerMissile (AActor *actor, double thresh, double turnMax, bool precise
 // Returns the actor's old floorz.
 //
 #define STOPSPEED			(0x1000/65536.)
-#define CARRYSTOPSPEED		(0x1000*32/3)
+#define CARRYSTOPSPEED		((0x1000*32/3)/65536.)
 
-fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly) 
+double P_XYMovement (AActor *mo, DVector2 scroll) 
 {
 	static int pushtime = 0;
-	bool bForceSlide = scrollx || scrolly;
+	bool bForceSlide = !scroll.isZero();
 	DAngle Angle;
-	fixed_t ptryx, ptryy;
+	DVector2 ptry;
 	player_t *player;
-	fixed_t xmove, ymove;
+	DVector2 move;
 	const secplane_t * walkplane;
 	static const double windTab[3] = { 5 / 32., 10 / 32., 25 / 32. };
 	int steps, step, totalsteps;
-	fixed_t startx, starty;
-	fixed_t oldfloorz = mo->_f_floorz();
-	fixed_t oldz = mo->_f_Z();
+	DVector2 start;
+	double Oldfloorz = mo->floorz;
+	double oldz = mo->Z();
 
 	double maxmove = (mo->waterlevel < 1) || (mo->flags & MF_MISSILE) || 
 					  (mo->player && mo->player->crouchoffset<-10) ? MAXMOVE : MAXMOVE/4;
@@ -1815,29 +1798,27 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 		mo->Vel.X *= fac;
 		mo->Vel.Y *= fac;
 	}
-	xmove = mo->_f_velx();
-	ymove = mo->_f_vely();
+	move = mo->Vel;
 	// [RH] Carrying sectors didn't work with low speeds in BOOM. This is
 	// because BOOM relied on the speed being fast enough to accumulate
 	// despite friction. If the speed is too low, then its movement will get
 	// cancelled, and it won't accumulate to the desired speed.
 	mo->flags4 &= ~MF4_SCROLLMOVE;
-	if (abs(scrollx) > CARRYSTOPSPEED)
+	if (fabs(scroll.X) > CARRYSTOPSPEED)
 	{
-		scrollx = FixedMul (scrollx, _f_CARRYFACTOR);
-		mo->Vel.X += FIXED2DBL(scrollx);
+		scroll.X *= CARRYFACTOR;
+		mo->Vel.X += scroll.X;
 		mo->flags4 |= MF4_SCROLLMOVE;
 	}
-	if (abs(scrolly) > CARRYSTOPSPEED)
+	if (fabs(scroll.Y) > CARRYSTOPSPEED)
 	{
-		scrolly = FixedMul (scrolly, _f_CARRYFACTOR);
-		mo->Vel.Y += FIXED2DBL(scrolly);
+		scroll.Y *= CARRYFACTOR;
+		mo->Vel.Y += scroll.Y;
 		mo->flags4 |= MF4_SCROLLMOVE;
 	}
-	xmove += scrollx;
-	ymove += scrolly;
+	move += scroll;
 
-	if ((xmove | ymove) == 0)
+	if (move.isZero())
 	{
 		if (mo->flags & MF_SKULLFLY)
 		{
@@ -1855,15 +1836,14 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 				mo->tics = -1;
 			}
 		}
-		return oldfloorz;
+		return Oldfloorz;
 	}
 
 	player = mo->player;
 
 	// [RH] Adjust player movement on sloped floors
-	fixed_t startxmove = xmove;
-	fixed_t startymove = ymove;
-	walkplane = P_CheckSlopeWalk (mo, xmove, ymove);
+	DVector2 startmove = move;
+	walkplane = P_CheckSlopeWalk (mo, move);
 
 	// [RH] Take smaller steps when moving faster than the object's size permits.
 	// Moving as fast as the object's "diameter" is bad because it could skip
@@ -1872,15 +1852,15 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 	// through the actor.
 
 	{
-		fixed_t maxmove = mo->_f_radius() - FRACUNIT;
+		double maxmove = mo->radius - 1;
 
 		if (maxmove <= 0)
-		{ // gibs can have _f_radius() 0, so don't divide by zero below!
-			maxmove = _f_MAXMOVE;
+		{ // gibs can have radius 0, so don't divide by zero below!
+			maxmove = MAXMOVE;
 		}
 
-		const fixed_t xspeed = abs (xmove);
-		const fixed_t yspeed = abs (ymove);
+		const double xspeed = fabs (move.X);
+		const double yspeed = fabs (move.Y);
 
 		steps = 1;
 
@@ -1888,25 +1868,23 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 		{
 			if (xspeed > maxmove)
 			{
-				steps = 1 + xspeed / maxmove;
+				steps = int(1 + xspeed / maxmove);
 			}
 		}
 		else
 		{
 			if (yspeed > maxmove)
 			{
-				steps = 1 + yspeed / maxmove;
+				steps = int(1 + yspeed / maxmove);
 			}
 		}
 	}
 
 	// P_SlideMove needs to know the step size before P_CheckSlopeWalk
 	// because it also calls P_CheckSlopeWalk on its clipped steps.
-	fixed_t onestepx = startxmove / steps;
-	fixed_t onestepy = startymove / steps;
+	DVector2 onestep = startmove / steps;
 
-	startx = mo->_f_X();
-	starty = mo->_f_Y();
+	start = mo->Pos();
 	step = 1;
 	totalsteps = steps;
 
@@ -1923,23 +1901,19 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 
 	FCheckPosition tm(!!(mo->flags2 & MF2_RIP));
 
-	angle_t oldangle = mo->_f_angle();
+	DAngle oldangle = mo->Angles.Yaw;
 	do
 	{
 		if (i_compatflags & COMPATF_WALLRUN) pushtime++;
 		tm.PushTime = pushtime;
 
-		ptryx = startx + Scale (xmove, step, steps);
-		ptryy = starty + Scale (ymove, step, steps);
+		ptry = start + move * step / steps;
 
-/*		if (mo->player)
-		Printf ("%d,%d/%d: %d %d %d %d %d %d %d\n", level.time, step, steps, startxmove, Scale(xmove,step,steps), startymove, Scale(ymove,step,steps), mo->x, mo->y, mo->z);
-*/
-		// [RH] If walking on a slope, stay on the slope
+		DVector2 startvel = mo->Vel;
+
 		// killough 3/15/98: Allow objects to drop off
-		fixed_t startvelx = mo->_f_velx(), startvely = mo->_f_vely();
-
-		if (!P_TryMove (mo, DVector2(FIXED2DBL(ptryx), FIXED2DBL(ptryy)), true, walkplane, tm))
+		// [RH] If walking on a slope, stay on the slope
+		if (!P_TryMove (mo, ptry, true, walkplane, tm))
 		{
 			// blocked move
 			AActor *BlockingMobj = mo->BlockingMobj;
@@ -1964,7 +1938,7 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 					}
 					// If the blocked move executed any push specials that changed the
 					// actor's velocity, do not attempt to slide.
-					if (mo->_f_velx() == startvelx && mo->_f_vely() == startvely)
+					if (mo->Vel.XY() == startvel)
 					{
 						if (player && (i_compatflags & COMPATF_WALLRUN))
 						{
@@ -1976,9 +1950,9 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 						}
 						else
 						{
-							P_SlideMove (mo, DVector2(FIXED2DBL(onestepx), FIXED2DBL(onestepy)), totalsteps);
+							P_SlideMove (mo, onestep, totalsteps);
 						}
-						if ((mo->_f_velx() | mo->_f_vely()) == 0)
+						if (mo->Vel.XY().isZero())
 						{
 							steps = 0;
 						}
@@ -1986,14 +1960,11 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 						{
 							if (!player || !(i_compatflags & COMPATF_WALLRUN))
 							{
-								xmove = mo->_f_velx();
-								ymove = mo->_f_vely();
-								onestepx = xmove / steps;
-								onestepy = ymove / steps;
-								P_CheckSlopeWalk (mo, xmove, ymove);
+								move = mo->Vel;
+								onestep = move / steps;
+								P_CheckSlopeWalk (mo, move);
 							}
-							startx = mo->_f_X() - Scale (xmove, step, steps);
-							starty = mo->_f_Y() - Scale (ymove, step, steps);
+							start = mo->Pos().XY() - move * step / steps;
 						}
 					}
 					else
@@ -2003,18 +1974,18 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 				}
 				else
 				{ // slide against another actor
-					fixed_t tx, ty;
-					tx = 0, ty = onestepy;
-					walkplane = P_CheckSlopeWalk (mo, tx, ty);
-					if (P_TryMove (mo, mo->Pos() + DVector2(FIXED2DBL(tx), FIXED2DBL(ty)), true, walkplane, tm))
+					DVector2 t;
+					t.X = 0, t.Y = onestep.Y;
+					walkplane = P_CheckSlopeWalk (mo, t);
+					if (P_TryMove (mo, mo->Pos() + t, true, walkplane, tm))
 					{
 						mo->Vel.X = 0;
 					}
 					else
 					{
-						tx = onestepx, ty = 0;
-						walkplane = P_CheckSlopeWalk (mo, tx, ty);
-						if (P_TryMove (mo, mo->Pos() + DVector2(FIXED2DBL(tx), FIXED2DBL(ty)), true, walkplane, tm))
+						t.X = onestep.X, t.Y = 0;
+						walkplane = P_CheckSlopeWalk (mo, t);
+						if (P_TryMove (mo, mo->Pos() + t, true, walkplane, tm))
 						{
 							mo->Vel.Y = 0;
 						}
@@ -2045,7 +2016,7 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 						{	// Struck a player/creature
 							P_ExplodeMissile (mo, NULL, BlockingMobj);
 						}
-						return oldfloorz;
+						return Oldfloorz;
 					}
 				}
 				else
@@ -2054,7 +2025,7 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 					if (P_BounceWall (mo))
 					{
 						mo->PlayBounceSound(false);
-						return oldfloorz;
+						return Oldfloorz;
 					}
 				}
 				if (BlockingMobj && (BlockingMobj->flags2 & MF2_REFLECTIVE))
@@ -2105,7 +2076,7 @@ fixed_t P_XYMovement (AActor *mo, fixed_t scrollx, fixed_t scrolly)
 						mo->tracer = mo->target;
 					}
 					mo->target = BlockingMobj;
-					return oldfloorz;
+					return Oldfloorz;
 				}
 explode:
 				// explode a missile
@@ -2114,22 +2085,22 @@ explode:
 					if (tm.ceilingline &&
 						tm.ceilingline->backsector &&
 						tm.ceilingline->backsector->GetTexture(sector_t::ceiling) == skyflatnum &&
-						mo->_f_Z() >= tm.ceilingline->backsector->ceilingplane.ZatPoint(mo->_f_PosRelative(tm.ceilingline)))
+						mo->Z() >= tm.ceilingline->backsector->ceilingplane.ZatPoint(mo->PosRelative(tm.ceilingline)))
 					{
 						// Hack to prevent missiles exploding against the sky.
 						// Does not handle sky floors.
 						mo->Destroy ();
-						return oldfloorz;
+						return Oldfloorz;
 					}
 					// [RH] Don't explode on horizon lines.
 					if (mo->BlockingLine != NULL && mo->BlockingLine->special == Line_Horizon)
 					{
 						mo->Destroy ();
-						return oldfloorz;
+						return Oldfloorz;
 					}
 				}
 				P_ExplodeMissile (mo, mo->BlockingLine, BlockingMobj);
-				return oldfloorz;
+				return Oldfloorz;
 			}
 			else
 			{
@@ -2139,32 +2110,26 @@ explode:
 		}
 		else
 		{
-			if (mo->_f_X() != ptryx || mo->_f_Y() != ptryy)
+			if (mo->Pos().XY() != ptry)
 			{
 				// If the new position does not match the desired position, the player
 				// must have gone through a teleporter, so stop moving right now if it
 				// was a regular teleporter. If it was a line-to-line or fogless teleporter,
-				// the move should continue, but startx, starty and xmove, ymove need to change.
+				// the move should continue, but start and move need to change.
 				if (mo->Vel.X == 0 && mo->Vel.Y == 0)
 				{
 					step = steps;
 				}
 				else
 				{
-					angle_t anglediff = (mo->_f_angle() - oldangle) >> ANGLETOFINESHIFT;
+					DAngle anglediff = deltaangle(oldangle, mo->Angles.Yaw);
 
 					if (anglediff != 0)
 					{
-						fixed_t xnew = FixedMul(xmove, finecosine[anglediff]) - FixedMul(ymove, finesine[anglediff]);
-						fixed_t ynew = FixedMul(xmove, finesine[anglediff]) + FixedMul(ymove, finecosine[anglediff]);
-
-						xmove = xnew;
-						ymove = ynew;
-						oldangle = mo->_f_angle();	// in case more moves are needed this needs to be updated.
+						move = move.Rotated(anglediff);
+						oldangle = mo->Angles.Yaw;	// in case more moves are needed this needs to be updated.
 					}
-
-					startx = mo->_f_X() - Scale (xmove, step, steps);
-					starty = mo->_f_Y() - Scale (ymove, step, steps);
+					start = mo->Pos() - move * step / steps;
 				}
 			}
 		}
@@ -2176,12 +2141,12 @@ explode:
 	{ // debug option for no sliding at all
 		mo->Vel.X = mo->Vel.Y = 0;
 		player->Vel.X = player->Vel.Y = 0;
-		return oldfloorz;
+		return Oldfloorz;
 	}
 
 	if (mo->flags & (MF_MISSILE | MF_SKULLFLY))
 	{ // no friction for missiles
-		return oldfloorz;
+		return Oldfloorz;
 	}
 
 	if (mo->Z() > mo->floorz && !(mo->flags2 & MF2_ONMOBJ) &&
@@ -2200,7 +2165,7 @@ explode:
 				player->Vel.Y *= level.airfriction;
 			}
 		}
-		return oldfloorz;
+		return Oldfloorz;
 	}
 
 	// killough 8/11/98: add bouncers
@@ -2221,10 +2186,10 @@ explode:
 						// if the floor comes from one in the current sector stop sliding the corpse!
 						F3DFloor * rover=mo->Sector->e->XFloor.ffloors[i];
 						if (!(rover->flags&FF_EXISTS)) continue;
-						if (rover->flags&FF_SOLID && rover->top.plane->ZatPoint(mo) == mo->_f_floorz()) break;
+						if (rover->flags&FF_SOLID && rover->top.plane->ZatPointF(mo) == mo->floorz) break;
 					}
 					if (i==mo->Sector->e->XFloor.ffloors.Size()) 
-						return oldfloorz;
+						return Oldfloorz;
 				}
 			}
 		}
@@ -2291,7 +2256,7 @@ explode:
 			if (fabs(player->Vel.Y) < MinVel) player->Vel.Y = 0;
 		}
 	}
-	return oldfloorz;
+	return Oldfloorz;
 }
 
 // Move this to p_inter ***
@@ -3724,9 +3689,7 @@ void AActor::Tick ()
 
 		// Handle X and Y velocities
 		BlockingMobj = NULL;
-		assert(!player || !isnan(Vel.X));
-		fixed_t oldfloorz = P_XYMovement (this, cummx, cummy);
-		assert(!player || !isnan(Vel.X));
+		fixed_t oldfloorz = FLOAT2FIXED(P_XYMovement (this, DVector2(FIXED2DBL(cummx), FIXED2DBL(cummy))));
 		if (ObjectFlags & OF_EuthanizeMe)
 		{ // actor was destroyed
 			return;

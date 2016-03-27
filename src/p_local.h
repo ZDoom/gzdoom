@@ -84,7 +84,6 @@ inline int GetSafeBlockY(long long blocky)
 }
 
 //#define GRAVITY 		FRACUNIT
-#define _f_MAXMOVE 		(30*FRACUNIT)
 #define MAXMOVE 		(30.)
 
 #define TALKRANGE		(128.)

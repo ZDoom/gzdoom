@@ -330,7 +330,7 @@ struct secplane_t
 
 	double ZatPointF(const AActor *ac) const
 	{
-		return FIXED2DBL(ZatPoint(ac));
+		return (d + a*ac->X() + b*ac->Y()) * ic / (-65536.0 * 65536.0);
 	}
 
 	// Returns the value of z at (x,y) if d is equal to dist
@@ -643,6 +643,11 @@ struct sector_t
 		planes[pos].xform.xoffs += o;
 	}
 
+	void AddXOffset(int pos, double o)
+	{
+		planes[pos].xform.xoffs += FLOAT2FIXED(o);
+	}
+
 	fixed_t GetXOffset(int pos) const
 	{
 		return planes[pos].xform.xoffs;
@@ -661,6 +666,11 @@ struct sector_t
 	void AddYOffset(int pos, fixed_t o)
 	{
 		planes[pos].xform.yoffs += o;
+	}
+
+	void AddYOffset(int pos, double o)
+	{
+		planes[pos].xform.yoffs += FLOAT2FIXED(o);
 	}
 
 	fixed_t GetYOffset(int pos, bool addbase = true) const
@@ -945,6 +955,8 @@ struct sector_t
 	// Member variables
 	fixed_t		CenterFloor () const { return floorplane.ZatPoint (_f_centerspot()); }
 	fixed_t		CenterCeiling () const { return ceilingplane.ZatPoint (_f_centerspot()); }
+	double		CenterFloorF() const { return floorplane.ZatPoint(centerspot); }
+	double		CenterCeilingF() const { return ceilingplane.ZatPoint(centerspot); }
 
 	// [RH] store floor and ceiling planes instead of heights
 	secplane_t	floorplane, ceilingplane;
@@ -1134,6 +1146,10 @@ struct side_t
 	{
 		textures[which].xoffset += delta;
 	}
+	void AddTextureXOffset(int which, double delta)
+	{
+		textures[which].xoffset += FLOAT2FIXED(delta);
+	}
 
 	void SetTextureYOffset(int which, fixed_t offset)
 	{
@@ -1156,6 +1172,10 @@ struct side_t
 	void AddTextureYOffset(int which, fixed_t delta)
 	{
 		textures[which].yoffset += delta;
+	}
+	void AddTextureYOffset(int which, double delta)
+	{
+		textures[which].yoffset += FLOAT2FIXED(delta);
 	}
 
 	void SetTextureXScale(int which, fixed_t scale)

@@ -3597,7 +3597,8 @@ void AActor::Tick ()
 				}
 				DVector3 pos = PosRelative(sec);
 				height = sec->floorplane.ZatPoint (pos);
-				if (Z() > height)
+				double height2 = sec->floorplane.ZatPoint(this);
+				if (isAbove(height))
 				{
 					if (heightsec == NULL)
 					{

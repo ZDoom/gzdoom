@@ -565,6 +565,7 @@ fixed_t P_AproxDistance (fixed_t dx, fixed_t dy);	// since we cannot include p_l
 angle_t R_PointToAngle2 (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2); // same reason here with r_defs.h
 
 const double MinVel = 1. / 65536;
+const double Z_Epsilon = 1. / 65536.;
 
 // Map Object definition.
 class AActor : public DThinker
@@ -1293,6 +1294,20 @@ public:
 	DVector3 Pos() const
 	{
 		return __Pos;
+	}
+	// Note: Never compare z directly with a plane height if you want to know if the actor is *on* the plane. Some very minor inaccuracies may creep in. Always use these inline functions!
+	// Comparing with floorz is ok because those values come from the same calculations.
+	bool isAbove(double checkz) const
+	{
+		return Z() > checkz + Z_Epsilon;
+	}
+	bool isBelow(double checkz) const
+	{
+		return Z() < checkz - Z_Epsilon;
+	}
+	bool isAtZ(double checkz)
+	{
+		return fabs(Z() - checkz) < Z_Epsilon;
 	}
 
 	fixedvec3 _f_PosRelative(int grp) const;

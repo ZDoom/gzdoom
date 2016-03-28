@@ -55,7 +55,7 @@ enum EScrollPos : int
 	scw_all = 7,
 };
 
-void P_CreateScroller(EScroll type, fixed_t dx, fixed_t dy, int control, int affectee, int accel, EScrollPos scrollpos = EScrollPos::scw_all);
+void P_CreateScroller(EScroll type, double dx, double dy, int control, int affectee, int accel, EScrollPos scrollpos = EScrollPos::scw_all);
 
 
 //jff 2/23/98 identify the special classes that can share sectors
@@ -660,14 +660,14 @@ bool EV_DoCeiling (DCeiling::ECeiling type, line_t *line,
 
 inline bool EV_DoCeiling(DCeiling::ECeiling type, line_t *line,
 	int tag, double speed, double speed2, fixed_t height,
-	int crush, int silent, int change, bool hexencrush)
+	int crush, int silent, int change, DCeiling::ECrushMode hexencrush = DCeiling::ECrushMode::crushDoom)
 {
 	return EV_DoCeiling(type, line, tag, FLOAT2FIXED(speed), FLOAT2FIXED(speed2), height, crush, silent, change, hexencrush);
 }
 
 inline bool EV_DoCeiling(DCeiling::ECeiling type, line_t *line,
 	int tag, double speed, int speed2, fixed_t height,
-	int crush, int silent, int change, bool hexencrush)
+	int crush, int silent, int change, DCeiling::ECrushMode hexencrush = DCeiling::ECrushMode::crushDoom)
 {
 	return EV_DoCeiling(type, line, tag, FLOAT2FIXED(speed), speed2, height, crush, silent, change, hexencrush);
 }

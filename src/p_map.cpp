@@ -2992,7 +2992,7 @@ const secplane_t * P_CheckSlopeWalk(AActor *actor, DVector2 &move)
 		}
 		else if (t > 0)
 		{ // Desired location is in front of (above) the plane
-			if (fabs(planezhere - actor->Z() < (1/65536.)))	// it is very important not to be too precise here.
+			if (actor->isAtZ(planezhere))	// it is very important not to be too precise here.
 			{ 
 				// Actor's current spot is on/in the plane, so walk down it
 				// Same principle as walking up, except reversed

@@ -402,7 +402,7 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 	{
 		// Falling, not all the way down yet?
 		sector = player->mo->Sector;
-		if (player->mo->Z() != sector->LowestFloorAt(player->mo)
+		if (!player->mo->isAtZ(sector->LowestFloorAt(player->mo))
 			&& !player->mo->waterlevel)
 		{
 			return;
@@ -1203,8 +1203,7 @@ void P_InitSectorSpecial(sector_t *sector, int special, bool nothinkers)
 		if (!nothinkers)
 		{
 			new DStrobe(sector, STROBEBRIGHT, FASTDARK, false);
-			P_CreateScroller(EScroll::sc_floor, -((FRACUNIT / 2) << 3),
-				0, -1, int(sector - sectors), 0);
+			P_CreateScroller(EScroll::sc_floor, -4., 0, -1, int(sector - sectors), 0);
 		}
 		keepspecial = true;
 		break;
@@ -1248,7 +1247,7 @@ void P_InitSectorSpecial(sector_t *sector, int special, bool nothinkers)
 		if (sector->special >= Scroll_North_Slow &&
 			sector->special <= Scroll_SouthWest_Fast)
 		{ // Hexen scroll special
-			static const char hexenScrollies[24][2] =
+			static const SBYTE hexenScrollies[24][2] =
 			{
 				{  0,  1 }, {  0,  2 }, {  0,  4 },
 				{ -1,  0 }, { -2,  0 }, { -4,  0 },
@@ -1262,8 +1261,8 @@ void P_InitSectorSpecial(sector_t *sector, int special, bool nothinkers)
 
 			
 			int i = sector->special - Scroll_North_Slow;
-			fixed_t dx = hexenScrollies[i][0] * (FRACUNIT/2);
-			fixed_t dy = hexenScrollies[i][1] * (FRACUNIT/2);
+			double dx = hexenScrollies[i][0] / 2.;
+			double dy = hexenScrollies[i][1] / 2.;
 			if (!nothinkers) P_CreateScroller(EScroll::sc_floor, dx, dy, -1, int(sector-sectors), 0);
 		}
 		else if (sector->special >= Carry_East5 &&
@@ -1271,8 +1270,7 @@ void P_InitSectorSpecial(sector_t *sector, int special, bool nothinkers)
 		{ // Heretic scroll special
 			// Only east scrollers also scroll the texture
 			if (!nothinkers) P_CreateScroller(EScroll::sc_floor,
-				(-FRACUNIT/2)<<(sector->special - Carry_East5),
-				0, -1, int(sector-sectors), 0);
+				-0.5 * (1 << ((sector->special & 0xff) - Carry_East5)),	0, -1, int(sector-sectors), 0);
 		}
 		keepspecial = true;
 		break;

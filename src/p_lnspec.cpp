@@ -1955,7 +1955,7 @@ FUNC(LS_FloorAndCeiling_RaiseByValue)
 FUNC(LS_FloorAndCeiling_LowerRaise)
 // FloorAndCeiling_LowerRaise (tag, fspeed, cspeed, boomemu)
 {
-	bool res = EV_DoCeiling (DCeiling::ceilRaiseToHighest, ln, arg0, SPEED(arg2), 0, 0, 0, 0, 0, false);
+	bool res = EV_DoCeiling (DCeiling::ceilRaiseToHighest, ln, arg0, SPEED(arg2), 0, 0, 0, 0, 0);
 	// The switch based Boom equivalents of FloorandCeiling_LowerRaise do incorrect checks
 	// which cause the floor only to move when the ceiling fails to do so.
 	// To avoid problems with maps that have incorrect args this only uses a 
@@ -2241,8 +2241,8 @@ FUNC(LS_Sector_SetLink)
 	return false;
 }
 
-void SetWallScroller(int id, int sidechoice, fixed_t dx, fixed_t dy, EScrollPos Where);
-void SetScroller(int tag, EScroll type, fixed_t dx, fixed_t dy);
+void SetWallScroller(int id, int sidechoice, double dx, double dy, EScrollPos Where);
+void SetScroller(int tag, EScroll type, double dx, double dy);
 
 
 FUNC(LS_Scroll_Texture_Both)
@@ -2251,8 +2251,8 @@ FUNC(LS_Scroll_Texture_Both)
 	if (arg0 == 0)
 		return false;
 
-	fixed_t dx = (arg1 - arg2) * (FRACUNIT/64);
-	fixed_t dy = (arg4 - arg3) * (FRACUNIT/64);
+	double dx = (arg1 - arg2) / 64.;
+	double dy = (arg4 - arg3) / 64.;
 	int sidechoice;
 
 	if (arg0 < 0)
@@ -2276,7 +2276,7 @@ FUNC(LS_Scroll_Wall)
 	if (arg0 == 0)
 		return false;
 
-	SetWallScroller (arg0, !!arg3, arg1, arg2, EScrollPos(arg4));
+	SetWallScroller (arg0, !!arg3, arg1 / 65536., arg2 / 65536., EScrollPos(arg4));
 	return true;
 }
 
@@ -2287,8 +2287,8 @@ FUNC(LS_Scroll_Wall)
 FUNC(LS_Scroll_Floor)
 // Scroll_Floor (tag, x-move, y-move, s/c)
 {
-	fixed_t dx = arg1 * FRACUNIT/32;
-	fixed_t dy = arg2 * FRACUNIT/32;
+	double dx = arg1 / 32.;
+	double dy = arg2 / 32.;
 
 	if (arg3 == 0 || arg3 == 2)
 	{
@@ -2312,8 +2312,8 @@ FUNC(LS_Scroll_Floor)
 FUNC(LS_Scroll_Ceiling)
 // Scroll_Ceiling (tag, x-move, y-move, 0)
 {
-	fixed_t dx = arg1 * FRACUNIT/32;
-	fixed_t dy = arg2 * FRACUNIT/32;
+	double dx = arg1 / 32.;
+	double dy = arg2 / 32.;
 
 	SetScroller (arg0, EScroll::sc_ceiling, -dx, dy);
 	return true;

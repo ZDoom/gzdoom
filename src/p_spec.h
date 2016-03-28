@@ -71,51 +71,6 @@ typedef enum
 // (This is so scrolling floors and objects on them can move at same speed.)
 enum { CARRYFACTOR = (3*FRACUNIT >> 5) };
 
-// phares 3/20/98: added new model of Pushers for push/pull effects
-
-class DPusher : public DThinker
-{
-	DECLARE_CLASS (DPusher, DThinker)
-	HAS_OBJECT_POINTERS
-public:
-	enum EPusher
-	{
-		p_push,
-		p_pull,
-		p_wind,
-		p_current
-	};
-
-	DPusher ();
-	DPusher (EPusher type, line_t *l, int magnitude, int angle, AActor *source, int affectee);
-	void Serialize (FArchive &arc);
-	int CheckForSectorMatch (EPusher type, int tag);
-	void ChangeValues (int magnitude, int angle)
-	{
-		angle_t ang = ((angle_t)(angle<<24)) >> ANGLETOFINESHIFT;
-		m_Xmag = (magnitude * finecosine[ang]) >> FRACBITS;
-		m_Ymag = (magnitude * finesine[ang]) >> FRACBITS;
-		m_Magnitude = magnitude;
-	}
-
-	void Tick ();
-
-protected:
-	EPusher m_Type;
-	TObjPtr<AActor> m_Source;// Point source if point pusher
-	int m_Xmag;				// X Strength
-	int m_Ymag;				// Y Strength
-	int m_Magnitude;		// Vector strength for point pusher
-	int m_Radius;			// Effective radius for point pusher
-	int m_X;				// X of point source if point pusher
-	int m_Y;				// Y of point source if point pusher
-	int m_Affectee;			// Number of affected sector
-
-	friend bool PIT_PushThing (AActor *thing);
-};
-
-bool PIT_PushThing (AActor *thing);
-
 // Define values for map objects
 #define MO_TELEPORTMAN			14
 

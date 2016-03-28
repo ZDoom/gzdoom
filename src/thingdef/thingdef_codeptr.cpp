@@ -6854,3 +6854,25 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceMovementDirection)
 	}
 	ACTION_RETURN_BOOL(true);
 }
+
+//===========================================================================
+//
+// A_SetFlatAngle
+//
+// Set actor's flat angle (in degrees). GZDoom only. Requires the 
+// (PITCH)FLATSPRITE flag to have any visible effect.
+//
+//===========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetFlatAngle)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_ANGLE_OPT(flatangle) { flatangle = 0; }
+	PARAM_INT_OPT(ptr) { ptr = AAPTR_DEFAULT; }
+
+	AActor *ref = COPY_AAPTR(self, ptr);
+	if (ref != NULL)
+	{
+		ref->flatangle = flatangle;
+	}
+	return 0;
+}

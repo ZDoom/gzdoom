@@ -32,6 +32,32 @@
 class FScanner;
 struct level_info_t;
 
+struct FThinkerCollection
+{
+	int RefNum;
+	DThinker *Obj;
+};
+
+enum class EScroll : int
+{
+	sc_side,
+	sc_floor,
+	sc_ceiling,
+	sc_carry,
+	sc_carry_ceiling,	// killough 4/11/98: carry objects hanging on ceilings
+};
+
+enum EScrollPos : int
+{
+	scw_top = 1,
+	scw_mid = 2,
+	scw_bottom = 4,
+	scw_all = 7,
+};
+
+void P_CreateScroller(EScroll type, fixed_t dx, fixed_t dy, int control, int affectee, int accel, EScrollPos scrollpos = EScrollPos::scw_all);
+
+
 //jff 2/23/98 identify the special classes that can share sectors
 
 typedef enum
@@ -40,58 +66,6 @@ typedef enum
 	ceiling_special,
 	lighting_special,
 } special_e;
-
-// killough 3/7/98: Add generalized scroll effects
-
-class DScroller : public DThinker
-{
-	DECLARE_CLASS (DScroller, DThinker)
-	HAS_OBJECT_POINTERS
-public:
-	enum EScrollType
-	{
-		sc_side,
-		sc_floor,
-		sc_ceiling,
-		sc_carry,
-		sc_carry_ceiling,	// killough 4/11/98: carry objects hanging on ceilings
-	};
-	enum EScrollPos
-	{
-		scw_top=1,
-		scw_mid=2,
-		scw_bottom=4,
-		scw_all=7,
-	};
-	
-	DScroller (EScrollType type, fixed_t dx, fixed_t dy, int control, int affectee, int accel, int scrollpos = scw_all);
-	DScroller (fixed_t dx, fixed_t dy, const line_t *l, int control, int accel, int scrollpos = scw_all);
-	void Destroy();
-
-	void Serialize (FArchive &arc);
-	void Tick ();
-
-	bool AffectsWall (int wallnum) const { return m_Type == sc_side && m_Affectee == wallnum; }
-	int GetWallNum () const { return m_Type == sc_side ? m_Affectee : -1; }
-	void SetRate (fixed_t dx, fixed_t dy) { m_dx = dx; m_dy = dy; }
-	bool IsType (EScrollType type) const { return type == m_Type; }
-	int GetAffectee () const { return m_Affectee; }
-	int GetScrollParts() const { return m_Parts; }
-
-protected:
-	EScrollType m_Type;		// Type of scroll effect
-	fixed_t m_dx, m_dy;		// (dx,dy) scroll speeds
-	int m_Affectee;			// Number of affected sidedef, sector, tag, or whatever
-	int m_Control;			// Control sector (-1 if none) used to control scrolling
-	fixed_t m_LastHeight;	// Last known height of control sector
-	fixed_t m_vdx, m_vdy;	// Accumulated velocity if accelerative
-	int m_Accel;			// Whether it's accelerative
-	int m_Parts;			// Which parts of a sidedef are being scrolled?
-	TObjPtr<DInterpolation> m_Interpolations[3];
-
-private:
-	DScroller ();
-};
 
 // Factor to scale scrolling effect into mobj-carrying properties = 3/32.
 // (This is so scrolling floors and objects on them can move at same speed.)

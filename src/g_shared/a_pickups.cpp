@@ -11,6 +11,7 @@
 #include "c_dispatch.h"
 #include "gstrings.h"
 #include "templates.h"
+#include "a_strifeglobal.h"
 #include "a_morph.h"
 #include "a_specialspot.h"
 #include "thingdef/thingdef.h"

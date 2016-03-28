@@ -453,7 +453,7 @@ static void DoSectorDamage(AActor *actor, sector_t *sec, int amount, FName type,
 	if (!(flags & DAMAGE_PLAYERS) && actor->player != NULL)
 		return;
 
-	if (!(flags & DAMAGE_IN_AIR) && actor->_f_Z() != sec->floorplane.ZatPoint(actor) && !actor->waterlevel)
+	if (!(flags & DAMAGE_IN_AIR) && !actor->isAtZ(sec->floorplane.ZatPointF(actor)) && !actor->waterlevel)
 		return;
 
 	if (protectClass != NULL)
@@ -490,21 +490,21 @@ void P_SectorDamage(int tag, int amount, FName type, PClassActor *protectClass, 
 			{
 				next = actor->snext;
 				// Only affect actors touching the 3D floor
-				fixed_t z1 = sec->floorplane.ZatPoint(actor);
-				fixed_t z2 = sec->ceilingplane.ZatPoint(actor);
+				double z1 = sec->floorplane.ZatPointF(actor);
+				double z2 = sec->ceilingplane.ZatPointF(actor);
 				if (z2 < z1)
 				{
 					// Account for Vavoom-style 3D floors
-					fixed_t zz = z1;
+					double zz = z1;
 					z1 = z2;
 					z2 = zz;
 				}
-				if (actor->_f_Z() + actor->_f_height() > z1)
+				if (actor->Top() > z1)
 				{
 					// If DAMAGE_IN_AIR is used, anything not beneath the 3D floor will be
 					// damaged (so, anything touching it or above it). Other 3D floors between
 					// the actor and this one will not stop this effect.
-					if ((flags & DAMAGE_IN_AIR) || actor->_f_Z() <= z2)
+					if ((flags & DAMAGE_IN_AIR) || !actor->isAbove(z2))
 					{
 						// Here we pass the DAMAGE_IN_AIR flag to disable the floor check, since it
 						// only works with the real sector's floor. We did the appropriate height checks
@@ -901,7 +901,7 @@ void P_SetupPortals()
 	}
 }
 
-static void SetPortal(sector_t *sector, int plane, ASkyViewpoint *portal, fixed_t alpha)
+static void SetPortal(sector_t *sector, int plane, ASkyViewpoint *portal, double alpha)
 {
 	// plane: 0=floor, 1=ceiling, 2=both
 	if (plane > 0)
@@ -909,7 +909,7 @@ static void SetPortal(sector_t *sector, int plane, ASkyViewpoint *portal, fixed_
 		if (sector->SkyBoxes[sector_t::ceiling] == NULL || !barrier_cast<ASkyViewpoint*>(sector->SkyBoxes[sector_t::ceiling])->bAlways)
 		{
 			sector->SkyBoxes[sector_t::ceiling] = portal;
-			if (sector->GetAlpha(sector_t::ceiling) == OPAQUE)
+			if (sector->GetAlphaF(sector_t::ceiling) == 1.)
 				sector->SetAlpha(sector_t::ceiling, alpha);
 
 			if (!portal->bAlways) sector->SetTexture(sector_t::ceiling, skyflatnum);
@@ -921,14 +921,14 @@ static void SetPortal(sector_t *sector, int plane, ASkyViewpoint *portal, fixed_
 		{
 			sector->SkyBoxes[sector_t::floor] = portal;
 		}
-		if (sector->GetAlpha(sector_t::floor) == OPAQUE)
+		if (sector->GetAlphaF(sector_t::floor) == 1.)
 			sector->SetAlpha(sector_t::floor, alpha);
 
 		if (!portal->bAlways) sector->SetTexture(sector_t::floor, skyflatnum);
 	}
 }
 
-static void CopyPortal(int sectortag, int plane, ASkyViewpoint *origin, fixed_t alpha, bool tolines)
+static void CopyPortal(int sectortag, int plane, ASkyViewpoint *origin, double alpha, bool tolines)
 {
 	int s;
 	FSectorTagIterator itr(sectortag);
@@ -962,7 +962,7 @@ static void CopyPortal(int sectortag, int plane, ASkyViewpoint *origin, fixed_t 
 	}
 }
 
-void P_SpawnPortal(line_t *line, int sectortag, int plane, int alpha, int linked)
+void P_SpawnPortal(line_t *line, int sectortag, int plane, int bytealpha, int linked)
 {
 	if (plane < 0 || plane > 2 || (linked && plane == 2)) return;
 	for (int i=0;i<numlines;i++)
@@ -980,7 +980,7 @@ void P_SpawnPortal(line_t *line, int sectortag, int plane, int alpha, int linked
 			DVector3 pos2((lines[i].v1->fX() + lines[i].v2->fX()) / 2, (lines[i].v1->fY() + lines[i].v2->fY()) / 2, 0);
 			double z = linked ? line->frontsector->GetPlaneTexZF(plane) : 0;	// the map's sector height defines the portal plane for linked portals
 
-			fixed_t alpha = Scale (lines[i].args[4], OPAQUE, 255);
+			double alpha = bytealpha / 255.;
 
 			AStackPoint *anchor = Spawn<AStackPoint>(pos1, NO_REPLACE);
 			AStackPoint *reference = Spawn<AStackPoint>(pos2, NO_REPLACE);
@@ -1012,7 +1012,7 @@ void P_SpawnSkybox(ASkyViewpoint *origin)
 	if (Sector == NULL)
 	{
 		Printf("Sector not initialized for SkyCamCompat\n");
-		origin->Sector = Sector = P_PointInSector(origin->_f_X(), origin->_f_Y());
+		origin->Sector = Sector = P_PointInSector(origin->Pos());
 	}
 	if (Sector)
 	{
@@ -1410,7 +1410,7 @@ void P_SpawnSpecials (void)
 
 			case Init_Damage:
 				{
-					int damage = P_AproxDistance (lines[i].dx, lines[i].dy) >> FRACBITS;
+					int damage = int(lines[i].Delta().Length());
 					FSectorTagIterator itr(lines[i].args[0]);
 					while ((s = itr.Next()) >= 0)
 					{

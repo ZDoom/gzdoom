@@ -767,12 +767,22 @@ struct sector_t
 		planes[pos].alpha = o;
 	}
 
+	void SetAlpha(int pos, double o)
+	{
+		planes[pos].alpha = FLOAT2FIXED(o);
+	}
+
 	fixed_t GetAlpha(int pos) const
 	{
 		return planes[pos].alpha;
 	}
 
-	int GetFlags(int pos) const 
+	double GetAlphaF(int pos) const
+	{
+		return FIXED2DBL(planes[pos].alpha);
+	}
+
+	int GetFlags(int pos) const
 	{
 		return planes[pos].Flags;
 	}

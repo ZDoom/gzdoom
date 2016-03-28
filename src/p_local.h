@@ -259,15 +259,6 @@ void	P_ApplyTorque(AActor *mo);
 
 bool	P_TeleportMove(AActor* thing, const DVector3 &pos, bool telefrag, bool modifyactor = true);	// [RH] Added z and telefrag parameters
 
-inline bool	P_TeleportMove (AActor* thing, fixed_t x, fixed_t y, fixed_t z, bool telefrag, bool modifyactor = true)
-{
-	return P_TeleportMove(thing, DVector3(FIXED2DBL(x), FIXED2DBL(y), FIXED2DBL(z)), telefrag, modifyactor);
-}
-inline bool	P_TeleportMove(AActor* thing, const fixedvec3 &pos, bool telefrag, bool modifyactor = true)
-{
-	return P_TeleportMove(thing, DVector3(FIXED2DBL(pos.x), FIXED2DBL(pos.y), FIXED2DBL(pos.z)), telefrag, modifyactor);
-}
-
 void	P_PlayerStartStomp (AActor *actor, bool mononly=false);		// [RH] Stomp on things for a newly spawned player
 void	P_SlideMove (AActor* mo, const DVector2 &pos, int numsteps);
 bool	P_BounceWall (AActor *mo);

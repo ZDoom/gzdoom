@@ -878,11 +878,7 @@ inline void P_SpawnTeleportFog(AActor *mobj, double x, double y, double z, bool 
 }
 */
 
-bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, DAngle angle, int flags); // bool useFog, bool sourceFog, bool keepOrientation, bool haltVelocity = true, bool keepHeight = false
-inline bool P_Teleport(AActor *thing, const DVector3 &pos, DAngle angle, int flags)
-{
-	return P_Teleport(thing, FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), FLOAT2FIXED(pos.Z), angle, flags);
-}
+inline bool P_Teleport(AActor *thing, DVector3 pos, DAngle angle, int flags);
 bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, int flags);
 bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id, INTBOOL reverse);
 bool EV_TeleportOther (int other_tid, int dest_tid, bool fog);

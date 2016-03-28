@@ -89,7 +89,6 @@ enum ETerrainKeywords
 enum EGenericType
 {
 	GEN_End,
-	GEN_Fixed,
 	GEN_Sound,
 	GEN_Byte,
 	GEN_Class,
@@ -532,11 +531,6 @@ static void GenericParse (FScanner &sc, FGenericParse *parser, const char **keyw
 		{
 		case GEN_End:
 			notdone = false;
-			break;
-
-		case GEN_Fixed:
-			sc.MustGetFloat ();
-			SET_FIELD (fixed_t, (fixed_t)(FRACUNIT * sc.Float));
 			break;
 
 		case GEN_Sound:

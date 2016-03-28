@@ -2203,7 +2203,7 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 			x = ReadWord (stream);
 			y = ReadWord (stream);
 			z = ReadWord (stream);
-			P_TeleportMove (players[player].mo, x * 65536, y * 65536, z * 65536, true);
+			P_TeleportMove (players[player].mo, DVector3(x, y, z), true);
 		}
 		break;
 

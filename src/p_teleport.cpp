@@ -99,50 +99,50 @@ void P_SpawnTeleportFog(AActor *mobj, const DVector3 &pos, bool beforeTele, bool
 // TELEPORTATION
 //
 
-bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, DAngle angle, int flags)
+bool P_Teleport (AActor *thing, DVector3 pos, DAngle angle, int flags)
 {
 	bool predicting = (thing->player && (thing->player->cheats & CF_PREDICTING));
 
 	DVector3 old;
-	fixed_t aboveFloor;
+	double aboveFloor;
 	player_t *player;
 	sector_t *destsect;
 	bool resetpitch = false;
-	fixed_t floorheight, ceilingheight;
+	double floorheight, ceilingheight;
 	double missilespeed = 0;
 
 	old = thing->Pos();
-	aboveFloor = thing->_f_Z() - thing->_f_floorz();
-	destsect = P_PointInSector (x, y);
+	aboveFloor = thing->Z() - thing->floorz;
+	destsect = P_PointInSector (pos);
 	// killough 5/12/98: exclude voodoo dolls:
 	player = thing->player;
 	if (player && player->mo != thing)
 		player = NULL;
-	floorheight = destsect->floorplane.ZatPoint (x, y);
-	ceilingheight = destsect->ceilingplane.ZatPoint (x, y);
+	floorheight = destsect->floorplane.ZatPoint (pos);
+	ceilingheight = destsect->ceilingplane.ZatPoint (pos);
 	if (thing->flags & MF_MISSILE)
 	{ // We don't measure z velocity, because it doesn't change.
 		missilespeed = thing->VelXYToSpeed();
 	}
 	if (flags & TELF_KEEPHEIGHT)
 	{
-		z = floorheight + aboveFloor;
+		pos.Z = floorheight + aboveFloor;
 	}
-	else if (z == ONFLOORZ)
+	else if (pos.Z == ONFLOORZ)
 	{
 		if (player)
 		{
 			if (thing->flags & MF_NOGRAVITY && aboveFloor)
 			{
-				z = floorheight + aboveFloor;
-				if (z + thing->_f_height() > ceilingheight)
+				pos.Z = floorheight + aboveFloor;
+				if (pos.Z + thing->Height > ceilingheight)
 				{
-					z = ceilingheight - thing->_f_height();
+					pos.Z = ceilingheight - thing->Height;
 				}
 			}
 			else
 			{
-				z = floorheight;
+				pos.Z = floorheight;
 				if (!(flags & TELF_KEEPORIENTATION))
 				{
 					resetpitch = false;
@@ -151,18 +151,18 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, DAngle angle, i
 		}
 		else if (thing->flags & MF_MISSILE)
 		{
-			z = floorheight + aboveFloor;
-			if (z + thing->_f_height() > ceilingheight)
+			pos.Z = floorheight + aboveFloor;
+			if (pos.Z + thing->Height > ceilingheight)
 			{
-				z = ceilingheight - thing->_f_height();
+				pos.Z = ceilingheight - thing->Height;
 			}
 		}
 		else
 		{
-			z = floorheight;
+			pos.Z = floorheight;
 		}
 	}
-	if (!P_TeleportMove (thing, x, y, z, false))
+	if (!P_TeleportMove (thing, pos, false))
 	{
 		return false;
 	}
@@ -193,7 +193,7 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, DAngle angle, i
 		{
 			double fogDelta = thing->flags & MF_MISSILE ? 0 : TELEFOGHEIGHT;
 			DVector2 vector = angle.ToVector(20);
-			DVector2 fogpos = P_GetOffsetPosition(FIXED2DBL(x), FIXED2DBL(y), vector.X, vector.Y);
+			DVector2 fogpos = P_GetOffsetPosition(pos.X, pos.Y, vector.X, vector.Y);
 			P_SpawnTeleportFog(thing, DVector3(fogpos, thing->Z() + fogDelta), false, true);
 
 		}
@@ -324,7 +324,7 @@ static AActor *SelectTeleDest (int tid, int tag, bool norandom)
 bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, int flags)
 {
 	AActor *searcher;
-	fixed_t z;
+	double z;
 	DAngle angle = 0.;
 	double s = 0, c = 0;
 	double vx = 0, vy = 0;
@@ -365,11 +365,11 @@ bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, int f
 		vx = thing->Vel.X;
 		vy = thing->Vel.Y;
 
-		z = searcher->_f_Z();
+		z = searcher->Z();
 	}
 	else if (searcher->IsKindOf (PClass::FindClass(NAME_TeleportDest2)))
 	{
-		z = searcher->_f_Z();
+		z = searcher->Z();
 	}
 	else
 	{
@@ -379,7 +379,7 @@ bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, int f
 	{
 		badangle = 0.01;
 	}
-	if (P_Teleport (thing, searcher->_f_X(), searcher->_f_Y(), z, searcher->Angles.Yaw + badangle, flags))
+	if (P_Teleport (thing, DVector3(searcher->Pos(), z), searcher->Angles.Yaw + badangle, flags))
 	{
 		// [RH] Lee Killough's changes for silent teleporters from BOOM
 		if (!(flags & TELF_DESTFOG) && line && (flags & TELF_KEEPORIENTATION))
@@ -484,12 +484,10 @@ bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id, INTBO
 				thing->player : NULL;
 
 			// Whether walking towards first side of exit linedef steps down
-			fixed_t x = FLOAT2FIXED(p.X);
-			fixed_t y = FLOAT2FIXED(p.Y);
-			bool stepdown = l->frontsector->floorplane.ZatPoint(x, y) < l->backsector->floorplane.ZatPoint(x, y);
+			bool stepdown = l->frontsector->floorplane.ZatPoint(p) < l->backsector->floorplane.ZatPoint(p);
 
 			// Height of thing above ground
-			fixed_t z = thing->_f_Z() - thing->_f_floorz();
+			double z = thing->Z() - thing->floorz;
 
 			// Side to exit the linedef on positionally.
 			//
@@ -513,25 +511,30 @@ bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id, INTBO
 			// Exiting on side 1 slightly improves player viewing
 			// when going down a step on a non-reversed teleporter.
 
+			// Is this really still necessary with real math instead of imprecise trig tables?
+#if 1
 			int side = reverse || (player && stepdown);
 			int fudge = FUDGEFACTOR;
 
+			double dx = line->Delta().X;
+			double dy = line->Delta().Y;
 			// Make sure we are on correct side of exit linedef.
-			while (P_PointOnLineSidePrecise(x, y, l) != side && --fudge >= 0)
+			while (P_PointOnLineSidePrecise(p, l) != side && --fudge >= 0)
 			{
-				if (abs(l->dx) > abs(l->dy))
-					y -= (l->dx < 0) != side ? -1 : 1;
+				if (fabs(dx) > fabs(dy))
+					p.Y -= (dx < 0) != side ? -1 : 1;
 				else
-					x += (l->dy < 0) != side ? -1 : 1;
+					p.X += (dy < 0) != side ? -1 : 1;
 			}
+#endif
 
 			// Adjust z position to be same height above ground as before.
 			// Ground level at the exit is measured as the higher of the
 			// two floor heights at the exit linedef.
-			z = z + l->sidedef[stepdown]->sector->floorplane.ZatPoint(x, y);
+			z = z + l->sidedef[stepdown]->sector->floorplane.ZatPoint(p);
 
 			// Attempt to teleport, aborting if blocked
-			if (!P_TeleportMove (thing, x, y, z, false))
+			if (!P_TeleportMove (thing, DVector3(p, z), false))
 			{
 				return false;
 			}
@@ -544,10 +547,8 @@ bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id, INTBO
 			// Rotate thing's orientation according to difference in linedef angles
 			thing->Angles.Yaw += angle;
 
-			// Velocity of thing crossing teleporter linedef
-			p = thing->Vel.XY();
-
 			// Rotate thing's velocity to come out of exit just like it entered
+			p = thing->Vel.XY();
 			thing->Vel.X = p.X*c - p.Y*s;
 			thing->Vel.Y = p.Y*c + p.X*s;
 
@@ -600,35 +601,20 @@ bool EV_TeleportOther (int other_tid, int dest_tid, bool fog)
 
 static bool DoGroupForOne (AActor *victim, AActor *source, AActor *dest, bool floorz, bool fog)
 {
-	int an = (dest->_f_angle() - source->_f_angle()) >> ANGLETOFINESHIFT;
-	fixed_t offX = victim->_f_X() - source->_f_X();
-	fixed_t offY = victim->_f_Y() - source->_f_Y();
-	fixed_t newX = DMulScale16 (offX, finecosine[an], -offY, finesine[an]);
-	fixed_t newY = DMulScale16 (offX, finesine[an], offY, finecosine[an]);
+	DAngle an = dest->Angles.Yaw - source->Angles.Yaw;
+	DVector2 off = victim->Pos() - source->Pos();
+	DAngle offAngle = victim->Angles.Yaw - source->Angles.Yaw;
+	DVector2 newp = { off.X * an.Cos() - off.Y * an.Sin(), off.X * an.Sin() + off.Y * an.Cos() };
+	double z = floorz ? ONFLOORZ : dest->Z() + victim->Z() - source->Z();
 
 	bool res =
-		P_Teleport (victim, dest->_f_X() + newX,
-							dest->_f_Y() + newY,
-							floorz ? ONFLOORZ : dest->_f_Z() + victim->_f_Z() - source->_f_Z(),
+		P_Teleport (victim, DVector3(dest->Pos().XY() + newp, z),
 							0., fog ? (TELF_DESTFOG | TELF_SOURCEFOG) : TELF_KEEPORIENTATION);
 	// P_Teleport only changes angle if fog is true
 	victim->Angles.Yaw = (dest->Angles.Yaw + victim->Angles.Yaw - source->Angles.Yaw).Normalized360();
 
 	return res;
 }
-
-#if 0
-static void MoveTheDecal (DBaseDecal *decal, fixed_t z, AActor *source, AActor *dest)
-{
-	int an = (dest->_f_angle() - source->_f_angle()) >> ANGLETOFINESHIFT;
-	fixed_t offX = decal->x - source->x;
-	fixed_t offY = decal->y - source->y;
-	fixed_t newX = DMulScale16 (offX, finecosine[an], -offY, finesine[an]);
-	fixed_t newY = DMulScale16 (offX, finesine[an], offY, finecosine[an]);
-
-	decal->Relocate (dest->x + newX, dest->y + newY, dest->z + z - source->z);
-}
-#endif
 
 // [RH] Teleport a group of actors centered around source_tid so
 // that they become centered around dest_tid instead.
@@ -677,8 +663,7 @@ bool EV_TeleportGroup (int group_tid, AActor *victim, int source_tid, int dest_t
 	if (moveSource && didSomething)
 	{
 		didSomething |=
-			P_Teleport (sourceOrigin, destOrigin->_f_X(), destOrigin->_f_Y(),
-				floorz ? ONFLOORZ : destOrigin->_f_Z(), 0., TELF_KEEPORIENTATION);
+			P_Teleport (sourceOrigin, destOrigin->PosAtZ(floorz ? ONFLOORZ : destOrigin->Z()), 0., TELF_KEEPORIENTATION);
 		sourceOrigin->Angles.Yaw = destOrigin->Angles.Yaw;
 	}
 
@@ -731,32 +716,6 @@ bool EV_TeleportSector (int tag, int source_tid, int dest_tid, bool fog, int gro
 			}
 			node = next;
 		}
-
-#if 0
-		if (group_tid == 0 && !fog)
-		{
-			int lineindex;
-			for (lineindex = sec->linecount-1; lineindex >= 0; --lineindex)
-			{
-				line_t *line = sec->lines[lineindex];
-				int wallnum;
-
-				wallnum = line->sidenum[(line->backsector == sec)];
-				if (wallnum != -1)
-				{
-					side_t *wall = &sides[wallnum];
-					ADecal *decal = wall->BoundActors;
-
-					while (decal != NULL)
-					{
-						ADecal *next = (ADecal *)decal->snext;
-						MoveTheDecal (decal, decal->GetRealZ (wall), sourceOrigin, destOrigin);	
-						decal = next;
-					}
-				}
-			}
-		}
-#endif
 	}
 	return didSomething;
 }

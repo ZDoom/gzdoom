@@ -383,7 +383,7 @@ struct FSectorScrollValues
 struct FLevelLocals
 {
 	void Tick ();
-	void AddScroller (DScroller *, int secnum);
+	void AddScroller (int secnum);
 
 	int			time;			// time in the hub
 	int			maptime;		// time in the map

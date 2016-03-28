@@ -42,6 +42,7 @@ class PClass;
 class FArchive;
 
 class   DObject;
+/*
 class           DArgs;
 class           DCanvas;
 class           DConsoleCommand;
@@ -77,6 +78,7 @@ class                                           DFloor;
 class                                           DFloorWaggle;
 class                                           DPlat;
 class                                   DPillar;
+*/
 
 class PClassActor;
 

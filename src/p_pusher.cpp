@@ -1,0 +1,485 @@
+// Emacs style mode select	 -*- C++ -*- 
+//-----------------------------------------------------------------------------
+//
+// $Id:$
+//
+// Copyright (C) 1993-1996 by id Software, Inc.
+//
+// This source is available for distribution and/or modification
+// only under the terms of the DOOM Source Code License as
+// published by id Software. All rights reserved.
+//
+// The source is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
+// for more details.
+//
+// $Log:$
+//
+// DESCRIPTION:
+//		Initializes and implements BOOM linedef triggers for
+//			Wind/Current
+//
+//-----------------------------------------------------------------------------
+
+
+#include <stdlib.h>
+#include "actor.h"
+#include "p_spec.h"
+#include "farchive.h"
+#include "p_lnspec.h"
+#include "c_cvars.h"
+#include "p_maputl.h"
+#include "p_local.h"
+#include "d_player.h"
+
+CVAR(Bool, var_pushers, true, CVAR_SERVERINFO);
+
+// phares 3/20/98: added new model of Pushers for push/pull effects
+
+class DPusher : public DThinker
+{
+	DECLARE_CLASS (DPusher, DThinker)
+	HAS_OBJECT_POINTERS
+public:
+	enum EPusher
+	{
+		p_push,
+		p_pull,
+		p_wind,
+		p_current
+	};
+
+	DPusher ();
+	DPusher (EPusher type, line_t *l, int magnitude, int angle, AActor *source, int affectee);
+	void Serialize (FArchive &arc);
+	int CheckForSectorMatch (EPusher type, int tag);
+	void ChangeValues (int magnitude, int angle)
+	{
+		angle_t ang = ((angle_t)(angle<<24)) >> ANGLETOFINESHIFT;
+		m_Xmag = (magnitude * finecosine[ang]) >> FRACBITS;
+		m_Ymag = (magnitude * finesine[ang]) >> FRACBITS;
+		m_Magnitude = magnitude;
+	}
+
+	void Tick ();
+
+protected:
+	EPusher m_Type;
+	TObjPtr<AActor> m_Source;// Point source if point pusher
+	int m_Xmag;				// X Strength
+	int m_Ymag;				// Y Strength
+	int m_Magnitude;		// Vector strength for point pusher
+	int m_Radius;			// Effective radius for point pusher
+	int m_X;				// X of point source if point pusher
+	int m_Y;				// Y of point source if point pusher
+	int m_Affectee;			// Number of affected sector
+
+	friend bool PIT_PushThing (AActor *thing);
+};
+
+
+IMPLEMENT_POINTY_CLASS (DPusher)
+ DECLARE_POINTER (m_Source)
+END_POINTERS
+
+DPusher::DPusher ()
+{
+}
+
+inline FArchive &operator<< (FArchive &arc, DPusher::EPusher &type)
+{
+	BYTE val = (BYTE)type;
+	arc << val;
+	type = (DPusher::EPusher)val;
+	return arc;
+}
+
+void DPusher::Serialize (FArchive &arc)
+{
+	Super::Serialize (arc);
+	arc << m_Type
+		<< m_Source
+		<< m_Xmag
+		<< m_Ymag
+		<< m_Magnitude
+		<< m_Radius
+		<< m_X
+		<< m_Y
+		<< m_Affectee;
+}
+
+
+////////////////////////////////////////////////////////////////////////////
+//
+// PUSH/PULL EFFECT
+//
+// phares 3/20/98: Start of push/pull effects
+//
+// This is where push/pull effects are applied to objects in the sectors.
+//
+// There are four kinds of push effects
+//
+// 1) Pushing Away
+//
+//    Pushes you away from a point source defined by the location of an
+//    MT_PUSH Thing. The force decreases linearly with distance from the
+//    source. This force crosses sector boundaries and is felt w/in a circle
+//    whose center is at the MT_PUSH. The force is felt only if the point
+//    MT_PUSH can see the target object.
+//
+// 2) Pulling toward
+//
+//    Same as Pushing Away except you're pulled toward an MT_PULL point
+//    source. This force crosses sector boundaries and is felt w/in a circle
+//    whose center is at the MT_PULL. The force is felt only if the point
+//    MT_PULL can see the target object.
+//
+// 3) Wind
+//
+//    Pushes you in a constant direction. Full force above ground, half
+//    force on the ground, nothing if you're below it (water).
+//
+// 4) Current
+//
+//    Pushes you in a constant direction. No force above ground, full
+//    force if on the ground or below it (water).
+//
+// The magnitude of the force is controlled by the length of a controlling
+// linedef. The force vector for types 3 & 4 is determined by the angle
+// of the linedef, and is constant.
+//
+// For each sector where these effects occur, the sector special type has
+// to have the PUSH_MASK bit set. If this bit is turned off by a switch
+// at run-time, the effect will not occur. The controlling sector for
+// types 1 & 2 is the sector containing the MT_PUSH/MT_PULL Thing.
+
+
+#define PUSH_FACTOR 7
+
+/////////////////////////////
+//
+// Add a push thinker to the thinker list
+
+DPusher::DPusher (DPusher::EPusher type, line_t *l, int magnitude, int angle,
+				  AActor *source, int affectee)
+{
+	m_Source = source;
+	m_Type = type;
+	if (l)
+	{
+		m_Xmag = l->dx>>FRACBITS;
+		m_Ymag = l->dy>>FRACBITS;
+		m_Magnitude = P_AproxDistance (m_Xmag, m_Ymag);
+	}
+	else
+	{ // [RH] Allow setting magnitude and angle with parameters
+		ChangeValues (magnitude, angle);
+	}
+	if (source) // point source exist?
+	{
+		m_Radius = (m_Magnitude) << (FRACBITS+1); // where force goes to zero
+		m_X = m_Source->X();
+		m_Y = m_Source->Y();
+	}
+	m_Affectee = affectee;
+}
+
+int DPusher::CheckForSectorMatch (EPusher type, int tag)
+{
+	if (m_Type == type && tagManager.SectorHasTag(m_Affectee, tag))
+		return m_Affectee;
+	else
+		return -1;
+}
+
+
+/////////////////////////////
+//
+// T_Pusher looks for all objects that are inside the radius of
+// the effect.
+//
+void DPusher::Tick ()
+{
+	sector_t *sec;
+	AActor *thing;
+	msecnode_t *node;
+	int xspeed,yspeed;
+	int ht;
+
+	if (!var_pushers)
+		return;
+
+	sec = sectors + m_Affectee;
+
+	// Be sure the special sector type is still turned on. If so, proceed.
+	// Else, bail out; the sector type has been changed on us.
+
+	if (!(sec->Flags & SECF_PUSH))
+		return;
+
+	// For constant pushers (wind/current) there are 3 situations:
+	//
+	// 1) Affected Thing is above the floor.
+	//
+	//    Apply the full force if wind, no force if current.
+	//
+	// 2) Affected Thing is on the ground.
+	//
+	//    Apply half force if wind, full force if current.
+	//
+	// 3) Affected Thing is below the ground (underwater effect).
+	//
+	//    Apply no force if wind, full force if current.
+	//
+	// Apply the effect to clipped players only for now.
+	//
+	// In Phase II, you can apply these effects to Things other than players.
+	// [RH] No Phase II, but it works with anything having MF2_WINDTHRUST now.
+
+	if (m_Type == p_push)
+	{
+		// Seek out all pushable things within the force radius of this
+		// point pusher. Crosses sectors, so use blockmap.
+
+		FPortalGroupArray check(FPortalGroupArray::PGA_NoSectorPortals);	// no sector portals because this thing is utterly z-unaware.
+		FMultiBlockThingsIterator it(check, m_X, m_Y, 0, 0, m_Radius, false, m_Source->Sector);
+		FMultiBlockThingsIterator::CheckResult cres;
+
+
+		while (it.Next(&cres))
+		{
+			AActor *thing = cres.thing;
+			// Normal ZDoom is based only on the WINDTHRUST flag, with the noclip cheat as an exemption.
+			bool pusharound = ((thing->flags2 & MF2_WINDTHRUST) && !(thing->flags & MF_NOCLIP));
+					
+			// MBF allows any sentient or shootable thing to be affected, but players with a fly cheat aren't.
+			if (compatflags & COMPATF_MBFMONSTERMOVE)
+			{
+				pusharound = ((pusharound || (thing->IsSentient()) || (thing->flags & MF_SHOOTABLE)) // Add categories here
+					&& (!(thing->player && (thing->flags & (MF_NOGRAVITY))))); // Exclude flying players here
+			}
+
+			if ((pusharound) )
+			{
+				int sx = m_X;
+				int sy = m_Y;
+				int dist = thing->AproxDistance (sx, sy);
+				int speed = (m_Magnitude - ((dist>>FRACBITS)>>1))<<(FRACBITS-PUSH_FACTOR-1);
+
+				// If speed <= 0, you're outside the effective radius. You also have
+				// to be able to see the push/pull source point.
+
+				if ((speed > 0) && (P_CheckSight (thing, m_Source, SF_IGNOREVISIBILITY)))
+				{
+					angle_t pushangle = thing->AngleTo(sx, sy);
+					if (m_Source->GetClass()->TypeName == NAME_PointPusher)
+						pushangle += ANG180;    // away
+					pushangle >>= ANGLETOFINESHIFT;
+					thing->vel.x += FixedMul (speed, finecosine[pushangle]);
+					thing->vel.y += FixedMul (speed, finesine[pushangle]);
+				}
+			}
+		}
+		return;
+	}
+
+	// constant pushers p_wind and p_current
+
+	node = sec->touching_thinglist; // things touching this sector
+	for ( ; node ; node = node->m_snext)
+	{
+		thing = node->m_thing;
+		if (!(thing->flags2 & MF2_WINDTHRUST) || (thing->flags & MF_NOCLIP))
+			continue;
+
+		sector_t *hsec = sec->GetHeightSec();
+		fixedvec3 pos = thing->PosRelative(sec);
+		if (m_Type == p_wind)
+		{
+			if (hsec == NULL)
+			{ // NOT special water sector
+				if (thing->Z() > thing->floorz) // above ground
+				{
+					xspeed = m_Xmag; // full force
+					yspeed = m_Ymag;
+				}
+				else // on ground
+				{
+					xspeed = (m_Xmag)>>1; // half force
+					yspeed = (m_Ymag)>>1;
+				}
+			}
+			else // special water sector
+			{
+				ht = hsec->floorplane.ZatPoint(pos);
+				if (thing->Z() > ht) // above ground
+				{
+					xspeed = m_Xmag; // full force
+					yspeed = m_Ymag;
+				}
+				else if (thing->player->viewz < ht) // underwater
+				{
+					xspeed = yspeed = 0; // no force
+				}
+				else // wading in water
+				{
+					xspeed = (m_Xmag)>>1; // half force
+					yspeed = (m_Ymag)>>1;
+				}
+			}
+		}
+		else // p_current
+		{
+			const secplane_t *floor;
+
+			if (hsec == NULL)
+			{ // NOT special water sector
+				floor = &sec->floorplane;
+			}
+			else
+			{ // special water sector
+				floor = &hsec->floorplane;
+			}
+			if (thing->Z() > floor->ZatPoint(pos))
+			{ // above ground
+				xspeed = yspeed = 0; // no force
+			}
+			else
+			{ // on ground/underwater
+				xspeed = m_Xmag; // full force
+				yspeed = m_Ymag;
+			}
+		}
+		thing->vel.x += xspeed<<(FRACBITS-PUSH_FACTOR);
+		thing->vel.y += yspeed<<(FRACBITS-PUSH_FACTOR);
+	}
+}
+
+/////////////////////////////
+//
+// P_GetPushThing() returns a pointer to an MT_PUSH or MT_PULL thing,
+// NULL otherwise.
+
+AActor *P_GetPushThing (int s)
+{
+	AActor* thing;
+	sector_t* sec;
+
+	sec = sectors + s;
+	thing = sec->thinglist;
+
+	while (thing &&
+		thing->GetClass()->TypeName != NAME_PointPusher &&
+		thing->GetClass()->TypeName != NAME_PointPuller)
+	{
+		thing = thing->snext;
+	}
+	return thing;
+}
+
+/////////////////////////////
+//
+// Initialize the sectors where pushers are present
+//
+
+void P_SpawnPushers ()
+{
+	int i;
+	line_t *l = lines;
+	int s;
+
+	for (i = 0; i < numlines; i++, l++)
+	{
+		switch (l->special)
+		{
+		case Sector_SetWind: // wind
+		{
+			FSectorTagIterator itr(l->args[0]);
+			while ((s = itr.Next()) >= 0)
+				new DPusher(DPusher::p_wind, l->args[3] ? l : NULL, l->args[1], l->args[2], NULL, s);
+			l->special = 0;
+			break;
+		}
+
+		case Sector_SetCurrent: // current
+		{
+			FSectorTagIterator itr(l->args[0]);
+			while ((s = itr.Next()) >= 0)
+				new DPusher(DPusher::p_current, l->args[3] ? l : NULL, l->args[1], l->args[2], NULL, s);
+			l->special = 0;
+			break;
+		}
+
+		case PointPush_SetForce: // push/pull
+			if (l->args[0]) {	// [RH] Find thing by sector
+				FSectorTagIterator itr(l->args[0]);
+				while ((s = itr.Next()) >= 0)
+				{
+					AActor *thing = P_GetPushThing (s);
+					if (thing) {	// No MT_P* means no effect
+						// [RH] Allow narrowing it down by tid
+						if (!l->args[1] || l->args[1] == thing->tid)
+							new DPusher (DPusher::p_push, l->args[3] ? l : NULL, l->args[2],
+										 0, thing, s);
+					}
+				}
+			} else {	// [RH] Find thing by tid
+				AActor *thing;
+				FActorIterator iterator (l->args[1]);
+
+				while ( (thing = iterator.Next ()) )
+				{
+					if (thing->GetClass()->TypeName == NAME_PointPusher ||
+						thing->GetClass()->TypeName == NAME_PointPuller)
+					{
+						new DPusher (DPusher::p_push, l->args[3] ? l : NULL, l->args[2],
+									 0, thing, int(thing->Sector - sectors));
+					}
+				}
+			}
+			l->special = 0;
+			break;
+		}
+	}
+}
+
+void AdjustPusher (int tag, int magnitude, int angle, bool wind)
+{
+	DPusher::EPusher type = wind? DPusher::p_wind : DPusher::p_current;
+	
+	// Find pushers already attached to the sector, and change their parameters.
+	TArray<FThinkerCollection> Collection;
+	{
+		TThinkerIterator<DPusher> iterator;
+		FThinkerCollection collect;
+
+		while ( (collect.Obj = iterator.Next ()) )
+		{
+			if ((collect.RefNum = ((DPusher *)collect.Obj)->CheckForSectorMatch (type, tag)) >= 0)
+			{
+				((DPusher *)collect.Obj)->ChangeValues (magnitude, angle);
+				Collection.Push (collect);
+			}
+		}
+	}
+
+	size_t numcollected = Collection.Size ();
+	int secnum;
+
+	// Now create pushers for any sectors that don't already have them.
+	FSectorTagIterator itr(tag);
+	while ((secnum = itr.Next()) >= 0)
+	{
+		unsigned int i;
+		for (i = 0; i < numcollected; i++)
+		{
+			if (Collection[i].RefNum == sectors[secnum].sectornum)
+				break;
+		}
+		if (i == numcollected)
+		{
+			new DPusher (type, NULL, magnitude, angle, NULL, secnum);
+		}
+	}
+}

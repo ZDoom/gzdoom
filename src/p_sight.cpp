@@ -849,16 +849,16 @@ sightcounts[0]++;
 	if (!(flags & SF_IGNOREWATERBOUNDARY))
 	{
 		if ((s1->GetHeightSec() &&
-			((t1->top() <= s1->heightsec->floorplane.ZatPointF(t1) &&
+			((t1->Top() <= s1->heightsec->floorplane.ZatPointF(t1) &&
 			  t2->Z() >= s1->heightsec->floorplane.ZatPointF(t2)) ||
 			 (t1->Z() >= s1->heightsec->ceilingplane.ZatPointF(t1) &&
-			  t2->top() <= s1->heightsec->ceilingplane.ZatPointF(t2))))
+			  t2->Top() <= s1->heightsec->ceilingplane.ZatPointF(t2))))
 			||
 			(s2->GetHeightSec() &&
-			 ((t2->top() <= s2->heightsec->floorplane.ZatPointF(t2) &&
+			 ((t2->Top() <= s2->heightsec->floorplane.ZatPointF(t2) &&
 			   t1->Z() >= s2->heightsec->floorplane.ZatPointF(t1)) ||
 			  (t2->Z() >= s2->heightsec->ceilingplane.ZatPointF(t2) &&
-			   t1->top() <= s2->heightsec->ceilingplane.ZatPointF(t1)))))
+			   t1->Top() <= s2->heightsec->ceilingplane.ZatPointF(t1)))))
 		{
 			res = false;
 			goto done;

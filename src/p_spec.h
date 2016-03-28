@@ -675,6 +675,21 @@ private:
 bool EV_DoCeiling (DCeiling::ECeiling type, line_t *line,
 	int tag, fixed_t speed, fixed_t speed2, fixed_t height,
 	int crush, int silent, int change, bool hexencrush);
+
+inline bool EV_DoCeiling(DCeiling::ECeiling type, line_t *line,
+	int tag, double speed, double speed2, fixed_t height,
+	int crush, int silent, int change, bool hexencrush)
+{
+	return EV_DoCeiling(type, line, tag, FLOAT2FIXED(speed), FLOAT2FIXED(speed2), height, crush, silent, change, hexencrush);
+}
+
+inline bool EV_DoCeiling(DCeiling::ECeiling type, line_t *line,
+	int tag, double speed, int speed2, fixed_t height,
+	int crush, int silent, int change, bool hexencrush)
+{
+	return EV_DoCeiling(type, line, tag, FLOAT2FIXED(speed), speed2, height, crush, silent, change, hexencrush);
+}
+
 bool EV_CeilingCrushStop (int tag);
 void P_ActivateInStasisCeiling (int tag);
 

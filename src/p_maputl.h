@@ -1,6 +1,7 @@
 #ifndef __P_MAPUTL_H
 #define __P_MAPUTL_H
 
+#include <float.h>
 #include "r_defs.h"
 #include "doomstat.h"
 #include "m_bbox.h"

@@ -107,6 +107,10 @@ inline int P_PointOnDivlineSidePrecise(double x, double y, const divline_t *line
 	return (y - line->y) * line->dx + (line->x - x) * line->dy > 0;
 }
 
+inline int P_PointOnDivlineSidePrecise(const DVector2 &pos, const divline_t *line)
+{
+	return (pos.Y - line->y) * line->dx + (line->x - pos.X) * line->dy > 0;
+}
 
 //==========================================================================
 //

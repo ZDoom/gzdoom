@@ -194,7 +194,7 @@ static FGenericParse SplashParser[] =
 {
 	{ GEN_End,	  {0} },
 	{ GEN_Sound,  {myoffsetof(FSplashDef, SmallSplashSound)} },
-	{ GEN_Fixed,  {myoffsetof(FSplashDef, SmallSplashClip)} },
+	{ GEN_Double, {myoffsetof(FSplashDef, SmallSplashClip)} },
 	{ GEN_Sound,  {myoffsetof(FSplashDef, NormalSplashSound)} },
 	{ GEN_Class,  {myoffsetof(FSplashDef, SmallSplash)} },
 	{ GEN_Class,  {myoffsetof(FSplashDef, SplashBase)} },
@@ -202,7 +202,7 @@ static FGenericParse SplashParser[] =
 	{ GEN_Byte,   {myoffsetof(FSplashDef, ChunkXVelShift)} },
 	{ GEN_Byte,   {myoffsetof(FSplashDef, ChunkYVelShift)} },
 	{ GEN_Byte,   {myoffsetof(FSplashDef, ChunkZVelShift)} },
-	{ GEN_Double,  {myoffsetof(FSplashDef, ChunkBaseZVel)} },
+	{ GEN_Double, {myoffsetof(FSplashDef, ChunkBaseZVel)} },
 	{ GEN_Bool,	  {myoffsetof(FSplashDef, NoAlert)} }
 };
 
@@ -362,7 +362,7 @@ static void SetSplashDefaults (FSplashDef *splashdef)
 		splashdef->ChunkYVelShift =
 		splashdef->ChunkZVelShift = 8;
 	splashdef->ChunkBaseZVel = 1;
-	splashdef->SmallSplashClip = 12*FRACUNIT;
+	splashdef->SmallSplashClip = 12.;
 	splashdef->NoAlert = false;
 }
 

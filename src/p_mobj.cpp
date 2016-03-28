@@ -4784,8 +4784,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	{
 		polyspawns_t *polyspawn = new polyspawns_t;
 		polyspawn->next = polyspawns;
-		polyspawn->x = FLOAT2FIXED(mthing->pos.X);
-		polyspawn->y = FLOAT2FIXED(mthing->pos.Y);
+		polyspawn->pos = mthing->pos;
 		polyspawn->angle = mthing->angle;
 		polyspawn->type = mentry->Special;
 		polyspawns = polyspawn;
@@ -5200,7 +5199,7 @@ void P_SpawnBlood (const DVector3 &pos, DAngle dir, int damage, AActor *originat
 		double z = pr_spawnblood.Random2 () / 64.;
 		th = Spawn(bloodcls, pos + DVector3(0, 0, z), NO_REPLACE); // GetBloodType already performed the replacement
 		th->Vel.Z = 2;
-		th->Angles.Yaw = ANGLE2DBL(dir);
+		th->Angles.Yaw = dir;
 		// [NG] Applying PUFFGETSOWNER to the blood will make it target the owner
 		if (th->flags5 & MF5_PUFFGETSOWNER) th->target = originator;
 		if (gameinfo.gametype & GAME_DoomChex)
@@ -5937,7 +5936,7 @@ AActor *P_SpawnMissileZAimed (AActor *source, double z, AActor *dest, PClassActo
 		an += pr_spawnmissile.Random2() * (16. / 360.);
 	}
 	dist = source->Distance2D (dest);
-	speed = FIXED2DBL(GetDefaultSpeed (type));
+	speed = GetDefaultSpeed (type);
 	dist /= speed;
 	vz = dist != 0 ? (dest->Z() - source->Z())/dist : speed;
 	return P_SpawnMissileAngleZSpeed (source, z, type, an, vz, speed);

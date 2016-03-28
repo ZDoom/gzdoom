@@ -1261,7 +1261,8 @@ void S_Sound (const FPolyObj *poly, int channel, FSoundID sound_id, float volume
 
 void S_Sound(const DVector3 &pos, int channel, FSoundID sound_id, float volume, float attenuation)
 {
-	S_StartSound (NULL, NULL, NULL, &pos, channel, sound_id, volume, attenuation);
+	FVector3 p((float)pos.X, (float)pos.Y, (float)pos.Z);
+	S_StartSound (NULL, NULL, NULL, &p, channel, sound_id, volume, attenuation);
 }
 
 //==========================================================================

@@ -215,7 +215,7 @@ DehInfo deh =
 	  2,	// .KFAAC
 	"PLAY",	// Name of player sprite
 	255,	// Rocket explosion style, 255=use cvar
-	FRACUNIT*2/3,		// Rocket explosion alpha
+	2./3.,		// Rocket explosion alpha
 	false,	// .NoAutofreeze
 	40,		// BFG cells per shot
 };
@@ -1279,11 +1279,11 @@ static int PatchThing (int thingy)
 					info->RenderStyle = STYLE_Normal;
 			}
 		}
-		// If this thing's speed is really low (i.e. meant to be a monster),
-		// bump it up, because all speeds are fixed point now.
+		// Speed could be either an int of fixed value, depending on its use
+		// If this value is very large it needs to be rescaled.
 		if (fabs(info->Speed) >= 256)
 		{
-			info->Speed /= FRACUNIT;
+			info->Speed /= 65536;
 		}
 
 		if (info->flags & MF_SPECIAL)

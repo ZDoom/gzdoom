@@ -128,8 +128,7 @@ bool EV_StopPoly (int polyNum);
 struct polyspawns_t
 {
 	polyspawns_t *next;
-	fixed_t x;
-	fixed_t y;
+	DVector2 pos;
 	short angle;
 	short type;
 };

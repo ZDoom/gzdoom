@@ -1730,8 +1730,8 @@ void PO_Init (void)
 		if (polyspawn->type >= SMT_PolySpawn &&	polyspawn->type <= SMT_PolySpawnHurt)
 		{ 
 			// Polyobj StartSpot Pt.
-			polyobjs[polyIndex].StartSpot.x = polyspawn->x;
-			polyobjs[polyIndex].StartSpot.y = polyspawn->y;
+			polyobjs[polyIndex].StartSpot.x = FLOAT2FIXED(polyspawn->pos.X);
+			polyobjs[polyIndex].StartSpot.y = FLOAT2FIXED(polyspawn->pos.Y);
 			SpawnPolyobj(polyIndex, polyspawn->angle, polyspawn->type);
 			polyIndex++;
 			*prev = polyspawn->next;
@@ -1750,7 +1750,7 @@ void PO_Init (void)
 		if (polyspawn->type == SMT_PolyAnchor)
 		{ 
 			// Polyobj Anchor Pt.
-			TranslateToStartSpot (polyspawn->angle, polyspawn->x, polyspawn->y);
+			TranslateToStartSpot (polyspawn->angle, FLOAT2FIXED(polyspawn->pos.X), FLOAT2FIXED(polyspawn->pos.Y));
 		}
 		delete polyspawn;
 		polyspawn = next;

@@ -56,7 +56,6 @@
 #include "c_console.h"
 #include "c_dispatch.h"
 #include "d_player.h"
-#include "a_doomglobal.h"
 #include "w_wad.h"
 #include "gi.h"
 #include "zstring.h"

@@ -51,7 +51,6 @@
 #include "gi.h"
 #include "m_random.h"
 #include "p_conversation.h"
-#include "a_strifeglobal.h"
 #include "r_data/r_translate.h"
 #include "p_3dmidtex.h"
 #include "d_net.h"
@@ -2145,43 +2144,8 @@ FUNC(LS_Sector_ChangeFlags)
 }
 
 
-void AdjustPusher (int tag, int magnitude, int angle, DPusher::EPusher type)
-{
-	// Find pushers already attached to the sector, and change their parameters.
-	TArray<FThinkerCollection> Collection;
-	{
-		TThinkerIterator<DPusher> iterator;
-		FThinkerCollection collect;
 
-		while ( (collect.Obj = iterator.Next ()) )
-		{
-			if ((collect.RefNum = ((DPusher *)collect.Obj)->CheckForSectorMatch (type, tag)) >= 0)
-			{
-				((DPusher *)collect.Obj)->ChangeValues (magnitude, angle);
-				Collection.Push (collect);
-			}
-		}
-	}
-
-	size_t numcollected = Collection.Size ();
-	int secnum;
-
-	// Now create pushers for any sectors that don't already have them.
-	FSectorTagIterator itr(tag);
-	while ((secnum = itr.Next()) >= 0)
-	{
-		unsigned int i;
-		for (i = 0; i < numcollected; i++)
-		{
-			if (Collection[i].RefNum == sectors[secnum].sectornum)
-				break;
-		}
-		if (i == numcollected)
-		{
-			new DPusher (type, NULL, magnitude, angle, NULL, secnum);
-		}
-	}
-}
+void AdjustPusher(int tag, int magnitude, int angle, bool wind);
 
 FUNC(LS_Sector_SetWind)
 // Sector_SetWind (tag, amount, angle)
@@ -2189,7 +2153,7 @@ FUNC(LS_Sector_SetWind)
 	if (arg3)
 		return false;
 
-	AdjustPusher (arg0, arg1, arg2, DPusher::p_wind);
+	AdjustPusher (arg0, arg1, arg2, true);
 	return true;
 }
 
@@ -2199,7 +2163,7 @@ FUNC(LS_Sector_SetCurrent)
 	if (arg3)
 		return false;
 
-	AdjustPusher (arg0, arg1, arg2, DPusher::p_current);
+	AdjustPusher (arg0, arg1, arg2, false);
 	return true;
 }
 

@@ -1070,6 +1070,7 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	p_pillar.cpp
 	p_plats.cpp
 	p_pspr.cpp
+	p_pusher.cpp
 	p_saveg.cpp
 	p_scroll.cpp
 	p_sectors.cpp

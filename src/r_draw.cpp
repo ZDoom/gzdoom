@@ -33,7 +33,6 @@
 #include "v_video.h"
 #include "doomstat.h"
 #include "st_stuff.h"
-#include "a_hexenglobal.h"
 #include "g_game.h"
 #include "g_level.h"
 #include "r_data/r_translate.h"

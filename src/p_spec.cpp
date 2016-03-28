@@ -1625,8 +1625,8 @@ void DScroller::Tick ()
 
 		// [RH] Don't actually carry anything here. That happens later.
 		case sc_carry:
-			level.Scrolls[m_Affectee].ScrollX += dx;
-			level.Scrolls[m_Affectee].ScrollY += dy;
+			level.Scrolls[m_Affectee].Scroll.X += FIXED2DBL(dx);
+			level.Scrolls[m_Affectee].Scroll.Y += FIXED2DBL(dy);
 			break;
 
 		case sc_carry_ceiling:       // to be added later

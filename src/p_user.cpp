@@ -2040,7 +2040,7 @@ void P_FallingDamage (AActor *actor)
 {
 	int damagestyle;
 	int damage;
-	fixed_t vel;
+	double vel;
 
 	damagestyle = ((level.flags >> 15) | (dmflags)) &
 		(DF_FORCE_FALLINGZD | DF_FORCE_FALLINGHX);
@@ -2051,7 +2051,7 @@ void P_FallingDamage (AActor *actor)
 	if (actor->floorsector->Flags & SECF_NOFALLINGDAMAGE)
 		return;
 
-	vel = abs(actor->_f_velz());
+	vel = fabs(actor->Vel.Z);
 
 	// Since Hexen falling damage is stronger than ZDoom's, it takes
 	// precedence. ZDoom falling damage may not be as strong, but it
@@ -2060,19 +2060,19 @@ void P_FallingDamage (AActor *actor)
 	switch (damagestyle)
 	{
 	case DF_FORCE_FALLINGHX:		// Hexen falling damage
-		if (vel <= 23*FRACUNIT)
+		if (vel <= 23)
 		{ // Not fast enough to hurt
 			return;
 		}
-		if (vel >= 63*FRACUNIT)
+		if (vel >= 63)
 		{ // automatic death
 			damage = 1000000;
 		}
 		else
 		{
-			vel = FixedMul (vel, 16*FRACUNIT/23);
-			damage = ((FixedMul (vel, vel) / 10) >> FRACBITS) - 24;
-			if (actor->_f_velz() > -39*FRACUNIT && damage > actor->health
+			vel *= (16. / 23);
+			damage = int((vel * vel) / 10 - 24);
+			if (actor->Vel.Z > -39 && damage > actor->health
 				&& actor->health != 1)
 			{ // No-death threshold
 				damage = actor->health-1;
@@ -2081,17 +2081,17 @@ void P_FallingDamage (AActor *actor)
 		break;
 	
 	case DF_FORCE_FALLINGZD:		// ZDoom falling damage
-		if (vel <= 19*FRACUNIT)
+		if (vel <= 19)
 		{ // Not fast enough to hurt
 			return;
 		}
-		if (vel >= 84*FRACUNIT)
+		if (vel >= 84)
 		{ // automatic death
 			damage = 1000000;
 		}
 		else
 		{
-			damage = ((MulScale23 (vel, vel*11) >> FRACBITS) - 30) / 2;
+			damage = int((vel*vel*(11 / 128.) - 30) / 2);
 			if (damage < 1)
 			{
 				damage = 1;
@@ -2100,7 +2100,7 @@ void P_FallingDamage (AActor *actor)
 		break;
 
 	case DF_FORCE_FALLINGST:		// Strife falling damage
-		if (vel <= 20*FRACUNIT)
+		if (vel <= 20)
 		{ // Not fast enough to hurt
 			return;
 		}

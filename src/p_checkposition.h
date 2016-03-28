@@ -45,18 +45,6 @@ struct FCheckPosition
 		FromPMove = false;
 	}
 
-	inline fixed_t _f_ceilingz()
-	{
-		return FLOAT2FIXED(ceilingz);
-	}
-	inline fixed_t _f_floorz()
-	{
-		return FLOAT2FIXED(floorz);
-	}
-	inline fixed_t _f_dropoffz()
-	{
-		return FLOAT2FIXED(dropoffz);
-	}
 	inline fixed_t _f_X()
 	{
 		return FLOAT2FIXED(pos.X);

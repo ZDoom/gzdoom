@@ -899,10 +899,10 @@ sightcounts[0]++;
 		res = s.P_SightPathTraverse ();
 		if (!res)
 		{
-			fixed_t dist = t1->AproxDistance(t2);
+			double dist = t1->Distance2D(t2);
 			for (unsigned i = 0; i < portals.Size(); i++)
 			{
-				portals[i].frac += FixedDiv(FRACUNIT, dist);
+				portals[i].frac += FLOAT2FIXED(1 / dist);
 				s.init(t1, t2, NULL, &portals[i], flags);
 				if (s.P_SightPathTraverse())
 				{

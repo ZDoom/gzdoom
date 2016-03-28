@@ -1396,7 +1396,7 @@ void P_ExplodeMissile (AActor *mo, line_t *line, AActor *target)
 			{
 				// Find the nearest point on the line, and stick a decal there
 				DVector3 linepos;
-				double num, den, frac;
+				double den, frac;
 
 				den = line->Delta().LengthSquared();
 				if (den != 0)
@@ -2263,21 +2263,21 @@ explode:
 void P_MonsterFallingDamage (AActor *mo)
 {
 	int damage;
-	int vel;
+	double vel;
 
 	if (!(level.flags2 & LEVEL2_MONSTERFALLINGDAMAGE))
 		return;
 	if (mo->floorsector->Flags & SECF_NOFALLINGDAMAGE)
 		return;
 
-	vel = abs(mo->_f_velz());
-	if (vel > 35*FRACUNIT)
+	vel = fabs(mo->Vel.Z);
+	if (vel > 35)
 	{ // automatic death
 		damage = TELEFRAG_DAMAGE;
 	}
 	else
 	{
-		damage = ((vel - (23*FRACUNIT))*6)>>FRACBITS;
+		damage = int((vel - 23)*6);
 	}
 	damage = TELEFRAG_DAMAGE;	// always kill 'em
 	P_DamageMobj (mo, NULL, NULL, damage, NAME_Falling);
@@ -2287,11 +2287,11 @@ void P_MonsterFallingDamage (AActor *mo)
 // P_ZMovement
 //
 
-void P_ZMovement (AActor *mo, fixed_t oldfloorz)
+void P_ZMovement (AActor *mo, double oldfloorz)
 {
-	fixed_t dist;
-	fixed_t delta;
-	fixed_t oldz = mo->_f_Z();
+	double dist;
+	double delta;
+	double oldz = mo->Z();
 	double grav = mo->GetGravity();
 
 //
@@ -2317,7 +2317,7 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 		{
 			// [RH] Double gravity only if running off a ledge. Coming down from
 			// an upward thrust (e.g. a jump) should not double it.
-			if (mo->Vel.Z == 0 && oldfloorz > mo->_f_floorz() && mo->_f_Z() == oldfloorz)
+			if (mo->Vel.Z == 0 && oldfloorz > mo->floorz && mo->Z() == oldfloorz)
 			{
 				mo->Vel.Z -= grav + grav;
 			}
@@ -2401,19 +2401,19 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 	{	// float down towards target if too close
 		if (!(mo->flags & (MF_SKULLFLY | MF_INFLOAT)))
 		{
-			dist = mo->AproxDistance (mo->target);
-			delta = (mo->target->_f_Z() + (mo->_f_height()>>1)) - mo->_f_Z();
+			dist = mo->Distance2D (mo->target);
+			delta = (mo->target->Center()) - mo->Z();
 			if (delta < 0 && dist < -(delta*3))
-				mo->_f_AddZ(-mo->_f_floatspeed());
+				mo->AddZ(-mo->FloatSpeed);
 			else if (delta > 0 && dist < (delta*3))
-				mo->_f_AddZ(mo->_f_floatspeed());
+				mo->AddZ(mo->FloatSpeed);
 		}
 	}
 	if (mo->player && (mo->flags & MF_NOGRAVITY) && (mo->Z() > mo->floorz))
 	{
 		if (!mo->IsNoClip2())
 		{
-			mo->_f_AddZ(finesine[(FINEANGLES/80*level.maptime)&FINEMASK]/8);
+			mo->AddZ(DAngle(360 / 80.f * level.maptime).Sin() / 8);
 		}
 		mo->Vel.Z *= FRICTION_FLY;
 	}
@@ -2447,7 +2447,7 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 	{	// Hit the floor
 		if ((!mo->player || !(mo->player->cheats & CF_PREDICTING)) &&
 			mo->Sector->SecActTarget != NULL &&
-			mo->Sector->floorplane.ZatPoint(mo) == mo->_f_floorz())
+			mo->Sector->floorplane.ZatPointF(mo) == mo->floorz)
 		{ // [RH] Let the sector do something to the actor
 			mo->Sector->SecActTarget->TriggerAction (mo, SECSPAC_HitFloor);
 		}
@@ -2488,25 +2488,25 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 					return;
 				}
 			}
-			else if (mo->BounceFlags & BOUNCE_MBF && mo->_f_velz()) // check for MBF-like bounce on non-missiles
+			else if (mo->BounceFlags & BOUNCE_MBF && mo->Vel.Z) // check for MBF-like bounce on non-missiles
 			{
 				mo->FloorBounceMissile(mo->floorsector->floorplane);
 			}
 			if (mo->flags3 & MF3_ISMONSTER)		// Blasted mobj falling
 			{
-				if (mo->_f_velz() < -(23*FRACUNIT))
+				if (mo->Vel.Z < -23)
 				{
 					P_MonsterFallingDamage (mo);
 				}
 			}
 			mo->SetZ(mo->floorz);
-			if (mo->_f_velz() < 0)
+			if (mo->Vel.Z < 0)
 			{
-				const fixed_t minvel = -8*FRACUNIT;	// landing speed from a jump with normal gravity
+				const double minvel = -8;	// landing speed from a jump with normal gravity
 
 				// Spawn splashes, etc.
 				P_HitFloor (mo);
-				if (mo->DamageType == NAME_Ice && mo->_f_velz() < minvel)
+				if (mo->DamageType == NAME_Ice && mo->Vel.Z < minvel)
 				{
 					mo->tics = 1;
 					mo->Vel.Zero();
@@ -2516,11 +2516,11 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 				mo->HitFloor ();
 				if (mo->player)
 				{
-					if (mo->player->jumpTics < 0 || mo->_f_velz() < minvel)
+					if (mo->player->jumpTics < 0 || mo->Vel.Z < minvel)
 					{ // delay any jumping for a short while
 						mo->player->jumpTics = 7;
 					}
-					if (mo->_f_velz() < minvel && !(mo->flags & MF_NOGRAVITY))
+					if (mo->Vel.Z < minvel && !(mo->flags & MF_NOGRAVITY))
 					{
 						// Squat down.
 						// Decrease viewheight for a moment after hitting the ground (hard),
@@ -2547,7 +2547,7 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 	{ // hit the ceiling
 		if ((!mo->player || !(mo->player->cheats & CF_PREDICTING)) &&
 			mo->Sector->SecActTarget != NULL &&
-			mo->Sector->ceilingplane.ZatPoint(mo) == mo->_f_ceilingz())
+			mo->Sector->ceilingplane.ZatPointF(mo) == mo->ceilingz)
 		{ // [RH] Let the sector do something to the actor
 			mo->Sector->SecActTarget->TriggerAction (mo, SECSPAC_HitCeiling);
 		}
@@ -2584,7 +2584,7 @@ void P_ZMovement (AActor *mo, fixed_t oldfloorz)
 			}
 		}
 	}
-	P_CheckFakeFloorTriggers (mo, FIXED2DBL(oldz));
+	P_CheckFakeFloorTriggers (mo, oldz);
 }
 
 void P_CheckFakeFloorTriggers (AActor *mo, double oldz, bool oldz_has_viewheight)
@@ -3212,20 +3212,20 @@ void AActor::SetRoll(DAngle r, bool interpolate)
 }
 
 
-fixedvec3 AActor::_f_GetPortalTransition(fixed_t byoffset, sector_t **pSec)
+DVector3 AActor::GetPortalTransition(double byoffset, sector_t **pSec)
 {
 	bool moved = false;
 	sector_t *sec = Sector;
-	double testz = Z() + FIXED2FLOAT(byoffset);
-	fixedvec3 pos = _f_Pos();
+	double testz = Z() + byoffset;
+	DVector3 pos = Pos();
 
 	while (!sec->PortalBlocksMovement(sector_t::ceiling))
 	{
 		AActor *port = sec->SkyBoxes[sector_t::ceiling];
 		if (testz > port->specialf1)
 		{
-			pos = _f_PosRelative(port->Sector);
-			sec = P_PointInSector(pos.x, pos.y);
+			pos = PosRelative(port->Sector);
+			sec = P_PointInSector(pos);
 			moved = true;
 		}
 		else break;
@@ -3237,8 +3237,8 @@ fixedvec3 AActor::_f_GetPortalTransition(fixed_t byoffset, sector_t **pSec)
 			AActor *port = sec->SkyBoxes[sector_t::floor];
 			if (testz <= port->specialf1)
 			{
-				pos = _f_PosRelative(port->Sector);
-				sec = P_PointInSector(pos.x, pos.y);
+				pos = PosRelative(port->Sector);
+				sec = P_PointInSector(pos);
 			}
 			else break;
 		}
@@ -3294,8 +3294,7 @@ void AActor::CheckPortalTransition(bool islinked)
 void AActor::Tick ()
 {
 	// [RH] Data for Heretic/Hexen scrolling sectors
-	static const BYTE HexenScrollDirs[8] = { 64, 0, 192, 128, 96, 32, 224, 160 };
-	static const BYTE HexenSpeedMuls[3] = { 5, 10, 25 };
+	static const SBYTE HexenCompatSpeeds[] = {-25, 0, -10, -5, 0, 5, 10, 0, 25 };
 	static const SBYTE HexenScrollies[24][2] =
 	{
 		{  0,  1 }, {  0,  2 }, {  0,  4 },
@@ -3349,7 +3348,7 @@ void AActor::Tick ()
 
 		UnlinkFromWorld ();
 		flags |= MF_NOBLOCKMAP;
-		SetXYZ(Vec3Offset(_f_velx(), _f_vely(), _f_velz()));
+		SetXYZ(Vec3Offset(Vel));
 		CheckPortalTransition(false);
 		LinkToWorld ();
 	}
@@ -3434,7 +3433,7 @@ void AActor::Tick ()
 		{
 			if (health >0)
 			{
-				if (abs (_f_velz()) < FRACUNIT/4)
+				if (fabs (Vel.Z) < 0.25)
 				{
 					Vel.Z = 0;
 					flags4 &= ~MF4_VFRICTION;
@@ -3499,10 +3498,10 @@ void AActor::Tick ()
 		}
 
 		// [RH] Consider carrying sectors here
-		fixed_t cummx = 0, cummy = 0;
+		DVector2 cumm(0, 0);
 		if ((level.Scrolls != NULL || player != NULL) && !(flags & MF_NOCLIP) && !(flags & MF_NOSECTOR))
 		{
-			fixed_t height, waterheight;	// killough 4/4/98: add waterheight
+			double height, waterheight;	// killough 4/4/98: add waterheight
 			const msecnode_t *node;
 			int countx, county;
 
@@ -3519,17 +3518,16 @@ void AActor::Tick ()
 			for (node = touching_sectorlist; node; node = node->m_tnext)
 			{
 				sector_t *sec = node->m_sector;
-				fixed_t scrollx, scrolly;
+				DVector2 scrollv;
 
 				if (level.Scrolls != NULL)
 				{
 					const FSectorScrollValues *scroll = &level.Scrolls[sec - sectors];
-					scrollx = scroll->ScrollX;
-					scrolly = scroll->ScrollY;
+					scrollv = scroll->Scroll;
 				}
 				else
 				{
-					scrollx = scrolly = 0;
+					scrollv.Zero();
 				}
 
 				if (player != NULL)
@@ -3542,16 +3540,15 @@ void AActor::Tick ()
 						scrolltype -= Scroll_North_Slow;
 						if (i_compatflags&COMPATF_RAVENSCROLL)
 						{
-							angle_t fineangle = HexenScrollDirs[scrolltype / 3] * 32;
-							fixed_t carryspeed = DivScale32 (HexenSpeedMuls[scrolltype % 3], 32*_f_CARRYFACTOR);
-							scrollx += FixedMul (carryspeed, finecosine[fineangle]);
-							scrolly += FixedMul (carryspeed, finesine[fineangle]);
+							scrollv.X -= HexenCompatSpeeds[HexenScrollies[scrolltype][0]+4] * (1. / (32 * CARRYFACTOR));
+							scrollv.Y += HexenCompatSpeeds[HexenScrollies[scrolltype][1]+4] * (1. / (32 * CARRYFACTOR));
+
 						}
 						else
 						{
 							// Use speeds that actually match the scrolling textures!
-							scrollx -= HexenScrollies[scrolltype][0] << (FRACBITS-1);
-							scrolly += HexenScrollies[scrolltype][1] << (FRACBITS-1);
+							scrollv.X -= HexenScrollies[scrolltype][0] * 0.5;
+							scrollv.Y += HexenScrollies[scrolltype][1] * 0.5;
 						}
 					}
 					else if (scrolltype >= Carry_East5 &&
@@ -3559,39 +3556,37 @@ void AActor::Tick ()
 					{ // Heretic scroll special
 						scrolltype -= Carry_East5;
 						BYTE dir = HereticScrollDirs[scrolltype / 5];
-						fixed_t carryspeed = DivScale32 (HereticSpeedMuls[scrolltype % 5], 32*_f_CARRYFACTOR);
+						double carryspeed = HereticSpeedMuls[scrolltype % 5] * (1. / (32 * CARRYFACTOR));
 						if (scrolltype<=Carry_East35 && !(i_compatflags&COMPATF_RAVENSCROLL)) 
 						{
 							// Use speeds that actually match the scrolling textures!
-							carryspeed = (1 << ((scrolltype%5) + FRACBITS-1));
+							carryspeed = (1 << ((scrolltype%5) - 1));
 						}
-						scrollx += carryspeed * ((dir & 3) - 1);
-						scrolly += carryspeed * (((dir & 12) >> 2) - 1);
+						scrollv.X += carryspeed * ((dir & 3) - 1);
+						scrollv.Y += carryspeed * (((dir & 12) >> 2) - 1);
 					}
 					else if (scrolltype == dScroll_EastLavaDamage)
 					{ // Special Heretic scroll special
 						if (i_compatflags&COMPATF_RAVENSCROLL)
 						{
-							scrollx += DivScale32 (28, 32*_f_CARRYFACTOR);
+							scrollv.X += 28. / (32*CARRYFACTOR);
 						}
 						else
 						{
 							// Use a speed that actually matches the scrolling texture!
-							scrollx += DivScale32 (12, 32*_f_CARRYFACTOR);
+							scrollv.X += 12. / (32 * CARRYFACTOR);
 						}
 					}
 					else if (scrolltype == Scroll_StrifeCurrent)
 					{ // Strife scroll special
 						int anglespeed = tagManager.GetFirstSectorTag(sec) - 100;
-						fixed_t carryspeed = DivScale32 (anglespeed % 10, 16*_f_CARRYFACTOR);
-						angle_t fineangle = (anglespeed / 10) << (32-3);
-						fineangle >>= ANGLETOFINESHIFT;
-						scrollx += FixedMul (carryspeed, finecosine[fineangle]);
-						scrolly += FixedMul (carryspeed, finesine[fineangle]);
+						double carryspeed = (anglespeed % 10) / (16 * CARRYFACTOR);
+						DAngle angle = ((anglespeed / 10) * 45.);
+						scrollv += angle.ToVector(carryspeed);
 					}
 				}
 
-				if ((scrollx | scrolly) == 0)
+				if (scrollv.isZero())
 				{
 					continue;
 				}
@@ -3600,9 +3595,9 @@ void AActor::Tick ()
 				{
 					continue;
 				}
-				fixedvec3 pos = _f_PosRelative(sec);
+				DVector3 pos = PosRelative(sec);
 				height = sec->floorplane.ZatPoint (pos);
-				if (_f_Z() > height)
+				if (Z() > height)
 				{
 					if (heightsec == NULL)
 					{
@@ -3610,16 +3605,15 @@ void AActor::Tick ()
 					}
 
 					waterheight = heightsec->floorplane.ZatPoint (pos);
-					if (waterheight > height && _f_Z() >= waterheight)
+					if (waterheight > height && Z() >= waterheight)
 					{
 						continue;
 					}
 				}
 
-				cummx += scrollx;
-				cummy += scrolly;
-				if (scrollx) countx++;
-				if (scrolly) county++;
+				cumm += scrollv;
+				if (scrollv.X) countx++;
+				if (scrollv.Y) county++;
 			}
 
 			// Some levels designed with Boom in mind actually want things to accelerate
@@ -3629,11 +3623,11 @@ void AActor::Tick ()
 			{
 				if (countx > 1)
 				{
-					cummx /= countx;
+					cumm.X /= countx;
 				}
 				if (county > 1)
 				{
-					cummy /= county;
+					cumm.Y /= county;
 				}
 			}
 		}
@@ -3650,7 +3644,7 @@ void AActor::Tick ()
 			floorplane = P_FindFloorPlane(floorsector, PosAtZ(floorz));
 
 			if (floorplane.c < STEEPSLOPE &&
-				floorplane.ZatPoint (_f_PosRelative(floorsector)) <= _f_floorz())
+				floorplane.ZatPoint (PosRelative(floorsector)) <= floorz)
 			{
 				const msecnode_t *node;
 				bool dopush = true;
@@ -3689,7 +3683,7 @@ void AActor::Tick ()
 
 		// Handle X and Y velocities
 		BlockingMobj = NULL;
-		fixed_t oldfloorz = FLOAT2FIXED(P_XYMovement (this, DVector2(FIXED2DBL(cummx), FIXED2DBL(cummy))));
+		double oldfloorz = P_XYMovement (this, cumm);
 		if (ObjectFlags & OF_EuthanizeMe)
 		{ // actor was destroyed
 			return;
@@ -3755,7 +3749,7 @@ void AActor::Tick ()
 								onmo->lastbump = level.maptime + TICRATE;
 						}
 					}
-					if (_f_velz() != 0 && (BounceFlags & BOUNCE_Actors))
+					if (Vel.Z != 0 && (BounceFlags & BOUNCE_Actors))
 					{
 						P_BounceActor(this, onmo, true);
 					}
@@ -3902,15 +3896,15 @@ void AActor::CheckSectorTransition(sector_t *oldsec)
 		if (Sector->SecActTarget != NULL)
 		{
 			int act = SECSPAC_Enter;
-			if (_f_Z() <= Sector->floorplane.ZatPoint(this))
+			if (Z() <= Sector->floorplane.ZatPointF(this))
 			{
 				act |= SECSPAC_HitFloor;
 			}
-			if (_f_Z() + _f_height() >= Sector->ceilingplane.ZatPoint(this))
+			if (Top() >= Sector->ceilingplane.ZatPointF(this))
 			{
 				act |= SECSPAC_HitCeiling;
 			}
-			if (Sector->heightsec != NULL && _f_Z() == Sector->heightsec->floorplane.ZatPoint(this))
+			if (Sector->heightsec != NULL && Z() == Sector->heightsec->floorplane.ZatPointF(this))
 			{
 				act |= SECSPAC_HitFakeFloor;
 			}
@@ -5585,7 +5579,7 @@ bool P_HitFloor (AActor *thing)
 
 	// killough 11/98: touchy objects explode on impact
 	// Allow very short drops to be safe, so that a touchy can be summoned without exploding.
-	if (thing->flags6 & MF6_TOUCHY && ((thing->flags6 & MF6_ARMED) || thing->IsSentient()) && ((thing->_f_velz()) < (-5 * FRACUNIT)))
+	if (thing->flags6 & MF6_TOUCHY && ((thing->flags6 & MF6_ARMED) || thing->IsSentient()) && thing->Vel.Z < -5)
 	{
 		thing->flags6 &= ~MF6_ARMED; // Disarm
 		P_DamageMobj (thing, NULL, NULL, thing->health, NAME_Crush, DMG_FORCED);  // kill object
@@ -5938,21 +5932,21 @@ AActor *P_SpawnMissileZAimed (AActor *source, fixed_t z, AActor *dest, PClassAct
 	{
 		return NULL;
 	}
-	angle_t an;
-	fixed_t dist;
-	fixed_t speed;
-	fixed_t vz;
+	DAngle an;
+	double dist;
+	double speed;
+	double vz;
 
-	an = source->_f_angle();
+	an = source->Angles.Yaw;
 
 	if (dest->flags & MF_SHADOW)
 	{
-		an += pr_spawnmissile.Random2() << 20;
+		an += pr_spawnmissile.Random2() * (16. / 360.);
 	}
-	dist = source->AproxDistance (dest);
-	speed = GetDefaultSpeed (type);
+	dist = source->Distance2D (dest);
+	speed = FIXED2DBL(GetDefaultSpeed (type));
 	dist /= speed;
-	vz = dist != 0 ? (dest->_f_Z() - source->_f_Z())/dist : speed;
+	vz = dist != 0 ? (dest->Z() - source->Z())/dist : speed;
 	return P_SpawnMissileAngleZSpeed (source, z, type, an, vz, speed);
 }
 

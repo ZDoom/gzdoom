@@ -737,12 +737,7 @@ public:
 
 	inline bool IsNoClip2() const;
 	void CheckPortalTransition(bool islinked);
-	fixedvec3 _f_GetPortalTransition(fixed_t byoffset, sector_t **pSec = NULL);
-	DVector3 GetPortalTransition(double byoffset, sector_t **pSec = NULL)
-	{
-		fixedvec3 pos = _f_GetPortalTransition(FLOAT2FIXED(byoffset), pSec);
-		return{ FIXED2FLOAT(pos.x), FIXED2FLOAT(pos.y),FIXED2FLOAT(pos.z) };
-	}
+	DVector3 GetPortalTransition(double byoffset, sector_t **pSec = NULL);
 
 	// What species am I?
 	virtual FName GetSpecies();
@@ -823,27 +818,6 @@ public:
 		return bloodcls;
 	}
 
-	fixed_t AproxDistance(fixed_t otherx, fixed_t othery)
-	{
-		return P_AproxDistance(_f_X() - otherx, _f_Y() - othery);
-	}
-
-	// 'absolute' is reserved for a linked portal implementation which needs
-	// to distinguish between portal-aware and portal-unaware distance calculation.
-	fixed_t AproxDistance(AActor *other, bool absolute = false)
-	{
-		fixedvec3 otherpos = absolute ? other->_f_Pos() : other->_f_PosRelative(this);
-		return P_AproxDistance(_f_X() - otherpos.x, _f_Y() - otherpos.y);
-	}
-
-	/*
-	fixed_t AproxDistance(AActor *other, fixed_t xadd, fixed_t yadd, bool absolute = false)
-	{
-		fixedvec3 otherpos = absolute ? other->_f_Pos() : other->_f_PosRelative(this);
-		return P_AproxDistance(_f_X() - otherpos.x + xadd, _f_Y() - otherpos.y + yadd);
-	}
-	*/
-
 	double Distance2D(AActor *other, bool absolute = false)
 	{
 		DVector2 otherpos = absolute ? other->Pos() : other->PosRelative(this);
@@ -887,20 +861,6 @@ public:
 		return VecToAngle(otherpos - Pos() + DVector2(oxofs, oyofs));
 	}
 
-	fixedvec2 _f_Vec2To(AActor *other) const
-	{
-		fixedvec3 otherpos = other->_f_PosRelative(this);
-		fixedvec2 ret = { otherpos.x - _f_X(), otherpos.y - _f_Y() };
-		return ret;
-	}
-
-	fixedvec3 _f_Vec3To(AActor *other) const
-	{
-		fixedvec3 otherpos = other->_f_PosRelative(this);
-		fixedvec3 ret = { otherpos.x - _f_X(), otherpos.y - _f_Y(), otherpos.z - _f_Z() };
-		return ret;
-	}
-
 	DVector2 Vec2To(AActor *other) const
 	{
 		return other->PosRelative(this) - Pos();
@@ -911,16 +871,6 @@ public:
 		return other->PosRelative(this) - Pos();
 	}
 
-	fixedvec2 Vec2Offset(fixed_t dx, fixed_t dy, bool absolute = false)
-	{
-		if (absolute)
-		{
-			fixedvec2 ret = { _f_X() + dx, _f_Y() + dy };
-			return ret;
-		}
-		else return P_GetOffsetPosition(_f_X(), _f_Y(), dx, dy);
-	}
-
 	DVector2 Vec2Offset(double dx, double dy, bool absolute = false)
 	{
 		if (absolute)
@@ -929,8 +879,7 @@ public:
 		}
 		else
 		{
-			fixedvec2 v = P_GetOffsetPosition(_f_X(), _f_Y(), FLOAT2FIXED(dx), FLOAT2FIXED(dy));
-			return{ FIXED2DBL(v.x), FIXED2DBL(v.y) };
+			return P_GetOffsetPosition(X(), Y(), dx, dy);
 		}
 	}
 
@@ -943,20 +892,9 @@ public:
 		}
 		else
 		{
-			fixedvec2 v = P_GetOffsetPosition(_f_X(), _f_Y(), FLOAT2FIXED(dx), FLOAT2FIXED(dy));
-			return{ FIXED2DBL(v.x), FIXED2DBL(v.y), atz };
+			DVector2 v = P_GetOffsetPosition(X(), Y(), dx, dy);
+			return DVector3(v, atz);
 		}
-	}
-
-	fixedvec2 Vec2Angle(fixed_t length, angle_t angle, bool absolute = false)
-	{
-		if (absolute)
-		{
-			fixedvec2 ret = { _f_X() + FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]),
-							  _f_Y() + FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]) };
-			return ret;
-		}
-		else return P_GetOffsetPosition(_f_X(), _f_Y(), FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]), FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]));
 	}
 
 	DVector2 Vec2Angle(double length, DAngle angle, bool absolute = false)
@@ -967,8 +905,7 @@ public:
 		}
 		else
 		{
-			fixedvec2 op = P_GetOffsetPosition(_f_X(), _f_Y(), FLOAT2FIXED(length*angle.Cos()), FLOAT2FIXED(length*angle.Sin()));
-			return{ FIXED2DBL(op.x), FIXED2DBL(op.y) };
+			return P_GetOffsetPosition(X(), Y(), length*angle.Cos(), length*angle.Sin());
 		}
 	}
 
@@ -995,30 +932,14 @@ public:
 		}
 		else
 		{
-			fixedvec2 v = P_GetOffsetPosition(_f_X(), _f_Y(), FLOAT2FIXED(dx), FLOAT2FIXED(dy));
-			return{ FIXED2DBL(v.x), FIXED2DBL(v.y), Z() + dz };
+			DVector2 v = P_GetOffsetPosition(X(), Y(), dx, dy);
+			return DVector3(v, Z() + dz);
 		}
 	}
 
 	DVector3 Vec3Offset(const DVector3 &ofs, bool absolute = false)
 	{
 		return Vec3Offset(ofs.X, ofs.Y, ofs.Z, absolute);
-	}
-
-	fixedvec3 _f_Vec3Angle(fixed_t length, angle_t angle, fixed_t dz, bool absolute = false)
-	{
-		if (absolute)
-		{
-			fixedvec3 ret = { _f_X() + FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]),
-						  _f_Y() + FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]), _f_Z() + dz };
-			return ret;
-		}
-		else
-		{
-			fixedvec2 op = P_GetOffsetPosition(_f_X(), _f_Y(), FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]), FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]));
-			fixedvec3 pos = { op.x, op.y, _f_Z() + dz };
-			return pos;
-		}
 	}
 
 	DVector3 Vec3Angle(double length, DAngle angle, double dz, bool absolute = false)
@@ -1029,8 +950,8 @@ public:
 		}
 		else
 		{
-			fixedvec2 op = P_GetOffsetPosition(_f_X(), _f_Y(), FLOAT2FIXED(length*angle.Cos()), FLOAT2FIXED(length*angle.Sin()));
-			return{ FIXED2DBL(op.x), FIXED2DBL(op.y), Z() + dz };
+			DVector2 v = P_GetOffsetPosition(X(), Y(), length*angle.Cos(), length*angle.Sin());
+			return DVector3(v, Z() + dz);
 		}
 	}
 
@@ -1040,11 +961,6 @@ public:
 	}
 
 	void ClearInterpolation();
-
-	void Move(fixed_t dx, fixed_t dy, fixed_t dz)
-	{
-		SetOrigin(_f_X() + dx, _f_Y() + dy, _f_Z() + dz, true);
-	}
 
 	void SetOrigin(const fixedvec3 & npos, bool moving)
 	{
@@ -1094,12 +1010,7 @@ public:
 	// intentionally stange names so that searching for them is easier.
 	angle_t			_f_angle() { return FLOAT2ANGLE(Angles.Yaw.Degrees); }
 	int				_f_pitch() { return FLOAT2ANGLE(Angles.Pitch.Degrees); }
-	angle_t			_f_roll() { return FLOAT2ANGLE(Angles.Roll.Degrees); }
-	fixed_t			_f_velx() {	return FLOAT2FIXED(Vel.X); }
-	fixed_t			_f_vely() { return FLOAT2FIXED(Vel.Y); }
-	fixed_t			_f_velz() { return FLOAT2FIXED(Vel.Z); }
 	fixed_t			_f_speed() { return FLOAT2FIXED(Speed); }
-	fixed_t			_f_floatspeed() { return FLOAT2FIXED(FloatSpeed); }
 
 
 	WORD			sprite;				// used to find patch_t and flip value
@@ -1119,19 +1030,10 @@ public:
 	double			floorz, ceilingz;	// closest together of contacted secs
 	double			dropoffz;		// killough 11/98: the lowest floor over all contacted Sectors.
 
-	inline fixed_t _f_ceilingz()
-	{
-		return FLOAT2FIXED(ceilingz);
-	}
 	inline fixed_t _f_floorz()
 	{
 		return FLOAT2FIXED(floorz);
 	}
-	inline fixed_t _f_dropoffz()
-	{
-		return FLOAT2FIXED(dropoffz);
-	}
-
 
 	struct sector_t	*floorsector;
 	FTextureID		floorpic;			// contacted sec floorpic
@@ -1276,10 +1178,6 @@ public:
 	double MaxDropOffHeight;
 	double MaxStepHeight;
 
-	fixed_t _f_MaxStepHeight()
-	{
-		return FLOAT2FIXED(MaxStepHeight);
-	}
 	SDWORD Mass;
 	SWORD PainChance;
 	int PainThreshold;

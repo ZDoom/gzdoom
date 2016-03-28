@@ -377,7 +377,7 @@ struct level_info_t
 // [RH] These get zeroed every tic and are updated by thinkers.
 struct FSectorScrollValues
 {
-	fixed_t ScrollX, ScrollY;
+	DVector2 Scroll;
 };
 
 struct FLevelLocals

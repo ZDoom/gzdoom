@@ -1999,7 +1999,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_LookEx)
 			{
 				if (self->flags & MF_AMBUSH)
 				{
-					dist = self->AproxDistance (self->target);
+					dist = self->Distance2D (self->target);
 					if (P_CheckSight (self, self->target, SF_SEEPASTBLOCKEVERYTHING) &&
 						(!minseedist || dist > minseedist) &&
 						(!maxseedist || dist < maxseedist))
@@ -2449,7 +2449,7 @@ void A_DoChase (VMFrameStack *stack, AActor *actor, bool fastchase, FState *mele
 		{
 			actor->FastChaseStrafeCount = 0;
 			actor->Vel.X = actor->Vel.Y = 0;
-			fixed_t dist = actor->AproxDistance (actor->target);
+			double dist = actor->Distance2D (actor->target);
 			if (dist < CLASS_BOSS_STRAFE_RANGE)
 			{
 				if (pr_chase() < 100)

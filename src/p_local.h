@@ -138,11 +138,6 @@ enum EPuffFlags
 };
 
 AActor *P_SpawnPuff(AActor *source, PClassActor *pufftype, const DVector3 &pos, DAngle hitdir, DAngle particledir, int updown, int flags = 0, AActor *vict = NULL);
-inline AActor *P_SpawnPuff(AActor *source, PClassActor *pufftype, const fixedvec3 &pos, angle_t hitdir, angle_t particledir, int updown, int flags = 0, AActor *vict = NULL)
-{
-	DVector3 _pos(FIXED2DBL(pos.x), FIXED2DBL(pos.y), FIXED2DBL(pos.z));
-	return P_SpawnPuff(source, pufftype, _pos, ANGLE2DBL(hitdir), ANGLE2DBL(particledir), updown, flags, vict);
-}
 void	P_SpawnBlood (const DVector3 &pos, DAngle angle, int damage, AActor *originator);
 void	P_BloodSplatter (const DVector3 &pos, AActor *originator, DAngle hitangle);
 void	P_BloodSplatter2 (const DVector3 &pos, AActor *originator, DAngle hitangle);
@@ -152,42 +147,13 @@ void	P_ExplodeMissile (AActor *missile, line_t *explodeline, AActor *target);
 
 AActor *P_OldSpawnMissile(AActor *source, AActor *owner, AActor *dest, PClassActor *type);
 AActor *P_SpawnMissile (AActor* source, AActor* dest, PClassActor *type, AActor* owner = NULL);
-AActor *P_SpawnMissileZ (AActor* source, fixed_t z, AActor* dest, PClassActor *type);
-inline AActor *P_SpawnMissileZ(AActor* source, double z, AActor* dest, PClassActor *type)
-{
-	return P_SpawnMissileZ(source, FLOAT2FIXED(z), dest, type);
-}
+AActor *P_SpawnMissileZ(AActor* source, double z, AActor* dest, PClassActor *type);
+AActor *P_SpawnMissileXYZ(DVector3 pos, AActor *source, AActor *dest, PClassActor *type, bool checkspawn = true, AActor *owner = NULL);
+AActor *P_SpawnMissileAngle(AActor *source, PClassActor *type, DAngle angle, double vz);
+AActor *P_SpawnMissileAngleZ(AActor *source, double z, PClassActor *type, DAngle angle, double vz);
+AActor *P_SpawnMissileAngleZSpeed(AActor *source, double z, PClassActor *type, DAngle angle, double vz, double speed, AActor *owner = NULL, bool checkspawn = true);
+AActor *P_SpawnMissileZAimed(AActor *source, double z, AActor *dest, PClassActor *type);
 
-AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z, AActor *source, AActor *dest, PClassActor *type, bool checkspawn = true, AActor *owner = NULL);
-inline AActor *P_SpawnMissileXYZ(const fixedvec3 &pos, AActor *source, AActor *dest, PClassActor *type, bool checkspawn = true, AActor *owner = NULL)
-{
-	return P_SpawnMissileXYZ(pos.x, pos.y, pos.z, source, dest, type, checkspawn, owner);
-}
-inline AActor *P_SpawnMissileXYZ(const DVector3 &pos, AActor *source, AActor *dest, PClassActor *type, bool checkspawn = true, AActor *owner = NULL)
-{
-	return P_SpawnMissileXYZ(FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), FLOAT2FIXED(pos.Z), source, dest, type, checkspawn, owner);
-}
-AActor *P_SpawnMissileAngle (AActor *source, PClassActor *type, angle_t angle, fixed_t vz);
-inline AActor *P_SpawnMissileAngle(AActor *source, PClassActor *type, DAngle angle, double vz)
-{
-	return P_SpawnMissileAngle(source, type, angle.BAMs(), FLOAT2FIXED(vz));
-}
-AActor *P_SpawnMissileAngleSpeed (AActor *source, PClassActor *type, angle_t angle, fixed_t vz, fixed_t speed);
-AActor *P_SpawnMissileAngleZ (AActor *source, fixed_t z, PClassActor *type, angle_t angle, fixed_t vz);
-inline AActor *P_SpawnMissileAngleZ(AActor *source, double z, PClassActor *type, DAngle angle, double vz)
-{
-	return P_SpawnMissileAngleZ(source, FLOAT2FIXED(z), type, angle.BAMs(), FLOAT2FIXED(vz));
-}
-AActor *P_SpawnMissileAngleZSpeed (AActor *source, fixed_t z, PClassActor *type, angle_t angle, fixed_t vz, fixed_t speed, AActor *owner=NULL, bool checkspawn = true);
-inline AActor *P_SpawnMissileAngleZSpeed(AActor *source, double z, PClassActor *type, DAngle angle, double vz, double speed, AActor *owner = NULL, bool checkspawn = true)
-{
-	return P_SpawnMissileAngleZSpeed(source, FLOAT2FIXED(z), type, angle.BAMs(), FLOAT2FIXED(vz), FLOAT2FIXED(speed), owner, checkspawn);
-}
-AActor *P_SpawnMissileZAimed (AActor *source, fixed_t z, AActor *dest, PClassActor *type);
-inline AActor *P_SpawnMissileZAimed(AActor *source, double z, AActor *dest, PClassActor *type)
-{
-	return P_SpawnMissileZAimed(source, FLOAT2FIXED(z), dest, type);
-}
 
 AActor *P_SpawnPlayerMissile (AActor* source, PClassActor *type);
 AActor *P_SpawnPlayerMissile (AActor *source, PClassActor *type, DAngle angle);

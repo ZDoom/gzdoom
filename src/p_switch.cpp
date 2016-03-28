@@ -309,7 +309,7 @@ bool P_ChangeSwitchTexture (side_t *side, int useAgain, BYTE special, bool *ques
 	}
 	if (playsound)
 	{
-		S_Sound (pt[0], pt[1], 0, CHAN_VOICE|CHAN_LISTENERZ, sound, 1, ATTN_STATIC);
+		S_Sound (DVector3(FIXED2DBL(pt[0]), FIXED2DBL(pt[1]), 0), CHAN_VOICE|CHAN_LISTENERZ, sound, 1, ATTN_STATIC);
 	}
 	if (quest != NULL)
 	{
@@ -391,7 +391,7 @@ void DActiveButton::Tick ()
 			if (def != NULL)
 			{
 				m_Frame = -1;
-				S_Sound (m_X, m_Y, 0, CHAN_VOICE|CHAN_LISTENERZ,
+				S_Sound (DVector3(FIXED2DBL(m_X), FIXED2DBL(m_Y), 0), CHAN_VOICE|CHAN_LISTENERZ,
 					def->Sound != 0 ? FSoundID(def->Sound) : FSoundID("switches/normbutn"),
 					1, ATTN_STATIC);
 				bFlippable = false;

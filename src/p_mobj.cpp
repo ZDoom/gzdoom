@@ -4426,9 +4426,9 @@ void AActor::AdjustFloorClip ()
 	// do the floorclipping instead of the terrain type.
 	for (m = touching_sectorlist; m; m = m->m_tnext)
 	{
-		fixedvec3 pos = _f_PosRelative(m->m_sector);
+		DVector3 pos = PosRelative(m->m_sector);
 		sector_t *hsec = m->m_sector->GetHeightSec();
-		if (hsec == NULL && m->m_sector->floorplane.ZatPoint (pos) == _f_Z())
+		if (hsec == NULL && m->m_sector->floorplane.ZatPoint (pos) == Z())
 		{
 			double clip = Terrains[m->m_sector->GetTerrain(sector_t::floor)].FootClip;
 			if (clip < shallowestclip)
@@ -5270,7 +5270,7 @@ void P_SpawnBlood (const DVector3 &pos, DAngle dir, int damage, AActor *originat
 	}
 
 	if (bloodtype >= 1)
-		P_DrawSplash2 (40, pos, ANGLE2DBL(dir), 2, bloodcolor);
+		P_DrawSplash2 (40, pos, dir, 2, bloodcolor);
 }
 
 //---------------------------------------------------------------------------
@@ -5590,11 +5590,11 @@ bool P_HitFloor (AActor *thing)
 		return false;
 
 	// don't splash if landing on the edge above water/lava/etc....
-	fixedvec3 pos;
+	DVector3 pos;
 	for (m = thing->touching_sectorlist; m; m = m->m_tnext)
 	{
-		pos = thing->_f_PosRelative(m->m_sector);
-		if (thing->_f_Z() == m->m_sector->floorplane.ZatPoint(pos.x, pos.y))
+		pos = thing->PosRelative(m->m_sector);
+		if (thing->Z() == m->m_sector->floorplane.ZatPoint(pos))
 		{
 			break;
 		}
@@ -5606,7 +5606,7 @@ bool P_HitFloor (AActor *thing)
 			if (!(rover->flags & FF_EXISTS)) continue;
 			if (rover->flags & (FF_SOLID|FF_SWIMMABLE))
 			{
-				if (rover->top.plane->ZatPoint(pos.x, pos.y) == thing->_f_Z())
+				if (rover->top.plane->ZatPoint(pos) == thing->Z())
 				{
 					return P_HitWater (thing, m->m_sector, pos);
 				}
@@ -5638,8 +5638,8 @@ void P_CheckSplash(AActor *self, double distance)
 		// Explosion splashes never alert monsters. This is because A_Explode has
 		// a separate parameter for that so this would get in the way of proper 
 		// behavior.
-		fixedvec3 pos = self->_f_PosRelative(floorsec);
-		pos.z = self->_f_floorz();
+		DVector3 pos = self->PosRelative(floorsec);
+		pos.Z = self->floorz;
 		P_HitWater (self, floorsec, pos, false, false);
 	}
 }
@@ -5754,19 +5754,19 @@ void P_PlaySpawnSound(AActor *missile, AActor *spawner)
 			// If there is no spawner use the spawn position.
 			// But not in a silenced sector.
 			if (!(missile->Sector->Flags & SECF_SILENT))
-				S_Sound (missile->_f_X(), missile->_f_Y(), missile->_f_Z(), CHAN_WEAPON, missile->SeeSound, 1, ATTN_NORM);
+				S_Sound (missile->Pos(), CHAN_WEAPON, missile->SeeSound, 1, ATTN_NORM);
 		}
 	}
 }
 
-static fixed_t GetDefaultSpeed(PClassActor *type)
+static double GetDefaultSpeed(PClassActor *type)
 {
 	if (type == NULL)
 		return 0;
 	else if (G_SkillProperty(SKILLP_FastMonsters) && type->FastSpeed >= 0)
-		return FLOAT2FIXED(type->FastSpeed);
+		return type->FastSpeed;
 	else
-		return GetDefaultByType(type)->_f_speed();
+		return GetDefaultByType(type)->Speed;
 }
 
 //---------------------------------------------------------------------------
@@ -5784,21 +5784,19 @@ AActor *P_SpawnMissile (AActor *source, AActor *dest, PClassActor *type, AActor 
 	{
 		return NULL;
 	}
-	return P_SpawnMissileXYZ (source->_f_X(), source->_f_Y(), source->_f_Z() + 32*FRACUNIT + source->_f_GetBobOffset(),
-		source, dest, type, true, owner);
+	return P_SpawnMissileXYZ (source->PosPlusZ(32 + source->GetBobOffset()), source, dest, type, true, owner);
 }
 
-AActor *P_SpawnMissileZ (AActor *source, fixed_t z, AActor *dest, PClassActor *type)
+AActor *P_SpawnMissileZ (AActor *source, double z, AActor *dest, PClassActor *type)
 {
 	if (source == NULL)
 	{
 		return NULL;
 	}
-	return P_SpawnMissileXYZ (source->_f_X(), source->_f_Y(), z, source, dest, type);
+	return P_SpawnMissileXYZ (source->PosAtZ(z), source, dest, type);
 }
 
-AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
-	AActor *source, AActor *dest, PClassActor *type, bool checkspawn, AActor *owner)
+AActor *P_SpawnMissileXYZ (DVector3 pos, AActor *source, AActor *dest, PClassActor *type, bool checkspawn, AActor *owner)
 {
 	if (source == NULL)
 	{
@@ -5812,12 +5810,11 @@ AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
 		return NULL;
 	}
 
-	if (z != ONFLOORZ && z != ONCEILINGZ) 
+	if (pos.Z != ONFLOORZ && pos.Z != ONCEILINGZ)
 	{
-		z -= source->_f_floorclip();
+		pos.Z -= source->Floorclip;
 	}
 
-	DVector3 pos(FIXED2DBL(x), FIXED2DBL(y), FIXED2DBL(z));
 	AActor *th = Spawn (type, pos, ALLOW_REPLACE);
 	
 	P_PlaySpawnSound(th, source);
@@ -5841,9 +5838,9 @@ AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
 		velocity.Z = 0;
 	}
 	// [RH] Adjust the trajectory if the missile will go over the target's head.
-	else if (FIXED2FLOAT(z) - source->Z() >= dest->Height)
+	else if (pos.Z - source->Z() >= dest->Height)
 	{
-		velocity.Z += (dest->Height - FIXED2FLOAT(z) + source->Z());
+		velocity.Z += (dest->Height - pos.Z + source->Z());
 	}
 	th->Vel = velocity.Resized(speed);
 
@@ -5908,25 +5905,21 @@ AActor *P_OldSpawnMissile(AActor *source, AActor *owner, AActor *dest, PClassAct
 //
 //---------------------------------------------------------------------------
 
-AActor *P_SpawnMissileAngle (AActor *source, PClassActor *type,
-	angle_t angle, fixed_t vz)
+AActor *P_SpawnMissileAngle (AActor *source, PClassActor *type, DAngle angle, double vz)
 {
 	if (source == NULL)
 	{
 		return NULL;
 	}
-	return P_SpawnMissileAngleZSpeed (source, source->_f_Z() + 32*FRACUNIT + source->_f_GetBobOffset(),
-		type, angle, vz, GetDefaultSpeed (type));
+	return P_SpawnMissileAngleZSpeed (source, source->Z() + 32 + source->GetBobOffset(), type, angle, vz, GetDefaultSpeed (type));
 }
 
-AActor *P_SpawnMissileAngleZ (AActor *source, fixed_t z,
-	PClassActor *type, angle_t angle, fixed_t vz)
+AActor *P_SpawnMissileAngleZ (AActor *source, double z, PClassActor *type, DAngle angle, double vz)
 {
-	return P_SpawnMissileAngleZSpeed (source, z, type, angle, vz,
-		GetDefaultSpeed (type));
+	return P_SpawnMissileAngleZSpeed (source, z, type, angle, vz, GetDefaultSpeed (type));
 }
 
-AActor *P_SpawnMissileZAimed (AActor *source, fixed_t z, AActor *dest, PClassActor *type)
+AActor *P_SpawnMissileZAimed (AActor *source, double z, AActor *dest, PClassActor *type)
 {
 	if (source == NULL)
 	{
@@ -5952,26 +5945,15 @@ AActor *P_SpawnMissileZAimed (AActor *source, fixed_t z, AActor *dest, PClassAct
 
 //---------------------------------------------------------------------------
 //
-// FUNC P_SpawnMissileAngleSpeed
+// FUNC P_SpawnMissileAngleZSpeed
 //
 // Returns NULL if the missile exploded immediately, otherwise returns
 // a mobj_t pointer to the missile.
 //
 //---------------------------------------------------------------------------
 
-AActor *P_SpawnMissileAngleSpeed (AActor *source, PClassActor *type,
-	angle_t angle, fixed_t vz, fixed_t speed)
-{
-	if (source == NULL)
-	{
-		return NULL;
-	}
-	return P_SpawnMissileAngleZSpeed (source, source->_f_Z() + 32*FRACUNIT + source->_f_GetBobOffset(),
-		type, angle, vz, speed);
-}
-
-AActor *P_SpawnMissileAngleZSpeed (AActor *source, fixed_t z,
-	PClassActor *type, angle_t angle, fixed_t vz, fixed_t speed, AActor *owner, bool checkspawn)
+AActor *P_SpawnMissileAngleZSpeed (AActor *source, double z,
+	PClassActor *type, DAngle angle, double vz, double speed, AActor *owner, bool checkspawn)
 {
 	if (source == NULL)
 	{
@@ -5981,17 +5963,17 @@ AActor *P_SpawnMissileAngleZSpeed (AActor *source, fixed_t z,
 
 	if (z != ONFLOORZ && z != ONCEILINGZ) 
 	{
-		z -= source->_f_floorclip();
+		z -= source->Floorclip;
 	}
 
-	mo = Spawn (type, source->PosAtZ(FIXED2FLOAT(z)), ALLOW_REPLACE);
+	mo = Spawn (type, source->PosAtZ(z), ALLOW_REPLACE);
 
 	P_PlaySpawnSound(mo, source);
 	if (owner == NULL) owner = source;
 	mo->target = owner;
-	mo->Angles.Yaw = ANGLE2DBL(angle);
-	mo->VelFromAngle(FIXED2DBL(speed));
-	mo->Vel.Z = FIXED2DBL(vz);
+	mo->Angles.Yaw = angle;
+	mo->VelFromAngle(speed);
+	mo->Vel.Z = vz;
 
 	if (mo->flags4 & MF4_SPECTRAL)
 	{
@@ -6597,7 +6579,7 @@ void PrintMiscActorInfo(AActor *query)
 		Printf("\nTID: %d", query->tid);
 		Printf("\nCoord= x: %f, y: %f, z:%f, floor:%f, ceiling:%f.",
 			query->X(), query->Y(), query->Z(),
-			FIXED2DBL(query->_f_floorz()), query->ceilingz);
+			query->floorz, query->ceilingz);
 		Printf("\nSpeed= %f, velocity= x:%f, y:%f, z:%f, combined:%f.\n",
 			query->Speed, query->Vel.X, query->Vel.Y, query->Vel.Z, query->Vel.Length());
 	}

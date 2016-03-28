@@ -2106,7 +2106,7 @@ void P_FallingDamage (AActor *actor)
 		}
 		// The minimum amount of damage you take from falling in Strife
 		// is 52. Ouch!
-		damage = vel / 25000;
+		damage = int(vel / (25000./65536.));
 		break;
 
 	default:

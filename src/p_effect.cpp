@@ -691,8 +691,7 @@ void P_DrawRailTrail(AActor *source, const DVector3 &start, const DVector3 &end,
 				point = start + r * dir;
 				dir.Z = dirz;
 
-				S_Sound (FLOAT2FIXED(point.X), FLOAT2FIXED(point.Y), viewz,
-					CHAN_WEAPON, sound, 1, ATTN_NORM);
+				S_Sound (DVector3(point.X, point.Y, viewz),	CHAN_WEAPON, sound, 1, ATTN_NORM);
 			}
 		}
 	}

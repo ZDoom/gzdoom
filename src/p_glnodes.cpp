@@ -129,10 +129,10 @@ struct gl5_mapnode_t
 
 static int CheckForMissingSegs()
 {
-	float *added_seglen = new float[numsides];
+	double *added_seglen = new double[numsides];
 	int missing = 0;
 
-	memset(added_seglen, 0, sizeof(float)*numsides);
+	memset(added_seglen, 0, sizeof(double)*numsides);
 	for(int i=0;i<numsegs;i++)
 	{
 		seg_t * seg = &segs[i];
@@ -140,20 +140,15 @@ static int CheckForMissingSegs()
 		if (seg->sidedef!=NULL)
 		{
 			// check all the segs and calculate the length they occupy on their sidedef
-			DVector2 vec1(seg->v2->fixX() - seg->v1->fixX(), seg->v2->fixY() - seg->v1->fixY());
-			added_seglen[seg->sidedef - sides] += float(vec1.Length());
+			DVector2 vec1(seg->v2->fX() - seg->v1->fX(), seg->v2->fY() - seg->v1->fY());
+			added_seglen[seg->sidedef - sides] += vec1.Length();
 		}
 	}
 
 	for(int i=0;i<numsides;i++)
 	{
-		side_t * side =&sides[i];
-		line_t * line = side->linedef;
-
-		DVector2 lvec(line->dx, line->dy);
-		float linelen = float(lvec.Length());
-
-		missing += (added_seglen[i] < linelen - FRACUNIT);
+		double linelen = sides[i].linedef->Delta().Length();
+		missing += (added_seglen[i] < linelen - 1.);
 	}
 
 	delete [] added_seglen;

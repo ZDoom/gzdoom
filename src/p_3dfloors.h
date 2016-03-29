@@ -68,7 +68,6 @@ struct F3DFloor
 	{
 		secplane_t *	plane;
 		const FTextureID *	texture;
-		const fixed_t *		texheight;
 		sector_t *		model;
 		int				isceiling;
 		int				vindex;

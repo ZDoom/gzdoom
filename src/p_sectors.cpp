@@ -877,7 +877,7 @@ void sector_t::CheckPortalPlane(int plane)
 	AActor *portal = SkyBoxes[plane];
 	if (!portal || portal->special1 != SKYBOX_LINKEDPORTAL) return;
 
-	double planeh = FIXED2DBL(planes[plane].TexZ);
+	double planeh = GetPlaneTexZF(plane);
 	int obstructed = PLANEF_OBSTRUCTED * (plane == sector_t::floor ?
 		planeh > portal->specialf1 : planeh < portal->specialf1);
 	planes[plane].Flags = (planes[plane].Flags  & ~PLANEF_OBSTRUCTED) | obstructed;
@@ -1225,21 +1225,22 @@ int side_t::GetLightLevel (bool foggy, int baselight, bool is3dlight, int *pfake
 	{
 		if (!(Flags & WALLF_NOFAKECONTRAST) && r_fakecontrast != 0)
 		{
+			DVector2 delta = linedef->Delta();
 			int rel;
 			if (((level.flags2 & LEVEL2_SMOOTHLIGHTING) || (Flags & WALLF_SMOOTHLIGHTING) || r_fakecontrast == 2) &&
-				linedef->dx != 0)
+				delta.X != 0)
 			{
 				rel = xs_RoundToInt // OMG LEE KILLOUGH LIVES! :/
 					(
 						level.WallHorizLight
-						+ fabs(atan(double(linedef->dy) / linedef->dx) / 1.57079)
+						+ fabs(atan(delta.Y / delta.X) / 1.57079)
 						* (level.WallVertLight - level.WallHorizLight)
 					);
 			}
 			else
 			{
-				rel = linedef->dx == 0 ? level.WallVertLight : 
-					  linedef->dy == 0 ? level.WallHorizLight : 0;
+				rel = delta.X == 0 ? level.WallVertLight : 
+					  delta.Y == 0 ? level.WallHorizLight : 0;
 			}
 			if (pfakecontrast != NULL)
 			{

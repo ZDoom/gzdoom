@@ -418,6 +418,11 @@ public:
 		return FixedMul (ic, -d - DMulScale16 (a, v->fixX(), b, v->fixY()));
 	}
 
+	double ZatPointF(const vertex_t *v) const
+	{
+		return FIXED2DBL(FixedMul(ic, -d - DMulScale16(a, v->fixX(), b, v->fixY())));
+	}
+
 	fixed_t ZatPoint (const AActor *ac) const
 	{
 		return FixedMul (ic, -d - DMulScale16 (a, ac->_f_X(), b, ac->_f_Y()));
@@ -733,6 +738,11 @@ struct sector_t
 		planes[pos].xform.xoffs = o;
 	}
 
+	void SetXOffset(int pos, double o)
+	{
+		planes[pos].xform.xoffs = FLOAT2FIXED(o);
+	}
+
 	void AddXOffset(int pos, fixed_t o)
 	{
 		planes[pos].xform.xoffs += o;
@@ -756,6 +766,11 @@ struct sector_t
 	void SetYOffset(int pos, fixed_t o)
 	{
 		planes[pos].xform.yoffs = o;
+	}
+
+	void SetYOffset(int pos, double o)
+	{
+		planes[pos].xform.yoffs = FLOAT2FIXED(o);
 	}
 
 	void AddYOffset(int pos, fixed_t o)
@@ -825,6 +840,11 @@ struct sector_t
 	void SetAngle(int pos, angle_t o)
 	{
 		planes[pos].xform.angle = o;
+	}
+
+	void SetAngle(int pos, DAngle o)
+	{
+		planes[pos].xform.angle = o.BAMs();
 	}
 
 	angle_t GetAngle(int pos, bool addbase = true) const
@@ -925,9 +945,19 @@ struct sector_t
 		planes[pos].TexZ = val;
 	}
 
+	void SetPlaneTexZ(int pos, double val)
+	{
+		planes[pos].TexZ = FLOAT2FIXED(val);
+	}
+
 	void ChangePlaneTexZ(int pos, fixed_t val)
 	{
 		planes[pos].TexZ += val;
+	}
+
+	void ChangePlaneTexZ(int pos, double val)
+	{
+		planes[pos].TexZ += FLOAT2FIXED(val);
 	}
 
 	static inline short ClampLight(int level)
@@ -1334,7 +1364,9 @@ FArchive &operator<< (FArchive &arc, side_t::part &p);
 struct line_t
 {
 	vertex_t	*v1, *v2;	// vertices, from v1 to v2
+private:
 	fixed_t 	dx, dy;		// precalculated v2 - v1 for side checking
+public:
 	DWORD		flags;
 	DWORD		activation;	// activation type
 	int			special;
@@ -1360,6 +1392,28 @@ struct line_t
 	DVector2 Delta() const
 	{
 		return{ FIXED2DBL(dx), FIXED2DBL(dy) };
+	}
+
+	fixed_t fixDx() const
+	{
+		return dx;
+	}
+
+	fixed_t fixDy() const
+	{
+		return dy;
+	}
+
+	void setDelta(fixed_t x, fixed_t y)
+	{
+		dx = x;
+		dy = y;
+	}
+
+	void setDelta(double x, double y)
+	{
+		dx = FLOAT2FIXED(x);
+		dy = FLOAT2FIXED(y);
 	}
 
 	FLinePortal *getPortal() const

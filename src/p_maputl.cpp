@@ -410,38 +410,37 @@ bool AActor::FixMapthingPos()
 				continue;
 
 			// Get the exact distance to the line
-			fdivline_t dll, dlv;
-			fixed_t linelen = (fixed_t)g_sqrt((double)ldef->dx*ldef->dx + (double)ldef->dy*ldef->dy);
+			divline_t dll, dlv;
+			double linelen = ldef->Delta().Length();
 
 			P_MakeDivline(ldef, &dll);
 
-			dlv.x = _f_X();
-			dlv.y = _f_Y();
-			dlv.dx = FixedDiv(dll.dy, linelen);
-			dlv.dy = -FixedDiv(dll.dx, linelen);
+			dlv.x = X();
+			dlv.y = Y();
+			dlv.dx = dll.dy / linelen;
+			dlv.dy = -dll.dx / linelen;
 
-			fixed_t distance = abs(P_InterceptVector(&dlv, &dll));
+			double distance = fabs(P_InterceptVector(&dlv, &dll));
 
-			if (distance < _f_radius())
+			if (distance < radius)
 			{
-				DPrintf("%s at (%d,%d) lies on %s line %td, distance = %f\n",
-					this->GetClass()->TypeName.GetChars(), _f_X() >> FRACBITS, _f_Y() >> FRACBITS,
-					ldef->dx == 0 ? "vertical" : ldef->dy == 0 ? "horizontal" : "diagonal",
+				DPrintf("%s at (%f,%f) lies on %s line %td, distance = %f\n",
+					this->GetClass()->TypeName.GetChars(), X(), Y(),
+					ldef->Delta().X == 0 ? "vertical" : ldef->Delta().Y == 0 ? "horizontal" : "diagonal",
 					ldef - lines, FIXED2DBL(distance));
-				angle_t finean = R_PointToAngle2(0, 0, ldef->dx, ldef->dy);
+				DAngle ang = ldef->Delta().Angle();
 				if (ldef->backsector != NULL && ldef->backsector == secstart)
 				{
-					finean += ANGLE_90;
+					ang += 90.;
 				}
 				else
 				{
-					finean -= ANGLE_90;
+					ang -= 90.;
 				}
-				finean >>= ANGLETOFINESHIFT;
 
 				// Get the distance we have to move the object away from the wall
-				distance = _f_radius() - distance;
-				SetXY(_f_X() + FixedMul(distance, finecosine[finean]), _f_Y() + FixedMul(distance, finesine[finean]));
+				distance = radius - distance;
+				SetXY(Pos().XY() + ang.ToVector(distance));
 				ClearInterpolation();
 				success = true;
 			}
@@ -1936,27 +1935,32 @@ int P_VanillaPointOnLineSide(fixed_t x, fixed_t y, const line_t* line)
 	fixed_t	dy;
 	fixed_t	left;
 	fixed_t	right;
+	DVector2 delta = line->Delta();
 
-	if (!line->dx)
+	if (delta.X == 0)
 	{
 		if (x <= line->v1->fixX())
-			return line->dy > 0;
+			return delta.Y > 0;
 
-		return line->dy < 0;
+		return delta.Y < 0;
 	}
-	if (!line->dy)
+	if (delta.Y == 0)
 	{
 		if (y <= line->v1->fixY())
-			return line->dx < 0;
+			return delta.X < 0;
 
-		return line->dx > 0;
+		return delta.X > 0;
 	}
+
+	// Note: This cannot really be converted to floating point 
+	// without breaking the intended use of this function
+	// (i.e. to emulate the horrible imprecision of the entire methpd)
 
 	dx = (x - line->v1->fixX());
 	dy = (y - line->v1->fixY());
 
-	left = FixedMul ( line->dy>>FRACBITS , dx );
-	right = FixedMul ( dy , line->dx>>FRACBITS );
+	left = FixedMul ( int(delta.Y * 256) , dx );
+	right = FixedMul ( dy , int(delta.X * 256) );
 
 	if (right < left)
 		return 0;		// front side

@@ -79,14 +79,14 @@ static void P_SlopeLineToPoint (int lineid, fixed_t x, fixed_t y, fixed_t z, boo
 
 		DVector3 p, v1, v2, cross;
 
-		p[0] = FIXED2DBL (line->v1->fixX());
-		p[1] = FIXED2DBL (line->v1->fixY());
-		p[2] = FIXED2DBL (plane->ZatPoint (line->v1->fixX(), line->v1->fixY()));
-		v1[0] = FIXED2DBL (line->dx);
-		v1[1] = FIXED2DBL (line->dy);
-		v1[2] = FIXED2DBL (plane->ZatPoint (line->v2->fixX(), line->v2->fixY())) - p[2];
-		v2[0] = FIXED2DBL (x - line->v1->fixX());
-		v2[1] = FIXED2DBL (y - line->v1->fixY());
+		p[0] = line->v1->fX();
+		p[1] = line->v1->fY();
+		p[2] = plane->ZatPointF (line->v1);
+		v1[0] = line->Delta().X;
+		v1[1] = line->Delta().Y;
+		v1[2] = plane->ZatPointF (line->v2) - p[2];
+		v2[0] = FIXED2DBL (x) - p[0];
+		v2[1] = FIXED2DBL (y) - p[1];
 		v2[2] = FIXED2DBL (z) - p[2];
 
 		cross = v1 ^ v2;
@@ -487,8 +487,8 @@ static void P_AlignPlane (sector_t *sec, line_t *line, int which)
 			vert = (*probe++)->v2;
 		else
 			vert = (*probe)->v1;
-		dist = fabs((double(line->v1->fixY()) - vert->fixY()) * line->dx -
-					(double(line->v1->fixX()) - vert->fixX()) * line->dy);
+		dist = fabs((double(line->v1->fixY()) - vert->fixY()) * line->fixDx() -
+					(double(line->v1->fixX()) - vert->fixX()) * line->fixDy());
 
 		if (dist > bestdist)
 		{
@@ -508,14 +508,14 @@ static void P_AlignPlane (sector_t *sec, line_t *line, int which)
 	srcheight = (which == 0) ? sec->GetPlaneTexZ(sector_t::floor) : sec->GetPlaneTexZ(sector_t::ceiling);
 	destheight = (which == 0) ? refsec->GetPlaneTexZ(sector_t::floor) : refsec->GetPlaneTexZ(sector_t::ceiling);
 
-	p[0] = FIXED2DBL (line->v1->fixX());
-	p[1] = FIXED2DBL(line->v1->fixY());
+	p[0] = line->v1->fX();
+	p[1] = line->v1->fY();
 	p[2] = FIXED2DBL(destheight);
-	v1[0] = FIXED2DBL(line->dx);
-	v1[1] = FIXED2DBL(line->dy);
+	v1[0] = line->Delta().X;
+	v1[1] = line->Delta().Y;
 	v1[2] = 0;
-	v2[0] = FIXED2DBL(refvert->fixX() - line->v1->fixX());
-	v2[1] = FIXED2DBL(refvert->fixY() - line->v1->fixY());
+	v2[0] = refvert->fX() - line->v1->fX();
+	v2[1] = refvert->fY() - line->v1->fY();
 	v2[2] = FIXED2DBL(srcheight - destheight);
 
 	cross = (v1 ^ v2).Unit();

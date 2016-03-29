@@ -240,8 +240,9 @@ void GLSprite::Draw(int pass)
 		if (lightlist)
 		{
 			// set up the light slice
-			static secplane_t bottommost = { 0, 0, FRACUNIT, 32767<<FRACBITS, FRACUNIT };
-			static secplane_t topmost = { 0, 0, FRACUNIT, -(32767<<FRACBITS), FRACUNIT };
+#pragma message ("Undo this!")
+			secplane_t bottommost; bottommost.set(0, 0, FRACUNIT, 32767 << FRACBITS);
+			secplane_t topmost; topmost.set(0, 0, FRACUNIT, -(32767 << FRACBITS));
 
 			secplane_t *topplane = i == 0 ? &topmost : &(*lightlist)[i].plane;
 			secplane_t *lowplane = i == (*lightlist).Size() - 1 ? &bottommost : &(*lightlist)[i + 1].plane;

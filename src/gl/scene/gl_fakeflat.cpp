@@ -80,44 +80,44 @@ bool gl_CheckClip(side_t * sidedef, sector_t * frontsector, sector_t * backsecto
 	// on large levels this distinction can save some time
 	// That's a lot of avoided multiplications if there's a lot to see!
 
-	if (frontsector->ceilingplane.a | frontsector->ceilingplane.b)
+	if (frontsector->ceilingplane.isSlope())
 	{
 		fs_ceilingheight1=frontsector->ceilingplane.ZatPoint(linedef->v1);
 		fs_ceilingheight2=frontsector->ceilingplane.ZatPoint(linedef->v2);
 	}
 	else
 	{
-		fs_ceilingheight2=fs_ceilingheight1=frontsector->ceilingplane.d;
+		fs_ceilingheight2=fs_ceilingheight1=frontsector->ceilingplane.fixD();
 	}
 
-	if (frontsector->floorplane.a | frontsector->floorplane.b)
+	if (frontsector->floorplane.isSlope())
 	{
 		fs_floorheight1=frontsector->floorplane.ZatPoint(linedef->v1);
 		fs_floorheight2=frontsector->floorplane.ZatPoint(linedef->v2);
 	}
 	else
 	{
-		fs_floorheight2=fs_floorheight1=-frontsector->floorplane.d;
+		fs_floorheight2=fs_floorheight1=-frontsector->floorplane.fixD();
 	}
 	
-	if (backsector->ceilingplane.a | backsector->ceilingplane.b)
+	if (backsector->ceilingplane.isSlope())
 	{
 		bs_ceilingheight1=backsector->ceilingplane.ZatPoint(linedef->v1);
 		bs_ceilingheight2=backsector->ceilingplane.ZatPoint(linedef->v2);
 	}
 	else
 	{
-		bs_ceilingheight2=bs_ceilingheight1=backsector->ceilingplane.d;
+		bs_ceilingheight2=bs_ceilingheight1=backsector->ceilingplane.fixD();
 	}
 
-	if (backsector->floorplane.a | backsector->floorplane.b)
+	if (backsector->floorplane.isSlope())
 	{
 		bs_floorheight1=backsector->floorplane.ZatPoint(linedef->v1);
 		bs_floorheight2=backsector->floorplane.ZatPoint(linedef->v2);
 	}
 	else
 	{
-		bs_floorheight2=bs_floorheight1=-backsector->floorplane.d;
+		bs_floorheight2=bs_floorheight1=-backsector->floorplane.fixD();
 	}
 
 	// now check for closed sectors!
@@ -206,7 +206,7 @@ sector_t * gl_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool bac
 		// visual glitches because upper amd lower textures overlap.
 		if (back && sec->planes[sector_t::floor].TexZ > sec->planes[sector_t::ceiling].TexZ)
 		{
-			if (!(sec->floorplane.a | sec->floorplane.b | sec->ceilingplane.a | sec->ceilingplane.b))
+			if (!sec->floorplane.isSlope() && !sec->ceilingplane.isSlope())
 			{
 				*dest = *sec;
 				dest->ceilingplane=sec->floorplane;

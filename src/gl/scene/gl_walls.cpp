@@ -191,7 +191,7 @@ void GLWall::PutPortal(int ptype)
 		break;
 
 	case PORTALTYPE_PLANEMIRROR:
-		if (GLPortal::PlaneMirrorMode * planemirror->c <=0)
+		if (GLPortal::PlaneMirrorMode * planemirror->fC() <=0)
 		{
 			//@sync-portal
 			planemirror=UniquePlaneMirrors.Get(planemirror);
@@ -283,7 +283,7 @@ void GLWall::SplitWall(sector_t * frontsector, bool translucent)
 			if (i<lightlist.Size()-1) 
 			{
 				secplane_t &p = lightlist[i+1].plane;
-				if (p.a | p.b)
+				if (p.isSlope())
 				{
 					maplightbottomleft = p.ZatPoint(glseg.x1,glseg.y1);
 					maplightbottomright= p.ZatPoint(glseg.x2,glseg.y2);
@@ -1101,20 +1101,20 @@ void GLWall::BuildFFBlock(seg_t * seg, F3DFloor * rover,
 //
 //==========================================================================
 
-__forceinline void GLWall::GetPlanePos(F3DFloor::planeref *planeref, int &left, int &right)
+__forceinline void GLWall::GetPlanePos(F3DFloor::planeref *planeref, fixed_t &left, fixed_t &right)
 {
-	if (planeref->plane->a | planeref->plane->b)
+	if (planeref->plane->isSlope())
 	{
 		left=planeref->plane->ZatPoint(vertexes[0]);
 		right=planeref->plane->ZatPoint(vertexes[1]);
 	}
 	else if(planeref->isceiling == sector_t::ceiling)
 	{
-		left = right = planeref->plane->d;
+		left = right = planeref->plane->fixD();
 	}
 	else
 	{
-		left = right = -planeref->plane->d;
+		left = right = -planeref->plane->fixD();
 	}
 }
 
@@ -1450,7 +1450,7 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 	bottomplane = frontsector->floorplane;
 
 	// Save a little time (up to 0.3 ms per frame ;) )
-	if (frontsector->floorplane.a | frontsector->floorplane.b)
+	if (frontsector->floorplane.isSlope())
 	{
 		ffh1 = segfront->floorplane.ZatPoint(v1);
 		ffh2 = segfront->floorplane.ZatPoint(v2);
@@ -1459,11 +1459,11 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 	}
 	else
 	{
-		ffh1 = ffh2 = -segfront->floorplane.d;
+		ffh1 = ffh2 = -segfront->floorplane.fixD();
 		zfloor[0] = zfloor[1] = FIXED2FLOAT(ffh2);
 	}
 
-	if (segfront->ceilingplane.a | segfront->ceilingplane.b)
+	if (segfront->ceilingplane.isSlope())
 	{
 		fch1 = segfront->ceilingplane.ZatPoint(v1);
 		fch2 = segfront->ceilingplane.ZatPoint(v2);
@@ -1472,7 +1472,7 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 	}
 	else
 	{
-		fch1 = fch2 = segfront->ceilingplane.d;
+		fch1 = fch2 = segfront->ceilingplane.fixD();
 		zceil[0] = zceil[1] = FIXED2FLOAT(fch2);
 	}
 
@@ -1520,24 +1520,24 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 		fixed_t bfh1;
 		fixed_t bfh2;
 
-		if (segback->floorplane.a | segback->floorplane.b)
+		if (segback->floorplane.isSlope())
 		{
 			bfh1 = segback->floorplane.ZatPoint(v1);
 			bfh2 = segback->floorplane.ZatPoint(v2);
 		}
 		else
 		{
-			bfh1 = bfh2 = -segback->floorplane.d;
+			bfh1 = bfh2 = -segback->floorplane.fixD();
 		}
 
-		if (segback->ceilingplane.a | segback->ceilingplane.b)
+		if (segback->ceilingplane.isSlope())
 		{
 			bch1 = segback->ceilingplane.ZatPoint(v1);
 			bch2 = segback->ceilingplane.ZatPoint(v2);
 		}
 		else
 		{
-			bch1 = bch2 = segback->ceilingplane.d;
+			bch1 = bch2 = segback->ceilingplane.fixD();
 		}
 
 		SkyTop(seg, frontsector, backsector, v1, v2);
@@ -1568,8 +1568,7 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 				}
 				else if (!(seg->sidedef->Flags & WALLF_POLYOBJ))
 				{
-					if ((frontsector->ceilingplane.a | frontsector->ceilingplane.b |
-						backsector->ceilingplane.a | backsector->ceilingplane.b) &&
+					if ((frontsector->ceilingplane.isSlope() || backsector->ceilingplane.isSlope()) &&
 						frontsector->GetTexture(sector_t::ceiling) != skyflatnum &&
 						backsector->GetTexture(sector_t::ceiling) != skyflatnum)
 					{
@@ -1649,8 +1648,7 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 			}
 			else if (!(seg->sidedef->Flags & WALLF_POLYOBJ))
 			{
-				if ((frontsector->floorplane.a | frontsector->floorplane.b |
-					backsector->floorplane.a | backsector->floorplane.b) &&
+				if ((frontsector->ceilingplane.isSlope() || backsector->ceilingplane.isSlope()) &&
 					frontsector->GetTexture(sector_t::floor) != skyflatnum &&
 					backsector->GetTexture(sector_t::floor) != skyflatnum)
 				{

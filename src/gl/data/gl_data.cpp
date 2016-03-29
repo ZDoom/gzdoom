@@ -157,8 +157,8 @@ int LS_Sector_SetPlaneReflection (line_t *ln, AActor *it, bool backSide,
 	while ((secnum = itr.Next()) >= 0)
 	{
 		sector_t * s = &sectors[secnum];
-		if (s->floorplane.a==0 && s->floorplane.b==0) s->reflect[sector_t::floor] = arg1/255.f;
-		if (s->ceilingplane.a==0 && s->ceilingplane.b==0) sectors[secnum].reflect[sector_t::ceiling] = arg2/255.f;
+		if (!s->floorplane.isSlope()) s->reflect[sector_t::floor] = arg1/255.f;
+		if (!s->ceilingplane.isSlope()) sectors[secnum].reflect[sector_t::ceiling] = arg2/255.f;
 	}
 
 	return true;

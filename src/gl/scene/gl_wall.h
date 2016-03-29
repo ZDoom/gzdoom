@@ -86,7 +86,7 @@ struct GLSectorPlane
 		angle = sec->GetAngle(ceiling);
 		texture = sec->GetTexture(ceiling);
 		plane = sec->GetSecPlane(ceiling);
-		texheight = (ceiling == sector_t::ceiling)? plane.d : -plane.d;
+		texheight = (ceiling == sector_t::ceiling)? plane.fixD() : -plane.fixD();
 	}
 };
 
@@ -205,7 +205,7 @@ private:
 					  fixed_t fch1, fixed_t fch2, fixed_t ffh1, fixed_t ffh2,
 					  fixed_t bch1, fixed_t bch2, fixed_t bfh1, fixed_t bfh2);
 
-	void GetPlanePos(F3DFloor::planeref *planeref, int &left, int &right);
+	void GetPlanePos(F3DFloor::planeref *planeref, fixed_t &left, fixed_t &right);
 
 	void BuildFFBlock(seg_t * seg, F3DFloor * rover,
 					  fixed_t ff_topleft, fixed_t ff_topright, 

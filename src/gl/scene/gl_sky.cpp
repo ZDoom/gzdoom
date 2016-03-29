@@ -173,8 +173,8 @@ void GLWall::SkyPlane(sector_t *sector, int plane, bool allowreflect)
 		}
 		else if (allowreflect && sector->GetReflect(plane) > 0)
 		{
-			if ((plane == sector_t::ceiling && viewz > sector->ceilingplane.d) ||
-				(plane == sector_t::floor && viewz < -sector->floorplane.d)) return;
+			if ((plane == sector_t::ceiling && viewz > sector->ceilingplane.fixD()) ||
+				(plane == sector_t::floor && viewz < -sector->floorplane.fixD())) return;
 			ptype = PORTALTYPE_PLANEMIRROR;
 			planemirror = plane == sector_t::ceiling ? &sector->ceilingplane : &sector->floorplane;
 		}
@@ -263,7 +263,7 @@ void GLWall::SkyTop(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex
 					return;
 
 			// one more check for some ugly transparent door hacks
-			if (bs->floorplane.a==0 && bs->floorplane.b==0 && fs->floorplane.a==0 && fs->floorplane.b==0)
+			if (!bs->floorplane.isSlope() && !fs->floorplane.isSlope())
 			{
 				if (bs->GetPlaneTexZ(sector_t::floor)==fs->GetPlaneTexZ(sector_t::floor)+FRACUNIT)
 				{
@@ -309,7 +309,7 @@ void GLWall::SkyTop(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex
 		if (frontreflect > 0)
 		{
 			float backreflect = bs->GetReflect(sector_t::ceiling);
-			if (backreflect > 0 && bs->ceilingplane.d == fs->ceilingplane.d)
+			if (backreflect > 0 && bs->ceilingplane.fD() == fs->ceilingplane.fD())
 			{
 				// Don't add intra-portal line to the portal.
 				return;
@@ -386,7 +386,7 @@ void GLWall::SkyBottom(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,ver
 		if (frontreflect > 0)
 		{
 			float backreflect = bs->GetReflect(sector_t::floor);
-			if (backreflect > 0 && bs->floorplane.d == fs->floorplane.d)
+			if (backreflect > 0 && bs->floorplane.fD() == fs->floorplane.fD())
 			{
 				// Don't add intra-portal line to the portal.
 				return;

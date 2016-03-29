@@ -296,7 +296,7 @@ bool FDrawInfo::DoOneSectorUpper(subsector_t * subsec, fixed_t planez)
 			sector_t * sec = gl_FakeFlat(seg->backsector, &fakesec, true);
 
 			// Don't bother with slopes
-			if (sec->ceilingplane.a!=0 || sec->ceilingplane.b!=0)  return false;
+			if (sec->ceilingplane.isSlope())  return false;
 
 			// Is the neighboring ceiling lower than the desired height?
 			if (sec->GetPlaneTexZ(sector_t::ceiling)<planez) 
@@ -354,7 +354,7 @@ bool FDrawInfo::DoOneSectorLower(subsector_t * subsec, fixed_t planez)
 			sector_t * sec = gl_FakeFlat(seg->backsector, &fakesec, true);
 
 			// Don't bother with slopes
-			if (sec->floorplane.a!=0 || sec->floorplane.b!=0)  return false;
+			if (sec->floorplane.isSlope())  return false;
 
 			// Is the neighboring floor higher than the desired height?
 			if (sec->GetPlaneTexZ(sector_t::floor)>planez) 
@@ -413,7 +413,7 @@ bool FDrawInfo::DoFakeBridge(subsector_t * subsec, fixed_t planez)
 			sector_t * sec = gl_FakeFlat(seg->backsector, &fakesec, true);
 
 			// Don't bother with slopes
-			if (sec->floorplane.a!=0 || sec->floorplane.b!=0)  return false;
+			if (sec->floorplane.isSlope())  return false;
 
 			// Is the neighboring floor higher than the desired height?
 			if (sec->GetPlaneTexZ(sector_t::floor)<planez) 
@@ -466,7 +466,7 @@ bool FDrawInfo::DoFakeCeilingBridge(subsector_t * subsec, fixed_t planez)
 			sector_t * sec = gl_FakeFlat(seg->backsector, &fakesec, true);
 
 			// Don't bother with slopes
-			if (sec->ceilingplane.a!=0 || sec->ceilingplane.b!=0)  return false;
+			if (sec->ceilingplane.isSlope())  return false;
 
 			// Is the neighboring ceiling higher than the desired height?
 			if (sec->GetPlaneTexZ(sector_t::ceiling)>planez) 

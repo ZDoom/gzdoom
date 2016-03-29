@@ -229,10 +229,10 @@ void Plane::Set(secplane_t &plane)
 {
    float a, b, c, d;
 
-   a = FIXED2FLOAT(plane.a);
-   b = FIXED2FLOAT(plane.b);
-   c = FIXED2FLOAT(plane.c);
-   d = FIXED2FLOAT(plane.d);
+   a = (float)plane.fA();
+   b = (float)plane.fB();
+   c = (float)plane.fC();
+   d = (float)plane.fD();
 
    m_normal.Set(a, c, b);
    //m_normal.Normalize(); the vector is already normalized

@@ -174,7 +174,7 @@ void GLFlat::SetupSubsectorLights(int pass, subsector_t * sub, int *dli)
 void GLFlat::DrawSubsector(subsector_t * sub)
 {
 	FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-	if (plane.plane.a | plane.plane.b)
+	if (plane.plane.isSlope())
 	{
 		for (unsigned int k = 0; k < sub->numlines; k++)
 		{

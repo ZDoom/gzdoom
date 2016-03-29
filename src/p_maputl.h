@@ -53,12 +53,12 @@ inline int P_PointOnLineSide (fixed_t x, fixed_t y, const line_t *line)
 
 	return i_compatflags2 & COMPATF2_POINTONLINE
 		? P_VanillaPointOnLineSide(x, y, line)
-		: DMulScale32 (y-line->v1->fixY(), line->dx, line->v1->fixX()-x, line->dy) > 0;
+		: DMulScale32 (y-line->v1->fixY(), line->fixDx(), line->v1->fixX()-x, line->fixDy()) > 0;
 }
 
 inline int P_PointOnLineSidePrecise (fixed_t x, fixed_t y, const line_t *line)
 {
-	return DMulScale32 (y-line->v1->fixY(), line->dx, line->v1->fixX()-x, line->dy) > 0;
+	return DMulScale32 (y-line->v1->fixY(), line->fixDx(), line->v1->fixX()-x, line->fixDy()) > 0;
 }
 
 inline int P_PointOnLineSide(double x, double y, const line_t *line)
@@ -125,8 +125,8 @@ inline void P_MakeDivline (const line_t *li, fdivline_t *dl)
 {
 	dl->x = li->v1->fixX();
 	dl->y = li->v1->fixY();
-	dl->dx = li->dx;
-	dl->dy = li->dy;
+	dl->dx = li->fixDx();
+	dl->dy = li->fixDy();
 }
 
 inline void P_MakeDivline(const line_t *li, divline_t *dl)

@@ -702,11 +702,11 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 		vertex_t *v1 = pds->src->v1;
 
 		// Reflect the current view behind the mirror.
-		if (pds->src->dx == 0)
+		if (pds->src->Delta().X == 0)
 		{ // vertical mirror
 			viewx = v1->fixX() - startx + v1->fixX();
 		}
-		else if (pds->src->dy == 0)
+		else if (pds->src->Delta().Y == 0)
 		{ // horizontal mirror
 			viewy = v1->fixY() - starty + v1->fixY();
 		}

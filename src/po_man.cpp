@@ -943,8 +943,9 @@ void FPolyObj::UpdateBBox ()
 		}
 
 		// Update the line's slopetype
-		line->dx = line->v2->fixX() - line->v1->fixX();
-		line->dy = line->v2->fixY() - line->v1->fixY();
+		line->setDelta(
+			line->v2->fixX() - line->v1->fixX(),
+			line->v2->fixY() - line->v1->fixY());
 	}
 	CalcCenter();
 }

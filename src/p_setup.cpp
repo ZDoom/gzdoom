@@ -1903,8 +1903,7 @@ void P_AdjustLine (line_t *ld)
 	v1 = ld->v1;
 	v2 = ld->v2;
 
-	ld->dx = v2->fixX() - v1->fixX();
-	ld->dy = v2->fixY() - v1->fixY();
+	ld->setDelta(v2->fX() - v1->fX(), v2->fY() - v1->fY());
 	
 	if (v1->fixX() < v2->fixX())
 	{
@@ -2423,15 +2422,15 @@ static void P_LoopSidedefs (bool firstloop)
 			if (sidetemp[right].b.next != NO_SIDE)
 			{
 				int bestright = right;	// Shut up, GCC
-				angle_t bestang = ANGLE_MAX;
+				DAngle bestang = 360.;
 				line_t *leftline, *rightline;
-				angle_t ang1, ang2, ang;
+				DAngle ang1, ang2, ang;
 
 				leftline = sides[i].linedef;
-				ang1 = R_PointToAngle2 (0, 0, leftline->dx, leftline->dy);
+				ang1 = leftline->Delta().Angle();
 				if (!sidetemp[i].b.lineside)
 				{
-					ang1 += ANGLE_180;
+					ang1 += 180;
 				}
 
 				while (right != NO_SIDE)
@@ -2441,13 +2440,13 @@ static void P_LoopSidedefs (bool firstloop)
 						rightline = sides[right].linedef;
 						if (rightline->frontsector != rightline->backsector)
 						{
-							ang2 = R_PointToAngle2 (0, 0, rightline->dx, rightline->dy);
+							ang2 = rightline->Delta().Angle();
 							if (sidetemp[right].b.lineside)
 							{
-								ang2 += ANGLE_180;
+								ang2 += 180;
 							}
 
-							ang = ang2 - ang1;
+							ang = (ang2 - ang1).Normalized360();
 
 							if (ang != 0 && ang <= bestang)
 							{

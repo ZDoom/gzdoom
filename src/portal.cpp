@@ -251,10 +251,10 @@ static void SetRotation(FLinePortal *port)
 	{
 	line_t *dst = port->mDestination;
 	line_t *line = port->mOrigin;
-	double angle = g_atan2(dst->dy, dst->dx) - g_atan2(line->dy, line->dx) + M_PI;
-	port->mSinRot = FLOAT2FIXED(g_sin(angle));
-	port->mCosRot = FLOAT2FIXED(g_cos(angle));
-	port->mAngleDiff = ToDegrees(angle);
+	DAngle angle = dst->Delta().Angle() - line->Delta().Angle() + 180.;
+	port->mSinRot = FLOAT2FIXED(angle.Sin());
+	port->mCosRot = FLOAT2FIXED(angle.Cos());
+	port->mAngleDiff = angle;
 	}
 }
 
@@ -513,7 +513,7 @@ inline int P_PointOnLineSideExplicit (fixed_t x, fixed_t y, fixed_t x1, fixed_t 
 
 inline int P_GetLineSide(fixed_t x, fixed_t y, const line_t *line)
 {
-	return DMulScale32(y - line->v1->fixY(), line->dx, line->v1->fixX() - x, line->dy);
+	return DMulScale32(y - line->v1->fixY(), line->fixDx(), line->v1->fixX() - x, line->fixDy());
 }
 
 bool P_ClipLineToPortal(line_t* line, line_t* portal, fixed_t viewx, fixed_t viewy, bool partial, bool samebehind)
@@ -652,7 +652,7 @@ void P_TranslatePortalZ(line_t* src, fixed_t& z)
 
 fixed_t P_PointLineDistance(line_t* line, fixed_t x, fixed_t y)
 {
-	angle_t angle = R_PointToAngle2(0, 0, line->dx, line->dy);
+	angle_t angle = R_PointToAngle2(0, 0, line->fixDx(), line->fixDy());
 	angle += ANGLE_180;
 
 	fixed_t dx = line->v1->fixX() - x;

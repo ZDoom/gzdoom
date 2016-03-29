@@ -764,13 +764,12 @@ vertex_t *FindVertex (SDWORD x, SDWORD y)
 
 	for (i = 0; i < numvertexes; ++i)
 	{
-		if (vertexes[i].x == x && vertexes[i].y == y)
+		if (vertexes[i].fixX() == x && vertexes[i].fixY() == y)
 		{
 			return &vertexes[i];
 		}
 	}
-	vertexes[i].x = x;
-	vertexes[i].y = y;
+	vertexes[i].set(x, y);
 	numvertexes++;
 	return &vertexes[i];
 }

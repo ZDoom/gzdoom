@@ -45,18 +45,20 @@ struct intercept_t
 //
 //==========================================================================
 
+const double POL_Epsilon = -1. / 65536.;
+
 inline int P_PointOnLineSide (fixed_t x, fixed_t y, const line_t *line)
 {
 	extern int P_VanillaPointOnLineSide(fixed_t x, fixed_t y, const line_t* line);
 
 	return i_compatflags2 & COMPATF2_POINTONLINE
 		? P_VanillaPointOnLineSide(x, y, line)
-		: DMulScale32 (y-line->v1->y, line->dx, line->v1->x-x, line->dy) > 0;
+		: DMulScale32 (y-line->v1->fixY(), line->dx, line->v1->fixX()-x, line->dy) > 0;
 }
 
 inline int P_PointOnLineSidePrecise (fixed_t x, fixed_t y, const line_t *line)
 {
-	return DMulScale32 (y-line->v1->y, line->dx, line->v1->x-x, line->dy) > 0;
+	return DMulScale32 (y-line->v1->fixY(), line->dx, line->v1->fixX()-x, line->dy) > 0;
 }
 
 inline int P_PointOnLineSide(double x, double y, const line_t *line)
@@ -71,12 +73,12 @@ inline int P_PointOnLineSide(const DVector2 & p, const line_t *line)
 
 inline int P_PointOnLineSidePrecise(double x, double y, const line_t *line)
 {
-	return DMulScale32(FLOAT2FIXED(y) - line->v1->y, line->dx, line->v1->x - FLOAT2FIXED(x), line->dy) > 0;
+	return (y - line->v1->fY()) * line->Delta().X + (line->v1->fX() - x) * line->Delta().Y > POL_Epsilon ;
 }
 
 inline int P_PointOnLineSidePrecise(const DVector2 &pt, const line_t *line)
 {
-	return DMulScale32(FLOAT2FIXED(pt.Y) - line->v1->y, line->dx, line->v1->x - FLOAT2FIXED(pt.X), line->dy) > 0;
+	return (pt.Y - line->v1->fY()) * line->Delta().X + (line->v1->fX() - pt.X) * line->Delta().Y > POL_Epsilon;
 }
 
 
@@ -121,8 +123,8 @@ inline int P_PointOnDivlineSidePrecise(const DVector2 &pos, const divline_t *lin
 
 inline void P_MakeDivline (const line_t *li, fdivline_t *dl)
 {
-	dl->x = li->v1->x;
-	dl->y = li->v1->y;
+	dl->x = li->v1->fixX();
+	dl->y = li->v1->fixY();
 	dl->dx = li->dx;
 	dl->dy = li->dy;
 }

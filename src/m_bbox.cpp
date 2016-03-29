@@ -78,8 +78,8 @@ int FBoundingBox::BoxOnLineSide (const line_t *ld) const
 		
 	if (ld->dx == 0)
 	{ // ST_VERTICAL
-		p1 = m_Box[BOXRIGHT] < ld->v1->x;
-		p2 = m_Box[BOXLEFT] < ld->v1->x;
+		p1 = m_Box[BOXRIGHT] < ld->v1->fixX();
+		p2 = m_Box[BOXLEFT] < ld->v1->fixX();
 		if (ld->dy < 0)
 		{
 			p1 ^= 1;
@@ -88,8 +88,8 @@ int FBoundingBox::BoxOnLineSide (const line_t *ld) const
 	}
 	else if (ld->dy == 0)
 	{ // ST_HORIZONTAL:
-		p1 = m_Box[BOXTOP] > ld->v1->y;
-		p2 = m_Box[BOXBOTTOM] > ld->v1->y;
+		p1 = m_Box[BOXTOP] > ld->v1->fixY();
+		p2 = m_Box[BOXBOTTOM] > ld->v1->fixY();
 		if (ld->dx < 0)
 		{
 			p1 ^= 1;

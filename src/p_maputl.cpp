@@ -104,7 +104,7 @@ fixed_t P_InterceptVector (const fdivline_t *v2, const fdivline_t *v1)
 	SQWORD den = ( ((SQWORD)v1->dy*v2->dx - (SQWORD)v1->dx*v2->dy) >> FRACBITS );
 	if (den == 0)
 		return 0;		// parallel
-	SQWORD num = ((SQWORD)(v1->x - v2->x)*v1->dy + (SQWORD)(v2->y - v1->y)*v1->dx);
+	SQWORD num = ((SQWORD)(v1->fixX() - v2->fixX())*v1->dy + (SQWORD)(v2->fixY() - v1->fixY())*v1->dx);
 	return (fixed_t)(num / den);
 
 #elif 0	// This is the original Doom version
@@ -120,8 +120,8 @@ fixed_t P_InterceptVector (const fdivline_t *v2, const fdivline_t *v1)
 	//	I_Error ("P_InterceptVector: parallel");
 	
 	num =
-		FixedMul ( (v1->x - v2->x)>>8 ,v1->dy )
-		+FixedMul ( (v2->y - v1->y)>>8, v1->dx );
+		FixedMul ( (v1->fixX() - v2->fixX())>>8 ,v1->dy )
+		+FixedMul ( (v2->fixY() - v1->fixY())>>8, v1->dx );
 
 	frac = FixedDiv (num , den);
 
@@ -1230,8 +1230,8 @@ void FPathTraverse::AddLineIntercepts(int bx, int by)
 			 || trace.dx < -FRACUNIT*16
 			 || trace.dy < -FRACUNIT*16)
 		{
-			s1 = P_PointOnDivlineSide (ld->v1->x, ld->v1->y, &trace);
-			s2 = P_PointOnDivlineSide (ld->v2->x, ld->v2->y, &trace);
+			s1 = P_PointOnDivlineSide (ld->v1->fixX(), ld->v1->fixY(), &trace);
+			s2 = P_PointOnDivlineSide (ld->v2->fixX(), ld->v2->fixY(), &trace);
 		}
 		else
 		{
@@ -1939,21 +1939,21 @@ int P_VanillaPointOnLineSide(fixed_t x, fixed_t y, const line_t* line)
 
 	if (!line->dx)
 	{
-		if (x <= line->v1->x)
+		if (x <= line->v1->fixX())
 			return line->dy > 0;
 
 		return line->dy < 0;
 	}
 	if (!line->dy)
 	{
-		if (y <= line->v1->y)
+		if (y <= line->v1->fixY())
 			return line->dx < 0;
 
 		return line->dx > 0;
 	}
 
-	dx = (x - line->v1->x);
-	dy = (y - line->v1->y);
+	dx = (x - line->v1->fixX());
+	dy = (y - line->v1->fixY());
 
 	left = FixedMul ( line->dy>>FRACBITS , dx );
 	right = FixedMul ( dy , line->dx>>FRACBITS );

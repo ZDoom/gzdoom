@@ -79,14 +79,14 @@ static void P_SlopeLineToPoint (int lineid, fixed_t x, fixed_t y, fixed_t z, boo
 
 		DVector3 p, v1, v2, cross;
 
-		p[0] = FIXED2DBL (line->v1->x);
-		p[1] = FIXED2DBL (line->v1->y);
-		p[2] = FIXED2DBL (plane->ZatPoint (line->v1->x, line->v1->y));
+		p[0] = FIXED2DBL (line->v1->fixX());
+		p[1] = FIXED2DBL (line->v1->fixY());
+		p[2] = FIXED2DBL (plane->ZatPoint (line->v1->fixX(), line->v1->fixY()));
 		v1[0] = FIXED2DBL (line->dx);
 		v1[1] = FIXED2DBL (line->dy);
-		v1[2] = FIXED2DBL (plane->ZatPoint (line->v2->x, line->v2->y)) - p[2];
-		v2[0] = FIXED2DBL (x - line->v1->x);
-		v2[1] = FIXED2DBL (y - line->v1->y);
+		v1[2] = FIXED2DBL (plane->ZatPoint (line->v2->fixX(), line->v2->fixY())) - p[2];
+		v2[0] = FIXED2DBL (x - line->v1->fixX());
+		v2[1] = FIXED2DBL (y - line->v1->fixY());
 		v2[2] = FIXED2DBL (z) - p[2];
 
 		cross = v1 ^ v2;
@@ -232,12 +232,12 @@ void P_VavoomSlope(sector_t * sec, int id, fixed_t x, fixed_t y, fixed_t z, int 
 			secplane_t *srcplane = (which == 0) ? &sec->floorplane : &sec->ceilingplane;
 			fixed_t srcheight = (which == 0) ? sec->GetPlaneTexZ(sector_t::floor) : sec->GetPlaneTexZ(sector_t::ceiling);
 
-			v1[0] = FIXED2DBL (x - l->v2->x);
-			v1[1] = FIXED2DBL (y - l->v2->y);
+			v1[0] = FIXED2DBL (x - l->v2->fixX());
+			v1[1] = FIXED2DBL (y - l->v2->fixY());
 			v1[2] = FIXED2DBL (z - srcheight);
 			
-			v2[0] = FIXED2DBL (x - l->v1->x);
-			v2[1] = FIXED2DBL (y - l->v1->y);
+			v2[0] = FIXED2DBL (x - l->v1->fixX());
+			v2[1] = FIXED2DBL (y - l->v1->fixY());
 			v2[2] = FIXED2DBL (z - srcheight);
 
 			cross = v1 ^ v2;
@@ -360,7 +360,7 @@ static void P_SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt, 
 				vt2.Z = h2? *h2 : j==0? sec->GetPlaneTexZF(sector_t::floor) : sec->GetPlaneTexZF(sector_t::ceiling);
 				vt3.Z = h3? *h3 : j==0? sec->GetPlaneTexZF(sector_t::floor) : sec->GetPlaneTexZF(sector_t::ceiling);
 
-				if (P_PointOnLineSidePrecise(vertexes[vi3].x, vertexes[vi3].y, sec->lines[0]) == 0)
+				if (P_PointOnLineSidePrecise(vertexes[vi3].fixX(), vertexes[vi3].fixY(), sec->lines[0]) == 0)
 				{
 					vec1 = vt2 - vt3;
 					vec2 = vt1 - vt3;
@@ -394,8 +394,8 @@ static void P_SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt, 
 				srcplane->b = FLOAT2FIXED (cross[1]);
 				srcplane->c = FLOAT2FIXED (cross[2]);
 				srcplane->ic = DivScale32 (1, srcplane->c);
-				srcplane->d = -TMulScale16 (srcplane->a, vertexes[vi3].x,
-											srcplane->b, vertexes[vi3].y,
+				srcplane->d = -TMulScale16 (srcplane->a, vertexes[vi3].fixX(),
+											srcplane->b, vertexes[vi3].fixY(),
 											srcplane->c, FLOAT2FIXED(vt3.Z));
 			}
 		}
@@ -507,8 +507,8 @@ static void P_AlignPlane (sector_t *sec, line_t *line, int which)
 			vert = (*probe++)->v2;
 		else
 			vert = (*probe)->v1;
-		dist = fabs((double(line->v1->y) - vert->y) * line->dx -
-					(double(line->v1->x) - vert->x) * line->dy);
+		dist = fabs((double(line->v1->fixY()) - vert->fixY()) * line->dx -
+					(double(line->v1->fixX()) - vert->fixX()) * line->dy);
 
 		if (dist > bestdist)
 		{
@@ -528,14 +528,14 @@ static void P_AlignPlane (sector_t *sec, line_t *line, int which)
 	srcheight = (which == 0) ? sec->GetPlaneTexZ(sector_t::floor) : sec->GetPlaneTexZ(sector_t::ceiling);
 	destheight = (which == 0) ? refsec->GetPlaneTexZ(sector_t::floor) : refsec->GetPlaneTexZ(sector_t::ceiling);
 
-	p[0] = FIXED2DBL (line->v1->x);
-	p[1] = FIXED2DBL(line->v1->y);
+	p[0] = FIXED2DBL (line->v1->fixX());
+	p[1] = FIXED2DBL(line->v1->fixY());
 	p[2] = FIXED2DBL(destheight);
 	v1[0] = FIXED2DBL(line->dx);
 	v1[1] = FIXED2DBL(line->dy);
 	v1[2] = 0;
-	v2[0] = FIXED2DBL(refvert->x - line->v1->x);
-	v2[1] = FIXED2DBL(refvert->y - line->v1->y);
+	v2[0] = FIXED2DBL(refvert->fixX() - line->v1->fixX());
+	v2[1] = FIXED2DBL(refvert->fixY() - line->v1->fixY());
 	v2[2] = FIXED2DBL(srcheight - destheight);
 
 	cross = (v1 ^ v2).Unit();
@@ -551,8 +551,8 @@ static void P_AlignPlane (sector_t *sec, line_t *line, int which)
 	srcplane->c = FLOAT2FIXED (cross[2]);
 	//srcplane->ic = FLOAT2FIXED (1.f/cross[2]);
 	srcplane->ic = DivScale32 (1, srcplane->c);
-	srcplane->d = -TMulScale16 (srcplane->a, line->v1->x,
-								srcplane->b, line->v1->y,
+	srcplane->d = -TMulScale16 (srcplane->a, line->v1->fixX(),
+								srcplane->b, line->v1->fixY(),
 								srcplane->c, destheight);
 }
 

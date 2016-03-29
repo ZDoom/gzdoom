@@ -867,7 +867,7 @@ void FPolyObj::ThrustMobj (AActor *actor, side_t *side)
 	}
 	vertex_t *v1 = side->V1();
 	vertex_t *v2 = side->V2();
-	thrustAngle = VecToAngle(v2->x - v1->x, v2->y - v1->y) - 90.;
+	thrustAngle = VecToAngle(v2->fixX() - v1->fixX(), v2->fixY() - v1->fixY()) - 90.;
 
 	pe = static_cast<DPolyAction *>(specialdata);
 	if (pe)
@@ -921,30 +921,30 @@ void FPolyObj::UpdateBBox ()
 	{
 		line_t *line = Linedefs[i];
 
-		if (line->v1->x < line->v2->x)
+		if (line->v1->fixX() < line->v2->fixX())
 		{
-			line->bbox[BOXLEFT] = line->v1->x;
-			line->bbox[BOXRIGHT] = line->v2->x;
+			line->bbox[BOXLEFT] = line->v1->fixX();
+			line->bbox[BOXRIGHT] = line->v2->fixX();
 		}
 		else
 		{
-			line->bbox[BOXLEFT] = line->v2->x;
-			line->bbox[BOXRIGHT] = line->v1->x;
+			line->bbox[BOXLEFT] = line->v2->fixX();
+			line->bbox[BOXRIGHT] = line->v1->fixX();
 		}
-		if (line->v1->y < line->v2->y)
+		if (line->v1->fixY() < line->v2->fixY())
 		{
-			line->bbox[BOXBOTTOM] = line->v1->y;
-			line->bbox[BOXTOP] = line->v2->y;
+			line->bbox[BOXBOTTOM] = line->v1->fixY();
+			line->bbox[BOXTOP] = line->v2->fixY();
 		}
 		else
 		{
-			line->bbox[BOXBOTTOM] = line->v2->y;
-			line->bbox[BOXTOP] = line->v1->y;
+			line->bbox[BOXBOTTOM] = line->v2->fixY();
+			line->bbox[BOXTOP] = line->v1->fixY();
 		}
 
 		// Update the line's slopetype
-		line->dx = line->v2->x - line->v1->x;
-		line->dy = line->v2->y - line->v1->y;
+		line->dx = line->v2->fixX() - line->v1->fixX();
+		line->dy = line->v2->fixY() - line->v1->fixY();
 	}
 	CalcCenter();
 }
@@ -954,8 +954,8 @@ void FPolyObj::CalcCenter()
 	SQWORD cx = 0, cy = 0;
 	for(unsigned i=0;i<Vertices.Size(); i++)
 	{
-		cx += Vertices[i]->x;
-		cy += Vertices[i]->y;
+		cx += Vertices[i]->fixX();
+		cy += Vertices[i]->fixY();
 	}
 	CenterSpot.x = (fixed_t)(cx / Vertices.Size());
 	CenterSpot.y = (fixed_t)(cy / Vertices.Size());
@@ -1011,8 +1011,7 @@ void FPolyObj::DoMovePolyobj (int x, int y)
 {
 	for(unsigned i=0;i < Vertices.Size(); i++)
 	{
-		Vertices[i]->x += x;
-		Vertices[i]->y += y;
+		Vertices[i]->set(Vertices[i]->fixX() + x, Vertices[i]->fixY() + y);
 		PrevPts[i].x += x;
 		PrevPts[i].y += y;
 	}
@@ -1061,11 +1060,11 @@ bool FPolyObj::RotatePolyobj (angle_t angle, bool fromsave)
 
 	for(unsigned i=0;i < Vertices.Size(); i++)
 	{
-		PrevPts[i].x = Vertices[i]->x;
-		PrevPts[i].y = Vertices[i]->y;
-		Vertices[i]->x = OriginalPts[i].x;
-		Vertices[i]->y = OriginalPts[i].y;
-		RotatePt(an, &Vertices[i]->x, &Vertices[i]->y, StartSpot.x,	StartSpot.y);
+		PrevPts[i].x = Vertices[i]->fixX();
+		PrevPts[i].y = Vertices[i]->fixY();
+		FPolyVertex torot = OriginalPts[i];
+		RotatePt(an, &torot.x, &torot.y, StartSpot.x,	StartSpot.y);
+		Vertices[i]->set(torot.x, torot.y);
 	}
 	blocked = false;
 	validcount++;
@@ -1085,8 +1084,7 @@ bool FPolyObj::RotatePolyobj (angle_t angle, bool fromsave)
 		{
 			for(unsigned i=0;i < Vertices.Size(); i++)
 			{
-				Vertices[i]->x = PrevPts[i].x;
-				Vertices[i]->y = PrevPts[i].y;
+				Vertices[i]->set(PrevPts[i].x, PrevPts[i].y);
 			}
 			UpdateBBox();
 			LinkPolyobj();
@@ -1281,9 +1279,9 @@ void FPolyObj::LinkPolyobj ()
 		vertex_t *vt;
 		
 		vt = Sidedefs[i]->linedef->v1;
-		Bounds.AddToBox(vt->x, vt->y);
+		Bounds.AddToBox(vt->fixX(), vt->fixY());
 		vt = Sidedefs[i]->linedef->v2;
-		Bounds.AddToBox(vt->x, vt->y);
+		Bounds.AddToBox(vt->fixX(), vt->fixY());
 	}
 	bbox[BOXRIGHT] = GetSafeBlockX(Bounds.Right() - bmaporgx);
 	bbox[BOXLEFT] = GetSafeBlockX(Bounds.Left() - bmaporgx);
@@ -1373,34 +1371,34 @@ void FPolyObj::ClosestPoint(fixed_t fx, fixed_t fy, fixed_t &ox, fixed_t &oy, si
 	{
 		vertex_t *v1 = Sidedefs[i]->V1();
 		vertex_t *v2 = Sidedefs[i]->V2();
-		double a = v2->x - v1->x;
-		double b = v2->y - v1->y;
+		double a = v2->fixX() - v1->fixX();
+		double b = v2->fixY() - v1->fixY();
 		double den = a*a + b*b;
 		double ix, iy, dist;
 
 		if (den == 0)
 		{ // Line is actually a point!
-			ix = v1->x;
-			iy = v1->y;
+			ix = v1->fixX();
+			iy = v1->fixY();
 		}
 		else
 		{
-			double num = (x - v1->x) * a + (y - v1->y) * b;
+			double num = (x - v1->fixX()) * a + (y - v1->fixY()) * b;
 			double u = num / den;
 			if (u <= 0)
 			{
-				ix = v1->x;
-				iy = v1->y;
+				ix = v1->fixX();
+				iy = v1->fixY();
 			}
 			else if (u >= 1)
 			{
-				ix = v2->x;
-				iy = v2->y;
+				ix = v2->fixX();
+				iy = v2->fixY();
 			}
 			else
 			{
-				ix = v1->x + u * a;
-				iy = v1->y + u * b;
+				ix = v1->fixX() + u * a;
+				iy = v1->fixY() + u * b;
 			}
 		}
 		a = (ix - x);
@@ -1692,10 +1690,9 @@ static void TranslateToStartSpot (int tag, int originX, int originY)
 	}
 	for (unsigned i = 0; i < po->Vertices.Size(); i++)
 	{
-		po->Vertices[i]->x -= deltaX;
-		po->Vertices[i]->y -= deltaY;
-		po->OriginalPts[i].x = po->Vertices[i]->x - po->StartSpot.x;
-		po->OriginalPts[i].y = po->Vertices[i]->y - po->StartSpot.y;
+		po->Vertices[i]->set(po->Vertices[i]->fixX() - deltaX, po->Vertices[i]->fixY() - deltaY);
+		po->OriginalPts[i].x = po->Vertices[i]->fixX() - po->StartSpot.x;
+		po->OriginalPts[i].y = po->Vertices[i]->fixY() - po->StartSpot.y;
 	}
 	po->CalcCenter();
 	// For compatibility purposes

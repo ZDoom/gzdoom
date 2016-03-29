@@ -91,9 +91,32 @@ struct vertexdata_t
 	double zCeiling, zFloor;
 	DWORD flags;
 };
+
+#ifdef USE_FLOAT
+typedef float vtype;
+#elif !defined USE_FIXED
+typedef double vtype;
+#endif
+
+
 struct vertex_t
 {
+private:
 	fixed_t x, y;
+
+public:
+
+	void set(fixed_t x, fixed_t y)
+	{
+		this->x = x;
+		this->y = y;
+	}
+
+	void set(double x, double y)
+	{
+		this->x = FLOAT2FIXED(x);
+		this->y = FLOAT2FIXED(y);
+	}
 
 	double fX() const
 	{
@@ -103,6 +126,16 @@ struct vertex_t
 	double fY() const
 	{
 		return FIXED2DBL(y);
+	}
+
+	fixed_t fixX() const
+	{
+		return x;
+	}
+
+	fixed_t fixY() const
+	{
+		return y;
 	}
 
 	DVector2 fPos()
@@ -320,7 +353,7 @@ struct secplane_t
 	// Returns the value of z at vertex v
 	fixed_t ZatPoint (const vertex_t *v) const
 	{
-		return FixedMul (ic, -d - DMulScale16 (a, v->x, b, v->y));
+		return FixedMul (ic, -d - DMulScale16 (a, v->fixX(), b, v->fixY()));
 	}
 
 	fixed_t ZatPoint (const AActor *ac) const
@@ -342,7 +375,7 @@ struct secplane_t
 	// Returns the value of z at vertex v if d is equal to dist
 	fixed_t ZatPointDist (const vertex_t *v, fixed_t dist)
 	{
-		return FixedMul (ic, -dist - DMulScale16 (a, v->x, b, v->y));
+		return FixedMul (ic, -dist - DMulScale16 (a, v->fixX(), b, v->fixY()));
 	}
 
 	// Flips the plane's vertical orientiation, so that if it pointed up,
@@ -404,7 +437,7 @@ struct secplane_t
 
 	fixed_t PointToDist (const vertex_t *v, fixed_t z) const
 	{
-		return -TMulScale16 (a, v->x, b, v->y, z, c);
+		return -TMulScale16 (a, v->fixX(), b, v->fixY(), z, c);
 	}
 
 	void SetAtHeight(fixed_t height, int ceiling)
@@ -1254,12 +1287,12 @@ struct line_t
 
 	DVector2 V1() const
 	{
-		return{ FIXED2DBL(v1->x), FIXED2DBL(v1->y) };
+		return v1->fPos();
 	}
 
 	DVector2 V2() const
 	{
-		return{ FIXED2DBL(v2->x), FIXED2DBL(v2->y) };
+		return v1->fPos();
 	}
 
 	DVector2 Delta() const

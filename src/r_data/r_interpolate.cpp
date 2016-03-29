@@ -788,8 +788,8 @@ void DPolyobjInterpolation::UpdateInterpolation()
 {
 	for(unsigned int i = 0; i < poly->Vertices.Size(); i++)
 	{
-		oldverts[i*2  ] = poly->Vertices[i]->x;
-		oldverts[i*2+1] = poly->Vertices[i]->y;
+		oldverts[i*2  ] = poly->Vertices[i]->fixX();
+		oldverts[i*2+1] = poly->Vertices[i]->fixY();
 	}
 	oldcx = poly->CenterSpot.x;
 	oldcy = poly->CenterSpot.y;
@@ -805,8 +805,7 @@ void DPolyobjInterpolation::Restore()
 {
 	for(unsigned int i = 0; i < poly->Vertices.Size(); i++)
 	{
-		poly->Vertices[i]->x = bakverts[i*2  ];
-		poly->Vertices[i]->y = bakverts[i*2+1];
+		poly->Vertices[i]->set(bakverts[i*2  ], bakverts[i*2+1]);
 	}
 	poly->CenterSpot.x = bakcx;
 	poly->CenterSpot.y = bakcy;
@@ -824,17 +823,15 @@ void DPolyobjInterpolation::Interpolate(fixed_t smoothratio)
 	bool changed = false;
 	for(unsigned int i = 0; i < poly->Vertices.Size(); i++)
 	{
-		fixed_t *px = &poly->Vertices[i]->x;
-		fixed_t *py = &poly->Vertices[i]->y;
-
-		bakverts[i*2  ] = *px;
-		bakverts[i*2+1] = *py;
+		bakverts[i*2  ] = poly->Vertices[i]->fixX();
+		bakverts[i*2+1] = poly->Vertices[i]->fixY();
 
 		if (bakverts[i * 2] != oldverts[i * 2] || bakverts[i * 2 + 1] != oldverts[i * 2 + 1])
 		{
 			changed = true;
-			*px = oldverts[i * 2] + FixedMul(bakverts[i * 2] - oldverts[i * 2], smoothratio);
-			*py = oldverts[i * 2 + 1] + FixedMul(bakverts[i * 2 + 1] - oldverts[i * 2 + 1], smoothratio);
+			poly->Vertices[i]->set(
+				oldverts[i * 2] + FixedMul(bakverts[i * 2] - oldverts[i * 2], smoothratio),
+				oldverts[i * 2 + 1] + FixedMul(bakverts[i * 2 + 1] - oldverts[i * 2 + 1], smoothratio));
 		}
 	}
 	if (refcount == 0 && !changed)

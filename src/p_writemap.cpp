@@ -167,8 +167,8 @@ static int WriteVERTEXES (FILE *file)
 
 	for (int i = 0; i < numvertexes; ++i)
 	{
-		mv.x = LittleShort(short(vertexes[i].x >> FRACBITS));
-		mv.y = LittleShort(short(vertexes[i].y >> FRACBITS));
+		mv.x = LittleShort(short(vertexes[i].fixX() >> FRACBITS));
+		mv.y = LittleShort(short(vertexes[i].fixY() >> FRACBITS));
 		fwrite (&mv, sizeof(mv), 1, file);
 	}
 	return numvertexes * sizeof(mv);
@@ -189,7 +189,7 @@ static int WriteSEGS (FILE *file)
 			ms.v2 = LittleShort(short(segs[i].v2 - vertexes));
 			ms.linedef = LittleShort(short(segs[i].linedef - lines));
 			ms.side = segs[i].sidedef == segs[i].linedef->sidedef[0] ? 0 : LittleShort((short)1);
-			ms.angle = LittleShort(short(R_PointToAngle2 (segs[i].v1->x, segs[i].v1->y, segs[i].v2->x, segs[i].v2->y)>>16));
+			ms.angle = LittleShort(short(R_PointToAngle2 (segs[i].v1->fixX(), segs[i].v1->fixY(), segs[i].v2->fixX(), segs[i].v2->fixY())>>16));
 			fwrite (&ms, sizeof(ms), 1, file);
 		}
 	}

@@ -13,8 +13,8 @@ struct FPolyVertex
 
 	FPolyVertex &operator=(vertex_t *v)
 	{
-		x = v->x;
-		y = v->y;
+		x = v->fixX();
+		y = v->fixX();
 		return *this;
 	}
 };

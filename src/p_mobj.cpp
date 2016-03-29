@@ -1401,9 +1401,9 @@ void P_ExplodeMissile (AActor *mo, line_t *line, AActor *target)
 				den = line->Delta().LengthSquared();
 				if (den != 0)
 				{
-					frac = clamp<double>((mo->Pos() - line->v1->fPos()) | line->Delta(), 0, den) / den;
+					frac = clamp<double>((mo->Pos() - line->V1()) | line->Delta(), 0, den) / den;
 
-					linepos = DVector3(line->v1->fPos() + line->Delta() * frac, pos.Z);
+					linepos = DVector3(line->V1() + line->Delta() * frac, pos.Z);
 
 					F3DFloor * ffloor=NULL;
 					if (line->sidedef[side^1] != NULL)

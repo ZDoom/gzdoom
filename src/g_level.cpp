@@ -1228,7 +1228,7 @@ void G_FinishTravel ()
 			{
 				Printf(TEXTCOLOR_RED "No player %d start to travel to!\n", pnum + 1);
 				// Move to the coordinates this player had when they left the level.
-				pawn->SetXYZ(pawndup->_f_X(), pawndup->_f_Y(), pawndup->_f_Z());
+				pawn->SetXYZ(pawndup->Pos());
 			}
 		}
 		oldpawn = pawndup;
@@ -2021,7 +2021,7 @@ void FLevelLocals::Tick ()
 //
 //==========================================================================
 
-void FLevelLocals::AddScroller (DScroller *scroller, int secnum)
+void FLevelLocals::AddScroller (int secnum)
 {
 	if (secnum < 0)
 	{

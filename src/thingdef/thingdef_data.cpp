@@ -632,9 +632,9 @@ void InitThingdef()
 	symt.AddSymbol(new PField(NAME_TID,			TypeSInt32,		VARF_Native, myoffsetof(AActor,tid)));
 	symt.AddSymbol(new PField(NAME_TIDtoHate,	TypeSInt32,		VARF_Native, myoffsetof(AActor,TIDtoHate)));
 	symt.AddSymbol(new PField(NAME_WaterLevel,	TypeSInt32,		VARF_Native, myoffsetof(AActor,waterlevel)));
-	symt.AddSymbol(new PField(NAME_X,			TypeFixed,	VARF_Native, myoffsetof(AActor,__pos.x)));	// must remain read-only!
-	symt.AddSymbol(new PField(NAME_Y,			TypeFixed,	VARF_Native, myoffsetof(AActor,__pos.y)));	// must remain read-only!
-	symt.AddSymbol(new PField(NAME_Z,			TypeFixed,	VARF_Native, myoffsetof(AActor,__pos.z)));	// must remain read-only!
+	symt.AddSymbol(new PField(NAME_X,			TypeFloat64,	VARF_Native, myoffsetof(AActor,__Pos.X)));	// must remain read-only!
+	symt.AddSymbol(new PField(NAME_Y,			TypeFloat64,	VARF_Native, myoffsetof(AActor,__Pos.Y)));	// must remain read-only!
+	symt.AddSymbol(new PField(NAME_Z,			TypeFloat64,	VARF_Native, myoffsetof(AActor,__Pos.Z)));	// must remain read-only!
 	symt.AddSymbol(new PField(NAME_VelX,		TypeFloat64,	VARF_Native, myoffsetof(AActor,Vel.X)));
 	symt.AddSymbol(new PField(NAME_VelY,		TypeFloat64,	VARF_Native, myoffsetof(AActor, Vel.Y)));
 	symt.AddSymbol(new PField(NAME_VelZ,		TypeFloat64,	VARF_Native, myoffsetof(AActor, Vel.Z)));

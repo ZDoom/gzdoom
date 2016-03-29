@@ -704,20 +704,20 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 		// Reflect the current view behind the mirror.
 		if (pds->src->dx == 0)
 		{ // vertical mirror
-			viewx = v1->x - startx + v1->x;
+			viewx = v1->fixX() - startx + v1->fixX();
 		}
 		else if (pds->src->dy == 0)
 		{ // horizontal mirror
-			viewy = v1->y - starty + v1->y;
+			viewy = v1->fixY() - starty + v1->fixY();
 		}
 		else
 		{ // any mirror--use floats to avoid integer overflow
 			vertex_t *v2 = pds->src->v2;
 
-			double dx = FIXED2DBL(v2->x - v1->x);
-			double dy = FIXED2DBL(v2->y - v1->y);
-			double x1 = FIXED2DBL(v1->x);
-			double y1 = FIXED2DBL(v1->y);
+			double dx = v2->fX() - v1->fX();
+			double dy = v2->fY() - v1->fY();
+			double x1 = v1->fX();
+			double y1 = v1->fY();
 			double x = FIXED2DBL(startx);
 			double y = FIXED2DBL(starty);
 
@@ -727,8 +727,8 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 			viewx = FLOAT2FIXED((x1 + r * dx)*2 - x);
 			viewy = FLOAT2FIXED((y1 + r * dy)*2 - y);
 		}
-		viewangle = 2*R_PointToAngle2 (pds->src->v1->x, pds->src->v1->y,
-									   pds->src->v2->x, pds->src->v2->y) - startang;
+		viewangle = 2*R_PointToAngle2 (pds->src->v1->fixX(), pds->src->v1->fixY(),
+									   pds->src->v2->fixX(), pds->src->v2->fixY()) - startang;
 
 	}
 	else

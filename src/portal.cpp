@@ -168,8 +168,8 @@ void FLinePortalTraverse::AddLineIntercepts(int bx, int by)
 
 		if (ld->validcount == validcount) continue;	// already processed
 
-		if (P_PointOnDivlineSidePrecise (ld->v1->x, ld->v1->y, &trace) ==
-			P_PointOnDivlineSidePrecise (ld->v2->x, ld->v2->y, &trace))
+		if (P_PointOnDivlineSidePrecise (ld->v1->fixX(), ld->v1->fixY(), &trace) ==
+			P_PointOnDivlineSidePrecise (ld->v2->fixX(), ld->v2->fixY(), &trace))
 		{
 			continue;		// line isn't crossed
 		}
@@ -205,8 +205,7 @@ FArchive &operator<< (FArchive &arc, FLinePortal &port)
 {
 	arc << port.mOrigin
 		<< port.mDestination
-		<< port.mXDisplacement
-		<< port.mYDisplacement
+		<< port.mDisplacement
 		<< port.mType
 		<< port.mFlags
 		<< port.mDefFlags
@@ -385,8 +384,8 @@ void P_UpdatePortal(FLinePortal *port)
 			}
 			else
 			{
-				port->mXDisplacement = port->mDestination->v2->x - port->mOrigin->v1->x;
-				port->mYDisplacement = port->mDestination->v2->y - port->mOrigin->v1->y;
+				port->mDisplacement.X = port->mDestination->v2->fX() - port->mOrigin->v1->fX();
+				port->mDisplacement.Y = port->mDestination->v2->fY() - port->mOrigin->v1->fY();
 			}
 		}
  	}
@@ -514,13 +513,13 @@ inline int P_PointOnLineSideExplicit (fixed_t x, fixed_t y, fixed_t x1, fixed_t 
 
 inline int P_GetLineSide(fixed_t x, fixed_t y, const line_t *line)
 {
-	return DMulScale32(y - line->v1->y, line->dx, line->v1->x - x, line->dy);
+	return DMulScale32(y - line->v1->fixY(), line->dx, line->v1->fixX() - x, line->dy);
 }
 
 bool P_ClipLineToPortal(line_t* line, line_t* portal, fixed_t viewx, fixed_t viewy, bool partial, bool samebehind)
 {
-	int behind1 = P_GetLineSide(line->v1->x, line->v1->y, portal);
-	int behind2 = P_GetLineSide(line->v2->x, line->v2->y, portal);
+	int behind1 = P_GetLineSide(line->v1->fixX(), line->v1->fixY(), portal);
+	int behind2 = P_GetLineSide(line->v2->fixX(), line->v2->fixY(), portal);
 
 	if (behind1 == 0 && behind2 == 0)
 	{
@@ -545,8 +544,8 @@ bool P_ClipLineToPortal(line_t* line, line_t* portal, fixed_t viewx, fixed_t vie
 	{
 		// The line intersects with the portal straight, so we need to do another check to see how both ends of the portal lie in relation to the viewer.
 		int viewside = P_PointOnLineSidePrecise(viewx, viewy, line); 
-		int p1side = P_GetLineSide(portal->v1->x, portal->v1->y, line);
-		int p2side = P_GetLineSide(portal->v2->x, portal->v2->y, line);
+		int p1side = P_GetLineSide(portal->v1->fixX(), portal->v1->fixY(), line);
+		int p2side = P_GetLineSide(portal->v2->fixX(), portal->v2->fixY(), line);
 		// Do the same handling of points on the portal straight than above.
 		if (p1side == 0) p1side = p2side;
 		else if (p2side == 0) p2side = p1side;
@@ -570,15 +569,15 @@ void P_TranslatePortalXY(line_t* src, fixed_t& x, fixed_t& y)
 	if (!port) return;
 
 	// offsets from line
-	fixed_t nposx = x - src->v1->x;
-	fixed_t nposy = y - src->v1->y;
+	fixed_t nposx = x - src->v1->fixX();
+	fixed_t nposy = y - src->v1->fixY();
 
 	// Rotate position along normal to match exit linedef
 	fixed_t tx = FixedMul(nposx, port->mCosRot) - FixedMul(nposy, port->mSinRot);
 	fixed_t ty = FixedMul(nposy, port->mCosRot) + FixedMul(nposx, port->mSinRot);
 
-	tx += port->mDestination->v2->x;
-	ty += port->mDestination->v2->y;
+	tx += port->mDestination->v2->fixX();
+	ty += port->mDestination->v2->fixY();
 
 	x = tx;
 	y = ty;
@@ -633,11 +632,11 @@ void P_TranslatePortalZ(line_t* src, fixed_t& z)
 	switch (src->getPortalAlignment())
 	{
 	case PORG_FLOOR:
-		z = z - src->frontsector->floorplane.ZatPoint(src->v1->x, src->v1->y) + dst->frontsector->floorplane.ZatPoint(dst->v2->x, dst->v2->y);
+		z = z - src->frontsector->floorplane.ZatPoint(src->v1->fixX(), src->v1->fixY()) + dst->frontsector->floorplane.ZatPoint(dst->v2->fixX(), dst->v2->fixY());
 		return;
 
 	case PORG_CEILING:
-		z = z - src->frontsector->ceilingplane.ZatPoint(src->v1->x, src->v1->y) + dst->frontsector->ceilingplane.ZatPoint(dst->v2->x, dst->v2->y);
+		z = z - src->frontsector->ceilingplane.ZatPoint(src->v1->fixX(), src->v1->fixY()) + dst->frontsector->ceilingplane.ZatPoint(dst->v2->fixX(), dst->v2->fixY());
 		return;
 
 	default:
@@ -656,8 +655,8 @@ fixed_t P_PointLineDistance(line_t* line, fixed_t x, fixed_t y)
 	angle_t angle = R_PointToAngle2(0, 0, line->dx, line->dy);
 	angle += ANGLE_180;
 
-	fixed_t dx = line->v1->x - x;
-	fixed_t dy = line->v1->y - y;
+	fixed_t dx = line->v1->fixX() - x;
+	fixed_t dy = line->v1->fixY() - y;
 
 	fixed_t s = finesine[angle>>ANGLETOFINESHIFT];
 	fixed_t c = finecosine[angle>>ANGLETOFINESHIFT];
@@ -716,15 +715,15 @@ fixedvec2 P_GetOffsetPosition(fixed_t x, fixed_t y, fixed_t dx, fixed_t dy)
 				// Teleport portals are intentionally ignored since skipping this stuff is their entire reason for existence.
 				if (port->mFlags & PORTF_INTERACTIVE)
 				{
-					fixedvec2 hit = it.InterceptPoint(in);
+					fixedvec2 hit = it._f_InterceptPoint(in);
 
 					if (port->mType == PORTT_LINKED)
 					{
 						// optimized handling for linked portals where we only need to add an offset.
-						hit.x += port->mXDisplacement;
-						hit.y += port->mYDisplacement;
-						dest.x += port->mXDisplacement;
-						dest.y += port->mYDisplacement;
+						hit.x += FLOAT2FIXED(port->mDisplacement.X);
+						hit.y += FLOAT2FIXED(port->mDisplacement.Y);
+						dest.x += FLOAT2FIXED(port->mDisplacement.X);
+						dest.y += FLOAT2FIXED(port->mDisplacement.Y);
 					}
 					else
 					{
@@ -851,13 +850,13 @@ static void AddDisplacementForPortal(FLinePortal *portal)
 	FDisplacement & disp = Displacements(thisgroup, othergroup);
 	if (!disp.isSet)
 	{
-		disp.pos.x = portal->mXDisplacement;
-		disp.pos.y = portal->mYDisplacement;
+		disp.pos.x = FLOAT2FIXED(portal->mDisplacement.X);
+		disp.pos.y = FLOAT2FIXED(portal->mDisplacement.Y);
 		disp.isSet = true;
 	}
 	else
 	{
-		if (disp.pos.x != portal->mXDisplacement || disp.pos.y != portal->mYDisplacement)
+		if (disp.pos.x != FLOAT2FIXED(portal->mDisplacement.X) || disp.pos.y != FLOAT2FIXED(portal->mDisplacement.Y))
 		{
 			Printf("Portal between lines %d and %d has displacement mismatch\n", int(portal->mOrigin - lines), int(portal->mDestination - lines));
 			portal->mType = linePortals[portal->mDestination->portalindex].mType = PORTT_TELEPORT;
@@ -1209,7 +1208,7 @@ bool P_CollectConnectedGroups(int startgroup, const fixedvec3 &position, fixed_t
 		while (!wsec->PortalBlocksMovement(sector_t::ceiling) && upperz > FLOAT2FIXED(wsec->SkyBoxes[sector_t::ceiling]->specialf1))
 		{
 			sector_t *othersec = wsec->SkyBoxes[sector_t::ceiling]->Sector;
-			fixedvec2 pos = Displacements.getOffset(startgroup, othersec->PortalGroup);
+			fixedvec2 pos = Displacements._f_getOffset(startgroup, othersec->PortalGroup);
 			fixed_t dx = position.x + pos.x;
 			fixed_t dy = position.y + pos.y;
 			processMask.setBit(othersec->PortalGroup);
@@ -1221,7 +1220,7 @@ bool P_CollectConnectedGroups(int startgroup, const fixedvec3 &position, fixed_t
 		while (!wsec->PortalBlocksMovement(sector_t::floor) && position.z < FLOAT2FIXED(wsec->SkyBoxes[sector_t::floor]->specialf1))
 		{
 			sector_t *othersec = wsec->SkyBoxes[sector_t::floor]->Sector;
-			fixedvec2 pos = Displacements.getOffset(startgroup, othersec->PortalGroup);
+			fixedvec2 pos = Displacements._f_getOffset(startgroup, othersec->PortalGroup);
 			fixed_t dx = position.x + pos.x;
 			fixed_t dy = position.y + pos.y;
 			processMask.setBit(othersec->PortalGroup | FPortalGroupArray::LOWER);
@@ -1236,7 +1235,7 @@ bool P_CollectConnectedGroups(int startgroup, const fixedvec3 &position, fixed_t
 			int thisgroup = startgroup;
 			for (unsigned i = 0; i < groupsToCheck.Size();i++)
 			{
-				fixedvec2 disp = Displacements.getOffset(startgroup, thisgroup & ~FPortalGroupArray::FLAT);
+				fixedvec2 disp = Displacements._f_getOffset(startgroup, thisgroup & ~FPortalGroupArray::FLAT);
 				FBoundingBox box(position.x + disp.x, position.y + disp.y, checkradius);
 				FBlockLinesIterator it(box);
 				line_t *ld;

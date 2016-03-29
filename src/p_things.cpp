@@ -169,15 +169,13 @@ bool P_Thing_Move (int tid, AActor *source, int mapspot, bool fog)
 }
 
 bool P_Thing_Projectile (int tid, AActor *source, int type, const char *type_name, DAngle angle,
-	fixed_t _speed, fixed_t _vspeed, int dest, AActor *forcedest, int gravity, int newtid,
+	double speed, double vspeed, int dest, AActor *forcedest, int gravity, int newtid,
 	bool leadTarget)
 {
 	int rtn = 0;
 	PClassActor *kind;
 	AActor *spot, *mobj, *targ = forcedest;
 	FActorIterator iterator (tid);
-	double speed = FIXED2DBL(_speed);
-	double vspeed = FIXED2DBL(_vspeed);
 	int defflags3;
 
 	if (type_name == NULL)
@@ -427,7 +425,7 @@ bool P_Thing_Raise(AActor *thing, AActor *raiser)
 	thing->flags |= MF_SOLID;
 	thing->Height = info->Height;	// [RH] Use real height
 	thing->radius = info->radius;	// [RH] Use real radius
-	if (!P_CheckPosition (thing, thing->_f_Pos()))
+	if (!P_CheckPosition (thing, thing->Pos()))
 	{
 		thing->flags = oldflags;
 		thing->radius = oldradius;
@@ -757,32 +755,26 @@ int P_Thing_Warp(AActor *caller, AActor *reference, double xofs, double yofs, do
 				caller->Vel.Zero();
 			}
 
-#if 0	// needs fixing
 			// this is no fun with line portals 
 			if (flags & WARPF_WARPINTERPOLATION)
 			{
 				// This just translates the movement but doesn't change the vector
-				fixedvec3 displacedold  = old + Displacements.getOffset(oldpgroup, caller->Sector->PortalGroup);
-				caller->PrevX += caller->_f_X() - displacedold.x;
-				caller->PrevY += caller->_f_Y() - displacedold.y;
-				caller->PrevZ += caller->_f_Z() - displacedold.z;
+				DVector3 displacedold  = old + Displacements.getOffset(oldpgroup, caller->Sector->PortalGroup);
+				caller->Prev += caller->Pos() - displacedold;
 				caller->PrevPortalGroup = caller->Sector->PortalGroup;
 			}
 			else if (flags & WARPF_COPYINTERPOLATION)
 			{
 				// Map both positions of the reference actor to the current portal group
-				fixedvec3 displacedold = old + Displacements.getOffset(reference->PrevPortalGroup, caller->Sector->PortalGroup);
-				fixedvec3 displacedref = old + Displacements.getOffset(reference->Sector->PortalGroup, caller->Sector->PortalGroup);
-				caller->PrevX = caller->_f_X() + displacedold.x - displacedref.x;
-				caller->PrevY = caller->_f_Y() + displacedold.y - displacedref.y;
-				caller->PrevZ = caller->_f_Z() + displacedold.z - displacedref.z;
+				DVector3 displacedold = old + Displacements.getOffset(reference->PrevPortalGroup, caller->Sector->PortalGroup);
+				DVector3 displacedref = old + Displacements.getOffset(reference->Sector->PortalGroup, caller->Sector->PortalGroup);
+				caller->Prev = caller->Pos() + displacedold - displacedref;
 				caller->PrevPortalGroup = caller->Sector->PortalGroup;
 			}
 			else if (!(flags & WARPF_INTERPOLATE))
 			{
 				caller->ClearInterpolation();
 			}
-#endif
 
 			if ((flags & WARPF_BOB) && (reference->flags2 & MF2_FLOATBOB))
 			{

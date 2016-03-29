@@ -915,9 +915,9 @@ protected:
 	int DoClassifyActor (int tid);
 	int CallFunction(int argCount, int funcIndex, SDWORD *args);
 
-	void DoFadeTo (int r, int g, int b, int a, fixed_t time);
+	void DoFadeTo (int r, int g, int b, int a, int time);
 	void DoFadeRange (int r1, int g1, int b1, int a1,
-		int r2, int g2, int b2, int a2, fixed_t time);
+		int r2, int g2, int b2, int a2, int time);
 	void DoSetFont (int fontnum);
 	void SetActorProperty (int tid, int property, int value);
 	void DoSetActorProperty (AActor *actor, int property, int value);

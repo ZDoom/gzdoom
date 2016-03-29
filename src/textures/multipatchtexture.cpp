@@ -246,8 +246,8 @@ FMultiPatchTexture::FMultiPatchTexture (const void *texdef, FPatchLookup *patchl
 	Name = (char *)mtexture.d->name;
 	CalcBitSize ();
 
-	xScale = mtexture.d->ScaleX ? mtexture.d->ScaleX*(FRACUNIT/8) : FRACUNIT;
-	yScale = mtexture.d->ScaleY ? mtexture.d->ScaleY*(FRACUNIT/8) : FRACUNIT;
+	Scale.X = mtexture.d->ScaleX ? mtexture.d->ScaleX / 8. : 1.;
+	Scale.Y = mtexture.d->ScaleY ? mtexture.d->ScaleY / 8. : 1.;
 
 	if (mtexture.d->Flags & MAPTEXF_WORLDPANNING)
 	{
@@ -1243,14 +1243,14 @@ FMultiPatchTexture::FMultiPatchTexture (FScanner &sc, int usetype)
 			if (sc.Compare("XScale"))
 			{
 				sc.MustGetFloat();
-				xScale = FLOAT2FIXED(sc.Float);
-				if (xScale == 0) sc.ScriptError("Texture %s is defined with null x-scale\n", Name.GetChars());
+				Scale.X = sc.Float;
+				if (Scale.X == 0) sc.ScriptError("Texture %s is defined with null x-scale\n", Name.GetChars());
 			}
 			else if (sc.Compare("YScale"))
 			{
 				sc.MustGetFloat();
-				yScale = FLOAT2FIXED(sc.Float);
-				if (yScale == 0) sc.ScriptError("Texture %s is defined with null y-scale\n", Name.GetChars());
+				Scale.Y = sc.Float;
+				if (Scale.Y == 0) sc.ScriptError("Texture %s is defined with null y-scale\n", Name.GetChars());
 			}
 			else if (sc.Compare("WorldPanning"))
 			{

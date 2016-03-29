@@ -97,7 +97,7 @@ struct FSplashDef
 	BYTE ChunkZVelShift;
 	bool NoAlert;
 	double ChunkBaseZVel;
-	fixed_t SmallSplashClip;
+	double SmallSplashClip;
 };
 
 struct FTerrainDef

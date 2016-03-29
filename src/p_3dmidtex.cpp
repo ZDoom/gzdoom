@@ -36,6 +36,7 @@
 
 
 #include "templates.h"
+#include "p_3dmidtex.h"
 #include "p_local.h"
 #include "p_terrain.h"
 #include "p_maputl.h"
@@ -220,7 +221,7 @@ void P_Attach3dMidtexLinesToSector(sector_t *sector, int lineid, int tag, bool c
 // Retrieves top and bottom of the current line's mid texture.
 //
 //============================================================================
-bool P_GetMidTexturePosition(const line_t *line, int sideno, fixed_t *ptextop, fixed_t *ptexbot)
+bool P_GetMidTexturePosition(const line_t *line, int sideno, double *ptextop, double *ptexbot)
 {
 	if (line->sidedef[0]==NULL || line->sidedef[1]==NULL) return false;
 	
@@ -230,31 +231,30 @@ bool P_GetMidTexturePosition(const line_t *line, int sideno, fixed_t *ptextop, f
 	FTexture * tex= TexMan(texnum);
 	if (!tex) return false;
 
-	double totalscale = fabs(FIXED2DBL(side->GetTextureYScale(side_t::mid)) * tex->GetScaleY());
-	fixed_t y_offset = side->GetTextureYOffset(side_t::mid);
-	fixed_t textureheight = tex->GetScaledHeight(totalscale) << FRACBITS;
+	double totalscale = fabs(side->GetTextureYScaleF(side_t::mid)) * tex->GetScaleY();
+	double y_offset = side->GetTextureYOffsetF(side_t::mid);
+	double textureheight = tex->GetHeight() / totalscale;
 	if (totalscale != 1. && !tex->bWorldPanning)
 	{ 
-		y_offset = fixed_t(y_offset * totalscale);
+		y_offset *= totalscale;
 	}
 
 	if(line->flags & ML_DONTPEGBOTTOM)
 	{
 		*ptexbot = y_offset +
-			MAX<fixed_t>(line->frontsector->GetPlaneTexZ(sector_t::floor), line->backsector->GetPlaneTexZ(sector_t::floor));
+			MAX(line->frontsector->GetPlaneTexZF(sector_t::floor), line->backsector->GetPlaneTexZF(sector_t::floor));
 
 		*ptextop = *ptexbot + textureheight;
 	}
 	else
 	{
 		*ptextop = y_offset +
-		   MIN<fixed_t>(line->frontsector->GetPlaneTexZ(sector_t::ceiling), line->backsector->GetPlaneTexZ(sector_t::ceiling));
+		   MIN(line->frontsector->GetPlaneTexZF(sector_t::ceiling), line->backsector->GetPlaneTexZF(sector_t::ceiling));
 		
 		*ptexbot = *ptextop - textureheight;
 	}
 	return true;
 }
-
 
 //============================================================================
 //
@@ -273,12 +273,12 @@ bool P_LineOpening_3dMidtex(AActor *thing, const line_t *linedef, FLineOpening &
 		return false;
 	}
 
-	fixed_t tt, tb;
+	double tt, tb;
 
 	open.abovemidtex = false;
 	if (P_GetMidTexturePosition(linedef, 0, &tt, &tb))
 	{
-		if (thing->_f_Z() + (thing->_f_height()/2) < (tt + tb)/2)
+		if (thing->Center() < (tt + tb)/2)
 		{
 			if (tb < open.top)
 			{
@@ -288,7 +288,7 @@ bool P_LineOpening_3dMidtex(AActor *thing, const line_t *linedef, FLineOpening &
 		}
 		else
 		{
-			if (tt > open.bottom && (!restrict || thing->_f_Z() >= tt))
+			if (tt > open.bottom && (!restrict || thing->Z() >= tt))
 			{
 				open.bottom = tt;
 				open.abovemidtex = true;
@@ -299,7 +299,7 @@ bool P_LineOpening_3dMidtex(AActor *thing, const line_t *linedef, FLineOpening &
 
 			}
 			// returns true if it touches the midtexture
-			return (abs(thing->_f_Z() - tt) <= thing->_f_MaxStepHeight());
+			return (fabs(thing->Z() - tt) <= thing->MaxStepHeight);
 		}
 	}
 	return false;
@@ -307,7 +307,7 @@ bool P_LineOpening_3dMidtex(AActor *thing, const line_t *linedef, FLineOpening &
 	/* still have to figure out what this code from Eternity means...
 	if((linedef->flags & ML_BLOCKMONSTERS) && 
 		!(mo->flags & (MF_FLOAT | MF_DROPOFF)) &&
-		D_abs(mo->z - textop) <= 24*FRACUNIT)
+		fabs(mo->Z() - tt) <= 24)
 	{
 		opentop = openbottom;
 		openrange = 0;

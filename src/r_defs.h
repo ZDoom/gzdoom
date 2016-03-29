@@ -94,9 +94,32 @@ struct vertexdata_t
 	double zCeiling, zFloor;
 	DWORD flags;
 };
+
+#ifdef USE_FLOAT
+typedef float vtype;
+#elif !defined USE_FIXED
+typedef double vtype;
+#endif
+
+
 struct vertex_t
 {
+private:
 	fixed_t x, y;
+
+public:
+
+	void set(fixed_t x, fixed_t y)
+	{
+		this->x = x;
+		this->y = y;
+	}
+
+	void set(double x, double y)
+	{
+		this->x = FLOAT2FIXED(x);
+		this->y = FLOAT2FIXED(y);
+	}
 
 	double fX() const
 	{
@@ -106,6 +129,16 @@ struct vertex_t
 	double fY() const
 	{
 		return FIXED2DBL(y);
+	}
+
+	fixed_t fixX() const
+	{
+		return x;
+	}
+
+	fixed_t fixY() const
+	{
+		return y;
 	}
 
 	DVector2 fPos()
@@ -277,6 +310,28 @@ struct secplane_t
 
 	fixed_t a, b, c, d, ic;
 
+	double fA() const
+	{
+		return FIXED2FLOAT(a);
+	}
+	double fB() const
+	{
+		return FIXED2FLOAT(b);
+	}
+	double fC() const
+	{
+		return FIXED2FLOAT(c);
+	}
+	double fD() const
+	{
+		return FIXED2FLOAT(d);
+	}
+
+	bool isSlope() const
+	{
+		return a != 0 || b != 0;
+	}
+
 	DVector3 Normal() const
 	{
 		return{ FIXED2FLOAT(a), FIXED2FLOAT(b), FIXED2FLOAT(c) };
@@ -315,11 +370,6 @@ struct secplane_t
 		return FixedMul (ic, -d - DMulScale16 (a, x, b, y));
 	}
 
-	double _f_ZatPointF(fixed_t x, fixed_t y) const
-	{
-		return FIXED2DBL(FixedMul(ic, -d - DMulScale16(a, x, b, y)));
-	}
-
 	// Returns the value of z at (x,y) as a double
 	double ZatPoint (double x, double y) const
 	{
@@ -334,7 +384,7 @@ struct secplane_t
 	// Returns the value of z at vertex v
 	fixed_t ZatPoint (const vertex_t *v) const
 	{
-		return FixedMul (ic, -d - DMulScale16 (a, v->x, b, v->y));
+		return FixedMul (ic, -d - DMulScale16 (a, v->fixX(), b, v->fixY()));
 	}
 
 	fixed_t ZatPoint (const AActor *ac) const
@@ -344,7 +394,7 @@ struct secplane_t
 
 	double ZatPointF(const AActor *ac) const
 	{
-		return FIXED2DBL(ZatPoint(ac));
+		return (d + a*ac->X() + b*ac->Y()) * ic / (-65536.0 * 65536.0);
 	}
 
 	// Returns the value of z at (x,y) if d is equal to dist
@@ -356,7 +406,7 @@ struct secplane_t
 	// Returns the value of z at vertex v if d is equal to dist
 	fixed_t ZatPointDist (const vertex_t *v, fixed_t dist)
 	{
-		return FixedMul (ic, -dist - DMulScale16 (a, v->x, b, v->y));
+		return FixedMul (ic, -dist - DMulScale16 (a, v->fixX(), b, v->fixY()));
 	}
 
 	// Flips the plane's vertical orientiation, so that if it pointed up,
@@ -418,7 +468,7 @@ struct secplane_t
 
 	fixed_t PointToDist (const vertex_t *v, fixed_t z) const
 	{
-		return -TMulScale16 (a, v->x, b, v->y, z, c);
+		return -TMulScale16 (a, v->fixX(), b, v->fixY(), z, c);
 	}
 
 	void SetAtHeight(fixed_t height, int ceiling)
@@ -434,6 +484,11 @@ struct secplane_t
 			c = ic = FRACUNIT;
 			d = -height;
 		}
+	}
+
+	inline void SetAtHeight(double height, int ceiling)
+	{
+		SetAtHeight(FLOAT2FIXED(clamp(height, -32767., 32767.)), ceiling);
 	}
 
 	bool CopyPlaneIfValid (secplane_t *dest, const secplane_t *opp) const;
@@ -660,9 +715,19 @@ struct sector_t
 		planes[pos].xform.xoffs += o;
 	}
 
+	void AddXOffset(int pos, double o)
+	{
+		planes[pos].xform.xoffs += FLOAT2FIXED(o);
+	}
+
 	fixed_t GetXOffset(int pos) const
 	{
 		return planes[pos].xform.xoffs;
+	}
+
+	double GetXOffsetF(int pos) const
+	{
+		return FIXED2DBL(planes[pos].xform.xoffs);
 	}
 
 	void SetYOffset(int pos, fixed_t o)
@@ -673,6 +738,11 @@ struct sector_t
 	void AddYOffset(int pos, fixed_t o)
 	{
 		planes[pos].xform.yoffs += o;
+	}
+
+	void AddYOffset(int pos, double o)
+	{
+		planes[pos].xform.yoffs += FLOAT2FIXED(o);
 	}
 
 	fixed_t GetYOffset(int pos, bool addbase = true) const
@@ -687,6 +757,18 @@ struct sector_t
 		}
 	}
 
+	double GetYOffsetF(int pos, bool addbase = true) const
+	{
+		if (!addbase)
+		{
+			return FIXED2DBL(planes[pos].xform.yoffs);
+		}
+		else
+		{
+			return FIXED2DBL(planes[pos].xform.yoffs + planes[pos].xform.base_yoffs);
+		}
+	}
+
 	void SetXScale(int pos, fixed_t o)
 	{
 		planes[pos].xform.xscale = o;
@@ -697,6 +779,11 @@ struct sector_t
 		return planes[pos].xform.xscale;
 	}
 
+	double GetXScaleF(int pos) const
+	{
+		return FIXED2DBL(planes[pos].xform.xscale);
+	}
+
 	void SetYScale(int pos, fixed_t o)
 	{
 		planes[pos].xform.yscale = o;
@@ -705,6 +792,11 @@ struct sector_t
 	fixed_t GetYScale(int pos) const
 	{
 		return planes[pos].xform.yscale;
+	}
+
+	double GetYScaleF(int pos) const
+	{
+		return FIXED2DBL(planes[pos].xform.yscale);
 	}
 
 	void SetAngle(int pos, angle_t o)
@@ -724,6 +816,18 @@ struct sector_t
 		}
 	}
 
+	DAngle GetAngleF(int pos, bool addbase = true) const
+	{
+		if (!addbase)
+		{
+			return ANGLE2DBL(planes[pos].xform.angle);
+		}
+		else
+		{
+			return ANGLE2DBL(planes[pos].xform.angle + planes[pos].xform.base_angle);
+		}
+	}
+
 	void SetBase(int pos, fixed_t y, angle_t o)
 	{
 		planes[pos].xform.base_yoffs = y;
@@ -735,12 +839,22 @@ struct sector_t
 		planes[pos].alpha = o;
 	}
 
+	void SetAlpha(int pos, double o)
+	{
+		planes[pos].alpha = FLOAT2FIXED(o);
+	}
+
 	fixed_t GetAlpha(int pos) const
 	{
 		return planes[pos].alpha;
 	}
 
-	int GetFlags(int pos) const 
+	double GetAlphaF(int pos) const
+	{
+		return FIXED2DBL(planes[pos].alpha);
+	}
+
+	int GetFlags(int pos) const
 	{
 		return planes[pos].Flags;
 	}
@@ -888,12 +1002,12 @@ struct sector_t
 	}
 
 	// These may only be called if the portal has been validated
-	fixedvec2 FloorDisplacement()
+	DVector2 FloorDisplacement()
 	{
 		return Displacements.getOffset(PortalGroup, SkyBoxes[sector_t::floor]->Sector->PortalGroup);
 	}
 
-	fixedvec2 CeilingDisplacement()
+	DVector2 CeilingDisplacement()
 	{
 		return Displacements.getOffset(PortalGroup, SkyBoxes[sector_t::ceiling]->Sector->PortalGroup);
 	}
@@ -906,35 +1020,38 @@ struct sector_t
 	bool PlaneMoving(int pos);
 
 	// Portal-aware height calculation
-	fixed_t _f_HighestCeilingAt(fixed_t x, fixed_t y, sector_t **resultsec = NULL);
-	fixed_t _f_LowestFloorAt(fixed_t x, fixed_t y, sector_t **resultsec = NULL);
+	double HighestCeilingAt(const DVector2 &a, sector_t **resultsec = NULL);
+	double LowestFloorAt(const DVector2 &a, sector_t **resultsec = NULL);
 
-	fixed_t _f_HighestCeilingAt(AActor *a, sector_t **resultsec = NULL)
-	{
-		return _f_HighestCeilingAt(a->_f_X(), a->_f_Y(), resultsec);
-	}
 
 	double HighestCeilingAt(AActor *a, sector_t **resultsec = NULL)
 	{
-		return FIXED2DBL(_f_HighestCeilingAt(a->_f_X(), a->_f_Y(), resultsec));
-	}
-
-	fixed_t _f_LowestFloorAt(AActor *a, sector_t **resultsec = NULL)
-	{
-		return _f_LowestFloorAt(a->_f_X(), a->_f_Y(), resultsec);
+		return HighestCeilingAt(a->Pos(), resultsec);
 	}
 
 	double LowestFloorAt(AActor *a, sector_t **resultsec = NULL)
 	{
-		return FIXED2DBL(_f_LowestFloorAt(a->_f_X(), a->_f_Y(), resultsec));
+		return LowestFloorAt(a->Pos(), resultsec);
 	}
 
 	fixed_t NextHighestCeilingAt(fixed_t x, fixed_t y, fixed_t bottomz, fixed_t topz, int flags = 0, sector_t **resultsec = NULL, F3DFloor **resultffloor = NULL);
 	fixed_t NextLowestFloorAt(fixed_t x, fixed_t y, fixed_t z, int flags = 0, fixed_t steph = 0, sector_t **resultsec = NULL, F3DFloor **resultffloor = NULL);
 
+	inline double NextHighestCeilingAt(double x, double y, double bottomz, double topz, int flags = 0, sector_t **resultsec = NULL, F3DFloor **resultffloor = NULL)
+	{
+		return FIXED2DBL(NextHighestCeilingAt(FLOAT2FIXED(x), FLOAT2FIXED(y), FLOAT2FIXED(bottomz), FLOAT2FIXED(topz), flags, resultsec, resultffloor));
+	}
+
+	double NextLowestFloorAt(double x, double y, double z, int flags = 0, double steph = 0, sector_t **resultsec = NULL, F3DFloor **resultffloor = NULL)
+	{
+		return FIXED2DBL(NextLowestFloorAt(FLOAT2FIXED(x), FLOAT2FIXED(y), FLOAT2FIXED(z), flags, FLOAT2FIXED(steph), resultsec, resultffloor));
+	}
+
 	// Member variables
-	fixed_t		CenterFloor () const { return floorplane.ZatPoint (centerspot); }
-	fixed_t		CenterCeiling () const { return ceilingplane.ZatPoint (centerspot); }
+	fixed_t		CenterFloor () const { return floorplane.ZatPoint (_f_centerspot()); }
+	fixed_t		CenterCeiling () const { return ceilingplane.ZatPoint (_f_centerspot()); }
+	double		CenterFloorF() const { return floorplane.ZatPoint(centerspot); }
+	double		CenterCeilingF() const { return ceilingplane.ZatPoint(centerspot); }
 
 	// [RH] store floor and ceiling planes instead of heights
 	secplane_t	floorplane, ceilingplane;
@@ -952,9 +1069,14 @@ struct sector_t
 	int			sky;
 	FNameNoInit	SeqName;		// Sound sequence name. Setting seqType non-negative will override this.
 
-	fixedvec2	centerspot;		// origin for any sounds played by the sector
+	DVector2	centerspot;		// origin for any sounds played by the sector
 	int 		validcount;		// if == validcount, already checked
 	AActor* 	thinglist;		// list of mobjs in sector
+
+	fixedvec2 _f_centerspot() const
+	{
+		return{ FLOAT2FIXED(centerspot.X), FLOAT2FIXED(centerspot.Y) };
+	}
 
 	// killough 8/28/98: friction is a sector property, not an mobj property.
 	// these fields used to be in AActor, but presented performance problems
@@ -1141,9 +1263,17 @@ struct side_t
 	{
 		return textures[which].xoffset;
 	}
+	double GetTextureXOffsetF(int which) const
+	{
+		return FIXED2DBL(textures[which].xoffset);
+	}
 	void AddTextureXOffset(int which, fixed_t delta)
 	{
 		textures[which].xoffset += delta;
+	}
+	void AddTextureXOffset(int which, double delta)
+	{
+		textures[which].xoffset += FLOAT2FIXED(delta);
 	}
 
 	void SetTextureYOffset(int which, fixed_t offset)
@@ -1160,9 +1290,17 @@ struct side_t
 	{
 		return textures[which].yoffset;
 	}
+	double GetTextureYOffsetF(int which) const
+	{
+		return FIXED2DBL(textures[which].yoffset);
+	}
 	void AddTextureYOffset(int which, fixed_t delta)
 	{
 		textures[which].yoffset += delta;
+	}
+	void AddTextureYOffset(int which, double delta)
+	{
+		textures[which].yoffset += FLOAT2FIXED(delta);
 	}
 
 	void SetTextureXScale(int which, fixed_t scale)
@@ -1194,6 +1332,10 @@ struct side_t
 	fixed_t GetTextureYScale(int which) const
 	{
 		return textures[which].yscale;
+	}
+	double GetTextureYScaleF(int which) const
+	{
+		return FIXED2DBL(textures[which].yscale);
 	}
 	void MultiplyTextureYScale(int which, fixed_t delta)
 	{
@@ -1235,12 +1377,12 @@ struct line_t
 
 	DVector2 V1() const
 	{
-		return{ FIXED2DBL(v1->x), FIXED2DBL(v1->y) };
+		return v1->fPos();
 	}
 
 	DVector2 V2() const
 	{
-		return{ FIXED2DBL(v2->x), FIXED2DBL(v2->y) };
+		return v1->fPos();
 	}
 
 	DVector2 Delta() const
@@ -1445,36 +1587,65 @@ inline sector_t *P_PointInSector(const DVector2 &pos)
 	return P_PointInSubsector(FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y))->sector;
 }
 
+inline sector_t *P_PointInSector(double X, double Y)
+{
+	return P_PointInSubsector(FLOAT2FIXED(X), FLOAT2FIXED(Y))->sector;
+}
+
 inline fixedvec3 AActor::_f_PosRelative(int portalgroup) const
 {
-	return __pos + Displacements.getOffset(Sector->PortalGroup, portalgroup);
+	return _f_Pos() + Displacements._f_getOffset(Sector->PortalGroup, portalgroup);
 }
 
 inline fixedvec3 AActor::_f_PosRelative(const AActor *other) const
 {
-	return __pos + Displacements.getOffset(Sector->PortalGroup, other->Sector->PortalGroup);
+	return _f_Pos() + Displacements._f_getOffset(Sector->PortalGroup, other->Sector->PortalGroup);
 }
 
 inline fixedvec3 AActor::_f_PosRelative(sector_t *sec) const
 {
-	return __pos + Displacements.getOffset(Sector->PortalGroup, sec->PortalGroup);
+	return _f_Pos() + Displacements._f_getOffset(Sector->PortalGroup, sec->PortalGroup);
 }
 
 inline fixedvec3 AActor::_f_PosRelative(line_t *line) const
 {
-	return __pos + Displacements.getOffset(Sector->PortalGroup, line->frontsector->PortalGroup);
+	return _f_Pos() + Displacements._f_getOffset(Sector->PortalGroup, line->frontsector->PortalGroup);
 }
 
 inline fixedvec3 _f_PosRelative(const fixedvec3 &pos, line_t *line, sector_t *refsec = NULL)
 {
+	return pos + Displacements._f_getOffset(refsec->PortalGroup, line->frontsector->PortalGroup);
+}
+
+inline DVector3 AActor::PosRelative(int portalgroup) const
+{
+	return Pos() + Displacements.getOffset(Sector->PortalGroup, portalgroup);
+}
+
+inline DVector3 AActor::PosRelative(const AActor *other) const
+{
+	return Pos() + Displacements.getOffset(Sector->PortalGroup, other->Sector->PortalGroup);
+}
+
+inline DVector3 AActor::PosRelative(sector_t *sec) const
+{
+	return Pos() + Displacements.getOffset(Sector->PortalGroup, sec->PortalGroup);
+}
+
+inline DVector3 AActor::PosRelative(line_t *line) const
+{
+	return Pos() + Displacements.getOffset(Sector->PortalGroup, line->frontsector->PortalGroup);
+}
+
+inline DVector3 PosRelative(const DVector3 &pos, line_t *line, sector_t *refsec = NULL)
+{
 	return pos + Displacements.getOffset(refsec->PortalGroup, line->frontsector->PortalGroup);
 }
 
+
 inline void AActor::ClearInterpolation()
 {
-	PrevX = _f_X();
-	PrevY = _f_Y();
-	PrevZ = _f_Z();
+	Prev = Pos();
 	PrevAngles = Angles;
 	if (Sector) PrevPortalGroup = Sector->PortalGroup;
 	else PrevPortalGroup = 0;

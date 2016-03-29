@@ -957,7 +957,7 @@ static void R_DrawSky (visplane_t *pl)
 	rw_pic = frontskytex;
 	rw_offset = 0;
 
-	frontyScale = rw_pic->yScale;
+	frontyScale = FLOAT2FIXED(rw_pic->Scale.Y);
 	dc_texturemid = MulScale16 (skymid, frontyScale);
 
 	if (1 << frontskytex->HeightBits == frontskytex->GetHeight())
@@ -1003,6 +1003,7 @@ static void R_DrawSkyStriped (visplane_t *pl)
 	yl = 0;
 	yh = (short)MulScale32 ((frontskytex->GetHeight() << FRACBITS) - topfrac, frontyScale);
 	dc_texturemid = topfrac - iscale * (1-centery);
+	fixed_t yScale = FLOAT2FIXED(rw_pic->Scale.Y);
 
 	while (yl < viewheight)
 	{
@@ -1015,7 +1016,7 @@ static void R_DrawSkyStriped (visplane_t *pl)
 		{
 			lastskycol[x] = 0xffffffff;
 		}
-		wallscan (pl->left, pl->right, top, bot, swall, lwall, rw_pic->yScale,
+		wallscan (pl->left, pl->right, top, bot, swall, lwall, yScale,
 			backskytex == NULL ? R_GetOneSkyColumn : R_GetTwoSkyColumns);
 		yl = yh;
 		yh += drawheight;
@@ -1106,8 +1107,6 @@ void R_DrawHeightPlanes(fixed_t height)
 
 void R_DrawSinglePlane (visplane_t *pl, fixed_t alpha, bool additive, bool masked)
 {
-//	pl->_f_angle() = pa<<ANGLETOFINESHIFT;
-
 	if (pl->left >= pl->right)
 		return;
 
@@ -1138,8 +1137,8 @@ void R_DrawSinglePlane (visplane_t *pl, fixed_t alpha, bool additive, bool maske
 			masked = false;
 		}
 		R_SetupSpanBits(tex);
-		pl->xscale = MulScale16 (pl->xscale, tex->xScale);
-		pl->yscale = MulScale16 (pl->yscale, tex->yScale);
+		pl->xscale = fixed_t(pl->xscale * tex->Scale.X);
+		pl->yscale = fixed_t(pl->yscale * tex->Scale.Y);
 		ds_source = tex->GetPixels ();
 
 		basecolormap = pl->colormap;
@@ -1239,10 +1238,10 @@ void R_DrawSkyBoxes ()
 			extralight = 0;
 			R_SetVisibility (sky->args[0] * 0.25f);
 
-			fixedvec3 viewpos = sky->InterpolatedPosition(r_TicFrac);
-			viewx = viewpos.x;
-			viewy = viewpos.y;
-			viewz = viewpos.z;
+			DVector3 viewpos = sky->InterpolatedPosition(r_TicFracF);
+			viewx = FLOAT2FIXED(viewpos.X);
+			viewy = FLOAT2FIXED(viewpos.Y);
+			viewz = FLOAT2FIXED(viewpos.Z);
 			viewangle = savedangle + (sky->PrevAngles.Yaw + (sky->Angles.Yaw * r_TicFracF) - sky->PrevAngles.Yaw).BAMs();
 
 			R_CopyStackedViewParameters();
@@ -1251,8 +1250,8 @@ void R_DrawSkyBoxes ()
 		{
 			extralight = pl->extralight;
 			R_SetVisibility (pl->visibility);
-			viewx = pl->viewx - sky->Mate->_f_X() + sky->_f_X();
-			viewy = pl->viewy - sky->Mate->_f_Y() + sky->_f_Y();
+			viewx = pl->viewx - FLOAT2FIXED(sky->Mate->X() + sky->X());
+			viewy = pl->viewy - FLOAT2FIXED(sky->Mate->Y() + sky->Y());
 			viewz = pl->viewz;
 			viewangle = pl->viewangle;
 		}
@@ -1478,7 +1477,8 @@ void R_DrawSkyPlane (visplane_t *pl)
 			// allow old sky textures to be used.
 			skyflip = l->args[2] ? 0u : ~0u;
 
-			frontcyl = MAX(frontskytex->GetWidth(), frontskytex->xScale >> (16 - 10));
+			int frontxscale = int(frontskytex->Scale.X * 1024);
+			frontcyl = MAX(frontskytex->GetWidth(), frontxscale);
 			if (skystretch)
 			{
 				skymid = Scale(skymid, frontskytex->GetScaledHeight(), SKYSTRETCH_HEIGHT);

@@ -73,6 +73,30 @@ fixed_t P_AproxDistance (fixed_t dx, fixed_t dy)
 //
 //==========================================================================
 
+double P_InterceptVector(const divline_t *v2, const divline_t *v1)
+{
+	double num;
+	double den;
+
+	double v1x = v1->x;
+	double v1y = v1->y;
+	double v1dx = v1->dx;
+	double v1dy = v1->dy;
+	double v2x = v2->x;
+	double v2y = v2->y;
+	double v2dx = v2->dx;
+	double v2dy = v2->dy;
+
+	den = v1dy*v2dx - v1dx*v2dy;
+
+	if (den == 0)
+		return 0;		// parallel
+
+	num = (v1x - v2x)*v1dy + (v2y - v1y)*v1dx;
+	return num / den;
+}
+
+
 fixed_t P_InterceptVector (const fdivline_t *v2, const fdivline_t *v1)
 {
 #if 0	// [RH] Use 64 bit ints, so long divlines don't overflow
@@ -80,7 +104,7 @@ fixed_t P_InterceptVector (const fdivline_t *v2, const fdivline_t *v1)
 	SQWORD den = ( ((SQWORD)v1->dy*v2->dx - (SQWORD)v1->dx*v2->dy) >> FRACBITS );
 	if (den == 0)
 		return 0;		// parallel
-	SQWORD num = ((SQWORD)(v1->x - v2->x)*v1->dy + (SQWORD)(v2->y - v1->y)*v1->dx);
+	SQWORD num = ((SQWORD)(v1->fixX() - v2->fixX())*v1->dy + (SQWORD)(v2->fixY() - v1->fixY())*v1->dx);
 	return (fixed_t)(num / den);
 
 #elif 0	// This is the original Doom version
@@ -96,8 +120,8 @@ fixed_t P_InterceptVector (const fdivline_t *v2, const fdivline_t *v1)
 	//	I_Error ("P_InterceptVector: parallel");
 	
 	num =
-		FixedMul ( (v1->x - v2->x)>>8 ,v1->dy )
-		+FixedMul ( (v2->y - v1->y)>>8, v1->dx );
+		FixedMul ( (v1->fixX() - v2->fixX())>>8 ,v1->dy )
+		+FixedMul ( (v2->fixY() - v1->fixY())>>8, v1->dx );
 
 	frac = FixedDiv (num , den);
 
@@ -144,13 +168,12 @@ fixed_t P_InterceptVector (const fdivline_t *v2, const fdivline_t *v1)
 //
 //==========================================================================
 
-void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef, 
-					fixed_t x, fixed_t y, fixed_t refx, fixed_t refy, int flags)
+void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef, const DVector2 &pos, const DVector2 *ref, int flags)
 {
 	if (!(flags & FFCF_ONLY3DFLOORS))
 	{
 		sector_t *front, *back;
-		fixed_t fc = 0, ff = 0, bc = 0, bf = 0;
+		double fc = 0, ff = 0, bc = 0, bf = 0;
 
 		if (linedef->backsector == NULL)
 		{
@@ -164,16 +187,16 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef,
 
 		if (!(flags & FFCF_NOPORTALS) && (linedef->flags & ML_PORTALCONNECT))
 		{
-			if (!linedef->frontsector->PortalBlocksMovement(sector_t::ceiling)) fc = FIXED_MAX;
-			if (!linedef->backsector->PortalBlocksMovement(sector_t::ceiling)) bc = FIXED_MAX;
-			if (!linedef->frontsector->PortalBlocksMovement(sector_t::floor)) ff = FIXED_MIN;
-			if (!linedef->backsector->PortalBlocksMovement(sector_t::floor)) bf = FIXED_MIN;
+			if (!linedef->frontsector->PortalBlocksMovement(sector_t::ceiling)) fc = LINEOPEN_MAX;
+			if (!linedef->backsector->PortalBlocksMovement(sector_t::ceiling)) bc = LINEOPEN_MAX;
+			if (!linedef->frontsector->PortalBlocksMovement(sector_t::floor)) ff = LINEOPEN_MIN;
+			if (!linedef->backsector->PortalBlocksMovement(sector_t::floor)) bf = LINEOPEN_MIN;
 		}
 
-		if (fc == 0) fc = front->ceilingplane.ZatPoint(x, y);
-		if (bc == 0) bc = back->ceilingplane.ZatPoint(x, y);
-		if (ff == 0) ff = front->floorplane.ZatPoint(x, y);
-		if (bf == 0) bf = back->floorplane.ZatPoint(x, y);
+		if (fc == 0) fc = front->ceilingplane.ZatPoint(pos);
+		if (bc == 0) bc = back->ceilingplane.ZatPoint(pos);
+		if (ff == 0) ff = front->floorplane.ZatPoint(pos);
+		if (bf == 0) bf = back->floorplane.ZatPoint(pos);
 
 
 		/*Printf ("]]]]]] %d %d\n", ff, bf);*/
@@ -189,7 +212,7 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef,
 		// that imprecisions in the plane equation mean there is a
 		// good chance that even if a slope and non-slope look like
 		// they line up, they won't be perfectly aligned.
-		if (ff == FIXED_MIN || bf == FIXED_MIN || (refx == FIXED_MIN || abs (ff-bf) > 256))
+		if (ff == -FLT_MIN || bf == -FLT_MIN || ref == NULL || fabs (ff-bf) > 1./256)
 		{
 			usefront = (ff > bf);
 		}
@@ -200,7 +223,7 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef,
 			else if ((back->floorplane.a | front->floorplane.b) == 0)
 				usefront = false;
 			else
-				usefront = !P_PointOnLineSide (refx, refy, linedef);
+				usefront = !P_PointOnLineSide (*ref, linedef);
 		}
 
 		if (usefront)
@@ -209,12 +232,12 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef,
 			open.bottomsec = front;
 			open.floorpic = front->GetTexture(sector_t::floor);
 			open.floorterrain = front->GetTerrain(sector_t::floor);
-			if (bf != FIXED_MIN) open.lowfloor = bf;
+			if (bf != -FLT_MIN) open.lowfloor = bf;
 			else if (!(flags & FFCF_NODROPOFF))
 			{
 				// We must check through the portal for the actual dropoff.
 				// If there's no lines in the lower sections we'd never get a usable value otherwise.
-				open.lowfloor = back->NextLowestFloorAt(refx, refy, FLOAT2FIXED(back->SkyBoxes[sector_t::floor]->specialf1)-1);
+				open.lowfloor = back->NextLowestFloorAt(pos.X, pos.Y, back->SkyBoxes[sector_t::floor]->specialf1-1);
 			}
 		}
 		else
@@ -223,12 +246,12 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef,
 			open.bottomsec = back;
 			open.floorpic = back->GetTexture(sector_t::floor);
 			open.floorterrain = back->GetTerrain(sector_t::floor);
-			if (ff != FIXED_MIN) open.lowfloor = ff;
+			if (ff != -FLT_MIN) open.lowfloor = ff;
 			else if (!(flags & FFCF_NODROPOFF))
 			{
 				// We must check through the portal for the actual dropoff.
 				// If there's no lines in the lower sections we'd never get a usable value otherwise.
-				open.lowfloor = front->NextLowestFloorAt(refx, refy, FLOAT2FIXED(front->SkyBoxes[sector_t::floor]->specialf1) - 1);
+				open.lowfloor = front->NextLowestFloorAt(pos.X, pos.Y, front->SkyBoxes[sector_t::floor]->specialf1 - 1);
 			}
 		}
 		open.frontfloorplane = front->floorplane;
@@ -238,20 +261,20 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef,
 	{ // Dummy stuff to have some sort of opening for the 3D checks to modify
 		open.topsec = NULL;
 		open.ceilingpic.SetInvalid();
-		open.top = FIXED_MAX;
+		open.top = LINEOPEN_MAX;
 		open.bottomsec = NULL;
 		open.floorpic.SetInvalid();
 		open.floorterrain = -1;
-		open.bottom = FIXED_MIN;
-		open.lowfloor = FIXED_MAX;
-		open.frontfloorplane.SetAtHeight(FIXED_MIN, sector_t::floor);
-		open.backfloorplane.SetAtHeight(FIXED_MIN, sector_t::floor);
+		open.bottom = LINEOPEN_MIN;
+		open.lowfloor = LINEOPEN_MAX;
+		open.frontfloorplane.SetAtHeight(LINEOPEN_MIN, sector_t::floor);
+		open.backfloorplane.SetAtHeight(LINEOPEN_MIN, sector_t::floor);
 	}
 
 	// Check 3D floors
 	if (actor != NULL)
 	{
-		P_LineOpening_XFloors(open, actor, linedef, x, y, refx, refy, !!(flags & FFCF_3DRESTRICT));
+		P_LineOpening_XFloors(open, actor, linedef, pos.X, pos.Y, !!(flags & FFCF_3DRESTRICT));
 	}
 
 	if (actor != NULL && linedef->frontsector != NULL && linedef->backsector != NULL && 
@@ -265,7 +288,7 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef,
 	}
 
 	// avoid overflows in the opening.
-	open.range = (fixed_t)MIN<SQWORD>((SQWORD)open.top - open.bottom, FIXED_MAX);
+	open.range = clamp(open.top - open.bottom, LINEOPEN_MIN, LINEOPEN_MAX);
 }
 
 
@@ -446,7 +469,7 @@ void AActor::LinkToWorld(bool spawningmapthing, sector_t *sector)
 	{
 		if (!spawningmapthing || numgamenodes == 0)
 		{
-			sector = P_PointInSector(_f_X(), _f_Y());
+			sector = P_PointInSector(Pos());
 		}
 		else
 		{
@@ -482,7 +505,7 @@ void AActor::LinkToWorld(bool spawningmapthing, sector_t *sector)
 		// When a node is deleted, its sector links (the links starting
 		// at sector_t->touching_thinglist) are broken. When a node is
 		// added, new sector links are created.
-		P_CreateSecNodeList(this, _f_X(), _f_Y());
+		P_CreateSecNodeList(this);
 		touching_sectorlist = sector_list;	// Attach to thing
 		sector_list = NULL;		// clear for next time
 	}
@@ -815,6 +838,8 @@ bool FMultiBlockLinesIterator::Next(FMultiBlockLinesIterator::CheckResult *item)
 		item->line = line;
 		item->position.x = offset.x;
 		item->position.y = offset.y;
+		// same as above in floating point. This is here so that this stuff can be converted piece by piece.
+		item->Position = { FIXED2DBL(item->position.x), FIXED2DBL(item->position.y), FIXED2DBL(item->position.z) };
 		item->portalflags = portalflags;
 		return true;
 	}
@@ -870,7 +895,7 @@ bool FMultiBlockLinesIterator::Next(FMultiBlockLinesIterator::CheckResult *item)
 
 void FMultiBlockLinesIterator::startIteratorForGroup(int group)
 {
-	offset = Displacements.getOffset(basegroup, group);
+	offset = Displacements._f_getOffset(basegroup, group);
 	offset.x += checkpoint.x;
 	offset.y += checkpoint.y;
 	cursector = group == startsector->PortalGroup ? startsector : P_PointInSector(offset.x, offset.y);
@@ -1104,7 +1129,7 @@ bool FMultiBlockThingsIterator::Next(FMultiBlockThingsIterator::CheckResult *ite
 	if (thing != NULL)
 	{
 		item->thing = thing;
-		item->position = checkpoint + Displacements.getOffset(basegroup, thing->Sector->PortalGroup);
+		item->position = checkpoint + Displacements._f_getOffset(basegroup, thing->Sector->PortalGroup);
 		item->portalflags = portalflags;
 
 		// same as above in floating point. This is here so that this stuff can be converted piece by piece.
@@ -1146,7 +1171,7 @@ bool FMultiBlockThingsIterator::Next(FMultiBlockThingsIterator::CheckResult *ite
 
 void FMultiBlockThingsIterator::startIteratorForGroup(int group)
 {
-	fixedvec2 offset = Displacements.getOffset(basegroup, group);
+	fixedvec2 offset = Displacements._f_getOffset(basegroup, group);
 	offset.x += checkpoint.x;
 	offset.y += checkpoint.y;
 	bbox.setBox(offset.x, offset.y, checkpoint.z);
@@ -1205,8 +1230,8 @@ void FPathTraverse::AddLineIntercepts(int bx, int by)
 			 || trace.dx < -FRACUNIT*16
 			 || trace.dy < -FRACUNIT*16)
 		{
-			s1 = P_PointOnDivlineSide (ld->v1->x, ld->v1->y, &trace);
-			s2 = P_PointOnDivlineSide (ld->v2->x, ld->v2->y, &trace);
+			s1 = P_PointOnDivlineSide (ld->v1->fixX(), ld->v1->fixY(), &trace);
+			s2 = P_PointOnDivlineSide (ld->v2->fixX(), ld->v2->fixY(), &trace);
 		}
 		else
 		{
@@ -1426,6 +1451,7 @@ intercept_t *FPathTraverse::Next()
 		{
 			dist = scan->frac;
 			in = scan;
+			in->Frac = FIXED2FLOAT(in->frac);
 		}
 	}
 	
@@ -1659,6 +1685,10 @@ void FPathTraverse::init (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int fl
 			break;
 		}
 	}
+	ftrace.dx = FIXED2DBL(trace.dx);
+	ftrace.dy = FIXED2DBL(trace.dy);
+	ftrace.x = FIXED2DBL(trace.x);
+	ftrace.y = FIXED2DBL(trace.y);
 }
 
 //===========================================================================
@@ -1667,7 +1697,7 @@ void FPathTraverse::init (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int fl
 //
 //===========================================================================
 
-int FPathTraverse::PortalRelocate(intercept_t *in, int flags, fixedvec3 *optpos)
+int FPathTraverse::PortalRelocate(intercept_t *in, int flags, DVector3 *optpos)
 {
 	if (!in->isaline || !in->d.line->isLinePortal()) return false;
 	if (P_PointOnLineSidePrecise(trace.x, trace.y, in->d.line) == 1) return false;
@@ -1681,8 +1711,8 @@ int FPathTraverse::PortalRelocate(intercept_t *in, int flags, fixedvec3 *optpos)
 	P_TranslatePortalXY(in->d.line, endx, endy);
 	if (optpos != NULL)
 	{
-		P_TranslatePortalXY(in->d.line, optpos->x, optpos->y);
-		P_TranslatePortalZ(in->d.line, optpos->z);
+		P_TranslatePortalXY(in->d.line, optpos->X, optpos->Y);
+		P_TranslatePortalZ(in->d.line, optpos->Z);
 	}
 	line_t *saved = in->d.line;	// this gets overwriitten by the init call.
 	intercepts.Resize(intercept_index);
@@ -1909,21 +1939,21 @@ int P_VanillaPointOnLineSide(fixed_t x, fixed_t y, const line_t* line)
 
 	if (!line->dx)
 	{
-		if (x <= line->v1->x)
+		if (x <= line->v1->fixX())
 			return line->dy > 0;
 
 		return line->dy < 0;
 	}
 	if (!line->dy)
 	{
-		if (y <= line->v1->y)
+		if (y <= line->v1->fixY())
 			return line->dx < 0;
 
 		return line->dx > 0;
 	}
 
-	dx = (x - line->v1->x);
-	dy = (y - line->v1->y);
+	dx = (x - line->v1->fixX());
+	dy = (y - line->v1->fixY());
 
 	left = FixedMul ( line->dy>>FRACBITS , dx );
 	right = FixedMul ( dy , line->dx>>FRACBITS );

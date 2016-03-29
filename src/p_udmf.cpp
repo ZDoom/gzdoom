@@ -1676,21 +1676,22 @@ public:
 
 	void ParseVertex(vertex_t *vt, vertexdata_t *vd)
 	{
-		vt->x = vt->y = 0;
+		vt->set(0, 0);
 		vd->zCeiling = vd->zFloor = vd->flags = 0;
 
 		sc.MustGetToken('{');
+		fixed_t x, y;
 		while (!sc.CheckToken('}'))
 		{
 			FName key = ParseKey();
 			switch (key)
 			{
 			case NAME_X:
-				vt->x = CheckFixed(key);
+				x = CheckFixed(key);
 				break;
 
 			case NAME_Y:
-				vt->y = CheckFixed(key);
+				y = CheckFixed(key);
 				break;
 
 			case NAME_ZCeiling:
@@ -1707,6 +1708,7 @@ public:
 				break;
 			}
 		}
+		vt->set(x, y);
 	}
 
 	//===========================================================================
@@ -1729,7 +1731,7 @@ public:
 				I_Error ("Line %d has invalid vertices: %zd and/or %zd.\nThe map only contains %d vertices.", i+skipped, v1i, v2i, numvertexes);
 			}
 			else if (v1i == v2i ||
-				(vertexes[v1i].x == vertexes[v2i].x && vertexes[v1i].y == vertexes[v2i].y))
+				(vertexes[v1i].fixX() == vertexes[v2i].fixX() && vertexes[v1i].fixY() == vertexes[v2i].fixY()))
 			{
 				Printf ("Removing 0-length line %d\n", i+skipped);
 				ParsedLines.Delete(i);

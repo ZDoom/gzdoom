@@ -32,6 +32,32 @@
 class FScanner;
 struct level_info_t;
 
+struct FThinkerCollection
+{
+	int RefNum;
+	DThinker *Obj;
+};
+
+enum class EScroll : int
+{
+		sc_side,
+		sc_floor,
+		sc_ceiling,
+		sc_carry,
+		sc_carry_ceiling,	// killough 4/11/98: carry objects hanging on ceilings
+};
+
+enum EScrollPos : int
+{
+	scw_top = 1,
+	scw_mid = 2,
+	scw_bottom = 4,
+	scw_all = 7,
+};
+
+void P_CreateScroller(EScroll type, double dx, double dy, int control, int affectee, int accel, EScrollPos scrollpos = EScrollPos::scw_all);
+
+
 //jff 2/23/98 identify the special classes that can share sectors
 
 typedef enum
@@ -41,103 +67,10 @@ typedef enum
 	lighting_special,
 } special_e;
 
-// killough 3/7/98: Add generalized scroll effects
-
-class DScroller : public DThinker
-{
-	DECLARE_CLASS (DScroller, DThinker)
-	HAS_OBJECT_POINTERS
-public:
-	enum EScrollType
-	{
-		sc_side,
-		sc_floor,
-		sc_ceiling,
-		sc_carry,
-		sc_carry_ceiling,	// killough 4/11/98: carry objects hanging on ceilings
-	};
-	enum EScrollPos
-	{
-		scw_top=1,
-		scw_mid=2,
-		scw_bottom=4,
-		scw_all=7,
-	};
-	
-	DScroller (EScrollType type, fixed_t dx, fixed_t dy, int control, int affectee, int accel, int scrollpos = scw_all);
-	DScroller (fixed_t dx, fixed_t dy, const line_t *l, int control, int accel, int scrollpos = scw_all);
-	void Destroy();
-
-	void Serialize (FArchive &arc);
-	void Tick ();
-
-	bool AffectsWall (int wallnum) const { return m_Type == sc_side && m_Affectee == wallnum; }
-	int GetWallNum () const { return m_Type == sc_side ? m_Affectee : -1; }
-	void SetRate (fixed_t dx, fixed_t dy) { m_dx = dx; m_dy = dy; }
-	bool IsType (EScrollType type) const { return type == m_Type; }
-	int GetAffectee () const { return m_Affectee; }
-	int GetScrollParts() const { return m_Parts; }
-
-protected:
-	EScrollType m_Type;		// Type of scroll effect
-	fixed_t m_dx, m_dy;		// (dx,dy) scroll speeds
-	int m_Affectee;			// Number of affected sidedef, sector, tag, or whatever
-	int m_Control;			// Control sector (-1 if none) used to control scrolling
-	fixed_t m_LastHeight;	// Last known height of control sector
-	fixed_t m_vdx, m_vdy;	// Accumulated velocity if accelerative
-	int m_Accel;			// Whether it's accelerative
-	int m_Parts;			// Which parts of a sidedef are being scrolled?
-	TObjPtr<DInterpolation> m_Interpolations[3];
-
-private:
-	DScroller ();
-};
-
 // Factor to scale scrolling effect into mobj-carrying properties = 3/32.
 // (This is so scrolling floors and objects on them can move at same speed.)
 enum { _f_CARRYFACTOR = (3*FRACUNIT >> 5) };
 const double CARRYFACTOR = 3 / 32.;
-
-// phares 3/20/98: added new model of Pushers for push/pull effects
-
-class DPusher : public DThinker
-{
-	DECLARE_CLASS (DPusher, DThinker)
-	HAS_OBJECT_POINTERS
-public:
-	enum EPusher
-	{
-		p_push,
-		p_pull,
-		p_wind,
-		p_current
-	};
-
-	DPusher ();
-	DPusher (EPusher type, line_t *l, int magnitude, int angle, AActor *source, int affectee);
-	void Serialize (FArchive &arc);
-	int CheckForSectorMatch (EPusher type, int tag);
-	void ChangeValues (int magnitude, int angle)
-	{
-		DAngle ang = angle * (360. / 256.);
-		m_PushVec = ang.ToVector(magnitude);
-		m_Magnitude = magnitude;
-	}
-
-	void Tick ();
-
-protected:
-	EPusher m_Type;
-	TObjPtr<AActor> m_Source;// Point source if point pusher
-	DVector2 m_PushVec;
-	double m_Magnitude;		// Vector strength for point pusher
-	double m_Radius;		// Effective _f_radius() for point pusher
-	int m_Affectee;			// Number of affected sector
-
-	friend bool PIT_PushThing (AActor *thing);
-};
-
-bool PIT_PushThing (AActor *thing);
 
 // Define values for map objects
 #define MO_TELEPORTMAN			14
@@ -162,8 +95,8 @@ void	P_SpawnSpecials (void);
 void	P_UpdateSpecials (void);
 
 // when needed
-bool	P_ActivateLine (line_t *ld, AActor *mo, int side, int activationType, fixedvec3 *optpos = NULL);
-bool	P_TestActivateLine (line_t *ld, AActor *mo, int side, int activationType, fixedvec3 *optpos = NULL);
+bool	P_ActivateLine (line_t *ld, AActor *mo, int side, int activationType, DVector3 *optpos = NULL);
+bool	P_TestActivateLine (line_t *ld, AActor *mo, int side, int activationType, DVector3 *optpos = NULL);
 bool	P_PredictLine (line_t *ld, AActor *mo, int side, int activationType);
 
 void 	P_PlayerInSpecialSector (player_t *player, sector_t * sector=NULL);
@@ -365,7 +298,7 @@ void	EV_StartLightStrobing (int tag, int upper, int lower, int utics, int ltics)
 void	EV_StartLightStrobing (int tag, int utics, int ltics);
 void	EV_TurnTagLightsOff (int tag);
 void	EV_LightTurnOn (int tag, int bright);
-void	EV_LightTurnOnPartway (int tag, fixed_t frac);	// killough 10/98
+void	EV_LightTurnOnPartway (int tag, double frac);	// killough 10/98
 void	EV_LightChange (int tag, int value);
 void	EV_StopLightEffect (int tag);
 
@@ -382,7 +315,7 @@ void	EV_StartLightFading (int tag, int value, int tics);
 #define BUTTONTIME TICRATE		// 1 second, in ticks. 
 
 bool	P_ChangeSwitchTexture (side_t *side, int useAgain, BYTE special, bool *quest=NULL);
-bool	P_CheckSwitchRange(AActor *user, line_t *line, int sideno, fixedvec3 *optpos = NULL);
+bool	P_CheckSwitchRange(AActor *user, line_t *line, int sideno, const DVector3 *optpos = NULL);
 
 //
 // P_PLATS
@@ -633,6 +566,14 @@ public:
 		genCeilingChg
 	};
 
+	enum class ECrushMode
+	{
+		crushDoom = 0,
+		crushHexen = 1,
+		crushSlowdown = 2
+	};
+
+
 	DCeiling (sector_t *sec);
 	DCeiling (sector_t *sec, fixed_t speed1, fixed_t speed2, int silent);
 
@@ -641,7 +582,7 @@ public:
 
 	static DCeiling *Create(sector_t *sec, DCeiling::ECeiling type, line_t *line, int tag,
 						fixed_t speed, fixed_t speed2, fixed_t height,
-						int crush, int silent, int change, bool hexencrush);
+						int crush, int silent, int change, ECrushMode hexencrush);
 
 protected:
 	ECeiling	m_Type;
@@ -651,7 +592,7 @@ protected:
 	fixed_t		m_Speed1;		// [RH] dnspeed of crushers
 	fixed_t		m_Speed2;		// [RH] upspeed of crushers
 	int 		m_Crush;
-	bool		m_Hexencrush;
+	ECrushMode	m_CrushMode;
 	int			m_Silent;
 	int 		m_Direction;	// 1 = up, 0 = waiting, -1 = down
 
@@ -674,7 +615,22 @@ private:
 
 bool EV_DoCeiling (DCeiling::ECeiling type, line_t *line,
 	int tag, fixed_t speed, fixed_t speed2, fixed_t height,
-	int crush, int silent, int change, bool hexencrush);
+	int crush, int silent, int change, DCeiling::ECrushMode hexencrush = DCeiling::ECrushMode::crushDoom);
+
+inline bool EV_DoCeiling(DCeiling::ECeiling type, line_t *line,
+	int tag, double speed, double speed2, fixed_t height,
+	int crush, int silent, int change, DCeiling::ECrushMode hexencrush = DCeiling::ECrushMode::crushDoom)
+{
+	return EV_DoCeiling(type, line, tag, FLOAT2FIXED(speed), FLOAT2FIXED(speed2), height, crush, silent, change, hexencrush);
+}
+
+inline bool EV_DoCeiling(DCeiling::ECeiling type, line_t *line,
+	int tag, double speed, int speed2, fixed_t height,
+	int crush, int silent, int change, DCeiling::ECrushMode hexencrush = DCeiling::ECrushMode::crushDoom)
+{
+	return EV_DoCeiling(type, line, tag, FLOAT2FIXED(speed), speed2, height, crush, silent, change, hexencrush);
+}
+
 bool EV_CeilingCrushStop (int tag);
 void P_ActivateInStasisCeiling (int tag);
 
@@ -786,6 +742,11 @@ inline bool EV_DoFloor(DFloor::EFloor floortype, line_t *line, int tag,
 	double speed, double height, int crush, int change, bool hexencrush, bool hereticlower = false)
 {
 	return EV_DoFloor(floortype, line, tag, FLOAT2FIXED(speed), FLOAT2FIXED(height), crush, change, hexencrush, hereticlower);
+}
+inline bool EV_DoFloor(DFloor::EFloor floortype, line_t *line, int tag,
+	double speed, int height, int crush, int change, bool hexencrush, bool hereticlower = false)
+{
+	return EV_DoFloor(floortype, line, tag, FLOAT2FIXED(speed), height<<FRACBITS, crush, change, hexencrush, hereticlower);
 }
 bool EV_FloorCrushStop (int tag);
 bool EV_DoDonut (int tag, line_t *line, fixed_t pillarspeed, fixed_t slimespeed);
@@ -917,11 +878,7 @@ inline void P_SpawnTeleportFog(AActor *mobj, double x, double y, double z, bool 
 }
 */
 
-bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, DAngle angle, int flags); // bool useFog, bool sourceFog, bool keepOrientation, bool haltVelocity = true, bool keepHeight = false
-inline bool P_Teleport(AActor *thing, const DVector3 &pos, DAngle angle, int flags)
-{
-	return P_Teleport(thing, FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y), FLOAT2FIXED(pos.Z), angle, flags);
-}
+inline bool P_Teleport(AActor *thing, DVector3 pos, DAngle angle, int flags);
 bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, int flags);
 bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id, INTBOOL reverse);
 bool EV_TeleportOther (int other_tid, int dest_tid, bool fog);

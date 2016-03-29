@@ -13,9 +13,7 @@ struct FCheckPosition
 {
 	// in
 	AActor			*thing;
-	fixed_t			x;
-	fixed_t			y;
-	fixed_t			z;
+	DVector3		pos;
 
 	// out
 	sector_t		*sector;
@@ -47,17 +45,17 @@ struct FCheckPosition
 		FromPMove = false;
 	}
 
-	inline fixed_t _f_ceilingz()
+	inline fixed_t _f_X()
 	{
-		return FLOAT2FIXED(ceilingz);
+		return FLOAT2FIXED(pos.X);
 	}
-	inline fixed_t _f_floorz()
+	inline fixed_t _f_Y()
 	{
-		return FLOAT2FIXED(floorz);
+		return FLOAT2FIXED(pos.Y);
 	}
-	inline fixed_t _f_dropoffz()
+	inline fixed_t _f_Z()
 	{
-		return FLOAT2FIXED(dropoffz);
+		return FLOAT2FIXED(pos.Z);
 	}
 
 };

@@ -47,8 +47,7 @@
 
 #include "b_bot.h"	//Added by MC:
 
-#include "ravenshared.h"
-#include "a_hexenglobal.h"
+#include "d_player.h"
 #include "a_sharedglobal.h"
 #include "a_pickups.h"
 #include "gi.h"
@@ -85,11 +84,11 @@ FName MeansOfDeath;
 //
 void P_TouchSpecialThing (AActor *special, AActor *toucher)
 {
-	fixed_t delta = special->_f_Z() - toucher->_f_Z();
+	double delta = special->Z() - toucher->Z();
 
 	// The pickup is at or above the toucher's feet OR
 	// The pickup is below the toucher.
-	if (delta > toucher->_f_height() || delta < MIN(-32*FRACUNIT, -special->_f_height()))
+	if (delta > toucher->Height || delta < MIN(-32., -special->Height))
 	{ // out of reach
 		return;
 	}
@@ -931,7 +930,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 {
 	DAngle ang;
 	player_t *player = NULL;
-	fixed_t thrust;
+	double thrust;
 	int temp;
 	int painchance = 0;
 	FState * woundstate = NULL;
@@ -1076,7 +1075,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 
 			if (damage > 0 && source != NULL)
 			{
-				damage = FixedMul(damage, source->DamageMultiply);
+				damage = int(damage * source->DamageMultiply);
 
 				// Handle active damage modifiers (e.g. PowerDamage)
 				if (damage > 0 && source->Inventory != NULL)
@@ -1163,27 +1162,21 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 				ang = origin->AngleTo(target);
 			}
 
-			// Calculate this as float to avoid overflows so that the
-			// clamping that had to be done here can be removed.
-            double fltthrust;
-
-            fltthrust = mod == NAME_MDK ? 10 : 32;
+            thrust = mod == NAME_MDK ? 10 : 32;
             if (target->Mass > 0)
             {
-                fltthrust = clamp((damage * 0.125 * kickback) / target->Mass, 0., fltthrust);
+                thrust = clamp((damage * 0.125 * kickback) / target->Mass, 0., thrust);
             }
 
-			thrust = FLOAT2FIXED(fltthrust);
-
 			// Don't apply ultra-small damage thrust
-			if (thrust < FRACUNIT/100) thrust = 0;
+			if (thrust < 0.01) thrust = 0;
 
 			// make fall forwards sometimes
 			if ((damage < 40) && (damage > target->health)
 				 && (target->Z() - origin->Z() > 64)
 				 && (pr_damagemobj()&1)
 				 // [RH] But only if not too fast and not flying
-				 && thrust < 10*FRACUNIT
+				 && thrust < 10
 				 && !(target->flags & MF_NOGRAVITY)
 				 && (inflictor == NULL || !(inflictor->flags5 & MF5_NOFORWARDFALL))
 				 )
@@ -1204,7 +1197,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 			}
 			else
 			{
-				target->Thrust(ang, FIXED2DBL(thrust));
+				target->Thrust(ang, thrust);
 			}
 		}
 	}

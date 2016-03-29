@@ -864,8 +864,7 @@ void P_LoadVertexes (MapData * map)
 		SWORD x, y;
 
 		(*map->file) >> x >> y;
-		vertexes[i].x = x << FRACBITS;
-		vertexes[i].y = y << FRACBITS;
+		vertexes[i].set(x << FRACBITS, y << FRACBITS);
 	}
 }
 
@@ -1003,7 +1002,9 @@ void LoadZNodes(FileReaderBase &data, int glnodes)
 	}
 	for (i = 0; i < newVerts; ++i)
 	{
-		data >> newvertarray[i + orgVerts].x >> newvertarray[i + orgVerts].y;
+		fixed_t x, y;
+		data >> x >> y;
+		newvertarray[i + orgVerts].set(x, y);
 	}
 	if (vertexes != newvertarray)
 	{
@@ -1316,28 +1317,30 @@ void P_LoadSegs (MapData * map)
 			// off, then move one vertex. This may seem insignificant, but one degree
 			// errors _can_ cause firelines.
 
-			ptp_angle = R_PointToAngle2 (li->v1->x, li->v1->y, li->v2->x, li->v2->y);
+			ptp_angle = R_PointToAngle2 (li->v1->fixX(), li->v1->fixY(), li->v2->fixX(), li->v2->fixY());
 			dis = 0;
 			delta_angle = (absangle(ptp_angle-(segangle<<16))>>ANGLETOFINESHIFT)*360/FINEANGLES;
 
 			if (delta_angle != 0)
 			{
 				segangle >>= (ANGLETOFINESHIFT-16);
-				dx = (li->v1->x - li->v2->x)>>FRACBITS;
-				dy = (li->v1->y - li->v2->y)>>FRACBITS;
+				dx = (li->v1->fixX() - li->v2->fixX())>>FRACBITS;
+				dy = (li->v1->fixY() - li->v2->fixY())>>FRACBITS;
 				dis = ((int) g_sqrt((double)(dx*dx + dy*dy)))<<FRACBITS;
 				dx = finecosine[segangle];
 				dy = finesine[segangle];
 				if ((vnum2 > vnum1) && (vertchanged[vnum2] == 0))
 				{
-					li->v2->x = li->v1->x + FixedMul(dis,dx);
-					li->v2->y = li->v1->y + FixedMul(dis,dy);
+					li->v2->set(
+						li->v1->fixX() + FixedMul(dis,dx),
+						li->v1->fixY() + FixedMul(dis,dy));
 					vertchanged[vnum2] = 1; // this was changed
 				}
 				else if (vertchanged[vnum1] == 0)
 				{
-					li->v1->x = li->v2->x - FixedMul(dis,dx);
-					li->v1->y = li->v2->y - FixedMul(dis,dy);
+					li->v1->set(
+						li->v2->fixX() - FixedMul(dis,dx),
+						li->v2->fixY() - FixedMul(dis,dy));
 					vertchanged[vnum1] = 1; // this was changed
 				}
 			}
@@ -1904,29 +1907,29 @@ void P_AdjustLine (line_t *ld)
 	v1 = ld->v1;
 	v2 = ld->v2;
 
-	ld->dx = v2->x - v1->x;
-	ld->dy = v2->y - v1->y;
+	ld->dx = v2->fixX() - v1->fixX();
+	ld->dy = v2->fixY() - v1->fixY();
 	
-	if (v1->x < v2->x)
+	if (v1->fixX() < v2->fixX())
 	{
-		ld->bbox[BOXLEFT] = v1->x;
-		ld->bbox[BOXRIGHT] = v2->x;
+		ld->bbox[BOXLEFT] = v1->fixX();
+		ld->bbox[BOXRIGHT] = v2->fixX();
 	}
 	else
 	{
-		ld->bbox[BOXLEFT] = v2->x;
-		ld->bbox[BOXRIGHT] = v1->x;
+		ld->bbox[BOXLEFT] = v2->fixX();
+		ld->bbox[BOXRIGHT] = v1->fixX();
 	}
 
-	if (v1->y < v2->y)
+	if (v1->fixY() < v2->fixY())
 	{
-		ld->bbox[BOXBOTTOM] = v1->y;
-		ld->bbox[BOXTOP] = v2->y;
+		ld->bbox[BOXBOTTOM] = v1->fixY();
+		ld->bbox[BOXTOP] = v2->fixY();
 	}
 	else
 	{
-		ld->bbox[BOXBOTTOM] = v2->y;
-		ld->bbox[BOXTOP] = v1->y;
+		ld->bbox[BOXBOTTOM] = v2->fixY();
+		ld->bbox[BOXTOP] = v1->fixY();
 	}
 }
 
@@ -2015,8 +2018,8 @@ void P_FinishLoadingLineDef(line_t *ld, int alpha)
 
 	ld->frontsector = ld->sidedef[0] != NULL ? ld->sidedef[0]->sector : NULL;
 	ld->backsector  = ld->sidedef[1] != NULL ? ld->sidedef[1]->sector : NULL;
-	double dx = FIXED2DBL(ld->v2->x - ld->v1->x);
-	double dy = FIXED2DBL(ld->v2->y - ld->v1->y);
+	double dx = FIXED2DBL(ld->v2->fixX() - ld->v1->fixX());
+	double dy = FIXED2DBL(ld->v2->fixY() - ld->v1->fixY());
 	int linenum = int(ld-lines);
 
 	if (ld->frontsector == NULL)
@@ -2141,8 +2144,8 @@ void P_LoadLineDefs (MapData * map)
 			I_Error ("Line %d has invalid vertices: %d and/or %d.\nThe map only contains %d vertices.", i+skipped, v1, v2, numvertexes);
 		}
 		else if (v1 == v2 ||
-			(vertexes[LittleShort(mld->v1)].x == vertexes[LittleShort(mld->v2)].x &&
-			 vertexes[LittleShort(mld->v1)].y == vertexes[LittleShort(mld->v2)].y))
+			(vertexes[LittleShort(mld->v1)].fixX() == vertexes[LittleShort(mld->v2)].fixX() &&
+			 vertexes[LittleShort(mld->v1)].fixY() == vertexes[LittleShort(mld->v2)].fixY()))
 		{
 			Printf ("Removing 0-length line %d\n", i+skipped);
 			memmove (mld, mld+1, sizeof(*mld)*(numlines-i-1));
@@ -2230,8 +2233,8 @@ void P_LoadLineDefs2 (MapData * map)
 		mld = ((maplinedef2_t*)mldf) + i;
 
 		if (mld->v1 == mld->v2 ||
-			(vertexes[LittleShort(mld->v1)].x == vertexes[LittleShort(mld->v2)].x &&
-			 vertexes[LittleShort(mld->v1)].y == vertexes[LittleShort(mld->v2)].y))
+			(vertexes[LittleShort(mld->v1)].fixX() == vertexes[LittleShort(mld->v2)].fixX() &&
+			 vertexes[LittleShort(mld->v1)].fixY() == vertexes[LittleShort(mld->v2)].fixY()))
 		{
 			Printf ("Removing 0-length line %d\n", i+skipped);
 			memmove (mld, mld+1, sizeof(*mld)*(numlines-i-1));
@@ -2794,15 +2797,15 @@ static void P_CreateBlockMap ()
 		return;
 
 	// Find map extents for the blockmap
-	minx = maxx = vertexes[0].x;
-	miny = maxy = vertexes[0].y;
+	minx = maxx = vertexes[0].fixX();
+	miny = maxy = vertexes[0].fixY();
 
 	for (i = 1; i < numvertexes; ++i)
 	{
-			 if (vertexes[i].x < minx) minx = vertexes[i].x;
-		else if (vertexes[i].x > maxx) maxx = vertexes[i].x;
-			 if (vertexes[i].y < miny) miny = vertexes[i].y;
-		else if (vertexes[i].y > maxy) maxy = vertexes[i].y;
+			 if (vertexes[i].fixX() < minx) minx = vertexes[i].fixX();
+		else if (vertexes[i].fixX() > maxx) maxx = vertexes[i].fixX();
+			 if (vertexes[i].fixY() < miny) miny = vertexes[i].fixY();
+		else if (vertexes[i].fixY() > maxy) maxy = vertexes[i].fixY();
 	}
 
 	maxx >>= FRACBITS;
@@ -2824,10 +2827,10 @@ static void P_CreateBlockMap ()
 
 	for (line = 0; line < numlines; ++line)
 	{
-		int x1 = lines[line].v1->x >> FRACBITS;
-		int y1 = lines[line].v1->y >> FRACBITS;
-		int x2 = lines[line].v2->x >> FRACBITS;
-		int y2 = lines[line].v2->y >> FRACBITS;
+		int x1 = lines[line].v1->fixX() >> FRACBITS;
+		int y1 = lines[line].v1->fixY() >> FRACBITS;
+		int x2 = lines[line].v2->fixX() >> FRACBITS;
+		int y2 = lines[line].v2->fixY() >> FRACBITS;
 		int dx = x2 - x1;
 		int dy = y2 - y1;
 		int bx = (x1 - minx) >> BLOCKBITS;
@@ -3217,14 +3220,14 @@ static void P_GroupLines (bool buildmap)
 			for (j = 0; j < sector->linecount; ++j)
 			{
 				li = sector->lines[j];
-				bbox.AddToBox (li->v1->x, li->v1->y);
-				bbox.AddToBox (li->v2->x, li->v2->y);
+				bbox.AddToBox (li->v1->fixX(), li->v1->fixY());
+				bbox.AddToBox (li->v2->fixX(), li->v2->fixY());
 			}
 		}
 
 		// set the center to the middle of the bounding box
-		sector->centerspot.x = bbox.Right()/2 + bbox.Left()/2;
-		sector->centerspot.y = bbox.Top()/2 + bbox.Bottom()/2;
+		sector->centerspot.X = FIXED2DBL(bbox.Right()/2 + bbox.Left()/2);
+		sector->centerspot.Y = FIXED2DBL(bbox.Top()/2 + bbox.Bottom()/2);
 
 		// For triangular sectors the above does not calculate good points unless the longest of the triangle's lines is perfectly horizontal and vertical
 		if (sector->linecount == 3)
@@ -3234,8 +3237,8 @@ static void P_GroupLines (bool buildmap)
 			Triangle[1] = sector->lines[0]->v2;
 			if (sector->linecount > 1)
 			{
-				fixed_t dx = Triangle[1]->x - Triangle[0]->x;
-				fixed_t dy = Triangle[1]->y - Triangle[0]->y;
+				fixed_t dx = Triangle[1]->fixX() - Triangle[0]->fixX();
+				fixed_t dy = Triangle[1]->fixY() - Triangle[0]->fixY();
 				// Find another point in the sector that does not lie
 				// on the same line as the first two points.
 				for (j = 0; j < 2; ++j)
@@ -3243,11 +3246,11 @@ static void P_GroupLines (bool buildmap)
 					vertex_t *v;
 
 					v = (j == 1) ? sector->lines[1]->v1 : sector->lines[1]->v2;
-					if (DMulScale32 (v->y - Triangle[0]->y, dx,
-									Triangle[0]->x - v->x, dy) != 0)
+					if (DMulScale32 (v->fixY() - Triangle[0]->fixY(), dx,
+									Triangle[0]->fixX() - v->fixX(), dy) != 0)
 					{
-						sector->centerspot.x = Triangle[0]->x / 3 + Triangle[1]->x / 3 + v->x / 3;
-						sector->centerspot.y = Triangle[0]->y / 3 + Triangle[1]->y / 3 + v->y / 3;
+						sector->centerspot.X = FIXED2DBL(Triangle[0]->fixX() / 3 + Triangle[1]->fixX() / 3 + v->fixX() / 3);
+						sector->centerspot.Y = FIXED2DBL(Triangle[0]->fixY() / 3 + Triangle[1]->fixY() / 3 + v->fixY() / 3);
 						break;
 					}
 				}
@@ -3926,8 +3929,8 @@ void P_SetupLevel (const char *lumpname, int position)
 			seg_t * seg=&segs[i];
 			if (seg->backsector == seg->frontsector && seg->linedef)
 			{
-				fixed_t d1=P_AproxDistance(seg->v1->x-seg->linedef->v1->x,seg->v1->y-seg->linedef->v1->y);
-				fixed_t d2=P_AproxDistance(seg->v2->x-seg->linedef->v1->x,seg->v2->y-seg->linedef->v1->y);
+				fixed_t d1=P_AproxDistance(seg->v1->fixX()-seg->linedef->v1->fixX(),seg->v1->fixY()-seg->linedef->v1->fixY());
+				fixed_t d2=P_AproxDistance(seg->v2->fixX()-seg->linedef->v1->fixX(),seg->v2->fixY()-seg->linedef->v1->fixY());
 
 				if (d2<d1)	// backside
 				{
@@ -4202,9 +4205,9 @@ CCMD (lineloc)
 	{
 		Printf ("No such line\n");
 	}
-	Printf ("(%d,%d) -> (%d,%d)\n", lines[linenum].v1->x >> FRACBITS,
-		lines[linenum].v1->y >> FRACBITS,
-		lines[linenum].v2->x >> FRACBITS,
-		lines[linenum].v2->y >> FRACBITS);
+	Printf ("(%d,%d) -> (%d,%d)\n", lines[linenum].v1->fixX() >> FRACBITS,
+		lines[linenum].v1->fixY() >> FRACBITS,
+		lines[linenum].v2->fixX() >> FRACBITS,
+		lines[linenum].v2->fixY() >> FRACBITS);
 }
 #endif

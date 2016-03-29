@@ -59,8 +59,8 @@ enum
 
 struct SightOpening
 {
-	fixed_t top;
-	fixed_t bottom;
+	double top;
+	double bottom;
 	int range;
 	int portalflags;
 
@@ -72,9 +72,9 @@ struct SightOpening
 
 struct SightTask
 {
-	fixed_t frac;
-	fixed_t topslope;
-	fixed_t bottomslope;
+	double Frac;
+	double topslope;
+	double bottomslope;
 	int direction;
 	int portalgroup;
 };
@@ -85,23 +85,23 @@ static TArray<SightTask> portals(32);
 
 class SightCheck
 {
-	fixedvec3 sightstart;
-	fixedvec2 sightend;
-	fixed_t startfrac;
+	DVector3 sightstart;
+	DVector2 sightend;
+	double Startfrac;
 
 	AActor * seeingthing;
-	fixed_t lastztop;				// z at last line
-	fixed_t lastzbottom;				// z at last line
+	double Lastztop;				// z at last line
+	double Lastzbottom;				// z at last line
 	sector_t * lastsector;			// last sector being entered by trace
-	fixed_t topslope, bottomslope;	// slopes to top and bottom of target
+	double topslope, bottomslope;	// slopes to top and bottom of target
 	int Flags;
-	fdivline_t trace;
+	divline_t Trace;
 	int portaldir;
 	int portalgroup;
 	bool portalfound;
 	unsigned int myseethrough;
 
-	void P_SightOpening(SightOpening &open, const line_t *linedef, fixed_t x, fixed_t y);
+	void P_SightOpening(SightOpening &open, const line_t *linedef, double x, double y);
 	bool PTR_SightTraverse (intercept_t *in);
 	bool P_SightCheckLine (line_t *ld);
 	int P_SightBlockLinesIterator (int x, int y);
@@ -112,13 +112,13 @@ public:
 
 	void init(AActor * t1, AActor * t2, sector_t *startsector, SightTask *task, int flags)
 	{
-		sightstart = t1->_f_PosRelative(task->portalgroup);
-		sightend = t2->_f_PosRelative(task->portalgroup);
-		sightstart.z += t1->_f_height() - (t1->_f_height() >> 2);
+		sightstart = t1->PosRelative(task->portalgroup);
+		sightend = t2->PosRelative(task->portalgroup);
+		sightstart.Z += t1->Height / 2;
 
-		startfrac = task->frac;
-		trace = { sightstart.x, sightstart.y, sightend.x - sightstart.x, sightend.y - sightstart.y };
-		lastztop = lastzbottom = sightstart.z;
+		Startfrac = task->Frac;
+		Trace = { sightstart.X, sightstart.Y, sightend.X - sightstart.X, sightend.Y - sightstart.Y };
+		Lastztop = Lastzbottom = sightstart.Z;
 		lastsector = startsector;
 		seeingthing=t2;
 		topslope = task->topslope;
@@ -139,7 +139,7 @@ public:
 //
 //==========================================================================
 
-void SightCheck::P_SightOpening(SightOpening &open, const line_t *linedef, fixed_t x, fixed_t y)
+void SightCheck::P_SightOpening(SightOpening &open, const line_t *linedef, double x, double y)
 {
 	open.portalflags = 0;
 	sector_t *front = linedef->frontsector;
@@ -159,14 +159,14 @@ void SightCheck::P_SightOpening(SightOpening &open, const line_t *linedef, fixed
 	}
 
 
-	fixed_t fc = 0, ff = 0, bc = 0, bf = 0;
+	double fc = 0, ff = 0, bc = 0, bf = 0;
 
 	if (linedef->flags & ML_PORTALCONNECT)
 	{
-		if (!front->PortalBlocksSight(sector_t::ceiling)) fc = FIXED_MAX, open.portalflags |= SO_TOPFRONT;
-		if (!back->PortalBlocksSight(sector_t::ceiling)) bc = FIXED_MAX, open.portalflags |= SO_TOPBACK;
-		if (!front->PortalBlocksSight(sector_t::floor)) ff = FIXED_MIN, open.portalflags |= SO_BOTTOMFRONT;
-		if (!back->PortalBlocksSight(sector_t::floor)) bf = FIXED_MIN, open.portalflags |= SO_BOTTOMBACK;
+		if (!front->PortalBlocksSight(sector_t::ceiling)) fc = LINEOPEN_MAX, open.portalflags |= SO_TOPFRONT;
+		if (!back->PortalBlocksSight(sector_t::ceiling)) bc = LINEOPEN_MAX, open.portalflags |= SO_TOPBACK;
+		if (!front->PortalBlocksSight(sector_t::floor)) ff = LINEOPEN_MIN, open.portalflags |= SO_BOTTOMFRONT;
+		if (!back->PortalBlocksSight(sector_t::floor)) bf = LINEOPEN_MIN, open.portalflags |= SO_BOTTOMBACK;
 	}
 
 	if (fc == 0) fc = front->ceilingplane.ZatPoint(x, y);
@@ -178,7 +178,7 @@ void SightCheck::P_SightOpening(SightOpening &open, const line_t *linedef, fixed
 	open.top = MIN(fc, bc);
 
 	// we only want to know if there is an opening, not how large it is.
-	open.range = open.bottom >= open.top ? 0 : 1;
+	open.range = open.bottom < open.top;
 }
 
 
@@ -193,7 +193,7 @@ void SightCheck::P_SightOpening(SightOpening &open, const line_t *linedef, fixed
 bool SightCheck::PTR_SightTraverse (intercept_t *in)
 {
 	line_t  *li;
-	fixed_t slope;
+	double slope;
 	SightOpening open;
 	int  frontflag = -1;
 
@@ -207,8 +207,8 @@ bool SightCheck::PTR_SightTraverse (intercept_t *in)
 	if ((i_compatflags & COMPATF_TRACE) && li->frontsector == li->backsector) 
 		return true;
 
-	fixed_t trX=trace.x + FixedMul (trace.dx, in->frac);
-	fixed_t trY=trace.y + FixedMul (trace.dy, in->frac);
+	double trX = Trace.x + Trace.dx * in->Frac;
+	double trY = Trace.y + Trace.dy * in->Frac;
 	P_SightOpening (open, li, trX, trY);
 
 	FLinePortal *lport = li->getPortal();
@@ -217,17 +217,17 @@ bool SightCheck::PTR_SightTraverse (intercept_t *in)
 		return false;		// stop
 
 	// check bottom
-	if (open.bottom > FIXED_MIN)
+	if (open.bottom > LINEOPEN_MIN)
 	{
-		slope = FixedDiv(open.bottom - sightstart.z, in->frac);
+		slope = (open.bottom - sightstart.Z) / in->Frac;
 		if (slope > bottomslope)
 			bottomslope = slope;
 	}
 
 	// check top
-	if (open.top < FIXED_MAX)
+	if (open.top < LINEOPEN_MAX)
 	{
-		slope = FixedDiv(open.top - sightstart.z, in->frac);
+		slope = (open.top - sightstart.Z) / in->Frac;
 		if (slope < topslope)
 			topslope = slope;
 	}
@@ -235,7 +235,7 @@ bool SightCheck::PTR_SightTraverse (intercept_t *in)
 	if (open.portalflags)
 	{
 		sector_t *frontsec, *backsec;
-		frontflag = P_PointOnLineSidePrecise(sightstart.x, sightstart.y, li);
+		frontflag = P_PointOnLineSidePrecise(sightstart, li);
 		if (!frontflag)
 		{
 			frontsec = li->frontsector;
@@ -251,16 +251,16 @@ bool SightCheck::PTR_SightTraverse (intercept_t *in)
 
 		if (portaldir != sector_t::floor && (open.portalflags & SO_TOPBACK) && !(open.portalflags & SO_TOPFRONT))
 		{
-			portals.Push({ in->frac, topslope, bottomslope, sector_t::ceiling, backsec->SkyBoxes[sector_t::ceiling]->Sector->PortalGroup });
+			portals.Push({ in->Frac, topslope, bottomslope, sector_t::ceiling, backsec->SkyBoxes[sector_t::ceiling]->Sector->PortalGroup });
 		}
 		if (portaldir != sector_t::ceiling && (open.portalflags & SO_BOTTOMBACK) && !(open.portalflags & SO_BOTTOMFRONT))
 		{
-			portals.Push({ in->frac, topslope, bottomslope, sector_t::floor, backsec->SkyBoxes[sector_t::floor]->Sector->PortalGroup });
+			portals.Push({ in->Frac, topslope, bottomslope, sector_t::floor, backsec->SkyBoxes[sector_t::floor]->Sector->PortalGroup });
 		}
 	}
 	if (lport)
 	{
-		portals.Push({ in->frac, topslope, bottomslope, portaldir, lport->mDestination->frontsector->PortalGroup });
+		portals.Push({ in->Frac, topslope, bottomslope, portaldir, lport->mDestination->frontsector->PortalGroup });
 		return false;
 	}
 
@@ -270,41 +270,39 @@ bool SightCheck::PTR_SightTraverse (intercept_t *in)
 	// now handle 3D-floors
 	if(li->frontsector->e->XFloor.ffloors.Size() || li->backsector->e->XFloor.ffloors.Size())
 	{
-		if (frontflag == -1) frontflag = P_PointOnLineSidePrecise(sightstart.x, sightstart.y, li);
+		if (frontflag == -1) frontflag = P_PointOnLineSidePrecise(sightstart, li);
 		
 		//Check 3D FLOORS!
 		for(int i=1;i<=2;i++)
 		{
 			sector_t * s=i==1? li->frontsector:li->backsector;
-			fixed_t    highslope, lowslope;
+			double    highslope, lowslope;
 
-			fixed_t topz= FixedMul (topslope, in->frac) + sightstart.z;
-			fixed_t bottomz= FixedMul (bottomslope, in->frac) + sightstart.z;
+			double topz= topslope * in->Frac + sightstart.Z;
+			double bottomz= bottomslope * in->Frac + sightstart.Z;
 
-			for(unsigned int j=0;j<s->e->XFloor.ffloors.Size();j++)
+			for (auto rover : s->e->XFloor.ffloors)
 			{
-				F3DFloor*  rover=s->e->XFloor.ffloors[j];
-
-				if((rover->flags & FF_SEETHROUGH) == myseethrough || !(rover->flags & FF_EXISTS)) continue;
+				if ((rover->flags & FF_SEETHROUGH) == myseethrough || !(rover->flags & FF_EXISTS)) continue;
 				if ((Flags & SF_IGNOREWATERBOUNDARY) && (rover->flags & FF_SOLID) == 0) continue;
-				
-				fixed_t ff_bottom=rover->bottom.plane->ZatPoint(trX, trY);
-				fixed_t ff_top=rover->top.plane->ZatPoint(trX, trY);
 
-				highslope = FixedDiv (ff_top - sightstart.z, in->frac);
-				lowslope = FixedDiv (ff_bottom - sightstart.z, in->frac);
+				double ff_bottom = rover->bottom.plane->ZatPoint(trX, trY);
+				double ff_top = rover->top.plane->ZatPoint(trX, trY);
 
-				if (highslope>=topslope)
+				highslope = (ff_top - sightstart.Z) / in->Frac;
+				lowslope = (ff_bottom - sightstart.Z) / in->Frac;
+
+				if (highslope >= topslope)
 				{
 					// blocks completely
-					if (lowslope<=bottomslope) return false;	
+					if (lowslope <= bottomslope) return false;
 					// blocks upper edge of view
-					if (lowslope<topslope) topslope=lowslope;
+					if (lowslope < topslope) topslope = lowslope;
 				}
-				else if (lowslope<=bottomslope)
+				else if (lowslope <= bottomslope)
 				{
 					// blocks lower edge of view
-					if (highslope>bottomslope)  bottomslope=highslope;
+					if (highslope > bottomslope)  bottomslope = highslope;
 				}
 				else
 				{
@@ -312,39 +310,37 @@ bool SightCheck::PTR_SightTraverse (intercept_t *in)
 					// itself it can't be view blocking.
 					// However, if there's a 3D-floor on the other side that obstructs the same vertical range
 					// the 2 together will block sight.
-					sector_t * sb=i==2? li->frontsector:li->backsector;
+					sector_t * sb = i == 2 ? li->frontsector : li->backsector;
 
-					for(unsigned int k=0;k<sb->e->XFloor.ffloors.Size();k++)
+					for (auto rover2 : sb->e->XFloor.ffloors)
 					{
-						F3DFloor*  rover2=sb->e->XFloor.ffloors[k];
-
-						if((rover2->flags & FF_SEETHROUGH) == myseethrough || !(rover2->flags & FF_EXISTS)) continue;
+						if ((rover2->flags & FF_SEETHROUGH) == myseethrough || !(rover2->flags & FF_EXISTS)) continue;
 						if ((Flags & SF_IGNOREWATERBOUNDARY) && (rover->flags & FF_SOLID) == 0) continue;
-						
-						fixed_t ffb_bottom=rover2->bottom.plane->ZatPoint(trX, trY);
-						fixed_t ffb_top=rover2->top.plane->ZatPoint(trX, trY);
 
-						if ( (ffb_bottom >= ff_bottom && ffb_bottom<=ff_top) ||
+						double ffb_bottom = rover2->bottom.plane->ZatPoint(trX, trY);
+						double ffb_top = rover2->top.plane->ZatPoint(trX, trY);
+
+						if ((ffb_bottom >= ff_bottom && ffb_bottom <= ff_top) ||
 							(ffb_top <= ff_top && ffb_top >= ff_bottom) ||
 							(ffb_top >= ff_top && ffb_bottom <= ff_bottom) ||
-							(ffb_top <= ff_top && ffb_bottom >= ff_bottom) )
+							(ffb_top <= ff_top && ffb_bottom >= ff_bottom))
 						{
 							return false;
 						}
 					}
 				}
 				// trace is leaving a sector with a 3d-floor
-				if (s==lastsector && frontflag==i-1)
+				if (s == lastsector && frontflag == i - 1)
 				{
 					// upper slope intersects with this 3d-floor
-					if (lastztop<=ff_bottom && topz>ff_top)
+					if (Lastztop <= ff_bottom && topz > ff_top)
 					{
-						topslope=lowslope;
+						topslope = lowslope;
 					}
 					// lower slope intersects with this 3d-floor
-					if (lastzbottom>=ff_top && bottomz<ff_top)
+					if (Lastzbottom >= ff_top && bottomz < ff_top)
 					{
-						bottomslope=highslope;
+						bottomslope = highslope;
 					}
 				}
 				if (topslope <= bottomslope) return false;		// stop
@@ -354,8 +350,8 @@ bool SightCheck::PTR_SightTraverse (intercept_t *in)
 	}
 	else lastsector=NULL;	// don't need it if there are no 3D-floors
 
-	lastztop= FixedMul (topslope, in->frac) + sightstart.z;
-	lastzbottom= FixedMul (bottomslope, in->frac) + sightstart.z;
+	Lastztop = (topslope * in->Frac) + sightstart.Z;
+	Lastzbottom = (bottomslope * in->Frac) + sightstart.Z;
 
 	return true;			// keep going
 }
@@ -372,21 +368,21 @@ bool SightCheck::PTR_SightTraverse (intercept_t *in)
 
 bool SightCheck::P_SightCheckLine (line_t *ld)
 {
-	fdivline_t dl;
+	divline_t dl;
 
 	if (ld->validcount == validcount)
 	{
 		return true;
 	}
 	ld->validcount = validcount;
-	if (P_PointOnDivlineSidePrecise (ld->v1->x, ld->v1->y, &trace) ==
-		P_PointOnDivlineSidePrecise (ld->v2->x, ld->v2->y, &trace))
+	if (P_PointOnDivlineSidePrecise (ld->V1(), &Trace) ==
+		P_PointOnDivlineSidePrecise (ld->V2(), &Trace))
 	{
 		return true;		// line isn't crossed
 	}
 	P_MakeDivline (ld, &dl);
-	if (P_PointOnDivlineSidePrecise (trace.x, trace.y, &dl) ==
-		P_PointOnDivlineSidePrecise (trace.x+trace.dx, trace.y+trace.dy, &dl))
+	if (P_PointOnDivlineSidePrecise (Trace.x, Trace.y, &dl) ==
+		P_PointOnDivlineSidePrecise (Trace.x+Trace.dx, Trace.y+Trace.dy, &dl))
 	{
 		return true;		// line isn't crossed
 	}
@@ -505,10 +501,10 @@ int SightCheck::P_SightBlockLinesIterator (int x, int y)
 bool SightCheck::P_SightTraverseIntercepts ()
 {
 	unsigned count;
-	fixed_t dist;
+	double dist;
 	intercept_t *scan, *in;
 	unsigned scanpos;
-	fdivline_t dl;
+	divline_t dl;
 
 	count = intercepts.Size ();
 //
@@ -518,10 +514,10 @@ bool SightCheck::P_SightTraverseIntercepts ()
 	{
 		scan = &intercepts[scanpos];
 		P_MakeDivline (scan->d.line, &dl);
-		scan->frac = P_InterceptVector (&trace, &dl);
-		if (scan->frac < startfrac)
+		scan->Frac = P_InterceptVector (&Trace, &dl);
+		if (scan->Frac < Startfrac)
 		{
-			scan->frac = FIXED_MAX;
+			scan->Frac = INT_MAX;
 			count--;
 		}
 	}
@@ -534,13 +530,13 @@ bool SightCheck::P_SightTraverseIntercepts ()
 
 	while (count--)
 	{
-		dist = FIXED_MAX;
+		dist = INT_MAX;
 		for (scanpos = 0; scanpos < intercepts.Size (); scanpos++)
 		{
 			scan = &intercepts[scanpos];
-			if (scan->frac < dist)
+			if (scan->Frac < dist)
 			{
-				dist = scan->frac;
+				dist = scan->Frac;
 				in = scan;
 			}
 		}
@@ -549,31 +545,28 @@ bool SightCheck::P_SightTraverseIntercepts ()
 		{
 			if (!PTR_SightTraverse (in))
 				return false;					// don't bother going farther
-			in->frac = FIXED_MAX;
+			in->Frac = INT_MAX;
 		}
 	}
 
-	if (lastsector==seeingthing->Sector && lastsector->e->XFloor.ffloors.Size())
+	if (lastsector == seeingthing->Sector && lastsector->e->XFloor.ffloors.Size())
 	{
 		// we must do one last check whether the trace has crossed a 3D floor in the last sector
 
-		fixed_t topz= topslope + sightstart.z;
-		fixed_t bottomz= bottomslope + sightstart.z;
-		
-		for(unsigned int i=0;i<lastsector->e->XFloor.ffloors.Size();i++)
+		double topz = topslope + sightstart.Z;
+		double bottomz = bottomslope + sightstart.Z;
+
+		for (auto rover : lastsector->e->XFloor.ffloors)
 		{
-			F3DFloor*  rover = lastsector->e->XFloor.ffloors[i];
-
-			if((rover->flags & FF_SOLID) == myseethrough || !(rover->flags & FF_EXISTS)) continue;
+			if ((rover->flags & FF_SOLID) == myseethrough || !(rover->flags & FF_EXISTS)) continue;
 			if ((Flags & SF_IGNOREWATERBOUNDARY) && (rover->flags & FF_SOLID) == 0) continue;
-			
-			fixed_t ff_bottom=rover->bottom.plane->ZatPoint(seeingthing);
-			fixed_t ff_top=rover->top.plane->ZatPoint(seeingthing);
 
-			if (lastztop<=ff_bottom && topz>ff_bottom && lastzbottom<=ff_bottom && bottomz>ff_bottom) return false;
-			if (lastzbottom>=ff_top && bottomz<ff_top && lastztop>=ff_top && topz<ff_top) return false;
+			double ff_bottom = rover->bottom.plane->ZatPointF(seeingthing);
+			double ff_top = rover->top.plane->ZatPointF(seeingthing);
+
+			if (Lastztop <= ff_bottom && topz > ff_bottom && Lastzbottom <= ff_bottom && bottomz > ff_bottom) return false;
+			if (Lastzbottom >= ff_top && bottomz < ff_top && Lastztop >= ff_top && topz < ff_top) return false;
 		}
-	
 	}
 	return true;			// everything was traversed
 }
@@ -592,40 +585,37 @@ bool SightCheck::P_SightTraverseIntercepts ()
 
 bool SightCheck::P_SightPathTraverse ()
 {
-	fixed_t x1, x2, y1, y2;
-	fixed_t xt1,yt1,xt2,yt2;
-	long long _x1,_y1,_x2,_y2;
-	fixed_t xstep,ystep;
-	fixed_t partialx, partialy;
-	fixed_t xintercept, yintercept;
+	double x1, x2, y1, y2;
+	double xt1,yt1,xt2,yt2;
+	double xstep,ystep;
+	double partialx, partialy;
+	double xintercept, yintercept;
 	int mapx, mapy, mapxstep, mapystep;
 	int count;
 
 	validcount++;
 	intercepts.Clear ();
-	x1 = sightstart.x + FixedMul(startfrac, trace.dx);
-	y1 = sightstart.y + FixedMul(startfrac, trace.dy);
-	x2 = sightend.x;
-	y2 = sightend.y;
+	x1 = sightstart.X + Startfrac * Trace.dx;
+	y1 = sightstart.Y + Startfrac * Trace.dy;
+	x2 = sightend.X;
+	y2 = sightend.Y;
 	if (lastsector == NULL) lastsector = P_PointInSector(x1, y1);
 
 	// for FF_SEETHROUGH the following rule applies:
 	// If the viewer is in an area without FF_SEETHROUGH he can only see into areas without this flag
 	// If the viewer is in an area with FF_SEETHROUGH he can only see into areas with this flag
 	bool checkfloor = true, checkceiling = true;
-	for(unsigned int i=0;i<lastsector->e->XFloor.ffloors.Size();i++)
+	for(auto rover : lastsector->e->XFloor.ffloors)
 	{
-		F3DFloor*  rover = lastsector->e->XFloor.ffloors[i];
-
 		if(!(rover->flags & FF_EXISTS)) continue;
 		
-		fixed_t ff_bottom=rover->bottom.plane->ZatPoint(sightstart);
-		fixed_t ff_top=rover->top.plane->ZatPoint(sightstart);
+		double ff_bottom=rover->bottom.plane->ZatPoint(sightstart);
+		double ff_top=rover->top.plane->ZatPoint(sightstart);
 
-		if (sightstart.z < ff_top) checkceiling = false;
-		if (sightstart.z >= ff_bottom) checkfloor = false;
+		if (sightstart.Z < ff_top) checkceiling = false;
+		if (sightstart.Z >= ff_bottom) checkfloor = false;
 
-		if (sightstart.z < ff_top && sightstart.z >= ff_bottom) 
+		if (sightstart.Z < ff_top && sightstart.Z >= ff_bottom) 
 		{
 			myseethrough = rover->flags & FF_SEETHROUGH;
 			break;
@@ -642,92 +632,88 @@ bool SightCheck::P_SightPathTraverse ()
 		portals.Push({ 0, topslope, bottomslope, sector_t::floor, lastsector->SkyBoxes[sector_t::floor]->Sector->PortalGroup });
 	}
 
-	if ( ((x1-bmaporgx)&(MAPBLOCKSIZE-1)) == 0)
-		x1 += FRACUNIT;							// don't side exactly on a line
-	if ( ((y1-bmaporgy)&(MAPBLOCKSIZE-1)) == 0)
-		y1 += FRACUNIT;							// don't side exactly on a line
+	double bmaporgx = FIXED2DBL(::bmaporgx);
+	double bmaporgy = FIXED2DBL(::bmaporgy);
 
-	_x1 = (long long)x1 - bmaporgx;
-	_y1 = (long long)y1 - bmaporgy;
 	x1 -= bmaporgx;
 	y1 -= bmaporgy;
-	xt1 = int(_x1 >> MAPBLOCKSHIFT);
-	yt1 = int(_y1 >> MAPBLOCKSHIFT);
+	xt1 = x1 / MAPBLOCKUNITS;
+	yt1 = y1 / MAPBLOCKUNITS;
 
-	_x2 = (long long)x2 - bmaporgx;
-	_y2 = (long long)y2 - bmaporgy;
 	x2 -= bmaporgx;
 	y2 -= bmaporgy;
-	xt2 = int(_x2 >> MAPBLOCKSHIFT);
-	yt2 = int(_y2 >> MAPBLOCKSHIFT);
+	xt2 = x2 / MAPBLOCKUNITS;
+	yt2 = y2 / MAPBLOCKUNITS;
 
-	if (xt2 > xt1)
+	mapx = int(xt1);
+	mapy = int(yt1);
+	int mapex = int(xt2);
+	int mapey = int(yt2);
+
+	if (mapex > mapx)
 	{
 		mapxstep = 1;
-		partialx = FRACUNIT - ((x1>>MAPBTOFRAC)&(FRACUNIT-1));
-		ystep = FixedDiv (y2-y1,abs(x2-x1));
+		partialx = xs_CeilToInt(xt1) - xt1;
+		ystep = (y2 - y1) / fabs(x2 - x1);
 	}
-	else if (xt2 < xt1)
+	else if (mapex < mapx)
 	{
 		mapxstep = -1;
-		partialx = (x1>>MAPBTOFRAC)&(FRACUNIT-1);
-		ystep = FixedDiv (y2-y1,abs(x2-x1));
+		partialx = xt1 - xs_FloorToInt(xt1);
+		ystep = (y2 - y1) / fabs(x2 - x1);
 	}
 	else
 	{
 		mapxstep = 0;
-		partialx = FRACUNIT;
-		ystep = 256*FRACUNIT;
+		partialx = 1.;
+		ystep = 256;
 	}
-	yintercept = int(_y1>>MAPBTOFRAC) + FixedMul (partialx, ystep);
+	yintercept = yt1 + partialx * ystep;
 
-
-	if (yt2 > yt1)
+	if (mapey > mapy)
 	{
 		mapystep = 1;
-		partialy = FRACUNIT - ((y1>>MAPBTOFRAC)&(FRACUNIT-1));
-		xstep = FixedDiv (x2-x1,abs(y2-y1));
+		partialy = xs_CeilToInt(yt1) - yt1;
+		xstep = (x2 - x1) / fabs(y2 - y1);
 	}
-	else if (yt2 < yt1)
+	else if (mapey < mapy)
 	{
 		mapystep = -1;
-		partialy = (y1>>MAPBTOFRAC)&(FRACUNIT-1);
-		xstep = FixedDiv (x2-x1,abs(y2-y1));
+		partialy = yt1 - xs_FloorToInt(yt1);
+		xstep = (x2 - x1) / fabs(y2 - y1);
 	}
 	else
 	{
 		mapystep = 0;
-		partialy = FRACUNIT;
-		xstep = 256*FRACUNIT;
+		partialy = 1;
+		xstep = 256;
 	}
-	xintercept = int(_x1>>MAPBTOFRAC) + FixedMul (partialy, xstep);
+	xintercept = xt1 + partialy * xstep;
 
 	// [RH] Fix for traces that pass only through blockmap corners. In that case,
 	// xintercept and yintercept can both be set ahead of mapx and mapy, so the
 	// for loop would never advance anywhere.
 
-	if (abs(xstep) == FRACUNIT && abs(ystep) == FRACUNIT)
+	if (fabs(xstep) == 1. && fabs(ystep) == 1.)
 	{
 		if (ystep < 0)
 		{
-			partialx = FRACUNIT - partialx;
+			partialx = 1. - partialx;
 		}
 		if (xstep < 0)
 		{
-			partialy = FRACUNIT - partialy;
+			partialy = 1. - partialy;
 		}
 		if (partialx == partialy)
 		{
-			xintercept = xt1 << FRACBITS;
-			yintercept = yt1 << FRACBITS;
+			xintercept = xt1;
+			yintercept = yt1;
 		}
 	}
 
 //
 // step through map blocks
 // Count is present to prevent a round off error from skipping the break
-	mapx = xt1;
-	mapy = yt1;
 
 	for (count = 0 ; count < 100 ; count++)
 	{
@@ -748,7 +734,7 @@ bool SightCheck::P_SightPathTraverse ()
 		if (res == -1 || (mapxstep | mapystep) == 0)
 			break;
 
-		switch ((((yintercept >> FRACBITS) == mapy) << 1) | ((xintercept >> FRACBITS) == mapx))
+		switch (((int(yintercept) == mapy) << 1) | (int(xintercept) == mapx))
 		{
 		case 0:		// neither xintercept nor yintercept match!
 sightcounts[5]++;
@@ -759,14 +745,14 @@ sightcounts[5]++;
 		case 1:		// xintercept matches
 			xintercept += xstep;
 			mapy += mapystep;
-			if (mapy == yt2)
+			if (mapy == mapey)
 				mapystep = 0;
 			break;
 
 		case 2:		// yintercept matches
 			yintercept += ystep;
 			mapx += mapxstep;
-			if (mapx == xt2)
+			if (mapx == mapex)
 				mapxstep = 0;
 			break;
 
@@ -786,9 +772,9 @@ sightcounts[1]++;
 			yintercept += ystep;
 			mapx += mapxstep;
 			mapy += mapystep;
-			if (mapx == xt2)
+			if (mapx == mapex)
 				mapxstep = 0;
-			if (mapy == yt2)
+			if (mapy == mapey)
 				mapystep = 0;
 			break;
 		}
@@ -863,16 +849,16 @@ sightcounts[0]++;
 	if (!(flags & SF_IGNOREWATERBOUNDARY))
 	{
 		if ((s1->GetHeightSec() &&
-			((t1->_f_Z() + t1->_f_height() <= s1->heightsec->floorplane.ZatPoint(t1) &&
-			  t2->_f_Z() >= s1->heightsec->floorplane.ZatPoint(t2)) ||
-			 (t1->_f_Z() >= s1->heightsec->ceilingplane.ZatPoint(t1) &&
-			  t2->_f_Z() + t1->_f_height() <= s1->heightsec->ceilingplane.ZatPoint(t2))))
+			((t1->Top() <= s1->heightsec->floorplane.ZatPointF(t1) &&
+			  t2->Z() >= s1->heightsec->floorplane.ZatPointF(t2)) ||
+			 (t1->Z() >= s1->heightsec->ceilingplane.ZatPointF(t1) &&
+			  t2->Top() <= s1->heightsec->ceilingplane.ZatPointF(t2))))
 			||
 			(s2->GetHeightSec() &&
-			 ((t2->_f_Z() + t2->_f_height() <= s2->heightsec->floorplane.ZatPoint(t2) &&
-			   t1->_f_Z() >= s2->heightsec->floorplane.ZatPoint(t1)) ||
-			  (t2->_f_Z() >= s2->heightsec->ceilingplane.ZatPoint(t2) &&
-			   t1->_f_Z() + t2->_f_height() <= s2->heightsec->ceilingplane.ZatPoint(t1)))))
+			 ((t2->Top() <= s2->heightsec->floorplane.ZatPointF(t2) &&
+			   t1->Z() >= s2->heightsec->floorplane.ZatPointF(t1)) ||
+			  (t2->Z() >= s2->heightsec->ceilingplane.ZatPointF(t2) &&
+			   t1->Top() <= s2->heightsec->ceilingplane.ZatPointF(t1)))))
 		{
 			res = false;
 			goto done;
@@ -886,11 +872,11 @@ sightcounts[0]++;
 	portals.Clear();
 	{
 		sector_t *sec;
-		fixed_t lookheight = t1->_f_height() - (t1->_f_height() >> 2);
+		double lookheight = t1->Center();
 		t1->GetPortalTransition(lookheight, &sec);
 
-		fixed_t bottomslope = t2->_f_Z() - (t1->_f_Z() + lookheight);
-		fixed_t topslope = bottomslope + t2->_f_height();
+		double bottomslope = t2->Z() - (t1->Z() + lookheight);
+		double topslope = bottomslope + t2->Height;
 		SightTask task = { 0, topslope, bottomslope, -1, sec->PortalGroup };
 
 
@@ -899,10 +885,10 @@ sightcounts[0]++;
 		res = s.P_SightPathTraverse ();
 		if (!res)
 		{
-			fixed_t dist = t1->AproxDistance(t2);
+			double dist = t1->Distance2D(t2);
 			for (unsigned i = 0; i < portals.Size(); i++)
 			{
-				portals[i].frac += FixedDiv(FRACUNIT, dist);
+				portals[i].Frac += 1 / dist;
 				s.init(t1, t2, NULL, &portals[i], flags);
 				if (s.P_SightPathTraverse())
 				{
@@ -940,5 +926,3 @@ void P_ResetSightCounters (bool full)
 	SightCycles.Reset();
 	memset (sightcounts, 0, sizeof(sightcounts));
 }
-
-

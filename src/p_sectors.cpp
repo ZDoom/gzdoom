@@ -725,34 +725,34 @@ void sector_t::ClosestPoint(fixed_t fx, fixed_t fy, fixed_t &ox, fixed_t &oy) co
 	{
 		vertex_t *v1 = lines[i]->v1;
 		vertex_t *v2 = lines[i]->v2;
-		double a = v2->x - v1->x;
-		double b = v2->y - v1->y;
+		double a = v2->fixX() - v1->fixX();
+		double b = v2->fixY() - v1->fixY();
 		double den = a*a + b*b;
 		double ix, iy, dist;
 
 		if (den == 0)
 		{ // Line is actually a point!
-			ix = v1->x;
-			iy = v1->y;
+			ix = v1->fixX();
+			iy = v1->fixY();
 		}
 		else
 		{
-			double num = (x - v1->x) * a + (y - v1->y) * b;
+			double num = (x - v1->fixX()) * a + (y - v1->fixY()) * b;
 			double u = num / den;
 			if (u <= 0)
 			{
-				ix = v1->x;
-				iy = v1->y;
+				ix = v1->fixX();
+				iy = v1->fixY();
 			}
 			else if (u >= 1)
 			{
-				ix = v2->x;
-				iy = v2->y;
+				ix = v2->fixX();
+				iy = v2->fixY();
 			}
 			else
 			{
-				ix = v1->x + u * a;
-				iy = v1->y + u * b;
+				ix = v1->fixX() + u * a;
+				iy = v1->fixY() + u * b;
 			}
 		}
 		a = (ix - x);
@@ -889,22 +889,21 @@ void sector_t::CheckPortalPlane(int plane)
 //
 //===========================================================================
 
-fixed_t sector_t::_f_HighestCeilingAt(fixed_t x, fixed_t y, sector_t **resultsec)
+double sector_t::HighestCeilingAt(const DVector2 &p, sector_t **resultsec)
 {
 	sector_t *check = this;
 	fixed_t planeheight = FIXED_MIN;
+	DVector2 pos = p;
 
 	// Continue until we find a blocking portal or a portal below where we actually are.
 	while (!check->PortalBlocksMovement(ceiling) && planeheight < FLOAT2FIXED(check->SkyBoxes[ceiling]->specialf1))
 	{
-		fixedvec2 pos = check->CeilingDisplacement();
-		x += pos.x;
-		y += pos.y;
+		pos += check->CeilingDisplacement();
 		planeheight = FLOAT2FIXED(check->SkyBoxes[ceiling]->specialf1);
-		check = P_PointInSector(x, y);
+		check = P_PointInSector(pos);
 	}
 	if (resultsec) *resultsec = check;
-	return check->ceilingplane.ZatPoint(x, y);
+	return check->ceilingplane.ZatPoint(pos);
 }
 
 //===========================================================================
@@ -913,22 +912,21 @@ fixed_t sector_t::_f_HighestCeilingAt(fixed_t x, fixed_t y, sector_t **resultsec
 //
 //===========================================================================
 
-fixed_t sector_t::_f_LowestFloorAt(fixed_t x, fixed_t y, sector_t **resultsec)
+double sector_t::LowestFloorAt(const DVector2 &p, sector_t **resultsec)
 {
 	sector_t *check = this;
 	fixed_t planeheight = FIXED_MAX;
+	DVector2 pos = p;
 
 	// Continue until we find a blocking portal or a portal above where we actually are.
 	while (!check->PortalBlocksMovement(floor) && planeheight > FLOAT2FIXED(check->SkyBoxes[floor]->specialf1))
 	{
-		fixedvec2 pos = check->FloorDisplacement();
-		x += pos.x;
-		y += pos.y;
+		pos += check->FloorDisplacement();
 		planeheight = FLOAT2FIXED(check->SkyBoxes[floor]->specialf1);
-		check = P_PointInSector(x, y);
+		check = P_PointInSector(pos);
 	}
 	if (resultsec) *resultsec = check;
-	return check->floorplane.ZatPoint(x, y);
+	return check->floorplane.ZatPoint(pos);
 }
 
 
@@ -952,7 +950,7 @@ fixed_t sector_t::NextHighestCeilingAt(fixed_t x, fixed_t y, fixed_t bottomz, fi
 			fixed_t delta1 = bottomz - (ff_bottom + ((ff_top - ff_bottom) / 2));
 			fixed_t delta2 = topz - (ff_bottom + ((ff_top - ff_bottom) / 2));
 
-			if (ff_bottom < realceil && abs(delta1) >= abs(delta2))
+			if (ff_bottom < realceil && abs(delta1) > abs(delta2))
 			{ 
 				if (resultsec) *resultsec = sec;
 				if (resultffloor) *resultffloor = rover;
@@ -967,9 +965,9 @@ fixed_t sector_t::NextHighestCeilingAt(fixed_t x, fixed_t y, fixed_t bottomz, fi
 		}
 		else
 		{
-			fixedvec2 pos = sec->CeilingDisplacement();
-			x += pos.x;
-			y += pos.y;
+			DVector2 pos = sec->CeilingDisplacement();
+			x += FLOAT2FIXED(pos.X);
+			y += FLOAT2FIXED(pos.Y);
 			planeheight = FLOAT2FIXED(sec->SkyBoxes[ceiling]->specialf1);
 			sec = P_PointInSector(x, y);
 		}
@@ -1012,9 +1010,9 @@ fixed_t sector_t::NextLowestFloorAt(fixed_t x, fixed_t y, fixed_t z, int flags, 
 		}
 		else
 		{
-			fixedvec2 pos = sec->FloorDisplacement();
-			x += pos.x;
-			y += pos.y;
+			DVector2 pos = sec->FloorDisplacement();
+			x += FLOAT2FIXED(pos.X);
+			y += FLOAT2FIXED(pos.Y);
 			planeheight = FLOAT2FIXED(sec->SkyBoxes[floor]->specialf1);
 			sec = P_PointInSector(x, y);
 		}
@@ -1138,10 +1136,10 @@ bool P_AlignFlat (int linenum, int side, int fc)
 	if (!sec)
 		return false;
 
-	fixed_t x = line->v1->x;
-	fixed_t y = line->v1->y;
+	fixed_t x = line->v1->fixX();
+	fixed_t y = line->v1->fixY();
 
-	angle_t angle = R_PointToAngle2 (x, y, line->v2->x, line->v2->y);
+	angle_t angle = R_PointToAngle2 (x, y, line->v2->fixX(), line->v2->fixY());
 	angle_t norm = (angle-ANGLE_90) >> ANGLETOFINESHIFT;
 
 	fixed_t dist = -DMulScale16 (finecosine[norm], x, finesine[norm], y);

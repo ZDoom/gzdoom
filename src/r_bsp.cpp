@@ -404,8 +404,8 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 		// sectors at the same time.
 		if (back && !r_fakingunderwater && curline->frontsector->heightsec == NULL)
 		{
-			if (rw_frontcz1 <= s->floorplane.ZatPoint (curline->v1->x, curline->v1->y) &&
-				rw_frontcz2 <= s->floorplane.ZatPoint (curline->v2->x, curline->v2->y))
+			if (rw_frontcz1 <= s->floorplane.ZatPoint (curline->v1->fixX(), curline->v1->fixY()) &&
+				rw_frontcz2 <= s->floorplane.ZatPoint (curline->v2->fixX(), curline->v2->fixY()))
 			{
 				// Check that the window is actually visible
 				for (int z = WallC.sx1; z < WallC.sx2; ++z)
@@ -529,10 +529,10 @@ void R_AddLine (seg_t *line)
 	// [RH] Color if not texturing line
 	dc_color = (((int)(line - segs) * 8) + 4) & 255;
 
-	tx1 = line->v1->x - viewx;
-	tx2 = line->v2->x - viewx;
-	ty1 = line->v1->y - viewy;
-	ty2 = line->v2->y - viewy;
+	tx1 = line->v1->fixX() - viewx;
+	tx2 = line->v2->fixX() - viewx;
+	ty1 = line->v1->fixY() - viewy;
+	ty2 = line->v2->fixY() - viewy;
 
 	// Reject lines not facing viewer
 	if (DMulScale32 (ty1, tx1-tx2, tx1, ty2-ty1) >= 0)
@@ -573,17 +573,17 @@ void R_AddLine (seg_t *line)
 		{
 			swapvalues (v1, v2);
 		}
-		WallT.InitFromLine(v1->x - viewx, v1->y - viewy, v2->x - viewx, v2->y - viewy);
+		WallT.InitFromLine(v1->fixX() - viewx, v1->fixY() - viewy, v2->fixX() - viewx, v2->fixY() - viewy);
 	}
 
 	if (!(fake3D & FAKE3D_FAKEBACK))
 	{
 		backsector = line->backsector;
 	}
-	rw_frontcz1 = frontsector->ceilingplane.ZatPoint (line->v1->x, line->v1->y);
-	rw_frontfz1 = frontsector->floorplane.ZatPoint (line->v1->x, line->v1->y);
-	rw_frontcz2 = frontsector->ceilingplane.ZatPoint (line->v2->x, line->v2->y);
-	rw_frontfz2 = frontsector->floorplane.ZatPoint (line->v2->x, line->v2->y);
+	rw_frontcz1 = frontsector->ceilingplane.ZatPoint (line->v1->fixX(), line->v1->fixY());
+	rw_frontfz1 = frontsector->floorplane.ZatPoint (line->v1->fixX(), line->v1->fixY());
+	rw_frontcz2 = frontsector->ceilingplane.ZatPoint (line->v2->fixX(), line->v2->fixY());
+	rw_frontfz2 = frontsector->floorplane.ZatPoint (line->v2->fixX(), line->v2->fixY());
 
 	rw_mustmarkfloor = rw_mustmarkceiling = false;
 	rw_havehigh = rw_havelow = false;
@@ -602,10 +602,10 @@ void R_AddLine (seg_t *line)
 		}
 		doorclosed = 0;		// killough 4/16/98
 
-		rw_backcz1 = backsector->ceilingplane.ZatPoint (line->v1->x, line->v1->y);
-		rw_backfz1 = backsector->floorplane.ZatPoint (line->v1->x, line->v1->y);
-		rw_backcz2 = backsector->ceilingplane.ZatPoint (line->v2->x, line->v2->y);
-		rw_backfz2 = backsector->floorplane.ZatPoint (line->v2->x, line->v2->y);
+		rw_backcz1 = backsector->ceilingplane.ZatPoint (line->v1->fixX(), line->v1->fixY());
+		rw_backfz1 = backsector->floorplane.ZatPoint (line->v1->fixX(), line->v1->fixY());
+		rw_backcz2 = backsector->ceilingplane.ZatPoint (line->v2->fixX(), line->v2->fixY());
+		rw_backfz2 = backsector->floorplane.ZatPoint (line->v2->fixX(), line->v2->fixY());
 
 		// Cannot make these walls solid, because it can result in
 		// sprite clipping problems for sprites near the wall
@@ -1183,9 +1183,9 @@ void R_Subsector (subsector_t *sub)
 				fakeFloor->validcount = validcount;
 				R_3D_NewClip();
 			}
-			fakeHeight = fakeFloor->top.plane->ZatPoint(frontsector->centerspot);
+			fakeHeight = FLOAT2FIXED(fakeFloor->top.plane->ZatPoint(frontsector->centerspot));
 			if (fakeHeight < viewz &&
-				fakeHeight > frontsector->floorplane.ZatPoint(frontsector->centerspot))
+				fakeHeight > FLOAT2FIXED(frontsector->floorplane.ZatPoint(frontsector->centerspot)))
 			{
 				fake3D = FAKE3D_FAKEFLOOR;
 				tempsec = *fakeFloor->model;
@@ -1245,9 +1245,9 @@ void R_Subsector (subsector_t *sub)
 				fakeFloor->validcount = validcount;
 				R_3D_NewClip();
 			}
-			fakeHeight = fakeFloor->bottom.plane->ZatPoint(frontsector->centerspot);
+			fakeHeight = FLOAT2FIXED(fakeFloor->bottom.plane->ZatPoint(frontsector->centerspot));
 			if (fakeHeight > viewz &&
-				fakeHeight < frontsector->ceilingplane.ZatPoint(frontsector->centerspot))
+				fakeHeight < FLOAT2FIXED(frontsector->ceilingplane.ZatPoint(frontsector->centerspot)))
 			{
 				fake3D = FAKE3D_FAKECEILING;
 				tempsec = *fakeFloor->model;

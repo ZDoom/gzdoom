@@ -79,7 +79,6 @@ PName *TypeName;
 PSound *TypeSound;
 PColor *TypeColor;
 PStatePointer *TypeState;
-PFixed *TypeFixed;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -505,8 +504,7 @@ void PType::StaticInit()
 	RUNTIME_CLASS(PPrototype)->TypeTableType = RUNTIME_CLASS(PPrototype);
 	RUNTIME_CLASS(PClass)->TypeTableType = RUNTIME_CLASS(PClass);
 	RUNTIME_CLASS(PStatePointer)->TypeTableType = RUNTIME_CLASS(PStatePointer);
-	RUNTIME_CLASS(PFixed)->TypeTableType = RUNTIME_CLASS(PFixed);
-
+	
 	// Create types and add them type the type table.
 	TypeTable.AddType(TypeError = new PErrorType);
 	TypeTable.AddType(TypeVoid = new PVoidType);
@@ -524,7 +522,6 @@ void PType::StaticInit()
 	TypeTable.AddType(TypeSound = new PSound);
 	TypeTable.AddType(TypeColor = new PColor);
 	TypeTable.AddType(TypeState = new PStatePointer);
-	TypeTable.AddType(TypeFixed = new PFixed);
 
 	GlobalSymbols.AddSymbol(new PSymbolType(NAME_sByte, TypeSInt8));
 	GlobalSymbols.AddSymbol(new PSymbolType(NAME_Byte, TypeUInt8));
@@ -542,7 +539,6 @@ void PType::StaticInit()
 	GlobalSymbols.AddSymbol(new PSymbolType(NAME_Sound, TypeSound));
 	GlobalSymbols.AddSymbol(new PSymbolType(NAME_Color, TypeColor));
 	GlobalSymbols.AddSymbol(new PSymbolType(NAME_State, TypeState));
-	GlobalSymbols.AddSymbol(new PSymbolType(NAME_Fixed, TypeFixed));
 }
 
 
@@ -1079,67 +1075,6 @@ PColor::PColor()
 : PInt(sizeof(PalEntry), true)
 {
 	assert(sizeof(PalEntry) == __alignof(PalEntry));
-}
-
-/* PFixed *****************************************************************/
-
-IMPLEMENT_CLASS(PFixed)
-
-//==========================================================================
-//
-// PFixed Default Constructor
-//
-//==========================================================================
-
-PFixed::PFixed()
-: PFloat(sizeof(fixed_t))
-{
-}
-
-//==========================================================================
-//
-// PFixed :: SetValue
-//
-//==========================================================================
-
-void PFixed::SetValue(void *addr, int val)
-{
-	assert(((intptr_t)addr & (Align - 1)) == 0 && "unaligned address");
-	*(fixed_t *)addr = val << FRACBITS;
-}
-
-//==========================================================================
-//
-// PFixed :: GetValueInt
-//
-//==========================================================================
-
-int PFixed::GetValueInt(void *addr) const
-{
-	assert(((intptr_t)addr & (Align - 1)) == 0 && "unaligned address");
-	return *(fixed_t *)addr >> FRACBITS;
-}
-
-//==========================================================================
-//
-// PFixed :: GetStoreOp
-//
-//==========================================================================
-
-int PFixed::GetStoreOp() const
-{
-	return OP_SX;
-}
-
-//==========================================================================
-//
-// PFixed :: GetLoadOp
-//
-//==========================================================================
-
-int PFixed::GetLoadOp() const
-{
-	return OP_LX;
 }
 
 /* PStatePointer **********************************************************/

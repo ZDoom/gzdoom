@@ -3074,7 +3074,8 @@ void D3DFB::FillSimplePoly(FTexture *texture, FVector2 *points, int npoints,
 	DAngle rotation, FDynamicColormap *colormap, int lightlevel)
 {
 	// Use an equation similar to player sprites to determine shade
-	fixed_t shade = LIGHT2SHADE(lightlevel) - 12*FRACUNIT;
+	double fadelevel = clamp((LIGHT2SHADE(lightlevel)/65536. - 12) / NUMCOLORMAPS, 0.0, 1.0);
+	
 	BufferedTris *quad;
 	FBVERTEX *verts;
 	D3DTex *tex;
@@ -3128,7 +3129,6 @@ void D3DFB::FillSimplePoly(FTexture *texture, FVector2 *points, int npoints,
 			quad->ShaderNum = BQS_InGameColormap;
 			quad->Desat = colormap->Desaturate;
 			color0 = D3DCOLOR_ARGB(255, colormap->Color.r, colormap->Color.g, colormap->Color.b);
-			double fadelevel = clamp(shade / (NUMCOLORMAPS * 65536.0), 0.0, 1.0);
 			color1 = D3DCOLOR_ARGB(DWORD((1 - fadelevel) * 255),
 				DWORD(colormap->Fade.r * fadelevel),
 				DWORD(colormap->Fade.g * fadelevel),

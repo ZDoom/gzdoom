@@ -65,9 +65,9 @@ inline angle_t R_PointToAnglePrecise (fixed_t viewx, fixed_t viewy, fixed_t x, f
 }
 
 // Used for interpolation waypoints.
-struct fixedvec3a
+struct DVector3a
 {
-	fixed_t x, y, z;
+	DVector3 pos;
 	DAngle angle;
 };
 
@@ -78,7 +78,7 @@ void R_ResetViewInterpolation ();
 void R_RebuildViewInterpolation(player_t *player);
 bool R_GetViewInterpolationStatus();
 void R_ClearInterpolationPath();
-void R_AddInterpolationPoint(const fixedvec3a &vec);
+void R_AddInterpolationPoint(const DVector3a &vec);
 void R_SetViewSize (int blocks);
 void R_SetFOV (float fov);
 float R_GetFOV ();

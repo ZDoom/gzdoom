@@ -73,7 +73,7 @@ void AFastProjectile::Tick ()
 						if (tm.ceilingline &&
 							tm.ceilingline->backsector &&
 							tm.ceilingline->backsector->GetTexture(sector_t::ceiling) == skyflatnum &&
-							Z() >= tm.ceilingline->backsector->ceilingplane.ZatPointF(_f_PosRelative(tm.ceilingline)))
+							Z() >= tm.ceilingline->backsector->ceilingplane.ZatPoint(PosRelative(tm.ceilingline)))
 						{
 							// Hack to prevent missiles exploding against the sky.
 							// Does not handle sky floors.
@@ -93,7 +93,7 @@ void AFastProjectile::Tick ()
 				}
 			}
 			AddZ(frac.Z);
-			UpdateWaterLevel (oldz);
+			UpdateWaterLevel ();
 			oldz = Z();
 			if (oldz <= floorz)
 			{ // Hit the floor

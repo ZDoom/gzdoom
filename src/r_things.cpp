@@ -767,10 +767,10 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 		return;
 
 	// [RH] Interpolate the sprite's position to make it look smooth
-	fixedvec3 pos = thing->InterpolatedPosition(r_TicFrac);
-	fx = pos.x;
-	fy = pos.y;
-	fz = pos.z + thing->_f_GetBobOffset(r_TicFrac);
+	DVector3 pos = thing->InterpolatedPosition(r_TicFracF);
+	fx = FLOAT2FIXED(pos.X);
+	fy = FLOAT2FIXED(pos.Y);
+	fz = FLOAT2FIXED(pos.Z + thing->GetBobOffset(r_TicFracF));
 
 	tex = NULL;
 	voxel = NULL;
@@ -969,7 +969,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 		renderflags ^= MirrorFlags & RF_XFLIP;
 
 		// calculate edges of the shape
-		const fixed_t thingxscalemul = DivScale16(spritescaleX, tex->xScale);
+		const fixed_t thingxscalemul = fixed_t(spritescaleX / tex->Scale.X);
 
 		tx -= ((renderflags & RF_XFLIP) ? (tex->GetWidth() - tex->LeftOffset - 1) : tex->LeftOffset) * thingxscalemul;
 		x1 = centerx + MulScale32 (tx, xscale);
@@ -985,10 +985,10 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 		if ((x2 < WindowLeft || x2 <= x1))
 			return;
 
-		xscale = FixedDiv(FixedMul(spritescaleX, xscale), tex->xScale);
+		xscale = fixed_t(FixedMul(spritescaleX, xscale) / tex->Scale.X);
 		iscale = (tex->GetWidth() << FRACBITS) / (x2 - x1);
 
-		fixed_t yscale = SafeDivScale16(spritescaleY, tex->yScale);
+		fixed_t yscale = fixed_t(spritescaleY / tex->Scale.Y);
 
 		// store information in a vissprite
 		vis = R_NewVisSprite();
@@ -1335,7 +1335,7 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, fixed_t sx, fixed_
 	vis->floorclip = 0;
 
 
-	vis->texturemid = MulScale16((BASEYCENTER<<FRACBITS) - sy, tex->yScale) + (tex->TopOffset << FRACBITS);
+	vis->texturemid = int(((BASEYCENTER<<FRACBITS) - sy) * tex->Scale.Y) + (tex->TopOffset << FRACBITS);
 
 
 	if (camera->player && (RenderTarget != screen ||
@@ -1365,20 +1365,20 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, fixed_t sx, fixed_
 	}
 	vis->x1 = x1 < 0 ? 0 : x1;
 	vis->x2 = x2 >= viewwidth ? viewwidth : x2;
-	vis->xscale = DivScale16(pspritexscale, tex->xScale);
-	vis->yscale = DivScale16(pspriteyscale, tex->yScale);
+	vis->xscale = fixed_t(pspritexscale / tex->Scale.X);
+	vis->yscale = fixed_t(pspriteyscale / tex->Scale.Y);
 	vis->Translation = 0;		// [RH] Use default colors
 	vis->pic = tex;
 	vis->ColormapNum = 0;
 
 	if (flip)
 	{
-		vis->xiscale = -MulScale16(pspritexiscale, tex->xScale);
+		vis->xiscale = -int(pspritexiscale * tex->Scale.X);
 		vis->startfrac = (tex->GetWidth() << FRACBITS) - 1;
 	}
 	else
 	{
-		vis->xiscale = MulScale16(pspritexiscale, tex->xScale);
+		vis->xiscale = int(pspritexiscale * tex->Scale.X);
 		vis->startfrac = 0;
 	}
 
@@ -2211,8 +2211,8 @@ void R_DrawSprite (vissprite_t *spr)
 		}
 		// Check if sprite is in front of draw seg:
 		if ((!spr->bWallSprite && neardepth > spr->depth) || ((spr->bWallSprite || fardepth > spr->depth) &&
-			DMulScale32(spr->gy - ds->curline->v1->y, ds->curline->v2->x - ds->curline->v1->x,
-						ds->curline->v1->x - spr->gx, ds->curline->v2->y - ds->curline->v1->y) <= 0))
+			DMulScale32(spr->gy - ds->curline->v1->fixY(), ds->curline->v2->fixX() - ds->curline->v1->fixX(),
+						ds->curline->v1->fixX() - spr->gx, ds->curline->v2->fixY() - ds->curline->v1->fixY()) <= 0))
 		{
 			// seg is behind sprite, so draw the mid texture if it has one
 			if (ds->CurrentPortalUniq == CurrentPortalUniq && // [ZZ] instead, portal uniq check is made here

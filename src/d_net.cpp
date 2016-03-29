@@ -2203,7 +2203,7 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 			x = ReadWord (stream);
 			y = ReadWord (stream);
 			z = ReadWord (stream);
-			P_TeleportMove (players[player].mo, x * 65536, y * 65536, z * 65536, true);
+			P_TeleportMove (players[player].mo, DVector3(x, y, z), true);
 		}
 		break;
 
@@ -2366,19 +2366,15 @@ void Net_DoCommand (int type, BYTE **stream, int player)
 		{
 			FTraceResults trace;
 
-			angle_t ang = players[player].mo->_f_angle()  >> ANGLETOFINESHIFT;
-			angle_t pitch = (angle_t)(players[player].mo->_f_pitch()) >> ANGLETOFINESHIFT;
-			fixed_t vx = FixedMul (finecosine[pitch], finecosine[ang]);
-			fixed_t vy = FixedMul (finecosine[pitch], finesine[ang]);
-			fixed_t vz = -finesine[pitch];
+			DAngle ang = players[player].mo->Angles.Yaw;
+			DAngle pitch = players[player].mo->Angles.Pitch;
+			double c = pitch.Cos();
+			DVector3 vec(c * ang.Cos(), c * ang.Sin(), -pitch.Sin());
 
 			s = ReadString (stream);
 
-			if (Trace (players[player].mo->_f_X(), players[player].mo->_f_Y(),
-				players[player].mo->_f_Top() - (players[player].mo->_f_height()>>2),
-				players[player].mo->Sector,
-				vx, vy, vz, 172*FRACUNIT, 0, ML_BLOCKEVERYTHING, players[player].mo,
-				trace, TRACE_NoSky))
+			if (Trace (players[player].mo->PosPlusZ(players[player].mo->Height/2), players[player].mo->Sector, 
+				vec, 172., 0, ML_BLOCKEVERYTHING, players[player].mo, trace, TRACE_NoSky))
 			{
 				if (trace.HitType == TRACE_HitWall)
 				{

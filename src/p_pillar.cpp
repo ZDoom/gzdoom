@@ -144,15 +144,15 @@ DPillar::DPillar (sector_t *sector, EPillar type, fixed_t speed,
 		if (floordist == 0)
 		{
 			newheight = (sector->CenterFloor () + sector->CenterCeiling ()) / 2;
-			m_FloorTarget = sector->floorplane.PointToDist (sector->centerspot, newheight);
-			m_CeilingTarget = sector->ceilingplane.PointToDist (sector->centerspot, newheight);
+			m_FloorTarget = sector->floorplane.PointToDist (sector->_f_centerspot(), newheight);
+			m_CeilingTarget = sector->ceilingplane.PointToDist (sector->_f_centerspot(), newheight);
 			floordist = newheight - sector->CenterFloor ();
 		}
 		else
 		{
 			newheight = sector->CenterFloor () + floordist;
-			m_FloorTarget = sector->floorplane.PointToDist (sector->centerspot, newheight);
-			m_CeilingTarget = sector->ceilingplane.PointToDist (sector->centerspot, newheight);
+			m_FloorTarget = sector->floorplane.PointToDist (sector->_f_centerspot(), newheight);
+			m_CeilingTarget = sector->ceilingplane.PointToDist (sector->_f_centerspot(), newheight);
 		}
 		ceilingdist = sector->CenterCeiling () - newheight;
 	}
@@ -169,7 +169,7 @@ DPillar::DPillar (sector_t *sector, EPillar type, fixed_t speed,
 		else
 		{
 			newheight = sector->CenterFloor() - floordist;
-			m_FloorTarget = sector->floorplane.PointToDist (sector->centerspot, newheight);
+			m_FloorTarget = sector->floorplane.PointToDist (sector->_f_centerspot(), newheight);
 		}
 		if (ceilingdist == 0)
 		{
@@ -180,7 +180,7 @@ DPillar::DPillar (sector_t *sector, EPillar type, fixed_t speed,
 		else
 		{
 			newheight = sector->CenterCeiling() + ceilingdist;
-			m_CeilingTarget = sector->ceilingplane.PointToDist (sector->centerspot, newheight);
+			m_CeilingTarget = sector->ceilingplane.PointToDist (sector->_f_centerspot(), newheight);
 		}
 	}
 

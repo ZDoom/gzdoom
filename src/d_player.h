@@ -167,7 +167,7 @@ public:
 	// [CW] Fades for when you are being damaged.
 	PalEntry DamageFade;
 
-	bool UpdateWaterLevel (fixed_t oldz, bool splash);
+	bool UpdateWaterLevel (bool splash);
 	bool ResetAirSupply (bool playgasp = true);
 
 	int GetMaxHealth() const;

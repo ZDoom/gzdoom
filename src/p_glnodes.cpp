@@ -140,7 +140,7 @@ static int CheckForMissingSegs()
 		if (seg->sidedef!=NULL)
 		{
 			// check all the segs and calculate the length they occupy on their sidedef
-			DVector2 vec1(seg->v2->x - seg->v1->x, seg->v2->y - seg->v1->y);
+			DVector2 vec1(seg->v2->fixX() - seg->v1->fixX(), seg->v2->fixY() - seg->v1->fixY());
 			added_seglen[seg->sidedef - sides] += float(vec1.Length());
 		}
 	}
@@ -268,8 +268,7 @@ static bool LoadGLVertexes(FileReader * lump)
 
 	for (i = firstglvertex; i < numvertexes; i++)
 	{
-		vertexes[i].x = LittleLong(mgl->x);
-		vertexes[i].y = LittleLong(mgl->y);
+		vertexes[i].set(LittleLong(mgl->x), LittleLong(mgl->y));
 		mgl++;
 	}
 	delete[] gldata;
@@ -1102,8 +1101,8 @@ static void CreateCachedNodes(MapData *map)
 	WriteLong(ZNodes, numvertexes);
 	for(int i=0;i<numvertexes;i++)
 	{
-		WriteLong(ZNodes, vertexes[i].x);
-		WriteLong(ZNodes, vertexes[i].y);
+		WriteLong(ZNodes, vertexes[i].fixX());
+		WriteLong(ZNodes, vertexes[i].fixY());
 	}
 
 	WriteLong(ZNodes, numsubsectors);
@@ -1492,7 +1491,7 @@ void P_SetRenderSector()
 		ss->flags |= SSECF_DEGENERATE;
 		for(j=2; j<ss->numlines; j++)
 		{
-			if (!PointOnLine(seg[j].v1->x, seg[j].v1->y, seg->v1->x, seg->v1->y, seg->v2->x-seg->v1->x, seg->v2->y-seg->v1->y))
+			if (!PointOnLine(seg[j].v1->fixX(), seg[j].v1->fixY(), seg->v1->fixX(), seg->v1->fixY(), seg->v2->fixX() -seg->v1->fixX(), seg->v2->fixY() -seg->v1->fixY()))
 			{
 				// Not on the same line
 				ss->flags &= ~SSECF_DEGENERATE;

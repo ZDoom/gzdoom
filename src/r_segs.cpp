@@ -601,8 +601,8 @@ void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover)
 		scaledside = rover->master->sidedef[0];
 		scaledpart = side_t::mid;
 	}
-	xscale = FixedMul(rw_pic->xScale, scaledside->GetTextureXScale(scaledpart));
-	yscale = FixedMul(rw_pic->yScale, scaledside->GetTextureYScale(scaledpart));
+	xscale = fixed_t(rw_pic->Scale.X * scaledside->GetTextureXScale(scaledpart));
+	yscale = fixed_t(rw_pic->Scale.Y * scaledside->GetTextureYScale(scaledpart));
 
 	fixed_t rowoffset = curline->sidedef->GetTextureYOffset(side_t::mid) + rover->master->sidedef[0]->GetTextureYOffset(side_t::mid);
 	dc_texturemid = rover->model->GetPlaneTexZ(sector_t::ceiling);
@@ -1388,10 +1388,10 @@ static void wallscan_np2_ds(drawseg_t *ds, int x1, int x2, short *uwal, short *d
 {
 	if (rw_pic->GetHeight() != 1 << rw_pic->HeightBits)
 	{
-		fixed_t frontcz1 = ds->curline->frontsector->ceilingplane.ZatPoint(ds->curline->v1->x, ds->curline->v1->y);
-		fixed_t frontfz1 = ds->curline->frontsector->floorplane.ZatPoint(ds->curline->v1->x, ds->curline->v1->y);
-		fixed_t frontcz2 = ds->curline->frontsector->ceilingplane.ZatPoint(ds->curline->v2->x, ds->curline->v2->y);
-		fixed_t frontfz2 = ds->curline->frontsector->floorplane.ZatPoint(ds->curline->v2->x, ds->curline->v2->y);
+		fixed_t frontcz1 = ds->curline->frontsector->ceilingplane.ZatPoint(ds->curline->v1->fixX(), ds->curline->v1->fixY());
+		fixed_t frontfz1 = ds->curline->frontsector->floorplane.ZatPoint(ds->curline->v1->fixX(), ds->curline->v1->fixY());
+		fixed_t frontcz2 = ds->curline->frontsector->ceilingplane.ZatPoint(ds->curline->v2->fixX(), ds->curline->v2->fixY());
+		fixed_t frontfz2 = ds->curline->frontsector->floorplane.ZatPoint(ds->curline->v2->fixX(), ds->curline->v2->fixY());
 		fixed_t top = MAX(frontcz1, frontcz2);
 		fixed_t bot = MIN(frontfz1, frontfz2);
 		if (fake3D & FAKE3D_CLIPTOP)
@@ -1861,8 +1861,8 @@ void R_RenderSegLoop ()
 		{
 			dc_texturemid = rw_midtexturemid;
 			rw_pic = midtexture;
-			xscale = FixedMul(rw_pic->xScale, rw_midtexturescalex);
-			yscale = FixedMul(rw_pic->yScale, rw_midtexturescaley);
+			xscale = fixed_t(rw_pic->Scale.X * rw_midtexturescalex);
+			yscale = fixed_t(rw_pic->Scale.Y * rw_midtexturescaley);
 			if (xscale != lwallscale)
 			{
 				PrepLWall (lwall, curline->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2);
@@ -1904,8 +1904,8 @@ void R_RenderSegLoop ()
 			{
 				dc_texturemid = rw_toptexturemid;
 				rw_pic = toptexture;
-				xscale = FixedMul(rw_pic->xScale, rw_toptexturescalex);
-				yscale = FixedMul(rw_pic->yScale, rw_toptexturescaley);
+				xscale = fixed_t(rw_pic->Scale.X * rw_toptexturescalex);
+				yscale = fixed_t(rw_pic->Scale.Y * rw_toptexturescaley);
 				if (xscale != lwallscale)
 				{
 					PrepLWall (lwall, curline->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2);
@@ -1950,8 +1950,8 @@ void R_RenderSegLoop ()
 			{
 				dc_texturemid = rw_bottomtexturemid;
 				rw_pic = bottomtexture;
-				xscale = FixedMul(rw_pic->xScale, rw_bottomtexturescalex);
-				yscale = FixedMul(rw_pic->yScale, rw_bottomtexturescaley);
+				xscale = fixed_t(rw_pic->Scale.X * rw_bottomtexturescalex);
+				yscale = fixed_t(rw_pic->Scale.Y * rw_bottomtexturescaley);
 				if (xscale != lwallscale)
 				{
 					PrepLWall (lwall, curline->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2);
@@ -2021,7 +2021,7 @@ void R_NewWall (bool needlights)
 			rowoffset = sidedef->GetTextureYOffset(side_t::mid);
 			rw_midtexturescalex = sidedef->GetTextureXScale(side_t::mid);
 			rw_midtexturescaley = sidedef->GetTextureYScale(side_t::mid);
-			yrepeat = FixedMul(midtexture->yScale, rw_midtexturescaley);
+			yrepeat = fixed_t(midtexture->Scale.Y * rw_midtexturescaley);
 			if (yrepeat >= 0)
 			{ // normal orientation
 				if (linedef->flags & ML_DONTPEGBOTTOM)
@@ -2176,7 +2176,7 @@ void R_NewWall (bool needlights)
 			rowoffset = sidedef->GetTextureYOffset(side_t::top);
 			rw_toptexturescalex = sidedef->GetTextureXScale(side_t::top);
 			rw_toptexturescaley = sidedef->GetTextureYScale(side_t::top);
-			yrepeat = FixedMul(toptexture->yScale, rw_toptexturescaley);
+			yrepeat = fixed_t(toptexture->Scale.Y * rw_toptexturescaley);
 			if (yrepeat >= 0)
 			{ // normal orientation
 				if (linedef->flags & ML_DONTPEGTOP)
@@ -2221,7 +2221,7 @@ void R_NewWall (bool needlights)
 			rowoffset = sidedef->GetTextureYOffset(side_t::bottom);
 			rw_bottomtexturescalex = sidedef->GetTextureXScale(side_t::bottom);
 			rw_bottomtexturescaley = sidedef->GetTextureYScale(side_t::bottom);
-			yrepeat = FixedMul(bottomtexture->yScale, rw_bottomtexturescaley);
+			yrepeat = fixed_t(bottomtexture->Scale.Y * rw_bottomtexturescaley);
 			if (yrepeat >= 0)
 			{ // normal orientation
 				if (linedef->flags & ML_DONTPEGBOTTOM)
@@ -2292,9 +2292,9 @@ void R_NewWall (bool needlights)
 	if (needlights && (segtextured || (backsector && IsFogBoundary(frontsector, backsector))))
 	{
 		lwallscale =
-			midtex ? FixedMul(midtex->xScale, sidedef->GetTextureXScale(side_t::mid)) :
-			toptexture ? FixedMul(toptexture->xScale, sidedef->GetTextureXScale(side_t::top)) :
-			bottomtexture ? FixedMul(bottomtexture->xScale, sidedef->GetTextureXScale(side_t::bottom)) :
+			midtex ? int(midtex->Scale.X * sidedef->GetTextureXScale(side_t::mid)) :
+			toptexture ? int(toptexture->Scale.X * sidedef->GetTextureXScale(side_t::top)) :
+			bottomtexture ? int(bottomtexture->Scale.X * sidedef->GetTextureXScale(side_t::bottom)) :
 			FRACUNIT;
 
 		PrepWall (swall, lwall, sidedef->TexelLength * lwallscale, WallC.sx1, WallC.sx2);
@@ -2507,7 +2507,7 @@ void R_StoreWallRange (int start, int stop)
 				lwal = (fixed_t *)(openings + ds_p->maskedtexturecol);
 				swal = (fixed_t *)(openings + ds_p->swall);
 				FTexture *pic = TexMan(sidedef->GetTexture(side_t::mid), true);
-				fixed_t yrepeat = FixedMul(pic->yScale, sidedef->GetTextureYScale(side_t::mid));
+				fixed_t yrepeat = int(pic->Scale.X * sidedef->GetTextureYScale(side_t::mid));
 				fixed_t xoffset = sidedef->GetTextureXOffset(side_t::mid);
 
 				if (pic->bWorldPanning)
@@ -2778,25 +2778,25 @@ int WallMost (short *mostbuf, const secplane_t &plane, const FWallCoords *wallc)
 
 	if (MirrorFlags & RF_XFLIP)
 	{
-		x = curline->v2->x;
-		y = curline->v2->y;
+		x = curline->v2->fixX();
+		y = curline->v2->fixY();
 		if (wallc->sx1 == 0 && 0 != (den = wallc->tx1 - wallc->tx2 + wallc->ty1 - wallc->ty2))
 		{
 			int frac = SafeDivScale30 (wallc->ty1 + wallc->tx1, den);
-			x -= MulScale30 (frac, x - curline->v1->x);
-			y -= MulScale30 (frac, y - curline->v1->y);
+			x -= MulScale30 (frac, x - curline->v1->fixX());
+			y -= MulScale30 (frac, y - curline->v1->fixY());
 		}
 		z1 = viewz - plane.ZatPoint (x, y);
 
 		if (wallc->sx2 > wallc->sx1 + 1)
 		{
-			x = curline->v1->x;
-			y = curline->v1->y;
+			x = curline->v1->fixX();
+			y = curline->v1->fixY();
 			if (wallc->sx2 == viewwidth && 0 != (den = wallc->tx1 - wallc->tx2 - wallc->ty1 + wallc->ty2))
 			{
 				int frac = SafeDivScale30 (wallc->ty2 - wallc->tx2, den);
-				x += MulScale30 (frac, curline->v2->x - x);
-				y += MulScale30 (frac, curline->v2->y - y);
+				x += MulScale30 (frac, curline->v2->fixX() - x);
+				y += MulScale30 (frac, curline->v2->fixY() - y);
 			}
 			z2 = viewz - plane.ZatPoint (x, y);
 		}
@@ -2807,25 +2807,25 @@ int WallMost (short *mostbuf, const secplane_t &plane, const FWallCoords *wallc)
 	}
 	else
 	{
-		x = curline->v1->x;
-		y = curline->v1->y;
+		x = curline->v1->fixX();
+		y = curline->v1->fixY();
 		if (wallc->sx1 == 0 && 0 != (den = wallc->tx1 - wallc->tx2 + wallc->ty1 - wallc->ty2))
 		{
 			int frac = SafeDivScale30 (wallc->ty1 + wallc->tx1, den);
-			x += MulScale30 (frac, curline->v2->x - x);
-			y += MulScale30 (frac, curline->v2->y - y);
+			x += MulScale30 (frac, curline->v2->fixX() - x);
+			y += MulScale30 (frac, curline->v2->fixY() - y);
 		}
 		z1 = viewz - plane.ZatPoint (x, y);
 
 		if (wallc->sx2 > wallc->sx1 + 1)
 		{
-			x = curline->v2->x;
-			y = curline->v2->y;
+			x = curline->v2->fixX();
+			y = curline->v2->fixY();
 			if (wallc->sx2 == viewwidth && 0 != (den = wallc->tx1 - wallc->tx2 - wallc->ty1 + wallc->ty2))
 			{
 				int frac = SafeDivScale30 (wallc->ty2 - wallc->tx2, den);
-				x -= MulScale30 (frac, x - curline->v1->x);
-				y -= MulScale30 (frac, y - curline->v1->y);
+				x -= MulScale30 (frac, x - curline->v1->fixX());
+				y -= MulScale30 (frac, y - curline->v1->fixY());
 			}
 			z2 = viewz - plane.ZatPoint (x, y);
 		}
@@ -3101,7 +3101,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 	decalx = FLOAT2FIXED(dcx);
 	decaly = FLOAT2FIXED(dcy);
 
-	angle_t ang = R_PointToAngle2 (curline->v1->x, curline->v1->y, curline->v2->x, curline->v2->y) >> ANGLETOFINESHIFT;
+	angle_t ang = R_PointToAngle2 (curline->v1->fixX(), curline->v1->fixY(), curline->v2->fixX(), curline->v2->fixY()) >> ANGLETOFINESHIFT;
 	lx  = decalx - FixedMul (x1, finecosine[ang]) - viewx;
 	lx2 = decalx + FixedMul (x2, finecosine[ang]) - viewx;
 	ly  = decaly - FixedMul (x1, finesine[ang]) - viewy;

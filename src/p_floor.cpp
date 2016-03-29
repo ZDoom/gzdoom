@@ -344,7 +344,7 @@ bool EV_DoFloor (DFloor::EFloor floortype, line_t *line, int tag,
 		case DFloor::floorLowerByValue:
 			floor->m_Direction = -1;
 			newheight = sec->CenterFloor() - height;
-			floor->m_FloorDestDist = sec->floorplane.PointToDist (sec->centerspot, newheight);
+			floor->m_FloorDestDist = sec->floorplane.PointToDist (sec->_f_centerspot(), newheight);
 			break;
 
 		case DFloor::floorRaiseInstant:
@@ -352,7 +352,7 @@ bool EV_DoFloor (DFloor::EFloor floortype, line_t *line, int tag,
 		case DFloor::floorRaiseByValue:
 			floor->m_Direction = 1;
 			newheight = sec->CenterFloor() + height;
-			floor->m_FloorDestDist = sec->floorplane.PointToDist (sec->centerspot, newheight);
+			floor->m_FloorDestDist = sec->floorplane.PointToDist (sec->_f_centerspot(), newheight);
 			break;
 
 		case DFloor::floorMoveToValue:
@@ -413,7 +413,7 @@ bool EV_DoFloor (DFloor::EFloor floortype, line_t *line, int tag,
 		case DFloor::floorLowerByTexture:
 			floor->m_Direction = -1;
 			newheight = sec->CenterFloor() - sec->FindShortestTextureAround ();
-			floor->m_FloorDestDist = sec->floorplane.PointToDist (sec->centerspot, newheight);
+			floor->m_FloorDestDist = sec->floorplane.PointToDist (sec->_f_centerspot(), newheight);
 			break;
 
 		case DFloor::floorLowerToCeiling:
@@ -430,13 +430,13 @@ bool EV_DoFloor (DFloor::EFloor floortype, line_t *line, int tag,
 			//		enough, BOOM preserved the code here even though it
 			//		also had this function.)
 			newheight = sec->CenterFloor() + sec->FindShortestTextureAround ();
-			floor->m_FloorDestDist = sec->floorplane.PointToDist (sec->centerspot, newheight);
+			floor->m_FloorDestDist = sec->floorplane.PointToDist (sec->_f_centerspot(), newheight);
 			break;
 
 		case DFloor::floorRaiseAndChange:
 			floor->m_Direction = 1;
 			newheight = sec->CenterFloor() + height;
-			floor->m_FloorDestDist = sec->floorplane.PointToDist (sec->centerspot, newheight);
+			floor->m_FloorDestDist = sec->floorplane.PointToDist (sec->_f_centerspot(), newheight);
 			if (line != NULL)
 			{
 				FTextureID oldpic = sec->GetTexture(sector_t::floor);
@@ -620,7 +620,7 @@ bool EV_BuildStairs (int tag, DFloor::EStair type, line_t *line,
 
 		floor->m_Speed = speed;
 		height = sec->CenterFloor() + stairstep;
-		floor->m_FloorDestDist = sec->floorplane.PointToDist (sec->centerspot, height);
+		floor->m_FloorDestDist = sec->floorplane.PointToDist (sec->_f_centerspot(), height);
 
 		texture = sec->GetTexture(sector_t::floor);
 		osecnum = secnum;				//jff 3/4/98 preserve loop index
@@ -1037,15 +1037,15 @@ bool EV_DoElevator (line_t *line, DElevator::EElevator elevtype,
 		// [RH] elevate up by a specific amount
 		case DElevator::elevateRaise:
 			elevator->m_Direction = 1;
-			elevator->m_FloorDestDist = sec->floorplane.PointToDist (sec->centerspot, floorheight + height);
-			elevator->m_CeilingDestDist = sec->ceilingplane.PointToDist (sec->centerspot, ceilingheight + height);
+			elevator->m_FloorDestDist = sec->floorplane.PointToDist (sec->_f_centerspot(), floorheight + height);
+			elevator->m_CeilingDestDist = sec->ceilingplane.PointToDist (sec->_f_centerspot(), ceilingheight + height);
 			break;
 
 		// [RH] elevate down by a specific amount
 		case DElevator::elevateLower:
 			elevator->m_Direction = -1;
-			elevator->m_FloorDestDist = sec->floorplane.PointToDist (sec->centerspot, floorheight - height);
-			elevator->m_CeilingDestDist = sec->ceilingplane.PointToDist (sec->centerspot, ceilingheight - height);
+			elevator->m_FloorDestDist = sec->floorplane.PointToDist (sec->_f_centerspot(), floorheight - height);
+			elevator->m_CeilingDestDist = sec->ceilingplane.PointToDist (sec->_f_centerspot(), ceilingheight - height);
 			break;
 		}
 	}

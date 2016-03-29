@@ -82,7 +82,7 @@ static TArray<InterpolationViewer> PastViewers;
 static FRandom pr_torchflicker ("TorchFlicker");
 static FRandom pr_hom;
 bool NoInterpolateView;	// GL needs access to this.
-static TArray<fixedvec3a> InterpolationPath;
+static TArray<DVector3a> InterpolationPath;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -609,26 +609,26 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 			angle_t totaladiff = 0;
 			fixed_t oviewz = iview->oviewz;
 			fixed_t nviewz = iview->nviewz;
-			fixedvec3a oldpos = { iview->oviewx, iview->oviewy, 0, 0. };
-			fixedvec3a newpos = { iview->nviewx, iview->nviewy, 0, 0. };
+			DVector3a oldpos = { {FIXED2DBL(iview->oviewx), FIXED2DBL(iview->oviewy), 0.}, 0. };
+			DVector3a newpos = { {FIXED2DBL(iview->nviewx), FIXED2DBL(iview->nviewy), 0. }, 0. };
 			InterpolationPath.Push(newpos);	// add this to  the array to simplify the loops below
 
 			for (unsigned i = 0; i < InterpolationPath.Size(); i += 2)
 			{
-				fixedvec3a &start = i == 0 ? oldpos : InterpolationPath[i - 1];
-				fixedvec3a &end = InterpolationPath[i];
-				pathlen += xs_CRoundToInt(DVector2(end.x - start.x, end.y - start.y).Length());
-				totalzdiff += start.z;
+				DVector3a &start = i == 0 ? oldpos : InterpolationPath[i - 1];
+				DVector3a &end = InterpolationPath[i];
+				pathlen += FLOAT2FIXED((end.pos-start.pos).Length());
+				totalzdiff += FLOAT2FIXED(start.pos.Z);
 				totaladiff += FLOAT2ANGLE(start.angle.Degrees);
 			}
 			fixed_t interpolatedlen = FixedMul(frac, pathlen);
 
 			for (unsigned i = 0; i < InterpolationPath.Size(); i += 2)
 			{
-				fixedvec3a &start = i == 0 ? oldpos : InterpolationPath[i - 1];
-				fixedvec3a &end = InterpolationPath[i];
-				fixed_t fraglen = xs_CRoundToInt(DVector2(end.x - start.x, end.y - start.y).Length());
-				zdiff += start.z;
+				DVector3a &start = i == 0 ? oldpos : InterpolationPath[i - 1];
+				DVector3a &end = InterpolationPath[i];
+				fixed_t fraglen = FLOAT2FIXED((end.pos - start.pos).Length());
+				zdiff += FLOAT2FIXED(start.pos.Z);
 				adiff += FLOAT2ANGLE(start.angle.Degrees);
 				if (fraglen <= interpolatedlen)
 				{
@@ -636,13 +636,14 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 				}
 				else
 				{
-					fixed_t fragfrac = FixedDiv(interpolatedlen, fraglen);
+					double fragfrac = FIXED2DBL(FixedDiv(interpolatedlen, fraglen));
 					oviewz += zdiff;
 					nviewz -= totalzdiff - zdiff;
 					oviewangle += adiff;
 					nviewangle -= totaladiff - adiff;
-					viewx = start.x + FixedMul(fragfrac, end.x - start.x);
-					viewy = start.y + FixedMul(fragfrac, end.y - start.y);
+					DVector2 viewpos = start.pos + (fragfrac * (end.pos - start.pos));
+					viewx = FLOAT2FIXED(viewpos.X);
+					viewy = FLOAT2FIXED(viewpos.Y);
 					viewz = oviewz + FixedMul(frac, nviewz - oviewz);
 					break;
 				}
@@ -652,7 +653,7 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 	}
 	else
 	{
-		fixedvec2 disp = Displacements.getOffset(oldgroup, newgroup);
+		fixedvec2 disp = Displacements._f_getOffset(oldgroup, newgroup);
 		viewx = iview->oviewx + FixedMul(frac, iview->nviewx - iview->oviewx - disp.x);
 		viewy = iview->oviewy + FixedMul(frac, iview->nviewy - iview->oviewy - disp.y);
 		viewz = iview->oviewz + FixedMul(frac, iview->nviewz - iview->oviewz);
@@ -887,7 +888,7 @@ void R_ClearInterpolationPath()
 //
 //==========================================================================
 
-void R_AddInterpolationPoint(const fixedvec3a &vec)
+void R_AddInterpolationPoint(const DVector3a &vec)
 {
 	InterpolationPath.Push(vec);
 }

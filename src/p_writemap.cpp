@@ -102,7 +102,7 @@ static int WriteTHINGS (FILE *file)
 
 	mt.x = LittleShort(short(mo->X()));
 	mt.y = LittleShort(short(mo->Y()));
-	mt.angle = LittleShort(short(MulScale32 (mo->_f_angle() >> ANGLETOFINESHIFT, 360)));
+	mt.angle = LittleShort(short(mo->Angles.Yaw.Degrees));
 	mt.type = LittleShort((short)1);
 	mt.flags = LittleShort((short)(7|224|MTF_SINGLE));
 	fwrite (&mt, sizeof(mt), 1, file);
@@ -150,8 +150,8 @@ static int WriteSIDEDEFS (FILE *file)
 
 	for (int i = 0; i < numsides; ++i)
 	{
-		msd.textureoffset = LittleShort(short(sides[i].GetTextureXOffset(side_t::mid) >> FRACBITS));
-		msd.rowoffset = LittleShort(short(sides[i].GetTextureYOffset(side_t::mid) >> FRACBITS));
+		msd.textureoffset = LittleShort(short(sides[i].GetTextureXOffsetF(side_t::mid)));
+		msd.rowoffset = LittleShort(short(sides[i].GetTextureYOffsetF(side_t::mid)));
 		msd.sector = LittleShort(short(sides[i].sector - sectors));
 		uppercopy (msd.toptexture, GetTextureName (sides[i].GetTexture(side_t::top)));
 		uppercopy (msd.bottomtexture, GetTextureName (sides[i].GetTexture(side_t::bottom)));
@@ -167,8 +167,8 @@ static int WriteVERTEXES (FILE *file)
 
 	for (int i = 0; i < numvertexes; ++i)
 	{
-		mv.x = LittleShort(short(vertexes[i].x >> FRACBITS));
-		mv.y = LittleShort(short(vertexes[i].y >> FRACBITS));
+		mv.x = LittleShort(short(vertexes[i].fixX() >> FRACBITS));
+		mv.y = LittleShort(short(vertexes[i].fixY() >> FRACBITS));
 		fwrite (&mv, sizeof(mv), 1, file);
 	}
 	return numvertexes * sizeof(mv);
@@ -189,7 +189,7 @@ static int WriteSEGS (FILE *file)
 			ms.v2 = LittleShort(short(segs[i].v2 - vertexes));
 			ms.linedef = LittleShort(short(segs[i].linedef - lines));
 			ms.side = segs[i].sidedef == segs[i].linedef->sidedef[0] ? 0 : LittleShort((short)1);
-			ms.angle = LittleShort(short(R_PointToAngle2 (segs[i].v1->x, segs[i].v1->y, segs[i].v2->x, segs[i].v2->y)>>16));
+			ms.angle = LittleShort(short(R_PointToAngle2 (segs[i].v1->fixX(), segs[i].v1->fixY(), segs[i].v2->fixX(), segs[i].v2->fixY())>>16));
 			fwrite (&ms, sizeof(ms), 1, file);
 		}
 	}

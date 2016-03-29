@@ -1054,12 +1054,12 @@ void GLWall::BuildFFBlock(seg_t * seg, F3DFloor * rover,
 		to= (rover->flags&(FF_UPPERTEXTURE|FF_LOWERTEXTURE))? 
 				0.f : FIXED2FLOAT(tci.RowOffset(mastersd->GetTextureYOffset(side_t::mid)));
 		
-		to += FIXED2FLOAT(rowoffset);
+		to += FIXED2FLOAT(rowoffset) + rover->top.model->GetPlaneTexZF(rover->top.isceiling);
 		
-		uplft.v=tci.FloatToTexV(to + FIXED2FLOAT(*rover->top.texheight-ff_topleft));
-		uprgt.v=tci.FloatToTexV(to + FIXED2FLOAT(*rover->top.texheight-ff_topright));
-		lolft.v=tci.FloatToTexV(to + FIXED2FLOAT(*rover->top.texheight-ff_bottomleft));
-		lorgt.v=tci.FloatToTexV(to + FIXED2FLOAT(*rover->top.texheight-ff_bottomright));
+		uplft.v=tci.FloatToTexV(to + FIXED2FLOAT(-ff_topleft));
+		uprgt.v=tci.FloatToTexV(to + FIXED2FLOAT(-ff_topright));
+		lolft.v=tci.FloatToTexV(to + FIXED2FLOAT(-ff_bottomleft));
+		lorgt.v=tci.FloatToTexV(to + FIXED2FLOAT(-ff_bottomright));
 		type=RENDERWALL_FFBLOCK;
 		CheckTexturePosition();
 	}

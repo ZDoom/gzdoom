@@ -880,7 +880,7 @@ void GLMirrorPortal::DrawContents()
 	vertex_t *v2 = linedef->v2;
 
 	// Reflect the current view behind the mirror.
-	if (linedef->dx == 0)
+	if (linedef->Delta().X == 0)
 	{ 
 		// vertical mirror
 		viewx = v1->fixX() - startx + v1->fixX();
@@ -889,7 +889,7 @@ void GLMirrorPortal::DrawContents()
 		if (startx<v1->fixX())  viewx -= FRACUNIT/2;
 		else viewx += FRACUNIT/2;
 	}
-	else if (linedef->dy == 0)
+	else if (linedef->Delta().Y == 0)
 	{ 
 		// horizontal mirror
 		viewy = v1->fixY() - starty + v1->fixY();

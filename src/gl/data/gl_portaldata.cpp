@@ -463,14 +463,14 @@ void gl_InitPortals()
 						line_t *pSrcLine2 = linePortals[j].mOrigin;
 						line_t *pLine2 = linePortals[j].mDestination;
 						// angular precision is intentionally reduced to 32 bit BAM to account for precision problems (otherwise many not perfectly horizontal or vertical portals aren't found here.)
-						angle_t srcang = RAD2ANGLE(atan2(pSrcLine->dy, pSrcLine->dx));
-						angle_t dstang = RAD2ANGLE(atan2(pLine->dy, pLine->dx));
+						unsigned srcang = pSrcLine->Delta().Angle().BAMs();
+						unsigned dstang = pLine->Delta().Angle().BAMs();
 						if ((pSrcLine->v2 == pSrcLine2->v1 && pLine->v1 == pLine2->v2) ||
 							(pSrcLine->v1 == pSrcLine2->v2 && pLine->v2 == pLine2->v1))
 						{
 							// The line connects, now check the translation
-							fixed_t srcang2 = RAD2ANGLE(atan2(pSrcLine2->dy, pSrcLine2->dx));
-							fixed_t dstang2 = RAD2ANGLE(atan2(pLine2->dy, pLine2->dx));
+							unsigned srcang2 = pSrcLine2->Delta().Angle().BAMs();
+							unsigned dstang2 = pLine2->Delta().Angle().BAMs();
 							if (srcang == srcang2 && dstang == dstang2)
 							{
 								// The lines connect and  both source and destination are colinear, so this is a match

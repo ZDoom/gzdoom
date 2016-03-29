@@ -186,8 +186,8 @@ struct GLLinePortal : public GLPortal
 	{
 		v1 = line->v1;
 		v2 = line->v2;
-		dx = line->dx;
-		dy = line->dy;
+		dx = line->fixDx();
+		dy = line->fixDy();
 	}
 
 	GLLinePortal(FGLLinePortal *line)
@@ -198,8 +198,8 @@ struct GLLinePortal : public GLPortal
 			line_t *lline = line->reference->mDestination;
 			v1 = lline->v1;
 			v2 = lline->v2;
-			dx = lline->dx;
-			dy = lline->dy;
+			dx = lline->fixDy();
+			dy = lline->fixDy();
 		}
 		else
 		{

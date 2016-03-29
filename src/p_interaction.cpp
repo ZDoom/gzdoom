@@ -47,8 +47,7 @@
 
 #include "b_bot.h"	//Added by MC:
 
-#include "ravenshared.h"
-#include "a_hexenglobal.h"
+#include "d_player.h"
 #include "a_sharedglobal.h"
 #include "a_pickups.h"
 #include "gi.h"

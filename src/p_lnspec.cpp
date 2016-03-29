@@ -2149,51 +2149,9 @@ FUNC(LS_Sector_ChangeFlags)
 	return rtn;
 }
 
-struct FThinkerCollection
-{
-	int RefNum;
-	DThinker *Obj;
-};
 
-static TArray<FThinkerCollection> Collection;
 
-void AdjustPusher (int tag, int magnitude, int angle, DPusher::EPusher type)
-{
-	// Find pushers already attached to the sector, and change their parameters.
-	{
-		TThinkerIterator<DPusher> iterator;
-		FThinkerCollection collect;
-
-		while ( (collect.Obj = iterator.Next ()) )
-		{
-			if ((collect.RefNum = ((DPusher *)collect.Obj)->CheckForSectorMatch (type, tag)) >= 0)
-			{
-				((DPusher *)collect.Obj)->ChangeValues (magnitude, angle);
-				Collection.Push (collect);
-			}
-		}
-	}
-
-	size_t numcollected = Collection.Size ();
-	int secnum;
-
-	// Now create pushers for any sectors that don't already have them.
-	FSectorTagIterator itr(tag);
-	while ((secnum = itr.Next()) >= 0)
-	{
-		unsigned int i;
-		for (i = 0; i < numcollected; i++)
-		{
-			if (Collection[i].RefNum == sectors[secnum].sectornum)
-				break;
-		}
-		if (i == numcollected)
-		{
-			new DPusher (type, NULL, magnitude, angle, NULL, secnum);
-		}
-	}
-	Collection.Clear ();
-}
+void AdjustPusher(int tag, int magnitude, int angle, bool wind);
 
 FUNC(LS_Sector_SetWind)
 // Sector_SetWind (tag, amount, angle)
@@ -2201,7 +2159,7 @@ FUNC(LS_Sector_SetWind)
 	if (arg3)
 		return false;
 
-	AdjustPusher (arg0, arg1, arg2, DPusher::p_wind);
+	AdjustPusher (arg0, arg1, arg2, true);
 	return true;
 }
 
@@ -2211,7 +2169,7 @@ FUNC(LS_Sector_SetCurrent)
 	if (arg3)
 		return false;
 
-	AdjustPusher (arg0, arg1, arg2, DPusher::p_current);
+	AdjustPusher (arg0, arg1, arg2, false);
 	return true;
 }
 
@@ -2253,76 +2211,9 @@ FUNC(LS_Sector_SetLink)
 	return false;
 }
 
+void SetWallScroller(int id, int sidechoice, fixed_t dx, fixed_t dy, EScrollPos Where);
+void SetScroller(int tag, EScroll type, fixed_t dx, fixed_t dy);
 
-static void SetWallScroller (int id, int sidechoice, fixed_t dx, fixed_t dy, int Where)
-{
-	Where &=7;
-	if (Where == 0) return;
-
-	if ((dx | dy) == 0)
-	{
-		// Special case: Remove the scroller, because the deltas are both 0.
-		TThinkerIterator<DScroller> iterator (STAT_SCROLLER);
-		DScroller *scroller;
-
-		while ( (scroller = iterator.Next ()) )
-		{
-			int wallnum = scroller->GetWallNum ();
-
-			if (wallnum >= 0 && tagManager.LineHasID(sides[wallnum].linedef, id) &&
-				int(sides[wallnum].linedef->sidedef[sidechoice] - sides) == wallnum &&
-				Where == scroller->GetScrollParts())
-			{
-				scroller->Destroy ();
-			}
-		}
-	}
-	else
-	{
-		// Find scrollers already attached to the matching walls, and change
-		// their rates.
-		{
-			TThinkerIterator<DScroller> iterator (STAT_SCROLLER);
-			FThinkerCollection collect;
-
-			while ( (collect.Obj = iterator.Next ()) )
-			{
-				if ((collect.RefNum = ((DScroller *)collect.Obj)->GetWallNum ()) != -1 &&
-					tagManager.LineHasID(sides[collect.RefNum].linedef, id) &&
-					int(sides[collect.RefNum].linedef->sidedef[sidechoice] - sides) == collect.RefNum &&
-					Where == ((DScroller *)collect.Obj)->GetScrollParts())
-				{
-					((DScroller *)collect.Obj)->SetRate (dx, dy);
-					Collection.Push (collect);
-				}
-			}
-		}
-
-		size_t numcollected = Collection.Size ();
-		int linenum;
-
-		// Now create scrollers for any walls that don't already have them.
-		FLineIdIterator itr(id);
-		while ((linenum = itr.Next()) >= 0)
-		{
-			if (lines[linenum].sidedef[sidechoice] != NULL)
-			{
-				int sidenum = int(lines[linenum].sidedef[sidechoice] - sides);
-				unsigned int i;
-				for (i = 0; i < numcollected; i++)
-				{
-					if (Collection[i].RefNum == sidenum)
-						break;
-				}
-				if (i == numcollected)
-				{
-					new DScroller (DScroller::sc_side, dx, dy, -1, sidenum, 0, Where);
-				}
-			}
-		}
-		Collection.Clear ();
-	}
-}
 
 FUNC(LS_Scroll_Texture_Both)
 // Scroll_Texture_Both (id, left, right, up, down)
@@ -2344,7 +2235,7 @@ FUNC(LS_Scroll_Texture_Both)
 		sidechoice = 0;
 	}
 
-	SetWallScroller (arg0, sidechoice, dx, dy, 7);
+	SetWallScroller (arg0, sidechoice, dx, dy, scw_all);
 
 	return true;
 }
@@ -2355,45 +2246,8 @@ FUNC(LS_Scroll_Wall)
 	if (arg0 == 0)
 		return false;
 
-	SetWallScroller (arg0, !!arg3, arg1, arg2, arg4);
+	SetWallScroller (arg0, !!arg3, arg1, arg2, EScrollPos(arg4));
 	return true;
-}
-
-static void SetScroller (int tag, DScroller::EScrollType type, fixed_t dx, fixed_t dy)
-{
-	TThinkerIterator<DScroller> iterator (STAT_SCROLLER);
-	DScroller *scroller;
-	int i;
-
-	// Check if there is already a scroller for this tag
-	// If at least one sector with this tag is scrolling, then they all are.
-	// If the deltas are both 0, we don't remove the scroller, because a
-	// displacement/accelerative scroller might have been set up, and there's
-	// no way to create one after the level is fully loaded.
-	i = 0;
-	while ( (scroller = iterator.Next ()) )
-	{
-		if (scroller->IsType (type))
-		{
-			if (tagManager.SectorHasTag(scroller->GetAffectee (), tag))
-			{
-				i++;
-				scroller->SetRate (dx, dy);
-			}
-		}
-	}
-
-	if (i > 0 || (dx|dy) == 0)
-	{
-		return;
-	}
-
-	// Need to create scrollers for the sector(s)
-	FSectorTagIterator itr(tag);
-	while ((i = itr.Next()) >= 0)
-	{
-		new DScroller (type, dx, dy, -1, i, 0);
-	}
 }
 
 // NOTE: For the next two functions, x-move and y-move are
@@ -2408,19 +2262,19 @@ FUNC(LS_Scroll_Floor)
 
 	if (arg3 == 0 || arg3 == 2)
 	{
-		SetScroller (arg0, DScroller::sc_floor, -dx, dy);
+		SetScroller (arg0, EScroll::sc_floor, -dx, dy);
 	}
 	else
 	{
-		SetScroller (arg0, DScroller::sc_floor, 0, 0);
+		SetScroller (arg0, EScroll::sc_floor, 0, 0);
 	}
 	if (arg3 > 0)
 	{
-		SetScroller (arg0, DScroller::sc_carry, dx, dy);
+		SetScroller (arg0, EScroll::sc_carry, dx, dy);
 	}
 	else
 	{
-		SetScroller (arg0, DScroller::sc_carry, 0, 0);
+		SetScroller (arg0, EScroll::sc_carry, 0, 0);
 	}
 	return true;
 }
@@ -2431,7 +2285,7 @@ FUNC(LS_Scroll_Ceiling)
 	fixed_t dx = arg1 * FRACUNIT/32;
 	fixed_t dy = arg2 * FRACUNIT/32;
 
-	SetScroller (arg0, DScroller::sc_ceiling, -dx, dy);
+	SetScroller (arg0, EScroll::sc_ceiling, -dx, dy);
 	return true;
 }
 

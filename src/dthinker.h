@@ -42,6 +42,7 @@ class AActor;
 class player_t;
 struct pspdef_s;
 struct FState;
+class DThinker;
 
 class FThinkerIterator;
 

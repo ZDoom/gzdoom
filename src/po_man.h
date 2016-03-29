@@ -5,6 +5,7 @@
 #include "r_defs.h"
 #include "m_bbox.h"
 
+class DPolyAction;
 
 struct FPolyVertex
 {

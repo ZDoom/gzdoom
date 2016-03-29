@@ -91,8 +91,8 @@ void DPillar::Tick ()
 	int r, s;
 	fixed_t oldfloor, oldceiling;
 
-	oldfloor = m_Sector->floorplane.d;
-	oldceiling = m_Sector->ceilingplane.d;
+	oldfloor = m_Sector->floorplane.fixD();
+	oldceiling = m_Sector->ceilingplane.fixD();
 
 	if (m_Type == pillarBuild)
 	{

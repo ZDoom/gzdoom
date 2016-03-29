@@ -1600,39 +1600,22 @@ public:
 		// Reset the planes to their defaults if not all of the plane equation's parameters were found.
 		if (fplaneflags != 15)
 		{
-			sec->floorplane.a = sec->floorplane.b = 0;
-			sec->floorplane.d = -sec->GetPlaneTexZ(sector_t::floor);
-			sec->floorplane.c = FRACUNIT;
-			sec->floorplane.ic = FRACUNIT;
+			sec->floorplane.set(0, 0, FRACUNIT, -sec->GetPlaneTexZ(sector_t::floor));
 		}
 		else
 		{
-			double ulen = DVector3(fp[0], fp[1], fp[2]).Length();
-
 			// normalize the vector, it must have a length of 1
-			sec->floorplane.a = FLOAT2FIXED(fp[0] / ulen);
-			sec->floorplane.b = FLOAT2FIXED(fp[1] / ulen);
-			sec->floorplane.c = FLOAT2FIXED(fp[2] / ulen);
-			sec->floorplane.d = FLOAT2FIXED(fp[3] / ulen);
-			sec->floorplane.ic = FLOAT2FIXED(ulen / fp[2]);
+			DVector3 n = DVector3(fp[0], fp[1], fp[2]).Unit();
+			sec->floorplane.set(n.X, n.Y, n.Z, fp[3]);
 		}
 		if (cplaneflags != 15)
 		{
-			sec->ceilingplane.a = sec->ceilingplane.b = 0;
-			sec->ceilingplane.d = sec->GetPlaneTexZ(sector_t::ceiling);
-			sec->ceilingplane.c = -FRACUNIT;
-			sec->ceilingplane.ic = -FRACUNIT;
+			sec->ceilingplane.set(0, 0, -FRACUNIT, sec->GetPlaneTexZ(sector_t::ceiling));
 		}
 		else
 		{
-			double ulen = DVector3(cp[0], cp[1], cp[2]).Length();
-
-			// normalize the vector, it must have a length of 1
-			sec->ceilingplane.a = FLOAT2FIXED(cp[0] / ulen);
-			sec->ceilingplane.b = FLOAT2FIXED(cp[1] / ulen);
-			sec->ceilingplane.c = FLOAT2FIXED(cp[2] / ulen);
-			sec->ceilingplane.d = FLOAT2FIXED(cp[3] / ulen);
-			sec->ceilingplane.ic = FLOAT2FIXED(ulen / cp[2]);
+			DVector3 n = DVector3(cp[0], cp[1], cp[2]).Unit();
+			sec->ceilingplane.set(n.X, n.Y, n.Z, cp[3]);
 		}
 
 		if (lightcolor == -1 && fadecolor == -1 && desaturation == -1)

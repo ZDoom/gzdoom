@@ -312,7 +312,7 @@ bool EV_DoFloor (DFloor::EFloor floortype, line_t *line, int tag,
 		floor->m_Hexencrush = hexencrush;
 		floor->m_Speed = speed;
 		floor->m_ResetCount = 0;				// [RH]
-		floor->m_OrgDist = sec->floorplane.d;	// [RH]
+		floor->m_OrgDist = sec->floorplane.fixD();	// [RH]
 
 		switch (floortype)
 		{
@@ -322,7 +322,7 @@ bool EV_DoFloor (DFloor::EFloor floortype, line_t *line, int tag,
 			floor->m_FloorDestDist = sec->floorplane.PointToDist (spot, newheight);
 			// [RH] DOOM's turboLower type did this. I've just extended it
 			//		to be applicable to all LowerToHighest types.
-			if (hereticlower || floor->m_FloorDestDist != sec->floorplane.d)
+			if (hereticlower || floor->m_FloorDestDist != sec->floorplane.fixD())
 				floor->m_FloorDestDist = sec->floorplane.PointToDist (spot, newheight+height);
 			break;
 
@@ -358,7 +358,7 @@ bool EV_DoFloor (DFloor::EFloor floortype, line_t *line, int tag,
 		case DFloor::floorMoveToValue:
 			sec->FindHighestFloorPoint (&spot);
 			floor->m_FloorDestDist = sec->floorplane.PointToDist (spot, height);
-			floor->m_Direction = (floor->m_FloorDestDist > sec->floorplane.d) ? -1 : 1;
+			floor->m_Direction = (floor->m_FloorDestDist > sec->floorplane.fixD()) ? -1 : 1;
 			break;
 
 		case DFloor::floorRaiseAndCrushDoom:
@@ -475,9 +475,9 @@ bool EV_DoFloor (DFloor::EFloor floortype, line_t *line, int tag,
 		// Do not interpolate instant movement floors.
 		bool silent = false;
 
-		if ((floor->m_Direction>0 && floor->m_FloorDestDist>sec->floorplane.d) ||	// moving up but going down
-			(floor->m_Direction<0 && floor->m_FloorDestDist<sec->floorplane.d) ||	// moving down but going up
-			(floor->m_Speed >= abs(sec->floorplane.d - floor->m_FloorDestDist)))	// moving in one step
+		if ((floor->m_Direction>0 && floor->m_FloorDestDist>sec->floorplane.fixD()) ||	// moving up but going down
+			(floor->m_Direction<0 && floor->m_FloorDestDist<sec->floorplane.fixD()) ||	// moving down but going up
+			(floor->m_Speed >= abs(sec->floorplane.fixD() - floor->m_FloorDestDist)))	// moving in one step
 		{
 			floor->StopInterpolation(true);
 
@@ -609,7 +609,7 @@ bool EV_BuildStairs (int tag, DFloor::EStair type, line_t *line,
 		stairstep = stairsize * floor->m_Direction;
 		floor->m_Type = DFloor::buildStair;	//jff 3/31/98 do not leave uninited
 		floor->m_ResetCount = reset;	// [RH] Tics until reset (0 if never)
-		floor->m_OrgDist = sec->floorplane.d;	// [RH] Height to reset to
+		floor->m_OrgDist = sec->floorplane.fixD();	// [RH] Height to reset to
 		// [RH] Set up delay values
 		floor->m_Delay = delay;
 		floor->m_PauseTime = 0;
@@ -731,7 +731,7 @@ bool EV_BuildStairs (int tag, DFloor::EStair type, line_t *line,
 				floor->m_Crush = (!(usespecials & DFloor::stairUseSpecials) && speed == 4*FRACUNIT) ? 10 : -1; //jff 2/27/98 fix uninitialized crush field
 				floor->m_Hexencrush = false;
 				floor->m_ResetCount = reset;	// [RH] Tics until reset (0 if never)
-				floor->m_OrgDist = sec->floorplane.d;	// [RH] Height to reset to
+				floor->m_OrgDist = sec->floorplane.fixD();	// [RH] Height to reset to
 			}
 		} while (ok);
 		// [RH] make sure the first sector doesn't point to a previous one, otherwise
@@ -902,8 +902,8 @@ void DElevator::Tick ()
 
 	fixed_t oldfloor, oldceiling;
 
-	oldfloor = m_Sector->floorplane.d;
-	oldceiling = m_Sector->ceilingplane.d;
+	oldfloor = m_Sector->floorplane.fixD();
+	oldceiling = m_Sector->ceilingplane.fixD();
 
 	if (m_Direction < 0)	// moving down
 	{
@@ -1031,7 +1031,7 @@ bool EV_DoElevator (line_t *line, DElevator::EElevator elevtype,
 			elevator->m_CeilingDestDist = sec->ceilingplane.PointToDist (line->v1, newheight);
 
 			elevator->m_Direction =
-				elevator->m_FloorDestDist > sec->floorplane.d ? -1 : 1;
+				elevator->m_FloorDestDist > sec->floorplane.fixD() ? -1 : 1;
 			break;
 
 		// [RH] elevate up by a specific amount
@@ -1204,9 +1204,9 @@ void DWaggleBase::DoWaggle (bool ceiling)
 	case WGLSTATE_REDUCE:
 		if ((m_Scale -= m_ScaleDelta) <= 0)
 		{ // Remove
-			dist = FixedMul (m_OriginalDist - plane->d, plane->ic);
+			dist = FixedDiv (m_OriginalDist - plane->fixD(), plane->fixC());
 			m_Sector->ChangePlaneTexZ(pos, -plane->HeightDiff (m_OriginalDist));
-			plane->d = m_OriginalDist;
+			plane->setD(m_OriginalDist);
 			P_ChangeSector (m_Sector, true, dist, ceiling, false);
 			if (ceiling)
 			{
@@ -1236,8 +1236,8 @@ void DWaggleBase::DoWaggle (bool ceiling)
 
 	fixed_t mag = finesine[(m_Accumulator>>9)&8191]*8;
 
-	dist = plane->d;
-	plane->d = m_OriginalDist + plane->PointToDist (0, 0, FixedMul (mag, m_Scale));
+	dist = plane->fixD();
+	plane->setD(m_OriginalDist + plane->PointToDist (0, 0, FixedMul (mag, m_Scale)));
 	m_Sector->ChangePlaneTexZ(pos, plane->HeightDiff (dist));
 	dist = plane->HeightDiff (dist);
 
@@ -1322,12 +1322,12 @@ bool EV_StartWaggle (int tag, line_t *line, int height, int speed, int offset,
 		if (ceiling)
 		{
 			waggle = new DCeilingWaggle (sector);
-			waggle->m_OriginalDist = sector->ceilingplane.d;
+			waggle->m_OriginalDist = sector->ceilingplane.fixD();
 		}
 		else
 		{
 			waggle = new DFloorWaggle (sector);
-			waggle->m_OriginalDist = sector->floorplane.d;
+			waggle->m_OriginalDist = sector->floorplane.fixD();
 		}
 		waggle->m_Accumulator = offset*FRACUNIT;
 		waggle->m_AccDelta = speed << (FRACBITS-6);

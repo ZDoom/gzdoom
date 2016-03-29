@@ -279,7 +279,7 @@ void DPusher::Tick ()
 			continue;
 
 		sector_t *hsec = sec->GetHeightSec();
-		fixedvec3 pos = thing->_f_PosRelative(sec);
+		DVector3 pos = thing->PosRelative(sec);
 		DVector2 pushvel;
 		if (m_Type == p_wind)
 		{
@@ -296,7 +296,7 @@ void DPusher::Tick ()
 			}
 			else // special water sector
 			{
-				ht = hsec->floorplane.ZatPointF(pos);
+				ht = hsec->floorplane.ZatPoint(pos);
 				if (thing->Z() > ht) // above ground
 				{
 					pushvel = m_PushVec; // full force
@@ -323,7 +323,7 @@ void DPusher::Tick ()
 			{ // special water sector
 				floor = &hsec->floorplane;
 			}
-			if (thing->Z() > floor->ZatPointF(pos))
+			if (thing->Z() > floor->ZatPoint(pos))
 			{ // above ground
 				pushvel.Zero(); // no force
 			}

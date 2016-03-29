@@ -264,7 +264,7 @@ DCeiling *DCeiling::Create(sector_t *sec, DCeiling::ECeiling type, line_t *line,
 	{
 	case ceilCrushAndRaise:
 	case ceilCrushRaiseAndStay:
-		ceiling->m_TopHeight = sec->ceilingplane.d;
+		ceiling->m_TopHeight = sec->ceilingplane.fixD();
 	case ceilLowerAndCrush:
 		targheight = sec->FindHighestFloorPoint (&spot);
 		targheight += height;
@@ -404,11 +404,11 @@ DCeiling *DCeiling::Create(sector_t *sec, DCeiling::ECeiling type, line_t *line,
 
 	if (ceiling->m_Direction < 0)
 	{
-		movedist = sec->ceilingplane.d - ceiling->m_BottomHeight;
+		movedist = sec->ceilingplane.fixD() - ceiling->m_BottomHeight;
 	}
 	else
 	{
-		movedist = ceiling->m_TopHeight - sec->ceilingplane.d;
+		movedist = ceiling->m_TopHeight - sec->ceilingplane.fixD();
 	}
 	if (ceiling->m_Speed >= movedist)
 	{

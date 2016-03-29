@@ -101,7 +101,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightGoesOut)
 
 	fixed_t oldtheight = sec->floorplane.Zat0();
 	newheight = sec->FindLowestFloorSurrounding(&spot);
-	sec->floorplane.d = sec->floorplane.PointToDist (spot, newheight);
+	sec->floorplane.setD(sec->floorplane.PointToDist (spot, newheight));
 	fixed_t newtheight = sec->floorplane.Zat0();
 	sec->ChangePlaneTexZ(sector_t::floor, newtheight - oldtheight);
 	sec->CheckPortalPlane(sector_t::floor);

@@ -1530,7 +1530,7 @@ bool AActor::FloorBounceMissile (secplane_t &plane)
 		}
 	}
 
-	if (plane.c < 0)
+	if (plane.fC() < 0)
 	{ // on ceiling
 		if (!(BounceFlags & BOUNCE_Ceilings))
 			return true;
@@ -1582,7 +1582,7 @@ bool AActor::FloorBounceMissile (secplane_t &plane)
 		FState *bouncestate;
 
 		names[0] = NAME_Bounce;
-		names[1] = plane.c < 0 ? NAME_Ceiling : NAME_Floor;
+		names[1] = plane.fC() < 0 ? NAME_Ceiling : NAME_Floor;
 		bouncestate = FindState(2, names);
 		if (bouncestate != NULL)
 		{
@@ -1597,7 +1597,7 @@ bool AActor::FloorBounceMissile (secplane_t &plane)
 	}
 	else if (BounceFlags & (BOUNCE_AutoOff|BOUNCE_AutoOffFloorOnly))
 	{
-		if (plane.c > 0 || (BounceFlags & BOUNCE_AutoOff))
+		if (plane.fC() > 0 || (BounceFlags & BOUNCE_AutoOff))
 		{
 			// AutoOff only works when bouncing off a floor, not a ceiling (or in compatibility mode.)
 			if (!(flags & MF_NOGRAVITY) && (Vel.Z < 3))
@@ -3644,18 +3644,18 @@ void AActor::Tick ()
 			// Check 3D floors as well
 			floorplane = P_FindFloorPlane(floorsector, PosAtZ(floorz));
 
-			if (floorplane.c < STEEPSLOPE &&
+			if (floorplane.fixC() < STEEPSLOPE &&
 				floorplane.ZatPoint (PosRelative(floorsector)) <= floorz)
 			{
 				const msecnode_t *node;
 				bool dopush = true;
 
-				if (floorplane.c > STEEPSLOPE*2/3)
+				if (floorplane.fixC() > STEEPSLOPE*2/3)
 				{
 					for (node = touching_sectorlist; node; node = node->m_tnext)
 					{
 						const sector_t *sec = node->m_sector;
-						if (sec->floorplane.c >= STEEPSLOPE)
+						if (sec->floorplane.fixC() >= STEEPSLOPE)
 						{
 							if (floorplane.ZatPoint(PosRelative(node->m_sector)) >= Z() - MaxStepHeight)
 							{

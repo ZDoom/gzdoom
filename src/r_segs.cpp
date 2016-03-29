@@ -708,9 +708,7 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 
 			// visible?
 			passed = 0;
-			if (!(rover->flags & FF_RENDERSIDES) ||
-				rover->top.plane->a || rover->top.plane->b ||
-				rover->bottom.plane->a || rover->bottom.plane->b ||
+			if (!(rover->flags & FF_RENDERSIDES) || rover->top.plane->isSlope() || rover->bottom.plane->isSlope() ||
 				rover->top.plane->Zat0() <= sclipBottom ||
 				rover->bottom.plane->Zat0() >= ceilingheight ||
 				rover->top.plane->Zat0() <= floorheight)
@@ -745,7 +743,7 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 					if (!(fover->flags & FF_EXISTS)) continue;
 					if (!(fover->flags & FF_RENDERSIDES)) continue;
 					// no sloped walls, it's bugged
-					if (fover->top.plane->a || fover->top.plane->b || fover->bottom.plane->a || fover->bottom.plane->b) continue;
+					if (fover->top.plane->isSlope() || fover->bottom.plane->isSlope()) continue;
 
 					// visible?
 					if (fover->top.plane->Zat0() <= sclipBottom) continue; // no
@@ -798,7 +796,7 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 					if (!(fover->flags & FF_EXISTS)) continue;
 					if (!(fover->flags & FF_RENDERSIDES)) continue;
 					// no sloped walls, it's bugged
-					if (fover->top.plane->a || fover->top.plane->b || fover->bottom.plane->a || fover->bottom.plane->b) continue;
+					if (fover->top.plane->isSlope() || fover->bottom.plane->isSlope()) continue;
 
 					// visible?
 					if (fover->top.plane->Zat0() <= sclipBottom) continue; // no
@@ -893,8 +891,7 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 			// visible?
 			passed = 0;
 			if (!(rover->flags & FF_RENDERSIDES) ||
-				rover->top.plane->a || rover->top.plane->b ||
-				rover->bottom.plane->a || rover->bottom.plane->b ||
+				rover->top.plane->isSlope() || rover->bottom.plane->isSlope() ||
 				rover->bottom.plane->Zat0() >= sclipTop ||
 				rover->top.plane->Zat0() <= floorheight ||
 				rover->bottom.plane->Zat0() >= ceilingheight)
@@ -923,7 +920,7 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 					if (!(fover->flags & FF_EXISTS)) continue;
 					if (!(fover->flags & FF_RENDERSIDES)) continue;
 					// no sloped walls, it's bugged
-					if (fover->top.plane->a || fover->top.plane->b || fover->bottom.plane->a || fover->bottom.plane->b) continue;
+					if (fover->top.plane->isSlope() || fover->bottom.plane->isSlope()) continue;
 
 					// visible?
 					if (fover->bottom.plane->Zat0() >= sclipTop) continue; // no
@@ -975,7 +972,7 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 					if (!(fover->flags & FF_EXISTS)) continue;
 					if (!(fover->flags & FF_RENDERSIDES)) continue;
 					// no sloped walls, its bugged
-					if(fover->top.plane->a || fover->top.plane->b || fover->bottom.plane->a || fover->bottom.plane->b) continue;
+					if (fover->top.plane->isSlope() || fover->bottom.plane->isSlope()) continue;
 
 					// visible?
 					if (fover->bottom.plane->Zat0() >= sclipTop) continue; // no
@@ -2269,7 +2266,7 @@ void R_NewWall (bool needlights)
 		int planeside;
 
 		planeside = frontsector->floorplane.PointOnSide(viewx, viewy, viewz);
-		if (frontsector->floorplane.c < 0)	// 3D floors have the floor backwards
+		if (frontsector->floorplane.fixC() < 0)	// 3D floors have the floor backwards
 			planeside = -planeside;
 		if (planeside <= 0)		// above view plane
 			markfloor = false;
@@ -2277,7 +2274,7 @@ void R_NewWall (bool needlights)
 		if (frontsector->GetTexture(sector_t::ceiling) != skyflatnum)
 		{
 			planeside = frontsector->ceilingplane.PointOnSide(viewx, viewy, viewz);
-			if (frontsector->ceilingplane.c > 0)	// 3D floors have the ceiling backwards
+			if (frontsector->ceilingplane.fixC() > 0)	// 3D floors have the ceiling backwards
 				planeside = -planeside;
 			if (planeside <= 0)		// below view plane
 				markceiling = false;
@@ -2767,9 +2764,9 @@ int OWallMost (short *mostbuf, fixed_t z, const FWallCoords *wallc)
 
 int WallMost (short *mostbuf, const secplane_t &plane, const FWallCoords *wallc)
 {
-	if ((plane.a | plane.b) == 0)
+	if (!plane.isSlope())
 	{
-		return OWallMost (mostbuf, ((plane.c < 0) ? plane.d : -plane.d) - viewz, wallc);
+		return OWallMost (mostbuf, plane.Zat0() - viewz, wallc);
 	}
 
 	fixed_t x, y, den, z1, z2, oz1, oz2;

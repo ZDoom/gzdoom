@@ -274,26 +274,88 @@ class ASkyViewpoint;
 
 struct secplane_t
 {
+	friend FArchive &operator<< (FArchive &arc, secplane_t &plane);
 	// the plane is defined as a*x + b*y + c*z + d = 0
 	// ic is 1/c, for faster Z calculations
 
+private:
 	fixed_t a, b, c, d, ic;
+public:
+
+	void set(fixed_t aa, fixed_t bb, fixed_t cc, fixed_t dd)
+	{
+		a = aa;
+		b = bb;
+		c = cc;
+		d = dd;
+		ic = FixedDiv(FRACUNIT, c);
+	}
+
+	void set(double aa, double bb, double cc, double dd)
+	{
+		a = FLOAT2FIXED(aa);
+		b = FLOAT2FIXED(bb);
+		c = FLOAT2FIXED(cc);
+		d = FLOAT2FIXED(dd);
+		ic = FixedDiv(FRACUNIT, c);
+	}
+
+	void setD(fixed_t dd)
+	{
+		d = dd;
+	}
+
+	void changeD(fixed_t dd)
+	{
+		d += dd;
+	}
+
+	void setD(double dd)
+	{
+		d = FLOAT2FIXED(dd);
+	}
+
+	void changeD(double dd)
+	{
+		d += FLOAT2FIXED(dd);
+	}
+
+	fixed_t fixA() const
+	{
+		return a;
+	}
+	fixed_t fixB() const
+	{
+		return b;
+	}
+	fixed_t fixC() const
+	{
+		return c;
+	}
+	fixed_t fixD() const
+	{
+		return d;
+	}
+	fixed_t fixiC() const
+	{
+		return ic;
+	}
 
 	double fA() const
 	{
-		return FIXED2FLOAT(a);
+		return FIXED2DBL(a);
 	}
 	double fB() const
 	{
-		return FIXED2FLOAT(b);
+		return FIXED2DBL(b);
 	}
 	double fC() const
 	{
-		return FIXED2FLOAT(c);
+		return FIXED2DBL(c);
 	}
 	double fD() const
 	{
-		return FIXED2FLOAT(d);
+		return FIXED2DBL(d);
 	}
 
 	bool isSlope() const
@@ -303,7 +365,7 @@ struct secplane_t
 
 	DVector3 Normal() const
 	{
-		return{ FIXED2FLOAT(a), FIXED2FLOAT(b), FIXED2FLOAT(c) };
+		return{ fA(), fB(), fC() };
 	}
 
 	// Returns < 0 : behind; == 0 : on; > 0 : in front

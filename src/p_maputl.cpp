@@ -218,9 +218,9 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef, co
 		}
 		else
 		{
-			if ((front->floorplane.a | front->floorplane.b) == 0)
+			if (!front->floorplane.isSlope())
 				usefront = true;
-			else if ((back->floorplane.a | front->floorplane.b) == 0)
+			else if (!back->floorplane.isSlope())
 				usefront = false;
 			else
 				usefront = !P_PointOnLineSide (*ref, linedef);

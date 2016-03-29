@@ -103,14 +103,10 @@ static void P_SlopeLineToPoint (int lineid, fixed_t x, fixed_t y, fixed_t z, boo
 			cross = -cross;
 		}
 
-		plane->a = FLOAT2FIXED (cross[0]);
-		plane->b = FLOAT2FIXED (cross[1]);
-		plane->c = FLOAT2FIXED (cross[2]);
-		//plane->ic = FLOAT2FIXED (1.f/cross[2]);
-		plane->ic = DivScale32 (1, plane->c);
-		plane->d = -TMulScale16 (plane->a, x,
-								 plane->b, y,
-								 plane->c, z);
+		plane->set(cross[0], cross[1], cross[2], 0.);
+		plane->setD(-TMulScale16 (plane->fixA(), x,
+								 plane->fixB(), y,
+								 plane->fixC(), z));
 	}
 }
 
@@ -203,14 +199,8 @@ void P_SetSlope (secplane_t *plane, bool setCeil, int xyangi, int zangi,
 	}
 	norm[2] = double(finesine[zang]) * 65536.f;
 	norm.MakeUnit();
-	plane->a = FLOAT2FIXED(norm[0]);
-	plane->b = FLOAT2FIXED(norm[1]);
-	plane->c = FLOAT2FIXED(norm[2]);
-	//plane->ic = (int)(65536.f / norm[2]);
-	plane->ic = DivScale32 (1, plane->c);
-	plane->d = -TMulScale16 (plane->a, x,
-							 plane->b, y,
-							 plane->c, z);
+	plane->set(norm[0], norm[1], norm[2], 0.);
+	plane->setD(-TMulScale16(plane->fixA(), x, plane->fixB(), y, plane->fixC(), z));
 }
 
 
@@ -255,15 +245,8 @@ void P_VavoomSlope(sector_t * sec, int id, fixed_t x, fixed_t y, fixed_t z, int 
 				cross = -cross;
 			}
 
-
-			srcplane->a = FLOAT2FIXED (cross[0]);
-			srcplane->b = FLOAT2FIXED (cross[1]);
-			srcplane->c = FLOAT2FIXED (cross[2]);
-			//plane->ic = FLOAT2FIXED (1.f/cross[2]);
-			srcplane->ic = DivScale32 (1, srcplane->c);
-			srcplane->d = -TMulScale16 (srcplane->a, x,
-										srcplane->b, y,
-										srcplane->c, z);
+			srcplane->set(cross[0], cross[1], cross[2], 0.);
+			srcplane->setD(-TMulScale16(srcplane->fixA(), x, srcplane->fixB(), y,	srcplane->fixC(), z));
 			return;
 		}
 	}
@@ -388,15 +371,12 @@ static void P_SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt, 
 					cross = -cross;
 				}
 
-				secplane_t *srcplane = j==0? &sec->floorplane : &sec->ceilingplane;
+				secplane_t *plane = j==0? &sec->floorplane : &sec->ceilingplane;
 
-				srcplane->a = FLOAT2FIXED (cross[0]);
-				srcplane->b = FLOAT2FIXED (cross[1]);
-				srcplane->c = FLOAT2FIXED (cross[2]);
-				srcplane->ic = DivScale32 (1, srcplane->c);
-				srcplane->d = -TMulScale16 (srcplane->a, vertexes[vi3].fixX(),
-											srcplane->b, vertexes[vi3].fixY(),
-											srcplane->c, FLOAT2FIXED(vt3.Z));
+				plane->set(cross[0], cross[1], cross[2], 0.);
+				plane->setD(-TMulScale16 (plane->fixA(), vertexes[vi3].fixX(),
+											plane->fixB(), vertexes[vi3].fixY(),
+											plane->fixC(), FLOAT2FIXED(vt3.Z)));
 			}
 		}
 	}
@@ -546,14 +526,10 @@ static void P_AlignPlane (sector_t *sec, line_t *line, int which)
 		cross = -cross;
 	}
 
-	srcplane->a = FLOAT2FIXED (cross[0]);
-	srcplane->b = FLOAT2FIXED (cross[1]);
-	srcplane->c = FLOAT2FIXED (cross[2]);
-	//srcplane->ic = FLOAT2FIXED (1.f/cross[2]);
-	srcplane->ic = DivScale32 (1, srcplane->c);
-	srcplane->d = -TMulScale16 (srcplane->a, line->v1->fixX(),
-								srcplane->b, line->v1->fixY(),
-								srcplane->c, destheight);
+	srcplane->set(cross[0], cross[1], cross[2], 0.);
+	srcplane->setD(-TMulScale16 (srcplane->fixA(), line->v1->fixX(),
+								srcplane->fixB(), line->v1->fixY(),
+								srcplane->fixC(), destheight));
 }
 
 //===========================================================================

@@ -617,14 +617,14 @@ fixed_t sector_t::FindHighestFloorPoint (vertex_t **v) const
 	fixed_t probeheight;
 	vertex_t *spot = NULL;
 
-	if ((floorplane.a | floorplane.b) == 0)
+	if (!floorplane.isSlope())
 	{
 		if (v != NULL)
 		{
 			if (linecount == 0) *v = &vertexes[0];
 			else *v = lines[0]->v1;
 		}
-		return -floorplane.d;
+		return floorplane.Zat0();
 	}
 
 	for (i = 0; i < linecount; i++)
@@ -659,14 +659,14 @@ fixed_t sector_t::FindLowestCeilingPoint (vertex_t **v) const
 	fixed_t probeheight;
 	vertex_t *spot = NULL;
 
-	if ((ceilingplane.a | ceilingplane.b) == 0)
+	if (!ceilingplane.isSlope())
 	{
 		if (v != NULL)
 		{
 			if (linecount == 0) *v = &vertexes[0];
 			else *v = lines[0]->v1;
 		}
-		return ceilingplane.d;
+		return ceilingplane.fixD();
 	}
 
 	for (i = 0; i < linecount; i++)

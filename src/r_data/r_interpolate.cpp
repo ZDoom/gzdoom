@@ -440,12 +440,12 @@ void DSectorPlaneInterpolation::UpdateInterpolation()
 {
 	if (!ceiling)
 	{
-		oldheight = sector->floorplane.d;
+		oldheight = sector->floorplane.fixD();
 		oldtexz = sector->GetPlaneTexZ(sector_t::floor);
 	}
 	else
 	{
-		oldheight = sector->ceilingplane.d;
+		oldheight = sector->ceilingplane.fixD();
 		oldtexz = sector->GetPlaneTexZ(sector_t::ceiling);
 	}
 }
@@ -460,12 +460,12 @@ void DSectorPlaneInterpolation::Restore()
 {
 	if (!ceiling)
 	{
-		sector->floorplane.d = bakheight;
+		sector->floorplane.setD(bakheight);
 		sector->SetPlaneTexZ(sector_t::floor, baktexz, true);
 	}
 	else
 	{
-		sector->ceilingplane.d = bakheight;
+		sector->ceilingplane.setD(bakheight);
 		sector->SetPlaneTexZ(sector_t::ceiling, baktexz, true);
 	}
 	P_RecalculateAttached3DFloors(sector);
@@ -480,21 +480,21 @@ void DSectorPlaneInterpolation::Restore()
 
 void DSectorPlaneInterpolation::Interpolate(fixed_t smoothratio)
 {
-	fixed_t *pheight;
+	secplane_t *pplane;
 	int pos;
 
 	if (!ceiling)
 	{
-		pheight = &sector->floorplane.d;
+		pplane = &sector->floorplane;
 		pos = sector_t::floor;
 	}
 	else
 	{
-		pheight = &sector->ceilingplane.d;
+		pplane = &sector->ceilingplane;
 		pos = sector_t::ceiling;
 	}
 
-	bakheight = *pheight;
+	bakheight = pplane->fixD();
 	baktexz = sector->GetPlaneTexZ(pos);
 
 	if (refcount == 0 && oldheight == bakheight)
@@ -503,7 +503,7 @@ void DSectorPlaneInterpolation::Interpolate(fixed_t smoothratio)
 	}
 	else
 	{
-	*pheight = oldheight + FixedMul(bakheight - oldheight, smoothratio);
+		pplane->setD(oldheight + FixedMul(bakheight - oldheight, smoothratio));
 	sector->SetPlaneTexZ(pos, oldtexz + FixedMul(baktexz - oldtexz, smoothratio), true);
 	P_RecalculateAttached3DFloors(sector);
 		sector->CheckPortalPlane(pos);

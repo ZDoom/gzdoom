@@ -808,7 +808,7 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 	if (!(tm.thing->flags & MF_DROPOFF) &&
 		!(tm.thing->flags & (MF_NOGRAVITY | MF_NOCLIP)))
 	{
-		if ((open.frontfloorplane.c < STEEPSLOPE) != (open.backfloorplane.c < STEEPSLOPE))
+		if ((open.frontfloorplane.fixC() < STEEPSLOPE) != (open.backfloorplane.fixC() < STEEPSLOPE))
 		{
 			// on the boundary of a steep slope
 			return false;
@@ -2901,7 +2901,7 @@ const secplane_t * P_CheckSlopeWalk(AActor *actor, DVector2 &move)
 		if (thisplanez > planezhere && thisplanez <= actor->Z() + actor->MaxStepHeight)
 		{
 			copyplane = *rover->top.plane;
-			if (copyplane.c < 0) copyplane.FlipVert();
+			if (copyplane.fC() < 0) copyplane.FlipVert();
 			plane = &copyplane;
 			planezhere = thisplanez;
 		}
@@ -2918,7 +2918,7 @@ const secplane_t * P_CheckSlopeWalk(AActor *actor, DVector2 &move)
 			if (thisplanez > planezhere && thisplanez <= actor->Z() + actor->MaxStepHeight)
 			{
 				copyplane = *rover->top.plane;
-				if (copyplane.c < 0) copyplane.FlipVert();
+				if (copyplane.fC() < 0) copyplane.FlipVert();
 				plane = &copyplane;
 				planezhere = thisplanez;
 			}
@@ -2947,7 +2947,7 @@ const secplane_t * P_CheckSlopeWalk(AActor *actor, DVector2 &move)
 		if (t < 0)
 		{ // Desired location is behind (below) the plane
 			// (i.e. Walking up the plane)
-			if (plane->c < STEEPSLOPE)
+			if (plane->fixC() < STEEPSLOPE)
 			{ // Can't climb up slopes of ~45 degrees or more
 				if (actor->flags & MF_NOCLIP)
 				{
@@ -2958,12 +2958,12 @@ const secplane_t * P_CheckSlopeWalk(AActor *actor, DVector2 &move)
 					const msecnode_t *node;
 					bool dopush = true;
 
-					if (plane->c > STEEPSLOPE * 2 / 3)
+					if (plane->fixC() > STEEPSLOPE * 2 / 3)
 					{
 						for (node = actor->touching_sectorlist; node; node = node->m_tnext)
 						{
 							sector_t *sec = node->m_sector;
-							if (sec->floorplane.c >= STEEPSLOPE)
+							if (sec->floorplane.fixC() >= STEEPSLOPE)
 							{
 								DVector3 pos = actor->PosRelative(sec) +move;
 

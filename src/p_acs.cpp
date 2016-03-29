@@ -1426,9 +1426,9 @@ DPlaneWatcher::DPlaneWatcher (AActor *it, line_t *line, int lineSide, bool ceili
 		{
 			plane = Sector->floorplane;
 		}
-		LastD = plane.d;
+		LastD = plane.fixD();
 		plane.ChangeHeight (height << FRACBITS);
-		WatchD = plane.d;
+		WatchD = plane.fixD();
 	}
 	else
 	{
@@ -1458,11 +1458,11 @@ void DPlaneWatcher::Tick ()
 
 	if (bCeiling)
 	{
-		newd = Sector->ceilingplane.d;
+		newd = Sector->ceilingplane.fixD();
 	}
 	else
 	{
-		newd = Sector->floorplane.d;
+		newd = Sector->floorplane.fixD();
 	}
 
 	if ((LastD < WatchD && newd >= WatchD) ||

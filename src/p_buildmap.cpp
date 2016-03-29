@@ -403,9 +403,7 @@ static void LoadSectors (sectortype *bsec)
 
 		sec->e = &sectors[0].e[i];
 		sec->SetPlaneTexZ(sector_t::floor, -(LittleLong(bsec->floorZ) << 8));
-		sec->floorplane.d = -sec->GetPlaneTexZ(sector_t::floor);
-		sec->floorplane.c = FRACUNIT;
-		sec->floorplane.ic = FRACUNIT;
+		sec->floorplane.set(0, 0, -FRACUNIT, -sec->GetPlaneTexZ(sector_t::floor));
 		mysnprintf (tnam, countof(tnam), "BTIL%04d", LittleShort(bsec->floorpicnum));
 		sec->SetTexture(sector_t::floor, TexMan.GetTexture (tnam, FTexture::TEX_Build));
 		sec->SetXScale(sector_t::floor, (bsec->floorstat & 8) ? FRACUNIT*2 : FRACUNIT);
@@ -416,9 +414,7 @@ static void LoadSectors (sectortype *bsec)
 		sec->ChangeFlags(sector_t::floor, 0, PLANEF_ABSLIGHTING);
 
 		sec->SetPlaneTexZ(sector_t::ceiling, -(LittleLong(bsec->ceilingZ) << 8));
-		sec->ceilingplane.d = sec->GetPlaneTexZ(sector_t::ceiling);
-		sec->ceilingplane.c = -FRACUNIT;
-		sec->ceilingplane.ic = -FRACUNIT;
+		sec->ceilingplane.set(0, 0, -FRACUNIT, sec->GetPlaneTexZ(sector_t::ceiling));
 		mysnprintf (tnam, countof(tnam), "BTIL%04d", LittleShort(bsec->ceilingpicnum));
 		sec->SetTexture(sector_t::ceiling, TexMan.GetTexture (tnam, FTexture::TEX_Build));
 		if (bsec->ceilingstat & 1)
@@ -826,17 +822,14 @@ static void CalcPlane (SlopeWork &slope, secplane_t &plane)
 	pt[1] = DVector3(slope.x[2] - slope.x[0], slope.y[0] - slope.y[2], (slope.z[2] - slope.z[0]) / 16);
 	pt[2] = (pt[0] ^ pt[1]).Unit();
 
-	if ((pt[2][2] < 0 && plane.c > 0) || (pt[2][2] > 0 && plane.c < 0))
+	if ((pt[2][2] < 0 && plane.fC() > 0) || (pt[2][2] > 0 && plane.fC() < 0))
 	{
 		pt[2] = -pt[2];
 	}
 
-	plane.a = FLOAT2FIXED(pt[2][0]);
-	plane.b = FLOAT2FIXED(pt[2][1]);
-	plane.c = FLOAT2FIXED(pt[2][2]);
-	plane.ic = DivScale32(1, plane.c);
-	plane.d = -TMulScale8
-		(plane.a, slope.x[0]<<4, plane.b, (-slope.y[0])<<4, plane.c, slope.z[0]);
+	plane.set(pt[2][0], pt[2][1], pt[2][2], 0.);
+	plane.setD(-TMulScale8
+		(plane.fixA(), slope.x[0]<<4, plane.fixB(), (-slope.y[0])<<4, plane.fixC(), slope.z[0]));
 }
 
 //==========================================================================

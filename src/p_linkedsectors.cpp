@@ -101,8 +101,7 @@ static bool MoveCeiling(sector_t *sector, int crush, fixed_t move)
 	if (P_ChangeSector(sector, crush, move, 1, true)) return false;
 
 	// Don't let the ceiling go below the floor
-	if ((sector->ceilingplane.a | sector->ceilingplane.b |
-		 sector->floorplane.a | sector->floorplane.b) == 0 &&
+	if (!sector->ceilingplane.isSlope() && !sector->floorplane.isSlope() &&
 		 sector->GetPlaneTexZ(sector_t::floor)  > sector->GetPlaneTexZ(sector_t::ceiling)) return false;
 
 	return true;
@@ -116,8 +115,7 @@ static bool MoveFloor(sector_t *sector, int crush, fixed_t move)
 	if (P_ChangeSector(sector, crush, move, 0, true)) return false;
 
 	// Don't let the floor go above the ceiling
-	if ((sector->ceilingplane.a | sector->ceilingplane.b |
-		 sector->floorplane.a | sector->floorplane.b) == 0 &&
+	if (!sector->ceilingplane.isSlope() && !sector->floorplane.isSlope() &&
 		 sector->GetPlaneTexZ(sector_t::floor) > sector->GetPlaneTexZ(sector_t::ceiling)) return false;
 
 	return true;

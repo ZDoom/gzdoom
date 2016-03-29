@@ -1107,7 +1107,7 @@ void R_SetupFrame (AActor *actor)
 			viewside = plane->PointOnSide(viewx, viewy, viewz);
 			// Reverse the direction of the test if the plane was downward facing.
 			// We want to know if the view is above it, whatever its orientation may be.
-			if (plane->c < 0)
+			if (plane->fC() < 0)
 				viewside = -viewside;
 			if (viewside > 0)
 			{

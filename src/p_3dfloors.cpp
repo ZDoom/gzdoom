@@ -189,7 +189,7 @@ static void P_Add3DFloor(sector_t* sec, sector_t* sec2, line_t* master, int flag
 	ffloor->top.vindex = ffloor->bottom.vindex = -1;
 
 	// The engine cannot handle sloped translucent floors. Sorry
-	if (ffloor->top.plane->a || ffloor->top.plane->b || ffloor->bottom.plane->a || ffloor->bottom.plane->b)
+	if (ffloor->top.plane->isSlope() || ffloor->bottom.plane->isSlope())
 	{
 		ffloor->alpha = OPAQUE;
 		ffloor->flags &= ~FF_ADDITIVETRANS;
@@ -815,12 +815,12 @@ void P_LineOpening_XFloors (FLineOpening &open, AActor * thing, const line_t *li
 				if (highestfloorplanes[0])
 				{
 					open.frontfloorplane = *highestfloorplanes[0];
-					if (open.frontfloorplane.c < 0) open.frontfloorplane.FlipVert();
+					if (open.frontfloorplane.fC() < 0) open.frontfloorplane.FlipVert();
 				}
 				if (highestfloorplanes[1])
 				{
 					open.backfloorplane = *highestfloorplanes[1];
-					if (open.backfloorplane.c < 0) open.backfloorplane.FlipVert();
+					if (open.backfloorplane.fC() < 0) open.backfloorplane.FlipVert();
 				}
 			}
 			
@@ -908,7 +908,7 @@ secplane_t P_FindFloorPlane(sector_t * sector, const DVector3 &pos)
 			if (rover->top.plane->ZatPoint(pos) == pos.Z)
 			{
 				retplane = *rover->top.plane;
-				if (retplane.c<0) retplane.FlipVert();
+				if (retplane.fC() < 0) retplane.FlipVert();
 				break;
 			}
 		}

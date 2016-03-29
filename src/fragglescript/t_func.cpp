@@ -1638,7 +1638,7 @@ public:
 		m_FloorDestDist = moveheight;
 
 		// Do not interpolate instant movement floors.
-		fixed_t movedist = abs(-sec->floorplane.d - moveheight);
+		fixed_t movedist = abs(-sec->floorplane.fixD() - moveheight);
 		if (m_Speed >= movedist)
 		{
 			StopInterpolation(true);
@@ -1790,7 +1790,7 @@ public:
 		m_Direction=destheight>sec->GetPlaneTexZ(sector_t::ceiling)? 1:-1;
 
 		// Do not interpolate instant movement ceilings.
-		fixed_t movedist = abs(sec->ceilingplane.d - m_BottomHeight);
+		fixed_t movedist = abs(sec->ceilingplane.fixD() - m_BottomHeight);
 		if (m_Speed >= movedist)
 		{
 			StopInterpolation (true);

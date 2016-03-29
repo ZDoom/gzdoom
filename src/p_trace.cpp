@@ -930,13 +930,13 @@ bool FTraceInfo::TraceTraverse (int ptflags)
 
 bool FTraceInfo::CheckPlane (const secplane_t &plane)
 {
-	fixed_t den = TMulScale16 (plane.a, Vx, plane.b, Vy, plane.c, Vz);
+	fixed_t den = TMulScale16 (plane.fixA(), Vx, plane.fixB(), Vy, plane.fixC(), Vz);
 
 	if (den != 0)
 	{
-		fixed_t num = TMulScale16 (plane.a, StartX,
-								   plane.b, StartY,
-								   plane.c, StartZ) + plane.d;
+		fixed_t num = TMulScale16 (plane.fixA(), StartX,
+								   plane.fixB(), StartY,
+								   plane.fixC(), StartZ) + plane.fixD();
 
 		fixed_t hitdist = FixedDiv (-num, den);
 

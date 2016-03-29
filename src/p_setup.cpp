@@ -1509,13 +1509,9 @@ void P_LoadSectors (MapData *map, FMissingTextureTracker &missingtex)
 		ss->e = &sectors[0].e[i];
 		if (!map->HasBehavior) ss->Flags |= SECF_FLOORDROP;
 		ss->SetPlaneTexZ(sector_t::floor, LittleShort(ms->floorheight)<<FRACBITS);
-		ss->floorplane.d = -ss->GetPlaneTexZ(sector_t::floor);
-		ss->floorplane.c = FRACUNIT;
-		ss->floorplane.ic = FRACUNIT;
+		ss->floorplane.set(0, 0, FRACUNIT, -ss->GetPlaneTexZ(sector_t::floor));
 		ss->SetPlaneTexZ(sector_t::ceiling, LittleShort(ms->ceilingheight)<<FRACBITS);
-		ss->ceilingplane.d = ss->GetPlaneTexZ(sector_t::ceiling);
-		ss->ceilingplane.c = -FRACUNIT;
-		ss->ceilingplane.ic = -FRACUNIT;
+		ss->ceilingplane.set(0, 0, -FRACUNIT, ss->GetPlaneTexZ(sector_t::ceiling));
 		SetTexture(ss, i, sector_t::floor, ms->floorpic, missingtex, true);
 		SetTexture(ss, i, sector_t::ceiling, ms->ceilingpic, missingtex, true);
 		ss->lightlevel = LittleShort(ms->lightlevel);

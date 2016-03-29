@@ -1254,12 +1254,12 @@ void R_AddSprites (sector_t *sec, int lightlevel, int fakeside)
 			if(!(rover->flags & FF_SOLID) || rover->alpha != 255) continue;
 			if(!fakefloor)
 			{
-				if(!(rover->top.plane->a) && !(rover->top.plane->b))
+				if(!rover->top.plane->isSlope())
 				{
 					if(rover->top.plane->Zat0() <= thing->_f_Z()) fakefloor = rover;
 				}
 			}
-			if(!(rover->bottom.plane->a) && !(rover->bottom.plane->b))
+			if(!rover->bottom.plane->isSlope())
 			{
 				if(rover->bottom.plane->Zat0() >= thing->_f_Top()) fakeceiling = rover;
 			}

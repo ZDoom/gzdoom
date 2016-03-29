@@ -968,7 +968,7 @@ void P_CreateLinkedPortals()
 			if (box != NULL && box->special1 == SKYBOX_LINKEDPORTAL)
 			{
 				secplane_t &plane = j == 0 ? sectors[i].floorplane : sectors[i].ceilingplane;
-				if (plane.a || plane.b)
+				if (plane.isSlope())
 				{
 					// The engine cannot deal with portals on a sloped plane.
 					sectors[i].SkyBoxes[j] = NULL;

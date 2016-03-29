@@ -1169,7 +1169,7 @@ void R_Subsector (subsector_t *sub)
 			fakeFloor = frontsector->e->XFloor.ffloors[i];
 			if (!(fakeFloor->flags & FF_EXISTS)) continue;
 			if (!fakeFloor->model) continue;
-			if (fakeFloor->bottom.plane->a || fakeFloor->bottom.plane->b) continue;
+			if (fakeFloor->bottom.plane->isSlope()) continue;
 			if (!(fakeFloor->flags & FF_NOSHADE) || (fakeFloor->flags & (FF_RENDERPLANES|FF_RENDERSIDES)))
 			{
 				R_3D_AddHeight(fakeFloor->top.plane, frontsector);
@@ -1230,7 +1230,7 @@ void R_Subsector (subsector_t *sub)
 			fakeFloor = frontsector->e->XFloor.ffloors[i];
 			if (!(fakeFloor->flags & FF_EXISTS)) continue;
 			if (!fakeFloor->model) continue;
-			if (fakeFloor->top.plane->a || fakeFloor->top.plane->b) continue;
+			if (fakeFloor->top.plane->isSlope()) continue;
 			if (!(fakeFloor->flags & FF_NOSHADE) || (fakeFloor->flags & (FF_RENDERPLANES|FF_RENDERSIDES)))
 			{
 				R_3D_AddHeight(fakeFloor->bottom.plane, frontsector);

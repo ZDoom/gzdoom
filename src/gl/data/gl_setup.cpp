@@ -106,7 +106,7 @@ struct cvertex_t
 
 	operator int () const { return ((x>>16)&0xffff) | y; }
 	bool operator!= (const cvertex_t &other) const { return x != other.x || y != other.y; }
-	cvertex_t& operator =(const vertex_t *v) { x = v->x; y = v->y; return *this; }
+	cvertex_t& operator =(const vertex_t *v) { x = v->fixX(); y = v->fixY(); return *this; }
 };
 
 typedef TMap<cvertex_t, int> FSectionVertexMap;
@@ -286,7 +286,7 @@ static void PrepareSectorData()
 						seg[j].PartnerSeg!=NULL && 
 						subsectors[i].render_sector != seg[j].PartnerSeg->Subsector->render_sector)
 				{
-					DPrintf("Found hack: (%d,%d) (%d,%d)\n", seg[j].v1->x>>16, seg[j].v1->y>>16, seg[j].v2->x>>16, seg[j].v2->y>>16);
+					DPrintf("Found hack: (%f,%f) (%f,%f)\n", seg[j].v1->fX(), seg[j].v1->fY(), seg[j].v2->fX(), seg[j].v2->fY());
 					subsectors[i].hacked|=5;
 					SpreadHackedFlag(&subsectors[i]);
 				}
@@ -512,8 +512,8 @@ static void PrepareSegs()
 	// Get floatng point coordinates of vertices
 	for(int i = 0; i < numvertexes; i++)
 	{
-		vertexes[i].fx = FIXED2FLOAT(vertexes[i].x);
-		vertexes[i].fy = FIXED2FLOAT(vertexes[i].y);
+		vertexes[i].fx = vertexes[i].fX();
+		vertexes[i].fy = vertexes[i].fY();
 		vertexes[i].dirty = true;
 	}
 

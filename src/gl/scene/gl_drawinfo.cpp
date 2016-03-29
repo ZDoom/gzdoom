@@ -1182,10 +1182,10 @@ void FDrawInfo::FloodUpperGap(seg_t * seg)
 		v2=seg->linedef->v1;
 	}
 
-	ws.x1= FIXED2FLOAT(v1->x);
-	ws.y1= FIXED2FLOAT(v1->y);
-	ws.x2= FIXED2FLOAT(v2->x);
-	ws.y2= FIXED2FLOAT(v2->y);
+	ws.x1 = v1->fX();
+	ws.y1 = v1->fY();
+	ws.x2 = v2->fX();
+	ws.y2 = v2->fY();
 
 	ws.z1= FIXED2FLOAT(frontz);
 	ws.z2= FIXED2FLOAT(backz);
@@ -1235,10 +1235,10 @@ void FDrawInfo::FloodLowerGap(seg_t * seg)
 		v2=seg->linedef->v1;
 	}
 
-	ws.x1= FIXED2FLOAT(v1->x);
-	ws.y1= FIXED2FLOAT(v1->y);
-	ws.x2= FIXED2FLOAT(v2->x);
-	ws.y2= FIXED2FLOAT(v2->y);
+	ws.x1 = v1->fX();
+	ws.y1 = v1->fY();
+	ws.x2 = v2->fX();
+	ws.y2 = v2->fY();
 
 	ws.z2= FIXED2FLOAT(frontz);
 	ws.z1= FIXED2FLOAT(backz);

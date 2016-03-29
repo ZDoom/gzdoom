@@ -655,10 +655,10 @@ void GLSkyboxPortal::DrawContents()
 	PlaneMirrorMode=0;
 
 	bool oldclamp = gl_RenderState.SetDepthClamp(false);
-	fixedvec3 viewpos = origin->InterpolatedPosition(r_TicFrac);
-	viewx = viewpos.x;
-	viewy = viewpos.y;
-	viewz = viewpos.z;
+	DVector3 viewpos = origin->InterpolatedPosition(r_TicFracF);
+	viewx = FLOAT2FIXED(viewpos.X);
+	viewy = FLOAT2FIXED(viewpos.Y);
+	viewz = FLOAT2FIXED(viewpos.Z);
 	viewangle += (origin->PrevAngles.Yaw + deltaangle(origin->PrevAngles.Yaw, origin->Angles.Yaw) * FIXED2DBL(r_TicFrac)).BAMs();
 
 	// Don't let the viewpoint be too close to a floor or ceiling
@@ -883,19 +883,19 @@ void GLMirrorPortal::DrawContents()
 	if (linedef->dx == 0)
 	{ 
 		// vertical mirror
-		viewx = v1->x - startx + v1->x;
+		viewx = v1->fixX() - startx + v1->fixX();
 
 		// Compensation for reendering inaccuracies
-		if (startx<v1->x)  viewx -= FRACUNIT/2;
+		if (startx<v1->fixX())  viewx -= FRACUNIT/2;
 		else viewx += FRACUNIT/2;
 	}
 	else if (linedef->dy == 0)
 	{ 
 		// horizontal mirror
-		viewy = v1->y - starty + v1->y;
+		viewy = v1->fixY() - starty + v1->fixY();
 
 		// Compensation for reendering inaccuracies
-		if (starty<v1->y)  viewy -= FRACUNIT/2;
+		if (starty<v1->fixY())  viewy -= FRACUNIT/2;
 		else viewy += FRACUNIT/2;
 	}
 	else
@@ -903,10 +903,10 @@ void GLMirrorPortal::DrawContents()
 		// any mirror--use floats to avoid integer overflow. 
 		// Use doubles to avoid losing precision which is very important here.
 
-		double dx = FIXED2DBL(v2->x - v1->x);
-		double dy = FIXED2DBL(v2->y - v1->y);
-		double x1 = FIXED2DBL(v1->x);
-		double y1 = FIXED2DBL(v1->y);
+		double dx = v2->fX() - v1->fX();
+		double dy = v2->fY() - v1->fY();
+		double x1 = v1->fX();
+		double y1 = v1->fY();
 		double x = FIXED2DBL(startx);
 		double y = FIXED2DBL(starty);
 
@@ -924,8 +924,8 @@ void GLMirrorPortal::DrawContents()
 		viewy+= FLOAT2FIXED(v[0] * renderdepth / 2);
 	}
 	// we cannot afford any imprecisions caused by R_PointToAngle2 here. They'd be visible as seams around the mirror.
-	viewangle = 2*R_PointToAnglePrecise (linedef->v1->x, linedef->v1->y,
-										linedef->v2->x, linedef->v2->y) - startang;
+	viewangle = 2*R_PointToAnglePrecise (linedef->v1->fixX(), linedef->v1->fixY(),
+										linedef->v2->fixX(), linedef->v2->fixY()) - startang;
 
 	GLRenderer->mViewActor = NULL;
 	r_showviewer = true;
@@ -960,7 +960,7 @@ int GLLinePortal::ClipSubsector(subsector_t *sub)
 	// this seg is completely behind the mirror!
 	for(unsigned int i=0;i<sub->numlines;i++)
 	{
-		if (P_PointOnLineSidePrecise(sub->firstline[i].v1->x, sub->firstline[i].v1->y, line()) == 0) return PClip_Inside;
+		if (P_PointOnLineSidePrecise(sub->firstline[i].v1->fixX(), sub->firstline[i].v1->fixY(), line()) == 0) return PClip_Inside;
 	}
 	return PClip_InFront; 
 }
@@ -1015,7 +1015,7 @@ void GLLineToLinePortal::DrawContents()
 		line_t *line = lines[i].seg->linedef->getPortalDestination();
 		subsector_t *sub;
 		if (line->sidedef[0]->Flags & WALLF_POLYOBJ) 
-			sub = R_PointInSubsector(line->v1->x, line->v1->y);
+			sub = R_PointInSubsector(line->v1->fixX(), line->v1->fixY());
 		else sub = line->frontsector->subsectors[0];
 		int mapsection = sub->mapsection;
 		currentmapsection[mapsection >> 3] |= 1 << (mapsection & 7);

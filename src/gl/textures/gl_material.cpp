@@ -457,13 +457,13 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 
 	FTexture *basetex = tx->GetRedirect(false);
 	// allow the redirect only if the textute is not expanded or the scale matches.
-	if (!expanded || (tx->xScale == basetex->xScale && tx->yScale == basetex->yScale))
+	if (!expanded || (tx->Scale.X == basetex->Scale.X && tx->Scale.Y == basetex->Scale.Y))
 	{
 		mBaseLayer = ValidateSysTexture(basetex, expanded);
 	}
 
-	float fxScale = FIXED2FLOAT(tx->xScale);
-	float fyScale = FIXED2FLOAT(tx->yScale);
+	float fxScale = tx->Scale.X;
+	float fyScale = tx->Scale.Y;
 
 	// mSpriteRect is for positioning the sprite in the scene.
 	mSpriteRect.left = -mLeftOffset / fxScale;
@@ -646,7 +646,7 @@ void FMaterial::Bind(int clampmode, int translation)
 
 	int usebright = false;
 	int maxbound = 0;
-	bool allowhires = tex->xScale == FRACUNIT && tex->yScale == FRACUNIT && clampmode <= CLAMP_XY && !mExpanded;
+	bool allowhires = tex->Scale.X == 1 && tex->Scale.Y == 1 && clampmode <= CLAMP_XY && !mExpanded;
 
 	if (tex->bHasCanvas) clampmode = CLAMP_CAMTEX;
 	else if (tex->bWarped && clampmode <= CLAMP_XY) clampmode = CLAMP_NONE;
@@ -701,12 +701,12 @@ void FMaterial::GetTexCoordInfo(FTexCoordInfo *tci, fixed_t x, fixed_t y) const
 	if (x == FRACUNIT)
 	{
 		tci->mRenderWidth = mRenderWidth;
-		tci->mScaleX = tex->xScale;
+		tci->mScaleX = FLOAT2FIXED(tex->Scale.X);
 		tci->mTempScaleX = FRACUNIT;
 	}
 	else
 	{
-		fixed_t scale_x = FixedMul(x, tex->xScale);
+		fixed_t scale_x = fixed_t(x * tex->Scale.X);
 		int foo = (mWidth << 17) / scale_x; 
 		tci->mRenderWidth = (foo >> 1) + (foo & 1); 
 		tci->mScaleX = scale_x;
@@ -716,12 +716,12 @@ void FMaterial::GetTexCoordInfo(FTexCoordInfo *tci, fixed_t x, fixed_t y) const
 	if (y == FRACUNIT)
 	{
 		tci->mRenderHeight = mRenderHeight;
-		tci->mScaleY = tex->yScale;
+		tci->mScaleY = FLOAT2FIXED(tex->Scale.Y);
 		tci->mTempScaleY = FRACUNIT;
 	}
 	else
 	{
-		fixed_t scale_y = FixedMul(y, tex->yScale);
+		fixed_t scale_y = fixed_t(y * tex->Scale.Y);
 		int foo = (mHeight << 17) / scale_y; 
 		tci->mRenderHeight = (foo >> 1) + (foo & 1); 
 		tci->mScaleY = scale_y;

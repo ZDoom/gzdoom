@@ -90,8 +90,8 @@ void gl_SetDynSpriteLight(AActor *self, float x, float y, float z, subsector_t *
 					int togroup = subsec->sector->PortalGroup;
 					if (fromgroup == togroup || fromgroup == 0 || togroup == 0) goto direct;	
 
-					fixedvec2 offset = Displacements.getOffset(fromgroup, togroup);
-					dist = FVector3(x - light->X() - FIXED2FLOAT(offset.x), y - light->Y() - FIXED2FLOAT(offset.y), z - light->Z()).LengthSquared();
+					DVector2 offset = Displacements.getOffset(fromgroup, togroup);
+					dist = FVector3(x - light->X() - offset.X, y - light->Y() - offset.Y, z - light->Z()).LengthSquared();
 				}
 				else
 				{

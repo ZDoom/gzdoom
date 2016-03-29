@@ -508,12 +508,12 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 	if (!(currentmapsection[thing->subsector->mapsection>>3] & (1 << (thing->subsector->mapsection & 7)))) return;
 
 	// [RH] Interpolate the sprite's position to make it look smooth
-	fixedvec3 thingpos = thing->InterpolatedPosition(r_TicFrac);
+	DVector3 thingpos = thing->InterpolatedPosition(r_TicFracF);
 
 	// Too close to the camera. This doesn't look good if it is a sprite.
-	if (P_AproxDistance(thingpos.x-viewx, thingpos.y-viewy)<2*FRACUNIT)
+	if (fabs(thingpos.X - FIXED2DBL(viewx) < 2 && fabs(thingpos.Y - FIXED2DBL(viewy) < 2)))
 	{
-		if (viewz >= thingpos.z - 2 * FRACUNIT && viewz <= thingpos.z + FLOAT2FIXED(thing->Height) + 2 * FRACUNIT)
+		if (FIXED2DBL(viewz) >= thingpos.Z - 2 && FIXED2DBL(viewz) <= thingpos.Z + thing->Height + 2)
 		{
 			// exclude vertically moving objects from this check.
 			if (!thing->Vel.isZero())
@@ -532,14 +532,14 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 		if (!(thing->flags7 & MF7_FLYCHEAT) && thing->target==GLRenderer->mViewActor && GLRenderer->mViewActor != NULL)
 		{
 			fixed_t clipdist = FLOAT2FIXED(clamp(thing->Speed, thing->target->radius, thing->target->radius*2));
-			if (P_AproxDistance(thingpos.x-viewx, thingpos.y-viewy) < clipdist) return;
+			if (P_AproxDistance(FLOAT2FIXED(thingpos.X)-viewx, FLOAT2FIXED(thingpos.Y)-viewy) < clipdist) return;
 		}
 		thing->flags7 |= MF7_FLYCHEAT;	// do this only once for the very first frame, but not if it gets into range again.
 	}
 
 	if (GLRenderer->mCurrentPortal)
 	{
-		int clipres = GLRenderer->mCurrentPortal->ClipPoint(thingpos.x, thingpos.y);
+		int clipres = GLRenderer->mCurrentPortal->ClipPoint(FLOAT2FIXED(thingpos.X), FLOAT2FIXED(thingpos.Y));
 		if (clipres == GLPortal::PClip_InFront) return;
 	}
 
@@ -556,21 +556,21 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 	}
 	
 
-	x = FIXED2FLOAT(thingpos.x);
-	z = FIXED2FLOAT(thingpos.z)-thing->Floorclip;
-	y = FIXED2FLOAT(thingpos.y);
+	x = thingpos.X;
+	z = thingpos.Z - thing->Floorclip;
+	y = thingpos.Y;
 
 	// [RH] Make floatbobbing a renderer-only effect.
 	if (thing->flags2 & MF2_FLOATBOB)
 	{
-		float fz = FIXED2FLOAT(thing->GetBobOffset(r_TicFrac));
+		float fz = thing->GetBobOffset(r_TicFracF);
 		z += fz;
 	}
 	
 	modelframe = gl_FindModelFrame(thing->GetClass(), spritenum, thing->frame, !!(thing->flags & MF_DROPPED));
 	if (!modelframe)
 	{
-		angle_t ang = R_PointToAngle(thingpos.x, thingpos.y);
+		angle_t ang = R_PointToAngle(FLOAT2FIXED(thingpos.X), FLOAT2FIXED(thingpos.Y));
 
 		bool mirror;
 		FTextureID patch = gl_GetSpriteFrame(spritenum, thing->frame, -1, ang - thing->Angles.Yaw.BAMs(), &mirror);
@@ -607,7 +607,7 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 		// Tests show that this doesn't look good for many decorations and corpses
 		if (spriteheight > 0 && gl_spriteclip > 0 && (thing->renderflags & RF_SPRITETYPEMASK) == RF_FACESPRITE)
 		{
-			PerformSpriteClipAdjustment(thing, thingpos.x, thingpos.y, spriteheight);
+			PerformSpriteClipAdjustment(thing, FLOAT2FIXED(thingpos.X), FLOAT2FIXED(thingpos.Y), spriteheight);
 		}
 
 		float viewvecX;
@@ -643,7 +643,7 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 		gltexture=NULL;
 	}
 
-	depth = DMulScale20 (thingpos.x-viewx, viewtancos, thingpos.y-viewy, viewtansin);
+	depth = DMulScale20 (FLOAT2FIXED(thingpos.X)-viewx, viewtancos, FLOAT2FIXED(thingpos.Y)-viewy, viewtansin);
 
 	// light calculation
 
@@ -659,7 +659,7 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 			rendersector->GetCeilingLight() : rendersector->GetFloorLight());
 	foglevel = (BYTE)clamp<short>(rendersector->lightlevel, 0, 255);
 
-	lightlevel = (byte)gl_CheckSpriteGlow(rendersector, lightlevel, thingpos.x, thingpos.y, thingpos.z);
+	lightlevel = (byte)gl_CheckSpriteGlow(rendersector, lightlevel, FLOAT2FIXED(thingpos.X), FLOAT2FIXED(thingpos.Y), FLOAT2FIXED(thingpos.Z));
 
 	ThingColor = (thing->RenderStyle.Flags & STYLEF_ColorIsFixed) ? thing->fillcolor : 0xffffff;
 	ThingColor.a = 255;

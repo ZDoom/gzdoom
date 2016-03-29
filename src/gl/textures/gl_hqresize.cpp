@@ -264,7 +264,7 @@ unsigned char *gl_CreateUpsampledTextureBuffer ( const FTexture *inputTexture, u
 		return inputBuffer;
 
 	// already scaled?
-	if (inputTexture->xScale >= FRACUNIT*2 && inputTexture->yScale >= FRACUNIT*2)
+	if (inputTexture->Scale.X >= 2 && inputTexture->Scale.Y >= 2)
 		return inputBuffer;
 
 	switch (inputTexture->UseType)

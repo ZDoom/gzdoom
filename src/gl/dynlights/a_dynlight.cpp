@@ -354,9 +354,7 @@ void ADynamicLight::UpdateLocation()
 
 			DVector3 pos = target->Vec3Offset(m_off.X * c + m_off.Y * s, m_off.X * s - m_off.Y * c, m_off.Z + target->GetBobOffset());
 			SetXYZ(pos); // attached lights do not need to go into the regular blockmap
-			PrevX = target->_f_X();
-			PrevY = target->_f_Y();
-			PrevZ = target->_f_Z();
+			Prev = target->Pos();
 			subsector = R_PointInSubsector(target->_f_X(), target->_f_Y());
 			Sector = subsector->sector;
 		}
@@ -509,23 +507,23 @@ static FLightNode * DeleteLightNode(FLightNode * node)
 //
 //==========================================================================
 
-float ADynamicLight::DistToSeg(const fixedvec3 &pos, seg_t *seg)
+double ADynamicLight::DistToSeg(const fixedvec3 &pos, seg_t *seg)
 {
-	float u, px, py;
+	double u, px, py;
 
-	float seg_dx = FIXED2FLOAT(seg->v2->x - seg->v1->x);
-	float seg_dy = FIXED2FLOAT(seg->v2->y - seg->v1->y);
-	float seg_length_sq = seg_dx * seg_dx + seg_dy * seg_dy;
+	double seg_dx = seg->v2->fX() - seg->v1->fX();
+	double seg_dy = seg->v2->fY() - seg->v1->fY();
+	double seg_length_sq = seg_dx * seg_dx + seg_dy * seg_dy;
 
-	u = (FIXED2FLOAT(pos.x - seg->v1->x) * seg_dx + FIXED2FLOAT(pos.y - seg->v1->y) * seg_dy) / seg_length_sq;
-	if (u < 0.f) u = 0.f; // clamp the test point to the line segment
-	if (u > 1.f) u = 1.f;
+	u = ((FIXED2DBL(pos.x) - seg->v1->fX()) * seg_dx + (FIXED2DBL(pos.y) - seg->v1->fY()) * seg_dy) / seg_length_sq;
+	if (u < 0.) u = 0.; // clamp the test point to the line segment
+	if (u > 1.) u = 1.;
 
-	px = FIXED2FLOAT(seg->v1->x) + (u * seg_dx);
-	py = FIXED2FLOAT(seg->v1->y) + (u * seg_dy);
+	px = seg->v1->fX() + (u * seg_dx);
+	py = seg->v1->fY() + (u * seg_dy);
 
-	px -= FIXED2FLOAT(pos.x);
-	py -= FIXED2FLOAT(pos.y);
+	px -= FIXED2DBL(pos.x);
+	py -= FIXED2DBL(pos.y);
 
 	return (px*px) + (py*py);
 }
@@ -558,7 +556,7 @@ void ADynamicLight::CollectWithinRadius(const fixedvec3 &pos, subsector_t *subSe
 		if (seg->sidedef && seg->linedef && seg->linedef->validcount!=::validcount)
 		{
 			// light is in front of the seg
-			if (DMulScale32(pos.y - seg->v1->y, seg->v2->x - seg->v1->x, seg->v1->x - pos.x, seg->v2->y - seg->v1->y) <= 0)
+			if (DMulScale32(pos.y - seg->v1->fixY(), seg->v2->fixX() - seg->v1->fixX(), seg->v1->fixX() - pos.x, seg->v2->fixY() - seg->v1->fixY()) <= 0)
 			{
 				seg->linedef->validcount = validcount;
 				touching_sides = AddLightNode(&seg->sidedef->lighthead, seg->sidedef, this, touching_sides);
@@ -574,7 +572,7 @@ void ADynamicLight::CollectWithinRadius(const fixedvec3 &pos, subsector_t *subSe
 					line_t *other = port->mDestination;
 					if (other->validcount != ::validcount)
 					{
-						subsector_t *othersub = R_PointInSubsector(other->v1->x + other->dx / 2, other->v1->y + other->dy / 2);
+						subsector_t *othersub = R_PointInSubsector(other->v1->fixX() + other->dx / 2, other->v1->fixY() + other->dy / 2);
 						if (othersub->validcount != ::validcount) CollectWithinRadius(_f_PosRelative(other), othersub, radius);
 					}
 				}
@@ -601,7 +599,7 @@ void ADynamicLight::CollectWithinRadius(const fixedvec3 &pos, subsector_t *subSe
 		AActor *sb = subSec->sector->SkyBoxes[sector_t::ceiling];
 		if (sb->specialf1 < Z() + radius)
 		{
-			fixedvec2 refpos = { other->v1->x + other->dx / 2 + FLOAT2FIXED(sb->Scale.X), other->v1->y + other->dy / 2 + FLOAT2FIXED(sb->Scale.Y) };
+			fixedvec2 refpos = { other->v1->fixX() + other->dx / 2 + FLOAT2FIXED(sb->Scale.X), other->v1->fixY() + other->dy / 2 + FLOAT2FIXED(sb->Scale.Y) };
 			subsector_t *othersub = R_PointInSubsector(refpos.x, refpos.y);
 			if (othersub->validcount != ::validcount) CollectWithinRadius(_f_PosRelative(othersub->sector), othersub, radius);
 		}
@@ -612,7 +610,7 @@ void ADynamicLight::CollectWithinRadius(const fixedvec3 &pos, subsector_t *subSe
 		AActor *sb = subSec->sector->SkyBoxes[sector_t::floor];
 		if (sb->specialf1 > Z() - radius)
 		{
-			fixedvec2 refpos = { other->v1->x + other->dx / 2 + FLOAT2FIXED(sb->Scale.X), other->v1->y + other->dy / 2 + FLOAT2FIXED(sb->Scale.Y) };
+			fixedvec2 refpos = { other->v1->fixX() + other->dx / 2 + FLOAT2FIXED(sb->Scale.X), other->v1->fixY() + other->dy / 2 + FLOAT2FIXED(sb->Scale.Y) };
 			subsector_t *othersub = R_PointInSubsector(refpos.x, refpos.y);
 			if (othersub->validcount != ::validcount) CollectWithinRadius(_f_PosRelative(othersub->sector), othersub, radius);
 		}

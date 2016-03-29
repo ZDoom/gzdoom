@@ -134,8 +134,8 @@ void GLWall::PutWall(bool translucent)
 
 	if (translucent) // translucent walls
 	{
-		viewdistance = P_AproxDistance(((seg->linedef->v1->x + seg->linedef->v2->x) >> 1) - viewx,
-			((seg->linedef->v1->y + seg->linedef->v2->y) >> 1) - viewy);
+		viewdistance = P_AproxDistance(((seg->linedef->v1->fixX() + seg->linedef->v2->fixX()) >> 1) - viewx,
+			((seg->linedef->v1->fixY() + seg->linedef->v2->fixY()) >> 1) - viewy);
 		gl_drawinfo->drawlists[GLDL_TRANSLUCENT].AddWall(this);
 	}
 	else
@@ -1396,15 +1396,15 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 	}
 	else	// polyobjects must be rendered per seg.
 	{
-		if (abs(v1->x - v2->x) > abs(v1->y - v2->y))
+		if (fabs(v1->fX() - v2->fX()) > fabs(v1->fY() - v2->fY()))
 		{
-			glseg.fracleft = float(seg->v1->x - v1->x) / float(v2->x - v1->x);
-			glseg.fracright = float(seg->v2->x - v1->x) / float(v2->x - v1->x);
+			glseg.fracleft = (seg->v1->fX() - v1->fX()) / (v2->fX() - v1->fX());
+			glseg.fracright = (seg->v2->fX() - v1->fX()) / float(v2->fX() - v1->fX());
 		}
 		else
 		{
-			glseg.fracleft = float(seg->v1->y - v1->y) / float(v2->y - v1->y);
-			glseg.fracright = float(seg->v2->y - v1->y) / float(v2->y - v1->y);
+			glseg.fracleft = (seg->v1->fY() - v1->fY()) / (v2->fY() - v1->fY());
+			glseg.fracright = (seg->v2->fY() - v1->fY()) / (v2->fY() - v1->fY());
 		}
 		v1 = seg->v1;
 		v2 = seg->v2;
@@ -1414,10 +1414,10 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 	vertexes[0] = v1;
 	vertexes[1] = v2;
 
-	glseg.x1 = FIXED2FLOAT(v1->x);
-	glseg.y1 = FIXED2FLOAT(v1->y);
-	glseg.x2 = FIXED2FLOAT(v2->x);
-	glseg.y2 = FIXED2FLOAT(v2->y);
+	glseg.x1 = v1->fX();
+	glseg.y1 = v1->fY();
+	glseg.x2 = v2->fX();
+	glseg.y2 = v2->fY();
 	Colormap = frontsector->ColorMap;
 	flags = 0;
 	dynlightindex = UINT_MAX;
@@ -1700,10 +1700,10 @@ void GLWall::ProcessLowerMiniseg(seg_t *seg, sector_t * frontsector, sector_t * 
 		vertexes[0] = v1;
 		vertexes[1] = v2;
 
-		glseg.x1 = FIXED2FLOAT(v1->x);
-		glseg.y1 = FIXED2FLOAT(v1->y);
-		glseg.x2 = FIXED2FLOAT(v2->x);
-		glseg.y2 = FIXED2FLOAT(v2->y);
+		glseg.x1 = v1->fX();
+		glseg.y1 = v1->fY();
+		glseg.x2 = v2->fX();
+		glseg.y2 = v2->fY();
 		glseg.fracleft = 0;
 		glseg.fracright = 1;
 

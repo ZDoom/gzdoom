@@ -512,13 +512,13 @@ CCMD(dumpgeometry)
 				if (seg->linedef)
 				{
 				Printf(PRINT_LOG, "      (%4.4f, %4.4f), (%4.4f, %4.4f) - seg %d, linedef %d, side %d", 
-					FIXED2FLOAT(seg->v1->x), FIXED2FLOAT(seg->v1->y), FIXED2FLOAT(seg->v2->x), FIXED2FLOAT(seg->v2->y),
+					seg->v1->fX(), seg->v1->fY(), seg->v2->fX(), seg->v2->fY(),
 					int(seg-segs), int(seg->linedef-lines), seg->sidedef != seg->linedef->sidedef[0]);
 				}
 				else
 				{
 					Printf(PRINT_LOG, "      (%4.4f, %4.4f), (%4.4f, %4.4f) - seg %d, miniseg", 
-						FIXED2FLOAT(seg->v1->x), FIXED2FLOAT(seg->v1->y), FIXED2FLOAT(seg->v2->x), FIXED2FLOAT(seg->v2->y),
+						seg->v1->fX(), seg->v1->fY(), seg->v2->fX(), seg->v2->fY(),
 						int(seg-segs));
 				}
 				if (seg->PartnerSeg) 

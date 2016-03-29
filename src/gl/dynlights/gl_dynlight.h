@@ -99,7 +99,7 @@ public:
 	FLightNode * touching_sector;
 
 private:
-	float DistToSeg(const fixedvec3 &pos, seg_t *seg);
+	double DistToSeg(const fixedvec3 &pos, seg_t *seg);
 	void CollectWithinRadius(const fixedvec3 &pos, subsector_t *subSec, float radius);
 
 protected:

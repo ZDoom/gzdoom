@@ -187,33 +187,33 @@ public:
 
 	int GetScaledLeftOffset() const
 	{
-		return DivScale16(mLeftOffset, tex->xScale);
+		return int(mLeftOffset / tex->Scale.X);
 	}
 
 	int GetScaledTopOffset() const
 	{
-		return DivScale16(mTopOffset, tex->yScale);
+		return int(mTopOffset / tex->Scale.Y);
 	}
 
 	float GetScaledLeftOffsetFloat() const
 	{
-		return mLeftOffset / FIXED2FLOAT(tex->xScale);
+		return float(mLeftOffset / tex->Scale.X);
 	}
 
 	float GetScaledTopOffsetFloat() const
 	{
-		return mTopOffset/ FIXED2FLOAT(tex->yScale);
+		return float(mTopOffset/ tex->Scale.Y);
 	}
 
 	// This is scaled size in floating point as needed by sprites
 	float GetScaledWidthFloat() const
 	{
-		return mWidth / FIXED2FLOAT(tex->xScale);
+		return float(mWidth / tex->Scale.X);
 	}
 
 	float GetScaledHeightFloat() const
 	{
-		return mHeight / FIXED2FLOAT(tex->yScale);
+		return float(mHeight / tex->Scale.Y);
 	}
 
 	// Get right/bottom UV coordinates for patch drawing

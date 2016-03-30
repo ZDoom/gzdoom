@@ -879,10 +879,10 @@ struct sector_t
 		}
 	}
 
-	void SetBase(int pos, fixed_t y, angle_t o)
+	void SetBase(int pos, double y, DAngle o)
 	{
-		planes[pos].xform.base_yoffs = y;
-		planes[pos].xform.base_angle = o;
+		planes[pos].xform.base_yoffs = FLOAT2FIXED(y);
+		planes[pos].xform.base_angle = o.BAMs();
 	}
 
 	void SetAlpha(int pos, fixed_t o)
@@ -1082,18 +1082,8 @@ struct sector_t
 		return LowestFloorAt(a->Pos(), resultsec);
 	}
 
-	fixed_t NextHighestCeilingAt(fixed_t x, fixed_t y, fixed_t bottomz, fixed_t topz, int flags = 0, sector_t **resultsec = NULL, F3DFloor **resultffloor = NULL);
-	fixed_t NextLowestFloorAt(fixed_t x, fixed_t y, fixed_t z, int flags = 0, fixed_t steph = 0, sector_t **resultsec = NULL, F3DFloor **resultffloor = NULL);
-
-	inline double NextHighestCeilingAt(double x, double y, double bottomz, double topz, int flags = 0, sector_t **resultsec = NULL, F3DFloor **resultffloor = NULL)
-	{
-		return FIXED2DBL(NextHighestCeilingAt(FLOAT2FIXED(x), FLOAT2FIXED(y), FLOAT2FIXED(bottomz), FLOAT2FIXED(topz), flags, resultsec, resultffloor));
-	}
-
-	double NextLowestFloorAt(double x, double y, double z, int flags = 0, double steph = 0, sector_t **resultsec = NULL, F3DFloor **resultffloor = NULL)
-	{
-		return FIXED2DBL(NextLowestFloorAt(FLOAT2FIXED(x), FLOAT2FIXED(y), FLOAT2FIXED(z), flags, FLOAT2FIXED(steph), resultsec, resultffloor));
-	}
+	double NextHighestCeilingAt(double x, double y, double bottomz, double topz, int flags = 0, sector_t **resultsec = NULL, F3DFloor **resultffloor = NULL);
+	double NextLowestFloorAt(double x, double y, double z, int flags = 0, double steph = 0, sector_t **resultsec = NULL, F3DFloor **resultffloor = NULL);
 
 	// Member variables
 	double		CenterFloor() const { return floorplane.ZatPoint(centerspot); }

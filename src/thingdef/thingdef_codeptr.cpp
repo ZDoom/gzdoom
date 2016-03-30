@@ -4681,22 +4681,46 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetSpecial)
 //
 //===========================================================================
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetUserVar)
+static PField *GetVar(AActor *self, FName varname)
 {
-	PARAM_ACTION_PROLOGUE;
-	PARAM_NAME	(varname);
-	PARAM_INT	(value);
-
 	PField *var = dyn_cast<PField>(self->GetClass()->Symbols.FindSymbol(varname, true));
 
 	if (var == NULL || (var->Flags & VARF_Native) || !var->Type->IsKindOf(RUNTIME_CLASS(PBasicType)))
 	{
 		Printf("%s is not a user variable in class %s\n", varname.GetChars(),
 			self->GetClass()->TypeName.GetChars());
-		return 0;
+		return nullptr;
 	}
+	return var;
+}
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetUserVar)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_NAME	(varname);
+	PARAM_INT	(value);
+
 	// Set the value of the specified user variable.
-	var->Type->SetValue(reinterpret_cast<BYTE *>(self) + var->Offset, value);
+	PField *var = GetVar(self, varname);
+	if (var != nullptr)
+	{
+		var->Type->SetValue(reinterpret_cast<BYTE *>(self) + var->Offset, value);
+	}
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetUserVarFloat)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_NAME	(varname);
+	PARAM_FLOAT	(value);
+
+	// Set the value of the specified user variable.
+	PField *var = GetVar(self, varname);
+	if (var != nullptr)
+	{
+		var->Type->SetValue(reinterpret_cast<BYTE *>(self) + var->Offset, value);
+	}
 	return 0;
 }
 
@@ -4706,13 +4730,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetUserVar)
 //
 //===========================================================================
 
-DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetUserArray)
+static PField *GetArrayVar(AActor *self, FName varname, int pos)
 {
-	PARAM_ACTION_PROLOGUE;
-	PARAM_NAME	(varname);
-	PARAM_INT	(pos);
-	PARAM_INT	(value);
-
 	PField *var = dyn_cast<PField>(self->GetClass()->Symbols.FindSymbol(varname, true));
 
 	if (var == NULL || (var->Flags & VARF_Native) ||
@@ -4721,17 +4740,48 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetUserArray)
 	{
 		Printf("%s is not a user array in class %s\n", varname.GetChars(),
 			self->GetClass()->TypeName.GetChars());
-		return 0;
+		return nullptr;
 	}
-	PArray *arraytype = static_cast<PArray *>(var->Type);
-	if ((unsigned)pos >= arraytype->ElementCount)
+	if ((unsigned)pos >= static_cast<PArray *>(var->Type)->ElementCount)
 	{
 		Printf("%d is out of bounds in array %s in class %s\n", pos, varname.GetChars(),
 			self->GetClass()->TypeName.GetChars());
-		return 0;
+		return nullptr;
 	}
+	return var;
+}
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetUserArray)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_NAME	(varname);
+	PARAM_INT	(pos);
+	PARAM_INT	(value);
+
 	// Set the value of the specified user array at index pos.
-	arraytype->ElementType->SetValue(reinterpret_cast<BYTE *>(self) + var->Offset + arraytype->ElementSize * pos, value);
+	PField *var = GetArrayVar(self, varname, pos);
+	if (var != nullptr)
+	{
+		PArray *arraytype = static_cast<PArray *>(var->Type);
+		arraytype->ElementType->SetValue(reinterpret_cast<BYTE *>(self) + var->Offset + arraytype->ElementSize * pos, value);
+	}
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetUserArrayFloat)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_NAME	(varname);
+	PARAM_INT	(pos);
+	PARAM_FLOAT	(value);
+
+	// Set the value of the specified user array at index pos.
+	PField *var = GetArrayVar(self, varname, pos);
+	if (var != nullptr)
+	{
+		PArray *arraytype = static_cast<PArray *>(var->Type);
+		arraytype->ElementType->SetValue(reinterpret_cast<BYTE *>(self) + var->Offset + arraytype->ElementSize * pos, value);
+	}
 	return 0;
 }
 

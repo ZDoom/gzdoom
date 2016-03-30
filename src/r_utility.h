@@ -33,7 +33,6 @@ extern int				LocalViewPitch;			// [RH] Used directly instead of consoleplayer's
 extern bool				LocalKeyboardTurner;	// [RH] The local player used the keyboard to turn, so interpolate
 extern int				WidescreenRatio;
 
-extern fixed_t			r_TicFrac;
 extern double			r_TicFracF;
 extern DWORD			r_FrameTime;
 extern int				extralight;

@@ -125,7 +125,6 @@ fixed_t 		viewsin, viewtansin;
 
 AActor			*camera;	// [RH] camera to draw from. doesn't have to be a player
 
-fixed_t			r_TicFrac;			// [RH] Fractional tic to render
 double			r_TicFracF;			// same as floating point
 DWORD			r_FrameTime;		// [RH] Time this frame started drawing (in ms)
 bool			r_NoInterpolate;
@@ -572,9 +571,9 @@ static void R_Shutdown ()
 //CVAR (Int, tf, 0, 0)
 EXTERN_CVAR (Bool, cl_noprediction)
 
-void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *iview)
+void R_InterpolateView (player_t *player, double Frac, InterpolationViewer *iview)
 {
-//	frac = tf;
+	fixed_t frac = FLOAT2FIXED(Frac);
 	if (NoInterpolateView)
 	{
 		InterpolationPath.Clear();
@@ -1012,9 +1011,7 @@ void R_SetupFrame (AActor *actor)
 	{
 		r_TicFracF = 1.;
 	}
-	r_TicFrac = FLOAT2FIXED(r_TicFracF);
-
-	R_InterpolateView (player, r_TicFrac, iview);
+	R_InterpolateView (player, r_TicFracF, iview);
 
 #ifdef TEST_X
 	viewx = TEST_X;
@@ -1025,7 +1022,7 @@ void R_SetupFrame (AActor *actor)
 
 	R_SetViewAngle ();
 
-	interpolator.DoInterpolations (r_TicFrac);
+	interpolator.DoInterpolations (r_TicFracF);
 
 	// Keep the view within the sector's floor and ceiling
 	if (viewsector->PortalBlocksMovement(sector_t::ceiling))

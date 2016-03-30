@@ -30,7 +30,7 @@ public:
 	virtual void Destroy();
 	virtual void UpdateInterpolation() = 0;
 	virtual void Restore() = 0;
-	virtual void Interpolate(fixed_t smoothratio) = 0;
+	virtual void Interpolate(double smoothratio) = 0;
 	virtual void Serialize(FArchive &arc);
 };
 
@@ -58,7 +58,7 @@ public:
 	void UpdateInterpolations();
 	void AddInterpolation(DInterpolation *);
 	void RemoveInterpolation(DInterpolation *);
-	void DoInterpolations(fixed_t smoothratio);
+	void DoInterpolations(double smoothratio);
 	void RestoreInterpolations();
 	void ClearInterpolations();
 };

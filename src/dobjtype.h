@@ -660,7 +660,8 @@ public:
 	void InsertIntoHash();
 	DObject *CreateNew() const;
 	PClass *CreateDerivedClass(FName name, unsigned int size);
-	unsigned int Extend(unsigned int extension);
+	unsigned int Extend(unsigned int extension, unsigned int alignment);
+	unsigned int Extend(const PType *type) { return Extend(type->Size, type->Align); }
 	void InitializeActorInfo();
 	void BuildFlatPointers();
 	const PClass *NativeClass() const;

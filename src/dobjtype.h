@@ -192,6 +192,7 @@ public:
 
 	// Gets the value of a variable of this type at (addr)
 	virtual int GetValueInt(void *addr) const;
+	virtual double GetValueFloat(void *addr) const;
 
 	// Gets the opcode to store from a register to memory
 	virtual int GetStoreOp() const;
@@ -323,6 +324,7 @@ public:
 	virtual void SetValue(void *addr, int val);
 	virtual void SetValue(void *addr, double val);
 	virtual int GetValueInt(void *addr) const;
+	virtual double GetValueFloat(void *addr) const;
 	virtual int GetStoreOp() const;
 	virtual int GetLoadOp() const;
 	virtual int GetRegType() const;
@@ -348,6 +350,7 @@ public:
 	virtual void SetValue(void *addr, int val);
 	virtual void SetValue(void *addr, double val);
 	virtual int GetValueInt(void *addr) const;
+	virtual double GetValueFloat(void *addr) const;
 	virtual int GetStoreOp() const;
 	virtual int GetLoadOp() const;
 	virtual int GetRegType() const;
@@ -415,6 +418,7 @@ public:
 	virtual void SetValue(void *addr, int val);
 	virtual void SetValue(void *addr, double val);
 	virtual int GetValueInt(void *addr) const;
+	virtual double GetValueFloat(void *addr) const;
 	virtual int GetStoreOp() const;
 	virtual int GetLoadOp() const;
 };
@@ -428,6 +432,7 @@ public:
 	virtual void SetValue(void *addr, int val);
 	virtual void SetValue(void *addr, double val);
 	virtual int GetValueInt(void *addr) const;
+	virtual double GetValueFloat(void *addr) const;
 	virtual int GetStoreOp() const;
 	virtual int GetLoadOp() const;
 };

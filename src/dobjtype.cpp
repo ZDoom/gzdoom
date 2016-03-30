@@ -412,6 +412,12 @@ int PType::GetValueInt(void *addr) const
 	return 0;
 }
 
+double PType::GetValueFloat(void *addr) const
+{
+	assert(0 && "Cannot get value for this type");
+	return 0;
+}
+
 //==========================================================================
 //
 // PType :: GetStoreOp
@@ -726,6 +732,17 @@ int PInt::GetValueInt(void *addr) const
 
 //==========================================================================
 //
+// PInt :: GetValueFloat
+//
+//==========================================================================
+
+double PInt::GetValueFloat(void *addr) const
+{
+	return GetValueInt(addr);
+}
+
+//==========================================================================
+//
 // PInt :: GetStoreOp
 //
 //==========================================================================
@@ -963,15 +980,26 @@ void PFloat::SetValue(void *addr, double val)
 
 int PFloat::GetValueInt(void *addr) const
 {
+	return xs_ToInt(GetValueFloat(addr));
+}
+
+//==========================================================================
+//
+// PFloat :: GetValueFloat
+//
+//==========================================================================
+
+double PFloat::GetValueFloat(void *addr) const
+{
 	assert(((intptr_t)addr & (Align - 1)) == 0 && "unaligned address");
 	if (Size == 4)
 	{
-		return xs_ToInt(*(float *)addr);
+		return *(float *)addr;
 	}
 	else
 	{
 		assert(Size == 8);
-		return xs_ToInt(*(double *)addr);
+		return *(double *)addr;
 	}
 }
 
@@ -1147,6 +1175,18 @@ int PFixed::GetValueInt(void *addr) const
 
 //==========================================================================
 //
+// PFixed :: GetValueFloat
+//
+//==========================================================================
+
+double PFixed::GetValueFloat(void *addr) const
+{
+	assert(((intptr_t)addr & (Align - 1)) == 0 && "unaligned address");
+	return FIXED2DBL(*(fixed_t *)addr);
+}
+
+//==========================================================================
+//
 // PFixed :: GetStoreOp
 //
 //==========================================================================
@@ -1210,6 +1250,18 @@ int PAngle::GetValueInt(void *addr) const
 {
 	assert(((intptr_t)addr & (Align - 1)) == 0 && "unaligned address");
 	return *(angle_t *)addr / ANGLE_1;
+}
+
+//==========================================================================
+//
+// PAngle :: GetValueFloat
+//
+//==========================================================================
+
+double PAngle::GetValueFloat(void *addr) const
+{
+	assert(((intptr_t)addr & (Align - 1)) == 0 && "unaligned address");
+	return (double)(*(angle_t *)addr) / ANGLE_1;
 }
 
 //==========================================================================

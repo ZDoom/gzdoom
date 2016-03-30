@@ -494,8 +494,8 @@ void DSectorPlaneInterpolation::Interpolate(double smoothratio)
 		pos = sector_t::ceiling;
 	}
 
-	bakheight = pplane->fixD();
-	baktexz = sector->GetPlaneTexZ(pos);
+	bakheight = pplane->fD();
+	baktexz = sector->GetPlaneTexZF(pos);
 
 	if (refcount == 0 && oldheight == bakheight)
 	{
@@ -628,8 +628,8 @@ void DSectorScrollInterpolation::Restore()
 
 void DSectorScrollInterpolation::Interpolate(double smoothratio)
 {
-	bakx = sector->GetXOffset(ceiling);
-	baky = sector->GetYOffset(ceiling, false);
+	bakx = sector->GetXOffsetF(ceiling);
+	baky = sector->GetYOffsetF(ceiling, false);
 
 	if (refcount == 0 && oldx == bakx && oldy == baky)
 	{
@@ -719,8 +719,8 @@ void DWallScrollInterpolation::Restore()
 
 void DWallScrollInterpolation::Interpolate(double smoothratio)
 {
-	bakx = side->GetTextureXOffset(part);
-	baky = side->GetTextureYOffset(part);
+	bakx = side->GetTextureXOffsetF(part);
+	baky = side->GetTextureYOffsetF(part);
 
 	if (refcount == 0 && oldx == bakx && oldy == baky)
 	{
@@ -823,8 +823,8 @@ void DPolyobjInterpolation::Interpolate(double smoothratio)
 	bool changed = false;
 	for(unsigned int i = 0; i < poly->Vertices.Size(); i++)
 	{
-		bakverts[i*2  ] = poly->Vertices[i]->fixX();
-		bakverts[i*2+1] = poly->Vertices[i]->fixY();
+		bakverts[i*2  ] = poly->Vertices[i]->fX();
+		bakverts[i*2+1] = poly->Vertices[i]->fY();
 
 		if (bakverts[i * 2] != oldverts[i * 2] || bakverts[i * 2 + 1] != oldverts[i * 2 + 1])
 		{

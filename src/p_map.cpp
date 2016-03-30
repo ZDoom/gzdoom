@@ -2122,12 +2122,12 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 	// it slopes or the player's eyes are bobbing in and out.
 
 	bool oldAboveFakeFloor, oldAboveFakeCeiling;
-	double _viewheight = thing->player ? thing->player->viewheight : thing->Height / 2;
+	double viewheight = thing->player ? thing->player->viewheight : thing->Height / 2;
 	oldAboveFakeFloor = oldAboveFakeCeiling = false;	// pacify GCC
 
 	if (oldsec->heightsec)
 	{
-		double eyez = oldz + FIXED2DBL(viewheight);
+		double eyez = oldz + viewheight;
 
 		oldAboveFakeFloor = eyez > oldsec->heightsec->floorplane.ZatPoint(thing);
 		oldAboveFakeCeiling = eyez > oldsec->heightsec->ceilingplane.ZatPoint(thing);
@@ -2333,7 +2333,7 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 	if (newsec->heightsec && oldsec->heightsec && newsec->SecActTarget)
 	{
 		const sector_t *hs = newsec->heightsec;
-		double eyez = thing->Z() + FIXED2DBL(viewheight);
+		double eyez = thing->Z() + viewheight;
 		double fakez = hs->floorplane.ZatPoint(pos);
 
 		if (!oldAboveFakeFloor && eyez > fakez)

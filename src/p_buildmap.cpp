@@ -402,19 +402,21 @@ static void LoadSectors (sectortype *bsec)
 		bsec->floorstat = WORD(bsec->floorstat);
 
 		sec->e = &sectors[0].e[i];
-		sec->SetPlaneTexZ(sector_t::floor, -(LittleLong(bsec->floorZ) << 8));
-		sec->floorplane.set(0, 0, -FRACUNIT, -sec->GetPlaneTexZ(sector_t::floor));
+		double floorheight = -LittleLong(bsec->floorZ) / 256.;
+		sec->SetPlaneTexZ(sector_t::floor, floorheight);
+		sec->floorplane.SetAtHeight(floorheight, sector_t::floor);
 		mysnprintf (tnam, countof(tnam), "BTIL%04d", LittleShort(bsec->floorpicnum));
 		sec->SetTexture(sector_t::floor, TexMan.GetTexture (tnam, FTexture::TEX_Build));
-		sec->SetXScale(sector_t::floor, (bsec->floorstat & 8) ? FRACUNIT*2 : FRACUNIT);
-		sec->SetYScale(sector_t::floor, (bsec->floorstat & 8) ? FRACUNIT*2 : FRACUNIT);
-		sec->SetXOffset(sector_t::floor, (bsec->floorxpanning << FRACBITS) + (32 << FRACBITS));
-		sec->SetYOffset(sector_t::floor, bsec->floorypanning << FRACBITS);
+		sec->SetXScale(sector_t::floor, (bsec->floorstat & 8) ? 2. : 1.);
+		sec->SetYScale(sector_t::floor, (bsec->floorstat & 8) ? 2. : 1.);
+		sec->SetXOffset(sector_t::floor, bsec->floorxpanning + 32.);
+		sec->SetYOffset(sector_t::floor, bsec->floorypanning + 0.);
 		sec->SetPlaneLight(sector_t::floor, SHADE2LIGHT (bsec->floorshade));
 		sec->ChangeFlags(sector_t::floor, 0, PLANEF_ABSLIGHTING);
 
-		sec->SetPlaneTexZ(sector_t::ceiling, -(LittleLong(bsec->ceilingZ) << 8));
-		sec->ceilingplane.set(0, 0, -FRACUNIT, sec->GetPlaneTexZ(sector_t::ceiling));
+		double ceilingheight = -LittleLong(bsec->ceilingZ) / 256.;
+		sec->SetPlaneTexZ(sector_t::ceiling, ceilingheight);
+		sec->ceilingplane.SetAtHeight(ceilingheight, sector_t::ceiling);
 		mysnprintf (tnam, countof(tnam), "BTIL%04d", LittleShort(bsec->ceilingpicnum));
 		sec->SetTexture(sector_t::ceiling, TexMan.GetTexture (tnam, FTexture::TEX_Build));
 		if (bsec->ceilingstat & 1)
@@ -422,10 +424,10 @@ static void LoadSectors (sectortype *bsec)
 			sky1texture = sky2texture = sec->GetTexture(sector_t::ceiling);
 			sec->SetTexture(sector_t::ceiling, skyflatnum);
 		}
-		sec->SetXScale(sector_t::ceiling, (bsec->ceilingstat & 8) ? FRACUNIT*2 : FRACUNIT);
-		sec->SetYScale(sector_t::ceiling, (bsec->ceilingstat & 8) ? FRACUNIT*2 : FRACUNIT);
-		sec->SetXOffset(sector_t::ceiling, (bsec->ceilingxpanning << FRACBITS) + (32 << FRACBITS));
-		sec->SetYOffset(sector_t::ceiling, bsec->ceilingypanning << FRACBITS);
+		sec->SetXScale(sector_t::ceiling, (bsec->ceilingstat & 8) ? 2. : 1.);
+		sec->SetYScale(sector_t::ceiling, (bsec->ceilingstat & 8) ? 2. : 1.);
+		sec->SetXOffset(sector_t::ceiling, bsec->ceilingxpanning + 32.);
+		sec->SetYOffset(sector_t::ceiling, bsec->ceilingypanning + 0.);
 		sec->SetPlaneLight(sector_t::ceiling, SHADE2LIGHT (bsec->ceilingshade));
 		sec->ChangeFlags(sector_t::ceiling, 0, PLANEF_ABSLIGHTING);
 
@@ -444,30 +446,30 @@ static void LoadSectors (sectortype *bsec)
 
 		if (bsec->floorstat & 4)
 		{
-			sec->SetAngle(sector_t::floor, ANGLE_90);
-			sec->SetXScale(sector_t::floor, -sec->GetXScale(sector_t::floor));
+			sec->SetAngle(sector_t::floor, DAngle(90.));
+			sec->SetXScale(sector_t::floor, -sec->GetXScaleF(sector_t::floor));
 		}
 		if (bsec->floorstat & 16)
 		{
-			sec->SetXScale(sector_t::floor, -sec->GetXScale(sector_t::floor));
+			sec->SetXScale(sector_t::floor, -sec->GetXScaleF(sector_t::floor));
 		}
 		if (bsec->floorstat & 32)
 		{
-			sec->SetYScale(sector_t::floor, -sec->GetYScale(sector_t::floor));
+			sec->SetYScale(sector_t::floor, -sec->GetYScaleF(sector_t::floor));
 		}
 
 		if (bsec->ceilingstat & 4)
 		{
-			sec->SetAngle(sector_t::ceiling, ANGLE_90);
-			sec->SetYScale(sector_t::ceiling, -sec->GetYScale(sector_t::ceiling));
+			sec->SetAngle(sector_t::ceiling, DAngle(90.));
+			sec->SetYScale(sector_t::ceiling, -sec->GetYScaleF(sector_t::ceiling));
 		}
 		if (bsec->ceilingstat & 16)
 		{
-			sec->SetXScale(sector_t::ceiling, -sec->GetXScale(sector_t::ceiling));
+			sec->SetXScale(sector_t::ceiling, -sec->GetXScaleF(sector_t::ceiling));
 		}
 		if (bsec->ceilingstat & 32)
 		{
-			sec->SetYScale(sector_t::ceiling, -sec->GetYScale(sector_t::ceiling));
+			sec->SetYScale(sector_t::ceiling, -sec->GetYScaleF(sector_t::ceiling));
 		}
 	}
 }
@@ -523,8 +525,8 @@ static void LoadWalls (walltype *walls, int numwalls, sectortype *bsec)
 		walls[i].nextwall = LittleShort(walls[i].nextwall);
 		walls[i].nextsector = LittleShort(walls[i].nextsector);
 
-		sides[i].SetTextureXOffset(walls[i].xpanning << FRACBITS);
-		sides[i].SetTextureYOffset(walls[i].ypanning << FRACBITS);
+		sides[i].SetTextureXOffset((double)walls[i].xpanning);
+		sides[i].SetTextureYOffset((double)walls[i].ypanning);
 
 		sides[i].SetTexture(side_t::top, pic);
 		sides[i].SetTexture(side_t::bottom, pic);
@@ -542,8 +544,8 @@ static void LoadWalls (walltype *walls, int numwalls, sectortype *bsec)
 		}
 
 		sides[i].TexelLength = walls[i].xrepeat * 8;
-		sides[i].SetTextureYScale(walls[i].yrepeat << (FRACBITS - 3));
-		sides[i].SetTextureXScale(FRACUNIT);
+		sides[i].SetTextureYScale(walls[i].yrepeat / 8.);
+		sides[i].SetTextureXScale(1.);
 		sides[i].SetLight(SHADE2LIGHT(walls[i].shade));
 		sides[i].Flags = WALLF_ABSLIGHTING;
 		sides[i].RightSide = walls[i].point2;
@@ -751,16 +753,16 @@ static int LoadSprites (spritetype *sprites, Xsprite *xsprites, int numsprites,
 //
 //==========================================================================
 
-vertex_t *FindVertex (SDWORD x, SDWORD y)
+vertex_t *FindVertex (SDWORD xx, SDWORD yy)
 {
 	int i;
 
-	x <<= 12;
-	y = -(y << 12);
+	double x = xx / 64.;
+	double y = -yy / 64.;
 
 	for (i = 0; i < numvertexes; ++i)
 	{
-		if (vertexes[i].fixX() == x && vertexes[i].fixY() == y)
+		if (vertexes[i].fX() == x && vertexes[i].fY() == y)
 		{
 			return &vertexes[i];
 		}
@@ -814,8 +816,7 @@ static void CalcPlane (SlopeWork &slope, secplane_t &plane)
 		slope.x[2] = slope.x[0];
 		slope.y[2] = slope.y[0] + 64;
 	}
-	j = DMulScale3 (slope.dx, slope.y[2]-slope.wal->y,
-		-slope.dy, slope.x[2]-slope.wal->x);
+	j = DMulScale3 (slope.dx, slope.y[2]-slope.wal->y, -slope.dy, slope.x[2]-slope.wal->x);
 	slope.z[2] += Scale (slope.heinum, j, slope.i);
 
 	pt[0] = DVector3(slope.dx, -slope.dy, 0);
@@ -827,9 +828,8 @@ static void CalcPlane (SlopeWork &slope, secplane_t &plane)
 		pt[2] = -pt[2];
 	}
 
-	plane.set(pt[2][0], pt[2][1], pt[2][2], 0.);
-	plane.setD(-TMulScale8
-		(plane.fixA(), slope.x[0]<<4, plane.fixB(), (-slope.y[0])<<4, plane.fixC(), slope.z[0]));
+	double dist = -pt[2][0] * slope.x[0] * 16 + pt[2][1] * slope.y[0] * 16 - pt[2][2] * slope.z[0];
+	plane.set(pt[2][0], pt[2][1], pt[2][2], dist);
 }
 
 //==========================================================================

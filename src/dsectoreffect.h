@@ -37,23 +37,6 @@ protected:
 	void Serialize (FArchive &arc);
 	void Destroy();
 	void StopInterpolation(bool force = false);
-	inline EResult MoveFloor(fixed_t speed, fixed_t dest, int crush, int direction, bool hexencrush)
-	{
-		return MovePlane(FIXED2DBL(speed), FIXED2DBL(dest), crush, 0, direction, hexencrush);
-	}
-	inline EResult MoveFloor(fixed_t speed, fixed_t dest, int direction)
-	{
-		return MovePlane(FIXED2DBL(speed), FIXED2DBL(dest), -1, 0, direction, false);
-	}
-	inline EResult MoveCeiling(fixed_t speed, fixed_t dest, int crush, int direction, bool hexencrush)
-	{
-		return MovePlane(FIXED2DBL(speed), FIXED2DBL(dest), crush, 1, direction, hexencrush);
-	}
-	inline EResult MoveCeiling(fixed_t speed, fixed_t dest, int direction)
-	{
-		return MovePlane(FIXED2DBL(speed), FIXED2DBL(dest), -1, 1, direction, false);
-	}
-
 	inline EResult MoveFloor (double speed, double dest, int crush, int direction, bool hexencrush)
 	{
 		return MovePlane (speed, dest, crush, 0, direction, hexencrush);

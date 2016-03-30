@@ -435,7 +435,7 @@ bool EV_DoFloor (DFloor::EFloor floortype, line_t *line, int tag,
 
 		case DFloor::floorRaiseAndChange:
 			floor->m_Direction = 1;
-			newheight = sec->_f_CenterFloor() + height;
+			newheight = sec->CenterFloor() + height;
 			floor->m_FloorDestDist = sec->floorplane.PointToDist (sec->centerspot, newheight);
 			if (line != NULL)
 			{

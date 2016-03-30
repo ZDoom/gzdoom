@@ -810,6 +810,11 @@ struct sector_t
 		planes[pos].xform.xscale = o;
 	}
 
+	void SetXScale(int pos, double o)
+	{
+		planes[pos].xform.xscale = FLOAT2FIXED(o);
+	}
+
 	fixed_t GetXScale(int pos) const
 	{
 		return planes[pos].xform.xscale;
@@ -823,6 +828,11 @@ struct sector_t
 	void SetYScale(int pos, fixed_t o)
 	{
 		planes[pos].xform.yscale = o;
+	}
+
+	void SetYScale(int pos, double o)
+	{
+		planes[pos].xform.yscale = FLOAT2FIXED(o);
 	}
 
 	fixed_t GetYScale(int pos) const
@@ -1267,6 +1277,16 @@ struct side_t
 		textures[mid].xoffset =
 		textures[bottom].xoffset = offset;
 	}
+	void SetTextureXOffset(int which, double offset)
+	{
+		textures[which].xoffset = FLOAT2FIXED(offset);
+	}
+	void SetTextureXOffset(double offset)
+	{
+		textures[top].xoffset =
+		textures[mid].xoffset =
+		textures[bottom].xoffset = FLOAT2FIXED(offset);
+	}
 	fixed_t GetTextureXOffset(int which) const
 	{
 		return textures[which].xoffset;
@@ -1294,6 +1314,16 @@ struct side_t
 		textures[mid].yoffset =
 		textures[bottom].yoffset = offset;
 	}
+	void SetTextureYOffset(int which, double offset)
+	{
+		textures[which].yoffset = FLOAT2FIXED(offset);
+	}
+	void SetTextureYOffset(double offset)
+	{
+		textures[top].yoffset =
+		textures[mid].yoffset =
+		textures[bottom].yoffset = FLOAT2FIXED(offset);
+	}
 	fixed_t GetTextureYOffset(int which) const
 	{
 		return textures[which].yoffset;
@@ -1319,6 +1349,10 @@ struct side_t
 	{
 		textures[top].xscale = textures[mid].xscale = textures[bottom].xscale = scale == 0 ? FRACUNIT : scale;
 	}
+	void SetTextureXScale(double scale)
+	{
+		textures[top].xscale = textures[mid].xscale = textures[bottom].xscale = scale == 0 ? FRACUNIT : FLOAT2FIXED(scale);
+	}
 	fixed_t GetTextureXScale(int which) const
 	{
 		return textures[which].xscale;
@@ -1342,6 +1376,10 @@ struct side_t
 	void SetTextureYScale(fixed_t scale)
 	{
 		textures[top].yscale = textures[mid].yscale = textures[bottom].yscale = scale == 0 ? FRACUNIT : scale;
+	}
+	void SetTextureYScale(double scale)
+	{
+		textures[top].yscale = textures[mid].yscale = textures[bottom].yscale = scale == 0 ? FRACUNIT : FLOAT2FIXED(scale);
 	}
 	fixed_t GetTextureYScale(int which) const
 	{

@@ -4620,7 +4620,7 @@ static void SetUserVariable(AActor *self, FName varname, int index, int value)
 		}
 		else
 		{
-			type->SetValue(addr, FIXED2DBL(value));
+			type->SetValue(addr, ACSToDouble(value));
 		}
 	}
 }
@@ -4634,7 +4634,7 @@ static int GetUserVariable(AActor *self, FName varname, int index)
 	{
 		if (type->IsKindOf(RUNTIME_CLASS(PFloat)))
 		{
-			return FLOAT2FIXED(type->GetValueFloat(addr));
+			return DoubleToACS(type->GetValueFloat(addr));
 		}
 		else if (type->IsA(RUNTIME_CLASS(PName)))
 		{

@@ -4529,12 +4529,12 @@ int DLevelScript::LineFromID(int id)
 	}
 }
 
-bool GetVarAddrType(AActor *self, FName varname, int index, void *&addr, PType *&type, bool allownative)
+bool GetVarAddrType(AActor *self, FName varname, int index, void *&addr, PType *&type, bool readonly)
 {
 	PField *var = dyn_cast<PField>(self->GetClass()->Symbols.FindSymbol(varname, true));
 	PArray *arraytype;
 
-	if (var == NULL || (!allownative && (var->Flags & VARF_Native)))
+	if (var == NULL || (!readonly && (var->Flags & VARF_Native)))
 	{
 		return false;
 	}
@@ -4561,6 +4561,11 @@ bool GetVarAddrType(AActor *self, FName varname, int index, void *&addr, PType *
 	// but we do want to support Float subclasses like Fixed.
 	if (!type->IsA(RUNTIME_CLASS(PInt)) || !type->IsKindOf(RUNTIME_CLASS(PFloat)))
 	{
+		// For reading, we also support Name and String types.
+		if (readonly && (type->IsA(RUNTIME_CLASS(PName)) || type->IsA(RUNTIME_CLASS(PString))))
+		{
+			return true;
+		}
 		return false;
 	}
 	return true;
@@ -4591,13 +4596,21 @@ static int GetUserVariable(AActor *self, FName varname, int index)
 
 	if (GetVarAddrType(self, varname, index, addr, type, true))
 	{
-		if (!type->IsKindOf(RUNTIME_CLASS(PFloat)))
+		if (type->IsKindOf(RUNTIME_CLASS(PFloat)))
 		{
-			return type->GetValueInt(addr);
+			return FLOAT2FIXED(type->GetValueFloat(addr));
+		}
+		else if (type->IsA(RUNTIME_CLASS(PName)))
+		{
+			return GlobalACSStrings.AddString(FName(ENamedName(type->GetValueInt(addr))).GetChars());
+		}
+		else if (type->IsA(RUNTIME_CLASS(PString)))
+		{
+			return GlobalACSStrings.AddString(*(FString *)addr);
 		}
 		else
 		{
-			return FLOAT2FIXED(type->GetValueFloat(addr));
+			return type->GetValueInt(addr);
 		}
 	}
 	return 0;

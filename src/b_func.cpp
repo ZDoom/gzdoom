@@ -34,13 +34,13 @@ bool DBot::Reachable (AActor *rtarget)
 	if (player->mo == rtarget)
 		return false;
 
-	if ((rtarget->Sector->ceilingplane.ZatPointF (rtarget) -
-		 rtarget->Sector->floorplane.ZatPointF (rtarget))
+	if ((rtarget->Sector->ceilingplane.ZatPoint (rtarget) -
+		 rtarget->Sector->floorplane.ZatPoint (rtarget))
 		< player->mo->Height) //Where rtarget is, player->mo can't be.
 		return false;
 
 	sector_t *last_s = player->mo->Sector;
-	double last_z = last_s->floorplane.ZatPointF (player->mo);
+	double last_z = last_s->floorplane.ZatPoint (player->mo);
 	double estimated_dist = player->mo->Distance2D(rtarget);
 	bool reachable = true;
 
@@ -100,7 +100,7 @@ bool DBot::Reachable (AActor *rtarget)
 		thing = in->d.thing;
 		if (thing == player->mo) //Can't reach self in this case.
 			continue;
-		if (thing == rtarget && (rtarget->Sector->floorplane.ZatPointF (rtarget) <= (last_z+MAXMOVEHEIGHT)))
+		if (thing == rtarget && (rtarget->Sector->floorplane.ZatPoint (rtarget) <= (last_z+MAXMOVEHEIGHT)))
 		{
 			return true;
 		}

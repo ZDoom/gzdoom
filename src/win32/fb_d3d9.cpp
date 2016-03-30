@@ -3105,8 +3105,8 @@ void D3DFB::FillSimplePoly(FTexture *texture, FVector2 *points, int npoints,
 		return;
 	}
 
-	cosrot = (float)cos(ToRadians(rotation));
-	sinrot = (float)sin(ToRadians(rotation));
+	cosrot = (float)cos(rotation.Radians());
+	sinrot = (float)sin(rotation.Radians());
 
 	CheckQuadBatch(npoints - 2, npoints);
 	quad = &QuadExtra[QuadBatchPos];

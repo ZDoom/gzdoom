@@ -105,6 +105,7 @@ fixed_t 		viewx;
 fixed_t 		viewy;
 fixed_t 		viewz;
 int				viewpitch;
+angle_t 		viewangle;
 
 extern "C" 
 {
@@ -117,7 +118,6 @@ extern "C"
 
 int				otic;
 
-angle_t 		viewangle;
 sector_t		*viewsector;
 
 fixed_t 		viewcos, viewtancos;
@@ -125,7 +125,6 @@ fixed_t 		viewsin, viewtansin;
 
 AActor			*camera;	// [RH] camera to draw from. doesn't have to be a player
 
-fixed_t			r_TicFrac;			// [RH] Fractional tic to render
 double			r_TicFracF;			// same as floating point
 DWORD			r_FrameTime;		// [RH] Time this frame started drawing (in ms)
 bool			r_NoInterpolate;
@@ -572,9 +571,9 @@ static void R_Shutdown ()
 //CVAR (Int, tf, 0, 0)
 EXTERN_CVAR (Bool, cl_noprediction)
 
-void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *iview)
+void R_InterpolateView (player_t *player, double Frac, InterpolationViewer *iview)
 {
-//	frac = tf;
+	fixed_t frac = FLOAT2FIXED(Frac);
 	if (NoInterpolateView)
 	{
 		InterpolationPath.Clear();
@@ -619,7 +618,7 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 				DVector3a &end = InterpolationPath[i];
 				pathlen += FLOAT2FIXED((end.pos-start.pos).Length());
 				totalzdiff += FLOAT2FIXED(start.pos.Z);
-				totaladiff += FLOAT2ANGLE(start.angle.Degrees);
+				totaladiff += start.angle.BAMs();
 			}
 			fixed_t interpolatedlen = FixedMul(frac, pathlen);
 
@@ -629,7 +628,7 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 				DVector3a &end = InterpolationPath[i];
 				fixed_t fraglen = FLOAT2FIXED((end.pos - start.pos).Length());
 				zdiff += FLOAT2FIXED(start.pos.Z);
-				adiff += FLOAT2ANGLE(start.angle.Degrees);
+				adiff += start.angle.BAMs();
 				if (fraglen <= interpolatedlen)
 				{
 					interpolatedlen -= fraglen;
@@ -683,11 +682,11 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 			// Avoid overflowing viewpitch (can happen when a netgame is stalled)
 			if (viewpitch > INT_MAX - delta)
 			{
-				viewpitch = FLOAT2ANGLE(player->MaxPitch.Degrees);
+				viewpitch = player->MaxPitch.BAMs();
 			}
 			else
 			{
-				viewpitch = MIN<int>(viewpitch + delta, FLOAT2ANGLE(player->MaxPitch.Degrees));
+				viewpitch = MIN<int>(viewpitch + delta, player->MaxPitch.BAMs());
 			}
 		}
 		else if (delta < 0)
@@ -695,11 +694,11 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 			// Avoid overflowing viewpitch (can happen when a netgame is stalled)
 			if (viewpitch < INT_MIN - delta)
 			{
-				viewpitch = FLOAT2ANGLE(player->MinPitch.Degrees);
+				viewpitch = player->MinPitch.BAMs();
 			}
 			else
 			{
-				viewpitch = MAX<int>(viewpitch + delta, FLOAT2ANGLE(player->MinPitch.Degrees));
+				viewpitch = MAX<int>(viewpitch + delta, player->MinPitch.BAMs());
 			}
 		}
 	}
@@ -994,13 +993,13 @@ void R_SetupFrame (AActor *actor)
 		viewsector = camera->Sector;
 		r_showviewer = false;
 	}
-	iview->nviewpitch = camera->_f_pitch();
+	iview->nviewpitch = camera->Angles.Pitch.BAMs();
 	if (camera->player != 0)
 	{
 		player = camera->player;
 	}
 
-	iview->nviewangle = camera->_f_angle();
+	iview->nviewangle = camera->Angles.Yaw.BAMs();
 	if (iview->otic == -1 || r_NoInterpolate)
 	{
 		R_ResetViewInterpolation ();
@@ -1012,9 +1011,7 @@ void R_SetupFrame (AActor *actor)
 	{
 		r_TicFracF = 1.;
 	}
-	r_TicFrac = FLOAT2FIXED(r_TicFracF);
-
-	R_InterpolateView (player, r_TicFrac, iview);
+	R_InterpolateView (player, r_TicFracF, iview);
 
 #ifdef TEST_X
 	viewx = TEST_X;
@@ -1025,7 +1022,7 @@ void R_SetupFrame (AActor *actor)
 
 	R_SetViewAngle ();
 
-	interpolator.DoInterpolations (r_TicFrac);
+	interpolator.DoInterpolations (r_TicFracF);
 
 	// Keep the view within the sector's floor and ceiling
 	if (viewsector->PortalBlocksMovement(sector_t::ceiling))

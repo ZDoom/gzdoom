@@ -763,7 +763,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 
 	// [ZZ] Or less definitely not visible (hue)
 	// [ZZ] 10.01.2016: don't try to clip stuff inside a skybox against the current portal.
-	if (!CurrentPortalInSkybox && CurrentPortal && !!P_PointOnLineSidePrecise(thing->_f_X(), thing->_f_Y(), CurrentPortal->dst))
+	if (!CurrentPortalInSkybox && CurrentPortal && !!P_PointOnLineSidePrecise(thing->Pos(), CurrentPortal->dst))
 		return;
 
 	// [RH] Interpolate the sprite's position to make it look smooth
@@ -806,11 +806,11 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 			angle_t rot;
 			if (sprframe->Texture[0] == sprframe->Texture[1])
 			{
-				rot = (ang - thing->_f_angle() + (angle_t)(ANGLE_45/2)*9) >> 28;
+				rot = (ang - thing->Angles.Yaw.BAMs() + (angle_t)(ANGLE_45/2)*9) >> 28;
 			}
 			else
 			{
-				rot = (ang - thing->_f_angle() + (angle_t)(ANGLE_45/2)*9-(angle_t)(ANGLE_180/16)) >> 28;
+				rot = (ang - thing->Angles.Yaw.BAMs() + (angle_t)(ANGLE_45/2)*9-(angle_t)(ANGLE_180/16)) >> 28;
 			}
 			picnum = sprframe->Texture[rot];
 			if (sprframe->Flip & (1 << rot))
@@ -845,11 +845,11 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 			angle_t rot;
 			if (sprframe->Texture[0] == sprframe->Texture[1])
 			{
-				rot = (ang - thing->_f_angle() + (angle_t)(ANGLE_45/2)*9) >> 28;
+				rot = (ang - thing->Angles.Yaw.BAMs() + (angle_t)(ANGLE_45/2)*9) >> 28;
 			}
 			else
 			{
-				rot = (ang - thing->_f_angle() + (angle_t)(ANGLE_45/2)*9-(angle_t)(ANGLE_180/16)) >> 28;
+				rot = (ang - thing->Angles.Yaw.BAMs() + (angle_t)(ANGLE_45/2)*9-(angle_t)(ANGLE_180/16)) >> 28;
 			}
 			picnum = sprframe->Texture[rot];
 			if (sprframe->Flip & (1 << rot))
@@ -1001,7 +1001,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 		vis->texturemid = (tex->TopOffset << FRACBITS) - FixedDiv (viewz - fz + FLOAT2FIXED(thing->Floorclip), yscale);
 		vis->x1 = x1 < WindowLeft ? WindowLeft : x1;
 		vis->x2 = x2 > WindowRight ? WindowRight : x2;
-		vis->angle = thing->_f_angle();
+		vis->angle = thing->Angles.Yaw.BAMs();
 
 		if (renderflags & RF_XFLIP)
 		{
@@ -1036,8 +1036,8 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 		int voxelspin = (thing->flags & MF_DROPPED) ? voxel->DroppedSpin : voxel->PlacedSpin;
 		if (voxelspin != 0)
 		{
-			double ang = double(I_FPSTime()) * voxelspin / 1000;
-			vis->angle -= FLOAT2ANGLE(ang);
+			DAngle ang = double(I_FPSTime()) * voxelspin / 1000;
+			vis->angle -= ang.BAMs();
 		}
 
 		vis->vx = viewx;
@@ -1151,7 +1151,7 @@ static void R_ProjectWallSprite(AActor *thing, fixed_t fx, fixed_t fy, fixed_t f
 	fixed_t lx1, lx2, ly1, ly2;
 	fixed_t gzb, gzt, tz;
 	FTexture *pic = TexMan(picnum, true);
-	angle_t ang = (thing->_f_angle() + ANGLE_90) >> ANGLETOFINESHIFT;
+	angle_t ang = (thing->Angles.Yaw.BAMs() + ANGLE_90) >> ANGLETOFINESHIFT;
 	vissprite_t *vis;
 
 	// Determine left and right edges of sprite. The sprite's angle is its normal,
@@ -1256,12 +1256,12 @@ void R_AddSprites (sector_t *sec, int lightlevel, int fakeside)
 			{
 				if(!rover->top.plane->isSlope())
 				{
-					if(rover->top.plane->Zat0() <= thing->_f_Z()) fakefloor = rover;
+					if(rover->top.plane->ZatPoint(0., 0.) <= thing->Z()) fakefloor = rover;
 				}
 			}
 			if(!rover->bottom.plane->isSlope())
 			{
-				if(rover->bottom.plane->Zat0() >= thing->_f_Top()) fakeceiling = rover;
+				if(rover->bottom.plane->ZatPoint(0., 0.) >= thing->Top()) fakeceiling = rover;
 			}
 		}	
 		R_ProjectSprite (thing, fakeside, fakefloor, fakeceiling);

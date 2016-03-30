@@ -435,10 +435,6 @@ struct FPlayerStart
 	  angle(mthing->angle),
 	  type(pnum)
 	{ }
-
-	fixed_t _f_X() { return FLOAT2FIXED(pos.X); }
-	fixed_t _f_Y() { return FLOAT2FIXED(pos.Y); }
-	fixed_t _f_Z() { return FLOAT2FIXED(pos.Z); }
 };
 // Player spawn spots for deathmatch.
 extern TArray<FPlayerStart> deathmatchstarts;

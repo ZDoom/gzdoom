@@ -1205,8 +1205,8 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 	scaley /= tex->Scale.Y;
 
 	// Use the CRT's functions here.
-	cosrot = cos(ToRadians(rotation));
-	sinrot = sin(ToRadians(rotation));
+	cosrot = cos(rotation.Radians());
+	sinrot = sin(rotation.Radians());
 
 	// Setup constant texture mapping parameters.
 	R_SetupSpanBits(tex);

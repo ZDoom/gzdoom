@@ -95,14 +95,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightGoesOut)
 	AActor *foo;
 	sector_t *sec = self->Sector;
 	vertex_t *spot;
-	fixed_t newheight;
+	double newheight;
 
 	sec->SetLightLevel(0);
 
-	fixed_t oldtheight = sec->floorplane.Zat0();
+	double oldtheight = sec->floorplane.fD();
 	newheight = sec->FindLowestFloorSurrounding(&spot);
 	sec->floorplane.setD(sec->floorplane.PointToDist (spot, newheight));
-	fixed_t newtheight = sec->floorplane.Zat0();
+	double newtheight = sec->floorplane.fD();
 	sec->ChangePlaneTexZ(sector_t::floor, newtheight - oldtheight);
 	sec->CheckPortalPlane(sector_t::floor);
 

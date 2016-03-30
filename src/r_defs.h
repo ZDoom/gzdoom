@@ -388,6 +388,10 @@ public:
 	{
 		return FIXED2DBL(d);
 	}
+	double fiC() const
+	{
+		return FIXED2DBL(ic);
+	}
 
 	bool isSlope() const
 	{
@@ -421,11 +425,6 @@ public:
 		return FixedMul(ic, -d - DMulScale16(a, spot.x, b, spot.y));
 	}
 
-	double ZatPointF(const fixedvec3 &spot) const
-	{
-		return FIXED2DBL(FixedMul(ic, -d - DMulScale16(a, spot.x, b, spot.y)));
-	}
-
 	// Returns the value of z at (x,y)
 	fixed_t ZatPoint (fixed_t x, fixed_t y) const
 	{
@@ -443,39 +442,21 @@ public:
 		return (d + a*pos.X + b*pos.Y) * ic / (-65536.0 * 65536.0);
 	}
 
-	// Returns the value of z at vertex v
-	fixed_t ZatPoint (const vertex_t *v) const
-	{
-		return FixedMul (ic, -d - DMulScale16 (a, v->fixX(), b, v->fixY()));
-	}
-
-	double ZatPointF(const vertex_t *v) const
+	double ZatPoint(const vertex_t *v) const
 	{
 		return FIXED2DBL(FixedMul(ic, -d - DMulScale16(a, v->fixX(), b, v->fixY())));
 	}
 
-	fixed_t ZatPoint (const AActor *ac) const
-	{
-		return FixedMul (ic, -d - DMulScale16 (a, ac->_f_X(), b, ac->_f_Y()));
-	}
-
-	double ZatPointF(const AActor *ac) const
+	double ZatPoint(const AActor *ac) const
 	{
 		return (d + a*ac->X() + b*ac->Y()) * ic / (-65536.0 * 65536.0);
 	}
 
-	// Returns the value of z at (x,y) if d is equal to dist
-	fixed_t ZatPointDist (fixed_t x, fixed_t y, fixed_t dist) const
-	{
-		return FixedMul (ic, -dist - DMulScale16 (a, x, b, y));
-	}
-
 	// Returns the value of z at vertex v if d is equal to dist
-	fixed_t ZatPointDist (const vertex_t *v, fixed_t dist)
+	double ZatPointDist(const vertex_t *v, double dist)
 	{
-		return FixedMul (ic, -dist - DMulScale16 (a, v->fixX(), b, v->fixY()));
+		return FIXED2DBL(FixedMul(ic, -FLOAT2FIXED(dist) - DMulScale16(a, v->fixX(), b, v->fixY())));
 	}
-
 	// Flips the plane's vertical orientiation, so that if it pointed up,
 	// it will point down, and vice versa.
 	void FlipVert ()
@@ -500,15 +481,15 @@ public:
 	}
 
 	// Moves a plane up/down by hdiff units
-	void ChangeHeight (fixed_t hdiff)
+	void ChangeHeight(double hdiff)
 	{
-		d = d - FixedMul (hdiff, c);
+		d = d - fixed_t(hdiff * c);
 	}
 
 	// Moves a plane up/down by hdiff units
-	fixed_t GetChangedHeight (fixed_t hdiff)
+	double GetChangedHeight(double hdiff)
 	{
-		return d - FixedMul (hdiff, c);
+		return fD() - hdiff * fC();
 	}
 
 	// Returns how much this plane's height would change if d were set to oldd
@@ -518,9 +499,15 @@ public:
 	}
 
 	// Returns how much this plane's height would change if d were set to oldd
-	fixed_t HeightDiff (fixed_t oldd, fixed_t newd) const
+	double HeightDiff(double oldd) const
 	{
-		return FixedMul (oldd - newd, ic);
+		return (oldd - fD()) * fiC();
+	}
+
+	// Returns how much this plane's height would change if d were set to oldd
+	double HeightDiff(double oldd, double newd) const
+	{
+		return (oldd - newd) * fiC();
 	}
 
 	fixed_t PointToDist (fixed_t x, fixed_t y, fixed_t z) const
@@ -536,6 +523,16 @@ public:
 	fixed_t PointToDist (const vertex_t *v, fixed_t z) const
 	{
 		return -TMulScale16 (a, v->fixX(), b, v->fixY(), z, c);
+	}
+
+	double PointToDist(const DVector2 &xy, double z) const
+	{
+		return -(a * xy.X + b * xy.Y + c * z) / 65536.;
+	}
+
+	double PointToDist(const vertex_t *v, double z) const
+	{
+		return -(a * v->fX() + b * v->fY() + c * z) / 65536.;
 	}
 
 	void SetAtHeight(fixed_t height, int ceiling)
@@ -723,22 +720,23 @@ struct sector_t
 {
 	// Member functions
 	bool IsLinked(sector_t *other, bool ceiling) const;
-	fixed_t FindLowestFloorSurrounding (vertex_t **v) const;
-	fixed_t FindHighestFloorSurrounding (vertex_t **v) const;
-	fixed_t FindNextHighestFloor (vertex_t **v) const;
-	fixed_t FindNextLowestFloor (vertex_t **v) const;
-	fixed_t FindLowestCeilingSurrounding (vertex_t **v) const;			// jff 2/04/98
-	fixed_t FindHighestCeilingSurrounding (vertex_t **v) const;			// jff 2/04/98
-	fixed_t FindNextLowestCeiling (vertex_t **v) const;					// jff 2/04/98
-	fixed_t FindNextHighestCeiling (vertex_t **v) const;				// jff 2/04/98
-	fixed_t FindShortestTextureAround () const;							// jff 2/04/98
-	fixed_t FindShortestUpperAround () const;							// jff 2/04/98
-	sector_t *FindModelFloorSector (fixed_t floordestheight) const;		// jff 2/04/98
-	sector_t *FindModelCeilingSector (fixed_t floordestheight) const;	// jff 2/04/98
+	double FindLowestFloorSurrounding(vertex_t **v) const;
+	double FindHighestFloorSurrounding(vertex_t **v) const;
+	double FindNextHighestFloor(vertex_t **v) const;
+	double FindNextLowestFloor(vertex_t **v) const;
+	double FindLowestCeilingSurrounding(vertex_t **v) const;			// jff 2/04/98
+	double FindHighestCeilingSurrounding(vertex_t **v) const;			// jff 2/04/98
+	double FindNextLowestCeiling(vertex_t **v) const;					// jff 2/04/98
+	double FindNextHighestCeiling(vertex_t **v) const;					// jff 2/04/98
+	double FindShortestTextureAround() const;							// jff 2/04/98
+	double FindShortestUpperAround() const;								// jff 2/04/98
+	sector_t *FindModelFloorSector(double floordestheight) const;		// jff 2/04/98
+	sector_t *FindModelCeilingSector(double floordestheight) const;		// jff 2/04/98
 	int FindMinSurroundingLight (int max) const;
 	sector_t *NextSpecialSector (int type, sector_t *prev) const;		// [RH]
-	fixed_t FindLowestCeilingPoint (vertex_t **v) const;
-	fixed_t FindHighestFloorPoint (vertex_t **v) const;
+	double FindLowestCeilingPoint(vertex_t **v) const;
+	double FindHighestFloorPoint(vertex_t **v) const;
+
 	void AdjustFloorClip () const;
 	void SetColor(int r, int g, int b, int desat);
 	void SetFade(int r, int g, int b);
@@ -851,6 +849,11 @@ struct sector_t
 		planes[pos].xform.xscale = o;
 	}
 
+	void SetXScale(int pos, double o)
+	{
+		planes[pos].xform.xscale = FLOAT2FIXED(o);
+	}
+
 	fixed_t GetXScale(int pos) const
 	{
 		return planes[pos].xform.xscale;
@@ -864,6 +867,11 @@ struct sector_t
 	void SetYScale(int pos, fixed_t o)
 	{
 		planes[pos].xform.yscale = o;
+	}
+
+	void SetYScale(int pos, double o)
+	{
+		planes[pos].xform.yscale = FLOAT2FIXED(o);
 	}
 
 	fixed_t GetYScale(int pos) const
@@ -910,10 +918,10 @@ struct sector_t
 		}
 	}
 
-	void SetBase(int pos, fixed_t y, angle_t o)
+	void SetBase(int pos, double y, DAngle o)
 	{
-		planes[pos].xform.base_yoffs = y;
-		planes[pos].xform.base_angle = o;
+		planes[pos].xform.base_yoffs = FLOAT2FIXED(y);
+		planes[pos].xform.base_angle = o.BAMs();
 	}
 
 	void SetAlpha(int pos, fixed_t o)
@@ -1126,24 +1134,12 @@ struct sector_t
 		return LowestFloorAt(a->Pos(), resultsec);
 	}
 
-	fixed_t NextHighestCeilingAt(fixed_t x, fixed_t y, fixed_t bottomz, fixed_t topz, int flags = 0, sector_t **resultsec = NULL, F3DFloor **resultffloor = NULL);
-	fixed_t NextLowestFloorAt(fixed_t x, fixed_t y, fixed_t z, int flags = 0, fixed_t steph = 0, sector_t **resultsec = NULL, F3DFloor **resultffloor = NULL);
-
-	inline double NextHighestCeilingAt(double x, double y, double bottomz, double topz, int flags = 0, sector_t **resultsec = NULL, F3DFloor **resultffloor = NULL)
-	{
-		return FIXED2DBL(NextHighestCeilingAt(FLOAT2FIXED(x), FLOAT2FIXED(y), FLOAT2FIXED(bottomz), FLOAT2FIXED(topz), flags, resultsec, resultffloor));
-	}
-
-	double NextLowestFloorAt(double x, double y, double z, int flags = 0, double steph = 0, sector_t **resultsec = NULL, F3DFloor **resultffloor = NULL)
-	{
-		return FIXED2DBL(NextLowestFloorAt(FLOAT2FIXED(x), FLOAT2FIXED(y), FLOAT2FIXED(z), flags, FLOAT2FIXED(steph), resultsec, resultffloor));
-	}
+	double NextHighestCeilingAt(double x, double y, double bottomz, double topz, int flags = 0, sector_t **resultsec = NULL, F3DFloor **resultffloor = NULL);
+	double NextLowestFloorAt(double x, double y, double z, int flags = 0, double steph = 0, sector_t **resultsec = NULL, F3DFloor **resultffloor = NULL);
 
 	// Member variables
-	fixed_t		CenterFloor () const { return floorplane.ZatPoint (_f_centerspot()); }
-	fixed_t		CenterCeiling () const { return ceilingplane.ZatPoint (_f_centerspot()); }
-	double		CenterFloorF() const { return floorplane.ZatPoint(centerspot); }
-	double		CenterCeilingF() const { return ceilingplane.ZatPoint(centerspot); }
+	double		CenterFloor() const { return floorplane.ZatPoint(centerspot); }
+	double		CenterCeiling() const { return ceilingplane.ZatPoint(centerspot); }
 
 	// [RH] store floor and ceiling planes instead of heights
 	secplane_t	floorplane, ceilingplane;
@@ -1351,6 +1347,16 @@ struct side_t
 		textures[mid].xoffset =
 		textures[bottom].xoffset = offset;
 	}
+	void SetTextureXOffset(int which, double offset)
+	{
+		textures[which].xoffset = FLOAT2FIXED(offset);
+	}
+	void SetTextureXOffset(double offset)
+	{
+		textures[top].xoffset =
+		textures[mid].xoffset =
+		textures[bottom].xoffset = FLOAT2FIXED(offset);
+	}
 	fixed_t GetTextureXOffset(int which) const
 	{
 		return textures[which].xoffset;
@@ -1378,6 +1384,16 @@ struct side_t
 		textures[mid].yoffset =
 		textures[bottom].yoffset = offset;
 	}
+	void SetTextureYOffset(int which, double offset)
+	{
+		textures[which].yoffset = FLOAT2FIXED(offset);
+	}
+	void SetTextureYOffset(double offset)
+	{
+		textures[top].yoffset =
+		textures[mid].yoffset =
+		textures[bottom].yoffset = FLOAT2FIXED(offset);
+	}
 	fixed_t GetTextureYOffset(int which) const
 	{
 		return textures[which].yoffset;
@@ -1399,9 +1415,17 @@ struct side_t
 	{
 		textures[which].xscale = scale == 0 ? FRACUNIT : scale;
 	}
+	void SetTextureXScale(int which, double scale)
+	{
+		textures[which].xscale = scale == 0 ? FRACUNIT : FLOAT2FIXED(scale);
+	}
 	void SetTextureXScale(fixed_t scale)
 	{
 		textures[top].xscale = textures[mid].xscale = textures[bottom].xscale = scale == 0 ? FRACUNIT : scale;
+	}
+	void SetTextureXScale(double scale)
+	{
+		textures[top].xscale = textures[mid].xscale = textures[bottom].xscale = scale == 0 ? FRACUNIT : FLOAT2FIXED(scale);
 	}
 	fixed_t GetTextureXScale(int which) const
 	{
@@ -1417,9 +1441,19 @@ struct side_t
 	{
 		textures[which].yscale = scale == 0 ? FRACUNIT : scale;
 	}
+
+	void SetTextureYScale(int which, double scale)
+	{
+		textures[which].yscale = scale == 0 ? FRACUNIT : FLOAT2FIXED(scale);
+	}
+
 	void SetTextureYScale(fixed_t scale)
 	{
 		textures[top].yscale = textures[mid].yscale = textures[bottom].yscale = scale == 0 ? FRACUNIT : scale;
+	}
+	void SetTextureYScale(double scale)
+	{
+		textures[top].yscale = textures[mid].yscale = textures[bottom].yscale = scale == 0 ? FRACUNIT : FLOAT2FIXED(scale);
 	}
 	fixed_t GetTextureYScale(int which) const
 	{
@@ -1504,6 +1538,11 @@ public:
 	{
 		dx = FLOAT2FIXED(x);
 		dy = FLOAT2FIXED(y);
+	}
+
+	void setAlpha(double a)
+	{
+		Alpha = FLOAT2FIXED(a);
 	}
 
 	FLinePortal *getPortal() const
@@ -1706,31 +1745,6 @@ inline sector_t *P_PointInSector(const DVector2 &pos)
 inline sector_t *P_PointInSector(double X, double Y)
 {
 	return P_PointInSubsector(FLOAT2FIXED(X), FLOAT2FIXED(Y))->sector;
-}
-
-inline fixedvec3 AActor::_f_PosRelative(int portalgroup) const
-{
-	return _f_Pos() + Displacements._f_getOffset(Sector->PortalGroup, portalgroup);
-}
-
-inline fixedvec3 AActor::_f_PosRelative(const AActor *other) const
-{
-	return _f_Pos() + Displacements._f_getOffset(Sector->PortalGroup, other->Sector->PortalGroup);
-}
-
-inline fixedvec3 AActor::_f_PosRelative(sector_t *sec) const
-{
-	return _f_Pos() + Displacements._f_getOffset(Sector->PortalGroup, sec->PortalGroup);
-}
-
-inline fixedvec3 AActor::_f_PosRelative(line_t *line) const
-{
-	return _f_Pos() + Displacements._f_getOffset(Sector->PortalGroup, line->frontsector->PortalGroup);
-}
-
-inline fixedvec3 _f_PosRelative(const fixedvec3 &pos, line_t *line, sector_t *refsec = NULL)
-{
-	return pos + Displacements._f_getOffset(refsec->PortalGroup, line->frontsector->PortalGroup);
 }
 
 inline DVector3 AActor::PosRelative(int portalgroup) const

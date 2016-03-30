@@ -2175,7 +2175,7 @@ explode:
 	{ // Don't stop sliding if halfway off a step with some velocity
 		if (fabs(mo->Vel.X) > 0.25 || fabs(mo->Vel.Y) > 0.25)
 		{
-			if (mo->floorz > mo->Sector->floorplane.ZatPointF(mo))
+			if (mo->floorz > mo->Sector->floorplane.ZatPoint(mo))
 			{
 				if (mo->dropoffz != mo->floorz) // 3DMidtex or other special cases that must be excluded
 				{
@@ -2186,7 +2186,7 @@ explode:
 						// if the floor comes from one in the current sector stop sliding the corpse!
 						F3DFloor * rover=mo->Sector->e->XFloor.ffloors[i];
 						if (!(rover->flags&FF_EXISTS)) continue;
-						if (rover->flags&FF_SOLID && rover->top.plane->ZatPointF(mo) == mo->floorz) break;
+						if (rover->flags&FF_SOLID && rover->top.plane->ZatPoint(mo) == mo->floorz) break;
 					}
 					if (i==mo->Sector->e->XFloor.ffloors.Size()) 
 						return Oldfloorz;
@@ -2427,8 +2427,8 @@ void P_ZMovement (AActor *mo, double oldfloorz)
 			if (!(rover->flags & FF_EXISTS)) continue;
 			if (!(rover->flags & FF_SWIMMABLE)) continue;
 
-			if (mo->Z() >= rover->top.plane->ZatPointF(mo) ||
-				mo->Center() < rover->bottom.plane->ZatPointF(mo))
+			if (mo->Z() >= rover->top.plane->ZatPoint(mo) ||
+				mo->Center() < rover->bottom.plane->ZatPoint(mo))
 				continue;
 
 			friction = rover->model->GetFriction(rover->top.isceiling);
@@ -2447,7 +2447,7 @@ void P_ZMovement (AActor *mo, double oldfloorz)
 	{	// Hit the floor
 		if ((!mo->player || !(mo->player->cheats & CF_PREDICTING)) &&
 			mo->Sector->SecActTarget != NULL &&
-			mo->Sector->floorplane.ZatPointF(mo) == mo->floorz)
+			mo->Sector->floorplane.ZatPoint(mo) == mo->floorz)
 		{ // [RH] Let the sector do something to the actor
 			mo->Sector->SecActTarget->TriggerAction (mo, SECSPAC_HitFloor);
 		}
@@ -2547,7 +2547,7 @@ void P_ZMovement (AActor *mo, double oldfloorz)
 	{ // hit the ceiling
 		if ((!mo->player || !(mo->player->cheats & CF_PREDICTING)) &&
 			mo->Sector->SecActTarget != NULL &&
-			mo->Sector->ceilingplane.ZatPointF(mo) == mo->ceilingz)
+			mo->Sector->ceilingplane.ZatPoint(mo) == mo->ceilingz)
 		{ // [RH] Let the sector do something to the actor
 			mo->Sector->SecActTarget->TriggerAction (mo, SECSPAC_HitCeiling);
 		}
@@ -2602,7 +2602,7 @@ void P_CheckFakeFloorTriggers (AActor *mo, double oldz, bool oldz_has_viewheight
 	if (sec->heightsec != NULL && sec->SecActTarget != NULL)
 	{
 		sector_t *hs = sec->heightsec;
-		double waterz = hs->floorplane.ZatPointF(mo);
+		double waterz = hs->floorplane.ZatPoint(mo);
 		double newz;
 		double viewheight;
 
@@ -2637,7 +2637,7 @@ void P_CheckFakeFloorTriggers (AActor *mo, double oldz, bool oldz_has_viewheight
 
 		if (!(hs->MoreFlags & SECF_FAKEFLOORONLY))
 		{
-			waterz = hs->ceilingplane.ZatPointF(mo);
+			waterz = hs->ceilingplane.ZatPoint(mo);
 			if (oldz <= waterz && newz > waterz)
 			{ // View went above fake ceiling
 				sec->SecActTarget->TriggerAction (mo, SECSPAC_EyesAboveC);
@@ -3644,18 +3644,18 @@ void AActor::Tick ()
 			// Check 3D floors as well
 			floorplane = P_FindFloorPlane(floorsector, PosAtZ(floorz));
 
-			if (floorplane.fixC() < STEEPSLOPE &&
+			if (floorplane.fC() < STEEPSLOPE &&
 				floorplane.ZatPoint (PosRelative(floorsector)) <= floorz)
 			{
 				const msecnode_t *node;
 				bool dopush = true;
 
-				if (floorplane.fixC() > STEEPSLOPE*2/3)
+				if (floorplane.fC() > STEEPSLOPE*2/3)
 				{
 					for (node = touching_sectorlist; node; node = node->m_tnext)
 					{
 						const sector_t *sec = node->m_sector;
-						if (sec->floorplane.fixC() >= STEEPSLOPE)
+						if (sec->floorplane.fC() >= STEEPSLOPE)
 						{
 							if (floorplane.ZatPoint(PosRelative(node->m_sector)) >= Z() - MaxStepHeight)
 							{
@@ -3897,15 +3897,15 @@ void AActor::CheckSectorTransition(sector_t *oldsec)
 		if (Sector->SecActTarget != NULL)
 		{
 			int act = SECSPAC_Enter;
-			if (Z() <= Sector->floorplane.ZatPointF(this))
+			if (Z() <= Sector->floorplane.ZatPoint(this))
 			{
 				act |= SECSPAC_HitFloor;
 			}
-			if (Top() >= Sector->ceilingplane.ZatPointF(this))
+			if (Top() >= Sector->ceilingplane.ZatPoint(this))
 			{
 				act |= SECSPAC_HitCeiling;
 			}
-			if (Sector->heightsec != NULL && Z() == Sector->heightsec->floorplane.ZatPointF(this))
+			if (Sector->heightsec != NULL && Z() == Sector->heightsec->floorplane.ZatPoint(this))
 			{
 				act |= SECSPAC_HitFakeFloor;
 			}
@@ -3952,7 +3952,7 @@ bool AActor::UpdateWaterLevel (bool dosplash)
 		const sector_t *hsec = Sector->GetHeightSec();
 		if (hsec != NULL)
 		{
-			fh = hsec->floorplane.ZatPointF (this);
+			fh = hsec->floorplane.ZatPoint (this);
 			//if (hsec->MoreFlags & SECF_UNDERWATERMASK)	// also check Boom-style non-swimmable sectors
 			{
 				if (Z() < fh)
@@ -3968,7 +3968,7 @@ bool AActor::UpdateWaterLevel (bool dosplash)
 						}
 					}
 				}
-				else if (!(hsec->MoreFlags & SECF_FAKEFLOORONLY) && (Top() > hsec->ceilingplane.ZatPointF (this)))
+				else if (!(hsec->MoreFlags & SECF_FAKEFLOORONLY) && (Top() > hsec->ceilingplane.ZatPoint (this)))
 				{
 					waterlevel = 3;
 				}
@@ -3992,8 +3992,8 @@ bool AActor::UpdateWaterLevel (bool dosplash)
 				if (!(rover->flags & FF_EXISTS)) continue;
 				if(!(rover->flags & FF_SWIMMABLE) || rover->flags & FF_SOLID) continue;
 
-				double ff_bottom=rover->bottom.plane->ZatPointF(this);
-				double ff_top=rover->top.plane->ZatPointF(this);
+				double ff_bottom=rover->bottom.plane->ZatPoint(this);
+				double ff_top=rover->top.plane->ZatPoint(this);
 
 				if(ff_top <= Z() || ff_bottom > (Center())) continue;
 				
@@ -4174,7 +4174,7 @@ AActor *AActor::StaticSpawn (PClassActor *type, const DVector3 &pos, replace_t a
 	}
 	else
 	{
-		actor->SpawnPoint.Z = (actor->Z() - actor->Sector->floorplane.ZatPointF(actor));
+		actor->SpawnPoint.Z = (actor->Z() - actor->Sector->floorplane.ZatPoint(actor));
 	}
 
 	if (actor->FloatBobPhase == (BYTE)-1) actor->FloatBobPhase = rng();	// Don't make everything bob in sync (unless deliberately told to do)
@@ -4420,7 +4420,7 @@ void AActor::AdjustFloorClip ()
 	const msecnode_t *m;
 
 	// possibly standing on a 3D-floor
-	if (Sector->e->XFloor.ffloors.Size() && Z() > Sector->floorplane.ZatPointF(this)) Floorclip = 0;
+	if (Sector->e->XFloor.ffloors.Size() && Z() > Sector->floorplane.ZatPoint(this)) Floorclip = 0;
 
 	// [RH] clip based on shallowest floor player is standing on
 	// If the sector has a deep water effect, then let that effect
@@ -5522,7 +5522,7 @@ foundone:
 	if (smallsplash && splash->SmallSplash)
 	{
 		mo = Spawn (splash->SmallSplash, pos, ALLOW_REPLACE);
-		if (mo) mo->Floorclip += FIXED2DBL(splash->SmallSplashClip);
+		if (mo) mo->Floorclip += splash->SmallSplashClip;
 	}
 	else
 	{

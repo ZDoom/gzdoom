@@ -426,7 +426,7 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 			tempsec->floorplane = sec->floorplane;
 			tempsec->ceilingplane = s->floorplane;
 			tempsec->ceilingplane.FlipVert ();
-			tempsec->ceilingplane.ChangeHeight (-1);
+			tempsec->ceilingplane.ChangeHeight(-1 / 65536.);
 			tempsec->ColorMap = s->ColorMap;
 		}
 
@@ -438,12 +438,12 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 
 			tempsec->ceilingplane		= s->floorplane;
 			tempsec->ceilingplane.FlipVert ();
-			tempsec->ceilingplane.ChangeHeight (-1);
+			tempsec->ceilingplane.ChangeHeight (-1 / 65536.);
 			if (s->GetTexture(sector_t::ceiling) == skyflatnum)
 			{
 				tempsec->floorplane			= tempsec->ceilingplane;
 				tempsec->floorplane.FlipVert ();
-				tempsec->floorplane.ChangeHeight (+1);
+				tempsec->floorplane.ChangeHeight (+1 / 65536.);
 				tempsec->SetTexture(sector_t::ceiling, tempsec->GetTexture(sector_t::floor), false);
 				tempsec->planes[sector_t::ceiling].xform = tempsec->planes[sector_t::floor].xform;
 			}
@@ -475,7 +475,7 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 			tempsec->ceilingplane		= s->ceilingplane;
 			tempsec->floorplane			= s->ceilingplane;
 			tempsec->floorplane.FlipVert ();
-			tempsec->floorplane.ChangeHeight (+1);
+			tempsec->floorplane.ChangeHeight (+1 / 65536.);
 			tempsec->ColorMap			= s->ColorMap;
 			tempsec->ColorMap			= s->ColorMap;
 
@@ -1261,14 +1261,14 @@ void R_Subsector (subsector_t *sub)
 				} else position = sector_t::ceiling;
 				frontsector = &tempsec;
 
-				tempsec.ceilingplane.ChangeHeight(-1);
+				tempsec.ceilingplane.ChangeHeight(-1 / 65536.);
 				if (fixedlightlev < 0 && sub->sector->e->XFloor.lightlist.Size())
 				{
 					light = P_GetPlaneLight(sub->sector, &frontsector->ceilingplane, false);
 					basecolormap = light->extra_colormap;
 					ceilinglightlevel = *light->p_lightlevel;
 				}
-				tempsec.ceilingplane.ChangeHeight(1);
+				tempsec.ceilingplane.ChangeHeight(1 / 65536.);
 
 				floorplane = NULL;
 				ceilingplane = R_FindPlane(frontsector->ceilingplane,		// killough 3/8/98

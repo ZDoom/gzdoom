@@ -1390,7 +1390,7 @@ public:
 	void Serialize (FArchive &arc);
 private:
 	sector_t *Sector;
-	fixed_t WatchD, LastD;
+	double WatchD, LastD;
 	int Special, Arg0, Arg1, Arg2, Arg3, Arg4;
 	TObjPtr<AActor> Activator;
 	line_t *Line;
@@ -1426,9 +1426,9 @@ DPlaneWatcher::DPlaneWatcher (AActor *it, line_t *line, int lineSide, bool ceili
 		{
 			plane = Sector->floorplane;
 		}
-		LastD = plane.fixD();
-		plane.ChangeHeight (height << FRACBITS);
-		WatchD = plane.fixD();
+		LastD = plane.fD();
+		plane.ChangeHeight (height);
+		WatchD = plane.fD();
 	}
 	else
 	{
@@ -1454,15 +1454,15 @@ void DPlaneWatcher::Tick ()
 		return;
 	}
 
-	fixed_t newd;
+	double newd;
 
 	if (bCeiling)
 	{
-		newd = Sector->ceilingplane.fixD();
+		newd = Sector->ceilingplane.fD();
 	}
 	else
 	{
-		newd = Sector->floorplane.fixD();
+		newd = Sector->floorplane.fD();
 	}
 
 	if ((LastD < WatchD && newd >= WatchD) ||
@@ -4565,12 +4565,12 @@ int DLevelScript::LineFromID(int id)
 	}
 }
 
-bool GetVarAddrType(AActor *self, FName varname, int index, void *&addr, PType *&type)
+bool GetVarAddrType(AActor *self, FName varname, int index, void *&addr, PType *&type, bool readonly)
 {
 	PField *var = dyn_cast<PField>(self->GetClass()->Symbols.FindSymbol(varname, true));
 	PArray *arraytype;
 
-	if (var == NULL || (var->Flags & VARF_Native))
+	if (var == NULL || (!readonly && (var->Flags & VARF_Native)))
 	{
 		return false;
 	}
@@ -4593,6 +4593,17 @@ bool GetVarAddrType(AActor *self, FName varname, int index, void *&addr, PType *
 		return false;
 	}
 	addr = baddr;
+	// We don't want Int subclasses like Name or Color to be accessible,
+	// but we do want to support Float subclasses like Fixed.
+	if (!type->IsA(RUNTIME_CLASS(PInt)) || !type->IsKindOf(RUNTIME_CLASS(PFloat)))
+	{
+		// For reading, we also support Name and String types.
+		if (readonly && (type->IsA(RUNTIME_CLASS(PName)) || type->IsA(RUNTIME_CLASS(PString))))
+		{
+			return true;
+		}
+		return false;
+	}
 	return true;
 }
 
@@ -4601,9 +4612,16 @@ static void SetUserVariable(AActor *self, FName varname, int index, int value)
 	void *addr;
 	PType *type;
 
-	if (GetVarAddrType(self, varname, index, addr, type))
+	if (GetVarAddrType(self, varname, index, addr, type, false))
 	{
-		type->SetValue(addr, value);
+		if (!type->IsKindOf(RUNTIME_CLASS(PFloat)))
+		{
+			type->SetValue(addr, value);
+		}
+		else
+		{
+			type->SetValue(addr, ACSToDouble(value));
+		}
 	}
 }
 
@@ -4612,9 +4630,24 @@ static int GetUserVariable(AActor *self, FName varname, int index)
 	void *addr;
 	PType *type;
 
-	if (GetVarAddrType(self, varname, index, addr, type))
+	if (GetVarAddrType(self, varname, index, addr, type, true))
 	{
-		return type->GetValueInt(addr);
+		if (type->IsKindOf(RUNTIME_CLASS(PFloat)))
+		{
+			return DoubleToACS(type->GetValueFloat(addr));
+		}
+		else if (type->IsA(RUNTIME_CLASS(PName)))
+		{
+			return GlobalACSStrings.AddString(FName(ENamedName(type->GetValueInt(addr))).GetChars());
+		}
+		else if (type->IsA(RUNTIME_CLASS(PString)))
+		{
+			return GlobalACSStrings.AddString(*(FString *)addr);
+		}
+		else
+		{
+			return type->GetValueInt(addr);
+		}
 	}
 	return 0;
 }
@@ -4916,7 +4949,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 			return GetUDMFInt(UDMF_Line, LineFromID(args[0]), FBehavior::StaticLookupString(args[1]));
 
 		case ACSF_GetLineUDMFFixed:
-			return GetUDMFFixed(UDMF_Line, LineFromID(args[0]), FBehavior::StaticLookupString(args[1]));
+			return DoubleToACS(GetUDMFFloat(UDMF_Line, LineFromID(args[0]), FBehavior::StaticLookupString(args[1])));
 
 		case ACSF_GetThingUDMFInt:
 		case ACSF_GetThingUDMFFixed:
@@ -4926,13 +4959,13 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 			return GetUDMFInt(UDMF_Sector, P_FindFirstSectorFromTag(args[0]), FBehavior::StaticLookupString(args[1]));
 
 		case ACSF_GetSectorUDMFFixed:
-			return GetUDMFFixed(UDMF_Sector, P_FindFirstSectorFromTag(args[0]), FBehavior::StaticLookupString(args[1]));
+			return DoubleToACS(GetUDMFFloat(UDMF_Sector, P_FindFirstSectorFromTag(args[0]), FBehavior::StaticLookupString(args[1])));
 
 		case ACSF_GetSideUDMFInt:
 			return GetUDMFInt(UDMF_Side, SideFromID(args[0], args[1]), FBehavior::StaticLookupString(args[2]));
 
 		case ACSF_GetSideUDMFFixed:
-			return GetUDMFFixed(UDMF_Side, SideFromID(args[0], args[1]), FBehavior::StaticLookupString(args[2]));
+			return DoubleToACS(GetUDMFFloat(UDMF_Side, SideFromID(args[0], args[1]), FBehavior::StaticLookupString(args[2])));
 
 		case ACSF_GetActorVelX:
 			actor = SingleActorFromTID(args[0], activator);

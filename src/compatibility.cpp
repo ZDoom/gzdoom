@@ -290,7 +290,7 @@ void ParseCompatibility()
 				sc.MustGetNumber();
 				CompatParams.Push(sc.Number);
 				sc.MustGetFloat();
-				CompatParams.Push(FLOAT2FIXED(sc.Float));
+				CompatParams.Push(int(sc.Float*65536.));
 			}
 			else if (sc.Compare("setwallyscale"))
 			{
@@ -303,7 +303,7 @@ void ParseCompatibility()
 				sc.MustGetString();
 				CompatParams.Push(sc.MustMatchString(WallTiers));
 				sc.MustGetFloat();
-				CompatParams.Push(FLOAT2FIXED(sc.Float));
+				CompatParams.Push(int(sc.Float*65536.));
 			}
 			else if (sc.Compare("setthingz"))
 			{
@@ -522,7 +522,7 @@ void SetCompatibilityParams()
 					{
 						sector_t *sec = &sectors[CompatParams[i+1]];
 						sec->floorplane.ChangeHeight(CompatParams[i+2]);
-						sec->ChangePlaneTexZ(sector_t::floor, CompatParams[i+2]);
+						sec->ChangePlaneTexZ(sector_t::floor, CompatParams[i+2] / 65536.);
 					}
 					i += 3;
 					break;
@@ -534,7 +534,7 @@ void SetCompatibilityParams()
 						side_t *side = lines[CompatParams[i+1]].sidedef[CompatParams[i+2]];
 						if (side != NULL)
 						{
-							side->SetTextureYScale(CompatParams[i+3], CompatParams[i+4]);
+							side->SetTextureYScale(CompatParams[i+3], CompatParams[i+4] / 65536.);
 						}
 					}
 					i += 5;

@@ -867,7 +867,7 @@ void FPolyObj::ThrustMobj (AActor *actor, side_t *side)
 	}
 	vertex_t *v1 = side->V1();
 	vertex_t *v2 = side->V2();
-	thrustAngle = VecToAngle(v2->fixX() - v1->fixX(), v2->fixY() - v1->fixY()) - 90.;
+	thrustAngle = (v2->fPos() - v1->fPos()).Angle() - 90.;
 
 	pe = static_cast<DPolyAction *>(specialdata);
 	if (pe)
@@ -1239,8 +1239,8 @@ bool FPolyObj::CheckMobjBlocking (side_t *sd)
 							}
 							// [BL] See if we hit below the floor/ceiling of the poly.
 							else if(!performBlockingThrust && (
-									mobj->_f_Z() < ld->sidedef[!side]->sector->GetSecPlane(sector_t::floor).ZatPoint(mobj) ||
-									mobj->_f_Top() > ld->sidedef[!side]->sector->GetSecPlane(sector_t::ceiling).ZatPoint(mobj)
+									mobj->Z() < ld->sidedef[!side]->sector->GetSecPlane(sector_t::floor).ZatPoint(mobj) ||
+									mobj->Top() > ld->sidedef[!side]->sector->GetSecPlane(sector_t::ceiling).ZatPoint(mobj)
 								))
 							{
 								performBlockingThrust = true;

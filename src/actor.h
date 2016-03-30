@@ -850,11 +850,7 @@ public:
 		return VecToAngle(otherpos - Pos().XY());
 	}
 
-	DAngle AngleTo(AActor *other, fixed_t oxofs, fixed_t oyofs, bool absolute = false) const
-	{
-		fixedvec3 otherpos = absolute ? other->_f_Pos() : other->_f_PosRelative(this);
-		return VecToAngle(otherpos.x + oxofs - _f_X(), otherpos.y + oyofs - _f_Y());
-	}
+	DAngle AngleTo(AActor *other, fixed_t oxofs, fixed_t oyofs, bool absolute = false) const = delete;
 
 	DAngle AngleTo(AActor *other, double oxofs, double oyofs, bool absolute = false) const
 	{
@@ -1007,12 +1003,6 @@ public:
 	DVector3		Vel;
 	double			Speed;
 	double			FloatSpeed;
-
-	// intentionally stange names so that searching for them is easier.
-	angle_t			_f_angle() { return FLOAT2ANGLE(Angles.Yaw.Degrees); }
-	int				_f_pitch() { return FLOAT2ANGLE(Angles.Pitch.Degrees); }
-	fixed_t			_f_speed() { return FLOAT2FIXED(Speed); }
-
 
 	WORD			sprite;				// used to find patch_t and flip value
 	BYTE			frame;				// sprite frame to draw
@@ -1305,15 +1295,10 @@ public:
 	{
 		return Z() < checkz - Z_Epsilon;
 	}
-	bool isAtZ(double checkz)
+	bool isAtZ(double checkz) const
 	{
 		return fabs(Z() - checkz) < Z_Epsilon;
 	}
-
-	fixedvec3 _f_PosRelative(int grp) const;
-	fixedvec3 _f_PosRelative(const AActor *other) const;
-	fixedvec3 _f_PosRelative(sector_t *sec) const;
-	fixedvec3 _f_PosRelative(line_t *line) const;
 
 	DVector3 PosRelative(int grp) const;
 	DVector3 PosRelative(const AActor *other) const;

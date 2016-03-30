@@ -124,20 +124,8 @@ enum ETraceStatus
 	TRACE_Abort,		// stop the trace, returning no hits
 };
 
-bool Trace (fixed_t x, fixed_t y, fixed_t z, sector_t *sector,
-			fixed_t vx, fixed_t vy, fixed_t vz, fixed_t maxDist,
-			ActorFlags ActorMask, DWORD WallMask, AActor *ignore,
-			FTraceResults &res,
-			DWORD traceFlags=0,
-			ETraceStatus (*callback)(FTraceResults &res, void *)=NULL, void *callbackdata=NULL);
-
-inline bool Trace(const DVector3 &start, sector_t *sector, const DVector3 &direction, double maxDist,
+bool Trace(const DVector3 &start, sector_t *sector, const DVector3 &direction, double maxDist,
 	ActorFlags ActorMask, DWORD WallMask, AActor *ignore, FTraceResults &res, DWORD traceFlags = 0,
-	ETraceStatus(*callback)(FTraceResults &res, void *) = NULL, void *callbackdata = NULL)
-{
-	return Trace(FLOAT2FIXED(start.X), FLOAT2FIXED(start.Y), FLOAT2FIXED(start.Z), sector,
-		FLOAT2FIXED(direction.X), FLOAT2FIXED(direction.Y), FLOAT2FIXED(direction.Z), FLOAT2FIXED(maxDist),
-		ActorMask, WallMask, ignore, res, traceFlags, callback, callbackdata);
-}
+	ETraceStatus(*callback)(FTraceResults &res, void *) = NULL, void *callbackdata = NULL);
 
 #endif //__P_TRACE_H__

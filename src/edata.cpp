@@ -105,7 +105,7 @@ struct EDLinedef
 	int tag;
 	int id;
 	int args[5];
-	fixed_t alpha;
+	double alpha;
 	DWORD flags;
 	DWORD activation;
 };
@@ -158,7 +158,7 @@ static void parseLinedef(FScanner &sc)
 	bool argsset = false;
 
 	memset(&ld, 0, sizeof(ld));
-	ld.alpha = FRACUNIT;
+	ld.alpha = 1.;
 
 	sc.MustGetStringName("{");
 	while (!sc.CheckString("}"))
@@ -216,7 +216,7 @@ static void parseLinedef(FScanner &sc)
 		{
 			sc.CheckString("=");
 			sc.MustGetFloat();
-			ld.alpha = FLOAT2FIXED(sc.Float);
+			ld.alpha = sc.Float;
 		}
 		else if (sc.Compare("extflags"))
 		{
@@ -703,7 +703,7 @@ void ProcessEDLinedef(line_t *ld, int recordnum)
 	ld->special = eld->special;
 	ld->activation = eld->activation;
 	ld->flags = (ld->flags&~fmask) | eld->flags;
-	ld->Alpha = eld->alpha;
+	ld->setAlpha(eld->alpha);
 	memcpy(ld->args, eld->args, sizeof(ld->args));
 	tagManager.AddLineID(int(ld - lines), eld->tag);
 }

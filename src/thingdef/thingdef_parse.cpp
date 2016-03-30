@@ -531,14 +531,14 @@ static void ParseUserVariable (FScanner &sc, PSymbolTable *symt, PClassActor *cl
 		sc.ScriptError("Native classes may not have user variables");
 	}
 
-	// Read the type and make sure it's int.
+	// Read the type and make sure it's acceptable.
 	sc.MustGetAnyToken();
-	if (sc.TokenType != TK_Int)
+	if (sc.TokenType != TK_Int && sc.TokenType != TK_Float)
 	{
-		sc.ScriptMessage("User variables must be of type int");
+		sc.ScriptMessage("User variables must be of type 'int' or 'float'");
 		FScriptPosition::ErrorCounter++;
 	}
-	type = TypeSInt32;
+	type = sc.TokenType == TK_Int ? (PType *)TypeSInt32 : (PType *)TypeFloat64;
 
 	sc.MustGetToken(TK_Identifier);
 	// For now, restrict user variables to those that begin with "user_" to guarantee
@@ -585,7 +585,7 @@ static void ParseUserVariable (FScanner &sc, PSymbolTable *symt, PClassActor *cl
 	sc.MustGetToken(';');
 
 	PField *sym = new PField(symname, type, 0);
-	sym->Offset = cls->Extend(sizeof(int) * maxelems);
+	sym->Offset = cls->Extend(type);
 	if (symt->AddSymbol(sym) == NULL)
 	{
 		delete sym;

@@ -4529,12 +4529,12 @@ int DLevelScript::LineFromID(int id)
 	}
 }
 
-bool GetVarAddrType(AActor *self, FName varname, int index, void *&addr, PType *&type)
+bool GetVarAddrType(AActor *self, FName varname, int index, void *&addr, PType *&type, bool readonly)
 {
 	PField *var = dyn_cast<PField>(self->GetClass()->Symbols.FindSymbol(varname, true));
 	PArray *arraytype;
 
-	if (var == NULL || (var->Flags & VARF_Native))
+	if (var == NULL || (!readonly && (var->Flags & VARF_Native)))
 	{
 		return false;
 	}
@@ -4557,6 +4557,17 @@ bool GetVarAddrType(AActor *self, FName varname, int index, void *&addr, PType *
 		return false;
 	}
 	addr = baddr;
+	// We don't want Int subclasses like Name or Color to be accessible,
+	// but we do want to support Float subclasses like Fixed.
+	if (!type->IsA(RUNTIME_CLASS(PInt)) || !type->IsKindOf(RUNTIME_CLASS(PFloat)))
+	{
+		// For reading, we also support Name and String types.
+		if (readonly && (type->IsA(RUNTIME_CLASS(PName)) || type->IsA(RUNTIME_CLASS(PString))))
+		{
+			return true;
+		}
+		return false;
+	}
 	return true;
 }
 
@@ -4565,9 +4576,16 @@ static void SetUserVariable(AActor *self, FName varname, int index, int value)
 	void *addr;
 	PType *type;
 
-	if (GetVarAddrType(self, varname, index, addr, type))
+	if (GetVarAddrType(self, varname, index, addr, type, false))
 	{
-		type->SetValue(addr, value);
+		if (!type->IsKindOf(RUNTIME_CLASS(PFloat)))
+		{
+			type->SetValue(addr, value);
+		}
+		else
+		{
+			type->SetValue(addr, FIXED2DBL(value));
+		}
 	}
 }
 
@@ -4576,9 +4594,24 @@ static int GetUserVariable(AActor *self, FName varname, int index)
 	void *addr;
 	PType *type;
 
-	if (GetVarAddrType(self, varname, index, addr, type))
+	if (GetVarAddrType(self, varname, index, addr, type, true))
 	{
-		return type->GetValueInt(addr);
+		if (type->IsKindOf(RUNTIME_CLASS(PFloat)))
+		{
+			return FLOAT2FIXED(type->GetValueFloat(addr));
+		}
+		else if (type->IsA(RUNTIME_CLASS(PName)))
+		{
+			return GlobalACSStrings.AddString(FName(ENamedName(type->GetValueInt(addr))).GetChars());
+		}
+		else if (type->IsA(RUNTIME_CLASS(PString)))
+		{
+			return GlobalACSStrings.AddString(*(FString *)addr);
+		}
+		else
+		{
+			return type->GetValueInt(addr);
+		}
 	}
 	return 0;
 }

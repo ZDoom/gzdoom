@@ -188,9 +188,11 @@ public:
 
 	// Sets the value of a variable of this type at (addr)
 	virtual void SetValue(void *addr, int val);
+	virtual void SetValue(void *addr, double val);
 
 	// Gets the value of a variable of this type at (addr)
 	virtual int GetValueInt(void *addr) const;
+	virtual double GetValueFloat(void *addr) const;
 
 	// Gets the opcode to store from a register to memory
 	virtual int GetStoreOp() const;
@@ -320,7 +322,9 @@ public:
 	PInt(unsigned int size, bool unsign);
 
 	virtual void SetValue(void *addr, int val);
+	virtual void SetValue(void *addr, double val);
 	virtual int GetValueInt(void *addr) const;
+	virtual double GetValueFloat(void *addr) const;
 	virtual int GetStoreOp() const;
 	virtual int GetLoadOp() const;
 	virtual int GetRegType() const;
@@ -344,7 +348,9 @@ public:
 	PFloat(unsigned int size);
 
 	virtual void SetValue(void *addr, int val);
+	virtual void SetValue(void *addr, double val);
 	virtual int GetValueInt(void *addr) const;
+	virtual double GetValueFloat(void *addr) const;
 	virtual int GetStoreOp() const;
 	virtual int GetLoadOp() const;
 	virtual int GetRegType() const;
@@ -410,7 +416,9 @@ public:
 	PFixed();
 
 	virtual void SetValue(void *addr, int val);
+	virtual void SetValue(void *addr, double val);
 	virtual int GetValueInt(void *addr) const;
+	virtual double GetValueFloat(void *addr) const;
 	virtual int GetStoreOp() const;
 	virtual int GetLoadOp() const;
 };
@@ -422,7 +430,9 @@ public:
 	PAngle();
 
 	virtual void SetValue(void *addr, int val);
+	virtual void SetValue(void *addr, double val);
 	virtual int GetValueInt(void *addr) const;
+	virtual double GetValueFloat(void *addr) const;
 	virtual int GetStoreOp() const;
 	virtual int GetLoadOp() const;
 };
@@ -660,7 +670,8 @@ public:
 	void InsertIntoHash();
 	DObject *CreateNew() const;
 	PClass *CreateDerivedClass(FName name, unsigned int size);
-	unsigned int Extend(unsigned int extension);
+	unsigned int Extend(unsigned int extension, unsigned int alignment);
+	unsigned int Extend(const PType *type) { return Extend(type->Size, type->Align); }
 	void InitializeActorInfo();
 	void BuildFlatPointers();
 	const PClass *NativeClass() const;

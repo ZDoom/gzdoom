@@ -392,7 +392,12 @@ bool PType::VisitedNodeSet::Check(const PType *node)
 
 void PType::SetValue(void *addr, int val)
 {
-	assert(0 && "Cannot set value for this type");
+	assert(0 && "Cannot set int value for this type");
+}
+
+void PType::SetValue(void *addr, double val)
+{
+	assert(0 && "Cannot set float value for this type");
 }
 
 //==========================================================================
@@ -402,6 +407,12 @@ void PType::SetValue(void *addr, int val)
 //==========================================================================
 
 int PType::GetValueInt(void *addr) const
+{
+	assert(0 && "Cannot get value for this type");
+	return 0;
+}
+
+double PType::GetValueFloat(void *addr) const
 {
 	assert(0 && "Cannot get value for this type");
 	return 0;
@@ -682,6 +693,11 @@ void PInt::SetValue(void *addr, int val)
 	}
 }
 
+void PInt::SetValue(void *addr, double val)
+{
+	SetValue(addr, (int)val);
+}
+
 //==========================================================================
 //
 // PInt :: GetValueInt
@@ -712,6 +728,17 @@ int PInt::GetValueInt(void *addr) const
 		assert(0 && "Unhandled integer size");
 		return 0;
 	}
+}
+
+//==========================================================================
+//
+// PInt :: GetValueFloat
+//
+//==========================================================================
+
+double PInt::GetValueFloat(void *addr) const
+{
+	return GetValueInt(addr);
 }
 
 //==========================================================================
@@ -928,6 +955,11 @@ void PFloat::SetSymbols(const PFloat::SymbolInitI *sym, size_t count)
 
 void PFloat::SetValue(void *addr, int val)
 {
+	return SetValue(addr, (double)val);
+}
+
+void PFloat::SetValue(void *addr, double val)
+{
 	assert(((intptr_t)addr & (Align - 1)) == 0 && "unaligned address");
 	if (Size == 4)
 	{
@@ -948,15 +980,26 @@ void PFloat::SetValue(void *addr, int val)
 
 int PFloat::GetValueInt(void *addr) const
 {
+	return xs_ToInt(GetValueFloat(addr));
+}
+
+//==========================================================================
+//
+// PFloat :: GetValueFloat
+//
+//==========================================================================
+
+double PFloat::GetValueFloat(void *addr) const
+{
 	assert(((intptr_t)addr & (Align - 1)) == 0 && "unaligned address");
 	if (Size == 4)
 	{
-		return xs_ToInt(*(float *)addr);
+		return *(float *)addr;
 	}
 	else
 	{
 		assert(Size == 8);
-		return xs_ToInt(*(double *)addr);
+		return *(double *)addr;
 	}
 }
 
@@ -1112,6 +1155,12 @@ void PFixed::SetValue(void *addr, int val)
 	*(fixed_t *)addr = val << FRACBITS;
 }
 
+void PFixed::SetValue(void *addr, double val)
+{
+	assert(((intptr_t)addr & (Align - 1)) == 0 && "unaligned address");
+	*(fixed_t *)addr = FLOAT2FIXED(val);
+}
+
 //==========================================================================
 //
 // PFixed :: GetValueInt
@@ -1122,6 +1171,18 @@ int PFixed::GetValueInt(void *addr) const
 {
 	assert(((intptr_t)addr & (Align - 1)) == 0 && "unaligned address");
 	return *(fixed_t *)addr >> FRACBITS;
+}
+
+//==========================================================================
+//
+// PFixed :: GetValueFloat
+//
+//==========================================================================
+
+double PFixed::GetValueFloat(void *addr) const
+{
+	assert(((intptr_t)addr & (Align - 1)) == 0 && "unaligned address");
+	return FIXED2DBL(*(fixed_t *)addr);
 }
 
 //==========================================================================
@@ -1173,6 +1234,12 @@ void PAngle::SetValue(void *addr, int val)
 	*(angle_t *)addr = Scale(val, ANGLE_90, 90);
 }
 
+void PAngle::SetValue(void *addr, double val)
+{
+	assert(((intptr_t)addr & (Align - 1)) == 0 && "unaligned address");
+	*(angle_t *)addr = (angle_t)(val * ANGLE_90 / 90);
+}
+
 //==========================================================================
 //
 // PAngle :: GetValueInt
@@ -1183,6 +1250,18 @@ int PAngle::GetValueInt(void *addr) const
 {
 	assert(((intptr_t)addr & (Align - 1)) == 0 && "unaligned address");
 	return *(angle_t *)addr / ANGLE_1;
+}
+
+//==========================================================================
+//
+// PAngle :: GetValueFloat
+//
+//==========================================================================
+
+double PAngle::GetValueFloat(void *addr) const
+{
+	assert(((intptr_t)addr & (Align - 1)) == 0 && "unaligned address");
+	return (double)(*(angle_t *)addr) / ANGLE_1;
 }
 
 //==========================================================================
@@ -2403,22 +2482,23 @@ PClass *PClass::CreateDerivedClass(FName name, unsigned int size)
 
 //==========================================================================
 //
-// PClass:: Extend
+// PClass :: Extend
 //
-// Add <extension> bytes to the end of this class. Returns the previous
-// size of the class.
+// Add <extension> bytes to the end of this class and possibly more to meet
+// alignment restrictions. Returns the start of the extended block.
 //
 //==========================================================================
 
-unsigned int PClass::Extend(unsigned int extension)
+unsigned int PClass::Extend(unsigned int extension, unsigned int alignment)
 {
 	assert(this->bRuntimeClass);
 
 	unsigned int oldsize = Size;
-	Size += extension;
+	unsigned int padto = (oldsize + alignment - 1) & ~(alignment - 1);
+	Size = padto + extension;
 	Defaults = (BYTE *)M_Realloc(Defaults, Size);
-	memset(Defaults + oldsize, 0, extension);
-	return oldsize;
+	memset(Defaults + oldsize, 0, Size - oldsize);
+	return padto;
 }
 
 //==========================================================================

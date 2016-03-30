@@ -81,10 +81,10 @@ static void P_SlopeLineToPoint (int lineid, fixed_t x, fixed_t y, fixed_t z, boo
 
 		p[0] = line->v1->fX();
 		p[1] = line->v1->fY();
-		p[2] = plane->ZatPointF (line->v1);
+		p[2] = plane->ZatPoint (line->v1);
 		v1[0] = line->Delta().X;
 		v1[1] = line->Delta().Y;
-		v1[2] = plane->ZatPointF (line->v2) - p[2];
+		v1[2] = plane->ZatPoint (line->v2) - p[2];
 		v2[0] = FIXED2DBL (x) - p[0];
 		v2[1] = FIXED2DBL (y) - p[1];
 		v2[2] = FIXED2DBL (z) - p[2];

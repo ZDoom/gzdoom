@@ -1065,9 +1065,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_SkullRodStorm)
 		return 0;
 	}
 	if (self->bouncecount >= 0 && (unsigned)self->bouncecount < self->Sector->e->XFloor.ffloors.Size())
-		pos.Z = self->Sector->e->XFloor.ffloors[self->bouncecount]->bottom.plane->ZatPointF(mo);
+		pos.Z = self->Sector->e->XFloor.ffloors[self->bouncecount]->bottom.plane->ZatPoint(mo);
 	else
-		pos.Z = self->Sector->ceilingplane.ZatPointF(mo);
+		pos.Z = self->Sector->ceilingplane.ZatPoint(mo);
 	int moceiling = P_Find3DFloor(NULL, pos, false, false, pos.Z);
 	if (moceiling >= 0) mo->SetZ(pos.Z - mo->Height);
 	mo->Translation = multiplayer ?	TRANSLATION(TRANSLATION_RainPillar,self->special2) : 0;
@@ -1120,7 +1120,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_HideInCeiling)
 		F3DFloor * rover = self->Sector->e->XFloor.ffloors[i];
 		if (!(rover->flags & FF_SOLID) || !(rover->flags & FF_EXISTS)) continue;
 
-		if ((foo = rover->bottom.plane->ZatPointF(self)) >= self->Top())
+		if ((foo = rover->bottom.plane->ZatPoint(self)) >= self->Top())
 		{
 			self->SetZ(foo + 4, false);
 			self->bouncecount = i;

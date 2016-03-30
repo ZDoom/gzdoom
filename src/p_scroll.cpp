@@ -183,8 +183,8 @@ void DScroller::Tick ()
 
 	if (m_Control != -1)
 	{	// compute scroll amounts based on a sector's height changes
-		double height = sectors[m_Control].CenterFloorF () +
-						 sectors[m_Control].CenterCeilingF ();
+		double height = sectors[m_Control].CenterFloor () +
+						 sectors[m_Control].CenterCeiling ();
 		double delta = height - m_LastHeight;
 		m_LastHeight = height;
 		dx *= delta;
@@ -277,7 +277,7 @@ DScroller::DScroller (EScroll type, double dx, double dy,
 	m_vdx = m_vdy = 0;
 	if ((m_Control = control) != -1)
 		m_LastHeight =
-			sectors[control].CenterFloorF () + sectors[control].CenterCeilingF ();
+			sectors[control].CenterFloor () + sectors[control].CenterCeiling ();
 	m_Affectee = affectee;
 	m_Interpolations[0] = m_Interpolations[1] = m_Interpolations[2] = NULL;
 

@@ -453,7 +453,7 @@ static void DoSectorDamage(AActor *actor, sector_t *sec, int amount, FName type,
 	if (!(flags & DAMAGE_PLAYERS) && actor->player != NULL)
 		return;
 
-	if (!(flags & DAMAGE_IN_AIR) && !actor->isAtZ(sec->floorplane.ZatPointF(actor)) && !actor->waterlevel)
+	if (!(flags & DAMAGE_IN_AIR) && !actor->isAtZ(sec->floorplane.ZatPoint(actor)) && !actor->waterlevel)
 		return;
 
 	if (protectClass != NULL)
@@ -490,8 +490,8 @@ void P_SectorDamage(int tag, int amount, FName type, PClassActor *protectClass, 
 			{
 				next = actor->snext;
 				// Only affect actors touching the 3D floor
-				double z1 = sec->floorplane.ZatPointF(actor);
-				double z2 = sec->ceilingplane.ZatPointF(actor);
+				double z1 = sec->floorplane.ZatPoint(actor);
+				double z2 = sec->ceilingplane.ZatPoint(actor);
 				if (z2 < z1)
 				{
 					// Account for Vavoom-style 3D floors

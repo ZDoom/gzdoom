@@ -687,16 +687,16 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 		frontsector = sec;
 	}
 
-	floorheight = backsector->CenterFloor();
-	ceilingheight = backsector->CenterCeiling();
+	floorheight = backsector->_f_CenterFloor();
+	ceilingheight = backsector->_f_CenterCeiling();
 
 	// maybe fix clipheights
 	if (!(fake3D & FAKE3D_CLIPBOTTOM)) sclipBottom = floorheight;
 	if (!(fake3D & FAKE3D_CLIPTOP))    sclipTop = ceilingheight;
 
 	// maybe not visible
-	if (sclipBottom >= frontsector->CenterCeiling()) return;
-	if (sclipTop <= frontsector->CenterFloor()) return;
+	if (sclipBottom >= frontsector->_f_CenterCeiling()) return;
+	if (sclipTop <= frontsector->_f_CenterFloor()) return;
 
 	if (fake3D & FAKE3D_DOWN2UP)
 	{ // bottom to viewz
@@ -2266,7 +2266,7 @@ void R_NewWall (bool needlights)
 		int planeside;
 
 		planeside = frontsector->floorplane.PointOnSide(viewx, viewy, viewz);
-		if (frontsector->floorplane.fixC() < 0)	// 3D floors have the floor backwards
+		if (frontsector->floorplane.fC() < 0)	// 3D floors have the floor backwards
 			planeside = -planeside;
 		if (planeside <= 0)		// above view plane
 			markfloor = false;
@@ -2274,7 +2274,7 @@ void R_NewWall (bool needlights)
 		if (frontsector->GetTexture(sector_t::ceiling) != skyflatnum)
 		{
 			planeside = frontsector->ceilingplane.PointOnSide(viewx, viewy, viewz);
-			if (frontsector->ceilingplane.fixC() > 0)	// 3D floors have the ceiling backwards
+			if (frontsector->ceilingplane.fC() > 0)	// 3D floors have the ceiling backwards
 				planeside = -planeside;
 			if (planeside <= 0)		// below view plane
 				markceiling = false;

@@ -561,8 +561,8 @@ bool SightCheck::P_SightTraverseIntercepts ()
 			if ((rover->flags & FF_SOLID) == myseethrough || !(rover->flags & FF_EXISTS)) continue;
 			if ((Flags & SF_IGNOREWATERBOUNDARY) && (rover->flags & FF_SOLID) == 0) continue;
 
-			double ff_bottom = rover->bottom.plane->ZatPointF(seeingthing);
-			double ff_top = rover->top.plane->ZatPointF(seeingthing);
+			double ff_bottom = rover->bottom.plane->ZatPoint(seeingthing);
+			double ff_top = rover->top.plane->ZatPoint(seeingthing);
 
 			if (Lastztop <= ff_bottom && topz > ff_bottom && Lastzbottom <= ff_bottom && bottomz > ff_bottom) return false;
 			if (Lastzbottom >= ff_top && bottomz < ff_top && Lastztop >= ff_top && topz < ff_top) return false;
@@ -849,16 +849,16 @@ sightcounts[0]++;
 	if (!(flags & SF_IGNOREWATERBOUNDARY))
 	{
 		if ((s1->GetHeightSec() &&
-			((t1->Top() <= s1->heightsec->floorplane.ZatPointF(t1) &&
-			  t2->Z() >= s1->heightsec->floorplane.ZatPointF(t2)) ||
-			 (t1->Z() >= s1->heightsec->ceilingplane.ZatPointF(t1) &&
-			  t2->Top() <= s1->heightsec->ceilingplane.ZatPointF(t2))))
+			((t1->Top() <= s1->heightsec->floorplane.ZatPoint(t1) &&
+			  t2->Z() >= s1->heightsec->floorplane.ZatPoint(t2)) ||
+			 (t1->Z() >= s1->heightsec->ceilingplane.ZatPoint(t1) &&
+			  t2->Top() <= s1->heightsec->ceilingplane.ZatPoint(t2))))
 			||
 			(s2->GetHeightSec() &&
-			 ((t2->Top() <= s2->heightsec->floorplane.ZatPointF(t2) &&
-			   t1->Z() >= s2->heightsec->floorplane.ZatPointF(t1)) ||
-			  (t2->Z() >= s2->heightsec->ceilingplane.ZatPointF(t2) &&
-			   t1->Top() <= s2->heightsec->ceilingplane.ZatPointF(t1)))))
+			 ((t2->Top() <= s2->heightsec->floorplane.ZatPoint(t2) &&
+			   t1->Z() >= s2->heightsec->floorplane.ZatPoint(t1)) ||
+			  (t2->Z() >= s2->heightsec->ceilingplane.ZatPoint(t2) &&
+			   t1->Top() <= s2->heightsec->ceilingplane.ZatPoint(t1)))))
 		{
 			res = false;
 			goto done;

@@ -329,13 +329,13 @@ void P_PlayerOnSpecial3DFloor(player_t* player)
 		if(rover->flags & FF_SOLID)
 		{
 			// Player must be on top of the floor to be affected...
-			if(player->mo->Z() != rover->top.plane->ZatPointF(player->mo)) continue;
+			if(player->mo->Z() != rover->top.plane->ZatPoint(player->mo)) continue;
 		}
 		else
 		{
 			//Water and DEATH FOG!!! heh
-			if (player->mo->Z() > rover->top.plane->ZatPointF(player->mo) || 
-				player->mo->Top() < rover->bottom.plane->ZatPointF(player->mo))
+			if (player->mo->Z() > rover->top.plane->ZatPoint(player->mo) || 
+				player->mo->Top() < rover->bottom.plane->ZatPoint(player->mo))
 				continue;
 		}
 
@@ -366,7 +366,7 @@ bool P_CheckFor3DFloorHit(AActor * mo)
 
 		if(rover->flags & FF_SOLID && rover->model->SecActTarget)
 		{
-			if(mo->Z() == rover->top.plane->ZatPointF(mo)) 
+			if(mo->Z() == rover->top.plane->ZatPoint(mo)) 
 			{
 				rover->model->SecActTarget->TriggerAction (mo, SECSPAC_HitFloor);
 				return true;
@@ -392,7 +392,7 @@ bool P_CheckFor3DCeilingHit(AActor * mo)
 
 		if(rover->flags & FF_SOLID && rover->model->SecActTarget)
 		{
-			if(mo->Top() == rover->bottom.plane->ZatPointF(mo)) 
+			if(mo->Top() == rover->bottom.plane->ZatPoint(mo)) 
 			{
 				rover->model->SecActTarget->TriggerAction (mo, SECSPAC_HitCeiling);
 				return true;

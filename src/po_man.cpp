@@ -1239,8 +1239,8 @@ bool FPolyObj::CheckMobjBlocking (side_t *sd)
 							}
 							// [BL] See if we hit below the floor/ceiling of the poly.
 							else if(!performBlockingThrust && (
-									mobj->_f_Z() < ld->sidedef[!side]->sector->GetSecPlane(sector_t::floor).ZatPoint(mobj) ||
-									mobj->_f_Top() > ld->sidedef[!side]->sector->GetSecPlane(sector_t::ceiling).ZatPoint(mobj)
+									mobj->Z() < ld->sidedef[!side]->sector->GetSecPlane(sector_t::floor).ZatPoint(mobj) ||
+									mobj->Top() > ld->sidedef[!side]->sector->GetSecPlane(sector_t::ceiling).ZatPoint(mobj)
 								))
 							{
 								performBlockingThrust = true;

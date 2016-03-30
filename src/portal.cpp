@@ -1096,8 +1096,8 @@ void P_CreateLinkedPortals()
 			{
 				// This is a fatal condition. We have to remove one of the two portals. Choose the one that doesn't match the current plane
 				Printf("Error in sector %d: Ceiling portal at z=%d is below floor portal at z=%d\n", i, cz, fz);
-				fixed_t cp = sectors[i].ceilingplane.Zat0();
-				fixed_t fp = sectors[i].ceilingplane.Zat0();
+				fixed_t cp = -sectors[i].ceilingplane.fixD();
+				fixed_t fp = -sectors[i].ceilingplane.fixD();
 				if (cp < fp || fz == fp)
 				{
 					sectors[i].SkyBoxes[sector_t::ceiling] = NULL;

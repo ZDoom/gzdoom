@@ -133,7 +133,7 @@ DMovingCeiling::DMovingCeiling (sector_t *sector)
 	interpolation = sector->SetInterpolation(sector_t::CeilingMove, true);
 }
 
-bool DMover::MoveAttached(int crush, fixed_t move, int floorOrCeiling, bool resetfailed)
+bool DMover::MoveAttached(int crush, double move, int floorOrCeiling, bool resetfailed)
 {
 	if (!P_Scroll3dMidtex(m_Sector, crush, move, !!floorOrCeiling) && resetfailed)
 	{
@@ -155,20 +155,20 @@ bool DMover::MoveAttached(int crush, fixed_t move, int floorOrCeiling, bool rese
 //		(Use -1 to prevent it from trying to crush)
 //		dest is the desired d value for the plane
 //
-DMover::EResult DMover::MovePlane (fixed_t speed, fixed_t dest, int crush,
+DMover::EResult DMover::MovePlane (double speed, double dest, int crush,
 								   int floorOrCeiling, int direction, bool hexencrush)
 {
 	bool	 	flag;
-	fixed_t 	lastpos;
-	fixed_t		movedest;
-	fixed_t		move;
-	//fixed_t		destheight;	//jff 02/04/98 used to keep floors/ceilings
+	double 	lastpos;
+	double		movedest;
+	double		move;
+	//double		destheight;	//jff 02/04/98 used to keep floors/ceilings
 							// from moving thru each other
 	switch (floorOrCeiling)
 	{
 	case 0:
 		// FLOOR
-		lastpos = m_Sector->floorplane.fixD();
+		lastpos = m_Sector->floorplane.fD();
 		switch (direction)
 		{
 		case -1:
@@ -223,9 +223,9 @@ DMover::EResult DMover::MovePlane (fixed_t speed, fixed_t dest, int crush,
 			// [RH] not so easy with arbitrary planes
 			//destheight = (dest < m_Sector->ceilingheight) ? dest : m_Sector->ceilingheight;
 			if (!m_Sector->ceilingplane.isSlope() && !m_Sector->floorplane.isSlope() &&
-				(!(i_compatflags2 & COMPATF2_FLOORMOVE) && -dest > m_Sector->ceilingplane.fixD()))
+				(!(i_compatflags2 & COMPATF2_FLOORMOVE) && -dest > m_Sector->ceilingplane.fD()))
 			{
-				dest = -m_Sector->ceilingplane.fixD();
+				dest = -m_Sector->ceilingplane.fD();
 			}
 
 			movedest = m_Sector->floorplane.GetChangedHeight (speed);
@@ -282,7 +282,7 @@ DMover::EResult DMover::MovePlane (fixed_t speed, fixed_t dest, int crush,
 																		
 	  case 1:
 		// CEILING
-		lastpos = m_Sector->ceilingplane.fixD();
+		lastpos = m_Sector->ceilingplane.fD();
 		switch (direction)
 		{
 		case -1:
@@ -291,9 +291,9 @@ DMover::EResult DMover::MovePlane (fixed_t speed, fixed_t dest, int crush,
 			// [RH] not so easy with arbitrary planes
 			//destheight = (dest > m_Sector->floorheight) ? dest : m_Sector->floorheight;
 			if (!m_Sector->ceilingplane.isSlope() && !m_Sector->floorplane.isSlope() &&
-				(!(i_compatflags2 & COMPATF2_FLOORMOVE) && dest < -m_Sector->floorplane.fixD()))
+				(!(i_compatflags2 & COMPATF2_FLOORMOVE) && dest < -m_Sector->floorplane.fD()))
 			{
-				dest = -m_Sector->floorplane.fixD();
+				dest = -m_Sector->floorplane.fD();
 			}
 			movedest = m_Sector->ceilingplane.GetChangedHeight (-speed);
 			if (movedest <= dest)

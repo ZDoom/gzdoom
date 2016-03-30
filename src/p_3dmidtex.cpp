@@ -51,7 +51,7 @@
 //
 //============================================================================
 
-bool P_Scroll3dMidtex(sector_t *sector, int crush, fixed_t move, bool ceiling)
+bool P_Scroll3dMidtex(sector_t *sector, int crush, double move, bool ceiling)
 {
 	extsector_t::midtex::plane &scrollplane = ceiling? sector->e->Midtex.Ceiling : sector->e->Midtex.Floor;
 

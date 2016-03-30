@@ -55,8 +55,8 @@ void R_3D_AddHeight(secplane_t *add, sector_t *sec)
 	fixed_t height;
 
 	height = add->ZatPoint(viewx, viewy);
-	if(height >= sec->CenterCeiling()) return;
-	if(height <= sec->CenterFloor()) return;
+	if(height >= sec->_f_CenterCeiling()) return;
+	if(height <= sec->_f_CenterFloor()) return;
 
 	fakeActive = 1;
 

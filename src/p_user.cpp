@@ -2609,7 +2609,7 @@ void P_PlayerThink (player_t *player)
 		P_PlayerOnSpecial3DFloor (player);
 		P_PlayerInSpecialSector (player);
 
-		if (!player->mo->isAbove(player->mo->Sector->floorplane.ZatPointF(player->mo)) ||
+		if (!player->mo->isAbove(player->mo->Sector->floorplane.ZatPoint(player->mo)) ||
 			player->mo->waterlevel)
 		{
 			// Player must be touching the floor

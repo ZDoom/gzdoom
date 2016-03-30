@@ -1390,7 +1390,7 @@ public:
 	void Serialize (FArchive &arc);
 private:
 	sector_t *Sector;
-	fixed_t WatchD, LastD;
+	double WatchD, LastD;
 	int Special, Arg0, Arg1, Arg2, Arg3, Arg4;
 	TObjPtr<AActor> Activator;
 	line_t *Line;
@@ -1426,9 +1426,9 @@ DPlaneWatcher::DPlaneWatcher (AActor *it, line_t *line, int lineSide, bool ceili
 		{
 			plane = Sector->floorplane;
 		}
-		LastD = plane.fixD();
-		plane.ChangeHeight (height << FRACBITS);
-		WatchD = plane.fixD();
+		LastD = plane.fD();
+		plane.ChangeHeight (height);
+		WatchD = plane.fD();
 	}
 	else
 	{
@@ -1454,15 +1454,15 @@ void DPlaneWatcher::Tick ()
 		return;
 	}
 
-	fixed_t newd;
+	double newd;
 
 	if (bCeiling)
 	{
-		newd = Sector->ceilingplane.fixD();
+		newd = Sector->ceilingplane.fD();
 	}
 	else
 	{
-		newd = Sector->floorplane.fixD();
+		newd = Sector->floorplane.fD();
 	}
 
 	if ((LastD < WatchD && newd >= WatchD) ||

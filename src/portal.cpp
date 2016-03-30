@@ -1174,13 +1174,7 @@ bool P_CollectConnectedGroups(int startgroup, const fixedvec3 &position, fixed_t
 
 			FBoundingBox box(position.x + disp.pos.x, position.y + disp.pos.y, checkradius);
 
-			if (box.Right() <= ld->bbox[BOXLEFT]
-				|| box.Left() >= ld->bbox[BOXRIGHT]
-				|| box.Top() <= ld->bbox[BOXBOTTOM]
-				|| box.Bottom() >= ld->bbox[BOXTOP])
-				continue;	// not touched
-
-			if (box.BoxOnLineSide(linkedPortals[i]->mOrigin) != -1) continue;	// not touched
+			if (!box.inRange(ld) || box.BoxOnLineSide(linkedPortals[i]->mOrigin) != -1) continue;	// not touched
 			foundPortals.Push(linkedPortals[i]);
 		}
 		bool foundone = true;
@@ -1241,13 +1235,7 @@ bool P_CollectConnectedGroups(int startgroup, const fixedvec3 &position, fixed_t
 				line_t *ld;
 				while ((ld = it.Next()))
 				{
-					if (box.Right() <= ld->bbox[BOXLEFT]
-						|| box.Left() >= ld->bbox[BOXRIGHT]
-						|| box.Top() <= ld->bbox[BOXBOTTOM]
-						|| box.Bottom() >= ld->bbox[BOXTOP])
-						continue;
-
-					if (box.BoxOnLineSide(ld) != -1)
+					if (!box.inRange(ld) || box.BoxOnLineSide(ld) != -1)
 						continue;
 
 					if (!(thisgroup & FPortalGroupArray::LOWER))

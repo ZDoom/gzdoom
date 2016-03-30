@@ -1407,7 +1407,7 @@ public:
 	fixed_t		Alpha;		// <--- translucency (0=invisibile, FRACUNIT=opaque)
 	int			args[5];	// <--- hexen-style arguments (expanded to ZDoom's full width)
 	side_t		*sidedef[2];
-	fixed_t		bbox[4];	// bounding box, for the extent of the LineDef.
+	double		bbox[4];	// bounding box, for the extent of the LineDef.
 	sector_t	*frontsector, *backsector;
 	int 		validcount;	// if == validcount, already checked
 	int			locknumber;	// [Dusk] lock number for special
@@ -1672,10 +1672,10 @@ inline void AActor::ClearInterpolation()
 
 inline bool FBoundingBox::inRange(const line_t *ld) const
 {
-	return Left() < ld->bbox[BOXRIGHT] &&
-		Right() > ld->bbox[BOXLEFT] &&
-		Top() > ld->bbox[BOXBOTTOM] &&
-		Bottom() < ld->bbox[BOXTOP];
+	return FIXED2DBL(Left()) < ld->bbox[BOXRIGHT] &&
+		FIXED2DBL(Right()) > ld->bbox[BOXLEFT] &&
+		FIXED2DBL(Top()) > ld->bbox[BOXBOTTOM] &&
+		FIXED2DBL(Bottom()) < ld->bbox[BOXTOP];
 }
 
 

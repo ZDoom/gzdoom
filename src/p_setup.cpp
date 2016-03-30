@@ -1905,26 +1905,26 @@ void P_AdjustLine (line_t *ld)
 
 	ld->setDelta(v2->fX() - v1->fX(), v2->fY() - v1->fY());
 	
-	if (v1->fixX() < v2->fixX())
+	if (v1->fX() < v2->fX())
 	{
-		ld->bbox[BOXLEFT] = v1->fixX();
-		ld->bbox[BOXRIGHT] = v2->fixX();
+		ld->bbox[BOXLEFT] = v1->fX();
+		ld->bbox[BOXRIGHT] = v2->fX();
 	}
 	else
 	{
-		ld->bbox[BOXLEFT] = v2->fixX();
-		ld->bbox[BOXRIGHT] = v1->fixX();
+		ld->bbox[BOXLEFT] = v2->fX();
+		ld->bbox[BOXRIGHT] = v1->fX();
 	}
 
-	if (v1->fixY() < v2->fixY())
+	if (v1->fY() < v2->fY())
 	{
-		ld->bbox[BOXBOTTOM] = v1->fixY();
-		ld->bbox[BOXTOP] = v2->fixY();
+		ld->bbox[BOXBOTTOM] = v1->fY();
+		ld->bbox[BOXTOP] = v2->fY();
 	}
 	else
 	{
-		ld->bbox[BOXBOTTOM] = v2->fixY();
-		ld->bbox[BOXTOP] = v1->fixY();
+		ld->bbox[BOXBOTTOM] = v2->fY();
+		ld->bbox[BOXTOP] = v1->fY();
 	}
 }
 

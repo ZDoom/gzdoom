@@ -403,10 +403,10 @@ bool AActor::FixMapthingPos()
 			}
 
 			// Not inside the line's bounding box
-			if (_f_X() + _f_radius() <= ldef->bbox[BOXLEFT]
-				|| _f_X() - _f_radius() >= ldef->bbox[BOXRIGHT]
-				|| _f_Y() + _f_radius() <= ldef->bbox[BOXBOTTOM]
-				|| _f_Y() - _f_radius() >= ldef->bbox[BOXTOP])
+			if (X() + radius <= ldef->bbox[BOXLEFT]
+				|| X() - radius >= ldef->bbox[BOXRIGHT]
+				|| Y() + radius <= ldef->bbox[BOXBOTTOM]
+				|| Y() - radius >= ldef->bbox[BOXTOP])
 				continue;
 
 			// Get the exact distance to the line

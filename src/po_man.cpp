@@ -168,6 +168,7 @@ public:
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 void PO_Init (void);
+void P_AdjustLine(line_t *ld);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -893,33 +894,7 @@ void FPolyObj::UpdateBBox ()
 {
 	for(unsigned i=0;i<Linedefs.Size(); i++)
 	{
-		line_t *line = Linedefs[i];
-
-		if (line->v1->fixX() < line->v2->fixX())
-		{
-			line->bbox[BOXLEFT] = line->v1->fixX();
-			line->bbox[BOXRIGHT] = line->v2->fixX();
-		}
-		else
-		{
-			line->bbox[BOXLEFT] = line->v2->fixX();
-			line->bbox[BOXRIGHT] = line->v1->fixX();
-		}
-		if (line->v1->fixY() < line->v2->fixY())
-		{
-			line->bbox[BOXBOTTOM] = line->v1->fixY();
-			line->bbox[BOXTOP] = line->v2->fixY();
-		}
-		else
-		{
-			line->bbox[BOXBOTTOM] = line->v2->fixY();
-			line->bbox[BOXTOP] = line->v1->fixY();
-		}
-
-		// Update the line's slopetype
-		line->setDelta(
-			line->v2->fixX() - line->v1->fixX(),
-			line->v2->fixY() - line->v1->fixY());
+		P_AdjustLine(Linedefs[i]);
 	}
 	CalcCenter();
 }
@@ -987,10 +962,10 @@ void FPolyObj::DoMovePolyobj (const DVector2 &pos)
 	}
 	for (unsigned i = 0; i < Linedefs.Size(); i++)
 	{
-		Linedefs[i]->bbox[BOXTOP] += FLOAT2FIXED(pos.Y);
-		Linedefs[i]->bbox[BOXBOTTOM] += FLOAT2FIXED(pos.Y);
-		Linedefs[i]->bbox[BOXLEFT] += FLOAT2FIXED(pos.X);
-		Linedefs[i]->bbox[BOXRIGHT] += FLOAT2FIXED(pos.X);
+		Linedefs[i]->bbox[BOXTOP] += pos.Y;
+		Linedefs[i]->bbox[BOXBOTTOM] += pos.Y;
+		Linedefs[i]->bbox[BOXLEFT] += pos.X;
+		Linedefs[i]->bbox[BOXRIGHT] += pos.X;
 	}
 }
 
@@ -1120,10 +1095,10 @@ bool FPolyObj::CheckMobjBlocking (side_t *sd)
 
 	ld = sd->linedef;
 
-	top = GetSafeBlockY(ld->bbox[BOXTOP]-bmaporgy);
-	bottom = GetSafeBlockY(ld->bbox[BOXBOTTOM]-bmaporgy);
-	left = GetSafeBlockX(ld->bbox[BOXLEFT]-bmaporgx);
-	right = GetSafeBlockX(ld->bbox[BOXRIGHT]-bmaporgx);
+	top = int((ld->bbox[BOXTOP] - FIXED2DBL(bmaporgy)) / 128.);
+	bottom = int((ld->bbox[BOXBOTTOM] - FIXED2DBL(bmaporgy)) / 128.);
+	left = int((ld->bbox[BOXLEFT] - FIXED2DBL(bmaporgx)) / 128.);
+	right = int((ld->bbox[BOXRIGHT] - FIXED2DBL(bmaporgx)) / 128.);
 
 	blocked = false;
 	checker.Clear();
@@ -1183,14 +1158,7 @@ bool FPolyObj::CheckMobjBlocking (side_t *sd)
 
 						FBoundingBox box(mobj->X(), mobj->Y(), mobj->radius);
 
-						if (box.Right() <= ld->bbox[BOXLEFT]
-							|| box.Left() >= ld->bbox[BOXRIGHT]
-							|| box.Top() <= ld->bbox[BOXBOTTOM]
-							|| box.Bottom() >= ld->bbox[BOXTOP])
-						{
-							continue;
-						}
-						if (box.BoxOnLineSide(ld) != -1)
+						if (!box.inRange(ld) || box.BoxOnLineSide(ld) != -1)
 						{
 							continue;
 						}
@@ -1648,10 +1616,10 @@ static void TranslateToStartSpot (int tag, const DVector2 &origin)
 	}
 	for (unsigned i = 0; i < po->Linedefs.Size(); i++)
 	{
-		po->Linedefs[i]->bbox[BOXTOP] -= FLOAT2FIXED(delta.Y);
-		po->Linedefs[i]->bbox[BOXBOTTOM] -= FLOAT2FIXED(delta.Y);
-		po->Linedefs[i]->bbox[BOXLEFT] -= FLOAT2FIXED(delta.X);
-		po->Linedefs[i]->bbox[BOXRIGHT] -= FLOAT2FIXED(delta.X);
+		po->Linedefs[i]->bbox[BOXTOP] -= delta.Y;
+		po->Linedefs[i]->bbox[BOXBOTTOM] -= delta.Y;
+		po->Linedefs[i]->bbox[BOXLEFT] -= delta.X;
+		po->Linedefs[i]->bbox[BOXRIGHT] -= delta.X;
 	}
 	for (unsigned i = 0; i < po->Vertices.Size(); i++)
 	{

@@ -427,7 +427,7 @@ bool AActor::FixMapthingPos()
 				DPrintf("%s at (%f,%f) lies on %s line %td, distance = %f\n",
 					this->GetClass()->TypeName.GetChars(), X(), Y(),
 					ldef->Delta().X == 0 ? "vertical" : ldef->Delta().Y == 0 ? "horizontal" : "diagonal",
-					ldef - lines, FIXED2DBL(distance));
+					ldef - lines, distance);
 				DAngle ang = ldef->Delta().Angle();
 				if (ldef->backsector != NULL && ldef->backsector == secstart)
 				{
@@ -519,7 +519,8 @@ void AActor::LinkToWorld(bool spawningmapthing, sector_t *sector)
 
 		for (int i = -1; i < (int)check.Size(); i++)
 		{
-			fixedvec3 pos = i==-1? _f_Pos() : _f_PosRelative(check[i]);
+			DVector3 _pos = i==-1? Pos() : PosRelative(check[i]);
+			fixedvec3 pos = { FLOAT2FIXED(_pos.X), FLOAT2FIXED(_pos.Y),FLOAT2FIXED(_pos.Z) };
 
 			int x1 = GetSafeBlockX(pos.x - _f_radius() - bmaporgx);
 			int x2 = GetSafeBlockX(pos.x + _f_radius() - bmaporgx);

@@ -42,16 +42,19 @@
 
 #include <math.h>
 #include <string.h>
-#include "m_fixed.h"
-#include "tables.h"
+#include "xs_Float.h"
 #include "math/cmath.h"
 
 
 #define EQUAL_EPSILON (1/65536.f)
 
+// make this a local inline function to avoid any dependencies on other headers and not pollute the global namespace
+namespace pi
+{
+	inline double pi() { return 3.14159265358979323846; }
+}
 
-//#define DEG2RAD(d) ((d)*M_PI/180.)
-//#define RAD2DEG(r) ((r)*180./M_PI)
+
 
 template<class vec_t> struct TVector3;
 template<class vec_t> struct TRotator;
@@ -783,6 +786,10 @@ struct TAngle
 {
 	vec_t Degrees;
 
+private:
+	const double BAM_FACTOR = (90. / 0x40000000);
+public:
+
 
 	// This is to catch any accidental attempt to assign an angle_t to this type. Any explicit exception will require a type cast.
 	TAngle(int) = delete;
@@ -990,51 +997,27 @@ struct TAngle
 	}
 
 	// Ensure the angle is between [0.0,360.0) degrees
-	TAngle &Normalize360()
+	TAngle Normalized360() const
 	{
 		// Normalizing the angle converts it to a BAM, which masks it, and converts it back to a float.
 		// Note: We MUST use xs_Float here because it is the only method that guarantees reliable wraparound.
-		Degrees = (vec_t)ANGLE2DBL((unsigned int)FLOAT2ANGLE(Degrees));
-		return *this;
-	}
-
-	// Ensures the angle is between (-180.0,180.0] degrees
-	TAngle &Normalize180()
-	{
-		Degrees = (vec_t)ANGLE2DBL((signed int)FLOAT2ANGLE(Degrees));
-		return *this;
-	}
-
-	// Same as above but doesn't alter the calling object itself
-
-	// Ensure the angle is between [0.0,360.0) degrees
-	TAngle Normalized360() const
-	{
-		
-		return (vec_t)ANGLE2DBL((unsigned int)FLOAT2ANGLE(Degrees));
+		return (vec_t)(BAM_FACTOR * BAMs());
 	}
 
 	// Ensures the angle is between (-180.0,180.0] degrees
 	TAngle Normalized180() const
 	{
-		return (vec_t)ANGLE2DBL((signed int)FLOAT2ANGLE(Degrees));
-	}
-
-	// Like Normalize360(), except the integer value is not converted back to a float.
-	// The steps parameter must be a power of 2.
-	int Quantize(int steps) const
-	{
-		return xs_CRoundToInt((Degrees * (steps/360.0)) & (steps-1));
+		return (vec_t)(BAM_FACTOR * (signed int)BAMs());
 	}
 
 	vec_t Radians() const
 	{
-		return Degrees * (M_PI / 180.0);
+		return Degrees * (pi::pi() / 180.0);
 	}
 
 	unsigned BAMs() const
 	{
-		return FLOAT2ANGLE(Degrees);
+		return xs_CRoundToInt(Degrees * (0x40000000 / 90.));
 	}
 
 	TVector2<vec_t> ToVector(vec_t length = 1) const
@@ -1054,7 +1037,7 @@ struct TAngle
 
 	double Tan() const
 	{
-		return g_tan(Degrees * (M_PI / 180.));
+		return g_tan(Degrees * (pi::pi() / 180.));
 	}
 
 	// This is for calculating vertical velocity. For high pitches the tangent will become too large to be useful.
@@ -1063,19 +1046,12 @@ struct TAngle
 		return clamp(Tan(), -max, max);
 	}
 
+	static inline TAngle ToDegrees(double rad)
+	{
+		return TAngle(double(rad * (180.0 / pi::pi())));
+	}
+
 };
-
-template<class T>
-inline double ToRadians (const TAngle<T> &deg)
-{
-	return double(deg.Degrees * (M_PI / 180.0));
-}
-
-// If this gets templated there will be countless instantiation errors.
-inline TAngle<double> ToDegrees (double rad)
-{
-	return TAngle<double> (double(rad * (180.0 / M_PI)));
-}
 
 // Emulates the old floatbob offset table with direct calls to trig functions.
 inline double BobSin(double fb)
@@ -1092,48 +1068,48 @@ inline TAngle<T> fabs (const TAngle<T> &deg)
 template<class T>
 inline TAngle<T> deltaangle(const TAngle<T> &a1, const TAngle<T> &a2)
 {
-	return (a2 - a1).Normalize180();
+	return (a2 - a1).Normalized180();
 }
 
 template<class T>
 inline TAngle<T> deltaangle(const TAngle<T> &a1, double a2)
 {
-	return (a2 - a1).Normalize180();
+	return (a2 - a1).Normalized180();
 }
 
 template<class T>
 inline TAngle<T> deltaangle(double a1, const TAngle<T> &a2)
 {
-	return (a2 - a1).Normalize180();
+	return (a2 - a1).Normalized180();
 }
 
 template<class T>
 inline TAngle<T> absangle(const TAngle<T> &a1, const TAngle<T> &a2)
 {
-	return fabs((a1 - a2).Normalize180());
+	return fabs((a1 - a2).Normalized180());
 }
 
 template<class T>
 inline TAngle<T> absangle(const TAngle<T> &a1, double a2)
 {
-	return fabs((a1 - a2).Normalize180());
+	return fabs((a1 - a2).Normalized180());
 }
 
 inline TAngle<double> VecToAngle(double x, double y)
 {
-	return g_atan2(y, x) * (180.0 / M_PI);
+	return g_atan2(y, x) * (180.0 / pi::pi());
 }
 
 template<class T>
 inline TAngle<T> VecToAngle (const TVector2<T> &vec)
 {
-	return (T)g_atan2(vec.Y, vec.X) * (180.0 / M_PI);
+	return (T)g_atan2(vec.Y, vec.X) * (180.0 / pi::pi());
 }
 
 template<class T>
 inline TAngle<T> VecToAngle (const TVector3<T> &vec)
 {
-	return (T)g_atan2(vec.Y, vec.X) * (180.0 / M_PI);
+	return (T)g_atan2(vec.Y, vec.X) * (180.0 / pi::pi());
 }
 
 template<class T>
@@ -1295,25 +1271,6 @@ struct TRotator
 	TRotator operator- (const TRotator &other) const
 	{
 		return TRotator(Pitch - other.Pitch, Yaw - other.Yaw, Roll - other.Roll);
-	}
-
-	// Normalize each component
-	TRotator &Normalize180 ()
-	{
-		for (int i = -3; i; ++i)
-		{
-			(*this)[i+3].Normalize180();
-		}
-		return *this;
-	}
-
-	TRotator &Normalize360 ()
-	{
-		for (int i = -3; i; ++i)
-		{
-			(*this)[i+3].Normalize360();
-		}
-		return *this;
 	}
 };
 

@@ -293,10 +293,7 @@ enum
 void	P_FindFloorCeiling (AActor *actor, int flags=0);
 
 bool	P_ChangeSector (sector_t* sector, int crunch, double amt, int floorOrCeil, bool isreset);
-inline bool	P_ChangeSector(sector_t* sector, int crunch, int amt, int floorOrCeil, bool isreset)
-{
-	return P_ChangeSector(sector, crunch, FIXED2DBL(amt), floorOrCeil, isreset);
-}
+inline bool	P_ChangeSector(sector_t* sector, int crunch, int amt, int floorOrCeil, bool isreset) = delete;
 
 DAngle P_AimLineAttack(AActor *t1, DAngle angle, double distance, FTranslatedLineTarget *pLineTarget = NULL, DAngle vrange = 0., int flags = 0, AActor *target = NULL, AActor *friender = NULL);
 
@@ -328,11 +325,7 @@ void	P_TraceBleed(int damage, FTranslatedLineTarget *t, AActor *puff);		// hitsc
 void	P_TraceBleed (int damage, AActor *target);		// random direction version
 bool	P_HitFloor (AActor *thing);
 bool	P_HitWater (AActor *thing, sector_t *sec, const DVector3 &pos, bool checkabove = false, bool alert = true, bool force = false);
-inline bool	P_HitWater(AActor *thing, sector_t *sec, const fixedvec3 &pos, bool checkabove = false, bool alert = true, bool force = false)
-{
-	DVector3 fpos(FIXED2DBL(pos.x), FIXED2DBL(pos.y), FIXED2DBL(pos.z));
-	return P_HitWater(thing, sec, fpos, checkabove, alert, force);
-}
+inline bool	P_HitWater(AActor *thing, sector_t *sec, const fixedvec3 &pos, bool checkabove = false, bool alert = true, bool force = false) = delete;
 void	P_CheckSplash(AActor *self, double distance);
 
 struct FRailParams
@@ -396,14 +389,7 @@ bool	Check_Sides(AActor *, int, int);					// phares
 // [RH] 
 const secplane_t * P_CheckSlopeWalk(AActor *actor, DVector2 &move);
 
-inline const secplane_t * P_CheckSlopeWalk(AActor *actor, fixed_t &xmove, fixed_t &ymove)
-{
-	DVector2 move = { FIXED2DBL(xmove), FIXED2DBL(ymove) };
-	const secplane_t *ret = P_CheckSlopeWalk(actor, move);
-	xmove = FLOAT2FIXED(move.X);
-	ymove = FLOAT2FIXED(move.Y);
-	return ret;
-}
+inline const secplane_t * P_CheckSlopeWalk(AActor *actor, fixed_t &xmove, fixed_t &ymove) = delete;
 
 //
 // P_SETUP

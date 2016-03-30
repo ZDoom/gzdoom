@@ -687,16 +687,16 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 		frontsector = sec;
 	}
 
-	floorheight = backsector->_f_CenterFloor();
-	ceilingheight = backsector->_f_CenterCeiling();
+	floorheight = FLOAT2FIXED(backsector->CenterFloor());
+	ceilingheight = FLOAT2FIXED(backsector->CenterCeiling());
 
 	// maybe fix clipheights
 	if (!(fake3D & FAKE3D_CLIPBOTTOM)) sclipBottom = floorheight;
 	if (!(fake3D & FAKE3D_CLIPTOP))    sclipTop = ceilingheight;
 
 	// maybe not visible
-	if (sclipBottom >= frontsector->_f_CenterCeiling()) return;
-	if (sclipTop <= frontsector->_f_CenterFloor()) return;
+	if (sclipBottom >= FLOAT2FIXED(frontsector->CenterCeiling())) return;
+	if (sclipTop <= FLOAT2FIXED(frontsector->CenterFloor())) return;
 
 	if (fake3D & FAKE3D_DOWN2UP)
 	{ // bottom to viewz

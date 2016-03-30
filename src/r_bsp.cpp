@@ -1345,11 +1345,11 @@ void R_Subsector (subsector_t *sub)
 						fakeFloor->validcount = validcount;
 						R_3D_NewClip();
 					}
-					if (frontsector->_f_CenterFloor() >= backsector->_f_CenterFloor())
+					if (frontsector->CenterFloor() >= backsector->CenterFloor())
 					{
 						fake3D |= FAKE3D_CLIPBOTFRONT;
 					}
-					if (frontsector->_f_CenterCeiling() <= backsector->_f_CenterCeiling())
+					if (frontsector->CenterCeiling() <= backsector->CenterCeiling())
 					{
 						fake3D |= FAKE3D_CLIPTOPFRONT;
 					}

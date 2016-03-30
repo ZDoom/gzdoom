@@ -1096,8 +1096,6 @@ struct sector_t
 	}
 
 	// Member variables
-	fixed_t		_f_CenterFloor () const { return floorplane.ZatPoint (_f_centerspot()); }
-	fixed_t		_f_CenterCeiling () const { return ceilingplane.ZatPoint (_f_centerspot()); }
 	double		CenterFloor() const { return floorplane.ZatPoint(centerspot); }
 	double		CenterCeiling() const { return ceilingplane.ZatPoint(centerspot); }
 
@@ -1344,6 +1342,10 @@ struct side_t
 	void SetTextureXScale(int which, fixed_t scale)
 	{
 		textures[which].xscale = scale == 0 ? FRACUNIT : scale;
+	}
+	void SetTextureXScale(int which, double scale)
+	{
+		textures[which].xscale = scale == 0 ? FRACUNIT : FLOAT2FIXED(scale);
 	}
 	void SetTextureXScale(fixed_t scale)
 	{
@@ -1642,31 +1644,6 @@ inline sector_t *P_PointInSector(const DVector2 &pos)
 inline sector_t *P_PointInSector(double X, double Y)
 {
 	return P_PointInSubsector(FLOAT2FIXED(X), FLOAT2FIXED(Y))->sector;
-}
-
-inline fixedvec3 AActor::_f_PosRelative(int portalgroup) const
-{
-	return _f_Pos() + Displacements._f_getOffset(Sector->PortalGroup, portalgroup);
-}
-
-inline fixedvec3 AActor::_f_PosRelative(const AActor *other) const
-{
-	return _f_Pos() + Displacements._f_getOffset(Sector->PortalGroup, other->Sector->PortalGroup);
-}
-
-inline fixedvec3 AActor::_f_PosRelative(sector_t *sec) const
-{
-	return _f_Pos() + Displacements._f_getOffset(Sector->PortalGroup, sec->PortalGroup);
-}
-
-inline fixedvec3 AActor::_f_PosRelative(line_t *line) const
-{
-	return _f_Pos() + Displacements._f_getOffset(Sector->PortalGroup, line->frontsector->PortalGroup);
-}
-
-inline fixedvec3 _f_PosRelative(const fixedvec3 &pos, line_t *line, sector_t *refsec = NULL)
-{
-	return pos + Displacements._f_getOffset(refsec->PortalGroup, line->frontsector->PortalGroup);
 }
 
 inline DVector3 AActor::PosRelative(int portalgroup) const

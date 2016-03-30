@@ -4949,7 +4949,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 			return GetUDMFInt(UDMF_Line, LineFromID(args[0]), FBehavior::StaticLookupString(args[1]));
 
 		case ACSF_GetLineUDMFFixed:
-			return GetUDMFFixed(UDMF_Line, LineFromID(args[0]), FBehavior::StaticLookupString(args[1]));
+			return DoubleToACS(GetUDMFFloat(UDMF_Line, LineFromID(args[0]), FBehavior::StaticLookupString(args[1])));
 
 		case ACSF_GetThingUDMFInt:
 		case ACSF_GetThingUDMFFixed:
@@ -4959,13 +4959,13 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 			return GetUDMFInt(UDMF_Sector, P_FindFirstSectorFromTag(args[0]), FBehavior::StaticLookupString(args[1]));
 
 		case ACSF_GetSectorUDMFFixed:
-			return GetUDMFFixed(UDMF_Sector, P_FindFirstSectorFromTag(args[0]), FBehavior::StaticLookupString(args[1]));
+			return DoubleToACS(GetUDMFFloat(UDMF_Sector, P_FindFirstSectorFromTag(args[0]), FBehavior::StaticLookupString(args[1])));
 
 		case ACSF_GetSideUDMFInt:
 			return GetUDMFInt(UDMF_Side, SideFromID(args[0], args[1]), FBehavior::StaticLookupString(args[2]));
 
 		case ACSF_GetSideUDMFFixed:
-			return GetUDMFFixed(UDMF_Side, SideFromID(args[0], args[1]), FBehavior::StaticLookupString(args[2]));
+			return DoubleToACS(GetUDMFFloat(UDMF_Side, SideFromID(args[0], args[1]), FBehavior::StaticLookupString(args[2])));
 
 		case ACSF_GetActorVelX:
 			actor = SingleActorFromTID(args[0], activator);

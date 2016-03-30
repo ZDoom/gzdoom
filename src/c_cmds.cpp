@@ -1244,9 +1244,9 @@ CCMD(angleconvtest)
 	Printf("Testing degrees to angle conversion:\n");
 	for (double ang = -5 * 180.; ang < 5 * 180.; ang += 45.)
 	{
-		angle_t ang1 = FLOAT2ANGLE(ang);
-		angle_t ang2 = (angle_t)(ang * (ANGLE_90 / 90.));
-		angle_t ang3 = (angle_t)(int)(ang * (ANGLE_90 / 90.));
+		unsigned ang1 = DAngle(ang).BAMs();
+		unsigned ang2 = (unsigned)(ang * (0x40000000 / 90.));
+		unsigned ang3 = (unsigned)(int)(ang * (0x40000000 / 90.));
 		Printf("Angle = %.5f: xs_RoundToInt = %08x, unsigned cast = %08x, signed cast = %08x\n",
 			ang, ang1, ang2, ang3);
 	}

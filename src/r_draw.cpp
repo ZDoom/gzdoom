@@ -1071,7 +1071,7 @@ void R_DrawSpanP_C (void)
 
 #ifdef RANGECHECK 
 	if (ds_x2 < ds_x1 || ds_x1 < 0
-		|| ds_x2 >= screen->width || ds_y > screen->_f_height())
+		|| ds_x2 >= screen->width || ds_y > screen->height)
 	{
 		I_Error ("R_DrawSpan: %i to %i at %i", ds_x1, ds_x2, ds_y);
 	}

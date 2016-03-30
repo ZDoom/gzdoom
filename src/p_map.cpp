@@ -4411,7 +4411,7 @@ void P_TraceBleed(int damage, AActor *target, AActor *missile)
 		double aim;
 
 		aim = g_atan(missile->Vel.Z / target->Distance2D(missile));
-		pitch = -ToDegrees(aim);
+		pitch = -DAngle::ToDegrees(aim);
 	}
 	else
 	{

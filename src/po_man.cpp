@@ -867,7 +867,7 @@ void FPolyObj::ThrustMobj (AActor *actor, side_t *side)
 	}
 	vertex_t *v1 = side->V1();
 	vertex_t *v2 = side->V2();
-	thrustAngle = VecToAngle(v2->fixX() - v1->fixX(), v2->fixY() - v1->fixY()) - 90.;
+	thrustAngle = (v2->fPos() - v1->fPos()).Angle() - 90.;
 
 	pe = static_cast<DPolyAction *>(specialdata);
 	if (pe)

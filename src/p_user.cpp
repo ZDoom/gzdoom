@@ -2500,7 +2500,6 @@ void P_PlayerThink (player_t *player)
 	}
 	if (player->centering)
 	{
-		player->mo->Angles.Pitch.Normalize180();	// make sure we are in the proper range here for the following code.
 		if (fabs(player->mo->Angles.Pitch) > 2.)
 		{
 			player->mo->Angles.Pitch *= (2. / 3.);

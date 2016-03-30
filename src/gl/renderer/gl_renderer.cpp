@@ -599,8 +599,8 @@ void FGLRenderer::FillSimplePoly(FTexture *texture, FVector2 *points, int npoint
 	int i;
 	bool dorotate = rotation != 0;
 
-	float cosrot = cos(ToRadians(rotation));
-	float sinrot = sin(ToRadians(rotation));
+	float cosrot = cos(rotation.Radians());
+	float sinrot = sin(rotation.Radians());
 
 	//float yoffs = GatheringWipeScreen ? 0 : LBOffset;
 	float uscale = float(1.f / (texture->GetScaledWidth() * scalex));

@@ -1165,8 +1165,8 @@ void FDrawInfo::FloodUpperGap(seg_t * seg)
 
 	// Although the plane can be sloped this code will only be called
 	// when the edge itself is not.
-	fixed_t backz = fakebsector->ceilingplane.ZatPoint(seg->v1);
-	fixed_t frontz = fakefsector->ceilingplane.ZatPoint(seg->v1);
+	fixed_t backz = fakebsector->ceilingplane.ZatPoint(seg->v1->x, seg->v1->y);
+	fixed_t frontz = fakefsector->ceilingplane.ZatPoint(seg->v1->x, seg->v1->y);
 
 	if (fakebsector->GetTexture(sector_t::ceiling)==skyflatnum) return;
 	if (backz < viewz) return;
@@ -1217,8 +1217,8 @@ void FDrawInfo::FloodLowerGap(seg_t * seg)
 
 	// Although the plane can be sloped this code will only be called
 	// when the edge itself is not.
-	fixed_t backz = fakebsector->floorplane.ZatPoint(seg->v1);
-	fixed_t frontz = fakefsector->floorplane.ZatPoint(seg->v1);
+	fixed_t backz = fakebsector->floorplane.ZatPoint(seg->v1->x, seg->v1->y);
+	fixed_t frontz = fakefsector->floorplane.ZatPoint(seg->v1->x, seg->v1->y);
 
 
 	if (fakebsector->GetTexture(sector_t::floor) == skyflatnum) return;

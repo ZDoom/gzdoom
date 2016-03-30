@@ -176,7 +176,7 @@ void ADynamicLight::PostBeginPlay()
 		Activate (NULL);
 	}
 
-	subsector = R_PointInSubsector(_f_X(), _f_Y());
+	subsector = R_PointInSubsector(Pos());
 }
 
 
@@ -355,7 +355,7 @@ void ADynamicLight::UpdateLocation()
 			DVector3 pos = target->Vec3Offset(m_off.X * c + m_off.Y * s, m_off.X * s - m_off.Y * c, m_off.Z + target->GetBobOffset());
 			SetXYZ(pos); // attached lights do not need to go into the regular blockmap
 			Prev = target->Pos();
-			subsector = R_PointInSubsector(target->_f_X(), target->_f_Y());
+			subsector = R_PointInSubsector(Prev);
 			Sector = subsector->sector;
 		}
 
@@ -507,7 +507,7 @@ static FLightNode * DeleteLightNode(FLightNode * node)
 //
 //==========================================================================
 
-double ADynamicLight::DistToSeg(const fixedvec3 &pos, seg_t *seg)
+double ADynamicLight::DistToSeg(const DVector3 &pos, seg_t *seg)
 {
 	double u, px, py;
 
@@ -515,15 +515,15 @@ double ADynamicLight::DistToSeg(const fixedvec3 &pos, seg_t *seg)
 	double seg_dy = seg->v2->fY() - seg->v1->fY();
 	double seg_length_sq = seg_dx * seg_dx + seg_dy * seg_dy;
 
-	u = ((FIXED2DBL(pos.x) - seg->v1->fX()) * seg_dx + (FIXED2DBL(pos.y) - seg->v1->fY()) * seg_dy) / seg_length_sq;
+	u = ((pos.X - seg->v1->fX()) * seg_dx + pos.Y - seg->v1->fY()) * seg_dy / seg_length_sq;
 	if (u < 0.) u = 0.; // clamp the test point to the line segment
-	if (u > 1.) u = 1.;
+	else if (u > 1.) u = 1.;
 
 	px = seg->v1->fX() + (u * seg_dx);
 	py = seg->v1->fY() + (u * seg_dy);
 
-	px -= FIXED2DBL(pos.x);
-	py -= FIXED2DBL(pos.y);
+	px -= pos.X;
+	py -= pos.Y;
 
 	return (px*px) + (py*py);
 }
@@ -536,7 +536,7 @@ double ADynamicLight::DistToSeg(const fixedvec3 &pos, seg_t *seg)
 //
 //==========================================================================
 
-void ADynamicLight::CollectWithinRadius(const fixedvec3 &pos, subsector_t *subSec, float radius)
+void ADynamicLight::CollectWithinRadius(const DVector3 &pos, subsector_t *subSec, float radius)
 {
 	if (!subSec) return;
 
@@ -556,7 +556,7 @@ void ADynamicLight::CollectWithinRadius(const fixedvec3 &pos, subsector_t *subSe
 		if (seg->sidedef && seg->linedef && seg->linedef->validcount!=::validcount)
 		{
 			// light is in front of the seg
-			if (DMulScale32(pos.y - seg->v1->fixY(), seg->v2->fixX() - seg->v1->fixX(), seg->v1->fixX() - pos.x, seg->v2->fixY() - seg->v1->fixY()) <= 0)
+			if ((pos.Y - seg->v1->fixY()) * (seg->v2->fX() - seg->v1->fixX()) + (seg->v1->fX() - pos.X * (seg->v2->fY() - seg->v1->fY())) <= 0)
 			{
 				seg->linedef->validcount = validcount;
 				touching_sides = AddLightNode(&seg->sidedef->lighthead, seg->sidedef, this, touching_sides);
@@ -572,8 +572,8 @@ void ADynamicLight::CollectWithinRadius(const fixedvec3 &pos, subsector_t *subSe
 					line_t *other = port->mDestination;
 					if (other->validcount != ::validcount)
 					{
-						subsector_t *othersub = R_PointInSubsector(other->v1->fixX() + other->fixDx() / 2, other->v1->fixY() + other->fixDy() / 2);
-						if (othersub->validcount != ::validcount) CollectWithinRadius(_f_PosRelative(other), othersub, radius);
+						subsector_t *othersub = R_PointInSubsector(other->v1->fPos() + other->Delta() / 2);
+						if (othersub->validcount != ::validcount) CollectWithinRadius(PosRelative(other), othersub, radius);
 					}
 				}
 			}
@@ -599,9 +599,9 @@ void ADynamicLight::CollectWithinRadius(const fixedvec3 &pos, subsector_t *subSe
 		AActor *sb = subSec->sector->SkyBoxes[sector_t::ceiling];
 		if (sb->specialf1 < Z() + radius)
 		{
-			fixedvec2 refpos = { other->v1->fixX() + other->fixDx() / 2 + FLOAT2FIXED(sb->Scale.X), other->v1->fixY() + other->fixDy() / 2 + FLOAT2FIXED(sb->Scale.Y) };
-			subsector_t *othersub = R_PointInSubsector(refpos.x, refpos.y);
-			if (othersub->validcount != ::validcount) CollectWithinRadius(_f_PosRelative(othersub->sector), othersub, radius);
+			DVector2 refpos = other->v1->fPos() + other->Delta() / 2 + sb->Scale;
+			subsector_t *othersub = R_PointInSubsector(refpos);
+			if (othersub->validcount != ::validcount) CollectWithinRadius(PosRelative(othersub->sector), othersub, radius);
 		}
 	}
 	if (!subSec->sector->PortalBlocksSight(sector_t::floor))
@@ -610,9 +610,9 @@ void ADynamicLight::CollectWithinRadius(const fixedvec3 &pos, subsector_t *subSe
 		AActor *sb = subSec->sector->SkyBoxes[sector_t::floor];
 		if (sb->specialf1 > Z() - radius)
 		{
-			fixedvec2 refpos = { other->v1->fixX() + other->fixDx() / 2 + FLOAT2FIXED(sb->Scale.X), other->v1->fixY() + other->fixDy() / 2 + FLOAT2FIXED(sb->Scale.Y) };
-			subsector_t *othersub = R_PointInSubsector(refpos.x, refpos.y);
-			if (othersub->validcount != ::validcount) CollectWithinRadius(_f_PosRelative(othersub->sector), othersub, radius);
+			DVector2 refpos = other->v1->fPos() + other->Delta() / 2 + sb->Scale;
+			subsector_t *othersub = R_PointInSubsector(refpos);
+			if (othersub->validcount != ::validcount) CollectWithinRadius(PosRelative(othersub->sector), othersub, radius);
 		}
 	}
 }
@@ -649,10 +649,10 @@ void ADynamicLight::LinkLight()
 
 	if (radius>0)
 	{
-		// passing in radius*radius allows us to do a distance check without any calls to sqrtf
-		subsector_t * subSec = R_PointInSubsector(_f_X(), _f_Y());
+		// passing in radius*radius allows us to do a distance check without any calls to sqrt
+		subsector_t * subSec = R_PointInSubsector(Pos());
 		::validcount++;
-		CollectWithinRadius(_f_Pos(), subSec, radius*radius);
+		CollectWithinRadius(Pos(), subSec, radius*radius);
 
 	}
 		

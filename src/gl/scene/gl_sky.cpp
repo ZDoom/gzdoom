@@ -92,7 +92,7 @@ void GLSkyInfo::init(int sky1, PalEntry FadeColor)
 		texture[0] = FMaterial::ValidateTexture(texno, false, true);
 		if (!texture[0] || texture[0]->tex->UseType == FTexture::TEX_Null) goto normalsky;
 		skytexno1 = texno;
-		x_offset[0] = ANGLE2FLOAT(s->GetTextureXOffset(pos));
+		x_offset[0] = AngleToFloat(s->GetTextureXOffset(pos));
 		y_offset = FIXED2FLOAT(s->GetTextureYOffset(pos));
 		mirrored = !l->args[2];
 	}
@@ -279,7 +279,7 @@ void GLWall::SkyTop(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex
 					{
 						ztop[0]=ztop[1]=32768.0f;
 						zbottom[0]=zbottom[1]= 
-							FIXED2FLOAT(bs->ceilingplane.ZatPoint(v2) + seg->sidedef->GetTextureYOffset(side_t::mid));
+							bs->ceilingplane.ZatPoint(v2) + seg->sidedef->GetTextureYOffsetF(side_t::mid);
 						SkyPlane(fs, sector_t::ceiling, false);
 						return;
 					}
@@ -298,8 +298,8 @@ void GLWall::SkyTop(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex
 		}
 		else
 		{
-			zbottom[0]=FIXED2FLOAT(bs->ceilingplane.ZatPoint(v1));
-			zbottom[1]=FIXED2FLOAT(bs->ceilingplane.ZatPoint(v2));
+			zbottom[0] = bs->ceilingplane.ZatPoint(v1);
+			zbottom[1] = bs->ceilingplane.ZatPoint(v2);
 			flags|=GLWF_SKYHACK;	// mid textures on such lines need special treatment!
 		}
 	}
@@ -324,12 +324,10 @@ void GLWall::SkyTop(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex
 		}
 
 		// stacked sectors
-		fixed_t fsc1=fs->ceilingplane.ZatPoint(v1);
-		fixed_t fsc2=fs->ceilingplane.ZatPoint(v2);
+		ztop[0] = ztop[1] = 32768.0f;
+		zbottom[0] = fs->ceilingplane.ZatPoint(v1);
+		zbottom[1] = fs->ceilingplane.ZatPoint(v2);
 
-		ztop[0]=ztop[1]=32768.0f;
-		zbottom[0]=FIXED2FLOAT(fsc1);
-		zbottom[1]=FIXED2FLOAT(fsc2);
 	}
 
 	SkyPlane(fs, sector_t::ceiling, true);
@@ -375,8 +373,8 @@ void GLWall::SkyBottom(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,ver
 		}
 		else
 		{
-			ztop[0]=FIXED2FLOAT(bs->floorplane.ZatPoint(v1));
-			ztop[1]=FIXED2FLOAT(bs->floorplane.ZatPoint(v2));
+			ztop[0] = bs->floorplane.ZatPoint(v1);
+			ztop[1] = bs->floorplane.ZatPoint(v2);
 			flags|=GLWF_SKYHACK;	// mid textures on such lines need special treatment!
 		}
 	}
@@ -401,12 +399,9 @@ void GLWall::SkyBottom(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,ver
 		}
 
 		// stacked sectors
-		fixed_t fsc1=fs->floorplane.ZatPoint(v1);
-		fixed_t fsc2=fs->floorplane.ZatPoint(v2);
-
 		zbottom[0]=zbottom[1]=-32768.0f;
-		ztop[0]=FIXED2FLOAT(fsc1);
-		ztop[1]=FIXED2FLOAT(fsc2);
+		ztop[0] = fs->floorplane.ZatPoint(v1);
+		ztop[1] = fs->floorplane.ZatPoint(v2);
 	}
 
 	SkyPlane(fs, sector_t::floor, true);

@@ -99,8 +99,8 @@ public:
 	FLightNode * touching_sector;
 
 private:
-	double DistToSeg(const fixedvec3 &pos, seg_t *seg);
-	void CollectWithinRadius(const fixedvec3 &pos, subsector_t *subSec, float radius);
+	double DistToSeg(const DVector3 &pos, seg_t *seg);
+	void CollectWithinRadius(const DVector3 &pos, subsector_t *subSec, float radius);
 
 protected:
 	DVector3 m_off;

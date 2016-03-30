@@ -93,7 +93,7 @@ void gl_SetPlaneTextureRotation(const GLSectorPlane * secplane, FMaterial * glte
 		{
 			yscale1 = 0 - yscale1;
 		}
-		float angle=-ANGLE2FLOAT(secplane->angle);
+		float angle=-AngleToFloat(secplane->angle);
 
 		float xscale2=64.f/gltexture->TextureWidth();
 		float yscale2=64.f/gltexture->TextureHeight();
@@ -142,10 +142,10 @@ void GLFlat::SetupSubsectorLights(int pass, subsector_t * sub, int *dli)
 
 		// we must do the side check here because gl_SetupLight needs the correct plane orientation
 		// which we don't have for Legacy-style 3D-floors
-		fixed_t planeh = plane.plane.ZatPoint(light);
-		if (gl_lights_checkside && ((planeh<light->_f_Z() && ceiling) || (planeh>light->_f_Z() && !ceiling)))
+		double planeh = plane.plane.ZatPoint(light);
+		if (gl_lights_checkside && ((planeh<light->Z() && ceiling) || (planeh>light->Z() && !ceiling)))
 		{
-			node=node->nextLight;
+			node = node->nextLight;
 			continue;
 		}
 
@@ -666,7 +666,7 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 				if (rover->flags&FF_FOG && gl_fixedcolormap) continue;
 				if (!rover->top.copied && rover->flags&(FF_INVERTPLANES|FF_BOTHPLANES))
 				{
-					fixed_t ff_top=rover->top.plane->ZatPoint(sector->centerspot);
+					fixed_t ff_top=FLOAT2FIXED(rover->top.plane->ZatPoint(sector->centerspot));
 					if (ff_top<lastceilingheight)
 					{
 						if (FIXED2FLOAT(viewz) <= rover->top.plane->ZatPoint(FIXED2FLOAT(viewx), FIXED2FLOAT(viewy)))
@@ -680,7 +680,7 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 				}
 				if (!rover->bottom.copied && !(rover->flags&FF_INVERTPLANES))
 				{
-					fixed_t ff_bottom=rover->bottom.plane->ZatPoint(sector->centerspot);
+					fixed_t ff_bottom=FLOAT2FIXED(rover->bottom.plane->ZatPoint(sector->centerspot));
 					if (ff_bottom<lastceilingheight)
 					{
 						if (FIXED2FLOAT(viewz)<=rover->bottom.plane->ZatPoint(FIXED2FLOAT(viewx), FIXED2FLOAT(viewy)))
@@ -706,7 +706,7 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 				if (rover->flags&FF_FOG && gl_fixedcolormap) continue;
 				if (!rover->bottom.copied && rover->flags&(FF_INVERTPLANES|FF_BOTHPLANES))
 				{
-					fixed_t ff_bottom=rover->bottom.plane->ZatPoint(sector->centerspot);
+					fixed_t ff_bottom=FLOAT2FIXED(rover->bottom.plane->ZatPoint(sector->centerspot));
 					if (ff_bottom>lastfloorheight || (rover->flags&FF_FIX))
 					{
 						if (FIXED2FLOAT(viewz) >= rover->bottom.plane->ZatPoint(FIXED2FLOAT(viewx), FIXED2FLOAT(viewy)))
@@ -727,7 +727,7 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 				}
 				if (!rover->top.copied && !(rover->flags&FF_INVERTPLANES))
 				{
-					fixed_t ff_top=rover->top.plane->ZatPoint(sector->centerspot);
+					fixed_t ff_top=FLOAT2FIXED(rover->top.plane->ZatPoint(sector->centerspot));
 					if (ff_top>lastfloorheight)
 					{
 						if (FIXED2FLOAT(viewz) >= rover->top.plane->ZatPoint(FIXED2FLOAT(viewx), FIXED2FLOAT(viewy)))

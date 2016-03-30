@@ -87,20 +87,16 @@ CUSTOM_CVAR (Bool, gl_lights_additive, false,  CVAR_ARCHIVE | CVAR_GLOBALCONFIG 
 //==========================================================================
 bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, bool forceadditive, FDynLightData &ldata)
 {
-	Vector fn, pos;
 	int i = 0;
 
-	fixedvec3 lpos = light->_f_PosRelative(group);
-    float x = FIXED2FLOAT(lpos.x);
-	float y = FIXED2FLOAT(lpos.y);
-	float z = FIXED2FLOAT(lpos.z);
+	DVector3 pos = light->PosRelative(group);
 	
-	float dist = fabsf(p.DistToPoint(x, z, y));
+	float dist = fabsf(p.DistToPoint(pos.X, pos.Z, pos.Y));
 	float radius = (light->GetRadius() * gl_lights_size);
 	
 	if (radius <= 0.f) return false;
 	if (dist > radius) return false;
-	if (checkside && gl_lights_checkside && p.PointOnSide(x, z, y))
+	if (checkside && gl_lights_checkside && p.PointOnSide(pos.X, pos.Z, pos.Y))
 	{
 		return false;
 	}
@@ -133,9 +129,9 @@ bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, bo
 	}
 
 	float *data = &ldata.arrays[i][ldata.arrays[i].Reserve(8)];
-	data[0] = x;
-	data[1] = z;
-	data[2] = y;
+	data[0] = pos.X;
+	data[1] = pos.Z;
+	data[2] = pos.Y;
 	data[3] = radius;
 	data[4] = r;
 	data[5] = g;

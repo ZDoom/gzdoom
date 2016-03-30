@@ -104,7 +104,7 @@ typedef double vtype;
 
 struct vertex_t
 {
-private:
+//private:
 	fixed_t x, y;
 
 public:
@@ -998,15 +998,15 @@ struct sector_t
 		for (unsigned i = 0; i < e->XFloor.attached.Size(); i++) e->XFloor.attached[i]->SetVerticesDirty();
 	}
 
-	void SetPlaneTexZ(int pos, fixed_t val, bool dirtify = false)	// This mainly gets used by init code. The only place where it must set the vertex to dirty is the interpolation code.
+	void SetPlaneTexZ(int pos, fixed_t val)
 	{
 		planes[pos].TexZ = val;
-		if (dirtify) SetAllVerticesDirty();
 	}
 
-	void SetPlaneTexZ(int pos, double val)
+	void SetPlaneTexZ(int pos, double val, bool dirtify = false)	// This mainly gets used by init code. The only place where it must set the vertex to dirty is the interpolation code.
 	{
 		planes[pos].TexZ = FLOAT2FIXED(val);
+		if (dirtify) SetAllVerticesDirty();
 	}
 
 	void ChangePlaneTexZ(int pos, fixed_t val)

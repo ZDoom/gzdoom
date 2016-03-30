@@ -118,7 +118,7 @@ angle_t FGLRenderer::FrustumAngle()
 	// ok, this is a gross hack that barely works...
 	// but at least it doesn't overestimate too much...
 	double floatangle=2.0+(45.0+((tilt/1.9)))*mCurrentFoV*48.0/BaseRatioSizes[WidescreenRatio][3]/90.0;
-	angle_t a1 = FLOAT2ANGLE(floatangle);
+	angle_t a1 = DAngle(floatangle).BAMs();
 	if (a1>=ANGLE_180) return 0xffffffff;
 	return a1;
 }
@@ -771,7 +771,7 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 	SetViewArea();
 
 	// We have to scale the pitch to account for the pixel stretching, because the playsim doesn't know about this and treats it as 1:1.
-	double radPitch = ANGLE2RAD(viewpitch);
+	double radPitch = (viewpitch)* M_PI / 0x80000000;
 	if (radPitch > PI) radPitch -= 2 * PI;
 	radPitch = clamp(radPitch, -PI / 2, PI / 2);
 
@@ -865,8 +865,8 @@ void FGLRenderer::RenderView (player_t* player)
 	ResetProfilingData();
 
 	// Get this before everything else
-	if (cl_capfps || r_NoInterpolate) r_TicFrac = FRACUNIT;
-	else r_TicFrac = I_GetTimeFrac (&r_FrameTime);
+	if (cl_capfps || r_NoInterpolate) r_TicFracF = 1.;
+	else r_TicFracF = I_GetTimeFrac (&r_FrameTime);
 	gl_frameMS = I_MSTime();
 
 	P_FindParticleSubsectors ();

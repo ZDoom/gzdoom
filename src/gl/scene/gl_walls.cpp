@@ -1105,8 +1105,8 @@ __forceinline void GLWall::GetPlanePos(F3DFloor::planeref *planeref, fixed_t &le
 {
 	if (planeref->plane->isSlope())
 	{
-		left=planeref->plane->ZatPoint(vertexes[0]);
-		right=planeref->plane->ZatPoint(vertexes[1]);
+		left=planeref->plane->ZatPoint(vertexes[0]->x, vertexes[0]->y);
+		right=planeref->plane->ZatPoint(vertexes[1]->x, vertexes[1]->y);
 	}
 	else if(planeref->isceiling == sector_t::ceiling)
 	{
@@ -1452,8 +1452,8 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 	// Save a little time (up to 0.3 ms per frame ;) )
 	if (frontsector->floorplane.isSlope())
 	{
-		ffh1 = segfront->floorplane.ZatPoint(v1);
-		ffh2 = segfront->floorplane.ZatPoint(v2);
+		ffh1 = segfront->floorplane.ZatPoint(v1->x, v1->y);
+		ffh2 = segfront->floorplane.ZatPoint(v2->x, v2->y);
 		zfloor[0] = FIXED2FLOAT(ffh1);
 		zfloor[1] = FIXED2FLOAT(ffh2);
 	}
@@ -1465,8 +1465,8 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 
 	if (segfront->ceilingplane.isSlope())
 	{
-		fch1 = segfront->ceilingplane.ZatPoint(v1);
-		fch2 = segfront->ceilingplane.ZatPoint(v2);
+		fch1 = segfront->ceilingplane.ZatPoint(v1->x, v1->y);
+		fch2 = segfront->ceilingplane.ZatPoint(v2->x, v2->y);
 		zceil[0] = FIXED2FLOAT(fch1);
 		zceil[1] = FIXED2FLOAT(fch2);
 	}
@@ -1522,8 +1522,8 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 
 		if (segback->floorplane.isSlope())
 		{
-			bfh1 = segback->floorplane.ZatPoint(v1);
-			bfh2 = segback->floorplane.ZatPoint(v2);
+			bfh1 = segback->floorplane.ZatPoint(v1->x, v1->y);
+			bfh2 = segback->floorplane.ZatPoint(v2->x, v2->y);
 		}
 		else
 		{
@@ -1532,8 +1532,8 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 
 		if (segback->ceilingplane.isSlope())
 		{
-			bch1 = segback->ceilingplane.ZatPoint(v1);
-			bch2 = segback->ceilingplane.ZatPoint(v2);
+			bch1 = segback->ceilingplane.ZatPoint(v1->x, v1->y);
+			bch2 = segback->ceilingplane.ZatPoint(v2->x, v2->y);
 		}
 		else
 		{

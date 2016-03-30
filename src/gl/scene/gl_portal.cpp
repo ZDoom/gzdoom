@@ -659,11 +659,11 @@ void GLSkyboxPortal::DrawContents()
 	viewx = FLOAT2FIXED(viewpos.X);
 	viewy = FLOAT2FIXED(viewpos.Y);
 	viewz = FLOAT2FIXED(viewpos.Z);
-	viewangle += (origin->PrevAngles.Yaw + deltaangle(origin->PrevAngles.Yaw, origin->Angles.Yaw) * FIXED2DBL(r_TicFrac)).BAMs();
+	viewangle += (origin->PrevAngles.Yaw + deltaangle(origin->PrevAngles.Yaw, origin->Angles.Yaw) * r_TicFracF).BAMs();
 
 	// Don't let the viewpoint be too close to a floor or ceiling
-	fixed_t floorh = origin->Sector->floorplane.ZatPoint(origin);
-	fixed_t ceilh = origin->Sector->ceilingplane.ZatPoint(origin);
+	fixed_t floorh = origin->Sector->floorplane.ZatPoint(origin->_f_Pos());
+	fixed_t ceilh = origin->Sector->ceilingplane.ZatPoint(origin->_f_Pos());
 	if (viewz<floorh+4*FRACUNIT) viewz=floorh+4*FRACUNIT;
 	if (viewz>ceilh-4*FRACUNIT) viewz=ceilh-4*FRACUNIT;
 

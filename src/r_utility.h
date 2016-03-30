@@ -72,6 +72,11 @@ struct DVector3a
 
 
 subsector_t *R_PointInSubsector (fixed_t x, fixed_t y);
+inline subsector_t *R_PointInSubsector(const DVector2 &pos)
+{
+	return R_PointInSubsector(FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y));
+}
+
 fixed_t R_PointToDist2 (fixed_t dx, fixed_t dy);
 void R_ResetViewInterpolation ();
 void R_RebuildViewInterpolation(player_t *player);

@@ -57,14 +57,14 @@ CVAR(Bool, gltest_slopeopt, false, 0)
 bool gl_CheckClip(side_t * sidedef, sector_t * frontsector, sector_t * backsector)
 {
 	line_t *linedef = sidedef->linedef;
-	fixed_t bs_floorheight1;
-	fixed_t bs_floorheight2;
-	fixed_t bs_ceilingheight1;
-	fixed_t bs_ceilingheight2;
-	fixed_t fs_floorheight1;
-	fixed_t fs_floorheight2;
-	fixed_t fs_ceilingheight1;
-	fixed_t fs_ceilingheight2;
+	double bs_floorheight1;
+	double bs_floorheight2;
+	double bs_ceilingheight1;
+	double bs_ceilingheight2;
+	double fs_floorheight1;
+	double fs_floorheight2;
+	double fs_ceilingheight1;
+	double fs_ceilingheight2;
 
 	// Mirrors and horizons always block the view
 	//if (linedef->special==Line_Mirror || linedef->special==Line_Horizon) return true;
@@ -82,82 +82,82 @@ bool gl_CheckClip(side_t * sidedef, sector_t * frontsector, sector_t * backsecto
 
 	if (frontsector->ceilingplane.isSlope())
 	{
-		fs_ceilingheight1=frontsector->ceilingplane.ZatPoint(linedef->v1);
-		fs_ceilingheight2=frontsector->ceilingplane.ZatPoint(linedef->v2);
+		fs_ceilingheight1 = frontsector->ceilingplane.ZatPoint(linedef->v1);
+		fs_ceilingheight2 = frontsector->ceilingplane.ZatPoint(linedef->v2);
 	}
 	else
 	{
-		fs_ceilingheight2=fs_ceilingheight1=frontsector->ceilingplane.fixD();
+		fs_ceilingheight2 = fs_ceilingheight1 = frontsector->ceilingplane.fixD();
 	}
 
 	if (frontsector->floorplane.isSlope())
 	{
-		fs_floorheight1=frontsector->floorplane.ZatPoint(linedef->v1);
-		fs_floorheight2=frontsector->floorplane.ZatPoint(linedef->v2);
+		fs_floorheight1 = frontsector->floorplane.ZatPoint(linedef->v1);
+		fs_floorheight2 = frontsector->floorplane.ZatPoint(linedef->v2);
 	}
 	else
 	{
-		fs_floorheight2=fs_floorheight1=-frontsector->floorplane.fixD();
+		fs_floorheight2 = fs_floorheight1 = -frontsector->floorplane.fixD();
 	}
-	
+
 	if (backsector->ceilingplane.isSlope())
 	{
-		bs_ceilingheight1=backsector->ceilingplane.ZatPoint(linedef->v1);
-		bs_ceilingheight2=backsector->ceilingplane.ZatPoint(linedef->v2);
+		bs_ceilingheight1 = backsector->ceilingplane.ZatPoint(linedef->v1);
+		bs_ceilingheight2 = backsector->ceilingplane.ZatPoint(linedef->v2);
 	}
 	else
 	{
-		bs_ceilingheight2=bs_ceilingheight1=backsector->ceilingplane.fixD();
+		bs_ceilingheight2 = bs_ceilingheight1 = backsector->ceilingplane.fixD();
 	}
 
 	if (backsector->floorplane.isSlope())
 	{
-		bs_floorheight1=backsector->floorplane.ZatPoint(linedef->v1);
-		bs_floorheight2=backsector->floorplane.ZatPoint(linedef->v2);
+		bs_floorheight1 = backsector->floorplane.ZatPoint(linedef->v1);
+		bs_floorheight2 = backsector->floorplane.ZatPoint(linedef->v2);
 	}
 	else
 	{
-		bs_floorheight2=bs_floorheight1=-backsector->floorplane.fixD();
+		bs_floorheight2 = bs_floorheight1 = -backsector->floorplane.fixD();
 	}
 
 	// now check for closed sectors!
-	if (bs_ceilingheight1<=fs_floorheight1 && bs_ceilingheight2<=fs_floorheight2) 
+	if (bs_ceilingheight1 <= fs_floorheight1 && bs_ceilingheight2 <= fs_floorheight2)
 	{
 		FTexture * tex = TexMan(sidedef->GetTexture(side_t::top));
-		if (!tex || tex->UseType==FTexture::TEX_Null) return false;
-		if (backsector->GetTexture(sector_t::ceiling)==skyflatnum && 
-			frontsector->GetTexture(sector_t::ceiling)==skyflatnum) return false;
+		if (!tex || tex->UseType == FTexture::TEX_Null) return false;
+		if (backsector->GetTexture(sector_t::ceiling) == skyflatnum &&
+			frontsector->GetTexture(sector_t::ceiling) == skyflatnum) return false;
 		return true;
 	}
 
-	if (fs_ceilingheight1<=bs_floorheight1 && fs_ceilingheight2<=bs_floorheight2) 
+	if (fs_ceilingheight1 <= bs_floorheight1 && fs_ceilingheight2 <= bs_floorheight2)
 	{
 		FTexture * tex = TexMan(sidedef->GetTexture(side_t::bottom));
-		if (!tex || tex->UseType==FTexture::TEX_Null) return false;
+		if (!tex || tex->UseType == FTexture::TEX_Null) return false;
 
 		// properly render skies (consider door "open" if both floors are sky):
-		if (backsector->GetTexture(sector_t::ceiling)==skyflatnum && 
-			frontsector->GetTexture(sector_t::ceiling)==skyflatnum) return false;
+		if (backsector->GetTexture(sector_t::ceiling) == skyflatnum &&
+			frontsector->GetTexture(sector_t::ceiling) == skyflatnum) return false;
 		return true;
 	}
 
-	if (bs_ceilingheight1<=bs_floorheight1 && bs_ceilingheight2<=bs_floorheight2)
+	if (bs_ceilingheight1 <= bs_floorheight1 && bs_ceilingheight2 <= bs_floorheight2)
 	{
 		// preserve a kind of transparent door/lift special effect:
-		if (bs_ceilingheight1 < fs_ceilingheight1 || bs_ceilingheight2 < fs_ceilingheight2) 
+		if (bs_ceilingheight1 < fs_ceilingheight1 || bs_ceilingheight2 < fs_ceilingheight2)
 		{
 			FTexture * tex = TexMan(sidedef->GetTexture(side_t::top));
-			if (!tex || tex->UseType==FTexture::TEX_Null) return false;
+			if (!tex || tex->UseType == FTexture::TEX_Null) return false;
 		}
 		if (bs_floorheight1 > fs_floorheight1 || bs_floorheight2 > fs_floorheight2)
 		{
 			FTexture * tex = TexMan(sidedef->GetTexture(side_t::bottom));
-			if (!tex || tex->UseType==FTexture::TEX_Null) return false;
+			if (!tex || tex->UseType == FTexture::TEX_Null) return false;
 		}
-		if (backsector->GetTexture(sector_t::ceiling)==skyflatnum && 
-			frontsector->GetTexture(sector_t::ceiling)==skyflatnum) return false;
-		if (backsector->GetTexture(sector_t::floor)==skyflatnum && frontsector->GetTexture(sector_t::floor)
-			==skyflatnum) return false;
+		if (backsector->GetTexture(sector_t::ceiling) == skyflatnum &&
+			frontsector->GetTexture(sector_t::ceiling) == skyflatnum) return false;
+		if (backsector->GetTexture(sector_t::floor) == skyflatnum && frontsector->GetTexture(sector_t::floor)
+			== skyflatnum) return false;
 		return true;
 	}
 
@@ -172,22 +172,22 @@ bool gl_CheckClip(side_t * sidedef, sector_t * frontsector, sector_t * backsecto
 
 void gl_CheckViewArea(vertex_t *v1, vertex_t *v2, sector_t *frontsector, sector_t *backsector)
 {
-	if (in_area==area_default && 
+	if (in_area == area_default &&
 		(backsector->heightsec && !(backsector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC)) &&
 		(!frontsector->heightsec || frontsector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
 	{
 		sector_t * s = backsector->heightsec;
 
-		fixed_t cz1 = frontsector->ceilingplane.ZatPoint(v1);
-		fixed_t cz2 = frontsector->ceilingplane.ZatPoint(v2);
-		fixed_t fz1 = s->floorplane.ZatPoint(v1);
-		fixed_t fz2 = s->floorplane.ZatPoint(v2);
+		double cz1 = frontsector->ceilingplane.ZatPoint(v1);
+		double cz2 = frontsector->ceilingplane.ZatPoint(v2);
+		double fz1 = s->floorplane.ZatPoint(v1);
+		double fz2 = s->floorplane.ZatPoint(v2);
 
 		// allow some tolerance in case slopes are involved
-		if (cz1 <= fz1 + FRACUNIT/100 && cz2<=fz2 + FRACUNIT/100) 
-			in_area=area_below;
-		else 
-			in_area=area_normal;
+		if (cz1 <= fz1 + 1. / 100 && cz2 <= fz2 + 1. / 100)
+			in_area = area_below;
+		else
+			in_area = area_normal;
 	}
 }
 

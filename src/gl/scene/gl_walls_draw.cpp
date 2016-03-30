@@ -346,8 +346,8 @@ void GLWall::RenderTextured(int rflags)
 		{
 			secplane_t &lowplane = i == (*lightlist).Size() - 1 ? bottomplane : (*lightlist)[i + 1].plane;
 			// this must use the exact same calculation method as GLWall::Process etc.
-			float low1 = FIXED2FLOAT(lowplane.ZatPoint(vertexes[0]));
-			float low2 = FIXED2FLOAT(lowplane.ZatPoint(vertexes[1]));
+			float low1 = lowplane.ZatPoint(vertexes[0]);
+			float low2 = lowplane.ZatPoint(vertexes[1]);
 
 			if (low1 < ztop[0] || low2 < ztop[1])
 			{

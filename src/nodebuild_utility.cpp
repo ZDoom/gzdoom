@@ -262,11 +262,11 @@ void FNodeBuilder::AddPolySegs(FPolySeg *segs, int numsegs)
 
 		seg.frontsector = side->sector;
 		seg.backsector = side->linedef->frontsector == side->sector ? side->linedef->backsector : side->linedef->frontsector;
-		vert.x = segs[i].v1.x;
-		vert.y = segs[i].v1.y;
+		vert.x = FLOAT2FIXED(segs[i].v1.pos.X);
+		vert.y = FLOAT2FIXED(segs[i].v1.pos.Y);
 		seg.v1 = VertexMap->SelectVertexExact(vert);
-		vert.x = segs[i].v2.x;
-		vert.y = segs[i].v2.y;
+		vert.x = FLOAT2FIXED(segs[i].v2.pos.X);
+		vert.y = FLOAT2FIXED(segs[i].v2.pos.Y);
 		seg.v2 = VertexMap->SelectVertexExact(vert);
 		seg.linedef = int(side->linedef - Level.Lines);
 		seg.sidedef = int(side - Level.Sides);

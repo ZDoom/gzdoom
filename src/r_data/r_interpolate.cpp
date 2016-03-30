@@ -791,8 +791,8 @@ void DPolyobjInterpolation::UpdateInterpolation()
 		oldverts[i*2  ] = poly->Vertices[i]->fX();
 		oldverts[i*2+1] = poly->Vertices[i]->fY();
 	}
-	oldcx = poly->CenterSpot.x;
-	oldcy = poly->CenterSpot.y;
+	oldcx = poly->CenterSpot.pos.X;
+	oldcy = poly->CenterSpot.pos.Y;
 }
 
 //==========================================================================
@@ -807,8 +807,8 @@ void DPolyobjInterpolation::Restore()
 	{
 		poly->Vertices[i]->set(bakverts[i*2  ], bakverts[i*2+1]);
 	}
-	poly->CenterSpot.x = bakcx;
-	poly->CenterSpot.y = bakcy;
+	poly->CenterSpot.pos.X = bakcx;
+	poly->CenterSpot.pos.Y = bakcy;
 	poly->ClearSubsectorLinks();
 }
 
@@ -840,10 +840,10 @@ void DPolyobjInterpolation::Interpolate(double smoothratio)
 	}
 	else
 	{
-		bakcx = poly->CenterSpot.x;
-		bakcy = poly->CenterSpot.y;
-		poly->CenterSpot.x = bakcx + (bakcx - oldcx) * smoothratio;
-		poly->CenterSpot.y = bakcy + (bakcy - oldcy) * smoothratio;
+		bakcx = poly->CenterSpot.pos.X;
+		bakcy = poly->CenterSpot.pos.Y;
+		poly->CenterSpot.pos.X = bakcx + (bakcx - oldcx) * smoothratio;
+		poly->CenterSpot.pos.Y = bakcy + (bakcy - oldcy) * smoothratio;
 
 		poly->ClearSubsectorLinks();
 	}

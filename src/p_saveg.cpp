@@ -614,15 +614,14 @@ void P_SerializePolyobjs (FArchive &arc)
 		arc << seg << po_NumPolyobjs;
 		for(i = 0, po = polyobjs; i < po_NumPolyobjs; i++, po++)
 		{
-			arc << po->tag << po->angle << po->StartSpot.x <<
-				po->StartSpot.y << po->interpolation;
+			arc << po->tag << po->Angle << po->StartSpot.pos << po->interpolation;
   		}
 	}
 	else
 	{
 		int data;
-		angle_t angle;
-		fixed_t deltaX, deltaY;
+		DAngle angle;
+		DVector2 delta;
 
 		arc << data;
 		if (data != ASEG_POLYOBJS)
@@ -640,12 +639,10 @@ void P_SerializePolyobjs (FArchive &arc)
 			{
 				I_Error ("UnarchivePolyobjs: Invalid polyobj tag");
 			}
-			arc << angle;
+			arc << angle << delta << po->interpolation;
 			po->RotatePolyobj (angle, true);
-			arc << deltaX << deltaY << po->interpolation;
-			deltaX -= po->StartSpot.x;
-			deltaY -= po->StartSpot.y;
-			po->MovePolyobj (deltaX, deltaY, true);
+			delta -= po->StartSpot.pos;
+			po->MovePolyobj (delta, true);
 		}
 	}
 }

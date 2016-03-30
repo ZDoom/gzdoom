@@ -55,6 +55,10 @@ inline int R_PointOnSide (fixed_t x, fixed_t y, const node_t *node)
 {
 	return DMulScale32 (y-node->y, node->dx, node->x-x, node->dy) > 0;
 }
+inline int R_PointOnSide(const DVector2 &pos, const node_t *node)
+{
+	return DMulScale32(FLOAT2FIXED(pos.Y) - node->y, node->dx, node->x - FLOAT2FIXED(pos.X), node->dy) > 0;
+}
 
 angle_t R_PointToAngle2 (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2);
 inline angle_t R_PointToAngle (fixed_t x, fixed_t y) { return R_PointToAngle2 (viewx, viewy, x, y); }
@@ -72,6 +76,10 @@ struct DVector3a
 
 
 subsector_t *R_PointInSubsector (fixed_t x, fixed_t y);
+inline subsector_t *R_PointInSubsector(const DVector2 &pos)
+{
+	return R_PointInSubsector(FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y));
+}
 fixed_t R_PointToDist2 (fixed_t dx, fixed_t dy);
 void R_ResetViewInterpolation ();
 void R_RebuildViewInterpolation(player_t *player);

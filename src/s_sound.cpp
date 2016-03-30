@@ -812,7 +812,10 @@ static void CalcPolyobjSoundOrg(const FPolyObj *poly, fixed_t *x, fixed_t *y, fi
 	side_t *side;
 	sector_t *sec;
 
-	poly->ClosestPoint(*x, *y, *x, *y, &side);
+	DVector2 pos(FIXED2DBL(*x), FIXED2DBL(*y));
+	poly->ClosestPoint(pos, pos, &side);
+	*x = FLOAT2FIXED(pos.X);
+	*y = FLOAT2FIXED(pos.Y);
 	sec = side->sector;
 	*z = clamp(*z, sec->floorplane.ZatPoint(*x, *y), sec->ceilingplane.ZatPoint(*x, *y));
 }

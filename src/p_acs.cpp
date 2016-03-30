@@ -4567,7 +4567,14 @@ static void SetUserVariable(AActor *self, FName varname, int index, int value)
 
 	if (GetVarAddrType(self, varname, index, addr, type))
 	{
-		type->SetValue(addr, value);
+		if (!type->IsKindOf(RUNTIME_CLASS(PFloat)))
+		{
+			type->SetValue(addr, value);
+		}
+		else
+		{
+			type->SetValue(addr, FIXED2DBL(value));
+		}
 	}
 }
 
@@ -4578,7 +4585,14 @@ static int GetUserVariable(AActor *self, FName varname, int index)
 
 	if (GetVarAddrType(self, varname, index, addr, type))
 	{
-		return type->GetValueInt(addr);
+		if (!type->IsKindOf(RUNTIME_CLASS(PFloat)))
+		{
+			return type->GetValueInt(addr);
+		}
+		else
+		{
+			return FLOAT2FIXED(type->GetValueFloat(addr));
+		}
 	}
 	return 0;
 }

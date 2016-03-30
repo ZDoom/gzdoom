@@ -557,7 +557,7 @@ double P_GetFriction(const AActor *mo, double *frictionfactor)
 				if (rover->flags & FF_SOLID)
 				{
 					// Must be standing on a solid floor
-					if (mo->Z() != rover->top.plane->ZatPoint(pos)) continue;
+					if (!mo->isAtZ(rover->top.plane->ZatPoint(pos))) continue;
 				}
 				else if (rover->flags & FF_SWIMMABLE)
 				{
@@ -573,7 +573,7 @@ double P_GetFriction(const AActor *mo, double *frictionfactor)
 				if (newfriction < friction || friction == ORIG_FRICTION)
 				{
 					friction = newfriction;
-					movefactor = newmf * 0.5;
+					movefactor = newmf;
 				}
 			}
 

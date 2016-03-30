@@ -1305,7 +1305,7 @@ public:
 	{
 		return Z() < checkz - Z_Epsilon;
 	}
-	bool isAtZ(double checkz)
+	bool isAtZ(double checkz) const
 	{
 		return fabs(Z() - checkz) < Z_Epsilon;
 	}

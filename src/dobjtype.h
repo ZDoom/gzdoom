@@ -188,6 +188,7 @@ public:
 
 	// Sets the value of a variable of this type at (addr)
 	virtual void SetValue(void *addr, int val);
+	virtual void SetValue(void *addr, double val);
 
 	// Gets the value of a variable of this type at (addr)
 	virtual int GetValueInt(void *addr) const;
@@ -320,6 +321,7 @@ public:
 	PInt(unsigned int size, bool unsign);
 
 	virtual void SetValue(void *addr, int val);
+	virtual void SetValue(void *addr, double val);
 	virtual int GetValueInt(void *addr) const;
 	virtual int GetStoreOp() const;
 	virtual int GetLoadOp() const;
@@ -344,6 +346,7 @@ public:
 	PFloat(unsigned int size);
 
 	virtual void SetValue(void *addr, int val);
+	virtual void SetValue(void *addr, double val);
 	virtual int GetValueInt(void *addr) const;
 	virtual int GetStoreOp() const;
 	virtual int GetLoadOp() const;
@@ -410,6 +413,7 @@ public:
 	PFixed();
 
 	virtual void SetValue(void *addr, int val);
+	virtual void SetValue(void *addr, double val);
 	virtual int GetValueInt(void *addr) const;
 	virtual int GetStoreOp() const;
 	virtual int GetLoadOp() const;
@@ -422,6 +426,7 @@ public:
 	PAngle();
 
 	virtual void SetValue(void *addr, int val);
+	virtual void SetValue(void *addr, double val);
 	virtual int GetValueInt(void *addr) const;
 	virtual int GetStoreOp() const;
 	virtual int GetLoadOp() const;

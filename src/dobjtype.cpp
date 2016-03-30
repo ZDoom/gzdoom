@@ -392,7 +392,12 @@ bool PType::VisitedNodeSet::Check(const PType *node)
 
 void PType::SetValue(void *addr, int val)
 {
-	assert(0 && "Cannot set value for this type");
+	assert(0 && "Cannot set int value for this type");
+}
+
+void PType::SetValue(void *addr, double val)
+{
+	assert(0 && "Cannot set float value for this type");
 }
 
 //==========================================================================
@@ -682,6 +687,11 @@ void PInt::SetValue(void *addr, int val)
 	}
 }
 
+void PInt::SetValue(void *addr, double val)
+{
+	SetValue(addr, (int)val);
+}
+
 //==========================================================================
 //
 // PInt :: GetValueInt
@@ -928,6 +938,11 @@ void PFloat::SetSymbols(const PFloat::SymbolInitI *sym, size_t count)
 
 void PFloat::SetValue(void *addr, int val)
 {
+	return SetValue(addr, (double)val);
+}
+
+void PFloat::SetValue(void *addr, double val)
+{
 	assert(((intptr_t)addr & (Align - 1)) == 0 && "unaligned address");
 	if (Size == 4)
 	{
@@ -1112,6 +1127,12 @@ void PFixed::SetValue(void *addr, int val)
 	*(fixed_t *)addr = val << FRACBITS;
 }
 
+void PFixed::SetValue(void *addr, double val)
+{
+	assert(((intptr_t)addr & (Align - 1)) == 0 && "unaligned address");
+	*(fixed_t *)addr = FLOAT2FIXED(val);
+}
+
 //==========================================================================
 //
 // PFixed :: GetValueInt
@@ -1171,6 +1192,12 @@ void PAngle::SetValue(void *addr, int val)
 {
 	assert(((intptr_t)addr & (Align - 1)) == 0 && "unaligned address");
 	*(angle_t *)addr = Scale(val, ANGLE_90, 90);
+}
+
+void PAngle::SetValue(void *addr, double val)
+{
+	assert(((intptr_t)addr & (Align - 1)) == 0 && "unaligned address");
+	*(angle_t *)addr = (angle_t)(val * ANGLE_90 / 90);
 }
 
 //==========================================================================

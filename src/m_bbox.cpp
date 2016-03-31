@@ -34,32 +34,17 @@
 //
 //==========================================================================
 
-void FBoundingBox::setBox(fixed_t x, fixed_t y, fixed_t radius)
+void FBoundingBox::AddToBox (const DVector2 &pos)
 {
-	m_Box[BOXTOP] = (fixed_t)MIN<SQWORD>((SQWORD)y + radius, FIXED_MAX);
-	m_Box[BOXLEFT] = (fixed_t)MAX<SQWORD>((SQWORD)x - radius, FIXED_MIN);
-	m_Box[BOXRIGHT] = (fixed_t)MIN<SQWORD>((SQWORD)x + radius, FIXED_MAX);
-	m_Box[BOXBOTTOM] = (fixed_t)MAX<SQWORD>((SQWORD)y - radius, FIXED_MIN);
-}
+	if (pos.X < m_Box[BOXLEFT])
+		m_Box[BOXLEFT] = pos.X;
+	if (pos.X > m_Box[BOXRIGHT])
+		m_Box[BOXRIGHT] = pos.X;
 
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void FBoundingBox::AddToBox (fixed_t x, fixed_t y)
-{
-	if (x < m_Box[BOXLEFT])
-		m_Box[BOXLEFT] = x;
-	if (x > m_Box[BOXRIGHT])
-		m_Box[BOXRIGHT] = x;
-
-	if (y < m_Box[BOXBOTTOM])
-		m_Box[BOXBOTTOM] = y;
-	if (y > m_Box[BOXTOP])
-		m_Box[BOXTOP] = y;
+	if (pos.Y < m_Box[BOXBOTTOM])
+		m_Box[BOXBOTTOM] = pos.Y;
+	if (pos.Y > m_Box[BOXTOP])
+		m_Box[BOXTOP] = pos.Y;
 }
 
 //==========================================================================
@@ -78,8 +63,8 @@ int FBoundingBox::BoxOnLineSide (const line_t *ld) const
 		
 	if (ld->Delta().X == 0)
 	{ // ST_VERTICAL
-		p1 = m_Box[BOXRIGHT] < ld->v1->fixX();
-		p2 = m_Box[BOXLEFT] < ld->v1->fixX();
+		p1 = m_Box[BOXRIGHT] < ld->v1->fX();
+		p2 = m_Box[BOXLEFT] < ld->v1->fX();
 		if (ld->Delta().Y < 0)
 		{
 			p1 ^= 1;
@@ -88,8 +73,8 @@ int FBoundingBox::BoxOnLineSide (const line_t *ld) const
 	}
 	else if (ld->Delta().Y == 0)
 	{ // ST_HORIZONTAL:
-		p1 = m_Box[BOXTOP] > ld->v1->fixY();
-		p2 = m_Box[BOXBOTTOM] > ld->v1->fixY();
+		p1 = m_Box[BOXTOP] > ld->v1->fY();
+		p2 = m_Box[BOXBOTTOM] > ld->v1->fY();
 		if (ld->Delta().X < 0)
 		{
 			p1 ^= 1;

@@ -1646,10 +1646,10 @@ inline void AActor::ClearInterpolation()
 
 inline bool FBoundingBox::inRange(const line_t *ld) const
 {
-	return FIXED2DBL(Left()) < ld->bbox[BOXRIGHT] &&
-		FIXED2DBL(Right()) > ld->bbox[BOXLEFT] &&
-		FIXED2DBL(Top()) > ld->bbox[BOXBOTTOM] &&
-		FIXED2DBL(Bottom()) < ld->bbox[BOXTOP];
+	return Left() < ld->bbox[BOXRIGHT] &&
+		Right() > ld->bbox[BOXLEFT] &&
+		Top() > ld->bbox[BOXBOTTOM] &&
+		Bottom() < ld->bbox[BOXTOP];
 }
 
 

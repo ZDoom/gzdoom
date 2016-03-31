@@ -1172,10 +1172,12 @@ bool P_CollectConnectedGroups(int startgroup, const fixedvec3 &position, fixed_t
 			FDisplacement &disp = Displacements(thisgroup, othergroup);
 			if (!disp.isSet) continue;	// no connection.
 
+			/*
 			FBoundingBox box(position.x + disp.pos.x, position.y + disp.pos.y, checkradius);
 
 			if (!box.inRange(ld) || box.BoxOnLineSide(linkedPortals[i]->mOrigin) != -1) continue;	// not touched
 			foundPortals.Push(linkedPortals[i]);
+			*/
 		}
 		bool foundone = true;
 		while (foundone)
@@ -1230,7 +1232,7 @@ bool P_CollectConnectedGroups(int startgroup, const fixedvec3 &position, fixed_t
 			for (unsigned i = 0; i < groupsToCheck.Size();i++)
 			{
 				fixedvec2 disp = Displacements._f_getOffset(startgroup, thisgroup & ~FPortalGroupArray::FLAT);
-				FBoundingBox box(position.x + disp.x, position.y + disp.y, checkradius);
+				FBoundingBox box(0., 0., 0.);// position.x + disp.x, position.y + disp.y, checkradius);
 				FBlockLinesIterator it(box);
 				line_t *ld;
 				while ((ld = it.Next()))

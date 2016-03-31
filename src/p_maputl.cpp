@@ -638,10 +638,10 @@ FBlockLinesIterator::FBlockLinesIterator(int _minx, int _miny, int _maxx, int _m
 void FBlockLinesIterator::init(const FBoundingBox &box)
 {
 	validcount++;
-	maxy = GetBlockY(FIXED2DBL(box.Top()));
-	miny = GetBlockY(FIXED2DBL(box.Bottom()));
-	maxx = GetBlockX(FIXED2DBL(box.Right()));
-	minx = GetBlockX(FIXED2DBL(box.Left()));
+	maxy = GetBlockY(box.Top());
+	miny = GetBlockY(box.Bottom());
+	maxx = GetBlockX(box.Right());
+	minx = GetBlockX(box.Left());
 	Reset();
 }
 
@@ -898,7 +898,7 @@ void FMultiBlockLinesIterator::startIteratorForGroup(int group)
 	offset.x += checkpoint.x;
 	offset.y += checkpoint.y;
 	cursector = group == startsector->PortalGroup ? startsector : P_PointInSector(offset.x, offset.y);
-	bbox.setBox(offset.x, offset.y, checkpoint.z);
+	bbox.setBox(FIXED2FLOAT(offset.x), FIXED2FLOAT(offset.y), FIXED2FLOAT(checkpoint.z));
 	blockIterator.init(bbox);
 }
 
@@ -944,10 +944,10 @@ FBlockThingsIterator::FBlockThingsIterator(int _minx, int _miny, int _maxx, int 
 
 void FBlockThingsIterator::init(const FBoundingBox &box)
 {
-	maxy = GetBlockY(FIXED2DBL(box.Top()));
-	miny = GetBlockY(FIXED2DBL(box.Bottom()));
-	maxx = GetBlockX(FIXED2DBL(box.Right()));
-	minx = GetBlockX(FIXED2DBL(box.Left()));
+	maxy = GetBlockY(box.Top());
+	miny = GetBlockY(box.Bottom());
+	maxx = GetBlockX(box.Right());
+	minx = GetBlockX(box.Left());
 	ClearHash();
 	Reset();
 }
@@ -1173,7 +1173,7 @@ void FMultiBlockThingsIterator::startIteratorForGroup(int group)
 	fixedvec2 offset = Displacements._f_getOffset(basegroup, group);
 	offset.x += checkpoint.x;
 	offset.y += checkpoint.y;
-	bbox.setBox(offset.x, offset.y, checkpoint.z);
+	bbox.setBox(FIXED2FLOAT(offset.x), FIXED2FLOAT(offset.y), FIXED2FLOAT(checkpoint.z));
 	blockIterator.init(bbox);
 }
 

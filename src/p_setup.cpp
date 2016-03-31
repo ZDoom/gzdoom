@@ -3208,14 +3208,14 @@ static void P_GroupLines (bool buildmap)
 			for (j = 0; j < sector->linecount; ++j)
 			{
 				li = sector->lines[j];
-				bbox.AddToBox (li->v1->fixX(), li->v1->fixY());
-				bbox.AddToBox (li->v2->fixX(), li->v2->fixY());
+				bbox.AddToBox (li->v1->fPos());
+				bbox.AddToBox (li->v2->fPos());
 			}
 		}
 
 		// set the center to the middle of the bounding box
-		sector->centerspot.X = FIXED2DBL(bbox.Right()/2 + bbox.Left()/2);
-		sector->centerspot.Y = FIXED2DBL(bbox.Top()/2 + bbox.Bottom()/2);
+		sector->centerspot.X = (bbox.Right() + bbox.Left()/2);
+		sector->centerspot.Y = (bbox.Top() + bbox.Bottom()/2);
 
 		// For triangular sectors the above does not calculate good points unless the longest of the triangle's lines is perfectly horizontal and vertical
 		if (sector->linecount == 3)

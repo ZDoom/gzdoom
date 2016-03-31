@@ -1791,12 +1791,14 @@ static AActor *RoughBlockCheck (AActor *mo, int index, void *param)
 //
 //==========================================================================
 
-static int R_PointOnSideSlow(double x, double y, node_t *node)
+static int R_PointOnSideSlow(double xx, double yy, node_t *node)
 {
 	// [RH] This might have been faster than two multiplies and an
 	// add on a 386/486, but it certainly isn't on anything newer than that.
 	fixed_t	dx;
 	fixed_t	dy;
+	fixed_t x = FloatToFixed(xx);
+	fixed_t y = FloatToFixed(yy);
 	double	left;
 	double	right;
 
@@ -1815,8 +1817,8 @@ static int R_PointOnSideSlow(double x, double y, node_t *node)
 		return node->dx > 0;
 	}
 
-	dx = (FloatToFixed(x) - node->x);
-	dy = (FloatToFixed(y) - node->y);
+	dx = (x - node->x);
+	dy = (y - node->y);
 
 	// Try to quickly decide by looking at sign bits.
 	if ((node->dy ^ node->dx ^ dx ^ dy) & 0x80000000)

@@ -1333,7 +1333,7 @@ CCMD(clearnodecache)
 //
 //==========================================================================
 
-subsector_t *P_PointInSubsector (fixed_t x, fixed_t y)
+subsector_t *P_PointInSubsector (double x, double y)
 {
 	node_t *node;
 	int side;

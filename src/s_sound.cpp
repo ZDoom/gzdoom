@@ -763,7 +763,7 @@ static void CalcSectorSoundOrg(const sector_t *sec, int channum, fixed_t *x, fix
 	if (!(i_compatflags & COMPATF_SECTORSOUNDS))
 	{
 		// Are we inside the sector? If yes, the closest point is the one we're on.
-		if (P_PointInSector(*x, *y) == sec)
+		if (P_PointInSector(FIXED2DBL(*x), FIXED2DBL(*y)) == sec)
 		{
 			FVector3 p = players[consoleplayer].camera->SoundPos();
 			*x = FLOAT2FIXED(p.X);

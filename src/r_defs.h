@@ -1574,20 +1574,17 @@ struct visstyle_t
 // not the same as R_PointInSubsector
 //
 //----------------------------------------------------------------------------------
-subsector_t *P_PointInSubsector(fixed_t x, fixed_t y);
-inline sector_t *P_PointInSector(fixed_t x, fixed_t y)
-{
-	return P_PointInSubsector(x, y)->sector;
-}
+subsector_t *P_PointInSubsector(double x, double y);
+sector_t *P_PointInSector(fixed_t x, fixed_t y) = delete;
 
 inline sector_t *P_PointInSector(const DVector2 &pos)
 {
-	return P_PointInSubsector(FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y))->sector;
+	return P_PointInSubsector(pos.X, pos.Y)->sector;
 }
 
 inline sector_t *P_PointInSector(double X, double Y)
 {
-	return P_PointInSubsector(FLOAT2FIXED(X), FLOAT2FIXED(Y))->sector;
+	return P_PointInSubsector(X, Y)->sector;
 }
 
 inline DVector3 AActor::PosRelative(int portalgroup) const

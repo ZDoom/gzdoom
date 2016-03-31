@@ -171,10 +171,8 @@ int 			bmapheight; 	// size in mapblocks
 int				*blockmap;		// int for larger maps ([RH] Made int because BOOM does)
 int				*blockmaplump;	// offsets in blockmap are from here	
 
-fixed_t 		bmaporgx;		// origin of block map
-fixed_t 		bmaporgy;
-int				bmapnegx;		// min negs of block map before wrapping
-int				bmapnegy;
+double	 		bmaporgx;		// origin of block map
+double	 		bmaporgy;
 
 FBlockNode**	blocklinks;		// for thing chains
 
@@ -1905,26 +1903,26 @@ void P_AdjustLine (line_t *ld)
 
 	ld->setDelta(v2->fX() - v1->fX(), v2->fY() - v1->fY());
 	
-	if (v1->fixX() < v2->fixX())
+	if (v1->fX() < v2->fX())
 	{
-		ld->bbox[BOXLEFT] = v1->fixX();
-		ld->bbox[BOXRIGHT] = v2->fixX();
+		ld->bbox[BOXLEFT] = v1->fX();
+		ld->bbox[BOXRIGHT] = v2->fX();
 	}
 	else
 	{
-		ld->bbox[BOXLEFT] = v2->fixX();
-		ld->bbox[BOXRIGHT] = v1->fixX();
+		ld->bbox[BOXLEFT] = v2->fX();
+		ld->bbox[BOXRIGHT] = v1->fX();
 	}
 
-	if (v1->fixY() < v2->fixY())
+	if (v1->fY() < v2->fY())
 	{
-		ld->bbox[BOXBOTTOM] = v1->fixY();
-		ld->bbox[BOXTOP] = v2->fixY();
+		ld->bbox[BOXBOTTOM] = v1->fY();
+		ld->bbox[BOXTOP] = v2->fY();
 	}
 	else
 	{
-		ld->bbox[BOXBOTTOM] = v2->fixY();
-		ld->bbox[BOXTOP] = v1->fixY();
+		ld->bbox[BOXBOTTOM] = v2->fY();
+		ld->bbox[BOXTOP] = v1->fY();
 	}
 }
 
@@ -3076,15 +3074,10 @@ void P_LoadBlockMap (MapData * map)
 
 	}
 
-	bmaporgx = blockmaplump[0] << FRACBITS;
-	bmaporgy = blockmaplump[1] << FRACBITS;
+	bmaporgx = blockmaplump[0];
+	bmaporgy = blockmaplump[1];
 	bmapwidth = blockmaplump[2];
 	bmapheight = blockmaplump[3];
-	// MAES: set blockmapxneg and blockmapyneg
-	// E.g. for a full 512x512 map, they should be both
-	// -1. For a 257*257, they should be both -255 etc.
-	bmapnegx = bmapwidth > 255 ? bmapwidth - 512 : -257;
-	bmapnegy = bmapheight > 255 ? bmapheight - 512 : -257;
 
 	// clear out mobj chains
 	count = bmapwidth*bmapheight;

@@ -632,9 +632,6 @@ bool SightCheck::P_SightPathTraverse ()
 		portals.Push({ 0, topslope, bottomslope, sector_t::floor, lastsector->SkyBoxes[sector_t::floor]->Sector->PortalGroup });
 	}
 
-	double bmaporgx = FIXED2DBL(::bmaporgx);
-	double bmaporgy = FIXED2DBL(::bmaporgy);
-
 	x1 -= bmaporgx;
 	y1 -= bmaporgy;
 	xt1 = x1 / MAPBLOCKUNITS;

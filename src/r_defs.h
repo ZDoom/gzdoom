@@ -346,32 +346,6 @@ public:
 		d = FLOAT2FIXED(dd);
 	}
 
-	void changeD(double dd)
-	{
-		d += FLOAT2FIXED(dd);
-	}
-
-	fixed_t fixA() const
-	{
-		return a;
-	}
-	fixed_t fixB() const
-	{
-		return b;
-	}
-	fixed_t fixC() const
-	{
-		return c;
-	}
-	fixed_t fixD() const
-	{
-		return d;
-	}
-	fixed_t fixiC() const
-	{
-		return ic;
-	}
-
 	double fA() const
 	{
 		return FIXED2DBL(a);
@@ -1431,9 +1405,9 @@ struct side_t
 	{
 		return textures[which].xscale;
 	}
-	void MultiplyTextureXScale(int which, fixed_t delta)
+	void MultiplyTextureXScale(int which, double delta)
 	{
-		textures[which].xscale = FixedMul(textures[which].xscale, delta);
+		textures[which].xscale = fixed_t(textures[which].xscale * delta);
 	}
 
 
@@ -1463,9 +1437,9 @@ struct side_t
 	{
 		return FIXED2DBL(textures[which].yscale);
 	}
-	void MultiplyTextureYScale(int which, fixed_t delta)
+	void MultiplyTextureYScale(int which, double delta)
 	{
-		textures[which].yscale = FixedMul(textures[which].yscale, delta);
+		textures[which].yscale = fixed_t(textures[which].yscale * delta);
 	}
 
 	DInterpolation *SetInterpolation(int position);
@@ -1496,7 +1470,7 @@ public:
 	fixed_t		Alpha;		// <--- translucency (0=invisibile, FRACUNIT=opaque)
 	int			args[5];	// <--- hexen-style arguments (expanded to ZDoom's full width)
 	side_t		*sidedef[2];
-	fixed_t		bbox[4];	// bounding box, for the extent of the LineDef.
+	double		bbox[4];	// bounding box, for the extent of the LineDef.
 	sector_t	*frontsector, *backsector;
 	int 		validcount;	// if == validcount, already checked
 	int			locknumber;	// [Dusk] lock number for special
@@ -1783,10 +1757,10 @@ inline void AActor::ClearInterpolation()
 
 inline bool FBoundingBox::inRange(const line_t *ld) const
 {
-	return Left() < ld->bbox[BOXRIGHT] &&
-		Right() > ld->bbox[BOXLEFT] &&
-		Top() > ld->bbox[BOXBOTTOM] &&
-		Bottom() < ld->bbox[BOXTOP];
+	return FIXED2DBL(Left()) < ld->bbox[BOXRIGHT] &&
+		FIXED2DBL(Right()) > ld->bbox[BOXLEFT] &&
+		FIXED2DBL(Top()) > ld->bbox[BOXBOTTOM] &&
+		FIXED2DBL(Bottom()) < ld->bbox[BOXTOP];
 }
 
 

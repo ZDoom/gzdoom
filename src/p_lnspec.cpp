@@ -84,10 +84,8 @@ int LS_SetGlobalFogParameter(line_t *ln, AActor *it, bool backSide, int arg0, in
 	int arg0, int arg1, int arg2, int arg3, int arg4)
 
 #define SPEED(a)		((a) / 8.)
-#define _f_SPEED(a)		((a)*(FRACUNIT/8))
 #define TICS(a)			(((a)*TICRATE)/35)
 #define OCTICS(a)		(((a)*TICRATE)/8)
-#define	_f_BYTEANGLE(a)	((angle_t)((a)<<24))
 #define BYTEANGLE(a)	((a) * (360./256.))
 #define CRUSH(a)		((a) > 0? (a) : -1)
 #define CHANGE(a)		(((a) >= 0 && (a)<=7)? ChangeMap[a]:0)
@@ -164,19 +162,19 @@ FUNC(LS_Polyobj_RotateRight)
 FUNC(LS_Polyobj_Move)
 // Polyobj_Move (po, speed, angle, distance)
 {
-	return EV_MovePoly (ln, arg0, _f_SPEED(arg1), _f_BYTEANGLE(arg2), arg3 * FRACUNIT, false);
+	return EV_MovePoly (ln, arg0, SPEED(arg1), BYTEANGLE(arg2), arg3, false);
 }
 
 FUNC(LS_Polyobj_MoveTimes8)
 // Polyobj_MoveTimes8 (po, speed, angle, distance)
 {
-	return EV_MovePoly (ln, arg0, _f_SPEED(arg1), _f_BYTEANGLE(arg2), arg3 * FRACUNIT * 8, false);
+	return EV_MovePoly (ln, arg0, SPEED(arg1), BYTEANGLE(arg2), arg3 * 8, false);
 }
 
 FUNC(LS_Polyobj_MoveTo)
 // Polyobj_MoveTo (po, speed, x, y)
 {
-	return EV_MovePolyTo (ln, arg0, _f_SPEED(arg1), arg2 << FRACBITS, arg3 << FRACBITS, false);
+	return EV_MovePolyTo (ln, arg0, SPEED(arg1), DVector2(arg2, arg3), false);
 }
 
 FUNC(LS_Polyobj_MoveToSpot)
@@ -185,19 +183,19 @@ FUNC(LS_Polyobj_MoveToSpot)
 	FActorIterator iterator (arg2);
 	AActor *spot = iterator.Next();
 	if (spot == NULL) return false;
-	return EV_MovePolyTo (ln, arg0, _f_SPEED(arg1), spot->_f_X(), spot->_f_Y(), false);
+	return EV_MovePolyTo (ln, arg0, SPEED(arg1), spot->Pos(), false);
 }
 
 FUNC(LS_Polyobj_DoorSwing)
 // Polyobj_DoorSwing (po, speed, angle, delay)
 {
-	return EV_OpenPolyDoor (ln, arg0, arg1, _f_BYTEANGLE(arg2), arg3, 0, PODOOR_SWING);
+	return EV_OpenPolyDoor (ln, arg0, arg1, BYTEANGLE(arg2), arg3, 0, PODOOR_SWING);
 }
 
 FUNC(LS_Polyobj_DoorSlide)
 // Polyobj_DoorSlide (po, speed, angle, distance, delay)
 {
-	return EV_OpenPolyDoor (ln, arg0, _f_SPEED(arg1), _f_BYTEANGLE(arg2), arg4, arg3*FRACUNIT, PODOOR_SLIDE);
+	return EV_OpenPolyDoor (ln, arg0, SPEED(arg1), BYTEANGLE(arg2), arg4, arg3, PODOOR_SLIDE);
 }
 
 FUNC(LS_Polyobj_OR_RotateLeft)
@@ -215,19 +213,19 @@ FUNC(LS_Polyobj_OR_RotateRight)
 FUNC(LS_Polyobj_OR_Move)
 // Polyobj_OR_Move (po, speed, angle, distance)
 {
-	return EV_MovePoly (ln, arg0, _f_SPEED(arg1), _f_BYTEANGLE(arg2), arg3 * FRACUNIT, true);
+	return EV_MovePoly (ln, arg0, SPEED(arg1), BYTEANGLE(arg2), arg3, true);
 }
 
 FUNC(LS_Polyobj_OR_MoveTimes8)
 // Polyobj_OR_MoveTimes8 (po, speed, angle, distance)
 {
-	return EV_MovePoly (ln, arg0, _f_SPEED(arg1), _f_BYTEANGLE(arg2), arg3 * FRACUNIT * 8, true);
+	return EV_MovePoly (ln, arg0, SPEED(arg1), BYTEANGLE(arg2), arg3 * 8, true);
 }
 
 FUNC(LS_Polyobj_OR_MoveTo)
 // Polyobj_OR_MoveTo (po, speed, x, y)
 {
-	return EV_MovePolyTo (ln, arg0, _f_SPEED(arg1), arg2 << FRACBITS, arg3 << FRACBITS, true);
+	return EV_MovePolyTo (ln, arg0, SPEED(arg1), DVector2(arg2, arg3), true);
 }
 
 FUNC(LS_Polyobj_OR_MoveToSpot)
@@ -236,7 +234,7 @@ FUNC(LS_Polyobj_OR_MoveToSpot)
 	FActorIterator iterator (arg2);
 	AActor *spot = iterator.Next();
 	if (spot == NULL) return false;
-	return EV_MovePolyTo (ln, arg0, _f_SPEED(arg1), spot->_f_X(), spot->_f_Y(), true);
+	return EV_MovePolyTo (ln, arg0, SPEED(arg1), spot->Pos(), true);
 }
 
 FUNC(LS_Polyobj_Stop)
@@ -810,13 +808,13 @@ FUNC(LS_Ceiling_LowerToNearest)
 FUNC(LS_Ceiling_ToHighestInstant)
 // Ceiling_ToHighestInstant (tag, change, crush)
 {
-	return EV_DoCeiling (DCeiling::ceilLowerToHighest, ln, arg0, FRACUNIT*2, 0, 0, CRUSH(arg2), 0, CHANGE(arg1));
+	return EV_DoCeiling (DCeiling::ceilLowerToHighest, ln, arg0, 2, 0, 0, CRUSH(arg2), 0, CHANGE(arg1));
 }
 
 FUNC(LS_Ceiling_ToFloorInstant)
 // Ceiling_ToFloorInstant (tag, change, crush)
 {
-	return EV_DoCeiling (DCeiling::ceilRaiseToFloor, ln, arg0, FRACUNIT*2, 0, 0, CRUSH(arg2), 0, CHANGE(arg1));
+	return EV_DoCeiling (DCeiling::ceilRaiseToFloor, ln, arg0, 2, 0, 0, CRUSH(arg2), 0, CHANGE(arg1));
 }
 
 FUNC(LS_Ceiling_LowerToFloor)
@@ -2377,8 +2375,8 @@ FUNC(LS_Sector_SetFade)
 FUNC(LS_Sector_SetCeilingPanning)
 // Sector_SetCeilingPanning (tag, x-int, x-frac, y-int, y-frac)
 {
-	fixed_t xofs = arg1 * FRACUNIT + arg2 * (FRACUNIT/100);
-	fixed_t yofs = arg3 * FRACUNIT + arg4 * (FRACUNIT/100);
+	double xofs = arg1 + arg2 / 100.;
+	double yofs = arg3 + arg4 / 100.;
 
 	FSectorTagIterator itr(arg0);
 	int secnum;
@@ -2393,8 +2391,8 @@ FUNC(LS_Sector_SetCeilingPanning)
 FUNC(LS_Sector_SetFloorPanning)
 // Sector_SetFloorPanning (tag, x-int, x-frac, y-int, y-frac)
 {
-	fixed_t xofs = arg1 * FRACUNIT + arg2 * (FRACUNIT/100);
-	fixed_t yofs = arg3 * FRACUNIT + arg4 * (FRACUNIT/100);
+	double xofs = arg1 + arg2 / 100.;
+	double yofs = arg3 + arg4 / 100.;
 
 	FSectorTagIterator itr(arg0);
 	int secnum;
@@ -2409,13 +2407,13 @@ FUNC(LS_Sector_SetFloorPanning)
 FUNC(LS_Sector_SetFloorScale)
 // Sector_SetFloorScale (tag, x-int, x-frac, y-int, y-frac)
 {
-	fixed_t xscale = arg1 * FRACUNIT + arg2 * (FRACUNIT/100);
-	fixed_t yscale = arg3 * FRACUNIT + arg4 * (FRACUNIT/100);
+	double xscale = arg1 + arg2 / 100.;
+	double yscale = arg3 + arg4 / 100.;
 
 	if (xscale)
-		xscale = FixedDiv (FRACUNIT, xscale);
+		xscale = 1. / xscale;
 	if (yscale)
-		yscale = FixedDiv (FRACUNIT, yscale);
+		yscale = 1. / yscale;
 
 	FSectorTagIterator itr(arg0);
 	int secnum;
@@ -2432,13 +2430,13 @@ FUNC(LS_Sector_SetFloorScale)
 FUNC(LS_Sector_SetCeilingScale)
 // Sector_SetCeilingScale (tag, x-int, x-frac, y-int, y-frac)
 {
-	fixed_t xscale = arg1 * FRACUNIT + arg2 * (FRACUNIT/100);
-	fixed_t yscale = arg3 * FRACUNIT + arg4 * (FRACUNIT/100);
+	double xscale = arg1 + arg2 / 100.;
+	double yscale = arg3 + arg4 / 100.;
 
 	if (xscale)
-		xscale = FixedDiv (FRACUNIT, xscale);
+		xscale = 1. / xscale;
 	if (yscale)
-		yscale = FixedDiv (FRACUNIT, yscale);
+		yscale = 1. / yscale;
 
 	FSectorTagIterator itr(arg0);
 	int secnum;
@@ -2455,10 +2453,12 @@ FUNC(LS_Sector_SetCeilingScale)
 FUNC(LS_Sector_SetFloorScale2)
 // Sector_SetFloorScale2 (tag, x-factor, y-factor)
 {
-	if (arg1)
-		arg1 = FixedDiv (FRACUNIT, arg1);
-	if (arg2)
-		arg2 = FixedDiv (FRACUNIT, arg2);
+	double xscale = arg1 / 65536., yscale = arg2 / 65536.;
+
+	if (xscale)
+		xscale = 1. / xscale;
+	if (yscale)
+		yscale = 1. / yscale;
 
 	FSectorTagIterator itr(arg0);
 	int secnum;
@@ -2475,10 +2475,12 @@ FUNC(LS_Sector_SetFloorScale2)
 FUNC(LS_Sector_SetCeilingScale2)
 // Sector_SetFloorScale2 (tag, x-factor, y-factor)
 {
-	if (arg1)
-		arg1 = FixedDiv (FRACUNIT, arg1);
-	if (arg2)
-		arg2 = FixedDiv (FRACUNIT, arg2);
+	double xscale = arg1 / 65536., yscale = arg2 / 65536.;
+
+	if (xscale)
+		xscale = 1. / xscale;
+	if (yscale)
+		yscale = 1. / yscale;
 
 	FSectorTagIterator itr(arg0);
 	int secnum;
@@ -2495,8 +2497,8 @@ FUNC(LS_Sector_SetCeilingScale2)
 FUNC(LS_Sector_SetRotation)
 // Sector_SetRotation (tag, floor-angle, ceiling-angle)
 {
-	angle_t ceiling = arg2 * ANGLE_1;
-	angle_t floor = arg1 * ANGLE_1;
+	DAngle ceiling = (double)arg2;
+	DAngle floor = (double)arg1;
 
 	FSectorTagIterator itr(arg0);
 	int secnum;
@@ -2539,7 +2541,9 @@ FUNC(LS_Line_AlignFloor)
 FUNC(LS_Line_SetTextureOffset)
 // Line_SetTextureOffset (id, x, y, side, flags)
 {
-	const fixed_t NO_CHANGE = 32767<<FRACBITS;
+	const double NO_CHANGE = FLT_MAX;
+	double farg1 = arg1 / 65536.;
+	double farg2 = arg2 / 65536.;
 
 	if (arg0 == 0 || arg3 < 0 || arg3 > 1)
 		return false;
@@ -2557,15 +2561,15 @@ FUNC(LS_Line_SetTextureOffset)
 				// set
 				if (arg1 != NO_CHANGE)
 				{
-					if (arg4&1) side->SetTextureXOffset(side_t::top, arg1);
-					if (arg4&2) side->SetTextureXOffset(side_t::mid, arg1);
-					if (arg4&4) side->SetTextureXOffset(side_t::bottom, arg1);
+					if (arg4&1) side->SetTextureXOffset(side_t::top, farg1);
+					if (arg4&2) side->SetTextureXOffset(side_t::mid, farg1);
+					if (arg4&4) side->SetTextureXOffset(side_t::bottom, farg1);
 				}
 				if (arg2 != NO_CHANGE)
 				{
-					if (arg4&1) side->SetTextureYOffset(side_t::top, arg2);
-					if (arg4&2) side->SetTextureYOffset(side_t::mid, arg2);
-					if (arg4&4) side->SetTextureYOffset(side_t::bottom, arg2);
+					if (arg4&1) side->SetTextureYOffset(side_t::top, farg2);
+					if (arg4&2) side->SetTextureYOffset(side_t::mid, farg2);
+					if (arg4&4) side->SetTextureYOffset(side_t::bottom, farg2);
 				}
 			}
 			else
@@ -2573,15 +2577,15 @@ FUNC(LS_Line_SetTextureOffset)
 				// add
 				if (arg1 != NO_CHANGE)
 				{
-					if (arg4&1) side->AddTextureXOffset(side_t::top, arg1);
-					if (arg4&2) side->AddTextureXOffset(side_t::mid, arg1);
-					if (arg4&4) side->AddTextureXOffset(side_t::bottom, arg1);
+					if (arg4&1) side->AddTextureXOffset(side_t::top, farg1);
+					if (arg4&2) side->AddTextureXOffset(side_t::mid, farg1);
+					if (arg4&4) side->AddTextureXOffset(side_t::bottom, farg1);
 				}
 				if (arg2 != NO_CHANGE)
 				{
-					if (arg4&1) side->AddTextureYOffset(side_t::top, arg2);
-					if (arg4&2) side->AddTextureYOffset(side_t::mid, arg2);
-					if (arg4&4) side->AddTextureYOffset(side_t::bottom, arg2);
+					if (arg4&1) side->AddTextureYOffset(side_t::top, farg2);
+					if (arg4&2) side->AddTextureYOffset(side_t::mid, farg2);
+					if (arg4&4) side->AddTextureYOffset(side_t::bottom, farg2);
 				}
 			}
 		}
@@ -2592,7 +2596,9 @@ FUNC(LS_Line_SetTextureOffset)
 FUNC(LS_Line_SetTextureScale)
 // Line_SetTextureScale (id, x, y, side, flags)
 {
-	const fixed_t NO_CHANGE = 32767<<FRACBITS;
+	const double NO_CHANGE = FLT_MAX;
+	double farg1 = arg1 / 65536.;
+	double farg2 = arg2 / 65536.;
 
 	if (arg0 == 0 || arg3 < 0 || arg3 > 1)
 		return false;
@@ -2609,15 +2615,15 @@ FUNC(LS_Line_SetTextureScale)
 				// set
 				if (arg1 != NO_CHANGE)
 				{
-					if (arg4&1) side->SetTextureXScale(side_t::top, arg1);
-					if (arg4&2) side->SetTextureXScale(side_t::mid, arg1);
-					if (arg4&4) side->SetTextureXScale(side_t::bottom, arg1);
+					if (arg4&1) side->SetTextureXScale(side_t::top, farg1);
+					if (arg4&2) side->SetTextureXScale(side_t::mid, farg1);
+					if (arg4&4) side->SetTextureXScale(side_t::bottom, farg1);
 				}
 				if (arg2 != NO_CHANGE)
 				{
-					if (arg4&1) side->SetTextureYScale(side_t::top, arg2);
-					if (arg4&2) side->SetTextureYScale(side_t::mid, arg2);
-					if (arg4&4) side->SetTextureYScale(side_t::bottom, arg2);
+					if (arg4&1) side->SetTextureYScale(side_t::top, farg2);
+					if (arg4&2) side->SetTextureYScale(side_t::mid, farg2);
+					if (arg4&4) side->SetTextureYScale(side_t::bottom, farg2);
 				}
 			}
 			else
@@ -2625,15 +2631,15 @@ FUNC(LS_Line_SetTextureScale)
 				// add
 				if (arg1 != NO_CHANGE)
 				{
-					if (arg4&1) side->MultiplyTextureXScale(side_t::top, arg1);
-					if (arg4&2) side->MultiplyTextureXScale(side_t::mid, arg1);
-					if (arg4&4) side->MultiplyTextureXScale(side_t::bottom, arg1);
+					if (arg4&1) side->MultiplyTextureXScale(side_t::top, farg1);
+					if (arg4&2) side->MultiplyTextureXScale(side_t::mid, farg1);
+					if (arg4&4) side->MultiplyTextureXScale(side_t::bottom, farg1);
 				}
 				if (arg2 != NO_CHANGE)
 				{
-					if (arg4&1) side->MultiplyTextureYScale(side_t::top, arg2);
-					if (arg4&2) side->MultiplyTextureYScale(side_t::mid, arg2);
-					if (arg4&4) side->MultiplyTextureYScale(side_t::bottom, arg2);
+					if (arg4&1) side->MultiplyTextureYScale(side_t::top, farg2);
+					if (arg4&2) side->MultiplyTextureYScale(side_t::mid, farg2);
+					if (arg4&4) side->MultiplyTextureYScale(side_t::bottom, farg2);
 				}
 			}
 		}

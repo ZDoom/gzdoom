@@ -1143,6 +1143,9 @@ static void AM_ScrollParchment (double dmapx, double dmapy)
 	mapxstart = mapxstart - dmapx * scale_mtof;
 	mapystart = mapystart - dmapy * scale_mtof;
 
+	mapxstart = clamp(mapxstart, -40000., 40000.);
+	mapystart = clamp(mapxstart, -40000., 40000.);
+
 	if (mapback.isValid())
 	{
 		FTexture *backtex = TexMan[mapback];
@@ -1836,8 +1839,7 @@ void AM_drawGrid (int color)
 
 	// Figure out start of vertical gridlines
 	start = minx - extx;
-	double bmorgx = FIXED2DBL(bmaporgx);
-	start = ceil((start - bmorgx) / MAPBLOCKUNITS) * MAPBLOCKUNITS + bmorgx;
+	start = ceil((start - bmaporgx) / MAPBLOCKUNITS) * MAPBLOCKUNITS + bmaporgx;
 
 	end = minx + minlen - extx;
 
@@ -1858,8 +1860,7 @@ void AM_drawGrid (int color)
 
 	// Figure out start of horizontal gridlines
 	start = miny - exty;
-	double bmorgy = FIXED2DBL(bmaporgy);
-	start = ceil((start - bmorgy) / MAPBLOCKUNITS) * MAPBLOCKUNITS + bmorgy;
+	start = ceil((start - bmaporgy) / MAPBLOCKUNITS) * MAPBLOCKUNITS + bmaporgy;
 	end = miny + minlen - exty;
 
 	// draw horizontal gridlines
@@ -1927,7 +1928,7 @@ void AM_drawSubsectors()
 			points[j].Y = float(f_y + (f_h - (pt.y - m_y) * scale));
 		}
 		// For lighting and texture determination
-		sector_t *sec = Renderer->FakeFlat (subsectors[i].render_sector, &tempsec, &floorlight,	&ceilinglight, false);
+		sector_t *sec = Renderer->FakeFlat(subsectors[i].render_sector, &tempsec, &floorlight, &ceilinglight, false);
 		// Find texture origin.
 		originpt.x = -sec->GetXOffsetF(sector_t::floor);
 		originpt.y = sec->GetYOffset(sector_t::floor);
@@ -1967,7 +1968,7 @@ void AM_drawSubsectors()
 			}
 			seczb = floorplane->ZatPoint(secx, secy);
 			seczt = sec->ceilingplane.ZatPoint(secx, secy);
-			
+
 			for (unsigned int i = 0; i < sec->e->XFloor.ffloors.Size(); ++i)
 			{
 				F3DFloor *rover = sec->e->XFloor.ffloors[i];
@@ -2030,7 +2031,7 @@ void AM_drawSubsectors()
 					(colormap->Color.b + 160) / 2),
 				colormap->Fade,
 				255 - (255 - colormap->Desaturate) / 4);
-			floorlight = (floorlight + 200*15) / 16;
+			floorlight = (floorlight + 200 * 15) / 16;
 		}
 
 		// Draw the polygon.
@@ -2106,10 +2107,10 @@ void AM_drawSeg(seg_t *seg, const AMColor &color)
 void AM_drawPolySeg(FPolySeg *seg, const AMColor &color)
 {
 	mline_t l;
-	l.a.x = seg->v1.x;
-	l.a.y = seg->v1.y;
-	l.b.x = seg->v2.x;
-	l.b.y = seg->v2.y;
+	l.a.x = seg->v1.pos.X;
+	l.a.y = seg->v1.pos.Y;
+	l.b.x = seg->v2.pos.X;
+	l.b.y = seg->v2.pos.Y;
 
 	if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 	{

@@ -376,8 +376,8 @@ bool AActor::FixMapthingPos()
 {
 	sector_t *secstart = P_PointInSectorBuggy(_f_X(), _f_Y());
 
-	int blockx = GetSafeBlockX(_f_X() - bmaporgx);
-	int blocky = GetSafeBlockY(_f_Y() - bmaporgy);
+	int blockx = GetBlockX(X());
+	int blocky = GetBlockY(Y());
 	bool success = false;
 
 	if ((unsigned int)blockx < (unsigned int)bmapwidth &&
@@ -403,10 +403,10 @@ bool AActor::FixMapthingPos()
 			}
 
 			// Not inside the line's bounding box
-			if (_f_X() + _f_radius() <= ldef->bbox[BOXLEFT]
-				|| _f_X() - _f_radius() >= ldef->bbox[BOXRIGHT]
-				|| _f_Y() + _f_radius() <= ldef->bbox[BOXBOTTOM]
-				|| _f_Y() - _f_radius() >= ldef->bbox[BOXTOP])
+			if (X() + radius <= ldef->bbox[BOXLEFT]
+				|| X() - radius >= ldef->bbox[BOXRIGHT]
+				|| Y() + radius <= ldef->bbox[BOXBOTTOM]
+				|| Y() - radius >= ldef->bbox[BOXTOP])
 				continue;
 
 			// Get the exact distance to the line
@@ -519,13 +519,12 @@ void AActor::LinkToWorld(bool spawningmapthing, sector_t *sector)
 
 		for (int i = -1; i < (int)check.Size(); i++)
 		{
-			DVector3 _pos = i==-1? Pos() : PosRelative(check[i]);
-			fixedvec3 pos = { FLOAT2FIXED(_pos.X), FLOAT2FIXED(_pos.Y),FLOAT2FIXED(_pos.Z) };
+			DVector3 pos = i==-1? Pos() : PosRelative(check[i]);
 
-			int x1 = GetSafeBlockX(pos.x - _f_radius() - bmaporgx);
-			int x2 = GetSafeBlockX(pos.x + _f_radius() - bmaporgx);
-			int y1 = GetSafeBlockY(pos.y - _f_radius() - bmaporgy);
-			int y2 = GetSafeBlockY(pos.y + _f_radius() - bmaporgy);
+			int x1 = GetBlockX(pos.X - radius);
+			int x2 = GetBlockX(pos.X + radius);
+			int y1 = GetBlockY(pos.Y - radius);
+			int y2 = GetBlockY(pos.Y + radius);
 
 			if (x1 >= bmapwidth || x2 < 0 || y1 >= bmapheight || y2 < 0)
 			{ // thing is off the map
@@ -639,10 +638,10 @@ FBlockLinesIterator::FBlockLinesIterator(int _minx, int _miny, int _maxx, int _m
 void FBlockLinesIterator::init(const FBoundingBox &box)
 {
 	validcount++;
-	maxy = GetSafeBlockY(box.Top() - bmaporgy);
-	miny = GetSafeBlockY(box.Bottom() - bmaporgy);
-	maxx = GetSafeBlockX(box.Right() - bmaporgx);
-	minx = GetSafeBlockX(box.Left() - bmaporgx);
+	maxy = GetBlockY(FIXED2DBL(box.Top()));
+	miny = GetBlockY(FIXED2DBL(box.Bottom()));
+	maxx = GetBlockX(FIXED2DBL(box.Right()));
+	minx = GetBlockX(FIXED2DBL(box.Left()));
 	Reset();
 }
 
@@ -945,10 +944,10 @@ FBlockThingsIterator::FBlockThingsIterator(int _minx, int _miny, int _maxx, int 
 
 void FBlockThingsIterator::init(const FBoundingBox &box)
 {
-	maxy = GetSafeBlockY(box.Top() - bmaporgy);
-	miny = GetSafeBlockY(box.Bottom() - bmaporgy);
-	maxx = GetSafeBlockX(box.Right() - bmaporgx);
-	minx = GetSafeBlockX(box.Left() - bmaporgx);
+	maxy = GetBlockY(FIXED2DBL(box.Top()));
+	miny = GetBlockY(FIXED2DBL(box.Bottom()));
+	maxx = GetBlockX(FIXED2DBL(box.Right()));
+	minx = GetBlockX(FIXED2DBL(box.Left()));
 	ClearHash();
 	Reset();
 }
@@ -1026,9 +1025,9 @@ AActor *FBlockThingsIterator::Next(bool centeronly)
 			if (centeronly)
 			{
 				// Block boundaries for compatibility mode
-				fixed_t blockleft = (curx << MAPBLOCKSHIFT) + bmaporgx;
+				fixed_t blockleft = (curx << MAPBLOCKSHIFT) + FLOAT2FIXED(bmaporgx);
 				fixed_t blockright = blockleft + MAPBLOCKSIZE;
-				fixed_t blockbottom = (cury << MAPBLOCKSHIFT) + bmaporgy;
+				fixed_t blockbottom = (cury << MAPBLOCKSHIFT) + FLOAT2FIXED(bmaporgy);
 				fixed_t blocktop = blockbottom + MAPBLOCKSIZE;
 
 				// only return actors with the center in this block
@@ -1517,16 +1516,19 @@ void FPathTraverse::init (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int fl
 	intercept_index = intercepts.Size();
 	this->startfrac = startfrac;
 
-	if ( ((x1-bmaporgx)&(MAPBLOCKSIZE-1)) == 0)
+	fixed_t _f_bmaporgx = FLOAT2FIXED(bmaporgx);
+	fixed_t _f_bmaporgy = FLOAT2FIXED(bmaporgy);
+
+	if ( ((x1-_f_bmaporgx)&(MAPBLOCKSIZE-1)) == 0)
 		x1 += FRACUNIT; // don't side exactly on a line
 	
-	if ( ((y1-bmaporgy)&(MAPBLOCKSIZE-1)) == 0)
+	if ( ((y1-_f_bmaporgy)&(MAPBLOCKSIZE-1)) == 0)
 		y1 += FRACUNIT; // don't side exactly on a line
 
-	_x1 = (long long)x1 - bmaporgx;
-	_y1 = (long long)y1 - bmaporgy;
-	x1 -= bmaporgx;
-	y1 -= bmaporgy;
+	_x1 = (long long)x1 - _f_bmaporgx;
+	_y1 = (long long)y1 - _f_bmaporgy;
+	x1 -= _f_bmaporgx;
+	y1 -= _f_bmaporgy;
 	xt1 = int(_x1 >> MAPBLOCKSHIFT);
 	yt1 = int(_y1 >> MAPBLOCKSHIFT);
 
@@ -1541,10 +1543,10 @@ void FPathTraverse::init (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int fl
 	}
 	else
 	{
-		_x2 = (long long)x2 - bmaporgx;
-		_y2 = (long long)y2 - bmaporgy;
-		x2 -= bmaporgx;
-		y2 -= bmaporgy;
+		_x2 = (long long)x2 - _f_bmaporgx;
+		_y2 = (long long)y2 - _f_bmaporgy;
+		x2 -= _f_bmaporgx;
+		y2 -= _f_bmaporgy;
 		xt2 = int(_x2 >> MAPBLOCKSHIFT);
 		yt2 = int(_y2 >> MAPBLOCKSHIFT);
 	}
@@ -1758,8 +1760,8 @@ AActor *P_BlockmapSearch (AActor *mo, int distance, AActor *(*check)(AActor*, in
 	int count;
 	AActor *target;
 
-	startX = GetSafeBlockX(mo->_f_X()-bmaporgx);
-	startY = GetSafeBlockY(mo->_f_Y()-bmaporgy);
+	startX = GetBlockX(mo->X());
+	startY = GetBlockY(mo->Y());
 	validcount++;
 	
 	if (startX >= 0 && startX < bmapwidth && startY >= 0 && startY < bmapheight)

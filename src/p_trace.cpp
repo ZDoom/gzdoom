@@ -165,8 +165,8 @@ void FTraceInfo::EnterSectorPortal(int position, double frac, sector_t *entersec
 	if (aimdir != -1 && aimdir != position) return;
 	AActor *portal = entersec->SkyBoxes[position];
 
-	if (aimdir == sector_t::ceiling && FLOAT2FIXED(portal->specialf1) < limitz) return;
-	else if (aimdir == sector_t::floor && FLOAT2FIXED(portal->specialf1) > limitz) return;
+	if (aimdir == sector_t::ceiling && portal->specialf1 < limitz) return;
+	else if (aimdir == sector_t::floor && portal->specialf1 > limitz) return;
 
 	FTraceInfo newtrace;
 	FTraceResults results;
@@ -785,7 +785,7 @@ bool FTraceInfo::TraceTraverse (int ptflags)
 		}
 
 		// We have something closer in the storage for portal subtraces.
-		if (TempResults->HitType != TRACE_HitNone && FIXED2DBL(in->frac) > TempResults->Fraction)
+		if (TempResults->HitType != TRACE_HitNone && in->Frac > TempResults->Fraction)
 		{
 			break;
 		}

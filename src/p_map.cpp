@@ -2947,7 +2947,7 @@ const secplane_t * P_CheckSlopeWalk(AActor *actor, DVector2 &move)
 		if (t < 0)
 		{ // Desired location is behind (below) the plane
 			// (i.e. Walking up the plane)
-			if (plane->fixC() < STEEPSLOPE)
+			if (plane->fC() < STEEPSLOPE)
 			{ // Can't climb up slopes of ~45 degrees or more
 				if (actor->flags & MF_NOCLIP)
 				{

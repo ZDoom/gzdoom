@@ -44,20 +44,6 @@ struct FCheckPosition
 		PushTime = 0;
 		FromPMove = false;
 	}
-
-	inline fixed_t _f_X()
-	{
-		return FLOAT2FIXED(pos.X);
-	}
-	inline fixed_t _f_Y()
-	{
-		return FLOAT2FIXED(pos.Y);
-	}
-	inline fixed_t _f_Z()
-	{
-		return FLOAT2FIXED(pos.Z);
-	}
-
 };
 
 

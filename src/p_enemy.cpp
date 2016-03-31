@@ -885,11 +885,8 @@ void P_NewChaseDir(AActor * actor)
 		double deltay = 0;
 		while ((line = it.Next()))
 		{
-			if (line->backsector                     && // Ignore one-sided linedefs
-				box.Right()  > line->bbox[BOXLEFT]   &&
-				box.Left()   < line->bbox[BOXRIGHT]  &&
-				box.Top()    > line->bbox[BOXBOTTOM] && // Linedef must be contacted
-				box.Bottom() < line->bbox[BOXTOP]    &&
+			if (line->backsector  && // Ignore one-sided linedefs
+				box.inRange(line) &&
 				box.BoxOnLineSide(line) == -1)
 		    {
 				double front = line->frontsector->floorplane.ZatPoint(actor->PosRelative(line));

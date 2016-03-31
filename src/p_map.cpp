@@ -2728,11 +2728,11 @@ void FSlide::SlideTraverse(const DVector2 &start, const DVector2 &end)
 		// the line does block movement,
 		// see if it is closer than best so far
 	isblocking:
-		if (in->Frac < bestSlidefrac)
+		if (in->frac < bestSlidefrac)
 		{
 			secondSlidefrac = bestSlidefrac;
 			secondslideline = bestslideline;
-			bestSlidefrac = in->Frac;
+			bestSlidefrac = in->frac;
 			bestslideline = li;
 		}
 
@@ -3057,11 +3057,11 @@ bool FSlide::BounceTraverse(const DVector2 &start, const DVector2 &end)
 
 		// the line does block movement, see if it is closer than best so far
 	bounceblocking:
-		if (in->Frac < bestSlidefrac)
+		if (in->frac < bestSlidefrac)
 		{
 			secondSlidefrac = bestSlidefrac;
 			secondslideline = bestslideline;
-			bestSlidefrac = in->Frac;
+			bestSlidefrac = in->frac;
 			bestslideline = li;
 		}
 		return false;   // stop
@@ -3419,9 +3419,9 @@ struct aim_t
 			F3DFloor* rover;
 			DAngle highpitch, lowpitch;
 
-			double trX = trace.x + trace.dx * in->Frac;
-			double trY = trace.y + trace.dy * in->Frac;
-			double dist = attackrange * in->Frac;
+			double trX = trace.x + trace.dx * in->frac;
+			double trY = trace.y + trace.dy * in->frac;
+			double dist = attackrange * in->frac;
 
 			// 3D floor check. This is not 100% accurate but normally sufficient when
 			// combined with a final sight check
@@ -3632,7 +3632,7 @@ struct aim_t
 			double 				dist;
 			DAngle				thingpitch;
 
-			if (linetarget.linetarget != NULL && in->Frac > linetarget.frac) return;	// we already found something better in another portal section.
+			if (linetarget.linetarget != NULL && in->frac > linetarget.frac) return;	// we already found something better in another portal section.
 
 			if (in->isaline)
 			{
@@ -3644,7 +3644,7 @@ struct aim_t
 
 				if (li->isLinePortal() && frontflag == 0)
 				{
-					EnterLinePortal(li, in->Frac);
+					EnterLinePortal(li, in->frac);
 					return;
 				}
 
@@ -3662,7 +3662,7 @@ struct aim_t
 				if (open.range <= 0 || open.bottom >= open.top)
 					return;
 					
-				dist = attackrange * in->Frac;
+				dist = attackrange * in->frac;
 
 				if (open.bottom != LINEOPEN_MIN)
 				{
@@ -3692,11 +3692,11 @@ struct aim_t
 				// check portal in backsector when aiming up/downward is possible, the line doesn't have portals on both sides and there's actually a portal in the backsector
 				if ((planestocheck & aim_up) && toppitch < 0 && open.top != LINEOPEN_MAX && !entersec->PortalBlocksMovement(sector_t::ceiling))
 				{
-					EnterSectorPortal(sector_t::ceiling, in->Frac, entersec, toppitch, MIN<DAngle>(0., bottompitch));
+					EnterSectorPortal(sector_t::ceiling, in->frac, entersec, toppitch, MIN<DAngle>(0., bottompitch));
 				}
 				if ((planestocheck & aim_down) && bottompitch > 0 && open.bottom != LINEOPEN_MIN && !entersec->PortalBlocksMovement(sector_t::floor))
 				{
-					EnterSectorPortal(sector_t::floor, in->Frac, entersec, MAX<DAngle>(0., toppitch), bottompitch);
+					EnterSectorPortal(sector_t::floor, in->frac, entersec, MAX<DAngle>(0., toppitch), bottompitch);
 				}
 				continue;					// shot continues
 			}
@@ -3728,7 +3728,7 @@ struct aim_t
 					}
 				}
 			}
-			dist = attackrange * in->Frac;
+			dist = attackrange * in->frac;
 
 			// Don't autoaim certain special actors
 			if (!cl_doautoaim && th->flags6 & MF6_NOTAUTOAIMED)
@@ -3811,7 +3811,7 @@ struct aim_t
 				if (cosine != 0)
 				{
 					double tracelen = DVector2(it.Trace().dx, it.Trace().dy).Length();
-					double d3 = tracelen * in->Frac / cosine;
+					double d3 = tracelen * in->frac / cosine;
 					if (d3 > attackrange)
 					{
 						return;
@@ -3834,7 +3834,7 @@ struct aim_t
 						// friends don't aim at friends (except players), at least not first
 						if (aimdebug)
 							Printf("Hit friend %s at %f,%f,%f\n", th->GetClass()->TypeName.GetChars(), th->X(), th->Y(), th->Z());
-						SetResult(thing_friend, in->Frac, th, thingpitch);
+						SetResult(thing_friend, in->frac, th, thingpitch);
 					}
 				}
 				else if (!(th->flags3 & MF3_ISMONSTER) && th->player == NULL)
@@ -3844,14 +3844,14 @@ struct aim_t
 						// don't autoaim at barrels and other shootable stuff unless no monsters have been found
 						if (aimdebug)
 							Printf("Hit other %s at %f,%f,%f\n", th->GetClass()->TypeName.GetChars(), th->X(), th->Y(), th->Z());
-						SetResult(thing_other, in->Frac, th, thingpitch);
+						SetResult(thing_other, in->frac, th, thingpitch);
 					}
 				}
 				else
 				{
 					if (aimdebug)
 						Printf("Hit target %s at %f,%f,%f\n", th->GetClass()->TypeName.GetChars(), th->X(), th->Y(), th->Z());
-					SetResult(linetarget, in->Frac, th, thingpitch);
+					SetResult(linetarget, in->frac, th, thingpitch);
 					return;
 				}
 			}
@@ -3859,7 +3859,7 @@ struct aim_t
 			{
 				if (aimdebug)
 					Printf("Hit target %s at %f,%f,%f\n", th->GetClass()->TypeName.GetChars(), th->X(), th->Y(), th->Z());
-				SetResult(linetarget, in->Frac, th, thingpitch);
+				SetResult(linetarget, in->frac, th, thingpitch);
 				return;
 			}
 		}

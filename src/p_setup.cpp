@@ -3917,8 +3917,8 @@ void P_SetupLevel (const char *lumpname, int position)
 			seg_t * seg=&segs[i];
 			if (seg->backsector == seg->frontsector && seg->linedef)
 			{
-				fixed_t d1=P_AproxDistance(seg->v1->fixX()-seg->linedef->v1->fixX(),seg->v1->fixY()-seg->linedef->v1->fixY());
-				fixed_t d2=P_AproxDistance(seg->v2->fixX()-seg->linedef->v1->fixX(),seg->v2->fixY()-seg->linedef->v1->fixY());
+				double d1 = (seg->v1->fPos() - seg->linedef->v1->fPos()).LengthSquared();
+				double d2 = (seg->v2->fPos() - seg->linedef->v1->fPos()).LengthSquared();
 
 				if (d2<d1)	// backside
 				{

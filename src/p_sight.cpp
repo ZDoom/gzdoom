@@ -207,8 +207,8 @@ bool SightCheck::PTR_SightTraverse (intercept_t *in)
 	if ((i_compatflags & COMPATF_TRACE) && li->frontsector == li->backsector) 
 		return true;
 
-	double trX = Trace.x + Trace.dx * in->Frac;
-	double trY = Trace.y + Trace.dy * in->Frac;
+	double trX = Trace.x + Trace.dx * in->frac;
+	double trY = Trace.y + Trace.dy * in->frac;
 	P_SightOpening (open, li, trX, trY);
 
 	FLinePortal *lport = li->getPortal();
@@ -219,7 +219,7 @@ bool SightCheck::PTR_SightTraverse (intercept_t *in)
 	// check bottom
 	if (open.bottom > LINEOPEN_MIN)
 	{
-		slope = (open.bottom - sightstart.Z) / in->Frac;
+		slope = (open.bottom - sightstart.Z) / in->frac;
 		if (slope > bottomslope)
 			bottomslope = slope;
 	}
@@ -227,7 +227,7 @@ bool SightCheck::PTR_SightTraverse (intercept_t *in)
 	// check top
 	if (open.top < LINEOPEN_MAX)
 	{
-		slope = (open.top - sightstart.Z) / in->Frac;
+		slope = (open.top - sightstart.Z) / in->frac;
 		if (slope < topslope)
 			topslope = slope;
 	}
@@ -251,16 +251,16 @@ bool SightCheck::PTR_SightTraverse (intercept_t *in)
 
 		if (portaldir != sector_t::floor && (open.portalflags & SO_TOPBACK) && !(open.portalflags & SO_TOPFRONT))
 		{
-			portals.Push({ in->Frac, topslope, bottomslope, sector_t::ceiling, backsec->SkyBoxes[sector_t::ceiling]->Sector->PortalGroup });
+			portals.Push({ in->frac, topslope, bottomslope, sector_t::ceiling, backsec->SkyBoxes[sector_t::ceiling]->Sector->PortalGroup });
 		}
 		if (portaldir != sector_t::ceiling && (open.portalflags & SO_BOTTOMBACK) && !(open.portalflags & SO_BOTTOMFRONT))
 		{
-			portals.Push({ in->Frac, topslope, bottomslope, sector_t::floor, backsec->SkyBoxes[sector_t::floor]->Sector->PortalGroup });
+			portals.Push({ in->frac, topslope, bottomslope, sector_t::floor, backsec->SkyBoxes[sector_t::floor]->Sector->PortalGroup });
 		}
 	}
 	if (lport)
 	{
-		portals.Push({ in->Frac, topslope, bottomslope, portaldir, lport->mDestination->frontsector->PortalGroup });
+		portals.Push({ in->frac, topslope, bottomslope, portaldir, lport->mDestination->frontsector->PortalGroup });
 		return false;
 	}
 
@@ -278,8 +278,8 @@ bool SightCheck::PTR_SightTraverse (intercept_t *in)
 			sector_t * s=i==1? li->frontsector:li->backsector;
 			double    highslope, lowslope;
 
-			double topz= topslope * in->Frac + sightstart.Z;
-			double bottomz= bottomslope * in->Frac + sightstart.Z;
+			double topz= topslope * in->frac + sightstart.Z;
+			double bottomz= bottomslope * in->frac + sightstart.Z;
 
 			for (auto rover : s->e->XFloor.ffloors)
 			{
@@ -289,8 +289,8 @@ bool SightCheck::PTR_SightTraverse (intercept_t *in)
 				double ff_bottom = rover->bottom.plane->ZatPoint(trX, trY);
 				double ff_top = rover->top.plane->ZatPoint(trX, trY);
 
-				highslope = (ff_top - sightstart.Z) / in->Frac;
-				lowslope = (ff_bottom - sightstart.Z) / in->Frac;
+				highslope = (ff_top - sightstart.Z) / in->frac;
+				lowslope = (ff_bottom - sightstart.Z) / in->frac;
 
 				if (highslope >= topslope)
 				{
@@ -350,8 +350,8 @@ bool SightCheck::PTR_SightTraverse (intercept_t *in)
 	}
 	else lastsector=NULL;	// don't need it if there are no 3D-floors
 
-	Lastztop = (topslope * in->Frac) + sightstart.Z;
-	Lastzbottom = (bottomslope * in->Frac) + sightstart.Z;
+	Lastztop = (topslope * in->frac) + sightstart.Z;
+	Lastzbottom = (bottomslope * in->frac) + sightstart.Z;
 
 	return true;			// keep going
 }
@@ -375,14 +375,14 @@ bool SightCheck::P_SightCheckLine (line_t *ld)
 		return true;
 	}
 	ld->validcount = validcount;
-	if (P_PointOnDivlineSidePrecise (ld->V1(), &Trace) ==
-		P_PointOnDivlineSidePrecise (ld->V2(), &Trace))
+	if (P_PointOnDivlineSide (ld->V1(), &Trace) ==
+		P_PointOnDivlineSide (ld->V2(), &Trace))
 	{
 		return true;		// line isn't crossed
 	}
 	P_MakeDivline (ld, &dl);
-	if (P_PointOnDivlineSidePrecise (Trace.x, Trace.y, &dl) ==
-		P_PointOnDivlineSidePrecise (Trace.x+Trace.dx, Trace.y+Trace.dy, &dl))
+	if (P_PointOnDivlineSide (Trace.x, Trace.y, &dl) ==
+		P_PointOnDivlineSide (Trace.x+Trace.dx, Trace.y+Trace.dy, &dl))
 	{
 		return true;		// line isn't crossed
 	}
@@ -514,10 +514,10 @@ bool SightCheck::P_SightTraverseIntercepts ()
 	{
 		scan = &intercepts[scanpos];
 		P_MakeDivline (scan->d.line, &dl);
-		scan->Frac = P_InterceptVector (&Trace, &dl);
-		if (scan->Frac < Startfrac)
+		scan->frac = P_InterceptVector (&Trace, &dl);
+		if (scan->frac < Startfrac)
 		{
-			scan->Frac = INT_MAX;
+			scan->frac = INT_MAX;
 			count--;
 		}
 	}
@@ -534,9 +534,9 @@ bool SightCheck::P_SightTraverseIntercepts ()
 		for (scanpos = 0; scanpos < intercepts.Size (); scanpos++)
 		{
 			scan = &intercepts[scanpos];
-			if (scan->Frac < dist)
+			if (scan->frac < dist)
 			{
-				dist = scan->Frac;
+				dist = scan->frac;
 				in = scan;
 			}
 		}
@@ -545,7 +545,7 @@ bool SightCheck::P_SightTraverseIntercepts ()
 		{
 			if (!PTR_SightTraverse (in))
 				return false;					// don't bother going farther
-			in->Frac = INT_MAX;
+			in->frac = INT_MAX;
 		}
 	}
 

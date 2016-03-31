@@ -358,16 +358,6 @@ public:
 		return ic < 0 ? d : -d;
 	}
 
-	fixed_t ZatPoint(const fixedvec2 &spot) const
-	{
-		return FixedMul(ic, -d - DMulScale16(a, spot.x, b, spot.y));
-	}
-
-	fixed_t ZatPoint(const fixedvec3 &spot) const
-	{
-		return FixedMul(ic, -d - DMulScale16(a, spot.x, b, spot.y));
-	}
-
 	// Returns the value of z at (x,y)
 	fixed_t ZatPoint (fixed_t x, fixed_t y) const
 	{
@@ -456,11 +446,6 @@ public:
 	fixed_t PointToDist (fixed_t x, fixed_t y, fixed_t z) const
 	{
 		return -TMulScale16 (a, x, y, b, z, c);
-	}
-
-	fixed_t PointToDist(fixedvec2 xy, fixed_t z) const
-	{
-		return -TMulScale16(a, xy.x, xy.y, b, z, c);
 	}
 
 	fixed_t PointToDist (const vertex_t *v, fixed_t z) const
@@ -1082,11 +1067,6 @@ struct sector_t
 	DVector2	centerspot;		// origin for any sounds played by the sector
 	int 		validcount;		// if == validcount, already checked
 	AActor* 	thinglist;		// list of mobjs in sector
-
-	fixedvec2 _f_centerspot() const
-	{
-		return{ FLOAT2FIXED(centerspot.X), FLOAT2FIXED(centerspot.Y) };
-	}
 
 	// killough 8/28/98: friction is a sector property, not an mobj property.
 	// these fields used to be in AActor, but presented performance problems

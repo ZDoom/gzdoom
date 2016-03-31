@@ -733,10 +733,14 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 	}
 	else
 	{
-		P_TranslatePortalXY(pds->src, viewx, viewy);
-		P_TranslatePortalZ(pds->src, viewz);
+		DVector3 view(FIXED2DBL(viewx), FIXED2DBL(viewy), FIXED2DBL(viewz));
 		DAngle va = ANGLE2DBL(viewangle);
+		P_TranslatePortalXY(pds->src, view.X, view.Y);
+		P_TranslatePortalZ(pds->src, view.Z);
 		P_TranslatePortalAngle(pds->src, va);
+		viewx = FLOAT2FIXED(view.X);
+		viewy = FLOAT2FIXED(view.Y);
+		viewz = FLOAT2FIXED(view.Z);
 		viewangle = va.BAMs();
 	}
 

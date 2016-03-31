@@ -709,8 +709,9 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 					}
 					else
 					{
-						x = sector->_f_centerspot().x;
-						z = sector->_f_centerspot().y;
+						
+						x = FLOAT2FIXED(sector->centerspot.X);
+						z = FLOAT2FIXED(sector->centerspot.Y);
 						chanflags |= CHAN_LISTENERZ;
 					}
 				}
@@ -777,8 +778,8 @@ static void CalcSectorSoundOrg(const sector_t *sec, int channum, fixed_t *x, fix
 	}
 	else
 	{
-		*x = sec->_f_centerspot().x;
-		*y = sec->_f_centerspot().y;
+		*x = FLOAT2FIXED(sec->centerspot.X);
+		*y = FLOAT2FIXED(sec->centerspot.Y);
 	}
 
 	// Set sound vertical position based on channel.

@@ -55,7 +55,7 @@ bool DBot::Reachable (AActor *rtarget)
 		double dist;
 		sector_t *s;
 
-		frac = in->Frac - 4 /MAX_TRAVERSE_DIST;
+		frac = in->frac - 4 /MAX_TRAVERSE_DIST;
 		dist = frac * MAX_TRAVERSE_DIST;
 
 		hitx = it.Trace().x + player->mo->Vel.X * frac;

@@ -8,14 +8,6 @@
 
 extern int validcount;
 
-struct fdivline_t
-{
-	fixed_t 	x;
-	fixed_t 	y;
-	fixed_t 	dx;
-	fixed_t 	dy;
-};
-
 struct divline_t
 {
 	double 	x;
@@ -26,8 +18,7 @@ struct divline_t
 
 struct intercept_t
 {
-	double		Frac;
-	fixed_t 	frac;			// along trace line
+	double		frac;
 	bool	 	isaline;
 	bool		done;
 	union {
@@ -44,8 +35,6 @@ struct intercept_t
 // [RH] inlined, stripped down, and made more precise
 //
 //==========================================================================
-
-const double POL_Epsilon = -1. / 65536.;
 
 inline int P_PointOnLineSide (fixed_t x, fixed_t y, const line_t *line)
 {
@@ -73,46 +62,32 @@ inline int P_PointOnLineSide(const DVector2 & p, const line_t *line)
 
 inline int P_PointOnLineSidePrecise(double x, double y, const line_t *line)
 {
-	return (y - line->v1->fY()) * line->Delta().X + (line->v1->fX() - x) * line->Delta().Y > POL_Epsilon ;
+	return (y - line->v1->fY()) * line->Delta().X + (line->v1->fX() - x) * line->Delta().Y > EQUAL_EPSILON ;
 }
 
 inline int P_PointOnLineSidePrecise(const DVector2 &pt, const line_t *line)
 {
-	return (pt.Y - line->v1->fY()) * line->Delta().X + (line->v1->fX() - pt.X) * line->Delta().Y > POL_Epsilon;
+	return (pt.Y - line->v1->fY()) * line->Delta().X + (line->v1->fX() - pt.X) * line->Delta().Y > EQUAL_EPSILON;
 }
 
 
 //==========================================================================
 //
-// P_PointOnDivlineSide
+// P_PointOnDivlineSideCompat
 //
 // Same as P_PointOnLineSide except it uses divlines
 // [RH] inlined, stripped down, and made more precise
 //
 //==========================================================================
 
-inline int P_PointOnDivlineSide (fixed_t x, fixed_t y, const fdivline_t *line)
+inline int P_PointOnDivlineSide(double x, double y, const divline_t *line)
 {
-	extern int P_VanillaPointOnDivlineSide(fixed_t x, fixed_t y, const fdivline_t* line);
-
-	return (i_compatflags2 & COMPATF2_POINTONLINE)
-		? P_VanillaPointOnDivlineSide(x, y, line)
-		: (DMulScale32 (y-line->y, line->dx, line->x-x, line->dy) > 0);
+	return (y - line->y) * line->dx + (line->x - x) * line->dy > EQUAL_EPSILON;
 }
 
-inline int P_PointOnDivlineSidePrecise (fixed_t x, fixed_t y, const fdivline_t *line)
+inline int P_PointOnDivlineSide(const DVector2 &pos, const divline_t *line)
 {
-	return DMulScale32 (y-line->y, line->dx, line->x-x, line->dy) > 0;
-}
-
-inline int P_PointOnDivlineSidePrecise(double x, double y, const divline_t *line)
-{
-	return (y - line->y) * line->dx + (line->x - x) * line->dy > 0;
-}
-
-inline int P_PointOnDivlineSidePrecise(const DVector2 &pos, const divline_t *line)
-{
-	return (pos.Y - line->y) * line->dx + (line->x - pos.X) * line->dy > 0;
+	return (pos.Y - line->y) * line->dx + (line->x - pos.X) * line->dy > EQUAL_EPSILON;
 }
 
 //==========================================================================
@@ -120,14 +95,6 @@ inline int P_PointOnDivlineSidePrecise(const DVector2 &pos, const divline_t *lin
 // P_MakeDivline
 //
 //==========================================================================
-
-inline void P_MakeDivline (const line_t *li, fdivline_t *dl)
-{
-	dl->x = li->v1->fixX();
-	dl->y = li->v1->fixY();
-	dl->dx = li->fixDx();
-	dl->dy = li->fixDy();
-}
 
 inline void P_MakeDivline(const line_t *li, divline_t *dl)
 {
@@ -161,15 +128,6 @@ void P_LineOpening(FLineOpening &open, AActor *thing, const line_t *linedef, con
 inline void P_LineOpening(FLineOpening &open, AActor *thing, const line_t *linedef, const DVector2 &xy, const DVector3 *ref, int flags = 0)
 {
 	P_LineOpening(open, thing, linedef, xy, reinterpret_cast<const DVector2*>(ref), flags);
-}
-
-inline void P_LineOpening(FLineOpening &open, AActor *thing, const line_t *linedef, fixed_t x, fixed_t y, fixed_t refx = FIXED_MIN, fixed_t refy = 0, int flags = 0)
-{
-	P_LineOpening(open, thing, linedef, DVector2(FIXED2DBL(x), FIXED2DBL(y)), &DVector2(FIXED2DBL(refx), FIXED2DBL(refy)), flags);
-}
-inline void	P_LineOpening(FLineOpening &open, AActor *thing, const line_t *linedef, fixedvec2 xy, fixed_t refx = FIXED_MIN, fixed_t refy = 0, int flags = 0)
-{
-	P_LineOpening(open, thing, linedef, xy.x, xy.y, refx, refy, flags);
 }
 
 class FBoundingBox;
@@ -277,8 +235,8 @@ public:
 class FMultiBlockLinesIterator
 {
 	FPortalGroupArray &checklist;
-	fixedvec3 checkpoint;
-	fixedvec2 offset;
+	DVector3 checkpoint;
+	DVector2 offset;
 	sector_t *startsector;
 	sector_t *cursector;
 	short basegroup;
@@ -289,8 +247,8 @@ class FMultiBlockLinesIterator
 	FBlockLinesIterator blockIterator;
 	FBoundingBox bbox;
 
-	bool GoUp(fixed_t x, fixed_t y);
-	bool GoDown(fixed_t x, fixed_t y);
+	bool GoUp(double x, double y);
+	bool GoDown(double x, double y);
 	void startIteratorForGroup(int group);
 
 public:
@@ -298,18 +256,12 @@ public:
 	struct CheckResult
 	{
 		line_t *line;
-		fixedvec3 position;
 		DVector3 Position;
 		int portalflags;
 	};
 
-	FMultiBlockLinesIterator(FPortalGroupArray &check, AActor *origin, fixed_t checkradius = -1);
-	FMultiBlockLinesIterator(FPortalGroupArray &check, fixed_t checkx, fixed_t checky, fixed_t checkz, fixed_t checkh, fixed_t checkradius, sector_t *newsec);
-
-	FMultiBlockLinesIterator(FPortalGroupArray &check, double checkx, double checky, double checkz, double checkh, double checkradius, sector_t *newsec)
-		: FMultiBlockLinesIterator(check, FLOAT2FIXED(checkx), FLOAT2FIXED(checky), FLOAT2FIXED(checkz), FLOAT2FIXED(checkh), FLOAT2FIXED(checkradius), newsec)
-	{
-	}
+	FMultiBlockLinesIterator(FPortalGroupArray &check, AActor *origin, double checkradius = -1);
+	FMultiBlockLinesIterator(FPortalGroupArray &check, double checkx, double checky, double checkz, double checkh, double checkradius, sector_t *newsec);
 
 	bool Next(CheckResult *item);
 	void Reset();
@@ -376,7 +328,7 @@ public:
 class FMultiBlockThingsIterator
 {
 	FPortalGroupArray &checklist;
-	fixedvec3 checkpoint;
+	DVector3 checkpoint;
 	short basegroup;
 	short portalflags;
 	short index;
@@ -390,17 +342,12 @@ public:
 	struct CheckResult
 	{
 		AActor *thing;
-		fixedvec3 position;	// keep these both until the fixed version can be removed.
 		DVector3 Position;
 		int portalflags;
 	};
 
-	FMultiBlockThingsIterator(FPortalGroupArray &check, AActor *origin, fixed_t checkradius = -1, bool ignorerestricted = false);
-	FMultiBlockThingsIterator(FPortalGroupArray &check, fixed_t checkx, fixed_t checky, fixed_t checkz, fixed_t checkh, fixed_t checkradius, bool ignorerestricted, sector_t *newsec);
-	FMultiBlockThingsIterator(FPortalGroupArray &check, double checkx, double checky, double checkz, double checkh, double checkradius, bool ignorerestricted, sector_t *newsec)
-		: FMultiBlockThingsIterator(check, FLOAT2FIXED(checkx), FLOAT2FIXED(checky), FLOAT2FIXED(checkz), FLOAT2FIXED(checkh), FLOAT2FIXED(checkradius), ignorerestricted, newsec)
-	{
-	}
+	FMultiBlockThingsIterator(FPortalGroupArray &check, AActor *origin, double checkradius = -1, bool ignorerestricted = false);
+	FMultiBlockThingsIterator(FPortalGroupArray &check, double checkx, double checky, double checkz, double checkh, double checkradius, bool ignorerestricted, sector_t *newsec);
 	bool Next(CheckResult *item);
 	void Reset();
 	const FBoundingBox &Box() const
@@ -416,9 +363,8 @@ class FPathTraverse
 protected:
 	static TArray<intercept_t> intercepts;
 
-	divline_t ftrace;
-	fdivline_t trace;
-	fixed_t startfrac;
+	divline_t trace;
+	double Startfrac;
 	unsigned int intercept_index;
 	unsigned int intercept_count;
 	unsigned int count;
@@ -430,34 +376,21 @@ public:
 
 	intercept_t *Next();
 
-	FPathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int flags, fixed_t startfrac = 0)
+	FPathTraverse(double x1, double y1, double x2, double y2, int flags, double startfrac = 0)
 	{
 		init(x1, y1, x2, y2, flags, startfrac);
 	}
-	FPathTraverse(double x1, double y1, double x2, double y2, int flags, double startfrac = 0)
-	{
-		init(FLOAT2FIXED(x1), FLOAT2FIXED(y1), FLOAT2FIXED(x2), FLOAT2FIXED(y2), flags, FLOAT2FIXED(startfrac));
-	}
-	void init(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int flags, fixed_t startfrac = 0);
+	void init(double x1, double y1, double x2, double y2, int flags, double startfrac = 0);
 	int PortalRelocate(intercept_t *in, int flags, DVector3 *optpos = NULL);
 	virtual ~FPathTraverse();
-	const fdivline_t &_f_Trace() const { return trace; }
-	const divline_t &Trace() const { return ftrace; }
+	const divline_t &Trace() const { return trace; }
 
-	inline fixedvec2 _f_InterceptPoint(const intercept_t *in)
-	{
-		return
-		{
-			trace.x + FixedMul(trace.dx, in->frac),
-			trace.y + FixedMul(trace.dy, in->frac) 
-		};
-	}
 	inline DVector2 InterceptPoint(const intercept_t *in)
 	{
 		return
 		{
-			FIXED2DBL(trace.x + FixedMul(trace.dx, in->frac)),
-			FIXED2DBL(trace.y + FixedMul(trace.dy, in->frac))
+			trace.x + trace.dx * in->frac,
+			trace.y + trace.dy * in->frac
 		};
 	}
 
@@ -480,18 +413,13 @@ public:
 	}
 };
 
-
-
 //
 // P_MAPUTL
 //
 
 typedef bool(*traverser_t) (intercept_t *in);
 
-fixed_t P_AproxDistance (fixed_t dx, fixed_t dy);
-
-
-fixed_t P_InterceptVector (const fdivline_t *v2, const fdivline_t *v1);
+int P_AproxDistance (int dx, int dy);
 double P_InterceptVector(const divline_t *v2, const divline_t *v1);
 
 #define PT_ADDLINES 	1

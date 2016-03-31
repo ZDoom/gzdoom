@@ -46,7 +46,7 @@
 #include "math/cmath.h"
 
 
-#define EQUAL_EPSILON (1/65536.f)
+#define EQUAL_EPSILON (1/65536.)
 
 // make this a local inline function to avoid any dependencies on other headers and not pollute the global namespace
 namespace pi

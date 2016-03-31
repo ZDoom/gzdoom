@@ -561,11 +561,7 @@ public:
 	int Amount;
 };
 
-fixed_t P_AproxDistance (fixed_t dx, fixed_t dy);	// since we cannot include p_local here...
-angle_t R_PointToAngle2 (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2); // same reason here with r_defs.h
-
-const double MinVel = 1. / 65536;
-const double Z_Epsilon = 1. / 65536.;
+const double MinVel = EQUAL_EPSILON;
 
 // Map Object definition.
 class AActor : public DThinker
@@ -752,17 +748,6 @@ public:
 		return BobSin(FloatBobPhase + level.maptime + ticfrac);
 	}
 
-
-
-	fixed_t _f_GetBobOffset(fixed_t ticfrac=0) const
-	{
-		 if (!(flags2 & MF2_FLOATBOB))
-		 {
-			 return 0;
-		 }
-		 return finesine[MulScale22(((FloatBobPhase + level.maptime) << FRACBITS) + ticfrac, FINEANGLES) & FINEMASK] * 8;
-	}
-
 	// Enter the crash state
 	void Crash();
 
@@ -850,8 +835,6 @@ public:
 		return VecToAngle(otherpos - Pos().XY());
 	}
 
-	DAngle AngleTo(AActor *other, fixed_t oxofs, fixed_t oyofs, bool absolute = false) const = delete;
-
 	DAngle AngleTo(AActor *other, double oxofs, double oyofs, bool absolute = false) const
 	{
 		DVector2 otherpos = absolute ? other->Pos() : other->PosRelative(this);
@@ -906,21 +889,6 @@ public:
 		}
 	}
 
-	fixedvec3 Vec3Offset(fixed_t dx, fixed_t dy, fixed_t dz, bool absolute = false)
-	{
-		if (absolute)
-		{
-			fixedvec3 ret = { _f_X() + dx, _f_Y() + dy, _f_Z() + dz };
-			return ret;
-		}
-		else
-		{
-			fixedvec2 op = P_GetOffsetPosition(_f_X(), _f_Y(), dx, dy);
-			fixedvec3 pos = { op.x, op.y, _f_Z() + dz };
-			return pos;
-		}
-	}
-
 	DVector3 Vec3Offset(double dx, double dy, double dz, bool absolute = false)
 	{
 		if (absolute)
@@ -958,11 +926,6 @@ public:
 	}
 
 	void ClearInterpolation();
-
-	void SetOrigin(const fixedvec3 & npos, bool moving)
-	{
-		SetOrigin(npos.x, npos.y, npos.z, moving);
-	}
 
 	void Move(const DVector3 &vel)
 	{
@@ -1021,26 +984,12 @@ public:
 	double			floorz, ceilingz;	// closest together of contacted secs
 	double			dropoffz;		// killough 11/98: the lowest floor over all contacted Sectors.
 
-	inline fixed_t _f_floorz()
-	{
-		return FLOAT2FIXED(floorz);
-	}
-
 	struct sector_t	*floorsector;
 	FTextureID		floorpic;			// contacted sec floorpic
 	int				floorterrain;
 	struct sector_t	*ceilingsector;
 	FTextureID		ceilingpic;			// contacted sec ceilingpic
 	double			radius, Height;		// for movement checking
-
-	inline fixed_t _f_radius() const
-	{
-		return FLOAT2FIXED(radius);
-	}
-	inline fixed_t _f_height() const
-	{
-		return FLOAT2FIXED(Height);
-	}
 
 	double			projectilepassheight;	// height for clipping projectile movement against this actor
 	
@@ -1092,10 +1041,6 @@ public:
 	TObjPtr<AActor>	tracer;			// Thing being chased/attacked for tracers
 	TObjPtr<AActor>	master;			// Thing which spawned this one (prevents mutual attacks)
 	double			Floorclip;		// value to use for floor clipping
-	fixed_t			_f_floorclip()
-	{
-		return FLOAT2FIXED(Floorclip);
-	}
 
 	int				tid;			// thing identifier
 	int				special;		// special
@@ -1260,14 +1205,6 @@ public:
 	{
 		return FLOAT2FIXED(__Pos.Y);
 	}
-	fixed_t _f_Z() const
-	{
-		return FLOAT2FIXED(__Pos.Z);
-	}
-	fixedvec3 _f_Pos() const
-	{
-		return{ _f_X(), _f_Y(), _f_Z() };
-	}
 
 	double X() const
 	{
@@ -1289,15 +1226,15 @@ public:
 	// Comparing with floorz is ok because those values come from the same calculations.
 	bool isAbove(double checkz) const
 	{
-		return Z() > checkz + Z_Epsilon;
+		return Z() > checkz + EQUAL_EPSILON;
 	}
 	bool isBelow(double checkz) const
 	{
-		return Z() < checkz - Z_Epsilon;
+		return Z() < checkz - EQUAL_EPSILON;
 	}
 	bool isAtZ(double checkz) const
 	{
-		return fabs(Z() - checkz) < Z_Epsilon;
+		return fabs(Z() - checkz) < EQUAL_EPSILON;
 	}
 
 	DVector3 PosRelative(int grp) const;
@@ -1314,11 +1251,6 @@ public:
 	{
 		return Prev + (ticFrac * (Pos() - Prev));
 	}
-	fixedvec3 PosPlusZ(fixed_t zadd) const
-	{
-		fixedvec3 ret = { _f_X(), _f_Y(), _f_Z() + zadd };
-		return ret;
-	}
 	DVector3 PosPlusZ(double zadd) const
 	{
 		return { X(), Y(), Z() + zadd };
@@ -1326,18 +1258,6 @@ public:
 	DVector3 PosAtZ(double zadd) const
 	{
 		return{ X(), Y(), zadd };
-	}
-	fixed_t _f_Top() const
-	{
-		return _f_Z() + FLOAT2FIXED(Height);
-	}
-	void _f_SetZ(fixed_t newz, bool moving = true)
-	{
-		__Pos.Z = FIXED2DBL(newz);
-	}
-	void _f_AddZ(fixed_t newz, bool moving = true)
-	{
-		__Pos.Z += FIXED2DBL(newz);
 	}
 	double Top() const
 	{
@@ -1363,11 +1283,6 @@ public:
 		__Pos.X = FIXED2DBL(xx);
 		__Pos.Y = FIXED2DBL(yy);
 	}
-	void SetXY(const fixedvec2 &npos)
-	{
-		__Pos.X = FIXED2DBL(npos.x);
-		__Pos.Y = FIXED2DBL(npos.y);
-	}
 	void SetXY(const DVector2 &npos)
 	{
 		__Pos.X = npos.X;
@@ -1382,12 +1297,6 @@ public:
 	void SetXYZ(double xx, double yy, double zz)
 	{
 		__Pos = { xx,yy,zz };
-	}
-	void SetXYZ(const fixedvec3 &npos)
-	{
-		__Pos.X = FIXED2DBL(npos.x);
-		__Pos.Y = FIXED2DBL(npos.y);
-		__Pos.Z = FIXED2DBL(npos.z);
 	}
 	void SetXYZ(const DVector3 &npos)
 	{
@@ -1568,13 +1477,6 @@ template<class T> inline T *Spawn(const DVector3 &pos, replace_t allowreplacemen
 template<class T> inline T *Spawn()	// for inventory items we do not need coordinates and replacement info.
 {
 	return static_cast<T *>(AActor::StaticSpawn(RUNTIME_TEMPLATE_CLASS(T), DVector3(0, 0, 0), NO_REPLACE));
-}
-
-inline fixedvec2 Vec2Angle(fixed_t length, angle_t angle)
-{
-	fixedvec2 ret = { FixedMul(length, finecosine[angle >> ANGLETOFINESHIFT]),
-						FixedMul(length, finesine[angle >> ANGLETOFINESHIFT]) };
-	return ret;
 }
 
 void PrintMiscActorInfo(AActor * query);

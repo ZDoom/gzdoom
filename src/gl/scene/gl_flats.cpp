@@ -78,31 +78,31 @@ static float tics;
 void gl_SetPlaneTextureRotation(const GLSectorPlane * secplane, FMaterial * gltexture)
 {
 	// only manipulate the texture matrix if needed.
-	if (secplane->xoffs != 0 || secplane->yoffs != 0 ||
-		secplane->xscale != FRACUNIT || secplane->yscale != FRACUNIT ||
-		secplane->angle != 0 || 
+	if (!secplane->Offs.isZero() ||
+		secplane->Scale.X != 1. || secplane->Scale.Y != 1 ||
+		secplane->Angle != 0 ||
 		gltexture->TextureWidth() != 64 ||
 		gltexture->TextureHeight() != 64)
 	{
-		float uoffs = FIXED2FLOAT(secplane->xoffs) / gltexture->TextureWidth();
-		float voffs = FIXED2FLOAT(secplane->yoffs) / gltexture->TextureHeight();
+		float uoffs = secplane->Offs.X / gltexture->TextureWidth();
+		float voffs = secplane->Offs.Y / gltexture->TextureHeight();
 
-		float xscale1=FIXED2FLOAT(secplane->xscale);
-		float yscale1=FIXED2FLOAT(secplane->yscale);
+		float xscale1 = secplane->Scale.X;
+		float yscale1 = secplane->Scale.Y;
 		if (gltexture->tex->bHasCanvas)
 		{
 			yscale1 = 0 - yscale1;
 		}
-		float angle=-AngleToFloat(secplane->angle);
+		float angle = -secplane->Angle;
 
-		float xscale2=64.f/gltexture->TextureWidth();
-		float yscale2=64.f/gltexture->TextureHeight();
+		float xscale2 = 64.f / gltexture->TextureWidth();
+		float yscale2 = 64.f / gltexture->TextureHeight();
 
 		gl_RenderState.mTextureMatrix.loadIdentity();
-		gl_RenderState.mTextureMatrix.scale(xscale1 ,yscale1,1.0f);
-		gl_RenderState.mTextureMatrix.translate(uoffs,voffs,0.0f);
-		gl_RenderState.mTextureMatrix.scale(xscale2 ,yscale2,1.0f);
-		gl_RenderState.mTextureMatrix.rotate(angle,0.0f,0.0f,1.0f);
+		gl_RenderState.mTextureMatrix.scale(xscale1, yscale1, 1.0f);
+		gl_RenderState.mTextureMatrix.translate(uoffs, voffs, 0.0f);
+		gl_RenderState.mTextureMatrix.scale(xscale2, yscale2, 1.0f);
+		gl_RenderState.mTextureMatrix.rotate(angle, 0.0f, 0.0f, 1.0f);
 		gl_RenderState.EnableTextureMatrix(true);
 	}
 }

@@ -1110,11 +1110,11 @@ __forceinline void GLWall::GetPlanePos(F3DFloor::planeref *planeref, fixed_t &le
 	}
 	else if(planeref->isceiling == sector_t::ceiling)
 	{
-		left = right = planeref->plane->fixD();
+		left = right = FLOAT2FIXED(planeref->plane->fD());
 	}
 	else
 	{
-		left = right = -planeref->plane->fixD();
+		left = right = -FLOAT2FIXED(planeref->plane->fD());
 	}
 }
 
@@ -1459,7 +1459,7 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 	}
 	else
 	{
-		ffh1 = ffh2 = -segfront->floorplane.fixD();
+		ffh1 = ffh2 = -FLOAT2FIXED(segfront->floorplane.fD());
 		zfloor[0] = zfloor[1] = FIXED2FLOAT(ffh2);
 	}
 
@@ -1472,7 +1472,7 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 	}
 	else
 	{
-		fch1 = fch2 = segfront->ceilingplane.fixD();
+		fch1 = fch2 = FLOAT2FIXED(segfront->ceilingplane.fD());
 		zceil[0] = zceil[1] = FIXED2FLOAT(fch2);
 	}
 
@@ -1527,7 +1527,7 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 		}
 		else
 		{
-			bfh1 = bfh2 = -segback->floorplane.fixD();
+			bfh1 = bfh2 = -FLOAT2FIXED(segback->floorplane.fD());
 		}
 
 		if (segback->ceilingplane.isSlope())
@@ -1537,7 +1537,7 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 		}
 		else
 		{
-			bch1 = bch2 = segback->ceilingplane.fixD();
+			bch1 = bch2 = FLOAT2FIXED(segback->ceilingplane.fD());
 		}
 
 		SkyTop(seg, frontsector, backsector, v1, v2);

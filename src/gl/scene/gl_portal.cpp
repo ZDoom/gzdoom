@@ -1115,7 +1115,7 @@ void GLHorizonPortal::DrawContents()
 	gl_RenderState.SetCameraPos(FIXED2FLOAT(viewx), FIXED2FLOAT(viewy), FIXED2FLOAT(viewz));
 
 
-	z=FIXED2FLOAT(sp->texheight);
+	z=sp->Texheight;
 
 
 	if (gltexture && gltexture->tex->isFullbright())
@@ -1238,7 +1238,7 @@ void GLEEHorizonPortal::DrawContents()
 		horz.colormap = origin->Sector->ColorMap;
 		if (origin->special1 == SKYBOX_PLANE)
 		{
-			horz.plane.texheight = viewz + abs(horz.plane.texheight);
+			horz.plane.Texheight = FIXED2FLOAT(viewz) + fabs(horz.plane.Texheight);
 		}
 		GLHorizonPortal ceil(&horz, true);
 		ceil.DrawContents();
@@ -1251,7 +1251,7 @@ void GLEEHorizonPortal::DrawContents()
 		horz.colormap = origin->Sector->ColorMap;
 		if (origin->special1 == SKYBOX_PLANE)
 		{
-			horz.plane.texheight = viewz - abs(horz.plane.texheight);
+			horz.plane.Texheight = FIXED2FLOAT(viewz) - fabs(horz.plane.Texheight);
 		}
 		GLHorizonPortal floor(&horz, true);
 		floor.DrawContents();

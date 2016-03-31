@@ -173,8 +173,8 @@ void GLWall::SkyPlane(sector_t *sector, int plane, bool allowreflect)
 		}
 		else if (allowreflect && sector->GetReflect(plane) > 0)
 		{
-			if ((plane == sector_t::ceiling && viewz > sector->ceilingplane.fixD()) ||
-				(plane == sector_t::floor && viewz < -sector->floorplane.fixD())) return;
+			if ((plane == sector_t::ceiling && FIXED2DBL(viewz) > sector->ceilingplane.fD()) ||
+				(plane == sector_t::floor && FIXED2DBL(viewz) < -sector->floorplane.fD())) return;
 			ptype = PORTALTYPE_PLANEMIRROR;
 			planemirror = plane == sector_t::ceiling ? &sector->ceilingplane : &sector->floorplane;
 		}

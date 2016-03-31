@@ -87,7 +87,7 @@ bool gl_CheckClip(side_t * sidedef, sector_t * frontsector, sector_t * backsecto
 	}
 	else
 	{
-		fs_ceilingheight2 = fs_ceilingheight1 = frontsector->ceilingplane.fixD();
+		fs_ceilingheight2 = fs_ceilingheight1 = frontsector->ceilingplane.fD();
 	}
 
 	if (frontsector->floorplane.isSlope())
@@ -97,7 +97,7 @@ bool gl_CheckClip(side_t * sidedef, sector_t * frontsector, sector_t * backsecto
 	}
 	else
 	{
-		fs_floorheight2 = fs_floorheight1 = -frontsector->floorplane.fixD();
+		fs_floorheight2 = fs_floorheight1 = -frontsector->floorplane.fD();
 	}
 
 	if (backsector->ceilingplane.isSlope())
@@ -107,7 +107,7 @@ bool gl_CheckClip(side_t * sidedef, sector_t * frontsector, sector_t * backsecto
 	}
 	else
 	{
-		bs_ceilingheight2 = bs_ceilingheight1 = backsector->ceilingplane.fixD();
+		bs_ceilingheight2 = bs_ceilingheight1 = backsector->ceilingplane.fD();
 	}
 
 	if (backsector->floorplane.isSlope())
@@ -117,7 +117,7 @@ bool gl_CheckClip(side_t * sidedef, sector_t * frontsector, sector_t * backsecto
 	}
 	else
 	{
-		bs_floorheight2 = bs_floorheight1 = -backsector->floorplane.fixD();
+		bs_floorheight2 = bs_floorheight1 = -backsector->floorplane.fD();
 	}
 
 	// now check for closed sectors!

@@ -36,39 +36,30 @@ struct intercept_t
 //
 //==========================================================================
 
-inline int P_PointOnLineSide (fixed_t x, fixed_t y, const line_t *line)
-{
-	extern int P_VanillaPointOnLineSide(fixed_t x, fixed_t y, const line_t* line);
-
-	return i_compatflags2 & COMPATF2_POINTONLINE
-		? P_VanillaPointOnLineSide(x, y, line)
-		: DMulScale32 (y-line->v1->fixY(), line->fixDx(), line->v1->fixX()-x, line->fixDy()) > 0;
-}
-
-inline int P_PointOnLineSidePrecise (fixed_t x, fixed_t y, const line_t *line)
-{
-	return DMulScale32 (y-line->v1->fixY(), line->fixDx(), line->v1->fixX()-x, line->fixDy()) > 0;
-}
-
-inline int P_PointOnLineSide(double x, double y, const line_t *line)
-{
-	return P_PointOnLineSide(FLOAT2FIXED(x), FLOAT2FIXED(y), line);
-}
-
-inline int P_PointOnLineSide(const DVector2 & p, const line_t *line)
-{
-	return P_PointOnLineSide(FLOAT2FIXED(p.X), FLOAT2FIXED(p.Y), line);
-}
-
 inline int P_PointOnLineSidePrecise(double x, double y, const line_t *line)
 {
-	return (y - line->v1->fY()) * line->Delta().X + (line->v1->fX() - x) * line->Delta().Y > EQUAL_EPSILON ;
+	return (y - line->v1->fY()) * line->Delta().X + (line->v1->fX() - x) * line->Delta().Y > -EQUAL_EPSILON;
 }
 
 inline int P_PointOnLineSidePrecise(const DVector2 &pt, const line_t *line)
 {
-	return (pt.Y - line->v1->fY()) * line->Delta().X + (line->v1->fX() - pt.X) * line->Delta().Y > EQUAL_EPSILON;
+	return (pt.Y - line->v1->fY()) * line->Delta().X + (line->v1->fX() - pt.X) * line->Delta().Y > -EQUAL_EPSILON;
 }
+
+inline int P_PointOnLineSide (double x, double y, const line_t *line)
+{
+	extern int P_VanillaPointOnLineSide(double x, double y, const line_t* line);
+
+	return i_compatflags2 & COMPATF2_POINTONLINE
+		? P_VanillaPointOnLineSide(x, y, line) : P_PointOnLineSidePrecise(x, y, line);
+}
+
+inline int P_PointOnLineSide(const DVector2 & p, const line_t *line)
+{
+	return P_PointOnLineSide(p.X, p.Y, line);
+}
+
+
 
 
 //==========================================================================
@@ -82,12 +73,12 @@ inline int P_PointOnLineSidePrecise(const DVector2 &pt, const line_t *line)
 
 inline int P_PointOnDivlineSide(double x, double y, const divline_t *line)
 {
-	return (y - line->y) * line->dx + (line->x - x) * line->dy > EQUAL_EPSILON;
+	return (y - line->y) * line->dx + (line->x - x) * line->dy > -EQUAL_EPSILON;
 }
 
 inline int P_PointOnDivlineSide(const DVector2 &pos, const divline_t *line)
 {
-	return (pos.Y - line->y) * line->dx + (line->x - pos.X) * line->dy > EQUAL_EPSILON;
+	return (pos.Y - line->y) * line->dx + (line->x - pos.X) * line->dy > -EQUAL_EPSILON;
 }
 
 //==========================================================================

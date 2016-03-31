@@ -493,6 +493,11 @@ struct TVector3
 		return TVector3(v3.X + v2.X, v3.Y + v2.Y, v3.Z);
 	}
 
+	friend TVector3 operator- (const TVector3 &v3, const Vector2 &v2)
+	{
+		return TVector3(v3.X - v2.X, v3.Y - v2.Y, v3.Z);
+	}
+
 	friend Vector2 operator+ (const Vector2 &v2, const TVector3 &v3)
 	{
 		return Vector2(v2.X + v3.X, v2.Y + v3.Y);
@@ -500,11 +505,6 @@ struct TVector3
 
 	// Subtract a 3D vector and a 2D vector.
 	// Discards the Z component of the 3D vector and returns a 2D vector.
-	friend Vector2 operator- (const TVector3 &v3, const Vector2 &v2)
-	{
-		return Vector2(v3.X - v2.X, v3.Y - v2.Y);
-	}
-
 	friend Vector2 operator- (const TVector2<vec_t> &v2, const TVector3 &v3)
 	{
 		return Vector2(v2.X - v3.X, v2.Y - v3.Y);

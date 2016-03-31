@@ -516,10 +516,10 @@ void AActor::LinkToWorld(bool spawningmapthing, sector_t *sector)
 	}
 }
 
-void AActor::SetOrigin (fixed_t ix, fixed_t iy, fixed_t iz, bool moving)
+void AActor::SetOrigin(double x, double y, double z, bool moving)
 {
 	UnlinkFromWorld ();
-	SetXYZ(ix, iy, iz);
+	SetXYZ(x, y, z);
 	LinkToWorld ();
 	P_FindFloorCeiling(this, FFCF_ONLYSPAWNPOS);
 	if (!moving) ClearInterpolation();
@@ -1387,7 +1387,7 @@ intercept_t *FPathTraverse::Next()
 {
 	intercept_t *in = NULL;
 
-	double dist = FIXED_MAX;
+	double dist = FLT_MAX;
 	for (unsigned scanpos = intercept_index; scanpos < intercepts.Size (); scanpos++)
 	{
 		intercept_t *scan = &intercepts[scanpos];
@@ -1795,10 +1795,8 @@ static int R_PointOnSideSlow(double xx, double yy, node_t *node)
 {
 	// [RH] This might have been faster than two multiplies and an
 	// add on a 386/486, but it certainly isn't on anything newer than that.
-	fixed_t	dx;
-	fixed_t	dy;
-	fixed_t x = FloatToFixed(xx);
-	fixed_t y = FloatToFixed(yy);
+	auto x = FloatToFixed(xx);
+	auto y = FloatToFixed(yy);
 	double	left;
 	double	right;
 
@@ -1817,8 +1815,8 @@ static int R_PointOnSideSlow(double xx, double yy, node_t *node)
 		return node->dx > 0;
 	}
 
-	dx = (x - node->x);
-	dy = (y - node->y);
+	auto dx = (x - node->x);
+	auto dy = (y - node->y);
 
 	// Try to quickly decide by looking at sign bits.
 	if ((node->dy ^ node->dx ^ dx ^ dy) & 0x80000000)
@@ -1832,6 +1830,7 @@ static int R_PointOnSideSlow(double xx, double yy, node_t *node)
 	}
 
 	// we must use doubles here because the fixed point code will produce errors due to loss of precision for extremely short linedefs.
+	// Note that this function is used for all map spawned actors and not just a compatibility fallback!
 	left = (double)node->dy * (double)dx;
 	right = (double)dy * (double)node->dx;
 
@@ -1852,24 +1851,20 @@ static int R_PointOnSideSlow(double xx, double yy, node_t *node)
 //
 //===========================================================================
 
-int P_VanillaPointOnLineSide(fixed_t x, fixed_t y, const line_t* line)
+int P_VanillaPointOnLineSide(double x, double y, const line_t* line)
 {
-	fixed_t	dx;
-	fixed_t	dy;
-	fixed_t	left;
-	fixed_t	right;
 	DVector2 delta = line->Delta();
 
 	if (delta.X == 0)
 	{
-		if (x <= line->v1->fixX())
+		if (x <= line->v1->fX())
 			return delta.Y > 0;
 
 		return delta.Y < 0;
 	}
 	if (delta.Y == 0)
 	{
-		if (y <= line->v1->fixY())
+		if (y <= line->v1->fY())
 			return delta.X < 0;
 
 		return delta.X > 0;
@@ -1877,13 +1872,13 @@ int P_VanillaPointOnLineSide(fixed_t x, fixed_t y, const line_t* line)
 
 	// Note: This cannot really be converted to floating point 
 	// without breaking the intended use of this function
-	// (i.e. to emulate the horrible imprecision of the entire methpd)
+	// (i.e. to emulate the horrible imprecision of the entire method)
 
-	dx = (x - line->v1->fixX());
-	dy = (y - line->v1->fixY());
+	auto dx = FloatToFixed(x - line->v1->fX());
+	auto dy = FloatToFixed(y - line->v1->fY());
 
-	left = FixedMul ( int(delta.Y * 256) , dx );
-	right = FixedMul ( dy , int(delta.X * 256) );
+	auto left = MulScale16( int(delta.Y * 256) , dx );
+	auto right = MulScale16( dy , int(delta.X * 256) );
 
 	if (right < left)
 		return 0;		// front side

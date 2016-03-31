@@ -375,8 +375,8 @@ bool SightCheck::P_SightCheckLine (line_t *ld)
 		return true;
 	}
 	ld->validcount = validcount;
-	if (P_PointOnDivlineSide (ld->V1(), &Trace) ==
-		P_PointOnDivlineSide (ld->V2(), &Trace))
+	if (P_PointOnDivlineSide (ld->v1->fPos(), &Trace) ==
+		P_PointOnDivlineSide (ld->v2->fPos(), &Trace))
 	{
 		return true;		// line isn't crossed
 	}

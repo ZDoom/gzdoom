@@ -81,7 +81,7 @@ static void CreateCachedNodes(MapData *map);
 // fixed 32 bit gl_vert format v2.0+ (glBsp 1.91)
 struct mapglvertex_t
 {
-  fixed_t x,y;
+	SDWORD x,y;
 };
 
 struct gl3_mapsubsector_t

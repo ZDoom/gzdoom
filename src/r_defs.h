@@ -660,7 +660,7 @@ struct sector_t
 	void AdjustFloorClip () const;
 	void SetColor(int r, int g, int b, int desat);
 	void SetFade(int r, int g, int b);
-	void ClosestPoint(fixed_t x, fixed_t y, fixed_t &ox, fixed_t &oy) const;
+	void ClosestPoint(const DVector2 &pos, DVector2 &out) const;
 	int GetFloorLight () const;
 	int GetCeilingLight () const;
 	sector_t *GetHeightSec() const;
@@ -1367,29 +1367,9 @@ public:
 	int			locknumber;	// [Dusk] lock number for special
 	unsigned	portalindex;
 
-	DVector2 V1() const
-	{
-		return v1->fPos();
-	}
-
-	DVector2 V2() const
-	{
-		return v1->fPos();
-	}
-
 	DVector2 Delta() const
 	{
 		return{ FIXED2DBL(dx), FIXED2DBL(dy) };
-	}
-
-	fixed_t fixDx() const
-	{
-		return dx;
-	}
-
-	fixed_t fixDy() const
-	{
-		return dy;
 	}
 
 	void setDelta(fixed_t x, fixed_t y)

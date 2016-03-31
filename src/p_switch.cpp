@@ -291,7 +291,7 @@ bool P_ChangeSwitchTexture (side_t *side, int useAgain, BYTE special, bool *ques
 	//		which wasn't necessarily anywhere near the switch if it was
 	//		facing a big sector (and which wasn't necessarily for the
 	//		button just activated, either).
-	DVector2 pt(side->linedef->V1() + side->linedef->Delta() / 2);
+	DVector2 pt(side->linedef->v1->fPos() + side->linedef->Delta() / 2);
 	bool playsound;
 
 	side->SetTexture(texture, Switch->frames[0].Texture);

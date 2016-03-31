@@ -109,7 +109,7 @@ static DVector2 FindRefPoint(line_t *ld, const DVector2 &pos)
 			!ld->frontsector->PortalBlocksMovement(sector_t::floor))
 	{
 
-		DVector2 v1 = ld->V1();
+		DVector2 v1 = ld->v1->fPos();
 		DVector2 d = ld->Delta();
 		double r = clamp(((pos.X - v1.X) * d.X + (pos.Y - v1.Y) * d.Y) / (d.X*d.X + d.Y*d.Y), 0., 1.);
 		return v1 + d*r;

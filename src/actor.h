@@ -931,13 +931,10 @@ public:
 	{
 		SetOrigin(Pos() + vel, true);
 	}
-	void SetOrigin(double x, double y, double z, bool moving)
-	{
-		SetOrigin(FLOAT2FIXED(x), FLOAT2FIXED(y), FLOAT2FIXED(z), moving);
-	}
+	void SetOrigin(double x, double y, double z, bool moving);
 	void SetOrigin(const DVector3 & npos, bool moving)
 	{
-		SetOrigin(FLOAT2FIXED(npos.X), FLOAT2FIXED(npos.Y), FLOAT2FIXED(npos.Z), moving);
+		SetOrigin(npos.X, npos.Y, npos.Z, moving);
 	}
 
 	inline void SetFriendPlayer(player_t *player);
@@ -1167,7 +1164,7 @@ public:
 	void LinkToWorld (bool spawningmapthing=false, sector_t *sector = NULL);
 	void UnlinkFromWorld ();
 	void AdjustFloorClip ();
-	void SetOrigin (fixed_t x, fixed_t y, fixed_t z, bool moving = false);
+	void SetOrigin(fixed_t x, fixed_t y, fixed_t z, bool moving = false) = delete;
 	bool InStateSequence(FState * newstate, FState * basestate);
 	int GetTics(FState * newstate);
 	bool SetState (FState *newstate, bool nofunction=false);
@@ -1244,8 +1241,9 @@ public:
 
 	FVector3 SoundPos() const
 	{
+		// the sound system switches y and z axes so this function must, too.
 		// fixme: This still needs portal handling
-		return{ float(X()), float(Y()), float(Z()) };
+		return{ float(X()), float(Z()), float(Y()) };
 	}
 	DVector3 InterpolatedPosition(double ticFrac) const
 	{

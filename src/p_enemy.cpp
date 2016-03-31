@@ -162,12 +162,12 @@ void P_RecursiveSound (sector_t *sec, AActor *soundtarget, bool splash, int soun
 		// I wish there was a better method to do this than randomly looking through the portal at a few places...
 		if (checkabove)
 		{
-			sector_t *upper = P_PointInSector(check->V1() + check->Delta() / 2 + sec->SkyBoxes[sector_t::ceiling]->Scale);
+			sector_t *upper = P_PointInSector(check->v1->fPos() + check->Delta() / 2 + sec->SkyBoxes[sector_t::ceiling]->Scale);
 			P_RecursiveSound(upper, soundtarget, splash, soundblocks, emitter, maxdist);
 		}
 		if (checkbelow)
 		{
-			sector_t *lower = P_PointInSector(check->V1() + check->Delta() / 2 + sec->SkyBoxes[sector_t::floor]->Scale);
+			sector_t *lower = P_PointInSector(check->v1->fPos() + check->Delta() / 2 + sec->SkyBoxes[sector_t::floor]->Scale);
 			P_RecursiveSound(lower, soundtarget, splash, soundblocks, emitter, maxdist);
 		}
 		FLinePortal *port = check->getPortal();
@@ -195,18 +195,18 @@ void P_RecursiveSound (sector_t *sec, AActor *soundtarget, bool splash, int soun
 			other = check->sidedef[0]->sector;
 
 		// check for closed door
-		if ((sec->floorplane.ZatPoint (check->V1()) >=
-			 other->ceilingplane.ZatPoint (check->V1()) &&
-			 sec->floorplane.ZatPoint (check->V2()) >=
-			 other->ceilingplane.ZatPoint (check->V2()))
-		 || (other->floorplane.ZatPoint (check->V1()) >=
-			 sec->ceilingplane.ZatPoint (check->V1()) &&
-			 other->floorplane.ZatPoint (check->V2()) >=
-			 sec->ceilingplane.ZatPoint (check->V2()))
-		 || (other->floorplane.ZatPoint (check->V1()) >=
-			 other->ceilingplane.ZatPoint (check->V1()) &&
-			 other->floorplane.ZatPoint (check->V2()) >=
-			 other->ceilingplane.ZatPoint (check->V2())))
+		if ((sec->floorplane.ZatPoint (check->v1->fPos()) >=
+			 other->ceilingplane.ZatPoint (check->v1->fPos()) &&
+			 sec->floorplane.ZatPoint (check->v2->fPos()) >=
+			 other->ceilingplane.ZatPoint (check->v2->fPos()))
+		 || (other->floorplane.ZatPoint (check->v1->fPos()) >=
+			 sec->ceilingplane.ZatPoint (check->v1->fPos()) &&
+			 other->floorplane.ZatPoint (check->v2->fPos()) >=
+			 sec->ceilingplane.ZatPoint (check->v2->fPos()))
+		 || (other->floorplane.ZatPoint (check->v1->fPos()) >=
+			 other->ceilingplane.ZatPoint (check->v1->fPos()) &&
+			 other->floorplane.ZatPoint (check->v2->fPos()) >=
+			 other->ceilingplane.ZatPoint (check->v2->fPos())))
 		{
 			continue;
 		}

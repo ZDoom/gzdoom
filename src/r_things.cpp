@@ -374,7 +374,7 @@ static inline bool R_ClipSpriteColumnWithPortals(fixed_t x, fixed_t y, vissprite
 		line_t* line = seg->curline->linedef;
 
 		// don't clip if the sprite is in front of the portal
-		if (!P_PointOnLineSidePrecise(x, y, line))
+		if (!P_PointOnLineSidePrecise(FIXED2DBL(x), FIXED2DBL(y), line))
 			continue;
 
 		// now if current column is covered by this drawseg, we clip it away

@@ -714,10 +714,10 @@ void sector_t::SetFade(int r, int g, int b)
 //
 //===========================================================================
 
-void sector_t::ClosestPoint(fixed_t fx, fixed_t fy, fixed_t &ox, fixed_t &oy) const
+void sector_t::ClosestPoint(const DVector2 &in, DVector2 &out) const
 {
 	int i;
-	double x = fx, y = fy;
+	double x = in.X, y = in.Y;
 	double bestdist = HUGE_VAL;
 	double bestx = 0, besty = 0;
 
@@ -725,34 +725,34 @@ void sector_t::ClosestPoint(fixed_t fx, fixed_t fy, fixed_t &ox, fixed_t &oy) co
 	{
 		vertex_t *v1 = lines[i]->v1;
 		vertex_t *v2 = lines[i]->v2;
-		double a = v2->fixX() - v1->fixX();
-		double b = v2->fixY() - v1->fixY();
+		double a = v2->fX() - v1->fX();
+		double b = v2->fY() - v1->fY();
 		double den = a*a + b*b;
 		double ix, iy, dist;
 
 		if (den == 0)
 		{ // Line is actually a point!
-			ix = v1->fixX();
-			iy = v1->fixY();
+			ix = v1->fX();
+			iy = v1->fY();
 		}
 		else
 		{
-			double num = (x - v1->fixX()) * a + (y - v1->fixY()) * b;
+			double num = (x - v1->fX()) * a + (y - v1->fY()) * b;
 			double u = num / den;
 			if (u <= 0)
 			{
-				ix = v1->fixX();
-				iy = v1->fixY();
+				ix = v1->fX();
+				iy = v1->fY();
 			}
 			else if (u >= 1)
 			{
-				ix = v2->fixX();
-				iy = v2->fixY();
+				ix = v2->fX();
+				iy = v2->fY();
 			}
 			else
 			{
-				ix = v1->fixX() + u * a;
-				iy = v1->fixY() + u * b;
+				ix = v1->fX() + u * a;
+				iy = v1->fY() + u * b;
 			}
 		}
 		a = (ix - x);
@@ -765,8 +765,7 @@ void sector_t::ClosestPoint(fixed_t fx, fixed_t fy, fixed_t &ox, fixed_t &oy) co
 			besty = iy;
 		}
 	}
-	ox = fixed_t(bestx);
-	oy = fixed_t(besty);
+	out = { bestx, besty };
 }
 
 

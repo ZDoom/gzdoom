@@ -438,7 +438,7 @@ bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id, INTBO
 			}
 			else
 			{
-				double num = (thing->Pos().XY() - line->V1()) | line->Delta();
+				double num = (thing->Pos().XY() - line->v1->fPos()) | line->Delta();
 				if (num <= 0)
 				{
 					pos = 0;
@@ -451,7 +451,7 @@ bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id, INTBO
 				{
 					pos = num / den;
 				}
-				npos = thing->Pos().XY() - line->V1() - line->Delta() * pos;
+				npos = thing->Pos().XY() - line->v1->fPos() - line->Delta() * pos;
 			}
 
 			// Get the angle between the two linedefs, for rotating
@@ -476,7 +476,7 @@ bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id, INTBO
 			p.Y = npos.Y*c + npos.X*s;
 
 			// Interpolate position across the exit linedef
-			p += l->V1() + pos*l->Delta();
+			p += l->v1->fPos() + pos*l->Delta();
 
 			// Whether this is a player, and if so, a pointer to its player_t.
 			// Voodoo dolls are excluded by making sure thing->player->mo==thing.

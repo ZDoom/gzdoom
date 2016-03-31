@@ -34,7 +34,6 @@ class player_t;
 class AActor;
 struct FPlayerStart;
 class PClassActor;
-struct fixedvec3;
 class APlayerPawn;
 struct line_t;
 struct sector_t;
@@ -60,28 +59,6 @@ struct FTranslatedLineTarget;
 // Inspired by Maes
 extern int bmapnegx;
 extern int bmapnegy;
-
-inline int GetSafeBlockX(int blockx)
-{
-	blockx >>= MAPBLOCKSHIFT;
-	return (blockx <= bmapnegx) ? blockx & 0x1FF : blockx;
-}
-inline int GetSafeBlockX(long long blockx)
-{
-	blockx >>= MAPBLOCKSHIFT;
-	return int((blockx <= bmapnegx) ? blockx & 0x1FF : blockx);
-}
-
-inline int GetSafeBlockY(int blocky)
-{
-	blocky >>= MAPBLOCKSHIFT;
-	return (blocky <= bmapnegy) ? blocky & 0x1FF: blocky;
-}
-inline int GetSafeBlockY(long long blocky)
-{
-	blocky >>= MAPBLOCKSHIFT;
-	return int((blocky <= bmapnegy) ? blocky & 0x1FF: blocky);
-}
 
 //#define GRAVITY 		FRACUNIT
 #define MAXMOVE 		(30.)
@@ -242,17 +219,11 @@ extern TArray<spechit_t> portalhit;
 bool	P_TestMobjLocation (AActor *mobj);
 bool	P_TestMobjZ (AActor *mobj, bool quick=true, AActor **pOnmobj = NULL);
 bool P_CheckPosition(AActor *thing, const DVector2 &pos, bool actorsonly = false);
-inline bool P_CheckPosition(AActor *thing, const DVector2 &pos, FCheckPosition &tm, bool actorsonly = false);
+bool P_CheckPosition(AActor *thing, const DVector2 &pos, FCheckPosition &tm, bool actorsonly = false);
 AActor	*P_CheckOnmobj (AActor *thing);
 void	P_FakeZMovement (AActor *mo);
 bool	P_TryMove(AActor* thing, const DVector2 &pos, int dropoff, const secplane_t * onfloor, FCheckPosition &tm, bool missileCheck = false);
 bool	P_TryMove(AActor* thing, const DVector2 &pos, int dropoff, const secplane_t * onfloor = NULL);
-/*
-inline bool	P_TryMove(AActor* thing, double x, double y, int dropoff, const secplane_t * onfloor = NULL)
-{
-	return P_TryMove(thing, FLOAT2FIXED(x), FLOAT2FIXED(y), dropoff, onfloor);
-}
-*/
 
 bool	P_CheckMove(AActor *thing, const DVector2 &pos);
 void	P_ApplyTorque(AActor *mo);
@@ -325,7 +296,6 @@ void	P_TraceBleed(int damage, FTranslatedLineTarget *t, AActor *puff);		// hitsc
 void	P_TraceBleed (int damage, AActor *target);		// random direction version
 bool	P_HitFloor (AActor *thing);
 bool	P_HitWater (AActor *thing, sector_t *sec, const DVector3 &pos, bool checkabove = false, bool alert = true, bool force = false);
-inline bool	P_HitWater(AActor *thing, sector_t *sec, const fixedvec3 &pos, bool checkabove = false, bool alert = true, bool force = false) = delete;
 void	P_CheckSplash(AActor *self, double distance);
 
 struct FRailParams
@@ -388,8 +358,6 @@ bool	Check_Sides(AActor *, int, int);					// phares
 
 // [RH] 
 const secplane_t * P_CheckSlopeWalk(AActor *actor, DVector2 &move);
-
-inline const secplane_t * P_CheckSlopeWalk(AActor *actor, fixed_t &xmove, fixed_t &ymove) = delete;
 
 //
 // P_SETUP

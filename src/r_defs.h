@@ -315,32 +315,6 @@ public:
 		d = FLOAT2FIXED(dd);
 	}
 
-	void changeD(double dd)
-	{
-		d += FLOAT2FIXED(dd);
-	}
-
-	fixed_t fixA() const
-	{
-		return a;
-	}
-	fixed_t fixB() const
-	{
-		return b;
-	}
-	fixed_t fixC() const
-	{
-		return c;
-	}
-	fixed_t fixD() const
-	{
-		return d;
-	}
-	fixed_t fixiC() const
-	{
-		return ic;
-	}
-
 	double fA() const
 	{
 		return FIXED2DBL(a);

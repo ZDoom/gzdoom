@@ -540,7 +540,7 @@ void S_ParseSndSeq (int levellump)
 	int delaybase;
 	float volumebase;
 	int curseq = -1;
-	fixed_t val;
+	int val;
 
 	// First free the old SNDSEQ data. This allows us to reload this for each level
 	// and specify a level specific SNDSEQ lump!

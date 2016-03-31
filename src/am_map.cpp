@@ -1839,8 +1839,7 @@ void AM_drawGrid (int color)
 
 	// Figure out start of vertical gridlines
 	start = minx - extx;
-	double bmorgx = FIXED2DBL(bmaporgx);
-	start = ceil((start - bmorgx) / MAPBLOCKUNITS) * MAPBLOCKUNITS + bmorgx;
+	start = ceil((start - bmaporgx) / MAPBLOCKUNITS) * MAPBLOCKUNITS + bmaporgx;
 
 	end = minx + minlen - extx;
 
@@ -1861,8 +1860,7 @@ void AM_drawGrid (int color)
 
 	// Figure out start of horizontal gridlines
 	start = miny - exty;
-	double bmorgy = FIXED2DBL(bmaporgy);
-	start = ceil((start - bmorgy) / MAPBLOCKUNITS) * MAPBLOCKUNITS + bmorgy;
+	start = ceil((start - bmaporgy) / MAPBLOCKUNITS) * MAPBLOCKUNITS + bmaporgy;
 	end = miny + minlen - exty;
 
 	// draw horizontal gridlines

@@ -171,10 +171,8 @@ int 			bmapheight; 	// size in mapblocks
 int				*blockmap;		// int for larger maps ([RH] Made int because BOOM does)
 int				*blockmaplump;	// offsets in blockmap are from here	
 
-fixed_t 		bmaporgx;		// origin of block map
-fixed_t 		bmaporgy;
-int				bmapnegx;		// min negs of block map before wrapping
-int				bmapnegy;
+double	 		bmaporgx;		// origin of block map
+double	 		bmaporgy;
 
 FBlockNode**	blocklinks;		// for thing chains
 
@@ -3076,15 +3074,10 @@ void P_LoadBlockMap (MapData * map)
 
 	}
 
-	bmaporgx = blockmaplump[0] << FRACBITS;
-	bmaporgy = blockmaplump[1] << FRACBITS;
+	bmaporgx = blockmaplump[0];
+	bmaporgy = blockmaplump[1];
 	bmapwidth = blockmaplump[2];
 	bmapheight = blockmaplump[3];
-	// MAES: set blockmapxneg and blockmapyneg
-	// E.g. for a full 512x512 map, they should be both
-	// -1. For a 257*257, they should be both -255 etc.
-	bmapnegx = bmapwidth > 255 ? bmapwidth - 512 : -257;
-	bmapnegy = bmapheight > 255 ? bmapheight - 512 : -257;
 
 	// clear out mobj chains
 	count = bmapwidth*bmapheight;

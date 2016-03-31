@@ -693,8 +693,8 @@ fixedvec2 P_GetOffsetPosition(fixed_t x, fixed_t y, fixed_t dx, fixed_t dy)
 		// Try some easily discoverable early-out first. If we know that the trace cannot possibly find a portal, this saves us from calling the traverser completely for vast parts of the map.
 		if (dx < 128 * FRACUNIT && dy < 128 * FRACUNIT)
 		{
-			fixed_t blockx = GetSafeBlockX(actx - bmaporgx);
-			fixed_t blocky = GetSafeBlockY(acty - bmaporgy);
+			int blockx = GetBlockX(FIXED2DBL(actx));
+			int blocky = GetBlockY(FIXED2DBL(acty));
 			if (blockx < 0 || blocky < 0 || blockx >= bmapwidth || blocky >= bmapheight || !PortalBlockmap(blockx, blocky).neighborContainsLines) return dest;
 		}
 
@@ -1096,8 +1096,8 @@ void P_CreateLinkedPortals()
 			{
 				// This is a fatal condition. We have to remove one of the two portals. Choose the one that doesn't match the current plane
 				Printf("Error in sector %d: Ceiling portal at z=%d is below floor portal at z=%d\n", i, cz, fz);
-				fixed_t cp = -sectors[i].ceilingplane.fixD();
-				fixed_t fp = -sectors[i].ceilingplane.fixD();
+				double cp = -sectors[i].ceilingplane.fD();
+				double fp = -sectors[i].ceilingplane.fD();
 				if (cp < fp || fz == fp)
 				{
 					sectors[i].SkyBoxes[sector_t::ceiling] = NULL;

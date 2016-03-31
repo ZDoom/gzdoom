@@ -69,7 +69,6 @@ typedef enum
 
 // Factor to scale scrolling effect into mobj-carrying properties = 3/32.
 // (This is so scrolling floors and objects on them can move at same speed.)
-enum { _f_CARRYFACTOR = (3*FRACUNIT >> 5) };
 const double CARRYFACTOR = 3 / 32.;
 
 // Define values for map objects

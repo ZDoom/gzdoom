@@ -389,16 +389,6 @@ public:
 		return ic < 0 ? d : -d;
 	}
 
-	fixed_t ZatPoint(const fixedvec2 &spot) const
-	{
-		return FixedMul(ic, -d - DMulScale16(a, spot.x, b, spot.y));
-	}
-
-	fixed_t ZatPoint(const fixedvec3 &spot) const
-	{
-		return FixedMul(ic, -d - DMulScale16(a, spot.x, b, spot.y));
-	}
-
 	// Returns the value of z at (x,y)
 	fixed_t ZatPoint (fixed_t x, fixed_t y) const
 	{
@@ -487,11 +477,6 @@ public:
 	fixed_t PointToDist (fixed_t x, fixed_t y, fixed_t z) const
 	{
 		return -TMulScale16 (a, x, y, b, z, c);
-	}
-
-	fixed_t PointToDist(fixedvec2 xy, fixed_t z) const
-	{
-		return -TMulScale16(a, xy.x, xy.y, b, z, c);
 	}
 
 	fixed_t PointToDist (const vertex_t *v, fixed_t z) const
@@ -714,7 +699,7 @@ struct sector_t
 	void AdjustFloorClip () const;
 	void SetColor(int r, int g, int b, int desat);
 	void SetFade(int r, int g, int b);
-	void ClosestPoint(fixed_t x, fixed_t y, fixed_t &ox, fixed_t &oy) const;
+	void ClosestPoint(const DVector2 &pos, DVector2 &out) const;
 	int GetFloorLight () const;
 	int GetCeilingLight () const;
 	sector_t *GetHeightSec() const;
@@ -1135,11 +1120,6 @@ struct sector_t
 	int 		validcount;		// if == validcount, already checked
 	AActor* 	thinglist;		// list of mobjs in sector
 
-	fixedvec2 _f_centerspot() const
-	{
-		return{ FLOAT2FIXED(centerspot.X), FLOAT2FIXED(centerspot.Y) };
-	}
-
 	// killough 8/28/98: friction is a sector property, not an mobj property.
 	// these fields used to be in AActor, but presented performance problems
 	// when processed as mobj properties. Fix is to make them sector properties.
@@ -1477,29 +1457,9 @@ public:
 	unsigned	portalindex;
 	TObjPtr<ASkyViewpoint> skybox;
 
-	DVector2 V1() const
-	{
-		return v1->fPos();
-	}
-
-	DVector2 V2() const
-	{
-		return v1->fPos();
-	}
-
 	DVector2 Delta() const
 	{
 		return{ FIXED2DBL(dx), FIXED2DBL(dy) };
-	}
-
-	fixed_t fixDx() const
-	{
-		return dx;
-	}
-
-	fixed_t fixDy() const
-	{
-		return dy;
 	}
 
 	void setDelta(fixed_t x, fixed_t y)
@@ -1705,20 +1665,16 @@ struct visstyle_t
 // not the same as R_PointInSubsector
 //
 //----------------------------------------------------------------------------------
-subsector_t *P_PointInSubsector(fixed_t x, fixed_t y);
-inline sector_t *P_PointInSector(fixed_t x, fixed_t y)
-{
-	return P_PointInSubsector(x, y)->sector;
-}
+subsector_t *P_PointInSubsector(double x, double y);
 
 inline sector_t *P_PointInSector(const DVector2 &pos)
 {
-	return P_PointInSubsector(FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y))->sector;
+	return P_PointInSubsector(pos.X, pos.Y)->sector;
 }
 
 inline sector_t *P_PointInSector(double X, double Y)
 {
-	return P_PointInSubsector(FLOAT2FIXED(X), FLOAT2FIXED(Y))->sector;
+	return P_PointInSubsector(X, Y)->sector;
 }
 
 inline DVector3 AActor::PosRelative(int portalgroup) const
@@ -1757,10 +1713,10 @@ inline void AActor::ClearInterpolation()
 
 inline bool FBoundingBox::inRange(const line_t *ld) const
 {
-	return FIXED2DBL(Left()) < ld->bbox[BOXRIGHT] &&
-		FIXED2DBL(Right()) > ld->bbox[BOXLEFT] &&
-		FIXED2DBL(Top()) > ld->bbox[BOXBOTTOM] &&
-		FIXED2DBL(Bottom()) < ld->bbox[BOXTOP];
+	return Left() < ld->bbox[BOXRIGHT] &&
+		Right() > ld->bbox[BOXLEFT] &&
+		Top() > ld->bbox[BOXBOTTOM] &&
+		Bottom() < ld->bbox[BOXTOP];
 }
 
 

@@ -81,7 +81,7 @@ static void CreateCachedNodes(MapData *map);
 // fixed 32 bit gl_vert format v2.0+ (glBsp 1.91)
 struct mapglvertex_t
 {
-  fixed_t x,y;
+	SDWORD x,y;
 };
 
 struct gl3_mapsubsector_t
@@ -1333,7 +1333,7 @@ CCMD(clearnodecache)
 //
 //==========================================================================
 
-subsector_t *P_PointInSubsector (fixed_t x, fixed_t y)
+subsector_t *P_PointInSubsector (double x, double y)
 {
 	node_t *node;
 	int side;

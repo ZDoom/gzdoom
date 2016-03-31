@@ -26,7 +26,7 @@ struct FPortalGroupArray;
 
 struct FDisplacement
 {
-	fixedvec2 pos;
+	DVector2 pos;
 	bool isSet;
 	BYTE indirect;	// just for illustration.
 
@@ -54,16 +54,6 @@ struct FDisplacementTable
 		return data[x + size*y];
 	}
 
-	fixedvec2 _f_getOffset(int x, int y) const
-	{
-		if (x == y)
-		{
-			fixedvec2 nulvec = { 0,0 };
-			return nulvec;	// shortcut for the most common case
-		}
-		return data[x + size*y].pos;
-	}
-
 	DVector2 getOffset(int x, int y) const
 	{
 		if (x == y)
@@ -71,8 +61,7 @@ struct FDisplacementTable
 			DVector2 nulvec = { 0,0 };
 			return nulvec;	// shortcut for the most common case
 		}
-		fixedvec2 &p = data[x + size*y].pos;
-		return{ FIXED2DBL(p.x), FIXED2DBL(p.y) };
+		return data[x + size*y].pos;
 	}
 
 };
@@ -191,8 +180,8 @@ struct FLinePortal
 	BYTE mDefFlags;
 	BYTE mAlign;
 	DAngle mAngleDiff;
-	fixed_t mSinRot;
-	fixed_t mCosRot;
+	double mSinRot;
+	double mCosRot;
 };
 
 extern TArray<FLinePortal> linePortals;
@@ -202,7 +191,7 @@ void P_SpawnLinePortal(line_t* line);
 void P_FinalizePortals();
 bool P_ChangePortal(line_t *ln, int thisid, int destid);
 void P_CreateLinkedPortals();
-bool P_CollectConnectedGroups(int startgroup, const fixedvec3 &position, fixed_t upperz, fixed_t checkradius, FPortalGroupArray &out);
+bool P_CollectConnectedGroups(int startgroup, const DVector3 &position, double upperz, double checkradius, FPortalGroupArray &out);
 void P_CollectLinkedPortals();
 inline int P_NumPortalGroups()
 {
@@ -211,43 +200,12 @@ inline int P_NumPortalGroups()
 
 
 /* code ported from prototype */
-bool P_ClipLineToPortal(line_t* line, line_t* portal, fixed_t viewx, fixed_t viewy, bool partial = true, bool samebehind = true);
-void P_TranslatePortalXY(line_t* src, fixed_t& x, fixed_t& y);
-inline void P_TranslatePortalXY(line_t* src, double& vx, double& vy)
-{
-	fixed_t x = FLOAT2FIXED(vx);
-	fixed_t y = FLOAT2FIXED(vy);
-	P_TranslatePortalXY(src, x, y);
-	vx = FIXED2DBL(x);
-	vx = FIXED2DBL(y);
-}
-void P_TranslatePortalVXVY(line_t* src, fixed_t& vx, fixed_t& vy);
-inline void P_TranslatePortalVXVY(line_t* src, double& vx, double& vy)
-{
-	fixed_t x = FLOAT2FIXED(vx);
-	fixed_t y = FLOAT2FIXED(vy);
-	P_TranslatePortalVXVY(src, x, y);
-	vx = FIXED2DBL(x);
-	vx = FIXED2DBL(y);
-}
+bool P_ClipLineToPortal(line_t* line, line_t* portal, DVector2 view, bool partial = true, bool samebehind = true);
+void P_TranslatePortalXY(line_t* src, double& vx, double& vy);
+void P_TranslatePortalVXVY(line_t* src, double &velx, double &vely);
 void P_TranslatePortalAngle(line_t* src, DAngle& angle);
-
-void P_TranslatePortalZ(line_t* src, fixed_t& z);
-inline void P_TranslatePortalZ(line_t* src, double& vz)
-{
-	fixed_t x = FLOAT2FIXED(vz);
-	P_TranslatePortalZ(src, x);
-	vz = FIXED2DBL(x);
-}
-void P_NormalizeVXVY(fixed_t& vx, fixed_t& vy);
-fixed_t P_PointLineDistance(line_t* line, fixed_t x, fixed_t y);
-fixedvec2 P_GetOffsetPosition(fixed_t x, fixed_t y, fixed_t dx, fixed_t dy);
-
-inline DVector2 P_GetOffsetPosition(double x, double y, double dx, double dy)
-{
-	fixedvec2 v = P_GetOffsetPosition(FLOAT2FIXED(x), FLOAT2FIXED(y), FLOAT2FIXED(dx), FLOAT2FIXED(dy));
-	return{ FIXED2DBL(v.x), FIXED2DBL(v.y) };
-}
+void P_TranslatePortalZ(line_t* src, double& vz);
+DVector2 P_GetOffsetPosition(double x, double y, double dx, double dy);
 
 
 #endif

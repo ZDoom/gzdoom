@@ -1216,14 +1216,14 @@ void FPolyObj::LinkPolyobj ()
 		vertex_t *vt;
 		
 		vt = Sidedefs[i]->linedef->v1;
-		Bounds.AddToBox(vt->fixX(), vt->fixY());
+		Bounds.AddToBox(vt->fPos());
 		vt = Sidedefs[i]->linedef->v2;
-		Bounds.AddToBox(vt->fixX(), vt->fixY());
+		Bounds.AddToBox(vt->fPos());
 	}
-	bbox[BOXRIGHT] = GetBlockX(FIXED2DBL(Bounds.Right()));
-	bbox[BOXLEFT] = GetBlockX(FIXED2DBL(Bounds.Left()));
-	bbox[BOXTOP] = GetBlockY(FIXED2DBL(Bounds.Top()));
-	bbox[BOXBOTTOM] = GetBlockY(FIXED2DBL(Bounds.Bottom()));
+	bbox[BOXRIGHT] = GetBlockX(Bounds.Right());
+	bbox[BOXLEFT] = GetBlockX(Bounds.Left());
+	bbox[BOXTOP] = GetBlockY(Bounds.Top());
+	bbox[BOXBOTTOM] = GetBlockY(Bounds.Bottom());
 	// add the polyobj to each blockmap section
 	for(int j = bbox[BOXBOTTOM]*bmapwidth; j <= bbox[BOXTOP]*bmapwidth;
 		j += bmapwidth)

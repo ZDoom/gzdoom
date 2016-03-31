@@ -52,9 +52,6 @@ struct FTranslatedLineTarget;
 // against lines and things
 #define MAPBLOCKUNITS	128
 #define MAPBLOCKSIZE	(MAPBLOCKUNITS*FRACUNIT)
-#define MAPBLOCKSHIFT	(FRACBITS+7)
-#define MAPBMASK		(MAPBLOCKSIZE-1)
-#define MAPBTOFRAC		(MAPBLOCKSHIFT-FRACBITS)
 
 // Inspired by Maes
 extern int bmapnegx;
@@ -202,7 +199,7 @@ AActor *P_RoughMonsterSearch (AActor *mo, int distance, bool onlyseekable=false)
 
 
 // If "floatok" true, move would be ok
-// if within "tmfloorz - tm_f_ceilingz()".
+// if within "tmfloorz - tmceilingz".
 extern msecnode_t		*sector_list;		// phares 3/16/98
 
 struct spechit_t
@@ -264,7 +261,6 @@ enum
 void	P_FindFloorCeiling (AActor *actor, int flags=0);
 
 bool	P_ChangeSector (sector_t* sector, int crunch, double amt, int floorOrCeil, bool isreset);
-inline bool	P_ChangeSector(sector_t* sector, int crunch, int amt, int floorOrCeil, bool isreset) = delete;
 
 DAngle P_AimLineAttack(AActor *t1, DAngle angle, double distance, FTranslatedLineTarget *pLineTarget = NULL, DAngle vrange = 0., int flags = 0, AActor *target = NULL, AActor *friender = NULL);
 

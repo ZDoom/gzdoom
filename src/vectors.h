@@ -46,7 +46,7 @@
 #include "math/cmath.h"
 
 
-#define EQUAL_EPSILON (1/65536.f)
+#define EQUAL_EPSILON (1/65536.)
 
 // make this a local inline function to avoid any dependencies on other headers and not pollute the global namespace
 namespace pi
@@ -493,6 +493,11 @@ struct TVector3
 		return TVector3(v3.X + v2.X, v3.Y + v2.Y, v3.Z);
 	}
 
+	friend TVector3 operator- (const TVector3 &v3, const Vector2 &v2)
+	{
+		return TVector3(v3.X - v2.X, v3.Y - v2.Y, v3.Z);
+	}
+
 	friend Vector2 operator+ (const Vector2 &v2, const TVector3 &v3)
 	{
 		return Vector2(v2.X + v3.X, v2.Y + v3.Y);
@@ -500,11 +505,6 @@ struct TVector3
 
 	// Subtract a 3D vector and a 2D vector.
 	// Discards the Z component of the 3D vector and returns a 2D vector.
-	friend Vector2 operator- (const TVector3 &v3, const Vector2 &v2)
-	{
-		return Vector2(v3.X - v2.X, v3.Y - v2.Y);
-	}
-
 	friend Vector2 operator- (const TVector2<vec_t> &v2, const TVector3 &v3)
 	{
 		return Vector2(v2.X - v3.X, v2.Y - v3.Y);

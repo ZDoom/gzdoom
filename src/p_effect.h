@@ -52,6 +52,12 @@
 struct subsector_t;
 
 // [RH] Particle details
+struct fixedvec3
+{
+	fixed_t x, y, z;
+};
+
+
 struct particle_t
 {
 	fixed_t	x,y,z;

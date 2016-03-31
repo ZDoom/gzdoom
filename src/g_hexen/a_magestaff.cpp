@@ -213,7 +213,7 @@ static AActor *FrontBlockCheck (AActor *mo, int index, void *)
 	{
 		if (link->Me != mo)
 		{
-			if (P_PointOnDivlineSidePrecise(link->Me->X(), link->Me->Y(), &BlockCheckLine) == 0 &&
+			if (P_PointOnDivlineSide(link->Me->X(), link->Me->Y(), &BlockCheckLine) == 0 &&
 				mo->IsOkayToAttack (link->Me))
 			{
 				return link->Me;

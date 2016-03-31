@@ -48,6 +48,7 @@ public:
 
 extern FFastTrig fasttrig;
 
+// This must use xs_Float to guarantee proper integer wraparound.
 #define DEG2BAM(f)		((unsigned)xs_CRoundToInt((f) * (0x40000000/90.)))
 #define RAD2BAM(f)		((unsigned)xs_CRoundToInt((f) * (0x80000000/3.14159265358979323846)))
 

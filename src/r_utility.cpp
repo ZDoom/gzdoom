@@ -57,6 +57,7 @@
 #include "r_utility.h"
 #include "d_player.h"
 #include "p_local.h"
+#include "p_maputl.h"
 #include "math/cmath.h"
 
 
@@ -652,9 +653,9 @@ void R_InterpolateView (player_t *player, double Frac, InterpolationViewer *ivie
 	}
 	else
 	{
-		fixedvec2 disp = Displacements._f_getOffset(oldgroup, newgroup);
-		viewx = iview->oviewx + FixedMul(frac, iview->nviewx - iview->oviewx - disp.x);
-		viewy = iview->oviewy + FixedMul(frac, iview->nviewy - iview->oviewy - disp.y);
+		DVector2 disp = Displacements.getOffset(oldgroup, newgroup);
+		viewx = iview->oviewx + FixedMul(frac, iview->nviewx - iview->oviewx - FLOAT2FIXED(disp.X));
+		viewy = iview->oviewy + FixedMul(frac, iview->nviewy - iview->oviewy - FLOAT2FIXED(disp.Y));
 		viewz = iview->oviewz + FixedMul(frac, iview->nviewz - iview->oviewz);
 	}
 	if (player != NULL &&

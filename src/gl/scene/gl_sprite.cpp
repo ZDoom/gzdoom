@@ -532,8 +532,8 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 	{
 		if (!(thing->flags7 & MF7_FLYCHEAT) && thing->target==GLRenderer->mViewActor && GLRenderer->mViewActor != NULL)
 		{
-			fixed_t clipdist = FLOAT2FIXED(clamp(thing->Speed, thing->target->radius, thing->target->radius*2));
-			if (P_AproxDistance(FLOAT2FIXED(thingpos.X)-viewx, FLOAT2FIXED(thingpos.Y)-viewy) < clipdist) return;
+			double clipdist = clamp(thing->Speed, thing->target->radius, thing->target->radius*2);
+			if (P_AproxDistance(thingpos.X-viewx, thingpos.Y-viewy) < clipdist) return;
 		}
 		thing->flags7 |= MF7_FLYCHEAT;	// do this only once for the very first frame, but not if it gets into range again.
 	}
@@ -660,7 +660,7 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 			rendersector->GetCeilingLight() : rendersector->GetFloorLight());
 	foglevel = (BYTE)clamp<short>(rendersector->lightlevel, 0, 255);
 
-	lightlevel = (byte)gl_CheckSpriteGlow(rendersector, lightlevel, FLOAT2FIXED(thingpos.X), FLOAT2FIXED(thingpos.Y), FLOAT2FIXED(thingpos.Z));
+	lightlevel = (byte)gl_CheckSpriteGlow(rendersector, lightlevel, thingpos);
 
 	ThingColor = (thing->RenderStyle.Flags & STYLEF_ColorIsFixed) ? thing->fillcolor : 0xffffff;
 	ThingColor.a = 255;

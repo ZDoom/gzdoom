@@ -134,8 +134,8 @@ void GLWall::PutWall(bool translucent)
 
 	if (translucent) // translucent walls
 	{
-		viewdistance = P_AproxDistance(((seg->linedef->v1->fixX() + seg->linedef->v2->fixX()) >> 1) - viewx,
-			((seg->linedef->v1->fixY() + seg->linedef->v2->fixY()) >> 1) - viewy);
+		viewdistance = P_AproxDistance(((seg->linedef->v1->fX() + seg->linedef->v2->fX()) /2) - viewx,
+			((seg->linedef->v1->fY() + seg->linedef->v2->fY()) /2) - viewy);
 		gl_drawinfo->drawlists[GLDL_TRANSLUCENT].AddWall(this);
 	}
 	else

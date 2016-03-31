@@ -639,55 +639,55 @@ void GLPortal::RestoreMapSection()
 static int skyboxrecursion=0;
 void GLSkyboxPortal::DrawContents()
 {
-	int old_pm=PlaneMirrorMode;
+	int old_pm = PlaneMirrorMode;
 	int saved_extralight = extralight;
 
-	if (skyboxrecursion>=3)
+	if (skyboxrecursion >= 3)
 	{
 		ClearScreen();
 		return;
 	}
 
 	skyboxrecursion++;
-	origin->flags|=MF_JUSTHIT;
+	origin->flags |= MF_JUSTHIT;
 	extralight = 0;
 
-	PlaneMirrorMode=0;
+	PlaneMirrorMode = 0;
 
 	bool oldclamp = gl_RenderState.SetDepthClamp(false);
 	DVector3 viewpos = origin->InterpolatedPosition(r_TicFracF);
-	viewx = FLOAT2FIXED(viewpos.X);
-	viewy = FLOAT2FIXED(viewpos.Y);
-	viewz = FLOAT2FIXED(viewpos.Z);
 	viewangle += (origin->PrevAngles.Yaw + deltaangle(origin->PrevAngles.Yaw, origin->Angles.Yaw) * r_TicFracF).BAMs();
 
 	// Don't let the viewpoint be too close to a floor or ceiling
-	fixed_t floorh = origin->Sector->floorplane.ZatPoint(origin->_f_Pos());
-	fixed_t ceilh = origin->Sector->ceilingplane.ZatPoint(origin->_f_Pos());
-	if (viewz<floorh+4*FRACUNIT) viewz=floorh+4*FRACUNIT;
-	if (viewz>ceilh-4*FRACUNIT) viewz=ceilh-4*FRACUNIT;
+	double floorh = origin->Sector->floorplane.ZatPoint(origin->Pos());
+	double ceilh = origin->Sector->ceilingplane.ZatPoint(origin->Pos());
+	if (viewpos.Z < floorh + 4) viewpos.Z = floorh + 4;
+	if (viewpos.Z > ceilh - 4) viewz = ceilh - 4;
 
+	viewx = FLOAT2FIXED(viewpos.X);
+	viewy = FLOAT2FIXED(viewpos.Y);
+	viewz = FLOAT2FIXED(viewpos.Z);
 
 	GLRenderer->mViewActor = origin;
 
 	validcount++;
-	inskybox=true;
-	GLRenderer->SetupView(viewx, viewy, viewz, viewangle, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
+	inskybox = true;
+	GLRenderer->SetupView(viewx, viewy, viewz, viewangle, !!(MirrorFlag & 1), !!(PlaneMirrorFlag & 1));
 	GLRenderer->SetViewArea();
 	ClearClipper();
 
 	int mapsection = R_PointInSubsector(viewx, viewy)->mapsection;
 
 	SaveMapSection();
-	currentmapsection[mapsection>>3] |= 1 << (mapsection & 7);
+	currentmapsection[mapsection >> 3] |= 1 << (mapsection & 7);
 
 	GLRenderer->DrawScene();
-	origin->flags&=~MF_JUSTHIT;
-	inskybox=false;
+	origin->flags &= ~MF_JUSTHIT;
+	inskybox = false;
 	gl_RenderState.SetDepthClamp(oldclamp);
 	skyboxrecursion--;
 
-	PlaneMirrorMode=old_pm;
+	PlaneMirrorMode = old_pm;
 	extralight = saved_extralight;
 
 	RestoreMapSection();

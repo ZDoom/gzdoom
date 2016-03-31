@@ -931,7 +931,7 @@ public:
 	{
 		SetOrigin(Pos() + vel, true);
 	}
-	void SetOrigin(double x, double y, double z, bool moving);
+	virtual void SetOrigin(double x, double y, double z, bool moving);
 	void SetOrigin(const DVector3 & npos, bool moving)
 	{
 		SetOrigin(npos.X, npos.Y, npos.Z, moving);
@@ -1164,7 +1164,6 @@ public:
 	void LinkToWorld (bool spawningmapthing=false, sector_t *sector = NULL);
 	void UnlinkFromWorld ();
 	void AdjustFloorClip ();
-	void SetOrigin(fixed_t x, fixed_t y, fixed_t z, bool moving = false) = delete;
 	bool InStateSequence(FState * newstate, FState * basestate);
 	int GetTics(FState * newstate);
 	bool SetState (FState *newstate, bool nofunction=false);

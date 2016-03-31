@@ -37,10 +37,6 @@ public:
 		ClearBox();
 	}
 
-	FBoundingBox(fixed_t left, fixed_t bottom, fixed_t right, fixed_t top) = delete;
-	FBoundingBox(fixed_t x, fixed_t y, fixed_t radius) = delete;
-	void Set(int index, fixed_t value) = delete;
-
 	FBoundingBox(double left, double bottom, double right, double top)
 	{
 		m_Box[BOXTOP] = top;

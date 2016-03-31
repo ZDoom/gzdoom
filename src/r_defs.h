@@ -1555,7 +1555,6 @@ struct visstyle_t
 //
 //----------------------------------------------------------------------------------
 subsector_t *P_PointInSubsector(double x, double y);
-sector_t *P_PointInSector(fixed_t x, fixed_t y) = delete;
 
 inline sector_t *P_PointInSector(const DVector2 &pos)
 {

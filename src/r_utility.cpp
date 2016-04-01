@@ -1010,11 +1010,11 @@ void R_SetupFrame (AActor *actor)
 			}
 			if (jiggers.Intensity.X != 0 || jiggers.Offset.X != 0)
 			{
-				ViewPos.Z += QuakePower(quakefactor, jiggers.Intensity.X, jiggers.Offset.X, jiggers.Falloff, jiggers.WFalloff);
+				ViewPos.X += QuakePower(quakefactor, jiggers.Intensity.X, jiggers.Offset.X, jiggers.Falloff, jiggers.WFalloff);
 			}
 			if (jiggers.Intensity.Y != 0 || jiggers.Offset.Y != 0)
 			{
-				ViewPos.Z += QuakePower(quakefactor, jiggers.Intensity.Y, jiggers.Offset.Y, jiggers.Falloff, jiggers.WFalloff);
+				ViewPos.Y += QuakePower(quakefactor, jiggers.Intensity.Y, jiggers.Offset.Y, jiggers.Falloff, jiggers.WFalloff);
 			}
 			if (jiggers.Intensity.Z != 0 || jiggers.Offset.Z != 0)
 			{

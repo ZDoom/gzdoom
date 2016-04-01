@@ -1131,7 +1131,7 @@ void P_InitSectorSpecial(sector_t *sector, int special, bool nothinkers)
 		break;
 			
 	case dSector_DoorCloseIn30:
-		new DDoor(sector, DDoor::doorWaitClose, FRACUNIT * 2, 0, 0, 30 * TICRATE);
+		new DDoor(sector, DDoor::doorWaitClose, 2, 0, 0, 30 * TICRATE);
 		break;
 			
 	case dDamage_End:
@@ -1147,7 +1147,7 @@ void P_InitSectorSpecial(sector_t *sector, int special, bool nothinkers)
 		break;
 
 	case dSector_DoorRaiseIn5Mins:
-		new DDoor (sector, DDoor::doorWaitRaise, 2*FRACUNIT, TICRATE*30/7, 0, 5*60*TICRATE);
+		new DDoor (sector, DDoor::doorWaitRaise, 2, TICRATE*30/7, 0, 5*60*TICRATE);
 		break;
 
 	case dFriction_Low:

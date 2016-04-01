@@ -51,7 +51,6 @@ struct FTranslatedLineTarget;
 // mapblocks are used to check movement
 // against lines and things
 #define MAPBLOCKUNITS	128
-#define MAPBLOCKSIZE	(MAPBLOCKUNITS*FRACUNIT)
 
 // Inspired by Maes
 extern int bmapnegx;

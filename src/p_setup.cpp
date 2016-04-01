@@ -1220,8 +1220,8 @@ void P_LoadSegs (MapData * map)
 	BYTE *vertchanged = new BYTE[numvertexes];	// phares 10/4/98
 	DWORD segangle;
 	line_t* line;		// phares 10/4/98
-	int ptp_angle;		// phares 10/4/98
-	int delta_angle;	// phares 10/4/98
+	//int ptp_angle;		// phares 10/4/98
+	//int delta_angle;	// phares 10/4/98
 	int vnum1,vnum2;	// phares 10/4/98
 	int lumplen = map->Size(ML_SEGS);
 
@@ -1313,30 +1313,26 @@ void P_LoadSegs (MapData * map)
 			// off, then move one vertex. This may seem insignificant, but one degree
 			// errors _can_ cause firelines.
 
-			ptp_angle = (li->v2->fPos() - li->v1->fPos()).Angle().BAMs();
-			dis = 0;
-			delta_angle = (absangle(ptp_angle-(segangle<<16))>>ANGLETOFINESHIFT)*360/FINEANGLES;
+			DAngle ptp_angle = (li->v2->fPos() - li->v1->fPos()).Angle();
+			DAngle seg_angle = AngleToFloat(segangle);
+			DAngle delta_angle = absangle(ptp_angle, seg_angle);
 
-			if (delta_angle != 0)
+			if (delta_angle >= 1.)
 			{
-				segangle >>= (ANGLETOFINESHIFT-16);
-				dx = (li->v1->fixX() - li->v2->fixX())>>FRACBITS;
-				dy = (li->v1->fixY() - li->v2->fixY())>>FRACBITS;
-				dis = ((int) g_sqrt((double)(dx*dx + dy*dy)))<<FRACBITS;
-				dx = finecosine[segangle];
-				dy = finesine[segangle];
+				double dis = (li->v2->fPos() - li->v1->fPos()).Length();
+				DVector2 delta = seg_angle.ToVector();
 				if ((vnum2 > vnum1) && (vertchanged[vnum2] == 0))
 				{
 					li->v2->set(
-						li->v1->fixX() + FixedMul(dis,dx),
-						li->v1->fixY() + FixedMul(dis,dy));
+						li->v1->fX() + dis * dx,
+						li->v1->fY() + dis * dy);
 					vertchanged[vnum2] = 1; // this was changed
 				}
 				else if (vertchanged[vnum1] == 0)
 				{
 					li->v1->set(
-						li->v2->fixX() - FixedMul(dis,dx),
-						li->v2->fixY() - FixedMul(dis,dy));
+						li->v2->fX() - dis * dx,
+						li->v2->fY() - dis * dy);
 					vertchanged[vnum1] = 1; // this was changed
 				}
 			}
@@ -2009,8 +2005,8 @@ void P_FinishLoadingLineDef(line_t *ld, int alpha)
 
 	ld->frontsector = ld->sidedef[0] != NULL ? ld->sidedef[0]->sector : NULL;
 	ld->backsector  = ld->sidedef[1] != NULL ? ld->sidedef[1]->sector : NULL;
-	double dx = FIXED2DBL(ld->v2->fixX() - ld->v1->fixX());
-	double dy = FIXED2DBL(ld->v2->fixY() - ld->v1->fixY());
+	double dx = (ld->v2->fX() - ld->v1->fX());
+	double dy = (ld->v2->fY() - ld->v1->fY());
 	int linenum = int(ld-lines);
 
 	if (ld->frontsector == NULL)
@@ -2135,8 +2131,8 @@ void P_LoadLineDefs (MapData * map)
 			I_Error ("Line %d has invalid vertices: %d and/or %d.\nThe map only contains %d vertices.", i+skipped, v1, v2, numvertexes);
 		}
 		else if (v1 == v2 ||
-			(vertexes[LittleShort(mld->v1)].fixX() == vertexes[LittleShort(mld->v2)].fixX() &&
-			 vertexes[LittleShort(mld->v1)].fixY() == vertexes[LittleShort(mld->v2)].fixY()))
+			(vertexes[LittleShort(mld->v1)].fX() == vertexes[LittleShort(mld->v2)].fX() &&
+			 vertexes[LittleShort(mld->v1)].fY() == vertexes[LittleShort(mld->v2)].fY()))
 		{
 			Printf ("Removing 0-length line %d\n", i+skipped);
 			memmove (mld, mld+1, sizeof(*mld)*(numlines-i-1));
@@ -2224,8 +2220,8 @@ void P_LoadLineDefs2 (MapData * map)
 		mld = ((maplinedef2_t*)mldf) + i;
 
 		if (mld->v1 == mld->v2 ||
-			(vertexes[LittleShort(mld->v1)].fixX() == vertexes[LittleShort(mld->v2)].fixX() &&
-			 vertexes[LittleShort(mld->v1)].fixY() == vertexes[LittleShort(mld->v2)].fixY()))
+			(vertexes[LittleShort(mld->v1)].fX() == vertexes[LittleShort(mld->v2)].fX() &&
+			 vertexes[LittleShort(mld->v1)].fY() == vertexes[LittleShort(mld->v2)].fY()))
 		{
 			Printf ("Removing 0-length line %d\n", i+skipped);
 			memmove (mld, mld+1, sizeof(*mld)*(numlines-i-1));
@@ -2780,6 +2776,7 @@ static void P_CreateBlockMap ()
 	TArray<int> *BlockLists, *block, *endblock;
 	int adder;
 	int bmapwidth, bmapheight;
+	double dminx, dmaxx, dminy, dmaxy;
 	int minx, maxx, miny, maxy;
 	int i;
 	int line;
@@ -2788,21 +2785,21 @@ static void P_CreateBlockMap ()
 		return;
 
 	// Find map extents for the blockmap
-	minx = maxx = vertexes[0].fixX();
-	miny = maxy = vertexes[0].fixY();
+	dminx = dmaxx = vertexes[0].fX();
+	dminy = dmaxy = vertexes[0].fY();
 
 	for (i = 1; i < numvertexes; ++i)
 	{
-			 if (vertexes[i].fixX() < minx) minx = vertexes[i].fixX();
-		else if (vertexes[i].fixX() > maxx) maxx = vertexes[i].fixX();
-			 if (vertexes[i].fixY() < miny) miny = vertexes[i].fixY();
-		else if (vertexes[i].fixY() > maxy) maxy = vertexes[i].fixY();
+			 if (vertexes[i].fX() < dminx) dminx = vertexes[i].fX();
+		else if (vertexes[i].fX() > dmaxx) dmaxx = vertexes[i].fX();
+			 if (vertexes[i].fY() < dminy) dminy = vertexes[i].fY();
+		else if (vertexes[i].fY() > dmaxy) dmaxy = vertexes[i].fY();
 	}
 
-	maxx >>= FRACBITS;
-	minx >>= FRACBITS;
-	maxy >>= FRACBITS;
-	miny >>= FRACBITS;
+	minx = int(dminx);
+	miny = int(dminy);
+	maxx = int(dmaxx);
+	maxy = int(dmaxy);
 
 	bmapwidth =	 ((maxx - minx) >> BLOCKBITS) + 1;
 	bmapheight = ((maxy - miny) >> BLOCKBITS) + 1;
@@ -2818,10 +2815,10 @@ static void P_CreateBlockMap ()
 
 	for (line = 0; line < numlines; ++line)
 	{
-		int x1 = lines[line].v1->fixX() >> FRACBITS;
-		int y1 = lines[line].v1->fixY() >> FRACBITS;
-		int x2 = lines[line].v2->fixX() >> FRACBITS;
-		int y2 = lines[line].v2->fixY() >> FRACBITS;
+		int x1 = int(lines[line].v1->fX());
+		int y1 = int(lines[line].v1->fY());
+		int x2 = int(lines[line].v2->fX());
+		int y2 = int(lines[line].v2->fY());
 		int dx = x2 - x1;
 		int dy = y2 - y1;
 		int bx = (x1 - minx) >> BLOCKBITS;
@@ -3223,8 +3220,8 @@ static void P_GroupLines (bool buildmap)
 			Triangle[1] = sector->lines[0]->v2;
 			if (sector->linecount > 1)
 			{
-				fixed_t dx = Triangle[1]->fixX() - Triangle[0]->fixX();
-				fixed_t dy = Triangle[1]->fixY() - Triangle[0]->fixY();
+				double dx = Triangle[1]->fX() - Triangle[0]->fX();
+				double dy = Triangle[1]->fY() - Triangle[0]->fY();
 				// Find another point in the sector that does not lie
 				// on the same line as the first two points.
 				for (j = 0; j < 2; ++j)
@@ -3232,11 +3229,10 @@ static void P_GroupLines (bool buildmap)
 					vertex_t *v;
 
 					v = (j == 1) ? sector->lines[1]->v1 : sector->lines[1]->v2;
-					if (DMulScale32 (v->fixY() - Triangle[0]->fixY(), dx,
-									Triangle[0]->fixX() - v->fixX(), dy) != 0)
+					if ( (v->fY() - Triangle[0]->fY()) * dx + (Triangle[0]->fX() - v->fX() * dy) != 0)
 					{
-						sector->centerspot.X = FIXED2DBL(Triangle[0]->fixX() / 3 + Triangle[1]->fixX() / 3 + v->fixX() / 3);
-						sector->centerspot.Y = FIXED2DBL(Triangle[0]->fixY() / 3 + Triangle[1]->fixY() / 3 + v->fixY() / 3);
+						sector->centerspot.X = (Triangle[0]->fX() / 3 + Triangle[1]->fX() / 3 + v->fX() / 3);
+						sector->centerspot.Y = (Triangle[0]->fY() / 3 + Triangle[1]->fY() / 3 + v->fY() / 3);
 						break;
 					}
 				}
@@ -4191,9 +4187,9 @@ CCMD (lineloc)
 	{
 		Printf ("No such line\n");
 	}
-	Printf ("(%d,%d) -> (%d,%d)\n", lines[linenum].v1->fixX() >> FRACBITS,
-		lines[linenum].v1->fixY() >> FRACBITS,
-		lines[linenum].v2->fixX() >> FRACBITS,
-		lines[linenum].v2->fixY() >> FRACBITS);
+	Printf ("(%f,%f) -> (%f,%f)\n", lines[linenum].v1->fX(),
+		lines[linenum].v1->fY(),
+		lines[linenum].v2->fX(),
+		lines[linenum].v2->fY());
 }
 #endif

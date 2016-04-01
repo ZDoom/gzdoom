@@ -156,6 +156,11 @@ inline double AngleToFloat(unsigned f)
 	return f * (90. / 0x40000000);
 }
 
+inline double AngleToFloat(int f)
+{
+	return f * (90. / 0x40000000);
+}
+
 #define FLOAT2FIXED(f)		FloatToFixed(f)
 #define FIXED2FLOAT(f)		float(FixedToFloat(f))
 #define FIXED2DBL(f)		FixedToFloat(f)

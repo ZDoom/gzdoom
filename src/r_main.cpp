@@ -68,6 +68,10 @@
 #define TEST_ANGLE 2468347904 
 #endif
 
+fixed_t viewx, viewy, viewz;
+angle_t viewangle;
+int viewpitch;
+
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -550,6 +554,12 @@ void R_SetupColormap(player_t *player)
 
 void R_SetupFreelook()
 {
+	viewx = FLOAT2FIXED(ViewPos.X);
+	viewy = FLOAT2FIXED(ViewPos.Y);
+	viewz = FLOAT2FIXED(ViewPos.Z);
+	viewangle = ViewAngle.BAMs();
+	viewpitch = ViewPitch.BAMs();
+
 	{
 		fixed_t dy;
 		
@@ -727,6 +737,7 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 			viewx = FLOAT2FIXED((x1 + r * dx)*2 - x);
 			viewy = FLOAT2FIXED((y1 + r * dy)*2 - y);
 		}
+		ViewAngle = pds->src->Delta().Angle();
 		viewangle = 2*R_PointToAngle2 (pds->src->v1->fixX(), pds->src->v1->fixY(),
 									   pds->src->v2->fixX(), pds->src->v2->fixY()) - startang;
 
@@ -743,6 +754,7 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 		viewz = FLOAT2FIXED(view.Z);
 		viewangle = va.BAMs();
 	}
+	ViewAngle = AngleToFloat(viewangle);
 
 	viewsin = finesine[viewangle>>ANGLETOFINESHIFT];
 	viewcos = finecosine[viewangle>>ANGLETOFINESHIFT];
@@ -821,6 +833,7 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 	viewx = startx;
 	viewy = starty;
 	viewz = startz;
+	ViewAngle = AngleToFloat(viewangle);
 }
 
 //==========================================================================

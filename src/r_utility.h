@@ -2,6 +2,7 @@
 #define __R_UTIL_H
 
 #include "r_state.h"
+#include "vectors.h"
 //
 // Stuff from r_main.h that's needed outside the rendering code.
 
@@ -11,10 +12,9 @@
 
 extern DCanvas			*RenderTarget;
 
-extern fixed_t			viewx;
-extern fixed_t			viewy;
-extern fixed_t			viewz;
-extern int				viewpitch;
+extern DVector3			ViewPos;
+extern DAngle			ViewAngle;
+extern DAngle			ViewPitch;
 
 extern "C" int			centerx, centerxwide;
 extern "C" int			centery;
@@ -65,7 +65,6 @@ inline int R_PointOnSide(const DVector2 &pos, const node_t *node)
 }
 
 angle_t R_PointToAngle2 (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2);
-inline angle_t R_PointToAngle (fixed_t x, fixed_t y) { return R_PointToAngle2 (viewx, viewy, x, y); }
 inline angle_t R_PointToAnglePrecise (fixed_t viewx, fixed_t viewy, fixed_t x, fixed_t y)
 {
 	return xs_RoundToUInt(g_atan2(double(y-viewy), double(x-viewx)) * (ANGLE_180/M_PI));

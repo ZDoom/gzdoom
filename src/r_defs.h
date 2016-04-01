@@ -352,6 +352,12 @@ public:
 		return TMulScale16(a,x, b,y, c,z) + d;
 	}
 
+	int PointOnSide(const DVector3 &pos) const
+	{
+		double v = a * pos.X + b * pos.Y + c * pos.Z;
+		return v < -EQUAL_EPSILON ? -1 : v > EQUAL_EPSILON ? 1 : 0;
+	}
+
 	// Returns the value of z at (0,0) This is used by the 3D floor code which does not handle slopes
 	fixed_t Zat0 () const
 	{
@@ -374,6 +380,13 @@ public:
 	{
 		return (d + a*pos.X + b*pos.Y) * ic / (-65536.0 * 65536.0);
 	}
+
+	// This is for the software renderer
+	fixed_t ZatPointFixed(const DVector2 &pos) const
+	{
+		return xs_CRoundToInt((d + a*pos.X + b*pos.Y) * ic / (-65536.0));
+	}
+
 
 	double ZatPoint(const vertex_t *v) const
 	{

@@ -1953,13 +1953,13 @@ void AM_drawSubsectors()
 			double secx;
 			double secy;
 			double seczb, seczt;
-			double cmpz = FIXED2DBL(viewz);
+			double cmpz = ViewPos.Z;
 
 			if (players[consoleplayer].camera && sec == players[consoleplayer].camera->Sector)
 			{
 				// For the actual camera sector use the current viewpoint as reference.
-				secx = FIXED2DBL(viewx);
-				secy = FIXED2DBL(viewy);
+				secx = ViewPos.X;
+				secy = ViewPos.Y;
 			}
 			else
 			{

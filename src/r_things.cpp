@@ -802,7 +802,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 		{
 			// choose a different rotation based on player view
 			spriteframe_t *sprframe = &SpriteFrames[tex->Rotations];
-			angle_t ang = R_PointToAngle (fx, fy);
+			angle_t ang = R_PointToAngle2 (viewx, viewy, fx, fy);
 			angle_t rot;
 			if (sprframe->Texture[0] == sprframe->Texture[1])
 			{
@@ -841,7 +841,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 			//picnum = SpriteFrames[sprdef->spriteframes + thing->frame].Texture[0];
 			// choose a different rotation based on player view
 			spriteframe_t *sprframe = &SpriteFrames[sprdef->spriteframes + thing->frame];
-			angle_t ang = R_PointToAngle (fx, fy);
+			angle_t ang = R_PointToAngle2 (viewx, viewy, fx, fy);
 			angle_t rot;
 			if (sprframe->Texture[0] == sprframe->Texture[1])
 			{

@@ -180,10 +180,10 @@ static int DoomSpecificInfo (char *buffer, char *end)
 		}
 		else
 		{
-			p += snprintf (buffer+p, size-p, "\n\nviewx = %d", (int)viewx);
-			p += snprintf (buffer+p, size-p, "\nviewy = %d", (int)viewy);
-			p += snprintf (buffer+p, size-p, "\nviewz = %d", (int)viewz);
-			p += snprintf (buffer+p, size-p, "\nviewangle = %x", (unsigned int)viewangle);
+			p += snprintf (buffer+p, size-p, "\n\nviewx = %f", ViewPos.X);
+			p += snprintf (buffer+p, size-p, "\nviewy = %f", ViewPos.Y);
+			p += snprintf (buffer+p, size-p, "\nviewz = %f", ViewPos.Z);
+			p += snprintf (buffer+p, size-p, "\nviewangle = %f", ViewAngle.Degrees);
 		}
 	}
 	buffer[p++] = '\n';

@@ -379,7 +379,7 @@ angle_t Clipper::AngleToPseudo(angle_t ang)
 //
 // ! Returns the pseudoangle between the line p1 to (infinity, p1.y) and the 
 // line from p1 to p2. The pseudoangle has the property that the ordering of 
-// points by true angle anround p1 and ordering of points by pseudoangle are the 
+// points by true angle around p1 and ordering of points by pseudoangle are the 
 // same.
 //
 // For clipping exact angles are not needed. Only the ordering matters.

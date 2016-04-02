@@ -205,7 +205,7 @@ void DCeiling::Tick ()
 				case ceilCrushAndRaise:
 				case ceilLowerAndCrush:
 					if (m_CrushMode == ECrushMode::crushSlowdown)
-						m_Speed = FRACUNIT / 8;
+						m_Speed = 1. / 8;
 						break;
 
 				default:

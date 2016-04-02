@@ -313,15 +313,6 @@ private:
 	fixed_t a, b, c, d, ic;
 public:
 
-	void set(fixed_t aa, fixed_t bb, fixed_t cc, fixed_t dd)
-	{
-		a = aa;
-		b = bb;
-		c = cc;
-		d = dd;
-		ic = FixedDiv(FRACUNIT, c);
-	}
-
 	void set(double aa, double bb, double cc, double dd)
 	{
 		a = FLOAT2FIXED(aa);
@@ -383,6 +374,12 @@ public:
 		return TMulScale16(a,x, b,y, c,z) + d;
 	}
 
+	int PointOnSide(const DVector3 &pos) const
+	{
+		double v = a * pos.X + b * pos.Y + c * pos.Z + d;
+		return v < -EQUAL_EPSILON ? -1 : v > EQUAL_EPSILON ? 1 : 0;
+	}
+
 	// Returns the value of z at (0,0) This is used by the 3D floor code which does not handle slopes
 	fixed_t Zat0 () const
 	{
@@ -390,10 +387,24 @@ public:
 	}
 
 	// Returns the value of z at (x,y)
-	fixed_t ZatPoint (fixed_t x, fixed_t y) const
+	fixed_t ZatPoint(fixed_t x, fixed_t y) const = delete;	// it is not allowed to call this.
+
+	fixed_t ZatPointFixed(fixed_t x, fixed_t y) const
 	{
 		return FixedMul (ic, -d - DMulScale16 (a, x, b, y));
 	}
+
+	// This is for the software renderer
+	fixed_t ZatPointFixed(const DVector2 &pos) const
+	{
+		return xs_CRoundToInt((d + a*pos.X + b*pos.Y) * ic / (-65536.0));
+	}
+
+	fixed_t ZatPointFixed(const vertex_t *v) const
+	{
+		return FixedMul(ic, -d - DMulScale16(a, v->fixX(), b, v->fixY()));
+	}
+
 
 	// Returns the value of z at (x,y) as a double
 	double ZatPoint (double x, double y) const
@@ -405,6 +416,7 @@ public:
 	{
 		return (d + a*pos.X + b*pos.Y) * ic / (-65536.0 * 65536.0);
 	}
+
 
 	double ZatPoint(const vertex_t *v) const
 	{
@@ -457,12 +469,6 @@ public:
 	}
 
 	// Returns how much this plane's height would change if d were set to oldd
-	fixed_t HeightDiff (fixed_t oldd) const
-	{
-		return FixedMul (oldd - d, ic);
-	}
-
-	// Returns how much this plane's height would change if d were set to oldd
 	double HeightDiff(double oldd) const
 	{
 		return (oldd - fD()) * fiC();
@@ -472,16 +478,6 @@ public:
 	double HeightDiff(double oldd, double newd) const
 	{
 		return (oldd - newd) * fiC();
-	}
-
-	fixed_t PointToDist (fixed_t x, fixed_t y, fixed_t z) const
-	{
-		return -TMulScale16 (a, x, y, b, z, c);
-	}
-
-	fixed_t PointToDist (const vertex_t *v, fixed_t z) const
-	{
-		return -TMulScale16 (a, v->fixX(), b, v->fixY(), z, c);
 	}
 
 	double PointToDist(const DVector2 &xy, double z) const
@@ -729,19 +725,9 @@ struct sector_t
 
 	splane planes[2];
 
-	void SetXOffset(int pos, fixed_t o)
-	{
-		planes[pos].xform.xoffs = o;
-	}
-
 	void SetXOffset(int pos, double o)
 	{
 		planes[pos].xform.xoffs = FLOAT2FIXED(o);
-	}
-
-	void AddXOffset(int pos, fixed_t o)
-	{
-		planes[pos].xform.xoffs += o;
 	}
 
 	void AddXOffset(int pos, double o)
@@ -759,19 +745,9 @@ struct sector_t
 		return FIXED2DBL(planes[pos].xform.xoffs);
 	}
 
-	void SetYOffset(int pos, fixed_t o)
-	{
-		planes[pos].xform.yoffs = o;
-	}
-
 	void SetYOffset(int pos, double o)
 	{
 		planes[pos].xform.yoffs = FLOAT2FIXED(o);
-	}
-
-	void AddYOffset(int pos, fixed_t o)
-	{
-		planes[pos].xform.yoffs += o;
 	}
 
 	void AddYOffset(int pos, double o)
@@ -803,11 +779,6 @@ struct sector_t
 		}
 	}
 
-	void SetXScale(int pos, fixed_t o)
-	{
-		planes[pos].xform.xscale = o;
-	}
-
 	void SetXScale(int pos, double o)
 	{
 		planes[pos].xform.xscale = FLOAT2FIXED(o);
@@ -823,11 +794,6 @@ struct sector_t
 		return FIXED2DBL(planes[pos].xform.xscale);
 	}
 
-	void SetYScale(int pos, fixed_t o)
-	{
-		planes[pos].xform.yscale = o;
-	}
-
 	void SetYScale(int pos, double o)
 	{
 		planes[pos].xform.yscale = FLOAT2FIXED(o);
@@ -841,11 +807,6 @@ struct sector_t
 	double GetYScaleF(int pos) const
 	{
 		return FIXED2DBL(planes[pos].xform.yscale);
-	}
-
-	void SetAngle(int pos, angle_t o)
-	{
-		planes[pos].xform.angle = o;
 	}
 
 	void SetAngle(int pos, DAngle o)
@@ -881,11 +842,6 @@ struct sector_t
 	{
 		planes[pos].xform.base_yoffs = FLOAT2FIXED(y);
 		planes[pos].xform.base_angle = o.BAMs();
-	}
-
-	void SetAlpha(int pos, fixed_t o)
-	{
-		planes[pos].alpha = o;
 	}
 
 	void SetAlpha(int pos, double o)
@@ -946,32 +902,11 @@ struct sector_t
 		return FIXED2DBL(planes[pos].TexZ);
 	}
 
-	void SetVerticesDirty()	{
-		for (unsigned i = 0; i < e->vertices.Size(); i++) e->vertices[i]->dirty = true;
-	}
-
-	void SetAllVerticesDirty()
-	{
-		SetVerticesDirty();
-		for (unsigned i = 0; i < e->FakeFloor.Sectors.Size(); i++) e->FakeFloor.Sectors[i]->SetVerticesDirty();
-		for (unsigned i = 0; i < e->XFloor.attached.Size(); i++) e->XFloor.attached[i]->SetVerticesDirty();
-	}
-
-	void SetPlaneTexZ(int pos, fixed_t val)
-	{
-		planes[pos].TexZ = val;
-	}
-
+	void SetPlaneTexZ(int pos, double val)
 	void SetPlaneTexZ(int pos, double val, bool dirtify = false)	// This mainly gets used by init code. The only place where it must set the vertex to dirty is the interpolation code.
 	{
 		planes[pos].TexZ = FLOAT2FIXED(val);
 		if (dirtify) SetAllVerticesDirty();
-	}
-
-	void ChangePlaneTexZ(int pos, fixed_t val)
-	{
-		planes[pos].TexZ += val;
-		SetAllVerticesDirty();
 	}
 
 	void ChangePlaneTexZ(int pos, double val)
@@ -1069,6 +1004,18 @@ struct sector_t
 	DVector2 CeilingDisplacement()
 	{
 		return Displacements.getOffset(PortalGroup, SkyBoxes[sector_t::ceiling]->Sector->PortalGroup);
+	}
+
+	void SetVerticesDirty()	
+	{
+		for (unsigned i = 0; i < e->vertices.Size(); i++) e->vertices[i]->dirty = true;
+	}
+
+	void SetAllVerticesDirty()
+	{
+		SetVerticesDirty();
+		for (unsigned i = 0; i < e->FakeFloor.Sectors.Size(); i++) e->FakeFloor.Sectors[i]->SetVerticesDirty();
+		for (unsigned i = 0; i < e->XFloor.attached.Size(); i++) e->XFloor.attached[i]->SetVerticesDirty();
 	}
 
 	int GetTerrain(int pos) const;

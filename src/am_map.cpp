@@ -1931,7 +1931,7 @@ void AM_drawSubsectors()
 		sector_t *sec = Renderer->FakeFlat(subsectors[i].render_sector, &tempsec, &floorlight, &ceilinglight, false);
 		// Find texture origin.
 		originpt.x = -sec->GetXOffsetF(sector_t::floor);
-		originpt.y = sec->GetYOffset(sector_t::floor);
+		originpt.y = sec->GetYOffsetF(sector_t::floor);
 		rotation = -sec->GetAngleF(sector_t::floor);
 		// Coloring for the polygon
 		colormap = sec->ColorMap;
@@ -1953,13 +1953,13 @@ void AM_drawSubsectors()
 			double secx;
 			double secy;
 			double seczb, seczt;
-			double cmpz = FIXED2DBL(viewz);
+			double cmpz = ViewPos.Z;
 
 			if (players[consoleplayer].camera && sec == players[consoleplayer].camera->Sector)
 			{
 				// For the actual camera sector use the current viewpoint as reference.
-				secx = FIXED2DBL(viewx);
-				secy = FIXED2DBL(viewy);
+				secx = ViewPos.X;
+				secy = ViewPos.Y;
 			}
 			else
 			{
@@ -3011,7 +3011,7 @@ void AM_drawAuthorMarkers ()
 				 marked->subsector->flags & SSECF_DRAWN :
 				 marked->Sector->MoreFlags & SECF_DRAWN)))
 			{
-				DrawMarker (tex, marked->X(), marked->Y(), 0, flip, mark->Scale.X, mark->Scale.Y, mark->Translation,
+				DrawMarker (tex, marked->X(), marked->Y(), 0, flip, mark->Scale.X*16, mark->Scale.Y*16, mark->Translation,
 					mark->Alpha, mark->fillcolor, mark->RenderStyle);
 			}
 			marked = mark->args[0] != 0 ? it.Next() : NULL;

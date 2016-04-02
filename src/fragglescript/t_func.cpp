@@ -1782,7 +1782,7 @@ public:
 		m_Type = DCeiling::ceilLowerByValue;	// doesn't really matter as long as it's no special value
 		m_Tag=tag;			
 		m_TopHeight=m_BottomHeight=sec->ceilingplane.PointToDist(sec->centerspot,destheight);
-		m_Direction=destheight>sec->GetPlaneTexZ(sector_t::ceiling)? 1:-1;
+		m_Direction=destheight>sec->GetPlaneTexZF(sector_t::ceiling)? 1:-1;
 
 		// Do not interpolate instant movement ceilings.
 		double movedist = fabs(sec->ceilingplane.fD() - m_BottomHeight);

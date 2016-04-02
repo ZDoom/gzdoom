@@ -184,7 +184,7 @@ double I_GetTimeFrac (uint32 *ms)
 	if (ms) *ms = TicStart + (1000 / TICRATE);
 	if (TicStart == 0)
 	{
-		return FRACUNIT;
+		return 1;
 	}
 	else
 	{

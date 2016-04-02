@@ -1193,15 +1193,6 @@ public:
 
 	bool HasSpecialDeathStates () const;
 
-	fixed_t _f_X() const
-	{
-		return FLOAT2FIXED(__Pos.X);
-	}
-	fixed_t _f_Y() const
-	{
-		return FLOAT2FIXED(__Pos.Y);
-	}
-
 	double X() const
 	{
 		return __Pos.X;
@@ -1274,22 +1265,10 @@ public:
 		if (!moving) Prev.Z = Z();
 	}
 
-	// These are not for general use as they do not link the actor into the world!
-	void SetXY(fixed_t xx, fixed_t yy)
-	{
-		__Pos.X = FIXED2DBL(xx);
-		__Pos.Y = FIXED2DBL(yy);
-	}
 	void SetXY(const DVector2 &npos)
 	{
 		__Pos.X = npos.X;
 		__Pos.Y = npos.Y;
-	}
-	void SetXYZ(fixed_t xx, fixed_t yy, fixed_t zz)
-	{
-		__Pos.X = FIXED2DBL(xx);
-		__Pos.Y = FIXED2DBL(yy);
-		__Pos.Z = FIXED2DBL(zz);
 	}
 	void SetXYZ(double xx, double yy, double zz)
 	{

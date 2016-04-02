@@ -860,8 +860,8 @@ static void SetupFloorPortal (AStackPoint *point)
 	if (skyv != NULL && skyv->bAlways)
 	{
 		skyv->Mate = point;
-		if (Sector->GetAlpha(sector_t::floor) == OPAQUE)
-			Sector->SetAlpha(sector_t::floor, Scale (point->args[0], OPAQUE, 255));
+		if (Sector->GetAlphaF(sector_t::floor) == 1.)
+			Sector->SetAlpha(sector_t::floor, clamp(point->args[0], 0, 255) / 255.);
 	}
 }
 
@@ -874,8 +874,8 @@ static void SetupCeilingPortal (AStackPoint *point)
 	if (skyv != NULL && skyv->bAlways)
 	{
 		skyv->Mate = point;
-		if (Sector->GetAlpha(sector_t::ceiling) == OPAQUE)
-			Sector->SetAlpha(sector_t::ceiling, Scale(point->args[0], OPAQUE, 255));
+		if (Sector->GetAlphaF(sector_t::ceiling) == 1.)
+			Sector->SetAlpha(sector_t::ceiling, clamp(point->args[0], 0, 255) / 255.);
 	}
 }
 
@@ -1148,7 +1148,7 @@ void P_InitSectorSpecial(sector_t *sector, int special, bool nothinkers)
 		break;
 			
 	case dSector_DoorCloseIn30:
-		new DDoor(sector, DDoor::doorWaitClose, FRACUNIT * 2, 0, 0, 30 * TICRATE);
+		new DDoor(sector, DDoor::doorWaitClose, 2, 0, 0, 30 * TICRATE);
 		break;
 			
 	case dDamage_End:
@@ -1164,7 +1164,7 @@ void P_InitSectorSpecial(sector_t *sector, int special, bool nothinkers)
 		break;
 
 	case dSector_DoorRaiseIn5Mins:
-		new DDoor (sector, DDoor::doorWaitRaise, 2*FRACUNIT, TICRATE*30/7, 0, 5*60*TICRATE);
+		new DDoor (sector, DDoor::doorWaitRaise, 2, TICRATE*30/7, 0, 5*60*TICRATE);
 		break;
 
 	case dFriction_Low:

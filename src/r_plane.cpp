@@ -1082,6 +1082,7 @@ void R_DrawHeightPlanes(fixed_t height)
 				viewy = pl->viewy;
 				viewz = pl->viewz;
 				viewangle = pl->viewangle;
+				ViewAngle = AngleToFloat(viewangle);
 				MirrorFlags = pl->MirrorFlags;
 				R_DrawSinglePlane (pl, pl->sky & 0x7FFFFFFF, pl->Additive, true);
 			}
@@ -1092,6 +1093,7 @@ void R_DrawHeightPlanes(fixed_t height)
 	viewy = oViewY;
 	viewz = oViewZ;
 	viewangle = oViewAngle;
+	ViewAngle = AngleToFloat(viewangle);
 }
 
 
@@ -1240,7 +1242,7 @@ void R_DrawSkyBoxes ()
 			viewx = FLOAT2FIXED(viewpos.X);
 			viewy = FLOAT2FIXED(viewpos.Y);
 			viewz = FLOAT2FIXED(viewpos.Z);
-			viewangle = savedangle + (sky->PrevAngles.Yaw + (sky->Angles.Yaw * r_TicFracF) - sky->PrevAngles.Yaw).BAMs();
+			viewangle = savedangle + (sky->PrevAngles.Yaw + deltaangle(sky->PrevAngles.Yaw, sky->Angles.Yaw) * r_TicFracF).BAMs();
 
 			R_CopyStackedViewParameters();
 		}
@@ -1248,11 +1250,12 @@ void R_DrawSkyBoxes ()
 		{
 			extralight = pl->extralight;
 			R_SetVisibility (pl->visibility);
-			viewx = pl->viewx - FLOAT2FIXED(sky->Mate->X() + sky->X());
-			viewy = pl->viewy - FLOAT2FIXED(sky->Mate->Y() + sky->Y());
+			viewx = pl->viewx + FLOAT2FIXED(-sky->Mate->X() + sky->X());
+			viewy = pl->viewy + FLOAT2FIXED(-sky->Mate->Y() + sky->Y());
 			viewz = pl->viewz;
 			viewangle = pl->viewangle;
 		}
+		ViewAngle = AngleToFloat(viewangle);
 
 		sky->bInSkybox = true;
 		if (mate != NULL) mate->bInSkybox = true;
@@ -1367,6 +1370,7 @@ void R_DrawSkyBoxes ()
 	R_SetVisibility (savedvisibility);
 	extralight = savedextralight;
 	viewangle = savedangle;
+	ViewAngle = AngleToFloat(viewangle);
 	R_SetViewAngle ();
 
 	CurrentPortalInSkybox = false;

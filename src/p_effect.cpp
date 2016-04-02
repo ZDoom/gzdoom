@@ -149,15 +149,16 @@ CUSTOM_CVAR( Int, r_maxparticles, 4000, CVAR_ARCHIVE )
 void P_InitParticles ()
 {
 	const char *i;
+	int num;
 
 	if ((i = Args->CheckValue ("-numparticles")))
-		NumParticles = atoi (i);
+		num = atoi (i);
 	// [BC] Use r_maxparticles now.
 	else
-		NumParticles = r_maxparticles;
+		num = r_maxparticles;
 
 	// This should be good, but eh...
-	NumParticles = clamp<WORD>(NumParticles, 100, 65535);
+	NumParticles = (WORD)clamp<int>(num, 100, 65535);
 
 	P_DeinitParticles();
 	Particles = new particle_t[NumParticles];
@@ -206,7 +207,7 @@ void P_FindParticleSubsectors ()
 	for (WORD i = ActiveParticles; i != NO_PARTICLE; i = Particles[i].tnext)
 	{
 		 // Try to reuse the subsector from the last portal check, if still valid.
-		if (Particles[i].subsector == NULL) Particles[i].subsector = R_PointInSubsector(Particles[i].x, Particles[i].y);
+		if (Particles[i].subsector == NULL) Particles[i].subsector = R_PointInSubsector(Particles[i].Pos);
 		int ssnum = int(Particles[i].subsector - subsectors);
 		Particles[i].snext = ParticlesInSubsec[ssnum];
 		ParticlesInSubsec[ssnum] = i;
@@ -279,33 +280,29 @@ void P_ThinkParticles ()
 			continue;
 		}
 
-		DVector2 newxy = P_GetOffsetPosition(FIXED2DBL(particle->x), FIXED2DBL(particle->y), FIXED2DBL(particle->vel.x), FIXED2DBL(particle->vel.y));
-		particle->x = FLOAT2FIXED(newxy.X);
-		particle->y = FLOAT2FIXED(newxy.Y);
-		//particle->x += particle->vel.x;
-		//particle->y += particle->vel.y;
-		particle->z += particle->vel.z;
-		particle->vel.x += particle->accx;
-		particle->vel.y += particle->accy;
-		particle->vel.z += particle->accz;
-		particle->subsector = R_PointInSubsector(particle->x, particle->y);
+		// Handle crossing a line portal
+		DVector2 newxy = P_GetOffsetPosition(particle->Pos.X, particle->Pos.Y, particle->Vel.X, particle->Vel.Y);
+		particle->Pos.X = newxy.X;
+		particle->Pos.Y = newxy.Y;
+		particle->Pos.Z += particle->Vel.Z;
+		particle->Vel += particle->Acc;
+		particle->subsector = R_PointInSubsector(particle->Pos);
+		// Handle crossing a sector portal.
 		if (!particle->subsector->sector->PortalBlocksMovement(sector_t::ceiling))
 		{
 			AActor *skybox = particle->subsector->sector->SkyBoxes[sector_t::ceiling];
-			if (particle->z > FLOAT2FIXED(skybox->specialf1))
+			if (particle->Pos.Z > skybox->specialf1)
 			{
-				particle->x += FLOAT2FIXED(skybox->Scale.X);
-				particle->y += FLOAT2FIXED(skybox->Scale.Y);
+				particle->Pos += skybox->Scale;
 				particle->subsector = NULL;
 			}
 		}
 		else if (!particle->subsector->sector->PortalBlocksMovement(sector_t::floor))
 		{
 			AActor *skybox = particle->subsector->sector->SkyBoxes[sector_t::floor];
-			if (particle->z < FLOAT2FIXED(skybox->specialf1))
+			if (particle->Pos.Z < skybox->specialf1)
 			{
-				particle->x += FLOAT2FIXED(skybox->Scale.X);
-				particle->y += FLOAT2FIXED(skybox->Scale.Y);
+				particle->Pos += skybox->Scale;
 				particle->subsector = NULL;
 			}
 		}
@@ -320,20 +317,14 @@ void P_SpawnParticle(const DVector3 &pos, const DVector3 &vel, const DVector3 &a
 
 	if (particle)
 	{
-		particle->x = FLOAT2FIXED(pos.X);
-		particle->y = FLOAT2FIXED(pos.Y);
-		particle->z = FLOAT2FIXED(pos.Z);
-		particle->vel.x = FLOAT2FIXED(vel.X);
-		particle->vel.y = FLOAT2FIXED(vel.Y);
-		particle->vel.z = FLOAT2FIXED(vel.Z);
+		particle->Pos = pos;
+		particle->Vel = vel;
+		particle->Acc = accel;
 		particle->color = ParticleColor(color);
 		particle->trans = BYTE(startalpha*255);
 		if (fadestep < 0) particle->fade = FADEFROMTTL(lifetime);
 		else particle->fade = int(fadestep * 255);
 		particle->ttl = lifetime;
-		particle->accx = FLOAT2FIXED(accel.X);
-		particle->accy = FLOAT2FIXED(accel.Y);
-		particle->accz = FLOAT2FIXED(accel.Z);
 		particle->bright = fullbright;
 		particle->size = (WORD)size;
 	}
@@ -380,15 +371,14 @@ particle_t *JitterParticle (int ttl, double drift)
 	particle_t *particle = NewParticle ();
 
 	if (particle) {
-		fixed_t *val = &particle->vel.x;
 		int i;
 
 		// Set initial velocities
-		for (i = 3; i; i--, val++)
-			*val = (int)((FRACUNIT/4096) * (M_Random () - 128) * drift);
+		for (i = 3; i; i--)
+			particle->Vel[i] = ((1./4096) * (M_Random () - 128) * drift);
 		// Set initial accelerations
-		for (i = 3; i; i--, val++)
-			*val = (int)((FRACUNIT/16384) * (M_Random () - 128) * drift);
+		for (i = 3; i; i--)
+			particle->Acc[i] = ((1./16384) * (M_Random () - 128) * drift);
 
 		particle->trans = 255;	// fully opaque
 		particle->ttl = ttl;
@@ -411,15 +401,12 @@ static void MakeFountain (AActor *actor, int color1, int color2)
 		DAngle an = M_Random() * (360. / 256);
 		double out = actor->radius * M_Random() / 256.;
 
-		DVector3 pos = actor->Vec3Angle(out, an, actor->Height + 1);
-		particle->x = FLOAT2FIXED(pos.X);
-		particle->y = FLOAT2FIXED(pos.Y);
-		particle->z = FLOAT2FIXED(pos.Z);
+		particle->Pos = actor->Vec3Angle(out, an, actor->Height + 1);
 		if (out < actor->radius/8)
-			particle->vel.z += FRACUNIT*10/3;
+			particle->Vel.Z += 10./3;
 		else
-			particle->vel.z += FRACUNIT*3;
-		particle->accz -= FRACUNIT/11;
+			particle->Vel.Z += 3;
+		particle->Acc.Z -= 1./11;
 		if (M_Random() < 30) {
 			particle->size = 4;
 			particle->color = color2;
@@ -445,7 +432,7 @@ void P_RunEffect (AActor *actor, int effects)
 		double backz = actor->Height * ((2. / 3) - actor->Vel.Z / 8);
 
 		DAngle an = moveangle + 90.;
-		int speed;
+		double speed;
 
 		particle = JitterParticle (3 + (M_Random() & 31));
 		if (particle) {
@@ -454,14 +441,12 @@ void P_RunEffect (AActor *actor, int effects)
 				backx - actor->Vel.X * pathdist,
 				backy - actor->Vel.Y * pathdist,
 				backz - actor->Vel.Z * pathdist);
-			particle->x = FLOAT2FIXED(pos.X);
-			particle->y = FLOAT2FIXED(pos.Y);
-			particle->z = FLOAT2FIXED(pos.Z);
-			speed = (M_Random () - 128) * (FRACUNIT/200);
-			particle->vel.x += fixed_t(speed * an.Cos());
-			particle->vel.y += fixed_t(speed * an.Sin());
-			particle->vel.z -= FRACUNIT/36;
-			particle->accz -= FRACUNIT/20;
+			particle->Pos = pos;
+			speed = (M_Random () - 128) * (1./200);
+			particle->Vel.X += speed * an.Cos();
+			particle->Vel.Y += speed * an.Sin();
+			particle->Vel.Z -= 1./36;
+			particle->Acc.Z -= 1./20;
 			particle->color = yellow;
 			particle->size = 2;
 		}
@@ -473,15 +458,13 @@ void P_RunEffect (AActor *actor, int effects)
 					backx - actor->Vel.X * pathdist,
 					backy - actor->Vel.Y * pathdist,
 					backz - actor->Vel.Z * pathdist + (M_Random() / 64.));
-				particle->x = FLOAT2FIXED(pos.X);
-				particle->y = FLOAT2FIXED(pos.Y);
-				particle->z = FLOAT2FIXED(pos.Z);
+				particle->Pos = pos;
 
-				speed = (M_Random () - 128) * (FRACUNIT/200);
-				particle->vel.x += fixed_t(speed * an.Cos());
-				particle->vel.y += fixed_t(speed * an.Sin());
-				particle->vel.z += FRACUNIT/80;
-				particle->accz += FRACUNIT/40;
+				speed = (M_Random () - 128) * (1./200);
+				particle->Vel.X += speed * an.Cos();
+				particle->Vel.Y += speed * an.Sin();
+				particle->Vel.Z -= 1. / 80;
+				particle->Acc.Z -= 1. / 40;
 				if (M_Random () & 7)
 					particle->color = grey2;
 				else
@@ -529,18 +512,16 @@ void P_RunEffect (AActor *actor, int effects)
 			{
 				DAngle ang = M_Random() * (360 / 256.);
 				DVector3 pos = actor->Vec3Angle(actor->radius, ang, 0);
-				particle->x = FLOAT2FIXED(pos.X);
-				particle->y = FLOAT2FIXED(pos.Y);
-				particle->z = FLOAT2FIXED(pos.Z);
+				particle->Pos = pos;
 				particle->color = *protectColors[M_Random() & 1];
-				particle->vel.z = FRACUNIT;
-				particle->accz = M_Random () << 7;
+				particle->Vel.Z = 1;
+				particle->Acc.Z = M_Random () / 512.;
 				particle->size = 1;
 				if (M_Random () < 128)
 				{ // make particle fall from top of actor
-					particle->z += FLOAT2FIXED(actor->Height);
-					particle->vel.z = -particle->vel.z;
-					particle->accz = -particle->accz;
+					particle->Pos.Z += actor->Height;
+					particle->Vel.Z = -particle->Vel.Z;
+					particle->Acc.Z = -particle->Acc.Z;
 				}
 			}
 		}
@@ -570,20 +551,21 @@ void P_DrawSplash (int count, const DVector3 &pos, DAngle angle, int kind)
 
 		p->size = 2;
 		p->color = M_Random() & 0x80 ? color1 : color2;
-		p->vel.z -= M_Random () * 512;
-		p->accz -= FRACUNIT/8;
-		p->accx += (M_Random () - 128) * 8;
-		p->accy += (M_Random () - 128) * 8;
-		p->z = FLOAT2FIXED(pos.Z) - M_Random () * 1024;
+		p->Vel.Z -= M_Random () / 128.;
+		p->Acc.Z -= 1./8;
+		p->Acc.X += (M_Random () - 128) / 8192.;
+		p->Acc.Y += (M_Random () - 128) / 8192.;
+		p->Pos.Z = pos.Z - M_Random () / 64.;
 		angle += M_Random() * (45./256);
-		p->x = FLOAT2FIXED(pos.X + (M_Random() & 15)*angle.Cos());
-		p->y = FLOAT2FIXED(pos.Y + (M_Random() & 15)*angle.Sin());
+		p->Pos.X = pos.X + (M_Random() & 15)*angle.Cos();
+		p->Pos.Y = pos.Y + (M_Random() & 15)*angle.Sin();
 	}
 }
 
 void P_DrawSplash2 (int count, const DVector3 &pos, DAngle angle, int updown, int kind)
 {
-	int color1, color2, zvel, zspread, zadd;
+	int color1, color2, zadd;
+	double zvel, zspread;
 
 	switch (kind)
 	{
@@ -605,14 +587,14 @@ void P_DrawSplash2 (int count, const DVector3 &pos, DAngle angle, int updown, in
 		break;
 	}
 
-	zvel = -128;
-	zspread = updown ? -6000 : 6000;
-	zadd = (updown == 2) ? -128 : 0;
+	zvel = -0.5;
+	zspread = updown ? -6000 / 65536. : 6000 / 65536.;
+	zadd = (updown == 2) ? 128 : 0;
 
 	for (; count; count--)
 	{
 		particle_t *p = NewParticle ();
-		angle_t an;
+		DAngle an;
 
 		if (!p)
 			break;
@@ -622,19 +604,20 @@ void P_DrawSplash2 (int count, const DVector3 &pos, DAngle angle, int updown, in
 		p->trans = 255;
 		p->size = 4;
 		p->color = M_Random() & 0x80 ? color1 : color2;
-		p->vel.z = M_Random () * zvel;
-		p->accz = -FRACUNIT/22;
-		if (kind) {
-			an = (angle.BAMs() + ((M_Random() - 128) << 23)) >> ANGLETOFINESHIFT;
-			p->vel.x = (M_Random () * finecosine[an]) >> 11;
-			p->vel.y = (M_Random () * finesine[an]) >> 11;
-			p->accx = p->vel.x >> 4;
-			p->accy = p->vel.y >> 4;
+		p->Vel.Z = M_Random() * zvel;
+		p->Acc.Z = -1 / 22.;
+		if (kind) 
+		{
+			an = angle + ((M_Random() - 128) * (180 / 256.));
+			p->Vel.X = M_Random() * an.Cos() / 2048.;
+			p->Vel.Y = M_Random() * an.Sin() / 2048.;
+			p->Acc.X = p->Vel.X / 16.;
+			p->Acc.Y = p->Vel.Y / 16.;
 		}
-		p->z = FLOAT2FIXED(pos.Z) + (M_Random () + zadd - 128) * zspread;
-		an = (angle.BAMs() + ((M_Random() - 128) << 22)) >> ANGLETOFINESHIFT;
-		p->x = FLOAT2FIXED(pos.X) + ((M_Random () & 31)-15)*finecosine[an];
-		p->y = FLOAT2FIXED(pos.X) + ((M_Random () & 31)-15)*finesine[an];
+		an = angle + ((M_Random() - 128) * (90 / 256.));
+		p->Pos.X = pos.X + ((M_Random() & 31) - 15) * an.Cos();
+		p->Pos.Y = pos.Y + ((M_Random() & 31) - 15) * an.Sin();
+		p->Pos.Z = pos.Z + (M_Random() + zadd - 128) * zspread;
 	}
 }
 
@@ -692,7 +675,7 @@ void P_DrawRailTrail(AActor *source, const DVector3 &start, const DVector3 &end,
 				point = start + r * dir;
 				dir.Z = dirz;
 
-				S_Sound (DVector3(point.X, point.Y, viewz),	CHAN_WEAPON, sound, 1, ATTN_NORM);
+				S_Sound (DVector3(point.X, point.Y, ViewPos.Z),	CHAN_WEAPON, sound, 1, ATTN_NORM);
 			}
 		}
 	}
@@ -749,13 +732,8 @@ void P_DrawRailTrail(AActor *source, const DVector3 &start, const DVector3 &end,
 			p->bright = fullbright;
 
 			tempvec = DMatrix3x3(dir, deg) * extend;
-			p->vel.x = FLOAT2FIXED(tempvec.X * drift)>>4;
-			p->vel.y = FLOAT2FIXED(tempvec.Y * drift)>>4;
-			p->vel.z = FLOAT2FIXED(tempvec.Z * drift)>>4;
-			tempvec += pos;
-			p->x = FLOAT2FIXED(tempvec.X);
-			p->y = FLOAT2FIXED(tempvec.Y);
-			p->z = FLOAT2FIXED(tempvec.Z);
+			p->Vel = tempvec * drift / 16.;
+			p->Pos = tempvec + pos;
 			pos += spiral_step;
 			deg += double(r_rail_spiralsparsity * 14);
 
@@ -812,11 +790,9 @@ void P_DrawRailTrail(AActor *source, const DVector3 &start, const DVector3 &end,
 			DVector3 postmp = pos + diff;
 
 			p->size = 2;
-			p->x = FLOAT2FIXED(postmp.X);
-			p->y = FLOAT2FIXED(postmp.Y);
-			p->z = FLOAT2FIXED(postmp.Z);
+			p->Pos = postmp;
 			if (color1 != -1)
-				p->accz -= FRACUNIT/4096;
+				p->Acc.Z -= 1./4096;
 			pos += trail_step;
 
 			p->bright = fullbright;
@@ -888,10 +864,8 @@ void P_DisconnectEffect (AActor *actor)
 		double zo = M_Random()*actor->Height / 256;
 
 		DVector3 pos = actor->Vec3Offset(xo, yo, zo);
-		p->x = FLOAT2FIXED(pos.X);
-		p->y = FLOAT2FIXED(pos.Y);
-		p->z = FLOAT2FIXED(pos.Z);
-		p->accz -= FRACUNIT/4096;
+		p->Pos = pos;
+		p->Acc.Z -= 1./4096;
 		p->color = M_Random() < 128 ? maroon1 : maroon2;
 		p->size = 4;
 	}

@@ -78,9 +78,6 @@ extern int 				numgamesubsectors;
 //
 // POV data.
 //
-extern fixed_t			viewz;
-extern angle_t			viewangle;
-
 extern AActor*			camera;		// [RH] camera instead of viewplayer
 extern sector_t*		viewsector;	// [RH] keep track of sector viewing from
 

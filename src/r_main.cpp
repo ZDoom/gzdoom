@@ -68,6 +68,7 @@
 #define TEST_ANGLE 2468347904 
 #endif
 
+
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -727,9 +728,8 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 			viewx = FLOAT2FIXED((x1 + r * dx)*2 - x);
 			viewy = FLOAT2FIXED((y1 + r * dy)*2 - y);
 		}
-		viewangle = 2*R_PointToAngle2 (pds->src->v1->fixX(), pds->src->v1->fixY(),
-									   pds->src->v2->fixX(), pds->src->v2->fixY()) - startang;
-
+		viewangle = pds->src->Delta().Angle().BAMs() - startang;
+		ViewAngle = AngleToFloat(viewangle);
 	}
 	else
 	{
@@ -743,6 +743,7 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 		viewz = FLOAT2FIXED(view.Z);
 		viewangle = va.BAMs();
 	}
+	ViewAngle = AngleToFloat(viewangle);
 
 	viewsin = finesine[viewangle>>ANGLETOFINESHIFT];
 	viewcos = finecosine[viewangle>>ANGLETOFINESHIFT];
@@ -821,6 +822,7 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 	viewx = startx;
 	viewy = starty;
 	viewz = startz;
+	ViewAngle = AngleToFloat(viewangle);
 }
 
 //==========================================================================

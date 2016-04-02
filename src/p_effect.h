@@ -52,21 +52,16 @@
 struct subsector_t;
 
 // [RH] Particle details
-struct fixedvec3
-{
-	fixed_t x, y, z;
-};
-
 
 struct particle_t
 {
-	fixed_t	x,y,z;
-	fixedvec3 vel;
-	fixed_t accx,accy,accz;
+	DVector3 Pos;
+	DVector3 Vel;
+	DVector3 Acc;
 	BYTE	ttl;
 	BYTE	trans;
 	WORD	size;
-	BYTE	bright:1;
+	BYTE	bright;
 	BYTE	fade;
 	int		color;
 	WORD	tnext;

@@ -1222,8 +1222,6 @@ void P_LoadSegs (MapData * map)
 	line_t* line;		// phares 10/4/98
 	int ptp_angle;		// phares 10/4/98
 	int delta_angle;	// phares 10/4/98
-	int dis;			// phares 10/4/98
-	int dx,dy;			// phares 10/4/98
 	int vnum1,vnum2;	// phares 10/4/98
 	int lumplen = map->Size(ML_SEGS);
 

@@ -2423,12 +2423,12 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 	BYTE*				map;
 
 	// [ZZ] Particle not visible through the portal plane
-	if (CurrentPortal && !!P_PointOnLineSide(particle->x, particle->y, CurrentPortal->dst))
+	if (CurrentPortal && !!P_PointOnLineSide(particle->Pos, CurrentPortal->dst))
 		return;
 
 	// transform the origin point
-	tr_x = particle->x - viewx;
-	tr_y = particle->y - viewy;
+	tr_x = FLOAT2FIXED(particle->Pos.X - ViewPos.X);
+	tr_y = FLOAT2FIXED(particle->Pos.Y - ViewPos.Y);
 
 	tz = DMulScale20 (tr_x, viewtancos, tr_y, viewtansin);
 
@@ -2460,8 +2460,8 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 	if (x1 >= x2)
 		return;
 
-	yscale = MulScale16 (yaspectmul, xscale);
-	ty = particle->z - viewz;
+	yscale = MulScale16(yaspectmul, xscale);
+	ty = FLOAT2FIXED(particle->Pos.Z - ViewPos.Z);
 	psize <<= 4;
 	y1 = (centeryfrac - FixedMul (ty+psize, yscale)) >> FRACBITS;
 	y2 = (centeryfrac - FixedMul (ty-psize, yscale)) >> FRACBITS;
@@ -2522,9 +2522,9 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 		map = sector->ColorMap->Maps;
 	}
 
-	if (botpic != skyflatnum && particle->z < botplane->ZatPoint (particle->x, particle->y))
+	if (botpic != skyflatnum && particle->Pos.Z < botplane->ZatPoint (particle->Pos))
 		return;
-	if (toppic != skyflatnum && particle->z >= topplane->ZatPoint (particle->x, particle->y))
+	if (toppic != skyflatnum && particle->Pos.Z >= topplane->ZatPoint (particle->Pos))
 		return;
 
 	// store information in a vissprite
@@ -2536,9 +2536,9 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 	vis->yscale = xscale;
 	vis->depth = tz;
 	vis->idepth = (DWORD)DivScale32 (1, tz) >> 1;
-	vis->gx = particle->x;
-	vis->gy = particle->y;
-	vis->gz = particle->z; // kg3D
+	vis->gx = FLOAT2FIXED(particle->Pos.X);
+	vis->gy = FLOAT2FIXED(particle->Pos.Y);
+	vis->gz = FLOAT2FIXED(particle->Pos.Z);
 	vis->gzb = y1;
 	vis->gzt = y2;
 	vis->x1 = x1;

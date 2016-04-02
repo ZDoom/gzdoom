@@ -128,7 +128,7 @@ public:
 	FColormap Colormap;
 	ERenderStyle RenderStyle;
 	
-	fixed_t viewdistance;
+	float ViewDistance;
 
 	TArray<lightlist_t> *lightlist;
 	int lightlevel;

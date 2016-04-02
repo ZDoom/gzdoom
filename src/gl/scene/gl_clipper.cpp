@@ -388,7 +388,13 @@ angle_t Clipper::AngleToPseudo(angle_t ang)
 //
 //-----------------------------------------------------------------------------
 
-angle_t R_PointToPseudoAngle (fixed_t viewx, fixed_t viewy, fixed_t x, fixed_t y)
+void R_SetView()
+{
+	viewx = FLOAT2FIXED(ViewPos.X);
+	viewy = FLOAT2FIXED(ViewPos.Y);
+}
+
+angle_t R_PointToPseudoAngle (fixed_t x, fixed_t y)
 {
 	// Note: float won't work here as it's less precise than the BAM values being passed as parameters
 	double vecx = double(x-viewx);
@@ -450,8 +456,8 @@ bool Clipper::CheckBox(const fixed_t *bspcoord)
 	if (boxpos == 5) return true;
 	
 	check = checkcoord[boxpos];
-	angle1 = R_PointToPseudoAngle (viewx, viewy, bspcoord[check[0]], bspcoord[check[1]]);
-	angle2 = R_PointToPseudoAngle (viewx, viewy, bspcoord[check[2]], bspcoord[check[3]]);
+	angle1 = R_PointToPseudoAngle (bspcoord[check[0]], bspcoord[check[1]]);
+	angle2 = R_PointToPseudoAngle (bspcoord[check[2]], bspcoord[check[3]]);
 	
 	return SafeCheckRange(angle2, angle1);
 }

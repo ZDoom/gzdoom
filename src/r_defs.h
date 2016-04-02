@@ -902,7 +902,6 @@ struct sector_t
 		return FIXED2DBL(planes[pos].TexZ);
 	}
 
-	void SetPlaneTexZ(int pos, double val)
 	void SetPlaneTexZ(int pos, double val, bool dirtify = false)	// This mainly gets used by init code. The only place where it must set the vertex to dirty is the interpolation code.
 	{
 		planes[pos].TexZ = FLOAT2FIXED(val);

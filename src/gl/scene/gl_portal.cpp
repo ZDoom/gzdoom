@@ -307,11 +307,9 @@ bool GLPortal::Start(bool usestencil, bool doquery)
 	gl_RenderState.SetClipHeightTop(65536.f);
 
 	// save viewpoint
-	savedviewx=viewx;
-	savedviewy=viewy;
-	savedviewz=viewz;
+	savedViewPos = ViewPos;
+	savedAngle = ViewAngle;
 	savedviewactor=GLRenderer->mViewActor;
-	savedviewangle=viewangle;
 	savedviewarea=in_area;
 	savedshowviewer = r_showviewer;
 
@@ -324,7 +322,7 @@ bool GLPortal::Start(bool usestencil, bool doquery)
 
 inline void GLPortal::ClearClipper()
 {
-	fixed_t angleOffset = viewangle - savedviewangle;
+	DAngle angleOffset = deltaangle(savedAngle, ViewAngle);
 
 	clipper.Clear();
 
@@ -332,23 +330,20 @@ inline void GLPortal::ClearClipper()
 
 	// Set the clipper to the minimal visible area
 	clipper.SafeAddClipRange(0,0xffffffff);
-	for(unsigned int i=0;i<lines.Size();i++)
+	for (unsigned int i = 0; i < lines.Size(); i++)
 	{
-		angle_t startAngle = R_PointToAnglePrecise(savedviewx, savedviewy, 
-												FLOAT2FIXED(lines[i].glseg.x2), FLOAT2FIXED(lines[i].glseg.y2));
+		DAngle startAngle = (DVector2(lines[i].glseg.x2, lines[i].glseg.y2) - savedViewPos).Angle() + angleOffset;
+		DAngle endAngle = (DVector2(lines[i].glseg.x1, lines[i].glseg.y1) - savedViewPos).Angle() + angleOffset;
 
-		angle_t endAngle = R_PointToAnglePrecise(savedviewx, savedviewy, 
-												FLOAT2FIXED(lines[i].glseg.x1), FLOAT2FIXED(lines[i].glseg.y1));
-
-		if (startAngle-endAngle>0) 
+		if (deltaangle(endAngle, startAngle) < 0)
 		{
-			clipper.SafeRemoveClipRangeRealAngles(startAngle + angleOffset, endAngle + angleOffset);
+			clipper.SafeRemoveClipRangeRealAngles(startAngle.BAMs(), endAngle.BAMs());
 		}
 	}
 
 	// and finally clip it to the visible area
 	angle_t a1 = GLRenderer->FrustumAngle();
-	if (a1<ANGLE_180) clipper.SafeAddClipRangeRealAngles(viewangle+a1, viewangle-a1);
+	if (a1 < ANGLE_180) clipper.SafeAddClipRangeRealAngles(ViewAngle.BAMs() + a1, ViewAngle.BAMs() - a1);
 
 	// lock the parts that have just been clipped out.
 	clipper.SetSilhouette();
@@ -379,14 +374,12 @@ void GLPortal::End(bool usestencil)
 		if (needdepth) FDrawInfo::EndDrawInfo();
 
 		// Restore the old view
-		viewx=savedviewx;
-		viewy=savedviewy;
-		viewz=savedviewz;
-		viewangle=savedviewangle;
+		ViewPos = savedViewPos;
+		ViewAngle = savedAngle;
 		GLRenderer->mViewActor=savedviewactor;
 		in_area=savedviewarea;
 		r_showviewer = savedshowviewer;
-		GLRenderer->SetupView(viewx, viewy, viewz, viewangle, !!(MirrorFlag & 1), !!(PlaneMirrorFlag & 1));
+		GLRenderer->SetupView(ViewPos.X, ViewPos.Y, ViewPos.Z, ViewAngle, !!(MirrorFlag & 1), !!(PlaneMirrorFlag & 1));
 
 		{
 			ScopedColorMask colorMask(0, 0, 0, 0); // glColorMask(0, 0, 0, 0);						// no graphics
@@ -438,14 +431,12 @@ void GLPortal::End(bool usestencil)
 			glDepthMask(true);
 		}
 		// Restore the old view
-		viewx=savedviewx;
-		viewy=savedviewy;
-		viewz=savedviewz;
-		viewangle=savedviewangle;
+		ViewPos = savedViewPos;
+		ViewAngle = savedAngle;
 		GLRenderer->mViewActor=savedviewactor;
 		in_area=savedviewarea;
 		r_showviewer = savedshowviewer;
-		GLRenderer->SetupView(viewx, viewy, viewz, viewangle, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
+		GLRenderer->SetupView(ViewPos.X, ViewPos.Y, ViewPos.Z, ViewAngle, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
 
 		// This draws a valid z-buffer into the stencil's contents to ensure it
 		// doesn't get overwritten by the level's geometry.
@@ -655,28 +646,24 @@ void GLSkyboxPortal::DrawContents()
 	PlaneMirrorMode = 0;
 
 	bool oldclamp = gl_RenderState.SetDepthClamp(false);
-	DVector3 viewpos = origin->InterpolatedPosition(r_TicFracF);
-	viewangle += (origin->PrevAngles.Yaw + deltaangle(origin->PrevAngles.Yaw, origin->Angles.Yaw) * r_TicFracF).BAMs();
+	ViewPos = origin->InterpolatedPosition(r_TicFracF);
+	ViewAngle += (origin->PrevAngles.Yaw + deltaangle(origin->PrevAngles.Yaw, origin->Angles.Yaw) * r_TicFracF);
 
 	// Don't let the viewpoint be too close to a floor or ceiling
 	double floorh = origin->Sector->floorplane.ZatPoint(origin->Pos());
 	double ceilh = origin->Sector->ceilingplane.ZatPoint(origin->Pos());
-	if (viewpos.Z < floorh + 4) viewpos.Z = floorh + 4;
-	if (viewpos.Z > ceilh - 4) viewz = ceilh - 4;
-
-	viewx = FLOAT2FIXED(viewpos.X);
-	viewy = FLOAT2FIXED(viewpos.Y);
-	viewz = FLOAT2FIXED(viewpos.Z);
+	if (ViewPos.Z < floorh + 4) ViewPos.Z = floorh + 4;
+	if (ViewPos.Z > ceilh - 4) ViewPos.Z = ceilh - 4;
 
 	GLRenderer->mViewActor = origin;
 
 	validcount++;
 	inskybox = true;
-	GLRenderer->SetupView(viewx, viewy, viewz, viewangle, !!(MirrorFlag & 1), !!(PlaneMirrorFlag & 1));
+	GLRenderer->SetupView(ViewPos.X, ViewPos.Y, ViewPos.Z, ViewAngle, !!(MirrorFlag & 1), !!(PlaneMirrorFlag & 1));
 	GLRenderer->SetViewArea();
 	ClearClipper();
 
-	int mapsection = R_PointInSubsector(viewx, viewy)->mapsection;
+	int mapsection = R_PointInSubsector(ViewPos)->mapsection;
 
 	SaveMapSection();
 	currentmapsection[mapsection >> 3] |= 1 << (mapsection & 7);
@@ -761,8 +748,7 @@ void GLSectorStackPortal::DrawContents()
 {
 	FPortal *portal = origin;
 
-	viewx += origin->xDisplacement;
-	viewy += origin->yDisplacement;
+	ViewPos += origin->mDisplacement;
 	GLRenderer->mViewActor = NULL;
 
 
@@ -771,7 +757,7 @@ void GLSectorStackPortal::DrawContents()
 	// avoid recursions!
 	if (origin->plane != -1) instack[origin->plane]++;
 
-	GLRenderer->SetupView(viewx, viewy, viewz, viewangle, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
+	GLRenderer->SetupView(ViewPos.X, ViewPos.Y, ViewPos.Z, ViewAngle, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
 	SaveMapSection();
 	SetupCoverage();
 	ClearClipper();
@@ -807,8 +793,8 @@ void GLPlaneMirrorPortal::DrawContents()
 
 	int old_pm=PlaneMirrorMode;
 
-	fixed_t planez = origin->ZatPoint(viewx, viewy);
-	viewz = 2*planez - viewz;
+	double planez = origin->ZatPoint(ViewPos);
+	ViewPos.Z = 2 * planez - ViewPos.Z;
 	GLRenderer->mViewActor = NULL;
 	PlaneMirrorMode = origin->fC() < 0 ? -1 : 1;
 	r_showviewer = true;
@@ -816,18 +802,17 @@ void GLPlaneMirrorPortal::DrawContents()
 	validcount++;
 
 	PlaneMirrorFlag++;
-	GLRenderer->SetupView(viewx, viewy, viewz, viewangle, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
+	GLRenderer->SetupView(ViewPos.X, ViewPos.Y, ViewPos.Z, ViewAngle, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
 	ClearClipper();
 
-	float f = FIXED2FLOAT(planez);
 	if (PlaneMirrorMode < 0)
 	{
-		gl_RenderState.SetClipHeightTop(f);	// ceiling mirror: clip everything with a z lower than the portal's ceiling
+		gl_RenderState.SetClipHeightTop(planez);	// ceiling mirror: clip everything with a z lower than the portal's ceiling
 		gl_RenderState.SetClipHeightBottom(-65536.f);
 	}
 	else
 	{
-		gl_RenderState.SetClipHeightBottom(f);	// floor mirror: clip everything with a z higher than the portal's floor
+		gl_RenderState.SetClipHeightBottom(planez);	// floor mirror: clip everything with a z higher than the portal's floor
 		gl_RenderState.SetClipHeightTop(65536.f);
 	}
 
@@ -872,31 +857,30 @@ void GLMirrorPortal::DrawContents()
 	}
 
 	GLRenderer->mCurrentPortal = this;
-	angle_t startang = viewangle;
-	fixed_t startx = viewx;
-	fixed_t starty = viewy;
+	DAngle StartAngle = ViewAngle;
+	DVector3 StartPos = ViewPos;
 
 	vertex_t *v1 = linedef->v1;
 	vertex_t *v2 = linedef->v2;
 
 	// Reflect the current view behind the mirror.
 	if (linedef->Delta().X == 0)
-	{ 
+	{
 		// vertical mirror
-		viewx = v1->fixX() - startx + v1->fixX();
+		ViewPos.X = 2 * v1->fX() - StartPos.X;
 
 		// Compensation for reendering inaccuracies
-		if (startx<v1->fixX())  viewx -= FRACUNIT/2;
-		else viewx += FRACUNIT/2;
+		if (StartPos.X < v1->fX())  ViewPos.X -= 0.1;
+		else ViewPos.X += 0.1;
 	}
 	else if (linedef->Delta().Y == 0)
 	{ 
 		// horizontal mirror
-		viewy = v1->fixY() - starty + v1->fixY();
+		ViewPos.Y = 2*v1->fY() - StartPos.Y;
 
 		// Compensation for reendering inaccuracies
-		if (starty<v1->fixY())  viewy -= FRACUNIT/2;
-		else viewy += FRACUNIT/2;
+		if (StartPos.Y<v1->fY())  ViewPos.Y -= 0.1;
+		else ViewPos.Y += 0.1;
 	}
 	else
 	{ 
@@ -907,25 +891,23 @@ void GLMirrorPortal::DrawContents()
 		double dy = v2->fY() - v1->fY();
 		double x1 = v1->fX();
 		double y1 = v1->fY();
-		double x = FIXED2DBL(startx);
-		double y = FIXED2DBL(starty);
+		double x = StartPos.X;
+		double y = StartPos.Y;
 
 		// the above two cases catch len == 0
 		double r = ((x - x1)*dx + (y - y1)*dy) / (dx*dx + dy*dy);
 
-		viewx = FLOAT2FIXED((x1 + r * dx)*2 - x);
-		viewy = FLOAT2FIXED((y1 + r * dy)*2 - y);
+		ViewPos.X = (x1 + r * dx)*2 - x;
+		ViewPos.Y = (y1 + r * dy)*2 - y;
 
 		// Compensation for reendering inaccuracies
 		FVector2 v(-dx, dy);
 		v.MakeUnit();
 
-		viewx+= FLOAT2FIXED(v[1] * renderdepth / 2);
-		viewy+= FLOAT2FIXED(v[0] * renderdepth / 2);
+		ViewPos.X+= v[1] * renderdepth / 2;
+		ViewPos.Y+= v[0] * renderdepth / 2;
 	}
-	// we cannot afford any imprecisions caused by R_PointToAngle2 here. They'd be visible as seams around the mirror.
-	viewangle = 2*R_PointToAnglePrecise (linedef->v1->fixX(), linedef->v1->fixY(),
-										linedef->v2->fixX(), linedef->v2->fixY()) - startang;
+	ViewAngle = linedef->Delta().Angle() * 2. - StartAngle;
 
 	GLRenderer->mViewActor = NULL;
 	r_showviewer = true;
@@ -933,12 +915,12 @@ void GLMirrorPortal::DrawContents()
 	validcount++;
 
 	MirrorFlag++;
-	GLRenderer->SetupView(viewx, viewy, viewz, viewangle, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
+	GLRenderer->SetupView(ViewPos.X, ViewPos.Y, ViewPos.Z, ViewAngle, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
 
 	clipper.Clear();
 
 	angle_t af = GLRenderer->FrustumAngle();
-	if (af<ANGLE_180) clipper.SafeAddClipRangeRealAngles(viewangle+af, viewangle-af);
+	if (af<ANGLE_180) clipper.SafeAddClipRangeRealAngles(ViewAngle.BAMs()+af, ViewAngle.BAMs()-af);
 
 	angle_t a2 = linedef->v1->GetClipAngle();
 	angle_t a1 = linedef->v2->GetClipAngle();
@@ -952,7 +934,12 @@ void GLMirrorPortal::DrawContents()
 
 int GLLinePortal::ClipSeg(seg_t *seg) 
 { 
-	return PClip_Inside;// P_ClipLineToPortal(seg->linedef, line(), viewx, viewy) ? PClip_InFront : PClip_Inside;
+	line_t *linedef = seg->linedef;
+	if (!linedef)
+	{
+		return PClip_Inside;	// should be handled properly.
+	}
+	return P_ClipLineToPortal(linedef, line(), ViewPos) ? PClip_InFront : PClip_Inside;
 }
 
 int GLLinePortal::ClipSubsector(subsector_t *sub)
@@ -960,14 +947,14 @@ int GLLinePortal::ClipSubsector(subsector_t *sub)
 	// this seg is completely behind the mirror!
 	for(unsigned int i=0;i<sub->numlines;i++)
 	{
-		if (P_PointOnLineSidePrecise(sub->firstline[i].v1->fixX(), sub->firstline[i].v1->fixY(), line()) == 0) return PClip_Inside;
+		if (P_PointOnLineSidePrecise(sub->firstline[i].v1->fPos(), line()) == 0) return PClip_Inside;
 	}
 	return PClip_InFront; 
 }
 
-int GLLinePortal::ClipPoint(fixed_t x, fixed_t y) 
+int GLLinePortal::ClipPoint(const DVector2 &pos) 
 { 
-	if (P_PointOnLineSidePrecise(x, y, line())) 
+	if (P_PointOnLineSidePrecise(pos, line())) 
 	{
 		return PClip_InFront;
 	}
@@ -1002,11 +989,9 @@ void GLLineToLinePortal::DrawContents()
 	GLRenderer->mCurrentPortal = this;
 
 	line_t *origin = glport->reference->mOrigin;
-	P_TranslatePortalXY(origin, viewx, viewy);
-	DAngle va = ANGLE2DBL(viewangle);
-	P_TranslatePortalAngle(origin, va);
-	viewangle = va.BAMs();
-	P_TranslatePortalZ(origin, viewz);
+	P_TranslatePortalXY(origin, ViewPos.X, ViewPos.Y);
+	P_TranslatePortalAngle(origin, ViewAngle);
+	P_TranslatePortalZ(origin, ViewPos.Z);
 
 	SaveMapSection();
 
@@ -1023,51 +1008,12 @@ void GLLineToLinePortal::DrawContents()
 
 	GLRenderer->mViewActor = NULL;
 	validcount++;
-	GLRenderer->SetupView(viewx, viewy, viewz, viewangle, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
+	GLRenderer->SetupView(ViewPos.X, ViewPos.Y, ViewPos.Z, ViewAngle, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
 
 	ClearClipper();
 	GLRenderer->DrawScene();
 	RestoreMapSection();
 }
-
-
-/*
-int GLLineToLinePortal::ClipSeg(seg_t *seg) 
-{ 
-	line_t *linedef = lines[0].seg->linedef->getPortalDestination();
-	// this seg is completely behind the portal
-	//we cannot use P_PointOnLineSide here because it loses the special meaning of 0 == 'on the line'.
-	int side1 = DMulScale32(seg->v1->y - linedef->v1->y, linedef->dx, linedef->v1->x - seg->v1->x, linedef->dy);
-	int side2 = DMulScale32(seg->v2->y - linedef->v1->y, linedef->dx, linedef->v1->x - seg->v2->x, linedef->dy);
-
-	if (side1 >= 0 && side2 >= 0)
-	{
-		return PClip_InFront;
-	}
-	return PClip_Inside; 
-}
-
-int GLLineToLinePortal::ClipSubsector(subsector_t *sub) 
-{ 
-	line_t *masterline = lines[0].seg->linedef->getPortalDestination();
-
-	for(unsigned int i=0;i<sub->numlines;i++)
-	{
-		if (P_PointOnLineSidePrecise(sub->firstline[i].v1->x, sub->firstline[i].v1->y, masterline) == 0) return PClip_Inside;
-	}
-	return PClip_InFront; 
-}
-
-int GLLineToLinePortal::ClipPoint(fixed_t x, fixed_t y) 
-{ 
-	line_t *masterline = lines[0].seg->linedef->getPortalDestination();
-	if (P_PointOnLineSidePrecise(x, y, masterline)) 
-	{
-		return PClip_InFront;
-	}
-	return PClip_Inside; 
-}
-*/
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -1112,7 +1058,7 @@ void GLHorizonPortal::DrawContents()
 		PortalAll.Unclock();
 		return;
 	}
-	gl_RenderState.SetCameraPos(FIXED2FLOAT(viewx), FIXED2FLOAT(viewy), FIXED2FLOAT(viewz));
+	gl_RenderState.SetCameraPos(ViewPos.X, ViewPos.Y, ViewPos.Z);
 
 
 	z=sp->Texheight;
@@ -1141,8 +1087,8 @@ void GLHorizonPortal::DrawContents()
 
 
 
-	float vx=FIXED2FLOAT(viewx);
-	float vy=FIXED2FLOAT(viewy);
+	float vx= ViewPos.X;
+	float vy= ViewPos.Y;
 
 	// Draw to some far away boundary
 	// This is not drawn as larher strips because it causes visual glitches.
@@ -1163,7 +1109,7 @@ void GLHorizonPortal::DrawContents()
 		}
 	}
 
-	float vz=FIXED2FLOAT(viewz);
+	float vz= ViewPos.Z;
 	float tz=(z-vz);///64.0f;
 
 	// fill the gap between the polygon and the true horizon
@@ -1238,7 +1184,7 @@ void GLEEHorizonPortal::DrawContents()
 		horz.colormap = origin->Sector->ColorMap;
 		if (origin->special1 == SKYBOX_PLANE)
 		{
-			horz.plane.Texheight = FIXED2FLOAT(viewz) + fabs(horz.plane.Texheight);
+			horz.plane.Texheight = ViewPos.Z + fabs(horz.plane.Texheight);
 		}
 		GLHorizonPortal ceil(&horz, true);
 		ceil.DrawContents();
@@ -1251,7 +1197,7 @@ void GLEEHorizonPortal::DrawContents()
 		horz.colormap = origin->Sector->ColorMap;
 		if (origin->special1 == SKYBOX_PLANE)
 		{
-			horz.plane.Texheight = FIXED2FLOAT(viewz) - fabs(horz.plane.Texheight);
+			horz.plane.Texheight = ViewPos.Z - fabs(horz.plane.Texheight);
 		}
 		GLHorizonPortal floor(&horz, true);
 		floor.DrawContents();

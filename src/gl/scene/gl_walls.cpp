@@ -134,8 +134,7 @@ void GLWall::PutWall(bool translucent)
 
 	if (translucent) // translucent walls
 	{
-		viewdistance = P_AproxDistance(((seg->linedef->v1->fX() + seg->linedef->v2->fX()) /2) - viewx,
-			((seg->linedef->v1->fY() + seg->linedef->v2->fY()) /2) - viewy);
+		ViewDistance = (ViewPos - (seg->linedef->v1->fPos() + seg->linedef->Delta() / 2)).XY().LengthSquared();
 		gl_drawinfo->drawlists[GLDL_TRANSLUCENT].AddWall(this);
 	}
 	else
@@ -370,13 +369,13 @@ bool GLWall::DoHorizon(seg_t * seg,sector_t * fs, vertex_t * v1,vertex_t * v2)
 	lightlist_t * light;
 
 	// ZDoom doesn't support slopes in a horizon sector so I won't either!
-	ztop[1] = ztop[0] = FIXED2FLOAT(fs->GetPlaneTexZ(sector_t::ceiling));
-	zbottom[1] = zbottom[0] = FIXED2FLOAT(fs->GetPlaneTexZ(sector_t::floor));
+	ztop[1] = ztop[0] = fs->GetPlaneTexZF(sector_t::ceiling);
+	zbottom[1] = zbottom[0] = fs->GetPlaneTexZF(sector_t::floor);
 
-	if (viewz < fs->GetPlaneTexZ(sector_t::ceiling))
+	if (ViewPos.Z < fs->GetPlaneTexZF(sector_t::ceiling))
 	{
-		if (viewz > fs->GetPlaneTexZ(sector_t::floor))
-			zbottom[1] = zbottom[0] = FIXED2FLOAT(viewz);
+		if (ViewPos.Z > fs->GetPlaneTexZF(sector_t::floor))
+			zbottom[1] = zbottom[0] = ViewPos.Z;
 
 		if (fs->GetTexture(sector_t::ceiling) == skyflatnum)
 		{
@@ -1105,8 +1104,8 @@ __forceinline void GLWall::GetPlanePos(F3DFloor::planeref *planeref, fixed_t &le
 {
 	if (planeref->plane->isSlope())
 	{
-		left=planeref->plane->ZatPoint(vertexes[0]->x, vertexes[0]->y);
-		right=planeref->plane->ZatPoint(vertexes[1]->x, vertexes[1]->y);
+		left=planeref->plane->ZatPointFixed(vertexes[0]);
+		right=planeref->plane->ZatPointFixed(vertexes[1]);
 	}
 	else if(planeref->isceiling == sector_t::ceiling)
 	{
@@ -1452,8 +1451,8 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 	// Save a little time (up to 0.3 ms per frame ;) )
 	if (frontsector->floorplane.isSlope())
 	{
-		ffh1 = segfront->floorplane.ZatPoint(v1->x, v1->y);
-		ffh2 = segfront->floorplane.ZatPoint(v2->x, v2->y);
+		ffh1 = segfront->floorplane.ZatPointFixed(v1);
+		ffh2 = segfront->floorplane.ZatPointFixed(v2);
 		zfloor[0] = FIXED2FLOAT(ffh1);
 		zfloor[1] = FIXED2FLOAT(ffh2);
 	}
@@ -1465,8 +1464,8 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 
 	if (segfront->ceilingplane.isSlope())
 	{
-		fch1 = segfront->ceilingplane.ZatPoint(v1->x, v1->y);
-		fch2 = segfront->ceilingplane.ZatPoint(v2->x, v2->y);
+		fch1 = segfront->ceilingplane.ZatPointFixed(v1);
+		fch2 = segfront->ceilingplane.ZatPointFixed(v2);
 		zceil[0] = FIXED2FLOAT(fch1);
 		zceil[1] = FIXED2FLOAT(fch2);
 	}
@@ -1522,8 +1521,8 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 
 		if (segback->floorplane.isSlope())
 		{
-			bfh1 = segback->floorplane.ZatPoint(v1->x, v1->y);
-			bfh2 = segback->floorplane.ZatPoint(v2->x, v2->y);
+			bfh1 = segback->floorplane.ZatPointFixed(v1);
+			bfh2 = segback->floorplane.ZatPointFixed(v2);
 		}
 		else
 		{
@@ -1532,8 +1531,8 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 
 		if (segback->ceilingplane.isSlope())
 		{
-			bch1 = segback->ceilingplane.ZatPoint(v1->x, v1->y);
-			bch2 = segback->ceilingplane.ZatPoint(v2->x, v2->y);
+			bch1 = segback->ceilingplane.ZatPointFixed(v1);
+			bch2 = segback->ceilingplane.ZatPointFixed(v2);
 		}
 		else
 		{

@@ -64,15 +64,13 @@
 
 struct FPortalID
 {
-	fixed_t mXDisplacement;
-	fixed_t mYDisplacement;
+	DVector2 mDisplacement;
 
 	// for the hash code
-	operator intptr_t() const { return (mXDisplacement >> 8) + (mYDisplacement << 8); }
+	operator intptr_t() const { return (FLOAT2FIXED(mDisplacement.X) >> 8) + (FLOAT2FIXED(mDisplacement.Y) << 8); }
 	bool operator != (const FPortalID &other) const
 	{
-		return mXDisplacement != other.mXDisplacement ||
-				mYDisplacement != other.mYDisplacement;
+		return mDisplacement != other.mDisplacement;
 	}
 };
 
@@ -331,8 +329,8 @@ void gl_BuildPortalCoverage(FPortalCoverage *coverage, subsector_t *subsector, F
 	shape.Resize(subsector->numlines);
 	for(unsigned i=0; i<subsector->numlines; i++)
 	{
-		centerx += (shape[i].x = subsector->firstline[i].v1->fixX() + portal->xDisplacement);
-		centery += (shape[i].y = subsector->firstline[i].v1->fixY() + portal->yDisplacement);
+		centerx += (shape[i].x = FLOAT2FIXED(subsector->firstline[i].v1->fX() + portal->mDisplacement.X));
+		centery += (shape[i].y = FLOAT2FIXED(subsector->firstline[i].v1->fY() + portal->mDisplacement.Y));
 	}
 
 	FCoverageBuilder build(subsector, portal);
@@ -361,7 +359,7 @@ static void CollectPortalSectors(FPortalMap &collection)
 			ASkyViewpoint *SkyBox = barrier_cast<ASkyViewpoint*>(sec->SkyBoxes[j]);
 			if (SkyBox != NULL && SkyBox->bAlways && SkyBox->Mate != NULL)
 			{
-				FPortalID id = { SkyBox->_f_X() - SkyBox->Mate->_f_X(), SkyBox->_f_Y() - SkyBox->Mate->_f_Y() };
+				FPortalID id = { {SkyBox->X() - SkyBox->Mate->X(), SkyBox->Y() - SkyBox->Mate->Y()} };
 
 				FPortalSectors &sss = collection[id];
 				FPortalSector ss = { sec, j };
@@ -406,8 +404,7 @@ void gl_InitPortals()
 			if (planeflags & i)
 			{
 				FPortal *portal = new FPortal;
-				portal->xDisplacement = pair->Key.mXDisplacement;
-				portal->yDisplacement = pair->Key.mYDisplacement;
+				portal->mDisplacement = pair->Key.mDisplacement;
 				portal->plane = (i==1? sector_t::floor : sector_t::ceiling);	/**/
 				portal->glportal = NULL;
 				portals.Push(portal);
@@ -505,8 +502,8 @@ CCMD(dumpportals)
 {
 	for(unsigned i=0;i<portals.Size(); i++)
 	{
-		double xdisp = portals[i]->xDisplacement/65536.;
-		double ydisp = portals[i]->yDisplacement/65536.;
+		double xdisp = portals[i]->mDisplacement.X;
+		double ydisp = portals[i]->mDisplacement.Y;
 		Printf(PRINT_LOG, "Portal #%d, %s, displacement = (%f,%f)\n", i, portals[i]->plane==0? "floor":"ceiling",
 			xdisp, ydisp);
 		Printf(PRINT_LOG, "Coverage:\n");

@@ -184,9 +184,8 @@ void CheckBench()
 		FString compose;
 
 		compose.Format("Map %s: \"%s\",\nx = %1.4f, y = %1.4f, z = %1.4f, angle = %1.4f, pitch = %1.4f\n",
-			level.MapName.GetChars(), level.LevelName.GetChars(), FIXED2FLOAT(viewx), FIXED2FLOAT(viewy), FIXED2FLOAT(viewz),
-			AngleToFloat(viewangle), AngleToFloat(viewpitch));
-
+			level.MapName.GetChars(), level.LevelName.GetChars(), ViewPos.X, ViewPos.Y, ViewPos.Z, ViewAngle.Degrees, ViewPitch.Degrees);
+		
 		AppendRenderStats(compose);
 		AppendRenderTimes(compose);
 		AppendLightStats(compose);

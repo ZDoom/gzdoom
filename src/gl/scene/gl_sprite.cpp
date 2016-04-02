@@ -154,10 +154,7 @@ void GLSprite::Draw(int pass)
 			// fog + fuzz don't work well without some fiddling with the alpha value!
 			if (!gl_isBlack(Colormap.FadeColor))
 			{
-				float xcamera=FIXED2FLOAT(viewx);
-				float ycamera=FIXED2FLOAT(viewy);
-
-				float dist=Dist2(xcamera,ycamera, x,y);
+				float dist=Dist2(ViewPos.X, ViewPos.Y, x,y);
 
 				if (!Colormap.FadeColor.a) Colormap.FadeColor.a=clamp<int>(255-lightlevel,60,255);
 
@@ -397,8 +394,8 @@ void GLSprite::PerformSpriteClipAdjustment(AActor *thing, fixed_t thingx, fixed_
 			for (unsigned int i = 0; i < x.ffloors.Size(); i++)
 			{
 				F3DFloor * ff = x.ffloors[i];
-				float floorh = FIXED2FLOAT(ff->top.plane->ZatPoint(thingx, thingy));
-				float ceilingh = FIXED2FLOAT(ff->bottom.plane->ZatPoint(thingx, thingy));
+				float floorh = FIXED2FLOAT(ff->top.plane->ZatPointFixed(thingx, thingy));
+				float ceilingh = FIXED2FLOAT(ff->bottom.plane->ZatPointFixed(thingx, thingy));
 				if (floorh == thing->floorz)
 				{
 					btm = floorh;
@@ -416,7 +413,7 @@ void GLSprite::PerformSpriteClipAdjustment(AActor *thing, fixed_t thingx, fixed_
 		else if (thing->Sector->heightsec && !(thing->Sector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
 		{
 			if (thing->flags2&MF2_ONMOBJ && thing->floorz ==
-				FIXED2FLOAT(thing->Sector->heightsec->floorplane.ZatPoint(thingx, thingy)))
+				FIXED2FLOAT(thing->Sector->heightsec->floorplane.ZatPointFixed(thingx, thingy)))
 			{
 				btm = thing->floorz;
 				top = thing->ceilingz;
@@ -425,7 +422,7 @@ void GLSprite::PerformSpriteClipAdjustment(AActor *thing, fixed_t thingx, fixed_
 		if (btm == 1000000.0f)
 			btm = thing->Sector->floorplane.ZatPoint(thing) - thing->Floorclip;
 		if (top == -1000000.0f)
-			top = FIXED2FLOAT(thing->Sector->ceilingplane.ZatPoint(thingx, thingy));
+			top = FIXED2FLOAT(thing->Sector->ceilingplane.ZatPointFixed(thingx, thingy));
 
 		// +/-1 to account for the one pixel empty frame around the sprite.
 		float diffb = (z2+1) - btm;
@@ -512,9 +509,9 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 	DVector3 thingpos = thing->InterpolatedPosition(r_TicFracF);
 
 	// Too close to the camera. This doesn't look good if it is a sprite.
-	if (fabs(thingpos.X - FIXED2DBL(viewx) < 2 && fabs(thingpos.Y - FIXED2DBL(viewy) < 2)))
+	if (fabs(thingpos.X - ViewPos.X) < 2 && fabs(thingpos.Y - ViewPos.Y) < 2)
 	{
-		if (FIXED2DBL(viewz) >= thingpos.Z - 2 && FIXED2DBL(viewz) <= thingpos.Z + thing->Height + 2)
+		if (ViewPos.Z >= thingpos.Z - 2 && ViewPos.Z <= thingpos.Z + thing->Height + 2)
 		{
 			// exclude vertically moving objects from this check.
 			if (!thing->Vel.isZero())
@@ -533,14 +530,14 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 		if (!(thing->flags7 & MF7_FLYCHEAT) && thing->target==GLRenderer->mViewActor && GLRenderer->mViewActor != NULL)
 		{
 			double clipdist = clamp(thing->Speed, thing->target->radius, thing->target->radius*2);
-			if (P_AproxDistance(thingpos.X-viewx, thingpos.Y-viewy) < clipdist) return;
+			if ((thingpos-ViewPos).LengthSquared() < clipdist * clipdist) return;
 		}
 		thing->flags7 |= MF7_FLYCHEAT;	// do this only once for the very first frame, but not if it gets into range again.
 	}
 
 	if (GLRenderer->mCurrentPortal)
 	{
-		int clipres = GLRenderer->mCurrentPortal->ClipPoint(FLOAT2FIXED(thingpos.X), FLOAT2FIXED(thingpos.Y));
+		int clipres = GLRenderer->mCurrentPortal->ClipPoint(thingpos);
 		if (clipres == GLPortal::PClip_InFront) return;
 	}
 
@@ -571,10 +568,9 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 	modelframe = gl_FindModelFrame(thing->GetClass(), spritenum, thing->frame, !!(thing->flags & MF_DROPPED));
 	if (!modelframe)
 	{
-		angle_t ang = R_PointToAngle(FLOAT2FIXED(thingpos.X), FLOAT2FIXED(thingpos.Y));
-
 		bool mirror;
-		FTextureID patch = gl_GetSpriteFrame(spritenum, thing->frame, -1, ang - thing->Angles.Yaw.BAMs(), &mirror);
+		DAngle ang = (thingpos - ViewPos).Angle();
+		FTextureID patch = gl_GetSpriteFrame(spritenum, thing->frame, -1, (ang - thing->Angles.Yaw).BAMs(), &mirror);
 		if (!patch.isValid()) return;
 		int type = thing->renderflags & RF_SPRITETYPEMASK;
 		gltexture = FMaterial::ValidateTexture(patch, (type == RF_FACESPRITE), false);
@@ -644,7 +640,7 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 		gltexture=NULL;
 	}
 
-	depth = DMulScale20 (FLOAT2FIXED(thingpos.X)-viewx, viewtancos, FLOAT2FIXED(thingpos.Y)-viewy, viewtansin);
+	depth = (int)((x - ViewPos.X) * viewtancos + (y - ViewPos.Y) * viewtansin);
 
 	// light calculation
 
@@ -841,7 +837,7 @@ void GLSprite::ProcessParticle (particle_t *particle, sector_t *sector)//, int s
 {
 	if (GLRenderer->mCurrentPortal)
 	{
-		int clipres = GLRenderer->mCurrentPortal->ClipPoint(particle->x, particle->y);
+		int clipres = GLRenderer->mCurrentPortal->ClipPoint(particle->Pos);
 		if (clipres == GLPortal::PClip_InFront) return;
 	}
 
@@ -860,15 +856,15 @@ void GLSprite::ProcessParticle (particle_t *particle, sector_t *sector)//, int s
 	else if (!particle->bright)
 	{
 		TArray<lightlist_t> & lightlist=sector->e->XFloor.lightlist;
-		int lightbottom;
+		double lightbottom;
 
 		Colormap = sector->ColorMap;
 		for(unsigned int i=0;i<lightlist.Size();i++)
 		{
-			if (i<lightlist.Size()-1) lightbottom = lightlist[i+1].plane.ZatPoint(particle->x,particle->y);
-			else lightbottom = sector->floorplane.ZatPoint(particle->x,particle->y);
+			if (i<lightlist.Size()-1) lightbottom = lightlist[i+1].plane.ZatPoint(particle->Pos);
+			else lightbottom = sector->floorplane.ZatPoint(particle->Pos);
 
-			if (lightbottom < particle->y)
+			if (lightbottom < particle->Pos.Z)
 			{
 				lightlevel = *lightlist[i].p_lightlevel;
 				Colormap.LightColor = (lightlist[i].extra_colormap)->Color;
@@ -920,9 +916,9 @@ void GLSprite::ProcessParticle (particle_t *particle, sector_t *sector)//, int s
 		}
 	}
 
-	x= FIXED2FLOAT(particle->x);
-	y= FIXED2FLOAT(particle->y);
-	z= FIXED2FLOAT(particle->z);
+	x = particle->Pos.X;
+	y = particle->Pos.Y;
+	z = particle->Pos.Z;
 	
 	float scalefac=particle->size/4.0f;
 	// [BB] The smooth particles are smaller than the other ones. Compensate for this here.
@@ -939,7 +935,7 @@ void GLSprite::ProcessParticle (particle_t *particle, sector_t *sector)//, int s
 	z1=z-scalefac;
 	z2=z+scalefac;
 
-	depth = DMulScale20 (particle->x-viewx, viewtancos, particle->y-viewy, viewtansin);
+	depth = (int)((x - ViewPos.X) * viewtancos + (y - ViewPos.Y) * viewtansin);
 
 	actor=NULL;
 	this->particle=particle;

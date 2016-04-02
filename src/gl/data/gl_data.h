@@ -47,8 +47,7 @@ struct GLSectorStackPortal;
 
 struct FPortal
 {
-	fixed_t xDisplacement;
-	fixed_t yDisplacement;
+	DVector2 mDisplacement;
 	int plane;
 	GLSectorStackPortal *glportal;	// for quick access to the render data. This is only valid during BSP traversal!
 

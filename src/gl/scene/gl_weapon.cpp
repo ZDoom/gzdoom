@@ -258,15 +258,15 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 			TArray<lightlist_t> & lightlist = viewsector->e->XFloor.lightlist;
 			for(i=0;i<lightlist.Size();i++)
 			{
-				int lightbottom;
+				double lightbottom;
 
 				if (i<lightlist.Size()-1) 
 				{
-					lightbottom=lightlist[i+1].plane.ZatPoint(viewx,viewy);
+					lightbottom=lightlist[i+1].plane.ZatPoint(ViewPos);
 				}
 				else 
 				{
-					lightbottom=viewsector->floorplane.ZatPoint(viewx,viewy);
+					lightbottom=viewsector->floorplane.ZatPoint(ViewPos);
 				}
 
 				if (lightbottom<player->viewz) 

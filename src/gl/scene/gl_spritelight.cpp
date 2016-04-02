@@ -142,6 +142,6 @@ void gl_SetDynSpriteLight(AActor *thing, particle_t *particle)
 	}
 	else if (particle != NULL)
 	{
-		gl_SetDynSpriteLight(NULL, FIXED2FLOAT(particle->x), FIXED2FLOAT(particle->y), FIXED2FLOAT(particle->z), particle->subsector);
+		gl_SetDynSpriteLight(NULL, particle->Pos.X, particle->Pos.Y, particle->Pos.Z, particle->subsector);
 	}
 }

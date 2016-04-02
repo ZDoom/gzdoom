@@ -243,39 +243,39 @@ SortNode * GLDrawList::FindSortPlane(SortNode * head)
 //==========================================================================
 SortNode * GLDrawList::FindSortWall(SortNode * head)
 {
-	fixed_t farthest=INT_MIN;
-	fixed_t nearest=INT_MAX;
-	SortNode * best=NULL;
-	SortNode * node=head;
-	fixed_t bestdist=INT_MAX;
+	float farthest = -FLT_MAX;
+	float nearest = FLT_MAX;
+	SortNode * best = NULL;
+	SortNode * node = head;
+	float bestdist = FLT_MAX;
 
 	while (node)
 	{
-		GLDrawItem * it=&drawitems[node->itemindex];
-		if (it->rendertype==GLDIT_WALL)
+		GLDrawItem * it = &drawitems[node->itemindex];
+		if (it->rendertype == GLDIT_WALL)
 		{
-			fixed_t d=walls[it->index].viewdistance;
-			if (d>farthest) farthest=d;
-			if (d<nearest) nearest=d;
+			float d = walls[it->index].ViewDistance;
+			if (d > farthest) farthest = d;
+			if (d < nearest) nearest = d;
 		}
-		node=node->next;
+		node = node->next;
 	}
-	if (farthest==INT_MIN) return NULL;
-	node=head;
-	farthest=(farthest+nearest)>>1;
+	if (farthest == INT_MIN) return NULL;
+	node = head;
+	farthest = (farthest + nearest) / 2;
 	while (node)
 	{
-		GLDrawItem * it=&drawitems[node->itemindex];
-		if (it->rendertype==GLDIT_WALL)
+		GLDrawItem * it = &drawitems[node->itemindex];
+		if (it->rendertype == GLDIT_WALL)
 		{
-			fixed_t di=abs(walls[it->index].viewdistance-farthest);
-			if (!best || di<bestdist)
+			float di = fabsf(walls[it->index].ViewDistance - farthest);
+			if (!best || di < bestdist)
 			{
-				best=node;
-				bestdist=di;
+				best = node;
+				bestdist = di;
 			}
 		}
-		node=node->next;
+		node = node->next;
 	}
 	return best;
 }
@@ -309,7 +309,7 @@ void GLDrawList::SortWallIntoPlane(SortNode * head,SortNode * sort)
 	GLFlat * fh=&flats[drawitems[head->itemindex].index];
 	GLWall * ws=&walls[drawitems[sort->itemindex].index];
 
-	bool ceiling = fh->z > FIXED2FLOAT(viewz);
+	bool ceiling = fh->z > ViewPos.Z;
 
 	if ((ws->ztop[0] > fh->z || ws->ztop[1] > fh->z) && (ws->zbottom[0] < fh->z || ws->zbottom[1] < fh->z))
 	{
@@ -350,7 +350,7 @@ void GLDrawList::SortSpriteIntoPlane(SortNode * head,SortNode * sort)
 	GLFlat * fh=&flats[drawitems[head->itemindex].index];
 	GLSprite * ss=&sprites[drawitems[sort->itemindex].index];
 
-	bool ceiling = fh->z > FIXED2FLOAT(viewz);
+	bool ceiling = fh->z > ViewPos.Z;
 
 	if ((ss->z1>fh->z && ss->z2<fh->z) || ss->modelframe)
 	{
@@ -708,7 +708,7 @@ void GLDrawList::DoDrawSorted(SortNode * head)
 	if (drawitems[head->itemindex].rendertype == GLDIT_FLAT)
 	{
 		z = flats[drawitems[head->itemindex].index].z;
-		relation = z > FIXED2FLOAT(viewz)? 1 : -1;
+		relation = z > ViewPos.Z ? 1 : -1;
 	}
 
 
@@ -1112,9 +1112,9 @@ void FDrawInfo::DrawFloodedPlane(wallseg * ws, float planez, sector_t * sec, boo
 	gl_SetFog(lightlevel, rel, &Colormap, false);
 	gl_RenderState.SetMaterial(gltexture, CLAMP_NONE, 0, -1, false);
 
-	float fviewx = FIXED2FLOAT(viewx);
-	float fviewy = FIXED2FLOAT(viewy);
-	float fviewz = FIXED2FLOAT(viewz);
+	float fviewx = ViewPos.X;
+	float fviewy = ViewPos.Y;
+	float fviewz = ViewPos.Z;
 
 	gl_SetPlaneTextureRotation(&plane, gltexture);
 	gl_RenderState.Apply();
@@ -1165,11 +1165,11 @@ void FDrawInfo::FloodUpperGap(seg_t * seg)
 
 	// Although the plane can be sloped this code will only be called
 	// when the edge itself is not.
-	fixed_t backz = fakebsector->ceilingplane.ZatPoint(seg->v1->x, seg->v1->y);
-	fixed_t frontz = fakefsector->ceilingplane.ZatPoint(seg->v1->x, seg->v1->y);
+	double backz = fakebsector->ceilingplane.ZatPoint(seg->v1);
+	double frontz = fakefsector->ceilingplane.ZatPoint(seg->v1);
 
 	if (fakebsector->GetTexture(sector_t::ceiling)==skyflatnum) return;
-	if (backz < viewz) return;
+	if (backz < ViewPos.Z) return;
 
 	if (seg->sidedef == seg->linedef->sidedef[0])
 	{
@@ -1187,8 +1187,8 @@ void FDrawInfo::FloodUpperGap(seg_t * seg)
 	ws.x2 = v2->fX();
 	ws.y2 = v2->fY();
 
-	ws.z1= FIXED2FLOAT(frontz);
-	ws.z2= FIXED2FLOAT(backz);
+	ws.z1= frontz;
+	ws.z2= backz;
 
 	// Step1: Draw a stencil into the gap
 	SetupFloodStencil(&ws);
@@ -1217,12 +1217,12 @@ void FDrawInfo::FloodLowerGap(seg_t * seg)
 
 	// Although the plane can be sloped this code will only be called
 	// when the edge itself is not.
-	fixed_t backz = fakebsector->floorplane.ZatPoint(seg->v1->x, seg->v1->y);
-	fixed_t frontz = fakefsector->floorplane.ZatPoint(seg->v1->x, seg->v1->y);
+	double backz = fakebsector->floorplane.ZatPoint(seg->v1);
+	double frontz = fakefsector->floorplane.ZatPoint(seg->v1);
 
 
 	if (fakebsector->GetTexture(sector_t::floor) == skyflatnum) return;
-	if (fakebsector->GetPlaneTexZ(sector_t::floor) > viewz) return;
+	if (fakebsector->GetPlaneTexZF(sector_t::floor) > ViewPos.Z) return;
 
 	if (seg->sidedef == seg->linedef->sidedef[0])
 	{
@@ -1240,8 +1240,8 @@ void FDrawInfo::FloodLowerGap(seg_t * seg)
 	ws.x2 = v2->fX();
 	ws.y2 = v2->fY();
 
-	ws.z2= FIXED2FLOAT(frontz);
-	ws.z1= FIXED2FLOAT(backz);
+	ws.z2= frontz;
+	ws.z1= backz;
 
 	// Step1: Draw a stencil into the gap
 	SetupFloodStencil(&ws);

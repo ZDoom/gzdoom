@@ -1315,7 +1315,7 @@ void P_LoadSegs (MapData * map)
 			// off, then move one vertex. This may seem insignificant, but one degree
 			// errors _can_ cause firelines.
 
-			ptp_angle = R_PointToAngle2 (li->v1->fixX(), li->v1->fixY(), li->v2->fixX(), li->v2->fixY());
+			ptp_angle = (li->v2->fPos() - li->v1->fPos()).Angle().BAMs();
 			dis = 0;
 			delta_angle = (absangle(ptp_angle-(segangle<<16))>>ANGLETOFINESHIFT)*360/FINEANGLES;
 

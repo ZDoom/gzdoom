@@ -1265,10 +1265,6 @@ public:
 		if (!moving) Prev.Z = Z();
 	}
 
-	// These are not for general use as they do not link the actor into the world!
-	void SetXY(fixed_t xx, fixed_t yy) = delete;
-	void SetXYZ(fixed_t xx, fixed_t yy, fixed_t zz) = delete;
-
 	void SetXY(const DVector2 &npos)
 	{
 		__Pos.X = npos.X;

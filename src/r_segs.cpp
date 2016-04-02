@@ -274,7 +274,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	{
 		if (!(fake3D & FAKE3D_CLIPTOP))
 		{
-			sclipTop = sec->ceilingplane.ZatPoint(viewx, viewy);
+			sclipTop = sec->ceilingplane.ZatPointFixed(viewx, viewy);
 		}
 		for (i = frontsector->e->XFloor.lightlist.Size() - 1; i >= 0; i--)
 		{
@@ -1385,10 +1385,10 @@ static void wallscan_np2_ds(drawseg_t *ds, int x1, int x2, short *uwal, short *d
 {
 	if (rw_pic->GetHeight() != 1 << rw_pic->HeightBits)
 	{
-		fixed_t frontcz1 = ds->curline->frontsector->ceilingplane.ZatPoint(ds->curline->v1->fixX(), ds->curline->v1->fixY());
-		fixed_t frontfz1 = ds->curline->frontsector->floorplane.ZatPoint(ds->curline->v1->fixX(), ds->curline->v1->fixY());
-		fixed_t frontcz2 = ds->curline->frontsector->ceilingplane.ZatPoint(ds->curline->v2->fixX(), ds->curline->v2->fixY());
-		fixed_t frontfz2 = ds->curline->frontsector->floorplane.ZatPoint(ds->curline->v2->fixX(), ds->curline->v2->fixY());
+		fixed_t frontcz1 = ds->curline->frontsector->ceilingplane.ZatPointFixed(ds->curline->v1);
+		fixed_t frontfz1 = ds->curline->frontsector->floorplane.ZatPointFixed(ds->curline->v1);
+		fixed_t frontcz2 = ds->curline->frontsector->ceilingplane.ZatPointFixed(ds->curline->v2);
+		fixed_t frontfz2 = ds->curline->frontsector->floorplane.ZatPointFixed(ds->curline->v2);
 		fixed_t top = MAX(frontcz1, frontcz2);
 		fixed_t bot = MIN(frontfz1, frontfz2);
 		if (fake3D & FAKE3D_CLIPTOP)
@@ -2783,7 +2783,7 @@ int WallMost (short *mostbuf, const secplane_t &plane, const FWallCoords *wallc)
 			x -= MulScale30 (frac, x - curline->v1->fixX());
 			y -= MulScale30 (frac, y - curline->v1->fixY());
 		}
-		z1 = viewz - plane.ZatPoint (x, y);
+		z1 = viewz - plane.ZatPointFixed(x, y);
 
 		if (wallc->sx2 > wallc->sx1 + 1)
 		{
@@ -2795,7 +2795,7 @@ int WallMost (short *mostbuf, const secplane_t &plane, const FWallCoords *wallc)
 				x += MulScale30 (frac, curline->v2->fixX() - x);
 				y += MulScale30 (frac, curline->v2->fixY() - y);
 			}
-			z2 = viewz - plane.ZatPoint (x, y);
+			z2 = viewz - plane.ZatPointFixed(x, y);
 		}
 		else
 		{
@@ -2812,7 +2812,7 @@ int WallMost (short *mostbuf, const secplane_t &plane, const FWallCoords *wallc)
 			x += MulScale30 (frac, curline->v2->fixX() - x);
 			y += MulScale30 (frac, curline->v2->fixY() - y);
 		}
-		z1 = viewz - plane.ZatPoint (x, y);
+		z1 = viewz - plane.ZatPointFixed(x, y);
 
 		if (wallc->sx2 > wallc->sx1 + 1)
 		{
@@ -2824,7 +2824,7 @@ int WallMost (short *mostbuf, const secplane_t &plane, const FWallCoords *wallc)
 				x -= MulScale30 (frac, x - curline->v1->fixX());
 				y -= MulScale30 (frac, y - curline->v1->fixY());
 			}
-			z2 = viewz - plane.ZatPoint (x, y);
+			z2 = viewz - plane.ZatPointFixed(x, y);
 		}
 		else
 		{

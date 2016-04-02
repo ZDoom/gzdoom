@@ -395,8 +395,8 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 			}
 		}
 
-		fixed_t refceilz = s->ceilingplane.ZatPoint (viewx, viewy);
-		fixed_t orgceilz = sec->ceilingplane.ZatPoint (viewx, viewy);
+		fixed_t refceilz = s->ceilingplane.ZatPointFixed (viewx, viewy);
+		fixed_t orgceilz = sec->ceilingplane.ZatPointFixed(viewx, viewy);
 
 #if 1
 		// [RH] Allow viewing underwater areas through doors/windows that
@@ -405,8 +405,8 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 		// sectors at the same time.
 		if (back && !r_fakingunderwater && curline->frontsector->heightsec == NULL)
 		{
-			if (rw_frontcz1 <= s->floorplane.ZatPoint (curline->v1->fixX(), curline->v1->fixY()) &&
-				rw_frontcz2 <= s->floorplane.ZatPoint (curline->v2->fixX(), curline->v2->fixY()))
+			if (rw_frontcz1 <= s->floorplane.ZatPointFixed (curline->v1) &&
+				rw_frontcz2 <= s->floorplane.ZatPointFixed(curline->v2))
 			{
 				// Check that the window is actually visible
 				for (int z = WallC.sx1; z < WallC.sx2; ++z)
@@ -581,10 +581,10 @@ void R_AddLine (seg_t *line)
 	{
 		backsector = line->backsector;
 	}
-	rw_frontcz1 = frontsector->ceilingplane.ZatPoint (line->v1->fixX(), line->v1->fixY());
-	rw_frontfz1 = frontsector->floorplane.ZatPoint (line->v1->fixX(), line->v1->fixY());
-	rw_frontcz2 = frontsector->ceilingplane.ZatPoint (line->v2->fixX(), line->v2->fixY());
-	rw_frontfz2 = frontsector->floorplane.ZatPoint (line->v2->fixX(), line->v2->fixY());
+	rw_frontcz1 = frontsector->ceilingplane.ZatPointFixed(line->v1);
+	rw_frontfz1 = frontsector->floorplane.ZatPointFixed(line->v1);
+	rw_frontcz2 = frontsector->ceilingplane.ZatPointFixed(line->v2);
+	rw_frontfz2 = frontsector->floorplane.ZatPointFixed(line->v2);
 
 	rw_mustmarkfloor = rw_mustmarkceiling = false;
 	rw_havehigh = rw_havelow = false;
@@ -603,10 +603,10 @@ void R_AddLine (seg_t *line)
 		}
 		doorclosed = 0;		// killough 4/16/98
 
-		rw_backcz1 = backsector->ceilingplane.ZatPoint (line->v1->fixX(), line->v1->fixY());
-		rw_backfz1 = backsector->floorplane.ZatPoint (line->v1->fixX(), line->v1->fixY());
-		rw_backcz2 = backsector->ceilingplane.ZatPoint (line->v2->fixX(), line->v2->fixY());
-		rw_backfz2 = backsector->floorplane.ZatPoint (line->v2->fixX(), line->v2->fixY());
+		rw_backcz1 = backsector->ceilingplane.ZatPointFixed (line->v1);
+		rw_backfz1 = backsector->floorplane.ZatPointFixed(line->v1);
+		rw_backcz2 = backsector->ceilingplane.ZatPointFixed(line->v2);
+		rw_backfz2 = backsector->floorplane.ZatPointFixed(line->v2);
 
 		// Cannot make these walls solid, because it can result in
 		// sprite clipping problems for sprites near the wall

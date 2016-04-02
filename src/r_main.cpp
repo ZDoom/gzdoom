@@ -728,10 +728,8 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 			viewx = FLOAT2FIXED((x1 + r * dx)*2 - x);
 			viewy = FLOAT2FIXED((y1 + r * dy)*2 - y);
 		}
-		ViewAngle = pds->src->Delta().Angle();
-		viewangle = 2*R_PointToAngle2 (pds->src->v1->fixX(), pds->src->v1->fixY(),
-									   pds->src->v2->fixX(), pds->src->v2->fixY()) - startang;
-
+		viewangle = pds->src->Delta().Angle().BAMs() - startang;
+		ViewAngle = AngleToFloat(viewangle);
 	}
 	else
 	{

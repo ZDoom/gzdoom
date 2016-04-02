@@ -937,19 +937,19 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	{
 		if (fakeside == FAKED_AboveCeiling)
 		{
-			if (gzt < heightsec->ceilingplane.ZatPoint (fx, fy))
+			if (gzt < heightsec->ceilingplane.ZatPointFixed(fx, fy))
 				return;
 		}
 		else if (fakeside == FAKED_BelowFloor)
 		{
-			if (gzb >= heightsec->floorplane.ZatPoint (fx, fy))
+			if (gzb >= heightsec->floorplane.ZatPointFixed(fx, fy))
 				return;
 		}
 		else
 		{
-			if (gzt < heightsec->floorplane.ZatPoint (fx, fy))
+			if (gzt < heightsec->floorplane.ZatPointFixed(fx, fy))
 				return;
-			if (!(heightsec->MoreFlags & SECF_FAKEFLOORONLY) && gzb >= heightsec->ceilingplane.ZatPoint (fx, fy))
+			if (!(heightsec->MoreFlags & SECF_FAKEFLOORONLY) && gzb >= heightsec->ceilingplane.ZatPointFixed(fx, fy))
 				return;
 		}
 	}
@@ -1931,7 +1931,7 @@ void R_DrawSprite (vissprite_t *spr)
 	{
 		if (!(fake3D & FAKE3D_CLIPTOP))
 		{
-			sclipTop = spr->sector->ceilingplane.ZatPoint(viewx, viewy);
+			sclipTop = spr->sector->ceilingplane.ZatPointFixed(viewx, viewy);
 		}
 		sector_t *sec = NULL;
 		for (i = spr->sector->e->XFloor.lightlist.Size() - 1; i >= 0; i--)
@@ -2031,7 +2031,7 @@ void R_DrawSprite (vissprite_t *spr)
 	{ // only things in specially marked sectors
 		if (spr->FakeFlatStat != FAKED_AboveCeiling)
 		{
-			fixed_t hz = spr->heightsec->floorplane.ZatPoint (spr->gx, spr->gy);
+			fixed_t hz = spr->heightsec->floorplane.ZatPointFixed(spr->gx, spr->gy);
 			fixed_t h = (centeryfrac - FixedMul (hz-viewz, scale)) >> FRACBITS;
 
 			if (spr->FakeFlatStat == FAKED_BelowFloor)
@@ -2053,7 +2053,7 @@ void R_DrawSprite (vissprite_t *spr)
 		}
 		if (spr->FakeFlatStat != FAKED_BelowFloor && !(spr->heightsec->MoreFlags & SECF_FAKEFLOORONLY))
 		{
-			fixed_t hz = spr->heightsec->ceilingplane.ZatPoint (spr->gx, spr->gy);
+			fixed_t hz = spr->heightsec->ceilingplane.ZatPointFixed(spr->gx, spr->gy);
 			fixed_t h = (centeryfrac - FixedMul (hz-viewz, scale)) >> FRACBITS;
 
 			if (spr->FakeFlatStat == FAKED_AboveCeiling)

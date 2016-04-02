@@ -365,10 +365,24 @@ public:
 	}
 
 	// Returns the value of z at (x,y)
-	fixed_t ZatPoint (fixed_t x, fixed_t y) const
+	fixed_t ZatPoint(fixed_t x, fixed_t y) const = delete;	// it is not allowed to call this.
+
+	fixed_t ZatPointFixed(fixed_t x, fixed_t y) const
 	{
 		return FixedMul (ic, -d - DMulScale16 (a, x, b, y));
 	}
+
+	// This is for the software renderer
+	fixed_t ZatPointFixed(const DVector2 &pos) const
+	{
+		return xs_CRoundToInt((d + a*pos.X + b*pos.Y) * ic / (-65536.0));
+	}
+
+	fixed_t ZatPointFixed(const vertex_t *v) const
+	{
+		return FixedMul(ic, -d - DMulScale16(a, v->fixX(), b, v->fixY()));
+	}
+
 
 	// Returns the value of z at (x,y) as a double
 	double ZatPoint (double x, double y) const
@@ -379,12 +393,6 @@ public:
 	double ZatPoint(const DVector2 &pos) const
 	{
 		return (d + a*pos.X + b*pos.Y) * ic / (-65536.0 * 65536.0);
-	}
-
-	// This is for the software renderer
-	fixed_t ZatPointFixed(const DVector2 &pos) const
-	{
-		return xs_CRoundToInt((d + a*pos.X + b*pos.Y) * ic / (-65536.0));
 	}
 
 

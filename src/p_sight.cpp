@@ -642,10 +642,11 @@ bool SightCheck::P_SightPathTraverse ()
 	xt2 = x2 / MAPBLOCKUNITS;
 	yt2 = y2 / MAPBLOCKUNITS;
 
-	mapx = int(xt1);
-	mapy = int(yt1);
-	int mapex = int(xt2);
-	int mapey = int(yt2);
+	mapx = xs_FloorToInt(xt1);
+	mapy = xs_FloorToInt(yt1);
+	int mapex = xs_FloorToInt(xt2);
+	int mapey = xs_FloorToInt(yt2);
+
 
 	if (mapex > mapx)
 	{
@@ -731,7 +732,7 @@ bool SightCheck::P_SightPathTraverse ()
 		if (res == -1 || (mapxstep | mapystep) == 0)
 			break;
 
-		switch (((int(yintercept) == mapy) << 1) | (int(xintercept) == mapx))
+		switch (((xs_FloorToInt(yintercept) == mapy) << 1) | (xs_FloorToInt(xintercept) == mapx))
 		{
 		case 0:		// neither xintercept nor yintercept match!
 sightcounts[5]++;
@@ -872,7 +873,7 @@ sightcounts[0]++;
 		double lookheight = t1->Center();
 		t1->GetPortalTransition(lookheight, &sec);
 
-		double bottomslope = t2->Z() - (t1->Z() + lookheight);
+		double bottomslope = t2->Z() - lookheight;
 		double topslope = bottomslope + t2->Height;
 		SightTask task = { 0, topslope, bottomslope, -1, sec->PortalGroup };
 

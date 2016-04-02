@@ -3011,7 +3011,7 @@ void AM_drawAuthorMarkers ()
 				 marked->subsector->flags & SSECF_DRAWN :
 				 marked->Sector->MoreFlags & SECF_DRAWN)))
 			{
-				DrawMarker (tex, marked->X(), marked->Y(), 0, flip, mark->Scale.X, mark->Scale.Y, mark->Translation,
+				DrawMarker (tex, marked->X(), marked->Y(), 0, flip, mark->Scale.X*16, mark->Scale.Y*16, mark->Translation,
 					mark->Alpha, mark->fillcolor, mark->RenderStyle);
 			}
 			marked = mark->args[0] != 0 ? it.Next() : NULL;

@@ -1456,7 +1456,7 @@ void FPathTraverse::init(double x1, double y1, double x2, double y2, int flags, 
 	if (flags & PT_DELTA)
 	{
 		x2 += x1;
-		y2 += y2;
+		y2 += y1;
 	}
 
 	x1 -= bmaporgx;
@@ -1469,10 +1469,10 @@ void FPathTraverse::init(double x1, double y1, double x2, double y2, int flags, 
 	xt2 = x2 / MAPBLOCKUNITS;
 	yt2 = y2 / MAPBLOCKUNITS;
 
-	mapx = int(xt1);
-	mapy = int(yt1);
-	int mapex = int(xt2);
-	int mapey = int(yt2);
+	mapx = xs_FloorToInt(xt1);
+	mapy = xs_FloorToInt(yt1);
+	int mapex = xs_FloorToInt(xt2);
+	int mapey = xs_FloorToInt(yt2);
 
 
 	if (mapex > mapx)
@@ -1563,7 +1563,7 @@ void FPathTraverse::init(double x1, double y1, double x2, double y2, int flags, 
 		}
 
 		// [RH] Handle corner cases properly instead of pretending they don't exist.
-		switch (((int(yintercept) == mapy) << 1) | (int(xintercept) == mapx))
+		switch (((xs_FloorToInt(yintercept) == mapy) << 1) | (xs_FloorToInt(xintercept) == mapx))
 		{
 		case 0:		// neither xintercept nor yintercept match!
 			count = 100;	// Stop traversing, because somebody screwed up.

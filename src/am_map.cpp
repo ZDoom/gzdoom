@@ -1931,7 +1931,7 @@ void AM_drawSubsectors()
 		sector_t *sec = Renderer->FakeFlat(subsectors[i].render_sector, &tempsec, &floorlight, &ceilinglight, false);
 		// Find texture origin.
 		originpt.x = -sec->GetXOffsetF(sector_t::floor);
-		originpt.y = sec->GetYOffset(sector_t::floor);
+		originpt.y = sec->GetYOffsetF(sector_t::floor);
 		rotation = -sec->GetAngleF(sector_t::floor);
 		// Coloring for the polygon
 		colormap = sec->ColorMap;

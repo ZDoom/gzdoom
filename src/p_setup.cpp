@@ -1500,10 +1500,10 @@ void P_LoadSectors (MapData *map, FMissingTextureTracker &missingtex)
 	{
 		ss->e = &sectors[0].e[i];
 		if (!map->HasBehavior) ss->Flags |= SECF_FLOORDROP;
-		ss->SetPlaneTexZ(sector_t::floor, LittleShort(ms->floorheight)<<FRACBITS);
-		ss->floorplane.set(0, 0, FRACUNIT, -ss->GetPlaneTexZ(sector_t::floor));
-		ss->SetPlaneTexZ(sector_t::ceiling, LittleShort(ms->ceilingheight)<<FRACBITS);
-		ss->ceilingplane.set(0, 0, -FRACUNIT, ss->GetPlaneTexZ(sector_t::ceiling));
+		ss->SetPlaneTexZ(sector_t::floor, (double)LittleShort(ms->floorheight));
+		ss->floorplane.set(0, 0, 1., -ss->GetPlaneTexZF(sector_t::floor));
+		ss->SetPlaneTexZ(sector_t::ceiling, (double)LittleShort(ms->ceilingheight));
+		ss->ceilingplane.set(0, 0, -1., ss->GetPlaneTexZF(sector_t::ceiling));
 		SetTexture(ss, i, sector_t::floor, ms->floorpic, missingtex, true);
 		SetTexture(ss, i, sector_t::ceiling, ms->ceilingpic, missingtex, true);
 		ss->lightlevel = LittleShort(ms->lightlevel);
@@ -1519,12 +1519,12 @@ void P_LoadSectors (MapData *map, FMissingTextureTracker &missingtex)
 		ss->nextsec = -1;	//jff 2/26/98 add fields to support locking out
 		ss->prevsec = -1;	// stair retriggering until build completes
 
-		ss->SetAlpha(sector_t::floor, OPAQUE);
-		ss->SetAlpha(sector_t::ceiling, OPAQUE);
-		ss->SetXScale(sector_t::floor, FRACUNIT);	// [RH] floor and ceiling scaling
-		ss->SetYScale(sector_t::floor, FRACUNIT);
-		ss->SetXScale(sector_t::ceiling, FRACUNIT);
-		ss->SetYScale(sector_t::ceiling, FRACUNIT);
+		ss->SetAlpha(sector_t::floor, 1.);
+		ss->SetAlpha(sector_t::ceiling, 1.);
+		ss->SetXScale(sector_t::floor, 1.);	// [RH] floor and ceiling scaling
+		ss->SetYScale(sector_t::floor, 1.);
+		ss->SetXScale(sector_t::ceiling, 1.);
+		ss->SetYScale(sector_t::ceiling, 1.);
 
 		ss->heightsec = NULL;	// sector used to get floor and ceiling height
 		// killough 3/7/98: end changes

@@ -2122,8 +2122,10 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 	// it slopes or the player's eyes are bobbing in and out.
 
 	bool oldAboveFakeFloor, oldAboveFakeCeiling;
-	double viewheight = thing->player ? thing->player->viewheight : thing->Height / 2;
-	oldAboveFakeFloor = oldAboveFakeCeiling = false;	// pacify GCC
+	double viewheight;
+	// pacify GCC
+	viewheight = thing->player ? thing->player->viewheight : thing->Height / 2;
+	oldAboveFakeFloor = oldAboveFakeCeiling = false;
 
 	if (oldsec->heightsec)
 	{

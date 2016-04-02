@@ -673,8 +673,8 @@ void R_InterpolateView (player_t *player, double Frac, InterpolationViewer *ivie
 	}
 	else
 	{
-		ViewPitch = (iview->Old.Angles.Pitch + (iview->New.Angles.Pitch - iview->Old.Angles.Pitch) * Frac).Normalized180();
-		ViewAngle = (oviewangle + (nviewangle - oviewangle) * Frac).Normalized180();
+		ViewPitch = (iview->Old.Angles.Pitch + deltaangle(iview->Old.Angles.Pitch, iview->New.Angles.Pitch) * Frac).Normalized180();
+		ViewAngle = (oviewangle + deltaangle(oviewangle, nviewangle) * Frac).Normalized180();
 	}
 	
 	// Due to interpolation this is not necessarily the same as the sector the camera is in.

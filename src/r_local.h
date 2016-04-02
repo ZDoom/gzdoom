@@ -38,8 +38,4 @@
 #include "r_things.h"
 #include "r_draw.h"
 
-extern  fixed_t viewx, viewy, viewz;
-extern angle_t viewangle;
-extern int viewpitch;
-
 #endif // __R_LOCAL_H__

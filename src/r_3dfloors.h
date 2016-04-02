@@ -49,7 +49,6 @@ enum
 
 extern int fake3D;
 extern F3DFloor *fakeFloor;
-extern fixed_t fakeHeight;
 extern fixed_t fakeAlpha;
 extern int fakeActive;
 extern fixed_t sclipBottom;

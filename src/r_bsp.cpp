@@ -556,7 +556,7 @@ void R_AddLine (seg_t *line)
 
 	// reject lines that aren't seen from the portal (if any)
 	// [ZZ] 10.01.2016: lines inside a skybox shouldn't be clipped, although this imposes some limitations on portals in skyboxes.
-	if (!CurrentPortalInSkybox && CurrentPortal && P_ClipLineToPortal(line->linedef, CurrentPortal->dst, DVector2(FIXED2DBL(viewx), FIXED2DBL(viewy))))
+	if (!CurrentPortalInSkybox && CurrentPortal && P_ClipLineToPortal(line->linedef, CurrentPortal->dst, ViewPos))
 		return;
 
 	vertex_t *v1, *v2;
@@ -1183,9 +1183,9 @@ void R_Subsector (subsector_t *sub)
 				fakeFloor->validcount = validcount;
 				R_3D_NewClip();
 			}
-			fakeHeight = FLOAT2FIXED(fakeFloor->top.plane->ZatPoint(frontsector->centerspot));
-			if (fakeHeight < viewz &&
-				fakeHeight > FLOAT2FIXED(frontsector->floorplane.ZatPoint(frontsector->centerspot)))
+			double fakeHeight = fakeFloor->top.plane->ZatPoint(frontsector->centerspot);
+			if (fakeHeight < ViewPos.Z &&
+				fakeHeight > frontsector->floorplane.ZatPoint(frontsector->centerspot))
 			{
 				fake3D = FAKE3D_FAKEFLOOR;
 				tempsec = *fakeFloor->model;
@@ -1245,9 +1245,9 @@ void R_Subsector (subsector_t *sub)
 				fakeFloor->validcount = validcount;
 				R_3D_NewClip();
 			}
-			fakeHeight = FLOAT2FIXED(fakeFloor->bottom.plane->ZatPoint(frontsector->centerspot));
-			if (fakeHeight > viewz &&
-				fakeHeight < FLOAT2FIXED(frontsector->ceilingplane.ZatPoint(frontsector->centerspot)))
+			double fakeHeight = fakeFloor->bottom.plane->ZatPoint(frontsector->centerspot);
+			if (fakeHeight > ViewPos.Z &&
+				fakeHeight < frontsector->ceilingplane.ZatPoint(frontsector->centerspot))
 			{
 				fake3D = FAKE3D_FAKECEILING;
 				tempsec = *fakeFloor->model;

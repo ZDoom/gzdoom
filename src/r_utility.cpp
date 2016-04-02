@@ -149,6 +149,10 @@ int				FieldOfView = 2048;		// Fineangles in the SCREENWIDTH wide window
 
 FCanvasTextureInfo *FCanvasTextureInfo::List;
 
+fixed_t viewx, viewy, viewz;
+angle_t viewangle;
+int viewpitch;
+
 
 // CODE --------------------------------------------------------------------
 static void R_Shutdown ();
@@ -1090,6 +1094,12 @@ void R_SetupFrame (AActor *actor)
 			BaseBlendA = 0.f;
 		}
 	}
+
+	viewx = FLOAT2FIXED(ViewPos.X);
+	viewy = FLOAT2FIXED(ViewPos.Y);
+	viewz = FLOAT2FIXED(ViewPos.Z);
+	viewangle = ViewAngle.BAMs();
+	viewpitch = ViewPitch.BAMs();
 
 	Renderer->CopyStackedViewParameters();
 	Renderer->SetupFrame(player);

@@ -68,9 +68,6 @@
 #define TEST_ANGLE 2468347904 
 #endif
 
-fixed_t viewx, viewy, viewz;
-angle_t viewangle;
-int viewpitch;
 
 // TYPES -------------------------------------------------------------------
 
@@ -554,12 +551,6 @@ void R_SetupColormap(player_t *player)
 
 void R_SetupFreelook()
 {
-	viewx = FLOAT2FIXED(ViewPos.X);
-	viewy = FLOAT2FIXED(ViewPos.Y);
-	viewz = FLOAT2FIXED(ViewPos.Z);
-	viewangle = ViewAngle.BAMs();
-	viewpitch = ViewPitch.BAMs();
-
 	{
 		fixed_t dy;
 		

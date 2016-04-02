@@ -354,7 +354,7 @@ public:
 
 	int PointOnSide(const DVector3 &pos) const
 	{
-		double v = a * pos.X + b * pos.Y + c * pos.Z;
+		double v = a * pos.X + b * pos.Y + c * pos.Z + d;
 		return v < -EQUAL_EPSILON ? -1 : v > EQUAL_EPSILON ? 1 : 0;
 	}
 

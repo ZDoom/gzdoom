@@ -533,12 +533,17 @@ static void ParseUserVariable (FScanner &sc, PSymbolTable *symt, PClassActor *cl
 
 	// Read the type and make sure it's acceptable.
 	sc.MustGetAnyToken();
-	if (sc.TokenType != TK_Int && sc.TokenType != TK_Float)
+	switch (sc.TokenType)
 	{
-		sc.ScriptMessage("User variables must be of type 'int' or 'float'");
+	case TK_Int:	type = TypeSInt32;		break;
+	case TK_Float:	type = TypeFloat64;		break;
+	case TK_String:	type = TypeString;		break;
+	default:
+		type = TypeError;
+		sc.ScriptMessage("User variables must be of type 'int' or 'float' or 'string'");
 		FScriptPosition::ErrorCounter++;
+		break;
 	}
-	type = sc.TokenType == TK_Int ? (PType *)TypeSInt32 : (PType *)TypeFloat64;
 
 	sc.MustGetToken(TK_Identifier);
 	// For now, restrict user variables to those that begin with "user_" to guarantee

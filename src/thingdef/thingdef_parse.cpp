@@ -588,7 +588,6 @@ static void ParseUserVariable (FScanner &sc, PSymbolTable *symt, PClassActor *cl
 	sym->Offset = cls->Extend(type);
 	if (symt->AddSymbol(sym) == NULL)
 	{
-		delete sym;
 		sc.ScriptMessage ("'%s' is already defined in '%s'.",
 			symname.GetChars(), cls ? cls->TypeName.GetChars() : "Global");
 		FScriptPosition::ErrorCounter++;

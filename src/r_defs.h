@@ -302,14 +302,6 @@ public:
 		D = dd;
 	}
 
-	double fA() const
-	{
-		return normal.X;
-	}
-	double fB() const
-	{
-		return normal.Y;
-	}
 	double fC() const
 	{
 		return normal.Z;

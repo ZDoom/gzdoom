@@ -877,11 +877,11 @@ bool FTraceInfo::TraceTraverse (int ptflags)
 
 bool FTraceInfo::CheckPlane (const secplane_t &plane)
 {
-	double den = plane.fA() * Vec.X + plane.fB() * Vec.Y + plane.fC() * Vec.Z;
+	double den = plane.Normal() | Vec;
 
 	if (den != 0)
 	{
-		double num = plane.fA() * Start.X + plane.fB() * Start.Y + plane.fC() * Start.Z + plane.fD();
+		double num = (plane.Normal() | Start) + plane.fD();
 
 		double hitdist = -num / den;
 

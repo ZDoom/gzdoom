@@ -1086,11 +1086,11 @@ bool secplane_t::CopyPlaneIfValid (secplane_t *dest, const secplane_t *opp) cons
 
 	// If the planes do not have matching slopes, then always copy them
 	// because clipping would require creating new sectors.
-	if (fA() != dest->fA() || fB() != dest->fB() || fC() != dest->fC())
+	if (Normal() != dest->Normal())
 	{
 		copy = true;
 	}
-	else if (opp->fA() != -dest->fA() || opp->fB() != -dest->fB() || opp->fC() != -dest->fC())
+	else if (opp->Normal() != -dest->Normal())
 	{
 		if (fD() < dest->fD())
 		{

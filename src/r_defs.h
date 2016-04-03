@@ -102,55 +102,60 @@ typedef double vtype;
 struct vertex_t
 {
 private:
-	fixed_t x, y;
+	DVector2 p;
 
 public:
 
 	void set(fixed_t x, fixed_t y)
 	{
-		this->x = x;
-		this->y = y;
+		p.X = x / 65536.;
+		p.Y = y / 65536.;
 	}
 
 	void set(double x, double y)
 	{
-		this->x = FLOAT2FIXED(x);
-		this->y = FLOAT2FIXED(y);
+		p.X = x;
+		p.Y = y;
 	}
 
 	double fX() const
 	{
-		return FIXED2DBL(x);
+		return p.X;
 	}
 
 	double fY() const
 	{
-		return FIXED2DBL(y);
+		return p.Y;
 	}
 
 	fixed_t fixX() const
 	{
-		return x;
+		return FLOAT2FIXED(p.X);
 	}
 
 	fixed_t fixY() const
 	{
-		return y;
+		return FLOAT2FIXED(p.Y);
 	}
 
 	DVector2 fPos()
 	{
-		return{ fX(), fY() };
+		return { p.X, p.Y };
 	}
 
 	bool operator== (const vertex_t &other)
 	{
-		return x == other.x && y == other.y;
+		return p == other.p;
+	}
+
+	bool operator!= (const vertex_t &other)
+	{
+		return p != other.p;
 	}
 
 	void clear()
 	{
-		x = y = 0;
+		p.Zero();
 	}
 };
 
@@ -366,12 +371,12 @@ public:
 	// This is for the software renderer
 	fixed_t ZatPointFixed(const DVector2 &pos) const
 	{
-		return xs_CRoundToInt((d + a*pos.X + b*pos.Y) * ic / (-65536.0));
+		return FLOAT2FIXED(ZatPoint(pos));
 	}
 
 	fixed_t ZatPointFixed(const vertex_t *v) const
 	{
-		return FixedMul(ic, -d - DMulScale16(a, v->fixX(), b, v->fixY()));
+		return FLOAT2FIXED(ZatPoint(v));
 	}
 
 
@@ -389,7 +394,7 @@ public:
 
 	double ZatPoint(const vertex_t *v) const
 	{
-		return FIXED2DBL(FixedMul(ic, -d - DMulScale16(a, v->fixX(), b, v->fixY())));
+		return (d + a*v->fX() + b*v->fY()) * ic / (-65536.0 * 65536.0);
 	}
 
 	double ZatPoint(const AActor *ac) const
@@ -400,7 +405,7 @@ public:
 	// Returns the value of z at vertex v if d is equal to dist
 	double ZatPointDist(const vertex_t *v, double dist)
 	{
-		return FIXED2DBL(FixedMul(ic, -FLOAT2FIXED(dist) - DMulScale16(a, v->fixX(), b, v->fixY())));
+		return (dist + a*v->fX() + b*v->fY()) * ic / (-65536.0 * 65536.0);
 	}
 	// Flips the plane's vertical orientiation, so that if it pointed up,
 	// it will point down, and vice versa.

@@ -166,7 +166,14 @@ public:
 virtual	void Write (const void *mem, unsigned int len);
 virtual void Read (void *mem, unsigned int len);
 
+		void WriteString(const FString &str);
 		void WriteString (const char *str);
+
+		void WriteByte(BYTE val);
+		void WriteInt16(WORD val);
+		void WriteInt32(DWORD val);
+		void WriteInt64(QWORD val);
+
 		void WriteCount (DWORD count);
 		DWORD ReadCount ();
 

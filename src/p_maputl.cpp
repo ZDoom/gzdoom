@@ -1545,7 +1545,7 @@ void FPathTraverse::init(double x1, double y1, double x2, double y2, int flags, 
 		
 	// we want to use one list of checked actors for the entire operation
 	FBlockThingsIterator btit;
-	for (count = 0 ; count < 100 ; count++)
+	for (count = 0 ; count < 1000 ; count++)
 	{
 		if (flags & PT_ADDLINES)
 		{
@@ -1557,26 +1557,30 @@ void FPathTraverse::init(double x1, double y1, double x2, double y2, int flags, 
 			AddThingIntercepts(mapx, mapy, btit, compatible);
 		}
 				
-		if (mapx == xt2 && mapy == yt2)
-		{
+		// both coordinates reached the end, so end the traversing.
+		if ((mapxstep | mapystep) == 0)
 			break;
-		}
+
 
 		// [RH] Handle corner cases properly instead of pretending they don't exist.
 		switch (((xs_FloorToInt(yintercept) == mapy) << 1) | (xs_FloorToInt(xintercept) == mapx))
 		{
 		case 0:		// neither xintercept nor yintercept match!
-			count = 100;	// Stop traversing, because somebody screwed up.
+			count = 1000;	// Stop traversing, because somebody screwed up.
 			break;
 
 		case 1:		// xintercept matches
 			xintercept += xstep;
 			mapy += mapystep;
+			if (mapy == mapey)
+				mapystep = 0;
 			break;
 
 		case 2:		// yintercept matches
 			yintercept += ystep;
 			mapx += mapxstep;
+			if (mapx == mapex)
+				mapxstep = 0;
 			break;
 
 		case 3:		// xintercept and yintercept both match
@@ -1584,6 +1588,7 @@ void FPathTraverse::init(double x1, double y1, double x2, double y2, int flags, 
 			// being entered need to be checked (which will happen when this loop
 			// continues), but the other two blocks adjacent to the corner also need to
 			// be checked.
+			// Since Doom.exe did not do this, this code won't either if run in compatibility mode.
 			if (!compatible)
 			{
 				if (flags & PT_ADDLINES)
@@ -1601,10 +1606,14 @@ void FPathTraverse::init(double x1, double y1, double x2, double y2, int flags, 
 				yintercept += ystep;
 				mapx += mapxstep;
 				mapy += mapystep;
+				if (mapx == mapex)
+					mapxstep = 0;
+				if (mapy == mapey)
+					mapystep = 0;
 			}
 			else
 			{
-				count = 100; //	Doom originally did not handle this case so do the same in compatibility mode.
+				count = 1000; //	Doom originally did not handle this case so do the same in compatibility mode.
 			}
 			break;
 		}

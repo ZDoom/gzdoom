@@ -713,7 +713,7 @@ bool SightCheck::P_SightPathTraverse ()
 // step through map blocks
 // Count is present to prevent a round off error from skipping the break
 
-	for (count = 0 ; count < 100 ; count++)
+	for (count = 0 ; count < 1000 ; count++)
 	{
 		// end traversing when reaching the end of the blockmap
 		// an early out is not possible because with portals a trace can easily land outside the map's bounds.
@@ -737,7 +737,7 @@ bool SightCheck::P_SightPathTraverse ()
 		case 0:		// neither xintercept nor yintercept match!
 sightcounts[5]++;
 			// Continuing won't make things any better, so we might as well stop right here
-			count = 100;
+			count = 1000;
 			break;
 
 		case 1:		// xintercept matches

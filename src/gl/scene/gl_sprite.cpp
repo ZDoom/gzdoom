@@ -378,7 +378,7 @@ inline void GLSprite::PutSprite(bool translucent)
 //
 //==========================================================================
 
-void GLSprite::PerformSpriteClipAdjustment(AActor *thing, fixed_t thingx, fixed_t thingy, float spriteheight)
+void GLSprite::PerformSpriteClipAdjustment(AActor *thing, const DVector2 &thingpos, float spriteheight)
 {
 	bool smarterclip = false; // Set to true if one condition triggers the test below
 	if (((thing->player || thing->flags3&MF3_ISMONSTER ||
@@ -394,8 +394,8 @@ void GLSprite::PerformSpriteClipAdjustment(AActor *thing, fixed_t thingx, fixed_
 			for (unsigned int i = 0; i < x.ffloors.Size(); i++)
 			{
 				F3DFloor * ff = x.ffloors[i];
-				float floorh = FIXED2FLOAT(ff->top.plane->ZatPointFixed(thingx, thingy));
-				float ceilingh = FIXED2FLOAT(ff->bottom.plane->ZatPointFixed(thingx, thingy));
+				float floorh = ff->top.plane->ZatPoint(thingpos);
+				float ceilingh = ff->bottom.plane->ZatPoint(thingpos);
 				if (floorh == thing->floorz)
 				{
 					btm = floorh;
@@ -413,7 +413,7 @@ void GLSprite::PerformSpriteClipAdjustment(AActor *thing, fixed_t thingx, fixed_
 		else if (thing->Sector->heightsec && !(thing->Sector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
 		{
 			if (thing->flags2&MF2_ONMOBJ && thing->floorz ==
-				FIXED2FLOAT(thing->Sector->heightsec->floorplane.ZatPointFixed(thingx, thingy)))
+				thing->Sector->heightsec->floorplane.ZatPoint(thingpos)))
 			{
 				btm = thing->floorz;
 				top = thing->ceilingz;
@@ -422,7 +422,7 @@ void GLSprite::PerformSpriteClipAdjustment(AActor *thing, fixed_t thingx, fixed_
 		if (btm == 1000000.0f)
 			btm = thing->Sector->floorplane.ZatPoint(thing) - thing->Floorclip;
 		if (top == -1000000.0f)
-			top = FIXED2FLOAT(thing->Sector->ceilingplane.ZatPointFixed(thingx, thingy));
+			top = thing->Sector->ceilingplane.ZatPoint(thingpos);
 
 		// +/-1 to account for the one pixel empty frame around the sprite.
 		float diffb = (z2+1) - btm;
@@ -604,7 +604,7 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 		// Tests show that this doesn't look good for many decorations and corpses
 		if (spriteheight > 0 && gl_spriteclip > 0 && (thing->renderflags & RF_SPRITETYPEMASK) == RF_FACESPRITE)
 		{
-			PerformSpriteClipAdjustment(thing, FLOAT2FIXED(thingpos.X), FLOAT2FIXED(thingpos.Y), spriteheight);
+			PerformSpriteClipAdjustment(thing, thingpos, spriteheight);
 		}
 
 		float viewvecX;

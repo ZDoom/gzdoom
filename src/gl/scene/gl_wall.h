@@ -342,7 +342,7 @@ public:
 	TArray<lightlist_t> *lightlist;
 
 	void SetLowerParam();
-	void PerformSpriteClipAdjustment(AActor *thing, fixed_t thingx, fixed_t thingy, float spriteheight);
+	void PerformSpriteClipAdjustment(AActor *thing, const DVector2 &thingpos, float spriteheight);
 
 public:
 

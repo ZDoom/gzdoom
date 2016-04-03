@@ -39,6 +39,7 @@
 #include <assert.h>
 #include <string.h>
 #include <new>
+#include <utility>
 
 #if !defined(_WIN32)
 #include <inttypes.h>		// for intptr_t
@@ -137,11 +138,17 @@ public:
 		Count = 0;
 		Array = (T *)M_Malloc (sizeof(T)*max);
 	}
-	TArray (const TArray<T> &other)
+	TArray (const TArray<T,TT> &other)
 	{
 		DoCopy (other);
 	}
-	TArray<T> &operator= (const TArray<T> &other)
+	TArray (TArray<T,TT> &&other)
+	{
+		Array = other.Array; other.Array = NULL;
+		Most = other.Most; other.Most = 0;
+		Count = other.Count; other.Count = 0;
+	}
+	TArray<T,TT> &operator= (const TArray<T,TT> &other)
 	{
 		if (&other != this)
 		{
@@ -155,6 +162,21 @@ public:
 			}
 			DoCopy (other);
 		}
+		return *this;
+	}
+	TArray<T,TT> &operator= (TArray<T,TT> &&other)
+	{
+		if (Array)
+		{
+			if (Count > 0)
+			{
+				DoDelete (0, Count-1);
+			}
+			M_Free (Array);
+		}
+		Array = other.Array; other.Array = NULL;
+		Most = other.Most; other.Most = 0;
+		Count = other.Count; other.Count = 0;
 		return *this;
 	}
 	~TArray ()
@@ -417,6 +439,14 @@ template<class T, class TT=T>
 class TDeletingArray : public TArray<T, TT>
 {
 public:
+	TDeletingArray() : TArray<T,TT>() {}
+	TDeletingArray(TDeletingArray<T,TT> &&other) : TArray<T,TT>(std::move(other)) {}
+	TDeletingArray<T,TT> &operator=(TDeletingArray<T,TT> &&other)
+	{
+		TArray<T,TT>::operator=(std::move(other));
+		return *this;
+	}
+
 	~TDeletingArray<T, TT> ()
 	{
 		for (unsigned int i = 0; i < TArray<T,TT>::Size(); ++i)

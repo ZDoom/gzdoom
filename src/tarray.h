@@ -94,17 +94,23 @@ public:
 	{
 		return &Array[0];
 	}
+	const_iterator begin() const
+	{
+		return &Array[0];
+	}
+	const_iterator cbegin() const
+	{
+		return &Array[0];
+	}
 
 	iterator end()
 	{
 		return &Array[Count];
 	}
-	
-	const_iterator cbegin() const
+	const_iterator end() const
 	{
-		return &Array[0];
+		return &Array[Count];
 	}
-	
 	const_iterator cend() const
 	{
 		return &Array[Count];

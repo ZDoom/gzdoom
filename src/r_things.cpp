@@ -728,7 +728,6 @@ void R_DrawVisVoxel(vissprite_t *spr, int minslabz, int maxslabz, short *cliptop
 //
 void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor *fakeceiling)
 {
-	fixed_t				fx, fy, fz;
 	fixed_t 			tr_x;
 	fixed_t 			tr_y;
 	
@@ -768,9 +767,9 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 
 	// [RH] Interpolate the sprite's position to make it look smooth
 	DVector3 pos = thing->InterpolatedPosition(r_TicFracF);
-	fx = FLOAT2FIXED(pos.X);
-	fy = FLOAT2FIXED(pos.Y);
-	fz = FLOAT2FIXED(pos.Z + thing->GetBobOffset(r_TicFracF));
+	const fixed_t fx = FLOAT2FIXED(pos.X);
+	const fixed_t fy = FLOAT2FIXED(pos.Y);
+	fixed_t fz = FLOAT2FIXED(pos.Z + thing->GetBobOffset(r_TicFracF));
 
 	tex = NULL;
 	voxel = NULL;
@@ -937,19 +936,19 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	{
 		if (fakeside == FAKED_AboveCeiling)
 		{
-			if (gzt < heightsec->ceilingplane.ZatPointFixed(fx, fy))
+			if (gzt < heightsec->ceilingplane.ZatPointFixed(pos))
 				return;
 		}
 		else if (fakeside == FAKED_BelowFloor)
 		{
-			if (gzb >= heightsec->floorplane.ZatPointFixed(fx, fy))
+			if (gzb >= heightsec->floorplane.ZatPointFixed(pos))
 				return;
 		}
 		else
 		{
-			if (gzt < heightsec->floorplane.ZatPointFixed(fx, fy))
+			if (gzt < heightsec->floorplane.ZatPointFixed(pos))
 				return;
-			if (!(heightsec->MoreFlags & SECF_FAKEFLOORONLY) && gzb >= heightsec->ceilingplane.ZatPointFixed(fx, fy))
+			if (!(heightsec->MoreFlags & SECF_FAKEFLOORONLY) && gzb >= heightsec->ceilingplane.ZatPointFixed(pos))
 				return;
 		}
 	}

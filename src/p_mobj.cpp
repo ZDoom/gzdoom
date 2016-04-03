@@ -275,29 +275,17 @@ void AActor::Serialize(FArchive &arc)
 		arc << dmg;
 		Damage = UncalcDamageValue(dmg, GetDefault()->Damage);
 	}
-	if (SaveVersion >= 4530)
-	{
-		P_SerializeTerrain(arc, floorterrain);
-	}
-	if (SaveVersion >= 3227)
-	{
-		arc << projectileKickback;
-	}
-	arc	<< flags
+	P_SerializeTerrain(arc, floorterrain);
+	arc	<< projectileKickback
+		<< flags
 		<< flags2
 		<< flags3
 		<< flags4
 		<< flags5
-		<< flags6;
-	if (SaveVersion >= 4504)
-	{
-		arc << flags7;
-	}
-	if (SaveVersion >= 4512)
-	{
-		arc << weaponspecial;
-	}
-	arc	<< special1
+		<< flags6
+		<< flags7
+		<< weaponspecial
+		<< special1
 		<< special2
 		<< specialf1
 		<< specialf2
@@ -313,12 +301,9 @@ void AActor::Serialize(FArchive &arc)
 		<< threshold
 		<< player
 		<< SpawnPoint
-		<< SpawnAngle;
-	if (SaveVersion >= 4506)
-	{
-		arc << StartHealth;
-	}
-	arc << skillrespawncount
+		<< SpawnAngle
+		<< StartHealth
+		<< skillrespawncount
 		<< tracer
 		<< Floorclip
 		<< tid
@@ -332,21 +317,13 @@ void AActor::Serialize(FArchive &arc)
 		arc << args[0];
 	}
 	arc << args[1] << args[2] << args[3] << args[4];
-	if (SaveVersion >= 3427)
-	{
-		arc << accuracy << stamina;
-	}
+	arc << accuracy << stamina;
 	arc << goal
 		<< waterlevel
 		<< MinMissileChance
 		<< SpawnFlags
 		<< Inventory
 		<< InventoryID;
-	if (SaveVersion < 4513)
-	{
-		SDWORD id;
-		arc << id;
-	}
 	arc << FloatBobPhase
 		<< Translation
 		<< SeeSound
@@ -376,16 +353,9 @@ void AActor::Serialize(FArchive &arc)
 		<< meleethreshold
 		<< meleerange
 		<< DamageType;
-	if (SaveVersion >= 4501)
-	{
-		arc << DamageTypeReceived;
-	}
-	if (SaveVersion >= 3237) 
-	{
-		arc
-		<< PainType
+	arc << DamageTypeReceived;
+	arc << PainType
 		<< DeathType;
-	}
 	arc	<< Gravity
 		<< FastChaseStrafeCount
 		<< master
@@ -396,48 +366,23 @@ void AActor::Serialize(FArchive &arc)
 		<< pushfactor
 		<< Species
 		<< Score;
-	if (SaveVersion >= 3113)
-	{
-		arc << DesignatedTeam;
-	}
+	arc << DesignatedTeam;
 	arc << lastpush << lastbump
 		<< PainThreshold
 		<< DamageFactor;
-	if (SaveVersion >= 4516)
-	{
-		arc << DamageMultiply;
-	}
-	else
-	{
-		DamageMultiply = 1.;
-	}
+	arc << DamageMultiply;
 	arc << WeaveIndexXY << WeaveIndexZ
 		<< PoisonDamageReceived << PoisonDurationReceived << PoisonPeriodReceived << Poisoner
 		<< PoisonDamage << PoisonDuration << PoisonPeriod;
-	if (SaveVersion >= 3235)
-	{
-		arc << PoisonDamageType << PoisonDamageTypeReceived;
-	}
+	arc << PoisonDamageType << PoisonDamageTypeReceived;
 	arc << ConversationRoot << Conversation;
-	if (SaveVersion >= 4509)
-	{
-		arc << FriendPlayer;
-	}
-	if (SaveVersion >= 4517)
-	{
-		arc << TeleFogSourceType
-			<< TeleFogDestType;
-	}
-	if (SaveVersion >= 4518)
-	{
-		arc << RipperLevel
-			<< RipLevelMin
-			<< RipLevelMax;
-	}
-	if (SaveVersion >= 4533)
-	{
-		arc << DefThreshold;
-	}
+	arc << FriendPlayer;
+	arc << TeleFogSourceType
+		<< TeleFogDestType;
+	arc << RipperLevel
+		<< RipLevelMin
+		<< RipLevelMax;
+	arc << DefThreshold;
 
 	{
 		FString tagstr;

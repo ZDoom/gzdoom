@@ -1052,24 +1052,12 @@ double sector_t::NextLowestFloorAt(double x, double y, double z, int flags, doub
 
 FArchive &operator<< (FArchive &arc, secspecial_t &p)
 {
-	if (SaveVersion < 4529)
-	{
-		int special;
-		arc << special;
-		sector_t sec;
-		memset(&sec, 0, sizeof(sec));
-		P_InitSectorSpecial(&sec, special, true);
-		sec.GetSpecial(&p);
-	}
-	else
-	{
-		arc << p.special
-			<< p.damageamount
-			<< p.damagetype
-			<< p.damageinterval
-			<< p.leakydamage
-			<< p.Flags;
-	}
+	arc << p.special
+		<< p.damageamount
+		<< p.damagetype
+		<< p.damageinterval
+		<< p.leakydamage
+		<< p.Flags;
 	return arc;
 }
 
@@ -1086,11 +1074,11 @@ bool secplane_t::CopyPlaneIfValid (secplane_t *dest, const secplane_t *opp) cons
 
 	// If the planes do not have matching slopes, then always copy them
 	// because clipping would require creating new sectors.
-	if (fA() != dest->fA() || fB() != dest->fB() || fC() != dest->fC())
+	if (Normal() != dest->Normal())
 	{
 		copy = true;
 	}
-	else if (opp->fA() != -dest->fA() || opp->fB() != -dest->fB() || opp->fC() != -dest->fC())
+	else if (opp->Normal() != -dest->Normal())
 	{
 		if (fD() < dest->fD())
 		{
@@ -1112,11 +1100,11 @@ bool secplane_t::CopyPlaneIfValid (secplane_t *dest, const secplane_t *opp) cons
 
 FArchive &operator<< (FArchive &arc, secplane_t &plane)
 {
-	arc << plane.a << plane.b << plane.c << plane.d;
-	//if (plane.c != 0)
+	arc << plane.normal << plane.D;
+	if (plane.normal.Z != 0)
 	{	// plane.c should always be non-0. Otherwise, the plane
-		// would be perfectly vertical.
-		plane.ic = DivScale32 (1, plane.c);
+		// would be perfectly vertical. (But then, don't let this crash on a broken savegame...)
+		plane.negiC = -1 / plane.normal.Z;
 	}
 	return arc;
 }

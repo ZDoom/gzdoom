@@ -1651,17 +1651,9 @@ void DBaseStatusBar::ReceivedWeapon (AWeapon *weapon)
 
 void DBaseStatusBar::Serialize (FArchive &arc)
 {
-	if (SaveVersion < 3821)
+	for (size_t i = 0; i < countof(Messages); ++i)
 	{
-		memset(Messages, 0, sizeof(Messages));
-		arc << Messages[HUDMSGLayer_Default];
-	}
-	else
-	{
-		for (size_t i = 0; i < countof(Messages); ++i)
-		{
-			arc << Messages[i];
-		}
+		arc << Messages[i];
 	}
 }
 

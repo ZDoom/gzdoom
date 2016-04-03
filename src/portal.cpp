@@ -1054,7 +1054,7 @@ void P_CreateLinkedPortals()
 			if (cz < fz)
 			{
 				// This is a fatal condition. We have to remove one of the two portals. Choose the one that doesn't match the current plane
-				Printf("Error in sector %d: Ceiling portal at z=%d is below floor portal at z=%d\n", i, cz, fz);
+				Printf("Error in sector %d: Ceiling portal at z=%f is below floor portal at z=%f\n", i, cz, fz);
 				double cp = -sectors[i].ceilingplane.fD();
 				double fp = -sectors[i].ceilingplane.fD();
 				if (cp < fp || fz == fp)

@@ -3169,7 +3169,8 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 		break;
 	}
 
-	fixed_t fzpos = FLOAT2FIXED(zpos);
+	fixed_t fzpos;
+	fzpos = FLOAT2FIXED(zpos);	// pacify GCC
 	topoff = WallSpriteTile->TopOffset << FRACBITS;
 	dc_texturemid = topoff + FixedDiv (fzpos - viewz, yscale);
 

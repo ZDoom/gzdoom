@@ -24,12 +24,7 @@ IMPLEMENT_CLASS (AHexenArmor)
 void ABasicArmor::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-	arc << SavePercent << BonusCount << MaxAbsorb << MaxFullAbsorb << AbsorbCount << ArmorType;
-
-	if (SaveVersion >= 4511)
-	{
-		 arc << ActualSaveAmount;
-	}
+	arc << SavePercent << BonusCount << MaxAbsorb << MaxFullAbsorb << AbsorbCount << ArmorType << ActualSaveAmount;
 }
 
 //===========================================================================

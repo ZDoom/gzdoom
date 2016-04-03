@@ -395,7 +395,7 @@ bool GLWall::DoHorizon(seg_t * seg,sector_t * fs, vertex_t * v1,vertex_t * v2)
 
 	if (viewz > fs->GetPlaneTexZ(sector_t::floor))
 	{
-		zbottom[1] = zbottom[0] = FIXED2FLOAT(fs->GetPlaneTexZ(sector_t::floor));
+		zbottom[1] = zbottom[0] = fs->GetPlaneTexZF(sector_t::floor);
 		if (fs->GetTexture(sector_t::floor) == skyflatnum)
 		{
 			SkyPlane(fs, sector_t::floor, false);
@@ -428,7 +428,7 @@ bool GLWall::DoHorizon(seg_t * seg,sector_t * fs, vertex_t * v1,vertex_t * v2)
 //
 //==========================================================================
 bool GLWall::SetWallCoordinates(seg_t * seg, FTexCoordInfo *tci, float texturetop,
-								int topleft,int topright, int bottomleft,int bottomright, int t_ofs)
+								fixed_t topleft, fixed_t topright, fixed_t bottomleft, fixed_t bottomright, fixed_t t_ofs)
 {
 	//
 	//
@@ -597,10 +597,10 @@ void GLWall::CheckTexturePosition()
 //
 //==========================================================================
 void GLWall::DoTexture(int _type,seg_t * seg, int peg,
-					   int ceilingrefheight,int floorrefheight,
-					   int topleft,int topright,
-					   int bottomleft,int bottomright,
-					   int v_offset)
+					   fixed_t ceilingrefheight,fixed_t floorrefheight,
+					   fixed_t topleft,fixed_t topright,
+					   fixed_t bottomleft,fixed_t bottomright,
+					   fixed_t v_offset)
 {
 	if (topleft<=bottomleft && topright<=bottomright) return;
 
@@ -1428,15 +1428,15 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 	topplane = frontsector->ceilingplane;
 	bottomplane = frontsector->floorplane;
 
-	ffh1 = segfront->floorplane.ZatPointFixed(v1);
-	ffh2 = segfront->floorplane.ZatPointFixed(v2);
-	zfloor[0] = FIXED2FLOAT(ffh1);
-	zfloor[1] = FIXED2FLOAT(ffh2);
+	zfloor[0] = segfront->floorplane.ZatPoint(v1);
+	zfloor[1] = segfront->floorplane.ZatPoint(v2);
+	ffh1 = FLOAT2FIXED(zfloor[0]);
+	ffh2 = FLOAT2FIXED(zfloor[1]);
 
-	fch1 = segfront->ceilingplane.ZatPointFixed(v1);
-	fch2 = segfront->ceilingplane.ZatPointFixed(v2);
-	zceil[0] = FIXED2FLOAT(fch1);
-	zceil[1] = FIXED2FLOAT(fch2);
+	zceil[0] = segfront->ceilingplane.ZatPoint(v1);
+	zceil[1] = segfront->ceilingplane.ZatPoint(v2);
+	fch1 = FLOAT2FIXED(zceil[0]);
+	fch2 = FLOAT2FIXED(zceil[1]);
 
 	if (seg->linedef->special == Line_Horizon)
 	{

@@ -104,9 +104,8 @@ typedef double vtype;
 
 struct vertex_t
 {
-//private:
+private:
 	DVector2 p;
-	//fixed_t x, y;
 
 public:
 

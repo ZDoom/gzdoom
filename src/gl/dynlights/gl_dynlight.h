@@ -82,7 +82,7 @@ public:
 	size_t PointerSubstitution (DObject *old, DObject *notOld);
 
 	void BeginPlay();
-	void SetOrigin (fixed_t x, fixed_t y, fixed_t z, bool moving = false);
+	void SetOrigin (double x, double y, double z, bool moving = false);
 	void PostBeginPlay();
 	void Destroy();
 	void Activate(AActor *activator);

@@ -944,7 +944,7 @@ void gl_RenderModel(GLSprite * spr)
 //
 //===========================================================================
 
-void gl_RenderHUDModel(pspdef_t *psp, fixed_t ofsx, fixed_t ofsy)
+void gl_RenderHUDModel(pspdef_t *psp, float ofsX, float ofsY)
 {
 	AActor * playermo=players[consoleplayer].camera;
 	FSpriteModelFrame *smf = gl_FindModelFrame(playermo->player->ReadyWeapon->GetClass(), psp->state->sprite, psp->state->GetFrame(), false);
@@ -975,8 +975,8 @@ void gl_RenderHUDModel(pspdef_t *psp, fixed_t ofsx, fixed_t ofsy)
 	gl_RenderState.mViewMatrix.translate(smf->xoffset / smf->xscale, smf->zoffset / smf->zscale, smf->yoffset / smf->yscale);
 
 	// [BB] Weapon bob, very similar to the normal Doom weapon bob.
-	gl_RenderState.mViewMatrix.rotate(FIXED2FLOAT(ofsx)/4, 0, 1, 0);
-	gl_RenderState.mViewMatrix.rotate(-FIXED2FLOAT(ofsy-WEAPONTOP)/4, 1, 0, 0);
+	gl_RenderState.mViewMatrix.rotate(ofsX/4, 0, 1, 0);
+	gl_RenderState.mViewMatrix.rotate(-ofsY-WEAPONTOP/4, 1, 0, 0);
 
 	// [BB] For some reason the jDoom models need to be rotated.
 	gl_RenderState.mViewMatrix.rotate(90.f, 0, 1, 0);

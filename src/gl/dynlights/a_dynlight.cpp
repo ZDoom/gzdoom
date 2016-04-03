@@ -388,7 +388,7 @@ void ADynamicLight::UpdateLocation()
 //
 //==========================================================================
 
-void ADynamicLight::SetOrigin(fixed_t x, fixed_t y, fixed_t z, bool moving)
+void ADynamicLight::SetOrigin(double x, double y, double z, bool moving)
 {
 	Super::SetOrigin(x, y, z, moving);
 	LinkLight();

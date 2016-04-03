@@ -191,13 +191,13 @@ private:
 	bool DoHorizon(seg_t * seg,sector_t * fs, vertex_t * v1,vertex_t * v2);
 
 	bool SetWallCoordinates(seg_t * seg, FTexCoordInfo *tci, float ceilingrefheight,
-							int topleft,int topright, int bottomleft,int bottomright, int texoffset);
+		fixed_t topleft, fixed_t topright, fixed_t bottomleft, fixed_t bottomright, fixed_t t_ofs);
 
 	void DoTexture(int type,seg_t * seg,int peg,
-						   int ceilingrefheight,int floorrefheight,
-						   int CeilingHeightstart,int CeilingHeightend,
-						   int FloorHeightstart,int FloorHeightend,
-						   int v_offset);
+						   fixed_t ceilingrefheight,fixed_t floorrefheight,
+						   fixed_t CeilingHeightstart,fixed_t CeilingHeightend,
+						   fixed_t FloorHeightstart,fixed_t FloorHeightend,
+						   fixed_t v_offset);
 
 	void DoMidTexture(seg_t * seg, bool drawfogboundary,
 					  sector_t * front, sector_t * back,

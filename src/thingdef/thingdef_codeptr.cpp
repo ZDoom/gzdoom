@@ -2761,6 +2761,22 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_LogInt)
 	return 0;
 }
 
+//=========================================================================
+//
+// A_LogFloat
+//
+//===========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_LogFloat)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_FLOAT(num);
+	IGNORE_FORMAT_PRE
+	Printf("%H\n", num);
+	IGNORE_FORMAT_POST
+	return 0;
+}
+
 //===========================================================================
 //
 // A_SetTranslucent

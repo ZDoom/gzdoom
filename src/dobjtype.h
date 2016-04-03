@@ -7,6 +7,8 @@
 
 #include "vm.h"
 
+typedef std::pair<const class PType *, unsigned> FTypeAndOffset;
+
 // Variable/parameter/field flags -------------------------------------------
 
 // Making all these different storage types use a common set of flags seems
@@ -199,6 +201,22 @@ public:
 	// Skips over a value written with WriteValue
 	static void SkipValue(FArchive &ar);
 	static void SkipValue(FArchive &ar, int tag);
+
+	// Sets the default value for this type at (base + offset)
+	// If the default value is binary 0, then this function doesn't need
+	// to do anything, because PClass::Extend() takes care of that.
+	//
+	// The stroffs array is so that types that need special initialization
+	// and destruction (e.g. strings) can add their offsets to it for special
+	// initialization when the object is created and destruction when the
+	// object is destroyed.
+	virtual void SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *special=NULL) const;
+
+	// Initialize the value, if needed (e.g. strings)
+	virtual void InitializeValue(void *addr, const void *def) const;
+
+	// Destroy the value, if needed (e.g. strings)
+	virtual void DestroyValue(void *addr) const;
 
 	// Sets the value of a variable of this type at (addr)
 	virtual void SetValue(void *addr, int val);
@@ -404,6 +422,9 @@ public:
 
 	void WriteValue(FArchive &ar, const void *addr) const override;
 	bool ReadValue(FArchive &ar, void *addr) const override;
+	void SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *special=NULL) const override;
+	void InitializeValue(void *addr, const void *def) const override;
+	void DestroyValue(void *addr) const override;
 };
 
 // Variations of integer types ----------------------------------------------
@@ -577,6 +598,8 @@ public:
 	void WriteValue(FArchive &ar, const void *addr) const override;
 	bool ReadValue(FArchive &ar, void *addr) const override;
 
+	void SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *special) const override;
+
 protected:
 	PArray();
 };
@@ -637,6 +660,7 @@ public:
 
 	void WriteValue(FArchive &ar, const void *addr) const override;
 	bool ReadValue(FArchive &ar, void *addr) const override;
+	void SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *specials) const override;
 
 	static void WriteFields(FArchive &ar, const void *addr, const TArray<PField *> &fields);
 	bool ReadFields(FArchive &ar, void *addr) const;
@@ -697,7 +721,9 @@ class PClass : public PStruct
 protected:
 	// We unravel _WITH_META here just as we did for PType.
 	enum { MetaClassNum = CLASSREG_PClassClass };
+	TArray<FTypeAndOffset> SpecialInits;
 	virtual void Derive(PClass *newclass);
+	void InitializeSpecials(void *addr) const;
 public:
 	typedef PClassClass MetaClass;
 	MetaClass *GetClass() const;
@@ -728,6 +754,7 @@ public:
 	PField *AddField(FName name, PType *type, DWORD flags=0) override;
 	void InitializeActorInfo();
 	void BuildFlatPointers();
+	void DestroySpecials(void *addr) const;
 	const PClass *NativeClass() const;
 
 	// Returns true if this type is an ancestor of (or same as) the passed type.

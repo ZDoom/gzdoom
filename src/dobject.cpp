@@ -257,46 +257,50 @@ DObject::DObject (PClass *inClass)
 
 DObject::~DObject ()
 {
-	if (!(ObjectFlags & OF_Cleanup) && !PClass::bShutdown)
+	if (!PClass::bShutdown)
 	{
-		DObject **probe;
 		PClass *type = GetClass();
-
-		if (!(ObjectFlags & OF_YesReallyDelete))
+		if (!(ObjectFlags & OF_Cleanup) && !PClass::bShutdown)
 		{
-			Printf ("Warning: '%s' is freed outside the GC process.\n",
-				type != NULL ? type->TypeName.GetChars() : "==some object==");
-		}
+			DObject **probe;
 
-		// Find all pointers that reference this object and NULL them.
-		StaticPointerSubstitution(this, NULL);
-
-		// Now unlink this object from the GC list.
-		for (probe = &GC::Root; *probe != NULL; probe = &((*probe)->ObjNext))
-		{
-			if (*probe == this)
+			if (!(ObjectFlags & OF_YesReallyDelete))
 			{
-				*probe = ObjNext;
-				if (&ObjNext == GC::SweepPos)
-				{
-					GC::SweepPos = probe;
-				}
-				break;
+				Printf("Warning: '%s' is freed outside the GC process.\n",
+					type != NULL ? type->TypeName.GetChars() : "==some object==");
 			}
-		}
 
-		// If it's gray, also unlink it from the gray list.
-		if (this->IsGray())
-		{
-			for (probe = &GC::Gray; *probe != NULL; probe = &((*probe)->GCNext))
+			// Find all pointers that reference this object and NULL them.
+			StaticPointerSubstitution(this, NULL);
+
+			// Now unlink this object from the GC list.
+			for (probe = &GC::Root; *probe != NULL; probe = &((*probe)->ObjNext))
 			{
 				if (*probe == this)
 				{
-					*probe = GCNext;
+					*probe = ObjNext;
+					if (&ObjNext == GC::SweepPos)
+					{
+						GC::SweepPos = probe;
+					}
 					break;
 				}
 			}
+
+			// If it's gray, also unlink it from the gray list.
+			if (this->IsGray())
+			{
+				for (probe = &GC::Gray; *probe != NULL; probe = &((*probe)->GCNext))
+				{
+					if (*probe == this)
+					{
+						*probe = GCNext;
+						break;
+					}
+				}
+			}
 		}
+		type->DestroySpecials(this);
 	}
 }
 

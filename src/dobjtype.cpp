@@ -502,6 +502,36 @@ void PType::SkipValue(FArchive &ar, int tag)
 
 //==========================================================================
 //
+// PType :: SetDefaultValue
+//
+//==========================================================================
+
+void PType::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *stroffs) const
+{
+}
+
+//==========================================================================
+//
+// PType :: InitializeValue
+//
+//==========================================================================
+
+void PType::InitializeValue(void *addr, const void *def) const
+{
+}
+
+//==========================================================================
+//
+// PType :: DestroyValue
+//
+//==========================================================================
+
+void PType::DestroyValue(void *addr) const
+{
+}
+
+//==========================================================================
+//
 // PType :: SetValue
 //
 //==========================================================================
@@ -1497,6 +1527,43 @@ bool PString::ReadValue(FArchive &ar, void *addr) const
 	return true;
 }
 
+//==========================================================================
+//
+// PString :: SetDefaultValue
+//
+//==========================================================================
+
+void PString::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *special) const
+{
+	new((BYTE *)base + offset) FString;
+	if (special != NULL)
+	{
+		special->Push(std::make_pair(this, offset));
+	}
+}
+
+//==========================================================================
+//
+// PString :: InitializeValue
+//
+//==========================================================================
+
+void PString::InitializeValue(void *addr, const void *def) const
+{
+	new(addr) FString(*(FString *)def);
+}
+
+//==========================================================================
+//
+// PString :: DestroyValue
+//
+//==========================================================================
+
+void PString::DestroyValue(void *addr) const
+{
+	((FString *)addr)->~FString();
+}
+
 /* PName ******************************************************************/
 
 IMPLEMENT_CLASS(PName)
@@ -2330,6 +2397,20 @@ bool PArray::ReadValue(FArchive &ar, void *addr) const
 
 //==========================================================================
 //
+// PArray :: SetDefaultValue
+//
+//==========================================================================
+
+void PArray::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *special) const
+{
+	for (unsigned i = 0; i < ElementCount; ++i)
+	{
+		ElementType->SetDefaultValue(base, offset + i*ElementSize, special);
+	}
+}
+
+//==========================================================================
+//
 // NewArray
 //
 // Returns a PArray for the given type and size, making sure not to create
@@ -2579,6 +2660,23 @@ PStruct::PStruct()
 PStruct::PStruct(FName name, DObject *outer)
 : PNamedType(name, outer)
 {
+}
+
+//==========================================================================
+//
+// PStruct :: SetDefaultValue
+//
+//==========================================================================
+
+void PStruct::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *special) const
+{
+	for (const PField *field : Fields)
+	{
+		if (!(field->Flags & VARF_Native))
+		{
+			field->Type->SetDefaultValue(base, offset + field->Offset, special);
+		}
+	}
 }
 
 //==========================================================================
@@ -3287,9 +3385,50 @@ DObject *PClass::CreateNew() const
 
 	ConstructNative (mem);
 	((DObject *)mem)->SetClass (const_cast<PClass *>(this));
+	if (Defaults != NULL)
+	{
+		InitializeSpecials(mem);
+	}
 	return (DObject *)mem;
 }
 
+//==========================================================================
+//
+// PClass :: InitializeSpecials
+//
+// Initialize special fields of a newly-created instance (e.g. strings).
+//
+//==========================================================================
+
+void PClass::InitializeSpecials(void *addr) const
+{
+	if (ParentClass != NULL)
+	{
+		ParentClass->InitializeSpecials(addr);
+	}
+	for (auto tao : SpecialInits)
+	{
+		tao.first->InitializeValue((BYTE*)addr + tao.second, Defaults + tao.second);
+	}
+}
+
+//==========================================================================
+//
+// PClass :: DestroySpecials
+//
+//==========================================================================
+
+void PClass::DestroySpecials(void *addr) const
+{
+	if (ParentClass != NULL)
+	{
+		ParentClass->DestroySpecials(addr);
+	}
+	for (auto tao : SpecialInits)
+	{
+		tao.first->DestroyValue((BYTE *)addr + tao.second);
+	}
+}
 //==========================================================================
 //
 // PClass :: Derive
@@ -3388,6 +3527,11 @@ PField *PClass::AddField(FName name, PType *type, DWORD flags)
 	{
 		Defaults = (BYTE *)M_Realloc(Defaults, Size);
 		memset(Defaults + oldsize, 0, Size - oldsize);
+		// If this is a native class, then we must not initialize and
+		// destroy any of its members. We do, however, initialize the
+		// default instance since it's not a normal instance of the class.
+		type->SetDefaultValue(Defaults, field->Offset,
+			bRuntimeClass ? &SpecialInits : NULL);
 	}
 	return field;
 }

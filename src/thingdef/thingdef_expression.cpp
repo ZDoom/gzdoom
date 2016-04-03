@@ -3039,7 +3039,7 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 	{
 		ExpEmit indexv(index->Emit(build));
 		int shiftbits = 0;
-		while (1 << shiftbits < arraytype->ElementSize)
+		while (1u << shiftbits < arraytype->ElementSize)
 		{ 
 			shiftbits++;
 		}

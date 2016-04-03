@@ -2503,6 +2503,24 @@ unsigned int PClass::Extend(unsigned int extension, unsigned int alignment)
 
 //==========================================================================
 //
+// PClass :: AddField
+//
+//==========================================================================
+
+PField *PClass::AddField(FName name, PType *type, DWORD flags)
+{
+	unsigned oldsize = Size;
+	PField *field = Super::AddField(name, type, flags);
+	if (field != NULL)
+	{
+		Defaults = (BYTE *)M_Realloc(Defaults, Size);
+		memset(Defaults + oldsize, 0, Size - oldsize);
+	}
+	return field;
+}
+
+//==========================================================================
+//
 // PClass :: FindClassTentative
 //
 // Like FindClass but creates a placeholder if no class is found.

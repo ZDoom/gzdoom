@@ -282,17 +282,8 @@ void GLWall::SplitWall(sector_t * frontsector, bool translucent)
 			if (i<lightlist.Size()-1) 
 			{
 				secplane_t &p = lightlist[i+1].plane;
-				if (p.isSlope())
-				{
-					maplightbottomleft = p.ZatPoint(glseg.x1,glseg.y1);
-					maplightbottomright= p.ZatPoint(glseg.x2,glseg.y2);
-				}
-				else
-				{
-					maplightbottomleft =
-					maplightbottomright= p.ZatPoint(glseg.x2,glseg.y2);
-				}
-
+				maplightbottomleft = p.ZatPoint(glseg.x1,glseg.y1);
+				maplightbottomright= p.ZatPoint(glseg.x2,glseg.y2);
 			}
 			else 
 			{
@@ -1102,19 +1093,8 @@ void GLWall::BuildFFBlock(seg_t * seg, F3DFloor * rover,
 
 __forceinline void GLWall::GetPlanePos(F3DFloor::planeref *planeref, fixed_t &left, fixed_t &right)
 {
-	if (planeref->plane->isSlope())
-	{
-		left=planeref->plane->ZatPointFixed(vertexes[0]);
-		right=planeref->plane->ZatPointFixed(vertexes[1]);
-	}
-	else if(planeref->isceiling == sector_t::ceiling)
-	{
-		left = right = FLOAT2FIXED(planeref->plane->fD());
-	}
-	else
-	{
-		left = right = -FLOAT2FIXED(planeref->plane->fD());
-	}
+	left=planeref->plane->ZatPointFixed(vertexes[0]);
+	right=planeref->plane->ZatPointFixed(vertexes[1]);
 }
 
 //==========================================================================
@@ -1448,33 +1428,15 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 	topplane = frontsector->ceilingplane;
 	bottomplane = frontsector->floorplane;
 
-	// Save a little time (up to 0.3 ms per frame ;) )
-	if (frontsector->floorplane.isSlope())
-	{
-		ffh1 = segfront->floorplane.ZatPointFixed(v1);
-		ffh2 = segfront->floorplane.ZatPointFixed(v2);
-		zfloor[0] = FIXED2FLOAT(ffh1);
-		zfloor[1] = FIXED2FLOAT(ffh2);
-	}
-	else
-	{
-		ffh1 = ffh2 = -FLOAT2FIXED(segfront->floorplane.fD());
-		zfloor[0] = zfloor[1] = FIXED2FLOAT(ffh2);
-	}
+	ffh1 = segfront->floorplane.ZatPointFixed(v1);
+	ffh2 = segfront->floorplane.ZatPointFixed(v2);
+	zfloor[0] = FIXED2FLOAT(ffh1);
+	zfloor[1] = FIXED2FLOAT(ffh2);
 
-	if (segfront->ceilingplane.isSlope())
-	{
-		fch1 = segfront->ceilingplane.ZatPointFixed(v1);
-		fch2 = segfront->ceilingplane.ZatPointFixed(v2);
-		zceil[0] = FIXED2FLOAT(fch1);
-		zceil[1] = FIXED2FLOAT(fch2);
-	}
-	else
-	{
-		fch1 = fch2 = FLOAT2FIXED(segfront->ceilingplane.fD());
-		zceil[0] = zceil[1] = FIXED2FLOAT(fch2);
-	}
-
+	fch1 = segfront->ceilingplane.ZatPointFixed(v1);
+	fch2 = segfront->ceilingplane.ZatPointFixed(v2);
+	zceil[0] = FIXED2FLOAT(fch1);
+	zceil[1] = FIXED2FLOAT(fch2);
 
 	if (seg->linedef->special == Line_Horizon)
 	{
@@ -1519,26 +1481,12 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 		fixed_t bfh1;
 		fixed_t bfh2;
 
-		if (segback->floorplane.isSlope())
-		{
-			bfh1 = segback->floorplane.ZatPointFixed(v1);
-			bfh2 = segback->floorplane.ZatPointFixed(v2);
-		}
-		else
-		{
-			bfh1 = bfh2 = -FLOAT2FIXED(segback->floorplane.fD());
-		}
+		bfh1 = segback->floorplane.ZatPointFixed(v1);
+		bfh2 = segback->floorplane.ZatPointFixed(v2);
 
-		if (segback->ceilingplane.isSlope())
-		{
-			bch1 = segback->ceilingplane.ZatPointFixed(v1);
-			bch2 = segback->ceilingplane.ZatPointFixed(v2);
-		}
-		else
-		{
-			bch1 = bch2 = FLOAT2FIXED(segback->ceilingplane.fD());
-		}
-
+		bch1 = segback->ceilingplane.ZatPointFixed(v1);
+		bch2 = segback->ceilingplane.ZatPointFixed(v2);
+		
 		SkyTop(seg, frontsector, backsector, v1, v2);
 		SkyBottom(seg, frontsector, backsector, v1, v2);
 

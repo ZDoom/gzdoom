@@ -1654,13 +1654,13 @@ void FBehavior::StaticSerializeModuleStates (FArchive &arc)
 		if (arc.IsStoring())
 		{
 			arc.WriteString (module->ModuleName);
-			if (SaveVersion >= 4516) arc << ModSize;
+			arc << ModSize;
 		}
 		else
 		{
 			char *modname = NULL;
 			arc << modname;
-			if (SaveVersion >= 4516) arc << ModSize;
+			arc << ModSize;
 			if (stricmp (modname, module->ModuleName) != 0)
 			{
 				delete[] modname;
@@ -2899,35 +2899,19 @@ void FBehavior::StaticStopMyScripts (AActor *actor)
 
 void P_SerializeACSScriptNumber(FArchive &arc, int &scriptnum, bool was2byte)
 {
-	if (SaveVersion < 3359)
+	arc << scriptnum;
+	// If the script number is negative, then it's really a name.
+	// So read/store the name after it.
+	if (scriptnum < 0)
 	{
-		if (was2byte)
+		if (arc.IsStoring())
 		{
-			WORD oldver;
-			arc << oldver;
-			scriptnum = oldver;
+			arc.WriteName(FName(ENamedName(-scriptnum)).GetChars());
 		}
 		else
 		{
-			arc << scriptnum;
-		}
-	}
-	else
-	{
-		arc << scriptnum;
-		// If the script number is negative, then it's really a name.
-		// So read/store the name after it.
-		if (scriptnum < 0)
-		{
-			if (arc.IsStoring())
-			{
-				arc.WriteName(FName(ENamedName(-scriptnum)).GetChars());
-			}
-			else
-			{
-				const char *nam = arc.ReadName();
-				scriptnum = -FName(nam);
-			}
+			const char *nam = arc.ReadName();
+			scriptnum = -FName(nam);
 		}
 	}
 }
@@ -2969,52 +2953,47 @@ void DACSThinker::Serialize (FArchive &arc)
 	int scriptcount = 0;
 
 	Super::Serialize (arc);
-	if (SaveVersion < 4515)
-		arc << Scripts << LastScript;
+	if (arc.IsStoring())
+	{
+		DLevelScript *script;
+		script = Scripts;
+		while (script)
+		{
+			scriptcount++;
+
+			// We want to store this list backwards, so we can't loose the last pointer
+			if (script->next == NULL)
+				break;
+			script = script->next;
+		}
+		arc << scriptcount;
+
+		while (script)
+		{
+			arc << script;
+			script = script->prev;
+		}
+	}
 	else
 	{
-		if (arc.IsStoring())
+		// We are running through this list backwards, so the next entry is the last processed
+		DLevelScript *next = NULL;
+		arc << scriptcount;
+		Scripts = NULL;
+		LastScript = NULL;
+		for (int i = 0; i < scriptcount; i++)
 		{
-			DLevelScript *script;
-			script = Scripts;
-			while (script)
-			{
-				scriptcount++;
+			arc << Scripts;
 
-				// We want to store this list backwards, so we can't loose the last pointer
-				if (script->next == NULL)
-					break;
-				script = script->next;
-			}
-			arc << scriptcount;
+			Scripts->next = next;
+			Scripts->prev = NULL;
+			if (next != NULL)
+				next->prev = Scripts;
 
-			while (script)
-			{
-				arc << script;
-				script = script->prev;
-			}
-		}
-		else
-		{
-			// We are running through this list backwards, so the next entry is the last processed
-			DLevelScript *next = NULL;
-			arc << scriptcount;
-			Scripts = NULL;
-			LastScript = NULL;
-			for (int i = 0; i < scriptcount; i++)
-			{
-				arc << Scripts;
+			next = Scripts;
 
-				Scripts->next = next;
-				Scripts->prev = NULL;
-				if (next != NULL)
-					next->prev = Scripts;
-
-				next = Scripts;
-
-				if (i == 0)
-					LastScript = Scripts;
-			}
+			if (i == 0)
+				LastScript = Scripts;
 		}
 	}
 	if (arc.IsStoring ())
@@ -3102,8 +3081,6 @@ void DLevelScript::Serialize (FArchive &arc)
 	DWORD i;
 
 	Super::Serialize (arc);
-	if (SaveVersion < 4515)
-		arc << next << prev;
 
 	P_SerializeACSScriptNumber(arc, script, false);
 
@@ -3140,23 +3117,9 @@ void DLevelScript::Serialize (FArchive &arc)
 
 	arc << activefont
 		<< hudwidth << hudheight;
-	if (SaveVersion >= 3960)
-	{
-		arc << ClipRectLeft << ClipRectTop << ClipRectWidth << ClipRectHeight
-			<< WrapWidth;
-	}
-	else
-	{
-		ClipRectLeft = ClipRectTop = ClipRectWidth = ClipRectHeight = WrapWidth = 0;
-	}
-	if (SaveVersion >= 4058)
-	{
-		arc << InModuleScriptNumber;
-	}
-	else
-	{ // Don't worry about locating profiling info for old saves.
-		InModuleScriptNumber = -1;
-	}
+	arc << ClipRectLeft << ClipRectTop << ClipRectWidth << ClipRectHeight
+		<< WrapWidth;
+	arc << InModuleScriptNumber;
 }
 
 DLevelScript::DLevelScript ()

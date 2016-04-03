@@ -1052,24 +1052,12 @@ double sector_t::NextLowestFloorAt(double x, double y, double z, int flags, doub
 
 FArchive &operator<< (FArchive &arc, secspecial_t &p)
 {
-	if (SaveVersion < 4529)
-	{
-		int special;
-		arc << special;
-		sector_t sec;
-		memset(&sec, 0, sizeof(sec));
-		P_InitSectorSpecial(&sec, special, true);
-		sec.GetSpecial(&p);
-	}
-	else
-	{
-		arc << p.special
-			<< p.damageamount
-			<< p.damagetype
-			<< p.damageinterval
-			<< p.leakydamage
-			<< p.Flags;
-	}
+	arc << p.special
+		<< p.damageamount
+		<< p.damagetype
+		<< p.damageinterval
+		<< p.leakydamage
+		<< p.Flags;
 	return arc;
 }
 

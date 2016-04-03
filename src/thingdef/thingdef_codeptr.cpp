@@ -3038,7 +3038,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnParticle)
 			acc.X = accelx * c + accely * s;
 			acc.Y = accelx * s - accely * c;
 		}
-		pos = self->Vec3Offset(xoff, yoff, zoff);
 		P_SpawnParticle(self->Vec3Offset(pos), vel, acc, color, !!(flags & SPF_FULLBRIGHT), startalpha, lifetime, size, fadestep);
 	}
 	return 0;

@@ -87,7 +87,7 @@ const double CARRYFACTOR = 3 / 32.;
 bool	CheckIfExitIsGood (AActor *self, level_info_t *info);
 
 // at map load
-void P_InitSectorSpecial(sector_t *sector, int special, bool nothinkers);
+void P_InitSectorSpecial(sector_t *sector, int special);
 void	P_SpawnSpecials (void);
 
 // every tic

@@ -3376,27 +3376,6 @@ PClass *PClass::CreateDerivedClass(FName name, unsigned int size)
 
 //==========================================================================
 //
-// PClass :: Extend
-//
-// Add <extension> bytes to the end of this class and possibly more to meet
-// alignment restrictions. Returns the start of the extended block.
-//
-//==========================================================================
-
-unsigned int PClass::Extend(unsigned int extension, unsigned int alignment)
-{
-	assert(this->bRuntimeClass);
-
-	unsigned int oldsize = Size;
-	unsigned int padto = (oldsize + alignment - 1) & ~(alignment - 1);
-	Size = padto + extension;
-	Defaults = (BYTE *)M_Realloc(Defaults, Size);
-	memset(Defaults + oldsize, 0, Size - oldsize);
-	return padto;
-}
-
-//==========================================================================
-//
 // PClass :: AddField
 //
 //==========================================================================

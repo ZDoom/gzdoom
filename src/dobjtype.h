@@ -725,8 +725,6 @@ public:
 	void InsertIntoHash();
 	DObject *CreateNew() const;
 	PClass *CreateDerivedClass(FName name, unsigned int size);
-	unsigned int Extend(unsigned int extension, unsigned int alignment);
-	unsigned int Extend(const PType *type) { return Extend(type->Size, type->Align); }
 	PField *AddField(FName name, PType *type, DWORD flags=0) override;
 	void InitializeActorInfo();
 	void BuildFlatPointers();

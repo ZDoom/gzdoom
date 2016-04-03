@@ -374,6 +374,7 @@ static void DoSubsector(subsector_t * sub)
 
 	// If the mapsections differ this subsector can't possibly be visible from the current view point
 	if (!(currentmapsection[sub->mapsection>>3] & (1 << (sub->mapsection & 7)))) return;
+	if (sub->flags & SSECF_POLYORG) return;	// never render polyobject origin subsectors because their vertices no longer are where one may expect.
 
 	if (gl_drawinfo->ss_renderflags[sub-subsectors] & SSRF_SEEN)
 	{

@@ -82,8 +82,8 @@ void GLWall::SplitUpperEdge(texcoord * tcs, FFlatVertex *&ptr)
 
 		float fracfac = sidefrac - glseg.fracleft;
 
-		ptr->x = cseg->v2->fx;
-		ptr->y = cseg->v2->fy;
+		ptr->x = cseg->v2->fX();
+		ptr->y = cseg->v2->fY();
 		ptr->z = ztop[0] + fact * fracfac;
 		ptr->u = tcs[1].u + facu * fracfac;
 		ptr->v = tcs[1].v + facv * fracfac;
@@ -118,8 +118,8 @@ void GLWall::SplitLowerEdge(texcoord * tcs, FFlatVertex *&ptr)
 
 		float fracfac = sidefrac - glseg.fracleft;
 
-		ptr->x = cseg->v2->fx;
-		ptr->y = cseg->v2->fy;
+		ptr->x = cseg->v2->fX();
+		ptr->y = cseg->v2->fY();
 		ptr->z = zbottom[0] + facb * fracfac;
 		ptr->u = tcs[0].u + facu * fracfac;
 		ptr->v = tcs[0].v + facv * fracfac;

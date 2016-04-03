@@ -396,7 +396,6 @@ void R_SetView()
 
 angle_t R_PointToPseudoAngle (fixed_t x, fixed_t y)
 {
-	// Note: float won't work here as it's less precise than the BAM values being passed as parameters
 	double vecx = double(x-viewx);
 	double vecy = double(y-viewy);
 	
@@ -415,6 +414,26 @@ angle_t R_PointToPseudoAngle (fixed_t x, fixed_t y)
 	}
 }
 
+
+angle_t R_PointToPseudoAngle(double x, double y)
+{
+	double vecx = x - ViewPos.X;
+	double vecy = y - ViewPos.Y;
+
+	if (vecx == 0 && vecy == 0)
+	{
+		return 0;
+	}
+	else
+	{
+		double result = vecy / (fabs(vecx) + fabs(vecy));
+		if (vecx < 0)
+		{
+			result = 2.f - result;
+		}
+		return xs_Fix<30>::ToFix(result);
+	}
+}
 
 
 

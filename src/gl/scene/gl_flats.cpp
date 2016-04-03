@@ -174,32 +174,15 @@ void GLFlat::SetupSubsectorLights(int pass, subsector_t * sub, int *dli)
 void GLFlat::DrawSubsector(subsector_t * sub)
 {
 	FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-	if (plane.plane.isSlope())
+	for (unsigned int k = 0; k < sub->numlines; k++)
 	{
-		for (unsigned int k = 0; k < sub->numlines; k++)
-		{
-			vertex_t *vt = sub->firstline[k].v1;
-			ptr->x = vt->fx;
-			ptr->y = vt->fy;
-			ptr->z = plane.plane.ZatPoint(vt->fx, vt->fy) + dz;
-			ptr->u = vt->fx / 64.f;
-			ptr->v = -vt->fy / 64.f;
-			ptr++;
-		}
-	}
-	else
-	{
-		float zc = FIXED2FLOAT(plane.plane.Zat0()) + dz;
-		for (unsigned int k = 0; k < sub->numlines; k++)
-		{
-			vertex_t *vt = sub->firstline[k].v1;
-			ptr->x = vt->fx;
-			ptr->y = vt->fy;
-			ptr->z = zc;
-			ptr->u = vt->fx / 64.f;
-			ptr->v = -vt->fy / 64.f;
-			ptr++;
-		}
+		vertex_t *vt = sub->firstline[k].v1;
+		ptr->x = vt->fX();
+		ptr->y = vt->fY();
+		ptr->z = plane.plane.ZatPoint(vt) + dz;
+		ptr->u = vt->fX() / 64.f;
+		ptr->v = -vt->fY() / 64.f;
+		ptr++;
 	}
 	GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_FAN);
 

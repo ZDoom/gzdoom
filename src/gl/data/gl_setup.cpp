@@ -472,22 +472,18 @@ static void InitVertexData()
 //
 //==========================================================================
 
-static void GetSideVertices(int sdnum, FVector2 *v1, FVector2 *v2)
+static void GetSideVertices(int sdnum, DVector2 *v1, DVector2 *v2)
 {
 	line_t *ln = sides[sdnum].linedef;
 	if (ln->sidedef[0] == &sides[sdnum]) 
 	{
-		v1->X = ln->v1->fx;
-		v1->Y = ln->v1->fy;
-		v2->X = ln->v2->fx;
-		v2->Y = ln->v2->fy;
+		*v1 = ln->v1->fPos();
+		*v2 = ln->v2->fPos();
 	}
 	else
 	{
-		v2->X = ln->v1->fx;
-		v2->Y = ln->v1->fy;
-		v1->X = ln->v2->fx;
-		v1->Y = ln->v2->fy;
+		*v2 = ln->v1->fPos();
+		*v1 = ln->v2->fPos();
 	}
 }
 
@@ -512,8 +508,6 @@ static void PrepareSegs()
 	// Get floatng point coordinates of vertices
 	for(int i = 0; i < numvertexes; i++)
 	{
-		vertexes[i].fx = vertexes[i].fX();
-		vertexes[i].fy = vertexes[i].fY();
 		vertexes[i].dirty = true;
 	}
 
@@ -559,7 +553,7 @@ static void PrepareSegs()
 
 		realsegs++;
 		segcount[sidenum]++;
-		FVector2 sidestart, sideend, segend(seg->v2->fx, seg->v2->fy);
+		DVector2 sidestart, sideend, segend = seg->v2->fPos();
 		GetSideVertices(sidenum, &sidestart, &sideend);
 
 		sideend -=sidestart;

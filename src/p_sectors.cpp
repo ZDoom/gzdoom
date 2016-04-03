@@ -1112,11 +1112,11 @@ bool secplane_t::CopyPlaneIfValid (secplane_t *dest, const secplane_t *opp) cons
 
 FArchive &operator<< (FArchive &arc, secplane_t &plane)
 {
-	arc << plane.a << plane.b << plane.c << plane.d;
-	//if (plane.c != 0)
+	arc << plane.normal << plane.D;
+	if (plane.normal.Z != 0)
 	{	// plane.c should always be non-0. Otherwise, the plane
-		// would be perfectly vertical.
-		plane.ic = DivScale32 (1, plane.c);
+		// would be perfectly vertical. (But then, don't let this crash on a broken savegame...)
+		plane.negiC = -1 / plane.normal.Z;
 	}
 	return arc;
 }

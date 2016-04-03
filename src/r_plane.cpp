@@ -1568,7 +1568,7 @@ void R_DrawNormalPlane (visplane_t *pl, fixed_t alpha, bool additive, bool maske
 	basexfrac = FixedMul (xscale, finecosine[planeang]) + x*xstepscale;
 	baseyfrac = FixedMul (yscale, -finesine[planeang]) + x*ystepscale;
 
-	planeheight = abs (int(pl->height.fD() * -pl->height.fiC() * 65536) - viewz);
+	planeheight = abs (pl->height.Zat0() - viewz);
 
 	GlobVis = FixedDiv (r_FloorVisibility, planeheight);
 	if (fixedlightlev >= 0)

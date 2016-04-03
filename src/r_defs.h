@@ -284,80 +284,67 @@ struct secplane_t
 	// ic is 1/c, for faster Z calculations
 
 private:
-	fixed_t a, b, c, d, ic;
+	DVector3 normal;
+	double  D, negiC;	// negative iC because that also saves a negation in all methods using this.
 public:
 
 	void set(double aa, double bb, double cc, double dd)
 	{
-		a = FLOAT2FIXED(aa);
-		b = FLOAT2FIXED(bb);
-		c = FLOAT2FIXED(cc);
-		d = FLOAT2FIXED(dd);
-		ic = FixedDiv(FRACUNIT, c);
-	}
-
-	void setD(fixed_t dd)
-	{
-		d = dd;
-	}
-
-	void changeD(fixed_t dd)
-	{
-		d += dd;
+		normal.X = aa;
+		normal.Y = bb;
+		normal.Z = cc;
+		D = dd;
+		negiC = -1 / cc;
 	}
 
 	void setD(double dd)
 	{
-		d = FLOAT2FIXED(dd);
+		D = dd;
 	}
 
 	double fA() const
 	{
-		return FIXED2DBL(a);
+		return normal.X;
 	}
 	double fB() const
 	{
-		return FIXED2DBL(b);
+		return normal.Y;
 	}
 	double fC() const
 	{
-		return FIXED2DBL(c);
+		return normal.Z;
 	}
 	double fD() const
 	{
-		return FIXED2DBL(d);
+		return D;
 	}
-	double fiC() const
-	{
-		return FIXED2DBL(ic);
-	}
-
+	
 	bool isSlope() const
 	{
-		return a != 0 || b != 0;
+		return !normal.XY().isZero();
 	}
 
 	DVector3 Normal() const
 	{
-		return{ fA(), fB(), fC() };
+		return normal;
 	}
 
 	// Returns < 0 : behind; == 0 : on; > 0 : in front
 	int PointOnSide (fixed_t x, fixed_t y, fixed_t z) const
 	{
-		return TMulScale16(a,x, b,y, c,z) + d;
+		return PointOnSide(DVector3(FIXED2DBL(x), FIXED2DBL(y), FIXED2DBL(z)));
 	}
 
 	int PointOnSide(const DVector3 &pos) const
 	{
-		double v = a * pos.X + b * pos.Y + c * pos.Z + d;
+		double v = (normal | pos) + D;
 		return v < -EQUAL_EPSILON ? -1 : v > EQUAL_EPSILON ? 1 : 0;
 	}
 
 	// Returns the value of z at (0,0) This is used by the 3D floor code which does not handle slopes
 	fixed_t Zat0 () const
 	{
-		return ic < 0 ? d : -d;
+		return FLOAT2FIXED(negiC*D);
 	}
 
 	// Returns the value of z at (x,y)
@@ -365,7 +352,7 @@ public:
 
 	fixed_t ZatPointFixed(fixed_t x, fixed_t y) const
 	{
-		return FixedMul (ic, -d - DMulScale16 (a, x, b, y));
+		return FLOAT2FIXED(ZatPoint(FIXED2DBL(x), FIXED2DBL(y)));
 	}
 
 	// This is for the software renderer
@@ -383,106 +370,101 @@ public:
 	// Returns the value of z at (x,y) as a double
 	double ZatPoint (double x, double y) const
 	{
-		return (d + a*x + b*y) * ic / (-65536.0 * 65536.0);
+		return (D + normal.X*x + normal.Y*y) * negiC;
 	}
 
 	double ZatPoint(const DVector2 &pos) const
 	{
-		return (d + a*pos.X + b*pos.Y) * ic / (-65536.0 * 65536.0);
+		return (D + normal.X*pos.X + normal.Y*pos.Y) * negiC;
 	}
 
 
 	double ZatPoint(const vertex_t *v) const
 	{
-		return (d + a*v->fX() + b*v->fY()) * ic / (-65536.0 * 65536.0);
+		return (D + normal.X*v->fX() + normal.Y*v->fY()) * negiC;
 	}
 
 	double ZatPoint(const AActor *ac) const
 	{
-		return (d + a*ac->X() + b*ac->Y()) * ic / (-65536.0 * 65536.0);
+		return (D + normal.X*ac->X() + normal.Y*ac->Y()) * negiC;
 	}
 
 	// Returns the value of z at vertex v if d is equal to dist
 	double ZatPointDist(const vertex_t *v, double dist)
 	{
-		return (dist + a*v->fX() + b*v->fY()) * ic / (-65536.0 * 65536.0);
+		return (dist + normal.X*v->fX() + normal.Y*v->fY()) * negiC;
 	}
 	// Flips the plane's vertical orientiation, so that if it pointed up,
 	// it will point down, and vice versa.
 	void FlipVert ()
 	{
-		a = -a;
-		b = -b;
-		c = -c;
-		d = -d;
-		ic = -ic;
+		normal = -normal;
+		D = -D;
+		negiC = -negiC;
 	}
 
 	// Returns true if 2 planes are the same
 	bool operator== (const secplane_t &other) const
 	{
-		return a == other.a && b == other.b && c == other.c && d == other.d;
+		return normal == other.normal && D == other.D;
 	}
 
 	// Returns true if 2 planes are different
 	bool operator!= (const secplane_t &other) const
 	{
-		return a != other.a || b != other.b || c != other.c || d != other.d;
+		return normal != other.normal || D != other.D;
 	}
 
 	// Moves a plane up/down by hdiff units
 	void ChangeHeight(double hdiff)
 	{
-		d = d - fixed_t(hdiff * c);
+		D = D - hdiff * normal.Z;
 	}
 
 	// Moves a plane up/down by hdiff units
 	double GetChangedHeight(double hdiff)
 	{
-		return fD() - hdiff * fC();
+		return D - hdiff * normal.Z;
 	}
 
 	// Returns how much this plane's height would change if d were set to oldd
 	double HeightDiff(double oldd) const
 	{
-		return (oldd - fD()) * fiC();
+		return (D - oldd) * negiC;
 	}
 
 	// Returns how much this plane's height would change if d were set to oldd
 	double HeightDiff(double oldd, double newd) const
 	{
-		return (oldd - newd) * fiC();
+		return (newd - oldd) * negiC;
 	}
 
 	double PointToDist(const DVector2 &xy, double z) const
 	{
-		return -(a * xy.X + b * xy.Y + c * z) / 65536.;
+		return -(normal.X * xy.X + normal.Y * xy.Y + normal.Z * z);
 	}
 
 	double PointToDist(const vertex_t *v, double z) const
 	{
-		return -(a * v->fX() + b * v->fY() + c * z) / 65536.;
+		return -(normal.X * v->fX() + normal.Y * v->fY() + normal.Z * z);
 	}
 
-	void SetAtHeight(fixed_t height, int ceiling)
+	void SetAtHeight(double height, int ceiling)
 	{
-		a = b = 0;
+		normal.X = normal.Y = 0;
 		if (ceiling)
 		{
-			c = ic = -FRACUNIT;
-			d = height;
+			normal.Z = negiC = 1;
+			D = height;
 		}
 		else
 		{
-			c = ic = FRACUNIT;
-			d = -height;
+			normal.Z = negiC = -1;
+			D = -height;
 		}
 	}
 
-	inline void SetAtHeight(double height, int ceiling)
-	{
-		SetAtHeight(FLOAT2FIXED(clamp(height, -32767., 32767.)), ceiling);
-	}
+	inline void SetAtHeight(fixed_t height, int ceiling) = delete;
 
 	bool CopyPlaneIfValid (secplane_t *dest, const secplane_t *opp) const;
 

@@ -3705,7 +3705,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
 	{
 		offsetforward *= self->radius;
 		offsetwidth *= self->radius;
-	}
+}
 		
 	pos = self->PosPlusZ(offsetheight - self->Floorclip);
 
@@ -3762,7 +3762,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
 			}
 			else
 			{
-				pitch -= VecToAngle(xydist, target->Center());
+				pitch -= VecToAngle(xydist, target->Center() - pos.Z);
 			}
 		}
 		else if (flags & CLOFF_ALLOWNULL)

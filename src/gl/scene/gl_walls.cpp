@@ -1428,15 +1428,22 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 	topplane = frontsector->ceilingplane;
 	bottomplane = frontsector->floorplane;
 
-	zfloor[0] = segfront->floorplane.ZatPoint(v1);
-	zfloor[1] = segfront->floorplane.ZatPoint(v2);
-	ffh1 = FLOAT2FIXED(zfloor[0]);
-	ffh2 = FLOAT2FIXED(zfloor[1]);
+	double v; 
+	v= segfront->floorplane.ZatPoint(v1);
+	zfloor[0] = v;
+	ffh1 = FLOAT2FIXED(v);
 
-	zceil[0] = segfront->ceilingplane.ZatPoint(v1);
-	zceil[1] = segfront->ceilingplane.ZatPoint(v2);
-	fch1 = FLOAT2FIXED(zceil[0]);
-	fch2 = FLOAT2FIXED(zceil[1]);
+	v = segfront->floorplane.ZatPoint(v2);
+	zfloor[1] = v;
+	ffh2 = FLOAT2FIXED(v);
+
+	v = segfront->ceilingplane.ZatPoint(v1);
+	zceil[0] = v;
+	fch1 = FLOAT2FIXED(v);
+
+	v = segfront->ceilingplane.ZatPoint(v2);
+	zceil[1] = v;
+	fch2 = FLOAT2FIXED(v);
 
 	if (seg->linedef->special == Line_Horizon)
 	{

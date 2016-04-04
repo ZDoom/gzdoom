@@ -289,8 +289,8 @@ unsigned char *gl_CreateUpsampledTextureBuffer ( const FTexture *inputTexture, u
 		outWidth = inWidth;
 		outHeight = inHeight;
 #ifdef HAVE_MMX
-		// ASM-hqNx does not preserve the alpha channel so fall back to C-version for such textures
-		if (!hasAlpha && type > 6 && type <= 9)
+		// hqNx MMX does not preserve the alpha channel so fall back to C-version for such textures
+		if (hasAlpha && type > 6 && type <= 9)
 		{
 			type -= 3;
 		}

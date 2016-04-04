@@ -1675,7 +1675,7 @@ bool P_SeekerMissile (AActor *actor, double thresh, double turnMax, bool precise
 			}
 			pitch = DVector2(dist, target->Z() + aimheight - actor->Center()).Angle();
 		}
-		actor->Vel3DFromAngle(pitch, speed);
+		actor->Vel3DFromAngle(-pitch, speed);
 	}
 
 	return true;

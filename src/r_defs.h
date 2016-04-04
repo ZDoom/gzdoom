@@ -446,17 +446,17 @@ public:
 		normal.X = normal.Y = 0;
 		if (ceiling)
 		{
-			normal.Z = negiC = 1;
+			normal.Z = -1;
+			negiC = 1;
 			D = height;
 		}
 		else
 		{
-			normal.Z = negiC = -1;
+			normal.Z = 1;
+			negiC = -1;
 			D = -height;
 		}
 	}
-
-	inline void SetAtHeight(fixed_t height, int ceiling) = delete;
 
 	bool CopyPlaneIfValid (secplane_t *dest, const secplane_t *opp) const;
 

@@ -525,17 +525,12 @@ static void ParseUserVariable (FScanner &sc, PSymbolTable *symt, PClassActor *cl
 
 	// Read the type and make sure it's acceptable.
 	sc.MustGetAnyToken();
-	switch (sc.TokenType)
+	if (sc.TokenType != TK_Int && sc.TokenType != TK_Float)
 	{
-	case TK_Int:	type = TypeSInt32;		break;
-	case TK_Float:	type = TypeFloat64;		break;
-	case TK_String:	type = TypeString;		break;
-	default:
-		type = TypeError;
-		sc.ScriptMessage("User variables must be of type 'int' or 'float' or 'string'");
+		sc.ScriptMessage("User variables must be of type 'int' or 'float'");
 		FScriptPosition::ErrorCounter++;
-		break;
 	}
+	type = sc.TokenType == TK_Int ? (PType *)TypeSInt32 : (PType *)TypeFloat64;
 
 	sc.MustGetToken(TK_Identifier);
 	// For now, restrict user variables to those that begin with "user_" to guarantee
@@ -582,7 +577,7 @@ static void ParseUserVariable (FScanner &sc, PSymbolTable *symt, PClassActor *cl
 	sc.MustGetToken(';');
 
 	PField *sym = cls->AddField(symname, type, 0);
-	if (cls == NULL)
+	if (sym == NULL)
 	{
 		sc.ScriptMessage ("'%s' is already defined in '%s'.",
 			symname.GetChars(), cls ? cls->TypeName.GetChars() : "Global");

@@ -4558,7 +4558,7 @@ bool GetVarAddrType(AActor *self, FName varname, int index, void *&addr, PType *
 	addr = baddr;
 	// We don't want Int subclasses like Name or Color to be accessible,
 	// but we do want to support Float subclasses like Fixed.
-	if (!type->IsA(RUNTIME_CLASS(PInt)) || !type->IsKindOf(RUNTIME_CLASS(PFloat)))
+	if (!type->IsA(RUNTIME_CLASS(PInt)) && !type->IsKindOf(RUNTIME_CLASS(PFloat)))
 	{
 		// For reading, we also support Name and String types.
 		if (readonly && (type->IsA(RUNTIME_CLASS(PName)) || type->IsA(RUNTIME_CLASS(PString))))

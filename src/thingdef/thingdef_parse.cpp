@@ -585,7 +585,7 @@ static void ParseUserVariable (FScanner &sc, PSymbolTable *symt, PClassActor *cl
 	sc.MustGetToken(';');
 
 	PField *sym = cls->AddField(symname, type, 0);
-	if (cls == NULL)
+	if (sym == NULL)
 	{
 		sc.ScriptMessage ("'%s' is already defined in '%s'.",
 			symname.GetChars(), cls ? cls->TypeName.GetChars() : "Global");

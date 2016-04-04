@@ -665,6 +665,7 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 		if (listener != NULL)
 		{
 			listenpos = listener->Pos();
+			*pos = listener->SoundPos();
 			pgroup = listener->Sector->PortalGroup;
 		}
 		else
@@ -1276,7 +1277,8 @@ void S_Sound (const FPolyObj *poly, int channel, FSoundID sound_id, float volume
 
 void S_Sound(const DVector3 &pos, int channel, FSoundID sound_id, float volume, float attenuation)
 {
-	FVector3 p((float)pos.X, (float)pos.Y, (float)pos.Z);
+	// The sound system switches Y and Z around.
+	FVector3 p((float)pos.X, (float)pos.Z, (float)pos.Y);
 	S_StartSound (NULL, NULL, NULL, &p, channel, sound_id, volume, attenuation);
 }
 

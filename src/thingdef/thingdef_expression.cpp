@@ -2994,10 +2994,10 @@ FxExpression *FxArrayElement::Resolve(FCompileContext &ctx)
 	}
 
 	ValueType = arraytype->ElementType;
-	if (ValueType->GetRegType() != REGT_INT)
+	if (ValueType->GetRegType() != REGT_INT && ValueType->GetRegType() != REGT_FLOAT)
 	{
 		// int arrays only for now
-		ScriptPosition.Message(MSG_ERROR, "Only integer arrays are supported.");
+		ScriptPosition.Message(MSG_ERROR, "Only numeric arrays are supported.");
 		delete this;
 		return NULL;
 	}
@@ -3014,7 +3014,10 @@ FxExpression *FxArrayElement::Resolve(FCompileContext &ctx)
 ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 {
 	ExpEmit start = Array->Emit(build);
-	ExpEmit dest(build, REGT_INT);
+	PArray *const arraytype = static_cast<PArray*>(Array->ValueType);
+	PType *const elementtype = arraytype->ElementType;
+	ExpEmit dest(build, elementtype->GetRegType());
+
 	if (start.Konst)
 	{
 		ExpEmit tmpstart(build, REGT_POINTER);
@@ -3024,19 +3027,30 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 	if (index->isConstant())
 	{
 		unsigned indexval = static_cast<FxConstant *>(index)->GetValue().GetInt();
-		if (indexval >= static_cast<PArray*>(Array->ValueType)->ElementCount)
+		if (indexval >= arraytype->ElementCount)
 		{
 			I_Error("Array index out of bounds");
 		}
-		indexval <<= 2;
-		build->Emit(OP_LW, dest.RegNum, start.RegNum, build->GetConstantInt(indexval));
+		indexval *= arraytype->ElementSize;
+		build->Emit(arraytype->ElementType->GetLoadOp(), dest.RegNum,
+			start.RegNum, build->GetConstantInt(indexval));
 	}
 	else
 	{
 		ExpEmit indexv(index->Emit(build));
-		build->Emit(OP_SLL_RI, indexv.RegNum, indexv.RegNum, 2);
-		build->Emit(OP_BOUND, indexv.RegNum, static_cast<PArray*>(Array->ValueType)->ElementCount);
-		build->Emit(OP_LW_R, dest.RegNum, start.RegNum, indexv.RegNum);
+		int shiftbits = 0;
+		while (1u << shiftbits < arraytype->ElementSize)
+		{ 
+			shiftbits++;
+		}
+		assert(1 << shiftbits == arraytype->ElementSize && "Element sizes other than power of 2 are not implemented");
+		build->Emit(OP_BOUND, indexv.RegNum, arraytype->ElementCount);
+		if (shiftbits > 0)
+		{
+			build->Emit(OP_SLL_RI, indexv.RegNum, indexv.RegNum, shiftbits);
+		}
+		build->Emit(arraytype->ElementType->GetLoadOp() + 1,	// added 1 to use the *_R version that
+			dest.RegNum, start.RegNum, indexv.RegNum);			// takes the offset from a register
 		indexv.Free(build);
 	}
 	start.Free(build);

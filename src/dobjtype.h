@@ -7,6 +7,8 @@
 
 #include "vm.h"
 
+typedef std::pair<const class PType *, unsigned> FTypeAndOffset;
+
 // Variable/parameter/field flags -------------------------------------------
 
 // Making all these different storage types use a common set of flags seems
@@ -186,11 +188,43 @@ public:
 
 	int FindConversion(PType *target, const Conversion **slots, int numslots);
 
+	// Writes the value of a variable of this type at (addr) to an archive, preceded by
+	// a tag indicating its type. The tag is there so that variable types can be changed
+	// without completely breaking savegames, provided that the change isn't between
+	// totally unrelated types.
+	virtual void WriteValue(FArchive &ar, const void *addr) const;
+
+	// Returns true if the stored value was compatible. False otherwise.
+	// If the value was incompatible, then the memory at *addr is unchanged.
+	virtual bool ReadValue(FArchive &ar, void *addr) const;
+
+	// Skips over a value written with WriteValue
+	static void SkipValue(FArchive &ar);
+	static void SkipValue(FArchive &ar, int tag);
+
+	// Sets the default value for this type at (base + offset)
+	// If the default value is binary 0, then this function doesn't need
+	// to do anything, because PClass::Extend() takes care of that.
+	//
+	// The stroffs array is so that types that need special initialization
+	// and destruction (e.g. strings) can add their offsets to it for special
+	// initialization when the object is created and destruction when the
+	// object is destroyed.
+	virtual void SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *special=NULL) const;
+
+	// Initialize the value, if needed (e.g. strings)
+	virtual void InitializeValue(void *addr, const void *def) const;
+
+	// Destroy the value, if needed (e.g. strings)
+	virtual void DestroyValue(void *addr) const;
+
 	// Sets the value of a variable of this type at (addr)
 	virtual void SetValue(void *addr, int val);
+	virtual void SetValue(void *addr, double val);
 
 	// Gets the value of a variable of this type at (addr)
 	virtual int GetValueInt(void *addr) const;
+	virtual double GetValueFloat(void *addr) const;
 
 	// Gets the opcode to store from a register to memory
 	virtual int GetStoreOp() const;
@@ -319,8 +353,13 @@ class PInt : public PBasicType
 public:
 	PInt(unsigned int size, bool unsign);
 
+	void WriteValue(FArchive &ar, const void *addr) const override;
+	bool ReadValue(FArchive &ar, void *addr) const override;
+
 	virtual void SetValue(void *addr, int val);
+	virtual void SetValue(void *addr, double val);
 	virtual int GetValueInt(void *addr) const;
+	virtual double GetValueFloat(void *addr) const;
 	virtual int GetStoreOp() const;
 	virtual int GetLoadOp() const;
 	virtual int GetRegType() const;
@@ -343,8 +382,13 @@ class PFloat : public PBasicType
 public:
 	PFloat(unsigned int size);
 
+	void WriteValue(FArchive &ar, const void *addr) const override;
+	bool ReadValue(FArchive &ar, void *addr) const override;
+
 	virtual void SetValue(void *addr, int val);
+	virtual void SetValue(void *addr, double val);
 	virtual int GetValueInt(void *addr) const;
+	virtual double GetValueFloat(void *addr) const;
 	virtual int GetStoreOp() const;
 	virtual int GetLoadOp() const;
 	virtual int GetRegType() const;
@@ -375,6 +419,12 @@ public:
 	PString();
 
 	virtual int GetRegType() const;
+
+	void WriteValue(FArchive &ar, const void *addr) const override;
+	bool ReadValue(FArchive &ar, void *addr) const override;
+	void SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *special=NULL) const override;
+	void InitializeValue(void *addr, const void *def) const override;
+	void DestroyValue(void *addr) const override;
 };
 
 // Variations of integer types ----------------------------------------------
@@ -384,6 +434,9 @@ class PName : public PInt
 	DECLARE_CLASS(PName, PInt);
 public:
 	PName();
+
+	void WriteValue(FArchive &ar, const void *addr) const override;
+	bool ReadValue(FArchive &ar, void *addr) const override;
 };
 
 class PSound : public PInt
@@ -391,6 +444,9 @@ class PSound : public PInt
 	DECLARE_CLASS(PSound, PInt);
 public:
 	PSound();
+
+	void WriteValue(FArchive &ar, const void *addr) const override;
+	bool ReadValue(FArchive &ar, void *addr) const override;
 };
 
 class PColor : public PInt
@@ -409,8 +465,13 @@ class PFixed : public PFloat
 public:
 	PFixed();
 
+	void WriteValue(FArchive &ar, const void *addr) const override;
+	bool ReadValue(FArchive &ar, void *addr) const override;
+
 	virtual void SetValue(void *addr, int val);
+	virtual void SetValue(void *addr, double val);
 	virtual int GetValueInt(void *addr) const;
+	virtual double GetValueFloat(void *addr) const;
 	virtual int GetStoreOp() const;
 	virtual int GetLoadOp() const;
 };
@@ -421,8 +482,13 @@ class PAngle : public PFloat
 public:
 	PAngle();
 
+	void WriteValue(FArchive &ar, const void *addr) const override;
+	bool ReadValue(FArchive &ar, void *addr) const override;
+
 	virtual void SetValue(void *addr, int val);
+	virtual void SetValue(void *addr, double val);
 	virtual int GetValueInt(void *addr) const;
+	virtual double GetValueFloat(void *addr) const;
 	virtual int GetStoreOp() const;
 	virtual int GetLoadOp() const;
 };
@@ -434,6 +500,9 @@ class PStatePointer : public PBasicType
 	DECLARE_CLASS(PStatePointer, PBasicType);
 public:
 	PStatePointer();
+
+	void WriteValue(FArchive &ar, const void *addr) const override;
+	bool ReadValue(FArchive &ar, void *addr) const override;
 
 	virtual int GetStoreOp() const;
 	virtual int GetLoadOp() const;
@@ -455,6 +524,10 @@ public:
 
 	virtual bool IsMatch(intptr_t id1, intptr_t id2) const;
 	virtual void GetTypeIDs(intptr_t &id1, intptr_t &id2) const;
+
+	void WriteValue(FArchive &ar, const void *addr) const override;
+	bool ReadValue(FArchive &ar, void *addr) const override;
+
 protected:
 	PPointer();
 };
@@ -521,6 +594,12 @@ public:
 
 	virtual bool IsMatch(intptr_t id1, intptr_t id2) const;
 	virtual void GetTypeIDs(intptr_t &id1, intptr_t &id2) const;
+
+	void WriteValue(FArchive &ar, const void *addr) const override;
+	bool ReadValue(FArchive &ar, void *addr) const override;
+
+	void SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *special) const override;
+
 protected:
 	PArray();
 };
@@ -575,9 +654,16 @@ public:
 
 	TArray<PField *> Fields;
 
-	PField *AddField(FName name, PType *type, DWORD flags=0);
+	virtual PField *AddField(FName name, PType *type, DWORD flags=0);
 
 	size_t PropagateMark();
+
+	void WriteValue(FArchive &ar, const void *addr) const override;
+	bool ReadValue(FArchive &ar, void *addr) const override;
+	void SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *specials) const override;
+
+	static void WriteFields(FArchive &ar, const void *addr, const TArray<PField *> &fields);
+	bool ReadFields(FArchive &ar, void *addr) const;
 protected:
 	PStruct();
 };
@@ -635,10 +721,15 @@ class PClass : public PStruct
 protected:
 	// We unravel _WITH_META here just as we did for PType.
 	enum { MetaClassNum = CLASSREG_PClassClass };
+	TArray<FTypeAndOffset> SpecialInits;
 	virtual void Derive(PClass *newclass);
+	void InitializeSpecials(void *addr) const;
 public:
 	typedef PClassClass MetaClass;
 	MetaClass *GetClass() const;
+
+	void WriteValue(FArchive &ar, const void *addr) const override;
+	bool ReadValue(FArchive &ar, void *addr) const override;
 
 	virtual void DeriveData(PClass *newclass) {}
 	static void StaticInit();
@@ -660,9 +751,10 @@ public:
 	void InsertIntoHash();
 	DObject *CreateNew() const;
 	PClass *CreateDerivedClass(FName name, unsigned int size);
-	unsigned int Extend(unsigned int extension);
+	PField *AddField(FName name, PType *type, DWORD flags=0) override;
 	void InitializeActorInfo();
 	void BuildFlatPointers();
+	void DestroySpecials(void *addr) const;
 	const PClass *NativeClass() const;
 
 	// Returns true if this type is an ancestor of (or same as) the passed type.
@@ -682,6 +774,9 @@ public:
 	}
 
 	// Find a type, given its name.
+	const PClass *FindParentClass(FName name) const;
+	PClass *FindParentClass(FName name) { return const_cast<PClass *>(const_cast<const PClass *>(this)->FindParentClass(name)); }
+
 	static PClass *FindClass(const char *name)			{ return FindClass(FName(name, true)); }
 	static PClass *FindClass(const FString &name)		{ return FindClass(FName(name, true)); }
 	static PClass *FindClass(ENamedName name)			{ return FindClass(FName(name)); }
@@ -831,5 +926,32 @@ public:
 };
 
 void ReleaseGlobalSymbols();
+
+// Enumerations for serializing types in an archive -------------------------
+
+enum ETypeVal : BYTE
+{
+	VAL_Int8,
+	VAL_UInt8,
+	VAL_Int16,
+	VAL_UInt16,
+	VAL_Int32,
+	VAL_UInt32,
+	VAL_Int64,
+	VAL_UInt64,
+	VAL_Zero,
+	VAL_One,
+	VAL_Float32,
+	VAL_Float64,
+	VAL_Fixed,
+	VAL_BAM,
+	VAL_String,
+	VAL_Name,
+	VAL_Struct,
+	VAL_Array,
+	VAL_Object,
+	VAL_State,
+	VAL_Class,
+};
 
 #endif

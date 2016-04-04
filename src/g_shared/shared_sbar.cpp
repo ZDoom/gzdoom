@@ -52,7 +52,6 @@
 #include "v_palette.h"
 #include "d_player.h"
 #include "farchive.h"
-#include "a_hexenglobal.h"
 #include "gstrings.h"
 
 #include "../version.h"

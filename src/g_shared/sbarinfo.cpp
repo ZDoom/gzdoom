@@ -206,67 +206,31 @@ class SBarInfoCommandFlowControl : public SBarInfoCommand
 {
 	public:
 		SBarInfoCommandFlowControl(SBarInfo *script) : SBarInfoCommand(script), truth(false) {}
-		~SBarInfoCommandFlowControl()
-		{
-			for(unsigned int i = 0;i < 2;i++)
-			{
-				for(unsigned int j = 0;j < commands[i].Size();j++)
-					delete commands[i][j];
-			}
-		}
 
 		void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar)
 		{
-			for(unsigned int i = 0;i < commands[truth].Size();i++)
-				commands[truth][i]->Draw(block, statusBar);
+			for(auto command : commands[truth])
+				command->Draw(block, statusBar);
 		}
 		int		NumCommands() const { return commands[truth].Size(); }
 		void	Parse(FScanner &sc, bool fullScreenOffsets)
 		{
-			bool elseBlock = false;
-			SBarInfoCommand *cmd = NULL;
-			// Should loop no more than twice.
-			while(true)
-			{
-				if(sc.CheckToken('{'))
-				{
-					while((cmd = NextCommand(sc)) != NULL)
-					{
-						cmd->Parse(sc, fullScreenOffsets);
-						commands[!elseBlock].Push(cmd);
-					}
-				}
-				else
-				{
-					if((cmd = NextCommand(sc)) != NULL)
-					{
-						cmd->Parse(sc, fullScreenOffsets);
-						commands[!elseBlock].Push(cmd);
-					}
-					else
-						sc.ScriptError("Missing command for flow control statement.");
-				}
-
-				if(!elseBlock && sc.CheckToken(TK_Else))
-				{
-					elseBlock = true;
-					continue;
-				}
-				break;
-			}
+			ParseBlock(commands[1], sc, fullScreenOffsets);
+			if(sc.CheckToken(TK_Else))
+				ParseBlock(commands[0], sc, fullScreenOffsets);
 		}
 		void	Reset()
 		{
 			for(unsigned int i = 0;i < 2;i++)
 			{
-				for(unsigned int j = 0;j < commands[i].Size();j++)
-					commands[i][j]->Reset();
+				for(auto command : commands[i])
+					command->Reset();
 			}
 		}
 		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
 		{
-			for(unsigned int i = 0;i < commands[truth].Size();i++)
-				commands[truth][i]->Tick(block, statusBar, hudChanged);
+			for(auto command : commands[truth])
+				command->Tick(block, statusBar, hudChanged);
 		}
 
 	protected:
@@ -283,11 +247,65 @@ class SBarInfoCommandFlowControl : public SBarInfoCommand
 				Tick(block, statusBar, true);
 		}
 
+		void Negate()
+		{
+			swapvalues(commands[0], commands[1]);
+		}
+
 	private:
+		void ParseBlock(TDeletingArray<SBarInfoCommand *> &commands, FScanner &sc, bool fullScreenOffsets)
+		{
+			if(sc.CheckToken('{'))
+			{
+				while(SBarInfoCommand *cmd = NextCommand(sc))
+				{
+					cmd->Parse(sc, fullScreenOffsets);
+					commands.Push(cmd);
+				}
+			}
+			else
+			{
+				if(SBarInfoCommand *cmd = NextCommand(sc))
+				{
+					cmd->Parse(sc, fullScreenOffsets);
+					commands.Push(cmd);
+				}
+				else
+					sc.ScriptError("Missing command for flow control statement.");
+			}
+		}
+
 		SBarInfoCommand	*NextCommand(FScanner &sc);
 
-		bool						truth;
-		TArray<SBarInfoCommand *>	commands[2];
+		TDeletingArray<SBarInfoCommand *> commands[2];
+		bool truth;
+};
+
+class SBarInfoNegatableFlowControl : public SBarInfoCommandFlowControl
+{
+	public:
+		SBarInfoNegatableFlowControl(SBarInfo *script) : SBarInfoCommandFlowControl(script) {}
+
+		void Parse(FScanner &sc, bool fullScreenOffsets)
+		{
+			bool negate = false;
+			if(sc.CheckToken(TK_Identifier))
+			{
+				if(sc.Compare("not"))
+					negate = true;
+				else
+					sc.UnGet();
+			}
+
+			ParseNegatable(sc, fullScreenOffsets);
+
+			SBarInfoCommandFlowControl::Parse(sc, fullScreenOffsets);
+
+			if(negate)
+				Negate();
+		}
+
+		virtual void ParseNegatable(FScanner &sc, bool fullScreenOffsets) {}
 };
 
 class SBarInfoMainBlock : public SBarInfoCommandFlowControl

@@ -88,8 +88,20 @@ int LS_SetGlobalFogParameter(line_t *ln, AActor *it, bool backSide, int arg0, in
 #define OCTICS(a)		(((a)*TICRATE)/8)
 #define	BYTEANGLE(a)	((angle_t)((a)<<24))
 #define CRUSH(a)		((a) > 0? (a) : -1)
-#define CRUSHTYPE(a)	((a)==1? false : (a)==2? true : gameinfo.gametype == GAME_Hexen)
 #define CHANGE(a)		(((a) >= 0 && (a)<=7)? ChangeMap[a]:0)
+
+static bool CRUSHTYPE(int a)
+{
+	return ((a) == 1 ? false : (a) == 2 ? true : gameinfo.gametype == GAME_Hexen);
+}
+
+static DCeiling::ECrushMode CRUSHTYPE(int a, bool withslowdown)
+{
+	static DCeiling::ECrushMode map[] = { DCeiling::ECrushMode::crushDoom, DCeiling::ECrushMode::crushHexen, DCeiling::ECrushMode::crushSlowdown };
+	if (a >= 1 && a <= 3) return map[a - 1];
+	if (gameinfo.gametype == GAME_Hexen) return DCeiling::ECrushMode::crushHexen;
+	return withslowdown? DCeiling::ECrushMode::crushSlowdown : DCeiling::ECrushMode::crushDoom;
+}
 
 static FRandom pr_glass ("GlassBreak");
 
@@ -632,43 +644,43 @@ FUNC(LS_Pillar_Open)
 FUNC(LS_Ceiling_LowerByValue)
 // Ceiling_LowerByValue (tag, speed, height, change, crush)
 {
-	return EV_DoCeiling (DCeiling::ceilLowerByValue, ln, arg0, SPEED(arg1), 0, arg2*FRACUNIT, CRUSH(arg4), 0, CHANGE(arg3), false);
+	return EV_DoCeiling (DCeiling::ceilLowerByValue, ln, arg0, SPEED(arg1), 0, arg2*FRACUNIT, CRUSH(arg4), 0, CHANGE(arg3));
 }
 
 FUNC(LS_Ceiling_RaiseByValue)
 // Ceiling_RaiseByValue (tag, speed, height, change)
 {
-	return EV_DoCeiling (DCeiling::ceilRaiseByValue, ln, arg0, SPEED(arg1), 0, arg2*FRACUNIT, CRUSH(arg4), 0, CHANGE(arg3), false);
+	return EV_DoCeiling (DCeiling::ceilRaiseByValue, ln, arg0, SPEED(arg1), 0, arg2*FRACUNIT, CRUSH(arg4), 0, CHANGE(arg3));
 }
 
 FUNC(LS_Ceiling_LowerByValueTimes8)
 // Ceiling_LowerByValueTimes8 (tag, speed, height, change, crush)
 {
-	return EV_DoCeiling (DCeiling::ceilLowerByValue, ln, arg0, SPEED(arg1), 0, arg2*FRACUNIT*8, -1, 0, CHANGE(arg3), false);
+	return EV_DoCeiling (DCeiling::ceilLowerByValue, ln, arg0, SPEED(arg1), 0, arg2*FRACUNIT*8, -1, 0, CHANGE(arg3));
 }
 
 FUNC(LS_Ceiling_RaiseByValueTimes8)
 // Ceiling_RaiseByValueTimes8 (tag, speed, height, change)
 {
-	return EV_DoCeiling (DCeiling::ceilRaiseByValue, ln, arg0, SPEED(arg1), 0, arg2*FRACUNIT*8, -1, 0, CHANGE(arg3), false);
+	return EV_DoCeiling (DCeiling::ceilRaiseByValue, ln, arg0, SPEED(arg1), 0, arg2*FRACUNIT*8, -1, 0, CHANGE(arg3));
 }
 
 FUNC(LS_Ceiling_CrushAndRaise)
 // Ceiling_CrushAndRaise (tag, speed, crush, crushtype)
 {
-	return EV_DoCeiling (DCeiling::ceilCrushAndRaise, ln, arg0, SPEED(arg1), SPEED(arg1)/2, 8*FRACUNIT, arg2, 0, 0, CRUSHTYPE(arg3));
+	return EV_DoCeiling (DCeiling::ceilCrushAndRaise, ln, arg0, SPEED(arg1), SPEED(arg1)/2, 8*FRACUNIT, arg2, 0, 0, CRUSHTYPE(arg3, false));
 }
 
 FUNC(LS_Ceiling_LowerAndCrush)
 // Ceiling_LowerAndCrush (tag, speed, crush, crushtype)
 {
-	return EV_DoCeiling (DCeiling::ceilLowerAndCrush, ln, arg0, SPEED(arg1), SPEED(arg1), 8*FRACUNIT, arg2, 0, 0, CRUSHTYPE(arg3));
+	return EV_DoCeiling (DCeiling::ceilLowerAndCrush, ln, arg0, SPEED(arg1), SPEED(arg1), 8*FRACUNIT, arg2, 0, 0, CRUSHTYPE(arg3, arg1 == 8));
 }
 
 FUNC(LS_Ceiling_LowerAndCrushDist)
 // Ceiling_LowerAndCrush (tag, speed, crush, dist, crushtype)
 {
-	return EV_DoCeiling (DCeiling::ceilLowerAndCrush, ln, arg0, SPEED(arg1), SPEED(arg1), arg3*FRACUNIT, arg2, 0, 0, CRUSHTYPE(arg4));
+	return EV_DoCeiling (DCeiling::ceilLowerAndCrush, ln, arg0, SPEED(arg1), SPEED(arg1), arg3*FRACUNIT, arg2, 0, 0, CRUSHTYPE(arg4, arg1 == 8));
 }
 
 FUNC(LS_Ceiling_CrushStop)
@@ -680,141 +692,141 @@ FUNC(LS_Ceiling_CrushStop)
 FUNC(LS_Ceiling_CrushRaiseAndStay)
 // Ceiling_CrushRaiseAndStay (tag, speed, crush, crushtype)
 {
-	return EV_DoCeiling (DCeiling::ceilCrushRaiseAndStay, ln, arg0, SPEED(arg1), SPEED(arg1)/2, 8*FRACUNIT, arg2, 0, 0, CRUSHTYPE(arg3));
+	return EV_DoCeiling (DCeiling::ceilCrushRaiseAndStay, ln, arg0, SPEED(arg1), SPEED(arg1)/2, 8*FRACUNIT, arg2, 0, 0, CRUSHTYPE(arg3, false));
 }
 
 FUNC(LS_Ceiling_MoveToValueTimes8)
 // Ceiling_MoveToValueTimes8 (tag, speed, height, negative, change)
 {
 	return EV_DoCeiling (DCeiling::ceilMoveToValue, ln, arg0, SPEED(arg1), 0,
-						 arg2*FRACUNIT*8*((arg3) ? -1 : 1), -1, 0, CHANGE(arg4), false);
+						 arg2*FRACUNIT*8*((arg3) ? -1 : 1), -1, 0, CHANGE(arg4));
 }
 
 FUNC(LS_Ceiling_MoveToValue)
 // Ceiling_MoveToValue (tag, speed, height, negative, change)
 {
 	return EV_DoCeiling (DCeiling::ceilMoveToValue, ln, arg0, SPEED(arg1), 0,
-						 arg2*FRACUNIT*((arg3) ? -1 : 1), -1, 0, CHANGE(arg4), false);
+						 arg2*FRACUNIT*((arg3) ? -1 : 1), -1, 0, CHANGE(arg4));
 }
 
 FUNC(LS_Ceiling_LowerToHighestFloor)
 // Ceiling_LowerToHighestFloor (tag, speed, change, crush)
 {
-	return EV_DoCeiling (DCeiling::ceilLowerToHighestFloor, ln, arg0, SPEED(arg1), 0, 0, CRUSH(arg3), 0, CHANGE(arg2), false);
+	return EV_DoCeiling (DCeiling::ceilLowerToHighestFloor, ln, arg0, SPEED(arg1), 0, 0, CRUSH(arg3), 0, CHANGE(arg2));
 }
 
 FUNC(LS_Ceiling_LowerInstant)
 // Ceiling_LowerInstant (tag, unused, height, change, crush)
 {
-	return EV_DoCeiling (DCeiling::ceilLowerInstant, ln, arg0, 0, 0, arg2*FRACUNIT*8, CRUSH(arg4), 0, CHANGE(arg3), false);
+	return EV_DoCeiling (DCeiling::ceilLowerInstant, ln, arg0, 0, 0, arg2*FRACUNIT*8, CRUSH(arg4), 0, CHANGE(arg3));
 }
 
 FUNC(LS_Ceiling_RaiseInstant)
 // Ceiling_RaiseInstant (tag, unused, height, change)
 {
-	return EV_DoCeiling (DCeiling::ceilRaiseInstant, ln, arg0, 0, 0, arg2*FRACUNIT*8, -1, 0, CHANGE(arg3), false);
+	return EV_DoCeiling (DCeiling::ceilRaiseInstant, ln, arg0, 0, 0, arg2*FRACUNIT*8, -1, 0, CHANGE(arg3));
 }
 
 FUNC(LS_Ceiling_CrushRaiseAndStayA)
 // Ceiling_CrushRaiseAndStayA (tag, dnspeed, upspeed, damage, crushtype)
 {
-	return EV_DoCeiling (DCeiling::ceilCrushRaiseAndStay, ln, arg0, SPEED(arg1), SPEED(arg2), 0, arg3, 0, 0, CRUSHTYPE(arg4));
+	return EV_DoCeiling (DCeiling::ceilCrushRaiseAndStay, ln, arg0, SPEED(arg1), SPEED(arg2), 0, arg3, 0, 0, CRUSHTYPE(arg4, false));
 }
 
 FUNC(LS_Ceiling_CrushRaiseAndStaySilA)
 // Ceiling_CrushRaiseAndStaySilA (tag, dnspeed, upspeed, damage, crushtype)
 {
-	return EV_DoCeiling (DCeiling::ceilCrushRaiseAndStay, ln, arg0, SPEED(arg1), SPEED(arg2), 0, arg3, 1, 0, CRUSHTYPE(arg4));
+	return EV_DoCeiling (DCeiling::ceilCrushRaiseAndStay, ln, arg0, SPEED(arg1), SPEED(arg2), 0, arg3, 1, 0, CRUSHTYPE(arg4, false));
 }
 
 FUNC(LS_Ceiling_CrushAndRaiseA)
 // Ceiling_CrushAndRaiseA (tag, dnspeed, upspeed, damage, crushtype)
 {
-	return EV_DoCeiling (DCeiling::ceilCrushAndRaise, ln, arg0, SPEED(arg1), SPEED(arg2), 0, arg3, 0, 0, CRUSHTYPE(arg4));
+	return EV_DoCeiling (DCeiling::ceilCrushAndRaise, ln, arg0, SPEED(arg1), SPEED(arg2), 0, arg3, 0, 0, CRUSHTYPE(arg4, arg1 == 8 && arg2 == 8));
 }
 
 FUNC(LS_Ceiling_CrushAndRaiseDist)
 // Ceiling_CrushAndRaiseDist (tag, dist, speed, damage, crushtype)
 {
-	return EV_DoCeiling (DCeiling::ceilCrushAndRaise, ln, arg0, SPEED(arg2), SPEED(arg2), arg1*FRACUNIT, arg3, 0, 0, CRUSHTYPE(arg4));
+	return EV_DoCeiling (DCeiling::ceilCrushAndRaise, ln, arg0, SPEED(arg2), SPEED(arg2), arg1*FRACUNIT, arg3, 0, 0, CRUSHTYPE(arg4, arg2 == 8));
 }
 
 FUNC(LS_Ceiling_CrushAndRaiseSilentA)
 // Ceiling_CrushAndRaiseSilentA (tag, dnspeed, upspeed, damage, crushtype)
 {
-	return EV_DoCeiling (DCeiling::ceilCrushAndRaise, ln, arg0, SPEED(arg1), SPEED(arg2), 0, arg3, 1, 0, CRUSHTYPE(arg4));
+	return EV_DoCeiling (DCeiling::ceilCrushAndRaise, ln, arg0, SPEED(arg1), SPEED(arg2), 0, arg3, 1, 0, CRUSHTYPE(arg4, arg1 == 8 && arg2 == 8));
 }
 
 FUNC(LS_Ceiling_CrushAndRaiseSilentDist)
 // Ceiling_CrushAndRaiseSilentDist (tag, dist, upspeed, damage, crushtype)
 {
-	return EV_DoCeiling (DCeiling::ceilCrushAndRaise, ln, arg0, SPEED(arg2), SPEED(arg2), arg1*FRACUNIT, arg3, 1, 0, CRUSHTYPE(arg4));
+	return EV_DoCeiling (DCeiling::ceilCrushAndRaise, ln, arg0, SPEED(arg2), SPEED(arg2), arg1*FRACUNIT, arg3, 1, 0, CRUSHTYPE(arg4, arg2 == 8));
 }
 
 FUNC(LS_Ceiling_RaiseToNearest)
 // Ceiling_RaiseToNearest (tag, speed, change)
 {
-	return EV_DoCeiling (DCeiling::ceilRaiseToNearest, ln, arg0, SPEED(arg1), 0, 0, -1, CHANGE(arg2), 0, false);
+	return EV_DoCeiling (DCeiling::ceilRaiseToNearest, ln, arg0, SPEED(arg1), 0, 0, -1, CHANGE(arg2), 0);
 }
 
 FUNC(LS_Ceiling_RaiseToHighest)
 // Ceiling_RaiseToHighest (tag, speed, change)
 {
-	return EV_DoCeiling (DCeiling::ceilRaiseToHighest, ln, arg0, SPEED(arg1), 0, 0, -1, CHANGE(arg2), 0, false);
+	return EV_DoCeiling (DCeiling::ceilRaiseToHighest, ln, arg0, SPEED(arg1), 0, 0, -1, CHANGE(arg2), 0);
 }
 
 FUNC(LS_Ceiling_RaiseToLowest)
 // Ceiling_RaiseToLowest (tag, speed, change)
 {
-	return EV_DoCeiling (DCeiling::ceilRaiseToLowest, ln, arg0, SPEED(arg1), 0, 0, -1, CHANGE(arg2), 0, false);
+	return EV_DoCeiling (DCeiling::ceilRaiseToLowest, ln, arg0, SPEED(arg1), 0, 0, -1, CHANGE(arg2), 0);
 }
 
 FUNC(LS_Ceiling_RaiseToHighestFloor)
 // Ceiling_RaiseToHighestFloor (tag, speed, change)
 {
-	return EV_DoCeiling (DCeiling::ceilRaiseToHighestFloor, ln, arg0, SPEED(arg1), 0, 0, -1, CHANGE(arg2), 0, false);
+	return EV_DoCeiling (DCeiling::ceilRaiseToHighestFloor, ln, arg0, SPEED(arg1), 0, 0, -1, CHANGE(arg2), 0);
 }
 
 FUNC(LS_Ceiling_RaiseByTexture)
 // Ceiling_RaiseByTexture (tag, speed, change)
 {
-	return EV_DoCeiling (DCeiling::ceilRaiseByTexture, ln, arg0, SPEED(arg1), 0, 0, -1, CHANGE(arg2), 0, false);
+	return EV_DoCeiling (DCeiling::ceilRaiseByTexture, ln, arg0, SPEED(arg1), 0, 0, -1, CHANGE(arg2), 0);
 }
 
 FUNC(LS_Ceiling_LowerToLowest)
 // Ceiling_LowerToLowest (tag, speed, change, crush)
 {
-	return EV_DoCeiling (DCeiling::ceilLowerToLowest, ln, arg0, SPEED(arg1), 0, 0, CRUSH(arg3), 0, CHANGE(arg2), false);
+	return EV_DoCeiling (DCeiling::ceilLowerToLowest, ln, arg0, SPEED(arg1), 0, 0, CRUSH(arg3), 0, CHANGE(arg2));
 }
 
 FUNC(LS_Ceiling_LowerToNearest)
 // Ceiling_LowerToNearest (tag, speed, change, crush)
 {
-	return EV_DoCeiling (DCeiling::ceilLowerToNearest, ln, arg0, SPEED(arg1), 0, 0, CRUSH(arg3), 0, CHANGE(arg2), false);
+	return EV_DoCeiling (DCeiling::ceilLowerToNearest, ln, arg0, SPEED(arg1), 0, 0, CRUSH(arg3), 0, CHANGE(arg2));
 }
 
 FUNC(LS_Ceiling_ToHighestInstant)
 // Ceiling_ToHighestInstant (tag, change, crush)
 {
-	return EV_DoCeiling (DCeiling::ceilLowerToHighest, ln, arg0, FRACUNIT*2, 0, 0, CRUSH(arg2), 0, CHANGE(arg1), false);
+	return EV_DoCeiling (DCeiling::ceilLowerToHighest, ln, arg0, FRACUNIT*2, 0, 0, CRUSH(arg2), 0, CHANGE(arg1));
 }
 
 FUNC(LS_Ceiling_ToFloorInstant)
 // Ceiling_ToFloorInstant (tag, change, crush)
 {
-	return EV_DoCeiling (DCeiling::ceilRaiseToFloor, ln, arg0, FRACUNIT*2, 0, 0, CRUSH(arg2), 0, CHANGE(arg1), false);
+	return EV_DoCeiling (DCeiling::ceilRaiseToFloor, ln, arg0, FRACUNIT*2, 0, 0, CRUSH(arg2), 0, CHANGE(arg1));
 }
 
 FUNC(LS_Ceiling_LowerToFloor)
 // Ceiling_LowerToFloor (tag, speed, change, crush)
 {
-	return EV_DoCeiling (DCeiling::ceilLowerToFloor, ln, arg0, SPEED(arg1), 0, 0, CRUSH(arg3), 0, CHANGE(arg4), false);
+	return EV_DoCeiling (DCeiling::ceilLowerToFloor, ln, arg0, SPEED(arg1), 0, 0, CRUSH(arg3), 0, CHANGE(arg4));
 }
 
 FUNC(LS_Ceiling_LowerByTexture)
 // Ceiling_LowerByTexture (tag, speed, change, crush)
 {
-	return EV_DoCeiling (DCeiling::ceilLowerByTexture, ln, arg0, SPEED(arg1), 0, 0, CRUSH(arg3), 0, CHANGE(arg4), false);
+	return EV_DoCeiling (DCeiling::ceilLowerByTexture, ln, arg0, SPEED(arg1), 0, 0, CRUSH(arg3), 0, CHANGE(arg4));
 }
 
 FUNC(LS_Generic_Ceiling)
@@ -845,14 +857,14 @@ FUNC(LS_Generic_Ceiling)
 	}
 
 	return EV_DoCeiling (type, ln, arg0, SPEED(arg1), SPEED(arg1), arg2*FRACUNIT,
-						 (arg4 & 16) ? 20 : -1, 0, arg4 & 7, false);
+						 (arg4 & 16) ? 20 : -1, 0, arg4 & 7);
 }
 
 FUNC(LS_Generic_Crusher)
 // Generic_Crusher (tag, dnspeed, upspeed, silent, damage)
 {
 	return EV_DoCeiling (DCeiling::ceilCrushAndRaise, ln, arg0, SPEED(arg1),
-						 SPEED(arg2), 0, arg4, arg3 ? 2 : 0, 0, false);
+						 SPEED(arg2), 0, arg4, arg3 ? 2 : 0, 0, (arg1 <= 24 && arg2 <= 24)? DCeiling::ECrushMode::crushSlowdown : DCeiling::ECrushMode::crushDoom);
 }
 
 FUNC(LS_Generic_Crusher2)
@@ -860,7 +872,7 @@ FUNC(LS_Generic_Crusher2)
 {
 	// same as above but uses Hexen's crushing method.
 	return EV_DoCeiling (DCeiling::ceilCrushAndRaise, ln, arg0, SPEED(arg1),
-						 SPEED(arg2), 0, arg4, arg3 ? 2 : 0, 0, true);
+						 SPEED(arg2), 0, arg4, arg3 ? 2 : 0, 0, DCeiling::ECrushMode::crushHexen);
 }
 
 FUNC(LS_Plat_PerpetualRaise)
@@ -1948,7 +1960,7 @@ FUNC(LS_FloorAndCeiling_RaiseByValue)
 FUNC(LS_FloorAndCeiling_LowerRaise)
 // FloorAndCeiling_LowerRaise (tag, fspeed, cspeed, boomemu)
 {
-	bool res = EV_DoCeiling (DCeiling::ceilRaiseToHighest, ln, arg0, SPEED(arg2), 0, 0, 0, 0, 0, false);
+	bool res = EV_DoCeiling (DCeiling::ceilRaiseToHighest, ln, arg0, SPEED(arg2), 0, 0, 0, 0, 0);
 	// The switch based Boom equivalents of FloorandCeiling_LowerRaise do incorrect checks
 	// which cause the floor only to move when the ceiling fails to do so.
 	// To avoid problems with maps that have incorrect args this only uses a 
@@ -2137,51 +2149,9 @@ FUNC(LS_Sector_ChangeFlags)
 	return rtn;
 }
 
-struct FThinkerCollection
-{
-	int RefNum;
-	DThinker *Obj;
-};
 
-static TArray<FThinkerCollection> Collection;
 
-void AdjustPusher (int tag, int magnitude, int angle, DPusher::EPusher type)
-{
-	// Find pushers already attached to the sector, and change their parameters.
-	{
-		TThinkerIterator<DPusher> iterator;
-		FThinkerCollection collect;
-
-		while ( (collect.Obj = iterator.Next ()) )
-		{
-			if ((collect.RefNum = ((DPusher *)collect.Obj)->CheckForSectorMatch (type, tag)) >= 0)
-			{
-				((DPusher *)collect.Obj)->ChangeValues (magnitude, angle);
-				Collection.Push (collect);
-			}
-		}
-	}
-
-	size_t numcollected = Collection.Size ();
-	int secnum;
-
-	// Now create pushers for any sectors that don't already have them.
-	FSectorTagIterator itr(tag);
-	while ((secnum = itr.Next()) >= 0)
-	{
-		unsigned int i;
-		for (i = 0; i < numcollected; i++)
-		{
-			if (Collection[i].RefNum == sectors[secnum].sectornum)
-				break;
-		}
-		if (i == numcollected)
-		{
-			new DPusher (type, NULL, magnitude, angle, NULL, secnum);
-		}
-	}
-	Collection.Clear ();
-}
+void AdjustPusher(int tag, int magnitude, int angle, bool wind);
 
 FUNC(LS_Sector_SetWind)
 // Sector_SetWind (tag, amount, angle)
@@ -2189,7 +2159,7 @@ FUNC(LS_Sector_SetWind)
 	if (arg3)
 		return false;
 
-	AdjustPusher (arg0, arg1, arg2, DPusher::p_wind);
+	AdjustPusher (arg0, arg1, arg2, true);
 	return true;
 }
 
@@ -2199,7 +2169,7 @@ FUNC(LS_Sector_SetCurrent)
 	if (arg3)
 		return false;
 
-	AdjustPusher (arg0, arg1, arg2, DPusher::p_current);
+	AdjustPusher (arg0, arg1, arg2, false);
 	return true;
 }
 
@@ -2241,76 +2211,9 @@ FUNC(LS_Sector_SetLink)
 	return false;
 }
 
+void SetWallScroller(int id, int sidechoice, fixed_t dx, fixed_t dy, EScrollPos Where);
+void SetScroller(int tag, EScroll type, fixed_t dx, fixed_t dy);
 
-static void SetWallScroller (int id, int sidechoice, fixed_t dx, fixed_t dy, int Where)
-{
-	Where &=7;
-	if (Where == 0) return;
-
-	if ((dx | dy) == 0)
-	{
-		// Special case: Remove the scroller, because the deltas are both 0.
-		TThinkerIterator<DScroller> iterator (STAT_SCROLLER);
-		DScroller *scroller;
-
-		while ( (scroller = iterator.Next ()) )
-		{
-			int wallnum = scroller->GetWallNum ();
-
-			if (wallnum >= 0 && tagManager.LineHasID(sides[wallnum].linedef, id) &&
-				int(sides[wallnum].linedef->sidedef[sidechoice] - sides) == wallnum &&
-				Where == scroller->GetScrollParts())
-			{
-				scroller->Destroy ();
-			}
-		}
-	}
-	else
-	{
-		// Find scrollers already attached to the matching walls, and change
-		// their rates.
-		{
-			TThinkerIterator<DScroller> iterator (STAT_SCROLLER);
-			FThinkerCollection collect;
-
-			while ( (collect.Obj = iterator.Next ()) )
-			{
-				if ((collect.RefNum = ((DScroller *)collect.Obj)->GetWallNum ()) != -1 &&
-					tagManager.LineHasID(sides[collect.RefNum].linedef, id) &&
-					int(sides[collect.RefNum].linedef->sidedef[sidechoice] - sides) == collect.RefNum &&
-					Where == ((DScroller *)collect.Obj)->GetScrollParts())
-				{
-					((DScroller *)collect.Obj)->SetRate (dx, dy);
-					Collection.Push (collect);
-				}
-			}
-		}
-
-		size_t numcollected = Collection.Size ();
-		int linenum;
-
-		// Now create scrollers for any walls that don't already have them.
-		FLineIdIterator itr(id);
-		while ((linenum = itr.Next()) >= 0)
-		{
-			if (lines[linenum].sidedef[sidechoice] != NULL)
-			{
-				int sidenum = int(lines[linenum].sidedef[sidechoice] - sides);
-				unsigned int i;
-				for (i = 0; i < numcollected; i++)
-				{
-					if (Collection[i].RefNum == sidenum)
-						break;
-				}
-				if (i == numcollected)
-				{
-					new DScroller (DScroller::sc_side, dx, dy, -1, sidenum, 0, Where);
-				}
-			}
-		}
-		Collection.Clear ();
-	}
-}
 
 FUNC(LS_Scroll_Texture_Both)
 // Scroll_Texture_Both (id, left, right, up, down)
@@ -2332,7 +2235,7 @@ FUNC(LS_Scroll_Texture_Both)
 		sidechoice = 0;
 	}
 
-	SetWallScroller (arg0, sidechoice, dx, dy, 7);
+	SetWallScroller (arg0, sidechoice, dx, dy, scw_all);
 
 	return true;
 }
@@ -2343,45 +2246,8 @@ FUNC(LS_Scroll_Wall)
 	if (arg0 == 0)
 		return false;
 
-	SetWallScroller (arg0, !!arg3, arg1, arg2, arg4);
+	SetWallScroller (arg0, !!arg3, arg1, arg2, EScrollPos(arg4));
 	return true;
-}
-
-static void SetScroller (int tag, DScroller::EScrollType type, fixed_t dx, fixed_t dy)
-{
-	TThinkerIterator<DScroller> iterator (STAT_SCROLLER);
-	DScroller *scroller;
-	int i;
-
-	// Check if there is already a scroller for this tag
-	// If at least one sector with this tag is scrolling, then they all are.
-	// If the deltas are both 0, we don't remove the scroller, because a
-	// displacement/accelerative scroller might have been set up, and there's
-	// no way to create one after the level is fully loaded.
-	i = 0;
-	while ( (scroller = iterator.Next ()) )
-	{
-		if (scroller->IsType (type))
-		{
-			if (tagManager.SectorHasTag(scroller->GetAffectee (), tag))
-			{
-				i++;
-				scroller->SetRate (dx, dy);
-			}
-		}
-	}
-
-	if (i > 0 || (dx|dy) == 0)
-	{
-		return;
-	}
-
-	// Need to create scrollers for the sector(s)
-	FSectorTagIterator itr(tag);
-	while ((i = itr.Next()) >= 0)
-	{
-		new DScroller (type, dx, dy, -1, i, 0);
-	}
 }
 
 // NOTE: For the next two functions, x-move and y-move are
@@ -2396,19 +2262,19 @@ FUNC(LS_Scroll_Floor)
 
 	if (arg3 == 0 || arg3 == 2)
 	{
-		SetScroller (arg0, DScroller::sc_floor, -dx, dy);
+		SetScroller (arg0, EScroll::sc_floor, -dx, dy);
 	}
 	else
 	{
-		SetScroller (arg0, DScroller::sc_floor, 0, 0);
+		SetScroller (arg0, EScroll::sc_floor, 0, 0);
 	}
 	if (arg3 > 0)
 	{
-		SetScroller (arg0, DScroller::sc_carry, dx, dy);
+		SetScroller (arg0, EScroll::sc_carry, dx, dy);
 	}
 	else
 	{
-		SetScroller (arg0, DScroller::sc_carry, 0, 0);
+		SetScroller (arg0, EScroll::sc_carry, 0, 0);
 	}
 	return true;
 }
@@ -2419,7 +2285,7 @@ FUNC(LS_Scroll_Ceiling)
 	fixed_t dx = arg1 * FRACUNIT/32;
 	fixed_t dy = arg2 * FRACUNIT/32;
 
-	SetScroller (arg0, DScroller::sc_ceiling, -dx, dy);
+	SetScroller (arg0, EScroll::sc_ceiling, -dx, dy);
 	return true;
 }
 

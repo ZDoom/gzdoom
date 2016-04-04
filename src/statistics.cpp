@@ -62,7 +62,6 @@
 #include "cmdlib.h"
 #include "p_terrain.h"
 #include "decallib.h"
-#include "a_doomglobal.h"
 #include "autosegs.h"
 #include "i_cd.h"
 #include "stats.h"

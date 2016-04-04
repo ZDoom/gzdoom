@@ -1830,33 +1830,17 @@ const char* const CommandGameMode::modeNames[] =
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class CommandUsesAmmo : public SBarInfoCommandFlowControl
+class CommandUsesAmmo : public SBarInfoNegatableFlowControl
 {
 	public:
-		CommandUsesAmmo(SBarInfo *script)  : SBarInfoCommandFlowControl(script),
-			negate(false)
-		{
-		}
+		CommandUsesAmmo(SBarInfo *script)  : SBarInfoNegatableFlowControl(script) {}
 
-		void	Parse(FScanner &sc, bool fullScreenOffsets)
-		{
-			if(sc.CheckToken(TK_Identifier))
-			{
-				if(sc.Compare("not"))
-					negate = true;
-				else
-					sc.ScriptError("Expected 'not', but got '%s' instead.", sc.String);
-			}
-			SBarInfoCommandFlowControl::Parse(sc, fullScreenOffsets);
-		}
 		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
 		{
-			SBarInfoCommandFlowControl::Tick(block, statusBar, hudChanged);
+			SBarInfoNegatableFlowControl::Tick(block, statusBar, hudChanged);
 
-			SetTruth((statusBar->CPlayer->ReadyWeapon != NULL && (statusBar->CPlayer->ReadyWeapon->AmmoType1 != NULL || statusBar->CPlayer->ReadyWeapon->AmmoType2 != NULL)) ^ negate, block, statusBar);
+			SetTruth(statusBar->CPlayer->ReadyWeapon != NULL && (statusBar->CPlayer->ReadyWeapon->AmmoType1 != NULL || statusBar->CPlayer->ReadyWeapon->AmmoType2 != NULL), block, statusBar);
 		}
-	protected:
-		bool	negate;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1872,7 +1856,7 @@ class CommandUsesSecondaryAmmo : public CommandUsesAmmo
 		{
 			SBarInfoCommandFlowControl::Tick(block, statusBar, hudChanged);
 
-			SetTruth((statusBar->CPlayer->ReadyWeapon != NULL && statusBar->CPlayer->ReadyWeapon->AmmoType2 != NULL && statusBar->CPlayer->ReadyWeapon->AmmoType1 != statusBar->CPlayer->ReadyWeapon->AmmoType2) ^ negate, block, statusBar);
+			SetTruth(statusBar->CPlayer->ReadyWeapon != NULL && statusBar->CPlayer->ReadyWeapon->AmmoType2 != NULL && statusBar->CPlayer->ReadyWeapon->AmmoType1 != statusBar->CPlayer->ReadyWeapon->AmmoType2, block, statusBar);
 		}
 };
 
@@ -2890,28 +2874,18 @@ class CommandDrawBar : public SBarInfoCommand
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class CommandIsSelected : public SBarInfoCommandFlowControl
+class CommandIsSelected : public SBarInfoNegatableFlowControl
 {
 	public:
-		CommandIsSelected(SBarInfo *script) : SBarInfoCommandFlowControl(script),
-			negate(false)
+		CommandIsSelected(SBarInfo *script) : SBarInfoNegatableFlowControl(script)
 		{
 			weapon[0] = NULL;
 			weapon[1] = NULL;
 		}
 
-		void	Parse(FScanner &sc, bool fullScreenOffsets)
+		void	ParseNegatable(FScanner &sc, bool fullScreenOffsets)
 		{
-			if(sc.CheckToken(TK_Identifier))
-			{
-				if(sc.Compare("not"))
-				{
-					negate = true;
-					if(!sc.CheckToken(TK_StringConst))
-						sc.MustGetToken(TK_Identifier);
-				}
-			}
-			else
+			if(!sc.CheckToken(TK_Identifier))
 				sc.MustGetToken(TK_StringConst);
 			for(int i = 0;i < 2;i++)
 			{
@@ -2930,24 +2904,18 @@ class CommandIsSelected : public SBarInfoCommandFlowControl
 				else
 					break;
 			}
-			SBarInfoCommandFlowControl::Parse(sc, fullScreenOffsets);
 		}
 		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
 		{
-			SBarInfoCommandFlowControl::Tick(block, statusBar, hudChanged);
+			SBarInfoNegatableFlowControl::Tick(block, statusBar, hudChanged);
 
 			if(statusBar->CPlayer->ReadyWeapon != NULL)
 			{
 				const PClass *readyWeapon = statusBar->CPlayer->ReadyWeapon->GetClass();
-				SetTruth(((weapon[1] != NULL) &&
-						((negate && (weapon[0] != readyWeapon && weapon[1] != readyWeapon)) ||
-						(!negate && (weapon[0] == readyWeapon || weapon[1] == readyWeapon)))) ||
-					((weapon[1] == NULL) &&
-						((!negate && weapon[0] == readyWeapon) || (negate && weapon[0] != readyWeapon))), block, statusBar);
+				SetTruth(weapon[0] == readyWeapon || (weapon[1] && weapon[1] == readyWeapon), block, statusBar);
 			}
 		}
 	protected:
-		bool			negate;
 		const PClass	*weapon[2];
 };
 
@@ -3245,26 +3213,20 @@ FRandom CommandDrawGem::pr_chainwiggle; //use the same method of chain wiggling 
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class CommandWeaponAmmo : public SBarInfoCommandFlowControl
+class CommandWeaponAmmo : public SBarInfoNegatableFlowControl
 {
 	public:
-		CommandWeaponAmmo(SBarInfo *script) : SBarInfoCommandFlowControl(script),
-			conditionAnd(false), negate(false)
+		CommandWeaponAmmo(SBarInfo *script) : SBarInfoNegatableFlowControl(script),
+			conditionAnd(false)
 		{
 			ammo[0] = NULL;
 			ammo[1] = NULL;
 		}
 
-		void	Parse(FScanner &sc, bool fullScreenOffsets)
+		void	ParseNegatable(FScanner &sc, bool fullScreenOffsets)
 		{
 			if(!sc.CheckToken(TK_StringConst))
 				sc.MustGetToken(TK_Identifier);
-			if(sc.Compare("not") && sc.TokenType == TK_Identifier)
-			{
-				negate = true;
-				if(!sc.CheckToken(TK_StringConst))
-					sc.MustGetToken(TK_Identifier);
-			}
 			for(int i = 0;i < 2;i++)
 			{
 				ammo[i] = PClass::FindClass(sc.String);
@@ -3289,11 +3251,10 @@ class CommandWeaponAmmo : public SBarInfoCommandFlowControl
 				else
 					break;
 			}
-			SBarInfoCommandFlowControl::Parse(sc, fullScreenOffsets);
 		}
 		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
 		{
-			SBarInfoCommandFlowControl::Tick(block, statusBar, hudChanged);
+			SBarInfoNegatableFlowControl::Tick(block, statusBar, hudChanged);
 
 			if(statusBar->CPlayer->ReadyWeapon != NULL)
 			{
@@ -3301,11 +3262,11 @@ class CommandWeaponAmmo : public SBarInfoCommandFlowControl
 				const PClass *AmmoType2 = statusBar->CPlayer->ReadyWeapon->AmmoType2;
 				bool usesammo1 = (AmmoType1 != NULL);
 				bool usesammo2 = (AmmoType2 != NULL);
-				if(negate && !usesammo1 && !usesammo2) //if the weapon doesn't use ammo don't go though the trouble.
-				{
-					SetTruth(true, block, statusBar);
-					return;
-				}
+				//if(!usesammo1 && !usesammo2) //if the weapon doesn't use ammo don't go though the trouble.
+				//{
+				//	SetTruth(false, block, statusBar);
+				//	return;
+				//}
 				//Or means only 1 ammo type needs to match and means both need to match.
 				if(ammo[1] != NULL)
 				{
@@ -3313,29 +3274,13 @@ class CommandWeaponAmmo : public SBarInfoCommandFlowControl
 					bool match2 = ((usesammo2 && (AmmoType2 == ammo[0] || AmmoType2 == ammo[1])) || !usesammo2);
 					if((!conditionAnd && (match1 || match2)) || (conditionAnd && (match1 && match2)))
 					{
-						if(!negate)
-						{
-							SetTruth(true, block, statusBar);
-							return;
-						}
-					}
-					else if(negate)
-					{
 						SetTruth(true, block, statusBar);
 						return;
 					}
 				}
-				else //Every thing here could probably be one long if statement but then it would be more confusing.
+				else
 				{
 					if((usesammo1 && (AmmoType1 == ammo[0])) || (usesammo2 && (AmmoType2 == ammo[0])))
-					{
-						if(!negate)
-						{
-							SetTruth(true, block, statusBar);
-							return;
-						}
-					}
-					else if(negate)
 					{
 						SetTruth(true, block, statusBar);
 						return;
@@ -3345,33 +3290,26 @@ class CommandWeaponAmmo : public SBarInfoCommandFlowControl
 			SetTruth(false, block, statusBar);
 		}
 	protected:
-		bool			conditionAnd;
-		bool			negate;
 		const PClass	*ammo[2];
+		bool			conditionAnd;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class CommandInInventory : public SBarInfoCommandFlowControl
+class CommandInInventory : public SBarInfoNegatableFlowControl
 {
 	public:
-		CommandInInventory(SBarInfo *script) : SBarInfoCommandFlowControl(script),
-			conditionAnd(false), negate(false)
+		CommandInInventory(SBarInfo *script) : SBarInfoNegatableFlowControl(script),
+			conditionAnd(false)
 		{
 			item[0] = item[1] = NULL;
 			amount[0] = amount[1] = 0;
 		}
 
-		void	Parse(FScanner &sc, bool fullScreenOffsets)
+		void	ParseNegatable(FScanner &sc, bool fullScreenOffsets)
 		{
 			if(!sc.CheckToken(TK_StringConst))
 				sc.MustGetToken(TK_Identifier);
-			if(sc.Compare("not") && sc.TokenType == TK_Identifier)
-			{
-				negate = true;
-				if(!sc.CheckToken(TK_StringConst))
-					sc.MustGetToken(TK_Identifier);
-			}
 			for(int i = 0;i < 2;i++)
 			{
 				item[i] = PClass::FindActor(sc.String);
@@ -3402,11 +3340,10 @@ class CommandInInventory : public SBarInfoCommandFlowControl
 				else
 					break;
 			}
-			SBarInfoCommandFlowControl::Parse(sc, fullScreenOffsets);
 		}
 		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
 		{
-			SBarInfoCommandFlowControl::Tick(block, statusBar, hudChanged);
+			SBarInfoNegatableFlowControl::Tick(block, statusBar, hudChanged);
 
 			AInventory *invItem[2] = { statusBar->CPlayer->mo->FindInventory(item[0]), statusBar->CPlayer->mo->FindInventory(item[1]) };
 			if (invItem[0] != NULL && amount[0] > 0 && invItem[0]->Amount < amount[0]) invItem[0] = NULL;
@@ -3415,16 +3352,15 @@ class CommandInInventory : public SBarInfoCommandFlowControl
 			if (item[1])
 			{
 				if (conditionAnd)
-					SetTruth((invItem[0] && invItem[1]) != negate, block, statusBar);
+					SetTruth(invItem[0] && invItem[1], block, statusBar);
 				else
-					SetTruth((invItem[0] || invItem[1]) != negate, block, statusBar);
+					SetTruth(invItem[0] || invItem[1], block, statusBar);
 			}
 			else
-				SetTruth((invItem[0] != NULL) != negate, block, statusBar);
+				SetTruth(invItem[0] != NULL, block, statusBar);
 		}
 	protected:
 		bool			conditionAnd;
-		bool			negate;
 		PClassActor		*item[2];
 		int				amount[2];
 };
@@ -3459,42 +3395,48 @@ class CommandAlpha : public SBarInfoMainBlock
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class CommandIfHealth : public SBarInfoCommandFlowControl
+class CommandIfHealth : public SBarInfoNegatableFlowControl
 {
 	public:
-		CommandIfHealth(SBarInfo *script) : SBarInfoCommandFlowControl(script),
-			negate(false), percentage(false)
+		CommandIfHealth(SBarInfo *script) : SBarInfoNegatableFlowControl(script),
+			percentage(false)
 		{
 		}
 
-		void	Parse(FScanner &sc, bool fullScreenOffsets)
+		void	ParseNegatable(FScanner &sc, bool fullScreenOffsets)
 		{
-			if (sc.CheckToken(TK_Identifier))
-			{
-				if (sc.Compare("not"))
-					negate = true;
-				else
-					sc.ScriptError("Expected 'not', but got '%s' instead.", sc.String);
-			}
-
 			sc.MustGetToken(TK_IntConst);
 			percentage = sc.CheckToken('%');
 			hpamount = sc.Number;
-
-			SBarInfoCommandFlowControl::Parse(sc, fullScreenOffsets);
 		}
 		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
 		{
-			SBarInfoCommandFlowControl::Tick(block, statusBar, hudChanged);
+			SBarInfoNegatableFlowControl::Tick(block, statusBar, hudChanged);
 
 			int phealth = percentage ? statusBar->CPlayer->mo->health * 100 / statusBar->CPlayer->mo->GetMaxHealth() : statusBar->CPlayer->mo->health;
 
-			SetTruth((phealth >= hpamount) ^ negate, block, statusBar);
+			SetTruth(phealth >= hpamount, block, statusBar);
 		}
 	protected:
-		bool	negate;
-		bool	percentage;
 		int		hpamount;
+		bool	percentage;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+class CommandIfInvulnerable : public SBarInfoNegatableFlowControl
+{
+	public:
+		CommandIfInvulnerable(SBarInfo *script) : SBarInfoNegatableFlowControl(script)
+		{
+		}
+
+		void Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
+		{
+			SBarInfoNegatableFlowControl::Tick(block, statusBar, hudChanged);
+
+			SetTruth((statusBar->CPlayer->mo->flags2 & MF2_INVULNERABLE) || (statusBar->CPlayer->cheats & (CF_GODMODE | CF_GODMODE2)), block, statusBar);
+		}
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -3509,6 +3451,7 @@ static const char *SBarInfoCommandNames[] =
 	"isselected", "usesammo", "usessecondaryammo",
 	"hasweaponpiece", "inventorybarnotvisible",
 	"weaponammo", "ininventory", "alpha", "ifhealth",
+	"ifinvulnerable",
 	NULL
 };
 
@@ -3522,6 +3465,7 @@ enum SBarInfoCommands
 	SBARINFO_ISSELECTED, SBARINFO_USESAMMO, SBARINFO_USESSECONDARYAMMO,
 	SBARINFO_HASWEAPONPIECE, SBARINFO_INVENTORYBARNOTVISIBLE,
 	SBARINFO_WEAPONAMMO, SBARINFO_ININVENTORY, SBARINFO_ALPHA, SBARINFO_IFHEALTH,
+	SBARINFO_IFINVULNERABLE,
 };
 
 SBarInfoCommand *SBarInfoCommandFlowControl::NextCommand(FScanner &sc)
@@ -3555,6 +3499,7 @@ SBarInfoCommand *SBarInfoCommandFlowControl::NextCommand(FScanner &sc)
 			case SBARINFO_ININVENTORY: return new CommandInInventory(script);
 			case SBARINFO_ALPHA: return new CommandAlpha(script);
 			case SBARINFO_IFHEALTH: return new CommandIfHealth(script);
+			case SBARINFO_IFINVULNERABLE: return new CommandIfInvulnerable(script);
 		}
 
 		sc.ScriptError("Unknown command '%s'.\n", sc.String);

@@ -2025,7 +2025,7 @@ void FLevelLocals::Tick ()
 //
 //==========================================================================
 
-void FLevelLocals::AddScroller (DScroller *scroller, int secnum)
+void FLevelLocals::AddScroller (int secnum)
 {
 	if (secnum < 0)
 	{

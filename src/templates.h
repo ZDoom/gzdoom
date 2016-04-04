@@ -40,6 +40,7 @@
 #endif
 
 #include <stdlib.h>
+#include <utility>
 
 //==========================================================================
 //
@@ -204,7 +205,7 @@ template<class T>
 inline
 void swapvalues (T &a, T &b)
 {
-	T temp = a; a = b; b = temp;
+	T temp = std::move(a); a = std::move(b); b = std::move(temp);
 }
 
 #endif //__TEMPLATES_H__

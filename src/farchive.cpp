@@ -721,6 +721,29 @@ void FArchive::Close ()
 	}
 }
 
+void FArchive::WriteByte(BYTE val)
+{
+	m_File->Write(&val, 1);
+}
+
+void FArchive::WriteInt16(WORD val)
+{
+	WORD out = LittleShort(val);
+	m_File->Write(&out, 2);
+}
+
+void FArchive::WriteInt32(DWORD val)
+{
+	int out = LittleLong(val);
+	m_File->Write(&out, 4);
+}
+
+void FArchive::WriteInt64(QWORD val)
+{
+	long long out = SWAP_QWORD(val);
+	m_File->Write(&out, 8);
+}
+
 void FArchive::WriteCount (DWORD count)
 {
 	BYTE out;
@@ -832,6 +855,14 @@ void FArchive::WriteString (const char *str)
 	}
 }
 
+void FArchive::WriteString(const FString &str)
+{
+	// The count includes the '\0' terminator, but we don't
+	// actually write it out.
+	WriteCount(str.Len() + 1);
+	Write(str, str.Len());
+}
+
 FArchive &FArchive::operator<< (char *&str)
 {
 	if (m_Storing)
@@ -868,7 +899,7 @@ FArchive &FArchive::operator<< (FString &str)
 {
 	if (m_Storing)
 	{
-		WriteString (str.GetChars());
+		WriteString (str);
 	}
 	else
 	{
@@ -883,8 +914,7 @@ FArchive &FArchive::operator<< (FString &str)
 			char *str2 = (char *)alloca(size*sizeof(char));
 			size--;
 			Read (str2, size);
-			str2[size] = 0;
-			str = str2;
+			str = FString(str2, size);
 		}
 	}
 	return *this;

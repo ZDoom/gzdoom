@@ -82,6 +82,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePistol)
 				return 0;
 
 			P_SetPsprite (self->player, ps_flash, weapon->FindState(NAME_Flash));
+			self->player->psprites[ps_flash].processPending = true;
 		}
 		self->player->mo->PlayAttacking2 ();
 
@@ -274,6 +275,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireShotgun)
 		if (!weapon->DepleteAmmo (weapon->bAltFire, true, 1))
 			return 0;
 		P_SetPsprite (player, ps_flash, weapon->FindState(NAME_Flash));
+		self->player->psprites[ps_flash].processPending = true;
 	}
 	player->mo->PlayAttacking2 ();
 
@@ -310,6 +312,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireShotgun2)
 		if (!weapon->DepleteAmmo (weapon->bAltFire, true, 2))
 			return 0;
 		P_SetPsprite (player, ps_flash, weapon->FindState(NAME_Flash));
+		self->player->psprites[ps_flash].processPending = true;
 	}
 	player->mo->PlayAttacking2 ();
 
@@ -382,12 +385,14 @@ void P_SetSafeFlash(AWeapon *weapon, player_t *player, FState *flashstate, int i
 			{
 				// we're ok so set the state
 				P_SetPsprite (player, ps_flash, flashstate + index);
+				player->psprites[ps_flash].processPending = true;
 				return;
 			}
 			else
 			{
 				// oh, no! The state is beyond the end of the state table so use the original flash state.
 				P_SetPsprite (player, ps_flash, flashstate);
+				player->psprites[ps_flash].processPending = true;
 				return;
 			}
 		}
@@ -404,6 +409,7 @@ void P_SetSafeFlash(AWeapon *weapon, player_t *player, FState *flashstate, int i
 		index = 0;
 	}
 	P_SetPsprite (player, ps_flash, flashstate + index);
+	player->psprites[ps_flash].processPending = true;
 }
 
 //

@@ -275,14 +275,18 @@ public:
 
 	void SetGlowPlanes(const secplane_t &top, const secplane_t &bottom)
 	{
-		mGlowTopPlane.Set(top.fA(), top.fB(), 1. / top.fC(), top.fD());
-		mGlowBottomPlane.Set(bottom.fA(), bottom.fB(), 1. / bottom.fC(), bottom.fD());
+		DVector3 tn = top.Normal();
+		DVector3 bn = bottom.Normal();
+		mGlowTopPlane.Set(tn.X, tn.Y, 1. / tn.Z, top.fD());
+		mGlowBottomPlane.Set(bn.X, bn.Y, 1. / bn.Z, bottom.fD());
 	}
 
 	void SetSplitPlanes(const secplane_t &top, const secplane_t &bottom)
 	{
-		mSplitTopPlane.Set(top.fA(), top.fB(), 1. / top.fC(), top.fD());
-		mSplitBottomPlane.Set(bottom.fA(), bottom.fB(), 1. / bottom.fC(), bottom.fD());
+		DVector3 tn = top.Normal();
+		DVector3 bn = bottom.Normal();
+		mSplitTopPlane.Set(tn.X, tn.Y, 1. / tn.Z, top.fD());
+		mSplitBottomPlane.Set(bn.X, bn.Y, 1. / bn.Z, bottom.fD());
 	}
 
 	void SetDynLight(float r, float g, float b)

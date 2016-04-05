@@ -22,7 +22,9 @@
 #ifndef __M_BBOX_H__
 #define __M_BBOX_H__
 
-#include "doomtype.h"
+#include <float.h>
+#include "vectors.h"
+#include "m_fixed.h"
 
 struct line_t;
 struct node_t;
@@ -35,7 +37,7 @@ public:
 		ClearBox();
 	}
 
-	FBoundingBox(fixed_t left, fixed_t bottom, fixed_t right, fixed_t top)
+	FBoundingBox(double left, double bottom, double right, double top)
 	{
 		m_Box[BOXTOP] = top;
 		m_Box[BOXLEFT] = left;
@@ -43,17 +45,24 @@ public:
 		m_Box[BOXBOTTOM] = bottom;
 	}
 
-	FBoundingBox(fixed_t x, fixed_t y, fixed_t radius)
+	FBoundingBox(double x, double y, double radius)
 	{
 		setBox(x, y, radius);
 	}
 
-	void setBox(fixed_t x, fixed_t y, fixed_t radius);
+
+	void setBox(double x, double y, double radius)
+	{
+		m_Box[BOXTOP] = y + radius;
+		m_Box[BOXLEFT] = x - radius;
+		m_Box[BOXRIGHT] = x + radius;
+		m_Box[BOXBOTTOM] = y - radius;
+	}
 
 	void ClearBox ()
 	{
-		m_Box[BOXTOP] = m_Box[BOXRIGHT] = FIXED_MIN;
-		m_Box[BOXBOTTOM] = m_Box[BOXLEFT] = FIXED_MAX;
+		m_Box[BOXTOP] = m_Box[BOXRIGHT] = -FLT_MAX;
+		m_Box[BOXBOTTOM] = m_Box[BOXLEFT] = FLT_MAX;
 	}
 
 	// Returns a bounding box that encloses both bounding boxes
@@ -65,19 +74,21 @@ public:
 							m_Box[BOXTOP] > box2.m_Box[BOXTOP] ? m_Box[BOXTOP] : box2.m_Box[BOXTOP]);
 	}
 
-	void AddToBox (fixed_t x, fixed_t y);
+	void AddToBox(const DVector2 &pos);
 
-	inline fixed_t Top () const { return m_Box[BOXTOP]; }
-	inline fixed_t Bottom () const { return m_Box[BOXBOTTOM]; }
-	inline fixed_t Left () const { return m_Box[BOXLEFT]; }
-	inline fixed_t Right () const { return m_Box[BOXRIGHT]; }
+	inline double Top () const { return m_Box[BOXTOP]; }
+	inline double Bottom () const { return m_Box[BOXBOTTOM]; }
+	inline double Left () const { return m_Box[BOXLEFT]; }
+	inline double Right () const { return m_Box[BOXRIGHT]; }
+
+	bool inRange(const line_t *ld) const;
 
 	int BoxOnLineSide (const line_t *ld) const;
 
-	void Set(int index, fixed_t value) {m_Box[index] = value;}
+	void Set(int index, double value) {m_Box[index] = value;}
 
 protected:
-	fixed_t m_Box[4];
+	double m_Box[4];
 };
 
 

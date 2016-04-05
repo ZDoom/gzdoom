@@ -84,11 +84,11 @@ FName MeansOfDeath;
 //
 void P_TouchSpecialThing (AActor *special, AActor *toucher)
 {
-	fixed_t delta = special->Z() - toucher->Z();
+	double delta = special->Z() - toucher->Z();
 
 	// The pickup is at or above the toucher's feet OR
 	// The pickup is below the toucher.
-	if (delta > toucher->height || delta < MIN(-32*FRACUNIT, -special->height))
+	if (delta > toucher->Height || delta < MIN(-32., -special->Height))
 	{ // out of reach
 		return;
 	}
@@ -392,7 +392,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 	flags6 |= MF6_KILLED;
 
 	// [RH] Allow the death height to be overridden using metadata.
-	fixed_t metaheight = -1;
+	double metaheight = -1;
 	if (DamageType == NAME_Fire)
 	{
 		metaheight = GetClass()->BurnHeight;
@@ -403,11 +403,11 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 	}
 	if (metaheight < 0)
 	{
-		height >>= 2;
+		Height *= 0.25;
 	}
 	else
 	{
-		height = MAX<fixed_t> (metaheight, 0);
+		Height = MAX<double> (metaheight, 0);
 	}
 
 	// [RH] If the thing has a special, execute and remove it
@@ -926,11 +926,11 @@ static inline bool isFakePain(AActor *target, AActor *inflictor, int damage)
 
 // Returns the amount of damage actually inflicted upon the target, or -1 if
 // the damage was cancelled.
-int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage, FName mod, int flags, angle_t angle)
+int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage, FName mod, int flags, DAngle angle)
 {
-	unsigned ang;
+	DAngle ang;
 	player_t *player = NULL;
-	fixed_t thrust;
+	double thrust;
 	int temp;
 	int painchance = 0;
 	FState * woundstate = NULL;
@@ -973,7 +973,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 		{
 			target->tics = 1;
 			target->flags6 |= MF6_SHATTERING;
-			target->vel.x = target->vel.y = target->vel.z = 0;
+			target->Vel.Zero();
 		}
 		return -1;
 	}
@@ -1023,12 +1023,12 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 	// [RH] Andy Baker's Stealth monsters
 	if (target->flags & MF_STEALTH)
 	{
-		target->alpha = OPAQUE;
+		target->Alpha = 1.;
 		target->visdir = -1;
 	}
 	if (target->flags & MF_SKULLFLY)
 	{
-		target->vel.x = target->vel.y = target->vel.z = 0;
+		target->Vel.Zero();
 	}
 
 	player = target->player;
@@ -1045,7 +1045,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 			if (player && damage > 1)
 			{
 				// Take half damage in trainer mode
-				damage = FixedMul(damage, G_SkillProperty(SKILLP_DamageFactor));
+				damage = int(damage * G_SkillProperty(SKILLP_DamageFactor));
 			}
 			// Special damage types
 			if (inflictor)
@@ -1075,7 +1075,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 
 			if (damage > 0 && source != NULL)
 			{
-				damage = FixedMul(damage, source->DamageMultiply);
+				damage = int(damage * source->DamageMultiply);
 
 				// Handle active damage modifiers (e.g. PowerDamage)
 				if (damage > 0 && source->Inventory != NULL)
@@ -1090,11 +1090,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 			}
 			if (damage > 0 && !(flags & DMG_NO_FACTOR))
 			{
-				damage = FixedMul(damage, target->DamageFactor);
-				if (damage > 0)
-				{
-					damage = DamageTypeDefinition::ApplyMobjDamageFactor(damage, mod, target->GetClass()->DamageFactors);
-				}
+				damage = target->ApplyDamageFactor(mod, damage);
 			}
 
 			if (damage >= 0)
@@ -1159,58 +1155,49 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 				// If the origin and target are in exactly the same spot, choose a random direction.
 				// (Most likely cause is from telefragging somebody during spawning because they
 				// haven't moved from their spawn spot at all.)
-				ang = pr_kickbackdir.GenRand32();
+				ang = pr_kickbackdir.GenRand_Real2() * 360.;
 			}
 			else
 			{
 				ang = origin->AngleTo(target);
 			}
 
-			// Calculate this as float to avoid overflows so that the
-			// clamping that had to be done here can be removed.
-            double fltthrust;
-
-            fltthrust = mod == NAME_MDK ? 10 : 32;
+            thrust = mod == NAME_MDK ? 10 : 32;
             if (target->Mass > 0)
             {
-                fltthrust = clamp((damage * 0.125 * kickback) / target->Mass, 0., fltthrust);
+                thrust = clamp((damage * 0.125 * kickback) / target->Mass, 0., thrust);
             }
 
-			thrust = FLOAT2FIXED(fltthrust);
-
 			// Don't apply ultra-small damage thrust
-			if (thrust < FRACUNIT/100) thrust = 0;
+			if (thrust < 0.01) thrust = 0;
 
 			// make fall forwards sometimes
 			if ((damage < 40) && (damage > target->health)
-				 && (target->Z() - origin->Z() > 64*FRACUNIT)
+				 && (target->Z() - origin->Z() > 64)
 				 && (pr_damagemobj()&1)
 				 // [RH] But only if not too fast and not flying
-				 && thrust < 10*FRACUNIT
+				 && thrust < 10
 				 && !(target->flags & MF_NOGRAVITY)
 				 && (inflictor == NULL || !(inflictor->flags5 & MF5_NOFORWARDFALL))
 				 )
 			{
-				ang += ANG180;
+				ang += 180.;
 				thrust *= 4;
 			}
-			ang >>= ANGLETOFINESHIFT;
 			if (source && source->player && (flags & DMG_INFLICTOR_IS_PUFF)
 				&& source->player->ReadyWeapon != NULL &&
 				(source->player->ReadyWeapon->WeaponFlags & WIF_STAFF2_KICKBACK))
 			{
 				// Staff power level 2
-				target->vel.x += FixedMul (10*FRACUNIT, finecosine[ang]);
-				target->vel.y += FixedMul (10*FRACUNIT, finesine[ang]);
+				target->Thrust(ang, 10);
 				if (!(target->flags & MF_NOGRAVITY))
 				{
-					target->vel.z += 5*FRACUNIT;
+					target->Vel.Z += 5.;
 				}
 			}
 			else
 			{
-				target->vel.x += FixedMul (thrust, finecosine[ang]);
-				target->vel.y += FixedMul (thrust, finesine[ang]);
+				target->Thrust(ang, thrust);
 			}
 		}
 	}
@@ -1223,7 +1210,7 @@ int P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage,
 		//Use the original damage to check for telefrag amount. Don't let the now-amplified damagetypes do it.
 		if (rawdamage < TELEFRAG_DAMAGE || (target->flags7 & MF7_LAXTELEFRAGDMG)) 
 		{ // Still allow telefragging :-(
-			damage = (int)((float)damage * level.teamdamage);
+			damage = (int)(damage * level.teamdamage);
 			if (damage < 0)
 			{
 				return damage;
@@ -1674,7 +1661,7 @@ bool P_PoisonPlayer (player_t *player, AActor *poisoner, AActor *source, int poi
 	}
 	if (source != NULL && source->player != player && player->mo->IsTeammate (source))
 	{
-		poison = (int)((float)poison * level.teamdamage);
+		poison = (int)(poison * level.teamdamage);
 	}
 	if (poison > 0)
 	{
@@ -1723,18 +1710,15 @@ void P_PoisonDamage (player_t *player, AActor *source, int damage,
 		return;
 	}
 	// Take half damage in trainer mode
-	damage = FixedMul(damage, G_SkillProperty(SKILLP_DamageFactor));
+	damage = int(damage * G_SkillProperty(SKILLP_DamageFactor));
 	// Handle passive damage modifiers (e.g. PowerProtection)
 	if (target->Inventory != NULL)
 	{
 		target->Inventory->ModifyDamage(damage, player->poisontype, damage, true);
 	}
 	// Modify with damage factors
-	damage = FixedMul(damage, target->DamageFactor);
-	if (damage > 0)
-	{
-		damage = DamageTypeDefinition::ApplyMobjDamageFactor(damage, player->poisontype, target->GetClass()->DamageFactors);
-	}
+	damage = target->ApplyDamageFactor(player->poisontype, damage);
+
 	if (damage <= 0)
 	{ // Damage was reduced to 0, so don't bother further.
 		return;

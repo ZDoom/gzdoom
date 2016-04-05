@@ -164,7 +164,7 @@ if( MSVC )
 	string(REPLACE " /GR" " " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} )
 else()
 	set( REL_LINKER_FLAGS "" )
-	set( ALL_C_FLAGS "" )
+	set( ALL_C_FLAGS "-ffp-contract=off" )
 	set( REL_C_FLAGS "" )
 	set( DEB_C_FLAGS "" )
 

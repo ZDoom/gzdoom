@@ -39,13 +39,10 @@ IMPLEMENT_CLASS (AArtiPoisonBag1)
 
 bool AArtiPoisonBag1::Use (bool pickup)
 {
-	angle_t angle = Owner->angle >> ANGLETOFINESHIFT;
-	AActor *mo;
-
-	mo = Spawn ("PoisonBag", Owner->Vec3Offset(
-		16*finecosine[angle],
-		24*finesine[angle], 
-		-Owner->floorclip+8*FRACUNIT), ALLOW_REPLACE);
+	AActor *mo = Spawn("PoisonBag", Owner->Vec3Offset(
+		16 * Owner->Angles.Yaw.Cos(),
+		24 * Owner->Angles.Yaw.Sin(),
+		-Owner->Floorclip + 8), ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->target = Owner;
@@ -67,13 +64,10 @@ IMPLEMENT_CLASS (AArtiPoisonBag2)
 
 bool AArtiPoisonBag2::Use (bool pickup)
 {
-	angle_t angle = Owner->angle >> ANGLETOFINESHIFT;
-	AActor *mo;
-
-	mo = Spawn ("FireBomb", Owner->Vec3Offset(
-		16*finecosine[angle],
-		24*finesine[angle], 
-		-Owner->floorclip+8*FRACUNIT), ALLOW_REPLACE);
+	AActor *mo = Spawn("FireBomb", Owner->Vec3Offset(
+		16 * Owner->Angles.Yaw.Cos(),
+		24 * Owner->Angles.Yaw.Sin(),
+		-Owner->Floorclip + 8), ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->target = Owner;
@@ -97,14 +91,14 @@ bool AArtiPoisonBag3::Use (bool pickup)
 {
 	AActor *mo;
 
-	mo = Spawn("ThrowingBomb", Owner->PosPlusZ(-Owner->floorclip+35*FRACUNIT + (Owner->player? Owner->player->crouchoffset : 0)), ALLOW_REPLACE);
+	mo = Spawn("ThrowingBomb", Owner->PosPlusZ(35. - Owner->Floorclip + (Owner->player? Owner->player->crouchoffset : 0)), ALLOW_REPLACE);
 	if (mo)
 	{
-		mo->angle = Owner->angle + (((pr_poisonbag()&7) - 4) << 24);
+		mo->Angles.Yaw = Owner->Angles.Yaw + (((pr_poisonbag() & 7) - 4) * (360./256.));
 
 		/* Original flight code from Hexen
-		 * mo->momz = 4*FRACUNIT+((player->lookdir)<<(FRACBITS-4));
-		 * mo->z += player->lookdir<<(FRACBITS-4);
+		 * mo->momz = 4*F.RACUNIT+((player->lookdir)<<(F.RACBITS-4));
+		 * mo->z += player->lookdir<<(F.RACBITS-4);
 		 * P_ThrustMobj(mo, mo->angle, mo->info->speed);
 		 * mo->momx += player->mo->momx>>1;
 		 * mo->momy += player->mo->momy>>1;
@@ -114,16 +108,16 @@ bool AArtiPoisonBag3::Use (bool pickup)
 		// is as set by the projectile. To accommodate this with a proper trajectory, we
 		// aim the projectile ~20 degrees higher than we're looking at and increase the
 		// speed we fire at accordingly.
-		angle_t orgpitch = angle_t(-Owner->pitch) >> ANGLETOFINESHIFT;
-		angle_t modpitch = angle_t(0xDC00000 - Owner->pitch) >> ANGLETOFINESHIFT;
-		angle_t angle = mo->angle >> ANGLETOFINESHIFT;
-		fixed_t speed = fixed_t(sqrt((double)mo->Speed*mo->Speed + (4.0*65536*4*65536)));
-		fixed_t xyscale = FixedMul(speed, finecosine[modpitch]);
+		DAngle orgpitch = -Owner->Angles.Pitch;
+		DAngle modpitch = clamp<DAngle>(-Owner->Angles.Pitch + 20, -89., 89.);
+		DAngle angle = mo->Angles.Yaw;
+		double speed = DVector2(mo->Speed, 4.).Length();
+		double xyscale = speed * modpitch.Cos();
 
-		mo->vel.z = FixedMul(speed, finesine[modpitch]);
-		mo->vel.x = FixedMul(xyscale, finecosine[angle]) + (Owner->vel.x >> 1);
-		mo->vel.y = FixedMul(xyscale, finesine[angle]) + (Owner->vel.y >> 1);
-		mo->AddZ(FixedMul(mo->Speed, finesine[orgpitch]));
+		mo->Vel.Z = speed * modpitch.Sin();
+		mo->Vel.X = xyscale * angle.Cos() + Owner->Vel.X / 2;
+		mo->Vel.Y = xyscale * angle.Sin() + Owner->Vel.Y / 2;
+		mo->AddZ(mo->Speed * orgpitch.Sin());
 
 		mo->target = Owner;
 		mo->tics -= pr_poisonbag()&3;
@@ -265,7 +259,7 @@ AInventory *AArtiPoisonBag::CreateCopy (AActor *other)
 
 	AInventory *copy;
 	PClassActor *spawntype = GetFlechetteType(other);
-	copy = static_cast<AInventory *>(Spawn (spawntype, 0, 0, 0, NO_REPLACE));
+	copy = static_cast<AInventory *>(Spawn (spawntype));
 	copy->Amount = Amount;
 	copy->MaxAmount = MaxAmount;
 	GoAwayAndDie ();
@@ -306,7 +300,7 @@ IMPLEMENT_CLASS (APoisonCloud)
 
 void APoisonCloud::BeginPlay ()
 {
-	vel.x = 1; // missile objects must move to impact other objects
+	Vel.X = MinVel; // missile objects must move to impact other objects
 	special1 = 24+(pr_poisoncloud()&7);
 	special2 = 0;
 }
@@ -324,7 +318,7 @@ int APoisonCloud::DoSpecialDamage (AActor *victim, int damage, FName damagetype)
 		}
 		else
 		{
-			dopoison = victim->player->poisoncount < (int)(4.f * level.teamdamage);
+			dopoison = victim->player->poisoncount < (int)(4. * level.teamdamage);
 		}
 
 		if (dopoison)
@@ -332,7 +326,7 @@ int APoisonCloud::DoSpecialDamage (AActor *victim, int damage, FName damagetype)
 			int damage = 15 + (pr_poisoncloudd()&15);
 			if (mate)
 			{
-				damage = (int)((double)damage * level.teamdamage);
+				damage = (int)(damage * level.teamdamage);
 			}
 			// Handle passive damage modifiers (e.g. PowerProtection)
 			if (victim->Inventory != NULL)
@@ -340,11 +334,7 @@ int APoisonCloud::DoSpecialDamage (AActor *victim, int damage, FName damagetype)
 				victim->Inventory->ModifyDamage(damage, damagetype, damage, true);
 			}
 			// Modify with damage factors
-			damage = FixedMul(damage, victim->DamageFactor);
-			if (damage > 0)
-			{
-				damage = DamageTypeDefinition::ApplyMobjDamageFactor(damage, damagetype, victim->GetClass()->DamageFactors);
-			}
+			damage = victim->ApplyDamageFactor(damagetype, damage);
 			if (damage > 0)
 			{
 				P_PoisonDamage (victim->player, this,
@@ -376,7 +366,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PoisonBagInit)
 
 	AActor *mo;
 	
-	mo = Spawn<APoisonCloud> (self->PosPlusZ(28*FRACUNIT), ALLOW_REPLACE);
+	mo = Spawn<APoisonCloud> (self->PosPlusZ(28.), ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->target = self->target;
@@ -419,7 +409,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PoisonBagDamage)
 	
 	P_RadiusAttack (self, self->target, 4, 40, self->DamageType, RADF_HURTSOURCE);
 	bobIndex = self->special2;
-	self->AddZ(finesine[bobIndex << BOBTOFINESHIFT] >> 1);
+	self->AddZ(BobSin(bobIndex) / 16);
 	self->special2 = (bobIndex + 1) & 63;
 	return 0;
 }
@@ -452,15 +442,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_CheckThrowBomb2)
 	PARAM_ACTION_PROLOGUE;
 
 	// [RH] Check using actual velocity, although the vel.z < 2 check still stands
-	//if (abs(self->vel.x) < FRACUNIT*3/2 && abs(self->vel.y) < FRACUNIT*3/2
-	//	&& self->vel.z < 2*FRACUNIT)
-	if (self->vel.z < 2*FRACUNIT &&
-		TMulScale32 (self->vel.x, self->vel.x, self->vel.y, self->vel.y, self->vel.z, self->vel.z)
-		< (3*3)/(2*2))
+	if (self->Vel.Z < 2 && self->Vel.LengthSquared() < (9./4.))
 	{
 		self->SetState (self->SpawnState + 6);
 		self->SetZ(self->floorz);
-		self->vel.z = 0;
+		self->Vel.Z = 0;
 		self->BounceFlags = BOUNCE_None;
 		self->flags &= ~MF_MISSILE;
 	}

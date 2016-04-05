@@ -24,7 +24,7 @@ enum dirtype_t
 	NUMDIRS
 };
 
-extern fixed_t xspeed[8], yspeed[8];
+extern double xspeed[8], yspeed[8];
 
 enum LO_Flags
 {
@@ -38,18 +38,19 @@ enum LO_Flags
 
 struct FLookExParams
 {
-	angle_t fov;
-	fixed_t mindist;
-	fixed_t maxdist;
-	fixed_t maxheardist;
+	DAngle Fov;
+	double minDist;
+	double maxDist;
+	double maxHeardist;
 	int flags;
 	FState *seestate;
 };
 
 void P_DaggerAlert (AActor *target, AActor *emitter);
-void P_RecursiveSound (sector_t *sec, AActor *soundtarget, bool splash, int soundblocks, AActor *emitter=NULL, fixed_t maxdist=0);
+void P_RecursiveSound (sector_t *sec, AActor *soundtarget, bool splash, int soundblocks, AActor *emitter=NULL, double maxdist=0);
 bool P_HitFriend (AActor *self);
-void P_NoiseAlert (AActor *target, AActor *emmiter, bool splash=false, fixed_t maxdist=0);
+void P_NoiseAlert (AActor *target, AActor *emmiter, bool splash=false, double maxdist=0);
+
 bool P_CheckMeleeRange2 (AActor *actor);
 bool P_Move (AActor *actor);
 bool P_TryWalk (AActor *actor);
@@ -57,7 +58,7 @@ void P_NewChaseDir (AActor *actor);
 AInventory *P_DropItem (AActor *source, PClassActor *type, int special, int chance);
 void P_TossItem (AActor *item);
 bool P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params);
-void A_Weave(AActor *self, int xyspeed, int zspeed, fixed_t xydist, fixed_t zdist);
+void A_Weave(AActor *self, int xyspeed, int zspeed, double xydist, double zdist);
 void A_Unblock(AActor *self, bool drop);
 
 DECLARE_ACTION(A_Look)
@@ -73,16 +74,16 @@ void A_BossDeath(AActor *self);
 void A_Wander(AActor *self, int flags = 0);
 void A_Chase(VMFrameStack *stack, AActor *self);
 void A_FaceTarget(AActor *actor);
-void A_Face(AActor *self, AActor *other, angle_t max_turn = 0, angle_t max_pitch = ANGLE_270, angle_t ang_offset = 0, angle_t pitch_offset = 0, int flags = 0, fixed_t z_add = 0);
+void A_Face(AActor *self, AActor *other, DAngle max_turn = 0., DAngle max_pitch = 270., DAngle ang_offset = 0., DAngle pitch_offset = 0., int flags = 0, double z_add = 0);
 
-bool A_RaiseMobj (AActor *, fixed_t speed);
-bool A_SinkMobj (AActor *, fixed_t speed);
+bool A_RaiseMobj (AActor *, double speed);
+bool A_SinkMobj (AActor *, double speed);
 
 bool CheckBossDeath (AActor *);
 int P_Massacre ();
 bool P_CheckMissileRange (AActor *actor);
 
-#define SKULLSPEED (20*FRACUNIT)
-void A_SkullAttack(AActor *self, fixed_t speed);
+#define SKULLSPEED (20.)
+void A_SkullAttack(AActor *self, double speed);
 
 #endif //__P_ENEMY_H__

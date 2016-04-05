@@ -2,6 +2,7 @@
 #define __R_UTIL_H
 
 #include "r_state.h"
+#include "vectors.h"
 //
 // Stuff from r_main.h that's needed outside the rendering code.
 
@@ -11,10 +12,13 @@
 
 extern DCanvas			*RenderTarget;
 
-extern fixed_t			viewx;
-extern fixed_t			viewy;
-extern fixed_t			viewz;
-extern int				viewpitch;
+extern DVector3			ViewPos;
+extern DAngle			ViewAngle;
+extern DAngle			ViewPitch;
+
+extern fixed_t viewx, viewy, viewz;
+extern angle_t viewangle;
+extern int viewpitch;
 
 extern "C" int			centerx, centerxwide;
 extern "C" int			centery;
@@ -33,7 +37,7 @@ extern int				LocalViewPitch;			// [RH] Used directly instead of consoleplayer's
 extern bool				LocalKeyboardTurner;	// [RH] The local player used the keyboard to turn, so interpolate
 extern int				WidescreenRatio;
 
-extern fixed_t			r_TicFrac;
+extern double			r_TicFracF;
 extern DWORD			r_FrameTime;
 extern int				extralight;
 extern unsigned int		R_OldBlend;
@@ -55,29 +59,40 @@ inline int R_PointOnSide (fixed_t x, fixed_t y, const node_t *node)
 {
 	return DMulScale32 (y-node->y, node->dx, node->x-x, node->dy) > 0;
 }
+inline int R_PointOnSide(double x, double y, const node_t *node)
+{
+	return DMulScale32(FLOAT2FIXED(y) - node->y, node->dx, node->x - FLOAT2FIXED(x), node->dy) > 0;
+}
+inline int R_PointOnSide(const DVector2 &pos, const node_t *node)
+{
+	return DMulScale32(FLOAT2FIXED(pos.Y) - node->y, node->dx, node->x - FLOAT2FIXED(pos.X), node->dy) > 0;
+}
 
 angle_t R_PointToAngle2 (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2);
-inline angle_t R_PointToAngle (fixed_t x, fixed_t y) { return R_PointToAngle2 (viewx, viewy, x, y); }
 inline angle_t R_PointToAnglePrecise (fixed_t viewx, fixed_t viewy, fixed_t x, fixed_t y)
 {
-	return xs_RoundToUInt(atan2(double(y-viewy), double(x-viewx)) * (ANGLE_180/M_PI));
+	return xs_RoundToUInt(g_atan2(double(y-viewy), double(x-viewx)) * (ANGLE_180/M_PI));
 }
 
 // Used for interpolation waypoints.
-struct fixedvec3a
+struct DVector3a
 {
-	fixed_t x, y, z;
-	angle_t angle;
+	DVector3 pos;
+	DAngle angle;
 };
 
 
 subsector_t *R_PointInSubsector (fixed_t x, fixed_t y);
+inline subsector_t *R_PointInSubsector(const DVector2 &pos)
+{
+	return R_PointInSubsector(FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y));
+}
 fixed_t R_PointToDist2 (fixed_t dx, fixed_t dy);
 void R_ResetViewInterpolation ();
 void R_RebuildViewInterpolation(player_t *player);
 bool R_GetViewInterpolationStatus();
 void R_ClearInterpolationPath();
-void R_AddInterpolationPoint(const fixedvec3a &vec);
+void R_AddInterpolationPoint(const DVector3a &vec);
 void R_SetViewSize (int blocks);
 void R_SetFOV (float fov);
 float R_GetFOV ();

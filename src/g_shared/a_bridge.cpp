@@ -48,13 +48,13 @@ void ACustomBridge::BeginPlay ()
 	if (args[2]) // Hexen bridge if there are balls
 	{
 		SetState(SeeState);
-		radius = args[0] ? args[0] << FRACBITS : 32 * FRACUNIT;
-		height = args[1] ? args[1] << FRACBITS : 2 * FRACUNIT;
+		radius = args[0] ? args[0] : 32;
+		Height = args[1] ? args[1] : 2;
 	}
 	else // No balls? Then a Doom bridge.
 	{
-		radius = args[0] ? args[0] << FRACBITS : 36 * FRACUNIT;
-		height = args[1] ? args[1] << FRACBITS : 4 * FRACUNIT;
+		radius = args[0] ? args[0] : 36;
+		Height = args[1] ? args[1] : 4;
 		RenderStyle = STYLE_Normal;
 	}
 }
@@ -101,18 +101,18 @@ DEFINE_ACTION_FUNCTION(AActor, A_BridgeOrbit)
 	}
 	// Set default values
 	// Every five tics, Hexen moved the ball 3/256th of a revolution.
-	int rotationspeed  = ANGLE_45/32*3/5;
-	int rotationradius = ORBIT_RADIUS * FRACUNIT;
+	DAngle rotationspeed  = 45./32*3/5;
+	double rotationradius = ORBIT_RADIUS;
 	// If the bridge is custom, set non-default values if any.
 
 	// Set angular speed; 1--128: counterclockwise rotation ~=1--180°; 129--255: clockwise rotation ~= 180--1°
-	if (self->target->args[3] > 128) rotationspeed = ANGLE_45/32 * (self->target->args[3]-256) / TICRATE;
-	else if (self->target->args[3] > 0) rotationspeed = ANGLE_45/32 * (self->target->args[3]) / TICRATE;
+	if (self->target->args[3] > 128) rotationspeed = 45./32 * (self->target->args[3]-256) / TICRATE;
+	else if (self->target->args[3] > 0) rotationspeed = 45./32 * (self->target->args[3]) / TICRATE;
 	// Set rotation radius
 	if (self->target->args[4]) rotationradius = ((self->target->args[4] * self->target->radius) / 100);
 
-	self->angle += rotationspeed;
-	self->SetOrigin(self->target->Vec3Angle(rotationradius, self->angle, 0), true);
+	self->Angles.Yaw += rotationspeed;
+	self->SetOrigin(self->target->Vec3Angle(rotationradius, self->Angles.Yaw, 0), true);
 	self->floorz = self->target->floorz;
 	self->ceilingz = self->target->ceilingz;
 	return 0;
@@ -124,7 +124,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BridgeInit)
 	PARAM_ACTION_PROLOGUE;
 	PARAM_CLASS_OPT(balltype, AActor)	{ balltype = NULL; }
 
-	angle_t startangle;
 	AActor *ball;
 
 	if (balltype == NULL)
@@ -132,7 +131,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BridgeInit)
 		balltype = PClass::FindActor("BridgeBall");
 	}
 
-	startangle = pr_orbit() << 24;
+	DAngle startangle = pr_orbit() * (360./256.);
 
 	// Spawn triad into world -- may be more than a triad now.
 	int ballcount = self->args[2]==0 ? 3 : self->args[2];
@@ -140,7 +139,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BridgeInit)
 	for (int i = 0; i < ballcount; i++)
 	{
 		ball = Spawn(balltype, self->Pos(), ALLOW_REPLACE);
-		ball->angle = startangle + (ANGLE_45/32) * (256/ballcount) * i;
+		ball->Angles.Yaw = startangle + (45./32) * (256/ballcount) * i;
 		ball->target = self;
 		CALL_ACTION(A_BridgeOrbit, ball);
 	}
@@ -163,8 +162,8 @@ void AInvisibleBridge::BeginPlay ()
 {
 	Super::BeginPlay ();
 	if (args[0])
-		radius = args[0] << FRACBITS;
+		radius = args[0];
 	if (args[1])
-		height = args[1] << FRACBITS;
+		Height = args[1];
 }
 

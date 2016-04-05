@@ -45,7 +45,7 @@
 //
 //===========================================================================
 
-static void P_SlopeLineToPoint (int lineid, fixed_t x, fixed_t y, fixed_t z, bool slopeCeil)
+static void P_SlopeLineToPoint (int lineid, const DVector3 &pos, bool slopeCeil)
 {
 	int linenum;
 
@@ -56,7 +56,7 @@ static void P_SlopeLineToPoint (int lineid, fixed_t x, fixed_t y, fixed_t z, boo
 		sector_t *sec;
 		secplane_t *plane;
 		
-		if (P_PointOnLineSidePrecise (x, y, line) == 0)
+		if (P_PointOnLineSidePrecise (pos, line) == 0)
 		{
 			sec = line->frontsector;
 		}
@@ -79,21 +79,21 @@ static void P_SlopeLineToPoint (int lineid, fixed_t x, fixed_t y, fixed_t z, boo
 
 		DVector3 p, v1, v2, cross;
 
-		p[0] = FIXED2DBL (line->v1->x);
-		p[1] = FIXED2DBL (line->v1->y);
-		p[2] = FIXED2DBL (plane->ZatPoint (line->v1->x, line->v1->y));
-		v1[0] = FIXED2DBL (line->dx);
-		v1[1] = FIXED2DBL (line->dy);
-		v1[2] = FIXED2DBL (plane->ZatPoint (line->v2->x, line->v2->y)) - p[2];
-		v2[0] = FIXED2DBL (x - line->v1->x);
-		v2[1] = FIXED2DBL (y - line->v1->y);
-		v2[2] = FIXED2DBL (z) - p[2];
+		p[0] = line->v1->fX();
+		p[1] = line->v1->fY();
+		p[2] = plane->ZatPoint (line->v1);
+		v1[0] = line->Delta().X;
+		v1[1] = line->Delta().Y;
+		v1[2] = plane->ZatPoint (line->v2) - p[2];
+		v2[0] = pos.X - p[0];
+		v2[1] = pos.Y - p[1];
+		v2[2] = pos.Z - p[2];
 
 		cross = v1 ^ v2;
 		double len = cross.Length();
 		if (len == 0)
 		{
-			Printf ("Slope thing at (%d,%d) lies directly on its target line.\n", int(x>>16), int(y>>16));
+			Printf ("Slope thing at (%f,%f) lies directly on its target line.\n", pos.X, pos.Y);
 			return;
 		}
 		cross /= len;
@@ -103,14 +103,8 @@ static void P_SlopeLineToPoint (int lineid, fixed_t x, fixed_t y, fixed_t z, boo
 			cross = -cross;
 		}
 
-		plane->a = FLOAT2FIXED (cross[0]);
-		plane->b = FLOAT2FIXED (cross[1]);
-		plane->c = FLOAT2FIXED (cross[2]);
-		//plane->ic = FLOAT2FIXED (1.f/cross[2]);
-		plane->ic = DivScale32 (1, plane->c);
-		plane->d = -TMulScale16 (plane->a, x,
-								 plane->b, y,
-								 plane->c, z);
+		double dist = -cross[0] * pos.X - cross[1] * pos.Y - cross[2] * pos.Z;
+		plane->set(cross[0], cross[1], cross[2], dist);
 	}
 }
 
@@ -124,7 +118,6 @@ static void P_CopyPlane (int tag, sector_t *dest, bool copyCeil)
 {
 	sector_t *source;
 	int secnum;
-	size_t planeofs;
 
 	secnum = P_FindFirstSectorFromTag (tag);
 	if (secnum == -1)
@@ -136,18 +129,17 @@ static void P_CopyPlane (int tag, sector_t *dest, bool copyCeil)
 
 	if (copyCeil)
 	{
-		planeofs = myoffsetof(sector_t, ceilingplane);
+		dest->ceilingplane = source->ceilingplane;
 	}
 	else
 	{
-		planeofs = myoffsetof(sector_t, floorplane);
+		dest->floorplane = source->floorplane;
 	}
-	*(secplane_t *)((BYTE *)dest + planeofs) = *(secplane_t *)((BYTE *)source + planeofs);
 }
 
-static void P_CopyPlane (int tag, fixed_t x, fixed_t y, bool copyCeil)
+static void P_CopyPlane (int tag, const DVector2 &pos, bool copyCeil)
 {
-	sector_t *dest = P_PointInSector (x, y);
+	sector_t *dest = P_PointInSector (pos);
 	P_CopyPlane(tag, dest, copyCeil);
 }
 
@@ -157,60 +149,47 @@ static void P_CopyPlane (int tag, fixed_t x, fixed_t y, bool copyCeil)
 //
 //===========================================================================
 
-void P_SetSlope (secplane_t *plane, bool setCeil, int xyangi, int zangi,
-	fixed_t x, fixed_t y, fixed_t z)
+void P_SetSlope (secplane_t *plane, bool setCeil, int xyangi, int zangi, const DVector3 &pos)
 {
-	angle_t xyang;
-	angle_t zang;
+	DAngle xyang;
+	DAngle zang;
 
 	if (zangi >= 180)
 	{
-		zang = ANGLE_180-ANGLE_1;
+		zang = 179.;
 	}
 	else if (zangi <= 0)
 	{
-		zang = ANGLE_1;
+		zang = 1.;
 	}
 	else
 	{
-		zang = Scale (zangi, ANGLE_90, 90);
+		zang = (double)zangi;
 	}
 	if (setCeil)
 	{
-		zang += ANGLE_180;
+		zang += 180.;
 	}
-	zang >>= ANGLETOFINESHIFT;
 
-	// Sanitize xyangi to [0,360) range
-	xyangi = xyangi % 360;
-	if (xyangi < 0)
-	{
-		xyangi = 360 + xyangi;
-	}
-	xyang = (angle_t)Scale (xyangi, ANGLE_90, 90 << ANGLETOFINESHIFT);
+	xyang = (double)xyangi;
 
 	DVector3 norm;
 
 	if (ib_compatflags & BCOMPATF_SETSLOPEOVERFLOW)
 	{
-		norm[0] = double(finecosine[zang] * finecosine[xyang]);
-		norm[1] = double(finecosine[zang] * finesine[xyang]);
+		// We have to consider an integer multiplication overflow here.
+		norm[0] = FixedToFloat(FloatToFixed(zang.Cos()) * FloatToFixed(xyang.Cos()));
+		norm[1] = FixedToFloat(FloatToFixed(zang.Cos()) * FloatToFixed(xyang.Sin()));
 	}
 	else
 	{
-		norm[0] = double(finecosine[zang]) * double(finecosine[xyang]);
-		norm[1] = double(finecosine[zang]) * double(finesine[xyang]);
+		norm[0] = zang.Cos() * xyang.Cos();
+		norm[1] = zang.Cos() * xyang.Sin();
 	}
-	norm[2] = double(finesine[zang]) * 65536.f;
+	norm[2] = zang.Sin();
 	norm.MakeUnit();
-	plane->a = FLOAT2FIXED(norm[0]);
-	plane->b = FLOAT2FIXED(norm[1]);
-	plane->c = FLOAT2FIXED(norm[2]);
-	//plane->ic = (int)(65536.f / norm[2]);
-	plane->ic = DivScale32 (1, plane->c);
-	plane->d = -TMulScale16 (plane->a, x,
-							 plane->b, y,
-							 plane->c, z);
+	double dist = -norm[0] * pos.X - norm[1] * pos.Y - norm[2] * pos.Z;
+	plane->set(norm[0], norm[1], norm[2], dist);
 }
 
 
@@ -220,7 +199,7 @@ void P_SetSlope (secplane_t *plane, bool setCeil, int xyangi, int zangi,
 //
 //===========================================================================
 
-void P_VavoomSlope(sector_t * sec, int id, fixed_t x, fixed_t y, fixed_t z, int which)
+void P_VavoomSlope(sector_t * sec, int id, const DVector3 &pos, int which)
 {
 	for (int i=0;i<sec->linecount;i++)
 	{
@@ -230,21 +209,21 @@ void P_VavoomSlope(sector_t * sec, int id, fixed_t x, fixed_t y, fixed_t z, int 
 		{
 			DVector3 v1, v2, cross;
 			secplane_t *srcplane = (which == 0) ? &sec->floorplane : &sec->ceilingplane;
-			fixed_t srcheight = (which == 0) ? sec->GetPlaneTexZ(sector_t::floor) : sec->GetPlaneTexZ(sector_t::ceiling);
+			double srcheight = (which == 0) ? sec->GetPlaneTexZF(sector_t::floor) : sec->GetPlaneTexZF(sector_t::ceiling);
 
-			v1[0] = FIXED2DBL (x - l->v2->x);
-			v1[1] = FIXED2DBL (y - l->v2->y);
-			v1[2] = FIXED2DBL (z - srcheight);
+			v1[0] = pos.X - l->v2->fX();
+			v1[1] = pos.Y - l->v2->fY();
+			v1[2] = pos.Z - srcheight;
 			
-			v2[0] = FIXED2DBL (x - l->v1->x);
-			v2[1] = FIXED2DBL (y - l->v1->y);
-			v2[2] = FIXED2DBL (z - srcheight);
+			v2[0] = pos.X - l->v1->fX();
+			v2[1] = pos.Y - l->v1->fY();
+			v2[2] = pos.Z - srcheight;
 
 			cross = v1 ^ v2;
 			double len = cross.Length();
 			if (len == 0)
 			{
-				Printf ("Slope thing at (%d,%d) lies directly on its target line.\n", int(x>>16), int(y>>16));
+				Printf ("Slope thing at (%f,%f) lies directly on its target line.\n", pos.X, pos.Y);
 				return;
 			}
 			cross /= len;
@@ -255,15 +234,8 @@ void P_VavoomSlope(sector_t * sec, int id, fixed_t x, fixed_t y, fixed_t z, int 
 				cross = -cross;
 			}
 
-
-			srcplane->a = FLOAT2FIXED (cross[0]);
-			srcplane->b = FLOAT2FIXED (cross[1]);
-			srcplane->c = FLOAT2FIXED (cross[2]);
-			//plane->ic = FLOAT2FIXED (1.f/cross[2]);
-			srcplane->ic = DivScale32 (1, srcplane->c);
-			srcplane->d = -TMulScale16 (srcplane->a, x,
-										srcplane->b, y,
-										srcplane->c, z);
+			double dist = -cross[0] * pos.X - cross[1] * pos.Y - cross[2] * pos.Z;
+			srcplane->set(cross[0], cross[1], cross[2], dist);
 			return;
 		}
 	}
@@ -277,7 +249,7 @@ void P_VavoomSlope(sector_t * sec, int id, fixed_t x, fixed_t y, fixed_t z, int 
 
 static void P_SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt, const int *oldvertextable)
 {
-	TMap<int, fixed_t> vt_heights[2];
+	TMap<int, double> vt_heights[2];
 	FMapThing *mt;
 	bool vt_found = false;
 
@@ -289,15 +261,15 @@ static void P_SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt, 
 			{
 				for (int i = 0; i < numvertexes; i++)
 				{
-					if (vertexes[i].x == mt->x && vertexes[i].y == mt->y)
+					if (vertexes[i].fX() == mt->pos.X && vertexes[i].fY() == mt->pos.Y)
 					{
 						if (mt->info->Special == SMT_VertexFloorZ)
 						{
-							vt_heights[0][i] = mt->z;
+							vt_heights[0][i] = mt->pos.Z;
 						}
 						else
 						{
-							vt_heights[1][i] = mt->z;
+							vt_heights[1][i] = mt->pos.Z;
 						}
 						vt_found = true;
 					}
@@ -345,27 +317,22 @@ static void P_SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt, 
 			vi3 = (sec->lines[1]->v1 == sec->lines[0]->v1 || sec->lines[1]->v1 == sec->lines[0]->v2)?
 				int(sec->lines[1]->v2 - vertexes) : int(sec->lines[1]->v1 - vertexes);
 
-			vt1.X = FIXED2DBL(vertexes[vi1].x);
-			vt1.Y = FIXED2DBL(vertexes[vi1].y);
-			vt2.X = FIXED2DBL(vertexes[vi2].x);
-			vt2.Y = FIXED2DBL(vertexes[vi2].y);
-			vt3.X = FIXED2DBL(vertexes[vi3].x);
-			vt3.Y = FIXED2DBL(vertexes[vi3].y);
+			vt1 = DVector3(vertexes[vi1].fPos(), 0);
+			vt2 = DVector3(vertexes[vi2].fPos(), 0);
+			vt3 = DVector3(vertexes[vi3].fPos(), 0);
 
 			for(int j=0; j<2; j++)
 			{
-				fixed_t *h1 = vt_heights[j].CheckKey(vi1);
-				fixed_t *h2 = vt_heights[j].CheckKey(vi2);
-				fixed_t *h3 = vt_heights[j].CheckKey(vi3);
-				fixed_t z3;
-				if (h1==NULL && h2==NULL && h3==NULL) continue;
+				double *h1 = vt_heights[j].CheckKey(vi1);
+				double *h2 = vt_heights[j].CheckKey(vi2);
+				double *h3 = vt_heights[j].CheckKey(vi3);
+				if (h1 == NULL && h2 == NULL && h3 == NULL) continue;
 
-				vt1.Z = FIXED2DBL(h1? *h1 : j==0? sec->GetPlaneTexZ(sector_t::floor) : sec->GetPlaneTexZ(sector_t::ceiling));
-				vt2.Z = FIXED2DBL(h2? *h2 : j==0? sec->GetPlaneTexZ(sector_t::floor) : sec->GetPlaneTexZ(sector_t::ceiling));
-				z3 = h3? *h3 : j==0? sec->GetPlaneTexZ(sector_t::floor) : sec->GetPlaneTexZ(sector_t::ceiling);
-				vt3.Z = FIXED2DBL(z3);
+				vt1.Z = h1? *h1 : j==0? sec->GetPlaneTexZF(sector_t::floor) : sec->GetPlaneTexZF(sector_t::ceiling);
+				vt2.Z = h2? *h2 : j==0? sec->GetPlaneTexZF(sector_t::floor) : sec->GetPlaneTexZF(sector_t::ceiling);
+				vt3.Z = h3? *h3 : j==0? sec->GetPlaneTexZF(sector_t::floor) : sec->GetPlaneTexZF(sector_t::ceiling);
 
-				if (P_PointOnLineSidePrecise(vertexes[vi3].x, vertexes[vi3].y, sec->lines[0]) == 0)
+				if (P_PointOnLineSidePrecise(vertexes[vi3].fX(), vertexes[vi3].fY(), sec->lines[0]) == 0)
 				{
 					vec1 = vt2 - vt3;
 					vec2 = vt1 - vt3;
@@ -393,15 +360,10 @@ static void P_SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt, 
 					cross = -cross;
 				}
 
-				secplane_t *srcplane = j==0? &sec->floorplane : &sec->ceilingplane;
+				secplane_t *plane = j==0? &sec->floorplane : &sec->ceilingplane;
 
-				srcplane->a = FLOAT2FIXED (cross[0]);
-				srcplane->b = FLOAT2FIXED (cross[1]);
-				srcplane->c = FLOAT2FIXED (cross[2]);
-				srcplane->ic = DivScale32 (1, srcplane->c);
-				srcplane->d = -TMulScale16 (srcplane->a, vertexes[vi3].x,
-											srcplane->b, vertexes[vi3].y,
-											srcplane->c, z3);
+				double dist = -cross[0] * vertexes[vi3].fX() - cross[1] * vertexes[vi3].fY() - cross[2] * vt3.Z;
+				plane->set(cross[0], cross[1], cross[2], dist);
 			}
 		}
 	}
@@ -422,14 +384,12 @@ void P_SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt, const int *oldve
 		if (mt->info != NULL && mt->info->Type == NULL &&
 		   (mt->info->Special >= SMT_SlopeFloorPointLine && mt->info->Special <= SMT_VavoomCeiling))
 		{
-			fixed_t x, y, z;
+			DVector3 pos = mt->pos;
 			secplane_t *refplane;
 			sector_t *sec;
 			bool ceiling;
 
-			x = mt->x;
-			y = mt->y;
-			sec = P_PointInSector (x, y);
+			sec = P_PointInSector (mt->pos);
 			if (mt->info->Special == SMT_SlopeCeilingPointLine || mt->info->Special == SMT_VavoomCeiling || mt->info->Special == SMT_SetCeilingSlope)
 			{
 				refplane = &sec->ceilingplane;
@@ -440,18 +400,19 @@ void P_SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt, const int *oldve
 				refplane = &sec->floorplane;
 				ceiling = false;
 			}
-			z = refplane->ZatPoint (x, y) + (mt->z);
+			pos.Z = refplane->ZatPoint (mt->pos) + mt->pos.Z;
+
 			if (mt->info->Special <= SMT_SlopeCeilingPointLine)
 			{ // SlopeFloorPointLine and SlopCeilingPointLine
-				P_SlopeLineToPoint (mt->args[0], x, y, z, ceiling);
+				P_SlopeLineToPoint (mt->args[0], pos, ceiling);
 			}
 			else if (mt->info->Special <= SMT_SetCeilingSlope)
 			{ // SetFloorSlope and SetCeilingSlope
-				P_SetSlope (refplane, ceiling, mt->angle, mt->args[0], x, y, z);
+				P_SetSlope (refplane, ceiling, mt->angle, mt->args[0], pos);
 			}
 			else 
-			{ // VavoomFloor and VavoomCeiling
-				P_VavoomSlope(sec, mt->thingid, x, y, mt->z, ceiling); 
+			{ // VavoomFloor and VavoomCeiling (these do not perform any sector height adjustment - z is absolute)
+				P_VavoomSlope(sec, mt->thingid, mt->pos, ceiling); 
 			}
 			mt->EdNum = 0;
 		}
@@ -462,7 +423,7 @@ void P_SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt, const int *oldve
 		if (mt->info != NULL && mt->info->Type == NULL &&
 			(mt->info->Special == SMT_CopyFloorPlane || mt->info->Special == SMT_CopyCeilingPlane))
 		{
-			P_CopyPlane (mt->args[0], mt->x, mt->y, mt->info->Special == SMT_CopyCeilingPlane);
+			P_CopyPlane (mt->args[0], mt->pos, mt->info->Special == SMT_CopyCeilingPlane);
 			mt->EdNum = 0;
 		}
 	}
@@ -486,7 +447,7 @@ void P_SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt, const int *oldve
 //
 //===========================================================================
 
-static void P_AlignPlane (sector_t *sec, line_t *line, int which)
+static void P_AlignPlane(sector_t *sec, line_t *line, int which)
 {
 	sector_t *refsec;
 	double bestdist;
@@ -500,7 +461,7 @@ static void P_AlignPlane (sector_t *sec, line_t *line, int which)
 	// Find furthest vertex from the reference line. It, along with the two ends
 	// of the line, will define the plane.
 	bestdist = 0;
-	for (i = sec->linecount*2, probe = sec->lines; i > 0; i--)
+	for (i = sec->linecount * 2, probe = sec->lines; i > 0; i--)
 	{
 		double dist;
 		vertex_t *vert;
@@ -509,8 +470,8 @@ static void P_AlignPlane (sector_t *sec, line_t *line, int which)
 			vert = (*probe++)->v2;
 		else
 			vert = (*probe)->v1;
-		dist = fabs((double(line->v1->y) - vert->y) * line->dx -
-					(double(line->v1->x) - vert->x) * line->dy);
+		dist = fabs((line->v1->fY() - vert->fY()) * line->Delta().X -
+			(line->v1->fX() - vert->fX()) * line->Delta().Y);
 
 		if (dist > bestdist)
 		{
@@ -524,21 +485,21 @@ static void P_AlignPlane (sector_t *sec, line_t *line, int which)
 	DVector3 p, v1, v2, cross;
 
 	secplane_t *srcplane;
-	fixed_t srcheight, destheight;
+	double srcheight, destheight;
 
 	srcplane = (which == 0) ? &sec->floorplane : &sec->ceilingplane;
-	srcheight = (which == 0) ? sec->GetPlaneTexZ(sector_t::floor) : sec->GetPlaneTexZ(sector_t::ceiling);
-	destheight = (which == 0) ? refsec->GetPlaneTexZ(sector_t::floor) : refsec->GetPlaneTexZ(sector_t::ceiling);
+	srcheight = (which == 0) ? sec->GetPlaneTexZF(sector_t::floor) : sec->GetPlaneTexZF(sector_t::ceiling);
+	destheight = (which == 0) ? refsec->GetPlaneTexZF(sector_t::floor) : refsec->GetPlaneTexZF(sector_t::ceiling);
 
-	p[0] = FIXED2DBL (line->v1->x);
-	p[1] = FIXED2DBL(line->v1->y);
-	p[2] = FIXED2DBL(destheight);
-	v1[0] = FIXED2DBL(line->dx);
-	v1[1] = FIXED2DBL(line->dy);
+	p[0] = line->v1->fX();
+	p[1] = line->v1->fY();
+	p[2] = destheight;
+	v1[0] = line->Delta().X;
+	v1[1] = line->Delta().Y;
 	v1[2] = 0;
-	v2[0] = FIXED2DBL(refvert->x - line->v1->x);
-	v2[1] = FIXED2DBL(refvert->y - line->v1->y);
-	v2[2] = FIXED2DBL(srcheight - destheight);
+	v2[0] = refvert->fX() - line->v1->fX();
+	v2[1] = refvert->fY() - line->v1->fY();
+	v2[2] = srcheight - destheight;
 
 	cross = (v1 ^ v2).Unit();
 
@@ -548,14 +509,8 @@ static void P_AlignPlane (sector_t *sec, line_t *line, int which)
 		cross = -cross;
 	}
 
-	srcplane->a = FLOAT2FIXED (cross[0]);
-	srcplane->b = FLOAT2FIXED (cross[1]);
-	srcplane->c = FLOAT2FIXED (cross[2]);
-	//srcplane->ic = FLOAT2FIXED (1.f/cross[2]);
-	srcplane->ic = DivScale32 (1, srcplane->c);
-	srcplane->d = -TMulScale16 (srcplane->a, line->v1->x,
-								srcplane->b, line->v1->y,
-								srcplane->c, destheight);
+	double dist = -cross[0] * line->v1->fX() - cross[1] * line->v1->fY() - cross[2] * destheight;
+	srcplane->set(cross[0], cross[1], cross[2], dist);
 }
 
 //===========================================================================
@@ -644,4 +599,3 @@ void P_CopySlopes()
 		}
 	}
 }
-

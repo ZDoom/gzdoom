@@ -229,9 +229,9 @@ PClassActor::PClassActor()
 	GibHealth = INT_MIN;
 	WoundHealth = 6;
 	PoisonDamage = 0;
-	FastSpeed = FIXED_MIN;
-	RDFactor = FRACUNIT;
-	CameraHeight = FIXED_MIN;
+	FastSpeed = -1.;
+	RDFactor = 1.;
+	CameraHeight = INT_MIN;
 
 	DropItems = NULL;
 
@@ -532,7 +532,7 @@ PClassActor *PClassActor::GetReplacee(bool lookskill)
 //
 //==========================================================================
 
-void PClassActor::SetDamageFactor(FName type, fixed_t factor)
+void PClassActor::SetDamageFactor(FName type, double factor)
 {
 	if (DamageFactors == NULL)
 	{
@@ -593,15 +593,17 @@ void PClassActor::ReplaceClassRef(PClass *oldclass, PClass *newclass)
 //
 //==========================================================================
 
-fixed_t *DmgFactors::CheckFactor(FName type)
+int DmgFactors::Apply(FName type, int damage)
 {
-	fixed_t *pdf = CheckKey(type);
+	auto pdf = CheckKey(type);
 	if (pdf == NULL && type != NAME_None)
 	{
 		pdf = CheckKey(NAME_None);
 	}
-	return pdf;
+	if (!pdf) return damage;
+	return int(damage * *pdf);
 }
+
 
 static void SummonActor (int command, int command2, FCommandLine argv)
 {
@@ -689,32 +691,33 @@ bool DamageTypeDefinition::IgnoreArmor(FName type)
 //
 //==========================================================================
 
-int DamageTypeDefinition::ApplyMobjDamageFactor(int damage, FName type, DmgFactors const * const factors)
+double DamageTypeDefinition::GetMobjDamageFactor(FName type, DmgFactors const * const factors)
 {
 	if (factors)
 	{
 		// If the actor has named damage factors, look for a specific factor
-		fixed_t const *pdf = factors->CheckKey(type);
-		if (pdf) return FixedMul(damage, *pdf); // type specific damage type
+
+		auto pdf = factors->CheckKey(type);
+		if (pdf) return *pdf; // type specific damage type
 		
 		// If this was nonspecific damage, don't fall back to nonspecific search
-		if (type == NAME_None) return damage;
+		if (type == NAME_None) return 1.;
 	}
 	
 	// If this was nonspecific damage, don't fall back to nonspecific search
 	else if (type == NAME_None) 
 	{ 
-		return damage; 
+		return 1.;
 	}
 	else
 	{
 		// Normal is unsupplied / 1.0, so there's no difference between modifying and overriding
 		DamageTypeDefinition *dtd = Get(type);
-		return dtd ? FixedMul(damage, dtd->DefaultFactor) : damage;
+		return dtd ? dtd->DefaultFactor : 1.;
 	}
 	
 	{
-		fixed_t const *pdf  = factors->CheckKey(NAME_None);
+		auto pdf  = factors->CheckKey(NAME_None);
 		DamageTypeDefinition *dtd = Get(type);
 		// Here we are looking for modifications to untyped damage
 		// If the calling actor defines untyped damage factor, that is contained in "pdf".
@@ -722,15 +725,21 @@ int DamageTypeDefinition::ApplyMobjDamageFactor(int damage, FName type, DmgFacto
 		{
 			if (dtd)
 			{
-				if (dtd->ReplaceFactor) return FixedMul(damage, dtd->DefaultFactor); // use default instead of untyped factor
-				return FixedMul(damage, FixedMul(*pdf, dtd->DefaultFactor)); // use default as modification of untyped factor
+				if (dtd->ReplaceFactor) return dtd->DefaultFactor; // use default instead of untyped factor
+				return *pdf * dtd->DefaultFactor; // use default as modification of untyped factor
 			}
-			return FixedMul(damage, *pdf); // there was no default, so actor default is used
+			return *pdf; // there was no default, so actor default is used
 		}
 		else if (dtd)
 		{
-			return FixedMul(damage, dtd->DefaultFactor); // implicit untyped factor 1.0 does not need to be applied/replaced explicitly
+			return dtd->DefaultFactor; // implicit untyped factor 1.0 does not need to be applied/replaced explicitly
 		}
 	}
-	return damage;
+	return 1.;
+}
+
+int DamageTypeDefinition::ApplyMobjDamageFactor(int damage, FName type, DmgFactors const * const factors)
+{
+	double factor = GetMobjDamageFactor(type, factors);
+	return int(damage * factor);
 }

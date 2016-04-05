@@ -1,16 +1,6 @@
 #ifndef __BASICTYPES_H
 #define __BASICTYPES_H
 
-#ifdef _MSC_VER
-typedef __int8					SBYTE;
-typedef unsigned __int8			BYTE;
-typedef __int16					SWORD;
-typedef unsigned __int16		WORD;
-typedef __int32					SDWORD;
-typedef unsigned __int32		uint32;
-typedef __int64					SQWORD;
-typedef unsigned __int64		QWORD;
-#else
 #include <stdint.h>
 
 typedef int8_t					SBYTE;
@@ -21,11 +11,6 @@ typedef int32_t					SDWORD;
 typedef uint32_t				uint32;
 typedef int64_t					SQWORD;
 typedef uint64_t				QWORD;
-#endif
-
-typedef SDWORD					int32;
-typedef float					real32;
-typedef double					real64;
 
 // windef.h, included by windows.h, has its own incompatible definition
 // of DWORD as a long. In files that mix Doom and Windows code, you
@@ -73,96 +58,13 @@ union QWORD_UNION
 };
 
 //
-// Fixed point, 32bit as 16.16.
+// fixed point, 32bit as 16.16.
 //
 #define FRACBITS						16
 #define FRACUNIT						(1<<FRACBITS)
 
 typedef SDWORD							fixed_t;
 typedef DWORD							dsfixed_t;				// fixedpt used by span drawer
-
-struct fixedvec2
-{
-	fixed_t x, y;
-
-	fixedvec2 &operator +=(const fixedvec2 &other)
-	{
-		x += other.x;
-		y += other.y;
-		return *this;
-	}
-};
-
-struct fixedvec3
-{
-	fixed_t x, y, z;
-
-	fixedvec3 &operator +=(const fixedvec3 &other)
-	{
-		x += other.x;
-		y += other.y;
-		z += other.z;
-		return *this;
-	}
-
-	fixedvec3 &operator +=(const fixedvec2 &other)
-	{
-		x += other.x;
-		y += other.y;
-		return *this;
-	}
-
-	fixedvec3 &operator -=(const fixedvec2 &other)
-	{
-		x -= other.x;
-		y -= other.y;
-		return *this;
-	}
-
-	fixedvec3 &operator -=(const fixedvec3 &other)
-	{
-		x -= other.x;
-		y -= other.y;
-		z -= other.z;
-		return *this;
-	}
-
-	operator fixedvec2()
-	{
-		return { x, y };
-	}
-
-};
-
-inline fixedvec2 operator +(const fixedvec2 &v1, const fixedvec2 &v2)
-{
-	return { v1.x + v2.x, v1.y + v2.y };
-}
-
-inline fixedvec2 operator -(const fixedvec2 &v1, const fixedvec2 &v2)
-{
-	return { v1.x - v2.x, v1.y - v2.y };
-}
-
-inline fixedvec3 operator +(const fixedvec3 &v1, const fixedvec3 &v2)
-{
-	return { v1.x + v2.x, v1.y + v2.y, v1.z + v2.z };
-}
-
-inline fixedvec3 operator +(const fixedvec3 &v1, const fixedvec2 &v2)
-{
-	return { v1.x + v2.x, v1.y + v2.y, v1.z };
-}
-
-inline fixedvec3 operator -(const fixedvec3 &v1, const fixedvec2 &v2)
-{
-	return{ v1.x - v2.x, v1.y - v2.y, v1.z };
-}
-
-inline fixedvec3 operator -(const fixedvec3 &v1, const fixedvec3 &v2)
-{
-	return{ v1.x - v2.x, v1.y - v2.y, v1.z - v2.z };
-}
 
 #define FIXED_MAX						(signed)(0x7fffffff)
 #define FIXED_MIN						(signed)(0x80000000)

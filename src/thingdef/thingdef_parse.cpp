@@ -486,14 +486,6 @@ static void ParseNativeFunction(FScanner &sc, PClassActor *cls)
 		rets.Push(TypeFloat64);
 		break;
 
-	case TK_Angle_t:
-		rets.Push(TypeAngle);
-		break;
-
-	case TK_Fixed_t:
-		rets.Push(TypeFixed);
-		break;
-
 	case TK_State:
 		rets.Push(TypeState);
 		break;
@@ -1282,8 +1274,8 @@ static void ParseDamageDefinition(FScanner &sc)
 		if (sc.Compare("FACTOR"))
 		{
 			sc.MustGetFloat();
-			dtd.DefaultFactor = FLOAT2FIXED(sc.Float);
-			if (!dtd.DefaultFactor) dtd.ReplaceFactor = true; // Multiply by 0 yields 0: FixedMul(damage, FixedMul(factor, 0)) is more wasteful than FixedMul(factor, 0)
+			dtd.DefaultFactor = sc.Float;
+			if (dtd.DefaultFactor == 0) dtd.ReplaceFactor = true;
 		}
 		else if (sc.Compare("REPLACEFACTOR"))
 		{

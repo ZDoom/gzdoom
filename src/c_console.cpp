@@ -732,15 +732,15 @@ static void C_DrawNotifyText ()
 			if (!show_messages && NotifyStrings[i].PrintLevel != 128)
 				continue;
 
-			fixed_t alpha;
+			double alpha;
 
 			if (j < NOTIFYFADETIME)
 			{
-				alpha = OPAQUE * j / NOTIFYFADETIME;
+				alpha = 1. * j / NOTIFYFADETIME;
 			}
 			else
 			{
-				alpha = OPAQUE;
+				alpha = 1;
 			}
 
 			if (NotifyStrings[i].PrintLevel >= PRINTLEVELS)
@@ -752,23 +752,23 @@ static void C_DrawNotifyText ()
 			{
 				if (!center)
 					screen->DrawText (SmallFont, color, 0, line, NotifyStrings[i].Text,
-						DTA_CleanNoMove, true, DTA_Alpha, alpha, TAG_DONE);
+						DTA_CleanNoMove, true, DTA_AlphaF, alpha, TAG_DONE);
 				else
 					screen->DrawText (SmallFont, color, (SCREENWIDTH -
 						SmallFont->StringWidth (NotifyStrings[i].Text)*CleanXfac)/2,
 						line, NotifyStrings[i].Text, DTA_CleanNoMove, true,
-						DTA_Alpha, alpha, TAG_DONE);
+						DTA_AlphaF, alpha, TAG_DONE);
 			}
 			else if (con_scaletext == 0)
 			{
 				if (!center)
 					screen->DrawText (SmallFont, color, 0, line, NotifyStrings[i].Text,
-						DTA_Alpha, alpha, TAG_DONE);
+						DTA_AlphaF, alpha, TAG_DONE);
 				else
 					screen->DrawText (SmallFont, color, (SCREENWIDTH -
 						SmallFont->StringWidth (NotifyStrings[i].Text))/2,
 						line, NotifyStrings[i].Text,
-						DTA_Alpha, alpha, TAG_DONE);
+						DTA_AlphaF, alpha, TAG_DONE);
 			}
 			else
 			{
@@ -777,7 +777,7 @@ static void C_DrawNotifyText ()
 						DTA_VirtualWidth, screen->GetWidth() / 2, 
 						DTA_VirtualHeight, screen->GetHeight() / 2,
 						DTA_KeepRatio, true,
-						DTA_Alpha, alpha, TAG_DONE);
+						DTA_AlphaF, alpha, TAG_DONE);
 				else
 					screen->DrawText (SmallFont, color, (screen->GetWidth() / 2 -
 						SmallFont->StringWidth (NotifyStrings[i].Text))/2,
@@ -785,7 +785,7 @@ static void C_DrawNotifyText ()
 						DTA_VirtualWidth, screen->GetWidth() / 2, 
 						DTA_VirtualHeight, screen->GetHeight() / 2,
 						DTA_KeepRatio, true,
-						DTA_Alpha, alpha, TAG_DONE);
+						DTA_AlphaF, alpha, TAG_DONE);
 			}
 			line += lineadv;
 			canskip = false;
@@ -865,7 +865,7 @@ void C_DrawConsole (bool hw2d)
 			DTA_DestWidth, screen->GetWidth(),
 			DTA_DestHeight, screen->GetHeight(),
 			DTA_ColorOverlay, conshade,
-			DTA_Alpha, (hw2d && gamestate != GS_FULLCONSOLE) ? FLOAT2FIXED(con_alpha) : FRACUNIT,
+			DTA_AlphaF, (hw2d && gamestate != GS_FULLCONSOLE) ? (double)con_alpha : 1.,
 			DTA_Masked, false,
 			TAG_DONE);
 		if (conline && visheight < screen->GetHeight())

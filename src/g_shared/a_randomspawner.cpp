@@ -114,7 +114,7 @@ class ARandomSpawner : public AActor
 				{
 					Species = cls->TypeName;
 					AActor *defmobj = GetDefaultByType(cls);
-					this->Speed   =  defmobj->Speed;
+					this->Speed = defmobj->Speed;
 					this->flags  |= (defmobj->flags  & MF_MISSILE);
 					this->flags2 |= (defmobj->flags2 & MF2_SEEKERMISSILE);
 					this->flags4 |= (defmobj->flags4 & MF4_SPECTRAL);
@@ -160,8 +160,9 @@ class ARandomSpawner : public AActor
 		if (newmobj != NULL)
 		{
 			// copy everything relevant
-			newmobj->SpawnAngle = newmobj->angle = angle;
-			newmobj->SpawnPoint[2] = SpawnPoint[2];
+			newmobj->SpawnAngle = SpawnAngle;
+			newmobj->Angles		= Angles;
+			newmobj->SpawnPoint = SpawnPoint;
 			newmobj->special    = special;
 			newmobj->args[0]    = args[0];
 			newmobj->args[1]    = args[1];
@@ -175,9 +176,7 @@ class ARandomSpawner : public AActor
 			newmobj->SpawnFlags = SpawnFlags;
 			newmobj->tid        = tid;
 			newmobj->AddToHash();
-			newmobj->vel.x = vel.x;
-			newmobj->vel.y = vel.y;
-			newmobj->vel.z = vel.z;
+			newmobj->Vel	= Vel;
 			newmobj->master = master;	// For things such as DamageMaster/DamageChildren, transfer mastery.
 			newmobj->target = target;
 			newmobj->tracer = tracer;
@@ -189,17 +188,17 @@ class ARandomSpawner : public AActor
 			// Handle special altitude flags
 			if (newmobj->flags & MF_SPAWNCEILING)
 			{
-				newmobj->SetZ(newmobj->ceilingz - newmobj->height - SpawnPoint[2]);
+				newmobj->SetZ(newmobj->ceilingz - newmobj->Height - SpawnPoint.Z);
 			}
 			else if (newmobj->flags2 & MF2_SPAWNFLOAT) 
 			{
-				fixed_t space = newmobj->ceilingz - newmobj->height - newmobj->floorz;
-				if (space > 48*FRACUNIT)
+				double space = newmobj->ceilingz - newmobj->Height - newmobj->floorz;
+				if (space > 48)
 				{
-					space -= 40*FRACUNIT;
-					newmobj->SetZ(MulScale8 (space, pr_randomspawn()) + newmobj->floorz + 40*FRACUNIT);
+					space -= 40;
+					newmobj->SetZ((space * pr_randomspawn()) / 256. + newmobj->floorz + 40);
 				}
-				newmobj->AddZ(SpawnPoint[2]);
+				newmobj->AddZ(SpawnPoint.Z);
 			}
 			if (newmobj->flags & MF_MISSILE)
 				P_CheckMissileSpawn(newmobj, 0);

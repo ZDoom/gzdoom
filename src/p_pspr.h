@@ -28,12 +28,12 @@
 #include "tables.h"
 #include "thingdef/thingdef.h"
 
-#define WEAPONBOTTOM			128*FRACUNIT
+#define WEAPONBOTTOM			128.
 
 // [RH] +0x6000 helps it meet the screen bottom
 //		at higher resolutions while still being in
 //		the right spot at 320x200.
-#define WEAPONTOP				(32*FRACUNIT+0x6000)
+#define WEAPONTOP				(32+6./16)
 
 
 //
@@ -66,8 +66,8 @@ struct pspdef_t
 {
 	FState*		state;	// a NULL state means not active
 	int 		tics;
-	fixed_t 	sx;
-	fixed_t 	sy;
+	double	 	sx;
+	double 		sy;
 	int			sprite;
 	int			frame;
 	bool		processPending; // true: waiting for periodic processing on this tick
@@ -87,9 +87,10 @@ void P_CalcSwing (player_t *player);
 void P_BringUpWeapon (player_t *player);
 void P_FireWeapon (player_t *player);
 void P_DropWeapon (player_t *player);
-void P_BobWeapon (player_t *player, pspdef_t *psp, fixed_t *x, fixed_t *y);
-angle_t P_BulletSlope (AActor *mo, FTranslatedLineTarget *pLineTarget = NULL, int aimflags = 0);
-void P_GunShot (AActor *mo, bool accurate, PClassActor *pufftype, angle_t pitch);
+void P_BobWeapon (player_t *player, pspdef_t *psp, float *x, float *y);
+DAngle P_BulletSlope (AActor *mo, FTranslatedLineTarget *pLineTarget = NULL, int aimflags = 0);
+
+void P_GunShot (AActor *mo, bool accurate, PClassActor *pufftype, DAngle pitch);
 
 void DoReadyWeapon(AActor *self);
 void DoReadyWeaponToBob(AActor *self);

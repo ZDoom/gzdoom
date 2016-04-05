@@ -71,13 +71,13 @@ TDeletingArray<FVoxelDef *> VoxelDefs;
 struct VoxelOptions
 {
 	VoxelOptions()
-	: DroppedSpin(0), PlacedSpin(0), Scale(FRACUNIT), AngleOffset(ANGLE_90), OverridePalette(false)
+	: DroppedSpin(0), PlacedSpin(0), Scale(1.), AngleOffset(90.), OverridePalette(false)
 	{}
 
 	int			DroppedSpin;
 	int			PlacedSpin;
-	fixed_t		Scale;
-	angle_t		AngleOffset;
+	double		Scale;
+	DAngle		AngleOffset;
 	bool		OverridePalette;
 };
 
@@ -213,9 +213,9 @@ FVoxel *R_LoadKVX(int lumpnum)
 		mipl->SizeX = GetInt(rawmip + 0);
 		mipl->SizeY = GetInt(rawmip + 4);
 		mipl->SizeZ = GetInt(rawmip + 8);
-		mipl->PivotX = GetInt(rawmip + 12);
-		mipl->PivotY = GetInt(rawmip + 16);
-		mipl->PivotZ = GetInt(rawmip + 20);
+		mipl->Pivot.X = GetInt(rawmip + 12) / 256.;
+		mipl->Pivot.Y = GetInt(rawmip + 16) / 256.;
+		mipl->Pivot.Z = GetInt(rawmip + 20) / 256.;
 
 		// How much space do we have for voxdata?
 		int offsetsize = (mipl->SizeX + 1) * 4 + mipl->SizeX * (mipl->SizeY + 1) * 2;
@@ -300,9 +300,7 @@ FVoxel *R_LoadKVX(int lumpnum)
 	// Fix pivot data for submips, since some tools seem to like to just center these.
 	for (i = 1; i < mip; ++i)
 	{
-		voxel->Mips[i].PivotX = voxel->Mips[0].PivotX >> i;
-		voxel->Mips[i].PivotY = voxel->Mips[0].PivotY >> i;
-		voxel->Mips[i].PivotZ = voxel->Mips[0].PivotZ >> i;
+		voxel->Mips[i].Pivot = voxel->Mips[i - 1].Pivot / 2;
 	}
 
 	for (i = 0; i < mip; ++i)
@@ -339,9 +337,9 @@ FVoxelDef *R_LoadVoxelDef(int lumpnum, int spin)
 	{
 		FVoxelDef *voxdef = new FVoxelDef;
 		voxdef->Voxel = vox;
-		voxdef->Scale = FRACUNIT;
+		voxdef->Scale = 1.;
 		voxdef->DroppedSpin = voxdef->PlacedSpin = spin;
-		voxdef->AngleOffset = ANGLE_90;
+		voxdef->AngleOffset = 90.;
 
 		Voxels.Push(vox);
 		VoxelDefs.Push(voxdef);
@@ -358,7 +356,7 @@ FVoxelDef *R_LoadVoxelDef(int lumpnum, int spin)
 FVoxelMipLevel::FVoxelMipLevel()
 {
 	SizeZ = SizeY = SizeX = 0;
-	PivotZ = PivotY = PivotX = 0;
+	Pivot.Zero();
 	OffsetX = NULL;
 	OffsetXY = NULL;
 	SlabData = NULL;
@@ -499,7 +497,7 @@ static void VOX_ReadOptions(FScanner &sc, VoxelOptions &opts)
 		{
 			sc.MustGetToken('=');
 			sc.MustGetToken(TK_FloatConst);
-			opts.Scale = FLOAT2FIXED(sc.Float);
+			opts.Scale = sc.Float;
 		}
 		else if (sc.Compare("spin"))
 		{
@@ -531,7 +529,7 @@ static void VOX_ReadOptions(FScanner &sc, VoxelOptions &opts)
 			{
 				sc.TokenMustBe(TK_FloatConst);
 			}
-			opts.AngleOffset = ANGLE_90 + FLOAT2ANGLE(sc.Float);
+			opts.AngleOffset = sc.Float + 90.;
 		}
 		else if (sc.Compare("overridepalette"))
 		{

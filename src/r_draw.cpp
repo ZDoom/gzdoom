@@ -2349,6 +2349,18 @@ static bool R_SetBlendFunc (int op, fixed_t fglevel, fixed_t bglevel, int flags)
 	}
 }
 
+static fixed_t GetAlpha(int type, fixed_t alpha)
+{
+	switch (type)
+	{
+	case STYLEALPHA_Zero:		return 0;
+	case STYLEALPHA_One:		return OPAQUE;
+	case STYLEALPHA_Src:		return alpha;
+	case STYLEALPHA_InvSrc:		return OPAQUE - alpha;
+	default:					return 0;
+	}
+}
+
 ESPSResult R_SetPatchStyle (FRenderStyle style, fixed_t alpha, int translation, DWORD color)
 {
 	fixed_t fglevel, bglevel;
@@ -2358,13 +2370,13 @@ ESPSResult R_SetPatchStyle (FRenderStyle style, fixed_t alpha, int translation, 
 	if (style.BlendOp == STYLEOP_Shadow)
 	{
 		style = LegacyRenderStyles[STYLE_TranslucentStencil];
-		alpha = FRACUNIT*3/10;
+		alpha = TRANSLUC33;
 		color = 0;
 	}
 
 	if (style.Flags & STYLEF_TransSoulsAlpha)
 	{
-		alpha = fixed_t(transsouls * FRACUNIT);
+		alpha = fixed_t(transsouls * OPAQUE);
 	}
 	else if (style.Flags & STYLEF_Alpha1)
 	{
@@ -2372,7 +2384,7 @@ ESPSResult R_SetPatchStyle (FRenderStyle style, fixed_t alpha, int translation, 
 	}
 	else
 	{
-		alpha = clamp<fixed_t> (alpha, 0, FRACUNIT);
+		alpha = clamp<fixed_t> (alpha, 0, OPAQUE);
 	}
 
 	dc_translation = NULL;

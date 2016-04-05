@@ -875,7 +875,7 @@ CCMD(linetarget)
 	FTranslatedLineTarget t;
 
 	if (CheckCheatmode () || players[consoleplayer].mo == NULL) return;
-	P_AimLineAttack(players[consoleplayer].mo,players[consoleplayer].mo->angle,MISSILERANGE, &t, 0);
+	P_AimLineAttack(players[consoleplayer].mo,players[consoleplayer].mo->Angles.Yaw, MISSILERANGE, &t, 0.);
 	if (t.linetarget)
 	{
 		Printf("Target=%s, Health=%d, Spawnhealth=%d\n",
@@ -892,8 +892,8 @@ CCMD(info)
 	FTranslatedLineTarget t;
 
 	if (CheckCheatmode () || players[consoleplayer].mo == NULL) return;
-	P_AimLineAttack(players[consoleplayer].mo,players[consoleplayer].mo->angle,MISSILERANGE, 
-		&t, 0,	ALF_CHECKNONSHOOTABLE|ALF_FORCENOSMART);
+	P_AimLineAttack(players[consoleplayer].mo,players[consoleplayer].mo->Angles.Yaw, MISSILERANGE,
+		&t, 0.,	ALF_CHECKNONSHOOTABLE|ALF_FORCENOSMART);
 	if (t.linetarget)
 	{
 		Printf("Target=%s, Health=%d, Spawnhealth=%d\n",
@@ -943,9 +943,8 @@ static void PrintFilteredActorList(const ActorTypeChecker IsActorType, const cha
 	{
 		if ((FilterClass == NULL || mo->IsA(FilterClass)) && IsActorType(mo))
 		{
-			Printf ("%s at (%d,%d,%d)\n",
-				mo->GetClass()->TypeName.GetChars(),
-				mo->X() >> FRACBITS, mo->Y() >> FRACBITS, mo->Z() >> FRACBITS);
+			Printf ("%s at (%f,%f,%f)\n",
+				mo->GetClass()->TypeName.GetChars(), mo->X(), mo->Y(), mo->Z());
 		}
 	}
 }
@@ -1087,7 +1086,7 @@ CCMD(currentpos)
 	if(mo)
 	{
 		Printf("Current player position: (%1.3f,%1.3f,%1.3f), angle: %1.3f, floorheight: %1.3f, sector:%d, lightlevel: %d\n",
-			FIXED2DBL(mo->X()), FIXED2DBL(mo->Y()), FIXED2DBL(mo->Z()), ANGLE2DBL(mo->angle), FIXED2DBL(mo->floorz), mo->Sector->sectornum, mo->Sector->lightlevel);
+			mo->X(), mo->Y(), mo->Z(), mo->Angles.Yaw.Normalized360().Degrees, mo->floorz, mo->Sector->sectornum, mo->Sector->lightlevel);
 	}
 	else
 	{
@@ -1245,9 +1244,9 @@ CCMD(angleconvtest)
 	Printf("Testing degrees to angle conversion:\n");
 	for (double ang = -5 * 180.; ang < 5 * 180.; ang += 45.)
 	{
-		angle_t ang1 = FLOAT2ANGLE(ang);
-		angle_t ang2 = (angle_t)(ang * (ANGLE_90 / 90.));
-		angle_t ang3 = (angle_t)(int)(ang * (ANGLE_90 / 90.));
+		unsigned ang1 = DAngle(ang).BAMs();
+		unsigned ang2 = (unsigned)(ang * (0x40000000 / 90.));
+		unsigned ang3 = (unsigned)(int)(ang * (0x40000000 / 90.));
 		Printf("Angle = %.5f: xs_RoundToInt = %08x, unsigned cast = %08x, signed cast = %08x\n",
 			ang, ang1, ang2, ang3);
 	}

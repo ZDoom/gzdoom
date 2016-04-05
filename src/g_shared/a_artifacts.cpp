@@ -66,7 +66,7 @@ bool APowerupGiver::Use (bool pickup)
 {
 	if (PowerupType == NULL) return true;	// item is useless
 
-	APowerup *power = static_cast<APowerup *> (Spawn (PowerupType, 0, 0, 0, NO_REPLACE));
+	APowerup *power = static_cast<APowerup *> (Spawn (PowerupType));
 
 	if (EffectTics != 0)
 	{
@@ -415,28 +415,28 @@ void APowerInvulnerable::DoEffect ()
 			// Don't mess with the translucency settings if an
 			// invisibility powerup is active.
 			Owner->RenderStyle = STYLE_Translucent;
-			if (!(level.time & 7) && Owner->alpha > 0 && Owner->alpha < OPAQUE)
+			if (!(level.time & 7) && Owner->Alpha > 0 && Owner->Alpha < 1)
 			{
-				if (Owner->alpha == HX_SHADOW)
+				if (Owner->Alpha == HX_SHADOW)
 				{
-					Owner->alpha = HX_ALTSHADOW;
+					Owner->Alpha = HX_ALTSHADOW;
 				}
 				else
 				{
-					Owner->alpha = 0;
+					Owner->Alpha = 0;
 					Owner->flags2 |= MF2_NONSHOOTABLE;
 				}
 			}
 			if (!(level.time & 31))
 			{
-				if (Owner->alpha == 0)
+				if (Owner->Alpha == 0)
 				{
 					Owner->flags2 &= ~MF2_NONSHOOTABLE;
-					Owner->alpha = HX_ALTSHADOW;
+					Owner->Alpha = HX_ALTSHADOW;
 				}
 				else
 				{
-					Owner->alpha = HX_SHADOW;
+					Owner->Alpha = HX_SHADOW;
 				}
 			}
 		}
@@ -472,7 +472,7 @@ void APowerInvulnerable::EndEffect ()
 			// Don't mess with the translucency settings if an
 			// invisibility powerup is active.
 			Owner->RenderStyle = STYLE_Normal;
-			Owner->alpha = OPAQUE;
+			Owner->Alpha = 1.;
 		}
 	}
 	else if (Mode == NAME_Reflective)
@@ -499,8 +499,7 @@ int APowerInvulnerable::AlterWeaponSprite (visstyle_t *vis)
 	{
 		if (Mode == NAME_Ghost && !(Owner->flags & MF_SHADOW))
 		{
-			fixed_t wp_alpha = MIN<fixed_t>(FRACUNIT/4 + Owner->alpha*3/4, FRACUNIT);
-			if (wp_alpha != FIXED_MAX) vis->alpha = wp_alpha;
+			vis->Alpha = MIN<float>(0.25f + (float)Owner->Alpha*0.75f, 1.f);
 		}
 	}
 	return changed;
@@ -616,8 +615,10 @@ void APowerInvisibility::DoEffect ()
 	Super::DoEffect();
 	// Due to potential interference with other PowerInvisibility items
 	// the effect has to be refreshed each tic.
-	fixed_t ts = (Strength/100) * (special1 + 1); if (ts > FRACUNIT) ts = FRACUNIT;
-	Owner->alpha = clamp<fixed_t>((OPAQUE - ts), 0, OPAQUE);
+	double ts = (Strength / 100) * (special1 + 1);
+	
+	if (ts > 1.) ts = 1.;
+	Owner->Alpha = clamp((1. - ts), 0., 1.);
 	switch (Mode)
 	{
 	case (NAME_Fuzzy):
@@ -645,7 +646,7 @@ void APowerInvisibility::DoEffect ()
 		break;
 	default: // Something's wrong
 		Owner->RenderStyle = STYLE_Normal;
-		Owner->alpha = OPAQUE;
+		Owner->Alpha = 1.;
 		break;
 	}
 }
@@ -666,7 +667,7 @@ void APowerInvisibility::EndEffect ()
 		Owner->flags5 &= ~(flags5 & INVISIBILITY_FLAGS5);
 
 		Owner->RenderStyle = STYLE_Normal;
-		Owner->alpha = OPAQUE;
+		Owner->Alpha = 1.;
 
 		// Check whether there are other invisibility items and refresh their effect.
 		// If this isn't done there will be one incorrectly drawn frame when this
@@ -696,14 +697,14 @@ int APowerInvisibility::AlterWeaponSprite (visstyle_t *vis)
 	if (changed == 0 && EffectTics < 4*32 && !(EffectTics & 8))
 	{
 		vis->RenderStyle = STYLE_Normal;
-		vis->alpha = OPAQUE;
+		vis->Alpha = 1.f;
 		return 1;
 	}
 	else if (changed == 1)
 	{
 		// something else set the weapon sprite back to opaque but this item is still active.
-		fixed_t ts = (Strength/100) * (special1 + 1); if (ts > FRACUNIT) ts = FRACUNIT;
-		vis->alpha = clamp<fixed_t>((OPAQUE - ts), 0, OPAQUE);
+		float ts = float((Strength / 100) * (special1 + 1));
+		vis->Alpha = clamp<>((1.f - ts), 0.f, 1.f);
 		switch (Mode)
 		{
 		case (NAME_Fuzzy):
@@ -733,9 +734,9 @@ int APowerInvisibility::AlterWeaponSprite (visstyle_t *vis)
 		}
 	}
 	// Handling of Strife-like cumulative invisibility powerups, the weapon itself shouldn't become invisible
-	if ((vis->alpha < TRANSLUC25 && special1 > 0) || (vis->alpha == 0))
+	if ((vis->Alpha < 0.25f && special1 > 0) || (vis->Alpha == 0))
 	{
-		vis->alpha = clamp<fixed_t>((OPAQUE - (Strength/100)), 0, OPAQUE);
+		vis->Alpha = clamp((1.f - float(Strength/100)), 0.f, 1.f);
 		vis->colormap = SpecialColormaps[INVERSECOLORMAP].Colormap;
 	}
 	return -1;	// This item is valid so another one shouldn't reset the translucency
@@ -752,7 +753,7 @@ int APowerInvisibility::AlterWeaponSprite (visstyle_t *vis)
 
 bool APowerInvisibility::HandlePickup (AInventory *item)
 {
-	if (Mode == NAME_Cumulative && ((Strength * special1) < FRACUNIT) && item->GetClass() == GetClass())
+	if (Mode == NAME_Cumulative && ((Strength * special1) < 1.) && item->GetClass() == GetClass())
 	{
 		APowerup *power = static_cast<APowerup *>(item);
 		if (power->EffectTics == 0)
@@ -981,9 +982,9 @@ void APowerFlight::InitEffect ()
 	Owner->flags |= MF_NOGRAVITY;
 	if (Owner->Z() <= Owner->floorz)
 	{
-		Owner->vel.z = 4*FRACUNIT;	// thrust the player in the air a bit
+		Owner->Vel.Z = 4;;	// thrust the player in the air a bit
 	}
-	if (Owner->vel.z <= -35*FRACUNIT)
+	if (Owner->Vel.Z <= -35)
 	{ // stop falling scream
 		S_StopSound (Owner, CHAN_VOICE);
 	}
@@ -1180,14 +1181,14 @@ IMPLEMENT_CLASS (APlayerSpeedTrail)
 
 void APlayerSpeedTrail::Tick ()
 {
-	const int fade = OPAQUE*6/10/8;
-	if (alpha <= fade)
+	const double fade = .6 / 8;
+	if (Alpha <= fade)
 	{
 		Destroy ();
 	}
 	else
 	{
-		alpha -= fade;
+		Alpha -= fade;
 	}
 }
 
@@ -1204,14 +1205,7 @@ IMPLEMENT_CLASS (APowerSpeed)
 void APowerSpeed::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
-	if (SaveVersion < 4146)
-	{
-		SpeedFlags = 0;
-	}
-	else
-	{
-		arc << SpeedFlags;
-	}
+	arc << SpeedFlags;
 }
 
 //===========================================================================
@@ -1220,10 +1214,10 @@ void APowerSpeed::Serialize(FArchive &arc)
 //
 //===========================================================================
 
-fixed_t APowerSpeed ::GetSpeedFactor ()
+double APowerSpeed ::GetSpeedFactor ()
 {
 	if (Inventory != NULL)
-		return FixedMul(Speed, Inventory->GetSpeedFactor());
+		return Speed * Inventory->GetSpeedFactor();
 	else
 		return Speed;
 }
@@ -1261,22 +1255,21 @@ void APowerSpeed::DoEffect ()
 		}
 	}
 
-	if (P_AproxDistance (Owner->vel.x, Owner->vel.y) <= 12*FRACUNIT)
+	if (Owner->Vel.LengthSquared() <= 12*12)
 		return;
 
 	AActor *speedMo = Spawn<APlayerSpeedTrail> (Owner->Pos(), NO_REPLACE);
 	if (speedMo)
 	{
-		speedMo->angle = Owner->angle;
+		speedMo->Angles.Yaw = Owner->Angles.Yaw;
 		speedMo->Translation = Owner->Translation;
 		speedMo->target = Owner;
 		speedMo->sprite = Owner->sprite;
 		speedMo->frame = Owner->frame;
-		speedMo->floorclip = Owner->floorclip;
+		speedMo->Floorclip = Owner->Floorclip;
 
 		// [BC] Also get the scale from the owner.
-		speedMo->scaleX = Owner->scaleX;
-		speedMo->scaleY = Owner->scaleY;
+		speedMo->Scale = Owner->Scale;
 
 		if (Owner == players[consoleplayer].camera &&
 			!(Owner->player->cheats & CF_CHASECAM))
@@ -1317,10 +1310,10 @@ void APowerTargeter::InitEffect ()
 		P_SetPsprite (player, ps_targetright, state + 2);
 	}
 
-	player->psprites[ps_targetcenter].sx = (160-3)*FRACUNIT;
+	player->psprites[ps_targetcenter].sx = (160-3);
 	player->psprites[ps_targetcenter].sy =
 		player->psprites[ps_targetleft].sy =
-		player->psprites[ps_targetright].sy = (100-3)*FRACUNIT;
+		player->psprites[ps_targetright].sy = (100-3);
 	PositionAccuracy ();
 }
 
@@ -1383,8 +1376,8 @@ void APowerTargeter::PositionAccuracy ()
 
 	if (player != NULL)
 	{
-		player->psprites[ps_targetleft].sx = (160-3)*FRACUNIT - ((100 - player->mo->accuracy) << FRACBITS);
-		player->psprites[ps_targetright].sx = (160-3)*FRACUNIT + ((100 - player->mo->accuracy) << FRACBITS);
+		player->psprites[ps_targetleft].sx = (160-3) - ((100 - player->mo->accuracy));
+		player->psprites[ps_targetright].sx = (160-3)+ ((100 - player->mo->accuracy));
 	}
 }
 
@@ -1630,25 +1623,20 @@ void APowerDamage::EndEffect( )
 
 void APowerDamage::ModifyDamage(int damage, FName damageType, int &newdamage, bool passive)
 {
-	static const fixed_t def = 4*FRACUNIT;
 	if (!passive && damage > 0)
 	{
-		const fixed_t *pdf = NULL;
+		int newdam;
 		DmgFactors *df = GetClass()->DamageFactors;
 		if (df != NULL && df->CountUsed() != 0)
 		{
-			pdf = df->CheckFactor(damageType);
+			newdam = MIN(1, df->Apply(damageType, damage));// don't allow zero damage as result of an underflow
 		}
 		else
 		{
-			pdf = &def;
+			newdam = damage * 4;
 		}
-		if (pdf != NULL)
-		{
-			damage = newdamage = FixedMul(damage, *pdf);
-			if (*pdf > 0 && damage == 0) damage = newdamage = 1;	// don't allow zero damage as result of an underflow
-			if (Owner != NULL && *pdf > FRACUNIT) S_Sound(Owner, 5, ActiveSound, 1.0f, ATTN_NONE);
-		}
+		if (Owner != NULL && newdam > damage) S_Sound(Owner, 5, ActiveSound, 1.0f, ATTN_NONE);
+		newdamage = newdam;
 	}
 	if (Inventory != NULL) Inventory->ModifyDamage(damage, damageType, newdamage, passive);
 }
@@ -1710,22 +1698,20 @@ void APowerProtection::EndEffect( )
 
 void APowerProtection::ModifyDamage(int damage, FName damageType, int &newdamage, bool passive)
 {
-	static const fixed_t def = FRACUNIT/4;
 	if (passive && damage > 0)
 	{
-		const fixed_t *pdf = NULL;
+		int newdam;
 		DmgFactors *df = GetClass()->DamageFactors;
 		if (df != NULL && df->CountUsed() != 0)
 		{
-			pdf = df->CheckFactor(damageType);
+			newdam = MIN(0, df->Apply(damageType, damage));
 		}
-		else pdf = &def;
-
-		if (pdf != NULL)
+		else
 		{
-			damage = newdamage = FixedMul(damage, *pdf);
-			if (Owner != NULL && *pdf < FRACUNIT) S_Sound(Owner, CHAN_AUTO, ActiveSound, 1.0f, ATTN_NONE);
+			newdam = damage / 4;
 		}
+		if (Owner != NULL && newdam < damage) S_Sound(Owner, CHAN_AUTO, ActiveSound, 1.0f, ATTN_NONE);
+		newdamage = newdam;
 	}
 	if (Inventory != NULL)
 	{
@@ -1788,7 +1774,7 @@ void APowerRegeneration::DoEffect()
 	Super::DoEffect();
 	if (Owner != NULL && Owner->health > 0 && (level.time & 31) == 0)
 	{
-		if (P_GiveBody(Owner, Strength/FRACUNIT))
+		if (P_GiveBody(Owner, int(Strength)))
 		{
 			S_Sound(Owner, CHAN_ITEM, "*regenerate", 1, ATTN_NORM );
 		}

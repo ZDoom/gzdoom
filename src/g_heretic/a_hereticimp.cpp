@@ -28,7 +28,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ImpMsAttack)
         self->SetState (self->SeeState);
         return 0;
     }
-	A_SkullAttack(self, 12 * FRACUNIT);
+	A_SkullAttack(self, 12.);
 	return 0;
 }
 
@@ -47,14 +47,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_ImpExplode)
 	self->flags &= ~MF_NOGRAVITY;
 
 	chunk = Spawn("HereticImpChunk1", self->Pos(), ALLOW_REPLACE);
-	chunk->vel.x = pr_imp.Random2 () << 10;
-	chunk->vel.y = pr_imp.Random2 () << 10;
-	chunk->vel.z = 9*FRACUNIT;
+	chunk->Vel.X = pr_imp.Random2() / 64.;
+	chunk->Vel.Y = pr_imp.Random2() / 64.;
+	chunk->Vel.Z = 9;
 
 	chunk = Spawn("HereticImpChunk2", self->Pos(), ALLOW_REPLACE);
-	chunk->vel.x = pr_imp.Random2 () << 10;
-	chunk->vel.y = pr_imp.Random2 () << 10;
-	chunk->vel.z = 9*FRACUNIT;
+	chunk->Vel.X = pr_imp.Random2() / 64.;
+	chunk->Vel.Y = pr_imp.Random2() / 64.;
+	chunk->Vel.Z = 9;
 	if (self->special1 == 666)
 	{ // Extreme death crash
 		self->SetState (self->FindState("XCrash"));

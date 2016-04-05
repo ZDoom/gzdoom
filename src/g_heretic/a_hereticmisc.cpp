@@ -59,11 +59,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PodPain)
 	}
 	for (count = chance > 240 ? 2 : 1; count; count--)
 	{
-		goo = Spawn(gootype, self->PosPlusZ(48*FRACUNIT), ALLOW_REPLACE);
+		goo = Spawn(gootype, self->PosPlusZ(48.), ALLOW_REPLACE);
 		goo->target = self;
-		goo->vel.x = pr_podpain.Random2() << 9;
-		goo->vel.y = pr_podpain.Random2() << 9;
-		goo->vel.z = FRACUNIT/2 + (pr_podpain() << 9);
+		goo->Vel.X = pr_podpain.Random2() / 128.;
+		goo->Vel.Y = pr_podpain.Random2() / 128.;
+		goo->Vel.Z = 0.5 + pr_podpain() / 128.;
 	}
 	return 0;
 }
@@ -104,23 +104,19 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_MakePod)
 	PARAM_CLASS_OPT(podtype, AActor)	{ podtype = PClass::FindActor("Pod"); }
 
 	AActor *mo;
-	fixed_t x;
-	fixed_t y;
 
 	if (self->special1 == MAX_GEN_PODS)
 	{ // Too many generated pods
 		return 0;
 	}
-	x = self->X();
-	y = self->Y();
-	mo = Spawn(podtype, x, y, ONFLOORZ, ALLOW_REPLACE);
-	if (!P_CheckPosition (mo, x, y))
+	mo = Spawn(podtype, self->PosAtZ(ONFLOORZ), ALLOW_REPLACE);
+	if (!P_CheckPosition (mo, mo->Pos()))
 	{ // Didn't fit
 		mo->Destroy ();
 		return 0;
 	}
 	mo->SetState (mo->FindState("Grow"));
-	P_ThrustMobj (mo, pr_makepod()<<24, (fixed_t)(4.5*FRACUNIT));
+	mo->Thrust(pr_makepod() * (360. / 256), 4.5);
 	S_Sound (mo, CHAN_BODY, self->AttackSound, 1, ATTN_IDLE);
 	self->special1++; // Increment generated pod count
 	mo->master = self; // Link the generator to the pod
@@ -139,7 +135,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_AccTeleGlitter)
 
 	if (++self->health > 35)
 	{
-		self->vel.z += self->vel.z/2;
+		self->Vel.Z *= 1.5;
 	}
 	return 0;
 }
@@ -172,19 +168,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_VolcanoBlast)
 	int i;
 	int count;
 	AActor *blast;
-	angle_t angle;
 
 	count = 1 + (pr_blast() % 3);
 	for (i = 0; i < count; i++)
 	{
-		blast = Spawn("VolcanoBlast", self->PosPlusZ(44*FRACUNIT), ALLOW_REPLACE);
+		blast = Spawn("VolcanoBlast", self->PosPlusZ(44.), ALLOW_REPLACE);
 		blast->target = self;
-		angle = pr_blast () << 24;
-		blast->angle = angle;
-		angle >>= ANGLETOFINESHIFT;
-		blast->vel.x = FixedMul (1*FRACUNIT, finecosine[angle]);
-		blast->vel.y = FixedMul (1*FRACUNIT, finesine[angle]);
-		blast->vel.z = (FRACUNIT*5/2) + (pr_blast() << 10);
+		blast->Angles.Yaw = pr_blast() * (360 / 256.);
+		blast->VelFromAngle(1.);
+		blast->Vel.Z = 2.5 + pr_blast() / 64.;
 		S_Sound (blast, CHAN_BODY, "world/volcano/shoot", 1, ATTN_NORM);
 		P_CheckMissileSpawn (blast, self->radius);
 	}
@@ -203,26 +195,22 @@ DEFINE_ACTION_FUNCTION(AActor, A_VolcBallImpact)
 
 	unsigned int i;
 	AActor *tiny;
-	angle_t angle;
 
 	if (self->Z() <= self->floorz)
 	{
 		self->flags |= MF_NOGRAVITY;
-		self->gravity = FRACUNIT;
-		self->AddZ(28*FRACUNIT);
-		//self->vel.z = 3*FRACUNIT;
+		self->Gravity = 1;
+		self->AddZ(28);
+		//self->Vel.Z = 3;
 	}
 	P_RadiusAttack (self, self->target, 25, 25, NAME_Fire, RADF_HURTSOURCE);
 	for (i = 0; i < 4; i++)
 	{
 		tiny = Spawn("VolcanoTBlast", self->Pos(), ALLOW_REPLACE);
 		tiny->target = self;
-		angle = i*ANG90;
-		tiny->angle = angle;
-		angle >>= ANGLETOFINESHIFT;
-		tiny->vel.x = FixedMul (FRACUNIT*7/10, finecosine[angle]);
-		tiny->vel.y = FixedMul (FRACUNIT*7/10, finesine[angle]);
-		tiny->vel.z = FRACUNIT + (pr_volcimpact() << 9);
+		tiny->Angles.Yaw = 90.*i;
+		tiny->VelFromAngle(0.7);
+		tiny->Vel.Z = 1. + pr_volcimpact() / 128.;
 		P_CheckMissileSpawn (tiny, self->radius);
 	}
 	return 0;

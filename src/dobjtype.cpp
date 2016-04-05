@@ -80,8 +80,6 @@ PName *TypeName;
 PSound *TypeSound;
 PColor *TypeColor;
 PStatePointer *TypeState;
-PFixed *TypeFixed;
-PAngle *TypeAngle;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -663,9 +661,7 @@ void PType::StaticInit()
 	RUNTIME_CLASS(PPrototype)->TypeTableType = RUNTIME_CLASS(PPrototype);
 	RUNTIME_CLASS(PClass)->TypeTableType = RUNTIME_CLASS(PClass);
 	RUNTIME_CLASS(PStatePointer)->TypeTableType = RUNTIME_CLASS(PStatePointer);
-	RUNTIME_CLASS(PFixed)->TypeTableType = RUNTIME_CLASS(PFixed);
-	RUNTIME_CLASS(PAngle)->TypeTableType = RUNTIME_CLASS(PAngle);
-
+	
 	// Create types and add them type the type table.
 	TypeTable.AddType(TypeError = new PErrorType);
 	TypeTable.AddType(TypeVoid = new PVoidType);
@@ -683,8 +679,6 @@ void PType::StaticInit()
 	TypeTable.AddType(TypeSound = new PSound);
 	TypeTable.AddType(TypeColor = new PColor);
 	TypeTable.AddType(TypeState = new PStatePointer);
-	TypeTable.AddType(TypeFixed = new PFixed);
-	TypeTable.AddType(TypeAngle = new PAngle);
 
 	GlobalSymbols.AddSymbol(new PSymbolType(NAME_sByte, TypeSInt8));
 	GlobalSymbols.AddSymbol(new PSymbolType(NAME_Byte, TypeUInt8));
@@ -702,8 +696,6 @@ void PType::StaticInit()
 	GlobalSymbols.AddSymbol(new PSymbolType(NAME_Sound, TypeSound));
 	GlobalSymbols.AddSymbol(new PSymbolType(NAME_Color, TypeColor));
 	GlobalSymbols.AddSymbol(new PSymbolType(NAME_State, TypeState));
-	GlobalSymbols.AddSymbol(new PSymbolType(NAME_Fixed, TypeFixed));
-	GlobalSymbols.AddSymbol(new PSymbolType(NAME_Angle, TypeAngle));
 }
 
 
@@ -1692,242 +1684,6 @@ PColor::PColor()
 : PInt(sizeof(PalEntry), true)
 {
 	assert(sizeof(PalEntry) == __alignof(PalEntry));
-}
-
-/* PFixed *****************************************************************/
-
-IMPLEMENT_CLASS(PFixed)
-
-//==========================================================================
-//
-// PFixed Default Constructor
-//
-//==========================================================================
-
-PFixed::PFixed()
-: PFloat(sizeof(fixed_t))
-{
-}
-
-//==========================================================================
-//
-// PFixed :: WriteValue
-//
-//==========================================================================
-
-void PFixed::WriteValue(FArchive &ar, const void *addr) const
-{
-	ar.WriteByte(VAL_Fixed);
-	ar << *(fixed_t *)addr;
-}
-
-//==========================================================================
-//
-// PFixed :: ReadValue
-//
-//==========================================================================
-
-bool PFixed::ReadValue(FArchive &ar, void *addr) const
-{
-	BYTE tag;
-	ar << tag;
-	if (tag == VAL_Fixed)
-	{
-		ar << *(fixed_t *)addr;
-		return true;
-	}
-	else
-	{
-		double val;
-		if (ReadValueDbl(ar, &val, tag))
-		{
-			*(fixed_t *)addr = FLOAT2FIXED(val);
-			return true;
-		}
-		return false;
-	}
-}
-
-//==========================================================================
-//
-// PFixed :: SetValue
-//
-//==========================================================================
-
-void PFixed::SetValue(void *addr, int val)
-{
-	assert(((intptr_t)addr & (Align - 1)) == 0 && "unaligned address");
-	*(fixed_t *)addr = val << FRACBITS;
-}
-
-void PFixed::SetValue(void *addr, double val)
-{
-	assert(((intptr_t)addr & (Align - 1)) == 0 && "unaligned address");
-	*(fixed_t *)addr = FLOAT2FIXED(val);
-}
-
-//==========================================================================
-//
-// PFixed :: GetValueInt
-//
-//==========================================================================
-
-int PFixed::GetValueInt(void *addr) const
-{
-	assert(((intptr_t)addr & (Align - 1)) == 0 && "unaligned address");
-	return *(fixed_t *)addr >> FRACBITS;
-}
-
-//==========================================================================
-//
-// PFixed :: GetValueFloat
-//
-//==========================================================================
-
-double PFixed::GetValueFloat(void *addr) const
-{
-	assert(((intptr_t)addr & (Align - 1)) == 0 && "unaligned address");
-	return FIXED2DBL(*(fixed_t *)addr);
-}
-
-//==========================================================================
-//
-// PFixed :: GetStoreOp
-//
-//==========================================================================
-
-int PFixed::GetStoreOp() const
-{
-	return OP_SX;
-}
-
-//==========================================================================
-//
-// PFixed :: GetLoadOp
-//
-//==========================================================================
-
-int PFixed::GetLoadOp() const
-{
-	return OP_LX;
-}
-
-/* PAngle *****************************************************************/
-
-IMPLEMENT_CLASS(PAngle)
-
-//==========================================================================
-//
-// PAngle Default Constructor
-//
-//==========================================================================
-
-PAngle::PAngle()
-: PFloat(sizeof(angle_t))
-{
-}
-
-//==========================================================================
-//
-// PAngle :: WriteValue
-//
-//==========================================================================
-
-void PAngle::WriteValue(FArchive &ar, const void *addr) const
-{
-	ar.WriteByte(VAL_BAM);
-	ar.WriteInt32(*(angle_t *)addr);
-}
-
-//==========================================================================
-//
-// PAngle :: ReadValue
-//
-//==========================================================================
-
-bool PAngle::ReadValue(FArchive &ar, void *addr) const
-{
-	BYTE tag;
-	ar << tag;
-	if (tag == VAL_BAM)
-	{
-		ar << *(angle_t *)addr;
-		return true;
-	}
-	else
-	{
-		double val;
-		if (ReadValueDbl(ar, &val, tag))
-		{
-			*(angle_t *)addr = FLOAT2ANGLE(val);
-			return true;
-		}
-		return false;
-	}
-}
-
-//==========================================================================
-//
-// PAngle :: SetValue
-//
-//==========================================================================
-
-void PAngle::SetValue(void *addr, int val)
-{
-	assert(((intptr_t)addr & (Align - 1)) == 0 && "unaligned address");
-	*(angle_t *)addr = Scale(val, ANGLE_90, 90);
-}
-
-void PAngle::SetValue(void *addr, double val)
-{
-	assert(((intptr_t)addr & (Align - 1)) == 0 && "unaligned address");
-	*(angle_t *)addr = (angle_t)(val * ANGLE_90 / 90);
-}
-
-//==========================================================================
-//
-// PAngle :: GetValueInt
-//
-//==========================================================================
-
-int PAngle::GetValueInt(void *addr) const
-{
-	assert(((intptr_t)addr & (Align - 1)) == 0 && "unaligned address");
-	return *(angle_t *)addr / ANGLE_1;
-}
-
-//==========================================================================
-//
-// PAngle :: GetValueFloat
-//
-//==========================================================================
-
-double PAngle::GetValueFloat(void *addr) const
-{
-	assert(((intptr_t)addr & (Align - 1)) == 0 && "unaligned address");
-	return (double)(*(angle_t *)addr) / ANGLE_1;
-}
-
-//==========================================================================
-//
-// PAngle :: GetStoreOp
-//
-//==========================================================================
-
-int PAngle::GetStoreOp() const
-{
-	return OP_SANG;
-}
-
-//==========================================================================
-//
-// PAngle :: GetLoadOp
-//
-//==========================================================================
-
-int PAngle::GetLoadOp() const
-{
-	return OP_LANG;
 }
 
 /* PStatePointer **********************************************************/
@@ -3537,8 +3293,8 @@ PField *PClass::AddField(FName name, PType *type, DWORD flags)
 	PField *field = Super::AddField(name, type, flags);
 	if (field != NULL)
 	{
-		Defaults = (BYTE *)M_Realloc(Defaults, Size);
-		memset(Defaults + oldsize, 0, Size - oldsize);
+	Defaults = (BYTE *)M_Realloc(Defaults, Size);
+	memset(Defaults + oldsize, 0, Size - oldsize);
 		// If this is a native class, then we must not initialize and
 		// destroy any of its members. We do, however, initialize the
 		// default instance since it's not a normal instance of the class.

@@ -567,8 +567,7 @@ void FParser::SimpleEvaluate(svalue_t &returnvar, int n)
     case number:
 		if(strchr(Tokens[n], '.'))
 		{
-			returnvar.type = svt_fixed;
-			returnvar.value.f = (fixed_t)(atof(Tokens[n]) * FRACUNIT);
+			returnvar.setDouble(atof(Tokens[n]));
 		}
 		else
 		{

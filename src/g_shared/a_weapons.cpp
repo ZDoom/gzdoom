@@ -41,7 +41,7 @@ IMPLEMENT_CLASS(PClassWeapon)
 PClassWeapon::PClassWeapon()
 {
 	SlotNumber = -1;
-	SlotPriority = FIXED_MAX;
+	SlotPriority = INT_MAX;
 }
 
 void PClassWeapon::DeriveData(PClass *newclass)
@@ -90,16 +90,11 @@ void AWeapon::Serialize (FArchive &arc)
 		<< MoveCombatDist
 		<< Ammo1 << Ammo2 << SisterWeapon << GivenAsMorphWeapon
 		<< bAltFire
-		<< ReloadCounter;		
-		if (SaveVersion >= 3615) {
-			arc << BobStyle << BobSpeed << BobRangeX << BobRangeY;
-		}
-	arc << FOVScale
-		<< Crosshair;
-	if (SaveVersion >= 4203)
-	{
-		arc << MinSelAmmo1 << MinSelAmmo2;
-	}
+		<< ReloadCounter
+		<< BobStyle << BobSpeed << BobRangeX << BobRangeY
+		<< FOVScale
+		<< Crosshair
+		<< MinSelAmmo1 << MinSelAmmo2;
 }
 
 //===========================================================================
@@ -382,12 +377,12 @@ AAmmo *AWeapon::AddAmmo (AActor *other, PClassActor *ammotype, int amount)
 	// extra ammo in baby mode and nightmare mode
 	if (!(this->ItemFlags&IF_IGNORESKILL))
 	{
-		amount = FixedMul(amount, G_SkillProperty(SKILLP_AmmoFactor));
+		amount = int(amount * G_SkillProperty(SKILLP_AmmoFactor));
 	}
 	ammo = static_cast<AAmmo *>(other->FindInventory (ammotype));
 	if (ammo == NULL)
 	{
-		ammo = static_cast<AAmmo *>(Spawn (ammotype, 0, 0, 0, NO_REPLACE));
+		ammo = static_cast<AAmmo *>(Spawn (ammotype));
 		ammo->Amount = MIN (amount, ammo->MaxAmount);
 		ammo->AttachToOwner (other);
 	}
@@ -418,7 +413,7 @@ bool AWeapon::AddExistingAmmo (AAmmo *ammo, int amount)
 		// extra ammo in baby mode and nightmare mode
 		if (!(ItemFlags&IF_IGNORESKILL))
 		{
-			amount = FixedMul(amount, G_SkillProperty(SKILLP_AmmoFactor));
+			amount = int(amount * G_SkillProperty(SKILLP_AmmoFactor));
 		}
 		ammo->Amount += amount;
 		if (ammo->Amount > ammo->MaxAmount && !sv_unlimited_pickup)
@@ -449,7 +444,7 @@ AWeapon *AWeapon::AddWeapon (PClassWeapon *weapontype)
 	weap = static_cast<AWeapon *>(Owner->FindInventory (weapontype));
 	if (weap == NULL)
 	{
-		weap = static_cast<AWeapon *>(Spawn (weapontype, 0, 0, 0, NO_REPLACE));
+		weap = static_cast<AWeapon *>(Spawn (weapontype));
 		weap->AttachToOwner (Owner);
 	}
 	return weap;
@@ -731,10 +726,7 @@ IMPLEMENT_CLASS(AWeaponGiver)
 void AWeaponGiver::Serialize(FArchive &arc)
 {
 	Super::Serialize(arc);
-	if (SaveVersion >= 4246)
-	{
-		arc << DropAmmoFactor;
-	}
+	arc << DropAmmoFactor;
 }
 
 bool AWeaponGiver::TryPickup(AActor *&toucher)
@@ -749,7 +741,7 @@ bool AWeaponGiver::TryPickup(AActor *&toucher)
 		{
 			if (master == NULL)
 			{
-				master = weap = static_cast<AWeapon*>(Spawn(di->Name, 0, 0, 0, NO_REPLACE));
+				master = weap = static_cast<AWeapon*>(Spawn(di->Name));
 				if (weap != NULL)
 				{
 					weap->ItemFlags &= ~IF_ALWAYSPICKUP;	// use the flag of this item only.
@@ -762,8 +754,8 @@ bool AWeaponGiver::TryPickup(AActor *&toucher)
 					// If DropAmmoFactor is non-negative, modify the given ammo amounts.
 					if (DropAmmoFactor > 0)
 					{
-						weap->AmmoGive1 = FixedMul(weap->AmmoGive1, DropAmmoFactor);
-						weap->AmmoGive2 = FixedMul(weap->AmmoGive2, DropAmmoFactor);
+						weap->AmmoGive1 = int(weap->AmmoGive1 * DropAmmoFactor);
+						weap->AmmoGive2 = int(weap->AmmoGive2 * DropAmmoFactor);
 					}
 					weap->BecomeItem();
 				}
@@ -984,7 +976,7 @@ void FWeaponSlot::Sort()
 
 	for (i = 1; i < (int)Weapons.Size(); ++i)
 	{
-		fixed_t pos = Weapons[i].Position;
+		int pos = Weapons[i].Position;
 		PClassWeapon *type = Weapons[i].Type;
 		for (j = i - 1; j >= 0 && Weapons[j].Position > pos; --j)
 		{

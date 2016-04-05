@@ -62,7 +62,7 @@ extern int (*I_WaitForTic) (int);
 // tic will never arrive (unless it's the current one).
 extern void (*I_FreezeTime) (bool frozen);
 
-fixed_t I_GetTimeFrac (uint32 *ms);
+double I_GetTimeFrac (uint32 *ms);
 
 // Return a seed value for the RNG.
 unsigned int I_MakeRNGSeed();

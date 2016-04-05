@@ -13,7 +13,7 @@
 #include "thingdef/thingdef.h"
 */
 
-const fixed_t HAMMER_RANGE = MELEERANGE+MELEERANGE/2;
+const double HAMMER_RANGE = 1.5 * MELEERANGE;
 
 static FRandom pr_hammeratk ("FHammerAtk");
 
@@ -27,10 +27,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_FHammerAttack)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	angle_t angle;
+	DAngle angle;
 	int damage;
-	fixed_t power;
-	int slope;
+	DAngle slope;
 	int i;
 	player_t *player;
 	FTranslatedLineTarget t;
@@ -43,46 +42,32 @@ DEFINE_ACTION_FUNCTION(AActor, A_FHammerAttack)
 	AActor *pmo=player->mo;
 
 	damage = 60+(pr_hammeratk()&63);
-	power = 10*FRACUNIT;
 	hammertime = PClass::FindActor("HammerPuff");
 	for (i = 0; i < 16; i++)
 	{
-		angle = pmo->angle + i*(ANG45/32);
-		slope = P_AimLineAttack (pmo, angle, HAMMER_RANGE, &t, 0, ALF_CHECK3D);
-		if (t.linetarget != NULL)
+		for (int j = 1; j >= -1; j -= 2)
 		{
-			P_LineAttack(pmo, angle, HAMMER_RANGE, slope, damage, NAME_Melee, hammertime, true, &t);
+			angle = pmo->Angles.Yaw + j*i*(45. / 32);
+			slope = P_AimLineAttack(pmo, angle, HAMMER_RANGE, &t, 0., ALF_CHECK3D);
 			if (t.linetarget != NULL)
 			{
-				AdjustPlayerAngle(pmo, &t);
-				if (t.linetarget->flags3 & MF3_ISMONSTER || t.linetarget->player)
+				P_LineAttack(pmo, angle, HAMMER_RANGE, slope, damage, NAME_Melee, hammertime, true, &t);
+				if (t.linetarget != NULL)
 				{
-					P_ThrustMobj(t.linetarget, t.angleFromSource, power);
+					AdjustPlayerAngle(pmo, &t);
+					if (t.linetarget->flags3 & MF3_ISMONSTER || t.linetarget->player)
+					{
+						t.linetarget->Thrust(t.angleFromSource, 10);
+					}
+					pmo->weaponspecial = false; // Don't throw a hammer
+					goto hammerdone;
 				}
-				pmo->weaponspecial = false; // Don't throw a hammer
-				goto hammerdone;
-			}
-		}
-		angle = pmo->angle-i*(ANG45/32);
-		slope = P_AimLineAttack(pmo, angle, HAMMER_RANGE, &t, 0, ALF_CHECK3D);
-		if (t.linetarget != NULL)
-		{
-			P_LineAttack(pmo, angle, HAMMER_RANGE, slope, damage, NAME_Melee, hammertime, true, &t);
-			if (t.linetarget != NULL)
-			{
-				AdjustPlayerAngle(pmo, &t);
-				if (t.linetarget->flags3 & MF3_ISMONSTER || t.linetarget->player)
-				{
-					P_ThrustMobj(t.linetarget, t.angleFromSource, power);
-				}
-				pmo->weaponspecial = false; // Don't throw a hammer
-				goto hammerdone;
 			}
 		}
 	}
 	// didn't find any targets in meleerange, so set to throw out a hammer
-	angle = pmo->angle;
-	slope = P_AimLineAttack (pmo, angle, HAMMER_RANGE, NULL, 0, ALF_CHECK3D);
+	angle = pmo->Angles.Yaw;
+	slope = P_AimLineAttack (pmo, angle, HAMMER_RANGE, NULL, 0., ALF_CHECK3D);
 	if (P_LineAttack (pmo, angle, HAMMER_RANGE, slope, damage, NAME_Melee, hammertime, true) != NULL)
 	{
 		pmo->weaponspecial = false;

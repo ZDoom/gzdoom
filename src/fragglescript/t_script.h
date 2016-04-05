@@ -82,15 +82,17 @@ enum
 //
 //
 //==========================================================================
+typedef int fsfix;
 
 struct svalue_t
 {
 	int type;
+
 	FString string;
 	union
 	{
 		int i;
-		fixed_t f;      // haleyjd: 8-17
+		fsfix f;      // haleyjd: 8-17
 		AActor *mobj;
 	} value;
 
@@ -106,10 +108,28 @@ struct svalue_t
 		string = other.string;
 		value = other.value;
 	}
+
+	void setInt(int ip)
+	{
+		value.i = ip;
+		type = svt_int;
+	}
+
+	void setFixed(fsfix fp)
+	{
+		value.f = fp;
+		type = svt_fixed;
+	}
+
+	void setDouble(double dp)
+	{
+		value.f = fsfix(dp/65536);
+		type = svt_fixed;
+	}
 };
 
 int intvalue(const svalue_t & v);
-fixed_t fixedvalue(const svalue_t & v);
+fsfix fixedvalue(const svalue_t & v);
 double floatvalue(const svalue_t & v);
 const char *stringvalue(const svalue_t & v);
 AActor *actorvalue(const svalue_t &svalue);
@@ -153,7 +173,7 @@ public:
 	union value_t
 	{
 		SDWORD i;
-		fixed_t fixed;          // haleyjd: fixed-point
+		fsfix fixed;          // haleyjd: fixed-point
 		
 		// the following are only used in the global script so we don't need to bother with them
 		// when serializing variables.

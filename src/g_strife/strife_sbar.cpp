@@ -327,7 +327,7 @@ private:
 
 		if (ItemFlash > 0)
 		{
-			ItemFlash -= FRACUNIT/14;
+			ItemFlash -= 1/14.;
 			if (ItemFlash < 0)
 			{
 				ItemFlash = 0;
@@ -379,7 +379,7 @@ private:
 
 	void FlashItem (const PClass *itemtype)
 	{
-		ItemFlash = FRACUNIT*3/4;
+		ItemFlash = 0.75;
 	}
 
 	void DrawMainBar ()
@@ -454,7 +454,7 @@ private:
 				screen->DrawTexture (Images[CursorImage],
 					42 + 35*i + ST_X, 12 + ST_Y,
 					DTA_Bottom320x200, Scaled,
-					DTA_Alpha, FRACUNIT - ItemFlash,
+					DTA_AlphaF, 1. - ItemFlash,
 					TAG_DONE);
 			}
 			if (item->Icon.isValid())
@@ -526,7 +526,7 @@ private:
 						DTA_HUDRules, HUD_Normal,
 						DTA_LeftOffset, cursor->GetWidth(),
 						DTA_TopOffset, cursor->GetHeight(),
-						DTA_Alpha, ItemFlash,
+						DTA_AlphaF, ItemFlash,
 						TAG_DONE);
 				}
 				DrINumberOuter (CPlayer->mo->InvSel->Amount, -51, -10, false, 7);
@@ -576,14 +576,14 @@ private:
 		int bars = (CurrentPop == POP_Status) ? imgINVPOP : imgINVPOP2;
 		int back = (CurrentPop == POP_Status) ? imgINVPBAK : imgINVPBAK2;
 		// Extrapolate the height of the popscreen for smoother movement
-		int height = clamp<int> (PopHeight + FixedMul (r_TicFrac, PopHeightChange), -POP_HEIGHT, 0);
+		int height = clamp<int> (PopHeight + int(r_TicFracF * PopHeightChange), -POP_HEIGHT, 0);
 
 		xscale = CleanXfac;
 		yscale = CleanYfac;
 		left = screen->GetWidth()/2 - 160*CleanXfac;
 		top = bottom + height * yscale;
 
-		screen->DrawTexture (Images[back], left, top, DTA_CleanNoMove, true, DTA_Alpha, FRACUNIT*3/4, TAG_DONE);
+		screen->DrawTexture (Images[back], left, top, DTA_CleanNoMove, true, DTA_AlphaF, 0.75, TAG_DONE);
 		screen->DrawTexture (Images[bars], left, top, DTA_CleanNoMove, true, TAG_DONE);
 
 
@@ -627,7 +627,7 @@ private:
 			if (KeyPopScroll > 0)
 			{
 				// Extrapolate the scroll position for smoother scrolling
-				int scroll = MAX<int> (0,KeyPopScroll - FixedMul (r_TicFrac, 280/KEY_TIME));
+				int scroll = MAX<int> (0,KeyPopScroll - int(r_TicFracF * (280./KEY_TIME)));
 				pos -= 10;
 				leftcol = leftcol - 280 + scroll;
 			}
@@ -847,7 +847,7 @@ private:
 	int CursorImage;
 	int CurrentPop, PendingPop, PopHeight, PopHeightChange;
 	int KeyPopPos, KeyPopScroll;
-	fixed_t ItemFlash;
+	double ItemFlash;
 };
 
 IMPLEMENT_CLASS(DStrifeStatusBar);

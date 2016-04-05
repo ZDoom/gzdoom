@@ -52,7 +52,7 @@
 
 FDecalLib DecalLibrary;
 
-static fixed_t ReadScale (FScanner &sc);
+static double ReadScale (FScanner &sc);
 static TArray<BYTE> DecalTranslations;
 
 // A decal group holds multiple decals and returns one randomly
@@ -148,7 +148,7 @@ public:
 
 	int TimeToStartDecay;
 	int TimeToEndDecay;
-	fixed_t StartTrans;
+	double StartTrans;
 private:
 	DDecalFader () {}
 };
@@ -186,7 +186,7 @@ struct FDecalStretcherAnim : public FDecalAnimator
 
 	int StretchStart;
 	int StretchTime;
-	fixed_t GoalX, GoalY;
+	double GoalX, GoalY;
 };
 
 class DDecalStretcher : public DDecalThinker
@@ -199,10 +199,10 @@ public:
 
 	int TimeToStart;
 	int TimeToStop;
-	fixed_t GoalX;
-	fixed_t StartX;
-	fixed_t GoalY;
-	fixed_t StartY;
+	double GoalX;
+	double StartX;
+	double GoalY;
+	double StartY;
 	bool bStretchX;
 	bool bStretchY;
 	bool bStarted;
@@ -217,7 +217,7 @@ struct FDecalSliderAnim : public FDecalAnimator
 
 	int SlideStart;
 	int SlideTime;
-	fixed_t /*DistX,*/ DistY;
+	double /*DistX,*/ DistY;
 };
 
 class DDecalSlider : public DDecalThinker
@@ -230,10 +230,10 @@ public:
 
 	int TimeToStart;
 	int TimeToStop;
-/*	fixed_t DistX; */
-	fixed_t DistY;
-	fixed_t StartX;
-	fixed_t StartY;
+/*	double DistX; */
+	double DistY;
+	double StartX;
+	double StartY;
 	bool bStarted;
 private:
 	DDecalSlider () {}
@@ -453,10 +453,10 @@ void FDecalLib::ParseDecal (FScanner &sc)
 
 	memset ((void *)&newdecal, 0, sizeof(newdecal));
 	newdecal.PicNum.SetInvalid();
-	newdecal.ScaleX = newdecal.ScaleY = FRACUNIT;
+	newdecal.ScaleX = newdecal.ScaleY = 1.;
 	newdecal.RenderFlags = RF_WALLSPRITE;
 	newdecal.RenderStyle = STYLE_Normal;
-	newdecal.Alpha = 0x8000;
+	newdecal.Alpha = 1.;
 
 	for (;;)
 	{
@@ -492,13 +492,13 @@ void FDecalLib::ParseDecal (FScanner &sc)
 
 		case DECAL_ADD:
 			sc.MustGetFloat ();
-			newdecal.Alpha = (WORD)(32768.f * sc.Float);
+			newdecal.Alpha = sc.Float;
 			newdecal.RenderStyle = STYLE_Add;
 			break;
 
 		case DECAL_TRANSLUCENT:
 			sc.MustGetFloat ();
-			newdecal.Alpha = (WORD)(32768.f * sc.Float);
+			newdecal.Alpha = sc.Float;
 			newdecal.RenderStyle = STYLE_Translucent;
 			break;
 
@@ -681,7 +681,7 @@ void FDecalLib::ParseFader (FScanner &sc)
 void FDecalLib::ParseStretcher (FScanner &sc)
 {
 	FString stretcherName;
-	fixed_t goalX = -1, goalY = -1;
+	double goalX = -1, goalY = -1;
 	int startTime = 0, takeTime = 0;
 
 	sc.MustGetString ();
@@ -732,7 +732,7 @@ void FDecalLib::ParseStretcher (FScanner &sc)
 void FDecalLib::ParseSlider (FScanner &sc)
 {
 	FString sliderName;
-	fixed_t distX = 0, distY = 0;
+	double distX = 0, distY = 0;
 	int startTime = 0, takeTime = 0;
 
 	sc.MustGetString ();
@@ -773,7 +773,7 @@ void FDecalLib::ParseSlider (FScanner &sc)
 		else if (sc.Compare ("DistY"))
 		{
 			sc.MustGetFloat ();
-			distY = (fixed_t)(sc.Float * FRACUNIT);
+			distY = sc.Float;
 		}
 		else
 		{
@@ -1046,7 +1046,7 @@ void FDecalTemplate::ApplyToDecal (DBaseDecal *decal, side_t *wall) const
 	decal->ScaleX = ScaleX;
 	decal->ScaleY = ScaleY;
 	decal->PicNum = PicNum;
-	decal->Alpha = Alpha << 1;
+	decal->Alpha = Alpha;
 	decal->RenderStyle = RenderStyle;
 	decal->RenderFlags = (RenderFlags & ~(DECAL_RandomFlipX|DECAL_RandomFlipY)) |
 		(decal->RenderFlags & (RF_RELMASK|RF_CLIPMASK|RF_INVISIBLE|RF_ONESIDED));
@@ -1184,7 +1184,7 @@ void DDecalFader::Tick ()
 
 		int distanceToEnd = TimeToEndDecay - level.maptime;
 		int fadeDistance = TimeToEndDecay - TimeToStartDecay;
-		TheDecal->Alpha = Scale (StartTrans, distanceToEnd, fadeDistance);
+		TheDecal->Alpha = StartTrans * distanceToEnd / fadeDistance;
 	}
 }
 
@@ -1278,11 +1278,11 @@ void DDecalStretcher::Tick ()
 	int maxDistance = TimeToStop - TimeToStart;
 	if (bStretchX)
 	{
-		TheDecal->ScaleX = StartX + Scale (GoalX - StartX, distance, maxDistance);
+		TheDecal->ScaleX = StartX + (GoalX - StartX) * distance / maxDistance;
 	}
 	if (bStretchY)
 	{
-		TheDecal->ScaleY = StartY + Scale (GoalY - StartY, distance, maxDistance);
+		TheDecal->ScaleY = StartY + (GoalY - StartY) * distance / maxDistance;
 	}
 }
 
@@ -1339,8 +1339,8 @@ void DDecalSlider::Tick ()
 
 	int distance = level.maptime - TimeToStart;
 	int maxDistance = TimeToStop - TimeToStart;
-	/*TheDecal->LeftDistance = StartX + Scale (DistX, distance, maxDistance);*/
-	TheDecal->Z = StartY + Scale (DistY, distance, maxDistance);
+	/*TheDecal->LeftDistance = StartX + DistX * distance / maxDistance);*/
+	TheDecal->Z = StartY + DistY * distance / maxDistance;
 }
 
 DThinker *FDecalCombinerAnim::CreateThinker (DBaseDecal *actor, side_t *wall) const
@@ -1428,8 +1428,8 @@ DThinker *FDecalColorerAnim::CreateThinker (DBaseDecal *actor, side_t *wall) con
 	return Colorer;
 }
 
-static fixed_t ReadScale (FScanner &sc)
+static double ReadScale (FScanner &sc)
 {
 	sc.MustGetFloat ();
-	return fixed_t(clamp (sc.Float * FRACUNIT, 256.0, 256.0*FRACUNIT));
+	return clamp (sc.Float, 1/256.0, 256.0);
 }

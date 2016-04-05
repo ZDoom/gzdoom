@@ -40,22 +40,20 @@
 
 class AHateTarget : public AActor
 {
-	DECLARE_CLASS (AHateTarget, AActor)
+	DECLARE_CLASS(AHateTarget, AActor)
 public:
-	void BeginPlay ();
-	int TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, FName damagetype);
+	void BeginPlay();
+	int TakeSpecialDamage(AActor *inflictor, AActor *source, int damage, FName damagetype);
 };
 
-IMPLEMENT_CLASS (AHateTarget)
+IMPLEMENT_CLASS(AHateTarget)
 
-void AHateTarget::BeginPlay ()
+void AHateTarget::BeginPlay()
 {
-	Super::BeginPlay ();
-	if (angle != 0)
+	Super::BeginPlay();
+	if (SpawnAngle != 0)
 	{	// Each degree translates into 10 units of health
-		health = Scale (angle >> 1, 1800, 0x40000000);
-		// Round to the nearest 10 because of inaccuracy above
-		health = (health + 5) / 10 * 10;
+		health = SpawnAngle * 10;
 	}
 	else
 	{
@@ -64,7 +62,7 @@ void AHateTarget::BeginPlay ()
 	}
 }
 
-int AHateTarget::TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, FName damagetype)
+int AHateTarget::TakeSpecialDamage(AActor *inflictor, AActor *source, int damage, FName damagetype)
 {
 	if (special2 != 0)
 	{

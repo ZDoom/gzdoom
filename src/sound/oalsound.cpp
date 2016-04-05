@@ -1357,7 +1357,7 @@ FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener
         if(dir.DoesNotApproximatelyEqual(FVector3(0.f, 0.f, 0.f)))
         {
             float gain = GetRolloff(rolloff, sqrtf(dist_sqr) * distscale);
-            dir.Resize((gain > 0.00001f) ? 1.f/gain : 100000.f);
+            dir.MakeResize((gain > 0.00001f) ? 1.f/gain : 100000.f);
         }
         if((chanflags&SNDF_AREA) && dist_sqr < AREA_SOUND_RADIUS*AREA_SOUND_RADIUS)
         {
@@ -1596,7 +1596,7 @@ void OpenALSoundRenderer::UpdateSoundParams3D(SoundListener *listener, FISoundCh
         if(dir.DoesNotApproximatelyEqual(FVector3(0.f, 0.f, 0.f)))
         {
             float gain = GetRolloff(&chan->Rolloff, sqrtf(chan->DistanceSqr) * chan->DistanceScale);
-            dir.Resize((gain > 0.00001f) ? 1.f/gain : 100000.f);
+            dir.MakeResize((gain > 0.00001f) ? 1.f/gain : 100000.f);
         }
         if(areasound && chan->DistanceSqr < AREA_SOUND_RADIUS*AREA_SOUND_RADIUS)
         {

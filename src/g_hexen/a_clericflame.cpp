@@ -13,9 +13,8 @@
 #include "thingdef/thingdef.h"
 */
 
-const fixed_t FLAMESPEED	= fixed_t(0.45*FRACUNIT);
-const fixed_t CFLAMERANGE	= 12*64*FRACUNIT;
-const fixed_t FLAMEROTSPEED	= 2*FRACUNIT;
+const double FLAMESPEED	= 0.45;
+const double FLAMEROTSPEED	= 2.;
 
 static FRandom pr_missile ("CFlameMissile");
 
@@ -43,20 +42,18 @@ void ACFlameMissile::BeginPlay ()
 
 void ACFlameMissile::Effect ()
 {
-	fixed_t newz;
-
 	if (!--special1)
 	{
 		special1 = 4;
-		newz = Z()-12*FRACUNIT;
+		double newz = Z() - 12;
 		if (newz < floorz)
 		{
 			newz = floorz;
 		}
-		AActor *mo = Spawn ("CFlameFloor", X(), Y(), newz, ALLOW_REPLACE);
+		AActor *mo = Spawn ("CFlameFloor", PosAtZ(newz), ALLOW_REPLACE);
 		if (mo)
 		{
-			mo->angle = angle;
+			mo->Angles.Yaw = Angles.Yaw;
 		}
 	}
 }
@@ -99,9 +96,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CFlamePuff)
 	PARAM_ACTION_PROLOGUE;
 
 	self->renderflags &= ~RF_INVISIBLE;
-	self->vel.x = 0;
-	self->vel.y = 0;
-	self->vel.z = 0;
+	self->Vel.Zero();
 	S_Sound (self, CHAN_BODY, "ClericFlameExplode", 1, ATTN_NORM);
 	return 0;
 }
@@ -117,8 +112,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_CFlameMissile)
 	PARAM_ACTION_PROLOGUE;
 
 	int i;
-	int an, an90;
-	fixed_t dist;
+	DAngle an;
+	double dist;
 	AActor *mo;
 	
 	self->renderflags &= ~RF_INVISIBLE;
@@ -126,33 +121,28 @@ DEFINE_ACTION_FUNCTION(AActor, A_CFlameMissile)
 	AActor *BlockingMobj = self->BlockingMobj;
 	if (BlockingMobj && BlockingMobj->flags&MF_SHOOTABLE)
 	{ // Hit something, so spawn the flame circle around the thing
-		dist = BlockingMobj->radius+18*FRACUNIT;
+		dist = BlockingMobj->radius + 18;
 		for (i = 0; i < 4; i++)
 		{
-			an = (i*ANG45)>>ANGLETOFINESHIFT;
-			an90 = (i*ANG45+ANG90)>>ANGLETOFINESHIFT;
-			mo = Spawn ("CircleFlame", BlockingMobj->Vec3Offset(
-				FixedMul(dist, finecosine[an]),
-				FixedMul(dist, finesine[an]), 
-				5*FRACUNIT), ALLOW_REPLACE);
+			an = i*45.;
+			mo = Spawn ("CircleFlame", BlockingMobj->Vec3Angle(dist, an, 5), ALLOW_REPLACE);
 			if (mo)
 			{
-				mo->angle = an<<ANGLETOFINESHIFT;
+				mo->Angles.Yaw = an;
 				mo->target = self->target;
-				mo->vel.x = mo->special1 = FixedMul(FLAMESPEED, finecosine[an]);
-				mo->vel.y = mo->special2 = FixedMul(FLAMESPEED, finesine[an]);
+				mo->VelFromAngle(FLAMESPEED);
+				mo->specialf1 = mo->Vel.X;
+				mo->specialf2 = mo->Vel.Y;
 				mo->tics -= pr_missile()&3;
 			}
-			mo = Spawn ("CircleFlame", BlockingMobj->Vec3Offset(
-				-FixedMul(dist, finecosine[an]),
-				-FixedMul(dist, finesine[an]), 
-				5*FRACUNIT), ALLOW_REPLACE);
+			mo = Spawn("CircleFlame", BlockingMobj->Vec3Angle(dist, an, 5), ALLOW_REPLACE);
 			if(mo)
 			{
-				mo->angle = ANG180+(an<<ANGLETOFINESHIFT);
+				mo->Angles.Yaw = an + 180.;
 				mo->target = self->target;
-				mo->vel.x = mo->special1 = FixedMul(-FLAMESPEED, finecosine[an]);
-				mo->vel.y = mo->special2 = FixedMul(-FLAMESPEED, finesine[an]);
+				mo->VelFromAngle(-FLAMESPEED);
+				mo->specialf1 = mo->Vel.X;
+				mo->specialf2 = mo->Vel.Y;
 				mo->tics -= pr_missile()&3;
 			}
 		}
@@ -171,11 +161,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_CFlameRotate)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	int an;
+	DAngle an = self->Angles.Yaw + 90.;
+	self->VelFromAngle(an, FLAMEROTSPEED);
+	self->Vel += DVector2(self->specialf1, self->specialf2);
 
-	an = (self->angle+ANG90)>>ANGLETOFINESHIFT;
-	self->vel.x = self->special1+FixedMul(FLAMEROTSPEED, finecosine[an]);
-	self->vel.y = self->special2+FixedMul(FLAMEROTSPEED, finesine[an]);
-	self->angle += ANG90/15;
+	self->Angles.Yaw += 6.;
 	return 0;
 }

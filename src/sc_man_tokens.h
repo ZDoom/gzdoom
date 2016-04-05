@@ -111,8 +111,6 @@ xx(TK_Global,				"'global'")
 xx(TK_Self,					"'self'")
 xx(TK_Stop,					"'stop'")
 xx(TK_Include,				"'include'")
-xx(TK_Fixed_t,				"'fixed_t'")
-xx(TK_Angle_t,				"'angle_t'")
 
 xx(TK_Is,					"'is'")
 xx(TK_Replaces,				"'replaces'")

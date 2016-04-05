@@ -35,6 +35,7 @@
 #define __V_VIDEO_H__
 
 #include "doomtype.h"
+#include "vectors.h"
 
 #include "doomdef.h"
 #include "dobject.h"
@@ -74,6 +75,7 @@ enum
 	DTA_DestWidth,		// width of area to draw to
 	DTA_DestHeight,		// height of area to draw to
 	DTA_Alpha,			// alpha value for translucency
+	DTA_AlphaF,			// alpha value for translucency
 	DTA_FillColor,		// color to stencil onto the destination (RGB is the color for truecolor drawers, A is the palette index for paletted drawers)
 	DTA_Translation,	// translation table to recolor the source
 	DTA_AlphaChannel,	// bool: the source is an alpha channel; used with DTA_FillColor
@@ -178,7 +180,7 @@ public:
 
 	// Fill a simple polygon with a texture
 	virtual void FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
-		double originx, double originy, double scalex, double scaley, angle_t rotation,
+		double originx, double originy, double scalex, double scaley, DAngle rotation,
 		struct FDynamicColormap *colormap, int lightlevel);
 
 	// Set an area to a specified color
@@ -238,7 +240,7 @@ public:
 		int rclip;
 		double top;
 		double left;
-		fixed_t alpha;
+		float Alpha;
 		uint32 fillcolor;
 		FRemapTable *remap;
 		const BYTE *translation;

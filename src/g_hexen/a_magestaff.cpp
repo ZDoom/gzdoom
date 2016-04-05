@@ -64,7 +64,7 @@ class AMageStaffFX2 : public AActor
 	DECLARE_CLASS(AMageStaffFX2, AActor)
 public:
 	int SpecialMissileHit (AActor *victim);
-	bool SpecialBlastHandling (AActor *source, fixed_t strength);
+	bool SpecialBlastHandling (AActor *source, double strength);
 };
 
 IMPLEMENT_CLASS (AMageStaffFX2)
@@ -81,7 +81,7 @@ int AMageStaffFX2::SpecialMissileHit (AActor *victim)
 	return -1;
 }
 
-bool AMageStaffFX2::SpecialBlastHandling (AActor *source, fixed_t strength)
+bool AMageStaffFX2::SpecialBlastHandling (AActor *source, double strength)
 {
 	// Reflect to originator
 	tracer = target;	
@@ -97,13 +97,12 @@ bool AMageStaffFX2::SpecialBlastHandling (AActor *source, fixed_t strength)
 //
 //============================================================================
 
-void MStaffSpawn (AActor *pmo, angle_t angle, AActor *alttarget)
+void MStaffSpawn (AActor *pmo, DAngle angle, AActor *alttarget)
 {
 	AActor *mo;
 	FTranslatedLineTarget t;
 
-	mo = P_SpawnPlayerMissile (pmo, 0, 0, 8*FRACUNIT,
-		RUNTIME_CLASS(AMageStaffFX2), angle, &t);
+	mo = P_SpawnPlayerMissile (pmo, 0, 0, 8, RUNTIME_CLASS(AMageStaffFX2), angle, &t);
 	if (mo)
 	{
 		mo->target = pmo;
@@ -124,7 +123,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MStaffAttack)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	angle_t angle;
+	DAngle angle;
 	player_t *player;
 	FTranslatedLineTarget t;
 
@@ -139,21 +138,21 @@ DEFINE_ACTION_FUNCTION(AActor, A_MStaffAttack)
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return 0;
 	}
-	angle = self->angle;
+	angle = self->Angles.Yaw;
 	
 	// [RH] Let's try and actually track what the player aimed at
-	P_AimLineAttack (self, angle, PLAYERMISSILERANGE, &t, ANGLE_1*32);
+	P_AimLineAttack (self, angle, PLAYERMISSILERANGE, &t, 32.);
 	if (t.linetarget == NULL)
 	{
 		BlockCheckLine.x = self->X();
 		BlockCheckLine.y = self->Y();
-		BlockCheckLine.dx = -finesine[angle >> ANGLETOFINESHIFT];
-		BlockCheckLine.dy = -finecosine[angle >> ANGLETOFINESHIFT];
+		BlockCheckLine.dx = -angle.Sin();
+		BlockCheckLine.dy = -angle.Cos();
 		t.linetarget = P_BlockmapSearch (self, 10, FrontBlockCheck);
 	}
 	MStaffSpawn (self, angle, t.linetarget);
-	MStaffSpawn (self, angle-ANGLE_1*5, t.linetarget);
-	MStaffSpawn (self, angle+ANGLE_1*5, t.linetarget);
+	MStaffSpawn (self, angle-5, t.linetarget);
+	MStaffSpawn (self, angle+5, t.linetarget);
 	S_Sound (self, CHAN_WEAPON, "MageStaffFire", 1, ATTN_NORM);
 	weapon->MStaffCount = 3;
 	return 0;
@@ -194,7 +193,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MStaffTrack)
 	{
 		self->tracer = P_RoughMonsterSearch (self, 10, true);
 	}
-	P_SeekerMissile (self, ANGLE_1*2, ANGLE_1*10);
+	P_SeekerMissile(self, 2, 10);
 	return 0;
 }
 
@@ -214,7 +213,7 @@ static AActor *FrontBlockCheck (AActor *mo, int index, void *)
 	{
 		if (link->Me != mo)
 		{
-			if (P_PointOnDivlineSide (link->Me->X(), link->Me->Y(), &BlockCheckLine) == 0 &&
+			if (P_PointOnDivlineSide(link->Me->X(), link->Me->Y(), &BlockCheckLine) == 0 &&
 				mo->IsOkayToAttack (link->Me))
 			{
 				return link->Me;
@@ -230,12 +229,11 @@ static AActor *FrontBlockCheck (AActor *mo, int index, void *)
 //
 //============================================================================
 
-void MStaffSpawn2 (AActor *actor, angle_t angle)
+void MStaffSpawn2 (AActor *actor, DAngle angle)
 {
 	AActor *mo;
 
-	mo = P_SpawnMissileAngleZ (actor, actor->Z()+40*FRACUNIT,
-		RUNTIME_CLASS(AMageStaffFX2), angle, 0);
+	mo = P_SpawnMissileAngleZ (actor, actor->Z()+40, RUNTIME_CLASS(AMageStaffFX2), angle, 0.);
 	if (mo)
 	{
 		mo->target = actor;
@@ -257,11 +255,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_MageAttack)
 	{
 		return 0;
 	}
-	angle_t angle;
-	angle = self->angle;
-	MStaffSpawn2 (self, angle);
-	MStaffSpawn2 (self, angle-ANGLE_1*5);
-	MStaffSpawn2 (self, angle+ANGLE_1*5);
-	S_Sound (self, CHAN_WEAPON, "MageStaffFire", 1, ATTN_NORM);
+	DAngle angle = self->Angles.Yaw;
+	MStaffSpawn2(self, angle);
+	MStaffSpawn2(self, angle - 5);
+	MStaffSpawn2(self, angle + 5);
+	S_Sound(self, CHAN_WEAPON, "MageStaffFire", 1, ATTN_NORM);
 	return 0;
 }

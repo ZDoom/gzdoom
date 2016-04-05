@@ -28,7 +28,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SerpentUnHide)
 	PARAM_ACTION_PROLOGUE;
 
 	self->renderflags &= ~RF_INVISIBLE;
-	self->floorclip = 24*FRACUNIT;
+	self->Floorclip = 24;
 	return 0;
 }
 
@@ -43,7 +43,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SerpentHide)
 	PARAM_ACTION_PROLOGUE;
 
 	self->renderflags |= RF_INVISIBLE;
-	self->floorclip = 0;
+	self->Floorclip = 0;
 	return 0;
 }
 
@@ -58,7 +58,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SerpentRaiseHump)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	self->floorclip -= 4*FRACUNIT;
+	self->Floorclip -= 4;
 	return 0;
 }
 
@@ -72,7 +72,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SerpentLowerHump)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	self->floorclip += 4*FRACUNIT;
+	self->Floorclip += 4;
 	return 0;
 }
 
@@ -228,17 +228,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_SerpentSpawnGibs)
 
 	for (int i = countof(GibTypes)-1; i >= 0; --i)
 	{
-		fixedvec2 pos = self->Vec2Offset(
-			((pr_serpentgibs() - 128) << 12),
-			((pr_serpentgibs() - 128) << 12));
+		double x = (pr_serpentgibs() - 128) / 16.;
+		double y = (pr_serpentgibs() - 128) / 16.;
 
-		mo = Spawn (GibTypes[i], pos.x, pos.y,
-			self->floorz+FRACUNIT, ALLOW_REPLACE);
+		mo = Spawn (GibTypes[i], self->Vec2OffsetZ(x, y, self->floorz + 1), ALLOW_REPLACE);
 		if (mo)
 		{
-			mo->vel.x = (pr_serpentgibs()-128)<<6;
-			mo->vel.y = (pr_serpentgibs()-128)<<6;
-			mo->floorclip = 6*FRACUNIT;
+			mo->Vel.X = (pr_serpentgibs() - 128) / 1024.f;
+			mo->Vel.Y = (pr_serpentgibs() - 128) / 1024.f;
+			mo->Floorclip = 6;
 		}
 	}
 	return 0;
@@ -254,7 +252,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FloatGib)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	self->floorclip -= FRACUNIT;
+	self->Floorclip -= 1;
 	return 0;
 }
 
@@ -268,7 +266,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SinkGib)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	self->floorclip += FRACUNIT;
+	self->Floorclip += 1;;
 	return 0;
 }
 

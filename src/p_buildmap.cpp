@@ -45,7 +45,7 @@
 struct sectortype
 {
 	SWORD wallptr, wallnum;
-	SDWORD ceilingz, floorz;
+	SDWORD ceilingZ, floorZ;
 	SWORD ceilingstat, floorstat;
 	SWORD ceilingpicnum, ceilingheinum;
 	SBYTE ceilingshade;
@@ -145,8 +145,8 @@ static bool P_LoadBloodMap (BYTE *data, size_t len, FMapThing **sprites, int *nu
 static void LoadSectors (sectortype *bsectors);
 static void LoadWalls (walltype *walls, int numwalls, sectortype *bsectors);
 static int LoadSprites (spritetype *sprites, Xsprite *xsprites, int numsprites, sectortype *bsectors, FMapThing *mapthings);
-static vertex_t *FindVertex (fixed_t x, fixed_t y);
-static void CreateStartSpot (fixed_t *pos, FMapThing *start);
+static vertex_t *FindVertex (SDWORD x, SDWORD y);
+static void CreateStartSpot (SDWORD *pos, FMapThing *start);
 static void CalcPlane (SlopeWork &slope, secplane_t &plane);
 static void Decrypt (void *to, const void *from, int len, int key);
 
@@ -232,7 +232,7 @@ bool P_LoadBuildMap (BYTE *data, size_t len, FMapThing **sprites, int *numspr)
 
 	numsprites = *(WORD *)(data + 24 + numsectors*sizeof(sectortype) + numwalls*sizeof(walltype));
 	*sprites = new FMapThing[numsprites + 1];
-	CreateStartSpot ((fixed_t *)(data + 4), *sprites);
+	CreateStartSpot ((SDWORD *)(data + 4), *sprites);
 	*numspr = 1 + LoadSprites ((spritetype *)(data + 26 + numsectors*sizeof(sectortype) + numwalls*sizeof(walltype)),
 		NULL, numsprites, (sectortype *)(data + 22), *sprites + 1);
 
@@ -402,23 +402,21 @@ static void LoadSectors (sectortype *bsec)
 		bsec->floorstat = WORD(bsec->floorstat);
 
 		sec->e = &sectors[0].e[i];
-		sec->SetPlaneTexZ(sector_t::floor, -(LittleLong(bsec->floorz) << 8));
-		sec->floorplane.d = -sec->GetPlaneTexZ(sector_t::floor);
-		sec->floorplane.c = FRACUNIT;
-		sec->floorplane.ic = FRACUNIT;
+		double floorheight = -LittleLong(bsec->floorZ) / 256.;
+		sec->SetPlaneTexZ(sector_t::floor, floorheight);
+		sec->floorplane.SetAtHeight(floorheight, sector_t::floor);
 		mysnprintf (tnam, countof(tnam), "BTIL%04d", LittleShort(bsec->floorpicnum));
 		sec->SetTexture(sector_t::floor, TexMan.GetTexture (tnam, FTexture::TEX_Build));
-		sec->SetXScale(sector_t::floor, (bsec->floorstat & 8) ? FRACUNIT*2 : FRACUNIT);
-		sec->SetYScale(sector_t::floor, (bsec->floorstat & 8) ? FRACUNIT*2 : FRACUNIT);
-		sec->SetXOffset(sector_t::floor, (bsec->floorxpanning << FRACBITS) + (32 << FRACBITS));
-		sec->SetYOffset(sector_t::floor, bsec->floorypanning << FRACBITS);
+		sec->SetXScale(sector_t::floor, (bsec->floorstat & 8) ? 2. : 1.);
+		sec->SetYScale(sector_t::floor, (bsec->floorstat & 8) ? 2. : 1.);
+		sec->SetXOffset(sector_t::floor, bsec->floorxpanning + 32.);
+		sec->SetYOffset(sector_t::floor, bsec->floorypanning + 0.);
 		sec->SetPlaneLight(sector_t::floor, SHADE2LIGHT (bsec->floorshade));
 		sec->ChangeFlags(sector_t::floor, 0, PLANEF_ABSLIGHTING);
 
-		sec->SetPlaneTexZ(sector_t::ceiling, -(LittleLong(bsec->ceilingz) << 8));
-		sec->ceilingplane.d = sec->GetPlaneTexZ(sector_t::ceiling);
-		sec->ceilingplane.c = -FRACUNIT;
-		sec->ceilingplane.ic = -FRACUNIT;
+		double ceilingheight = -LittleLong(bsec->ceilingZ) / 256.;
+		sec->SetPlaneTexZ(sector_t::ceiling, ceilingheight);
+		sec->ceilingplane.SetAtHeight(ceilingheight, sector_t::ceiling);
 		mysnprintf (tnam, countof(tnam), "BTIL%04d", LittleShort(bsec->ceilingpicnum));
 		sec->SetTexture(sector_t::ceiling, TexMan.GetTexture (tnam, FTexture::TEX_Build));
 		if (bsec->ceilingstat & 1)
@@ -426,10 +424,10 @@ static void LoadSectors (sectortype *bsec)
 			sky1texture = sky2texture = sec->GetTexture(sector_t::ceiling);
 			sec->SetTexture(sector_t::ceiling, skyflatnum);
 		}
-		sec->SetXScale(sector_t::ceiling, (bsec->ceilingstat & 8) ? FRACUNIT*2 : FRACUNIT);
-		sec->SetYScale(sector_t::ceiling, (bsec->ceilingstat & 8) ? FRACUNIT*2 : FRACUNIT);
-		sec->SetXOffset(sector_t::ceiling, (bsec->ceilingxpanning << FRACBITS) + (32 << FRACBITS));
-		sec->SetYOffset(sector_t::ceiling, bsec->ceilingypanning << FRACBITS);
+		sec->SetXScale(sector_t::ceiling, (bsec->ceilingstat & 8) ? 2. : 1.);
+		sec->SetYScale(sector_t::ceiling, (bsec->ceilingstat & 8) ? 2. : 1.);
+		sec->SetXOffset(sector_t::ceiling, bsec->ceilingxpanning + 32.);
+		sec->SetYOffset(sector_t::ceiling, bsec->ceilingypanning + 0.);
 		sec->SetPlaneLight(sector_t::ceiling, SHADE2LIGHT (bsec->ceilingshade));
 		sec->ChangeFlags(sector_t::ceiling, 0, PLANEF_ABSLIGHTING);
 
@@ -448,30 +446,30 @@ static void LoadSectors (sectortype *bsec)
 
 		if (bsec->floorstat & 4)
 		{
-			sec->SetAngle(sector_t::floor, ANGLE_90);
-			sec->SetXScale(sector_t::floor, -sec->GetXScale(sector_t::floor));
+			sec->SetAngle(sector_t::floor, DAngle(90.));
+			sec->SetXScale(sector_t::floor, -sec->GetXScaleF(sector_t::floor));
 		}
 		if (bsec->floorstat & 16)
 		{
-			sec->SetXScale(sector_t::floor, -sec->GetXScale(sector_t::floor));
+			sec->SetXScale(sector_t::floor, -sec->GetXScaleF(sector_t::floor));
 		}
 		if (bsec->floorstat & 32)
 		{
-			sec->SetYScale(sector_t::floor, -sec->GetYScale(sector_t::floor));
+			sec->SetYScale(sector_t::floor, -sec->GetYScaleF(sector_t::floor));
 		}
 
 		if (bsec->ceilingstat & 4)
 		{
-			sec->SetAngle(sector_t::ceiling, ANGLE_90);
-			sec->SetYScale(sector_t::ceiling, -sec->GetYScale(sector_t::ceiling));
+			sec->SetAngle(sector_t::ceiling, DAngle(90.));
+			sec->SetYScale(sector_t::ceiling, -sec->GetYScaleF(sector_t::ceiling));
 		}
 		if (bsec->ceilingstat & 16)
 		{
-			sec->SetXScale(sector_t::ceiling, -sec->GetXScale(sector_t::ceiling));
+			sec->SetXScale(sector_t::ceiling, -sec->GetXScaleF(sector_t::ceiling));
 		}
 		if (bsec->ceilingstat & 32)
 		{
-			sec->SetYScale(sector_t::ceiling, -sec->GetYScale(sector_t::ceiling));
+			sec->SetYScale(sector_t::ceiling, -sec->GetYScaleF(sector_t::ceiling));
 		}
 	}
 }
@@ -527,8 +525,8 @@ static void LoadWalls (walltype *walls, int numwalls, sectortype *bsec)
 		walls[i].nextwall = LittleShort(walls[i].nextwall);
 		walls[i].nextsector = LittleShort(walls[i].nextsector);
 
-		sides[i].SetTextureXOffset(walls[i].xpanning << FRACBITS);
-		sides[i].SetTextureYOffset(walls[i].ypanning << FRACBITS);
+		sides[i].SetTextureXOffset((double)walls[i].xpanning);
+		sides[i].SetTextureYOffset((double)walls[i].ypanning);
 
 		sides[i].SetTexture(side_t::top, pic);
 		sides[i].SetTexture(side_t::bottom, pic);
@@ -546,8 +544,8 @@ static void LoadWalls (walltype *walls, int numwalls, sectortype *bsec)
 		}
 
 		sides[i].TexelLength = walls[i].xrepeat * 8;
-		sides[i].SetTextureYScale(walls[i].yrepeat << (FRACBITS - 3));
-		sides[i].SetTextureXScale(FRACUNIT);
+		sides[i].SetTextureYScale(walls[i].yrepeat / 8.);
+		sides[i].SetTextureXScale(1.);
 		sides[i].SetLight(SHADE2LIGHT(walls[i].shade));
 		sides[i].Flags = WALLF_ABSLIGHTING;
 		sides[i].RightSide = walls[i].point2;
@@ -595,11 +593,11 @@ static void LoadWalls (walltype *walls, int numwalls, sectortype *bsec)
 		{
 			if (walls[i].cstat & 512)
 			{
-				lines[j].Alpha = FRACUNIT/3;
+				lines[j].Alpha = TRANSLUC33;
 			}
 			else
 			{
-				lines[j].Alpha = FRACUNIT*2/3;
+				lines[j].Alpha = TRANSLUC66;
 			}
 		}
 		if (walls[i].cstat & 1)
@@ -639,7 +637,7 @@ static void LoadWalls (walltype *walls, int numwalls, sectortype *bsec)
 		slope.wal2 = &walls[slope.wal->point2];
 		slope.dx = slope.wal2->x - slope.wal->x;
 		slope.dy = slope.wal2->y - slope.wal->y;
-		slope.i = long (sqrt ((double)(slope.dx*slope.dx+slope.dy*slope.dy))) << 5;
+		slope.i = long (g_sqrt ((double)(slope.dx*slope.dx+slope.dy*slope.dy))) << 5;
 		if (slope.i == 0)
 		{
 			continue;
@@ -647,13 +645,13 @@ static void LoadWalls (walltype *walls, int numwalls, sectortype *bsec)
 		if ((bsec->floorstat & 2) && (bsec->floorheinum != 0))
 		{ // floor is sloped
 			slope.heinum = -LittleShort(bsec->floorheinum);
-			slope.z[0] = slope.z[1] = slope.z[2] = -bsec->floorz;
+			slope.z[0] = slope.z[1] = slope.z[2] = -bsec->floorZ;
 			CalcPlane (slope, sectors[i].floorplane);
 		}
 		if ((bsec->ceilingstat & 2) && (bsec->ceilingheinum != 0))
 		{ // ceiling is sloped
 			slope.heinum = -LittleShort(bsec->ceilingheinum);
-			slope.z[0] = slope.z[1] = slope.z[2] = -bsec->ceilingz;
+			slope.z[0] = slope.z[1] = slope.z[2] = -bsec->ceilingZ;
 			CalcPlane (slope, sectors[i].ceilingplane);
 		}
 		int linenum = int(intptr_t(sides[bsec->wallptr].linedef));
@@ -697,17 +695,17 @@ static int LoadSprites (spritetype *sprites, Xsprite *xsprites, int numsprites,
 	for (int i = 0; i < numsprites; ++i)
 	{
 		mapthings[count].thingid = 0;
-		mapthings[count].x = (sprites[i].x << 12);
-		mapthings[count].y = -(sprites[i].y << 12);
-		mapthings[count].z = (bsectors[sprites[i].sectnum].floorz - sprites[i].z) << 8;
+		mapthings[count].pos.X = sprites[i].x / 16.;
+		mapthings[count].pos.Y = -sprites[i].y / 16.;
+		mapthings[count].pos.Z = (bsectors[sprites[i].sectnum].floorZ - sprites[i].z) / 256.;
 		mapthings[count].angle = (((2048-sprites[i].ang) & 2047) * 360) >> 11;
 		mapthings[count].ClassFilter = 0xffff;
 		mapthings[count].SkillFilter = 0xffff;
 		mapthings[count].flags = MTF_SINGLE|MTF_COOPERATIVE|MTF_DEATHMATCH;
 		mapthings[count].special = 0;
-		mapthings[count].gravity = FRACUNIT;
+		mapthings[count].Gravity = 1.;
 		mapthings[count].RenderStyle = STYLE_Count;
-		mapthings[count].alpha = -1;
+		mapthings[count].Alpha = -1;
 		mapthings[count].health = -1;
 		mapthings[count].FloatbobPhase = -1;
 
@@ -755,22 +753,21 @@ static int LoadSprites (spritetype *sprites, Xsprite *xsprites, int numsprites,
 //
 //==========================================================================
 
-vertex_t *FindVertex (fixed_t x, fixed_t y)
+vertex_t *FindVertex (SDWORD xx, SDWORD yy)
 {
 	int i;
 
-	x <<= 12;
-	y = -(y << 12);
+	double x = xx / 64.;
+	double y = -yy / 64.;
 
 	for (i = 0; i < numvertexes; ++i)
 	{
-		if (vertexes[i].x == x && vertexes[i].y == y)
+		if (vertexes[i].fX() == x && vertexes[i].fY() == y)
 		{
 			return &vertexes[i];
 		}
 	}
-	vertexes[i].x = x;
-	vertexes[i].y = y;
+	vertexes[i].set(x, y);
 	numvertexes++;
 	return &vertexes[i];
 }
@@ -781,13 +778,13 @@ vertex_t *FindVertex (fixed_t x, fixed_t y)
 //
 //==========================================================================
 
-static void CreateStartSpot (fixed_t *pos, FMapThing *start)
+static void CreateStartSpot (SDWORD *pos, FMapThing *start)
 {
 	short angle = LittleShort(*(WORD *)(&pos[3]));
 	FMapThing mt = { 0, };
 
-	mt.x = LittleLong(pos[0])<<12;
-	mt.y = (-LittleLong(pos[1]))<<12;
+	mt.pos.X = LittleLong(pos[0]) / 16.;
+	mt.pos.Y = -LittleLong(pos[1]) / 16.;
 	mt.angle = short(Scale((2048-angle)&2047, 360, 2048));
 	mt.info = DoomEdMap.CheckKey(1);
 	mt.EdNum = 1;
@@ -819,25 +816,20 @@ static void CalcPlane (SlopeWork &slope, secplane_t &plane)
 		slope.x[2] = slope.x[0];
 		slope.y[2] = slope.y[0] + 64;
 	}
-	j = DMulScale3 (slope.dx, slope.y[2]-slope.wal->y,
-		-slope.dy, slope.x[2]-slope.wal->x);
+	j = DMulScale3 (slope.dx, slope.y[2]-slope.wal->y, -slope.dy, slope.x[2]-slope.wal->x);
 	slope.z[2] += Scale (slope.heinum, j, slope.i);
 
 	pt[0] = DVector3(slope.dx, -slope.dy, 0);
 	pt[1] = DVector3(slope.x[2] - slope.x[0], slope.y[0] - slope.y[2], (slope.z[2] - slope.z[0]) / 16);
 	pt[2] = (pt[0] ^ pt[1]).Unit();
 
-	if ((pt[2][2] < 0 && plane.c > 0) || (pt[2][2] > 0 && plane.c < 0))
+	if ((pt[2][2] < 0 && plane.fC() > 0) || (pt[2][2] > 0 && plane.fC() < 0))
 	{
 		pt[2] = -pt[2];
 	}
 
-	plane.a = FLOAT2FIXED(pt[2][0]);
-	plane.b = FLOAT2FIXED(pt[2][1]);
-	plane.c = FLOAT2FIXED(pt[2][2]);
-	plane.ic = DivScale32(1, plane.c);
-	plane.d = -TMulScale8
-		(plane.a, slope.x[0]<<4, plane.b, (-slope.y[0])<<4, plane.c, slope.z[0]);
+	double dist = -pt[2][0] * slope.x[0] * 16 + pt[2][1] * slope.y[0] * 16 - pt[2][2] * slope.z[0];
+	plane.set(pt[2][0], pt[2][1], pt[2][2], dist);
 }
 
 //==========================================================================
@@ -883,14 +875,14 @@ void ACustomSprite::BeginPlay ()
 	mysnprintf (name, countof(name), "BTIL%04d", args[0] & 0xffff);
 	picnum = TexMan.GetTexture (name, FTexture::TEX_Build);
 
-	scaleX = args[2] * (FRACUNIT/64);
-	scaleY = args[3] * (FRACUNIT/64);
+	Scale.X = args[2] / 64.;
+	Scale.Y = args[3] / 64.;
 
 	int cstat = args[4];
 	if (cstat & 2)
 	{
 		RenderStyle = STYLE_Translucent;
-		alpha = (cstat & 512) ? TRANSLUC66 : TRANSLUC33;
+		Alpha = (cstat & 512) ? 0.6666 : 0.3333;
 	}
 	if (cstat & 4)
 		renderflags |= RF_XFLIP;

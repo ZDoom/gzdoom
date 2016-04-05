@@ -17,9 +17,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_CMaceAttack)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	angle_t angle;
+	DAngle angle;
 	int damage;
-	int slope;
+	DAngle slope;
 	int i;
 	player_t *player;
 	FTranslatedLineTarget t;
@@ -36,7 +36,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CMaceAttack)
 	{
 		for (int j = 1; j >= -1; j -= 2)
 		{
-			angle = player->mo->angle + j*i*(ANG45 / 16);
+			angle = player->mo->Angles.Yaw + j*i*(45. / 16);
 			slope = P_AimLineAttack(player->mo, angle, 2 * MELEERANGE, &t);
 			if (t.linetarget)
 			{
@@ -44,7 +44,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CMaceAttack)
 				if (t.linetarget != NULL)
 				{
 					AdjustPlayerAngle(player->mo, &t);
-					goto macedone;
+					return 0;
 				}
 			}
 		}
@@ -52,9 +52,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_CMaceAttack)
 	// didn't find any creatures, so try to strike any walls
 	player->mo->weaponspecial = 0;
 
-	angle = player->mo->angle;
+	angle = player->mo->Angles.Yaw;
 	slope = P_AimLineAttack (player->mo, angle, MELEERANGE);
 	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage, NAME_Melee, hammertime);
-macedone:
 	return 0;		
 }

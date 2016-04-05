@@ -133,11 +133,11 @@ const char* GameInfoBorders[] =
 		gameinfo.key = static_cast<float> (sc.Float); \
 	}
 
-#define GAMEINFOKEY_FIXED(key, variable) \
+#define GAMEINFOKEY_DOUBLE(key, variable) \
 	else if(nextKey.CompareNoCase(variable) == 0) \
 	{ \
 		sc.MustGetFloat(); \
-		gameinfo.key = static_cast<int> (sc.Float*FRACUNIT); \
+		gameinfo.key = sc.Float; \
 	}
 
 #define GAMEINFOKEY_COLOR(key, variable) \
@@ -272,7 +272,7 @@ void FMapInfoParser::ParseGameInfo()
 			if (sc.CheckToken(','))
 			{
 				sc.MustGetToken(TK_FloatConst);
-				gameinfo.Armor2Percent = FLOAT2FIXED(sc.Float);
+				gameinfo.Armor2Percent = sc.Float;
 				sc.MustGetToken(',');
 				sc.MustGetToken(TK_StringConst);
 				gameinfo.ArmorIcon2 = sc.String;
@@ -310,8 +310,8 @@ void FMapInfoParser::ParseGameInfo()
 		GAMEINFOKEY_STRING(PauseSign, "pausesign")
 		GAMEINFOKEY_STRING(quitSound, "quitSound")
 		GAMEINFOKEY_STRING(BorderFlat, "borderFlat")
-		GAMEINFOKEY_FIXED(telefogheight, "telefogheight")
-		GAMEINFOKEY_FIXED(gibfactor, "gibfactor")
+		GAMEINFOKEY_DOUBLE(telefogheight, "telefogheight")
+		GAMEINFOKEY_DOUBLE(gibfactor, "gibfactor")
 		GAMEINFOKEY_INT(defKickback, "defKickback")
 		GAMEINFOKEY_STRING(SkyFlatName, "SkyFlatName")
 		GAMEINFOKEY_STRING(translator, "translator")

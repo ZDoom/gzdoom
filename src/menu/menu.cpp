@@ -78,7 +78,7 @@ FButtonStatus	MenuButtons[NUM_MKEYS];
 int				MenuButtonTickers[NUM_MKEYS];
 bool			MenuButtonOrigin[NUM_MKEYS];
 int				BackbuttonTime;
-fixed_t			BackbuttonAlpha;
+float			BackbuttonAlpha;
 static bool		MenuEnabled = true;
 
 
@@ -274,7 +274,7 @@ void DMenu::Drawer ()
 		}
 		else
 		{
-			screen->DrawTexture(tex, x, y, DTA_CleanNoMove, true, DTA_Alpha, BackbuttonAlpha, TAG_DONE);
+			screen->DrawTexture(tex, x, y, DTA_CleanNoMove, true, DTA_AlphaF, BackbuttonAlpha, TAG_DONE);
 		}
 	}
 }
@@ -680,12 +680,13 @@ void M_Ticker (void)
 		}
 		if (BackbuttonTime > 0)
 		{
-			if (BackbuttonAlpha < FRACUNIT) BackbuttonAlpha += FRACUNIT/10;
+			if (BackbuttonAlpha < 1.f) BackbuttonAlpha += .1f;
+			if (BackbuttonAlpha > 1.f) BackbuttonAlpha = 1.f;
 			BackbuttonTime--;
 		}
 		else
 		{
-			if (BackbuttonAlpha > 0) BackbuttonAlpha -= FRACUNIT/10;
+			if (BackbuttonAlpha > 0) BackbuttonAlpha -= .1f;
 			if (BackbuttonAlpha < 0) BackbuttonAlpha = 0;
 		}
 	}

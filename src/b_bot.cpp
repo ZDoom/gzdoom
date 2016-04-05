@@ -33,7 +33,7 @@ DBot::DBot ()
 void DBot::Clear ()
 {
 	player = NULL;
-	angle = 0;
+	Angle = 0.;
 	dest = NULL;
 	prev = NULL;
 	enemy = NULL;
@@ -52,27 +52,15 @@ void DBot::Clear ()
 	sleft = false;
 	allround = false;
 	increase = false;
-	oldx = 0;
-	oldy = 0;
+	old = { 0, 0 };
 }
 
 void DBot::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
 
-	if (SaveVersion < 4515)
-	{
-		angle_t savedyaw;
-		int savedpitch;
-		arc << savedyaw
-			<< savedpitch;
-	}
-	else
-	{
-		arc << player;
-	}
-
-	arc << angle
+	arc << player
+		<< Angle
 		<< dest
 		<< prev
 		<< enemy
@@ -91,8 +79,7 @@ void DBot::Serialize (FArchive &arc)
 		<< sleft
 		<< allround
 		<< increase
-		<< oldx
-		<< oldy;
+		<< old;
 }
 
 void DBot::Tick ()
@@ -269,7 +256,7 @@ void InitBotStuff()
 			AWeapon *w = (AWeapon*)GetDefaultByType(cls);
 			if (w != NULL)
 			{
-				w->MoveCombatDist = botinits[i].movecombatdist;
+				w->MoveCombatDist = botinits[i].movecombatdist/65536.;
 				w->WeaponFlags |= botinits[i].weaponflags;
 				w->ProjectileType = PClass::FindActor(botinits[i].projectile);
 			}

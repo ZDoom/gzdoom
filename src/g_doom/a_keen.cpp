@@ -35,7 +35,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_KeenDie)
 		}
 	}
 
-	EV_DoDoor (DDoor::doorOpen, NULL, NULL, doortag, 2*FRACUNIT, 0, 0, 0);
+	EV_DoDoor (DDoor::doorOpen, NULL, NULL, doortag, 2., 0, 0, 0);
 	return 0;
 }
 

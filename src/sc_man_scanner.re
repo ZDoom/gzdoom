@@ -192,8 +192,6 @@ std2:
 		
 		/* other DECORATE top level keywords */
 		'#include'					{ RET(TK_Include); }
-		'fixed_t'					{ RET(TK_Fixed_t); }
-		'angle_t'					{ RET(TK_Angle_t); }
 
 		L (L|D)*					{ RET(TK_Identifier); }
 

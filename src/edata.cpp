@@ -92,7 +92,7 @@ struct EDMapthing
 	int recordnum;
 	int tid;
 	int type;
-	fixed_t height;
+	double height;
 	int args[5];
 	WORD skillfilter;
 	DWORD flags;
@@ -105,7 +105,7 @@ struct EDLinedef
 	int tag;
 	int id;
 	int args[5];
-	fixed_t alpha;
+	double alpha;
 	DWORD flags;
 	DWORD activation;
 };
@@ -140,10 +140,10 @@ struct EDSector
 	bool colorSet;
 
 	// colormaptop//bottom cannot be used because ZDoom has no corresponding properties.
-
-	FTransform planexform[2];
+	double xoffs[2], yoffs[2];
+	DAngle angle[2];
 	DWORD portalflags[2];
-	fixed_t overlayalpha[2];
+	double Overlayalpha[2];
 };
 
 static FString EDMap;
@@ -158,7 +158,7 @@ static void parseLinedef(FScanner &sc)
 	bool argsset = false;
 
 	memset(&ld, 0, sizeof(ld));
-	ld.alpha = FRACUNIT;
+	ld.alpha = 1.;
 
 	sc.MustGetStringName("{");
 	while (!sc.CheckString("}"))
@@ -216,7 +216,7 @@ static void parseLinedef(FScanner &sc)
 		{
 			sc.CheckString("=");
 			sc.MustGetFloat();
-			ld.alpha = FLOAT2FIXED(sc.Float);
+			ld.alpha = sc.Float;
 		}
 		else if (sc.Compare("extflags"))
 		{
@@ -275,7 +275,7 @@ static void parseSector(FScanner &sc)
 	EDSector sec;
 
 	memset(&sec, 0, sizeof(sec));
-	sec.overlayalpha[sector_t::floor] = sec.overlayalpha[sector_t::ceiling] = FRACUNIT;
+	sec.Overlayalpha[sector_t::floor] = sec.Overlayalpha[sector_t::ceiling] = 1.;
 	sec.floorterrain = sec.ceilingterrain = -1;
 
 	sc.MustGetStringName("{");
@@ -398,19 +398,19 @@ static void parseSector(FScanner &sc)
 		{
 			sc.CheckString("=");
 			sc.MustGetFloat();
-			sec.planexform[sector_t::floor].angle = FLOAT2ANGLE(sc.Float);
+			sec.angle[sector_t::floor] = sc.Float;
 		}
 		else if (sc.Compare("flooroffsetx"))
 		{
 			sc.CheckString("=");
 			sc.MustGetFloat();
-			sec.planexform[sector_t::floor].xoffs = FLOAT2FIXED(sc.Float);
+			sec.xoffs[sector_t::floor] = sc.Float;
 		}
 		else if (sc.Compare("flooroffsety"))
 		{
 			sc.CheckString("=");
 			sc.MustGetFloat();
-			sec.planexform[sector_t::floor].yoffs = FLOAT2FIXED(sc.Float);
+			sec.yoffs[sector_t::floor] = sc.Float;
 		}
 		else if (sc.Compare("ceilingterrain"))
 		{
@@ -422,19 +422,19 @@ static void parseSector(FScanner &sc)
 		{
 			sc.CheckString("=");
 			sc.MustGetFloat();
-			sec.planexform[sector_t::ceiling].angle = FLOAT2ANGLE(sc.Float);
+			sec.angle[sector_t::ceiling] = sc.Float;
 		}
 		else if (sc.Compare("ceilingoffsetx"))
 		{
 			sc.CheckString("=");
 			sc.MustGetFloat();
-			sec.planexform[sector_t::ceiling].xoffs = FLOAT2FIXED(sc.Float);
+			sec.xoffs[sector_t::ceiling] = sc.Float;
 		}
 		else if (sc.Compare("ceilingoffsety"))
 		{
 			sc.CheckString("=");
 			sc.MustGetFloat();
-			sec.planexform[sector_t::ceiling].yoffs = FLOAT2FIXED(sc.Float);
+			sec.yoffs[sector_t::ceiling] = sc.Float;
 		}
 		else if (sc.Compare("colormaptop") || sc.Compare("colormapbottom"))
 		{
@@ -464,14 +464,14 @@ static void parseSector(FScanner &sc)
 				sc.MustGetNumber();
 				if (sc.CheckString("%")) sc.Float = sc.Number / 100.f;
 				else sc.Float = sc.Number / 255.f;
-				sec.overlayalpha[sector_t::floor] = FLOAT2FIXED(sc.Float);
+				sec.Overlayalpha[sector_t::floor] = sc.Float;
 			}
 			else if (sc.Compare("ceiling"))
 			{
 				sc.MustGetFloat();
 				if (sc.CheckString("%")) sc.Float = sc.Number / 100.f;
 				else sc.Float = sc.Number / 255.f;
-				sec.overlayalpha[sector_t::floor] = FLOAT2FIXED(sc.Float);
+				sec.Overlayalpha[sector_t::floor] = sc.Float;
 			}
 		}
 		else if (sc.Compare("portalflags"))
@@ -585,7 +585,7 @@ static void parseMapthing(FScanner &sc)
 		{
 			sc.CheckString("=");
 			sc.MustGetFloat();	// no idea if Eternity allows fractional numbers. Better be safe and do it anyway.
-			mt.height = FLOAT2FIXED(sc.Float);
+			mt.height = sc.Float;
 		}
 		else if (sc.Compare("options"))
 		{
@@ -682,7 +682,7 @@ void ProcessEDMapthing(FMapThing *mt, int recordnum)
 	mt->thingid = emt->tid;
 	mt->EdNum = emt->type;
 	mt->info = DoomEdMap.CheckKey(mt->EdNum);
-	mt->z = emt->height;
+	mt->pos.Z = emt->height;
 	memcpy(mt->args, emt->args, sizeof(mt->args));
 	mt->SkillFilter = emt->skillfilter;
 	mt->flags = emt->flags;
@@ -703,7 +703,7 @@ void ProcessEDLinedef(line_t *ld, int recordnum)
 	ld->special = eld->special;
 	ld->activation = eld->activation;
 	ld->flags = (ld->flags&~fmask) | eld->flags;
-	ld->Alpha = eld->alpha;
+	ld->setAlpha(eld->alpha);
 	memcpy(ld->args, eld->args, sizeof(ld->args));
 	tagManager.AddLineID(int(ld - lines), eld->tag);
 }
@@ -742,10 +742,10 @@ void ProcessEDSector(sector_t *sec, int recordnum)
 	const DWORD pflagmask = PLANEF_DISABLED | PLANEF_NORENDER | PLANEF_NOPASS | PLANEF_BLOCKSOUND | PLANEF_ADDITIVE;
 	for (int i = 0; i < 2; i++)
 	{
-		sec->planes[i].xform.xoffs = esec->planexform[i].xoffs;
-		sec->planes[i].xform.yoffs = esec->planexform[i].yoffs;
-		sec->planes[i].xform.angle = esec->planexform[i].angle;
-		sec->planes[i].alpha = esec->overlayalpha[i];
+		sec->SetXOffset(i, esec->xoffs[i]);
+		sec->SetYOffset(i, esec->yoffs[i]);
+		sec->SetAngle(i, esec->angle[i]);
+		sec->SetAlpha(i, esec->Overlayalpha[i]);
 		sec->planes[i].Flags = (sec->planes[i].Flags & ~pflagmask) | esec->portalflags[i];
 	}
 }

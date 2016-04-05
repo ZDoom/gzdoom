@@ -30,26 +30,26 @@ protected:
 	enum EResult { ok, crushed, pastdest };
 	TObjPtr<DInterpolation> interpolation;
 private:
-	bool MoveAttached(int crush, fixed_t move, int floorOrCeiling, bool resetfailed);
-	EResult MovePlane (fixed_t speed, fixed_t dest, int crush, int floorOrCeiling, int direction, bool hexencrush);
+	bool MoveAttached(int crush, double move, int floorOrCeiling, bool resetfailed);
+	EResult MovePlane (double speed, double dest, int crush, int floorOrCeiling, int direction, bool hexencrush);
 protected:
 	DMover ();
 	void Serialize (FArchive &arc);
 	void Destroy();
 	void StopInterpolation(bool force = false);
-	inline EResult MoveFloor (fixed_t speed, fixed_t dest, int crush, int direction, bool hexencrush)
+	inline EResult MoveFloor (double speed, double dest, int crush, int direction, bool hexencrush)
 	{
 		return MovePlane (speed, dest, crush, 0, direction, hexencrush);
 	}
-	inline EResult MoveFloor (fixed_t speed, fixed_t dest, int direction)
+	inline EResult MoveFloor (double speed, double dest, int direction)
 	{
 		return MovePlane (speed, dest, -1, 0, direction, false);
 	}
-	inline EResult MoveCeiling (fixed_t speed, fixed_t dest, int crush, int direction, bool hexencrush)
+	inline EResult MoveCeiling (double speed, double dest, int crush, int direction, bool hexencrush)
 	{
 		return MovePlane (speed, dest, crush, 1, direction, hexencrush);
 	}
-	inline EResult MoveCeiling (fixed_t speed, fixed_t dest, int direction)
+	inline EResult MoveCeiling (double speed, double dest, int direction)
 	{
 		return MovePlane (speed, dest, -1, 1, direction, false);
 	}

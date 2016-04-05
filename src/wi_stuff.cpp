@@ -722,7 +722,7 @@ static int WI_DrawCharPatch (FFont *font, int charcode, int x, int y, EColorRang
 	int width;
 	screen->DrawTexture(font->GetChar(charcode, &width), x, y,
 		nomove ? DTA_CleanNoMove : DTA_Clean, true,
-		DTA_ShadowAlpha, (gameinfo.gametype & GAME_DoomChex) ? 0 : FRACUNIT/2,
+		DTA_ShadowAlpha, (gameinfo.gametype & GAME_DoomChex) ? 0 : OPAQUE/2,
 		DTA_Translation, font->GetColorTranslation(translation),
 		TAG_DONE);
 	return x - width;
@@ -759,7 +759,7 @@ int CheckRealHeight(FTexture *tex)
 		}
 	}
 	// Scale maxy before returning it
-	maxy = (maxy << 17) / tex->yScale;
+	maxy = int((maxy *2) / tex->Scale.Y);
 	maxy = (maxy >> 1) + (maxy & 1);
 	return maxy;
 }

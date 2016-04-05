@@ -210,26 +210,6 @@ begin:
 			reg.f[a+2] = v[2];
 		}
 		NEXTOP;
-	OP(LX):
-		ASSERTF(a); ASSERTA(B); ASSERTKD(C);
-		GETADDR(PB,KC,X_READ_NIL);
-		reg.f[a] = *(VM_SWORD *)ptr / 65536.0;
-		NEXTOP;
-	OP(LX_R):
-		ASSERTF(a); ASSERTA(B); ASSERTD(C);
-		GETADDR(PB,RC,X_READ_NIL);
-		reg.f[a] = *(VM_SWORD *)ptr / 65536.0;
-		NEXTOP;
-	OP(LANG):
-		ASSERTF(a); ASSERTA(B); ASSERTKD(C);
-		GETADDR(PB,KC,X_READ_NIL);
-		reg.f[a] = (*(VM_UWORD *)ptr >> 1) * (180.0 / 0x40000000);	// BAM -> deg
-		NEXTOP;
-	OP(LANG_R):
-		ASSERTF(a); ASSERTA(B); ASSERTD(C);
-		GETADDR(PB,RC,X_READ_NIL);
-		reg.f[a] = (*(VM_UWORD *)ptr >> 1) * (180.0 / 0x40000000);
-		NEXTOP;
 	OP(LBIT):
 		ASSERTD(a); ASSERTA(B);
 		GETADDR(PB,0,X_READ_NIL);
@@ -325,26 +305,6 @@ begin:
 			v[1] = (float)reg.f[B+1];
 			v[2] = (float)reg.f[B+2];
 		}
-		NEXTOP;
-	OP(SX):
-		ASSERTA(a); ASSERTF(B); ASSERTKD(C);
-		GETADDR(PA,KC,X_WRITE_NIL);
-		*(VM_SWORD *)ptr = (VM_SWORD)(reg.f[B] * 65536.0);
-		NEXTOP;
-	OP(SX_R):
-		ASSERTA(a); ASSERTF(B); ASSERTD(C);
-		GETADDR(PA,RC,X_WRITE_NIL);
-		*(VM_SWORD *)ptr = (VM_SWORD)(reg.f[B] * 65536.0);
-		NEXTOP;
-	OP(SANG):
-		ASSERTA(a); ASSERTF(B); ASSERTKD(C);
-		GETADDR(PA,KC,X_WRITE_NIL);
-		*(VM_UWORD *)ptr = (VM_UWORD)(xs_CRoundToInt((reg.f[B]) * (0x40000000/90.)));	// deg -> BAM
-		NEXTOP;
-	OP(SANG_R):
-		ASSERTA(a); ASSERTF(B); ASSERTD(C);
-		GETADDR(PA,RC,X_WRITE_NIL);
-		*(VM_UWORD *)ptr = (VM_UWORD)(xs_CRoundToInt((reg.f[B]) * (0x40000000/90.)));
 		NEXTOP;
 	OP(SBIT):
 		ASSERTA(a); ASSERTD(B);
@@ -1269,7 +1229,7 @@ begin:
 
 	OP(LENV):
 		ASSERTF(a); ASSERTF(B+2);
-		reg.f[a] = sqrt(reg.f[B] * reg.f[B] + reg.f[B+1] * reg.f[B+1] + reg.f[B+2] * reg.f[B+2]);
+		reg.f[a] = g_sqrt(reg.f[B] * reg.f[B] + reg.f[B+1] * reg.f[B+1] + reg.f[B+2] * reg.f[B+2]);
 		NEXTOP;
 
 	OP(EQV_R):
@@ -1392,30 +1352,30 @@ static double DoFLOP(int flop, double v)
 	{
 	case FLOP_ABS:		return fabs(v);
 	case FLOP_NEG:		return -v;
-	case FLOP_EXP:		return exp(v);
-	case FLOP_LOG:		return log(v);
-	case FLOP_LOG10:	return log10(v);
-	case FLOP_SQRT:		return sqrt(v);
+	case FLOP_EXP:		return g_exp(v);
+	case FLOP_LOG:		return g_log(v);
+	case FLOP_LOG10:	return g_log10(v);
+	case FLOP_SQRT:		return g_sqrt(v);
 	case FLOP_CEIL:		return ceil(v);
 	case FLOP_FLOOR:	return floor(v);
 
-	case FLOP_ACOS:		return acos(v);
-	case FLOP_ASIN:		return asin(v);
-	case FLOP_ATAN:		return atan(v);
-	case FLOP_COS:		return cos(v);
-	case FLOP_SIN:		return sin(v);
-	case FLOP_TAN:		return tan(v);
+	case FLOP_ACOS:		return g_acos(v);
+	case FLOP_ASIN:		return g_asin(v);
+	case FLOP_ATAN:		return g_atan(v);
+	case FLOP_COS:		return g_cos(v);
+	case FLOP_SIN:		return g_sin(v);
+	case FLOP_TAN:		return g_tan(v);
 
-	case FLOP_ACOS_DEG:	return acos(v) * (180 / M_PI);
-	case FLOP_ASIN_DEG:	return asin(v) * (180 / M_PI);
-	case FLOP_ATAN_DEG:	return atan(v) * (180 / M_PI);
-	case FLOP_COS_DEG:	return cos(v * (M_PI / 180));
-	case FLOP_SIN_DEG:	return sin(v * (M_PI / 180));
-	case FLOP_TAN_DEG:	return tan(v * (M_PI / 180));
+	case FLOP_ACOS_DEG:	return g_acos(v) * (180 / M_PI);
+	case FLOP_ASIN_DEG:	return g_asin(v) * (180 / M_PI);
+	case FLOP_ATAN_DEG:	return g_atan(v) * (180 / M_PI);
+	case FLOP_COS_DEG:	return g_cosdeg(v);
+	case FLOP_SIN_DEG:	return g_sindeg(v);
+	case FLOP_TAN_DEG:	return g_tan(v * (M_PI / 180));
 
-	case FLOP_COSH:		return cosh(v);
-	case FLOP_SINH:		return sinh(v);
-	case FLOP_TANH:		return tanh(v);
+	case FLOP_COSH:		return g_cosh(v);
+	case FLOP_SINH:		return g_sinh(v);
+	case FLOP_TANH:		return g_tanh(v);
 	}
 	assert(0);
 	return 0;

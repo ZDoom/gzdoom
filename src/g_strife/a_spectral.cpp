@@ -28,9 +28,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpectralLightningTail)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	AActor *foo = Spawn("SpectralLightningHTail", self->Vec3Offset(-self->vel.x, -self->vel.y, 0), ALLOW_REPLACE);
+	AActor *foo = Spawn("SpectralLightningHTail", self->Vec3Offset(-self->Vel.X, -self->Vel.Y, 0.), ALLOW_REPLACE);
 
-	foo->angle = self->angle;
+	foo->Angles.Yaw = self->Angles.Yaw;
 	foo->FriendPlayer = self->FriendPlayer;
 	return 0;
 }
@@ -42,11 +42,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpectralBigBallLightning)
 	PClassActor *cls = PClass::FindActor("SpectralLightningH3");
 	if (cls)
 	{
-		self->angle += ANGLE_90;
+		self->Angles.Yaw += 90.;
 		P_SpawnSubMissile (self, cls, self->target);
-		self->angle += ANGLE_180;
+		self->Angles.Yaw += 180.;
 		P_SpawnSubMissile (self, cls, self->target);
-		self->angle += ANGLE_90;
+		self->Angles.Yaw -= 270.;
 		P_SpawnSubMissile (self, cls, self->target);
 	}
 	return 0;
@@ -63,93 +63,81 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpectralLightning)
 	if (self->threshold != 0)
 		--self->threshold;
 
-	self->vel.x += pr_zap5.Random2(3) << FRACBITS;
-	self->vel.y += pr_zap5.Random2(3) << FRACBITS;
+	self->Vel.X += pr_zap5.Random2(3);
+	self->Vel.Y += pr_zap5.Random2(3);
 
-	fixedvec2 pos = self->Vec2Offset(
-		pr_zap5.Random2(3) * FRACUNIT * 50,
-		pr_zap5.Random2(3) * FRACUNIT * 50);
+	double xo = pr_zap5.Random2(3) * 50.;
+	double yo = pr_zap5.Random2(3) * 50.;
 
 	flash = Spawn (self->threshold > 25 ? PClass::FindActor(NAME_SpectralLightningV2) :
-		PClass::FindActor(NAME_SpectralLightningV1), pos.x, pos.y, ONCEILINGZ, ALLOW_REPLACE);
+		PClass::FindActor(NAME_SpectralLightningV1), self->Vec2OffsetZ(xo, yo, ONCEILINGZ), ALLOW_REPLACE);
 
 	flash->target = self->target;
-	flash->vel.z = -18*FRACUNIT;
+	flash->Vel.Z = -18;
 	flash->FriendPlayer = self->FriendPlayer;
 
-	flash = Spawn(NAME_SpectralLightningV2, self->X(), self->Y(), ONCEILINGZ, ALLOW_REPLACE);
+	flash = Spawn(NAME_SpectralLightningV2, self->PosAtZ(ONCEILINGZ), ALLOW_REPLACE);
 
 	flash->target = self->target;
-	flash->vel.z = -18*FRACUNIT;
+	flash->Vel.Z = -18;
 	flash->FriendPlayer = self->FriendPlayer;
 	return 0;
 }
 
 // In Strife, this number is stored in the data segment, but it doesn't seem to be
 // altered anywhere.
-#define TRACEANGLE (0xe000000)
+#define TRACEANGLE (19.6875)
 
 DEFINE_ACTION_FUNCTION(AActor, A_Tracer2)
 {
 	PARAM_ACTION_PROLOGUE;
 
 	AActor *dest;
-	angle_t exact;
-	fixed_t dist;
-	fixed_t slope;
+	double dist;
+	double slope;
 
 	dest = self->tracer;
 
 	if (!dest || dest->health <= 0 || self->Speed == 0 || !self->CanSeek(dest))
 		return 0;
 
-	// change angle
-	exact = self->AngleTo(dest);
+	DAngle exact = self->AngleTo(dest);
+	DAngle diff = deltaangle(self->Angles.Yaw, exact);
 
-	if (exact != self->angle)
+	if (diff < 0)
 	{
-		if (exact - self->angle > 0x80000000)
-		{
-			self->angle -= TRACEANGLE;
-			if (exact - self->angle < 0x80000000)
-				self->angle = exact;
-		}
-		else
-		{
-			self->angle += TRACEANGLE;
-			if (exact - self->angle > 0x80000000)
-				self->angle = exact;
-		}
+		self->Angles.Yaw -= TRACEANGLE;
+		if (deltaangle(self->Angles.Yaw, exact) > 0)
+			self->Angles.Yaw = exact;
+	}
+	else if (diff > 0)
+	{
+		self->Angles.Yaw += TRACEANGLE;
+		if (deltaangle(self->Angles.Yaw, exact) < 0.)
+			self->Angles.Yaw = exact;
 	}
 
-	exact = self->angle >> ANGLETOFINESHIFT;
-	self->vel.x = FixedMul (self->Speed, finecosine[exact]);
-	self->vel.y = FixedMul (self->Speed, finesine[exact]);
+	self->VelFromAngle();
 
 	if (!(self->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER)))
 	{
 		// change slope
-		dist = self->AproxDistance (dest) / self->Speed;
-
-		if (dist < 1)
+		dist = self->DistanceBySpeed (dest, self->Speed);
+		if (dest->Height >= 56)
 		{
-			dist = 1;
-		}
-		if (dest->height >= 56*FRACUNIT)
-		{
-			slope = (dest->Z()+40*FRACUNIT - self->Z()) / dist;
+			slope = (dest->Z()+40 - self->Z()) / dist;
 		}
 		else
 		{
-			slope = (dest->Z() + self->height*2/3 - self->Z()) / dist;
+			slope = (dest->Z() + self->Height*(2./3) - self->Z()) / dist;
 		}
-		if (slope < self->vel.z)
+		if (slope < self->Vel.Z)
 		{
-			self->vel.z -= FRACUNIT/8;
+			self->Vel.Z -= 1 / 8.;
 		}
 		else
 		{
-			self->vel.z += FRACUNIT/8;
+			self->Vel.Z += 1 / 8.;
 		}
 	}
 	return 0;

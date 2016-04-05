@@ -198,7 +198,7 @@ void DPlat::Tick ()
 	case waiting:
 		if (m_Count > 0 && !--m_Count)
 		{
-			if (m_Sector->floorplane.d == m_Low)
+			if (m_Sector->floorplane.fD() == m_Low)
 				m_Status = up;
 			else
 				m_Status = down;
@@ -225,15 +225,15 @@ DPlat::DPlat (sector_t *sector)
 //	[RH] Changed amount to height and added delay,
 //		 lip, change, tag, and speed parameters.
 //
-bool EV_DoPlat (int tag, line_t *line, DPlat::EPlatType type, int height,
-				int speed, int delay, int lip, int change)
+bool EV_DoPlat (int tag, line_t *line, DPlat::EPlatType type, double height,
+				double speed, int delay, int lip, int change)
 {
 	DPlat *plat;
 	int secnum;
 	sector_t *sec;
 	bool rtn = false;
 	bool manual = false;
-	fixed_t newheight = 0;
+	double newheight = 0;
 	vertex_t *spot;
 
 	if (tag != 0)
@@ -277,7 +277,7 @@ bool EV_DoPlat (int tag, line_t *line, DPlat::EPlatType type, int height,
 
 		//jff 1/26/98 Avoid raise plat bouncing a head off a ceiling and then
 		//going down forever -- default lower to plat height when triggered
-		plat->m_Low = sec->floorplane.d;
+		plat->m_Low = sec->floorplane.fD();
 
 		if (change)
 		{
@@ -292,7 +292,7 @@ bool EV_DoPlat (int tag, line_t *line, DPlat::EPlatType type, int height,
 		case DPlat::platRaiseAndStayLockout:
 			newheight = sec->FindNextHighestFloor (&spot);
 			plat->m_High = sec->floorplane.PointToDist (spot, newheight);
-			plat->m_Low = sec->floorplane.d;
+			plat->m_Low = sec->floorplane.fD();
 			plat->m_Status = DPlat::up;
 			plat->PlayPlatSound ("Floor");
 			sec->ClearSpecial();
@@ -300,30 +300,30 @@ bool EV_DoPlat (int tag, line_t *line, DPlat::EPlatType type, int height,
 
 		case DPlat::platUpByValue:
 		case DPlat::platUpByValueStay:
-			newheight = sec->floorplane.ZatPoint (0, 0) + height;
-			plat->m_High = sec->floorplane.PointToDist (0, 0, newheight);
-			plat->m_Low = sec->floorplane.d;
+			newheight = sec->floorplane.ZatPoint (sec->centerspot) + height;
+			plat->m_High = sec->floorplane.PointToDist (sec->centerspot, newheight);
+			plat->m_Low = sec->floorplane.fD();
 			plat->m_Status = DPlat::up;
 			plat->PlayPlatSound ("Floor");
 			break;
 		
 		case DPlat::platDownByValue:
-			newheight = sec->floorplane.ZatPoint (0, 0) - height;
-			plat->m_Low = sec->floorplane.PointToDist (0, 0, newheight);
-			plat->m_High = sec->floorplane.d;
+			newheight = sec->floorplane.ZatPoint (sec->centerspot) - height;
+			plat->m_Low = sec->floorplane.PointToDist (sec->centerspot, newheight);
+			plat->m_High = sec->floorplane.fD();
 			plat->m_Status = DPlat::down;
 			plat->PlayPlatSound ("Floor");
 			break;
 
 		case DPlat::platDownWaitUpStay:
 		case DPlat::platDownWaitUpStayStone:
-			newheight = sec->FindLowestFloorSurrounding (&spot) + lip*FRACUNIT;
+			newheight = sec->FindLowestFloorSurrounding (&spot) + lip;
 			plat->m_Low = sec->floorplane.PointToDist (spot, newheight);
 
-			if (plat->m_Low < sec->floorplane.d)
-				plat->m_Low = sec->floorplane.d;
+			if (plat->m_Low < sec->floorplane.fD())
+				plat->m_Low = sec->floorplane.fD();
 
-			plat->m_High = sec->floorplane.d;
+			plat->m_High = sec->floorplane.fD();
 			plat->m_Status = DPlat::down;
 			plat->PlayPlatSound (type == DPlat::platDownWaitUpStay ? "Platform" : "Floor");
 			break;
@@ -338,27 +338,27 @@ bool EV_DoPlat (int tag, line_t *line, DPlat::EPlatType type, int height,
 				newheight = sec->FindHighestFloorSurrounding (&spot);
 			}
 			plat->m_High = sec->floorplane.PointToDist (spot, newheight);
-			plat->m_Low = sec->floorplane.d;
+			plat->m_Low = sec->floorplane.fD();
 
-			if (plat->m_High > sec->floorplane.d)
-				plat->m_High = sec->floorplane.d;
+			if (plat->m_High > sec->floorplane.fD())
+				plat->m_High = sec->floorplane.fD();
 
 			plat->m_Status = DPlat::up;
 			plat->PlayPlatSound ("Platform");
 			break;
 
 		case DPlat::platPerpetualRaise:
-			newheight = sec->FindLowestFloorSurrounding (&spot) + lip*FRACUNIT;
+			newheight = sec->FindLowestFloorSurrounding (&spot) + lip;
 			plat->m_Low =  sec->floorplane.PointToDist (spot, newheight);
 
-			if (plat->m_Low < sec->floorplane.d)
-				plat->m_Low = sec->floorplane.d;
+			if (plat->m_Low < sec->floorplane.fD())
+				plat->m_Low = sec->floorplane.fD();
 
 			newheight = sec->FindHighestFloorSurrounding (&spot);
 			plat->m_High =  sec->floorplane.PointToDist (spot, newheight);
 
-			if (plat->m_High > sec->floorplane.d)
-				plat->m_High = sec->floorplane.d;
+			if (plat->m_High > sec->floorplane.fD())
+				plat->m_High = sec->floorplane.fD();
 
 			plat->m_Status = pr_doplat() & 1 ? DPlat::up : DPlat::down;
 
@@ -371,26 +371,26 @@ bool EV_DoPlat (int tag, line_t *line, DPlat::EPlatType type, int height,
 			// set up toggling between ceiling, floor inclusive
 			newheight = sec->FindLowestCeilingPoint (&spot);
 			plat->m_Low = sec->floorplane.PointToDist (spot, newheight);
-			plat->m_High = sec->floorplane.d;
+			plat->m_High = sec->floorplane.fD();
 			plat->m_Status = DPlat::down;
 			SN_StartSequence (sec, CHAN_FLOOR, "Silence", 0);
 			break;
 
 		case DPlat::platDownToNearestFloor:
-			newheight = sec->FindNextLowestFloor (&spot) + lip*FRACUNIT;
+			newheight = sec->FindNextLowestFloor (&spot) + lip;
 			plat->m_Low = sec->floorplane.PointToDist (spot, newheight);
 			plat->m_Status = DPlat::down;
-			plat->m_High = sec->floorplane.d;
+			plat->m_High = sec->floorplane.fD();
 			plat->PlayPlatSound ("Platform");
 			break;
 
 		case DPlat::platDownToLowestCeiling:
 			newheight = sec->FindLowestCeilingSurrounding (&spot);
 		    plat->m_Low = sec->floorplane.PointToDist (spot, newheight);
-			plat->m_High = sec->floorplane.d;
+			plat->m_High = sec->floorplane.fD();
 
-			if (plat->m_Low < sec->floorplane.d)
-				plat->m_Low = sec->floorplane.d;
+			if (plat->m_Low < sec->floorplane.fD())
+				plat->m_Low = sec->floorplane.fD();
 
 			plat->m_Status = DPlat::down;
 			plat->PlayPlatSound ("Platform");

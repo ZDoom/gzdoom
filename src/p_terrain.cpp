@@ -89,12 +89,12 @@ enum ETerrainKeywords
 enum EGenericType
 {
 	GEN_End,
-	GEN_Fixed,
 	GEN_Sound,
 	GEN_Byte,
 	GEN_Class,
 	GEN_Splash,
 	GEN_Float,
+	GEN_Double,
 	GEN_Time,
 	GEN_Bool,
 	GEN_Int,
@@ -193,7 +193,7 @@ static FGenericParse SplashParser[] =
 {
 	{ GEN_End,	  {0} },
 	{ GEN_Sound,  {myoffsetof(FSplashDef, SmallSplashSound)} },
-	{ GEN_Fixed,  {myoffsetof(FSplashDef, SmallSplashClip)} },
+	{ GEN_Double, {myoffsetof(FSplashDef, SmallSplashClip)} },
 	{ GEN_Sound,  {myoffsetof(FSplashDef, NormalSplashSound)} },
 	{ GEN_Class,  {myoffsetof(FSplashDef, SmallSplash)} },
 	{ GEN_Class,  {myoffsetof(FSplashDef, SplashBase)} },
@@ -201,7 +201,7 @@ static FGenericParse SplashParser[] =
 	{ GEN_Byte,   {myoffsetof(FSplashDef, ChunkXVelShift)} },
 	{ GEN_Byte,   {myoffsetof(FSplashDef, ChunkYVelShift)} },
 	{ GEN_Byte,   {myoffsetof(FSplashDef, ChunkZVelShift)} },
-	{ GEN_Fixed,  {myoffsetof(FSplashDef, ChunkBaseZVel)} },
+	{ GEN_Double, {myoffsetof(FSplashDef, ChunkBaseZVel)} },
 	{ GEN_Bool,	  {myoffsetof(FSplashDef, NoAlert)} }
 };
 
@@ -212,7 +212,7 @@ static FGenericParse TerrainParser[] =
 	{ GEN_Int,    {myoffsetof(FTerrainDef, DamageAmount)} },
 	{ GEN_Custom, {(size_t)ParseDamage} },
 	{ GEN_Int,    {myoffsetof(FTerrainDef, DamageTimeMask)} },
-	{ GEN_Fixed,  {myoffsetof(FTerrainDef, FootClip)} },
+	{ GEN_Double, {myoffsetof(FTerrainDef, FootClip)} },
 	{ GEN_Float,  {myoffsetof(FTerrainDef, StepVolume)} },
 	{ GEN_Time,   {myoffsetof(FTerrainDef, WalkStepTics)} },
 	{ GEN_Time,   {myoffsetof(FTerrainDef, RunStepTics)} },
@@ -360,8 +360,8 @@ static void SetSplashDefaults (FSplashDef *splashdef)
 	splashdef->ChunkXVelShift =
 		splashdef->ChunkYVelShift =
 		splashdef->ChunkZVelShift = 8;
-	splashdef->ChunkBaseZVel = FRACUNIT;
-	splashdef->SmallSplashClip = 12*FRACUNIT;
+	splashdef->ChunkBaseZVel = 1;
+	splashdef->SmallSplashClip = 12.;
 	splashdef->NoAlert = false;
 }
 
@@ -487,15 +487,15 @@ static void ParseDamage (FScanner &sc, int keyword, void *fields)
 static void ParseFriction (FScanner &sc, int keyword, void *fields)
 {
 	FTerrainDef *def = (FTerrainDef *)fields;
-	fixed_t friction, movefactor;
+	double friction, movefactor;
 
 	sc.MustGetFloat ();
 
 	// These calculations should match those in P_SetSectorFriction().
 	// A friction of 1.0 is equivalent to ORIG_FRICTION.
 
-	friction = (fixed_t)(0x1EB8*(sc.Float*100))/0x80 + 0xD001;
-	friction = clamp<fixed_t> (friction, 0, FRACUNIT);
+	friction = (0x1EB8*(sc.Float*100))/0x80 + 0xD001;
+	friction = clamp<double> (friction, 0, 65536.);
 
 	if (friction > ORIG_FRICTION)	// ice
 		movefactor = ((0x10092 - friction) * 1024) / 4352 + 568;
@@ -505,8 +505,8 @@ static void ParseFriction (FScanner &sc, int keyword, void *fields)
 	if (movefactor < 32)
 		movefactor = 32;
 
-	def->Friction = friction;
-	def->MoveFactor = movefactor;
+	def->Friction = friction / 65536.;
+	def->MoveFactor = movefactor / 65536.;
 }
 
 //==========================================================================
@@ -531,11 +531,6 @@ static void GenericParse (FScanner &sc, FGenericParse *parser, const char **keyw
 		{
 		case GEN_End:
 			notdone = false;
-			break;
-
-		case GEN_Fixed:
-			sc.MustGetFloat ();
-			SET_FIELD (fixed_t, (fixed_t)(FRACUNIT * sc.Float));
 			break;
 
 		case GEN_Sound:
@@ -593,6 +588,11 @@ static void GenericParse (FScanner &sc, FGenericParse *parser, const char **keyw
 		case GEN_Float:
 			sc.MustGetFloat ();
 			SET_FIELD (float, float(sc.Float));
+			break;
+
+		case GEN_Double:
+			sc.MustGetFloat();
+			SET_FIELD(double, sc.Float);
 			break;
 
 		case GEN_Time:

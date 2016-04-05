@@ -197,9 +197,9 @@ short			consistancy[MAXPLAYERS][BACKUPTICS];
 float	 		normforwardmove[2] = {0x19, 0x32};		// [RH] For setting turbo from console
 float	 		normsidemove[2] = {0x18, 0x28};			// [RH] Ditto
 
-fixed_t			forwardmove[2], sidemove[2];
-fixed_t 		angleturn[4] = {640, 1280, 320, 320};		// + slow turn
-fixed_t			flyspeed[2] = {1*256, 3*256};
+int				forwardmove[2], sidemove[2];
+int		 		angleturn[4] = {640, 1280, 320, 320};		// + slow turn
+int				flyspeed[2] = {1*256, 3*256};
 int				lookspeed[2] = {450, 512};
 
 #define SLOWTURNTICS	6 
@@ -1182,8 +1182,7 @@ void G_Ticker ()
 				}
 				if (players[i].mo)
 				{
-					DWORD sum = rngsum + players[i].mo->X() + players[i].mo->Y() + players[i].mo->Z()
-						+ players[i].mo->angle + players[i].mo->pitch;
+					DWORD sum = rngsum + int((players[i].mo->X() + players[i].mo->Y() + players[i].mo->Z())*257) + players[i].mo->Angles.Yaw.BAMs() + players[i].mo->Angles.Pitch.BAMs();
 					sum ^= players[i].health;
 					consistancy[i][buf] = sum;
 				}
@@ -1288,7 +1287,7 @@ void G_PlayerFinishLevel (int player, EFinishLevelType mode, int flags)
 		p->mo->flags &= ~MF_SHADOW;
 	}
 	p->mo->RenderStyle = p->mo->GetDefault()->RenderStyle;
-	p->mo->alpha = p->mo->GetDefault()->alpha;
+	p->mo->Alpha = p->mo->GetDefault()->Alpha;
 	p->extralight = 0;					// cancel gun flashes
 	p->fixedcolormap = NOFIXEDCOLORMAP;	// cancel ir goggles
 	p->fixedlightlevel = -1;
@@ -1423,33 +1422,30 @@ void G_PlayerReborn (int player)
 
 bool G_CheckSpot (int playernum, FPlayerStart *mthing)
 {
-	fixed_t x;
-	fixed_t y;
-	fixed_t z, oldz;
+	DVector3 spot;
+	double oldz;
 	int i;
 
 	if (mthing->type == 0) return false;
 
-	x = mthing->x;
-	y = mthing->y;
-	z = mthing->z;
+	spot = mthing->pos;
 
 	if (!(level.flags & LEVEL_USEPLAYERSTARTZ))
 	{
-		z = 0;
+		spot.Z = 0;
 	}
-	z += P_PointInSector (x, y)->floorplane.ZatPoint (x, y);
+	spot.Z += P_PointInSector (spot)->floorplane.ZatPoint (spot);
 
 	if (!players[playernum].mo)
 	{ // first spawn of level, before corpses
 		for (i = 0; i < playernum; i++)
-			if (players[i].mo && players[i].mo->X() == x && players[i].mo->Y() == y)
+			if (players[i].mo && players[i].mo->X() == spot.X && players[i].mo->Y() == spot.Y)
 				return false;
 		return true;
 	}
 
 	oldz = players[playernum].mo->Z();	// [RH] Need to save corpse's z-height
-	players[playernum].mo->SetZ(z);		// [RH] Checks are now full 3-D
+	players[playernum].mo->SetZ(spot.Z);		// [RH] Checks are now full 3-D
 
 	// killough 4/2/98: fix bug where P_CheckPosition() uses a non-solid
 	// corpse to detect collisions with other players in DM starts
@@ -1459,7 +1455,7 @@ bool G_CheckSpot (int playernum, FPlayerStart *mthing)
 	//    return false;
 
 	players[playernum].mo->flags |=  MF_SOLID;
-	i = P_CheckPosition(players[playernum].mo, x, y);
+	i = P_CheckPosition(players[playernum].mo, spot);
 	players[playernum].mo->flags &= ~MF_SOLID;
 	players[playernum].mo->SetZ(oldz);	// [RH] Restore corpse's height
 	if (!i)
@@ -1476,10 +1472,10 @@ bool G_CheckSpot (int playernum, FPlayerStart *mthing)
 //
 
 // [RH] Returns the distance of the closest player to the given mapthing
-static fixed_t PlayersRangeFromSpot (FPlayerStart *spot)
+static double PlayersRangeFromSpot (FPlayerStart *spot)
 {
-	fixed_t closest = INT_MAX;
-	fixed_t distance;
+	double closest = INT_MAX;
+	double distance;
 	int i;
 
 	for (i = 0; i < MAXPLAYERS; i++)
@@ -1487,7 +1483,7 @@ static fixed_t PlayersRangeFromSpot (FPlayerStart *spot)
 		if (!playeringame[i] || !players[i].mo || players[i].health <= 0)
 			continue;
 
-		distance = players[i].mo->AproxDistance (spot->x, spot->y);
+		distance = players[i].mo->Distance2D(spot->pos.X, spot->pos.Y);
 
 		if (distance < closest)
 			closest = distance;
@@ -1499,13 +1495,13 @@ static fixed_t PlayersRangeFromSpot (FPlayerStart *spot)
 // [RH] Select the deathmatch spawn spot farthest from everyone.
 static FPlayerStart *SelectFarthestDeathmatchSpot (size_t selections)
 {
-	fixed_t bestdistance = 0;
+	double bestdistance = 0;
 	FPlayerStart *bestspot = NULL;
 	unsigned int i;
 
 	for (i = 0; i < selections; i++)
 	{
-		fixed_t distance = PlayersRangeFromSpot (&deathmatchstarts[i]);
+		double distance = PlayersRangeFromSpot (&deathmatchstarts[i]);
 
 		if (distance > bestdistance)
 		{
@@ -1645,8 +1641,8 @@ static void G_QueueBody (AActor *body)
 		const AActor *const defaultActor = body->GetDefault();
 		const FPlayerSkin &skin = skins[skinidx];
 
-		body->scaleX = Scale(body->scaleX, skin.ScaleX, defaultActor->scaleX);
-		body->scaleY = Scale(body->scaleY, skin.ScaleY, defaultActor->scaleY);
+		body->Scale.X *= skin.Scale.X / defaultActor->Scale.X;
+		body->Scale.Y *= skin.Scale.Y / defaultActor->Scale.Y;
 	}
 
 	bodyqueslot++;
@@ -1933,13 +1929,6 @@ void G_DoLoadGame ()
 		BYTE *vars_p = (BYTE *)text;
 		C_ReadCVars (&vars_p);
 		delete[] text;
-		if (SaveVersion <= 4509)
-		{
-			// account for the flag shuffling for making freelook a 3-state option
-			INTBOOL flag = dmflags & DF_YES_FREELOOK;
-			dmflags = dmflags & ~DF_YES_FREELOOK;
-			if (flag) dmflags2 = dmflags2 | DF2_RESPAWN_SUPER;
-		}
 	}
 
 	// dearchive all the modifications

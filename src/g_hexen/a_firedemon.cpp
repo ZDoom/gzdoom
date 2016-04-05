@@ -9,7 +9,7 @@
 #include "thingdef/thingdef.h"
 */
 
-#define FIREDEMON_ATTACK_RANGE	64*8*FRACUNIT
+#define FIREDEMON_ATTACK_RANGE	(64*8.)
 
 static FRandom pr_firedemonrock ("FireDemonRock");
 static FRandom pr_smbounce ("SMBounce");
@@ -54,16 +54,16 @@ void A_FiredSpawnRock (AActor *actor)
 			break;
 	}
 
-	fixed_t xo = ((pr_firedemonrock() - 128) << 12);
-	fixed_t yo = ((pr_firedemonrock() - 128) << 12);
-	fixed_t zo = (pr_firedemonrock() << 11);
+	double xo = (pr_firedemonrock() - 128) / 16.;
+	double yo = (pr_firedemonrock() - 128) / 16.;
+	double zo = pr_firedemonrock() / 32.;
 	mo = Spawn (rtype, actor->Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->target = actor;
-		mo->vel.x = (pr_firedemonrock() - 128) <<10;
-		mo->vel.y = (pr_firedemonrock() - 128) <<10;
-		mo->vel.z = (pr_firedemonrock() << 10);
+		mo->Vel.X = (pr_firedemonrock() - 128) / 64.;
+		mo->Vel.Y = (pr_firedemonrock() - 128) / 64.;
+		mo->Vel.Z = (pr_firedemonrock() / 64.);
 		mo->special1 = 2;		// Number bounces
 	}
 
@@ -101,10 +101,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_SmBounce)
 	PARAM_ACTION_PROLOGUE;
 
 	// give some more velocity (x,y,&z)
-	self->SetZ(self->floorz + FRACUNIT);
-	self->vel.z = (2*FRACUNIT) + (pr_smbounce() << 10);
-	self->vel.x = pr_smbounce()%3<<FRACBITS;
-	self->vel.y = pr_smbounce()%3<<FRACBITS;
+	self->SetZ(self->floorz + 1);
+	self->Vel.Z = 2. + pr_smbounce() / 64.;
+	self->Vel.X = pr_smbounce() % 3;
+	self->Vel.Y = pr_smbounce() % 3;
 	return 0;
 }
 
@@ -137,20 +137,20 @@ DEFINE_ACTION_FUNCTION(AActor, A_FiredChase)
 
 	int weaveindex = self->special1;
 	AActor *target = self->target;
-	angle_t ang;
-	fixed_t dist;
+	DAngle ang;
+	double dist;
 
 	if (self->reactiontime) self->reactiontime--;
 	if (self->threshold) self->threshold--;
 
 	// Float up and down
-	self->AddZ(finesine[weaveindex << BOBTOFINESHIFT] * 8);
+	self->AddZ(BobSin(weaveindex));
 	self->special1 = (weaveindex + 2) & 63;
 
 	// Ensure it stays above certain height
-	if (self->Z() < self->floorz + (64*FRACUNIT))
+	if (self->Z() < self->floorz + 64)
 	{
-		self->AddZ(2*FRACUNIT);
+		self->AddZ(2);
 	}
 
 	if(!self->target || !(self->target->flags&MF_SHOOTABLE))
@@ -167,20 +167,18 @@ DEFINE_ACTION_FUNCTION(AActor, A_FiredChase)
 	else
 	{
 		self->special2 = 0;
-		self->vel.x = self->vel.y = 0;
-		dist = self->AproxDistance (target);
+		self->Vel.X = self->Vel.Y = 0;
+		dist = self->Distance2D(target);
 		if (dist < FIREDEMON_ATTACK_RANGE)
 		{
 			if (pr_firedemonchase() < 30)
 			{
 				ang = self->AngleTo(target);
 				if (pr_firedemonchase() < 128)
-					ang += ANGLE_90;
+					ang += 90;
 				else
-					ang -= ANGLE_90;
-				ang >>= ANGLETOFINESHIFT;
-				self->vel.x = finecosine[ang] << 3; //FixedMul (8*FRACUNIT, finecosine[ang]);
-				self->vel.y = finesine[ang] << 3; //FixedMul (8*FRACUNIT, finesine[ang]);
+					ang -= 90;
+				self->Thrust(ang, 8);
 				self->special2 = 3;		// strafe time
 			}
 		}
@@ -235,16 +233,16 @@ DEFINE_ACTION_FUNCTION(AActor, A_FiredSplotch)
 	mo = Spawn ("FireDemonSplotch1", self->Pos(), ALLOW_REPLACE);
 	if (mo)
 	{
-		mo->vel.x = (pr_firedemonsplotch() - 128) << 11;
-		mo->vel.y = (pr_firedemonsplotch() - 128) << 11;
-		mo->vel.z = (pr_firedemonsplotch() << 10) + FRACUNIT*3;
+		mo->Vel.X = (pr_firedemonsplotch() - 128) / 32.;
+		mo->Vel.Y = (pr_firedemonsplotch() - 128) / 32.;
+		mo->Vel.Z = (pr_firedemonsplotch() / 64.) + 3;
 	}
 	mo = Spawn ("FireDemonSplotch2", self->Pos(), ALLOW_REPLACE);
 	if (mo)
 	{
-		mo->vel.x = (pr_firedemonsplotch() - 128) << 11;
-		mo->vel.y = (pr_firedemonsplotch() - 128) << 11;
-		mo->vel.z = (pr_firedemonsplotch() << 10) + FRACUNIT*3;
+		mo->Vel.X = (pr_firedemonsplotch() - 128) / 32.;
+		mo->Vel.Y = (pr_firedemonsplotch() - 128) / 32.;
+		mo->Vel.Z = (pr_firedemonsplotch() / 64.) + 3;
 	}
 	return 0;
 }

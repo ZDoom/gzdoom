@@ -55,11 +55,9 @@ static void TeloSpawn (AActor *source, const char *type)
 	if (fx)
 	{
 		fx->special1 = TELEPORT_LIFE;			// Lifetime countdown
-		fx->angle = source->angle;
+		fx->Angles.Yaw = source->Angles.Yaw;
 		fx->target = source->target;
-		fx->vel.x = source->vel.x >> 1;
-		fx->vel.y = source->vel.y >> 1;
-		fx->vel.z = source->vel.z >> 1;
+		fx->Vel = source->Vel / 2;
 	}
 }
 
@@ -166,14 +164,12 @@ int ATelOtherFX1::DoSpecialDamage (AActor *target, int damage, FName damagetype)
 
 void P_TeleportToPlayerStarts (AActor *victim)
 {
-	fixed_t destX,destY;
-	angle_t destAngle;
+	DVector3 dest;
 
 	FPlayerStart *start = G_PickPlayerStart(0, PPS_FORCERANDOM | PPS_NOBLOCKINGCHECK);
-	destX = start->x;
-	destY = start->y;
-	destAngle = ANG45 * (start->angle/45);
-	P_Teleport (victim, destX, destY, ONFLOORZ, destAngle, TELF_SOURCEFOG | TELF_DESTFOG);
+	dest = start->pos;
+	dest.Z = ONFLOORZ;
+	P_Teleport (victim, dest, (double)start->angle, TELF_SOURCEFOG | TELF_DESTFOG);
 }
 
 //===========================================================================
@@ -185,17 +181,15 @@ void P_TeleportToPlayerStarts (AActor *victim)
 void P_TeleportToDeathmatchStarts (AActor *victim)
 {
 	unsigned int i, selections;
-	fixed_t destX,destY;
-	angle_t destAngle;
+	DVector3 dest;
 
 	selections = deathmatchstarts.Size ();
 	if (selections > 0)
 	{
 		i = pr_teledm() % selections;
-		destX = deathmatchstarts[i].x;
-		destY = deathmatchstarts[i].y;
-		destAngle = ANG45 * (deathmatchstarts[i].angle/45);
-		P_Teleport (victim, destX, destY, ONFLOORZ, destAngle, TELF_SOURCEFOG | TELF_DESTFOG);
+		dest = deathmatchstarts[i].pos;
+		dest.Z = ONFLOORZ;
+		P_Teleport (victim, dest, (double)deathmatchstarts[i].angle, TELF_SOURCEFOG | TELF_DESTFOG);
 	}
 	else
 	{

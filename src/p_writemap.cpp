@@ -100,9 +100,9 @@ static int WriteTHINGS (FILE *file)
 	mapthinghexen_t mt = { 0, 0, 0, 0, 0, 0, 0, 0, {0} };
 	AActor *mo = players[consoleplayer].mo;
 
-	mt.x = LittleShort(short(mo->X() >> FRACBITS));
-	mt.y = LittleShort(short(mo->Y() >> FRACBITS));
-	mt.angle = LittleShort(short(MulScale32 (mo->angle >> ANGLETOFINESHIFT, 360)));
+	mt.x = LittleShort(short(mo->X()));
+	mt.y = LittleShort(short(mo->Y()));
+	mt.angle = LittleShort(short(mo->Angles.Yaw.Degrees));
 	mt.type = LittleShort((short)1);
 	mt.flags = LittleShort((short)(7|224|MTF_SINGLE));
 	fwrite (&mt, sizeof(mt), 1, file);
@@ -150,8 +150,8 @@ static int WriteSIDEDEFS (FILE *file)
 
 	for (int i = 0; i < numsides; ++i)
 	{
-		msd.textureoffset = LittleShort(short(sides[i].GetTextureXOffset(side_t::mid) >> FRACBITS));
-		msd.rowoffset = LittleShort(short(sides[i].GetTextureYOffset(side_t::mid) >> FRACBITS));
+		msd.textureoffset = LittleShort(short(sides[i].GetTextureXOffsetF(side_t::mid)));
+		msd.rowoffset = LittleShort(short(sides[i].GetTextureYOffsetF(side_t::mid)));
 		msd.sector = LittleShort(short(sides[i].sector - sectors));
 		uppercopy (msd.toptexture, GetTextureName (sides[i].GetTexture(side_t::top)));
 		uppercopy (msd.bottomtexture, GetTextureName (sides[i].GetTexture(side_t::bottom)));
@@ -167,8 +167,8 @@ static int WriteVERTEXES (FILE *file)
 
 	for (int i = 0; i < numvertexes; ++i)
 	{
-		mv.x = LittleShort(short(vertexes[i].x >> FRACBITS));
-		mv.y = LittleShort(short(vertexes[i].y >> FRACBITS));
+		mv.x = LittleShort(short(vertexes[i].fixX() >> FRACBITS));
+		mv.y = LittleShort(short(vertexes[i].fixY() >> FRACBITS));
 		fwrite (&mv, sizeof(mv), 1, file);
 	}
 	return numvertexes * sizeof(mv);
@@ -177,79 +177,17 @@ static int WriteVERTEXES (FILE *file)
 
 static int WriteSEGS (FILE *file)
 {
-#if 0
-	mapseg_t ms;
-
-	ms.offset = 0;		// unused by ZDoom, so just leave it 0
-	for (int i = 0; i < numsegs; ++i)
-	{
-		if (segs[i].linedef!=NULL)
-		{
-			ms.v1 = LittleShort(short(segs[i].v1 - vertexes));
-			ms.v2 = LittleShort(short(segs[i].v2 - vertexes));
-			ms.linedef = LittleShort(short(segs[i].linedef - lines));
-			ms.side = segs[i].sidedef == segs[i].linedef->sidedef[0] ? 0 : LittleShort((short)1);
-			ms.angle = LittleShort(short(R_PointToAngle2 (segs[i].v1->x, segs[i].v1->y, segs[i].v2->x, segs[i].v2->y)>>16));
-			fwrite (&ms, sizeof(ms), 1, file);
-		}
-	}
-	return numsegs * sizeof(ms);
-#else
 	return 0;
-#endif
 }
 
 static int WriteSSECTORS (FILE *file)
 {
-#if 0
-	mapsubsector_t mss;
-
-	for (int i = 0; i < numsubsectors; ++i)
-	{
-		mss.firstseg = LittleShort((WORD)subsectors[i].firstline);
-		mss.numsegs = LittleShort((WORD)subsectors[i].numlines);
-		fwrite (&mss, sizeof(mss), 1, file);
-	}
-	return numsubsectors * sizeof(mss);
-#else
 	return 0;
-#endif
 }
 
 static int WriteNODES (FILE *file)
 {
-#if 0
-	mapnode_t mn;
-
-	for (int i = 0; i < numnodes; ++i)
-	{
-		mn.x = LittleShort(short(nodes[i].x >> FRACBITS));
-		mn.y = LittleShort(short(nodes[i].y >> FRACBITS));
-		mn.dx = LittleShort(short(nodes[i].dx >> FRACBITS));
-		mn.dy = LittleShort(short(nodes[i].dy >> FRACBITS));
-		for (int j = 0; j < 2; ++j)
-		{
-			for (int k = 0; k < 4; ++k)
-			{
-				mn.bbox[j][k] = LittleShort(short(nodes[i].bbox[j][k] >> FRACBITS));
-			}
-			WORD child;
-			if ((size_t)nodes[i].children[j] & 1)
-			{
-				child = mapnode_t::NF_SUBSECTOR | WORD((subsector_t *)((BYTE *)nodes[i].children[j] - 1) - subsectors);
-			}
-			else
-			{
-				child = WORD((node_t *)nodes[i].children[j] - nodes);
-			}
-			mn.children[j] = LittleShort(child);
-		}
-		fwrite (&mn, sizeof(mn), 1, file);
-	}
-	return numnodes * sizeof(mn);
-#else
 	return 0;
-#endif
 }
 
 static int WriteSECTORS (FILE *file)
@@ -258,8 +196,8 @@ static int WriteSECTORS (FILE *file)
 
 	for (int i = 0; i < numsectors; ++i)
 	{
-		ms.floorheight = LittleShort(short(sectors[i].GetPlaneTexZ(sector_t::floor) >> FRACBITS));
-		ms.ceilingheight = LittleShort(short(sectors[i].GetPlaneTexZ(sector_t::ceiling) >> FRACBITS));
+		ms.floorheight = LittleShort(short(sectors[i].GetPlaneTexZF(sector_t::floor)));
+		ms.ceilingheight = LittleShort(short(sectors[i].GetPlaneTexZF(sector_t::ceiling)));
 		uppercopy (ms.floorpic, GetTextureName (sectors[i].GetTexture(sector_t::floor)));
 		uppercopy (ms.ceilingpic, GetTextureName (sectors[i].GetTexture(sector_t::ceiling)));
 		ms.lightlevel = LittleShort((short)sectors[i].lightlevel);

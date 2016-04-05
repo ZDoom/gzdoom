@@ -824,6 +824,7 @@ static bool ParsePropertyParams(FScanner &sc, FPropertyInfo *prop, AActor *defau
 			conv.s = NULL;
 			pref.s = NULL;
 			pref.i = -1;
+			bag.ScriptPosition = sc;
 			switch ((*p) & 223)
 			{
 			case 'X':	// Expression in parentheses or number.

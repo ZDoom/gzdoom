@@ -67,21 +67,6 @@ int P_AproxDistance (int dx, int dy)
 
 //==========================================================================
 //
-// P_PointOnDivlineSideCompat
-//
-// Returns the fractional intercept point along the first divline
-// with compatibility flag handling
-//
-//==========================================================================
-
-inline int P_PointOnDivlineSideCompat(double x, double y, const divline_t *line)
-{
-	return (i_compatflags2 & COMPATF2_POINTONLINE)
-		? P_VanillaPointOnDivlineSide(x, y, line) : P_PointOnDivlineSide(x, y, line);
-}
-
-//==========================================================================
-//
 // P_InterceptVector
 //
 // Returns the fractional intercept point along the first divline.
@@ -1168,20 +1153,8 @@ void FPathTraverse::AddLineIntercepts(int bx, int by)
 		double 				frac;
 		divline_t			dl;
 
-		// avoid precision problems with two routines
-		if ( trace.dx > 16
-			 || trace.dy > 16
-			 || trace.dx < -16
-			 || trace.dy < -16)
-		{
-			s1 = P_PointOnDivlineSideCompat (ld->v1->fX(), ld->v1->fY(), &trace);
-			s2 = P_PointOnDivlineSideCompat (ld->v2->fX(), ld->v2->fY(), &trace);
-		}
-		else
-		{
-			s1 = P_PointOnLineSide (trace.x, trace.y, ld);
-			s2 = P_PointOnLineSide (trace.x+trace.dx, trace.y+trace.dy, ld);
-		}
+		s1 = P_PointOnDivlineSide (ld->v1->fX(), ld->v1->fY(), &trace);
+		s2 = P_PointOnDivlineSide (ld->v2->fX(), ld->v2->fY(), &trace);
 		
 		if (s1 == s2) continue;	// line isn't crossed
 		
@@ -1232,81 +1205,82 @@ void FPathTraverse::AddThingIntercepts (int bx, int by, FBlockThingsIterator &it
 				switch (i)
 				{
 				case 0:		// Top edge
-					line.x = thing->X() + thing->radius;
 					line.y = thing->Y() + thing->radius;
+					if (trace.y < line.y) continue;
+					line.x = thing->X() + thing->radius;
 					line.dx = -thing->radius * 2;
 					line.dy = 0;
 					break;
 
 				case 1:		// Right edge
 					line.x = thing->X() + thing->radius;
+					if (trace.x < line.x) continue;
 					line.y = thing->Y() - thing->radius;
 					line.dx = 0;
 					line.dy = thing->radius * 2;
 					break;
 
 				case 2:		// Bottom edge
-					line.x = thing->X() - thing->radius;
 					line.y = thing->Y() - thing->radius;
+					if (trace.y > line.y) continue;
+					line.x = thing->X() - thing->radius;
 					line.dx = thing->radius * 2;
 					line.dy = 0;
 					break;
 
 				case 3:		// Left edge
 					line.x = thing->X() - thing->radius;
+					if (trace.x > line.x) continue;
 					line.y = thing->Y() + thing->radius;
 					line.dx = 0;
 					line.dy = thing->radius * -2;
 					break;
 				}
 				// Check if this side is facing the trace origin
-				if (P_PointOnDivlineSide (trace.x, trace.y, &line) == 0)
+				numfronts++;
+
+				// If it is, see if the trace crosses it
+				if (P_PointOnDivlineSide (line.x, line.y, &trace) !=
+					P_PointOnDivlineSide (line.x + line.dx, line.y + line.dy, &trace))
 				{
-					numfronts++;
-
-					// If it is, see if the trace crosses it
-					if (P_PointOnDivlineSide (line.x, line.y, &trace) !=
-						P_PointOnDivlineSide (line.x + line.dx, line.y + line.dy, &trace))
-					{
-						// It's a hit
-						double frac = P_InterceptVector (&trace, &line);
-						if (frac < Startfrac)
-						{ // behind source
-							if (Startfrac > 0)
+					// It's a hit
+					double frac = P_InterceptVector (&trace, &line);
+					if (frac < Startfrac)
+					{ // behind source
+						if (Startfrac > 0)
+						{
+							// check if the trace starts within this actor
+							switch (i)
 							{
-								// check if the trace starts within this actor
-								switch (i)
-								{
-								case 0:
-									line.y -= 2 * thing->radius;
-									break;
+							case 0:
+								line.y -= 2 * thing->radius;
+								break;
 
-								case 1:
-									line.x -= 2 * thing->radius;
-									break;
+							case 1:
+								line.x -= 2 * thing->radius;
+								break;
 
-								case 2:
-									line.y += 2 * thing->radius;
-									break;
+							case 2:
+								line.y += 2 * thing->radius;
+								break;
 
-								case 3:
-									line.x += 2 * thing->radius;
-									break;
-								}
-								double frac2 = P_InterceptVector(&trace, &line);
-								if (frac2 >= Startfrac) goto addit;
+							case 3:
+								line.x += 2 * thing->radius;
+								break;
 							}
-							continue;
+							double frac2 = P_InterceptVector(&trace, &line);
+							if (frac2 >= Startfrac) goto addit;
 						}
-					addit:
-						intercept_t newintercept;
-						newintercept.frac = frac;
-						newintercept.isaline = false;
-						newintercept.done = false;
-						newintercept.d.thing = thing;
-						intercepts.Push (newintercept);
 						continue;
 					}
+				addit:
+					intercept_t newintercept;
+					newintercept.frac = frac;
+					newintercept.isaline = false;
+					newintercept.done = false;
+					newintercept.d.thing = thing;
+					intercepts.Push (newintercept);
+					break;
 				}
 			}
 
@@ -1350,8 +1324,8 @@ void FPathTraverse::AddThingIntercepts (int bx, int by, FBlockThingsIterator &it
 				y2 = thing->Y() + thing->radius;					
 			}
 			
-			s1 = P_PointOnDivlineSideCompat (x1, y1, &trace);
-			s2 = P_PointOnDivlineSideCompat (x2, y2, &trace);
+			s1 = P_PointOnDivlineSide (x1, y1, &trace);
+			s2 = P_PointOnDivlineSide (x2, y2, &trace);
 
 			if (s1 != s2)
 			{
@@ -1888,60 +1862,6 @@ int P_VanillaPointOnLineSide(double x, double y, const line_t* line)
 
 	auto left = MulScale16( int(delta.Y * 256) , dx );
 	auto right = MulScale16( dy , int(delta.X * 256) );
-
-	if (right < left)
-		return 0;		// front side
-	return 1;			// back side
-}
-
-//===========================================================================
-//
-// P_VanillaPointOnDivlineSide
-// P_PointOnDivlineSideCompat() from the initial Doom source code release
-//
-//===========================================================================
-
-int P_VanillaPointOnDivlineSide(double x, double y, const divline_t* line)
-{
-	int	dx;
-	int	dy;
-	int	left;
-	int	right;
-	int ldx;
-	int ldy;
-
-	if (!line->dx)
-	{
-		if (x <= line->x)
-			return line->dy > 0;
-
-		return line->dy < 0;
-	}
-	if (!line->dy)
-	{
-		if (y <= line->y)
-			return line->dx < 0;
-
-		return line->dx > 0;
-	}
-
-	// This is supposed to be compatible so the rest needs to be done
-	// with the same broken fixed point checks as the original
-	dx = FloatToFixed(x - line->x);
-	dy = FloatToFixed(y - line->y);
-	ldx = FloatToFixed(line->dx);
-	ldy = FloatToFixed(line->dy);
-
-	// try to quickly decide by looking at sign bits
-	if ( (ldy ^ ldx ^ dx ^ dy)&0x80000000 )
-	{
-		if ( (ldy ^ dx) & 0x80000000 )
-			return 1;		// (left is negative)
-		return 0;
-	}
-
-	left = MulScale16( ldy>>8, dx>>8 );
-	right = MulScale16( dy>>8 , ldx>>8 );
 
 	if (right < left)
 		return 0;		// front side

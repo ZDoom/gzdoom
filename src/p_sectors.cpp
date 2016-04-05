@@ -624,7 +624,7 @@ double sector_t::FindHighestFloorPoint (vertex_t **v) const
 			if (linecount == 0) *v = &vertexes[0];
 			else *v = lines[0]->v1;
 		}
-		return floorplane.fD();
+		return -floorplane.fD();
 	}
 
 	for (i = 0; i < linecount; i++)

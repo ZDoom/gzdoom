@@ -1452,7 +1452,7 @@ void FPathTraverse::init(double x1, double y1, double x2, double y2, int flags, 
 	if (mapex > mapx)
 	{
 		mapxstep = 1;
-		partialx = xs_CeilToInt(xt1) - xt1;
+		partialx = 1. - xt1 + xs_FloorToInt(xt1);
 		ystep = (y2 - y1) / fabs(x2 - x1);
 	}
 	else if (mapex < mapx)
@@ -1469,11 +1469,10 @@ void FPathTraverse::init(double x1, double y1, double x2, double y2, int flags, 
 	}
 	yintercept = yt1 + partialx * ystep;
 
-		
 	if (mapey > mapy)
 	{
 		mapystep = 1;
-		partialy = xs_CeilToInt(yt1) - yt1;
+		partialy = 1. - yt1 + xs_FloorToInt(yt1);
 		xstep = (x2 - x1) / fabs(y2 - y1);
 	}
 	else if (mapey < mapy)

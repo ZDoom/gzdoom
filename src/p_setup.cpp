@@ -1314,7 +1314,7 @@ void P_LoadSegs (MapData * map)
 			// errors _can_ cause firelines.
 
 			DAngle ptp_angle = (li->v2->fPos() - li->v1->fPos()).Angle();
-			DAngle seg_angle = AngleToFloat(segangle);
+			DAngle seg_angle = AngleToFloat(segangle << 16);
 			DAngle delta_angle = absangle(ptp_angle, seg_angle);
 
 			if (delta_angle >= 1.)

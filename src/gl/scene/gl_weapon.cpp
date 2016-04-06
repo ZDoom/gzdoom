@@ -272,7 +272,7 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 				if (lightbottom<player->viewz) 
 				{
 					cm = lightlist[i].extra_colormap;
-					lightlevel = *lightlist[i].p_lightlevel;
+					lightlevel = gl_ClampLight(*lightlist[i].p_lightlevel);
 					break;
 				}
 			}

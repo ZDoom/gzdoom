@@ -119,7 +119,7 @@ public:
 	
 	float ViewDistance;
 
-	BYTE lightlevel;
+	int lightlevel;
 	BYTE type;
 	BYTE flags;
 	short rellight;

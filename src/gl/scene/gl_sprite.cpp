@@ -416,10 +416,7 @@ void GLSprite::SplitSprite(sector_t * frontsector, bool translucent)
 
 			if (glset.nocoloredspritelighting)
 			{
-				int v = (copySprite.Colormap.LightColor.r + copySprite.Colormap.LightColor.g + copySprite.Colormap.LightColor.b )/3;
-				copySprite.Colormap.LightColor.r=
-				copySprite.Colormap.LightColor.g=
-				copySprite.Colormap.LightColor.b=(255+v+v)/3;
+				copySprite.Colormap.Decolorize();
 			}
 
 			if (!gl_isWhite(ThingColor))
@@ -460,10 +457,7 @@ void GLSprite::SetSpriteColor(sector_t *sector, double center_y)
 
 			if (glset.nocoloredspritelighting)
 			{
-				int v = (Colormap.LightColor.r + Colormap.LightColor.g + Colormap.LightColor.b )/3;
-				Colormap.LightColor.r=
-				Colormap.LightColor.g=
-				Colormap.LightColor.b=(255+v+v)/3;
+				Colormap.Decolorize();
 			}
 
 			if (!gl_isWhite(ThingColor))
@@ -803,10 +797,7 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 		}
 		else if (glset.nocoloredspritelighting)
 		{
-			int v = (Colormap.LightColor.r /* * 77 */ + Colormap.LightColor.g /**143 */ + Colormap.LightColor.b /**35*/)/3;//255;
-			Colormap.LightColor.r=
-			Colormap.LightColor.g=
-			Colormap.LightColor.b=(255+v+v)/3;
+			Colormap.Decolorize();
 		}
 	}
 
@@ -967,10 +958,14 @@ void GLSprite::ProcessParticle (particle_t *particle, sector_t *sector)//, int s
 
 			if (lightbottom < particle->Pos.Z)
 			{
-				lightlevel = *lightlist[i].p_lightlevel;
+				lightlevel = gl_ClampLight(*lightlist[i].p_lightlevel);
 				Colormap.LightColor = (lightlist[i].extra_colormap)->Color;
 				break;
 			}
+		}
+		if (glset.nocoloredspritelighting)
+		{
+			Colormap.Decolorize();	// ZDoom never applies colored light to particles.
 		}
 	}
 	else
@@ -1041,6 +1036,7 @@ void GLSprite::ProcessParticle (particle_t *particle, sector_t *sector)//, int s
 
 	actor=NULL;
 	this->particle=particle;
+	fullbright = !!particle->bright;
 	
 	// [BB] Translucent particles have to be rendered without the alpha test.
 	if (gl_particles_style != 2 && trans>=1.0f-FLT_EPSILON) hw_styleflags = STYLEHW_Solid;

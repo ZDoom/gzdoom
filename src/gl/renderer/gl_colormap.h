@@ -73,6 +73,12 @@ struct FColormap
 		colormap = from->Desaturate>>3;
 		blendfactor = from->Color.a;
 	}
+
+	void Decolorize()	// this for 'nocoloredspritelighting' and not the same as desaturation. The normal formula results in a value that's too dark.
+	{
+		int v = (LightColor.r + LightColor.g + LightColor.b) / 3;
+		LightColor.r = LightColor.g = LightColor.b = (255 + v + v) / 3;
+	}
 };
 
 

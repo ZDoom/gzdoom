@@ -314,7 +314,7 @@ public:
 	friend struct GLDrawList;
 	friend void Mod_RenderModel(GLSprite * spr, model_t * mdl, int framenumber);
 
-	BYTE lightlevel;
+	int lightlevel;
 	BYTE foglevel;
 	BYTE hw_styleflags;
 	bool fullbright;

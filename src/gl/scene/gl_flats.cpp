@@ -447,7 +447,7 @@ void GLFlat::SetFrom3DFloor(F3DFloor *rover, bool top, bool underside)
 
 	// FF_FOG requires an inverted logic where to get the light from
 	lightlist_t *light = P_GetPlaneLight(sector, plane.plane, underside);
-	lightlevel = *light->p_lightlevel;
+	lightlevel = gl_ClampLight(*light->p_lightlevel);
 	
 	if (rover->flags & FF_FOG) Colormap.LightColor = (light->extra_colormap)->Fade;
 	else Colormap.CopyFrom3DLight(light);
@@ -544,7 +544,7 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 			if ((!(sector->GetFlags(sector_t::floor)&PLANEF_ABSLIGHTING) || light->lightsource == NULL)	
 				&& (light->p_lightlevel != &frontsector->lightlevel))
 			{
-				lightlevel = *light->p_lightlevel;
+				lightlevel = gl_ClampLight(*light->p_lightlevel);
 			}
 
 			Colormap.CopyFrom3DLight(light);
@@ -607,7 +607,7 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 			if ((!(sector->GetFlags(sector_t::ceiling)&PLANEF_ABSLIGHTING))
 				&& (light->p_lightlevel != &frontsector->lightlevel))
 			{
-				lightlevel = *light->p_lightlevel;
+				lightlevel = gl_ClampLight(*light->p_lightlevel);
 			}
 			Colormap.CopyFrom3DLight(light);
 		}

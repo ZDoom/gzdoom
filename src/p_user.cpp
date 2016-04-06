@@ -1510,7 +1510,6 @@ void APlayerPawn::TweakSpeeds (double &forward, double &side)
 	}
 
 	if (fabs(side) < 0x2800)
-	if ((unsigned int)(side + 0x27ff) < 0x4fff)
 	{
 		side *= SideMove1;
 	}

@@ -836,7 +836,7 @@ enum
 //Spawns teleport fog. Pass the actor to pluck TeleFogFromType and TeleFogToType. 'from' determines if this is the fog to spawn at the old position (true) or new (false).
 void P_SpawnTeleportFog(AActor *mobj, const DVector3 &pos, bool beforeTele = true, bool setTarget = false);
 
-inline bool P_Teleport(AActor *thing, DVector3 pos, DAngle angle, int flags);
+bool P_Teleport(AActor *thing, DVector3 pos, DAngle angle, int flags);
 bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, int flags);
 bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id, INTBOOL reverse);
 bool EV_TeleportOther (int other_tid, int dest_tid, bool fog);

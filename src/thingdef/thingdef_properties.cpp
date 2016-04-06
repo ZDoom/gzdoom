@@ -2358,14 +2358,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, face, S, PlayerPawn)
 	FString tmp = str;
 
 	tmp.ToUpper();
-	if (tmp.Len() != 3)
-	{
-		bag.ScriptPosition.Message(MSG_WARNING,
-			"Invalid face '%s' for '%s';\nSTF replacement codes must be 3 characters.\n",
-			tmp.GetChars(), info->TypeName.GetChars ());
-	}
-
-	bool valid = (
+	bool valid = (tmp.Len() == 3 &&
 		(((tmp[0] >= 'A') && (tmp[0] <= 'Z')) || ((tmp[0] >= '0') && (tmp[0] <= '9'))) &&
 		(((tmp[1] >= 'A') && (tmp[1] <= 'Z')) || ((tmp[1] >= '0') && (tmp[1] <= '9'))) &&
 		(((tmp[2] >= 'A') && (tmp[2] <= 'Z')) || ((tmp[2] >= '0') && (tmp[2] <= '9')))
@@ -2373,7 +2366,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, face, S, PlayerPawn)
 	if (!valid)
 	{
 		bag.ScriptPosition.Message(MSG_WARNING,
-			"Invalid face '%s' for '%s';\nSTF replacement codes must be alphanumeric.\n",
+			"Invalid face '%s' for '%s';\nSTF replacement codes must be 3 alphanumeric characters.\n",
 			tmp.GetChars(), info->TypeName.GetChars ());
 	}
 	

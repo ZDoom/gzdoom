@@ -2820,7 +2820,7 @@ void A_Face(AActor *self, AActor *other, DAngle max_turn, DAngle max_pitch, DAng
 	self->flags &= ~MF_AMBUSH;
 
 	DAngle other_angle = self->AngleTo(other);
-	DAngle delta = deltaangle(self->Angles.Yaw, other_angle);
+	DAngle delta = -deltaangle(self->Angles.Yaw, other_angle);
 
 	// 0 means no limit. Also, if we turn in a single step anyways, no need to go through the algorithms.
 	// It also means that there is no need to check for going past the other.

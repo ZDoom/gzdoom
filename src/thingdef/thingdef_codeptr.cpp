@@ -2109,7 +2109,7 @@ bool DoTakeInventory(AActor *receiver, bool orresult, VM_ARGS)
 	
 	if (itemtype == NULL)
 	{
-		return true;
+		return false;
 	}
 	if (!orresult)
 	{

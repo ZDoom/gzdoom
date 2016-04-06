@@ -3152,16 +3152,20 @@ DObject *PClass::CreateNew() const
 //
 // PClass :: InitializeSpecials
 //
-// Initialize special fields of a newly-created instance (e.g. strings).
+// Initialize special fields (e.g. strings) of a newly-created instance.
 //
 //==========================================================================
 
 void PClass::InitializeSpecials(void *addr) const
 {
-	if (ParentClass != NULL)
+	// Once we reach a native class, we can stop going up the family tree,
+	// since native classes handle initialization natively.
+	if (!bRuntimeClass)
 	{
-		ParentClass->InitializeSpecials(addr);
+		return;
 	}
+	assert(ParentClass != NULL);
+	ParentClass->InitializeSpecials(addr);
 	for (auto tao : SpecialInits)
 	{
 		tao.first->InitializeValue((BYTE*)addr + tao.second, Defaults + tao.second);
@@ -3172,19 +3176,27 @@ void PClass::InitializeSpecials(void *addr) const
 //
 // PClass :: DestroySpecials
 //
+// Destroy special fields (e.g. strings) of an instance that is about to be
+// deleted.
+//
 //==========================================================================
 
 void PClass::DestroySpecials(void *addr) const
 {
-	if (ParentClass != NULL)
+	// Once we reach a native class, we can stop going up the family tree,
+	// since native classes handle deinitialization natively.
+	if (!bRuntimeClass)
 	{
-		ParentClass->DestroySpecials(addr);
+		return;
 	}
+	assert(ParentClass != NULL);
+	ParentClass->DestroySpecials(addr);
 	for (auto tao : SpecialInits)
 	{
 		tao.first->DestroyValue((BYTE *)addr + tao.second);
 	}
 }
+
 //==========================================================================
 //
 // PClass :: Derive

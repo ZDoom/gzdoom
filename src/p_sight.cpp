@@ -651,7 +651,7 @@ bool SightCheck::P_SightPathTraverse ()
 	if (mapex > mapx)
 	{
 		mapxstep = 1;
-		partialx = xs_CeilToInt(xt1) - xt1;
+		partialx = 1. - xt1 + xs_FloorToInt(xt1);
 		ystep = (y2 - y1) / fabs(x2 - x1);
 	}
 	else if (mapex < mapx)
@@ -671,7 +671,7 @@ bool SightCheck::P_SightPathTraverse ()
 	if (mapey > mapy)
 	{
 		mapystep = 1;
-		partialy = xs_CeilToInt(yt1) - yt1;
+		partialy = 1. - yt1 + xs_FloorToInt(yt1);
 		xstep = (x2 - x1) / fabs(y2 - y1);
 	}
 	else if (mapey < mapy)

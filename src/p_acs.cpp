@@ -9073,14 +9073,14 @@ scriptwait:
 			// projectile a TID.
 			// Thing_Projectile2 (tid, type, angle, speed, vspeed, gravity, newtid);
 			P_Thing_Projectile(STACK(7), activator, STACK(6), NULL, STACK(5) * (360. / 256.),
-				ACSToDouble(STACK(4)) / 8., ACSToDouble(STACK(3)) / 8., 0, NULL, STACK(2), STACK(1), false);
+				STACK(4) / 8., STACK(3) / 8., 0, NULL, STACK(2), STACK(1), false);
 			sp -= 7;
 			break;
 
 		case PCD_SPAWNPROJECTILE:
 			// Same, but takes an actor name instead of a spawn ID.
 			P_Thing_Projectile(STACK(7), activator, 0, FBehavior::StaticLookupString(STACK(6)), STACK(5) * (360. / 256.),
-				ACSToDouble(STACK(4)) / 8., ACSToDouble(STACK(3)) / 8., 0, NULL, STACK(2), STACK(1), false);
+				STACK(4) / 8., STACK(3) / 8., 0, NULL, STACK(2), STACK(1), false);
 			sp -= 7;
 			break;
 

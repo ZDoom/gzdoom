@@ -335,6 +335,8 @@ bool	P_TeleportMove(AActor* thing, const DVector3 &pos, bool telefrag, bool modi
 	tmf.abovemidtex = false;
 	P_GetFloorCeilingZ(tmf, 0);
 
+	spechit.Clear();	// this is needed so that no more specials get activated after crossing a teleporter.
+
 	bool StompAlwaysFrags = ((thing->flags2 & MF2_TELESTOMP) || (level.flags & LEVEL_MONSTERSTELEFRAG) || telefrag) && !(thing->flags7 & MF7_NOTELESTOMP);
 
 	// P_LineOpening requires the thing's z to be the destination z in order to work.
@@ -2284,12 +2286,7 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 			line_t *ld = spec.line;
 			// see if the line was crossed
 
-			// One more case of trying to preserve some side effects from the original:
-			// If the reference position is the same as the actor's position before checking the spechits,
-			// we use the thing's actual position, including all the side effects of the original.
-			// If some portal transition has to be considered here, we cannot do that and use the reference position stored with the spechit.
-			bool posisoriginal = (spec.Refpos == lastpos);
-			side = posisoriginal? P_PointOnLineSide(thing->Pos(), ld) : P_PointOnLineSide(spec.Refpos, ld);
+			side = P_PointOnLineSide(spec.Refpos, ld);
 			oldside = P_PointOnLineSide(spec.Oldrefpos, ld);
 			if (side != oldside && ld->special && !(thing->flags6 & MF6_NOTRIGGER))
 			{
@@ -5049,7 +5046,7 @@ void P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bo
 	double bombdamagefloat = (double)bombdamage;
 
 	FPortalGroupArray grouplist(FPortalGroupArray::PGA_Full3d);
-	FMultiBlockThingsIterator it(grouplist, bombspot->X(), bombspot->Y(), bombspot->Z() - bombdistance, bombspot->Height + bombdistance*2, bombdistancefloat, false, bombspot->Sector);
+	FMultiBlockThingsIterator it(grouplist, bombspot->X(), bombspot->Y(), bombspot->Z() - bombdistance, bombspot->Height + bombdistance*2, bombdistance, false, bombspot->Sector);
 	FMultiBlockThingsIterator::CheckResult cres;
 
 	if (flags & RADF_SOURCEISSPOT)

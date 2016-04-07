@@ -620,7 +620,7 @@ void GLWall::DoTexture(int _type,seg_t * seg, int peg,
 
 	FTexCoordInfo tci;
 
-	gltexture->GetTexCoordInfo(&tci, seg->sidedef->GetTextureXScale(texpos), seg->sidedef->GetTextureYScale(texpos));
+	gltexture->GetTexCoordInfo(&tci, seg->sidedef, texpos);
 
 	type = _type;
 
@@ -679,12 +679,12 @@ void GLWall::DoMidTexture(seg_t * seg, bool drawfogboundary,
 		// Align the texture to the ORIGINAL sector's height!!
 		// At this point slopes don't matter because they don't affect the texture's z-position
 
-		gltexture->GetTexCoordInfo(&tci, seg->sidedef->GetTextureXScale(side_t::mid), seg->sidedef->GetTextureYScale(side_t::mid));
+		gltexture->GetTexCoordInfo(&tci, seg->sidedef, side_t::mid);
 		if (tci.mRenderHeight < 0)
 		{
 			mirrory = true;
 			tci.mRenderHeight = -tci.mRenderHeight;
-			tci.mScaleY = -tci.mScaleY;
+			tci.mScale.Y = -tci.mScale.Y;
 		}
 		float rowoffset = tci.RowOffset(seg->sidedef->GetTextureYOffsetF(side_t::mid));
 		if ((seg->linedef->flags & ML_DONTPEGBOTTOM) >0)
@@ -847,7 +847,7 @@ void GLWall::DoMidTexture(seg_t * seg, bool drawfogboundary,
 	if (mirrory)
 	{
 		tci.mRenderHeight = -tci.mRenderHeight;
-		tci.mScaleY = -tci.mScaleY;
+		tci.mScale.Y = -tci.mScale.Y;
 	}
 	SetWallCoordinates(seg, &tci, texturetop, topleft, topright, bottomleft, bottomright, t_ofs);
 
@@ -1019,19 +1019,19 @@ void GLWall::BuildFFBlock(seg_t * seg, F3DFloor * rover,
 		{
 			gltexture = FMaterial::ValidateTexture(seg->sidedef->GetTexture(side_t::top), false, true);
 			if (!gltexture) return;
-			gltexture->GetTexCoordInfo(&tci, seg->sidedef->GetTextureXScale(side_t::top), seg->sidedef->GetTextureYScale(side_t::top));
+			gltexture->GetTexCoordInfo(&tci, seg->sidedef, side_t::top);
 		}
 		else if (rover->flags&FF_LOWERTEXTURE)
 		{
 			gltexture = FMaterial::ValidateTexture(seg->sidedef->GetTexture(side_t::bottom), false, true);
 			if (!gltexture) return;
-			gltexture->GetTexCoordInfo(&tci, seg->sidedef->GetTextureXScale(side_t::bottom), seg->sidedef->GetTextureYScale(side_t::bottom));
+			gltexture->GetTexCoordInfo(&tci, seg->sidedef, side_t::bottom);
 		}
 		else
 		{
 			gltexture = FMaterial::ValidateTexture(mastersd->GetTexture(side_t::mid), false, true);
 			if (!gltexture) return;
-			gltexture->GetTexCoordInfo(&tci, mastersd->GetTextureXScale(side_t::mid), mastersd->GetTextureYScale(side_t::mid));
+			gltexture->GetTexCoordInfo(&tci, mastersd, side_t::mid);
 		}
 
 		to = (rover->flags&(FF_UPPERTEXTURE | FF_LOWERTEXTURE)) ? 0 : tci.TextureOffset(mastersd->GetTextureXOffsetF(side_t::mid));
@@ -1525,7 +1525,7 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 						// skip processing if the back is a malformed subsector
 						if (seg->PartnerSeg != NULL && !(seg->PartnerSeg->Subsector->hacked & 4))
 						{
-							gl_drawinfo->AddUpperMissingTexture(seg->sidedef, sub, FLOAT2FIXED(bch1a));
+							gl_drawinfo->AddUpperMissingTexture(seg->sidedef, sub, bch1a);
 						}
 					}
 				}
@@ -1608,7 +1608,7 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 					// skip processing if the back is a malformed subsector
 					if (seg->PartnerSeg != NULL && !(seg->PartnerSeg->Subsector->hacked & 4))
 					{
-						gl_drawinfo->AddLowerMissingTexture(seg->sidedef, sub, FLOAT2FIXED(bfh1));
+						gl_drawinfo->AddLowerMissingTexture(seg->sidedef, sub, bfh1);
 					}
 				}
 			}
@@ -1669,7 +1669,7 @@ void GLWall::ProcessLowerMiniseg(seg_t *seg, sector_t * frontsector, sector_t * 
 		{
 			FTexCoordInfo tci;
 			type = RENDERWALL_BOTTOM;
-			gltexture->GetTexCoordInfo(&tci, FRACUNIT, FRACUNIT);
+			gltexture->GetTexCoordInfo(&tci, 1.f, 1.f);
 			SetWallCoordinates(seg, &tci, bfh, bfh, bfh, ffh, ffh, 0);
 			PutWall(false);
 		}

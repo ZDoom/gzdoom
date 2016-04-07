@@ -227,9 +227,9 @@ void Plane::Init(float a, float b, float c, float d)
 
 void Plane::Set(secplane_t &plane)
 {
-   m_normal.Set(plane.Normal().X, plane.Normal().Z, plane.Normal().Y);
+   m_normal.Set((float)plane.Normal().X, (float)plane.Normal().Z, (float)plane.Normal().Y);
    //m_normal.Normalize(); the vector is already normalized
-   m_d = plane.fD();
+   m_d = (float)plane.fD();
 }
 
 

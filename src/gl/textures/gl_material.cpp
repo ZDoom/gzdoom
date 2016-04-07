@@ -329,15 +329,15 @@ const FHardwareTexture *FGLTexture::Bind(int texunit, int clampmode, int transla
 
 float FTexCoordInfo::RowOffset(float rowoffset) const
 {
-	if (mTempScaleY == FRACUNIT)
+	if (mTempScale.Y == 1.f)
 	{
-		if (mScaleY==FRACUNIT || mWorldPanning) return rowoffset;
-		else return rowoffset * FIXED2FLOAT(mScaleY);
+		if (mScale.Y == 1.f || mWorldPanning) return rowoffset;
+		else return rowoffset * mScale.Y;
 	}
 	else
 	{
-		if (mWorldPanning) return rowoffset * FIXED2FLOAT(mTempScaleY);
-		else return rowoffset * FIXED2FLOAT(mScaleY);
+		if (mWorldPanning) return rowoffset * mTempScale.Y;
+		else return rowoffset * mScale.Y;
 	}
 }
 
@@ -349,15 +349,15 @@ float FTexCoordInfo::RowOffset(float rowoffset) const
 
 float FTexCoordInfo::TextureOffset(float textureoffset) const
 {
-	if (mTempScaleX == FRACUNIT)
+	if (mTempScale.X == 1.f)
 	{
-		if (mScaleX==FRACUNIT || mWorldPanning) return textureoffset;
-		else return textureoffset * FIXED2FLOAT(mScaleX);
+		if (mScale.X == 1.f || mWorldPanning) return textureoffset;
+		else return textureoffset * mScale.X;
 	}
 	else
 	{
-		if (mWorldPanning) return textureoffset * FIXED2FLOAT(mTempScaleX);
-		else return textureoffset * FIXED2FLOAT(mScaleX);
+		if (mWorldPanning) return textureoffset * mTempScale.X;
+		else return textureoffset * mScale.X;
 	}
 }
 
@@ -367,12 +367,12 @@ float FTexCoordInfo::TextureOffset(float textureoffset) const
 //
 //===========================================================================
 
-fixed_t FTexCoordInfo::TextureAdjustWidth() const
+float FTexCoordInfo::TextureAdjustWidth() const
 {
 	if (mWorldPanning) 
 	{
-		if (mTempScaleX == FRACUNIT) return mRenderWidth;
-		else return FixedDiv(mWidth, mTempScaleX);
+		if (mTempScale.X == 1.f) return mRenderWidth;
+		else return mWidth * mTempScale.X;
 	}
 	else return mWidth;
 }
@@ -696,40 +696,38 @@ void FMaterial::Precache()
 //
 //===========================================================================
 
-void FMaterial::GetTexCoordInfo(FTexCoordInfo *tci, fixed_t x, fixed_t y) const
+void FMaterial::GetTexCoordInfo(FTexCoordInfo *tci, float x, float y) const
 {
-	if (x == FRACUNIT)
+	if (x == 1.f)
 	{
 		tci->mRenderWidth = mRenderWidth;
-		tci->mScaleX = FLOAT2FIXED(tex->Scale.X);
-		tci->mTempScaleX = FRACUNIT;
+		tci->mScale.X = tex->Scale.X;
+		tci->mTempScale.X = 1.f;
 	}
 	else
 	{
-		fixed_t scale_x = fixed_t(x * tex->Scale.X);
-		int foo = (mWidth << 17) / scale_x; 
-		tci->mRenderWidth = (foo >> 1) + (foo & 1); 
-		tci->mScaleX = scale_x;
-		tci->mTempScaleX = x;
+		float scale_x = x * tex->Scale.X;
+		tci->mRenderWidth = xs_CeilToInt(mWidth / scale_x);
+		tci->mScale.X = scale_x;
+		tci->mTempScale.X = x;
 	}
 
-	if (y == FRACUNIT)
+	if (y == 1.f)
 	{
 		tci->mRenderHeight = mRenderHeight;
-		tci->mScaleY = FLOAT2FIXED(tex->Scale.Y);
-		tci->mTempScaleY = FRACUNIT;
+		tci->mScale.Y = tex->Scale.Y;
+		tci->mTempScale.Y = 1.f;
 	}
 	else
 	{
-		fixed_t scale_y = fixed_t(y * tex->Scale.Y);
-		int foo = (mHeight << 17) / scale_y; 
-		tci->mRenderHeight = (foo >> 1) + (foo & 1); 
-		tci->mScaleY = scale_y;
-		tci->mTempScaleY = y;
+		float scale_y = y * tex->Scale.Y;
+		tci->mRenderHeight = xs_CeilToInt(mHeight / scale_y);
+		tci->mScale.Y = scale_y;
+		tci->mTempScale.Y = y;
 	}
 	if (tex->bHasCanvas) 
 	{
-		tci->mScaleY = -tci->mScaleY;
+		tci->mScale.Y = -tci->mScale.Y;
 		tci->mRenderHeight = -tci->mRenderHeight;
 	}
 	tci->mWorldPanning = tex->bWorldPanning;

@@ -444,7 +444,7 @@ void gl_InitPortals()
 			tempindex[i] = glLinePortals.Size();
 			line_t *pSrcLine = linePortals[i].mOrigin;
 			line_t *pLine = linePortals[i].mDestination;
-			FGLLinePortal glport = { pLine->v1, pLine->v2, 0, 0, &linePortals[i] };
+			FGLLinePortal glport = { pLine->v1, pLine->v2, {0, 0}, &linePortals[i] };
 			glLinePortals.Push(glport);
 
 			// We cannot do this grouping for non-linked portals because they can be changed at run time.
@@ -484,8 +484,7 @@ void gl_InitPortals()
 	}
 	for (auto glport : glLinePortals)
 	{
-		glport.dx = glport.v2->fixX() - glport.v1->fixX();
-		glport.dy = glport.v2->fixY() - glport.v1->fixY();
+		glport.delta = glport.v2->fPos() - glport.v1->fPos();
 	}
 	linePortalToGL.Resize(linePortals.Size());
 	for (unsigned i = 0; i < linePortals.Size(); i++)

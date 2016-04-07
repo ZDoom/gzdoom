@@ -140,12 +140,12 @@ void FDrawInfo::AddOtherCeilingPlane(int sector, gl_subsectorrendernode * node)
 // Collects all sectors that might need a fake ceiling
 //
 //==========================================================================
-void FDrawInfo::AddUpperMissingTexture(side_t * side, subsector_t *sub, fixed_t backheight)
+void FDrawInfo::AddUpperMissingTexture(side_t * side, subsector_t *sub, float Backheight)
 {
 	if (!side->segs[0]->backsector) return;
 
 	totalms.Clock();
-	for(int i=0; i<side->numsegs; i++)
+	for (int i = 0; i < side->numsegs; i++)
 	{
 		seg_t *seg = side->segs[i];
 
@@ -156,35 +156,35 @@ void FDrawInfo::AddUpperMissingTexture(side_t * side, subsector_t *sub, fixed_t 
 			MissingSegInfo msi;
 
 
-			if (sub->render_sector != sub->sector || seg->frontsector != sub->sector) 
+			if (sub->render_sector != sub->sector || seg->frontsector != sub->sector)
 			{
 				totalms.Unclock();
 				return;
 			}
 
-			for(unsigned int i=0;i<MissingUpperTextures.Size();i++)
+			for (unsigned int i = 0; i < MissingUpperTextures.Size(); i++)
 			{
 				if (MissingUpperTextures[i].sub == sub)
 				{
 					// Use the lowest adjoining height to draw a fake ceiling if necessary
-					if (backheight < MissingUpperTextures[i].planez) 
+					if (Backheight < MissingUpperTextures[i].Planez)
 					{
-						MissingUpperTextures[i].planez = backheight;
+						MissingUpperTextures[i].Planez = Backheight;
 						MissingUpperTextures[i].seg = seg;
 					}
 
 					msi.MTI_Index = i;
-					msi.seg=seg;
+					msi.seg = seg;
 					MissingUpperSegs.Push(msi);
 					totalms.Unclock();
 					return;
 				}
 			}
-			mti.seg=seg;
-			mti.sub=sub;
-			mti.planez=backheight;
+			mti.seg = seg;
+			mti.sub = sub;
+			mti.Planez = Backheight;
 			msi.MTI_Index = MissingUpperTextures.Push(mti);
-			msi.seg=seg;
+			msi.seg = seg;
 			MissingUpperSegs.Push(msi);
 		}
 	}
@@ -196,7 +196,7 @@ void FDrawInfo::AddUpperMissingTexture(side_t * side, subsector_t *sub, fixed_t 
 // Collects all sectors that might need a fake floor
 //
 //==========================================================================
-void FDrawInfo::AddLowerMissingTexture(side_t * side, subsector_t *sub, fixed_t backheight)
+void FDrawInfo::AddLowerMissingTexture(side_t * side, subsector_t *sub, float Backheight)
 {
 	sector_t *backsec = side->segs[0]->backsector;
 	if (!backsec) return;
@@ -209,7 +209,7 @@ void FDrawInfo::AddLowerMissingTexture(side_t * side, subsector_t *sub, fixed_t 
 
 	totalms.Clock();
 	// we need to check all segs of this sidedef
-	for(int i=0; i<side->numsegs; i++)
+	for (int i = 0; i < side->numsegs; i++)
 	{
 		seg_t *seg = side->segs[i];
 
@@ -221,42 +221,42 @@ void FDrawInfo::AddLowerMissingTexture(side_t * side, subsector_t *sub, fixed_t 
 
 			subsector_t * sub = seg->Subsector;
 
-			if (sub->render_sector != sub->sector || seg->frontsector != sub->sector) 
+			if (sub->render_sector != sub->sector || seg->frontsector != sub->sector)
 			{
 				totalms.Unclock();
 				return;
 			}
 
 			// Ignore FF_FIX's because they are designed to abuse missing textures
-			if (seg->backsector->e->XFloor.ffloors.Size() && (seg->backsector->e->XFloor.ffloors[0]->flags&(FF_FIX|FF_SEETHROUGH)) == FF_FIX)
+			if (seg->backsector->e->XFloor.ffloors.Size() && (seg->backsector->e->XFloor.ffloors[0]->flags&(FF_FIX | FF_SEETHROUGH)) == FF_FIX)
 			{
 				totalms.Unclock();
 				return;
 			}
 
-			for(unsigned int i=0;i<MissingLowerTextures.Size();i++)
+			for (unsigned int i = 0; i < MissingLowerTextures.Size(); i++)
 			{
 				if (MissingLowerTextures[i].sub == sub)
 				{
 					// Use the highest adjoining height to draw a fake floor if necessary
-					if (backheight > MissingLowerTextures[i].planez) 
+					if (Backheight > MissingLowerTextures[i].Planez)
 					{
-						MissingLowerTextures[i].planez = backheight;
+						MissingLowerTextures[i].Planez = Backheight;
 						MissingLowerTextures[i].seg = seg;
 					}
 
 					msi.MTI_Index = i;
-					msi.seg=seg;
+					msi.seg = seg;
 					MissingLowerSegs.Push(msi);
 					totalms.Unclock();
 					return;
 				}
 			}
-			mti.seg=seg;
+			mti.seg = seg;
 			mti.sub = sub;
-			mti.planez=backheight;
+			mti.Planez = Backheight;
 			msi.MTI_Index = MissingLowerTextures.Push(mti);
-			msi.seg=seg;
+			msi.seg = seg;
 			MissingLowerSegs.Push(msi);
 		}
 	}
@@ -269,24 +269,24 @@ void FDrawInfo::AddLowerMissingTexture(side_t * side, subsector_t *sub, fixed_t 
 // 
 //
 //==========================================================================
-bool FDrawInfo::DoOneSectorUpper(subsector_t * subsec, fixed_t planez)
+bool FDrawInfo::DoOneSectorUpper(subsector_t * subsec, float Planez)
 {
 	// Is there a one-sided wall in this sector?
 	// Do this first to avoid unnecessary recursion
-	for(DWORD i=0; i< subsec->numlines; i++)
+	for (DWORD i = 0; i < subsec->numlines; i++)
 	{
 		if (subsec->firstline[i].backsector == NULL) return false;
 		if (subsec->firstline[i].PartnerSeg == NULL) return false;
 	}
 
-	for(DWORD i=0; i< subsec->numlines; i++)
+	for (DWORD i = 0; i < subsec->numlines; i++)
 	{
-		seg_t * seg = subsec->firstline +i;
+		seg_t * seg = subsec->firstline + i;
 		subsector_t * backsub = seg->PartnerSeg->Subsector;
 
 		// already checked?
-		if (backsub->validcount == validcount) continue;	
-		backsub->validcount=validcount;
+		if (backsub->validcount == validcount) continue;
+		backsub->validcount = validcount;
 
 		if (seg->frontsector != seg->backsector && seg->linedef)
 		{
@@ -299,22 +299,22 @@ bool FDrawInfo::DoOneSectorUpper(subsector_t * subsec, fixed_t planez)
 			if (sec->ceilingplane.isSlope())  return false;
 
 			// Is the neighboring ceiling lower than the desired height?
-			if (sec->GetPlaneTexZ(sector_t::ceiling)<planez) 
+			if (sec->GetPlaneTexZF(sector_t::ceiling) < Planez)
 			{
 				// todo: check for missing textures.
 				return false;
 			}
 
 			// This is an exact height match which means we don't have to do any further checks for this sector
-			if (sec->GetPlaneTexZ(sector_t::ceiling)==planez) 
+			if (sec->GetPlaneTexZF(sector_t::ceiling) == Planez)
 			{
 				// If there's a texture abort
 				FTexture * tex = TexMan[seg->sidedef->GetTexture(side_t::top)];
-				if (!tex || tex->UseType==FTexture::TEX_Null) continue;
+				if (!tex || tex->UseType == FTexture::TEX_Null) continue;
 				else return false;
 			}
 		}
-		if (!DoOneSectorUpper(backsub, planez)) return false;
+		if (!DoOneSectorUpper(backsub, Planez)) return false;
 	}
 	// all checked ok. This subsector is part of the current fake plane
 
@@ -327,24 +327,24 @@ bool FDrawInfo::DoOneSectorUpper(subsector_t * subsec, fixed_t planez)
 // 
 //
 //==========================================================================
-bool FDrawInfo::DoOneSectorLower(subsector_t * subsec, fixed_t planez)
+bool FDrawInfo::DoOneSectorLower(subsector_t * subsec, float Planez)
 {
 	// Is there a one-sided wall in this subsector?
 	// Do this first to avoid unnecessary recursion
-	for(DWORD i=0; i< subsec->numlines; i++)
+	for (DWORD i = 0; i < subsec->numlines; i++)
 	{
 		if (subsec->firstline[i].backsector == NULL) return false;
 		if (subsec->firstline[i].PartnerSeg == NULL) return false;
 	}
 
-	for(DWORD i=0; i< subsec->numlines; i++)
+	for (DWORD i = 0; i < subsec->numlines; i++)
 	{
 		seg_t * seg = subsec->firstline + i;
 		subsector_t * backsub = seg->PartnerSeg->Subsector;
 
 		// already checked?
-		if (backsub->validcount == validcount) continue;	
-		backsub->validcount=validcount;
+		if (backsub->validcount == validcount) continue;
+		backsub->validcount = validcount;
 
 		if (seg->frontsector != seg->backsector && seg->linedef)
 		{
@@ -357,22 +357,22 @@ bool FDrawInfo::DoOneSectorLower(subsector_t * subsec, fixed_t planez)
 			if (sec->floorplane.isSlope())  return false;
 
 			// Is the neighboring floor higher than the desired height?
-			if (sec->GetPlaneTexZ(sector_t::floor)>planez) 
+			if (sec->GetPlaneTexZF(sector_t::floor) > Planez)
 			{
 				// todo: check for missing textures.
 				return false;
 			}
 
 			// This is an exact height match which means we don't have to do any further checks for this sector
-			if (sec->GetPlaneTexZ(sector_t::floor)==planez) 
+			if (sec->GetPlaneTexZF(sector_t::floor) == Planez)
 			{
 				// If there's a texture abort
 				FTexture * tex = TexMan[seg->sidedef->GetTexture(side_t::bottom)];
-				if (!tex || tex->UseType==FTexture::TEX_Null) continue;
+				if (!tex || tex->UseType == FTexture::TEX_Null) continue;
 				else return false;
 			}
 		}
-		if (!DoOneSectorLower(backsub, planez)) return false;
+		if (!DoOneSectorLower(backsub, Planez)) return false;
 	}
 	// all checked ok. This sector is part of the current fake plane
 
@@ -386,24 +386,24 @@ bool FDrawInfo::DoOneSectorLower(subsector_t * subsec, fixed_t planez)
 //
 //
 //==========================================================================
-bool FDrawInfo::DoFakeBridge(subsector_t * subsec, fixed_t planez)
+bool FDrawInfo::DoFakeBridge(subsector_t * subsec, float Planez)
 {
 	// Is there a one-sided wall in this sector?
 	// Do this first to avoid unnecessary recursion
-	for(DWORD i=0; i< subsec->numlines; i++)
+	for (DWORD i = 0; i < subsec->numlines; i++)
 	{
 		if (subsec->firstline[i].backsector == NULL) return false;
 		if (subsec->firstline[i].PartnerSeg == NULL) return false;
 	}
 
-	for(DWORD i=0; i< subsec->numlines; i++)
+	for (DWORD i = 0; i < subsec->numlines; i++)
 	{
 		seg_t * seg = subsec->firstline + i;
 		subsector_t * backsub = seg->PartnerSeg->Subsector;
 
 		// already checked?
-		if (backsub->validcount == validcount) continue;	
-		backsub->validcount=validcount;
+		if (backsub->validcount == validcount) continue;
+		backsub->validcount = validcount;
 
 		if (seg->frontsector != seg->backsector && seg->linedef)
 		{
@@ -416,7 +416,7 @@ bool FDrawInfo::DoFakeBridge(subsector_t * subsec, fixed_t planez)
 			if (sec->floorplane.isSlope())  return false;
 
 			// Is the neighboring floor higher than the desired height?
-			if (sec->GetPlaneTexZ(sector_t::floor)<planez) 
+			if (sec->GetPlaneTexZF(sector_t::floor) < Planez)
 			{
 				// todo: check for missing textures.
 				return false;
@@ -424,9 +424,9 @@ bool FDrawInfo::DoFakeBridge(subsector_t * subsec, fixed_t planez)
 
 			// This is an exact height match which means we don't have to do any further checks for this sector
 			// No texture checks though! 
-			if (sec->GetPlaneTexZ(sector_t::floor)==planez) continue;
+			if (sec->GetPlaneTexZF(sector_t::floor) == Planez) continue;
 		}
-		if (!DoFakeBridge(backsub, planez)) return false;
+		if (!DoFakeBridge(backsub, Planez)) return false;
 	}
 	// all checked ok. This sector is part of the current fake plane
 
@@ -439,24 +439,24 @@ bool FDrawInfo::DoFakeBridge(subsector_t * subsec, fixed_t planez)
 //
 //
 //==========================================================================
-bool FDrawInfo::DoFakeCeilingBridge(subsector_t * subsec, fixed_t planez)
+bool FDrawInfo::DoFakeCeilingBridge(subsector_t * subsec, float Planez)
 {
 	// Is there a one-sided wall in this sector?
 	// Do this first to avoid unnecessary recursion
-	for(DWORD i=0; i< subsec->numlines; i++)
+	for (DWORD i = 0; i < subsec->numlines; i++)
 	{
 		if (subsec->firstline[i].backsector == NULL) return false;
 		if (subsec->firstline[i].PartnerSeg == NULL) return false;
 	}
 
-	for(DWORD i=0; i< subsec->numlines; i++)
+	for (DWORD i = 0; i < subsec->numlines; i++)
 	{
 		seg_t * seg = subsec->firstline + i;
 		subsector_t * backsub = seg->PartnerSeg->Subsector;
 
 		// already checked?
-		if (backsub->validcount == validcount) continue;	
-		backsub->validcount=validcount;
+		if (backsub->validcount == validcount) continue;
+		backsub->validcount = validcount;
 
 		if (seg->frontsector != seg->backsector && seg->linedef)
 		{
@@ -469,7 +469,7 @@ bool FDrawInfo::DoFakeCeilingBridge(subsector_t * subsec, fixed_t planez)
 			if (sec->ceilingplane.isSlope())  return false;
 
 			// Is the neighboring ceiling higher than the desired height?
-			if (sec->GetPlaneTexZ(sector_t::ceiling)>planez) 
+			if (sec->GetPlaneTexZF(sector_t::ceiling) > Planez)
 			{
 				// todo: check for missing textures.
 				return false;
@@ -477,9 +477,9 @@ bool FDrawInfo::DoFakeCeilingBridge(subsector_t * subsec, fixed_t planez)
 
 			// This is an exact height match which means we don't have to do any further checks for this sector
 			// No texture checks though! 
-			if (sec->GetPlaneTexZ(sector_t::ceiling)==planez) continue;
+			if (sec->GetPlaneTexZF(sector_t::ceiling) == Planez) continue;
 		}
-		if (!DoFakeCeilingBridge(backsub, planez)) return false;
+		if (!DoFakeCeilingBridge(backsub, Planez)) return false;
 	}
 	// all checked ok. This sector is part of the current fake plane
 
@@ -497,49 +497,49 @@ void FDrawInfo::HandleMissingTextures()
 {
 	sector_t fake;
 	totalms.Clock();
-	totalupper=MissingUpperTextures.Size();
-	totallower=MissingLowerTextures.Size();
+	totalupper = MissingUpperTextures.Size();
+	totallower = MissingLowerTextures.Size();
 
-	for(unsigned int i=0;i<MissingUpperTextures.Size();i++)
+	for (unsigned int i = 0; i < MissingUpperTextures.Size(); i++)
 	{
 		if (!MissingUpperTextures[i].seg) continue;
 		HandledSubsectors.Clear();
 		validcount++;
 
-		if (MissingUpperTextures[i].planez > FLOAT2FIXED(ViewPos.Z))
+		if (MissingUpperTextures[i].Planez > ViewPos.Z)
 		{
 			// close the hole only if all neighboring sectors are an exact height match
 			// Otherwise just fill in the missing textures.
-			MissingUpperTextures[i].sub->validcount=validcount;
-			if (DoOneSectorUpper(MissingUpperTextures[i].sub, MissingUpperTextures[i].planez))
+			MissingUpperTextures[i].sub->validcount = validcount;
+			if (DoOneSectorUpper(MissingUpperTextures[i].sub, MissingUpperTextures[i].Planez))
 			{
 				sector_t * sec = MissingUpperTextures[i].seg->backsector;
 				// The mere fact that this seg has been added to the list means that the back sector
 				// will be rendered so we can safely assume that it is already in the render list
 
-				for(unsigned int j=0;j<HandledSubsectors.Size();j++)
-				{				
+				for (unsigned int j = 0; j < HandledSubsectors.Size(); j++)
+				{
 					gl_subsectorrendernode * node = SSR_List.GetNew();
 					node->sub = HandledSubsectors[j];
 
 					AddOtherCeilingPlane(sec->sectornum, node);
 				}
 
-				if (HandledSubsectors.Size()!=1)
+				if (HandledSubsectors.Size() != 1)
 				{
 					// mark all subsectors in the missing list that got processed by this
-					for(unsigned int j=0;j<HandledSubsectors.Size();j++)
+					for (unsigned int j = 0; j < HandledSubsectors.Size(); j++)
 					{
-						for(unsigned int k=0;k<MissingUpperTextures.Size();k++)
+						for (unsigned int k = 0; k < MissingUpperTextures.Size(); k++)
 						{
-							if (MissingUpperTextures[k].sub==HandledSubsectors[j])
+							if (MissingUpperTextures[k].sub == HandledSubsectors[j])
 							{
-								MissingUpperTextures[k].seg=NULL;
+								MissingUpperTextures[k].seg = NULL;
 							}
 						}
 					}
 				}
-				else MissingUpperTextures[i].seg=NULL;
+				else MissingUpperTextures[i].seg = NULL;
 				continue;
 			}
 		}
@@ -553,16 +553,16 @@ void FDrawInfo::HandleMissingTextures()
 		{
 			// It isn't a hole. Now check whether it might be a fake bridge
 			sector_t * fakesector = gl_FakeFlat(MissingUpperTextures[i].seg->frontsector, &fake, false);
-			fixed_t planez = fakesector->GetPlaneTexZ(sector_t::ceiling);
+			float planez = (float)fakesector->GetPlaneTexZF(sector_t::ceiling);
 
-			backsub->validcount=validcount;
+			backsub->validcount = validcount;
 			if (DoFakeCeilingBridge(backsub, planez))
 			{
 				// The mere fact that this seg has been added to the list means that the back sector
 				// will be rendered so we can safely assume that it is already in the render list
 
-				for(unsigned int j=0;j<HandledSubsectors.Size();j++)
-				{				
+				for (unsigned int j = 0; j < HandledSubsectors.Size(); j++)
+				{
 					gl_subsectorrendernode * node = SSR_List.GetNew();
 					node->sub = HandledSubsectors[j];
 					AddOtherCeilingPlane(fakesector->sectornum, node);
@@ -572,45 +572,45 @@ void FDrawInfo::HandleMissingTextures()
 		}
 	}
 
-	for(unsigned int i=0;i<MissingLowerTextures.Size();i++)
+	for (unsigned int i = 0; i < MissingLowerTextures.Size(); i++)
 	{
 		if (!MissingLowerTextures[i].seg) continue;
 		HandledSubsectors.Clear();
 		validcount++;
 
-		if (MissingLowerTextures[i].planez < FLOAT2FIXED(ViewPos.Z))
+		if (MissingLowerTextures[i].Planez < ViewPos.Z)
 		{
 			// close the hole only if all neighboring sectors are an exact height match
 			// Otherwise just fill in the missing textures.
-			MissingLowerTextures[i].sub->validcount=validcount;
-			if (DoOneSectorLower(MissingLowerTextures[i].sub, MissingLowerTextures[i].planez))
+			MissingLowerTextures[i].sub->validcount = validcount;
+			if (DoOneSectorLower(MissingLowerTextures[i].sub, MissingLowerTextures[i].Planez))
 			{
 				sector_t * sec = MissingLowerTextures[i].seg->backsector;
 				// The mere fact that this seg has been added to the list means that the back sector
 				// will be rendered so we can safely assume that it is already in the render list
 
-				for(unsigned int j=0;j<HandledSubsectors.Size();j++)
-				{				
+				for (unsigned int j = 0; j < HandledSubsectors.Size(); j++)
+				{
 					gl_subsectorrendernode * node = SSR_List.GetNew();
 					node->sub = HandledSubsectors[j];
 					AddOtherFloorPlane(sec->sectornum, node);
 				}
 
-				if (HandledSubsectors.Size()!=1)
+				if (HandledSubsectors.Size() != 1)
 				{
 					// mark all subsectors in the missing list that got processed by this
-					for(unsigned int j=0;j<HandledSubsectors.Size();j++)
+					for (unsigned int j = 0; j < HandledSubsectors.Size(); j++)
 					{
-						for(unsigned int k=0;k<MissingLowerTextures.Size();k++)
+						for (unsigned int k = 0; k < MissingLowerTextures.Size(); k++)
 						{
-							if (MissingLowerTextures[k].sub==HandledSubsectors[j])
+							if (MissingLowerTextures[k].sub == HandledSubsectors[j])
 							{
-								MissingLowerTextures[k].seg=NULL;
+								MissingLowerTextures[k].seg = NULL;
 							}
 						}
 					}
 				}
-				else MissingLowerTextures[i].seg=NULL;
+				else MissingLowerTextures[i].seg = NULL;
 				continue;
 			}
 		}
@@ -624,16 +624,16 @@ void FDrawInfo::HandleMissingTextures()
 		{
 			// It isn't a hole. Now check whether it might be a fake bridge
 			sector_t * fakesector = gl_FakeFlat(MissingLowerTextures[i].seg->frontsector, &fake, false);
-			fixed_t planez = fakesector->GetPlaneTexZ(sector_t::floor);
+			float planez = (float)fakesector->GetPlaneTexZF(sector_t::floor);
 
-			backsub->validcount=validcount;
+			backsub->validcount = validcount;
 			if (DoFakeBridge(backsub, planez))
 			{
 				// The mere fact that this seg has been added to the list means that the back sector
 				// will be rendered so we can safely assume that it is already in the render list
 
-				for(unsigned int j=0;j<HandledSubsectors.Size();j++)
-				{				
+				for (unsigned int j = 0; j < HandledSubsectors.Size(); j++)
+				{
 					gl_subsectorrendernode * node = SSR_List.GetNew();
 					node->sub = HandledSubsectors[j];
 					AddOtherFloorPlane(fakesector->sectornum, node);
@@ -644,7 +644,7 @@ void FDrawInfo::HandleMissingTextures()
 	}
 
 	totalms.Unclock();
-	showtotalms=totalms;
+	showtotalms = totalms;
 	totalms.Reset();
 }
 
@@ -658,43 +658,43 @@ void FDrawInfo::HandleMissingTextures()
 void FDrawInfo::DrawUnhandledMissingTextures()
 {
 	validcount++;
-	for(int i=MissingUpperSegs.Size()-1; i>=0; i--)
+	for (int i = MissingUpperSegs.Size() - 1; i >= 0; i--)
 	{
 		int index = MissingUpperSegs[i].MTI_Index;
-		if (index>=0 && MissingUpperTextures[index].seg==NULL) continue;
+		if (index >= 0 && MissingUpperTextures[index].seg == NULL) continue;
 
 		seg_t * seg = MissingUpperSegs[i].seg;
 
 		// already done!
-		if (seg->linedef->validcount==validcount) continue;		// already done
-		seg->linedef->validcount=validcount;
+		if (seg->linedef->validcount == validcount) continue;		// already done
+		seg->linedef->validcount = validcount;
 		if (seg->frontsector->GetPlaneTexZF(sector_t::ceiling) < ViewPos.Z) continue;	// out of sight
 		//if (seg->frontsector->ceilingpic==skyflatnum) continue;
 
 		// FIXME: The check for degenerate subsectors should be more precise
 		if (seg->PartnerSeg && (seg->PartnerSeg->Subsector->flags & SSECF_DEGENERATE)) continue;
 		if (seg->backsector->transdoor) continue;
-		if (seg->backsector->GetTexture(sector_t::ceiling)==skyflatnum) continue;
+		if (seg->backsector->GetTexture(sector_t::ceiling) == skyflatnum) continue;
 		if (seg->backsector->portals[sector_t::ceiling] != NULL) continue;
 
 		if (!glset.notexturefill) FloodUpperGap(seg);
 	}
 
 	validcount++;
-	for(int i=MissingLowerSegs.Size()-1; i>=0; i--)
+	for (int i = MissingLowerSegs.Size() - 1; i >= 0; i--)
 	{
 		int index = MissingLowerSegs[i].MTI_Index;
-		if (index>=0 && MissingLowerTextures[index].seg==NULL) continue;
+		if (index >= 0 && MissingLowerTextures[index].seg == NULL) continue;
 
 		seg_t * seg = MissingLowerSegs[i].seg;
 
 		// already done!
-		if (seg->linedef->validcount==validcount) continue;		// already done
-		seg->linedef->validcount=validcount;
+		if (seg->linedef->validcount == validcount) continue;		// already done
+		seg->linedef->validcount = validcount;
 		if (!(sectorrenderflags[seg->backsector->sectornum] & SSRF_RENDERFLOOR)) continue;
 		if (seg->frontsector->GetPlaneTexZF(sector_t::floor) > ViewPos.Z) continue;	// out of sight
 		if (seg->backsector->transdoor) continue;
-		if (seg->backsector->GetTexture(sector_t::floor)==skyflatnum) continue;
+		if (seg->backsector->GetTexture(sector_t::floor) == skyflatnum) continue;
 		if (seg->backsector->portals[sector_t::floor] != NULL) continue;
 
 		if (!glset.notexturefill) FloodLowerGap(seg);

@@ -101,25 +101,24 @@ FSkyVertexBuffer::~FSkyVertexBuffer()
 //
 //-----------------------------------------------------------------------------
 
-void FSkyVertexBuffer::SkyVertex(int r, int c, bool yflip)
+void FSkyVertexBuffer::SkyVertex(int r, int c, bool zflip)
 {
-	static const angle_t maxSideAngle = ANGLE_180 / 3;
-	static const fixed_t scale = 10000 << FRACBITS;
+	static const FAngle maxSideAngle = 60.f;
+	static const float scale = 10000.;
 
-	angle_t topAngle= (angle_t)(c / (float)mColumns * ANGLE_MAX);
-	angle_t sideAngle = maxSideAngle * (mRows - r) / mRows;
-	fixed_t height = finesine[sideAngle>>ANGLETOFINESHIFT];
-	fixed_t realRadius = FixedMul(scale, finecosine[sideAngle>>ANGLETOFINESHIFT]);
-	fixed_t x = FixedMul(realRadius, finecosine[topAngle>>ANGLETOFINESHIFT]);
-	fixed_t y = (!yflip) ? FixedMul(scale, height) : FixedMul(scale, height) * -1;
-	fixed_t z = FixedMul(realRadius, finesine[topAngle>>ANGLETOFINESHIFT]);
+	FAngle topAngle= (c / (float)mColumns * 360.f);
+	FAngle sideAngle = maxSideAngle * (mRows - r) / mRows;
+	float height = sideAngle.Sin();
+	float realRadius = scale * sideAngle.Cos();
+	FVector2 pos = topAngle.ToVector(realRadius);
+	float z = (!zflip) ? scale * height : -scale * height;
 
 	FSkyVertex vert;
 	
 	vert.color = r == 0 ? 0xffffff : 0xffffffff;
 		
 	// And the texture coordinates.
-	if(!yflip)	// Flipped Y is for the lower hemisphere.
+	if(!zflip)	// Flipped Y is for the lower hemisphere.
 	{
 		vert.u = (-c / (float)mColumns) ;
 		vert.v = (r / (float)mRows);
@@ -130,11 +129,11 @@ void FSkyVertexBuffer::SkyVertex(int r, int c, bool yflip)
 		vert.v = 1.0f + ((mRows - r) / (float)mRows);
 	}
 
-	if (r != 4) y+=FRACUNIT*300;
+	if (r != 4) z+=300;
 	// And finally the vertex.
-	vert.x =-FIXED2FLOAT(x);	// Doom mirrors the sky vertically!
-	vert.y = FIXED2FLOAT(y) - 1.f;
-	vert.z = FIXED2FLOAT(z);
+	vert.x = -pos.X;	// Doom mirrors the sky vertically!
+	vert.y = z - 1.f;
+	vert.z = pos.Y;
 
 	mVertices.Push(vert);
 }
@@ -149,13 +148,13 @@ void FSkyVertexBuffer::SkyVertex(int r, int c, bool yflip)
 void FSkyVertexBuffer::CreateSkyHemisphere(int hemi)
 {
 	int r, c;
-	bool yflip = !!(hemi & SKYHEMI_LOWER);
+	bool zflip = !!(hemi & SKYHEMI_LOWER);
 
 	mPrimStart.Push(mVertices.Size());
 
 	for (c = 0; c < mColumns; c++)
 	{
-		SkyVertex(1, c, yflip);
+		SkyVertex(1, c, zflip);
 	}
 
 	// The total number of triangles per hemisphere can be calculated
@@ -165,8 +164,8 @@ void FSkyVertexBuffer::CreateSkyHemisphere(int hemi)
 		mPrimStart.Push(mVertices.Size());
 		for (c = 0; c <= mColumns; c++)
 		{
-			SkyVertex(r + yflip, c, yflip);
-			SkyVertex(r + 1 - yflip, c, yflip);
+			SkyVertex(r + zflip, c, zflip);
+			SkyVertex(r + 1 - zflip, c, zflip);
 		}
 	}
 }

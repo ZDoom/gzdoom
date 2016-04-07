@@ -70,16 +70,17 @@ EXTERN_CVAR (Bool, r_deathcamera)
 //
 //==========================================================================
 
-void FGLRenderer::DrawPSprite (player_t * player,pspdef_t *psp,fixed_t sx, fixed_t sy, int cm_index, bool hudModelStep, int OverrideShader)
+void FGLRenderer::DrawPSprite (player_t * player,pspdef_t *psp, float sx, float sy, int cm_index, bool hudModelStep, int OverrideShader)
 {
 	float			fU1,fV1;
 	float			fU2,fV2;
-	fixed_t			tx;
-	int				x1,y1,x2,y2;
+	float			tx;
+	float			x1,y1,x2,y2;
 	float			scale;
-	fixed_t			scalex;
-	fixed_t			texturemid;// 4:3		16:9		16:10			17:10			5:4		  	17:10    		21:9
-	static fixed_t xratio[] = {FRACUNIT, FRACUNIT*3/4, FRACUNIT*5/6, FRACUNIT*40/51, FRACUNIT, FRACUNIT*40/51, FRACUNIT*4/7};
+	float			scalex;
+	float			ftexturemid;
+	                      // 4:3  16:9   16:10  17:10    5:4  17:10    21:9
+	static float xratio[] = {1.f, 3.f/4, 5.f/6, 40.f/51, 1.f, 40.f/51, 4.f/7};
 	
 	// [BB] In the HUD model step we just render the model and break out. 
 	if ( hudModelStep )
@@ -98,41 +99,43 @@ void FGLRenderer::DrawPSprite (player_t * player,pspdef_t *psp,fixed_t sx, fixed
 
 	tex->BindPatch(cm_index, 0, OverrideShader);
 
-	int vw = viewwidth;
-	int vh = viewheight;
+	float vw = (float)viewwidth;
+	float vh = (float)viewheight;
 
 	// calculate edges of the shape
 	scalex = xratio[WidescreenRatio] * vw / 320;
 
-	tx = sx - ((160 + tex->GetScaledLeftOffset(GLUSE_PATCH))<<FRACBITS);
-	x1 = (FixedMul(tx, scalex)>>FRACBITS) + (vw>>1);
+	tx = sx - (160 + tex->GetScaledLeftOffset(GLUSE_PATCH));
+	x1 = tx * scalex + vw/2;
 	if (x1 > vw)	return; // off the right side
-	x1+=viewwindowx;
+	x1 += viewwindowx;
 
-	tx +=  tex->TextureWidth(GLUSE_PATCH) << FRACBITS;
-	x2 = (FixedMul(tx, scalex)>>FRACBITS) + (vw>>1);
+	tx += tex->TextureWidth(GLUSE_PATCH);
+	x2 = tx * scalex + vw / 2;
 	if (x2 < 0) return; // off the left side
-	x2+=viewwindowx;
+	x2 += viewwindowx;
+
 
 	// killough 12/98: fix psprite positioning problem
-	texturemid = (100<<FRACBITS) - (sy-(tex->GetScaledTopOffset(GLUSE_PATCH)<<FRACBITS));
+	ftexturemid = 100.f - (sy - tex->GetScaledTopOffset(GLUSE_PATCH));
 
 	AWeapon * wi=player->ReadyWeapon;
-	if (wi && wi->YAdjust)
+	if (wi && wi->YAdjust != 0)
 	{
-		if (screenblocks>=11)
+		float fYAd = wi->YAdjust;
+		if (screenblocks >= 11)
 		{
-			texturemid -= wi->YAdjust;
+			ftexturemid -= fYAd;
 		}
 		else if (!st_scale)
 		{
-			texturemid -= FixedMul (StatusBar->GetDisplacement (), wi->YAdjust);
+			ftexturemid -= StatusBar->GetDisplacement () * fYAd;
 		}
 	}
 
-	scale = ((SCREENHEIGHT*vw)/SCREENWIDTH) / 200.0f;    
-	y1 = viewwindowy + (vh >> 1) - (int)(((float)texturemid / (float)FRACUNIT) * scale);
-	y2 = y1 + (int)((float)tex->TextureHeight(GLUSE_PATCH) * scale) + 1;
+	scale = (SCREENHEIGHT*vw) / (SCREENWIDTH * 200.0f);
+	y1 = viewwindowy + vh / 2 - (ftexturemid * scale);
+	y2 = y1 + (tex->TextureHeight(GLUSE_PATCH) * scale) + 1;
 
 	if (!mirror)
 	{
@@ -180,7 +183,7 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 	unsigned int i;
 	pspdef_t *psp;
 	int lightlevel=0;
-	fixed_t ofsx, ofsy;
+	float ofsx, ofsy;
 	FColormap cm;
 	sector_t * fakesec, fs;
 	AActor * playermo=players[consoleplayer].camera;
@@ -204,7 +207,8 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 	// check for fullbright
 	if (player->fixedcolormap==NOFIXEDCOLORMAP)
 	{
-		for (i=0, psp=player->psprites; i<=ps_flash; i++,psp++)
+		for (i = 0, psp = player->psprites; i <= ps_flash; i++, psp++)
+		{
 			if (psp->state != NULL)
 			{
 				bool disablefullbright = false;
@@ -217,7 +221,7 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 				}
 				statebright[i] = !!psp->state->GetFullbright() && !disablefullbright;
 			}
-				
+		}
 	}
 
 	if (gl_fixedcolormap) 
@@ -246,7 +250,7 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 
 			lightlevel = (1.0 - min_L) * 255;
 		}
-		lightlevel = gl_CheckSpriteGlow(viewsector, lightlevel, playermo->X(), playermo->Y(), playermo->Z());
+		lightlevel = gl_CheckSpriteGlow(viewsector, lightlevel, playermo->Pos());
 
 		// calculate colormap for weapon sprites
 		if (viewsector->e->XFloor.ffloors.Size() && !glset.nocoloredspritelighting)
@@ -254,15 +258,15 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 			TArray<lightlist_t> & lightlist = viewsector->e->XFloor.lightlist;
 			for(i=0;i<lightlist.Size();i++)
 			{
-				int lightbottom;
+				double lightbottom;
 
 				if (i<lightlist.Size()-1) 
 				{
-					lightbottom=lightlist[i+1].plane.ZatPoint(viewx,viewy);
+					lightbottom=lightlist[i+1].plane.ZatPoint(ViewPos);
 				}
 				else 
 				{
-					lightbottom=viewsector->floorplane.ZatPoint(viewx,viewy);
+					lightbottom=viewsector->floorplane.ZatPoint(ViewPos);
 				}
 
 				if (lightbottom<player->viewz) 
@@ -291,7 +295,7 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 	visstyle_t vis;
 
 	vis.RenderStyle=playermo->RenderStyle;
-	vis.alpha=playermo->alpha;
+	vis.Alpha=playermo->Alpha;
 	vis.colormap = NULL;
 	if (playermo->Inventory) 
 	{
@@ -341,7 +345,7 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 	}
 	else if (trans == 0.f)
 	{
-		trans = FIXED2FLOAT(vis.alpha);
+		trans = vis.Alpha;
 	}
 
 	// now draw the different layers of the weapon
@@ -382,7 +386,7 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 			// set the lighting parameters (only calls glColor and glAlphaFunc)
 			gl_SetSpriteLighting(vis.RenderStyle, playermo, statebright[i]? 255 : lightlevel, 
 				0, &cmc, 0xffffff, trans, statebright[i], true);
-			DrawPSprite (player,psp,psp->sx+ofsx, psp->sy+ofsy, cm.colormap, hudModelStep, OverrideShader);
+			DrawPSprite(player, psp, psp->sx + ofsx, psp->sy + ofsy, cm.colormap, hudModelStep, OverrideShader);
 		}
 	}
 	gl_RenderState.EnableBrightmap(false);

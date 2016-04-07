@@ -379,7 +379,7 @@ angle_t Clipper::AngleToPseudo(angle_t ang)
 //
 // ! Returns the pseudoangle between the line p1 to (infinity, p1.y) and the 
 // line from p1 to p2. The pseudoangle has the property that the ordering of 
-// points by true angle anround p1 and ordering of points by pseudoangle are the 
+// points by true angle around p1 and ordering of points by pseudoangle are the 
 // same.
 //
 // For clipping exact angles are not needed. Only the ordering matters.
@@ -388,9 +388,14 @@ angle_t Clipper::AngleToPseudo(angle_t ang)
 //
 //-----------------------------------------------------------------------------
 
-angle_t R_PointToPseudoAngle (fixed_t viewx, fixed_t viewy, fixed_t x, fixed_t y)
+void R_SetView()
 {
-	// Note: float won't work here as it's less precise than the BAM values being passed as parameters
+	viewx = FLOAT2FIXED(ViewPos.X);
+	viewy = FLOAT2FIXED(ViewPos.Y);
+}
+
+angle_t R_PointToPseudoAngle (fixed_t x, fixed_t y)
+{
 	double vecx = double(x-viewx);
 	double vecy = double(y-viewy);
 	
@@ -409,6 +414,26 @@ angle_t R_PointToPseudoAngle (fixed_t viewx, fixed_t viewy, fixed_t x, fixed_t y
 	}
 }
 
+
+angle_t R_PointToPseudoAngle(double x, double y)
+{
+	double vecx = x - ViewPos.X;
+	double vecy = y - ViewPos.Y;
+
+	if (vecx == 0 && vecy == 0)
+	{
+		return 0;
+	}
+	else
+	{
+		double result = vecy / (fabs(vecx) + fabs(vecy));
+		if (vecx < 0)
+		{
+			result = 2.f - result;
+		}
+		return xs_Fix<30>::ToFix(result);
+	}
+}
 
 
 
@@ -450,8 +475,8 @@ bool Clipper::CheckBox(const fixed_t *bspcoord)
 	if (boxpos == 5) return true;
 	
 	check = checkcoord[boxpos];
-	angle1 = R_PointToPseudoAngle (viewx, viewy, bspcoord[check[0]], bspcoord[check[1]]);
-	angle2 = R_PointToPseudoAngle (viewx, viewy, bspcoord[check[2]], bspcoord[check[3]]);
+	angle1 = R_PointToPseudoAngle (bspcoord[check[0]], bspcoord[check[1]]);
+	angle2 = R_PointToPseudoAngle (bspcoord[check[2]], bspcoord[check[3]]);
 	
 	return SafeCheckRange(angle2, angle1);
 }

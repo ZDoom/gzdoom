@@ -53,7 +53,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_WizAtk2)
 	PARAM_ACTION_PROLOGUE;
 
 	A_FaceTarget (self);
-	self->alpha = HR_SHADOW;
+	self->Alpha = HR_SHADOW;
 	self->RenderStyle = STYLE_Translucent;
 	self->flags3 |= MF3_GHOST;
 	return 0;
@@ -88,8 +88,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_WizAtk3)
 	mo = P_SpawnMissile (self, self->target, fx);
 	if (mo != NULL)
 	{
-		P_SpawnMissileAngle(self, fx, mo->angle-(ANG45/8), mo->vel.z);
-		P_SpawnMissileAngle(self, fx, mo->angle+(ANG45/8), mo->vel.z);
+		P_SpawnMissileAngle(self, fx, mo->Angles.Yaw - 45. / 8, mo->Vel.Z);
+		P_SpawnMissileAngle(self, fx, mo->Angles.Yaw + 45. / 8, mo->Vel.Z);
 	}
 	return 0;
 }

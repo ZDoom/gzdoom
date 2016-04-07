@@ -63,7 +63,7 @@ void A_Unblock(AActor *self, bool drop)
 	// [RH] Andy Baker's stealth monsters
 	if (self->flags & MF_STEALTH)
 	{
-		self->alpha = OPAQUE;
+		self->Alpha = 1.;
 		self->visdir = 0;
 	}
 
@@ -142,7 +142,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_UnSetFloorClip)
 	PARAM_ACTION_PROLOGUE;
 
 	self->flags2 &= ~MF2_FLOORCLIP;
-	self->floorclip = 0;
+	self->Floorclip = 0;
 	return 0;
 }
 
@@ -189,7 +189,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FreezeDeath)
 	self->flags |= MF_SOLID|MF_SHOOTABLE|MF_NOBLOOD|MF_ICECORPSE;
 	self->flags2 |= MF2_PUSHABLE|MF2_TELESTOMP|MF2_PASSMOBJ|MF2_SLIDE;
 	self->flags3 |= MF3_CRASHED;
-	self->height = self->GetDefault()->height;
+	self->Height = self->GetDefault()->Height;
 	// Remove fuzz effects from frozen actors.
 	if (self->RenderStyle.BlendOp >= STYLEOP_Fuzz && self->RenderStyle.BlendOp <= STYLEOP_FuzzOrRevSub)
 	{
@@ -201,7 +201,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FreezeDeath)
 	// [RH] Andy Baker's stealth monsters
 	if (self->flags & MF_STEALTH)
 	{
-		self->alpha = OPAQUE;
+		self->Alpha = 1;
 		self->visdir = 0;
 	}
 
@@ -274,12 +274,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_FreezeDeathChunks)
 	int numChunks;
 	AActor *mo;
 	
-	if ((self->vel.x || self->vel.y || self->vel.z) && !(self->flags6 & MF6_SHATTERING))
+	if (!self->Vel.isZero() && !(self->flags6 & MF6_SHATTERING))
 	{
 		self->tics = 3*TICRATE;
 		return 0;
 	}
-	self->vel.x = self->vel.y = self->vel.z = 0;
+	self->Vel.Zero();
 	S_Sound (self, CHAN_BODY, "misc/icebreak", 1, ATTN_NORM);
 
 	// [RH] In Hexen, this creates a random number of shards (range [24,56])
@@ -287,23 +287,24 @@ DEFINE_ACTION_FUNCTION(AActor, A_FreezeDeathChunks)
 	// base the number of shards on the size of the dead thing, so bigger
 	// things break up into more shards than smaller things.
 	// An actor with radius 20 and height 64 creates ~40 chunks.
-	numChunks = MAX<int> (4, (self->radius>>FRACBITS)*(self->height>>FRACBITS)/32);
+	numChunks = MAX<int>(4, int(self->radius * self->Height)/32);
 	i = (pr_freeze.Random2()) % (numChunks/4);
 	for (i = MAX (24, numChunks + i); i >= 0; i--)
 	{
-		fixed_t xo = (((pr_freeze() - 128)*self->radius) >> 7);
-		fixed_t yo = (((pr_freeze() - 128)*self->radius) >> 7);
-		fixed_t zo = (pr_freeze()*self->height / 255);
+		double xo = (pr_freeze() - 128)*self->radius / 128;
+		double yo = (pr_freeze() - 128)*self->radius / 128;
+		double zo = (pr_freeze()*self->Height / 255);
+
 		mo = Spawn("IceChunk", self->Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
 		if (mo)
 		{
-				mo->SetState (mo->SpawnState + (pr_freeze()%3));
-			mo->vel.z = FixedDiv(mo->Z() - self->Z(), self->height)<<2;
-			mo->vel.x = pr_freeze.Random2 () << (FRACBITS-7);
-			mo->vel.y = pr_freeze.Random2 () << (FRACBITS-7);
+			mo->SetState (mo->SpawnState + (pr_freeze()%3));
+			mo->Vel.X = pr_freeze.Random2() / 128.;
+			mo->Vel.Y = pr_freeze.Random2() / 128.;
+			mo->Vel.Z = (mo->Z() - self->Z()) / self->Height * 4;
 			CALL_ACTION(A_IceSetTics, mo); // set a random tic wait
 			mo->RenderStyle = self->RenderStyle;
-			mo->alpha = self->alpha;
+			mo->Alpha = self->Alpha;
 		}
 	}
 	if (self->player)
@@ -311,11 +312,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_FreezeDeathChunks)
 		AActor *head = Spawn("IceChunkHead", self->PosPlusZ(self->player->mo->ViewHeight), ALLOW_REPLACE);
 		if (head != NULL)
 		{
-			head->vel.z = FixedDiv(head->Z() - self->Z(), self->height)<<2;
-			head->vel.x = pr_freeze.Random2 () << (FRACBITS-7);
-			head->vel.y = pr_freeze.Random2 () << (FRACBITS-7);
+			head->Vel.X = pr_freeze.Random2() / 128.;
+			head->Vel.Y = pr_freeze.Random2() / 128.;
+			head->Vel.Z = (mo->Z() - self->Z()) / self->Height * 4;
+
 			head->health = self->health;
-			head->angle = self->angle;
+			head->Angles.Yaw = self->Angles.Yaw;
 			if (head->IsKindOf(RUNTIME_CLASS(APlayerPawn)))
 			{
 				head->player = self->player;
@@ -323,9 +325,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_FreezeDeathChunks)
 				self->player = NULL;
 				head->ObtainInventory (self);
 			}
-			head->pitch = 0;
+			head->Angles.Pitch = 0.;
 			head->RenderStyle = self->RenderStyle;
-			head->alpha = self->alpha;
+			head->Alpha = self->Alpha;
 			if (head->player->camera == self)
 			{
 				head->player->camera = head;
@@ -611,7 +613,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Gravity)
 	PARAM_ACTION_PROLOGUE;
 
 	self->flags &= ~MF_NOGRAVITY;
-	self->gravity = FRACUNIT;
+	self->Gravity = 1;
 	return 0;
 }
 
@@ -626,7 +628,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LowGravity)
 	PARAM_ACTION_PROLOGUE;
 
 	self->flags &= ~MF_NOGRAVITY;
-	self->gravity = FRACUNIT/8;
+	self->Gravity = 1. / 8;;
 	return 0;
 }
 
@@ -636,34 +638,33 @@ DEFINE_ACTION_FUNCTION(AActor, A_LowGravity)
 //
 //===========================================================================
 
-void FaceMovementDirection (AActor *actor)
+void FaceMovementDirection(AActor *actor)
 {
 	switch (actor->movedir)
 	{
 	case DI_EAST:
-		actor->angle = 0<<24;
+		actor->Angles.Yaw = 0.;
 		break;
 	case DI_NORTHEAST:
-		actor->angle = 32<<24;
+		actor->Angles.Yaw = 45.;
 		break;
 	case DI_NORTH:
-		actor->angle = 64<<24;
+		actor->Angles.Yaw = 90.;
 		break;
 	case DI_NORTHWEST:
-		actor->angle = 96<<24;
+		actor->Angles.Yaw = 135.;
 		break;
 	case DI_WEST:
-		actor->angle = 128<<24;
+		actor->Angles.Yaw = 180.;
 		break;
 	case DI_SOUTHWEST:
-		actor->angle = 160<<24;
+		actor->Angles.Yaw = 225.;
 		break;
 	case DI_SOUTH:
-		actor->angle = 192<<24;
+		actor->Angles.Yaw = 270.;
 		break;
 	case DI_SOUTHEAST:
-		actor->angle = 224<<24;
+		actor->Angles.Yaw = 315.;
 		break;
 	}
 }
-

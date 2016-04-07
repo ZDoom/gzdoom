@@ -106,7 +106,7 @@ struct cvertex_t
 
 	operator int () const { return ((x>>16)&0xffff) | y; }
 	bool operator!= (const cvertex_t &other) const { return x != other.x || y != other.y; }
-	cvertex_t& operator =(const vertex_t *v) { x = v->x; y = v->y; return *this; }
+	cvertex_t& operator =(const vertex_t *v) { x = v->fixX(); y = v->fixY(); return *this; }
 };
 
 typedef TMap<cvertex_t, int> FSectionVertexMap;
@@ -286,7 +286,7 @@ static void PrepareSectorData()
 						seg[j].PartnerSeg!=NULL && 
 						subsectors[i].render_sector != seg[j].PartnerSeg->Subsector->render_sector)
 				{
-					DPrintf("Found hack: (%d,%d) (%d,%d)\n", seg[j].v1->x>>16, seg[j].v1->y>>16, seg[j].v2->x>>16, seg[j].v2->y>>16);
+					DPrintf("Found hack: (%f,%f) (%f,%f)\n", seg[j].v1->fX(), seg[j].v1->fY(), seg[j].v2->fX(), seg[j].v2->fY());
 					subsectors[i].hacked|=5;
 					SpreadHackedFlag(&subsectors[i]);
 				}
@@ -324,7 +324,7 @@ static void PrepareTransparentDoors(sector_t * sector)
 	if (sector->subsectorcount==0) return;
 
 	sector->transdoorheight=sector->GetPlaneTexZ(sector_t::floor);
-	sector->transdoor= !(sector->e->XFloor.ffloors.Size() || sector->heightsec || sector->floorplane.a || sector->floorplane.b);
+	sector->transdoor= !(sector->e->XFloor.ffloors.Size() || sector->heightsec || sector->floorplane.isSlope());
 
 	if (sector->transdoor)
 	{
@@ -414,7 +414,6 @@ static void InitVertexData()
 	TArray<int> * vt_sectorlists;
 
 	int i,j,k;
-	unsigned int l;
 
 	vt_sectorlists = new TArray<int>[numvertexes];
 
@@ -437,15 +436,6 @@ static void InitVertexData()
 
 					AddToVertex(sec, vt_sectorlists[v-vertexes]);
 					if (sec->heightsec) AddToVertex(sec->heightsec, vt_sectorlists[v-vertexes]);
-
-					for(l=0;l<x.ffloors.Size();l++)
-					{
-						F3DFloor * rover = x.ffloors[l];
-						if(!(rover->flags & FF_EXISTS)) continue;
-						if (rover->flags&FF_NOSHADE) continue; // FF_NOSHADE doesn't create any wall splits 
-
-						AddToVertex(rover->model, vt_sectorlists[v-vertexes]);
-					}
 				}
 			}
 		}
@@ -482,22 +472,18 @@ static void InitVertexData()
 //
 //==========================================================================
 
-static void GetSideVertices(int sdnum, FVector2 *v1, FVector2 *v2)
+static void GetSideVertices(int sdnum, DVector2 *v1, DVector2 *v2)
 {
 	line_t *ln = sides[sdnum].linedef;
 	if (ln->sidedef[0] == &sides[sdnum]) 
 	{
-		v1->X = ln->v1->fx;
-		v1->Y = ln->v1->fy;
-		v2->X = ln->v2->fx;
-		v2->Y = ln->v2->fy;
+		*v1 = ln->v1->fPos();
+		*v2 = ln->v2->fPos();
 	}
 	else
 	{
-		v2->X = ln->v1->fx;
-		v2->Y = ln->v1->fy;
-		v1->X = ln->v2->fx;
-		v1->Y = ln->v2->fy;
+		*v2 = ln->v1->fPos();
+		*v1 = ln->v2->fPos();
 	}
 }
 
@@ -522,8 +508,6 @@ static void PrepareSegs()
 	// Get floatng point coordinates of vertices
 	for(int i = 0; i < numvertexes; i++)
 	{
-		vertexes[i].fx = FIXED2FLOAT(vertexes[i].x);
-		vertexes[i].fy = FIXED2FLOAT(vertexes[i].y);
 		vertexes[i].dirty = true;
 	}
 
@@ -569,7 +553,7 @@ static void PrepareSegs()
 
 		realsegs++;
 		segcount[sidenum]++;
-		FVector2 sidestart, sideend, segend(seg->v2->fx, seg->v2->fy);
+		DVector2 sidestart, sideend, segend = seg->v2->fPos();
 		GetSideVertices(sidenum, &sidestart, &sideend);
 
 		sideend -=sidestart;

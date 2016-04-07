@@ -42,8 +42,8 @@ class DScroller : public DThinker
 	HAS_OBJECT_POINTERS
 public:
 	
-	DScroller (EScroll type, fixed_t dx, fixed_t dy, int control, int affectee, int accel, EScrollPos scrollpos = EScrollPos::scw_all);
-	DScroller (fixed_t dx, fixed_t dy, const line_t *l, int control, int accel, EScrollPos scrollpos = EScrollPos::scw_all);
+	DScroller (EScroll type, double dx, double dy, int control, int affectee, int accel, EScrollPos scrollpos = EScrollPos::scw_all);
+	DScroller (double dx, double dy, const line_t *l, int control, int accel, EScrollPos scrollpos = EScrollPos::scw_all);
 	void Destroy();
 
 	void Serialize (FArchive &arc);
@@ -51,18 +51,18 @@ public:
 
 	bool AffectsWall (int wallnum) const { return m_Type == EScroll::sc_side && m_Affectee == wallnum; }
 	int GetWallNum () const { return m_Type == EScroll::sc_side ? m_Affectee : -1; }
-	void SetRate (fixed_t dx, fixed_t dy) { m_dx = dx; m_dy = dy; }
+	void SetRate (double dx, double dy) { m_dx = dx; m_dy = dy; }
 	bool IsType (EScroll type) const { return type == m_Type; }
 	int GetAffectee () const { return m_Affectee; }
 	EScrollPos GetScrollParts() const { return m_Parts; }
 
 protected:
 	EScroll m_Type;		// Type of scroll effect
-	fixed_t m_dx, m_dy;		// (dx,dy) scroll speeds
+	double m_dx, m_dy;		// (dx,dy) scroll speeds
 	int m_Affectee;			// Number of affected sidedef, sector, tag, or whatever
 	int m_Control;			// Control sector (-1 if none) used to control scrolling
-	fixed_t m_LastHeight;	// Last known height of control sector
-	fixed_t m_vdx, m_vdy;	// Accumulated velocity if accelerative
+	double m_LastHeight;	// Last known height of control sector
+	double m_vdx, m_vdy;	// Accumulated velocity if accelerative
 	int m_Accel;			// Whether it's accelerative
 	EScrollPos m_Parts;			// Which parts of a sidedef are being scrolled?
 	TObjPtr<DInterpolation> m_Interpolations[3];
@@ -137,9 +137,9 @@ void DScroller::Serialize (FArchive &arc)
 //
 //-----------------------------------------------------------------------------
 
-static void RotationComp(const sector_t *sec, int which, fixed_t dx, fixed_t dy, fixed_t &tdx, fixed_t &tdy)
+static void RotationComp(const sector_t *sec, int which, double dx, double dy, double &tdx, double &tdy)
 {
-	angle_t an = sec->GetAngle(which);
+	DAngle an = sec->GetAngleF(which);
 	if (an == 0)
 	{
 		tdx = dx;
@@ -147,11 +147,10 @@ static void RotationComp(const sector_t *sec, int which, fixed_t dx, fixed_t dy,
 	}
 	else
 	{
-		an = an >> ANGLETOFINESHIFT;
-		fixed_t ca = -finecosine[an];
-		fixed_t sa = -finesine[an];
-		tdx = DMulScale16(dx, ca, -dy, sa);
-		tdy = DMulScale16(dy, ca,  dx, sa);
+		double ca = an.Cos();
+		double sa = an.Sin();
+		tdx = dx*ca - dy*sa;
+		tdy = dy*ca + dx*sa;
 	}
 }
 
@@ -180,16 +179,16 @@ static void RotationComp(const sector_t *sec, int which, fixed_t dx, fixed_t dy,
 
 void DScroller::Tick ()
 {
-	fixed_t dx = m_dx, dy = m_dy, tdx, tdy;
+	double dx = m_dx, dy = m_dy, tdx, tdy;
 
 	if (m_Control != -1)
 	{	// compute scroll amounts based on a sector's height changes
-		fixed_t height = sectors[m_Control].CenterFloor () +
+		double height = sectors[m_Control].CenterFloor () +
 						 sectors[m_Control].CenterCeiling ();
-		fixed_t delta = height - m_LastHeight;
+		double delta = height - m_LastHeight;
 		m_LastHeight = height;
-		dx = FixedMul(dx, delta);
-		dy = FixedMul(dy, delta);
+		dx *= delta;
+		dy *= delta;
 	}
 
 	// killough 3/14/98: Add acceleration
@@ -199,7 +198,7 @@ void DScroller::Tick ()
 		m_vdy = dy += m_vdy;
 	}
 
-	if (!(dx | dy))			// no-op if both (x,y) offsets are 0
+	if (dx == 0 && dy == 0)
 		return;
 
 	switch (m_Type)
@@ -237,8 +236,8 @@ void DScroller::Tick ()
 
 		// [RH] Don't actually carry anything here. That happens later.
 		case EScroll::sc_carry:
-			level.Scrolls[m_Affectee].ScrollX += dx;
-			level.Scrolls[m_Affectee].ScrollY += dy;
+			level.Scrolls[m_Affectee].Scroll.X += dx;
+			level.Scrolls[m_Affectee].Scroll.Y += dy;
 			break;
 
 		case EScroll::sc_carry_ceiling:       // to be added later
@@ -266,7 +265,7 @@ void DScroller::Tick ()
 //
 //-----------------------------------------------------------------------------
 
-DScroller::DScroller (EScroll type, fixed_t dx, fixed_t dy,
+DScroller::DScroller (EScroll type, double dx, double dy,
 					  int control, int affectee, int accel, EScrollPos scrollpos)
 	: DThinker (STAT_SCROLLER)
 {
@@ -342,17 +341,16 @@ void DScroller::Destroy ()
 //
 //-----------------------------------------------------------------------------
 
-DScroller::DScroller (fixed_t dx, fixed_t dy, const line_t *l,
+DScroller::DScroller (double dx, double dy, const line_t *l,
 					 int control, int accel, EScrollPos scrollpos)
 	: DThinker (STAT_SCROLLER)
 {
-	fixed_t x = abs(l->dx), y = abs(l->dy), d;
-	if (y > x)
-		d = x, x = y, y = d;
-	d = FixedDiv (x, finesine[(tantoangle[FixedDiv(y,x) >> DBITS] + ANG90)
-						  >> ANGLETOFINESHIFT]);
-	x = -FixedDiv (FixedMul(dy, l->dy) + FixedMul(dx, l->dx), d);
-	y = -FixedDiv (FixedMul(dx, l->dy) - FixedMul(dy, l->dx), d);
+	double x = fabs(l->Delta().X), y = fabs(l->Delta().Y), d;
+	if (y > x) d = x, x = y, y = d;
+
+	d = x / g_sin(g_atan2(y, x) + M_PI / 2);
+	x = (-dy * l->Delta().Y + dx * l->Delta().X) / d;
+	y = (-dx * l->Delta().Y - dy * l->Delta().Y) / d;
 
 	m_Type = EScroll::sc_side;
 	m_dx = x;
@@ -412,8 +410,8 @@ void P_SpawnScrollers(void)
 
 	for (i = 0; i < numlines; i++, l++)
 	{
-		fixed_t dx;	// direction and speed of scrolling
-		fixed_t dy;
+		double dx;	// direction and speed of scrolling
+		double dy;
 		int control = -1, accel = 0;		// no control sector or acceleration
 		int special = l->special;
 
@@ -463,14 +461,14 @@ void P_SpawnScrollers(void)
 			{
 				// The line housing the special controls the
 				// direction and speed of scrolling.
-				dx = l->dx >> SCROLL_SHIFT;
-				dy = l->dy >> SCROLL_SHIFT;
+				dx = l->Delta().X / 32.;
+				dy = l->Delta().Y / 32.;
 			}
 			else
 			{
 				// The speed and direction are parameters to the special.
-				dx = (l->args[3] - 128) * (FRACUNIT / 32);
-				dy = (l->args[4] - 128) * (FRACUNIT / 32);
+				dx = (l->args[3] - 128) / 32.;
+				dy = (l->args[4] - 128) / 32.;
 			}
 		}
 
@@ -558,36 +556,36 @@ void P_SpawnScrollers(void)
 		case Scroll_Texture_Left:
 			l->special = special;	// Restore the special, for compat_useblocking's benefit.
 			s = int(lines[i].sidedef[0] - sides);
-			new DScroller (EScroll::sc_side, l->args[0] * (FRACUNIT/64), 0,
+			new DScroller (EScroll::sc_side, l->args[0] / 64., 0,
 						   -1, s, accel, SCROLLTYPE(l->args[1]));
 			break;
 
 		case Scroll_Texture_Right:
 			l->special = special;
 			s = int(lines[i].sidedef[0] - sides);
-			new DScroller (EScroll::sc_side, l->args[0] * (-FRACUNIT/64), 0,
+			new DScroller (EScroll::sc_side, -l->args[0] / 64., 0,
 						   -1, s, accel, SCROLLTYPE(l->args[1]));
 			break;
 
 		case Scroll_Texture_Up:
 			l->special = special;
 			s = int(lines[i].sidedef[0] - sides);
-			new DScroller (EScroll::sc_side, 0, l->args[0] * (FRACUNIT/64),
+			new DScroller (EScroll::sc_side, 0, l->args[0] / 64.,
 						   -1, s, accel, SCROLLTYPE(l->args[1]));
 			break;
 
 		case Scroll_Texture_Down:
 			l->special = special;
 			s = int(lines[i].sidedef[0] - sides);
-			new DScroller (EScroll::sc_side, 0, l->args[0] * (-FRACUNIT/64),
+			new DScroller (EScroll::sc_side, 0, -l->args[0] / 64.,
 						   -1, s, accel, SCROLLTYPE(l->args[1]));
 			break;
 
 		case Scroll_Texture_Both:
 			s = int(lines[i].sidedef[0] - sides);
 			if (l->args[0] == 0) {
-				dx = (l->args[1] - l->args[2]) * (FRACUNIT/64);
-				dy = (l->args[4] - l->args[3]) * (FRACUNIT/64);
+				dx = (l->args[1] - l->args[2]) / 64.;
+				dy = (l->args[4] - l->args[3]) / 64.;
 				new DScroller (EScroll::sc_side, dx, dy, -1, s, accel);
 			}
 			break;
@@ -606,12 +604,12 @@ void P_SpawnScrollers(void)
 //
 //-----------------------------------------------------------------------------
 
-void SetWallScroller (int id, int sidechoice, fixed_t dx, fixed_t dy, EScrollPos Where)
+void SetWallScroller (int id, int sidechoice, double dx, double dy, EScrollPos Where)
 {
 	Where = Where & scw_all;
 	if (Where == 0) return;
 
-	if ((dx | dy) == 0)
+	if (dx == 0 && dy == 0)
 	{
 		// Special case: Remove the scroller, because the deltas are both 0.
 		TThinkerIterator<DScroller> iterator (STAT_SCROLLER);
@@ -676,7 +674,7 @@ void SetWallScroller (int id, int sidechoice, fixed_t dx, fixed_t dy, EScrollPos
 	}
 }
 
-void SetScroller (int tag, EScroll type, fixed_t dx, fixed_t dy)
+void SetScroller (int tag, EScroll type, double dx, double dy)
 {
 	TThinkerIterator<DScroller> iterator (STAT_SCROLLER);
 	DScroller *scroller;
@@ -700,7 +698,7 @@ void SetScroller (int tag, EScroll type, fixed_t dx, fixed_t dy)
 		}
 	}
 
-	if (i > 0 || (dx|dy) == 0)
+	if (i > 0 || (dx == 0 && dy == 0))
 	{
 		return;
 	}
@@ -713,7 +711,7 @@ void SetScroller (int tag, EScroll type, fixed_t dx, fixed_t dy)
 	}
 }
 
-void P_CreateScroller(EScroll type, fixed_t dx, fixed_t dy, int control, int affectee, int accel, EScrollPos scrollpos)
+void P_CreateScroller(EScroll type, double dx, double dy, int control, int affectee, int accel, EScrollPos scrollpos)
 {
 	new DScroller(type, dx, dy, control, affectee, accel, scrollpos);
 }

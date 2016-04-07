@@ -82,12 +82,12 @@ public:
 	size_t PointerSubstitution (DObject *old, DObject *notOld);
 
 	void BeginPlay();
-	void SetOrigin (fixed_t x, fixed_t y, fixed_t z, bool moving = false);
+	void SetOrigin (double x, double y, double z, bool moving = false);
 	void PostBeginPlay();
 	void Destroy();
 	void Activate(AActor *activator);
 	void Deactivate(AActor *activator);
-	void SetOffset(fixed_t x, fixed_t y, fixed_t z);
+	void SetOffset(const DVector3 &pos);
 	void UpdateLocation();
 	bool IsOwned() const { return owned; }
 	bool IsActive() const { return !(flags2&MF2_DORMANT); }
@@ -98,11 +98,11 @@ public:
 	FLightNode * touching_subsectors;
 
 private:
-	float DistToSeg(const fixedvec3 &pos, seg_t *seg);
-	void CollectWithinRadius(const fixedvec3 &pos, subsector_t *subSec, float radius);
+	double DistToSeg(const DVector3 &pos, seg_t *seg);
+	void CollectWithinRadius(const DVector3 &pos, subsector_t *subSec, float radius);
 
 protected:
-	fixed_t m_offX, m_offY, m_offZ;
+	DVector3 m_off;
 	float m_currentIntensity;
 	int m_tickCount;
 	unsigned int m_lastUpdate;

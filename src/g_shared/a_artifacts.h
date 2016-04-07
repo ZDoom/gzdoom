@@ -25,7 +25,7 @@ public:
 	int EffectTics;
 	PalEntry BlendColor;
 	FNameNoInit Mode;
-	fixed_t Strength;
+	double Strength;
 
 protected:
 	virtual void InitEffect ();
@@ -58,7 +58,7 @@ public:
 	int EffectTics;			// Non-0 to override the powerup's default tics
 	PalEntry BlendColor;	// Non-0 to override the powerup's default blend
 	FNameNoInit Mode;		// Meaning depends on powerup - used for Invulnerability and Invisibility
-	fixed_t Strength;		// Meaning depends on powerup - currently used only by Invisibility
+	double Strength;		// Meaning depends on powerup - currently used only by Invisibility
 };
 
 class APowerInvulnerable : public APowerup
@@ -91,8 +91,6 @@ protected:
 	void DoEffect ();
 	void EndEffect ();
 	int AlterWeaponSprite (visstyle_t *vis);
-//	FRenderStyle OwnersNormalStyle;
-//	fixed_t OwnersNormalAlpha;
 };
 
 class APowerIronFeet : public APowerup
@@ -158,7 +156,7 @@ class APowerSpeed : public APowerup
 protected:
 	void DoEffect ();
 	void Serialize(FArchive &arc);
-	fixed_t GetSpeedFactor();
+	double GetSpeedFactor();
 public:
 	int SpeedFlags;
 };

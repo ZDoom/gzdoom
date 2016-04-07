@@ -149,15 +149,16 @@ CUSTOM_CVAR( Int, r_maxparticles, 4000, CVAR_ARCHIVE )
 void P_InitParticles ()
 {
 	const char *i;
+	int num;
 
 	if ((i = Args->CheckValue ("-numparticles")))
-		NumParticles = atoi (i);
+		num = atoi (i);
 	// [BC] Use r_maxparticles now.
 	else
-		NumParticles = r_maxparticles;
+		num = r_maxparticles;
 
 	// This should be good, but eh...
-	NumParticles = clamp<WORD>(NumParticles, 100, 65535);
+	NumParticles = (WORD)clamp<int>(num, 100, 65535);
 
 	P_DeinitParticles();
 	Particles = new particle_t[NumParticles];
@@ -206,7 +207,7 @@ void P_FindParticleSubsectors ()
 	for (WORD i = ActiveParticles; i != NO_PARTICLE; i = Particles[i].tnext)
 	{
 		 // Try to reuse the subsector from the last portal check, if still valid.
-		if (Particles[i].subsector == NULL) Particles[i].subsector = R_PointInSubsector(Particles[i].x, Particles[i].y);
+		if (Particles[i].subsector == NULL) Particles[i].subsector = R_PointInSubsector(Particles[i].Pos);
 		int ssnum = int(Particles[i].subsector - subsectors);
 		Particles[i].snext = ParticlesInSubsec[ssnum];
 		ParticlesInSubsec[ssnum] = i;
@@ -279,33 +280,29 @@ void P_ThinkParticles ()
 			continue;
 		}
 
-		fixedvec2 newxy = P_GetOffsetPosition(particle->x, particle->y, particle->vel.x, particle->vel.y);
-		particle->x = newxy.x;
-		particle->y = newxy.y;
-		//particle->x += particle->vel.x;
-		//particle->y += particle->vel.y;
-		particle->z += particle->vel.z;
-		particle->vel.x += particle->accx;
-		particle->vel.y += particle->accy;
-		particle->vel.z += particle->accz;
-		particle->subsector = R_PointInSubsector(particle->x, particle->y);
+		// Handle crossing a line portal
+		DVector2 newxy = P_GetOffsetPosition(particle->Pos.X, particle->Pos.Y, particle->Vel.X, particle->Vel.Y);
+		particle->Pos.X = newxy.X;
+		particle->Pos.Y = newxy.Y;
+		particle->Pos.Z += particle->Vel.Z;
+		particle->Vel += particle->Acc;
+		particle->subsector = R_PointInSubsector(particle->Pos);
+		// Handle crossing a sector portal.
 		if (!particle->subsector->sector->PortalBlocksMovement(sector_t::ceiling))
 		{
 			AActor *skybox = particle->subsector->sector->SkyBoxes[sector_t::ceiling];
-			if (particle->z > skybox->threshold)
+			if (particle->Pos.Z > skybox->specialf1)
 			{
-				particle->x += skybox->scaleX;
-				particle->y += skybox->scaleY;
+				particle->Pos += skybox->Scale;
 				particle->subsector = NULL;
 			}
 		}
 		else if (!particle->subsector->sector->PortalBlocksMovement(sector_t::floor))
 		{
 			AActor *skybox = particle->subsector->sector->SkyBoxes[sector_t::floor];
-			if (particle->z < skybox->threshold)
+			if (particle->Pos.Z < skybox->specialf1)
 			{
-				particle->x += skybox->scaleX;
-				particle->y += skybox->scaleY;
+				particle->Pos += skybox->Scale;
 				particle->subsector = NULL;
 			}
 		}
@@ -313,28 +310,23 @@ void P_ThinkParticles ()
 	}
 }
 
-void P_SpawnParticle(fixed_t x, fixed_t y, fixed_t z, fixed_t vx, fixed_t vy, fixed_t vz, PalEntry color, bool fullbright, BYTE startalpha, BYTE lifetime, WORD size, int fadestep, fixed_t accelx, fixed_t accely, fixed_t accelz)
+
+void P_SpawnParticle(const DVector3 &pos, const DVector3 &vel, const DVector3 &accel, PalEntry color, bool fullbright, double startalpha, int lifetime, WORD size, double fadestep)
 {
 	particle_t *particle = NewParticle();
 
 	if (particle)
 	{
-		particle->x = x;
-		particle->y = y;
-		particle->z = z;
-		particle->vel.x = vx;
-		particle->vel.y = vy;
-		particle->vel.z = vz;
+		particle->Pos = pos;
+		particle->Vel = vel;
+		particle->Acc = accel;
 		particle->color = ParticleColor(color);
-		particle->trans = startalpha;
-		if (fadestep < 0) fadestep = FADEFROMTTL(lifetime);
-		particle->fade = fadestep;
+		particle->trans = BYTE(startalpha*255);
+		if (fadestep < 0) particle->fade = FADEFROMTTL(lifetime);
+		else particle->fade = int(fadestep * 255);
 		particle->ttl = lifetime;
-		particle->accx = accelx;
-		particle->accy = accely;
-		particle->accz = accelz;
 		particle->bright = fullbright;
-		particle->size = size;
+		particle->size = (WORD)size;
 	}
 }
 
@@ -379,15 +371,14 @@ particle_t *JitterParticle (int ttl, double drift)
 	particle_t *particle = NewParticle ();
 
 	if (particle) {
-		fixed_t *val = &particle->vel.x;
 		int i;
 
 		// Set initial velocities
-		for (i = 3; i; i--, val++)
-			*val = (int)((FRACUNIT/4096) * (M_Random () - 128) * drift);
+		for (i = 3; i; i--)
+			particle->Vel[i] = ((1./4096) * (M_Random () - 128) * drift);
 		// Set initial accelerations
-		for (i = 3; i; i--, val++)
-			*val = (int)((FRACUNIT/16384) * (M_Random () - 128) * drift);
+		for (i = 3; i; i--)
+			particle->Acc[i] = ((1./16384) * (M_Random () - 128) * drift);
 
 		particle->trans = 255;	// fully opaque
 		particle->ttl = ttl;
@@ -407,18 +398,15 @@ static void MakeFountain (AActor *actor, int color1, int color2)
 
 	if (particle)
 	{
-		angle_t an = M_Random()<<(24-ANGLETOFINESHIFT);
-		fixed_t out = FixedMul (actor->radius, M_Random()<<8);
+		DAngle an = M_Random() * (360. / 256);
+		double out = actor->radius * M_Random() / 256.;
 
-		fixedvec3 pos = actor->Vec3Offset(FixedMul(out, finecosine[an]), FixedMul(out, finesine[an]), actor->height + FRACUNIT);
-		particle->x = pos.x;
-		particle->y = pos.y;
-		particle->z = pos.z;
+		particle->Pos = actor->Vec3Angle(out, an, actor->Height + 1);
 		if (out < actor->radius/8)
-			particle->vel.z += FRACUNIT*10/3;
+			particle->Vel.Z += 10./3;
 		else
-			particle->vel.z += FRACUNIT*3;
-		particle->accz -= FRACUNIT/11;
+			particle->Vel.Z += 3;
+		particle->Acc.Z -= 1./11;
 		if (M_Random() < 30) {
 			particle->size = 4;
 			particle->color = color2;
@@ -431,17 +419,7 @@ static void MakeFountain (AActor *actor, int color1, int color2)
 
 void P_RunEffect (AActor *actor, int effects)
 {
-	angle_t moveangle;
-	
-	// 512 is the limit below which R_PointToAngle2 does no longer returns usable values.
-	if (abs(actor->vel.x) > 512 || abs(actor->vel.y) > 512)
-	{
-		moveangle = R_PointToAngle2(0,0,actor->vel.x,actor->vel.y);
-	}
-	else
-	{
-		moveangle = actor->angle;
-	}
+	DAngle moveangle = actor->Vel.Angle();
 
 	particle_t *particle;
 	int i;
@@ -449,49 +427,44 @@ void P_RunEffect (AActor *actor, int effects)
 	if ((effects & FX_ROCKET) && (cl_rockettrails & 1))
 	{
 		// Rocket trail
+		double backx = -actor->radius * 2 * moveangle.Cos();
+		double backy = -actor->radius * 2 * moveangle.Sin();
+		double backz = actor->Height * ((2. / 3) - actor->Vel.Z / 8);
 
-
-		fixed_t backx = - FixedMul (finecosine[(moveangle)>>ANGLETOFINESHIFT], actor->radius*2);
-		fixed_t backy = - FixedMul (finesine[(moveangle)>>ANGLETOFINESHIFT], actor->radius*2);
-		fixed_t backz = - (actor->height>>3) * (actor->vel.z>>16) + (2*actor->height)/3;
-
-		angle_t an = (moveangle + ANG90) >> ANGLETOFINESHIFT;
-		int speed;
+		DAngle an = moveangle + 90.;
+		double speed;
 
 		particle = JitterParticle (3 + (M_Random() & 31));
 		if (particle) {
-			fixed_t pathdist = M_Random()<<8;
-			fixedvec3 pos = actor->Vec3Offset(
-				backx - FixedMul(actor->vel.x, pathdist),
-				backy - FixedMul(actor->vel.y, pathdist),
-				backz - FixedMul(actor->vel.z, pathdist));
-			particle->x = pos.x;
-			particle->y = pos.y;
-			particle->z = pos.z;
-			speed = (M_Random () - 128) * (FRACUNIT/200);
-			particle->vel.x += FixedMul (speed, finecosine[an]);
-			particle->vel.y += FixedMul (speed, finesine[an]);
-			particle->vel.z -= FRACUNIT/36;
-			particle->accz -= FRACUNIT/20;
+			double pathdist = M_Random() / 256.;
+			DVector3 pos = actor->Vec3Offset(
+				backx - actor->Vel.X * pathdist,
+				backy - actor->Vel.Y * pathdist,
+				backz - actor->Vel.Z * pathdist);
+			particle->Pos = pos;
+			speed = (M_Random () - 128) * (1./200);
+			particle->Vel.X += speed * an.Cos();
+			particle->Vel.Y += speed * an.Sin();
+			particle->Vel.Z -= 1./36;
+			particle->Acc.Z -= 1./20;
 			particle->color = yellow;
 			particle->size = 2;
 		}
 		for (i = 6; i; i--) {
 			particle_t *particle = JitterParticle (3 + (M_Random() & 31));
 			if (particle) {
-				fixed_t pathdist = M_Random()<<8;
-				fixedvec3 pos = actor->Vec3Offset(
-					backx - FixedMul(actor->vel.x, pathdist),
-					backy - FixedMul(actor->vel.y, pathdist),
-					backz - FixedMul(actor->vel.z, pathdist) + (M_Random() << 10));
-				particle->x = pos.x;
-				particle->y = pos.y;
-				particle->z = pos.z;
-				speed = (M_Random () - 128) * (FRACUNIT/200);
-				particle->vel.x += FixedMul (speed, finecosine[an]);
-				particle->vel.y += FixedMul (speed, finesine[an]);
-				particle->vel.z += FRACUNIT/80;
-				particle->accz += FRACUNIT/40;
+				double pathdist = M_Random() / 256.;
+				DVector3 pos = actor->Vec3Offset(
+					backx - actor->Vel.X * pathdist,
+					backy - actor->Vel.Y * pathdist,
+					backz - actor->Vel.Z * pathdist + (M_Random() / 64.));
+				particle->Pos = pos;
+
+				speed = (M_Random () - 128) * (1./200);
+				particle->Vel.X += speed * an.Cos();
+				particle->Vel.Y += speed * an.Sin();
+				particle->Vel.Z -= 1. / 80;
+				particle->Acc.Z -= 1. / 40;
 				if (M_Random () & 7)
 					particle->color = grey2;
 				else
@@ -505,11 +478,9 @@ void P_RunEffect (AActor *actor, int effects)
 	{
 		// Grenade trail
 
-		fixedvec3 pos = actor->Vec3Angle(-actor->radius * 2, moveangle,
-			-(actor->height >> 3) * (actor->vel.z >> 16) + (2 * actor->height) / 3);
+		DVector3 pos = actor->Vec3Angle(-actor->radius * 2, moveangle, -actor->Height * actor->Vel.Z / 8 + actor->Height * (2. / 3));
 
-		P_DrawSplash2 (6, pos.x, pos.y, pos.z,
-			moveangle + ANG180, 2, 2);
+		P_DrawSplash2 (6, pos, moveangle + 180, 2, 2);
 	}
 	if (effects & FX_FOUNTAINMASK)
 	{
@@ -539,27 +510,25 @@ void P_RunEffect (AActor *actor, int effects)
 			particle = JitterParticle (16);
 			if (particle != NULL)
 			{
-				angle_t ang = M_Random () << (32-ANGLETOFINESHIFT-8);
-				fixedvec3 pos = actor->Vec3Offset(FixedMul (actor->radius, finecosine[ang]), FixedMul (actor->radius, finesine[ang]), 0);
-				particle->x = pos.x;
-				particle->y = pos.y;
-				particle->z = pos.z;
+				DAngle ang = M_Random() * (360 / 256.);
+				DVector3 pos = actor->Vec3Angle(actor->radius, ang, 0);
+				particle->Pos = pos;
 				particle->color = *protectColors[M_Random() & 1];
-				particle->vel.z = FRACUNIT;
-				particle->accz = M_Random () << 7;
+				particle->Vel.Z = 1;
+				particle->Acc.Z = M_Random () / 512.;
 				particle->size = 1;
 				if (M_Random () < 128)
 				{ // make particle fall from top of actor
-					particle->z += actor->height;
-					particle->vel.z = -particle->vel.z;
-					particle->accz = -particle->accz;
+					particle->Pos.Z += actor->Height;
+					particle->Vel.Z = -particle->Vel.Z;
+					particle->Acc.Z = -particle->Acc.Z;
 				}
 			}
 		}
 	}
 }
 
-void P_DrawSplash (int count, fixed_t x, fixed_t y, fixed_t z, angle_t angle, int kind)
+void P_DrawSplash (int count, const DVector3 &pos, DAngle angle, int kind)
 {
 	int color1, color2;
 
@@ -576,27 +545,27 @@ void P_DrawSplash (int count, fixed_t x, fixed_t y, fixed_t z, angle_t angle, in
 	for (; count; count--)
 	{
 		particle_t *p = JitterParticle (10);
-		angle_t an;
 
 		if (!p)
 			break;
 
 		p->size = 2;
 		p->color = M_Random() & 0x80 ? color1 : color2;
-		p->vel.z -= M_Random () * 512;
-		p->accz -= FRACUNIT/8;
-		p->accx += (M_Random () - 128) * 8;
-		p->accy += (M_Random () - 128) * 8;
-		p->z = z - M_Random () * 1024;
-		an = (angle + (M_Random() << 21)) >> ANGLETOFINESHIFT;
-		p->x = x + (M_Random () & 15)*finecosine[an];
-		p->y = y + (M_Random () & 15)*finesine[an];
+		p->Vel.Z -= M_Random () / 128.;
+		p->Acc.Z -= 1./8;
+		p->Acc.X += (M_Random () - 128) / 8192.;
+		p->Acc.Y += (M_Random () - 128) / 8192.;
+		p->Pos.Z = pos.Z - M_Random () / 64.;
+		angle += M_Random() * (45./256);
+		p->Pos.X = pos.X + (M_Random() & 15)*angle.Cos();
+		p->Pos.Y = pos.Y + (M_Random() & 15)*angle.Sin();
 	}
 }
 
-void P_DrawSplash2 (int count, fixed_t x, fixed_t y, fixed_t z, angle_t angle, int updown, int kind)
+void P_DrawSplash2 (int count, const DVector3 &pos, DAngle angle, int updown, int kind)
 {
-	int color1, color2, zvel, zspread, zadd;
+	int color1, color2, zadd;
+	double zvel, zspread;
 
 	switch (kind)
 	{
@@ -618,14 +587,14 @@ void P_DrawSplash2 (int count, fixed_t x, fixed_t y, fixed_t z, angle_t angle, i
 		break;
 	}
 
-	zvel = -128;
-	zspread = updown ? -6000 : 6000;
-	zadd = (updown == 2) ? -128 : 0;
+	zvel = -0.5;
+	zspread = updown ? -6000 / 65536. : 6000 / 65536.;
+	zadd = (updown == 2) ? 128 : 0;
 
 	for (; count; count--)
 	{
 		particle_t *p = NewParticle ();
-		angle_t an;
+		DAngle an;
 
 		if (!p)
 			break;
@@ -635,23 +604,24 @@ void P_DrawSplash2 (int count, fixed_t x, fixed_t y, fixed_t z, angle_t angle, i
 		p->trans = 255;
 		p->size = 4;
 		p->color = M_Random() & 0x80 ? color1 : color2;
-		p->vel.z = M_Random () * zvel;
-		p->accz = -FRACUNIT/22;
-		if (kind) {
-			an = (angle + ((M_Random() - 128) << 23)) >> ANGLETOFINESHIFT;
-			p->vel.x = (M_Random () * finecosine[an]) >> 11;
-			p->vel.y = (M_Random () * finesine[an]) >> 11;
-			p->accx = p->vel.x >> 4;
-			p->accy = p->vel.y >> 4;
+		p->Vel.Z = M_Random() * zvel;
+		p->Acc.Z = -1 / 22.;
+		if (kind) 
+		{
+			an = angle + ((M_Random() - 128) * (180 / 256.));
+			p->Vel.X = M_Random() * an.Cos() / 2048.;
+			p->Vel.Y = M_Random() * an.Sin() / 2048.;
+			p->Acc.X = p->Vel.X / 16.;
+			p->Acc.Y = p->Vel.Y / 16.;
 		}
-		p->z = z + (M_Random () + zadd - 128) * zspread;
-		an = (angle + ((M_Random() - 128) << 22)) >> ANGLETOFINESHIFT;
-		p->x = x + ((M_Random () & 31)-15)*finecosine[an];
-		p->y = y + ((M_Random () & 31)-15)*finesine[an];
+		an = angle + ((M_Random() - 128) * (90 / 256.));
+		p->Pos.X = pos.X + ((M_Random() & 31) - 15) * an.Cos();
+		p->Pos.Y = pos.Y + ((M_Random() & 31) - 15) * an.Sin();
+		p->Pos.Z = pos.Z + (M_Random() + zadd - 128) * zspread;
 	}
 }
 
-void P_DrawRailTrail(AActor *source, const DVector3 &start, const DVector3 &end, int color1, int color2, double maxdiff_d, int flags, PClassActor *spawnclass, angle_t angle, int duration, double sparsity, double drift, int SpiralOffset)
+void P_DrawRailTrail(AActor *source, const DVector3 &start, const DVector3 &end, int color1, int color2, double maxdiff_d, int flags, PClassActor *spawnclass, DAngle angle, int duration, double sparsity, double drift, int SpiralOffset)
 {
 	double length, lengthsquared;
 	int steps, i;
@@ -660,9 +630,10 @@ void P_DrawRailTrail(AActor *source, const DVector3 &start, const DVector3 &end,
 	bool fullbright;
 	float maxdiff = (float)maxdiff_d;
 
+
 	dir = end - start;
 	lengthsquared = dir | dir;
-	length = sqrt(lengthsquared);
+	length = g_sqrt(lengthsquared);
 	steps = xs_FloorToInt(length / 3);
 	fullbright = !!(flags & RAF_FULLBRIGHT);
 
@@ -685,8 +656,8 @@ void P_DrawRailTrail(AActor *source, const DVector3 &start, const DVector3 &end,
 			double r;
 			double dirz;
 
-			if (abs(mo->X() - FLOAT2FIXED(start.X)) < 20 * FRACUNIT
-				&& (mo->Y() - FLOAT2FIXED(start.Y)) < 20 * FRACUNIT)
+			if (fabs(mo->X() - start.X) < 20
+				&& fabs(mo->Y() - start.Y) < 20)
 			{ // This player (probably) fired the railgun
 				S_Sound (mo, CHAN_WEAPON, sound, 1, ATTN_NORM);
 			}
@@ -696,7 +667,7 @@ void P_DrawRailTrail(AActor *source, const DVector3 &start, const DVector3 &end,
 				// Only consider sound in 2D (for now, anyway)
 				// [BB] You have to divide by lengthsquared here, not multiply with it.
 
-				r = ((start.Y - FIXED2DBL(mo->Y())) * (-dir.Y) - (start.X - FIXED2DBL(mo->X())) * (dir.X)) / lengthsquared;
+				r = ((start.Y - mo->Y()) * (-dir.Y) - (start.X - mo->X()) * (dir.X)) / lengthsquared;
 				r = clamp<double>(r, 0., 1.);
 
 				dirz = dir.Z;
@@ -704,8 +675,7 @@ void P_DrawRailTrail(AActor *source, const DVector3 &start, const DVector3 &end,
 				point = start + r * dir;
 				dir.Z = dirz;
 
-				S_Sound (FLOAT2FIXED(point.X), FLOAT2FIXED(point.Y), viewz,
-					CHAN_WEAPON, sound, 1, ATTN_NORM);
+				S_Sound (DVector3(point.X, point.Y, ViewPos.Z),	CHAN_WEAPON, sound, 1, ATTN_NORM);
 			}
 		}
 	}
@@ -744,7 +714,7 @@ void P_DrawRailTrail(AActor *source, const DVector3 &start, const DVector3 &end,
 		
 		color1 = color1 == 0 ? -1 : ParticleColor(color1);
 		pos = start;
-		deg = TAngle<double>(SpiralOffset);
+		deg = (double)SpiralOffset;
 		for (i = spiral_steps; i; i--)
 		{
 			particle_t *p = NewParticle ();
@@ -762,15 +732,10 @@ void P_DrawRailTrail(AActor *source, const DVector3 &start, const DVector3 &end,
 			p->bright = fullbright;
 
 			tempvec = DMatrix3x3(dir, deg) * extend;
-			p->vel.x = FLOAT2FIXED(tempvec.X * drift)>>4;
-			p->vel.y = FLOAT2FIXED(tempvec.Y * drift)>>4;
-			p->vel.z = FLOAT2FIXED(tempvec.Z * drift)>>4;
-			tempvec += pos;
-			p->x = FLOAT2FIXED(tempvec.X);
-			p->y = FLOAT2FIXED(tempvec.Y);
-			p->z = FLOAT2FIXED(tempvec.Z);
+			p->Vel = tempvec * drift / 16.;
+			p->Pos = tempvec + pos;
 			pos += spiral_step;
-			deg += TAngle<double>(r_rail_spiralsparsity * 14);
+			deg += double(r_rail_spiralsparsity * 14);
 
 			if (color1 == -1)
 			{
@@ -825,11 +790,9 @@ void P_DrawRailTrail(AActor *source, const DVector3 &start, const DVector3 &end,
 			DVector3 postmp = pos + diff;
 
 			p->size = 2;
-			p->x = FLOAT2FIXED(postmp.X);
-			p->y = FLOAT2FIXED(postmp.Y);
-			p->z = FLOAT2FIXED(postmp.Z);
+			p->Pos = postmp;
 			if (color1 != -1)
-				p->accz -= FRACUNIT/4096;
+				p->Acc.Z -= 1./4096;
 			pos += trail_step;
 
 			p->bright = fullbright;
@@ -874,11 +837,9 @@ void P_DrawRailTrail(AActor *source, const DVector3 &start, const DVector3 &end,
 				if (rnd & 4)
 					diff.Z = clamp<double>(diff.Z + ((rnd & 32) ? 1 : -1), -maxdiff, maxdiff);
 			}			
-			DVector3 postmp = pos + diff;
-
-			AActor *thing = Spawn (spawnclass, FLOAT2FIXED(postmp.X), FLOAT2FIXED(postmp.Y), FLOAT2FIXED(postmp.Z), ALLOW_REPLACE);
+			AActor *thing = Spawn (spawnclass, pos + diff, ALLOW_REPLACE);
 			if (thing)
-				thing->angle = angle;
+				thing->Angles.Yaw = angle;
 			pos += trail_step;
 		}
 	}
@@ -898,15 +859,13 @@ void P_DisconnectEffect (AActor *actor)
 		if (!p)
 			break;
 
-		
-		fixed_t xo = ((M_Random() - 128) << 9) * (actor->radius >> FRACBITS);
-		fixed_t yo = ((M_Random() - 128) << 9) * (actor->radius >> FRACBITS);
-		fixed_t zo = (M_Random() << 8) * (actor->height >> FRACBITS);
-		fixedvec3 pos = actor->Vec3Offset(xo, yo, zo);
-		p->x = pos.x;
-		p->y = pos.y;
-		p->z = pos.z;
-		p->accz -= FRACUNIT/4096;
+		double xo = (M_Random() - 128)*actor->radius / 128;
+		double yo = (M_Random() - 128)*actor->radius / 128;
+		double zo = M_Random()*actor->Height / 256;
+
+		DVector3 pos = actor->Vec3Offset(xo, yo, zo);
+		p->Pos = pos;
+		p->Acc.Z -= 1./4096;
 		p->color = M_Random() < 128 ? maroon1 : maroon2;
 		p->size = 4;
 	}

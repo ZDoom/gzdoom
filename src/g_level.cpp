@@ -1228,7 +1228,7 @@ void G_FinishTravel ()
 			{
 				Printf(TEXTCOLOR_RED "No player %d start to travel to!\n", pnum + 1);
 				// Move to the coordinates this player had when they left the level.
-				pawn->SetXYZ(pawndup->X(), pawndup->Y(), pawndup->Z());
+				pawn->SetXYZ(pawndup->Pos());
 			}
 		}
 		oldpawn = pawndup;
@@ -1240,13 +1240,10 @@ void G_FinishTravel ()
 		{
 			if (!(changeflags & CHANGELEVEL_KEEPFACING))
 			{
-				pawn->angle = pawndup->angle;
-				pawn->pitch = pawndup->pitch;
+				pawn->Angles = pawndup->Angles;
 			}
-			pawn->SetXYZ(pawndup->X(), pawndup->Y(), pawndup->Z());
-			pawn->vel.x = pawndup->vel.x;
-			pawn->vel.y = pawndup->vel.y;
-			pawn->vel.z = pawndup->vel.z;
+			pawn->SetXYZ(pawndup->Pos());
+			pawn->Vel = pawndup->Vel;
 			pawn->Sector = pawndup->Sector;
 			pawn->floorz = pawndup->floorz;
 			pawn->ceilingz = pawndup->ceilingz;
@@ -1256,7 +1253,7 @@ void G_FinishTravel ()
 			pawn->floorterrain = pawndup->floorterrain;
 			pawn->ceilingsector = pawndup->ceilingsector;
 			pawn->ceilingpic = pawndup->ceilingpic;
-			pawn->floorclip = pawndup->floorclip;
+			pawn->Floorclip = pawndup->Floorclip;
 			pawn->waterlevel = pawndup->waterlevel;
 		}
 		else
@@ -1316,7 +1313,7 @@ void G_InitLevelLocals ()
 	NormalLight.ChangeColor (PalEntry (255, 255, 255), 0);
 
 	level.gravity = sv_gravity * 35/TICRATE;
-	level.aircontrol = (fixed_t)(sv_aircontrol * 65536.f);
+	level.aircontrol = sv_aircontrol;
 	level.teamdamage = teamdamage;
 	level.flags = 0;
 	level.flags2 = 0;
@@ -1357,7 +1354,7 @@ void G_InitLevelLocals ()
 	}
 	if (info->aircontrol != 0.f)
 	{
-		level.aircontrol = (fixed_t)(info->aircontrol * 65536.f);
+		level.aircontrol = info->aircontrol;
 	}
 	if (info->teamdamage != 0.f)
 	{
@@ -1462,15 +1459,14 @@ FString CalcMapName (int episode, int level)
 
 void G_AirControlChanged ()
 {
-	if (level.aircontrol <= 256)
+	if (level.aircontrol <= 1/256.)
 	{
-		level.airfriction = FRACUNIT;
+		level.airfriction = 1.;
 	}
 	else
 	{
 		// Friction is inversely proportional to the amount of control
-		float fric = ((float)level.aircontrol/65536.f) * -0.0941f + 1.0004f;
-		level.airfriction = (fixed_t)(fric * 65536.f);
+		level.airfriction = level.aircontrol * -0.0941 + 1.0004;
 	}
 }
 
@@ -1499,26 +1495,11 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 		<< level.maptime
 		<< i;
 
-	if (SaveVersion >= 3313)
-	{
-		// This is a player property now
-		int nextmusic;
-		arc << nextmusic;
-	}
-
 	// Hub transitions must keep the current total time
 	if (!hubLoad)
 		level.totaltime = i;
 
-	if (SaveVersion >= 4507)
-	{
-		arc << level.skytexture1 << level.skytexture2;
-	}
-	else
-	{
-		level.skytexture1 = TexMan.GetTexture(arc.ReadName(), FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_ReturnFirst);
-		level.skytexture2 = TexMan.GetTexture(arc.ReadName(), FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_ReturnFirst);
-	}
+	arc << level.skytexture1 << level.skytexture2;
 	if (arc.IsLoading())
 	{
 		sky1texture = level.skytexture1;
@@ -1559,12 +1540,7 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 	P_SerializeSubsectors(arc);
 	StatusBar->Serialize (arc);
 
-	if (SaveVersion >= 4222)
-	{ // This must be done *after* thinkers are serialized.
-		arc << level.DefaultSkybox;
-	}
-
-	arc << level.total_monsters << level.total_items << level.total_secrets;
+	arc << level.DefaultSkybox << level.total_monsters << level.total_items << level.total_secrets;
 
 	// Does this level have custom translations?
 	FRemapTable *trans;
@@ -1794,8 +1770,6 @@ void G_WriteSnapshots (FILE *file)
 void G_ReadSnapshots (PNGHandle *png)
 {
 	DWORD chunkLen;
-	BYTE namelen;
-	char mapname[256];
 	FString MapName;
 	level_info_t *i;
 
@@ -1808,14 +1782,7 @@ void G_ReadSnapshots (PNGHandle *png)
 		DWORD snapver;
 
 		arc << snapver;
-		if (SaveVersion < 4508)
-		{
-			arc << namelen;
-			arc.Read(mapname, namelen);
-			mapname[namelen] = 0;
-			MapName = mapname;
-		}
-		else arc << MapName;
+		arc << MapName;
 		i = FindLevelInfo (MapName);
 		i->snapshotVer = snapver;
 		i->snapshot = new FCompressedMemFile;
@@ -1830,14 +1797,7 @@ void G_ReadSnapshots (PNGHandle *png)
 		DWORD snapver;
 
 		arc << snapver;
-		if (SaveVersion < 4508)
-		{
-			arc << namelen;
-			arc.Read(mapname, namelen);
-			mapname[namelen] = 0;
-			MapName = mapname;
-		}
-		else arc << MapName;
+		arc << MapName;
 		TheDefaultLevelInfo.snapshotVer = snapver;
 		TheDefaultLevelInfo.snapshot = new FCompressedMemFile;
 		TheDefaultLevelInfo.snapshot->Serialize (arc);
@@ -1848,25 +1808,10 @@ void G_ReadSnapshots (PNGHandle *png)
 	{
 		FPNGChunkArchive arc (png->File->GetFile(), VIST_ID, chunkLen);
 
-		if (SaveVersion < 4508)
+		while (arc << MapName, MapName.Len() > 0)
 		{
-			arc << namelen;
-			while (namelen != 0)
-			{
-				arc.Read(mapname, namelen);
-				mapname[namelen] = 0;
-				i = FindLevelInfo(mapname);
-				i->flags |= LEVEL_VISITED;
-				arc << namelen;
-			}
-		}
-		else
-		{
-			while (arc << MapName, MapName.Len() > 0)
-			{
-				i = FindLevelInfo(MapName);
-				i->flags |= LEVEL_VISITED;
-			}
+			i = FindLevelInfo(MapName);
+			i->flags |= LEVEL_VISITED;
 		}
 	}
 
@@ -1962,8 +1907,6 @@ void P_WriteACSDefereds (FILE *file)
 
 void P_ReadACSDefereds (PNGHandle *png)
 {
-	BYTE namelen;
-	char mapname[256];
 	FString MapName;
 	size_t chunklen;
 
@@ -1973,33 +1916,14 @@ void P_ReadACSDefereds (PNGHandle *png)
 	{
 		FPNGChunkArchive arc (png->File->GetFile(), ACSD_ID, chunklen);
 
-		if (SaveVersion < 4508)
+		while (arc << MapName, MapName.Len() > 0)
 		{
-			arc << namelen;
-			while (namelen != 0)
+			level_info_t *i = FindLevelInfo(MapName);
+			if (i == NULL)
 			{
-				arc.Read(mapname, namelen);
-				mapname[namelen] = 0;
-				level_info_t *i = FindLevelInfo(mapname);
-				if (i == NULL)
-				{
-					I_Error("Unknown map '%s' in savegame", mapname);
-				}
-				arc << i->defered;
-				arc << namelen;
+				I_Error("Unknown map '%s' in savegame", MapName.GetChars());
 			}
-		}
-		else
-		{
-			while (arc << MapName, MapName.Len() > 0)
-			{
-				level_info_t *i = FindLevelInfo(MapName);
-				if (i == NULL)
-				{
-					I_Error("Unknown map '%s' in savegame", MapName.GetChars());
-				}
-				arc << i->defered;
-			}
+			arc << i->defered;
 		}
 	}
 	png->File->ResetFilePtr();

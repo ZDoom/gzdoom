@@ -180,7 +180,7 @@ protected:
 		FRemapTable *Translation;
 		PalEntry Blend;
 		FTexture *Texture;
-		fixed_t Alpha;
+		blend_t Alpha;
 
 		TexPart();
 	};
@@ -246,8 +246,8 @@ FMultiPatchTexture::FMultiPatchTexture (const void *texdef, FPatchLookup *patchl
 	Name = (char *)mtexture.d->name;
 	CalcBitSize ();
 
-	xScale = mtexture.d->ScaleX ? mtexture.d->ScaleX*(FRACUNIT/8) : FRACUNIT;
-	yScale = mtexture.d->ScaleY ? mtexture.d->ScaleY*(FRACUNIT/8) : FRACUNIT;
+	Scale.X = mtexture.d->ScaleX ? mtexture.d->ScaleX / 8. : 1.;
+	Scale.Y = mtexture.d->ScaleY ? mtexture.d->ScaleY / 8. : 1.;
 
 	if (mtexture.d->Flags & MAPTEXF_WORLDPANNING)
 	{
@@ -593,7 +593,7 @@ int FMultiPatchTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rota
 
 		memset (&info, 0, sizeof(info));
 		info.alpha = Parts[i].Alpha;
-		info.invalpha = FRACUNIT - info.alpha;
+		info.invalpha = BLENDUNIT - info.alpha;
 		info.op = ECopyOp(Parts[i].op);
 		PalEntry b = Parts[i].Blend;
 		if (b.a == 0 && b != BLEND_NONE)
@@ -604,14 +604,14 @@ int FMultiPatchTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rota
 		{
 			if (b.a == 255)
 			{
-				info.blendcolor[0] = b.r * FRACUNIT / 255;
-				info.blendcolor[1] = b.g * FRACUNIT / 255;
-				info.blendcolor[2] = b.b * FRACUNIT / 255;
+				info.blendcolor[0] = b.r * BLENDUNIT / 255;
+				info.blendcolor[1] = b.g * BLENDUNIT / 255;
+				info.blendcolor[2] = b.b * BLENDUNIT / 255;
 				info.blend = BLEND_MODULATE;
 			}
 			else
 			{
-				fixed_t blendalpha = b.a * FRACUNIT / 255;
+				blend_t blendalpha = b.a * BLENDUNIT / 255;
 				info.blendcolor[0] = b.r * blendalpha;
 				info.blendcolor[1] = b.g * blendalpha;
 				info.blendcolor[2] = b.b * blendalpha;
@@ -1165,7 +1165,7 @@ void FMultiPatchTexture::ParsePatch(FScanner &sc, TexPart & part, bool silent, i
 			else if (sc.Compare("alpha"))
 			{
 				sc.MustGetFloat();
-				part.Alpha = clamp(FLOAT2FIXED(sc.Float), 0, FRACUNIT);
+				part.Alpha = clamp<blend_t>(int(sc.Float / BLENDUNIT), 0, BLENDUNIT);
 				// bComplex is not set because it is only needed when the style is not OP_COPY.
 			}
 			else if (sc.Compare("style"))
@@ -1243,14 +1243,14 @@ FMultiPatchTexture::FMultiPatchTexture (FScanner &sc, int usetype)
 			if (sc.Compare("XScale"))
 			{
 				sc.MustGetFloat();
-				xScale = FLOAT2FIXED(sc.Float);
-				if (xScale == 0) sc.ScriptError("Texture %s is defined with null x-scale\n", Name.GetChars());
+				Scale.X = sc.Float;
+				if (Scale.X == 0) sc.ScriptError("Texture %s is defined with null x-scale\n", Name.GetChars());
 			}
 			else if (sc.Compare("YScale"))
 			{
 				sc.MustGetFloat();
-				yScale = FLOAT2FIXED(sc.Float);
-				if (yScale == 0) sc.ScriptError("Texture %s is defined with null y-scale\n", Name.GetChars());
+				Scale.Y = sc.Float;
+				if (Scale.Y == 0) sc.ScriptError("Texture %s is defined with null y-scale\n", Name.GetChars());
 			}
 			else if (sc.Compare("WorldPanning"))
 			{

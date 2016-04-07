@@ -24,6 +24,7 @@
 
 
 #include <math.h>
+#include <float.h>
 #ifdef _MSC_VER
 #include <malloc.h>		// for alloca()
 #endif
@@ -170,10 +171,8 @@ int 			bmapheight; 	// size in mapblocks
 int				*blockmap;		// int for larger maps ([RH] Made int because BOOM does)
 int				*blockmaplump;	// offsets in blockmap are from here	
 
-fixed_t 		bmaporgx;		// origin of block map
-fixed_t 		bmaporgy;
-int				bmapnegx;		// min negs of block map before wrapping
-int				bmapnegy;
+double	 		bmaporgx;		// origin of block map
+double	 		bmaporgy;
 
 FBlockNode**	blocklinks;		// for thing chains
 
@@ -863,8 +862,7 @@ void P_LoadVertexes (MapData * map)
 		SWORD x, y;
 
 		(*map->file) >> x >> y;
-		vertexes[i].x = x << FRACBITS;
-		vertexes[i].y = y << FRACBITS;
+		vertexes[i].set(x << FRACBITS, y << FRACBITS);
 	}
 }
 
@@ -1002,7 +1000,9 @@ void LoadZNodes(FileReaderBase &data, int glnodes)
 	}
 	for (i = 0; i < newVerts; ++i)
 	{
-		data >> newvertarray[i + orgVerts].x >> newvertarray[i + orgVerts].y;
+		fixed_t x, y;
+		data >> x >> y;
+		newvertarray[i + orgVerts].set(x, y);
 	}
 	if (vertexes != newvertarray)
 	{
@@ -1220,10 +1220,8 @@ void P_LoadSegs (MapData * map)
 	BYTE *vertchanged = new BYTE[numvertexes];	// phares 10/4/98
 	DWORD segangle;
 	line_t* line;		// phares 10/4/98
-	int ptp_angle;		// phares 10/4/98
-	int delta_angle;	// phares 10/4/98
-	int dis;			// phares 10/4/98
-	int dx,dy;			// phares 10/4/98
+	//int ptp_angle;		// phares 10/4/98
+	//int delta_angle;	// phares 10/4/98
 	int vnum1,vnum2;	// phares 10/4/98
 	int lumplen = map->Size(ML_SEGS);
 
@@ -1315,28 +1313,26 @@ void P_LoadSegs (MapData * map)
 			// off, then move one vertex. This may seem insignificant, but one degree
 			// errors _can_ cause firelines.
 
-			ptp_angle = R_PointToAngle2 (li->v1->x, li->v1->y, li->v2->x, li->v2->y);
-			dis = 0;
-			delta_angle = (absangle(ptp_angle-(segangle<<16))>>ANGLETOFINESHIFT)*360/FINEANGLES;
+			DAngle ptp_angle = (li->v2->fPos() - li->v1->fPos()).Angle();
+			DAngle seg_angle = AngleToFloat(segangle);
+			DAngle delta_angle = absangle(ptp_angle, seg_angle);
 
-			if (delta_angle != 0)
+			if (delta_angle >= 1.)
 			{
-				segangle >>= (ANGLETOFINESHIFT-16);
-				dx = (li->v1->x - li->v2->x)>>FRACBITS;
-				dy = (li->v1->y - li->v2->y)>>FRACBITS;
-				dis = ((int) sqrt((double)(dx*dx + dy*dy)))<<FRACBITS;
-				dx = finecosine[segangle];
-				dy = finesine[segangle];
+				double dis = (li->v2->fPos() - li->v1->fPos()).Length();
+				DVector2 delta = seg_angle.ToVector();
 				if ((vnum2 > vnum1) && (vertchanged[vnum2] == 0))
 				{
-					li->v2->x = li->v1->x + FixedMul(dis,dx);
-					li->v2->y = li->v1->y + FixedMul(dis,dy);
+					li->v2->set(
+						li->v1->fX() + dis * delta.X,
+						li->v1->fY() + dis * delta.Y);
 					vertchanged[vnum2] = 1; // this was changed
 				}
 				else if (vertchanged[vnum1] == 0)
 				{
-					li->v1->x = li->v2->x - FixedMul(dis,dx);
-					li->v1->y = li->v2->y - FixedMul(dis,dy);
+					li->v1->set(
+						li->v2->fX() - dis * delta.X,
+						li->v2->fY() - dis * delta.Y);
 					vertchanged[vnum1] = 1; // this was changed
 				}
 			}
@@ -1504,14 +1500,10 @@ void P_LoadSectors (MapData *map, FMissingTextureTracker &missingtex)
 	{
 		ss->e = &sectors[0].e[i];
 		if (!map->HasBehavior) ss->Flags |= SECF_FLOORDROP;
-		ss->SetPlaneTexZ(sector_t::floor, LittleShort(ms->floorheight)<<FRACBITS);
-		ss->floorplane.d = -ss->GetPlaneTexZ(sector_t::floor);
-		ss->floorplane.c = FRACUNIT;
-		ss->floorplane.ic = FRACUNIT;
-		ss->SetPlaneTexZ(sector_t::ceiling, LittleShort(ms->ceilingheight)<<FRACBITS);
-		ss->ceilingplane.d = ss->GetPlaneTexZ(sector_t::ceiling);
-		ss->ceilingplane.c = -FRACUNIT;
-		ss->ceilingplane.ic = -FRACUNIT;
+		ss->SetPlaneTexZ(sector_t::floor, (double)LittleShort(ms->floorheight));
+		ss->floorplane.set(0, 0, 1., -ss->GetPlaneTexZF(sector_t::floor));
+		ss->SetPlaneTexZ(sector_t::ceiling, (double)LittleShort(ms->ceilingheight));
+		ss->ceilingplane.set(0, 0, -1., ss->GetPlaneTexZF(sector_t::ceiling));
 		SetTexture(ss, i, sector_t::floor, ms->floorpic, missingtex, true);
 		SetTexture(ss, i, sector_t::ceiling, ms->ceilingpic, missingtex, true);
 		ss->lightlevel = LittleShort(ms->lightlevel);
@@ -1527,12 +1519,12 @@ void P_LoadSectors (MapData *map, FMissingTextureTracker &missingtex)
 		ss->nextsec = -1;	//jff 2/26/98 add fields to support locking out
 		ss->prevsec = -1;	// stair retriggering until build completes
 
-		ss->SetAlpha(sector_t::floor, FRACUNIT);
-		ss->SetAlpha(sector_t::ceiling, FRACUNIT);
-		ss->SetXScale(sector_t::floor, FRACUNIT);	// [RH] floor and ceiling scaling
-		ss->SetYScale(sector_t::floor, FRACUNIT);
-		ss->SetXScale(sector_t::ceiling, FRACUNIT);
-		ss->SetYScale(sector_t::ceiling, FRACUNIT);
+		ss->SetAlpha(sector_t::floor, 1.);
+		ss->SetAlpha(sector_t::ceiling, 1.);
+		ss->SetXScale(sector_t::floor, 1.);	// [RH] floor and ceiling scaling
+		ss->SetYScale(sector_t::floor, 1.);
+		ss->SetXScale(sector_t::ceiling, 1.);
+		ss->SetYScale(sector_t::ceiling, 1.);
 
 		ss->heightsec = NULL;	// sector used to get floor and ceiling height
 		// killough 3/7/98: end changes
@@ -1670,8 +1662,8 @@ AActor *SpawnMapThing(int index, FMapThing *mt, int position)
 	AActor *spawned = P_SpawnMapThing(mt, position);
 	if (dumpspawnedthings)
 	{
-		Printf("%5d: (%5d, %5d, %5d), doomednum = %5d, flags = %04x, type = %s\n",
-			index, mt->x>>FRACBITS, mt->y>>FRACBITS, mt->z>>FRACBITS, mt->EdNum, mt->flags, 
+		Printf("%5d: (%5f, %5f, %5f), doomednum = %5d, flags = %04x, type = %s\n",
+			index, mt->pos.X, mt->pos.Y, mt->pos.Z, mt->EdNum, mt->flags, 
 			spawned? spawned->GetClass()->TypeName.GetChars() : "(none)");
 	}
 	T_AddSpawnedThing(spawned);
@@ -1755,17 +1747,17 @@ void P_LoadThings (MapData * map)
 
 		memset (&mti[i], 0, sizeof(mti[i]));
 
-		mti[i].gravity = FRACUNIT;
+		mti[i].Gravity = 1;
 		mti[i].Conversation = 0;
 		mti[i].SkillFilter = MakeSkill(flags);
 		mti[i].ClassFilter = 0xffff;	// Doom map format doesn't have class flags so spawn for all player classes
 		mti[i].RenderStyle = STYLE_Count;
-		mti[i].alpha = -1;
+		mti[i].Alpha = -1;
 		mti[i].health = 1;
 		mti[i].FloatbobPhase = -1;
 
-		mti[i].x = LittleShort(mt->x) << FRACBITS;
-		mti[i].y = LittleShort(mt->y) << FRACBITS;
+		mti[i].pos.X = LittleShort(mt->x);
+		mti[i].pos.Y = LittleShort(mt->y);
 		mti[i].angle = LittleShort(mt->angle);
 		mti[i].EdNum = LittleShort(mt->type);
 		mti[i].info = DoomEdMap.CheckKey(mti[i].EdNum);
@@ -1837,9 +1829,9 @@ void P_LoadThings2 (MapData * map)
 		memset (&mti[i], 0, sizeof(mti[i]));
 
 		mti[i].thingid = LittleShort(mth[i].thingid);
-		mti[i].x = LittleShort(mth[i].x)<<FRACBITS;
-		mti[i].y = LittleShort(mth[i].y)<<FRACBITS;
-		mti[i].z = LittleShort(mth[i].z)<<FRACBITS;
+		mti[i].pos.X = LittleShort(mth[i].x);
+		mti[i].pos.Y = LittleShort(mth[i].y);
+		mti[i].pos.Z = LittleShort(mth[i].z);
 		mti[i].angle = LittleShort(mth[i].angle);
 		mti[i].EdNum = LittleShort(mth[i].type);
 		mti[i].info = DoomEdMap.CheckKey(mti[i].EdNum);
@@ -1854,9 +1846,9 @@ void P_LoadThings2 (MapData * map)
 			mti[i].flags &= 0x7ff;	// mask out Strife flags if playing an original Hexen map.
 		}
 
-		mti[i].gravity = FRACUNIT;
+		mti[i].Gravity = 1;
 		mti[i].RenderStyle = STYLE_Count;
-		mti[i].alpha = -1;
+		mti[i].Alpha = -1;
 		mti[i].health = 1;
 		mti[i].FloatbobPhase = -1;
 	}
@@ -1903,29 +1895,28 @@ void P_AdjustLine (line_t *ld)
 	v1 = ld->v1;
 	v2 = ld->v2;
 
-	ld->dx = v2->x - v1->x;
-	ld->dy = v2->y - v1->y;
+	ld->setDelta(v2->fX() - v1->fX(), v2->fY() - v1->fY());
 	
-	if (v1->x < v2->x)
+	if (v1->fX() < v2->fX())
 	{
-		ld->bbox[BOXLEFT] = v1->x;
-		ld->bbox[BOXRIGHT] = v2->x;
+		ld->bbox[BOXLEFT] = v1->fX();
+		ld->bbox[BOXRIGHT] = v2->fX();
 	}
 	else
 	{
-		ld->bbox[BOXLEFT] = v2->x;
-		ld->bbox[BOXRIGHT] = v1->x;
+		ld->bbox[BOXLEFT] = v2->fX();
+		ld->bbox[BOXRIGHT] = v1->fX();
 	}
 
-	if (v1->y < v2->y)
+	if (v1->fY() < v2->fY())
 	{
-		ld->bbox[BOXBOTTOM] = v1->y;
-		ld->bbox[BOXTOP] = v2->y;
+		ld->bbox[BOXBOTTOM] = v1->fY();
+		ld->bbox[BOXTOP] = v2->fY();
 	}
 	else
 	{
-		ld->bbox[BOXBOTTOM] = v2->y;
-		ld->bbox[BOXTOP] = v1->y;
+		ld->bbox[BOXBOTTOM] = v2->fY();
+		ld->bbox[BOXTOP] = v1->fY();
 	}
 }
 
@@ -2014,8 +2005,8 @@ void P_FinishLoadingLineDef(line_t *ld, int alpha)
 
 	ld->frontsector = ld->sidedef[0] != NULL ? ld->sidedef[0]->sector : NULL;
 	ld->backsector  = ld->sidedef[1] != NULL ? ld->sidedef[1]->sector : NULL;
-	double dx = FIXED2DBL(ld->v2->x - ld->v1->x);
-	double dy = FIXED2DBL(ld->v2->y - ld->v1->y);
+	double dx = (ld->v2->fX() - ld->v1->fX());
+	double dy = (ld->v2->fY() - ld->v1->fY());
 	int linenum = int(ld-lines);
 
 	if (ld->frontsector == NULL)
@@ -2024,7 +2015,7 @@ void P_FinishLoadingLineDef(line_t *ld, int alpha)
 	}
 
 	// [RH] Set some new sidedef properties
-	int len = (int)(sqrt (dx*dx + dy*dy) + 0.5f);
+	int len = (int)(g_sqrt (dx*dx + dy*dy) + 0.5f);
 
 	if (ld->sidedef[0] != NULL)
 	{
@@ -2055,7 +2046,7 @@ void P_FinishLoadingLineDef(line_t *ld, int alpha)
 			additive = true;
 		}
 
-		alpha = Scale(alpha, FRACUNIT, 255); 
+		alpha = Scale(alpha, OPAQUE, 255); 
 		if (!ld->args[0])
 		{
 			ld->Alpha = alpha;
@@ -2140,8 +2131,8 @@ void P_LoadLineDefs (MapData * map)
 			I_Error ("Line %d has invalid vertices: %d and/or %d.\nThe map only contains %d vertices.", i+skipped, v1, v2, numvertexes);
 		}
 		else if (v1 == v2 ||
-			(vertexes[LittleShort(mld->v1)].x == vertexes[LittleShort(mld->v2)].x &&
-			 vertexes[LittleShort(mld->v1)].y == vertexes[LittleShort(mld->v2)].y))
+			(vertexes[LittleShort(mld->v1)].fX() == vertexes[LittleShort(mld->v2)].fX() &&
+			 vertexes[LittleShort(mld->v1)].fY() == vertexes[LittleShort(mld->v2)].fY()))
 		{
 			Printf ("Removing 0-length line %d\n", i+skipped);
 			memmove (mld, mld+1, sizeof(*mld)*(numlines-i-1));
@@ -2172,7 +2163,7 @@ void P_LoadLineDefs (MapData * map)
 	ld = lines;
 	for (i = 0; i < numlines; i++, mld++, ld++)
 	{
-		ld->Alpha = FRACUNIT;	// [RH] Opaque by default
+		ld->Alpha = OPAQUE;	// [RH] Opaque by default
 		ld->portalindex = UINT_MAX;
 
 		// [RH] Translate old linedef special and flags to be
@@ -2229,8 +2220,8 @@ void P_LoadLineDefs2 (MapData * map)
 		mld = ((maplinedef2_t*)mldf) + i;
 
 		if (mld->v1 == mld->v2 ||
-			(vertexes[LittleShort(mld->v1)].x == vertexes[LittleShort(mld->v2)].x &&
-			 vertexes[LittleShort(mld->v1)].y == vertexes[LittleShort(mld->v2)].y))
+			(vertexes[LittleShort(mld->v1)].fX() == vertexes[LittleShort(mld->v2)].fX() &&
+			 vertexes[LittleShort(mld->v1)].fY() == vertexes[LittleShort(mld->v2)].fY()))
 		{
 			Printf ("Removing 0-length line %d\n", i+skipped);
 			memmove (mld, mld+1, sizeof(*mld)*(numlines-i-1));
@@ -2276,7 +2267,7 @@ void P_LoadLineDefs2 (MapData * map)
 
 		ld->v1 = &vertexes[LittleShort(mld->v1)];
 		ld->v2 = &vertexes[LittleShort(mld->v2)];
-		ld->Alpha = FRACUNIT;	// [RH] Opaque by default
+		ld->Alpha = OPAQUE;	// [RH] Opaque by default
 
 		P_SetSideNum (&ld->sidedef[0], LittleShort(mld->sidenum[0]));
 		P_SetSideNum (&ld->sidedef[1], LittleShort(mld->sidenum[1]));
@@ -2423,15 +2414,15 @@ static void P_LoopSidedefs (bool firstloop)
 			if (sidetemp[right].b.next != NO_SIDE)
 			{
 				int bestright = right;	// Shut up, GCC
-				angle_t bestang = ANGLE_MAX;
+				DAngle bestang = 360.;
 				line_t *leftline, *rightline;
-				angle_t ang1, ang2, ang;
+				DAngle ang1, ang2, ang;
 
 				leftline = sides[i].linedef;
-				ang1 = R_PointToAngle2 (0, 0, leftline->dx, leftline->dy);
+				ang1 = leftline->Delta().Angle();
 				if (!sidetemp[i].b.lineside)
 				{
-					ang1 += ANGLE_180;
+					ang1 += 180;
 				}
 
 				while (right != NO_SIDE)
@@ -2441,13 +2432,13 @@ static void P_LoopSidedefs (bool firstloop)
 						rightline = sides[right].linedef;
 						if (rightline->frontsector != rightline->backsector)
 						{
-							ang2 = R_PointToAngle2 (0, 0, rightline->dx, rightline->dy);
+							ang2 = rightline->Delta().Angle();
 							if (sidetemp[right].b.lineside)
 							{
-								ang2 += ANGLE_180;
+								ang2 += 180;
 							}
 
-							ang = ang2 - ang1;
+							ang = (ang2 - ang1).Normalized360();
 
 							if (ang != 0 && ang <= bestang)
 							{
@@ -2785,6 +2776,7 @@ static void P_CreateBlockMap ()
 	TArray<int> *BlockLists, *block, *endblock;
 	int adder;
 	int bmapwidth, bmapheight;
+	double dminx, dmaxx, dminy, dmaxy;
 	int minx, maxx, miny, maxy;
 	int i;
 	int line;
@@ -2793,21 +2785,21 @@ static void P_CreateBlockMap ()
 		return;
 
 	// Find map extents for the blockmap
-	minx = maxx = vertexes[0].x;
-	miny = maxy = vertexes[0].y;
+	dminx = dmaxx = vertexes[0].fX();
+	dminy = dmaxy = vertexes[0].fY();
 
 	for (i = 1; i < numvertexes; ++i)
 	{
-			 if (vertexes[i].x < minx) minx = vertexes[i].x;
-		else if (vertexes[i].x > maxx) maxx = vertexes[i].x;
-			 if (vertexes[i].y < miny) miny = vertexes[i].y;
-		else if (vertexes[i].y > maxy) maxy = vertexes[i].y;
+			 if (vertexes[i].fX() < dminx) dminx = vertexes[i].fX();
+		else if (vertexes[i].fX() > dmaxx) dmaxx = vertexes[i].fX();
+			 if (vertexes[i].fY() < dminy) dminy = vertexes[i].fY();
+		else if (vertexes[i].fY() > dmaxy) dmaxy = vertexes[i].fY();
 	}
 
-	maxx >>= FRACBITS;
-	minx >>= FRACBITS;
-	maxy >>= FRACBITS;
-	miny >>= FRACBITS;
+	minx = int(dminx);
+	miny = int(dminy);
+	maxx = int(dmaxx);
+	maxy = int(dmaxy);
 
 	bmapwidth =	 ((maxx - minx) >> BLOCKBITS) + 1;
 	bmapheight = ((maxy - miny) >> BLOCKBITS) + 1;
@@ -2823,10 +2815,10 @@ static void P_CreateBlockMap ()
 
 	for (line = 0; line < numlines; ++line)
 	{
-		int x1 = lines[line].v1->x >> FRACBITS;
-		int y1 = lines[line].v1->y >> FRACBITS;
-		int x2 = lines[line].v2->x >> FRACBITS;
-		int y2 = lines[line].v2->y >> FRACBITS;
+		int x1 = int(lines[line].v1->fX());
+		int y1 = int(lines[line].v1->fY());
+		int x2 = int(lines[line].v2->fX());
+		int y2 = int(lines[line].v2->fY());
 		int dx = x2 - x1;
 		int dy = y2 - y1;
 		int bx = (x1 - minx) >> BLOCKBITS;
@@ -3077,15 +3069,10 @@ void P_LoadBlockMap (MapData * map)
 
 	}
 
-	bmaporgx = blockmaplump[0] << FRACBITS;
-	bmaporgy = blockmaplump[1] << FRACBITS;
+	bmaporgx = blockmaplump[0];
+	bmaporgy = blockmaplump[1];
 	bmapwidth = blockmaplump[2];
 	bmapheight = blockmaplump[3];
-	// MAES: set blockmapxneg and blockmapyneg
-	// E.g. for a full 512x512 map, they should be both
-	// -1. For a 257*257, they should be both -255 etc.
-	bmapnegx = bmapwidth > 255 ? bmapwidth - 512 : -257;
-	bmapnegy = bmapheight > 255 ? bmapheight - 512 : -257;
 
 	// clear out mobj chains
 	count = bmapwidth*bmapheight;
@@ -3216,14 +3203,14 @@ static void P_GroupLines (bool buildmap)
 			for (j = 0; j < sector->linecount; ++j)
 			{
 				li = sector->lines[j];
-				bbox.AddToBox (li->v1->x, li->v1->y);
-				bbox.AddToBox (li->v2->x, li->v2->y);
+				bbox.AddToBox (li->v1->fPos());
+				bbox.AddToBox (li->v2->fPos());
 			}
 		}
 
 		// set the center to the middle of the bounding box
-		sector->centerspot.x = bbox.Right()/2 + bbox.Left()/2;
-		sector->centerspot.y = bbox.Top()/2 + bbox.Bottom()/2;
+		sector->centerspot.X = (bbox.Right() + bbox.Left()/2);
+		sector->centerspot.Y = (bbox.Top() + bbox.Bottom()/2);
 
 		// For triangular sectors the above does not calculate good points unless the longest of the triangle's lines is perfectly horizontal and vertical
 		if (sector->linecount == 3)
@@ -3233,8 +3220,8 @@ static void P_GroupLines (bool buildmap)
 			Triangle[1] = sector->lines[0]->v2;
 			if (sector->linecount > 1)
 			{
-				fixed_t dx = Triangle[1]->x - Triangle[0]->x;
-				fixed_t dy = Triangle[1]->y - Triangle[0]->y;
+				double dx = Triangle[1]->fX() - Triangle[0]->fX();
+				double dy = Triangle[1]->fY() - Triangle[0]->fY();
 				// Find another point in the sector that does not lie
 				// on the same line as the first two points.
 				for (j = 0; j < 2; ++j)
@@ -3242,11 +3229,10 @@ static void P_GroupLines (bool buildmap)
 					vertex_t *v;
 
 					v = (j == 1) ? sector->lines[1]->v1 : sector->lines[1]->v2;
-					if (DMulScale32 (v->y - Triangle[0]->y, dx,
-									Triangle[0]->x - v->x, dy) != 0)
+					if ( (v->fY() - Triangle[0]->fY()) * dx + (Triangle[0]->fX() - v->fX() * dy) != 0)
 					{
-						sector->centerspot.x = Triangle[0]->x / 3 + Triangle[1]->x / 3 + v->x / 3;
-						sector->centerspot.y = Triangle[0]->y / 3 + Triangle[1]->y / 3 + v->y / 3;
+						sector->centerspot.X = (Triangle[0]->fX() / 3 + Triangle[1]->fX() / 3 + v->fX() / 3);
+						sector->centerspot.Y = (Triangle[0]->fY() / 3 + Triangle[1]->fY() / 3 + v->fY() / 3);
 						break;
 					}
 				}
@@ -3367,8 +3353,8 @@ void P_GetPolySpots (MapData * map, TArray<FNodeBuilder::FPolyStart> &spots, TAr
 			if (mentry != NULL && mentry->Type == NULL && mentry->Special >= SMT_PolyAnchor && mentry->Special <= SMT_PolySpawnHurt)
 			{
 				FNodeBuilder::FPolyStart newvert;
-				newvert.x = MapThingsConverted[i].x;
-				newvert.y = MapThingsConverted[i].y;
+				newvert.x = FLOAT2FIXED(MapThingsConverted[i].pos.X);
+				newvert.y = FLOAT2FIXED(MapThingsConverted[i].pos.Y);
 				newvert.polynum = MapThingsConverted[i].angle;
 				if (mentry->Special == SMT_PolyAnchor)
 				{
@@ -3608,7 +3594,7 @@ void P_SetupLevel (const char *lumpname, int position)
 	translationtables[TRANSLATION_LevelScripted].Clear();
 
 	// Initial height of PointOfView will be set by player think.
-	players[consoleplayer].viewz = 1; 
+	players[consoleplayer].viewz = NO_VALUE; 
 
 	// Make sure all sounds are stopped before Z_FreeTags.
 	S_Start ();
@@ -3925,8 +3911,8 @@ void P_SetupLevel (const char *lumpname, int position)
 			seg_t * seg=&segs[i];
 			if (seg->backsector == seg->frontsector && seg->linedef)
 			{
-				fixed_t d1=P_AproxDistance(seg->v1->x-seg->linedef->v1->x,seg->v1->y-seg->linedef->v1->y);
-				fixed_t d2=P_AproxDistance(seg->v2->x-seg->linedef->v1->x,seg->v2->y-seg->linedef->v1->y);
+				double d1 = (seg->v1->fPos() - seg->linedef->v1->fPos()).LengthSquared();
+				double d2 = (seg->v2->fPos() - seg->linedef->v1->fPos()).LengthSquared();
 
 				if (d2<d1)	// backside
 				{
@@ -4201,9 +4187,9 @@ CCMD (lineloc)
 	{
 		Printf ("No such line\n");
 	}
-	Printf ("(%d,%d) -> (%d,%d)\n", lines[linenum].v1->x >> FRACBITS,
-		lines[linenum].v1->y >> FRACBITS,
-		lines[linenum].v2->x >> FRACBITS,
-		lines[linenum].v2->y >> FRACBITS);
+	Printf ("(%f,%f) -> (%f,%f)\n", lines[linenum].v1->fX(),
+		lines[linenum].v1->fY(),
+		lines[linenum].v2->fX(),
+		lines[linenum].v2->fY());
 }
 #endif

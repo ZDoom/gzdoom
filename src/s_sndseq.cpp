@@ -34,6 +34,7 @@
 
 #define GetCommand(a)		((a) & 255)
 #define GetData(a)			(SDWORD(a) >> 8 )
+#define GetFloatData(a)		float((SDWORD(a) >> 8 )/65536.f)
 #define MakeCommand(a,b)	((a) | ((b) << 8))
 #define HexenPlatSeq(a)		(a)
 #define HexenDoorSeq(a)		((a) | 0x40)
@@ -539,7 +540,7 @@ void S_ParseSndSeq (int levellump)
 	int delaybase;
 	float volumebase;
 	int curseq = -1;
-	fixed_t val;
+	int val;
 
 	// First free the old SNDSEQ data. This allows us to reload this for each level
 	// and specify a level specific SNDSEQ lump!
@@ -675,18 +676,18 @@ void S_ParseSndSeq (int levellump)
 
 				case SS_STRING_VOLUME:		// volume is in range 0..100
 					sc.MustGetFloat ();
-					ScriptTemp.Push(MakeCommand(SS_CMD_VOLUME, int(sc.Float * (FRACUNIT/100.f))));
+					ScriptTemp.Push(MakeCommand(SS_CMD_VOLUME, int(sc.Float * (65536.f / 100.f))));
 					break;
 
 				case SS_STRING_VOLUMEREL:
 					sc.MustGetFloat ();
-					ScriptTemp.Push(MakeCommand(SS_CMD_VOLUMEREL, int(sc.Float * (FRACUNIT/100.f))));
+					ScriptTemp.Push(MakeCommand(SS_CMD_VOLUMEREL, int(sc.Float * (65536.f / 100.f))));
 					break;
 
 				case SS_STRING_VOLUMERAND:
 					sc.MustGetFloat ();
 					volumebase = float(sc.Float);
-					ScriptTemp.Push(MakeCommand(SS_CMD_VOLUMERAND, int(sc.Float * (FRACUNIT/100.f))));
+					ScriptTemp.Push(MakeCommand(SS_CMD_VOLUMERAND, int(sc.Float * (65536.f / 100.f))));
 					sc.MustGetFloat ();
 					ScriptTemp.Push(int((sc.Float - volumebase) * (256/100.f)));
 					break;
@@ -705,12 +706,12 @@ void S_ParseSndSeq (int levellump)
 				case SS_STRING_ATTENUATION:
 					if (sc.CheckFloat())
 					{
-						val = FLOAT2FIXED(sc.Float);
+						val = int(sc.Float*65536.);
 					}
 					else
 					{
 						sc.MustGetString ();
-						val = sc.MustMatchString(&Attenuations[0].name, sizeof(Attenuations[0])) << FRACBITS;
+						val = sc.MustMatchString(&Attenuations[0].name, sizeof(Attenuations[0])) * 65536;
 					}
 					ScriptTemp.Push(MakeCommand(SS_CMD_ATTENUATION, val));
 					break;
@@ -1179,19 +1180,19 @@ void DSeqNode::Tick ()
 			return;
 
 		case SS_CMD_VOLUME:
-			m_Volume = GetData(*m_SequencePtr) / float(FRACUNIT);
+			m_Volume = GetFloatData(*m_SequencePtr);
 			m_SequencePtr++;
 			break;
 
 		case SS_CMD_VOLUMEREL:
 			// like SS_CMD_VOLUME, but the new volume is added to the old volume
-			m_Volume += GetData(*m_SequencePtr) / float(FRACUNIT);
+			m_Volume += GetFloatData(*m_SequencePtr);
 			m_SequencePtr++;
 			break;
 
 		case SS_CMD_VOLUMERAND:
 			// like SS_CMD_VOLUME, but the new volume is chosen randomly from a range
-			m_Volume = GetData(m_SequencePtr[0]) / float(FRACUNIT) + (pr_sndseq() % m_SequencePtr[1]) / 255.f;
+			m_Volume = GetFloatData(m_SequencePtr[0]) + (pr_sndseq() % m_SequencePtr[1]) / 255.f;
 			m_SequencePtr += 2;
 			break;
 
@@ -1200,7 +1201,7 @@ void DSeqNode::Tick ()
 			return;
 
 		case SS_CMD_ATTENUATION:
-			m_Atten = FIXED2FLOAT(GetData(*m_SequencePtr));
+			m_Atten = GetFloatData(*m_SequencePtr);
 			m_SequencePtr++;
 			break;
 

@@ -37,6 +37,7 @@
 #include "a_sharedglobal.h"
 #include "p_local.h"
 #include "farchive.h"
+#include "math/cmath.h"
 
 /*
 == SecurityCamera
@@ -56,10 +57,10 @@ public:
 
 	void Serialize (FArchive &arc);
 protected:
-	angle_t Center;
-	angle_t Acc;
-	angle_t Delta;
-	angle_t Range;
+	DAngle Center;
+	DAngle Acc;
+	DAngle Delta;
+	DAngle Range;
 };
 
 IMPLEMENT_CLASS (ASecurityCamera)
@@ -73,29 +74,25 @@ void ASecurityCamera::Serialize (FArchive &arc)
 void ASecurityCamera::PostBeginPlay ()
 {
 	Super::PostBeginPlay ();
-	Center = angle;
+	Center = Angles.Yaw;
 	if (args[2])
-		Delta = ANGLE_MAX / (args[2] * TICRATE / 8);
+		Delta = 360. / (args[2] * TICRATE / 8);
 	else
-		Delta = 0;
+		Delta = 0.;
 	if (args[1])
 		Delta /= 2;
-	Acc = 0;
-	pitch = (signed int)((char)args[0]) * ANGLE_1;
-	if (pitch <= -ANGLE_90)
-		pitch = -ANGLE_90 + ANGLE_1;
-	else if (pitch >= ANGLE_90)
-		pitch = ANGLE_90 - ANGLE_1;
-	Range = FLOAT2ANGLE(args[1]);
+	Acc = 0.;
+	Angles.Pitch = (double)clamp<int>((signed char)args[0], -89, 89);
+	Range = (double)args[1];
 }
 
 void ASecurityCamera::Tick ()
 {
 	Acc += Delta;
-	if (Range)
-		angle = Center + FixedMul (Range, finesine[Acc >> ANGLETOFINESHIFT]);
-	else if (Delta)
-		angle = Acc;
+	if (Range != 0)
+		Angles.Yaw = Center + Range * Acc.Sin();
+	else if (Delta != 0)
+		Angles.Yaw = Acc;
 }
 
 /*
@@ -119,7 +116,7 @@ public:
 
 	void Serialize (FArchive &arc);
 protected:
-	int MaxPitchChange;
+	DAngle MaxPitchChange;
 };
 
 IMPLEMENT_CLASS (AAimingCamera)
@@ -136,7 +133,7 @@ void AAimingCamera::PostBeginPlay ()
 
 	args[2] = 0;
 	Super::PostBeginPlay ();
-	MaxPitchChange = FLOAT2ANGLE(changepitch * TICRATE);
+	MaxPitchChange = double(changepitch / TICRATE);
 	Range /= TICRATE;
 
 	TActorIterator<AActor> iterator (args[3]);
@@ -160,7 +157,7 @@ void AAimingCamera::Tick ()
 	}
 	if (tracer != NULL)
 	{
-		angle_t delta;
+		DAngle delta;
 		int dir = P_FaceMobj (this, tracer, &delta);
 		if (delta > Range)
 		{
@@ -168,31 +165,30 @@ void AAimingCamera::Tick ()
 		}
 		if (dir)
 		{
-			angle += delta;
+			Angles.Yaw += delta;
 		}
 		else
 		{
-			angle -= delta;
+			Angles.Yaw -= delta;
 		}
-		if (MaxPitchChange)
+		if (MaxPitchChange != 0)
 		{ // Aim camera's pitch; use floats for precision
-			fixedvec2 fv3 = tracer->Vec2To(this);
-			DVector2 vect(fv3.x, fv3.y);
-			double dz = Z() - tracer->Z() - tracer->height/2;
+			DVector2 vect = tracer->Vec2To(this);
+			double dz = Z() - tracer->Z() - tracer->Height/2;
 			double dist = vect.Length();
-			double ang = dist != 0.f ? atan2 (dz, dist) : 0;
-			int desiredpitch = (int)RAD2ANGLE(ang);
-			if (abs (desiredpitch - pitch) < MaxPitchChange)
+			DAngle desiredPitch = dist != 0.f ? VecToAngle(dist, dz) : 0.;
+			DAngle diff = deltaangle(Angles.Pitch, desiredPitch);
+			if (fabs (diff) < MaxPitchChange)
 			{
-				pitch = desiredpitch;
+				Angles.Pitch = desiredPitch;
 			}
-			else if (desiredpitch < pitch)
+			else if (diff < 0)
 			{
-				pitch -= MaxPitchChange;
+				Angles.Pitch -= MaxPitchChange;
 			}
 			else
 			{
-				pitch += MaxPitchChange;
+				Angles.Pitch += MaxPitchChange;
 			}
 		}
 	}

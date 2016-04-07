@@ -332,7 +332,7 @@ struct FSpriteModelFrame
 	short frame;
 	FState * state;	// for later!
 	int hashnext;
-	angle_t angleoffset;
+	float angleoffset;
 	// added pithoffset, rolloffset.
 	float pitchoffset, rolloffset; // I don't want to bother with type transformations, so I made this variables float.
 };
@@ -343,7 +343,7 @@ FSpriteModelFrame * gl_FindModelFrame(const PClass * ti, int sprite, int frame, 
 
 void gl_RenderModel(GLSprite * spr, int cm);
 // [BB] HUD weapon model rendering functions.
-void gl_RenderHUDModel(pspdef_t *psp, fixed_t ofsx, fixed_t ofsy, int cm);
+void gl_RenderHUDModel(pspdef_t *psp, float ofsx, float ofsy, int cm);
 bool gl_IsHUDModelForPlayerAvailable (player_t * player);
 void gl_CleanModelData();
 

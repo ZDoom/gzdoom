@@ -129,10 +129,10 @@ public:
 
    void ApplyProperties(ADynamicLight * light) const;
    FName GetName() const { return m_Name; }
-   void SetAngle(angle_t angle) { m_Angle = angle; }
+   void SetParameter(double p) { m_Param = p; }
    void SetArg(int arg, BYTE val) { m_Args[arg] = val; }
    BYTE GetArg(int arg) { return m_Args[arg]; }
-   void SetOffset(float* ft) { m_X = FLOAT2FIXED(ft[0]); m_Y = FLOAT2FIXED(ft[1]); m_Z = FLOAT2FIXED(ft[2]); }
+   void SetOffset(float* ft) { m_Pos.X = ft[0]; m_Pos.Z = ft[1]; m_Pos.Y = ft[2]; }
    void SetSubtractive(bool subtract) { m_subtractive = subtract; }
    void SetAdditive(bool add) { m_additive = add; }
    void SetDontLightSelf(bool add) { m_dontlightself = add; }
@@ -140,8 +140,8 @@ public:
 protected:
    FName m_Name;
    unsigned char m_Args[5];
-   angle_t m_Angle;
-   fixed_t m_X, m_Y, m_Z;
+   double m_Param;
+   DVector3 m_Pos;
    ELightType m_type;
    bool m_subtractive, m_additive, m_halo, m_dontlightself;
 };
@@ -159,8 +159,9 @@ FLightDefaults::FLightDefaults(FName name, ELightType type)
 	m_Name = name;
 	m_type = type;
 
-	m_X = m_Y = m_Z = 0;
+	m_Pos.Zero();
 	memset(m_Args, 0, 5);
+	m_Param = 0;
 
 	m_subtractive = false;
 	m_additive = false;
@@ -171,16 +172,16 @@ FLightDefaults::FLightDefaults(FName name, ELightType type)
 void FLightDefaults::ApplyProperties(ADynamicLight * light) const
 {
 	light->lighttype = m_type;
-	light->angle = m_Angle;
-	light->SetOffset(m_X, m_Y, m_Z);
+	light->Angles.Yaw.Degrees = m_Param;
+	light->SetOffset(m_Pos);
 	light->halo = m_halo;
 	for (int a = 0; a < 3; a++) light->args[a] = clamp<int>((int)(m_Args[a] * gl_lights_intensity), 0, 255);
 	light->m_intensity[0] = int(m_Args[LIGHT_INTENSITY]);
 	light->m_intensity[1] = int(m_Args[LIGHT_SECONDARY_INTENSITY]);
-	light->flags4&=~(MF4_ADDITIVE|MF4_SUBTRACTIVE|MF4_DONTLIGHTSELF);
-	if (m_subtractive) light->flags4|=MF4_SUBTRACTIVE;
-	if (m_additive) light->flags4|=MF4_ADDITIVE;
-	if (m_dontlightself) light->flags4|=MF4_DONTLIGHTSELF;
+	light->flags4 &= ~(MF4_ADDITIVE | MF4_SUBTRACTIVE | MF4_DONTLIGHTSELF);
+	if (m_subtractive) light->flags4 |= MF4_SUBTRACTIVE;
+	if (m_additive) light->flags4 |= MF4_ADDITIVE;
+	if (m_dontlightself) light->flags4 |= MF4_DONTLIGHTSELF;
 }
 
 
@@ -423,7 +424,7 @@ void gl_ParsePulseLight(FScanner &sc)
 				break;
 			case LIGHTTAG_INTERVAL:
 				floatVal = gl_ParseFloat(sc);
-				defaults->SetAngle(FLOAT_TO_ANGLE(floatVal * TICRATE));
+				defaults->SetParameter(floatVal * TICRATE);
 				break;
 			case LIGHTTAG_SUBTRACTIVE:
 				defaults->SetSubtractive(gl_ParseInt(sc) != 0);
@@ -502,7 +503,7 @@ void gl_ParseFlickerLight(FScanner &sc)
 				break;
 			case LIGHTTAG_CHANCE:
 				floatVal = gl_ParseFloat(sc);
-				defaults->SetAngle((angle_t)(floatVal * ANGLE_MAX));
+				defaults->SetParameter(floatVal*360.);
 				break;
 			case LIGHTTAG_SUBTRACTIVE:
 				defaults->SetSubtractive(gl_ParseInt(sc) != 0);
@@ -581,7 +582,7 @@ void gl_ParseFlickerLight2(FScanner &sc)
 				break;
 			case LIGHTTAG_INTERVAL:
 				floatVal = gl_ParseFloat(sc);
-				defaults->SetAngle((angle_t)(floatVal * ANGLE_MAX));
+				defaults->SetParameter(floatVal * 360.);
 				break;
 			case LIGHTTAG_SUBTRACTIVE:
 				defaults->SetSubtractive(gl_ParseInt(sc) != 0);

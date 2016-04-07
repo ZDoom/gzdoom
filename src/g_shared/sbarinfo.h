@@ -61,9 +61,10 @@ struct Popup
 	bool moving;
 	int height;
 	int width;
-	int speed;
-	int speed2;
-	int alpha;
+	int ispeed;
+	double speed;
+	double speed2;
+	double alpha;
 	int x;
 	int y;
 	int displacementX;
@@ -77,7 +78,7 @@ struct Popup
 	bool isDoneMoving();
 	int getXOffset();
 	int getYOffset();
-	int getAlpha(int maxAlpha=FRACUNIT);
+	double getAlpha(double maxAlpha=1.);
 	int getXDisplacement();
 	int getYDisplacement();
 };

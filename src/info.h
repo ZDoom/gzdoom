@@ -37,7 +37,7 @@
 #include <stddef.h>
 #if !defined(_WIN32)
 #include <inttypes.h>		// for intptr_t
-#elif !defined(_MSC_VER)
+#else
 #include <stdint.h>			// for mingw
 #endif
 
@@ -158,9 +158,9 @@ FArchive &operator<< (FArchive &arc, FState *&state);
 
 #include "gametype.h"
 
-struct DmgFactors : public TMap<FName, fixed_t>
+struct DmgFactors : public TMap<FName, double>
 {
-	fixed_t *CheckFactor(FName type);
+	int Apply(FName type, int damage);
 };
 typedef TMap<FName, int> PainChanceList;
 
@@ -169,20 +169,21 @@ struct DamageTypeDefinition
 public:
 	DamageTypeDefinition() { Clear(); }
 
-	fixed_t DefaultFactor;
+	double DefaultFactor;
 	bool ReplaceFactor;
 	bool NoArmor;
 
 	void Apply(FName type);
 	void Clear()
 	{
-		DefaultFactor = FRACUNIT;
+		DefaultFactor = 1.;
 		ReplaceFactor = false;
 		NoArmor = false;
 	}
 
 	static DamageTypeDefinition *Get(FName type);
 	static bool IgnoreArmor(FName type);
+	static double GetMobjDamageFactor(FName type, DmgFactors const * const factors);
 	static int ApplyMobjDamageFactor(int damage, FName type, DmgFactors const * const factors);
 };
 
@@ -206,7 +207,7 @@ public:
 	void BuildDefaults();
 	void ApplyDefaults(BYTE *defaults);
 	void RegisterIDs();
-	void SetDamageFactor(FName type, fixed_t factor);
+	void SetDamageFactor(FName type, double factor);
 	void SetPainChance(FName type, int chance);
 	size_t PropagateMark();
 	void InitializeNativeDefaults();
@@ -242,15 +243,15 @@ public:
 
 	FString Obituary;		// Player was killed by this actor
 	FString HitObituary;	// Player was killed by this actor in melee
-	fixed_t DeathHeight;	// Height on normal death
-	fixed_t BurnHeight;		// Height on burning death
+	double DeathHeight;	// Height on normal death
+	double BurnHeight;		// Height on burning death
 	PalEntry BloodColor;	// Colorized blood
 	int GibHealth;			// Negative health below which this monster dies an extreme death
 	int WoundHealth;		// Health needed to enter wound state
 	int PoisonDamage;		// Amount of poison damage
-	fixed_t FastSpeed;		// Speed in fast mode
-	fixed_t RDFactor;		// Radius damage factor
-	fixed_t CameraHeight;	// Height of camera when used as such
+	double FastSpeed;		// speed in fast mode
+	double RDFactor;		// Radius damage factor
+	double CameraHeight;	// Height of camera when used as such
 	FSoundID HowlSound;		// Sound being played when electrocuted or poisoned
 	FName BloodType;		// Blood replacement type
 	FName BloodType2;		// Bloopsplatter replacement type
@@ -266,7 +267,7 @@ public:
 	int MeleeDamage;
 	FSoundID MeleeSound;
 	FName MissileName;
-	fixed_t MissileHeight;
+	double MissileHeight;
 
 	// For those times when being able to scan every kind of actor is convenient
 	static TArray<PClassActor *> AllActorClasses;

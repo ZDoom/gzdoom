@@ -17,8 +17,7 @@ protected:
 	FName ParseKey(bool checkblock = false, bool *isblock = NULL);
 	int CheckInt(const char *key);
 	double CheckFloat(const char *key);
-	fixed_t CheckFixed(const char *key);
-	angle_t CheckAngle(const char *key);
+	DAngle CheckAngle(const char *key);
 	bool CheckBool(const char *key);
 	const char *CheckString(const char *key);
 

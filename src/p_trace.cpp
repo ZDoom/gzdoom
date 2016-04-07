@@ -49,23 +49,23 @@
 
 struct FTraceInfo
 {
-	fixed_t StartX, StartY, StartZ;
-	fixed_t Vx, Vy, Vz;
+	DVector3 Start;
+	DVector3 Vec;
 	ActorFlags ActorMask;
 	DWORD WallMask;
 	AActor *IgnoreThis;
 	FTraceResults *Results;
 	FTraceResults *TempResults;
 	sector_t *CurSector;
-	fixed_t MaxDist;
-	fixed_t EnterDist;
+	double MaxDist;
+	double EnterDist;
 	ETraceStatus (*TraceCallback)(FTraceResults &res, void *data);
 	void *TraceCallbackData;
 	DWORD TraceFlags;
 	int inshootthrough;
-	fixed_t startfrac;
+	double startfrac;
 	int aimdir;
-	fixed_t limitz;
+	double limitz;
 
 	// These are required for 3D-floor checking
 	// to create a fake sector with a floor 
@@ -78,8 +78,8 @@ struct FTraceInfo
 	bool ThingCheck(intercept_t *in);
 	bool TraceTraverse (int ptflags);
 	bool CheckPlane(const secplane_t &plane);
-	int EnterLinePortal(line_t *li, fixed_t frac);
-	void EnterSectorPortal(int position, fixed_t frac, sector_t *entersec);
+	int EnterLinePortal(line_t *li, double frac);
+	void EnterSectorPortal(int position, double frac, sector_t *entersec);
 
 
 	bool CheckSectorPlane(const sector_t *sector, bool checkFloor)
@@ -94,9 +94,9 @@ struct FTraceInfo
 
 	void SetSourcePosition()
 	{
-		Results->SrcFromTarget = { StartX, StartY, StartZ };
-		Results->HitVector = { Vx, Vy, Vz };
-		Results->SrcAngleToTarget = R_PointToAngle2(0, 0, Results->HitPos.x - StartX, Results->HitPos.y - StartY);
+		Results->SrcFromTarget = Start;
+		Results->HitVector = Vec;
+		Results->SrcAngleFromTarget = Results->HitVector.Angle();
 	}
 
 
@@ -111,27 +111,21 @@ static bool EditTraceResult (DWORD flags, FTraceResults &res);
 //
 //==========================================================================
 
-bool Trace (fixed_t x, fixed_t y, fixed_t z, sector_t *sector,
-			fixed_t vx, fixed_t vy, fixed_t vz, fixed_t maxDist,
-			ActorFlags actorMask, DWORD wallMask, AActor *ignore,
-			FTraceResults &res,
-			DWORD flags, ETraceStatus (*callback)(FTraceResults &res, void *), void *callbackdata)
+bool Trace(const DVector3 &start, sector_t *sector, const DVector3 &direction, double maxDist,
+	ActorFlags actorMask, DWORD wallMask, AActor *ignore, FTraceResults &res, DWORD flags,
+	ETraceStatus(*callback)(FTraceResults &res, void *), void *callbackdata)
 {
 	int ptflags;
 	FTraceInfo inf;
 	FTraceResults tempResult;
 
 	memset(&tempResult, 0, sizeof(tempResult));
-	tempResult.Fraction = tempResult.Distance = FIXED_MAX;
+	tempResult.Fraction = tempResult.Distance = NO_VALUE;
 
 	ptflags = actorMask ? PT_ADDLINES|PT_ADDTHINGS|PT_COMPATIBLE : PT_ADDLINES;
 
-	inf.StartX = x;
-	inf.StartY = y;
-	inf.StartZ = z;
-	inf.Vx = vx;
-	inf.Vy = vy;
-	inf.Vz = vz;
+	inf.Start = start;
+	inf.Vec = direction;
 	inf.ActorMask = actorMask;
 	inf.WallMask = wallMask;
 	inf.IgnoreThis = ignore;
@@ -148,30 +142,6 @@ bool Trace (fixed_t x, fixed_t y, fixed_t z, sector_t *sector,
 	inf.aimdir = -1;
 	inf.startfrac = 0;
 	memset(&res, 0, sizeof(res));
-
-	// check for overflows and clip if necessary
-	SQWORD xd = (SQWORD)x + ((SQWORD(vx) * SQWORD(maxDist)) >> 16);
-
-	if (xd>SQWORD(32767)*FRACUNIT)
-	{
-		inf.MaxDist = FixedDiv(FIXED_MAX - x, vx);
-	}
-	else if (xd<-SQWORD(32767)*FRACUNIT)
-	{
-		inf.MaxDist = FixedDiv(FIXED_MIN - x, vx);
-	}
-
-
-	SQWORD yd = (SQWORD)y + ((SQWORD(vy) * SQWORD(maxDist)) >> 16);
-
-	if (yd>SQWORD(32767)*FRACUNIT)
-	{
-		inf.MaxDist = FixedDiv(FIXED_MAX - y, vy);
-	}
-	else if (yd<-SQWORD(32767)*FRACUNIT)
-	{
-		inf.MaxDist = FixedDiv(FIXED_MIN - y, vy);
-	}
 
 	if (inf.TraceTraverse (ptflags))
 	{ 
@@ -190,37 +160,32 @@ bool Trace (fixed_t x, fixed_t y, fixed_t z, sector_t *sector,
 //
 //============================================================================
 
-void FTraceInfo::EnterSectorPortal(int position, fixed_t frac, sector_t *entersec)
+void FTraceInfo::EnterSectorPortal(int position, double frac, sector_t *entersec)
 {
 	if (aimdir != -1 && aimdir != position) return;
 	AActor *portal = entersec->SkyBoxes[position];
 
-	if (aimdir == sector_t::ceiling && portal->threshold < limitz) return;
-	else if (aimdir == sector_t::floor && portal->threshold > limitz) return;
+	if (aimdir == sector_t::ceiling && portal->specialf1 < limitz) return;
+	else if (aimdir == sector_t::floor && portal->specialf1 > limitz) return;
 
 	FTraceInfo newtrace;
 	FTraceResults results;
 
 	memset(&results, 0, sizeof(results));
 
-	newtrace.StartX = StartX + portal->scaleX;
-	newtrace.StartY = StartY + portal->scaleY;
-	newtrace.StartZ = StartZ;
+	newtrace.Start += portal->Scale;
 
-	frac += FixedDiv(FRACUNIT, MaxDist);
-	fixed_t enterdist = FixedMul(MaxDist, frac);
-	fixed_t enterX = newtrace.StartX + FixedMul(enterdist, Vx);
-	fixed_t enterY = newtrace.StartY + FixedMul(enterdist, Vy);
+	frac += 1 / MaxDist;
+	double enterdist = MaxDist * frac;
+	DVector2 enter = newtrace.Start.XY() + enterdist * Vec.XY();
 
-	newtrace.Vx = Vx;
-	newtrace.Vy = Vy;
-	newtrace.Vz = Vz;
+	newtrace.Vec = Vec;
 	newtrace.ActorMask = ActorMask;
 	newtrace.WallMask = WallMask;
 	newtrace.IgnoreThis = IgnoreThis;
 	newtrace.Results = &results;
 	newtrace.TempResults = TempResults;
-	newtrace.CurSector = P_PointInSector(enterX ,enterY);
+	newtrace.CurSector = P_PointInSector(enter);
 	newtrace.MaxDist = MaxDist;
 	newtrace.EnterDist = EnterDist;
 	newtrace.TraceCallback = TraceCallback;
@@ -229,7 +194,7 @@ void FTraceInfo::EnterSectorPortal(int position, fixed_t frac, sector_t *enterse
 	newtrace.inshootthrough = true;
 	newtrace.startfrac = frac;
 	newtrace.aimdir = position;
-	newtrace.limitz = portal->threshold;
+	newtrace.limitz = portal->specialf1;
 	newtrace.sectorsel = 0;
 
 	if (newtrace.TraceTraverse(ActorMask ? PT_ADDLINES | PT_ADDTHINGS | PT_COMPATIBLE : PT_ADDLINES))
@@ -241,11 +206,10 @@ void FTraceInfo::EnterSectorPortal(int position, fixed_t frac, sector_t *enterse
 //============================================================================
 //
 // traverses a line portal
-// simply calling PortalRelocate does not work here because more needs to be set up
 //
 //============================================================================
 
-int FTraceInfo::EnterLinePortal(line_t *li, fixed_t frac)
+int FTraceInfo::EnterLinePortal(line_t *li, double frac)
 {
 	FLinePortal *port = li->getPortal();
 
@@ -254,28 +218,23 @@ int FTraceInfo::EnterLinePortal(line_t *li, fixed_t frac)
 
 	FTraceInfo newtrace;
 
-	newtrace.StartX = StartX;
-	newtrace.StartY = StartY;
-	newtrace.StartZ = StartZ;
-	newtrace.Vx = Vx;
-	newtrace.Vy = Vy;
-	newtrace.Vz = Vz;
+	newtrace.Start = Start;
+	newtrace.Vec = Vec;
 
-	P_TranslatePortalXY(li, newtrace.StartX, newtrace.StartY);
-	P_TranslatePortalZ(li, newtrace.StartZ);
-	P_TranslatePortalVXVY(li, newtrace.Vx, newtrace.Vy);
+	P_TranslatePortalXY(li, newtrace.Start.X, newtrace.Start.Y);
+	P_TranslatePortalZ(li, newtrace.Start.Z);
+	P_TranslatePortalVXVY(li, newtrace.Vec.X, newtrace.Vec.Y);
 
-	frac += FixedDiv(FRACUNIT, MaxDist);
-	fixed_t enterdist = FixedMul(MaxDist, frac);
-	fixed_t enterX = newtrace.StartX + FixedMul(enterdist, Vx);
-	fixed_t enterY = newtrace.StartY + FixedMul(enterdist, Vy);
+	frac += 1 / MaxDist;
+	double enterdist = MaxDist / frac;
+	DVector2 enter = newtrace.Start.XY() + enterdist * Vec.XY();
 
 	newtrace.ActorMask = ActorMask;
 	newtrace.WallMask = WallMask;
 	newtrace.IgnoreThis = IgnoreThis;
 	newtrace.Results = Results;
 	newtrace.TempResults = TempResults;
-	newtrace.CurSector = P_PointInSector(enterX, enterY);
+	newtrace.CurSector = P_PointInSector(enter);
 	newtrace.MaxDist = MaxDist;
 	newtrace.EnterDist = EnterDist;
 	newtrace.TraceCallback = TraceCallback;
@@ -307,14 +266,12 @@ void FTraceInfo::Setup3DFloors()
 		CurSector = &DummySector[0];
 		sectorsel = 1;
 
-		fixed_t sdist = FixedMul(MaxDist, startfrac);
-		fixed_t x = StartX + FixedMul(Vx, sdist);
-		fixed_t y = StartY + FixedMul(Vy, sdist);
-		fixed_t z = StartZ + FixedMul(Vz, sdist);
+		double sdist = MaxDist * startfrac;
+		DVector3 pos = Start + Vec * sdist;
 
 
-		fixed_t bf = CurSector->floorplane.ZatPoint(x, y);
-		fixed_t bc = CurSector->ceilingplane.ZatPoint(x, y);
+		double bf = CurSector->floorplane.ZatPoint(pos);
+		double bc = CurSector->ceilingplane.ZatPoint(pos);
 
 		for (auto rover : ff)
 		{
@@ -332,10 +289,10 @@ void FTraceInfo::Setup3DFloors()
 
 			if (!(rover->flags&FF_SHOOTTHROUGH))
 			{
-				fixed_t ff_bottom = rover->bottom.plane->ZatPoint(x, y);
-				fixed_t ff_top = rover->top.plane->ZatPoint(x, y);
+				double ff_bottom = rover->bottom.plane->ZatPoint(pos);
+				double ff_top = rover->top.plane->ZatPoint(pos);
 				// clip to the part of the sector we are in
-				if (z > ff_top)
+				if (pos.Z > ff_top)
 				{
 					// above
 					if (bf < ff_top)
@@ -346,7 +303,7 @@ void FTraceInfo::Setup3DFloors()
 						bf = ff_top;
 					}
 				}
-				else if (z < ff_bottom)
+				else if (pos.Z < ff_bottom)
 				{
 					//below
 					if (bc > ff_bottom)
@@ -402,12 +359,10 @@ bool FTraceInfo::LineCheck(intercept_t *in)
 	int lineside;
 	sector_t *entersector;
 
-	fixed_t dist = FixedMul(MaxDist, in->frac);
-	fixed_t hitx = StartX + FixedMul(Vx, dist);
-	fixed_t hity = StartY + FixedMul(Vy, dist);
-	fixed_t hitz = StartZ + FixedMul(Vz, dist);
+	double dist = MaxDist * in->frac;
+	DVector3 hit = Start + Vec * dist;
 
-	fixed_t ff, fc, bf = 0, bc = 0;
+	double ff, fc, bf = 0, bc = 0;
 
 	if (in->d.line->frontsector->sectornum == CurSector->sectornum)
 	{
@@ -426,7 +381,7 @@ bool FTraceInfo::LineCheck(intercept_t *in)
 		}
 		else
 		{
-			lineside = P_PointOnLineSide(StartX, StartY, in->d.line);
+			lineside = P_PointOnLineSide(Start, in->d.line);
 			CurSector = lineside ? in->d.line->backsector : in->d.line->frontsector;
 		}
 	}
@@ -456,20 +411,20 @@ bool FTraceInfo::LineCheck(intercept_t *in)
 		}
 	}
 
-	ff = CurSector->floorplane.ZatPoint(hitx, hity);
-	fc = CurSector->ceilingplane.ZatPoint(hitx, hity);
+	ff = CurSector->floorplane.ZatPoint(hit);
+	fc = CurSector->ceilingplane.ZatPoint(hit);
 
 	if (entersector != NULL)
 	{
-		bf = entersector->floorplane.ZatPoint(hitx, hity);
-		bc = entersector->ceilingplane.ZatPoint(hitx, hity);
+		bf = entersector->floorplane.ZatPoint(hit);
+		bc = entersector->ceilingplane.ZatPoint(hit);
 	}
 
 	sector_t *hsec = CurSector->GetHeightSec();
 	if (Results->CrossedWater == NULL &&
 		hsec != NULL &&
 		//CurSector->heightsec->waterzone &&
-		hitz <= hsec->floorplane.ZatPoint(hitx, hity))
+		hit.Z <= hsec->floorplane.ZatPoint(hit))
 	{
 		// hit crossed a water plane
 		if (CheckSectorPlane(hsec, true))
@@ -479,7 +434,7 @@ bool FTraceInfo::LineCheck(intercept_t *in)
 		}
 	}
 
-	if (hitz <= ff)
+	if (hit.Z <= ff)
 	{
 		if (CurSector->PortalBlocksMovement(sector_t::floor))
 		{
@@ -494,7 +449,7 @@ bool FTraceInfo::LineCheck(intercept_t *in)
 			return false;
 		}
 	}
-	else if (hitz >= fc)
+	else if (hit.Z >= fc)
 	{
 		if (CurSector->PortalBlocksMovement(sector_t::ceiling))
 		{
@@ -511,7 +466,7 @@ bool FTraceInfo::LineCheck(intercept_t *in)
 	}
 	else if (in->d.line->isLinePortal())
 	{
-		if (entersector == NULL || (hitz >= bf && hitz <= bc))
+		if (entersector == NULL || (hit.Z >= bf && hit.Z <= bc))
 		{
 			int res = EnterLinePortal(in->d.line, in->frac);
 			if (res != -1)
@@ -523,7 +478,7 @@ bool FTraceInfo::LineCheck(intercept_t *in)
 		goto normalline;	// hit upper or lower tier.
 	}
 	else if (entersector == NULL ||
-		hitz < bf || hitz > bc ||
+		hit.Z < bf || hit.Z > bc ||
 		in->d.line->flags & WallMask)
 	{
 normalline:
@@ -531,8 +486,8 @@ normalline:
 		Results->HitType = TRACE_HitWall;
 		Results->Tier =
 			entersector == NULL ? TIER_Middle :
-			hitz <= bf ? TIER_Lower :
-			hitz >= bc ? TIER_Upper : TIER_Middle;
+			hit.Z <= bf ? TIER_Lower :
+			hit.Z >= bc ? TIER_Upper : TIER_Middle;
 		if (TraceFlags & TRACE_Impact)
 		{
 			P_ActivateLine(in->d.line, IgnoreThis, lineside, SPAC_Impact);
@@ -553,11 +508,11 @@ normalline:
 
 				if (entershootthrough != inshootthrough && rover->flags&FF_EXISTS)
 				{
-					fixed_t ff_bottom = rover->bottom.plane->ZatPoint(hitx, hity);
-					fixed_t ff_top = rover->top.plane->ZatPoint(hitx, hity);
+					double ff_bottom = rover->bottom.plane->ZatPoint(hit);
+					double ff_top = rover->top.plane->ZatPoint(hit);
 
 					// clip to the part of the sector we are in
-					if (hitz > ff_top)
+					if (hit.Z > ff_top)
 					{
 						// above
 						if (bf < ff_top)
@@ -568,7 +523,7 @@ normalline:
 							bf = ff_top;
 						}
 					}
-					else if (hitz < ff_bottom)
+					else if (hit.Z < ff_bottom)
 					{
 						//below
 						if (bc > ff_bottom)
@@ -632,12 +587,12 @@ cont:
 			}
 			else
 			{
-				if (hitz <= bf || hitz >= bc)
+				if (hit.Z <= bf || hit.Z >= bc)
 				{
 					Results->HitType = TRACE_HitWall;
 					Results->Tier =
-						hitz <= bf ? TIER_Lower :
-						hitz >= bc ? TIER_Upper : TIER_Middle;
+						hit.Z <= bf ? TIER_Lower :
+						hit.Z >= bc ? TIER_Upper : TIER_Middle;
 				}
 				else
 				{
@@ -652,7 +607,7 @@ cont:
 
 		if (Results->HitType == TRACE_HitWall)
 		{
-			Results->HitPos = { hitx, hity, hitz };
+			Results->HitPos = hit;
 			SetSourcePosition();
 			Results->Distance = dist;
 			Results->Fraction = in->frac;
@@ -693,60 +648,54 @@ cont:
 
 bool FTraceInfo::ThingCheck(intercept_t *in)
 {
-	fixed_t dist = FixedMul(MaxDist, in->frac);
-	fixed_t hitx = StartX + FixedMul(Vx, dist);
-	fixed_t hity = StartY + FixedMul(Vy, dist);
-	fixed_t hitz = StartZ + FixedMul(Vz, dist);
+	double dist = MaxDist * in->frac;
+	DVector3 hit = Start + Vec * dist;
 
-	if (hitz > in->d.thing->Top())
+	if (hit.Z > in->d.thing->Top())
 	{
 		// trace enters above actor
-		if (Vz >= 0) return true;      // Going up: can't hit
+		if (Vec.Z >= 0) return true;      // Going up: can't hit
 
 		// Does it hit the top of the actor?
-		dist = FixedDiv(in->d.thing->Top() - StartZ, Vz);
+		dist = (in->d.thing->Top() - Start.Z) / Vec.Z;
 
 		if (dist > MaxDist) return true;
-		in->frac = FixedDiv(dist, MaxDist);
+		in->frac = dist / MaxDist;
 
-		hitx = StartX + FixedMul(Vx, dist);
-		hity = StartY + FixedMul(Vy, dist);
-		hitz = StartZ + FixedMul(Vz, dist);
+		hit = Start + Vec * dist;
 
 		// calculated coordinate is outside the actor's bounding box
-		if (abs(hitx - in->d.thing->X()) > in->d.thing->radius ||
-			abs(hity - in->d.thing->Y()) > in->d.thing->radius) return true;
+		if (fabs(hit.X - in->d.thing->X()) > in->d.thing->radius ||
+			fabs(hit.Y - in->d.thing->Y()) > in->d.thing->radius) return true;
 	}
-	else if (hitz < in->d.thing->Z())
+	else if (hit.Z < in->d.thing->Z())
 	{ // trace enters below actor
-		if (Vz <= 0) return true;      // Going down: can't hit
+		if (Vec.Z <= 0) return true;      // Going down: can't hit
 
 		// Does it hit the bottom of the actor?
-		dist = FixedDiv(in->d.thing->Z() - StartZ, Vz);
+		dist = (in->d.thing->Z() - Start.Z) / Vec.Z;
 		if (dist > MaxDist) return true;
-		in->frac = FixedDiv(dist, MaxDist);
+		in->frac = dist / MaxDist;
 
-		hitx = StartX + FixedMul(Vx, dist);
-		hity = StartY + FixedMul(Vy, dist);
-		hitz = StartZ + FixedMul(Vz, dist);
+		hit = Start + Vec * dist;
 
 		// calculated coordinate is outside the actor's bounding box
-		if (abs(hitx - in->d.thing->X()) > in->d.thing->radius ||
-			abs(hity - in->d.thing->Y()) > in->d.thing->radius) return true;
+		if (fabs(hit.X - in->d.thing->X()) > in->d.thing->radius ||
+			fabs(hit.Y - in->d.thing->Y()) > in->d.thing->radius) return true;
 	}
 
 	if (CurSector->e->XFloor.ffloors.Size())
 	{
 		// check for 3D floor hits first.
-		fixed_t ff_floor = CurSector->floorplane.ZatPoint(hitx, hity);
-		fixed_t ff_ceiling = CurSector->ceilingplane.ZatPoint(hitx, hity);
+		double ff_floor = CurSector->floorplane.ZatPoint(hit);
+		double ff_ceiling = CurSector->ceilingplane.ZatPoint(hit);
 
-		if (hitz > ff_ceiling && CurSector->PortalBlocksMovement(sector_t::ceiling))	// actor is hit above the current ceiling
+		if (hit.Z > ff_ceiling && CurSector->PortalBlocksMovement(sector_t::ceiling))	// actor is hit above the current ceiling
 		{
 			Results->HitType = TRACE_HitCeiling;
 			Results->HitTexture = CurSector->GetTexture(sector_t::ceiling);
 		}
-		else if (hitz < ff_floor && CurSector->PortalBlocksMovement(sector_t::floor))	// actor is hit below the current floor
+		else if (hit.Z < ff_floor && CurSector->PortalBlocksMovement(sector_t::floor))	// actor is hit below the current floor
 		{
 			Results->HitType = TRACE_HitFloor;
 			Results->HitTexture = CurSector->GetTexture(sector_t::floor);
@@ -779,7 +728,7 @@ cont1:
 
 
 	Results->HitType = TRACE_HitActor;
-	Results->HitPos = { hitx, hity, hitz };
+	Results->HitPos = hit;
 	SetSourcePosition();
 	Results->Distance = dist;
 	Results->Fraction = in->frac;
@@ -812,7 +761,7 @@ bool FTraceInfo::TraceTraverse (int ptflags)
 	// Do a 3D floor check in the starting sector
 	Setup3DFloors();
 
-	FPathTraverse it(StartX, StartY, FixedMul (Vx, MaxDist), FixedMul (Vy, MaxDist), ptflags | PT_DELTA, startfrac);
+	FPathTraverse it(Start.X, Start.Y, Vec.X * MaxDist, Vec.Y * MaxDist, ptflags | PT_DELTA, startfrac);
 	intercept_t *in;
 	int lastsplashsector = -1;
 
@@ -859,7 +808,7 @@ bool FTraceInfo::TraceTraverse (int ptflags)
 		// We still need to do a water check here or this may get missed on occasion
 		if (Results->CrossedWater == NULL &&
 			CurSector->heightsec != NULL &&
-			CurSector->heightsec->floorplane.ZatPoint(Results->HitPos) >= Results->HitPos.z)
+			CurSector->heightsec->floorplane.ZatPoint(Results->HitPos) >= Results->HitPos.Z)
 		{
 			// Save the result so that the water check doesn't destroy it.
 			FTraceResults *res = Results;
@@ -896,7 +845,7 @@ bool FTraceInfo::TraceTraverse (int ptflags)
 
 	if (Results->CrossedWater == NULL &&
 		CurSector->heightsec != NULL &&
-		CurSector->heightsec->floorplane.ZatPoint(Results->HitPos) >= Results->HitPos.z)
+		CurSector->heightsec->floorplane.ZatPoint(Results->HitPos) >= Results->HitPos.Z)
 	{
 		// Save the result so that the water check doesn't destroy it.
 		FTraceResults *res = Results;
@@ -912,13 +861,10 @@ bool FTraceInfo::TraceTraverse (int ptflags)
 	}
 	if (Results->HitType == TRACE_HitNone && Results->Distance == 0)
 	{
-		Results->HitPos = {
-			StartX + FixedMul(Vx, MaxDist),
-			StartY + FixedMul(Vy, MaxDist),
-			StartZ + FixedMul(Vz, MaxDist) };
+		Results->HitPos = Start + Vec * MaxDist;
 		SetSourcePosition();
 		Results->Distance = MaxDist;
-		Results->Fraction = FRACUNIT;
+		Results->Fraction = 1.;
 	}
 	return Results->HitType != TRACE_HitNone;
 }
@@ -931,25 +877,20 @@ bool FTraceInfo::TraceTraverse (int ptflags)
 
 bool FTraceInfo::CheckPlane (const secplane_t &plane)
 {
-	fixed_t den = TMulScale16 (plane.a, Vx, plane.b, Vy, plane.c, Vz);
+	double den = plane.Normal() | Vec;
 
 	if (den != 0)
 	{
-		fixed_t num = TMulScale16 (plane.a, StartX,
-								   plane.b, StartY,
-								   plane.c, StartZ) + plane.d;
+		double num = (plane.Normal() | Start) + plane.fD();
 
-		fixed_t hitdist = FixedDiv (-num, den);
+		double hitdist = -num / den;
 
 		if (hitdist > EnterDist && hitdist < MaxDist)
 		{
-			Results->HitPos = {
-				StartX + FixedMul(Vx, hitdist),
-				StartY + FixedMul(Vy, hitdist),
-				StartZ + FixedMul(Vz, hitdist) };
+			Results->HitPos = Start + Vec * hitdist;
 			SetSourcePosition();
 			Results->Distance = hitdist;
-			Results->Fraction = FixedDiv (hitdist, MaxDist);
+			Results->Fraction = hitdist / MaxDist;
 			return true;
 		}
 	}

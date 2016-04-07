@@ -27,26 +27,24 @@ IMPLEMENT_CLASS (AArtiTeleport)
 
 bool AArtiTeleport::Use (bool pickup)
 {
-	fixed_t destX;
-	fixed_t destY;
-	angle_t destAngle;
+	DVector3 dest;
+	int destAngle;
 
 	if (deathmatch)
 	{
 		unsigned int selections = deathmatchstarts.Size ();
 		unsigned int i = pr_tele() % selections;
-		destX = deathmatchstarts[i].x;
-		destY = deathmatchstarts[i].y;
-		destAngle = ANG45 * (deathmatchstarts[i].angle/45);
+		dest = deathmatchstarts[i].pos;
+		destAngle = deathmatchstarts[i].angle;
 	}
 	else
 	{
 		FPlayerStart *start = G_PickPlayerStart(int(Owner->player - players));
-		destX = start->x;
-		destY = start->y;
-		destAngle = ANG45 * (start->angle/45);
+		dest = start->pos;
+		destAngle = start->angle;
 	}
-	P_Teleport (Owner, destX, destY, ONFLOORZ, destAngle, TELF_SOURCEFOG | TELF_DESTFOG);
+	dest.Z = ONFLOORZ;
+	P_Teleport (Owner, dest, (double)destAngle, TELF_SOURCEFOG | TELF_DESTFOG);
 	bool canlaugh = true;
  	if (Owner->player->morphTics && (Owner->player->MorphStyle & MORPH_UNDOBYCHAOSDEVICE))
  	{ // Teleporting away will undo any morph effects (pig)

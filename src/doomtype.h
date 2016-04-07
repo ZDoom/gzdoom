@@ -44,7 +44,6 @@
 #include "tarray.h"
 #include "name.h"
 #include "zstring.h"
-#include "vectors.h"
 
 class PClassActor;
 typedef TMap<int, PClassActor *> FClassMap;
@@ -252,9 +251,12 @@ enum ESSType
 	SS_BGRA
 };
 
-#ifndef M_PI
-#define M_PI		3.14159265358979323846	// matches value in gcc v2 math.h
+// always use our own definition for consistency.
+#ifdef M_PI
+#undef M_PI
 #endif
+
+const double M_PI = 3.14159265358979323846;	// matches value in gcc v2 math.h
 
 template <typename T, size_t N>
 char ( &_ArraySizeHelper( T (&array)[N] ))[N];

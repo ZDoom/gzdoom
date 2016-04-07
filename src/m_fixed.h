@@ -136,17 +136,35 @@ inline SDWORD ModDiv (SDWORD num, SDWORD den, SDWORD *dmval)
 	return num % den;
 }
 
+inline fixed_t FloatToFixed(double f)
+{
+	return xs_Fix<16>::ToFix(f);
+}
 
-#define FLOAT2FIXED(f)		((fixed_t)xs_Fix<16>::ToFix(f))
-#define FIXED2FLOAT(f)		((f) / float(65536))
-#define FIXED2DBL(f)		((f) / double(65536))
+inline double FixedToFloat(fixed_t f)
+{
+	return f / 65536.;
+}
 
-#define ANGLE2DBL(f)		((f) * (90./ANGLE_90))
-#define ANGLE2FLOAT(f)		(float((f) * (90./ANGLE_90)))
-#define FLOAT2ANGLE(f)		((angle_t)xs_CRoundToInt((f) * (ANGLE_90/90.)))
+inline unsigned FloatToAngle(double f)
+{
+	return xs_CRoundToInt((f)* (0x40000000 / 90.));
+}
 
-#define ANGLE2RAD(f)		((f) * (M_PI/ANGLE_180))
-#define ANGLE2RADF(f)		((f) * float(M_PI/ANGLE_180))
-#define RAD2ANGLE(f)		((angle_t)xs_CRoundToInt((f) * (ANGLE_180/M_PI)))
+inline double AngleToFloat(unsigned f)
+{
+	return f * (90. / 0x40000000);
+}
+
+inline double AngleToFloat(int f)
+{
+	return f * (90. / 0x40000000);
+}
+
+#define FLOAT2FIXED(f)		FloatToFixed(f)
+#define FIXED2FLOAT(f)		float(FixedToFloat(f))
+#define FIXED2DBL(f)		FixedToFloat(f)
+
+#define ANGLE2DBL(f)		AngleToFloat(f)
 
 #endif

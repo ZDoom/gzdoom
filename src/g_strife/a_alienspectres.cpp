@@ -22,19 +22,19 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpectreChunkSmall)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	AActor *foo = Spawn("AlienChunkSmall", self->PosPlusZ(10*FRACUNIT), ALLOW_REPLACE);
+	AActor *foo = Spawn("AlienChunkSmall", self->PosPlusZ(10.), ALLOW_REPLACE);
 
 	if (foo != NULL)
 	{
 		int t;
 
 		t = pr_spectrechunk() & 15;
-		foo->vel.x = (t - (pr_spectrechunk() & 7)) << FRACBITS;
+		foo->Vel.X = (t - (pr_spectrechunk() & 7));
 		
 		t = pr_spectrechunk() & 15;
-		foo->vel.y = (t - (pr_spectrechunk() & 7)) << FRACBITS;
+		foo->Vel.Y = (t - (pr_spectrechunk() & 7));
 
-		foo->vel.z = (pr_spectrechunk() & 15) << FRACBITS;
+		foo->Vel.Z = (pr_spectrechunk() & 15);
 	}
 	return 0;
 }
@@ -43,19 +43,19 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpectreChunkLarge)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	AActor *foo = Spawn("AlienChunkLarge", self->PosPlusZ(10*FRACUNIT), ALLOW_REPLACE);
+	AActor *foo = Spawn("AlienChunkLarge", self->PosPlusZ(10.), ALLOW_REPLACE);
 
 	if (foo != NULL)
 	{
 		int t;
 
 		t = pr_spectrechunk() & 7;
-		foo->vel.x = (t - (pr_spectrechunk() & 15)) << FRACBITS;
+		foo->Vel.X = (t - (pr_spectrechunk() & 15));
 		
 		t = pr_spectrechunk() & 7;
-		foo->vel.y = (t - (pr_spectrechunk() & 15)) << FRACBITS;
+		foo->Vel.Y = (t - (pr_spectrechunk() & 15));
 
-		foo->vel.z = (pr_spectrechunk() & 7) << FRACBITS;
+		foo->Vel.Z = (pr_spectrechunk() & 7);
 	}
 	return 0;
 }
@@ -67,20 +67,20 @@ DEFINE_ACTION_FUNCTION(AActor, A_Spectre3Attack)
 	if (self->target == NULL)
 		return 0;
 
-	AActor *foo = Spawn("SpectralLightningV2", self->PosPlusZ(32*FRACUNIT), ALLOW_REPLACE);
+	AActor *foo = Spawn("SpectralLightningV2", self->PosPlusZ(32.), ALLOW_REPLACE);
 
-	foo->vel.z = -12*FRACUNIT;
+	foo->Vel.Z = -12;
 	foo->target = self;
 	foo->FriendPlayer = 0;
 	foo->tracer = self->target;
 
-	self->angle -= ANGLE_180 / 20 * 10;
+	self->Angles.Yaw -= 90.;
 	for (int i = 0; i < 20; ++i)
 	{
-		self->angle += ANGLE_180 / 20;
+		self->Angles.Yaw += 9.;
 		P_SpawnSubMissile (self, PClass::FindActor("SpectralLightningBall2"), self);
 	}
-	self->angle -= ANGLE_180 / 20 * 10;
+	self->Angles.Yaw -= 90.;
 	return 0;
 }
 
@@ -114,7 +114,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_AlienSpectreDeath)
 	switch (self->GetClass()->TypeName)
 	{
 	case NAME_AlienSpectre1:
-		EV_DoFloor (DFloor::floorLowerToLowest, NULL, 999, FRACUNIT, 0, -1, 0, false);
+		EV_DoFloor (DFloor::floorLowerToLowest, NULL, 999, 1., 0., -1, 0, false);
 		log = 95;
 		break;
 
@@ -152,7 +152,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_AlienSpectreDeath)
 		{	// You wield the power of the complete Sigil.
 			log = 85;
 		}
-		EV_DoDoor (DDoor::doorOpen, NULL, NULL, 222, 8*FRACUNIT, 0, 0, 0);
+		EV_DoDoor (DDoor::doorOpen, NULL, NULL, 222, 8., 0, 0, 0);
 		break;
 	}
 
@@ -188,7 +188,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_AlienSpectreDeath)
 		{	// Another Sigil piece. Woohoo!
 			log = 83;
 		}
-		EV_DoFloor (DFloor::floorLowerToLowest, NULL, 666, FRACUNIT, 0, -1, 0, false);
+		EV_DoFloor (DFloor::floorLowerToLowest, NULL, 666, 1., 0., -1, 0, false);
 		break;
 
 	default:

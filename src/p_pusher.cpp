@@ -56,9 +56,8 @@ public:
 	int CheckForSectorMatch (EPusher type, int tag);
 	void ChangeValues (int magnitude, int angle)
 	{
-		angle_t ang = ((angle_t)(angle<<24)) >> ANGLETOFINESHIFT;
-		m_Xmag = (magnitude * finecosine[ang]) >> FRACBITS;
-		m_Ymag = (magnitude * finesine[ang]) >> FRACBITS;
+		DAngle ang = angle * (360. / 256.);
+		m_PushVec = ang.ToVector(magnitude);
 		m_Magnitude = magnitude;
 	}
 
@@ -67,12 +66,9 @@ public:
 protected:
 	EPusher m_Type;
 	TObjPtr<AActor> m_Source;// Point source if point pusher
-	int m_Xmag;				// X Strength
-	int m_Ymag;				// Y Strength
-	int m_Magnitude;		// Vector strength for point pusher
-	int m_Radius;			// Effective radius for point pusher
-	int m_X;				// X of point source if point pusher
-	int m_Y;				// Y of point source if point pusher
+	DVector2 m_PushVec;
+	double m_Magnitude;		// Vector strength for point pusher
+	double m_Radius;		// Effective radius for point pusher
 	int m_Affectee;			// Number of affected sector
 
 	friend bool PIT_PushThing (AActor *thing);
@@ -100,12 +96,9 @@ void DPusher::Serialize (FArchive &arc)
 	Super::Serialize (arc);
 	arc << m_Type
 		<< m_Source
-		<< m_Xmag
-		<< m_Ymag
+		<< m_PushVec
 		<< m_Magnitude
 		<< m_Radius
-		<< m_X
-		<< m_Y
 		<< m_Affectee;
 }
 
@@ -155,7 +148,7 @@ void DPusher::Serialize (FArchive &arc)
 // types 1 & 2 is the sector containing the MT_PUSH/MT_PULL Thing.
 
 
-#define PUSH_FACTOR 7
+#define PUSH_FACTOR 128
 
 /////////////////////////////
 //
@@ -168,9 +161,8 @@ DPusher::DPusher (DPusher::EPusher type, line_t *l, int magnitude, int angle,
 	m_Type = type;
 	if (l)
 	{
-		m_Xmag = l->dx>>FRACBITS;
-		m_Ymag = l->dy>>FRACBITS;
-		m_Magnitude = P_AproxDistance (m_Xmag, m_Ymag);
+		m_PushVec = l->Delta();
+		m_Magnitude = m_PushVec.Length();
 	}
 	else
 	{ // [RH] Allow setting magnitude and angle with parameters
@@ -178,9 +170,7 @@ DPusher::DPusher (DPusher::EPusher type, line_t *l, int magnitude, int angle,
 	}
 	if (source) // point source exist?
 	{
-		m_Radius = (m_Magnitude) << (FRACBITS+1); // where force goes to zero
-		m_X = m_Source->X();
-		m_Y = m_Source->Y();
+		m_Radius = m_Magnitude * 2; // where force goes to zero
 	}
 	m_Affectee = affectee;
 }
@@ -204,8 +194,7 @@ void DPusher::Tick ()
 	sector_t *sec;
 	AActor *thing;
 	msecnode_t *node;
-	int xspeed,yspeed;
-	int ht;
+	double ht;
 
 	if (!var_pushers)
 		return;
@@ -243,7 +232,7 @@ void DPusher::Tick ()
 		// point pusher. Crosses sectors, so use blockmap.
 
 		FPortalGroupArray check(FPortalGroupArray::PGA_NoSectorPortals);	// no sector portals because this thing is utterly z-unaware.
-		FMultiBlockThingsIterator it(check, m_X, m_Y, 0, 0, m_Radius, false, m_Source->Sector);
+		FMultiBlockThingsIterator it(check, m_Source, m_Radius);
 		FMultiBlockThingsIterator::CheckResult cres;
 
 
@@ -262,22 +251,18 @@ void DPusher::Tick ()
 
 			if ((pusharound) )
 			{
-				int sx = m_X;
-				int sy = m_Y;
-				int dist = thing->AproxDistance (sx, sy);
-				int speed = (m_Magnitude - ((dist>>FRACBITS)>>1))<<(FRACBITS-PUSH_FACTOR-1);
+				DVector2 pos = m_Source->Vec2To(thing);
+				double dist = pos.Length();
+				double speed = (m_Magnitude - (dist/2)) / (PUSH_FACTOR * 2);
 
 				// If speed <= 0, you're outside the effective radius. You also have
 				// to be able to see the push/pull source point.
 
 				if ((speed > 0) && (P_CheckSight (thing, m_Source, SF_IGNOREVISIBILITY)))
 				{
-					angle_t pushangle = thing->AngleTo(sx, sy);
-					if (m_Source->GetClass()->TypeName == NAME_PointPusher)
-						pushangle += ANG180;    // away
-					pushangle >>= ANGLETOFINESHIFT;
-					thing->vel.x += FixedMul (speed, finecosine[pushangle]);
-					thing->vel.y += FixedMul (speed, finesine[pushangle]);
+					DAngle pushangle = pos.Angle();
+					if (m_Source->GetClass()->TypeName == NAME_PointPuller) pushangle += 180;  
+					thing->Thrust(pushangle, speed);
 				}
 			}
 		}
@@ -294,20 +279,19 @@ void DPusher::Tick ()
 			continue;
 
 		sector_t *hsec = sec->GetHeightSec();
-		fixedvec3 pos = thing->PosRelative(sec);
+		DVector3 pos = thing->PosRelative(sec);
+		DVector2 pushvel;
 		if (m_Type == p_wind)
 		{
 			if (hsec == NULL)
 			{ // NOT special water sector
 				if (thing->Z() > thing->floorz) // above ground
 				{
-					xspeed = m_Xmag; // full force
-					yspeed = m_Ymag;
+					pushvel = m_PushVec; // full force
 				}
 				else // on ground
 				{
-					xspeed = (m_Xmag)>>1; // half force
-					yspeed = (m_Ymag)>>1;
+					pushvel = m_PushVec / 2; // half force
 				}
 			}
 			else // special water sector
@@ -315,17 +299,15 @@ void DPusher::Tick ()
 				ht = hsec->floorplane.ZatPoint(pos);
 				if (thing->Z() > ht) // above ground
 				{
-					xspeed = m_Xmag; // full force
-					yspeed = m_Ymag;
+					pushvel = m_PushVec; // full force
 				}
 				else if (thing->player->viewz < ht) // underwater
 				{
-					xspeed = yspeed = 0; // no force
+					pushvel.Zero(); // no force
 				}
 				else // wading in water
 				{
-					xspeed = (m_Xmag)>>1; // half force
-					yspeed = (m_Ymag)>>1;
+					pushvel = m_PushVec / 2; // full force
 				}
 			}
 		}
@@ -343,16 +325,14 @@ void DPusher::Tick ()
 			}
 			if (thing->Z() > floor->ZatPoint(pos))
 			{ // above ground
-				xspeed = yspeed = 0; // no force
+				pushvel.Zero(); // no force
 			}
 			else
 			{ // on ground/underwater
-				xspeed = m_Xmag; // full force
-				yspeed = m_Ymag;
+				pushvel = m_PushVec; // full force
 			}
 		}
-		thing->vel.x += xspeed<<(FRACBITS-PUSH_FACTOR);
-		thing->vel.y += yspeed<<(FRACBITS-PUSH_FACTOR);
+		thing->Vel += pushvel / PUSH_FACTOR;
 	}
 }
 

@@ -26,6 +26,7 @@
 
 // The most basic types we use, portability.
 #include "doomtype.h"
+#include "vectors.h"
 
 // Some global defines, that configure the game.
 #include "doomdef.h"
@@ -345,9 +346,7 @@ struct FDoomEdEntry;
 struct FMapThing
 {
 	int			thingid;
-	fixed_t		x;
-	fixed_t		y;
-	fixed_t		z;
+	DVector3	pos;
 	short		angle;
 	WORD		SkillFilter;
 	WORD		ClassFilter;
@@ -357,11 +356,10 @@ struct FMapThing
 	int			special;
 	int			args[5];
 	int			Conversation;
-	fixed_t		gravity;
-	fixed_t		alpha;
+	double		Gravity;
+	double		Alpha;
 	DWORD		fillcolor;
-	fixed_t		scaleX;
-	fixed_t		scaleY;
+	DVector2	Scale;
 	int			health;
 	int			score;
 	short		pitch;
@@ -428,12 +426,12 @@ enum EMapThingFlags
 // A simplified mapthing for player starts
 struct FPlayerStart
 {
-	fixed_t x, y, z;
+	DVector3 pos;
 	short angle, type;
 
 	FPlayerStart() { }
 	FPlayerStart(const FMapThing *mthing, int pnum)
-	: x(mthing->x), y(mthing->y), z(mthing->z),
+	: pos(mthing->pos),
 	  angle(mthing->angle),
 	  type(pnum)
 	{ }

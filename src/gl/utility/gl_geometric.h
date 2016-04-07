@@ -33,8 +33,8 @@ public:
 
 	Vector(vertex_t * v)
 	{
-		SetX(v->fx);
-		SetY(v->fy);
+		SetX((float)v->fX());
+		SetY((float)v->fY());
 		SetZ(0);
 	}
 

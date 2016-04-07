@@ -35,6 +35,20 @@
 **
 */
 
+// <wingdi.h> also #defines OPAQUE
+#ifdef OPAQUE
+#undef OPAQUE
+#endif
+
+enum
+{
+	OPAQUE = 65536,
+	TRANSLUC25 = (OPAQUE / 4),
+	TRANSLUC33 = (OPAQUE / 3),
+	TRANSLUC66 = ((OPAQUE * 2) / 3),
+	TRANSLUC75 = ((OPAQUE * 3) / 4),
+};
+
 // Legacy render styles
 enum ERenderStyle
 {
@@ -127,7 +141,7 @@ union FRenderStyle
 	operator uint32() const { return AsDWORD; }
 	bool operator==(const FRenderStyle &o) const { return AsDWORD == o.AsDWORD; }
 	void CheckFuzz();
-	bool IsVisible(fixed_t alpha) const throw();
+	bool IsVisible(double alpha) const throw();
 private:
 	// Code that compares an actor's render style with a legacy render
 	// style value should be updated. Making these conversion operators
@@ -151,6 +165,5 @@ inline FRenderStyle &FRenderStyle::operator= (ERenderStyle legacy)
 class FArchive;
 
 FArchive &operator<< (FArchive &arc, FRenderStyle &style);
-fixed_t GetAlpha(int type, fixed_t alpha);
 
 #endif

@@ -27,8 +27,18 @@ extern int*				blockmaplump;	// offsets in blockmap are from here
 extern int*				blockmap;
 extern int				bmapwidth;
 extern int				bmapheight; 	// in mapblocks
-extern fixed_t			bmaporgx;
-extern fixed_t			bmaporgy;		// origin of block map
+extern double			bmaporgx;
+extern double			bmaporgy;		// origin of block map
 extern FBlockNode**		blocklinks; 	// for thing chains
+
+inline int GetBlockX(double xpos)
+{
+	return int((xpos - bmaporgx) / MAPBLOCKUNITS);
+}
+
+inline int GetBlockY(double ypos)
+{
+	return int((ypos - bmaporgy) / MAPBLOCKUNITS);
+}
 
 #endif

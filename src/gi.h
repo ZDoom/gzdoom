@@ -135,10 +135,10 @@ struct gameinfo_t
 	FString ArmorIcon2;
 	FString PauseSign;
 	FString Endoom;
-	fixed_t Armor2Percent;
+	double Armor2Percent;
 	FString quitSound;
 	gameborder_t Border;
-	int telefogheight;
+	double telefogheight;
 	int defKickback;
 	FString translator;
 	DWORD defaultbloodcolor;
@@ -163,7 +163,7 @@ struct gameinfo_t
 	FName mFontColorHighlight;
 	FName mFontColorSelection;
 	FString mBackButton;
-	fixed_t gibfactor;
+	double gibfactor;
 	int TextScreenX;
 	int TextScreenY;
 	FName DefaultEndSequence;

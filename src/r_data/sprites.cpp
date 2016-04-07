@@ -596,8 +596,8 @@ void R_InitSkins (void)
 			}
 			else if (0 == stricmp (key, "scale"))
 			{
-				skins[i].ScaleX = clamp<fixed_t> (FLOAT2FIXED(atof (sc.String)), 1, 256*FRACUNIT);
-				skins[i].ScaleY = skins[i].ScaleX;
+				skins[i].Scale.X = clamp(atof (sc.String), 1./65536, 256.);
+				skins[i].Scale.Y = skins[i].Scale.X;
 			}
 			else if (0 == stricmp (key, "game"))
 			{
@@ -937,8 +937,7 @@ void R_InitSprites ()
 		PClassPlayerPawn *type = PlayerClasses[0].Type;
 		skins[i].range0start = type->ColorRangeStart;
 		skins[i].range0end = type->ColorRangeEnd;
-		skins[i].ScaleX = GetDefaultByType (type)->scaleX;
-		skins[i].ScaleY = GetDefaultByType (type)->scaleY;
+		skins[i].Scale = GetDefaultByType (type)->Scale;
 	}
 
 	R_InitSpriteDefs ();
@@ -967,8 +966,7 @@ void R_InitSprites ()
 		}
 		skins[i].range0start = basetype->ColorRangeStart;
 		skins[i].range0end = basetype->ColorRangeEnd;
-		skins[i].ScaleX = GetDefaultByType (basetype)->scaleX;
-		skins[i].ScaleY = GetDefaultByType (basetype)->scaleY;
+		skins[i].Scale = GetDefaultByType (basetype)->Scale;
 		skins[i].sprite = GetDefaultByType (basetype)->SpawnState->sprite;
 		skins[i].namespc = ns_global;
 

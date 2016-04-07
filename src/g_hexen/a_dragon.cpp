@@ -22,16 +22,15 @@ DECLARE_ACTION(A_DragonFlight)
 //
 //============================================================================
 
-static void DragonSeek (AActor *actor, angle_t thresh, angle_t turnMax)
+static void DragonSeek (AActor *actor, DAngle thresh, DAngle turnMax)
 {
 	int dir;
-	int dist;
-	angle_t delta;
-	angle_t angle;
+	double dist;
+	DAngle delta;
 	AActor *target;
 	int i;
-	angle_t bestAngle;
-	angle_t angleToSpot, angleToTarget;
+	DAngle bestAngle;
+	DAngle angleToSpot, angleToTarget;
 	AActor *mo;
 
 	target = actor->tracer;
@@ -42,7 +41,7 @@ static void DragonSeek (AActor *actor, angle_t thresh, angle_t turnMax)
 	dir = P_FaceMobj (actor, target, &delta);
 	if (delta > thresh)
 	{
-		delta >>= 1;
+		delta /= 2;
 		if (delta > turnMax)
 		{
 			delta = turnMax;
@@ -50,30 +49,25 @@ static void DragonSeek (AActor *actor, angle_t thresh, angle_t turnMax)
 	}
 	if (dir)
 	{ // Turn clockwise
-		actor->angle += delta;
+		actor->Angles.Yaw += delta;
 	}
 	else
 	{ // Turn counter clockwise
-		actor->angle -= delta;
+		actor->Angles.Yaw -= delta;
 	}
-	angle = actor->angle>>ANGLETOFINESHIFT;
-	actor->vel.x = FixedMul (actor->Speed, finecosine[angle]);
-	actor->vel.y = FixedMul (actor->Speed, finesine[angle]);
-	dist = actor->AproxDistance (target) / actor->Speed;
+	actor->VelFromAngle();
+
+	dist = actor->DistanceBySpeed(target, actor->Speed);
 	if (actor->Top() < target->Z() ||
 		target->Top() < actor->Z())
 	{
-		if (dist < 1)
-		{
-			dist = 1;
-		}
-		actor->vel.z = (target->Z() - actor->Z())/dist;
+		actor->Vel.Z = (target->Z() - actor->Z()) / dist;
 	}
 	if (target->flags&MF_SHOOTABLE && pr_dragonseek() < 64)
 	{ // attack the destination mobj if it's attackable
 		AActor *oldTarget;
-
-		if (absangle(actor->angle - actor->AngleTo(target)) < ANGLE_45/2)
+		
+		if (absangle(actor->Angles.Yaw, actor->AngleTo(target)) < 22.5)
 		{
 			oldTarget = actor->target;
 			actor->target = target;
@@ -97,7 +91,7 @@ static void DragonSeek (AActor *actor, angle_t thresh, angle_t turnMax)
 		if (actor->target && pr_dragonseek() < 200)
 		{
 			AActor *bestActor = NULL;
-			bestAngle = ANGLE_MAX;
+			bestAngle = 360.;
 			angleToTarget = actor->AngleTo(actor->target);
 			for (i = 0; i < 5; i++)
 			{
@@ -112,9 +106,10 @@ static void DragonSeek (AActor *actor, angle_t thresh, angle_t turnMax)
 					continue;
 				}
 				angleToSpot = actor->AngleTo(mo);
-				if (absangle(angleToSpot-angleToTarget) < bestAngle)
+				DAngle diff = absangle(angleToSpot, angleToTarget);
+				if (diff < bestAngle)
 				{
-					bestAngle = absangle(angleToSpot-angleToTarget);
+					bestAngle = diff;
 					bestActor = mo;
 				}
 			}
@@ -182,9 +177,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_DragonFlight)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	angle_t angle;
+	DAngle angle;
 
-	DragonSeek (self, 4*ANGLE_1, 8*ANGLE_1);
+	DragonSeek (self, 4., 8.);
 	if (self->target)
 	{
 		if(!(self->target->flags&MF_SHOOTABLE))
@@ -192,15 +187,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_DragonFlight)
 			self->target = NULL;
 			return 0;
 		}
-		angle = self->AngleTo(self->target);
-		if (absangle(self->angle-angle) < ANGLE_45/2 && self->CheckMeleeRange())
+		angle = absangle(self->Angles.Yaw, self->AngleTo(self->target));
+		if (angle <22.5 && self->CheckMeleeRange())
 		{
 			int damage = pr_dragonflight.HitDice (8);
 			int newdam = P_DamageMobj (self->target, self, self, damage, NAME_Melee);
 			P_TraceBleed (newdam > 0 ? newdam : damage, self->target, self);
 			S_Sound (self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NORM);
 		}
-		else if (absangle(self->angle-angle) <= ANGLE_1*20)
+		else if (angle <= 20)
 		{
 			self->SetState (self->MissileState);
 			S_Sound (self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NORM);
@@ -266,9 +261,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_DragonFX2)
 	delay = 16+(pr_dragonfx2()>>3);
 	for (i = 1+(pr_dragonfx2()&3); i; i--)
 	{
-		fixed_t xo = ((pr_dragonfx2() - 128) << 14);
-		fixed_t yo = ((pr_dragonfx2() - 128) << 14);
-		fixed_t zo = ((pr_dragonfx2() - 128) << 12);
+		double xo = (pr_dragonfx2() - 128) / 4.;
+		double yo = (pr_dragonfx2() - 128) / 4.;
+		double zo = (pr_dragonfx2() - 128) / 16.;
 
 		mo = Spawn ("DragonExplosion", self->Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
 		if (mo)

@@ -35,8 +35,6 @@
 #include "doomtype.h"
 #include "doomstat.h"
 #include "d_player.h"
-#include "tables.h"
-#include "m_fixed.h"
 #include "templates.h"
 #include "menu/menu.h"
 #include "colormatcher.h"
@@ -59,6 +57,22 @@
 
 struct FBackdropTexture : public FTexture
 {
+	enum
+	{
+		COS_SIZE = 256,
+		ANGLESHIFT = 24
+	};
+
+	static constexpr uint32_t DEGREES(double v)
+	{
+		return uint32_t((v)*(0x40000000 / 90.0));
+	}
+
+	static double TORAD(uint32_t x)
+	{
+		return x*(M_PI / 0x80000000);
+	}
+
 public:
 	FBackdropTexture();
 
@@ -68,12 +82,13 @@ public:
 	bool CheckModified();
 
 protected:
+	uint32_t costab[COS_SIZE];
 	BYTE Pixels[144*160];
 	static const Span DummySpan[2];
 	int LastRenderTic;
 
-	angle_t time1, time2, time3, time4;
-	angle_t t1ang, t2ang, z1ang, z2ang;
+	uint32_t time1, time2, time3, time4;
+	uint32_t t1ang, t2ang, z1ang, z2ang;
 
 	void Render();
 };
@@ -171,14 +186,19 @@ FBackdropTexture::FBackdropTexture()
 	WidthMask = 255;
 	LastRenderTic = 0;
 
-	time1 = ANGLE_1*180;
-	time2 = ANGLE_1*56;
-	time3 = ANGLE_1*99;
-	time4 = ANGLE_1*1;
-	t1ang = ANGLE_90;
+	for (int i = 0; i < COS_SIZE; ++i)
+	{
+		costab[i] = uint32_t(cos(i * (M_PI / (COS_SIZE / 2))) * 65536);
+	}
+
+	time1 = DEGREES(180);
+	time2 = DEGREES(56);
+	time3 = DEGREES(99);
+	time4 = DEGREES(1);
+	t1ang = DEGREES(90);
 	t2ang = 0;
 	z1ang = 0;
-	z2ang = ANGLE_90/2;
+	z2ang = DEGREES(45);
 }
 
 //=============================================================================
@@ -248,22 +268,23 @@ void FBackdropTexture::Render()
 
 	int x, y;
 
-	const angle_t a1add = ANGLE_1/2;
-	const angle_t a2add = ANGLE_MAX-ANGLE_1;
-	const angle_t a3add = ANGLE_1*5/7;
-	const angle_t a4add = ANGLE_MAX-ANGLE_1*4/3;
+	const DWORD a1add = DEGREES(0.5);
+	const DWORD a2add = DEGREES(359);
+	const DWORD a3add = DEGREES(5 / 7.f);
+	const DWORD a4add = DEGREES(358.66666);
 
-	const angle_t t1add = ANGLE_MAX-ANGLE_1*2;
-	const angle_t t2add = ANGLE_MAX-ANGLE_1*3+ANGLE_1/6;
-	const angle_t t3add = ANGLE_1*16/7;
-	const angle_t t4add = ANGLE_MAX-ANGLE_1*2/3;
-	const angle_t x1add = 5<<ANGLETOFINESHIFT;
-	const angle_t x2add = ANGLE_MAX-(13<<ANGLETOFINESHIFT);
-	const angle_t z1add = 3<<ANGLETOFINESHIFT;
-	const angle_t z2add = 4<<ANGLETOFINESHIFT;
+	const DWORD t1add = DEGREES(358);
+	const DWORD t2add = DEGREES(357.16666);
+	const DWORD t3add = DEGREES(2.285);
+	const DWORD t4add = DEGREES(359.33333);
+	const DWORD x1add = 5 * 524288;
+	const DWORD x2add = 0u - 13 * 524288;
+	const DWORD z1add = 3 * 524288;
+	const DWORD z2add = 4 * 524288;
 
-	angle_t a1, a2, a3, a4;
-	fixed_t c1, c2, c3, c4;
+
+	DWORD a1, a2, a3, a4;
+	SDWORD c1, c2, c3, c4;
 	DWORD tx, ty, tc, ts;
 	DWORD ux, uy, uc, us;
 	DWORD ltx, lty, lux, luy;
@@ -273,36 +294,36 @@ void FBackdropTexture::Render()
 	a3 = time3;
 	a4 = time4;
 
-	fixed_t z1 = (finecosine[z2ang>>ANGLETOFINESHIFT]>>2)+FRACUNIT/2;
-	fixed_t z2 = (finecosine[z1ang>>ANGLETOFINESHIFT]>>2)+FRACUNIT*3/4;
+	double z1 = (cos(TORAD(z2ang)) / 4 + 0.5) * (0x8000000);
+	double z2 = (cos(TORAD(z1ang)) / 4 + 0.75) * (0x8000000);
 
-	tc = MulScale5 (finecosine[t1ang>>ANGLETOFINESHIFT], z1);
-	ts = MulScale5 (finesine[t1ang>>ANGLETOFINESHIFT], z1);
-	uc = MulScale5 (finecosine[t2ang>>ANGLETOFINESHIFT], z2);
-	us = MulScale5 (finesine[t2ang>>ANGLETOFINESHIFT], z2);
-
-	ltx = -width/2*tc;
-	lty = -width/2*ts;
-	lux = -width/2*uc;
-	luy = -width/2*us;
+	tc = SDWORD(cos(TORAD(t1ang)) * z1);
+	ts = SDWORD(sin(TORAD(t1ang)) * z1);
+	uc = SDWORD(cos(TORAD(t2ang)) * z2);
+	us = SDWORD(sin(TORAD(t2ang)) * z2);
+	
+	ltx = -width / 2 * tc;
+	lty = -width / 2 * ts;
+	lux = -width / 2 * uc;
+	luy = -width / 2 * us;
 
 	for (y = 0; y < height; ++y)
 	{
 		a1 = time1;
 		a2 = time2;
-		c3 = finecosine[a3>>ANGLETOFINESHIFT];
-		c4 = finecosine[a4>>ANGLETOFINESHIFT];
-		tx = ltx - (y-height/2)*ts;
-		ty = lty + (y-height/2)*tc;
-		ux = lux - (y-height/2)*us;
-		uy = luy + (y-height/2)*uc;
+		c3 = SDWORD(cos(TORAD(a3)) * 65536.0);
+		c4 = SDWORD(cos(TORAD(a4)) * 65536.0);
+		tx = ltx - (y - height / 2)*ts;
+		ty = lty + (y - height / 2)*tc;
+		ux = lux - (y - height / 2)*us;
+		uy = luy + (y - height / 2)*uc;
 		for (x = 0; x < width; ++x)
 		{
-			c1 = finecosine[a1>>ANGLETOFINESHIFT];
-			c2 = finecosine[a2>>ANGLETOFINESHIFT];
-			from[x] = ((c1 + c2 + c3 + c4) >> (FRACBITS+3-7)) + 128	// plasma
-			 + pattern1[(tx>>27)+((ty>>22)&992)]					// rotozoomer 1
-			 + pattern2[(ux>>27)+((uy>>22)&992)];					// rotozoomer 2
+			c1 = costab[a1 >> ANGLESHIFT];
+			c2 = costab[a2 >> ANGLESHIFT];
+			from[x] = ((c1 + c2 + c3 + c4) >> (16 + 3 - 7)) + 128		// plasma
+				+ pattern1[(tx >> 27) + ((ty >> 22) & 992)]				// rotozoomer 1
+				+ pattern2[(ux >> 27) + ((uy >> 22) & 992)];			// rotozoomer 2
 			tx += tc;
 			ty += ts;
 			ux += uc;
@@ -563,21 +584,19 @@ void FListMenuItemPlayerDisplay::Drawer(bool selected)
 	V_DrawFrame (x, y, 72*CleanXfac, 80*CleanYfac-1);
 
 	spriteframe_t *sprframe = NULL;
-	fixed_t scaleX, scaleY;
+	DVector2 Scale;
 
 	if (mPlayerState != NULL)
 	{
 		if (mSkin == 0)
 		{
 			sprframe = &SpriteFrames[sprites[mPlayerState->sprite].spriteframes + mPlayerState->GetFrame()];
-			scaleX = GetDefaultByType(mPlayerClass->Type)->scaleX;
-			scaleY = GetDefaultByType(mPlayerClass->Type)->scaleY;
+			Scale = GetDefaultByType(mPlayerClass->Type)->Scale;
 		}
 		else
 		{
 			sprframe = &SpriteFrames[sprites[skins[mSkin].sprite].spriteframes + mPlayerState->GetFrame()];
-			scaleX = skins[mSkin].ScaleX;
-			scaleY = skins[mSkin].ScaleY;
+			Scale = skins[mSkin].Scale;
 		}
 	}
 
@@ -590,8 +609,8 @@ void FListMenuItemPlayerDisplay::Drawer(bool selected)
 			if (mTranslate) trans = translationtables[TRANSLATION_Players](MAXPLAYERS);
 			screen->DrawTexture (tex,
 				x + 36*CleanXfac, y + 71*CleanYfac,
-				DTA_DestWidth, MulScale16 (tex->GetScaledWidth() * CleanXfac, scaleX),
-				DTA_DestHeight, MulScale16 (tex->GetScaledHeight() * CleanYfac, scaleY),
+				DTA_DestWidthF, tex->GetScaledWidthDouble() * CleanXfac * Scale.X,
+				DTA_DestHeightF, tex->GetScaledHeightDouble() * CleanYfac * Scale.Y,
 				DTA_Translation, trans,
 				DTA_FlipX, sprframe->Flip & (1 << mRotation),
 				TAG_DONE);

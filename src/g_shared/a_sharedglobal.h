@@ -8,9 +8,10 @@ class FDecalTemplate;
 struct vertex_t;
 struct side_t;
 struct F3DFloor;
+class DBaseDecal;
 
-void P_SpawnDirt (AActor *actor, fixed_t radius);
-class DBaseDecal *ShootDecal(const FDecalTemplate *tpl, AActor *basisactor, sector_t *sec, fixed_t x, fixed_t y, fixed_t z, angle_t angle, fixed_t tracedist, bool permanent);
+void P_SpawnDirt (AActor *actor, double radius);
+class DBaseDecal *ShootDecal(const FDecalTemplate *tpl, AActor *basisactor, sector_t *sec, double x, double y, double z, DAngle angle, double tracedist, bool permanent);
 
 class DBaseDecal : public DThinker
 {
@@ -18,28 +19,28 @@ class DBaseDecal : public DThinker
 	HAS_OBJECT_POINTERS
 public:
 	DBaseDecal ();
-	DBaseDecal (fixed_t z);
-	DBaseDecal (int statnum, fixed_t z);
+	DBaseDecal(double z);
+	DBaseDecal(int statnum, double z);
 	DBaseDecal (const AActor *actor);
 	DBaseDecal (const DBaseDecal *basis);
 
 	void Serialize (FArchive &arc);
 	void Destroy ();
-	FTextureID StickToWall (side_t *wall, fixed_t x, fixed_t y, F3DFloor * ffloor);
-	fixed_t GetRealZ (const side_t *wall) const;
+	FTextureID StickToWall(side_t *wall, double x, double y, F3DFloor * ffloor);
+	double GetRealZ (const side_t *wall) const;
 	void SetShade (DWORD rgb);
 	void SetShade (int r, int g, int b);
-	void Spread (const FDecalTemplate *tpl, side_t *wall, fixed_t x, fixed_t y, fixed_t z, F3DFloor * ffloor);
-	void GetXY (side_t *side, fixed_t &x, fixed_t &y) const;
+	void Spread (const FDecalTemplate *tpl, side_t *wall, double x, double y, double z, F3DFloor * ffloor);
+	void GetXY (side_t *side, double &x, double &y) const;
 
 	static void SerializeChain (FArchive &arc, DBaseDecal **firstptr);
 
 	DBaseDecal *WallNext, **WallPrev;
 
-	fixed_t LeftDistance;
-	fixed_t Z;
-	fixed_t ScaleX, ScaleY;
-	fixed_t Alpha;
+	double LeftDistance;
+	double Z;
+	double ScaleX, ScaleY;
+	double Alpha;
 	DWORD AlphaColor;
 	int Translation;
 	FTextureID PicNum;
@@ -48,23 +49,23 @@ public:
 	sector_t * Sector;	// required for 3D floors
 
 protected:
-	virtual DBaseDecal *CloneSelf (const FDecalTemplate *tpl, fixed_t x, fixed_t y, fixed_t z, side_t *wall, F3DFloor * ffloor) const;
-	void CalcFracPos (side_t *wall, fixed_t x, fixed_t y);
+	virtual DBaseDecal *CloneSelf(const FDecalTemplate *tpl, double x, double y, double z, side_t *wall, F3DFloor * ffloor) const;
+	void CalcFracPos(side_t *wall, double x, double y);
 	void Remove ();
 
-	static void SpreadLeft (fixed_t r, vertex_t *v1, side_t *feelwall, F3DFloor *ffloor);
-	static void SpreadRight (fixed_t r, side_t *feelwall, fixed_t wallsize, F3DFloor *ffloor);
+	static void SpreadLeft (double r, vertex_t *v1, side_t *feelwall, F3DFloor *ffloor);
+	static void SpreadRight (double r, side_t *feelwall, double wallsize, F3DFloor *ffloor);
 };
 
 class DImpactDecal : public DBaseDecal
 {
 	DECLARE_CLASS (DImpactDecal, DBaseDecal)
 public:
-	DImpactDecal (fixed_t z);
+	DImpactDecal(double z);
 	DImpactDecal (side_t *wall, const FDecalTemplate *templ);
 
-	static DImpactDecal *StaticCreate (const char *name, const fixedvec3 &pos, side_t *wall, F3DFloor * ffloor, PalEntry color=0);
-	static DImpactDecal *StaticCreate (const FDecalTemplate *tpl, const fixedvec3 &pos, side_t *wall, F3DFloor * ffloor, PalEntry color=0);
+	static DImpactDecal *StaticCreate(const char *name, const DVector3 &pos, side_t *wall, F3DFloor * ffloor, PalEntry color = 0);
+	static DImpactDecal *StaticCreate(const FDecalTemplate *tpl, const DVector3 &pos, side_t *wall, F3DFloor * ffloor, PalEntry color = 0);
 
 	void BeginPlay ();
 	void Destroy ();
@@ -73,7 +74,7 @@ public:
 	static void SerializeTime (FArchive &arc);
 
 protected:
-	DBaseDecal *CloneSelf (const FDecalTemplate *tpl, fixed_t x, fixed_t y, fixed_t z, side_t *wall, F3DFloor * ffloor) const;
+	DBaseDecal *CloneSelf(const FDecalTemplate *tpl, double x, double y, double z, side_t *wall, F3DFloor * ffloor) const;
 	static void CheckMax ();
 
 private:
@@ -153,11 +154,12 @@ enum
 
 struct FQuakeJiggers
 {
-	int IntensityX, IntensityY, IntensityZ;
-	int RelIntensityX, RelIntensityY, RelIntensityZ;
-	int OffsetX, OffsetY, OffsetZ;
-	int RelOffsetX, RelOffsetY, RelOffsetZ;
-	int Falloff, WFalloff;
+	DVector3 Intensity;
+	DVector3 RelIntensity;
+	DVector3 Offset;
+	DVector3 RelOffset;
+	double Falloff;
+	double WFalloff;
 };
 
 class DEarthquake : public DThinker
@@ -172,19 +174,19 @@ public:
 	void Serialize (FArchive &arc);
 	void Tick ();
 	TObjPtr<AActor> m_Spot;
-	fixed_t m_TremorRadius, m_DamageRadius;
+	double m_TremorRadius, m_DamageRadius;
 	int m_Countdown;
 	int m_CountdownStart;
 	FSoundID m_QuakeSFX;
 	int m_Flags;
-	fixed_t m_IntensityX, m_IntensityY, m_IntensityZ;
-	float m_WaveSpeedX, m_WaveSpeedY, m_WaveSpeedZ;
-	fixed_t m_Falloff;
+	DVector3 m_Intensity;
+	DVector3 m_WaveSpeed;
+	double m_Falloff;
 	int m_Highpoint, m_MiniCount;
 
-	fixed_t GetModIntensity(int intensity) const;
-	fixed_t GetModWave(double waveMultiplier) const;
-	fixed_t GetFalloff(fixed_t dist) const;
+	double GetModIntensity(double intensity) const;
+	double GetModWave(double waveMultiplier) const;
+	double GetFalloff(double dist) const;
 
 	static int StaticGetQuakeIntensities(AActor *viewer, FQuakeJiggers &jiggers);
 

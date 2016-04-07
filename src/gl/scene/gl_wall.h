@@ -69,24 +69,23 @@ struct GLSectorPlane
 {
 	FTextureID texture;
 	secplane_t plane;
-	fixed_t texheight;
-	fixed_t xoffs,  yoffs;
-	fixed_t	xscale, yscale;
-	angle_t	angle;
+	float Texheight;
+	float	Angle;
+	FVector2 Offs;
+	FVector2 Scale;
 
 	void GetFromSector(sector_t * sec, int ceiling)
 	{
-		xoffs = sec->GetXOffset(ceiling);
-		yoffs = sec->GetYOffset(ceiling);
-		xscale = sec->GetXScale(ceiling);
-		yscale = sec->GetYScale(ceiling);
-		angle = sec->GetAngle(ceiling);
+		Offs.X = (float)sec->GetXOffsetF(ceiling);
+		Offs.Y = (float)sec->GetYOffsetF(ceiling);
+		Scale.X = (float)sec->GetXScaleF(ceiling);
+		Scale.Y = (float)sec->GetYScaleF(ceiling);
+		Angle = (float)sec->GetAngleF(ceiling).Degrees;
 		texture = sec->GetTexture(ceiling);
 		plane = sec->GetSecPlane(ceiling);
-		texheight = (ceiling == sector_t::ceiling)? plane.d : -plane.d;
+		Texheight = (float)((ceiling == sector_t::ceiling)? plane.fD() : -plane.fD());
 	}
 };
-
 
 
 class GLWall
@@ -118,9 +117,9 @@ public:
 	FColormap Colormap;
 	ERenderStyle RenderStyle;
 	
-	fixed_t viewdistance;
+	float ViewDistance;
 
-	int lightlevel;
+	BYTE lightlevel;
 	BYTE type;
 	BYTE flags;
 	short rellight;
@@ -177,13 +176,13 @@ private:
 	bool DoHorizon(seg_t * seg,sector_t * fs, vertex_t * v1,vertex_t * v2);
 
 	bool SetWallCoordinates(seg_t * seg, FTexCoordInfo *tci, float ceilingrefheight,
-							int topleft,int topright, int bottomleft,int bottomright, int texoffset);
+		fixed_t topleft, fixed_t topright, fixed_t bottomleft, fixed_t bottomright, fixed_t t_ofs);
 
 	void DoTexture(int type,seg_t * seg,int peg,
-						   int ceilingrefheight,int floorrefheight,
-						   int CeilingHeightstart,int CeilingHeightend,
-						   int FloorHeightstart,int FloorHeightend,
-						   int v_offset);
+						   fixed_t ceilingrefheight,fixed_t floorrefheight,
+						   fixed_t CeilingHeightstart,fixed_t CeilingHeightend,
+						   fixed_t FloorHeightstart,fixed_t FloorHeightend,
+						   fixed_t v_offset);
 
 	void DoMidTexture(seg_t * seg, bool drawfogboundary,
 					  sector_t * front, sector_t * back,
@@ -191,7 +190,7 @@ private:
 					  fixed_t fch1, fixed_t fch2, fixed_t ffh1, fixed_t ffh2,
 					  fixed_t bch1, fixed_t bch2, fixed_t bfh1, fixed_t bfh2);
 
-	void GetPlanePos(F3DFloor::planeref *planeref, int &left, int &right);
+	void GetPlanePos(F3DFloor::planeref *planeref, fixed_t &left, fixed_t &right);
 
 	void BuildFFBlock(seg_t * seg, F3DFloor * rover,
 					  fixed_t ff_topleft, fixed_t ff_topright, 
@@ -299,7 +298,7 @@ public:
 	friend struct GLDrawList;
 	friend void Mod_RenderModel(GLSprite * spr, model_t * mdl, int framenumber);
 
-	BYTE lightlevel;
+	int lightlevel;
 	BYTE foglevel;
 	BYTE hw_styleflags;
 	bool fullbright;
@@ -327,7 +326,7 @@ public:
 
 	void SplitSprite(sector_t * frontsector, bool translucent);
 	void SetLowerParam();
-	void PerformSpriteClipAdjustment(AActor *thing, fixed_t thingx, fixed_t thingy, float spriteheight);
+	void PerformSpriteClipAdjustment(AActor *thing, const DVector2 &thingpos, float spriteheight);
 
 public:
 
@@ -336,7 +335,7 @@ public:
 	void Process(AActor* thing,sector_t * sector);
 	void ProcessParticle (particle_t *particle, sector_t *sector);//, int shade, int fakeside)
 	void SetThingColor(PalEntry);
-	void SetSpriteColor(sector_t *sector, fixed_t y);
+	void SetSpriteColor(sector_t *sector, double y);
 
 	// Lines start-end and fdiv must intersect.
 	double CalcIntersectionVertex(GLWall * w2);
@@ -349,7 +348,7 @@ inline float Dist2(float x1,float y1,float x2,float y2)
 
 // Light + color
 
-bool gl_GetSpriteLight(AActor *Self, fixed_t x, fixed_t y, fixed_t z, subsector_t * subsec, int desaturation, float * out, line_t *line = NULL, int side = 0);
+bool gl_GetSpriteLight(AActor *Self, float x, float y, float z, subsector_t * subsec, int desaturation, float * out, line_t *line = NULL, int side = 0);
 int gl_SetSpriteLight(AActor * thing, int lightlevel, int rellight, FColormap * cm, float alpha, PalEntry ThingColor = 0xffffff, bool weapon=false);
 
 void gl_GetSpriteLight(AActor * thing, int lightlevel, int rellight, FColormap * cm,

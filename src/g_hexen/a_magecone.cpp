@@ -53,9 +53,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireConePL1)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	angle_t angle;
+	DAngle angle;
 	int damage;
-	int slope;
+	DAngle slope;
 	int i;
 	AActor *mo;
 	bool conedone=false;
@@ -78,11 +78,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireConePL1)
 	damage = 90+(pr_cone()&15);
 	for (i = 0; i < 16; i++)
 	{
-		angle = self->angle+i*(ANG45/16);
-		slope = P_AimLineAttack (self, angle, MELEERANGE, &t, 0, ALF_CHECK3D);
+		angle = self->Angles.Yaw + i*(45./16);
+		slope = P_AimLineAttack (self, angle, MELEERANGE, &t, 0., ALF_CHECK3D);
 		if (t.linetarget)
 		{
-			P_DamageMobj (t.linetarget, self, self, damage, NAME_Ice, DMG_USEANGLE, t.angleFromSource);
+			P_DamageMobj (t.linetarget, self, self, damage, NAME_Ice, DMG_USEANGLE, t.angleFromSource.Degrees);
 			conedone = true;
 			break;
 		}
@@ -128,35 +128,35 @@ DEFINE_ACTION_FUNCTION(AActor, A_ShedShard)
 	// every so many calls, spawn a new missile in its set directions
 	if (spawndir & SHARDSPAWN_LEFT)
 	{
-		mo = P_SpawnMissileAngleZSpeed (self, self->Z(), RUNTIME_CLASS(AFrostMissile), self->angle+(ANG45/9),
-											 0, (20+2*spermcount)<<FRACBITS, self->target);
+		mo = P_SpawnMissileAngleZSpeed(self, self->Z(), RUNTIME_CLASS(AFrostMissile), 
+			self->Angles.Yaw + 5, 0, (20. + 2 * spermcount), self->target);
 		if (mo)
 		{
 			mo->special1 = SHARDSPAWN_LEFT;
 			mo->special2 = spermcount;
-			mo->vel.z = self->vel.z;
+			mo->Vel.Z = self->Vel.Z;
 			mo->args[0] = (spermcount==3)?2:0;
 		}
 	}
 	if (spawndir & SHARDSPAWN_RIGHT)
 	{
-		mo = P_SpawnMissileAngleZSpeed (self, self->Z(), RUNTIME_CLASS(AFrostMissile), self->angle-(ANG45/9),
-											 0, (20+2*spermcount)<<FRACBITS, self->target);
+		mo = P_SpawnMissileAngleZSpeed(self, self->Z(), RUNTIME_CLASS(AFrostMissile),
+			self->Angles.Yaw - 5, 0, (20. + 2 * spermcount), self->target);
 		if (mo)
 		{
 			mo->special1 = SHARDSPAWN_RIGHT;
 			mo->special2 = spermcount;
-			mo->vel.z = self->vel.z;
+			mo->Vel.Z = self->Vel.Z;
 			mo->args[0] = (spermcount==3)?2:0;
 		}
 	}
 	if (spawndir & SHARDSPAWN_UP)
 	{
-		mo = P_SpawnMissileAngleZSpeed (self, self->Z()+8*FRACUNIT, RUNTIME_CLASS(AFrostMissile), self->angle, 
-											 0, (15+2*spermcount)<<FRACBITS, self->target);
+		mo = P_SpawnMissileAngleZSpeed(self, self->Z() + 8., RUNTIME_CLASS(AFrostMissile),
+			self->Angles.Yaw, 0, (15. + 2 * spermcount), self->target);
 		if (mo)
 		{
-			mo->vel.z = self->vel.z;
+			mo->Vel.Z = self->Vel.Z;
 			if (spermcount & 1)			// Every other reproduction
 				mo->special1 = SHARDSPAWN_UP | SHARDSPAWN_LEFT | SHARDSPAWN_RIGHT;
 			else
@@ -167,11 +167,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_ShedShard)
 	}
 	if (spawndir & SHARDSPAWN_DOWN)
 	{
-		mo = P_SpawnMissileAngleZSpeed (self, self->Z()-4*FRACUNIT, RUNTIME_CLASS(AFrostMissile), self->angle, 
-											 0, (15+2*spermcount)<<FRACBITS, self->target);
+		mo = P_SpawnMissileAngleZSpeed(self, self->Z() - 4., RUNTIME_CLASS(AFrostMissile),
+			self->Angles.Yaw, 0, (15. + 2 * spermcount), self->target);
 		if (mo)
 		{
-			mo->vel.z = self->vel.z;
+			mo->Vel.Z = self->Vel.Z;
 			if (spermcount & 1)			// Every other reproduction
 				mo->special1 = SHARDSPAWN_DOWN | SHARDSPAWN_LEFT | SHARDSPAWN_RIGHT;
 			else

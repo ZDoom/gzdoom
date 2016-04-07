@@ -100,10 +100,8 @@ public:
 private:
 	void DrawPortalStencil();
 
-	fixed_t savedviewx;
-	fixed_t savedviewy;
-	fixed_t savedviewz;
-	angle_t savedviewangle;
+	DVector3 savedViewPos;
+	DAngle savedAngle;
 	AActor * savedviewactor;
 	area_t savedviewarea;
 	bool savedshowviewer;
@@ -164,7 +162,7 @@ public:
 
 	virtual int ClipSeg(seg_t *seg) { return PClip_Inside; }
 	virtual int ClipSubsector(subsector_t *sub) { return PClip_Inside; }
-	virtual int ClipPoint(fixed_t x, fixed_t y) { return PClip_Inside; }
+	virtual int ClipPoint(const DVector2 &pos) { return PClip_Inside; }
 
 	static void BeginScene();
 	static void StartFrame();
@@ -185,8 +183,7 @@ struct GLLinePortal : public GLPortal
 	{
 		v1 = line->v1;
 		v2 = line->v2;
-		dx = line->dx;
-		dy = line->dy;
+		CalcDelta();
 	}
 
 	GLLinePortal(FGLLinePortal *line)
@@ -197,17 +194,21 @@ struct GLLinePortal : public GLPortal
 			line_t *lline = line->reference->mDestination;
 			v1 = lline->v1;
 			v2 = lline->v2;
-			dx = lline->dx;
-			dy = lline->dy;
 		}
 		else
 		{
 			// For linked portals we can check the merged span.
 			v1 = line->v1;
 			v2 = line->v2;
-			dx = line->dx;
-			dy = line->dy;
 		}
+		CalcDelta();
+	}
+
+	void CalcDelta()
+	{
+		DVector2 delta = v2->fPos() - v1->fPos();
+		dx = FLOAT2FIXED(delta.X);
+		dy = FLOAT2FIXED(delta.Y);
 	}
 
 	line_t *line()
@@ -218,7 +219,7 @@ struct GLLinePortal : public GLPortal
 
 	virtual int ClipSeg(seg_t *seg);
 	virtual int ClipSubsector(subsector_t *sub);
-	virtual int ClipPoint(fixed_t x, fixed_t y);
+	virtual int ClipPoint(const DVector2 &pos);
 	virtual bool NeedCap() { return false; }
 };
 

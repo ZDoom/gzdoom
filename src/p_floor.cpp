@@ -280,14 +280,14 @@ DFloor::DFloor (sector_t *sec)
 //==========================================================================
 
 bool EV_DoFloor (DFloor::EFloor floortype, line_t *line, int tag,
-				 fixed_t speed, fixed_t height, int crush, int change, bool hexencrush, bool hereticlower)
+				 double speed, double height, int crush, int change, bool hexencrush, bool hereticlower)
 {
 	int 		secnum;
 	bool 		rtn;
 	sector_t*	sec;
 	DFloor*		floor;
-	fixed_t		ceilingheight;
-	fixed_t		newheight;
+	double		ceilingheight;
+	double		newheight;
 	vertex_t	*spot, *spot2;
 
 	rtn = false;
@@ -312,7 +312,7 @@ bool EV_DoFloor (DFloor::EFloor floortype, line_t *line, int tag,
 		floor->m_Hexencrush = hexencrush;
 		floor->m_Speed = speed;
 		floor->m_ResetCount = 0;				// [RH]
-		floor->m_OrgDist = sec->floorplane.d;	// [RH]
+		floor->m_OrgDist = sec->floorplane.fD();	// [RH]
 
 		switch (floortype)
 		{
@@ -322,7 +322,7 @@ bool EV_DoFloor (DFloor::EFloor floortype, line_t *line, int tag,
 			floor->m_FloorDestDist = sec->floorplane.PointToDist (spot, newheight);
 			// [RH] DOOM's turboLower type did this. I've just extended it
 			//		to be applicable to all LowerToHighest types.
-			if (hereticlower || floor->m_FloorDestDist != sec->floorplane.d)
+			if (hereticlower || floor->m_FloorDestDist != sec->floorplane.fD())
 				floor->m_FloorDestDist = sec->floorplane.PointToDist (spot, newheight+height);
 			break;
 
@@ -358,7 +358,7 @@ bool EV_DoFloor (DFloor::EFloor floortype, line_t *line, int tag,
 		case DFloor::floorMoveToValue:
 			sec->FindHighestFloorPoint (&spot);
 			floor->m_FloorDestDist = sec->floorplane.PointToDist (spot, height);
-			floor->m_Direction = (floor->m_FloorDestDist > sec->floorplane.d) ? -1 : 1;
+			floor->m_Direction = (floor->m_FloorDestDist > sec->floorplane.fD()) ? -1 : 1;
 			break;
 
 		case DFloor::floorRaiseAndCrushDoom:
@@ -366,12 +366,12 @@ bool EV_DoFloor (DFloor::EFloor floortype, line_t *line, int tag,
 			floor->m_Direction = 1;
 			newheight = sec->FindLowestCeilingSurrounding (&spot);
 			if (floortype == DFloor::floorRaiseAndCrushDoom)
-				newheight -= 8 * FRACUNIT;
+				newheight -= 8;
 			ceilingheight = sec->FindLowestCeilingPoint (&spot2);
 			floor->m_FloorDestDist = sec->floorplane.PointToDist (spot, newheight);
 			if (sec->floorplane.ZatPointDist (spot2, floor->m_FloorDestDist) > ceilingheight)
 				floor->m_FloorDestDist = sec->floorplane.PointToDist (spot2,
-					floortype == DFloor::floorRaiseAndCrushDoom ? ceilingheight - 8*FRACUNIT : ceilingheight);
+					floortype == DFloor::floorRaiseAndCrushDoom ? ceilingheight - 8 : ceilingheight);
 			break;
 
 		case DFloor::floorRaiseToHighest:
@@ -394,7 +394,7 @@ bool EV_DoFloor (DFloor::EFloor floortype, line_t *line, int tag,
 
 		case DFloor::floorRaiseAndCrush:
 			floor->m_Direction = 1;
-			newheight = sec->FindLowestCeilingPoint (&spot) - 8*FRACUNIT;
+			newheight = sec->FindLowestCeilingPoint (&spot) - 8;
 			floor->m_FloorDestDist = sec->floorplane.PointToDist (spot, newheight);
 			break;
 
@@ -475,9 +475,9 @@ bool EV_DoFloor (DFloor::EFloor floortype, line_t *line, int tag,
 		// Do not interpolate instant movement floors.
 		bool silent = false;
 
-		if ((floor->m_Direction>0 && floor->m_FloorDestDist>sec->floorplane.d) ||	// moving up but going down
-			(floor->m_Direction<0 && floor->m_FloorDestDist<sec->floorplane.d) ||	// moving down but going up
-			(floor->m_Speed >= abs(sec->floorplane.d - floor->m_FloorDestDist)))	// moving in one step
+		if ((floor->m_Direction>0 && floor->m_FloorDestDist>sec->floorplane.fD()) ||	// moving up but going down
+			(floor->m_Direction<0 && floor->m_FloorDestDist<sec->floorplane.fD()) ||	// moving down but going up
+			(floor->m_Speed >= fabs(sec->floorplane.fD() - floor->m_FloorDestDist)))	// moving in one step
 		{
 			floor->StopInterpolation(true);
 
@@ -560,13 +560,13 @@ bool EV_FloorCrushStop (int tag)
 //==========================================================================
 
 bool EV_BuildStairs (int tag, DFloor::EStair type, line_t *line,
-					 fixed_t stairsize, fixed_t speed, int delay, int reset, int igntxt,
+					 double stairsize, double speed, int delay, int reset, int igntxt,
 					 int usespecials)
 {
 	int 				secnum = -1;
 	int					osecnum;	//jff 3/4/98 save old loop index
-	int 				height;
-	fixed_t				stairstep;
+	double 				height;
+	double				stairstep;
 	int 				i;
 	int 				newsecnum = -1;
 	FTextureID			texture;
@@ -583,7 +583,7 @@ bool EV_BuildStairs (int tag, DFloor::EStair type, line_t *line,
 	if (speed == 0)
 		return false;
 
-	persteptime = FixedDiv (stairsize, speed) >> FRACBITS;
+	persteptime = int(stairsize / speed);
 
 	// check if a manual trigger, if so do just the sector on the backside
 	FSectorTagIterator itr(tag, line);
@@ -609,13 +609,13 @@ bool EV_BuildStairs (int tag, DFloor::EStair type, line_t *line,
 		stairstep = stairsize * floor->m_Direction;
 		floor->m_Type = DFloor::buildStair;	//jff 3/31/98 do not leave uninited
 		floor->m_ResetCount = reset;	// [RH] Tics until reset (0 if never)
-		floor->m_OrgDist = sec->floorplane.d;	// [RH] Height to reset to
+		floor->m_OrgDist = sec->floorplane.fD();	// [RH] Height to reset to
 		// [RH] Set up delay values
 		floor->m_Delay = delay;
 		floor->m_PauseTime = 0;
 		floor->m_StepTime = floor->m_PerStepTime = persteptime;
 
-		floor->m_Crush = (!(usespecials & DFloor::stairUseSpecials) && speed == 4*FRACUNIT) ? 10 : -1; //jff 2/27/98 fix uninitialized crush field
+		floor->m_Crush = (!(usespecials & DFloor::stairUseSpecials) && speed == 4) ? 10 : -1; //jff 2/27/98 fix uninitialized crush field
 		floor->m_Hexencrush = false;
 
 		floor->m_Speed = speed;
@@ -710,7 +710,7 @@ bool EV_BuildStairs (int tag, DFloor::EStair type, line_t *line,
 				floor = new DFloor (sec);
 				floor->StartFloorSound ();
 				floor->m_Direction = (type == DFloor::buildUp) ? 1 : -1;
-				floor->m_FloorDestDist = sec->floorplane.PointToDist (0, 0, height);
+				floor->m_FloorDestDist = sec->floorplane.PointToDist (DVector2(0, 0), height);
 				// [RH] Set up delay values
 				floor->m_Delay = delay;
 				floor->m_PauseTime = 0;
@@ -719,8 +719,8 @@ bool EV_BuildStairs (int tag, DFloor::EStair type, line_t *line,
 				if (usespecials & DFloor::stairSync)
 				{
 					// [RH]
-					fixed_t rise = height - sec->CenterFloor();
-					floor->m_Speed = Scale (speed, rise, stairstep);
+					double rise = height - sec->CenterFloor();
+					floor->m_Speed = speed * rise / stairstep;
 				}
 				else
 				{
@@ -728,10 +728,10 @@ bool EV_BuildStairs (int tag, DFloor::EStair type, line_t *line,
 				}
 				floor->m_Type = DFloor::buildStair;	//jff 3/31/98 do not leave uninited
 				//jff 2/27/98 fix uninitialized crush field
-				floor->m_Crush = (!(usespecials & DFloor::stairUseSpecials) && speed == 4*FRACUNIT) ? 10 : -1; //jff 2/27/98 fix uninitialized crush field
+				floor->m_Crush = (!(usespecials & DFloor::stairUseSpecials) && speed == 4) ? 10 : -1; //jff 2/27/98 fix uninitialized crush field
 				floor->m_Hexencrush = false;
 				floor->m_ResetCount = reset;	// [RH] Tics until reset (0 if never)
-				floor->m_OrgDist = sec->floorplane.d;	// [RH] Height to reset to
+				floor->m_OrgDist = sec->floorplane.fD();	// [RH] Height to reset to
 			}
 		} while (ok);
 		// [RH] make sure the first sector doesn't point to a previous one, otherwise
@@ -747,7 +747,7 @@ bool EV_BuildStairs (int tag, DFloor::EStair type, line_t *line,
 //
 //==========================================================================
 
-bool EV_DoDonut (int tag, line_t *line, fixed_t pillarspeed, fixed_t slimespeed)
+bool EV_DoDonut (int tag, line_t *line, double pillarspeed, double slimespeed)
 {
 	sector_t*			s1;
 	sector_t*			s2;
@@ -757,7 +757,7 @@ bool EV_DoDonut (int tag, line_t *line, fixed_t pillarspeed, fixed_t slimespeed)
 	int 				i;
 	DFloor*				floor;
 	vertex_t*			spot;
-	fixed_t				height;
+	double				height;
 		
 	rtn = false;
 
@@ -900,10 +900,10 @@ void DElevator::Tick ()
 {
 	EResult res;
 
-	fixed_t oldfloor, oldceiling;
+	double oldfloor, oldceiling;
 
-	oldfloor = m_Sector->floorplane.d;
-	oldceiling = m_Sector->ceilingplane.d;
+	oldfloor = m_Sector->floorplane.fD();
+	oldceiling = m_Sector->ceilingplane.fD();
 
 	if (m_Direction < 0)	// moving down
 	{
@@ -966,14 +966,14 @@ void DElevator::StartFloorSound ()
 //==========================================================================
 
 bool EV_DoElevator (line_t *line, DElevator::EElevator elevtype,
-					fixed_t speed, fixed_t height, int tag)
+					double speed, double height, int tag)
 {
 	int			secnum;
 	bool		rtn;
 	sector_t*	sec;
 	DElevator*	elevator;
-	fixed_t		floorheight, ceilingheight;
-	fixed_t		newheight;
+	double		floorheight, ceilingheight;
+	double		newheight;
 	vertex_t*	spot;
 
 	if (!line && (elevtype == DElevator::elevateCurrent))
@@ -1010,7 +1010,7 @@ bool EV_DoElevator (line_t *line, DElevator::EElevator elevtype,
 			elevator->m_Direction = -1;
 			newheight = sec->FindNextLowestFloor (&spot);
 			elevator->m_FloorDestDist = sec->floorplane.PointToDist (spot, newheight);
-			newheight += sec->ceilingplane.ZatPoint (spot) - sec->floorplane.ZatPoint (spot);
+			newheight += sec->ceilingplane.ZatPoint(spot) - sec->floorplane.ZatPoint(spot);
 			elevator->m_CeilingDestDist = sec->ceilingplane.PointToDist (spot, newheight);
 			break;
 
@@ -1019,7 +1019,7 @@ bool EV_DoElevator (line_t *line, DElevator::EElevator elevtype,
 			elevator->m_Direction = 1;
 			newheight = sec->FindNextHighestFloor (&spot);
 			elevator->m_FloorDestDist = sec->floorplane.PointToDist (spot, newheight);
-			newheight += sec->ceilingplane.ZatPoint (spot) - sec->floorplane.ZatPoint (spot);
+			newheight += sec->ceilingplane.ZatPoint(spot) - sec->floorplane.ZatPoint(spot);
 			elevator->m_CeilingDestDist = sec->ceilingplane.PointToDist (spot, newheight);
 			break;
 
@@ -1027,11 +1027,11 @@ bool EV_DoElevator (line_t *line, DElevator::EElevator elevtype,
 		case DElevator::elevateCurrent:
 			newheight = line->frontsector->floorplane.ZatPoint (line->v1);
 			elevator->m_FloorDestDist = sec->floorplane.PointToDist (line->v1, newheight);
-			newheight += sec->ceilingplane.ZatPoint (line->v1) - sec->floorplane.ZatPoint (line->v1);
+			newheight += sec->ceilingplane.ZatPoint(line->v1) - sec->floorplane.ZatPoint(line->v1);
 			elevator->m_CeilingDestDist = sec->ceilingplane.PointToDist (line->v1, newheight);
 
 			elevator->m_Direction =
-				elevator->m_FloorDestDist > sec->floorplane.d ? -1 : 1;
+				elevator->m_FloorDestDist > sec->floorplane.fD() ? -1 : 1;
 			break;
 
 		// [RH] elevate up by a specific amount
@@ -1178,7 +1178,7 @@ void DWaggleBase::DoWaggle (bool ceiling)
 {
 	secplane_t *plane;
 	int pos;
-	fixed_t dist;
+	double dist;
 
 	if (ceiling)
 	{
@@ -1204,9 +1204,9 @@ void DWaggleBase::DoWaggle (bool ceiling)
 	case WGLSTATE_REDUCE:
 		if ((m_Scale -= m_ScaleDelta) <= 0)
 		{ // Remove
-			dist = FixedMul (m_OriginalDist - plane->d, plane->ic);
+			dist = (m_OriginalDist - plane->fD()) / plane->fC();
 			m_Sector->ChangePlaneTexZ(pos, -plane->HeightDiff (m_OriginalDist));
-			plane->d = m_OriginalDist;
+			plane->setD(m_OriginalDist);
 			P_ChangeSector (m_Sector, true, dist, ceiling, false);
 			if (ceiling)
 			{
@@ -1233,11 +1233,8 @@ void DWaggleBase::DoWaggle (bool ceiling)
 	}
 	m_Accumulator += m_AccDelta;
 
-
-	fixed_t mag = finesine[(m_Accumulator>>9)&8191]*8;
-
-	dist = plane->d;
-	plane->d = m_OriginalDist + plane->PointToDist (0, 0, FixedMul (mag, m_Scale));
+	dist = plane->fD();
+	plane->setD(m_OriginalDist + plane->PointToDist (DVector2(0, 0), BobSin(m_Accumulator) *m_Scale));
 	m_Sector->ChangePlaneTexZ(pos, plane->HeightDiff (dist));
 	dist = plane->HeightDiff (dist);
 
@@ -1322,19 +1319,18 @@ bool EV_StartWaggle (int tag, line_t *line, int height, int speed, int offset,
 		if (ceiling)
 		{
 			waggle = new DCeilingWaggle (sector);
-			waggle->m_OriginalDist = sector->ceilingplane.d;
+			waggle->m_OriginalDist = sector->ceilingplane.fD();
 		}
 		else
 		{
 			waggle = new DFloorWaggle (sector);
-			waggle->m_OriginalDist = sector->floorplane.d;
+			waggle->m_OriginalDist = sector->floorplane.fD();
 		}
-		waggle->m_Accumulator = offset*FRACUNIT;
-		waggle->m_AccDelta = speed << (FRACBITS-6);
+		waggle->m_Accumulator = offset;
+		waggle->m_AccDelta = speed / 64.;
 		waggle->m_Scale = 0;
-		waggle->m_TargetScale = height << (FRACBITS-6);
-		waggle->m_ScaleDelta = waggle->m_TargetScale
-			/(TICRATE+((3*TICRATE)*height)/255);
+		waggle->m_TargetScale = height / 64.;
+		waggle->m_ScaleDelta = waggle->m_TargetScale / (TICRATE + ((3 * TICRATE)*height) / 255);
 		waggle->m_Ticker = timer ? timer*TICRATE : -1;
 		waggle->m_State = WGLSTATE_EXPAND;
 	}

@@ -116,7 +116,7 @@ static FTexture * invgems[4];				// Inventory arrows
 static int hudwidth, hudheight;				// current width/height for HUD display
 static int statspace;
 
-void AM_GetPosition(fixed_t & x, fixed_t & y);
+DVector2 AM_GetPosition();
 
 
 FTextureID GetHUDIcon(PClassInventory *cls)
@@ -313,9 +313,8 @@ static void DrawArmor(ABasicArmor * barmor, AHexenArmor * harmor, int x, int y)
 
 	if (harmor)
 	{
-		int ac = (harmor->Slots[0] + harmor->Slots[1] + harmor->Slots[2] + harmor->Slots[3] + harmor->Slots[4]);
-		ac >>= FRACBITS;
-		ap += ac;
+		auto ac = (harmor->Slots[0] + harmor->Slots[1] + harmor->Slots[2] + harmor->Slots[3] + harmor->Slots[4]);
+		ap += int(ac);
 		
 		if (ac)
 		{
@@ -767,7 +766,7 @@ static void DrawInventory(player_t * CPlayer, int x,int y)
 
 				if (AltIcon.Exists() && (rover->Icon.isValid() || AltIcon.isValid()) )
 				{
-					int trans = rover==CPlayer->mo->InvSel ? FRACUNIT : 0x6666;
+					int trans = rover==CPlayer->mo->InvSel ? 0x10000 : 0x6666;
 
 					DrawImageToBox(TexMan[AltIcon.isValid()? AltIcon : rover->Icon], x, y, 19, 25, trans);
 					if (rover->Amount>1)
@@ -819,23 +818,20 @@ static void DrawFrags(player_t * CPlayer, int x, int y)
 
 static void DrawCoordinates(player_t * CPlayer)
 {
-	fixed_t x;
-	fixed_t y;
-	fixed_t z;
+	DVector3 pos;
 	char coordstr[18];
 	int h = SmallFont->GetHeight()+1;
 
 	
 	if (!map_point_coordinates || !automapactive) 
 	{
-		x=CPlayer->mo->X();
-		y=CPlayer->mo->Y();                     
-		z=CPlayer->mo->Z();
+		pos = CPlayer->mo->Pos();
 	}
 	else 
 	{
-		AM_GetPosition(x,y);
-		z = P_PointInSector(x, y)->floorplane.ZatPoint(x, y);
+		DVector2 apos = AM_GetPosition();
+		double z = P_PointInSector(apos)->floorplane.ZatPoint(apos);
+		pos = DVector3(apos, z);
 	}
 
 	int vwidth = con_scaletext==0? SCREENWIDTH : SCREENWIDTH/2;
@@ -843,17 +839,17 @@ static void DrawCoordinates(player_t * CPlayer)
 	int xpos = vwidth - SmallFont->StringWidth("X: -00000")-6;
 	int ypos = 18;
 
-	mysnprintf(coordstr, countof(coordstr), "X: %d", x>>FRACBITS);
+	mysnprintf(coordstr, countof(coordstr), "X: %d", int(pos.X));
 	screen->DrawText(SmallFont, hudcolor_xyco, xpos, ypos, coordstr,
 		DTA_KeepRatio, true,
 		DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
 
-	mysnprintf(coordstr, countof(coordstr), "Y: %d", y>>FRACBITS);
+	mysnprintf(coordstr, countof(coordstr), "Y: %d", int(pos.Y));
 	screen->DrawText(SmallFont, hudcolor_xyco, xpos, ypos+h, coordstr,
 		DTA_KeepRatio, true,
 		DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
 
-	mysnprintf(coordstr, countof(coordstr), "Z: %d", z>>FRACBITS);
+	mysnprintf(coordstr, countof(coordstr), "Z: %d", int(pos.Z));
 	screen->DrawText(SmallFont, hudcolor_xyco, xpos, ypos+2*h, coordstr,
 		DTA_KeepRatio, true,
 		DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
@@ -934,7 +930,7 @@ static void DrawTime()
 	const int width  = SmallFont->GetCharWidth('0') * characterCount + 2; // small offset from screen's border
 	const int height = SmallFont->GetHeight();
 
-	DrawHudText(SmallFont, hud_timecolor, timeString, hudwidth - width, height, FRACUNIT);
+	DrawHudText(SmallFont, hud_timecolor, timeString, hudwidth - width, height, 0x10000);
 }
 
 static bool IsAltHUDTextVisible()
@@ -992,7 +988,7 @@ static void DrawLatency()
 	const int width = SmallFont->GetCharWidth('0') * characterCount + 2; // small offset from screen's border
 	const int height = SmallFont->GetHeight() * (ST_IsTimeVisible() ? 2 : 1);
 
-	DrawHudText(SmallFont, color, tempstr, hudwidth - width, height, FRACUNIT);
+	DrawHudText(SmallFont, color, tempstr, hudwidth - width, height, 0x10000);
 }
 
 bool ST_IsLatencyVisible()
@@ -1083,7 +1079,7 @@ void DrawHUD()
 		{
 			seconds = Tics2Seconds(level.totaltime);
 			mysnprintf(printstr, countof(printstr), "%02i:%02i:%02i", seconds/3600, (seconds%3600)/60, seconds%60);
-			DrawHudText(SmallFont, hudcolor_ttim, printstr, hudwidth-length, bottom, FRACUNIT);
+			DrawHudText(SmallFont, hudcolor_ttim, printstr, hudwidth-length, bottom, 0x10000);
 			bottom -= fonth;
 		}
 
@@ -1093,14 +1089,14 @@ void DrawHUD()
 			{
 				seconds = Tics2Seconds(level.time);
 				mysnprintf(printstr, countof(printstr), "%02i:%02i:%02i", seconds/3600, (seconds%3600)/60, seconds%60);
-				DrawHudText(SmallFont, hudcolor_time, printstr, hudwidth-length, bottom, FRACUNIT);
+				DrawHudText(SmallFont, hudcolor_time, printstr, hudwidth-length, bottom, 0x10000);
 				bottom -= fonth;
 			}
 
 			// Single level time for hubs
 			seconds= Tics2Seconds(level.maptime);
 			mysnprintf(printstr, countof(printstr), "%02i:%02i:%02i", seconds/3600, (seconds%3600)/60, seconds%60);
-			DrawHudText(SmallFont, hudcolor_ltim, printstr, hudwidth-length, bottom, FRACUNIT);
+			DrawHudText(SmallFont, hudcolor_ltim, printstr, hudwidth-length, bottom, 0x10000);
 		}
 
 		ST_FormatMapName(mapname);

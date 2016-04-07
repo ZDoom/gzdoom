@@ -76,6 +76,7 @@
 #include "d_player.h"
 #include "p_maputl.h"
 #include "p_spec.h"
+#include "math/cmath.h"
 
 AActor *SingleActorFromTID(int tid, AActor *defactor);
 
@@ -312,12 +313,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetDistance)
 		}
 		else
 		{
-			fixedvec3 diff = self->Vec3To(target);
+			DVector3 diff = self->Vec3To(target);
 			if (checkz)
-				diff.z += (target->height - self->height) / 2;
+				diff.Z += (target->Height - self->Height) / 2;
 
-			const double length = DVector3(FIXED2DBL(diff.x), FIXED2DBL(diff.y), (checkz) ? FIXED2DBL(diff.z) : 0).Length();
-			ret->SetFloat(length);
+			ret->SetFloat(diff.Length());
 		}
 		return 1;
 	}
@@ -598,7 +598,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_UnsetFloat)
 //
 //==========================================================================
 static void DoAttack (AActor *self, bool domelee, bool domissile,
-					  int MeleeDamage, FSoundID MeleeSound, PClassActor *MissileType,fixed_t MissileHeight)
+					  int MeleeDamage, FSoundID MeleeSound, PClassActor *MissileType,double MissileHeight)
 {
 	if (self->target == NULL) return;
 
@@ -613,9 +613,10 @@ static void DoAttack (AActor *self, bool domelee, bool domissile,
 	else if (domissile && MissileType != NULL)
 	{
 		// This seemingly senseless code is needed for proper aiming.
-		self->AddZ(MissileHeight + self->GetBobOffset() - 32*FRACUNIT);
-		AActor *missile = P_SpawnMissileXYZ (self->PosPlusZ(32*FRACUNIT), self, self->target, MissileType, false);
-		self->AddZ(-(MissileHeight + self->GetBobOffset() - 32*FRACUNIT));
+		double add = MissileHeight + self->GetBobOffset() - 32;
+		self->AddZ(add);
+		AActor *missile = P_SpawnMissileXYZ (self->PosPlusZ(32.), self, self->target, MissileType, false);
+		self->AddZ(-add);
 
 		if (missile)
 		{
@@ -642,8 +643,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_MissileAttack)
 {
 	PARAM_ACTION_PROLOGUE;
 	PClassActor *MissileType = PClass::FindActor(self->GetClass()->MissileName);
-	fixed_t MissileHeight = self->GetClass()->MissileHeight;
-	DoAttack(self, false, true, 0, 0, MissileType, MissileHeight);
+	DoAttack(self, false, true, 0, 0, MissileType, self->GetClass()->MissileHeight);
 	return 0;
 }
 
@@ -653,8 +653,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ComboAttack)
 	int MeleeDamage = self->GetClass()->MeleeDamage;
 	FSoundID MeleeSound = self->GetClass()->MeleeSound;
 	PClassActor *MissileType = PClass::FindActor(self->GetClass()->MissileName);
-	fixed_t MissileHeight = self->GetClass()->MissileHeight;
-	DoAttack(self, true, true, MeleeDamage, MeleeSound, MissileType, MissileHeight);
+	DoAttack(self, true, true, MeleeDamage, MeleeSound, MissileType, self->GetClass()->MissileHeight);
 	return 0;
 }
 
@@ -664,7 +663,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BasicAttack)
 	PARAM_INT	(melee_damage);
 	PARAM_SOUND	(melee_sound);
 	PARAM_CLASS	(missile_type, AActor);
-	PARAM_FIXED	(missile_height);
+	PARAM_FLOAT	(missile_height);
 
 	if (missile_type != NULL)
 	{
@@ -803,7 +802,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SeekerMissile)
 	{
 		self->tracer = P_RoughMonsterSearch (self, distance, true);
 	}
-	if (!P_SeekerMissile(self, clamp<int>(ang1, 0, 90) * ANGLE_1, clamp<int>(ang2, 0, 90) * ANGLE_1, !!(flags & SMF_PRECISE), !!(flags & SMF_CURSPEED)))
+	if (!P_SeekerMissile(self, clamp<int>(ang1, 0, 90), clamp<int>(ang2, 0, 90), !!(flags & SMF_PRECISE), !!(flags & SMF_CURSPEED)))
 	{
 		if (flags & SMF_LOOK)
 		{ // This monster is no longer seekable, so let us look for another one next time.
@@ -823,20 +822,17 @@ DEFINE_ACTION_FUNCTION(AActor, A_BulletAttack)
 	PARAM_ACTION_PROLOGUE;
 
 	int i;
-	int bangle;
-	int slope;
 		
 	if (!self->target) return 0;
 
 	A_FaceTarget (self);
-	bangle = self->angle;
 
-	slope = P_AimLineAttack (self, bangle, MISSILERANGE);
+	DAngle slope = P_AimLineAttack (self, self->Angles.Yaw, MISSILERANGE);
 
 	S_Sound (self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NORM);
 	for (i = self->GetMissileDamage (0, 1); i > 0; --i)
     {
-		int angle = bangle + (pr_cabullet.Random2() << 20);
+		DAngle angle = self->Angles.Yaw + pr_cabullet.Random2() * (5.625 / 256.);
 		int damage = ((pr_cabullet()%5)+1)*3;
 		P_LineAttack(self, angle, MISSILERANGE, slope, damage,
 			NAME_Hitscan, NAME_BulletPuff);
@@ -931,7 +927,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInsideMeleeRange)
 static int DoJumpIfCloser(AActor *target, VM_ARGS)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_FIXED	(dist);
+	PARAM_FLOAT	(dist);
 	PARAM_STATE	(jump);
 	PARAM_BOOL_OPT(noz) { noz = false; }
 
@@ -939,7 +935,7 @@ static int DoJumpIfCloser(AActor *target, VM_ARGS)
 	{ // No target - no jump
 		ACTION_RETURN_STATE(NULL);
 	}
-	if (self->AproxDistance(target) < dist &&
+	if (self->Distance2D(target) < dist &&
 		(noz || 
 		((self->Z() > target->Z() && self->Z() - target->Top() < dist) ||
 		(self->Z() <= target->Z() && target->Z() - self->Top() < dist))))
@@ -1094,19 +1090,19 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Explode)
 
 	if (nails)
 	{
-		angle_t ang;
+		DAngle ang;
 		for (int i = 0; i < nails; i++)
 		{
-			ang = i*(ANGLE_MAX/nails);
+			ang = i*360./nails;
 			// Comparing the results of a test wad with Eternity, it seems A_NailBomb does not aim
-			P_LineAttack (self, ang, MISSILERANGE, 0,
+			P_LineAttack (self, ang, MISSILERANGE, 0.,
 				//P_AimLineAttack (self, ang, MISSILERANGE), 
 				naildamage, NAME_Hitscan, pufftype);
 		}
 	}
 
 	P_RadiusAttack (self, self->target, damage, distance, self->DamageType, flags, fulldmgdistance);
-	P_CheckSplash(self, distance<<FRACBITS);
+	P_CheckSplash(self, distance);
 	if (alert && self->target != NULL && self->target->player != NULL)
 	{
 		validcount++;
@@ -1149,7 +1145,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusThrust)
 	}
 
 	P_RadiusAttack (self, self->target, force, distance, self->DamageType, flags | RADF_NODAMAGE, fullthrustdistance);
-	P_CheckSplash(self, distance << FRACBITS);
+	P_CheckSplash(self, distance);
 
 	if (sourcenothrust)
 	{
@@ -1200,11 +1196,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomMissile)
 {
 	PARAM_ACTION_PROLOGUE;
 	PARAM_CLASS		(ti, AActor);
-	PARAM_FIXED_OPT	(spawnheight) { spawnheight = 32*FRACUNIT; }
-	PARAM_INT_OPT	(spawnofs_xy) { spawnofs_xy = 0; }
-	PARAM_ANGLE_OPT	(angle)		  { angle = 0; }
+	PARAM_FLOAT_OPT	(Spawnheight) { Spawnheight = 32; }
+	PARAM_FLOAT_OPT	(Spawnofs_xy) { Spawnofs_xy = 0; }
+	PARAM_ANGLE_OPT	(Angle)		  { Angle = 0.; }
 	PARAM_INT_OPT	(flags)		  { flags = 0; }
-	PARAM_ANGLE_OPT	(pitch)		  { pitch = 0; }
+	PARAM_ANGLE_OPT	(Pitch)		  { Pitch = 0.; }
 	PARAM_INT_OPT	(ptr)		  { ptr = AAPTR_TARGET; }
 
 	AActor *ref = COPY_AAPTR(self, ptr);
@@ -1218,29 +1214,29 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomMissile)
 	{
 		if (ti) 
 		{
-			angle_t ang = (self->angle - ANGLE_90) >> ANGLETOFINESHIFT;
-			fixed_t x = spawnofs_xy * finecosine[ang];
-			fixed_t y = spawnofs_xy * finesine[ang];
-			fixed_t z = spawnheight + self->GetBobOffset() - 32*FRACUNIT + (self->player? self->player->crouchoffset : 0);
+			DAngle angle = self->Angles.Yaw - 90;
+			double x = Spawnofs_xy * angle.Cos();
+			double y = Spawnofs_xy * angle.Sin();
+			double z = Spawnheight + self->GetBobOffset() - 32 + (self->player? self->player->crouchoffset : 0.);
 
-			fixedvec3 pos = self->Pos();
+			DVector3 pos = self->Pos();
 			switch (aimmode)
 			{
 			case 0:
 			default:
 				// same adjustment as above (in all 3 directions this time) - for better aiming!
 				self->SetXYZ(self->Vec3Offset(x, y, z));
-				missile = P_SpawnMissileXYZ(self->PosPlusZ(32*FRACUNIT), self, ref, ti, false);
+				missile = P_SpawnMissileXYZ(self->PosPlusZ(32.), self, ref, ti, false);
 				self->SetXYZ(pos);
 				break;
 
 			case 1:
-				missile = P_SpawnMissileXYZ(self->Vec3Offset(x, y, self->GetBobOffset() + spawnheight), self, ref, ti, false);
+				missile = P_SpawnMissileXYZ(self->Vec3Offset(x, y, self->GetBobOffset() + Spawnheight), self, ref, ti, false);
 				break;
 
 			case 2:
-				self->SetXYZ(self->Vec3Offset(x, y, 0));
-				missile = P_SpawnMissileAngleZSpeed(self, self->Z() + self->GetBobOffset() + spawnheight, ti, self->angle, 0, GetDefaultByType(ti)->Speed, self, false);
+				self->SetXYZ(self->Vec3Offset(x, y, 0.));
+				missile = P_SpawnMissileAngleZSpeed(self, self->Z() + self->GetBobOffset() + Spawnheight, ti, self->Angles.Yaw, 0, GetDefaultByType(ti)->Speed, self, false);
 				self->SetXYZ(pos);
 
 				flags |= CMF_ABSOLUTEPITCH;
@@ -1254,38 +1250,32 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomMissile)
 				// so that this can handle missiles with a high vertical velocity 
 				// component properly.
 
-				fixed_t missilespeed;
+				double missilespeed;
 
 				if ( (CMF_ABSOLUTEPITCH|CMF_OFFSETPITCH) & flags)
 				{
 					if (CMF_OFFSETPITCH & flags)
 					{
-							DVector2 velocity (missile->vel.x, missile->vel.y);
-							pitch += R_PointToAngle2(0,0, xs_CRoundToInt(velocity.Length()), missile->vel.z);
+						Pitch += missile->Vel.Pitch();
 					}
-					ang = pitch >> ANGLETOFINESHIFT;
-					missilespeed = abs(FixedMul(finecosine[ang], missile->Speed));
-					missile->vel.z = FixedMul(finesine[ang], missile->Speed);
+					missilespeed = fabs(Pitch.Cos() * missile->Speed);
+					missile->Vel.Z = Pitch.Sin() * missile->Speed;
 				}
 				else
 				{
-					DVector2 velocity (missile->vel.x, missile->vel.y);
-					missilespeed = xs_CRoundToInt(velocity.Length());
+					missilespeed = missile->VelXYToSpeed();
 				}
 
 				if (CMF_SAVEPITCH & flags)
 				{
-					missile->pitch = pitch;
+					missile->Angles.Pitch = Pitch;
 					// In aimmode 0 and 1 without absolutepitch or offsetpitch, the pitch parameter
 					// contains the unapplied parameter. In that case, it is set as pitch without
 					// otherwise affecting the spawned actor.
 				}
 
-				missile->angle = (CMF_ABSOLUTEANGLE & flags) ? angle : missile->angle + angle ;
-
-				ang = missile->angle >> ANGLETOFINESHIFT;
-				missile->vel.x = FixedMul(missilespeed, finecosine[ang]);
-				missile->vel.y = FixedMul(missilespeed, finesine[ang]);
+				missile->Angles.Yaw = (CMF_ABSOLUTEANGLE & flags) ? Angle : missile->Angles.Yaw + Angle;
+				missile->VelFromAngle(missilespeed);
 	
 				// handle projectile shooting projectiles - track the
 				// links back to a real owner
@@ -1354,7 +1344,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomBulletAttack)
 	PARAM_INT		(numbullets);
 	PARAM_INT		(damageperbullet);
 	PARAM_CLASS_OPT	(pufftype, AActor) { pufftype = PClass::FindActor(NAME_BulletPuff); }
-	PARAM_FIXED_OPT	(range)			   { range = MISSILERANGE; }
+	PARAM_FLOAT_OPT	(range)			   { range = 0; }
 	PARAM_INT_OPT	(flags)			   { flags = 0; }
 	PARAM_INT_OPT	(ptr)			   { ptr = AAPTR_TARGET; }
 
@@ -1364,8 +1354,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomBulletAttack)
 		range = MISSILERANGE;
 
 	int i;
-	int bangle;
-	int bslope = 0;
+	DAngle bangle;
+	DAngle bslope = 0.;
 	int laflags = (flags & CBAF_NORANDOMPUFFZ)? LAF_NORANDOMPUFFZ : 0;
 
 	if (ref != NULL || (flags & CBAF_AIMFACING))
@@ -1374,15 +1364,15 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomBulletAttack)
 		{
 			A_Face(self, ref);
 		}
-		bangle = self->angle;
+		bangle = self->Angles.Yaw;
 
 		if (!(flags & CBAF_NOPITCH)) bslope = P_AimLineAttack (self, bangle, MISSILERANGE);
 
 		S_Sound (self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NORM);
 		for (i = 0; i < numbullets; i++)
 		{
-			int angle = bangle;
-			int slope = bslope;
+			DAngle angle = bangle;
+			DAngle slope = bslope;
 
 			if (flags & CBAF_EXPLICITANGLE)
 			{
@@ -1391,8 +1381,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomBulletAttack)
 			}
 			else
 			{
-				angle += pr_cwbullet.Random2() * (spread_xy / 255);
-				slope += pr_cwbullet.Random2() * (spread_z / 255);
+				angle += spread_xy * (pr_cwbullet.Random2() / 255.);
+				slope += spread_z * (pr_cwbullet.Random2() / 255.);
 			}
 
 			int damage = damageperbullet;
@@ -1452,7 +1442,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomComboAttack)
 {
 	PARAM_ACTION_PROLOGUE;
 	PARAM_CLASS		(ti, AActor);
-	PARAM_FIXED		(spawnheight);
+	PARAM_FLOAT		(spawnheight);
 	PARAM_INT		(damage);
 	PARAM_SOUND_OPT	(meleesound)	{ meleesound = 0; }
 	PARAM_NAME_OPT	(damagetype)	{ damagetype = NAME_Melee; }
@@ -1475,9 +1465,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomComboAttack)
 	else if (ti) 
 	{
 		// This seemingly senseless code is needed for proper aiming.
-		self->AddZ(spawnheight + self->GetBobOffset() - 32*FRACUNIT);
-		AActor *missile = P_SpawnMissileXYZ (self->PosPlusZ(32*FRACUNIT), self, self->target, ti, false);
-		self->AddZ(-(spawnheight + self->GetBobOffset() - 32*FRACUNIT));
+		double add = spawnheight + self->GetBobOffset() - 32;
+		self->AddZ(add);
+		AActor *missile = P_SpawnMissileXYZ (self->PosPlusZ(32.), self, self->target, ti, false);
+		self->AddZ(-add);
 
 		if (missile)
 		{
@@ -1539,7 +1530,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireBullets)
 	PARAM_INT		(damageperbullet);
 	PARAM_CLASS_OPT	(pufftype, AActor)	{ pufftype = NULL; }
 	PARAM_INT_OPT	(flags)				{ flags = FBF_USEAMMO; }
-	PARAM_FIXED_OPT	(range)				{ range = 0; }
+	PARAM_FLOAT_OPT	(range)				{ range = 0; }
 
 	if (!self->player) return 0;
 
@@ -1547,8 +1538,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireBullets)
 	AWeapon *weapon = player->ReadyWeapon;
 
 	int i;
-	int bangle;
-	int bslope = 0;
+	DAngle bangle;
+	DAngle bslope = 0.;
 	int laflags = (flags & FBF_NORANDOMPUFFZ)? LAF_NORANDOMPUFFZ : 0;
 
 	if ((flags & FBF_USEAMMO) && weapon && ACTION_CALL_FROM_WEAPON())
@@ -1557,16 +1548,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireBullets)
 			return 0;	// out of ammo
 	}
 	
-	if (range == 0)
-		range = PLAYERMISSILERANGE;
+	if (range == 0)	range = PLAYERMISSILERANGE;
 
 	if (!(flags & FBF_NOFLASH)) static_cast<APlayerPawn *>(self)->PlayAttacking2 ();
 
 	if (!(flags & FBF_NOPITCH)) bslope = P_BulletSlope(self);
-	bangle = self->angle;
+	bangle = self->Angles.Yaw;
 
-	if (pufftype == NULL)
-		pufftype = PClass::FindActor(NAME_BulletPuff);
+	if (pufftype == NULL) pufftype = PClass::FindActor(NAME_BulletPuff);
 
 	if (weapon != NULL)
 	{
@@ -1588,8 +1577,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireBullets)
 			numbullets = 1;
 		for (i = 0; i < numbullets; i++)
 		{
-			int angle = bangle;
-			int slope = bslope;
+			DAngle angle = bangle;
+			DAngle slope = bslope;
 
 			if (flags & FBF_EXPLICITANGLE)
 			{
@@ -1598,8 +1587,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireBullets)
 			}
 			else
 			{
-				angle += pr_cwbullet.Random2() * (spread_xy / 255);
-				slope += pr_cwbullet.Random2() * (spread_z / 255);
+				angle += spread_xy * (pr_cwbullet.Random2() / 255.);
+				slope += spread_z * (pr_cwbullet.Random2() / 255.);
 			}
 
 			int damage = damageperbullet;
@@ -1629,12 +1618,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireCustomMissile)
 {
 	PARAM_ACTION_PROLOGUE;
 	PARAM_CLASS		(ti, AActor);
-	PARAM_ANGLE_OPT	(angle)			{ angle = 0; }
+	PARAM_ANGLE_OPT	(angle)			{ angle = 0.; }
 	PARAM_BOOL_OPT	(useammo)		{ useammo = true; }
-	PARAM_INT_OPT	(spawnofs_xy)	{ spawnofs_xy = 0; }
-	PARAM_FIXED_OPT	(spawnheight)	{ spawnheight = 0; }
+	PARAM_FLOAT_OPT	(spawnofs_xy)	{ spawnofs_xy = 0; }
+	PARAM_FLOAT_OPT	(spawnheight)	{ spawnheight = 0; }
 	PARAM_INT_OPT	(flags)			{ flags = 0; }
-	PARAM_ANGLE_OPT	(pitch)			{ pitch = 0; }
+	PARAM_ANGLE_OPT	(pitch)			{ pitch = 0.; }
 
 	if (!self->player)
 		return 0;
@@ -1652,19 +1641,17 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireCustomMissile)
 
 	if (ti) 
 	{
-		angle_t ang = (self->angle - ANGLE_90) >> ANGLETOFINESHIFT;
-		fixed_t x = spawnofs_xy * finecosine[ang];
-		fixed_t y = spawnofs_xy * finesine[ang];
-		fixed_t z = spawnheight;
-		fixed_t shootangle = self->angle;
+		DAngle ang = self->Angles.Yaw - 90;
+		DVector2 ofs = ang.ToVector(spawnofs_xy);
+		DAngle shootangle = self->Angles.Yaw;
 
 		if (flags & FPF_AIMATANGLE) shootangle += angle;
 
 		// Temporarily adjusts the pitch
-		fixed_t saved_player_pitch = self->pitch;
-		self->pitch -= pitch;
-		AActor * misl=P_SpawnPlayerMissile (self, x, y, z, ti, shootangle, &t, NULL, false, (flags & FPF_NOAUTOAIM) != 0);
-		self->pitch = saved_player_pitch;
+		DAngle saved_player_pitch = self->Angles.Pitch;
+		self->Angles.Pitch -= pitch;
+		AActor * misl=P_SpawnPlayerMissile (self, ofs.X, ofs.Y, spawnheight, ti, shootangle, &t, NULL, false, (flags & FPF_NOAUTOAIM) != 0);
+		self->Angles.Pitch = saved_player_pitch;
 
 		// automatic handling of seeker missiles
 		if (misl)
@@ -1677,12 +1664,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireCustomMissile)
 			{
 				// This original implementation is to aim straight ahead and then offset
 				// the angle from the resulting direction. 
-				DVector3 velocity(misl->vel.x, misl->vel.y, 0);
-				fixed_t missilespeed = xs_CRoundToInt(velocity.Length());
-				misl->angle += angle;
-				angle_t an = misl->angle >> ANGLETOFINESHIFT;
-				misl->vel.x = FixedMul (missilespeed, finecosine[an]);
-				misl->vel.y = FixedMul (missilespeed, finesine[an]);
+				misl->Angles.Yaw += angle;
+				misl->VelFromAngle(misl->VelXYToSpeed());
 			}
 		}
 	}
@@ -1715,8 +1698,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
 	PARAM_BOOL_OPT	(norandom)			{ norandom = false; }
 	PARAM_INT_OPT	(flags)				{ flags = CPF_USEAMMO; }
 	PARAM_CLASS_OPT	(pufftype, AActor)	{ pufftype = NULL; }
-	PARAM_FIXED_OPT	(range)				{ range = 0; }
-	PARAM_FIXED_OPT	(lifesteal)			{ lifesteal = 0; }
+	PARAM_FLOAT_OPT	(range)				{ range = 0; }
+	PARAM_FLOAT_OPT	(lifesteal)			{ lifesteal = 0; }
 	PARAM_INT_OPT	(lifestealmax)		{ lifestealmax = 0; }
 	PARAM_CLASS_OPT	(armorbonustype, ABasicArmorBonus)	{ armorbonustype = NULL; }
 	PARAM_SOUND_OPT	(MeleeSound)		{ MeleeSound = ""; }
@@ -1729,17 +1712,16 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
 	AWeapon *weapon = player->ReadyWeapon;
 
 
-	angle_t 	angle;
-	int 		pitch;
+	DAngle angle;
+	DAngle pitch;
 	FTranslatedLineTarget t;
 	int			actualdamage;
 
 	if (!norandom)
 		damage *= pr_cwpunch() % 8 + 1;
 
-	angle = self->angle + (pr_cwpunch.Random2() << 18);
-	if (range == 0)
-		range = MELEERANGE;
+	angle = self->Angles.Yaw + pr_cwpunch.Random2() * (5.625 / 256);
+	if (range == 0) range = MELEERANGE;
 	pitch = P_AimLineAttack (self, angle, range, &t);
 
 	// only use ammo when actually hitting something!
@@ -1761,7 +1743,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
 	}
 	else
 	{
-		if (lifesteal && !(t.linetarget->flags5 & MF5_DONTDRAIN))
+		if (lifesteal > 0 && !(t.linetarget->flags5 & MF5_DONTDRAIN))
 		{
 			if (flags & CPF_STEALARMOR)
 			{
@@ -1772,8 +1754,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
 				if (armorbonustype != NULL)
 				{
 					assert(armorbonustype->IsDescendantOf(RUNTIME_CLASS(ABasicArmorBonus)));
-					ABasicArmorBonus *armorbonus = static_cast<ABasicArmorBonus *>(Spawn(armorbonustype, 0,0,0, NO_REPLACE));
-					armorbonus->SaveAmount *= (actualdamage * lifesteal) >> FRACBITS;
+					ABasicArmorBonus *armorbonus = static_cast<ABasicArmorBonus *>(Spawn(armorbonustype));
+					armorbonus->SaveAmount *= int(actualdamage * lifesteal);
 					armorbonus->MaxSaveAmount = lifestealmax <= 0 ? armorbonus->MaxSaveAmount : lifestealmax;
 					armorbonus->flags |= MF_DROPPED;
 					armorbonus->ClearCounters();
@@ -1786,7 +1768,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
 			}
 			else
 			{
-				P_GiveBody (self, (actualdamage * lifesteal) >> FRACBITS, lifestealmax);
+				P_GiveBody (self, int(actualdamage * lifesteal), lifestealmax);
 			}
 		}
 		if (weapon != NULL)
@@ -1798,7 +1780,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomPunch)
 		if (!(flags & CPF_NOTURN))
 		{
 			// turn to face target
-			self->angle = t.angleFromSource;
+			self->Angles.Yaw = t.angleFromSource;
 		}
 
 		if (flags & CPF_PULLIN) self->flags |= MF_JUSTATTACKED;
@@ -1824,17 +1806,17 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RailAttack)
 	PARAM_INT_OPT	(flags)				{ flags = 0; }
 	PARAM_FLOAT_OPT	(maxdiff)			{ maxdiff = 0; }
 	PARAM_CLASS_OPT	(pufftype, AActor)	{ pufftype = PClass::FindActor(NAME_BulletPuff); }
-	PARAM_ANGLE_OPT	(spread_xy)			{ spread_xy = 0; }
-	PARAM_ANGLE_OPT	(spread_z)			{ spread_z = 0; }
-	PARAM_FIXED_OPT	(range)				{ range = 0; }
+	PARAM_ANGLE_OPT	(spread_xy)			{ spread_xy = 0.; }
+	PARAM_ANGLE_OPT	(spread_z)			{ spread_z = 0.; }
+	PARAM_FLOAT_OPT	(range)				{ range = 0; }
 	PARAM_INT_OPT	(duration)			{ duration = 0; }
 	PARAM_FLOAT_OPT	(sparsity)			{ sparsity = 1; }
 	PARAM_FLOAT_OPT	(driftspeed)		{ driftspeed = 1; }
 	PARAM_CLASS_OPT	(spawnclass, AActor){ spawnclass = NULL; }
-	PARAM_FIXED_OPT	(spawnofs_z)		{ spawnofs_z = 0; }
+	PARAM_FLOAT_OPT	(spawnofs_z)		{ spawnofs_z = 0; }
 	PARAM_INT_OPT	(SpiralOffset)		{ SpiralOffset = 270; }
 	
-	if (range == 0) range = 8192*FRACUNIT;
+	if (range == 0) range = 8192;
 	if (sparsity == 0) sparsity=1.0;
 
 	if (self->player == NULL)
@@ -1849,21 +1831,31 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RailAttack)
 			return 0;	// out of ammo
 	}
 
-	angle_t angle;
-	angle_t slope;
-
-	if (flags & RAF_EXPLICITANGLE)
+	if (!(flags & RAF_EXPLICITANGLE))
 	{
-		angle = spread_xy;
-		slope = spread_z;
-	}
-	else
-	{
-		angle = pr_crailgun.Random2() * (spread_xy / 255);
-		slope = pr_crailgun.Random2() * (spread_z / 255);
+		spread_xy = spread_xy * pr_crailgun.Random2() / 255;
+		spread_z = spread_z * pr_crailgun.Random2() / 255;
 	}
 
-	P_RailAttack (self, damage, spawnofs_xy, spawnofs_z, color1, color2, maxdiff, flags, pufftype, angle, slope, range, duration, sparsity, driftspeed, spawnclass, SpiralOffset);
+	FRailParams p;
+	p.source = self;
+	p.damage = damage;
+	p.offset_xy = spawnofs_xy;
+	p.offset_z = spawnofs_z;
+	p.color1 = color1;
+	p.color2 = color2;
+	p.maxdiff = maxdiff;
+	p.flags = flags;
+	p.puff = pufftype;
+	p.angleoffset = spread_xy;
+	p.pitchoffset = spread_z;
+	p.distance = range;
+	p.duration = duration;
+	p.sparsity = sparsity;
+	p.drift = driftspeed;
+	p.spawnclass = spawnclass;
+	p.SpiralOffset = SpiralOffset;
+	P_RailAttack(&p);
 	return 0;
 }
 
@@ -1891,24 +1883,24 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 	PARAM_INT_OPT	(aim)				{ aim = CRF_DONTAIM; }
 	PARAM_FLOAT_OPT	(maxdiff)			{ maxdiff = 0; }
 	PARAM_CLASS_OPT	(pufftype, AActor)	{ pufftype = PClass::FindActor(NAME_BulletPuff); }
-	PARAM_ANGLE_OPT	(spread_xy)			{ spread_xy = 0; }
-	PARAM_ANGLE_OPT	(spread_z)			{ spread_z = 0; }
-	PARAM_FIXED_OPT	(range)				{ range = 0; }
+	PARAM_ANGLE_OPT	(spread_xy)			{ spread_xy = 0.; }
+	PARAM_ANGLE_OPT	(spread_z)			{ spread_z = 0.; }
+	PARAM_FLOAT_OPT	(range)				{ range = 0; }
 	PARAM_INT_OPT	(duration)			{ duration = 0; }
 	PARAM_FLOAT_OPT	(sparsity)			{ sparsity = 1; }
 	PARAM_FLOAT_OPT	(driftspeed)		{ driftspeed = 1; }
 	PARAM_CLASS_OPT	(spawnclass, AActor){ spawnclass = NULL; }
-	PARAM_FIXED_OPT	(spawnofs_z)		{ spawnofs_z = 0; }
+	PARAM_FLOAT_OPT	(spawnofs_z)		{ spawnofs_z = 0; }
 	PARAM_INT_OPT	(SpiralOffset)		{ SpiralOffset = 270; }
 
-	if (range == 0) range = 8192*FRACUNIT;
+	if (range == 0) range = 8192.;
 	if (sparsity == 0) sparsity = 1;
 
 	FTranslatedLineTarget t;
 
-	fixedvec3 savedpos = self->Pos();
-	angle_t saved_angle = self->angle;
-	fixed_t saved_pitch = self->pitch;
+	DVector3 savedpos = self->Pos();
+	DAngle saved_angle = self->Angles.Yaw;
+	DAngle saved_pitch = self->Angles.Pitch;
 
 	if (aim && self->target == NULL)
 	{
@@ -1925,63 +1917,68 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 
 	if (aim)
 	{
-		self->angle = self->AngleTo(self->target);
+		self->Angles.Yaw = self->AngleTo(self->target);
 	}
-	self->pitch = P_AimLineAttack (self, self->angle, MISSILERANGE, &t, ANGLE_1*60, 0, aim ? self->target : NULL);
+	self->Angles.Pitch = P_AimLineAttack (self, self->Angles.Yaw, MISSILERANGE, &t, 60., 0, aim ? self->target : NULL);
 	if (t.linetarget == NULL && aim)
 	{
 		// We probably won't hit the target, but aim at it anyway so we don't look stupid.
-		fixedvec2 pos = self->Vec2To(self->target);
-		DVector2 xydiff(pos.x, pos.y);
-		double zdiff = (self->target->Z() + (self->target->height>>1)) -
-						(self->Z() + (self->height>>1) - self->floorclip);
-		self->pitch = int(atan2(zdiff, xydiff.Length()) * ANGLE_180 / -M_PI);
+		DVector2 xydiff = self->Vec2To(self->target);
+		double zdiff = self->target->Center() - self->Center() - self->Floorclip;
+		self->Angles.Pitch = VecToAngle(xydiff.Length(), zdiff);
 	}
 	// Let the aim trail behind the player
 	if (aim)
 	{
-		saved_angle = self->angle = self->AngleTo(self->target, -self->target->vel.x * 3, -self->target->vel.y * 3);
+		saved_angle = self->Angles.Yaw = self->AngleTo(self->target, -self->target->Vel.X * 3, -self->target->Vel.Y * 3);
 
 		if (aim == CRF_AIMDIRECT)
 		{
 			// Tricky: We must offset to the angle of the current position
 			// but then change the angle again to ensure proper aim.
 			self->SetXY(self->Vec2Offset(
-				spawnofs_xy * finecosine[self->angle],
-				spawnofs_xy * finesine[self->angle]));
+				spawnofs_xy * self->Angles.Yaw.Cos(),
+				spawnofs_xy * self->Angles.Yaw.Sin()));
 			spawnofs_xy = 0;
-			self->angle = self->AngleTo(self->target,- self->target->vel.x * 3, -self->target->vel.y * 3);
+			self->Angles.Yaw = self->AngleTo(self->target,- self->target->Vel.X * 3, -self->target->Vel.Y * 3);
 		}
 
 		if (self->target->flags & MF_SHADOW)
 		{
-			angle_t rnd = pr_crailgun.Random2() << 21;
-			self->angle += rnd;
-			saved_angle = rnd;
+			DAngle rnd = pr_crailgun.Random2() * (45. / 256.);
+			self->Angles.Yaw += rnd;
 		}
 	}
 
-	angle_t angle = (self->angle - ANG90) >> ANGLETOFINESHIFT;
-
-	angle_t angleoffset;
-	angle_t slopeoffset;
-
-	if (flags & CRF_EXPLICITANGLE)
+	if (!(flags & CRF_EXPLICITANGLE))
 	{
-		angleoffset = spread_xy;
-		slopeoffset = spread_z;
-	}
-	else
-	{
-		angleoffset = pr_crailgun.Random2() * (spread_xy / 255);
-		slopeoffset = pr_crailgun.Random2() * (spread_z / 255);
+		spread_xy = spread_xy * pr_crailgun.Random2() / 255;
+		spread_z = spread_z * pr_crailgun.Random2() / 255;
 	}
 
-	P_RailAttack (self, damage, spawnofs_xy, spawnofs_z, color1, color2, maxdiff, flags, pufftype, angleoffset, slopeoffset, range, duration, sparsity, driftspeed, spawnclass,SpiralOffset);
+	FRailParams p;
+	p.source = self;
+	p.damage = damage;
+	p.offset_xy = spawnofs_xy;
+	p.offset_z = spawnofs_z;
+	p.color1 = color1;
+	p.color2 = color2;
+	p.maxdiff = maxdiff;
+	p.flags = flags;
+	p.puff = pufftype;
+	p.angleoffset = spread_xy;
+	p.pitchoffset = spread_z;
+	p.distance = range;
+	p.duration = duration;
+	p.sparsity = sparsity;
+	p.drift = driftspeed;
+	p.spawnclass = spawnclass;
+	p.SpiralOffset = SpiralOffset;
+	P_RailAttack(&p);
 
 	self->SetXYZ(savedpos);
-	self->angle = saved_angle;
-	self->pitch = saved_pitch;
+	self->Angles.Yaw = saved_angle;
+	self->Angles.Pitch = saved_pitch;
 	return 0;
 }
 
@@ -2013,7 +2010,7 @@ static bool DoGiveInventory(AActor *receiver, bool orresult, VM_ARGS)
 	}
 	if (mi) 
 	{
-		AInventory *item = static_cast<AInventory *>(Spawn(mi, 0, 0, 0, NO_REPLACE));
+		AInventory *item = static_cast<AInventory *>(Spawn(mi));
 		if (item == NULL)
 		{
 			return false;
@@ -2243,10 +2240,10 @@ static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
 		mo->tracer = self->tracer;
 	}
 
-	mo->angle = self->angle;
+	mo->Angles.Yaw = self->Angles.Yaw;
 	if (flags & SIXF_TRANSFERPITCH)
 	{
-		mo->pitch = self->pitch;
+		mo->Angles.Pitch = self->Angles.Pitch;
 	}
 	if (!(flags & SIXF_ORIGINATOR))
 	{
@@ -2324,8 +2321,7 @@ static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
 	}
 	if (flags & SIXF_TRANSFERSCALE)
 	{
-		mo->scaleX = self->scaleX;
-		mo->scaleY = self->scaleY;
+		mo->Scale = self->Scale;
 	}
 	if (flags & SIXF_TRANSFERAMBUSHFLAG)
 	{
@@ -2352,7 +2348,7 @@ static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
 	}
 	if (flags & SIXF_TRANSFERALPHA)
 	{
-		mo->alpha = self->alpha;
+		mo->Alpha = self->Alpha;
 	}
 	if (flags & SIXF_TRANSFERRENDERSTYLE)
 	{
@@ -2367,7 +2363,7 @@ static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
 
 	if (flags & SIXF_TRANSFERROLL)
 	{
-		mo->roll = self->roll;
+		mo->Angles.Roll = self->Angles.Roll;
 	}
 
 	if (flags & SIXF_ISTARGET)
@@ -2397,8 +2393,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItem)
 {
 	PARAM_ACTION_PROLOGUE;
 	PARAM_CLASS_OPT	(missile, AActor)		{ missile = PClass::FindActor("Unknown"); }
-	PARAM_FIXED_OPT	(distance)				{ distance = 0; }
-	PARAM_FIXED_OPT	(zheight)				{ zheight = 0; }
+	PARAM_FLOAT_OPT	(distance)				{ distance = 0; }
+	PARAM_FLOAT_OPT	(zheight)				{ zheight = 0; }
 	PARAM_BOOL_OPT	(useammo)				{ useammo = true; }
 	PARAM_BOOL_OPT	(transfer_translation)	{ transfer_translation = false; }
 
@@ -2416,7 +2412,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItem)
 	if (distance == 0) 
 	{
 		// use the minimum distance that does not result in an overlap
-		distance = (self->radius + GetDefaultByType(missile)->radius) >> FRACBITS;
+		distance = (self->radius + GetDefaultByType(missile)->radius);
 	}
 
 	if (ACTION_CALL_FROM_WEAPON())
@@ -2434,7 +2430,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItem)
 		}
 	}
 
-	AActor *mo = Spawn( missile, self->Vec3Angle(distance, self->angle, -self->floorclip + self->GetBobOffset() + zheight), ALLOW_REPLACE);
+	AActor *mo = Spawn( missile, self->Vec3Angle(distance, self->Angles.Yaw, -self->Floorclip + self->GetBobOffset() + zheight), ALLOW_REPLACE);
 
 	int flags = (transfer_translation ? SIXF_TRANSFERTRANSLATION : 0) + (useammo ? SIXF_SETMASTER : 0);
 	ACTION_RETURN_BOOL(InitSpawnedItem(self, mo, flags));	// for an inventory item's use state
@@ -2451,13 +2447,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItemEx)
 {
 	PARAM_ACTION_PROLOGUE;
 	PARAM_CLASS		(missile, AActor);
-	PARAM_FIXED_OPT	(xofs)		{ xofs = 0; }
-	PARAM_FIXED_OPT	(yofs)		{ yofs = 0; }
-	PARAM_FIXED_OPT	(zofs)		{ zofs = 0; }
-	PARAM_FIXED_OPT	(xvel)		{ xvel = 0; }
-	PARAM_FIXED_OPT	(yvel)		{ yvel = 0; }
-	PARAM_FIXED_OPT	(zvel)		{ zvel = 0; }
-	PARAM_ANGLE_OPT	(angle)		{ angle = 0; }
+	PARAM_FLOAT_OPT	(xofs)		{ xofs = 0; }
+	PARAM_FLOAT_OPT	(yofs)		{ yofs = 0; }
+	PARAM_FLOAT_OPT	(zofs)		{ zofs = 0; }
+	PARAM_FLOAT_OPT	(xvel)		{ xvel = 0; }
+	PARAM_FLOAT_OPT	(yvel)		{ yvel = 0; }
+	PARAM_FLOAT_OPT	(zvel)		{ zvel = 0; }
+	PARAM_ANGLE_OPT	(angle)		{ angle = 0.; }
 	PARAM_INT_OPT	(flags)		{ flags = 0; }
 	PARAM_INT_OPT	(chance)	{ chance = 0; }
 	PARAM_INT_OPT	(tid)		{ tid = 0; }
@@ -2476,14 +2472,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItemEx)
 		ACTION_RETURN_BOOL(true);
 	}
 
-	fixedvec2 pos;
+	DVector2 pos;
 
 	if (!(flags & SIXF_ABSOLUTEANGLE))
 	{
-		angle += self->angle;
+		angle += self->Angles.Yaw;
 	}
-
-	angle_t ang = angle >> ANGLETOFINESHIFT;
+	double s = angle.Sin();
+	double c = angle.Cos();
 
 	if (flags & SIXF_ABSOLUTEPOSITION)
 	{
@@ -2493,20 +2489,18 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItemEx)
 	{
 		// in relative mode negative y values mean 'left' and positive ones mean 'right'
 		// This is the inverse orientation of the absolute mode!
-		pos = self->Vec2Offset(
-			FixedMul(xofs, finecosine[ang]) + FixedMul(yofs, finesine[ang]),
-			FixedMul(xofs, finesine[ang]) - FixedMul(yofs, finecosine[ang]));
+		pos = self->Vec2Offset(xofs * c + yofs * s, xofs * s - yofs*c);
 	}
 
 	if (!(flags & SIXF_ABSOLUTEVELOCITY))
 	{
 		// Same orientation issue here!
-		fixed_t newxvel = FixedMul(xvel, finecosine[ang]) + FixedMul(yvel, finesine[ang]);
-		yvel = FixedMul(xvel, finesine[ang]) - FixedMul(yvel, finecosine[ang]);
+		double newxvel = xvel * c + yvel * s;
+		yvel = xvel * s - yvel * c;
 		xvel = newxvel;
 	}
 
-	AActor *mo = Spawn(missile, pos.x, pos.y, self->Z() - self->floorclip + self->GetBobOffset() + zofs, ALLOW_REPLACE);
+	AActor *mo = Spawn(missile, DVector3(pos, self->Z() - self->Floorclip + self->GetBobOffset() + zofs), ALLOW_REPLACE);
 	bool res = InitSpawnedItem(self, mo, flags);
 	if (res)
 	{
@@ -2516,19 +2510,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnItemEx)
 			mo->tid = tid;
 			mo->AddToHash();
 		}
+		mo->Vel = {xvel, yvel, zvel};
 		if (flags & SIXF_MULTIPLYSPEED)
 		{
-			mo->vel.x = FixedMul(xvel, mo->Speed);
-			mo->vel.y = FixedMul(yvel, mo->Speed);
-			mo->vel.z = FixedMul(zvel, mo->Speed);
+			mo->Vel *= mo->Speed;
 		}
-		else
-		{
-			mo->vel.x = xvel;
-			mo->vel.y = yvel;
-			mo->vel.z = zvel;
-		}
-		mo->angle = angle;
+		mo->Angles.Yaw = angle;
 	}
 	ACTION_RETURN_BOOL(res);	// for an inventory item's use state
 }
@@ -2544,9 +2531,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ThrowGrenade)
 {
 	PARAM_ACTION_PROLOGUE;
 	PARAM_CLASS		(missile, AActor);
-	PARAM_FIXED_OPT	(zheight)		{ zheight = 0; }
-	PARAM_FIXED_OPT	(xyvel)			{ xyvel = 0; }
-	PARAM_FIXED_OPT	(zvel)			{ zvel = 0; }
+	PARAM_FLOAT_OPT	(zheight)		{ zheight = 0; }
+	PARAM_FLOAT_OPT	(xyvel)			{ xyvel = 0; }
+	PARAM_FLOAT_OPT	(zvel)			{ zvel = 0; }
 	PARAM_BOOL_OPT	(useammo)		{ useammo = true; }
 
 	if (missile == NULL)
@@ -2571,36 +2558,36 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ThrowGrenade)
 	AActor *bo;
 
 	bo = Spawn(missile, 
-			self->PosPlusZ(-self->floorclip + self->GetBobOffset() + zheight + 35*FRACUNIT + (self->player? self->player->crouchoffset : 0)),
+			self->PosPlusZ(-self->Floorclip + self->GetBobOffset() + zheight + 35 + (self->player? self->player->crouchoffset : 0.)),
 			ALLOW_REPLACE);
 	if (bo)
 	{
 		P_PlaySpawnSound(bo, self);
 		if (xyvel != 0)
 			bo->Speed = xyvel;
-		bo->angle = self->angle + (((pr_grenade()&7) - 4) << 24);
+		bo->Angles.Yaw = self->Angles.Yaw + (((pr_grenade()&7) - 4) * (360./256.));
 
-		angle_t pitch = angle_t(-self->pitch) >> ANGLETOFINESHIFT;
-		angle_t angle = bo->angle >> ANGLETOFINESHIFT;
+		DAngle pitch = -self->Angles.Pitch;
+		DAngle angle = bo->Angles.Yaw;
 
 		// There are two vectors we are concerned about here: xy and z. We rotate
 		// them separately according to the shooter's pitch and then sum them to
 		// get the final velocity vector to shoot with.
 
-		fixed_t xy_xyscale = FixedMul(bo->Speed, finecosine[pitch]);
-		fixed_t xy_velz = FixedMul(bo->Speed, finesine[pitch]);
-		fixed_t xy_velx = FixedMul(xy_xyscale, finecosine[angle]);
-		fixed_t xy_vely = FixedMul(xy_xyscale, finesine[angle]);
+		double xy_xyscale = bo->Speed * pitch.Cos();
+		double xy_velz = bo->Speed * pitch.Sin();
+		double xy_velx = xy_xyscale * angle.Cos();
+		double xy_vely = xy_xyscale * angle.Sin();
 
-		pitch = angle_t(self->pitch) >> ANGLETOFINESHIFT;
-		fixed_t z_xyscale = FixedMul(zvel, finesine[pitch]);
-		fixed_t z_velz = FixedMul(zvel, finecosine[pitch]);
-		fixed_t z_velx = FixedMul(z_xyscale, finecosine[angle]);
-		fixed_t z_vely = FixedMul(z_xyscale, finesine[angle]);
+		pitch = self->Angles.Pitch;
+		double z_xyscale = zvel * pitch.Sin();
+		double z_velz = zvel * pitch.Cos();
+		double z_velx = z_xyscale * angle.Cos();
+		double z_vely = z_xyscale * angle.Sin();
 
-		bo->vel.x = xy_velx + z_velx + (self->vel.x >> 1);
-		bo->vel.y = xy_vely + z_vely + (self->vel.y >> 1);
-		bo->vel.z = xy_velz + z_velz;
+		bo->Vel.X = xy_velx + z_velx + self->Vel.X / 2;
+		bo->Vel.Y = xy_vely + z_vely + self->Vel.Y / 2;
+		bo->Vel.Z = xy_velz + z_velz;
 
 		bo->target = self;
 		P_CheckMissileSpawn (bo, self->radius);
@@ -2621,12 +2608,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ThrowGrenade)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Recoil)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_FIXED(xyvel);
+	PARAM_FLOAT(xyvel);
 
-	angle_t angle = self->angle + ANG180;
-	angle >>= ANGLETOFINESHIFT;
-	self->vel.x += FixedMul(xyvel, finecosine[angle]);
-	self->vel.y += FixedMul(xyvel, finesine[angle]);
+	self->Thrust(self->Angles.Yaw + 180., xyvel);
 	return 0;
 }
 
@@ -2785,13 +2769,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_LogFloat)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetTranslucent)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_FIXED		(alpha);
+	PARAM_FLOAT		(alpha);
 	PARAM_INT_OPT	(mode)	{ mode = 0; }
 
 	mode = mode == 0 ? STYLE_Translucent : mode == 2 ? STYLE_Fuzzy : STYLE_Add;
 
 	self->RenderStyle.Flags &= ~STYLEF_Alpha1;
-	self->alpha = clamp<fixed_t>(alpha, 0, FRACUNIT);
+	self->Alpha = clamp(alpha, 0., 1.);
 	self->RenderStyle = ERenderStyle(mode);
 	return 0;
 }
@@ -2813,21 +2797,21 @@ enum FadeFlags
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FadeIn)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_FIXED_OPT(reduce)	{ reduce = FRACUNIT/10; }
+	PARAM_FLOAT_OPT(reduce)	{ reduce = 0.1; }
 	PARAM_INT_OPT(flags)	{ flags = 0; }
 
 	if (reduce == 0)
 	{
-		reduce = FRACUNIT / 10;
+		reduce = 0.1;
 	}
 	self->RenderStyle.Flags &= ~STYLEF_Alpha1;
-	self->alpha += reduce;
+	self->Alpha += reduce;
 
-	if (self->alpha >= FRACUNIT)
+	if (self->Alpha >= 1.)
 	{
 		if (flags & FTF_CLAMP)
 		{
-			self->alpha = FRACUNIT;
+			self->Alpha = 1.;
 		}
 		if (flags & FTF_REMOVE)
 		{
@@ -2847,20 +2831,20 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FadeIn)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FadeOut)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_FIXED_OPT(reduce)	{ reduce = FRACUNIT/10; }
+	PARAM_FLOAT_OPT(reduce)	{ reduce = 0.1; }
 	PARAM_INT_OPT(flags)	{ flags = FTF_REMOVE; }
 
 	if (reduce == 0)
 	{
-		reduce = FRACUNIT/10;
+		reduce = 0.1;
 	}
 	self->RenderStyle.Flags &= ~STYLEF_Alpha1;
-	self->alpha -= reduce;
-	if (self->alpha <= 0)
+	self->Alpha -= reduce;
+	if (self->Alpha <= 0)
 	{
 		if (flags & FTF_CLAMP)
 		{
-			self->alpha = 0;
+			self->Alpha = 0;
 		}
 		if (flags & FTF_REMOVE)
 		{
@@ -2881,35 +2865,35 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FadeOut)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FadeTo)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_FIXED		(target);
-	PARAM_FIXED_OPT	(amount)		{ amount = fixed_t(0.1*FRACUNIT); }
+	PARAM_FLOAT		(target);
+	PARAM_FLOAT_OPT	(amount)		{ amount = 0.1; }
 	PARAM_INT_OPT	(flags)			{ flags = 0; }
 
 	self->RenderStyle.Flags &= ~STYLEF_Alpha1;
 
-	if (self->alpha > target)
+	if (self->Alpha > target)
 	{
-		self->alpha -= amount;
+		self->Alpha -= amount;
 
-		if (self->alpha < target)
+		if (self->Alpha < target)
 		{
-			self->alpha = target;
+			self->Alpha = target;
 		}
 	}
-	else if (self->alpha < target)
+	else if (self->Alpha < target)
 	{
-		self->alpha += amount;
+		self->Alpha += amount;
 
-		if (self->alpha > target)
+		if (self->Alpha > target)
 		{
-			self->alpha = target;
+			self->Alpha = target;
 		}
 	}
 	if (flags & FTF_CLAMP)
 	{
-		self->alpha = clamp(self->alpha, 0, FRACUNIT);
+		self->Alpha = clamp(self->Alpha, 0., 1.);
 	}
-	if (self->alpha == target && (flags & FTF_REMOVE))
+	if (self->Alpha == target && (flags & FTF_REMOVE))
 	{
 		P_RemoveThing(self);
 	}
@@ -2926,8 +2910,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FadeTo)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetScale)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_FIXED		(scalex);
-	PARAM_FIXED_OPT	(scaley)	{ scaley = scalex; }
+	PARAM_FLOAT		(scalex);
+	PARAM_FLOAT_OPT	(scaley)	{ scaley = scalex; }
 	PARAM_INT_OPT	(ptr)		{ ptr = AAPTR_DEFAULT; }
 	PARAM_BOOL_OPT	(usezero)	{ usezero = false; }
 
@@ -2939,8 +2923,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetScale)
 		{
 			scaley = scalex;
 		}
-		ref->scaleX = scalex;
-		ref->scaleY = scaley;
+		ref->Scale = { scalex, scaley };
 	}
 	return 0;
 }
@@ -2971,8 +2954,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnDebris)
 	PARAM_ACTION_PROLOGUE;
 	PARAM_CLASS		(debris, AActor);
 	PARAM_BOOL_OPT	(transfer_translation)	{ transfer_translation = false; }
-	PARAM_FIXED_OPT	(mult_h)				{ mult_h = FRACUNIT; }
-	PARAM_FIXED_OPT	(mult_v)				{ mult_v = FRACUNIT; }
+	PARAM_FLOAT_OPT	(mult_h)				{ mult_h = 1; }
+	PARAM_FLOAT_OPT	(mult_v)				{ mult_v = 1; }
 	int i;
 	AActor *mo;
 
@@ -2980,16 +2963,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnDebris)
 		return 0;
 
 	// only positive values make sense here
-	if (mult_v <= 0)
-		mult_v = FRACUNIT;
-	if (mult_h <= 0)
-		mult_h = FRACUNIT;
+	if (mult_v <= 0) mult_v = 1;
+	if (mult_h <= 0) mult_h = 1;
 	
 	for (i = 0; i < GetDefaultByType(debris)->health; i++)
 	{
-		fixed_t xo = ((pr_spawndebris() - 128) << 12);
-		fixed_t yo = ((pr_spawndebris() - 128) << 12);
-		fixed_t zo = (pr_spawndebris()*self->height / 256 + self->GetBobOffset());
+		double xo = (pr_spawndebris() - 128) / 16.;
+		double yo = (pr_spawndebris() - 128) / 16.;
+		double zo = pr_spawndebris()*self->Height / 256 + self->GetBobOffset();
 		mo = Spawn(debris, self->Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
 		if (mo)
 		{
@@ -3001,9 +2982,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnDebris)
 			{
 				mo->SetState (mo->GetClass()->OwnedStates + i);
 			}
-			mo->vel.z = FixedMul(mult_v, ((pr_spawndebris()&7)+5)*FRACUNIT);
-			mo->vel.x = FixedMul(mult_h, pr_spawndebris.Random2()<<(FRACBITS-6));
-			mo->vel.y = FixedMul(mult_h, pr_spawndebris.Random2()<<(FRACBITS-6));
+			mo->Vel.X = mult_h * pr_spawndebris.Random2() / 64.;
+			mo->Vel.Y = mult_h * pr_spawndebris.Random2() / 64.;
+			mo->Vel.Z = mult_v * ((pr_spawndebris() & 7) + 5);
 		}
 	}
 	return 0;
@@ -3030,51 +3011,50 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnParticle)
 	PARAM_INT_OPT	(flags)			{ flags = 0; }
 	PARAM_INT_OPT	(lifetime)		{ lifetime = 35; }
 	PARAM_INT_OPT	(size)			{ size = 1; }
-	PARAM_ANGLE_OPT	(angle)			{ angle = 0; }
-	PARAM_FIXED_OPT	(xoff)			{ xoff = 0; }
-	PARAM_FIXED_OPT	(yoff)			{ yoff = 0; }
-	PARAM_FIXED_OPT	(zoff)			{ zoff = 0; }
-	PARAM_FIXED_OPT	(xvel)			{ xvel = 0; }
-	PARAM_FIXED_OPT	(yvel)			{ yvel = 0; }
-	PARAM_FIXED_OPT	(zvel)			{ zvel = 0; }
-	PARAM_FIXED_OPT	(accelx)		{ accelx = 0; }
-	PARAM_FIXED_OPT	(accely)		{ accely = 0; }
-	PARAM_FIXED_OPT	(accelz)		{ accelz = 0; }
-	PARAM_FIXED_OPT	(startalphaf)	{ startalphaf = FRACUNIT; }
-	PARAM_FIXED_OPT	(fadestepf)		{ fadestepf = -FRACUNIT; }
+	PARAM_ANGLE_OPT	(angle)			{ angle = 0.; }
+	PARAM_FLOAT_OPT	(xoff)			{ xoff = 0; }
+	PARAM_FLOAT_OPT	(yoff)			{ yoff = 0; }
+	PARAM_FLOAT_OPT	(zoff)			{ zoff = 0; }
+	PARAM_FLOAT_OPT	(xvel)			{ xvel = 0; }
+	PARAM_FLOAT_OPT	(yvel)			{ yvel = 0; }
+	PARAM_FLOAT_OPT	(zvel)			{ zvel = 0; }
+	PARAM_FLOAT_OPT	(accelx)		{ accelx = 0; }
+	PARAM_FLOAT_OPT	(accely)		{ accely = 0; }
+	PARAM_FLOAT_OPT	(accelz)		{ accelz = 0; }
+	PARAM_FLOAT_OPT	(startalpha)	{ startalpha = 1.; }
+	PARAM_FLOAT_OPT	(fadestep)		{ fadestep = -1.; }
 
-	BYTE startalpha = (BYTE)(clamp(startalphaf, 0, FRACUNIT) * 255 / FRACUNIT);
-	int fadestep = fadestepf < 0 ? -1 : clamp(fadestepf, 0, FRACUNIT) * 255 / FRACUNIT;
-	lifetime = clamp<int>(lifetime, 0, 255);	// Clamp to byte
+	startalpha = clamp(startalpha, 0., 1.);
+	if (fadestep > 0) fadestep = clamp(fadestep, 0., 1.);
 	size = clamp<int>(size, 0, 65535);			// Clamp to word
 
 	if (lifetime != 0)
 	{
-		const angle_t ang = (angle + ((flags & SPF_RELANG) ? self->angle : 0)) >> ANGLETOFINESHIFT;
-		fixedvec3 pos;
+		if (flags & SPF_RELANG) angle += self->Angles.Yaw;
+		double s = angle.Sin();
+		double c = angle.Cos();
+		DVector3 pos(xoff, yoff, zoff);
+		DVector3 vel(xvel, yvel, zvel);
+		DVector3 acc(accelx, accely, accelz);
 		//[MC] Code ripped right out of A_SpawnItemEx.
 		if (flags & SPF_RELPOS)
 		{
 			// in relative mode negative y values mean 'left' and positive ones mean 'right'
 			// This is the inverse orientation of the absolute mode!
-			const fixed_t xof1 = xoff;
-			xoff = FixedMul(xof1, finecosine[ang]) + FixedMul(yoff, finesine[ang]);
-			yoff = FixedMul(xof1, finesine[ang]) - FixedMul(yoff, finecosine[ang]);
+			pos.X = xoff * c + yoff * s;
+			pos.Y = xoff * s - yoff * c;
 		}
 		if (flags & SPF_RELVEL)
 		{
-			const fixed_t newxvel = FixedMul(xvel, finecosine[ang]) + FixedMul(yvel, finesine[ang]);
-			yvel = FixedMul(xvel, finesine[ang]) - FixedMul(yvel, finecosine[ang]);
-			xvel = newxvel;
+			vel.X = xvel * c + yvel * s;
+			vel.Y = xvel * s - yvel * c;
 		}
 		if (flags & SPF_RELACCEL)
 		{
-			fixed_t newaccelx = FixedMul(accelx, finecosine[ang]) + FixedMul(accely, finesine[ang]);
-			accely = FixedMul(accelx, finesine[ang]) - FixedMul(accely, finecosine[ang]);
-			accelx = newaccelx;
+			acc.X = accelx * c + accely * s;
+			acc.Y = accelx * s - accely * c;
 		}
-		pos = self->Vec3Offset(xoff, yoff, zoff);
-		P_SpawnParticle(pos.x, pos.y, pos.z, xvel, yvel, zvel, color, !!(flags & SPF_FULLBRIGHT), startalpha, lifetime, size, fadestep, accelx, accely, accelz);
+		P_SpawnParticle(self->Vec3Offset(pos), vel, acc, color, !!(flags & SPF_FULLBRIGHT), startalpha, lifetime, size, fadestep);
 	}
 	return 0;
 }
@@ -3117,16 +3097,16 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckSight)
 // Useful for maps with many multi-actor special effects.
 //
 //===========================================================================
-static bool DoCheckSightOrRange(AActor *self, AActor *camera, double range, bool twodi)
+static bool DoCheckSightOrRange(AActor *self, AActor *camera, double range, bool twodi, bool checksight)
 {
 	if (camera == NULL)
 	{
 		return false;
 	}
 	// Check distance first, since it's cheaper than checking sight.
-	fixedvec2 pos = camera->Vec2To(self);
-	fixed_t dz;
-	fixed_t eyez = (camera->Top() - (camera->height>>2));	// same eye height as P_CheckSight
+	DVector2 pos = camera->Vec2To(self);
+	double dz;
+	double eyez = camera->Center();
 	if (eyez > self->Top())
 	{
 		dz = self->Top() - eyez;
@@ -3139,14 +3119,15 @@ static bool DoCheckSightOrRange(AActor *self, AActor *camera, double range, bool
 	{
 		dz = 0;
 	}
-	double distance = ((double)pos.x * pos.x) + ((double)pos.y * pos.y) + (twodi == 0? ((double)dz * dz) : 0);
-	if (distance <= range){
+	double distance = DVector3(pos, twodi? 0. : dz).LengthSquared();
+	if (distance <= range*range)
+	{
 		// Within range
 		return true;
 	}
 
 	// Now check LOS.
-	if (P_CheckSight(camera, self, SF_IGNOREVISIBILITY))
+	if (checksight && P_CheckSight(camera, self, SF_IGNOREVISIBILITY))
 	{ // Visible
 		return true;
 	}
@@ -3160,19 +3141,19 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckSightOrRange)
 	PARAM_STATE(jump);
 	PARAM_BOOL_OPT(twodi)	{ twodi = false; }
 
-	range = range * range * (double(FRACUNIT) * FRACUNIT);		// no need for square roots
+	range *= range;
 	for (int i = 0; i < MAXPLAYERS; ++i)
 	{
 		if (playeringame[i])
 		{
 			// Always check from each player.
-			if (DoCheckSightOrRange(self, players[i].mo, range, twodi))
+			if (DoCheckSightOrRange(self, players[i].mo, range, twodi, true))
 			{
 				ACTION_RETURN_STATE(NULL);
 			}
 			// If a player is viewing from a non-player, check that too.
 			if (players[i].camera != NULL && players[i].camera->player == NULL &&
-				DoCheckSightOrRange(self, players[i].camera, range, twodi))
+				DoCheckSightOrRange(self, players[i].camera, range, twodi, true))
 			{
 				ACTION_RETURN_STATE(NULL);
 			}
@@ -3181,42 +3162,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckSightOrRange)
 	ACTION_RETURN_STATE(jump);
 }
 
-//===========================================================================
-//
-// A_CheckRange
-// Jumps if this actor is out of range of all players.
-//
-//===========================================================================
-static bool DoCheckRange(AActor *self, AActor *camera, double range, bool twodi)
-{
-	if (camera == NULL)
-	{
-		return false;
-	}
-	// Check distance first, since it's cheaper than checking sight.
-	fixedvec2 pos = camera->Vec2To(self);
-	fixed_t dz;
-	fixed_t eyez = (camera->Top() - (camera->height>>2));	// same eye height as P_CheckSight
-	if (eyez > self->Top())
-	{
-		dz = self->Top() - eyez;
-	}
-	else if (eyez < self->Z())
-	{
-		dz = self->Z() - eyez;
-	}
-	else
-	{
-		dz = 0;
-	}
-	double distance = ((double)pos.x * pos.x) + ((double)pos.y * pos.y) + (twodi == 0? ((double)dz * dz) : 0);
-
-	if (distance <= range){
-		// Within range
-		return true;
-	}
-	return false;
-}
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckRange)
 {
@@ -3225,19 +3170,19 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckRange)
 	PARAM_STATE(jump);
 	PARAM_BOOL_OPT(twodi)	{ twodi = false; }
 
-	range = range * range * (double(FRACUNIT) * FRACUNIT);		// no need for square roots
+	range *= range;
 	for (int i = 0; i < MAXPLAYERS; ++i)
 	{
 		if (playeringame[i])
 		{
 			// Always check from each player.
-			if (DoCheckRange(self, players[i].mo, range, twodi))
+			if (DoCheckSightOrRange(self, players[i].mo, range, twodi, false))
 			{
 				ACTION_RETURN_STATE(NULL);
 			}
 			// If a player is viewing from a non-player, check that too.
 			if (players[i].camera != NULL && players[i].camera->player == NULL &&
-				DoCheckRange(self, players[i].camera, range, twodi))
+				DoCheckSightOrRange(self, players[i].camera, range, twodi, false))
 			{
 				ACTION_RETURN_STATE(NULL);
 			}
@@ -3360,30 +3305,30 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Burst)
 		return 0;
 	}
 
-	self->vel.x = self->vel.y = self->vel.z = 0;
-	self->height = self->GetDefault()->height;
+	self->Vel.Zero();
+	self->Height = self->GetDefault()->Height;
 
 	// [RH] In Hexen, this creates a random number of shards (range [24,56])
 	// with no relation to the size of the self shattering. I think it should
 	// base the number of shards on the size of the dead thing, so bigger
 	// things break up into more shards than smaller things.
 	// An self with radius 20 and height 64 creates ~40 chunks.
-	numChunks = MAX<int> (4, (self->radius>>FRACBITS)*(self->height>>FRACBITS)/32);
+	numChunks = MAX<int> (4, int(self->radius * self->Height)/32);
 	i = (pr_burst.Random2()) % (numChunks/4);
 	for (i = MAX (24, numChunks + i); i >= 0; i--)
 	{
-		fixed_t xo = (((pr_burst() - 128)*self->radius) >> 7);
-		fixed_t yo = (((pr_burst() - 128)*self->radius) >> 7);
-		fixed_t zo = (pr_burst()*self->height / 255 + self->GetBobOffset());
+		double xo = (pr_burst() - 128) * self->radius / 128;
+		double yo = (pr_burst() - 128) * self->radius / 128;
+		double zo = (pr_burst() * self->Height / 255);
 		mo = Spawn(chunk, self->Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
 
 		if (mo)
 		{
-			mo->vel.z = FixedDiv(mo->Z() - self->Z(), self->height)<<2;
-			mo->vel.x = pr_burst.Random2 () << (FRACBITS-7);
-			mo->vel.y = pr_burst.Random2 () << (FRACBITS-7);
+			mo->Vel.Z = 4 * (mo->Z() - self->Z()) * self->Height;
+			mo->Vel.X = pr_burst.Random2() / 128.;
+			mo->Vel.Y = pr_burst.Random2() / 128.;
 			mo->RenderStyle = self->RenderStyle;
-			mo->alpha = self->alpha;
+			mo->Alpha = self->Alpha;
 			mo->CopyFriendliness(self, true);
 		}
 	}
@@ -3445,11 +3390,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckCeiling)
 DEFINE_ACTION_FUNCTION(AActor, A_Stop)
 {
 	PARAM_ACTION_PROLOGUE;
-	self->vel.x = self->vel.y = self->vel.z = 0;
+	self->Vel.Zero();
 	if (self->player && self->player->mo == self && !(self->player->cheats & CF_PREDICTING))
 	{
 		self->player->mo->PlayIdle();
-		self->player->vel.x = self->player->vel.y = 0;
+		self->player->Vel.Zero();
 	}
 	return 0;
 }
@@ -3458,11 +3403,10 @@ static void CheckStopped(AActor *self)
 {
 	if (self->player != NULL &&
 		self->player->mo == self &&
-		!(self->player->cheats & CF_PREDICTING) &&
-		!(self->vel.x | self->vel.y | self->vel.z))
+		!(self->player->cheats & CF_PREDICTING) && !self->Vel.isZero())
 	{
 		self->player->mo->PlayIdle();
-		self->player->vel.x = self->player->vel.y = 0;
+		self->player->Vel.Zero();
 	}
 }
 
@@ -3487,10 +3431,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Respawn)
 	PARAM_INT_OPT(flags) { flags = RSF_FOG; }
 
 	bool oktorespawn = false;
-	fixedvec3 pos = self->Pos();
+	DVector3 pos = self->Pos();
 
 	self->flags |= MF_SOLID;
-	self->height = self->GetDefault()->height;
+	self->Height = self->GetDefault()->Height;
 	self->radius = self->GetDefault()->radius;
 	CALL_ACTION(A_RestoreSpecialPosition, self);
 
@@ -3501,7 +3445,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Respawn)
 	}
 	else
 	{
-		oktorespawn = P_CheckPosition(self, self->X(), self->Y(), true);
+		oktorespawn = P_CheckPosition(self, self->Pos(), true);
 	}
 
 	if (oktorespawn)
@@ -3581,9 +3525,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_PlayerSkinCheck)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetGravity)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_FIXED(gravity);
+	PARAM_FLOAT(gravity);
 	
-	self->gravity = clamp<fixed_t>(gravity, 0, FRACUNIT*10); 
+	self->Gravity = clamp(gravity, 0., 10.); 
 	return 0;
 }
 
@@ -3742,142 +3686,132 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
 	*/
 
 	AActor *target;
-	fixedvec3 pos;
-	fixed_t	vx, vy, vz;
+	DVector3 pos;
+	DVector3 vel;
 
 	PARAM_ACTION_PROLOGUE;
 	PARAM_STATE		(jump);
 	PARAM_INT_OPT	(flags)			{ flags = 0; }
-	PARAM_FIXED_OPT	(range)			{ range = 0; }
-	PARAM_FIXED_OPT	(minrange)		{ minrange = 0; }
+	PARAM_FLOAT_OPT	(range)			{ range = 0; }
+	PARAM_FLOAT_OPT	(minrange)		{ minrange = 0; }
+	PARAM_ANGLE_OPT	(angle)			{ angle = 0.; }
+	PARAM_ANGLE_OPT	(pitch)			{ pitch = 0.; }
+	PARAM_FLOAT_OPT	(offsetheight)	{ offsetheight = 0; }
+	PARAM_FLOAT_OPT	(offsetwidth)	{ offsetwidth = 0; }
+	PARAM_INT_OPT	(ptr_target)	{ ptr_target = AAPTR_DEFAULT; }
+	PARAM_FLOAT_OPT	(offsetforward)	{ offsetforward = 0; }
+
+	DAngle ang;
+
+	target = COPY_AAPTR(self, ptr_target == AAPTR_DEFAULT ? AAPTR_TARGET|AAPTR_PLAYER_GETTARGET|AAPTR_NULL : ptr_target); // no player-support by default
+
+	if (flags & CLOFF_MUL_HEIGHT)
 	{
-		PARAM_ANGLE_OPT	(angle)			{ angle = 0; }
-		PARAM_ANGLE_OPT	(pitch)			{ pitch = 0; }
-		PARAM_FIXED_OPT	(offsetheight)	{ offsetheight = 0; }
-		PARAM_FIXED_OPT	(offsetwidth)	{ offsetwidth = 0; }
-		PARAM_INT_OPT	(ptr_target)	{ ptr_target = AAPTR_DEFAULT; }
-		PARAM_FIXED_OPT	(offsetforward)	{ offsetforward = 0; }
-
-		target = COPY_AAPTR(self, ptr_target == AAPTR_DEFAULT ? AAPTR_TARGET|AAPTR_PLAYER_GETTARGET|AAPTR_NULL : ptr_target); // no player-support by default
-
-		if (flags & CLOFF_MUL_HEIGHT)
+		if (self->player != NULL)
 		{
-			if (self->player != NULL)
-			{
-				// Synced with hitscan: self->player->mo->height is strangely conscientious about getting the right actor for player
-				offsetheight = FixedMul(offsetheight, FixedMul (self->player->mo->height, self->player->crouchfactor));
-			}
-			else
-			{
-				offsetheight = FixedMul(offsetheight, self->height);
-			}
+			// Synced with hitscan: self->player->mo->height is strangely conscientious about getting the right actor for player
+			offsetheight *= self->player->mo->Height * self->player->crouchfactor;
 		}
-		if (flags & CLOFF_MUL_WIDTH)
+		else
 		{
-			offsetforward = FixedMul(self->radius, offsetforward);
-			offsetwidth = FixedMul(self->radius, offsetwidth);
+			offsetheight *= self->Height;
 		}
+	}
+	if (flags & CLOFF_MUL_WIDTH)
+	{
+		offsetforward *= self->radius;
+		offsetwidth *= self->radius;
+}
 		
-		pos = self->PosPlusZ(offsetheight - self->floorclip);
+	pos = self->PosPlusZ(offsetheight - self->Floorclip);
 
 		if (!(flags & CLOFF_FROMBASE))
 		{ // default to hitscan origin
 
-			// Synced with hitscan: self->height is strangely NON-conscientious about getting the right actor for player
-			pos.z += (self->height >> 1);
+			// Synced with hitscan: self->Height is strangely NON-conscientious about getting the right actor for player
+			pos.Z += self->Height *0.5;
 			if (self->player != NULL)
 			{
-				pos.z += FixedMul (self->player->mo->AttackZOffset, self->player->crouchfactor);
+				pos.Z += self->player->mo->AttackZOffset * self->player->crouchfactor;
 			}
 			else
 			{
-				pos.z += 8*FRACUNIT;
+				pos.Z += 8;
 			}
 		}
 
 		if (target)
 		{
-			fixed_t xydist = self->Distance2D(target);
-			fixed_t distance = P_AproxDistance(xydist, target->Z() - pos.z);
-
-			if (range && !(flags & CLOFF_CHECKPARTIAL))
+			if (range > 0 && !(flags & CLOFF_CHECKPARTIAL))
 			{
+				double distance = self->Distance3D(target);
 				if (distance > range)
 				{
 					ACTION_RETURN_STATE(NULL);
 				}
 			}
 
+			if (flags & CLOFF_NOAIM_HORZ)
 			{
-				angle_t ang;
-
-				if (flags & CLOFF_NOAIM_HORZ)
-				{
-					ang = self->angle;
-				}
-				else ang = self->AngleTo (target);
-				
-				angle += ang;
-				
-				ang >>= ANGLETOFINESHIFT;
-
-				fixedvec2 xy = self->Vec2Offset(
-					FixedMul(offsetforward, finecosine[ang]) + FixedMul(offsetwidth, finesine[ang]),
-					FixedMul(offsetforward, finesine[ang]) - FixedMul(offsetwidth, finecosine[ang]));
-
-				pos.x = xy.x;
-				pos.y = xy.y;
+				ang = self->Angles.Yaw;
 			}
+			else ang = self->AngleTo (target);
+				
+			angle += ang;
 
+			double s = ang.Sin();
+			double c = ang.Cos();
+				
+			DVector2 xy = self->Vec2Offset(offsetforward * c + offsetwidth * s, offsetforward * s - offsetwidth * c);
+
+			pos.X = xy.X;
+			pos.Y = xy.Y;
+
+			double xydist = self->Distance2D(target);
 			if (flags & CLOFF_NOAIM_VERT)
 			{
-				pitch += self->pitch;
+				pitch += self->Angles.Pitch;
 			}
 			else if (flags & CLOFF_AIM_VERT_NOOFFSET)
 			{
-				pitch -= R_PointToAngle2 (0,0, xydist, target->Z() - pos.z + offsetheight + target->height / 2);
+				pitch -= VecToAngle(xydist, target->Center() - pos.Z + offsetheight);
 			}
 			else
 			{
-				pitch -= R_PointToAngle2 (0,0, xydist, target->Z() - pos.z + target->height / 2);
+				pitch -= VecToAngle(xydist, target->Center() - pos.Z);
 			}
 		}
 		else if (flags & CLOFF_ALLOWNULL)
 		{
-			angle += self->angle;
-			pitch += self->pitch;
+			angle += self->Angles.Yaw;
+			pitch += self->Angles.Pitch;
 
-			angle_t ang = self->angle >> ANGLETOFINESHIFT;
+			double s = angle.Sin();
+			double c = angle.Cos();
 
-			fixedvec2 xy = self->Vec2Offset(
-				FixedMul(offsetforward, finecosine[ang]) + FixedMul(offsetwidth, finesine[ang]),
-				FixedMul(offsetforward, finesine[ang]) - FixedMul(offsetwidth, finecosine[ang]));
+			DVector2 xy = self->Vec2Offset(offsetforward * c + offsetwidth * s, offsetforward * s - offsetwidth * c);
 
-			pos.x = xy.x;
-			pos.y = xy.y;
+			pos.X = xy.X;
+			pos.Y = xy.Y;
 		}
 		else
 		{
 			ACTION_RETURN_STATE(NULL);
 		}
 
-		angle >>= ANGLETOFINESHIFT;
-		pitch >>= ANGLETOFINESHIFT;
+		double cp = pitch.Cos();
 
-		vx = FixedMul (finecosine[pitch], finecosine[angle]);
-		vy = FixedMul (finecosine[pitch], finesine[angle]);
-		vz = -finesine[pitch];
-	}
+		vel = { cp * angle.Cos(), cp * angle.Sin(), -pitch.Sin() };
 
 	/* Variable set:
 
 		jump, flags, target
-		x1,y1,z1 (trace point of origin)
-		vx,vy,vz (trace unit vector)
+		pos (trace point of origin)
+		vel (trace unit vector)
 		range
 	*/
 
-	sector_t *sec = P_PointInSector(pos.x, pos.y);
+	sector_t *sec = P_PointInSector(pos);
 
 	if (range == 0)
 	{
@@ -3892,7 +3826,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckLOF)
 	lof_data.Flags = flags;
 	lof_data.BadActor = false;
 
-	Trace(pos.x, pos.y, pos.z, sec, vx, vy, vz, range, ActorFlags::FromInt(0xFFFFFFFF), ML_BLOCKEVERYTHING, self, trace, TRACE_PortalRestrict,
+	Trace(pos, sec, vel, range, ActorFlags::FromInt(0xFFFFFFFF), ML_BLOCKEVERYTHING, self, trace, TRACE_PortalRestrict,
 		CheckLOFTraceFunc, &lof_data);
 
 	if (trace.HitType == TRACE_HitActor ||
@@ -3949,12 +3883,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 {
 	PARAM_ACTION_PROLOGUE;
 	PARAM_STATE		(jump);
-	PARAM_ANGLE_OPT	(fov)			{ fov = 0; }
+	PARAM_ANGLE_OPT	(fov)			{ fov = 0.; }
 	PARAM_INT_OPT	(flags)			{ flags = 0; }
-	PARAM_FIXED_OPT	(dist_max)		{ dist_max = 0; }
-	PARAM_FIXED_OPT	(dist_close)	{ dist_close = 0; }
+	PARAM_FLOAT_OPT	(dist_max)		{ dist_max = 0; }
+	PARAM_FLOAT_OPT	(dist_close)	{ dist_close = 0; }
 
-	angle_t an;
 	AActor *target, *viewport;
 	FTranslatedLineTarget t;
 
@@ -3992,7 +3925,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 	else
 	{
 		// Does the player aim at something that can be shot?
-		P_AimLineAttack(self, self->angle, MISSILERANGE, &t, (flags & JLOSF_NOAUTOAIM) ? ANGLE_1/2 : 0, ALF_PORTALRESTRICT);
+		P_AimLineAttack(self, self->Angles.Yaw, MISSILERANGE, &t, (flags & JLOSF_NOAUTOAIM) ? 0.5 : 0., ALF_PORTALRESTRICT);
 		
 		if (!t.linetarget)
 		{
@@ -4004,14 +3937,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 		{
 		case JLOSF_TARGETLOS|JLOSF_FLIPFOV:
 			// target makes sight check, player makes fov check; player has verified fov
-			fov = 0;
+			fov = 0.;
 			// fall-through
 		case JLOSF_TARGETLOS:
 			doCheckSight = !(flags & JLOSF_NOSIGHT); // The target is responsible for sight check and fov
 			break;
 		default:
 			// player has verified sight and fov
-			fov = 0;
+			fov = 0.;
 			// fall-through
 		case JLOSF_FLIPFOV: // Player has verified sight, but target must verify fov
 			doCheckSight = false;
@@ -4029,7 +3962,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 	{
 		ACTION_RETURN_STATE(NULL);
 	}
-	fixed_t distance = self->AproxDistance3D(target);
+	double distance = self->Distance3D(target);
 
 	if (dist_max && (distance > dist_max))
 	{
@@ -4042,7 +3975,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 			ACTION_RETURN_STATE(NULL);
 		}
 		if (flags & JLOSF_CLOSENOFOV)
-			fov = 0;
+			fov = 0.;
 
 		if (flags & JLOSF_CLOSENOSIGHT)
 			doCheckSight = false;
@@ -4062,11 +3995,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfTargetInLOS)
 		else { target = viewport; viewport = self; }
 	}
 
-	if (fov && (fov < ANGLE_MAX))
+	if (fov > 0 && (fov < 360.))
 	{
-		an = viewport->AngleTo(target) - viewport->angle;
+		DAngle an = absangle(viewport->AngleTo(target), viewport->Angles.Yaw);
 
-		if (an > (fov / 2) && an < (ANGLE_MAX - (fov / 2)))
+		if (an > (fov / 2))
 		{
 			ACTION_RETURN_STATE(NULL); // [KS] Outside of FOV - return
 		}
@@ -4086,12 +4019,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfInTargetLOS)
 {
 	PARAM_ACTION_PROLOGUE;
 	PARAM_STATE		(jump);
-	PARAM_ANGLE_OPT	(fov)			{ fov = 0; }
+	PARAM_ANGLE_OPT	(fov)			{ fov = 0.; }
 	PARAM_INT_OPT	(flags)			{ flags = 0; }
-	PARAM_FIXED_OPT	(dist_max)		{ dist_max = 0; }
-	PARAM_FIXED_OPT	(dist_close)	{ dist_close = 0; }
+	PARAM_FLOAT_OPT	(dist_max)		{ dist_max = 0; }
+	PARAM_FLOAT_OPT	(dist_close)	{ dist_close = 0; }
 
-	angle_t an;
 	AActor *target;
 
 	if (flags & JLOSF_CHECKMASTER)
@@ -4120,7 +4052,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfInTargetLOS)
 		ACTION_RETURN_STATE(NULL);
 	}
 
-	fixed_t distance = self->AproxDistance3D(target);
+	double distance = self->Distance3D(target);
 
 	if (dist_max && (distance > dist_max))
 	{
@@ -4136,17 +4068,17 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfInTargetLOS)
 			ACTION_RETURN_STATE(NULL);
 		}
 		if (flags & JLOSF_CLOSENOFOV)
-			fov = 0;
+			fov = 0.;
 
 		if (flags & JLOSF_CLOSENOSIGHT)
 			doCheckSight = false;
 	}
 
-	if (fov && (fov < ANGLE_MAX))
+	if (fov > 0 && (fov < 360.))
 	{
-		an = target->AngleTo(self) - target->angle;
+		DAngle an = absangle(target->AngleTo(self), target->Angles.Yaw);
 
-		if (an > (fov / 2) && an < (ANGLE_MAX - (fov / 2)))
+		if (an > (fov / 2))
 		{
 			ACTION_RETURN_STATE(NULL); // [KS] Outside of FOV - return
 		}
@@ -4427,8 +4359,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_RaiseSiblings)
 //===========================================================================
 DEFINE_ACTION_FUNCTION_PARAMS (AActor, A_FaceConsolePlayer)
 {
-	PARAM_ACTION_PROLOGUE;
-	PARAM_ANGLE_OPT(max_turn_angle) { max_turn_angle = 0; }
 	// NOTE: It does nothing for zdoom.
 	return 0;
 }
@@ -4479,7 +4409,7 @@ enum
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetAngle)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_ANGLE_OPT(angle)	{ angle = 0; }
+	PARAM_FLOAT_OPT(angle)	{ angle = 0; }
 	PARAM_INT_OPT(flags)	{ flags = 0; }
 	PARAM_INT_OPT(ptr)		{ ptr = AAPTR_DEFAULT; }
 
@@ -4502,7 +4432,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetAngle)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetPitch)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_ANGLE(pitch);
+	PARAM_FLOAT(pitch);
 	PARAM_INT_OPT(flags)	{ flags = 0; }
 	PARAM_INT_OPT(ptr)		{ ptr = AAPTR_DEFAULT; }
 
@@ -4511,23 +4441,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetPitch)
 	if (ref == NULL)
 	{
 		return 0;
-	}
-
-	if (ref->player != NULL || (flags & SPF_FORCECLAMP))
-	{ // clamp the pitch we set
-		int min, max;
-
-		if (ref->player != NULL)
-		{
-			min = ref->player->MinPitch;
-			max = ref->player->MaxPitch;
-		}
-		else
-		{
-			min = -ANGLE_90 + (1 << ANGLETOFINESHIFT);
-			max = ANGLE_90 - (1 << ANGLETOFINESHIFT);
-		}
-		pitch = clamp<int>(pitch, min, max);
 	}
 
 	ref->SetPitch(pitch, !!(flags & SPF_INTERPOLATE), !!(flags & SPF_FORCECLAMP));
@@ -4545,7 +4458,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetPitch)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetRoll)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_ANGLE		(roll);
+	PARAM_FLOAT		(roll);
 	PARAM_INT_OPT	(flags)		{ flags = 0; }
 	PARAM_INT_OPT	(ptr)		{ ptr = AAPTR_DEFAULT; }
 	AActor *ref = COPY_AAPTR(self, ptr);
@@ -4568,7 +4481,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetRoll)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ScaleVelocity)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_FIXED(scale);
+	PARAM_FLOAT(scale);
 	PARAM_INT_OPT(ptr)	{ ptr = AAPTR_DEFAULT; }
 
 	AActor *ref = COPY_AAPTR(self, ptr);
@@ -4578,11 +4491,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ScaleVelocity)
 		return 0;
 	}
 
-	INTBOOL was_moving = ref->vel.x | ref->vel.y | ref->vel.z;
+	bool was_moving = !ref->Vel.isZero();
 
-	ref->vel.x = FixedMul(ref->vel.x, scale);
-	ref->vel.y = FixedMul(ref->vel.y, scale);
-	ref->vel.z = FixedMul(ref->vel.z, scale);
+	ref->Vel *= scale;
 
 	// If the actor was previously moving but now is not, and is a player,
 	// update its player variables. (See A_Stop.)
@@ -4602,9 +4513,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ScaleVelocity)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ChangeVelocity)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_FIXED_OPT	(x)		{ x = 0; }
-	PARAM_FIXED_OPT	(y)		{ y = 0; }
-	PARAM_FIXED_OPT	(z)		{ z = 0; }
+	PARAM_FLOAT_OPT	(x)		{ x = 0; }
+	PARAM_FLOAT_OPT	(y)		{ y = 0; }
+	PARAM_FLOAT_OPT	(z)		{ z = 0; }
 	PARAM_INT_OPT	(flags)	{ flags = 0; }
 	PARAM_INT_OPT	(ptr)	{ ptr = AAPTR_DEFAULT; }
 
@@ -4615,28 +4526,24 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ChangeVelocity)
 		return 0;
 	}
 
-	INTBOOL was_moving = ref->vel.x | ref->vel.y | ref->vel.z;
+	INTBOOL was_moving = !ref->Vel.isZero();
 
-	fixed_t vx = x, vy = y, vz = z;
-	fixed_t sina = finesine[ref->angle >> ANGLETOFINESHIFT];
-	fixed_t cosa = finecosine[ref->angle >> ANGLETOFINESHIFT];
+	DVector3 vel(x, y, z);
+	double sina = ref->Angles.Yaw.Sin();
+	double cosa = ref->Angles.Yaw.Cos();
 
 	if (flags & 1)	// relative axes - make x, y relative to actor's current angle
 	{
-		vx = DMulScale16(x, cosa, -y, sina);
-		vy = DMulScale16(x, sina,  y, cosa);
+		vel.X = x*cosa - y*sina;
+		vel.Y = x*sina + y*cosa;
 	}
 	if (flags & 2)	// discard old velocity - replace old velocity with new velocity
 	{
-		ref->vel.x = vx;
-		ref->vel.y = vy;
-		ref->vel.z = vz;
+		ref->Vel = vel;
 	}
 	else	// add new velocity to old velocity
 	{
-		ref->vel.x += vx;
-		ref->vel.y += vy;
-		ref->vel.z += vz;
+		ref->Vel += vel;
 	}
 
 	if (was_moving)
@@ -4835,8 +4742,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Teleport)
 	PARAM_CLASS_OPT		(target_type, ASpecialSpot)	{ target_type = PClass::FindActor("BossSpot"); }
 	PARAM_CLASS_OPT		(fog_type, AActor)			{ fog_type = PClass::FindActor("TeleportFog"); }
 	PARAM_INT_OPT		(flags)						{ flags = 0; }
-	PARAM_FIXED_OPT		(mindist)					{ mindist = 128 << FRACBITS; }
-	PARAM_FIXED_OPT		(maxdist)					{ maxdist = 128 << FRACBITS; }
+	PARAM_FLOAT_OPT		(mindist)					{ mindist = 128; }
+	PARAM_FLOAT_OPT		(maxdist)					{ maxdist = 0; }
 	PARAM_INT_OPT		(ptr)						{ ptr = AAPTR_DEFAULT; }
 
 	AActor *ref = COPY_AAPTR(self, ptr);
@@ -4907,28 +4814,30 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Teleport)
 	// of the spot.
 	if (flags & TF_SENSITIVEZ)
 	{
-		fixed_t posz = (flags & TF_USESPOTZ) ? spot->Z() : spot->floorz;
-		if ((posz + ref->height > spot->ceilingz) || (posz < spot->floorz))
+		double posz = (flags & TF_USESPOTZ) ? spot->Z() : spot->floorz;
+		if ((posz + ref->Height > spot->ceilingz) || (posz < spot->floorz))
 		{
 			return numret;
 		}
 	}
-	fixedvec3 prev = ref->Pos();
-	fixed_t aboveFloor = spot->Z() - spot->floorz;
-	fixed_t finalz = spot->floorz + aboveFloor;
+	DVector3 prev = ref->Pos();
+	double aboveFloor = spot->Z() - spot->floorz;
+	double finalz = spot->floorz + aboveFloor;
 
-	if (spot->Z() + ref->height > spot->ceilingz)
-		finalz = spot->ceilingz - ref->height;
+	if (spot->Top() > spot->ceilingz)
+		finalz = spot->ceilingz - ref->Height;
 	else if (spot->Z() < spot->floorz)
 		finalz = spot->floorz;
 
+	DVector3 tpos = spot->PosAtZ(finalz);
+
 	//Take precedence and cooperate with telefragging first.
-	bool tele_result = P_TeleportMove(ref, spot->X(), spot->Y(), finalz, !!(flags & TF_TELEFRAG));
+	bool tele_result = P_TeleportMove(ref, tpos, !!(flags & TF_TELEFRAG));
 
 	if (!tele_result && (flags & TF_FORCED))
 	{
 		//If for some reason the original move didn't work, regardless of telefrag, force it to move.
-		ref->SetOrigin(spot->X(), spot->Y(), finalz, false);
+		ref->SetOrigin(tpos, false);
 		tele_result = true;
 	}
 
@@ -4966,10 +4875,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Teleport)
 		ref->SetZ((flags & TF_USESPOTZ) ? spot->Z() : ref->floorz, false);
 
 		if (!(flags & TF_KEEPANGLE))
-			ref->angle = spot->angle;
+			ref->Angles.Yaw = spot->Angles.Yaw;
 
-		if (!(flags & TF_KEEPVELOCITY))
-			ref->vel.x = ref->vel.y = ref->vel.z = 0;
+		if (!(flags & TF_KEEPVELOCITY)) ref->Vel.Zero();
 
 		if (!(flags & TF_NOJUMP)) //The state jump should only happen with the calling actor.
 		{
@@ -5006,8 +4914,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Teleport)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Turn)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_ANGLE_OPT(angle) { angle = 0; }
-	self->angle += angle;
+	PARAM_FLOAT_OPT(angle) { angle = 0; }
+	self->Angles.Yaw += angle;
 	return 0;
 }
 
@@ -5064,47 +4972,44 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_QuakeEx)
 //
 //===========================================================================
 
-void A_Weave(AActor *self, int xyspeed, int zspeed, fixed_t xydist, fixed_t zdist)
+void A_Weave(AActor *self, int xyspeed, int zspeed, double xydist, double zdist)
 {
-	fixed_t newX, newY;
+	DVector2 newpos;
 	int weaveXY, weaveZ;
-	int angle;
-	fixed_t dist;
+	DAngle angle;
+	double dist;
 
 	weaveXY = self->WeaveIndexXY & 63;
 	weaveZ = self->WeaveIndexZ & 63;
-	angle = (self->angle + ANG90) >> ANGLETOFINESHIFT;
+	angle = self->Angles.Yaw + 90;
 
 	if (xydist != 0 && xyspeed != 0)
 	{
-		dist = MulScale13(finesine[weaveXY << BOBTOFINESHIFT], xydist);
-		newX = self->X() - FixedMul (finecosine[angle], dist);
-		newY = self->Y() - FixedMul (finesine[angle], dist);
+		dist = BobSin(weaveXY) * xydist;
+		newpos = self->Pos().XY() - angle.ToVector(dist);
 		weaveXY = (weaveXY + xyspeed) & 63;
-		dist = MulScale13(finesine[weaveXY << BOBTOFINESHIFT], xydist);
-		newX += FixedMul (finecosine[angle], dist);
-		newY += FixedMul (finesine[angle], dist);
+		dist = BobSin(weaveXY) * xydist;
+		newpos += angle.ToVector(dist);
 		if (!(self->flags5 & MF5_NOINTERACTION))
 		{
-			P_TryMove (self, newX, newY, true);
+			P_TryMove (self, newpos, true);
 		}
 		else
 		{
 			self->UnlinkFromWorld ();
 			self->flags |= MF_NOBLOCKMAP;
 			// We need to do portal offsetting here explicitly, because SetXY cannot do that.
-			newX -= self->X();
-			newY -= self->Y();
-			self->SetXY(self->Vec2Offset(newX, newY));
+			newpos -= self->Pos().XY();
+			self->SetXY(self->Vec2Offset(newpos.X, newpos.Y));
 			self->LinkToWorld ();
 		}
 		self->WeaveIndexXY = weaveXY;
 	}
 	if (zdist != 0 && zspeed != 0)
 	{
-		self->AddZ(-MulScale13(finesine[weaveZ << BOBTOFINESHIFT], zdist));
+		self->AddZ(-BobSin(weaveZ) * zdist);
 		weaveZ = (weaveZ + zspeed) & 63;
-		self->AddZ(MulScale13(finesine[weaveZ << BOBTOFINESHIFT], zdist));
+		self->AddZ(BobSin(weaveZ) * zdist);
 		self->WeaveIndexZ = weaveZ;
 	}
 }
@@ -5114,8 +5019,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Weave)
 	PARAM_ACTION_PROLOGUE;
 	PARAM_INT	(xspeed);
 	PARAM_INT	(yspeed);
-	PARAM_FIXED	(xdist);
-	PARAM_FIXED	(ydist);
+	PARAM_FLOAT	(xdist);
+	PARAM_FLOAT	(ydist);
 	A_Weave(self, xspeed, yspeed, xdist, ydist);
 	return 0;
 }
@@ -5171,12 +5076,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_WolfAttack)
 	PARAM_ACTION_PROLOGUE;
 	PARAM_INT_OPT	(flags)				{ flags = 0; }
 	PARAM_SOUND_OPT	(sound)				{ sound = "weapons/pistol"; }
-	PARAM_FIXED_OPT	(snipe)				{ snipe = FRACUNIT; }
+	PARAM_FLOAT_OPT	(snipe)				{ snipe = 1.; }
 	PARAM_INT_OPT	(maxdamage)			{ maxdamage = 64; }
 	PARAM_INT_OPT	(blocksize)			{ blocksize = 128; }
 	PARAM_INT_OPT	(pointblank)		{ pointblank = 2; }
 	PARAM_INT_OPT	(longrange)			{ longrange = 4; }
-	PARAM_FIXED_OPT	(runspeed)			{ runspeed = 160*FRACUNIT; }
+	PARAM_FLOAT_OPT	(runspeed)			{ runspeed = 160; }
 	PARAM_CLASS_OPT	(pufftype, AActor)	{ pufftype = PClass::FindActor(NAME_BulletPuff); }
 
 	if (!self->target)
@@ -5189,31 +5094,27 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_WolfAttack)
 	A_FaceTarget (self);
 
 	// Target can dodge if it can see enemy
-	angle_t angle = self->target->AngleTo(self) - self->target->angle;
-	angle >>= 24;
-	bool dodge = (P_CheckSight(self->target, self) && (angle>226 || angle<30));
+	DAngle angle = absangle(self->target->Angles.Yaw, self->target->AngleTo(self));
+	bool dodge = (P_CheckSight(self->target, self) && angle < 30. * 256. / 360.);	// 30 byteangles ~ 21°
 
 	// Distance check is simplistic
-	fixedvec2 vec = self->Vec2To(self->target);
-	fixed_t dx = abs (vec.x);
-	fixed_t dy = abs (vec.y);
-	fixed_t dist = dx > dy ? dx : dy;
+	DVector2 vec = self->Vec2To(self->target);
+	double dx = fabs (vec.X);
+	double dy = fabs (vec.Y);
+	double dist = dx > dy ? dx : dy;
 
 	// Some enemies are more precise
-	dist = FixedMul(dist, snipe);
+	dist *= snipe;
 
 	// Convert distance into integer number of blocks
-	dist >>= FRACBITS;
-	dist /= blocksize;
+	int idist = int(dist / blocksize);
 
 	// Now for the speed accuracy thingie
-	fixed_t speed = FixedMul(self->target->vel.x, self->target->vel.x)
-				  + FixedMul(self->target->vel.y, self->target->vel.y)
-				  + FixedMul(self->target->vel.z, self->target->vel.z);
+	double speed = self->target->Vel.LengthSquared();
 	int hitchance = speed < runspeed ? 256 : 160;
 
 	// Distance accuracy (factoring dodge)
-	hitchance -= dist * (dodge ? 16 : 8);
+	hitchance -= idist * (dodge ? 16 : 8);
 
 	// While we're here, we may as well do something for this:
 	if (self->target->flags & MF_SHADOW)
@@ -5225,10 +5126,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_WolfAttack)
 	if (pr_cabullet() < hitchance)
 	{
 		// Compute position for spawning blood/puff
-		angle = self->target->AngleTo(self);
-		
-		fixedvec3 bloodpos = self->target->Vec3Angle(self->target->radius, angle, self->target->height >> 1);
-
+		DAngle angle = self->target->AngleTo(self);
+		DVector3 BloodPos = self->target->Vec3Angle(self->target->radius, angle, self->target->Height/2);
 
 		int damage = flags & WAF_NORANDOM ? maxdamage : (1 + (pr_cabullet() % maxdamage));
 		if (dist >= pointblank)
@@ -5249,7 +5148,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_WolfAttack)
 			if ((0 && dpuff->flags3 & MF3_PUFFONACTORS) || !spawnblood)
 			{
 				spawnblood = false;
-				P_SpawnPuff(self, pufftype, bloodpos, angle, angle, 0);
+				P_SpawnPuff(self, pufftype, BloodPos, angle, angle, 0);
 			}
 		}
 		else if (self->target->flags3 & MF3_GHOST)
@@ -5259,7 +5158,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_WolfAttack)
 			int newdam = P_DamageMobj(self->target, self, self, damage, mod, DMG_THRUSTLESS);
 			if (spawnblood)
 			{
-				P_SpawnBlood(bloodpos, angle, newdam > 0 ? newdam : damage, self->target);
+				P_SpawnBlood(BloodPos, angle, newdam > 0 ? newdam : damage, self->target);
 				P_TraceBleed(newdam > 0 ? newdam : damage, self->target, self);
 			}
 		}
@@ -5281,15 +5180,15 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Warp)
 {
 	PARAM_ACTION_PROLOGUE;
 	PARAM_INT(destination_selector);
-	PARAM_FIXED_OPT(xofs)				{ xofs = 0; }
-	PARAM_FIXED_OPT(yofs)				{ yofs = 0; }
-	PARAM_FIXED_OPT(zofs)				{ zofs = 0; }
-	PARAM_ANGLE_OPT(angle)				{ angle = 0; }
+	PARAM_FLOAT_OPT(xofs)				{ xofs = 0; }
+	PARAM_FLOAT_OPT(yofs)				{ yofs = 0; }
+	PARAM_FLOAT_OPT(zofs)				{ zofs = 0; }
+	PARAM_ANGLE_OPT(angle)				{ angle = 0.; }
 	PARAM_INT_OPT(flags)				{ flags = 0; }
 	PARAM_STATE_OPT(success_state)		{ success_state = NULL; }
-	PARAM_FIXED_OPT(heightoffset)		{ heightoffset = 0; }
-	PARAM_FIXED_OPT(radiusoffset)		{ radiusoffset = 0; }
-	PARAM_ANGLE_OPT(pitch)				{ pitch = 0; }
+	PARAM_FLOAT_OPT(heightoffset)		{ heightoffset = 0; }
+	PARAM_FLOAT_OPT(radiusoffset)		{ radiusoffset = 0; }
+	PARAM_ANGLE_OPT(pitch)				{ pitch = 0.; }
 	
 	AActor *reference;
 
@@ -5490,7 +5389,7 @@ enum RadiusGiveFlags
 						RGF_CORPSES | RGF_MISSILES,
 };
 
-static bool DoRadiusGive(AActor *self, AActor *thing, PClassActor *item, int amount, fixed_t distance, int flags, PClassActor *filter, FName species, fixed_t mindist)
+static bool DoRadiusGive(AActor *self, AActor *thing, PClassActor *item, int amount, double distance, int flags, PClassActor *filter, FName species, double mindist)
 {
 	// [MC] We only want to make an exception for missiles here. Nothing else.
 	bool missilePass = !!((flags & RGF_MISSILES) && thing->flags & MF_MISSILE);
@@ -5564,26 +5463,22 @@ static bool DoRadiusGive(AActor *self, AActor *thing, PClassActor *item, int amo
 	if (selfPass || monsterPass || corpsePass || killedPass || itemPass || objectPass || missilePass || playerPass || voodooPass)
 	{
 
-		fixedvec3 diff = self->Vec3To(thing);
-		diff.z += (thing->height - self->height) / 2;
+		DVector3 diff = self->Vec3To(thing);
+		diff.Z += thing->Height *0.5;
 		if (flags & RGF_CUBE)
 		{ // check if inside a cube
-			double dx = fabs((double)(diff.x));
-			double dy = fabs((double)(diff.y));
-			double dz = fabs((double)(diff.z));
-			double dist = (double)distance;
-			double min = (double)mindist;
-			if ((dx > dist || dy > dist || dz > dist) || (min && (dx < min && dy < min && dz < min)))
+			double dx = fabs(diff.X);
+			double dy = fabs(diff.Y);
+			double dz = fabs(diff.Z);
+			if ((dx > distance || dy > distance || dz > distance) || (mindist && (dx < mindist && dy < mindist && dz < mindist)))
 			{
 				return false;
 			}
 		}
 		else
 		{ // check if inside a sphere
-			double distsquared = double(distance) * double(distance);
-			double minsquared = double(mindist) * double(mindist);
-			double lengthsquared = DVector3(diff.x, diff.y, diff.z).LengthSquared();
-			if (lengthsquared > distsquared || (minsquared && (lengthsquared < minsquared)))
+			double lengthsquared = diff.LengthSquared();
+			if (lengthsquared > distance*distance || (mindist && (lengthsquared < mindist*mindist)))
 			{
 				return false;
 			}
@@ -5591,7 +5486,7 @@ static bool DoRadiusGive(AActor *self, AActor *thing, PClassActor *item, int amo
 
 		if ((flags & RGF_NOSIGHT) || P_CheckSight(thing, self, SF_IGNOREVISIBILITY | SF_IGNOREWATERBOUNDARY))
 		{ // OK to give; target is in direct path, or the monster doesn't care about it being in line of sight.
-			AInventory *gift = static_cast<AInventory *>(Spawn(item, 0, 0, 0, NO_REPLACE));
+			AInventory *gift = static_cast<AInventory *>(Spawn(item));
 			if (gift->IsKindOf(RUNTIME_CLASS(AHealth)))
 			{
 				gift->Amount *= amount;
@@ -5620,12 +5515,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusGive)
 {
 	PARAM_ACTION_PROLOGUE;
 	PARAM_CLASS		(item, AInventory);
-	PARAM_FIXED		(distance);
+	PARAM_FLOAT		(distance);
 	PARAM_INT		(flags);
 	PARAM_INT_OPT	(amount)	{ amount = 0; }
 	PARAM_CLASS_OPT	(filter, AActor)	{ filter = NULL; }
 	PARAM_NAME_OPT	(species)	{ species = NAME_None; }
-	PARAM_FIXED_OPT	(mindist)	{ mindist = 0; }
+	PARAM_FLOAT_OPT	(mindist)	{ mindist = 0; }
 
 	// We need a valid item, valid targets, and a valid range
 	if (item == NULL || (flags & RGF_MASK) == 0 || !flags || distance <= 0 || mindist >= distance)
@@ -5650,7 +5545,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusGive)
 	else
 	{
 		FPortalGroupArray check(FPortalGroupArray::PGA_Full3d);
-		fixed_t mid = self->Z() + self->height / 2;
+		double mid = self->Center();
 		FMultiBlockThingsIterator it(check, self->X(), self->Y(), mid-distance, mid+distance, distance, false, self->Sector);
 		FMultiBlockThingsIterator::CheckResult cres;
 
@@ -5750,7 +5645,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_DropItem)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetSpeed)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_FIXED(speed);
+	PARAM_FLOAT(speed);
 	PARAM_INT_OPT(ptr)	{ ptr = AAPTR_DEFAULT; }
 
 	AActor *ref = COPY_AAPTR(self, ptr);
@@ -5770,7 +5665,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetSpeed)
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetFloatSpeed)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_FIXED(speed);
+	PARAM_FLOAT(speed);
 	PARAM_INT_OPT(ptr)	{ ptr = AAPTR_DEFAULT; }
 
 	AActor *ref = COPY_AAPTR(self, ptr);
@@ -6472,8 +6367,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfHigherOrLower)
 	PARAM_ACTION_PROLOGUE;
 	PARAM_STATE(high);
 	PARAM_STATE(low);
-	PARAM_FIXED_OPT(offsethigh) { offsethigh = 0; }
-	PARAM_FIXED_OPT(offsetlow)  { offsetlow = 0; }
+	PARAM_FLOAT_OPT(offsethigh) { offsethigh = 0; }
+	PARAM_FLOAT_OPT(offsetlow)  { offsetlow = 0; }
 	PARAM_BOOL_OPT(includeHeight)  { includeHeight = true; }
 	PARAM_INT_OPT(ptr)  { ptr = AAPTR_TARGET; }
 
@@ -6482,11 +6377,11 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_JumpIfHigherOrLower)
 
 	if (mobj != NULL && mobj != self) //AAPTR_DEFAULT is completely useless in this regard.
 	{
-		if ((high) && (mobj->Z() > ((includeHeight ? self->height : 0) + self->Z() + offsethigh)))
+		if ((high) && (mobj->Z() > ((includeHeight ? self->Height : 0) + self->Z() + offsethigh)))
 		{
 			ACTION_RETURN_STATE(high);
 		}
-		else if ((low) && (mobj->Z() + (includeHeight ? mobj->height : 0)) < (self->Z() + offsetlow))
+		else if ((low) && (mobj->Z() + (includeHeight ? mobj->Height : 0)) < (self->Z() + offsetlow))
 		{
 			ACTION_RETURN_STATE(low);
 		}
@@ -6613,7 +6508,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckProximity)
 	PARAM_ACTION_PROLOGUE;
 	PARAM_STATE(jump);
 	PARAM_CLASS(classname, AActor);
-	PARAM_FIXED(distance);
+	PARAM_FLOAT(distance);
 	PARAM_INT_OPT(count) { count = 1; }
 	PARAM_INT_OPT(flags) { flags = 0; }
 	PARAM_INT_OPT(ptr) { ptr = AAPTR_DEFAULT; }
@@ -6634,7 +6529,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckProximity)
 	}
 	int counter = 0;
 	bool result = false;
-	fixed_t closer = distance, farther = 0, current = distance;
+	double closer = distance, farther = 0, current = distance;
 	const bool ptrWillChange = !!(flags & (CPXF_SETTARGET | CPXF_SETMASTER | CPXF_SETTRACER));
 	const bool ptrDistPref = !!(flags & (CPXF_CLOSEST | CPXF_FARTHEST));
 
@@ -6665,7 +6560,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckProximity)
 		//[MC]Make sure it's in range and respect the desire for Z or not. The function forces it to use
 		//Z later for ensuring CLOSEST and FARTHEST flags are respected perfectly.
 		//Ripped from sphere checking in A_RadiusGive (along with a number of things).
-		if ((ref->AproxDistance(mo) < distance &&
+		if ((ref->Distance2D(mo) < distance &&
 			((flags & CPXF_NOZ) ||
 			((ref->Z() > mo->Z() && ref->Z() - mo->Top() < distance) ||
 			(ref->Z() <= mo->Z() && mo->Z() - ref->Top() < distance)))))
@@ -6675,7 +6570,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckProximity)
 
 			if (ptrWillChange)
 			{
-				current = ref->AproxDistance(mo);
+				current = ref->Distance2D(mo);
 
 				if ((flags & CPXF_CLOSEST) && (current < closer))
 				{
@@ -6770,12 +6665,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckBlock)
 {
 	PARAM_ACTION_PROLOGUE;
 	PARAM_STATE(block)
-	PARAM_INT_OPT(flags)	{ flags = 0; }
+	PARAM_INT_OPT(flags) { flags = 0; }
 	PARAM_INT_OPT(ptr)		{ ptr = AAPTR_DEFAULT; }
-	PARAM_FIXED_OPT(xofs)	{ xofs = 0; }
-	PARAM_FIXED_OPT(yofs)	{ yofs = 0; }
-	PARAM_FIXED_OPT(zofs)	{ zofs = 0; }
-	PARAM_ANGLE_OPT(angle)	{ angle = 0; }
+	PARAM_FLOAT_OPT(xofs)	{ xofs = 0; }
+	PARAM_FLOAT_OPT(yofs)	{ yofs = 0; }
+	PARAM_FLOAT_OPT(zofs)	{ zofs = 0; }
+	PARAM_ANGLE_OPT(angle)	{ angle = 0.; }
 
 	AActor *mobj = COPY_AAPTR(self, ptr);
 
@@ -6787,25 +6682,21 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckBlock)
 
 	if (!(flags & CBF_ABSOLUTEANGLE))
 	{
-		angle += self->angle;
+		angle += self->Angles.Yaw;
 	}
 
-	angle_t ang = angle >> ANGLETOFINESHIFT;
-	fixedvec3 oldpos = mobj->Pos();
-	fixedvec3 pos;
+	DVector3 oldpos = mobj->Pos();
+	DVector3 pos;
 
 	if (flags & CBF_ABSOLUTEPOS)
 	{
-		pos.x = xofs;
-		pos.y = yofs;
-		pos.z = zofs;
+		pos = { xofs, yofs, zofs };
 	}
 	else
 	{
-		pos = mobj->Vec3Offset(
-			FixedMul(xofs, finecosine[ang]) + FixedMul(yofs, finesine[ang]),
-			FixedMul(xofs, finesine[ang]) - FixedMul(yofs, finecosine[ang]),
-			mobj->Z() + zofs);
+		double s = angle.Sin();
+		double c = angle.Cos();
+		pos = mobj->Vec3Offset(xofs * c + yofs * s, xofs * s - yofs * c, zofs);
 	}
 	
 	// Next, try checking the position based on the sensitivity desired.
@@ -6815,9 +6706,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckBlock)
 	bool checker = false;
 	if (flags & CBF_DROPOFF)
 	{
-		mobj->SetZ(pos.z);
-		checker = P_CheckMove(mobj, pos.x, pos.y);
-		mobj->SetZ(oldpos.z);
+		mobj->SetZ(pos.Z);
+		checker = P_CheckMove(mobj, pos);
+		mobj->SetZ(oldpos.Z);
 	}
 	else
 	{
@@ -6826,7 +6717,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckBlock)
 		mobj->SetOrigin(oldpos, true);
 	}
 	
-	//Nothing to block it so skip the rest.
 	if (checker)
 	{
 		ACTION_RETURN_STATE(NULL);
@@ -6875,9 +6765,9 @@ enum FMDFlags
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceMovementDirection)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_ANGLE_OPT(offset)			{ offset = 0; }
-	PARAM_ANGLE_OPT(anglelimit)		{ anglelimit = 0; }
-	PARAM_ANGLE_OPT(pitchlimit)		{ pitchlimit = 0; }
+	PARAM_ANGLE_OPT(offset)			{ offset = 0.; }
+	PARAM_ANGLE_OPT(anglelimit)		{ anglelimit = 0.; }
+	PARAM_ANGLE_OPT(pitchlimit)		{ pitchlimit = 0.; }
 	PARAM_INT_OPT(flags)			{ flags = 0; }
 	PARAM_INT_OPT(ptr)				{ ptr = AAPTR_DEFAULT; }
 
@@ -6890,36 +6780,32 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceMovementDirection)
 	}
 
 	//Don't bother calculating this if we don't have any horizontal movement.
-	if (!(flags & FMDF_NOANGLE) && (mobj->vel.x != 0 || mobj->vel.y != 0))
+	if (!(flags & FMDF_NOANGLE) && (mobj->Vel.X != 0 || mobj->Vel.Y != 0))
 	{
-		angle_t current = mobj->angle;
-		const angle_t angle = R_PointToAngle2(0, 0, mobj->vel.x, mobj->vel.y);
+		DAngle current = mobj->Angles.Yaw;
+		DAngle angle = mobj->Vel.Angle();
 		//Done because using anglelimit directly causes a signed/unsigned mismatch.
-		const angle_t limit = anglelimit;
 
 		//Code borrowed from A_Face*.
-		if (limit > 0 && (absangle(current - angle) > limit))
+		if (anglelimit > 0)
 		{
-			if (current < angle)
+			DAngle delta = -deltaangle(current, angle);
+			if (fabs(delta) > anglelimit)
 			{
-				// [MC] This may appear backwards, but I assure any who
-				// reads this, it works.
-				if (current - angle > ANGLE_180)
-					current += limit + offset;
-				else
-					current -= limit + offset;
+				if (delta < 0)
+				{
+					current += anglelimit + offset;
+				}
+				else if (delta > 0)
+				{
+					current -= anglelimit + offset;
+				}
+				else // huh???
+				{
+					current = angle + 180. + offset;
+				}
 				mobj->SetAngle(current, !!(flags & FMDF_INTERPOLATE));
 			}
-			else if (current > angle)
-			{
-				if (angle - current > ANGLE_180)
-					current -= limit + offset;
-				else
-					current += limit + offset;
-				mobj->SetAngle(current, !!(flags & FMDF_INTERPOLATE));
-			}
-			else
-				mobj->SetAngle(angle + ANGLE_180 + offset, !!(flags & FMDF_INTERPOLATE));
 		}
 		else
 			mobj->SetAngle(angle + offset, !!(flags & FMDF_INTERPOLATE));
@@ -6927,31 +6813,22 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceMovementDirection)
 
 	if (!(flags & FMDF_NOPITCH))
 	{
-		fixed_t current = mobj->pitch;
-		const DVector2 velocity(mobj->vel.x, mobj->vel.y);
-		const fixed_t pitch = R_PointToAngle2(0, 0, xs_CRoundToInt(velocity.Length()), -mobj->vel.z);
+		DAngle current = mobj->Angles.Pitch;
+		const DVector2 velocity = mobj->Vel.XY();
+		DAngle pitch = VecToAngle(velocity.Length(), -mobj->Vel.Z);
 		if (pitchlimit > 0)
 		{
-			// [MC] angle_t for pitchlimit was required because otherwise
-			// we would wind up with less than desirable turn rates that didn't
-			// match that of A_SetPitch. We want consistency. Also, I didn't know
-			// of a better way to convert from angle_t to fixed_t properly so I
-			// used this instead.
-			fixed_t plimit = fixed_t(pitchlimit);
+			DAngle pdelta = deltaangle(current, pitch);
 
-			if (abs(current - pitch) > plimit)
+			if (fabs(pdelta) > pitchlimit)
 			{
-				fixed_t max = 0;
-
-				if (current > pitch)
+				if (pdelta > 0)
 				{
-					max = MIN(plimit, (current - pitch));
-					current -= max;
+					current -= MIN(pitchlimit, pdelta);
 				}
-				else //if (current > pitch)
+				else //if (pdelta < 0)
 				{
-					max = MIN(plimit, (pitch - current));
-					current += max;
+					current += MIN(pitchlimit, -pdelta);
 				}
 				mobj->SetPitch(current, !!(flags & FMDF_INTERPOLATE));
 			}

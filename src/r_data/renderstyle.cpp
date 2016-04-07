@@ -105,6 +105,18 @@ FArchive &operator<< (FArchive &arc, FRenderStyle &style)
 	return arc;
 }
 
+double GetAlpha(int type, double alpha)
+{
+	switch (type)
+	{
+	case STYLEALPHA_Zero:		return 0;
+	case STYLEALPHA_One:		return OPAQUE;
+	case STYLEALPHA_Src:		return alpha;
+	case STYLEALPHA_InvSrc:		return 1. - alpha;
+	default:					return 0;
+	}
+}
+
 //==========================================================================
 //
 // FRenderStyle :: IsVisible
@@ -114,7 +126,7 @@ FArchive &operator<< (FArchive &arc, FRenderStyle &style)
 //
 //==========================================================================
 
-bool FRenderStyle::IsVisible(fixed_t alpha) const throw()
+bool FRenderStyle::IsVisible(double alpha) const throw()
 {
 	if (BlendOp == STYLEOP_None)
 	{
@@ -124,13 +136,13 @@ bool FRenderStyle::IsVisible(fixed_t alpha) const throw()
 	{
 		if (Flags & STYLEF_Alpha1)
 		{
-			alpha = FRACUNIT;
+			alpha = 1.;
 		}
 		else
 		{
-			alpha = clamp(alpha, 0, FRACUNIT);
+			alpha = clamp(alpha, 0., 1.);
 		}
-		return GetAlpha(SrcAlpha, alpha) != 0 || GetAlpha(DestAlpha, alpha) != FRACUNIT;
+		return GetAlpha(SrcAlpha, alpha) != 0 || GetAlpha(DestAlpha, alpha) != 1;
 	}
 	// Treat anything else as visible.
 	return true;
@@ -186,16 +198,3 @@ void FRenderStyle::CheckFuzz()
 		BlendOp = STYLEOP_Fuzz;
 	}
 }
-
-fixed_t GetAlpha(int type, fixed_t alpha)
-{
-	switch (type)
-	{
-	case STYLEALPHA_Zero:		return 0;
-	case STYLEALPHA_One:		return FRACUNIT;
-	case STYLEALPHA_Src:		return alpha;
-	case STYLEALPHA_InvSrc:		return FRACUNIT - alpha;
-	default:					return 0;
-	}
-}
-

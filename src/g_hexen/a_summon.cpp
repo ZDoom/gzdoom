@@ -36,7 +36,7 @@ bool AArtiDarkServant::Use (bool pickup)
 	{
 		mo->target = Owner;
 		mo->tracer = Owner;
-		mo->vel.z = 5*FRACUNIT;
+		mo->Vel.Z = 5;
 	}
 	return true;
 }
@@ -53,13 +53,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_Summon)
 
 	AMinotaurFriend *mo;
 
-	mo = Spawn<AMinotaurFriend> (self->Pos(), ALLOW_REPLACE);
+	mo = Spawn<AMinotaurFriend>(self->Pos(), ALLOW_REPLACE);
 	if (mo)
 	{
 		if (P_TestMobjLocation(mo) == false || !self->tracer)
 		{ // Didn't fit - change back to artifact
-			mo->Destroy ();
-			AActor *arti = Spawn<AArtiDarkServant> (self->Pos(), ALLOW_REPLACE);
+			mo->Destroy();
+			AActor *arti = Spawn<AArtiDarkServant>(self->Pos(), ALLOW_REPLACE);
 			if (arti) arti->flags |= MF_DROPPED;
 			return 0;
 		}
@@ -72,14 +72,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_Summon)
 		else
 		{
 			mo->tracer = self->tracer;		// Pointer to master
-			AInventory *power = Spawn<APowerMinotaur> (0, 0, 0, NO_REPLACE);
-			power->CallTryPickup (self->tracer);
+			AInventory *power = Spawn<APowerMinotaur>();
+			power->CallTryPickup(self->tracer);
 			mo->SetFriendPlayer(self->tracer->player);
 		}
 
 		// Make smoke puff
-		Spawn ("MinotaurSmoke", self->Pos(), ALLOW_REPLACE);
-		S_Sound (self, CHAN_VOICE, mo->ActiveSound, 1, ATTN_NORM);
+		Spawn("MinotaurSmoke", self->Pos(), ALLOW_REPLACE);
+		S_Sound(self, CHAN_VOICE, mo->ActiveSound, 1, ATTN_NORM);
 	}
 	return 0;
 }

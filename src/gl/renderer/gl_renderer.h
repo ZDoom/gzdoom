@@ -15,6 +15,16 @@ struct pspdef_t;
 class FShaderManager;
 class GLPortal;
 
+inline float DEG2RAD(float deg)
+{
+	return deg * float(M_PI / 180.0);
+}
+
+inline float RAD2DEG(float deg)
+{
+	return deg * float(180. / M_PI);
+}
+
 enum SectorRenderFlags
 {
 	// This is used to avoid creating too many drawinfos
@@ -78,8 +88,8 @@ public:
 	void SetViewport(GL_IRECT *bounds);
 	sector_t *RenderViewpoint (AActor * camera, GL_IRECT * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen);
 	void RenderView(player_t *player);
-	void SetViewAngle(angle_t viewangle);
-	void SetupView(fixed_t viewx, fixed_t viewy, fixed_t viewz, angle_t viewangle, bool mirror, bool planemirror);
+	void SetViewAngle(DAngle viewangle);
+	void SetupView(float viewx, float viewy, float viewz, DAngle viewangle, bool mirror, bool planemirror);
 
 	void Initialize();
 
@@ -89,7 +99,7 @@ public:
 	void DrawScene(bool toscreen = false);
 	void DrawBlend(sector_t * viewsector);
 
-	void DrawPSprite (player_t * player,pspdef_t *psp,fixed_t sx, fixed_t sy, int cm_index, bool hudModelStep, int OverrideShader);
+	void DrawPSprite (player_t * player,pspdef_t *psp,float sx, float sy, int cm_index, bool hudModelStep, int OverrideShader);
 	void DrawPlayerSprites(sector_t * viewsector, bool hudModelStep);
 	void DrawTargeterSprites();
 
@@ -117,7 +127,7 @@ public:
 
 	void SetProjection(float fov, float ratio, float fovratio);
 	void SetProjection(float matrix[4][4]); // raw matrix input from stereo 3d modes
-	void SetViewMatrix(fixed_t viewx, fixed_t viewy, fixed_t viewz, bool mirror, bool planemirror);
+	void SetViewMatrix(float vx, float vy, float vz, bool mirror, bool planemirror);
 	void ProcessScene(bool toscreen = false);
 
 	bool StartOffscreen();
@@ -125,7 +135,7 @@ public:
 
 	void FillSimplePoly(FTexture *texture, FVector2 *points, int npoints,
 		double originx, double originy, double scalex, double scaley,
-		angle_t rotation, FDynamicColormap *colormap, int lightlevel);
+		DAngle rotation, FDynamicColormap *colormap, int lightlevel);
 };
 
 // Global functions. Make them members of GLRenderer later?

@@ -48,7 +48,7 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 			translatable(false), type(NORMAL_IMAGE), image(-1), maxwidth(-1),
 			maxheight(-1), spawnScaleX(1.0f), spawnScaleY(1.0f), flags(0),
 			applyscale(false), offset(static_cast<Offset> (TOP|LEFT)),
-			texture(NULL), alpha(FRACUNIT)
+			texture(NULL), alpha(1.)
 		{
 		}
 
@@ -63,9 +63,7 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 			int w = maxwidth, h = maxheight;
 			
 			// We must calculate this per frame in order to prevent glitches with cl_capfps true.
-			fixed_t frameAlpha = block->Alpha();
-			if(alpha != FRACUNIT)
-				frameAlpha = fixed_t(((double) block->Alpha() / (double) FRACUNIT) * ((double) alpha / (double) OPAQUE) * FRACUNIT);
+			double frameAlpha = block->Alpha() * alpha;
 			
 			if(flags & DI_DRAWINBOX)
 			{
@@ -236,7 +234,7 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 			SBarInfoCommandFlowControl::Tick(block, statusBar, hudChanged);
 
 			texture = NULL;
-			alpha = FRACUNIT;
+			alpha = 1.;
 			if (applyscale)
 			{
 				spawnScaleX = spawnScaleY = 1.0f;
@@ -284,7 +282,7 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 					if (harmor->Slots[armorType] > 0 && harmor->SlotsIncrement[armorType] > 0)
 					{
 						//combine the alpha values
-						alpha = fixed_t(((double) alpha / (double) FRACUNIT) * ((double) MIN<fixed_t> (OPAQUE, Scale(harmor->Slots[armorType], OPAQUE, harmor->SlotsIncrement[armorType])) / (double) OPAQUE) * FRACUNIT);
+						alpha *= MIN(1., harmor->Slots[armorType] / harmor->SlotsIncrement[armorType]);
 						texture = statusBar->Images[image];
 					}
 					else
@@ -310,8 +308,8 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 			
 			if (applyscale)
 			{
-				spawnScaleX = FIXED2DBL(item->scaleX);
-				spawnScaleY = FIXED2DBL(item->scaleY);
+				spawnScaleX = item->Scale.X;
+				spawnScaleY = item->Scale.Y;
 			}
 			
 			texture = TexMan[icon];
@@ -352,7 +350,7 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 		Offset				offset;
 
 		FTexture			*texture;
-		int					alpha;
+		double					alpha;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -643,7 +641,7 @@ class CommandDrawSwitchableImage : public CommandDrawImage
 
 				// Since we're not going to call our parent's tick() method,
 				// be sure to set the alpha value properly.
-				alpha = FRACUNIT;
+				alpha = 1.;
 				return;
 			}
 			CommandDrawImage::Tick(block, statusBar, hudChanged);
@@ -1379,21 +1377,21 @@ class CommandDrawNumber : public CommandDrawString
 				case ARMORCLASS:
 				case SAVEPERCENT:
 				{
+					double add = 0;
 					AHexenArmor *harmor = statusBar->CPlayer->mo->FindInventory<AHexenArmor>();
 					if(harmor != NULL)
 					{
-						num = harmor->Slots[0] + harmor->Slots[1] +
+						add = harmor->Slots[0] + harmor->Slots[1] +
 							harmor->Slots[2] + harmor->Slots[3] + harmor->Slots[4];
 					}
 					//Hexen counts basic armor also so we should too.
 					if(statusBar->armor != NULL)
 					{
-						num += FixedMul(statusBar->armor->SavePercent, 100*FRACUNIT);
+						add += statusBar->armor->SavePercent * 100;
 					}
 					if(value == ARMORCLASS)
-						num /= (5*FRACUNIT);
-					else
-						num >>= FRACBITS;
+						add /= 5;
+					num = int(add);
 					break;
 				}
 				case GLOBALVAR:
@@ -1643,9 +1641,9 @@ class CommandDrawSelectedInventory : public CommandDrawImage, private CommandDra
 				}
 				else
 				{
-					if(itemflash && itemflashFade)
+					if(itemflash && itemflashFade != 0)
 					{
-						fixed_t flashAlpha = fixed_t(((double) block->Alpha() / (double) FRACUNIT) * ((double) itemflashFade / (double) OPAQUE) * FRACUNIT);
+						double flashAlpha = block->Alpha() * itemflashFade;
 						statusBar->DrawGraphic(statusBar->Images[statusBar->invBarOffset + imgCURSOR], imgx-4, imgy+2, block->XOffset(), block->YOffset(), flashAlpha, block->FullScreenOffsets(),
 							translatable, false, offset);
 					}
@@ -1738,7 +1736,7 @@ class CommandDrawSelectedInventory : public CommandDrawImage, private CommandDra
 				artiflashTick--;
 			if(itemflashFade > 0)
 			{
-				itemflashFade -= FRACUNIT/14;
+				itemflashFade -= 1./14;
 				if(itemflashFade < 0)
 					itemflashFade = 0;
 			}
@@ -1749,7 +1747,7 @@ class CommandDrawSelectedInventory : public CommandDrawImage, private CommandDra
 			CommandDrawNumber::Tick(block, statusBar, hudChanged);
 		}
 
-		static void	Flash() { artiflashTick = 4; itemflashFade = FRACUNIT*3/4; }
+		static void	Flash() { artiflashTick = 4; itemflashFade = 0.75; }
 	protected:
 		bool	alternateOnEmpty;
 		bool	artiflash;
@@ -1757,10 +1755,10 @@ class CommandDrawSelectedInventory : public CommandDrawImage, private CommandDra
 		bool	itemflash;
 
 		static int		artiflashTick;
-		static fixed_t	itemflashFade;
+		static double	itemflashFade;
 };
 int CommandDrawSelectedInventory::artiflashTick = 0;
-int CommandDrawSelectedInventory::itemflashFade = FRACUNIT*3/4;
+double CommandDrawSelectedInventory::itemflashFade = 0.75;
 
 void DSBarInfo::FlashItem(const PClass *itemtype)
 {
@@ -2096,9 +2094,9 @@ class CommandDrawInventoryBar : public SBarInfoCommand
 		{
 			int spacing = GetCounterSpacing(statusBar);
 		
-			int bgalpha = block->Alpha();
+			double bgalpha = block->Alpha();
 			if(translucent)
-				bgalpha = fixed_t((((double) block->Alpha() / (double) FRACUNIT) * ((double) HX_SHADOW / (double) FRACUNIT)) * FRACUNIT);
+				bgalpha *= HX_SHADOW;
 		
 			AInventory *item;
 			unsigned int i = 0;
@@ -2478,10 +2476,10 @@ class CommandDrawBar : public SBarInfoCommand
 			FTexture *fg = statusBar->Images[foreground];
 			FTexture *bg = (background != -1) ? statusBar->Images[background] : NULL;
 
-			fixed_t value = drawValue;
+			double value = drawValue;
 			if(border != 0)
 			{
-				value = FRACUNIT - value; //invert since the new drawing method requires drawing the bg on the fg.
+				value = 1. - value; //invert since the new drawing method requires drawing the bg on the fg.
 
 				//Draw the whole foreground
 				statusBar->DrawGraphic(fg, this->x, this->y, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets());
@@ -2492,27 +2490,27 @@ class CommandDrawBar : public SBarInfoCommand
 				if (bg != NULL && bg->GetScaledWidth() == fg->GetScaledWidth() && bg->GetScaledHeight() == fg->GetScaledHeight())
 					statusBar->DrawGraphic(bg, this->x, this->y, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets());
 				else
-					statusBar->DrawGraphic(fg, this->x, this->y, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets(), false, false, 0, false, -1, -1, 0, 0, 0, 0, true);
+					statusBar->DrawGraphic(fg, this->x, this->y, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets(), false, false, 0, false, -1, -1, nulclip, true);
 			}
 		
 			// {cx, cy, cr, cb}
-			fixed_t clip[4] = {0, 0, 0, 0};
+			double Clip[4] = {0, 0, 0, 0};
 		
-			fixed_t sizeOfImage = (horizontal ? fg->GetScaledWidth()-border*2 : fg->GetScaledHeight()-border*2)<<FRACBITS;
-			clip[(!horizontal)|((horizontal ? !reverse : reverse)<<1)] = sizeOfImage - FixedMul(sizeOfImage, value);
+			int sizeOfImage = (horizontal ? fg->GetScaledWidth()-border*2 : fg->GetScaledHeight()-border*2);
+			Clip[(!horizontal)|((horizontal ? !reverse : reverse)<<1)] = sizeOfImage - sizeOfImage *value;
 			// Draw background
 			if(border != 0)
 			{
 				for(unsigned int i = 0;i < 4;i++)
-					clip[i] += border<<FRACBITS;
+					Clip[i] += border;
 		
 				if (bg != NULL && bg->GetScaledWidth() == fg->GetScaledWidth() && bg->GetScaledHeight() == fg->GetScaledHeight())
-					statusBar->DrawGraphic(bg, this->x, this->y, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets(), false, false, 0, false, -1, -1, clip[0], clip[1], clip[2], clip[3]);
+					statusBar->DrawGraphic(bg, this->x, this->y, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets(), false, false, 0, false, -1, -1, Clip);
 				else
-					statusBar->DrawGraphic(fg, this->x, this->y, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets(), false, false, 0, false, -1, -1, clip[0], clip[1], clip[2], clip[3], true);
+					statusBar->DrawGraphic(fg, this->x, this->y, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets(), false, false, 0, false, -1, -1, Clip, true);
 			}
 			else
-				statusBar->DrawGraphic(fg, this->x, this->y, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets(), false, false, 0, false, -1, -1, clip[0], clip[1], clip[2], clip[3]);
+				statusBar->DrawGraphic(fg, this->x, this->y, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets(), false, false, 0, false, -1, -1, Clip);
 		}
 		void	Parse(FScanner &sc, bool fullScreenOffsets)
 		{
@@ -2637,7 +2635,7 @@ class CommandDrawBar : public SBarInfoCommand
 		}
 		void	Tick(const SBarInfoMainBlock *block, const DSBarInfo *statusBar, bool hudChanged)
 		{
-			fixed_t value = 0;
+			double value = 0;
 			int max = 0;
 			switch(type)
 			{
@@ -2756,18 +2754,19 @@ class CommandDrawBar : public SBarInfoCommand
 				}
 				case SAVEPERCENT:
 				{
+					double add = 0;
 					AHexenArmor *harmor = statusBar->CPlayer->mo->FindInventory<AHexenArmor>();
 					if(harmor != NULL)
 					{
-						value = harmor->Slots[0] + harmor->Slots[1] +
+						add = harmor->Slots[0] + harmor->Slots[1] +
 							harmor->Slots[2] + harmor->Slots[3] + harmor->Slots[4];
 					}
 					//Hexen counts basic armor also so we should too.
 					if(statusBar->armor != NULL)
 					{
-						value += FixedMul(statusBar->armor->SavePercent, 100*FRACUNIT);
+						add += statusBar->armor->SavePercent * 100;
 					}
-					value >>= FRACBITS;
+					value = int(add);
 					max = 100;
 					break;
 				}
@@ -2776,9 +2775,7 @@ class CommandDrawBar : public SBarInfoCommand
 
 			if(max != 0 && value > 0)
 			{
-				value = (value << FRACBITS) / max;
-				if(value > FRACUNIT)
-					value = FRACUNIT;
+				value = MIN(value / max, 1.);
 			}
 			else
 				value = 0;
@@ -2787,14 +2784,14 @@ class CommandDrawBar : public SBarInfoCommand
 				// [BL] Since we used a percentage (in order to get the most fluid animation)
 				//      we need to establish a cut off point so the last pixel won't hang as the animation slows
 				if(pixel == -1 && statusBar->Images[foreground])
-					pixel = MAX(1, FRACUNIT/statusBar->Images[foreground]->GetWidth());
+					pixel = MAX(1., 1./statusBar->Images[foreground]->GetWidth());
 
-				if(abs(drawValue - value) < pixel)
+				if(fabs(drawValue - value) < pixel)
 					drawValue = value;
-				else if(value < drawValue)
-					drawValue -= clamp<fixed_t>((drawValue - value) >> 2, 1, FixedDiv(interpolationSpeed<<FRACBITS, FRACUNIT*100));
-				else if(drawValue < value)
-					drawValue += clamp<fixed_t>((value - drawValue) >> 2, 1, FixedDiv(interpolationSpeed<<FRACBITS, FRACUNIT*100));
+				else if (value < drawValue)
+					drawValue -= clamp<double>((drawValue - value) / 4, 1 / 65536., interpolationSpeed / 100.);
+				else if (drawValue < value)
+					drawValue += clamp<double>((value - drawValue) / 4, 1 / 65536., interpolationSpeed / 100.);
 			}
 			else
 				drawValue = value;
@@ -2868,8 +2865,8 @@ class CommandDrawBar : public SBarInfoCommand
 		SBarInfoCoordinate	y;
 
 		int					interpolationSpeed;
-		fixed_t				drawValue;
-		fixed_t				pixel;
+		double				drawValue;
+		double				pixel;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -3385,7 +3382,7 @@ class CommandAlpha : public SBarInfoMainBlock
 		void	Parse(FScanner &sc, bool fullScreenOffsets)
 		{
 			sc.MustGetToken(TK_FloatConst);
-			alpha = fixed_t(FRACUNIT * sc.Float);
+			alpha = sc.Float;
 
 			// We don't want to allow all the options of a regular main block
 			// so skip to the SBarInfoCommandFlowControl.

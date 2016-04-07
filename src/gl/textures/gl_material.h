@@ -182,33 +182,33 @@ public:
 
 	int GetScaledLeftOffset(ETexUse i) const
 	{
-		return DivScale16(LeftOffset[i], tex->xScale);
+		return int(LeftOffset[i] / tex->Scale.X);
 	}
 
 	int GetScaledTopOffset(ETexUse i) const
 	{
-		return DivScale16(TopOffset[i], tex->yScale);
+		return int(TopOffset[i] / tex->Scale.Y);
 	}
 
 	float GetScaledLeftOffsetFloat(ETexUse i) const
 	{
-		return LeftOffset[i] / FIXED2FLOAT(tex->xScale);
+		return float(LeftOffset[i] / tex->Scale.X);
 	}
 
 	float GetScaledTopOffsetFloat(ETexUse i) const
 	{
-		return TopOffset[i] / FIXED2FLOAT(tex->yScale);
+		return float(TopOffset[i] / tex->Scale.Y);
 	}
 
 	// This is scaled size in floating point as needed by sprites
 	float GetScaledWidthFloat(ETexUse i) const
 	{
-		return Width[i] / FIXED2FLOAT(tex->xScale);
+		return float(Width[i] / tex->Scale.X);
 	}
 
 	float GetScaledHeightFloat(ETexUse i) const
 	{
-		return Height[i] / FIXED2FLOAT(tex->yScale);
+		return float(Height[i] / tex->Scale.Y);
 	}
 
 	// Get right/bottom UV coordinates for patch drawing

@@ -2,6 +2,7 @@
 #define __TEXTURES_H
 
 #include "doomtype.h"
+#include "vectors.h"
 
 struct FloatRect
 {
@@ -145,8 +146,7 @@ public:
 
 	BYTE WidthBits, HeightBits;
 
-	fixed_t		xScale;
-	fixed_t		yScale;
+	DVector2 Scale;
 
 	int SourceLump;
 	FTextureID id;
@@ -225,16 +225,16 @@ public:
 	int GetWidth () { return Width; }
 	int GetHeight () { return Height; }
 
-	int GetScaledWidth () { int foo = (Width << 17) / xScale; return (foo >> 1) + (foo & 1); }
-	int GetScaledHeight () { int foo = (Height << 17) / yScale; return (foo >> 1) + (foo & 1); }
-	int GetScaledHeight(fixed_t scale) { int foo = (Height << 17) / scale; return (foo >> 1) + (foo & 1); }
-	double GetScaledWidthDouble () { return (Width * 65536.) / xScale; }
-	double GetScaledHeightDouble () { return (Height * 65536.) / yScale; }
+	int GetScaledWidth () { int foo = int((Width * 2) / Scale.X); return (foo >> 1) + (foo & 1); }
+	int GetScaledHeight () { int foo = int((Height * 2) / Scale.Y); return (foo >> 1) + (foo & 1); }
+	double GetScaledWidthDouble () { return Width / Scale.X; }
+	double GetScaledHeightDouble () { return Height / Scale.Y; }
+	double GetScaleY() const { return Scale.Y; }
 
-	int GetScaledLeftOffset () { int foo = (LeftOffset << 17) / xScale; return (foo >> 1) + (foo & 1); }
-	int GetScaledTopOffset () { int foo = (TopOffset << 17) / yScale; return (foo >> 1) + (foo & 1); }
-	double GetScaledLeftOffsetDouble() { return (LeftOffset * 65536.) / xScale; }
-	double GetScaledTopOffsetDouble() { return (TopOffset * 65536.) / yScale; }
+	int GetScaledLeftOffset () { int foo = int((LeftOffset * 2) / Scale.X); return (foo >> 1) + (foo & 1); }
+	int GetScaledTopOffset () { int foo = int((TopOffset * 2) / Scale.Y); return (foo >> 1) + (foo & 1); }
+	double GetScaledLeftOffsetDouble() { return LeftOffset / Scale.X; }
+	double GetScaledTopOffsetDouble() { return TopOffset / Scale.Y; }
 
 	virtual void SetFrontSkyLayer();
 
@@ -260,8 +260,7 @@ public:
 		LeftOffset = BaseTexture->LeftOffset;
 		WidthBits = BaseTexture->WidthBits;
 		HeightBits = BaseTexture->HeightBits;
-		xScale = BaseTexture->xScale;
-		yScale = BaseTexture->yScale;
+		Scale = BaseTexture->Scale;
 		WidthMask = (1 << WidthBits) - 1;
 	}
 

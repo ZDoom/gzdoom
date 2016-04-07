@@ -245,39 +245,39 @@ SortNode * GLDrawList::FindSortPlane(SortNode * head)
 //==========================================================================
 SortNode * GLDrawList::FindSortWall(SortNode * head)
 {
-	fixed_t farthest=INT_MIN;
-	fixed_t nearest=INT_MAX;
-	SortNode * best=NULL;
-	SortNode * node=head;
-	fixed_t bestdist=INT_MAX;
+	float farthest = -FLT_MAX;
+	float nearest = FLT_MAX;
+	SortNode * best = NULL;
+	SortNode * node = head;
+	float bestdist = FLT_MAX;
 
 	while (node)
 	{
-		GLDrawItem * it=&drawitems[node->itemindex];
-		if (it->rendertype==GLDIT_WALL)
+		GLDrawItem * it = &drawitems[node->itemindex];
+		if (it->rendertype == GLDIT_WALL)
 		{
-			fixed_t d=walls[it->index].viewdistance;
-			if (d>farthest) farthest=d;
-			if (d<nearest) nearest=d;
+			float d = walls[it->index].ViewDistance;
+			if (d > farthest) farthest = d;
+			if (d < nearest) nearest = d;
 		}
-		node=node->next;
+		node = node->next;
 	}
-	if (farthest==INT_MIN) return NULL;
-	node=head;
-	farthest=(farthest+nearest)>>1;
+	if (farthest == INT_MIN) return NULL;
+	node = head;
+	farthest = (farthest + nearest) / 2;
 	while (node)
 	{
-		GLDrawItem * it=&drawitems[node->itemindex];
-		if (it->rendertype==GLDIT_WALL)
+		GLDrawItem * it = &drawitems[node->itemindex];
+		if (it->rendertype == GLDIT_WALL)
 		{
-			fixed_t di=abs(walls[it->index].viewdistance-farthest);
-			if (!best || di<bestdist)
+			float di = fabsf(walls[it->index].ViewDistance - farthest);
+			if (!best || di < bestdist)
 			{
-				best=node;
-				bestdist=di;
+				best = node;
+				bestdist = di;
 			}
 		}
-		node=node->next;
+		node = node->next;
 	}
 	return best;
 }
@@ -312,16 +312,15 @@ void GLDrawList::SortWallIntoPlane(SortNode * head,SortNode * sort)
 	GLWall * ws=&walls[drawitems[sort->itemindex].index];
 	GLWall * ws1;
 
-	bool ceiling = fh->z > FIXED2FLOAT(viewz);
+	bool ceiling = fh->z > ViewPos.Z;
 
-
-	if (ws->ztop[0]>fh->z && ws->zbottom[0]<fh->z)
+	if ((ws->ztop[0] > fh->z || ws->ztop[1] > fh->z) && (ws->zbottom[0] < fh->z || ws->zbottom[1] < fh->z))
 	{
 		// We have to split this wall!
 
 		// WARNING: NEVER EVER push a member of an array onto the array itself.
 		// Bad things will happen if the memory must be reallocated!
-		GLWall w=*ws;
+		GLWall w = *ws;
 		AddWall(&w);
 
 		ws1=&walls[walls.Size()-1];
@@ -342,9 +341,9 @@ void GLDrawList::SortWallIntoPlane(SortNode * head,SortNode * sort)
 			ws1->uplft.v = ws->lolft.v = ws1->uprgt.v = ws->lorgt.v=newtexv;
 		}
 
-		SortNode * sort2=SortNodes.GetNew();
-		memset(sort2,0,sizeof(SortNode));
-		sort2->itemindex=drawitems.Size()-1;
+		SortNode * sort2 = SortNodes.GetNew();
+		memset(sort2, 0, sizeof(SortNode));
+		sort2->itemindex = drawitems.Size() - 1;
 
 		head->AddToLeft(sort);
 		head->AddToRight(sort2);
@@ -371,13 +370,13 @@ void GLDrawList::SortSpriteIntoPlane(SortNode * head,SortNode * sort)
 	GLSprite * ss=&sprites[drawitems[sort->itemindex].index];
 	GLSprite * ss1;
 
-	bool ceiling = fh->z > FIXED2FLOAT(viewz);
+	bool ceiling = fh->z > ViewPos.Z;
 
-	if (ss->z1>fh->z && ss->z2<fh->z)
+	if ((ss->z1>fh->z && ss->z2<fh->z) || ss->modelframe)
 	{
-		// We have to split this sprite!
+		// We have to split this sprite
 		GLSprite s=*ss;
-		AddSprite(&s);
+		AddSprite(&s);	// add a copy to avoid reallocation issues.
 		ss1=&sprites[sprites.Size()-1];
 		ss=&sprites[drawitems[sort->itemindex].index];	// may have been reallocated!
 		float newtexv=ss->vt + ((ss->vb-ss->vt)/(ss->z2-ss->z1))*(fh->z-ss->z1);
@@ -1072,9 +1071,9 @@ void FDrawInfo::DrawFloodedPlane(wallseg * ws, float planez, sector_t * sec, boo
 	gl_SetFog(lightlevel, rel, &Colormap, false);
 	gltexture->Bind(Colormap.colormap);
 
-	float fviewx = FIXED2FLOAT(viewx);
-	float fviewy = FIXED2FLOAT(viewy);
-	float fviewz = FIXED2FLOAT(viewz);
+	float fviewx = ViewPos.X;
+	float fviewy = ViewPos.Y;
+	float fviewz = ViewPos.Z;
 
 	gl_RenderState.Apply();
 
@@ -1134,11 +1133,11 @@ void FDrawInfo::FloodUpperGap(seg_t * seg)
 
 	// Although the plane can be sloped this code will only be called
 	// when the edge itself is not.
-	fixed_t backz = fakebsector->ceilingplane.ZatPoint(seg->v1);
-	fixed_t frontz = fakefsector->ceilingplane.ZatPoint(seg->v1);
+	double backz = fakebsector->ceilingplane.ZatPoint(seg->v1);
+	double frontz = fakefsector->ceilingplane.ZatPoint(seg->v1);
 
 	if (fakebsector->GetTexture(sector_t::ceiling)==skyflatnum) return;
-	if (backz < viewz) return;
+	if (backz < ViewPos.Z) return;
 
 	if (seg->sidedef == seg->linedef->sidedef[0])
 	{
@@ -1151,13 +1150,13 @@ void FDrawInfo::FloodUpperGap(seg_t * seg)
 		v2=seg->linedef->v1;
 	}
 
-	ws.x1= FIXED2FLOAT(v1->x);
-	ws.y1= FIXED2FLOAT(v1->y);
-	ws.x2= FIXED2FLOAT(v2->x);
-	ws.y2= FIXED2FLOAT(v2->y);
+	ws.x1 = v1->fX();
+	ws.y1 = v1->fY();
+	ws.x2 = v2->fX();
+	ws.y2 = v2->fY();
 
-	ws.z1= FIXED2FLOAT(frontz);
-	ws.z2= FIXED2FLOAT(backz);
+	ws.z1= frontz;
+	ws.z2= backz;
 
 	// Step1: Draw a stencil into the gap
 	SetupFloodStencil(&ws);
@@ -1186,12 +1185,12 @@ void FDrawInfo::FloodLowerGap(seg_t * seg)
 
 	// Although the plane can be sloped this code will only be called
 	// when the edge itself is not.
-	fixed_t backz = fakebsector->floorplane.ZatPoint(seg->v1);
-	fixed_t frontz = fakefsector->floorplane.ZatPoint(seg->v1);
+	double backz = fakebsector->floorplane.ZatPoint(seg->v1);
+	double frontz = fakefsector->floorplane.ZatPoint(seg->v1);
 
 
 	if (fakebsector->GetTexture(sector_t::floor) == skyflatnum) return;
-	if (fakebsector->GetPlaneTexZ(sector_t::floor) > viewz) return;
+	if (fakebsector->GetPlaneTexZF(sector_t::floor) > ViewPos.Z) return;
 
 	if (seg->sidedef == seg->linedef->sidedef[0])
 	{
@@ -1204,13 +1203,13 @@ void FDrawInfo::FloodLowerGap(seg_t * seg)
 		v2=seg->linedef->v1;
 	}
 
-	ws.x1= FIXED2FLOAT(v1->x);
-	ws.y1= FIXED2FLOAT(v1->y);
-	ws.x2= FIXED2FLOAT(v2->x);
-	ws.y2= FIXED2FLOAT(v2->y);
+	ws.x1 = v1->fX();
+	ws.y1 = v1->fY();
+	ws.x2 = v2->fX();
+	ws.y2 = v2->fY();
 
-	ws.z2= FIXED2FLOAT(frontz);
-	ws.z1= FIXED2FLOAT(backz);
+	ws.z2= frontz;
+	ws.z1= backz;
 
 	// Step1: Draw a stencil into the gap
 	SetupFloodStencil(&ws);

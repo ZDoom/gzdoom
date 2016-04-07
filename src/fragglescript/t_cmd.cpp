@@ -165,7 +165,7 @@ void FS_EmulateCmd(char * string)
 		else if (sc.Compare("viewheight"))
 		{
 			sc.MustGetFloat();
-			fixed_t playerviewheight = (fixed_t)(sc.Float*FRACUNIT);
+			double playerviewheight = sc.Float;
 			for(int i=0;i<MAXPLAYERS;i++)
 			{
 				// No, this is not correct. But this is the way Legacy WADs expect it to be handled!

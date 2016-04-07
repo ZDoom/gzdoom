@@ -93,7 +93,7 @@ bool sector_t::IsLinked(sector_t *other, bool ceiling) const
 //
 //============================================================================
 
-static bool MoveCeiling(sector_t *sector, int crush, fixed_t move)
+static bool MoveCeiling(sector_t *sector, int crush, double move)
 {
 	sector->ceilingplane.ChangeHeight (move);
 	sector->ChangePlaneTexZ(sector_t::ceiling, move);
@@ -101,14 +101,13 @@ static bool MoveCeiling(sector_t *sector, int crush, fixed_t move)
 	if (P_ChangeSector(sector, crush, move, 1, true)) return false;
 
 	// Don't let the ceiling go below the floor
-	if ((sector->ceilingplane.a | sector->ceilingplane.b |
-		 sector->floorplane.a | sector->floorplane.b) == 0 &&
-		 sector->GetPlaneTexZ(sector_t::floor)  > sector->GetPlaneTexZ(sector_t::ceiling)) return false;
+	if (!sector->ceilingplane.isSlope() && !sector->floorplane.isSlope() &&
+		 sector->GetPlaneTexZF(sector_t::floor)  > sector->GetPlaneTexZF(sector_t::ceiling)) return false;
 
 	return true;
 }
 
-static bool MoveFloor(sector_t *sector, int crush, fixed_t move)
+static bool MoveFloor(sector_t *sector, int crush, double move)
 {
 	sector->floorplane.ChangeHeight (move);
 	sector->ChangePlaneTexZ(sector_t::floor, move);
@@ -116,9 +115,8 @@ static bool MoveFloor(sector_t *sector, int crush, fixed_t move)
 	if (P_ChangeSector(sector, crush, move, 0, true)) return false;
 
 	// Don't let the floor go above the ceiling
-	if ((sector->ceilingplane.a | sector->ceilingplane.b |
-		 sector->floorplane.a | sector->floorplane.b) == 0 &&
-		 sector->GetPlaneTexZ(sector_t::floor) > sector->GetPlaneTexZ(sector_t::ceiling)) return false;
+	if (!sector->ceilingplane.isSlope() && !sector->floorplane.isSlope() &&
+		 sector->GetPlaneTexZF(sector_t::floor) > sector->GetPlaneTexZF(sector_t::ceiling)) return false;
 
 	return true;
 }
@@ -133,7 +131,7 @@ static bool MoveFloor(sector_t *sector, int crush, fixed_t move)
 //
 //============================================================================
 
-bool P_MoveLinkedSectors(sector_t *sector, int crush, fixed_t move, bool ceiling)
+bool P_MoveLinkedSectors(sector_t *sector, int crush, double move, bool ceiling)
 {
 	extsector_t::linked::plane &scrollplane = ceiling? sector->e->Linked.Ceiling : sector->e->Linked.Floor;
 	bool ok = true;

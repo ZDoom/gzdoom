@@ -138,7 +138,7 @@ void cht_DoCheat (player_t *player, int cheat)
 			player->cheats &= ~CF_NOCLIP;
 			msg = GStrings("STSTR_NCOFF");
 		}
-		if (player->mo->vel.x == 0) player->mo->vel.x = 1;	// force some lateral movement so that internal variables are up to date
+		if (player->mo->Vel.X == 0) player->mo->Vel.X = MinVel;	// force some lateral movement so that internal variables are up to date
 		break;
 
 	case CHT_NOVELOCITY:
@@ -333,7 +333,7 @@ void cht_DoCheat (player_t *player, int cheat)
 				player->mo->flags6 = player->mo->GetDefault()->flags6;
 				player->mo->flags7 = player->mo->GetDefault()->flags7;
 				player->mo->renderflags &= ~RF_INVISIBLE;
-				player->mo->height = player->mo->GetDefault()->height;
+				player->mo->Height = player->mo->GetDefault()->Height;
 				player->mo->radius = player->mo->GetDefault()->radius;
 				player->mo->special1 = 0;	// required for the Hexen fighter's fist attack. 
 											// This gets set by AActor::Die as flag for the wimpy death and must be reset here.
@@ -469,8 +469,8 @@ void cht_DoCheat (player_t *player, int cheat)
 		{
 			// Don't allow this in deathmatch even with cheats enabled, because it's
 			// a very very cheap kill.
-			P_LineAttack (player->mo, player->mo->angle, PLAYERMISSILERANGE,
-				P_AimLineAttack (player->mo, player->mo->angle, PLAYERMISSILERANGE), TELEFRAG_DAMAGE,
+			P_LineAttack (player->mo, player->mo->Angles.Yaw, PLAYERMISSILERANGE,
+				P_AimLineAttack (player->mo, player->mo->Angles.Yaw, PLAYERMISSILERANGE), TELEFRAG_DAMAGE,
 				NAME_MDK, NAME_BulletPuff);
 		}
 		break;
@@ -583,7 +583,7 @@ void GiveSpawner (player_t *player, PClassInventory *type, int amount)
 	}
 
 	AInventory *item = static_cast<AInventory *>
-		(Spawn (type, player->mo->X(), player->mo->Y(), player->mo->Z(), NO_REPLACE));
+		(Spawn (type, player->mo->Pos(), NO_REPLACE));
 	if (item != NULL)
 	{
 		if (amount > 0)
@@ -694,7 +694,7 @@ void cht_Give (player_t *player, const char *name, int amount)
 				AInventory *ammo = player->mo->FindInventory(atype);
 				if (ammo == NULL)
 				{
-					ammo = static_cast<AInventory *>(Spawn (atype, 0, 0, 0, NO_REPLACE));
+					ammo = static_cast<AInventory *>(Spawn (atype));
 					ammo->AttachToOwner (player->mo);
 					ammo->Amount = ammo->MaxAmount;
 				}
@@ -713,9 +713,9 @@ void cht_Give (player_t *player, const char *name, int amount)
 	{
 		if (gameinfo.gametype != GAME_Hexen)
 		{
-			ABasicArmorPickup *armor = Spawn<ABasicArmorPickup> (0,0,0, NO_REPLACE);
+			ABasicArmorPickup *armor = Spawn<ABasicArmorPickup> ();
 			armor->SaveAmount = 100*deh.BlueAC;
-			armor->SavePercent = gameinfo.Armor2Percent > 0? gameinfo.Armor2Percent : FRACUNIT/2;
+			armor->SavePercent = gameinfo.Armor2Percent > 0? gameinfo.Armor2Percent : 0.5;
 			if (!armor->CallTryPickup (player->mo))
 			{
 				armor->Destroy ();
@@ -725,7 +725,7 @@ void cht_Give (player_t *player, const char *name, int amount)
 		{
 			for (i = 0; i < 4; ++i)
 			{
-				AHexenArmor *armor = Spawn<AHexenArmor> (0,0,0, NO_REPLACE);
+				AHexenArmor *armor = Spawn<AHexenArmor> ();
 				armor->health = i;
 				armor->Amount = 0;
 				if (!armor->CallTryPickup (player->mo))
@@ -748,7 +748,7 @@ void cht_Give (player_t *player, const char *name, int amount)
 				AKey *key = (AKey *)GetDefaultByType (PClassActor::AllActorClasses[i]);
 				if (key->KeyNumber != 0)
 				{
-					key = static_cast<AKey *>(Spawn(static_cast<PClassActor *>(PClassActor::AllActorClasses[i]), 0,0,0, NO_REPLACE));
+					key = static_cast<AKey *>(Spawn(static_cast<PClassActor *>(PClassActor::AllActorClasses[i])));
 					if (!key->CallTryPickup (player->mo))
 					{
 						key->Destroy ();
@@ -1071,8 +1071,8 @@ public:
 		Pawn->flags |= MF_SHOOTABLE;
 		Pawn->flags2 &= ~MF2_INVULNERABLE;
 		// Store the player's current damage factor, to restore it later.
-		fixed_t plyrdmgfact = Pawn->DamageFactor;
-		Pawn->DamageFactor = 65536;
+		double plyrdmgfact = Pawn->DamageFactor;
+		Pawn->DamageFactor = 1.;
 		P_DamageMobj (Pawn, Pawn, Pawn, TELEFRAG_DAMAGE, NAME_Suicide);
 		Pawn->DamageFactor = plyrdmgfact;
 		if (Pawn->health <= 0)

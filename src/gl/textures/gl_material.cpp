@@ -839,7 +839,7 @@ void FMaterial::Bind(int cm, int clampmode, int translation, int overrideshader)
 	int usebright = false;
 	int shaderindex = overrideshader > 0? overrideshader : mShaderIndex;
 	int maxbound = 0;
-	bool allowhires = tex->xScale == FRACUNIT && tex->yScale == FRACUNIT;
+	bool allowhires = tex->Scale.X == 1 && tex->Scale.Y == 1;
 
 	int softwarewarp = gl_RenderState.SetupShader(tex->bHasCanvas, shaderindex, cm, tex->gl_info.shaderspeed);
 
@@ -946,12 +946,12 @@ void FMaterial::GetTexCoordInfo(FTexCoordInfo *tci, fixed_t x, fixed_t y) const
 	if (x == FRACUNIT)
 	{
 		tci->mRenderWidth = RenderWidth[GLUSE_TEXTURE];
-		tci->mScaleX = tex->xScale;
+		tci->mScaleX = FLOAT2FIXED(tex->Scale.X);
 		tci->mTempScaleX = FRACUNIT;
 	}
 	else
 	{
-		fixed_t scale_x = FixedMul(x, tex->xScale);
+		fixed_t scale_x = fixed_t(x * tex->Scale.X);
 		int foo = (Width[GLUSE_TEXTURE] << 17) / scale_x; 
 		tci->mRenderWidth = (foo >> 1) + (foo & 1); 
 		tci->mScaleX = scale_x;
@@ -961,12 +961,12 @@ void FMaterial::GetTexCoordInfo(FTexCoordInfo *tci, fixed_t x, fixed_t y) const
 	if (y == FRACUNIT)
 	{
 		tci->mRenderHeight = RenderHeight[GLUSE_TEXTURE];
-		tci->mScaleY = tex->yScale;
+		tci->mScaleY = FLOAT2FIXED(tex->Scale.Y);
 		tci->mTempScaleY = FRACUNIT;
 	}
 	else
 	{
-		fixed_t scale_y = FixedMul(y, tex->yScale);
+		fixed_t scale_y = fixed_t(y * tex->Scale.Y);
 		int foo = (Height[GLUSE_TEXTURE] << 17) / scale_y; 
 		tci->mRenderHeight = (foo >> 1) + (foo & 1); 
 		tci->mScaleY = scale_y;

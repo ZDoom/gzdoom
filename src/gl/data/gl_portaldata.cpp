@@ -64,15 +64,13 @@
 
 struct FPortalID
 {
-	fixed_t mXDisplacement;
-	fixed_t mYDisplacement;
+	DVector2 mDisplacement;
 
 	// for the hash code
-	operator intptr_t() const { return (mXDisplacement >> 8) + (mYDisplacement << 8); }
+	operator intptr_t() const { return (FLOAT2FIXED(mDisplacement.X) >> 8) + (FLOAT2FIXED(mDisplacement.Y) << 8); }
 	bool operator != (const FPortalID &other) const
 	{
-		return mXDisplacement != other.mXDisplacement ||
-				mYDisplacement != other.mYDisplacement;
+		return mDisplacement != other.mDisplacement;
 	}
 };
 
@@ -331,8 +329,8 @@ void gl_BuildPortalCoverage(FPortalCoverage *coverage, subsector_t *subsector, F
 	shape.Resize(subsector->numlines);
 	for(unsigned i=0; i<subsector->numlines; i++)
 	{
-		centerx += (shape[i].x = subsector->firstline[i].v1->x + portal->xDisplacement);
-		centery += (shape[i].y = subsector->firstline[i].v1->y + portal->yDisplacement);
+		centerx += (shape[i].x = FLOAT2FIXED(subsector->firstline[i].v1->fX() + portal->mDisplacement.X));
+		centery += (shape[i].y = FLOAT2FIXED(subsector->firstline[i].v1->fY() + portal->mDisplacement.Y));
 	}
 
 	FCoverageBuilder build(subsector, portal);
@@ -361,7 +359,7 @@ static void CollectPortalSectors(FPortalMap &collection)
 			ASkyViewpoint *SkyBox = barrier_cast<ASkyViewpoint*>(sec->SkyBoxes[j]);
 			if (SkyBox != NULL && SkyBox->bAlways && SkyBox->Mate != NULL)
 			{
-				FPortalID id = { SkyBox->X() - SkyBox->Mate->X(), SkyBox->Y() - SkyBox->Mate->Y() };
+				FPortalID id = { {SkyBox->X() - SkyBox->Mate->X(), SkyBox->Y() - SkyBox->Mate->Y()} };
 
 				FPortalSectors &sss = collection[id];
 				FPortalSector ss = { sec, j };
@@ -406,8 +404,7 @@ void gl_InitPortals()
 			if (planeflags & i)
 			{
 				FPortal *portal = new FPortal;
-				portal->xDisplacement = pair->Key.mXDisplacement;
-				portal->yDisplacement = pair->Key.mYDisplacement;
+				portal->mDisplacement = pair->Key.mDisplacement;
 				portal->plane = (i==1? sector_t::floor : sector_t::ceiling);	/**/
 				portal->glportal = NULL;
 				portals.Push(portal);
@@ -463,14 +460,14 @@ void gl_InitPortals()
 						line_t *pSrcLine2 = linePortals[j].mOrigin;
 						line_t *pLine2 = linePortals[j].mDestination;
 						// angular precision is intentionally reduced to 32 bit BAM to account for precision problems (otherwise many not perfectly horizontal or vertical portals aren't found here.)
-						angle_t srcang = RAD2ANGLE(atan2(pSrcLine->dy, pSrcLine->dx));
-						angle_t dstang = RAD2ANGLE(atan2(pLine->dy, pLine->dx));
+						unsigned srcang = pSrcLine->Delta().Angle().BAMs();
+						unsigned dstang = pLine->Delta().Angle().BAMs();
 						if ((pSrcLine->v2 == pSrcLine2->v1 && pLine->v1 == pLine2->v2) ||
 							(pSrcLine->v1 == pSrcLine2->v2 && pLine->v2 == pLine2->v1))
 						{
 							// The line connects, now check the translation
-							fixed_t srcang2 = RAD2ANGLE(atan2(pSrcLine2->dy, pSrcLine2->dx));
-							fixed_t dstang2 = RAD2ANGLE(atan2(pLine2->dy, pLine2->dx));
+							unsigned srcang2 = pSrcLine2->Delta().Angle().BAMs();
+							unsigned dstang2 = pLine2->Delta().Angle().BAMs();
 							if (srcang == srcang2 && dstang == dstang2)
 							{
 								// The lines connect and  both source and destination are colinear, so this is a match
@@ -487,8 +484,8 @@ void gl_InitPortals()
 	}
 	for (auto glport : glLinePortals)
 	{
-		glport.dx = glport.v2->x - glport.v1->x;
-		glport.dy = glport.v2->y - glport.v1->y;
+		glport.dx = glport.v2->fixX() - glport.v1->fixX();
+		glport.dy = glport.v2->fixY() - glport.v1->fixY();
 	}
 	linePortalToGL.Resize(linePortals.Size());
 	for (unsigned i = 0; i < linePortals.Size(); i++)
@@ -496,7 +493,7 @@ void gl_InitPortals()
 		linePortalToGL[i] = &glLinePortals[tempindex[i]];
 		/*
 		Printf("portal at line %d translates to GL portal %d, range = %f,%f to %f,%f\n",
-			int(linePortals[i].mOrigin - lines), tempindex[i], linePortalToGL[i]->v1->x / 65536., linePortalToGL[i]->v1->y / 65536., linePortalToGL[i]->v2->x / 65536., linePortalToGL[i]->v2->y / 65536.);
+			int(linePortals[i].mOrigin - lines), tempindex[i], linePortalToGL[i]->v1->fixX() / 65536., linePortalToGL[i]->v1->fixY() / 65536., linePortalToGL[i]->v2->fixX() / 65536., linePortalToGL[i]->v2->fixY() / 65536.);
 		*/
 	}
 }
@@ -505,8 +502,8 @@ CCMD(dumpportals)
 {
 	for(unsigned i=0;i<portals.Size(); i++)
 	{
-		double xdisp = portals[i]->xDisplacement/65536.;
-		double ydisp = portals[i]->yDisplacement/65536.;
+		double xdisp = portals[i]->mDisplacement.X;
+		double ydisp = portals[i]->mDisplacement.Y;
 		Printf(PRINT_LOG, "Portal #%d, %s, displacement = (%f,%f)\n", i, portals[i]->plane==0? "floor":"ceiling",
 			xdisp, ydisp);
 		Printf(PRINT_LOG, "Coverage:\n");
@@ -519,7 +516,7 @@ CCMD(dumpportals)
 				Printf(PRINT_LOG, "\tSubsector %d (%d):\n\t\t", j, sub->render_sector->sectornum);
 				for(unsigned k = 0;k< sub->numlines; k++)
 				{
-					Printf(PRINT_LOG, "(%.3f,%.3f), ",	sub->firstline[k].v1->x/65536. + xdisp, sub->firstline[k].v1->y/65536. + ydisp);
+					Printf(PRINT_LOG, "(%.3f,%.3f), ",	sub->firstline[k].v1->fixX()/65536. + xdisp, sub->firstline[k].v1->fixY()/65536. + ydisp);
 				}
 				Printf(PRINT_LOG, "\n\t\tCovered by subsectors:\n");
 				FPortalCoverage *cov = &sub->portalcoverage[portals[i]->plane];
@@ -529,7 +526,7 @@ CCMD(dumpportals)
 					Printf(PRINT_LOG, "\t\t\t%5d (%4d): ", cov->subsectors[l], csub->render_sector->sectornum);
 					for(unsigned m = 0;m< csub->numlines; m++)
 					{
-						Printf(PRINT_LOG, "(%.3f,%.3f), ",	csub->firstline[m].v1->x/65536., csub->firstline[m].v1->y/65536.);
+						Printf(PRINT_LOG, "(%.3f,%.3f), ",	csub->firstline[m].v1->fixX()/65536., csub->firstline[m].v1->fixY()/65536.);
 					}
 					Printf(PRINT_LOG, "\n");
 				}

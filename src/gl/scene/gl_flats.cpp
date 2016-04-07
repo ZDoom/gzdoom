@@ -78,32 +78,32 @@ CVAR(Int, gl_breaksec, -1, 0)
 bool gl_SetPlaneTextureRotation(const GLSectorPlane * secplane, FMaterial * gltexture)
 {
 	// only manipulate the texture matrix if needed.
-	if (secplane->xoffs != 0 || secplane->yoffs != 0 ||
-		secplane->xscale != FRACUNIT || secplane->yscale != FRACUNIT ||
-		secplane->angle != 0 || 
+	if (!secplane->Offs.isZero() ||
+		secplane->Scale.X != 1. || secplane->Scale.Y != 1 ||
+		secplane->Angle != 0 ||
 		gltexture->TextureWidth(GLUSE_TEXTURE) != 64 ||
 		gltexture->TextureHeight(GLUSE_TEXTURE) != 64)
 	{
-		float uoffs=FIXED2FLOAT(secplane->xoffs)/gltexture->TextureWidth(GLUSE_TEXTURE);
-		float voffs=FIXED2FLOAT(secplane->yoffs)/gltexture->TextureHeight(GLUSE_TEXTURE);
+		float uoffs = secplane->Offs.X / gltexture->TextureWidth(GLUSE_TEXTURE);
+		float voffs = secplane->Offs.Y / gltexture->TextureHeight(GLUSE_TEXTURE);
 
-		float xscale1=FIXED2FLOAT(secplane->xscale);
-		float yscale1=FIXED2FLOAT(secplane->yscale);
+		float xscale1 = secplane->Scale.X;
+		float yscale1 = secplane->Scale.Y;
 		if (gltexture->tex->bHasCanvas)
 		{
 			yscale1 = 0 - yscale1;
 		}
-		float angle=-ANGLE_TO_FLOAT(secplane->angle);
+		float angle = -secplane->Angle;
 
-		float xscale2=64.f/gltexture->TextureWidth(GLUSE_TEXTURE);
-		float yscale2=64.f/gltexture->TextureHeight(GLUSE_TEXTURE);
+		float xscale2 = 64.f / gltexture->TextureWidth(GLUSE_TEXTURE);
+		float yscale2 = 64.f / gltexture->TextureHeight(GLUSE_TEXTURE);
 
 		glMatrixMode(GL_TEXTURE);
 		glPushMatrix();
-		glScalef(xscale1 ,yscale1,1.0f);
-		glTranslatef(uoffs,voffs,0.0f);
-		glScalef(xscale2 ,yscale2,1.0f);
-		glRotatef(angle,0.0f,0.0f,1.0f);
+		glScalef(xscale1, yscale1, 1.0f);
+		glTranslatef(uoffs, voffs, 0.0f);
+		glScalef(xscale2, yscale2, 1.0f);
+		glRotatef(angle, 0.0f, 0.0f, 1.0f);
 		return true;
 	}
 	return false;
@@ -129,7 +129,7 @@ void GLFlat::DrawSubsectorLights(subsector_t * sub, int pass)
 	while (node)
 	{
 		ADynamicLight * light = node->lightsource;
-		
+			
 		if (light->flags2&MF2_DORMANT)
 		{
 			node=node->nextLight;
@@ -139,17 +139,17 @@ void GLFlat::DrawSubsectorLights(subsector_t * sub, int pass)
 
 		// we must do the side check here because gl_SetupLight needs the correct plane orientation
 		// which we don't have for Legacy-style 3D-floors
-		fixed_t planeh = plane.plane.ZatPoint(light);
+		double planeh = plane.plane.ZatPoint(light);
 		if (gl_lights_checkside && ((planeh<light->Z() && ceiling) || (planeh>light->Z() && !ceiling)))
 		{
-			node=node->nextLight;
+			node = node->nextLight;
 			continue;
 		}
 
 		p.Set(plane.plane);
-		if (!gl_SetupLight(sub->sector->PortalGroup, p, light, nearPt, up, right, scale, Colormap.colormap, false, foggy)) 
+		if (!gl_SetupLight(sub->sector->PortalGroup, p, light, nearPt, up, right, scale, Colormap.colormap, false, foggy))
 		{
-			node=node->nextLight;
+			node = node->nextLight;
 			continue;
 		}
 		draw_dlightf++;
@@ -159,13 +159,13 @@ void GLFlat::DrawSubsectorLights(subsector_t * sub, int pass)
 		for(k = 0, v = sub->firstline; k < sub->numlines; k++, v++)
 		{
 			vertex_t *vt = v->v1;
-			float zc = plane.plane.ZatPoint(vt->fx, vt->fy) + dz;
+			float zc = plane.plane.ZatPoint(vt->fX(), vt->fY()) + dz;
 
-			t1.Set(vt->fx, zc, vt->fy);
+			t1.Set(vt->fX(), zc, vt->fY());
 			Vector nearToVert = t1 - nearPt;
 			glTexCoord2f( (nearToVert.Dot(right) * scale) + 0.5f, (nearToVert.Dot(up) * scale) + 0.5f);
 
-			glVertex3f(vt->fx, zc, vt->fy);
+			glVertex3f(vt->fX(), zc, vt->fY());
 		}
 
 		glEnd();
@@ -247,9 +247,9 @@ void GLFlat::DrawSubsector(subsector_t * sub)
 	for(unsigned int k=0; k<sub->numlines; k++)
 	{
 		vertex_t *vt = sub->firstline[k].v1;
-		glTexCoord2f(vt->fx/64.f, -vt->fy/64.f);
-		float zc = plane.plane.ZatPoint(vt->fx, vt->fy) + dz;
-		glVertex3f(vt->fx, zc, vt->fy);
+		glTexCoord2f(vt->fX()/64.f, -vt->fY()/64.f);
+		float zc = plane.plane.ZatPoint(vt->fX(), vt->fY()) + dz;
+		glVertex3f(vt->fX(), zc, vt->fY());
 	}
 	glEnd();
 
@@ -597,7 +597,7 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 	//
 	//
 	//
-	if (frontsector->floorplane.ZatPoint(FIXED2FLOAT(viewx), FIXED2FLOAT(viewy)) <= FIXED2FLOAT(viewz))
+	if (frontsector->floorplane.ZatPoint(ViewPos) <= ViewPos.Z)
 	{
 		// process the original floor first.
 
@@ -658,7 +658,7 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 	//
 	//
 	//
-	if (frontsector->ceilingplane.ZatPoint(FIXED2FLOAT(viewx), FIXED2FLOAT(viewy)) >= FIXED2FLOAT(viewz))
+	if (frontsector->ceilingplane.ZatPoint(ViewPos) >= ViewPos.Z)
 	{
 		// process the original ceiling first.
 
@@ -747,10 +747,10 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 				if (rover->flags&FF_FOG && gl_fixedcolormap) continue;
 				if (!rover->top.copied && rover->flags&(FF_INVERTPLANES|FF_BOTHPLANES))
 				{
-					fixed_t ff_top=rover->top.plane->ZatPoint(sector->centerspot);
+					fixed_t ff_top=FLOAT2FIXED(rover->top.plane->ZatPoint(sector->centerspot));
 					if (ff_top<lastceilingheight)
 					{
-						if (FIXED2FLOAT(viewz) <= rover->top.plane->ZatPoint(FIXED2FLOAT(viewx), FIXED2FLOAT(viewy)))
+						if (ViewPos.Z <= rover->top.plane->ZatPoint(ViewPos))
 						{
 							SetFrom3DFloor(rover, true, !!(rover->flags&FF_FOG));
 							Colormap.FadeColor=frontsector->ColorMap->Fade;
@@ -761,10 +761,10 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 				}
 				if (!rover->bottom.copied && !(rover->flags&FF_INVERTPLANES))
 				{
-					fixed_t ff_bottom=rover->bottom.plane->ZatPoint(sector->centerspot);
+					fixed_t ff_bottom=FLOAT2FIXED(rover->bottom.plane->ZatPoint(sector->centerspot));
 					if (ff_bottom<lastceilingheight)
 					{
-						if (FIXED2FLOAT(viewz)<=rover->bottom.plane->ZatPoint(FIXED2FLOAT(viewx), FIXED2FLOAT(viewy)))
+						if (ViewPos.Z <=rover->bottom.plane->ZatPoint(ViewPos))
 						{
 							SetFrom3DFloor(rover, false, !(rover->flags&FF_FOG));
 							Colormap.FadeColor=frontsector->ColorMap->Fade;
@@ -787,10 +787,10 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 				if (rover->flags&FF_FOG && gl_fixedcolormap) continue;
 				if (!rover->bottom.copied && rover->flags&(FF_INVERTPLANES|FF_BOTHPLANES))
 				{
-					fixed_t ff_bottom=rover->bottom.plane->ZatPoint(sector->centerspot);
+					fixed_t ff_bottom=FLOAT2FIXED(rover->bottom.plane->ZatPoint(sector->centerspot));
 					if (ff_bottom>lastfloorheight || (rover->flags&FF_FIX))
 					{
-						if (FIXED2FLOAT(viewz) >= rover->bottom.plane->ZatPoint(FIXED2FLOAT(viewx), FIXED2FLOAT(viewy)))
+						if (ViewPos.Z >= rover->bottom.plane->ZatPoint(ViewPos))
 						{
 							SetFrom3DFloor(rover, false, !(rover->flags&FF_FOG));
 							Colormap.FadeColor=frontsector->ColorMap->Fade;
@@ -808,10 +808,10 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 				}
 				if (!rover->top.copied && !(rover->flags&FF_INVERTPLANES))
 				{
-					fixed_t ff_top=rover->top.plane->ZatPoint(sector->centerspot);
+					fixed_t ff_top=FLOAT2FIXED(rover->top.plane->ZatPoint(sector->centerspot));
 					if (ff_top>lastfloorheight)
 					{
-						if (FIXED2FLOAT(viewz) >= rover->top.plane->ZatPoint(FIXED2FLOAT(viewx), FIXED2FLOAT(viewy)))
+						if (ViewPos.Z >= rover->top.plane->ZatPoint(ViewPos))
 						{
 							SetFrom3DFloor(rover, true, !!(rover->flags&FF_FOG));
 							Colormap.FadeColor=frontsector->ColorMap->Fade;

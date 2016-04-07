@@ -119,7 +119,7 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld, int lineindexforid = -1)
 int P_TranslateSectorSpecial (int);
 
 int GetUDMFInt(int type, int index, const char *key);
-fixed_t GetUDMFFixed(int type, int index, const char *key);
+double GetUDMFFloat(int type, int index, const char *key);
 
 bool P_LoadGLNodes(MapData * map);
 bool P_CheckNodes(MapData * map, bool rebuilt, int buildtime);

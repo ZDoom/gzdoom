@@ -50,6 +50,7 @@
 #include "i_system.h"
 #include "po_man.h"
 #include "r_state.h"
+#include "math/cmath.h"
 
 static const int PO_LINE_START = 1;
 static const int PO_LINE_EXPLICIT = 5;
@@ -74,7 +75,7 @@ angle_t FNodeBuilder::PointToAngle (fixed_t x, fixed_t y)
 	// See https://gcc.gnu.org/wiki/Math_Optimization_Flags for details
 	long double ang = atan2l (double(y), double(x));
 #else // !__APPLE__ || __llvm__
-	double ang = atan2 (double(y), double(x));
+	double ang = g_atan2 (double(y), double(x));
 #endif // __APPLE__ && !__llvm__
 	// Convert to signed first since negative double to unsigned is undefined.
 	return angle_t(int(ang * rad2bam)) << 1;
@@ -95,14 +96,14 @@ void FNodeBuilder::FindUsedVertices (vertex_t *oldverts, int max)
 
 		if (map[v1] == -1)
 		{
-			newvert.x = oldverts[v1].x;
-			newvert.y = oldverts[v1].y;
+			newvert.x = oldverts[v1].fixX();
+			newvert.y = oldverts[v1].fixY();
 			map[v1] = VertexMap->SelectVertexExact (newvert);
 		}
 		if (map[v2] == -1)
 		{
-			newvert.x = oldverts[v2].x;
-			newvert.y = oldverts[v2].y;
+			newvert.x = oldverts[v2].fixX();
+			newvert.y = oldverts[v2].fixY();
 			map[v2] = VertexMap->SelectVertexExact (newvert);
 		}
 
@@ -221,11 +222,11 @@ void FNodeBuilder::AddSegs(seg_t *segs, int numsegs)
 
 		seg.frontsector = segs[i].frontsector;
 		seg.backsector = segs[i].backsector;
-		vert.x = segs[i].v1->x;
-		vert.y = segs[i].v1->y;
+		vert.x = segs[i].v1->fixX();
+		vert.y = segs[i].v1->fixY();
 		seg.v1 = VertexMap->SelectVertexExact(vert);
-		vert.x = segs[i].v2->x;
-		vert.y = segs[i].v2->y;
+		vert.x = segs[i].v2->fixX();
+		vert.y = segs[i].v2->fixY();
 		seg.v2 = VertexMap->SelectVertexExact(vert);
 		seg.linedef = int(segs[i].linedef - Level.Lines);
 		seg.sidedef = segs[i].sidedef != NULL ? int(segs[i].sidedef - Level.Sides) : int(NO_SIDE);
@@ -261,11 +262,11 @@ void FNodeBuilder::AddPolySegs(FPolySeg *segs, int numsegs)
 
 		seg.frontsector = side->sector;
 		seg.backsector = side->linedef->frontsector == side->sector ? side->linedef->backsector : side->linedef->frontsector;
-		vert.x = segs[i].v1.x;
-		vert.y = segs[i].v1.y;
+		vert.x = FLOAT2FIXED(segs[i].v1.pos.X);
+		vert.y = FLOAT2FIXED(segs[i].v1.pos.Y);
 		seg.v1 = VertexMap->SelectVertexExact(vert);
-		vert.x = segs[i].v2.x;
-		vert.y = segs[i].v2.y;
+		vert.x = FLOAT2FIXED(segs[i].v2.pos.X);
+		vert.y = FLOAT2FIXED(segs[i].v2.pos.Y);
 		seg.v2 = VertexMap->SelectVertexExact(vert);
 		seg.linedef = int(side->linedef - Level.Lines);
 		seg.sidedef = int(side - Level.Sides);
@@ -429,18 +430,18 @@ void FNodeBuilder::FindPolyContainers (TArray<FPolyStart> &spots, TArray<FPolySt
 				vertex_t mid;
 				vertex_t center;
 
-				mid.x = bbox[BOXLEFT] + (bbox[BOXRIGHT]-bbox[BOXLEFT])/2;
-				mid.y = bbox[BOXBOTTOM] + (bbox[BOXTOP]-bbox[BOXBOTTOM])/2;
+				mid.set(bbox[BOXLEFT] + (bbox[BOXRIGHT]-bbox[BOXLEFT])/2,
+						bbox[BOXBOTTOM] + (bbox[BOXTOP]-bbox[BOXBOTTOM])/2);
 
-				center.x = mid.x - anchor->x + spot->x;
-				center.y = mid.y - anchor->y + spot->y;
+				center.set(mid.fixX() - anchor->x + spot->x,
+							mid.fixY() - anchor->y + spot->y);
 
 				// Scan right for the seg closest to the polyobject's center after it
 				// gets moved to its start spot.
 				fixed_t closestdist = FIXED_MAX;
 				unsigned int closestseg = UINT_MAX;
 
-				P(Printf ("start %d,%d -- center %d, %d\n", spot->x>>16, spot->y>>16, center.x>>16, center.y>>16));
+				P(Printf ("start %d,%d -- center %d, %d\n", spot->x>>16, spot->y>>16, center.fixX()>>16, center.fixY()>>16));
 
 				for (unsigned int j = 0; j < Segs.Size(); ++j)
 				{
@@ -453,16 +454,16 @@ void FNodeBuilder::FindPolyContainers (TArray<FPolyStart> &spots, TArray<FPolySt
 					{ // Horizontal, so skip it
 						continue;
 					}
-					if ((v1->y < center.y && v2->y < center.y) || (v1->y > center.y && v2->y > center.y))
+					if ((v1->y < center.fixY() && v2->y < center.fixY()) || (v1->y > center.fixY() && v2->y > center.fixY()))
 					{ // Not crossed
 						continue;
 					}
 
 					fixed_t dx = v2->x - v1->x;
 
-					if (PointOnSide (center.x, center.y, v1->x, v1->y, dx, dy) <= 0)
+					if (PointOnSide (center.fixX(), center.fixY(), v1->x, v1->y, dx, dy) <= 0)
 					{
-						fixed_t t = DivScale30 (center.y - v1->y, dy);
+						fixed_t t = DivScale30 (center.fixY() - v1->y, dy);
 						fixed_t sx = v1->x + MulScale30 (dx, t);
 						fixed_t dist = sx - spot->x;
 
@@ -564,8 +565,7 @@ bool FNodeBuilder::GetPolyExtents (int polynum, fixed_t bbox[4])
 
 		vert = Segs[i].v1;
 
-		start.x = Vertices[vert].x;
-		start.y = Vertices[vert].y;
+		start.set(Vertices[vert].x, Vertices[vert].y);
 
 		do
 		{
@@ -573,7 +573,7 @@ bool FNodeBuilder::GetPolyExtents (int polynum, fixed_t bbox[4])
 			vert = Segs[i].v2;
 			i = Vertices[vert].segs;
 			count++;	// to prevent endless loops. Stop when this reaches the number of segs.
-		} while (i != DWORD_MAX && (Vertices[vert].x != start.x || Vertices[vert].y != start.y) && count < Segs.Size());
+		} while (i != DWORD_MAX && (Vertices[vert].x != start.fixX() || Vertices[vert].y != start.fixY()) && count < Segs.Size());
 
 		return true;
 	}
@@ -613,15 +613,15 @@ void FNodeBuilder::FLevel::FindMapBounds ()
 {
 	fixed_t minx, maxx, miny, maxy;
 
-	minx = maxx = Vertices[0].x;
-	miny = maxy = Vertices[0].y;
+	minx = maxx = Vertices[0].fixX();
+	miny = maxy = Vertices[0].fixY();
 
 	for (int i = 1; i < NumVertices; ++i)
 	{
-			 if (Vertices[i].x < minx) minx = Vertices[i].x;
-		else if (Vertices[i].x > maxx) maxx = Vertices[i].x;
-			 if (Vertices[i].y < miny) miny = Vertices[i].y;
-		else if (Vertices[i].y > maxy) maxy = Vertices[i].y;
+			 if (Vertices[i].fixX() < minx) minx = Vertices[i].fixX();
+		else if (Vertices[i].fixX() > maxx) maxx = Vertices[i].fixX();
+			 if (Vertices[i].fixY() < miny) miny = Vertices[i].fixY();
+		else if (Vertices[i].fixY() > maxy) maxy = Vertices[i].fixY();
 	}
 
 	MinX = minx;

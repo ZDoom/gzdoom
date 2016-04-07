@@ -82,7 +82,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ThrustInitUp)
 
 	self->special2 = 5;	// Raise speed
 	self->args[0] = 1;		// Mark as up
-	self->floorclip = 0;
+	self->Floorclip = 0;
 	self->flags = MF_SOLID;
 	self->flags2 = MF2_NOTELEPORT|MF2_FLOORCLIP;
 	self->special1 = 0L;
@@ -95,7 +95,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ThrustInitDn)
 
 	self->special2 = 5;	// Raise speed
 	self->args[0] = 0;		// Mark as down
-	self->floorclip = self->GetDefault()->height;
+	self->Floorclip = self->GetDefault()->Height;
 	self->flags = 0;
 	self->flags2 = MF2_NOTELEPORT|MF2_FLOORCLIP;
 	self->renderflags = RF_INVISIBLE;
@@ -111,7 +111,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ThrustRaise)
 
 	AThrustFloor *actor = static_cast<AThrustFloor *>(self);
 
-	if (A_RaiseMobj (actor, self->special2*FRACUNIT))
+	if (A_RaiseMobj (actor, self->special2))
 	{	// Reached it's target height
 		actor->args[0] = 1;
 		if (actor->args[1])
@@ -121,7 +121,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ThrustRaise)
 	}
 
 	// Lose the dirt clump
-	if ((actor->floorclip < actor->height) && actor->DirtClump)
+	if ((actor->Floorclip < actor->Height) && actor->DirtClump)
 	{
 		actor->DirtClump->Destroy ();
 		actor->DirtClump = NULL;
@@ -138,7 +138,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ThrustLower)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	if (A_SinkMobj (self, 6*FRACUNIT))
+	if (A_SinkMobj (self, 6))
 	{
 		self->args[0] = 0;
 		if (self->args[1])
@@ -160,8 +160,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_ThrustImpale)
 	FMultiBlockThingsIterator::CheckResult cres;
 	while (it.Next(&cres))
 	{
-		fixed_t blockdist = self->radius + cres.thing->radius;
-		if (abs(cres.thing->X() - cres.position.x) >= blockdist || abs(cres.thing->Y() - cres.position.y) >= blockdist)
+		double blockdist = self->radius + cres.thing->radius;
+		if (fabs(cres.thing->X() - cres.Position.X) >= blockdist || fabs(cres.thing->Y() - cres.Position.Y) >= blockdist)
 			continue;
 
 		// Q: Make this z-aware for everything? It never was before.

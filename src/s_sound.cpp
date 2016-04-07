@@ -104,8 +104,8 @@ static void S_ActivatePlayList(bool goBack);
 static void CalcPosVel(FSoundChan *chan, FVector3 *pos, FVector3 *vel);
 static void CalcPosVel(int type, const AActor *actor, const sector_t *sector, const FPolyObj *poly,
 	const float pt[3], int channel, int chanflags, FVector3 *pos, FVector3 *vel);
-static void CalcSectorSoundOrg(const sector_t *sec, int channum, fixed_t *x, fixed_t *y, fixed_t *z);
-static void CalcPolyobjSoundOrg(const FPolyObj *poly, fixed_t *x, fixed_t *y, fixed_t *z);
+static void CalcSectorSoundOrg(const DVector3 &listenpos, const sector_t *sec, int channum, FVector3 &res);
+static void CalcPolyobjSoundOrg(const DVector3 &listenpos, const FPolyObj *poly, FVector3 &res);
 static FSoundChan *S_StartSound(AActor *mover, const sector_t *sec, const FPolyObj *poly,
 	const FVector3 *pt, int channel, FSoundID sound_id, float volume, float attenuation, FRolloffInfo *rolloff);
 static void S_SetListener(SoundListener &listener, AActor *listenactor);
@@ -173,9 +173,7 @@ void S_NoiseDebug (void)
 	}
 
 
-	listener.X = FIXED2FLOAT(players[consoleplayer].camera->SoundX());
-	listener.Y = FIXED2FLOAT(players[consoleplayer].camera->SoundZ());
-	listener.Z = FIXED2FLOAT(players[consoleplayer].camera->SoundY());
+	listener = players[consoleplayer].camera->SoundPos();
 
 	// Display the oldest channel first.
 	for (chan = Channels; chan->NextChan != NULL; chan = chan->NextChan)
@@ -660,26 +658,31 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 {
 	if (pos != NULL)
 	{
-		fixed_t x, y, z;
+		DVector3 listenpos;
+		int pgroup;
+		AActor *listener = players[consoleplayer].camera;
 
-		if (players[consoleplayer].camera != NULL)
+		if (listener != NULL)
 		{
-			x = players[consoleplayer].camera->SoundX();
-			y = players[consoleplayer].camera->SoundZ();
-			z = players[consoleplayer].camera->SoundY();
+			listenpos = listener->Pos();
+			*pos = listener->SoundPos();
+			pgroup = listener->Sector->PortalGroup;
 		}
 		else
 		{
-			z = y = x = 0;
+			listenpos.Zero();
+			pgroup = 0;
 		}
 
 		// [BL] Moved this case out of the switch statement to make code easier
 		//      on static analysis.
 		if(type == SOURCE_Unattached)
-		{
-			pos->X = pt[0];
-			pos->Y = !(chanflags & CHAN_LISTENERZ) ? pt[1] : FIXED2FLOAT(y);
-			pos->Z = pt[2];
+		{		
+			sector_t *sec = P_PointInSector(pt[0], pt[2]);
+			DVector2 disp = Displacements.getOffset(pgroup, sec->PortalGroup);
+			pos->X = pt[0] + (float)disp.X;
+			pos->Y = !(chanflags & CHAN_LISTENERZ) ? pt[1] : (float)listenpos.Z;
+			pos->Z = pt[2] + (float)disp.Y;
 		}
 		else
 		{
@@ -693,9 +696,9 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 				//assert(actor != NULL);
 				if (actor != NULL)
 				{
-					x = actor->SoundX();
-					y = actor->SoundZ();
-					z = actor->SoundY();
+					DVector2 disp = Displacements.getOffset(pgroup, actor->Sector->PortalGroup);
+					DVector3 posi = actor->Pos() + disp;
+					*pos = { (float)posi.X, (float)posi.Z, (float)posi.Y };
 				}
 				break;
 
@@ -703,14 +706,19 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 				assert(sector != NULL);
 				if (sector != NULL)
 				{
+					DVector2 disp = Displacements.getOffset(pgroup, sector->PortalGroup);
 					if (chanflags & CHAN_AREA)
 					{
-						CalcSectorSoundOrg(sector, channum, &x, &z, &y);
+						// listener must be reversely offset to calculate the proper sound origin.
+						CalcSectorSoundOrg(listenpos-disp, sector, channum, *pos);
+						pos->X += (float)disp.X;
+						pos->Z += (float)disp.Y;
 					}
 					else
 					{
-						x = sector->centerspot.x;
-						z = sector->centerspot.y;
+						
+						pos->X = (float)(sector->centerspot.X + disp.X);
+						pos->Z = (float)(sector->centerspot.Y + disp.Y);
 						chanflags |= CHAN_LISTENERZ;
 					}
 				}
@@ -718,17 +726,20 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 
 			case SOURCE_Polyobj:
 				assert(poly != NULL);
-				CalcPolyobjSoundOrg(poly, &x, &z, &y);
+				if (poly != NULL)
+				{
+					DVector2 disp = Displacements.getOffset(pgroup, poly->CenterSubsector->sector->PortalGroup);
+					CalcPolyobjSoundOrg(listenpos-disp, poly, *pos);
+					pos->X += (float)disp.X;
+					pos->Z += (float)disp.Y;
+				}
 				break;
 			}
 
 			if ((chanflags & CHAN_LISTENERZ) && players[consoleplayer].camera != NULL)
 			{
-				y = players[consoleplayer].camera != NULL ? players[consoleplayer].camera->SoundZ() : 0;
+				pos->Y = (float)listenpos.Z;
 			}
-			pos->X = FIXED2FLOAT(x);
-			pos->Y = FIXED2FLOAT(y);
-			pos->Z = FIXED2FLOAT(z);
 		}
 	}
 	if (vel != NULL)
@@ -736,9 +747,9 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 		// Only actors maintain velocity information.
 		if (type == SOURCE_Actor && actor != NULL)
 		{
-			vel->X = FIXED2FLOAT(actor->vel.x) * TICRATE;
-			vel->Y = FIXED2FLOAT(actor->vel.z) * TICRATE;
-			vel->Z = FIXED2FLOAT(actor->vel.y) * TICRATE;
+			vel->X = float(actor->Vel.X * TICRATE);
+			vel->Y = float(actor->Vel.Y * TICRATE);
+			vel->Z = float(actor->Vel.Z * TICRATE);
 		}
 		else
 		{
@@ -757,41 +768,44 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 //
 //==========================================================================
 
-static void CalcSectorSoundOrg(const sector_t *sec, int channum, fixed_t *x, fixed_t *y, fixed_t *z)
+static void CalcSectorSoundOrg(const DVector3 &listenpos, const sector_t *sec, int channum, FVector3 &pos)
 {
 	if (!(i_compatflags & COMPATF_SECTORSOUNDS))
 	{
 		// Are we inside the sector? If yes, the closest point is the one we're on.
-		if (P_PointInSector(*x, *y) == sec)
+		if (P_PointInSector(pos.X, pos.Y) == sec)
 		{
-			*x = players[consoleplayer].camera->SoundX();
-			*y = players[consoleplayer].camera->SoundY();
+			pos.X = (float)listenpos.X;
+			pos.Z = (float)listenpos.Y;
 		}
 		else
 		{
 			// Find the closest point on the sector's boundary lines and use
 			// that as the perceived origin of the sound.
-			sec->ClosestPoint(*x, *y, *x, *y);
+			DVector2 xy;
+			sec->ClosestPoint(listenpos, xy);
+			pos.X = (float)xy.X;
+			pos.Z = (float)xy.Y;
 		}
 	}
 	else
 	{
-		*x = sec->centerspot.x;
-		*y = sec->centerspot.y;
+		pos.X = float(sec->centerspot.X);
+		pos.Z = float(sec->centerspot.Y);
 	}
 
 	// Set sound vertical position based on channel.
 	if (channum == CHAN_FLOOR)
 	{
-		*z = MIN(sec->floorplane.ZatPoint(*x, *y), *z);
+		pos.Y = (float)MIN<double>(sec->floorplane.ZatPoint(listenpos), listenpos.Z);
 	}
 	else if (channum == CHAN_CEILING)
 	{
-		*z = MAX(sec->ceilingplane.ZatPoint(*x, *y), *z);
+		pos.Y = (float)MAX<double>(sec->ceilingplane.ZatPoint(listenpos), listenpos.Z);
 	}
 	else if (channum == CHAN_INTERIOR)
 	{
-		*z = clamp(*z, sec->floorplane.ZatPoint(*x, *y), sec->ceilingplane.ZatPoint(*x, *y));
+		pos.Y = (float)clamp<double>(listenpos.Z, sec->floorplane.ZatPoint(listenpos), sec->ceilingplane.ZatPoint(listenpos));
 	}
 }
 
@@ -806,14 +820,17 @@ static void CalcSectorSoundOrg(const sector_t *sec, int channum, fixed_t *x, fix
 //
 //==========================================================================
 
-static void CalcPolyobjSoundOrg(const FPolyObj *poly, fixed_t *x, fixed_t *y, fixed_t *z)
+static void CalcPolyobjSoundOrg(const DVector3 &listenpos, const FPolyObj *poly, FVector3 &pos)
 {
 	side_t *side;
 	sector_t *sec;
 
-	poly->ClosestPoint(*x, *y, *x, *y, &side);
+	DVector2 ppos;
+	poly->ClosestPoint(listenpos, ppos, &side);
+	pos.X = (float)ppos.X;
+	pos.Z = (float)ppos.Y;
 	sec = side->sector;
-	*z = clamp(*z, sec->floorplane.ZatPoint(*x, *y), sec->ceilingplane.ZatPoint(*x, *y));
+	pos.Y = (float)clamp<double>(listenpos.Z, sec->floorplane.ZatPoint(listenpos), sec->ceilingplane.ZatPoint(listenpos));
 }
 
 //==========================================================================
@@ -1258,10 +1275,11 @@ void S_Sound (const FPolyObj *poly, int channel, FSoundID sound_id, float volume
 //
 //==========================================================================
 
-void S_Sound (fixed_t x, fixed_t y, fixed_t z, int channel, FSoundID sound_id, float volume, float attenuation)
+void S_Sound(const DVector3 &pos, int channel, FSoundID sound_id, float volume, float attenuation)
 {
-	FVector3 pt(FIXED2FLOAT(x), FIXED2FLOAT(z), FIXED2FLOAT(y));
-	S_StartSound (NULL, NULL, NULL, &pt, channel, sound_id, volume, attenuation);
+	// The sound system switches Y and Z around.
+	FVector3 p((float)pos.X, (float)pos.Z, (float)pos.Y);
+	S_StartSound (NULL, NULL, NULL, &p, channel, sound_id, volume, attenuation);
 }
 
 //==========================================================================
@@ -1568,9 +1586,10 @@ void S_RelinkSound (AActor *from, AActor *to)
 			{
 				chan->Actor = NULL;
 				chan->SourceType = SOURCE_Unattached;
-				chan->Point[0] = FIXED2FLOAT(from->SoundX());
-				chan->Point[1] = FIXED2FLOAT(from->SoundZ());
-				chan->Point[2] = FIXED2FLOAT(from->SoundY());
+				FVector3 p = from->SoundPos();
+				chan->Point[0] = p.X;
+				chan->Point[1] = p.Y;
+				chan->Point[2] = p.Z;
 			}
 			else
 			{
@@ -1950,16 +1969,14 @@ static void S_SetListener(SoundListener &listener, AActor *listenactor)
 {
 	if (listenactor != NULL)
 	{
-		listener.angle = ANGLE2RADF(listenactor->angle);
+		listener.angle = (float)listenactor->Angles.Yaw.Radians();
 		/*
 		listener.velocity.X = listenactor->vel.x * (TICRATE/65536.f);
 		listener.velocity.Y = listenactor->vel.z * (TICRATE/65536.f);
 		listener.velocity.Z = listenactor->vel.y * (TICRATE/65536.f);
 		*/
 		listener.velocity.Zero();
-		listener.position.X = FIXED2FLOAT(listenactor->SoundX());
-		listener.position.Y = FIXED2FLOAT(listenactor->SoundZ());
-		listener.position.Z = FIXED2FLOAT(listenactor->SoundY());
+		listener.position = listenactor->SoundPos();
 		listener.underwater = listenactor->waterlevel == 3;
 		assert(zones != NULL);
 		listener.Environment = zones[listenactor->Sector->ZoneNumber].Environment;
@@ -2638,7 +2655,7 @@ CCMD (loopsound)
 		}
 		else
 		{
-			AActor *icon = Spawn("SpeakerIcon", players[consoleplayer].mo->PosPlusZ(32*FRACUNIT), ALLOW_REPLACE);
+			AActor *icon = Spawn("SpeakerIcon", players[consoleplayer].mo->PosPlusZ(32.), ALLOW_REPLACE);
 			if (icon != NULL)
 			{
 				S_Sound(icon, CHAN_BODY | CHAN_LOOP, id, 1.f, ATTN_IDLE);

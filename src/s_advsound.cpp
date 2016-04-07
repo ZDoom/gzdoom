@@ -162,8 +162,8 @@ enum SICommands
 struct FBloodSFX
 {
 	DWORD	RelVol;		// volume, 0-255
-	fixed_t	Pitch;		// pitch change
-	fixed_t	PitchRange;	// range of random pitch
+	int		Pitch;		// pitch change
+	int		PitchRange;	// range of random pitch
 	DWORD	Format;		// format of audio 1=11025 5=22050
 	SDWORD	LoopStart;	// loop position (-1 means no looping)
 	char	RawName[9];	// name of RAW resource
@@ -2281,7 +2281,7 @@ void AAmbientSound::Activate (AActor *activator)
 				Destroy ();
 				return;
 			}
-			amb->periodmin = Scale(S_GetMSLength(sndnum), TICRATE, 1000);
+			amb->periodmin = ::Scale(S_GetMSLength(sndnum), TICRATE, 1000);
 		}
 
 		NextCheck = level.maptime;

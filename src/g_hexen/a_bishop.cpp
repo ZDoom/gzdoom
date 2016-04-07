@@ -80,7 +80,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopMissileWeave)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	A_Weave(self, 2, 2, 2*FRACUNIT, FRACUNIT);
+	A_Weave(self, 2, 2, 2., 1.);
 	return 0;
 }
 
@@ -118,15 +118,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopDoBlur)
 	self->special1 = (pr_doblur() & 3) + 3; // Random number of blurs
 	if (pr_doblur() < 120)
 	{
-		P_ThrustMobj (self, self->angle + ANG90, 11*FRACUNIT);
+		self->Thrust(self->Angles.Yaw + 90, 11);
 	}
 	else if (pr_doblur() > 125)
 	{
-		P_ThrustMobj (self, self->angle - ANG90, 11*FRACUNIT);
+		self->Thrust(self->Angles.Yaw - 90, 11);
 	}
 	else
 	{ // Thrust forward
-		P_ThrustMobj (self, self->angle, 11*FRACUNIT);
+		self->Thrust(11);
 	}
 	S_Sound (self, CHAN_BODY, "BishopBlur", 1, ATTN_NORM);
 	return 0;
@@ -146,8 +146,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopSpawnBlur)
 
 	if (!--self->special1)
 	{
-		self->vel.x = 0;
-		self->vel.y = 0;
+		self->Vel.X = self->Vel.Y = 0;
 		if (pr_sblur() > 96)
 		{
 			self->SetState (self->SeeState);
@@ -160,7 +159,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopSpawnBlur)
 	mo = Spawn ("BishopBlur", self->Pos(), ALLOW_REPLACE);
 	if (mo)
 	{
-		mo->angle = self->angle;
+		mo->Angles.Yaw = self->Angles.Yaw;
 	}
 	return 0;
 }
@@ -175,9 +174,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopChase)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	fixed_t newz = self->Z() - finesine[self->special2 << BOBTOFINESHIFT] * 4;
+	double newz = self->Z() - BobSin(self->special2) / 2.;
 	self->special2 = (self->special2 + 4) & 63;
-	newz += finesine[self->special2 << BOBTOFINESHIFT] * 4;
+	newz += BobSin(self->special2) / 2.;
 	self->SetZ(newz);
 	return 0;
 }
@@ -194,10 +193,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopPuff)
 
 	AActor *mo;
 
-	mo = Spawn ("BishopPuff", self->PosPlusZ(40*FRACUNIT), ALLOW_REPLACE);
+	mo = Spawn ("BishopPuff", self->PosPlusZ(40.), ALLOW_REPLACE);
 	if (mo)
 	{
-		mo->vel.z = FRACUNIT/2;
+		mo->Vel.Z = -.5;
 	}
 	return 0;
 }
@@ -219,13 +218,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_BishopPainBlur)
 		self->SetState (self->FindState ("Blur"));
 		return 0;
 	}
-	fixed_t xo = (pr_pain.Random2() << 12);
-	fixed_t yo = (pr_pain.Random2() << 12);
-	fixed_t zo = (pr_pain.Random2() << 11);
+	double xo = pr_pain.Random2() / 16.;
+	double yo = pr_pain.Random2() / 16.;
+	double zo = pr_pain.Random2() / 32.;
 	mo = Spawn ("BishopPainBlur", self->Vec3Offset(xo, yo, zo), ALLOW_REPLACE);
 	if (mo)
 	{
-		mo->angle = self->angle;
+		mo->Angles.Yaw = self->Angles.Yaw;
 	}
 	return 0;
 }

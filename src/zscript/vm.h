@@ -894,8 +894,7 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 #define PARAM_SOUND_AT(p,x)			assert((p) < numparam); assert(param[p].Type == REGT_INT); FSoundID x = param[p].i;
 #define PARAM_COLOR_AT(p,x)			assert((p) < numparam); assert(param[p].Type == REGT_INT); PalEntry x; x.d = param[p].i;
 #define PARAM_FLOAT_AT(p,x)			assert((p) < numparam); assert(param[p].Type == REGT_FLOAT); double x = param[p].f;
-#define PARAM_FIXED_AT(p,x)			assert((p) < numparam); assert(param[p].Type == REGT_FLOAT); fixed_t x = FLOAT2FIXED(param[p].f);
-#define PARAM_ANGLE_AT(p,x)			assert((p) < numparam); assert(param[p].Type == REGT_FLOAT); angle_t x = FLOAT2ANGLE(param[p].f);
+#define PARAM_ANGLE_AT(p,x)		assert((p) < numparam); assert(param[p].Type == REGT_FLOAT); DAngle x = param[p].f;
 #define PARAM_STRING_AT(p,x)		assert((p) < numparam); assert(param[p].Type == REGT_STRING); FString x = param[p].s();
 #define PARAM_STATE_AT(p,x)			assert((p) < numparam); assert(param[p].Type == REGT_POINTER && (param[p].atag == ATAG_STATE || param[p].a == NULL)); FState *x = (FState *)param[p].a;
 #define PARAM_POINTER_AT(p,x,type)	assert((p) < numparam); assert(param[p].Type == REGT_POINTER); type *x = (type *)param[p].a;
@@ -912,8 +911,7 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 #define PARAM_SOUND_OPT_AT(p,x)			FSoundID x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_INT); x = FSoundID(param[p].i); } else
 #define PARAM_COLOR_OPT_AT(p,x)			PalEntry x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_INT); x.d = param[p].i; } else
 #define PARAM_FLOAT_OPT_AT(p,x)			double x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_FLOAT); x = param[p].f; } else
-#define PARAM_FIXED_OPT_AT(p,x)			fixed_t x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_FLOAT); x = FLOAT2FIXED(param[p].f); } else
-#define PARAM_ANGLE_OPT_AT(p,x)			angle_t x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_FLOAT); x = FLOAT2ANGLE(param[p].f); } else
+#define PARAM_ANGLE_OPT_AT(p,x)		DAngle x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_FLOAT); x = param[p].f; } else
 #define PARAM_STRING_OPT_AT(p,x)		FString x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_STRING); x = param[p].s(); } else
 #define PARAM_STATE_OPT_AT(p,x)			FState *x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_POINTER && (param[p].atag == ATAG_STATE || param[p].a == NULL)); x = (FState *)param[p].a; } else
 #define PARAM_POINTER_OPT_AT(p,x,type)	type *x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_POINTER); x = (type *)param[p].a; } else
@@ -929,7 +927,6 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 #define PARAM_SOUND(x)				++paramnum; PARAM_SOUND_AT(paramnum,x)
 #define PARAM_COLOR(x)				++paramnum; PARAM_COLOR_AT(paramnum,x)
 #define PARAM_FLOAT(x)				++paramnum; PARAM_FLOAT_AT(paramnum,x)
-#define PARAM_FIXED(x)				++paramnum; PARAM_FIXED_AT(paramnum,x)
 #define PARAM_ANGLE(x)				++paramnum; PARAM_ANGLE_AT(paramnum,x)
 #define PARAM_STRING(x)				++paramnum; PARAM_STRING_AT(paramnum,x)
 #define PARAM_STATE(x)				++paramnum; PARAM_STATE_AT(paramnum,x)
@@ -943,7 +940,6 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 #define PARAM_SOUND_OPT(x)			++paramnum; PARAM_SOUND_OPT_AT(paramnum,x)
 #define PARAM_COLOR_OPT(x)			++paramnum; PARAM_COLOR_OPT_AT(paramnum,x)
 #define PARAM_FLOAT_OPT(x)			++paramnum; PARAM_FLOAT_OPT_AT(paramnum,x)
-#define PARAM_FIXED_OPT(x)			++paramnum; PARAM_FIXED_OPT_AT(paramnum,x)
 #define PARAM_ANGLE_OPT(x)			++paramnum; PARAM_ANGLE_OPT_AT(paramnum,x)
 #define PARAM_STRING_OPT(x)			++paramnum; PARAM_STRING_OPT_AT(paramnum,x)
 #define PARAM_STATE_OPT(x)			++paramnum; PARAM_STATE_OPT_AT(paramnum,x)

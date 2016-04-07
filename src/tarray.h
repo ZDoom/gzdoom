@@ -43,7 +43,7 @@
 
 #if !defined(_WIN32)
 #include <inttypes.h>		// for intptr_t
-#elif !defined(_MSC_VER)
+#else
 #include <stdint.h>			// for mingw
 #endif
 

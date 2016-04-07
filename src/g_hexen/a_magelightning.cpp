@@ -14,7 +14,7 @@
 #include "g_level.h"
 */
 
-#define ZAGSPEED	FRACUNIT
+#define ZAGSPEED	1.
 
 static FRandom pr_lightningready ("LightningReady");
 static FRandom pr_lightningclip ("LightningClip");
@@ -42,8 +42,8 @@ int ALightning::SpecialMissileHit (AActor *thing)
 	{
 		if (thing->Mass != INT_MAX)
 		{
-			thing->vel.x += vel.x>>4;
-			thing->vel.y += vel.y>>4;
+			thing->Vel.X += Vel.X / 16;
+			thing->Vel.Y += Vel.Y / 16;
 		}
 		if ((!thing->player && !(thing->flags2&MF2_BOSS))
 			|| !(level.time&1))
@@ -161,7 +161,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningClip)
 	}
 	else if (self->flags3 & MF3_CEILINGHUGGER)
 	{
-		self->SetZ(self->ceilingz-self->height);
+		self->SetZ(self->ceilingz - self->Height);
 		target = self->tracer;
 	}
 	if (self->flags3 & MF3_FLOORHUGGER)
@@ -170,19 +170,19 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningClip)
 		zigZag = pr_lightningclip();
 		if((zigZag > 128 && self->special1 < 2) || self->special1 < -2)
 		{
-			P_ThrustMobj(self, self->angle+ANG90, ZAGSPEED);
+			self->Thrust(self->Angles.Yaw + 90, ZAGSPEED);
 			if(cMo)
 			{
-				P_ThrustMobj(cMo, self->angle+ANG90, ZAGSPEED);
+				cMo->Thrust(self->Angles.Yaw + 90, ZAGSPEED);
 			}
 			self->special1++;
 		}
 		else
 		{
-			P_ThrustMobj(self, self->angle-ANG90, ZAGSPEED);
+			self->Thrust(self->Angles.Yaw - 90, ZAGSPEED);
 			if(cMo)
 			{
-				P_ThrustMobj(cMo, cMo->angle-ANG90, ZAGSPEED);
+				cMo->Thrust(self->Angles.Yaw - 90, ZAGSPEED);
 			}
 			self->special1--;
 		}
@@ -195,10 +195,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningClip)
 		}
 		else
 		{
-			self->angle = self->AngleTo(target);
-			self->vel.x = 0;
-			self->vel.y = 0;
-			P_ThrustMobj (self, self->angle, self->Speed>>1);
+			self->Angles.Yaw = self->AngleTo(target);
+			self->VelFromAngle(self->Speed / 2);
 		}
 	}
 	return 0;
@@ -217,7 +215,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningZap)
 
 	PClassActor *lightning = PClass::FindActor(self->GetClass()->MissileName);
 	AActor *mo;
-	fixed_t deltaZ;
 
 	if (lightning == NULL)
 	{
@@ -232,32 +229,18 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightningZap)
 		self->SetState (self->FindState(NAME_Death));
 		return 0;
 	}
-	if (self->flags3 & MF3_FLOORHUGGER)
-	{
-		deltaZ = 10*FRACUNIT;
-	}
-	else
-	{
-		deltaZ = -10*FRACUNIT;
-	}			
-	fixed_t xo = ((pr_zap() - 128)*self->radius / 256);
-	fixed_t yo = ((pr_zap() - 128)*self->radius / 256);
+	double deltaX = (pr_zap() - 128) * self->radius / 256;
+	double deltaY = (pr_zap() - 128) * self->radius / 256;
+	double deltaZ = (self->flags3 & MF3_FLOORHUGGER) ? 10 : -10;
 
-	mo = Spawn(lightning, self->Vec3Offset(xo, yo, deltaZ), ALLOW_REPLACE);
+	mo = Spawn(lightning, self->Vec3Offset(deltaX, deltaY, deltaZ), ALLOW_REPLACE);
 	if (mo)
 	{
 		mo->lastenemy = self;
-		mo->vel.x = self->vel.x;
-		mo->vel.y = self->vel.y;
+		mo->Vel.X = self->Vel.X;
+		mo->Vel.Y = self->Vel.Y;
+		mo->Vel.Z = (self->flags3 & MF3_FLOORHUGGER) ? 20 : -20;
 		mo->target = self->target;
-		if (self->flags3 & MF3_FLOORHUGGER)
-		{
-			mo->vel.z = 20*FRACUNIT;
-		}
-		else 
-		{
-			mo->vel.z = -20*FRACUNIT;
-		}
 	}
 	if ((self->flags3 & MF3_FLOORHUGGER) && pr_zapf() < 160)
 	{
@@ -328,8 +311,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_ZapMimic)
 		}
 		else
 		{
-			self->vel.x = mo->vel.x;
-			self->vel.y = mo->vel.y;
+			self->Vel.X = mo->Vel.X;
+			self->Vel.Y = mo->Vel.Y;
 		}
 	}
 	return 0;
@@ -356,7 +339,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LastZap)
 	if (mo)
 	{
 		mo->SetState (mo->FindState (NAME_Death));
-		mo->vel.z = 40*FRACUNIT;
+		mo->Vel.Z = 40;
 		mo->Damage = NULL;
 	}
 	return 0;

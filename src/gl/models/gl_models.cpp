@@ -279,8 +279,8 @@ void gl_InitModels()
 		memset(&smf, 0, sizeof(smf));
 		smf.models[0] = md;
 		smf.skins[0] = md->GetPaletteTexture();
-		smf.xscale = smf.yscale = smf.zscale = FIXED2FLOAT(VoxelDefs[i]->Scale);
-		smf.angleoffset = VoxelDefs[i]->AngleOffset;
+		smf.xscale = smf.yscale = smf.zscale = VoxelDefs[i]->Scale;
+		smf.angleoffset = VoxelDefs[i]->AngleOffset.Degrees;
 		if (VoxelDefs[i]->PlacedSpin != 0)
 		{
 			smf.yrotate = 1.f;
@@ -381,7 +381,7 @@ void gl_InitModels()
 					else if (sc.Compare("angleoffset"))
 					{
 						sc.MustGetFloat();
-						smf.angleoffset = FLOAT_TO_ANGLE(sc.Float);
+						smf.angleoffset = sc.Float;
 					}
 					else if (sc.Compare("pitchoffset"))
 					{
@@ -708,20 +708,20 @@ void gl_RenderModel(GLSprite * spr, int cm)
 
 
 	// y scale for a sprite means height, i.e. z in the world!
-	float scaleFactorX = FIXED2FLOAT(spr->actor->scaleX) * smf->xscale;
-	float scaleFactorY = FIXED2FLOAT(spr->actor->scaleX) * smf->yscale;
-	float scaleFactorZ = FIXED2FLOAT(spr->actor->scaleY) * smf->zscale;
+	float scaleFactorX = spr->actor->Scale.X * smf->xscale;
+	float scaleFactorY = spr->actor->Scale.X * smf->yscale;
+	float scaleFactorZ = spr->actor->Scale.Y * smf->zscale;
 	float pitch = 0;
 	float roll = 0;
 	float rotateOffset = 0;
-	float angle = ANGLE_TO_FLOAT(spr->actor->angle);
+	float angle = spr->actor->Angles.Yaw.Degrees;
 
 	// [BB] Workaround for the missing pitch information.
 	if ( (smf->flags & MDL_PITCHFROMMOMENTUM) )
 	{
-		const double x = static_cast<double>(spr->actor->vel.x);
-		const double y = static_cast<double>(spr->actor->vel.y);
-		const double z = static_cast<double>(spr->actor->vel.z);
+		const double x = spr->actor->Vel.X;
+		const double y = spr->actor->Vel.Y;
+		const double z = spr->actor->Vel.Z;
 		
 		// [BB] Calculate the pitch using spherical coordinates.
 		if(z || x || y) pitch = float(atan( z/sqrt(x*x+y*y) ) / M_PI * 180);
@@ -743,9 +743,9 @@ void gl_RenderModel(GLSprite * spr, int cm)
 	// Added MDL_INHERITACTORPITCH and MDL_INHERITACTORROLL flags processing.
 	// If both flags MDL_INHERITACTORPITCH and MDL_PITCHFROMMOMENTUM are set, the pitch sums up the actor pitch and the momentum vector pitch.
 	// This is rather crappy way to transfer fixet_t type into angle in degrees, but its works!
-	if(smf->flags & MDL_INHERITACTORPITCH) pitch += float(static_cast<double>(spr->actor->pitch >> 16) / (1 << 13) * 45 + static_cast<double>(spr->actor->pitch & 0x0000FFFF) / (1 << 29) * 45);
-	if(smf->flags & MDL_INHERITACTORROLL) roll += float(static_cast<double>(spr->actor->roll >> 16) / (1 << 13) * 45 + static_cast<double>(spr->actor->roll & 0x0000FFFF) / (1 << 29) * 45);
-		
+	if(smf->flags & MDL_INHERITACTORPITCH) pitch += spr->actor->Angles.Pitch.Degrees;
+	if(smf->flags & MDL_INHERITACTORROLL) roll += spr->actor->Angles.Roll.Degrees;
+
 	if (gl.shadermodel < 4)
 	{
 		glMatrixMode(GL_MODELVIEW);
@@ -784,7 +784,7 @@ void gl_RenderModel(GLSprite * spr, int cm)
 	glTranslatef(smf->xoffset / smf->xscale, smf->zoffset / smf->zscale, smf->yoffset / smf->yscale);
 	
 	// 5) Applying model rotations.
-	glRotatef(-ANGLE_TO_FLOAT(smf->angleoffset), 0, 1, 0);
+	glRotatef(-smf->angleoffset, 0, 1, 0);
 	glRotatef(smf->pitchoffset, 0, 0, 1);
 	glRotatef(-smf->rolloffset, 1, 0, 0);
 
@@ -838,7 +838,7 @@ void gl_RenderModel(GLSprite * spr, int cm)
 //
 //===========================================================================
 
-void gl_RenderHUDModel(pspdef_t *psp, fixed_t ofsx, fixed_t ofsy, int cm)
+void gl_RenderHUDModel(pspdef_t *psp, float ofsX, float ofsY, int cm)
 {
 	AActor * playermo=players[consoleplayer].camera;
 	FSpriteModelFrame *smf = gl_FindModelFrame(playermo->player->ReadyWeapon->GetClass(), psp->state->sprite, psp->state->GetFrame(), false);
@@ -870,14 +870,14 @@ void gl_RenderHUDModel(pspdef_t *psp, fixed_t ofsx, fixed_t ofsy, int cm)
 	glTranslatef(smf->xoffset / smf->xscale, smf->zoffset / smf->zscale, smf->yoffset / smf->yscale);
 
 	// [BB] Weapon bob, very similar to the normal Doom weapon bob.
-	glRotatef(FIXED2FLOAT(ofsx)/4, 0, 1, 0);
-	glRotatef(-FIXED2FLOAT(ofsy-WEAPONTOP)/4, 1, 0, 0);
+	glRotatef(ofsX/4, 0, 1, 0);
+	glRotatef(-ofsY-WEAPONTOP/4, 1, 0, 0);
 
 	// [BB] For some reason the jDoom models need to be rotated.
 	glRotatef(90., 0, 1, 0);
 
 	// Applying angleoffset, pitchoffset, rolloffset.
-	glRotatef(-ANGLE_TO_FLOAT(smf->angleoffset), 0, 1, 0);
+	glRotatef(-smf->angleoffset, 0, 1, 0);
 	glRotatef(smf->pitchoffset, 0, 0, 1);
 	glRotatef(-smf->rolloffset, 1, 0, 0);
 

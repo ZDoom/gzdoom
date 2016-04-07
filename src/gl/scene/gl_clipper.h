@@ -136,12 +136,14 @@ public:
 
 extern Clipper clipper;
 
-angle_t R_PointToPseudoAngle (fixed_t viewx, fixed_t viewy, fixed_t x, fixed_t y);
+angle_t R_PointToPseudoAngle (fixed_t x, fixed_t y);
+angle_t R_PointToPseudoAngle(double x, double y);
+void R_SetView();
 
 // Used to speed up angle calculations during clipping
 inline angle_t vertex_t::GetClipAngle()
 {
-	return angletime == Clipper::anglecache? viewangle : (angletime = Clipper::anglecache, viewangle = R_PointToPseudoAngle(viewx, viewy, x,y));
+	return angletime == Clipper::anglecache? viewangle : (angletime = Clipper::anglecache, viewangle = R_PointToPseudoAngle(p.X, p.Y));
 }
 
 #endif

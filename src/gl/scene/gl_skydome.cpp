@@ -41,6 +41,7 @@
 #include "sc_man.h"
 #include "w_wad.h"
 #include "r_state.h"
+#include "r_utility.h"
 //#include "gl/gl_intern.h"
 
 #include "gl/system/gl_interface.h"
@@ -571,7 +572,7 @@ void GLSkyPortal::DrawContents()
 
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
-	GLRenderer->SetupView(0, 0, 0, viewangle, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
+	GLRenderer->SetupView(0, 0, 0, ViewAngle, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
 
 	if (origin->texture[0] && origin->texture[0]->tex->gl_info.bSkybox)
 	{

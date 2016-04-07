@@ -167,7 +167,7 @@ void STACK_ARGS DCanvas::DrawTextureV(FTexture *img, double x, double y, uint32 
 	}
 
 	fixedcolormap = dc_colormap;
-	ESPSResult mode = R_SetPatchStyle (parms.style, parms.alpha, 0, parms.fillcolor);
+	ESPSResult mode = R_SetPatchStyle (parms.style, parms.Alpha, 0, parms.fillcolor);
 
 	BYTE *destorgsave = dc_destorg;
 	dc_destorg = screen->GetBuffer();
@@ -363,7 +363,7 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, double x, double y, DWORD tag
 	parms->destheight = parms->texheight;
 	parms->top = img->GetScaledTopOffset();
 	parms->left = img->GetScaledLeftOffset();
-	parms->alpha = FRACUNIT;
+	parms->Alpha = 1.f;
 	parms->fillcolor = -1;
 	parms->remap = NULL;
 	parms->translation = NULL;
@@ -531,7 +531,11 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, double x, double y, DWORD tag
 			break;
 
 		case DTA_Alpha:
-			parms->alpha = MIN<fixed_t>(FRACUNIT, va_arg (tags, fixed_t));
+			parms->Alpha = FIXED2FLOAT(MIN<fixed_t>(OPAQUE, va_arg (tags, fixed_t)));
+			break;
+
+		case DTA_AlphaF:
+			parms->Alpha = (float)(MIN<double>(1., va_arg(tags, double)));
 			break;
 
 		case DTA_AlphaChannel:
@@ -640,7 +644,7 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, double x, double y, DWORD tag
 			break;
 
 		case DTA_ShadowAlpha:
-			parms->shadowAlpha = MIN<fixed_t>(FRACUNIT, va_arg (tags, fixed_t));
+			parms->shadowAlpha = MIN<fixed_t>(OPAQUE, va_arg (tags, fixed_t));
 			break;
 
 		case DTA_ShadowColor:
@@ -719,7 +723,7 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, double x, double y, DWORD tag
 			{
 				parms->style = STYLE_Shaded;
 			}
-			else if (parms->alpha < FRACUNIT)
+			else if (parms->Alpha < 1.f)
 			{
 				parms->style = STYLE_TranslucentStencil;
 			}
@@ -728,7 +732,7 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, double x, double y, DWORD tag
 				parms->style = STYLE_Stencil;
 			}
 		}
-		else if (parms->alpha < FRACUNIT)
+		else if (parms->Alpha < 1.f)
 		{
 			parms->style = STYLE_Translucent;
 		}
@@ -1148,7 +1152,7 @@ void DCanvas::Clear (int left, int top, int right, int bottom, int palcolor, uin
 //==========================================================================
 
 void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
-	double originx, double originy, double scalex, double scaley, angle_t rotation,
+	double originx, double originy, double scalex, double scaley, DAngle rotation,
 	FDynamicColormap *colormap, int lightlevel)
 {
 #ifndef NO_SWRENDER
@@ -1159,8 +1163,7 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 	int i;
 	int y1, y2, y;
 	fixed_t x;
-	double rot = rotation * M_PI / double(1u << 31);
-	bool dorotate = rot != 0;
+	bool dorotate = rotation != 0.;
 	double cosrot, sinrot;
 
 	if (--npoints < 2 || Buffer == NULL)
@@ -1198,11 +1201,12 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 		return;
 	}
 
-	scalex /= FIXED2DBL(tex->xScale);
-	scaley /= FIXED2DBL(tex->yScale);
+	scalex /= tex->Scale.X;
+	scaley /= tex->Scale.Y;
 
-	cosrot = cos(rot);
-	sinrot = sin(rot);
+	// Use the CRT's functions here.
+	cosrot = cos(rotation.Radians());
+	sinrot = sin(rotation.Radians());
 
 	// Setup constant texture mapping parameters.
 	R_SetupSpanBits(tex);

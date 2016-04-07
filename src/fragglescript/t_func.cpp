@@ -68,12 +68,10 @@
 #include "farchive.h"
 #include "p_setup.h"
 #include "p_spec.h"
+#include "r_utility.h"
+#include "math/cmath.h"
 
 static FRandom pr_script("FScript");
-
-
-#define AngleToFixed(x)  ((((double) x) / ((double) ANG45/45)) * FRACUNIT)
-#define FixedToAngle(x)  ((((double) x) / FRACUNIT) * ANG45/45)
 
 // functions. FParser::SF_ means Script Function not, well.. heh, me
 
@@ -860,43 +858,43 @@ void FParser::SF_Player(void)
 
 void FParser::SF_Spawn(void)
 {
-	int x, y, z;
+	DVector3 pos;
 	PClassActor *pclass;
-	angle_t angle = 0;
+	DAngle angle = 0.;
 	
 	if (CheckArgs(3))
 	{
 		if (!(pclass=T_GetMobjType(t_argv[0]))) return;
 		
-		x = fixedvalue(t_argv[1]);
-		y = fixedvalue(t_argv[2]);
+		pos.X = floatvalue(t_argv[1]);
+		pos.Y = floatvalue(t_argv[2]);
 
 		if(t_argc >= 5)
 		{
-			z = fixedvalue(t_argv[4]);
+			pos.Z = floatvalue(t_argv[4]);
 			// [Graf Zahl] added option of spawning with a relative z coordinate
 			if(t_argc > 5)
 			{
-				if (intvalue(t_argv[5])) z+=P_PointInSector(x, y)->floorplane.ZatPoint(x,y);
+				if (intvalue(t_argv[5])) pos.Z += P_PointInSector(pos)->floorplane.ZatPoint(pos);
 			}
 		}
 		else
 		{
 			// Legacy compatibility is more important than correctness.
-			z = ONFLOORZ;// (GetDefaultByType(PClass)->flags & MF_SPAWNCEILING) ? ONCEILINGZ : ONFLOORZ;
+			pos.Z = ONFLOORZ;// (GetDefaultByType(PClass)->flags & MF_SPAWNCEILING) ? ONCEILINGZ : ONFLOORZ;
 		}
 		
 		if(t_argc >= 4)
 		{
-			angle = intvalue(t_argv[3]) * (SQWORD)ANG45 / 45;
+			angle = floatvalue(t_argv[3]);
 		}
 		
 		t_return.type = svt_mobj;
-		t_return.value.mobj = Spawn(pclass, x, y, z, ALLOW_REPLACE);
+		t_return.value.mobj = Spawn(pclass, pos, ALLOW_REPLACE);
 
 		if (t_return.value.mobj)		
 		{
-			t_return.value.mobj->angle = angle;
+			t_return.value.mobj->Angles.Yaw = angle;
 
 			if (!DFraggleThinker::ActiveThinker->nocheckposition)
 			{
@@ -981,8 +979,7 @@ void FParser::SF_ObjX(void)
 		mo = Script->trigger;
 	}
 
-	t_return.type = svt_fixed;           // haleyjd: SoM's fixed-point fix
-	t_return.value.f = mo ? mo->X() : 0;   // null ptr check
+	t_return.setDouble(mo ? mo->X() : 0.);
 }
 
 //==========================================================================
@@ -1004,8 +1001,7 @@ void FParser::SF_ObjY(void)
 		mo = Script->trigger;
 	}
 
-	t_return.type = svt_fixed;         // haleyjd
-	t_return.value.f = mo ? mo->Y() : 0; // null ptr check
+	t_return.setDouble(mo ? mo->Y() : 0.);
 }
 
 //==========================================================================
@@ -1027,8 +1023,7 @@ void FParser::SF_ObjZ(void)
 		mo = Script->trigger;	
 	}
 
-	t_return.type = svt_fixed;         // haleyjd
-	t_return.value.f = mo ? mo->Z() : 0; // null ptr check
+	t_return.setDouble(mo ? mo->Z() : 0.);
 }
 
 
@@ -1051,8 +1046,7 @@ void FParser::SF_ObjAngle(void)
 		mo = Script->trigger;
 	}
 
-	t_return.type = svt_fixed; // haleyjd: fixed-point -- SoM again :)
-	t_return.value.f = mo ? (fixed_t)AngleToFixed(mo->angle) : 0;   // null ptr check
+	t_return.setDouble(mo ? mo->Angles.Yaw.Degrees : 0.);
 }
 
 
@@ -1256,10 +1250,9 @@ void FParser::SF_PushThing(void)
 		AActor * mo = actorvalue(t_argv[0]);
 		if(!mo) return;
 	
-		angle_t angle = (angle_t)FixedToAngle(fixedvalue(t_argv[1]));
-		fixed_t force = fixedvalue(t_argv[2]);
-	
-		P_ThrustMobj(mo, angle, force);
+		DAngle angle = floatvalue(t_argv[1]);
+		double force = floatvalue(t_argv[2]);
+		mo->Thrust(angle, force);
 	}
 }
 
@@ -1333,11 +1326,10 @@ void FParser::SF_MobjMomx(void)
 		if(t_argc > 1)
 		{
 			if(mo) 
-				mo->vel.x = fixedvalue(t_argv[1]);
+				mo->Vel.X = floatvalue(t_argv[1]);
 		}
 		
-		t_return.type = svt_fixed;
-		t_return.value.f = mo ? mo->vel.x : 0;
+		t_return.setDouble(mo ? mo->Vel.X : 0.);
 	}
 }
 
@@ -1356,12 +1348,11 @@ void FParser::SF_MobjMomy(void)
 		mo = actorvalue(t_argv[0]);
 		if(t_argc > 1)
 		{
-			if(mo)
-				mo->vel.y = fixedvalue(t_argv[1]);
+			if(mo) 
+				mo->Vel.Y = floatvalue(t_argv[1]);
 		}
 		
-		t_return.type = svt_fixed;
-		t_return.value.f = mo ? mo->vel.y : 0;
+		t_return.setDouble(mo ? mo->Vel.Y : 0.);
 	}
 }
 
@@ -1378,14 +1369,13 @@ void FParser::SF_MobjMomz(void)
 	if (CheckArgs(1))
 	{
 		mo = actorvalue(t_argv[0]);
-		if(t_argc > 1)
+		if (t_argc > 1)
 		{
-			if(mo)
-				mo->vel.z = fixedvalue(t_argv[1]);
+			if (mo)
+				mo->Vel.Z = floatvalue(t_argv[1]);
 		}
-		
-		t_return.type = svt_fixed;
-		t_return.value.f = mo ? mo->vel.z : 0;
+
+		t_return.setDouble(mo ? mo->Vel.Z : 0.);
 	}
 }
 
@@ -1402,15 +1392,12 @@ void FParser::SF_PointToAngle(void)
 {
 	if (CheckArgs(4))
 	{
-		fixed_t x1 = fixedvalue(t_argv[0]);
-		fixed_t y1 = fixedvalue(t_argv[1]);
-		fixed_t x2 = fixedvalue(t_argv[2]);
-		fixed_t y2 = fixedvalue(t_argv[3]);
+		double x1 = floatvalue(t_argv[0]);
+		double y1 = floatvalue(t_argv[1]);
+		double x2 = floatvalue(t_argv[2]);
+		double y2 = floatvalue(t_argv[3]);
 		
-		angle_t angle = R_PointToAngle2(x1, y1, x2, y2);
-		
-		t_return.type = svt_fixed;
-		t_return.value.f = (fixed_t)AngleToFixed(angle);
+		t_return.setDouble(DVector2(x2 - x1, y2 - y1).Angle().Normalized360().Degrees);
 	}
 }
 
@@ -1428,9 +1415,7 @@ void FParser::SF_PointToDist(void)
 		// Doing this in floating point is actually faster with modern computers!
 		double x = floatvalue(t_argv[2]) - floatvalue(t_argv[0]);
 		double y = floatvalue(t_argv[3]) - floatvalue(t_argv[1]);
-   
-		t_return.type = svt_fixed;
-		t_return.value.f = FLOAT2FIXED(sqrt(x*x+y*y));
+		t_return.setDouble(g_sqrt(x*x+y*y));
 	}
 }
 
@@ -1447,7 +1432,7 @@ void FParser::SF_PointToDist(void)
 
 void FParser::SF_SetCamera(void)
 {
-	angle_t angle;
+	DAngle angle;
 	player_t * player;
 	AActor * newcamera;
 	
@@ -1463,21 +1448,16 @@ void FParser::SF_SetCamera(void)
 			return;         // nullptr check
 		}
 		
-		angle = t_argc < 2 ? newcamera->angle : (fixed_t)FixedToAngle(fixedvalue(t_argv[1]));
+		angle = t_argc < 2 ? newcamera->Angles.Yaw : floatvalue(t_argv[1]);
 
-		newcamera->special1=newcamera->angle;
-		newcamera->special2=newcamera->Z();
-		newcamera->SetZ(t_argc < 3 ? (newcamera->Z() + (41 << FRACBITS)) : (intvalue(t_argv[2]) << FRACBITS));
-		newcamera->angle = angle;
-		if(t_argc < 4) newcamera->pitch = 0;
-		else
-		{
-			fixed_t pitch = fixedvalue(t_argv[3]);
-			if (pitch < -50 * FRACUNIT) pitch = -50 * FRACUNIT;
-			if (pitch > 50 * FRACUNIT)  pitch = 50 * FRACUNIT;
-			newcamera->pitch = xs_CRoundToUInt((pitch / 65536.0f)*(ANGLE_45 / 45.0f)*(20.0f / 32.0f));
-		}
+		newcamera->specialf1 = newcamera->Angles.Yaw.Degrees;
+		newcamera->specialf2 = newcamera->Z();
+		newcamera->SetZ(t_argc < 3 ? newcamera->Z() + 41 : floatvalue(t_argv[2]));
+		newcamera->Angles.Yaw = angle;
+		if (t_argc < 4) newcamera->Angles.Pitch = 0.;
+		else newcamera->Angles.Pitch = clamp(floatvalue(t_argv[3]), -50., 50.) * (20. / 32.);
 		player->camera=newcamera;
+		R_ResetViewInterpolation();
 	}
 }
 
@@ -1497,8 +1477,8 @@ void FParser::SF_ClearCamera(void)
 	if (cam)
 	{
 		player->camera=player->mo;
-		cam->angle=cam->special1;
-		cam->SetZ(cam->special2);
+		cam->Angles.Yaw = cam->specialf1;
+		cam->SetZ(cam->specialf2);
 	}
 
 }
@@ -1557,16 +1537,13 @@ void FParser::SF_StartSectorSound(void)
 
 /************* Sector functions ***************/
 
-//DMover::EResult P_MoveFloor (sector_t * m_Sector, fixed_t speed, fixed_t dest, int crush, int direction, int flags=0);
-//DMover::EResult P_MoveCeiling (sector_t * m_Sector, fixed_t speed, fixed_t dest, int crush, int direction, int flags=0);
-
 class DFloorChanger : public DFloor
 {
 public:
 	DFloorChanger(sector_t * sec)
 		: DFloor(sec) {}
 
-	bool Move(fixed_t speed, fixed_t dest, int crush, int direction)
+	bool Move(double speed, double dest, int crush, int direction)
 	{
 		bool res = DMover::crushed != MoveFloor(speed, dest, crush, direction, false);
 		Destroy();
@@ -1589,8 +1566,8 @@ void FParser::SF_FloorHeight(void)
 {
 	int tagnum;
 	int secnum;
-	fixed_t dest;
-	int returnval = 1; // haleyjd: SoM's fixes
+	double dest;
+	double returnval = 1; // haleyjd: SoM's fixes
 	
 	if (CheckArgs(1))
 	{
@@ -1602,7 +1579,7 @@ void FParser::SF_FloorHeight(void)
 			int crush = (t_argc >= 3) ? intvalue(t_argv[2]) : false;
 			
 			i = -1;
-			dest = fixedvalue(t_argv[1]);
+			dest = floatvalue(t_argv[1]);
 			
 			// set all sectors with tag
 			
@@ -1613,7 +1590,7 @@ void FParser::SF_FloorHeight(void)
 
 				DFloorChanger * f = new DFloorChanger(&sectors[i]);
 				if (!f->Move(
-					abs(dest - sectors[i].CenterFloor()), 
+					fabs(dest - sectors[i].CenterFloor()), 
 					sectors[i].floorplane.PointToDist (sectors[i].centerspot, dest),
 					crush? 10:-1, 
 					(dest > sectors[i].CenterFloor()) ? 1 : -1))
@@ -1630,13 +1607,11 @@ void FParser::SF_FloorHeight(void)
 				script_error("sector not found with tagnum %i\n", tagnum); 
 				return;
 			}
-			returnval = sectors[secnum].CenterFloor() >> FRACBITS;
+			returnval = sectors[secnum].CenterFloor();
 		}
 		
 		// return floor height
-		
-		t_return.type = svt_int;
-		t_return.value.i = returnval;
+		t_return.setDouble(returnval);
 	}
 }
 
@@ -1648,7 +1623,7 @@ void FParser::SF_FloorHeight(void)
 class DMoveFloor : public DFloor
 {
 public:
-	DMoveFloor(sector_t * sec,int moveheight,int _m_Direction,int crush,int movespeed)
+	DMoveFloor(sector_t * sec,double moveheight,int _m_Direction,int crush,double movespeed)
 	: DFloor(sec)
 	{
 		m_Type = floorRaiseByValue;
@@ -1658,7 +1633,7 @@ public:
 		m_FloorDestDist = moveheight;
 
 		// Do not interpolate instant movement floors.
-		fixed_t movedist = abs(-sec->floorplane.d - moveheight);
+		double movedist = fabs(-sec->floorplane.fD() - moveheight);
 		if (m_Speed >= movedist)
 		{
 			StopInterpolation(true);
@@ -1680,13 +1655,14 @@ void FParser::SF_MoveFloor(void)
 {
 	int secnum = -1;
 	sector_t *sec;
-	int tagnum, platspeed = 1, destheight, crush;
+	int tagnum, crush;
+	double platspeed = 1, destheight;
 	
 	if (CheckArgs(2))
 	{
 		tagnum = intvalue(t_argv[0]);
-		destheight = intvalue(t_argv[1]) * FRACUNIT;
-		platspeed = t_argc > 2 ? fixedvalue(t_argv[2]) : FRACUNIT;
+		destheight = intvalue(t_argv[1]);
+		platspeed = t_argc > 2 ? floatvalue(t_argv[2]) : 1.;
 		crush = (t_argc > 3 ? intvalue(t_argv[3]) : -1);
 		
 		// move all sectors with tag
@@ -1698,8 +1674,8 @@ void FParser::SF_MoveFloor(void)
 			// Don't start a second thinker on the same floor
 			if (sec->floordata) continue;
 			
-			new DMoveFloor(sec,sec->floorplane.PointToDist(sec->centerspot,destheight),
-				destheight < sec->CenterFloor() ? -1:1,crush,platspeed);
+			new DMoveFloor(sec, sec->floorplane.PointToDist(sec->centerspot, destheight),
+				destheight < sec->CenterFloor() ? -1 : 1, crush, platspeed);
 		}
 	}
 }
@@ -1716,7 +1692,7 @@ public:
 	DCeilingChanger(sector_t * sec)
 		: DCeiling(sec) {}
 
-	bool Move(fixed_t speed, fixed_t dest, int crush, int direction)
+	bool Move(double speed, double dest, int crush, int direction)
 	{
 		bool res = DMover::crushed != MoveCeiling(speed, dest, crush, direction, false);
 		Destroy();
@@ -1736,10 +1712,10 @@ public:
 // ceiling height of sector
 void FParser::SF_CeilingHeight(void)
 {
-	fixed_t dest;
+	double dest;
 	int secnum;
 	int tagnum;
-	int returnval = 1;
+	double returnval = 1;
 	
 	if (CheckArgs(1))
 	{
@@ -1751,7 +1727,7 @@ void FParser::SF_CeilingHeight(void)
 			int crush = (t_argc >= 3) ? intvalue(t_argv[2]) : false;
 			
 			i = -1;
-			dest = fixedvalue(t_argv[1]);
+			dest = floatvalue(t_argv[1]);
 			
 			// set all sectors with tag
 			FSSectorTagIterator itr(tagnum);
@@ -1761,7 +1737,7 @@ void FParser::SF_CeilingHeight(void)
 
 				DCeilingChanger * c = new DCeilingChanger(&sectors[i]);
 				if (!c->Move(
-					abs(dest - sectors[i].CenterCeiling()), 
+					fabs(dest - sectors[i].CenterCeiling()), 
 					sectors[i].ceilingplane.PointToDist (sectors[i].centerspot, dest), 
 					crush? 10:-1,
 					(dest > sectors[i].CenterCeiling()) ? 1 : -1))
@@ -1778,12 +1754,11 @@ void FParser::SF_CeilingHeight(void)
 				script_error("sector not found with tagnum %i\n", tagnum); 
 				return;
 			}
-			returnval = sectors[secnum].CenterCeiling() >> FRACBITS;
+			returnval = sectors[secnum].CenterCeiling();
 		}
 		
 		// return ceiling height
-		t_return.type = svt_int;
-		t_return.value.i = returnval;
+		t_return.setDouble(returnval);
 	}
 }
 
@@ -1798,7 +1773,7 @@ class DMoveCeiling : public DCeiling
 {
 public:
 
-	DMoveCeiling(sector_t * sec,int tag,fixed_t destheight,fixed_t speed,int silent,int crush)
+	DMoveCeiling(sector_t * sec,int tag,double destheight,double speed,int silent,int crush)
 		: DCeiling(sec)
 	{
 		m_Crush = crush;
@@ -1807,10 +1782,10 @@ public:
 		m_Type = DCeiling::ceilLowerByValue;	// doesn't really matter as long as it's no special value
 		m_Tag=tag;			
 		m_TopHeight=m_BottomHeight=sec->ceilingplane.PointToDist(sec->centerspot,destheight);
-		m_Direction=destheight>sec->GetPlaneTexZ(sector_t::ceiling)? 1:-1;
+		m_Direction=destheight>sec->GetPlaneTexZF(sector_t::ceiling)? 1:-1;
 
 		// Do not interpolate instant movement ceilings.
-		fixed_t movedist = abs(sec->ceilingplane.d - m_BottomHeight);
+		double movedist = fabs(sec->ceilingplane.fD() - m_BottomHeight);
 		if (m_Speed >= movedist)
 		{
 			StopInterpolation (true);
@@ -1831,15 +1806,16 @@ void FParser::SF_MoveCeiling(void)
 {
 	int secnum = -1;
 	sector_t *sec;
-	int tagnum, platspeed = 1, destheight;
+	int tagnum;
+	double platspeed = 1, destheight;
 	int crush;
 	int silent;
 	
 	if (CheckArgs(2))
 	{
 		tagnum = intvalue(t_argv[0]);
-		destheight = intvalue(t_argv[1]) * FRACUNIT;
-		platspeed = /*FLOORSPEED **/ (t_argc > 2 ? fixedvalue(t_argv[2]) : FRACUNIT);
+		destheight = intvalue(t_argv[1]);
+		platspeed = /*FLOORSPEED **/ (t_argc > 2 ? floatvalue(t_argv[2]) : 1);
 		crush=t_argc>3 ? intvalue(t_argv[3]):-1;
 		silent=t_argc>4 ? intvalue(t_argv[4]):1;
 		
@@ -2190,7 +2166,7 @@ void FParser::SF_OpenDoor(void)
 		if(t_argc > 2) speed = intvalue(t_argv[2]);
 		else speed = 1;    // 1= normal speed
 
-		EV_DoDoor(wait_time? DDoor::doorRaise:DDoor::doorOpen,NULL,NULL,sectag,2*FRACUNIT*clamp(speed,1,127),wait_time,0,0);
+		EV_DoDoor(wait_time ? DDoor::doorRaise : DDoor::doorOpen, NULL, NULL, sectag, 2. * clamp(speed, 1, 127), wait_time, 0, 0);
 	}
 }
 
@@ -2215,7 +2191,7 @@ void FParser::SF_CloseDoor(void)
 		if(t_argc > 1) speed = intvalue(t_argv[1]);
 		else speed = 1;    // 1= normal speed
 		
-		EV_DoDoor(DDoor::doorClose,NULL,NULL,sectag,2*FRACUNIT*clamp(speed,1,127),0,0,0);
+		EV_DoDoor(DDoor::doorClose, NULL, NULL, sectag, 2.*clamp(speed, 1, 127), 0, 0, 0);
 	}
 }
 
@@ -2429,12 +2405,10 @@ void FParser::SF_SetLineTexture(void)
 
 void FParser::SF_Max(void)
 {
-	fixed_t n1, n2;
-	
 	if (CheckArgs(2))
 	{
-		n1 = fixedvalue(t_argv[0]);
-		n2 = fixedvalue(t_argv[1]);
+		auto n1 = fixedvalue(t_argv[0]);
+		auto n2 = fixedvalue(t_argv[1]);
 		
 		t_return.type = svt_fixed;
 		t_return.value.f = (n1 > n2) ? n1 : n2;
@@ -2450,12 +2424,10 @@ void FParser::SF_Max(void)
 
 void FParser::SF_Min(void)
 {
-	fixed_t   n1, n2;
-	
 	if (CheckArgs(1))
 	{
-		n1 = fixedvalue(t_argv[0]);
-		n2 = fixedvalue(t_argv[1]);
+		auto n1 = fixedvalue(t_argv[0]);
+		auto n2 = fixedvalue(t_argv[1]);
 		
 		t_return.type = svt_fixed;
 		t_return.value.f = (n1 < n2) ? n1 : n2;
@@ -2471,11 +2443,10 @@ void FParser::SF_Min(void)
 
 void FParser::SF_Abs(void)
 {
-	fixed_t   n1;
 	
 	if (CheckArgs(1))
 	{
-		n1 = fixedvalue(t_argv[0]);
+		auto n1 = fixedvalue(t_argv[0]);
 		
 		t_return.type = svt_fixed;
 		t_return.value.f = (n1 < 0) ? -n1 : n1;
@@ -2587,7 +2558,7 @@ static void FS_GiveInventory (AActor *actor, const char * type, int amount)
 	AWeapon *savedPendingWeap = actor->player != NULL? actor->player->PendingWeapon : NULL;
 	bool hadweap = actor->player != NULL ? actor->player->ReadyWeapon != NULL : true;
 
-	AInventory *item = static_cast<AInventory *>(Spawn (info, 0,0,0, NO_REPLACE));
+	AInventory *item = static_cast<AInventory *>(Spawn (info));
 
 	// This shouldn't count for the item statistics!
 	item->ClearCounters();
@@ -2795,7 +2766,7 @@ void FParser::SF_MaxPlayerAmmo()
 			if(amount < 0) amount = 0;
 			if (!iammo) 
 			{
-				iammo = static_cast<AAmmo *>(Spawn (ammotype, 0, 0, 0, NO_REPLACE));
+				iammo = static_cast<AAmmo *>(Spawn (ammotype));
 				iammo->Amount = 0;
 				iammo->AttachToOwner (players[playernum].mo);
 			}
@@ -3067,166 +3038,57 @@ void FParser::SF_SetWeapon()
 //
 // movecamera(camera, targetobj, targetheight, movespeed, targetangle, anglespeed)
 //
+// This has been completely rewritten in a sane fashion, using actual vector math.
+//
 //==========================================================================
 
 void FParser::SF_MoveCamera(void)
 {
-	fixed_t    x, y, z;  
-	fixed_t    zdist, xydist, movespeed;
-	fixed_t    xstep, ystep, zstep, targetheight;
-	angle_t    anglespeed, anglestep, angledist, targetangle, 
-		mobjangle, bigangle, smallangle;
-	
-	// I have to use floats for the math where angles are divided 
-	// by fixed values.  
-	double     fangledist, fanglestep, fmovestep;
-	int        angledir;  
-	AActor*    target;
-	int        moved;
-	int        quad1, quad2;
-	AActor		* cam;
-	
-	angledir = moved = 0;
-
 	if (CheckArgs(6))
 	{
-		cam = actorvalue(t_argv[0]);
-
-		target = actorvalue(t_argv[1]);
-		if(!cam || !target) 
+		AActor *cam = actorvalue(t_argv[0]);
+		AActor *target = actorvalue(t_argv[1]);
+		if(!cam || !target)
 		{ 
 			script_error("invalid target for camera\n"); return; 
 		}
-		
-		targetheight = fixedvalue(t_argv[2]);
-		movespeed    = fixedvalue(t_argv[3]);
-		targetangle  = (angle_t)FixedToAngle(fixedvalue(t_argv[4]));
-		anglespeed   = (angle_t)FixedToAngle(fixedvalue(t_argv[5]));
-		
-		// figure out how big one step will be
-		fixedvec2 dist = cam->Vec2To(target);
-		zdist = targetheight - cam->Z();
-		
-		// Angle checking...  
-		//    90  
-		//   Q1|Q0  
-		//180--+--0  
-		//   Q2|Q3  
-		//    270
-		quad1 = targetangle / ANG90;
-		quad2 = cam->angle / ANG90;
-		bigangle = targetangle > cam->angle ? targetangle : cam->angle;
-		smallangle = targetangle < cam->angle ? targetangle : cam->angle;
-		if((quad1 > quad2 && quad1 - 1 == quad2) || (quad2 > quad1 && quad2 - 1 == quad1) ||
-			quad1 == quad2)
+
+		double targetheight = floatvalue(t_argv[2]);
+		DVector3 campos = cam->Pos();
+		DVector3 targpos = DVector3(target->Pos(), targetheight);
+		if (campos != targpos)
 		{
-			angledist = bigangle - smallangle;
-			angledir = targetangle > cam->angle ? 1 : -1;
-		}
-		else
-		{
-			angle_t diff180 = (bigangle + ANG180) - (smallangle + ANG180);
-			
-			if(quad2 == 3 && quad1 == 0)
+			DVector3 movement = targpos - campos;
+			double movelen = movement.Length();
+			double movespeed = floatvalue(t_argv[3]);
+			DVector3 movepos;
+			bool finished = (movespeed >= movelen);
+			if (finished) movepos = targpos;
+			else movepos = campos + movement.Resized(movespeed);
+
+			DAngle targetangle = floatvalue(t_argv[4]);
+			DAngle anglespeed = floatvalue(t_argv[5]);
+			DAngle diffangle = deltaangle(cam->Angles.Yaw, targetangle);
+
+			if (movespeed > 0 && anglespeed == 0.)
 			{
-				angledist = diff180;
-				angledir = 1;
-			}
-			else if(quad1 == 3 && quad2 == 0)
-			{
-				angledist = diff180;
-				angledir = -1;
+				if (!finished) targetangle = diffangle * movespeed / movelen;
 			}
 			else
 			{
-				angledist = bigangle - smallangle;
-				if(angledist > ANG180)
-				{
-					angledist = diff180;
-					angledir = targetangle > cam->angle ? -1 : 1;
-				}
-				else
-					angledir = targetangle > cam->angle ? 1 : -1;
+				targetangle = cam->Angles.Yaw + anglespeed;
 			}
-		}
-		
-		// set step variables based on distance and speed
-		mobjangle = cam->AngleTo(target);
-		xydist = cam->Distance2D(target);
-		
-		xstep = FixedMul(finecosine[mobjangle >> ANGLETOFINESHIFT], movespeed);
-		ystep = FixedMul(finesine[mobjangle >> ANGLETOFINESHIFT], movespeed);
-		
-		if(xydist && movespeed)
-			zstep = FixedDiv(zdist, FixedDiv(xydist, movespeed));
-		else
-			zstep = zdist > 0 ? movespeed : -movespeed;
-		
-		if(xydist && movespeed && !anglespeed)
-		{
-			fangledist = ((double)angledist / (ANG45/45));
-			fmovestep = ((double)FixedDiv(xydist, movespeed) / FRACUNIT);
-			if(fmovestep)
-				fanglestep = fangledist / fmovestep;
-			else
-				fanglestep = 360;
-			
-			anglestep =(angle_t) (fanglestep * (ANG45/45));
-		}
-		else
-			anglestep = anglespeed;
-		
-		if(abs(xstep) >= (abs(dist.x) - 1))
-			x = cam->X() + dist.x;
-		else
-		{
-			x = cam->X() + xstep;
-			moved = 1;
-		}
-		
-		if(abs(ystep) >= (abs(dist.y) - 1))
-			y = cam->Y() + dist.y;
-		else
-		{
-			y = cam->Y() + ystep;
-			moved = 1;
-		}
-		
-		if(abs(zstep) >= (abs(zdist) - 1))
-			z = targetheight;
-		else
-		{
-			z = cam->Z() + zstep;
-			moved = 1;
-		}
-		
-		if(anglestep >= angledist)
-			cam->angle = targetangle;
-		else
-		{
-			if(angledir == 1)
-			{
-				cam->angle += anglestep;
-				moved = 1;
-			}
-			else if(angledir == -1)
-			{
-				cam->angle -= anglestep;
-				moved = 1;
-			}
-		}
 
-		cam->radius=8;
-		cam->height=8;
-		if ((x != cam->X() || y != cam->Y()) && !P_TryMove(cam, x, y, true))
-		{
-			Printf("Illegal camera move to (%f, %f)\n", x/65536.f, y/65536.f);
-			return;
+			cam->radius = 1 / 8192.;
+			cam->Height = 1 / 8192.;
+			cam->SetOrigin(movepos, true);
+			t_return.value.i = 1;
 		}
-		cam->SetZ(z);
-
+		else
+		{
+			t_return.value.i = 0;
+		}
 		t_return.type = svt_int;
-		t_return.value.i = moved;
 	}
 }
 
@@ -3348,7 +3210,7 @@ void FParser::SF_FixedValue(void)
 
 void FParser::SF_SpawnExplosion()
 {
-	fixed_t   x, y, z;
+	DVector3 pos;
 	AActor*   spawn;
 	PClassActor * pclass;
 	
@@ -3356,14 +3218,14 @@ void FParser::SF_SpawnExplosion()
 	{
 		if (!(pclass=T_GetMobjType(t_argv[0]))) return;
 		
-		x = fixedvalue(t_argv[1]);
-		y = fixedvalue(t_argv[2]);
+		pos.X = floatvalue(t_argv[1]);
+		pos.Y = floatvalue(t_argv[2]);
 		if(t_argc > 3)
-			z = fixedvalue(t_argv[3]);
+			pos.Z = floatvalue(t_argv[3]);
 		else
-			z = P_PointInSector(x, y)->floorplane.ZatPoint(x,y);
+			pos.Z = P_PointInSector(pos)->floorplane.ZatPoint(pos);
 		
-		spawn = Spawn (pclass, x, y, z, ALLOW_REPLACE);
+		spawn = Spawn (pclass, pos, ALLOW_REPLACE);
 		t_return.type = svt_int;
 		t_return.value.i=0;
 		if (spawn)
@@ -3417,9 +3279,9 @@ void FParser::SF_SetObjPosition()
 		if (!mobj) return;
 
 		mobj->SetOrigin(
-			fixedvalue(t_argv[1]),
-			(t_argc >= 3)? fixedvalue(t_argv[2]) : mobj->Y(),
-			(t_argc >= 4)? fixedvalue(t_argv[3]) : mobj->Z(), false);
+			floatvalue(t_argv[1]),
+			(t_argc >= 3)? floatvalue(t_argv[2]) : mobj->Y(),
+			(t_argc >= 4)? floatvalue(t_argv[3]) : mobj->Z(), false);
 	}
 }
 
@@ -3750,7 +3612,7 @@ void FParser::SF_Resurrect()
 			return;
 
 		mo->SetState(state);
-		mo->height = mo->GetDefault()->height;
+		mo->Height = mo->GetDefault()->Height;
 		mo->radius = mo->GetDefault()->radius;
 		mo->flags =  mo->GetDefault()->flags;
 		mo->flags2 = mo->GetDefault()->flags2;
@@ -3771,14 +3633,15 @@ void FParser::SF_Resurrect()
 void FParser::SF_LineAttack()
 {
 	AActor	*mo;
-	int		damage, angle, slope;
+	int		damage;
+	DAngle angle, slope;
 
 	if (CheckArgs(3))
 	{
 		mo = actorvalue(t_argv[0]);
 		damage = intvalue(t_argv[2]);
 
-		angle = (intvalue(t_argv[1]) * (ANG45 / 45));
+		angle = floatvalue(t_argv[1]);
 		slope = P_AimLineAttack(mo, angle, MISSILERANGE);
 
 		P_LineAttack(mo, angle, MISSILERANGE, slope, damage, NAME_Hitscan, NAME_BulletPuff);
@@ -3828,8 +3691,7 @@ void FParser::SF_Sin()
 {
 	if (CheckArgs(1))
 	{
-		t_return.type = svt_fixed;
-		t_return.value.f = FLOAT2FIXED(sin(floatvalue(t_argv[0])));
+		t_return.setDouble(g_sin(floatvalue(t_argv[0])));
 	}
 }
 
@@ -3838,8 +3700,7 @@ void FParser::SF_ASin()
 {
 	if (CheckArgs(1))
 	{
-		t_return.type = svt_fixed;
-		t_return.value.f = FLOAT2FIXED(asin(floatvalue(t_argv[0])));
+		t_return.setDouble(g_asin(floatvalue(t_argv[0])));
 	}
 }
 
@@ -3848,8 +3709,7 @@ void FParser::SF_Cos()
 {
 	if (CheckArgs(1))
 	{
-		t_return.type = svt_fixed;
-		t_return.value.f = FLOAT2FIXED(cos(floatvalue(t_argv[0])));
+		t_return.setDouble(g_cos(floatvalue(t_argv[0])));
 	}
 }
 
@@ -3858,8 +3718,7 @@ void FParser::SF_ACos()
 {
 	if (CheckArgs(1))
 	{
-		t_return.type = svt_fixed;
-		t_return.value.f = FLOAT2FIXED(acos(floatvalue(t_argv[0])));
+		t_return.setDouble(g_acos(floatvalue(t_argv[0])));
 	}
 }
 
@@ -3868,8 +3727,7 @@ void FParser::SF_Tan()
 {
 	if (CheckArgs(1))
 	{
-		t_return.type = svt_fixed;
-		t_return.value.f = FLOAT2FIXED(tan(floatvalue(t_argv[0])));
+		t_return.setDouble(g_tan(floatvalue(t_argv[0])));
 	}
 }
 
@@ -3878,8 +3736,7 @@ void FParser::SF_ATan()
 {
 	if (CheckArgs(1))
 	{
-		t_return.type = svt_fixed;
-		t_return.value.f = FLOAT2FIXED(atan(floatvalue(t_argv[0])));
+		t_return.setDouble(g_atan(floatvalue(t_argv[0])));
 	}
 }
 
@@ -3888,8 +3745,7 @@ void FParser::SF_Exp()
 {
 	if (CheckArgs(1))
 	{
-		t_return.type = svt_fixed;
-		t_return.value.f = FLOAT2FIXED(exp(floatvalue(t_argv[0])));
+		t_return.setDouble(g_exp(floatvalue(t_argv[0])));
 	}
 }
 
@@ -3897,8 +3753,7 @@ void FParser::SF_Log()
 {
 	if (CheckArgs(1))
 	{
-		t_return.type = svt_fixed;
-		t_return.value.f = FLOAT2FIXED(log(floatvalue(t_argv[0])));
+		t_return.setDouble(g_log(floatvalue(t_argv[0])));
 	}
 }
 
@@ -3907,8 +3762,7 @@ void FParser::SF_Sqrt()
 {
 	if (CheckArgs(1))
 	{
-		t_return.type = svt_fixed;
-		t_return.value.f = FLOAT2FIXED(sqrt(floatvalue(t_argv[0])));
+		t_return.setDouble(g_sqrt(floatvalue(t_argv[0])));
 	}
 }
 
@@ -3918,7 +3772,7 @@ void FParser::SF_Floor()
 	if (CheckArgs(1))
 	{
 		t_return.type = svt_fixed;
-		t_return.value.f = fixedvalue(t_argv[0]) & 0xffFF0000;
+		t_return.value.f = fixedvalue(t_argv[0]) & 0xffff0000;
 	}
 }
 
@@ -3927,8 +3781,7 @@ void FParser::SF_Pow()
 {
 	if (CheckArgs(2))
 	{
-		t_return.type = svt_fixed;
-		t_return.value.f = FLOAT2FIXED(pow(floatvalue(t_argv[0]), floatvalue(t_argv[1])));
+		t_return.setDouble(pow(floatvalue(t_argv[0]), floatvalue(t_argv[1])));
 	}
 }
 
@@ -4008,10 +3861,9 @@ void FParser::SF_SetCorona(void)
 		return;
 	}
 	
-	int num = t_argv[0].value.i;    // which corona we want to modify
-	int what = t_argv[1].value.i;   // what we want to modify (type, color, offset,...)
-	int ival = t_argv[2].value.i;   // the value of what we modify
-	double fval = ((double) t_argv[2].value.f / FRACUNIT);
+	int num = intvalue(t_argv[0]);    // which corona we want to modify
+	int what = intvalue(t_argv[1]);   // what we want to modify (type, color, offset,...)
+	double val = floatvalue(t_argv[2]);   // the value of what we modify
 
   	/*
 	switch (what)
@@ -4042,7 +3894,7 @@ void FParser::SF_SetCorona(void)
 			break;
 		case 6:
 			lspr[num].dynamic_radius = fval;
-			lspr[num].dynamic_sqrradius = sqrt(lspr[num].dynamic_radius);
+			lspr[num].dynamic_sqrradius = g_sqrt(lspr[num].dynamic_radius);
 			break;
 		default:
 			CONS_Printf("Error in setcorona\n");
@@ -4108,11 +3960,9 @@ void FParser::SF_MobjRadius(void)
 		if(t_argc > 1)
 		{
 			if(mo) 
-				mo->radius = fixedvalue(t_argv[1]);
+				mo->radius = floatvalue(t_argv[1]);
 		}
-		
-		t_return.type = svt_fixed;
-		t_return.value.f = mo ? mo->radius : 0;
+		t_return.setDouble(mo ? mo->radius : 0.);
 	}
 }
 
@@ -4133,11 +3983,9 @@ void FParser::SF_MobjHeight(void)
 		if(t_argc > 1)
 		{
 			if(mo) 
-				mo->height = fixedvalue(t_argv[1]);
+				mo->Height = floatvalue(t_argv[1]);
 		}
-		
-		t_return.type = svt_fixed;
-		t_return.value.f = mo ? mo->height : 0;
+		t_return.setDouble(mo ? mo->Height : 0.);
 	}
 }
 
@@ -4260,33 +4108,34 @@ void FParser::SF_SpawnShot2(void)
 {
 	AActor *source = NULL;
 	PClassActor * pclass;
-	int z=0;
-	
+	double z = 0;
+
 	// t_argv[0] = type to spawn
 	// t_argv[1] = source mobj, optional, -1 to default
 	// shoots at source's angle
-	
+
 	if (CheckArgs(2))
 	{
-		if(t_argv[1].type == svt_int && t_argv[1].value.i < 0)
+		if (t_argv[1].type == svt_int && t_argv[1].value.i < 0)
 			source = Script->trigger;
 		else
 			source = actorvalue(t_argv[1]);
 
-		if (t_argc>2) z=fixedvalue(t_argv[2]);
-		
-		if(!source)	return;
-		
-		if (!(pclass=T_GetMobjType(t_argv[0]))) return;
-		
+		if (t_argc > 2) z = floatvalue(t_argv[2]);
+
+		if (!source)	return;
+
+		if (!(pclass = T_GetMobjType(t_argv[0]))) return;
+
 		t_return.type = svt_mobj;
 
-		AActor *mo = Spawn (pclass, source->PosPlusZ(z), ALLOW_REPLACE);
-		if (mo) 
+		AActor *mo = Spawn(pclass, source->PosPlusZ(z), ALLOW_REPLACE);
+		if (mo)
 		{
-			S_Sound (mo, CHAN_VOICE, mo->SeeSound, 1, ATTN_NORM);
+			S_Sound(mo, CHAN_VOICE, mo->SeeSound, 1, ATTN_NORM);
 			mo->target = source;
-			P_ThrustMobj(mo, mo->angle = source->angle, mo->Speed);
+			mo->Angles.Yaw = source->Angles.Yaw;
+			mo->Thrust();
 			if (!P_CheckMissileSpawn(mo, source->radius)) mo = NULL;
 		}
 		t_return.value.mobj = mo;

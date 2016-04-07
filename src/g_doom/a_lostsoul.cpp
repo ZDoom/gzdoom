@@ -19,12 +19,9 @@
 // Fly at the player like a missile.
 //
 
-void A_SkullAttack(AActor *self, fixed_t speed)
+void A_SkullAttack(AActor *self, double speed)
 {
 	AActor *dest;
-	angle_t an;
-	int dist;
-
 	if (!self->target)
 		return;
 				
@@ -33,21 +30,14 @@ void A_SkullAttack(AActor *self, fixed_t speed)
 
 	S_Sound (self, CHAN_VOICE, self->AttackSound, 1, ATTN_NORM);
 	A_FaceTarget (self);
-	an = self->angle >> ANGLETOFINESHIFT;
-	self->vel.x = FixedMul (speed, finecosine[an]);
-	self->vel.y = FixedMul (speed, finesine[an]);
-	dist = self->AproxDistance (dest);
-	dist = dist / speed;
-	
-	if (dist < 1)
-		dist = 1;
-	self->vel.z = (dest->Z() + (dest->height>>1) - self->Z()) / dist;
+	self->VelFromAngle(speed);
+	self->Vel.Z = (dest->Center() - self->Z()) / self->DistanceBySpeed(dest, speed);
 }
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SkullAttack)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_FIXED_OPT(speed) { speed = SKULLSPEED; }
+	PARAM_FLOAT_OPT(speed) { speed = SKULLSPEED; }
 
 	if (speed <= 0)
 		speed = SKULLSPEED;

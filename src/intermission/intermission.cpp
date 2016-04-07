@@ -262,7 +262,7 @@ void DIntermissionScreenFader::Drawer ()
 	{
 		double factor = clamp(double(mTicker) / mDuration, 0., 1.);
 		if (mType == FADE_In) factor = 1.0 - factor;
-		int color = MAKEARGB(xs_RoundToInt(factor*255), 0,0,0);
+		int color = MAKEARGB(int(factor*255), 0,0,0);
 
 		if (screen->Begin2D(false))
 		{
@@ -591,8 +591,7 @@ void DIntermissionScreenCast::Drawer ()
 	// draw the current frame in the middle of the screen
 	if (caststate != NULL)
 	{
-		double castscalex = FIXED2DBL(mDefaults->scaleX);
-		double castscaley = FIXED2DBL(mDefaults->scaleY);
+		DVector2 castscale = mDefaults->Scale;
 
 		int castsprite = caststate->sprite;
 
@@ -612,8 +611,7 @@ void DIntermissionScreenCast::Drawer ()
 
 					if (!(mDefaults->flags4 & MF4_NOSKIN))
 					{
-						castscaley = FIXED2DBL(skin->ScaleY);
-						castscalex = FIXED2DBL(skin->ScaleX);
+						castscale = skin->Scale;
 					}
 
 				}
@@ -626,10 +624,10 @@ void DIntermissionScreenCast::Drawer ()
 		screen->DrawTexture (pic, 160, 170,
 			DTA_320x200, true,
 			DTA_FlipX, sprframe->Flip & 1,
-			DTA_DestHeightF, pic->GetScaledHeightDouble() * castscaley,
-			DTA_DestWidthF, pic->GetScaledWidthDouble() * castscalex,
+			DTA_DestHeightF, pic->GetScaledHeightDouble() * castscale.Y,
+			DTA_DestWidthF, pic->GetScaledWidthDouble() * castscale.X,
 			DTA_RenderStyle, mDefaults->RenderStyle,
-			DTA_Alpha, mDefaults->alpha,
+			DTA_AlphaF, mDefaults->Alpha,
 			DTA_Translation, casttranslation,
 			TAG_DONE);
 	}

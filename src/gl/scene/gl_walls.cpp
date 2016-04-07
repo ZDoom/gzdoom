@@ -105,7 +105,7 @@ void GLWall::PutWall(bool translucent)
 	GLPortal * portal;
 	int list;
 
-	static char passflag[]={
+	static char passflag[] = {
 		0,		//RENDERWALL_NONE,             
 		1,		//RENDERWALL_TOP,              // unmasked
 		1,		//RENDERWALL_M1S,              // unmasked
@@ -144,8 +144,7 @@ void GLWall::PutWall(bool translucent)
 
 	if (translucent) // translucent walls
 	{
-		viewdistance = P_AproxDistance( ((seg->linedef->v1->x+seg->linedef->v2->x)>>1) - viewx,
-											((seg->linedef->v1->y+seg->linedef->v2->y)>>1) - viewy);
+		ViewDistance = (ViewPos - (seg->linedef->v1->fPos() + seg->linedef->Delta() / 2)).XY().LengthSquared();
 		gl_drawinfo->drawlists[GLDL_TRANSLUCENT].AddWall(this);
 	}
 	else if (passflag[type]!=4)	// non-translucent walls
@@ -178,7 +177,7 @@ void GLWall::PutWall(bool translucent)
 				}
 			}
 		}
-		else 
+		else
 		{
 			flags&=~GLWF_FOGGY;
 		}
@@ -226,7 +225,7 @@ void GLWall::PutWall(bool translucent)
 		break;
 
 	case RENDERWALL_PLANEMIRROR:
-		if (GLPortal::PlaneMirrorMode * planemirror->c <=0)
+		if (GLPortal::PlaneMirrorMode * planemirror->fC() <=0)
 		{
 			//@sync-portal
 			planemirror=UniquePlaneMirrors.Get(planemirror);
@@ -335,7 +334,7 @@ void GLWall::SplitWall(sector_t * frontsector, bool translucent)
 			if (i<lightlist.Size()-1) 
 			{
 				secplane_t &p = lightlist[i+1].plane;
-				if (p.a | p.b)
+				if (p.isSlope())
 				{
 					maplightbottomleft = p.ZatPoint(glseg.x1,glseg.y1);
 					maplightbottomright= p.ZatPoint(glseg.x2,glseg.y2);
@@ -345,7 +344,6 @@ void GLWall::SplitWall(sector_t * frontsector, bool translucent)
 					maplightbottomleft =
 					maplightbottomright= p.ZatPoint(glseg.x2,glseg.y2);
 				}
-
 			}
 			else 
 			{
@@ -508,13 +506,13 @@ bool GLWall::DoHorizon(seg_t * seg,sector_t * fs, vertex_t * v1,vertex_t * v2)
 	lightlist_t * light;
 
 	// ZDoom doesn't support slopes in a horizon sector so I won't either!
-	ztop[1] = ztop[0] = FIXED2FLOAT(fs->GetPlaneTexZ(sector_t::ceiling));
-	zbottom[1] = zbottom[0] = FIXED2FLOAT(fs->GetPlaneTexZ(sector_t::floor));
+	ztop[1] = ztop[0] = fs->GetPlaneTexZF(sector_t::ceiling);
+	zbottom[1] = zbottom[0] = fs->GetPlaneTexZF(sector_t::floor);
 
-	if (viewz < fs->GetPlaneTexZ(sector_t::ceiling))
+	if (ViewPos.Z < fs->GetPlaneTexZF(sector_t::ceiling))
 	{
-		if (viewz > fs->GetPlaneTexZ(sector_t::floor))
-			zbottom[1] = zbottom[0] = FIXED2FLOAT(viewz);
+		if (ViewPos.Z > fs->GetPlaneTexZF(sector_t::floor))
+			zbottom[1] = zbottom[0] = ViewPos.Z;
 
 		if (fs->GetTexture(sector_t::ceiling) == skyflatnum)
 		{
@@ -544,7 +542,7 @@ bool GLWall::DoHorizon(seg_t * seg,sector_t * fs, vertex_t * v1,vertex_t * v2)
 
 	if (viewz > fs->GetPlaneTexZ(sector_t::floor))
 	{
-		zbottom[1] = zbottom[0] = FIXED2FLOAT(fs->GetPlaneTexZ(sector_t::floor));
+		zbottom[1] = zbottom[0] = fs->GetPlaneTexZF(sector_t::floor);
 		if (fs->GetTexture(sector_t::floor) == skyflatnum)
 		{
 			SkyPlane(fs, sector_t::floor, false);
@@ -578,7 +576,7 @@ bool GLWall::DoHorizon(seg_t * seg,sector_t * fs, vertex_t * v1,vertex_t * v2)
 //
 //==========================================================================
 bool GLWall::SetWallCoordinates(seg_t * seg, FTexCoordInfo *tci, float texturetop,
-								int topleft,int topright, int bottomleft,int bottomright, int t_ofs)
+								fixed_t topleft, fixed_t topright, fixed_t bottomleft, fixed_t bottomright, fixed_t t_ofs)
 {
 	//
 	//
@@ -651,8 +649,8 @@ bool GLWall::SetWallCoordinates(seg_t * seg, FTexCoordInfo *tci, float textureto
 	if (topright >= bottomright)
 	{
 		// normal case
-		ztop[1]=FIXED2FLOAT(topright)		;
-		zbottom[1]=FIXED2FLOAT(bottomright)		;
+		ztop[1]=FIXED2FLOAT(topright);
+		zbottom[1]=FIXED2FLOAT(bottomright);
 
 		if (tci)
 		{
@@ -739,10 +737,10 @@ void GLWall::CheckTexturePosition()
 //
 //==========================================================================
 void GLWall::DoTexture(int _type,seg_t * seg, int peg,
-					   int ceilingrefheight,int floorrefheight,
-					   int topleft,int topright,
-					   int bottomleft,int bottomright,
-					   int v_offset)
+					   fixed_t ceilingrefheight,fixed_t floorrefheight,
+					   fixed_t topleft,fixed_t topright,
+					   fixed_t bottomleft,fixed_t bottomright,
+					   fixed_t v_offset)
 {
 	if (topleft<=bottomleft && topright<=bottomright) return;
 
@@ -1176,12 +1174,12 @@ void GLWall::BuildFFBlock(seg_t * seg, F3DFloor * rover,
 		to= (rover->flags&(FF_UPPERTEXTURE|FF_LOWERTEXTURE))? 
 				0.f : FIXED2FLOAT(tci.RowOffset(mastersd->GetTextureYOffset(side_t::mid)));
 		
-		to += FIXED2FLOAT(rowoffset);
+		to += FIXED2FLOAT(rowoffset) + rover->top.model->GetPlaneTexZF(rover->top.isceiling);
 		
-		uplft.v=tci.FloatToTexV(to + FIXED2FLOAT(*rover->top.texheight-ff_topleft));
-		uprgt.v=tci.FloatToTexV(to + FIXED2FLOAT(*rover->top.texheight-ff_topright));
-		lolft.v=tci.FloatToTexV(to + FIXED2FLOAT(*rover->top.texheight-ff_bottomleft));
-		lorgt.v=tci.FloatToTexV(to + FIXED2FLOAT(*rover->top.texheight-ff_bottomright));
+		uplft.v=tci.FloatToTexV(to + FIXED2FLOAT(-ff_topleft));
+		uprgt.v=tci.FloatToTexV(to + FIXED2FLOAT(-ff_topright));
+		lolft.v=tci.FloatToTexV(to + FIXED2FLOAT(-ff_bottomleft));
+		lorgt.v=tci.FloatToTexV(to + FIXED2FLOAT(-ff_bottomright));
 		type=RENDERWALL_FFBLOCK;
 		CheckTexturePosition();
 	}
@@ -1223,21 +1221,10 @@ void GLWall::BuildFFBlock(seg_t * seg, F3DFloor * rover,
 //
 //==========================================================================
 
-__forceinline void GLWall::GetPlanePos(F3DFloor::planeref *planeref, int &left, int &right)
+__forceinline void GLWall::GetPlanePos(F3DFloor::planeref *planeref, fixed_t &left, fixed_t &right)
 {
-	if (planeref->plane->a | planeref->plane->b)
-	{
-		left=planeref->plane->ZatPoint(vertexes[0]);
-		right=planeref->plane->ZatPoint(vertexes[1]);
-	}
-	else if(planeref->isceiling == sector_t::ceiling)
-	{
-		left = right = planeref->plane->d;
-	}
-	else
-	{
-		left = right = -planeref->plane->d;
-	}
+	left=planeref->plane->ZatPointFixed(vertexes[0]);
+	right=planeref->plane->ZatPointFixed(vertexes[1]);
 }
 
 //==========================================================================
@@ -1518,15 +1505,15 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 	}
 	else	// polyobjects must be rendered per seg.
 	{
-		if (abs(v1->x - v2->x) > abs(v1->y - v2->y))
+		if (fabs(v1->fX() - v2->fX()) > fabs(v1->fY() - v2->fY()))
 		{
-			glseg.fracleft = float(seg->v1->x - v1->x) / float(v2->x - v1->x);
-			glseg.fracright = float(seg->v2->x - v1->x) / float(v2->x - v1->x);
+			glseg.fracleft = (seg->v1->fX() - v1->fX()) / (v2->fX() - v1->fX());
+			glseg.fracright = (seg->v2->fX() - v1->fX()) / float(v2->fX() - v1->fX());
 		}
 		else
 		{
-			glseg.fracleft = float(seg->v1->y - v1->y) / float(v2->y - v1->y);
-			glseg.fracright = float(seg->v2->y - v1->y) / float(v2->y - v1->y);
+			glseg.fracleft = (seg->v1->fY() - v1->fY()) / (v2->fY() - v1->fY());
+			glseg.fracright = (seg->v2->fY() - v1->fY()) / (v2->fY() - v1->fY());
 		}
 		v1 = seg->v1;
 		v2 = seg->v2;
@@ -1536,10 +1523,10 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 	vertexes[0] = v1;
 	vertexes[1] = v2;
 
-	glseg.x1 = FIXED2FLOAT(v1->x);
-	glseg.y1 = FIXED2FLOAT(v1->y);
-	glseg.x2 = FIXED2FLOAT(v2->x);
-	glseg.y2 = FIXED2FLOAT(v2->y);
+	glseg.x1 = v1->fX();
+	glseg.y1 = v1->fY();
+	glseg.x2 = v2->fX();
+	glseg.y2 = v2->fY();
 	Colormap = frontsector->ColorMap;
 	flags = (!gl_isBlack(Colormap.FadeColor) || level.flags&LEVEL_HASFADETABLE)? GLWF_FOGGY : 0;
 
@@ -1568,33 +1555,22 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 	topplane = frontsector->ceilingplane;
 	bottomplane = frontsector->floorplane;
 
-	// Save a little time (up to 0.3 ms per frame ;) )
-	if (frontsector->floorplane.a | frontsector->floorplane.b)
-	{
-		ffh1 = segfront->floorplane.ZatPoint(v1);
-		ffh2 = segfront->floorplane.ZatPoint(v2);
-		zfloor[0] = FIXED2FLOAT(ffh1);
-		zfloor[1] = FIXED2FLOAT(ffh2);
-	}
-	else
-	{
-		ffh1 = ffh2 = -segfront->floorplane.d;
-		zfloor[0] = zfloor[1] = FIXED2FLOAT(ffh2);
-	}
+	double v; 
+	v= segfront->floorplane.ZatPoint(v1);
+	zfloor[0] = v;
+	ffh1 = FLOAT2FIXED(v);
 
-	if (segfront->ceilingplane.a | segfront->ceilingplane.b)
-	{
-		fch1 = segfront->ceilingplane.ZatPoint(v1);
-		fch2 = segfront->ceilingplane.ZatPoint(v2);
-		zceil[0] = FIXED2FLOAT(fch1);
-		zceil[1] = FIXED2FLOAT(fch2);
-	}
-	else
-	{
-		fch1 = fch2 = segfront->ceilingplane.d;
-		zceil[0] = zceil[1] = FIXED2FLOAT(fch2);
-	}
+	v = segfront->floorplane.ZatPoint(v2);
+	zfloor[1] = v;
+	ffh2 = FLOAT2FIXED(v);
 
+	v = segfront->ceilingplane.ZatPoint(v1);
+	zceil[0] = v;
+	fch1 = FLOAT2FIXED(v);
+
+	v = segfront->ceilingplane.ZatPoint(v2);
+	zceil[1] = v;
+	fch2 = FLOAT2FIXED(v);
 
 	if (seg->linedef->special == Line_Horizon)
 	{
@@ -1640,26 +1616,12 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 		fixed_t bfh1;
 		fixed_t bfh2;
 
-		if (segback->floorplane.a | segback->floorplane.b)
-		{
-			bfh1 = segback->floorplane.ZatPoint(v1);
-			bfh2 = segback->floorplane.ZatPoint(v2);
-		}
-		else
-		{
-			bfh1 = bfh2 = -segback->floorplane.d;
-		}
+		bfh1 = segback->floorplane.ZatPointFixed(v1);
+		bfh2 = segback->floorplane.ZatPointFixed(v2);
 
-		if (segback->ceilingplane.a | segback->ceilingplane.b)
-		{
-			bch1 = segback->ceilingplane.ZatPoint(v1);
-			bch2 = segback->ceilingplane.ZatPoint(v2);
-		}
-		else
-		{
-			bch1 = bch2 = segback->ceilingplane.d;
-		}
-
+		bch1 = segback->ceilingplane.ZatPointFixed(v1);
+		bch2 = segback->ceilingplane.ZatPointFixed(v2);
+		
 		SkyTop(seg, frontsector, backsector, v1, v2);
 		SkyBottom(seg, frontsector, backsector, v1, v2);
 
@@ -1688,8 +1650,7 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 				}
 				else if (!(seg->sidedef->Flags & WALLF_POLYOBJ))
 				{
-					if ((frontsector->ceilingplane.a | frontsector->ceilingplane.b |
-						backsector->ceilingplane.a | backsector->ceilingplane.b) &&
+					if ((frontsector->ceilingplane.isSlope() || backsector->ceilingplane.isSlope()) &&
 						frontsector->GetTexture(sector_t::ceiling) != skyflatnum &&
 						backsector->GetTexture(sector_t::ceiling) != skyflatnum)
 					{
@@ -1770,8 +1731,7 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 			}
 			else if (!(seg->sidedef->Flags & WALLF_POLYOBJ))
 			{
-				if ((frontsector->floorplane.a | frontsector->floorplane.b |
-					backsector->floorplane.a | backsector->floorplane.b) &&
+				if ((frontsector->ceilingplane.isSlope() || backsector->ceilingplane.isSlope()) &&
 					frontsector->GetTexture(sector_t::floor) != skyflatnum &&
 					backsector->GetTexture(sector_t::floor) != skyflatnum)
 				{
@@ -1820,10 +1780,10 @@ void GLWall::ProcessLowerMiniseg(seg_t *seg, sector_t * frontsector, sector_t * 
 		vertexes[0] = v1;
 		vertexes[1] = v2;
 
-		glseg.x1 = FIXED2FLOAT(v1->x);
-		glseg.y1 = FIXED2FLOAT(v1->y);
-		glseg.x2 = FIXED2FLOAT(v2->x);
-		glseg.y2 = FIXED2FLOAT(v2->y);
+		glseg.x1 = v1->fX();
+		glseg.y1 = v1->fY();
+		glseg.x2 = v2->fX();
+		glseg.y2 = v2->fY();
 		glseg.fracleft = 0;
 		glseg.fracright = 1;
 

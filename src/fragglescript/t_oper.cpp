@@ -360,8 +360,7 @@ void FParser::OPmultiply(svalue_t &result,int start, int n, int stop)
 	// haleyjd: 8-17
 	if(left.type == svt_fixed || right.type == svt_fixed)
 	{
-		result.type = svt_fixed;
-		result.value.f = FixedMul(fixedvalue(left), fixedvalue(right));
+		result.setDouble(floatvalue(left) * floatvalue(right));
 	}
 	else
 	{
@@ -385,21 +384,20 @@ void FParser::OPdivide(svalue_t &result, int start, int n, int stop)
 	// haleyjd: 8-17
 	if(left.type == svt_fixed || right.type == svt_fixed)
 	{
-		fixed_t fr;
+		auto fr = floatvalue(right);
 		
-		if((fr = fixedvalue(right)) == 0)
+		if(fr == 0)
 			script_error("divide by zero\n");
 		else
 		{
-			result.type = svt_fixed;
-			result.value.f = FixedDiv(fixedvalue(left), fr);
+			result.setDouble(floatvalue(left) / fr);
 		}
 	}
 	else
 	{
-		int ir;
+		auto ir = intvalue(right);
 		
-		if(!(ir = intvalue(right)))
+		if(!ir)
 			script_error("divide by zero\n");
 		else
 		{
@@ -509,8 +507,7 @@ void FParser::OPincrement(svalue_t &result, int start, int n, int stop)
 		}
 		else
 		{
-			result.value.f = fixedvalue(result) + FRACUNIT;
-			result.type = svt_fixed;
+			result.setDouble(floatvalue(result)+1);
 			var->SetValue (result);
 		}
     }
@@ -535,8 +532,7 @@ void FParser::OPincrement(svalue_t &result, int start, int n, int stop)
 		}
 		else
 		{
-			newvalue.type = svt_fixed;
-			newvalue.value.f = fixedvalue(result) + FRACUNIT;
+			newvalue.setDouble(floatvalue(result)+1);
 			var->SetValue (newvalue);
 		}
     }
@@ -574,7 +570,7 @@ void FParser::OPdecrement(svalue_t &result, int start, int n, int stop)
 		}
 		else
 		{
-			result.value.f = fixedvalue(result) - FRACUNIT;
+			result.setDouble(floatvalue(result)-1);
 			result.type = svt_fixed;
 			var->SetValue (result);
 		}
@@ -600,8 +596,7 @@ void FParser::OPdecrement(svalue_t &result, int start, int n, int stop)
 		}
 		else
 		{
-			newvalue.type = svt_fixed;
-			newvalue.value.f = fixedvalue(result) - FRACUNIT;
+			newvalue.setDouble(floatvalue(result)-1);
 			var->SetValue (newvalue);
 		}
     }

@@ -92,12 +92,8 @@
 #include "zstring.h"
 #include "gdtoa.h"
 
-#ifndef _MSC_VER
 #include <stdint.h>
-#else
-typedef unsigned __int64 uint64_t;
-typedef signed __int64 int64_t;
-#endif
+
 
 /*
  * MAXEXPDIG is the maximum number of decimal digits needed to store a

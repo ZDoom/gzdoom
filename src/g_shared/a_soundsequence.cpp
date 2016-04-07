@@ -146,7 +146,7 @@ void ASoundSequence::PostBeginPlay ()
 		}
 		if (master == NULL)
 		{
-			master = Spawn<ASoundSequenceSlot> (0, 0, 0, NO_REPLACE);
+			master = Spawn<ASoundSequenceSlot> ();
 			master->Sequence = SN_StartSequence (master, slot, 0);
 			GC::WriteBarrier(master, master->Sequence);
 		}

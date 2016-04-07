@@ -115,12 +115,11 @@ FFlatVertexBuffer::~FFlatVertexBuffer()
 
 void FFlatVertex::SetFlatVertex(vertex_t *vt, const secplane_t & plane)
 {
-	x = vt->fx;
-	y = vt->fy;
-	z = plane.ZatPoint(vt->fx, vt->fy);
-	u = vt->fx/64.f;
-	v = -vt->fy/64.f;
-	w = /*dc = df =*/ 0;
+	x = vt->fX();
+	y = vt->fY();
+	z = plane.ZatPoint(vt);
+	u = vt->fX()/64.f;
+	v = -vt->fY()/64.f;
 }
 
 //==========================================================================

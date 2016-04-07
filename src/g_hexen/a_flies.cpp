@@ -84,26 +84,24 @@ DEFINE_ACTION_FUNCTION(AActor, A_FlyBuzz)
 		return 0;
 	}
 
-	angle_t ang = self->AngleTo(targ);
-	self->angle = ang;
+	self->Angles.Yaw = self->AngleTo(targ);
 	self->args[0]++;
-	ang >>= ANGLETOFINESHIFT;
-	if (!P_TryMove(self, self->X() + 6 * finecosine[ang], self->Y() + 6 * finesine[ang], true))
+	if (!P_TryMove(self, self->Pos().XY() + self->Angles.Yaw.ToVector(6), true))
 	{
 		self->SetIdle(true);
 		return 0;
 	}
 	if (self->args[0] & 2)
 	{
-		self->vel.x += (pr_fly() - 128) << BOBTOFINESHIFT;
-		self->vel.y += (pr_fly() - 128) << BOBTOFINESHIFT;
+		self->Vel.X += (pr_fly() - 128) / 512.;
+		self->Vel.Y += (pr_fly() - 128) / 512.;
 	}
 	int zrand = pr_fly();
-	if (targ->Z() + 5*FRACUNIT < self->Z() && zrand > 150)
+	if (targ->Z() + 5. < self->Z() && zrand > 150)
 	{
 		zrand = -zrand;
 	}
-	self->vel.z = zrand << BOBTOFINESHIFT;
+	self->Vel.Z = zrand / 512.;
 	if (pr_fly() < 40)
 	{
 		S_Sound(self, CHAN_VOICE, self->ActiveSound, 0.5f, ATTN_STATIC);

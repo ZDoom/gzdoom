@@ -12,7 +12,7 @@
 #include "doomstat.h"
 */
 
-#define HEAL_RADIUS_DIST	255*FRACUNIT
+#define HEAL_RADIUS_DIST	255.
 
 static FRandom pr_healradius ("HealRadius");
 
@@ -42,7 +42,7 @@ bool AArtiHealingRadius::Use (bool pickup)
 		if (playeringame[i] &&
 			players[i].mo != NULL &&
 			players[i].mo->health > 0 &&
-			players[i].mo->AproxDistance (Owner) <= HEAL_RADIUS_DIST)
+			players[i].mo->Distance2D (Owner) <= HEAL_RADIUS_DIST)
 		{
 			// Q: Is it worth it to make this selectable as a player property?
 			// A: Probably not - but it sure doesn't hurt.
@@ -52,7 +52,7 @@ bool AArtiHealingRadius::Use (bool pickup)
 			case NAME_Armor:
 				for (int j = 0; j < 4; ++j)
 				{
-					AHexenArmor *armor = Spawn<AHexenArmor> (0,0,0, NO_REPLACE);
+					AHexenArmor *armor = Spawn<AHexenArmor> ();
 					armor->health = j;
 					armor->Amount = 1;
 					if (!armor->CallTryPickup (players[i].mo))

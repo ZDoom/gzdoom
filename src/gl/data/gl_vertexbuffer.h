@@ -20,13 +20,20 @@ public:
 	virtual void BindVBO() = 0;
 };
 
-struct FFlatVertex	// exactly 32 bytes large
+struct FFlatVertex
 {
-	float x,z,y,w;	// w only for padding to make one vertex 32 bytes - maybe it will find some use later
+	float x,z,y;	// world position
 	float u,v;		// texture coordinates
-	//float dc, df;	// distance to floor and ceiling on walls - used for glowing
 
 	void SetFlatVertex(vertex_t *vt, const secplane_t &plane);
+	void Set(float xx, float zz, float yy, float uu, float vv)
+	{
+		x = xx;
+		z = zz;
+		y = yy;
+		u = uu;
+		v = vv;
+	}
 };
 
 #define VTO ((FFlatVertex*)NULL)

@@ -456,43 +456,6 @@ public:
 	PColor();
 };
 
-// Variations of floating point types ---------------------------------------
-// These get converted to floats when they're loaded from memory.
-
-class PFixed : public PFloat
-{
-	DECLARE_CLASS(PFixed, PFloat);
-public:
-	PFixed();
-
-	void WriteValue(FArchive &ar, const void *addr) const override;
-	bool ReadValue(FArchive &ar, void *addr) const override;
-
-	virtual void SetValue(void *addr, int val);
-	virtual void SetValue(void *addr, double val);
-	virtual int GetValueInt(void *addr) const;
-	virtual double GetValueFloat(void *addr) const;
-	virtual int GetStoreOp() const;
-	virtual int GetLoadOp() const;
-};
-
-class PAngle : public PFloat
-{
-	DECLARE_CLASS(PAngle, PFloat);
-public:
-	PAngle();
-
-	void WriteValue(FArchive &ar, const void *addr) const override;
-	bool ReadValue(FArchive &ar, void *addr) const override;
-
-	virtual void SetValue(void *addr, int val);
-	virtual void SetValue(void *addr, double val);
-	virtual int GetValueInt(void *addr) const;
-	virtual double GetValueFloat(void *addr) const;
-	virtual int GetStoreOp() const;
-	virtual int GetLoadOp() const;
-};
-
 // Pointers -----------------------------------------------------------------
 
 class PStatePointer : public PBasicType
@@ -878,8 +841,6 @@ extern PName *TypeName;
 extern PSound *TypeSound;
 extern PColor *TypeColor;
 extern PStatePointer *TypeState;
-extern PFixed *TypeFixed;
-extern PAngle *TypeAngle;
 
 // A constant value ---------------------------------------------------------
 

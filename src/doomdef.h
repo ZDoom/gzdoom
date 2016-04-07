@@ -340,7 +340,7 @@ enum : unsigned int
 	COMPATF2_BADANGLES		= 1 << 0,	// It is impossible to face directly NSEW.
 	COMPATF2_FLOORMOVE		= 1 << 1,	// Use the same floor motion behavior as Doom.
 	COMPATF2_SOUNDCUTOFF	= 1 << 2,	// Cut off sounds when an actor vanishes instead of making it owner-less
-	COMPATF2_POINTONLINE	= 1 << 3,	// Use original but buggy P_PointOnLineSide() and P_PointOnDivlineSide()
+	COMPATF2_POINTONLINE	= 1 << 3,	// Use original but buggy P_PointOnLineSide() and P_PointOnDivlineSideCompat()
 	COMPATF2_MULTIEXIT		= 1 << 4,	// Level exit can be triggered multiple times (required by Daedalus's travel tubes, thanks to a faulty script)
 };
 
@@ -365,11 +365,11 @@ enum
 // linedefs. More friction can create mud, sludge,
 // magnetized floors, etc. Less friction can create ice.
 
-#define MORE_FRICTION_VELOCITY	15000	// mud factor based on velocity
-#define ORIG_FRICTION			0xE800	// original value
-#define ORIG_FRICTION_FACTOR	2048	// original value
-#define FRICTION_LOW			0xf900
-#define FRICTION_FLY			0xeb00
+#define MORE_FRICTION_VELOCITY	(15000/65536.)	// mud factor based on velocity
+#define ORIG_FRICTION			(0xE800/65536.)	// original value
+#define ORIG_FRICTION_FACTOR	(2048/65536.)	// original value
+#define FRICTION_LOW			(0xf900/65536.)
+#define FRICTION_FLY			(0xeb00/65536.)
 
 
 #define BLINKTHRESHOLD (4*32)

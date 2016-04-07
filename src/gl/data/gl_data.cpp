@@ -157,8 +157,8 @@ int LS_Sector_SetPlaneReflection (line_t *ln, AActor *it, bool backSide,
 	while ((secnum = itr.Next()) >= 0)
 	{
 		sector_t * s = &sectors[secnum];
-		if (s->floorplane.a==0 && s->floorplane.b==0) s->reflect[sector_t::floor] = arg1/255.f;
-		if (s->ceilingplane.a==0 && s->ceilingplane.b==0) sectors[secnum].reflect[sector_t::ceiling] = arg2/255.f;
+		if (!s->floorplane.isSlope()) s->reflect[sector_t::floor] = arg1/255.f;
+		if (!s->ceilingplane.isSlope()) sectors[secnum].reflect[sector_t::ceiling] = arg2/255.f;
 	}
 
 	return true;
@@ -460,8 +460,8 @@ void gl_RecalcVertexHeights(vertex_t * v)
 	{
 		for(j=0;j<2;j++)
 		{
-			if (j==0) height=FIXED2FLOAT(v->sectors[i]->ceilingplane.ZatPoint(v));
-			else height=FIXED2FLOAT(v->sectors[i]->floorplane.ZatPoint(v));
+			if (j==0) height=v->sectors[i]->ceilingplane.ZatPoint(v);
+			else height=v->sectors[i]->floorplane.ZatPoint(v);
 
 			for(k=0;k<v->numheights;k++)
 			{
@@ -513,13 +513,13 @@ CCMD(dumpgeometry)
 				if (seg->linedef)
 				{
 				Printf(PRINT_LOG, "      (%4.4f, %4.4f), (%4.4f, %4.4f) - seg %d, linedef %d, side %d", 
-					FIXED2FLOAT(seg->v1->x), FIXED2FLOAT(seg->v1->y), FIXED2FLOAT(seg->v2->x), FIXED2FLOAT(seg->v2->y),
+					seg->v1->fX(), seg->v1->fY(), seg->v2->fX(), seg->v2->fY(),
 					int(seg-segs), int(seg->linedef-lines), seg->sidedef != seg->linedef->sidedef[0]);
 				}
 				else
 				{
 					Printf(PRINT_LOG, "      (%4.4f, %4.4f), (%4.4f, %4.4f) - seg %d, miniseg", 
-						FIXED2FLOAT(seg->v1->x), FIXED2FLOAT(seg->v1->y), FIXED2FLOAT(seg->v2->x), FIXED2FLOAT(seg->v2->y),
+						seg->v1->fX(), seg->v1->fY(), seg->v2->fX(), seg->v2->fY(),
 						int(seg-segs));
 				}
 				if (seg->PartnerSeg) 

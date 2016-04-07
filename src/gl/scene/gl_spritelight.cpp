@@ -64,7 +64,7 @@
 //
 //==========================================================================
 
-bool gl_GetSpriteLight(AActor *self, fixed_t x, fixed_t y, fixed_t z, subsector_t * subsec, int desaturation, float * out, line_t *line, int side)
+bool gl_GetSpriteLight(AActor *self, float x, float y, float z, subsector_t * subsec, int desaturation, float * out, line_t *line, int side)
 {
 	ADynamicLight *light;
 	float frac, lr, lg, lb;
@@ -85,7 +85,7 @@ bool gl_GetSpriteLight(AActor *self, fixed_t x, fixed_t y, fixed_t z, subsector_
 				if (!(light->flags2&MF2_DORMANT) &&
 					(!(light->flags4&MF4_DONTLIGHTSELF) || light->target != self))
 				{
-					float dist = FVector3(FIXED2FLOAT(x - light->X()), FIXED2FLOAT(y - light->Y()), FIXED2FLOAT(z - light->Z())).Length();
+					float dist = FVector3(x - light->X(), y - light->Y(), z - light->Z()).Length();
 					radius = light->GetRadius() * gl_lights_size;
 
 					if (dist < radius)
@@ -146,7 +146,7 @@ bool gl_GetSpriteLight(AActor *self, fixed_t x, fixed_t y, fixed_t z, subsector_
 //
 //==========================================================================
 
-static int gl_SetSpriteLight(AActor *self, fixed_t x, fixed_t y, fixed_t z, subsector_t * subsec, 
+static int gl_SetSpriteLight(AActor *self, float x, float y, float z, subsector_t * subsec, 
                               int lightlevel, int rellight, FColormap * cm, float alpha, 
 							  PalEntry ThingColor, bool weapon)
 {
@@ -201,13 +201,13 @@ int gl_SetSpriteLight(AActor * thing, int lightlevel, int rellight, FColormap * 
 					   float alpha, PalEntry ThingColor, bool weapon)
 { 
 	subsector_t * subsec = thing->subsector;
-	return gl_SetSpriteLight(thing, thing->X(), thing->Y(), thing->Z()+(thing->height>>1), subsec, 
+	return gl_SetSpriteLight(thing, thing->X(), thing->Y(), thing->Z()+ thing->Height / 2, subsec, 
 					  lightlevel, rellight, cm, alpha, ThingColor, weapon);
 }
 
 int gl_SetSpriteLight(particle_t * thing, int lightlevel, int rellight, FColormap *cm, float alpha, PalEntry ThingColor)
 { 
-	return gl_SetSpriteLight(NULL, thing->x, thing->y, thing->z, thing->subsector, lightlevel, rellight, 
+	return gl_SetSpriteLight(NULL, thing->Pos.X, thing->Pos.Y, thing->Pos.Z, thing->subsector, lightlevel, rellight, 
 					  cm, alpha, ThingColor, false);
 }
 

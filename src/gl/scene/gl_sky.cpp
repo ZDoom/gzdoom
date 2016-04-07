@@ -92,7 +92,7 @@ void GLSkyInfo::init(int sky1, PalEntry FadeColor)
 		texture[0] = FMaterial::ValidateTexture(texno, true);
 		if (!texture[0] || texture[0]->tex->UseType == FTexture::TEX_Null) goto normalsky;
 		skytexno1 = texno;
-		x_offset[0] = ANGLE_TO_FLOAT(s->GetTextureXOffset(pos));
+		x_offset[0] = AngleToFloat(s->GetTextureXOffset(pos));
 		y_offset = FIXED2FLOAT(s->GetTextureYOffset(pos));
 		mirrored = !l->args[2];
 	}
@@ -172,8 +172,8 @@ void GLWall::SkyPlane(sector_t *sector, int plane, bool allowreflect)
 		}
 		else if (allowreflect && sector->GetReflect(plane) > 0)
 		{
-			if ((plane == sector_t::ceiling && viewz > sector->ceilingplane.d) ||
-				(plane == sector_t::floor && viewz < -sector->floorplane.d)) return;
+			if ((plane == sector_t::ceiling && ViewPos.Z > sector->ceilingplane.fD()) ||
+				(plane == sector_t::floor && ViewPos.Z < -sector->floorplane.fD())) return;
 			type = RENDERWALL_PLANEMIRROR;
 			planemirror = plane == sector_t::ceiling ? &sector->ceilingplane : &sector->floorplane;
 		}
@@ -204,7 +204,7 @@ void GLWall::SkyLine(sector_t *fs, line_t *line)
 	}
 	else
 	{
-		skyinfo.init(line->frontsector->sky, Colormap.FadeColor);
+		skyinfo.init(fs->sky, Colormap.FadeColor);
 		type = RENDERWALL_SKY;
 		sky = UniqueSkies.Get(&skyinfo);
 	}
@@ -259,7 +259,7 @@ void GLWall::SkyTop(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex
 					return;
 
 			// one more check for some ugly transparent door hacks
-			if (bs->floorplane.a==0 && bs->floorplane.b==0 && fs->floorplane.a==0 && fs->floorplane.b==0)
+			if (!bs->floorplane.isSlope() && !fs->floorplane.isSlope())
 			{
 				if (bs->GetPlaneTexZ(sector_t::floor)==fs->GetPlaneTexZ(sector_t::floor)+FRACUNIT)
 				{
@@ -275,7 +275,7 @@ void GLWall::SkyTop(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex
 					{
 						ztop[0]=ztop[1]=32768.0f;
 						zbottom[0]=zbottom[1]= 
-							FIXED2FLOAT(bs->ceilingplane.ZatPoint(v2) + seg->sidedef->GetTextureYOffset(side_t::mid));
+							bs->ceilingplane.ZatPoint(v2) + seg->sidedef->GetTextureYOffsetF(side_t::mid);
 						SkyPlane(fs, sector_t::ceiling, false);
 						return;
 					}
@@ -294,8 +294,8 @@ void GLWall::SkyTop(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex
 		}
 		else
 		{
-			zbottom[0]=FIXED2FLOAT(bs->ceilingplane.ZatPoint(v1));
-			zbottom[1]=FIXED2FLOAT(bs->ceilingplane.ZatPoint(v2));
+			zbottom[0] = bs->ceilingplane.ZatPoint(v1);
+			zbottom[1] = bs->ceilingplane.ZatPoint(v2);
 			flags|=GLWF_SKYHACK;	// mid textures on such lines need special treatment!
 		}
 	}
@@ -305,7 +305,7 @@ void GLWall::SkyTop(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex
 		if (frontreflect > 0)
 		{
 			float backreflect = bs->GetReflect(sector_t::ceiling);
-			if (backreflect > 0 && bs->ceilingplane.d == fs->ceilingplane.d)
+			if (backreflect > 0 && bs->ceilingplane.fD() == fs->ceilingplane.fD())
 			{
 				// Don't add intra-portal line to the portal.
 				return;
@@ -320,12 +320,10 @@ void GLWall::SkyTop(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex
 		}
 
 		// stacked sectors
-		fixed_t fsc1=fs->ceilingplane.ZatPoint(v1);
-		fixed_t fsc2=fs->ceilingplane.ZatPoint(v2);
+		ztop[0] = ztop[1] = 32768.0f;
+		zbottom[0] = fs->ceilingplane.ZatPoint(v1);
+		zbottom[1] = fs->ceilingplane.ZatPoint(v2);
 
-		ztop[0]=ztop[1]=32768.0f;
-		zbottom[0]=FIXED2FLOAT(fsc1);
-		zbottom[1]=FIXED2FLOAT(fsc2);
 	}
 
 	SkyPlane(fs, sector_t::ceiling, true);
@@ -359,7 +357,7 @@ void GLWall::SkyBottom(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,ver
 			else
 			{
 				// Special hack for Vrack2b
-				if (bs->floorplane.ZatPoint(FIXED2FLOAT(viewx), FIXED2FLOAT(viewy)) > FIXED2FLOAT(viewz)) return;
+				if (bs->floorplane.ZatPoint(ViewPos) > ViewPos.Z) return;
 			}
 		}
 		zbottom[0]=zbottom[1]=-32768.0f;
@@ -371,8 +369,8 @@ void GLWall::SkyBottom(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,ver
 		}
 		else
 		{
-			ztop[0]=FIXED2FLOAT(bs->floorplane.ZatPoint(v1));
-			ztop[1]=FIXED2FLOAT(bs->floorplane.ZatPoint(v2));
+			ztop[0] = bs->floorplane.ZatPoint(v1);
+			ztop[1] = bs->floorplane.ZatPoint(v2);
 			flags|=GLWF_SKYHACK;	// mid textures on such lines need special treatment!
 		}
 	}
@@ -382,7 +380,7 @@ void GLWall::SkyBottom(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,ver
 		if (frontreflect > 0)
 		{
 			float backreflect = bs->GetReflect(sector_t::floor);
-			if (backreflect > 0 && bs->floorplane.d == fs->floorplane.d)
+			if (backreflect > 0 && bs->floorplane.fD() == fs->floorplane.fD())
 			{
 				// Don't add intra-portal line to the portal.
 				return;
@@ -397,12 +395,9 @@ void GLWall::SkyBottom(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,ver
 		}
 
 		// stacked sectors
-		fixed_t fsc1=fs->floorplane.ZatPoint(v1);
-		fixed_t fsc2=fs->floorplane.ZatPoint(v2);
-
 		zbottom[0]=zbottom[1]=-32768.0f;
-		ztop[0]=FIXED2FLOAT(fsc1);
-		ztop[1]=FIXED2FLOAT(fsc2);
+		ztop[0] = fs->floorplane.ZatPoint(v1);
+		ztop[1] = fs->floorplane.ZatPoint(v2);
 	}
 
 	SkyPlane(fs, sector_t::floor, true);

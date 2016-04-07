@@ -18,9 +18,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_Bang4Cloud)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	fixed_t xo = (pr_bang4cloud.Random2() & 3) * 10240;
-	fixed_t yo = (pr_bang4cloud.Random2() & 3) * 10240;
-	Spawn("Bang4Cloud", self->Vec3Offset(xo, yo, 0), ALLOW_REPLACE);
+	double xo = (pr_bang4cloud.Random2() & 3) * (10. / 64);
+	double yo = (pr_bang4cloud.Random2() & 3) * (10. / 64);
+	Spawn("Bang4Cloud", self->Vec3Offset(xo, yo, 0.), ALLOW_REPLACE);
 	return 0;
 }
 
@@ -38,7 +38,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GiveQuestItem)
 		{
 			if (playeringame[i])
 			{
-				AInventory *item = static_cast<AInventory *>(Spawn (QuestItemClasses[questitem - 1], 0,0,0, NO_REPLACE));
+				AInventory *item = static_cast<AInventory *>(Spawn (QuestItemClasses[questitem - 1]));
 				if (!item->CallTryPickup (players[i].mo))
 				{
 					item->Destroy ();
@@ -81,7 +81,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Explode512)
 	{
 		self->target->player->extralight = 5;
 	}
-	P_CheckSplash(self, 512<<FRACBITS);
+	P_CheckSplash(self, 512);
 
 	// Strife didn't do this next part, but it looks good
 	self->RenderStyle = STYLE_Add;
@@ -95,14 +95,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightGoesOut)
 	AActor *foo;
 	sector_t *sec = self->Sector;
 	vertex_t *spot;
-	fixed_t newheight;
+	double newheight;
 
 	sec->SetLightLevel(0);
 
-	fixed_t oldtheight = sec->floorplane.Zat0();
+	double oldtheight = sec->floorplane.fD();
 	newheight = sec->FindLowestFloorSurrounding(&spot);
-	sec->floorplane.d = sec->floorplane.PointToDist (spot, newheight);
-	fixed_t newtheight = sec->floorplane.Zat0();
+	sec->floorplane.setD(sec->floorplane.PointToDist (spot, newheight));
+	double newtheight = sec->floorplane.fD();
 	sec->ChangePlaneTexZ(sector_t::floor, newtheight - oldtheight);
 	sec->CheckPortalPlane(sector_t::floor);
 
@@ -112,9 +112,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_LightGoesOut)
 		if (foo != NULL)
 		{
 			int t = pr_lightout() & 15;
-			foo->vel.x = (t - (pr_lightout() & 7)) << FRACBITS;
-			foo->vel.y = (pr_lightout.Random2() & 7) << FRACBITS;
-			foo->vel.z = (7 + (pr_lightout() & 3)) << FRACBITS;
+			foo->Vel.X = t - (pr_lightout() & 7);
+			foo->Vel.Y = pr_lightout.Random2() & 7;
+			foo->Vel.Z = 7 + (pr_lightout() & 3);
 		}
 	}
 	return 0;

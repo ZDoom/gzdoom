@@ -138,7 +138,7 @@ bool CheckIfExitIsGood (AActor *self, level_info_t *info)
 //
 //============================================================================
 
-bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType, fixedvec3 *optpos)
+bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType, DVector3 *optpos)
 {
 	int lineActivation;
 	INTBOOL repeat;
@@ -199,7 +199,7 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType, fix
 //
 //============================================================================
 
-bool P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType, fixedvec3 *optpos)
+bool P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType, DVector3 *optpos)
 {
  	int lineActivation = line->activation;
 
@@ -376,7 +376,7 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 	{
 		// Falling, not all the way down yet?
 		sector = player->mo->Sector;
-		if (player->mo->Z() != sector->LowestFloorAt(player->mo)
+		if (!player->mo->isAtZ(sector->LowestFloorAt(player->mo))
 			&& !player->mo->waterlevel)
 		{
 			return;
@@ -416,7 +416,7 @@ void P_PlayerInSpecialSector (player_t *player, sector_t * sector)
 				}
 				if (sector->Flags & SECF_DMGTERRAINFX)
 				{
-					P_HitWater(player->mo, player->mo->Sector, INT_MIN, INT_MIN, INT_MIN, false, true, true);
+					P_HitWater(player->mo, player->mo->Sector, player->mo->Pos(), false, true, true);
 				}
 			}
 		}
@@ -453,7 +453,7 @@ static void DoSectorDamage(AActor *actor, sector_t *sec, int amount, FName type,
 	if (!(flags & DAMAGE_PLAYERS) && actor->player != NULL)
 		return;
 
-	if (!(flags & DAMAGE_IN_AIR) && actor->Z() != sec->floorplane.ZatPoint(actor) && !actor->waterlevel)
+	if (!(flags & DAMAGE_IN_AIR) && !actor->isAtZ(sec->floorplane.ZatPoint(actor)) && !actor->waterlevel)
 		return;
 
 	if (protectClass != NULL)
@@ -490,21 +490,21 @@ void P_SectorDamage(int tag, int amount, FName type, PClassActor *protectClass, 
 			{
 				next = actor->snext;
 				// Only affect actors touching the 3D floor
-				fixed_t z1 = sec->floorplane.ZatPoint(actor);
-				fixed_t z2 = sec->ceilingplane.ZatPoint(actor);
+				double z1 = sec->floorplane.ZatPoint(actor);
+				double z2 = sec->ceilingplane.ZatPoint(actor);
 				if (z2 < z1)
 				{
 					// Account for Vavoom-style 3D floors
-					fixed_t zz = z1;
+					double zz = z1;
 					z1 = z2;
 					z2 = zz;
 				}
-				if (actor->Z() + actor->height > z1)
+				if (actor->Top() > z1)
 				{
 					// If DAMAGE_IN_AIR is used, anything not beneath the 3D floor will be
 					// damaged (so, anything touching it or above it). Other 3D floors between
 					// the actor and this one will not stop this effect.
-					if ((flags & DAMAGE_IN_AIR) || actor->Z() <= z2)
+					if ((flags & DAMAGE_IN_AIR) || !actor->isAbove(z2))
 					{
 						// Here we pass the DAMAGE_IN_AIR flag to disable the floor check, since it
 						// only works with the real sector's floor. We did the appropriate height checks
@@ -665,16 +665,7 @@ IMPLEMENT_CLASS (DLightTransfer)
 void DLightTransfer::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-	if (SaveVersion < 3223)
-	{
-		BYTE bytelight;
-		arc << bytelight;
-		LastLight = bytelight;
-	}
-	else
-	{
-		arc << LastLight;
-	}
+	arc << LastLight;
 	arc << Source << TargetTag << CopyFloor;
 }
 
@@ -762,16 +753,7 @@ IMPLEMENT_CLASS (DWallLightTransfer)
 void DWallLightTransfer::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-	if (SaveVersion < 3223)
-	{
-		BYTE bytelight;
-		arc << bytelight;
-		LastLight = bytelight;
-	}
-	else
-	{
-		arc << LastLight;
-	}
+	arc << LastLight;
 	arc << Source << TargetID << Flags;
 }
 
@@ -860,8 +842,8 @@ static void SetupFloorPortal (AStackPoint *point)
 	if (skyv != NULL && skyv->bAlways)
 	{
 		skyv->Mate = point;
-		if (Sector->GetAlpha(sector_t::floor) == OPAQUE)
-			Sector->SetAlpha(sector_t::floor, Scale (point->args[0], OPAQUE, 255));
+		if (Sector->GetAlphaF(sector_t::floor) == 1.)
+			Sector->SetAlpha(sector_t::floor, clamp(point->args[0], 0, 255) / 255.);
 	}
 }
 
@@ -874,8 +856,8 @@ static void SetupCeilingPortal (AStackPoint *point)
 	if (skyv != NULL && skyv->bAlways)
 	{
 		skyv->Mate = point;
-		if (Sector->GetAlpha(sector_t::ceiling) == OPAQUE)
-			Sector->SetAlpha(sector_t::ceiling, Scale(point->args[0], OPAQUE, 255));
+		if (Sector->GetAlphaF(sector_t::ceiling) == 1.)
+			Sector->SetAlpha(sector_t::ceiling, clamp(point->args[0], 0, 255) / 255.);
 	}
 }
 
@@ -901,7 +883,7 @@ void P_SetupPortals()
 	}
 }
 
-static void SetPortal(sector_t *sector, int plane, ASkyViewpoint *portal, fixed_t alpha)
+static void SetPortal(sector_t *sector, int plane, ASkyViewpoint *portal, double alpha)
 {
 	// plane: 0=floor, 1=ceiling, 2=both
 	if (plane > 0)
@@ -909,7 +891,7 @@ static void SetPortal(sector_t *sector, int plane, ASkyViewpoint *portal, fixed_
 		if (sector->SkyBoxes[sector_t::ceiling] == NULL || !barrier_cast<ASkyViewpoint*>(sector->SkyBoxes[sector_t::ceiling])->bAlways)
 		{
 			sector->SkyBoxes[sector_t::ceiling] = portal;
-			if (sector->GetAlpha(sector_t::ceiling) == OPAQUE)
+			if (sector->GetAlphaF(sector_t::ceiling) == 1.)
 				sector->SetAlpha(sector_t::ceiling, alpha);
 
 			if (!portal->bAlways) sector->SetTexture(sector_t::ceiling, skyflatnum);
@@ -921,14 +903,14 @@ static void SetPortal(sector_t *sector, int plane, ASkyViewpoint *portal, fixed_
 		{
 			sector->SkyBoxes[sector_t::floor] = portal;
 		}
-		if (sector->GetAlpha(sector_t::floor) == OPAQUE)
+		if (sector->GetAlphaF(sector_t::floor) == 1.)
 			sector->SetAlpha(sector_t::floor, alpha);
 
 		if (!portal->bAlways) sector->SetTexture(sector_t::floor, skyflatnum);
 	}
 }
 
-static void CopyPortal(int sectortag, int plane, ASkyViewpoint *origin, fixed_t alpha, bool tolines)
+static void CopyPortal(int sectortag, int plane, ASkyViewpoint *origin, double alpha, bool tolines)
 {
 	int s;
 	FSectorTagIterator itr(sectortag);
@@ -979,7 +961,7 @@ static void CopyPortal(int sectortag, int plane, ASkyViewpoint *origin, fixed_t 
 	}
 }
 
-void P_SpawnPortal(line_t *line, int sectortag, int plane, int alpha, int linked)
+void P_SpawnPortal(line_t *line, int sectortag, int plane, int bytealpha, int linked)
 {
 	if (plane < 0 || plane > 2 || (linked && plane == 2)) return;
 	for (int i=0;i<numlines;i++)
@@ -993,22 +975,19 @@ void P_SpawnPortal(line_t *line, int sectortag, int plane, int alpha, int linked
 			lines[i].args[3] == 1)
 		{
 			// beware of overflows.
-			fixed_t x1 = fixed_t((SQWORD(line->v1->x) + SQWORD(line->v2->x)) >> 1);
-			fixed_t y1 = fixed_t((SQWORD(line->v1->y) + SQWORD(line->v2->y)) >> 1);
-			fixed_t x2 = fixed_t((SQWORD(lines[i].v1->x) + SQWORD(lines[i].v2->x)) >> 1);
-			fixed_t y2 = fixed_t((SQWORD(lines[i].v1->y) + SQWORD(lines[i].v2->y)) >> 1);
-			fixed_t z = linked ? line->frontsector->planes[plane].TexZ : 0;	// the map's sector height defines the portal plane for linked portals
+			DVector3 pos1((line->v1->fX() + line->v2->fX()) / 2, (line->v1->fY() + line->v2->fY()) / 2, 0);
+			DVector3 pos2((lines[i].v1->fX() + lines[i].v2->fX()) / 2, (lines[i].v1->fY() + lines[i].v2->fY()) / 2, 0);
+			double z = linked ? line->frontsector->GetPlaneTexZF(plane) : 0;	// the map's sector height defines the portal plane for linked portals
 
-			fixed_t alpha = Scale (lines[i].args[4], OPAQUE, 255);
+			double alpha = bytealpha / 255.;
 
-			AStackPoint *anchor = Spawn<AStackPoint>(x1, y1, 0, NO_REPLACE);
-			AStackPoint *reference = Spawn<AStackPoint>(x2, y2, 0, NO_REPLACE);
+			AStackPoint *anchor = Spawn<AStackPoint>(pos1, NO_REPLACE);
+			AStackPoint *reference = Spawn<AStackPoint>(pos2, NO_REPLACE);
 			reference->special1 = linked ? SKYBOX_LINKEDPORTAL : SKYBOX_PORTAL;
 			anchor->special1 = SKYBOX_ANCHOR;
 			// store the portal displacement in the unused scaleX/Y members of the portal reference actor.
-			anchor->scaleX = -(reference->scaleX = x2 - x1);
-			anchor->scaleY = -(reference->scaleY = y2 - y1);
-			anchor->threshold = reference->threshold = z;
+			anchor->Scale = -(reference->Scale = pos2 - pos1);
+			anchor->specialf1 = reference->specialf1 = z;
 
 			reference->Mate = anchor;
 			anchor->Mate = reference;
@@ -1032,7 +1011,7 @@ void P_SpawnSkybox(ASkyViewpoint *origin)
 	if (Sector == NULL)
 	{
 		Printf("Sector not initialized for SkyCamCompat\n");
-		origin->Sector = Sector = P_PointInSector(origin->X(), origin->Y());
+		origin->Sector = Sector = P_PointInSector(origin->Pos());
 	}
 	if (Sector)
 	{
@@ -1078,7 +1057,7 @@ static void P_SetupSectorDamage(sector_t *sector, int damage, int interval, int 
 // ('fromload' is necessary to allow conversion upon savegame load.)
 //
 
-void P_InitSectorSpecial(sector_t *sector, int special, bool nothinkers)
+void P_InitSectorSpecial(sector_t *sector, int special)
 {
 	// [RH] All secret sectors are marked with a BOOM-ish bitfield
 	if (sector->special & SECRET_MASK)
@@ -1113,28 +1092,28 @@ void P_InitSectorSpecial(sector_t *sector, int special, bool nothinkers)
 	switch (sector->special)
 	{
 	case Light_Phased:
-		if (!nothinkers) new DPhased (sector, 48, 63 - (sector->lightlevel & 63));
+		new DPhased (sector, 48, 63 - (sector->lightlevel & 63));
 		break;
 
 		// [RH] Hexen-like phased lighting
 	case LightSequenceStart:
-		if (!nothinkers) new DPhased (sector);
+		new DPhased (sector);
 		break;
 
 	case dLight_Flicker:
-		if (!nothinkers) new DLightFlash (sector);
+		new DLightFlash (sector);
 		break;
 
 	case dLight_StrobeFast:
-		if (!nothinkers) new DStrobe (sector, STROBEBRIGHT, FASTDARK, false);
+		new DStrobe (sector, STROBEBRIGHT, FASTDARK, false);
 		break;
 			
 	case dLight_StrobeSlow:
-		if (!nothinkers) new DStrobe (sector, STROBEBRIGHT, SLOWDARK, false);
+		new DStrobe (sector, STROBEBRIGHT, SLOWDARK, false);
 		break;
 
 	case dLight_Strobe_Hurt:
-		if (!nothinkers) new DStrobe (sector, STROBEBRIGHT, FASTDARK, false);
+		new DStrobe (sector, STROBEBRIGHT, FASTDARK, false);
 		P_SetupSectorDamage(sector, 20, 32, 5, NAME_Slime, 0);
 		break;
 
@@ -1147,11 +1126,11 @@ void P_InitSectorSpecial(sector_t *sector, int special, bool nothinkers)
 		break;
 
 	case dLight_Glow:
-		if (!nothinkers) new DGlow (sector);
+		new DGlow (sector);
 		break;
 			
 	case dSector_DoorCloseIn30:
-		new DDoor(sector, DDoor::doorWaitClose, FRACUNIT * 2, 0, 0, 30 * TICRATE);
+		new DDoor(sector, DDoor::doorWaitClose, 2, 0, 0, 30 * TICRATE);
 		break;
 			
 	case dDamage_End:
@@ -1159,20 +1138,20 @@ void P_InitSectorSpecial(sector_t *sector, int special, bool nothinkers)
 		break;
 
 	case dLight_StrobeSlowSync:
-		if (!nothinkers) new DStrobe (sector, STROBEBRIGHT, SLOWDARK, true);
+		new DStrobe (sector, STROBEBRIGHT, SLOWDARK, true);
 		break;
 
 	case dLight_StrobeFastSync:
-		if (!nothinkers) new DStrobe (sector, STROBEBRIGHT, FASTDARK, true);
+		new DStrobe (sector, STROBEBRIGHT, FASTDARK, true);
 		break;
 
 	case dSector_DoorRaiseIn5Mins:
-		new DDoor (sector, DDoor::doorWaitRaise, 2*FRACUNIT, TICRATE*30/7, 0, 5*60*TICRATE);
+		new DDoor (sector, DDoor::doorWaitRaise, 2, TICRATE*30/7, 0, 5*60*TICRATE);
 		break;
 
 	case dFriction_Low:
 		sector->friction = FRICTION_LOW;
-		sector->movefactor = 0x269;
+		sector->movefactor = 0x269/65536.;
 		sector->Flags |= SECF_FRICTION;
 		break;
 
@@ -1181,7 +1160,7 @@ void P_InitSectorSpecial(sector_t *sector, int special, bool nothinkers)
 		break;
 
 	case dLight_FireFlicker:
-		if (!nothinkers) new DFireFlicker (sector);
+		new DFireFlicker (sector);
 		break;
 
 	case dDamage_LavaWimpy:
@@ -1194,12 +1173,8 @@ void P_InitSectorSpecial(sector_t *sector, int special, bool nothinkers)
 
 	case dScroll_EastLavaDamage:
 		P_SetupSectorDamage(sector, 5, 32, 256, NAME_Fire, SECF_DMGTERRAINFX);
-		if (!nothinkers)
-		{
-			new DStrobe(sector, STROBEBRIGHT, FASTDARK, false);
-			P_CreateScroller(EScroll::sc_floor, -((FRACUNIT / 2) << 3),
-				0, -1, int(sector - sectors), 0);
-		}
+		new DStrobe(sector, STROBEBRIGHT, FASTDARK, false);
+		P_CreateScroller(EScroll::sc_floor, -4., 0, -1, int(sector - sectors), 0);
 		keepspecial = true;
 		break;
 
@@ -1209,7 +1184,7 @@ void P_InitSectorSpecial(sector_t *sector, int special, bool nothinkers)
 
 	case sLight_Strobe_Hurt:
 		P_SetupSectorDamage(sector, 5, 32, 0, NAME_Slime, 0);
-		if (!nothinkers) new DStrobe (sector, STROBEBRIGHT, FASTDARK, false);
+		new DStrobe (sector, STROBEBRIGHT, FASTDARK, false);
 		break;
 
 	case sDamage_Hellslime:
@@ -1242,7 +1217,7 @@ void P_InitSectorSpecial(sector_t *sector, int special, bool nothinkers)
 		if (sector->special >= Scroll_North_Slow &&
 			sector->special <= Scroll_SouthWest_Fast)
 		{ // Hexen scroll special
-			static const char hexenScrollies[24][2] =
+			static const SBYTE hexenScrollies[24][2] =
 			{
 				{  0,  1 }, {  0,  2 }, {  0,  4 },
 				{ -1,  0 }, { -2,  0 }, { -4,  0 },
@@ -1256,17 +1231,16 @@ void P_InitSectorSpecial(sector_t *sector, int special, bool nothinkers)
 
 			
 			int i = sector->special - Scroll_North_Slow;
-			fixed_t dx = hexenScrollies[i][0] * (FRACUNIT/2);
-			fixed_t dy = hexenScrollies[i][1] * (FRACUNIT/2);
-			if (!nothinkers) P_CreateScroller(EScroll::sc_floor, dx, dy, -1, int(sector-sectors), 0);
+			double dx = hexenScrollies[i][0] / 2.;
+			double dy = hexenScrollies[i][1] / 2.;
+			P_CreateScroller(EScroll::sc_floor, dx, dy, -1, int(sector-sectors), 0);
 		}
 		else if (sector->special >= Carry_East5 &&
 					sector->special <= Carry_East35)
 		{ // Heretic scroll special
 			// Only east scrollers also scroll the texture
-			if (!nothinkers) P_CreateScroller(EScroll::sc_floor,
-				(-FRACUNIT/2)<<(sector->special - Carry_East5),
-				0, -1, int(sector-sectors), 0);
+			P_CreateScroller(EScroll::sc_floor,
+				-0.5 * (1 << ((sector->special & 0xff) - Carry_East5)),	0, -1, int(sector-sectors), 0);
 		}
 		keepspecial = true;
 		break;
@@ -1295,7 +1269,7 @@ void P_SpawnSpecials (void)
 		if (sector->special == 0)
 			continue;
 
-		P_InitSectorSpecial(sector, sector->special, false);
+		P_InitSectorSpecial(sector, sector->special);
 	}
 
 #ifndef NO_EDATA
@@ -1412,7 +1386,7 @@ void P_SpawnSpecials (void)
 			else if (lines[i].args[1] == 3 || lines[i].args[1] == 4)
 			{
 				line_t *line = &lines[i];
-				ASkyViewpoint *origin = Spawn<ASkyViewpoint>(0, 0, 0, NO_REPLACE);
+				ASkyViewpoint *origin = Spawn<ASkyViewpoint>();
 				origin->Sector = line->frontsector;
 				origin->special1 = line->args[1] == 3? SKYBOX_PLANE:SKYBOX_HORIZON;
 
@@ -1430,7 +1404,7 @@ void P_SpawnSpecials (void)
 			{
 			case Init_Gravity:
 				{
-					float grav = ((float)P_AproxDistance (lines[i].dx, lines[i].dy)) / (FRACUNIT * 100.0f);
+					double grav = lines[i].Delta().Length() / 100.;
 					FSectorTagIterator itr(lines[i].args[0]);
 					while ((s = itr.Next()) >= 0)
 						sectors[s].gravity = grav;
@@ -1442,7 +1416,7 @@ void P_SpawnSpecials (void)
 
 			case Init_Damage:
 				{
-					int damage = P_AproxDistance (lines[i].dx, lines[i].dy) >> FRACBITS;
+					int damage = int(lines[i].Delta().Length());
 					FSectorTagIterator itr(lines[i].args[0]);
 					while ((s = itr.Next()) >= 0)
 					{
@@ -1567,7 +1541,7 @@ static void P_SpawnFriction(void)
 			}
 			else
 			{
-				length = P_AproxDistance(l->dx,l->dy)>>FRACBITS;
+				length = int(l->Delta().Length());
 			}
 
 			P_SetSectorFriction (l->args[0], length, false);
@@ -1579,14 +1553,14 @@ static void P_SpawnFriction(void)
 void P_SetSectorFriction (int tag, int amount, bool alterFlag)
 {
 	int s;
-	fixed_t friction, movefactor;
+	double friction, movefactor;
 
 	// An amount of 100 should result in a friction of
 	// ORIG_FRICTION (0xE800)
-	friction = (0x1EB8*amount)/0x80 + 0xD001;
+	friction = ((0x1EB8 * amount) / 0x80 + 0xD001) / 65536.;
 
 	// killough 8/28/98: prevent odd situations
-	friction = clamp(friction, 0, FRACUNIT);
+	friction = clamp(friction, 0., 1.);
 
 	// The following check might seem odd. At the time of movement,
 	// the move distance is multiplied by 'friction/0x10000', so a
@@ -1623,6 +1597,26 @@ void P_SetSectorFriction (int tag, int amount, bool alterFlag)
 		}
 	}
 }
+
+double FrictionToMoveFactor(double friction)
+{
+	double movefactor;
+
+	// [RH] Twiddled these values so that velocity on ice (with
+	//		friction 0xf900) is the same as in Heretic/Hexen.
+	if (friction >= ORIG_FRICTION)	// ice
+									//movefactor = ((0x10092 - friction)*(0x70))/0x158;
+		movefactor = (((0x10092 - friction * 65536) * 1024) / 4352 + 568) / 65536.;
+	else
+		movefactor = (((friction*65536. - 0xDB34)*(0xA)) / 0x80) / 65536.;
+
+	// killough 8/28/98: prevent odd situations
+	if (movefactor < 1 / 2048.)
+		movefactor = 1 / 2048.;
+
+	return movefactor;
+}
+
 
 //
 // phares 3/12/98: End of friction effects

@@ -89,10 +89,10 @@ void DPillar::Serialize (FArchive &arc)
 void DPillar::Tick ()
 {
 	int r, s;
-	fixed_t oldfloor, oldceiling;
+	double oldfloor, oldceiling;
 
-	oldfloor = m_Sector->floorplane.d;
-	oldceiling = m_Sector->ceilingplane.d;
+	oldfloor = m_Sector->floorplane.fD();
+	oldceiling = m_Sector->ceilingplane.fD();
 
 	if (m_Type == pillarBuild)
 	{
@@ -123,11 +123,11 @@ void DPillar::Tick ()
 	}
 }
 
-DPillar::DPillar (sector_t *sector, EPillar type, fixed_t speed,
-				  fixed_t floordist, fixed_t ceilingdist, int crush, bool hexencrush)
+DPillar::DPillar (sector_t *sector, EPillar type, double speed,
+				  double floordist, double ceilingdist, int crush, bool hexencrush)
 	: DMover (sector)
 {
-	fixed_t newheight;
+	double newheight;
 	vertex_t *spot;
 
 	sector->floordata = sector->ceilingdata = this;
@@ -190,12 +190,12 @@ DPillar::DPillar (sector_t *sector, EPillar type, fixed_t speed,
 	if (floordist > ceilingdist)
 	{
 		m_FloorSpeed = speed;
-		m_CeilingSpeed = Scale (speed, ceilingdist, floordist);
+		m_CeilingSpeed = speed * ceilingdist / floordist;
 	}
 	else
 	{
 		m_CeilingSpeed = speed;
-		m_FloorSpeed = Scale (speed, floordist, ceilingdist);
+		m_FloorSpeed = speed * floordist / ceilingdist;
 	}
 
 	if (!(m_Sector->Flags & SECF_SILENTMOVE))
@@ -216,7 +216,7 @@ DPillar::DPillar (sector_t *sector, EPillar type, fixed_t speed,
 }
 
 bool EV_DoPillar (DPillar::EPillar type, line_t *line, int tag,
-				  fixed_t speed, fixed_t height, fixed_t height2, int crush, bool hexencrush)
+				  double speed, double height, double height2, int crush, bool hexencrush)
 {
 	int secnum;
 	sector_t *sec;
@@ -231,7 +231,7 @@ bool EV_DoPillar (DPillar::EPillar type, line_t *line, int tag,
 		if (sec->PlaneMoving(sector_t::floor) || sec->PlaneMoving(sector_t::ceiling))
 			continue;
 
-		fixed_t flor, ceil;
+		double flor, ceil;
 
 		flor = sec->CenterFloor ();
 		ceil = sec->CenterCeiling ();

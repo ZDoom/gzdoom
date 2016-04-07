@@ -35,10 +35,6 @@ xx(LP,		lp,		RPRPKI),	// load pointer
 xx(LP_R,	lp,		RPRPRI),
 xx(LV,		lv,		RVRPKI),	// load vector
 xx(LV_R,	lv,		RVRPRI),
-xx(LX,		lx,		RFRPKI),	// load fixed point
-xx(LX_R,	lx,		RFRPRI),
-xx(LANG,	lang,	RFRPKI),	// load angle
-xx(LANG_R,	lang,	RFRPRI),
 
 xx(LBIT,	lbit,	RIRPI8),	// rA = !!(*rB & C)  -- *rB is a byte
 
@@ -59,10 +55,6 @@ xx(SP,		sp,		RPRPKI),		// store pointer
 xx(SP_R,	sp,		RPRPRI),
 xx(SV,		sv,		RPRVKI),		// store vector
 xx(SV_R,	sv,		RPRVRI),
-xx(SX,		sx,		RPRFKI),		// store fixed point
-xx(SX_R,	sx,		RPRFRI),
-xx(SANG,	sang,	RPRFKI),		// store angle
-xx(SANG_R,	sang,	RPRFRI),
 
 xx(SBIT,	sbit,	RPRII8),		// *rA |= C if rB is true, *rA &= ~C otherwise
 

@@ -86,7 +86,7 @@ FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb)
 	mMirrorCount = 0;
 	mPlaneMirrorCount = 0;
 	mLightCount = 0;
-	mAngles = FRotator(0,0,0);
+	mAngles = FRotator(0.f, 0.f, 0.f);
 	mViewVector = FVector2(0,0);
 	mVBO = NULL;
 	gl_spriteindex = 0;
@@ -321,7 +321,7 @@ void FGLRenderer::DrawTexture(FTexture *img, DCanvas::DrawParms &parms)
 
 	if (!img->bHasCanvas)
 	{
-		if (!parms.alphaChannel) 
+		if (!parms.alphaChannel)
 		{
 			int translation = 0;
 			if (parms.remap != NULL && !parms.remap->Inactive)
@@ -393,7 +393,7 @@ void FGLRenderer::DrawTexture(FTexture *img, DCanvas::DrawParms &parms)
 		gl_RenderState.SetTextureMode(TM_OPAQUE);
 	}
 
-	glColor4f(r, g, b, FIXED2FLOAT(parms.alpha));
+	glColor4f(r, g, b,parms.Alpha);
 	
 	gl_RenderState.EnableAlphaTest(false);
 	gl_RenderState.Apply();
@@ -587,7 +587,7 @@ void FGLRenderer::Clear(int left, int top, int right, int bottom, int palcolor, 
 
 void FGLRenderer::FillSimplePoly(FTexture *texture, FVector2 *points, int npoints,
 	double originx, double originy, double scalex, double scaley,
-	angle_t rotation, FDynamicColormap *colormap, int lightlevel)
+	DAngle rotation, FDynamicColormap *colormap, int lightlevel)
 {
 	if (npoints < 3)
 	{ // This is no polygon.
@@ -611,11 +611,10 @@ void FGLRenderer::FillSimplePoly(FTexture *texture, FVector2 *points, int npoint
 	gltexture->Bind(cm.colormap);
 
 	int i;
-	float rot = float(rotation * M_PI / float(1u << 31));
-	bool dorotate = rot != 0;
+	bool dorotate = rotation != 0;
 
-	float cosrot = cos(rot);
-	float sinrot = sin(rot);
+	float cosrot = cos(rotation.Radians());
+	float sinrot = sin(rotation.Radians());
 
 	//float yoffs = GatheringWipeScreen ? 0 : LBOffset;
 	float uscale = float(1.f / (texture->GetScaledWidth() * scalex));

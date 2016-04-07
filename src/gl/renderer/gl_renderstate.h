@@ -213,8 +213,10 @@ public:
 
 	void SetGlowPlanes(const secplane_t &top, const secplane_t &bottom)
 	{
-		mGlowTopPlane.Set(FIXED2FLOAT(top.a), FIXED2FLOAT(top.b), FIXED2FLOAT(top.ic), FIXED2FLOAT(top.d));
-		mGlowBottomPlane.Set(FIXED2FLOAT(bottom.a), FIXED2FLOAT(bottom.b), FIXED2FLOAT(bottom.ic), FIXED2FLOAT(bottom.d));
+		DVector3 tn = top.Normal();
+		DVector3 bn = bottom.Normal();
+		mGlowTopPlane.Set(tn.X, tn.Y, 1. / tn.Z, top.fD());
+		mGlowBottomPlane.Set(bn.X, bn.Y, 1. / bn.Z, bottom.fD());
 	}
 
 	void SetDynLight(float r, float g, float b)

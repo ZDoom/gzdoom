@@ -1,3 +1,4 @@
+#include <math.h>
 #include "dobject.h"
 #include "sc_man.h"
 #include "c_console.h"

@@ -215,7 +215,7 @@ DehInfo deh =
 	  2,	// .KFAAC
 	"PLAY",	// Name of player sprite
 	255,	// Rocket explosion style, 255=use cvar
-	FRACUNIT*2/3,		// Rocket explosion alpha
+	2./3.,		// Rocket explosion alpha
 	false,	// .NoAutofreeze
 	40,		// BFG cells per shot
 };
@@ -352,6 +352,11 @@ static bool HandleKey (const struct Key *keys, void *structure, const char *key,
 static bool ReadChars (char **stuff, int size);
 static char *igets (void);
 static int GetLine (void);
+
+inline double DEHToDouble(int acsval)
+{
+	return acsval / 65536.;
+}
 
 static void PushTouchedActor(PClassActor *cls)
 {
@@ -647,7 +652,7 @@ static int CreateMushroomFunc(VMFunctionBuilder &buildit, int value1, int value2
 	}
 	else
 	{
-		buildit.Emit(OP_PARAM, 0, REGT_FLOAT | REGT_KONST, buildit.GetConstantFloat(FIXED2DBL(value1)));
+		buildit.Emit(OP_PARAM, 0, REGT_FLOAT | REGT_KONST, buildit.GetConstantFloat(DEHToDouble(value1)));
 	}
 	// hrange
 	if (value2 == 0)
@@ -656,7 +661,7 @@ static int CreateMushroomFunc(VMFunctionBuilder &buildit, int value1, int value2
 	}
 	else
 	{
-		buildit.Emit(OP_PARAM, 0, REGT_FLOAT | REGT_KONST, buildit.GetConstantFloat(FIXED2DBL(value2)));
+		buildit.Emit(OP_PARAM, 0, REGT_FLOAT | REGT_KONST, buildit.GetConstantFloat(DEHToDouble(value2)));
 	}
 	return 5;
 }
@@ -896,14 +901,14 @@ static int PatchThing (int thingy)
 		}
 		else if (linelen == 12 && stricmp (Line1, "Translucency") == 0)
 		{
-			info->alpha = val;
+			info->Alpha = DEHToDouble(val);
 			info->RenderStyle = STYLE_Translucent;
 			hadTranslucency = true;
 			hadStyle = true;
 		}
 		else if (linelen == 6 && stricmp (Line1, "Height") == 0)
 		{
-			info->height = val;
+			info->Height = DEHToDouble(val);
 			info->projectilepassheight = 0;	// needs to be disabled
 			hadHeight = true;
 		}
@@ -915,20 +920,20 @@ static int PatchThing (int thingy)
 		{
 			if (stricmp (Line1, "Speed") == 0)
 			{
-				info->Speed = val;
+				info->Speed = val;	// handle fixed point later.
 			}
 			else if (stricmp (Line1, "Width") == 0)
 			{
-				info->radius = val;
+				info->radius = DEHToDouble(val);
 			}
 			else if (stricmp (Line1, "Alpha") == 0)
 			{
-				info->alpha = (fixed_t)(atof (Line2) * FRACUNIT);
+				info->Alpha = atof (Line2);
 				hadTranslucency = true;
 			}
 			else if (stricmp (Line1, "Scale") == 0)
 			{
-				info->scaleY = info->scaleX = clamp<fixed_t> (FLOAT2FIXED(atof (Line2)), 1, 256*FRACUNIT);
+				info->Scale.Y = info->Scale.X = clamp(atof (Line2), 1./65536, 256.);
 			}
 			else if (stricmp (Line1, "Decal") == 0)
 			{
@@ -1141,14 +1146,12 @@ static int PatchThing (int thingy)
 						}
 
 						// MBF bounce factors depend on flag combos:
-						enum
-						{
-							MBF_BOUNCE_NOGRAVITY	= FRACUNIT,				// With NOGRAVITY: full momentum
-							MBF_BOUNCE_FLOATDROPOFF	= (FRACUNIT * 85) / 100,// With FLOAT and DROPOFF: 85%
-							MBF_BOUNCE_FLOAT		= (FRACUNIT * 70) / 100,// With FLOAT alone: 70%
-							MBF_BOUNCE_DEFAULT		= (FRACUNIT * 45) / 100,// Without the above flags: 45%
-							MBF_BOUNCE_WALL			= (FRACUNIT * 50) / 100,// Bouncing off walls: 50%
-						};
+						const double MBF_BOUNCE_NOGRAVITY = 1;				// With NOGRAVITY: full momentum
+						const double MBF_BOUNCE_FLOATDROPOFF = 0.85;		// With FLOAT and DROPOFF: 85%
+						const double MBF_BOUNCE_FLOAT = 0.7;				// With FLOAT alone: 70%
+						const double MBF_BOUNCE_DEFAULT = 0.45;				// Without the above flags: 45%
+						const double MBF_BOUNCE_WALL = 0.5;					// Bouncing off walls: 50%
+
 						info->bouncefactor = ((value[0] & MF_NOGRAVITY) ? MBF_BOUNCE_NOGRAVITY
 							: (value[0] & MF_FLOAT) ? (value[0] & MF_DROPOFF) ? MBF_BOUNCE_FLOATDROPOFF
 							: MBF_BOUNCE_FLOAT : MBF_BOUNCE_DEFAULT);
@@ -1215,7 +1218,7 @@ static int PatchThing (int thingy)
 					}
 					if (value[1] & 0x00000001)
 					{
-						info->gravity = FRACUNIT/4;
+						info->Gravity = 1./4;
 						value[1] &= ~0x00000001;
 					}
 					info->flags2 = ActorFlags2::FromInt (value[1]);
@@ -1226,11 +1229,11 @@ static int PatchThing (int thingy)
 					{
 						hadTranslucency = true;
 						if (value[2] & 1)
-							info->alpha = TRANSLUC25;
+							info->Alpha = 0.25;
 						else if (value[2] & 2)
-							info->alpha = TRANSLUC50;
+							info->Alpha = 0.5;
 						else if (value[2] & 4)
-							info->alpha = TRANSLUC75;
+							info->Alpha = 0.75;
 						info->RenderStyle = STYLE_Translucent;
 					}
 					if (value[2] & 8)
@@ -1257,7 +1260,7 @@ static int PatchThing (int thingy)
 			!hadHeight &&
 			thingy <= (int)OrgHeights.Size() && thingy > 0)
 		{
-			info->height = OrgHeights[thingy - 1] * FRACUNIT;
+			info->Height = OrgHeights[thingy - 1];
 			info->projectilepassheight = 0;
 		}
 		// If the thing's shadow changed, change its fuzziness if not already specified
@@ -1268,7 +1271,7 @@ static int PatchThing (int thingy)
 				if (!hadStyle)
 					info->RenderStyle = STYLE_OptFuzzy;
 				if (!hadTranslucency)
-					info->alpha = FRACUNIT/5;
+					info->Alpha = 0.5;
 			}
 			else
 			{ // changed from shadow
@@ -1276,11 +1279,11 @@ static int PatchThing (int thingy)
 					info->RenderStyle = STYLE_Normal;
 			}
 		}
-		// If this thing's speed is really low (i.e. meant to be a monster),
-		// bump it up, because all speeds are fixed point now.
-		if (abs(info->Speed) < 256)
+		// Speed could be either an int of fixed value, depending on its use
+		// If this value is very large it needs to be rescaled.
+		if (fabs(info->Speed) >= 256)
 		{
-			info->Speed <<= FRACBITS;
+			info->Speed /= 65536;
 		}
 
 		if (info->flags & MF_SPECIAL)
@@ -1853,7 +1856,7 @@ static int PatchMisc (int dummy)
 			}
 			else if (stricmp (Line1, "Rocket Explosion Alpha") == 0)
 			{
-				deh.ExplosionAlpha = (fixed_t)(atof (Line2) * FRACUNIT);
+				deh.ExplosionAlpha = atof (Line2);
 			}
 			else if (stricmp (Line1, "Monsters Infight") == 0)
 			{
@@ -1940,13 +1943,13 @@ static int PatchMisc (int dummy)
 	if (armor!=NULL)
 	{
 		armor->SaveAmount = 100 * deh.GreenAC;
-		armor->SavePercent = deh.GreenAC == 1 ? FRACUNIT/3 : FRACUNIT/2;
+		armor->SavePercent = deh.GreenAC == 1 ? 0.33335 : 0.5;
 	}
 	armor = static_cast<ABasicArmorPickup *> (GetDefaultByName ("BlueArmor"));
 	if (armor!=NULL)
 	{
 		armor->SaveAmount = 100 * deh.BlueAC;
-		armor->SavePercent = deh.BlueAC == 1 ? FRACUNIT/3 : FRACUNIT/2;
+		armor->SavePercent = deh.BlueAC == 1 ? 0.33335 : 0.5;
 	}
 
 	ABasicArmorBonus *barmor;

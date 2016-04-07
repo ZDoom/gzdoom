@@ -1579,7 +1579,7 @@ void R_DrawPlayerSprites ()
 		centery = viewheight >> 1;
 		centeryfrac = centery << FRACBITS;
 
-		P_BobWeapon (camera->player, &camera->player->psprites[ps_weapon], &ofsx, &ofsy);
+		P_BobWeapon (camera->player, &camera->player->psprites[ps_weapon], &ofsx, &ofsy, r_TicFracF);
 
 		// add all active psprites
 		for (i = 0, psp = camera->player->psprites;

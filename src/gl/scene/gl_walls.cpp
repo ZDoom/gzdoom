@@ -334,16 +334,8 @@ void GLWall::SplitWall(sector_t * frontsector, bool translucent)
 			if (i<lightlist.Size()-1) 
 			{
 				secplane_t &p = lightlist[i+1].plane;
-				if (p.isSlope())
-				{
-					maplightbottomleft = p.ZatPoint(glseg.x1,glseg.y1);
-					maplightbottomright= p.ZatPoint(glseg.x2,glseg.y2);
-				}
-				else
-				{
-					maplightbottomleft =
-					maplightbottomright= p.ZatPoint(glseg.x2,glseg.y2);
-				}
+				maplightbottomleft = p.ZatPoint(glseg.x1,glseg.y1);
+				maplightbottomright= p.ZatPoint(glseg.x2,glseg.y2);
 			}
 			else 
 			{
@@ -563,7 +555,7 @@ bool GLWall::DoHorizon(seg_t * seg,sector_t * fs, vertex_t * v1,vertex_t * v2)
 			}
 
 			if (gl_fixedcolormap) hi.colormap.GetFixedColormap();
-			horizon=&hi;
+			horizon = &hi;
 			PutWall(0);
 		}
 	}

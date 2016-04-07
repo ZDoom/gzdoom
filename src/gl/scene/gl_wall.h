@@ -270,8 +270,6 @@ public:
 	int vboindex;
 	int vboheight;
 
-	int dynlightindex;
-
 	bool SetupSubsectorLights(bool lightsapplied, subsector_t * sub);
 	void DrawSubsector(subsector_t * sub);
 	void DrawSubsectorLights(subsector_t * sub, int pass);

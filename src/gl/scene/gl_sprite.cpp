@@ -887,7 +887,6 @@ void GLSprite::ProcessParticle (particle_t *particle, sector_t *sector)//, int s
 	OverrideShader = 0;
 
 	ThingColor = particle->color;
-	ThingColor.g = 255;
 	ThingColor.a = 255;
 
 	modelframe=NULL;

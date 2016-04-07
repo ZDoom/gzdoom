@@ -692,6 +692,8 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 	fixed_t startx = viewx;
 	fixed_t starty = viewy;
 	fixed_t startz = viewz;
+	DVector3 savedpath[2] = { ViewPath[0], ViewPath[1] };
+	int savedvisibility = camera->renderflags & RF_INVISIBLE;
 
 	CurrentPortalUniq++;
 
@@ -738,10 +740,27 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 		P_TranslatePortalXY(pds->src, view.X, view.Y);
 		P_TranslatePortalZ(pds->src, view.Z);
 		P_TranslatePortalAngle(pds->src, va);
+		P_TranslatePortalXY(pds->src, ViewPath[0].X, ViewPath[0].Y);
+		P_TranslatePortalXY(pds->src, ViewPath[1].X, ViewPath[1].Y);
 		viewx = FLOAT2FIXED(view.X);
 		viewy = FLOAT2FIXED(view.Y);
 		viewz = FLOAT2FIXED(view.Z);
 		viewangle = va.BAMs();
+
+		if (!r_showviewer)
+		{
+			double distp = (ViewPath[0] - ViewPath[1]).Length();
+			if (distp > EQUAL_EPSILON)
+			{
+				double dist1 = (view - ViewPath[0]).Length();
+				double dist2 = (view - ViewPath[1]).Length();
+
+				if (dist1 + dist2 < distp + 1)
+				{
+					camera->renderflags |= RF_INVISIBLE;
+				}
+			}
+		}
 	}
 	ViewAngle = AngleToFloat(viewangle);
 
@@ -783,6 +802,7 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 	InSubsector = NULL;
 	R_RenderBSPNode (nodes + numnodes - 1);
 	R_3D_ResetClip(); // reset clips (floor/ceiling)
+	if (!savedvisibility) camera->renderflags &= ~RF_INVISIBLE;
 
 	PlaneCycles.Clock();
 	R_DrawPlanes ();
@@ -822,6 +842,8 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 	viewx = startx;
 	viewy = starty;
 	viewz = startz;
+	ViewPath[0] = savedpath[0];
+	ViewPath[1] = savedpath[1];
 	ViewAngle = AngleToFloat(viewangle);
 }
 

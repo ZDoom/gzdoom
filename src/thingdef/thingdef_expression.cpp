@@ -3648,6 +3648,7 @@ FxExpression *FxIfStatement::Resolve(FCompileContext &ctx)
 		FxExpression *e = result ? WhenTrue : WhenFalse;
 		delete (result ? WhenFalse : WhenTrue);
 		WhenTrue = WhenFalse = NULL;
+		if (e == NULL) e = new FxNop(ScriptPosition);	// create a dummy if this statement gets completely removed by optimizing out the constant parts.
 		delete this;
 		return e;
 	}

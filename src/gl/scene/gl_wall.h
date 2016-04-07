@@ -187,23 +187,23 @@ private:
 	void DoMidTexture(seg_t * seg, bool drawfogboundary,
 					  sector_t * front, sector_t * back,
 					  sector_t * realfront, sector_t * realback,
-					  fixed_t fch1, fixed_t fch2, fixed_t ffh1, fixed_t ffh2,
-					  fixed_t bch1, fixed_t bch2, fixed_t bfh1, fixed_t bfh2);
+					  float fch1, float fch2, float ffh1, float ffh2,
+					  float bch1, float bch2, float bfh1, float bfh2);
 
-	void GetPlanePos(F3DFloor::planeref *planeref, fixed_t &left, fixed_t &right);
+	void GetPlanePos(F3DFloor::planeref * planeref, float & left, float & right);
 
 	void BuildFFBlock(seg_t * seg, F3DFloor * rover,
-					  fixed_t ff_topleft, fixed_t ff_topright, 
-					  fixed_t ff_bottomleft, fixed_t ff_bottomright);
+					  float ff_topleft, float ff_topright, 
+					  float ff_bottomleft, float ff_bottomright);
 	void InverseFloors(seg_t * seg, sector_t * frontsector,
-					   fixed_t topleft, fixed_t topright, 
-					   fixed_t bottomleft, fixed_t bottomright);
+					   float topleft, float topright, 
+					   float bottomleft, float bottomright);
 	void ClipFFloors(seg_t * seg, F3DFloor * ffloor, sector_t * frontsector,
-					fixed_t topleft, fixed_t topright, 
-					fixed_t bottomleft, fixed_t bottomright);
+					float topleft, float topright, 
+					float bottomleft, float bottomright);
 	void DoFFloorBlocks(seg_t * seg, sector_t * frontsector, sector_t * backsector,
-					  fixed_t fch1, fixed_t fch2, fixed_t ffh1, fixed_t ffh2,
-					  fixed_t bch1, fixed_t bch2, fixed_t bfh1, fixed_t bfh2);
+					  float fch1, float fch2, float ffh1, float ffh2,
+					  float bch1, float bch2, float bfh1, float bfh2);
 
 	void DrawDecal(DBaseDecal *actor);
 	void DoDrawDecals();

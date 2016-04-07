@@ -873,7 +873,7 @@ sightcounts[0]++;
 	portals.Clear();
 	{
 		sector_t *sec;
-		double lookheight = t1->Center();
+		double lookheight = t1->Z() + t1->Height*0.75;
 		t1->GetPortalTransition(lookheight, &sec);
 
 		double bottomslope = t2->Z() - lookheight;

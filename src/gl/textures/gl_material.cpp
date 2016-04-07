@@ -518,17 +518,17 @@ const FHardwareTexture * FGLTexture::BindPatch(int texunit, int cm, int translat
 //
 //===========================================================================
 
-fixed_t FTexCoordInfo::RowOffset(fixed_t rowoffset) const
+float FTexCoordInfo::RowOffset(float rowoffset) const
 {
 	if (mTempScaleY == FRACUNIT)
 	{
 		if (mScaleY==FRACUNIT || mWorldPanning) return rowoffset;
-		else return FixedDiv(rowoffset, mScaleY);
+		else return rowoffset * FIXED2FLOAT(mScaleY);
 	}
 	else
 	{
-		if (mWorldPanning) return FixedDiv(rowoffset, mTempScaleY);
-		else return FixedDiv(rowoffset, mScaleY);
+		if (mWorldPanning) return rowoffset * FIXED2FLOAT(mTempScaleY);
+		else return rowoffset * FIXED2FLOAT(mScaleY);
 	}
 }
 
@@ -538,17 +538,17 @@ fixed_t FTexCoordInfo::RowOffset(fixed_t rowoffset) const
 //
 //===========================================================================
 
-fixed_t FTexCoordInfo::TextureOffset(fixed_t textureoffset) const
+float FTexCoordInfo::TextureOffset(float textureoffset) const
 {
 	if (mTempScaleX == FRACUNIT)
 	{
 		if (mScaleX==FRACUNIT || mWorldPanning) return textureoffset;
-		else return FixedDiv(textureoffset, mScaleX);
+		else return textureoffset * FIXED2FLOAT(mScaleX);
 	}
 	else
 	{
-		if (mWorldPanning) return FixedDiv(textureoffset, mTempScaleX);
-		else return FixedDiv(textureoffset, mScaleX);
+		if (mWorldPanning) return textureoffset * FIXED2FLOAT(mTempScaleX);
+		else return textureoffset * FIXED2FLOAT(mScaleX);
 	}
 }
 

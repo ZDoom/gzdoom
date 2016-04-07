@@ -177,7 +177,7 @@ void gl_GenerateGlobalBrightmapFromColormap()
 //	component becomes one.
 //
 //===========================================================================
-PalEntry averageColor(const DWORD *data, int size, fixed_t maxout_factor)
+PalEntry averageColor(const DWORD *data, int size, int maxout)
 {
 	int				i;
 	unsigned int	r, g, b;
@@ -203,12 +203,11 @@ PalEntry averageColor(const DWORD *data, int size, fixed_t maxout_factor)
 
 	int maxv=MAX(MAX(r,g),b);
 
-	if(maxv && maxout_factor)
+	if(maxv && maxout)
 	{
-		maxout_factor = FixedMul(maxout_factor, 255);
-		r = Scale(r, maxout_factor, maxv);
-		g = Scale(g, maxout_factor, maxv);
-		b = Scale(b, maxout_factor, maxv);
+		r = Scale(r, maxout, maxv);
+		g = Scale(g, maxout, maxv);
+		b = Scale(b, maxout, maxv);
 	}
 	return PalEntry(r,g,b);
 }
@@ -354,7 +353,7 @@ void FTexture::GetGlowColor(float *data)
 
 		if (buffer)
 		{
-			gl_info.GlowColor = averageColor((DWORD *) buffer, w*h, 6*FRACUNIT/10);
+			gl_info.GlowColor = averageColor((DWORD *) buffer, w*h, 153);
 			delete[] buffer;
 		}
 

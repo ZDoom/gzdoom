@@ -443,12 +443,12 @@ void P_BobWeapon (player_t *player, pspdef_t *psp, float *x, float *y)
 			
 		case AWeapon::BobSmooth:
 			*x = bobx*angle.Cos();
-			*y = 0.5f * (boby * (1.f - fabsf((angle * 2).Cos())));
+			*y = 0.5f * (boby * (1.f - ((angle * 2).Cos())));
 			break;
 
 		case AWeapon::BobInverseSmooth:
 			*x = bobx*angle.Cos();
-			*y = 0.5f * (boby * (1.f + fabsf((angle * 2).Cos())));
+			*y = 0.5f * (boby * (1.f + ((angle * 2).Cos())));
 		}
 	}
 	else

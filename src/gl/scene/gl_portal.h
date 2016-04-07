@@ -105,6 +105,7 @@ private:
 	AActor * savedviewactor;
 	area_t savedviewarea;
 	bool savedshowviewer;
+	DVector3 savedviewpath[2];
 	unsigned char clipsave;
 	GLPortal *NextPortal;
 	TArray<BYTE> savedmapsection;

@@ -39,8 +39,8 @@ struct FTexCoordInfo
 
 	float FloatToTexU(float v) const { return v / mRenderWidth; }
 	float FloatToTexV(float v) const { return v / mRenderHeight; }
-	fixed_t RowOffset(fixed_t ofs) const;
-	fixed_t TextureOffset(fixed_t ofs) const;
+	float RowOffset(float ofs) const;
+	float TextureOffset(float ofs) const;
 	fixed_t TextureAdjustWidth() const;
 };
 

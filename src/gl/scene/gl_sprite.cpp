@@ -479,13 +479,14 @@ void GLSprite::SetSpriteColor(sector_t *sector, double center_y)
 
 void GLSprite::PerformSpriteClipAdjustment(AActor *thing, const DVector2 &thingpos, float spriteheight)
 {
-	bool smarterclip = false; // Set to true if one condition triggers the test below
-	if (((thing->player || thing->flags3&MF3_ISMONSTER ||
-		thing->IsKindOf(RUNTIME_CLASS(AInventory))) && (thing->flags&MF_ICECORPSE ||
-		!(thing->flags&MF_CORPSE))) || (gl_spriteclip == 3 && (smarterclip = true)) || gl_spriteclip > 1)
+	const float NO_VAL = 100000000.0f;
+	bool clipthing = (thing->player || thing->flags3&MF3_ISMONSTER || thing->IsKindOf(RUNTIME_CLASS(AInventory))) && (thing->flags&MF_ICECORPSE || !(thing->flags&MF_CORPSE));
+	bool smarterclip = !clipthing && gl_spriteclip == 3;
+	if (clipthing || gl_spriteclip > 1)
 	{
-		float btm = 100000000.0f;
-		float top = -100000000.0f;
+
+		float btm = NO_VAL;
+		float top = -NO_VAL;
 		extsector_t::xfloor &x = thing->Sector->e->XFloor;
 
 		if (x.ffloors.Size())
@@ -503,7 +504,7 @@ void GLSprite::PerformSpriteClipAdjustment(AActor *thing, const DVector2 &thingp
 				{
 					top = ceilingh;
 				}
-				if (btm != 100000000.0f && top != -100000000.0f)
+				if (btm != NO_VAL && top != -NO_VAL)
 				{
 					break;
 				}
@@ -518,9 +519,9 @@ void GLSprite::PerformSpriteClipAdjustment(AActor *thing, const DVector2 &thingp
 				top = thing->ceilingz;
 			}
 		}
-		if (btm == 1000000.0f)
+		if (btm == NO_VAL)
 			btm = thing->Sector->floorplane.ZatPoint(thing) - thing->Floorclip;
-		if (top == -1000000.0f)
+		if (top == NO_VAL)
 			top = thing->Sector->ceilingplane.ZatPoint(thingpos);
 
 		// +/-1 to account for the one pixel empty frame around the sprite.

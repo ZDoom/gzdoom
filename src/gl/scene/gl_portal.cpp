@@ -312,6 +312,8 @@ bool GLPortal::Start(bool usestencil, bool doquery)
 	savedviewactor=GLRenderer->mViewActor;
 	savedviewarea=in_area;
 	savedshowviewer = r_showviewer;
+	savedviewpath[0] = ViewPath[0];
+	savedviewpath[1] = ViewPath[1];
 
 	NextPortal = GLRenderer->mCurrentPortal;
 	GLRenderer->mCurrentPortal = NULL;	// Portals which need this have to set it themselves
@@ -374,6 +376,8 @@ void GLPortal::End(bool usestencil)
 		if (needdepth) FDrawInfo::EndDrawInfo();
 
 		// Restore the old view
+		ViewPath[0] = savedviewpath[0];
+		ViewPath[1] = savedviewpath[1];
 		ViewPos = savedViewPos;
 		ViewAngle = savedAngle;
 		GLRenderer->mViewActor=savedviewactor;
@@ -992,6 +996,23 @@ void GLLineToLinePortal::DrawContents()
 	P_TranslatePortalXY(origin, ViewPos.X, ViewPos.Y);
 	P_TranslatePortalAngle(origin, ViewAngle);
 	P_TranslatePortalZ(origin, ViewPos.Z);
+	P_TranslatePortalXY(origin, ViewPath[0].X, ViewPath[0].Y);
+	P_TranslatePortalXY(origin, ViewPath[1].X, ViewPath[1].Y);
+	if (!r_showviewer)
+	{
+		double distp = (ViewPath[0] - ViewPath[1]).Length();
+		if (distp > EQUAL_EPSILON)
+		{
+			double dist1 = (ViewPos - ViewPath[0]).Length();
+			double dist2 = (ViewPos - ViewPath[1]).Length();
+
+			if (dist1 + dist2 > distp + 1)
+			{
+				r_showviewer = true;
+			}
+		}
+	}
+
 
 	SaveMapSection();
 

@@ -106,6 +106,7 @@ private:
 	AActor * savedviewactor;
 	area_t savedviewarea;
 	bool savedshowviewer;
+	DVector3 savedviewpath[2];
 	GLPortal *NextPortal;
 	TArray<BYTE> savedmapsection;
 	TArray<unsigned int> mPrimIndices;

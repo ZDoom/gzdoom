@@ -118,6 +118,11 @@ public:
 		p.Y = y;
 	}
 
+	void set(const DVector2 &pos)
+	{
+		p = pos;
+	}
+
 	double fX() const
 	{
 		return p.X;

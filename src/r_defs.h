@@ -1307,6 +1307,10 @@ struct side_t
 	{
 		return textures[which].xscale;
 	}
+	double GetTextureXScaleF(int which) const
+	{
+		return FIXED2DBL(textures[which].xscale);
+	}
 	void MultiplyTextureXScale(int which, double delta)
 	{
 		textures[which].xscale = fixed_t(textures[which].xscale * delta);

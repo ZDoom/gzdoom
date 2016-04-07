@@ -169,8 +169,8 @@ struct FDrawInfo
 	{
 		seg_t * seg;
 		subsector_t * sub;
-		fixed_t planez;
-		fixed_t planezfront;
+		float Planez;
+		float Planezfront;
 	};
 
 	struct MissingSegInfo
@@ -212,10 +212,10 @@ struct FDrawInfo
 	~FDrawInfo();
 	void ClearBuffers();
 
-	bool DoOneSectorUpper(subsector_t * subsec, fixed_t planez);
-	bool DoOneSectorLower(subsector_t * subsec, fixed_t planez);
-	bool DoFakeBridge(subsector_t * subsec, fixed_t planez);
-	bool DoFakeCeilingBridge(subsector_t * subsec, fixed_t planez);
+	bool DoOneSectorUpper(subsector_t * subsec, float planez);
+	bool DoOneSectorLower(subsector_t * subsec, float planez);
+	bool DoFakeBridge(subsector_t * subsec, float planez);
+	bool DoFakeCeilingBridge(subsector_t * subsec, float planez);
 
 	bool CheckAnchorFloor(subsector_t * sub);
 	bool CollectSubsectorsFloor(subsector_t * sub, sector_t * anchor);
@@ -224,8 +224,8 @@ struct FDrawInfo
 	void CollectSectorStacksCeiling(subsector_t * sub, sector_t * anchor);
 	void CollectSectorStacksFloor(subsector_t * sub, sector_t * anchor);
 
-	void AddUpperMissingTexture(side_t * side, subsector_t *sub, fixed_t backheight);
-	void AddLowerMissingTexture(side_t * side, subsector_t *sub, fixed_t backheight);
+	void AddUpperMissingTexture(side_t * side, subsector_t *sub, float backheight);
+	void AddLowerMissingTexture(side_t * side, subsector_t *sub, float backheight);
 	void HandleMissingTextures();
 	void DrawUnhandledMissingTextures();
 	void AddHackedSubsector(subsector_t * sub);

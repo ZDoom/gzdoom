@@ -71,9 +71,7 @@ extern int skyfog;
 
 // The texture offset to be applied to the texture coordinates in SkyVertex().
 
-static angle_t maxSideAngle = ANGLE_180 / 3;
 static int rows, columns;	
-static fixed_t scale = 10000 << FRACBITS;
 static bool yflip;
 static int texw;
 static float yAdd;
@@ -95,14 +93,16 @@ static bool skymirror;
 
 static void SkyVertex(int r, int c)
 {
-	angle_t topAngle= (angle_t)(c / (float)columns * ANGLE_MAX);
-	angle_t sideAngle = maxSideAngle * (rows - r) / rows;
-	fixed_t height = finesine[sideAngle>>ANGLETOFINESHIFT];
-	fixed_t realRadius = FixedMul(scale, finecosine[sideAngle>>ANGLETOFINESHIFT]);
-	fixed_t x = FixedMul(realRadius, finecosine[topAngle>>ANGLETOFINESHIFT]);
-	fixed_t y = (!yflip) ? FixedMul(scale, height) : FixedMul(scale, height) * -1;
-	fixed_t z = FixedMul(realRadius, finesine[topAngle>>ANGLETOFINESHIFT]);
-	float fx, fy, fz;
+	static const FAngle maxSideAngle = 60.f;
+	static const float scale = 10000.;
+
+	FAngle topAngle= (c / (float)columns * 360.f);
+	FAngle sideAngle = maxSideAngle * (rows - r) / rows;
+	float height = sideAngle.Sin();
+	float realRadius = scale * sideAngle.Cos();
+	float x = realRadius * topAngle.Cos();
+	float y = (!yflip) ? scale * height : -scale * height;
+	float z = realRadius * topAngle.Sin();
 	float color = r * 1.f / rows;
 	float u, v;
 	float timesRepeat;
@@ -129,12 +129,9 @@ static void SkyVertex(int r, int c)
 		
 		glTexCoord2f(skymirror? -u:u, v);
 	}
-	if (r != 4) y+=FRACUNIT*300;
+	if (r != 4) y+=300;
 	// And finally the vertex.
-	fx =-FIXED2FLOAT(x);	// Doom mirrors the sky vertically!
-	fy = FIXED2FLOAT(y);
-	fz = FIXED2FLOAT(z);
-	glVertex3f(fx, fy - 1.f, fz);
+	glVertex3f(-x, y - 1.f, z);  // Doom mirrors the sky vertically!
 }
 
 

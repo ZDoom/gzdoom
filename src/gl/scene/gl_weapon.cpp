@@ -202,7 +202,7 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 		(r_deathcamera && camera->health <= 0))
 		return;
 
-	P_BobWeapon (player, &player->psprites[ps_weapon], &ofsx, &ofsy);
+	P_BobWeapon (player, &player->psprites[ps_weapon], &ofsx, &ofsy, r_TicFracF);
 
 	// check for fullbright
 	if (player->fixedcolormap==NOFIXEDCOLORMAP)

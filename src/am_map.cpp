@@ -1191,7 +1191,7 @@ void AM_changeWindowLoc ()
 	oincy = incy = m_paninc.y * SCREENHEIGHT / 200;
 	if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 	{
-		AM_rotate(&incx, &incy, players[consoleplayer].camera->Angles.Yaw - 90.);
+		AM_rotate(&incx, &incy, players[consoleplayer].camera->Angles.Yaw + 90.);
 	}
 
 	m_x += incx;
@@ -1573,7 +1573,7 @@ void AM_doFollowPlayer ()
 		sy = (f_oldloc.y - players[consoleplayer].camera->Y());
 		if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 		{
-			AM_rotate (&sx, &sy, players[consoleplayer].camera->Angles.Yaw - 90);
+			AM_rotate (&sx, &sy, players[consoleplayer].camera->Angles.Yaw + 90);
 		}
 		AM_ScrollParchment (sx, sy);
 
@@ -2559,7 +2559,7 @@ void AM_rotatePoint (double *x, double *y)
 	double pivoty = m_y + m_h/2;
 	*x -= pivotx;
 	*y -= pivoty;
-	AM_rotate (x, y, -players[consoleplayer].camera->Angles.Yaw - 90.);
+	AM_rotate (x, y, -players[consoleplayer].camera->Angles.Yaw + 90.);
 	*x += pivotx;
 	*y += pivoty;
 }
@@ -2645,7 +2645,7 @@ void AM_drawPlayers ()
 		pt.y = pos.Y;
 		if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 		{
-			angle = -90.;
+			angle = 90.;
 			AM_rotatePoint (&pt.x, &pt.y);
 		}
 		else
@@ -2713,7 +2713,7 @@ void AM_drawPlayers ()
 			if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 			{
 				AM_rotatePoint (&pt.x, &pt.y);
-				angle -= players[consoleplayer].camera->Angles.Yaw - 90.;
+				angle -= players[consoleplayer].camera->Angles.Yaw + 90.;
 			}
 
 			AM_drawLineCharacter(&MapArrow[0], MapArrow.Size(), 0, angle, color, pt.x, pt.y);
@@ -2802,7 +2802,7 @@ void AM_drawThings ()
 						const size_t spriteIndex = sprite.spriteframes + (show > 1 ? t->frame : 0);
 
 						frame = &SpriteFrames[spriteIndex];
-						DAngle angle = -t->Angles.Yaw + 270.;
+						DAngle angle = -t->Angles.Yaw + 90.;
 						if (frame->Texture[0] != frame->Texture[1]) angle += 180. / 16;
 						if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 						{
@@ -2830,7 +2830,7 @@ void AM_drawThings ()
 					if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 					{
 						AM_rotatePoint (&p.x, &p.y);
-						angle += -players[consoleplayer].camera->Angles.Yaw - 90.;
+						angle += -players[consoleplayer].camera->Angles.Yaw + 90.;
 					}
 
 					color = AMColors[AMColors.ThingColor];

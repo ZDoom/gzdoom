@@ -175,7 +175,7 @@ struct GLLinePortal : public GLPortal
 {
 	// this must be the same as at the start of line_t, so that we can pass in this structure directly to P_ClipLineToPortal.
 	vertex_t	*v1, *v2;	// vertices, from v1 to v2
-	fixed_t 	dx, dy;		// precalculated v2 - v1 for side checking
+	DVector2	delta;		// precalculated v2 - v1 for side checking
 
 	angle_t		angv1, angv2;	// for quick comparisons with a line or subsector
 
@@ -206,9 +206,7 @@ struct GLLinePortal : public GLPortal
 
 	void CalcDelta()
 	{
-		DVector2 delta = v2->fPos() - v1->fPos();
-		dx = FLOAT2FIXED(delta.X);
-		dy = FLOAT2FIXED(delta.Y);
+		delta = v2->fPos() - v1->fPos();
 	}
 
 	line_t *line()

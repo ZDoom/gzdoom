@@ -4689,7 +4689,7 @@ void P_AimCamera(AActor *t1, DVector3 &campos, sector_t *&CameraSector, bool &un
 
 	double pc = pitch.Cos();
 
-	vvec = { pc * angle.Cos(), pc * angle.Sin(), -pitch.Sin() };
+	vvec = { pc * angle.Cos(), pc * angle.Sin(), pitch.Sin() };
 	sz = t1->Top() - t1->Floorclip + clamp<double>(chase_height, -1000, 1000);
 
 	if (Trace(t1->PosAtZ(sz), t1->Sector, vvec, distance, 0, 0, NULL, trace) &&

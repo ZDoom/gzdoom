@@ -2559,7 +2559,7 @@ void AM_rotatePoint (double *x, double *y)
 	double pivoty = m_y + m_h/2;
 	*x -= pivotx;
 	*y -= pivoty;
-	AM_rotate (x, y, -players[consoleplayer].camera->Angles.Yaw - 90.);
+	AM_rotate (x, y, -players[consoleplayer].camera->Angles.Yaw + 90.);
 	*x += pivotx;
 	*y += pivoty;
 }
@@ -2645,7 +2645,7 @@ void AM_drawPlayers ()
 		pt.y = pos.Y;
 		if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 		{
-			angle = -90.;
+			angle = 90.;
 			AM_rotatePoint (&pt.x, &pt.y);
 		}
 		else
@@ -2802,11 +2802,11 @@ void AM_drawThings ()
 						const size_t spriteIndex = sprite.spriteframes + (show > 1 ? t->frame : 0);
 
 						frame = &SpriteFrames[spriteIndex];
-						DAngle angle = -t->Angles.Yaw + 270.;
+						DAngle angle = 270. -t->Angles.Yaw;
 						if (frame->Texture[0] != frame->Texture[1]) angle += 180. / 16;
 						if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 						{
-							angle += players[consoleplayer].camera->Angles.Yaw + 90.;
+							angle += players[consoleplayer].camera->Angles.Yaw - 90.;
 						}
 						rotation = int((angle.Normalized360() * (16. / 360.)).Degrees);
 
@@ -2830,7 +2830,7 @@ void AM_drawThings ()
 					if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 					{
 						AM_rotatePoint (&p.x, &p.y);
-						angle += -players[consoleplayer].camera->Angles.Yaw - 90.;
+						angle += -players[consoleplayer].camera->Angles.Yaw + 90.;
 					}
 
 					color = AMColors[AMColors.ThingColor];

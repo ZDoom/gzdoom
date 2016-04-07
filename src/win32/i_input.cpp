@@ -531,7 +531,7 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			SpawnEAXWindow = false;
 			ShowEAXEditor ();
 		}
-		break;
+		return DefWindowProc(hWnd, message, wParam, lParam);
 
 	case WM_GETMINMAXINFO:
 		if (screen && !VidResizing)

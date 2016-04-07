@@ -3737,6 +3737,8 @@ enum
 	APROP_StencilColor	= 41,
 	APROP_Friction		= 42,
 	APROP_DamageMultiplier=43,
+	APROP_MaxStepHeight	= 44,
+	APROP_MaxDropOffHeight= 45,
 };
 
 // These are needed for ACS's APROP_RenderStyle
@@ -3987,6 +3989,15 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 	case APROP_Friction:
 		actor->Friction = ACSToDouble(value);
 
+	case APROP_MaxStepHeight:
+		actor->MaxStepHeight = ACSToDouble(value);
+		break;
+
+	case APROP_MaxDropOffHeight:
+		actor->MaxDropOffHeight = ACSToDouble(value);
+		break;
+
+
 	default:
 		// do nothing.
 		break;
@@ -4087,6 +4098,8 @@ int DLevelScript::GetActorProperty (int tid, int property)
 	case APROP_NameTag:		return GlobalACSStrings.AddString(actor->GetTag());
 	case APROP_StencilColor:return actor->fillcolor;
 	case APROP_Friction:	return DoubleToACS(actor->Friction);
+	case APROP_MaxStepHeight: return DoubleToACS(actor->MaxStepHeight);
+	case APROP_MaxDropOffHeight: return DoubleToACS(actor->MaxDropOffHeight);
 
 	default:				return 0;
 	}
@@ -4133,6 +4146,8 @@ int DLevelScript::CheckActorProperty (int tid, int property, int value)
 		case APROP_MeleeRange:
 		case APROP_ViewHeight:
 		case APROP_AttackZOffset:
+		case APROP_MaxStepHeight:
+		case APROP_MaxDropOffHeight:
 		case APROP_StencilColor:
 			return (GetActorProperty(tid, property) == value);
 

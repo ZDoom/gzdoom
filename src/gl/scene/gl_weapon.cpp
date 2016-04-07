@@ -202,7 +202,7 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 		mViewActor!=playermo || playermo->RenderStyle.BlendOp == STYLEOP_None) return;
 	*/
 
-	P_BobWeapon (player, &player->psprites[ps_weapon], &ofsx, &ofsy);
+	P_BobWeapon (player, &player->psprites[ps_weapon], &ofsx, &ofsy, r_TicFracF);
 
 	// check for fullbright
 	if (player->fixedcolormap==NOFIXEDCOLORMAP)

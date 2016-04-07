@@ -216,6 +216,9 @@ bool SightCheck::PTR_SightTraverse (intercept_t *in)
 	if (open.range == 0 && open.portalflags == 0 && (lport == NULL || lport->mType != PORTT_LINKED))		// quick test for totally closed doors (must be delayed if portal checks are needed, though)
 		return false;		// stop
 
+	if (in->frac == 0)
+		return true;
+
 	// check bottom
 	if (open.bottom > LINEOPEN_MIN)
 	{
@@ -870,7 +873,7 @@ sightcounts[0]++;
 	portals.Clear();
 	{
 		sector_t *sec;
-		double lookheight = t1->Center();
+		double lookheight = t1->Z() + t1->Height*0.75;
 		t1->GetPortalTransition(lookheight, &sec);
 
 		double bottomslope = t2->Z() - lookheight;

@@ -1314,25 +1314,21 @@ void P_LoadSegs (MapData * map)
 			// errors _can_ cause firelines.
 
 			DAngle ptp_angle = (li->v2->fPos() - li->v1->fPos()).Angle();
-			DAngle seg_angle = AngleToFloat(segangle);
+			DAngle seg_angle = AngleToFloat(segangle << 16);
 			DAngle delta_angle = absangle(ptp_angle, seg_angle);
 
 			if (delta_angle >= 1.)
 			{
 				double dis = (li->v2->fPos() - li->v1->fPos()).Length();
-				DVector2 delta = seg_angle.ToVector();
+				DVector2 delta = seg_angle.ToVector(dis);
 				if ((vnum2 > vnum1) && (vertchanged[vnum2] == 0))
 				{
-					li->v2->set(
-						li->v1->fX() + dis * delta.X,
-						li->v1->fY() + dis * delta.Y);
+					li->v2->set(li->v1->fPos() + delta);
 					vertchanged[vnum2] = 1; // this was changed
 				}
 				else if (vertchanged[vnum1] == 0)
 				{
-					li->v1->set(
-						li->v2->fX() - dis * delta.X,
-						li->v2->fY() - dis * delta.Y);
+					li->v1->set(li->v2->fPos() - delta);
 					vertchanged[vnum1] = 1; // this was changed
 				}
 			}

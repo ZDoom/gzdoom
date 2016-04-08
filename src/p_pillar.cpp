@@ -88,7 +88,7 @@ void DPillar::Serialize (FArchive &arc)
 
 void DPillar::Tick ()
 {
-	int r, s;
+	EMoveResult r, s;
 	double oldfloor, oldceiling;
 
 	oldfloor = m_Sector->floorplane.fD();
@@ -105,18 +105,18 @@ void DPillar::Tick ()
 		s = MoveCeiling (m_CeilingSpeed, m_CeilingTarget, m_Crush, 1, m_Hexencrush);
 	}
 
-	if (r == pastdest && s == pastdest)
+	if (r == EMoveResult::pastdest && s == EMoveResult::pastdest)
 	{
 		SN_StopSequence (m_Sector, CHAN_FLOOR);
 		Destroy ();
 	}
 	else
 	{
-		if (r == crushed)
+		if (r == EMoveResult::crushed)
 		{
 			MoveFloor (m_FloorSpeed, oldfloor, -1, -1, m_Hexencrush);
 		}
-		if (s == crushed)
+		if (s == EMoveResult::crushed)
 		{
 			MoveCeiling (m_CeilingSpeed, oldceiling, -1, 1, m_Hexencrush);
 		}

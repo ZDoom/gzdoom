@@ -1545,7 +1545,7 @@ public:
 
 	bool Move(double speed, double dest, int crush, int direction)
 	{
-		bool res = DMover::crushed != MoveFloor(speed, dest, crush, direction, false);
+		bool res = EMoveResult::crushed != MoveFloor(speed, dest, crush, direction, false);
 		Destroy();
 		m_Sector->floordata=NULL;
 		StopInterpolation(true);
@@ -1694,7 +1694,7 @@ public:
 
 	bool Move(double speed, double dest, int crush, int direction)
 	{
-		bool res = DMover::crushed != MoveCeiling(speed, dest, crush, direction, false);
+		bool res = EMoveResult::crushed != MoveCeiling(speed, dest, crush, direction, false);
 		Destroy();
 		m_Sector->ceilingdata=NULL;
 		StopInterpolation (true);

@@ -80,7 +80,7 @@ void DDoor::Serialize (FArchive &arc)
 
 void DDoor::Tick ()
 {
-	EResult res;
+	EMoveResult res;
 
 	// Adjust bottom height - but only if there isn't an active lift attached to the floor.
 	if (m_Sector->floorplane.fD() != m_OldFloorDist)
@@ -146,7 +146,7 @@ void DDoor::Tick ()
 				(m_Sector->ceilingplane.fD() + m_Sector->floorplane.fD()) / (m_TopDist + m_Sector->floorplane.fD()));
 		}
 
-		if (res == pastdest)
+		if (res == EMoveResult::pastdest)
 		{
 			SN_StopSequence (m_Sector, CHAN_CEILING);
 			switch (m_Type)
@@ -166,7 +166,7 @@ void DDoor::Tick ()
 				break;
 			}
 		}
-		else if (res == crushed)
+		else if (res == EMoveResult::crushed)
 		{
 			switch (m_Type)
 			{
@@ -192,7 +192,7 @@ void DDoor::Tick ()
 				(m_Sector->ceilingplane.fD() + m_Sector->floorplane.fD()) / (m_TopDist + m_Sector->floorplane.fD()));
 		}
 
-		if (res == pastdest)
+		if (res == EMoveResult::pastdest)
 		{
 			SN_StopSequence (m_Sector, CHAN_CEILING);
 			switch (m_Type)
@@ -212,7 +212,7 @@ void DDoor::Tick ()
 				break;
 			}
 		}
-		else if (res == crushed)
+		else if (res == EMoveResult::crushed)
 		{
 			switch (m_Type)
 			{
@@ -560,7 +560,7 @@ bool DAnimatedDoor::StartClosing ()
 	}
 
 	double topdist = m_Sector->ceilingplane.fD();
-	if (MoveCeiling (2048., m_BotDist, 0, -1, false) == crushed)
+	if (MoveCeiling (2048., m_BotDist, 0, -1, false) == EMoveResult::crushed)
 	{
 		return false;
 	}

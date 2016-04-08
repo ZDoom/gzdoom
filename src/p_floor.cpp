@@ -112,7 +112,7 @@ void DFloor::Serialize (FArchive &arc)
 
 void DFloor::Tick ()
 {
-	EResult res;
+	EMoveResult res;
 
 	// [RH] Handle resetting stairs
 	if (m_Type == buildStair || m_Type == waitStair)
@@ -146,7 +146,7 @@ void DFloor::Tick ()
 
 	res = MoveFloor (m_Speed, m_FloorDestDist, m_Crush, m_Direction, m_Hexencrush);
 	
-	if (res == pastdest)
+	if (res == EMoveResult::pastdest)
 	{
 		SN_StopSequence (m_Sector, CHAN_FLOOR);
 
@@ -898,7 +898,7 @@ void DElevator::Destroy()
 
 void DElevator::Tick ()
 {
-	EResult res;
+	EMoveResult res;
 
 	double oldfloor, oldceiling;
 
@@ -908,10 +908,10 @@ void DElevator::Tick ()
 	if (m_Direction < 0)	// moving down
 	{
 		res = MoveFloor (m_Speed, m_FloorDestDist, m_Direction);
-		if (res == ok || res == pastdest)
+		if (res == EMoveResult::ok || res == EMoveResult::pastdest)
 		{
 			res = MoveCeiling (m_Speed, m_CeilingDestDist, m_Direction);
-			if (res == crushed)
+			if (res == EMoveResult::crushed)
 			{
 				MoveFloor (m_Speed, oldfloor, -m_Direction);
 			}
@@ -920,17 +920,17 @@ void DElevator::Tick ()
 	else // up
 	{
 		res = MoveCeiling (m_Speed, m_CeilingDestDist, m_Direction);
-		if (res == ok || res == pastdest)
+		if (res == EMoveResult::ok || res == EMoveResult::pastdest)
 		{
 			res = MoveFloor (m_Speed, m_FloorDestDist, m_Direction);
-			if (res == crushed)
+			if (res == EMoveResult::crushed)
 			{
 				MoveCeiling (m_Speed, oldceiling, -m_Direction);
 			}
 		}
 	}
 
-	if (res == pastdest)	// if destination height acheived
+	if (res == EMoveResult::pastdest)	// if destination height acheived
 	{
 		// make floor stop sound
 		SN_StopSequence (m_Sector, CHAN_FLOOR);

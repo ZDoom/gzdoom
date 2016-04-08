@@ -155,7 +155,7 @@ bool DMover::MoveAttached(int crush, double move, int floorOrCeiling, bool reset
 //		(Use -1 to prevent it from trying to crush)
 //		dest is the desired d value for the plane
 //
-DMover::EResult DMover::MoveFloor(double speed, double dest, int crush, int direction, bool hexencrush)
+EMoveResult DMover::MoveFloor(double speed, double dest, int crush, int direction, bool hexencrush)
 {
 	bool	 	flag;
 	double 	lastpos;
@@ -173,7 +173,7 @@ DMover::EResult DMover::MoveFloor(double speed, double dest, int crush, int dire
 		{
 			move = m_Sector->floorplane.HeightDiff(lastpos, dest);
 
-			if (!MoveAttached(crush, move, 0, true)) return crushed;
+			if (!MoveAttached(crush, move, 0, true)) return EMoveResult::crushed;
 
 			m_Sector->floorplane.setD(dest);
 			flag = P_ChangeSector(m_Sector, crush, move, 0, false);
@@ -188,11 +188,11 @@ DMover::EResult DMover::MoveFloor(double speed, double dest, int crush, int dire
 				m_Sector->ChangePlaneTexZ(sector_t::floor, move);
 				m_Sector->AdjustFloorClip();
 			}
-			return pastdest;
+			return EMoveResult::pastdest;
 		}
 		else
 		{
-			if (!MoveAttached(crush, -speed, 0, true)) return crushed;
+			if (!MoveAttached(crush, -speed, 0, true)) return EMoveResult::crushed;
 
 			m_Sector->floorplane.setD(movedest);
 
@@ -202,7 +202,7 @@ DMover::EResult DMover::MoveFloor(double speed, double dest, int crush, int dire
 				m_Sector->floorplane.setD(lastpos);
 				P_ChangeSector(m_Sector, crush, speed, 0, true);
 				MoveAttached(crush, speed, 0, false);
-				return crushed;
+				return EMoveResult::crushed;
 			}
 			else
 			{
@@ -229,7 +229,7 @@ DMover::EResult DMover::MoveFloor(double speed, double dest, int crush, int dire
 		{
 			move = m_Sector->floorplane.HeightDiff(lastpos, dest);
 
-			if (!MoveAttached(crush, move, 0, true)) return crushed;
+			if (!MoveAttached(crush, move, 0, true)) return EMoveResult::crushed;
 
 			m_Sector->floorplane.setD(dest);
 
@@ -245,11 +245,11 @@ DMover::EResult DMover::MoveFloor(double speed, double dest, int crush, int dire
 				m_Sector->ChangePlaneTexZ(sector_t::floor, move);
 				m_Sector->AdjustFloorClip();
 			}
-			return pastdest;
+			return EMoveResult::pastdest;
 		}
 		else
 		{
-			if (!MoveAttached(crush, speed, 0, true)) return crushed;
+			if (!MoveAttached(crush, speed, 0, true)) return EMoveResult::crushed;
 
 			m_Sector->floorplane.setD(movedest);
 
@@ -261,22 +261,22 @@ DMover::EResult DMover::MoveFloor(double speed, double dest, int crush, int dire
 				{
 					m_Sector->ChangePlaneTexZ(sector_t::floor, m_Sector->floorplane.HeightDiff(lastpos));
 					m_Sector->AdjustFloorClip();
-					return crushed;
+					return EMoveResult::crushed;
 				}
 				m_Sector->floorplane.setD(lastpos);
 				P_ChangeSector(m_Sector, crush, -speed, 0, true);
 				MoveAttached(crush, -speed, 0, false);
-				return crushed;
+				return EMoveResult::crushed;
 			}
 			m_Sector->ChangePlaneTexZ(sector_t::floor, m_Sector->floorplane.HeightDiff(lastpos));
 			m_Sector->AdjustFloorClip();
 		}
 		break;
 	}
-	return ok;
+	return EMoveResult::ok;
 }
 
-DMover::EResult DMover::MoveCeiling(double speed, double dest, int crush, int direction, bool hexencrush)
+EMoveResult DMover::MoveCeiling(double speed, double dest, int crush, int direction, bool hexencrush)
 {
 	bool	 	flag;
 	double 	lastpos;
@@ -303,7 +303,7 @@ DMover::EResult DMover::MoveCeiling(double speed, double dest, int crush, int di
 		{
 			move = m_Sector->ceilingplane.HeightDiff (lastpos, dest);
 
-			if (!MoveAttached(crush, move, 1, true)) return crushed;
+			if (!MoveAttached(crush, move, 1, true)) return EMoveResult::crushed;
 
 			m_Sector->ceilingplane.setD(dest);
 			flag = P_ChangeSector (m_Sector, crush, move, 1, false);
@@ -318,11 +318,11 @@ DMover::EResult DMover::MoveCeiling(double speed, double dest, int crush, int di
 			{
 				m_Sector->ChangePlaneTexZ(sector_t::ceiling, move);
 			}
-			return pastdest;
+			return EMoveResult::pastdest;
 		}
 		else
 		{
-			if (!MoveAttached(crush, -speed, 1, true)) return crushed;
+			if (!MoveAttached(crush, -speed, 1, true)) return EMoveResult::crushed;
 
 			m_Sector->ceilingplane.setD(movedest);
 
@@ -333,12 +333,12 @@ DMover::EResult DMover::MoveCeiling(double speed, double dest, int crush, int di
 				if (crush >= 0 && !hexencrush)
 				{
 					m_Sector->ChangePlaneTexZ(sector_t::ceiling, m_Sector->ceilingplane.HeightDiff (lastpos));
-					return crushed;
+					return EMoveResult::crushed;
 				}
 				m_Sector->ceilingplane.setD(lastpos);
 				P_ChangeSector (m_Sector, crush, speed, 1, true);
 				MoveAttached(crush, speed, 1, false);
-				return crushed;
+				return EMoveResult::crushed;
 			}
 			m_Sector->ChangePlaneTexZ(sector_t::ceiling, m_Sector->ceilingplane.HeightDiff (lastpos));
 		}
@@ -351,7 +351,7 @@ DMover::EResult DMover::MoveCeiling(double speed, double dest, int crush, int di
 		{
 			move = m_Sector->ceilingplane.HeightDiff (lastpos, dest);
 
-			if (!MoveAttached(crush, move, 1, true)) return crushed;
+			if (!MoveAttached(crush, move, 1, true)) return EMoveResult::crushed;
 
 			m_Sector->ceilingplane.setD(dest);
 
@@ -366,11 +366,11 @@ DMover::EResult DMover::MoveCeiling(double speed, double dest, int crush, int di
 			{
 				m_Sector->ChangePlaneTexZ(sector_t::ceiling, move);
 			}
-			return pastdest;
+			return EMoveResult::pastdest;
 		}
 		else
 		{
-			if (!MoveAttached(crush, speed, 1, true)) return crushed;
+			if (!MoveAttached(crush, speed, 1, true)) return EMoveResult::crushed;
 
 			m_Sector->ceilingplane.setD(movedest);
 
@@ -380,11 +380,11 @@ DMover::EResult DMover::MoveCeiling(double speed, double dest, int crush, int di
 				m_Sector->ceilingplane.setD(lastpos);
 				P_ChangeSector (m_Sector, crush, -speed, 1, true);
 				MoveAttached(crush, -speed, 1, false);
-				return crushed;
+				return EMoveResult::crushed;
 			}
 			m_Sector->ChangePlaneTexZ(sector_t::ceiling, m_Sector->ceilingplane.HeightDiff (lastpos));
 		}
 		break;
 	}
-	return ok;
+	return EMoveResult::ok;
 }

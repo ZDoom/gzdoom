@@ -27,7 +27,6 @@ class DMover : public DSectorEffect
 public:
 	DMover (sector_t *sector);
 protected:
-	enum EResult { ok, crushed, pastdest };
 	TObjPtr<DInterpolation> interpolation;
 private:
 	bool MoveAttached(int crush, double move, int floorOrCeiling, bool resetfailed);
@@ -36,15 +35,15 @@ protected:
 	void Serialize (FArchive &arc);
 	void Destroy();
 	void StopInterpolation(bool force = false);
-	EResult MoveFloor(double speed, double dest, int crush, int direction, bool hexencrush);
-	EResult MoveCeiling(double speed, double dest, int crush, int direction, bool hexencrush);
+	EMoveResult MoveFloor(double speed, double dest, int crush, int direction, bool hexencrush);
+	EMoveResult MoveCeiling(double speed, double dest, int crush, int direction, bool hexencrush);
 
-	inline EResult MoveFloor(double speed, double dest, int direction)
+	inline EMoveResult MoveFloor(double speed, double dest, int direction)
 	{
 		return MoveFloor(speed, dest, -1, direction, false);
 	}
 
-	inline EResult MoveCeiling(double speed, double dest, int direction)
+	inline EMoveResult MoveCeiling(double speed, double dest, int direction)
 	{
 		return MoveCeiling(speed, dest, -1, direction, false);
 	}

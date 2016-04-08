@@ -616,6 +616,8 @@ struct secspecial_t
 
 FArchive &operator<< (FArchive &arc, secspecial_t &p);
 
+enum class EMoveResult { ok, crushed, pastdest };
+
 struct sector_t
 {
 	// Member functions

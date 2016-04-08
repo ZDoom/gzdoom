@@ -257,7 +257,7 @@ DCeiling *DCeiling::Create(sector_t *sec, DCeiling::ECeiling type, line_t *line,
 	}
 	
 	// new door thinker
-	DCeiling *ceiling = new DCeiling (sec, speed, speed2, silent);
+	DCeiling *ceiling = new DCeiling (sec, speed, speed2, silent & ~4);
 	vertex_t *spot = sec->lines[0]->v1;
 
 	switch (type)
@@ -413,6 +413,7 @@ DCeiling *DCeiling::Create(sector_t *sec, DCeiling::ECeiling type, line_t *line,
 	if (ceiling->m_Speed >= movedist)
 	{
 		ceiling->StopInterpolation(true);
+		if (silent & 4) ceiling->m_Silent = 2;
 	}
 
 	// set texture/type change properties

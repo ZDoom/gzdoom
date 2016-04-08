@@ -123,7 +123,7 @@ struct svalue_t
 
 	void setDouble(double dp)
 	{
-		value.f = fsfix(dp/65536);
+		value.f = fsfix(dp * 65536);
 		type = svt_fixed;
 	}
 };

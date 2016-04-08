@@ -708,7 +708,7 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 	{ // One sided line
 
 		// Needed for polyobject portals.
-		if (cres.line->isLinePortal())
+		if (cres.line->isLinePortal() && (cres.line->sidedef[0]->Flags & WALLF_POLYOBJ))
 		{
 			spechit_t spec;
 			spec.line = ld;

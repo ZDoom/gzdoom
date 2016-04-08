@@ -108,6 +108,7 @@ int 			viewwindowy;
 DVector3		ViewPos;
 DAngle			ViewAngle;
 DAngle			ViewPitch;
+DVector3		ViewPath[2];
 
 extern "C" 
 {
@@ -590,67 +591,78 @@ void R_InterpolateView (player_t *player, double Frac, InterpolationViewer *ivie
 
 	DAngle oviewangle = iview->Old.Angles.Yaw;
 	DAngle nviewangle = iview->New.Angles.Yaw;
-	if ((iview->Old.Pos.X != iview->New.Pos.X || iview->Old.Pos.Y != iview->New.Pos.Y) && InterpolationPath.Size() > 0)
+	if (!cl_capfps)
 	{
-		DVector3 view = iview->New.Pos;
-
-		// Interpolating through line portals is a messy affair.
-		// What needs be done is to store the portal transitions of the camera actor as waypoints
-		// and then find out on which part of the path the current view lies.
-		// Needless to say, this doesn't work for chasecam mode.
-		if (!r_showviewer)
+		if ((iview->Old.Pos.X != iview->New.Pos.X || iview->Old.Pos.Y != iview->New.Pos.Y) && InterpolationPath.Size() > 0)
 		{
-			double pathlen = 0;
-			double zdiff = 0;
-			double totalzdiff = 0;
-			DAngle adiff = 0.;
-			DAngle totaladiff = 0.;
-			double oviewz = iview->Old.Pos.Z;
-			double nviewz = iview->New.Pos.Z;
-			DVector3a oldpos = { { iview->Old.Pos.X, iview->Old.Pos.Y, 0 }, 0. };
-			DVector3a newpos = { { iview->New.Pos.X, iview->New.Pos.Y, 0 }, 0. };
-			InterpolationPath.Push(newpos);	// add this to  the array to simplify the loops below
+			DVector3 view = iview->New.Pos;
 
-			for (unsigned i = 0; i < InterpolationPath.Size(); i += 2)
+			// Interpolating through line portals is a messy affair.
+			// What needs be done is to store the portal transitions of the camera actor as waypoints
+			// and then find out on which part of the path the current view lies.
+			// Needless to say, this doesn't work for chasecam mode.
+			if (!r_showviewer)
 			{
-				DVector3a &start = i == 0 ? oldpos : InterpolationPath[i - 1];
-				DVector3a &end = InterpolationPath[i];
-				pathlen += (end.pos-start.pos).Length();
-				totalzdiff += start.pos.Z;
-				totaladiff += start.angle;
-			}
-			double interpolatedlen = Frac * pathlen;
+				double pathlen = 0;
+				double zdiff = 0;
+				double totalzdiff = 0;
+				DAngle adiff = 0.;
+				DAngle totaladiff = 0.;
+				double oviewz = iview->Old.Pos.Z;
+				double nviewz = iview->New.Pos.Z;
+				DVector3a oldpos = { { iview->Old.Pos.X, iview->Old.Pos.Y, 0 }, 0. };
+				DVector3a newpos = { { iview->New.Pos.X, iview->New.Pos.Y, 0 }, 0. };
+				InterpolationPath.Push(newpos);	// add this to  the array to simplify the loops below
 
-			for (unsigned i = 0; i < InterpolationPath.Size(); i += 2)
-			{
-				DVector3a &start = i == 0 ? oldpos : InterpolationPath[i - 1];
-				DVector3a &end = InterpolationPath[i];
-				double fraglen = (end.pos - start.pos).Length();
-				zdiff += start.pos.Z;
-				adiff += start.angle;
-				if (fraglen <= interpolatedlen)
+				for (unsigned i = 0; i < InterpolationPath.Size(); i += 2)
 				{
-					interpolatedlen -= fraglen;
+					DVector3a &start = i == 0 ? oldpos : InterpolationPath[i - 1];
+					DVector3a &end = InterpolationPath[i];
+					pathlen += (end.pos - start.pos).Length();
+					totalzdiff += start.pos.Z;
+					totaladiff += start.angle;
 				}
-				else
+				double interpolatedlen = Frac * pathlen;
+
+				for (unsigned i = 0; i < InterpolationPath.Size(); i += 2)
 				{
-					double fragfrac = interpolatedlen / fraglen;
-					oviewz += zdiff;
-					nviewz -= totalzdiff - zdiff;
-					oviewangle += adiff;
-					nviewangle -= totaladiff - adiff;
-					DVector2 viewpos = start.pos + (fragfrac * (end.pos - start.pos));
-					ViewPos = { viewpos, oviewz + Frac * (nviewz - oviewz) };
-					break;
+					DVector3a &start = i == 0 ? oldpos : InterpolationPath[i - 1];
+					DVector3a &end = InterpolationPath[i];
+					double fraglen = (end.pos - start.pos).Length();
+					zdiff += start.pos.Z;
+					adiff += start.angle;
+					if (fraglen <= interpolatedlen)
+					{
+						interpolatedlen -= fraglen;
+					}
+					else
+					{
+						double fragfrac = interpolatedlen / fraglen;
+						oviewz += zdiff;
+						nviewz -= totalzdiff - zdiff;
+						oviewangle += adiff;
+						nviewangle -= totaladiff - adiff;
+						DVector2 viewpos = start.pos + (fragfrac * (end.pos - start.pos));
+						ViewPos = { viewpos, oviewz + Frac * (nviewz - oviewz) };
+						break;
+					}
 				}
+				InterpolationPath.Pop();
+				ViewPath[0] = iview->Old.Pos;
 			}
-			InterpolationPath.Pop();
+		}
+		else
+		{
+			DVector2 disp = Displacements.getOffset(oldgroup, newgroup);
+			ViewPos = iview->Old.Pos + (iview->New.Pos - iview->Old.Pos - disp) * Frac;
+			ViewPath[1] = iview->New.Pos;
+			ViewPath[0] = iview->Old.Pos;
 		}
 	}
 	else
 	{
-		DVector2 disp = Displacements.getOffset(oldgroup, newgroup);
-		ViewPos = iview->Old.Pos + (iview->New.Pos - iview->Old.Pos - disp) * Frac;
+		ViewPos = iview->New.Pos;
+		ViewPath[0] = ViewPath[1] = iview->New.Pos;
 	}
 	if (player != NULL &&
 		!(player->cheats & CF_INTERPVIEW) &&

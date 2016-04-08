@@ -997,6 +997,25 @@ public:
 	void SetFunction(VMScriptFunction *func) { MyFunction = func; }
 };
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+class FxNop : public FxExpression
+{
+public:
+	FxNop(const FScriptPosition &p)
+		: FxExpression(p)
+	{
+		isresolved = true;
+	}
+	ExpEmit Emit(VMFunctionBuilder *build)
+	{
+		return ExpEmit();
+	}
+};
 
 FxExpression *ParseExpression (FScanner &sc, PClassActor *cls, bool mustresolve = false);
 

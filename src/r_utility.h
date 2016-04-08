@@ -15,6 +15,7 @@ extern DCanvas			*RenderTarget;
 extern DVector3			ViewPos;
 extern DAngle			ViewAngle;
 extern DAngle			ViewPitch;
+extern DVector3			ViewPath[2];
 
 extern fixed_t viewx, viewy, viewz;
 extern angle_t viewangle;

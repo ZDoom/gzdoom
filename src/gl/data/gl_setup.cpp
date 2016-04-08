@@ -102,11 +102,11 @@ static void DoSetMapSection(subsector_t *sub, int num)
 
 struct cvertex_t
 {
-	fixed_t x, y;
+	double X, Y;
 
-	operator int () const { return ((x>>16)&0xffff) | y; }
-	bool operator!= (const cvertex_t &other) const { return x != other.x || y != other.y; }
-	cvertex_t& operator =(const vertex_t *v) { x = v->fixX(); y = v->fixY(); return *this; }
+	operator int() const { return xs_FloorToInt(X) + 65536 * xs_FloorToInt(Y); }
+	bool operator!= (const cvertex_t &other) const { return fabs(X - other.X) >= EQUAL_EPSILON || fabs(Y - other.Y) >= EQUAL_EPSILON; }
+	cvertex_t& operator =(const vertex_t *v) { X = v->fX(); Y = v->fY(); return *this; }
 };
 
 typedef TMap<cvertex_t, int> FSectionVertexMap;

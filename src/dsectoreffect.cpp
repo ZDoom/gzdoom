@@ -155,8 +155,7 @@ bool DMover::MoveAttached(int crush, double move, int floorOrCeiling, bool reset
 //		(Use -1 to prevent it from trying to crush)
 //		dest is the desired d value for the plane
 //
-DMover::EResult DMover::MovePlane (double speed, double dest, int crush,
-								   int floorOrCeiling, int direction, bool hexencrush)
+DMover::EResult DMover::MoveFloor(double speed, double dest, int crush, int direction, bool hexencrush)
 {
 	bool	 	flag;
 	double 	lastpos;
@@ -164,227 +163,228 @@ DMover::EResult DMover::MovePlane (double speed, double dest, int crush,
 	double		move;
 	//double		destheight;	//jff 02/04/98 used to keep floors/ceilings
 							// from moving thru each other
-	switch (floorOrCeiling)
+	lastpos = m_Sector->floorplane.fD();
+	switch (direction)
 	{
-	case 0:
-		// FLOOR
-		lastpos = m_Sector->floorplane.fD();
-		switch (direction)
+	case -1:
+		// DOWN
+		movedest = m_Sector->floorplane.GetChangedHeight(-speed);
+		if (movedest >= dest)
 		{
-		case -1:
-			// DOWN
-			movedest = m_Sector->floorplane.GetChangedHeight (-speed);
-			if (movedest >= dest)
+			move = m_Sector->floorplane.HeightDiff(lastpos, dest);
+
+			if (!MoveAttached(crush, move, 0, true)) return crushed;
+
+			m_Sector->floorplane.setD(dest);
+			flag = P_ChangeSector(m_Sector, crush, move, 0, false);
+			if (flag)
 			{
-				move = m_Sector->floorplane.HeightDiff (lastpos, dest);
-
-				if (!MoveAttached(crush, move, 0, true)) return crushed;
-
-				m_Sector->floorplane.setD(dest);
-				flag = P_ChangeSector (m_Sector, crush, move, 0, false);
-				if (flag)
-				{
-					m_Sector->floorplane.setD(lastpos);
-					P_ChangeSector (m_Sector, crush, -move, 0, true);
-					MoveAttached(crush, -move, 0, false);
-				}
-				else
-				{
-					m_Sector->ChangePlaneTexZ(sector_t::floor, move);
-					m_Sector->AdjustFloorClip ();
-				}
-				return pastdest;
+				m_Sector->floorplane.setD(lastpos);
+				P_ChangeSector(m_Sector, crush, -move, 0, true);
+				MoveAttached(crush, -move, 0, false);
 			}
 			else
 			{
-				if (!MoveAttached(crush, -speed, 0, true)) return crushed;
-
-				m_Sector->floorplane.setD(movedest);
-
-				flag = P_ChangeSector (m_Sector, crush, -speed, 0, false);
-				if (flag)
-				{
-					m_Sector->floorplane.setD(lastpos);
-					P_ChangeSector (m_Sector, crush, speed, 0, true);
-					MoveAttached(crush, speed, 0, false);
-					return crushed;
-				}
-				else
-				{
-					m_Sector->ChangePlaneTexZ(sector_t::floor, m_Sector->floorplane.HeightDiff (lastpos));
-					m_Sector->AdjustFloorClip ();
-				}
+				m_Sector->ChangePlaneTexZ(sector_t::floor, move);
+				m_Sector->AdjustFloorClip();
 			}
-			break;
-												
-		case 1:
-			// UP
-			// jff 02/04/98 keep floor from moving thru ceilings
-			// [RH] not so easy with arbitrary planes
-			//destheight = (dest < m_Sector->ceilingheight) ? dest : m_Sector->ceilingheight;
-			if (!m_Sector->ceilingplane.isSlope() && !m_Sector->floorplane.isSlope() &&
-				(!(i_compatflags2 & COMPATF2_FLOORMOVE) && -dest > m_Sector->ceilingplane.fD()))
+			return pastdest;
+		}
+		else
+		{
+			if (!MoveAttached(crush, -speed, 0, true)) return crushed;
+
+			m_Sector->floorplane.setD(movedest);
+
+			flag = P_ChangeSector(m_Sector, crush, -speed, 0, false);
+			if (flag)
 			{
-				dest = -m_Sector->ceilingplane.fD();
-			}
-
-			movedest = m_Sector->floorplane.GetChangedHeight (speed);
-
-			if (movedest <= dest)
-			{
-				move = m_Sector->floorplane.HeightDiff (lastpos, dest);
-
-				if (!MoveAttached(crush, move, 0, true)) return crushed;
-
-				m_Sector->floorplane.setD(dest);
-
-				flag = P_ChangeSector (m_Sector, crush, move, 0, false);
-				if (flag)
-				{
-					m_Sector->floorplane.setD(lastpos);
-					P_ChangeSector (m_Sector, crush, -move, 0, true);
-					MoveAttached(crush, -move, 0, false);
-				}
-				else
-				{
-					m_Sector->ChangePlaneTexZ(sector_t::floor, move);
-					m_Sector->AdjustFloorClip ();
-				}
-				return pastdest;
+				m_Sector->floorplane.setD(lastpos);
+				P_ChangeSector(m_Sector, crush, speed, 0, true);
+				MoveAttached(crush, speed, 0, false);
+				return crushed;
 			}
 			else
 			{
-				if (!MoveAttached(crush, speed, 0, true)) return crushed;
-
-				m_Sector->floorplane.setD(movedest);
-
-				// COULD GET CRUSHED
-				flag = P_ChangeSector (m_Sector, crush, speed, 0, false);
-				if (flag)
-				{
-					if (crush >= 0 && !hexencrush)
-					{
-						m_Sector->ChangePlaneTexZ(sector_t::floor, m_Sector->floorplane.HeightDiff (lastpos));
-						m_Sector->AdjustFloorClip ();
-						return crushed;
-					}
-					m_Sector->floorplane.setD(lastpos);
-					P_ChangeSector (m_Sector, crush, -speed, 0, true);
-					MoveAttached(crush, -speed, 0, false);
-					return crushed;
-				}
-				m_Sector->ChangePlaneTexZ(sector_t::floor, m_Sector->floorplane.HeightDiff (lastpos));
-				m_Sector->AdjustFloorClip ();
+				m_Sector->ChangePlaneTexZ(sector_t::floor, m_Sector->floorplane.HeightDiff(lastpos));
+				m_Sector->AdjustFloorClip();
 			}
-			break;
 		}
 		break;
-																		
-	  case 1:
-		// CEILING
-		lastpos = m_Sector->ceilingplane.fD();
-		switch (direction)
+
+	case 1:
+		// UP
+		// jff 02/04/98 keep floor from moving thru ceilings
+		// [RH] not so easy with arbitrary planes
+		//destheight = (dest < m_Sector->ceilingheight) ? dest : m_Sector->ceilingheight;
+		if (!m_Sector->ceilingplane.isSlope() && !m_Sector->floorplane.isSlope() &&
+			(!(i_compatflags2 & COMPATF2_FLOORMOVE) && -dest > m_Sector->ceilingplane.fD()))
 		{
-		case -1:
-			// DOWN
-			// jff 02/04/98 keep ceiling from moving thru floors
-			// [RH] not so easy with arbitrary planes
-			//destheight = (dest > m_Sector->floorheight) ? dest : m_Sector->floorheight;
-			if (!m_Sector->ceilingplane.isSlope() && !m_Sector->floorplane.isSlope() &&
-				(!(i_compatflags2 & COMPATF2_FLOORMOVE) && dest < -m_Sector->floorplane.fD()))
+			dest = -m_Sector->ceilingplane.fD();
+		}
+
+		movedest = m_Sector->floorplane.GetChangedHeight(speed);
+
+		if (movedest <= dest)
+		{
+			move = m_Sector->floorplane.HeightDiff(lastpos, dest);
+
+			if (!MoveAttached(crush, move, 0, true)) return crushed;
+
+			m_Sector->floorplane.setD(dest);
+
+			flag = P_ChangeSector(m_Sector, crush, move, 0, false);
+			if (flag)
 			{
-				dest = -m_Sector->floorplane.fD();
-			}
-			movedest = m_Sector->ceilingplane.GetChangedHeight (-speed);
-			if (movedest <= dest)
-			{
-				move = m_Sector->ceilingplane.HeightDiff (lastpos, dest);
-
-				if (!MoveAttached(crush, move, 1, true)) return crushed;
-
-				m_Sector->ceilingplane.setD(dest);
-				flag = P_ChangeSector (m_Sector, crush, move, 1, false);
-
-				if (flag)
-				{
-					m_Sector->ceilingplane.setD(lastpos);
-					P_ChangeSector (m_Sector, crush, -move, 1, true);
-					MoveAttached(crush, -move, 1, false);
-				}
-				else
-				{
-					m_Sector->ChangePlaneTexZ(sector_t::ceiling, move);
-				}
-				return pastdest;
+				m_Sector->floorplane.setD(lastpos);
+				P_ChangeSector(m_Sector, crush, -move, 0, true);
+				MoveAttached(crush, -move, 0, false);
 			}
 			else
 			{
-				if (!MoveAttached(crush, -speed, 1, true)) return crushed;
+				m_Sector->ChangePlaneTexZ(sector_t::floor, move);
+				m_Sector->AdjustFloorClip();
+			}
+			return pastdest;
+		}
+		else
+		{
+			if (!MoveAttached(crush, speed, 0, true)) return crushed;
 
-				m_Sector->ceilingplane.setD(movedest);
+			m_Sector->floorplane.setD(movedest);
 
-				// COULD GET CRUSHED
-				flag = P_ChangeSector (m_Sector, crush, -speed, 1, false);
-				if (flag)
+			// COULD GET CRUSHED
+			flag = P_ChangeSector(m_Sector, crush, speed, 0, false);
+			if (flag)
+			{
+				if (crush >= 0 && !hexencrush)
 				{
-					if (crush >= 0 && !hexencrush)
-					{
-						m_Sector->ChangePlaneTexZ(sector_t::ceiling, m_Sector->ceilingplane.HeightDiff (lastpos));
-						return crushed;
-					}
-					m_Sector->ceilingplane.setD(lastpos);
-					P_ChangeSector (m_Sector, crush, speed, 1, true);
-					MoveAttached(crush, speed, 1, false);
+					m_Sector->ChangePlaneTexZ(sector_t::floor, m_Sector->floorplane.HeightDiff(lastpos));
+					m_Sector->AdjustFloorClip();
 					return crushed;
 				}
-				m_Sector->ChangePlaneTexZ(sector_t::ceiling, m_Sector->ceilingplane.HeightDiff (lastpos));
+				m_Sector->floorplane.setD(lastpos);
+				P_ChangeSector(m_Sector, crush, -speed, 0, true);
+				MoveAttached(crush, -speed, 0, false);
+				return crushed;
 			}
-			break;
-												
-		case 1:
-			// UP
-			movedest = m_Sector->ceilingplane.GetChangedHeight (speed);
-			if (movedest >= dest)
-			{
-				move = m_Sector->ceilingplane.HeightDiff (lastpos, dest);
-
-				if (!MoveAttached(crush, move, 1, true)) return crushed;
-
-				m_Sector->ceilingplane.setD(dest);
-
-				flag = P_ChangeSector (m_Sector, crush, move, 1, false);
-				if (flag)
-				{
-					m_Sector->ceilingplane.setD(lastpos);
-					P_ChangeSector (m_Sector, crush, move, 1, true);
-					MoveAttached(crush, move, 1, false);
-				}
-				else
-				{
-					m_Sector->ChangePlaneTexZ(sector_t::ceiling, move);
-				}
-				return pastdest;
-			}
-			else
-			{
-				if (!MoveAttached(crush, speed, 1, true)) return crushed;
-
-				m_Sector->ceilingplane.setD(movedest);
-
-				flag = P_ChangeSector (m_Sector, crush, speed, 1, false);
-				if (flag)
-				{
-					m_Sector->ceilingplane.setD(lastpos);
-					P_ChangeSector (m_Sector, crush, -speed, 1, true);
-					MoveAttached(crush, -speed, 1, false);
-					return crushed;
-				}
-				m_Sector->ChangePlaneTexZ(sector_t::ceiling, m_Sector->ceilingplane.HeightDiff (lastpos));
-			}
-			break;
+			m_Sector->ChangePlaneTexZ(sector_t::floor, m_Sector->floorplane.HeightDiff(lastpos));
+			m_Sector->AdjustFloorClip();
 		}
 		break;
-				
+	}
+	return ok;
+}
+
+DMover::EResult DMover::MoveCeiling(double speed, double dest, int crush, int direction, bool hexencrush)
+{
+	bool	 	flag;
+	double 	lastpos;
+	double		movedest;
+	double		move;
+	//double		destheight;	//jff 02/04/98 used to keep floors/ceilings
+	// from moving thru each other
+
+	lastpos = m_Sector->ceilingplane.fD();
+	switch (direction)
+	{
+	case -1:
+		// DOWN
+		// jff 02/04/98 keep ceiling from moving thru floors
+		// [RH] not so easy with arbitrary planes
+		//destheight = (dest > m_Sector->floorheight) ? dest : m_Sector->floorheight;
+		if (!m_Sector->ceilingplane.isSlope() && !m_Sector->floorplane.isSlope() &&
+			(!(i_compatflags2 & COMPATF2_FLOORMOVE) && dest < -m_Sector->floorplane.fD()))
+		{
+			dest = -m_Sector->floorplane.fD();
+		}
+		movedest = m_Sector->ceilingplane.GetChangedHeight (-speed);
+		if (movedest <= dest)
+		{
+			move = m_Sector->ceilingplane.HeightDiff (lastpos, dest);
+
+			if (!MoveAttached(crush, move, 1, true)) return crushed;
+
+			m_Sector->ceilingplane.setD(dest);
+			flag = P_ChangeSector (m_Sector, crush, move, 1, false);
+
+			if (flag)
+			{
+				m_Sector->ceilingplane.setD(lastpos);
+				P_ChangeSector (m_Sector, crush, -move, 1, true);
+				MoveAttached(crush, -move, 1, false);
+			}
+			else
+			{
+				m_Sector->ChangePlaneTexZ(sector_t::ceiling, move);
+			}
+			return pastdest;
+		}
+		else
+		{
+			if (!MoveAttached(crush, -speed, 1, true)) return crushed;
+
+			m_Sector->ceilingplane.setD(movedest);
+
+			// COULD GET CRUSHED
+			flag = P_ChangeSector (m_Sector, crush, -speed, 1, false);
+			if (flag)
+			{
+				if (crush >= 0 && !hexencrush)
+				{
+					m_Sector->ChangePlaneTexZ(sector_t::ceiling, m_Sector->ceilingplane.HeightDiff (lastpos));
+					return crushed;
+				}
+				m_Sector->ceilingplane.setD(lastpos);
+				P_ChangeSector (m_Sector, crush, speed, 1, true);
+				MoveAttached(crush, speed, 1, false);
+				return crushed;
+			}
+			m_Sector->ChangePlaneTexZ(sector_t::ceiling, m_Sector->ceilingplane.HeightDiff (lastpos));
+		}
+		break;
+												
+	case 1:
+		// UP
+		movedest = m_Sector->ceilingplane.GetChangedHeight (speed);
+		if (movedest >= dest)
+		{
+			move = m_Sector->ceilingplane.HeightDiff (lastpos, dest);
+
+			if (!MoveAttached(crush, move, 1, true)) return crushed;
+
+			m_Sector->ceilingplane.setD(dest);
+
+			flag = P_ChangeSector (m_Sector, crush, move, 1, false);
+			if (flag)
+			{
+				m_Sector->ceilingplane.setD(lastpos);
+				P_ChangeSector (m_Sector, crush, move, 1, true);
+				MoveAttached(crush, move, 1, false);
+			}
+			else
+			{
+				m_Sector->ChangePlaneTexZ(sector_t::ceiling, move);
+			}
+			return pastdest;
+		}
+		else
+		{
+			if (!MoveAttached(crush, speed, 1, true)) return crushed;
+
+			m_Sector->ceilingplane.setD(movedest);
+
+			flag = P_ChangeSector (m_Sector, crush, speed, 1, false);
+			if (flag)
+			{
+				m_Sector->ceilingplane.setD(lastpos);
+				P_ChangeSector (m_Sector, crush, -speed, 1, true);
+				MoveAttached(crush, -speed, 1, false);
+				return crushed;
+			}
+			m_Sector->ChangePlaneTexZ(sector_t::ceiling, m_Sector->ceilingplane.HeightDiff (lastpos));
+		}
+		break;
 	}
 	return ok;
 }

@@ -341,6 +341,7 @@ void FGLRenderer::CreateScene()
 	for(unsigned i=0;i<portals.Size(); i++) portals[i]->glportal = NULL;
 	gl_spriteindex=0;
 	Bsp.Clock();
+	R_SetView();
 	gl_RenderBSPNode (nodes + numnodes - 1);
 	Bsp.Unclock();
 

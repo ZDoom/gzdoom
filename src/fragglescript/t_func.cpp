@@ -1535,26 +1535,6 @@ void FParser::SF_StartSectorSound(void)
 	}
 }
 
-/************* Sector functions ***************/
-
-class DFloorChanger : public DFloor
-{
-public:
-	DFloorChanger(sector_t * sec)
-		: DFloor(sec) {}
-
-	bool Move(double speed, double dest, int crush, int direction)
-	{
-		bool res = DMover::crushed != MoveFloor(speed, dest, crush, direction, false);
-		Destroy();
-		m_Sector->floordata=NULL;
-		StopInterpolation(true);
-		m_Sector=NULL;
-		return res;
-	}
-};
-
-
 //==========================================================================
 //
 //
@@ -1588,12 +1568,12 @@ void FParser::SF_FloorHeight(void)
 			{
 				if (sectors[i].floordata) continue;	// don't move floors that are active!
 
-				DFloorChanger * f = new DFloorChanger(&sectors[i]);
-				if (!f->Move(
+				if (sectors[i].MoveFloor(
 					fabs(dest - sectors[i].CenterFloor()), 
 					sectors[i].floorplane.PointToDist (sectors[i].centerspot, dest),
 					crush? 10:-1, 
-					(dest > sectors[i].CenterFloor()) ? 1 : -1))
+					(dest > sectors[i].CenterFloor()) ? 1 : -1,
+					false) != EMoveResult::crushed)
 				{
 					returnval = 0;
 				}
@@ -1686,29 +1666,6 @@ void FParser::SF_MoveFloor(void)
 //
 //==========================================================================
 
-class DCeilingChanger : public DCeiling
-{
-public:
-	DCeilingChanger(sector_t * sec)
-		: DCeiling(sec) {}
-
-	bool Move(double speed, double dest, int crush, int direction)
-	{
-		bool res = DMover::crushed != MoveCeiling(speed, dest, crush, direction, false);
-		Destroy();
-		m_Sector->ceilingdata=NULL;
-		StopInterpolation (true);
-		m_Sector=NULL;
-		return res;
-	}
-};
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
 // ceiling height of sector
 void FParser::SF_CeilingHeight(void)
 {
@@ -1735,12 +1692,12 @@ void FParser::SF_CeilingHeight(void)
 			{
 				if (sectors[i].ceilingdata) continue;	// don't move ceilings that are active!
 
-				DCeilingChanger * c = new DCeilingChanger(&sectors[i]);
-				if (!c->Move(
+				if (sectors[i].MoveCeiling(
 					fabs(dest - sectors[i].CenterCeiling()), 
 					sectors[i].ceilingplane.PointToDist (sectors[i].centerspot, dest), 
 					crush? 10:-1,
-					(dest > sectors[i].CenterCeiling()) ? 1 : -1))
+					(dest > sectors[i].CenterCeiling()) ? 1 : -1,
+					false) != EMoveResult::crushed)
 				{
 					returnval = 0;
 				}

@@ -127,7 +127,7 @@ void DCeiling::PlayCeilingSound ()
 
 void DCeiling::Tick ()
 {
-	EResult res;
+	EMoveResult res;
 		
 	switch (m_Direction)
 	{
@@ -136,9 +136,9 @@ void DCeiling::Tick ()
 		break;
 	case 1:
 		// UP
-		res = MoveCeiling (m_Speed, m_TopHeight, m_Direction);
+		res = m_Sector->MoveCeiling (m_Speed, m_TopHeight, m_Direction);
 		
-		if (res == pastdest)
+		if (res == EMoveResult::pastdest)
 		{
 			switch (m_Type)
 			{
@@ -167,9 +167,9 @@ void DCeiling::Tick ()
 		
 	case -1:
 		// DOWN
-		res = MoveCeiling (m_Speed, m_BottomHeight, m_Crush, m_Direction, m_CrushMode == ECrushMode::crushHexen);
+		res = m_Sector->MoveCeiling (m_Speed, m_BottomHeight, m_Crush, m_Direction, m_CrushMode == ECrushMode::crushHexen);
 		
-		if (res == pastdest)
+		if (res == EMoveResult::pastdest)
 		{
 			switch (m_Type)
 			{
@@ -198,7 +198,7 @@ void DCeiling::Tick ()
 		}
 		else // ( res != pastdest )
 		{
-			if (res == crushed)
+			if (res == EMoveResult::crushed)
 			{
 				switch (m_Type)
 				{

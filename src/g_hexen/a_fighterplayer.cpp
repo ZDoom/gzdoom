@@ -27,7 +27,11 @@ static FRandom pr_fpatk ("FPunchAttack");
 
 void AdjustPlayerAngle (AActor *pmo, FTranslatedLineTarget *t)
 {
-	DAngle difference = deltaangle(pmo->Angles.Yaw, pmo->AngleTo(t->linetarget));
+	// normally this will adjust relative to the actual direction to the target,
+	// but with arbitrary portals that cannot be calculated so using the actual
+	// attack angle is the only option.
+	DAngle atkangle = t->unlinked ? t->angleFromSource : pmo->AngleTo(t->linetarget);
+	DAngle difference = deltaangle(pmo->Angles.Yaw, atkangle);
 	if (fabs(difference) > MAX_ANGLE_ADJUST)
 	{
 		if (difference > 0)

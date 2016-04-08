@@ -4,7 +4,7 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright 2003 Timothy Stump
-** Copyright 2005 Christoph Oelckers
+** Copyright 2005-2016 Christoph Oelckers
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -515,7 +515,7 @@ double ADynamicLight::DistToSeg(const DVector3 &pos, seg_t *seg)
 	double seg_dy = seg->v2->fY() - seg->v1->fY();
 	double seg_length_sq = seg_dx * seg_dx + seg_dy * seg_dy;
 
-	u = ((pos.X - seg->v1->fX()) * seg_dx + pos.Y - seg->v1->fY()) * seg_dy / seg_length_sq;
+	u = (((pos.X - seg->v1->fX()) * seg_dx) + (pos.Y - seg->v1->fY()) * seg_dy) / seg_length_sq;
 	if (u < 0.) u = 0.; // clamp the test point to the line segment
 	else if (u > 1.) u = 1.;
 
@@ -553,21 +553,23 @@ void ADynamicLight::CollectWithinRadius(const DVector3 &pos, subsector_t *subSec
 	{
 		seg_t * seg = subSec->firstline + i;
 
-		if (seg->sidedef && seg->linedef && seg->linedef->validcount!=::validcount)
+		// check distance from x/y to seg and if within radius add this seg and, if present the opposing subsector (lather/rinse/repeat)
+		// If out of range we do not need to bother with this seg.
+		if (DistToSeg(pos, seg) <= radius)
 		{
-			// light is in front of the seg
-			if ((pos.Y - seg->v1->fixY()) * (seg->v2->fX() - seg->v1->fixX()) + (seg->v1->fX() - pos.X * (seg->v2->fY() - seg->v1->fY())) <= 0)
+			if (seg->sidedef && seg->linedef && seg->linedef->validcount != ::validcount)
 			{
-				seg->linedef->validcount = validcount;
-				touching_sides = AddLightNode(&seg->sidedef->lighthead, seg->sidedef, this, touching_sides);
+				// light is in front of the seg
+				if ((pos.Y - seg->v1->fY()) * (seg->v2->fX() - seg->v1->fX()) + (seg->v1->fX() - pos.X * (seg->v2->fY() - seg->v1->fY())) <= 0)
+				{
+					seg->linedef->validcount = validcount;
+					touching_sides = AddLightNode(&seg->sidedef->lighthead, seg->sidedef, this, touching_sides);
+				}
 			}
-		}
-		if (seg->linedef)
-		{
-			FLinePortal *port = seg->linedef->getPortal();
-			if (port && port->mType == PORTT_LINKED)
+			if (seg->linedef)
 			{
-				if (DistToSeg(pos, seg) <= radius)
+				FLinePortal *port = seg->linedef->getPortal();
+				if (port && port->mType == PORTT_LINKED)
 				{
 					line_t *other = port->mDestination;
 					if (other->validcount != ::validcount)
@@ -577,16 +579,12 @@ void ADynamicLight::CollectWithinRadius(const DVector3 &pos, subsector_t *subSec
 					}
 				}
 			}
-		}
 
-		seg_t *partner = seg->PartnerSeg;
-		if (partner)
-		{
-			subsector_t *sub = partner->Subsector;
-			if (sub != NULL && sub->validcount!=::validcount)
+			seg_t *partner = seg->PartnerSeg;
+			if (partner)
 			{
-				// check distance from x/y to seg and if within radius add opposing subsector (lather/rinse/repeat)
-				if (DistToSeg(pos, seg) <= radius)
+				subsector_t *sub = partner->Subsector;
+				if (sub != NULL && sub->validcount != ::validcount)
 				{
 					CollectWithinRadius(pos, sub, radius);
 				}
@@ -625,6 +623,10 @@ void ADynamicLight::CollectWithinRadius(const DVector3 &pos, subsector_t *subSec
 
 void ADynamicLight::LinkLight()
 {
+	if (X() == 1088 && Y() == 2832)
+	{
+		int a = 0;
+	}
 	// mark the old light nodes
 	FLightNode * node;
 	

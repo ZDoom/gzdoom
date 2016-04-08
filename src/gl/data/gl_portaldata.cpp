@@ -102,7 +102,8 @@ GLSectorStackPortal *FPortal::GetGLPortal()
 
 //==========================================================================
 //
-//
+// this is left as fixed_t because the nodes also are, it makes no sense
+// to convert this without converting the nodes as well.
 //
 //==========================================================================
 

@@ -3205,8 +3205,8 @@ static void P_GroupLines (bool buildmap)
 		}
 
 		// set the center to the middle of the bounding box
-		sector->centerspot.X = (bbox.Right() + bbox.Left()/2);
-		sector->centerspot.Y = (bbox.Top() + bbox.Bottom()/2);
+		sector->centerspot.X = (bbox.Right() + bbox.Left()) / 2;
+		sector->centerspot.Y = (bbox.Top() + bbox.Bottom()) / 2;
 
 		// For triangular sectors the above does not calculate good points unless the longest of the triangle's lines is perfectly horizontal and vertical
 		if (sector->linecount == 3)

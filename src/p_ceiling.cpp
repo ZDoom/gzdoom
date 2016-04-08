@@ -136,7 +136,7 @@ void DCeiling::Tick ()
 		break;
 	case 1:
 		// UP
-		res = MoveCeiling (m_Speed, m_TopHeight, m_Direction);
+		res = m_Sector->MoveCeiling (m_Speed, m_TopHeight, m_Direction);
 		
 		if (res == EMoveResult::pastdest)
 		{
@@ -167,7 +167,7 @@ void DCeiling::Tick ()
 		
 	case -1:
 		// DOWN
-		res = MoveCeiling (m_Speed, m_BottomHeight, m_Crush, m_Direction, m_CrushMode == ECrushMode::crushHexen);
+		res = m_Sector->MoveCeiling (m_Speed, m_BottomHeight, m_Crush, m_Direction, m_CrushMode == ECrushMode::crushHexen);
 		
 		if (res == EMoveResult::pastdest)
 		{

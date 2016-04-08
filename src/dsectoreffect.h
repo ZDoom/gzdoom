@@ -29,25 +29,11 @@ public:
 protected:
 	TObjPtr<DInterpolation> interpolation;
 private:
-	bool MoveAttached(int crush, double move, int floorOrCeiling, bool resetfailed);
 protected:
 	DMover ();
 	void Serialize (FArchive &arc);
 	void Destroy();
 	void StopInterpolation(bool force = false);
-	EMoveResult MoveFloor(double speed, double dest, int crush, int direction, bool hexencrush);
-	EMoveResult MoveCeiling(double speed, double dest, int crush, int direction, bool hexencrush);
-
-	inline EMoveResult MoveFloor(double speed, double dest, int direction)
-	{
-		return MoveFloor(speed, dest, -1, direction, false);
-	}
-
-	inline EMoveResult MoveCeiling(double speed, double dest, int direction)
-	{
-		return MoveCeiling(speed, dest, -1, direction, false);
-	}
-
 };
 
 class DMovingFloor : public DMover

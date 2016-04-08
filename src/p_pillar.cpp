@@ -96,13 +96,13 @@ void DPillar::Tick ()
 
 	if (m_Type == pillarBuild)
 	{
-		r = MoveFloor (m_FloorSpeed, m_FloorTarget, m_Crush, 1, m_Hexencrush);
-		s = MoveCeiling (m_CeilingSpeed, m_CeilingTarget, m_Crush, -1, m_Hexencrush);
+		r = m_Sector->MoveFloor (m_FloorSpeed, m_FloorTarget, m_Crush, 1, m_Hexencrush);
+		s = m_Sector->MoveCeiling (m_CeilingSpeed, m_CeilingTarget, m_Crush, -1, m_Hexencrush);
 	}
 	else
 	{
-		r = MoveFloor (m_FloorSpeed, m_FloorTarget, m_Crush, -1, m_Hexencrush);
-		s = MoveCeiling (m_CeilingSpeed, m_CeilingTarget, m_Crush, 1, m_Hexencrush);
+		r = m_Sector->MoveFloor (m_FloorSpeed, m_FloorTarget, m_Crush, -1, m_Hexencrush);
+		s = m_Sector->MoveCeiling (m_CeilingSpeed, m_CeilingTarget, m_Crush, 1, m_Hexencrush);
 	}
 
 	if (r == EMoveResult::pastdest && s == EMoveResult::pastdest)
@@ -114,11 +114,11 @@ void DPillar::Tick ()
 	{
 		if (r == EMoveResult::crushed)
 		{
-			MoveFloor (m_FloorSpeed, oldfloor, -1, -1, m_Hexencrush);
+			m_Sector->MoveFloor (m_FloorSpeed, oldfloor, -1, -1, m_Hexencrush);
 		}
 		if (s == EMoveResult::crushed)
 		{
-			MoveCeiling (m_CeilingSpeed, oldceiling, -1, 1, m_Hexencrush);
+			m_Sector->MoveCeiling (m_CeilingSpeed, oldceiling, -1, 1, m_Hexencrush);
 		}
 	}
 }

@@ -144,7 +144,7 @@ void DFloor::Tick ()
 	if (m_Type == waitStair)
 		return;
 
-	res = MoveFloor (m_Speed, m_FloorDestDist, m_Crush, m_Direction, m_Hexencrush);
+	res = m_Sector->MoveFloor (m_Speed, m_FloorDestDist, m_Crush, m_Direction, m_Hexencrush);
 	
 	if (res == EMoveResult::pastdest)
 	{
@@ -907,25 +907,25 @@ void DElevator::Tick ()
 
 	if (m_Direction < 0)	// moving down
 	{
-		res = MoveFloor (m_Speed, m_FloorDestDist, m_Direction);
+		res = m_Sector->MoveFloor (m_Speed, m_FloorDestDist, m_Direction);
 		if (res == EMoveResult::ok || res == EMoveResult::pastdest)
 		{
-			res = MoveCeiling (m_Speed, m_CeilingDestDist, m_Direction);
+			res = m_Sector->MoveCeiling (m_Speed, m_CeilingDestDist, m_Direction);
 			if (res == EMoveResult::crushed)
 			{
-				MoveFloor (m_Speed, oldfloor, -m_Direction);
+				m_Sector->MoveFloor (m_Speed, oldfloor, -m_Direction);
 			}
 		}
 	}
 	else // up
 	{
-		res = MoveCeiling (m_Speed, m_CeilingDestDist, m_Direction);
+		res = m_Sector->MoveCeiling (m_Speed, m_CeilingDestDist, m_Direction);
 		if (res == EMoveResult::ok || res == EMoveResult::pastdest)
 		{
-			res = MoveFloor (m_Speed, m_FloorDestDist, m_Direction);
+			res = m_Sector->MoveFloor (m_Speed, m_FloorDestDist, m_Direction);
 			if (res == EMoveResult::crushed)
 			{
-				MoveCeiling (m_Speed, oldceiling, -m_Direction);
+				m_Sector->MoveCeiling (m_Speed, oldceiling, -m_Direction);
 			}
 		}
 	}

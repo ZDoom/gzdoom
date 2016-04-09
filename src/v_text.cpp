@@ -86,9 +86,6 @@ void STACK_ARGS DCanvas::DrawChar (FFont *font, int normalcolor, int x, int y, B
 //
 void STACK_ARGS DCanvas::DrawText(FFont *font, int normalcolor, int x, int y, const char *string, int tag_first, ...)
 {
-	INTBOOL boolval;
-	uint32 tag;
-
 	int 		w;
 	const BYTE *ch;
 	int 		c;

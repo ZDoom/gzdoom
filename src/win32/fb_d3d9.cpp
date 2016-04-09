@@ -2762,11 +2762,11 @@ void D3DFB::DrawPixel(int x, int y, int palcolor, uint32 color)
 //
 //==========================================================================
 
-void D3DFB::DrawTextureParms (FTexture *img, double x, double y, DrawParms &parms)
+void D3DFB::DrawTextureParms (FTexture *img, DrawParms &parms)
 {
 	if (In2D < 2)
 	{
-		Super::DrawTextureParms(img, x, y, parms);
+		Super::DrawTextureParms(img, parms);
 		return;
 	}
 	if (!InScene)

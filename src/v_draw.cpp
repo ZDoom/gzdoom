@@ -116,10 +116,10 @@ void STACK_ARGS DCanvas::DrawTexture (FTexture *img, double x, double y, int tag
 	{
 		return;
 	}
-	DrawTextureParms(img, x, y, parms);
+	DrawTextureParms(img, parms);
 }
 
-void DCanvas::DrawTextureParms(FTexture *img, double x, double y, DrawParms &parms)
+void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 {
 #ifndef NO_SWRENDER
 	FTexture::Span unmaskedSpan[2];

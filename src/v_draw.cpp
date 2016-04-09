@@ -110,22 +110,21 @@ void STACK_ARGS DCanvas::DrawTexture (FTexture *img, double x, double y, int tag
 {
 	va_list tags;
 	va_start(tags, tags_first);
-	DrawTextureV(img, x, y, tags_first, tags);
+	DrawParms parms;
+
+	if (!ParseDrawTextureTags(img, x, y, tags_first, tags, &parms, false))
+	{
+		return;
+	}
+	DrawTextureParms(img, x, y, parms);
 }
 
-void STACK_ARGS DCanvas::DrawTextureV(FTexture *img, double x, double y, uint32 tag, va_list tags)
+void DCanvas::DrawTextureParms(FTexture *img, double x, double y, DrawParms &parms)
 {
 #ifndef NO_SWRENDER
 	FTexture::Span unmaskedSpan[2];
 	const FTexture::Span **spanptr, *spans;
 	static short bottomclipper[MAXWIDTH], topclipper[MAXWIDTH];
-
-	DrawParms parms;
-
-	if (!ParseDrawTextureTags(img, x, y, tag, tags, &parms, false))
-	{
-		return;
-	}
 
 	if (parms.masked)
 	{
@@ -171,6 +170,10 @@ void STACK_ARGS DCanvas::DrawTextureV(FTexture *img, double x, double y, uint32 
 
 	BYTE *destorgsave = dc_destorg;
 	dc_destorg = screen->GetBuffer();
+	if (dc_destorg == NULL)
+	{
+		I_FatalError("Attempt to write to buffer of hardware canvas");
+	}
 
 	double x0 = parms.x - parms.left * parms.destwidth / parms.texwidth;
 	double y0 = parms.y - parms.top * parms.destheight / parms.texheight;
@@ -327,7 +330,7 @@ void STACK_ARGS DCanvas::DrawTextureV(FTexture *img, double x, double y, uint32 
 #endif
 }
 
-bool DCanvas::ParseDrawTextureTags (FTexture *img, double x, double y, DWORD tag, va_list tags, DrawParms *parms, bool hw) const
+bool DCanvas::ParseDrawTextureTags (FTexture *img, double x, double y, DWORD tag, va_list tags, DrawParms *parms, bool fortext) const
 {
 	INTBOOL boolval;
 	int intval;

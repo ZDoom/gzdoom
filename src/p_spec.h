@@ -572,10 +572,6 @@ public:
 	void Serialize (FArchive &arc);
 	void Tick ();
 
-	static DCeiling *Create(sector_t *sec, DCeiling::ECeiling type, line_t *line, int tag,
-						double speed, double speed2, double height,
-						int crush, int silent, int change, ECrushMode hexencrush);
-
 protected:
 	ECeiling	m_Type;
 	double	 	m_BottomHeight;
@@ -601,13 +597,13 @@ protected:
 private:
 	DCeiling ();
 
+	friend bool P_CreateCeiling(sector_t *sec, DCeiling::ECeiling type, line_t *line, int tag, double speed, double speed2, double height, int crush, int silent, int change, DCeiling::ECrushMode hexencrush);
 	friend bool EV_CeilingCrushStop (int tag);
 	friend void P_ActivateInStasisCeiling (int tag);
 };
 
-bool EV_DoCeiling (DCeiling::ECeiling type, line_t *line,
-	int tag, double speed, double speed2, double height,
-	int crush, int silent, int change, DCeiling::ECrushMode hexencrush = DCeiling::ECrushMode::crushDoom);
+bool P_CreateCeiling(sector_t *sec, DCeiling::ECeiling type, line_t *line, int tag, double speed, double speed2, double height, int crush, int silent, int change, DCeiling::ECrushMode hexencrush);
+bool EV_DoCeiling (DCeiling::ECeiling type, line_t *line, int tag, double speed, double speed2, double height, int crush, int silent, int change, DCeiling::ECrushMode hexencrush = DCeiling::ECrushMode::crushDoom);
 
 bool EV_CeilingCrushStop (int tag);
 void P_ActivateInStasisCeiling (int tag);
@@ -710,6 +706,9 @@ public:
 private:
 	DFloor ();
 };
+
+bool P_CreateFloor(sector_t *sec, DFloor::EFloor floortype, line_t *line,
+	double speed, double height, int crush, int change, bool hexencrush, bool hereticlower);
 
 bool EV_BuildStairs (int tag, DFloor::EStair type, line_t *line,
 	double stairsize, double speed, int delay, int reset, int igntxt,

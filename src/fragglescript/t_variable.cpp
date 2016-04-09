@@ -93,7 +93,7 @@ double floatvalue(const svalue_t &v)
 {
 	return 
 		v.type == svt_string ? atof(v.string) :       
-		v.type == svt_fixed ? v.value.f * 65536. : 
+		v.type == svt_fixed ? v.value.f / 65536. : 
 		v.type == svt_mobj ? -1. : (double)v.value.i;
 }
 

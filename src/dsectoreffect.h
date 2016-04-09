@@ -26,6 +26,7 @@ class DMover : public DSectorEffect
 	HAS_OBJECT_POINTERS
 public:
 	DMover (sector_t *sector);
+	void StopInterpolation(bool force = false);
 protected:
 	TObjPtr<DInterpolation> interpolation;
 private:
@@ -33,7 +34,6 @@ protected:
 	DMover ();
 	void Serialize (FArchive &arc);
 	void Destroy();
-	void StopInterpolation(bool force = false);
 };
 
 class DMovingFloor : public DMover

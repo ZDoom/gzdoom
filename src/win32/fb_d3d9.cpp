@@ -2762,17 +2762,14 @@ void D3DFB::DrawPixel(int x, int y, int palcolor, uint32 color)
 //
 //==========================================================================
 
-void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, double x, double y, uint32 tags_first, va_list tags)
+void D3DFB::DrawTextureParms (FTexture *img, double x, double y, DrawParms &parms)
 {
 	if (In2D < 2)
 	{
-		Super::DrawTextureV(img, x, y, tags_first, tags);
+		Super::DrawTextureParms(img, x, y, parms);
 		return;
 	}
-
-	DrawParms parms;
-
-	if (!InScene || !ParseDrawTextureTags(img, x, y, tags_first, tags, &parms, true))
+	if (!InScene)
 	{
 		return;
 	}

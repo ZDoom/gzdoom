@@ -132,8 +132,10 @@ OptionValue VRMode
 	0, "Normal"
 	1, "Green/Magenta"
 	2, "Red/Cyan"
+	9, "Amber/Blue"
 	5, "Left Eye"
 	6, "Right Eye"
+	7, "Quad-buffered"
 }
 
 OptionMenu "GLTextureGLOptions"
@@ -186,5 +188,6 @@ OptionMenu "GLPrefOptions"
 	Slider "Ambient light level",		gl_light_ambient,				1.0, 255.0, 5.0
 	Option "Rendering quality",			gl_render_precise,				"Precision"
 	Option "Stereo 3D VR",				vr_mode, 						"VRMode"
+	Option "Enable Quad Stereo",		vr_enable_quadbuffered,			"OnOff"
 }
 

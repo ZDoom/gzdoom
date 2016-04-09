@@ -1,9 +1,9 @@
 /*
-** gl_anaglyph.cpp
-** Color mask based stereoscopic 3D modes for GZDoom
+** gl_quadstereo.h
+** Quad-buffered OpenGL stereoscopic 3D mode for GZDoom
 **
 **---------------------------------------------------------------------------
-** Copyright 2015 Christopher Bruns
+** Copyright 2016 Christopher Bruns
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -33,40 +33,65 @@
 **
 */
 
-#include "gl_anaglyph.h"
+#ifndef GL_QUADSTEREO_H_
+#define GL_QUADSTEREO_H_
+
+#include "gl_stereo3d.h"
+#include "gl_stereo_leftright.h"
+#include "gl/system/gl_system.h"
 
 namespace s3d {
 
-MaskAnaglyph::MaskAnaglyph(const ColorMask& leftColorMask, double ipdMeters)
-	: leftEye(leftColorMask, ipdMeters), rightEye(leftColorMask.inverse(), ipdMeters)
+
+class QuadStereoLeftPose : public LeftEyePose
 {
-	eye_ptrs.Push(&leftEye);
-	eye_ptrs.Push(&rightEye);
-}
+public:
+	QuadStereoLeftPose(float ipd) : LeftEyePose(ipd), bQuadStereoSupported(false) {}
+	virtual void SetUp() const {
+		if (bQuadStereoSupported)
+			glDrawBuffer(GL_BACK_LEFT);
+	}
+	virtual void TearDown() const { 
+		if (bQuadStereoSupported)
+			glDrawBuffer(GL_BACK);
+	}
+	bool bQuadStereoSupported;
+};
 
-
-/* static */
-const GreenMagenta& GreenMagenta::getInstance(FLOATTYPE ipd)
+class QuadStereoRightPose : public RightEyePose
 {
-	static GreenMagenta instance(ipd);
-	return instance;
-}
+public:
+	QuadStereoRightPose(float ipd) : RightEyePose(ipd), bQuadStereoSupported(false){}
+	virtual void SetUp() const { 
+		if (bQuadStereoSupported)
+			glDrawBuffer(GL_BACK_RIGHT);
+	}
+	virtual void TearDown() const { 
+		if (bQuadStereoSupported)
+			glDrawBuffer(GL_BACK);
+	}
+	bool bQuadStereoSupported;
+};
 
-
-/* static */
-const RedCyan& RedCyan::getInstance(FLOATTYPE ipd)
+// To use Quad-buffered stereo mode with nvidia 3d vision glasses, 
+// you must either:
+// A) be using a Quadro series video card, OR
+//
+// B) be using nvidia driver version 314.07 or later
+//    AND have your monitor set to 120 Hz refresh rate
+//    AND have gzdoom in true full screen mode
+class QuadStereo : public Stereo3DMode
 {
-	static RedCyan instance(ipd);
-	return instance;
-}
-
-
-/* static */
-const AmberBlue& AmberBlue::getInstance(FLOATTYPE ipd)
-{
-	static AmberBlue instance(ipd);
-	return instance;
-}
+public:
+	QuadStereo(double ipdMeters);
+	static const QuadStereo& QuadStereo::getInstance(float ipd);
+private:
+	QuadStereoLeftPose leftEye;
+	QuadStereoRightPose rightEye;
+};
 
 
 } /* namespace s3d */
+
+
+#endif /* GL_QUADSTEREO_H_ */

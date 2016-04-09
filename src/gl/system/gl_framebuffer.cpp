@@ -421,14 +421,9 @@ bool OpenGLFrameBuffer::Begin2D(bool)
 //
 //==========================================================================
 
-void STACK_ARGS OpenGLFrameBuffer::DrawTextureV(FTexture *img, double x0, double y0, uint32 tag, va_list tags)
+void STACK_ARGS OpenGLFrameBuffer::DrawTextureParms(FTexture *img, DrawParms &parms)
 {
-	DrawParms parms;
-
-	if (ParseDrawTextureTags(img, x0, y0, tag, tags, &parms, true))
-	{
-		if (GLRenderer != NULL) GLRenderer->DrawTexture(img, parms);
-	}
+	if (GLRenderer != NULL) GLRenderer->DrawTexture(img, parms);
 }
 
 //==========================================================================

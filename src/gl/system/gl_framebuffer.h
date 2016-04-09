@@ -58,7 +58,7 @@ public:
 	virtual void ReleaseScreenshotBuffer();
 
 	// 2D drawing
-	void STACK_ARGS DrawTextureV(FTexture *img, double x, double y, uint32 tag, va_list tags);
+	void DrawTextureParms(FTexture *img, DrawParms &parms);
 	void DrawLine(int x1, int y1, int x2, int y2, int palcolor, uint32 color);
 	void DrawPixel(int x1, int y1, int palcolor, uint32 color);
 	void Clear(int left, int top, int right, int bottom, int palcolor, uint32 color);

@@ -2410,7 +2410,7 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 //
 //==========================================================================
 
-bool P_CheckMove(AActor *thing, const DVector2 &pos)
+bool P_CheckMove(AActor *thing, const DVector2 &pos, bool dropoff)
 {
 	FCheckPosition tm;
 	double		newz = thing->Z();
@@ -2465,6 +2465,17 @@ bool P_CheckMove(AActor *thing, const DVector2 &pos)
 				bool good = P_TestMobjZ(thing);
 				thing->SetZ(savedz);
 				if (!good)
+				{
+					return false;
+				}
+			}
+			else if (dropoff)
+			{
+				const DVector3 oldpos = thing->Pos();
+				thing->SetOrigin(pos.X, pos.Y, newz, true);
+				bool hcheck = (newz - thing->MaxDropOffHeight > thing->floorz);
+				thing->SetOrigin(oldpos, true);
+				if (hcheck && !(thing->flags & MF_FLOAT) && !(i_compatflags & COMPATF_DROPOFF))
 				{
 					return false;
 				}

@@ -2473,7 +2473,7 @@ bool P_CheckMove(AActor *thing, const DVector2 &pos, bool dropoff)
 			{
 				const DVector3 oldpos = thing->Pos();
 				thing->SetOrigin(pos.X, pos.Y, newz, true);
-				bool hcheck = (newz - thing->MaxDropOffHeight > thing->floorz);
+				bool hcheck = (newz - thing->MaxDropOffHeight > thing->dropoffz);
 				thing->SetOrigin(oldpos, true);
 				if (hcheck && !(thing->flags & MF_FLOAT) && !(i_compatflags & COMPATF_DROPOFF))
 				{

@@ -2805,10 +2805,11 @@ void D3DFB::DrawTextureParms (FTexture *img, DrawParms &parms)
 	}
 	if (parms.windowleft > 0 || parms.windowright < parms.texwidth)
 	{
+		double wi = MIN(parms.windowright, parms.texwidth);
 		x0 += parms.windowleft * xscale;
 		u0 = float(u0 + parms.windowleft * uscale);
-		x1 -= (parms.texwidth - parms.windowright) * xscale;
-		u1 = float(u1 - (parms.texwidth - parms.windowright) * uscale);
+		x1 -= (parms.texwidth - wi) * xscale;
+		u1 = float(u1 - (parms.texwidth - wi) * uscale);
 	}
 
 #if 0

@@ -50,7 +50,8 @@ enum ETraceResult
 	TRACE_HitFloor,
 	TRACE_HitCeiling,
 	TRACE_HitWall,
-	TRACE_HitActor
+	TRACE_HitActor,
+	TRACE_CrossingPortal,
 };
 
 enum
@@ -113,6 +114,7 @@ enum
 	TRACE_PCross		= 2,	// Trigger SPAC_PCROSS lines
 	TRACE_Impact		= 4,	// Trigger SPAC_IMPACT lines
 	TRACE_PortalRestrict= 8,	// Cannot go through portals without a static link offset.
+	TRACE_ReportPortals = 16,	// Report any portal crossing to the TraceCallback
 };
 
 // return values from callback

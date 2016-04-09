@@ -4463,10 +4463,17 @@ struct SRailHit
 	DVector3 HitPos;
 	DAngle HitAngle;
 };
+struct SPortalHit
+{
+	DVector3 HitPos;
+	DVector3 ContPos;
+	DVector3 OutDir;
+};
 struct RailData
 {
 	AActor *Caller;
 	TArray<SRailHit> RailHits;
+	TArray<SPortalHit> PortalHits;
 	bool StopAtOne;
 	bool StopAtInvul;
 	bool ThruSpecies;
@@ -4475,6 +4482,16 @@ struct RailData
 static ETraceStatus ProcessRailHit(FTraceResults &res, void *userdata)
 {
 	RailData *data = (RailData *)userdata;
+	if (res.HitType == TRACE_CrossingPortal)
+	{
+		SPortalHit newhit;
+		newhit.HitPos = res.HitPos;
+		newhit.ContPos = res.SrcFromTarget;
+		newhit.OutDir = res.HitVector;
+		data->PortalHits.Push(newhit);
+		return TRACE_Continue;
+	}
+
 	if (res.HitType != TRACE_HitActor)
 	{
 		return TRACE_Stop;
@@ -4559,7 +4576,8 @@ void P_RailAttack(FRailParams *p)
 	assert(puffclass != NULL);		// Because we set it to a default above
 	AActor *puffDefaults = GetDefaultByType(puffclass->GetReplacement()); //Contains all the flags such as FOILINVUL, etc.
 
-	flags = (puffDefaults->flags6 & MF6_NOTRIGGER) ? 0 : TRACE_PCross | TRACE_Impact;
+	// disabled because not complete yet.
+	flags = (puffDefaults->flags6 & MF6_NOTRIGGER) ? 0/*TRACE_ReportPortals*/ : TRACE_PCross | TRACE_Impact /*| TRACE_ReportPortals*/;
 	rail_data.StopAtInvul = (puffDefaults->flags3 & MF3_FOILINVUL) ? false : true;
 	rail_data.ThruSpecies = (puffDefaults->flags6 & MF6_MTHRUSPECIES) ? true : false;
 	Trace(start, source->Sector, vec, p->distance, MF_SHOOTABLE, ML_BLOCKEVERYTHING, source, trace,	flags, ProcessRailHit, &rail_data);

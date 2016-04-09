@@ -1580,7 +1580,7 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 			if (gltexture)
 			{
 				DoTexture(RENDERWALL_BOTTOM, seg, (seg->linedef->flags & ML_DONTPEGBOTTOM) > 0,
-					realback->GetPlaneTexZF(sector_t::floor), crefz,
+					realback->GetPlaneTexZF(sector_t::floor), frefz,
 					bfh1, bfh2, ffh1, ffh2,
 					frontsector->GetTexture(sector_t::ceiling) == skyflatnum && backsector->GetTexture(sector_t::ceiling) == skyflatnum ?
 					frefz - realback->GetPlaneTexZF(sector_t::ceiling) :

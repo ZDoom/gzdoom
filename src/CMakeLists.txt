@@ -555,22 +555,6 @@ if( UNIX )
 	endif()
 endif()
 
-CHECK_CXX_SOURCE_COMPILES(
-	"#include <stdarg.h>
-	int main() { va_list list1, list2; va_copy(list1, list2); return 0; }"
-	HAS_VA_COPY )
-if( NOT HAS_VA_COPY )
-	CHECK_CXX_SOURCE_COMPILES(
-		"#include <stdarg.h>
-		int main() { va_list list1, list2; __va_copy(list1, list2); return 0; }"
-		HAS___VA_COPY )
-	if( HAS___VA_COPY )
-		add_definitions( -Dva_copy=__va_copy )
-	else()
-		add_definitions( -DNO_VA_COPY )
-	endif()
-endif()
-
 # Flags
 
 if( BACKPATCH )

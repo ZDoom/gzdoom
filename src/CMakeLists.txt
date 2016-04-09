@@ -169,6 +169,12 @@ else()
 		set( FMOD_INC_PATH_SUFFIXES PATH_SUFFIXES inc )
 		set( FMOD_LIB_PATH_SUFFIXES PATH_SUFFIXES lib )
 		set( NO_GTK ON )
+
+		# Prevent inclusion of fp.h and FixMath.h from Carbon framework
+		# Declarations from these files are not used but cause the following conflicts:
+		#  - redefinition of 'FixedToFloat' and 'FloatToFixed' macros
+		#  - redefinition of 'pi' as different kind of symbol
+		add_definitions( -D__FP__ -D__FIXMATH__ )
 	else()
 		option( NO_GTK "Disable GTK+ dialogs (Not applicable to Windows)" )
 		option( VALGRIND "Add special Valgrind sequences to self-modifying code" )

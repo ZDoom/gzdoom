@@ -110,7 +110,7 @@ public:
 
 	void Begin2D();
 	void ClearBorders();
-	void DrawTexture(FTexture *img, DCanvas::DrawParms &parms);
+	void DrawTexture(FTexture *img, DrawParms &parms);
 	void DrawLine(int x1, int y1, int x2, int y2, int palcolor, uint32 color);
 	void DrawPixel(int x1, int y1, int palcolor, uint32 color);
 	void Dim(PalEntry color, float damount, int x1, int y1, int w, int h);

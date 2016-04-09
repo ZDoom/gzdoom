@@ -299,7 +299,7 @@ void FGLRenderer::ClearBorders()
 //
 //==========================================================================
 
-void FGLRenderer::DrawTexture(FTexture *img, DCanvas::DrawParms &parms)
+void FGLRenderer::DrawTexture(FTexture *img, DrawParms &parms)
 {
 	double xscale = parms.destwidth / parms.texwidth;
 	double yscale = parms.destheight / parms.texheight;

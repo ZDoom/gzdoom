@@ -63,8 +63,6 @@ class FTexture;
 
 #define TAG_DONE	(0)  /* Used to indicate the end of the Tag list */
 #define TAG_END		(0)  /* Ditto									*/
-#define TAG_IGNORE	(1)  /* Ignore this Tag							*/
-#define TAG_MORE	(2)  /* Ends this list and continues with the	*/
 						 /* list pointed to in ti_Data 				*/
 
 #define TAG_USER	((DWORD)(1u<<30))
@@ -102,6 +100,7 @@ enum
 	DTA_ClipRight,		// don't draw anything at or to the right of this column (on dest, not source)
 	DTA_Masked,			// true(default)=use masks from texture, false=ignore masks
 	DTA_HUDRules,		// use fullscreen HUD rules to position and size textures
+	DTA_HUDRulesC,		// only used internally for marking HUD_HorizCenter
 	DTA_KeepRatio,		// doesn't adjust screen size for DTA_Virtual* if the aspect ratio is not 4:3
 	DTA_RenderStyle,	// same as render style for actors
 	DTA_ColorOverlay,	// DWORD: ARGB to overlay on top of image; limited to black for software
@@ -149,6 +148,7 @@ struct DrawParms
 	double virtHeight;
 	double windowleft;
 	double windowright;
+	int cleanmode;
 	int dclip;
 	int uclip;
 	int lclip;
@@ -170,6 +170,11 @@ struct DrawParms
 	FRenderStyle style;
 	struct FSpecialColormap *specialcolormap;
 	struct FColormapStyle *colormapstyle;
+	int scalex, scaley;
+	int cellx, celly;
+	int maxstrlen;
+	bool fortext;
+	bool virtBottom;
 };
 
 //
@@ -241,6 +246,7 @@ public:
 	// Text drawing functions -----------------------------------------------
 
 	// 2D Texture drawing
+	bool SetTextureParms(DrawParms *parms, FTexture *img, double x, double y) const;
 	void STACK_ARGS DrawTexture (FTexture *img, double x, double y, int tags, ...);
 	void FillBorder (FTexture *img);	// Fills the border around a 4:3 part of the screen on non-4:3 displays
 	void VirtualToRealCoords(double &x, double &y, double &w, double &h, double vwidth, double vheight, bool vbottom=false, bool handleaspect=true) const;
@@ -249,13 +255,12 @@ public:
 	void VirtualToRealCoordsFixed(fixed_t &x, fixed_t &y, fixed_t &w, fixed_t &h, int vwidth, int vheight, bool vbottom=false, bool handleaspect=true) const;
 	void VirtualToRealCoordsInt(int &x, int &y, int &w, int &h, int vwidth, int vheight, bool vbottom=false, bool handleaspect=true) const;
 
-	// 2D Text drawing
-	void STACK_ARGS DrawText (FFont *font, int normalcolor, int x, int y, const char *string, ...);
-#ifndef DrawText	// See WinUser.h for the definition of DrawText as a macro
-	void STACK_ARGS DrawTextA (FFont *font, int normalcolor, int x, int y, const char *string, ...);
+#ifdef DrawText
+#undef DrawText	// See WinUser.h for the definition of DrawText as a macro
 #endif
-	void DrawTextV (FFont *font, int normalcolor, int x, int y, const char *string, va_list tags);
-	void STACK_ARGS DrawChar (FFont *font, int normalcolor, int x, int y, BYTE character, ...);
+	// 2D Text drawing
+	void STACK_ARGS DrawText (FFont *font, int normalcolor, int x, int y, const char *string, int tag_first, ...);
+	void STACK_ARGS DrawChar (FFont *font, int normalcolor, int x, int y, BYTE character, int tag_first, ...);
 
 protected:
 	BYTE *Buffer;

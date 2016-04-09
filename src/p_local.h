@@ -221,7 +221,7 @@ void	P_FakeZMovement (AActor *mo);
 bool	P_TryMove(AActor* thing, const DVector2 &pos, int dropoff, const secplane_t * onfloor, FCheckPosition &tm, bool missileCheck = false);
 bool	P_TryMove(AActor* thing, const DVector2 &pos, int dropoff, const secplane_t * onfloor = NULL);
 
-bool	P_CheckMove(AActor *thing, const DVector2 &pos);
+bool	P_CheckMove(AActor *thing, const DVector2 &pos, bool dropoff = false);
 void	P_ApplyTorque(AActor *mo);
 
 bool	P_TeleportMove(AActor* thing, const DVector3 &pos, bool telefrag, bool modifyactor = true);	// [RH] Added z and telefrag parameters

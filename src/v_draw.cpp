@@ -127,6 +127,7 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 	FTexture::Span unmaskedSpan[2];
 	const FTexture::Span **spanptr, *spans;
 	static short bottomclipper[MAXWIDTH], topclipper[MAXWIDTH];
+	const BYTE *translation = NULL;
 
 	if (parms.masked)
 	{
@@ -155,12 +156,16 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 		// Note that this overrides DTA_Translation in software, but not in hardware.
 		FDynamicColormap *colormap = GetSpecialLights(MAKERGB(255,255,255),
 			parms.colorOverlay & MAKEARGB(0,255,255,255), 0);
-		parms.translation = &colormap->Maps[(APART(parms.colorOverlay)*NUMCOLORMAPS/255)*256];
+		translation = &colormap->Maps[(APART(parms.colorOverlay)*NUMCOLORMAPS/255)*256];
+	}
+	else if (parms.remap != NULL)
+	{
+		translation = parms.remap->Remap;
 	}
 
-	if (parms.translation != NULL)
+	if (translation != NULL)
 	{
-		dc_colormap = (lighttable_t *)parms.translation;
+		dc_colormap = (lighttable_t *)translation;
 	}
 	else
 	{
@@ -421,6 +426,7 @@ bool DCanvas::SetTextureParms(DrawParms *parms, FTexture *img, double xx, double
 				parms->virtWidth, parms->virtHeight, parms->virtBottom, !parms->keepratio);
 		}
 	}
+
 	return false;
 }
 
@@ -461,7 +467,6 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, double x, double y, DWORD tag
 	parms->Alpha = 1.f;
 	parms->fillcolor = -1;
 	parms->remap = NULL;
-	parms->translation = NULL;
 	parms->colorOverlay = 0;
 	parms->alphaChannel = false;
 	parms->flipX = false;
@@ -824,11 +829,6 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, double x, double y, DWORD tag
 		{
 			return false;
 		}
-	}
-
-	if (parms->remap != NULL)
-	{
-		parms->translation = parms->remap->Remap;
 	}
 
 	if (parms->style.BlendOp == 255)

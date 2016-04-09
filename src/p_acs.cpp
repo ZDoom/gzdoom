@@ -178,6 +178,11 @@ inline int AngleToACS(DAngle ang)
 	return ang.BAMs() >> 16;
 }
 
+inline int PitchToACS(DAngle ang)
+{
+	return int(ang.Normalized180().Degrees * (65536. / 360));
+}
+
 struct CallReturn
 {
 	CallReturn(int pc, ScriptFunction *func, FBehavior *module, SDWORD *locals, ACSLocalArrays *arrays, bool discard, unsigned int runaway)
@@ -8751,7 +8756,7 @@ scriptwait:
 		case PCD_GETACTORPITCH:
 			{
 				AActor *actor = SingleActorFromTID(STACK(1), activator);
-				STACK(1) = actor == NULL ? 0 : AngleToACS(actor->Angles.Pitch);
+				STACK(1) = actor == NULL ? 0 : PitchToACS(actor->Angles.Pitch);
 			}
 			break;
 

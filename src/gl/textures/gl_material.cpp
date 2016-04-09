@@ -332,12 +332,12 @@ float FTexCoordInfo::RowOffset(float rowoffset) const
 	if (mTempScale.Y == 1.f)
 	{
 		if (mScale.Y == 1.f || mWorldPanning) return rowoffset;
-		else return rowoffset * mScale.Y;
+		else return rowoffset / mScale.Y;
 	}
 	else
 	{
-		if (mWorldPanning) return rowoffset * mTempScale.Y;
-		else return rowoffset * mScale.Y;
+		if (mWorldPanning) return rowoffset / mTempScale.Y;
+		else return rowoffset / mScale.Y;
 	}
 }
 
@@ -352,12 +352,12 @@ float FTexCoordInfo::TextureOffset(float textureoffset) const
 	if (mTempScale.X == 1.f)
 	{
 		if (mScale.X == 1.f || mWorldPanning) return textureoffset;
-		else return textureoffset * mScale.X;
+		else return textureoffset / mScale.X;
 	}
 	else
 	{
-		if (mWorldPanning) return textureoffset * mTempScale.X;
-		else return textureoffset * mScale.X;
+		if (mWorldPanning) return textureoffset / mTempScale.X;
+		else return textureoffset / mScale.X;
 	}
 }
 

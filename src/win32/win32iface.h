@@ -257,7 +257,7 @@ public:
 	void DrawBlendingRect ();
 	FNativeTexture *CreateTexture (FTexture *gametex, bool wrapping);
 	FNativePalette *CreatePalette (FRemapTable *remap);
-	void DrawTextureParms (FTexture *img, double x, double y, DrawParms &parms);
+	void DrawTextureParms (FTexture *img, DrawParms &parms);
 	void Clear (int left, int top, int right, int bottom, int palcolor, uint32 color);
 	void Dim (PalEntry color, float amount, int x1, int y1, int w, int h);
 	void FlatFill (int left, int top, int right, int bottom, FTexture *src, bool local_origin);

@@ -1,9 +1,9 @@
 /*
-** gl_anaglyph.h
-** Color mask based stereoscopic 3D modes for GZDoom
+** gl_quadstereo.h
+** Quad-buffered OpenGL stereoscopic 3D mode for GZDoom
 **
 **---------------------------------------------------------------------------
-** Copyright 2015 Christopher Bruns
+** Copyright 2016 Christopher Bruns
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -33,100 +33,65 @@
 **
 */
 
-#ifndef GL_ANAGLYPH_H_
-#define GL_ANAGLYPH_H_
+#ifndef GL_QUADSTEREO_H_
+#define GL_QUADSTEREO_H_
 
 #include "gl_stereo3d.h"
 #include "gl_stereo_leftright.h"
 #include "gl/system/gl_system.h"
-#include "gl/renderer/gl_renderstate.h"
-
 
 namespace s3d {
 
 
-class ColorMask
+class QuadStereoLeftPose : public LeftEyePose
 {
 public:
-	ColorMask(bool r, bool g, bool b) : r(r), g(g), b(b) {}
-	ColorMask inverse() const { return ColorMask(!r, !g, !b); }
-
-	bool r;
-	bool g;
-	bool b;
-};
-
-
-class AnaglyphLeftPose : public LeftEyePose
-{
-public:
-	AnaglyphLeftPose(const ColorMask& colorMask, float ipd) : LeftEyePose(ipd), colorMask(colorMask) {}
-	virtual void SetUp() const { 
-		gl_RenderState.SetColorMask(colorMask.r, colorMask.g, colorMask.b, true);
-		gl_RenderState.ApplyColorMask();
+	QuadStereoLeftPose(float ipd) : LeftEyePose(ipd), bQuadStereoSupported(false) {}
+	virtual void SetUp() const {
+		if (bQuadStereoSupported)
+			glDrawBuffer(GL_BACK_LEFT);
 	}
 	virtual void TearDown() const { 
-		gl_RenderState.ResetColorMask();
-		gl_RenderState.ApplyColorMask();
+		if (bQuadStereoSupported)
+			glDrawBuffer(GL_BACK);
 	}
-private:
-	ColorMask colorMask;
+	bool bQuadStereoSupported;
 };
 
-class AnaglyphRightPose : public RightEyePose
+class QuadStereoRightPose : public RightEyePose
 {
 public:
-	AnaglyphRightPose(const ColorMask& colorMask, float ipd) : RightEyePose(ipd), colorMask(colorMask) {}
+	QuadStereoRightPose(float ipd) : RightEyePose(ipd), bQuadStereoSupported(false){}
 	virtual void SetUp() const { 
-		gl_RenderState.SetColorMask(colorMask.r, colorMask.g, colorMask.b, true);
-		gl_RenderState.ApplyColorMask();
+		if (bQuadStereoSupported)
+			glDrawBuffer(GL_BACK_RIGHT);
 	}
 	virtual void TearDown() const { 
-		gl_RenderState.ResetColorMask();
-		gl_RenderState.ApplyColorMask();
+		if (bQuadStereoSupported)
+			glDrawBuffer(GL_BACK);
 	}
+	bool bQuadStereoSupported;
+};
+
+// To use Quad-buffered stereo mode with nvidia 3d vision glasses, 
+// you must either:
+// A) be using a Quadro series video card, OR
+//
+// B) be using nvidia driver version 314.07 or later
+//    AND have your monitor set to 120 Hz refresh rate
+//    AND have gzdoom in true full screen mode
+class QuadStereo : public Stereo3DMode
+{
+public:
+	QuadStereo(double ipdMeters);
+	static const QuadStereo& QuadStereo::getInstance(float ipd);
 private:
-	ColorMask colorMask;
+	QuadStereoLeftPose leftEye;
+	QuadStereoRightPose rightEye;
 };
-
-class MaskAnaglyph : public Stereo3DMode
-{
-public:
-	MaskAnaglyph(const ColorMask& leftColorMask, double ipdMeters);
-private:
-	AnaglyphLeftPose leftEye;
-	AnaglyphRightPose rightEye;
-};
-
-
-class RedCyan : public MaskAnaglyph
-{
-public:
-	static const RedCyan& getInstance(float ipd);
-
-	RedCyan(float ipd) : MaskAnaglyph(ColorMask(true, false, false), ipd) {}
-};
-
-class GreenMagenta : public MaskAnaglyph
-{
-public:
-	static const GreenMagenta& getInstance(float ipd);
-
-	GreenMagenta(float ipd) : MaskAnaglyph(ColorMask(false, true, false), ipd) {}
-};
-
-class AmberBlue : public MaskAnaglyph
-{
-public:
-	static const AmberBlue& getInstance(float ipd);
-
-	AmberBlue(float ipd) : MaskAnaglyph(ColorMask(true, true, false), ipd) {}
-};
-
-// TODO matrix anaglyph
 
 
 } /* namespace s3d */
 
 
-#endif /* GL_ANAGLYPH_H_ */
+#endif /* GL_QUADSTEREO_H_ */

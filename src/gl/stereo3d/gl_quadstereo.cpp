@@ -1,6 +1,6 @@
 /*
-** gl_anaglyph.cpp
-** Color mask based stereoscopic 3D modes for GZDoom
+** gl_quadstereo.cpp
+** Quad-buffered OpenGL stereoscopic 3D mode for GZDoom
 **
 **---------------------------------------------------------------------------
 ** Copyright 2015 Christopher Bruns
@@ -33,40 +33,35 @@
 **
 */
 
-#include "gl_anaglyph.h"
+#include "gl_quadstereo.h"
 
 namespace s3d {
 
-MaskAnaglyph::MaskAnaglyph(const ColorMask& leftColorMask, double ipdMeters)
-	: leftEye(leftColorMask, ipdMeters), rightEye(leftColorMask.inverse(), ipdMeters)
+QuadStereo::QuadStereo(double ipdMeters)
+	: leftEye(ipdMeters), rightEye(ipdMeters)
 {
+	// Check whether quad-buffered stereo is supported in the current context
+	// We are assuming the OpenGL context is already current at this point,
+	// i.e. this constructor is called "just in time".
+	GLboolean supportsStereo, supportsBuffered;
+	glGetBooleanv(GL_STEREO, &supportsStereo);
+	glGetBooleanv(GL_DOUBLEBUFFER, &supportsBuffered);
+	bool bQuadStereoSupported = supportsStereo && supportsBuffered;
+	leftEye.bQuadStereoSupported = bQuadStereoSupported;
+	rightEye.bQuadStereoSupported = bQuadStereoSupported;
+
 	eye_ptrs.Push(&leftEye);
-	eye_ptrs.Push(&rightEye);
+	// If stereo is not supported, just draw scene once (left eye view only)
+	if (bQuadStereoSupported) {
+		eye_ptrs.Push(&rightEye);
+	}
 }
-
 
 /* static */
-const GreenMagenta& GreenMagenta::getInstance(float ipd)
+const QuadStereo& QuadStereo::getInstance(float ipd)
 {
-	static GreenMagenta instance(ipd);
+	static QuadStereo instance(ipd);
 	return instance;
 }
-
-
-/* static */
-const RedCyan& RedCyan::getInstance(float ipd)
-{
-	static RedCyan instance(ipd);
-	return instance;
-}
-
-
-/* static */
-const AmberBlue& AmberBlue::getInstance(float ipd)
-{
-	static AmberBlue instance(ipd);
-	return instance;
-}
-
 
 } /* namespace s3d */

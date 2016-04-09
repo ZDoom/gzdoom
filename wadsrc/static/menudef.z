@@ -139,8 +139,10 @@ OptionValue VRMode
 	0, "Normal"
 	1, "Green/Magenta"
 	2, "Red/Cyan"
+	9, "Amber/Blue"
 	5, "Left Eye"
 	6, "Right Eye"
+	7, "Quad-buffered"
 }
 
 OptionMenu "GLTextureGLOptions"
@@ -195,6 +197,7 @@ OptionMenu "GLPrefOptions"
 	Option "Rendering quality",			gl_render_precise,				"Precision"
 	Option "Use vertex buffer",			gl_usevbo,						"VBOModes"
 	Option "Stereo 3D VR",				vr_mode, 						"VRMode"
+	Option "Enable Quad Stereo",		vr_enable_quadbuffered,			"OnOff"
 }
 
 OptionMenu "GLShaderOptions"

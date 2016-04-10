@@ -877,8 +877,7 @@ set( NOT_COMPILED_SOURCE_FILES
 	asm_x86_64/tmap3.s
 )
 
-# Enable fast math for some sources
-set( FASTMATH_SOURCES
+set( FASTMATH_PCH_SOURCES
 	r_swrenderer.cpp
 	r_3dfloors.cpp
 	r_bsp.cpp
@@ -914,12 +913,35 @@ set( FASTMATH_SOURCES
 	oplsynth/fmopl.cpp
 	oplsynth/mlopl.cpp
 	oplsynth/mlopl_io.cpp
-	oplsynth/music_opldumper_mididevice.cpp
-	oplsynth/music_opl_mididevice.cpp
-	oplsynth/opl_mus_player.cpp
 	oplsynth/dosbox/opl.cpp
 	oplsynth/OPL3.cpp
 	oplsynth/nukedopl3.cpp
+	timidity/common.cpp
+	timidity/instrum.cpp
+	timidity/instrum_dls.cpp
+	timidity/instrum_font.cpp
+	timidity/instrum_sf2.cpp
+	timidity/mix.cpp
+	timidity/playmidi.cpp
+	timidity/resample.cpp
+	timidity/timidity.cpp
+	wildmidi/file_io.cpp
+	wildmidi/gus_pat.cpp
+	wildmidi/reverb.cpp
+	wildmidi/wm_error.cpp
+	r_data/colormaps.cpp
+	r_data/r_translate.cpp
+)
+# This is disabled for now because I cannot find a way to give the .pch file a different name.
+# Visual C++ 2015 seems hell-bent of only allowing one .pch file with the same name as the executable.
+#enable_precompiled_headers( g_pch2.h FASTMATH_PCH_SOURCES )
+
+# Enable fast math for some sources
+set( FASTMATH_SOURCES
+	${FASTMATH_PCH_SOURCES}
+	oplsynth/music_opldumper_mididevice.cpp
+	oplsynth/music_opl_mididevice.cpp
+	oplsynth/opl_mus_player.cpp
 	sound/fmodsound.cpp
 	sound/i_music.cpp
 	sound/i_sound.cpp
@@ -944,22 +966,7 @@ set( FASTMATH_SOURCES
 	sound/oalsound.cpp
 	sound/sndfile_decoder.cpp
 	sound/music_pseudo_mididevice.cpp
-	timidity/common.cpp
-	timidity/instrum.cpp
-	timidity/instrum_dls.cpp
-	timidity/instrum_font.cpp
-	timidity/instrum_sf2.cpp
-	timidity/mix.cpp
-	timidity/playmidi.cpp
-	timidity/resample.cpp
-	timidity/timidity.cpp
-	wildmidi/file_io.cpp
-	wildmidi/gus_pat.cpp
-	wildmidi/reverb.cpp
 	wildmidi/wildmidi_lib.cpp
-	wildmidi/wm_error.cpp
-	r_data/colormaps.cpp
-	r_data/r_translate.cpp
 )
 
 set (PCH_SOURCES
@@ -1195,6 +1202,7 @@ set (PCH_SOURCES
 	r_data/voxels.cpp
 	r_data/renderstyle.cpp
 	r_data/r_interpolate.cpp
+	sfmt/SFMT.cpp
 	zscript/ast.cpp
 	zscript/vmbuilder.cpp
 	zscript/vmdisasm.cpp
@@ -1235,7 +1243,6 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	math/tan.c
 	math/tanh.c
 	math/fastsin.cpp
-	sfmt/SFMT.cpp
 	zzautozend.cpp
 )
 

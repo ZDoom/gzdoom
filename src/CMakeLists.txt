@@ -1,5 +1,7 @@
 cmake_minimum_required( VERSION 2.8.7 )
 
+include(../precompiled_headers.cmake)
+
 if( COMMAND cmake_policy )
 	cmake_policy( SET CMP0003 NEW )
 endif()
@@ -959,15 +961,8 @@ set( FASTMATH_SOURCES
 	r_data/colormaps.cpp
 	r_data/r_translate.cpp
 )
-add_executable( zdoom WIN32 MACOSX_BUNDLE
-	${HEADER_FILES}
-	${NOT_COMPILED_SOURCE_FILES}
-	__autostart.cpp
-	${ASM_SOURCES}
-	${SYSTEM_SOURCES}
-	${X86_SOURCES}
-	${FASTMATH_SOURCES}
-	x86.cpp
+
+set (PCH_SOURCES
 	actorptrselect.cpp
 	am_map.cpp
 	b_bot.cpp
@@ -1028,7 +1023,6 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	m_misc.cpp
 	m_png.cpp
 	m_random.cpp
-	m_specialpaths.cpp
 	memarena.cpp
 	md5.cpp
 	name.cpp
@@ -1090,7 +1084,6 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	statistics.cpp
 	stats.cpp
 	stringtable.cpp
-	strnatcmp.c
 	tables.cpp
 	teaminfo.cpp
 	tempfiles.cpp
@@ -1105,7 +1098,6 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	w_wad.cpp
 	wi_stuff.cpp
 	zstrformat.cpp
-	zstring.cpp
 	g_doom/a_doommisc.cpp
 	g_heretic/a_hereticmisc.cpp
 	g_hexen/a_hexenmisc.cpp
@@ -1149,22 +1141,6 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	g_shared/sbar_mugshot.cpp
 	g_shared/shared_hud.cpp
 	g_shared/shared_sbar.cpp
-	math/asin.c
-	math/atan.c
-	math/const.c
-	math/cosh.c
-	math/exp.c
-	math/isnan.c
-	math/log.c
-	math/log10.c
-	math/mtherr.c
-	math/polevl.c
-	math/sin.c
-	math/sinh.c
-	math/sqrt.c
-	math/tan.c
-	math/tanh.c
-	math/fastsin.cpp
 	resourcefiles/ancientzip.cpp
 	resourcefiles/file_7z.cpp
 	resourcefiles/file_grp.cpp
@@ -1175,7 +1151,6 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	resourcefiles/file_pak.cpp
 	resourcefiles/file_directory.cpp
 	resourcefiles/resourcefile.cpp
-	sfmt/SFMT.cpp
 	textures/animations.cpp
 	textures/anim_switches.cpp
 	textures/automaptexture.cpp
@@ -1228,6 +1203,39 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	zscript/zcc_compile.cpp
 	zscript/zcc_expr.cpp
 	zscript/zcc_parser.cpp
+)
+enable_precompiled_headers( g_pch.h PCH_SOURCES )
+
+add_executable( zdoom WIN32 MACOSX_BUNDLE
+	${HEADER_FILES}
+	${NOT_COMPILED_SOURCE_FILES}
+	__autostart.cpp
+	${ASM_SOURCES}
+	${SYSTEM_SOURCES}
+	${X86_SOURCES}
+	${FASTMATH_SOURCES}
+	${PCH_SOURCES}
+	x86.cpp
+	m_specialpaths.cpp
+	strnatcmp.c
+	zstring.cpp
+	math/asin.c
+	math/atan.c
+	math/const.c
+	math/cosh.c
+	math/exp.c
+	math/isnan.c
+	math/log.c
+	math/log10.c
+	math/mtherr.c
+	math/polevl.c
+	math/sin.c
+	math/sinh.c
+	math/sqrt.c
+	math/tan.c
+	math/tanh.c
+	math/fastsin.cpp
+	sfmt/SFMT.cpp
 	zzautozend.cpp
 )
 

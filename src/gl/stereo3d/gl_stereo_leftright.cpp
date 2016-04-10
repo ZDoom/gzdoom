@@ -73,7 +73,7 @@ VSMatrix ShiftedEyePose::GetProjection(FLOATTYPE fov, FLOATTYPE aspectRatio, FLO
 /* virtual */
 void ShiftedEyePose::GetViewShift(FLOATTYPE yaw, FLOATTYPE outViewShift[3]) const
 {
-	FLOATTYPE dx = cos(DEG2RAD(yaw)) * vr_hunits_per_meter * shift;
+	FLOATTYPE dx = -cos(DEG2RAD(yaw)) * vr_hunits_per_meter * shift;
 	FLOATTYPE dy = sin(DEG2RAD(yaw)) * vr_hunits_per_meter * shift;
 	outViewShift[0] = dx;
 	outViewShift[1] = dy;

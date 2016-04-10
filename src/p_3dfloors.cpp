@@ -593,7 +593,11 @@ void P_Recalculate3DFloors(sector_t * sector)
 		lightlist[0].extra_colormap = sector->ColorMap;
 		lightlist[0].blend = 0;
 		lightlist[0].flags = 0;
+		lightlist[0].fromsector = true;
 		
+
+		resetlight = lightlist[0];
+
 		maxheight = sector->CenterCeiling();
 		minheight = sector->CenterFloor();
 		for(i = 0; i < ffloors.Size(); i++)

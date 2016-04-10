@@ -2410,14 +2410,26 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 //
 //==========================================================================
 
-bool P_CheckMove(AActor *thing, const DVector2 &pos, bool dropoff)
+bool P_CheckMove(AActor *thing, const DVector2 &pos, int flags)
 {
 	FCheckPosition tm;
 	double		newz = thing->Z();
 
 	if (!P_CheckPosition(thing, pos, tm))
 	{
-		return false;
+		// Ignore PCM_DROPOFF. Not necessary here: a little later it is.
+		if (!flags || (!(flags & PCM_NOACTORS) && !(flags & PCM_NOLINES)))
+		{
+			return false;
+		}
+		if (!(flags & PCM_NOACTORS) && thing->BlockingMobj)
+		{
+			return false;
+		}
+		if (!(flags & PCM_NOLINES) && thing->BlockingLine)
+		{
+			return false;
+		}
 	}
 
 	if (thing->flags3 & MF3_FLOORHUGGER)
@@ -2469,7 +2481,7 @@ bool P_CheckMove(AActor *thing, const DVector2 &pos, bool dropoff)
 					return false;
 				}
 			}
-			else if (dropoff)
+			else if (flags & PCM_DROPOFF)
 			{
 				const DVector3 oldpos = thing->Pos();
 				thing->SetOrigin(pos.X, pos.Y, newz, true);

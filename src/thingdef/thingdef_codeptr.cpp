@@ -6706,8 +6706,16 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckBlock)
 	bool checker = false;
 	if (flags & CBF_DROPOFF)
 	{
+		// Unfortunately, whenever P_CheckMove returned false, that means it could
+		// ignore a variety of flags mainly because of P_CheckPosition. This
+		// results in picking up false positives due to actors or lines being in the way
+		// when they clearly should not be.
+
+		int fpass = PCM_DROPOFF;
+		if (flags & CBF_NOACTORS)	fpass |= PCM_NOACTORS;
+		if (flags & CBF_NOLINES)	fpass |= PCM_NOLINES;
 		mobj->SetZ(pos.Z);
-		checker = P_CheckMove(mobj, pos, true);
+		checker = P_CheckMove(mobj, pos, fpass);
 		mobj->SetZ(oldpos.Z);
 	}
 	else
@@ -6743,7 +6751,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckBlock)
 	//[MC] I don't know why I let myself be persuaded not to include a flag.
 	//If an actor is loaded with pointers, they don't really have any options to spare.
 	//Also, fail if a dropoff or a step is too great to pass over when checking for dropoffs.
-
+	
 	if ((!(flags & CBF_NOACTORS) && (mobj->BlockingMobj)) || (!(flags & CBF_NOLINES) && mobj->BlockingLine != NULL) ||
 		((flags & CBF_DROPOFF) && !checker))
 	{

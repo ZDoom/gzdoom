@@ -71,9 +71,6 @@ typedef enum
 // (This is so scrolling floors and objects on them can move at same speed.)
 const double CARRYFACTOR = 3 / 32.;
 
-// Define values for map objects
-#define MO_TELEPORTMAN			14
-
 // Flags for P_SectorDamage
 #define DAMAGE_PLAYERS				1
 #define DAMAGE_NONPLAYERS			2
@@ -87,7 +84,6 @@ const double CARRYFACTOR = 3 / 32.;
 bool	CheckIfExitIsGood (AActor *self, level_info_t *info);
 
 // at map load
-void P_InitSectorSpecial(sector_t *sector, int special);
 void	P_SpawnSpecials (void);
 
 // every tic
@@ -104,39 +100,6 @@ void	P_SectorDamage(int tag, int amount, FName type, PClassActor *protectClass, 
 void	P_SetSectorFriction (int tag, int amount, bool alterFlag);
 double FrictionToMoveFactor(double friction);
 void P_GiveSecret(AActor *actor, bool printmessage, bool playsound, int sectornum);
-
-//
-// getSide()
-// Will return a side_t*
-//	given the number of the current sector,
-//	the line number, and the side (0/1) that you want.
-//
-inline side_t *getSide (int currentSector, int line, int side)
-{
-	return (sectors[currentSector].lines[line])->sidedef[side];
-}
-
-//
-// getSector()
-// Will return a sector_t*
-//	given the number of the current sector,
-//	the line number and the side (0/1) that you want.
-//
-inline sector_t *getSector (int currentSector, int line, int side)
-{
-	return (sectors[currentSector].lines[line])->sidedef[side]->sector;
-}
-
-
-//
-// twoSided()
-// Given the sector number and the line number,
-//	it will tell you whether the line is two-sided or not.
-//
-inline int twoSided (int sector, int line)
-{
-	return (sectors[sector].lines[line])->flags & ML_TWOSIDED;
-}
 
 //
 // getNextSector()

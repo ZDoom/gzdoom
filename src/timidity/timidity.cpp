@@ -782,11 +782,6 @@ void Renderer::MarkInstrument(int banknum, int percussion, int instr)
 	}
 }
 
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#endif
-
 void cmsg(int type, int verbosity_level, const char *fmt, ...)
 {
 	/*
@@ -801,7 +796,7 @@ void cmsg(int type, int verbosity_level, const char *fmt, ...)
 	va_start(args, fmt);
 	vsprintf(buf, fmt, args);
 	va_end(args);
-	OutputDebugString(buf);
+	I_DebugPrint(buf);
 #endif
 }
 

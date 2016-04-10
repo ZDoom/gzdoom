@@ -1051,6 +1051,11 @@ static void DoPrintStr(const char *cp, HWND edit, HANDLE StdOut)
 
 static TArray<FString> bufferedConsoleStuff;
 
+void I_DebugPrint(const char *cp)
+{
+	OutputDebugStringA(cp);
+}
+
 void I_PrintStr(const char *cp)
 {
 	if (con_debugoutput)

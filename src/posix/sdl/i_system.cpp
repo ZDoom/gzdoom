@@ -232,6 +232,10 @@ void I_SetIWADInfo ()
 {
 }
 
+void I_DebugPrint(const char *cp)
+{
+}
+
 void I_PrintStr (const char *cp)
 {
 	// Strip out any color escape sequences before writing to the log file

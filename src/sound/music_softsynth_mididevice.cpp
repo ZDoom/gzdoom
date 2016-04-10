@@ -40,6 +40,7 @@
 #include "m_swap.h"
 #include "w_wad.h"
 #include "v_text.h"
+#include "i_system.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -337,7 +338,7 @@ int SoftSynthMIDIDevice::PlayTick()
 				char buffer[128];
 				mysnprintf(buffer, countof(buffer), "C%02d: %11s %3d %3d\n", (status & 15) + 1, commands[(status >> 4) & 7], parm1, parm2);
 #ifdef _WIN32
-				OutputDebugString(buffer);
+				I_DebugPrint(buffer);
 #else
 				fputs(buffer, stderr);
 #endif

@@ -111,6 +111,8 @@ void addterm (void (*func)(void), const char *name);
 #define atterm(t) addterm (t, #t)
 void popterm ();
 
+void I_DebugPrint (const char *cp);
+
 // Print a console string
 void I_PrintStr (const char *str);
 

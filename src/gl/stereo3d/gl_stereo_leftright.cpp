@@ -82,7 +82,7 @@ void ShiftedEyePose::GetProjection(float fov, float aspectRatio, float fovRatio,
 /* virtual */
 void ShiftedEyePose::GetViewShift(float yaw, float outViewShift[3]) const
 {
-	float dx = cos(DEG2RAD(yaw)) * vr_hunits_per_meter * shift;
+	float dx = -cos(DEG2RAD(yaw)) * vr_hunits_per_meter * shift;
 	float dy = sin(DEG2RAD(yaw)) * vr_hunits_per_meter * shift;
 	outViewShift[0] = dx;
 	outViewShift[1] = dy;

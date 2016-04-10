@@ -119,141 +119,14 @@ inline sector_t *getNextSector (line_t *line, const sector_t *sec)
 
 #include "p_tags.h"
 
-//
-// P_LIGHTS
-//
-
 class DLighting : public DSectorEffect
 {
-	DECLARE_CLASS (DLighting, DSectorEffect)
+	DECLARE_CLASS(DLighting, DSectorEffect)
 public:
-	DLighting (sector_t *sector);
+	DLighting(sector_t *sector);
 protected:
-	DLighting ();
+	DLighting();
 };
-
-class DFireFlicker : public DLighting
-{
-	DECLARE_CLASS (DFireFlicker, DLighting)
-public:
-	DFireFlicker (sector_t *sector);
-	DFireFlicker (sector_t *sector, int upper, int lower);
-	void		Serialize (FArchive &arc);
-	void		Tick ();
-protected:
-	int 		m_Count;
-	int 		m_MaxLight;
-	int 		m_MinLight;
-private:
-	DFireFlicker ();
-};
-
-class DFlicker : public DLighting
-{
-	DECLARE_CLASS (DFlicker, DLighting)
-public:
-	DFlicker (sector_t *sector, int upper, int lower);
-	void		Serialize (FArchive &arc);
-	void		Tick ();
-protected:
-	int 		m_Count;
-	int 		m_MaxLight;
-	int 		m_MinLight;
-private:
-	DFlicker ();
-};
-
-class DLightFlash : public DLighting
-{
-	DECLARE_CLASS (DLightFlash, DLighting)
-public:
-	DLightFlash (sector_t *sector);
-	DLightFlash (sector_t *sector, int min, int max);
-	void		Serialize (FArchive &arc);
-	void		Tick ();
-protected:
-	int 		m_Count;
-	int 		m_MaxLight;
-	int 		m_MinLight;
-	int 		m_MaxTime;
-	int 		m_MinTime;
-private:
-	DLightFlash ();
-};
-
-class DStrobe : public DLighting
-{
-	DECLARE_CLASS (DStrobe, DLighting)
-public:
-	DStrobe (sector_t *sector, int utics, int ltics, bool inSync);
-	DStrobe (sector_t *sector, int upper, int lower, int utics, int ltics);
-	void		Serialize (FArchive &arc);
-	void		Tick ();
-protected:
-	int 		m_Count;
-	int 		m_MinLight;
-	int 		m_MaxLight;
-	int 		m_DarkTime;
-	int 		m_BrightTime;
-private:
-	DStrobe ();
-};
-
-class DGlow : public DLighting
-{
-	DECLARE_CLASS (DGlow, DLighting)
-public:
-	DGlow (sector_t *sector);
-	void		Serialize (FArchive &arc);
-	void		Tick ();
-protected:
-	int 		m_MinLight;
-	int 		m_MaxLight;
-	int 		m_Direction;
-private:
-	DGlow ();
-};
-
-// [RH] Glow from Light_Glow and Light_Fade specials
-class DGlow2 : public DLighting
-{
-	DECLARE_CLASS (DGlow2, DLighting)
-public:
-	DGlow2 (sector_t *sector, int start, int end, int tics, bool oneshot);
-	void		Serialize (FArchive &arc);
-	void		Tick ();
-protected:
-	int			m_Start;
-	int			m_End;
-	int			m_MaxTics;
-	int			m_Tics;
-	bool		m_OneShot;
-private:
-	DGlow2 ();
-};
-
-// [RH] Phased light thinker
-class DPhased : public DLighting
-{
-	DECLARE_CLASS (DPhased, DLighting)
-public:
-	DPhased (sector_t *sector);
-	DPhased (sector_t *sector, int baselevel, int phase);
-	void		Serialize (FArchive &arc);
-	void		Tick ();
-protected:
-	BYTE		m_BaseLevel;
-	BYTE		m_Phase;
-private:
-	DPhased ();
-	DPhased (sector_t *sector, int baselevel);
-	int PhaseHelper (sector_t *sector, int index, int light, sector_t *prev);
-};
-
-#define GLOWSPEED				8
-#define STROBEBRIGHT			5
-#define FASTDARK				15
-#define SLOWDARK				TICRATE
 
 void	EV_StartLightFlickering (int tag, int upper, int lower);
 void	EV_StartLightStrobing (int tag, int upper, int lower, int utics, int ltics);

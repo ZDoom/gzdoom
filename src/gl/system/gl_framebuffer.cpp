@@ -402,7 +402,7 @@ bool OpenGLFrameBuffer::Begin2D(bool)
 //
 //==========================================================================
 
-// void STACK_ARGS OpenGLFrameBuffer::DrawTextureParms(FTexture *img, DrawParms &parms)
+// void STACK_ARGS OpenGLFrameBuffer::DrawTextureParms(FTexture *img, DrawParms &parms) // CMB Does not compile for me on VS2015 "redefinition; different type modifiers"
 void OpenGLFrameBuffer::DrawTextureParms(FTexture *img, DrawParms &parms)
 {
 	if (GLRenderer != NULL) GLRenderer->DrawTexture(img, parms);

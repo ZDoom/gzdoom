@@ -859,8 +859,8 @@ void FArchive::WriteString(const FString &str)
 {
 	// The count includes the '\0' terminator, but we don't
 	// actually write it out.
-	WriteCount(str.Len() + 1);
-	Write(str, str.Len());
+	WriteCount(DWORD(str.Len() + 1));
+	Write(str, DWORD(str.Len()));
 }
 
 FArchive &FArchive::operator<< (char *&str)

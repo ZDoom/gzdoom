@@ -110,22 +110,24 @@ void STACK_ARGS DCanvas::DrawTexture (FTexture *img, double x, double y, int tag
 {
 	va_list tags;
 	va_start(tags, tags_first);
-	DrawTextureV(img, x, y, tags_first, tags);
+	DrawParms parms;
+
+	bool res = ParseDrawTextureTags(img, x, y, tags_first, tags, &parms, false);
+	va_end(tags);
+	if (!res)
+	{
+		return;
+	}
+	DrawTextureParms(img, parms);
 }
 
-void STACK_ARGS DCanvas::DrawTextureV(FTexture *img, double x, double y, uint32 tag, va_list tags)
+void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 {
 #ifndef NO_SWRENDER
 	FTexture::Span unmaskedSpan[2];
 	const FTexture::Span **spanptr, *spans;
 	static short bottomclipper[MAXWIDTH], topclipper[MAXWIDTH];
-
-	DrawParms parms;
-
-	if (!ParseDrawTextureTags(img, x, y, tag, tags, &parms, false))
-	{
-		return;
-	}
+	const BYTE *translation = NULL;
 
 	if (parms.masked)
 	{
@@ -154,12 +156,16 @@ void STACK_ARGS DCanvas::DrawTextureV(FTexture *img, double x, double y, uint32 
 		// Note that this overrides DTA_Translation in software, but not in hardware.
 		FDynamicColormap *colormap = GetSpecialLights(MAKERGB(255,255,255),
 			parms.colorOverlay & MAKEARGB(0,255,255,255), 0);
-		parms.translation = &colormap->Maps[(APART(parms.colorOverlay)*NUMCOLORMAPS/255)*256];
+		translation = &colormap->Maps[(APART(parms.colorOverlay)*NUMCOLORMAPS/255)*256];
+	}
+	else if (parms.remap != NULL)
+	{
+		translation = parms.remap->Remap;
 	}
 
-	if (parms.translation != NULL)
+	if (translation != NULL)
 	{
-		dc_colormap = (lighttable_t *)parms.translation;
+		dc_colormap = (lighttable_t *)translation;
 	}
 	else
 	{
@@ -171,6 +177,10 @@ void STACK_ARGS DCanvas::DrawTextureV(FTexture *img, double x, double y, uint32 
 
 	BYTE *destorgsave = dc_destorg;
 	dc_destorg = screen->GetBuffer();
+	if (dc_destorg == NULL)
+	{
+		I_FatalError("Attempt to write to buffer of hardware canvas");
+	}
 
 	double x0 = parms.x - parms.left * parms.destwidth / parms.texwidth;
 	double y0 = parms.y - parms.top * parms.destheight / parms.texheight;
@@ -246,10 +256,11 @@ void STACK_ARGS DCanvas::DrawTextureV(FTexture *img, double x, double y, uint32 
 
 		if (parms.windowleft > 0 || parms.windowright < parms.texwidth)
 		{
+			double wi = MIN(parms.windowright, parms.texwidth);
 			double xscale = parms.destwidth / parms.texwidth;
 			x0 += parms.windowleft * xscale;
 			frac += FLOAT2FIXED(parms.windowleft);
-			x2 -= (parms.texwidth - parms.windowright) * xscale;
+			x2 -= (parms.texwidth - wi) * xscale;
 		}
 		if (x0 < parms.lclip)
 		{
@@ -327,18 +338,112 @@ void STACK_ARGS DCanvas::DrawTextureV(FTexture *img, double x, double y, uint32 
 #endif
 }
 
-bool DCanvas::ParseDrawTextureTags (FTexture *img, double x, double y, DWORD tag, va_list tags, DrawParms *parms, bool hw) const
+bool DCanvas::SetTextureParms(DrawParms *parms, FTexture *img, double xx, double yy) const
+{
+	if (img != NULL)
+	{
+		parms->x = xx;
+		parms->y = yy;
+		parms->texwidth = img->GetScaledWidthDouble();
+		parms->texheight = img->GetScaledHeightDouble();
+		if (parms->top == INT_MAX || parms->fortext)
+		{
+			parms->top = img->GetScaledTopOffset();
+		}
+		if (parms->left == INT_MAX || parms->fortext)
+		{
+			parms->left = img->GetScaledLeftOffset();
+		}
+		if (parms->destwidth == INT_MAX || parms->fortext)
+		{
+			parms->destwidth = img->GetScaledWidthDouble();
+		}
+		if (parms->destheight == INT_MAX || parms->fortext)
+		{
+			parms->destheight = img->GetScaledHeightDouble();
+		}
+
+		switch (parms->cleanmode)
+		{
+		default:
+			break;
+
+		case DTA_Clean:
+			parms->x = (parms->x - 160.0) * CleanXfac + (Width * 0.5);
+			parms->y = (parms->y - 100.0) * CleanYfac + (Height * 0.5);
+			parms->destwidth = parms->texwidth * CleanXfac;
+			parms->destheight = parms->texheight * CleanYfac;
+			break;
+
+		case DTA_CleanNoMove:
+			parms->destwidth = parms->texwidth * CleanXfac;
+			parms->destheight = parms->texheight * CleanYfac;
+			break;
+
+		case DTA_CleanNoMove_1:
+			parms->destwidth = parms->texwidth * CleanXfac_1;
+			parms->destheight = parms->texheight * CleanYfac_1;
+			break;
+
+		case DTA_Fullscreen:
+			parms->x = parms->y = 0;
+			break;
+
+		case DTA_HUDRules:
+		case DTA_HUDRulesC:
+		{
+			bool xright = parms->x < 0;
+			bool ybot = parms->y < 0;
+
+			if (hud_scale)
+			{
+				parms->x *= CleanXfac;
+				if (parms->cleanmode == DTA_HUDRulesC)
+					parms->x += Width * 0.5;
+				else if (xright)
+					parms->x = Width + parms->x;
+				parms->y *= CleanYfac;
+				if (ybot)
+					parms->y = Height + parms->y;
+				parms->destwidth = parms->texwidth * CleanXfac;
+				parms->destheight = parms->texheight * CleanYfac;
+			}
+			else
+			{
+				if (parms->cleanmode == DTA_HUDRulesC)
+					parms->x += Width * 0.5;
+				else if (xright)
+					parms->x = Width + parms->x;
+				if (ybot)
+					parms->y = Height + parms->y;
+			}
+			break;
+		}
+		}
+		if (parms->virtWidth != Width || parms->virtHeight != Height)
+		{
+			VirtualToRealCoords(parms->x, parms->y, parms->destwidth, parms->destheight,
+				parms->virtWidth, parms->virtHeight, parms->virtBottom, !parms->keepratio);
+		}
+	}
+
+	return false;
+}
+
+bool DCanvas::ParseDrawTextureTags (FTexture *img, double x, double y, DWORD tag, va_list tags, DrawParms *parms, bool fortext) const
 {
 	INTBOOL boolval;
 	int intval;
 	bool translationset = false;
-	bool virtBottom;
 	bool fillcolorset = false;
 
-	if (img == NULL || img->UseType == FTexture::TEX_Null)
+	if (!fortext)
 	{
-		va_end(tags);
-		return false;
+		if (img == NULL || img->UseType == FTexture::TEX_Null)
+		{
+			va_end(tags);
+			return false;
+		}
 	}
 
 	// Do some sanity checks on the coordinates.
@@ -348,25 +453,20 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, double x, double y, DWORD tag
 		return false;
 	}
 
-	virtBottom = false;
-
-	parms->texwidth = img->GetScaledWidthDouble();
-	parms->texheight = img->GetScaledHeightDouble();
-
+	parms->fortext = fortext;
 	parms->windowleft = 0;
-	parms->windowright = parms->texwidth;
+	parms->windowright = INT_MAX;
 	parms->dclip = this->GetHeight();
 	parms->uclip = 0;
 	parms->lclip = 0;
 	parms->rclip = this->GetWidth();
-	parms->destwidth = parms->windowright;
-	parms->destheight = parms->texheight;
-	parms->top = img->GetScaledTopOffset();
-	parms->left = img->GetScaledLeftOffset();
+	parms->left = INT_MAX;
+	parms->top = INT_MAX;
+	parms->destwidth = INT_MAX;
+	parms->destheight = INT_MAX;
 	parms->Alpha = 1.f;
 	parms->fillcolor = -1;
 	parms->remap = NULL;
-	parms->translation = NULL;
 	parms->colorOverlay = 0;
 	parms->alphaChannel = false;
 	parms->flipX = false;
@@ -380,48 +480,50 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, double x, double y, DWORD tag
 	parms->bilinear = false;
 	parms->specialcolormap = NULL;
 	parms->colormapstyle = NULL;
-
-	parms->x = x;
-	parms->y = y;
+	parms->cleanmode = DTA_Base;
+	parms->scalex = parms->scaley = 1;
+	parms->cellx = parms->celly = 0;
+	parms->maxstrlen = INT_MAX;
+	parms->virtBottom = false;
 
 	// Parse the tag list for attributes. (For floating point attributes,
 	// consider that the C ABI dictates that all floats be promoted to
 	// doubles when passed as function arguments.)
 	while (tag != TAG_DONE)
 	{
-		va_list *more_p;
 		DWORD data;
 
 		switch (tag)
 		{
-		case TAG_IGNORE:
 		default:
 			data = va_arg(tags, DWORD);
 			break;
 
-		case TAG_MORE:
-			more_p = va_arg(tags, va_list *);
-			va_end (tags);
-#ifndef NO_VA_COPY
-			va_copy (tags, *more_p);
-#else
-			tags = *more_p;
-#endif
-			break;
-
 		case DTA_DestWidth:
+			assert(fortext == false);
+			if (fortext) return false;
+			parms->cleanmode = DTA_Base;
 			parms->destwidth = va_arg(tags, int);
 			break;
 
 		case DTA_DestWidthF:
+			assert(fortext == false);
+			if (fortext) return false;
+			parms->cleanmode = DTA_Base;
 			parms->destwidth = va_arg(tags, double);
 			break;
 
 		case DTA_DestHeight:
+			assert(fortext == false);
+			if (fortext) return false;
+			parms->cleanmode = DTA_Base;
 			parms->destheight = va_arg(tags, int);
 			break;
 
 		case DTA_DestHeightF:
+			assert(fortext == false);
+			if (fortext) return false;
+			parms->cleanmode = DTA_Base;
 			parms->destheight = va_arg(tags, double);
 			break;
 
@@ -429,10 +531,9 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, double x, double y, DWORD tag
 			boolval = va_arg(tags, INTBOOL);
 			if (boolval)
 			{
-				parms->x = (parms->x - 160.0) * CleanXfac + (Width * 0.5);
-				parms->y = (parms->y - 100.0) * CleanYfac + (Height * 0.5);
-				parms->destwidth = parms->texwidth * CleanXfac;
-				parms->destheight = parms->texheight * CleanYfac;
+				parms->scalex = 1;
+				parms->scaley = 1;
+				parms->cleanmode = tag;
 			}
 			break;
 
@@ -440,8 +541,9 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, double x, double y, DWORD tag
 			boolval = va_arg(tags, INTBOOL);
 			if (boolval)
 			{
-				parms->destwidth = parms->texwidth * CleanXfac;
-				parms->destheight = parms->texheight * CleanYfac;
+				parms->scalex = CleanXfac;
+				parms->scaley = CleanYfac;
+				parms->cleanmode = tag;
 			}
 			break;
 
@@ -449,8 +551,9 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, double x, double y, DWORD tag
 			boolval = va_arg(tags, INTBOOL);
 			if (boolval)
 			{
-				parms->destwidth = parms->texwidth * CleanXfac_1;
-				parms->destheight = parms->texheight * CleanYfac_1;
+				parms->scalex = CleanXfac_1;
+				parms->scaley = CleanYfac_1;
+				parms->cleanmode = tag;
 			}
 			break;
 
@@ -458,6 +561,9 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, double x, double y, DWORD tag
 			boolval = va_arg(tags, INTBOOL);
 			if (boolval)
 			{
+				parms->cleanmode = DTA_Base;
+				parms->scalex = 1;
+				parms->scaley = 1;
 				parms->virtWidth = 320;
 				parms->virtHeight = 200;
 			}
@@ -467,56 +573,37 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, double x, double y, DWORD tag
 			boolval = va_arg(tags, INTBOOL);
 			if (boolval)
 			{
+				parms->cleanmode = DTA_Base;
+				parms->scalex = 1;
+				parms->scaley = 1;
 				parms->virtWidth = 320;
 				parms->virtHeight = 200;
 			}
-			virtBottom = true;
+			parms->virtBottom = true;
 			break;
 
 		case DTA_HUDRules:
-			{
-				bool xright = parms->x < 0;
-				bool ybot = parms->y < 0;
-				intval = va_arg(tags, int);
-
-				if (hud_scale)
-				{
-					parms->x *= CleanXfac;
-					if (intval == HUD_HorizCenter)
-						parms->x += Width * 0.5;
-					else if (xright)
-						parms->x = Width + parms->x;
-					parms->y *= CleanYfac;
-					if (ybot)
-						parms->y = Height + parms->y;
-					parms->destwidth = parms->texwidth * CleanXfac;
-					parms->destheight = parms->texheight * CleanYfac;
-				}
-				else
-				{
-					if (intval == HUD_HorizCenter)
-						parms->x += Width * 0.5;
-					else if (xright)
-						parms->x = Width + parms->x;
-					if (ybot)
-						parms->y = Height + parms->y;
-				}
-			}
+			intval = va_arg(tags, int);
+			parms->cleanmode = intval == HUD_HorizCenter ? DTA_HUDRulesC : DTA_HUDRules;
 			break;
 
 		case DTA_VirtualWidth:
+			parms->cleanmode = DTA_Base;
 			parms->virtWidth = va_arg(tags, int);
 			break;
 
 		case DTA_VirtualWidthF:
+			parms->cleanmode = DTA_Base;
 			parms->virtWidth = va_arg(tags, double);
 			break;
 			
 		case DTA_VirtualHeight:
+			parms->cleanmode = DTA_Base;
 			parms->virtHeight = va_arg(tags, int);
 			break;
 
 		case DTA_VirtualHeightF:
+			parms->cleanmode = DTA_Base;
 			parms->virtHeight = va_arg(tags, double);
 			break;
 
@@ -524,7 +611,9 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, double x, double y, DWORD tag
 			boolval = va_arg(tags, INTBOOL);
 			if (boolval)
 			{
-				parms->x = parms->y = 0;
+				assert(fortext == false);
+				if (img == NULL) return false;
+				parms->cleanmode = DTA_Fullscreen;
 				parms->virtWidth = img->GetScaledWidthDouble();
 				parms->virtHeight = img->GetScaledHeightDouble();
 			}
@@ -564,50 +653,70 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, double x, double y, DWORD tag
 			break;
 
 		case DTA_TopOffset:
+			assert(fortext == false);
+			if (fortext) return false;
 			parms->top = va_arg(tags, int);
 			break;
 
 		case DTA_TopOffsetF:
+			assert(fortext == false);
+			if (fortext) return false;
 			parms->top = va_arg(tags, double);
 			break;
 
 		case DTA_LeftOffset:
+			assert(fortext == false);
+			if (fortext) return false;
 			parms->left = va_arg(tags, int);
 			break;
 
 		case DTA_LeftOffsetF:
+			assert(fortext == false);
+			if (fortext) return false;
 			parms->left = va_arg(tags, double);
 			break;
 
 		case DTA_CenterOffset:
+			assert(fortext == false);
+			if (fortext) return false;
 			if (va_arg(tags, int))
 			{
-				parms->left = parms->texwidth * 0.5;
-				parms->top = parms->texheight * 0.5;
+				parms->left = img->GetScaledWidthDouble() * 0.5;
+				parms->top = img->GetScaledHeightDouble() * 0.5;
 			}
 			break;
 
 		case DTA_CenterBottomOffset:
+			assert(fortext == false);
+			if (fortext) return false;
 			if (va_arg(tags, int))
 			{
-				parms->left = parms->texwidth * 0.5;
-				parms->top = parms->texheight;
+				parms->left = img->GetScaledWidthDouble() * 0.5;
+				parms->top = img->GetScaledHeightDouble();
 			}
 			break;
 
 		case DTA_WindowLeft:
+			assert(fortext == false);
+			if (fortext) return false;
 			parms->windowleft = va_arg(tags, int);
 			break;
 
 		case DTA_WindowLeftF:
+			assert(fortext == false);
+			if (fortext) return false;
 			parms->windowleft = va_arg(tags, double);
 			break;
 
 		case DTA_WindowRight:
+			assert(fortext == false);
+			if (fortext) return false;
 			parms->windowright = va_arg(tags, int);
 			break;
 
 		case DTA_WindowRightF:
+			assert(fortext == false);
+			if (fortext) return false;
 			parms->windowright = va_arg(tags, double);
 			break;
 
@@ -689,6 +798,19 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, double x, double y, DWORD tag
 		case DTA_ColormapStyle:
 			parms->colormapstyle = va_arg(tags, FColormapStyle *);
 			break;
+
+		case DTA_TextLen:
+			parms->maxstrlen = va_arg(tags, int);
+			break;
+
+		case DTA_CellX:
+			parms->cellx = va_arg(tags, int);
+			break;
+
+		case DTA_CellY:
+			parms->celly = va_arg(tags, int);
+			break;
+
 		}
 		tag = va_arg(tags, DWORD);
 	}
@@ -699,20 +821,14 @@ bool DCanvas::ParseDrawTextureTags (FTexture *img, double x, double y, DWORD tag
 		return false;
 	}
 
-	if (parms->virtWidth != Width || parms->virtHeight != Height)
+	if (img != NULL)
 	{
-		VirtualToRealCoords(parms->x, parms->y, parms->destwidth, parms->destheight,
-			parms->virtWidth, parms->virtHeight, virtBottom, !parms->keepratio);
-	}
+		SetTextureParms(parms, img, x, y);
 
-	if (parms->destwidth <= 0 || parms->destheight <= 0)
-	{
-		return false;
-	}
-
-	if (parms->remap != NULL)
-	{
-		parms->translation = parms->remap->Remap;
+		if (parms->destwidth <= 0 || parms->destheight <= 0)
+		{
+			return false;
+		}
 	}
 
 	if (parms->style.BlendOp == 255)

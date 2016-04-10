@@ -1535,26 +1535,6 @@ void FParser::SF_StartSectorSound(void)
 	}
 }
 
-/************* Sector functions ***************/
-
-class DFloorChanger : public DFloor
-{
-public:
-	DFloorChanger(sector_t * sec)
-		: DFloor(sec) {}
-
-	bool Move(double speed, double dest, int crush, int direction)
-	{
-		bool res = DMover::crushed != MoveFloor(speed, dest, crush, direction, false);
-		Destroy();
-		m_Sector->floordata=NULL;
-		StopInterpolation(true);
-		m_Sector=NULL;
-		return res;
-	}
-};
-
-
 //==========================================================================
 //
 //
@@ -1588,12 +1568,12 @@ void FParser::SF_FloorHeight(void)
 			{
 				if (sectors[i].floordata) continue;	// don't move floors that are active!
 
-				DFloorChanger * f = new DFloorChanger(&sectors[i]);
-				if (!f->Move(
+				if (sectors[i].MoveFloor(
 					fabs(dest - sectors[i].CenterFloor()), 
 					sectors[i].floorplane.PointToDist (sectors[i].centerspot, dest),
 					crush? 10:-1, 
-					(dest > sectors[i].CenterFloor()) ? 1 : -1))
+					(dest > sectors[i].CenterFloor()) ? 1 : -1,
+					false) != EMoveResult::crushed)
 				{
 					returnval = 0;
 				}
@@ -1616,35 +1596,6 @@ void FParser::SF_FloorHeight(void)
 }
 
 
-//=============================================================================
-//
-//
-//=============================================================================
-class DMoveFloor : public DFloor
-{
-public:
-	DMoveFloor(sector_t * sec,double moveheight,int _m_Direction,int crush,double movespeed)
-	: DFloor(sec)
-	{
-		m_Type = floorRaiseByValue;
-		m_Crush = crush;
-		m_Speed=movespeed;
-		m_Direction = _m_Direction;
-		m_FloorDestDist = moveheight;
-
-		// Do not interpolate instant movement floors.
-		double movedist = fabs(-sec->floorplane.fD() - moveheight);
-		if (m_Speed >= movedist)
-		{
-			StopInterpolation(true);
-		}
-
-		StartFloorSound();
-	}
-};
-
-
-
 //==========================================================================
 //
 //
@@ -1654,7 +1605,6 @@ public:
 void FParser::SF_MoveFloor(void)
 {
 	int secnum = -1;
-	sector_t *sec;
 	int tagnum, crush;
 	double platspeed = 1, destheight;
 	
@@ -1670,38 +1620,10 @@ void FParser::SF_MoveFloor(void)
 		FSSectorTagIterator itr(tagnum);
 		while ((secnum = itr.Next()) >= 0)
 		{
-			sec = &sectors[secnum];
-			// Don't start a second thinker on the same floor
-			if (sec->floordata) continue;
-			
-			new DMoveFloor(sec, sec->floorplane.PointToDist(sec->centerspot, destheight),
-				destheight < sec->CenterFloor() ? -1 : 1, crush, platspeed);
+			P_CreateFloor(&sectors[secnum], DFloor::floorMoveToValue, NULL, platspeed, destheight, crush, 0, false, false);
 		}
 	}
 }
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-class DCeilingChanger : public DCeiling
-{
-public:
-	DCeilingChanger(sector_t * sec)
-		: DCeiling(sec) {}
-
-	bool Move(double speed, double dest, int crush, int direction)
-	{
-		bool res = DMover::crushed != MoveCeiling(speed, dest, crush, direction, false);
-		Destroy();
-		m_Sector->ceilingdata=NULL;
-		StopInterpolation (true);
-		m_Sector=NULL;
-		return res;
-	}
-};
 
 //==========================================================================
 //
@@ -1735,12 +1657,12 @@ void FParser::SF_CeilingHeight(void)
 			{
 				if (sectors[i].ceilingdata) continue;	// don't move ceilings that are active!
 
-				DCeilingChanger * c = new DCeilingChanger(&sectors[i]);
-				if (!c->Move(
+				if (sectors[i].MoveCeiling(
 					fabs(dest - sectors[i].CenterCeiling()), 
 					sectors[i].ceilingplane.PointToDist (sectors[i].centerspot, dest), 
 					crush? 10:-1,
-					(dest > sectors[i].CenterCeiling()) ? 1 : -1))
+					(dest > sectors[i].CenterCeiling()) ? 1 : -1,
+					false) != EMoveResult::crushed)
 				{
 					returnval = 0;
 				}
@@ -1769,43 +1691,9 @@ void FParser::SF_CeilingHeight(void)
 //
 //==========================================================================
 
-class DMoveCeiling : public DCeiling
-{
-public:
-
-	DMoveCeiling(sector_t * sec,int tag,double destheight,double speed,int silent,int crush)
-		: DCeiling(sec)
-	{
-		m_Crush = crush;
-		m_Speed2 = m_Speed = m_Speed1 = speed;
-		m_Silent = silent;
-		m_Type = DCeiling::ceilLowerByValue;	// doesn't really matter as long as it's no special value
-		m_Tag=tag;			
-		m_TopHeight=m_BottomHeight=sec->ceilingplane.PointToDist(sec->centerspot,destheight);
-		m_Direction=destheight>sec->GetPlaneTexZF(sector_t::ceiling)? 1:-1;
-
-		// Do not interpolate instant movement ceilings.
-		double movedist = fabs(sec->ceilingplane.fD() - m_BottomHeight);
-		if (m_Speed >= movedist)
-		{
-			StopInterpolation (true);
-			m_Silent=2;
-		}
-		PlayCeilingSound();
-	}
-};
-
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
 void FParser::SF_MoveCeiling(void)
 {
 	int secnum = -1;
-	sector_t *sec;
 	int tagnum;
 	double platspeed = 1, destheight;
 	int crush;
@@ -1823,11 +1711,7 @@ void FParser::SF_MoveCeiling(void)
 		FSSectorTagIterator itr(tagnum);
 		while ((secnum = itr.Next()) >= 0)
 		{
-			sec = &sectors[secnum];
-			
-			// Don't start a second thinker on the same floor
-			if (sec->ceilingdata) continue;
-			new DMoveCeiling(sec, tagnum, destheight, platspeed, silent, crush);
+			P_CreateCeiling(&sectors[secnum], DCeiling::ceilMoveToValue, NULL, tagnum, platspeed, platspeed, destheight, crush, silent | 4, 0, DCeiling::ECrushMode::crushDoom);
 		}
 	}
 }

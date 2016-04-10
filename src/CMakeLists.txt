@@ -170,6 +170,12 @@ else()
 		set( FMOD_INC_PATH_SUFFIXES PATH_SUFFIXES inc )
 		set( FMOD_LIB_PATH_SUFFIXES PATH_SUFFIXES lib )
 		set( NO_GTK ON )
+
+		# Prevent inclusion of fp.h and FixMath.h from Carbon framework
+		# Declarations from these files are not used but cause the following conflicts:
+		#  - redefinition of 'FixedToFloat' and 'FloatToFixed' macros
+		#  - redefinition of 'pi' as different kind of symbol
+		add_definitions( -D__FP__ -D__FIXMATH__ )
 	else()
 		option( NO_GTK "Disable GTK+ dialogs (Not applicable to Windows)" )
 		option( VALGRIND "Add special Valgrind sequences to self-modifying code" )
@@ -575,22 +581,6 @@ if( UNIX )
 		endif()
 	else()
 		set( ZDOOM_LIBS ${ZDOOM_LIBS} rt )
-	endif()
-endif()
-
-CHECK_CXX_SOURCE_COMPILES(
-	"#include <stdarg.h>
-	int main() { va_list list1, list2; va_copy(list1, list2); return 0; }"
-	HAS_VA_COPY )
-if( NOT HAS_VA_COPY )
-	CHECK_CXX_SOURCE_COMPILES(
-		"#include <stdarg.h>
-		int main() { va_list list1, list2; __va_copy(list1, list2); return 0; }"
-		HAS___VA_COPY )
-	if( HAS___VA_COPY )
-		add_definitions( -Dva_copy=__va_copy )
-	else()
-		add_definitions( -DNO_VA_COPY )
 	endif()
 endif()
 

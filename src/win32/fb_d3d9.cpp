@@ -2762,17 +2762,14 @@ void D3DFB::DrawPixel(int x, int y, int palcolor, uint32 color)
 //
 //==========================================================================
 
-void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, double x, double y, uint32 tags_first, va_list tags)
+void D3DFB::DrawTextureParms (FTexture *img, DrawParms &parms)
 {
 	if (In2D < 2)
 	{
-		Super::DrawTextureV(img, x, y, tags_first, tags);
+		Super::DrawTextureParms(img, parms);
 		return;
 	}
-
-	DrawParms parms;
-
-	if (!InScene || !ParseDrawTextureTags(img, x, y, tags_first, tags, &parms, true))
+	if (!InScene)
 	{
 		return;
 	}
@@ -2808,10 +2805,11 @@ void STACK_ARGS D3DFB::DrawTextureV (FTexture *img, double x, double y, uint32 t
 	}
 	if (parms.windowleft > 0 || parms.windowright < parms.texwidth)
 	{
+		double wi = MIN(parms.windowright, parms.texwidth);
 		x0 += parms.windowleft * xscale;
 		u0 = float(u0 + parms.windowleft * uscale);
-		x1 -= (parms.texwidth - parms.windowright) * xscale;
-		u1 = float(u1 - (parms.texwidth - parms.windowright) * uscale);
+		x1 -= (parms.texwidth - wi) * xscale;
+		u1 = float(u1 - (parms.texwidth - wi) * uscale);
 	}
 
 #if 0

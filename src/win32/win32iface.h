@@ -257,7 +257,7 @@ public:
 	void DrawBlendingRect ();
 	FNativeTexture *CreateTexture (FTexture *gametex, bool wrapping);
 	FNativePalette *CreatePalette (FRemapTable *remap);
-	void STACK_ARGS DrawTextureV (FTexture *img, double x, double y, uint32 tag, va_list tags);
+	void DrawTextureParms (FTexture *img, DrawParms &parms);
 	void Clear (int left, int top, int right, int bottom, int palcolor, uint32 color);
 	void Dim (PalEntry color, float amount, int x1, int y1, int w, int h);
 	void FlatFill (int left, int top, int right, int bottom, FTexture *src, bool local_origin);
@@ -370,7 +370,7 @@ private:
 	void DrawPackedTextures(int packnum);
 	void DrawLetterbox();
 	void Draw3DPart(bool copy3d);
-	bool SetStyle(D3DTex *tex, DCanvas::DrawParms &parms, D3DCOLOR &color0, D3DCOLOR &color1, BufferedTris &quad);
+	bool SetStyle(D3DTex *tex, DrawParms &parms, D3DCOLOR &color0, D3DCOLOR &color1, BufferedTris &quad);
 	static D3DBLEND GetStyleAlpha(int type);
 	static void SetColorOverlay(DWORD color, float alpha, D3DCOLOR &color0, D3DCOLOR &color1);
 	void DoWindowedGamma();

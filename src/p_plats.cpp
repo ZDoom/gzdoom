@@ -94,20 +94,20 @@ void DPlat::PlayPlatSound (const char *sound)
 //
 void DPlat::Tick ()
 {
-	EResult res;
+	EMoveResult res;
 		
 	switch (m_Status)
 	{
 	case up:
-		res = MoveFloor (m_Speed, m_High, m_Crush, 1, false);
+		res = m_Sector->MoveFloor (m_Speed, m_High, m_Crush, 1, false);
 										
-		if (res == crushed && (m_Crush == -1))
+		if (res == EMoveResult::crushed && (m_Crush == -1))
 		{
 			m_Count = m_Wait;
 			m_Status = down;
 			PlayPlatSound ("Platform");
 		}
-		else if (res == pastdest)
+		else if (res == EMoveResult::pastdest)
 		{
 			SN_StopSequence (m_Sector, CHAN_FLOOR);
 			if (m_Type != platToggle)
@@ -144,9 +144,9 @@ void DPlat::Tick ()
 		break;
 		
 	case down:
-		res = MoveFloor (m_Speed, m_Low, -1, -1, false);
+		res = m_Sector->MoveFloor (m_Speed, m_Low, -1, -1, false);
 
-		if (res == pastdest)
+		if (res == EMoveResult::pastdest)
 		{
 			SN_StopSequence (m_Sector, CHAN_FLOOR);
 			// if not an instant toggle, start waiting
@@ -172,7 +172,7 @@ void DPlat::Tick ()
 				m_Status = in_stasis;		//for reactivation of toggle
 			}
 		}
-		else if (res == crushed && m_Crush < 0 && m_Type != platToggle)
+		else if (res == EMoveResult::crushed && m_Crush < 0 && m_Type != platToggle)
 		{
 			m_Status = up;
 			m_Count = m_Wait;

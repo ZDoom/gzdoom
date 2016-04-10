@@ -5010,7 +5010,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	if (mthing->Scale.X != 0)
 		mobj->Scale.X = mthing->Scale.X * mobj->Scale.X;
 	if (mthing->Scale.Y != 0)
-		mobj->Scale.X = mthing->Scale.Y * mobj->Scale.Y;
+		mobj->Scale.Y = mthing->Scale.Y * mobj->Scale.Y;
 	if (mthing->pitch)
 		mobj->Angles.Pitch = (double)mthing->pitch;
 	if (mthing->roll)

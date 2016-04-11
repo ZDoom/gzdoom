@@ -784,7 +784,7 @@ void I_Quit()
 //
 //==========================================================================
 
-void STACK_ARGS I_FatalError(const char *error, ...)
+void I_FatalError(const char *error, ...)
 {
 	static BOOL alreadyThrown = false;
 	gameisdead = true;
@@ -824,7 +824,7 @@ void STACK_ARGS I_FatalError(const char *error, ...)
 //
 //==========================================================================
 
-void STACK_ARGS I_Error(const char *error, ...)
+void I_Error(const char *error, ...)
 {
 	va_list argptr;
 	char errortext[MAX_ERRORTEXT];

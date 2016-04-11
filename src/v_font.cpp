@@ -134,7 +134,7 @@ protected:
 	void LoadBMF (int lump, const BYTE *data);
 	void CreateFontFromPic (FTextureID picnum);
 
-	static int STACK_ARGS BMFCompare(const void *a, const void *b);
+	static int BMFCompare(const void *a, const void *b);
 
 	enum
 	{
@@ -231,7 +231,7 @@ struct TempColorInfo
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static int STACK_ARGS TranslationMapCompare (const void *a, const void *b);
+static int TranslationMapCompare (const void *a, const void *b);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -594,7 +594,7 @@ void RecordTextureColors (FTexture *pic, BYTE *usedcolors)
 //
 //==========================================================================
 
-static int STACK_ARGS compare (const void *arg1, const void *arg2)
+static int compare (const void *arg1, const void *arg2)
 {
 	if (RPART(GPalette.BaseColors[*((BYTE *)arg1)]) * 299 +
 		GPART(GPalette.BaseColors[*((BYTE *)arg1)]) * 587 +
@@ -1360,7 +1360,7 @@ void FSingleLumpFont::LoadBMF(int lump, const BYTE *data)
 //
 //==========================================================================
 
-int STACK_ARGS FSingleLumpFont::BMFCompare(const void *a, const void *b)
+int FSingleLumpFont::BMFCompare(const void *a, const void *b)
 {
 	const PalEntry *pa = (const PalEntry *)a;
 	const PalEntry *pb = (const PalEntry *)b;
@@ -2474,7 +2474,7 @@ void V_InitFontColors ()
 //
 //==========================================================================
 
-static int STACK_ARGS TranslationMapCompare (const void *a, const void *b)
+static int TranslationMapCompare (const void *a, const void *b)
 {
 	return int(((const TranslationMap *)a)->Name) - int(((const TranslationMap *)b)->Name);
 }

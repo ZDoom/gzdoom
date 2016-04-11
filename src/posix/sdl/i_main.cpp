@@ -129,7 +129,7 @@ void popterm ()
 		NumTerms--;
 }
 
-void STACK_ARGS call_terms ()
+void call_terms ()
 {
     while (NumTerms > 0)
 	{
@@ -138,7 +138,7 @@ void STACK_ARGS call_terms ()
 	}
 }
 
-static void STACK_ARGS NewFailure ()
+static void NewFailure ()
 {
     I_FatalError ("Failed to allocate memory from system heap");
 }

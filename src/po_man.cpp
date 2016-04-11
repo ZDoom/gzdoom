@@ -1469,7 +1469,7 @@ static void IterFindPolySides (FPolyObj *po, side_t *side)
 //
 //==========================================================================
 
-static int STACK_ARGS posicmp(const void *a, const void *b)
+static int posicmp(const void *a, const void *b)
 {
 	return (*(const side_t **)a)->linedef->args[1] - (*(const side_t **)b)->linedef->args[1];
 }

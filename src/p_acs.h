@@ -361,7 +361,7 @@ private:
 
 	void LoadScriptsDirectory ();
 
-	static int STACK_ARGS SortScripts (const void *a, const void *b);
+	static int SortScripts (const void *a, const void *b);
 	void UnencryptStrings ();
 	void UnescapeStringTable(BYTE *chunkstart, BYTE *datastart, bool haspadding);
 	int FindStringInChunk (DWORD *chunk, const char *varname) const;

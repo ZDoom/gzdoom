@@ -253,7 +253,7 @@ void FNodeBuilder::CreateSubsectorsForReal ()
 	}
 }
 
-int STACK_ARGS FNodeBuilder::SortSegs (const void *a, const void *b)
+int FNodeBuilder::SortSegs (const void *a, const void *b)
 {
 	const FPrivSeg *x = ((const USegPtr *)a)->SegPtr;
 	const FPrivSeg *y = ((const USegPtr *)b)->SegPtr;

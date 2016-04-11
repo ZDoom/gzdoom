@@ -46,7 +46,7 @@
 #include "farchive.h"
 
 
-static int STACK_ARGS SortSwitchDefs (const void *a, const void *b)
+static int SortSwitchDefs (const void *a, const void *b)
 {
 	return (*(FSwitchDef **)a)->PreTexture - (*(FSwitchDef **)b)->PreTexture;
 }

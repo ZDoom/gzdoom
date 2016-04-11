@@ -294,7 +294,7 @@ void P_ClearUDMFKeys()
 	}
 }
 
-static int STACK_ARGS udmfcmp(const void *a, const void *b)
+static int udmfcmp(const void *a, const void *b)
 {
 	FUDMFKey *A = (FUDMFKey*)a;
 	FUDMFKey *B = (FUDMFKey*)b;

@@ -3555,7 +3555,7 @@ static FLineSpecial LineSpecialNames[] = {
 #include "actionspecials.h"
 };
 
-static int STACK_ARGS lscmp (const void * a, const void * b)
+static int lscmp (const void * a, const void * b)
 {
 	return stricmp( ((FLineSpecial*)a)->name, ((FLineSpecial*)b)->name);
 }

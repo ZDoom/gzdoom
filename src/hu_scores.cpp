@@ -84,7 +84,7 @@ CVAR (Int,	sb_deathmatch_otherplayercolor,		CR_GREY,	CVAR_ARCHIVE)
 CVAR (Bool,	sb_teamdeathmatch_enable,			true,		CVAR_ARCHIVE)
 CVAR (Int,	sb_teamdeathmatch_headingcolor,		CR_RED,		CVAR_ARCHIVE)
 
-int STACK_ARGS comparepoints (const void *arg1, const void *arg2)
+int comparepoints (const void *arg1, const void *arg2)
 {
 	// Compare first be frags/kills, then by name.
 	player_t *p1 = *(player_t **)arg1;
@@ -99,7 +99,7 @@ int STACK_ARGS comparepoints (const void *arg1, const void *arg2)
 	return diff;
 }
 
-int STACK_ARGS compareteams (const void *arg1, const void *arg2)
+int compareteams (const void *arg1, const void *arg2)
 {
 	// Compare first by teams, then by frags, then by name.
 	player_t *p1 = *(player_t **)arg1;

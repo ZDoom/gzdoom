@@ -100,7 +100,7 @@ static IdMap DoomEdFromMapinfo;
 
 FDoomEdMap DoomEdMap;
 
-static int STACK_ARGS sortnums (const void *a, const void *b)
+static int sortnums (const void *a, const void *b)
 {
 	return (*(const FDoomEdMap::Pair**)a)->Key - (*(const FDoomEdMap::Pair**)b)->Key;
 }

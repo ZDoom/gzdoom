@@ -246,7 +246,7 @@ public:
 
 	// 2D Texture drawing
 	bool SetTextureParms(DrawParms *parms, FTexture *img, double x, double y) const;
-	void STACK_ARGS DrawTexture (FTexture *img, double x, double y, int tags, ...);
+	void DrawTexture (FTexture *img, double x, double y, int tags, ...);
 	void FillBorder (FTexture *img);	// Fills the border around a 4:3 part of the screen on non-4:3 displays
 	void VirtualToRealCoords(double &x, double &y, double &w, double &h, double vwidth, double vheight, bool vbottom=false, bool handleaspect=true) const;
 
@@ -258,8 +258,8 @@ public:
 #undef DrawText	// See WinUser.h for the definition of DrawText as a macro
 #endif
 	// 2D Text drawing
-	void STACK_ARGS DrawText (FFont *font, int normalcolor, int x, int y, const char *string, int tag_first, ...);
-	void STACK_ARGS DrawChar (FFont *font, int normalcolor, int x, int y, BYTE character, int tag_first, ...);
+	void DrawText (FFont *font, int normalcolor, int x, int y, const char *string, int tag_first, ...);
+	void DrawChar (FFont *font, int normalcolor, int x, int y, BYTE character, int tag_first, ...);
 
 protected:
 	BYTE *Buffer;

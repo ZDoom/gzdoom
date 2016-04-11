@@ -236,7 +236,7 @@ bool P_GetMidTexturePosition(const line_t *line, int sideno, double *ptextop, do
 	double textureheight = tex->GetHeight() / totalscale;
 	if (totalscale != 1. && !tex->bWorldPanning)
 	{ 
-		y_offset *= totalscale;
+		y_offset /= totalscale;
 	}
 
 	if(line->flags & ML_DONTPEGBOTTOM)

@@ -34,7 +34,7 @@ FWeaponSlots *PlayingKeyConf;
 TArray<PClassWeapon *> Weapons_ntoh;
 TMap<PClassWeapon *, int> Weapons_hton;
 
-static int STACK_ARGS ntoh_cmp(const void *a, const void *b);
+static int ntoh_cmp(const void *a, const void *b);
 
 IMPLEMENT_CLASS(PClassWeapon)
 
@@ -1725,7 +1725,7 @@ void P_SetupWeapons_ntohton()
 //
 //===========================================================================
 
-static int STACK_ARGS ntoh_cmp(const void *a, const void *b)
+static int ntoh_cmp(const void *a, const void *b)
 {
 	PClassWeapon *c1 = *(PClassWeapon **)a;
 	PClassWeapon *c2 = *(PClassWeapon **)b;

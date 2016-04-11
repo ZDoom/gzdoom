@@ -316,7 +316,7 @@ FResourceFile::~FResourceFile()
 	delete Reader;
 }
 
-int STACK_ARGS lumpcmp(const void * a, const void * b)
+int lumpcmp(const void * a, const void * b)
 {
 	FResourceLump * rec1 = (FResourceLump *)a;
 	FResourceLump * rec2 = (FResourceLump *)b;

@@ -379,7 +379,7 @@ static void DrawArmor(ABasicArmor * barmor, AHexenArmor * harmor, int x, int y)
 //---------------------------------------------------------------------------
 static TArray<PClassActor *> KeyTypes, UnassignedKeyTypes;
 
-static int STACK_ARGS ktcmp(const void * a, const void * b)
+static int ktcmp(const void * a, const void * b)
 {
 	AKey *key1 = (AKey*)GetDefaultByType ( *(PClassActor **)a );
 	AKey *key2 = (AKey*)GetDefaultByType ( *(PClassActor **)b );

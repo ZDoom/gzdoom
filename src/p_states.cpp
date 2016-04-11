@@ -451,7 +451,7 @@ FState *FStateDefinitions::FindState(const char * name)
 //
 //==========================================================================
 
-static int STACK_ARGS labelcmp(const void *a, const void *b)
+static int labelcmp(const void *a, const void *b)
 {
 	FStateLabel *A = (FStateLabel *)a;
 	FStateLabel *B = (FStateLabel *)b;

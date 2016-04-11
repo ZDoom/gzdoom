@@ -940,7 +940,7 @@ int FScanner::GetMessageLine()
 //
 //==========================================================================
 
-void STACK_ARGS FScanner::ScriptError (const char *message, ...)
+void FScanner::ScriptError (const char *message, ...)
 {
 	FString composed;
 
@@ -966,7 +966,7 @@ void STACK_ARGS FScanner::ScriptError (const char *message, ...)
 //
 //==========================================================================
 
-void STACK_ARGS FScanner::ScriptMessage (const char *message, ...)
+void FScanner::ScriptMessage (const char *message, ...)
 {
 	FString composed;
 
@@ -1038,7 +1038,7 @@ FScriptPosition &FScriptPosition::operator=(const FScriptPosition &other)
 //
 //==========================================================================
 
-void STACK_ARGS FScriptPosition::Message (int severity, const char *message, ...) const
+void FScriptPosition::Message (int severity, const char *message, ...) const
 {
 	FString composed;
 

@@ -64,8 +64,8 @@ FColorMatcher ColorMatcher;
 /* Current color blending values */
 int		BlendR, BlendG, BlendB, BlendA;
 
-static int STACK_ARGS sortforremap (const void *a, const void *b);
-static int STACK_ARGS sortforremap2 (const void *a, const void *b);
+static int sortforremap (const void *a, const void *b);
+static int sortforremap2 (const void *a, const void *b);
 
 /**************************/
 /* Gamma correction stuff */
@@ -222,7 +222,7 @@ void FPalette::MakeGoodRemap ()
 	// 256 entries are different. :-)
 }
 
-static int STACK_ARGS sortforremap (const void *a, const void *b)
+static int sortforremap (const void *a, const void *b)
 {
 	return (*(const DWORD *)a & 0xFFFFFF) - (*(const DWORD *)b & 0xFFFFFF);
 }
@@ -298,7 +298,7 @@ void FPalette::MakeRemap (const DWORD *colors, BYTE *remap, const BYTE *useful, 
 	}
 }
 
-static int STACK_ARGS sortforremap2 (const void *a, const void *b)
+static int sortforremap2 (const void *a, const void *b)
 {
 	const RemappingWork *ap = (const RemappingWork *)a;
 	const RemappingWork *bp = (const RemappingWork *)b;
@@ -384,7 +384,7 @@ void InitPalette ()
 	R_InitColormaps ();
 }
 
-extern "C" void STACK_ARGS DoBlending_MMX (const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a);
+extern "C" void DoBlending_MMX (const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a);
 extern void DoBlending_SSE2 (const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a);
 
 void DoBlending (const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a)

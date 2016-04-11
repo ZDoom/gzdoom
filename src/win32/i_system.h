@@ -132,8 +132,8 @@ void I_Quit (void);
 
 void I_Tactile (int on, int off, int total);
 
-void STACK_ARGS I_Error (const char *error, ...) GCCPRINTF(1,2);
-void STACK_ARGS I_FatalError (const char *error, ...) GCCPRINTF(1,2);
+void I_Error (const char *error, ...) GCCPRINTF(1,2);
+void I_FatalError (const char *error, ...) GCCPRINTF(1,2);
 
 void atterm (void (*func)(void));
 void popterm ();
@@ -144,6 +144,8 @@ bool I_SetCursor(FTexture *cursor);
 
 // Repaint the pre-game console
 void I_PaintConsole (void);
+
+void I_DebugPrint (const char *cp);
 
 // Print a console string
 void I_PrintStr (const char *cp);

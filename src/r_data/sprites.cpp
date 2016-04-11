@@ -499,7 +499,7 @@ static const char *skinsoundnames[NUMSKINSOUNDS][2] =
 };
 
 /*
-static int STACK_ARGS skinsorter (const void *a, const void *b)
+static int skinsorter (const void *a, const void *b)
 {
 	return stricmp (((FPlayerSkin *)a)->name, ((FPlayerSkin *)b)->name);
 }

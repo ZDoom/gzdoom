@@ -1709,13 +1709,13 @@ static drawseg_t **drawsegsorter;
 static int drawsegsortersize = 0;
 
 // Sort vissprites by leftmost column, left to right
-static int STACK_ARGS sv_comparex (const void *arg1, const void *arg2)
+static int sv_comparex (const void *arg1, const void *arg2)
 {
 	return (*(vissprite_t **)arg2)->x1 - (*(vissprite_t **)arg1)->x1;
 }
 
 // Sort drawsegs by rightmost column, left to right
-static int STACK_ARGS sd_comparex (const void *arg1, const void *arg2)
+static int sd_comparex (const void *arg1, const void *arg2)
 {
 	return (*(drawseg_t **)arg2)->x2 - (*(drawseg_t **)arg1)->x2;
 }

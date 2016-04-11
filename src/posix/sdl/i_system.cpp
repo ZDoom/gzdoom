@@ -179,7 +179,7 @@ bool gameisdead;
 void Mac_I_FatalError(const char* errortext);
 #endif
 
-void STACK_ARGS I_FatalError (const char *error, ...)
+void I_FatalError (const char *error, ...)
 {
     static bool alreadyThrown = false;
     gameisdead = true;
@@ -216,7 +216,7 @@ void STACK_ARGS I_FatalError (const char *error, ...)
     }
 }
 
-void STACK_ARGS I_Error (const char *error, ...)
+void I_Error (const char *error, ...)
 {
     va_list argptr;
     char errortext[MAX_ERRORTEXT];
@@ -229,6 +229,10 @@ void STACK_ARGS I_Error (const char *error, ...)
 }
 
 void I_SetIWADInfo ()
+{
+}
+
+void I_DebugPrint(const char *cp)
 {
 }
 

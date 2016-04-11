@@ -100,12 +100,6 @@ typedef TMap<int, PClassActor *> FClassMap;
 #endif
 
 
-#if defined(_MSC_VER) || defined(__WATCOMC__)
-#define STACK_ARGS __cdecl
-#else
-#define STACK_ARGS
-#endif
-
 #if defined(_MSC_VER)
 #define NOVTABLE __declspec(novtable)
 #else
@@ -149,11 +143,11 @@ enum
 
 
 // [RH] This gets used all over; define it here:
-int STACK_ARGS Printf (int printlevel, const char *, ...) GCCPRINTF(2,3);
-int STACK_ARGS Printf (const char *, ...) GCCPRINTF(1,2);
+int Printf (int printlevel, const char *, ...) GCCPRINTF(2,3);
+int Printf (const char *, ...) GCCPRINTF(1,2);
 
 // [RH] Same here:
-int STACK_ARGS DPrintf (const char *, ...) GCCPRINTF(1,2);
+int DPrintf (const char *, ...) GCCPRINTF(1,2);
 
 extern "C" int mysnprintf(char *buffer, size_t count, const char *format, ...) GCCPRINTF(3,4);
 extern "C" int myvsnprintf(char *buffer, size_t count, const char *format, va_list argptr) GCCFORMAT(3);

@@ -135,7 +135,7 @@ unsigned int FZipExploder::InitTable(TArray<HuffNode> &decoder, int numspots)
 	return start;
 }
 
-int STACK_ARGS FZipExploder::buildercmp(const void *a, const void *b)
+int FZipExploder::buildercmp(const void *a, const void *b)
 {
 	const TableBuilder *v1 = (const TableBuilder *)a;
 	const TableBuilder *v2 = (const TableBuilder *)b;

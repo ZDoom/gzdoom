@@ -773,7 +773,7 @@ static void CalcSectorSoundOrg(const DVector3 &listenpos, const sector_t *sec, i
 	if (!(i_compatflags & COMPATF_SECTORSOUNDS))
 	{
 		// Are we inside the sector? If yes, the closest point is the one we're on.
-		if (P_PointInSector(pos.X, pos.Y) == sec)
+		if (P_PointInSector(listenpos.X, listenpos.Y) == sec)
 		{
 			pos.X = (float)listenpos.X;
 			pos.Z = (float)listenpos.Y;

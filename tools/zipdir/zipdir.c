@@ -56,10 +56,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-#ifndef _WIN32
-#define __cdecl
-#endif
-
 #ifdef __GNUC__
 // With versions of GCC newer than 4.2, it appears it was determined that the
 // cost of an unaligned pointer on PPC was high enough to add padding to the
@@ -212,7 +208,7 @@ dir_tree_t *add_dir(const char *dirpath);
 #endif
 dir_tree_t *add_dirs(char **argv);
 int count_files(dir_tree_t *trees);
-int __cdecl sort_cmp(const void *a, const void *b);
+int sort_cmp(const void *a, const void *b);
 file_sorted_t *sort_files(dir_tree_t *trees, int num_files);
 void write_zip(const char *zipname, dir_tree_t *trees, int update);
 int append_to_zip(FILE *zip_file, file_sorted_t *file, FILE *ozip, BYTE *odir);
@@ -694,7 +690,7 @@ int count_files(dir_tree_t *trees)
 //
 //==========================================================================
 
-int __cdecl sort_cmp(const void *a, const void *b)
+int sort_cmp(const void *a, const void *b)
 {
 	const file_sorted_t *sort1 = (const file_sorted_t *)a;
 	const file_sorted_t *sort2 = (const file_sorted_t *)b;
@@ -1569,7 +1565,7 @@ int copy_zip_file(FILE *zip, file_entry_t *file, FILE *ozip, CentralDirectoryEnt
 //
 //==========================================================================
 
-int __cdecl main (int argc, char **argv)
+int main (int argc, char **argv)
 {
 	dir_tree_t *tree, *trees;
 	file_entry_t *file;

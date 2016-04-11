@@ -560,7 +560,7 @@ void ADynamicLight::CollectWithinRadius(const DVector3 &pos, subsector_t *subSec
 			if (seg->sidedef && seg->linedef && seg->linedef->validcount != ::validcount)
 			{
 				// light is in front of the seg
-				if ((pos.Y - seg->v1->fY()) * (seg->v2->fX() - seg->v1->fX()) + (seg->v1->fX() - pos.X * (seg->v2->fY() - seg->v1->fY())) <= 0)
+				if ((pos.Y - seg->v1->fY()) * (seg->v2->fX() - seg->v1->fX()) + (seg->v1->fX() - pos.X) * (seg->v2->fY() - seg->v1->fY()) <= 0)
 				{
 					seg->linedef->validcount = validcount;
 					touching_sides = AddLightNode(&seg->sidedef->lighthead, seg->sidedef, this, touching_sides);

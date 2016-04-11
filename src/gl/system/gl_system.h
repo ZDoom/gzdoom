@@ -84,7 +84,6 @@ typedef unsigned char 	byte;
 typedef float		FLOAT;
 template <typename T>
 inline T max( T a, T b) { return (((a)>(b)) ? (a) : (b)); }
-#define __cdecl
 #define _access(a,b)	access(a,b)
 #endif
 #ifndef _WIN32

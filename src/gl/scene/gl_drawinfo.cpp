@@ -547,7 +547,7 @@ inline int GLDrawList::CompareSprites(SortNode * a,SortNode * b)
 //
 //==========================================================================
 static GLDrawList * gd;
-int __cdecl CompareSprite(const void * a,const void * b)
+int CompareSprite(const void * a,const void * b)
 {
 	return gd->CompareSprites(*(SortNode**)a,*(SortNode**)b);
 }
@@ -838,7 +838,7 @@ void GLDrawList::DrawDecals()
 //==========================================================================
 static GLDrawList * sortinfo;
 
-static int __cdecl diwcmp (const void *a, const void *b)
+static int diwcmp (const void *a, const void *b)
 {
 	const GLDrawItem * di1 = (const GLDrawItem *)a;
 	GLWall * w1=&sortinfo->walls[di1->index];
@@ -850,7 +850,7 @@ static int __cdecl diwcmp (const void *a, const void *b)
 	return ((w1->flags & 3) - (w2->flags & 3));
 }
 
-static int __cdecl difcmp (const void *a, const void *b)
+static int difcmp (const void *a, const void *b)
 {
 	const GLDrawItem * di1 = (const GLDrawItem *)a;
 	GLFlat * w1=&sortinfo->flats[di1->index];

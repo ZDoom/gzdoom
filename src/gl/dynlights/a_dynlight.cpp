@@ -623,10 +623,6 @@ void ADynamicLight::CollectWithinRadius(const DVector3 &pos, subsector_t *subSec
 
 void ADynamicLight::LinkLight()
 {
-	if (X() == 1088 && Y() == 2832)
-	{
-		int a = 0;
-	}
 	// mark the old light nodes
 	FLightNode * node;
 	

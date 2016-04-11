@@ -227,7 +227,7 @@ protected:
 	FDInputJoystick *EnumDevices();
 
 	static BOOL CALLBACK EnumCallback(LPCDIDEVICEINSTANCE lpddi, LPVOID pvRef);
-	static int STACK_ARGS NameSort(const void *a, const void *b);
+	static int NameSort(const void *a, const void *b);
 	static bool IsXInputDevice(const GUID *guid);
 	static bool IsXInputDeviceFast(const GUID *guid);
 	static bool IsXInputDeviceSlow(const GUID *guid);

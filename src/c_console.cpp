@@ -581,7 +581,7 @@ int VPrintf (int printlevel, const char *format, va_list parms)
 	return PrintString (printlevel, outline.GetChars());
 }
 
-int STACK_ARGS Printf (int printlevel, const char *format, ...)
+int Printf (int printlevel, const char *format, ...)
 {
 	va_list argptr;
 	int count;
@@ -593,7 +593,7 @@ int STACK_ARGS Printf (int printlevel, const char *format, ...)
 	return count;
 }
 
-int STACK_ARGS Printf (const char *format, ...)
+int Printf (const char *format, ...)
 {
 	va_list argptr;
 	int count;
@@ -605,7 +605,7 @@ int STACK_ARGS Printf (const char *format, ...)
 	return count;
 }
 
-int STACK_ARGS DPrintf (const char *format, ...)
+int DPrintf (const char *format, ...)
 {
 	va_list argptr;
 	int count;

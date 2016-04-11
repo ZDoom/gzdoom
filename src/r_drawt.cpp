@@ -112,7 +112,7 @@ void rt_copy1col_c (int hx, int sx, int yl, int yh)
 }
 
 // Copies all four spans to the screen starting at sx.
-void STACK_ARGS rt_copy4cols_c (int sx, int yl, int yh)
+void rt_copy4cols_c (int sx, int yl, int yh)
 {
 	int *source;
 	int *dest;
@@ -180,7 +180,7 @@ void rt_map1col_c (int hx, int sx, int yl, int yh)
 }
 
 // Maps all four spans to the screen starting at sx.
-void STACK_ARGS rt_map4cols_c (int sx, int yl, int yh)
+void rt_map4cols_c (int sx, int yl, int yh)
 {
 	BYTE *colormap;
 	BYTE *source;
@@ -320,7 +320,7 @@ void rt_tlate1col (int hx, int sx, int yl, int yh)
 }
 
 // Translates all four spans to the screen starting at sx.
-void STACK_ARGS rt_tlate4cols (int sx, int yl, int yh)
+void rt_tlate4cols (int sx, int yl, int yh)
 {
 	rt_Translate4cols(dc_translation, yl, yh);
 	rt_map4cols(sx, yl, yh);
@@ -361,7 +361,7 @@ void rt_add1col (int hx, int sx, int yl, int yh)
 }
 
 // Adds all four spans to the screen starting at sx without clamping.
-void STACK_ARGS rt_add4cols_c (int sx, int yl, int yh)
+void rt_add4cols_c (int sx, int yl, int yh)
 {
 	BYTE *colormap;
 	BYTE *source;
@@ -424,7 +424,7 @@ void rt_tlateadd1col (int hx, int sx, int yl, int yh)
 }
 
 // Translates and adds all four spans to the screen starting at sx without clamping.
-void STACK_ARGS rt_tlateadd4cols (int sx, int yl, int yh)
+void rt_tlateadd4cols (int sx, int yl, int yh)
 {
 	rt_Translate4cols(dc_translation, yl, yh);
 	rt_add4cols(sx, yl, yh);
@@ -462,7 +462,7 @@ void rt_shaded1col (int hx, int sx, int yl, int yh)
 }
 
 // Shades all four spans to the screen starting at sx.
-void STACK_ARGS rt_shaded4cols_c (int sx, int yl, int yh)
+void rt_shaded4cols_c (int sx, int yl, int yh)
 {
 	DWORD *fgstart;
 	BYTE *colormap;
@@ -543,7 +543,7 @@ void rt_addclamp1col (int hx, int sx, int yl, int yh)
 }
 
 // Adds all four spans to the screen starting at sx with clamping.
-void STACK_ARGS rt_addclamp4cols_c (int sx, int yl, int yh)
+void rt_addclamp4cols_c (int sx, int yl, int yh)
 {
 	BYTE *colormap;
 	BYTE *source;
@@ -614,7 +614,7 @@ void rt_tlateaddclamp1col (int hx, int sx, int yl, int yh)
 }
 
 // Translates and adds all four spans to the screen starting at sx with clamping.
-void STACK_ARGS rt_tlateaddclamp4cols (int sx, int yl, int yh)
+void rt_tlateaddclamp4cols (int sx, int yl, int yh)
 {
 	rt_Translate4cols(dc_translation, yl, yh);
 	rt_addclamp4cols(sx, yl, yh);
@@ -656,7 +656,7 @@ void rt_subclamp1col (int hx, int sx, int yl, int yh)
 }
 
 // Subtracts all four spans to the screen starting at sx with clamping.
-void STACK_ARGS rt_subclamp4cols (int sx, int yl, int yh)
+void rt_subclamp4cols (int sx, int yl, int yh)
 {
 	BYTE *colormap;
 	BYTE *source;
@@ -723,7 +723,7 @@ void rt_tlatesubclamp1col (int hx, int sx, int yl, int yh)
 }
 
 // Translates and subtracts all four spans to the screen starting at sx with clamping.
-void STACK_ARGS rt_tlatesubclamp4cols (int sx, int yl, int yh)
+void rt_tlatesubclamp4cols (int sx, int yl, int yh)
 {
 	rt_Translate4cols(dc_translation, yl, yh);
 	rt_subclamp4cols(sx, yl, yh);
@@ -765,7 +765,7 @@ void rt_revsubclamp1col (int hx, int sx, int yl, int yh)
 }
 
 // Subtracts all four spans from the screen starting at sx with clamping.
-void STACK_ARGS rt_revsubclamp4cols (int sx, int yl, int yh)
+void rt_revsubclamp4cols (int sx, int yl, int yh)
 {
 	BYTE *colormap;
 	BYTE *source;
@@ -832,7 +832,7 @@ void rt_tlaterevsubclamp1col (int hx, int sx, int yl, int yh)
 }
 
 // Translates and subtracts all four spans from the screen starting at sx with clamping.
-void STACK_ARGS rt_tlaterevsubclamp4cols (int sx, int yl, int yh)
+void rt_tlaterevsubclamp4cols (int sx, int yl, int yh)
 {
 	rt_Translate4cols(dc_translation, yl, yh);
 	rt_revsubclamp4cols(sx, yl, yh);

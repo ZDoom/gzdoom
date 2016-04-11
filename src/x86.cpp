@@ -273,7 +273,7 @@ void DoBlending_MMX2(const PalEntry *from, PalEntry *to, int count, int r, int g
 #endif
 
 #ifdef X86_ASM
-extern "C" void STACK_ARGS DoBlending_MMX(const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a);
+extern "C" void DoBlending_MMX(const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a);
 #endif
 
 void DoBlending_SSE2(const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a)

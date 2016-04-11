@@ -540,7 +540,7 @@ void PClassPlayerPawn::DeriveData(PClass *newclass)
 	}
 }
 
-static int STACK_ARGS intcmp(const void *a, const void *b)
+static int intcmp(const void *a, const void *b)
 {
 	return *(const int *)a - *(const int *)b;
 }

@@ -31,7 +31,7 @@ class FZipExploder
 	unsigned char ReadBuf[256];
 	unsigned int bs, be;
 
-	static int STACK_ARGS buildercmp(const void *a, const void *b);
+	static int buildercmp(const void *a, const void *b);
 	void InsertCode(TArray<HuffNode> &decoder, unsigned int pos, int bits, unsigned short code, int len, unsigned char value);
 	unsigned int InitTable(TArray<HuffNode> &decoder, int numspots);
 	int BuildDecoder(TArray<HuffNode> &decoder, TableBuilder *values, int numvals);

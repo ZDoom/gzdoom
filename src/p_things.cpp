@@ -532,7 +532,7 @@ typedef TMap<int, MapinfoSpawnItem> SpawnMap;
 static SpawnMap SpawnablesFromMapinfo;
 static SpawnMap ConversationIDsFromMapinfo;
 
-static int STACK_ARGS SpawnableSort(const void *a, const void *b)
+static int SpawnableSort(const void *a, const void *b)
 {
 	return (*((FClassMap::Pair **)a))->Key - (*((FClassMap::Pair **)b))->Key;
 }

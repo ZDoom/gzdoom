@@ -106,7 +106,7 @@ static int PalFromRGB(uint32 rgb)
 	return LastPal;
 }
 
-void STACK_ARGS DCanvas::DrawTexture (FTexture *img, double x, double y, int tags_first, ...)
+void DCanvas::DrawTexture (FTexture *img, double x, double y, int tags_first, ...)
 {
 	va_list tags;
 	va_start(tags, tags_first);

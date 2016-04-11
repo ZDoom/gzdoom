@@ -199,7 +199,7 @@ void popterm ()
 //
 //==========================================================================
 
-static void STACK_ARGS call_terms (void)
+static void call_terms (void)
 {
 	while (NumTerms > 0)
 	{
@@ -208,7 +208,7 @@ static void STACK_ARGS call_terms (void)
 }
 
 #ifdef _MSC_VER
-static int STACK_ARGS NewFailure (size_t size)
+static int NewFailure (size_t size)
 {
 	I_FatalError ("Failed to allocate %d bytes from process heap", size);
 	return 0;

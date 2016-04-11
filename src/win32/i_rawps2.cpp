@@ -158,7 +158,7 @@ protected:
 
 	void DoRegister();
 	FRawPS2Controller *EnumDevices();
-	static int STACK_ARGS DeviceSort(const void *a, const void *b);
+	static int DeviceSort(const void *a, const void *b);
 };
 
 // Each entry is an offset to the corresponding data field in the

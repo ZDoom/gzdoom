@@ -80,7 +80,7 @@ void (*R_DrawSpanTranslucent)(void);
 void (*R_DrawSpanMaskedTranslucent)(void);
 void (*R_DrawSpanAddClamp)(void);
 void (*R_DrawSpanMaskedAddClamp)(void);
-void (STACK_ARGS *rt_map4cols)(int,int,int);
+void (*rt_map4cols)(int,int,int);
 
 //
 // R_DrawColumn
@@ -984,7 +984,7 @@ int 					dscount;
 
 #ifdef X86_ASM
 extern "C" void R_SetSpanSource_ASM (const BYTE *flat);
-extern "C" void STACK_ARGS R_SetSpanSize_ASM (int xbits, int ybits);
+extern "C" void R_SetSpanSize_ASM (int xbits, int ybits);
 extern "C" void R_SetSpanColormap_ASM (BYTE *colormap);
 extern "C" BYTE *ds_curcolormap, *ds_cursource, *ds_curtiltedsource;
 #endif
@@ -1493,7 +1493,7 @@ extern "C" void R_SetupDrawSlabC(const BYTE *colormap)
 	slabcolormap = colormap;
 }
 
-extern "C" void STACK_ARGS R_DrawSlabC(int dx, fixed_t v, int dy, fixed_t vi, const BYTE *vptr, BYTE *p)
+extern "C" void R_DrawSlabC(int dx, fixed_t v, int dy, fixed_t vi, const BYTE *vptr, BYTE *p)
 {
 	int x;
 	const BYTE *colormap = slabcolormap;
@@ -1574,53 +1574,53 @@ extern "C" void STACK_ARGS R_DrawSlabC(int dx, fixed_t v, int dy, fixed_t vi, co
 // wallscan stuff, in C
 
 #ifndef X86_ASM
-static DWORD STACK_ARGS vlinec1 ();
+static DWORD vlinec1 ();
 static int vlinebits;
 
-DWORD (STACK_ARGS *dovline1)() = vlinec1;
-DWORD (STACK_ARGS *doprevline1)() = vlinec1;
+DWORD (*dovline1)() = vlinec1;
+DWORD (*doprevline1)() = vlinec1;
 
 #ifdef X64_ASM
 extern "C" void vlinetallasm4();
 #define dovline4 vlinetallasm4
 extern "C" void setupvlinetallasm (int);
 #else
-static void STACK_ARGS vlinec4 ();
-void (STACK_ARGS *dovline4)() = vlinec4;
+static void vlinec4 ();
+void (*dovline4)() = vlinec4;
 #endif
 
-static DWORD STACK_ARGS mvlinec1();
-static void STACK_ARGS mvlinec4();
+static DWORD mvlinec1();
+static void mvlinec4();
 static int mvlinebits;
 
-DWORD (STACK_ARGS *domvline1)() = mvlinec1;
-void (STACK_ARGS *domvline4)() = mvlinec4;
+DWORD (*domvline1)() = mvlinec1;
+void (*domvline4)() = mvlinec4;
 
 #else
 
 extern "C"
 {
-DWORD STACK_ARGS vlineasm1 ();
-DWORD STACK_ARGS prevlineasm1 ();
-DWORD STACK_ARGS vlinetallasm1 ();
-DWORD STACK_ARGS prevlinetallasm1 ();
-void STACK_ARGS vlineasm4 ();
-void STACK_ARGS vlinetallasmathlon4 ();
-void STACK_ARGS vlinetallasm4 ();
-void STACK_ARGS setupvlineasm (int);
-void STACK_ARGS setupvlinetallasm (int);
+DWORD vlineasm1 ();
+DWORD prevlineasm1 ();
+DWORD vlinetallasm1 ();
+DWORD prevlinetallasm1 ();
+void vlineasm4 ();
+void vlinetallasmathlon4 ();
+void vlinetallasm4 ();
+void setupvlineasm (int);
+void setupvlinetallasm (int);
 
-DWORD STACK_ARGS mvlineasm1();
-void STACK_ARGS mvlineasm4();
-void STACK_ARGS setupmvlineasm (int);
+DWORD mvlineasm1();
+void mvlineasm4();
+void setupmvlineasm (int);
 }
 
-DWORD (STACK_ARGS *dovline1)() = vlinetallasm1;
-DWORD (STACK_ARGS *doprevline1)() = prevlinetallasm1;
-void (STACK_ARGS *dovline4)() = vlinetallasm4;
+DWORD (*dovline1)() = vlinetallasm1;
+DWORD (*doprevline1)() = prevlinetallasm1;
+void (*dovline4)() = vlinetallasm4;
 
-DWORD (STACK_ARGS *domvline1)() = mvlineasm1;
-void (STACK_ARGS *domvline4)() = mvlineasm4;
+DWORD (*domvline1)() = mvlineasm1;
+void (*domvline4)() = mvlineasm4;
 #endif
 
 void setupvline (int fracbits)
@@ -1660,7 +1660,7 @@ void setupvline (int fracbits)
 }
 
 #if !defined(X86_ASM)
-DWORD STACK_ARGS vlinec1 ()
+DWORD vlinec1 ()
 {
 	DWORD fracstep = dc_iscale;
 	DWORD frac = dc_texturefrac;
@@ -1681,7 +1681,7 @@ DWORD STACK_ARGS vlinec1 ()
 	return frac;
 }
 
-void STACK_ARGS vlinec4 ()
+void vlinec4 ()
 {
 	BYTE *dest = dc_dest;
 	int count = dc_count;
@@ -1711,7 +1711,7 @@ void setupmvline (int fracbits)
 }
 
 #if !defined(X86_ASM)
-DWORD STACK_ARGS mvlinec1 ()
+DWORD mvlinec1 ()
 {
 	DWORD fracstep = dc_iscale;
 	DWORD frac = dc_texturefrac;
@@ -1736,7 +1736,7 @@ DWORD STACK_ARGS mvlinec1 ()
 	return frac;
 }
 
-void STACK_ARGS mvlinec4 ()
+void mvlinec4 ()
 {
 	BYTE *dest = dc_dest;
 	int count = dc_count;

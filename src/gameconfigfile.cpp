@@ -39,13 +39,6 @@
 #include <CoreServices/CoreServices.h>
 #endif
 
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-extern HWND Window;
-#define USE_WINDOWS_DWORD
-#endif
-
 #include "doomdef.h"
 #include "gameconfigfile.h"
 #include "c_cvars.h"

@@ -1056,6 +1056,7 @@ static void P_SetupSectorDamage(sector_t *sector, int damage, int interval, int 
 // Sets up everything derived from 'sector->special' for one sector
 // ('fromload' is necessary to allow conversion upon savegame load.)
 //
+void P_SpawnLights(sector_t *sector);
 
 void P_InitSectorSpecial(sector_t *sector, int special)
 {
@@ -1089,31 +1090,10 @@ void P_InitSectorSpecial(sector_t *sector, int special)
 
 	// [RH] Normal DOOM special or BOOM specialized?
 	bool keepspecial = false;
+	P_SpawnLights(sector);
 	switch (sector->special)
 	{
-	case Light_Phased:
-		new DPhased (sector, 48, 63 - (sector->lightlevel & 63));
-		break;
-
-		// [RH] Hexen-like phased lighting
-	case LightSequenceStart:
-		new DPhased (sector);
-		break;
-
-	case dLight_Flicker:
-		new DLightFlash (sector);
-		break;
-
-	case dLight_StrobeFast:
-		new DStrobe (sector, STROBEBRIGHT, FASTDARK, false);
-		break;
-			
-	case dLight_StrobeSlow:
-		new DStrobe (sector, STROBEBRIGHT, SLOWDARK, false);
-		break;
-
 	case dLight_Strobe_Hurt:
-		new DStrobe (sector, STROBEBRIGHT, FASTDARK, false);
 		P_SetupSectorDamage(sector, 20, 32, 5, NAME_Slime, 0);
 		break;
 
@@ -1125,24 +1105,12 @@ void P_InitSectorSpecial(sector_t *sector, int special)
 		P_SetupSectorDamage(sector, 5, 32, 0, NAME_Slime, 0);
 		break;
 
-	case dLight_Glow:
-		new DGlow (sector);
-		break;
-			
 	case dSector_DoorCloseIn30:
 		new DDoor(sector, DDoor::doorWaitClose, 2, 0, 0, 30 * TICRATE);
 		break;
 			
 	case dDamage_End:
 		P_SetupSectorDamage(sector, 20, 32, 256, NAME_None, SECF_ENDGODMODE|SECF_ENDLEVEL);
-		break;
-
-	case dLight_StrobeSlowSync:
-		new DStrobe (sector, STROBEBRIGHT, SLOWDARK, true);
-		break;
-
-	case dLight_StrobeFastSync:
-		new DStrobe (sector, STROBEBRIGHT, FASTDARK, true);
 		break;
 
 	case dSector_DoorRaiseIn5Mins:
@@ -1159,10 +1127,6 @@ void P_InitSectorSpecial(sector_t *sector, int special)
 		P_SetupSectorDamage(sector, 20, 32, 5, NAME_Slime, 0);
 		break;
 
-	case dLight_FireFlicker:
-		new DFireFlicker (sector);
-		break;
-
 	case dDamage_LavaWimpy:
 		P_SetupSectorDamage(sector, 5, 32, 256, NAME_Fire, SECF_DMGTERRAINFX);
 		break;
@@ -1173,7 +1137,6 @@ void P_InitSectorSpecial(sector_t *sector, int special)
 
 	case dScroll_EastLavaDamage:
 		P_SetupSectorDamage(sector, 5, 32, 256, NAME_Fire, SECF_DMGTERRAINFX);
-		new DStrobe(sector, STROBEBRIGHT, FASTDARK, false);
 		P_CreateScroller(EScroll::sc_floor, -4., 0, -1, int(sector - sectors), 0);
 		keepspecial = true;
 		break;
@@ -1184,7 +1147,6 @@ void P_InitSectorSpecial(sector_t *sector, int special)
 
 	case sLight_Strobe_Hurt:
 		P_SetupSectorDamage(sector, 5, 32, 0, NAME_Slime, 0);
-		new DStrobe (sector, STROBEBRIGHT, FASTDARK, false);
 		break;
 
 	case sDamage_Hellslime:

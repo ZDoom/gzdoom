@@ -663,14 +663,14 @@ void D_DoServerInfoChange (BYTE **stream, bool singlebit)
 	}
 }
 
-static int STACK_ARGS userinfosortfunc(const void *a, const void *b)
+static int userinfosortfunc(const void *a, const void *b)
 {
 	TMap<FName, FBaseCVar *>::ConstPair *pair1 = *(TMap<FName, FBaseCVar *>::ConstPair **)a;
 	TMap<FName, FBaseCVar *>::ConstPair *pair2 = *(TMap<FName, FBaseCVar *>::ConstPair **)b;
 	return stricmp(pair1->Key.GetChars(), pair2->Key.GetChars());
 }
 
-static int STACK_ARGS namesortfunc(const void *a, const void *b)
+static int namesortfunc(const void *a, const void *b)
 {
 	FName *name1 = (FName *)a;
 	FName *name2 = (FName *)b;

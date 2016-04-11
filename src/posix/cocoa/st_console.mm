@@ -363,6 +363,15 @@ void FConsoleWindow::SetTitleText()
 		textViewFrame.size.width,
 		TITLE_TEXT_HEIGHT);
 
+	// Temporary solution for the same foreground and background colors
+	// It's used in graphical startup screen, with Hexen style in particular
+	// Native OS X backend doesn't implement this yet
+
+	if (DoomStartupInfo.FgColor == DoomStartupInfo.BkColor)
+	{
+		DoomStartupInfo.FgColor = ~DoomStartupInfo.FgColor;
+	}
+
 	NSTextField* titleText = [[NSTextField alloc] initWithFrame:titleTextRect];
 	[titleText setStringValue:[NSString stringWithUTF8String:DoomStartupInfo.Name]];
 	[titleText setAlignment:NSCenterTextAlignment];

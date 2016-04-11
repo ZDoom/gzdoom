@@ -1259,7 +1259,7 @@ void FMaskCVar::DoSet (UCVarValue value, ECVarType type)
 
 
 ////////////////////////////////////////////////////////////////////////
-static int STACK_ARGS sortcvars (const void *a, const void *b)
+static int sortcvars (const void *a, const void *b)
 {
 	return strcmp (((*(FBaseCVar **)a))->GetName(), ((*(FBaseCVar **)b))->GetName());
 }

@@ -487,7 +487,7 @@ static void GetSideVertices(int sdnum, DVector2 *v1, DVector2 *v2)
 	}
 }
 
-static int STACK_ARGS segcmp(const void *a, const void *b)
+static int segcmp(const void *a, const void *b)
 {
 	seg_t *A = *(seg_t**)a;
 	seg_t *B = *(seg_t**)b;

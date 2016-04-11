@@ -117,7 +117,7 @@ extern void 			(*spanfunc) (void);
 extern void (*hcolfunc_pre) (void);
 extern void (*hcolfunc_post1) (int hx, int sx, int yl, int yh);
 extern void (*hcolfunc_post2) (int hx, int sx, int yl, int yh);
-extern void (STACK_ARGS *hcolfunc_post4) (int sx, int yl, int yh);
+extern void (*hcolfunc_post4) (int sx, int yl, int yh);
 
 
 void R_InitTextureMapping ();

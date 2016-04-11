@@ -299,7 +299,7 @@ private:
 	void PushConnectingGLSeg (int subsector, TArray<glseg_t> &segs, vertex_t *v1, vertex_t *v2);
 	int OutputDegenerateSubsector (TArray<glseg_t> &segs, int subsector, bool bForward, double lastdot, FPrivSeg *&prev, vertex_t *outVerts);
 
-	static int STACK_ARGS SortSegs (const void *a, const void *b);
+	static int SortSegs (const void *a, const void *b);
 
 	double InterceptVector (const node_t &splitter, const FPrivSeg &seg);
 

@@ -589,7 +589,7 @@ void P_DrawSplash2 (int count, const DVector3 &pos, DAngle angle, int updown, in
 
 	zvel = -1./512.;
 	zspread = updown ? -6000 / 65536. : 6000 / 65536.;
-	zadd = (updown == 2) ? 128 : 0;
+	zadd = (updown == 2) ? -128 : 0;
 
 	for (; count; count--)
 	{
@@ -621,7 +621,7 @@ void P_DrawSplash2 (int count, const DVector3 &pos, DAngle angle, int updown, in
 	}
 }
 
-void P_DrawRailTrail(AActor *source, const DVector3 &start, const DVector3 &end, int color1, int color2, double maxdiff_d, int flags, PClassActor *spawnclass, DAngle angle, int duration, double sparsity, double drift, int SpiralOffset)
+void P_DrawRailTrail(AActor *source, const DVector3 &start, TArray<SPortalHit> &portalhits, const DVector3 &end, int color1, int color2, double maxdiff_d, int flags, PClassActor *spawnclass, DAngle angle, int duration, double sparsity, double drift, int SpiralOffset)
 {
 	double length, lengthsquared;
 	int steps, i;

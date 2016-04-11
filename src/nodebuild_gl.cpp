@@ -40,7 +40,7 @@
 #include "doomtype.h"
 #include "nodebuild.h"
 
-static inline void STACK_ARGS Warn (const char *format, ...)
+static inline void Warn (const char *format, ...)
 {
 }
 

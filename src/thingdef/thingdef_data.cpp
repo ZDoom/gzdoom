@@ -557,17 +557,17 @@ PFunction *FindGlobalActionFunction(const char *name)
 //
 //==========================================================================
 
-static int STACK_ARGS flagcmp (const void * a, const void * b)
+static int flagcmp (const void * a, const void * b)
 {
 	return stricmp( ((FFlagDef*)a)->name, ((FFlagDef*)b)->name);
 }
 
-static int STACK_ARGS propcmp(const void * a, const void * b)
+static int propcmp(const void * a, const void * b)
 {
 	return stricmp( (*(FPropertyInfo**)a)->name, (*(FPropertyInfo**)b)->name);
 }
 
-static int STACK_ARGS funccmp(const void * a, const void * b)
+static int funccmp(const void * a, const void * b)
 {
 	return stricmp( ((AFuncDesc*)a)->Name, ((AFuncDesc*)b)->Name);
 }

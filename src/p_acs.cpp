@@ -8637,8 +8637,11 @@ scriptwait:
 					else
 					{
 						item = activator->GiveInventoryType (static_cast<PClassAmmo *>(type));
-						item->MaxAmount = STACK(1);
-						item->Amount = 0;
+						if (item != NULL)
+						{
+							item->MaxAmount = STACK(1);
+							item->Amount = 0;
+						}
 					}
 				}
 			}

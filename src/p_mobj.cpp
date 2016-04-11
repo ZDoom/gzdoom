@@ -5049,15 +5049,13 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 // P_SpawnPuff
 //
 
-AActor *P_SpawnPuff (AActor *source, PClassActor *pufftype, const DVector3 &pos, DAngle hitdir, DAngle particledir, int updown, int flags, AActor *vict)
+AActor *P_SpawnPuff (AActor *source, PClassActor *pufftype, const DVector3 &pos1, DAngle hitdir, DAngle particledir, int updown, int flags, AActor *vict)
 {
 	AActor *puff;
-	double z = 0;
-	
-	if (!(flags & PF_NORANDOMZ))
-		z = pr_spawnpuff.Random2() / 64.;
+	DVector3 pos = pos1;
 
-	puff = Spawn(pufftype, pos + DVector3(0, 0, z), ALLOW_REPLACE);
+	if (!(flags & PF_NORANDOMZ)) pos.Z += pr_spawnpuff.Random2() / 64.;
+	puff = Spawn(pufftype, pos, ALLOW_REPLACE);
 	if (puff == NULL) return NULL;
 
 	if ((puff->flags4 & MF4_RANDOMIZE) && puff->tics > 0)
@@ -5275,13 +5273,14 @@ void P_BloodSplatter2 (const DVector3 &pos, AActor *originator, DAngle hitangle)
 	if (bloodcls != NULL && !(GetDefaultByType(bloodcls)->flags4 & MF4_ALLOWPARTICLES))
 		bloodtype = 0;
 
+	DVector2 add;
+	add.X = (pr_splat() - 128) / 32.;
+	add.Y = (pr_splat() - 128) / 32.;
+
 	if (bloodcls != NULL)
 	{
 		AActor *mo;
 
-		DVector2 add;
-		add.X = (pr_splat()-128) / 32.;
-		add.Y = (pr_splat()-128) / 32.;
 
 		mo = Spawn (bloodcls, pos + add, NO_REPLACE); // GetBloodType already performed the replacement
 		mo->target = originator;
@@ -5296,7 +5295,7 @@ void P_BloodSplatter2 (const DVector3 &pos, AActor *originator, DAngle hitangle)
 	}
 	if (bloodtype >= 1)
 	{
-		P_DrawSplash2(40, pos, hitangle - 180., 2, bloodcolor);
+		P_DrawSplash2(40, pos + add, hitangle - 180., 2, bloodcolor);
 	}
 }
 

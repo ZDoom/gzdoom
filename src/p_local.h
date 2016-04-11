@@ -186,7 +186,12 @@ enum WARPF
 	WARPF_COPYPITCH			= 0x8000,
 };
 
-
+enum PCM
+{
+	PCM_DROPOFF =		1,
+	PCM_NOACTORS =		1 << 1,
+	PCM_NOLINES =		1 << 2,
+};
 
 
 AActor *P_BlockmapSearch (AActor *mo, int distance, AActor *(*check)(AActor*, int, void *), void *params = NULL);
@@ -221,7 +226,7 @@ void	P_FakeZMovement (AActor *mo);
 bool	P_TryMove(AActor* thing, const DVector2 &pos, int dropoff, const secplane_t * onfloor, FCheckPosition &tm, bool missileCheck = false);
 bool	P_TryMove(AActor* thing, const DVector2 &pos, int dropoff, const secplane_t * onfloor = NULL);
 
-bool	P_CheckMove(AActor *thing, const DVector2 &pos, bool dropoff = false);
+bool	P_CheckMove(AActor *thing, const DVector2 &pos, int flags = 0);
 void	P_ApplyTorque(AActor *mo);
 
 bool	P_TeleportMove(AActor* thing, const DVector3 &pos, bool telefrag, bool modifyactor = true);	// [RH] Added z and telefrag parameters

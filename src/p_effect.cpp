@@ -589,7 +589,7 @@ void P_DrawSplash2 (int count, const DVector3 &pos, DAngle angle, int updown, in
 
 	zvel = -1./512.;
 	zspread = updown ? -6000 / 65536. : 6000 / 65536.;
-	zadd = (updown == 2) ? 128 : 0;
+	zadd = (updown == 2) ? -128 : 0;
 
 	for (; count; count--)
 	{

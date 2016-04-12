@@ -1165,7 +1165,7 @@ void FMultiPatchTexture::ParsePatch(FScanner &sc, TexPart & part, bool silent, i
 			else if (sc.Compare("alpha"))
 			{
 				sc.MustGetFloat();
-				part.Alpha = clamp<blend_t>(int(sc.Float / BLENDUNIT), 0, BLENDUNIT);
+				part.Alpha = clamp<blend_t>(int(sc.Float * BLENDUNIT), 0, BLENDUNIT);
 				// bComplex is not set because it is only needed when the style is not OP_COPY.
 			}
 			else if (sc.Compare("style"))

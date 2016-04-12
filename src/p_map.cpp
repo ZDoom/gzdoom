@@ -5002,7 +5002,7 @@ bool P_UsePuzzleItem(AActor *PuzzleItemUser, int PuzzleItemType)
 	start = PuzzleItemUser->GetPortalTransition(PuzzleItemUser->Height / 2);
 	end = PuzzleItemUser->Angles.Yaw.ToVector(usedist);
 
-	FPathTraverse it(start.X, start.Y, end.X, end.Y, PT_ADDLINES | PT_ADDTHINGS);
+	FPathTraverse it(start.X, start.Y, end.X, end.Y, PT_DELTA | PT_ADDLINES | PT_ADDTHINGS);
 	intercept_t *in;
 
 	while ((in = it.Next()))

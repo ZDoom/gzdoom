@@ -542,7 +542,7 @@ static DWORD WINAPI WriteMiniDumpInAnotherThread (LPVOID lpParam)
 //
 //==========================================================================
 
-void __cdecl Writef (HANDLE file, const char *format, ...)
+void Writef (HANDLE file, const char *format, ...)
 {
 	char buffer[1024];
 	va_list args;

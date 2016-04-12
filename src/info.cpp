@@ -296,6 +296,7 @@ void PClassActor::DeriveData(PClass *newclass)
 	newa->BloodType = BloodType;
 	newa->BloodType2 = BloodType2;
 	newa->BloodType3 = BloodType3;
+	newa->distancecheck = distancecheck;
 
 	newa->DropItems = DropItems;
 

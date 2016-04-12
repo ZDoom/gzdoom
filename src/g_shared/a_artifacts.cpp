@@ -1629,7 +1629,7 @@ void APowerDamage::ModifyDamage(int damage, FName damageType, int &newdamage, bo
 		DmgFactors *df = GetClass()->DamageFactors;
 		if (df != NULL && df->CountUsed() != 0)
 		{
-			newdam = MIN(1, df->Apply(damageType, damage));// don't allow zero damage as result of an underflow
+			newdam = MAX(1, df->Apply(damageType, damage));// don't allow zero damage as result of an underflow
 		}
 		else
 		{

@@ -339,6 +339,17 @@ static inline void RenderThings(subsector_t * sub, sector_t * sector)
 		// Handle all things in sector.
 		for (AActor * thing = sec->thinglist; thing; thing = thing->snext)
 		{
+			FIntCVar *cvar = thing->GetClass()->distancecheck;
+			if (cvar != NULL && *cvar >= 0)
+			{
+				double dist = thing->Distance2DSquared(camera);
+				double check = (double)**cvar;
+				if (dist >= check * check)
+				{
+					continue;
+				}
+			}
+
 			GLRenderer->ProcessSprite(thing, sector);
 		}
 	}

@@ -53,6 +53,7 @@ struct Baggage;
 class FScanner;
 struct FActorInfo;
 class FArchive;
+class FIntCVar;
 
 // Sprites that are fixed in position because they can have special meanings.
 enum
@@ -259,6 +260,7 @@ public:
 
 	DDropItem *DropItems;
 	FString SourceLumpName;
+	FIntCVar *distancecheck;
 
 	// Old Decorate compatibility stuff
 	bool DontHurtShooter;

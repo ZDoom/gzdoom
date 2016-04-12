@@ -1246,9 +1246,20 @@ void R_AddSprites (sector_t *sec, int lightlevel, int fakeside)
 	// Handle all things in sector.
 	for (thing = sec->thinglist; thing; thing = thing->snext)
 	{
+		FIntCVar *cvar = thing->GetClass()->distancecheck;
+		if (cvar != NULL && *cvar >= 0)
+		{
+			double dist = thing->Distance2DSquared(camera);
+			double check = (double)**cvar;
+			if (dist >= check * check)
+			{
+				continue;
+			}
+		}
+
 		// find fake level
-		for(int i = 0; i < (int)frontsector->e->XFloor.ffloors.Size(); i++) {
-			rover = frontsector->e->XFloor.ffloors[i];
+		for(auto rover : frontsector->e->XFloor.ffloors) 
+		{
 			if(!(rover->flags & FF_EXISTS) || !(rover->flags & FF_RENDERPLANES)) continue;
 			if(!(rover->flags & FF_SOLID) || rover->alpha != 255) continue;
 			if(!fakefloor)

@@ -804,6 +804,12 @@ public:
 		return bloodcls;
 	}
 
+	double Distance2DSquared(AActor *other, bool absolute = false)
+	{
+		DVector2 otherpos = absolute ? other->Pos() : other->PosRelative(this);
+		return (Pos().XY() - otherpos).LengthSquared();
+	}
+
 	double Distance2D(AActor *other, bool absolute = false)
 	{
 		DVector2 otherpos = absolute ? other->Pos() : other->PosRelative(this);

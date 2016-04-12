@@ -361,7 +361,7 @@ void ADynamicLight::UpdateLocation()
 		// The radius being used here is always the maximum possible with the
 		// current settings. This avoids constant relinking of flickering lights
 
-		if (lighttype == FlickerLight || lighttype == RandomFlickerLight)
+		if (lighttype == FlickerLight || lighttype == RandomFlickerLight || lighttype == PulseLight)
 		{
 			intensity = float(MAX(m_intensity[0], m_intensity[1]));
 		}

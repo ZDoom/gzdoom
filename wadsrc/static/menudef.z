@@ -1,193 +1,192 @@
 OptionValue "SpriteclipModes"
 {
-	0, "Never"
-	1, "Smart"
-	2, "Always"
-	3, "Smarter"
+	0, "$OPTVAL_NEVER"
+	1, "$OPTVAL_SMART"
+	2, "$OPTVAL_ALWAYS"
+	3, "$OPTVAL_SMARTER"
 }
 
 OptionValue "EnhancedStealth"
 {
-	0, "Never"
-	1, "Infrared only"
-	2, "Infrared and torch"
-	3, "Any fixed colormap"
+	0, "$OPTVAL_NEVER"
+	1, "$OPTVAL_INFRAREDONLY"
+	2, "$OPTVAL_INFRAREDANDTORCH"
+	3, "$OPTVAL_ANYFIXEDCOLORMAP"
 }
 
 OptionValue "FilterModes"
 {
-	0, "None"
-	1, "None (nearest mipmap)"
-	5, "None (linear mipmap)"
-	2, "Linear"
-	3, "Bilinear"
-	4, "Trilinear"
+	0, "$OPTVAL_NONE"
+	1, "$OPTVAL_NONENEARESTMIPMAP"
+	5, "$OPTVAL_NONELINEARMIPMAP"
+	2, "$OPTVAL_LINEAR"
+	3, "$OPTVAL_BILINEAR"
+	4, "$OPTVAL_TRILINEAR"
 }
 
 OptionValue "TextureFormats"
 {
-	0, "RGBA8"
-	1, "RGB5_A1"
-	2, "RGBA4"
-	3, "RGBA2"
+	0, "$OPTVAL_RGBA8"
+	1, "$OPTVAL_RGB5A1"
+	2, "$OPTVAL_RGBA4"
+	3, "$OPTVAL_RGBA2"
 	// [BB] Added modes for texture compression.
-	4, "COMPR_RGBA"
-	5, "S3TC_DXT1"
-	6, "S3TC_DXT3"
-	7, "S3TC_DXT5"
+	4, "$OPTVAL_COMPRRGBA"
+	5, "$OPTVAL_S3TCDXT1"
+	6, "$OPTVAL_S3TCDXT3"
+	7, "$OPTVAL_S3TCDXT5"
 }
 
 OptionValue "Anisotropy"
 {
-	1, "Off"
-	2, "2x"
-	4, "4x"
-	8, "8x"
-	16, "16x"
+	1, "$OPTVAL_OFF"
+	2, "$OPTVAL_2X"
+	4, "$OPTVAL_4X"
+	8, "$OPTVAL_8X"
+	16, "$OPTVAL_16X"
 }
 
 OptionValue "Colormaps"
 {
-	0, "Use as palette"
-	1, "Blend"
+	0, "$OPTVAL_USEASPALETTE"
+	1, "$OPTVAL_BLEND"
 }
 
 OptionValue "LightingModes"
 {
-	0, "Standard"
-	1, "Bright"
-	2, "Doom"
-	3, "Dark"
-	4, "Legacy"
-	8, "Software"
+	0, "$OPTVAL_STANDARD"
+	1, "$OPTVAL_BRIGHT"
+	2, "$OPTVAL_DOOM"
+	3, "$OPTVAL_DARK"
+	4, "$OPTVAL_LEGACY"
+	8, "$OPTVAL_SOFTWARE"
 }
 
 OptionValue "Precision"
 {
-	0, "Speed"
-	1, "Quality"
+	0, "$OPTVAL_SPEED"
+	1, "$OPTVAL_QUALITY"
 }
 
 
 OptionValue "Hz"
 {
-	0, "Optimal"
-	60, "60"
-	70, "70"
-	72, "72"
-	75, "75"
-	85, "85"
-	100, "100"
+	0, "$OPTVAL_OPTIMAL"
+	60, "$OPTVAL_60"
+	70, "$OPTVAL_70"
+	72, "$OPTVAL_72"
+	75, "$OPTVAL_75"
+	85, "$OPTVAL_85"
+	100, "$OPTVAL_100"
 }
 
 OptionValue "BillboardModes"
 {
-	0, "Y Axis"
-	1, "X/Y Axis"
+	0, "$OPTVAL_YAXIS"
+	1, "$OPTVAL_XYAXIS"
 }
 
 
 OptionValue "Particles"
 {
-	0, "Square"
-	1, "Round"
-	2, "Smooth"
+	0, "$OPTVAL_SQUARE"
+	1, "$OPTVAL_ROUND"
+	2, "$OPTVAL_SMOOTH"
 }
 
 OptionValue "HqResizeModes"
 {
-   0, "Off"
-   1, "Scale2x"
-   2, "Scale3x"
-   3, "Scale4x"
-   4, "hq2x"
-   5, "hq3x"
-   6, "hq4x"
-   7, "hq2x MMX"
-   8, "hq3x MMX"
-   9, "hq4x MMX"
+   0, "$OPTVAL_OFF"
+   1, "$OPTVAL_SCALE2X"
+   2, "$OPTVAL_SCALE3X"
+   3, "$OPTVAL_SCALE4X"
+   4, "$OPTVAL_HQ2X"
+   5, "$OPTVAL_HQ3X"
+   6, "$OPTVAL_HQ4X"
+   7, "$OPTVAL_HQ2XMMX"
+   8, "$OPTVAL_HQ3XMMX"
+   9, "$OPTVAL_HQ4XMMX"
 }
 
 OptionValue "FogMode"
 {
-	0, "Off"
-	1, "Standard"
-	2, "Radial"
+	0, "$OPTVAL_OFF"
+	1, "$OPTVAL_STANDARD"
+	2, "$OPTVAL_RADIAL"
 }
 
 OptionValue "FuzzStyle"
 {
-	0, "Shadow"
-	1, "Pixel fuzz"
-	2, "Smooth fuzz"
-	3, "Swirly fuzz"
-	4, "Translucent fuzz"
-	6, "Noise"
-	7, "Smooth Noise"
-	//5, "Jagged fuzz" I can't see any difference between this and 4 so it's disabled for now.
+	0, "$OPTVAL_SHADOW"
+	1, "$OPTVAL_PIXELFUZZ"
+	2, "$OPTVAL_SMOOTHFUZZ"
+	3, "$OPTVAL_SWIRLYFUZZ"
+	4, "$OPTVAL_TRANSLUCENTFUZZ"
+	6, "$OPTVAL_NOISE"
+	7, "$OPTVAL_SMOOTHNOISE"
+	//5, "$OPTVAL_JAGGEDFUZZ" I can't see any difference between this and 4 so it's disabled for now.
 }
 
 OptionValue VRMode
 {
-	0, "Normal"
-	1, "Green/Magenta"
-	2, "Red/Cyan"
-	9, "Amber/Blue"
-	5, "Left Eye"
-	6, "Right Eye"
-	7, "Quad-buffered"
+	0, "$OPTVAL_NORMAL"
+	1, "$OPTVAL_GREENMAGENTA"
+	2, "$OPTVAL_REDCYAN"
+	9, "$OPTVAL_AMBERBLUE"
+	5, "$OPTVAL_LEFTEYE"
+	6, "$OPTVAL_RIGHTEYE"
+	7, "$OPTVAL_QUADBUFFERED"
 }
 
 OptionMenu "GLTextureGLOptions"
 {
-	Title "TEXTURE OPTIONS"
-	Option "Textures enabled",			gl_texture,						"YesNo"
-	Option "Texture Filter mode",		gl_texture_filter,				"FilterModes"
-	Option "Anisotropic filter",		gl_texture_filter_anisotropic,	"Anisotropy"
-	Option "Texture Format",			gl_texture_format,				"TextureFormats"
-	Option "Enable hires textures",		gl_texture_usehires,			"YesNo"
-	Option "High Quality Resize mode",	gl_texture_hqresize,			"HqResizeModes"
-	Option "Resize textures",			gl_texture_hqresize_textures,	"OnOff"
-	Option "Resize sprites",			gl_texture_hqresize_sprites,	"OnOff"
-	Option "Resize fonts",				gl_texture_hqresize_fonts,		"OnOff"
-	Option "Precache GL textures",		gl_precache,					"YesNo"
-	Option "Camera textures offscreen",	gl_usefb,						"OnOff"
-	Option "Trim sprite edges",			gl_trimsprites,					"OnOff"
-	Option "Sort draw lists by texture", gl_sort_textures,				"YesNo"
+	Title "$GLTEXMNU_TITLE"
+	Option "$GLTEXMNU_TEXENABLED",		gl_texture,						"YesNo"
+	Option "$GLTEXMNU_TEXFILTER",		gl_texture_filter,				"FilterModes"
+	Option "$GLTEXMNU_ANISOTROPIC",		gl_texture_filter_anisotropic,	"Anisotropy"
+	Option "$GLTEXMNU_TEXFORMAT",		gl_texture_format,				"TextureFormats"
+	Option "$GLTEXMNU_ENABLEHIRES",		gl_texture_usehires,			"YesNo"
+	Option "$GLTEXMNU_HQRESIZE",		gl_texture_hqresize,			"HqResizeModes"
+	Option "$GLTEXMNU_RESIZETEX",		gl_texture_hqresize_textures,	"OnOff"
+	Option "$GLTEXMNU_RESIZESPR",		gl_texture_hqresize_sprites,	"OnOff"
+	Option "$GLTEXMNU_RESIZEFNT",		gl_texture_hqresize_fonts,		"OnOff"
+	Option "$GLTEXMNU_PRECACHETEX",		gl_precache,					"YesNo"
+	Option "$GLTEXMNU_CAMTEXOFFSCR",	gl_usefb,						"OnOff"
+	Option "$GLTEXMNU_TRIMSPREDGE",		gl_trimsprites,					"OnOff"
+	Option "$GLTEXMNU_SORTDRAWLIST", 	gl_sort_textures,				"YesNo"
 }
 
 OptionMenu "GLLightOptions"
 {
-	Title "DYNAMIC LIGHTS"
-	Option "Dynamic Lights enabled",	gl_lights,						"YesNo"
-	Option "Enable light definitions",	gl_attachedlights,				"YesNo"
-	Option "Clip lights",				gl_lights_checkside,			"YesNo"
-	Option "Lights affect sprites",		gl_light_sprites,				"YesNo"
-	Option "Lights affect particles",	gl_light_particles,				"YesNo"
-	Option "Force additive lighting",	gl_lights_additive,				"YesNo"
-	Slider "Light intensity",			gl_lights_intensity, 			0.0, 1.0, 0.1
-	Slider "Light size",				gl_lights_size,					0.0, 2.0, 0.1
+	Title "$GLLIGHTMNU_TITLE"
+	Option "$GLLIGHTMNU_LIGHTSENABLED",		gl_lights,						"YesNo"
+	Option "$GLLIGHTMNU_LIGHTDEFS",			gl_attachedlights,				"YesNo"
+	Option "$GLLIGHTMNU_CLIPLIGHTS",		gl_lights_checkside,			"YesNo"
+	Option "$GLLIGHTMNU_LIGHTSPRITES",		gl_light_sprites,				"YesNo"
+	Option "$GLLIGHTMNU_LIGHTPARTICLES",	gl_light_particles,				"YesNo"
+	Option "$GLLIGHTMNU_FORCEADDITIVE",		gl_lights_additive,				"YesNo"
+	Slider "$GLLIGHTMNU_LIGHTINTENSITY",	gl_lights_intensity, 			0.0, 1.0, 0.1
+	Slider "$GLLIGHTMNU_LIGHTSIZE",			gl_lights_size,					0.0, 2.0, 0.1
 }
 
 OptionMenu "GLPrefOptions"
 {
-	Title "OPENGL PREFERENCES"
-	Option "Sector light mode",			gl_lightmode,					"LightingModes"
-	Option "Fog mode",					gl_fogmode,						"FogMode"
-	Option "Fog forces fullbright",		gl_brightfog,					"YesNo"
-	Slider "Weapon light strength",		gl_weaponlight,					0,32, 2
-	Option "Environment map on mirrors",gl_mirror_envmap,				"OnOff"
-	Option "Enhanced night vision mode",gl_enhanced_nightvision,		"OnOff"
-	Option "ENV shows stealth monsters",gl_enhanced_nv_stealth,			"EnhancedStealth"
-	Option "Force brightness in fog",	gl_spritebrightfog,				"OnOff"
-	Option "Adjust sprite clipping",	gl_spriteclip,					"SpriteclipModes"
-	Option "Smooth sprite edges",		gl_sprite_blend,				"OnOff"
-	Option "Fuzz Style",				gl_fuzztype,					"FuzzStyle"
-	Option "Sprite billboard",			gl_billboard_mode,				"BillboardModes"
-	Option "Particle style",			gl_particles_style,				"Particles"
-	Slider "Ambient light level",		gl_light_ambient,				1.0, 255.0, 5.0
-	Option "Rendering quality",			gl_render_precise,				"Precision"
-	Option "Stereo 3D VR",				vr_mode, 						"VRMode"
-	Option "Enable Quad Stereo",		vr_enable_quadbuffered,			"OnOff"
+	Title "$GLPREFMNU_TITLE"
+	Option "$GLPREFMNU_SECLIGHTMODE",			gl_lightmode,					"LightingModes"
+	Option "$GLPREFMNU_FOGMODE",				gl_fogmode,						"FogMode"
+	Option "$GLPREFMNU_FOGFORCEFULLBRIGHT",		gl_brightfog,					"YesNo"
+	Slider "$GLPREFMNU_WPNLIGHTSTR",			gl_weaponlight,					0,32, 2
+	Option "$GLPREFMNU_ENVIRONMENTMAPMIRROR",	gl_mirror_envmap,				"OnOff"
+	Option "$GLPREFMNU_ENV",					gl_enhanced_nightvision,		"OnOff"
+	Option "$GLPREFMNU_ENVSTEALTH",				gl_enhanced_nv_stealth,			"EnhancedStealth"
+	Option "$GLPREFMNU_SPRBRIGHTFOG",			gl_spritebrightfog,				"OnOff"
+	Option "$GLPREFMNU_SPRCLIP",				gl_spriteclip,					"SpriteclipModes"
+	Option "$GLPREFMNU_SPRBLEND",				gl_sprite_blend,				"OnOff"
+	Option "$GLPREFMNU_FUZZSTYLE",				gl_fuzztype,					"FuzzStyle"
+	Option "$GLPREFMNU_SPRBILLBOARD",			gl_billboard_mode,				"BillboardModes"
+	Option "$GLPREFMNU_PARTICLESTYLE",			gl_particles_style,				"Particles"
+	Slider "$GLPREFMNU_AMBLIGHT",				gl_light_ambient,				1.0, 255.0, 5.0
+	Option "$GLPREFMNU_RENDERQUALITY",			gl_render_precise,				"Precision"
+	Option "$GLPREFMNU_VRMODE",					vr_mode, 						"VRMode"
+	Option "$GLPREFMNU_VRQUADSTEREO",			vr_enable_quadbuffered,			"OnOff"
 }
-

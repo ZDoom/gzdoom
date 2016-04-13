@@ -976,7 +976,7 @@ void gl_RenderHUDModel(pspdef_t *psp, float ofsX, float ofsY)
 
 	// [BB] Weapon bob, very similar to the normal Doom weapon bob.
 	gl_RenderState.mViewMatrix.rotate(ofsX/4, 0, 1, 0);
-	gl_RenderState.mViewMatrix.rotate(-ofsY-WEAPONTOP/4, 1, 0, 0);
+	gl_RenderState.mViewMatrix.rotate((ofsY-WEAPONTOP)/-4., 1, 0, 0);
 
 	// [BB] For some reason the jDoom models need to be rotated.
 	gl_RenderState.mViewMatrix.rotate(90.f, 0, 1, 0);

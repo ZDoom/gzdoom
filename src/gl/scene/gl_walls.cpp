@@ -1588,7 +1588,7 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 			}
 			else if (!(seg->sidedef->Flags & WALLF_POLYOBJ))
 			{
-				if ((frontsector->ceilingplane.isSlope() || backsector->ceilingplane.isSlope()) &&
+				if ((frontsector->floorplane.isSlope() || backsector->floorplane.isSlope()) &&
 					frontsector->GetTexture(sector_t::floor) != skyflatnum &&
 					backsector->GetTexture(sector_t::floor) != skyflatnum)
 				{

@@ -1227,7 +1227,6 @@ static void R_ProjectWallSprite(AActor *thing, fixed_t fx, fixed_t fy, fixed_t f
 void R_AddSprites (sector_t *sec, int lightlevel, int fakeside)
 {
 	AActor *thing;
-	F3DFloor *rover;
 	F3DFloor *fakeceiling = NULL;
 	F3DFloor *fakefloor = NULL;
 

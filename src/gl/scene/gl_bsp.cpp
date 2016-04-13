@@ -342,7 +342,7 @@ static inline void RenderThings(subsector_t * sub, sector_t * sector)
 			FIntCVar *cvar = thing->GetClass()->distancecheck;
 			if (cvar != NULL && *cvar >= 0)
 			{
-				double dist = (thing->PosRelative(viewsector) - ViewPos).LengthSquared();
+				double dist = (thing->Pos() - ViewPos).LengthSquared();
 				double check = (double)**cvar;
 				if (dist >= check * check)
 				{

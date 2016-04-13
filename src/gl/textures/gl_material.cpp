@@ -563,7 +563,7 @@ float FTexCoordInfo::TextureAdjustWidth() const
 	if (mWorldPanning) 
 	{
 		if (mTempScale.X == 1.f) return mRenderWidth;
-		else return mWidth * mTempScale.X;
+		else return mWidth / mTempScale.X;
 	}
 	else return mWidth;
 }

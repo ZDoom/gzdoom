@@ -2600,7 +2600,7 @@ GLPREFMNU_FUZZSTYLE 			= "Fuzz Style";
 GLPREFMNU_SPRBILLBOARD 			= "Sprite billboard";
 GLPREFMNU_PARTICLESTYLE 		= "Particle style";
 GLPREFMNU_AMBLIGHT 				= "Ambient light level";
-GLPREFMNU_RENDERQUALITY 		= "Rendering quality"";
+GLPREFMNU_RENDERQUALITY 		= "Rendering quality";
 GLPREFMNU_VRMODE 				= "Stereo 3D VR";
 GLPREFMNU_VRQUADSTEREO 			= "Enable Quad Stereo";
 

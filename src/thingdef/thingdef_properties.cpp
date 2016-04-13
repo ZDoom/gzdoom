@@ -1525,6 +1525,28 @@ DEFINE_PROPERTY(riplevelmax, I, Actor)
 
 //==========================================================================
 //
+//==========================================================================
+DEFINE_PROPERTY(distancecheck, S, Actor)
+{
+	PROP_STRING_PARM(cvar, 0);
+	FBaseCVar *scratch;
+	FBaseCVar *cv = FindCVar(cvar, &scratch);
+	if (cv == NULL)
+	{
+		I_Error("CVar %s not defined", cvar);
+	}
+	else if (cv->GetRealType() == CVAR_Int)
+	{
+		static_cast<PClassActor*>(info)->distancecheck = static_cast<FIntCVar *>(cv);
+	}
+	else
+	{
+		I_Error("CVar %s must of type Int", cvar);
+	}
+}
+
+//==========================================================================
+//
 // Special inventory properties
 //
 //==========================================================================

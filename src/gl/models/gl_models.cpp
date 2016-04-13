@@ -871,7 +871,7 @@ void gl_RenderHUDModel(pspdef_t *psp, float ofsX, float ofsY, int cm)
 
 	// [BB] Weapon bob, very similar to the normal Doom weapon bob.
 	glRotatef(ofsX/4, 0, 1, 0);
-	glRotatef(-ofsY-WEAPONTOP/4, 1, 0, 0);
+	glRotatef((ofsY-WEAPONTOP)/-4., 1, 0, 0);
 
 	// [BB] For some reason the jDoom models need to be rotated.
 	glRotatef(90., 0, 1, 0);

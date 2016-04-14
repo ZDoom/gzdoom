@@ -84,7 +84,7 @@ class QuadStereo : public Stereo3DMode
 {
 public:
 	QuadStereo(double ipdMeters);
-	static const QuadStereo& QuadStereo::getInstance(float ipd);
+	static const QuadStereo& getInstance(float ipd);
 private:
 	QuadStereoLeftPose leftEye;
 	QuadStereoRightPose rightEye;

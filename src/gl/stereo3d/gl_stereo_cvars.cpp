@@ -42,7 +42,10 @@
 // Set up 3D-specific console variables:
 CVAR(Int, vr_mode, 0, CVAR_GLOBALCONFIG)
 
-EXTERN_CVAR(Bool, vr_enable_quadbuffered)
+// For broadest GL compatibility, require user to explicitly enable quad-buffered stereo mode.
+// Setting vr_enable_quadbuffered_stereo does not automatically invoke quad-buffered stereo,
+// but makes it possible for subsequent "vr_mode 7" to invoke quad-buffered stereo
+CVAR(Bool, vr_enable_quadbuffered, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 // intraocular distance in meters
 CVAR(Float, vr_ipd, 0.062f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG) // METERS
@@ -90,7 +93,7 @@ const Stereo3DMode& Stereo3DMode::getCurrentMode()
 		else {
 			setCurrentMode(MonoView::getInstance());
 		}
-		break			;
+		break;
 	// TODO: 8: Oculus Rift
 	case 9:
 		setCurrentMode(AmberBlue::getInstance(vr_ipd));

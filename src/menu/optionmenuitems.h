@@ -133,9 +133,9 @@ public:
 		}
 
 		FString FullString;
-		FullString.Format(TEXTCOLOR_WHITE "%s" TEXTCOLOR_NORMAL "\n\n" "%s", actionLabel, msg);
+		FullString.Format(TEXTCOLOR_WHITE "%s" TEXTCOLOR_NORMAL "\n\n" "%s", actionLabel != NULL ? actionLabel : "", msg);
 
-		if (msg && actionLabel && FullString) M_StartMessage(FullString, 0);
+		if (msg && FullString) M_StartMessage(FullString, 0);
 		return true;
 	}
 };

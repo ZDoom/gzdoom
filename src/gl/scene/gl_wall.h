@@ -23,6 +23,11 @@ struct FPortal;
 struct FFlatVertex;
 struct FGLLinePortal;
 
+enum
+{
+	GLSector_NoSkyDraw = 89,
+	GLSector_Skybox = 90,
+};
 
 enum WallTypes
 {
@@ -290,6 +295,7 @@ public:
 	void SetupSubsectorLights(int pass, subsector_t * sub, int *dli = NULL);
 	void DrawSubsector(subsector_t * sub);
 	void DrawSubsectorLights(subsector_t * sub, int pass);
+	void DrawSkyboxSector(int pass, bool processlights);
 	void DrawSubsectors(int pass, bool processlights, bool istrans);
 	void ProcessLights(bool istrans);
 

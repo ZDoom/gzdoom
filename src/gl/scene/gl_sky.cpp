@@ -58,12 +58,6 @@
 CVAR(Bool,gl_noskyboxes, false, 0)
 extern int skyfog;
 
-enum
-{
-	NoSkyDraw = 89
-};
-
-
 //==========================================================================
 //
 //  Set up the skyinfo struct
@@ -254,7 +248,7 @@ void GLWall::SkyTop(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex
 {
 	if (fs->GetTexture(sector_t::ceiling)==skyflatnum)
 	{
-		if (bs->special == NoSkyDraw) return;
+		if (bs->special == GLSector_NoSkyDraw) return;
 		if (bs->GetTexture(sector_t::ceiling)==skyflatnum) 
 		{
 			// if the back sector is closed the sky must be drawn!
@@ -344,7 +338,7 @@ void GLWall::SkyBottom(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,ver
 {
 	if (fs->GetTexture(sector_t::floor)==skyflatnum)
 	{
-		if (bs->special == NoSkyDraw) return;
+		if (bs->special == GLSector_NoSkyDraw) return;
 		FTexture * tex = TexMan(seg->sidedef->GetTexture(side_t::bottom));
 		
 		// For lower skies the normal logic only applies to walls with no lower texture!

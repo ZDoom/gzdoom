@@ -178,8 +178,8 @@ void GLFlat::DrawSubsector(subsector_t * sub)
 	{
 		vertex_t *vt = sub->firstline[k].v1;
 		ptr->x = vt->fX();
-		ptr->y = vt->fY();
 		ptr->z = plane.plane.ZatPoint(vt) + dz;
+		ptr->y = vt->fY();
 		ptr->u = vt->fX() / 64.f;
 		ptr->v = -vt->fY() / 64.f;
 		ptr++;
@@ -252,7 +252,7 @@ void GLFlat::DrawSubsectors(int pass, bool processlights, bool istrans)
 		if (processlights) SetupSubsectorLights(GLPASS_ALL, sub, &dli);
 		DrawSubsector(sub);
 	}
-	else
+	else 
 	{
 		if (vboindex >= 0)
 		{
@@ -307,6 +307,76 @@ void GLFlat::DrawSubsectors(int pass, bool processlights, bool istrans)
 
 //==========================================================================
 //
+// special handling for skyboxes which need texture clamping.
+// This will find the bounding rectangle of the sector and just
+// draw one single polygon filling that rectangle with a clamped
+// texture.
+//
+//==========================================================================
+
+void GLFlat::DrawSkyboxSector(int pass, bool processlights)
+{
+	FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
+
+	float minx = FLT_MAX, miny = FLT_MAX;
+	float maxx = -FLT_MAX, maxy = -FLT_MAX;
+
+	for (int i = 0; i < sector->linecount; i++)
+	{
+		line_t *ln = sector->lines[i];
+		float x = ln->v1->fX();
+		float y = ln->v1->fY();
+		if (x < minx) minx = x;
+		if (y < miny) miny = y;
+		if (x > maxx) maxx = x;
+		if (y > maxy) maxy = y;
+		x = ln->v2->fX();
+		y = ln->v2->fY();
+		if (x < minx) minx = x;
+		if (y < miny) miny = y;
+		if (x > maxx) maxx = x;
+		if (y > maxy) maxy = y;
+	}
+
+	float z = plane.plane.ZatPoint(0., 0.) + dz;
+
+	ptr->x = minx;
+	ptr->z = z;
+	ptr->y = miny;
+	ptr->u = 0;
+	ptr->v = 1;
+	ptr++;
+
+	ptr->x = minx;
+	ptr->z = z;
+	ptr->y = maxy;
+	ptr->u = 0;
+	ptr->v = 0;
+	ptr++;
+
+	ptr->x = maxx;
+	ptr->z = z;
+	ptr->y = maxy;
+	ptr->u = 1;
+	ptr->v = 0;
+	ptr++;
+
+	ptr->x = maxx;
+	ptr->z = z;
+	ptr->y = miny;
+	ptr->u = 1;
+	ptr->v = 1;
+	ptr++;
+
+	GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_FAN);
+
+	flatvertices += 4;
+	flatprimitives++;
+}
+
+
+//==========================================================================
+//
 //
 //
 //==========================================================================
@@ -328,10 +398,18 @@ void GLFlat::Draw(int pass, bool trans)	// trans only has meaning for GLPASS_LIG
 	case GLPASS_ALL:
 		gl_SetColor(lightlevel, rel, Colormap,1.0f);
 		gl_SetFog(lightlevel, rel, &Colormap, false);
-		gl_RenderState.SetMaterial(gltexture, CLAMP_NONE, 0, -1, false);
-		gl_SetPlaneTextureRotation(&plane, gltexture);
-		DrawSubsectors(pass, (pass == GLPASS_ALL || dynlightindex > -1), false);
-		gl_RenderState.EnableTextureMatrix(false);
+		if (sector->special != GLSector_Skybox)
+		{
+			gl_RenderState.SetMaterial(gltexture, CLAMP_NONE, 0, -1, false);
+			gl_SetPlaneTextureRotation(&plane, gltexture);
+			DrawSubsectors(pass, (pass == GLPASS_ALL || dynlightindex > -1), false);
+			gl_RenderState.EnableTextureMatrix(false);
+		}
+		else
+		{
+			gl_RenderState.SetMaterial(gltexture, CLAMP_XY, 0, -1, false);
+			DrawSkyboxSector(pass, (pass == GLPASS_ALL || dynlightindex > -1));
+		}
 		break;
 
 	case GLPASS_LIGHTSONLY:

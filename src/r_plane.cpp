@@ -98,7 +98,7 @@ visplane_t 				*ceilingplane;
 // you are changing them to draw a stacked sector. Otherwise, stacked sectors
 // won't draw in skyboxes properly.
 int stacked_extralight;
-float stacked_visibility;
+double stacked_visibility;
 DVector3 stacked_viewpos;
 DAngle stacked_angle;
 
@@ -123,7 +123,7 @@ short					ceilingclip[MAXWIDTH];
 // texture mapping
 //
 
-static fixed_t			planeheight;
+static double			planeheight;
 
 extern "C" {
 //
@@ -217,7 +217,7 @@ void R_MapPlane (int y, int x1)
 	// [RH] Notice that I dumped the caching scheme used by Doom.
 	// It did not offer any appreciable speedup.
 
-	distance = FixedMul (planeheight, yslope[y]);
+	distance = xs_ToInt(planeheight * yslope[y]);
 
 	ds_xstep = FixedMul (distance, xstepscale);
 	ds_ystep = FixedMul (distance, ystepscale);
@@ -228,7 +228,7 @@ void R_MapPlane (int y, int x1)
 	{
 		// Determine lighting based on the span's distance from the viewer.
 		ds_colormap = basecolormap->Maps + (GETPALOOKUP (
-			xs_ToInt(GlobVis * fabs(CenterY - y)), planeshade) << COLORMAPSHIFT);
+			FLOAT2FIXED(GlobVis * fabs(CenterY - y)), planeshade) << COLORMAPSHIFT);
 	}
 
 #ifdef X86_ASM
@@ -1187,7 +1187,7 @@ void R_DrawPortals ()
 	ptrdiff_t savedds_p = ds_p - drawsegs;
 	ptrdiff_t savedlastopening = lastopening;
 	size_t savedinteresting = FirstInterestingDrawseg;
-	float savedvisibility = R_GetVisibility ();
+	double savedvisibility = R_GetVisibility();
 	AActor *savedcamera = camera;
 	sector_t *savedsector = viewsector;
 
@@ -1359,7 +1359,7 @@ void R_DrawPortals ()
 	camera = savedcamera;
 	viewsector = savedsector;
 	ViewPos = savedpos;
-	R_SetVisibility (savedvisibility);
+	R_SetVisibility(savedvisibility);
 	extralight = savedextralight;
 	ViewAngle = savedangle;
 	R_SetViewAngle ();
@@ -1559,9 +1559,9 @@ void R_DrawNormalPlane (visplane_t *pl, fixed_t alpha, bool additive, bool maske
 	basexfrac = FixedMul (xscale, finecosine[planeang]) + x*xstepscale;
 	baseyfrac = FixedMul (yscale, -finesine[planeang]) + x*ystepscale;
 
-	planeheight = FLOAT2FIXED(fabs(pl->height.Zat0() - ViewPos.Z));
+	planeheight = fabs(pl->height.Zat0() - ViewPos.Z);
 
-	GlobVis = FixedDiv (r_FloorVisibility, planeheight);
+	GlobVis = r_FloorVisibility / planeheight;
 	if (fixedlightlev >= 0)
 		ds_colormap = basecolormap->Maps + fixedlightlev, plane_shade = false;
 	else if (fixedcolormap)
@@ -1709,7 +1709,7 @@ void R_DrawTiltedPlane (visplane_t *pl, fixed_t alpha, bool additive, bool maske
 		plane_sz[0] = -plane_sz[0];
 	}
 
-	planelightfloat = (r_TiltVisibility * lxscale * lyscale) / (fabs(pl->height.ZatPoint(ViewPos)) / 65536.0);
+	planelightfloat = (r_TiltVisibility * lxscale * lyscale) / fabs(pl->height.ZatPoint(ViewPos));
 
 	if (pl->height.fC() > 0)
 		planelightfloat = -planelightfloat;

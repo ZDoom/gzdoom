@@ -50,7 +50,7 @@ struct visplane_s
 	// have stacked sectors inside a skybox. If the visplane is not for a
 	// stack, then they are unused.
 	int			extralight;
-	float		visibility;
+	double		visibility;
 	DVector3	viewpos;
 	DAngle		viewangle;
 	fixed_t		Alpha;

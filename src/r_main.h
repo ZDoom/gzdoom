@@ -82,17 +82,16 @@ extern bool				r_dontmaplines;
 // Change R_CalcTiltedLighting() when this changes.
 #define GETPALOOKUP(vis,shade)	(clamp<int> (((shade)-MIN(MAXLIGHTVIS,(vis)))>>FRACBITS, 0, NUMCOLORMAPS-1))
 
-extern fixed_t			GlobVis;
+extern double			GlobVis;
 
-void R_SetVisibility (float visibility);
-float R_GetVisibility ();
+void R_SetVisibility(double visibility);
+double R_GetVisibility();
 
-extern fixed_t			r_BaseVisibility;
-extern fixed_t			r_WallVisibility;
-extern fixed_t			r_FloorVisibility;
+extern double			r_BaseVisibility;
+extern double			r_WallVisibility;
+extern double			r_FloorVisibility;
 extern float			r_TiltVisibility;
-extern fixed_t			r_SpriteVisibility;
-extern fixed_t			r_SkyVisibility;
+extern double			r_SpriteVisibility;
 
 extern int				r_actualextralight;
 extern bool				foggy;
@@ -137,7 +136,7 @@ void R_MultiresInit (void);
 
 
 extern int stacked_extralight;
-extern float stacked_visibility;
+extern double stacked_visibility;
 extern DVector3 stacked_viewpos;
 extern DAngle stacked_angle;
 

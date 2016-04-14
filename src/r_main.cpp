@@ -93,9 +93,9 @@ extern bool r_showviewer;
 
 // PRIVATE DATA DECLARATIONS -----------------------------------------------
 
-static float CurrentVisibility = 8.f;
-static fixed_t MaxVisForWall;
-static fixed_t MaxVisForFloor;
+static double CurrentVisibility = 8.f;
+static double MaxVisForWall;
+static double MaxVisForFloor;
 bool r_dontmaplines;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -103,15 +103,14 @@ bool r_dontmaplines;
 CVAR (String, r_viewsize, "", CVAR_NOSET)
 CVAR (Bool, r_shadercolormaps, true, CVAR_ARCHIVE)
 
-fixed_t			r_BaseVisibility;
-fixed_t			r_WallVisibility;
-fixed_t			r_FloorVisibility;
+double			r_BaseVisibility;
+double			r_WallVisibility;
+double			r_FloorVisibility;
 float			r_TiltVisibility;
-fixed_t			r_SpriteVisibility;
-fixed_t			r_ParticleVisibility;
-fixed_t			r_SkyVisibility;
+double			r_SpriteVisibility;
+double			r_ParticleVisibility;
 
-fixed_t			GlobVis;
+double			GlobVis;
 fixed_t			viewingrangerecip;
 double			FocalLengthX;
 double			FocalLengthY;
@@ -250,10 +249,10 @@ void R_InitTextureMapping ()
 //
 //==========================================================================
 
-void R_SetVisibility (float vis)
+void R_SetVisibility(double vis)
 {
 	// Allow negative visibilities, just for novelty's sake
-	vis = clamp (vis, -204.7f, 204.7f);	// (205 and larger do not work in 5:4 aspect ratio)
+	vis = clamp(vis, -204.7, 204.7);	// (205 and larger do not work in 5:4 aspect ratio)
 
 	CurrentVisibility = vis;
 
@@ -264,7 +263,7 @@ void R_SetVisibility (float vis)
 		return;
 	}
 
-	r_BaseVisibility = xs_RoundToInt(vis * 65536.f);
+	r_BaseVisibility = vis;
 
 	// Prevent overflow on walls
 	if (r_BaseVisibility < 0 && r_BaseVisibility < -MaxVisForWall)
@@ -274,8 +273,8 @@ void R_SetVisibility (float vis)
 	else
 		r_WallVisibility = r_BaseVisibility;
 
-	r_WallVisibility = FixedMul (FLOAT2FIXED(InvZtoScale * SCREENWIDTH*BaseRatioSizes[WidescreenRatio][1] /
-		(viewwidth*SCREENHEIGHT*3)), xs_ToInt(r_WallVisibility * FocalTangent));
+	r_WallVisibility = (InvZtoScale * SCREENWIDTH*BaseRatioSizes[WidescreenRatio][1] /
+		(viewwidth*SCREENHEIGHT*3)) * (r_WallVisibility * FocalTangent);
 
 	// Prevent overflow on floors/ceilings. Note that the calculation of
 	// MaxVisForFloor means that planes less than two units from the player's
@@ -288,9 +287,9 @@ void R_SetVisibility (float vis)
 	else
 		r_FloorVisibility = r_BaseVisibility;
 
-	r_FloorVisibility = xs_ToInt(160.0 * r_FloorVisibility / FocalLengthY);
+	r_FloorVisibility = 160.0 * r_FloorVisibility / FocalLengthY;
 
-	r_TiltVisibility = vis * (float)FocalTangent * (16.f * 320.f) / (float)viewwidth;
+	r_TiltVisibility = float(vis * FocalTangent * (16.f * 320.f) / viewwidth);
 	r_SpriteVisibility = r_WallVisibility;
 }
 
@@ -300,7 +299,7 @@ void R_SetVisibility (float vis)
 //
 //==========================================================================
 
-float R_GetVisibility ()
+double R_GetVisibility()
 {
 	return CurrentVisibility;
 }
@@ -323,7 +322,7 @@ CCMD (r_visibility)
 	}
 	else if (!netgame)
 	{
-		R_SetVisibility ((float)atof (argv[1]));
+		R_SetVisibility(atof(argv[1]));
 	}
 	else
 	{
@@ -396,13 +395,13 @@ void R_SWRSetWindow(int windowSize, int fullWidth, int fullHeight, int stHeight,
 
 	R_InitTextureMapping ();
 
-	MaxVisForWall = FLOAT2FIXED((InvZtoScale * (SCREENWIDTH*r_Yaspect) /
-		(viewwidth*SCREENHEIGHT * FocalTangent)));
-	MaxVisForWall = FixedDiv (0x7fff0000, MaxVisForWall);
-	MaxVisForFloor = int(0x7fff0000 / (viewheight * FocalLengthY / 160));
+	MaxVisForWall = (InvZtoScale * (SCREENWIDTH*r_Yaspect) /
+		(viewwidth*SCREENHEIGHT * FocalTangent));
+	MaxVisForWall = 32767.0 / MaxVisForWall;
+	MaxVisForFloor = 32767.0 / (viewheight * FocalLengthY / 160);
 
 	// Reset r_*Visibility vars
-	R_SetVisibility (R_GetVisibility ());
+	R_SetVisibility(R_GetVisibility());
 }
 
 //==========================================================================

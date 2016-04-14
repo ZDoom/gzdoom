@@ -2312,8 +2312,8 @@ void R_NewWall (bool needlights)
 			wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(foggy, frontsector->lightlevel)
 				+ r_actualextralight);
 			GlobVis = r_WallVisibility;
-			rw_lightleft = FLOAT2FIXED(FIXED2DBL(GlobVis) / WallC.sz1);
-			rw_lightstep = (FLOAT2FIXED(FIXED2DBL(GlobVis) / WallC.sz2) - rw_lightleft) / (WallC.sx2 - WallC.sx1);
+			rw_lightleft = FLOAT2FIXED(GlobVis / WallC.sz1);
+			rw_lightstep = (FLOAT2FIXED(GlobVis / WallC.sz2) - rw_lightleft) / (WallC.sx2 - WallC.sx1);
 		}
 		else
 		{

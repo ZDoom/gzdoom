@@ -533,8 +533,8 @@ void R_DrawWallSprite(vissprite_t *spr)
 
 	int shade = LIGHT2SHADE(spr->sector->lightlevel + r_actualextralight);
 	GlobVis = r_WallVisibility;
-	rw_lightleft = SafeDivScale12(GlobVis, xs_Fix<12>::ToFix(spr->wallc.sz1));
-	rw_lightstep = (SafeDivScale12(GlobVis, xs_Fix<12>::ToFix(spr->wallc.sz2)) - rw_lightleft) / (spr->wallc.sx2 - spr->wallc.sx1);
+	rw_lightleft =  FLOAT2FIXED(GlobVis / spr->wallc.sz1);
+	rw_lightstep = (FLOAT2FIXED(GlobVis / spr->wallc.sz2) - rw_lightleft) / (spr->wallc.sx2 - spr->wallc.sx1);
 	rw_light = rw_lightleft + (x1 - spr->wallc.sx1) * rw_lightstep;
 	if (fixedlightlev >= 0)
 		dc_colormap = usecolormap->Maps + fixedlightlev;
@@ -1128,7 +1128,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 		else
 		{ // diminished light
 			vis->ColormapNum = GETPALOOKUP(
-				(fixed_t)(r_SpriteVisibility / MAX(tz, MINZ)), spriteshade);
+				FLOAT2FIXED(r_SpriteVisibility / MAX(tz, MINZ)), spriteshade);
 			vis->Style.colormap = mybasecolormap->Maps + (vis->ColormapNum << COLORMAPSHIFT);
 		}
 	}
@@ -1204,7 +1204,7 @@ static void R_ProjectWallSprite(AActor *thing, const DVector3 &pos, FTextureID p
 	vis->bIsVoxel = false;
 	vis->bWallSprite = true;
 	vis->ColormapNum = GETPALOOKUP(
-		(fixed_t)DivScale12 (r_SpriteVisibility, xs_Fix<20>::ToFix(MAX(tz, MINZ))), spriteshade);
+		FLOAT2FIXED(r_SpriteVisibility / MAX(tz, MINZ)), spriteshade);
 	vis->Style.colormap = basecolormap->Maps + (vis->ColormapNum << COLORMAPSHIFT);
 	vis->wallc = wallc;
 }
@@ -2002,7 +2002,7 @@ void R_DrawSprite (vissprite_t *spr)
 			{ // diminished light
 				spriteshade = LIGHT2SHADE(sec->lightlevel + r_actualextralight);
 				spr->Style.colormap = mybasecolormap->Maps + (GETPALOOKUP (
-					(fixed_t)DivScale12 (r_SpriteVisibility, xs_Fix<20>::ToFix(MAX(MINZ, (double)spr->depth))), spriteshade) << COLORMAPSHIFT);
+					FLOAT2FIXED(r_SpriteVisibility / MAX(MINZ, (double)spr->depth)), spriteshade) << COLORMAPSHIFT);
 			}
 		}
 	}
@@ -2558,9 +2558,8 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 	}
 	else
 	{
-		// Using MulScale15 instead of 16 makes particles slightly more visible
-		// than regular sprites.
-		vis->ColormapNum = GETPALOOKUP(MulScale15 (FLOAT2FIXED(tiz), r_SpriteVisibility), shade);
+		// Particles are slightly more visible than regular sprites.
+		vis->ColormapNum = GETPALOOKUP(FLOAT2FIXED(tiz * r_SpriteVisibility * 0.5), shade);
 		vis->Style.colormap = map + (vis->ColormapNum << COLORMAPSHIFT);
 	}
 }

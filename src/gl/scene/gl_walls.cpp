@@ -723,7 +723,23 @@ void GLWall::CheckTexturePosition()
 	if ((uplft.v == 0.f && uprgt.v == 0.f && lolft.v <= 1.f && lorgt.v <= 1.f) ||
 		(uplft.v >= 0.f && uprgt.v >= 0.f && lolft.v == 1.f && lorgt.v == 1.f))
 	{
-		flags|=GLT_CLAMPY;
+		flags |= GLT_CLAMPY;
+	}
+
+	// Check if this is marked as a skybox and if so, do the same for x.
+	// This intentionally only tests the seg's frontsector.
+	if (seg->frontsector->special == GLSector_Skybox)
+	{
+		sub = (float)xs_FloorToInt(uplft.u);
+		uplft.u -= sub;
+		uprgt.u -= sub;
+		lolft.u -= sub;
+		lorgt.u -= sub;
+		if ((uplft.u == 0.f && lolft.u == 0.f && uprgt.u <= 1.f && lorgt.u <= 1.f) ||
+			(uplft.u >= 0.f && lolft.u >= 0.f && uprgt.u == 1.f && lorgt.u == 1.f))
+		{
+			flags |= GLT_CLAMPX;
+		}
 	}
 }
 
@@ -744,6 +760,7 @@ void GLWall::DoTexture(int _type,seg_t * seg, int peg,
 	GLSeg glsave=glseg;
 	float flh=ceilingrefheight-floorrefheight;
 	int texpos;
+	BYTE savedflags = flags;
 
 	switch (_type)
 	{
@@ -773,13 +790,12 @@ void GLWall::DoTexture(int _type,seg_t * seg, int peg,
 	CheckTexturePosition();
 
 	// Add this wall to the render list
-	sector_t * sec = sub? sub->sector : seg->frontsector;
-
+	sector_t * sec = sub ? sub->sector : seg->frontsector;
 	if (sec->e->XFloor.lightlist.Size()==0 || gl_fixedcolormap) PutWall(false);
 	else SplitWall(sec, false);
 
-	glseg=glsave;
-	flags&=~GLT_CLAMPY;
+	glseg = glsave;
+	flags = savedflags;
 }
 
 
@@ -971,11 +987,11 @@ void GLWall::DoMidTexture(seg_t * seg, bool drawfogboundary,
 		}
 		else
 		{
-			flags&=~GLT_CLAMPX;
+			flags &= ~GLT_CLAMPX;
 		}
 		if (!wrap)
 		{
-			flags|=GLT_CLAMPY;
+			flags |= GLT_CLAMPY;
 		}
 	}
 	if (mirrory)
@@ -1460,7 +1476,7 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 	sector_t * segback;
 
 #ifdef _DEBUG
-	if (seg->linedef - lines == 904)
+	if (seg->linedef - lines < 4)
 	{
 		int a = 0;
 	}

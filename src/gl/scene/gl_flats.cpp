@@ -274,7 +274,7 @@ void GLFlat::DrawSubsectors(int pass, bool istrans)
 		if (pass == GLPASS_ALL) lightsapplied = SetupSubsectorLights(lightsapplied, sub);
 		DrawSubsector(sub);
 	}
-	else
+	else 
 	{
 		if (vboindex >= 0)
 		{
@@ -330,6 +330,55 @@ void GLFlat::DrawSubsectors(int pass, bool istrans)
 
 //==========================================================================
 //
+// special handling for skyboxes which need texture clamping.
+// This will find the bounding rectangle of the sector and just
+// draw one single polygon filling that rectangle with a clamped
+// texture.
+//
+//==========================================================================
+
+void GLFlat::DrawSkyboxSector(int pass)
+{
+	float minx = FLT_MAX, miny = FLT_MAX;
+	float maxx = -FLT_MAX, maxy = -FLT_MAX;
+
+	for (int i = 0; i < sector->linecount; i++)
+	{
+		line_t *ln = sector->lines[i];
+		float x = ln->v1->fX();
+		float y = ln->v1->fY();
+		if (x < minx) minx = x;
+		if (y < miny) miny = y;
+		if (x > maxx) maxx = x;
+		if (y > maxy) maxy = y;
+		x = ln->v2->fX();
+		y = ln->v2->fY();
+		if (x < minx) minx = x;
+		if (y < miny) miny = y;
+		if (x > maxx) maxx = x;
+		if (y > maxy) maxy = y;
+	}
+
+	float z = plane.plane.ZatPoint(0., 0.) + dz;
+
+	glBegin(GL_TRIANGLE_FAN);
+	glVertex3f(minx, z, miny);
+	glTexCoord2f(0.0f, 1.0f);
+	glVertex3f(minx, z, maxy);
+	glTexCoord2f(0.0f, 0.0f);
+	glVertex3f(maxx, z, maxy);
+	glTexCoord2f(1.0f, 0.0f);
+	glVertex3f(maxx, z, miny);
+	glTexCoord2f(1.0f, 1.0f);
+	glEnd();
+
+	flatvertices += 4;
+	flatprimitives++;
+}
+
+
+//==========================================================================
+//
 //
 //
 //==========================================================================
@@ -362,13 +411,21 @@ void GLFlat::Draw(int pass)
 		// fall through
 	case GLPASS_TEXTURE:
 	{
-		gltexture->Bind(Colormap.colormap);
-		bool pushed = gl_SetPlaneTextureRotation(&plane, gltexture);
-		DrawSubsectors(pass, false);
-		if (pushed) 
+		if (sector->special != GLSector_Skybox)
 		{
-			glPopMatrix();
-			glMatrixMode(GL_MODELVIEW);
+			gltexture->Bind(Colormap.colormap);
+			bool pushed = gl_SetPlaneTextureRotation(&plane, gltexture);
+		    DrawSubsectors(pass, false);
+		    if (pushed) 
+		    {
+			    glPopMatrix();
+			    glMatrixMode(GL_MODELVIEW);
+		    }
+		}
+		else
+		{
+			gltexture->Bind(Colormap.colormap, GLT_CLAMPX | GLT_CLAMPY);
+			DrawSkyboxSector(pass);
 		}
 		break;
 	}

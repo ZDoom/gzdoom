@@ -35,22 +35,21 @@ typedef BYTE lighttable_t;	// This could be wider for >8 bit display.
 // POV related.
 //
 extern bool				bRenderingToCanvas;
-extern fixed_t			viewcos;
-extern fixed_t			viewsin;
+extern double			ViewCos;
+extern double			ViewSin;
 extern fixed_t			viewingrangerecip;
-extern fixed_t			FocalLengthX, FocalLengthY;
-extern float			FocalLengthXfloat;
-extern fixed_t			InvZtoScale;
+extern double			FocalLengthX, FocalLengthY;
+extern double			InvZtoScale;
 
-extern float			WallTMapScale2;
+extern double			WallTMapScale2;
 
 extern int				viewwindowx;
 extern int				viewwindowy;
 
-extern fixed_t			centerxfrac;
-extern fixed_t			centeryfrac;
-extern fixed_t			yaspectmul;
-extern float			iyaspectmulfloat;
+extern double			CenterX;
+extern double			CenterY;
+extern double			YaspectMul;
+extern double			IYaspectMul;
 
 extern FDynamicColormap*basecolormap;	// [RH] Colormap for sector currently being drawn
 
@@ -139,8 +138,8 @@ void R_MultiresInit (void);
 
 extern int stacked_extralight;
 extern float stacked_visibility;
-extern fixed_t stacked_viewx, stacked_viewy, stacked_viewz;
-extern angle_t stacked_angle;
+extern DVector3 stacked_viewpos;
+extern DAngle stacked_angle;
 
 extern void R_CopyStackedViewParameters();
 

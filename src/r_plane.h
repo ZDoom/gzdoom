@@ -51,8 +51,8 @@ struct visplane_s
 	// stack, then they are unused.
 	int			extralight;
 	float		visibility;
-	fixed_t		viewx, viewy, viewz;
-	angle_t		viewangle;
+	DVector3	viewpos;
+	DAngle		viewangle;
 	fixed_t		Alpha;
 	bool		Additive;
 

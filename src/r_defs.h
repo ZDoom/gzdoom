@@ -326,9 +326,9 @@ public:
 	}
 
 	// Returns the value of z at (0,0) This is used by the 3D floor code which does not handle slopes
-	fixed_t Zat0 () const
+	double Zat0() const
 	{
-		return FLOAT2FIXED(negiC*D);
+		return negiC*D;
 	}
 
 	// Returns the value of z at (x,y)
@@ -362,6 +362,10 @@ public:
 		return (D + normal.X*pos.X + normal.Y*pos.Y) * negiC;
 	}
 
+	double ZatPoint(const FVector2 &pos) const
+	{
+		return (D + normal.X*pos.X + normal.Y*pos.Y) * negiC;
+	}
 
 	double ZatPoint(const vertex_t *v) const
 	{

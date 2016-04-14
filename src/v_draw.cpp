@@ -199,8 +199,8 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 			unmaskedSpan[1].Length = 0;
 		}
 
-		fixed_t centeryback = centeryfrac;
-		centeryfrac = 0;
+		double centeryback = CenterY;
+		CenterY = 0;
 
 		sprtopscreen = FLOAT2FIXED(y0);
 		// There is not enough precision in the drawing routines to keep the full
@@ -225,7 +225,7 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 		//dc_texturemid = FLOAT2FIXED((-y0) * iyscale);
 		//dc_iscale = 0xffffffffu / (unsigned)spryscale;
 		dc_iscale = DivScale32(1, spryscale);
-		dc_texturemid = FixedMul(-sprtopscreen, dc_iscale) + FixedMul(centeryfrac-FRACUNIT, dc_iscale);
+		dc_texturemid = FixedMul(-sprtopscreen, dc_iscale) + xs_ToInt((CenterY - 1) * dc_iscale);
 		fixed_t frac = 0;
 		double xiscale = img->GetWidth() / parms.destwidth;
 		double x2 = x0 + parms.destwidth;
@@ -325,7 +325,7 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 				frac += xiscale_i;
 			}
 		}
-		centeryfrac = centeryback;
+		CenterY = centeryback;
 	}
 	R_FinishSetPatchStyle ();
 

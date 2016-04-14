@@ -17,18 +17,14 @@ extern DAngle			ViewAngle;
 extern DAngle			ViewPitch;
 extern DVector3			ViewPath[2];
 
-extern fixed_t viewx, viewy, viewz;
-extern angle_t viewangle;
-extern int viewpitch;
-
 extern "C" int			centerx, centerxwide;
 extern "C" int			centery;
 
 extern int				setblocks;
 
-extern fixed_t			viewtancos;
-extern fixed_t			viewtansin;
-extern fixed_t			FocalTangent;
+extern double			ViewTanCos;
+extern double			ViewTanSin;
+extern double			FocalTangent;
 
 extern bool				r_NoInterpolate;
 extern int				validcount;

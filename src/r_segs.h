@@ -31,10 +31,10 @@ extern short *openings;
 extern ptrdiff_t lastopening;
 extern size_t maxopenings;
 
-int OWallMost (short *mostbuf, fixed_t z, const FWallCoords *wallc);
+int OWallMost (short *mostbuf, double z, const FWallCoords *wallc);
 int WallMost (short *mostbuf, const secplane_t &plane, const FWallCoords *wallc);
-void PrepWall (fixed_t *swall, fixed_t *lwall, fixed_t walxrepeat, int x1, int x2);
-void PrepLWall (fixed_t *lwall, fixed_t walxrepeat, int x1, int x2);
+void PrepWall (fixed_t *swall, fixed_t *lwall, double walxrepeat, int x1, int x2);
+void PrepLWall (fixed_t *lwall, double walxrepeat, int x1, int x2);
 
 ptrdiff_t R_NewOpening (ptrdiff_t len);
 

@@ -1136,7 +1136,7 @@ void R_DrawMaskedColumnHoriz (const BYTE *column, const FTexture::Span *span)
 			if (sprflipvert)
 			{
 				dc_texturefrac = (dc_yl*dc_iscale) - (top << FRACBITS)
-					- FixedMul (centeryfrac, dc_iscale) - dc_texturemid;
+					- fixed_t(CenterY * dc_iscale) - dc_texturemid;
 				const fixed_t maxfrac = length << FRACBITS;
 				while (dc_texturefrac >= maxfrac)
 				{
@@ -1155,7 +1155,7 @@ void R_DrawMaskedColumnHoriz (const BYTE *column, const FTexture::Span *span)
 			else
 			{
 				dc_texturefrac = dc_texturemid - (top << FRACBITS)
-					+ (dc_yl*dc_iscale) - FixedMul (centeryfrac-FRACUNIT, dc_iscale);
+					+ (dc_yl*dc_iscale) - fixed_t((CenterY-1) * dc_iscale);
 				while (dc_texturefrac < 0)
 				{
 					if (++dc_yl > dc_yh)

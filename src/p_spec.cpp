@@ -983,6 +983,13 @@ void P_SpawnPortal(line_t *line, int sectortag, int plane, int bytealpha, int li
 
 			AStackPoint *anchor = Spawn<AStackPoint>(pos1, NO_REPLACE);
 			AStackPoint *reference = Spawn<AStackPoint>(pos2, NO_REPLACE);
+
+			// In some situations it can happen that the sector here is not the frontsector of the anchor linedef,
+			// because some colinear node line with opposite direction causes this to be positioned on the wrong side.
+			// Fortunately these things will never move so it should be sufficient to set the intended sector directly.
+			anchor->Sector = line->frontsector;
+			reference->Sector = lines[i].frontsector;
+
 			reference->special1 = linked ? SKYBOX_LINKEDPORTAL : SKYBOX_PORTAL;
 			anchor->special1 = SKYBOX_ANCHOR;
 			// store the portal displacement in the unused scaleX/Y members of the portal reference actor.

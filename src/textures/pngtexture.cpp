@@ -659,6 +659,10 @@ int FPNGTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCo
 						transpal = true;
 				}
 			}
+			else
+			{
+				lump->Seek(len, SEEK_CUR);
+			}
 			break;
 		}
 		lump->Seek(4, SEEK_CUR);		// Skip CRC

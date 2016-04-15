@@ -484,7 +484,7 @@ AActor *P_SpawnKoraxMissile (const DVector3 &pos, AActor *source, AActor *dest, 
 	DAngle an;
 	double dist;
 
-	th = Spawn (type, source->PosPlusZ(-source->Floorclip), ALLOW_REPLACE);
+	th = Spawn (type, pos, ALLOW_REPLACE);
 	th->target = source; // Originator
 	an = th->AngleTo(dest);
 	if (dest->flags & MF_SHADOW)

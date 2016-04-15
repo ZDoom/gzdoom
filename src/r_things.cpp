@@ -105,9 +105,9 @@ EXTERN_CVAR(Bool, r_deathcamera);
 // This is not the same as the angle,
 //	which increases counter clockwise (protractor).
 //
-fixed_t 		pspritexscale;
-fixed_t			pspriteyscale;
-fixed_t 		pspritexiscale;
+double 			pspritexscale;
+double	 		pspritexiscale;
+double			pspriteyscale;
 fixed_t			sky1scale;			// [RH] Sky 1 scale factor
 fixed_t			sky2scale;			// [RH] Sky 2 scale factor
 
@@ -1274,9 +1274,9 @@ void R_AddSprites (sector_t *sec, int lightlevel, int fakeside)
 //
 // R_DrawPSprite
 //
-void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, fixed_t sx, fixed_t sy)
+void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, double sx, double sy)
 {
-	fixed_t 			tx;
+	double 				tx;
 	int 				x1;
 	int 				x2;
 	spritedef_t*		sprdef;
@@ -1313,17 +1313,17 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, fixed_t sx, fixed_
 		return;
 
 	// calculate edges of the shape
-	tx = sx-((320/2)<<FRACBITS);
+	tx = sx - (320 / 2);
 
-	tx -= tex->GetScaledLeftOffset() << FRACBITS;
-	x1 = centerx + (FixedMul(tx, pspritexscale) >> FRACBITS);
+	tx -= tex->GetScaledLeftOffset();
+	x1 = xs_RoundToInt(CenterX + tx * pspritexscale);
 
 	// off the right side
 	if (x1 > viewwidth)
 		return; 
 
-	tx += tex->GetScaledWidth() << FRACBITS;
-	x2 = centerx + (FixedMul(tx, pspritexscale) >> FRACBITS);
+	tx += tex->GetScaledWidth();
+	x2 = xs_RoundToInt(CenterX + tx * pspritexscale);
 
 	// off the left side
 	if (x2 <= 0)
@@ -1334,7 +1334,7 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, fixed_t sx, fixed_
 	vis->renderflags = owner->renderflags;
 	vis->floorclip = 0;
 
-	vis->texturemid = int(((BASEYCENTER<<FRACBITS) - sy) * tex->Scale.Y) + (tex->TopOffset << FRACBITS);
+	vis->texturemid = FLOAT2FIXED((BASEYCENTER - sy) * tex->Scale.Y + tex->TopOffset);
 
 	if (camera->player && (RenderTarget != screen ||
 		viewheight == RenderTarget->GetHeight() ||
@@ -1363,20 +1363,20 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, fixed_t sx, fixed_
 	}
 	vis->x1 = x1 < 0 ? 0 : x1;
 	vis->x2 = x2 >= viewwidth ? viewwidth : x2;
-	vis->xscale = fixed_t(pspritexscale / tex->Scale.X);
-	vis->yscale = fixed_t(pspriteyscale / tex->Scale.Y);
+	vis->xscale = FLOAT2FIXED(pspritexscale / tex->Scale.X);
+	vis->yscale = FLOAT2FIXED(pspriteyscale / tex->Scale.Y);
 	vis->Translation = 0;		// [RH] Use default colors
 	vis->pic = tex;
 	vis->ColormapNum = 0;
 
 	if (flip)
 	{
-		vis->xiscale = -int(pspritexiscale * tex->Scale.X);
+		vis->xiscale = -FLOAT2FIXED(pspritexiscale * tex->Scale.X);
 		vis->startfrac = (tex->GetWidth() << FRACBITS) - 1;
 	}
 	else
 	{
-		vis->xiscale = int(pspritexiscale * tex->Scale.X);
+		vis->xiscale = FLOAT2FIXED(pspritexiscale * tex->Scale.X);
 		vis->startfrac = 0;
 	}
 
@@ -1592,7 +1592,7 @@ void R_DrawPlayerSprites ()
 			// [RH] Don't draw the targeter's crosshair if the player already has a crosshair set.
 			if (psp->state && (i != ps_targetcenter || CrosshairImage == NULL))
 			{
-				R_DrawPSprite (psp, i, camera, FLOAT2FIXED(psp->sx + ofsx), FLOAT2FIXED(psp->sy + ofsy));
+				R_DrawPSprite (psp, i, camera, psp->sx + ofsx, psp->sy + ofsy);
 			}
 			// [RH] Don't bob the targeter.
 			if (i == ps_flash)

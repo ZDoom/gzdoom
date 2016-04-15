@@ -386,9 +386,9 @@ void R_SWRSetWindow(int windowSize, int fullWidth, int fullHeight, int stHeight,
 	WallTMapScale2 = IYaspectMul * (1 << 18) / CenterX;
 
 	// psprite scales
-	pspritexscale = (centerxwide << FRACBITS) / 160;
-	pspriteyscale = FLOAT2FIXED(pspritexscale * YaspectMul);
-	pspritexiscale = FixedDiv(FRACUNIT, pspritexscale);
+	pspritexscale = centerxwide / 160.0;
+	pspriteyscale = pspritexscale * YaspectMul;
+	pspritexiscale = 1 / pspritexscale;
 
 	// thing clipping
 	clearbufshort (screenheightarray, viewwidth, (short)viewheight);

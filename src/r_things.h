@@ -112,9 +112,9 @@ extern fixed_t			spryscale;
 extern fixed_t			sprtopscreen;
 extern bool				sprflipvert;
 
-extern fixed_t			pspritexscale;
-extern fixed_t			pspriteyscale;
-extern fixed_t			pspritexiscale;
+extern double			pspritexscale;
+extern double			pspritexiscale;
+extern double			pspriteyscale;
 
 extern FTexture			*WallSpriteTile;
 

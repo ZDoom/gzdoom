@@ -44,9 +44,9 @@ void R_RenderSegLoop ();
 
 extern fixed_t	swall[MAXWIDTH];
 extern fixed_t	lwall[MAXWIDTH];
-extern fixed_t	rw_light;		// [RH] Scale lights with viewsize adjustments
-extern fixed_t	rw_lightstep;
-extern fixed_t	rw_lightleft;
+extern float	rw_light;		// [RH] Scale lights with viewsize adjustments
+extern float	rw_lightstep;
+extern float	rw_lightleft;
 extern fixed_t	rw_offset;
 
 /* portal structure, this is used in r_ code in order to store drawsegs with portals (and mirrors) */

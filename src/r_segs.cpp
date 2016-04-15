@@ -110,9 +110,9 @@ bool			rw_markportal;
 bool			rw_havehigh;
 bool			rw_havelow;
 
-fixed_t			rw_light;		// [RH] Scale lights with viewsize adjustments
-fixed_t			rw_lightstep;
-fixed_t			rw_lightleft;
+float			rw_light;		// [RH] Scale lights with viewsize adjustments
+float			rw_lightstep;
+float			rw_lightleft;
 
 static double	rw_frontlowertop;
 
@@ -1080,7 +1080,7 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 	int x, shiftval;
 	int y1ve[4], y2ve[4], u4, d4, z;
 	char bad;
-	fixed_t light = rw_light - rw_lightstep;
+	float light = rw_light - rw_lightstep;
 	SDWORD texturemid, xoffset;
 	BYTE *basecolormapdata;
 
@@ -1158,7 +1158,7 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 		}
 		if (bad == 15)
 		{
-			light += rw_lightstep << 2;
+			light += rw_lightstep * 4;
 			continue;
 		}
 
@@ -1432,7 +1432,7 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixe
 	BYTE *p;
 	int y1ve[4], y2ve[4], u4, d4, startx, dax, z;
 	char bad;
-	fixed_t light = rw_light - rw_lightstep;
+	float light = rw_light - rw_lightstep;
 	SDWORD texturemid, xoffset;
 	BYTE *basecolormapdata;
 
@@ -1507,7 +1507,7 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixe
 		}
 		if (bad == 15)
 		{
-			light += rw_lightstep << 2;
+			light += rw_lightstep * 4;
 			continue;
 		}
 
@@ -1605,7 +1605,7 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal,
 	BYTE *p;
 	int y1ve[4], y2ve[4], u4, d4, startx, dax, z;
 	char bad;
-	fixed_t light = rw_light - rw_lightstep;
+	float light = rw_light - rw_lightstep;
 	SDWORD texturemid, xoffset;
 	BYTE *basecolormapdata;
 
@@ -1681,7 +1681,7 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal,
 		}
 		if (bad == 15)
 		{
-			light += rw_lightstep << 2;
+			light += rw_lightstep * 4;
 			continue;
 		}
 
@@ -2312,12 +2312,12 @@ void R_NewWall (bool needlights)
 			wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(foggy, frontsector->lightlevel)
 				+ r_actualextralight);
 			GlobVis = r_WallVisibility;
-			rw_lightleft = FLOAT2FIXED(GlobVis / WallC.sz1);
-			rw_lightstep = (FLOAT2FIXED(GlobVis / WallC.sz2) - rw_lightleft) / (WallC.sx2 - WallC.sx1);
+			rw_lightleft = float (GlobVis / WallC.sz1);
+			rw_lightstep = float((GlobVis / WallC.sz2 - rw_lightleft) / (WallC.sx2 - WallC.sx1));
 		}
 		else
 		{
-			rw_lightleft = FRACUNIT;
+			rw_lightleft = 1;
 			rw_lightstep = 0;
 		}
 	}

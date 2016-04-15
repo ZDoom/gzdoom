@@ -75,12 +75,12 @@ extern bool				r_dontmaplines;
 #define LIGHT2SHADE(l)			((NUMCOLORMAPS*2*FRACUNIT)-(((l)+12)*(FRACUNIT*NUMCOLORMAPS/128)))
 
 // MAXLIGHTSCALE from original DOOM, divided by 2.
-#define MAXLIGHTVIS				(24*FRACUNIT)
+#define MAXLIGHTVIS				(24.0)
 
 // Convert a shade and visibility to a clamped colormap index.
 // Result is not fixed point.
 // Change R_CalcTiltedLighting() when this changes.
-#define GETPALOOKUP(vis,shade)	(clamp<int> (((shade)-MIN(MAXLIGHTVIS,(vis)))>>FRACBITS, 0, NUMCOLORMAPS-1))
+#define GETPALOOKUP(vis,shade)	(clamp<int> (((shade)-FLOAT2FIXED(MIN(MAXLIGHTVIS,double(vis))))>>FRACBITS, 0, NUMCOLORMAPS-1))
 
 extern double			GlobVis;
 

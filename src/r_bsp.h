@@ -65,7 +65,7 @@ enum
 struct drawseg_t
 {
 	seg_t*		curline;
-	fixed_t		light, lightstep;
+	float		light, lightstep;
 	fixed_t		iscale, iscalestep;
 	short 		x1, x2;			// Same as sx1 and sx2, but clipped to the drawseg
 	short		sx1, sx2;		// left, right of parent seg on screen

@@ -228,7 +228,7 @@ void R_MapPlane (int y, int x1)
 	{
 		// Determine lighting based on the span's distance from the viewer.
 		ds_colormap = basecolormap->Maps + (GETPALOOKUP (
-			FLOAT2FIXED(GlobVis * fabs(CenterY - y)), planeshade) << COLORMAPSHIFT);
+			GlobVis * fabs(CenterY - y), planeshade) << COLORMAPSHIFT);
 	}
 
 #ifdef X86_ASM
@@ -253,9 +253,9 @@ void R_MapPlane (int y, int x1)
 //==========================================================================
 
 extern "C" {
-void R_CalcTiltedLighting (fixed_t lval, fixed_t lend, int width)
+void R_CalcTiltedLighting (double lval, double lend, int width)
 {
-	fixed_t lstep;
+	double lstep;
 	BYTE *lightfiller;
 	BYTE *basecolormapdata = basecolormap->Maps;
 	int i = 0;
@@ -311,7 +311,7 @@ void R_CalcTiltedLighting (fixed_t lval, fixed_t lend, int width)
 					}
 					while (i <= width && lval >= 0)
 					{
-						tiltlighting[i++] = basecolormapdata + ((lval >> FRACBITS) << COLORMAPSHIFT);
+						tiltlighting[i++] = basecolormapdata + (xs_ToInt(lval) << COLORMAPSHIFT);
 						lval += lstep;
 					}
 					lightfiller = basecolormapdata;
@@ -334,7 +334,7 @@ void R_CalcTiltedLighting (fixed_t lval, fixed_t lend, int width)
 						return;
 					while (i <= width && lval < (NUMCOLORMAPS-1)*FRACUNIT)
 					{
-						tiltlighting[i++] = basecolormapdata + ((lval >> FRACBITS) << COLORMAPSHIFT);
+						tiltlighting[i++] = basecolormapdata + (xs_ToInt(lval) << COLORMAPSHIFT);
 						lval += lstep;
 					}
 					lightfiller = basecolormapdata + ((NUMCOLORMAPS-1) << COLORMAPSHIFT);
@@ -371,7 +371,7 @@ void R_MapTiltedPlane (int y, int x1)
 	{
 		uz = (iz + plane_sz[0]*width) * planelightfloat;
 		vz = iz * planelightfloat;
-		R_CalcTiltedLighting (xs_RoundToInt(vz), xs_RoundToInt(uz), width);
+		R_CalcTiltedLighting (vz, uz, width);
 	}
 
 	uz = plane_su[2] + plane_su[1]*(centery-y) + plane_su[0]*(x1-centerx);
@@ -1709,7 +1709,7 @@ void R_DrawTiltedPlane (visplane_t *pl, fixed_t alpha, bool additive, bool maske
 		plane_sz[0] = -plane_sz[0];
 	}
 
-	planelightfloat = (r_TiltVisibility * lxscale * lyscale) / fabs(pl->height.ZatPoint(ViewPos));
+	planelightfloat = (r_TiltVisibility * lxscale * lyscale) / (fabs(pl->height.ZatPoint(ViewPos) - ViewPos.Z)) / 65536.f;
 
 	if (pl->height.fC() > 0)
 		planelightfloat = -planelightfloat;

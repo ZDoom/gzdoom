@@ -697,6 +697,7 @@ int FPNGTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCo
 		{
 			bmp->CopyPixelDataRGB(x, y, Pixels, Width, Height, 3, pixwidth, rotate, CF_RGBT, inf,
 				NonPaletteTrans[0], NonPaletteTrans[1], NonPaletteTrans[2]);
+			transpal = true;
 		}
 		break;
 

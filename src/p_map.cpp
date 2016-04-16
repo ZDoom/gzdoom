@@ -4598,14 +4598,7 @@ void P_RailAttack(FRailParams *p)
 	rail_data.StopAtInvul = (puffDefaults->flags3 & MF3_FOILINVUL) ? false : true;
 	rail_data.ThruSpecies = (puffDefaults->flags6 & MF6_MTHRUSPECIES) ? true : false;
 
-	// to make things easier, push the start position and directional vector onto the PortalHits array as its first element
-	SPortalHit phit = { start, start, vec };
-	rail_data.PortalHits.Push(phit);
 	Trace(start, source->Sector, vec, p->distance, MF_SHOOTABLE, ML_BLOCKEVERYTHING, source, trace,	flags, ProcessRailHit, &rail_data);
-
-	// and push the hit position, too, so that the array contains the entire trace with all transition points.
-	phit = { trace.HitPos, trace.HitPos, trace.HitVector };
-	rail_data.PortalHits.Push(phit);
 
 	// Hurt anything the trace hit
 	unsigned int i;
@@ -4709,7 +4702,7 @@ void P_RailAttack(FRailParams *p)
 	}
 
 	// Draw the slug's trail.
-	P_DrawRailTrail(source, start, rail_data.PortalHits, trace.HitPos, p->color1, p->color2, p->maxdiff, p->flags, p->spawnclass, angle, p->duration, p->sparsity, p->drift, p->SpiralOffset);
+	P_DrawRailTrail(source, rail_data.PortalHits, p->color1, p->color2, p->maxdiff, p->flags, p->spawnclass, angle, p->duration, p->sparsity, p->drift, p->SpiralOffset);
 }
 
 //==========================================================================

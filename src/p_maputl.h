@@ -373,6 +373,7 @@ public:
 	}
 	void init(double x1, double y1, double x2, double y2, int flags, double startfrac = 0);
 	int PortalRelocate(intercept_t *in, int flags, DVector3 *optpos = NULL);
+	void PortalRelocate(AActor *portalthing, int flags, double hitfrac);
 	virtual ~FPathTraverse();
 	const divline_t &Trace() const { return trace; }
 

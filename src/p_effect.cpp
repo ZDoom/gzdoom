@@ -621,19 +621,65 @@ void P_DrawSplash2 (int count, const DVector3 &pos, DAngle angle, int updown, in
 	}
 }
 
-void P_DrawRailTrail(AActor *source, const DVector3 &start, TArray<SPortalHit> &portalhits, const DVector3 &end, int color1, int color2, double maxdiff_d, int flags, PClassActor *spawnclass, DAngle angle, int duration, double sparsity, double drift, int SpiralOffset)
+struct TrailSegment
 {
-	double length, lengthsquared;
+	DVector3 start;
+	DVector3 dir;
+	DVector3 extend;
+	DVector2 soundpos;
+	double length;
+	double sounddist;
+};
+
+
+
+void P_DrawRailTrail(AActor *source, TArray<SPortalHit> &portalhits, int color1, int color2, double maxdiff, int flags, PClassActor *spawnclass, DAngle angle, int duration, double sparsity, double drift, int SpiralOffset)
+{
+	double length = 0;
 	int steps, i;
+	TArray<TrailSegment> trail;
 	TAngle<double> deg;
-	DVector3 step, dir, pos, extend;
+	DVector3 pos;
 	bool fullbright;
-	float maxdiff = (float)maxdiff_d;
+	unsigned segment;
+	double lencount;
 
+	for (unsigned i = 0; i < portalhits.Size() - 1; i++)
+	{
+		TrailSegment seg;
 
-	dir = end - start;
-	lengthsquared = dir | dir;
-	length = g_sqrt(lengthsquared);
+		seg.start = portalhits[i].ContPos;
+		seg.dir = portalhits[i].OutDir;
+		seg.length = (portalhits[i + 1].HitPos - seg.start).Length();
+
+		//Calculate PerpendicularVector (extend, dir):
+		double minelem = 1;
+		int epos;
+		int ii;
+		for (epos = 0, ii = 0; ii < 3; ++ii)
+		{
+			if (fabs(seg.dir[ii]) < minelem)
+			{
+				epos = ii;
+				minelem = fabs(seg.dir[ii]);
+			}
+		}
+		DVector3 tempvec(0, 0, 0);
+		tempvec[epos] = 1;
+		seg.extend = (tempvec - (seg.dir | tempvec) * seg.dir) * 3;
+		length += seg.length;
+
+		// Only consider sound in 2D (for now, anyway)
+		// [BB] You have to divide by lengthsquared here, not multiply with it.
+		AActor *mo = players[consoleplayer].camera;
+
+		double r = ((seg.start.Y - mo->Y()) * (-seg.dir.Y) - (seg.start.X - mo->X()) * (seg.dir.X)) / (seg.length * seg.length);
+		r = clamp<double>(r, 0., 1.);
+		seg.soundpos = seg.start + r * seg.dir;
+		seg.sounddist = (seg.soundpos - mo->Pos()).LengthSquared();
+		trail.Push(seg);
+	}
+
 	steps = xs_FloorToInt(length / 3);
 	fullbright = !!(flags & RAF_FULLBRIGHT);
 
@@ -652,30 +698,19 @@ void P_DrawRailTrail(AActor *source, const DVector3 &start, TArray<SPortalHit> &
 			// The railgun's sound is special. It gets played from the
 			// point on the slug's trail that is closest to the hearing player.
 			AActor *mo = players[consoleplayer].camera;
-			DVector3 point;
-			double r;
-			double dirz;
 
-			if (fabs(mo->X() - start.X) < 20
-				&& fabs(mo->Y() - start.Y) < 20)
+			if (fabs(mo->X() - trail[0].start.X) < 20 && fabs(mo->Y() - trail[0].start.Y) < 20)
 			{ // This player (probably) fired the railgun
 				S_Sound (mo, CHAN_WEAPON, sound, 1, ATTN_NORM);
 			}
 			else
 			{
-
-				// Only consider sound in 2D (for now, anyway)
-				// [BB] You have to divide by lengthsquared here, not multiply with it.
-
-				r = ((start.Y - mo->Y()) * (-dir.Y) - (start.X - mo->X()) * (dir.X)) / lengthsquared;
-				r = clamp<double>(r, 0., 1.);
-
-				dirz = dir.Z;
-				dir.Z = 0;
-				point = start + r * dir;
-				dir.Z = dirz;
-
-				S_Sound (DVector3(point.X, point.Y, ViewPos.Z),	CHAN_WEAPON, sound, 1, ATTN_NORM);
+				TrailSegment *shortest = NULL;
+				for (auto &seg : trail)
+				{
+					if (shortest == NULL || shortest->sounddist > seg.sounddist) shortest = &seg;
+				}
+				S_Sound (DVector3(shortest->soundpos, ViewPos.Z), CHAN_WEAPON, sound, 1, ATTN_NORM);
 			}
 		}
 	}
@@ -685,35 +720,16 @@ void P_DrawRailTrail(AActor *source, const DVector3 &start, TArray<SPortalHit> &
 		return;
 	}
 
-	dir /= length;
-
-	//Calculate PerpendicularVector (extend, dir):
-	double minelem = 1;
-	int epos;
-	for (epos = 0, i = 0; i < 3; ++i)
-	{
-		if (fabs(dir[i]) < minelem)
-		{
-			epos = i;
-			minelem = fabs(dir[i]);
-		}
-	}
-	DVector3 tempvec(0, 0, 0);
-	tempvec[epos] = 1;
-	extend = tempvec - (dir | tempvec) * dir;
-	//
-
-	extend *= 3;
-	step = dir * 3;
-
 	// Create the outer spiral.
 	if (color1 != -1 && (!r_rail_smartspiral || color2 == -1) && r_rail_spiralsparsity > 0 && (spawnclass == NULL))
 	{
-		DVector3 spiral_step = step * r_rail_spiralsparsity * sparsity;
+		double stepsize = 3 * r_rail_spiralsparsity * sparsity;
 		int spiral_steps = (int)(steps * r_rail_spiralsparsity / sparsity);
+		segment = 0;
+		lencount = trail[0].length;
 		
 		color1 = color1 == 0 ? -1 : ParticleColor(color1);
-		pos = start;
+		pos = trail[0].start;
 		deg = (double)SpiralOffset;
 		for (i = spiral_steps; i; i--)
 		{
@@ -731,12 +747,12 @@ void P_DrawRailTrail(AActor *source, const DVector3 &start, TArray<SPortalHit> &
 			p->size = 3;
 			p->bright = fullbright;
 
-			tempvec = DMatrix3x3(dir, deg) * extend;
+			tempvec = DMatrix3x3(trail[segment].dir, deg) * trail[segment].extend;
 			p->Vel = tempvec * drift / 16.;
 			p->Pos = tempvec + pos;
-			pos += spiral_step;
+			pos += trail[segment].dir * stepsize;
 			deg += double(r_rail_spiralsparsity * 14);
-
+			lencount -= stepsize;
 			if (color1 == -1)
 			{
 				int rand = M_Random();
@@ -754,19 +770,36 @@ void P_DrawRailTrail(AActor *source, const DVector3 &start, TArray<SPortalHit> &
 			{
 				p->color = color1;
 			}
+
+			if (lencount <= 0)
+			{
+				segment++;
+				if (segment < trail.Size())
+				{
+					pos = trail[segment].start - trail[segment].dir * lencount;
+					lencount += trail[segment].length;
+				}
+				else
+				{
+					// should never happen but if something goes wrong, just terminate the loop.
+					break;
+				}
+			}
 		}
 	}
 
 	// Create the inner trail.
 	if (color2 != -1 && r_rail_trailsparsity > 0 && spawnclass == NULL)
 	{
-		DVector3 trail_step = step * r_rail_trailsparsity * sparsity;
+		double stepsize = 3 * r_rail_spiralsparsity * sparsity;
 		int trail_steps = xs_FloorToInt(steps * r_rail_trailsparsity / sparsity);
 
 		color2 = color2 == 0 ? -1 : ParticleColor(color2);
 		DVector3 diff(0, 0, 0);
 
-		pos = start;
+		pos = trail[0].start;
+		lencount = trail[0].length;
+		segment = 0;
 		for (i = trail_steps; i; i--)
 		{
 			// [XA] inner trail uses a different default duration (33).
@@ -793,8 +826,8 @@ void P_DrawRailTrail(AActor *source, const DVector3 &start, TArray<SPortalHit> &
 			p->Pos = postmp;
 			if (color1 != -1)
 				p->Acc.Z -= 1./4096;
-			pos += trail_step;
-
+			pos += trail[segment].dir * stepsize;
+			lencount -= stepsize;
 			p->bright = fullbright;
 
 			if (color2 == -1)
@@ -812,6 +845,21 @@ void P_DrawRailTrail(AActor *source, const DVector3 &start, TArray<SPortalHit> &
 			{
 				p->color = color2;
 			}
+			if (lencount <= 0)
+			{
+				segment++;
+				if (segment < trail.Size())
+				{
+					pos = trail[segment].start - trail[segment].dir * lencount;
+					lencount += trail[segment].length;
+				}
+				else
+				{
+					// should never happen but if something goes wrong, just terminate the loop.
+					break;
+				}
+			}
+
 		}
 	}
 	// create actors
@@ -820,11 +868,14 @@ void P_DrawRailTrail(AActor *source, const DVector3 &start, TArray<SPortalHit> &
 		if (sparsity < 1)
 			sparsity = 32;
 
-		DVector3 trail_step = (step / 3) * sparsity;
+		double stepsize = 3 * r_rail_spiralsparsity * sparsity;
 		int trail_steps = (int)((steps * 3) / sparsity);
 		DVector3 diff(0, 0, 0);
 
-		pos = start;
+		pos = trail[0].start;
+		lencount = trail[0].length;
+		segment = 0;
+
 		for (i = trail_steps; i; i--)
 		{
 			if (maxdiff > 0)
@@ -840,7 +891,22 @@ void P_DrawRailTrail(AActor *source, const DVector3 &start, TArray<SPortalHit> &
 			AActor *thing = Spawn (spawnclass, pos + diff, ALLOW_REPLACE);
 			if (thing)
 				thing->Angles.Yaw = angle;
-			pos += trail_step;
+			pos += trail[segment].dir * stepsize;
+			lencount -= stepsize;
+			if (lencount <= 0)
+			{
+				segment++;
+				if (segment < trail.Size())
+				{
+					pos = trail[segment].start - trail[segment].dir * lencount;
+					lencount += trail[segment].length;
+				}
+				else
+				{
+					// should never happen but if something goes wrong, just terminate the loop.
+					break;
+				}
+			}
 		}
 	}
 }

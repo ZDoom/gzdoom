@@ -661,10 +661,10 @@ DVector2 P_GetOffsetPosition(double x, double y, double dx, double dy)
 			if (blockx < 0 || blocky < 0 || blockx >= bmapwidth || blocky >= bmapheight || !PortalBlockmap(blockx, blocky).neighborContainsLines) return dest;
 		}
 
-		FLinePortalTraverse it;
 		bool repeat;
 		do
 		{
+			FLinePortalTraverse it;
 			it.init(actx, acty, dx, dy, PT_ADDLINES|PT_DELTA);
 			intercept_t *in;
 
@@ -696,6 +696,8 @@ DVector2 P_GetOffsetPosition(double x, double y, double dx, double dy)
 					// update the fields, end this trace and restart from the new position
 					dx = dest.X - hit.X;
 					dy = dest.Y - hit.Y;
+					actx = hit.X;
+					acty = hit.Y;
 					repeat = true;
 				}
 

@@ -513,6 +513,23 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 }
 
 
+bool R_SkyboxCompare(sector_t *frontsector, sector_t *backsector)
+{
+	AActor *frontc = frontsector->SkyBoxes[sector_t::ceiling];
+	AActor *frontf = frontsector->SkyBoxes[sector_t::floor];
+	AActor *backc = backsector->SkyBoxes[sector_t::ceiling];
+	AActor *backf = backsector->SkyBoxes[sector_t::floor];
+
+	// return true if any of the planes has a linedef-based portal (unless both sides have the same one.
+	// Ideally this should also check thing based portals but the omission of this check had been abused to hell and back for those.
+	// (Note: This may require a compatibility option if some maps ran into this for line based portals as well.)
+	if (frontc != NULL && (frontc->special1 == SKYBOX_PORTAL || frontc->special1 == SKYBOX_LINKEDPORTAL)) return (frontc != backc);
+	if (frontf != NULL && (frontf->special1 == SKYBOX_PORTAL || frontf->special1 == SKYBOX_LINKEDPORTAL)) return (frontf != backf);
+	if (backc != NULL && (backc->special1 == SKYBOX_PORTAL || backc->special1 == SKYBOX_LINKEDPORTAL)) return true;
+	if (backf != NULL && (backf->special1 == SKYBOX_PORTAL || backf->special1 == SKYBOX_LINKEDPORTAL)) return true;
+	return false;
+}
+
 //
 // R_AddLine
 // Clips the given segment
@@ -653,6 +670,10 @@ void R_AddLine (seg_t *line)
 			frontsector->floorplane != backsector->floorplane)
 		{
 		// Window.
+			solid = false;
+		}
+		else if (R_SkyboxCompare(frontsector, backsector))
+		{
 			solid = false;
 		}
 		else if (backsector->lightlevel != frontsector->lightlevel

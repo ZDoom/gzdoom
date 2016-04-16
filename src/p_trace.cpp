@@ -230,7 +230,7 @@ int FTraceInfo::EnterLinePortal(line_t *li, double frac)
 	P_TranslatePortalVXVY(li, newtrace.Vec.X, newtrace.Vec.Y);
 
 	frac += 1 / MaxDist;
-	double enterdist = MaxDist / frac;
+	double enterdist = MaxDist * frac;
 	DVector3 enter = newtrace.Start + enterdist * Vec;
 
 	newtrace.ActorMask = ActorMask;

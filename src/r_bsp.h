@@ -66,13 +66,13 @@ struct drawseg_t
 {
 	seg_t*		curline;
 	float		light, lightstep;
-	fixed_t		iscale, iscalestep;
+	float		iscale, iscalestep;
 	short 		x1, x2;			// Same as sx1 and sx2, but clipped to the drawseg
 	short		sx1, sx2;		// left, right of parent seg on screen
 	float		sz1, sz2;		// z for left, right of parent seg on screen
 	float		siz1, siz2;		// 1/z for left, right of parent seg on screen
 	float		cx, cy, cdx, cdy;
-	fixed_t		yrepeat;
+	float		yscale;
 	BYTE 		silhouette;		// 0=none, 1=bottom, 2=top, 3=both
 	BYTE		bFogBoundary;
 	BYTE		bFakeBoundary;		// for fake walls

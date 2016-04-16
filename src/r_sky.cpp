@@ -40,7 +40,7 @@
 //
 FTextureID	skyflatnum;
 FTextureID	sky1texture,	sky2texture;
-fixed_t		skytexturemid;
+double		skytexturemid;
 fixed_t		skyscale;
 fixed_t		skyiscale;
 bool		skystretch;
@@ -103,11 +103,11 @@ void R_InitSkyMap ()
 					  && skyheight >= 128
 					  && level.IsFreelookAllowed()
 					  && !(level.flags & LEVEL_FORCENOSKYSTRETCH)) ? 1 : 0;
-		skytexturemid = -28*FRACUNIT;
+		skytexturemid = -28;
 	}
 	else if (skyheight > 200)
 	{
-		skytexturemid = FLOAT2FIXED((200 - skyheight) * skytex1->Scale.Y);
+		skytexturemid = (200 - skyheight) * skytex1->Scale.Y;
 	}
 
 	if (viewwidth != 0 && viewheight != 0)
@@ -124,7 +124,7 @@ void R_InitSkyMap ()
 	{
 		skyscale = Scale(skyscale, SKYSTRETCH_HEIGHT, skyheight);
 		skyiscale = Scale(skyiscale, skyheight, SKYSTRETCH_HEIGHT);
-		skytexturemid = Scale(skytexturemid, skyheight, SKYSTRETCH_HEIGHT);
+		skytexturemid = skytexturemid * skyheight / SKYSTRETCH_HEIGHT;
 	}
 
 	// The standard Doom sky texture is 256 pixels wide, repeated 4 times over 360 degrees,

@@ -86,6 +86,7 @@ void (*rt_map4cols)(int,int,int);
 // R_DrawColumn
 // Source is the top of the column to scale.
 //
+double 			dc_texturemid;
 extern "C" {
 int				dc_pitch=0xABadCafe;	// [RH] Distance between rows
 
@@ -94,7 +95,6 @@ int 			dc_x;
 int 			dc_yl; 
 int 			dc_yh; 
 fixed_t 		dc_iscale; 
-fixed_t 		dc_texturemid;
 fixed_t			dc_texturefrac;
 int				dc_color;				// [RH] Color for column filler
 DWORD			dc_srccolor;

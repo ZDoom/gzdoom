@@ -237,22 +237,23 @@ vissprite_t *R_NewVisSprite (void)
 short*			mfloorclip;
 short*			mceilingclip;
 
-fixed_t 		spryscale;
-fixed_t 		sprtopscreen;
+double	 		spryscale;
+double	 		sprtopscreen;
 
 bool			sprflipvert;
 
 void R_DrawMaskedColumn (const BYTE *column, const FTexture::Span *span)
 {
-	fixed_t centeryfrac = FLOAT2FIXED(CenterY);
+	const fixed_t centeryfrac = FLOAT2FIXED(CenterY);
+	const fixed_t texturemid = FLOAT2FIXED(dc_texturemid);
 	while (span->Length != 0)
 	{
 		const int length = span->Length;
 		const int top = span->TopOffset;
 
 		// calculate unclipped screen coordinates for post
-		dc_yl = (sprtopscreen + spryscale * top) >> FRACBITS;
-		dc_yh = (sprtopscreen + spryscale * (top + length) - FRACUNIT) >> FRACBITS;
+		dc_yl = xs_RoundToInt(sprtopscreen + spryscale * top);
+		dc_yh = xs_RoundToInt(sprtopscreen + spryscale * (top + length)) - 1;
 
 		if (sprflipvert)
 		{
@@ -273,7 +274,7 @@ void R_DrawMaskedColumn (const BYTE *column, const FTexture::Span *span)
 			if (sprflipvert)
 			{
 				dc_texturefrac = (dc_yl*dc_iscale) - (top << FRACBITS)
-					- FixedMul (centeryfrac, dc_iscale) - dc_texturemid;
+					- FixedMul (centeryfrac, dc_iscale) - texturemid;
 				const fixed_t maxfrac = length << FRACBITS;
 				while (dc_texturefrac >= maxfrac)
 				{
@@ -291,7 +292,7 @@ void R_DrawMaskedColumn (const BYTE *column, const FTexture::Span *span)
 			}
 			else
 			{
-				dc_texturefrac = dc_texturemid - (top << FRACBITS)
+				dc_texturefrac = texturemid - (top << FRACBITS)
 					+ (dc_yl*dc_iscale) - FixedMul (centeryfrac-FRACUNIT, dc_iscale);
 				while (dc_texturefrac < 0)
 				{
@@ -433,24 +434,23 @@ void R_DrawVisSprite (vissprite_t *vis)
 		tex = vis->pic;
 		spryscale = vis->yscale;
 		sprflipvert = false;
-		dc_iscale = 0xffffffffu / (unsigned)vis->yscale;
+		dc_iscale = FLOAT2FIXED(1 / vis->yscale);
 		frac = vis->startfrac;
 		xiscale = vis->xiscale;
 		dc_texturemid = vis->texturemid;
-
 
 		if (vis->renderflags & RF_YFLIP)
 		{
 			sprflipvert = true;
 			spryscale = -spryscale;
 			dc_iscale = -dc_iscale;
-			dc_texturemid -= (vis->pic->GetHeight() << FRACBITS);
-			sprtopscreen = centeryfrac + FixedMul(dc_texturemid, spryscale);
+			dc_texturemid -= vis->pic->GetHeight();
+			sprtopscreen = CenterY + dc_texturemid * spryscale;
 		}
 		else
 		{
 			sprflipvert = false;
-			sprtopscreen = centeryfrac - FixedMul(dc_texturemid, spryscale);
+			sprtopscreen = CenterY - dc_texturemid * spryscale;
 		}
 
 		dc_x = vis->x1;
@@ -500,7 +500,7 @@ void R_DrawVisSprite (vissprite_t *vis)
 void R_DrawWallSprite(vissprite_t *spr)
 {
 	int x1, x2;
-	fixed_t yscale;
+	double iyscale;
 
 	x1 = MAX<int>(spr->x1, spr->wallc.sx1);
 	x2 = MIN<int>(spr->x2, spr->wallc.sx2);
@@ -508,8 +508,8 @@ void R_DrawWallSprite(vissprite_t *spr)
 		return;
 	WallT.InitFromWallCoords(&spr->wallc);
 	PrepWall(swall, lwall, spr->pic->GetWidth() << FRACBITS, x1, x2);
-	yscale = spr->yscale;
-	dc_texturemid = FixedDiv(FLOAT2FIXED(spr->gzt - ViewPos.Z), yscale);
+	iyscale = 1 / spr->yscale;
+	dc_texturemid = (spr->gzt - ViewPos.Z) * iyscale;
 	if (spr->renderflags & RF_XFLIP)
 	{
 		int right = (spr->pic->GetWidth() << FRACBITS) - 1;
@@ -550,8 +550,8 @@ void R_DrawWallSprite(vissprite_t *spr)
 	if (spr->renderflags & RF_YFLIP)
 	{
 		sprflipvert = true;
-		yscale = -yscale;
-		dc_texturemid = dc_texturemid - (spr->pic->GetHeight() << FRACBITS);
+		iyscale = -iyscale;
+		dc_texturemid -= spr->pic->GetHeight();
 	}
 	else
 	{
@@ -559,7 +559,7 @@ void R_DrawWallSprite(vissprite_t *spr)
 	}
 
 	// rw_offset is used as the texture's vertical scale
-	rw_offset = SafeDivScale30(1, yscale);
+	rw_offset = xs_Fix<30>::ToFix(iyscale);
 
 	dc_x = x1;
 	ESPSResult mode;
@@ -636,9 +636,9 @@ void R_WallSpriteColumn (void (*drawfunc)(const BYTE *column, const FTexture::Sp
 	dc_iscale = MulScale16 (swall[dc_x], rw_offset);
 	spryscale = SafeDivScale32 (1, dc_iscale);
 	if (sprflipvert)
-		sprtopscreen = FLOAT2FIXED(CenterY) + FixedMul (dc_texturemid, spryscale);
+		sprtopscreen = CenterY + dc_texturemid * spryscale;
 	else
-		sprtopscreen = FLOAT2FIXED(CenterY) - FixedMul (dc_texturemid, spryscale);
+		sprtopscreen = CenterY - dc_texturemid * spryscale;
 
 	const BYTE *column;
 	const FTexture::Span *spans;
@@ -680,7 +680,7 @@ void R_DrawVisVoxel(vissprite_t *spr, int minslabz, int maxslabz, short *cliptop
 
 	// Render the voxel, either directly to the screen or offscreen.
 	R_DrawVoxel(spr->vpos, spr->vang, spr->gpos, spr->angle,
-		spr->xscale, spr->yscale, spr->voxel, spr->Style.colormap, cliptop, clipbot,
+		spr->xscale, FLOAT2FIXED(spr->yscale), spr->voxel, spr->Style.colormap, cliptop, clipbot,
 		minslabz, maxslabz, flags);
 
 	// Blend the voxel, if that's what we need to do.
@@ -982,17 +982,17 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 		xscale = spriteScale.X * xscale / tex->Scale.X;
 		iscale = (tex->GetWidth() << FRACBITS) / (x2 - x1);
 
-		fixed_t yscale = FLOAT2FIXED(spriteScale.Y / tex->Scale.Y);
+		double yscale = spriteScale.Y / tex->Scale.Y;
 
 		// store information in a vissprite
 		vis = R_NewVisSprite();
 
 		vis->CurrentPortalUniq = CurrentPortalUniq;
 		vis->xscale = FLOAT2FIXED(xscale);
-		vis->yscale = fixed_t(InvZtoScale * yscale / tz);
+		vis->yscale = float(InvZtoScale * yscale / tz);
 		vis->idepth = float(1 / tz);
-		vis->floorclip = FixedDiv (FLOAT2FIXED(thing->Floorclip), yscale);
-		vis->texturemid = (tex->TopOffset << FRACBITS) - FixedDiv(FLOAT2FIXED(ViewPos.Z - pos.Z + thing->Floorclip), yscale);
+		vis->floorclip = thing->Floorclip / yscale;
+		vis->texturemid = tex->TopOffset - (ViewPos.Z - pos.Z + thing->Floorclip) / yscale;
 		vis->x1 = x1 < WindowLeft ? WindowLeft : x1;
 		vis->x2 = x2 > WindowRight ? WindowRight : x2;
 		vis->angle = thing->Angles.Yaw.BAMs();
@@ -1017,11 +1017,11 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 
 		vis->CurrentPortalUniq = CurrentPortalUniq;
 		vis->xscale = FLOAT2FIXED(xscale);
-		vis->yscale = FLOAT2FIXED(yscale);
+		vis->yscale = (float)yscale;
 		vis->x1 = WindowLeft;
 		vis->x2 = WindowRight;
 		vis->idepth = 1 / MINZ;
-		vis->floorclip = FLOAT2FIXED(thing->Floorclip);
+		vis->floorclip = thing->Floorclip;
 
 		pos.Z -= thing->Floorclip;
 
@@ -1179,7 +1179,7 @@ static void R_ProjectWallSprite(AActor *thing, const DVector3 &pos, FTextureID p
 	vis->CurrentPortalUniq = CurrentPortalUniq;
 	vis->x1 = wallc.sx1 < WindowLeft ? WindowLeft : wallc.sx1;
 	vis->x2 = wallc.sx2 >= WindowRight ? WindowRight : wallc.sx2;
-	vis->yscale = FLOAT2FIXED(scale.Y);
+	vis->yscale = (float)scale.Y;
 	vis->idepth = float(1 / tz);
 	vis->depth = (float)tz;
 	vis->sector = thing->Sector;
@@ -1334,7 +1334,7 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, double sx, double 
 	vis->renderflags = owner->renderflags;
 	vis->floorclip = 0;
 
-	vis->texturemid = FLOAT2FIXED((BASEYCENTER - sy) * tex->Scale.Y + tex->TopOffset);
+	vis->texturemid = (BASEYCENTER - sy) * tex->Scale.Y + tex->TopOffset;
 
 	if (camera->player && (RenderTarget != screen ||
 		viewheight == RenderTarget->GetHeight() ||
@@ -1349,11 +1349,11 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, double sx, double 
 		{
 			if (RenderTarget != screen || viewheight == RenderTarget->GetHeight())
 			{
-				vis->texturemid -= FLOAT2FIXED(weapon->YAdjust);
+				vis->texturemid -= weapon->YAdjust;
 			}
 			else
 			{
-				vis->texturemid -= FLOAT2FIXED(StatusBar->GetDisplacement () * weapon->YAdjust);
+				vis->texturemid -= StatusBar->GetDisplacement () * weapon->YAdjust;
 			}
 		}
 	}
@@ -1364,7 +1364,7 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, double sx, double 
 	vis->x1 = x1 < 0 ? 0 : x1;
 	vis->x2 = x2 >= viewwidth ? viewwidth : x2;
 	vis->xscale = FLOAT2FIXED(pspritexscale / tex->Scale.X);
-	vis->yscale = FLOAT2FIXED(pspriteyscale / tex->Scale.Y);
+	vis->yscale = float(pspriteyscale / tex->Scale.Y);
 	vis->Translation = 0;		// [RH] Use default colors
 	vis->pic = tex;
 	vis->ColormapNum = 0;
@@ -1655,9 +1655,9 @@ void R_DrawRemainingPlayerSprites()
 			}
 			screen->DrawTexture(vis->pic,
 				viewwindowx + VisPSpritesX1[i],
-				viewwindowy + viewheight/2 - (vis->texturemid / 65536.0) * (vis->yscale / 65536.0) - 0.5,
+				viewwindowy + viewheight/2 - vis->texturemid * vis->yscale - 0.5,
 				DTA_DestWidthF, FIXED2DBL(vis->pic->GetWidth() * vis->xscale),
-				DTA_DestHeightF, FIXED2DBL(vis->pic->GetHeight() * vis->yscale),
+				DTA_DestHeightF, vis->pic->GetHeight() * vis->yscale,
 				DTA_Translation, TranslationToTable(vis->Translation),
 				DTA_FlipX, flip,
 				DTA_TopOffset, 0,
@@ -2075,12 +2075,11 @@ void R_DrawSprite (vissprite_t *spr)
 	// killough 3/27/98: end special clipping for deep water / fake ceilings
 	else if (!spr->bIsVoxel && spr->floorclip)
 	{ // [RH] Move floorclip stuff from R_DrawVisSprite to here
-		int clip = ((FLOAT2FIXED(CenterY) - FixedMul (spr->texturemid -
-			(spr->pic->GetHeight() << FRACBITS) +
-			spr->floorclip, spr->yscale)) >> FRACBITS);
+		//int clip = ((FLOAT2FIXED(CenterY) - FixedMul (spr->texturemid - (spr->pic->GetHeight() << FRACBITS) + spr->floorclip, spr->yscale)) >> FRACBITS);
+		int clip = xs_RoundToInt(CenterY - (spr->texturemid - spr->pic->GetHeight() + spr->floorclip) * spr->yscale);
 		if (clip < botclip)
 		{
-			botclip = MAX<short> (0, clip);
+			botclip = MAX<short>(0, clip);
 		}
 	}
 
@@ -2295,8 +2294,8 @@ void R_DrawSprite (vissprite_t *spr)
 		{
 			clearbufshort(cliptop + x2, viewwidth - x2, viewheight);
 		}
-		int minvoxely = spr->gzt <= hzt ? 0 : FLOAT2FIXED(spr->gzt - hzt) / spr->yscale;
-		int maxvoxely = spr->gzb > hzb ? INT_MAX : FLOAT2FIXED(spr->gzt - hzb) / spr->yscale;
+		int minvoxely = spr->gzt <= hzt ? 0 : xs_RoundToInt((spr->gzt - hzt) / spr->yscale);
+		int maxvoxely = spr->gzb > hzb ? INT_MAX : xs_RoundToInt((spr->gzt - hzb) / spr->yscale);
 		R_DrawVisVoxel(spr, minvoxely, maxvoxely, cliptop, clipbot);
 	}
 	spr->Style.colormap = colormap;
@@ -2526,8 +2525,9 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 	vis = R_NewVisSprite ();
 	vis->CurrentPortalUniq = CurrentPortalUniq;
 	vis->heightsec = heightsec;
-	vis->yscale = vis->xscale = FLOAT2FIXED(xscale);
-//	vis->yscale = FixedMul (xscale, InvZtoScale);
+	vis->xscale = FLOAT2FIXED(xscale);
+	vis->yscale = (float)xscale;
+//	vis->yscale *= InvZtoScale;
 	vis->depth = (float)tz;
 	vis->idepth = float(1 / tz);
 	vis->gpos = { (float)particle->Pos.X, (float)particle->Pos.Y, (float)particle->Pos.Z };

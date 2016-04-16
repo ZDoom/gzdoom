@@ -34,7 +34,7 @@ extern "C" int			dc_x;
 extern "C" int			dc_yl;
 extern "C" int			dc_yh;
 extern "C" fixed_t		dc_iscale;
-extern "C" fixed_t		dc_texturemid;
+extern     double		dc_texturemid;
 extern "C" fixed_t		dc_texturefrac;
 extern "C" int			dc_color;		// [RH] For flat colors (no texturing)
 extern "C" DWORD		dc_srccolor;

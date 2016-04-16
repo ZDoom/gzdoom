@@ -39,12 +39,13 @@ struct vissprite_t
 		int			y1, y2;			// top / bottom of particle on screen
 	};
 	angle_t			angle;
-	fixed_t			xscale, yscale;
+	fixed_t			xscale;
+	float			yscale;
 	float			depth;
 	float			idepth;			// 1/z
 	float			deltax, deltay;
 	DWORD			FillColor;
-	fixed_t			floorclip;
+	double			floorclip;
 	union
 	{
 		FTexture *pic;
@@ -55,7 +56,7 @@ struct vissprite_t
 		// Used by face sprites
 		struct
 		{
-			fixed_t	texturemid;
+			double	texturemid;
 			fixed_t	startfrac;		// horizontal position of x1
 			fixed_t	xiscale;		// negative if flipped
 		};
@@ -108,8 +109,8 @@ extern short			screenheightarray[MAXWIDTH];
 // vars for R_DrawMaskedColumn
 extern short*			mfloorclip;
 extern short*			mceilingclip;
-extern fixed_t			spryscale;
-extern fixed_t			sprtopscreen;
+extern double			spryscale;
+extern double			sprtopscreen;
 extern bool				sprflipvert;
 
 extern double			pspritexscale;

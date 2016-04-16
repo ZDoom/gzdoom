@@ -29,7 +29,7 @@ extern FTextureID	skyflatnum;
 extern fixed_t		sky1cyl,		sky2cyl;
 extern FTextureID	sky1texture,	sky2texture;
 extern double		sky1pos,		sky2pos;
-extern fixed_t	skytexturemid;
+extern double	skytexturemid;
 extern fixed_t	skyiscale;
 extern fixed_t	skyscale;
 extern bool		skystretch;

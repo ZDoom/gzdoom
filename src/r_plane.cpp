@@ -842,11 +842,11 @@ inline void R_MakeSpans (int x, int t1, int b1, int t2, int b2, void (*mapfunc)(
 static FTexture *frontskytex, *backskytex;
 static angle_t skyflip;
 static int frontpos, backpos;
-static fixed_t frontyScale;
+static double frontyScale;
 static fixed_t frontcyl, backcyl;
-static fixed_t skymid;
+static double skymid;
 static angle_t skyangle;
-int frontiScale;
+static double frontiScale;
 
 extern fixed_t swall[MAXWIDTH];
 extern fixed_t lwall[MAXWIDTH];
@@ -947,8 +947,8 @@ static void R_DrawSky (visplane_t *pl)
 	rw_pic = frontskytex;
 	rw_offset = 0;
 
-	frontyScale = FLOAT2FIXED(rw_pic->Scale.Y);
-	dc_texturemid = MulScale16 (skymid, frontyScale);
+	frontyScale = rw_pic->Scale.Y;
+	dc_texturemid = skymid * frontyScale;
 
 	if (1 << frontskytex->HeightBits == frontskytex->GetHeight())
 	{ // The texture tiles nicely
@@ -957,19 +957,19 @@ static void R_DrawSky (visplane_t *pl)
 			lastskycol[x] = 0xffffffff;
 		}
 		wallscan (pl->left, pl->right, (short *)pl->top, (short *)pl->bottom, swall, lwall,
-			frontyScale, backskytex == NULL ? R_GetOneSkyColumn : R_GetTwoSkyColumns);
+			FLOAT2FIXED(frontyScale), backskytex == NULL ? R_GetOneSkyColumn : R_GetTwoSkyColumns);
 	}
 	else
 	{ // The texture does not tile nicely
-		frontyScale = DivScale16 (skyscale, frontyScale);
-		frontiScale = DivScale32 (1, frontyScale);
+		frontyScale *= skyscale;
+		frontiScale = 1 / frontyScale;
 		// Sodding crap. Fixed point sucks when you want precision.
 		// TODO (if I'm feeling adventurous): Rewrite the renderer to use floating point
 		// coordinates to keep as much precision as possible until the final
 		// rasterization stage so fudges like this aren't needed.
 		if (viewheight <= 600)
 		{
-			skymid -= FRACUNIT;
+			skymid -= 1;
 		}
 		R_DrawSkyStriped (pl);
 	}
@@ -977,22 +977,18 @@ static void R_DrawSky (visplane_t *pl)
 
 static void R_DrawSkyStriped (visplane_t *pl)
 {
-	double centerysave = CenterY;
-	short drawheight = (short)MulScale16 (frontskytex->GetHeight(), frontyScale);
-	fixed_t topfrac;
-	fixed_t iscale = frontiScale;
+	short drawheight = short(frontskytex->GetHeight() * frontyScale);
+	double topfrac;
+	double iscale = frontiScale;
 	short top[MAXWIDTH], bot[MAXWIDTH];
 	short yl, yh;
 	int x;
 
-	// So that I don't have to worry about fractional precision, chop off the
-	// fractional part of centeryfrac.
-	CenterY = centery;
-	topfrac = (skymid + iscale * (1-centery)) % (frontskytex->GetHeight() << FRACBITS);
-	if (topfrac < 0) topfrac += frontskytex->GetHeight() << FRACBITS;
+	topfrac = fmod(skymid + iscale * (1 - CenterY), frontskytex->GetHeight());
+	if (topfrac < 0) topfrac += frontskytex->GetHeight();
 	yl = 0;
-	yh = (short)MulScale32 ((frontskytex->GetHeight() << FRACBITS) - topfrac, frontyScale);
-	dc_texturemid = topfrac - iscale * (1-centery);
+	yh = short((frontskytex->GetHeight() - topfrac) * frontyScale);
+	dc_texturemid = topfrac - iscale * (1 - CenterY);
 	fixed_t yScale = FLOAT2FIXED(rw_pic->Scale.Y);
 
 	while (yl < viewheight)
@@ -1012,7 +1008,6 @@ static void R_DrawSkyStriped (visplane_t *pl)
 		yh += drawheight;
 		dc_texturemid = iscale * (centery-yl-1);
 	}
-	CenterY = centerysave;
 }
 
 //==========================================================================
@@ -1461,7 +1456,7 @@ void R_DrawSkyPlane (visplane_t *pl)
 			skyangle += s->GetTextureXOffset(pos);
 
 			// Vertical offset allows careful sky positioning.
-			skymid = s->GetTextureYOffset(pos) - 28*FRACUNIT;
+			skymid = s->GetTextureYOffsetF(pos) - 28;
 
 			// We sometimes flip the picture horizontally.
 			//
@@ -1474,7 +1469,7 @@ void R_DrawSkyPlane (visplane_t *pl)
 			frontcyl = MAX(frontskytex->GetWidth(), frontxscale);
 			if (skystretch)
 			{
-				skymid = Scale(skymid, frontskytex->GetScaledHeight(), SKYSTRETCH_HEIGHT);
+				skymid = skymid * frontskytex->GetScaledHeightDouble() / SKYSTRETCH_HEIGHT;
 			}
 		}
 	}

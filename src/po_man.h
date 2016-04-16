@@ -62,6 +62,7 @@ struct FPolyObj
 	int			validcount;
 	int			crush; 			// should the polyobj attempt to crush mobjs?
 	bool		bHurtOnTouch;	// should the polyobj hurt anything it touches?
+	bool		bBlocked;
 	int			seqType;
 	double		Size;			// polyobj size (area of POLY_AREAUNIT == size of FRACUNIT)
 	FPolyNode	*subsectorlinks;

@@ -824,6 +824,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcFX2Orbit)
 	else							// Clock wise
 	{
 		self->specialf1 -= 10;
+		angle = self->specialf1;
 		pos = parent->Vec3Angle(dist, angle, parent->Floorclip + SORC_DEFENSE_HEIGHT);
 		pos.Z += 20 * angle.Sin();
 		// Spawn trailer

@@ -187,7 +187,7 @@ struct FCoverageBuilder
 
 	double PartitionDistance(FCoverageVertex *vt, node_t *node)
 	{	
-		return fabs(double(-node->dy) * (vt->x - node->x) + double(node->dx) * (vt->y - node->y)) / node->len;
+		return fabs(double(-node->dy) * (vt->x - node->x) + double(node->dx) * (vt->y - node->y)) / (node->len * 65536.);
 	}
 
 	//==========================================================================
@@ -379,8 +379,9 @@ void gl_InitPortals()
 	for(int i=0;i<numnodes;i++)
 	{
 		node_t *no = &nodes[i];
-		double fdx = (double)no->dx;
-		double fdy = (double)no->dy;
+		// Must be converted because the len value is also needed for polyobjects.
+		double fdx = FIXED2DBL(no->dx);
+		double fdy = FIXED2DBL(no->dy);
 		no->len = (float)sqrt(fdx * fdx + fdy * fdy);
 	}
 

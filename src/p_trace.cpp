@@ -55,7 +55,6 @@ struct FTraceInfo
 	DWORD WallMask;
 	AActor *IgnoreThis;
 	FTraceResults *Results;
-	FTraceResults *TempResults;
 	sector_t *CurSector;
 	double MaxDist;
 	double EnterDist;
@@ -64,10 +63,8 @@ struct FTraceInfo
 	DWORD TraceFlags;
 	int inshootthrough;
 	double startfrac;
-	int aimdir;
 	double limitz;
-	double lastfloorportalheight;
-	double lastceilingportalheight;
+	int ptflags;
 
 	// These are required for 3D-floor checking
 	// to create a fake sector with a floor 
@@ -76,12 +73,12 @@ struct FTraceInfo
 	int sectorsel;		
 
 	void Setup3DFloors();
-	bool LineCheck(intercept_t *in);
-	bool ThingCheck(intercept_t *in);
+	bool LineCheck(intercept_t *in, double dist, DVector3 hit);
+	bool ThingCheck(intercept_t *in, double dist, DVector3 hit);
 	bool TraceTraverse (int ptflags);
 	bool CheckPlane(const secplane_t &plane);
-	int EnterLinePortal(line_t *li, double frac);
-	void EnterSectorPortal(int position, double frac, sector_t *entersec);
+	void EnterLinePortal(FPathTraverse &pt, intercept_t *in);
+	void EnterSectorPortal(FPathTraverse &pt, int position, double frac, sector_t *entersec);
 
 
 	bool CheckSectorPlane(const sector_t *sector, bool checkFloor)
@@ -107,6 +104,38 @@ struct FTraceInfo
 static bool EditTraceResult (DWORD flags, FTraceResults &res);
 
 
+
+static void GetPortalTransition(DVector3 &pos, sector_t *&sec)
+{
+	bool moved = false;
+	double testz = pos.Z;
+
+	while (!sec->PortalBlocksMovement(sector_t::ceiling))
+	{
+		AActor *port = sec->SkyBoxes[sector_t::ceiling];
+		if (pos.Z > port->specialf1)
+		{
+			pos += port->Scale;
+			sec = P_PointInSector(pos);
+			moved = true;
+		}
+		else break;
+	}
+	if (!moved)
+	{
+		while (!sec->PortalBlocksMovement(sector_t::floor))
+		{
+			AActor *port = sec->SkyBoxes[sector_t::floor];
+			if (pos.Z <= port->specialf1)
+			{
+				pos += port->Scale;
+				sec = P_PointInSector(pos);
+			}
+			else break;
+		}
+	}
+}
+
 //==========================================================================
 //
 // Trace entry point
@@ -117,16 +146,15 @@ bool Trace(const DVector3 &start, sector_t *sector, const DVector3 &direction, d
 	ActorFlags actorMask, DWORD wallMask, AActor *ignore, FTraceResults &res, DWORD flags,
 	ETraceStatus(*callback)(FTraceResults &res, void *), void *callbackdata)
 {
-	int ptflags;
 	FTraceInfo inf;
 	FTraceResults tempResult;
 
 	memset(&tempResult, 0, sizeof(tempResult));
 	tempResult.Fraction = tempResult.Distance = NO_VALUE;
 
-	ptflags = actorMask ? PT_ADDLINES|PT_ADDTHINGS|PT_COMPATIBLE : PT_ADDLINES;
-
 	inf.Start = start;
+	GetPortalTransition(inf.Start, sector);
+	inf.ptflags = actorMask ? PT_ADDLINES|PT_ADDTHINGS|PT_COMPATIBLE : PT_ADDLINES;
 	inf.Vec = direction;
 	inf.ActorMask = actorMask;
 	inf.WallMask = wallMask;
@@ -138,15 +166,30 @@ bool Trace(const DVector3 &start, sector_t *sector, const DVector3 &direction, d
 	inf.TraceCallbackData = callbackdata;
 	inf.TraceFlags = flags;
 	inf.Results = &res;
-	inf.TempResults = &tempResult;
 	inf.inshootthrough = true;
 	inf.sectorsel=0;
-	inf.aimdir = -1;
 	inf.startfrac = 0;
-	inf.lastfloorportalheight = inf.lastceilingportalheight = start.Z;
+	inf.limitz = inf.Start.Z;
 	memset(&res, 0, sizeof(res));
 
-	if (inf.TraceTraverse (ptflags))
+	if ((flags & TRACE_ReportPortals) && callback != NULL)
+	{
+		tempResult.HitType = TRACE_CrossingPortal;
+		tempResult.HitPos = tempResult.SrcFromTarget = inf.Start;
+		tempResult.HitVector = inf.Vec;
+		callback(tempResult, inf.TraceCallbackData);
+	}
+	bool reslt = inf.TraceTraverse(inf.ptflags);
+
+	if ((flags & TRACE_ReportPortals) && callback != NULL)
+	{
+		tempResult.HitType = TRACE_CrossingPortal;
+		tempResult.HitPos = tempResult.SrcFromTarget = inf.Results->HitPos;
+		tempResult.HitVector = inf.Vec;
+		callback(tempResult, inf.TraceCallbackData);
+	}
+
+	if (reslt)
 	{ 
 		return flags ? EditTraceResult(flags, res) : true;
 	}
@@ -163,48 +206,32 @@ bool Trace(const DVector3 &start, sector_t *sector, const DVector3 &direction, d
 //
 //============================================================================
 
-void FTraceInfo::EnterSectorPortal(int position, double frac, sector_t *entersec)
+void FTraceInfo::EnterSectorPortal(FPathTraverse &pt, int position, double frac, sector_t *entersec)
 {
-	if (aimdir != -1 && aimdir != position) return;
 	AActor *portal = entersec->SkyBoxes[position];
 
-	if (aimdir == sector_t::ceiling && portal->specialf1 < limitz) return;
-	else if (aimdir == sector_t::floor && portal->specialf1 > limitz) return;
-
-	FTraceInfo newtrace;
-	FTraceResults results;
-
-	memset(&results, 0, sizeof(results));
-
-	newtrace.Start += portal->Scale;
-
-	frac += 1 / MaxDist;
 	double enterdist = MaxDist * frac;
-	DVector2 enter = newtrace.Start.XY() + enterdist * Vec.XY();
+	DVector3 exit = Start + enterdist * Vec;
+	DVector3 enter = exit + portal->Scale;
 
-	newtrace.Vec = Vec;
-	newtrace.ActorMask = ActorMask;
-	newtrace.WallMask = WallMask;
-	newtrace.IgnoreThis = IgnoreThis;
-	newtrace.Results = &results;
-	newtrace.TempResults = TempResults;
-	newtrace.CurSector = P_PointInSector(enter);
-	newtrace.MaxDist = MaxDist;
-	newtrace.EnterDist = EnterDist;
-	newtrace.TraceCallback = TraceCallback;
-	newtrace.TraceCallbackData = TraceCallbackData;
-	newtrace.TraceFlags = TraceFlags;
-	newtrace.inshootthrough = true;
-	newtrace.startfrac = frac;
-	newtrace.aimdir = position;
-	newtrace.limitz = portal->specialf1;
-	newtrace.sectorsel = 0;
-	newtrace.lastfloorportalheight = newtrace.lastceilingportalheight = limitz;
+	Start += portal->Scale;
+	CurSector = P_PointInSector(enter);
+	inshootthrough = true;
+	startfrac = frac;
+	EnterDist = enterdist;
+	pt.PortalRelocate(portal, ptflags, frac);
 
-	if (newtrace.TraceTraverse(ActorMask ? PT_ADDLINES | PT_ADDTHINGS | PT_COMPATIBLE : PT_ADDLINES))
+	if ((TraceFlags & TRACE_ReportPortals) && TraceCallback != NULL)
 	{
-		TempResults->CopyIfCloser(newtrace.Results);
+		enterdist = MaxDist * frac;
+		Results->HitType = TRACE_CrossingPortal;
+		Results->HitPos = exit;
+		Results->SrcFromTarget = enter;
+		Results->HitVector = Vec;
+		TraceCallback(*Results, TraceCallbackData);
 	}
+
+	Setup3DFloors();
 }
 
 //============================================================================
@@ -213,59 +240,38 @@ void FTraceInfo::EnterSectorPortal(int position, double frac, sector_t *entersec
 //
 //============================================================================
 
-int FTraceInfo::EnterLinePortal(line_t *li, double frac)
+void FTraceInfo::EnterLinePortal(FPathTraverse &pt, intercept_t *in)
 {
+	line_t *li = in->d.line;
 	FLinePortal *port = li->getPortal();
 
-	// The caller cannot handle portals without global offset.
-	if (port->mType != PORTT_LINKED && (TraceFlags & TRACE_PortalRestrict)) return -1;
-
-	FTraceInfo newtrace;
-
-	newtrace.Start = Start;
-	newtrace.Vec = Vec;
-
-	P_TranslatePortalXY(li, newtrace.Start.X, newtrace.Start.Y);
-	P_TranslatePortalZ(li, newtrace.Start.Z);
-	P_TranslatePortalVXVY(li, newtrace.Vec.X, newtrace.Vec.Y);
-
-	frac += 1 / MaxDist;
+	double frac = in->frac + EQUAL_EPSILON;
 	double enterdist = MaxDist * frac;
-	DVector3 enter = newtrace.Start + enterdist * Vec;
+	DVector3 exit = Start + MaxDist * in->frac * Vec;
 
-	newtrace.ActorMask = ActorMask;
-	newtrace.WallMask = WallMask;
-	newtrace.IgnoreThis = IgnoreThis;
-	newtrace.Results = Results;
-	newtrace.TempResults = TempResults;
-	newtrace.CurSector = P_PointInSector(enter);
-	newtrace.MaxDist = MaxDist;
-	newtrace.EnterDist = EnterDist;
-	newtrace.TraceCallback = TraceCallback;
-	newtrace.TraceCallbackData = TraceCallbackData;
-	newtrace.TraceFlags = TraceFlags;
-	newtrace.inshootthrough = true;
-	newtrace.startfrac = frac;
-	newtrace.aimdir = aimdir;
-	newtrace.limitz = limitz;
+	P_TranslatePortalXY(li, Start.X, Start.Y);
+	P_TranslatePortalZ(li, Start.Z);
+	P_TranslatePortalVXVY(li, Vec.X, Vec.Y);
+	P_TranslatePortalZ(li, limitz);
 
-	P_TranslatePortalZ(li, newtrace.limitz);
-	newtrace.lastfloorportalheight = newtrace.lastceilingportalheight = newtrace.limitz;
-	newtrace.sectorsel = 0;
-	Results->unlinked = true;
+	CurSector = P_PointInSector(Start + enterdist * Vec);
+	EnterDist = enterdist;
+	inshootthrough = true;
+	startfrac = frac;
+	Results->unlinked |= (port->mType != PORTT_LINKED);
+	pt.PortalRelocate(in, ptflags);
 
 	if ((TraceFlags & TRACE_ReportPortals) && TraceCallback != NULL)
 	{
+		enterdist = MaxDist * in->frac;
 		Results->HitType = TRACE_CrossingPortal;
-		Results->HitPos = enter;
-		P_TranslatePortalXY(li, enter.X, enter.Y);
-		P_TranslatePortalZ(li, enter.Z);
-		Results->SrcFromTarget = enter;
-		Results->HitVector = newtrace.Vec;
+		Results->HitPos = exit;
+		P_TranslatePortalXY(li, exit.X, exit.Y);
+		P_TranslatePortalZ(li, exit.Z);
+		Results->SrcFromTarget = exit;
+		Results->HitVector = Vec;
 		TraceCallback(*Results, TraceCallbackData);
 	}
-
-	return newtrace.TraceTraverse(ActorMask ? PT_ADDLINES | PT_ADDTHINGS | PT_COMPATIBLE : PT_ADDLINES);
 }
 
 //==========================================================================
@@ -355,14 +361,6 @@ void FTraceInfo::Setup3DFloors()
 			}
 		}
 	}
-	if (!CurSector->PortalBlocksMovement(sector_t::ceiling))
-	{
-		EnterSectorPortal(sector_t::ceiling, startfrac, CurSector);
-	}
-	if (!CurSector->PortalBlocksMovement(sector_t::floor))
-	{
-		EnterSectorPortal(sector_t::floor, startfrac, CurSector);
-	}
 }
 
 
@@ -372,13 +370,10 @@ void FTraceInfo::Setup3DFloors()
 //
 //==========================================================================
 
-bool FTraceInfo::LineCheck(intercept_t *in)
+bool FTraceInfo::LineCheck(intercept_t *in, double dist, DVector3 hit)
 {
 	int lineside;
 	sector_t *entersector;
-
-	double dist = MaxDist * in->frac;
-	DVector3 hit = Start + Vec * dist;
 
 	double ff, fc, bf = 0, bc = 0;
 
@@ -454,78 +449,15 @@ bool FTraceInfo::LineCheck(intercept_t *in)
 
 	if (hit.Z <= ff)
 	{
-		if (CurSector->PortalBlocksMovement(sector_t::floor))
-		{
-			// hit floor in front of wall
-			Results->HitType = TRACE_HitFloor;
-			Results->HitTexture = CurSector->GetTexture(sector_t::floor);
-		}
-		else
-		{
-			if ((TraceFlags & TRACE_ReportPortals) && lastfloorportalheight > fc)
-			{
-				lastfloorportalheight = fc;
-				if (TraceCallback != NULL)
-				{
-					Results->HitType = TRACE_CrossingPortal;
-					double hitz = CurSector->SkyBoxes[sector_t::floor]->specialf1;
-					Results->HitPos = Start + Vec * (hitz - Start.Z) / Vec.Z;
-					Results->SrcFromTarget = Results->HitPos + CurSector->SkyBoxes[sector_t::floor]->Scale;
-					Results->HitVector = Vec;
-					TraceCallback(*Results, TraceCallbackData);
-				}
-			}
-			if (entersector == NULL || entersector->PortalBlocksMovement(sector_t::floor))
-			{
-				// hit beyond a portal plane. This needs to be taken care of by the trace spawned on the other side.
-				Results->HitType = TRACE_HitNone;
-				return false;
-			}
-		}
+		// hit floor in front of wall
+		Results->HitType = TRACE_HitFloor;
+		Results->HitTexture = CurSector->GetTexture(sector_t::floor);
 	}
 	else if (hit.Z >= fc)
 	{
-		if (CurSector->PortalBlocksMovement(sector_t::ceiling))
-		{
-			// hit ceiling in front of wall
-			Results->HitType = TRACE_HitCeiling;
-			Results->HitTexture = CurSector->GetTexture(sector_t::ceiling);
-		}
-		else
-		{
-			if ((TraceFlags & TRACE_ReportPortals) && lastceilingportalheight < fc)
-			{
-				lastceilingportalheight = fc;
-				if (TraceCallback != NULL)
-				{
-					Results->HitType = TRACE_CrossingPortal;
-					double hitz = CurSector->SkyBoxes[sector_t::ceiling]->specialf1;
-					Results->HitPos = Start + Vec * (hitz - Start.Z) / Vec.Z;
-					Results->SrcFromTarget = Results->HitPos + CurSector->SkyBoxes[sector_t::ceiling]->Scale;
-					Results->HitVector = Vec;
-					TraceCallback(*Results, TraceCallbackData);
-				}
-			}
-			if (entersector == NULL || entersector->PortalBlocksMovement(sector_t::ceiling))
-			{
-				// hit beyond a portal plane. This needs to be taken care of by the trace spawned on the other side.
-				Results->HitType = TRACE_HitNone;
-				return false;
-			}
-		}
-	}
-	else if (in->d.line->isLinePortal())
-	{
-		if (entersector == NULL || (hit.Z >= bf && hit.Z <= bc))
-		{
-			int res = EnterLinePortal(in->d.line, in->frac);
-			if (res != -1)
-			{
-				aimdir = INT_MAX;	// flag for ending the traverse
-				return !!res;
-			}
-		}
-		goto normalline;	// hit upper or lower tier.
+		// hit ceiling in front of wall
+		Results->HitType = TRACE_HitCeiling;
+		Results->HitTexture = CurSector->GetTexture(sector_t::ceiling);
 	}
 	else if (entersector == NULL ||
 		hit.Z < bf || hit.Z > bc ||
@@ -610,15 +542,6 @@ normalline:
 		  // we need to as well, for compatibility
 			P_ActivateLine(in->d.line, IgnoreThis, lineside, SPAC_Impact);
 		}
-
-		if (!entersector->PortalBlocksMovement(sector_t::ceiling))
-		{
-			EnterSectorPortal(sector_t::ceiling, in->frac, entersector);
-		}
-		if (!entersector->PortalBlocksMovement(sector_t::floor))
-		{
-			EnterSectorPortal(sector_t::floor, in->frac, entersector);
-		}
 	}
 cont:
 
@@ -696,11 +619,8 @@ cont:
 //
 //==========================================================================
 
-bool FTraceInfo::ThingCheck(intercept_t *in)
+bool FTraceInfo::ThingCheck(intercept_t *in, double dist, DVector3 hit)
 {
-	double dist = MaxDist * in->frac;
-	DVector3 hit = Start + Vec * dist;
-
 	if (hit.Z > in->d.thing->Top())
 	{
 		// trace enters above actor
@@ -834,49 +754,59 @@ bool FTraceInfo::TraceTraverse (int ptflags)
 			lastsplashsector = CurSector->sectornum;
 		}
 
-		// We have something closer in the storage for portal subtraces.
-		if (TempResults->HitType != TRACE_HitNone && in->frac > TempResults->Fraction)
+		double dist = MaxDist * in->frac;
+		DVector3 hit = Start + Vec * dist;
+
+		// Crossed a floor portal? 
+		if (Vec.Z < 0 && !CurSector->PortalBlocksMovement(sector_t::floor))
 		{
-			break;
+			// calculate position where the portal is crossed
+			double portz = CurSector->SkyBoxes[sector_t::floor]->specialf1;
+			if (hit.Z < portz && limitz > portz)
+			{
+				limitz = portz;
+				EnterSectorPortal(it, sector_t::floor, (portz - Start.Z) / (Vec.Z * MaxDist), CurSector);
+				continue;
+			}
 		}
-		else if (in->isaline)
+		// ... or a ceiling portal?
+		else if (Vec.Z > 0 && !CurSector->PortalBlocksMovement(sector_t::ceiling))
 		{
-			bool res = LineCheck(in);
-			if (aimdir == INT_MAX) return res;	// signal for immediate abort 
-			if (!res) break;
+			// calculate position where the portal is crossed
+			double portz = CurSector->SkyBoxes[sector_t::ceiling]->specialf1;
+			if (hit.Z > portz && limitz < portz)
+			{
+				limitz = portz;
+				EnterSectorPortal(it, sector_t::ceiling, (portz - Start.Z) / (Vec.Z * MaxDist), CurSector);
+				continue;
+			}
+		}
+
+		if (in->isaline)
+		{
+			if (in->d.line->isLinePortal() && P_PointOnLineSidePrecise(Start, in->d.line) == 0)
+			{
+				sector_t *entersector = in->d.line->backsector;
+				if (entersector == NULL || (hit.Z >= entersector->floorplane.ZatPoint(hit) && hit.Z <= entersector->ceilingplane.ZatPoint(hit)))
+				{
+					FLinePortal *port = in->d.line->getPortal();
+					// The caller cannot handle portals without global offset.
+					if (port->mType == PORTT_LINKED || !(TraceFlags & TRACE_PortalRestrict))
+					{
+						EnterLinePortal(it, in);
+						continue;
+					}
+				}
+			}
+			if (!LineCheck(in, dist, hit)) break;
 		}
 		else if ((in->d.thing->flags & ActorMask) && in->d.thing != IgnoreThis)
 		{
-			if (!ThingCheck(in)) break;
+			if (!ThingCheck(in, dist, hit)) break;
 		}
 	}
 
-	// Check if one subtrace through a portal yielded a better result.
-	if (TempResults->HitType != TRACE_HitNone && 
-		(Results->HitType == TRACE_HitNone || Results->Fraction > TempResults->Fraction))
-	{
-		// We still need to do a water check here or this may get missed on occasion
-		if (Results->CrossedWater == NULL &&
-			CurSector->heightsec != NULL &&
-			CurSector->heightsec->floorplane.ZatPoint(Results->HitPos) >= Results->HitPos.Z)
-		{
-			// Save the result so that the water check doesn't destroy it.
-			FTraceResults *res = Results;
-			FTraceResults hsecResult;
-			Results = &hsecResult;
-
-			if (CheckSectorPlane(CurSector->heightsec, true))
-			{
-				Results->CrossedWater = &sectors[CurSector->sectornum];
-				Results->CrossedWaterPos = Results->HitPos;
-			}
-			Results = res;
-		}
-
-		Results->CopyIfCloser(TempResults);
-		return true;
-	}
-	else if (Results->HitType == TRACE_HitNone)
+	if (Results->HitType == TRACE_HitNone)
 	{
 		if (CurSector->PortalBlocksMovement(sector_t::floor) && CheckSectorPlane(CurSector, true))
 		{

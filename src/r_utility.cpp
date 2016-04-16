@@ -937,8 +937,10 @@ void R_SetupFrame (AActor *actor)
 		sector_t *oldsector = R_PointInSubsector(iview->Old.Pos)->sector;
 		// [RH] Use chasecam view
 		DVector3 campos;
-		P_AimCamera (camera, campos, viewsector, unlinked);	// fixme: This needs to translate the angle, too.
+		DAngle camangle;
+		P_AimCamera (camera, campos, camangle, viewsector, unlinked);	// fixme: This needs to translate the angle, too.
 		iview->New.Pos = campos;
+		iview->New.Angles.Yaw = camangle;
 		r_showviewer = true;
 		// Interpolating this is a very complicated thing because nothing keeps track of the aim camera's movement, so whenever we detect a portal transition
 		// it's probably best to just reset the interpolation for this move.

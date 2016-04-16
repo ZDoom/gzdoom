@@ -295,6 +295,8 @@ void FGLRenderer::SetupView(float vx, float vy, float vz, DAngle va, bool mirror
 
 void FGLRenderer::CreateScene()
 {
+	::validcount++; // [CMB] reset marking of map linedefs, so subsequent stereo 3d eye render pass can start fresh.
+
 	// reset the portal manager
 	GLPortal::StartFrame();
 	PO_LinkToSubsectors();

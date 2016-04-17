@@ -539,7 +539,7 @@ void P_SerializePolyobjs (FArchive &arc)
 		arc << seg << po_NumPolyobjs;
 		for(i = 0, po = polyobjs; i < po_NumPolyobjs; i++, po++)
 		{
-			arc << po->tag << po->Angle << po->StartSpot.pos << po->interpolation << po->bBlocked;
+			arc << po->tag << po->Angle << po->StartSpot.pos << po->interpolation << po->bBlocked << po->bHasPortals;
   		}
 	}
 	else
@@ -572,6 +572,14 @@ void P_SerializePolyobjs (FArchive &arc)
 			else
 			{
 				po->bBlocked = false;
+			}
+			if (SaveVersion >= 4538)
+			{
+				arc << po->bHasPortals;
+			}
+			else
+			{
+				po->bHasPortals = 0;
 			}
 
 			po->RotatePolyobj (angle, true);

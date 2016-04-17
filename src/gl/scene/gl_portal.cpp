@@ -630,7 +630,6 @@ void GLSkyboxPortal::DrawContents()
 
 	GLRenderer->mViewActor = origin;
 
-	validcount++;
 	inskybox = true;
 	GLRenderer->SetupView(ViewPos.X, ViewPos.Y, ViewPos.Z, ViewAngle, !!(MirrorFlag & 1), !!(PlaneMirrorFlag & 1));
 	GLRenderer->SetViewArea();
@@ -724,9 +723,6 @@ void GLSectorStackPortal::DrawContents()
 	ViewPos += origin->mDisplacement;
 	GLRenderer->mViewActor = NULL;
 
-
-	validcount++;
-
 	// avoid recursions!
 	if (origin->plane != -1) instack[origin->plane]++;
 
@@ -771,8 +767,6 @@ void GLPlaneMirrorPortal::DrawContents()
 	GLRenderer->mViewActor = NULL;
 	PlaneMirrorMode = origin->fC() < 0 ? -1 : 1;
 	r_showviewer = true;
-
-	validcount++;
 
 	PlaneMirrorFlag++;
 	GLRenderer->SetupView(ViewPos.X, ViewPos.Y, ViewPos.Z, ViewAngle, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
@@ -876,8 +870,6 @@ void GLMirrorPortal::DrawContents()
 
 	GLRenderer->mViewActor = NULL;
 	r_showviewer = true;
-
-	validcount++;
 
 	MirrorFlag++;
 	GLRenderer->SetupView(ViewPos.X, ViewPos.Y, ViewPos.Z, ViewAngle, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
@@ -989,7 +981,6 @@ void GLLineToLinePortal::DrawContents()
 	}
 
 	GLRenderer->mViewActor = NULL;
-	validcount++;
 	GLRenderer->SetupView(ViewPos.X, ViewPos.Y, ViewPos.Z, ViewAngle, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
 
 	ClearClipper();

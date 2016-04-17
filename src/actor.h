@@ -959,11 +959,14 @@ public:
 
 	// Triggers SECSPAC_Exit/SECSPAC_Enter and related events if oldsec != current sector
 	void CheckSectorTransition(sector_t *oldsec);
+	void UpdateRenderSectorList();
+	void ClearRenderSectorList();
 
 // info for drawing
 // NOTE: The first member variable *must* be snext.
 	AActor			*snext, **sprev;	// links in sector (if needed)
 	DVector3		__Pos;		// double underscores so that it won't get used by accident. Access to this should be exclusively through the designated access functions.
+	DVector3		OldRenderPos;
 
 	DRotator		Angles;
 	DVector3		Vel;
@@ -1094,6 +1097,8 @@ public:
 
 	// a linked list of sectors where this object appears
 	struct msecnode_t	*touching_sectorlist;				// phares 3/14/98
+	struct msecnode_t	*render_sectorlist;		// same for cross-portal rendering
+
 
 	TObjPtr<AInventory>	Inventory;		// [RH] This actor's inventory
 	DWORD			InventoryID;	// A unique ID to keep track of inventory items

@@ -1057,6 +1057,7 @@ public:
 	// list of mobjs that are at least partially in the sector
 	// thinglist is a subset of touching_thinglist
 	struct msecnode_t *touching_thinglist;				// phares 3/14/98
+	struct msecnode_t *render_thinglist;				// for cross-portal rendering.
 
 	double gravity;			// [RH] Sector gravity (1.0 is normal)
 	FNameNoInit damagetype;		// [RH] Means-of-death for applied damage

@@ -306,6 +306,7 @@ void FGLRenderer::CreateScene()
 	gl_spriteindex=0;
 	Bsp.Clock();
 	R_SetView();
+	validcount++;	// used for processing sidedefs only once by the renderer.
 	gl_RenderBSPNode (nodes + numnodes - 1);
 	Bsp.Unclock();
 

@@ -95,7 +95,7 @@ static void UnclipSubsector(subsector_t *sub)
 static subsector_t *currentsubsector;
 static sector_t *currentsector;
 
-static void AddLine (seg_t *seg)
+static void AddLine (seg_t *seg, bool portalclip)
 {
 #ifdef _DEBUG
 	if (seg->linedef - lines == 38)
@@ -108,7 +108,7 @@ static void AddLine (seg_t *seg)
 	sector_t * backsector = NULL;
 	sector_t bs;
 
-	if (GLRenderer->mCurrentPortal)
+	if (portalclip)
 	{
 		int clipres = GLRenderer->mCurrentPortal->ClipSeg(seg);
 		if (clipres == GLPortal::PClip_InFront) return;
@@ -215,7 +215,7 @@ static void PolySubsector(subsector_t * sub)
 	{
 		if (line->linedef)
 		{
-			AddLine (line);
+			AddLine (line, GLRenderer->mCurrentPortal != NULL);
 		}
 		line++;
 	}
@@ -310,14 +310,48 @@ static inline void AddLines(subsector_t * sub, sector_t * sector)
 		{
 			if (seg->linedef == NULL)
 			{
-				if (!(sub->flags & SSECF_DRAWN)) AddLine (seg);
+				if (!(sub->flags & SSECF_DRAWN)) AddLine (seg, GLRenderer->mCurrentPortal != NULL);
 			}
 			else if (!(seg->sidedef->Flags & WALLF_POLYOBJ)) 
 			{
-				AddLine (seg);
+				AddLine (seg, GLRenderer->mCurrentPortal != NULL);
 			}
 			seg++;
 		}
+	}
+	ClipWall.Unclock();
+}
+
+//==========================================================================
+//
+// Adds lines that lie directly on the portal boundary.
+// Only two-sided lines will be handled here, and no polyobjects
+//
+//==========================================================================
+
+inline bool PointOnLine(const DVector2 &pos, const line_t *line)
+{
+	double v = (pos.Y - line->v1->fY()) * line->Delta().X + (line->v1->fX() - pos.X) * line->Delta().Y;
+	return fabs(v) <= EQUAL_EPSILON;
+}
+
+static inline void AddSpecialPortalLines(subsector_t * sub, sector_t * sector, line_t *line)
+{
+	currentsector = sector;
+	currentsubsector = sub;
+
+	ClipWall.Clock();
+	int count = sub->numlines;
+	seg_t * seg = sub->firstline;
+
+	while (count--)
+	{
+		if (seg->linedef != NULL && seg->PartnerSeg != NULL)
+		{
+			if (PointOnLine(seg->v1->fPos(), line) && PointOnLine(seg->v2->fPos(), line))
+				AddLine(seg, false);
+		}
+		seg++;
 	}
 	ClipWall.Unclock();
 }
@@ -395,15 +429,19 @@ static void DoSubsector(subsector_t * sub)
 		UnclipSubsector(sub);
 	}
 
+	fakesector=gl_FakeFlat(sector, &fake, false);
+
 	if (GLRenderer->mCurrentPortal)
 	{
 		int clipres = GLRenderer->mCurrentPortal->ClipSubsector(sub);
-		if (clipres == GLPortal::PClip_InFront) return;
+		if (clipres == GLPortal::PClip_InFront)
+		{
+			line_t *line = GLRenderer->mCurrentPortal->ClipLine();
+			// The subsector is out of range, but we still have to check lines that lie directly on the boundary and may expose their upper or lower parts.
+			if (line) AddSpecialPortalLines(sub, fakesector, line);
+			return;
+		}
 	}
-
-
-
-	fakesector=gl_FakeFlat(sector, &fake, false);
 
 	if (sector->validcount != validcount)
 	{

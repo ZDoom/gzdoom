@@ -137,7 +137,7 @@ public:
 	{
 		PClip_InFront,
 		PClip_Inside,
-		PClip_Behind
+		PClip_Behind,
 	};
 
 	void RenderPortal(bool usestencil, bool doquery)
@@ -165,6 +165,7 @@ public:
 	virtual int ClipSeg(seg_t *seg) { return PClip_Inside; }
 	virtual int ClipSubsector(subsector_t *sub) { return PClip_Inside; }
 	virtual int ClipPoint(const DVector2 &pos) { return PClip_Inside; }
+	virtual line_t *ClipLine() { return NULL; }
 
 	static void BeginScene();
 	static void StartFrame();
@@ -251,6 +252,7 @@ protected:
 	virtual void DrawContents();
 	virtual void * GetSource() const { return glport; }
 	virtual const char *GetName();
+	virtual line_t *ClipLine() { return line(); }
 
 public:
 	

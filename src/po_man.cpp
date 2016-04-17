@@ -425,6 +425,11 @@ bool EV_RotatePoly (line_t *line, int polyNum, int speed, int byteAngle,
 		{ // poly is already in motion
 			break;
 		}
+		if (poly->bHasPortals == 2)
+		{
+			// cannot do rotations on linked polyportals.
+			break;
+		}
 		pe = new DRotatePoly(poly->tag);
 		poly->specialdata = pe;
 		poly->bBlocked = false;
@@ -476,6 +481,7 @@ void DMovePoly::Tick ()
 				m_Speed = m_Dist * (m_Speed < 0 ? -1 : 1);
 				m_Speedv = m_Angle.ToVector(m_Speed);
 			}
+			poly->UpdateLinks();
 		}
 	}
 }
@@ -555,6 +561,7 @@ void DMovePolyTo::Tick ()
 				m_Speed = m_Dist * (m_Speed < 0 ? -1 : 1);
 				m_Speedv = m_Target - poly->StartSpot.pos;
 			}
+			poly->UpdateLinks();
 		}
 	}
 }
@@ -649,6 +656,7 @@ void DPolyDoor::Tick ()
 					Destroy ();
 				}
 			}
+			poly->UpdateLinks();
 		}
 		else
 		{
@@ -735,6 +743,12 @@ bool EV_OpenPolyDoor(line_t *line, int polyNum, double speed, DAngle angle, int 
 		{ // poly is already moving
 			break;
 		}
+		if (poly->bHasPortals == 2 && type == PODOOR_SWING)
+		{
+			// cannot do rotations on linked polyportals.
+			break;
+		}
+
 		pd = new DPolyDoor(poly->tag, type);
 		poly->specialdata = pd;
 		if (type == PODOOR_SLIDE)
@@ -898,6 +912,36 @@ void FPolyObj::ThrustMobj (AActor *actor, side_t *side)
 // UpdateSegBBox
 //
 //==========================================================================
+
+void FPolyObj::UpdateLinks()
+{
+	if (bHasPortals == 2)
+	{
+		TMap<int, bool> processed;
+		for (unsigned i = 0; i < Linedefs.Size(); i++)
+		{
+			if (Linedefs[i]->isLinePortal())
+			{
+				FLinePortal *port = Linedefs[i]->getPortal();
+				if (port->mType == PORTT_LINKED)
+				{
+					DVector2 old = port->mDisplacement;
+					port->mDisplacement = port->mDestination->v2->fPos() - port->mOrigin->v1->fPos();
+					FLinePortal *port2 = port->mDestination->getPortal();
+					if (port2) port2->mDisplacement = -port->mDisplacement;
+					int destgroup = port->mDestination->frontsector->PortalGroup;
+					bool *done = processed.CheckKey(destgroup);
+					if (!done || !*done)
+					{
+						processed[destgroup] = true;
+						DVector2 delta = port->mDisplacement - old;
+						Displacements.MoveGroup(destgroup, delta);
+					}
+				}
+			}
+		}
+	}
+}
 
 void FPolyObj::UpdateBBox ()
 {
@@ -1171,6 +1215,15 @@ bool FPolyObj::CheckMobjBlocking (side_t *sd)
 						if (!box.inRange(ld) || box.BoxOnLineSide(ld) != -1)
 						{
 							continue;
+						}
+
+						if (ld->isLinePortal())
+						{
+							// Fixme: this still needs to figure out if the polyobject move made the player cross the portal line.
+							if (P_TryMove(mobj, mobj->Pos(), false))
+							{
+								continue;
+							}
 						}
 						// We have a two-sided linedef so we should only check one side
 						// so that the thrust from both sides doesn't cancel each other out.
@@ -1496,6 +1549,8 @@ static void SpawnPolyobj (int index, int tag, int type)
 		{
 			continue;
 		}
+		po->bBlocked = false;
+		po->bHasPortals = 0;
 
 		side_t *sd = &sides[i];
 		
@@ -1563,6 +1618,12 @@ static void SpawnPolyobj (int index, int tag, int type)
 
 		if (l->validcount != validcount)
 		{
+			FLinePortal *port = l->getPortal();
+			if (port && (port->mDefFlags & PORTF_PASSABLE))
+			{
+				int type = port->mType == PORTT_LINKED ? 2 : 1;
+				if (po->bHasPortals < type) po->bHasPortals = (BYTE)type;
+			}
 			l->validcount = validcount;
 			po->Linedefs.Push(l);
 

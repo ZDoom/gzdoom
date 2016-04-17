@@ -811,15 +811,6 @@ void FNodeBuilder::SplitSegs (DWORD set, node_t &node, DWORD splitseg, DWORD &ou
 			unsigned int vertnum;
 			int seg2;
 
-			if (seg->loopnum)
-			{
-				Printf ("   Split seg %u (%d,%d)-(%d,%d) of sector %td in loop %d\n",
-					set,
-					Vertices[seg->v1].x>>16, Vertices[seg->v1].y>>16,
-					Vertices[seg->v2].x>>16, Vertices[seg->v2].y>>16,
-					seg->frontsector - sectors, seg->loopnum);
-			}
-
 			frac = InterceptVector (node, *seg);
 			newvert.x = Vertices[seg->v1].x;
 			newvert.y = Vertices[seg->v1].y;

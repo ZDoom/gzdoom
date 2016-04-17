@@ -64,6 +64,14 @@ struct FDisplacementTable
 		return data[x + size*y].pos;
 	}
 
+	void MoveGroup(int grp, DVector2 delta)
+	{
+		for (int i = 1; i < size; i++)
+		{
+			data[grp + size*i].pos -= delta;
+			data[i + grp*size].pos += delta;
+		}
+	}
 };
 
 extern FDisplacementTable Displacements;

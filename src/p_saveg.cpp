@@ -341,7 +341,7 @@ void P_SerializeWorld (FArchive &arc)
 	{
 		arc << sec->floorplane
 			<< sec->ceilingplane;
-			arc << sec->lightlevel;
+		arc << sec->lightlevel;
 		arc << sec->special;
 		arc << sec->soundtraversed
 			<< sec->seqType
@@ -358,12 +358,12 @@ void P_SerializeWorld (FArchive &arc)
 			<< sec->heightsec
 			<< sec->bottommap << sec->midmap << sec->topmap
 			<< sec->gravity;
-			P_SerializeTerrain(arc, sec->terrainnum[0]);
-			P_SerializeTerrain(arc, sec->terrainnum[1]);
-			arc << sec->damageamount;
-			arc << sec->damageinterval
-				<< sec->leakydamage
-				<< sec->damagetype;
+		P_SerializeTerrain(arc, sec->terrainnum[0]);
+		P_SerializeTerrain(arc, sec->terrainnum[1]);
+		arc << sec->damageamount;
+		arc << sec->damageinterval
+			<< sec->leakydamage
+			<< sec->damagetype;
 		arc << sec->SoundTarget
 			<< sec->SecActTarget
 			<< sec->sky
@@ -417,10 +417,7 @@ void P_SerializeWorld (FArchive &arc)
 		arc << li->args[1] << li->args[2] << li->args[3] << li->args[4];
 
 			arc << li->portalindex;
-		if (SaveVersion >= 4531)
-		{
-			arc << li->skybox;
-		}
+			arc << li->skybox;	// GZDoom addition.
 
 		for (j = 0; j < 2; j++)
 		{
@@ -457,7 +454,7 @@ void P_SerializeWorld (FArchive &arc)
 		arc << zn->Environment;
 	}
 
-		arc << linePortals;
+	arc << linePortals;
 	P_CollectLinkedPortals();
 }
 

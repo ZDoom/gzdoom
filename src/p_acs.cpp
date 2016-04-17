@@ -81,6 +81,7 @@
 #include "p_effect.h"
 #include "r_utility.h"
 #include "a_morph.h"
+#include "i_music.h"
 
 #include "g_shared/a_pickups.h"
 
@@ -4500,6 +4501,8 @@ enum EACSFunctions
 	ACSF_SetSectorDamage,
 	ACSF_SetSectorTerrain,
 	ACSF_SpawnParticle,
+	ACSF_SetMusicVolume,
+	// 2 more left...
 	
 	/* Zandronum's - these must be skipped when we reach 99!
 	-100:ResetMap(0),
@@ -6087,6 +6090,10 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 								color, fullbright, startalpha/255., lifetime, size, fadestep/255.);
 		}
 		break;
+
+		case ACSF_SetMusicVolume:
+			I_SetMusicVolume(ACSToFloat(args[0]));
+			break;
 		
 		default:
 			break;

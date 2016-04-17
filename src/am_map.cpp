@@ -1144,7 +1144,7 @@ static void AM_ScrollParchment (double dmapx, double dmapy)
 	mapystart = mapystart - dmapy * scale_mtof;
 
 	mapxstart = clamp(mapxstart, -40000., 40000.);
-	mapystart = clamp(mapxstart, -40000., 40000.);
+	mapystart = clamp(mapystart, -40000., 40000.);
 
 	if (mapback.isValid())
 	{

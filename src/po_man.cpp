@@ -421,12 +421,13 @@ bool EV_RotatePoly (line_t *line, int polyNum, int speed, int byteAngle,
 
 	while ((poly = it.NextMirror()) != NULL)
 	{
-		if (poly->specialdata != NULL && !overRide)
+		if ((poly->specialdata != NULL || poly->bBlocked) && !overRide)
 		{ // poly is already in motion
 			break;
 		}
 		pe = new DRotatePoly(poly->tag);
 		poly->specialdata = pe;
+		poly->bBlocked = false;
 		if (byteAngle != 0)
 		{
 			if (byteAngle == 255)
@@ -501,12 +502,13 @@ bool EV_MovePoly (line_t *line, int polyNum, double speed, DAngle angle,
 
 	while ((poly = it.NextMirror()) != NULL)
 	{
-		if (poly->specialdata != NULL && !overRide)
+		if ((poly->specialdata != NULL || poly->bBlocked) && !overRide)
 		{ // poly is already in motion
 			break;
 		}
 		pe = new DMovePoly(poly->tag);
 		poly->specialdata = pe;
+		poly->bBlocked = false;
 		pe->m_Dist = dist; // Distance
 		pe->m_Speed = speed;
 		pe->m_Angle = angle;
@@ -581,12 +583,13 @@ bool EV_MovePolyTo(line_t *line, int polyNum, double speed, const DVector2 &targ
 	distlen = dist.MakeUnit();
 	while ((poly = it.NextMirror()) != NULL)
 	{
-		if (poly->specialdata != NULL && !overRide)
+		if ((poly->specialdata != NULL || poly->bBlocked) && !overRide)
 		{ // poly is already in motion
 			break;
 		}
 		pe = new DMovePolyTo(poly->tag);
 		poly->specialdata = pe;
+		poly->bBlocked = false;
 		pe->m_Dist = distlen;
 		pe->m_Speed = speed;
 		pe->m_Speedv = dist * speed;
@@ -630,7 +633,7 @@ void DPolyDoor::Tick ()
 			if (m_Dist <= 0)
 			{
 				SN_StopSequence (poly);
-				if (!m_Close)
+				if (!m_Close && m_WaitTics >= 0)
 				{
 					m_Dist = m_TotalDist;
 					m_Close = true;
@@ -640,6 +643,9 @@ void DPolyDoor::Tick ()
 				}
 				else
 				{
+					// if set to wait infinitely, Hexen kept the dead thinker to block the polyobject from getting activated again but that causes some problems
+					// with the subsectorlinks and the interpolation. Better delete the thinker and use a different means to block it.
+					if (!m_Close) poly->bBlocked = true;
 					Destroy ();
 				}
 			}
@@ -669,7 +675,7 @@ void DPolyDoor::Tick ()
 			if (m_Dist <= 0)
 			{
 				SN_StopSequence (poly);
-				if (!m_Close)
+				if (!m_Close && m_WaitTics >= 0)
 				{
 					m_Dist = m_TotalDist;
 					m_Close = true;
@@ -678,6 +684,7 @@ void DPolyDoor::Tick ()
 				}
 				else
 				{
+					if (!m_Close) poly->bBlocked = true;
 					Destroy ();
 				}
 			}
@@ -724,7 +731,7 @@ bool EV_OpenPolyDoor(line_t *line, int polyNum, double speed, DAngle angle, int 
 
 	while ((poly = it.NextMirror()) != NULL)
 	{
-		if (poly->specialdata != NULL)
+		if ((poly->specialdata != NULL || poly->bBlocked))
 		{ // poly is already moving
 			break;
 		}
@@ -815,6 +822,7 @@ FPolyObj::FPolyObj()
 	bHurtOnTouch = false;
 	seqType = 0;
 	Size = 0;
+	bBlocked = false;
 	subsectorlinks = NULL;
 	specialdata = NULL;
 	interpolation = NULL;
@@ -1157,7 +1165,8 @@ bool FPolyObj::CheckMobjBlocking (side_t *sd)
 							performBlockingThrust = true;
 						}
 
-						FBoundingBox box(mobj->X(), mobj->Y(), mobj->radius);
+						DVector2 pos = mobj->PosRelative(ld);
+						FBoundingBox box(pos.X, pos.Y, mobj->radius);
 
 						if (!box.inRange(ld) || box.BoxOnLineSide(ld) != -1)
 						{

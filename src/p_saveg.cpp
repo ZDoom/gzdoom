@@ -548,6 +548,14 @@ void P_SerializePolyobjs (FArchive &arc)
 		for(i = 0, po = polyobjs; i < po_NumPolyobjs; i++, po++)
 		{
 			arc << po->tag << po->Angle << po->StartSpot.pos << po->interpolation;
+			if (SaveVersion >= 4537)
+			{
+				arc << po->bBlocked;
+			}
+			else
+			{
+				po->bBlocked = false;
+			}
   		}
 	}
 	else

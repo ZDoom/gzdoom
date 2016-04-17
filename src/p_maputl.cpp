@@ -450,13 +450,13 @@ void AActor::LinkToWorld(bool spawningmapthing, sector_t *sector)
 	// link into blockmap (inert things don't need to be in the blockmap)
 	if (!(flags & MF_NOBLOCKMAP))
 	{
-		FPortalGroupArray check(FPortalGroupArray::PGA_NoSectorPortals);
+		FPortalGroupArray check;
 
 		P_CollectConnectedGroups(Sector->PortalGroup, Pos(), Top(), radius, check);
 
 		for (int i = -1; i < (int)check.Size(); i++)
 		{
-			DVector3 pos = i==-1? Pos() : PosRelative(check[i]);
+			DVector3 pos = i==-1? Pos() : PosRelative(check[i] & ~FPortalGroupArray::FLAT);
 
 			int x1 = GetBlockX(pos.X - radius);
 			int x2 = GetBlockX(pos.X + radius);
@@ -1616,10 +1616,20 @@ int FPathTraverse::PortalRelocate(intercept_t *in, int flags, DVector3 *optpos)
 		P_TranslatePortalXY(in->d.line, optpos->X, optpos->Y);
 		P_TranslatePortalZ(in->d.line, optpos->Z);
 	}
-	line_t *saved = in->d.line;	// this gets overwriitten by the init call.
+	line_t *saved = in->d.line;	// this gets overwritten by the init call.
 	intercepts.Resize(intercept_index);
-	init(hitx, hity, endx, endy, flags, in->frac);
+	init(hitx, hity, endx, endy, flags, in->frac + EQUAL_EPSILON);
 	return saved->getPortal()->mType == PORTT_LINKED? 1:-1;
+}
+
+void FPathTraverse::PortalRelocate(AActor *portalthing, int flags, double hitfrac)
+{
+	double hitx = trace.x + portalthing->Scale.X;
+	double hity = trace.y + portalthing->Scale.Y;
+	double endx = hitx + trace.dx;
+	double endy = hity + trace.dy;
+	intercepts.Resize(intercept_index);
+	init(hitx, hity, endx, endy, flags, hitfrac);
 }
 
 //===========================================================================

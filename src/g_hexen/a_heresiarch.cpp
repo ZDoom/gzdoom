@@ -350,7 +350,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SorcBallOrbit)
 		break;
 	}
 
-	if (deltaangle(angle, prevangle) < 0 && (parent->args[4]==SORCBALL_TERMINAL_SPEED))
+	if ( angle.BAMs() < prevangle.BAMs() && (parent->args[4]==SORCBALL_TERMINAL_SPEED))
 	{
 		parent->args[1]++;			// Bump rotation counter
 		// Completed full rotation - make woosh sound

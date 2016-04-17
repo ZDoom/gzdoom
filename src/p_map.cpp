@@ -6184,15 +6184,13 @@ void P_CreateSecNodeList(AActor *thing)
 		node = node->m_tnext;
 	}
 
-	FPortalGroupArray grouplist;
-	FMultiBlockLinesIterator mit(grouplist, thing);
-	FMultiBlockLinesIterator::CheckResult cres;
+	FBoundingBox box(thing->X(), thing->Y(), thing->radius);
+	FBlockLinesIterator it(box);
+	line_t *ld;
 
-	while (mit.Next(&cres))
+	while ((ld = it.Next()))
 	{
-		line_t *ld = cres.line;
-
-		if (!mit.Box().inRange(ld) || mit.Box().BoxOnLineSide(ld) != -1)
+		if (!box.inRange(ld) || box.BoxOnLineSide(ld) != -1)
 			continue;
 
 		// This line crosses through the object.

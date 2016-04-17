@@ -75,8 +75,7 @@ public:
 	BYTE GetRed() const { return args[LIGHT_RED]; }
 	BYTE GetGreen() const { return args[LIGHT_GREEN]; }
 	BYTE GetBlue() const { return args[LIGHT_BLUE]; }
-	float GetIntensity() const { return m_currentIntensity; }
-	float GetRadius() const { return (IsActive() ? GetIntensity() * 2.f : 0.f); }
+	float GetRadius() const { return (IsActive() ? m_currentRadius * 2.f : 0.f); }
 	void LinkLight();
 	void UnlinkLight();
 	size_t PointerSubstitution (DObject *old, DObject *notOld);
@@ -103,14 +102,14 @@ private:
 
 protected:
 	DVector3 m_off;
-	float m_currentIntensity;
+	float m_currentRadius;
 	int m_tickCount;
 	unsigned int m_lastUpdate;
 	FCycler m_cycler;
 	subsector_t * subsector;
 
 public:
-	int m_intensity[2];
+	int m_Radius[2];
 	BYTE lightflags;
 	BYTE lighttype;
 	bool owned;

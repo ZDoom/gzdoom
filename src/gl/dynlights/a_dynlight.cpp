@@ -101,7 +101,7 @@ void AVavoomLight::BeginPlay ()
 
 void AVavoomLightWhite::BeginPlay ()
 {
-	m_intensity[0] = args[0] * 4;
+	m_Radius[0] = args[0] * 4;
 	args[LIGHT_RED] = 128;
 	args[LIGHT_GREEN] = 128;
 	args[LIGHT_BLUE] = 128;
@@ -114,7 +114,7 @@ void AVavoomLightColor::BeginPlay ()
 	int l_args[5];
 	memcpy(l_args, args, sizeof(l_args));
 	memset(args, 0, sizeof(args));
-	m_intensity[0] = l_args[0] * 4;
+	m_Radius[0] = l_args[0] * 4;
 	args[LIGHT_RED] = l_args[1] >> 1;
 	args[LIGHT_GREEN] = l_args[2] >> 1;
 	args[LIGHT_BLUE] = l_args[3] >> 1;
@@ -139,8 +139,8 @@ void ADynamicLight::Serialize(FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << lightflags << lighttype;
-	arc << m_tickCount << m_currentIntensity;
-	arc << m_intensity[0] << m_intensity[1];
+	arc << m_tickCount << m_currentRadius;
+	arc << m_Radius[0] << m_Radius[1];
 
 	if (lighttype == PulseLight) arc << m_lastUpdate << m_cycler;
 	if (arc.IsLoading()) LinkLight();
@@ -158,8 +158,8 @@ void ADynamicLight::BeginPlay()
 	//Super::BeginPlay();
 	ChangeStatNum(STAT_DLIGHT);
 
-	m_intensity[0] = args[LIGHT_INTENSITY];
-	m_intensity[1] = args[LIGHT_SECONDARY_INTENSITY];
+	m_Radius[0] = args[LIGHT_INTENSITY];
+	m_Radius[1] = args[LIGHT_SECONDARY_INTENSITY];
 }
 
 //==========================================================================
@@ -190,7 +190,7 @@ void ADynamicLight::Activate(AActor *activator)
 	//Super::Activate(activator);
 	flags2&=~MF2_DORMANT;	
 
-	m_currentIntensity = float(m_intensity[0]);
+	m_currentRadius = float(m_Radius[0]);
 	m_tickCount = 0;
 
 	if (lighttype == PulseLight)
@@ -198,10 +198,10 @@ void ADynamicLight::Activate(AActor *activator)
 		float pulseTime = Angles.Yaw.Degrees / TICRATE;
 		
 		m_lastUpdate = level.maptime;
-		m_cycler.SetParams(float(m_intensity[1]), float(m_intensity[0]), pulseTime);
+		m_cycler.SetParams(float(m_Radius[1]), float(m_Radius[0]), pulseTime);
 		m_cycler.ShouldCycle(true);
 		m_cycler.SetCycleType(CYCLE_Sin);
-		m_currentIntensity = (BYTE)m_cycler.GetVal();
+		m_currentRadius = (BYTE)m_cycler.GetVal();
 	}
 }
 
@@ -252,7 +252,7 @@ void ADynamicLight::Tick()
 		
 		m_lastUpdate = level.maptime;
 		m_cycler.Update(diff);
-		m_currentIntensity = m_cycler.GetVal();
+		m_currentRadius = m_cycler.GetVal();
 		break;
 	}
 
@@ -261,20 +261,20 @@ void ADynamicLight::Tick()
 		BYTE rnd = randLight();
 		float pct = Angles.Yaw.Degrees / 360.f;
 		
-		m_currentIntensity = float(m_intensity[rnd >= pct * 255]);
+		m_currentRadius = float(m_Radius[rnd >= pct * 255]);
 		break;
 	}
 
 	case RandomFlickerLight:
 	{
-		int flickerRange = m_intensity[1] - m_intensity[0];
+		int flickerRange = m_Radius[1] - m_Radius[0];
 		float amt = randLight() / 255.f;
 		
 		m_tickCount++;
 		
 		if (m_tickCount > Angles.Yaw.Degrees)
 		{
-			m_currentIntensity = float(m_intensity[0] + (amt * flickerRange));
+			m_currentRadius = float(m_Radius[0] + (amt * flickerRange));
 			m_tickCount = 0;
 		}
 		break;
@@ -287,20 +287,20 @@ void ADynamicLight::Tick()
 		BYTE rnd = randLight();
 		float pct = Angles.Yaw.Degrees/360.f;
 		
-		m_currentIntensity = m_intensity[rnd >= pct * 255];
+		m_currentRadius = m_Radius[rnd >= pct * 255];
 		break;
 	}
 
 	case RandomColorFlickerLight:
 	{
-		int flickerRange = m_intensity[1] - m_intensity[0];
+		int flickerRange = m_Radius[1] - m_Radius[0];
 		float amt = randLight() / 255.f;
 		
 		m_tickCount++;
 		
 		if (m_tickCount > Angles.Yaw.Degrees)
 		{
-			m_currentIntensity = m_intensity[0] + (amt * flickerRange);
+			m_currentRadius = m_Radius[0] + (amt * flickerRange);
 			m_tickCount = 0;
 		}
 		break;
@@ -317,12 +317,12 @@ void ADynamicLight::Tick()
 		intensity = Sector->lightlevel * scale;
 		intensity = clamp<float>(intensity, 0.f, 255.f);
 		
-		m_currentIntensity = intensity;
+		m_currentRadius = intensity;
 		break;
 	}
 
 	case PointLight:
-		m_currentIntensity = float(m_intensity[0]);
+		m_currentRadius = float(m_Radius[0]);
 		break;
 	}
 
@@ -365,11 +365,11 @@ void ADynamicLight::UpdateLocation()
 
 		if (lighttype == FlickerLight || lighttype == RandomFlickerLight || lighttype == PulseLight)
 		{
-			intensity = float(MAX(m_intensity[0], m_intensity[1]));
+			intensity = float(MAX(m_Radius[0], m_Radius[1]));
 		}
 		else
 		{
-			intensity = m_currentIntensity;
+			intensity = m_currentRadius;
 		}
 		radius = intensity * 2.0f * gl_lights_size;
 

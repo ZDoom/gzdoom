@@ -463,7 +463,6 @@ bool FTraceInfo::LineCheck(intercept_t *in, double dist, DVector3 hit)
 		hit.Z < bf || hit.Z > bc ||
 		in->d.line->flags & WallMask)
 	{
-normalline:
 		// hit the wall
 		Results->HitType = TRACE_HitWall;
 		Results->Tier =

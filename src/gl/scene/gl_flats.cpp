@@ -360,16 +360,19 @@ void GLFlat::DrawSkyboxSector(int pass)
 	}
 
 	float z = plane.plane.ZatPoint(0., 0.) + dz;
+	static float uvals[] = { 0, 0, 1, 1 };
+	static float vvals[] = { 1, 0, 0, 1 };
+	int rot = -xs_FloorToInt(plane.Angle / 90.f);
 
 	glBegin(GL_TRIANGLE_FAN);
+	glTexCoord2f(uvals[rot & 3], vvals[rot & 3]);
 	glVertex3f(minx, z, miny);
-	glTexCoord2f(0.0f, 1.0f);
+	glTexCoord2f(uvals[(rot + 1) & 3], vvals[(rot + 1) & 3]);
 	glVertex3f(minx, z, maxy);
-	glTexCoord2f(0.0f, 0.0f);
+	glTexCoord2f(uvals[(rot + 2) & 3], vvals[(rot + 2) & 3]);
 	glVertex3f(maxx, z, maxy);
-	glTexCoord2f(1.0f, 0.0f);
+	glTexCoord2f(uvals[(rot + 3) & 3], vvals[(rot + 3) & 3]);
 	glVertex3f(maxx, z, miny);
-	glTexCoord2f(1.0f, 1.0f);
 	glEnd();
 
 	flatvertices += 4;

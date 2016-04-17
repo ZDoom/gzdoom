@@ -339,33 +339,37 @@ void GLFlat::DrawSkyboxSector(int pass, bool processlights)
 	}
 
 	float z = plane.plane.ZatPoint(0., 0.) + dz;
+	static float uvals[] = { 0, 0, 1, 1 };
+	static float vvals[] = { 1, 0, 0, 1 };
+	int rot = -xs_FloorToInt(plane.Angle / 90.f);
+
 
 	ptr->x = minx;
 	ptr->z = z;
 	ptr->y = miny;
-	ptr->u = 0;
-	ptr->v = 1;
+	ptr->u = uvals[rot & 3];
+	ptr->v = vvals[rot & 3];
 	ptr++;
 
 	ptr->x = minx;
 	ptr->z = z;
 	ptr->y = maxy;
-	ptr->u = 0;
-	ptr->v = 0;
+	ptr->u = uvals[(rot + 1) & 3];
+	ptr->v = vvals[(rot + 1) & 3];
 	ptr++;
 
 	ptr->x = maxx;
 	ptr->z = z;
 	ptr->y = maxy;
-	ptr->u = 1;
-	ptr->v = 0;
+	ptr->u = uvals[(rot + 2) & 3];
+	ptr->v = vvals[(rot + 2) & 3];
 	ptr++;
 
 	ptr->x = maxx;
 	ptr->z = z;
 	ptr->y = miny;
-	ptr->u = 1;
-	ptr->v = 1;
+	ptr->u = uvals[(rot + 3) & 3];
+	ptr->v = vvals[(rot + 3) & 3];
 	ptr++;
 
 	GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_FAN);

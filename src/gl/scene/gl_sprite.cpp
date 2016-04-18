@@ -105,6 +105,8 @@ void gl_SetRenderStyle(FRenderStyle style, bool drawopaque, bool allowcolorblend
 
 CVAR(Bool, gl_nolayer, false, 0)
 
+static const float LARGE_VALUE = 1e19f;
+
 //==========================================================================
 //
 // 
@@ -576,12 +578,12 @@ void GLSprite::PerformSpriteClipAdjustment(AActor *thing, const DVector2 &thingp
 //
 //==========================================================================
 
-void GLSprite::Process(AActor* thing,sector_t * sector)
+void GLSprite::Process(AActor* thing, sector_t * sector, bool thruportal)
 {
 	sector_t rs;
 	sector_t * rendersector;
 	// don't draw the thing that's used as camera (for viewshifts during quakes!)
-	if (thing==GLRenderer->mViewActor || (thing == players[consoleplayer].camera && !r_showviewer)) return;
+	if (thing == GLRenderer->mViewActor || (thing == players[consoleplayer].camera && !r_showviewer)) return;
 
 	// Don't waste time projecting sprites that are definitely not visible.
 	if (thing == NULL || thing->sprite == 0 || !thing->IsVisibleToPlayer())
@@ -596,14 +598,14 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 		P_CheckPlayerSprite(thing, spritenum, sprscale);
 	}
 
-	if (thing->renderflags & RF_INVISIBLE || !thing->RenderStyle.IsVisible(thing->Alpha)) 
+	if (thing->renderflags & RF_INVISIBLE || !thing->RenderStyle.IsVisible(thing->Alpha))
 	{
 		if (!(thing->flags & MF_STEALTH) || !gl_fixedcolormap || !gl_enhanced_nightvision)
-			return; 
+			return;
 	}
 
 	// If this thing is in a map section that's not in view it can't possibly be visible
-	if (!(currentmapsection[thing->subsector->mapsection>>3] & (1 << (thing->subsector->mapsection & 7)))) return;
+	if (!(currentmapsection[thing->subsector->mapsection >> 3] & (1 << (thing->subsector->mapsection & 7)))) return;
 
 	// [RH] Interpolate the sprite's position to make it look smooth
 	DVector3 thingpos = thing->InterpolatedPosition(r_TicFracF);
@@ -627,10 +629,10 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 	// don't draw first frame of a player missile
 	if (thing->flags&MF_MISSILE)
 	{
-		if (!(thing->flags7 & MF7_FLYCHEAT) && thing->target==GLRenderer->mViewActor && GLRenderer->mViewActor != NULL)
+		if (!(thing->flags7 & MF7_FLYCHEAT) && thing->target == GLRenderer->mViewActor && GLRenderer->mViewActor != NULL)
 		{
-			double clipdist = clamp(thing->Speed, thing->target->radius, thing->target->radius*2);
-			if ((thingpos-ViewPos).LengthSquared() < clipdist * clipdist) return;
+			double clipdist = clamp(thing->Speed, thing->target->radius, thing->target->radius * 2);
+			if ((thingpos - ViewPos).LengthSquared() < clipdist * clipdist) return;
 		}
 		thing->flags7 |= MF7_FLYCHEAT;	// do this only once for the very first frame, but not if it gets into range again.
 	}
@@ -641,18 +643,20 @@ void GLSprite::Process(AActor* thing,sector_t * sector)
 		if (clipres == GLPortal::PClip_InFront) return;
 	}
 
-	player_t *player=&players[consoleplayer];
+	player_t *player = &players[consoleplayer];
 	FloatRect r;
 
-	if (sector->sectornum!=thing->Sector->sectornum)
+	if (sector->sectornum != thing->Sector->sectornum && !thruportal)
 	{
-		rendersector=gl_FakeFlat(thing->Sector, &rs, false);
+		rendersector = gl_FakeFlat(thing->Sector, &rs, false);
 	}
 	else
 	{
-		rendersector=sector;
+		rendersector = sector;
 	}
-	
+	topclip = rendersector->PortalBlocksMovement(sector_t::ceiling) ? LARGE_VALUE : rendersector->SkyBoxes[sector_t::ceiling]->specialf1;
+	bottomclip = rendersector->PortalBlocksMovement(sector_t::floor) ? -LARGE_VALUE : rendersector->SkyBoxes[sector_t::floor]->specialf1;
+
 
 	x = thingpos.X;
 	z = thingpos.Z - thing->Floorclip;
@@ -986,6 +990,8 @@ void GLSprite::ProcessParticle (particle_t *particle, sector_t *sector)//, int s
 
 	modelframe=NULL;
 	gltexture=NULL;
+	topclip = LARGE_VALUE;
+	bottomclip = -LARGE_VALUE;
 
 	// [BB] Load the texture for round or smooth particles
 	if (gl_particles_style)

@@ -316,6 +316,9 @@ public:
 	int index;
 	int depth;
 
+	float topclip;
+	float bottomclip;
+
 	float x,y,z;	// needed for sorting!
 
 	float ul,ur;
@@ -336,7 +339,7 @@ public:
 
 	void Draw(int pass);
 	void PutSprite(bool translucent);
-	void Process(AActor* thing,sector_t * sector);
+	void Process(AActor* thing,sector_t * sector, bool thruportal = false);
 	void ProcessParticle (particle_t *particle, sector_t *sector);//, int shade, int fakeside)
 	void SetThingColor(PalEntry);
 	void SetSpriteColor(sector_t *sector, double y);

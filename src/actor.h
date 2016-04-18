@@ -576,6 +576,7 @@ public:
 	~AActor ();
 
 	void Serialize (FArchive &arc);
+	void PostSerialize();
 
 	static AActor *StaticSpawn (PClassActor *type, const DVector3 &pos, replace_t allowreplacement, bool SpawningMapThing = false);
 

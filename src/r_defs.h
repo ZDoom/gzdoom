@@ -957,17 +957,6 @@ public:
 		return (SkyBoxes[plane] != NULL && SkyBoxes[plane]->special1 == SKYBOX_LINKEDPORTAL);
 	}
 
-	// These may only be called if the portal has been validated
-	DVector2 FloorDisplacement()
-	{
-		return Displacements.getOffset(PortalGroup, SkyBoxes[sector_t::floor]->Sector->PortalGroup);
-	}
-
-	DVector2 CeilingDisplacement()
-	{
-		return Displacements.getOffset(PortalGroup, SkyBoxes[sector_t::ceiling]->Sector->PortalGroup);
-	}
-
 	int GetTerrain(int pos) const;
 
 	void TransferSpecial(sector_t *model);

@@ -897,7 +897,7 @@ double sector_t::HighestCeilingAt(const DVector2 &p, sector_t **resultsec)
 	// Continue until we find a blocking portal or a portal below where we actually are.
 	while (!check->PortalBlocksMovement(ceiling) && planeheight < check->SkyBoxes[ceiling]->specialf1)
 	{
-		pos += check->CeilingDisplacement();
+		pos += check->SkyBoxes[ceiling]->Scale;
 		planeheight = check->SkyBoxes[ceiling]->specialf1;
 		check = P_PointInSector(pos);
 	}
@@ -920,7 +920,7 @@ double sector_t::LowestFloorAt(const DVector2 &p, sector_t **resultsec)
 	// Continue until we find a blocking portal or a portal above where we actually are.
 	while (!check->PortalBlocksMovement(floor) && planeheight > check->SkyBoxes[floor]->specialf1)
 	{
-		pos += check->FloorDisplacement();
+		pos += check->SkyBoxes[floor]->Scale;
 		planeheight = check->SkyBoxes[floor]->specialf1;
 		check = P_PointInSector(pos);
 	}
@@ -964,7 +964,7 @@ double sector_t::NextHighestCeilingAt(double x, double y, double bottomz, double
 		}
 		else
 		{
-			DVector2 pos = sec->CeilingDisplacement();
+			DVector2 pos = sec->SkyBoxes[ceiling]->Scale;
 			x += pos.X;
 			y += pos.Y;
 			planeheight = sec->SkyBoxes[ceiling]->specialf1;
@@ -1009,7 +1009,7 @@ double sector_t::NextLowestFloorAt(double x, double y, double z, int flags, doub
 		}
 		else
 		{
-			DVector2 pos = sec->FloorDisplacement();
+			DVector2 pos = sec->SkyBoxes[floor]->Scale;
 			x += pos.X;
 			y += pos.Y;
 			planeheight = sec->SkyBoxes[floor]->specialf1;

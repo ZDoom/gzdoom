@@ -6246,7 +6246,7 @@ void P_CreateSecNodeList(AActor *thing)
 void AActor::UpdateRenderSectorList()
 {
 	static const double SPRITE_SPACE = 64.;
-	if (Pos() != OldRenderPos)
+	if (Pos() != OldRenderPos && !(flags & MF_NOSECTOR))
 	{
 		sector_t *sec = Sector;
 		double lasth = -FLT_MAX;

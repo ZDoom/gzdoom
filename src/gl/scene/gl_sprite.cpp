@@ -605,10 +605,11 @@ void GLSprite::Process(AActor* thing, sector_t * sector, bool thruportal)
 	}
 
 	// If this thing is in a map section that's not in view it can't possibly be visible
-	if (!(currentmapsection[thing->subsector->mapsection >> 3] & (1 << (thing->subsector->mapsection & 7)))) return;
+	if (!thruportal && !(currentmapsection[thing->subsector->mapsection >> 3] & (1 << (thing->subsector->mapsection & 7)))) return;
 
 	// [RH] Interpolate the sprite's position to make it look smooth
 	DVector3 thingpos = thing->InterpolatedPosition(r_TicFracF);
+	if (thruportal) thingpos += Displacements.getOffset(thing->Sector->PortalGroup, sector->PortalGroup);
 
 	// Too close to the camera. This doesn't look good if it is a sprite.
 	if (fabs(thingpos.X - ViewPos.X) < 2 && fabs(thingpos.Y - ViewPos.Y) < 2)

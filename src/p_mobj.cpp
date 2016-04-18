@@ -3752,6 +3752,9 @@ void AActor::Tick ()
 	if (!CheckNoDelay())
 		return; // freed itself
 	// cycle through states, calling action functions at transitions
+
+	UpdateRenderSectorList();
+
 	if (tics != -1)
 	{
 		// [RH] Use tics <= 0 instead of == 0 so that spawnstates
@@ -4011,6 +4014,7 @@ AActor *AActor::StaticSpawn (PClassActor *type, const DVector3 &pos, replace_t a
 	}
 
 	actor->SetXYZ(pos);
+	actor->OldRenderPos = { FLT_MAX, FLT_MAX, FLT_MAX };
 	actor->picnum.SetInvalid();
 	actor->health = actor->SpawnHealth();
 
@@ -4322,12 +4326,15 @@ void AActor::Deactivate (AActor *activator)
 	}
 }
 
+
 //
 // P_RemoveMobj
 //
 
 void AActor::Destroy ()
 {
+	ClearRenderSectorList();
+
 	// [RH] Destroy any inventory this actor is carrying
 	DestroyAllInventory ();
 

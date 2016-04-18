@@ -384,8 +384,7 @@ void P_UpdatePortal(FLinePortal *port)
 			}
 			else
 			{
-				port->mDisplacement.X = port->mDestination->v2->fX() - port->mOrigin->v1->fX();
-				port->mDisplacement.Y = port->mDestination->v2->fY() - port->mOrigin->v1->fY();
+				port->mDisplacement = port->mDestination->v2->fPos() - port->mOrigin->v1->fPos();
 			}
 		}
  	}

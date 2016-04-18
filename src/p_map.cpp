@@ -5555,6 +5555,7 @@ int P_PushUp(AActor *thing, FChangePosition *cpos)
 			intersect->SetZ(oldz);
 			return 2;
 		}
+		intersect->UpdateRenderSectorList();
 	}
 	thing->CheckPortalTransition(true);
 	return 0;
@@ -5602,6 +5603,7 @@ int P_PushDown(AActor *thing, FChangePosition *cpos)
 				intersect->SetZ(oldz);
 				return 2;
 			}
+			intersect->UpdateRenderSectorList();
 		}
 	}
 	thing->CheckPortalTransition(true);
@@ -5634,6 +5636,7 @@ void PIT_FloorDrop(AActor *thing, FChangePosition *cpos)
 		{
 			thing->SetZ(thing->floorz);
 			P_CheckFakeFloorTriggers(thing, oldz);
+			thing->UpdateRenderSectorList();
 		}
 	}
 	else if ((thing->Z() != oldfloorz && !(thing->flags & MF_NOLIFTDROP)))
@@ -5642,6 +5645,7 @@ void PIT_FloorDrop(AActor *thing, FChangePosition *cpos)
 		{
 			thing->AddZ(-oldfloorz + thing->floorz);
 			P_CheckFakeFloorTriggers(thing, oldz);
+			thing->UpdateRenderSectorList();
 		}
 	}
 	if (thing->player && thing->player->mo == thing)
@@ -5689,10 +5693,12 @@ void PIT_FloorRaise(AActor *thing, FChangePosition *cpos)
 	{
 	default:
 		P_CheckFakeFloorTriggers(thing, oldz);
+		thing->UpdateRenderSectorList();
 		break;
 	case 1:
 		P_DoCrunch(thing, cpos);
 		P_CheckFakeFloorTriggers(thing, oldz);
+		thing->UpdateRenderSectorList();
 		break;
 	case 2:
 		P_DoCrunch(thing, cpos);
@@ -5735,6 +5741,7 @@ void PIT_CeilingLower(AActor *thing, FChangePosition *cpos)
 		{
 			thing->SetZ(thing->floorz);
 		}
+		thing->UpdateRenderSectorList();
 		switch (P_PushDown(thing, cpos))
 		{
 		case 2:
@@ -5744,9 +5751,11 @@ void PIT_CeilingLower(AActor *thing, FChangePosition *cpos)
 				thing->SetZ(thing->floorz);
 			P_DoCrunch(thing, cpos);
 			P_CheckFakeFloorTriggers(thing, oldz);
+			thing->UpdateRenderSectorList();
 			break;
 		default:
 			P_CheckFakeFloorTriggers(thing, oldz);
+			thing->UpdateRenderSectorList();
 			break;
 		}
 	}
@@ -5782,6 +5791,7 @@ void PIT_CeilingRaise(AActor *thing, FChangePosition *cpos)
 			thing->SetZ(thing->ceilingz - thing->Height);
 		}
 		P_CheckFakeFloorTriggers(thing, oldz);
+		thing->UpdateRenderSectorList();
 	}
 	else if ((thing->flags2 & MF2_PASSMOBJ) && !isgood && thing->Top() < thing->ceilingz)
 	{
@@ -5789,6 +5799,7 @@ void PIT_CeilingRaise(AActor *thing, FChangePosition *cpos)
 		if (!P_TestMobjZ(thing, true, &onmobj) && onmobj->Z() <= thing->Z())
 		{
 			thing->SetZ(MIN(thing->ceilingz - thing->Height, onmobj->Top()));
+			thing->UpdateRenderSectorList();
 		}
 	}
 	if (thing->player && thing->player->mo == thing)
@@ -6023,7 +6034,7 @@ void P_PutSecnode(msecnode_t *node)
 //
 //=============================================================================
 
-msecnode_t *P_AddSecnode(sector_t *s, AActor *thing, msecnode_t *nextnode)
+msecnode_t *P_AddSecnode(sector_t *s, AActor *thing, msecnode_t *nextnode, msecnode_t *&sec_thinglist)
 {
 	msecnode_t *node;
 
@@ -6061,10 +6072,10 @@ msecnode_t *P_AddSecnode(sector_t *s, AActor *thing, msecnode_t *nextnode)
 	// Add new node at head of sector thread starting at s->touching_thinglist
 
 	node->m_sprev = NULL;			// prev node on sector thread
-	node->m_snext = s->touching_thinglist; // next node on sector thread
-	if (s->touching_thinglist)
+	node->m_snext = sec_thinglist; // next node on sector thread
+	if (sec_thinglist)
 		node->m_snext->m_sprev = node;
-	s->touching_thinglist = node;
+	sec_thinglist = node;
 	return node;
 }
 
@@ -6078,7 +6089,7 @@ msecnode_t *P_AddSecnode(sector_t *s, AActor *thing, msecnode_t *nextnode)
 //
 //=============================================================================
 
-msecnode_t *P_DelSecnode(msecnode_t *node)
+msecnode_t *P_DelSecnode(msecnode_t *node, msecnode_t *sector_t::*listhead)
 {
 	msecnode_t* tp;  // prev node on thing thread
 	msecnode_t* tn;  // next node on thing thread
@@ -6105,7 +6116,7 @@ msecnode_t *P_DelSecnode(msecnode_t *node)
 		if (sp)
 			sp->m_snext = sn;
 		else
-			node->m_sector->touching_thinglist = sn;
+			node->m_sector->*listhead = sn;
 		if (sn)
 			sn->m_sprev = sp;
 
@@ -6145,7 +6156,7 @@ void P_DelSector_List()
 void P_DelSeclist(msecnode_t *node)
 {
 	while (node)
-		node = P_DelSecnode(node);
+		node = P_DelSecnode(node, &sector_t::touching_thinglist);
 }
 
 //=============================================================================
@@ -6189,7 +6200,7 @@ void P_CreateSecNodeList(AActor *thing)
 		// allowed to move to this position, then the sector_list
 		// will be attached to the Thing's AActor at touching_sectorlist.
 
-		sector_list = P_AddSecnode(ld->frontsector, thing, sector_list);
+		sector_list = P_AddSecnode(ld->frontsector, thing, sector_list, ld->frontsector->touching_thinglist);
 
 		// Don't assume all lines are 2-sided, since some Things
 		// like MT_TFOG are allowed regardless of whether their radius takes
@@ -6199,12 +6210,12 @@ void P_CreateSecNodeList(AActor *thing)
 		// Use sidedefs instead of 2s flag to determine two-sidedness.
 
 		if (ld->backsector)
-			sector_list = P_AddSecnode(ld->backsector, thing, sector_list);
+			sector_list = P_AddSecnode(ld->backsector, thing, sector_list, ld->backsector->touching_thinglist);
 	}
 
 	// Add the sector of the (x,y) point to sector_list.
 
-	sector_list = P_AddSecnode(thing->Sector, thing, sector_list);
+	sector_list = P_AddSecnode(thing->Sector, thing, sector_list, thing->Sector->touching_thinglist);
 
 	// Now delete any nodes that won't be used. These are the ones where
 	// m_thing is still NULL.
@@ -6216,7 +6227,7 @@ void P_CreateSecNodeList(AActor *thing)
 		{
 			if (node == sector_list)
 				sector_list = node->m_tnext;
-			node = P_DelSecnode(node);
+			node = P_DelSecnode(node, &sector_t::touching_thinglist);
 		}
 		else
 		{
@@ -6224,6 +6235,54 @@ void P_CreateSecNodeList(AActor *thing)
 		}
 	}
 }
+
+
+//==========================================================================
+//
+// Handle the lists used to render actors from other portal areas
+//
+//==========================================================================
+
+void AActor::UpdateRenderSectorList()
+{
+	static const double SPRITE_SPACE = 64.;
+	if (Pos() != OldRenderPos && !(flags & MF_NOSECTOR))
+	{
+		sector_t *sec = Sector;
+		double lasth = -FLT_MAX;
+		ClearRenderSectorList();
+		while (!sec->PortalBlocksMovement(sector_t::ceiling))
+		{
+			double planeh = sec->SkyBoxes[sector_t::ceiling]->specialf1;
+			if (planeh < lasth) break;	// broken setup.
+			if (Top() + SPRITE_SPACE < planeh) break;
+			lasth = planeh;
+			DVector2 newpos = Pos() + sec->SkyBoxes[sector_t::ceiling]->Scale;
+			sec = P_PointInSector(newpos);
+			render_sectorlist = P_AddSecnode(sec, this, render_sectorlist, sec->render_thinglist);
+		}
+		lasth = FLT_MAX;
+		while (!sec->PortalBlocksMovement(sector_t::floor))
+		{
+			double planeh = sec->SkyBoxes[sector_t::floor]->specialf1;
+			if (planeh > lasth) break;	// broken setup.
+			if (Z() - SPRITE_SPACE > planeh) break;
+			lasth = planeh;
+			DVector2 newpos = Pos() + sec->SkyBoxes[sector_t::floor]->Scale;
+			sec = P_PointInSector(newpos);
+			render_sectorlist = P_AddSecnode(sec, this, render_sectorlist, sec->render_thinglist);
+		}
+	}
+}
+
+void AActor::ClearRenderSectorList()
+{
+	msecnode_t *node = render_sectorlist;
+	while (node)
+		node = P_DelSecnode(node, &sector_t::render_thinglist);
+	render_sectorlist = NULL;
+}
+
 
 //==========================================================================
 //

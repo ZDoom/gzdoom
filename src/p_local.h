@@ -350,7 +350,8 @@ void	P_RadiusAttack (AActor *spot, AActor *source, int damage, int distance,
 
 void	P_DelSector_List();
 void	P_DelSeclist(msecnode_t *);							// phares 3/16/98
-msecnode_t*	P_DelSecnode(msecnode_t *);
+msecnode_t *P_AddSecnode(sector_t *s, AActor *thing, msecnode_t *nextnode, msecnode_t *&sec_thinglist);
+msecnode_t*	P_DelSecnode(msecnode_t *, msecnode_t *sector_t::*head);
 void	P_CreateSecNodeList(AActor*);		// phares 3/14/98
 double	P_GetMoveFactor(const AActor *mo, double *frictionp);	// phares  3/6/98
 double		P_GetFriction(const AActor *mo, double *frictionfactor);

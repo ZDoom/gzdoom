@@ -127,8 +127,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_WraithFX2)
 				angle = -angle;
 			}
 			angle += self->Angles.Yaw;
-			mo->Vel.X = ((pr_wraithfx2() << 7) + 1) * angle.Cos();
-			mo->Vel.Y = ((pr_wraithfx2() << 7) + 1) * angle.Sin();
+			mo->Vel.X = ((pr_wraithfx2() / 512.) + 1) * angle.Cos();
+			mo->Vel.Y = ((pr_wraithfx2() / 512.) + 1) * angle.Sin();
 			mo->Vel.Z = 0;
 			mo->target = self;
 			mo->Floorclip = 10;

@@ -2090,7 +2090,7 @@ FMOD_MODE FMODSoundRenderer::SetChanHeadSettings(SoundListener *listener, FMOD::
 		}
 		return oldmode;
 	}
-	else if (cpos == pos)
+	else if ((cpos - pos).LengthSquared() < (0.0004 * 0.0004))
 	{ // Head relative
 		return (oldmode & ~FMOD_3D) | FMOD_2D;
 	}

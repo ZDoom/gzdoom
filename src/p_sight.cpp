@@ -114,7 +114,7 @@ public:
 	{
 		sightstart = t1->PosRelative(task->portalgroup);
 		sightend = t2->PosRelative(task->portalgroup);
-		sightstart.Z += t1->Height / 2;
+		sightstart.Z += t1->Height * 0.75;
 
 		Startfrac = task->Frac;
 		Trace = { sightstart.X, sightstart.Y, sightend.X - sightstart.X, sightend.Y - sightstart.Y };

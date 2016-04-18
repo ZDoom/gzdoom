@@ -484,6 +484,7 @@ enum
 	PLANEF_BLOCKSOUND	= 32,
 	PLANEF_DISABLED		= 64,
 	PLANEF_OBSTRUCTED	= 128,	// if the portal plane is beyond the sector's floor or ceiling.
+	PLANEF_LINKED		= 256	// plane is flagged as a linked portal
 };
 
 // Internal sector flags
@@ -936,20 +937,17 @@ public:
 
 	bool PortalBlocksSight(int plane)
 	{
-		if (SkyBoxes[plane] == NULL || SkyBoxes[plane]->special1 != SKYBOX_LINKEDPORTAL) return true;
-		return !!(planes[plane].Flags & (PLANEF_NORENDER | PLANEF_NOPASS | PLANEF_DISABLED | PLANEF_OBSTRUCTED));
+		return PLANEF_LINKED != (planes[plane].Flags & (PLANEF_NORENDER | PLANEF_NOPASS | PLANEF_DISABLED | PLANEF_OBSTRUCTED | PLANEF_LINKED));
 	}
 
 	bool PortalBlocksMovement(int plane)
 	{
-		if (SkyBoxes[plane] == NULL || SkyBoxes[plane]->special1 != SKYBOX_LINKEDPORTAL) return true;
-		return !!(planes[plane].Flags & (PLANEF_NOPASS | PLANEF_DISABLED | PLANEF_OBSTRUCTED));
+		return PLANEF_LINKED != (planes[plane].Flags & (PLANEF_NOPASS | PLANEF_DISABLED | PLANEF_OBSTRUCTED | PLANEF_LINKED));
 	}
 
 	bool PortalBlocksSound(int plane)
 	{
-		if (SkyBoxes[plane] == NULL || SkyBoxes[plane]->special1 != SKYBOX_LINKEDPORTAL) return true;
-		return !!(planes[plane].Flags & (PLANEF_BLOCKSOUND | PLANEF_DISABLED | PLANEF_OBSTRUCTED));
+		return PLANEF_LINKED != (planes[plane].Flags & (PLANEF_BLOCKSOUND | PLANEF_DISABLED | PLANEF_OBSTRUCTED | PLANEF_LINKED));
 	}
 
 	bool PortalIsLinked(int plane)

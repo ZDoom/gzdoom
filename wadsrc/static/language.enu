@@ -869,6 +869,15 @@ TAG_SKULLROD = "Hellstaff";
 TAG_PHOENIXROD = "Phoenix Rod";
 TAG_MACE = "Firemace";
 
+TAG_STAFFP = "Staff";
+TAG_GAUNTLETSP = "Gauntlets of the Necromancer";
+TAG_GOLDWANDP = "Elven Wand";
+TAG_CROSSBOWP = "Ethereal Crossbow";
+TAG_BLASTERP = "Dragon Claw";
+TAG_SKULLRODP = "Hellstaff";
+TAG_PHOENIXRODP = "Phoenix Rod";
+TAG_MACEP = "Firemace";
+
 // Item tags: Heretic artifacts
 TAG_ARTIEGG = "Morph Ovum";
 TAG_ARTIFIREBOMB = "Timebomb of the Ancients";

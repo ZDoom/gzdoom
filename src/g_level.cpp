@@ -1582,6 +1582,13 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 	P_SerializeSounds (arc);
 	if (arc.IsLoading())
 	{
+		FThinkerIterator it(RUNTIME_CLASS(DThinker));
+		DThinker *th;
+		while ((th = it.Next()))
+		{
+			th->PostSerialize();
+		}
+
 		for (i = 0; i < numsectors; i++)
 		{
 			P_Recalculate3DFloors(&sectors[i]);

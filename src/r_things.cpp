@@ -1294,7 +1294,8 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, fixed_t sx, fixed_
 	WORD				flip;
 	FTexture*			tex;
 	vissprite_t*		vis;
-	static vissprite_t	avis[NUMPSPRITES+1];
+	static vissprite_t	avis[NUMPSPRITES];
+	vissprite_t			tempvis;
 	bool noaccel;
 
 	assert(pspnum >= 0 && pspnum < NUMPSPRITES);
@@ -1338,7 +1339,7 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, fixed_t sx, fixed_
 		return;
 	
 	// store information in a vissprite
-	vis = &avis[NUMPSPRITES];
+	vis = &tempvis;
 	vis->renderflags = owner->renderflags;
 	vis->floorclip = 0;
 

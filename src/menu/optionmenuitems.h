@@ -122,7 +122,20 @@ public:
 	bool Activate()
 	{
 		const char *msg = GStrings("SAFEMESSAGE");
-		if (msg) M_StartMessage(msg, 0);
+
+		const char *actionLabel = mLabel;
+		if (actionLabel != NULL)
+		{
+			if (*actionLabel == '$')
+			{
+				actionLabel = GStrings(actionLabel + 1);
+			}
+		}
+
+		FString FullString;
+		FullString.Format(TEXTCOLOR_WHITE "%s" TEXTCOLOR_NORMAL "\n\n" "%s", actionLabel != NULL ? actionLabel : "", msg);
+
+		if (msg && FullString) M_StartMessage(FullString, 0);
 		return true;
 	}
 };

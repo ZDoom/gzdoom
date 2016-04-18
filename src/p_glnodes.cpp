@@ -1344,9 +1344,11 @@ subsector_t *P_PointInSubsector (double x, double y)
 				
 	node = gamenodes + numgamenodes - 1;
 
+	fixed_t xx = FLOAT2FIXED(x);
+	fixed_t yy = FLOAT2FIXED(y);
 	do
 	{
-		side = R_PointOnSide (x, y, node);
+		side = R_PointOnSide (xx, yy, node);
 		node = (node_t *)node->children[side];
 	}
 	while (!((size_t)node & 1));

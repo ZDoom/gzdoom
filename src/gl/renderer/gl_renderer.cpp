@@ -170,10 +170,10 @@ void FGLRenderer::ProcessLowerMiniseg(seg_t *seg, sector_t * frontsector, sector
 //
 //===========================================================================
 
-void FGLRenderer::ProcessSprite(AActor *thing, sector_t *sector)
+void FGLRenderer::ProcessSprite(AActor *thing, sector_t *sector, bool thruportal)
 {
 	GLSprite glsprite;
-	glsprite.Process(thing, sector);
+	glsprite.Process(thing, sector, thruportal);
 }
 
 //===========================================================================

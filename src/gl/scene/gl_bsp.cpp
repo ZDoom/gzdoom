@@ -368,24 +368,37 @@ static inline void RenderThings(subsector_t * sub, sector_t * sector)
 
 	SetupSprite.Clock();
 	sector_t * sec=sub->sector;
-	if (sec->thinglist != NULL)
+	// Handle all things in sector.
+	for (AActor * thing = sec->thinglist; thing; thing = thing->snext)
 	{
-		// Handle all things in sector.
-		for (AActor * thing = sec->thinglist; thing; thing = thing->snext)
+		FIntCVar *cvar = thing->GetClass()->distancecheck;
+		if (cvar != NULL && *cvar >= 0)
 		{
-			FIntCVar *cvar = thing->GetClass()->distancecheck;
-			if (cvar != NULL && *cvar >= 0)
+			double dist = (thing->Pos() - ViewPos).LengthSquared();
+			double check = (double)**cvar;
+			if (dist >= check * check)
 			{
-				double dist = (thing->Pos() - ViewPos).LengthSquared();
-				double check = (double)**cvar;
-				if (dist >= check * check)
-				{
-					continue;
-				}
+				continue;
 			}
-
-			GLRenderer->ProcessSprite(thing, sector);
 		}
+
+		GLRenderer->ProcessSprite(thing, sector, false);
+	}
+	for (msecnode_t *node = sec->render_thinglist; node; node = node->m_snext)
+	{
+		AActor *thing = node->m_thing;
+		FIntCVar *cvar = thing->GetClass()->distancecheck;
+		if (cvar != NULL && *cvar >= 0)
+		{
+			double dist = (thing->Pos() - ViewPos).LengthSquared();
+			double check = (double)**cvar;
+			if (dist >= check * check)
+			{
+				continue;
+			}
+		}
+
+		GLRenderer->ProcessSprite(thing, sector, true);
 	}
 	SetupSprite.Unclock();
 }

@@ -308,6 +308,7 @@ void FTraceInfo::Setup3DFloors()
 				{
 					Results->Crossed3DWater = rover;
 					Results->Crossed3DWaterPos = Results->HitPos;
+					Results->Distance = 0;
 				}
 			}
 
@@ -444,6 +445,7 @@ bool FTraceInfo::LineCheck(intercept_t *in, double dist, DVector3 hit)
 		{
 			Results->CrossedWater = &sectors[CurSector->sectornum];
 			Results->CrossedWaterPos = Results->HitPos;
+			Results->Distance = 0;
 		}
 	}
 
@@ -747,6 +749,7 @@ bool FTraceInfo::TraceTraverse (int ptflags)
 					{
 						Results->Crossed3DWater = rover;
 						Results->Crossed3DWaterPos = Results->HitPos;
+						Results->Distance = 0;
 					}
 				}
 			}
@@ -835,6 +838,7 @@ bool FTraceInfo::TraceTraverse (int ptflags)
 		{
 			Results->CrossedWater = &sectors[CurSector->sectornum];
 			Results->CrossedWaterPos = Results->HitPos;
+			Results->Distance = 0;
 		}
 		Results = res;
 	}

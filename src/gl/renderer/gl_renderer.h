@@ -118,7 +118,7 @@ public:
 	void Clear(int left, int top, int right, int bottom, int palcolor, uint32 color);
 
 	void ProcessLowerMiniseg(seg_t *seg, sector_t * frontsector, sector_t * backsector);
-	void ProcessSprite(AActor *thing, sector_t *sector);
+	void ProcessSprite(AActor *thing, sector_t *sector, bool thruportal);
 	void ProcessParticle(particle_t *part, sector_t *sector);
 	void ProcessSector(sector_t *fakesector);
 	void FlushTextures();

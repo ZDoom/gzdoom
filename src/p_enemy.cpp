@@ -2856,6 +2856,10 @@ void A_Face(AActor *self, AActor *other, DAngle max_turn, DAngle max_pitch, DAng
 		{
 			target_z = other->Center();
 		}
+		if (source_z >= self->Top())
+		{
+			source_z = self->Center();
+		}
 
 		//Note there is no +32 on purpose. This is for customization sake. 
 		//If one doesn't want this behavior, just don't use FAF_BOTTOM.

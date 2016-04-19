@@ -895,10 +895,10 @@ double sector_t::HighestCeilingAt(const DVector2 &p, sector_t **resultsec)
 	DVector2 pos = p;
 
 	// Continue until we find a blocking portal or a portal below where we actually are.
-	while (!check->PortalBlocksMovement(ceiling) && planeheight < check->SkyBoxes[ceiling]->specialf1)
+	while (!check->PortalBlocksMovement(ceiling) && planeheight < check->GetPortalPlaneZ(ceiling))
 	{
-		pos += check->SkyBoxes[ceiling]->Scale;
-		planeheight = check->SkyBoxes[ceiling]->specialf1;
+		pos += check->GetPortalDisplacement(ceiling);
+		planeheight = check->GetPortalPlaneZ(ceiling);
 		check = P_PointInSector(pos);
 	}
 	if (resultsec) *resultsec = check;
@@ -918,10 +918,10 @@ double sector_t::LowestFloorAt(const DVector2 &p, sector_t **resultsec)
 	DVector2 pos = p;
 
 	// Continue until we find a blocking portal or a portal above where we actually are.
-	while (!check->PortalBlocksMovement(floor) && planeheight > check->SkyBoxes[floor]->specialf1)
+	while (!check->PortalBlocksMovement(floor) && planeheight > check->GetPortalPlaneZ(floor))
 	{
-		pos += check->SkyBoxes[floor]->Scale;
-		planeheight = check->SkyBoxes[floor]->specialf1;
+		pos += check->GetPortalDisplacement(floor);
+		planeheight = check->GetPortalPlaneZ(ceiling);
 		check = P_PointInSector(pos);
 	}
 	if (resultsec) *resultsec = check;
@@ -956,7 +956,7 @@ double sector_t::NextHighestCeilingAt(double x, double y, double bottomz, double
 				return ff_bottom;
 			}
 		}
-		if ((flags & FFCF_NOPORTALS) || sec->PortalBlocksMovement(ceiling) || planeheight >= sec->SkyBoxes[ceiling]->specialf1)
+		if ((flags & FFCF_NOPORTALS) || sec->PortalBlocksMovement(ceiling) || planeheight >= sec->GetPortalPlaneZ(ceiling))
 		{ // Use sector's floor
 			if (resultffloor) *resultffloor = NULL;
 			if (resultsec) *resultsec = sec;
@@ -964,10 +964,10 @@ double sector_t::NextHighestCeilingAt(double x, double y, double bottomz, double
 		}
 		else
 		{
-			DVector2 pos = sec->SkyBoxes[ceiling]->Scale;
+			DVector2 pos = sec->GetPortalDisplacement(ceiling);
 			x += pos.X;
 			y += pos.Y;
-			planeheight = sec->SkyBoxes[ceiling]->specialf1;
+			planeheight = sec->GetPortalPlaneZ(ceiling);
 			sec = P_PointInSector(x, y);
 		}
 	}
@@ -1001,7 +1001,7 @@ double sector_t::NextLowestFloorAt(double x, double y, double z, int flags, doub
 				}
 			}
 		}
-		if ((flags & FFCF_NOPORTALS) || sec->PortalBlocksMovement(sector_t::floor) || planeheight <= sec->SkyBoxes[floor]->specialf1)
+		if ((flags & FFCF_NOPORTALS) || sec->PortalBlocksMovement(sector_t::floor) || planeheight <= sec->GetPortalPlaneZ(floor))
 		{ // Use sector's floor
 			if (resultffloor) *resultffloor = NULL;
 			if (resultsec) *resultsec = sec;
@@ -1009,10 +1009,10 @@ double sector_t::NextLowestFloorAt(double x, double y, double z, int flags, doub
 		}
 		else
 		{
-			DVector2 pos = sec->SkyBoxes[floor]->Scale;
+			DVector2 pos = sec->GetPortalDisplacement(floor);
 			x += pos.X;
 			y += pos.Y;
-			planeheight = sec->SkyBoxes[floor]->specialf1;
+			planeheight = sec->GetPortalPlaneZ(floor);
 			sec = P_PointInSector(x, y);
 		}
 	}

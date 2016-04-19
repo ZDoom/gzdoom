@@ -3169,10 +3169,9 @@ DVector3 AActor::GetPortalTransition(double byoffset, sector_t **pSec)
 
 	while (!sec->PortalBlocksMovement(sector_t::ceiling))
 	{
-		AActor *port = sec->SkyBoxes[sector_t::ceiling];
-		if (testz > port->specialf1)
+		if (testz > sec->GetPortalPlaneZ(sector_t::ceiling))
 		{
-			pos = PosRelative(port->Sector);
+			pos = PosRelative(sec->GetOppositePortalGroup(sector_t::ceiling));
 			sec = P_PointInSector(pos);
 			moved = true;
 		}
@@ -3182,10 +3181,9 @@ DVector3 AActor::GetPortalTransition(double byoffset, sector_t **pSec)
 	{
 		while (!sec->PortalBlocksMovement(sector_t::floor))
 		{
-			AActor *port = sec->SkyBoxes[sector_t::floor];
-			if (testz <= port->specialf1)
+			if (testz <= sec->GetPortalPlaneZ(sector_t::floor))
 			{
-				pos = PosRelative(port->Sector);
+				pos = PosRelative(sec->GetOppositePortalGroup(sector_t::floor));
 				sec = P_PointInSector(pos);
 			}
 			else break;
@@ -3202,12 +3200,11 @@ void AActor::CheckPortalTransition(bool islinked)
 	bool moved = false;
 	while (!Sector->PortalBlocksMovement(sector_t::ceiling))
 	{
-		AActor *port = Sector->SkyBoxes[sector_t::ceiling];
-		if (Z() > port->specialf1)
+		if (Z() > Sector->GetPortalPlaneZ(sector_t::ceiling))
 		{
 			DVector3 oldpos = Pos();
 			if (islinked && !moved) UnlinkFromWorld();
-			SetXYZ(PosRelative(port->Sector));
+			SetXYZ(PosRelative(Sector->GetOppositePortalGroup(sector_t::ceiling)));
 			Prev = Pos() - oldpos;
 			Sector = P_PointInSector(Pos());
 			PrevPortalGroup = Sector->PortalGroup;
@@ -3219,12 +3216,12 @@ void AActor::CheckPortalTransition(bool islinked)
 	{
 		while (!Sector->PortalBlocksMovement(sector_t::floor))
 		{
-			AActor *port = Sector->SkyBoxes[sector_t::floor];
-			if (Z() < port->specialf1 && floorz < port->specialf1)
+			double portalz = Sector->GetPortalPlaneZ(sector_t::floor);
+			if (Z() < portalz && floorz < portalz)
 			{
 				DVector3 oldpos = Pos();
 				if (islinked && !moved) UnlinkFromWorld();
-				SetXYZ(PosRelative(port->Sector));
+				SetXYZ(PosRelative(Sector->GetOppositePortalGroup(sector_t::floor)));
 				Prev = Pos() - oldpos;
 				Sector = P_PointInSector(Pos());
 				PrevPortalGroup = Sector->PortalGroup;

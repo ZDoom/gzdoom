@@ -931,7 +931,7 @@ public:
 	bool PortalBlocksView(int plane)
 	{
 		if (SkyBoxes[plane] == NULL) return true;
-		if (SkyBoxes[plane]->special1 != SKYBOX_LINKEDPORTAL) return false;
+		if (GetPortalType(plane) != SKYBOX_LINKEDPORTAL) return false;
 		return !!(planes[plane].Flags & (PLANEF_NORENDER | PLANEF_DISABLED | PLANEF_OBSTRUCTED));
 	}
 
@@ -952,7 +952,28 @@ public:
 
 	bool PortalIsLinked(int plane)
 	{
-		return (SkyBoxes[plane] != NULL && SkyBoxes[plane]->special1 == SKYBOX_LINKEDPORTAL);
+		return (SkyBoxes[plane] != NULL && GetPortalType(plane) == SKYBOX_LINKEDPORTAL);
+	}
+
+	// These intentionally do not validate the SkyBoxes pointers.
+	double GetPortalPlaneZ(int plane)
+	{
+		return SkyBoxes[plane]->specialf1;
+	}
+
+	DVector2 GetPortalDisplacement(int plane)
+	{
+		return SkyBoxes[plane]->Scale;
+	}
+
+	int GetPortalType(int plane)
+	{
+		return SkyBoxes[plane]->special1;
+	}
+
+	int GetOppositePortalGroup(int plane)
+	{
+		return SkyBoxes[plane]->Sector->PortalGroup;
 	}
 
 	int GetTerrain(int pos) const;

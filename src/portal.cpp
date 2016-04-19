@@ -1050,8 +1050,8 @@ void P_CreateLinkedPortals()
 		}
 		if (sectors[i].PortalIsLinked(sector_t::ceiling) && sectors[i].PortalIsLinked(sector_t::floor))
 		{
-			double cz = sectors[i].SkyBoxes[sector_t::ceiling]->specialf1;
-			double fz = sectors[i].SkyBoxes[sector_t::floor]->specialf1;
+			double cz = sectors[i].GetPortalPlaneZ(sector_t::ceiling);
+			double fz = sectors[i].GetPortalPlaneZ(sector_t::floor);
 			if (cz < fz)
 			{
 				// This is a fatal condition. We have to remove one of the two portals. Choose the one that doesn't match the current plane
@@ -1162,22 +1162,22 @@ bool P_CollectConnectedGroups(int startgroup, const DVector3 &position, double u
 	{
 		sector_t *sec = P_PointInSector(position);
 		sector_t *wsec = sec;
-		while (!wsec->PortalBlocksMovement(sector_t::ceiling) && upperz > wsec->SkyBoxes[sector_t::ceiling]->specialf1)
+		while (!wsec->PortalBlocksMovement(sector_t::ceiling) && upperz > wsec->GetPortalPlaneZ(sector_t::ceiling))
 		{
-			sector_t *othersec = wsec->SkyBoxes[sector_t::ceiling]->Sector;
-			DVector2 pos = Displacements.getOffset(startgroup, othersec->PortalGroup) + position;
-			processMask.setBit(othersec->PortalGroup);
-			out.Add(othersec->PortalGroup | FPortalGroupArray::UPPER);
+			int othergroup = wsec->GetOppositePortalGroup(sector_t::ceiling);
+			DVector2 pos = Displacements.getOffset(startgroup, othergroup) + position;
+			processMask.setBit(othergroup);
+			out.Add(othergroup | FPortalGroupArray::UPPER);
 			wsec = P_PointInSector(pos);	// get upper sector at the exact spot we want to check and repeat
 			retval = true;
 		}
 		wsec = sec;
-		while (!wsec->PortalBlocksMovement(sector_t::floor) && position.Z < wsec->SkyBoxes[sector_t::floor]->specialf1)
+		while (!wsec->PortalBlocksMovement(sector_t::floor) && position.Z < wsec->GetPortalPlaneZ(sector_t::floor))
 		{
-			sector_t *othersec = wsec->SkyBoxes[sector_t::floor]->Sector;
-			DVector2 pos = Displacements.getOffset(startgroup, othersec->PortalGroup) + position;
-			processMask.setBit(othersec->PortalGroup | FPortalGroupArray::LOWER);
-			out.Add(othersec->PortalGroup);
+			int othergroup = wsec->GetOppositePortalGroup(sector_t::floor);
+			DVector2 pos = Displacements.getOffset(startgroup, othergroup) + position;
+			processMask.setBit(othergroup | FPortalGroupArray::LOWER);
+			out.Add(othergroup);
 			wsec = P_PointInSector(pos);	// get lower sector at the exact spot we want to check and repeat
 			retval = true;
 		}
@@ -1204,9 +1204,9 @@ bool P_CollectConnectedGroups(int startgroup, const DVector3 &position, double u
 							sector_t *sec = s ? ld->backsector : ld->frontsector;
 							if (sec && !(sec->PortalBlocksMovement(sector_t::ceiling)))
 							{
-								if (sec->SkyBoxes[sector_t::ceiling]->specialf1 < upperz)
+								if (sec->GetPortalPlaneZ(sector_t::ceiling) < upperz)
 								{
-									int grp = sec->SkyBoxes[sector_t::ceiling]->Sector->PortalGroup;
+									int grp = sec->GetOppositePortalGroup(sector_t::ceiling);
 									if (!(processMask.getBit(grp)))
 									{
 										processMask.setBit(grp);
@@ -1223,9 +1223,9 @@ bool P_CollectConnectedGroups(int startgroup, const DVector3 &position, double u
 							sector_t *sec = s ? ld->backsector : ld->frontsector;
 							if (sec && !(sec->PortalBlocksMovement(sector_t::floor)))
 							{
-								if (sec->SkyBoxes[sector_t::floor]->specialf1 > position.Z)
+								if (sec->GetPortalPlaneZ(sector_t::floor) > position.Z)
 								{
-									int grp = sec->SkyBoxes[sector_t::floor]->Sector->PortalGroup;
+									int grp = sec->GetOppositePortalGroup(sector_t::floor);
 									if (!(processMask.getBit(grp)))
 									{
 										processMask.setBit(grp);

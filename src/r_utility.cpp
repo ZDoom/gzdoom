@@ -694,10 +694,9 @@ void R_InterpolateView (player_t *player, double Frac, InterpolationViewer *ivie
 	bool moved = false;
 	while (!viewsector->PortalBlocksMovement(sector_t::ceiling))
 	{
-		AActor *point = viewsector->SkyBoxes[sector_t::ceiling];
-		if (ViewPos.Z > point->specialf1)
+		if (ViewPos.Z > viewsector->GetPortalPlaneZ(sector_t::ceiling))
 		{
-			ViewPos += point->Scale;
+			ViewPos += viewsector->GetPortalDisplacement(sector_t::ceiling);
 			viewsector = R_PointInSubsector(ViewPos)->sector;
 			moved = true;
 		}
@@ -707,10 +706,9 @@ void R_InterpolateView (player_t *player, double Frac, InterpolationViewer *ivie
 	{
 		while (!viewsector->PortalBlocksMovement(sector_t::floor))
 		{
-			AActor *point = viewsector->SkyBoxes[sector_t::floor];
-			if (ViewPos.Z < point->specialf1)
+			if (ViewPos.Z < viewsector->GetPortalPlaneZ(sector_t::floor))
 			{
-				ViewPos += point->Scale;
+				ViewPos += viewsector->GetPortalDisplacement(sector_t::floor);
 				viewsector = R_PointInSubsector(ViewPos)->sector;
 				moved = true;
 			}

@@ -623,6 +623,27 @@ public:
 //
 //==========================================================================
 
+class FxATan2 : public FxExpression
+{
+	FxExpression *yval, *xval;
+
+public:
+
+	FxATan2(FxExpression *y, FxExpression *x, const FScriptPosition &pos);
+	~FxATan2();
+	FxExpression *Resolve(FCompileContext&);
+
+	ExpEmit Emit(VMFunctionBuilder *build);
+
+private:
+	ExpEmit ToReg(VMFunctionBuilder *build, FxExpression *val);
+};
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 class FxMinMax : public FxExpression
 {
 	TDeletingArray<FxExpression *> choices;

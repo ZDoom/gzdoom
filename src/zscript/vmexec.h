@@ -1039,6 +1039,11 @@ begin:
 		reg.f[a] = reg.f[B] > konstf[C] ? reg.f[B] : konstf[C];
 		NEXTOP;
 
+	OP(ATAN2):
+		ASSERTF(a); ASSERTF(B); ASSERTF(C);
+		reg.f[a] = g_atan2(reg.f[B], reg.f[C]) * (180 / M_PI);
+		NEXTOP;
+
 	OP(FLOP):
 		ASSERTF(a); ASSERTF(B);
 		fb = reg.f[B];

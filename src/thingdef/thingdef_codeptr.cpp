@@ -4604,7 +4604,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetSpecial)
 //
 //===========================================================================
 
-static PField *GetVar(AActor *self, FName varname)
+static PField *GetVar(DObject *self, FName varname)
 {
 	PField *var = dyn_cast<PField>(self->GetClass()->Symbols.FindSymbol(varname, true));
 
@@ -4619,7 +4619,8 @@ static PField *GetVar(AActor *self, FName varname)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetUserVar)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_PROLOGUE;
+	PARAM_OBJECT(self, DObject);
 	PARAM_NAME	(varname);
 	PARAM_INT	(value);
 
@@ -4634,7 +4635,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetUserVar)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetUserVarFloat)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_PROLOGUE;
+	PARAM_OBJECT(self, DObject);
 	PARAM_NAME	(varname);
 	PARAM_FLOAT	(value);
 
@@ -4653,7 +4655,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetUserVarFloat)
 //
 //===========================================================================
 
-static PField *GetArrayVar(AActor *self, FName varname, int pos)
+static PField *GetArrayVar(DObject *self, FName varname, int pos)
 {
 	PField *var = dyn_cast<PField>(self->GetClass()->Symbols.FindSymbol(varname, true));
 
@@ -4676,7 +4678,8 @@ static PField *GetArrayVar(AActor *self, FName varname, int pos)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetUserArray)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_PROLOGUE;
+	PARAM_OBJECT(self, DObject);
 	PARAM_NAME	(varname);
 	PARAM_INT	(pos);
 	PARAM_INT	(value);
@@ -4693,7 +4696,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetUserArray)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetUserArrayFloat)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_PROLOGUE;
+	PARAM_OBJECT(self, DObject);
 	PARAM_NAME	(varname);
 	PARAM_INT	(pos);
 	PARAM_FLOAT	(value);

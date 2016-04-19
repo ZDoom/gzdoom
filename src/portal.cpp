@@ -931,7 +931,7 @@ void P_CreateLinkedPortals()
 				{
 					// The engine cannot deal with portals on a sloped plane.
 					sectors[i].SkyBoxes[j] = NULL;
-						Printf("Portal on %s of sector %d is sloped and will be disabled\n", j == 0 ? "floor" : "ceiling", i);
+					Printf("Portal on %s of sector %d is sloped and will be disabled\n", j == 0 ? "floor" : "ceiling", i);
 				}
 			}
 		}
@@ -1056,7 +1056,7 @@ void P_CreateLinkedPortals()
 				// This is a fatal condition. We have to remove one of the two portals. Choose the one that doesn't match the current plane
 				Printf("Error in sector %d: Ceiling portal at z=%f is below floor portal at z=%f\n", i, cz, fz);
 				double cp = -sectors[i].ceilingplane.fD();
-				double fp = -sectors[i].ceilingplane.fD();
+				double fp = sectors[i].floorplane.fD();
 				if (cp < fp || fz == fp)
 				{
 					sectors[i].SkyBoxes[sector_t::ceiling] = NULL;
@@ -1067,6 +1067,9 @@ void P_CreateLinkedPortals()
 				}
 			}
 		}
+		// mark all sector planes that check out ok for everything.
+		if (sectors[i].PortalIsLinked(sector_t::floor)) sectors[i].planes[sector_t::floor].Flags |= PLANEF_LINKED;
+		if (sectors[i].PortalIsLinked(sector_t::ceiling)) sectors[i].planes[sector_t::ceiling].Flags |= PLANEF_LINKED;
 	}
 	if (linkedPortals.Size() > 0)
 	{

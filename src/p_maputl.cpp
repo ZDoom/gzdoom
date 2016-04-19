@@ -396,14 +396,19 @@ bool AActor::FixMapthingPos()
 
 void AActor::LinkToWorld(bool spawningmapthing, sector_t *sector)
 {
-	if (spawningmapthing && (flags4 & MF4_FIXMAPTHINGPOS) && sector == NULL)
+	bool spawning = spawningmapthing;
+
+	if (spawning)
 	{
-		if (FixMapthingPos()) spawningmapthing = false;
+		if ((flags4 & MF4_FIXMAPTHINGPOS) && sector == NULL)
+		{
+			if (FixMapthingPos()) spawning = false;
+		}
 	}
 
 	if (sector == NULL)
 	{
-		if (!spawningmapthing || numgamenodes == 0)
+		if (!spawning || numgamenodes == 0)
 		{
 			sector = P_PointInSector(Pos());
 		}
@@ -499,7 +504,8 @@ void AActor::LinkToWorld(bool spawningmapthing, sector_t *sector)
 			}
 		}
 	}
-	UpdateRenderSectorList();
+	// Portal links cannot be done unless the level is fully initialized.
+	if (!spawningmapthing) UpdateRenderSectorList();
 }
 
 void AActor::SetOrigin(double x, double y, double z, bool moving)

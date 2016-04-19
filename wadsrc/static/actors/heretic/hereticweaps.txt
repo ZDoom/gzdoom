@@ -711,6 +711,7 @@ ACTOR BlasterPowered : Blaster
 	Weapon.AmmoUse 5
 	Weapon.AmmoGive 0
 	Weapon.SisterWeapon "Blaster"
+	Tag "$TAG_BLASTERP"
 	States
 	{
 	Fire:
@@ -735,7 +736,6 @@ ACTOR BlasterFX1 : FastProjectile native
 	DeathSound "weapons/blasterhit"
 	+SPAWNSOUNDSOURCE
 	Obituary "$OB_MPPBLASTER"
-	Tag "$TAG_BLASTERP"
 
 	action native A_SpawnRippers();
 

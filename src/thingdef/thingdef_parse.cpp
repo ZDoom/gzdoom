@@ -473,7 +473,7 @@ static void ParseNativeFunction(FScanner &sc, PClassActor *cls)
 		FScriptPosition::ErrorCounter++;
 	}
 
-	// Read the type and make sure it's int or float.
+	// Read the type and make sure it's acceptable.
 	sc.MustGetAnyToken();
 	switch (sc.TokenType)
 	{
@@ -488,6 +488,9 @@ static void ParseNativeFunction(FScanner &sc, PClassActor *cls)
 
 	case TK_State:
 		rets.Push(TypeState);
+		break;
+
+	case TK_Void:
 		break;
 
 	case TK_Identifier:

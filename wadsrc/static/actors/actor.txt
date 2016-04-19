@@ -274,10 +274,10 @@ ACTOR Actor native //: Thinker
 	action native A_ScaleVelocity(float scale, int ptr = AAPTR_DEFAULT);
 	action native A_ChangeVelocity(float x = 0, float y = 0, float z = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
 	action native A_SetArg(int pos, int value);
-	action native A_SetUserVar(name varname, int value);
-	action native A_SetUserArray(name varname, int index, int value);
-	action native A_SetUserVarFloat(name varname, float value);
-	action native A_SetUserArrayFloat(name varname, int index, float value);
+	native void A_SetUserVar(name varname, int value);
+	native void A_SetUserArray(name varname, int index, int value);
+	native void A_SetUserVarFloat(name varname, float value);
+	native void A_SetUserArrayFloat(name varname, int index, float value);
 	action native A_SetSpecial(int spec, int arg0 = 0, int arg1 = 0, int arg2 = 0, int arg3 = 0, int arg4 = 0);
 	action native A_Quake(int intensity, int duration, int damrad, int tremrad, sound sfx = "world/quake");
 	action native A_QuakeEx(int intensityX, int intensityY, int intensityZ, int duration, int damrad, int tremrad, sound sfx = "world/quake", int flags = 0, float mulWaveX = 1, float mulWaveY = 1, float mulWaveZ = 1, int falloff = 0, int highpoint = 0);

@@ -1195,20 +1195,21 @@ void GLHorizonPortal::DrawContents()
 void GLEEHorizonPortal::DrawContents()
 {
 	PortalAll.Clock();
-	if (origin->Sector->GetTexture(sector_t::floor) == skyflatnum ||
-		origin->Sector->GetTexture(sector_t::ceiling) == skyflatnum)
+	sector_t *sector = origin->Sector;
+	if (sector->GetTexture(sector_t::floor) == skyflatnum ||
+		sector->GetTexture(sector_t::ceiling) == skyflatnum)
 	{
 		GLSkyInfo skyinfo;
-		skyinfo.init(origin->Sector->sky, 0);
+		skyinfo.init(sector->sky, 0);
 		GLSkyPortal sky(&skyinfo, true);
 		sky.DrawContents();
 	}
-	if (origin->Sector->GetTexture(sector_t::ceiling) != skyflatnum)
+	if (sector->GetTexture(sector_t::ceiling) != skyflatnum)
 	{
 		GLHorizonInfo horz;
-		horz.plane.GetFromSector(origin->Sector, true);
-		horz.lightlevel = gl_ClampLight(origin->Sector->GetCeilingLight());
-		horz.colormap = origin->Sector->ColorMap;
+		horz.plane.GetFromSector(sector, true);
+		horz.lightlevel = gl_ClampLight(sector->GetCeilingLight());
+		horz.colormap = sector->ColorMap;
 		if (origin->special1 == SKYBOX_PLANE)
 		{
 			horz.plane.Texheight = ViewPos.Z + fabs(horz.plane.Texheight);
@@ -1216,12 +1217,12 @@ void GLEEHorizonPortal::DrawContents()
 		GLHorizonPortal ceil(&horz, true);
 		ceil.DrawContents();
 	}
-	if (origin->Sector->GetTexture(sector_t::floor) != skyflatnum)
+	if (sector->GetTexture(sector_t::floor) != skyflatnum)
 	{
 		GLHorizonInfo horz;
-		horz.plane.GetFromSector(origin->Sector, false);
-		horz.lightlevel = gl_ClampLight(origin->Sector->GetFloorLight());
-		horz.colormap = origin->Sector->ColorMap;
+		horz.plane.GetFromSector(sector, false);
+		horz.lightlevel = gl_ClampLight(sector->GetFloorLight());
+		horz.colormap = sector->ColorMap;
 		if (origin->special1 == SKYBOX_PLANE)
 		{
 			horz.plane.Texheight = ViewPos.Z - fabs(horz.plane.Texheight);

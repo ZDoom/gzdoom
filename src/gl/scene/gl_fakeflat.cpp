@@ -212,8 +212,8 @@ sector_t * gl_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool bac
 				dest->ceilingplane=sec->floorplane;
 				dest->ceilingplane.FlipVert();
 				dest->planes[sector_t::ceiling].TexZ = dest->planes[sector_t::floor].TexZ;
-				dest->portals[sector_t::ceiling] = NULL;
-				dest->portals[sector_t::floor] = NULL;
+				dest->ClearPortal(sector_t::ceiling);
+				dest->ClearPortal(sector_t::floor);
 				return dest;
 			}
 		}
@@ -314,7 +314,7 @@ sector_t * gl_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool bac
 		dest->vboindex[sector_t::ceiling] = sec->vboindex[sector_t::vbo_fakefloor];
 		dest->vboheight[sector_t::ceiling] = s->vboheight[sector_t::floor];
 
-		dest->portals[sector_t::ceiling] = NULL;
+		dest->ClearPortal(sector_t::ceiling);
 
 		if (!(s->MoreFlags & SECF_NOFAKELIGHT))
 		{
@@ -367,7 +367,7 @@ sector_t * gl_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool bac
 		dest->vboindex[sector_t::ceiling] = sec->vboindex[sector_t::ceiling];
 		dest->vboheight[sector_t::ceiling] = sec->vboheight[sector_t::ceiling];
 
-		dest->portals[sector_t::floor] = NULL;
+		dest->ClearPortal(sector_t::floor);
 
 		if (!(s->MoreFlags & SECF_NOFAKELIGHT))
 		{

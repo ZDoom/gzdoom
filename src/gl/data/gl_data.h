@@ -51,7 +51,7 @@ struct FPortal
 	int plane;
 	GLSectorStackPortal *glportal;	// for quick access to the render data. This is only valid during BSP traversal!
 
-	GLSectorStackPortal *GetGLPortal();
+	GLSectorStackPortal *GetRenderState();
 };
 
 struct FGLLinePortal
@@ -68,7 +68,7 @@ extern TArray<FGLLinePortal*> linePortalToGL;
 extern TArray<BYTE> currentmapsection;
 
 void gl_InitPortals();
-void gl_BuildPortalCoverage(FPortalCoverage *coverage, subsector_t *subsector, FPortal *portal);
+void gl_BuildPortalCoverage(FPortalCoverage *coverage, subsector_t *subsector, const DVector2 &displacement);
 void gl_InitData();
 
 #endif

@@ -220,7 +220,7 @@ void GLWall::PutWall(bool translucent)
 		break;
 
 	case RENDERWALL_SECTORSTACK:
-		portal = this->portal->GetGLPortal();
+		portal = this->portal->GetRenderState();
 		portal->AddLine(this);
 		break;
 

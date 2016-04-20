@@ -94,7 +94,7 @@ TArray<FGLLinePortal> glLinePortals;
 //
 //==========================================================================
 
-GLSectorStackPortal *FPortal::GetGLPortal()
+GLSectorStackPortal *FPortal::GetRenderState()
 {
 	if (glportal == NULL) glportal = new GLSectorStackPortal(this);
 	return glportal;
@@ -125,7 +125,6 @@ struct FCoverageLine
 struct FCoverageBuilder
 {
 	subsector_t *target;
-	FPortal *portal;
 	TArray<int> collect;
 	FCoverageVertex center;
 
@@ -135,10 +134,9 @@ struct FCoverageBuilder
 	//
 	//==========================================================================
 
-	FCoverageBuilder(subsector_t *sub, FPortal *port)
+	FCoverageBuilder(subsector_t *sub)
 	{
 		target = sub;
-		portal = port;
 	}
 
 	//==========================================================================
@@ -322,7 +320,7 @@ struct FCoverageBuilder
 //
 //==========================================================================
 
-void gl_BuildPortalCoverage(FPortalCoverage *coverage, subsector_t *subsector, FPortal *portal)
+void gl_BuildPortalCoverage(FPortalCoverage *coverage, subsector_t *subsector, const DVector2 &displacement)
 {
 	TArray<FCoverageVertex> shape;
 	double centerx=0, centery=0;
@@ -330,11 +328,11 @@ void gl_BuildPortalCoverage(FPortalCoverage *coverage, subsector_t *subsector, F
 	shape.Resize(subsector->numlines);
 	for(unsigned i=0; i<subsector->numlines; i++)
 	{
-		centerx += (shape[i].x = FLOAT2FIXED(subsector->firstline[i].v1->fX() + portal->mDisplacement.X));
-		centery += (shape[i].y = FLOAT2FIXED(subsector->firstline[i].v1->fY() + portal->mDisplacement.Y));
+		centerx += (shape[i].x = FLOAT2FIXED(subsector->firstline[i].v1->fX() + displacement.X));
+		centery += (shape[i].y = FLOAT2FIXED(subsector->firstline[i].v1->fY() + displacement.Y));
 	}
 
-	FCoverageBuilder build(subsector, portal);
+	FCoverageBuilder build(subsector);
 	build.center.x = xs_CRoundToInt(centerx / subsector->numlines);
 	build.center.y = xs_CRoundToInt(centery / subsector->numlines);
 
@@ -357,10 +355,10 @@ static void CollectPortalSectors(FPortalMap &collection)
 		sector_t *sec = &sectors[i];
 		for (int j = 0; j < 2; j++)
 		{
-			ASkyViewpoint *SkyBox = barrier_cast<ASkyViewpoint*>(sec->SkyBoxes[j]);
-			if (SkyBox != NULL && SkyBox->bAlways && SkyBox->Mate != NULL)
+			int ptype = sec->GetPortalType(j);
+			if (ptype== SKYBOX_STACKEDSECTORTHING || ptype == SKYBOX_PORTAL || ptype == SKYBOX_LINKEDPORTAL)	// only offset-displacing portal types
 			{
-				FPortalID id = { {SkyBox->X() - SkyBox->Mate->X(), SkyBox->Y() - SkyBox->Mate->Y()} };
+				FPortalID id = { sec->GetPortalDisplacement(j) };
 
 				FPortalSectors &sss = collection[id];
 				FPortalSector ss = { sec, j };
@@ -401,8 +399,7 @@ void gl_InitPortals()
 		}
 		for (int i=1;i<=2;i<<=1)
 		{
-			// For now, add separate portals for floor and ceiling. They can be merged once
-			// proper plane clipping is in.
+			// add separate portals for floor and ceiling.
 			if (planeflags & i)
 			{
 				FPortal *portal = new FPortal;
@@ -419,7 +416,7 @@ void gl_InitPortals()
 						for(int k=0;k<sec->subsectorcount; k++)
 						{
 							subsector_t *sub = sec->subsectors[k];
-							gl_BuildPortalCoverage(&sub->portalcoverage[plane], sub, portal);
+							gl_BuildPortalCoverage(&sub->portalcoverage[plane], sub, pair->Key.mDisplacement);
 						}
 						sec->portals[plane] = portal;
 					}
@@ -511,13 +508,13 @@ CCMD(dumpportals)
 		for(int j=0;j<numsubsectors;j++)
 		{
 			subsector_t *sub = &subsectors[j];
-			FPortal *port = sub->render_sector->portals[portals[i]->plane];
+			FPortal *port = sub->render_sector->GetGLPortal(portals[i]->plane);
 			if (port == portals[i])
 			{
 				Printf(PRINT_LOG, "\tSubsector %d (%d):\n\t\t", j, sub->render_sector->sectornum);
 				for(unsigned k = 0;k< sub->numlines; k++)
 				{
-					Printf(PRINT_LOG, "(%.3f,%.3f), ",	sub->firstline[k].v1->fixX()/65536. + xdisp, sub->firstline[k].v1->fixY()/65536. + ydisp);
+					Printf(PRINT_LOG, "(%.3f,%.3f), ",	sub->firstline[k].v1->fX() + xdisp, sub->firstline[k].v1->fY() + ydisp);
 				}
 				Printf(PRINT_LOG, "\n\t\tCovered by subsectors:\n");
 				FPortalCoverage *cov = &sub->portalcoverage[portals[i]->plane];
@@ -527,7 +524,7 @@ CCMD(dumpportals)
 					Printf(PRINT_LOG, "\t\t\t%5d (%4d): ", cov->subsectors[l], csub->render_sector->sectornum);
 					for(unsigned m = 0;m< csub->numlines; m++)
 					{
-						Printf(PRINT_LOG, "(%.3f,%.3f), ",	csub->firstline[m].v1->fixX()/65536., csub->firstline[m].v1->fixY()/65536.);
+						Printf(PRINT_LOG, "(%.3f,%.3f), ",	csub->firstline[m].v1->fX(), csub->firstline[m].v1->fY());
 					}
 					Printf(PRINT_LOG, "\n");
 				}

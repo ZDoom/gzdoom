@@ -669,7 +669,6 @@ void FDrawInfo::DrawUnhandledMissingTextures()
 		if (seg->linedef->validcount == validcount) continue;		// already done
 		seg->linedef->validcount = validcount;
 		if (seg->frontsector->GetPlaneTexZF(sector_t::ceiling) < ViewPos.Z) continue;	// out of sight
-		//if (seg->frontsector->ceilingpic==skyflatnum) continue;
 
 		// FIXME: The check for degenerate subsectors should be more precise
 		if (seg->PartnerSeg && (seg->PartnerSeg->Subsector->flags & SSECF_DEGENERATE)) continue;
@@ -688,7 +687,6 @@ void FDrawInfo::DrawUnhandledMissingTextures()
 
 		seg_t * seg = MissingLowerSegs[i].seg;
 
-		// already done!
 		if (seg->linedef->validcount == validcount) continue;		// already done
 		seg->linedef->validcount = validcount;
 		if (!(sectorrenderflags[seg->backsector->sectornum] & SSRF_RENDERFLOOR)) continue;
@@ -1049,7 +1047,7 @@ void FDrawInfo::CollectSectorStacksCeiling(subsector_t * sub, sector_t * anchor)
 	sub->validcount=validcount;
 
 	// Has a sector stack or skybox itself!
-	if (sub->render_sector->portals[sector_t::ceiling] != NULL) return;
+	if (sub->render_sector->GetGLPortal(sector_t::ceiling) != nullptr) return;
 
 	// Don't bother processing unrendered subsectors
 	if (sub->numlines>2 && !(ss_renderflags[DWORD(sub-subsectors)]&SSRF_PROCESSED)) return;
@@ -1096,7 +1094,7 @@ void FDrawInfo::CollectSectorStacksFloor(subsector_t * sub, sector_t * anchor)
 	sub->validcount=validcount;
 
 	// Has a sector stack or skybox itself!
-	if (sub->render_sector->portals[sector_t::floor] != NULL) return;
+	if (sub->render_sector->GetGLPortal(sector_t::floor) != nullptr) return;
 
 	// Don't bother processing unrendered subsectors
 	if (sub->numlines>2 && !(ss_renderflags[DWORD(sub-subsectors)]&SSRF_PROCESSED)) return;
@@ -1146,7 +1144,7 @@ void FDrawInfo::ProcessSectorStacks()
 	for (i=0;i<CeilingStacks.Size (); i++)
 	{
 		sector_t *sec = gl_FakeFlat(CeilingStacks[i], &fake, false);
-		FPortal *portal = sec->portals[sector_t::ceiling];
+		FPortal *portal = sec->GetGLPortal(sector_t::ceiling);
 		if (portal != NULL) for(int k=0;k<sec->subsectorcount;k++)
 		{
 			subsector_t * sub = sec->subsectors[k];
@@ -1170,10 +1168,10 @@ void FDrawInfo::ProcessSectorStacks()
 
 					if (sub->portalcoverage[sector_t::ceiling].subsectors == NULL)
 					{
-						gl_BuildPortalCoverage(&sub->portalcoverage[sector_t::ceiling],	sub, portal);
+						gl_BuildPortalCoverage(&sub->portalcoverage[sector_t::ceiling],	sub, portal->mDisplacement);
 					}
 
-					portal->GetGLPortal()->AddSubsector(sub);
+					portal->GetRenderState()->AddSubsector(sub);
 
 					if (sec->GetAlpha(sector_t::ceiling) != 0 && sec->GetTexture(sector_t::ceiling) != skyflatnum)
 					{
@@ -1190,7 +1188,7 @@ void FDrawInfo::ProcessSectorStacks()
 	for (i=0;i<FloorStacks.Size (); i++)
 	{
 		sector_t *sec = gl_FakeFlat(FloorStacks[i], &fake, false);
-		FPortal *portal = sec->portals[sector_t::floor];
+		FPortal *portal = sec->GetGLPortal(sector_t::floor);
 		if (portal != NULL) for(int k=0;k<sec->subsectorcount;k++)
 		{
 			subsector_t * sub = sec->subsectors[k];
@@ -1215,10 +1213,10 @@ void FDrawInfo::ProcessSectorStacks()
 
 					if (sub->portalcoverage[sector_t::floor].subsectors == NULL)
 					{
-						gl_BuildPortalCoverage(&sub->portalcoverage[sector_t::floor], sub, portal);
+						gl_BuildPortalCoverage(&sub->portalcoverage[sector_t::floor], sub, portal->mDisplacement);
 					}
 
-					GLSectorStackPortal *glportal = portal->GetGLPortal();
+					GLSectorStackPortal *glportal = portal->GetRenderState();
 					glportal->AddSubsector(sub);
 
 					if (sec->GetAlpha(sector_t::floor) != 0 && sec->GetTexture(sector_t::floor) != skyflatnum)

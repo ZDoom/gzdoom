@@ -307,10 +307,14 @@ void GLWall::SkyTop(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex
 		}
 		else
 		{
-			FPortal *pfront = fs->portals[sector_t::ceiling];
-			FPortal *pback = bs->portals[sector_t::ceiling];
-			if (pfront == NULL || fs->PortalBlocksView(sector_t::ceiling)) return;
-			if (pfront == pback && !bs->PortalBlocksView(sector_t::ceiling)) return;
+			int type = fs->GetPortalType(sector_t::ceiling);
+			if (type == SKYBOX_STACKEDSECTORTHING || type == SKYBOX_PORTAL || type == SKYBOX_LINKEDPORTAL)
+			{
+				FPortal *pfront = fs->GetGLPortal(sector_t::ceiling);
+				FPortal *pback = bs->GetGLPortal(sector_t::ceiling);
+				if (pfront == NULL || fs->PortalBlocksView(sector_t::ceiling)) return;
+				if (pfront == pback && !bs->PortalBlocksView(sector_t::ceiling)) return;
+			}
 		}
 
 		// stacked sectors
@@ -382,10 +386,14 @@ void GLWall::SkyBottom(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,ver
 		}
 		else
 		{
-			FPortal *pfront = fs->portals[sector_t::floor];
-			FPortal *pback = bs->portals[sector_t::floor];
-			if (pfront == NULL || fs->PortalBlocksView(sector_t::floor)) return;
-			if (pfront == pback && !bs->PortalBlocksView(sector_t::floor)) return;
+			int type = fs->GetPortalType(sector_t::floor);
+			if (type == SKYBOX_STACKEDSECTORTHING || type == SKYBOX_PORTAL || type == SKYBOX_LINKEDPORTAL)
+			{
+				FPortal *pfront = fs->GetGLPortal(sector_t::floor);
+				FPortal *pback = bs->GetGLPortal(sector_t::floor);
+				if (pfront == NULL || fs->PortalBlocksView(sector_t::floor)) return;
+				if (pfront == pback && !bs->PortalBlocksView(sector_t::floor)) return;
+			}
 		}
 
 		// stacked sectors

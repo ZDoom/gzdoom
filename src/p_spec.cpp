@@ -975,14 +975,14 @@ static void CopyPortal(int sectortag, int plane, unsigned pnum, double alpha, bo
 		{
 			if (lines[j].args[0] == 0)
 			{
-				lines[j].skybox = origin;
+				lines[j].portaltransferred = pnum;
 			}
 			else
 			{
 				FLineIdIterator itr(lines[j].args[0]);
 				while ((s = itr.Next()) >= 0)
 				{
-					lines[s].skybox = origin;
+					lines[s].portaltransferred = pnum;
 				}
 			}
 		}

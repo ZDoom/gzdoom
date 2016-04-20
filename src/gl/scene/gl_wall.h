@@ -137,7 +137,7 @@ public:
 	union
 	{
 		// it's either one of them but never more!
-		AActor * skybox;			// for skyboxes
+		FSectorPortal *secportal;	// sector portal (formerly skybox)
 		GLSkyInfo * sky;			// for normal sky
 		GLHorizonInfo * horizon;	// for horizon information
 		FPortal * portal;			// stacked sector portals

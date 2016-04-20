@@ -209,12 +209,12 @@ void GLWall::PutWall(bool translucent)
 		break;
 
 	case RENDERWALL_SKYBOX:
-		portal = GLPortal::FindPortal(skybox);
+		portal = GLPortal::FindPortal(secportal);
 		if (!portal)
 		{
 			// either a regular skybox or an Eternity-style horizon
-			if (skybox->special1 != SKYBOX_SKYVIEWPOINT) portal = new GLEEHorizonPortal(skybox);
-			else portal = new GLSkyboxPortal(skybox);
+			if (secportal->mType != PORTS_SKYVIEWPOINT) portal = new GLEEHorizonPortal(secportal);
+			else portal = new GLSkyboxPortal(secportal);
 		}
 		portal->AddLine(this);
 		break;
@@ -1605,7 +1605,11 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 			type = RENDERWALL_LINETOLINE;
 			PutWall(0);
 		}
-		else if (seg->linedef->skybox == NULL && !seg->linedef->isVisualPortal())
+		else if (seg->linedef->portaltransferred > 0)
+		{
+			SkyLine(frontsector, seg->linedef);
+		}
+		else
 		{
 			// normal texture
 			gltexture = FMaterial::ValidateTexture(seg->sidedef->GetTexture(side_t::mid), true);

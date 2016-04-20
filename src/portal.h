@@ -6,6 +6,7 @@
 #include "m_bbox.h"
 
 struct FPortalGroupArray;
+class ASkyViewpoint;
 //============================================================================
 //
 // This table holds the offsets for the different parts of a map
@@ -173,8 +174,6 @@ enum
 //============================================================================
 //
 // All information about a line-to-line portal (all types)
-// There is no structure for sector plane portals because for historic
-// reasons those use actors to connect.
 //
 //============================================================================
 
@@ -190,9 +189,60 @@ struct FLinePortal
 	DAngle mAngleDiff;
 	double mSinRot;
 	double mCosRot;
+	void *mRenderData;
 };
 
 extern TArray<FLinePortal> linePortals;
+
+//============================================================================
+//
+// All information about a sector plane portal
+//
+//============================================================================
+
+enum
+{
+	PORTS_SKYVIEWPOINT = 0,		// a regular skybox
+	PORTS_STACKEDSECTORTHING,	// stacked sectors with the thing method
+	PORTS_PORTAL,				// stacked sectors with Sector_SetPortal
+	PORTS_LINKEDPORTAL,			// linked portal (interactive)
+	PORTS_PLANE,				// EE-style plane portal (not implemented in SW renderer)
+	PORTS_HORIZON,				// EE-style horizon portal (not implemented in SW renderer)
+};
+
+enum
+{
+	PORTSF_SKYFLATONLY = 1,				// portal is only active on skyflatnum
+	PORTSF_INSKYBOX = 2,				// to avoid recursion
+};
+
+struct FSectorPortal
+{
+	int mType;
+	int mFlags;
+	unsigned mPartner;
+	int mPlane;
+	sector_t *mOrigin;
+	sector_t *mDestination;
+	DVector2 mDisplacement;
+	double mPlaneZ;
+	TObjPtr<AActor> mSkybox;
+	void *mRenderData;
+
+	bool MergeAllowed() const
+	{
+		// For thing based stack sectors and regular skies the portal has no relevance for merging visplanes.
+		return (mType == PORTS_STACKEDSECTORTHING || (mType == PORTS_SKYVIEWPOINT && (mFlags & PORTSF_SKYFLATONLY)));
+	}
+};
+
+extern TArray<FSectorPortal> sectorPortals;
+
+//============================================================================
+//
+// Functions
+//
+//============================================================================
 
 void P_ClearPortals();
 void P_SpawnLinePortal(line_t* line);
@@ -205,6 +255,9 @@ inline int P_NumPortalGroups()
 {
 	return Displacements.size;
 }
+unsigned P_GetSkyboxPortal(ASkyViewpoint *actor);
+unsigned P_GetPortal(int type, int plane, sector_t *orgsec, sector_t *destsec, const DVector2 &displacement);
+unsigned P_GetStackPortal(AActor *point, int plane);
 
 
 /* code ported from prototype */

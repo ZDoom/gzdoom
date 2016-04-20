@@ -298,6 +298,7 @@ template<> FArchive &operator<< (FArchive &arc, FStrifeDialogueNode *&node);
 template<> FArchive &operator<< (FArchive &arc, FSwitchDef* &sw);
 template<> FArchive &operator<< (FArchive &arc, FDoorAnimation* &da);
 FArchive &operator<< (FArchive &arc, FLinePortal &da);
+FArchive &operator<< (FArchive &arc, FSectorPortal &da);
 
 
 

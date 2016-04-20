@@ -32,6 +32,7 @@
 #include "r_utility.h"
 #include "a_sharedglobal.h"
 #include "p_local.h"
+#include "r_sky.h"
 #include "r_data/colormaps.h"
 
 
@@ -803,11 +804,13 @@ int sector_t::GetCeilingLight () const
 }
 
 
-ASkyViewpoint *sector_t::GetSkyBox(int which)
+FSectorPortal *sector_t::ValidatePortal(int which)
 {
-	if (SkyBoxes[which] != NULL) return barrier_cast<ASkyViewpoint*>(SkyBoxes[which]);
-	if (MoreFlags & (SECF_NOFLOORSKYBOX << which)) return NULL;
-	return level.DefaultSkybox;
+	FSectorPortal *port = GetPortal(which);
+	if (port->mType == PORTS_SKYVIEWPOINT && port->mSkybox == nullptr) return nullptr;				// A skybox without a viewpoint is just a regular sky.
+	if (PortalBlocksView(which)) return nullptr;													// disabled or obstructed linked portal.
+	if ((port->mFlags & PORTSF_SKYFLATONLY) && GetTexture(which) != skyflatnum) return nullptr;		// Skybox without skyflat texture
+	return port;
 }
 
 
@@ -873,13 +876,13 @@ int sector_t::GetTerrain(int pos) const
 
 void sector_t::CheckPortalPlane(int plane)
 {
-	AActor *portal = SkyBoxes[plane];
-	if (!portal || portal->special1 != SKYBOX_LINKEDPORTAL) return;
-
-	double planeh = GetPlaneTexZF(plane);
-	int obstructed = PLANEF_OBSTRUCTED * (plane == sector_t::floor ?
-		planeh > portal->specialf1 : planeh < portal->specialf1);
-	planes[plane].Flags = (planes[plane].Flags  & ~PLANEF_OBSTRUCTED) | obstructed;
+	if (GetPortalType(plane) == PORTS_LINKEDPORTAL)
+	{
+		double portalh = GetPortalPlaneZ(plane);
+		double planeh = GetPlaneTexZF(plane);
+		int obstructed = PLANEF_OBSTRUCTED * (plane == sector_t::floor ? planeh > portalh : planeh < portalh);
+		planes[plane].Flags = (planes[plane].Flags  & ~PLANEF_OBSTRUCTED) | obstructed;
+	}
 }
 
 //===========================================================================

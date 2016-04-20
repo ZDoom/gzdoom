@@ -1536,6 +1536,7 @@ void R_DrawPlayerSprites ()
 	F3DFloor *rover;
 
 	if (!r_drawplayersprites ||
+		!camera ||
 		!camera->player ||
 		(players[consoleplayer].cheats & CF_CHASECAM) ||
 		(r_deathcamera && camera->health <= 0))

@@ -369,7 +369,7 @@ void P_SerializeWorld (FArchive &arc)
 			<< sec->sky
 			<< sec->MoreFlags
 			<< sec->Flags
-			<< sec->SkyBoxes[sector_t::floor] << sec->SkyBoxes[sector_t::ceiling]
+			<< sec->Portals[sector_t::floor] << sec->Portals[sector_t::ceiling]
 			<< sec->ZoneNumber;
 		arc	<< sec->interpolations[0]
 			<< sec->interpolations[1]
@@ -449,7 +449,7 @@ void P_SerializeWorld (FArchive &arc)
 		arc << zn->Environment;
 	}
 
-	arc << linePortals;
+	arc << linePortals << sectorPortals;
 	P_CollectLinkedPortals();
 }
 
@@ -565,22 +565,8 @@ void P_SerializePolyobjs (FArchive &arc)
 				I_Error ("UnarchivePolyobjs: Invalid polyobj tag");
 			}
 			arc << angle << delta << po->interpolation;
-			if (SaveVersion >= 4537)
-			{
-				arc << po->bBlocked;
-			}
-			else
-			{
-				po->bBlocked = false;
-			}
-			if (SaveVersion >= 4538)
-			{
-				arc << po->bHasPortals;
-			}
-			else
-			{
-				po->bHasPortals = 0;
-			}
+			arc << po->bBlocked;
+			arc << po->bHasPortals;
 
 			po->RotatePolyobj (angle, true);
 			delta -= po->StartSpot.pos;

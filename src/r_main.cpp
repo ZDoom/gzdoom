@@ -693,7 +693,7 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 	fixed_t starty = viewy;
 	fixed_t startz = viewz;
 	DVector3 savedpath[2] = { ViewPath[0], ViewPath[1] };
-	int savedvisibility = camera->renderflags & RF_INVISIBLE;
+	int savedvisibility = camera? camera->renderflags & RF_INVISIBLE : 0;
 
 	CurrentPortalUniq++;
 
@@ -746,7 +746,7 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 		viewz = FLOAT2FIXED(view.Z);
 		viewangle = va.BAMs();
 
-		if (!r_showviewer)
+		if (!r_showviewer && camera)
 		{
 			double distp = (ViewPath[0] - ViewPath[1]).Length();
 			if (distp > EQUAL_EPSILON)
@@ -802,11 +802,11 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 	InSubsector = NULL;
 	R_RenderBSPNode (nodes + numnodes - 1);
 	R_3D_ResetClip(); // reset clips (floor/ceiling)
-	if (!savedvisibility) camera->renderflags &= ~RF_INVISIBLE;
+	if (!savedvisibility && camera) camera->renderflags &= ~RF_INVISIBLE;
 
 	PlaneCycles.Clock();
 	R_DrawPlanes ();
-	R_DrawSkyBoxes ();
+	R_DrawPortals ();
 	PlaneCycles.Unclock();
 
 	fixed_t vzp = viewz;
@@ -961,7 +961,7 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	{
 		PlaneCycles.Clock();
 		R_DrawPlanes ();
-		R_DrawSkyBoxes ();
+		R_DrawPortals ();
 		PlaneCycles.Unclock();
 
 		// [RH] Walk through mirrors

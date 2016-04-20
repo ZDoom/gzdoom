@@ -39,13 +39,13 @@ enum
 282 = 0,	Sector_Attach3DMidtex(tag, 0, 1) // "3DMidTex_MoveWithCeiling"
 
 // Plane portals are not supported in ZDoom, though they probably wouldn't be too hard to implement.
-283 = 0,	Unsupported() // "Portal_PlaneCeiling"
-284 = 0,	Unsupported() // "Portal_PlaneFloor"
-285 = 0,	Unsupported() // "Portal_PlaneFloorCeiling"
-286 = 0,	Unsupported() // "Portal_HorizonCeiling"
-287 = 0,	Unsupported() // "Portal_HorizonFloor"
-288 = 0,	Unsupported() // "Portal_HorizonFloorCeiling"
-289 = 0,	Unsupported() // "Portal_LineTransfer"
+283 = 0,	Sector_SetPortal(tag,3, 1, 0, 0) // "Portal_PlaneCeiling"
+284 = 0,	Sector_SetPortal(tag,3, 0, 0, 0) // "Portal_PlaneFloor"
+285 = 0,	Sector_SetPortal(tag,3, 2, 0, 0) // "Portal_PlaneFloorCeiling"
+286 = 0,	Sector_SetPortal(tag,4, 1, 0, 0) // "Portal_HorizonCeiling"
+287 = 0,	Sector_SetPortal(tag,4, 0, 0, 0) // "Portal_HorizonFloor"
+288 = 0,	Sector_SetPortal(tag,4, 2, 0, 0) // "Portal_HorizonFloorCeiling"
+289 = 0,	Sector_SetPortal(0, 5, 0, tag) // "Portal_LineTransfer"
 
 // Skybox portals
 290 = 0,	Sector_SetPortal(tag, 2, 1, 1, 0) // "Portal_SkyboxCeiling"

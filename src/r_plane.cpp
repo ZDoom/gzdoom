@@ -584,7 +584,7 @@ static visplane_t *new_visplane (unsigned hash)
 visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightlevel, fixed_t alpha, bool additive,
 						 fixed_t xoffs, fixed_t yoffs,
 						 fixed_t xscale, fixed_t yscale, angle_t angle,
-						 int sky, ASkyViewpoint *skybox)
+						 int sky, FSectorPortal *portal)
 {
 	secplane_t plane;
 	visplane_t *check;
@@ -606,9 +606,9 @@ visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightl
 		// same column but separated by a wall. If they both try to reside in the
 		// same visplane, then only the floor sky will be drawn.
 		plane.set(0., 0., height.fC(), 0.);
-		isskybox = skybox != NULL && !skybox->bInSkybox;
+		isskybox = portal != NULL && !(portal->mFlags & PORTSF_INSKYBOX);
 	}
-	else if (skybox != NULL && skybox->bAlways && !skybox->bInSkybox)
+	else if (portal != NULL && !(portal->mFlags & PORTSF_INSKYBOX))
 	{
 		plane = height;
 		isskybox = true;
@@ -622,7 +622,7 @@ visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightl
 		// and ->alpha is for stacked sectors
 		if (fake3D & (FAKE3D_FAKEFLOOR|FAKE3D_FAKECEILING)) sky = 0x80000000 | fakeAlpha;
 		else sky = 0;	// not skyflatnum so it can't be a sky
-		skybox = NULL;
+		portal = NULL;
 		alpha = OPAQUE;
 	}
 
@@ -633,9 +633,9 @@ visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightl
 	{
 		if (isskybox)
 		{
-			if (skybox == check->skybox && plane == check->height)
+			if (portal == check->portal && plane == check->height)
 			{
-				if (skybox->Mate != NULL)
+				if (portal->mType != PORTS_SKYVIEWPOINT)
 				{ // This skybox is really a stacked sector, so we need to
 				  // check even more.
 					if (check->extralight == stacked_extralight &&
@@ -645,7 +645,7 @@ visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightl
 						check->viewz == stacked_viewz &&
 						(
 							// headache inducing logic... :(
-							(!(skybox->flags & MF_JUSTATTACKED)) ||
+							(portal->mType != PORTS_STACKEDSECTORTHING) ||
 							(
 								check->Alpha == alpha &&
 								check->Additive == additive &&
@@ -710,7 +710,7 @@ visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightl
 	check->angle = angle;
 	check->colormap = basecolormap;		// [RH] Save colormap
 	check->sky = sky;
-	check->skybox = skybox;
+	check->portal = portal;
 	check->left = viewwidth;			// Was SCREENWIDTH -- killough 11/98
 	check->right = 0;
 	check->extralight = stacked_extralight;
@@ -781,7 +781,7 @@ visplane_t *R_CheckPlane (visplane_t *pl, int start, int stop)
 		// make a new visplane
 		unsigned hash;
 
-		if (pl->skybox != NULL && !pl->skybox->bInSkybox && (pl->picnum == skyflatnum || pl->skybox->bAlways) && viewactive)
+		if (pl->portal != NULL && !(pl->portal->mFlags & PORTSF_INSKYBOX) && viewactive)
 		{
 			hash = MAXVISPLANES;
 		}
@@ -800,7 +800,7 @@ visplane_t *R_CheckPlane (visplane_t *pl, int start, int stop)
 		new_pl->yscale = pl->yscale;
 		new_pl->angle = pl->angle;
 		new_pl->colormap = pl->colormap;
-		new_pl->skybox = pl->skybox;
+		new_pl->portal = pl->portal;
 		new_pl->extralight = pl->extralight;
 		new_pl->visibility = pl->visibility;
 		new_pl->viewx = pl->viewx;
@@ -1160,7 +1160,7 @@ void R_DrawSinglePlane (visplane_t *pl, fixed_t alpha, bool additive, bool maske
 
 //==========================================================================
 //
-// R_DrawSkyBoxes
+// R_DrawPortals
 //
 // Draws any recorded sky boxes and then frees them.
 //
@@ -1181,7 +1181,7 @@ void R_DrawSinglePlane (visplane_t *pl, fixed_t alpha, bool additive, bool maske
 CVAR (Bool, r_skyboxes, true, 0)
 static int numskyboxes;
 
-void R_DrawSkyBoxes ()
+void R_DrawPortals ()
 {
 	static TArray<size_t> interestingStack;
 	static TArray<ptrdiff_t> drawsegStack;
@@ -1221,7 +1221,7 @@ void R_DrawSkyBoxes ()
 		visplanes[MAXVISPLANES] = pl->next;
 		pl->next = NULL;
 
-		if (pl->right < pl->left || !r_skyboxes || numskyboxes == MAX_SKYBOX_PLANES)
+		if (pl->right < pl->left || !r_skyboxes || numskyboxes == MAX_SKYBOX_PLANES || pl->portal == NULL)
 		{
 			R_DrawSinglePlane (pl, OPAQUE, false, false);
 			*freehead = pl;
@@ -1231,14 +1231,15 @@ void R_DrawSkyBoxes ()
 
 		numskyboxes++;
 
-		ASkyViewpoint *sky = pl->skybox;
-		ASkyViewpoint *mate = sky->Mate;
-
-		if (mate == NULL)
+		FSectorPortal *port = pl->portal;
+		switch (port->mType)
+		{
+		case PORTS_SKYVIEWPOINT:
 		{
 			// Don't let gun flashes brighten the sky box
+			ASkyViewpoint *sky = barrier_cast<ASkyViewpoint*>(port->mSkybox);
 			extralight = 0;
-			R_SetVisibility (sky->args[0] * 0.25f);
+			R_SetVisibility(sky->args[0] * 0.25f);
 
 			DVector3 viewpos = sky->InterpolatedPosition(r_TicFracF);
 			viewx = FLOAT2FIXED(viewpos.X);
@@ -1247,23 +1248,40 @@ void R_DrawSkyBoxes ()
 			viewangle = savedangle + (sky->PrevAngles.Yaw + deltaangle(sky->PrevAngles.Yaw, sky->Angles.Yaw) * r_TicFracF).BAMs();
 
 			R_CopyStackedViewParameters();
+			break;
 		}
-		else
-		{
+
+		case PORTS_STACKEDSECTORTHING:
+		case PORTS_PORTAL:
+		case PORTS_LINKEDPORTAL:
 			extralight = pl->extralight;
 			R_SetVisibility (pl->visibility);
-			viewx = pl->viewx + FLOAT2FIXED(-sky->Mate->X() + sky->X());
-			viewy = pl->viewy + FLOAT2FIXED(-sky->Mate->Y() + sky->Y());
+			viewx = pl->viewx + FLOAT2FIXED(port->mDisplacement.X);
+			viewy = pl->viewy + FLOAT2FIXED(port->mDisplacement.Y);
 			viewz = pl->viewz;
 			viewangle = pl->viewangle;
+			break;
+
+		case PORTS_HORIZON:
+		case PORTS_PLANE:
+			// not implemented yet
+
+		default:
+			R_DrawSinglePlane(pl, OPAQUE, false, false);
+			*freehead = pl;
+			freehead = &pl->next;
+			numskyboxes--;
+			continue;
 		}
+
 		ViewAngle = AngleToFloat(viewangle);
 		ViewPos = { FIXED2DBL(viewx), FIXED2DBL(viewy), FIXED2DBL(viewz) };
 
-		sky->bInSkybox = true;
-		if (mate != NULL) mate->bInSkybox = true;
-		camera = sky;
-		viewsector = sky->Sector;
+		port->mFlags |= PORTSF_INSKYBOX;
+		if (port->mPartner > 0) sectorPortals[port->mPartner].mFlags |= PORTSF_INSKYBOX;
+		camera = NULL;
+		viewsector = port->mDestination;
+		assert(viewsector != NULL);
 		R_SetViewAngle ();
 		validcount++;	// Make sure we see all sprites
 
@@ -1324,8 +1342,8 @@ void R_DrawSkyBoxes ()
 		R_3D_ResetClip(); // reset clips (floor/ceiling)
 		R_DrawPlanes ();
 
-		sky->bInSkybox = false;
-		if (mate != NULL) mate->bInSkybox = false;
+		port->mFlags &= ~PORTSF_INSKYBOX;
+		if (port->mPartner > 0) sectorPortals[port->mPartner].mFlags &= ~PORTSF_INSKYBOX;
 	}
 
 	// Draw all the masked textures in a second pass, in the reverse order they

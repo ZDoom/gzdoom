@@ -1386,7 +1386,6 @@ void G_InitLevelLocals ()
 	NormalLight.ChangeFade (level.fadeto);
 
 	level.DefaultEnvironment = info->DefaultEnvironment;
-	level.DefaultSkybox = NULL;
 }
 
 //==========================================================================
@@ -1538,7 +1537,7 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 	P_SerializeSubsectors(arc);
 	StatusBar->Serialize (arc);
 
-	arc << level.DefaultSkybox << level.total_monsters << level.total_items << level.total_secrets;
+	arc << level.total_monsters << level.total_items << level.total_secrets;
 
 	// Does this level have custom translations?
 	FRemapTable *trans;

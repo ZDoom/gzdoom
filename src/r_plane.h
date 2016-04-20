@@ -43,7 +43,7 @@ struct visplane_s
 	fixed_t		xscale, yscale;		// [RH] Support flat scaling
 	angle_t		angle;				// [RH] Support flat rotation
 	int			sky;
-	ASkyViewpoint *skybox;			// [RH] Support sky boxes
+	FSectorPortal *portal;			// [RH] Support sky boxes
 
 	// [RH] This set of variables copies information from the time when the
 	// visplane is created. They are only used by stacks so that you can
@@ -88,7 +88,7 @@ void R_DeinitPlanes ();
 void R_ClearPlanes (bool fullclear);
 
 int R_DrawPlanes ();
-void R_DrawSkyBoxes ();
+void R_DrawPortals ();
 void R_DrawSkyPlane (visplane_t *pl);
 void R_DrawNormalPlane (visplane_t *pl, fixed_t alpha, bool additive, bool masked);
 void R_DrawTiltedPlane (visplane_t *pl, fixed_t alpha, bool additive, bool masked);
@@ -106,7 +106,7 @@ visplane_t *R_FindPlane
   fixed_t		yscale,
   angle_t		angle,
   int			sky,
-  ASkyViewpoint *skybox);
+  FSectorPortal *portal);
 
 visplane_t *R_CheckPlane (visplane_t *pl, int start, int stop);
 

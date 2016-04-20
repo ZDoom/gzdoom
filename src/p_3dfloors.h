@@ -122,8 +122,8 @@ struct lightlist_t
 class player_s;
 void P_PlayerOnSpecial3DFloor(player_t* player);
 
-bool P_CheckFor3DFloorHit(AActor * mo);
-bool P_CheckFor3DCeilingHit(AActor * mo);
+bool P_CheckFor3DFloorHit(AActor * mo, double z);
+bool P_CheckFor3DCeilingHit(AActor * mo, double z);
 void P_Recalculate3DFloors(sector_t *);
 void P_RecalculateAttached3DFloors(sector_t * sec);
 void P_RecalculateLights(sector_t *sector);

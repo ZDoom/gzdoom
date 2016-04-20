@@ -48,6 +48,8 @@
 #include "p_spec.h"
 #include "r_data/colormaps.h"
 
+EXTERN_CVAR(Int, vid_renderer)
+
 //==========================================================================
 //
 //  3D Floors
@@ -356,7 +358,7 @@ void P_PlayerOnSpecial3DFloor(player_t* player)
 // Checks whether the player's feet touch a solid 3D floor in the sector
 //
 //==========================================================================
-bool P_CheckFor3DFloorHit(AActor * mo)
+bool P_CheckFor3DFloorHit(AActor * mo, double z)
 {
 	if ((mo->player && (mo->player->cheats & CF_PREDICTING))) return false;
 
@@ -366,7 +368,7 @@ bool P_CheckFor3DFloorHit(AActor * mo)
 
 		if(rover->flags & FF_SOLID && rover->model->SecActTarget)
 		{
-			if(mo->Z() == rover->top.plane->ZatPoint(mo)) 
+			if (fabs(z - rover->top.plane->ZatPoint(mo)) < EQUAL_EPSILON) 
 			{
 				rover->model->SecActTarget->TriggerAction (mo, SECSPAC_HitFloor);
 				return true;
@@ -382,7 +384,7 @@ bool P_CheckFor3DFloorHit(AActor * mo)
 // Checks whether the player's head touches a solid 3D floor in the sector
 //
 //==========================================================================
-bool P_CheckFor3DCeilingHit(AActor * mo)
+bool P_CheckFor3DCeilingHit(AActor * mo, double z)
 {
 	if ((mo->player && (mo->player->cheats & CF_PREDICTING))) return false;
 
@@ -392,7 +394,7 @@ bool P_CheckFor3DCeilingHit(AActor * mo)
 
 		if(rover->flags & FF_SOLID && rover->model->SecActTarget)
 		{
-			if(mo->Top() == rover->bottom.plane->ZatPoint(mo)) 
+			if(fabs(z - rover->bottom.plane->ZatPoint(mo)) < EQUAL_EPSILON)
 			{
 				rover->model->SecActTarget->TriggerAction (mo, SECSPAC_HitCeiling);
 				return true;

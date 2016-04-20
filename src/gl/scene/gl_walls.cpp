@@ -185,7 +185,7 @@ void GLWall::PutPortal(int ptype)
 		break;
 
 	case PORTALTYPE_SECTORSTACK:
-		portal = this->portal->GetGLPortal();
+		portal = this->portal->GetRenderState();
 		portal->AddLine(this);
 		break;
 

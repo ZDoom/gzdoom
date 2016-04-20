@@ -494,7 +494,7 @@ static void DoSubsector(subsector_t * sub)
 
 	if (gl_render_flats)
 	{
-		// Subsectors with only 2 lines cannot have any area!
+		// Subsectors with only 2 lines cannot have any area
 		if (sub->numlines>2 || (sub->hacked&1)) 
 		{
 			// Exclude the case when it tries to render a sector with a heightsec
@@ -527,17 +527,17 @@ static void DoSubsector(subsector_t * sub)
 
 				FPortal *portal;
 
-				portal = fakesector->portals[sector_t::ceiling];
+				portal = fakesector->GetGLPortal(sector_t::ceiling);
 				if (portal != NULL)
 				{
-					GLSectorStackPortal *glportal = portal->GetGLPortal();
+					GLSectorStackPortal *glportal = portal->GetRenderState();
 					glportal->AddSubsector(sub);
 				}
 
-				portal = fakesector->portals[sector_t::floor];
+				portal = fakesector->GetGLPortal(sector_t::floor);
 				if (portal != NULL)
 				{
-					GLSectorStackPortal *glportal = portal->GetGLPortal();
+					GLSectorStackPortal *glportal = portal->GetRenderState();
 					glportal->AddSubsector(sub);
 				}
 			}

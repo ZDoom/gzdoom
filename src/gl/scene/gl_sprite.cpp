@@ -554,8 +554,8 @@ void GLSprite::Process(AActor* thing, sector_t * sector, bool thruportal)
 	{
 		rendersector = sector;
 	}
-	topclip = rendersector->PortalBlocksMovement(sector_t::ceiling) ? LARGE_VALUE : rendersector->SkyBoxes[sector_t::ceiling]->specialf1;
-	bottomclip = rendersector->PortalBlocksMovement(sector_t::floor) ? -LARGE_VALUE : rendersector->SkyBoxes[sector_t::floor]->specialf1;
+	topclip = rendersector->PortalBlocksMovement(sector_t::ceiling) ? LARGE_VALUE : rendersector->GetPortalPlaneZ(sector_t::ceiling);
+	bottomclip = rendersector->PortalBlocksMovement(sector_t::floor) ? -LARGE_VALUE : rendersector->GetPortalPlaneZ(sector_t::floor);
 
 
 	x = thingpos.X;

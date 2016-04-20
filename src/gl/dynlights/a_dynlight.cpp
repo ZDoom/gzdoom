@@ -591,24 +591,23 @@ void ADynamicLight::CollectWithinRadius(const DVector3 &pos, subsector_t *subSec
 			}
 		}
 	}
-	if (!subSec->sector->PortalBlocksSight(sector_t::ceiling))
+	sector_t *sec = subSec->sector;
+	if (!sec->PortalBlocksSight(sector_t::ceiling))
 	{
 		line_t *other = subSec->firstline->linedef;
-		AActor *sb = subSec->sector->SkyBoxes[sector_t::ceiling];
-		if (sb->specialf1 < Z() + radius)
+		if (sec->GetPortalPlaneZ(sector_t::ceiling) < Z() + radius)
 		{
-			DVector2 refpos = other->v1->fPos() + other->Delta() / 2 + sb->Scale;
+			DVector2 refpos = other->v1->fPos() + other->Delta() / 2 + sec->GetPortalDisplacement(sector_t::ceiling);
 			subsector_t *othersub = R_PointInSubsector(refpos);
 			if (othersub->validcount != ::validcount) CollectWithinRadius(PosRelative(othersub->sector), othersub, radius);
 		}
 	}
-	if (!subSec->sector->PortalBlocksSight(sector_t::floor))
+	if (!sec->PortalBlocksSight(sector_t::floor))
 	{
 		line_t *other = subSec->firstline->linedef;
-		AActor *sb = subSec->sector->SkyBoxes[sector_t::floor];
-		if (sb->specialf1 > Z() - radius)
+		if (sec->GetPortalPlaneZ(sector_t::floor) > Z() - radius)
 		{
-			DVector2 refpos = other->v1->fPos() + other->Delta() / 2 + sb->Scale;
+			DVector2 refpos = other->v1->fPos() + other->Delta() / 2 + sec->GetPortalDisplacement(sector_t::floor);
 			subsector_t *othersub = R_PointInSubsector(refpos);
 			if (othersub->validcount != ::validcount) CollectWithinRadius(PosRelative(othersub->sector), othersub, radius);
 		}

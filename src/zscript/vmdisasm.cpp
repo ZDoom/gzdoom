@@ -476,7 +476,7 @@ static int print_reg(FILE *out, int col, int arg, int mode, int immshift, const 
 	case MODE_KF:
 		if (func != NULL)
 		{
-			return col+printf_wrapper(out, "%g", func->KonstF[arg]);
+			return col+printf_wrapper(out, "%#g", func->KonstF[arg]);
 		}
 		return col+printf_wrapper(out, "kf%d", arg);
 	case MODE_KS:

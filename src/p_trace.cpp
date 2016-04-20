@@ -112,10 +112,9 @@ static void GetPortalTransition(DVector3 &pos, sector_t *&sec)
 
 	while (!sec->PortalBlocksMovement(sector_t::ceiling))
 	{
-		AActor *port = sec->SkyBoxes[sector_t::ceiling];
-		if (pos.Z > port->specialf1)
+		if (pos.Z > sec->GetPortalPlaneZ(sector_t::ceiling))
 		{
-			pos += port->Scale;
+			pos += sec->GetPortalDisplacement(sector_t::ceiling);
 			sec = P_PointInSector(pos);
 			moved = true;
 		}
@@ -125,10 +124,9 @@ static void GetPortalTransition(DVector3 &pos, sector_t *&sec)
 	{
 		while (!sec->PortalBlocksMovement(sector_t::floor))
 		{
-			AActor *port = sec->SkyBoxes[sector_t::floor];
-			if (pos.Z <= port->specialf1)
+			if (pos.Z <= sec->GetPortalPlaneZ(sector_t::floor))
 			{
-				pos += port->Scale;
+				pos += sec->GetPortalDisplacement(sector_t::floor);
 				sec = P_PointInSector(pos);
 			}
 			else break;
@@ -208,18 +206,17 @@ bool Trace(const DVector3 &start, sector_t *sector, const DVector3 &direction, d
 
 void FTraceInfo::EnterSectorPortal(FPathTraverse &pt, int position, double frac, sector_t *entersec)
 {
-	AActor *portal = entersec->SkyBoxes[position];
-
+	DVector2 displacement = entersec->GetPortalDisplacement(position);;
 	double enterdist = MaxDist * frac;
 	DVector3 exit = Start + enterdist * Vec;
-	DVector3 enter = exit + portal->Scale;
+	DVector3 enter = exit + displacement;
 
-	Start += portal->Scale;
+	Start += displacement;
 	CurSector = P_PointInSector(enter);
 	inshootthrough = true;
 	startfrac = frac;
 	EnterDist = enterdist;
-	pt.PortalRelocate(portal, ptflags, frac);
+	pt.PortalRelocate(entersec->SkyBoxes[position], ptflags, frac);
 
 	if ((TraceFlags & TRACE_ReportPortals) && TraceCallback != NULL)
 	{
@@ -763,7 +760,7 @@ bool FTraceInfo::TraceTraverse (int ptflags)
 		if (Vec.Z < 0 && !CurSector->PortalBlocksMovement(sector_t::floor))
 		{
 			// calculate position where the portal is crossed
-			double portz = CurSector->SkyBoxes[sector_t::floor]->specialf1;
+			double portz = CurSector->GetPortalPlaneZ(sector_t::floor);
 			if (hit.Z < portz && limitz > portz)
 			{
 				limitz = portz;
@@ -775,7 +772,7 @@ bool FTraceInfo::TraceTraverse (int ptflags)
 		else if (Vec.Z > 0 && !CurSector->PortalBlocksMovement(sector_t::ceiling))
 		{
 			// calculate position where the portal is crossed
-			double portz = CurSector->SkyBoxes[sector_t::ceiling]->specialf1;
+			double portz = CurSector->GetPortalPlaneZ(sector_t::ceiling);
 			if (hit.Z > portz && limitz < portz)
 			{
 				limitz = portz;

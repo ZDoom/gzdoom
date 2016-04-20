@@ -254,11 +254,11 @@ bool SightCheck::PTR_SightTraverse (intercept_t *in)
 
 		if (portaldir != sector_t::floor && (open.portalflags & SO_TOPBACK) && !(open.portalflags & SO_TOPFRONT))
 		{
-			portals.Push({ in->frac, topslope, bottomslope, sector_t::ceiling, backsec->SkyBoxes[sector_t::ceiling]->Sector->PortalGroup });
+			portals.Push({ in->frac, topslope, bottomslope, sector_t::ceiling, backsec->GetOppositePortalGroup(sector_t::ceiling) });
 		}
 		if (portaldir != sector_t::ceiling && (open.portalflags & SO_BOTTOMBACK) && !(open.portalflags & SO_BOTTOMFRONT))
 		{
-			portals.Push({ in->frac, topslope, bottomslope, sector_t::floor, backsec->SkyBoxes[sector_t::floor]->Sector->PortalGroup });
+			portals.Push({ in->frac, topslope, bottomslope, sector_t::floor, backsec->GetOppositePortalGroup(sector_t::floor) });
 		}
 	}
 	if (lport)
@@ -628,11 +628,11 @@ bool SightCheck::P_SightPathTraverse ()
 	// We also must check if the starting sector contains  portals, and start sight checks in those as well.
 	if (portaldir != sector_t::floor && checkceiling && !lastsector->PortalBlocksSight(sector_t::ceiling))
 	{
-		portals.Push({ 0, topslope, bottomslope, sector_t::ceiling, lastsector->SkyBoxes[sector_t::ceiling]->Sector->PortalGroup });
+		portals.Push({ 0, topslope, bottomslope, sector_t::ceiling, lastsector->GetOppositePortalGroup(sector_t::ceiling) });
 	}
 	if (portaldir != sector_t::ceiling && checkfloor && !lastsector->PortalBlocksSight(sector_t::floor))
 	{
-		portals.Push({ 0, topslope, bottomslope, sector_t::floor, lastsector->SkyBoxes[sector_t::floor]->Sector->PortalGroup });
+		portals.Push({ 0, topslope, bottomslope, sector_t::floor, lastsector->GetOppositePortalGroup(sector_t::floor) });
 	}
 
 	x1 -= bmaporgx;

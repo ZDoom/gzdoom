@@ -287,22 +287,21 @@ void P_ThinkParticles ()
 		particle->Pos.Z += particle->Vel.Z;
 		particle->Vel += particle->Acc;
 		particle->subsector = R_PointInSubsector(particle->Pos);
+		sector_t *s = particle->subsector->sector;
 		// Handle crossing a sector portal.
-		if (!particle->subsector->sector->PortalBlocksMovement(sector_t::ceiling))
+		if (!s->PortalBlocksMovement(sector_t::ceiling))
 		{
-			AActor *skybox = particle->subsector->sector->SkyBoxes[sector_t::ceiling];
-			if (particle->Pos.Z > skybox->specialf1)
+			if (particle->Pos.Z > s->GetPortalPlaneZ(sector_t::ceiling))
 			{
-				particle->Pos += skybox->Scale;
+				particle->Pos += s->GetPortalDisplacement(sector_t::ceiling);
 				particle->subsector = NULL;
 			}
 		}
-		else if (!particle->subsector->sector->PortalBlocksMovement(sector_t::floor))
+		else if (!s->PortalBlocksMovement(sector_t::floor))
 		{
-			AActor *skybox = particle->subsector->sector->SkyBoxes[sector_t::floor];
-			if (particle->Pos.Z < skybox->specialf1)
+			if (particle->Pos.Z < s->GetPortalPlaneZ(sector_t::floor))
 			{
-				particle->Pos += skybox->Scale;
+				particle->Pos += s->GetPortalDisplacement(sector_t::floor);
 				particle->subsector = NULL;
 			}
 		}

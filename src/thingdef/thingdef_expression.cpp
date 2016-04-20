@@ -1996,6 +1996,99 @@ ExpEmit FxAbs::Emit(VMFunctionBuilder *build)
 //
 //
 //==========================================================================
+FxATan2::FxATan2(FxExpression *y, FxExpression *x, const FScriptPosition &pos)
+: FxExpression(pos)
+{
+	yval = y;
+	xval = x;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+FxATan2::~FxATan2()
+{
+	SAFE_DELETE(yval);
+	SAFE_DELETE(xval);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+FxExpression *FxATan2::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+	SAFE_RESOLVE(yval, ctx);
+	SAFE_RESOLVE(xval, ctx);
+
+	if (!yval->IsNumeric() || !xval->IsNumeric())
+	{
+		ScriptPosition.Message(MSG_ERROR, "numeric value expected for parameter");
+		delete this;
+		return NULL;
+	}
+	if (yval->isConstant() && xval->isConstant())
+	{
+		double y = static_cast<FxConstant *>(yval)->GetValue().GetFloat();
+		double x = static_cast<FxConstant *>(xval)->GetValue().GetFloat();
+		FxExpression *z = new FxConstant(g_atan2(y, x) * (180 / M_PI), ScriptPosition);
+		delete this;
+		return z;
+	}
+	if (yval->ValueType->GetRegType() != REGT_FLOAT && !yval->isConstant())
+	{
+		yval = new FxFloatCast(yval);
+	}
+	if (xval->ValueType->GetRegType() != REGT_FLOAT && !xval->isConstant())
+	{
+		xval = new FxFloatCast(xval);
+	}
+	ValueType = TypeFloat64;
+	return this;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+ExpEmit FxATan2::Emit(VMFunctionBuilder *build)
+{
+	ExpEmit yreg = ToReg(build, yval);
+	ExpEmit xreg = ToReg(build, xval);
+	yreg.Free(build);
+	xreg.Free(build);
+	ExpEmit out(build, REGT_FLOAT);
+	build->Emit(OP_ATAN2, out.RegNum, yreg.RegNum, xreg.RegNum);
+	return out;
+}
+
+//==========================================================================
+//
+// The atan2 opcode only takes registers as parameters, so any constants
+// must be loaded into registers first.
+//
+//==========================================================================
+ExpEmit FxATan2::ToReg(VMFunctionBuilder *build, FxExpression *val)
+{
+	if (val->isConstant())
+	{
+		ExpEmit reg(build, REGT_FLOAT);
+		build->Emit(OP_LKF, reg.RegNum, build->GetConstantFloat(static_cast<FxConstant*>(val)->GetValue().GetFloat()));
+		return reg;
+	}
+	return val->Emit(build);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 FxMinMax::FxMinMax(TArray<FxExpression*> &expr, FName type, const FScriptPosition &pos)
 : FxExpression(pos), Type(type)
 {
@@ -3751,7 +3844,7 @@ VMFunction *FxReturnStatement::GetDirectFunction()
 	// then it can be a "direct" function. That is, the DECORATE
 	// definition can call that function directly without wrapping
 	// it inside VM code.
-	if (Call != NULL && Call->GetArgCount() == 0)
+	if (Call != NULL && Call->GetArgCount() == 0 && (Call->GetFunction()->Flags & VARF_Action))
 	{
 		return Call->GetVMFunction();
 	}

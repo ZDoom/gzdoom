@@ -56,6 +56,7 @@ static FxExpression *ParseRandom(FScanner &sc, FName identifier, PClassActor *cl
 static FxExpression *ParseRandomPick(FScanner &sc, FName identifier, PClassActor *cls);
 static FxExpression *ParseRandom2(FScanner &sc, PClassActor *cls);
 static FxExpression *ParseAbs(FScanner &sc, PClassActor *cls);
+static FxExpression *ParseAtan2(FScanner &sc, FName identifier, PClassActor *cls);
 static FxExpression *ParseMinMax(FScanner &sc, FName identifier, PClassActor *cls);
 static FxExpression *ParseClamp(FScanner &sc, PClassActor *cls);
 
@@ -386,6 +387,9 @@ static FxExpression *ParseExpression0 (FScanner &sc, PClassActor *cls)
 				return ParseClamp(sc, cls);
 			case NAME_Abs:
 				return ParseAbs(sc, cls);
+			case NAME_ATan2:
+			case NAME_VectorAngle:
+				return ParseAtan2(sc, identifier, cls);
 			default:
 				args = new FArgumentList;
 				func = dyn_cast<PFunction>(cls->Symbols.FindSymbol(identifier, true));
@@ -509,6 +513,15 @@ static FxExpression *ParseAbs(FScanner &sc, PClassActor *cls)
 	FxExpression *x = ParseExpressionM (sc, cls);
 	sc.MustGetToken(')');
 	return new FxAbs(x); 
+}
+
+static FxExpression *ParseAtan2(FScanner &sc, FName identifier, PClassActor *cls)
+{
+	FxExpression *a = ParseExpressionM(sc, cls);
+	sc.MustGetToken(',');
+	FxExpression *b = ParseExpressionM(sc, cls);
+	sc.MustGetToken(')');
+	return identifier == NAME_ATan2 ? new FxATan2(a, b, sc) : new FxATan2(b, a, sc);
 }
 
 static FxExpression *ParseMinMax(FScanner &sc, FName identifier, PClassActor *cls)

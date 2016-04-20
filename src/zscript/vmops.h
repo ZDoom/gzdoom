@@ -174,6 +174,7 @@ xx(MINF_RR,		min,	RFRFRF),		// fA = min(fB),fkC)
 xx(MINF_RK,		min,	RFRFKF),
 xx(MAXF_RR,		max,	RFRFRF),		// fA = max(fB),fkC)
 xx(MAXF_RK,		max,	RFRFKF),
+xx(ATAN2,		atan2,	RFRFRF),		// fA = atan2(fB,fC), result is in degrees
 xx(FLOP,		flop,	RFRFI8),		// fA = f(fB), where function is selected by C
 xx(EQF_R,		beq,	CFRR),			// if ((fB == fkC) != (A & 1)) then pc++
 xx(EQF_K,		beq,	CFRK),

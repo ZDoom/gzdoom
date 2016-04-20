@@ -623,6 +623,27 @@ public:
 //
 //==========================================================================
 
+class FxATan2 : public FxExpression
+{
+	FxExpression *yval, *xval;
+
+public:
+
+	FxATan2(FxExpression *y, FxExpression *x, const FScriptPosition &pos);
+	~FxATan2();
+	FxExpression *Resolve(FCompileContext&);
+
+	ExpEmit Emit(VMFunctionBuilder *build);
+
+private:
+	ExpEmit ToReg(VMFunctionBuilder *build, FxExpression *val);
+};
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 class FxMinMax : public FxExpression
 {
 	TDeletingArray<FxExpression *> choices;
@@ -860,6 +881,7 @@ public:
 	ExpEmit Emit(VMFunctionBuilder *build, bool tailcall);
 	bool CheckEmitCast(VMFunctionBuilder *build, bool returnit, ExpEmit &reg);
 	unsigned GetArgCount() const { return ArgList == NULL ? 0 : ArgList->Size(); }
+	PFunction *GetFunction() const { return Function; }
 	VMFunction *GetVMFunction() const { return Function->Variants[0].Implementation; }
 	bool IsDirectFunction();
 };

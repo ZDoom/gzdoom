@@ -656,20 +656,21 @@ double P_GetMoveFactor(const AActor *mo, double *frictionp)
 // - 0 when intersecting
 // - -1 when outside the portal
 //
+// Note that this check is done from the 'other' side of the portal
+// so plane names seem to be inverted.
+//
 //==========================================================================
 
 static int LineIsAbove(line_t *line, AActor *actor)
 {
-	AActor *point = line->frontsector->SkyBoxes[sector_t::floor];
-	if (point == NULL) return -1;
-	return point->specialf1 >= actor->Top();
+	if (line->frontsector->PortalBlocksMovement(sector_t::floor)) return -1;
+	return line->frontsector->GetPortalPlaneZ(sector_t::floor) >= actor->Top();
 }
 
 static int LineIsBelow(line_t *line, AActor *actor)
 {
-	AActor *point = line->frontsector->SkyBoxes[sector_t::ceiling];
-	if (point == NULL) return -1;
-	return point->specialf1 <= actor->Z();
+	if (line->frontsector->PortalBlocksMovement(sector_t::ceiling)) return -1;
+	return line->frontsector->GetPortalPlaneZ(sector_t::ceiling) <= actor->Z();
 }
 
 //
@@ -762,7 +763,7 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 				if (state == 1)
 				{
 					// the line should not block but we should set the ceilingz to the portal boundary so that we can't float up into that line.
-					double portalz = cres.line->frontsector->SkyBoxes[sector_t::floor]->specialf1;
+					double portalz = cres.line->frontsector->GetPortalPlaneZ(sector_t::floor);
 					if (portalz < tm.ceilingz)
 					{
 						tm.ceilingz = portalz;
@@ -778,7 +779,7 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 				if (state == -1) return true;
 				if (state == 1)
 				{
-					double portalz = cres.line->frontsector->SkyBoxes[sector_t::ceiling]->specialf1;
+					double portalz = cres.line->frontsector->GetPortalPlaneZ(sector_t::ceiling);
 					if (portalz > tm.floorz)
 					{
 						tm.floorz = portalz;
@@ -3529,20 +3530,20 @@ struct aim_t
 
 	void EnterSectorPortal(int position, double frac, sector_t *entersec, DAngle newtoppitch, DAngle newbottompitch)
 	{
-		AActor *portal = entersec->SkyBoxes[position];
+		double portalz = entersec->GetPortalPlaneZ(position);
 
-		if (position == sector_t::ceiling && portal->specialf1 < limitz) return;
-		else if (position == sector_t::floor && portal->specialf1 > limitz) return;
+		if (position == sector_t::ceiling && portalz < limitz) return;
+		else if (position == sector_t::floor && portalz > limitz) return;
 		aim_t newtrace = Clone();
 
 
 		newtrace.toppitch = newtoppitch;
 		newtrace.bottompitch = newbottompitch;
 		newtrace.aimdir = position == sector_t::ceiling? aim_t::aim_up : aim_t::aim_down;
-		newtrace.startpos = startpos + portal->Scale;
+		newtrace.startpos = startpos + entersec->GetPortalDisplacement(position);
 		newtrace.startfrac = frac + 1. / attackrange;	// this is to skip the transition line to the portal which would produce a bogus opening
 		newtrace.lastsector = P_PointInSector(newtrace.startpos + aimtrace * newtrace.startfrac);
-		newtrace.limitz = portal->specialf1;
+		newtrace.limitz = portalz;
 		if (aimdebug)
 			Printf("-----Entering %s portal from sector %d to sector %d\n", position ? "ceiling" : "floor", lastsector->sectornum, newtrace.lastsector->sectornum);
 		newtrace.AimTraverse();
@@ -6253,22 +6254,22 @@ void AActor::UpdateRenderSectorList()
 		ClearRenderSectorList();
 		while (!sec->PortalBlocksMovement(sector_t::ceiling))
 		{
-			double planeh = sec->SkyBoxes[sector_t::ceiling]->specialf1;
+			double planeh = sec->GetPortalPlaneZ(sector_t::ceiling);
 			if (planeh < lasth) break;	// broken setup.
 			if (Top() + SPRITE_SPACE < planeh) break;
 			lasth = planeh;
-			DVector2 newpos = Pos() + sec->SkyBoxes[sector_t::ceiling]->Scale;
+			DVector2 newpos = Pos() + sec->GetPortalDisplacement(sector_t::ceiling);
 			sec = P_PointInSector(newpos);
 			render_sectorlist = P_AddSecnode(sec, this, render_sectorlist, sec->render_thinglist);
 		}
 		lasth = FLT_MAX;
 		while (!sec->PortalBlocksMovement(sector_t::floor))
 		{
-			double planeh = sec->SkyBoxes[sector_t::floor]->specialf1;
+			double planeh = sec->GetPortalPlaneZ(sector_t::floor);
 			if (planeh > lasth) break;	// broken setup.
 			if (Z() - SPRITE_SPACE > planeh) break;
 			lasth = planeh;
-			DVector2 newpos = Pos() + sec->SkyBoxes[sector_t::floor]->Scale;
+			DVector2 newpos = Pos() + sec->GetPortalDisplacement(sector_t::floor);
 			sec = P_PointInSector(newpos);
 			render_sectorlist = P_AddSecnode(sec, this, render_sectorlist, sec->render_thinglist);
 		}

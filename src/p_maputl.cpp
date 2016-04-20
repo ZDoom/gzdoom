@@ -174,7 +174,7 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef, co
 			{
 				// We must check through the portal for the actual dropoff.
 				// If there's no lines in the lower sections we'd never get a usable value otherwise.
-				open.lowfloor = back->NextLowestFloorAt(pos.X, pos.Y, back->SkyBoxes[sector_t::floor]->specialf1-1);
+				open.lowfloor = back->NextLowestFloorAt(pos.X, pos.Y, back->GetPortalPlaneZ(sector_t::floor) - EQUAL_EPSILON);
 			}
 		}
 		else
@@ -188,7 +188,7 @@ void P_LineOpening (FLineOpening &open, AActor *actor, const line_t *linedef, co
 			{
 				// We must check through the portal for the actual dropoff.
 				// If there's no lines in the lower sections we'd never get a usable value otherwise.
-				open.lowfloor = front->NextLowestFloorAt(pos.X, pos.Y, front->SkyBoxes[sector_t::floor]->specialf1 - 1);
+				open.lowfloor = front->NextLowestFloorAt(pos.X, pos.Y, front->GetPortalPlaneZ(sector_t::floor) - EQUAL_EPSILON);
 			}
 		}
 		open.frontfloorplane = front->floorplane;
@@ -735,7 +735,7 @@ bool FMultiBlockLinesIterator::GoUp(double x, double y)
 	{
 		if (!cursector->PortalBlocksMovement(sector_t::ceiling))
 		{
-			startIteratorForGroup(cursector->SkyBoxes[sector_t::ceiling]->Sector->PortalGroup);
+			startIteratorForGroup(cursector->GetOppositePortalGroup(sector_t::ceiling));
 			portalflags = FFCF_NOFLOOR;
 			return true;
 		}
@@ -756,7 +756,7 @@ bool FMultiBlockLinesIterator::GoDown(double x, double y)
 	{
 		if (!cursector->PortalBlocksMovement(sector_t::floor))
 		{
-			startIteratorForGroup(cursector->SkyBoxes[sector_t::floor]->Sector->PortalGroup);
+			startIteratorForGroup(cursector->GetOppositePortalGroup(sector_t::floor));
 			portalflags = FFCF_NOCEILING;
 			return true;
 		}

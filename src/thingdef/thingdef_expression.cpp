@@ -3844,7 +3844,7 @@ VMFunction *FxReturnStatement::GetDirectFunction()
 	// then it can be a "direct" function. That is, the DECORATE
 	// definition can call that function directly without wrapping
 	// it inside VM code.
-	if (Call != NULL && Call->GetArgCount() == 0 && (Call->GetFunction()->Flags & VARF_Action))
+	if (Call != NULL && Call->GetArgCount() == 0)
 	{
 		return Call->GetVMFunction();
 	}

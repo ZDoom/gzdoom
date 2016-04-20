@@ -3379,7 +3379,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckCeiling)
 //===========================================================================
 DEFINE_ACTION_FUNCTION(AActor, A_Stop)
 {
-	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ACTION_PROLOGUE;
 	self->Vel.Zero();
 	if (self->player && self->player->mo == self && !(self->player->cheats & CF_PREDICTING))
 	{

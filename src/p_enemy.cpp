@@ -2773,7 +2773,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_VileChase)
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ExtChase)
 {
-	PARAM_ACTION_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_BOOL		(domelee);
 	PARAM_BOOL		(domissile);
 	PARAM_BOOL_OPT	(playactive)	{ playactive = true; }

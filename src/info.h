@@ -345,4 +345,8 @@ void AddStateLight(FState *state, const char *lname);
 // Number of action paramaters
 #define NAP 3
 
+#define PARAM_SELF_PROLOGUE(type) \
+	PARAM_PROLOGUE; \
+	PARAM_OBJECT(self, type);
+
 #endif	// __INFO_H__

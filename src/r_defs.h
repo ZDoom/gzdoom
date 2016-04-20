@@ -975,6 +975,7 @@ public:
 	void ClearPortal(int plane)
 	{
 		Portals[plane] = 0;
+		portals[plane] = nullptr;
 	}
 
 	FSectorPortal *GetPortal(int plane)
@@ -1152,7 +1153,6 @@ public:
 	float GetReflect(int pos) { return gl_plane_reflection_i? reflect[pos] : 0; }
 	bool VBOHeightcheck(int pos) const { return vboheight[pos] == GetPlaneTexZ(pos); }
 	FPortal *GetGLPortal(int plane) { return portals[plane]; }
-	void ClearPortal(int plane) { portals[plane] = nullptr;	SkyBoxes[plane] = nullptr; }
 
 	enum
 	{
@@ -1404,7 +1404,7 @@ public:
 	int 		validcount;	// if == validcount, already checked
 	int			locknumber;	// [Dusk] lock number for special
 	unsigned	portalindex;
-	TObjPtr<ASkyViewpoint> skybox;
+	unsigned	portaltransferred;
 
 	DVector2 Delta() const
 	{
@@ -1419,6 +1419,11 @@ public:
 	void setAlpha(double a)
 	{
 		Alpha = FLOAT2FIXED(a);
+	}
+
+	FSectorPortal *GetTransferredPortal()
+	{
+		return portaltransferred >= sectorPortals.Size() ? (FSectorPortal*)NULL : &sectorPortals[portaltransferred];
 	}
 
 	FLinePortal *getPortal() const

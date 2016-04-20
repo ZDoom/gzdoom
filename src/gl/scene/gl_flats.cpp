@@ -491,8 +491,6 @@ void GLFlat::Process(sector_t * model, int whichplane, bool fog)
 
 	if (!fog)
 	{
-		if (plane.texture==skyflatnum) return;
-
 		gltexture=FMaterial::ValidateTexture(plane.texture, false, true);
 		if (!gltexture) return;
 		if (gltexture->tex->isFullbright()) 
@@ -558,6 +556,7 @@ void GLFlat::SetFrom3DFloor(F3DFloor *rover, bool top, bool underside)
 void GLFlat::ProcessSector(sector_t * frontsector)
 {
 	lightlist_t * light;
+	FSectorPortal *port;
 
 #ifdef _DEBUG
 	if (frontsector->sectornum == gl_breaksec)
@@ -589,50 +588,48 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 
 		lightlevel = gl_ClampLight(frontsector->GetFloorLight());
 		Colormap = frontsector->ColorMap;
-		if ((stack = (frontsector->portals[sector_t::floor] != NULL)))
+		port = frontsector->ValidatePortal(sector_t::floor);
+		if ((stack = (port != NULL)))
 		{
-			if (!frontsector->PortalBlocksView(sector_t::floor))
+			if (port->mType == PORTS_STACKEDSECTORTHING)
 			{
-				if (sector->SkyBoxes[sector_t::floor]->special1 == SKYBOX_STACKEDSECTORTHING)
-				{
-					gl_drawinfo->AddFloorStack(sector);
-				}
-				alpha = frontsector->GetAlpha(sector_t::floor) / 65536.0f;
+				gl_drawinfo->AddFloorStack(sector);	// stacked sector things require visplane merging.
 			}
-			else
-			{
-				alpha = 1.f;
-			}
+			alpha = frontsector->GetAlpha(sector_t::floor) / 65536.0f;
 		}
 		else
 		{
 			alpha = 1.0f - frontsector->GetReflect(sector_t::floor);
 		}
-		if (frontsector->VBOHeightcheck(sector_t::floor))
-		{
-			vboindex = frontsector->vboindex[sector_t::floor];
-		}
-		else
-		{
-			vboindex = -1;
-		}
 
-		ceiling = false;
-		renderflags = SSRF_RENDERFLOOR;
-
-		if (x.ffloors.Size())
+		if (alpha != 0.f && sector->GetTexture(sector_t::floor) != skyflatnum)
 		{
-			light = P_GetPlaneLight(sector, &frontsector->floorplane, false);
-			if ((!(sector->GetFlags(sector_t::floor)&PLANEF_ABSLIGHTING) || light->lightsource == NULL)
-				&& (light->p_lightlevel != &frontsector->lightlevel))
+			if (frontsector->VBOHeightcheck(sector_t::floor))
 			{
-				lightlevel = gl_ClampLight(*light->p_lightlevel);
+				vboindex = frontsector->vboindex[sector_t::floor];
+			}
+			else
+			{
+				vboindex = -1;
 			}
 
-			Colormap.CopyFrom3DLight(light);
+			ceiling = false;
+			renderflags = SSRF_RENDERFLOOR;
+
+			if (x.ffloors.Size())
+			{
+				light = P_GetPlaneLight(sector, &frontsector->floorplane, false);
+				if ((!(sector->GetFlags(sector_t::floor)&PLANEF_ABSLIGHTING) || light->lightsource == NULL)
+					&& (light->p_lightlevel != &frontsector->lightlevel))
+				{
+					lightlevel = gl_ClampLight(*light->p_lightlevel);
+				}
+
+				Colormap.CopyFrom3DLight(light);
+			}
+			renderstyle = STYLE_Translucent;
+			Process(frontsector, false, false);
 		}
-		renderstyle = STYLE_Translucent;
-		if (alpha != 0.0f) Process(frontsector, false, false);
 	}
 
 	//
@@ -650,51 +647,48 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 
 		lightlevel = gl_ClampLight(frontsector->GetCeilingLight());
 		Colormap = frontsector->ColorMap;
-		if ((stack = (frontsector->portals[sector_t::ceiling] != NULL)))
+		port = frontsector->ValidatePortal(sector_t::ceiling);
+		if ((stack = (port != NULL)))
 		{
-			if (!frontsector->PortalBlocksView(sector_t::ceiling))
+			if (port->mType == PORTS_STACKEDSECTORTHING)
 			{
-				if (sector->SkyBoxes[sector_t::ceiling]->special1 == SKYBOX_STACKEDSECTORTHING)
-				{
-					gl_drawinfo->AddCeilingStack(sector);
-				}
-				alpha = frontsector->GetAlpha(sector_t::ceiling) / 65536.0f;
+				gl_drawinfo->AddCeilingStack(sector);
 			}
-			else
-			{
-				alpha = 1.f;
-			}
+			alpha = frontsector->GetAlpha(sector_t::ceiling) / 65536.0f;
 		}
 		else
 		{
 			alpha = 1.0f - frontsector->GetReflect(sector_t::ceiling);
 		}
 
-		if (frontsector->VBOHeightcheck(sector_t::ceiling))
+		if (alpha != 0.f && sector->GetTexture(sector_t::ceiling) != skyflatnum)
 		{
-			vboindex = frontsector->vboindex[sector_t::ceiling];
-		}
-		else
-		{
-			vboindex = -1;
-		}
-
-		ceiling = true;
-		renderflags = SSRF_RENDERCEILING;
-
-		if (x.ffloors.Size())
-		{
-			light = P_GetPlaneLight(sector, &sector->ceilingplane, true);
-
-			if ((!(sector->GetFlags(sector_t::ceiling)&PLANEF_ABSLIGHTING))
-				&& (light->p_lightlevel != &frontsector->lightlevel))
+			if (frontsector->VBOHeightcheck(sector_t::ceiling))
 			{
-				lightlevel = gl_ClampLight(*light->p_lightlevel);
+				vboindex = frontsector->vboindex[sector_t::ceiling];
 			}
-			Colormap.CopyFrom3DLight(light);
+			else
+			{
+				vboindex = -1;
+			}
+
+			ceiling = true;
+			renderflags = SSRF_RENDERCEILING;
+
+			if (x.ffloors.Size())
+			{
+				light = P_GetPlaneLight(sector, &sector->ceilingplane, true);
+
+				if ((!(sector->GetFlags(sector_t::ceiling)&PLANEF_ABSLIGHTING))
+					&& (light->p_lightlevel != &frontsector->lightlevel))
+				{
+					lightlevel = gl_ClampLight(*light->p_lightlevel);
+				}
+				Colormap.CopyFrom3DLight(light);
+			}
+			renderstyle = STYLE_Translucent;
+			Process(frontsector, true, false);
 		}
-		renderstyle = STYLE_Translucent;
-		if (alpha != 0.0f) Process(frontsector, true, false);
 	}
 
 	//

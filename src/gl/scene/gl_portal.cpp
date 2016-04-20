@@ -644,7 +644,8 @@ void GLSkyboxPortal::DrawContents()
 	}
 
 	skyboxrecursion++;
-	origin->flags |= MF_JUSTHIT;
+	AActor *origin = portal->mSkybox;
+	portal->mFlags |= PORTSF_INSKYBOX;
 	extralight = 0;
 
 	PlaneMirrorMode = 0;
@@ -672,7 +673,7 @@ void GLSkyboxPortal::DrawContents()
 	currentmapsection[mapsection >> 3] |= 1 << (mapsection & 7);
 
 	GLRenderer->DrawScene();
-	origin->flags &= ~MF_JUSTHIT;
+	portal->mFlags &= ~PORTSF_INSKYBOX;
 	inskybox = false;
 	gl_RenderState.SetDepthClamp(oldclamp);
 	skyboxrecursion--;
@@ -1180,7 +1181,7 @@ void GLHorizonPortal::DrawContents()
 void GLEEHorizonPortal::DrawContents()
 {
 	PortalAll.Clock();
-	sector_t *sector = origin->Sector;
+	sector_t *sector = portal->mOrigin;
 	if (sector->GetTexture(sector_t::floor) == skyflatnum ||
 		sector->GetTexture(sector_t::ceiling) == skyflatnum)
 	{
@@ -1195,7 +1196,7 @@ void GLEEHorizonPortal::DrawContents()
 		horz.plane.GetFromSector(sector, true);
 		horz.lightlevel = gl_ClampLight(sector->GetCeilingLight());
 		horz.colormap = sector->ColorMap;
-		if (origin->special1 == SKYBOX_PLANE)
+		if (portal->mType == PORTS_PLANE)
 		{
 			horz.plane.Texheight = ViewPos.Z + fabs(horz.plane.Texheight);
 		}
@@ -1208,7 +1209,7 @@ void GLEEHorizonPortal::DrawContents()
 		horz.plane.GetFromSector(sector, false);
 		horz.lightlevel = gl_ClampLight(sector->GetFloorLight());
 		horz.colormap = sector->ColorMap;
-		if (origin->special1 == SKYBOX_PLANE)
+		if (portal->mType == PORTS_PLANE)
 		{
 			horz.plane.Texheight = ViewPos.Z - fabs(horz.plane.Texheight);
 		}

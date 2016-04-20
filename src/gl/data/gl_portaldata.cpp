@@ -356,7 +356,7 @@ static void CollectPortalSectors(FPortalMap &collection)
 		for (int j = 0; j < 2; j++)
 		{
 			int ptype = sec->GetPortalType(j);
-			if (ptype== SKYBOX_STACKEDSECTORTHING || ptype == SKYBOX_PORTAL || ptype == SKYBOX_LINKEDPORTAL)	// only offset-displacing portal types
+			if (ptype== PORTS_STACKEDSECTORTHING || ptype == PORTS_PORTAL || ptype == PORTS_LINKEDPORTAL)	// only offset-displacing portal types
 			{
 				FPortalID id = { sec->GetPortalDisplacement(j) };
 

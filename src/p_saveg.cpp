@@ -415,7 +415,7 @@ void P_SerializeWorld (FArchive &arc)
 		arc << li->args[1] << li->args[2] << li->args[3] << li->args[4];
 
 			arc << li->portalindex;
-			arc << li->skybox;	// GZDoom addition.
+			arc << li->portaltransferred;	// GZDoom addition.
 
 		for (j = 0; j < 2; j++)
 		{

@@ -134,44 +134,52 @@ void GLSkyInfo::init(int sky1, PalEntry FadeColor)
 void GLWall::SkyPlane(sector_t *sector, int plane, bool allowreflect)
 {
 	int ptype = -1;
-	FPortal *portal = sector->portals[plane];
-	if (portal != NULL)
-	{
-		if (sector->PortalBlocksView(plane)) return;
 
-		if (GLPortal::instack[1 - plane]) return;
-		ptype = PORTALTYPE_SECTORSTACK;
-		this->portal = portal;
+	FSectorPortal *sportal = sector->ValidatePortal(plane);
+	if (sportal != nullptr && sportal->mFlags & PORTSF_INSKYBOX) sportal = nullptr;	// no recursions, delete it here to simplify the following code
+
+	// Either a regular sky or a skybox with skyboxes disabled
+	if ((sportal == nullptr && sector->GetTexture(plane) == skyflatnum) || (gl_noskyboxes && sportal != nullptr && sportal->mType == PORTS_SKYVIEWPOINT))
+	{
+		GLSkyInfo skyinfo;
+		skyinfo.init(sector->sky, Colormap.FadeColor);
+		ptype = PORTALTYPE_SKY;
+		sky = UniqueSkies.Get(&skyinfo);
 	}
-	else
+	else if (sportal != nullptr)
 	{
-		ASkyViewpoint * skyboxx = sector->GetSkyBox(plane);
-		if (sector->GetTexture(plane) == skyflatnum || (skyboxx != NULL && skyboxx->bAlways))
+		switch (sportal->mType)
 		{
-			GLSkyInfo skyinfo;
-
-			// JUSTHIT is used as an indicator that a skybox is in use.
-			// This is to avoid recursion
-
-			if (!gl_noskyboxes && skyboxx && GLRenderer->mViewActor != skyboxx && !(skyboxx->flags&MF_JUSTHIT))
-			{
-				ptype = PORTALTYPE_SKYBOX;
-				skybox = skyboxx;
-			}
-			else
-			{
-				skyinfo.init(sector->sky, Colormap.FadeColor);
-				ptype = PORTALTYPE_SKY;
-				sky = UniqueSkies.Get(&skyinfo);
-			}
-		}
-		else if (allowreflect && sector->GetReflect(plane) > 0)
+		case PORTS_STACKEDSECTORTHING:
+		case PORTS_PORTAL:
+		case PORTS_LINKEDPORTAL:
 		{
-			if ((plane == sector_t::ceiling && ViewPos.Z > sector->ceilingplane.fD()) ||
-				(plane == sector_t::floor && ViewPos.Z < -sector->floorplane.fD())) return;
-			ptype = PORTALTYPE_PLANEMIRROR;
-			planemirror = plane == sector_t::ceiling ? &sector->ceilingplane : &sector->floorplane;
+			FPortal *glport = sector->portals[plane];
+			if (glport != NULL)
+			{
+				if (sector->PortalBlocksView(plane)) return;
+
+				if (GLPortal::instack[1 - plane]) return;
+				ptype = PORTALTYPE_SECTORSTACK;
+				portal = glport;
+			}
+			break;
 		}
+
+		case PORTS_SKYVIEWPOINT:
+		case PORTS_HORIZON:
+		case PORTS_PLANE:
+			ptype = PORTALTYPE_SKYBOX;
+			secportal = sportal;
+			break;
+		}
+	}
+	else if (allowreflect && sector->GetReflect(plane) > 0)
+	{
+		if ((plane == sector_t::ceiling && ViewPos.Z > sector->ceilingplane.fD()) ||
+			(plane == sector_t::floor && ViewPos.Z < -sector->floorplane.fD())) return;
+		ptype = PORTALTYPE_PLANEMIRROR;
+		planemirror = plane == sector_t::ceiling ? &sector->ceilingplane : &sector->floorplane;
 	}
 	if (ptype != -1)
 	{
@@ -188,17 +196,17 @@ void GLWall::SkyPlane(sector_t *sector, int plane, bool allowreflect)
 
 void GLWall::SkyLine(sector_t *fs, line_t *line)
 {
-	ASkyViewpoint * skyboxx = line->skybox;
+	FSectorPortal *secport = line->GetTransferredPortal();
 	GLSkyInfo skyinfo;
 	int ptype;
 
 	// JUSTHIT is used as an indicator that a skybox is in use.
 	// This is to avoid recursion
 
-	if (!gl_noskyboxes && skyboxx && GLRenderer->mViewActor != skyboxx && !(skyboxx->flags&MF_JUSTHIT))
+	if (!gl_noskyboxes && secport && (secport->mSkybox == nullptr || !(secport->mFlags & PORTSF_INSKYBOX)))
 	{
 		ptype = PORTALTYPE_SKYBOX;
-		skybox = skyboxx;
+		secportal = secport;
 	}
 	else
 	{
@@ -206,6 +214,10 @@ void GLWall::SkyLine(sector_t *fs, line_t *line)
 		ptype = PORTALTYPE_SKY;
 		sky = UniqueSkies.Get(&skyinfo);
 	}
+	ztop[0] = zceil[0];
+	ztop[1] = zceil[1];
+	zbottom[0] = zfloor[0];
+	zbottom[1] = zfloor[1];
 	PutPortal(ptype);
 }
 
@@ -222,15 +234,6 @@ void GLWall::SkyNormal(sector_t * fs,vertex_t * v1,vertex_t * v2)
 	zbottom[0]=zceil[0];
 	zbottom[1]=zceil[1];
 	SkyPlane(fs, sector_t::ceiling, true);
-
-	if (seg->linedef->skybox != NULL)
-	{
-		ztop[0] = zceil[0];
-		ztop[1] = zceil[1];
-		zbottom[0] = zfloor[0];
-		zbottom[1] = zfloor[1];
-		SkyLine(fs, seg->linedef);
-	}
 
 	ztop[0]=zfloor[0];
 	ztop[1]=zfloor[1];
@@ -312,7 +315,7 @@ void GLWall::SkyTop(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex
 		else
 		{
 			int type = fs->GetPortalType(sector_t::ceiling);
-			if (type == SKYBOX_STACKEDSECTORTHING || type == SKYBOX_PORTAL || type == SKYBOX_LINKEDPORTAL)
+			if (type == PORTS_STACKEDSECTORTHING || type == PORTS_PORTAL || type == PORTS_LINKEDPORTAL)
 			{
 				FPortal *pfront = fs->GetGLPortal(sector_t::ceiling);
 				FPortal *pback = bs->GetGLPortal(sector_t::ceiling);
@@ -391,7 +394,7 @@ void GLWall::SkyBottom(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,ver
 		else
 		{
 			int type = fs->GetPortalType(sector_t::floor);
-			if (type == SKYBOX_STACKEDSECTORTHING || type == SKYBOX_PORTAL || type == SKYBOX_LINKEDPORTAL)
+			if (type == PORTS_STACKEDSECTORTHING || type == PORTS_PORTAL || type == PORTS_LINKEDPORTAL)
 			{
 				FPortal *pfront = fs->GetGLPortal(sector_t::floor);
 				FPortal *pback = bs->GetGLPortal(sector_t::floor);

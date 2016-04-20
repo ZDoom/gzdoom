@@ -69,10 +69,12 @@ bool gl_CheckClip(side_t * sidedef, sector_t * frontsector, sector_t * backsecto
 	// Mirrors and horizons always block the view
 	//if (linedef->special==Line_Mirror || linedef->special==Line_Horizon) return true;
 
-	// Lines with stacked sectors must never block!
-
-	if (backsector->portals[sector_t::ceiling] != NULL || backsector->portals[sector_t::floor] != NULL ||
-		frontsector->portals[sector_t::ceiling] != NULL || frontsector->portals[sector_t::floor] != NULL)
+	// Lines with portals must never block.
+	// Portals which require the sky flat are excluded here, because for them the special sky semantics apply.
+	if (!(frontsector->GetPortal(sector_t::ceiling)->mFlags & PORTSF_SKYFLATONLY) ||
+		!(frontsector->GetPortal(sector_t::floor)->mFlags & PORTSF_SKYFLATONLY) ||
+		!(backsector->GetPortal(sector_t::ceiling)->mFlags & PORTSF_SKYFLATONLY) ||
+		!(backsector->GetPortal(sector_t::floor)->mFlags & PORTSF_SKYFLATONLY))
 	{
 		return false;
 	}

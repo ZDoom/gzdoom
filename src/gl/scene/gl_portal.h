@@ -266,20 +266,20 @@ public:
 
 struct GLSkyboxPortal : public GLPortal
 {
-	AActor * origin;
+	FSectorPortal * portal;
 
 protected:
 	virtual void DrawContents();
-	virtual void * GetSource() const { return origin; }
+	virtual void * GetSource() const { return portal; }
 	virtual bool IsSky() { return true; }
 	virtual const char *GetName();
 
 public:
 
 	
-	GLSkyboxPortal(AActor * pt)
+	GLSkyboxPortal(FSectorPortal * pt)
 	{
-		origin=pt;
+		portal=pt;
 	}
 
 };
@@ -377,20 +377,20 @@ public:
 
 struct GLEEHorizonPortal : public GLPortal
 {
-	AActor * origin;
+	FSectorPortal * portal;
 
 protected:
 	virtual void DrawContents();
-	virtual void * GetSource() const { return origin; }
+	virtual void * GetSource() const { return portal; }
 	virtual bool NeedDepthBuffer() { return false; }
 	virtual bool NeedCap() { return false; }
 	virtual const char *GetName();
 
 public:
 	
-	GLEEHorizonPortal(AActor *pt)
+	GLEEHorizonPortal(FSectorPortal *pt)
 	{
-		origin=pt;
+		portal=pt;
 	}
 
 };

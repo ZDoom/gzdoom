@@ -1531,8 +1531,9 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 
 	FBehavior::StaticSerializeModuleStates (arc);
 	if (arc.IsLoading()) interpolator.ClearInterpolations();
+	P_SerializeWorld(arc);
 	P_SerializeThinkers (arc, hubLoad);
-	P_SerializeWorld (arc);
+	P_SerializeWorldActors(arc);	// serializing actor pointers in the world data must be done after SerializeWorld has restored the entire sector state, otherwise LinkToWorld may fail.
 	P_SerializePolyobjs (arc);
 	P_SerializeSubsectors(arc);
 	StatusBar->Serialize (arc);
@@ -1579,13 +1580,6 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 	P_SerializeSounds (arc);
 	if (arc.IsLoading())
 	{
-		FThinkerIterator it(RUNTIME_CLASS(DThinker));
-		DThinker *th;
-		while ((th = it.Next()))
-		{
-			th->PostSerialize();
-		}
-
 		for (i = 0; i < numsectors; i++)
 		{
 			P_Recalculate3DFloors(&sectors[i]);

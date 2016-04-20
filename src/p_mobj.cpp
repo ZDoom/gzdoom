@@ -397,6 +397,9 @@ void AActor::Serialize(FArchive &arc)
 
 	if (arc.IsLoading ())
 	{
+		touching_sectorlist = NULL;
+		LinkToWorld(false, Sector);
+
 		AddToHash ();
 		SetShade (fillcolor);
 		if (player)
@@ -413,15 +416,9 @@ void AActor::Serialize(FArchive &arc)
 				Speed = GetDefault()->Speed;
 			}
 		}
+		ClearInterpolation();
+		UpdateWaterLevel(false);
 	}
-}
-
-void AActor::PostSerialize()
-{
-	touching_sectorlist = NULL;
-	LinkToWorld(false, Sector);
-	ClearInterpolation();
-	UpdateWaterLevel(false);
 }
 
 AActor::AActor () throw()

@@ -230,8 +230,7 @@ FArchive &operator<< (FArchive &arc, FSectorPortal &port)
 		<< port.mOrigin
 		<< port.mDestination
 		<< port.mDisplacement
-		<< port.mPlaneZ
-		<< port.mSkybox;
+		<< port.mPlaneZ;
 	return arc;
 }
 

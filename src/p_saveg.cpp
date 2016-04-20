@@ -363,9 +363,7 @@ void P_SerializeWorld (FArchive &arc)
 		arc << sec->damageamount;
 		arc << sec->damageinterval
 			<< sec->leakydamage
-			<< sec->damagetype;
-		arc << sec->SoundTarget
-			<< sec->SecActTarget
+			<< sec->damagetype
 			<< sec->sky
 			<< sec->MoreFlags
 			<< sec->Flags
@@ -451,6 +449,22 @@ void P_SerializeWorld (FArchive &arc)
 
 	arc << linePortals << sectorPortals;
 	P_CollectLinkedPortals();
+}
+
+void P_SerializeWorldActors(FArchive &arc)
+{
+	int i, j;
+	sector_t *sec;
+
+	for (i = 0, sec = sectors; i < numsectors; i++, sec++)
+	{
+		arc << sec->SoundTarget
+			<< sec->SecActTarget;
+	}
+	for (auto &s : sectorPortals)
+	{
+		arc << s.mSkybox;
+	}
 }
 
 void extsector_t::Serialize(FArchive &arc)

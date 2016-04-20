@@ -1001,7 +1001,7 @@ public:
 
 	int GetPortalType(int plane)
 	{
-		return SkyBoxes[plane]->special1;
+		return SkyBoxes[plane] == nullptr? -1 : SkyBoxes[plane]->special1;
 	}
 
 	int GetOppositePortalGroup(int plane)

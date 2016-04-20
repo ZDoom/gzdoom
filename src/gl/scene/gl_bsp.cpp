@@ -141,11 +141,13 @@ static void AddLine (seg_t *seg, bool portalclip)
 	}
 	currentsubsector->flags |= SSECF_DRAWN;
 
+	BYTE ispoly = BYTE(seg->sidedef->Flags & WALLF_POLYOBJ);
+
 	if (!seg->backsector)
 	{
 		clipper.SafeAddClipRange(startAngle, endAngle);
 	}
-	else if (!(seg->sidedef->Flags & WALLF_POLYOBJ))	// Two-sided polyobjects never obstruct the view
+	else if (!ispoly)	// Two-sided polyobjects never obstruct the view
 	{
 		if (currentsector->sectornum == seg->backsector->sectornum)
 		{
@@ -179,9 +181,9 @@ static void AddLine (seg_t *seg, bool portalclip)
 
 	seg->linedef->flags |= ML_MAPPED;
 
-	if ((seg->sidedef->Flags & WALLF_POLYOBJ) || seg->linedef->validcount!=validcount) 
+	if (ispoly || seg->linedef->validcount!=validcount) 
 	{
-		if (!(seg->sidedef->Flags & WALLF_POLYOBJ)) seg->linedef->validcount=validcount;
+		if (!ispoly) seg->linedef->validcount=validcount;
 
 		if (gl_render_walls)
 		{

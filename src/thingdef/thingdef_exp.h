@@ -881,6 +881,7 @@ public:
 	ExpEmit Emit(VMFunctionBuilder *build, bool tailcall);
 	bool CheckEmitCast(VMFunctionBuilder *build, bool returnit, ExpEmit &reg);
 	unsigned GetArgCount() const { return ArgList == NULL ? 0 : ArgList->Size(); }
+	PFunction *GetFunction() const { return Function; }
 	VMFunction *GetVMFunction() const { return Function->Variants[0].Implementation; }
 	bool IsDirectFunction();
 };

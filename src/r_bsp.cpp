@@ -515,18 +515,18 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 
 bool R_SkyboxCompare(sector_t *frontsector, sector_t *backsector)
 {
-	AActor *frontc = frontsector->SkyBoxes[sector_t::ceiling];
-	AActor *frontf = frontsector->SkyBoxes[sector_t::floor];
-	AActor *backc = backsector->SkyBoxes[sector_t::ceiling];
-	AActor *backf = backsector->SkyBoxes[sector_t::floor];
+	FSectorPortal *frontc = frontsector->GetPortal(sector_t::ceiling);
+	FSectorPortal *frontf = frontsector->GetPortal(sector_t::floor);
+	FSectorPortal *backc = backsector->GetPortal(sector_t::ceiling);
+	FSectorPortal *backf = backsector->GetPortal(sector_t::floor);
 
 	// return true if any of the planes has a linedef-based portal (unless both sides have the same one.
 	// Ideally this should also check thing based portals but the omission of this check had been abused to hell and back for those.
 	// (Note: This may require a compatibility option if some maps ran into this for line based portals as well.)
-	if (frontc != NULL && (frontc->special1 == SKYBOX_PORTAL || frontc->special1 == SKYBOX_LINKEDPORTAL)) return (frontc != backc);
-	if (frontf != NULL && (frontf->special1 == SKYBOX_PORTAL || frontf->special1 == SKYBOX_LINKEDPORTAL)) return (frontf != backf);
-	if (backc != NULL && (backc->special1 == SKYBOX_PORTAL || backc->special1 == SKYBOX_LINKEDPORTAL)) return true;
-	if (backf != NULL && (backf->special1 == SKYBOX_PORTAL || backf->special1 == SKYBOX_LINKEDPORTAL)) return true;
+	if (!frontc->MergeAllowed()) return (frontc != backc);
+	if (!frontf->MergeAllowed()) return (frontf != backf);
+	if (!backc->MergeAllowed()) return true;
+	if (!backf->MergeAllowed()) return true;
 	return false;
 }
 
@@ -1046,7 +1046,7 @@ void R_Subsector (subsector_t *sub)
 	int          ceilinglightlevel;		// killough 4/11/98
 	bool		 outersubsector;
 	int	fll, cll, position;
-	ASkyViewpoint *skybox;
+	FSectorPortal *portal;
 
 	// kg3D - fake floor stuff
 	visplane_t *backupfp;
@@ -1114,12 +1114,11 @@ void R_Subsector (subsector_t *sub)
 		basecolormap = frontsector->ColorMap;
 	}
 
-	skybox = frontsector->GetSkyBox(sector_t::ceiling);
-	if (skybox != NULL && skybox->special1 >= SKYBOX_PLANE) skybox = NULL;	// skip unsupported portal types
+	portal = frontsector->ValidatePortal(sector_t::ceiling);
 
 	ceilingplane = frontsector->ceilingplane.PointOnSide(viewx, viewy, viewz) > 0 ||
 		frontsector->GetTexture(sector_t::ceiling) == skyflatnum ||
-		(skybox != NULL && skybox->bAlways) ||
+		portal != NULL ||
 		(frontsector->heightsec && 
 		 !(frontsector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC) &&
 		 frontsector->heightsec->GetTexture(sector_t::floor) == skyflatnum) ?
@@ -1134,7 +1133,7 @@ void R_Subsector (subsector_t *sub)
 					frontsector->GetYScale(sector_t::ceiling),
 					frontsector->GetAngle(sector_t::ceiling),
 					frontsector->sky,
-					skybox
+					portal
 					) : NULL;
 
 	if (fixedlightlev < 0 && frontsector->e && frontsector->e->XFloor.lightlist.Size())
@@ -1156,13 +1155,11 @@ void R_Subsector (subsector_t *sub)
 	// killough 3/7/98: Add (x,y) offsets to flats, add deep water check
 	// killough 3/16/98: add floorlightlevel
 	// killough 10/98: add support for skies transferred from sidedefs
-
-	skybox = frontsector->GetSkyBox(sector_t::floor);
-	if (skybox != NULL && skybox->special1 >= SKYBOX_PLANE) skybox = NULL;	// skip unsupported portal types
+	portal = frontsector->ValidatePortal(sector_t::floor);
 
 	floorplane = frontsector->floorplane.PointOnSide(viewx, viewy, viewz) > 0 || // killough 3/7/98
 		frontsector->GetTexture(sector_t::floor) == skyflatnum ||
-		(skybox != NULL && skybox->bAlways) ||
+		portal != NULL ||
 		(frontsector->heightsec &&
 		 !(frontsector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC) &&
 		 frontsector->heightsec->GetTexture(sector_t::ceiling) == skyflatnum) ?
@@ -1177,7 +1174,7 @@ void R_Subsector (subsector_t *sub)
 					frontsector->GetYScale(sector_t::floor),
 					frontsector->GetAngle(sector_t::floor),
 					frontsector->sky,
-					skybox
+					portal
 					) : NULL;
 
 	// kg3D - fake planes rendering

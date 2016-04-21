@@ -91,14 +91,9 @@ public:
 class ASkyViewpoint : public AActor
 {
 	DECLARE_CLASS (ASkyViewpoint, AActor)
-	HAS_OBJECT_POINTERS
 public:
-	void Serialize (FArchive &arc);
 	void BeginPlay ();
 	void Destroy ();
-	bool bInSkybox;
-	bool bAlways;
-	TObjPtr<ASkyViewpoint> Mate;
 };
 
 // For an EE compatible linedef based definition.

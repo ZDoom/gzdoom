@@ -838,12 +838,13 @@ static void SetupFloorPortal (AStackPoint *point)
 	NActorIterator it (NAME_LowerStackLookOnly, point->tid);
 	sector_t *Sector = point->Sector;
 	ASkyViewpoint *skyv = static_cast<ASkyViewpoint*>(it.Next());
-	Sector->SkyBoxes[sector_t::floor] = skyv;
-	if (skyv != NULL && skyv->bAlways)
+	if (skyv != NULL)
 	{
-		skyv->Mate = point;
+		skyv->target = point;
 		if (Sector->GetAlphaF(sector_t::floor) == 1.)
 			Sector->SetAlpha(sector_t::floor, clamp(point->args[0], 0, 255) / 255.);
+
+		Sector->Portals[sector_t::floor] = P_GetStackPortal(skyv, sector_t::floor);
 	}
 }
 
@@ -852,12 +853,13 @@ static void SetupCeilingPortal (AStackPoint *point)
 	NActorIterator it (NAME_UpperStackLookOnly, point->tid);
 	sector_t *Sector = point->Sector;
 	ASkyViewpoint *skyv = static_cast<ASkyViewpoint*>(it.Next());
-	Sector->SkyBoxes[sector_t::ceiling] = skyv;
-	if (skyv != NULL && skyv->bAlways)
+	if (skyv != NULL)
 	{
-		skyv->Mate = point;
+		skyv->target = point;
 		if (Sector->GetAlphaF(sector_t::ceiling) == 1.)
 			Sector->SetAlpha(sector_t::ceiling, clamp(point->args[0], 0, 255) / 255.);
+
+		Sector->Portals[sector_t::ceiling] = P_GetStackPortal(skyv, sector_t::ceiling);
 	}
 }
 
@@ -881,42 +883,68 @@ void P_SetupPortals()
 		pt->special1 = 0;
 		points.Push(pt);
 	}
+	// the semantics here are incredibly lax so the final setup can only be done once all portals have been created,
+	// because later stackpoints will happily overwrite info in older ones, if there are multiple links.
+	for (auto &s : sectorPortals)
+	{
+		if (s.mType == PORTS_STACKEDSECTORTHING && s.mSkybox)
+		{
+			for (auto &ss : sectorPortals)
+			{
+				if (ss.mType == PORTS_STACKEDSECTORTHING && ss.mSkybox == s.mSkybox->target)
+				{
+					s.mPartner = (&ss) - &sectorPortals[0];
+				}
+			}
+		}
+	}
+	// Now we can finally set the displacement and delete the stackpoint reference.
+	for (auto &s : sectorPortals)
+	{
+		if (s.mType == PORTS_STACKEDSECTORTHING && s.mSkybox)
+		{
+			s.mDisplacement = s.mSkybox->Pos() - s.mSkybox->target->Pos();
+			s.mSkybox = NULL;
+		}
+	}
 }
 
-static void SetPortal(sector_t *sector, int plane, ASkyViewpoint *portal, double alpha)
+static void SetPortal(sector_t *sector, int plane, unsigned pnum, double alpha)
 {
 	// plane: 0=floor, 1=ceiling, 2=both
 	if (plane > 0)
 	{
-		if (sector->SkyBoxes[sector_t::ceiling] == NULL || !barrier_cast<ASkyViewpoint*>(sector->SkyBoxes[sector_t::ceiling])->bAlways)
+		if (sector->GetPortalType(sector_t::ceiling) == PORTS_SKYVIEWPOINT)
 		{
-			sector->SkyBoxes[sector_t::ceiling] = portal;
+			sector->Portals[sector_t::ceiling] = pnum;
 			if (sector->GetAlphaF(sector_t::ceiling) == 1.)
 				sector->SetAlpha(sector_t::ceiling, alpha);
 
-			if (!portal->bAlways) sector->SetTexture(sector_t::ceiling, skyflatnum);
+			if (sectorPortals[pnum].mFlags & PORTSF_SKYFLATONLY)
+				sector->SetTexture(sector_t::ceiling, skyflatnum);
 		}
 	}
 	if (plane == 2 || plane == 0)
 	{
-		if (sector->SkyBoxes[sector_t::floor] == NULL || !barrier_cast<ASkyViewpoint*>(sector->SkyBoxes[sector_t::floor])->bAlways)
+		if (sector->GetPortalType(sector_t::floor) == PORTS_SKYVIEWPOINT)
 		{
-			sector->SkyBoxes[sector_t::floor] = portal;
+			sector->Portals[sector_t::floor] = pnum;
 		}
 		if (sector->GetAlphaF(sector_t::floor) == 1.)
 			sector->SetAlpha(sector_t::floor, alpha);
 
-		if (!portal->bAlways) sector->SetTexture(sector_t::floor, skyflatnum);
+		if (sectorPortals[pnum].mFlags & PORTSF_SKYFLATONLY)
+			sector->SetTexture(sector_t::floor, skyflatnum);
 	}
 }
 
-static void CopyPortal(int sectortag, int plane, ASkyViewpoint *origin, double alpha, bool tolines)
+static void CopyPortal(int sectortag, int plane, unsigned pnum, double alpha, bool tolines)
 {
 	int s;
 	FSectorTagIterator itr(sectortag);
 	while ((s = itr.Next()) >= 0)
 	{
-		SetPortal(&sectors[s], plane, origin, alpha);
+		SetPortal(&sectors[s], plane, pnum, alpha);
 	}
 
 	for (int j=0;j<numlines;j++)
@@ -930,14 +958,14 @@ static void CopyPortal(int sectortag, int plane, ASkyViewpoint *origin, double a
 		{
 			if (lines[j].args[0] == 0)
 			{
-				SetPortal(lines[j].frontsector, plane, origin, alpha);
+				SetPortal(lines[j].frontsector, plane, pnum, alpha);
 			}
 			else
 			{
 				FSectorTagIterator itr(lines[j].args[0]);
 				while ((s = itr.Next()) >= 0)
 				{
-					SetPortal(&sectors[s], plane, origin, alpha);
+					SetPortal(&sectors[s], plane, pnum, alpha);
 				}
 			}
 		}
@@ -961,6 +989,7 @@ static void CopyPortal(int sectortag, int plane, ASkyViewpoint *origin, double a
 	}
 }
 
+
 void P_SpawnPortal(line_t *line, int sectortag, int plane, int bytealpha, int linked)
 {
 	if (plane < 0 || plane > 2 || (linked && plane == 2)) return;
@@ -975,36 +1004,10 @@ void P_SpawnPortal(line_t *line, int sectortag, int plane, int bytealpha, int li
 			lines[i].args[3] == 1)
 		{
 			// beware of overflows.
-			DVector3 pos1((line->v1->fX() + line->v2->fX()) / 2, (line->v1->fY() + line->v2->fY()) / 2, 0);
-			DVector3 pos2((lines[i].v1->fX() + lines[i].v2->fX()) / 2, (lines[i].v1->fY() + lines[i].v2->fY()) / 2, 0);
-			double z = linked ? line->frontsector->GetPlaneTexZF(plane) : 0;	// the map's sector height defines the portal plane for linked portals
-
-			double alpha = bytealpha / 255.;
-
-			AStackPoint *anchor = Spawn<AStackPoint>(pos1, NO_REPLACE);
-			AStackPoint *reference = Spawn<AStackPoint>(pos2, NO_REPLACE);
-
-			// In some situations it can happen that the sector here is not the frontsector of the anchor linedef,
-			// because some colinear node line with opposite direction causes this to be positioned on the wrong side.
-			// Fortunately these things will never move so it should be sufficient to set the intended sector directly.
-			anchor->Sector = line->frontsector;
-			reference->Sector = lines[i].frontsector;
-
-			reference->special1 = linked ? SKYBOX_LINKEDPORTAL : SKYBOX_PORTAL;
-			anchor->special1 = SKYBOX_ANCHOR;
-			// store the portal displacement in the unused scaleX/Y members of the portal reference actor.
-			anchor->Scale = -(reference->Scale = pos2 - pos1);
-			anchor->specialf1 = reference->specialf1 = z;
-
-			reference->Mate = anchor;
-			anchor->Mate = reference;
-
-			// This is so that the renderer can distinguish these portals from
-			// the ones spawned with the '*StackLookOnly' things.
-			reference->flags |= MF_JUSTATTACKED;
-			anchor->flags |= MF_JUSTATTACKED;
-
-			CopyPortal(sectortag, plane, reference, alpha, false);
+			DVector2 pos1 = line->v1->fPos() + line->Delta() / 2;
+			DVector2 pos2 = lines[i].v1->fPos() + lines[i].Delta() / 2;
+			unsigned pnum = P_GetPortal(linked ? PORTS_LINKEDPORTAL : PORTS_PORTAL, plane, line->frontsector, lines[i].frontsector, pos2 - pos1);
+			CopyPortal(sectortag, plane, pnum, bytealpha / 255., false);
 			return;
 		}
 	}
@@ -1029,7 +1032,8 @@ void P_SpawnSkybox(ASkyViewpoint *origin)
 			if (refline->special == Sector_SetPortal && refline->args[1] == 2)
 			{
 				// We found the setup linedef for this skybox, so let's use it for our init.
-				CopyPortal(refline->args[0], refline->args[2], origin, 0, true);
+				unsigned pnum = P_GetSkyboxPortal(origin);
+				CopyPortal(refline->args[0], refline->args[2], pnum, 0, true);
 				return;
 			}
 		}
@@ -1355,11 +1359,8 @@ void P_SpawnSpecials (void)
 			else if (lines[i].args[1] == 3 || lines[i].args[1] == 4)
 			{
 				line_t *line = &lines[i];
-				ASkyViewpoint *origin = Spawn<ASkyViewpoint>();
-				origin->Sector = line->frontsector;
-				origin->special1 = line->args[1] == 3? SKYBOX_PLANE:SKYBOX_HORIZON;
-
-				CopyPortal(line->args[0], line->args[2], origin, 0, true);
+				unsigned pnum = P_GetPortal(line->args[1] == 3 ? PORTS_PLANE : PORTS_HORIZON, line->args[2], line->frontsector, NULL, { 0,0 });
+				CopyPortal(line->args[0], line->args[2], pnum, 0, true);
 			}
 			break;
 

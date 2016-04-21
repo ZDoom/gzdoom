@@ -1629,10 +1629,10 @@ int FPathTraverse::PortalRelocate(intercept_t *in, int flags, DVector3 *optpos)
 	return saved->getPortal()->mType == PORTT_LINKED? 1:-1;
 }
 
-void FPathTraverse::PortalRelocate(AActor *portalthing, int flags, double hitfrac)
+void FPathTraverse::PortalRelocate(const DVector2 &displacement, int flags, double hitfrac)
 {
-	double hitx = trace.x + portalthing->Scale.X;
-	double hity = trace.y + portalthing->Scale.Y;
+	double hitx = trace.x + displacement.X;
+	double hity = trace.y + displacement.Y;
 	double endx = hitx + trace.dx;
 	double endy = hity + trace.dy;
 	intercepts.Resize(intercept_index);

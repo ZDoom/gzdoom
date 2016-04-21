@@ -44,6 +44,7 @@
 #include "p_trace.h"
 #include "p_checkposition.h"
 #include "r_utility.h"
+#include "p_blockmap.h"
 
 #include "s_sound.h"
 #include "decallib.h"
@@ -6238,6 +6239,91 @@ void P_CreateSecNodeList(AActor *thing)
 }
 
 
+//=============================================================================
+//
+// P_DelPortalnode
+//
+// Same for line portal nodes
+//
+//=============================================================================
+
+portnode_t *P_DelPortalnode(portnode_t *node)
+{
+	portnode_t* tp;  // prev node on thing thread
+	portnode_t* tn;  // next node on thing thread
+	portnode_t* sp;  // prev node on sector thread
+	portnode_t* sn;  // next node on sector thread
+
+	if (node)
+	{
+		// Unlink from the Thing thread. The Thing thread begins at
+		// sector_list and not from AActor->touching_sectorlist.
+
+		tp = node->m_tprev;
+		tn = node->m_tnext;
+		if (tp)
+			tp->m_tnext = tn;
+		if (tn)
+			tn->m_tprev = tp;
+
+		// Unlink from the sector thread. This thread begins at
+		// sector_t->touching_thinglist.
+
+		sp = node->m_sprev;
+		sn = node->m_snext;
+		if (sp)
+			sp->m_snext = sn;
+		else
+			node->m_portal->render_thinglist = sn;
+		if (sn)
+			sn->m_sprev = sp;
+
+		// Return this node to the freelist (use the same one as for msecnodes, since both types are the same size.)
+		P_PutSecnode(reinterpret_cast<msecnode_t *>(node));
+		return tn;
+	}
+	return NULL;
+}
+
+
+//=============================================================================
+//
+// P_AddPortalnode
+//
+//=============================================================================
+
+portnode_t *P_AddPortalnode(FLinePortal *s, AActor *thing, portnode_t *nextnode)
+{
+	portnode_t *node;
+
+	if (s == 0)
+	{
+		I_FatalError("AddSecnode of 0 for %s\n", thing->GetClass()->TypeName.GetChars());
+	}
+
+	node = reinterpret_cast<portnode_t*>(P_GetSecnode());
+
+	// killough 4/4/98, 4/7/98: mark new nodes unvisited.
+	node->visited = 0;
+
+	node->m_portal = s; 			// portal
+	node->m_thing = thing; 			// mobj
+	node->m_tprev = NULL;			// prev node on Thing thread
+	node->m_tnext = nextnode;		// next node on Thing thread
+	if (nextnode)
+		nextnode->m_tprev = node;	// set back link on Thing
+
+									// Add new node at head of portal thread starting at s->touching_thinglist
+
+	node->m_sprev = NULL;			// prev node on portal thread
+	node->m_snext = s->render_thinglist; // next node on portal thread
+	if (s->render_thinglist)
+		node->m_snext->m_sprev = node;
+	s->render_thinglist = node;
+	return node;
+}
+
+
 //==========================================================================
 //
 // Handle the lists used to render actors from other portal areas
@@ -6249,6 +6335,27 @@ void AActor::UpdateRenderSectorList()
 	static const double SPRITE_SPACE = 64.;
 	if (Pos() != OldRenderPos && !(flags & MF_NOSECTOR))
 	{
+		// Only check if the map contains line portals
+		ClearRenderLineList();
+		if (PortalBlockmap.containsLines && Pos().XY() != OldRenderPos.XY())
+		{
+			int bx = GetBlockX(X());
+			int by = GetBlockX(Y());
+			FBoundingBox bb(X(), Y(), MIN(radius*1.5, 128.));	// Don't go further than 128 map units, even for large actors
+			// Are there any portals near the actor's position?
+			if (bx >= 0 && by >= 0 && bx < bmapwidth && by < bmapheight && PortalBlockmap(bx, by).neighborContainsLines)
+			{
+				// Go through the entire list. In most cases this is faster than setting up a blockmap iterator
+				for (auto &p : linePortals)
+				{
+					if (p.mType == PORTT_VISUAL) continue;
+					if (bb.inRange(p.mOrigin) && bb.BoxOnLineSide(p.mOrigin))
+					{
+						render_portallist = P_AddPortalnode(&p, this, render_portallist);
+					}
+				}
+			}
+		}
 		sector_t *sec = Sector;
 		double lasth = -FLT_MAX;
 		ClearRenderSectorList();
@@ -6282,6 +6389,14 @@ void AActor::ClearRenderSectorList()
 	while (node)
 		node = P_DelSecnode(node, &sector_t::render_thinglist);
 	render_sectorlist = NULL;
+}
+
+void AActor::ClearRenderLineList()
+{
+	portnode_t *node = render_portallist;
+	while (node)
+		node = P_DelPortalnode(node);
+	render_portallist = NULL;
 }
 
 

@@ -7,6 +7,7 @@
 
 struct FPortalGroupArray;
 class ASkyViewpoint;
+struct portnode_t;
 //============================================================================
 //
 // This table holds the offsets for the different parts of a map
@@ -189,6 +190,7 @@ struct FLinePortal
 	DAngle mAngleDiff;
 	double mSinRot;
 	double mCosRot;
+	portnode_t *render_thinglist;
 	void *mRenderData;
 };
 

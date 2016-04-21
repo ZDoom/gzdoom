@@ -268,7 +268,7 @@ ACTOR Actor native //: Thinker
 	native void A_DropWeaponPieces(class<Actor> p1, class<Actor> p2, class<Actor> p3);
 	action native A_PigPain ();
 	native state A_MonsterRefire(int chance, state label);
-	native void A_SetAngle(float angle = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
+	action native A_SetAngle(float angle = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
 	native void A_SetPitch(float pitch, int flags = 0, int ptr = AAPTR_DEFAULT);
 	native void A_SetRoll(float/*angle*/ roll, int flags = 0, int ptr = AAPTR_DEFAULT);
 	native void A_ScaleVelocity(float scale, int ptr = AAPTR_DEFAULT);

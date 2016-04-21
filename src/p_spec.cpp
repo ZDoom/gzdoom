@@ -893,7 +893,7 @@ void P_SetupPortals()
 			{
 				if (ss.mType == PORTS_STACKEDSECTORTHING && ss.mSkybox == s.mSkybox->target)
 				{
-					s.mPartner = (&ss) - &sectorPortals[0];
+					s.mPartner = unsigned((&ss) - &sectorPortals[0]);
 				}
 			}
 		}

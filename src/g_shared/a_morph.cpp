@@ -514,7 +514,7 @@ bool P_MorphedDeath(AActor *actor, AActor **morphed, int *morphedstyle, int *mor
 		AActor *realme = actor->player->mo->tracer;
 		int realstyle = actor->player->MorphStyle;
 		int realhealth = actor->health;
-		if (P_UndoPlayerMorph(actor->player, actor->player, !!(actor->player->MorphStyle & MORPH_UNDOBYDEATHFORCED)))
+		if (P_UndoPlayerMorph(actor->player, actor->player, 0, !!(actor->player->MorphStyle & MORPH_UNDOBYDEATHFORCED)))
 		{
 			*morphed = realme;
 			*morphedstyle = realstyle;

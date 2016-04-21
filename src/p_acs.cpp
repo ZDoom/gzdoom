@@ -9346,7 +9346,26 @@ scriptwait:
 			AActor *actor = SingleActorFromTID(STACK(1), activator);
 			if (actor != NULL)
 			{
-				STACK(1) = actor->Sector->lightlevel;
+				sector_t *sector = actor->Sector;
+				if (sector->e->XFloor.lightlist.Size())
+				{
+					unsigned   i;
+					TArray<lightlist_t> &lightlist = sector->e->XFloor.lightlist;
+
+					STACK(1) = *lightlist.Last().p_lightlevel;
+					for (i = 1; i < lightlist.Size(); i++)
+					{
+						if (lightlist[i].plane.ZatPoint(actor) <= actor->Z())
+						{
+							STACK(1) = *lightlist[i - 1].p_lightlevel;
+							break;
+						}
+					}
+				}
+				else
+				{
+					STACK(1) = actor->Sector->lightlevel;
+				}
 			}
 			else STACK(1) = 0;
 			break;
@@ -9436,7 +9455,7 @@ scriptwait:
 				{
 					if (activator->player)
 					{
-						if (P_UndoPlayerMorph(activator->player, activator->player, force))
+						if (P_UndoPlayerMorph(activator->player, activator->player, 0, force))
 						{
 							changes++;
 						}
@@ -9462,7 +9481,7 @@ scriptwait:
 					{
 						if (actor->player)
 						{
-							if (P_UndoPlayerMorph(activator->player, actor->player, force))
+							if (P_UndoPlayerMorph(activator->player, actor->player, 0, force))
 							{
 								changes++;
 							}

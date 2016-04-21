@@ -603,26 +603,12 @@ void cht_Give (player_t *player, const char *name, int amount)
 	{
 		if (amount > 0)
 		{
-			if (player->mo)
-			{
-				player->mo->health += amount;
-	  			player->health = player->mo->health;
-			}
-			else
-			{
-				player->health += amount;
-			}
+			player->mo->health += amount;
+			player->health = player->mo->health;
 		}
 		else
 		{
-			if (player->mo != NULL)
-			{
-				player->health = player->mo->health = player->mo->GetMaxHealth();
-			}
-			else
-			{
-				player->health = deh.GodHealth;
-			}
+			player->health = player->mo->health = player->mo->GetMaxHealth();
 		}
 	}
 

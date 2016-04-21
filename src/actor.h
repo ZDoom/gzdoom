@@ -661,6 +661,10 @@ public:
 	// Adds the item to this actor's inventory and sets its Owner.
 	virtual void AddInventory (AInventory *item);
 
+	// Give an item to the actor and pick it up.
+	// Returns true if the item pickup succeeded.
+	virtual bool GiveInventory (PClassInventory *type, int amount, bool givecheat = false);
+
 	// Removes the item from the inventory list.
 	virtual void RemoveInventory (AInventory *item);
 

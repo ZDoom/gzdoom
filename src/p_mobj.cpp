@@ -614,6 +614,62 @@ void AActor::AddInventory (AInventory *item)
 
 //============================================================================
 //
+// AActor :: GiveInventory
+//
+//============================================================================
+
+bool AActor::GiveInventory(PClassInventory *type, int amount, bool givecheat)
+{
+	bool result = true;
+
+	AWeapon *savedPendingWeap = player != NULL ? player->PendingWeapon : NULL;
+	bool hadweap = player != NULL ? player->ReadyWeapon != NULL : true;
+
+	AInventory *item;
+	if (!givecheat)
+	{
+		item = static_cast<AInventory *>(Spawn (type));
+	}
+	else
+	{
+		item = static_cast<AInventory *>(Spawn (type, Pos(), NO_REPLACE));
+		if (item == NULL) return false;
+	}
+
+	// This shouldn't count for the item statistics!
+	item->ClearCounters();
+	if (type->IsDescendantOf (RUNTIME_CLASS(ABasicArmorPickup)))
+	{
+		static_cast<ABasicArmorPickup*>(item)->SaveAmount *= amount;
+	}
+	else if (type->IsDescendantOf (RUNTIME_CLASS(ABasicArmorBonus)))
+	{
+		static_cast<ABasicArmorBonus*>(item)->SaveAmount *= amount;
+	}
+	else
+	{
+		if (!givecheat)
+			item->Amount = amount;
+		else
+			item->Amount = MIN (amount, item->MaxAmount);
+	}
+	if (!item->CallTryPickup (this))
+	{
+		item->Destroy ();
+		result = false;
+	}
+	// If the item was a weapon, don't bring it up automatically
+	// unless the player was not already using a weapon.
+	// Don't bring it up automatically if this is called by the give cheat.
+	if (!givecheat && player != NULL && savedPendingWeap != NULL && hadweap)
+	{
+		player->PendingWeapon = savedPendingWeap;
+	}
+	return result;
+}
+
+//============================================================================
+//
 // AActor :: RemoveInventory
 //
 //============================================================================

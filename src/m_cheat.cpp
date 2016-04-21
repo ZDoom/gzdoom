@@ -575,47 +575,6 @@ const char *cht_Morph (player_t *player, PClassPlayerPawn *morphclass, bool quic
 	return "";
 }
 
-void GiveSpawner (player_t *player, PClassInventory *type, int amount)
-{
-	if (player->mo == NULL || player->health <= 0)
-	{
-		return;
-	}
-
-	AInventory *item = static_cast<AInventory *>
-		(Spawn (type, player->mo->Pos(), NO_REPLACE));
-	if (item != NULL)
-	{
-		if (amount > 0)
-		{
-			if (type->IsDescendantOf (RUNTIME_CLASS(ABasicArmorPickup)))
-			{
-				if (static_cast<ABasicArmorPickup*>(item)->SaveAmount != 0)
-				{
-					static_cast<ABasicArmorPickup*>(item)->SaveAmount *= amount;
-				}
-				else
-				{
-					static_cast<ABasicArmorPickup*>(item)->SaveAmount *= amount;
-				}
-			}
-			else if (type->IsDescendantOf (RUNTIME_CLASS(ABasicArmorBonus)))
-			{
-				static_cast<ABasicArmorBonus*>(item)->SaveAmount *= amount;
-			}
-			else
-			{
-				item->Amount = MIN (amount, item->MaxAmount);
-			}
-		}
-		item->ClearCounters();
-		if (!item->CallTryPickup (player->mo))
-		{
-			item->Destroy ();
-		}
-	}
-}
-
 void cht_Give (player_t *player, const char *name, int amount)
 {
 	enum { ALL_NO, ALL_YES, ALL_YESYES } giveall;
@@ -673,7 +632,7 @@ void cht_Give (player_t *player, const char *name, int amount)
 		type = PClass::FindActor(gameinfo.backpacktype);
 		if (type != NULL)
 		{
-			GiveSpawner (player, static_cast<PClassInventory *>(type), 1);
+			player->mo->GiveInventory(static_cast<PClassInventory *>(type), 1, true);
 		}
 
 		if (!giveall)
@@ -778,7 +737,7 @@ void cht_Give (player_t *player, const char *name, int amount)
 					AWeapon *def = (AWeapon*)GetDefaultByType (type);
 					if (giveall == ALL_YESYES || !(def->WeaponFlags & WIF_CHEATNOTWEAPON))
 					{
-						GiveSpawner (player, static_cast<PClassInventory *>(type), 1);
+						player->mo->GiveInventory(static_cast<PClassInventory *>(type), 1, true);
 					}
 				}
 			}
@@ -805,7 +764,7 @@ void cht_Give (player_t *player, const char *name, int amount)
 					// Do not give replaced items unless using "give everything"
 					if (giveall == ALL_YESYES || type->GetReplacement() == type)
 					{
-						GiveSpawner (player, static_cast<PClassInventory *>(type), amount <= 0 ? def->MaxAmount : amount);
+						player->mo->GiveInventory(static_cast<PClassInventory *>(type), amount <= 0 ? def->MaxAmount : amount, true);
 					}
 				}
 			}
@@ -827,7 +786,7 @@ void cht_Give (player_t *player, const char *name, int amount)
 					// Do not give replaced items unless using "give everything"
 					if (giveall == ALL_YESYES || type->GetReplacement() == type)
 					{
-						GiveSpawner (player, static_cast<PClassInventory *>(type), amount <= 0 ? def->MaxAmount : amount);
+						player->mo->GiveInventory(static_cast<PClassInventory *>(type), amount <= 0 ? def->MaxAmount : amount, true);
 					}
 				}
 			}
@@ -847,7 +806,7 @@ void cht_Give (player_t *player, const char *name, int amount)
 	}
 	else
 	{
-		GiveSpawner (player, static_cast<PClassInventory *>(type), amount);
+		player->mo->GiveInventory(static_cast<PClassInventory *>(type), amount, true);
 	}
 	return;
 }

@@ -2439,32 +2439,7 @@ static void FS_GiveInventory (AActor *actor, const char * type, int amount)
 		return;
 	}
 
-	AWeapon *savedPendingWeap = actor->player != NULL? actor->player->PendingWeapon : NULL;
-	bool hadweap = actor->player != NULL ? actor->player->ReadyWeapon != NULL : true;
-
-	AInventory *item = static_cast<AInventory *>(Spawn (info));
-
-	// This shouldn't count for the item statistics!
-	item->ClearCounters();
-	if (info->IsDescendantOf (RUNTIME_CLASS(ABasicArmorPickup)) ||
-		info->IsDescendantOf (RUNTIME_CLASS(ABasicArmorBonus)))
-	{
-		static_cast<ABasicArmorPickup*>(item)->SaveAmount *= amount;
-	}
-	else
-	{
-		item->Amount = amount;
-	}
-	if (!item->CallTryPickup (actor))
-	{
-		item->Destroy ();
-	}
-	// If the item was a weapon, don't bring it up automatically
-	// unless the player was not already using a weapon.
-	if (savedPendingWeap != NULL && hadweap)
-	{
-		actor->player->PendingWeapon = savedPendingWeap;
-	}
+	actor->GiveInventory(info, amount);
 }
 
 //============================================================================

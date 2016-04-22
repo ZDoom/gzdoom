@@ -98,10 +98,10 @@ double	lwallscale;
 //
 // regular wall
 //
-extern fixed_t	rw_backcz1, rw_backcz2;
-extern fixed_t	rw_backfz1, rw_backfz2;
-extern fixed_t	rw_frontcz1, rw_frontcz2;
-extern fixed_t	rw_frontfz1, rw_frontfz2;
+extern double	rw_backcz1, rw_backcz2;
+extern double	rw_backfz1, rw_backfz2;
+extern double	rw_frontcz1, rw_frontcz2;
+extern double	rw_frontfz1, rw_frontfz2;
 
 int				rw_ceilstat, rw_floorstat;
 bool			rw_mustmarkfloor, rw_mustmarkceiling;
@@ -136,7 +136,7 @@ static fixed_t	*maskedtexturecol;
 
 static void R_RenderDecal (side_t *wall, DBaseDecal *first, drawseg_t *clipper, int pass);
 static void WallSpriteColumn (void (*drawfunc)(const BYTE *column, const FTexture::Span *spans));
-void wallscan_np2(int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal, fixed_t yrepeat, fixed_t top, fixed_t bot, bool mask);
+void wallscan_np2(int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal, fixed_t yrepeat, double top, double bot, bool mask);
 static void wallscan_np2_ds(drawseg_t *ds, int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal, fixed_t yrepeat);
 static void call_wallscan(int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal, fixed_t yrepeat, bool mask);
 
@@ -1317,7 +1317,7 @@ static void call_wallscan(int x1, int x2, short *uwal, short *dwal, fixed_t *swa
 //
 //=============================================================================
 
-void wallscan_np2(int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal, fixed_t yrep, fixed_t itop, fixed_t ibot, bool mask)
+void wallscan_np2(int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal, fixed_t yrep, double top, double bot, bool mask)
 {
 	if (!r_np2)
 	{
@@ -1329,8 +1329,6 @@ void wallscan_np2(int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed
 		short *up, *down;
 		double texheight = rw_pic->GetHeight();
 		double partition;
-		double top = FIXED2FLOAT(itop);
-		double bot = FIXED2FLOAT(ibot);
 		double yrepeat = FIXED2FLOAT(yrep);
 		double scaledtexheight = texheight / yrepeat;
 
@@ -1407,7 +1405,7 @@ static void wallscan_np2_ds(drawseg_t *ds, int x1, int x2, short *uwal, short *d
 		{
 			bot = MAX(bot, sclipBottom);
 		}
-		wallscan_np2(x1, x2, uwal, dwal, swal, lwal, yrepeat, FLOAT2FIXED(top), FLOAT2FIXED(bot), true);
+		wallscan_np2(x1, x2, uwal, dwal, swal, lwal, yrepeat, top, bot, true);
 	}
 	else
 	{

@@ -78,10 +78,10 @@ extern short	wallbottom[MAXWIDTH];
 extern short	wallupper[MAXWIDTH];
 extern short	walllower[MAXWIDTH];
 
-fixed_t			rw_backcz1, rw_backcz2;
-fixed_t			rw_backfz1, rw_backfz2;
-fixed_t			rw_frontcz1, rw_frontcz2;
-fixed_t			rw_frontfz1, rw_frontfz2;
+double			rw_backcz1, rw_backcz2;
+double			rw_backfz1, rw_backfz2;
+double			rw_frontcz1, rw_frontcz2;
+double			rw_frontfz1, rw_frontfz2;
 
 
 size_t			MaxDrawSegs;
@@ -596,10 +596,10 @@ void R_AddLine (seg_t *line)
 	{
 		backsector = line->backsector;
 	}
-	rw_frontcz1 = frontsector->ceilingplane.ZatPointFixed(line->v1);
-	rw_frontfz1 = frontsector->floorplane.ZatPointFixed(line->v1);
-	rw_frontcz2 = frontsector->ceilingplane.ZatPointFixed(line->v2);
-	rw_frontfz2 = frontsector->floorplane.ZatPointFixed(line->v2);
+	rw_frontcz1 = frontsector->ceilingplane.ZatPoint(line->v1);
+	rw_frontfz1 = frontsector->floorplane.ZatPoint(line->v1);
+	rw_frontcz2 = frontsector->ceilingplane.ZatPoint(line->v2);
+	rw_frontfz2 = frontsector->floorplane.ZatPoint(line->v2);
 
 	rw_mustmarkfloor = rw_mustmarkceiling = false;
 	rw_havehigh = rw_havelow = false;
@@ -618,10 +618,10 @@ void R_AddLine (seg_t *line)
 		}
 		doorclosed = 0;		// killough 4/16/98
 
-		rw_backcz1 = backsector->ceilingplane.ZatPointFixed (line->v1);
-		rw_backfz1 = backsector->floorplane.ZatPointFixed(line->v1);
-		rw_backcz2 = backsector->ceilingplane.ZatPointFixed(line->v2);
-		rw_backfz2 = backsector->floorplane.ZatPointFixed(line->v2);
+		rw_backcz1 = backsector->ceilingplane.ZatPoint(line->v1);
+		rw_backfz1 = backsector->floorplane.ZatPoint(line->v1);
+		rw_backcz2 = backsector->ceilingplane.ZatPoint(line->v2);
+		rw_backfz2 = backsector->floorplane.ZatPoint(line->v2);
 
 		// Cannot make these walls solid, because it can result in
 		// sprite clipping problems for sprites near the wall

@@ -932,19 +932,19 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	{
 		if (fakeside == FAKED_AboveCeiling)
 		{
-			if (gzt < heightsec->ceilingplane.ZatPointFixed(pos))
+			if (gzt < heightsec->ceilingplane.ZatPoint(pos))
 				return;
 		}
 		else if (fakeside == FAKED_BelowFloor)
 		{
-			if (gzb >= heightsec->floorplane.ZatPointFixed(pos))
+			if (gzb >= heightsec->floorplane.ZatPoint(pos))
 				return;
 		}
 		else
 		{
-			if (gzt < heightsec->floorplane.ZatPointFixed(pos))
+			if (gzt < heightsec->floorplane.ZatPoint(pos))
 				return;
-			if (!(heightsec->MoreFlags & SECF_FAKEFLOORONLY) && gzb >= heightsec->ceilingplane.ZatPointFixed(pos))
+			if (!(heightsec->MoreFlags & SECF_FAKEFLOORONLY) && gzb >= heightsec->ceilingplane.ZatPoint(pos))
 				return;
 		}
 	}
@@ -1929,7 +1929,7 @@ void R_DrawSprite (vissprite_t *spr)
 	{
 		if (!(fake3D & FAKE3D_CLIPTOP))
 		{
-			sclipTop = spr->sector->ceilingplane.ZatPointFixed(ViewPos);
+			sclipTop = spr->sector->ceilingplane.ZatPoint(ViewPos);
 		}
 		sector_t *sec = NULL;
 		for (i = spr->sector->e->XFloor.lightlist.Size() - 1; i >= 0; i--)

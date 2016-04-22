@@ -791,8 +791,7 @@ bool FWallCoords::Init(const DVector2 &pt1, const DVector2 &pt2, double too_clos
 	{
 		if (tleft.X > tleft.Y) return true;	// left edge is off the right side
 		if (tleft.Y == 0) return true;
-		sx1 = xs_ToInt(CenterX + tleft.X * CenterX / tleft.Y);
-		if (tleft.X >= 0) sx1 = MIN(viewwidth, sx1+1); // fix for signed divide
+		sx1 = xs_RoundToInt(CenterX + tleft.X * CenterX / tleft.Y);
 		sz1 = tleft.Y;
 	}
 	else
@@ -811,8 +810,7 @@ bool FWallCoords::Init(const DVector2 &pt1, const DVector2 &pt2, double too_clos
 	{
 		if (tright.X < -tright.Y) return true;	// right edge is off the left side
 		if (tright.Y == 0) return true;
-		sx2 = xs_ToInt(CenterX + tright.X * CenterX / tright.Y);
-		if (tright.X >= 0) sx2 = MIN(viewwidth, sx2+1);	// fix for signed divide
+		sx2 = xs_RoundToInt(CenterX + tright.X * CenterX / tright.Y);
 		sz2 = tright.Y;
 	}
 	else
@@ -945,8 +943,7 @@ static bool R_CheckBBox (fixed_t *bspcoord)	// killough 1/28/98: static
 	{
 		if (rx1 > ry1) return false;	// left edge is off the right side
 		if (ry1 == 0) return false;
-		sx1 = xs_ToInt(CenterX + rx1 * CenterX / ry1);
-		if (rx1 >= 0) sx1 = MIN<int>(viewwidth, sx1+1);	// fix for signed divide
+		sx1 = xs_RoundToInt(CenterX + rx1 * CenterX / ry1);
 	}
 	else
 	{
@@ -959,8 +956,7 @@ static bool R_CheckBBox (fixed_t *bspcoord)	// killough 1/28/98: static
 	{
 		if (rx2 < -ry2) return false;	// right edge is off the left side
 		if (ry2 == 0) return false;
-		sx2 = xs_ToInt(CenterX + rx2 * CenterX / ry2);
-		if (rx2 >= 0) sx2 = MIN<int>(viewwidth, sx2+1);	// fix for signed divide
+		sx2 = xs_RoundToInt(CenterX + rx2 * CenterX / ry2);
 	}
 	else
 	{

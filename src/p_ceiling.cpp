@@ -253,7 +253,7 @@ bool P_CreateCeiling(sector_t *sec, DCeiling::ECeiling type, line_t *line, int t
 	// if ceiling already moving, don't start a second function on it
 	if (sec->PlaneMoving(sector_t::ceiling))
 	{
-		return NULL;
+		return false;
 	}
 	
 	// new door thinker

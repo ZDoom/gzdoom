@@ -458,7 +458,7 @@ void P_SerializeWorld (FArchive &arc)
 
 void P_SerializeWorldActors(FArchive &arc)
 {
-	int i, j;
+	int i;
 	sector_t *sec;
 
 	for (i = 0, sec = sectors; i < numsectors; i++, sec++)

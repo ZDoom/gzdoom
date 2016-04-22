@@ -102,8 +102,6 @@ struct TeaserSpeech
 
 static FRandom pr_randomspeech("RandomSpeech");
 
-void GiveSpawner (player_t *player, PClassActor *type);
-
 TArray<FStrifeDialogueNode *> StrifeDialogues;
 
 typedef TMap<int, int> FDialogueIDMap;				// maps dialogue IDs to dialogue array index (for ACS)

@@ -1144,48 +1144,6 @@ static void ClearInventory (AActor *activator)
 
 //============================================================================
 //
-// DoGiveInv
-//
-// Gives an item to a single actor.
-//
-//============================================================================
-
-static void DoGiveInv (AActor *actor, PClassActor *info, int amount)
-{
-	AWeapon *savedPendingWeap = actor->player != NULL
-		? actor->player->PendingWeapon : NULL;
-	bool hadweap = actor->player != NULL ? actor->player->ReadyWeapon != NULL : true;
-
-	AInventory *item = static_cast<AInventory *>(Spawn (info));
-
-	// This shouldn't count for the item statistics!
-	item->ClearCounters();
-	if (info->IsDescendantOf (RUNTIME_CLASS(ABasicArmorPickup)))
-	{
-		static_cast<ABasicArmorPickup*>(item)->SaveAmount *= amount;
-	}
-	else if (info->IsDescendantOf (RUNTIME_CLASS(ABasicArmorBonus)))
-	{
-		static_cast<ABasicArmorBonus*>(item)->SaveAmount *= amount;
-	}
-	else
-	{
-		item->Amount = amount;
-	}
-	if (!item->CallTryPickup (actor))
-	{
-		item->Destroy ();
-	}
-	// If the item was a weapon, don't bring it up automatically
-	// unless the player was not already using a weapon.
-	if (savedPendingWeap != NULL && hadweap && actor->player != NULL)
-	{
-		actor->player->PendingWeapon = savedPendingWeap;
-	}
-}
-
-//============================================================================
-//
 // GiveInventory
 //
 // Gives an item to one or more actors.
@@ -1218,12 +1176,12 @@ static void GiveInventory (AActor *activator, const char *type, int amount)
 		for (int i = 0; i < MAXPLAYERS; ++i)
 		{
 			if (playeringame[i])
-				DoGiveInv (players[i].mo, info, amount);
+				players[i].mo->GiveInventory(static_cast<PClassInventory *>(info), amount);
 		}
 	}
 	else
 	{
-		DoGiveInv (activator, info, amount);
+		activator->GiveInventory(static_cast<PClassInventory *>(info), amount);
 	}
 }
 
@@ -9346,7 +9304,26 @@ scriptwait:
 			AActor *actor = SingleActorFromTID(STACK(1), activator);
 			if (actor != NULL)
 			{
-				STACK(1) = actor->Sector->lightlevel;
+				sector_t *sector = actor->Sector;
+				if (sector->e->XFloor.lightlist.Size())
+				{
+					unsigned   i;
+					TArray<lightlist_t> &lightlist = sector->e->XFloor.lightlist;
+
+					STACK(1) = *lightlist.Last().p_lightlevel;
+					for (i = 1; i < lightlist.Size(); i++)
+					{
+						if (lightlist[i].plane.ZatPoint(actor) <= actor->Z())
+						{
+							STACK(1) = *lightlist[i - 1].p_lightlevel;
+							break;
+						}
+					}
+				}
+				else
+				{
+					STACK(1) = actor->Sector->lightlevel;
+				}
 			}
 			else STACK(1) = 0;
 			break;
@@ -9436,7 +9413,7 @@ scriptwait:
 				{
 					if (activator->player)
 					{
-						if (P_UndoPlayerMorph(activator->player, activator->player, force))
+						if (P_UndoPlayerMorph(activator->player, activator->player, 0, force))
 						{
 							changes++;
 						}
@@ -9462,7 +9439,7 @@ scriptwait:
 					{
 						if (actor->player)
 						{
-							if (P_UndoPlayerMorph(activator->player, actor->player, force))
+							if (P_UndoPlayerMorph(activator->player, actor->player, 0, force))
 							{
 								changes++;
 							}

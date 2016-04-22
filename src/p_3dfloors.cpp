@@ -723,7 +723,7 @@ lightlist_t * P_GetPlaneLight(sector_t * sector, secplane_t * plane, bool unders
 	TArray<lightlist_t> &lightlist = sector->e->XFloor.lightlist;
 
 	double planeheight=plane->ZatPoint(sector->centerspot);
-	if(underside) planeheight--;
+	if(underside) planeheight-= EQUAL_EPSILON;
 	
 	for(i = 1; i < lightlist.Size(); i++)
 		if (lightlist[i].plane.ZatPoint(sector->centerspot) <= planeheight) 

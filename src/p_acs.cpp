@@ -1144,48 +1144,6 @@ static void ClearInventory (AActor *activator)
 
 //============================================================================
 //
-// DoGiveInv
-//
-// Gives an item to a single actor.
-//
-//============================================================================
-
-static void DoGiveInv (AActor *actor, PClassActor *info, int amount)
-{
-	AWeapon *savedPendingWeap = actor->player != NULL
-		? actor->player->PendingWeapon : NULL;
-	bool hadweap = actor->player != NULL ? actor->player->ReadyWeapon != NULL : true;
-
-	AInventory *item = static_cast<AInventory *>(Spawn (info));
-
-	// This shouldn't count for the item statistics!
-	item->ClearCounters();
-	if (info->IsDescendantOf (RUNTIME_CLASS(ABasicArmorPickup)))
-	{
-		static_cast<ABasicArmorPickup*>(item)->SaveAmount *= amount;
-	}
-	else if (info->IsDescendantOf (RUNTIME_CLASS(ABasicArmorBonus)))
-	{
-		static_cast<ABasicArmorBonus*>(item)->SaveAmount *= amount;
-	}
-	else
-	{
-		item->Amount = amount;
-	}
-	if (!item->CallTryPickup (actor))
-	{
-		item->Destroy ();
-	}
-	// If the item was a weapon, don't bring it up automatically
-	// unless the player was not already using a weapon.
-	if (savedPendingWeap != NULL && hadweap && actor->player != NULL)
-	{
-		actor->player->PendingWeapon = savedPendingWeap;
-	}
-}
-
-//============================================================================
-//
 // GiveInventory
 //
 // Gives an item to one or more actors.
@@ -1218,12 +1176,12 @@ static void GiveInventory (AActor *activator, const char *type, int amount)
 		for (int i = 0; i < MAXPLAYERS; ++i)
 		{
 			if (playeringame[i])
-				DoGiveInv (players[i].mo, info, amount);
+				players[i].mo->GiveInventory(static_cast<PClassInventory *>(info), amount);
 		}
 	}
 	else
 	{
-		DoGiveInv (activator, info, amount);
+		activator->GiveInventory(static_cast<PClassInventory *>(info), amount);
 	}
 }
 

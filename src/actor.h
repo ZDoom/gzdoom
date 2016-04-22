@@ -661,6 +661,10 @@ public:
 	// Adds the item to this actor's inventory and sets its Owner.
 	virtual void AddInventory (AInventory *item);
 
+	// Give an item to the actor and pick it up.
+	// Returns true if the item pickup succeeded.
+	virtual bool GiveInventory (PClassInventory *type, int amount, bool givecheat = false);
+
 	// Removes the item from the inventory list.
 	virtual void RemoveInventory (AInventory *item);
 
@@ -961,6 +965,7 @@ public:
 	void CheckSectorTransition(sector_t *oldsec);
 	void UpdateRenderSectorList();
 	void ClearRenderSectorList();
+	void ClearRenderLineList();
 
 // info for drawing
 // NOTE: The first member variable *must* be snext.
@@ -1097,7 +1102,8 @@ public:
 
 	// a linked list of sectors where this object appears
 	struct msecnode_t	*touching_sectorlist;				// phares 3/14/98
-	struct msecnode_t	*render_sectorlist;		// same for cross-portal rendering
+	struct msecnode_t	*render_sectorlist;		// same for cross-sectorportal rendering
+	struct portnode_t	*render_portallist;		// and for cross-lineportal
 
 
 	TObjPtr<AInventory>	Inventory;		// [RH] This actor's inventory

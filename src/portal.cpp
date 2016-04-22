@@ -119,8 +119,8 @@ static void BuildBlockmap()
 			while (*list != -1)
 			{
 				line_t *ld = &lines[*list++];
-
-				if (ld->isLinePortal())
+				FLinePortal *port = ld->getPortal();
+				if (port && port->mType != PORTT_VISUAL)
 				{
 					PortalBlockmap.containsLines = true;
 					block.portallines.Push(ld);

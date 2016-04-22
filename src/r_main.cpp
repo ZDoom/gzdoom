@@ -693,7 +693,7 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 	fixed_t starty = viewy;
 	fixed_t startz = viewz;
 	DVector3 savedpath[2] = { ViewPath[0], ViewPath[1] };
-	int savedvisibility = camera? camera->renderflags & RF_INVISIBLE : 0;
+	ActorRenderFlags savedvisibility = camera? camera->renderflags & RF_INVISIBLE : ActorRenderFlags::FromInt(0);
 
 	CurrentPortalUniq++;
 

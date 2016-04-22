@@ -1480,6 +1480,18 @@ struct msecnode_t
 	bool visited;	// killough 4/4/98, 4/7/98: used in search algorithms
 };
 
+// use the same memory layout as msecnode_t so both can be used from the same freelist.
+struct portnode_t
+{
+	FLinePortal			*m_portal;	// a portal containing this object
+	AActor				*m_thing;	// this object
+	struct portnode_t	*m_tprev;	// prev msecnode_t for this thing
+	struct portnode_t	*m_tnext;	// next msecnode_t for this thing
+	struct portnode_t	*m_sprev;	// prev msecnode_t for this portal
+	struct portnode_t	*m_snext;	// next msecnode_t for this portal
+	bool visited;
+};
+
 struct FPolyNode;
 struct FMiniBSP;
 

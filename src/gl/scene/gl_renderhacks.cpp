@@ -674,7 +674,7 @@ void FDrawInfo::DrawUnhandledMissingTextures()
 		if (seg->PartnerSeg && (seg->PartnerSeg->Subsector->flags & SSECF_DEGENERATE)) continue;
 		if (seg->backsector->transdoor) continue;
 		if (seg->backsector->GetTexture(sector_t::ceiling) == skyflatnum) continue;
-		if (seg->backsector->portals[sector_t::ceiling] != NULL) continue;
+		if (seg->backsector->ValidatePortal(sector_t::ceiling) != NULL) continue;
 
 		if (!glset.notexturefill) FloodUpperGap(seg);
 	}
@@ -693,7 +693,7 @@ void FDrawInfo::DrawUnhandledMissingTextures()
 		if (seg->frontsector->GetPlaneTexZF(sector_t::floor) > ViewPos.Z) continue;	// out of sight
 		if (seg->backsector->transdoor) continue;
 		if (seg->backsector->GetTexture(sector_t::floor) == skyflatnum) continue;
-		if (seg->backsector->portals[sector_t::floor] != NULL) continue;
+		if (seg->backsector->ValidatePortal(sector_t::floor) != NULL) continue;
 
 		if (!glset.notexturefill) FloodLowerGap(seg);
 	}

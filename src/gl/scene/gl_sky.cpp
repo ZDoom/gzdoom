@@ -154,7 +154,7 @@ void GLWall::SkyPlane(sector_t *sector, int plane, bool allowreflect)
 		case PORTS_PORTAL:
 		case PORTS_LINKEDPORTAL:
 		{
-			FPortal *glport = sector->portals[plane];
+			FPortal *glport = sector->GetGLPortal(plane);
 			if (glport != NULL)
 			{
 				if (sector->PortalBlocksView(plane)) return;

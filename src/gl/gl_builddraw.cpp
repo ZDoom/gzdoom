@@ -3,6 +3,10 @@
 ** a build-like rendering algorithm
 ** Uses the sections created in gl_sections.cpp
 **
+** NOTE: Although this code generally works, it clearly shows the limitations
+** of Build's algorithm. This requires constant sorting of the collected geometry
+** and that causes extreme slowdowns on larger maps.
+**
 **---------------------------------------------------------------------------
 ** Copyright 2008 Christoph Oelckers
 ** All rights reserved.

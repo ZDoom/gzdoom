@@ -952,6 +952,7 @@ void FGLRenderer::RenderView (player_t* player)
 	OpenGLFrameBuffer* GLTarget = static_cast<OpenGLFrameBuffer*>(screen);
 	AActor *&LastCamera = GLTarget->LastCamera;
 
+	checkBenchActive();
 	if (player->camera != LastCamera)
 	{
 		// If the camera changed don't interpolate

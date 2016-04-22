@@ -267,6 +267,10 @@ public:
 	virtual FString GetStats () = 0;
 
 	void ToggleStat ();
+	bool isActive() const
+	{
+		return m_Active;
+	}
 
 	static void PrintStat ();
 	static FStat *FindStat (const char *name);

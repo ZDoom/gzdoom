@@ -311,6 +311,7 @@ public:
 		FloatRect *areas;
 		int areacount;
 		int shaderindex;
+		unsigned int precacheTime;
 		float shaderspeed;
 		int mIsTransparent:2;
 		bool bGlowing:1;						// Texture glows
@@ -458,6 +459,8 @@ public:
 
 	FSwitchDef *FindSwitch (FTextureID texture);
 	FDoorAnimation *FindAnimatedDoor (FTextureID picnum);
+
+	unsigned int precacheTime;
 
 private:
 

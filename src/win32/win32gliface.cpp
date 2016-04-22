@@ -19,6 +19,8 @@
 #include "i_system.h"
 #include "doomstat.h"
 #include "v_text.h"
+#include "m_argv.h"
+#include "doomerrors.h"
 //#include "gl_defs.h"
 
 #include "gl/renderer/gl_renderer.h"
@@ -384,9 +386,7 @@ DFrameBuffer *Win32GLVideo::CreateFrameBuffer(int width, int height, bool fs, DF
 		//old->GetFlash(flashColor, flashAmount);
 		delete old;
 	}
-
 	fb = new OpenGLFrameBuffer(m_hMonitor, m_DisplayWidth, m_DisplayHeight, m_DisplayBits, m_DisplayHz, fs);
-
 	return fb;
 }
 
@@ -617,7 +617,7 @@ bool Win32GLVideo::SetPixelFormat()
 //
 //==========================================================================
 
-bool Win32GLVideo::SetupPixelFormat(bool allowsoftware, int multisample)
+bool Win32GLVideo::SetupPixelFormat(int multisample)
 {
 	int i;
 	int colorDepth;
@@ -667,14 +667,7 @@ bool Win32GLVideo::SetupPixelFormat(bool allowsoftware, int multisample)
 		}
 		
 		attributes[i++]	=	WGL_ACCELERATION_ARB;	//required to be FULL_ACCELERATION_ARB
-		if (allowsoftware)
-		{
-			attributes[i++]	=	WGL_NO_ACCELERATION_ARB;
-		}
-		else
-		{
-			attributes[i++]	=	WGL_FULL_ACCELERATION_ARB;
-		}
+		attributes[i++]	=	WGL_FULL_ACCELERATION_ARB;
 	
 		if (vr_enable_quadbuffered)
 		{
@@ -727,17 +720,14 @@ bool Win32GLVideo::SetupPixelFormat(bool allowsoftware, int multisample)
 
 		if (pfd.dwFlags & PFD_GENERIC_FORMAT)
 		{
-			if (!allowsoftware)
-			{
-				Printf("R_OPENGL: OpenGL driver not accelerated!  Falling back to software renderer.\n");
-				return false;
-			}
+			I_Error("R_OPENGL: OpenGL driver not accelerated!");
+			return false;
 		}
 	}
 
 	if (!::SetPixelFormat(m_hDC, pixelFormat, NULL))
 	{
-		Printf("R_OPENGL: Couldn't set pixel format.\n");
+		I_Error("R_OPENGL: Couldn't set pixel format.\n");
 		return false;
 	}
 	return true;
@@ -749,14 +739,14 @@ bool Win32GLVideo::SetupPixelFormat(bool allowsoftware, int multisample)
 //
 //==========================================================================
 
-bool Win32GLVideo::InitHardware (HWND Window, bool allowsoftware, int multisample)
+bool Win32GLVideo::InitHardware (HWND Window, int multisample)
 {
 	m_Window=Window;
 	m_hDC = GetDC(Window);
 
-	if (!SetupPixelFormat(allowsoftware, multisample))
+	if (!SetupPixelFormat(multisample))
 	{
-		Printf ("R_OPENGL: Reverting to software mode...\n");
+		I_Error ("R_OPENGL: Unabl...\n");
 		return false;
 	}
 
@@ -917,7 +907,7 @@ Win32GLFrameBuffer::Win32GLFrameBuffer(void *hMonitor, int width, int height, in
 		I_RestoreWindowedPos();
 	}
 
-	if (!static_cast<Win32GLVideo *>(Video)->InitHardware(Window, false, localmultisample))
+	if (!static_cast<Win32GLVideo *>(Video)->InitHardware(Window, localmultisample))
 	{
 		vid_renderer = 0;
 		return;

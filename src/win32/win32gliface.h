@@ -41,7 +41,7 @@ public:
 	DFrameBuffer *CreateFrameBuffer (int width, int height, bool fs, DFrameBuffer *old);
 	virtual bool SetResolution (int width, int height, int bits);
 	void DumpAdapters();
-	bool InitHardware (HWND Window, bool allowsoftware, int multisample);
+	bool InitHardware (HWND Window, int multisample);
 	void Shutdown();
 	bool SetFullscreen(const char *devicename, int w, int h, int bits, int hz);
 
@@ -80,7 +80,7 @@ protected:
 	HWND InitDummy();
 	void ShutdownDummy(HWND dummy);
 	bool SetPixelFormat();
-	bool SetupPixelFormat(bool allowsoftware, int multisample);
+	bool SetupPixelFormat(int multisample);
 
 	void GetDisplayDeviceName();
 	void MakeModesList();
@@ -103,6 +103,7 @@ public:
     // look to be some cross-platform bits in the way.
 	Win32GLFrameBuffer(void *hMonitor, int width, int height, int bits, int refreshHz, bool fullscreen);
 	virtual ~Win32GLFrameBuffer();
+
 
 	// unused but must be defined
 	virtual void Blank ();

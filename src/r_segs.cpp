@@ -3032,8 +3032,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 {
 	DVector2 decal_left, decal_right, decal_pos;
 	int x1, x2;
-	fixed_t xscale, yscale;
-	fixed_t topoff;
+	double yscale;
 	BYTE flipx;
 	double zpos;
 	int needrepeat = 0;
@@ -3085,9 +3084,6 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 		}
 	}
 
-	xscale = FLOAT2FIXED(decal->ScaleX);
-	yscale = FLOAT2FIXED(decal->ScaleY);
-
 	WallSpriteTile = TexMan(decal->PicNum, true);
 	flipx = (BYTE)(decal->RenderFlags & RF_XFLIP);
 
@@ -3102,12 +3098,10 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 
 	FWallCoords savecoord = WallC;
 
-	x2 = WallSpriteTile->GetWidth();
-	x1 = WallSpriteTile->LeftOffset;
-	x2 = x2 - x1;
-
-	x1 *= xscale;
-	x2 *= xscale;
+	double edge_right = WallSpriteTile->GetWidth();
+	double edge_left = WallSpriteTile->LeftOffset;
+	edge_right = (edge_right - edge_left) * decal->ScaleX;
+	edge_left *= decal->ScaleX;
 
 	double dcx, dcy;
 	decal->GetXY(wall, dcx, dcy);
@@ -3115,8 +3109,8 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 
 	DVector2 angvec = (curline->v2->fPos() - curline->v1->fPos()).Unit();
 
-	decal_left = decal_pos - x1 * angvec - ViewPos;
-	decal_right = decal_pos + x2 * angvec - ViewPos;
+	decal_left = decal_pos - edge_left * angvec - ViewPos;
+	decal_right = decal_pos + edge_right * angvec - ViewPos;
 
 	if (WallC.Init(decal_left, decal_right, TOO_CLOSE_Z))
 		goto done;
@@ -3183,8 +3177,8 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 		break;
 	}
 
-	topoff = WallSpriteTile->TopOffset << FRACBITS;
-	dc_texturemid = topoff + (zpos - ViewPos.Z) / yscale;
+	yscale = decal->ScaleY;
+	dc_texturemid = WallSpriteTile->TopOffset + (zpos - ViewPos.Z) / yscale;
 
 	// Clip sprite to drawseg
 	x1 = MAX<int>(clipper->x1, x1);
@@ -3194,7 +3188,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 		goto done;
 	}
 
-	PrepWall (swall, lwall, WallSpriteTile->GetWidth() << FRACBITS, x1, x2);
+	PrepWall (swall, lwall, WallSpriteTile->GetWidth(), x1, x2);
 
 	if (flipx)
 	{
@@ -3242,7 +3236,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 	}
 
 	// rw_offset is used as the texture's vertical scale
-	rw_offset = SafeDivScale30(1, yscale);
+	rw_offset = FLOAT2FIXED(1 / yscale);
 
 	do
 	{

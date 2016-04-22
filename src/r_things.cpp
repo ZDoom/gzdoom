@@ -632,9 +632,8 @@ void R_DrawWallSprite(vissprite_t *spr)
 
 void R_WallSpriteColumn (void (*drawfunc)(const BYTE *column, const FTexture::Span *spans))
 {
-	unsigned int texturecolumn = lwall[dc_x] >> FRACBITS;
-	dc_iscale = MulScale16 (swall[dc_x], rw_offset);
-	spryscale = SafeDivScale32 (1, dc_iscale);
+	dc_iscale = MulScale16 (swall[dc_x], rw_offset/4);
+	spryscale = 65536.0 / dc_iscale;
 	if (sprflipvert)
 		sprtopscreen = CenterY + dc_texturemid * spryscale;
 	else
@@ -642,7 +641,7 @@ void R_WallSpriteColumn (void (*drawfunc)(const BYTE *column, const FTexture::Sp
 
 	const BYTE *column;
 	const FTexture::Span *spans;
-	column = WallSpriteTile->GetColumn (texturecolumn, &spans);
+	column = WallSpriteTile->GetColumn (lwall[dc_x] >> FRACBITS, &spans);
 	dc_texturefrac = 0;
 	drawfunc (column, spans);
 	rw_light += rw_lightstep;

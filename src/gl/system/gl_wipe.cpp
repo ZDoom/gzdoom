@@ -149,8 +149,8 @@ bool OpenGLFrameBuffer::WipeStartScreen(int type)
 
 	wipestartscreen = new FHardwareTexture(Width, Height, true);
 	wipestartscreen->CreateTexture(NULL, Width, Height, 0, false, 0);
-	GLRenderer->mSamplerManager->Bind(0, CLAMP_NOFILTER);
-	GLRenderer->mSamplerManager->Bind(1, CLAMP_NONE);
+	GLRenderer->mSamplerManager->Bind(0, CLAMP_NOFILTER, -1);
+	GLRenderer->mSamplerManager->Bind(1, CLAMP_NONE, -1);
 	glFinish();
 	wipestartscreen->Bind(0, false, false);
 	GLint readbuffer = 0;
@@ -176,7 +176,7 @@ void OpenGLFrameBuffer::WipeEndScreen()
 {
 	wipeendscreen = new FHardwareTexture(Width, Height, true);
 	wipeendscreen->CreateTexture(NULL, Width, Height, 0, false, 0);
-	GLRenderer->mSamplerManager->Bind(0, CLAMP_NOFILTER);
+	GLRenderer->mSamplerManager->Bind(0, CLAMP_NOFILTER, -1);
 	glFinish();
 	wipeendscreen->Bind(0, false, false);
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, Width, Height);

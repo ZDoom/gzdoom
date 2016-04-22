@@ -65,6 +65,7 @@ private:
 
 	bool bHasColorkey;		// only for hires
 	bool bExpandFlag;
+	BYTE lastSampler;
 
 	unsigned char * LoadHiresTexture(FTexture *hirescheck, int *width, int *height);
 

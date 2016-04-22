@@ -89,6 +89,7 @@ FGLTexture::FGLTexture(FTexture * tx, bool expandpatches)
 	bHasColorkey = false;
 	bIsTransparent = -1;
 	bExpandFlag = expandpatches;
+	lastSampler = 254;
 	tex->gl_info.SystemTexture[expandpatches] = this;
 }
 
@@ -278,7 +279,7 @@ const FHardwareTexture *FGLTexture::Bind(int texunit, int clampmode, int transla
 	if (translation <= 0) translation = -translation;
 	else translation = GLTranslationPalette::GetInternalTranslation(translation);
 
-	bool needmipmap = (clampmode <= CLAMP_XY);
+	bool needmipmap = (clampmode <= CLAMP_XY) || !(gl.flags & RFL_SAMPLER_OBJECTS);
 
 	FHardwareTexture *hwtex = CreateHwTexture();
 
@@ -313,9 +314,10 @@ const FHardwareTexture *FGLTexture::Bind(int texunit, int clampmode, int transla
 			}
 			delete[] buffer;
 		}
-
+		if (!needmipmap) clampmode = CLAMP_XY_NOMIP;
 		if (tex->bHasCanvas) static_cast<FCanvasTexture*>(tex)->NeedUpdate();
-		GLRenderer->mSamplerManager->Bind(texunit, clampmode);
+		if (lastSampler != clampmode)
+			lastSampler = GLRenderer->mSamplerManager->Bind(texunit, clampmode, lastSampler);
 		return hwtex; 
 	}
 	return NULL;

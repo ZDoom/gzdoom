@@ -347,9 +347,6 @@ void P_SerializeWorld (FArchive &arc)
 			<< sec->seqType
 			<< sec->friction
 			<< sec->movefactor
-			<< sec->floordata
-			<< sec->ceilingdata
-			<< sec->lightingdata
 			<< sec->stairlock
 			<< sec->prevsec
 			<< sec->nextsec
@@ -459,7 +456,10 @@ void P_SerializeWorldActors(FArchive &arc)
 	for (i = 0, sec = sectors; i < numsectors; i++, sec++)
 	{
 		arc << sec->SoundTarget
-			<< sec->SecActTarget;
+			<< sec->SecActTarget
+			<< sec->floordata
+			<< sec->ceilingdata
+			<< sec->lightingdata;
 	}
 	for (auto &s : sectorPortals)
 	{

@@ -65,12 +65,6 @@ inline int R_PointOnSide(const DVector2 &pos, const node_t *node)
 	return DMulScale32(FLOAT2FIXED(pos.Y) - node->y, node->dx, node->x - FLOAT2FIXED(pos.X), node->dy) > 0;
 }
 
-angle_t R_PointToAngle2 (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2);
-inline angle_t R_PointToAnglePrecise (fixed_t viewx, fixed_t viewy, fixed_t x, fixed_t y)
-{
-	return xs_RoundToUInt(g_atan2(double(y-viewy), double(x-viewx)) * (ANGLE_180/M_PI));
-}
-
 // Used for interpolation waypoints.
 struct DVector3a
 {
@@ -84,7 +78,6 @@ inline subsector_t *R_PointInSubsector(const DVector2 &pos)
 {
 	return R_PointInSubsector(FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y));
 }
-fixed_t R_PointToDist2 (fixed_t dx, fixed_t dy);
 void R_ResetViewInterpolation ();
 void R_RebuildViewInterpolation(player_t *player);
 bool R_GetViewInterpolationStatus();

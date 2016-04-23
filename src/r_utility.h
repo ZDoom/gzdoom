@@ -17,18 +17,14 @@ extern DAngle			ViewAngle;
 extern DAngle			ViewPitch;
 extern DVector3			ViewPath[2];
 
-extern fixed_t viewx, viewy, viewz;
-extern angle_t viewangle;
-extern int viewpitch;
-
 extern "C" int			centerx, centerxwide;
 extern "C" int			centery;
 
 extern int				setblocks;
 
-extern fixed_t			viewtancos;
-extern fixed_t			viewtansin;
-extern fixed_t			FocalTangent;
+extern double			ViewTanCos;
+extern double			ViewTanSin;
+extern double			FocalTangent;
 
 extern bool				r_NoInterpolate;
 extern int				validcount;
@@ -43,7 +39,7 @@ extern DWORD			r_FrameTime;
 extern int				extralight;
 extern unsigned int		R_OldBlend;
 
-const int				r_Yaspect = 200;	// Why did I make this a variable? It's never set anywhere.
+const double			r_Yaspect = 200.0;		// Why did I make this a variable? It's never set anywhere.
 
 //==========================================================================
 //
@@ -69,12 +65,6 @@ inline int R_PointOnSide(const DVector2 &pos, const node_t *node)
 	return DMulScale32(FLOAT2FIXED(pos.Y) - node->y, node->dx, node->x - FLOAT2FIXED(pos.X), node->dy) > 0;
 }
 
-angle_t R_PointToAngle2 (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2);
-inline angle_t R_PointToAnglePrecise (fixed_t viewx, fixed_t viewy, fixed_t x, fixed_t y)
-{
-	return xs_RoundToUInt(g_atan2(double(y-viewy), double(x-viewx)) * (ANGLE_180/M_PI));
-}
-
 // Used for interpolation waypoints.
 struct DVector3a
 {
@@ -88,7 +78,6 @@ inline subsector_t *R_PointInSubsector(const DVector2 &pos)
 {
 	return R_PointInSubsector(FLOAT2FIXED(pos.X), FLOAT2FIXED(pos.Y));
 }
-fixed_t R_PointToDist2 (fixed_t dx, fixed_t dy);
 void R_ResetViewInterpolation ();
 void R_RebuildViewInterpolation(player_t *player);
 bool R_GetViewInterpolationStatus();

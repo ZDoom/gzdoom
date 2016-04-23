@@ -6,8 +6,8 @@ include( CheckFunctionExists )
 include( CheckTypeSize )
 
 if( MSVC )
-	# Runtime type information is required
-	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /GR" )
+	# Runtime type information is required and don't complain about uint32_t to bool conversions
+	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /GR /wd4800" )
 endif()
 
 set( PACKAGE_NAME re2c )

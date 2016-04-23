@@ -339,11 +339,6 @@ public:
 	}
 
 	// Returns < 0 : behind; == 0 : on; > 0 : in front
-	int PointOnSide (fixed_t x, fixed_t y, fixed_t z) const
-	{
-		return PointOnSide(DVector3(FIXED2DBL(x), FIXED2DBL(y), FIXED2DBL(z)));
-	}
-
 	int PointOnSide(const DVector3 &pos) const
 	{
 		double v = (normal | pos) + D;
@@ -351,30 +346,13 @@ public:
 	}
 
 	// Returns the value of z at (0,0) This is used by the 3D floor code which does not handle slopes
-	fixed_t Zat0 () const
+	double Zat0() const
 	{
-		return FLOAT2FIXED(negiC*D);
+		return negiC*D;
 	}
 
 	// Returns the value of z at (x,y)
 	fixed_t ZatPoint(fixed_t x, fixed_t y) const = delete;	// it is not allowed to call this.
-
-	fixed_t ZatPointFixed(fixed_t x, fixed_t y) const
-	{
-		return FLOAT2FIXED(ZatPoint(FIXED2DBL(x), FIXED2DBL(y)));
-	}
-
-	// This is for the software renderer
-	fixed_t ZatPointFixed(const DVector2 &pos) const
-	{
-		return FLOAT2FIXED(ZatPoint(pos));
-	}
-
-	fixed_t ZatPointFixed(const vertex_t *v) const
-	{
-		return FLOAT2FIXED(ZatPoint(v));
-	}
-
 
 	// Returns the value of z at (x,y) as a double
 	double ZatPoint (double x, double y) const
@@ -387,6 +365,10 @@ public:
 		return (D + normal.X*pos.X + normal.Y*pos.Y) * negiC;
 	}
 
+	double ZatPoint(const FVector2 &pos) const
+	{
+		return (D + normal.X*pos.X + normal.Y*pos.Y) * negiC;
+	}
 
 	double ZatPoint(const vertex_t *v) const
 	{
@@ -600,16 +582,24 @@ struct extsector_t
 struct FTransform
 {
 	// killough 3/7/98: floor and ceiling texture offsets
-	fixed_t xoffs, yoffs;
+	double xOffs, yOffs, baseyOffs;
 
 	// [RH] floor and ceiling texture scales
-	fixed_t xscale, yscale;
+	double xScale, yScale;
 
 	// [RH] floor and ceiling texture rotation
-	angle_t angle;
+	DAngle Angle, baseAngle;
 
-	// base values
-	fixed_t base_angle, base_yoffs;
+	finline bool operator == (const FTransform &other) const
+	{
+		return xOffs == other.xOffs && yOffs + baseyOffs == other.yOffs + other.baseyOffs &&
+			xScale == other.xScale && yScale == other.yScale && Angle + baseAngle == other.Angle + other.baseAngle;
+	}
+	finline bool operator != (const FTransform &other) const
+	{
+		return !(*this == other);
+	}
+
 };
 
 struct secspecial_t
@@ -709,121 +699,82 @@ public:
 
 	void SetXOffset(int pos, double o)
 	{
-		planes[pos].xform.xoffs = FLOAT2FIXED(o);
+		planes[pos].xform.xOffs = o;
 	}
 
 	void AddXOffset(int pos, double o)
 	{
-		planes[pos].xform.xoffs += FLOAT2FIXED(o);
+		planes[pos].xform.xOffs += o;
 	}
 
-	fixed_t GetXOffset(int pos) const
+	double GetXOffset(int pos) const
 	{
-		return planes[pos].xform.xoffs;
-	}
-
-	double GetXOffsetF(int pos) const
-	{
-		return FIXED2DBL(planes[pos].xform.xoffs);
+		return planes[pos].xform.xOffs;
 	}
 
 	void SetYOffset(int pos, double o)
 	{
-		planes[pos].xform.yoffs = FLOAT2FIXED(o);
+		planes[pos].xform.yOffs = o;
 	}
 
 	void AddYOffset(int pos, double o)
 	{
-		planes[pos].xform.yoffs += FLOAT2FIXED(o);
+		planes[pos].xform.yOffs += o;
 	}
 
-	fixed_t GetYOffset(int pos, bool addbase = true) const
+	double GetYOffset(int pos, bool addbase = true) const
 	{
 		if (!addbase)
 		{
-			return planes[pos].xform.yoffs;
+			return planes[pos].xform.yOffs;
 		}
 		else
 		{
-			return planes[pos].xform.yoffs + planes[pos].xform.base_yoffs;
-		}
-	}
-
-	double GetYOffsetF(int pos, bool addbase = true) const
-	{
-		if (!addbase)
-		{
-			return FIXED2DBL(planes[pos].xform.yoffs);
-		}
-		else
-		{
-			return FIXED2DBL(planes[pos].xform.yoffs + planes[pos].xform.base_yoffs);
+			return planes[pos].xform.yOffs + planes[pos].xform.baseyOffs;
 		}
 	}
 
 	void SetXScale(int pos, double o)
 	{
-		planes[pos].xform.xscale = FLOAT2FIXED(o);
+		planes[pos].xform.xScale = o;
 	}
 
-	fixed_t GetXScale(int pos) const
+	double GetXScale(int pos) const
 	{
-		return planes[pos].xform.xscale;
-	}
-
-	double GetXScaleF(int pos) const
-	{
-		return FIXED2DBL(planes[pos].xform.xscale);
+		return planes[pos].xform.xScale;
 	}
 
 	void SetYScale(int pos, double o)
 	{
-		planes[pos].xform.yscale = FLOAT2FIXED(o);
+		planes[pos].xform.yScale = o;
 	}
 
-	fixed_t GetYScale(int pos) const
+	double GetYScale(int pos) const
 	{
-		return planes[pos].xform.yscale;
-	}
-
-	double GetYScaleF(int pos) const
-	{
-		return FIXED2DBL(planes[pos].xform.yscale);
+		return planes[pos].xform.yScale;
 	}
 
 	void SetAngle(int pos, DAngle o)
 	{
-		planes[pos].xform.angle = o.BAMs();
+		planes[pos].xform.Angle = o;
 	}
 
-	angle_t GetAngle(int pos, bool addbase = true) const
+	DAngle GetAngle(int pos, bool addbase = true) const
 	{
 		if (!addbase)
 		{
-			return planes[pos].xform.angle;
+			return planes[pos].xform.Angle;
 		}
 		else
 		{
-			return planes[pos].xform.angle + planes[pos].xform.base_angle;
-		}
-	}
-
-	DAngle GetAngleF(int pos, bool addbase = true) const
-	{
-		if (!addbase)
-		{
-			return ANGLE2DBL(planes[pos].xform.angle);
-		}
-		else
-		{
-			return ANGLE2DBL(planes[pos].xform.angle + planes[pos].xform.base_angle);
+			return planes[pos].xform.Angle + planes[pos].xform.baseAngle;
 		}
 	}
 
 	void SetBase(int pos, double y, DAngle o)
 	{
-		planes[pos].xform.base_yoffs = FLOAT2FIXED(y);
-		planes[pos].xform.base_angle = o.BAMs();
+		planes[pos].xform.baseyOffs = y;
+		planes[pos].xform.baseAngle = o;
 	}
 
 	void SetAlpha(int pos, double o)
@@ -844,6 +795,12 @@ public:
 	int GetFlags(int pos) const
 	{
 		return planes[pos].Flags;
+	}
+
+	// like the previous one but masks out all flags which are not relevant for rendering.
+	int GetVisFlags(int pos) const
+	{
+		return planes[pos].Flags & ~(PLANEF_BLOCKED | PLANEF_NOPASS | PLANEF_BLOCKSOUND | PLANEF_LINKED);
 	}
 
 	void ChangeFlags(int pos, int And, int Or)
@@ -1199,10 +1156,10 @@ struct side_t
 	};
 	struct part
 	{
-		fixed_t xoffset;
-		fixed_t yoffset;
-		fixed_t xscale;
-		fixed_t yscale;
+		double xOffset;
+		double yOffset;
+		double xScale;
+		double yScale;
 		FTextureID texture;
 		TObjPtr<DInterpolation> interpolation;
 		//int Light;
@@ -1235,139 +1192,88 @@ struct side_t
 		textures[which].texture = tex;
 	}
 
-	void SetTextureXOffset(int which, fixed_t offset)
-	{
-		textures[which].xoffset = offset;
-	}
-	void SetTextureXOffset(fixed_t offset)
-	{
-		textures[top].xoffset =
-		textures[mid].xoffset =
-		textures[bottom].xoffset = offset;
-	}
 	void SetTextureXOffset(int which, double offset)
 	{
-		textures[which].xoffset = FLOAT2FIXED(offset);
+		textures[which].xOffset = offset;;
 	}
+	
 	void SetTextureXOffset(double offset)
 	{
-		textures[top].xoffset =
-		textures[mid].xoffset =
-		textures[bottom].xoffset = FLOAT2FIXED(offset);
+		textures[top].xOffset =
+		textures[mid].xOffset =
+		textures[bottom].xOffset = offset;
 	}
-	fixed_t GetTextureXOffset(int which) const
+
+	double GetTextureXOffset(int which) const
 	{
-		return textures[which].xoffset;
+		return textures[which].xOffset;
 	}
-	double GetTextureXOffsetF(int which) const
-	{
-		return FIXED2DBL(textures[which].xoffset);
-	}
-	void AddTextureXOffset(int which, fixed_t delta)
-	{
-		textures[which].xoffset += delta;
-	}
+
 	void AddTextureXOffset(int which, double delta)
 	{
-		textures[which].xoffset += FLOAT2FIXED(delta);
+		textures[which].xOffset += delta;
 	}
 
-	void SetTextureYOffset(int which, fixed_t offset)
-	{
-		textures[which].yoffset = offset;
-	}
-	void SetTextureYOffset(fixed_t offset)
-	{
-		textures[top].yoffset =
-		textures[mid].yoffset =
-		textures[bottom].yoffset = offset;
-	}
 	void SetTextureYOffset(int which, double offset)
 	{
-		textures[which].yoffset = FLOAT2FIXED(offset);
+		textures[which].yOffset = offset;
 	}
+
 	void SetTextureYOffset(double offset)
 	{
-		textures[top].yoffset =
-		textures[mid].yoffset =
-		textures[bottom].yoffset = FLOAT2FIXED(offset);
+		textures[top].yOffset =
+		textures[mid].yOffset =
+		textures[bottom].yOffset = offset;
 	}
-	fixed_t GetTextureYOffset(int which) const
+
+	double GetTextureYOffset(int which) const
 	{
-		return textures[which].yoffset;
+		return textures[which].yOffset;
 	}
-	double GetTextureYOffsetF(int which) const
-	{
-		return FIXED2DBL(textures[which].yoffset);
-	}
-	void AddTextureYOffset(int which, fixed_t delta)
-	{
-		textures[which].yoffset += delta;
-	}
+
 	void AddTextureYOffset(int which, double delta)
 	{
-		textures[which].yoffset += FLOAT2FIXED(delta);
+		textures[which].yOffset += delta;
 	}
 
-	void SetTextureXScale(int which, fixed_t scale)
-	{
-		textures[which].xscale = scale == 0 ? FRACUNIT : scale;
-	}
 	void SetTextureXScale(int which, double scale)
 	{
-		textures[which].xscale = scale == 0 ? FRACUNIT : FLOAT2FIXED(scale);
+		textures[which].xScale = scale == 0 ? 1. : scale;
 	}
-	void SetTextureXScale(fixed_t scale)
-	{
-		textures[top].xscale = textures[mid].xscale = textures[bottom].xscale = scale == 0 ? FRACUNIT : scale;
-	}
+
 	void SetTextureXScale(double scale)
 	{
-		textures[top].xscale = textures[mid].xscale = textures[bottom].xscale = scale == 0 ? FRACUNIT : FLOAT2FIXED(scale);
+		textures[top].xScale = textures[mid].xScale = textures[bottom].xScale = scale == 0 ? 1. : scale;
 	}
-	fixed_t GetTextureXScale(int which) const
+
+	double GetTextureXScale(int which) const
 	{
-		return textures[which].xscale;
+		return textures[which].xScale;
 	}
-	double GetTextureXScaleF(int which) const
-	{
-		return FIXED2DBL(textures[which].xscale);
-	}
+
 	void MultiplyTextureXScale(int which, double delta)
 	{
-		textures[which].xscale = fixed_t(textures[which].xscale * delta);
-	}
-
-
-	void SetTextureYScale(int which, fixed_t scale)
-	{
-		textures[which].yscale = scale == 0 ? FRACUNIT : scale;
+		textures[which].xScale *= delta;
 	}
 
 	void SetTextureYScale(int which, double scale)
 	{
-		textures[which].yscale = scale == 0 ? FRACUNIT : FLOAT2FIXED(scale);
+		textures[which].yScale = scale == 0 ? 1. : scale;
 	}
 
-	void SetTextureYScale(fixed_t scale)
-	{
-		textures[top].yscale = textures[mid].yscale = textures[bottom].yscale = scale == 0 ? FRACUNIT : scale;
-	}
 	void SetTextureYScale(double scale)
 	{
-		textures[top].yscale = textures[mid].yscale = textures[bottom].yscale = scale == 0 ? FRACUNIT : FLOAT2FIXED(scale);
+		textures[top].yScale = textures[mid].yScale = textures[bottom].yScale = scale == 0 ? 1. : scale;
 	}
-	fixed_t GetTextureYScale(int which) const
+
+	double GetTextureYScale(int which) const
 	{
-		return textures[which].yscale;
+		return textures[which].yScale;
 	}
-	double GetTextureYScaleF(int which) const
-	{
-		return FIXED2DBL(textures[which].yscale);
-	}
+
 	void MultiplyTextureYScale(int which, double delta)
 	{
-		textures[which].yscale = fixed_t(textures[which].yscale * delta);
+		textures[which].yScale *= delta;
 	}
 
 	DInterpolation *SetInterpolation(int position);

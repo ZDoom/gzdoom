@@ -1108,14 +1108,15 @@ void R_FillColumnHorizP (void)
 
 void R_DrawMaskedColumnHoriz (const BYTE *column, const FTexture::Span *span)
 {
+	const fixed_t texturemid = FLOAT2FIXED(dc_texturemid);
 	while (span->Length != 0)
 	{
 		const int length = span->Length;
 		const int top = span->TopOffset;
 
 		// calculate unclipped screen coordinates for post
-		dc_yl = (sprtopscreen + spryscale * top) >> FRACBITS;
-		dc_yh = (sprtopscreen + spryscale * (top + length) - FRACUNIT) >> FRACBITS;
+		dc_yl = xs_RoundToInt(sprtopscreen + spryscale * top);
+		dc_yh = xs_RoundToInt(sprtopscreen + spryscale * (top + length) - 1);
 
 		if (sprflipvert)
 		{
@@ -1136,7 +1137,7 @@ void R_DrawMaskedColumnHoriz (const BYTE *column, const FTexture::Span *span)
 			if (sprflipvert)
 			{
 				dc_texturefrac = (dc_yl*dc_iscale) - (top << FRACBITS)
-					- FixedMul (centeryfrac, dc_iscale) - dc_texturemid;
+					- fixed_t(CenterY * dc_iscale) - texturemid;
 				const fixed_t maxfrac = length << FRACBITS;
 				while (dc_texturefrac >= maxfrac)
 				{
@@ -1154,8 +1155,8 @@ void R_DrawMaskedColumnHoriz (const BYTE *column, const FTexture::Span *span)
 			}
 			else
 			{
-				dc_texturefrac = dc_texturemid - (top << FRACBITS)
-					+ (dc_yl*dc_iscale) - FixedMul (centeryfrac-FRACUNIT, dc_iscale);
+				dc_texturefrac = texturemid - (top << FRACBITS)
+					+ (dc_yl*dc_iscale) - fixed_t((CenterY-1) * dc_iscale);
 				while (dc_texturefrac < 0)
 				{
 					if (++dc_yl > dc_yh)

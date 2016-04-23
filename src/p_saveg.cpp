@@ -347,9 +347,6 @@ void P_SerializeWorld (FArchive &arc)
 			<< sec->seqType
 			<< sec->friction
 			<< sec->movefactor
-			<< sec->floordata
-			<< sec->ceilingdata
-			<< sec->lightingdata
 			<< sec->stairlock
 			<< sec->prevsec
 			<< sec->nextsec
@@ -464,7 +461,10 @@ void P_SerializeWorldActors(FArchive &arc)
 	for (i = 0, sec = sectors; i < numsectors; i++, sec++)
 	{
 		arc << sec->SoundTarget
-			<< sec->SecActTarget;
+			<< sec->SecActTarget
+			<< sec->floordata
+			<< sec->ceilingdata
+			<< sec->lightingdata;
 	}
 	for (auto &s : sectorPortals)
 	{
@@ -485,15 +485,15 @@ void extsector_t::Serialize(FArchive &arc)
 
 FArchive &operator<< (FArchive &arc, side_t::part &p)
 {
-	arc << p.xoffset << p.yoffset << p.interpolation << p.texture 
-		<< p.xscale << p.yscale;// << p.Light;
+	arc << p.xOffset << p.yOffset << p.interpolation << p.texture 
+		<< p.xScale << p.yScale;// << p.Light;
 	return arc;
 }
 
 FArchive &operator<< (FArchive &arc, sector_t::splane &p)
 {
-	arc << p.xform.xoffs << p.xform.yoffs << p.xform.xscale << p.xform.yscale 
-		<< p.xform.angle << p.xform.base_yoffs << p.xform.base_angle
+	arc << p.xform.xOffs << p.xform.yOffs << p.xform.xScale << p.xform.yScale 
+		<< p.xform.Angle << p.xform.baseyOffs << p.xform.baseAngle
 		<< p.Flags << p.Light << p.Texture << p.TexZ << p.alpha;
 	return arc;
 }

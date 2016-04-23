@@ -123,8 +123,8 @@ int				otic;
 
 sector_t		*viewsector;
 
-fixed_t 		viewcos, viewtancos;
-fixed_t 		viewsin, viewtansin;
+double	 		ViewCos, ViewTanCos;
+double	 		ViewSin, ViewTanSin;
 
 AActor			*camera;	// [RH] camera to draw from. doesn't have to be a player
 
@@ -142,7 +142,7 @@ int				WidescreenRatio;
 int				setblocks;
 int				extralight;
 bool			setsizeneeded;
-fixed_t			FocalTangent;
+double			FocalTangent;
 
 unsigned int	R_OldBlend = ~0;
 int 			validcount = 1; 	// increment every time a check is made
@@ -150,121 +150,12 @@ int				FieldOfView = 2048;		// Fineangles in the SCREENWIDTH wide window
 
 FCanvasTextureInfo *FCanvasTextureInfo::List;
 
-fixed_t viewx, viewy, viewz;
-angle_t viewangle;
-int viewpitch;
+DVector3a view;
+DAngle viewpitch;
 
 
 // CODE --------------------------------------------------------------------
 static void R_Shutdown ();
-
-//==========================================================================
-//
-// SlopeDiv
-//
-// Utility function, called by R_PointToAngle.
-//
-//==========================================================================
-
-angle_t SlopeDiv (unsigned int num, unsigned den)
-{
-	unsigned int ans;
-
-	if (den < 512)
-		return (ANG45 - 1); //tantoangle[SLOPERANGE]
-
-	ans = (num << 3) / (den >> 8);
-
-	return ans <= SLOPERANGE ? tantoangle[ans] : (ANG45 - 1);
-}
-
-
-//==========================================================================
-//
-// R_PointToAngle
-//
-// To get a global angle from cartesian coordinates, the coordinates are
-// flipped until they are in the first octant of the coordinate system,
-// then the y (<=x) is scaled and divided by x to get a tangent (slope)
-// value which is looked up in the tantoangle[] table.
-//
-//==========================================================================
-
-angle_t R_PointToAngle2 (fixed_t x1, fixed_t y1, fixed_t x, fixed_t y)
-{
-	x -= x1;
-	y -= y1;
-
-	if ((x | y) == 0)
-	{
-		return 0;
-	}
-
-	// We need to be aware of overflows here. If the values get larger than INT_MAX/4
-	// this code won't work anymore.
-
-	if (x < INT_MAX/4 && x > -INT_MAX/4 && y < INT_MAX/4 && y > -INT_MAX/4)
-	{
-		if (x >= 0)
-		{
-			if (y >= 0)
-			{
-				if (x > y)
-				{ // octant 0
-					return SlopeDiv(y, x);
-				}
-				else
-				{ // octant 1
-					return ANG90 - 1 - SlopeDiv(x, y);
-				}
-			}
-			else // y < 0
-			{
-				y = -y;
-				if (x > y)
-				{ // octant 8
-					return 0 - SlopeDiv(y, x);
-				}
-				else
-				{ // octant 7
-					return ANG270 + SlopeDiv(x, y);
-				}
-			}
-		}
-		else // x < 0
-		{
-			x = -x;
-			if (y >= 0)
-			{
-				if (x > y)
-				{ // octant 3
-					return ANG180 - 1 - SlopeDiv(y, x);
-				}
-				else
-				{ // octant 2
-					return ANG90 + SlopeDiv(x, y);
-				}
-			}
-			else // y < 0
-			{
-				y = -y;
-				if (x > y)
-				{ // octant 4
-					return ANG180 + SlopeDiv(y, x);
-				}
-				else
-				{ // octant 5
-					return ANG270 - 1 - SlopeDiv(x, y);
-				}
-			}
-		}
-	}
-	else
-	{
-		// we have to use the slower but more precise floating point atan2 function here.
-		return xs_RoundToUInt(g_atan2(double(y), double(x)) * (ANGLE_180/M_PI));
-	}
-}
 
 //==========================================================================
 //
@@ -286,37 +177,6 @@ void R_InitPointToAngle (void)
 	}
 }
 
-//==========================================================================
-//
-// R_PointToDist2
-//
-// Returns the distance from (0,0) to some other point. In a
-// floating point environment, we'd probably be better off using the
-// Pythagorean Theorem to determine the result.
-//
-// killough 5/2/98: simplified
-// [RH] Simplified further [sin (t + 90 deg) == cos (t)]
-// Not used. Should it go away?
-//
-//==========================================================================
-
-fixed_t R_PointToDist2 (fixed_t dx, fixed_t dy)
-{
-	dx = abs (dx);
-	dy = abs (dy);
-
-	if ((dx | dy) == 0)
-	{
-		return 0;
-	}
-
-	if (dy > dx)
-	{
-		swapvalues (dx, dy);
-	}
-
-	return FixedDiv (dx, finecosine[tantoangle[FixedDiv (dy, dx) >> DBITS] >> ANGLETOFINESHIFT]);
-}
 
 //==========================================================================
 //
@@ -463,7 +323,7 @@ void R_SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight)
 			fov = 170*FINEANGLES/360;
 	}
 
-	FocalTangent = finetangent[FINEANGLES/4+fov/2];
+	FocalTangent = FIXED2FLOAT(finetangent[FINEANGLES/4+fov/2]);
 	Renderer->SetWindow(windowSize, fullWidth, fullHeight, stHeight, trueratio);
 }
 
@@ -737,11 +597,11 @@ void R_ResetViewInterpolation ()
 
 void R_SetViewAngle ()
 {
-	viewsin = FLOAT2FIXED(ViewAngle.Sin());
-	viewcos = FLOAT2FIXED(ViewAngle.Cos());
+	ViewSin = ViewAngle.Sin();
+	ViewCos = ViewAngle.Cos();
 
-	viewtansin = FixedMul (FocalTangent, viewsin);
-	viewtancos = FixedMul (FocalTangent, viewcos);
+	ViewTanSin = FocalTangent * ViewSin;
+	ViewTanCos = FocalTangent * ViewCos;
 }
 
 //==========================================================================
@@ -1107,12 +967,6 @@ void R_SetupFrame (AActor *actor)
 			BaseBlendA = 0.f;
 		}
 	}
-
-	viewx = FLOAT2FIXED(ViewPos.X);
-	viewy = FLOAT2FIXED(ViewPos.Y);
-	viewz = FLOAT2FIXED(ViewPos.Z);
-	viewangle = ViewAngle.BAMs();
-	viewpitch = ViewPitch.BAMs();
 
 	Renderer->CopyStackedViewParameters();
 	Renderer->SetupFrame(player);

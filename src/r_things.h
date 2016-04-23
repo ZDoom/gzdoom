@@ -32,15 +32,20 @@
 struct vissprite_t
 {
 	short			x1, x2;
-	fixed_t			gx, gy, gz;		// origin in world coordinates
+	FVector3		gpos;			// origin in world coordinates
+	union
+	{
+		float		gzb, gzt;		// global bottom / top for silhouette clipping
+		int			y1, y2;			// top / bottom of particle on screen
+	};
 	angle_t			angle;
-	fixed_t			gzb, gzt;		// global bottom / top for silhouette clipping
-	fixed_t			xscale, yscale;
-	fixed_t			depth;
-	fixed_t			idepth;			// 1/z
-	fixed_t			deltax, deltay;
+	fixed_t			xscale;
+	float			yscale;
+	float			depth;
+	float			idepth;			// 1/z
+	float			deltax, deltay;
 	DWORD			FillColor;
-	fixed_t			floorclip;
+	double			floorclip;
 	union
 	{
 		FTexture *pic;
@@ -51,7 +56,7 @@ struct vissprite_t
 		// Used by face sprites
 		struct
 		{
-			fixed_t	texturemid;
+			double	texturemid;
 			fixed_t	startfrac;		// horizontal position of x1
 			fixed_t	xiscale;		// negative if flipped
 		};
@@ -63,8 +68,8 @@ struct vissprite_t
 		// Used by voxels
 		struct
 		{
-			fixed_t vx, vy, vz;		// view origin
-			angle_t vang;			// view angle
+			FVector3 vpos;			// view origin
+			FAngle vang;			// view angle
 		};
 	};
 	sector_t		*heightsec;		// killough 3/27/98: height sector for underwater/fake ceiling
@@ -81,6 +86,9 @@ struct vissprite_t
 	DWORD			Translation;	// [RH] for color translation
 	visstyle_t		Style;
 	int				CurrentPortalUniq; // [ZZ] to identify the portal that this thing is in. used for clipping.
+
+	vissprite_t() {}
+	vissprite_t &vissprite_t::operator= (const vissprite_t &o) { memcpy(this, &o, sizeof *this); return *this; }
 };
 
 struct particle_t;
@@ -101,13 +109,13 @@ extern short			screenheightarray[MAXWIDTH];
 // vars for R_DrawMaskedColumn
 extern short*			mfloorclip;
 extern short*			mceilingclip;
-extern fixed_t			spryscale;
-extern fixed_t			sprtopscreen;
+extern double			spryscale;
+extern double			sprtopscreen;
 extern bool				sprflipvert;
 
-extern fixed_t			pspritexscale;
-extern fixed_t			pspriteyscale;
-extern fixed_t			pspritexiscale;
+extern double			pspritexscale;
+extern double			pspritexiscale;
+extern double			pspriteyscale;
 
 extern FTexture			*WallSpriteTile;
 
@@ -128,9 +136,9 @@ void R_CheckOffscreenBuffer(int width, int height, bool spansonly);
 
 enum { DVF_OFFSCREEN = 1, DVF_SPANSONLY = 2, DVF_MIRRORED = 4 };
 
-void R_DrawVoxel(fixed_t viewx, fixed_t viewy, fixed_t viewz, angle_t viewangle,
-	fixed_t dasprx, fixed_t daspry, fixed_t dasprz, angle_t dasprang,
-	fixed_t daxscale, fixed_t dayscale, FVoxel *voxobj,
+void R_DrawVoxel(const FVector3 &viewpos, FAngle viewangle,
+	const FVector3 &sprpos, angle_t dasprang,
+	fixed_t daxscale, fixed_t dayscale, struct FVoxel *voxobj,
 	lighttable_t *colormap, short *daumost, short *dadmost, int minslabz, int maxslabz, int flags);
 
 void R_ClipVisSprite (vissprite_t *vis, int xl, int xh);

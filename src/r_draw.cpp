@@ -86,6 +86,7 @@ void (*rt_map4cols)(int,int,int);
 // R_DrawColumn
 // Source is the top of the column to scale.
 //
+double 			dc_texturemid;
 extern "C" {
 int				dc_pitch=0xABadCafe;	// [RH] Distance between rows
 
@@ -94,7 +95,6 @@ int 			dc_x;
 int 			dc_yl; 
 int 			dc_yh; 
 fixed_t 		dc_iscale; 
-fixed_t 		dc_texturemid;
 fixed_t			dc_texturefrac;
 int				dc_color;				// [RH] Color for column filler
 DWORD			dc_srccolor;
@@ -1757,8 +1757,8 @@ void mvlinec4 ()
 #endif
 
 extern "C" short spanend[MAXHEIGHT];
-extern fixed_t rw_light;
-extern fixed_t rw_lightstep;
+extern float rw_light;
+extern float rw_lightstep;
 extern int wallshade;
 
 static void R_DrawFogBoundarySection (int y, int y2, int x1)
@@ -1795,12 +1795,12 @@ void R_DrawFogBoundary (int x1, int x2, short *uclip, short *dclip)
 	// to create new horizontal spans whenever the light changes enough that
 	// we need to use a new colormap.
 
-	fixed_t lightstep = rw_lightstep;
-	fixed_t light = rw_light+lightstep*(x2-x1-1);
+	double lightstep = rw_lightstep;
+	double light = rw_light + rw_lightstep*(x2-x1-1);
 	int x = x2-1;
 	int t2 = uclip[x];
 	int b2 = dclip[x];
-	int rcolormap = GETPALOOKUP (light, wallshade);
+	int rcolormap = GETPALOOKUP(light, wallshade);
 	int lcolormap;
 	BYTE *basecolormapdata = basecolormap->Maps;
 
@@ -1819,7 +1819,7 @@ void R_DrawFogBoundary (int x1, int x2, short *uclip, short *dclip)
 		int stop;
 
 		light -= rw_lightstep;
-		lcolormap = GETPALOOKUP (light, wallshade);
+		lcolormap = GETPALOOKUP(light, wallshade);
 		if (lcolormap != rcolormap)
 		{
 			if (t2 < b2 && rcolormap != 0)

@@ -78,10 +78,10 @@ extern short	wallbottom[MAXWIDTH];
 extern short	wallupper[MAXWIDTH];
 extern short	walllower[MAXWIDTH];
 
-fixed_t			rw_backcz1, rw_backcz2;
-fixed_t			rw_backfz1, rw_backfz2;
-fixed_t			rw_frontcz1, rw_frontcz2;
-fixed_t			rw_frontfz1, rw_frontfz2;
+double			rw_backcz1, rw_backcz2;
+double			rw_backfz1, rw_backfz2;
+double			rw_frontcz1, rw_frontcz2;
+double			rw_frontfz1, rw_frontfz2;
 
 
 size_t			MaxDrawSegs;
@@ -336,7 +336,7 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 	{
 		sector_t *heightsec = viewsector->heightsec;
 		bool underwater = r_fakingunderwater ||
-			(heightsec && heightsec->floorplane.PointOnSide(viewx, viewy, viewz) <= 0);
+			(heightsec && heightsec->floorplane.PointOnSide(ViewPos) <= 0);
 		bool doorunderwater = false;
 		int diffTex = (s->MoreFlags & SECF_CLIPFAKEPLANES);
 
@@ -395,8 +395,8 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 			}
 		}
 
-		fixed_t refceilz = s->ceilingplane.ZatPointFixed (viewx, viewy);
-		fixed_t orgceilz = sec->ceilingplane.ZatPointFixed(viewx, viewy);
+		double refceilz = s->ceilingplane.ZatPoint(ViewPos);
+		double orgceilz = sec->ceilingplane.ZatPoint(ViewPos);
 
 #if 1
 		// [RH] Allow viewing underwater areas through doors/windows that
@@ -405,8 +405,8 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 		// sectors at the same time.
 		if (back && !r_fakingunderwater && curline->frontsector->heightsec == NULL)
 		{
-			if (rw_frontcz1 <= s->floorplane.ZatPointFixed (curline->v1) &&
-				rw_frontcz2 <= s->floorplane.ZatPointFixed(curline->v2))
+			if (rw_frontcz1 <= s->floorplane.ZatPoint(curline->v1) &&
+				rw_frontcz2 <= s->floorplane.ZatPoint(curline->v2))
 			{
 				// Check that the window is actually visible
 				for (int z = WallC.sx1; z < WallC.sx2; ++z)
@@ -470,7 +470,7 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 			}
 			FakeSide = FAKED_BelowFloor;
 		}
-		else if (heightsec && heightsec->ceilingplane.PointOnSide(viewx, viewy, viewz) <= 0 &&
+		else if (heightsec && heightsec->ceilingplane.PointOnSide(ViewPos) <= 0 &&
 				 orgceilz > refceilz && !(s->MoreFlags & SECF_FAKEFLOORONLY))
 		{	// Above-ceiling hack
 			tempsec->ceilingplane		= s->ceilingplane;
@@ -540,23 +540,21 @@ void R_AddLine (seg_t *line)
 {
 	static sector_t tempsec;	// killough 3/8/98: ceiling/water hack
 	bool			solid;
-	fixed_t			tx1, tx2, ty1, ty2;
+	DVector2		pt1, pt2;
 
 	curline = line;
 
 	// [RH] Color if not texturing line
 	dc_color = (((int)(line - segs) * 8) + 4) & 255;
 
-	tx1 = line->v1->fixX() - viewx;
-	tx2 = line->v2->fixX() - viewx;
-	ty1 = line->v1->fixY() - viewy;
-	ty2 = line->v2->fixY() - viewy;
+	pt1 = line->v1->fPos() - ViewPos;
+	pt2 = line->v2->fPos() - ViewPos;
 
 	// Reject lines not facing viewer
-	if (DMulScale32 (ty1, tx1-tx2, tx1, ty2-ty1) >= 0)
+	if (pt1.Y * (pt1.X - pt2.X) + pt1.X * (pt2.Y - pt1.Y) >= 0)
 		return;
 
-	if (WallC.Init(tx1, ty1, tx2, ty2, 32))
+	if (WallC.Init(pt1, pt2, 32.0 / (1 << 12)))
 		return;
 
 	if (WallC.sx1 >= WindowRight || WallC.sx2 <= WindowLeft)
@@ -591,17 +589,17 @@ void R_AddLine (seg_t *line)
 		{
 			swapvalues (v1, v2);
 		}
-		WallT.InitFromLine(v1->fixX() - viewx, v1->fixY() - viewy, v2->fixX() - viewx, v2->fixY() - viewy);
+		WallT.InitFromLine(v1->fPos() - ViewPos, v2->fPos() - ViewPos);
 	}
 
 	if (!(fake3D & FAKE3D_FAKEBACK))
 	{
 		backsector = line->backsector;
 	}
-	rw_frontcz1 = frontsector->ceilingplane.ZatPointFixed(line->v1);
-	rw_frontfz1 = frontsector->floorplane.ZatPointFixed(line->v1);
-	rw_frontcz2 = frontsector->ceilingplane.ZatPointFixed(line->v2);
-	rw_frontfz2 = frontsector->floorplane.ZatPointFixed(line->v2);
+	rw_frontcz1 = frontsector->ceilingplane.ZatPoint(line->v1);
+	rw_frontfz1 = frontsector->floorplane.ZatPoint(line->v1);
+	rw_frontcz2 = frontsector->ceilingplane.ZatPoint(line->v2);
+	rw_frontfz2 = frontsector->floorplane.ZatPoint(line->v2);
 
 	rw_mustmarkfloor = rw_mustmarkceiling = false;
 	rw_havehigh = rw_havelow = false;
@@ -620,10 +618,10 @@ void R_AddLine (seg_t *line)
 		}
 		doorclosed = 0;		// killough 4/16/98
 
-		rw_backcz1 = backsector->ceilingplane.ZatPointFixed (line->v1);
-		rw_backfz1 = backsector->floorplane.ZatPointFixed(line->v1);
-		rw_backcz2 = backsector->ceilingplane.ZatPointFixed(line->v2);
-		rw_backfz2 = backsector->floorplane.ZatPointFixed(line->v2);
+		rw_backcz1 = backsector->ceilingplane.ZatPoint(line->v1);
+		rw_backfz1 = backsector->floorplane.ZatPoint(line->v1);
+		rw_backcz2 = backsector->ceilingplane.ZatPoint(line->v2);
+		rw_backfz2 = backsector->floorplane.ZatPoint(line->v2);
 
 		// Cannot make these walls solid, because it can result in
 		// sprite clipping problems for sprites near the wall
@@ -682,28 +680,18 @@ void R_AddLine (seg_t *line)
 			|| curline->sidedef->GetTexture(side_t::mid).isValid()
 
 			// killough 3/7/98: Take flats offsets into account:
-			|| backsector->GetXOffset(sector_t::floor) != frontsector->GetXOffset(sector_t::floor)
-			|| backsector->GetYOffset(sector_t::floor) != frontsector->GetYOffset(sector_t::floor)
-			|| backsector->GetXOffset(sector_t::ceiling) != frontsector->GetXOffset(sector_t::ceiling)
-			|| backsector->GetYOffset(sector_t::ceiling) != frontsector->GetYOffset(sector_t::ceiling)
+			|| backsector->planes[sector_t::floor].xform != frontsector->planes[sector_t::floor].xform
+			|| backsector->planes[sector_t::ceiling].xform != frontsector->planes[sector_t::ceiling].xform
 
 			|| backsector->GetPlaneLight(sector_t::floor) != frontsector->GetPlaneLight(sector_t::floor)
 			|| backsector->GetPlaneLight(sector_t::ceiling) != frontsector->GetPlaneLight(sector_t::ceiling)
-			|| backsector->GetFlags(sector_t::floor) != frontsector->GetFlags(sector_t::floor)
-			|| backsector->GetFlags(sector_t::ceiling) != frontsector->GetFlags(sector_t::ceiling)
+			|| backsector->GetVisFlags(sector_t::floor) != frontsector->GetVisFlags(sector_t::floor)
+			|| backsector->GetVisFlags(sector_t::ceiling) != frontsector->GetVisFlags(sector_t::ceiling)
 
 			// [RH] Also consider colormaps
 			|| backsector->ColorMap != frontsector->ColorMap
 
-			// [RH] and scaling
-			|| backsector->GetXScale(sector_t::floor) != frontsector->GetXScale(sector_t::floor)
-			|| backsector->GetYScale(sector_t::floor) != frontsector->GetYScale(sector_t::floor)
-			|| backsector->GetXScale(sector_t::ceiling) != frontsector->GetXScale(sector_t::ceiling)
-			|| backsector->GetYScale(sector_t::ceiling) != frontsector->GetYScale(sector_t::ceiling)
 
-			// [RH] and rotation
-			|| backsector->GetAngle(sector_t::floor) != frontsector->GetAngle(sector_t::floor)
-			|| backsector->GetAngle(sector_t::ceiling) != frontsector->GetAngle(sector_t::ceiling)
 
 			// kg3D - and fake lights
 			|| (frontsector->e && frontsector->e->XFloor.lightlist.Size())
@@ -773,57 +761,55 @@ void R_AddLine (seg_t *line)
 //
 // Transform and clip coordinates. Returns true if it was clipped away
 //
-bool FWallCoords::Init(int x1, int y1, int x2, int y2, int too_close)
+bool FWallCoords::Init(const DVector2 &pt1, const DVector2 &pt2, double too_close)
 {
-	tx1 = DMulScale20(x1, viewsin, -y1, viewcos);
-	tx2 = DMulScale20(x2, viewsin, -y2, viewcos);
+	tleft.X =  float(pt1.X * ViewSin - pt1.Y * ViewCos);
+	tright.X = float(pt2.X * ViewSin - pt2.Y * ViewCos);
 
-	ty1 = DMulScale20(x1, viewtancos, y1, viewtansin);
-	ty2 = DMulScale20(x2, viewtancos, y2, viewtansin);
+	tleft.Y =  float(pt1.X * ViewTanCos + pt1.Y * ViewTanSin);
+	tright.Y = float(pt2.X * ViewTanCos + pt2.Y * ViewTanSin);
 
 	if (MirrorFlags & RF_XFLIP)
 	{
-		int t = 256 - tx1;
-		tx1 = 256 - tx2;
-		tx2 = t;
-		swapvalues(ty1, ty2);
+		float t = -tleft.X;
+		tleft.X = -tright.X;
+		tright.X = t;
+		swapvalues(tleft.Y, tright.Y);
 	}
 
-	if (tx1 >= -ty1)
+	if (tleft.X >= -tleft.Y)
 	{
-		if (tx1 > ty1) return true;	// left edge is off the right side
-		if (ty1 == 0) return true;
-		sx1 = (centerxfrac + Scale(tx1, centerxfrac, ty1)) >> FRACBITS;
-		if (tx1 >= 0) sx1 = MIN(viewwidth, sx1+1); // fix for signed divide
-		sz1 = ty1;
+		if (tleft.X > tleft.Y) return true;	// left edge is off the right side
+		if (tleft.Y == 0) return true;
+		sx1 = xs_RoundToInt(CenterX + tleft.X * CenterX / tleft.Y);
+		sz1 = tleft.Y;
 	}
 	else
 	{
-		if (tx2 < -ty2) return true;	// wall is off the left side
-		fixed_t den = tx1 - tx2 - ty2 + ty1;	
+		if (tright.X < -tright.Y) return true;	// wall is off the left side
+		float den = tleft.X - tright.X - tright.Y + tleft.Y;
 		if (den == 0) return true;
 		sx1 = 0;
-		sz1 = ty1 + Scale(ty2 - ty1, tx1 + ty1, den);
+		sz1 = tleft.Y + (tright.Y - tleft.Y) * (tleft.X + tleft.Y) / den;
 	}
 
 	if (sz1 < too_close)
 		return true;
 
-	if (tx2 <= ty2)
+	if (tright.X <= tright.Y)
 	{
-		if (tx2 < -ty2) return true;	// right edge is off the left side
-		if (ty2 == 0) return true;
-		sx2 = (centerxfrac + Scale(tx2, centerxfrac, ty2)) >> FRACBITS;
-		if (tx2 >= 0) sx2 = MIN(viewwidth, sx2+1);	// fix for signed divide
-		sz2 = ty2;
+		if (tright.X < -tright.Y) return true;	// right edge is off the left side
+		if (tright.Y == 0) return true;
+		sx2 = xs_RoundToInt(CenterX + tright.X * CenterX / tright.Y);
+		sz2 = tright.Y;
 	}
 	else
 	{
-		if (tx1 > ty1) return true;	// wall is off the right side
-		fixed_t den = ty2 - ty1 - tx2 + tx1;
+		if (tleft.X > tleft.Y) return true;	// wall is off the right side
+		float den = tright.Y - tleft.Y - tright.X + tleft.X;
 		if (den == 0) return true;
 		sx2 = viewwidth;
-		sz2 = ty1 + Scale(ty2 - ty1, tx1 - ty1, den);
+		sz2 = tleft.Y + (tright.Y - tleft.Y) * (tleft.X - tleft.Y) / den;
 	}
 
 	if (sz2 < too_close || sx2 <= sx1)
@@ -834,28 +820,25 @@ bool FWallCoords::Init(int x1, int y1, int x2, int y2, int too_close)
 
 void FWallTmapVals::InitFromWallCoords(const FWallCoords *wallc)
 {
+	const FVector2 *left = &wallc->tleft;
+	const FVector2 *right = &wallc->tright;
+
 	if (MirrorFlags & RF_XFLIP)
 	{
-		UoverZorg = (float)wallc->tx2 * centerx;
-		UoverZstep = (float)(-wallc->ty2);
-		InvZorg = (float)(wallc->tx2 - wallc->tx1) * centerx;
-		InvZstep = (float)(wallc->ty1 - wallc->ty2);
+		swapvalues(left, right);
 	}
-	else
-	{
-		UoverZorg = (float)wallc->tx1 * centerx;
-		UoverZstep = (float)(-wallc->ty1);
-		InvZorg = (float)(wallc->tx1 - wallc->tx2) * centerx;
-		InvZstep = (float)(wallc->ty2 - wallc->ty1);
-	}
+	UoverZorg = left->X * centerx;
+	UoverZstep = -left->Y;
+	InvZorg = (left->X - right->X) * centerx;
+	InvZstep = right->Y - left->Y;
 }
 
-void FWallTmapVals::InitFromLine(int tx1, int ty1, int tx2, int ty2)
+void FWallTmapVals::InitFromLine(const DVector2 &left, const DVector2 &right)
 { // Coordinates should have already had viewx,viewy subtracted
-	fixed_t fullx1 = DMulScale20 (tx1, viewsin, -ty1, viewcos);
-	fixed_t fullx2 = DMulScale20 (tx2, viewsin, -ty2, viewcos);
-	fixed_t fully1 = DMulScale20 (tx1, viewtancos, ty1, viewtansin);
-	fixed_t fully2 = DMulScale20 (tx2, viewtancos, ty2, viewtansin);
+	double fullx1 = left.X * ViewSin - left.Y * ViewCos;
+	double fullx2 = right.X * ViewSin - right.Y * ViewCos;
+	double fully1 = left.X * ViewTanCos + left.Y * ViewTanSin;
+	double fully2 = right.X * ViewTanCos + right.Y * ViewTanSin;
 
 	if (MirrorFlags & RF_XFLIP)
 	{
@@ -863,10 +846,10 @@ void FWallTmapVals::InitFromLine(int tx1, int ty1, int tx2, int ty2)
 		fullx2 = -fullx2;
 	}
 
-	UoverZorg = (float)fullx1 * centerx;
-	UoverZstep = (float)(-fully1);
-	InvZorg = (float)(fullx1 - fullx2) * centerx;
-	InvZstep = (float)(fully2 - fully1);
+	UoverZorg = float(fullx1 * centerx);
+	UoverZstep = float(-fully1);
+	InvZorg = float((fullx1 - fullx2) * centerx);
+	InvZstep = float(fully2 - fully1);
 }
 
 //
@@ -896,24 +879,24 @@ static bool R_CheckBBox (fixed_t *bspcoord)	// killough 1/28/98: static
 	int 				boxy;
 	int 				boxpos;
 
-	fixed_t 			x1, y1, x2, y2;
-	fixed_t				rx1, ry1, rx2, ry2;
+	double	 			x1, y1, x2, y2;
+	double				rx1, ry1, rx2, ry2;
 	int					sx1, sx2;
 	
 	cliprange_t*		start;
 
 	// Find the corners of the box
 	// that define the edges from current viewpoint.
-	if (viewx <= bspcoord[BOXLEFT])
+	if (ViewPos.X <= FIXED2DBL(bspcoord[BOXLEFT]))
 		boxx = 0;
-	else if (viewx < bspcoord[BOXRIGHT])
+	else if (ViewPos.X < FIXED2DBL(bspcoord[BOXRIGHT]))
 		boxx = 1;
 	else
 		boxx = 2;
 
-	if (viewy >= bspcoord[BOXTOP])
+	if (ViewPos.Y >= FIXED2DBL(bspcoord[BOXTOP]))
 		boxy = 0;
-	else if (viewy > bspcoord[BOXBOTTOM])
+	else if (ViewPos.Y > FIXED2DBL(bspcoord[BOXBOTTOM]))
 		boxy = 1;
 	else
 		boxy = 2;
@@ -922,36 +905,35 @@ static bool R_CheckBBox (fixed_t *bspcoord)	// killough 1/28/98: static
 	if (boxpos == 5)
 		return true;
 
-	x1 = bspcoord[checkcoord[boxpos][0]] - viewx;
-	y1 = bspcoord[checkcoord[boxpos][1]] - viewy;
-	x2 = bspcoord[checkcoord[boxpos][2]] - viewx;
-	y2 = bspcoord[checkcoord[boxpos][3]] - viewy;
+	x1 = FIXED2DBL(bspcoord[checkcoord[boxpos][0]]) - ViewPos.X;
+	y1 = FIXED2DBL(bspcoord[checkcoord[boxpos][1]]) - ViewPos.Y;
+	x2 = FIXED2DBL(bspcoord[checkcoord[boxpos][2]]) - ViewPos.X;
+	y2 = FIXED2DBL(bspcoord[checkcoord[boxpos][3]]) - ViewPos.Y;
 
 	// check clip list for an open space
 
 	// Sitting on a line?
-	if (DMulScale32 (y1, x1-x2, x1, y2-y1) >= 0)
+	if (y1 * (x1 - x2) + x1 * (y2 - y1) >= -EQUAL_EPSILON)
 		return true;
 
-	rx1 = DMulScale20 (x1, viewsin, -y1, viewcos);
-	rx2 = DMulScale20 (x2, viewsin, -y2, viewcos);
-	ry1 = DMulScale20 (x1, viewtancos, y1, viewtansin);
-	ry2 = DMulScale20 (x2, viewtancos, y2, viewtansin);
+	rx1 = x1 * ViewSin - y1 * ViewCos;
+	rx2 = x2 * ViewSin - y2 * ViewCos;
+	ry1 = x1 * ViewTanCos + y1 * ViewTanSin;
+	ry2 = x2 * ViewTanCos + y2 * ViewTanSin;
 
 	if (MirrorFlags & RF_XFLIP)
 	{
-		int t = 256-rx1;
-		rx1 = 256-rx2;
+		double t = -rx1;
+		rx1 = -rx2;
 		rx2 = t;
-		swapvalues (ry1, ry2);
+		swapvalues(ry1, ry2);
 	}
 
 	if (rx1 >= -ry1)
 	{
 		if (rx1 > ry1) return false;	// left edge is off the right side
 		if (ry1 == 0) return false;
-		sx1 = (centerxfrac + Scale (rx1, centerxfrac, ry1)) >> FRACBITS;
-		if (rx1 >= 0) sx1 = MIN<int> (viewwidth, sx1+1);	// fix for signed divide
+		sx1 = xs_RoundToInt(CenterX + rx1 * CenterX / ry1);
 	}
 	else
 	{
@@ -964,8 +946,7 @@ static bool R_CheckBBox (fixed_t *bspcoord)	// killough 1/28/98: static
 	{
 		if (rx2 < -ry2) return false;	// right edge is off the left side
 		if (ry2 == 0) return false;
-		sx2 = (centerxfrac + Scale (rx2, centerxfrac, ry2)) >> FRACBITS;
-		if (rx2 >= 0) sx2 = MIN<int> (viewwidth, sx2+1);	// fix for signed divide
+		sx2 = xs_RoundToInt(CenterX + rx2 * CenterX / ry2);
 	}
 	else
 	{
@@ -1116,7 +1097,7 @@ void R_Subsector (subsector_t *sub)
 
 	portal = frontsector->ValidatePortal(sector_t::ceiling);
 
-	ceilingplane = frontsector->ceilingplane.PointOnSide(viewx, viewy, viewz) > 0 ||
+	ceilingplane = frontsector->ceilingplane.PointOnSide(ViewPos) > 0 ||
 		frontsector->GetTexture(sector_t::ceiling) == skyflatnum ||
 		portal != NULL ||
 		(frontsector->heightsec && 
@@ -1127,11 +1108,7 @@ void R_Subsector (subsector_t *sub)
 					ceilinglightlevel + r_actualextralight,				// killough 4/11/98
 					frontsector->GetAlpha(sector_t::ceiling),
 					!!(frontsector->GetFlags(sector_t::ceiling) & PLANEF_ADDITIVE),
-					frontsector->GetXOffset(sector_t::ceiling),		// killough 3/7/98
-					frontsector->GetYOffset(sector_t::ceiling),		// killough 3/7/98
-					frontsector->GetXScale(sector_t::ceiling),
-					frontsector->GetYScale(sector_t::ceiling),
-					frontsector->GetAngle(sector_t::ceiling),
+					frontsector->planes[sector_t::ceiling].xform,
 					frontsector->sky,
 					portal
 					) : NULL;
@@ -1157,7 +1134,7 @@ void R_Subsector (subsector_t *sub)
 	// killough 10/98: add support for skies transferred from sidedefs
 	portal = frontsector->ValidatePortal(sector_t::floor);
 
-	floorplane = frontsector->floorplane.PointOnSide(viewx, viewy, viewz) > 0 || // killough 3/7/98
+	floorplane = frontsector->floorplane.PointOnSide(ViewPos) > 0 || // killough 3/7/98
 		frontsector->GetTexture(sector_t::floor) == skyflatnum ||
 		portal != NULL ||
 		(frontsector->heightsec &&
@@ -1168,11 +1145,7 @@ void R_Subsector (subsector_t *sub)
 					floorlightlevel + r_actualextralight,				// killough 3/16/98
 					frontsector->GetAlpha(sector_t::floor),
 					!!(frontsector->GetFlags(sector_t::floor) & PLANEF_ADDITIVE),
-					frontsector->GetXOffset(sector_t::floor),		// killough 3/7/98
-					frontsector->GetYOffset(sector_t::floor),		// killough 3/7/98
-					frontsector->GetXScale(sector_t::floor),
-					frontsector->GetYScale(sector_t::floor),
-					frontsector->GetAngle(sector_t::floor),
+					frontsector->planes[sector_t::floor].xform,
 					frontsector->sky,
 					portal
 					) : NULL;
@@ -1230,11 +1203,7 @@ void R_Subsector (subsector_t *sub)
 					floorlightlevel + r_actualextralight,				// killough 3/16/98
 					frontsector->GetAlpha(sector_t::floor),
 					!!(fakeFloor->flags & FF_ADDITIVETRANS),
-					frontsector->GetXOffset(position),		// killough 3/7/98
-					frontsector->GetYOffset(position),		// killough 3/7/98
-					frontsector->GetXScale(position),
-					frontsector->GetYScale(position),
-					frontsector->GetAngle(position),
+					frontsector->planes[position].xform,
 					frontsector->sky,
 					NULL);
 
@@ -1295,11 +1264,7 @@ void R_Subsector (subsector_t *sub)
 					ceilinglightlevel + r_actualextralight,				// killough 4/11/98
 					frontsector->GetAlpha(sector_t::ceiling),
 					!!(fakeFloor->flags & FF_ADDITIVETRANS),
-					frontsector->GetXOffset(position),		// killough 3/7/98
-					frontsector->GetYOffset(position),		// killough 3/7/98
-					frontsector->GetXScale(position),
-					frontsector->GetYScale(position),
-					frontsector->GetAngle(position),
+					frontsector->planes[position].xform,
 					frontsector->sky,
 					NULL);
 
@@ -1408,7 +1373,7 @@ void R_RenderBSPNode (void *node)
 		node_t *bsp = (node_t *)node;
 
 		// Decide which side the view point is on.
-		int side = R_PointOnSide (viewx, viewy, bsp);
+		int side = R_PointOnSide (ViewPos, bsp);
 
 		// Recursively divide front space (toward the viewer).
 		R_RenderBSPNode (bsp->children[side]);

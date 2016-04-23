@@ -30,17 +30,17 @@
 // The 3072 below is just an arbitrary value picked to avoid
 // drawing lines the player is too close to that would overflow
 // the texture calculations.
-#define TOO_CLOSE_Z 3072
+#define TOO_CLOSE_Z (3072.0 / (1<<12))
 
 struct FWallCoords
 {
-	fixed_t		tx1, tx2;	// x coords at left, right of wall in view space	rx1,rx2
-	fixed_t		ty1, ty2;	// y coords at left, right of wall in view space	ry1,ry2
+	FVector2	tleft;		// coords at left of wall in view space				rx1,ry1
+	FVector2	tright;		// coords at right of wall in view space			rx2,ry2
 
+	float		sz1, sz2;	// depth at left, right of wall in screen space		yb1,yb2
 	short		sx1, sx2;	// x coords at left, right of wall in screen space	xb1,xb2
-	fixed_t		sz1, sz2;	// depth at left, right of wall in screen space		yb1,yb2
 
-	bool Init(int x1, int y1, int x2, int y2, int too_close);
+	bool Init(const DVector2 &pt1, const DVector2 &pt2, double too_close);
 };
 
 struct FWallTmapVals
@@ -49,7 +49,7 @@ struct FWallTmapVals
 	float		InvZorg, InvZstep;
 
 	void InitFromWallCoords(const FWallCoords *wallc);
-	void InitFromLine(int x1, int y1, int x2, int y2);
+	void InitFromLine(const DVector2 &left, const DVector2 &right);
 };
 
 extern FWallCoords WallC;
@@ -65,14 +65,14 @@ enum
 struct drawseg_t
 {
 	seg_t*		curline;
-	fixed_t		light, lightstep;
-	fixed_t		iscale, iscalestep;
+	float		light, lightstep;
+	float		iscale, iscalestep;
 	short 		x1, x2;			// Same as sx1 and sx2, but clipped to the drawseg
 	short		sx1, sx2;		// left, right of parent seg on screen
-	fixed_t		sz1, sz2;		// z for left, right of parent seg on screen
-	fixed_t		siz1, siz2;		// 1/z for left, right of parent seg on screen
-	fixed_t		cx, cy, cdx, cdy;
-	fixed_t		yrepeat;
+	float		sz1, sz2;		// z for left, right of parent seg on screen
+	float		siz1, siz2;		// 1/z for left, right of parent seg on screen
+	float		cx, cy, cdx, cdy;
+	float		yscale;
 	BYTE 		silhouette;		// 0=none, 1=bottom, 2=top, 3=both
 	BYTE		bFogBoundary;
 	BYTE		bFakeBoundary;		// for fake walls
@@ -82,7 +82,7 @@ struct drawseg_t
 	ptrdiff_t	sprtopclip; 		// type short
 	ptrdiff_t	sprbottomclip;		// type short
 	ptrdiff_t	maskedtexturecol;	// type short
-	ptrdiff_t	swall;				// type fixed_t
+	ptrdiff_t	swall;				// type float
 	int fake;	// ident fake drawseg, don't draw and clip sprites
 // backups
 	ptrdiff_t	bkup;	// sprtopclip backup, for mid and fake textures

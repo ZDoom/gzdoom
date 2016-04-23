@@ -231,8 +231,8 @@ bool P_GetMidTexturePosition(const line_t *line, int sideno, double *ptextop, do
 	FTexture * tex= TexMan(texnum);
 	if (!tex) return false;
 
-	double totalscale = fabs(side->GetTextureYScaleF(side_t::mid)) * tex->GetScaleY();
-	double y_offset = side->GetTextureYOffsetF(side_t::mid);
+	double totalscale = fabs(side->GetTextureYScale(side_t::mid)) * tex->GetScaleY();
+	double y_offset = side->GetTextureYOffset(side_t::mid);
 	double textureheight = tex->GetHeight() / totalscale;
 	if (totalscale != 1. && !tex->bWorldPanning)
 	{ 

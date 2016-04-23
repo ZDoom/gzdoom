@@ -64,7 +64,7 @@ CVAR(Bool, r_np2, true, 0)
 #define HEIGHTBITS 12
 #define HEIGHTSHIFT (FRACBITS-HEIGHTBITS)
 
-extern fixed_t globaluclip, globaldclip;
+extern double globaluclip, globaldclip;
 
 PortalDrawseg* CurrentPortal = NULL;
 int CurrentPortalUniq = 0;
@@ -91,17 +91,17 @@ short	walltop[MAXWIDTH];	// [RH] record max extents of wall
 short	wallbottom[MAXWIDTH];
 short	wallupper[MAXWIDTH];
 short	walllower[MAXWIDTH];
-fixed_t	swall[MAXWIDTH];
+float	swall[MAXWIDTH];
 fixed_t	lwall[MAXWIDTH];
-fixed_t	lwallscale;
+double	lwallscale;
 
 //
 // regular wall
 //
-extern fixed_t	rw_backcz1, rw_backcz2;
-extern fixed_t	rw_backfz1, rw_backfz2;
-extern fixed_t	rw_frontcz1, rw_frontcz2;
-extern fixed_t	rw_frontfz1, rw_frontfz2;
+extern double	rw_backcz1, rw_backcz2;
+extern double	rw_backfz1, rw_backfz2;
+extern double	rw_frontcz1, rw_frontcz2;
+extern double	rw_frontfz1, rw_frontfz2;
 
 int				rw_ceilstat, rw_floorstat;
 bool			rw_mustmarkfloor, rw_mustmarkceiling;
@@ -110,25 +110,25 @@ bool			rw_markportal;
 bool			rw_havehigh;
 bool			rw_havelow;
 
-fixed_t			rw_light;		// [RH] Scale lights with viewsize adjustments
-fixed_t			rw_lightstep;
-fixed_t			rw_lightleft;
+float			rw_light;		// [RH] Scale lights with viewsize adjustments
+float			rw_lightstep;
+float			rw_lightleft;
 
-static fixed_t	rw_frontlowertop;
+static double	rw_frontlowertop;
 
 static int		rw_x;
 static int		rw_stopx;
 fixed_t			rw_offset;
-static fixed_t	rw_scalestep;
-static fixed_t	rw_midtexturemid;
-static fixed_t	rw_toptexturemid;
-static fixed_t	rw_bottomtexturemid;
-static fixed_t	rw_midtexturescalex;
-static fixed_t	rw_midtexturescaley;
-static fixed_t	rw_toptexturescalex;
-static fixed_t	rw_toptexturescaley;
-static fixed_t	rw_bottomtexturescalex;
-static fixed_t	rw_bottomtexturescaley;
+static double	rw_scalestep;
+static double	rw_midtexturemid;
+static double	rw_toptexturemid;
+static double	rw_bottomtexturemid;
+static double	rw_midtexturescalex;
+static double	rw_midtexturescaley;
+static double	rw_toptexturescalex;
+static double	rw_toptexturescaley;
+static double	rw_bottomtexturescalex;
+static double	rw_bottomtexturescaley;
 
 FTexture		*rw_pic;
 
@@ -136,9 +136,9 @@ static fixed_t	*maskedtexturecol;
 
 static void R_RenderDecal (side_t *wall, DBaseDecal *first, drawseg_t *clipper, int pass);
 static void WallSpriteColumn (void (*drawfunc)(const BYTE *column, const FTexture::Span *spans));
-void wallscan_np2(int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal, fixed_t yrepeat, fixed_t top, fixed_t bot, bool mask);
-static void wallscan_np2_ds(drawseg_t *ds, int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal, fixed_t yrepeat);
-static void call_wallscan(int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal, fixed_t yrepeat, bool mask);
+void wallscan_np2(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, double top, double bot, bool mask);
+static void wallscan_np2_ds(drawseg_t *ds, int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat);
+static void call_wallscan(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, bool mask);
 
 //=============================================================================
 //
@@ -169,8 +169,8 @@ CVAR(Bool, r_drawmirrors, true, 0)
 //
 // R_RenderMaskedSegRange
 //
-fixed_t *MaskedSWall;
-fixed_t MaskedScaleY;
+float *MaskedSWall;
+float MaskedScaleY;
 
 static void BlastMaskedColumn (void (*blastfunc)(const BYTE *pixels, const FTexture::Span *spans), FTexture *tex)
 {
@@ -180,11 +180,11 @@ static void BlastMaskedColumn (void (*blastfunc)(const BYTE *pixels, const FText
 		dc_colormap = basecolormap->Maps + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
 	}
 
-	dc_iscale = MulScale18 (MaskedSWall[dc_x], MaskedScaleY);
+	dc_iscale = xs_Fix<16>::ToFix(MaskedSWall[dc_x] * MaskedScaleY);
  	if (sprflipvert)
-		sprtopscreen = centeryfrac + FixedMul(dc_texturemid, spryscale);
+		sprtopscreen = CenterY + dc_texturemid * spryscale;
 	else
-		sprtopscreen = centeryfrac - FixedMul(dc_texturemid, spryscale);
+		sprtopscreen = CenterY - dc_texturemid * spryscale;
 	
 	// killough 1/25/98: here's where Medusa came in, because
 	// it implicitly assumed that the column was all one patch.
@@ -228,9 +228,9 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	FTexture	*tex;
 	int			i;
 	sector_t	tempsec;		// killough 4/13/98
-	fixed_t		texheight, texheightscale;
+	double		texheight, texheightscale;
 	bool		notrelevant = false;
-	fixed_t		rowoffset;
+	double		rowoffset;
 
 	const sector_t *sec;
 
@@ -274,7 +274,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	{
 		if (!(fake3D & FAKE3D_CLIPTOP))
 		{
-			sclipTop = sec->ceilingplane.ZatPointFixed(viewx, viewy);
+			sclipTop = sec->ceilingplane.ZatPoint(ViewPos);
 		}
 		for (i = frontsector->e->XFloor.lightlist.Size() - 1; i >= 0; i--)
 		{
@@ -305,8 +305,8 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 		goto clearfog;
 	}
 
-	MaskedSWall = (fixed_t *)(openings + ds->swall) - ds->x1;
-	MaskedScaleY = ds->yrepeat;
+	MaskedSWall = (float *)(openings + ds->swall) - ds->x1;
+	MaskedScaleY = ds->yscale;
 	maskedtexturecol = (fixed_t *)(openings + ds->maskedtexturecol) - ds->x1;
 	spryscale = ds->iscale + ds->iscalestep * (x1 - ds->x1);
 	rw_scalestep = ds->iscalestep;
@@ -317,19 +317,19 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 		dc_colormap = fixedcolormap;
 
 	// find positioning
-	texheight = tex->GetScaledHeight() << FRACBITS;
-	texheightscale = abs(curline->sidedef->GetTextureYScale(side_t::mid));
-	if (texheightscale != FRACUNIT)
+	texheight = tex->GetScaledHeightDouble();
+	texheightscale = fabs(curline->sidedef->GetTextureYScale(side_t::mid));
+	if (texheightscale != 1)
 	{
-		texheight = FixedDiv(texheight, texheightscale);
+		texheight = texheight / texheightscale;
 	}
 	if (curline->linedef->flags & ML_DONTPEGBOTTOM)
 	{
-		dc_texturemid = MAX (frontsector->GetPlaneTexZ(sector_t::floor), backsector->GetPlaneTexZ(sector_t::floor)) + texheight;
+		dc_texturemid = MAX(frontsector->GetPlaneTexZF(sector_t::floor), backsector->GetPlaneTexZF(sector_t::floor)) + texheight;
 	}
 	else
 	{
-		dc_texturemid = MIN (frontsector->GetPlaneTexZ(sector_t::ceiling), backsector->GetPlaneTexZ(sector_t::ceiling));
+		dc_texturemid = MIN(frontsector->GetPlaneTexZF(sector_t::ceiling), backsector->GetPlaneTexZF(sector_t::ceiling));
 	}
 
 	rowoffset = curline->sidedef->GetTextureYOffset(side_t::mid);
@@ -337,7 +337,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	if (!(curline->linedef->flags & ML_WRAP_MIDTEX) &&
 		!(curline->sidedef->Flags & WALLF_WRAP_MIDTEX))
 	{ // Texture does not wrap vertically.
-		fixed_t textop;
+		double textop;
 
 		if (MaskedScaleY < 0)
 		{
@@ -346,18 +346,18 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 		}
 		if (tex->bWorldPanning)
 		{
-			// rowoffset is added before the MulScale3 so that the masked texture will
+			// rowoffset is added before the multiply so that the masked texture will
 			// still be positioned in world units rather than texels.
-			dc_texturemid += rowoffset - viewz;
+			dc_texturemid += rowoffset - ViewPos.Z;
 			textop = dc_texturemid;
-			dc_texturemid = MulScale16 (dc_texturemid, MaskedScaleY);
+			dc_texturemid *= MaskedScaleY;
 		}
 		else
 		{
 			// rowoffset is added outside the multiply so that it positions the texture
 			// by texels instead of world units.
-			textop = dc_texturemid - viewz + SafeDivScale16 (rowoffset, MaskedScaleY);
-			dc_texturemid = MulScale16 (dc_texturemid - viewz, MaskedScaleY) + rowoffset;
+			textop = dc_texturemid + rowoffset / MaskedScaleY - ViewPos.Z;
+			dc_texturemid = (dc_texturemid - ViewPos.Z) * MaskedScaleY + rowoffset;
 		}
 		if (sprflipvert)
 		{
@@ -366,24 +366,22 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 		}
 
 		// [RH] Don't bother drawing segs that are completely offscreen
-		if (MulScale12 (globaldclip, ds->sz1) < -textop &&
-			MulScale12 (globaldclip, ds->sz2) < -textop)
+		if (globaldclip * ds->sz1 < -textop && globaldclip * ds->sz2 < -textop)
 		{ // Texture top is below the bottom of the screen
 			goto clearfog;
 		}
 
-		if (MulScale12 (globaluclip, ds->sz1) > texheight - textop &&
-			MulScale12 (globaluclip, ds->sz2) > texheight - textop)
+		if (globaluclip * ds->sz1 > texheight - textop && globaluclip * ds->sz2 > texheight - textop)
 		{ // Texture bottom is above the top of the screen
 			goto clearfog;
 		}
 
-		if ((fake3D & FAKE3D_CLIPBOTTOM) && textop < sclipBottom - viewz)
+		if ((fake3D & FAKE3D_CLIPBOTTOM) && textop < sclipBottom - ViewPos.Z)
 		{
 			notrelevant = true;
 			goto clearfog;
 		}
-		if ((fake3D & FAKE3D_CLIPTOP) && textop - texheight > sclipTop - viewz)
+		if ((fake3D & FAKE3D_CLIPTOP) && textop - texheight > sclipTop - ViewPos.Z)
 		{
 			notrelevant = true;
 			goto clearfog;
@@ -396,7 +394,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 
 		if (fake3D & FAKE3D_CLIPTOP)
 		{
-			OWallMost(wallupper, textop < sclipTop - viewz ? textop : sclipTop - viewz, &WallC);
+			OWallMost(wallupper, textop < sclipTop - ViewPos.Z ? textop : sclipTop - ViewPos.Z, &WallC);
 		}
 		else
 		{
@@ -404,7 +402,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 		}
 		if (fake3D & FAKE3D_CLIPBOTTOM)
 		{
-			OWallMost(walllower, textop - texheight > sclipBottom - viewz ? textop - texheight : sclipBottom - viewz, &WallC);
+			OWallMost(walllower, textop - texheight > sclipBottom - ViewPos.Z ? textop - texheight : sclipBottom - ViewPos.Z, &WallC);
 		}
 		else
 		{
@@ -482,16 +480,15 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	{ // Texture does wrap vertically.
 		if (tex->bWorldPanning)
 		{
-			// rowoffset is added before the MulScale3 so that the masked texture will
+			// rowoffset is added before the multiply so that the masked texture will
 			// still be positioned in world units rather than texels.
-			dc_texturemid += rowoffset - viewz;
-			dc_texturemid = MulScale16 (dc_texturemid, MaskedScaleY);
+			dc_texturemid = (dc_texturemid + rowoffset - ViewPos.Z) * MaskedScaleY;
 		}
 		else
 		{
 			// rowoffset is added outside the multiply so that it positions the texture
 			// by texels instead of world units.
-			dc_texturemid = MulScale16 (dc_texturemid - viewz, MaskedScaleY) + rowoffset;
+			dc_texturemid = (dc_texturemid - ViewPos.Z) * MaskedScaleY + rowoffset;
 		}
 
 		WallC.sz1 = ds->sz1;
@@ -512,7 +509,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 
 		if (fake3D & FAKE3D_CLIPTOP)
 		{
-			OWallMost(wallupper, sclipTop - viewz, &WallC);
+			OWallMost(wallupper, sclipTop - ViewPos.Z, &WallC);
 			for (i = x1; i < x2; i++)
 			{
 				if (wallupper[i] < mceilingclip[i])
@@ -522,7 +519,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 		}
 		if (fake3D & FAKE3D_CLIPBOTTOM)
 		{
-			OWallMost(walllower, sclipBottom - viewz, &WallC);
+			OWallMost(walllower, sclipBottom - ViewPos.Z, &WallC);
 			for (i = x1; i < x2; i++)
 			{
 				if (walllower[i] > mfloorclip[i])
@@ -533,7 +530,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 
 		rw_offset = 0;
 		rw_pic = tex;
-		wallscan_np2_ds(ds, x1, x2, mceilingclip, mfloorclip, MaskedSWall, maskedtexturecol, ds->yrepeat);
+		wallscan_np2_ds(ds, x1, x2, mceilingclip, mfloorclip, MaskedSWall, maskedtexturecol, ds->yscale);
 	}
 
 clearfog:
@@ -561,7 +558,8 @@ clearfog:
 void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover)
 {
 	int i;
-	fixed_t xscale, yscale;
+	fixed_t xscale;
+	double yscale;
 
 	fixed_t Alpha = Scale(rover->alpha, OPAQUE, 255);
 	ESPSResult drawmode;
@@ -581,7 +579,7 @@ void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover)
 
 	spryscale = ds->iscale + ds->iscalestep * (x1 - ds->x1);
 	rw_scalestep = ds->iscalestep;
-	MaskedSWall = (fixed_t *)(openings + ds->swall) - ds->x1;
+	MaskedSWall = (float *)(openings + ds->swall) - ds->x1;
 
 	// find positioning
 	side_t *scaledside;
@@ -601,29 +599,30 @@ void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover)
 		scaledside = rover->master->sidedef[0];
 		scaledpart = side_t::mid;
 	}
-	xscale = fixed_t(rw_pic->Scale.X * scaledside->GetTextureXScale(scaledpart));
-	yscale = fixed_t(rw_pic->Scale.Y * scaledside->GetTextureYScale(scaledpart));
+	xscale = FLOAT2FIXED(rw_pic->Scale.X * scaledside->GetTextureXScale(scaledpart));
+	yscale = rw_pic->Scale.Y * scaledside->GetTextureYScale(scaledpart);
 
-	fixed_t rowoffset = curline->sidedef->GetTextureYOffset(side_t::mid) + rover->master->sidedef[0]->GetTextureYOffset(side_t::mid);
-	dc_texturemid = rover->model->GetPlaneTexZ(sector_t::ceiling);
-	rw_offset = curline->sidedef->GetTextureXOffset(side_t::mid) + rover->master->sidedef[0]->GetTextureXOffset(side_t::mid);
+	double rowoffset = curline->sidedef->GetTextureYOffset(side_t::mid) + rover->master->sidedef[0]->GetTextureYOffset(side_t::mid);
+	double planez = rover->model->GetPlaneTexZF(sector_t::ceiling);
+	rw_offset = FLOAT2FIXED(curline->sidedef->GetTextureXOffset(side_t::mid) + rover->master->sidedef[0]->GetTextureXOffset(side_t::mid));
 	if (rowoffset < 0)
 	{
-		rowoffset += rw_pic->GetHeight() << FRACBITS;
+		rowoffset += rw_pic->GetHeight();
 	}
+	dc_texturemid = (planez - ViewPos.Z) * yscale;
 	if (rw_pic->bWorldPanning)
 	{
-		// rowoffset is added before the MulScale3 so that the masked texture will
+		// rowoffset is added before the multiply so that the masked texture will
 		// still be positioned in world units rather than texels.
 
-		dc_texturemid = MulScale16(dc_texturemid - viewz + rowoffset, yscale);
+		dc_texturemid = dc_texturemid + rowoffset * yscale;
 		rw_offset = MulScale16 (rw_offset, xscale);
 	}
 	else
 	{
 		// rowoffset is added outside the multiply so that it positions the texture
 		// by texels instead of world units.
-		dc_texturemid = MulScale16(dc_texturemid - viewz, yscale) + rowoffset;
+		dc_texturemid += rowoffset;
 	}
 
 	if (fixedlightlev >= 0)
@@ -635,14 +634,14 @@ void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover)
 	WallC.sz2 = ds->sz2;
 	WallC.sx1 = ds->sx1;
 	WallC.sx2 = ds->sx2;
-	WallC.tx1 = ds->cx;
-	WallC.ty1 = ds->cy;
-	WallC.tx2 = ds->cx + ds->cdx;
-	WallC.ty2 = ds->cy + ds->cdy;
+	WallC.tleft.X = ds->cx;
+	WallC.tleft.Y = ds->cy;
+	WallC.tright.X = ds->cx + ds->cdx;
+	WallC.tright.Y = ds->cy + ds->cdy;
 	WallT = ds->tmapvals;
 
-	OWallMost(wallupper, sclipTop - viewz, &WallC);
-	OWallMost(walllower, sclipBottom - viewz, &WallC);
+	OWallMost(wallupper, sclipTop - ViewPos.Z, &WallC);
+	OWallMost(walllower, sclipBottom - ViewPos.Z, &WallC);
 
 	for (i = x1; i < x2; i++)
 	{
@@ -1074,15 +1073,16 @@ inline fixed_t prevline1 (fixed_t vince, BYTE *colormap, int count, fixed_t vplc
 	return doprevline1 ();
 }
 
-void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal,
-			   fixed_t yrepeat, const BYTE *(*getcol)(FTexture *tex, int x))
+void wallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal,
+			   double yrepeat, const BYTE *(*getcol)(FTexture *tex, int x))
 {
-	int x, shiftval;
+	int x, fracbits;
 	int y1ve[4], y2ve[4], u4, d4, z;
 	char bad;
-	fixed_t light = rw_light - rw_lightstep;
-	SDWORD texturemid, xoffset;
+	float light = rw_light - rw_lightstep;
+	SDWORD xoffset;
 	BYTE *basecolormapdata;
+	double iscale;
 
 	// This function also gets used to draw skies. Unlike BUILD, skies are
 	// drawn by visplane instead of by bunch, so these checks are invalid.
@@ -1098,10 +1098,8 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 //clock (WallScanCycles);
 
 	rw_pic->GetHeight();	// Make sure texture size is loaded
-	shiftval = rw_pic->HeightBits;
-	setupvline (32-shiftval);
-	yrepeat >>= 2 + shiftval;
-	texturemid = dc_texturemid << (16 - shiftval);
+	fracbits = 32 - rw_pic->HeightBits;
+	setupvline(fracbits);
 	xoffset = rw_offset;
 	basecolormapdata = basecolormap->Maps;
 
@@ -1133,9 +1131,10 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 
 		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
 		dc_dest = ylookup[y1ve[0]] + x + dc_destorg;
-		dc_iscale = swal[x] * yrepeat;
 		dc_count = y2ve[0] - y1ve[0];
-		dc_texturefrac = texturemid + FixedMul (dc_iscale, (y1ve[0]<<FRACBITS)-centeryfrac+FRACUNIT);
+		iscale = swal[x] * yrepeat;
+		dc_iscale = xs_ToFixed(fracbits, iscale);
+		dc_texturefrac = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[0] - CenterY + 1));
 
 		dovline1();
 	}
@@ -1152,12 +1151,13 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 			assert (y2ve[z] <= viewheight);
 
 			bufplce[z] = getcol (rw_pic, (lwal[x+z] + xoffset) >> FRACBITS);
-			vince[z] = swal[x+z] * yrepeat;
-			vplce[z] = texturemid + FixedMul (vince[z], (y1ve[z]<<FRACBITS)-centeryfrac+FRACUNIT);
+			iscale = swal[x + z] * yrepeat;
+			vince[z] = xs_ToFixed(fracbits, iscale);
+			vplce[z] = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[z] - CenterY + 1));
 		}
 		if (bad == 15)
 		{
-			light += rw_lightstep << 2;
+			light += rw_lightstep * 4;
 			continue;
 		}
 
@@ -1226,9 +1226,10 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 
 		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
 		dc_dest = ylookup[y1ve[0]] + x + dc_destorg;
-		dc_iscale = swal[x] * yrepeat;
 		dc_count = y2ve[0] - y1ve[0];
-		dc_texturefrac = texturemid + FixedMul (dc_iscale, (y1ve[0]<<FRACBITS)-centeryfrac+FRACUNIT);
+		iscale = swal[x] * yrepeat;
+		dc_iscale = xs_ToFixed(fracbits, iscale);
+		dc_texturefrac = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[0] - CenterY + 1));
 
 		dovline1();
 	}
@@ -1238,7 +1239,7 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 	NetUpdate ();
 }
 
-void wallscan_striped (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal, fixed_t yrepeat)
+void wallscan_striped (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat)
 {
 	FDynamicColormap *startcolormap = basecolormap;
 	int startshade = wallshade;
@@ -1279,7 +1280,7 @@ void wallscan_striped (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, 
 	wallshade = startshade;
 }
 
-static void call_wallscan(int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal, fixed_t yrepeat, bool mask)
+static void call_wallscan(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, bool mask)
 {
 	if (mask)
 	{
@@ -1316,7 +1317,7 @@ static void call_wallscan(int x1, int x2, short *uwal, short *dwal, fixed_t *swa
 //
 //=============================================================================
 
-void wallscan_np2(int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal, fixed_t yrepeat, fixed_t top, fixed_t bot, bool mask)
+void wallscan_np2(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, double top, double bot, bool mask)
 {
 	if (!r_np2)
 	{
@@ -1326,19 +1327,23 @@ void wallscan_np2(int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed
 	{
 		short most1[MAXWIDTH], most2[MAXWIDTH], most3[MAXWIDTH];
 		short *up, *down;
-		fixed_t texheight = rw_pic->GetHeight() << FRACBITS;
-		fixed_t scaledtexheight = FixedDiv(texheight, yrepeat);
-		fixed_t partition;
+		double texheight = rw_pic->GetHeight();
+		double partition;
+		double scaledtexheight = texheight / yrepeat;
 
 		if (yrepeat >= 0)
 		{ // normal orientation: draw strips from top to bottom
-			partition = top - (top - FixedDiv(dc_texturemid, yrepeat) - viewz) % scaledtexheight;
+			partition = top - fmod(top - dc_texturemid / yrepeat - ViewPos.Z, scaledtexheight);
+			if (partition == top)
+			{
+				partition -= scaledtexheight;
+			}
 			up = uwal;
 			down = most1;
-			dc_texturemid = FixedMul(partition - viewz, yrepeat) + texheight;
+			dc_texturemid = (partition - ViewPos.Z) * yrepeat + texheight;
 			while (partition > bot)
 			{
-				int j = OWallMost(most3, partition - viewz, &WallC);
+				int j = OWallMost(most3, partition - ViewPos.Z, &WallC);
 				if (j != 3)
 				{
 					for (int j = x1; j < x2; ++j)
@@ -1356,13 +1361,13 @@ void wallscan_np2(int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed
 		}
 		else
 		{ // upside down: draw strips from bottom to top
-			partition = bot - (bot - FixedDiv(dc_texturemid, yrepeat) - viewz) % scaledtexheight;
+			partition = bot - fmod(bot - dc_texturemid / yrepeat - ViewPos.Z, scaledtexheight);
 			up = most1;
 			down = dwal;
-			dc_texturemid = FixedMul(partition - viewz, yrepeat) + texheight;
+			dc_texturemid = (partition - ViewPos.Z) * yrepeat + texheight;
 			while (partition < top)
 			{
-				int j = OWallMost(most3, partition - viewz, &WallC);
+				int j = OWallMost(most3, partition - ViewPos.Z, &WallC);
 				if (j != 12)
 				{
 					for (int j = x1; j < x2; ++j)
@@ -1381,16 +1386,16 @@ void wallscan_np2(int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed
 	}
 }
 
-static void wallscan_np2_ds(drawseg_t *ds, int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal, fixed_t yrepeat)
+static void wallscan_np2_ds(drawseg_t *ds, int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat)
 {
 	if (rw_pic->GetHeight() != 1 << rw_pic->HeightBits)
 	{
-		fixed_t frontcz1 = ds->curline->frontsector->ceilingplane.ZatPointFixed(ds->curline->v1);
-		fixed_t frontfz1 = ds->curline->frontsector->floorplane.ZatPointFixed(ds->curline->v1);
-		fixed_t frontcz2 = ds->curline->frontsector->ceilingplane.ZatPointFixed(ds->curline->v2);
-		fixed_t frontfz2 = ds->curline->frontsector->floorplane.ZatPointFixed(ds->curline->v2);
-		fixed_t top = MAX(frontcz1, frontcz2);
-		fixed_t bot = MIN(frontfz1, frontfz2);
+		double frontcz1 = ds->curline->frontsector->ceilingplane.ZatPoint(ds->curline->v1);
+		double frontfz1 = ds->curline->frontsector->floorplane.ZatPoint(ds->curline->v1);
+		double frontcz2 = ds->curline->frontsector->ceilingplane.ZatPoint(ds->curline->v2);
+		double frontfz2 = ds->curline->frontsector->floorplane.ZatPoint(ds->curline->v2);
+		double top = MAX(frontcz1, frontcz2);
+		double bot = MIN(frontfz1, frontfz2);
 		if (fake3D & FAKE3D_CLIPTOP)
 		{
 			top = MIN(top, sclipTop);
@@ -1418,16 +1423,17 @@ inline fixed_t mvline1 (fixed_t vince, BYTE *colormap, int count, fixed_t vplce,
 	return domvline1 ();
 }
 
-void maskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal,
-	fixed_t yrepeat, const BYTE *(*getcol)(FTexture *tex, int x))
+void maskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal,
+	double yrepeat, const BYTE *(*getcol)(FTexture *tex, int x))
 {
-	int x, shiftval;
+	int x, fracbits;
 	BYTE *p;
 	int y1ve[4], y2ve[4], u4, d4, startx, dax, z;
 	char bad;
-	fixed_t light = rw_light - rw_lightstep;
-	SDWORD texturemid, xoffset;
+	float light = rw_light - rw_lightstep;
+	SDWORD xoffset;
 	BYTE *basecolormapdata;
+	double iscale;
 
 	if (rw_pic->UseType == FTexture::TEX_Null)
 	{
@@ -1444,10 +1450,8 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixe
 //clock (WallScanCycles);
 
 	rw_pic->GetHeight();	// Make sure texture size is loaded
-	shiftval = rw_pic->HeightBits;
-	setupmvline (32-shiftval);
-	yrepeat >>= 2 + shiftval;
-	texturemid = dc_texturemid << (16 - shiftval);
+	fracbits = 32- rw_pic->HeightBits;
+	setupmvline(fracbits);
 	xoffset = rw_offset;
 	basecolormapdata = basecolormap->Maps;
 
@@ -1477,9 +1481,10 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixe
 
 		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
 		dc_dest = ylookup[y1ve[0]] + p;
-		dc_iscale = swal[x] * yrepeat;
 		dc_count = y2ve[0] - y1ve[0];
-		dc_texturefrac = texturemid + FixedMul (dc_iscale, (y1ve[0]<<FRACBITS)-centeryfrac+FRACUNIT);
+		iscale = swal[x] * yrepeat;
+		dc_iscale = xs_ToFixed(fracbits, iscale);
+		dc_texturefrac = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[0] - CenterY + 1));
 
 		domvline1();
 	}
@@ -1494,12 +1499,13 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixe
 			if (y2ve[z] <= y1ve[z]) { bad += 1<<z; continue; }
 
 			bufplce[z] = getcol (rw_pic, (lwal[dax] + xoffset) >> FRACBITS);
-			vince[z] = swal[dax] * yrepeat;
-			vplce[z] = texturemid + FixedMul (vince[z], (y1ve[z]<<FRACBITS)-centeryfrac+FRACUNIT);
+			iscale = swal[dax] * yrepeat;
+			vince[z] = xs_ToFixed(fracbits, iscale);
+			vplce[z] = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[z] - CenterY + 1));
 		}
 		if (bad == 15)
 		{
-			light += rw_lightstep << 2;
+			light += rw_lightstep * 4;
 			continue;
 		}
 
@@ -1566,9 +1572,10 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixe
 
 		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
 		dc_dest = ylookup[y1ve[0]] + p;
-		dc_iscale = swal[x] * yrepeat;
 		dc_count = y2ve[0] - y1ve[0];
-		dc_texturefrac = texturemid + FixedMul (dc_iscale, (y1ve[0]<<FRACBITS)-centeryfrac+FRACUNIT);
+		iscale = swal[x] * yrepeat;
+		dc_iscale = xs_ToFixed(fracbits, iscale);
+		dc_texturefrac = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[0] - CenterY + 1));
 
 		domvline1();
 	}
@@ -1588,18 +1595,19 @@ inline void preptmvline1 (fixed_t vince, BYTE *colormap, int count, fixed_t vplc
 	dc_dest = dest;
 }
 
-void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal,
-	fixed_t yrepeat, const BYTE *(*getcol)(FTexture *tex, int x))
+void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal,
+	double yrepeat, const BYTE *(*getcol)(FTexture *tex, int x))
 {
 	fixed_t (*tmvline1)();
 	void (*tmvline4)();
-	int x, shiftval;
+	int x, fracbits;
 	BYTE *p;
 	int y1ve[4], y2ve[4], u4, d4, startx, dax, z;
 	char bad;
-	fixed_t light = rw_light - rw_lightstep;
-	SDWORD texturemid, xoffset;
+	float light = rw_light - rw_lightstep;
+	SDWORD xoffset;
 	BYTE *basecolormapdata;
+	double iscale;
 
 	if (rw_pic->UseType == FTexture::TEX_Null)
 	{
@@ -1617,12 +1625,11 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal,
 //clock (WallScanCycles);
 
 	rw_pic->GetHeight();	// Make sure texture size is loaded
-	shiftval = rw_pic->HeightBits;
-	setuptmvline (32-shiftval);
-	yrepeat >>= 2 + shiftval;
-	texturemid = dc_texturemid << (16 - shiftval);
+	fracbits = 32 - rw_pic->HeightBits;
+	setuptmvline(fracbits);
 	xoffset = rw_offset;
 	basecolormapdata = basecolormap->Maps;
+	fixed_t centeryfrac = FLOAT2FIXED(CenterY);
 
 	x = startx = x1;
 	p = x + dc_destorg;
@@ -1650,9 +1657,10 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal,
 
 		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
 		dc_dest = ylookup[y1ve[0]] + p;
-		dc_iscale = swal[x] * yrepeat;
 		dc_count = y2ve[0] - y1ve[0];
-		dc_texturefrac = texturemid + FixedMul (dc_iscale, (y1ve[0]<<FRACBITS)-centeryfrac+FRACUNIT);
+		iscale = swal[x] * yrepeat;
+		dc_iscale = xs_ToFixed(fracbits, iscale);
+		dc_texturefrac = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[0] - CenterY + 1));
 
 		tmvline1();
 	}
@@ -1667,12 +1675,13 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal,
 			if (y2ve[z] <= y1ve[z]) { bad += 1<<z; continue; }
 
 			bufplce[z] = getcol (rw_pic, (lwal[dax] + xoffset) >> FRACBITS);
-			vince[z] = swal[dax] * yrepeat;
-			vplce[z] = texturemid + FixedMul (vince[z], (y1ve[z]<<FRACBITS)-centeryfrac+FRACUNIT);
+			iscale = swal[dax] * yrepeat;
+			vince[z] = xs_ToFixed(fracbits, iscale);
+			vplce[z] = xs_ToFixed(fracbits, dc_texturemid + vince[z] * (y1ve[z] - CenterY + 1));
 		}
 		if (bad == 15)
 		{
-			light += rw_lightstep << 2;
+			light += rw_lightstep * 4;
 			continue;
 		}
 
@@ -1742,9 +1751,10 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal,
 
 		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
 		dc_dest = ylookup[y1ve[0]] + p;
-		dc_iscale = swal[x] * yrepeat;
 		dc_count = y2ve[0] - y1ve[0];
-		dc_texturefrac = texturemid + FixedMul (dc_iscale, (y1ve[0]<<FRACBITS)-centeryfrac+FRACUNIT);
+		iscale = swal[x] * yrepeat;
+		dc_iscale = xs_ToFixed(fracbits, iscale);
+		dc_texturefrac = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[0] - CenterY + 1));
 
 		tmvline1();
 	}
@@ -1769,7 +1779,8 @@ void R_RenderSegLoop ()
 	int x1 = rw_x;
 	int x2 = rw_stopx;
 	int x;
-	fixed_t xscale, yscale;
+	double xscale;
+	double yscale;
 	fixed_t xoffset = rw_offset;
 
 	if (fixedlightlev >= 0)
@@ -1858,8 +1869,8 @@ void R_RenderSegLoop ()
 		{
 			dc_texturemid = rw_midtexturemid;
 			rw_pic = midtexture;
-			xscale = fixed_t(rw_pic->Scale.X * rw_midtexturescalex);
-			yscale = fixed_t(rw_pic->Scale.Y * rw_midtexturescaley);
+			xscale = rw_pic->Scale.X * rw_midtexturescalex;
+			yscale = rw_pic->Scale.Y * rw_midtexturescaley;
 			if (xscale != lwallscale)
 			{
 				PrepLWall (lwall, curline->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2);
@@ -1867,7 +1878,7 @@ void R_RenderSegLoop ()
 			}
 			if (midtexture->bWorldPanning)
 			{
-				rw_offset = MulScale16 (rw_offset_mid, xscale);
+				rw_offset = xs_RoundToInt(rw_offset_mid * xscale);
 			}
 			else
 			{
@@ -1901,8 +1912,8 @@ void R_RenderSegLoop ()
 			{
 				dc_texturemid = rw_toptexturemid;
 				rw_pic = toptexture;
-				xscale = fixed_t(rw_pic->Scale.X * rw_toptexturescalex);
-				yscale = fixed_t(rw_pic->Scale.Y * rw_toptexturescaley);
+				xscale = rw_pic->Scale.X * rw_toptexturescalex;
+				yscale = rw_pic->Scale.Y * rw_toptexturescaley;
 				if (xscale != lwallscale)
 				{
 					PrepLWall (lwall, curline->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2);
@@ -1910,7 +1921,7 @@ void R_RenderSegLoop ()
 				}
 				if (toptexture->bWorldPanning)
 				{
-					rw_offset = MulScale16 (rw_offset_top, xscale);
+					rw_offset = xs_RoundToInt(rw_offset_top * xscale);
 				}
 				else
 				{
@@ -1947,8 +1958,8 @@ void R_RenderSegLoop ()
 			{
 				dc_texturemid = rw_bottomtexturemid;
 				rw_pic = bottomtexture;
-				xscale = fixed_t(rw_pic->Scale.X * rw_bottomtexturescalex);
-				yscale = fixed_t(rw_pic->Scale.Y * rw_bottomtexturescaley);
+				xscale = rw_pic->Scale.X * rw_bottomtexturescalex;
+				yscale = rw_pic->Scale.Y * rw_bottomtexturescaley;
 				if (xscale != lwallscale)
 				{
 					PrepLWall (lwall, curline->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2);
@@ -1956,7 +1967,7 @@ void R_RenderSegLoop ()
 				}
 				if (bottomtexture->bWorldPanning)
 				{
-					rw_offset = MulScale16 (rw_offset_bottom, xscale);
+					rw_offset = xs_RoundToInt(rw_offset_bottom * xscale);
 				}
 				else
 				{
@@ -1987,7 +1998,8 @@ void R_RenderSegLoop ()
 
 void R_NewWall (bool needlights)
 {
-	fixed_t rowoffset, yrepeat;
+	double rowoffset;
+	double yrepeat;
 
 	rw_markportal = false;
 
@@ -2014,23 +2026,23 @@ void R_NewWall (bool needlights)
 		if (linedef->special != Line_Horizon)
 		{
 			midtexture = TexMan(sidedef->GetTexture(side_t::mid), true);
-			rw_offset_mid = sidedef->GetTextureXOffset(side_t::mid);
+			rw_offset_mid = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::mid));
 			rowoffset = sidedef->GetTextureYOffset(side_t::mid);
 			rw_midtexturescalex = sidedef->GetTextureXScale(side_t::mid);
 			rw_midtexturescaley = sidedef->GetTextureYScale(side_t::mid);
-			yrepeat = fixed_t(midtexture->Scale.Y * rw_midtexturescaley);
+			yrepeat = midtexture->Scale.Y * rw_midtexturescaley;
 			if (yrepeat >= 0)
 			{ // normal orientation
 				if (linedef->flags & ML_DONTPEGBOTTOM)
 				{ // bottom of texture at bottom
-					rw_midtexturemid = MulScale16(frontsector->GetPlaneTexZ(sector_t::floor) - viewz, yrepeat) + (midtexture->GetHeight() << FRACBITS);
+					rw_midtexturemid = (frontsector->GetPlaneTexZF(sector_t::floor) - ViewPos.Z) * yrepeat + midtexture->GetHeight();
 				}
 				else
 				{ // top of texture at top
-					rw_midtexturemid = MulScale16(frontsector->GetPlaneTexZ(sector_t::ceiling) - viewz, yrepeat);
+					rw_midtexturemid = (frontsector->GetPlaneTexZF(sector_t::ceiling) - ViewPos.Z) * yrepeat;
 					if (rowoffset < 0 && midtexture != NULL)
 					{
-						rowoffset += midtexture->GetHeight() << FRACBITS;
+						rowoffset += midtexture->GetHeight();
 					}
 				}
 			}
@@ -2039,16 +2051,16 @@ void R_NewWall (bool needlights)
 				rowoffset = -rowoffset;
 				if (linedef->flags & ML_DONTPEGBOTTOM)
 				{ // top of texture at bottom
-					rw_midtexturemid = MulScale16(frontsector->GetPlaneTexZ(sector_t::floor) - viewz, yrepeat);
+					rw_midtexturemid = (frontsector->GetPlaneTexZF(sector_t::floor) - ViewPos.Z) * yrepeat;
 				}
 				else
 				{ // bottom of texture at top
-					rw_midtexturemid = MulScale16(frontsector->GetPlaneTexZ(sector_t::ceiling) - viewz, yrepeat) + (midtexture->GetHeight() << FRACBITS);
+					rw_midtexturemid = (frontsector->GetPlaneTexZ(sector_t::ceiling) - ViewPos.Z) * yrepeat + midtexture->GetHeight();
 				}
 			}
 			if (midtexture->bWorldPanning)
 			{
-				rw_midtexturemid += MulScale16(rowoffset, yrepeat);
+				rw_midtexturemid += rowoffset * yrepeat;
 			}
 			else
 			{
@@ -2062,7 +2074,7 @@ void R_NewWall (bool needlights)
 	{ // two-sided line
 		// hack to allow height changes in outdoor areas
 
-		rw_frontlowertop = frontsector->GetPlaneTexZ(sector_t::ceiling);
+		rw_frontlowertop = frontsector->GetPlaneTexZF(sector_t::ceiling);
 
 		if (frontsector->GetTexture(sector_t::ceiling) == skyflatnum &&
 			backsector->GetTexture(sector_t::ceiling) == skyflatnum)
@@ -2083,7 +2095,7 @@ void R_NewWall (bool needlights)
 			}
 			// Putting sky ceilings on the front and back of a line alters the way unpegged
 			// positioning works.
-			rw_frontlowertop = backsector->GetPlaneTexZ(sector_t::ceiling);
+			rw_frontlowertop = backsector->GetPlaneTexZF(sector_t::ceiling);
 		}
 
 		if ((rw_backcz1 <= rw_frontfz1 && rw_backcz2 <= rw_frontfz2) ||
@@ -2098,26 +2110,21 @@ void R_NewWall (bool needlights)
 				|| backsector->floorplane != frontsector->floorplane
 				|| backsector->lightlevel != frontsector->lightlevel
 				|| backsector->GetTexture(sector_t::floor) != frontsector->GetTexture(sector_t::floor)
+				|| backsector->GetPlaneLight(sector_t::floor) != frontsector->GetPlaneLight(sector_t::floor)
 
 				// killough 3/7/98: Add checks for (x,y) offsets
-				|| backsector->GetXOffset(sector_t::floor) != frontsector->GetXOffset(sector_t::floor)
-				|| backsector->GetYOffset(sector_t::floor) != frontsector->GetYOffset(sector_t::floor)
+				|| backsector->planes[sector_t::floor].xform != frontsector->planes[sector_t::floor].xform
 				|| backsector->GetAlpha(sector_t::floor) != frontsector->GetAlpha(sector_t::floor)
 
 				// killough 4/15/98: prevent 2s normals
 				// from bleeding through deep water
 				|| frontsector->heightsec
 
-				|| backsector->GetPlaneLight(sector_t::floor) != frontsector->GetPlaneLight(sector_t::floor)
-				|| backsector->GetFlags(sector_t::floor) != frontsector->GetFlags(sector_t::floor)
+				|| backsector->GetVisFlags(sector_t::floor) != frontsector->GetVisFlags(sector_t::floor)
 
 				// [RH] Add checks for colormaps
 				|| backsector->ColorMap != frontsector->ColorMap
 
-				|| backsector->GetXScale(sector_t::floor) != frontsector->GetXScale(sector_t::floor)
-				|| backsector->GetYScale(sector_t::floor) != frontsector->GetYScale(sector_t::floor)
-
-				|| backsector->GetAngle(sector_t::floor) != frontsector->GetAngle(sector_t::floor)
 
 				// kg3D - add fake lights
 				|| (frontsector->e && frontsector->e->XFloor.lightlist.Size())
@@ -2136,8 +2143,7 @@ void R_NewWall (bool needlights)
 				|| backsector->GetTexture(sector_t::ceiling) != frontsector->GetTexture(sector_t::ceiling)
 
 				// killough 3/7/98: Add checks for (x,y) offsets
-				|| backsector->GetXOffset(sector_t::ceiling) != frontsector->GetXOffset(sector_t::ceiling)
-				|| backsector->GetYOffset(sector_t::ceiling) != frontsector->GetYOffset(sector_t::ceiling)
+				|| backsector->planes[sector_t::ceiling].xform != frontsector->planes[sector_t::ceiling].xform
 				|| backsector->GetAlpha(sector_t::ceiling) != frontsector->GetAlpha(sector_t::ceiling)
 
 				// killough 4/15/98: prevent 2s normals
@@ -2149,11 +2155,6 @@ void R_NewWall (bool needlights)
 
 				// [RH] Add check for colormaps
 				|| backsector->ColorMap != frontsector->ColorMap
-
-				|| backsector->GetXScale(sector_t::ceiling) != frontsector->GetXScale(sector_t::ceiling)
-				|| backsector->GetYScale(sector_t::ceiling) != frontsector->GetYScale(sector_t::ceiling)
-
-				|| backsector->GetAngle(sector_t::ceiling) != frontsector->GetAngle(sector_t::ceiling)
 
 				// kg3D - add fake lights
 				|| (frontsector->e && frontsector->e->XFloor.lightlist.Size())
@@ -2169,24 +2170,24 @@ void R_NewWall (bool needlights)
 		{ // top texture
 			toptexture = TexMan(sidedef->GetTexture(side_t::top), true);
 
-			rw_offset_top = sidedef->GetTextureXOffset(side_t::top);
+			rw_offset_top = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::top));
 			rowoffset = sidedef->GetTextureYOffset(side_t::top);
-			rw_toptexturescalex = sidedef->GetTextureXScale(side_t::top);
-			rw_toptexturescaley = sidedef->GetTextureYScale(side_t::top);
-			yrepeat = fixed_t(toptexture->Scale.Y * rw_toptexturescaley);
+			rw_toptexturescalex =sidedef->GetTextureXScale(side_t::top);
+			rw_toptexturescaley =sidedef->GetTextureYScale(side_t::top);
+			yrepeat = toptexture->Scale.Y * rw_toptexturescaley;
 			if (yrepeat >= 0)
 			{ // normal orientation
 				if (linedef->flags & ML_DONTPEGTOP)
 				{ // top of texture at top
-					rw_toptexturemid = MulScale16(frontsector->GetPlaneTexZ(sector_t::ceiling) - viewz, yrepeat);
+					rw_toptexturemid = (frontsector->GetPlaneTexZF(sector_t::ceiling) - ViewPos.Z) * yrepeat;
 					if (rowoffset < 0 && toptexture != NULL)
 					{
-						rowoffset += toptexture->GetHeight() << FRACBITS;
+						rowoffset += toptexture->GetHeight();
 					}
 				}
 				else
 				{ // bottom of texture at bottom
-					rw_toptexturemid = MulScale16(backsector->GetPlaneTexZ(sector_t::ceiling) - viewz, yrepeat) + (toptexture->GetHeight() << FRACBITS);
+					rw_toptexturemid = (backsector->GetPlaneTexZF(sector_t::ceiling) - ViewPos.Z) * yrepeat + toptexture->GetHeight();
 				}
 			}
 			else
@@ -2194,16 +2195,16 @@ void R_NewWall (bool needlights)
 				rowoffset = -rowoffset;
 				if (linedef->flags & ML_DONTPEGTOP)
 				{ // bottom of texture at top
-					rw_toptexturemid = MulScale16(frontsector->GetPlaneTexZ(sector_t::ceiling) - viewz, yrepeat) + (toptexture->GetHeight() << FRACBITS);
+					rw_toptexturemid = (frontsector->GetPlaneTexZF(sector_t::ceiling) - ViewPos.Z) * yrepeat + toptexture->GetHeight();
 				}
 				else
 				{ // top of texture at bottom
-					rw_toptexturemid = MulScale16(backsector->GetPlaneTexZ(sector_t::ceiling) - viewz, yrepeat);
+					rw_toptexturemid = (backsector->GetPlaneTexZF(sector_t::ceiling) - ViewPos.Z) * yrepeat;
 				}
 			}
 			if (toptexture->bWorldPanning)
 			{
-				rw_toptexturemid += MulScale16(rowoffset, yrepeat);
+				rw_toptexturemid += rowoffset * yrepeat;
 			}
 			else
 			{
@@ -2214,23 +2215,23 @@ void R_NewWall (bool needlights)
 		{ // bottom texture
 			bottomtexture = TexMan(sidedef->GetTexture(side_t::bottom), true);
 
-			rw_offset_bottom = sidedef->GetTextureXOffset(side_t::bottom);
+			rw_offset_bottom = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::bottom));
 			rowoffset = sidedef->GetTextureYOffset(side_t::bottom);
 			rw_bottomtexturescalex = sidedef->GetTextureXScale(side_t::bottom);
 			rw_bottomtexturescaley = sidedef->GetTextureYScale(side_t::bottom);
-			yrepeat = fixed_t(bottomtexture->Scale.Y * rw_bottomtexturescaley);
+			yrepeat = bottomtexture->Scale.Y * rw_bottomtexturescaley;
 			if (yrepeat >= 0)
 			{ // normal orientation
 				if (linedef->flags & ML_DONTPEGBOTTOM)
 				{ // bottom of texture at bottom
-					rw_bottomtexturemid = MulScale16(rw_frontlowertop - viewz, yrepeat);
+					rw_bottomtexturemid = (rw_frontlowertop - ViewPos.Z) * yrepeat;
 				}
 				else
 				{ // top of texture at top
-					rw_bottomtexturemid = MulScale16(backsector->GetPlaneTexZ(sector_t::floor) - viewz, yrepeat);
+					rw_bottomtexturemid = (backsector->GetPlaneTexZF(sector_t::floor) - ViewPos.Z) * yrepeat;
 					if (rowoffset < 0 && bottomtexture != NULL)
 					{
-						rowoffset += bottomtexture->GetHeight() << FRACBITS;
+						rowoffset += bottomtexture->GetHeight();
 					}
 				}
 			}
@@ -2239,16 +2240,16 @@ void R_NewWall (bool needlights)
 				rowoffset = -rowoffset;
 				if (linedef->flags & ML_DONTPEGBOTTOM)
 				{ // top of texture at bottom
-					rw_bottomtexturemid = MulScale16(rw_frontlowertop - viewz, yrepeat);
+					rw_bottomtexturemid = (rw_frontlowertop - ViewPos.Z) * yrepeat;
 				}
 				else
 				{ // bottom of texture at top
-					rw_bottomtexturemid = MulScale16(backsector->GetPlaneTexZ(sector_t::floor) - viewz, yrepeat) + (bottomtexture->GetHeight() << FRACBITS);
+					rw_bottomtexturemid = (backsector->GetPlaneTexZ(sector_t::floor) - ViewPos.Z) * yrepeat + bottomtexture->GetHeight();
 				}
 			}
 			if (bottomtexture->bWorldPanning)
 			{
-				rw_bottomtexturemid += MulScale16(rowoffset, yrepeat);
+				rw_bottomtexturemid += rowoffset * yrepeat;
 			}
 			else
 			{
@@ -2265,7 +2266,7 @@ void R_NewWall (bool needlights)
 	{
 		int planeside;
 
-		planeside = frontsector->floorplane.PointOnSide(viewx, viewy, viewz);
+		planeside = frontsector->floorplane.PointOnSide(ViewPos);
 		if (frontsector->floorplane.fC() < 0)	// 3D floors have the floor backwards
 			planeside = -planeside;
 		if (planeside <= 0)		// above view plane
@@ -2273,7 +2274,7 @@ void R_NewWall (bool needlights)
 
 		if (frontsector->GetTexture(sector_t::ceiling) != skyflatnum)
 		{
-			planeside = frontsector->ceilingplane.PointOnSide(viewx, viewy, viewz);
+			planeside = frontsector->ceilingplane.PointOnSide(ViewPos);
 			if (frontsector->ceilingplane.fC() > 0)	// 3D floors have the ceiling backwards
 				planeside = -planeside;
 			if (planeside <= 0)		// below view plane
@@ -2289,10 +2290,10 @@ void R_NewWall (bool needlights)
 	if (needlights && (segtextured || (backsector && IsFogBoundary(frontsector, backsector))))
 	{
 		lwallscale =
-			midtex ? int(midtex->Scale.X * sidedef->GetTextureXScale(side_t::mid)) :
-			toptexture ? int(toptexture->Scale.X * sidedef->GetTextureXScale(side_t::top)) :
-			bottomtexture ? int(bottomtexture->Scale.X * sidedef->GetTextureXScale(side_t::bottom)) :
-			FRACUNIT;
+			midtex ? (midtex->Scale.X * sidedef->GetTextureXScale(side_t::mid)) :
+			toptexture ? (toptexture->Scale.X * sidedef->GetTextureXScale(side_t::top)) :
+			bottomtexture ? (bottomtexture->Scale.X * sidedef->GetTextureXScale(side_t::bottom)) :
+			1.;
 
 		PrepWall (swall, lwall, sidedef->TexelLength * lwallscale, WallC.sx1, WallC.sx2);
 
@@ -2301,12 +2302,12 @@ void R_NewWall (bool needlights)
 			wallshade = LIGHT2SHADE(curline->sidedef->GetLightLevel(foggy, frontsector->lightlevel)
 				+ r_actualextralight);
 			GlobVis = r_WallVisibility;
-			rw_lightleft = SafeDivScale12 (GlobVis, WallC.sz1);
-			rw_lightstep = (SafeDivScale12 (GlobVis, WallC.sz2) - rw_lightleft) / (WallC.sx2 - WallC.sx1);
+			rw_lightleft = float (GlobVis / WallC.sz1);
+			rw_lightstep = float((GlobVis / WallC.sz2 - rw_lightleft) / (WallC.sx2 - WallC.sx1));
 		}
 		else
 		{
-			rw_lightleft = FRACUNIT;
+			rw_lightleft = 1;
 			rw_lightstep = 0;
 		}
 	}
@@ -2375,7 +2376,7 @@ void R_StoreWallRange (int start, int stop)
 		R_NewWall (true);
 	}
 
-	rw_offset = sidedef->GetTextureXOffset(side_t::mid);
+	rw_offset = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::mid));
 	rw_light = rw_lightleft + rw_lightstep * (start - WallC.sx1);
 
 	ds_p->CurrentPortalUniq = CurrentPortalUniq;
@@ -2383,13 +2384,13 @@ void R_StoreWallRange (int start, int stop)
 	ds_p->sx2 = WallC.sx2;
 	ds_p->sz1 = WallC.sz1;
 	ds_p->sz2 = WallC.sz2;
-	ds_p->cx = WallC.tx1;
-	ds_p->cy = WallC.ty1;
-	ds_p->cdx = WallC.tx2 - WallC.tx1;
-	ds_p->cdy = WallC.ty2 - WallC.ty1;
+	ds_p->cx = WallC.tleft.X;;
+	ds_p->cy = WallC.tleft.Y;
+	ds_p->cdx = WallC.tright.X - WallC.tleft.X;
+	ds_p->cdy = WallC.tright.Y - WallC.tleft.Y;
 	ds_p->tmapvals = WallT;
-	ds_p->siz1 = (DWORD)DivScale32 (1, WallC.sz1) >> 1;
-	ds_p->siz2 = (DWORD)DivScale32 (1, WallC.sz2) >> 1;
+	ds_p->siz1 = 1 / WallC.sz1;
+	ds_p->siz2 = 1 / WallC.sz2;
 	ds_p->x1 = rw_x = start;
 	ds_p->x2 = stop;
 	ds_p->curline = curline;
@@ -2420,13 +2421,13 @@ void R_StoreWallRange (int start, int stop)
 		ds_p->silhouette = 0;
 
 		if (rw_frontfz1 > rw_backfz1 || rw_frontfz2 > rw_backfz2 ||
-			backsector->floorplane.PointOnSide(viewx, viewy, viewz) < 0)
+			backsector->floorplane.PointOnSide(ViewPos) < 0)
 		{
 			ds_p->silhouette = SIL_BOTTOM;
 		}
 
 		if (rw_frontcz1 < rw_backcz1 || rw_frontcz2 < rw_backcz2 ||
-			backsector->ceilingplane.PointOnSide(viewx, viewy, viewz) < 0)
+			backsector->ceilingplane.PointOnSide(ViewPos) < 0)
 		{
 			ds_p->silhouette |= SIL_TOP;
 		}
@@ -2482,7 +2483,7 @@ void R_StoreWallRange (int start, int stop)
 			(rw_floorstat != 3 || !sidedef->GetTexture(side_t::bottom).isValid()) &&
 			(WallC.sz1 >= TOO_CLOSE_Z && WallC.sz2 >= TOO_CLOSE_Z))
 		{
-			fixed_t *swal;
+			float *swal;
 			fixed_t *lwal;
 			int i;
 
@@ -2502,14 +2503,14 @@ void R_StoreWallRange (int start, int stop)
 				ds_p->swall = R_NewOpening ((stop - start) * 2);
 
 				lwal = (fixed_t *)(openings + ds_p->maskedtexturecol);
-				swal = (fixed_t *)(openings + ds_p->swall);
+				swal = (float *)(openings + ds_p->swall);
 				FTexture *pic = TexMan(sidedef->GetTexture(side_t::mid), true);
-				fixed_t yrepeat = int(pic->Scale.X * sidedef->GetTextureYScale(side_t::mid));
-				fixed_t xoffset = sidedef->GetTextureXOffset(side_t::mid);
+				double yscale = pic->Scale.X * sidedef->GetTextureYScale(side_t::mid);
+				fixed_t xoffset = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::mid));
 
 				if (pic->bWorldPanning)
 				{
-					xoffset = MulScale16 (xoffset, lwallscale);
+					xoffset = xs_RoundToInt(xoffset * lwallscale);
 				}
 
 				for (i = start; i < stop; i++)
@@ -2518,20 +2519,23 @@ void R_StoreWallRange (int start, int stop)
 					*swal++ = swall[i];
 				}
 
-				fixed_t istart = MulScale18 (*((fixed_t *)(openings + ds_p->swall)), yrepeat);
-				fixed_t iend = MulScale18 (*(swal - 1), yrepeat);
-
-				if (istart < 3 && istart >= 0) istart = 3;
-				if (istart > -3 && istart < 0) istart = -3;
-				if (iend < 3 && iend >= 0) iend = 3;
-				if (iend > -3 && iend < 0) iend = -3;
-				istart = DivScale32 (1, istart);
-				iend = DivScale32 (1, iend);
-				ds_p->yrepeat = yrepeat;
-				ds_p->iscale = istart;
+				double istart = *((float *)(openings + ds_p->swall)) * yscale;
+				double iend = *(swal - 1) * yscale;
+#if 0
+				///This was for avoiding overflow when using fixed point. It might not be needed anymore.
+				const double mini = 3 / 65536.0;
+				if (istart < mini && istart >= 0) istart = mini;
+				if (istart > -mini && istart < 0) istart = -mini;
+				if (iend < mini && iend >= 0) iend = mini;
+				if (iend > -mini && iend < 0) iend = -mini;
+#endif
+				istart = 1 / istart;
+				iend = 1 / iend;
+				ds_p->yscale = (float)yscale;
+				ds_p->iscale = (float)istart;
 				if (stop - start > 0)
 				{
-					ds_p->iscalestep = (iend - istart) / (stop - start);
+					ds_p->iscalestep = float((iend - istart) / (stop - start));
 				}
 				else
 				{
@@ -2655,14 +2659,15 @@ void R_StoreWallRange (int start, int stop)
 	ds_p++;
 }
 
-int OWallMost (short *mostbuf, fixed_t z, const FWallCoords *wallc)
+int OWallMost (short *mostbuf, double z, const FWallCoords *wallc)
 {
-	int bad, y, ix1, ix2, iy1, iy2;
-	fixed_t s1, s2, s3, s4;
+	int bad, ix1, ix2;
+	double y, iy1, iy2;
+	double s1, s2, s3, s4;
 
-	z = -(z >> 4);
-	s1 = MulScale16 (globaluclip, wallc->sz1); s2 = MulScale16 (globaluclip, wallc->sz2);
-	s3 = MulScale16 (globaldclip, wallc->sz1); s4 = MulScale16 (globaldclip, wallc->sz2);
+	z = -z;
+	s1 = globaluclip * wallc->sz1; s2 = globaluclip * wallc->sz2;
+	s3 = globaldclip * wallc->sz1; s4 = globaldclip * wallc->sz2;
 	bad = (z<s1)+((z<s2)<<1)+((z>s3)<<2)+((z>s4)<<3);
 
 #if 1
@@ -2683,9 +2688,9 @@ int OWallMost (short *mostbuf, fixed_t z, const FWallCoords *wallc)
 #if 1
 	if (bad & 3)
 	{
-		int t = DivScale30 (z-s1, s2-s1);
-		int inty = wallc->sz1 + MulScale30 (wallc->sz2 - wallc->sz1, t);
-		int xcross = wallc->sx1 + Scale (MulScale30 (wallc->sz2, t), wallc->sx2 - wallc->sx1, inty);
+		double t = (z-s1) / (s2-s1);
+		double inty = wallc->sz1 + t * (wallc->sz2 - wallc->sz1);
+		int xcross = xs_RoundToInt(wallc->sx1 + (t * wallc->sz2 * (wallc->sx2 - wallc->sx1)) / inty);
 
 		if ((bad & 3) == 2)
 		{
@@ -2701,9 +2706,9 @@ int OWallMost (short *mostbuf, fixed_t z, const FWallCoords *wallc)
 
 	if (bad & 12)
 	{
-		int t = DivScale30 (z-s3, s4-s3);
-		int inty = wallc->sz1 + MulScale30 (wallc->sz2 - wallc->sz1, t);
-		int xcross = wallc->sx1 + Scale (MulScale30 (wallc->sz2, t), wallc->sx2 - wallc->sx1, inty);
+		double t = (z-s3) / (s4-s3);
+		double inty = wallc->sz1 + t * (wallc->sz2 - wallc->sz1);
+		int xcross = xs_RoundToInt(wallc->sx1 + (t * wallc->sz2 * (wallc->sx2 - wallc->sx1)) / inty);
 
 		if ((bad & 12) == 8)
 		{
@@ -2717,15 +2722,15 @@ int OWallMost (short *mostbuf, fixed_t z, const FWallCoords *wallc)
 		}
 	}
 
-	y = Scale (z, InvZtoScale, iy1);
+	y = z * InvZtoScale / iy1;
 	if (ix2 == ix1)
 	{
-		mostbuf[ix1] = (short)((y + centeryfrac) >> FRACBITS);
+		mostbuf[ix1] = (short)xs_RoundToInt(y + CenterY);
 	}
 	else
 	{
-		fixed_t yinc  = (Scale (z, InvZtoScale, iy2) - y) / (ix2 - ix1);
-		qinterpolatedown16short (&mostbuf[ix1], ix2-ix1, y + centeryfrac, yinc);
+		fixed_t yinc = FLOAT2FIXED(((z * InvZtoScale / iy2) - y) / (ix2 - ix1));
+		qinterpolatedown16short (&mostbuf[ix1], ix2-ix1, FLOAT2FIXED(y + CenterY), yinc);
 	}
 #else
 	double max = viewheight;
@@ -2766,36 +2771,37 @@ int WallMost (short *mostbuf, const secplane_t &plane, const FWallCoords *wallc)
 {
 	if (!plane.isSlope())
 	{
-		return OWallMost (mostbuf, plane.Zat0() - viewz, wallc);
+		return OWallMost(mostbuf, plane.Zat0() - ViewPos.Z, wallc);
 	}
 
-	fixed_t x, y, den, z1, z2, oz1, oz2;
-	fixed_t s1, s2, s3, s4;
-	int bad, ix1, ix2, iy1, iy2;
+	double x, y, den, z1, z2, oz1, oz2;
+	double s1, s2, s3, s4;
+	int bad, ix1, ix2;
+	double iy1, iy2;
 
 	if (MirrorFlags & RF_XFLIP)
 	{
-		x = curline->v2->fixX();
-		y = curline->v2->fixY();
-		if (wallc->sx1 == 0 && 0 != (den = wallc->tx1 - wallc->tx2 + wallc->ty1 - wallc->ty2))
+		x = curline->v2->fX();
+		y = curline->v2->fY();
+		if (wallc->sx1 == 0 && 0 != (den = wallc->tleft.X - wallc->tright.X + wallc->tleft.Y - wallc->tright.Y))
 		{
-			int frac = SafeDivScale30 (wallc->ty1 + wallc->tx1, den);
-			x -= MulScale30 (frac, x - curline->v1->fixX());
-			y -= MulScale30 (frac, y - curline->v1->fixY());
+			double frac = (wallc->tleft.Y + wallc->tleft.X) / den;
+			x -= frac * (x - curline->v1->fX());
+			y -= frac * (y - curline->v1->fY());
 		}
-		z1 = viewz - plane.ZatPointFixed(x, y);
+		z1 = ViewPos.Z - plane.ZatPoint(x, y);
 
 		if (wallc->sx2 > wallc->sx1 + 1)
 		{
-			x = curline->v1->fixX();
-			y = curline->v1->fixY();
-			if (wallc->sx2 == viewwidth && 0 != (den = wallc->tx1 - wallc->tx2 - wallc->ty1 + wallc->ty2))
+			x = curline->v1->fX();
+			y = curline->v1->fY();
+			if (wallc->sx2 == viewwidth && 0 != (den = wallc->tleft.X - wallc->tright.X - wallc->tleft.Y + wallc->tright.Y))
 			{
-				int frac = SafeDivScale30 (wallc->ty2 - wallc->tx2, den);
-				x += MulScale30 (frac, curline->v2->fixX() - x);
-				y += MulScale30 (frac, curline->v2->fixY() - y);
+				double frac = (wallc->tright.Y - wallc->tright.X) / den;
+				x += frac * (curline->v2->fX() - x);
+				y += frac * (curline->v2->fY() - y);
 			}
-			z2 = viewz - plane.ZatPointFixed(x, y);
+			z2 = ViewPos.Z - plane.ZatPoint(x, y);
 		}
 		else
 		{
@@ -2804,27 +2810,27 @@ int WallMost (short *mostbuf, const secplane_t &plane, const FWallCoords *wallc)
 	}
 	else
 	{
-		x = curline->v1->fixX();
-		y = curline->v1->fixY();
-		if (wallc->sx1 == 0 && 0 != (den = wallc->tx1 - wallc->tx2 + wallc->ty1 - wallc->ty2))
+		x = curline->v1->fX();
+		y = curline->v1->fY();
+		if (wallc->sx1 == 0 && 0 != (den = wallc->tleft.X - wallc->tright.X + wallc->tleft.Y - wallc->tright.Y))
 		{
-			int frac = SafeDivScale30 (wallc->ty1 + wallc->tx1, den);
-			x += MulScale30 (frac, curline->v2->fixX() - x);
-			y += MulScale30 (frac, curline->v2->fixY() - y);
+			double frac = (wallc->tleft.Y + wallc->tleft.X) / den;
+			x += frac * (curline->v2->fX() - x);
+			y += frac * (curline->v2->fY() - y);
 		}
-		z1 = viewz - plane.ZatPointFixed(x, y);
+		z1 = ViewPos.Z - plane.ZatPoint(x, y);
 
 		if (wallc->sx2 > wallc->sx1 + 1)
 		{
-			x = curline->v2->fixX();
-			y = curline->v2->fixY();
-			if (wallc->sx2 == viewwidth && 0 != (den = wallc->tx1 - wallc->tx2 - wallc->ty1 + wallc->ty2))
+			x = curline->v2->fX();
+			y = curline->v2->fY();
+			if (wallc->sx2 == viewwidth && 0 != (den = wallc->tleft.X - wallc->tright.X - wallc->tleft.Y + wallc->tright.Y))
 			{
-				int frac = SafeDivScale30 (wallc->ty2 - wallc->tx2, den);
-				x -= MulScale30 (frac, x - curline->v1->fixX());
-				y -= MulScale30 (frac, y - curline->v1->fixY());
+				double frac = (wallc->tright.Y - wallc->tright.X) / den;
+				x -= frac * (x - curline->v1->fX());
+				y -= frac * (y - curline->v1->fY());
 			}
-			z2 = viewz - plane.ZatPointFixed(x, y);
+			z2 = ViewPos.Z - plane.ZatPoint(x, y);
 		}
 		else
 		{
@@ -2832,8 +2838,8 @@ int WallMost (short *mostbuf, const secplane_t &plane, const FWallCoords *wallc)
 		}
 	}
 
-	s1 = MulScale12 (globaluclip, wallc->sz1); s2 = MulScale12 (globaluclip, wallc->sz2);
-	s3 = MulScale12 (globaldclip, wallc->sz1); s4 = MulScale12 (globaldclip, wallc->sz2);
+	s1 = globaluclip * wallc->sz1; s2 = globaluclip * wallc->sz2;
+	s3 = globaldclip * wallc->sz1; s4 = globaldclip * wallc->sz2;
 	bad = (z1<s1)+((z2<s2)<<1)+((z1>s3)<<2)+((z2>s4)<<3);
 
 	ix1 = wallc->sx1; ix2 = wallc->sx2;
@@ -2856,10 +2862,10 @@ int WallMost (short *mostbuf, const secplane_t &plane, const FWallCoords *wallc)
 	if (bad&3)
 	{
 			//inty = intz / (globaluclip>>16)
-		int t = SafeDivScale30 (oz1-s1, s2-s1+oz1-oz2);
-		int inty = wallc->sz1 + MulScale30 (wallc->sz2-wallc->sz1,t);
-		int intz = oz1 + MulScale30 (oz2-oz1,t);
-		int xcross = wallc->sx1 + Scale (MulScale30 (wallc->sz2, t), wallc->sx2-wallc->sx1, inty);
+		double t = (oz1-s1) / (s2-s1+oz1-oz2);
+		double inty = wallc->sz1 + t * (wallc->sz2-wallc->sz1);
+		double intz = oz1 + t * (oz2-oz1);
+		int xcross = wallc->sx1 + xs_RoundToInt((t * wallc->sz2 * (wallc->sx2-wallc->sx1)) / inty);
 
 		//t = divscale30((x1<<4)-xcross*yb1[w],xcross*(yb2[w]-yb1[w])-((x2-x1)<<4));
 		//inty = yb1[w] + mulscale30(yb2[w]-yb1[w],t);
@@ -2880,10 +2886,10 @@ int WallMost (short *mostbuf, const secplane_t &plane, const FWallCoords *wallc)
 	if (bad&12)
 	{
 			//inty = intz / (globaldclip>>16)
-		int t = SafeDivScale30 (oz1-s3, s4-s3+oz1-oz2);
-		int inty = wallc->sz1 + MulScale30 (wallc->sz2-wallc->sz1,t);
-		int intz = oz1 + MulScale30 (oz2-oz1,t);
-		int xcross = wallc->sx1 + Scale (MulScale30 (wallc->sz2, t), wallc->sx2-wallc->sx1,inty);
+		double t = (oz1-s3) / (s4-s3+oz1-oz2);
+		double inty = wallc->sz1 + t * (wallc->sz2-wallc->sz1);
+		double intz = oz1 + t * (oz2-oz1);
+		int xcross = wallc->sx1 + xs_RoundToInt((t * wallc->sz2 * (wallc->sx2-wallc->sx1)) / inty);
 
 		//t = divscale30((x1<<4)-xcross*yb1[w],xcross*(yb2[w]-yb1[w])-((x2-x1)<<4));
 		//inty = yb1[w] + mulscale30(yb2[w]-yb1[w],t);
@@ -2901,15 +2907,15 @@ int WallMost (short *mostbuf, const secplane_t &plane, const FWallCoords *wallc)
 		}
 	}
 
-	y = Scale (z1>>4, InvZtoScale, iy1);
+	y = z1 * InvZtoScale / iy1;
 	if (ix2 == ix1)
 	{
-		mostbuf[ix1] = (short)((y + centeryfrac) >> FRACBITS);
+		mostbuf[ix1] = (short)xs_RoundToInt(y/65536.0 + CenterY);
 	}
 	else
 	{
-		fixed_t yinc = (Scale (z2>>4, InvZtoScale, iy2) - y) / (ix2-ix1);
-		qinterpolatedown16short (&mostbuf[ix1], ix2-ix1, y + centeryfrac,yinc);
+		fixed_t yinc = FLOAT2FIXED(((z2 * InvZtoScale / iy2) - y) / (ix2-ix1));
+		qinterpolatedown16short (&mostbuf[ix1], ix2-ix1, FLOAT2FIXED(y/65536.0 + CenterY), yinc);
 	}
 
 	return bad;
@@ -2950,10 +2956,10 @@ static void PrepWallRoundFix(fixed_t *lwall, fixed_t walxrepeat, int x1, int x2)
 	}
 }
 
-void PrepWall (fixed_t *swall, fixed_t *lwall, fixed_t walxrepeat, int x1, int x2)
+void PrepWall (float *swall, fixed_t *lwall, double walxrepeat, int x1, int x2)
 { // swall = scale, lwall = texturecolumn
 	double top, bot, i;
-	double xrepeat = fabs((double)walxrepeat);
+	double xrepeat = fabs(walxrepeat * 65536);
 	double depth_scale = WallT.InvZstep * WallTMapScale2;
 	double depth_org = -WallT.UoverZstep * WallTMapScale2;
 
@@ -2972,18 +2978,18 @@ void PrepWall (fixed_t *swall, fixed_t *lwall, fixed_t walxrepeat, int x1, int x
 		{
 			lwall[x] = xs_RoundToInt(frac * xrepeat);
 		}
-		swall[x] = xs_RoundToInt(frac * depth_scale + depth_org);
+		swall[x] = float(frac * depth_scale + depth_org);
 		top += WallT.UoverZstep;
 		bot += WallT.InvZstep;
 	}
-	PrepWallRoundFix(lwall, walxrepeat, x1, x2);
+	PrepWallRoundFix(lwall, FLOAT2FIXED(walxrepeat), x1, x2);
 }
 
-void PrepLWall (fixed_t *lwall, fixed_t walxrepeat, int x1, int x2)
+void PrepLWall (fixed_t *lwall, double walxrepeat, int x1, int x2)
 { // lwall = texturecolumn
 	double top, bot, i;
-	double xrepeat = fabs((double)walxrepeat);
-	double topstep;
+	double xrepeat = fabs(walxrepeat * 65536);
+	double topstep, botstep;
 
 	i = x1 - centerx;
 	top = WallT.UoverZorg + WallT.UoverZstep * i;
@@ -2991,6 +2997,7 @@ void PrepLWall (fixed_t *lwall, fixed_t walxrepeat, int x1, int x2)
 
 	top *= xrepeat;
 	topstep = WallT.UoverZstep * xrepeat;
+	botstep = WallT.InvZstep;
 
 	for (int x = x1; x < x2; x++)
 	{
@@ -3003,9 +3010,9 @@ void PrepLWall (fixed_t *lwall, fixed_t walxrepeat, int x1, int x2)
 			lwall[x] = xs_RoundToInt(top / bot);
 		}
 		top += topstep;
-		bot += WallT.InvZstep;
+		bot += botstep;
 	}
-	PrepWallRoundFix(lwall, walxrepeat, x1, x2);
+	PrepWallRoundFix(lwall, FLOAT2FIXED(walxrepeat), x1, x2);
 }
 
 // pass = 0: when seg is first drawn
@@ -3014,10 +3021,9 @@ void PrepLWall (fixed_t *lwall, fixed_t walxrepeat, int x1, int x2)
 
 static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, int pass)
 {
-	fixed_t lx, ly, lx2, ly2, decalx, decaly;
+	DVector2 decal_left, decal_right, decal_pos;
 	int x1, x2;
-	fixed_t xscale, yscale;
-	fixed_t topoff;
+	double yscale;
 	BYTE flipx;
 	double zpos;
 	int needrepeat = 0;
@@ -3069,9 +3075,6 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 		}
 	}
 
-	xscale = FLOAT2FIXED(decal->ScaleX);
-	yscale = FLOAT2FIXED(decal->ScaleY);
-
 	WallSpriteTile = TexMan(decal->PicNum, true);
 	flipx = (BYTE)(decal->RenderFlags & RF_XFLIP);
 
@@ -3086,25 +3089,21 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 
 	FWallCoords savecoord = WallC;
 
-	x2 = WallSpriteTile->GetWidth();
-	x1 = WallSpriteTile->LeftOffset;
-	x2 = x2 - x1;
-
-	x1 *= xscale;
-	x2 *= xscale;
+	double edge_right = WallSpriteTile->GetWidth();
+	double edge_left = WallSpriteTile->LeftOffset;
+	edge_right = (edge_right - edge_left) * decal->ScaleX;
+	edge_left *= decal->ScaleX;
 
 	double dcx, dcy;
 	decal->GetXY(wall, dcx, dcy);
-	decalx = FLOAT2FIXED(dcx);
-	decaly = FLOAT2FIXED(dcy);
+	decal_pos = { dcx, dcy };
 
-	angle_t ang = R_PointToAngle2 (curline->v1->fixX(), curline->v1->fixY(), curline->v2->fixX(), curline->v2->fixY()) >> ANGLETOFINESHIFT;
-	lx  = decalx - FixedMul (x1, finecosine[ang]) - viewx;
-	lx2 = decalx + FixedMul (x2, finecosine[ang]) - viewx;
-	ly  = decaly - FixedMul (x1, finesine[ang]) - viewy;
-	ly2 = decaly + FixedMul (x2, finesine[ang]) - viewy;
+	DVector2 angvec = (curline->v2->fPos() - curline->v1->fPos()).Unit();
 
-	if (WallC.Init(lx, ly, lx2, ly2, TOO_CLOSE_Z))
+	decal_left = decal_pos - edge_left * angvec - ViewPos;
+	decal_right = decal_pos + edge_right * angvec - ViewPos;
+
+	if (WallC.Init(decal_left, decal_right, TOO_CLOSE_Z))
 		goto done;
 
 	x1 = WallC.sx1;
@@ -3169,10 +3168,8 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 		break;
 	}
 
-	fixed_t fzpos;
-	fzpos = FLOAT2FIXED(zpos);	// pacify GCC
-	topoff = WallSpriteTile->TopOffset << FRACBITS;
-	dc_texturemid = topoff + FixedDiv (fzpos - viewz, yscale);
+	yscale = decal->ScaleY;
+	dc_texturemid = WallSpriteTile->TopOffset + (zpos - ViewPos.Z) / yscale;
 
 	// Clip sprite to drawseg
 	x1 = MAX<int>(clipper->x1, x1);
@@ -3182,7 +3179,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 		goto done;
 	}
 
-	PrepWall (swall, lwall, WallSpriteTile->GetWidth() << FRACBITS, x1, x2);
+	PrepWall (swall, lwall, WallSpriteTile->GetWidth(), x1, x2);
 
 	if (flipx)
 	{
@@ -3222,16 +3219,14 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 	{
 		sprflipvert = true;
 		yscale = -yscale;
-		dc_texturemid = dc_texturemid - (WallSpriteTile->GetHeight() << FRACBITS);
+		dc_texturemid -= WallSpriteTile->GetHeight();
 	}
 	else
 	{
 		sprflipvert = false;
 	}
 
-	// rw_offset is used as the texture's vertical scale
-	rw_offset = SafeDivScale30(1, yscale);
-
+	MaskedScaleY = float(1 / yscale);
 	do
 	{
 		dc_x = x1;

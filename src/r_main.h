@@ -35,22 +35,21 @@ typedef BYTE lighttable_t;	// This could be wider for >8 bit display.
 // POV related.
 //
 extern bool				bRenderingToCanvas;
-extern fixed_t			viewcos;
-extern fixed_t			viewsin;
+extern double			ViewCos;
+extern double			ViewSin;
 extern fixed_t			viewingrangerecip;
-extern fixed_t			FocalLengthX, FocalLengthY;
-extern float			FocalLengthXfloat;
-extern fixed_t			InvZtoScale;
+extern double			FocalLengthX, FocalLengthY;
+extern double			InvZtoScale;
 
-extern float			WallTMapScale2;
+extern double			WallTMapScale2;
 
 extern int				viewwindowx;
 extern int				viewwindowy;
 
-extern fixed_t			centerxfrac;
-extern fixed_t			centeryfrac;
-extern fixed_t			yaspectmul;
-extern float			iyaspectmulfloat;
+extern double			CenterX;
+extern double			CenterY;
+extern double			YaspectMul;
+extern double			IYaspectMul;
 
 extern FDynamicColormap*basecolormap;	// [RH] Colormap for sector currently being drawn
 
@@ -76,24 +75,23 @@ extern bool				r_dontmaplines;
 #define LIGHT2SHADE(l)			((NUMCOLORMAPS*2*FRACUNIT)-(((l)+12)*(FRACUNIT*NUMCOLORMAPS/128)))
 
 // MAXLIGHTSCALE from original DOOM, divided by 2.
-#define MAXLIGHTVIS				(24*FRACUNIT)
+#define MAXLIGHTVIS				(24.0)
 
 // Convert a shade and visibility to a clamped colormap index.
 // Result is not fixed point.
 // Change R_CalcTiltedLighting() when this changes.
-#define GETPALOOKUP(vis,shade)	(clamp<int> (((shade)-MIN(MAXLIGHTVIS,(vis)))>>FRACBITS, 0, NUMCOLORMAPS-1))
+#define GETPALOOKUP(vis,shade)	(clamp<int> (((shade)-FLOAT2FIXED(MIN(MAXLIGHTVIS,double(vis))))>>FRACBITS, 0, NUMCOLORMAPS-1))
 
-extern fixed_t			GlobVis;
+extern double			GlobVis;
 
-void R_SetVisibility (float visibility);
-float R_GetVisibility ();
+void R_SetVisibility(double visibility);
+double R_GetVisibility();
 
-extern fixed_t			r_BaseVisibility;
-extern fixed_t			r_WallVisibility;
-extern fixed_t			r_FloorVisibility;
+extern double			r_BaseVisibility;
+extern double			r_WallVisibility;
+extern double			r_FloorVisibility;
 extern float			r_TiltVisibility;
-extern fixed_t			r_SpriteVisibility;
-extern fixed_t			r_SkyVisibility;
+extern double			r_SpriteVisibility;
 
 extern int				r_actualextralight;
 extern bool				foggy;
@@ -138,9 +136,9 @@ void R_MultiresInit (void);
 
 
 extern int stacked_extralight;
-extern float stacked_visibility;
-extern fixed_t stacked_viewx, stacked_viewy, stacked_viewz;
-extern angle_t stacked_angle;
+extern double stacked_visibility;
+extern DVector3 stacked_viewpos;
+extern DAngle stacked_angle;
 
 extern void R_CopyStackedViewParameters();
 

@@ -82,7 +82,7 @@ struct drawseg_t
 	ptrdiff_t	sprtopclip; 		// type short
 	ptrdiff_t	sprbottomclip;		// type short
 	ptrdiff_t	maskedtexturecol;	// type short
-	ptrdiff_t	swall;				// type fixed_t
+	ptrdiff_t	swall;				// type float
 	int fake;	// ident fake drawseg, don't draw and clip sprites
 // backups
 	ptrdiff_t	bkup;	// sprtopclip backup, for mid and fake textures

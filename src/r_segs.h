@@ -33,7 +33,7 @@ extern size_t maxopenings;
 
 int OWallMost (short *mostbuf, double z, const FWallCoords *wallc);
 int WallMost (short *mostbuf, const secplane_t &plane, const FWallCoords *wallc);
-void PrepWall (fixed_t *swall, fixed_t *lwall, double walxrepeat, int x1, int x2);
+void PrepWall (float *swall, fixed_t *lwall, double walxrepeat, int x1, int x2);
 void PrepLWall (fixed_t *lwall, double walxrepeat, int x1, int x2);
 
 ptrdiff_t R_NewOpening (ptrdiff_t len);
@@ -42,7 +42,7 @@ void R_CheckDrawSegs ();
 
 void R_RenderSegLoop ();
 
-extern fixed_t	swall[MAXWIDTH];
+extern float	swall[MAXWIDTH];
 extern fixed_t	lwall[MAXWIDTH];
 extern float	rw_light;		// [RH] Scale lights with viewsize adjustments
 extern float	rw_lightstep;

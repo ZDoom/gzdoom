@@ -91,7 +91,7 @@ short	walltop[MAXWIDTH];	// [RH] record max extents of wall
 short	wallbottom[MAXWIDTH];
 short	wallupper[MAXWIDTH];
 short	walllower[MAXWIDTH];
-fixed_t	swall[MAXWIDTH];
+float	swall[MAXWIDTH];
 fixed_t	lwall[MAXWIDTH];
 double	lwallscale;
 
@@ -136,9 +136,9 @@ static fixed_t	*maskedtexturecol;
 
 static void R_RenderDecal (side_t *wall, DBaseDecal *first, drawseg_t *clipper, int pass);
 static void WallSpriteColumn (void (*drawfunc)(const BYTE *column, const FTexture::Span *spans));
-void wallscan_np2(int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal, fixed_t yrepeat, double top, double bot, bool mask);
-static void wallscan_np2_ds(drawseg_t *ds, int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal, fixed_t yrepeat);
-static void call_wallscan(int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal, fixed_t yrepeat, bool mask);
+void wallscan_np2(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, double top, double bot, bool mask);
+static void wallscan_np2_ds(drawseg_t *ds, int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat);
+static void call_wallscan(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, bool mask);
 
 //=============================================================================
 //
@@ -169,8 +169,8 @@ CVAR(Bool, r_drawmirrors, true, 0)
 //
 // R_RenderMaskedSegRange
 //
-fixed_t *MaskedSWall;
-double MaskedScaleY;
+float *MaskedSWall;
+float MaskedScaleY;
 
 static void BlastMaskedColumn (void (*blastfunc)(const BYTE *pixels, const FTexture::Span *spans), FTexture *tex)
 {
@@ -180,7 +180,7 @@ static void BlastMaskedColumn (void (*blastfunc)(const BYTE *pixels, const FText
 		dc_colormap = basecolormap->Maps + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
 	}
 
-	dc_iscale = xs_RoundToInt(MaskedSWall[dc_x] * MaskedScaleY);
+	dc_iscale = xs_Fix<16>::ToFix(MaskedSWall[dc_x] * MaskedScaleY);
  	if (sprflipvert)
 		sprtopscreen = CenterY + dc_texturemid * spryscale;
 	else
@@ -305,7 +305,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 		goto clearfog;
 	}
 
-	MaskedSWall = (fixed_t *)(openings + ds->swall) - ds->x1;
+	MaskedSWall = (float *)(openings + ds->swall) - ds->x1;
 	MaskedScaleY = ds->yscale;
 	maskedtexturecol = (fixed_t *)(openings + ds->maskedtexturecol) - ds->x1;
 	spryscale = ds->iscale + ds->iscalestep * (x1 - ds->x1);
@@ -433,7 +433,6 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 
 		mfloorclip = walllower;
 		mceilingclip = wallupper;
-		MaskedScaleY /= 4;		// [RH] Wish I could remember why this needs to be done
 
 		// draw the columns one at a time
 		if (drawmode == DoDraw0)
@@ -531,7 +530,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 
 		rw_offset = 0;
 		rw_pic = tex;
-		wallscan_np2_ds(ds, x1, x2, mceilingclip, mfloorclip, MaskedSWall, maskedtexturecol, FLOAT2FIXED(ds->yscale));
+		wallscan_np2_ds(ds, x1, x2, mceilingclip, mfloorclip, MaskedSWall, maskedtexturecol, ds->yscale);
 	}
 
 clearfog:
@@ -580,7 +579,7 @@ void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover)
 
 	spryscale = ds->iscale + ds->iscalestep * (x1 - ds->x1);
 	rw_scalestep = ds->iscalestep;
-	MaskedSWall = (fixed_t *)(openings + ds->swall) - ds->x1;
+	MaskedSWall = (float *)(openings + ds->swall) - ds->x1;
 
 	// find positioning
 	side_t *scaledside;
@@ -656,7 +655,7 @@ void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover)
 	}
 
 	PrepLWall (lwall, curline->sidedef->TexelLength*xscale, ds->sx1, ds->sx2);
-	wallscan_np2_ds(ds, x1, x2, wallupper, walllower, MaskedSWall, lwall, FLOAT2FIXED(yscale));
+	wallscan_np2_ds(ds, x1, x2, wallupper, walllower, MaskedSWall, lwall, yscale);
 	R_FinishSetPatchStyle();
 }
 
@@ -1074,15 +1073,16 @@ inline fixed_t prevline1 (fixed_t vince, BYTE *colormap, int count, fixed_t vplc
 	return doprevline1 ();
 }
 
-void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal,
-			   fixed_t yrepeat, const BYTE *(*getcol)(FTexture *tex, int x))
+void wallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal,
+			   double yrepeat, const BYTE *(*getcol)(FTexture *tex, int x))
 {
-	int x, shiftval;
+	int x, fracbits;
 	int y1ve[4], y2ve[4], u4, d4, z;
 	char bad;
 	float light = rw_light - rw_lightstep;
-	SDWORD texturemid, xoffset;
+	SDWORD xoffset;
 	BYTE *basecolormapdata;
+	double iscale;
 
 	// This function also gets used to draw skies. Unlike BUILD, skies are
 	// drawn by visplane instead of by bunch, so these checks are invalid.
@@ -1098,13 +1098,10 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 //clock (WallScanCycles);
 
 	rw_pic->GetHeight();	// Make sure texture size is loaded
-	shiftval = rw_pic->HeightBits;
-	setupvline (32-shiftval);
-	yrepeat >>= 2 + shiftval;
-	texturemid = xs_ToFixed(32 - shiftval, dc_texturemid);
+	fracbits = 32 - rw_pic->HeightBits;
+	setupvline(fracbits);
 	xoffset = rw_offset;
 	basecolormapdata = basecolormap->Maps;
-	fixed_t centeryfrac = FLOAT2FIXED(CenterY);
 
 	x = x1;
 	//while ((umost[x] > dmost[x]) && (x < x2)) x++;
@@ -1134,9 +1131,10 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 
 		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
 		dc_dest = ylookup[y1ve[0]] + x + dc_destorg;
-		dc_iscale = swal[x] * yrepeat;
 		dc_count = y2ve[0] - y1ve[0];
-		dc_texturefrac = texturemid + FixedMul (dc_iscale, (y1ve[0]<<FRACBITS)-centeryfrac+FRACUNIT);
+		iscale = swal[x] * yrepeat;
+		dc_iscale = xs_ToFixed(fracbits, iscale);
+		dc_texturefrac = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[0] - CenterY + 1));
 
 		dovline1();
 	}
@@ -1153,8 +1151,9 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 			assert (y2ve[z] <= viewheight);
 
 			bufplce[z] = getcol (rw_pic, (lwal[x+z] + xoffset) >> FRACBITS);
-			vince[z] = swal[x+z] * yrepeat;
-			vplce[z] = texturemid + FixedMul (vince[z], (y1ve[z]<<FRACBITS)-centeryfrac+FRACUNIT);
+			iscale = swal[x + z] * yrepeat;
+			vince[z] = xs_ToFixed(fracbits, iscale);
+			vplce[z] = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[z] - CenterY + 1));
 		}
 		if (bad == 15)
 		{
@@ -1227,9 +1226,10 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 
 		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
 		dc_dest = ylookup[y1ve[0]] + x + dc_destorg;
-		dc_iscale = swal[x] * yrepeat;
 		dc_count = y2ve[0] - y1ve[0];
-		dc_texturefrac = texturemid + FixedMul (dc_iscale, (y1ve[0]<<FRACBITS)-centeryfrac+FRACUNIT);
+		iscale = swal[x] * yrepeat;
+		dc_iscale = xs_ToFixed(fracbits, iscale);
+		dc_texturefrac = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[0] - CenterY + 1));
 
 		dovline1();
 	}
@@ -1239,7 +1239,7 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 	NetUpdate ();
 }
 
-void wallscan_striped (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal, fixed_t yrepeat)
+void wallscan_striped (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat)
 {
 	FDynamicColormap *startcolormap = basecolormap;
 	int startshade = wallshade;
@@ -1280,7 +1280,7 @@ void wallscan_striped (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, 
 	wallshade = startshade;
 }
 
-static void call_wallscan(int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal, fixed_t yrepeat, bool mask)
+static void call_wallscan(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, bool mask)
 {
 	if (mask)
 	{
@@ -1317,11 +1317,11 @@ static void call_wallscan(int x1, int x2, short *uwal, short *dwal, fixed_t *swa
 //
 //=============================================================================
 
-void wallscan_np2(int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal, fixed_t yrep, double top, double bot, bool mask)
+void wallscan_np2(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, double top, double bot, bool mask)
 {
 	if (!r_np2)
 	{
-		call_wallscan(x1, x2, uwal, dwal, swal, lwal, yrep, mask);
+		call_wallscan(x1, x2, uwal, dwal, swal, lwal, yrepeat, mask);
 	}
 	else
 	{
@@ -1329,7 +1329,6 @@ void wallscan_np2(int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed
 		short *up, *down;
 		double texheight = rw_pic->GetHeight();
 		double partition;
-		double yrepeat = FIXED2FLOAT(yrep);
 		double scaledtexheight = texheight / yrepeat;
 
 		if (yrepeat >= 0)
@@ -1351,14 +1350,14 @@ void wallscan_np2(int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed
 					{
 						down[j] = clamp(most3[j], up[j], dwal[j]);
 					}
-					call_wallscan(x1, x2, up, down, swal, lwal, yrep, mask);
+					call_wallscan(x1, x2, up, down, swal, lwal, yrepeat, mask);
 					up = down;
 					down = (down == most1) ? most2 : most1;
 				}
 				partition -= scaledtexheight;
 				dc_texturemid -= texheight;
  			}
-			call_wallscan(x1, x2, up, dwal, swal, lwal, yrep, mask);
+			call_wallscan(x1, x2, up, dwal, swal, lwal, yrepeat, mask);
 		}
 		else
 		{ // upside down: draw strips from bottom to top
@@ -1375,19 +1374,19 @@ void wallscan_np2(int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed
 					{
 						up[j] = clamp(most3[j], uwal[j], down[j]);
 					}
-					call_wallscan(x1, x2, up, down, swal, lwal, yrep, mask);
+					call_wallscan(x1, x2, up, down, swal, lwal, yrepeat, mask);
 					down = up;
 					up = (up == most1) ? most2 : most1;
 				}
 				partition -= scaledtexheight;
 				dc_texturemid -= texheight;
  			}
-			call_wallscan(x1, x2, uwal, down, swal, lwal, yrep, mask);
+			call_wallscan(x1, x2, uwal, down, swal, lwal, yrepeat, mask);
 		}
 	}
 }
 
-static void wallscan_np2_ds(drawseg_t *ds, int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal, fixed_t yrepeat)
+static void wallscan_np2_ds(drawseg_t *ds, int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat)
 {
 	if (rw_pic->GetHeight() != 1 << rw_pic->HeightBits)
 	{
@@ -1424,16 +1423,17 @@ inline fixed_t mvline1 (fixed_t vince, BYTE *colormap, int count, fixed_t vplce,
 	return domvline1 ();
 }
 
-void maskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal,
-	fixed_t yrepeat, const BYTE *(*getcol)(FTexture *tex, int x))
+void maskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal,
+	double yrepeat, const BYTE *(*getcol)(FTexture *tex, int x))
 {
-	int x, shiftval;
+	int x, fracbits;
 	BYTE *p;
 	int y1ve[4], y2ve[4], u4, d4, startx, dax, z;
 	char bad;
 	float light = rw_light - rw_lightstep;
-	SDWORD texturemid, xoffset;
+	SDWORD xoffset;
 	BYTE *basecolormapdata;
+	double iscale;
 
 	if (rw_pic->UseType == FTexture::TEX_Null)
 	{
@@ -1450,13 +1450,10 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixe
 //clock (WallScanCycles);
 
 	rw_pic->GetHeight();	// Make sure texture size is loaded
-	shiftval = rw_pic->HeightBits;
-	setupmvline (32-shiftval);
-	yrepeat >>= 2 + shiftval;
-	texturemid = xs_ToFixed(32 - shiftval, dc_texturemid);
+	fracbits = 32- rw_pic->HeightBits;
+	setupmvline(fracbits);
 	xoffset = rw_offset;
 	basecolormapdata = basecolormap->Maps;
-	fixed_t centeryfrac = FLOAT2FIXED(CenterY);
 
 	x = startx = x1;
 	p = x + dc_destorg;
@@ -1484,9 +1481,10 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixe
 
 		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
 		dc_dest = ylookup[y1ve[0]] + p;
-		dc_iscale = swal[x] * yrepeat;
 		dc_count = y2ve[0] - y1ve[0];
-		dc_texturefrac = texturemid + FixedMul (dc_iscale, (y1ve[0]<<FRACBITS)-centeryfrac+FRACUNIT);
+		iscale = swal[x] * yrepeat;
+		dc_iscale = xs_ToFixed(fracbits, iscale);
+		dc_texturefrac = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[0] - CenterY + 1));
 
 		domvline1();
 	}
@@ -1501,8 +1499,9 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixe
 			if (y2ve[z] <= y1ve[z]) { bad += 1<<z; continue; }
 
 			bufplce[z] = getcol (rw_pic, (lwal[dax] + xoffset) >> FRACBITS);
-			vince[z] = swal[dax] * yrepeat;
-			vplce[z] = texturemid + FixedMul (vince[z], (y1ve[z]<<FRACBITS)-centeryfrac+FRACUNIT);
+			iscale = swal[dax] * yrepeat;
+			vince[z] = xs_ToFixed(fracbits, iscale);
+			vplce[z] = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[z] - CenterY + 1));
 		}
 		if (bad == 15)
 		{
@@ -1573,9 +1572,10 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixe
 
 		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
 		dc_dest = ylookup[y1ve[0]] + p;
-		dc_iscale = swal[x] * yrepeat;
 		dc_count = y2ve[0] - y1ve[0];
-		dc_texturefrac = texturemid + FixedMul (dc_iscale, (y1ve[0]<<FRACBITS)-centeryfrac+FRACUNIT);
+		iscale = swal[x] * yrepeat;
+		dc_iscale = xs_ToFixed(fracbits, iscale);
+		dc_texturefrac = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[0] - CenterY + 1));
 
 		domvline1();
 	}
@@ -1595,18 +1595,19 @@ inline void preptmvline1 (fixed_t vince, BYTE *colormap, int count, fixed_t vplc
 	dc_dest = dest;
 }
 
-void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal,
-	fixed_t yrepeat, const BYTE *(*getcol)(FTexture *tex, int x))
+void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal,
+	double yrepeat, const BYTE *(*getcol)(FTexture *tex, int x))
 {
 	fixed_t (*tmvline1)();
 	void (*tmvline4)();
-	int x, shiftval;
+	int x, fracbits;
 	BYTE *p;
 	int y1ve[4], y2ve[4], u4, d4, startx, dax, z;
 	char bad;
 	float light = rw_light - rw_lightstep;
-	SDWORD texturemid, xoffset;
+	SDWORD xoffset;
 	BYTE *basecolormapdata;
+	double iscale;
 
 	if (rw_pic->UseType == FTexture::TEX_Null)
 	{
@@ -1624,10 +1625,8 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal,
 //clock (WallScanCycles);
 
 	rw_pic->GetHeight();	// Make sure texture size is loaded
-	shiftval = rw_pic->HeightBits;
-	setuptmvline (32-shiftval);
-	yrepeat >>= 2 + shiftval;
-	texturemid = xs_ToFixed(32 - shiftval, dc_texturemid);
+	fracbits = 32 - rw_pic->HeightBits;
+	setuptmvline(fracbits);
 	xoffset = rw_offset;
 	basecolormapdata = basecolormap->Maps;
 	fixed_t centeryfrac = FLOAT2FIXED(CenterY);
@@ -1658,9 +1657,10 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal,
 
 		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
 		dc_dest = ylookup[y1ve[0]] + p;
-		dc_iscale = swal[x] * yrepeat;
 		dc_count = y2ve[0] - y1ve[0];
-		dc_texturefrac = texturemid + FixedMul (dc_iscale, (y1ve[0]<<FRACBITS)-centeryfrac+FRACUNIT);
+		iscale = swal[x] * yrepeat;
+		dc_iscale = xs_ToFixed(fracbits, iscale);
+		dc_texturefrac = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[0] - CenterY + 1));
 
 		tmvline1();
 	}
@@ -1675,8 +1675,9 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal,
 			if (y2ve[z] <= y1ve[z]) { bad += 1<<z; continue; }
 
 			bufplce[z] = getcol (rw_pic, (lwal[dax] + xoffset) >> FRACBITS);
-			vince[z] = swal[dax] * yrepeat;
-			vplce[z] = texturemid + FixedMul (vince[z], (y1ve[z]<<FRACBITS)-centeryfrac+FRACUNIT);
+			iscale = swal[dax] * yrepeat;
+			vince[z] = xs_ToFixed(fracbits, iscale);
+			vplce[z] = xs_ToFixed(fracbits, dc_texturemid + vince[z] * (y1ve[z] - CenterY + 1));
 		}
 		if (bad == 15)
 		{
@@ -1750,9 +1751,10 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal,
 
 		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
 		dc_dest = ylookup[y1ve[0]] + p;
-		dc_iscale = swal[x] * yrepeat;
 		dc_count = y2ve[0] - y1ve[0];
-		dc_texturefrac = texturemid + FixedMul (dc_iscale, (y1ve[0]<<FRACBITS)-centeryfrac+FRACUNIT);
+		iscale = swal[x] * yrepeat;
+		dc_iscale = xs_ToFixed(fracbits, iscale);
+		dc_texturefrac = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[0] - CenterY + 1));
 
 		tmvline1();
 	}
@@ -1778,7 +1780,7 @@ void R_RenderSegLoop ()
 	int x2 = rw_stopx;
 	int x;
 	double xscale;
-	fixed_t yscale;
+	double yscale;
 	fixed_t xoffset = rw_offset;
 
 	if (fixedlightlev >= 0)
@@ -1868,7 +1870,7 @@ void R_RenderSegLoop ()
 			dc_texturemid = rw_midtexturemid;
 			rw_pic = midtexture;
 			xscale = rw_pic->Scale.X * rw_midtexturescalex;
-			yscale = FLOAT2FIXED(rw_pic->Scale.Y * rw_midtexturescaley);
+			yscale = rw_pic->Scale.Y * rw_midtexturescaley;
 			if (xscale != lwallscale)
 			{
 				PrepLWall (lwall, curline->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2);
@@ -1911,7 +1913,7 @@ void R_RenderSegLoop ()
 				dc_texturemid = rw_toptexturemid;
 				rw_pic = toptexture;
 				xscale = rw_pic->Scale.X * rw_toptexturescalex;
-				yscale = FLOAT2FIXED(rw_pic->Scale.Y * rw_toptexturescaley);
+				yscale = rw_pic->Scale.Y * rw_toptexturescaley;
 				if (xscale != lwallscale)
 				{
 					PrepLWall (lwall, curline->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2);
@@ -1957,7 +1959,7 @@ void R_RenderSegLoop ()
 				dc_texturemid = rw_bottomtexturemid;
 				rw_pic = bottomtexture;
 				xscale = rw_pic->Scale.X * rw_bottomtexturescalex;
-				yscale = FLOAT2FIXED(rw_pic->Scale.Y * rw_bottomtexturescaley);
+				yscale = rw_pic->Scale.Y * rw_bottomtexturescaley;
 				if (xscale != lwallscale)
 				{
 					PrepLWall (lwall, curline->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2);
@@ -2228,7 +2230,7 @@ void R_NewWall (bool needlights)
 			rowoffset = sidedef->GetTextureYOffsetF(side_t::bottom);
 			rw_bottomtexturescalex = FIXED2DBL(sidedef->GetTextureXScale(side_t::bottom));
 			rw_bottomtexturescaley = FIXED2DBL(sidedef->GetTextureYScale(side_t::bottom));
-			yrepeat = fixed_t(bottomtexture->Scale.Y * rw_bottomtexturescaley);
+			yrepeat = bottomtexture->Scale.Y * rw_bottomtexturescaley;
 			if (yrepeat >= 0)
 			{ // normal orientation
 				if (linedef->flags & ML_DONTPEGBOTTOM)
@@ -2492,7 +2494,7 @@ void R_StoreWallRange (int start, int stop)
 			(rw_floorstat != 3 || !sidedef->GetTexture(side_t::bottom).isValid()) &&
 			(WallC.sz1 >= TOO_CLOSE_Z && WallC.sz2 >= TOO_CLOSE_Z))
 		{
-			fixed_t *swal;
+			float *swal;
 			fixed_t *lwal;
 			int i;
 
@@ -2512,7 +2514,7 @@ void R_StoreWallRange (int start, int stop)
 				ds_p->swall = R_NewOpening ((stop - start) * 2);
 
 				lwal = (fixed_t *)(openings + ds_p->maskedtexturecol);
-				swal = (fixed_t *)(openings + ds_p->swall);
+				swal = (float *)(openings + ds_p->swall);
 				FTexture *pic = TexMan(sidedef->GetTexture(side_t::mid), true);
 				double yscale = pic->Scale.X * sidedef->GetTextureYScaleF(side_t::mid);
 				fixed_t xoffset = sidedef->GetTextureXOffset(side_t::mid);
@@ -2528,8 +2530,8 @@ void R_StoreWallRange (int start, int stop)
 					*swal++ = swall[i];
 				}
 
-				double istart = *((fixed_t *)(openings + ds_p->swall)) * yscale / (1 << 18);
-				double iend = *(swal - 1) * yscale / (1 << 18);
+				double istart = *((float *)(openings + ds_p->swall)) * yscale;
+				double iend = *(swal - 1) * yscale;
 #if 0
 				///This was for avoiding overflow when using fixed point. It might not be needed anymore.
 				const double mini = 3 / 65536.0;
@@ -2965,7 +2967,7 @@ static void PrepWallRoundFix(fixed_t *lwall, fixed_t walxrepeat, int x1, int x2)
 	}
 }
 
-void PrepWall (fixed_t *swall, fixed_t *lwall, double walxrepeat, int x1, int x2)
+void PrepWall (float *swall, fixed_t *lwall, double walxrepeat, int x1, int x2)
 { // swall = scale, lwall = texturecolumn
 	double top, bot, i;
 	double xrepeat = fabs(walxrepeat * 65536);
@@ -2987,7 +2989,7 @@ void PrepWall (fixed_t *swall, fixed_t *lwall, double walxrepeat, int x1, int x2
 		{
 			lwall[x] = xs_RoundToInt(frac * xrepeat);
 		}
-		swall[x] = xs_RoundToInt(frac * depth_scale + depth_org);
+		swall[x] = float(frac * depth_scale + depth_org);
 		top += WallT.UoverZstep;
 		bot += WallT.InvZstep;
 	}
@@ -3235,9 +3237,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 		sprflipvert = false;
 	}
 
-	// rw_offset is used as the texture's vertical scale
-	rw_offset = FLOAT2FIXED(1 / yscale);
-
+	MaskedScaleY = float(1 / yscale);
 	do
 	{
 		dc_x = x1;

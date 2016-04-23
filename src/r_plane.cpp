@@ -848,7 +848,7 @@ static double skymid;
 static angle_t skyangle;
 static double frontiScale;
 
-extern fixed_t swall[MAXWIDTH];
+extern float swall[MAXWIDTH];
 extern fixed_t lwall[MAXWIDTH];
 extern fixed_t rw_offset;
 extern FTexture *rw_pic;
@@ -916,13 +916,16 @@ static const BYTE *R_GetTwoSkyColumns (FTexture *fronttex, int x)
 static void R_DrawSky (visplane_t *pl)
 {
 	int x;
+	float swal;
 
  	if (pl->left >= pl->right)
 		return;
 
-	dc_iscale = skyiscale;
-
-	clearbuf (swall+pl->left, pl->right-pl->left, dc_iscale<<2);
+	swal = skyiscale;
+	for (x = pl->left; x < pl->right; ++x)
+	{
+		swall[x] = swal;
+	}
 
 	if (MirrorFlags & RF_XFLIP)
 	{
@@ -957,20 +960,12 @@ static void R_DrawSky (visplane_t *pl)
 			lastskycol[x] = 0xffffffff;
 		}
 		wallscan (pl->left, pl->right, (short *)pl->top, (short *)pl->bottom, swall, lwall,
-			FLOAT2FIXED(frontyScale), backskytex == NULL ? R_GetOneSkyColumn : R_GetTwoSkyColumns);
+			frontyScale, backskytex == NULL ? R_GetOneSkyColumn : R_GetTwoSkyColumns);
 	}
 	else
 	{ // The texture does not tile nicely
 		frontyScale *= skyscale;
 		frontiScale = 1 / frontyScale;
-		// Sodding crap. Fixed point sucks when you want precision.
-		// TODO (if I'm feeling adventurous): Rewrite the renderer to use floating point
-		// coordinates to keep as much precision as possible until the final
-		// rasterization stage so fudges like this aren't needed.
-		if (viewheight <= 600)
-		{
-			skymid -= 1;
-		}
 		R_DrawSkyStriped (pl);
 	}
 }
@@ -989,7 +984,6 @@ static void R_DrawSkyStriped (visplane_t *pl)
 	yl = 0;
 	yh = short((frontskytex->GetHeight() - topfrac) * frontyScale);
 	dc_texturemid = topfrac - iscale * (1 - CenterY);
-	fixed_t yScale = FLOAT2FIXED(rw_pic->Scale.Y);
 
 	while (yl < viewheight)
 	{
@@ -1002,7 +996,7 @@ static void R_DrawSkyStriped (visplane_t *pl)
 		{
 			lastskycol[x] = 0xffffffff;
 		}
-		wallscan (pl->left, pl->right, top, bot, swall, lwall, yScale,
+		wallscan (pl->left, pl->right, top, bot, swall, lwall, rw_pic->Scale.Y,
 			backskytex == NULL ? R_GetOneSkyColumn : R_GetTwoSkyColumns);
 		yl = yh;
 		yh += drawheight;

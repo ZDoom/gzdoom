@@ -41,8 +41,8 @@
 FTextureID	skyflatnum;
 FTextureID	sky1texture,	sky2texture;
 double		skytexturemid;
-fixed_t		skyscale;
-fixed_t		skyiscale;
+double		skyscale;
+float		skyiscale;
 bool		skystretch;
 
 fixed_t		sky1cyl,		sky2cyl;
@@ -54,7 +54,7 @@ CUSTOM_CVAR (Bool, r_stretchsky, true, CVAR_ARCHIVE)
 	R_InitSkyMap ();
 }
 
-fixed_t			freelookviewheight;
+int			freelookviewheight;
 
 //==========================================================================
 //
@@ -112,19 +112,18 @@ void R_InitSkyMap ()
 
 	if (viewwidth != 0 && viewheight != 0)
 	{
-		skyiscale = (r_Yaspect*FRACUNIT) / ((freelookviewheight * viewwidth) / viewwidth);
-		skyscale = (((freelookviewheight * viewwidth) / viewwidth) << FRACBITS) /
-					(r_Yaspect);
+		skyiscale = float(r_Yaspect / freelookviewheight);
+		skyscale = freelookviewheight / r_Yaspect;
 
-		skyiscale = Scale (skyiscale, FieldOfView, 2048);
-		skyscale = Scale (skyscale, 2048, FieldOfView);
+		skyiscale *= FieldOfView / 2048.f;
+		skyscale *= 2048.0 / FieldOfView;
 	}
 
 	if (skystretch)
 	{
-		skyscale = Scale(skyscale, SKYSTRETCH_HEIGHT, skyheight);
-		skyiscale = Scale(skyiscale, skyheight, SKYSTRETCH_HEIGHT);
-		skytexturemid = skytexturemid * skyheight / SKYSTRETCH_HEIGHT;
+		skyscale *= (double)SKYSTRETCH_HEIGHT / skyheight;
+		skyiscale *= skyheight / (float)SKYSTRETCH_HEIGHT;
+		skytexturemid *= skyheight / (double)SKYSTRETCH_HEIGHT;
 	}
 
 	// The standard Doom sky texture is 256 pixels wide, repeated 4 times over 360 degrees,

@@ -39,7 +39,7 @@ extern DWORD			r_FrameTime;
 extern int				extralight;
 extern unsigned int		R_OldBlend;
 
-const int				r_Yaspect = 200;	// Why did I make this a variable? It's never set anywhere.
+const double			r_Yaspect = 200.0;		// Why did I make this a variable? It's never set anywhere.
 
 //==========================================================================
 //

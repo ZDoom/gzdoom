@@ -30,10 +30,10 @@ extern fixed_t		sky1cyl,		sky2cyl;
 extern FTextureID	sky1texture,	sky2texture;
 extern double		sky1pos,		sky2pos;
 extern double	skytexturemid;
-extern fixed_t	skyiscale;
-extern fixed_t	skyscale;
+extern float	skyiscale;
+extern double	skyscale;
 extern bool		skystretch;
-extern fixed_t freelookviewheight;
+extern int		freelookviewheight;
 
 #define SKYSTRETCH_HEIGHT 228
 

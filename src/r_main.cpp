@@ -383,7 +383,7 @@ void R_SWRSetWindow(int windowSize, int fullWidth, int fullHeight, int stHeight,
 	IYaspectMul = (double)virtwidth * r_Yaspect / 320.0 / virtheight;
 	InvZtoScale = YaspectMul * CenterX;
 
-	WallTMapScale2 = IYaspectMul * (1 << 18) / CenterX;
+	WallTMapScale2 = IYaspectMul / CenterX;
 
 	// psprite scales
 	pspritexscale = centerxwide / 160.0;

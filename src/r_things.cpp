@@ -89,7 +89,7 @@ struct FCoverageBuffer
 };
 
 extern double globaluclip, globaldclip;
-
+extern float MaskedScaleY;
 
 #define MINZ			double((2048*4) / double(1 << 20))
 #define BASEYCENTER 	(100)
@@ -558,8 +558,7 @@ void R_DrawWallSprite(vissprite_t *spr)
 		sprflipvert = false;
 	}
 
-	// rw_offset is used as the texture's vertical scale
-	rw_offset = xs_Fix<30>::ToFix(iyscale);
+	MaskedScaleY = (float)iyscale;
 
 	dc_x = x1;
 	ESPSResult mode;
@@ -632,8 +631,9 @@ void R_DrawWallSprite(vissprite_t *spr)
 
 void R_WallSpriteColumn (void (*drawfunc)(const BYTE *column, const FTexture::Span *spans))
 {
-	dc_iscale = MulScale16 (swall[dc_x], rw_offset/4);
-	spryscale = 65536.0 / dc_iscale;
+	float iscale = swall[dc_x] * MaskedScaleY;
+	dc_iscale = FLOAT2FIXED(iscale);
+	spryscale = 1 / iscale;
 	if (sprflipvert)
 		sprtopscreen = CenterY + dc_texturemid * spryscale;
 	else

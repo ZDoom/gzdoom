@@ -81,11 +81,11 @@ struct GLSectorPlane
 
 	void GetFromSector(sector_t * sec, int ceiling)
 	{
-		Offs.X = (float)sec->GetXOffsetF(ceiling);
-		Offs.Y = (float)sec->GetYOffsetF(ceiling);
-		Scale.X = (float)sec->GetXScaleF(ceiling);
-		Scale.Y = (float)sec->GetYScaleF(ceiling);
-		Angle = (float)sec->GetAngleF(ceiling).Degrees;
+		Offs.X = (float)sec->GetXOffset(ceiling);
+		Offs.Y = (float)sec->GetYOffset(ceiling);
+		Scale.X = (float)sec->GetXScale(ceiling);
+		Scale.Y = (float)sec->GetYScale(ceiling);
+		Angle = (float)sec->GetAngle(ceiling).Degrees;
 		texture = sec->GetTexture(ceiling);
 		plane = sec->GetSecPlane(ceiling);
 		Texheight = (float)((ceiling == sector_t::ceiling)? plane.fD() : -plane.fD());

@@ -100,11 +100,7 @@ visplane_t *R_FindPlane
   int			lightlevel,
   fixed_t		alpha,
   bool			additive,
-  fixed_t		xoffs,		// killough 2/28/98: add x-y offsets
-  fixed_t		yoffs,
-  fixed_t		xscale,
-  fixed_t		yscale,
-  angle_t		angle,
+  const FTransform &xform,
   int			sky,
   FSectorPortal *portal);
 

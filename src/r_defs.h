@@ -339,11 +339,6 @@ public:
 	}
 
 	// Returns < 0 : behind; == 0 : on; > 0 : in front
-	int PointOnSide (fixed_t x, fixed_t y, fixed_t z) const
-	{
-		return PointOnSide(DVector3(FIXED2DBL(x), FIXED2DBL(y), FIXED2DBL(z)));
-	}
-
 	int PointOnSide(const DVector3 &pos) const
 	{
 		double v = (normal | pos) + D;
@@ -358,23 +353,6 @@ public:
 
 	// Returns the value of z at (x,y)
 	fixed_t ZatPoint(fixed_t x, fixed_t y) const = delete;	// it is not allowed to call this.
-
-	fixed_t ZatPointFixed(fixed_t x, fixed_t y) const
-	{
-		return FLOAT2FIXED(ZatPoint(FIXED2DBL(x), FIXED2DBL(y)));
-	}
-
-	// This is for the software renderer
-	fixed_t ZatPointFixed(const DVector2 &pos) const
-	{
-		return FLOAT2FIXED(ZatPoint(pos));
-	}
-
-	fixed_t ZatPointFixed(const vertex_t *v) const
-	{
-		return FLOAT2FIXED(ZatPoint(v));
-	}
-
 
 	// Returns the value of z at (x,y) as a double
 	double ZatPoint (double x, double y) const
@@ -604,16 +582,24 @@ struct extsector_t
 struct FTransform
 {
 	// killough 3/7/98: floor and ceiling texture offsets
-	fixed_t xoffs, yoffs;
+	double xOffs, yOffs, baseyOffs;
 
 	// [RH] floor and ceiling texture scales
-	fixed_t xscale, yscale;
+	double xScale, yScale;
 
 	// [RH] floor and ceiling texture rotation
-	angle_t angle;
+	DAngle Angle, baseAngle;
 
-	// base values
-	fixed_t base_angle, base_yoffs;
+	finline bool operator == (const FTransform &other) const
+	{
+		return xOffs == other.xOffs && yOffs + baseyOffs == other.yOffs + other.baseyOffs &&
+			xScale == other.xScale && yScale == other.yScale && Angle + baseAngle == other.Angle + other.baseAngle;
+	}
+	finline bool operator != (const FTransform &other) const
+	{
+		return !(*this == other);
+	}
+
 };
 
 struct secspecial_t
@@ -713,121 +699,82 @@ public:
 
 	void SetXOffset(int pos, double o)
 	{
-		planes[pos].xform.xoffs = FLOAT2FIXED(o);
+		planes[pos].xform.xOffs = o;
 	}
 
 	void AddXOffset(int pos, double o)
 	{
-		planes[pos].xform.xoffs += FLOAT2FIXED(o);
-	}
-
-	fixed_t GetXOffset(int pos) const
-	{
-		return planes[pos].xform.xoffs;
+		planes[pos].xform.xOffs += o;
 	}
 
 	double GetXOffsetF(int pos) const
 	{
-		return FIXED2DBL(planes[pos].xform.xoffs);
+		return planes[pos].xform.xOffs;
 	}
 
 	void SetYOffset(int pos, double o)
 	{
-		planes[pos].xform.yoffs = FLOAT2FIXED(o);
+		planes[pos].xform.yOffs = o;
 	}
 
 	void AddYOffset(int pos, double o)
 	{
-		planes[pos].xform.yoffs += FLOAT2FIXED(o);
-	}
-
-	fixed_t GetYOffset(int pos, bool addbase = true) const
-	{
-		if (!addbase)
-		{
-			return planes[pos].xform.yoffs;
-		}
-		else
-		{
-			return planes[pos].xform.yoffs + planes[pos].xform.base_yoffs;
-		}
+		planes[pos].xform.yOffs += o;
 	}
 
 	double GetYOffsetF(int pos, bool addbase = true) const
 	{
 		if (!addbase)
 		{
-			return FIXED2DBL(planes[pos].xform.yoffs);
+			return planes[pos].xform.yOffs;
 		}
 		else
 		{
-			return FIXED2DBL(planes[pos].xform.yoffs + planes[pos].xform.base_yoffs);
+			return planes[pos].xform.yOffs + planes[pos].xform.baseyOffs;
 		}
 	}
 
 	void SetXScale(int pos, double o)
 	{
-		planes[pos].xform.xscale = FLOAT2FIXED(o);
-	}
-
-	fixed_t GetXScale(int pos) const
-	{
-		return planes[pos].xform.xscale;
+		planes[pos].xform.xScale = o;
 	}
 
 	double GetXScaleF(int pos) const
 	{
-		return FIXED2DBL(planes[pos].xform.xscale);
+		return planes[pos].xform.xScale;
 	}
 
 	void SetYScale(int pos, double o)
 	{
-		planes[pos].xform.yscale = FLOAT2FIXED(o);
-	}
-
-	fixed_t GetYScale(int pos) const
-	{
-		return planes[pos].xform.yscale;
+		planes[pos].xform.yScale = o;
 	}
 
 	double GetYScaleF(int pos) const
 	{
-		return FIXED2DBL(planes[pos].xform.yscale);
+		return planes[pos].xform.yScale;
 	}
 
 	void SetAngle(int pos, DAngle o)
 	{
-		planes[pos].xform.angle = o.BAMs();
-	}
-
-	angle_t GetAngle(int pos, bool addbase = true) const
-	{
-		if (!addbase)
-		{
-			return planes[pos].xform.angle;
-		}
-		else
-		{
-			return planes[pos].xform.angle + planes[pos].xform.base_angle;
-		}
+		planes[pos].xform.Angle = o;
 	}
 
 	DAngle GetAngleF(int pos, bool addbase = true) const
 	{
 		if (!addbase)
 		{
-			return ANGLE2DBL(planes[pos].xform.angle);
+			return planes[pos].xform.Angle;
 		}
 		else
 		{
-			return ANGLE2DBL(planes[pos].xform.angle + planes[pos].xform.base_angle);
+			return planes[pos].xform.Angle + planes[pos].xform.baseAngle;
 		}
 	}
 
 	void SetBase(int pos, double y, DAngle o)
 	{
-		planes[pos].xform.base_yoffs = FLOAT2FIXED(y);
-		planes[pos].xform.base_angle = o.BAMs();
+		planes[pos].xform.baseyOffs = y;
+		planes[pos].xform.baseAngle = o;
 	}
 
 	void SetAlpha(int pos, double o)
@@ -848,6 +795,12 @@ public:
 	int GetFlags(int pos) const
 	{
 		return planes[pos].Flags;
+	}
+
+	// like the previous one but masks out all flags which are not relevant for rendering.
+	int GetVisFlags(int pos) const
+	{
+		return planes[pos].Flags & ~(PLANEF_BLOCKED | PLANEF_NOPASS | PLANEF_BLOCKSOUND | PLANEF_LINKED);
 	}
 
 	void ChangeFlags(int pos, int And, int Or)

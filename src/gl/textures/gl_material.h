@@ -155,7 +155,7 @@ public:
 
 	void GetTexCoordInfo(FTexCoordInfo *tci, side_t *side, int texpos) const
 	{
-		GetTexCoordInfo(tci, (float)side->GetTextureXScaleF(texpos), (float)side->GetTextureYScaleF(texpos));
+		GetTexCoordInfo(tci, (float)side->GetTextureXScale(texpos), (float)side->GetTextureYScale(texpos));
 	}
 
 	// This is scaled size in integer units as needed by walls and flats

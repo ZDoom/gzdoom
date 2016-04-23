@@ -86,8 +86,8 @@ void GLSkyInfo::init(int sky1, PalEntry FadeColor)
 		texture[0] = FMaterial::ValidateTexture(texno, true);
 		if (!texture[0] || texture[0]->tex->UseType == FTexture::TEX_Null) goto normalsky;
 		skytexno1 = texno;
-		x_offset[0] = s->GetTextureXOffsetF(pos) * (360.f/65536.f);
-		y_offset = s->GetTextureYOffsetF(pos);
+		x_offset[0] = s->GetTextureXOffset(pos) * (360.f/65536.f);
+		y_offset = s->GetTextureYOffset(pos);
 		mirrored = !l->args[2];
 	}
 	else
@@ -272,11 +272,11 @@ void GLWall::SkyTop(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex
 					// or it will cause glitches elsewhere.
 					tex = TexMan(seg->sidedef->GetTexture(side_t::mid));
 					if (tex != NULL && !(seg->linedef->flags & ML_DONTPEGTOP) &&
-						seg->sidedef->GetTextureYOffsetF(side_t::mid) > 0)
+						seg->sidedef->GetTextureYOffset(side_t::mid) > 0)
 					{
 						ztop[0]=ztop[1]=32768.0f;
 						zbottom[0]=zbottom[1]= 
-							bs->ceilingplane.ZatPoint(v2) + seg->sidedef->GetTextureYOffsetF(side_t::mid);
+							bs->ceilingplane.ZatPoint(v2) + seg->sidedef->GetTextureYOffset(side_t::mid);
 						SkyPlane(fs, sector_t::ceiling, false);
 						return;
 					}

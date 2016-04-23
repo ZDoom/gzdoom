@@ -772,11 +772,11 @@ void GLWall::DoTexture(int _type,seg_t * seg, int peg,
 
 	type = (seg->linedef->special == Line_Mirror && _type == RENDERWALL_M1S && gl_mirrors) ? RENDERWALL_MIRROR : _type;
 
-	float floatceilingref = ceilingrefheight + tci.RowOffset(seg->sidedef->GetTextureYOffsetF(texpos));
+	float floatceilingref = ceilingrefheight + tci.RowOffset(seg->sidedef->GetTextureYOffset(texpos));
 	if (peg) floatceilingref += tci.mRenderHeight - flh - v_offset;
 
 	if (!SetWallCoordinates(seg, &tci, floatceilingref, topleft, topright, bottomleft, bottomright, 
-							seg->sidedef->GetTextureXOffsetF(texpos))) return;
+							seg->sidedef->GetTextureXOffset(texpos))) return;
 
 	CheckTexturePosition();
 
@@ -827,7 +827,7 @@ void GLWall::DoMidTexture(seg_t * seg, bool drawfogboundary,
 			tci.mRenderHeight = -tci.mRenderHeight;
 			tci.mScale.Y = -tci.mScale.Y;
 		}
-		float rowoffset = tci.RowOffset(seg->sidedef->GetTextureYOffsetF(side_t::mid));
+		float rowoffset = tci.RowOffset(seg->sidedef->GetTextureYOffset(side_t::mid));
 		if ((seg->linedef->flags & ML_DONTPEGBOTTOM) >0)
 		{
 			texturebottom = MAX(realfront->GetPlaneTexZF(sector_t::floor), realback->GetPlaneTexZF(sector_t::floor)) + rowoffset;
@@ -945,7 +945,7 @@ void GLWall::DoMidTexture(seg_t * seg, bool drawfogboundary,
 	// set up texture coordinate stuff
 	//
 	// 
-	float t_ofs = seg->sidedef->GetTextureXOffsetF(side_t::mid);
+	float t_ofs = seg->sidedef->GetTextureXOffset(side_t::mid);
 
 	if (gltexture)
 	{
@@ -1171,18 +1171,18 @@ void GLWall::BuildFFBlock(seg_t * seg, F3DFloor * rover,
 			gltexture->GetTexCoordInfo(&tci, mastersd, side_t::mid);
 		}
 
-		to = (rover->flags&(FF_UPPERTEXTURE | FF_LOWERTEXTURE)) ? 0 : tci.TextureOffset(mastersd->GetTextureXOffsetF(side_t::mid));
+		to = (rover->flags&(FF_UPPERTEXTURE | FF_LOWERTEXTURE)) ? 0 : tci.TextureOffset(mastersd->GetTextureXOffset(side_t::mid));
 
-		ul = tci.FloatToTexU(to + tci.TextureOffset(seg->sidedef->GetTextureXOffsetF(side_t::mid)));
+		ul = tci.FloatToTexU(to + tci.TextureOffset(seg->sidedef->GetTextureXOffset(side_t::mid)));
 
 		texlength = tci.FloatToTexU(seg->sidedef->TexelLength);
 
 		uplft.u = lolft.u = ul + texlength * glseg.fracleft;
 		uprgt.u = lorgt.u = ul + texlength * glseg.fracright;
 
-		float rowoffset = tci.RowOffset(seg->sidedef->GetTextureYOffsetF(side_t::mid));
+		float rowoffset = tci.RowOffset(seg->sidedef->GetTextureYOffset(side_t::mid));
 		to = (rover->flags&(FF_UPPERTEXTURE | FF_LOWERTEXTURE)) ?
-			0.f : tci.RowOffset(mastersd->GetTextureYOffsetF(side_t::mid));
+			0.f : tci.RowOffset(mastersd->GetTextureYOffset(side_t::mid));
 
 		to += rowoffset + rover->top.model->GetPlaneTexZF(rover->top.isceiling);
 

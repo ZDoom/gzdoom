@@ -726,11 +726,9 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 	}
 	else
 	{
-		DVector3 view(ViewPos);
-		DAngle va = ViewAngle;
-		P_TranslatePortalXY(pds->src, view.X, view.Y);
-		P_TranslatePortalZ(pds->src, view.Z);
-		P_TranslatePortalAngle(pds->src, va);
+		P_TranslatePortalXY(pds->src, ViewPos.X, ViewPos.Y);
+		P_TranslatePortalZ(pds->src, ViewPos.Z);
+		P_TranslatePortalAngle(pds->src, ViewAngle);
 		P_TranslatePortalXY(pds->src, ViewPath[0].X, ViewPath[0].Y);
 		P_TranslatePortalXY(pds->src, ViewPath[1].X, ViewPath[1].Y);
 
@@ -739,8 +737,8 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 			double distp = (ViewPath[0] - ViewPath[1]).Length();
 			if (distp > EQUAL_EPSILON)
 			{
-				double dist1 = (view - ViewPath[0]).Length();
-				double dist2 = (view - ViewPath[1]).Length();
+				double dist1 = (ViewPos - ViewPath[0]).Length();
+				double dist2 = (ViewPos - ViewPath[1]).Length();
 
 				if (dist1 + dist2 < distp + 1)
 				{
@@ -748,8 +746,6 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 				}
 			}
 		}
-		ViewPos = view;
-		ViewAngle = va;
 	}
 
 	ViewSin = ViewAngle.Sin();

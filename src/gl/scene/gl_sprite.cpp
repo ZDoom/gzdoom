@@ -744,7 +744,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, bool thruportal)
 		gltexture=NULL;
 	}
 
-	depth = (int)((x - ViewPos.X) * viewtancos + (y - ViewPos.Y) * viewtansin);
+	depth = FloatToFixed((x - ViewPos.X) * ViewTanCos + (y - ViewPos.Y) * ViewTanSin);
 
 	// light calculation
 
@@ -1040,7 +1040,7 @@ void GLSprite::ProcessParticle (particle_t *particle, sector_t *sector)//, int s
 	z1=z-scalefac;
 	z2=z+scalefac;
 
-	depth = (int)((x - ViewPos.X) * viewtancos + (y - ViewPos.Y) * viewtansin);
+	depth = FloatToFixed((x - ViewPos.X) * ViewTanCos + (y - ViewPos.Y) * ViewTanSin);
 
 	actor=NULL;
 	this->particle=particle;

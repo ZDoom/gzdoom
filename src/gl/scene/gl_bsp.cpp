@@ -63,6 +63,7 @@ CVAR(Bool, gl_render_things, true, 0)
 CVAR(Bool, gl_render_walls, true, 0)
 CVAR(Bool, gl_render_flats, true, 0)
 
+extern fixed_t viewx, viewy;
 
 static void UnclipSubsector(subsector_t *sub)
 {

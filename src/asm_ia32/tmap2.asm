@@ -294,11 +294,11 @@ R_DrawTiltedPlane_ASM:
 	fmul	dword [planelightfloat]
 	fxch	st1
 	fmul	dword [planelightfloat]
-	sub	esp,8
-	fistp	dword [esp]
-	fistp	dword [esp+4]
+	sub	esp,16
+	fstp	qword [esp]
+	fstp	qword [esp+8]
 	call	R_CalcTiltedLighting
-	add	esp, 12
+	add	esp, 20
 	xor	eax, eax
 	
 .litup	add	esp, 8

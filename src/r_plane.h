@@ -39,7 +39,7 @@ struct visplane_s
 	int			lightlevel;
 	fixed_t		xoffs, yoffs;		// killough 2/28/98: Support scrolling flats
 	int			left, right;
-	FDynamicColormap *colormap;			// [RH] Support multiple colormaps
+	FDynamicColormap *colormap;		// [RH] Support multiple colormaps
 	fixed_t		xscale, yscale;		// [RH] Support flat scaling
 	angle_t		angle;				// [RH] Support flat rotation
 	int			sky;
@@ -50,9 +50,9 @@ struct visplane_s
 	// have stacked sectors inside a skybox. If the visplane is not for a
 	// stack, then they are unused.
 	int			extralight;
-	float		visibility;
-	fixed_t		viewx, viewy, viewz;
-	angle_t		viewangle;
+	double		visibility;
+	DVector3	viewpos;
+	DAngle		viewangle;
 	fixed_t		Alpha;
 	bool		Additive;
 

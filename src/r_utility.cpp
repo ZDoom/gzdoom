@@ -123,8 +123,8 @@ int				otic;
 
 sector_t		*viewsector;
 
-fixed_t 		viewcos, viewtancos;
-fixed_t 		viewsin, viewtansin;
+double	 		ViewCos, ViewTanCos;
+double	 		ViewSin, ViewTanSin;
 
 AActor			*camera;	// [RH] camera to draw from. doesn't have to be a player
 
@@ -142,7 +142,7 @@ int				WidescreenRatio;
 int				setblocks;
 int				extralight;
 bool			setsizeneeded;
-fixed_t			FocalTangent;
+double			FocalTangent;
 
 unsigned int	R_OldBlend = ~0;
 int 			validcount = 1; 	// increment every time a check is made
@@ -150,9 +150,8 @@ int				FieldOfView = 2048;		// Fineangles in the SCREENWIDTH wide window
 
 FCanvasTextureInfo *FCanvasTextureInfo::List;
 
-fixed_t viewx, viewy, viewz;
-angle_t viewangle;
-int viewpitch;
+DVector3a view;
+DAngle viewpitch;
 
 
 // CODE --------------------------------------------------------------------
@@ -463,7 +462,7 @@ void R_SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight)
 			fov = 170*FINEANGLES/360;
 	}
 
-	FocalTangent = finetangent[FINEANGLES/4+fov/2];
+	FocalTangent = FIXED2FLOAT(finetangent[FINEANGLES/4+fov/2]);
 	Renderer->SetWindow(windowSize, fullWidth, fullHeight, stHeight, trueratio);
 }
 
@@ -737,11 +736,11 @@ void R_ResetViewInterpolation ()
 
 void R_SetViewAngle ()
 {
-	viewsin = FLOAT2FIXED(ViewAngle.Sin());
-	viewcos = FLOAT2FIXED(ViewAngle.Cos());
+	ViewSin = ViewAngle.Sin();
+	ViewCos = ViewAngle.Cos();
 
-	viewtansin = FixedMul (FocalTangent, viewsin);
-	viewtancos = FixedMul (FocalTangent, viewcos);
+	ViewTanSin = FocalTangent * ViewSin;
+	ViewTanCos = FocalTangent * ViewCos;
 }
 
 //==========================================================================
@@ -1107,12 +1106,6 @@ void R_SetupFrame (AActor *actor)
 			BaseBlendA = 0.f;
 		}
 	}
-
-	viewx = FLOAT2FIXED(ViewPos.X);
-	viewy = FLOAT2FIXED(ViewPos.Y);
-	viewz = FLOAT2FIXED(ViewPos.Z);
-	viewangle = ViewAngle.BAMs();
-	viewpitch = ViewPitch.BAMs();
 
 	Renderer->CopyStackedViewParameters();
 	Renderer->SetupFrame(player);

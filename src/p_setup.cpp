@@ -2627,10 +2627,10 @@ void P_LoadSideDefs2 (MapData *map, FMissingTextureTracker &missingtex)
 			msd->rowoffset += 102;
 		}
 
-		sd->SetTextureXOffset(LittleShort(msd->textureoffset)<<FRACBITS);
-		sd->SetTextureYOffset(LittleShort(msd->rowoffset)<<FRACBITS);
-		sd->SetTextureXScale(FRACUNIT);
-		sd->SetTextureYScale(FRACUNIT);
+		sd->SetTextureXOffset(LittleShort(msd->textureoffset));
+		sd->SetTextureYOffset(LittleShort(msd->rowoffset));
+		sd->SetTextureXScale(1.);
+		sd->SetTextureYScale(1.);
 		sd->linedef = NULL;
 		sd->Flags = 0;
 		sd->Index = i;

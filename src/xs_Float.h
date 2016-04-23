@@ -87,14 +87,14 @@ public:
     // ====================================================================================================================
     //  Basic Conversion from Numbers
     // ====================================================================================================================
-    finline static Fix       ToFix       (int32_t val)    {return val<<N;}
+    finline static Fix       ToFix       (int32_t val)  {return val<<N;}
     finline static Fix       ToFix       (real64 val)   {return xs_ConvertToFixed(val);}
 
     // ====================================================================================================================
     //  Basic Conversion to Numbers
     // ====================================================================================================================
     finline static real64    ToReal      (Fix f)        {return real64(f)/real64(1<<N);}
-    finline static int32_t     ToInt       (Fix f)        {return f>>N;}
+    finline static int32_t     ToInt     (Fix f)        {return f>>N;}
 
 
 
@@ -111,6 +111,15 @@ protected:
     #endif
     }
 };
+
+finline static int32_t xs_ToFixed(int32_t n, real64 val)
+{
+    #if _xs_DEFAULT_CONVERSION==0
+        return xs_CRoundToInt(val, _xs_doublemagic/(1<<n));
+    #else
+        return (long)((val)*(1<<N));
+    #endif
+}
 
 
 

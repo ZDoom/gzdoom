@@ -351,9 +351,9 @@ public:
 	}
 
 	// Returns the value of z at (0,0) This is used by the 3D floor code which does not handle slopes
-	fixed_t Zat0 () const
+	double Zat0() const
 	{
-		return FLOAT2FIXED(negiC*D);
+		return negiC*D;
 	}
 
 	// Returns the value of z at (x,y)
@@ -387,6 +387,10 @@ public:
 		return (D + normal.X*pos.X + normal.Y*pos.Y) * negiC;
 	}
 
+	double ZatPoint(const FVector2 &pos) const
+	{
+		return (D + normal.X*pos.X + normal.Y*pos.Y) * negiC;
+	}
 
 	double ZatPoint(const vertex_t *v) const
 	{
@@ -1200,10 +1204,10 @@ struct side_t
 	};
 	struct part
 	{
-		fixed_t xoffset;
-		fixed_t yoffset;
-		fixed_t xscale;
-		fixed_t yscale;
+		double xOffset;
+		double yOffset;
+		double xScale;
+		double yScale;
 		FTextureID texture;
 		TObjPtr<DInterpolation> interpolation;
 		//int Light;
@@ -1236,139 +1240,88 @@ struct side_t
 		textures[which].texture = tex;
 	}
 
-	void SetTextureXOffset(int which, fixed_t offset)
-	{
-		textures[which].xoffset = offset;
-	}
-	void SetTextureXOffset(fixed_t offset)
-	{
-		textures[top].xoffset =
-		textures[mid].xoffset =
-		textures[bottom].xoffset = offset;
-	}
 	void SetTextureXOffset(int which, double offset)
 	{
-		textures[which].xoffset = FLOAT2FIXED(offset);
+		textures[which].xOffset = offset;;
 	}
 	void SetTextureXOffset(double offset)
 	{
-		textures[top].xoffset =
-		textures[mid].xoffset =
-		textures[bottom].xoffset = FLOAT2FIXED(offset);
+		textures[top].xOffset =
+		textures[mid].xOffset =
+		textures[bottom].xOffset = offset;
 	}
-	fixed_t GetTextureXOffset(int which) const
-	{
-		return textures[which].xoffset;
-	}
+	fixed_t GetTextureXOffset(int which) const = delete;
 	double GetTextureXOffsetF(int which) const
 	{
-		return FIXED2DBL(textures[which].xoffset);
+		return textures[which].xOffset;
 	}
-	void AddTextureXOffset(int which, fixed_t delta)
-	{
-		textures[which].xoffset += delta;
-	}
+	void AddTextureXOffset(int which, fixed_t delta) = delete;
 	void AddTextureXOffset(int which, double delta)
 	{
-		textures[which].xoffset += FLOAT2FIXED(delta);
+		textures[which].xOffset += delta;
 	}
 
-	void SetTextureYOffset(int which, fixed_t offset)
-	{
-		textures[which].yoffset = offset;
-	}
-	void SetTextureYOffset(fixed_t offset)
-	{
-		textures[top].yoffset =
-		textures[mid].yoffset =
-		textures[bottom].yoffset = offset;
-	}
 	void SetTextureYOffset(int which, double offset)
 	{
-		textures[which].yoffset = FLOAT2FIXED(offset);
+		textures[which].yOffset = offset;
 	}
 	void SetTextureYOffset(double offset)
 	{
-		textures[top].yoffset =
-		textures[mid].yoffset =
-		textures[bottom].yoffset = FLOAT2FIXED(offset);
+		textures[top].yOffset =
+		textures[mid].yOffset =
+		textures[bottom].yOffset = offset;
 	}
-	fixed_t GetTextureYOffset(int which) const
-	{
-		return textures[which].yoffset;
-	}
+	fixed_t GetTextureYOffset(int which) const = delete;
 	double GetTextureYOffsetF(int which) const
 	{
-		return FIXED2DBL(textures[which].yoffset);
+		return textures[which].yOffset;
 	}
-	void AddTextureYOffset(int which, fixed_t delta)
-	{
-		textures[which].yoffset += delta;
-	}
+	void AddTextureYOffset(int which, fixed_t delta) = delete;
 	void AddTextureYOffset(int which, double delta)
 	{
-		textures[which].yoffset += FLOAT2FIXED(delta);
+		textures[which].yOffset += delta;
 	}
 
-	void SetTextureXScale(int which, fixed_t scale)
-	{
-		textures[which].xscale = scale == 0 ? FRACUNIT : scale;
-	}
+	void SetTextureXScale(int which, fixed_t scale) = delete;
 	void SetTextureXScale(int which, double scale)
 	{
-		textures[which].xscale = scale == 0 ? FRACUNIT : FLOAT2FIXED(scale);
+		textures[which].xScale = scale == 0 ? 1. : scale;
 	}
-	void SetTextureXScale(fixed_t scale)
-	{
-		textures[top].xscale = textures[mid].xscale = textures[bottom].xscale = scale == 0 ? FRACUNIT : scale;
-	}
+	void SetTextureXScale(fixed_t scale) = delete;
 	void SetTextureXScale(double scale)
 	{
-		textures[top].xscale = textures[mid].xscale = textures[bottom].xscale = scale == 0 ? FRACUNIT : FLOAT2FIXED(scale);
+		textures[top].xScale = textures[mid].xScale = textures[bottom].xScale = scale == 0 ? 1. : scale;
 	}
-	fixed_t GetTextureXScale(int which) const
-	{
-		return textures[which].xscale;
-	}
+	fixed_t GetTextureXScale(int which) const = delete;
 	double GetTextureXScaleF(int which) const
 	{
-		return FIXED2DBL(textures[which].xscale);
+		return textures[which].xScale;
 	}
+
 	void MultiplyTextureXScale(int which, double delta)
 	{
-		textures[which].xscale = fixed_t(textures[which].xscale * delta);
+		textures[which].xScale *= delta;
 	}
 
-
-	void SetTextureYScale(int which, fixed_t scale)
-	{
-		textures[which].yscale = scale == 0 ? FRACUNIT : scale;
-	}
-
+	void SetTextureYScale(int which, fixed_t scale) = delete;
 	void SetTextureYScale(int which, double scale)
 	{
-		textures[which].yscale = scale == 0 ? FRACUNIT : FLOAT2FIXED(scale);
+		textures[which].yScale = scale == 0 ? 1. : scale;
 	}
 
-	void SetTextureYScale(fixed_t scale)
-	{
-		textures[top].yscale = textures[mid].yscale = textures[bottom].yscale = scale == 0 ? FRACUNIT : scale;
-	}
+	void SetTextureYScale(fixed_t scale) = delete;
 	void SetTextureYScale(double scale)
 	{
-		textures[top].yscale = textures[mid].yscale = textures[bottom].yscale = scale == 0 ? FRACUNIT : FLOAT2FIXED(scale);
+		textures[top].yScale = textures[mid].yScale = textures[bottom].yScale = scale == 0 ? 1. : scale;
 	}
-	fixed_t GetTextureYScale(int which) const
-	{
-		return textures[which].yscale;
-	}
+	fixed_t GetTextureYScale(int which) const = delete;
 	double GetTextureYScaleF(int which) const
 	{
-		return FIXED2DBL(textures[which].yscale);
+		return textures[which].yScale;
 	}
 	void MultiplyTextureYScale(int which, double delta)
 	{
-		textures[which].yscale = fixed_t(textures[which].yscale * delta);
+		textures[which].yScale *= delta;
 	}
 
 	DInterpolation *SetInterpolation(int position);

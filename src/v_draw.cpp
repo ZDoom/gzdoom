@@ -199,33 +199,26 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 			unmaskedSpan[1].Length = 0;
 		}
 
-		fixed_t centeryback = centeryfrac;
-		centeryfrac = 0;
+		double centeryback = CenterY;
+		CenterY = 0;
 
-		sprtopscreen = FLOAT2FIXED(y0);
 		// There is not enough precision in the drawing routines to keep the full
 		// precision for y0. :(
-		sprtopscreen &= ~(FRACUNIT - 1);
+		double dummy;
+		sprtopscreen = modf(y0, &dummy);
 
 		double yscale = parms.destheight / img->GetHeight();
 		double iyscale = 1 / yscale;
 
-		spryscale = FLOAT2FIXED(yscale);
-		assert(spryscale > 2);
-#if 0
-		// Fix precision errors that are noticeable at some resolutions
-		if ((y0 + parms.destheight) > (y0 + yscale * img->GetHeight()))
-		{
-			spryscale++;
-		}
-#endif
+		spryscale = yscale;
+		assert(spryscale > 0);
 
 		sprflipvert = false;
 		//dc_iscale = FLOAT2FIXED(iyscale);
-		//dc_texturemid = FLOAT2FIXED((-y0) * iyscale);
+		//dc_texturemid = (-y0) * iyscale;
 		//dc_iscale = 0xffffffffu / (unsigned)spryscale;
-		dc_iscale = DivScale32(1, spryscale);
-		dc_texturemid = FixedMul(-sprtopscreen, dc_iscale) + FixedMul(centeryfrac-FRACUNIT, dc_iscale);
+		dc_iscale = FLOAT2FIXED(1 / spryscale);
+		dc_texturemid = (CenterY - 1 - sprtopscreen) * dc_iscale / 65536;
 		fixed_t frac = 0;
 		double xiscale = img->GetWidth() / parms.destwidth;
 		double x2 = x0 + parms.destwidth;
@@ -325,7 +318,7 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 				frac += xiscale_i;
 			}
 		}
-		centeryfrac = centeryback;
+		CenterY = centeryback;
 	}
 	R_FinishSetPatchStyle ();
 

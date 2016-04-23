@@ -388,6 +388,8 @@ angle_t Clipper::AngleToPseudo(angle_t ang)
 //
 //-----------------------------------------------------------------------------
 
+fixed_t viewx, viewy;
+
 void R_SetView()
 {
 	viewx = FLOAT2FIXED(ViewPos.X);

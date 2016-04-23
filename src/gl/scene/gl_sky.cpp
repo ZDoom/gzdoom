@@ -272,7 +272,7 @@ void GLWall::SkyTop(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex
 					// or it will cause glitches elsewhere.
 					tex = TexMan(seg->sidedef->GetTexture(side_t::mid));
 					if (tex != NULL && !(seg->linedef->flags & ML_DONTPEGTOP) &&
-						seg->sidedef->GetTextureYOffset(side_t::mid) > 0)
+						seg->sidedef->GetTextureYOffsetF(side_t::mid) > 0)
 					{
 						ztop[0]=ztop[1]=32768.0f;
 						zbottom[0]=zbottom[1]= 

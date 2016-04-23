@@ -447,29 +447,29 @@ static void LoadSectors (sectortype *bsec)
 		if (bsec->floorstat & 4)
 		{
 			sec->SetAngle(sector_t::floor, DAngle(90.));
-			sec->SetXScale(sector_t::floor, -sec->GetXScaleF(sector_t::floor));
+			sec->SetXScale(sector_t::floor, -sec->GetXScale(sector_t::floor));
 		}
 		if (bsec->floorstat & 16)
 		{
-			sec->SetXScale(sector_t::floor, -sec->GetXScaleF(sector_t::floor));
+			sec->SetXScale(sector_t::floor, -sec->GetXScale(sector_t::floor));
 		}
 		if (bsec->floorstat & 32)
 		{
-			sec->SetYScale(sector_t::floor, -sec->GetYScaleF(sector_t::floor));
+			sec->SetYScale(sector_t::floor, -sec->GetYScale(sector_t::floor));
 		}
 
 		if (bsec->ceilingstat & 4)
 		{
 			sec->SetAngle(sector_t::ceiling, DAngle(90.));
-			sec->SetYScale(sector_t::ceiling, -sec->GetYScaleF(sector_t::ceiling));
+			sec->SetYScale(sector_t::ceiling, -sec->GetYScale(sector_t::ceiling));
 		}
 		if (bsec->ceilingstat & 16)
 		{
-			sec->SetXScale(sector_t::ceiling, -sec->GetXScaleF(sector_t::ceiling));
+			sec->SetXScale(sector_t::ceiling, -sec->GetXScale(sector_t::ceiling));
 		}
 		if (bsec->ceilingstat & 32)
 		{
-			sec->SetYScale(sector_t::ceiling, -sec->GetYScaleF(sector_t::ceiling));
+			sec->SetYScale(sector_t::ceiling, -sec->GetYScale(sector_t::ceiling));
 		}
 	}
 }

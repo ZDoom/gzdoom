@@ -1930,16 +1930,16 @@ void AM_drawSubsectors()
 		// For lighting and texture determination
 		sector_t *sec = Renderer->FakeFlat(subsectors[i].render_sector, &tempsec, &floorlight, &ceilinglight, false);
 		// Find texture origin.
-		originpt.x = -sec->GetXOffsetF(sector_t::floor);
-		originpt.y = sec->GetYOffsetF(sector_t::floor);
-		rotation = -sec->GetAngleF(sector_t::floor);
+		originpt.x = -sec->GetXOffset(sector_t::floor);
+		originpt.y = sec->GetYOffset(sector_t::floor);
+		rotation = -sec->GetAngle(sector_t::floor);
 		// Coloring for the polygon
 		colormap = sec->ColorMap;
 
 		FTextureID maptex = sec->GetTexture(sector_t::floor);
 
-		scalex = sec->GetXScaleF(sector_t::floor);
-		scaley = sec->GetYScaleF(sector_t::floor);
+		scalex = sec->GetXScale(sector_t::floor);
+		scaley = sec->GetYScale(sector_t::floor);
 
 		if (sec->e->XFloor.ffloors.Size())
 		{
@@ -1988,11 +1988,11 @@ void AM_drawSubsectors()
 					floorplane = rover->top.plane;
 					sector_t *model = rover->top.model;
 					int selector = (rover->flags & FF_INVERTPLANES) ? sector_t::floor : sector_t::ceiling;
-					rotation = -model->GetAngleF(selector);
-					scalex = model->GetXScaleF(selector);
-					scaley = model->GetYScaleF(selector);
-					originpt.x = -model->GetXOffsetF(selector);
-					originpt.y = model->GetYOffsetF(selector);
+					rotation = -model->GetAngle(selector);
+					scalex = model->GetXScale(selector);
+					scaley = model->GetYScale(selector);
+					originpt.x = -model->GetXOffset(selector);
+					originpt.y = model->GetYOffset(selector);
 					break;
 				}
 			}

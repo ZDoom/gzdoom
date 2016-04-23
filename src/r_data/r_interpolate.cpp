@@ -604,8 +604,8 @@ void DSectorScrollInterpolation::Destroy()
 
 void DSectorScrollInterpolation::UpdateInterpolation()
 {
-	oldx = sector->GetXOffsetF(ceiling);
-	oldy = sector->GetYOffsetF(ceiling, false);
+	oldx = sector->GetXOffset(ceiling);
+	oldy = sector->GetYOffset(ceiling, false);
 }
 
 //==========================================================================
@@ -628,8 +628,8 @@ void DSectorScrollInterpolation::Restore()
 
 void DSectorScrollInterpolation::Interpolate(double smoothratio)
 {
-	bakx = sector->GetXOffsetF(ceiling);
-	baky = sector->GetYOffsetF(ceiling, false);
+	bakx = sector->GetXOffset(ceiling);
+	baky = sector->GetYOffset(ceiling, false);
 
 	if (refcount == 0 && oldx == bakx && oldy == baky)
 	{

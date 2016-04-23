@@ -707,7 +707,7 @@ public:
 		planes[pos].xform.xOffs += o;
 	}
 
-	double GetXOffsetF(int pos) const
+	double GetXOffset(int pos) const
 	{
 		return planes[pos].xform.xOffs;
 	}
@@ -722,7 +722,7 @@ public:
 		planes[pos].xform.yOffs += o;
 	}
 
-	double GetYOffsetF(int pos, bool addbase = true) const
+	double GetYOffset(int pos, bool addbase = true) const
 	{
 		if (!addbase)
 		{
@@ -739,7 +739,7 @@ public:
 		planes[pos].xform.xScale = o;
 	}
 
-	double GetXScaleF(int pos) const
+	double GetXScale(int pos) const
 	{
 		return planes[pos].xform.xScale;
 	}
@@ -749,7 +749,7 @@ public:
 		planes[pos].xform.yScale = o;
 	}
 
-	double GetYScaleF(int pos) const
+	double GetYScale(int pos) const
 	{
 		return planes[pos].xform.yScale;
 	}
@@ -759,7 +759,7 @@ public:
 		planes[pos].xform.Angle = o;
 	}
 
-	DAngle GetAngleF(int pos, bool addbase = true) const
+	DAngle GetAngle(int pos, bool addbase = true) const
 	{
 		if (!addbase)
 		{

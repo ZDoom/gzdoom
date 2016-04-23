@@ -2055,7 +2055,7 @@ void R_NewWall (bool needlights)
 				}
 				else
 				{ // bottom of texture at top
-					rw_midtexturemid = (frontsector->GetPlaneTexZ(sector_t::ceiling) - ViewPos.Z) * yrepeat + midtexture->GetHeight();
+					rw_midtexturemid = (frontsector->GetPlaneTexZF(sector_t::ceiling) - ViewPos.Z) * yrepeat + midtexture->GetHeight();
 				}
 			}
 			if (midtexture->bWorldPanning)
@@ -2244,7 +2244,7 @@ void R_NewWall (bool needlights)
 				}
 				else
 				{ // bottom of texture at top
-					rw_bottomtexturemid = (backsector->GetPlaneTexZ(sector_t::floor) - ViewPos.Z) * yrepeat + bottomtexture->GetHeight();
+					rw_bottomtexturemid = (backsector->GetPlaneTexZF(sector_t::floor) - ViewPos.Z) * yrepeat + bottomtexture->GetHeight();
 				}
 			}
 			if (bottomtexture->bWorldPanning)

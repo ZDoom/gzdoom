@@ -38,6 +38,7 @@
 #define GL_STEREO3D_SCOPED_VIEW_SHIFTER_H_
 
 #include "basictypes.h"
+#include "vectors.h"
 
 namespace s3d {
 
@@ -51,9 +52,7 @@ namespace s3d {
 		~ScopedViewShifter();
 
 	private:
-		fixed_t cachedViewx;
-		fixed_t cachedViewy;
-		fixed_t cachedViewz;
+		DVector3 cachedView;
 	};
 
 } /* namespace s3d */

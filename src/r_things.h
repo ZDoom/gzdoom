@@ -88,7 +88,7 @@ struct vissprite_t
 	int				CurrentPortalUniq; // [ZZ] to identify the portal that this thing is in. used for clipping.
 
 	vissprite_t() {}
-	vissprite_t &vissprite_t::operator= (const vissprite_t &o) { memcpy(this, &o, sizeof *this); return *this; }
+	vissprite_t &operator= (const vissprite_t &o) { memcpy(this, &o, sizeof *this); return *this; }
 };
 
 struct particle_t;

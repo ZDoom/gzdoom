@@ -2110,26 +2110,21 @@ void R_NewWall (bool needlights)
 				|| backsector->floorplane != frontsector->floorplane
 				|| backsector->lightlevel != frontsector->lightlevel
 				|| backsector->GetTexture(sector_t::floor) != frontsector->GetTexture(sector_t::floor)
+				|| backsector->GetPlaneLight(sector_t::floor) != frontsector->GetPlaneLight(sector_t::floor)
 
 				// killough 3/7/98: Add checks for (x,y) offsets
-				|| backsector->GetXOffset(sector_t::floor) != frontsector->GetXOffset(sector_t::floor)
-				|| backsector->GetYOffset(sector_t::floor) != frontsector->GetYOffset(sector_t::floor)
+				|| backsector->planes[sector_t::floor].xform != frontsector->planes[sector_t::floor].xform
 				|| backsector->GetAlpha(sector_t::floor) != frontsector->GetAlpha(sector_t::floor)
 
 				// killough 4/15/98: prevent 2s normals
 				// from bleeding through deep water
 				|| frontsector->heightsec
 
-				|| backsector->GetPlaneLight(sector_t::floor) != frontsector->GetPlaneLight(sector_t::floor)
-				|| backsector->GetFlags(sector_t::floor) != frontsector->GetFlags(sector_t::floor)
+				|| backsector->GetVisFlags(sector_t::floor) != frontsector->GetVisFlags(sector_t::floor)
 
 				// [RH] Add checks for colormaps
 				|| backsector->ColorMap != frontsector->ColorMap
 
-				|| backsector->GetXScale(sector_t::floor) != frontsector->GetXScale(sector_t::floor)
-				|| backsector->GetYScale(sector_t::floor) != frontsector->GetYScale(sector_t::floor)
-
-				|| backsector->GetAngle(sector_t::floor) != frontsector->GetAngle(sector_t::floor)
 
 				// kg3D - add fake lights
 				|| (frontsector->e && frontsector->e->XFloor.lightlist.Size())
@@ -2148,8 +2143,7 @@ void R_NewWall (bool needlights)
 				|| backsector->GetTexture(sector_t::ceiling) != frontsector->GetTexture(sector_t::ceiling)
 
 				// killough 3/7/98: Add checks for (x,y) offsets
-				|| backsector->GetXOffset(sector_t::ceiling) != frontsector->GetXOffset(sector_t::ceiling)
-				|| backsector->GetYOffset(sector_t::ceiling) != frontsector->GetYOffset(sector_t::ceiling)
+				|| backsector->planes[sector_t::ceiling].xform != frontsector->planes[sector_t::ceiling].xform
 				|| backsector->GetAlpha(sector_t::ceiling) != frontsector->GetAlpha(sector_t::ceiling)
 
 				// killough 4/15/98: prevent 2s normals
@@ -2161,11 +2155,6 @@ void R_NewWall (bool needlights)
 
 				// [RH] Add check for colormaps
 				|| backsector->ColorMap != frontsector->ColorMap
-
-				|| backsector->GetXScale(sector_t::ceiling) != frontsector->GetXScale(sector_t::ceiling)
-				|| backsector->GetYScale(sector_t::ceiling) != frontsector->GetYScale(sector_t::ceiling)
-
-				|| backsector->GetAngle(sector_t::ceiling) != frontsector->GetAngle(sector_t::ceiling)
 
 				// kg3D - add fake lights
 				|| (frontsector->e && frontsector->e->XFloor.lightlist.Size())

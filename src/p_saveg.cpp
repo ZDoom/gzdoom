@@ -487,8 +487,8 @@ FArchive &operator<< (FArchive &arc, side_t::part &p)
 
 FArchive &operator<< (FArchive &arc, sector_t::splane &p)
 {
-	arc << p.xform.xoffs << p.xform.yoffs << p.xform.xscale << p.xform.yscale 
-		<< p.xform.angle << p.xform.base_yoffs << p.xform.base_angle
+	arc << p.xform.xOffs << p.xform.yOffs << p.xform.xScale << p.xform.yScale 
+		<< p.xform.Angle << p.xform.baseyOffs << p.xform.baseAngle
 		<< p.Flags << p.Light << p.Texture << p.TexZ << p.alpha;
 	return arc;
 }

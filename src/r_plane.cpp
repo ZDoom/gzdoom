@@ -582,14 +582,18 @@ static visplane_t *new_visplane (unsigned hash)
 //==========================================================================
 
 visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightlevel, fixed_t alpha, bool additive,
-						 fixed_t xoffs, fixed_t yoffs,
-						 fixed_t xscale, fixed_t yscale, angle_t angle,
+						const FTransform &xform,
 						 int sky, FSectorPortal *portal)
 {
 	secplane_t plane;
 	visplane_t *check;
 	unsigned hash;						// killough
 	bool isskybox;
+	fixed_t xoffs = FLOAT2FIXED(xform.xOffs);
+	fixed_t yoffs = FLOAT2FIXED(xform.yOffs + xform.baseyOffs);
+	fixed_t xscale = FLOAT2FIXED(xform.xScale);
+	fixed_t yscale = FLOAT2FIXED(xform.yScale);
+	angle_t angle = (xform.Angle + xform.baseAngle).BAMs();
 
 	if (picnum == skyflatnum)	// killough 10/98
 	{ // most skies map together
@@ -651,6 +655,7 @@ visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightl
 									(plane == check->height &&
 									 picnum == check->picnum &&
 									 lightlevel == check->lightlevel &&
+									 
 									 xoffs == check->xoffs &&	// killough 2/28/98: Add offset checks
 									 yoffs == check->yoffs &&
 									 basecolormap == check->colormap &&	// [RH] Add more checks

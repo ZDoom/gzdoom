@@ -1175,7 +1175,7 @@ struct side_t
 		textures[bottom].xOffset = offset;
 	}
 
-	double GetTextureXOffsetF(int which) const
+	double GetTextureXOffset(int which) const
 	{
 		return textures[which].xOffset;
 	}
@@ -1197,7 +1197,7 @@ struct side_t
 		textures[bottom].yOffset = offset;
 	}
 
-	double GetTextureYOffsetF(int which) const
+	double GetTextureYOffset(int which) const
 	{
 		return textures[which].yOffset;
 	}
@@ -1217,7 +1217,7 @@ struct side_t
 		textures[top].xScale = textures[mid].xScale = textures[bottom].xScale = scale == 0 ? 1. : scale;
 	}
 
-	double GetTextureXScaleF(int which) const
+	double GetTextureXScale(int which) const
 	{
 		return textures[which].xScale;
 	}
@@ -1237,7 +1237,7 @@ struct side_t
 		textures[top].yScale = textures[mid].yScale = textures[bottom].yScale = scale == 0 ? 1. : scale;
 	}
 
-	double GetTextureYScaleF(int which) const
+	double GetTextureYScale(int which) const
 	{
 		return textures[which].yScale;
 	}

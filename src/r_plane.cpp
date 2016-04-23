@@ -1447,10 +1447,10 @@ void R_DrawSkyPlane (visplane_t *pl)
 			// to allow sky rotation as well as careful positioning.
 			// However, the offset is scaled very small, so that it
 			// allows a long-period of sky rotation.
-			skyangle += FLOAT2FIXED(s->GetTextureXOffsetF(pos));
+			skyangle += FLOAT2FIXED(s->GetTextureXOffset(pos));
 
 			// Vertical offset allows careful sky positioning.
-			skymid = s->GetTextureYOffsetF(pos) - 28;
+			skymid = s->GetTextureYOffset(pos) - 28;
 
 			// We sometimes flip the picture horizontally.
 			//

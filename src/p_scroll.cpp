@@ -549,8 +549,8 @@ void P_SpawnScrollers(void)
 		case Scroll_Texture_Offsets:
 			// killough 3/2/98: scroll according to sidedef offsets
 			s = int(lines[i].sidedef[0] - sides);
-			new DScroller (EScroll::sc_side, -sides[s].GetTextureXOffsetF(side_t::mid),
-				sides[s].GetTextureYOffsetF(side_t::mid), -1, s, accel, SCROLLTYPE(l->args[0]));
+			new DScroller (EScroll::sc_side, -sides[s].GetTextureXOffset(side_t::mid),
+				sides[s].GetTextureYOffset(side_t::mid), -1, s, accel, SCROLLTYPE(l->args[0]));
 			break;
 
 		case Scroll_Texture_Left:

@@ -8731,7 +8731,7 @@ scriptwait:
 		case PCD_GETLINEROWOFFSET:
 			if (activationline != NULL)
 			{
-				PushToStack (int(activationline->sidedef[0]->GetTextureYOffsetF(side_t::mid)));
+				PushToStack (int(activationline->sidedef[0]->GetTextureYOffset(side_t::mid)));
 			}
 			else
 			{

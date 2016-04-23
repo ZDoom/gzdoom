@@ -1058,11 +1058,7 @@ void FDrawInfo::CollectSectorStacksCeiling(subsector_t * sub, sector_t * anchor)
 		me->ceilingplane != anchor->ceilingplane ||
 		me->GetCeilingLight() != anchor->GetCeilingLight() ||
 		me->ColorMap != anchor->ColorMap ||
-		me->GetXOffset(sector_t::ceiling) != anchor->GetXOffset(sector_t::ceiling) || 
-		me->GetYOffset(sector_t::ceiling) != anchor->GetYOffset(sector_t::ceiling) || 
-		me->GetXScale(sector_t::ceiling) != anchor->GetXScale(sector_t::ceiling) || 
-		me->GetYScale(sector_t::ceiling) != anchor->GetYScale(sector_t::ceiling) || 
-		me->GetAngle(sector_t::ceiling) != anchor->GetAngle(sector_t::ceiling))
+		me->planes[sector_t::ceiling].xform != anchor->planes[sector_t::ceiling].xform)
 	{
 		// different visplane so it can't belong to this stack
 		return;
@@ -1105,11 +1101,7 @@ void FDrawInfo::CollectSectorStacksFloor(subsector_t * sub, sector_t * anchor)
 		me->floorplane != anchor->floorplane ||
 		me->GetFloorLight() != anchor->GetFloorLight() ||
 		me->ColorMap != anchor->ColorMap ||
-		me->GetXOffset(sector_t::floor) != anchor->GetXOffset(sector_t::floor) || 
-		me->GetYOffset(sector_t::floor) != anchor->GetYOffset(sector_t::floor) || 
-		me->GetXScale(sector_t::floor) != anchor->GetXScale(sector_t::floor) || 
-		me->GetYScale(sector_t::floor) != anchor->GetYScale(sector_t::floor) || 
-		me->GetAngle(sector_t::floor) != anchor->GetAngle(sector_t::floor))
+		me->planes[sector_t::floor].xform != anchor->planes[sector_t::floor].xform)
 	{
 		// different visplane so it can't belong to this stack
 		return;

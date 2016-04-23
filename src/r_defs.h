@@ -1244,18 +1244,19 @@ struct side_t
 	{
 		textures[which].xOffset = offset;;
 	}
+	
 	void SetTextureXOffset(double offset)
 	{
 		textures[top].xOffset =
 		textures[mid].xOffset =
 		textures[bottom].xOffset = offset;
 	}
-	fixed_t GetTextureXOffset(int which) const = delete;
-	double GetTextureXOffsetF(int which) const
+
+	double GetTextureXOffset(int which) const
 	{
 		return textures[which].xOffset;
 	}
-	void AddTextureXOffset(int which, fixed_t delta) = delete;
+
 	void AddTextureXOffset(int which, double delta)
 	{
 		textures[which].xOffset += delta;
@@ -1265,35 +1266,35 @@ struct side_t
 	{
 		textures[which].yOffset = offset;
 	}
+
 	void SetTextureYOffset(double offset)
 	{
 		textures[top].yOffset =
 		textures[mid].yOffset =
 		textures[bottom].yOffset = offset;
 	}
-	fixed_t GetTextureYOffset(int which) const = delete;
-	double GetTextureYOffsetF(int which) const
+
+	double GetTextureYOffset(int which) const
 	{
 		return textures[which].yOffset;
 	}
-	void AddTextureYOffset(int which, fixed_t delta) = delete;
+
 	void AddTextureYOffset(int which, double delta)
 	{
 		textures[which].yOffset += delta;
 	}
 
-	void SetTextureXScale(int which, fixed_t scale) = delete;
 	void SetTextureXScale(int which, double scale)
 	{
 		textures[which].xScale = scale == 0 ? 1. : scale;
 	}
-	void SetTextureXScale(fixed_t scale) = delete;
+
 	void SetTextureXScale(double scale)
 	{
 		textures[top].xScale = textures[mid].xScale = textures[bottom].xScale = scale == 0 ? 1. : scale;
 	}
-	fixed_t GetTextureXScale(int which) const = delete;
-	double GetTextureXScaleF(int which) const
+
+	double GetTextureXScale(int which) const
 	{
 		return textures[which].xScale;
 	}
@@ -1303,22 +1304,21 @@ struct side_t
 		textures[which].xScale *= delta;
 	}
 
-	void SetTextureYScale(int which, fixed_t scale) = delete;
 	void SetTextureYScale(int which, double scale)
 	{
 		textures[which].yScale = scale == 0 ? 1. : scale;
 	}
 
-	void SetTextureYScale(fixed_t scale) = delete;
 	void SetTextureYScale(double scale)
 	{
 		textures[top].yScale = textures[mid].yScale = textures[bottom].yScale = scale == 0 ? 1. : scale;
 	}
-	fixed_t GetTextureYScale(int which) const = delete;
-	double GetTextureYScaleF(int which) const
+
+	double GetTextureYScale(int which) const
 	{
 		return textures[which].yScale;
 	}
+
 	void MultiplyTextureYScale(int which, double delta)
 	{
 		textures[which].yScale *= delta;

@@ -318,7 +318,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 
 	// find positioning
 	texheight = tex->GetScaledHeightDouble();
-	texheightscale = fabs(curline->sidedef->GetTextureYScaleF(side_t::mid));
+	texheightscale = fabs(curline->sidedef->GetTextureYScale(side_t::mid));
 	if (texheightscale != 1)
 	{
 		texheight = texheight / texheightscale;
@@ -332,7 +332,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 		dc_texturemid = MIN(frontsector->GetPlaneTexZF(sector_t::ceiling), backsector->GetPlaneTexZF(sector_t::ceiling));
 	}
 
-	rowoffset = curline->sidedef->GetTextureYOffsetF(side_t::mid);
+	rowoffset = curline->sidedef->GetTextureYOffset(side_t::mid);
 
 	if (!(curline->linedef->flags & ML_WRAP_MIDTEX) &&
 		!(curline->sidedef->Flags & WALLF_WRAP_MIDTEX))
@@ -599,12 +599,12 @@ void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover)
 		scaledside = rover->master->sidedef[0];
 		scaledpart = side_t::mid;
 	}
-	xscale = FLOAT2FIXED(rw_pic->Scale.X * scaledside->GetTextureXScaleF(scaledpart));
-	yscale = rw_pic->Scale.Y * scaledside->GetTextureYScaleF(scaledpart);
+	xscale = FLOAT2FIXED(rw_pic->Scale.X * scaledside->GetTextureXScale(scaledpart));
+	yscale = rw_pic->Scale.Y * scaledside->GetTextureYScale(scaledpart);
 
-	double rowoffset = curline->sidedef->GetTextureYOffsetF(side_t::mid) + rover->master->sidedef[0]->GetTextureYOffsetF(side_t::mid);
+	double rowoffset = curline->sidedef->GetTextureYOffset(side_t::mid) + rover->master->sidedef[0]->GetTextureYOffset(side_t::mid);
 	double planez = rover->model->GetPlaneTexZF(sector_t::ceiling);
-	rw_offset = FLOAT2FIXED(curline->sidedef->GetTextureXOffsetF(side_t::mid) + rover->master->sidedef[0]->GetTextureXOffsetF(side_t::mid));
+	rw_offset = FLOAT2FIXED(curline->sidedef->GetTextureXOffset(side_t::mid) + rover->master->sidedef[0]->GetTextureXOffset(side_t::mid));
 	if (rowoffset < 0)
 	{
 		rowoffset += rw_pic->GetHeight();
@@ -2026,10 +2026,10 @@ void R_NewWall (bool needlights)
 		if (linedef->special != Line_Horizon)
 		{
 			midtexture = TexMan(sidedef->GetTexture(side_t::mid), true);
-			rw_offset_mid = FLOAT2FIXED(sidedef->GetTextureXOffsetF(side_t::mid));
-			rowoffset = sidedef->GetTextureYOffsetF(side_t::mid);
-			rw_midtexturescalex = sidedef->GetTextureXScaleF(side_t::mid);
-			rw_midtexturescaley = sidedef->GetTextureYScaleF(side_t::mid);
+			rw_offset_mid = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::mid));
+			rowoffset = sidedef->GetTextureYOffset(side_t::mid);
+			rw_midtexturescalex = sidedef->GetTextureXScale(side_t::mid);
+			rw_midtexturescaley = sidedef->GetTextureYScale(side_t::mid);
 			yrepeat = midtexture->Scale.Y * rw_midtexturescaley;
 			if (yrepeat >= 0)
 			{ // normal orientation
@@ -2181,10 +2181,10 @@ void R_NewWall (bool needlights)
 		{ // top texture
 			toptexture = TexMan(sidedef->GetTexture(side_t::top), true);
 
-			rw_offset_top = FLOAT2FIXED(sidedef->GetTextureXOffsetF(side_t::top));
-			rowoffset = sidedef->GetTextureYOffsetF(side_t::top);
-			rw_toptexturescalex =sidedef->GetTextureXScaleF(side_t::top);
-			rw_toptexturescaley =sidedef->GetTextureYScaleF(side_t::top);
+			rw_offset_top = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::top));
+			rowoffset = sidedef->GetTextureYOffset(side_t::top);
+			rw_toptexturescalex =sidedef->GetTextureXScale(side_t::top);
+			rw_toptexturescaley =sidedef->GetTextureYScale(side_t::top);
 			yrepeat = toptexture->Scale.Y * rw_toptexturescaley;
 			if (yrepeat >= 0)
 			{ // normal orientation
@@ -2226,10 +2226,10 @@ void R_NewWall (bool needlights)
 		{ // bottom texture
 			bottomtexture = TexMan(sidedef->GetTexture(side_t::bottom), true);
 
-			rw_offset_bottom = FLOAT2FIXED(sidedef->GetTextureXOffsetF(side_t::bottom));
-			rowoffset = sidedef->GetTextureYOffsetF(side_t::bottom);
-			rw_bottomtexturescalex = sidedef->GetTextureXScaleF(side_t::bottom);
-			rw_bottomtexturescaley = sidedef->GetTextureYScaleF(side_t::bottom);
+			rw_offset_bottom = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::bottom));
+			rowoffset = sidedef->GetTextureYOffset(side_t::bottom);
+			rw_bottomtexturescalex = sidedef->GetTextureXScale(side_t::bottom);
+			rw_bottomtexturescaley = sidedef->GetTextureYScale(side_t::bottom);
 			yrepeat = bottomtexture->Scale.Y * rw_bottomtexturescaley;
 			if (yrepeat >= 0)
 			{ // normal orientation
@@ -2301,9 +2301,9 @@ void R_NewWall (bool needlights)
 	if (needlights && (segtextured || (backsector && IsFogBoundary(frontsector, backsector))))
 	{
 		lwallscale =
-			midtex ? (midtex->Scale.X * sidedef->GetTextureXScaleF(side_t::mid)) :
-			toptexture ? (toptexture->Scale.X * sidedef->GetTextureXScaleF(side_t::top)) :
-			bottomtexture ? (bottomtexture->Scale.X * sidedef->GetTextureXScaleF(side_t::bottom)) :
+			midtex ? (midtex->Scale.X * sidedef->GetTextureXScale(side_t::mid)) :
+			toptexture ? (toptexture->Scale.X * sidedef->GetTextureXScale(side_t::top)) :
+			bottomtexture ? (bottomtexture->Scale.X * sidedef->GetTextureXScale(side_t::bottom)) :
 			1.;
 
 		PrepWall (swall, lwall, sidedef->TexelLength * lwallscale, WallC.sx1, WallC.sx2);
@@ -2387,7 +2387,7 @@ void R_StoreWallRange (int start, int stop)
 		R_NewWall (true);
 	}
 
-	rw_offset = FLOAT2FIXED(sidedef->GetTextureXOffsetF(side_t::mid));
+	rw_offset = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::mid));
 	rw_light = rw_lightleft + rw_lightstep * (start - WallC.sx1);
 
 	ds_p->CurrentPortalUniq = CurrentPortalUniq;
@@ -2516,8 +2516,8 @@ void R_StoreWallRange (int start, int stop)
 				lwal = (fixed_t *)(openings + ds_p->maskedtexturecol);
 				swal = (float *)(openings + ds_p->swall);
 				FTexture *pic = TexMan(sidedef->GetTexture(side_t::mid), true);
-				double yscale = pic->Scale.X * sidedef->GetTextureYScaleF(side_t::mid);
-				fixed_t xoffset = FLOAT2FIXED(sidedef->GetTextureXOffsetF(side_t::mid));
+				double yscale = pic->Scale.X * sidedef->GetTextureYScale(side_t::mid);
+				fixed_t xoffset = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::mid));
 
 				if (pic->bWorldPanning)
 				{

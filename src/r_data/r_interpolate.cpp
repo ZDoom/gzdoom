@@ -695,8 +695,8 @@ void DWallScrollInterpolation::Destroy()
 
 void DWallScrollInterpolation::UpdateInterpolation()
 {
-	oldx = side->GetTextureXOffsetF(part);
-	oldy = side->GetTextureYOffsetF(part);
+	oldx = side->GetTextureXOffset(part);
+	oldy = side->GetTextureYOffset(part);
 }
 
 //==========================================================================
@@ -719,8 +719,8 @@ void DWallScrollInterpolation::Restore()
 
 void DWallScrollInterpolation::Interpolate(double smoothratio)
 {
-	bakx = side->GetTextureXOffsetF(part);
-	baky = side->GetTextureYOffsetF(part);
+	bakx = side->GetTextureXOffset(part);
+	baky = side->GetTextureYOffset(part);
 
 	if (refcount == 0 && oldx == bakx && oldy == baky)
 	{

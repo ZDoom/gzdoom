@@ -4704,7 +4704,7 @@ void P_RailAttack(FRailParams *p)
 	}
 
 	// Draw the slug's trail.
-	P_DrawRailTrail(source, rail_data.PortalHits, p->color1, p->color2, p->maxdiff, p->flags, p->spawnclass, angle, p->duration, p->sparsity, p->drift, p->SpiralOffset);
+	P_DrawRailTrail(source, rail_data.PortalHits, p->color1, p->color2, p->maxdiff, p->flags, p->spawnclass, angle, p->duration, p->sparsity, p->drift, p->SpiralOffset, pitch);
 }
 
 //==========================================================================

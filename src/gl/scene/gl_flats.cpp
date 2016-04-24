@@ -678,7 +678,7 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 			alpha = 1.0f - frontsector->GetReflect(sector_t::floor);
 		}
 
-		if (alpha != 0.f && sector->GetTexture(sector_t::floor) != skyflatnum)
+		if (alpha != 0.f && frontsector->GetTexture(sector_t::floor) != skyflatnum)
 		{
 			if (frontsector->VBOHeightcheck(sector_t::floor))
 			{
@@ -737,7 +737,7 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 			alpha = 1.0f - frontsector->GetReflect(sector_t::ceiling);
 		}
 
-		if (alpha != 0.f && sector->GetTexture(sector_t::ceiling) != skyflatnum)
+		if (alpha != 0.f && frontsector->GetTexture(sector_t::ceiling) != skyflatnum)
 		{
 			if (frontsector->VBOHeightcheck(sector_t::ceiling))
 			{

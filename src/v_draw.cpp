@@ -204,8 +204,7 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 
 		// There is not enough precision in the drawing routines to keep the full
 		// precision for y0. :(
-		double dummy;
-		sprtopscreen = modf(y0, &dummy);
+		modf(y0, &sprtopscreen);
 
 		double yscale = parms.destheight / img->GetHeight();
 		double iyscale = 1 / yscale;

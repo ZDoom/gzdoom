@@ -2185,7 +2185,7 @@ void FParser::SF_SetLineMonsterBlocking(void)
 {
 	if (CheckArgs(2))
 	{
-		int blocking = intvalue(t_argv[1]) ? ML_BLOCKMONSTERS : 0;
+		int blocking = intvalue(t_argv[1]) ? (int)ML_BLOCKMONSTERS : 0;
 		int tag=intvalue(t_argv[0]);
 
 		FLineIdIterator itr(tag);

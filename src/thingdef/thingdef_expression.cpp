@@ -3137,7 +3137,7 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 		{ 
 			shiftbits++;
 		}
-		assert(1 << shiftbits == arraytype->ElementSize && "Element sizes other than power of 2 are not implemented");
+		assert(1u << shiftbits == arraytype->ElementSize && "Element sizes other than power of 2 are not implemented");
 		build->Emit(OP_BOUND, indexv.RegNum, arraytype->ElementCount);
 		if (shiftbits > 0)
 		{

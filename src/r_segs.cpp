@@ -243,7 +243,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	ESPSResult drawmode;
 
 	drawmode = R_SetPatchStyle (LegacyRenderStyles[curline->linedef->flags & ML_ADDTRANS ? STYLE_Add : STYLE_Translucent],
-		MIN<fixed_t>(curline->linedef->Alpha, OPAQUE),	0, 0);
+		(float)MIN(curline->linedef->alpha, 1.),	0, 0);
 
 	if ((drawmode == DontDraw && !ds->bFogBoundary && !ds->bFakeBoundary))
 	{
@@ -325,11 +325,11 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	}
 	if (curline->linedef->flags & ML_DONTPEGBOTTOM)
 	{
-		dc_texturemid = MAX(frontsector->GetPlaneTexZF(sector_t::floor), backsector->GetPlaneTexZF(sector_t::floor)) + texheight;
+		dc_texturemid = MAX(frontsector->GetPlaneTexZ(sector_t::floor), backsector->GetPlaneTexZ(sector_t::floor)) + texheight;
 	}
 	else
 	{
-		dc_texturemid = MIN(frontsector->GetPlaneTexZF(sector_t::ceiling), backsector->GetPlaneTexZF(sector_t::ceiling));
+		dc_texturemid = MIN(frontsector->GetPlaneTexZ(sector_t::ceiling), backsector->GetPlaneTexZ(sector_t::ceiling));
 	}
 
 	rowoffset = curline->sidedef->GetTextureYOffset(side_t::mid);
@@ -603,7 +603,7 @@ void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover)
 	yscale = rw_pic->Scale.Y * scaledside->GetTextureYScale(scaledpart);
 
 	double rowoffset = curline->sidedef->GetTextureYOffset(side_t::mid) + rover->master->sidedef[0]->GetTextureYOffset(side_t::mid);
-	double planez = rover->model->GetPlaneTexZF(sector_t::ceiling);
+	double planez = rover->model->GetPlaneTexZ(sector_t::ceiling);
 	rw_offset = FLOAT2FIXED(curline->sidedef->GetTextureXOffset(side_t::mid) + rover->master->sidedef[0]->GetTextureXOffset(side_t::mid));
 	if (rowoffset < 0)
 	{
@@ -2035,11 +2035,11 @@ void R_NewWall (bool needlights)
 			{ // normal orientation
 				if (linedef->flags & ML_DONTPEGBOTTOM)
 				{ // bottom of texture at bottom
-					rw_midtexturemid = (frontsector->GetPlaneTexZF(sector_t::floor) - ViewPos.Z) * yrepeat + midtexture->GetHeight();
+					rw_midtexturemid = (frontsector->GetPlaneTexZ(sector_t::floor) - ViewPos.Z) * yrepeat + midtexture->GetHeight();
 				}
 				else
 				{ // top of texture at top
-					rw_midtexturemid = (frontsector->GetPlaneTexZF(sector_t::ceiling) - ViewPos.Z) * yrepeat;
+					rw_midtexturemid = (frontsector->GetPlaneTexZ(sector_t::ceiling) - ViewPos.Z) * yrepeat;
 					if (rowoffset < 0 && midtexture != NULL)
 					{
 						rowoffset += midtexture->GetHeight();
@@ -2051,7 +2051,7 @@ void R_NewWall (bool needlights)
 				rowoffset = -rowoffset;
 				if (linedef->flags & ML_DONTPEGBOTTOM)
 				{ // top of texture at bottom
-					rw_midtexturemid = (frontsector->GetPlaneTexZF(sector_t::floor) - ViewPos.Z) * yrepeat;
+					rw_midtexturemid = (frontsector->GetPlaneTexZ(sector_t::floor) - ViewPos.Z) * yrepeat;
 				}
 				else
 				{ // bottom of texture at top
@@ -2074,7 +2074,7 @@ void R_NewWall (bool needlights)
 	{ // two-sided line
 		// hack to allow height changes in outdoor areas
 
-		rw_frontlowertop = frontsector->GetPlaneTexZF(sector_t::ceiling);
+		rw_frontlowertop = frontsector->GetPlaneTexZ(sector_t::ceiling);
 
 		if (frontsector->GetTexture(sector_t::ceiling) == skyflatnum &&
 			backsector->GetTexture(sector_t::ceiling) == skyflatnum)
@@ -2095,7 +2095,7 @@ void R_NewWall (bool needlights)
 			}
 			// Putting sky ceilings on the front and back of a line alters the way unpegged
 			// positioning works.
-			rw_frontlowertop = backsector->GetPlaneTexZF(sector_t::ceiling);
+			rw_frontlowertop = backsector->GetPlaneTexZ(sector_t::ceiling);
 		}
 
 		if ((rw_backcz1 <= rw_frontfz1 && rw_backcz2 <= rw_frontfz2) ||
@@ -2179,7 +2179,7 @@ void R_NewWall (bool needlights)
 			{ // normal orientation
 				if (linedef->flags & ML_DONTPEGTOP)
 				{ // top of texture at top
-					rw_toptexturemid = (frontsector->GetPlaneTexZF(sector_t::ceiling) - ViewPos.Z) * yrepeat;
+					rw_toptexturemid = (frontsector->GetPlaneTexZ(sector_t::ceiling) - ViewPos.Z) * yrepeat;
 					if (rowoffset < 0 && toptexture != NULL)
 					{
 						rowoffset += toptexture->GetHeight();
@@ -2187,7 +2187,7 @@ void R_NewWall (bool needlights)
 				}
 				else
 				{ // bottom of texture at bottom
-					rw_toptexturemid = (backsector->GetPlaneTexZF(sector_t::ceiling) - ViewPos.Z) * yrepeat + toptexture->GetHeight();
+					rw_toptexturemid = (backsector->GetPlaneTexZ(sector_t::ceiling) - ViewPos.Z) * yrepeat + toptexture->GetHeight();
 				}
 			}
 			else
@@ -2195,11 +2195,11 @@ void R_NewWall (bool needlights)
 				rowoffset = -rowoffset;
 				if (linedef->flags & ML_DONTPEGTOP)
 				{ // bottom of texture at top
-					rw_toptexturemid = (frontsector->GetPlaneTexZF(sector_t::ceiling) - ViewPos.Z) * yrepeat + toptexture->GetHeight();
+					rw_toptexturemid = (frontsector->GetPlaneTexZ(sector_t::ceiling) - ViewPos.Z) * yrepeat + toptexture->GetHeight();
 				}
 				else
 				{ // top of texture at bottom
-					rw_toptexturemid = (backsector->GetPlaneTexZF(sector_t::ceiling) - ViewPos.Z) * yrepeat;
+					rw_toptexturemid = (backsector->GetPlaneTexZ(sector_t::ceiling) - ViewPos.Z) * yrepeat;
 				}
 			}
 			if (toptexture->bWorldPanning)
@@ -2228,7 +2228,7 @@ void R_NewWall (bool needlights)
 				}
 				else
 				{ // top of texture at top
-					rw_bottomtexturemid = (backsector->GetPlaneTexZF(sector_t::floor) - ViewPos.Z) * yrepeat;
+					rw_bottomtexturemid = (backsector->GetPlaneTexZ(sector_t::floor) - ViewPos.Z) * yrepeat;
 					if (rowoffset < 0 && bottomtexture != NULL)
 					{
 						rowoffset += bottomtexture->GetHeight();
@@ -3047,31 +3047,31 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 	case RF_RELUPPER:
 		if (curline->linedef->flags & ML_DONTPEGTOP)
 		{
-			zpos = decal->Z + front->GetPlaneTexZF(sector_t::ceiling);
+			zpos = decal->Z + front->GetPlaneTexZ(sector_t::ceiling);
 		}
 		else
 		{
-			zpos = decal->Z + back->GetPlaneTexZF(sector_t::ceiling);
+			zpos = decal->Z + back->GetPlaneTexZ(sector_t::ceiling);
 		}
 		break;
 	case RF_RELLOWER:
 		if (curline->linedef->flags & ML_DONTPEGBOTTOM)
 		{
-			zpos = decal->Z + front->GetPlaneTexZF(sector_t::ceiling);
+			zpos = decal->Z + front->GetPlaneTexZ(sector_t::ceiling);
 		}
 		else
 		{
-			zpos = decal->Z + back->GetPlaneTexZF(sector_t::floor);
+			zpos = decal->Z + back->GetPlaneTexZ(sector_t::floor);
 		}
 		break;
 	case RF_RELMID:
 		if (curline->linedef->flags & ML_DONTPEGBOTTOM)
 		{
-			zpos = decal->Z + front->GetPlaneTexZF(sector_t::floor);
+			zpos = decal->Z + front->GetPlaneTexZ(sector_t::floor);
 		}
 		else
 		{
-			zpos = decal->Z + front->GetPlaneTexZF(sector_t::ceiling);
+			zpos = decal->Z + front->GetPlaneTexZ(sector_t::ceiling);
 		}
 	}
 

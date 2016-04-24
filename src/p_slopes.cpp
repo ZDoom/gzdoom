@@ -209,7 +209,7 @@ void P_VavoomSlope(sector_t * sec, int id, const DVector3 &pos, int which)
 		{
 			DVector3 v1, v2, cross;
 			secplane_t *srcplane = (which == 0) ? &sec->floorplane : &sec->ceilingplane;
-			double srcheight = (which == 0) ? sec->GetPlaneTexZF(sector_t::floor) : sec->GetPlaneTexZF(sector_t::ceiling);
+			double srcheight = (which == 0) ? sec->GetPlaneTexZ(sector_t::floor) : sec->GetPlaneTexZ(sector_t::ceiling);
 
 			v1[0] = pos.X - l->v2->fX();
 			v1[1] = pos.Y - l->v2->fY();
@@ -328,9 +328,9 @@ static void P_SetSlopesFromVertexHeights(FMapThing *firstmt, FMapThing *lastmt, 
 				double *h3 = vt_heights[j].CheckKey(vi3);
 				if (h1 == NULL && h2 == NULL && h3 == NULL) continue;
 
-				vt1.Z = h1? *h1 : j==0? sec->GetPlaneTexZF(sector_t::floor) : sec->GetPlaneTexZF(sector_t::ceiling);
-				vt2.Z = h2? *h2 : j==0? sec->GetPlaneTexZF(sector_t::floor) : sec->GetPlaneTexZF(sector_t::ceiling);
-				vt3.Z = h3? *h3 : j==0? sec->GetPlaneTexZF(sector_t::floor) : sec->GetPlaneTexZF(sector_t::ceiling);
+				vt1.Z = h1? *h1 : j==0? sec->GetPlaneTexZ(sector_t::floor) : sec->GetPlaneTexZ(sector_t::ceiling);
+				vt2.Z = h2? *h2 : j==0? sec->GetPlaneTexZ(sector_t::floor) : sec->GetPlaneTexZ(sector_t::ceiling);
+				vt3.Z = h3? *h3 : j==0? sec->GetPlaneTexZ(sector_t::floor) : sec->GetPlaneTexZ(sector_t::ceiling);
 
 				if (P_PointOnLineSidePrecise(vertexes[vi3].fX(), vertexes[vi3].fY(), sec->lines[0]) == 0)
 				{
@@ -488,8 +488,8 @@ static void P_AlignPlane(sector_t *sec, line_t *line, int which)
 	double srcheight, destheight;
 
 	srcplane = (which == 0) ? &sec->floorplane : &sec->ceilingplane;
-	srcheight = (which == 0) ? sec->GetPlaneTexZF(sector_t::floor) : sec->GetPlaneTexZF(sector_t::ceiling);
-	destheight = (which == 0) ? refsec->GetPlaneTexZF(sector_t::floor) : refsec->GetPlaneTexZF(sector_t::ceiling);
+	srcheight = (which == 0) ? sec->GetPlaneTexZ(sector_t::floor) : sec->GetPlaneTexZ(sector_t::ceiling);
+	destheight = (which == 0) ? refsec->GetPlaneTexZ(sector_t::floor) : refsec->GetPlaneTexZ(sector_t::ceiling);
 
 	p[0] = line->v1->fX();
 	p[1] = line->v1->fY();

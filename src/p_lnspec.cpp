@@ -2991,7 +2991,7 @@ FUNC(LS_TranslucentLine)
 	int linenum;
 	while ((linenum = itr.Next()) >= 0)
 	{
-		lines[linenum].Alpha = Scale(clamp(arg1, 0, 255), OPAQUE, 255);
+		lines[linenum].alpha = clamp(arg1, 0, 255) / 255.;
 		if (arg2 == 0)
 		{
 			lines[linenum].flags &= ~ML_ADDTRANS;

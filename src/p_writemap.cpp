@@ -196,8 +196,8 @@ static int WriteSECTORS (FILE *file)
 
 	for (int i = 0; i < numsectors; ++i)
 	{
-		ms.floorheight = LittleShort(short(sectors[i].GetPlaneTexZF(sector_t::floor)));
-		ms.ceilingheight = LittleShort(short(sectors[i].GetPlaneTexZF(sector_t::ceiling)));
+		ms.floorheight = LittleShort(short(sectors[i].GetPlaneTexZ(sector_t::floor)));
+		ms.ceilingheight = LittleShort(short(sectors[i].GetPlaneTexZ(sector_t::ceiling)));
 		uppercopy (ms.floorpic, GetTextureName (sectors[i].GetTexture(sector_t::floor)));
 		uppercopy (ms.ceilingpic, GetTextureName (sectors[i].GetTexture(sector_t::ceiling)));
 		ms.lightlevel = LittleShort((short)sectors[i].lightlevel);

@@ -1284,11 +1284,19 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, double sx, double 
 	WORD				flip;
 	FTexture*			tex;
 	vissprite_t*		vis;
-	static vissprite_t	avis[NUMPSPRITES];
-	vissprite_t			tempvis;
+	static vissprite_t	avis[NUMPSPRITES + 1];
+	static vissprite_t	*avisp[countof(avis)];
 	bool noaccel;
 
 	assert(pspnum >= 0 && pspnum < NUMPSPRITES);
+
+	if (avisp[0] == NULL)
+	{
+		for (int i = 0; i < countof(avis); ++i)
+		{
+			avisp[i] = &avis[i];
+		}
+	}
 
 	// decide which patch to use
 	if ( (unsigned)psp->sprite >= (unsigned)sprites.Size ())
@@ -1329,7 +1337,7 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, double sx, double 
 		return;
 	
 	// store information in a vissprite
-	vis = &tempvis;
+	vis = avisp[NUMPSPRITES];
 	vis->renderflags = owner->renderflags;
 	vis->floorclip = 0;
 
@@ -1499,8 +1507,8 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, double sx, double 
 		{
 			VisPSpritesX1[pspnum] = x1;
 			VisPSpritesBaseColormap[pspnum] = colormap_to_use;
-			VisPSprites[pspnum] = &avis[pspnum];
-			avis[pspnum] = *vis;
+			VisPSprites[pspnum] = vis;
+			swapvalues(avisp[pspnum], avisp[NUMPSPRITES]);
 			return;
 		}
 	}

@@ -678,7 +678,7 @@ void R_DrawVisVoxel(vissprite_t *spr, int minslabz, int maxslabz, short *cliptop
 	}
 
 	// Render the voxel, either directly to the screen or offscreen.
-	R_DrawVoxel(spr->vpos, spr->vang, spr->gpos, spr->angle,
+	R_DrawVoxel(spr->pa.vpos, spr->pa.vang, spr->gpos, spr->angle,
 		spr->xscale, FLOAT2FIXED(spr->yscale), spr->voxel, spr->Style.colormap, cliptop, clipbot,
 		minslabz, maxslabz, flags);
 
@@ -1033,8 +1033,8 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 			vis->angle -= ang.BAMs();
 		}
 
-		vis->vpos = { (float)ViewPos.X, (float)ViewPos.Y, (float)ViewPos.Z };
-		vis->vang = FAngle((float)ViewAngle.Degrees);
+		vis->pa.vpos = { (float)ViewPos.X, (float)ViewPos.Y, (float)ViewPos.Z };
+		vis->pa.vang = FAngle((float)ViewAngle.Degrees);
 	}
 
 	// killough 3/27/98: save sector for special clipping later
@@ -1292,7 +1292,7 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, double sx, double 
 
 	if (avisp[0] == NULL)
 	{
-		for (int i = 0; i < countof(avis); ++i)
+		for (unsigned i = 0; i < countof(avis); ++i)
 		{
 			avisp[i] = &avis[i];
 		}

@@ -651,8 +651,7 @@ void C_DoCommand (const char *cmd, int keynum)
 			}
 			else
 			{ // Get the variable's value
-				UCVarValue val = var->GetGenericRep (CVAR_String);
-				Printf ("\"%s\" is \"%s\"\n", var->GetName(), val.String);
+				Printf ("\"%s\" is \"%s\"\n", var->GetName(), var->GetHumanString());
 			}
 		}
 		else

@@ -263,7 +263,7 @@ static bool LoadGLVertexes(FileReader * lump)
 
 	for (i = firstglvertex; i < numvertexes; i++)
 	{
-		vertexes[i].set(LittleLong(mgl->x), LittleLong(mgl->y));
+		vertexes[i].set(LittleLong(mgl->x)/65536., LittleLong(mgl->y)/65536.);
 		mgl++;
 	}
 	delete[] gldata;

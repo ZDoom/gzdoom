@@ -349,13 +349,14 @@ bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, int f
 		return false;
 	}
 	// [RH] Lee Killough's changes for silent teleporters from BOOM
-	if ((flags & TELF_KEEPORIENTATION) && line)
+	if ((flags & (TELF_ROTATEBOOM|TELF_ROTATEBOOMINVERSE)) && line)
 	{
 		// Get the angle between the exit thing and source linedef.
 		// Rotate 90 degrees, so that walking perpendicularly across
 		// teleporter linedef causes thing to exit in the direction
 		// indicated by the exit thing.
 		angle = line->Delta().Angle() - searcher->Angles.Yaw + 90.;
+		if (flags & TELF_ROTATEBOOMINVERSE) angle = -angle;
 
 		// Sine, cosine of angle adjustment
 		s = angle.Sin();
@@ -382,14 +383,17 @@ bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, int f
 	if (P_Teleport (thing, DVector3(searcher->Pos(), z), searcher->Angles.Yaw + badangle, flags))
 	{
 		// [RH] Lee Killough's changes for silent teleporters from BOOM
-		if (!(flags & TELF_DESTFOG) && line && (flags & TELF_KEEPORIENTATION))
+		if (line)
 		{
-			// Rotate thing according to difference in angles
-			thing->Angles.Yaw += angle;
+			if (flags & (TELF_ROTATEBOOM| TELF_ROTATEBOOMINVERSE))
+			{
+				// Rotate thing according to difference in angles (or not - Boom got the direction wrong here.)
+				thing->Angles.Yaw += angle;
 
-			// Rotate thing's velocity to come out of exit just like it entered
-			thing->Vel.X = vx*c - vy*s;
-			thing->Vel.Y = vy*c + vx*s;
+				// Rotate thing's velocity to come out of exit just like it entered
+				thing->Vel.X = vx*c - vy*s;
+				thing->Vel.Y = vy*c + vx*s;
+			}
 		}
 		if (vx == 0 && vy == 0 && thing->player != NULL && thing->player->mo == thing && !predicting)
 		{

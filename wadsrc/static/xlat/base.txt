@@ -209,10 +209,10 @@ include "xlat/defines.i"
 204 = USE,		Ceiling_LowerToHighestFloor (tag, C_SLOW)
 205 = USE|REP,		Ceiling_LowerToLowest (tag, C_SLOW)
 206 = USE|REP,		Ceiling_LowerToHighestFloor (tag, C_SLOW)
-207 = WALK|MONST,	Teleport_NoFog (0, 0, tag, 1)
-208 = WALK|REP|MONST,	Teleport_NoFog (0, 0, tag, 1)
-209 = USE|MONST,	Teleport_NoFog (0, 0, tag, 1)
-210 = USE|REP|MONST,	Teleport_NoFog (0, 0, tag, 1)
+207 = WALK|MONST,	Teleport_NoFog (0, 2, tag, 1)
+208 = WALK|REP|MONST,	Teleport_NoFog (0, 2, tag, 1)
+209 = USE|MONST,	Teleport_NoFog (0, 2, tag, 1)
+210 = USE|REP|MONST,	Teleport_NoFog (0, 2, tag, 1)
 211 = USE|REP,		Plat_ToggleCeiling (tag)
 212 = WALK|REP,		Plat_ToggleCeiling (tag)
 213 = 0,		Transfer_FloorLight (tag)
@@ -270,8 +270,8 @@ include "xlat/defines.i"
 265 = MONWALK|REP,	Teleport_Line (tag, tag, 1)
 266 = MONWALK,		Teleport_Line (tag, tag, 0)
 267 = MONWALK|REP,	Teleport_Line (tag, tag, 0)
-268 = MONWALK,		Teleport_NoFog (0, 0, tag, 1)
-269 = MONWALK|REP,	Teleport_NoFog (0, 0, tag, 1)
+268 = MONWALK,		Teleport_NoFog (0, 2, tag, 1)
+269 = MONWALK|REP,	Teleport_NoFog (0, 2, tag, 1)
 
 /****** MBF linetypes ******/
 

@@ -862,7 +862,7 @@ void P_LoadVertexes (MapData * map)
 		SWORD x, y;
 
 		(*map->file) >> x >> y;
-		vertexes[i].set(x << FRACBITS, y << FRACBITS);
+		vertexes[i].set(double(x), double(y));
 	}
 }
 
@@ -1497,9 +1497,9 @@ void P_LoadSectors (MapData *map, FMissingTextureTracker &missingtex)
 		ss->e = &sectors[0].e[i];
 		if (!map->HasBehavior) ss->Flags |= SECF_FLOORDROP;
 		ss->SetPlaneTexZ(sector_t::floor, (double)LittleShort(ms->floorheight));
-		ss->floorplane.set(0, 0, 1., -ss->GetPlaneTexZF(sector_t::floor));
+		ss->floorplane.set(0, 0, 1., -ss->GetPlaneTexZ(sector_t::floor));
 		ss->SetPlaneTexZ(sector_t::ceiling, (double)LittleShort(ms->ceilingheight));
-		ss->ceilingplane.set(0, 0, -1., ss->GetPlaneTexZF(sector_t::ceiling));
+		ss->ceilingplane.set(0, 0, -1., ss->GetPlaneTexZ(sector_t::ceiling));
 		SetTexture(ss, i, sector_t::floor, ms->floorpic, missingtex, true);
 		SetTexture(ss, i, sector_t::ceiling, ms->ceilingpic, missingtex, true);
 		ss->lightlevel = LittleShort(ms->lightlevel);
@@ -2043,10 +2043,10 @@ void P_FinishLoadingLineDef(line_t *ld, int alpha)
 			additive = true;
 		}
 
-		alpha = Scale(alpha, OPAQUE, 255); 
+		double dalpha = alpha / 255.;
 		if (!ld->args[0])
 		{
-			ld->Alpha = alpha;
+			ld->alpha = dalpha;
 			if (additive)
 			{
 				ld->flags |= ML_ADDTRANS;
@@ -2058,7 +2058,7 @@ void P_FinishLoadingLineDef(line_t *ld, int alpha)
 			{
 				if (tagManager.LineHasID(j, ld->args[0]))
 				{
-					lines[j].Alpha = alpha;
+					lines[j].alpha = dalpha;
 					if (additive)
 					{
 						lines[j].flags |= ML_ADDTRANS;
@@ -2160,7 +2160,7 @@ void P_LoadLineDefs (MapData * map)
 	ld = lines;
 	for (i = 0; i < numlines; i++, mld++, ld++)
 	{
-		ld->Alpha = OPAQUE;	// [RH] Opaque by default
+		ld->alpha = 1.;	// [RH] Opaque by default
 		ld->portalindex = UINT_MAX;
 
 		// [RH] Translate old linedef special and flags to be
@@ -2264,7 +2264,7 @@ void P_LoadLineDefs2 (MapData * map)
 
 		ld->v1 = &vertexes[LittleShort(mld->v1)];
 		ld->v2 = &vertexes[LittleShort(mld->v2)];
-		ld->Alpha = OPAQUE;	// [RH] Opaque by default
+		ld->alpha = 1.;	// [RH] Opaque by default
 
 		P_SetSideNum (&ld->sidedef[0], LittleShort(mld->sidenum[0]));
 		P_SetSideNum (&ld->sidedef[1], LittleShort(mld->sidenum[1]));

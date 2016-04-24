@@ -1527,9 +1527,9 @@ OptionValue MidiDevices
 OptionMenu SoundOptions
 {
 	Title "$SNDMNU_TITLE"
-	Slider "$SNDMNU_SFXVOLUME",			"snd_sfxvolume", 0, 1, 0.05
-	Slider "$SNDMNU_MENUVOLUME",		"snd_menuvolume", 0, 1, 0.05
-	Slider "$SNDMNU_MUSICVOLUME",		"snd_musicvolume", 0, 1, 0.05
+	Slider "$SNDMNU_SFXVOLUME",			"snd_sfxvolume", 0, 1, 0.05, 2
+	Slider "$SNDMNU_MENUVOLUME",		"snd_menuvolume", 0, 1, 0.05, 2
+	Slider "$SNDMNU_MUSICVOLUME",		"snd_musicvolume", 0, 1, 0.05, 2
 	Option "$SNDMNU_MIDIDEVICE",		"snd_mididevice", "MidiDevices"
 	StaticText " "
 	Option "$SNDMNU_UNDERWATERREVERB",	"snd_waterreverb", "OnOff"

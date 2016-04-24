@@ -98,7 +98,7 @@ visplane_t *R_FindPlane
 ( const secplane_t &height,
   FTextureID	picnum,
   int			lightlevel,
-  fixed_t		alpha,
+  double		alpha,
   bool			additive,
   const FTransform &xform,
   int			sky,

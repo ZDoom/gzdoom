@@ -250,27 +250,27 @@ FTextureID DBaseDecal::StickToWall (side_t *wall, double x, double y, F3DFloor *
 	{
 		RenderFlags |= RF_RELMID;
 		if (line->flags & ML_DONTPEGBOTTOM)
-			Z -= front->GetPlaneTexZF(sector_t::floor);
+			Z -= front->GetPlaneTexZ(sector_t::floor);
 		else
-			Z -= front->GetPlaneTexZF(sector_t::ceiling);
+			Z -= front->GetPlaneTexZ(sector_t::ceiling);
 		tex = wall->GetTexture(side_t::mid);
 	}
 	else if (back->floorplane.ZatPoint (x, y) >= Z)
 	{
 		RenderFlags |= RF_RELLOWER|RF_CLIPLOWER;
 		if (line->flags & ML_DONTPEGBOTTOM)
-			Z -= front->GetPlaneTexZF(sector_t::ceiling);
+			Z -= front->GetPlaneTexZ(sector_t::ceiling);
 		else
-			Z -= back->GetPlaneTexZF(sector_t::floor);
+			Z -= back->GetPlaneTexZ(sector_t::floor);
 		tex = wall->GetTexture(side_t::bottom);
 	}
 	else if (back->ceilingplane.ZatPoint (x, y) <= Z)
 	{
 		RenderFlags |= RF_RELUPPER|RF_CLIPUPPER;
 		if (line->flags & ML_DONTPEGTOP)
-			Z -= front->GetPlaneTexZF(sector_t::ceiling);
+			Z -= front->GetPlaneTexZ(sector_t::ceiling);
 		else
-			Z -= back->GetPlaneTexZF(sector_t::ceiling);
+			Z -= back->GetPlaneTexZ(sector_t::ceiling);
 		tex = wall->GetTexture(side_t::top);
 	}
 	else if (ffloor) // this is a 3d-floor segment - do this only if we know which one!
@@ -278,9 +278,9 @@ FTextureID DBaseDecal::StickToWall (side_t *wall, double x, double y, F3DFloor *
 		Sector=ffloor->model;
 		RenderFlags |= RF_RELMID|RF_CLIPMID;
 		if (line->flags & ML_DONTPEGBOTTOM)
-			Z -= Sector->GetPlaneTexZF(sector_t::floor);
+			Z -= Sector->GetPlaneTexZ(sector_t::floor);
 		else
-			Z -= Sector->GetPlaneTexZF(sector_t::ceiling);
+			Z -= Sector->GetPlaneTexZ(sector_t::ceiling);
 
 		if (ffloor->flags & FF_UPPERTEXTURE)
 		{
@@ -335,29 +335,29 @@ double DBaseDecal::GetRealZ (const side_t *wall) const
 	case RF_RELUPPER:
 		if (line->flags & ML_DONTPEGTOP)
 		{
-			return Z + front->GetPlaneTexZF(sector_t::ceiling);
+			return Z + front->GetPlaneTexZ(sector_t::ceiling);
 		}
 		else
 		{
-			return Z + back->GetPlaneTexZF(sector_t::ceiling);
+			return Z + back->GetPlaneTexZ(sector_t::ceiling);
 		}
 	case RF_RELLOWER:
 		if (line->flags & ML_DONTPEGBOTTOM)
 		{
-			return Z + front->GetPlaneTexZF(sector_t::ceiling);
+			return Z + front->GetPlaneTexZ(sector_t::ceiling);
 		}
 		else
 		{
-			return Z + back->GetPlaneTexZF(sector_t::floor);
+			return Z + back->GetPlaneTexZ(sector_t::floor);
 		}
 	case RF_RELMID:
 		if (line->flags & ML_DONTPEGBOTTOM)
 		{
-			return Z + front->GetPlaneTexZF(sector_t::floor);
+			return Z + front->GetPlaneTexZ(sector_t::floor);
 		}
 		else
 		{
-			return Z + front->GetPlaneTexZF(sector_t::ceiling);
+			return Z + front->GetPlaneTexZ(sector_t::ceiling);
 		}
 	}
 }

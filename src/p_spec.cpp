@@ -841,7 +841,7 @@ static void SetupFloorPortal (AStackPoint *point)
 	if (skyv != NULL)
 	{
 		skyv->target = point;
-		if (Sector->GetAlphaF(sector_t::floor) == 1.)
+		if (Sector->GetAlpha(sector_t::floor) == 1.)
 			Sector->SetAlpha(sector_t::floor, clamp(point->args[0], 0, 255) / 255.);
 
 		Sector->Portals[sector_t::floor] = P_GetStackPortal(skyv, sector_t::floor);
@@ -856,7 +856,7 @@ static void SetupCeilingPortal (AStackPoint *point)
 	if (skyv != NULL)
 	{
 		skyv->target = point;
-		if (Sector->GetAlphaF(sector_t::ceiling) == 1.)
+		if (Sector->GetAlpha(sector_t::ceiling) == 1.)
 			Sector->SetAlpha(sector_t::ceiling, clamp(point->args[0], 0, 255) / 255.);
 
 		Sector->Portals[sector_t::ceiling] = P_GetStackPortal(skyv, sector_t::ceiling);
@@ -917,7 +917,7 @@ static void SetPortal(sector_t *sector, int plane, unsigned pnum, double alpha)
 		if (sector->GetPortalType(sector_t::ceiling) == PORTS_SKYVIEWPOINT)
 		{
 			sector->Portals[sector_t::ceiling] = pnum;
-			if (sector->GetAlphaF(sector_t::ceiling) == 1.)
+			if (sector->GetAlpha(sector_t::ceiling) == 1.)
 				sector->SetAlpha(sector_t::ceiling, alpha);
 
 			if (sectorPortals[pnum].mFlags & PORTSF_SKYFLATONLY)
@@ -930,7 +930,7 @@ static void SetPortal(sector_t *sector, int plane, unsigned pnum, double alpha)
 		{
 			sector->Portals[sector_t::floor] = pnum;
 		}
-		if (sector->GetAlphaF(sector_t::floor) == 1.)
+		if (sector->GetAlpha(sector_t::floor) == 1.)
 			sector->SetAlpha(sector_t::floor, alpha);
 
 		if (sectorPortals[pnum].mFlags & PORTSF_SKYFLATONLY)

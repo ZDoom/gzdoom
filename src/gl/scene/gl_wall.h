@@ -288,7 +288,7 @@ public:
 	bool ceiling;
 	BYTE renderflags;
 	int vboindex;
-	int vboheight;
+	//int vboheight;
 
 	int dynlightindex;
 

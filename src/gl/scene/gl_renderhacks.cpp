@@ -299,14 +299,14 @@ bool FDrawInfo::DoOneSectorUpper(subsector_t * subsec, float Planez)
 			if (sec->ceilingplane.isSlope())  return false;
 
 			// Is the neighboring ceiling lower than the desired height?
-			if (sec->GetPlaneTexZF(sector_t::ceiling) < Planez)
+			if (sec->GetPlaneTexZ(sector_t::ceiling) < Planez)
 			{
 				// todo: check for missing textures.
 				return false;
 			}
 
 			// This is an exact height match which means we don't have to do any further checks for this sector
-			if (sec->GetPlaneTexZF(sector_t::ceiling) == Planez)
+			if (sec->GetPlaneTexZ(sector_t::ceiling) == Planez)
 			{
 				// If there's a texture abort
 				FTexture * tex = TexMan[seg->sidedef->GetTexture(side_t::top)];
@@ -357,14 +357,14 @@ bool FDrawInfo::DoOneSectorLower(subsector_t * subsec, float Planez)
 			if (sec->floorplane.isSlope())  return false;
 
 			// Is the neighboring floor higher than the desired height?
-			if (sec->GetPlaneTexZF(sector_t::floor) > Planez)
+			if (sec->GetPlaneTexZ(sector_t::floor) > Planez)
 			{
 				// todo: check for missing textures.
 				return false;
 			}
 
 			// This is an exact height match which means we don't have to do any further checks for this sector
-			if (sec->GetPlaneTexZF(sector_t::floor) == Planez)
+			if (sec->GetPlaneTexZ(sector_t::floor) == Planez)
 			{
 				// If there's a texture abort
 				FTexture * tex = TexMan[seg->sidedef->GetTexture(side_t::bottom)];
@@ -416,7 +416,7 @@ bool FDrawInfo::DoFakeBridge(subsector_t * subsec, float Planez)
 			if (sec->floorplane.isSlope())  return false;
 
 			// Is the neighboring floor higher than the desired height?
-			if (sec->GetPlaneTexZF(sector_t::floor) < Planez)
+			if (sec->GetPlaneTexZ(sector_t::floor) < Planez)
 			{
 				// todo: check for missing textures.
 				return false;
@@ -424,7 +424,7 @@ bool FDrawInfo::DoFakeBridge(subsector_t * subsec, float Planez)
 
 			// This is an exact height match which means we don't have to do any further checks for this sector
 			// No texture checks though! 
-			if (sec->GetPlaneTexZF(sector_t::floor) == Planez) continue;
+			if (sec->GetPlaneTexZ(sector_t::floor) == Planez) continue;
 		}
 		if (!DoFakeBridge(backsub, Planez)) return false;
 	}
@@ -469,7 +469,7 @@ bool FDrawInfo::DoFakeCeilingBridge(subsector_t * subsec, float Planez)
 			if (sec->ceilingplane.isSlope())  return false;
 
 			// Is the neighboring ceiling higher than the desired height?
-			if (sec->GetPlaneTexZF(sector_t::ceiling) > Planez)
+			if (sec->GetPlaneTexZ(sector_t::ceiling) > Planez)
 			{
 				// todo: check for missing textures.
 				return false;
@@ -477,7 +477,7 @@ bool FDrawInfo::DoFakeCeilingBridge(subsector_t * subsec, float Planez)
 
 			// This is an exact height match which means we don't have to do any further checks for this sector
 			// No texture checks though! 
-			if (sec->GetPlaneTexZF(sector_t::ceiling) == Planez) continue;
+			if (sec->GetPlaneTexZ(sector_t::ceiling) == Planez) continue;
 		}
 		if (!DoFakeCeilingBridge(backsub, Planez)) return false;
 	}
@@ -553,7 +553,7 @@ void FDrawInfo::HandleMissingTextures()
 		{
 			// It isn't a hole. Now check whether it might be a fake bridge
 			sector_t * fakesector = gl_FakeFlat(MissingUpperTextures[i].seg->frontsector, &fake, false);
-			float planez = (float)fakesector->GetPlaneTexZF(sector_t::ceiling);
+			float planez = (float)fakesector->GetPlaneTexZ(sector_t::ceiling);
 
 			backsub->validcount = validcount;
 			if (DoFakeCeilingBridge(backsub, planez))
@@ -624,7 +624,7 @@ void FDrawInfo::HandleMissingTextures()
 		{
 			// It isn't a hole. Now check whether it might be a fake bridge
 			sector_t * fakesector = gl_FakeFlat(MissingLowerTextures[i].seg->frontsector, &fake, false);
-			float planez = (float)fakesector->GetPlaneTexZF(sector_t::floor);
+			float planez = (float)fakesector->GetPlaneTexZ(sector_t::floor);
 
 			backsub->validcount = validcount;
 			if (DoFakeBridge(backsub, planez))
@@ -668,7 +668,7 @@ void FDrawInfo::DrawUnhandledMissingTextures()
 		// already done!
 		if (seg->linedef->validcount == validcount) continue;		// already done
 		seg->linedef->validcount = validcount;
-		if (seg->frontsector->GetPlaneTexZF(sector_t::ceiling) < ViewPos.Z) continue;	// out of sight
+		if (seg->frontsector->GetPlaneTexZ(sector_t::ceiling) < ViewPos.Z) continue;	// out of sight
 
 		// FIXME: The check for degenerate subsectors should be more precise
 		if (seg->PartnerSeg && (seg->PartnerSeg->Subsector->flags & SSECF_DEGENERATE)) continue;
@@ -690,7 +690,7 @@ void FDrawInfo::DrawUnhandledMissingTextures()
 		if (seg->linedef->validcount == validcount) continue;		// already done
 		seg->linedef->validcount = validcount;
 		if (!(sectorrenderflags[seg->backsector->sectornum] & SSRF_RENDERFLOOR)) continue;
-		if (seg->frontsector->GetPlaneTexZF(sector_t::floor) > ViewPos.Z) continue;	// out of sight
+		if (seg->frontsector->GetPlaneTexZ(sector_t::floor) > ViewPos.Z) continue;	// out of sight
 		if (seg->backsector->transdoor) continue;
 		if (seg->backsector->GetTexture(sector_t::floor) == skyflatnum) continue;
 		if (seg->backsector->ValidatePortal(sector_t::floor) != NULL) continue;
@@ -758,8 +758,8 @@ bool FDrawInfo::CheckAnchorFloor(subsector_t * sub)
 		{
 			// I'm ignoring slopes, scaling and rotation here. The likelihood of ZDoom maps
 			// using such crap hacks is simply too small
-			if (sub->render_sector->GetTexture(sector_t::floor)==backsub->render_sector->GetTexture(sector_t::floor) &&
-				sub->render_sector->GetPlaneTexZ(sector_t::floor)==backsub->render_sector->GetPlaneTexZ(sector_t::floor) &&
+			if (sub->render_sector->GetTexture(sector_t::floor) == backsub->render_sector->GetTexture(sector_t::floor) &&
+				sub->render_sector->GetPlaneTexZ(sector_t::floor) == backsub->render_sector->GetPlaneTexZ(sector_t::floor) &&
 				sub->render_sector->GetFloorLight() == backsub->render_sector->GetFloorLight())
 			{
 				continue;
@@ -797,10 +797,10 @@ bool FDrawInfo::CollectSubsectorsFloor(subsector_t * sub, sector_t * anchor)
 		if (!(ss_renderflags[DWORD(sub - subsectors)] & SSRF_PROCESSED)) return true;
 
 		if (sub->render_sector->GetTexture(sector_t::floor) != anchor->GetTexture(sector_t::floor) ||
-			sub->render_sector->GetPlaneTexZF(sector_t::floor) != anchor->GetPlaneTexZF(sector_t::floor) ||
+			sub->render_sector->GetPlaneTexZ(sector_t::floor) != anchor->GetPlaneTexZ(sector_t::floor) ||
 			sub->render_sector->GetFloorLight() != anchor->GetFloorLight())
 		{
-			if (sub == viewsubsector && ViewPos.Z < anchor->GetPlaneTexZF(sector_t::floor)) inview = true;
+			if (sub == viewsubsector && ViewPos.Z < anchor->GetPlaneTexZ(sector_t::floor)) inview = true;
 			HandledSubsectors.Push(sub);
 		}
 	}
@@ -825,9 +825,9 @@ bool FDrawInfo::CollectSubsectorsFloor(subsector_t * sub, sector_t * anchor)
 			else if (sub->render_sector == backsub->render_sector)
 			{
 				// Any anchor not within the original anchor's visplane terminates the processing.
-				if (sub->render_sector->GetTexture(sector_t::floor)!=anchor->GetTexture(sector_t::floor) ||
-					sub->render_sector->GetPlaneTexZ(sector_t::floor)!=anchor->GetPlaneTexZ(sector_t::floor) ||
-					sub->render_sector->GetFloorLight() != anchor->GetFloorLight()) 
+				if (sub->render_sector->GetTexture(sector_t::floor) != anchor->GetTexture(sector_t::floor) ||
+					sub->render_sector->GetPlaneTexZ(sector_t::floor) != anchor->GetPlaneTexZ(sector_t::floor) ||
+					sub->render_sector->GetFloorLight() != anchor->GetFloorLight())
 				{
 					return false;
 				}
@@ -864,8 +864,8 @@ bool FDrawInfo::CheckAnchorCeiling(subsector_t * sub)
 		{
 			// I'm ignoring slopes, scaling and rotation here. The likelihood of ZDoom maps
 			// using such crap hacks is simply too small
-			if (sub->render_sector->GetTexture(sector_t::ceiling)==backsub->render_sector->GetTexture(sector_t::ceiling) &&
-				sub->render_sector->GetPlaneTexZ(sector_t::ceiling)==backsub->render_sector->GetPlaneTexZ(sector_t::ceiling) &&
+			if (sub->render_sector->GetTexture(sector_t::ceiling) == backsub->render_sector->GetTexture(sector_t::ceiling) &&
+				sub->render_sector->GetPlaneTexZ(sector_t::ceiling) == backsub->render_sector->GetPlaneTexZ(sector_t::ceiling) &&
 				sub->render_sector->GetCeilingLight() == backsub->render_sector->GetCeilingLight())
 			{
 				continue;
@@ -898,11 +898,11 @@ bool FDrawInfo::CollectSubsectorsCeiling(subsector_t * sub, sector_t * anchor)
 		// Is not being rendererd so don't bother.
 		if (!(ss_renderflags[DWORD(sub-subsectors)]&SSRF_PROCESSED)) return true;
 
-		if (sub->render_sector->GetTexture(sector_t::ceiling)!=anchor->GetTexture(sector_t::ceiling) ||
-			sub->render_sector->GetPlaneTexZ(sector_t::ceiling)!=anchor->GetPlaneTexZ(sector_t::ceiling) ||
-			sub->render_sector->GetCeilingLight() != anchor->GetCeilingLight()) 
+		if (sub->render_sector->GetTexture(sector_t::ceiling) != anchor->GetTexture(sector_t::ceiling) ||
+			sub->render_sector->GetPlaneTexZ(sector_t::ceiling) != anchor->GetPlaneTexZ(sector_t::ceiling) ||
+			sub->render_sector->GetCeilingLight() != anchor->GetCeilingLight())
 		{
-			HandledSubsectors.Push (sub);
+			HandledSubsectors.Push(sub);
 		}
 	}
 
@@ -926,9 +926,9 @@ bool FDrawInfo::CollectSubsectorsCeiling(subsector_t * sub, sector_t * anchor)
 			else if (sub->render_sector == backsub->render_sector)
 			{
 				// Any anchor not within the original anchor's visplane terminates the processing.
-				if (sub->render_sector->GetTexture(sector_t::ceiling)!=anchor->GetTexture(sector_t::ceiling) ||
-					sub->render_sector->GetPlaneTexZ(sector_t::ceiling)!=anchor->GetPlaneTexZ(sector_t::ceiling) ||
-					sub->render_sector->GetCeilingLight() != anchor->GetCeilingLight()) 
+				if (sub->render_sector->GetTexture(sector_t::ceiling) != anchor->GetTexture(sector_t::ceiling) ||
+					sub->render_sector->GetPlaneTexZ(sector_t::ceiling) != anchor->GetPlaneTexZ(sector_t::ceiling) ||
+					sub->render_sector->GetCeilingLight() != anchor->GetCeilingLight())
 				{
 					return false;
 				}

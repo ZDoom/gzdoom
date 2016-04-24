@@ -262,7 +262,7 @@ void GLWall::SkyTop(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex
 			// one more check for some ugly transparent door hacks
 			if (!bs->floorplane.isSlope() && !fs->floorplane.isSlope())
 			{
-				if (bs->GetPlaneTexZ(sector_t::floor)==fs->GetPlaneTexZ(sector_t::floor)+FRACUNIT)
+				if (bs->GetPlaneTexZ(sector_t::floor)==fs->GetPlaneTexZ(sector_t::floor)+1.)
 				{
 					FTexture * tex = TexMan(seg->sidedef->GetTexture(side_t::bottom));
 					if (!tex || tex->UseType==FTexture::TEX_Null) return;

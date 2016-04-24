@@ -360,12 +360,12 @@ bool GLWall::DoHorizon(seg_t * seg,sector_t * fs, vertex_t * v1,vertex_t * v2)
 	lightlist_t * light;
 
 	// ZDoom doesn't support slopes in a horizon sector so I won't either!
-	ztop[1] = ztop[0] = fs->GetPlaneTexZF(sector_t::ceiling);
-	zbottom[1] = zbottom[0] = fs->GetPlaneTexZF(sector_t::floor);
+	ztop[1] = ztop[0] = fs->GetPlaneTexZ(sector_t::ceiling);
+	zbottom[1] = zbottom[0] = fs->GetPlaneTexZ(sector_t::floor);
 
-	if (ViewPos.Z < fs->GetPlaneTexZF(sector_t::ceiling))
+	if (ViewPos.Z < fs->GetPlaneTexZ(sector_t::ceiling))
 	{
-		if (ViewPos.Z > fs->GetPlaneTexZF(sector_t::floor))
+		if (ViewPos.Z > fs->GetPlaneTexZ(sector_t::floor))
 			zbottom[1] = zbottom[0] = ViewPos.Z;
 
 		if (fs->GetTexture(sector_t::ceiling) == skyflatnum)
@@ -393,9 +393,9 @@ bool GLWall::DoHorizon(seg_t * seg,sector_t * fs, vertex_t * v1,vertex_t * v2)
 		ztop[1] = ztop[0] = zbottom[0];
 	} 
 
-	if (ViewPos.Z > fs->GetPlaneTexZF(sector_t::floor))
+	if (ViewPos.Z > fs->GetPlaneTexZ(sector_t::floor))
 	{
-		zbottom[1] = zbottom[0] = fs->GetPlaneTexZF(sector_t::floor);
+		zbottom[1] = zbottom[0] = fs->GetPlaneTexZ(sector_t::floor);
 		if (fs->GetTexture(sector_t::floor) == skyflatnum)
 		{
 			SkyPlane(fs, sector_t::floor, false);
@@ -707,12 +707,12 @@ void GLWall::DoMidTexture(seg_t * seg, bool drawfogboundary,
 		float rowoffset = tci.RowOffset(seg->sidedef->GetTextureYOffset(side_t::mid));
 		if ((seg->linedef->flags & ML_DONTPEGBOTTOM) >0)
 		{
-			texturebottom = MAX(realfront->GetPlaneTexZF(sector_t::floor), realback->GetPlaneTexZF(sector_t::floor)) + rowoffset;
+			texturebottom = MAX(realfront->GetPlaneTexZ(sector_t::floor), realback->GetPlaneTexZ(sector_t::floor)) + rowoffset;
 			texturetop = texturebottom + tci.mRenderHeight;
 		}
 		else
 		{
-			texturetop = MIN(realfront->GetPlaneTexZF(sector_t::ceiling), realback->GetPlaneTexZF(sector_t::ceiling)) + rowoffset;
+			texturetop = MIN(realfront->GetPlaneTexZ(sector_t::ceiling), realback->GetPlaneTexZ(sector_t::ceiling)) + rowoffset;
 			texturebottom = texturetop - tci.mRenderHeight;
 		}
 	}
@@ -896,7 +896,7 @@ void GLWall::DoMidTexture(seg_t * seg, bool drawfogboundary,
 	// set up alpha blending
 	//
 	// 
-	if (seg->linedef->Alpha)// && seg->linedef->special!=Line_Fogsheet)
+	if (seg->linedef->alpha != 0)
 	{
 		bool translucent = false;
 
@@ -904,13 +904,13 @@ void GLWall::DoMidTexture(seg_t * seg, bool drawfogboundary,
 		{
 		case 0:
 			RenderStyle=STYLE_Translucent;
-			alpha=FIXED2FLOAT(seg->linedef->Alpha);
-			translucent = seg->linedef->Alpha < FRACUNIT || (gltexture && gltexture->GetTransparent());
+			alpha = seg->linedef->alpha;
+			translucent =alpha < 1. || (gltexture && gltexture->GetTransparent());
 			break;
 
 		case ML_ADDTRANS:
 			RenderStyle=STYLE_Add;
-			alpha=FIXED2FLOAT(seg->linedef->Alpha);
+			alpha = seg->linedef->alpha;
 			translucent=true;
 			break;
 		}
@@ -1065,7 +1065,7 @@ void GLWall::BuildFFBlock(seg_t * seg, F3DFloor * rover,
 		to = (rover->flags&(FF_UPPERTEXTURE | FF_LOWERTEXTURE)) ?
 			0.f : tci.RowOffset(mastersd->GetTextureYOffset(side_t::mid));
 
-		to += rowoffset + rover->top.model->GetPlaneTexZF(rover->top.isceiling);
+		to += rowoffset + rover->top.model->GetPlaneTexZ(rover->top.isceiling);
 
 		uplft.v = tci.FloatToTexV(to - ff_topleft);
 		uprgt.v = tci.FloatToTexV(to - ff_topright);
@@ -1372,8 +1372,8 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 		segfront = frontsector;
 		segback = backsector;
 	}
-	frefz = realfront->GetPlaneTexZF(sector_t::floor);
-	crefz = realfront->GetPlaneTexZF(sector_t::ceiling);
+	frefz = realfront->GetPlaneTexZ(sector_t::floor);
+	crefz = realfront->GetPlaneTexZ(sector_t::ceiling);
 
 	if (seg->sidedef == seg->linedef->sidedef[0])
 	{
@@ -1525,7 +1525,7 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 				if (gltexture)
 				{
 					DoTexture(RENDERWALL_TOP, seg, (seg->linedef->flags & (ML_DONTPEGTOP)) == 0,
-						crefz, realback->GetPlaneTexZF(sector_t::ceiling),
+						crefz, realback->GetPlaneTexZ(sector_t::ceiling),
 						fch1, fch2, bch1a, bch2a, 0);
 				}
 				else if (!(seg->sidedef->Flags & WALLF_POLYOBJ))
@@ -1538,7 +1538,7 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 						if (gltexture)
 						{
 							DoTexture(RENDERWALL_TOP, seg, (seg->linedef->flags & (ML_DONTPEGTOP)) == 0,
-								crefz, realback->GetPlaneTexZF(sector_t::ceiling),
+								crefz, realback->GetPlaneTexZ(sector_t::ceiling),
 								fch1, fch2, bch1a, bch2a, 0);
 						}
 					}
@@ -1602,10 +1602,10 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 			if (gltexture)
 			{
 				DoTexture(RENDERWALL_BOTTOM, seg, (seg->linedef->flags & ML_DONTPEGBOTTOM) > 0,
-					realback->GetPlaneTexZF(sector_t::floor), frefz,
+					realback->GetPlaneTexZ(sector_t::floor), frefz,
 					bfh1, bfh2, ffh1, ffh2,
 					frontsector->GetTexture(sector_t::ceiling) == skyflatnum && backsector->GetTexture(sector_t::ceiling) == skyflatnum ?
-					frefz - realback->GetPlaneTexZF(sector_t::ceiling) :
+					frefz - realback->GetPlaneTexZ(sector_t::ceiling) :
 					frefz - crefz);
 			}
 			else if (!(seg->sidedef->Flags & WALLF_POLYOBJ))
@@ -1621,7 +1621,7 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 					if (gltexture)
 					{
 						DoTexture(RENDERWALL_BOTTOM, seg, (seg->linedef->flags & ML_DONTPEGBOTTOM) > 0,
-							realback->GetPlaneTexZF(sector_t::floor), frefz,
+							realback->GetPlaneTexZ(sector_t::floor), frefz,
 							bfh1, bfh2, ffh1, ffh2, frefz - crefz);
 					}
 				}
@@ -1648,8 +1648,8 @@ void GLWall::ProcessLowerMiniseg(seg_t *seg, sector_t * frontsector, sector_t * 
 	if (frontsector->GetTexture(sector_t::floor) == skyflatnum) return;
 	lightlist = NULL;
 
-	float ffh = frontsector->GetPlaneTexZF(sector_t::floor);
-	float bfh = backsector->GetPlaneTexZF(sector_t::floor);
+	float ffh = frontsector->GetPlaneTexZ(sector_t::floor);
+	float bfh = backsector->GetPlaneTexZ(sector_t::floor);
 	if (bfh > ffh)
 	{
 		this->seg = seg;

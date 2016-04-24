@@ -657,9 +657,9 @@ public:
 		FTransform xform;
 		int Flags;
 		int Light;
-		fixed_t alpha;
+		double alpha;
 		FTextureID Texture;
-		fixed_t TexZ;
+		double TexZ;
 	};
 
 
@@ -747,17 +747,12 @@ public:
 
 	void SetAlpha(int pos, double o)
 	{
-		planes[pos].alpha = FLOAT2FIXED(o);
+		planes[pos].alpha = o;
 	}
 
-	fixed_t GetAlpha(int pos) const
+	double GetAlpha(int pos) const
 	{
 		return planes[pos].alpha;
-	}
-
-	double GetAlphaF(int pos) const
-	{
-		return FIXED2DBL(planes[pos].alpha);
 	}
 
 	int GetFlags(int pos) const
@@ -799,24 +794,19 @@ public:
 		if (floorclip && pos == floor && tex != old) AdjustFloorClip();
 	}
 
-	fixed_t GetPlaneTexZ(int pos) const
+	double GetPlaneTexZ(int pos) const
 	{
 		return planes[pos].TexZ;
 	}
 
-	double GetPlaneTexZF(int pos) const
-	{
-		return FIXED2DBL(planes[pos].TexZ);
-	}
-
 	void SetPlaneTexZ(int pos, double val)
 	{
-		planes[pos].TexZ = FLOAT2FIXED(val);
+		planes[pos].TexZ = val;
 	}
 
 	void ChangePlaneTexZ(int pos, double val)
 	{
-		planes[pos].TexZ += FLOAT2FIXED(val);
+		planes[pos].TexZ += val;
 	}
 
 	static inline short ClampLight(int level)
@@ -1218,8 +1208,8 @@ public:
 	DWORD		flags;
 	DWORD		activation;	// activation type
 	int			special;
-	fixed_t		Alpha;		// <--- translucency (0=invisibile, FRACUNIT=opaque)
 	int			args[5];	// <--- hexen-style arguments (expanded to ZDoom's full width)
+	double		alpha;		// <--- translucency (0=invisibile, FRACUNIT=opaque)
 	side_t		*sidedef[2];
 	double		bbox[4];	// bounding box, for the extent of the LineDef.
 	sector_t	*frontsector, *backsector;
@@ -1239,7 +1229,7 @@ public:
 
 	void setAlpha(double a)
 	{
-		Alpha = FLOAT2FIXED(a);
+		alpha = a;
 	}
 
 	FLinePortal *getPortal() const

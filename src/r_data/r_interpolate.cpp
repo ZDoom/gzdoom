@@ -441,12 +441,12 @@ void DSectorPlaneInterpolation::UpdateInterpolation()
 	if (!ceiling)
 	{
 		oldheight = sector->floorplane.fD();
-		oldtexz = sector->GetPlaneTexZF(sector_t::floor);
+		oldtexz = sector->GetPlaneTexZ(sector_t::floor);
 	}
 	else
 	{
 		oldheight = sector->ceilingplane.fD();
-		oldtexz = sector->GetPlaneTexZF(sector_t::ceiling);
+		oldtexz = sector->GetPlaneTexZ(sector_t::ceiling);
 	}
 }
 
@@ -495,7 +495,7 @@ void DSectorPlaneInterpolation::Interpolate(double smoothratio)
 	}
 
 	bakheight = pplane->fD();
-	baktexz = sector->GetPlaneTexZF(pos);
+	baktexz = sector->GetPlaneTexZ(pos);
 
 	if (refcount == 0 && oldheight == bakheight)
 	{

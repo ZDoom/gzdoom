@@ -708,7 +708,7 @@ unsigned P_GetPortal(int type, int plane, sector_t *from, sector_t *to, const DV
 	sectorPortals[i].mOrigin = from;
 	sectorPortals[i].mDestination = to;
 	sectorPortals[i].mDisplacement = displacement;
-	sectorPortals[i].mPlaneZ = type == PORTS_LINKEDPORTAL? from->GetPlaneTexZF(plane) : FLT_MAX;
+	sectorPortals[i].mPlaneZ = type == PORTS_LINKEDPORTAL? from->GetPlaneTexZ(plane) : FLT_MAX;
 	return i;
 }
 

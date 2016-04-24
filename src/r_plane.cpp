@@ -581,7 +581,7 @@ static visplane_t *new_visplane (unsigned hash)
 // killough 2/28/98: Add offsets
 //==========================================================================
 
-visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightlevel, fixed_t alpha, bool additive,
+visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightlevel, double Alpha, bool additive,
 						const FTransform &xform,
 						 int sky, FSectorPortal *portal)
 {
@@ -593,6 +593,7 @@ visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightl
 	fixed_t yoffs = FLOAT2FIXED(xform.yOffs + xform.baseyOffs);
 	fixed_t xscale = FLOAT2FIXED(xform.xScale);
 	fixed_t yscale = FLOAT2FIXED(xform.yScale);
+	fixed_t alpha = FLOAT2FIXED(Alpha);
 	angle_t angle = (xform.Angle + xform.baseAngle).BAMs();
 
 	if (picnum == skyflatnum)	// killough 10/98

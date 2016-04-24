@@ -593,11 +593,11 @@ static void LoadWalls (walltype *walls, int numwalls, sectortype *bsec)
 		{
 			if (walls[i].cstat & 512)
 			{
-				lines[j].Alpha = TRANSLUC33;
+				lines[j].alpha = 1/3.;
 			}
 			else
 			{
-				lines[j].Alpha = TRANSLUC66;
+				lines[j].alpha = 2/3.;
 			}
 		}
 		if (walls[i].cstat & 1)

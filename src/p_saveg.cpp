@@ -396,7 +396,7 @@ void P_SerializeWorld (FArchive &arc)
 		arc << li->flags
 			<< li->activation
 			<< li->special
-			<< li->Alpha;
+			<< li->alpha;
 
 		if (P_IsACSSpecial(li->special))
 		{

@@ -31,6 +31,12 @@
 
 struct vissprite_t
 {
+	struct posang
+	{
+		FVector3 vpos;			// view origin
+		FAngle vang;			// view angle
+	};
+
 	short			x1, x2;
 	FVector3		gpos;			// origin in world coordinates
 	union
@@ -61,16 +67,9 @@ struct vissprite_t
 			fixed_t	xiscale;		// negative if flipped
 		};
 		// Used by wall sprites
-		struct
-		{
-			FWallCoords wallc;
-		};
+		FWallCoords wallc;
 		// Used by voxels
-		struct
-		{
-			FVector3 vpos;			// view origin
-			FAngle vang;			// view angle
-		};
+		posang pa;
 	};
 	sector_t		*heightsec;		// killough 3/27/98: height sector for underwater/fake ceiling
 	sector_t		*sector;		// [RH] sector this sprite is in
@@ -88,7 +87,6 @@ struct vissprite_t
 	int				CurrentPortalUniq; // [ZZ] to identify the portal that this thing is in. used for clipping.
 
 	vissprite_t() {}
-	vissprite_t &operator= (const vissprite_t &o) { memcpy(this, &o, sizeof *this); return *this; }
 };
 
 struct particle_t;

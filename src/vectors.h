@@ -781,15 +781,12 @@ Outside comments: A faster version with only 10 (not 24) multiplies.
 	}
 };
 
+#define BAM_FACTOR (90. / 0x40000000)
+
 template<class vec_t>
 struct TAngle
 {
 	vec_t Degrees;
-
-private:
-	const double BAM_FACTOR = (90. / 0x40000000);
-public:
-
 
 	// This is to catch any accidental attempt to assign an angle_t to this type. Any explicit exception will require a type cast.
 	TAngle(int) = delete;

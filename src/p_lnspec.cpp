@@ -1057,10 +1057,25 @@ FUNC(LS_Teleport_NoFog)
 // Teleport_NoFog (tid, useang, sectortag, keepheight)
 {
 	int flags = 0;
-	if (!arg1)
+	switch (arg1)
 	{
+	case 0:
 		flags |= TELF_KEEPORIENTATION;
+		break;
+
+	default:
+	case 1:
+		break;
+
+	case 2:
+		flags |= TELF_KEEPORIENTATION | TELF_ROTATEBOOM;	// adjust to exit thing like Boom (i.e. with incorrect reversed angle)
+		break;
+
+	case 3:
+		flags |= TELF_KEEPORIENTATION | TELF_ROTATEBOOMINVERSE;	// adjust to exit thing correctly
+		break;
 	}
+
 	if (arg3)
 	{
 		flags |= TELF_KEEPHEIGHT;

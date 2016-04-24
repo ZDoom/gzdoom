@@ -993,8 +993,7 @@ CCMD (playerinfo)
 			if (pair->Key != NAME_Name && pair->Key != NAME_Team && pair->Key != NAME_Skin &&
 				pair->Key != NAME_Gender && pair->Key != NAME_PlayerClass)
 			{
-				UCVarValue val = pair->Value->GetGenericRep(CVAR_String);
-				Printf("%20s: %s\n", pair->Key.GetChars(), val.String);
+				Printf("%20s: %s\n", pair->Key.GetChars(), pair->Value->GetHumanString());
 			}
 		}
 		if (argv.argc() > 2)

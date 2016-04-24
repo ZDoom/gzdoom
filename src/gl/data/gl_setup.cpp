@@ -348,7 +348,7 @@ static void PrepareTransparentDoors(sector_t * sector)
 
 				int side = sector->lines[i]->sidedef[0]->sector == sec;
 
-				if (sector->GetPlaneTexZ(sector_t::floor)!=sec->GetPlaneTexZ(sector_t::floor)+FRACUNIT) 
+				if (sector->GetPlaneTexZ(sector_t::floor)!=sec->GetPlaneTexZ(sector_t::floor)+1.) 
 				{
 					sector->transdoor=false;
 					return;

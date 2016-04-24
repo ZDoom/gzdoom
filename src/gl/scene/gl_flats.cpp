@@ -671,7 +671,7 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 			{
 				gl_drawinfo->AddFloorStack(sector);	// stacked sector things require visplane merging.
 			}
-			alpha = frontsector->GetAlpha(sector_t::floor) / 65536.0f;
+			alpha = frontsector->GetAlpha(sector_t::floor);
 		}
 		else
 		{
@@ -730,7 +730,7 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 			{
 				gl_drawinfo->AddCeilingStack(sector);
 			}
-			alpha = frontsector->GetAlpha(sector_t::ceiling) / 65536.0f;
+			alpha = frontsector->GetAlpha(sector_t::ceiling);
 		}
 		else
 		{

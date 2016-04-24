@@ -138,33 +138,33 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 		if (type!=RENDERWALL_TOP) return;
 		if (line->flags & ML_DONTPEGTOP)
 		{
-			zpos = decal->Z + frontsector->GetPlaneTexZF(sector_t::ceiling);
+			zpos = decal->Z + frontsector->GetPlaneTexZ(sector_t::ceiling);
 		}
 		else
 		{
-			zpos = decal->Z + seg->backsector->GetPlaneTexZF(sector_t::ceiling);
+			zpos = decal->Z + seg->backsector->GetPlaneTexZ(sector_t::ceiling);
 		}
 		break;
 	case RF_RELLOWER:
 		if (type!=RENDERWALL_BOTTOM) return;
 		if (line->flags & ML_DONTPEGBOTTOM)
 		{
-			zpos = decal->Z + frontsector->GetPlaneTexZF(sector_t::ceiling);
+			zpos = decal->Z + frontsector->GetPlaneTexZ(sector_t::ceiling);
 		}
 		else
 		{
-			zpos = decal->Z + seg->backsector->GetPlaneTexZF(sector_t::floor);
+			zpos = decal->Z + seg->backsector->GetPlaneTexZ(sector_t::floor);
 		}
 		break;
 	case RF_RELMID:
 		if (type==RENDERWALL_TOP || type==RENDERWALL_BOTTOM) return;
 		if (line->flags & ML_DONTPEGBOTTOM)
 		{
-			zpos = decal->Z + frontsector->GetPlaneTexZF(sector_t::floor);
+			zpos = decal->Z + frontsector->GetPlaneTexZ(sector_t::floor);
 		}
 		else
 		{
-			zpos = decal->Z + frontsector->GetPlaneTexZF(sector_t::ceiling);
+			zpos = decal->Z + frontsector->GetPlaneTexZ(sector_t::ceiling);
 		}
 	}
 	

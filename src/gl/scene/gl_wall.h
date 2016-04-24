@@ -273,7 +273,7 @@ public:
 	bool ceiling;
 	BYTE renderflags;
 	int vboindex;
-	int vboheight;
+	//int vboheight;
 
 	bool SetupSubsectorLights(bool lightsapplied, subsector_t * sub);
 	void DrawSubsector(subsector_t * sub);

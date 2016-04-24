@@ -338,7 +338,7 @@ void FFlatVertexBuffer::CreateVBO()
 		{
 			sectors[i].vboindex[3] = sectors[i].vboindex[2] = 
 			sectors[i].vboindex[1] = sectors[i].vboindex[0] = -1;
-			sectors[i].vboheight[1] = sectors[i].vboheight[0] = FIXED_MIN;
+			sectors[i].vboheight[1] = sectors[i].vboheight[0] = FLT_MIN;
 		}
 	}
 }

@@ -1190,7 +1190,7 @@ void FDrawInfo::FloodLowerGap(seg_t * seg)
 
 
 	if (fakebsector->GetTexture(sector_t::floor) == skyflatnum) return;
-	if (fakebsector->GetPlaneTexZF(sector_t::floor) > ViewPos.Z) return;
+	if (fakebsector->GetPlaneTexZ(sector_t::floor) > ViewPos.Z) return;
 
 	if (seg->sidedef == seg->linedef->sidedef[0])
 	{

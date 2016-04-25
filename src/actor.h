@@ -973,6 +973,7 @@ public:
 	DVector3		__Pos;		// double underscores so that it won't get used by accident. Access to this should be exclusively through the designated access functions.
 	DVector3		OldRenderPos;
 
+	TAngle<double>	CamRoll;	// Roll specific to actor cameras. Used by quakes.
 	DRotator		Angles;
 	DVector3		Vel;
 	double			Speed;

@@ -871,7 +871,7 @@ void R_SetupFrame (AActor *actor)
 
 			if (jiggers.RollIntensity != 0 || jiggers.RollWave != 0)
 			{
-				camera->Angles.CamRoll = camera->Angles.Roll + QuakePower(quakefactor, jiggers.RollIntensity, jiggers.RollWave, jiggers.Falloff, jiggers.WFalloff);
+				camera->CamRoll = camera->Angles.Roll + QuakePower(quakefactor, jiggers.RollIntensity, jiggers.RollWave, jiggers.Falloff, jiggers.WFalloff);
 			}
 			if (jiggers.RelIntensity.X != 0 || jiggers.RelOffset.X != 0)
 			{
@@ -905,7 +905,7 @@ void R_SetupFrame (AActor *actor)
 		}
 		else
 		{
-			camera->Angles.CamRoll = camera->Angles.Roll;
+			camera->CamRoll = camera->Angles.Roll;
 		}
 	}
 

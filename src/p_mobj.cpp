@@ -238,6 +238,7 @@ void AActor::Serialize(FArchive &arc)
 		<< Angles.Yaw
 		<< Angles.Pitch
 		<< Angles.Roll
+		<< Angles.CamRoll
 		<< frame
 		<< Scale
 		<< RenderStyle
@@ -4592,7 +4593,7 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 	}
 
 	mobj->Angles.Yaw = SpawnAngle;
-	mobj->Angles.Pitch = mobj->Angles.Roll = 0.;
+	mobj->Angles.Pitch = mobj->Angles.Roll = mobj->Angles.CamRoll = 0.;
 	mobj->health = p->health;
 
 	// [RH] Set player sprite based on skin
@@ -5074,7 +5075,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	if (mthing->pitch)
 		mobj->Angles.Pitch = (double)mthing->pitch;
 	if (mthing->roll)
-		mobj->Angles.Roll = (double)mthing->roll;
+		mobj->Angles.Roll = mobj->Angles.CamRoll = (double)mthing->roll;
 	if (mthing->score)
 		mobj->Score = mthing->score;
 	if (mthing->fillcolor)

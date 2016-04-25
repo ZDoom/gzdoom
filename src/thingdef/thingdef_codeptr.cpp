@@ -2354,6 +2354,7 @@ static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
 	if (flags & SIXF_TRANSFERROLL)
 	{
 		mo->Angles.Roll = self->Angles.Roll;
+		mo->Angles.CamRoll = self->Angles.CamRoll;
 	}
 
 	if (flags & SIXF_ISTARGET)
@@ -4951,7 +4952,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_QuakeEx)
 	PARAM_FLOAT_OPT(mulWaveZ) { mulWaveZ = 1.; }
 	PARAM_INT_OPT(falloff) { falloff = 0; }
 	PARAM_INT_OPT(highpoint) { highpoint = 0; }
-	P_StartQuakeXYZ(self, 0, intensityX, intensityY, intensityZ, duration, damrad, tremrad, sound, flags, mulWaveX, mulWaveY, mulWaveZ, falloff, highpoint);
+	PARAM_INT_OPT(rollIntensity) { rollIntensity = 0; }
+	PARAM_FLOAT_OPT(rollWave) { rollWave = 0.; }
+	P_StartQuakeXYZ(self, 0, intensityX, intensityY, intensityZ, duration, damrad, tremrad, sound, flags, mulWaveX, mulWaveY, mulWaveZ, falloff, highpoint, 
+		rollIntensity, rollWave);
 	return 0;
 }
 

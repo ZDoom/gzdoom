@@ -799,6 +799,7 @@ void R_SetupFrame (AActor *actor)
 		P_AimCamera (camera, campos, camangle, viewsector, unlinked);	// fixme: This needs to translate the angle, too.
 		iview->New.Pos = campos;
 		iview->New.Angles.Yaw = camangle;
+		
 		r_showviewer = true;
 		// Interpolating this is a very complicated thing because nothing keeps track of the aim camera's movement, so whenever we detect a portal transition
 		// it's probably best to just reset the interpolation for this move.
@@ -868,6 +869,10 @@ void R_SetupFrame (AActor *actor)
 			double quakefactor = r_quakeintensity;
 			DAngle an;
 
+			if (jiggers.RollIntensity != 0 || jiggers.RollWave != 0)
+			{
+				camera->Angles.CamRoll = camera->Angles.Roll + QuakePower(quakefactor, jiggers.RollIntensity, jiggers.RollWave, jiggers.Falloff, jiggers.WFalloff);
+			}
 			if (jiggers.RelIntensity.X != 0 || jiggers.RelOffset.X != 0)
 			{
 				an = camera->Angles.Yaw;
@@ -897,6 +902,10 @@ void R_SetupFrame (AActor *actor)
 			{
 				ViewPos.Z += QuakePower(quakefactor, jiggers.Intensity.Z, jiggers.Offset.Z, jiggers.Falloff, jiggers.WFalloff);
 			}
+		}
+		else
+		{
+			camera->Angles.CamRoll = camera->Angles.Roll;
 		}
 	}
 

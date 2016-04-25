@@ -1135,7 +1135,8 @@ struct TRotator
 
 	Angle Pitch;	// up/down
 	Angle Yaw;		// left/right
-	Angle Roll;		// rotation about the forward axis
+	Angle Roll;		// rotation about the forward axis.
+	Angle CamRoll;	// Roll specific to actor cameras. Used by quakes.
 
 	TRotator ()
 	{

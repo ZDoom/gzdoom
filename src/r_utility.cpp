@@ -108,6 +108,7 @@ int 			viewwindowy;
 DVector3		ViewPos;
 DAngle			ViewAngle;
 DAngle			ViewPitch;
+DAngle			ViewRoll;
 DVector3		ViewPath[2];
 
 extern "C" 
@@ -542,11 +543,13 @@ void R_InterpolateView (player_t *player, double Frac, InterpolationViewer *ivie
 		ViewAngle = (nviewangle + AngleToFloat(LocalViewAngle & 0xFFFF0000)).Normalized180();
 		DAngle delta = player->centering ? DAngle(0.) : AngleToFloat(int(LocalViewPitch & 0xFFFF0000));
 		ViewPitch = clamp<DAngle>((iview->New.Angles.Pitch - delta).Normalized180(), player->MinPitch, player->MaxPitch);
+		ViewRoll = iview->New.Angles.Roll.Normalized180();
 	}
 	else
 	{
 		ViewPitch = (iview->Old.Angles.Pitch + deltaangle(iview->Old.Angles.Pitch, iview->New.Angles.Pitch) * Frac).Normalized180();
 		ViewAngle = (oviewangle + deltaangle(oviewangle, nviewangle) * Frac).Normalized180();
+		ViewRoll = iview->Old.Angles.Roll.Normalized180();
 	}
 	
 	// Due to interpolation this is not necessarily the same as the sector the camera is in.
@@ -871,7 +874,7 @@ void R_SetupFrame (AActor *actor)
 
 			if (jiggers.RollIntensity != 0 || jiggers.RollWave != 0)
 			{
-				camera->Angles.CamRoll = camera->Angles.Roll + QuakePower(quakefactor, jiggers.RollIntensity, jiggers.RollWave, jiggers.Falloff, jiggers.WFalloff);
+				ViewRoll += QuakePower(quakefactor, jiggers.RollIntensity, jiggers.RollWave, jiggers.Falloff, jiggers.WFalloff);
 			}
 			if (jiggers.RelIntensity.X != 0 || jiggers.RelOffset.X != 0)
 			{
@@ -902,10 +905,6 @@ void R_SetupFrame (AActor *actor)
 			{
 				ViewPos.Z += QuakePower(quakefactor, jiggers.Intensity.Z, jiggers.Offset.Z, jiggers.Falloff, jiggers.WFalloff);
 			}
-		}
-		else
-		{
-			camera->Angles.CamRoll = camera->Angles.Roll;
 		}
 	}
 

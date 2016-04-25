@@ -2388,7 +2388,6 @@ static bool InitSpawnedItem(AActor *self, AActor *mo, int flags)
 	if (flags & SIXF_TRANSFERROLL)
 	{
 		mo->Angles.Roll = self->Angles.Roll;
-		mo->Angles.CamRoll = self->Angles.CamRoll;
 	}
 
 	if (flags & SIXF_ISTARGET)

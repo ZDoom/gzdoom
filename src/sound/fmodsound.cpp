@@ -3192,8 +3192,8 @@ bool IsFModExPresent()
 {
 #ifdef NO_FMOD
 	return false;
-#elif !defined _WIN32
-	return true;	// on non-Windows we cannot delay load the library so it has to be present.
+#elif !defined _MSC_VER
+	return true;	// on non-MSVC we cannot delay load the library so it has to be present.
 #else
 	static bool cached_result;
 	static bool done = false;

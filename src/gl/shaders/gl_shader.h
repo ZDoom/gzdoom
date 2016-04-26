@@ -221,8 +221,8 @@ class FShader
 	FUniform4f muSplitBottomPlane;
 	FUniform4f muSplitTopPlane;
 	FBufferedUniform1f muInterpolationFactor;
-	FBufferedUniform1f muClipHeightTop;
-	FBufferedUniform1f muClipHeightBottom;
+	FBufferedUniform1f muClipHeight;
+	FBufferedUniform1f muClipHeightDirection;
 	FBufferedUniform1f muAlphaThreshold;
 	FBufferedUniform1f muTimer;
 	

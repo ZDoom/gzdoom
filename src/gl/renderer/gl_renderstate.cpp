@@ -86,8 +86,8 @@ void FRenderState::Reset()
 	mColormapState = CM_DEFAULT;
 	mLightParms[3] = -1.f;
 	mSpecialEffect = EFF_NONE;
-	mClipHeightTop = 65536.f;
-	mClipHeightBottom = -65536.f;
+	mClipHeight = 0.f;
+	mClipHeightDirection = 0.f;
 	ClearClipSplit();
 
 	stSrcBlend = stDstBlend = -1;
@@ -140,8 +140,8 @@ bool FRenderState::ApplyShader()
 	activeShader->muObjectColor.Set(mObjectColor);
 	activeShader->muDynLightColor.Set(mDynColor.vec);
 	activeShader->muInterpolationFactor.Set(mInterpolationFactor);
-	activeShader->muClipHeightTop.Set(mClipHeightTop);
-	activeShader->muClipHeightBottom.Set(mClipHeightBottom);
+	activeShader->muClipHeight.Set(mClipHeight);
+	activeShader->muClipHeightDirection.Set(mClipHeightDirection);
 	activeShader->muTimer.Set(gl_frameMS * mShaderTimer / 1000.f);
 	activeShader->muAlphaThreshold.Set(mAlphaThreshold);
 	activeShader->muLightIndex.Set(mLightIndex);	// will always be -1 for now
@@ -323,5 +323,28 @@ void FRenderState::ApplyLightIndex(int index)
 			index = GLRenderer->mLights->BindUBO(index);
 		}
 		activeShader->muLightIndex.Set(index);
+	}
+}
+
+void FRenderState::SetClipHeight(float height, float direction)
+{
+	mClipHeight = height;
+	mClipHeightDirection = direction;
+	if (direction != 0.f)
+	{
+		if (gl.glslversion >= 1.3f) glEnable(GL_CLIP_DISTANCE0);
+		else
+		{
+			// This does not work. Need someone who understands how glClipPlane works...
+			//glEnable(GL_CLIP_PLANE0);
+			// Plane mirrors never are slopes.
+			//double d[4] = { 0, direction, 0, -direction * height };
+			//glClipPlane(GL_CLIP_PLANE0, d);
+		}
+	}
+	else
+	{
+		if (gl.glslversion >= 1.3f) glDisable(GL_CLIP_DISTANCE0);
+		//else glDisable(GL_CLIP_PLANE0);
 	}
 }

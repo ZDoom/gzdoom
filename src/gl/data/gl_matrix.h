@@ -48,6 +48,7 @@ class VSMatrix {
 #ifdef USE_DOUBLE
 		void multMatrix(const float *aMatrix);
 #endif
+		void multVector(FLOATTYPE *aVector);
 		void multMatrix(const FLOATTYPE *aMatrix);
 		void multMatrix(const VSMatrix &aMatrix)
 		{
@@ -92,7 +93,9 @@ class VSMatrix {
 		{
 			computeNormalMatrix(aMatrix.mMatrix);
 		}
-		
+		bool inverseMatrix(VSMatrix &result);
+		void transpose();
+
 	protected:
 		static void crossProduct(const FLOATTYPE *a, const FLOATTYPE *b, FLOATTYPE *res);
 		static FLOATTYPE dotProduct(const FLOATTYPE *a, const FLOATTYPE * b);

@@ -280,8 +280,8 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	muSplitTopPlane.Init(hShader, "uSplitTopPlane");
 	muFixedColormap.Init(hShader, "uFixedColormap");
 	muInterpolationFactor.Init(hShader, "uInterpolationFactor");
-	muClipHeightTop.Init(hShader, "uClipHeightTop");
-	muClipHeightBottom.Init(hShader, "uClipHeightBottom");
+	muClipHeight.Init(hShader, "uClipHeight");
+	muClipHeightDirection.Init(hShader, "uClipHeightDirection");
 	muAlphaThreshold.Init(hShader, "uAlphaThreshold");
 	muTimer.Init(hShader, "timer");
 

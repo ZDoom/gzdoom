@@ -63,7 +63,7 @@ class FRenderState
 	bool mModelMatrixEnabled;
 	bool mTextureMatrixEnabled;
 	float mInterpolationFactor;
-	float mClipHeightTop, mClipHeightBottom;
+	float mClipHeight, mClipHeightDirection;
 	float mShaderTimer;
 	bool mLastDepthClamp;
 
@@ -135,25 +135,17 @@ public:
 		mCurrentVertexBuffer = NULL;
 	}
 
-	void SetClipHeightTop(float clip)
+	float GetClipHeight()
 	{
-		mClipHeightTop = clip;
+		return mClipHeight;
 	}
 
-	float GetClipHeightTop()
+	float GetClipHeightDirection()
 	{
-		return mClipHeightTop;
+		return mClipHeightDirection;
 	}
 
-	void SetClipHeightBottom(float clip)
-	{
-		mClipHeightBottom = clip;
-	}
-
-	float GetClipHeightBottom()
-	{
-		return mClipHeightBottom;
-	}
+	void SetClipHeight(float height, float direction);
 
 	void SetColor(float r, float g, float b, float a = 1.f, int desat = 0)
 	{

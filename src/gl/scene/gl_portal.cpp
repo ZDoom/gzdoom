@@ -300,11 +300,9 @@ bool GLPortal::Start(bool usestencil, bool doquery)
 			glDisable(GL_DEPTH_TEST);
 		}
 	}
-	planestack.Push(gl_RenderState.GetClipHeightTop());
-	planestack.Push(gl_RenderState.GetClipHeightBottom());
-	glDisable(GL_CLIP_DISTANCE0);
-	gl_RenderState.SetClipHeightBottom(-65536.f);
-	gl_RenderState.SetClipHeightTop(65536.f);
+	planestack.Push(gl_RenderState.GetClipHeight());
+	planestack.Push(gl_RenderState.GetClipHeightDirection());
+	gl_RenderState.SetClipHeight(0., 0.);
 
 	// save viewpoint
 	savedViewPos = ViewPos;
@@ -363,13 +361,10 @@ void GLPortal::End(bool usestencil)
 	PortalAll.Clock();
 	GLRenderer->mCurrentPortal = NextPortal;
 
-	float f;
+	float f, d;
+	planestack.Pop(d);
 	planestack.Pop(f);
-	gl_RenderState.SetClipHeightBottom(f);
-	if (f > -65535.f) glEnable(GL_CLIP_DISTANCE0);
-	planestack.Pop(f);
-	gl_RenderState.SetClipHeightTop(f);
-	if (f < 65535.f) glEnable(GL_CLIP_DISTANCE0);
+	gl_RenderState.SetClipHeight(f, d);
 
 	if (usestencil)
 	{
@@ -804,22 +799,9 @@ void GLPlaneMirrorPortal::DrawContents()
 	GLRenderer->SetupView(ViewPos.X, ViewPos.Y, ViewPos.Z, ViewAngle, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
 	ClearClipper();
 
-	if (PlaneMirrorMode < 0)
-	{
-		gl_RenderState.SetClipHeightTop(planez);	// ceiling mirror: clip everything with a z lower than the portal's ceiling
-		gl_RenderState.SetClipHeightBottom(-65536.f);
-	}
-	else
-	{
-		gl_RenderState.SetClipHeightBottom(planez);	// floor mirror: clip everything with a z higher than the portal's floor
-		gl_RenderState.SetClipHeightTop(65536.f);
-	}
-
-	glEnable(GL_CLIP_DISTANCE0);
+	gl_RenderState.SetClipHeight(planez, PlaneMirrorMode < 0? -1.f : 1.f);
 	GLRenderer->DrawScene();
-	glDisable(GL_CLIP_DISTANCE0);
-	gl_RenderState.SetClipHeightBottom(-65536.f);
-	gl_RenderState.SetClipHeightTop(65536.f);
+	gl_RenderState.SetClipHeight(0.f, 0.f);
 	PlaneMirrorFlag--;
 	PlaneMirrorMode=old_pm;
 }

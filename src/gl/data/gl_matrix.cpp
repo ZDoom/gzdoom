@@ -10,6 +10,7 @@ This is a simplified version of VSMatrix that has been adjusted for GZDoom's nee
 
 ----------------------------------------------------*/
 
+#include <algorithm>
 #include "gl/system/gl_system.h"
 #include <math.h>
 #include <stdlib.h>
@@ -139,14 +140,9 @@ VSMatrix::translate(FLOATTYPE x, FLOATTYPE y, FLOATTYPE z)
 void 
 VSMatrix::scale(FLOATTYPE x, FLOATTYPE y, FLOATTYPE z) 
 {
-	FLOATTYPE mat[16];
-
-	setIdentityMatrix(mat,4);
-	mat[0] = x;
-	mat[5] = y;
-	mat[10] = z;
-
-	multMatrix(mat);
+	mMatrix[0] *= x;   mMatrix[1] *= x;   mMatrix[2] *= x;   mMatrix[3] *= x;
+	mMatrix[4] *= y;   mMatrix[5] *= y;   mMatrix[6] *= y;   mMatrix[7] *= y;
+	mMatrix[8] *= z;   mMatrix[9] *= z;   mMatrix[10] *= z;   mMatrix[11] *= z;
 }
 
 

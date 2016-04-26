@@ -197,6 +197,8 @@ static bool ffFogEnabled;
 static PalEntry ffFogColor;
 static int ffSpecialEffect;
 static float ffFogDensity;
+static bool currentTextureMatrixState;
+static bool currentModelMatrixState;
 
 void FRenderState::ApplyFixedFunction()
 {
@@ -282,12 +284,41 @@ void FRenderState::ApplyFixedFunction()
 	if (mAlphaThreshold > 0)
 	{
 		glEnable(GL_ALPHA_TEST);
-		glAlphaFunc(GL_GREATER, mAlphaThreshold);
+		glAlphaFunc(GL_GREATER, mAlphaThreshold * col.vec[3]);
 	}
 	else
 	{
 		glDisable(GL_ALPHA_TEST);
 	}
+
+	if (mTextureMatrixEnabled)
+	{
+		glMatrixMode(GL_TEXTURE);
+		glLoadMatrixf(mTextureMatrix.get());
+		currentTextureMatrixState = true;
+	}
+	else if (currentTextureMatrixState)
+	{
+		glMatrixMode(GL_TEXTURE);
+		glLoadIdentity();
+		currentTextureMatrixState = false;
+	}
+
+	if (mModelMatrixEnabled)
+	{
+		VSMatrix mult = mViewMatrix;
+		mult.multMatrix(mModelMatrix);
+		glMatrixMode(GL_MODELVIEW);
+		glLoadMatrixf(mult.get());
+		currentModelMatrixState = true;
+	}
+	else if (currentModelMatrixState)
+	{
+		glMatrixMode(GL_MODELVIEW);
+		glLoadMatrixf(mViewMatrix.get());
+		currentModelMatrixState = false;
+	}
+
 
 }
 

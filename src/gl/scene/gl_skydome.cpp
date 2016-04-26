@@ -104,7 +104,7 @@ void FSkyVertexBuffer::BindVBO()
 		glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(FSkyVertex), &VSO->color);
 		glEnableClientState(GL_VERTEX_ARRAY);
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		glEnableClientState(GL_COLOR_ARRAY);
+		glDisableClientState(GL_COLOR_ARRAY);
 	}
 }
 
@@ -254,6 +254,11 @@ void FSkyVertexBuffer::RenderDome(FMaterial *tex, int mode)
 		gl_RenderState.Apply();
 		RenderRow(GL_TRIANGLE_FAN, rc);
 		gl_RenderState.EnableTexture(true);
+		// The color array can only be activated now if this is drawn without shader
+		if (gl.glslversion == 0)
+		{
+			glEnableClientState(GL_COLOR_ARRAY);
+		}
 	}
 	gl_RenderState.SetObjectColor(0xffffffff);
 	gl_RenderState.Apply();
@@ -523,7 +528,7 @@ void GLSkyPortal::DrawContents()
 			gl_RenderState.SetTextureMode(TM_MODULATE);
 		}
 		
-		gl_RenderState.AlphaFunc(GL_GEQUAL, 0.05f);
+		gl_RenderState.AlphaFunc(GL_GREATER, 0.f);
 		
 		if (origin->doublesky && origin->texture[1])
 		{

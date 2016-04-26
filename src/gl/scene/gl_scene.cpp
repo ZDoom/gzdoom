@@ -524,7 +524,7 @@ void FGLRenderer::DrawScene(bool toscreen)
 }
 
 
-static void FillScreen()
+void gl_FillScreen()
 {
 	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 	gl_RenderState.EnableTexture(false);
@@ -629,7 +629,7 @@ void FGLRenderer::DrawBlend(sector_t * viewsector)
 			{
 				gl_RenderState.BlendFunc(GL_DST_COLOR, GL_ZERO);
 				gl_RenderState.SetColor(extra_red, extra_green, extra_blue, 1.0f);
-				FillScreen();
+				gl_FillScreen();
 			}
 		}
 		else if (blendv.a)
@@ -659,7 +659,7 @@ void FGLRenderer::DrawBlend(sector_t * viewsector)
 	{
 		gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		gl_RenderState.SetColor(blend[0], blend[1], blend[2], blend[3]);
-		FillScreen();
+		gl_FillScreen();
 	}
 }
 
@@ -696,10 +696,17 @@ void FGLRenderer::EndDrawScene(sector_t * viewsector)
 	{
 		DrawPlayerSprites (viewsector, false);
 	}
+	int cm = gl_RenderState.GetFixedColormap();
 	gl_RenderState.SetFixedColormap(CM_DEFAULT);
 	gl_RenderState.SetSoftLightLevel(-1);
 	DrawTargeterSprites();
 	DrawBlend(viewsector);
+	if (gl.glslversion == 0.0)
+	{
+		gl_RenderState.SetFixedColormap(cm);
+		gl_RenderState.DrawColormapOverlay();
+		gl_RenderState.SetFixedColormap(CM_DEFAULT);
+	}
 
 	// Restore standard rendering state
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

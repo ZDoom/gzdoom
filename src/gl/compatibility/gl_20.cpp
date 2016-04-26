@@ -262,25 +262,6 @@ void FRenderState::ApplyFixedFunction()
 
 	FStateVec4 col = mColor;
 
-	if (mColormapState == CM_LITE)
-	{
-		if (gl_enhanced_nightvision)
-		{
-			col.vec[0] = 0.375f, col.vec[1] = 1.0f, col.vec[2] = 0.375f;
-		}
-		else
-		{
-			col.vec[0] = col.vec[1] = col.vec[2] = 1.f;
-		}
-	}
-	else if (mColormapState >= CM_TORCH)
-	{
-		int flicker = mColormapState - CM_TORCH;
-		col.vec[0] = (0.8f + (7 - flicker) / 70.0f);
-		if (col.vec[0] > 1.0f) col.vec[0] = 1.0f;
-		col.vec[1] = col.vec[2] = col.vec[0];
-		if (gl_enhanced_nightvision) col.vec[0] = col.vec[0] * 0.75f;
-	}
 	col.vec[0] += mDynColor.vec[0];
 	col.vec[1] += mDynColor.vec[1];
 	col.vec[2] += mDynColor.vec[2];
@@ -308,4 +289,59 @@ void FRenderState::ApplyFixedFunction()
 		glDisable(GL_ALPHA_TEST);
 	}
 
+}
+
+void gl_FillScreen();
+
+void FRenderState::DrawColormapOverlay()
+{
+	float r, g, b;
+	if (mColormapState > CM_DEFAULT && mColormapState < CM_MAXCOLORMAP)
+	{
+		FSpecialColormap *scm = &SpecialColormaps[gl_fixedcolormap - CM_FIRSTSPECIALCOLORMAP];
+		float m[] = { scm->ColorizeEnd[0] - scm->ColorizeStart[0],
+			scm->ColorizeEnd[1] - scm->ColorizeStart[1], scm->ColorizeEnd[2] - scm->ColorizeStart[2], 0.f };
+
+		if (m[0] < 0 && m[1] < 0 && m[2] < 0)
+		{
+			gl_RenderState.SetColor(1, 1, 1, 1);
+			gl_RenderState.BlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
+			gl_FillScreen();
+
+			r = scm->ColorizeStart[0];
+			g = scm->ColorizeStart[1];
+			b = scm->ColorizeStart[2];
+		}
+		else
+		{
+			r = scm->ColorizeEnd[0];
+			g = scm->ColorizeEnd[1];
+			b = scm->ColorizeEnd[2];
+		}
+	}
+	else if (mColormapState == CM_LITE)
+	{
+		if (gl_enhanced_nightvision)
+		{
+			r = 0.375f, g = 1.0f, b = 0.375f;
+		}
+		else
+		{
+			return;
+		}
+	}
+	else if (mColormapState >= CM_TORCH)
+	{
+		int flicker = mColormapState - CM_TORCH;
+		r = (0.8f + (7 - flicker) / 70.0f);
+		if (r > 1.0f) r = 1.0f;
+		b = g = r;
+		if (gl_enhanced_nightvision) b = g * 0.75f;
+	}
+	else return;
+
+	gl_RenderState.SetColor(r, g, b, 1.f);
+	gl_RenderState.BlendFunc(GL_DST_COLOR, GL_ZERO);
+	gl_FillScreen();
+	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }

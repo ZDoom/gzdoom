@@ -317,6 +317,11 @@ public:
 		mColormapState = cm;
 	}
 
+	int GetFixedColormap()
+	{
+		return mColormapState;
+	}
+
 	PalEntry GetFogColor() const
 	{
 		return mFogColor;
@@ -397,7 +402,7 @@ public:
 
 	// Backwards compatibility crap follows
 	void ApplyFixedFunction();
-
+	void DrawColormapOverlay();
 };
 
 extern FRenderState gl_RenderState;

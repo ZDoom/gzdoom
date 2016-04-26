@@ -182,7 +182,7 @@ void FGLTexture::Clean(bool all)
 //
 //===========================================================================
 
-unsigned char * FGLTexture::CreateTexBuffer(int translation, int & w, int & h, FTexture *hirescheck, bool createexpanded)
+unsigned char * FGLTexture::CreateTexBuffer(int translation, int & w, int & h, FTexture *hirescheck, bool createexpanded, bool alphatrans)
 {
 	unsigned char * buffer;
 	int W, H;
@@ -190,7 +190,7 @@ unsigned char * FGLTexture::CreateTexBuffer(int translation, int & w, int & h, F
 
 	// Textures that are already scaled in the texture lump will not get replaced
 	// by hires textures
-	if (gl_texture_usehires && hirescheck != NULL)
+	if (gl_texture_usehires && hirescheck != NULL && !alphatrans)
 	{
 		buffer = LoadHiresTexture (hirescheck, &w, &h);
 		if (buffer)
@@ -209,7 +209,7 @@ unsigned char * FGLTexture::CreateTexBuffer(int translation, int & w, int & h, F
 	memset(buffer, 0, W * (H+1) * 4);
 
 	FGLBitmap bmp(buffer, W*4, W, H);
-	bmp.SetTranslationInfo(translation);
+	bmp.SetTranslationInfo(translation, alphatrans);
 
 	if (tex->bComplex)
 	{
@@ -275,9 +275,14 @@ FHardwareTexture *FGLTexture::CreateHwTexture()
 const FHardwareTexture *FGLTexture::Bind(int texunit, int clampmode, int translation, FTexture *hirescheck)
 {
 	int usebright = false;
+	bool alphatrans = false;
 
 	if (translation <= 0) translation = -translation;
-	else translation = GLTranslationPalette::GetInternalTranslation(translation);
+	else
+	{
+		alphatrans = (gl.glslversion == 0 && translation == TRANSLATION(TRANSLATION_Standard, 8));
+		translation = GLTranslationPalette::GetInternalTranslation(translation);
+	}
 
 	bool needmipmap = (clampmode <= CLAMP_XY) || !(gl.flags & RFL_SAMPLER_OBJECTS);
 
@@ -303,7 +308,7 @@ const FHardwareTexture *FGLTexture::Bind(int texunit, int clampmode, int transla
 			
 			if (!tex->bHasCanvas)
 			{
-				buffer = CreateTexBuffer(translation, w, h, hirescheck);
+				buffer = CreateTexBuffer(translation, w, h, hirescheck, true, alphatrans);
 				tex->ProcessData(buffer, w, h, false);
 			}
 			if (!hwtex->CreateTexture(buffer, w, h, texunit, needmipmap, translation)) 

@@ -124,12 +124,16 @@ void FGLBitmap::CopyPixelData(int originx, int originy, const BYTE * patch, int 
 		if (translation > 0)
 		{
 			PalEntry *ptrans = GLTranslationPalette::GetPalette(translation);
-			if (ptrans)
+			if (ptrans && !alphatrans)
 			{
 				for (i = 0; i < 256; i++)
 				{
 					penew[i] = (ptrans[i] & 0xffffff) | (palette[i] & 0xff000000);
 				}
+			}
+			else if (ptrans)
+			{
+				memcpy(penew, ptrans, 256 * sizeof(PalEntry));
 			}
 		}
 		else

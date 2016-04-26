@@ -287,7 +287,7 @@ void gl_PrintStartupLog()
 		for (int i = 0; i < 256; i++)
 		{
 			remap->Remap[i] = i;
-			remap->Palette[i] = PalEntry(i, 255, 255);
+			remap->Palette[i] = PalEntry(i, 255, 255, 255);
 		}
 	}
 

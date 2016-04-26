@@ -7,23 +7,22 @@
 
 class FGLBitmap : public FBitmap
 {
-	int translation;
+	int translation = 0;
+	bool alphatrans = false;
 public:
 
 	FGLBitmap()
 	{
-		translation = 0;
 	}
 	FGLBitmap(BYTE *buffer, int pitch, int width, int height)
 		: FBitmap(buffer, pitch, width, height)
 	{
-		translation = 0;
 	}
 
-	void SetTranslationInfo(int _trans)
+	void SetTranslationInfo(int _trans, bool _alphatrans = false)
 	{
 		if (_trans != -1337) translation = _trans;
-
+		alphatrans = _alphatrans;
 	}
 
 	virtual void CopyPixelDataRGB(int originx, int originy, const BYTE *patch, int srcwidth, 

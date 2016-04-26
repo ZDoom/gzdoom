@@ -297,6 +297,7 @@ void FRenderState::ApplyFixedFunction()
 	col.vec[3] *= (mObjectColor.a / 255.f);
 	glColor4fv(col.vec);
 
+	glEnable(GL_BLEND);
 	if (mAlphaThreshold > 0)
 	{
 		glEnable(GL_ALPHA_TEST);

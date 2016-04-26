@@ -77,7 +77,7 @@ public:
 	FGLTexture(FTexture * tx, bool expandpatches);
 	~FGLTexture();
 
-	unsigned char * CreateTexBuffer(int translation, int & w, int & h, FTexture *hirescheck, bool createexpanded = true);
+	unsigned char * CreateTexBuffer(int translation, int & w, int & h, FTexture *hirescheck, bool createexpanded = true, bool alphatrans = false);
 
 	void Clean(bool all);
 	int Dump(int i);

@@ -747,8 +747,12 @@ typedef const GLubyte * (APIENTRY *PFNGLGETSTRINGIPROC)(GLenum, GLuint);
 
 bool Win32GLVideo::checkCoreUsability()
 {
-	// if we explicitly want to disable 4.x features this must fail.
-	if (Args->CheckParm("-gl3")) return false;
+	const char *version = Args->CheckValue("-glversion");
+	if (version != NULL)
+	{
+		if (strtod(version, NULL) < 4.0) return false;
+	}
+	if (Args->CheckParm("-noshader")) return false;
 
 	// GL 4.4 implies GL_ARB_buffer_storage
 	if (strcmp((char*)glGetString(GL_VERSION), "4.4") >= 0) return true;

@@ -285,7 +285,7 @@ void FRenderState::Apply()
 	}
 	else
 	{
-		//ApplyFixedFunction();
+		ApplyFixedFunction();
 	}
 }
 

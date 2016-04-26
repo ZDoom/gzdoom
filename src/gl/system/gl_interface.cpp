@@ -43,6 +43,7 @@
 #include "version.h"
 #include "i_system.h"
 #include "v_text.h"
+#include "r_data/r_translate.h"
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_cvars.h"
 
@@ -279,6 +280,16 @@ void gl_PrintStartupLog()
 	glGetIntegerv(GL_MAX_VERTEX_SHADER_STORAGE_BLOCKS, &v);
 	Printf("Max. vertex shader storage blocks: %d\n", v);
 
+	// For shader-less, the special alphatexture translation must be changed to actually set the alpha, because it won't get translated by a shader.
+	if (gl.glslversion == 0)
+	{
+		FRemapTable *remap = translationtables[TRANSLATION_Standard][8];
+		for (int i = 0; i < 256; i++)
+		{
+			remap->Remap[i] = i;
+			remap->Palette[i] = PalEntry(i, 255, 255);
+		}
+	}
 
 }
 

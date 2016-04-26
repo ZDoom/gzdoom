@@ -59,7 +59,6 @@ class FRenderState
 	int mSrcBlend, mDstBlend;
 	float mAlphaThreshold;
 	int mBlendEquation;
-	bool mAlphaTest;
 	bool m2D;
 	bool mModelMatrixEnabled;
 	bool mTextureMatrixEnabled;
@@ -110,9 +109,10 @@ public:
 		// textures without their own palette are a special case for use as an alpha texture:
 		// They use the color index directly as an alpha value instead of using the palette's red.
 		// To handle this case, we need to set a special translation for such textures.
+		// Without shaders this translation must be applied to any texture.
 		if (alphatexture)
 		{
-			if (mat->tex->UseBasePalette()) translation = TRANSLATION(TRANSLATION_Standard, 8);
+			if (mat->tex->UseBasePalette() || gl.glslversion == 0) translation = TRANSLATION(TRANSLATION_Standard, 8);
 		}
 		mEffectState = overrideshader >= 0? overrideshader : mat->mShaderIndex;
 		mShaderTimer = mat->tex->gl_info.shaderspeed;
@@ -394,6 +394,10 @@ public:
 	{
 		mInterpolationFactor = fac;
 	}
+
+	// Backwards compatibility crap follows
+	void ApplyFixedFunction();
+
 };
 
 extern FRenderState gl_RenderState;

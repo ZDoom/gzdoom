@@ -1027,6 +1027,7 @@ set( FASTMATH_SOURCES
 	sound/sndfile_decoder.cpp
 	sound/music_pseudo_mididevice.cpp
 	wildmidi/wildmidi_lib.cpp
+	gl/compatibility/gl_20.cpp
 	gl/data/gl_data.cpp
 	gl/data/gl_portaldata.cpp
 	gl/data/gl_setup.cpp

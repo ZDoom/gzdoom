@@ -170,7 +170,7 @@ vec4 getLightColor(float fogdist, float fogfactor)
 		float newlightlevel = 1.0 - R_DoomLightingEquation(uLightLevel, gl_FragCoord.z);
 		color.rgb *= newlightlevel;
 	}
-	else if (uFogEnabled > 0.0)
+	else if (uFogEnabled > 0)
 	{
 		// brightening around the player for light mode 2
 		if (fogdist < uLightDist)

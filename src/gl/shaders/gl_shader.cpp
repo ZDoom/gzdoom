@@ -61,6 +61,44 @@
 
 //==========================================================================
 //
+// patch the shader source to work with 
+// GLSL 1.2 keywords and identifiers
+//
+//==========================================================================
+
+void PatchCommon(FString &code)
+{
+	code.Substitute("precision highp int;", "");
+	code.Substitute("precision highp float;", "");
+}
+
+void PatchVertShader(FString &code)
+{
+	PatchCommon(code);
+	code.Substitute("out vec", "varying vec");
+	code.Substitute("gl_ClipDistance", "//");
+}
+
+void PatchFragShader(FString &code)
+{
+	PatchCommon(code);
+	code.Substitute("out vec4 FragColor;", "");
+	code.Substitute("FragColor", "gl_FragColor");
+	code.Substitute("in vec", "varying vec");
+	// this patches the switch statement to if's.
+	code.Substitute("break;", "");
+	code.Substitute("switch (uFixedColormap)", "int i = uFixedColormap;");
+	code.Substitute("case 0:", "if (i == 0)");
+	code.Substitute("case 1:", "else if (i == 1)");
+	code.Substitute("case 2:", "else if (i == 2)");
+	code.Substitute("case 3:", "else if (i == 3)");
+	code.Substitute("case 4:", "else if (i == 4)");
+	code.Substitute("case 5:", "else if (i == 5)");
+	code.Substitute("texture(", "texture2D(");
+}
+
+//==========================================================================
+//
 //
 //
 //==========================================================================
@@ -94,6 +132,10 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 		if (gl.compatibility >= CMPT_GL3)
 		{
 			vp_comb = "#version 130\n";
+		}
+		else
+		{
+			vp_comb = "#define GLSL12_COMPATIBLE\n";
 		}
 	}
 	else
@@ -157,6 +199,12 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 			// Proc_prog_lump is not a lump name but the source itself (from generated shaders)
 			fp_comb << proc_prog_lump + 1;
 		}
+	}
+
+	if (gl.compatibility < CMPT_GL3)
+	{
+		PatchVertShader(vp_comb);
+		PatchFragShader(fp_comb);
 	}
 
 	hVertProg = glCreateShader(GL_VERTEX_SHADER);
@@ -391,7 +439,7 @@ static const FEffectShader effectshaders[]=
 
 FShaderManager::FShaderManager()
 {
-	CompileShaders();
+	if (gl.compatibility > CMPT_GL2) CompileShaders();
 }
 
 //==========================================================================
@@ -402,7 +450,7 @@ FShaderManager::FShaderManager()
 
 FShaderManager::~FShaderManager()
 {
-	Clean();
+	if (gl.compatibility > CMPT_GL2) Clean();
 }
 
 //==========================================================================
@@ -544,25 +592,35 @@ EXTERN_CVAR(Int, gl_fuzztype)
 
 void FShaderManager::ApplyMatrices(VSMatrix *proj, VSMatrix *view)
 {
-	for (int i = 0; i < 4; i++)
+	if (gl.compatibility == CMPT_GL2)
 	{
-		mTextureEffects[i]->ApplyMatrices(proj, view);
-		mTextureEffectsNAT[i]->ApplyMatrices(proj, view);
+		glMatrixMode(GL_PROJECTION);
+		glLoadMatrixf(proj->get());
+		glMatrixMode(GL_MODELVIEW);
+		glLoadMatrixf(view->get());
 	}
-	mTextureEffects[4]->ApplyMatrices(proj, view);
-	if (gl_fuzztype != 0)
+	else
 	{
-		mTextureEffects[4+gl_fuzztype]->ApplyMatrices(proj, view);
+		for (int i = 0; i < 4; i++)
+		{
+			mTextureEffects[i]->ApplyMatrices(proj, view);
+			mTextureEffectsNAT[i]->ApplyMatrices(proj, view);
+		}
+		mTextureEffects[4]->ApplyMatrices(proj, view);
+		if (gl_fuzztype != 0)
+		{
+			mTextureEffects[4 + gl_fuzztype]->ApplyMatrices(proj, view);
+		}
+		for (unsigned i = 12; i < mTextureEffects.Size(); i++)
+		{
+			mTextureEffects[i]->ApplyMatrices(proj, view);
+		}
+		for (int i = 0; i < MAX_EFFECTS; i++)
+		{
+			mEffectShaders[i]->ApplyMatrices(proj, view);
+		}
+		if (mActiveShader != NULL) mActiveShader->Bind();
 	}
-	for (unsigned i = 12; i < mTextureEffects.Size(); i++)
-	{
-		mTextureEffects[i]->ApplyMatrices(proj, view);
-	}
-	for (int i = 0; i < MAX_EFFECTS; i++)
-	{
-		mEffectShaders[i]->ApplyMatrices(proj, view);
-	}
-	if (mActiveShader != NULL) mActiveShader->Bind();
 }
 
 //==========================================================================

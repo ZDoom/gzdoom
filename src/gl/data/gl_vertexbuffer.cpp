@@ -138,10 +138,21 @@ void FFlatVertexBuffer::ImmRenderBuffer(unsigned int primtype, unsigned int offs
 	// this will only get called if we can't acquire a persistently mapped buffer.
 #ifndef CORE_PROFILE
 	glBegin(primtype);
-	for (unsigned int i = 0; i < count; i++)
+	if (gl.compatibility > CMPT_GL2)
 	{
-		glVertexAttrib2fv(VATTR_TEXCOORD, &map[offset + i].u);
-		glVertexAttrib3fv(VATTR_VERTEX, &map[offset + i].x);
+		for (unsigned int i = 0; i < count; i++)
+		{
+			glVertexAttrib2fv(VATTR_TEXCOORD, &map[offset + i].u);
+			glVertexAttrib3fv(VATTR_VERTEX, &map[offset + i].x);
+		}
+	}
+	else	// no shader means no vertex attributes, so use the old stuff instead.
+	{
+		for (unsigned int i = 0; i < count; i++)
+		{
+			glTexCoord2fv(&map[offset + i].u);
+			glVertex3fv(&map[offset + i].x);
+		}
 	}
 	glEnd();
 #endif

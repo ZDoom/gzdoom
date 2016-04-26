@@ -782,7 +782,6 @@ bool Win32GLVideo::InitHardware (HWND Window, int multisample)
 
 	if (!SetupPixelFormat(multisample))
 	{
-		I_Error ("R_OPENGL: Unabl...\n");
 		return false;
 	}
 

@@ -263,6 +263,10 @@ unsigned char *gl_CreateUpsampledTextureBuffer ( const FTexture *inputTexture, u
 	if ( inputTexture->bHasCanvas )
 		return inputBuffer;
 
+	// [BB] Don't upsample non-shader handled warped textures. Needs too much memory and time
+	if (gl.compatibility == CMPT_GL2 && inputTexture->bWarped)
+		return inputBuffer;
+
 	// already scaled?
 	if (inputTexture->Scale.X >= 2 && inputTexture->Scale.Y >= 2)
 		return inputBuffer;

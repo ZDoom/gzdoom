@@ -152,7 +152,6 @@ void gl_LoadExtensions()
 	// Buffer lighting is only feasible with GLSL 1.3 and higher, even if 1.2 supports the extension.
 	if (gl.version > 3.0f && (gl.version >= 3.3f || CheckExtension("GL_ARB_uniform_buffer_object")))
 	{
-		gl.flags |= RFL_SAMPLER_OBJECTS;
 		gl.lightmethod = LM_DEFERRED;
 	}
 
@@ -161,9 +160,10 @@ void gl_LoadExtensions()
 
 	if (Args->CheckParm("-noshader"))
 	{
+		gl.version = 2.1f;
 		gl.compatibility = CMPT_GL2;	// force the low end path
 	}
-	if (gl.version < 3.0f)
+	else if (gl.version < 3.0f)
 	{
 		if (CheckExtension("GL_NV_GPU_shader4") || CheckExtension("GL_EXT_GPU_shader4")) gl.compatibility = CMPT_GL2_SHADER;	// for pre-3.0 drivers that support capable hardware. Needed for Apple.
 		else gl.compatibility = CMPT_GL2;
@@ -172,6 +172,7 @@ void gl_LoadExtensions()
 	{
 		if (strstr(gl.vendorstring, "ATI Tech")) 
 		{
+			gl.version = 2.1f;
 			gl.compatibility = CMPT_GL2_SHADER;	// most of these drivers are irreperably broken with GLSL 1.3 and higher.
 			gl.lightmethod = LM_SOFTWARE;		// do not use uniform buffers with the fallback shader, it may cause problems.
 		}
@@ -198,6 +199,7 @@ void gl_LoadExtensions()
 		}
 		else
 		{
+			gl.version = 3.3f;
 			gl.compatibility = CMPT_GL3;
 		}
 	}

@@ -110,20 +110,29 @@ FFlatVertexBuffer::~FFlatVertexBuffer()
 void FFlatVertexBuffer::BindVBO()
 {
 	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
-	if (vbo_id != 0)	// set this up only if there is an actual buffer.
+	if (gl.glslversion > 0)
 	{
-		glVertexAttribPointer(VATTR_VERTEX, 3, GL_FLOAT, false, sizeof(FFlatVertex), &VTO->x);
-		glVertexAttribPointer(VATTR_TEXCOORD, 2, GL_FLOAT, false, sizeof(FFlatVertex), &VTO->u);
-		glEnableVertexAttribArray(VATTR_VERTEX);
-		glEnableVertexAttribArray(VATTR_TEXCOORD);
+		if (vbo_id != 0)	// set this up only if there is an actual buffer.
+		{
+			glVertexAttribPointer(VATTR_VERTEX, 3, GL_FLOAT, false, sizeof(FFlatVertex), &VTO->x);
+			glVertexAttribPointer(VATTR_TEXCOORD, 2, GL_FLOAT, false, sizeof(FFlatVertex), &VTO->u);
+			glEnableVertexAttribArray(VATTR_VERTEX);
+			glEnableVertexAttribArray(VATTR_TEXCOORD);
+		}
+		else
+		{
+			glDisableVertexAttribArray(VATTR_VERTEX);
+			glDisableVertexAttribArray(VATTR_TEXCOORD);
+		}
+		glDisableVertexAttribArray(VATTR_COLOR);
+		glDisableVertexAttribArray(VATTR_VERTEX2);
 	}
 	else
 	{
-		glDisableVertexAttribArray(VATTR_VERTEX);
-		glDisableVertexAttribArray(VATTR_TEXCOORD);
+		glDisableClientState(GL_VERTEX_ARRAY);
+		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+		glDisableClientState(GL_COLOR_ARRAY);
 	}
-	glDisableVertexAttribArray(VATTR_COLOR);
-	glDisableVertexAttribArray(VATTR_VERTEX2);
 }
 
 //==========================================================================

@@ -316,9 +316,12 @@ void FRenderState::ApplyMatrices()
 
 void FRenderState::ApplyLightIndex(int index)
 {
-	if (index > -1 && GLRenderer->mLights->GetBufferType() == GL_UNIFORM_BUFFER)
+	if (gl.lightmethod != LM_SOFTWARE)
 	{
-		index = GLRenderer->mLights->BindUBO(index);
+		if (index > -1 && GLRenderer->mLights->GetBufferType() == GL_UNIFORM_BUFFER)
+		{
+			index = GLRenderer->mLights->BindUBO(index);
+		}
+		activeShader->muLightIndex.Set(index);
 	}
-	activeShader->muLightIndex.Set(index);
 }

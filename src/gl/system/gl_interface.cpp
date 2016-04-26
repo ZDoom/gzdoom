@@ -162,6 +162,7 @@ void gl_LoadExtensions()
 	{
 		gl.version = 2.11f;
 		gl.glslversion = 0;
+		gl.lightmethod = LM_SOFTWARE;
 	}
 	else if (gl.version < 3.0f)
 	{

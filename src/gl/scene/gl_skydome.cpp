@@ -78,8 +78,14 @@ extern int skyfog;
 FSkyVertexBuffer::FSkyVertexBuffer()
 {
 	CreateDome();
+}
 
-	glBindVertexArray(vao_id);
+FSkyVertexBuffer::~FSkyVertexBuffer()
+{
+}
+
+void FSkyVertexBuffer::BindVBO()
+{
 	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
 	glVertexAttribPointer(VATTR_VERTEX, 3, GL_FLOAT, false, sizeof(FSkyVertex), &VSO->x);
 	glVertexAttribPointer(VATTR_TEXCOORD, 2, GL_FLOAT, false, sizeof(FSkyVertex), &VSO->u);
@@ -87,12 +93,7 @@ FSkyVertexBuffer::FSkyVertexBuffer()
 	glEnableVertexAttribArray(VATTR_VERTEX);
 	glEnableVertexAttribArray(VATTR_TEXCOORD);
 	glEnableVertexAttribArray(VATTR_COLOR);
-	glBindVertexArray(0);
-
-}
-
-FSkyVertexBuffer::~FSkyVertexBuffer()
-{
+	glDisableVertexAttribArray(VATTR_VERTEX2);
 }
 
 //-----------------------------------------------------------------------------

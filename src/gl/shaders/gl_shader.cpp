@@ -129,7 +129,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 
 	if (gl.lightmethod == LM_SOFTWARE)
 	{
-		if (gl.compatibility >= CMPT_GL3)
+		if (gl.glslversion >= 1.3)
 		{
 			vp_comb = "#version 130\n";
 		}
@@ -201,7 +201,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 		}
 	}
 
-	if (gl.compatibility < CMPT_GL3)
+	if (gl.glslversion < 1.3)
 	{
 		PatchVertShader(vp_comb);
 		PatchFragShader(fp_comb);
@@ -439,7 +439,7 @@ static const FEffectShader effectshaders[]=
 
 FShaderManager::FShaderManager()
 {
-	if (gl.compatibility > CMPT_GL2) CompileShaders();
+	if (gl.glslversion > 0) CompileShaders();
 }
 
 //==========================================================================
@@ -450,7 +450,7 @@ FShaderManager::FShaderManager()
 
 FShaderManager::~FShaderManager()
 {
-	if (gl.compatibility > CMPT_GL2) Clean();
+	if (gl.glslversion > 0) Clean();
 }
 
 //==========================================================================
@@ -592,7 +592,7 @@ EXTERN_CVAR(Int, gl_fuzztype)
 
 void FShaderManager::ApplyMatrices(VSMatrix *proj, VSMatrix *view)
 {
-	if (gl.compatibility == CMPT_GL2)
+	if (gl.glslversion == 0)
 	{
 		glMatrixMode(GL_PROJECTION);
 		glLoadMatrixf(proj->get());

@@ -279,7 +279,7 @@ void FRenderState::Apply()
 		else mVertexBuffer->BindVBO();
 		mCurrentVertexBuffer = mVertexBuffer;
 	}
-	if (gl.compatibility > CMPT_GL2) 
+	if (gl.glslversion > 0) 
 	{
 		ApplyShader();
 	}

@@ -103,6 +103,14 @@ void gl_FlushModels();
 
 void FGLRenderer::Initialize()
 {
+	// Only needed for the core profile, because someone decided it was a good idea to remove the default VAO.
+	if (gl.version >= 4.0)
+	{
+		glGenVertexArrays(1, &mVAOID);
+		glBindVertexArray(mVAOID);
+	}
+	else mVAOID = 0;
+
 	glpart2 = FTexture::CreateTexture(Wads.GetNumForFullName("glstuff/glpart2.png"), FTexture::TEX_MiscPatch);
 	glpart = FTexture::CreateTexture(Wads.GetNumForFullName("glstuff/glpart.png"), FTexture::TEX_MiscPatch);
 	mirrortexture = FTexture::CreateTexture(Wads.GetNumForFullName("glstuff/mirror.png"), FTexture::TEX_MiscPatch);
@@ -113,6 +121,7 @@ void FGLRenderer::Initialize()
 	else mLights = NULL;
 	gl_RenderState.SetVertexBuffer(mVBO);
 	mFBID = 0;
+
 	SetupLevel();
 	mShaderManager = new FShaderManager;
 	mSamplerManager = new FSamplerManager;
@@ -133,6 +142,12 @@ FGLRenderer::~FGLRenderer()
 	if (glpart) delete glpart;
 	if (mirrortexture) delete mirrortexture;
 	if (mFBID != 0) glDeleteFramebuffers(1, &mFBID);
+	if (mVAOID != 0)
+	{
+		glBindVertexArray(0);
+		glDeleteVertexArrays(1, &mVAOID);
+	}
+
 }
 
 //===========================================================================

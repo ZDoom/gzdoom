@@ -158,25 +158,24 @@ void gl_LoadExtensions()
 	if (CheckExtension("GL_ARB_texture_compression")) gl.flags |= RFL_TEXTURE_COMPRESSION;
 	if (CheckExtension("GL_EXT_texture_compression_s3tc")) gl.flags |= RFL_TEXTURE_COMPRESSION_S3TC;
 
-	if (Args->CheckParm("-noshader"))
+	if (Args->CheckParm("-noshader") || gl.glslversion < 1.2f)
 	{
-		gl.version = 2.1f;
-		gl.compatibility = CMPT_GL2;	// force the low end path
+		gl.version = 2.11f;
+		gl.glslversion = 0;
 	}
 	else if (gl.version < 3.0f)
 	{
-		if (CheckExtension("GL_NV_GPU_shader4") || CheckExtension("GL_EXT_GPU_shader4")) gl.compatibility = CMPT_GL2_SHADER;	// for pre-3.0 drivers that support capable hardware. Needed for Apple.
-		else gl.compatibility = CMPT_GL2;
+		if (CheckExtension("GL_NV_GPU_shader4") || CheckExtension("GL_EXT_GPU_shader4")) gl.glslversion = 1.21f;	// for pre-3.0 drivers that support capable hardware. Needed for Apple.
+		else gl.glslversion = 0;
 	}
 	else if (gl.version < 4.f)
 	{
 		if (strstr(gl.vendorstring, "ATI Tech")) 
 		{
-			gl.version = 2.1f;
-			gl.compatibility = CMPT_GL2_SHADER;	// most of these drivers are irreperably broken with GLSL 1.3 and higher.
+			gl.version = 2.11f;
+			gl.glslversion = 1.21f;
 			gl.lightmethod = LM_SOFTWARE;		// do not use uniform buffers with the fallback shader, it may cause problems.
 		}
-		else gl.compatibility = CMPT_GL3;
 	}
 	else
 	{
@@ -194,13 +193,11 @@ void gl_LoadExtensions()
 				}
 			}
 			gl.flags |= RFL_BUFFER_STORAGE;
-			gl.compatibility = CMPT_GL4;
 			gl.lightmethod = LM_DIRECT;
 		}
 		else
 		{
 			gl.version = 3.3f;
-			gl.compatibility = CMPT_GL3;
 		}
 	}
 

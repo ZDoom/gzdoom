@@ -69,6 +69,7 @@ public:
 	FSamplerManager *mSamplerManager;
 	int gl_spriteindex;
 	unsigned int mFBID;
+	unsigned int mVAOID;
 
 	FTexture *glpart2;
 	FTexture *glpart;

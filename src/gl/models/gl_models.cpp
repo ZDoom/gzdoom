@@ -117,20 +117,27 @@ void gl_FlushModels()
 
 FModelVertexBuffer::FModelVertexBuffer(bool needindex)
 {
-	glBindVertexArray(vao_id);
-
 	ibo_id = 0;
 	if (needindex)
 	{
 		glGenBuffers(1, &ibo_id);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_id);
 	}
+}
 
+//===========================================================================
+//
+//
+//
+//===========================================================================
+
+void FModelVertexBuffer::BindVBO()
+{
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_id);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
 	glEnableVertexAttribArray(VATTR_VERTEX);
 	glEnableVertexAttribArray(VATTR_TEXCOORD);
 	glEnableVertexAttribArray(VATTR_VERTEX2);
-	glBindVertexArray(0);
+	glDisableVertexAttribArray(VATTR_COLOR);
 }
 
 //===========================================================================

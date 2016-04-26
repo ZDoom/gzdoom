@@ -811,7 +811,7 @@ bool Win32GLVideo::InitHardware (HWND Window, int multisample)
 
 		if (m_hRC == NULL && prof == WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB)
 		{
-			I_Error ("R_OPENGL: Unable to create an OpenGL 3.x render context.\n");
+			I_Error ("R_OPENGL: Unable to create an OpenGL render context.\n");
 			return false;
 		}
 
@@ -832,7 +832,7 @@ bool Win32GLVideo::InitHardware (HWND Window, int multisample)
 		}
 	}
 	// We get here if the driver doesn't support the modern context creation API which always means an old driver.
-	I_Error ("R_OPENGL: Unable to create an OpenGL 3.x render context.\n");
+	I_Error ("R_OPENGL: Unable to create an OpenGL render context.\n");
 	return false;
 }
 

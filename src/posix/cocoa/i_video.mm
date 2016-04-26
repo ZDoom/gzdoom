@@ -31,10 +31,11 @@
  **
  */
 
+#include "gl/system/gl_load.h"
+
 #include "i_common.h"
 
 #import <Carbon/Carbon.h>
-#import <OpenGL/gl.h>
 
 // Avoid collision between DObject class and Objective-C
 #define Class ObjectClass
@@ -45,6 +46,7 @@
 #include "hardware.h"
 #include "i_system.h"
 #include "m_argv.h"
+#include "m_png.h"
 #include "r_renderer.h"
 #include "r_swrenderer.h"
 #include "st_console.h"
@@ -55,6 +57,11 @@
 #include "v_text.h"
 #include "v_video.h"
 #include "version.h"
+
+#include "gl/renderer/gl_renderer.h"
+#include "gl/system/gl_framebuffer.h"
+#include "gl/system/gl_interface.h"
+#include "gl/utility/gl_clock.h"
 
 #undef Class
 
@@ -110,6 +117,41 @@ CUSTOM_CVAR(Bool, vid_autoswitch, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_
 {
 	Printf("You must restart " GAMENAME " to apply graphics switching mode\n");
 }
+
+static int s_currentRenderer;
+
+CUSTOM_CVAR(Int, vid_renderer, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	// 0: Software renderer
+	// 1: OpenGL renderer
+
+	if (self != s_currentRenderer)
+	{
+		switch (self)
+		{
+			case 0:
+				Printf("Switching to software renderer...\n");
+				break;
+			case 1:
+				Printf("Switching to OpenGL renderer...\n");
+				break;
+			default:
+				Printf("Unknown renderer (%d). Falling back to software renderer...\n",
+					static_cast<int>(vid_renderer));
+				self = 0;
+				break;
+		}
+
+		Printf("You must restart " GAMENAME " to switch the renderer\n");
+	}
+}
+
+CUSTOM_CVAR(Int, gl_vid_multisample, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	Printf("This won't take effect until " GAMENAME " is restarted.\n");
+}
+
+EXTERN_CVAR(Bool, gl_smooth_rendered)
 
 
 RenderBufferOptions rbOpts;
@@ -187,7 +229,6 @@ namespace
 @end
 
 
-
 // ---------------------------------------------------------------------------
 
 
@@ -233,6 +274,9 @@ private:
 
 	static CocoaVideo* GetInstance();
 };
+
+
+// ---------------------------------------------------------------------------
 
 
 class CocoaFrameBuffer : public DFrameBuffer
@@ -281,6 +325,83 @@ private:
 
 	void UpdateColors();
 };
+
+
+// ---------------------------------------------------------------------------
+
+
+class NonCopyable
+{
+protected:
+	NonCopyable() { }
+	~NonCopyable() { }
+
+private:
+	NonCopyable(const NonCopyable&);
+	const NonCopyable& operator=(const NonCopyable&);
+};
+
+
+// ---------------------------------------------------------------------------
+
+
+class RenderTarget : private NonCopyable
+{
+public:
+	RenderTarget(const GLsizei width, const GLsizei height);
+	~RenderTarget();
+
+	void Bind();
+	void Unbind();
+
+	FHardwareTexture& GetColorTexture()
+	{
+		return m_texture;
+	}
+
+private:
+	GLuint m_ID;
+	GLuint m_oldID;
+
+	FHardwareTexture m_texture;
+
+	static GLuint GetBoundID();
+
+}; // class RenderTarget
+
+
+// ---------------------------------------------------------------------------
+
+
+struct CapabilityChecker
+{
+	CapabilityChecker();
+};
+
+
+// ---------------------------------------------------------------------------
+
+
+class CocoaOpenGLFrameBuffer : public OpenGLFrameBuffer, private CapabilityChecker, private NonCopyable
+{
+	typedef OpenGLFrameBuffer Super;
+
+public:
+	CocoaOpenGLFrameBuffer(void* hMonitor, int width, int height, int bits, int refreshHz, bool fullscreen);
+
+	virtual bool Lock(bool buffered);
+	virtual void Update();
+
+	virtual void GetScreenshotBuffer(const BYTE*& buffer, int& pitch, ESSType& color_type);
+
+	virtual void SetSmoothPicture(bool smooth);
+
+private:
+	RenderTarget m_renderTarget;
+
+	void DrawRenderTarget();
+
+}; // class CocoaOpenGLFrameBuffer
 
 
 // ---------------------------------------------------------------------------
@@ -542,7 +663,17 @@ DFrameBuffer* CocoaVideo::CreateFrameBuffer(const int width, const int height, c
 		delete old;
 	}
 
-	CocoaFrameBuffer* fb = new CocoaFrameBuffer(width, height, fullscreen);
+	DFrameBuffer* fb = NULL;
+
+	if (1 == s_currentRenderer)
+ 	{
+		fb = new CocoaOpenGLFrameBuffer(NULL, width, height, 32, 60, fullscreen);
+	}
+	else
+	{
+		fb = new CocoaFrameBuffer(width, height, fullscreen);
+	}
+
 	fb->SetFlash(flashColor, flashAmount);
 
 	SetMode(width, height, fullscreen, vid_hidpi);
@@ -762,6 +893,9 @@ CocoaVideo* CocoaVideo::GetInstance()
 }
 
 
+// ---------------------------------------------------------------------------
+
+
 CocoaFrameBuffer::CocoaFrameBuffer(int width, int height, bool fullscreen)
 : DFrameBuffer(width, height)
 , m_needPaletteUpdate(false)
@@ -772,6 +906,14 @@ CocoaFrameBuffer::CocoaFrameBuffer(int width, int height, bool fullscreen)
 , m_pixelBuffer(new uint8_t[width * height * BYTES_PER_PIXEL])
 , m_texture(0)
 {
+	static bool isOpenGLInitialized;
+
+	if (!isOpenGLInitialized)
+	{
+		ogl_LoadFunctions();
+		isOpenGLInitialized = true;
+	}
+
 	glEnable(GL_TEXTURE_RECTANGLE_ARB);
 
 	glGenTextures(1, &m_texture);
@@ -1011,6 +1153,423 @@ void CocoaFrameBuffer::Flip()
 }
 
 
+// ---------------------------------------------------------------------------
+
+
+static const uint32_t GAMMA_TABLE_ALPHA = 0xFF000000;
+
+
+SDLGLFB::SDLGLFB(void*, const int width, const int height, int, int, const bool fullscreen)
+: DFrameBuffer(width, height)
+, m_lock(-1)
+, m_isUpdatePending(false)
+, m_supportsGamma(true)
+, m_gammaTexture(GAMMA_TABLE_SIZE, 1, false, false, true, true)
+{
+}
+
+SDLGLFB::SDLGLFB()
+: m_gammaTexture(0, 0, false, false, false, false)
+{
+}
+
+SDLGLFB::~SDLGLFB()
+{
+}
+
+
+bool SDLGLFB::Lock(bool buffered)
+{
+	m_lock++;
+
+	Buffer = MemBuffer;
+
+	return true;
+}
+
+void SDLGLFB::Unlock()
+{
+	if (m_isUpdatePending && 1 == m_lock)
+	{
+		Update();
+	}
+	else if (--m_lock <= 0)
+	{
+		m_lock = 0;
+	}
+}
+
+bool SDLGLFB::IsLocked()
+{
+	return m_lock > 0;
+}
+
+
+bool SDLGLFB::IsFullscreen()
+{
+	return CocoaVideo::IsFullscreen();
+}
+
+void SDLGLFB::SetVSync(bool vsync)
+{
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1050
+	const long value = vsync ? 1 : 0;
+#else // 10.5 or newer
+	const GLint value = vsync ? 1 : 0;
+#endif // prior to 10.5
+
+	[[NSOpenGLContext currentContext] setValues:&value
+								   forParameter:NSOpenGLCPSwapInterval];
+}
+
+
+void SDLGLFB::InitializeState()
+{
+}
+
+bool SDLGLFB::CanUpdate()
+{
+	if (m_lock != 1)
+	{
+		if (m_lock > 0)
+		{
+			m_isUpdatePending = true;
+			--m_lock;
+		}
+
+		return false;
+	}
+
+	return true;
+}
+
+void SDLGLFB::SwapBuffers()
+{
+	[[NSOpenGLContext currentContext] flushBuffer];
+}
+
+void SDLGLFB::SetGammaTable(WORD* table)
+{
+	const WORD* const red   = &table[  0];
+	const WORD* const green = &table[256];
+	const WORD* const blue  = &table[512];
+
+	for (size_t i = 0; i < GAMMA_TABLE_SIZE; ++i)
+	{
+		// Convert 16 bits colors to 8 bits by dividing on 256
+
+		const uint32_t r =   red[i] >> 8;
+		const uint32_t g = green[i] >> 8;
+		const uint32_t b =  blue[i] >> 8;
+
+		m_gammaTable[i] = GAMMA_TABLE_ALPHA + (b << 16) + (g << 8) + r;
+	}
+
+	m_gammaTexture.CreateTexture(
+		reinterpret_cast<unsigned char*>(m_gammaTable),
+		GAMMA_TABLE_SIZE, 1, false, 1, 0);
+}
+
+
+// ---------------------------------------------------------------------------
+
+
+void BoundTextureSetFilter(const GLenum target, const GLint filter)
+{
+	glTexParameteri(target, GL_TEXTURE_MIN_FILTER, filter);
+	glTexParameteri(target, GL_TEXTURE_MAG_FILTER, filter);
+
+	glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+}
+
+void BoundTextureDraw2D(const GLsizei width, const GLsizei height)
+{
+	const bool flipX = width  < 0;
+	const bool flipY = height < 0;
+
+	const float u0 = flipX ? 1.0f : 0.0f;
+	const float v0 = flipY ? 1.0f : 0.0f;
+	const float u1 = flipX ? 0.0f : 1.0f;
+	const float v1 = flipY ? 0.0f : 1.0f;
+
+	const float x1 = 0.0f;
+	const float y1 = 0.0f;
+	const float x2 = abs(width );
+	const float y2 = abs(height);
+
+	glDisable(GL_BLEND);
+	glDisable(GL_ALPHA_TEST);
+
+	glBegin(GL_QUADS);
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	glTexCoord2f(u0, v1);
+	glVertex2f(x1, y1);
+	glTexCoord2f(u1, v1);
+	glVertex2f(x2, y1);
+	glTexCoord2f(u1, v0);
+	glVertex2f(x2, y2);
+	glTexCoord2f(u0, v0);
+	glVertex2f(x1, y2);
+	glEnd();
+
+	glEnable(GL_ALPHA_TEST);
+	glEnable(GL_BLEND);
+}
+
+bool BoundTextureSaveAsPNG(const GLenum target, const char* const path)
+{
+	if (NULL == path)
+	{
+		return false;
+	}
+
+	GLint width  = 0;
+	GLint height = 0;
+
+	glGetTexLevelParameteriv(target, 0, GL_TEXTURE_WIDTH,  &width );
+	glGetTexLevelParameteriv(target, 0, GL_TEXTURE_HEIGHT, &height);
+
+	if (0 == width || 0 == height)
+	{
+		Printf("BoundTextureSaveAsPNG: invalid texture size %ix%i\n", width, height);
+
+		return false;
+	}
+
+	static const int BYTES_PER_PIXEL = 4;
+
+	const int imageSize = width * height * BYTES_PER_PIXEL;
+	unsigned char* imageBuffer = static_cast<unsigned char*>(malloc(imageSize));
+
+	if (NULL == imageBuffer)
+	{
+		Printf("BoundTextureSaveAsPNG: cannot allocate %i bytes\n", imageSize);
+
+		return false;
+	}
+
+	glGetTexImage(target, 0, GL_BGRA, GL_UNSIGNED_BYTE, imageBuffer);
+
+	const int lineSize = width * BYTES_PER_PIXEL;
+	unsigned char lineBuffer[lineSize];
+
+	for (GLint line = 0; line < height / 2; ++line)
+	{
+		void* frontLinePtr = &imageBuffer[line                * lineSize];
+		void*  backLinePtr = &imageBuffer[(height - line - 1) * lineSize];
+
+		memcpy(  lineBuffer, frontLinePtr, lineSize);
+		memcpy(frontLinePtr,  backLinePtr, lineSize);
+		memcpy( backLinePtr,   lineBuffer, lineSize);
+	}
+
+	FILE* file = fopen(path, "w");
+
+	if (NULL == file)
+	{
+		Printf("BoundTextureSaveAsPNG: cannot open file %s\n", path);
+
+		free(imageBuffer);
+
+		return false;
+	}
+
+	const bool result =
+		   M_CreatePNG(file, &imageBuffer[0], NULL, SS_BGRA, width, height, width * BYTES_PER_PIXEL)
+		&& M_FinishPNG(file);
+
+	fclose(file);
+
+	free(imageBuffer);
+
+	return result;
+}
+
+
+// ---------------------------------------------------------------------------
+
+
+RenderTarget::RenderTarget(const GLsizei width, const GLsizei height)
+: m_ID(0)
+, m_oldID(0)
+, m_texture(width, height, false, false, true, true)
+{
+	glGenFramebuffersEXT(1, &m_ID);
+
+	Bind();
+	m_texture.CreateTexture(NULL, width, height, false, 0, 0);
+	m_texture.BindToFrameBuffer();
+	Unbind();
+}
+
+RenderTarget::~RenderTarget()
+{
+	glDeleteFramebuffersEXT(1, &m_ID);
+}
+
+
+void RenderTarget::Bind()
+{
+	const GLuint boundID = GetBoundID();
+
+	if (m_ID != boundID)
+	{
+		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, m_ID);
+		m_oldID = boundID;
+	}
+}
+
+void RenderTarget::Unbind()
+{
+	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, m_oldID);
+	m_oldID = 0;
+}
+
+
+GLuint RenderTarget::GetBoundID()
+{
+	GLint result;
+	glGetIntegerv(GL_FRAMEBUFFER_BINDING_EXT, &result);
+
+	return static_cast<GLuint>(result);
+}
+
+
+// ---------------------------------------------------------------------------
+
+
+CapabilityChecker::CapabilityChecker()
+{
+	if (!(gl.flags & RFL_FRAMEBUFFER))
+	{
+		I_FatalError(
+			"The graphics hardware in your system does not support Frame Buffer Object (FBO).\n"
+			"It is required to run this version of " GAMENAME ".\n");
+	}
+}
+
+
+// ---------------------------------------------------------------------------
+
+
+CocoaOpenGLFrameBuffer::CocoaOpenGLFrameBuffer(void* hMonitor, int width, int height, int bits, int refreshHz, bool fullscreen)
+: OpenGLFrameBuffer(hMonitor, width, height, bits, refreshHz, fullscreen)
+, m_renderTarget(width, height)
+{
+	SetSmoothPicture(gl_smooth_rendered);
+
+	// Setup uniform samplers for gamma correction shader
+
+	m_gammaProgram.Load("GammaCorrection", "shaders/glsl/main.vp",
+		"shaders/glsl/gamma_correction.fp", NULL, "");
+
+	const GLuint program = m_gammaProgram.GetHandle();
+
+	glUseProgram(program);
+	glUniform1i(glGetUniformLocation(program, "backbuffer"), 0);
+	glUniform1i(glGetUniformLocation(program, "gammaTable"), 1);
+	glUseProgram(0);
+
+	// Fill render target with black color
+
+	m_renderTarget.Bind();
+	glClear(GL_COLOR_BUFFER_BIT);
+	m_renderTarget.Unbind();
+}
+
+
+bool CocoaOpenGLFrameBuffer::Lock(bool buffered)
+{
+	if (0 == m_lock)
+	{
+		m_renderTarget.Bind();
+	}
+
+	return Super::Lock(buffered);
+}
+
+void CocoaOpenGLFrameBuffer::Update()
+{
+	if (!CanUpdate())
+	{
+		GLRenderer->Flush();
+		return;
+	}
+
+	Begin2D(false);
+
+	DrawRateStuff();
+	GLRenderer->Flush();
+
+	DrawRenderTarget();
+
+	Swap();
+	Unlock();
+
+	CheckBench();
+}
+
+
+void CocoaOpenGLFrameBuffer::GetScreenshotBuffer(const BYTE*& buffer, int& pitch, ESSType& color_type)
+{
+	m_renderTarget.Bind();
+
+	Super::GetScreenshotBuffer(buffer, pitch, color_type);
+
+	m_renderTarget.Unbind();
+}
+
+
+void CocoaOpenGLFrameBuffer::DrawRenderTarget()
+{
+	m_renderTarget.Unbind();
+
+	m_renderTarget.GetColorTexture().Bind(0, 0);
+	m_gammaTexture.Bind(1, 0);
+
+	if (rbOpts.dirty)
+	{
+		// TODO: Figure out why the following glClear() call is needed
+		// to avoid drawing of garbage in fullscreen mode when
+		// in-game's aspect ratio is different from display one
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		rbOpts.dirty = false;
+	}
+
+	glViewport(rbOpts.shiftX, rbOpts.shiftY, rbOpts.width, rbOpts.height);
+
+	m_gammaProgram.Bind(0.0f);
+	BoundTextureDraw2D(Width, Height);
+
+	glViewport(0, 0, Width, Height);
+}
+
+
+void CocoaOpenGLFrameBuffer::SetSmoothPicture(const bool smooth)
+{
+	FHardwareTexture& texture = m_renderTarget.GetColorTexture();
+	texture.Bind(0, 0);
+	BoundTextureSetFilter(GL_TEXTURE_2D, smooth ? GL_LINEAR : GL_NEAREST);
+}
+
+
+// ---------------------------------------------------------------------------
+
+
+CUSTOM_CVAR(Bool, gl_smooth_rendered, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	if (NULL != screen)
+	{
+		screen->SetSmoothPicture(self);
+	}
+}
+
+
+// ---------------------------------------------------------------------------
+
+
 ADD_STAT(blit)
 {
 	FString result;
@@ -1020,6 +1579,9 @@ ADD_STAT(blit)
 
 
 IVideo* Video;
+
+
+// ---------------------------------------------------------------------------
 
 
 void I_ShutdownGraphics()
@@ -1042,7 +1604,7 @@ void I_InitGraphics()
 	val.Bool = !!Args->CheckParm("-devparm");
 	ticker.SetGenericRepDefault(val, CVAR_Bool);
 
-	Video = new CocoaVideo(0);
+	Video = new CocoaVideo(gl_vid_multisample);
 	atterm(I_ShutdownGraphics);
 }
 
@@ -1055,9 +1617,15 @@ static void I_DeleteRenderer()
 
 void I_CreateRenderer()
 {
+	s_currentRenderer = vid_renderer;
+
 	if (NULL == Renderer)
 	{
-		Renderer = new FSoftwareRenderer;
+		extern FRenderer* gl_CreateInterface();
+
+		Renderer = 1 == s_currentRenderer
+			? gl_CreateInterface()
+			: new FSoftwareRenderer;
 		atterm(I_DeleteRenderer);
 	}
 }
@@ -1129,6 +1697,9 @@ void I_ClosestResolution(int *width, int *height, int bits)
 }
 
 
+// ---------------------------------------------------------------------------
+
+
 EXTERN_CVAR(Int, vid_maxfps);
 EXTERN_CVAR(Bool, cl_capfps);
 
@@ -1165,6 +1736,9 @@ CUSTOM_CVAR(Bool, vid_hidpi, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 		self = 0;
 	}
 }
+
+
+// ---------------------------------------------------------------------------
 
 
 CCMD(vid_listmodes)

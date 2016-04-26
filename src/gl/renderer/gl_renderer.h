@@ -71,6 +71,7 @@ public:
 	unsigned int mFBID;
 	unsigned int mVAOID;
 
+	FTexture *gllight;
 	FTexture *glpart2;
 	FTexture *glpart;
 	FTexture *mirrortexture;

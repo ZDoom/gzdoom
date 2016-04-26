@@ -350,6 +350,7 @@ public:
 	particle_t * particle;
 	TArray<lightlist_t> *lightlist;
 
+	void SplitSprite(sector_t * frontsector, bool translucent);
 	void SetLowerParam();
 	void PerformSpriteClipAdjustment(AActor *thing, const DVector2 &thingpos, float spriteheight);
 

@@ -72,6 +72,7 @@ EXTERN_CVAR(Bool, gl_texture_usehires)
 // The GL texture maintenance class
 //
 //===========================================================================
+BYTE *gl_WarpBuffer(BYTE *buffer, int Width, int Height, int warp, float Speed);
 
 //===========================================================================
 //
@@ -291,7 +292,7 @@ const FHardwareTexture *FGLTexture::Bind(int texunit, int clampmode, int transla
 	if (hwtex)
 	{
 		// Texture has become invalid
-		if ((!tex->bHasCanvas && !tex->bWarped) && tex->CheckModified())
+		if ((!tex->bHasCanvas && (!tex->bWarped || gl.glslversion == 0)) && tex->CheckModified())
 		{
 			Clean(true);
 			hwtex = CreateHwTexture();
@@ -309,6 +310,12 @@ const FHardwareTexture *FGLTexture::Bind(int texunit, int clampmode, int transla
 			if (!tex->bHasCanvas)
 			{
 				buffer = CreateTexBuffer(translation, w, h, hirescheck, true, alphatrans);
+				if (tex->bWarped && gl.glslversion == 0)
+				{
+					// need to warp
+					buffer = gl_WarpBuffer(buffer, w, h, tex->bWarped, static_cast<FWarpTexture*>(tex)->GetSpeed());
+					static_cast<FWarpTexture*>(tex)->GenTime = r_FrameTime;
+				}
 				tex->ProcessData(buffer, w, h, false);
 			}
 			if (!hwtex->CreateTexture(buffer, w, h, texunit, needmipmap, translation)) 
@@ -462,7 +469,7 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 	mSpriteU[0] = mSpriteV[0] = 0.f;
 	mSpriteU[1] = mSpriteV[1] = 1.f;
 
-	FTexture *basetex = tx->GetRedirect(false);
+	FTexture *basetex = (tx->bWarped && gl.glslversion == 0)? tx : tx->GetRedirect(false);
 	// allow the redirect only if the textute is not expanded or the scale matches.
 	if (!expanded || (tx->Scale.X == basetex->Scale.X && tx->Scale.Y == basetex->Scale.Y))
 	{

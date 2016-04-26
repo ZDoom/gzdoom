@@ -351,7 +351,8 @@ void FGLRenderer::RenderScene(int recursion)
 
 	// if we don't have a persistently mapped buffer, we have to process all the dynamic lights up front,
 	// so that we don't have to do repeated map/unmap calls on the buffer.
-	if (mLightCount > 0 && gl_fixedcolormap == CM_DEFAULT && gl_lights && !(gl.flags & RFL_BUFFER_STORAGE))
+	bool haslights = mLightCount > 0 && gl_fixedcolormap == CM_DEFAULT && gl_lights;
+	if (gl.lightmethod == LM_DEFERRED && haslights)
 	{
 		GLRenderer->mLights->Begin();
 		gl_drawinfo->drawlists[GLDL_PLAINWALLS].DrawWalls(GLPASS_LIGHTSONLY);
@@ -371,12 +372,20 @@ void FGLRenderer::RenderScene(int recursion)
 
 	int pass;
 
-	if (mLightCount > 0 && gl_fixedcolormap == CM_DEFAULT && gl_lights && (gl.flags & RFL_BUFFER_STORAGE))
+	if (!haslights || gl.lightmethod == LM_DEFERRED)
+	{
+		pass = GLPASS_PLAIN;
+	}
+	else if (gl.lightmethod == LM_DIRECT)
 	{
 		pass = GLPASS_ALL;
 	}
 	else
 	{
+		// Todo: Draw lights with multipass rendering.
+		// RenderMultpassStuff();
+
+		// The remaining stuff which is unaffected by dynamic lights is just processed as normal.
 		pass = GLPASS_PLAIN;
 	}
 
@@ -418,6 +427,10 @@ void FGLRenderer::RenderScene(int recursion)
 
 	// this is the only geometry type on which decals can possibly appear
 	gl_drawinfo->drawlists[GLDL_PLAINWALLS].DrawDecals();
+	if (gl.lightmethod == LM_SOFTWARE)
+	{
+		// also process the render lists with walls and dynamic lights
+	}
 
 	gl_RenderState.SetTextureMode(TM_MODULATE);
 
@@ -870,7 +883,7 @@ void FGLRenderer::RenderView (player_t* player)
 
 	P_FindParticleSubsectors ();
 
-	GLRenderer->mLights->Clear();
+	if (gl.lightmethod != LM_SOFTWARE) GLRenderer->mLights->Clear();
 
 	// NoInterpolateView should have no bearing on camera textures, but needs to be preserved for the main view below.
 	bool saved_niv = NoInterpolateView;
@@ -925,7 +938,7 @@ void FGLRenderer::WriteSavePic (player_t *player, FILE *file, int width, int hei
 	SetFixedColormap(player);
 	gl_RenderState.SetVertexBuffer(mVBO);
 	GLRenderer->mVBO->Reset();
-	GLRenderer->mLights->Clear();
+	if (gl.lightmethod != LM_SOFTWARE) GLRenderer->mLights->Clear();
 
 	// Check if there's some lights. If not some code can be skipped.
 	TThinkerIterator<ADynamicLight> it(STAT_DLIGHT);

@@ -109,7 +109,8 @@ void FGLRenderer::Initialize()
 
 	mVBO = new FFlatVertexBuffer;
 	mSkyVBO = new FSkyVertexBuffer;
-	mLights = new FLightBuffer();
+	if (gl.lightmethod != LM_SOFTWARE) mLights = new FLightBuffer();
+	else mLights = NULL;
 	gl_RenderState.SetVertexBuffer(mVBO);
 	mFBID = 0;
 	SetupLevel();

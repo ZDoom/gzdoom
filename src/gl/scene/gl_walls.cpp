@@ -1422,7 +1422,7 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 	glseg.y2 = v2->fY();
 	Colormap = frontsector->ColorMap;
 	flags = 0;
-	dynlightindex = UINT_MAX;
+	dynlightindex = -1;
 	lightlist = NULL;
 
 	int rel = 0;
@@ -1681,7 +1681,7 @@ void GLWall::ProcessLowerMiniseg(seg_t *seg, sector_t * frontsector, sector_t * 
 		bottomflat = frontsector->GetTexture(sector_t::floor);
 		topplane = frontsector->ceilingplane;
 		bottomplane = frontsector->floorplane;
-		dynlightindex = UINT_MAX;
+		dynlightindex = -1;
 
 		zfloor[0] = zfloor[1] = ffh;
 

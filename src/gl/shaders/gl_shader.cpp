@@ -87,25 +87,37 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 //
 // The following code uses GetChars on the strings to get rid of terminating 0 characters. Do not remove or the code may break!
 //
-	unsigned int lightbuffertype = GLRenderer->mLights->GetBufferType();
-	unsigned int lightbuffersize = GLRenderer->mLights->GetBlockSize();
-
 	FString vp_comb;
 
-	if (lightbuffertype == GL_UNIFORM_BUFFER)
+	if (gl.lightmethod == LM_SOFTWARE)
 	{
-		if (gl.glslversion < 1.4f || gl.version < 3.1f)
+		if (gl.compatibility >= CMPT_GL3)
 		{
-			vp_comb.Format("#version 130\n#extension GL_ARB_uniform_buffer_object : require\n#define NUM_UBO_LIGHTS %d\n", lightbuffersize);
-		}
-		else
-		{
-			vp_comb.Format("#version 140\n#define NUM_UBO_LIGHTS %d\n", lightbuffersize);
+			vp_comb = "#version 130\n";
 		}
 	}
 	else
 	{
-		vp_comb = "#version 400 core\n#extension GL_ARB_shader_storage_buffer_object : require\n#define SHADER_STORAGE_LIGHTS\n";
+		assert(GLRenderer->mLights != NULL);
+		// On the shader side there is no difference between LM_DEFERRED and LM_DIRECT, it only matters which buffer type is used by the light buffer.
+		unsigned int lightbuffertype = GLRenderer->mLights->GetBufferType();
+		unsigned int lightbuffersize = GLRenderer->mLights->GetBlockSize();
+		if (lightbuffertype == GL_UNIFORM_BUFFER)
+		{
+			// This differentiation is for some Intel drivers which fail on #extension, so use of #version 140 is necessary
+			if (gl.glslversion < 1.4f || gl.version < 3.1f)
+			{
+				vp_comb.Format("#version 130\n#extension GL_ARB_uniform_buffer_object : require\n#define NUM_UBO_LIGHTS %d\n", lightbuffersize);
+			}
+			else
+			{
+				vp_comb.Format("#version 140\n#define NUM_UBO_LIGHTS %d\n", lightbuffersize);
+			}
+		}
+		else
+		{
+			vp_comb = "#version 400 core\n#extension GL_ARB_shader_storage_buffer_object : require\n#define SHADER_STORAGE_LIGHTS\n";
+		}
 	}
 
 	vp_comb << defines << i_data.GetString().GetChars();

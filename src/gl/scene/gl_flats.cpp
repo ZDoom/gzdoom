@@ -193,7 +193,7 @@ void GLFlat::DrawSubsector(subsector_t * sub)
 
 //==========================================================================
 //
-//
+// this is only used by LM_DEFERRED
 //
 //==========================================================================
 
@@ -399,7 +399,7 @@ void GLFlat::Draw(int pass, bool trans)	// trans only has meaning for GLPASS_LIG
 	switch (pass)
 	{
 	case GLPASS_PLAIN:			// Single-pass rendering
-	case GLPASS_ALL:
+	case GLPASS_ALL:			// Same, but also creates the dynlight data.
 		gl_SetColor(lightlevel, rel, Colormap,1.0f);
 		gl_SetFog(lightlevel, rel, &Colormap, false);
 		if (sector->special != GLSector_Skybox)
@@ -473,6 +473,7 @@ inline void GLFlat::PutFlat(bool fog)
 		bool masked = gltexture->isMasked() && ((renderflags&SSRF_RENDER3DPLANES) || stack);
 		list = masked ? GLDL_MASKEDFLATS : GLDL_PLAINFLATS;
 	}
+	dynlightindex = -1;	// make sure this is always initialized to something proper.
 	gl_drawinfo->drawlists[list].AddFlat (this);
 }
 

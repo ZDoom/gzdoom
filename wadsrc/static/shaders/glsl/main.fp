@@ -11,7 +11,7 @@ out vec4 FragColor;
 	{
 		vec4 lights[];
 	};
-#else
+#elif defined NUM_UBO_LIGHTS
 	/*layout(std140)*/ uniform LightBufferUBO
 	{
 		vec4 lights[NUM_UBO_LIGHTS];
@@ -51,6 +51,32 @@ vec4 desaturate(vec4 texel)
 //
 //===========================================================================
 
+#ifdef GLSL12_COMPATIBLE
+vec4 getTexel(vec2 st)
+{
+	vec4 texel = texture(tex, st);
+	
+	//
+	// Apply texture modes
+	//
+	if (uTextureMode != 0)
+	{
+		if (uTextureMode == 1) texel.rgb = vec3(1.0,1.0,1.0);
+		else if (uTextureMode == 2) texel.a = 1.0;
+		else if (uTextureMode == 3) texel = vec4(1.0-texel.r, 1.0-texel.b, 1.0-texel.g, texel.a);
+		else if (uTextureMode == 4) texel = vec4(1.0, 1.0, 1.0, texel.r*texel.a);
+		else if (uTextureMode == 5)
+		{
+			if (st.t < 0.0 || st.t > 1.0)
+			{
+				texel.a = 0.0;
+			}
+		}
+	}
+	texel *= uObjectColor;
+	return desaturate(texel);
+}
+#else
 vec4 getTexel(vec2 st)
 {
 	vec4 texel = texture(tex, st);
@@ -87,6 +113,7 @@ vec4 getTexel(vec2 st)
 
 	return desaturate(texel);
 }
+#endif
 
 //===========================================================================
 //
@@ -181,6 +208,7 @@ vec4 getLightColor(float fogdist, float fogfactor)
 	
 	vec4 dynlight = uDynLightColor;
 
+#if defined NUM_UBO_LIGHTS || defined SHADER_STORAGE_LIGHTS
 	if (uLightIndex >= 0)
 	{
 		ivec4 lightRange = ivec4(lights[uLightIndex]) + ivec4(uLightIndex + 1);
@@ -210,6 +238,7 @@ vec4 getLightColor(float fogdist, float fogfactor)
 			}
 		}
 	}
+#endif
 	color.rgb = clamp(color.rgb + desaturate(dynlight).rgb, 0.0, 1.4);
 	
 	// prevent any unintentional messing around with the alpha.
@@ -270,6 +299,7 @@ void main()
 			
 			frag *= getLightColor(fogdist, fogfactor);
 			
+#if defined NUM_UBO_LIGHTS || defined SHADER_STORAGE_LIGHTS
 			if (uLightIndex >= 0)
 			{
 				ivec4 lightRange = ivec4(lights[uLightIndex]) + ivec4(uLightIndex + 1);
@@ -291,6 +321,7 @@ void main()
 					frag.rgb = clamp(frag.rgb + desaturate(addlight).rgb, 0.0, 1.0);
 				}
 			}
+#endif
 
 			//
 			// colored fog

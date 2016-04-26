@@ -1,6 +1,11 @@
 #ifndef OALSOUND_H
 #define OALSOUND_H
 
+#include <thread>
+#include <mutex>
+#include <atomic>
+#include <condition_variable>
+
 #include "i_sound.h"
 #include "s_sound.h"
 #include "menu/menu.h"
@@ -109,7 +114,6 @@ public:
 
 	virtual void UpdateListener(SoundListener *);
 	virtual void UpdateSounds();
-	virtual void UpdateMusic();
 
 	virtual void MarkStartTime(FISoundChannel*);
 	virtual float GetAudibility(FISoundChannel*);
@@ -174,9 +178,17 @@ private:
     ALvoid (AL_APIENTRY*alDeferUpdatesSOFT)(void);
     ALvoid (AL_APIENTRY*alProcessUpdatesSOFT)(void);
 
+    void BackgroundProc();
+    void AddStream(OpenALSoundStream *stream);
+    void RemoveStream(OpenALSoundStream *stream);
 	void LoadReverb(const ReverbContainer *env);
 	void PurgeStoppedSources();
 	static FSoundChan *FindLowestChannel();
+
+    std::thread StreamThread;
+    std::mutex StreamLock;
+    std::condition_variable StreamWake;
+    std::atomic<bool> QuitThread;
 
 	ALCdevice *Device;
 	ALCcontext *Context;

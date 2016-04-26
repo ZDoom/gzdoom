@@ -806,11 +806,17 @@ void GLDrawList::DrawSorted()
 		sorted=DoSort(SortNodes[SortNodeStart]);
 	}
 	gl_RenderState.ClearClipSplit();
-	glEnable(GL_CLIP_DISTANCE1);
-	glEnable(GL_CLIP_DISTANCE2);
+	if (gl.glslversion >= 1.3f)
+	{
+		glEnable(GL_CLIP_DISTANCE1);
+		glEnable(GL_CLIP_DISTANCE2);
+	}
 	DoDrawSorted(sorted);
-	glDisable(GL_CLIP_DISTANCE1);
-	glDisable(GL_CLIP_DISTANCE2);
+	if (gl.glslversion >= 1.3f)
+	{
+		glDisable(GL_CLIP_DISTANCE1);
+		glDisable(GL_CLIP_DISTANCE2);
+	}
 	gl_RenderState.ClearClipSplit();
 }
 

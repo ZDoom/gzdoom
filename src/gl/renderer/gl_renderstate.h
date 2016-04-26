@@ -233,7 +233,20 @@ public:
 
 	void EnableSplit(bool on)
 	{
-		mSplitEnabled = on;
+		if (gl.glslversion >= 1.3f)
+		{
+			mSplitEnabled = on;
+			if (on)
+			{
+				glEnable(GL_CLIP_DISTANCE3);
+				glEnable(GL_CLIP_DISTANCE4);
+			}
+			else
+			{
+				glDisable(GL_CLIP_DISTANCE3);
+				glDisable(GL_CLIP_DISTANCE4);
+			}
+		}
 	}
 
 	void SetLightIndex(int n)

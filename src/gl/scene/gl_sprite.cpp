@@ -226,8 +226,6 @@ void GLSprite::Draw(int pass)
 	{
 		clipping = true;
 		gl_RenderState.EnableSplit(true);
-		glEnable(GL_CLIP_DISTANCE3);
-		glEnable(GL_CLIP_DISTANCE4);
 	}
 
 	secplane_t bottomp = { { 0, 0, -1. }, bottomclip };
@@ -333,8 +331,6 @@ void GLSprite::Draw(int pass)
 
 	if (clipping)
 	{
-		glDisable(GL_CLIP_DISTANCE3);
-		glDisable(GL_CLIP_DISTANCE4);
 		gl_RenderState.EnableSplit(false);
 	}
 

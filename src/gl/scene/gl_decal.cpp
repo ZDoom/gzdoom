@@ -388,8 +388,6 @@ void GLWall::DoDrawDecals()
 		if (lightlist != NULL)
 		{
 			gl_RenderState.EnableSplit(true);
-			glEnable(GL_CLIP_DISTANCE3);
-			glEnable(GL_CLIP_DISTANCE4);
 		}
 		else
 		{
@@ -405,8 +403,6 @@ void GLWall::DoDrawDecals()
 
 		if (lightlist != NULL)
 		{
-			glDisable(GL_CLIP_DISTANCE3);
-			glDisable(GL_CLIP_DISTANCE4);
 			gl_RenderState.EnableSplit(false);
 		}
 

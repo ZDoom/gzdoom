@@ -44,31 +44,31 @@ namespace s3d {
 class ShiftedEyePose : public EyePose
 {
 public:
-	ShiftedEyePose(FLOATTYPE shift) : shift(shift) {};
-	FLOATTYPE getShift() const { return shift; }
-	void setShift(FLOATTYPE shift) { this->shift = shift; }
-	virtual VSMatrix GetProjection(FLOATTYPE fov, FLOATTYPE aspectRatio, FLOATTYPE fovRatio) const;
-	virtual void GetViewShift(FLOATTYPE yaw, FLOATTYPE outViewShift[3]) const;
+	ShiftedEyePose(float shift) : shift(shift) {};
+	float getShift() const { return shift; }
+	void setShift(float shift) { this->shift = shift; }
+	virtual VSMatrix GetProjection(float fov, float aspectRatio, float fovRatio) const;
+	virtual void GetViewShift(float yaw, float outViewShift[3]) const;
 protected:
-	FLOATTYPE shift;
+	float shift;
 };
 
 
 class LeftEyePose : public ShiftedEyePose
 {
 public:
-	LeftEyePose(FLOATTYPE ipd) : ShiftedEyePose( FLOATTYPE(-0.5) * ipd) {}
-	FLOATTYPE getIpd() const { return FLOATTYPE(-2.0)*getShift(); }
-	void setIpd(FLOATTYPE ipd) { setShift(FLOATTYPE(-0.5)*ipd); }
+	LeftEyePose(float ipd) : ShiftedEyePose( float(-0.5) * ipd) {}
+	float getIpd() const { return float(-2.0)*getShift(); }
+	void setIpd(float ipd) { setShift(float(-0.5)*ipd); }
 };
 
 
 class RightEyePose : public ShiftedEyePose
 {
 public:
-	RightEyePose(FLOATTYPE ipd) : ShiftedEyePose(FLOATTYPE(+0.5)*ipd) {}
-	FLOATTYPE getIpd() const { return FLOATTYPE(+2.0)*shift; }
-	void setIpd(FLOATTYPE ipd) { setShift(FLOATTYPE(+0.5)*ipd); }
+	RightEyePose(float ipd) : ShiftedEyePose(float(+0.5)*ipd) {}
+	float getIpd() const { return float(+2.0)*shift; }
+	void setIpd(float ipd) { setShift(float(+0.5)*ipd); }
 };
 
 
@@ -78,11 +78,11 @@ public:
 class LeftEyeView : public Stereo3DMode
 {
 public:
-	static const LeftEyeView& getInstance(FLOATTYPE ipd);
+	static const LeftEyeView& getInstance(float ipd);
 
-	LeftEyeView(FLOATTYPE ipd) : eye(ipd) { eye_ptrs.Push(&eye); }
-	FLOATTYPE getIpd() const { return eye.getIpd(); }
-	void setIpd(FLOATTYPE ipd) { eye.setIpd(ipd); }
+	LeftEyeView(float ipd) : eye(ipd) { eye_ptrs.Push(&eye); }
+	float getIpd() const { return eye.getIpd(); }
+	void setIpd(float ipd) { eye.setIpd(ipd); }
 protected:
 	LeftEyePose eye;
 };
@@ -91,11 +91,11 @@ protected:
 class RightEyeView : public Stereo3DMode
 {
 public:
-	static const RightEyeView& getInstance(FLOATTYPE ipd);
+	static const RightEyeView& getInstance(float ipd);
 
-	RightEyeView(FLOATTYPE ipd) : eye(ipd) { eye_ptrs.Push(&eye); }
-	FLOATTYPE getIpd() const { return eye.getIpd(); }
-	void setIpd(FLOATTYPE ipd) { eye.setIpd(ipd); }
+	RightEyeView(float ipd) : eye(ipd) { eye_ptrs.Push(&eye); }
+	float getIpd() const { return eye.getIpd(); }
+	void setIpd(float ipd) { eye.setIpd(ipd); }
 protected:
 	RightEyePose eye;
 };

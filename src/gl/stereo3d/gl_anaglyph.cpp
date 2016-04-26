@@ -46,7 +46,7 @@ MaskAnaglyph::MaskAnaglyph(const ColorMask& leftColorMask, double ipdMeters)
 
 
 /* static */
-const GreenMagenta& GreenMagenta::getInstance(FLOATTYPE ipd)
+const GreenMagenta& GreenMagenta::getInstance(float ipd)
 {
 	static GreenMagenta instance(ipd);
 	return instance;
@@ -54,7 +54,7 @@ const GreenMagenta& GreenMagenta::getInstance(FLOATTYPE ipd)
 
 
 /* static */
-const RedCyan& RedCyan::getInstance(FLOATTYPE ipd)
+const RedCyan& RedCyan::getInstance(float ipd)
 {
 	static RedCyan instance(ipd);
 	return instance;
@@ -62,7 +62,7 @@ const RedCyan& RedCyan::getInstance(FLOATTYPE ipd)
 
 
 /* static */
-const AmberBlue& AmberBlue::getInstance(FLOATTYPE ipd)
+const AmberBlue& AmberBlue::getInstance(float ipd)
 {
 	static AmberBlue instance(ipd);
 	return instance;

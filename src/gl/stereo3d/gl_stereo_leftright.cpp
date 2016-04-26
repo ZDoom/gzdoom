@@ -47,7 +47,7 @@ namespace s3d {
 
 
 /* virtual */
-VSMatrix ShiftedEyePose::GetProjection(FLOATTYPE fov, FLOATTYPE aspectRatio, FLOATTYPE fovRatio) const
+VSMatrix ShiftedEyePose::GetProjection(float fov, float aspectRatio, float fovRatio) const
 {
 	double zNear = 5.0;
 	double zFar = 65536.0;
@@ -71,10 +71,10 @@ VSMatrix ShiftedEyePose::GetProjection(FLOATTYPE fov, FLOATTYPE aspectRatio, FLO
 
 
 /* virtual */
-void ShiftedEyePose::GetViewShift(FLOATTYPE yaw, FLOATTYPE outViewShift[3]) const
+void ShiftedEyePose::GetViewShift(float yaw, float outViewShift[3]) const
 {
-	FLOATTYPE dx = -cos(DEG2RAD(yaw)) * vr_hunits_per_meter * shift;
-	FLOATTYPE dy = sin(DEG2RAD(yaw)) * vr_hunits_per_meter * shift;
+	float dx = -cos(DEG2RAD(yaw)) * vr_hunits_per_meter * shift;
+	float dy = sin(DEG2RAD(yaw)) * vr_hunits_per_meter * shift;
 	outViewShift[0] = dx;
 	outViewShift[1] = dy;
 	outViewShift[2] = 0;
@@ -82,7 +82,7 @@ void ShiftedEyePose::GetViewShift(FLOATTYPE yaw, FLOATTYPE outViewShift[3]) cons
 
 
 /* static */
-const LeftEyeView& LeftEyeView::getInstance(FLOATTYPE ipd)
+const LeftEyeView& LeftEyeView::getInstance(float ipd)
 {
 	static LeftEyeView instance(ipd);
 	instance.setIpd(ipd);
@@ -91,7 +91,7 @@ const LeftEyeView& LeftEyeView::getInstance(FLOATTYPE ipd)
 
 
 /* static */
-const RightEyeView& RightEyeView::getInstance(FLOATTYPE ipd)
+const RightEyeView& RightEyeView::getInstance(float ipd)
 {
 	static RightEyeView instance(ipd);
 	instance.setIpd(ipd);

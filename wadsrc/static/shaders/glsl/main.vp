@@ -50,16 +50,18 @@ void main()
 	
 	gl_Position = ProjectionMatrix * eyeCoordPos;
 	
-	// clip planes used for reflective flats
-	if (uClipHeightBottom  > -65536.0)
-	{
-		gl_ClipDistance[0] = worldcoord.y - uClipHeightBottom;
-	}
-	else if (uClipHeightTop < 65536.0)
-	{
-		gl_ClipDistance[0] = uClipHeightTop - worldcoord.y;
-	}
+    #if defined __GLSL_CG_DATA_TYPES && defined GLSL12_COMPATIBILE
+		gl_ClipVertex = eyeCoordPos;
+	#endif
 	
+	
+	// clip planes used for reflective flats
+	if (uClipHeightDirection != 0.0)
+	{
+		gl_ClipDistance[0] = (worldcoord.y - uClipHeight) * uClipHeightDirection;
+	}
+
+	// clip planes used for translucency splitting
 	gl_ClipDistance[1] = worldcoord.y - uClipSplit.x;
 	gl_ClipDistance[2] = uClipSplit.y - worldcoord.y;
 	

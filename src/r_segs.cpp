@@ -2910,12 +2910,12 @@ int WallMost (short *mostbuf, const secplane_t &plane, const FWallCoords *wallc)
 	y = z1 * InvZtoScale / iy1;
 	if (ix2 == ix1)
 	{
-		mostbuf[ix1] = (short)xs_RoundToInt(y/65536.0 + CenterY);
+		mostbuf[ix1] = (short)xs_RoundToInt(y + CenterY);
 	}
 	else
 	{
 		fixed_t yinc = FLOAT2FIXED(((z2 * InvZtoScale / iy2) - y) / (ix2-ix1));
-		qinterpolatedown16short (&mostbuf[ix1], ix2-ix1, FLOAT2FIXED(y/65536.0 + CenterY), yinc);
+		qinterpolatedown16short (&mostbuf[ix1], ix2-ix1, FLOAT2FIXED(y + CenterY), yinc);
 	}
 
 	return bad;

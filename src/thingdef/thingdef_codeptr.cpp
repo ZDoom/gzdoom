@@ -322,6 +322,40 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetDistance)
 
 //==========================================================================
 //
+// GetAngle
+//
+// NON-ACTION function to get the angle in degrees (normalized to -180..180)
+//
+//==========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetAngle)
+{
+	if (numret > 0)
+	{
+		assert(ret != NULL);
+		PARAM_SELF_PROLOGUE(AActor);
+		PARAM_BOOL(relative);
+		PARAM_INT_OPT(ptr) { ptr = AAPTR_TARGET; }
+
+		AActor *target = COPY_AAPTR(self, ptr);
+
+		if (!target || target == self)
+		{
+			ret->SetFloat(0);
+		}
+		else
+		{
+			DVector3 diff = self->Vec3To(target);
+			DAngle angto = diff.Angle();
+			if (relative) angto = deltaangle(self->Angles.Yaw, angto);
+			ret->SetFloat(angto.Degrees);
+		}
+		return 1;
+	}
+	return 0;
+}
+
+//==========================================================================
+//
 // GetSpawnHealth
 //
 //==========================================================================

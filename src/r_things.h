@@ -41,8 +41,14 @@ struct vissprite_t
 	FVector3		gpos;			// origin in world coordinates
 	union
 	{
-		float		gzb, gzt;		// global bottom / top for silhouette clipping
-		int			y1, y2;			// top / bottom of particle on screen
+		struct
+		{
+			float	gzb, gzt;		// global bottom / top for silhouette clipping
+		};
+		struct
+		{
+			int		y1, y2;			// top / bottom of particle on screen
+		};
 	};
 	angle_t			angle;
 	fixed_t			xscale;

@@ -991,10 +991,15 @@ static FDrawInfoList di_list;
 FDrawInfo::FDrawInfo()
 {
 	next = NULL;
+	if (gl.lightmethod == LM_SOFTWARE)
+	{
+		dldrawlists = new GLDrawList[GLLDL_TYPES];
+	}
 }
 
 FDrawInfo::~FDrawInfo()
 {
+	if (dldrawlists != NULL) delete[] dldrawlists;
 	ClearBuffers();
 }
 
@@ -1018,13 +1023,17 @@ void FDrawInfo::StartScene()
 	ss_renderflags.Resize(numsubsectors);
 	no_renderflags.Resize(numsubsectors);
 
-	memset(&sectorrenderflags[0], 0, numsectors*sizeof(sectorrenderflags[0]));
-	memset(&ss_renderflags[0], 0, numsubsectors*sizeof(ss_renderflags[0]));
-	memset(&no_renderflags[0], 0, numnodes*sizeof(no_renderflags[0]));
+	memset(&sectorrenderflags[0], 0, numsectors * sizeof(sectorrenderflags[0]));
+	memset(&ss_renderflags[0], 0, numsubsectors * sizeof(ss_renderflags[0]));
+	memset(&no_renderflags[0], 0, numnodes * sizeof(no_renderflags[0]));
 
-	next=gl_drawinfo;
-	gl_drawinfo=this;
-	for(int i=0;i<GLDL_TYPES;i++) drawlists[i].Reset();
+	next = gl_drawinfo;
+	gl_drawinfo = this;
+	for (int i = 0; i < GLDL_TYPES; i++) drawlists[i].Reset();
+	if (dldrawlists != NULL)
+	{
+		for (int i = 0; i < GLLDL_TYPES; i++) dldrawlists[i].Reset();
+	}
 }
 
 //==========================================================================
@@ -1037,6 +1046,10 @@ void FDrawInfo::EndDrawInfo()
 	FDrawInfo * di = gl_drawinfo;
 
 	for(int i=0;i<GLDL_TYPES;i++) di->drawlists[i].Reset();
+	if (di->dldrawlists != NULL)
+	{
+		for (int i = 0; i < GLLDL_TYPES; i++) di->dldrawlists[i].Reset();
+	}
 	gl_drawinfo=di->next;
 	di_list.Release(di);
 }

@@ -25,6 +25,28 @@ enum DrawListType
 	GLDL_TYPES,
 };
 
+// more lists for handling of dynamic lights
+enum DLDrawListType
+{
+	// These are organized so that the various multipass rendering modes have to be set as few times as possible
+	GLLDL_WALLS_PLAIN,			// dynamic lights on normal walls
+	GLLDL_WALLS_BRIGHT,			// dynamic lights on brightmapped walls
+	GLLDL_WALLS_MASKED,			// dynamic lights on masked midtextures
+
+	GLLDL_FLATS_PLAIN,			// dynamic lights on normal flats
+	GLLDL_FLATS_BRIGHT,			// dynamic lights on brightmapped flats
+	GLLDL_FLATS_MASKED,			// dynamic lights on masked flats
+
+	GLLDL_WALLS_FOG,			// lights on fogged walls
+	GLLDL_WALLS_FOGMASKED,		// lights on fogged masked midtextures
+
+	GLLDL_FLATS_FOG,			// lights on fogged walls
+	GLLDL_FLATS_FOGMASKED,		// lights on fogged masked midtextures
+
+	GLLDL_TYPES,
+};
+
+
 enum Drawpasses
 {
 	GLPASS_ALL,			// Main pass with dynamic lights
@@ -32,6 +54,12 @@ enum Drawpasses
 	GLPASS_PLAIN,		// Main pass without dynamic lights
 	GLPASS_DECALS,		// Draws a decal
 	GLPASS_TRANSLUCENT,	// Draws translucent objects
+
+	// these are only used with texture based dynamic lights
+	GLPASS_BASE,		// untextured base for dynamic lights
+	GLPASS_LIGHTTEX,	// lighttexture pass
+	GLPASS_TEXONLY		// finishing texture pass
+
 };
 
 //==========================================================================
@@ -199,6 +227,7 @@ struct FDrawInfo
 
 	FDrawInfo * next;
 	GLDrawList drawlists[GLDL_TYPES];
+	GLDrawList *dldrawlists;	// only gets allocated when needed.
 
 	FDrawInfo();
 	~FDrawInfo();

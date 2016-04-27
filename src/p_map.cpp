@@ -1526,6 +1526,7 @@ bool P_CheckPosition(AActor *thing, const DVector2 &pos, FCheckPosition &tm, boo
 			tm.ceilingz = newsec->ceilingplane.ZatPoint(pos);
 			tm.ceilingpic = newsec->GetTexture(sector_t::ceiling);
 			tm.floorsector = tm.ceilingsector = newsec;
+			tm.floorterrain = newsec->GetTerrain(sector_t::floor);
 		}
 
 		F3DFloor*  rover;
@@ -1546,6 +1547,7 @@ bool P_CheckPosition(AActor *thing, const DVector2 &pos, FCheckPosition &tm, boo
 			{
 				tm.floorz = tm.dropoffz = ff_top;
 				tm.floorpic = *rover->top.texture;
+				tm.floorterrain = rover->model->GetTerrain(rover->top.isceiling);
 			}
 			if (ff_bottom < tm.ceilingz && abs(delta1) >= abs(delta2))
 			{

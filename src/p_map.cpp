@@ -45,6 +45,7 @@
 #include "p_checkposition.h"
 #include "r_utility.h"
 #include "p_blockmap.h"
+#include "p_3dmidtex.h"
 
 #include "s_sound.h"
 #include "decallib.h"
@@ -1905,6 +1906,15 @@ static void CheckForPushSpecial(line_t *line, int side, AActor *mobj, DVector2 *
 			if (fzt >= mobj->Top() && bzt >= mobj->Top() &&
 				fzb <= mobj->Z() && bzb <= mobj->Z())
 			{
+				if (line->flags & ML_3DMIDTEX)
+				{
+					double top, bot;
+					P_GetMidTexturePosition(line, side, &top, &bot);
+					if (bot < mobj->Top() && top > mobj->Z())
+					{
+						goto isblocking;
+					}
+				}
 				// we must also check if some 3D floor in the backsector may be blocking
 				for (auto rover : line->backsector->e->XFloor.ffloors)
 				{

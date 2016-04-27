@@ -1514,7 +1514,45 @@ bool P_CheckPosition(AActor *thing, const DVector2 &pos, FCheckPosition &tm, boo
 	// Any contacted lines the step closer together will adjust them.
 	if (!thing->IsNoClip2())
 	{
-		P_GetFloorCeilingZ(tm, FFCF_SAMESECTOR);
+		if (!newsec->PortalBlocksMovement(sector_t::ceiling) || !newsec->PortalBlocksMovement(sector_t::floor))
+		{
+			// Use P_GetFloorCeilingZ only if there's portals to consider. Its logic is subtly different than what is needed here for 3D floors.
+			P_GetFloorCeilingZ(tm, FFCF_SAMESECTOR);
+		}
+		else
+		{
+			tm.floorz = tm.dropoffz = newsec->floorplane.ZatPoint(pos);
+			tm.floorpic = newsec->GetTexture(sector_t::floor);
+			tm.ceilingz = newsec->ceilingplane.ZatPoint(pos);
+			tm.ceilingpic = newsec->GetTexture(sector_t::ceiling);
+			tm.floorsector = tm.ceilingsector = newsec;
+		}
+
+		F3DFloor*  rover;
+		double thingtop = thing->Height > 0 ? thing->Top() : thing->Z() + 1;
+
+		for (unsigned i = 0; i<newsec->e->XFloor.ffloors.Size(); i++)
+		{
+			rover = newsec->e->XFloor.ffloors[i];
+			if (!(rover->flags & FF_SOLID) || !(rover->flags & FF_EXISTS)) continue;
+
+			double ff_bottom = rover->bottom.plane->ZatPoint(pos);
+			double ff_top = rover->top.plane->ZatPoint(pos);
+
+			double delta1 = thing->Z() - (ff_bottom + ((ff_top - ff_bottom) / 2));
+			double delta2 = thingtop - (ff_bottom + ((ff_top - ff_bottom) / 2));
+
+			if (ff_top > tm.floorz && fabs(delta1) < fabs(delta2))
+			{
+				tm.floorz = tm.dropoffz = ff_top;
+				tm.floorpic = *rover->top.texture;
+			}
+			if (ff_bottom < tm.ceilingz && abs(delta1) >= abs(delta2))
+			{
+				tm.ceilingz = ff_bottom;
+				tm.ceilingpic = *rover->bottom.texture;
+			}
+		}
 	}
 	else
 	{

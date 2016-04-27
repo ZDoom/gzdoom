@@ -382,10 +382,10 @@ void FGLRenderer::RenderScene(int recursion)
 	}
 	else
 	{
-		// Todo: Draw lights with multipass rendering.
-		// RenderMultpassStuff();
+		// process everything that needs to handle textured dynamic lights.
+		if (haslights) RenderMultipassStuff();
 
-		// The remaining stuff which is unaffected by dynamic lights is just processed as normal.
+		// The remaining lists which are unaffected by dynamic lights are just processed as normal.
 		pass = GLPASS_PLAIN;
 	}
 

@@ -45,10 +45,19 @@
 #include "i_system.h"
 #include "v_text.h"
 #include "r_utility.h"
+#include "gl/dynlights/gl_dynlight.h"
+#include "gl/utility/gl_geometric.h"
+#include "gl/renderer/gl_renderer.h"
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_cvars.h"
 #include "gl/renderer/gl_renderstate.h"
+#include "gl/scene/gl_drawinfo.h"
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 void gl_SetTextureMode(int type)
 {
@@ -190,6 +199,11 @@ BYTE *gl_WarpBuffer(BYTE *buffer, int Width, int Height, int warp, float Speed)
 	return (BYTE*)out;
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 static int ffTextureMode;
 static bool ffTextureEnabled;
@@ -322,6 +336,12 @@ void FRenderState::ApplyFixedFunction()
 
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 void gl_FillScreen();
 
 void FRenderState::DrawColormapOverlay()
@@ -375,4 +395,184 @@ void FRenderState::DrawColormapOverlay()
 	gl_RenderState.BlendFunc(GL_DST_COLOR, GL_ZERO);
 	gl_FillScreen();
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+}
+
+//==========================================================================
+//
+// Sets up the parameters to render one dynamic light onto one plane
+//
+//==========================================================================
+bool gl_SetupLight(int group, Plane & p, ADynamicLight * light, Vector & nearPt, Vector & up, Vector & right,
+	float & scale, int desaturation, bool checkside, bool forceadditive)
+{
+	Vector fn, pos;
+
+	DVector3 lpos = light->PosRelative(group);
+
+	float dist = fabsf(p.DistToPoint(lpos.X, lpos.Z, lpos.Y));
+	float radius = (light->GetRadius() * gl_lights_size);
+
+	if (radius <= 0.f) return false;
+	if (dist > radius) return false;
+	if (checkside && gl_lights_checkside && p.PointOnSide(lpos.X, lpos.Z, lpos.Y))
+	{
+		return false;
+	}
+	if (light->owned && light->target != NULL && !light->target->IsVisibleToPlayer())
+	{
+		return false;
+	}
+
+	scale = 1.0f / ((2.f * radius) - dist);
+
+	// project light position onto plane (find closest point on plane)
+
+
+	pos.Set(lpos.X, lpos.Z, lpos.Y);
+	fn = p.Normal();
+	fn.GetRightUp(right, up);
+
+#ifdef _MSC_VER
+	nearPt = pos + fn * dist;
+#else
+	Vector tmpVec = fn * dist;
+	nearPt = pos + tmpVec;
+#endif
+
+	float cs = 1.0f - (dist / radius);
+	if (gl_lights_additive || light->flags4&MF4_ADDITIVE || forceadditive) cs *= 0.2f;	// otherwise the light gets too strong.
+	float r = light->GetRed() / 255.0f * cs * gl_lights_intensity;
+	float g = light->GetGreen() / 255.0f * cs * gl_lights_intensity;
+	float b = light->GetBlue() / 255.0f * cs * gl_lights_intensity;
+
+	if (light->IsSubtractive())
+	{
+		Vector v;
+
+		gl_RenderState.BlendEquation(GL_FUNC_REVERSE_SUBTRACT);
+		v.Set(r, g, b);
+		r = v.Length() - r;
+		g = v.Length() - g;
+		b = v.Length() - b;
+	}
+	else
+	{
+		gl_RenderState.BlendEquation(GL_FUNC_ADD);
+	}
+	if (desaturation > 0 && gl.glslversion > 0)	// no-shader excluded because no desaturated textures.
+	{
+		float gray = (r * 77 + g * 143 + b * 37) / 257;
+
+		r = (r*(32 - desaturation) + gray*desaturation) / 32;
+		g = (g*(32 - desaturation) + gray*desaturation) / 32;
+		b = (b*(32 - desaturation) + gray*desaturation) / 32;
+	}
+	glColor3f(r, g, b);
+	return true;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+bool gl_SetupLightTexture()
+{
+	if (GLRenderer->gllight == NULL) return false;
+	FMaterial * pat = FMaterial::ValidateTexture(GLRenderer->gllight, false);
+	pat->Bind(CLAMP_XY, 0);
+	return true;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void FGLRenderer::RenderMultipassStuff()
+{
+	return;
+	// First pass: empty background with sector light only
+
+	// Part 1: solid geometry. This is set up so that there are no transparent parts
+
+	// remove any remaining texture bindings and shaders whick may get in the way.
+	gl_RenderState.EnableTexture(false);
+	gl_RenderState.EnableBrightmap(false);
+	gl_RenderState.Apply();
+	gl_drawinfo->dldrawlists[GLLDL_WALLS_PLAIN].DrawWalls(GLPASS_BASE);
+	gl_drawinfo->dldrawlists[GLLDL_FLATS_PLAIN].DrawFlats(GLPASS_BASE);
+
+	// Part 2: masked geometry. This is set up so that only pixels with alpha>0.5 will show
+	// This creates a blank surface that only fills the nontransparent parts of the texture
+	gl_RenderState.EnableTexture(true);
+	gl_RenderState.SetTextureMode(TM_MASK);
+	gl_RenderState.EnableBrightmap(true);
+	gl_drawinfo->dldrawlists[GLLDL_WALLS_BRIGHT].DrawWalls(GLPASS_BASE_MASKED);
+	gl_drawinfo->dldrawlists[GLLDL_WALLS_MASKED].DrawWalls(GLPASS_BASE_MASKED);
+	gl_drawinfo->dldrawlists[GLLDL_FLATS_BRIGHT].DrawFlats(GLPASS_BASE_MASKED);
+	gl_drawinfo->dldrawlists[GLLDL_FLATS_MASKED].DrawFlats(GLPASS_BASE_MASKED);
+
+	// Part 3: The base of fogged surfaces, including the texture
+	gl_RenderState.EnableBrightmap(false);
+	gl_RenderState.SetTextureMode(TM_MODULATE);
+	gl_drawinfo->dldrawlists[GLLDL_WALLS_FOG].DrawWalls(GLPASS_PLAIN);
+	gl_drawinfo->dldrawlists[GLLDL_WALLS_FOGMASKED].DrawWalls(GLPASS_PLAIN);
+	gl_drawinfo->dldrawlists[GLLDL_FLATS_FOG].DrawFlats(GLPASS_PLAIN);
+	gl_drawinfo->dldrawlists[GLLDL_FLATS_FOGMASKED].DrawFlats(GLPASS_PLAIN);
+
+	// second pass: draw lights
+	glDepthMask(false);
+	if (mLightCount && !gl_fixedcolormap)
+	{
+		if (gl_SetupLightTexture())
+		{
+			gl_RenderState.BlendFunc(GL_ONE, GL_ONE);
+			glDepthFunc(GL_EQUAL);
+			if (glset.lightmode == 8) gl_RenderState.SetSoftLightLevel(255);
+			gl_drawinfo->dldrawlists[GLLDL_WALLS_PLAIN].DrawWalls(GLPASS_LIGHTTEX);
+			gl_drawinfo->dldrawlists[GLLDL_WALLS_BRIGHT].DrawWalls(GLPASS_LIGHTTEX);
+			gl_drawinfo->dldrawlists[GLLDL_WALLS_MASKED].DrawWalls(GLPASS_LIGHTTEX);
+			gl_drawinfo->dldrawlists[GLLDL_FLATS_PLAIN].DrawFlats(GLPASS_LIGHTTEX);
+			gl_drawinfo->dldrawlists[GLLDL_FLATS_BRIGHT].DrawFlats(GLPASS_LIGHTTEX);
+			gl_drawinfo->dldrawlists[GLLDL_FLATS_MASKED].DrawFlats(GLPASS_LIGHTTEX);
+			gl_RenderState.BlendEquation(GL_FUNC_ADD);
+		}
+		else gl_lights = false;
+	}
+
+	// third pass: modulated texture
+	gl_RenderState.SetColor(0xffffffff);
+	gl_RenderState.BlendFunc(GL_DST_COLOR, GL_ZERO);
+	gl_RenderState.EnableFog(false);
+	gl_RenderState.AlphaFunc(GL_GEQUAL, 0);
+	glDepthFunc(GL_LEQUAL);
+	gl_drawinfo->dldrawlists[GLLDL_WALLS_PLAIN].DrawWalls(GLPASS_TEXONLY);
+	gl_drawinfo->dldrawlists[GLLDL_FLATS_PLAIN].DrawFlats(GLPASS_TEXONLY);
+	gl_drawinfo->dldrawlists[GLLDL_WALLS_BRIGHT].DrawWalls(GLPASS_TEXONLY);
+	gl_drawinfo->dldrawlists[GLLDL_FLATS_BRIGHT].DrawFlats(GLPASS_TEXONLY);
+	gl_RenderState.AlphaFunc(GL_GREATER, gl_mask_threshold);
+	gl_drawinfo->dldrawlists[GLLDL_WALLS_MASKED].DrawWalls(GLPASS_TEXONLY);
+	gl_drawinfo->dldrawlists[GLLDL_FLATS_MASKED].DrawFlats(GLPASS_TEXONLY);
+
+	// fourth pass: additive lights
+	gl_RenderState.EnableFog(true);
+	gl_RenderState.BlendFunc(GL_ONE, GL_ONE);
+	glDepthFunc(GL_EQUAL);
+	if (gl_SetupLightTexture())
+	{
+		gl_drawinfo->dldrawlists[GLLDL_WALLS_PLAIN].DrawWalls(GLPASS_LIGHTTEX_ADDITIVE);
+		gl_drawinfo->dldrawlists[GLLDL_WALLS_BRIGHT].DrawWalls(GLPASS_LIGHTTEX_ADDITIVE);
+		gl_drawinfo->dldrawlists[GLLDL_WALLS_MASKED].DrawWalls(GLPASS_LIGHTTEX_ADDITIVE);
+		gl_drawinfo->dldrawlists[GLLDL_FLATS_PLAIN].DrawFlats(GLPASS_LIGHTTEX_ADDITIVE);
+		gl_drawinfo->dldrawlists[GLLDL_FLATS_BRIGHT].DrawFlats(GLPASS_LIGHTTEX_ADDITIVE);
+		gl_drawinfo->dldrawlists[GLLDL_FLATS_MASKED].DrawFlats(GLPASS_LIGHTTEX_ADDITIVE);
+		gl_drawinfo->dldrawlists[GLLDL_WALLS_FOG].DrawWalls(GLPASS_LIGHTTEX_ADDITIVE);
+		gl_drawinfo->dldrawlists[GLLDL_WALLS_FOGMASKED].DrawWalls(GLPASS_LIGHTTEX_ADDITIVE);
+		gl_drawinfo->dldrawlists[GLLDL_FLATS_FOG].DrawFlats(GLPASS_LIGHTTEX_ADDITIVE);
+		gl_drawinfo->dldrawlists[GLLDL_FLATS_FOGMASKED].DrawFlats(GLPASS_LIGHTTEX_ADDITIVE);
+	}
+	else gl_lights = false;
 }

@@ -57,8 +57,10 @@ enum Drawpasses
 
 	// these are only used with texture based dynamic lights
 	GLPASS_BASE,		// untextured base for dynamic lights
+	GLPASS_BASE_MASKED,	// same but with active texture
 	GLPASS_LIGHTTEX,	// lighttexture pass
-	GLPASS_TEXONLY		// finishing texture pass
+	GLPASS_TEXONLY,		// finishing texture pass
+	GLPASS_LIGHTTEX_ADDITIVE,	// lighttexture pass (additive)
 
 };
 

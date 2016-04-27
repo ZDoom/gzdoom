@@ -813,8 +813,13 @@ bool Win32GLVideo::InitHardware (HWND Window, int multisample)
 
 		if (m_hRC == NULL && prof == WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB)
 		{
-			I_Error ("R_OPENGL: Unable to create an OpenGL render context.\n");
-			return false;
+
+			m_hRC = wglCreateContext(m_hDC);
+			if (m_hRC == NULL)
+			{
+				I_Error("R_OPENGL: Unable to create an OpenGL render context.\n");
+				return false;
+			}
 		}
 
 		if (m_hRC != NULL)

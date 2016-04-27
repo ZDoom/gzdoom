@@ -101,6 +101,7 @@ public:
 	void Initialize();
 
 	void CreateScene();
+	void RenderMultipassStuff();
 	void RenderScene(int recursion);
 	void RenderTranslucent();
 	void DrawScene(bool toscreen = false);

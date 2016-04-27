@@ -558,7 +558,7 @@ clearfog:
 void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover)
 {
 	int i;
-	fixed_t xscale;
+	double xscale;
 	double yscale;
 
 	fixed_t Alpha = Scale(rover->alpha, OPAQUE, 255);
@@ -599,7 +599,7 @@ void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover)
 		scaledside = rover->master->sidedef[0];
 		scaledpart = side_t::mid;
 	}
-	xscale = FLOAT2FIXED(rw_pic->Scale.X * scaledside->GetTextureXScale(scaledpart));
+	xscale = rw_pic->Scale.X * scaledside->GetTextureXScale(scaledpart);
 	yscale = rw_pic->Scale.Y * scaledside->GetTextureYScale(scaledpart);
 
 	double rowoffset = curline->sidedef->GetTextureYOffset(side_t::mid) + rover->master->sidedef[0]->GetTextureYOffset(side_t::mid);
@@ -616,7 +616,7 @@ void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover)
 		// still be positioned in world units rather than texels.
 
 		dc_texturemid = dc_texturemid + rowoffset * yscale;
-		rw_offset = MulScale16 (rw_offset, xscale);
+		rw_offset = xs_RoundToInt(rw_offset * xscale);
 	}
 	else
 	{

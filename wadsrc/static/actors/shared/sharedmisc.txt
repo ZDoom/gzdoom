@@ -51,6 +51,7 @@ ACTOR MapSpot
 	+NOGRAVITY
 	+DONTSPLASH
 	RenderStyle None
+	CameraHeight 0
 }	
 
 // same with different editor number for Legacy maps -----------------------

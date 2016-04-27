@@ -15,6 +15,7 @@ ACTOR SecurityCamera native
 	+NOGRAVITY
 	+DONTSPLASH
 	RenderStyle None
+	CameraHeight 0
 }
 
 ACTOR AimingCamera : SecurityCamera native 

@@ -264,6 +264,7 @@ class FMugShot
 			DISABLEOUCH = 0x8,
 			DISABLEPAIN = 0x10,
 			DISABLERAMPAGE = 0x20,
+			CUSTOM = 0x40,
 		};
 
 		FMugShot();

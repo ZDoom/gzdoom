@@ -666,8 +666,8 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 	int i,j;
 	F3DFloor *rover, *fover = NULL;
 	int passed, last;
-	fixed_t floorheight;
-	fixed_t ceilingheight;
+	double floorHeight;
+	double ceilingHeight;
 
 	sprflipvert = false;
 	curline = ds->curline;
@@ -686,16 +686,16 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 		frontsector = sec;
 	}
 
-	floorheight = FLOAT2FIXED(backsector->CenterFloor());
-	ceilingheight = FLOAT2FIXED(backsector->CenterCeiling());
+	floorHeight = backsector->CenterFloor();
+	ceilingHeight = backsector->CenterCeiling();
 
 	// maybe fix clipheights
-	if (!(fake3D & FAKE3D_CLIPBOTTOM)) sclipBottom = floorheight;
-	if (!(fake3D & FAKE3D_CLIPTOP))    sclipTop = ceilingheight;
+	if (!(fake3D & FAKE3D_CLIPBOTTOM)) sclipBottom = floorHeight;
+	if (!(fake3D & FAKE3D_CLIPTOP))    sclipTop = ceilingHeight;
 
 	// maybe not visible
-	if (sclipBottom >= FLOAT2FIXED(frontsector->CenterCeiling())) return;
-	if (sclipTop <= FLOAT2FIXED(frontsector->CenterFloor())) return;
+	if (sclipBottom >= frontsector->CenterCeiling()) return;
+	if (sclipTop <= frontsector->CenterFloor()) return;
 
 	if (fake3D & FAKE3D_DOWN2UP)
 	{ // bottom to viewz
@@ -709,8 +709,8 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 			passed = 0;
 			if (!(rover->flags & FF_RENDERSIDES) || rover->top.plane->isSlope() || rover->bottom.plane->isSlope() ||
 				rover->top.plane->Zat0() <= sclipBottom ||
-				rover->bottom.plane->Zat0() >= ceilingheight ||
-				rover->top.plane->Zat0() <= floorheight)
+				rover->bottom.plane->Zat0() >= ceilingHeight ||
+				rover->top.plane->Zat0() <= floorHeight)
 			{
 				if (!i)
 				{
@@ -892,8 +892,8 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 			if (!(rover->flags & FF_RENDERSIDES) ||
 				rover->top.plane->isSlope() || rover->bottom.plane->isSlope() ||
 				rover->bottom.plane->Zat0() >= sclipTop ||
-				rover->top.plane->Zat0() <= floorheight ||
-				rover->bottom.plane->Zat0() >= ceilingheight)
+				rover->top.plane->Zat0() <= floorHeight ||
+				rover->bottom.plane->Zat0() >= ceilingHeight)
 			{
 				if ((unsigned)i == backsector->e->XFloor.ffloors.Size() - 1)
 				{

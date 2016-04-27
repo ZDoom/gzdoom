@@ -37,8 +37,8 @@ DEarthquake::DEarthquake()
 
 DEarthquake::DEarthquake(AActor *center, int intensityX, int intensityY, int intensityZ, int duration,
 	int damrad, int tremrad, FSoundID quakesound, int flags,
-	double waveSpeedX, double waveSpeedY, double waveSpeedZ, int falloff, int highpoint, int rollIntensity,
-	double rollWave)
+	double waveSpeedX, double waveSpeedY, double waveSpeedZ, int falloff, int highpoint, 
+	double rollIntensity, double rollWave)
 	: DThinker(STAT_EARTHQUAKE)
 {
 	m_QuakeSFX = quakesound;
@@ -351,7 +351,7 @@ int DEarthquake::StaticGetQuakeIntensities(AActor *victim, FQuakeJiggers &jigger
 bool P_StartQuakeXYZ(AActor *activator, int tid, int intensityX, int intensityY, int intensityZ, int duration,
 	int damrad, int tremrad, FSoundID quakesfx, int flags,
 	double waveSpeedX, double waveSpeedY, double waveSpeedZ, int falloff, int highpoint, 
-	int rollIntensity, double rollWave)
+	double rollIntensity, double rollWave)
 {
 	AActor *center;
 	bool res = false;

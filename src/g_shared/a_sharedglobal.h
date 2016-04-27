@@ -164,7 +164,7 @@ class DEarthquake : public DThinker
 public:
 	DEarthquake(AActor *center, int intensityX, int intensityY, int intensityZ, int duration,
 		int damrad, int tremrad, FSoundID quakesfx, int flags, 
-		double waveSpeedX, double waveSpeedY, double waveSpeedZ, int falloff, int highpoint, int rollIntensity, double rollWave);
+		double waveSpeedX, double waveSpeedY, double waveSpeedZ, int falloff, int highpoint, double rollIntensity, double rollWave);
 
 	void Serialize (FArchive &arc);
 	void Tick ();

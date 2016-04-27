@@ -53,11 +53,10 @@ void R_3D_AddHeight(secplane_t *add, sector_t *sec)
 	HeightLevel *near;
 	HeightLevel *curr;
 
-	double fheight = add->ZatPoint(ViewPos);
-	if(fheight >= sec->CenterCeiling()) return;
-	if(fheight <= sec->CenterFloor()) return;
+	double height = add->ZatPoint(ViewPos);
+	if(height >= sec->CenterCeiling()) return;
+	if(height <= sec->CenterFloor()) return;
 
-	fixed_t height = FLOAT2FIXED(fheight);
 	fakeActive = 1;
 
 	if(height_max >= 0) {

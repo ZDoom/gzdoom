@@ -153,7 +153,7 @@ struct FQuakeJiggers
 	DVector3 RelIntensity;
 	DVector3 Offset;
 	DVector3 RelOffset;
-	double Falloff, WFalloff;
+	double Falloff, WFalloff, RFalloff, RWFalloff;
 	double RollIntensity, RollWave;
 };
 

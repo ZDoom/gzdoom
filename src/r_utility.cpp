@@ -872,9 +872,9 @@ void R_SetupFrame (AActor *actor)
 			double quakefactor = r_quakeintensity;
 			DAngle an;
 
-			if (jiggers.RollIntensity != 0 || jiggers.RollWave != 0)
+			if (jiggers.RollIntensity != 0)
 			{
-				ViewRoll += QuakePower(quakefactor, jiggers.RollIntensity, jiggers.RollWave, jiggers.Falloff, jiggers.WFalloff);
+				ViewRoll += QuakePower(quakefactor, jiggers.RollIntensity, jiggers.RollWave, jiggers.RFalloff, jiggers.RWFalloff);
 			}
 			if (jiggers.RelIntensity.X != 0 || jiggers.RelOffset.X != 0)
 			{

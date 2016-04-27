@@ -1068,11 +1068,11 @@ FUNC(LS_Teleport_NoFog)
 		break;
 
 	case 2:
-		flags |= TELF_KEEPORIENTATION | TELF_ROTATEBOOM;	// adjust to exit thing like Boom (i.e. with incorrect reversed angle)
+		if (ln != NULL) flags |= TELF_KEEPORIENTATION | TELF_ROTATEBOOM;	// adjust to exit thing like Boom (i.e. with incorrect reversed angle)
 		break;
 
 	case 3:
-		flags |= TELF_KEEPORIENTATION | TELF_ROTATEBOOMINVERSE;	// adjust to exit thing correctly
+		if (ln != NULL) flags |= TELF_KEEPORIENTATION | TELF_ROTATEBOOMINVERSE;	// adjust to exit thing correctly
 		break;
 	}
 

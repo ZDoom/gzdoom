@@ -230,3 +230,4 @@ enum
 443 = 0, Generic_Crusher(0)
 444 = 0, Teleport(0)
 445 = 0, Teleport_NoFog(0)
+446 = 0, Teleport_Line(0)

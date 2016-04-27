@@ -1578,23 +1578,25 @@ class CommandDrawMugShot : public SBarInfoCommand
 				sc.ScriptError("Expected a number between 1 and 9, got %d instead.", sc.Number);
 			accuracy = sc.Number;
 			sc.MustGetToken(',');
-			while(sc.CheckToken(TK_Identifier))
+			while (sc.CheckToken(TK_Identifier))
 			{
-				if(sc.Compare("xdeathface"))
-					stateFlags = static_cast<FMugShot::StateFlags> (stateFlags|FMugShot::XDEATHFACE);
-				else if(sc.Compare("animatedgodmode"))
-					stateFlags = static_cast<FMugShot::StateFlags> (stateFlags|FMugShot::ANIMATEDGODMODE);
-				else if(sc.Compare("disablegrin"))
-					stateFlags = static_cast<FMugShot::StateFlags> (stateFlags|FMugShot::DISABLEGRIN);
-				else if(sc.Compare("disableouch"))
-					stateFlags = static_cast<FMugShot::StateFlags> (stateFlags|FMugShot::DISABLEOUCH);
-				else if(sc.Compare("disablepain"))
-					stateFlags = static_cast<FMugShot::StateFlags> (stateFlags|FMugShot::DISABLEPAIN);
-				else if(sc.Compare("disablerampage"))
-					stateFlags = static_cast<FMugShot::StateFlags> (stateFlags|FMugShot::DISABLERAMPAGE);
+				if (sc.Compare("xdeathface"))
+					stateFlags = static_cast<FMugShot::StateFlags> (stateFlags | FMugShot::XDEATHFACE);
+				else if (sc.Compare("animatedgodmode"))
+					stateFlags = static_cast<FMugShot::StateFlags> (stateFlags | FMugShot::ANIMATEDGODMODE);
+				else if (sc.Compare("disablegrin"))
+					stateFlags = static_cast<FMugShot::StateFlags> (stateFlags | FMugShot::DISABLEGRIN);
+				else if (sc.Compare("disableouch"))
+					stateFlags = static_cast<FMugShot::StateFlags> (stateFlags | FMugShot::DISABLEOUCH);
+				else if (sc.Compare("disablepain"))
+					stateFlags = static_cast<FMugShot::StateFlags> (stateFlags | FMugShot::DISABLEPAIN);
+				else if (sc.Compare("disablerampage"))
+					stateFlags = static_cast<FMugShot::StateFlags> (stateFlags | FMugShot::DISABLERAMPAGE);
+				else if (sc.Compare("custom"))
+					stateFlags = static_cast<FMugShot::StateFlags> (stateFlags | FMugShot::CUSTOM);
 				else
 					sc.ScriptError("Unknown flag '%s'.", sc.String);
-				if(!sc.CheckToken('|'))
+				if (!sc.CheckToken('|'))
 					sc.MustGetToken(',');
 			}
 		

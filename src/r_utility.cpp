@@ -108,6 +108,7 @@ int 			viewwindowy;
 DVector3		ViewPos;
 DAngle			ViewAngle;
 DAngle			ViewPitch;
+DAngle			ViewRoll;
 DVector3		ViewPath[2];
 
 extern "C" 
@@ -542,11 +543,13 @@ void R_InterpolateView (player_t *player, double Frac, InterpolationViewer *ivie
 		ViewAngle = (nviewangle + AngleToFloat(LocalViewAngle & 0xFFFF0000)).Normalized180();
 		DAngle delta = player->centering ? DAngle(0.) : AngleToFloat(int(LocalViewPitch & 0xFFFF0000));
 		ViewPitch = clamp<DAngle>((iview->New.Angles.Pitch - delta).Normalized180(), player->MinPitch, player->MaxPitch);
+		ViewRoll = iview->New.Angles.Roll.Normalized180();
 	}
 	else
 	{
 		ViewPitch = (iview->Old.Angles.Pitch + deltaangle(iview->Old.Angles.Pitch, iview->New.Angles.Pitch) * Frac).Normalized180();
 		ViewAngle = (oviewangle + deltaangle(oviewangle, nviewangle) * Frac).Normalized180();
+		ViewRoll = (iview->Old.Angles.Roll + deltaangle(iview->Old.Angles.Roll, iview->New.Angles.Roll) * Frac).Normalized180();
 	}
 	
 	// Due to interpolation this is not necessarily the same as the sector the camera is in.
@@ -799,6 +802,7 @@ void R_SetupFrame (AActor *actor)
 		P_AimCamera (camera, campos, camangle, viewsector, unlinked);	// fixme: This needs to translate the angle, too.
 		iview->New.Pos = campos;
 		iview->New.Angles.Yaw = camangle;
+		
 		r_showviewer = true;
 		// Interpolating this is a very complicated thing because nothing keeps track of the aim camera's movement, so whenever we detect a portal transition
 		// it's probably best to just reset the interpolation for this move.
@@ -868,6 +872,10 @@ void R_SetupFrame (AActor *actor)
 			double quakefactor = r_quakeintensity;
 			DAngle an;
 
+			if (jiggers.RollIntensity != 0 || jiggers.RollWave != 0)
+			{
+				ViewRoll += QuakePower(quakefactor, jiggers.RollIntensity, jiggers.RollWave, jiggers.Falloff, jiggers.WFalloff);
+			}
 			if (jiggers.RelIntensity.X != 0 || jiggers.RelOffset.X != 0)
 			{
 				an = camera->Angles.Yaw;

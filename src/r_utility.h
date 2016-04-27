@@ -15,6 +15,7 @@ extern DCanvas			*RenderTarget;
 extern DVector3			ViewPos;
 extern DAngle			ViewAngle;
 extern DAngle			ViewPitch;
+extern DAngle			ViewRoll;
 extern DVector3			ViewPath[2];
 
 extern "C" int			centerx, centerxwide;

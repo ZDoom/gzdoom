@@ -322,6 +322,40 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetDistance)
 
 //==========================================================================
 //
+// GetAngle
+//
+// NON-ACTION function to get the angle in degrees (normalized to -180..180)
+//
+//==========================================================================
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetAngle)
+{
+	if (numret > 0)
+	{
+		assert(ret != NULL);
+		PARAM_SELF_PROLOGUE(AActor);
+		PARAM_BOOL(relative);
+		PARAM_INT_OPT(ptr) { ptr = AAPTR_TARGET; }
+
+		AActor *target = COPY_AAPTR(self, ptr);
+
+		if (!target || target == self)
+		{
+			ret->SetFloat(0);
+		}
+		else
+		{
+			DVector3 diff = self->Vec3To(target);
+			DAngle angto = diff.Angle();
+			if (relative) angto = deltaangle(self->Angles.Yaw, angto);
+			ret->SetFloat(angto.Degrees);
+		}
+		return 1;
+	}
+	return 0;
+}
+
+//==========================================================================
+//
 // GetSpawnHealth
 //
 //==========================================================================
@@ -4951,7 +4985,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_QuakeEx)
 	PARAM_FLOAT_OPT(mulWaveZ) { mulWaveZ = 1.; }
 	PARAM_INT_OPT(falloff) { falloff = 0; }
 	PARAM_INT_OPT(highpoint) { highpoint = 0; }
-	P_StartQuakeXYZ(self, 0, intensityX, intensityY, intensityZ, duration, damrad, tremrad, sound, flags, mulWaveX, mulWaveY, mulWaveZ, falloff, highpoint);
+	PARAM_INT_OPT(rollIntensity) { rollIntensity = 0; }
+	PARAM_FLOAT_OPT(rollWave) { rollWave = 0.; }
+	P_StartQuakeXYZ(self, 0, intensityX, intensityY, intensityZ, duration, damrad, tremrad, sound, flags, mulWaveX, mulWaveY, mulWaveZ, falloff, highpoint, 
+		rollIntensity, rollWave);
 	return 0;
 }
 

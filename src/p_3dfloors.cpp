@@ -790,7 +790,7 @@ void P_LineOpening_XFloors (FLineOpening &open, AActor * thing, const line_t *li
 						lowestceilingsec = j == 0 ? linedef->frontsector : linedef->backsector;
 					}
 					
-					if(ff_top > highestfloor && delta1 < delta2 && (!restrict || thing->Z() >= ff_top))
+					if(ff_top > highestfloor && delta1 <= delta2 && (!restrict || thing->Z() >= ff_top))
 					{
 						highestfloor = ff_top;
 						highestfloorpic = *rover->top.texture;

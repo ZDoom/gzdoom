@@ -287,21 +287,21 @@ void R_CalcTiltedLighting (double lval, double lend, int width)
 		}
 		if (width > 0)
 		{
-			lval = planeshade - lval;
-			lend = planeshade - lend;
+			lval = FIXED2DBL(planeshade) - lval;
+			lend = FIXED2DBL(planeshade) - lend;
 			lstep = (lend - lval) / width;
 			if (lstep < 0)
 			{ // Going from dark to light
-				if (lval < FRACUNIT)
+				if (lval < 1.)
 				{ // All bright
 					lightfiller = basecolormapdata;
 				}
 				else
 				{
-					if (lval >= NUMCOLORMAPS*FRACUNIT)
+					if (lval >= NUMCOLORMAPS)
 					{ // Starts beyond the dark end
 						BYTE *clight = basecolormapdata + ((NUMCOLORMAPS-1) << COLORMAPSHIFT);
-						while (lval >= NUMCOLORMAPS*FRACUNIT && i <= width)
+						while (lval >= NUMCOLORMAPS && i <= width)
 						{
 							tiltlighting[i++] = clight;
 							lval += lstep;
@@ -319,7 +319,7 @@ void R_CalcTiltedLighting (double lval, double lend, int width)
 			}
 			else
 			{ // Going from light to dark
-				if (lval >= (NUMCOLORMAPS-1)*FRACUNIT)
+				if (lval >= (NUMCOLORMAPS-1))
 				{ // All dark
 					lightfiller = basecolormapdata + ((NUMCOLORMAPS-1) << COLORMAPSHIFT);
 				}
@@ -332,7 +332,7 @@ void R_CalcTiltedLighting (double lval, double lend, int width)
 					}
 					if (i > width)
 						return;
-					while (i <= width && lval < (NUMCOLORMAPS-1)*FRACUNIT)
+					while (i <= width && lval < (NUMCOLORMAPS-1))
 					{
 						tiltlighting[i++] = basecolormapdata + (xs_ToInt(lval) << COLORMAPSHIFT);
 						lval += lstep;

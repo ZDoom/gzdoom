@@ -558,7 +558,7 @@ clearfog:
 void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover)
 {
 	int i;
-	fixed_t xscale;
+	double xscale;
 	double yscale;
 
 	fixed_t Alpha = Scale(rover->alpha, OPAQUE, 255);
@@ -599,7 +599,7 @@ void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover)
 		scaledside = rover->master->sidedef[0];
 		scaledpart = side_t::mid;
 	}
-	xscale = FLOAT2FIXED(rw_pic->Scale.X * scaledside->GetTextureXScale(scaledpart));
+	xscale = rw_pic->Scale.X * scaledside->GetTextureXScale(scaledpart);
 	yscale = rw_pic->Scale.Y * scaledside->GetTextureYScale(scaledpart);
 
 	double rowoffset = curline->sidedef->GetTextureYOffset(side_t::mid) + rover->master->sidedef[0]->GetTextureYOffset(side_t::mid);
@@ -616,7 +616,7 @@ void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover)
 		// still be positioned in world units rather than texels.
 
 		dc_texturemid = dc_texturemid + rowoffset * yscale;
-		rw_offset = MulScale16 (rw_offset, xscale);
+		rw_offset = xs_RoundToInt(rw_offset * xscale);
 	}
 	else
 	{
@@ -666,8 +666,8 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 	int i,j;
 	F3DFloor *rover, *fover = NULL;
 	int passed, last;
-	fixed_t floorheight;
-	fixed_t ceilingheight;
+	double floorHeight;
+	double ceilingHeight;
 
 	sprflipvert = false;
 	curline = ds->curline;
@@ -686,16 +686,16 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 		frontsector = sec;
 	}
 
-	floorheight = FLOAT2FIXED(backsector->CenterFloor());
-	ceilingheight = FLOAT2FIXED(backsector->CenterCeiling());
+	floorHeight = backsector->CenterFloor();
+	ceilingHeight = backsector->CenterCeiling();
 
 	// maybe fix clipheights
-	if (!(fake3D & FAKE3D_CLIPBOTTOM)) sclipBottom = floorheight;
-	if (!(fake3D & FAKE3D_CLIPTOP))    sclipTop = ceilingheight;
+	if (!(fake3D & FAKE3D_CLIPBOTTOM)) sclipBottom = floorHeight;
+	if (!(fake3D & FAKE3D_CLIPTOP))    sclipTop = ceilingHeight;
 
 	// maybe not visible
-	if (sclipBottom >= FLOAT2FIXED(frontsector->CenterCeiling())) return;
-	if (sclipTop <= FLOAT2FIXED(frontsector->CenterFloor())) return;
+	if (sclipBottom >= frontsector->CenterCeiling()) return;
+	if (sclipTop <= frontsector->CenterFloor()) return;
 
 	if (fake3D & FAKE3D_DOWN2UP)
 	{ // bottom to viewz
@@ -709,8 +709,8 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 			passed = 0;
 			if (!(rover->flags & FF_RENDERSIDES) || rover->top.plane->isSlope() || rover->bottom.plane->isSlope() ||
 				rover->top.plane->Zat0() <= sclipBottom ||
-				rover->bottom.plane->Zat0() >= ceilingheight ||
-				rover->top.plane->Zat0() <= floorheight)
+				rover->bottom.plane->Zat0() >= ceilingHeight ||
+				rover->top.plane->Zat0() <= floorHeight)
 			{
 				if (!i)
 				{
@@ -892,8 +892,8 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 			if (!(rover->flags & FF_RENDERSIDES) ||
 				rover->top.plane->isSlope() || rover->bottom.plane->isSlope() ||
 				rover->bottom.plane->Zat0() >= sclipTop ||
-				rover->top.plane->Zat0() <= floorheight ||
-				rover->bottom.plane->Zat0() >= ceilingheight)
+				rover->top.plane->Zat0() <= floorHeight ||
+				rover->bottom.plane->Zat0() >= ceilingHeight)
 			{
 				if ((unsigned)i == backsector->e->XFloor.ffloors.Size() - 1)
 				{
@@ -2910,12 +2910,12 @@ int WallMost (short *mostbuf, const secplane_t &plane, const FWallCoords *wallc)
 	y = z1 * InvZtoScale / iy1;
 	if (ix2 == ix1)
 	{
-		mostbuf[ix1] = (short)xs_RoundToInt(y/65536.0 + CenterY);
+		mostbuf[ix1] = (short)xs_RoundToInt(y + CenterY);
 	}
 	else
 	{
 		fixed_t yinc = FLOAT2FIXED(((z2 * InvZtoScale / iy2) - y) / (ix2-ix1));
-		qinterpolatedown16short (&mostbuf[ix1], ix2-ix1, FLOAT2FIXED(y/65536.0 + CenterY), yinc);
+		qinterpolatedown16short (&mostbuf[ix1], ix2-ix1, FLOAT2FIXED(y + CenterY), yinc);
 	}
 
 	return bad;

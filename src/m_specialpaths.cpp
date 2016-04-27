@@ -198,6 +198,13 @@ FString M_GetConfigPath(bool for_reading)
 	FString path;
 	HRESULT hr;
 
+	path.Format("%s" GAMENAME "_portable.ini", progdir.GetChars());
+	if (FileExists(path))
+	{
+		return path;
+	}
+	path = "";
+
 	// Construct a user-specific config name
 	if (UseKnownFolders() && GetKnownFolder(CSIDL_APPDATA, FOLDERID_RoamingAppData, true, path))
 	{

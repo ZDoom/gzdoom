@@ -50,7 +50,7 @@ struct vissprite_t
 			int		y1, y2;			// top / bottom of particle on screen
 		};
 	};
-	angle_t			angle;
+	DAngle			Angle;
 	fixed_t			xscale;
 	float			yscale;
 	float			depth;
@@ -141,7 +141,7 @@ void R_CheckOffscreenBuffer(int width, int height, bool spansonly);
 enum { DVF_OFFSCREEN = 1, DVF_SPANSONLY = 2, DVF_MIRRORED = 4 };
 
 void R_DrawVoxel(const FVector3 &viewpos, FAngle viewangle,
-	const FVector3 &sprpos, angle_t dasprang,
+	const FVector3 &sprpos, DAngle dasprang,
 	fixed_t daxscale, fixed_t dayscale, struct FVoxel *voxobj,
 	lighttable_t *colormap, short *daumost, short *dadmost, int minslabz, int maxslabz, int flags);
 

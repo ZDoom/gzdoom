@@ -678,7 +678,7 @@ void R_DrawVisVoxel(vissprite_t *spr, int minslabz, int maxslabz, short *cliptop
 	}
 
 	// Render the voxel, either directly to the screen or offscreen.
-	R_DrawVoxel(spr->pa.vpos, spr->pa.vang, spr->gpos, spr->angle,
+	R_DrawVoxel(spr->pa.vpos, spr->pa.vang, spr->gpos, spr->Angle,
 		spr->xscale, FLOAT2FIXED(spr->yscale), spr->voxel, spr->Style.colormap, cliptop, clipbot,
 		minslabz, maxslabz, flags);
 
@@ -994,7 +994,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 		vis->texturemid = tex->TopOffset - (ViewPos.Z - pos.Z + thing->Floorclip) / yscale;
 		vis->x1 = x1 < WindowLeft ? WindowLeft : x1;
 		vis->x2 = x2 > WindowRight ? WindowRight : x2;
-		vis->angle = thing->Angles.Yaw.BAMs();
+		vis->Angle = thing->Angles.Yaw;
 
 		if (renderflags & RF_XFLIP)
 		{
@@ -1024,13 +1024,13 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 
 		pos.Z -= thing->Floorclip;
 
-		vis->angle = thing->Angles.Yaw.BAMs() + voxel->AngleOffset.BAMs();
+		vis->Angle = thing->Angles.Yaw + voxel->AngleOffset;
 
 		int voxelspin = (thing->flags & MF_DROPPED) ? voxel->DroppedSpin : voxel->PlacedSpin;
 		if (voxelspin != 0)
 		{
 			DAngle ang = double(I_FPSTime()) * voxelspin / 1000;
-			vis->angle -= ang.BAMs();
+			vis->Angle -= ang;
 		}
 
 		vis->pa.vpos = { (float)ViewPos.X, (float)ViewPos.Y, (float)ViewPos.Z };
@@ -2664,7 +2664,7 @@ void R_DrawParticle (vissprite_t *vis)
 extern double BaseYaspectMul;;
 
 void R_DrawVoxel(const FVector3 &globalpos, FAngle viewangle,
-	const FVector3 &dasprpos, angle_t dasprang,
+	const FVector3 &dasprpos, DAngle dasprang,
 	fixed_t daxscale, fixed_t dayscale, FVoxel *voxobj,
 	lighttable_t *colormap, short *daumost, short *dadmost, int minslabz, int maxslabz, int flags)
 {
@@ -2698,10 +2698,10 @@ void R_DrawVoxel(const FVector3 &globalpos, FAngle viewangle,
 	dayscale = dayscale / (0xC000 >> 6);
 
 	angle_t viewang = viewangle.BAMs();
-	cosang = finecosine[viewang >> ANGLETOFINESHIFT] >> 2;
-	sinang = -finesine[viewang >> ANGLETOFINESHIFT] >> 2;
-	sprcosang = finecosine[dasprang >> ANGLETOFINESHIFT] >> 2;
-	sprsinang = -finesine[dasprang >> ANGLETOFINESHIFT] >> 2;
+	cosang = FLOAT2FIXED(viewangle.Cos()) >> 2;
+	sinang = FLOAT2FIXED(-viewangle.Sin()) >> 2;
+	sprcosang = FLOAT2FIXED(dasprang.Cos()) >> 2;
+	sprsinang = FLOAT2FIXED(-dasprang.Sin()) >> 2;
 
 	R_SetupDrawSlab(colormap);
 

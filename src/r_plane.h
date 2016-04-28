@@ -34,10 +34,10 @@ struct visplane_s
 {
 	struct visplane_s *next;		// Next visplane in hash chain -- killough
 
-	const FTransform *xform;
 	FDynamicColormap *colormap;		// [RH] Support multiple colormaps
 	FSectorPortal *portal;			// [RH] Support sky boxes
 
+	FTransform	xform;
 	secplane_t	height;
 	FTextureID	picnum;
 	int			lightlevel;

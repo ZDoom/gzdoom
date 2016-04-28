@@ -595,8 +595,12 @@ visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightl
 
 	if (picnum == skyflatnum)	// killough 10/98
 	{ // most skies map together
+		FTransform nulltransform;
 		lightlevel = 0;
-		xform = NULL;
+		xform = &nulltransform;
+		nulltransform.xOffs = nulltransform.yOffs = nulltransform.baseyOffs = 0;
+		nulltransform.xScale = nulltransform.yScale = 1;
+		nulltransform.Angle = nulltransform.baseAngle = 0.0;
 		additive = false;
 		// [RH] Map floor skies and ceiling skies to separate visplanes. This isn't
 		// always necessary, but it is needed if a floor and ceiling sky are in the
@@ -649,9 +653,7 @@ visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightl
 									 picnum == check->picnum &&
 									 lightlevel == check->lightlevel &&
 									 basecolormap == check->colormap &&	// [RH] Add more checks
-									 
-									 (xform == check->xform ||
-									  (xform != NULL && check->xform != NULL && *xform == *check->xform))
+									 *xform == check->xform
 									)
 								) &&
 								check->viewangle == stacked_angle
@@ -673,8 +675,7 @@ visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightl
 			picnum == check->picnum &&
 			lightlevel == check->lightlevel &&
 			basecolormap == check->colormap &&	// [RH] Add more checks
-			(xform == check->xform ||
-			 (xform != NULL && check->xform != NULL && *xform == *check->xform)) &&
+			*xform == check->xform &&
 			sky == check->sky &&
 			CurrentPortalUniq == check->CurrentPortalUniq &&
 			MirrorFlags == check->MirrorFlags &&
@@ -691,7 +692,7 @@ visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightl
 	check->height = plane;
 	check->picnum = picnum;
 	check->lightlevel = lightlevel;
-	check->xform = xform;
+	check->xform = *xform;
 	check->colormap = basecolormap;		// [RH] Save colormap
 	check->sky = sky;
 	check->portal = portal;
@@ -1095,8 +1096,8 @@ void R_DrawSinglePlane (visplane_t *pl, fixed_t alpha, bool additive, bool maske
 			masked = false;
 		}
 		R_SetupSpanBits(tex);
-		double xscale = pl->xform->xScale * tex->Scale.X;
-		double yscale = pl->xform->yScale * tex->Scale.Y;
+		double xscale = pl->xform.xScale * tex->Scale.X;
+		double yscale = pl->xform.yScale * tex->Scale.Y;
 		ds_source = tex->GetPixels ();
 
 		basecolormap = pl->colormap;
@@ -1494,19 +1495,19 @@ void R_DrawNormalPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t 
 		return;
 	}
 
-	DAngle planeang = pl->xform->Angle + pl->xform->baseAngle;
+	DAngle planeang = pl->xform.Angle + pl->xform.baseAngle;
 	xscale = xs_ToFixed(32 - ds_xbits, _xscale);
 	yscale = xs_ToFixed(32 - ds_ybits, _yscale);
 	if (planeang != 0)
 	{
 		double cosine = planeang.Cos(), sine = planeang.Sin();
-		pviewx = FLOAT2FIXED(pl->xform->xOffs + ViewPos.X * cosine - ViewPos.Y * sine);
-		pviewy = FLOAT2FIXED(pl->xform->yOffs - ViewPos.X * sine - ViewPos.Y * cosine);
+		pviewx = FLOAT2FIXED(pl->xform.xOffs + ViewPos.X * cosine - ViewPos.Y * sine);
+		pviewy = FLOAT2FIXED(pl->xform.yOffs - ViewPos.X * sine - ViewPos.Y * cosine);
 	}
 	else
 	{
-		pviewx = FLOAT2FIXED(pl->xform->xOffs + ViewPos.X);
-		pviewy = FLOAT2FIXED(pl->xform->yOffs - ViewPos.Y);
+		pviewx = FLOAT2FIXED(pl->xform.xOffs + ViewPos.X);
+		pviewy = FLOAT2FIXED(pl->xform.yOffs - ViewPos.Y);
 	}
 
 	pviewx = FixedMul (xscale, pviewx);
@@ -1624,8 +1625,8 @@ void R_DrawTiltedPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t 
 	yscale = 64.f / lyscale;
 	zeroheight = pl->height.ZatPoint(ViewPos);
 
-	pviewx = xs_ToFixed(32 - ds_xbits, pl->xform->xOffs * pl->xform->xScale);
-	pviewy = xs_ToFixed(32 - ds_ybits, pl->xform->yOffs * pl->xform->yScale);
+	pviewx = xs_ToFixed(32 - ds_xbits, pl->xform.xOffs * pl->xform.xScale);
+	pviewy = xs_ToFixed(32 - ds_ybits, pl->xform.yOffs * pl->xform.yScale);
 
 	// p is the texture origin in view space
 	// Don't add in the offsets at this stage, because doing so can result in
@@ -1652,7 +1653,7 @@ void R_DrawTiltedPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t 
 	// This code keeps the texture coordinates constant across the x,y plane no matter
 	// how much you slope the surface. Use the commented-out code above instead to keep
 	// the textures a constant size across the surface's plane instead.
-	ang = pl->xform->Angle + pl->xform->baseAngle;
+	ang = pl->xform.Angle + pl->xform.baseAngle;
 	m[1] = pl->height.ZatPoint(ViewPos.X + yscale * ang.Sin(), ViewPos.Y + yscale * ang.Cos()) - zeroheight;
 	ang += 90;
 	n[1] = pl->height.ZatPoint(ViewPos.X + xscale * ang.Sin(), ViewPos.Y + xscale * ang.Cos()) - zeroheight;

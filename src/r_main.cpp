@@ -167,79 +167,35 @@ static int lastcenteryfrac;
 
 //==========================================================================
 //
-// viewangletox
-//
-// Used solely for construction the xtoviewangle table.
-//
-//==========================================================================
-
-static inline int viewangletox(int i)
-{
-	const double pimul = M_PI / 4096;
-
-	// Don't waste time calculating the tangent of values outside the valid range.
-	// Checking the index where tan(i) becomes too large is a lot faster
-	if (i <= 604)	// 604 is the highest index with tan < -2
-	{
-		return viewwidth + 1;
-	}
-	else if (i >= 4096 - 604)	// same as above with reversed signs
-	{
-		return -1;
-	}
-
-	double t = tan((i - 2048)*pimul) * FocalLengthX;
-	return clamp(xs_CeilToInt(CenterX - t), -1, viewwidth+1);
-}
-
-//==========================================================================
-//
 // R_InitTextureMapping
 //
 //==========================================================================
 
 void R_InitTextureMapping ()
 {
-	int i, x;
+	int i;
 
-	// Calc focallength so FieldOfView fineangles covers viewwidth.
+	// Calc focallength so FieldOfView angles cover viewwidth.
 	FocalLengthX = CenterX / FocalTangent;
 	FocalLengthY = FocalLengthX * YaspectMul;
 
 	// This is 1/FocalTangent before the widescreen extension of FOV.
 	viewingrangerecip = FLOAT2FIXED(1. / tan(FieldOfView.Radians() / 2));
 
-	// [RH] Do not generate viewangletox, because texture mapping is no
-	// longer done with trig, so it's not needed.
 
 	// Now generate xtoviewangle for sky texture mapping.
-	// We do this with a hybrid approach: The center 90 degree span is
-	// constructed as per the original code:
-	//   Scan xtoviewangle to find the smallest view angle that maps to x.
-	//   (viewangletox is sorted in non-increasing order.)
-	//   This reduces the chances of "doubling-up" of texture columns in
-	//   the drawn sky texture.
-	// The remaining arcs are done with tantoangle instead.
+	// [RH] Do not generate viewangletox, because texture mapping is no
+	// longer done with trig, so it's not needed.
+	const double slopestep = FocalTangent / centerx;
+	double slope;
 
-	const int t1 = MAX(int(CenterX - FocalLengthX), 0);
-	const int t2 = MIN(int(CenterX + FocalLengthX), viewwidth);
-
-	for (i = 0, x = t2; x >= t1; --x)
+	for (i = centerx, slope = 0; i <= viewwidth; i++, slope += slopestep)
 	{
-		while (viewangletox(i) > x)
-		{
-			++i;
-		}
-		xtoviewangle[x] = (i << 19) - ANGLE_90;
+		xtoviewangle[i] = angle_t((2 * M_PI - atan(slope)) * (ANGLE_180 / M_PI));
 	}
-	for (x = t2 + 1; x <= viewwidth; ++x)
+	for (i = 0; i < centerx; i++)
 	{
-		double f = atan2((FocalLengthX / (x - centerx)), 1) / (2*M_PI);
-		xtoviewangle[x] = ANGLE_270 + (angle_t)(0xffffffff * f);
-	}
-	for (x = 0; x < t1; ++x)
-	{
-		xtoviewangle[x] = (angle_t)(-(signed)xtoviewangle[viewwidth - x]);
+		xtoviewangle[i] = 0 - xtoviewangle[viewwidth - i - 1];
 	}
 }
 

@@ -582,29 +582,21 @@ static visplane_t *new_visplane (unsigned hash)
 //==========================================================================
 
 visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightlevel, double Alpha, bool additive,
-						const FTransform &xform,
+						const FTransform &xxform,
 						 int sky, FSectorPortal *portal)
 {
 	secplane_t plane;
 	visplane_t *check;
 	unsigned hash;						// killough
 	bool isskybox;
-	fixed_t xoffs = FLOAT2FIXED(xform.xOffs);
-	fixed_t yoffs = FLOAT2FIXED(xform.yOffs + xform.baseyOffs);
-	fixed_t xscale = FLOAT2FIXED(xform.xScale);
-	fixed_t yscale = FLOAT2FIXED(xform.yScale);
+	const FTransform *xform = &xxform;
 	fixed_t alpha = FLOAT2FIXED(Alpha);
-	angle_t angle = (xform.Angle + xform.baseAngle).BAMs();
+	//angle_t angle = (xform.Angle + xform.baseAngle).BAMs();
 
 	if (picnum == skyflatnum)	// killough 10/98
 	{ // most skies map together
 		lightlevel = 0;
-		xoffs = 0;
-		yoffs = 0;
-		xscale = 0;
-		yscale = 0;
-		angle = 0;
-		alpha = 0;
+		xform = NULL;
 		additive = false;
 		// [RH] Map floor skies and ceiling skies to separate visplanes. This isn't
 		// always necessary, but it is needed if a floor and ceiling sky are in the
@@ -656,13 +648,10 @@ visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightl
 									(plane == check->height &&
 									 picnum == check->picnum &&
 									 lightlevel == check->lightlevel &&
-									 
-									 xoffs == check->xoffs &&	// killough 2/28/98: Add offset checks
-									 yoffs == check->yoffs &&
 									 basecolormap == check->colormap &&	// [RH] Add more checks
-									 xscale == check->xscale &&
-									 yscale == check->yscale &&
-									 angle == check->angle
+									 
+									 (xform == check->xform ||
+									  (xform != NULL && check->xform != NULL && *xform == *check->xform))
 									)
 								) &&
 								check->viewangle == stacked_angle
@@ -683,12 +672,9 @@ visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightl
 		if (plane == check->height &&
 			picnum == check->picnum &&
 			lightlevel == check->lightlevel &&
-			xoffs == check->xoffs &&	// killough 2/28/98: Add offset checks
-			yoffs == check->yoffs &&
 			basecolormap == check->colormap &&	// [RH] Add more checks
-			xscale == check->xscale &&
-			yscale == check->yscale &&
-			angle == check->angle && 
+			(xform == check->xform ||
+			 (xform != NULL && check->xform != NULL && *xform == *check->xform)) &&
 			sky == check->sky &&
 			CurrentPortalUniq == check->CurrentPortalUniq &&
 			MirrorFlags == check->MirrorFlags &&
@@ -705,11 +691,7 @@ visplane_t *R_FindPlane (const secplane_t &height, FTextureID picnum, int lightl
 	check->height = plane;
 	check->picnum = picnum;
 	check->lightlevel = lightlevel;
-	check->xoffs = xoffs;				// killough 2/28/98: Save offsets
-	check->yoffs = yoffs;
-	check->xscale = xscale;
-	check->yscale = yscale;
-	check->angle = angle;
+	check->xform = xform;
 	check->colormap = basecolormap;		// [RH] Save colormap
 	check->sky = sky;
 	check->portal = portal;
@@ -794,11 +776,7 @@ visplane_t *R_CheckPlane (visplane_t *pl, int start, int stop)
 		new_pl->height = pl->height;
 		new_pl->picnum = pl->picnum;
 		new_pl->lightlevel = pl->lightlevel;
-		new_pl->xoffs = pl->xoffs;			// killough 2/28/98
-		new_pl->yoffs = pl->yoffs;
-		new_pl->xscale = pl->xscale;		// [RH] copy these, too
-		new_pl->yscale = pl->yscale;
-		new_pl->angle = pl->angle;
+		new_pl->xform = pl->xform;
 		new_pl->colormap = pl->colormap;
 		new_pl->portal = pl->portal;
 		new_pl->extralight = pl->extralight;
@@ -1117,8 +1095,8 @@ void R_DrawSinglePlane (visplane_t *pl, fixed_t alpha, bool additive, bool maske
 			masked = false;
 		}
 		R_SetupSpanBits(tex);
-		pl->xscale = fixed_t(pl->xscale * tex->Scale.X);
-		pl->yscale = fixed_t(pl->yscale * tex->Scale.Y);
+		double xscale = pl->xform->xScale * tex->Scale.X;
+		double yscale = pl->xform->yScale * tex->Scale.Y;
 		ds_source = tex->GetPixels ();
 
 		basecolormap = pl->colormap;
@@ -1126,11 +1104,11 @@ void R_DrawSinglePlane (visplane_t *pl, fixed_t alpha, bool additive, bool maske
 
 		if (r_drawflat || (!pl->height.isSlope() && !tilt))
 		{
-			R_DrawNormalPlane (pl, alpha, additive, masked);
+			R_DrawNormalPlane(pl, xscale, yscale, alpha, additive, masked);
 		}
 		else
 		{
-			R_DrawTiltedPlane (pl, alpha, additive, masked);
+			R_DrawTiltedPlane(pl, xscale, yscale, alpha, additive, masked);
 		}
 	}
 	NetUpdate ();
@@ -1502,7 +1480,7 @@ void R_DrawSkyPlane (visplane_t *pl)
 //
 //==========================================================================
 
-void R_DrawNormalPlane (visplane_t *pl, fixed_t alpha, bool additive, bool masked)
+void R_DrawNormalPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t alpha, bool additive, bool masked)
 {
 #ifdef X86_ASM
 	if (ds_source != ds_cursource)
@@ -1516,31 +1494,29 @@ void R_DrawNormalPlane (visplane_t *pl, fixed_t alpha, bool additive, bool maske
 		return;
 	}
 
-	angle_t planeang = pl->angle;
-	xscale = pl->xscale << (16 - ds_xbits);
-	yscale = pl->yscale << (16 - ds_ybits);
+	DAngle planeang = pl->xform->Angle + pl->xform->baseAngle;
+	xscale = xs_ToFixed(32 - ds_xbits, _xscale);
+	yscale = xs_ToFixed(32 - ds_ybits, _yscale);
 	if (planeang != 0)
 	{
-		double rad = planeang * (M_PI / ANGLE_180);
-		double cosine = cos(rad), sine = sin(rad);
-
-		pviewx = xs_RoundToInt(pl->xoffs + FLOAT2FIXED(ViewPos.X * cosine - ViewPos.Y * sine));
-		pviewy = xs_RoundToInt(pl->yoffs - FLOAT2FIXED(ViewPos.X * sine - ViewPos.Y * cosine));
+		double cosine = planeang.Cos(), sine = planeang.Sin();
+		pviewx = FLOAT2FIXED(pl->xform->xOffs + ViewPos.X * cosine - ViewPos.Y * sine);
+		pviewy = FLOAT2FIXED(pl->xform->yOffs - ViewPos.X * sine - ViewPos.Y * cosine);
 	}
 	else
 	{
-		pviewx = pl->xoffs + FLOAT2FIXED(ViewPos.X);
-		pviewy = pl->yoffs - FLOAT2FIXED(ViewPos.Y);
+		pviewx = FLOAT2FIXED(pl->xform->xOffs + ViewPos.X);
+		pviewy = FLOAT2FIXED(pl->xform->yOffs - ViewPos.Y);
 	}
 
 	pviewx = FixedMul (xscale, pviewx);
 	pviewy = FixedMul (yscale, pviewy);
 	
 	// left to right mapping
-	planeang = (ViewAngle.BAMs() - ANG90 + planeang) >> ANGLETOFINESHIFT;
+	planeang = ViewAngle - 90 + planeang;
 	// Scale will be unit scale at FocalLengthX (normally SCREENWIDTH/2) distance
-	xstepscale = fixed_t(FixedMul(xscale, finecosine[planeang]) / FocalLengthX);
-	ystepscale = fixed_t(FixedMul(yscale, -finesine[planeang]) / FocalLengthX);
+	xstepscale = xs_RoundToInt(xscale * planeang.Cos() / FocalLengthX);
+	ystepscale = xs_RoundToInt(yscale * -planeang.Sin() / FocalLengthX);
 
 	// [RH] flip for mirrors
 	if (MirrorFlags & RF_XFLIP)
@@ -1550,9 +1526,9 @@ void R_DrawNormalPlane (visplane_t *pl, fixed_t alpha, bool additive, bool maske
 	}
 
 	int x = pl->right - halfviewwidth - 1;
-	planeang = (planeang + (ANG90 >> ANGLETOFINESHIFT)) & FINEMASK;
-	basexfrac = FixedMul (xscale, finecosine[planeang]) + x*xstepscale;
-	baseyfrac = FixedMul (yscale, -finesine[planeang]) + x*ystepscale;
+	planeang += 90;
+	basexfrac = xs_RoundToInt(xscale * planeang.Cos()) + x*xstepscale;
+	baseyfrac = xs_RoundToInt(yscale * -planeang.Sin()) + x*ystepscale;
 
 	planeheight = fabs(pl->height.Zat0() - ViewPos.Z);
 
@@ -1620,7 +1596,7 @@ void R_DrawNormalPlane (visplane_t *pl, fixed_t alpha, bool additive, bool maske
 //
 //==========================================================================
 
-void R_DrawTiltedPlane (visplane_t *pl, fixed_t alpha, bool additive, bool masked)
+void R_DrawTiltedPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t alpha, bool additive, bool masked)
 {
 	static const float ifloatpow2[16] =
 	{
@@ -1634,7 +1610,7 @@ void R_DrawTiltedPlane (visplane_t *pl, fixed_t alpha, bool additive, bool maske
 	double lxscale, lyscale;
 	double xscale, yscale;
 	FVector3 p, m, n;
-	double ang;
+	DAngle ang;
 	double zeroheight;
 
 	if (alpha <= 0)
@@ -1642,44 +1618,44 @@ void R_DrawTiltedPlane (visplane_t *pl, fixed_t alpha, bool additive, bool maske
 		return;
 	}
 
-	lxscale = FIXED2DBL(pl->xscale) * ifloatpow2[ds_xbits];
-	lyscale = FIXED2DBL(pl->yscale) * ifloatpow2[ds_ybits];
+	lxscale = _xscale * ifloatpow2[ds_xbits];
+	lyscale = _yscale * ifloatpow2[ds_ybits];
 	xscale = 64.f / lxscale;
 	yscale = 64.f / lyscale;
 	zeroheight = pl->height.ZatPoint(ViewPos);
 
-	pviewx = MulScale (pl->xoffs, pl->xscale, ds_xbits);
-	pviewy = MulScale (pl->yoffs, pl->yscale, ds_ybits);
+	pviewx = xs_ToFixed(32 - ds_xbits, pl->xform->xOffs * pl->xform->xScale);
+	pviewy = xs_ToFixed(32 - ds_ybits, pl->xform->yOffs * pl->xform->yScale);
 
 	// p is the texture origin in view space
 	// Don't add in the offsets at this stage, because doing so can result in
 	// errors if the flat is rotated.
-	ang = (DAngle(270.) - ViewAngle).Radians();
-	p[0] = ViewPos.X * cos(ang) - ViewPos.Y * sin(ang);
-	p[2] = ViewPos.X * sin(ang) + ViewPos.Y * cos(ang);
+	ang = DAngle(270.) - ViewAngle;
+	p[0] = ViewPos.X * ang.Cos() - ViewPos.Y * ang.Sin();
+	p[2] = ViewPos.X * ang.Sin() + ViewPos.Y * ang.Cos();
 	p[1] = pl->height.ZatPoint(0.0, 0.0) - ViewPos.Z;
 
 	// m is the v direction vector in view space
-	ang = (DAngle(180.) - ViewAngle).Radians();
-	m[0] = yscale * cos(ang);
-	m[2] = yscale * sin(ang);
+	ang = DAngle(180.) - ViewAngle;
+	m[0] = yscale * ang.Cos();
+	m[2] = yscale * ang.Sin();
 //	m[1] = pl->height.ZatPointF (0, iyscale) - pl->height.ZatPointF (0,0));
 //	VectorScale2 (m, 64.f/VectorLength(m));
 
 	// n is the u direction vector in view space
-	ang += PI/2;
-	n[0] = -xscale * cos(ang);
-	n[2] = -xscale * sin(ang);
+	ang += 90;
+	n[0] = -xscale * ang.Cos();
+	n[2] = -xscale * ang.Sin();
 //	n[1] = pl->height.ZatPointF (ixscale, 0) - pl->height.ZatPointF (0,0));
 //	VectorScale2 (n, 64.f/VectorLength(n));
 
 	// This code keeps the texture coordinates constant across the x,y plane no matter
 	// how much you slope the surface. Use the commented-out code above instead to keep
 	// the textures a constant size across the surface's plane instead.
-	ang = pl->angle * (M_PI / ANGLE_180);
-	m[1] = pl->height.ZatPoint(ViewPos.X + yscale * sin(ang), ViewPos.Y + yscale * cos(ang)) - zeroheight;
-	ang += PI/2;
-	n[1] = pl->height.ZatPoint(ViewPos.X + xscale * sin(ang), ViewPos.Y + xscale * cos(ang)) - zeroheight;
+	ang = pl->xform->Angle + pl->xform->baseAngle;
+	m[1] = pl->height.ZatPoint(ViewPos.X + yscale * ang.Sin(), ViewPos.Y + yscale * ang.Cos()) - zeroheight;
+	ang += 90;
+	n[1] = pl->height.ZatPoint(ViewPos.X + xscale * ang.Sin(), ViewPos.Y + xscale * ang.Cos()) - zeroheight;
 
 	plane_su = p ^ m;
 	plane_sv = p ^ n;

@@ -34,16 +34,15 @@ struct visplane_s
 {
 	struct visplane_s *next;		// Next visplane in hash chain -- killough
 
+	const FTransform *xform;
+	FDynamicColormap *colormap;		// [RH] Support multiple colormaps
+	FSectorPortal *portal;			// [RH] Support sky boxes
+
 	secplane_t	height;
 	FTextureID	picnum;
 	int			lightlevel;
-	fixed_t		xoffs, yoffs;		// killough 2/28/98: Support scrolling flats
 	int			left, right;
-	FDynamicColormap *colormap;		// [RH] Support multiple colormaps
-	fixed_t		xscale, yscale;		// [RH] Support flat scaling
-	angle_t		angle;				// [RH] Support flat rotation
 	int			sky;
-	FSectorPortal *portal;			// [RH] Support sky boxes
 
 	// [RH] This set of variables copies information from the time when the
 	// visplane is created. They are only used by stacks so that you can
@@ -90,8 +89,8 @@ void R_ClearPlanes (bool fullclear);
 int R_DrawPlanes ();
 void R_DrawPortals ();
 void R_DrawSkyPlane (visplane_t *pl);
-void R_DrawNormalPlane (visplane_t *pl, fixed_t alpha, bool additive, bool masked);
-void R_DrawTiltedPlane (visplane_t *pl, fixed_t alpha, bool additive, bool masked);
+void R_DrawNormalPlane (visplane_t *pl, double xscale, double yscale, fixed_t alpha, bool additive, bool masked);
+void R_DrawTiltedPlane (visplane_t *pl, double xscale, double yscale, fixed_t alpha, bool additive, bool masked);
 void R_MapVisPlane (visplane_t *pl, void (*mapfunc)(int y, int x1));
 
 visplane_t *R_FindPlane

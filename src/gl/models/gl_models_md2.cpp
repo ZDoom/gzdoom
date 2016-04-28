@@ -64,8 +64,8 @@ static float   avertexnormals[NUMVERTEXNORMALS][3] = {
 
 static void UnpackVector(unsigned short packed, float vec[3])
 {
-	float   yaw = (packed & 511) / 512.0f * 2 * PI;
-	float   pitch = ((packed >> 9) / 127.0f - 0.5f) * PI;
+	float   yaw = (packed & 511) / 512.0f * 2 * M_PI;
+	float   pitch = ((packed >> 9) / 127.0f - 0.5f) * M_PI;
 	float   cosp = (float) cos(pitch);
 
 	vec[VX] = (float) cos(yaw) * cosp;

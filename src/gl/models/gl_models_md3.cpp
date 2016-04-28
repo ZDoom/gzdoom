@@ -60,8 +60,8 @@ static void UnpackVector(unsigned short packed, float & nx, float & ny, float & 
 {
 	double lat = ( packed >> 8 ) & 0xff;
 	double lng = ( packed & 0xff );
-	lat *= PI/128;
-	lng *= PI/128;
+	lat *= M_PI/128;
+	lng *= M_PI/128;
 
 	nx = cos(lat) * sin(lng);
 	ny = sin(lat) * sin(lng);

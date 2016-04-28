@@ -229,7 +229,7 @@ struct FDrawInfo
 
 	FDrawInfo * next;
 	GLDrawList drawlists[GLDL_TYPES];
-	GLDrawList *dldrawlists;	// only gets allocated when needed.
+	GLDrawList *dldrawlists = NULL;	// only gets allocated when needed.
 
 	FDrawInfo();
 	~FDrawInfo();

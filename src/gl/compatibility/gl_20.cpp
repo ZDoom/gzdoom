@@ -143,12 +143,15 @@ BYTE *gl_WarpBuffer(BYTE *buffer, int Width, int Height, int warp, float Speed)
 	int xmask = xsize - 1;
 	int ymask = ysize - 1;
 	int ds_xbits;
-	int i, x;
+	int i;
 
 	if (warp == 1)
 	{
 		for (ds_xbits = -1, i = Width; i; i >>= 1, ds_xbits++);
 
+		// pending consolidation with the software renderer's code.
+
+		/*
 		for (x = xsize - 1; x >= 0; x--)
 		{
 			int yt, yf = (finesine[(timebase + (x + 17) * 128)&FINEMASK] >> 13) & ymask;
@@ -172,12 +175,14 @@ BYTE *gl_WarpBuffer(BYTE *buffer, int Width, int Height, int warp, float Speed)
 			}
 			memcpy(out + y*xsize, linebuffer, xsize * sizeof(DWORD));
 		}
+		*/
 	}
 	else
 	{
 		int ybits;
 		for (ybits = -1, i = ysize; i; i >>= 1, ybits++);
 
+		/*
 		DWORD timebase = (r_FrameTime * Speed * 40 / 28);
 		for (x = xsize - 1; x >= 0; x--)
 		{
@@ -194,6 +199,7 @@ BYTE *gl_WarpBuffer(BYTE *buffer, int Width, int Height, int warp, float Speed)
 				*dest = *source;
 			}
 		}
+		*/
 	}
 	delete[] buffer;
 	return (BYTE*)out;

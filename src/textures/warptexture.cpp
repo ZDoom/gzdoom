@@ -120,9 +120,9 @@ const BYTE *FWarpTexture::GetColumn (unsigned int column, const Span **spans_out
 	return Pixels + column*Height;
 }
 
-void FWarpTexture::MakeTexture (DWORD time)
+void FWarpTexture::MakeTexture(DWORD time)
 {
-	const BYTE *otherpix = SourcePic->GetPixels ();
+	const BYTE *otherpix = SourcePic->GetPixels();
 
 	if (Pixels == NULL)
 	{
@@ -130,17 +130,17 @@ void FWarpTexture::MakeTexture (DWORD time)
 	}
 	if (Spans != NULL)
 	{
-		FreeSpans (Spans);
+		FreeSpans(Spans);
 		Spans = NULL;
 	}
 
 	GenTime = time;
 
-	BYTE *buffer = (BYTE *)alloca (MAX (Width, Height));
+	BYTE *buffer = (BYTE *)alloca(MAX(Width, Height));
 	int xsize = Width;
 	int ysize = Height;
-	int xmul = WidthOffsetMultipiler;  // [mxd]
-	int ymul = HeightOffsetMultipiler; // [mxd]
+	int xmul = WidthOffsetMultiplier;  // [mxd]
+	int ymul = HeightOffsetMultiplier; // [mxd]
 	int xmask = WidthMask;
 	int ymask = Height - 1;
 	int ybits = HeightBits;
@@ -153,39 +153,39 @@ void FWarpTexture::MakeTexture (DWORD time)
 
 	DWORD timebase = DWORD(time * Speed * 32 / 28);
 	// [mxd] Rewrote to fix animation for NPo2 textures
-	for (y = ysize-1; y >= 0; y--)
+	for (y = ysize - 1; y >= 0; y--)
 	{
-		int xf = (finesine[(timebase+y*ymul)&FINEMASK]>>13) % xsize;
-		if(xf < 0) xf += xsize; 
+		int xf = (TexMan.sintable[((timebase + y*ymul) >> 2)&TexMan.SINMASK] >> 11) % xsize;
+		if (xf < 0) xf += xsize;
 		int xt = xf;
 		const BYTE *source = otherpix + y;
 		BYTE *dest = Pixels + y;
-		for (xt = xsize; xt; xt--, xf = (xf+1)%xsize, dest += ysize)
+		for (xt = xsize; xt; xt--, xf = (xf + 1) % xsize, dest += ysize)
 			*dest = source[xf + ymask * xf];
 	}
 	timebase = DWORD(time * Speed * 23 / 28);
-	for (x = xsize-1; x >= 0; x--)
+	for (x = xsize - 1; x >= 0; x--)
 	{
-		int yf = (finesine[(time+(x+17)*xmul)&FINEMASK]>>13) % ysize;
-		if(yf < 0) yf += ysize;
+		int yf = (TexMan.sintable[((time + (x + 17)*xmul) >> 2)&TexMan.SINMASK] >> 11) % ysize;
+		if (yf < 0) yf += ysize;
 		int yt = yf;
 		const BYTE *source = Pixels + (x + ymask * x);
 		BYTE *dest = buffer;
-		for (yt = ysize; yt; yt--, yf = (yf+1)%ysize)
+		for (yt = ysize; yt; yt--, yf = (yf + 1) % ysize)
 			*dest++ = source[yf];
-		memcpy (Pixels+(x+ymask*x), buffer, ysize);
+		memcpy(Pixels + (x + ymask*x), buffer, ysize);
 	}
 }
 
 // [mxd] Non power of 2 textures need different offset multipliers, otherwise warp animation won't sync across texture
 void FWarpTexture::SetupMultipliers (int width, int height)
 {
-	WidthOffsetMultipiler = width;
-	HeightOffsetMultipiler = height;
+	WidthOffsetMultiplier = width;
+	HeightOffsetMultiplier = height;
 	int widthpo2 = NextPo2(Width);
 	int heightpo2 = NextPo2(Height);
-	if(widthpo2 != Width) WidthOffsetMultipiler = (int)(WidthOffsetMultipiler * ((float)widthpo2 / Width));
-	if(heightpo2 != Height) HeightOffsetMultipiler = (int)(HeightOffsetMultipiler * ((float)heightpo2 / Height));
+	if(widthpo2 != Width) WidthOffsetMultiplier = (int)(WidthOffsetMultiplier * ((float)widthpo2 / Width));
+	if(heightpo2 != Height) HeightOffsetMultiplier = (int)(HeightOffsetMultiplier * ((float)heightpo2 / Height));
 }
 
 int FWarpTexture::NextPo2 (int v)
@@ -225,8 +225,8 @@ void FWarp2Texture::MakeTexture (DWORD time)
 
 	int xsize = Width;
 	int ysize = Height;
-	int xmul = WidthOffsetMultipiler;  // [mxd]
-	int ymul = HeightOffsetMultipiler; // [mxd]
+	int xmul = WidthOffsetMultiplier;  // [mxd]
+	int ymul = HeightOffsetMultiplier; // [mxd]
 	int xmask = WidthMask;
 	int ymask = Height - 1;
 	int ybits = HeightBits;
@@ -245,12 +245,12 @@ void FWarp2Texture::MakeTexture (DWORD time)
 		for (y = 0; y < ysize; y++)
 		{
 			int xt = (x + 128
-				+ ((finesine[(y*ymul + timebase*5 + 900) & FINEMASK]*2)>>FRACBITS)
-				+ ((finesine[(x*xmul + timebase*4 + 300) & FINEMASK]*2)>>FRACBITS)) % xsize;
+				+ ((TexMan.sintable[((y*ymul + timebase*5 + 900) >> 2) & TexMan.SINMASK])>>13)
+				+ ((TexMan.sintable[((x*xmul + timebase*4 + 300) >> 2) & TexMan.SINMASK])>>13)) % xsize;
 
 			int yt = (y + 128
-				+ ((finesine[(y*ymul + timebase*3 + 700) & FINEMASK]*2)>>FRACBITS)
-				+ ((finesine[(x*xmul + timebase*4 + 1200) & FINEMASK]*2)>>FRACBITS)) % ysize;
+				+ ((TexMan.sintable[((y*ymul + timebase*3 + 700) >> 2) & TexMan.SINMASK])>>13)
+				+ ((TexMan.sintable[((x*xmul + timebase*4 + 1200) >> 2) & TexMan.SINMASK])>>13)) % ysize;
 
 			*dest++ = otherpix[(xt + ymask * xt) + yt];
 		}

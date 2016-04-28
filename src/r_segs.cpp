@@ -2670,53 +2670,51 @@ int OWallMost (short *mostbuf, double z, const FWallCoords *wallc)
 	s3 = globaldclip * wallc->sz1; s4 = globaldclip * wallc->sz2;
 	bad = (z<s1)+((z<s2)<<1)+((z>s3)<<2)+((z>s4)<<3);
 
-#if 1
 	if ((bad&3) == 3)
-	{
+	{ // entire line is above the screen
 		memset (&mostbuf[wallc->sx1], 0, (wallc->sx2 - wallc->sx1)*sizeof(mostbuf[0]));
 		return bad;
 	}
 
 	if ((bad&12) == 12)
-	{
+	{ // entire line is below the screen
 		clearbufshort (&mostbuf[wallc->sx1], wallc->sx2 - wallc->sx1, viewheight);
 		return bad;
 	}
-#endif
 	ix1 = wallc->sx1; iy1 = wallc->sz1;
 	ix2 = wallc->sx2; iy2 = wallc->sz2;
 #if 1
 	if (bad & 3)
-	{
+	{ // the line intersects the top of the screen
 		double t = (z-s1) / (s2-s1);
 		double inty = wallc->sz1 + t * (wallc->sz2 - wallc->sz1);
 		int xcross = xs_RoundToInt(wallc->sx1 + (t * wallc->sz2 * (wallc->sx2 - wallc->sx1)) / inty);
 
 		if ((bad & 3) == 2)
-		{
+		{ // the right side is above the screen
 			if (wallc->sx1 <= xcross) { iy2 = inty; ix2 = xcross; }
 			if (wallc->sx2 > xcross) memset (&mostbuf[xcross], 0, (wallc->sx2-xcross)*sizeof(mostbuf[0]));
 		}
 		else
-		{
+		{ // the left side is above the screen
 			if (xcross <= wallc->sx2) { iy1 = inty; ix1 = xcross; }
 			if (xcross > wallc->sx1) memset (&mostbuf[wallc->sx1], 0, (xcross-wallc->sx1)*sizeof(mostbuf[0]));
 		}
 	}
 
 	if (bad & 12)
-	{
+	{ // the line intersects the bottom of the screen
 		double t = (z-s3) / (s4-s3);
 		double inty = wallc->sz1 + t * (wallc->sz2 - wallc->sz1);
 		int xcross = xs_RoundToInt(wallc->sx1 + (t * wallc->sz2 * (wallc->sx2 - wallc->sx1)) / inty);
 
 		if ((bad & 12) == 8)
-		{
+		{ // the right side is below the screen
 			if (wallc->sx1 <= xcross) { iy2 = inty; ix2 = xcross; }
 			if (wallc->sx2 > xcross) clearbufshort (&mostbuf[xcross], wallc->sx2 - xcross, viewheight);
 		}
 		else
-		{
+		{ // the left side is below the screen
 			if (xcross <= wallc->sx2) { iy1 = inty; ix1 = xcross; }
 			if (xcross > wallc->sx1) clearbufshort (&mostbuf[wallc->sx1], xcross - wallc->sx1, viewheight);
 		}
@@ -2779,6 +2777,7 @@ int WallMost (short *mostbuf, const secplane_t &plane, const FWallCoords *wallc)
 	int bad, ix1, ix2;
 	double iy1, iy2;
 
+	// Get Z coordinates at both ends of the line
 	if (MirrorFlags & RF_XFLIP)
 	{
 		x = curline->v2->fX();
@@ -2847,20 +2846,20 @@ int WallMost (short *mostbuf, const secplane_t &plane, const FWallCoords *wallc)
 	oz1 = z1; oz2 = z2;
 
 	if ((bad&3) == 3)
-	{
-		memset (&mostbuf[ix1], -1, (ix2-ix1)*sizeof(mostbuf[0]));
+	{ // The entire line is above the screen
+		memset (&mostbuf[ix1], 0, (ix2-ix1)*sizeof(mostbuf[0]));
 		return bad;
 	}
 
 	if ((bad&12) == 12)
-	{
+	{ // The entire line is below the screen
 		clearbufshort (&mostbuf[ix1], ix2-ix1, viewheight);
 		return bad;
 
 	}
 
 	if (bad&3)
-	{
+	{ // The line intersects the top of the screen
 			//inty = intz / (globaluclip>>16)
 		double t = (oz1-s1) / (s2-s1+oz1-oz2);
 		double inty = wallc->sz1 + t * (wallc->sz2-wallc->sz1);
@@ -2872,19 +2871,19 @@ int WallMost (short *mostbuf, const secplane_t &plane, const FWallCoords *wallc)
 		//intz = z1 + mulscale30(z2-z1,t);
 
 		if ((bad&3) == 2)
-		{
+		{ // The right side of the line is above the screen
 			if (wallc->sx1 <= xcross) { z2 = intz; iy2 = inty; ix2 = xcross; }
 			memset (&mostbuf[xcross], 0, (wallc->sx2-xcross)*sizeof(mostbuf[0]));
 		}
 		else
-		{
+		{ // The left side of the line is above the screen
 			if (xcross <= wallc->sx2) { z1 = intz; iy1 = inty; ix1 = xcross; }
 			memset (&mostbuf[wallc->sx1], 0, (xcross-wallc->sx1)*sizeof(mostbuf[0]));
 		}
 	}
 
 	if (bad&12)
-	{
+	{ // The line intersects the bottom of the screen
 			//inty = intz / (globaldclip>>16)
 		double t = (oz1-s3) / (s4-s3+oz1-oz2);
 		double inty = wallc->sz1 + t * (wallc->sz2-wallc->sz1);
@@ -2896,12 +2895,12 @@ int WallMost (short *mostbuf, const secplane_t &plane, const FWallCoords *wallc)
 		//intz = z1 + mulscale30(z2-z1,t);
 
 		if ((bad&12) == 8)
-		{
+		{ // The right side of the line is below the screen
 			if (wallc->sx1 <= xcross) { z2 = intz; iy2 = inty; ix2 = xcross; }
 			if (wallc->sx2 > xcross) clearbufshort (&mostbuf[xcross], wallc->sx2-xcross, viewheight);
 		}
 		else
-		{
+		{ // The left side of the line is below the screen
 			if (xcross <= wallc->sx2) { z1 = intz; iy1 = inty; ix1 = xcross; }
 			if (xcross > wallc->sx1) clearbufshort (&mostbuf[wallc->sx1], xcross-wallc->sx1, viewheight);
 		}

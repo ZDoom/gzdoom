@@ -72,6 +72,14 @@ typedef DWORD							dsfixed_t;				// fixedpt used by span drawer
 #define DWORD_MIN						((uint32)0)
 #define DWORD_MAX						((uint32)0xffffffff)
 
+// the last remnants of tables.h
+#define ANGLE_90		(0x40000000)
+#define ANGLE_180		(0x80000000)
+#define ANGLE_270		(0xc0000000)
+#define ANGLE_MAX		(0xffffffff)
+
+typedef uint32			angle_t;
+
 
 #ifdef __GNUC__
 #define GCCPRINTF(stri,firstargi)		__attribute__((format(printf,stri,firstargi)))

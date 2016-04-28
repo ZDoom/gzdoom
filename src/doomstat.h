@@ -121,7 +121,6 @@ extern	int 			viewwindowx;
 extern	int 			viewwindowy;
 extern	"C" int 		viewheight;
 extern	"C" int 		viewwidth;
-extern	"C"	int			halfviewwidth;		// [RH] Half view width, for plane drawing
 
 
 

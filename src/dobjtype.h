@@ -904,8 +904,6 @@ enum ETypeVal : BYTE
 	VAL_One,
 	VAL_Float32,
 	VAL_Float64,
-	VAL_Fixed,
-	VAL_BAM,
 	VAL_String,
 	VAL_Name,
 	VAL_Struct,

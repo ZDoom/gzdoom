@@ -82,7 +82,7 @@ extern AActor*			camera;		// [RH] camera instead of viewplayer
 extern sector_t*		viewsector;	// [RH] keep track of sector viewing from
 
 extern angle_t			xtoviewangle[MAXWIDTH+1];
-extern int				FieldOfView;
+extern DAngle			FieldOfView;
 
 int R_FindSkin (const char *name, int pclass);	// [RH] Find a skin
 

@@ -37,8 +37,8 @@ DEarthquake::DEarthquake()
 
 DEarthquake::DEarthquake(AActor *center, int intensityX, int intensityY, int intensityZ, int duration,
 	int damrad, int tremrad, FSoundID quakesound, int flags,
-	double waveSpeedX, double waveSpeedY, double waveSpeedZ, int falloff, int highpoint, int rollIntensity,
-	double rollWave)
+	double waveSpeedX, double waveSpeedY, double waveSpeedZ, int falloff, int highpoint, 
+	double rollIntensity, double rollWave)
 	: DThinker(STAT_EARTHQUAKE)
 {
 	m_QuakeSFX = quakesound;
@@ -283,7 +283,8 @@ int DEarthquake::StaticGetQuakeIntensities(AActor *victim, FQuakeJiggers &jigger
 			double dist = quake->m_Spot->Distance2D (victim, true);
 			if (dist < quake->m_TremorRadius)
 			{
-				double falloff = quake->GetFalloff(dist);
+				const double falloff = quake->GetFalloff(dist);
+				const double rfalloff = (quake->m_RollIntensity != 0) ? falloff : 0.;
 				++count;
 				double x = quake->GetModIntensity(quake->m_Intensity.X);
 				double y = quake->GetModIntensity(quake->m_Intensity.Y);
@@ -293,6 +294,7 @@ int DEarthquake::StaticGetQuakeIntensities(AActor *victim, FQuakeJiggers &jigger
 				if (!(quake->m_Flags & QF_WAVE))
 				{
 					jiggers.Falloff = MAX(falloff, jiggers.Falloff);
+					jiggers.RFalloff = MAX(rfalloff, jiggers.RFalloff);
 					jiggers.RollIntensity = MAX(r, jiggers.RollIntensity);
 					if (quake->m_Flags & QF_RELATIVE)
 					{
@@ -310,11 +312,11 @@ int DEarthquake::StaticGetQuakeIntensities(AActor *victim, FQuakeJiggers &jigger
 				else
 				{
 					jiggers.WFalloff = MAX(falloff, jiggers.WFalloff);
-					double mr = r * quake->GetModWave(quake->m_RollWave);
+					jiggers.RWFalloff = MAX(rfalloff, jiggers.RWFalloff);
+					jiggers.RollWave = r * quake->GetModWave(quake->m_RollWave);
 					double mx = x * quake->GetModWave(quake->m_WaveSpeed.X);
 					double my = y * quake->GetModWave(quake->m_WaveSpeed.Y);
 					double mz = z * quake->GetModWave(quake->m_WaveSpeed.Z);
-					jiggers.RollWave = r * quake->GetModWave(quake->m_RollWave);
 
 					// [RH] This only gives effect to the last sine quake. I would
 					// prefer if some way was found to make multiples coexist
@@ -349,7 +351,7 @@ int DEarthquake::StaticGetQuakeIntensities(AActor *victim, FQuakeJiggers &jigger
 bool P_StartQuakeXYZ(AActor *activator, int tid, int intensityX, int intensityY, int intensityZ, int duration,
 	int damrad, int tremrad, FSoundID quakesfx, int flags,
 	double waveSpeedX, double waveSpeedY, double waveSpeedZ, int falloff, int highpoint, 
-	int rollIntensity, double rollWave)
+	double rollIntensity, double rollWave)
 {
 	AActor *center;
 	bool res = false;

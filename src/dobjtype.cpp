@@ -438,7 +438,7 @@ void PType::SkipValue(FArchive &ar, int tag)
 		ar.Read(buff, 2);
 		break;
 
-	case VAL_Int32: case VAL_UInt32: case VAL_Float32: case VAL_Fixed: case VAL_BAM:
+	case VAL_Int32: case VAL_UInt32: case VAL_Float32:
 		ar.Read(buff, 4);
 		break;
 
@@ -936,10 +936,8 @@ bool PInt::ReadValue(FArchive &ar, void *addr) const
 		BYTE val8;
 		WORD val16;
 		DWORD val32;
-		fixed_t fix;
 		float single;
 		double dbl;
-		angle_t ang;
 	};
 
 	ar << tag;
@@ -955,8 +953,6 @@ bool PInt::ReadValue(FArchive &ar, void *addr) const
 	case VAL_UInt32:	ar << val32; uval = val32; break;
 	case VAL_Int64:		ar << sval; break;
 	case VAL_UInt64:	ar << uval; break;
-	case VAL_Fixed:		ar << fix; sval = fix >> FRACBITS; break;	// fixed -> int
-	case VAL_BAM:		ar << ang; uval = ang / ANGLE_1; break;		// BAM -> degrees
 	case VAL_Float32:	ar << single; sval = (SQWORD)single; break;
 	case VAL_Float64:	ar << dbl; sval = (SQWORD)dbl; break;
 	default:			SkipValue(ar, tag); return false;		// Incompatible type
@@ -1317,8 +1313,6 @@ static bool ReadValueDbl(FArchive &ar, double *addr, unsigned tag)
 	case VAL_UInt32:	ar << val32; val = val32; break;
 	case VAL_Int64:		ar << val64; val = (double)(SQWORD)val64; break;
 	case VAL_UInt64:	ar << val64; val = (double)val64; break;
-	case VAL_Fixed:		ar << fix; val = FIXED2DBL(fix); break;
-	case VAL_BAM:		ar << ang; val = ang * (90.0 / ANGLE_90); break;		// BAM -> degrees
 	case VAL_Float32:	ar << single; val = single; break;
 	case VAL_Float64:	ar << val; break;
 	default:			PType::SkipValue(ar, tag); return false;	// Incompatible type

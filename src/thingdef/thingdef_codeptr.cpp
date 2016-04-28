@@ -4985,7 +4985,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_QuakeEx)
 	PARAM_FLOAT_OPT(mulWaveZ) { mulWaveZ = 1.; }
 	PARAM_INT_OPT(falloff) { falloff = 0; }
 	PARAM_INT_OPT(highpoint) { highpoint = 0; }
-	PARAM_INT_OPT(rollIntensity) { rollIntensity = 0; }
+	PARAM_FLOAT_OPT(rollIntensity) { rollIntensity = 0.; }
 	PARAM_FLOAT_OPT(rollWave) { rollWave = 0.; }
 	P_StartQuakeXYZ(self, 0, intensityX, intensityY, intensityZ, duration, damrad, tremrad, sound, flags, mulWaveX, mulWaveY, mulWaveZ, falloff, highpoint, 
 		rollIntensity, rollWave);

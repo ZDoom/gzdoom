@@ -85,8 +85,7 @@ bool R_GetViewInterpolationStatus();
 void R_ClearInterpolationPath();
 void R_AddInterpolationPoint(const DVector3a &vec);
 void R_SetViewSize (int blocks);
-void R_SetFOV (float fov);
-float R_GetFOV ();
+void R_SetFOV (DAngle fov);
 void R_SetupFrame (AActor * camera);
 void R_SetViewAngle ();
 

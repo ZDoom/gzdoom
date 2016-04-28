@@ -37,6 +37,4 @@
 
 fixed_t finetangent[4096];
 fixed_t finesine[10240];
-angle_t tantoangle[2049];
 
-cosine_inline finecosine;	// in case this is actually needed

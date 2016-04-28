@@ -160,27 +160,6 @@ static void R_Shutdown ();
 
 //==========================================================================
 //
-// R_InitPointToAngle
-//
-//==========================================================================
-
-void R_InitPointToAngle (void)
-{
-	double f;
-	int i;
-//
-// slope (tangent) to angle lookup
-//
-	for (i = 0; i <= SLOPERANGE; i++)
-	{
-		f = g_atan2 ((double)i, (double)SLOPERANGE) / (6.28318530718 /* 2*pi */);
-		tantoangle[i] = (angle_t)(0xffffffff*f);
-	}
-}
-
-
-//==========================================================================
-//
 // R_InitTables
 //
 //==========================================================================
@@ -188,7 +167,7 @@ void R_InitPointToAngle (void)
 void R_InitTables (void)
 {
 	int i;
-	const double pimul = PI*2/FINEANGLES;
+	const double pimul = M_PI*2/FINEANGLES;
 
 	// viewangle tangent table
 	finetangent[0] = (fixed_t)(FRACUNIT*g_tan ((0.5-FINEANGLES/4)*pimul)+0.5);
@@ -410,7 +389,6 @@ void R_Init ()
 	//R_InitColormaps ();
 	//StartScreen->Progress();
 
-	R_InitPointToAngle ();
 	R_InitTables ();
 	R_InitTranslationTables ();
 	R_SetViewSize (screenblocks);

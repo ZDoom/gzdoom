@@ -221,7 +221,6 @@ void R_InitTextureMapping ()
 
 	const int t1 = MAX(int(CenterX - FocalLengthX), 0);
 	const int t2 = MIN(int(CenterX + FocalLengthX), viewwidth);
-	const fixed_t dfocus = FLOAT2FIXED(FocalLengthX) >> DBITS;
 
 	for (i = 0, x = t2; x >= t1; --x)
 	{
@@ -233,7 +232,10 @@ void R_InitTextureMapping ()
 	}
 	for (x = t2 + 1; x <= viewwidth; ++x)
 	{
-		xtoviewangle[x] = ANGLE_270 + tantoangle[dfocus / (x - centerx)];
+		double f = atan2((FocalLengthX / (x - centerx)), 1) / (2*M_PI);
+		xtoviewangle[x] = ANGLE_270 + (angle_t)(0xffffffff * f);
+
+		//xtoviewangle[x] = ANGLE_270 + tantoangle[i];
 	}
 	for (x = 0; x < t1; ++x)
 	{

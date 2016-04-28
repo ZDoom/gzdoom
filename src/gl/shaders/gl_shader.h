@@ -220,6 +220,7 @@ class FShader
 	FUniform4f muGlowTopPlane;
 	FUniform4f muSplitBottomPlane;
 	FUniform4f muSplitTopPlane;
+	FUniform4f muClipLine;
 	FBufferedUniform1f muInterpolationFactor;
 	FBufferedUniform1f muClipHeight;
 	FBufferedUniform1f muClipHeightDirection;
@@ -234,22 +235,18 @@ class FShader
 public:
 	int fakevb_index;
 private:
-	int currentglowstate;
-	int currentsplitstate;
-	int currentfixedcolormap;
-	bool currentTextureMatrixState;
-	bool currentModelMatrixState;
+	int currentglowstate = 0;
+	int currentsplitstate = 0;
+	int currentcliplinestate = 0;
+	int currentfixedcolormap = 0;
+	bool currentTextureMatrixState = true;// by setting the matrix state to 'true' it is guaranteed to be set the first time the render state gets applied.
+	bool currentModelMatrixState = true;
 
 public:
 	FShader(const char *name)
 		: mName(name)
 	{
 		hShader = hVertProg = hFragProg = 0;
-		currentglowstate = 0;
-		currentsplitstate = 0;
-		currentfixedcolormap = 0;
-		currentTextureMatrixState = true;	// by setting the matrix state to 'true' it is guaranteed to be set the first time the render state gets applied.
-		currentModelMatrixState = true;
 	}
 
 	~FShader();

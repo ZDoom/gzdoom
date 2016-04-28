@@ -300,9 +300,6 @@ bool GLPortal::Start(bool usestencil, bool doquery)
 			glDisable(GL_DEPTH_TEST);
 		}
 	}
-	planestack.Push(gl_RenderState.GetClipHeight());
-	planestack.Push(gl_RenderState.GetClipHeightDirection());
-	gl_RenderState.SetClipHeight(0., 0.);
 
 	// save viewpoint
 	savedViewPos = ViewPos;
@@ -313,8 +310,12 @@ bool GLPortal::Start(bool usestencil, bool doquery)
 	savedviewpath[0] = ViewPath[0];
 	savedviewpath[1] = ViewPath[1];
 
-	NextPortal = GLRenderer->mCurrentPortal;
-	GLRenderer->mCurrentPortal = NULL;	// Portals which need this have to set it themselves
+	PrevPortal = GLRenderer->mCurrentPortal;
+	PrevClipPortal = GLRenderer->mClipPortal;
+	GLRenderer->mClipPortal = NULL;	// Portals which need this have to set it themselves
+	GLRenderer->mCurrentPortal = this;
+
+	if (PrevPortal != NULL) PrevPortal->PushState();
 	PortalAll.Unclock();
 	return true;
 }
@@ -359,12 +360,9 @@ void GLPortal::End(bool usestencil)
 	bool needdepth = NeedDepthBuffer();
 
 	PortalAll.Clock();
-	GLRenderer->mCurrentPortal = NextPortal;
-
-	float f, d;
-	planestack.Pop(d);
-	planestack.Pop(f);
-	gl_RenderState.SetClipHeight(f, d);
+	if (PrevPortal != NULL) PrevPortal->PopState();
+	GLRenderer->mCurrentPortal = PrevPortal;
+	GLRenderer->mClipPortal = PrevClipPortal;
 
 	if (usestencil)
 	{
@@ -806,12 +804,57 @@ void GLPlaneMirrorPortal::DrawContents()
 	PlaneMirrorMode=old_pm;
 }
 
+void GLPlaneMirrorPortal::PushState()
+{
+	planestack.Push(gl_RenderState.GetClipHeight());
+	planestack.Push(gl_RenderState.GetClipHeightDirection());
+	gl_RenderState.SetClipHeight(0.f, 0.f);
+}
+
+void GLPlaneMirrorPortal::PopState()
+{
+	float d, f;
+	planestack.Pop(d);
+	planestack.Pop(f);
+	gl_RenderState.SetClipHeight(f, d);
+}
+
 //-----------------------------------------------------------------------------
 //
-// GLPlaneMirrorPortal::DrawContents
+// Common code for line to line and mirror portals
 //
 //-----------------------------------------------------------------------------
 
+
+
+int GLLinePortal::ClipSeg(seg_t *seg) 
+{ 
+	line_t *linedef = seg->linedef;
+	if (!linedef)
+	{
+		return PClip_Inside;	// should be handled properly.
+	}
+	return P_ClipLineToPortal(linedef, line(), ViewPos) ? PClip_InFront : PClip_Inside;
+}
+
+int GLLinePortal::ClipSubsector(subsector_t *sub)
+{ 
+	// this seg is completely behind the mirror!
+	for(unsigned int i=0;i<sub->numlines;i++)
+	{
+		if (P_PointOnLineSidePrecise(sub->firstline[i].v1->fPos(), line()) == 0) return PClip_Inside;
+	}
+	return PClip_InFront; 
+}
+
+int GLLinePortal::ClipPoint(const DVector2 &pos) 
+{ 
+	if (P_PointOnLineSidePrecise(pos, line())) 
+	{
+		return PClip_InFront;
+	}
+	return PClip_Inside; 
+}
 
 
 //-----------------------------------------------------------------------------
@@ -837,7 +880,7 @@ void GLMirrorPortal::DrawContents()
 		return;
 	}
 
-	GLRenderer->mCurrentPortal = this;
+	GLRenderer->mClipPortal = this;
 	DAngle StartAngle = ViewAngle;
 	DVector3 StartPos = ViewPos;
 
@@ -910,37 +953,6 @@ void GLMirrorPortal::DrawContents()
 	MirrorFlag--;
 }
 
-
-int GLLinePortal::ClipSeg(seg_t *seg) 
-{ 
-	line_t *linedef = seg->linedef;
-	if (!linedef)
-	{
-		return PClip_Inside;	// should be handled properly.
-	}
-	return P_ClipLineToPortal(linedef, line(), ViewPos) ? PClip_InFront : PClip_Inside;
-}
-
-int GLLinePortal::ClipSubsector(subsector_t *sub)
-{ 
-	// this seg is completely behind the mirror!
-	for(unsigned int i=0;i<sub->numlines;i++)
-	{
-		if (P_PointOnLineSidePrecise(sub->firstline[i].v1->fPos(), line()) == 0) return PClip_Inside;
-	}
-	return PClip_InFront; 
-}
-
-int GLLinePortal::ClipPoint(const DVector2 &pos) 
-{ 
-	if (P_PointOnLineSidePrecise(pos, line())) 
-	{
-		return PClip_InFront;
-	}
-	return PClip_Inside; 
-}
-
-
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 //
@@ -965,7 +977,7 @@ void GLLineToLinePortal::DrawContents()
 		return;
 	}
 
-	GLRenderer->mCurrentPortal = this;
+	GLRenderer->mClipPortal = this;
 
 	line_t *origin = glport->reference->mOrigin;
 	P_TranslatePortalXY(origin, ViewPos.X, ViewPos.Y);

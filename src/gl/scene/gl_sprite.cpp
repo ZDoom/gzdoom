@@ -581,9 +581,9 @@ void GLSprite::Process(AActor* thing, sector_t * sector, bool thruportal)
 		thing->flags7 |= MF7_FLYCHEAT;	// do this only once for the very first frame, but not if it gets into range again.
 	}
 
-	if (GLRenderer->mCurrentPortal)
+	if (GLRenderer->mClipPortal)
 	{
-		int clipres = GLRenderer->mCurrentPortal->ClipPoint(thingpos);
+		int clipres = GLRenderer->mClipPortal->ClipPoint(thingpos);
 		if (clipres == GLPortal::PClip_InFront) return;
 	}
 
@@ -894,9 +894,9 @@ void GLSprite::Process(AActor* thing, sector_t * sector, bool thruportal)
 
 void GLSprite::ProcessParticle (particle_t *particle, sector_t *sector)//, int shade, int fakeside)
 {
-	if (GLRenderer->mCurrentPortal)
+	if (GLRenderer->mClipPortal)
 	{
-		int clipres = GLRenderer->mCurrentPortal->ClipPoint(particle->Pos);
+		int clipres = GLRenderer->mClipPortal->ClipPoint(particle->Pos);
 		if (clipres == GLPortal::PClip_InFront) return;
 	}
 

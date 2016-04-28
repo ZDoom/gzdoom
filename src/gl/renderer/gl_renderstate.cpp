@@ -69,7 +69,7 @@ TArray<VSMatrix> gl_MatrixStack;
 void FRenderState::Reset()
 {
 	mTextureEnabled = true;
-	mSplitEnabled = mBrightmapEnabled = mFogEnabled = mGlowEnabled = false;
+	mClipLineEnabled = mSplitEnabled = mBrightmapEnabled = mFogEnabled = mGlowEnabled = false;
 	mColorMask[0] = mColorMask[1] = mColorMask[2] = mColorMask[3] = true;
 	currentColorMask[0] = currentColorMask[1] = currentColorMask[2] = currentColorMask[3] = true;
 	mFogColor.d = -1;
@@ -171,10 +171,22 @@ bool FRenderState::ApplyShader()
 		activeShader->muSplitBottomPlane.Set(mSplitBottomPlane.vec);
 		activeShader->currentsplitstate = 1;
 	}
-	else
+	else if (activeShader->currentsplitstate)
 	{
 		activeShader->muSplitTopPlane.Set(nulvec);
 		activeShader->muSplitBottomPlane.Set(nulvec);
+		activeShader->currentsplitstate = 0;
+	}
+
+	if (mClipLineEnabled)
+	{
+		activeShader->muClipLine.Set(mClipLine.vec);
+		activeShader->currentcliplinestate = 1;
+	}
+	else if (activeShader->currentcliplinestate)
+	{
+		activeShader->muClipLine.Set(-10000000.0, 0, 0, 0);
+		activeShader->currentcliplinestate = 0;
 	}
 
 	if (mColormapState != activeShader->currentfixedcolormap)

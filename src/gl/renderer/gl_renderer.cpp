@@ -84,6 +84,7 @@
 FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb) 
 {
 	framebuffer = fb;
+	mClipPortal = NULL;
 	mCurrentPortal = NULL;
 	mMirrorCount = 0;
 	mPlaneMirrorCount = 0;

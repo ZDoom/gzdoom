@@ -107,7 +107,8 @@ private:
 	area_t savedviewarea;
 	bool savedshowviewer;
 	DVector3 savedviewpath[2];
-	GLPortal *NextPortal;
+	GLPortal *PrevPortal;
+	GLPortal *PrevClipPortal;
 	TArray<BYTE> savedmapsection;
 	TArray<unsigned int> mPrimIndices;
 
@@ -130,6 +131,8 @@ protected:
 	virtual const char *GetName() = 0;
 	void SaveMapSection();
 	void RestoreMapSection();
+	virtual void PushState() {}
+	virtual void PopState() {}
 
 public:
 
@@ -341,6 +344,8 @@ protected:
 	virtual void DrawContents();
 	virtual void * GetSource() const { return origin; }
 	virtual const char *GetName();
+	virtual void PushState();
+	virtual void PopState();
 	secplane_t * origin;
 
 public:

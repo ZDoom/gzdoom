@@ -351,7 +351,6 @@ void R_SWRSetWindow(int windowSize, int fullWidth, int fullHeight, int stHeight,
 	}
 
 	fuzzviewheight = viewheight - 2;	// Maximum row the fuzzer can draw to
-	halfviewwidth = (viewwidth >> 1) - 1;
 
 	lastcenteryfrac = 1<<30;
 	CenterX = centerx;

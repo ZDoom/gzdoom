@@ -60,7 +60,6 @@ extern	int		ST_Y;
 
 BYTE*			viewimage;
 extern "C" {
-int				halfviewwidth;
 int				ylookup[MAXHEIGHT];
 BYTE			*dc_destorg;
 }

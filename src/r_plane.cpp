@@ -1525,7 +1525,7 @@ void R_DrawNormalPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t 
 		ystepscale = (DWORD)(-(SDWORD)ystepscale);
 	}
 
-	int x = pl->right - halfviewwidth - 1;
+	int x = pl->right - centerx;
 	planeang += 90;
 	basexfrac = xs_RoundToInt(xscale * planeang.Cos()) + x*xstepscale;
 	baseyfrac = xs_RoundToInt(yscale * -planeang.Sin()) + x*ystepscale;

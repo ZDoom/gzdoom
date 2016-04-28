@@ -47,6 +47,7 @@
 #include "templates.h"
 #include "sc_man.h"
 #include "colormatcher.h"
+#include "textures/warpbuffer.h"
 
 //#include "gl/gl_intern.h"
 
@@ -72,7 +73,6 @@ EXTERN_CVAR(Bool, gl_texture_usehires)
 // The GL texture maintenance class
 //
 //===========================================================================
-BYTE *gl_WarpBuffer(BYTE *buffer, int Width, int Height, int warp, float Speed);
 
 //===========================================================================
 //
@@ -310,11 +310,18 @@ const FHardwareTexture *FGLTexture::Bind(int texunit, int clampmode, int transla
 			if (!tex->bHasCanvas)
 			{
 				buffer = CreateTexBuffer(translation, w, h, hirescheck, true, alphatrans);
-				if (tex->bWarped && gl.glslversion == 0)
+				if (tex->bWarped && gl.glslversion == 0 && w*h <= 256*256)	// do not software-warp larger textures, especially on the old systems that still need this fallback.
 				{
-					// need to warp
-					buffer = gl_WarpBuffer(buffer, w, h, tex->bWarped, static_cast<FWarpTexture*>(tex)->GetSpeed());
-					static_cast<FWarpTexture*>(tex)->GenTime = r_FrameTime;
+					// need to do software warping
+					FWarpTexture *wt = static_cast<FWarpTexture*>(tex);
+					unsigned char *warpbuffer = new unsigned char[w*h*4];
+					if (tex->bWarped != 2)
+						WarpBufferType1((DWORD*)warpbuffer, (const DWORD*)buffer, w, h, wt->WidthOffsetMultiplier, wt->HeightOffsetMultiplier, r_FrameTime, wt->Speed);
+					else
+						WarpBufferType2((DWORD*)warpbuffer, (const DWORD*)buffer, w, h, wt->WidthOffsetMultiplier, wt->HeightOffsetMultiplier, r_FrameTime, wt->Speed);
+					delete[] buffer;
+					buffer = warpbuffer;
+					wt->GenTime = r_FrameTime;
 				}
 				tex->ProcessData(buffer, w, h, false);
 			}

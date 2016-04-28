@@ -555,12 +555,12 @@ public:
 	FTexture *GetRedirect(bool wantwarped);
 
 	DWORD GenTime;
+	float Speed;
+	int WidthOffsetMultiplier, HeightOffsetMultiplier;  // [mxd]
 protected:
 	FTexture *SourcePic;
 	BYTE *Pixels;
 	Span **Spans;
-	float Speed;
-	int WidthOffsetMultiplier, HeightOffsetMultiplier;  // [mxd]
 
 	virtual void MakeTexture (DWORD time);
 	int NextPo2 (int v); // [mxd]

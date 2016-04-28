@@ -175,19 +175,21 @@ static int lastcenteryfrac;
 
 static inline int viewangletox(int i)
 {
-	if (finetangent[i] > FRACUNIT*2)
+	const double pimul = M_PI * 2 / FINEANGLES;
+
+	// Don't waste time calculating the tangent of values outside the valid range.
+	// Checking the index where tan(i) becomes too large is a lot faster
+	if (i <= 604)	// 604 is the highest index with finetangent < -2*FRACUNIT
+	{
+		return viewwidth + 1;
+	}
+	else if (i >= 4096 - 604)	// same as above with reversed signs
 	{
 		return -1;
 	}
-	else if (finetangent[i] < -FRACUNIT*2)
-	{
-		return viewwidth+1;
-	}
-	else
-	{
-		double t = FIXED2DBL(finetangent[i]) * FocalLengthX;
-		return clamp(xs_CeilToInt(CenterX - t), -1, viewwidth+1);
-	}
+
+	double t = tan((i - FINEANGLES / 4)*pimul) * FocalLengthX;
+	return clamp(xs_CeilToInt(CenterX - t), -1, viewwidth+1);
 }
 
 //==========================================================================
@@ -234,8 +236,6 @@ void R_InitTextureMapping ()
 	{
 		double f = atan2((FocalLengthX / (x - centerx)), 1) / (2*M_PI);
 		xtoviewangle[x] = ANGLE_270 + (angle_t)(0xffffffff * f);
-
-		//xtoviewangle[x] = ANGLE_270 + tantoangle[i];
 	}
 	for (x = 0; x < t1; ++x)
 	{

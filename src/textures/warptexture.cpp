@@ -38,6 +38,7 @@
 #include "templates.h"
 #include "r_utility.h"
 #include "textures/textures.h"
+#include "warpbuffer.h"
 
 
 FWarpTexture::FWarpTexture (FTexture *source)
@@ -120,6 +121,7 @@ const BYTE *FWarpTexture::GetColumn (unsigned int column, const Span **spans_out
 	return Pixels + column*Height;
 }
 
+
 void FWarpTexture::MakeTexture(DWORD time)
 {
 	const BYTE *otherpix = SourcePic->GetPixels();
@@ -135,46 +137,7 @@ void FWarpTexture::MakeTexture(DWORD time)
 	}
 
 	GenTime = time;
-
-	BYTE *buffer = (BYTE *)alloca(MAX(Width, Height));
-	int xsize = Width;
-	int ysize = Height;
-	int xmul = WidthOffsetMultiplier;  // [mxd]
-	int ymul = HeightOffsetMultiplier; // [mxd]
-	int xmask = WidthMask;
-	int ymask = Height - 1;
-	int ybits = HeightBits;
-	int x, y;
-
-	if ((1 << ybits) > Height)
-	{
-		ybits--;
-	}
-
-	DWORD timebase = DWORD(time * Speed * 32 / 28);
-	// [mxd] Rewrote to fix animation for NPo2 textures
-	for (y = ysize - 1; y >= 0; y--)
-	{
-		int xf = (TexMan.sintable[((timebase + y*ymul) >> 2)&TexMan.SINMASK] >> 11) % xsize;
-		if (xf < 0) xf += xsize;
-		int xt = xf;
-		const BYTE *source = otherpix + y;
-		BYTE *dest = Pixels + y;
-		for (xt = xsize; xt; xt--, xf = (xf + 1) % xsize, dest += ysize)
-			*dest = source[xf + ymask * xf];
-	}
-	timebase = DWORD(time * Speed * 23 / 28);
-	for (x = xsize - 1; x >= 0; x--)
-	{
-		int yf = (TexMan.sintable[((time + (x + 17)*xmul) >> 2)&TexMan.SINMASK] >> 11) % ysize;
-		if (yf < 0) yf += ysize;
-		int yt = yf;
-		const BYTE *source = Pixels + (x + ymask * x);
-		BYTE *dest = buffer;
-		for (yt = ysize; yt; yt--, yf = (yf + 1) % ysize)
-			*dest++ = source[yf];
-		memcpy(Pixels + (x + ymask*x), buffer, ysize);
-	}
+	WarpBufferType1(Pixels, otherpix, Width, Height, WidthOffsetMultiplier, HeightOffsetMultiplier, time, Speed);
 }
 
 // [mxd] Non power of 2 textures need different offset multipliers, otherwise warp animation won't sync across texture
@@ -222,39 +185,7 @@ void FWarp2Texture::MakeTexture (DWORD time)
 	}
 
 	GenTime = time;
-
-	int xsize = Width;
-	int ysize = Height;
-	int xmul = WidthOffsetMultiplier;  // [mxd]
-	int ymul = HeightOffsetMultiplier; // [mxd]
-	int xmask = WidthMask;
-	int ymask = Height - 1;
-	int ybits = HeightBits;
-	int x, y;
-
-	if ((1 << ybits) > Height)
-	{
-		ybits--;
-	}
-
-	DWORD timebase = DWORD(time * Speed * 40 / 28);
-	// [mxd] Rewrote to fix animation for NPo2 textures
-	for (x = 0; x < xsize; x++)
-	{
-		BYTE *dest = Pixels + (x + ymask * x);
-		for (y = 0; y < ysize; y++)
-		{
-			int xt = (x + 128
-				+ ((TexMan.sintable[((y*ymul + timebase*5 + 900) >> 2) & TexMan.SINMASK])>>13)
-				+ ((TexMan.sintable[((x*xmul + timebase*4 + 300) >> 2) & TexMan.SINMASK])>>13)) % xsize;
-
-			int yt = (y + 128
-				+ ((TexMan.sintable[((y*ymul + timebase*3 + 700) >> 2) & TexMan.SINMASK])>>13)
-				+ ((TexMan.sintable[((x*xmul + timebase*4 + 1200) >> 2) & TexMan.SINMASK])>>13)) % ysize;
-
-			*dest++ = otherpix[(xt + ymask * xt) + yt];
-		}
-	}
+	WarpBufferType2(Pixels, otherpix, Width, Height, WidthOffsetMultiplier, HeightOffsetMultiplier, time, Speed);
 }
 
 //==========================================================================

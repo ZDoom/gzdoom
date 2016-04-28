@@ -138,7 +138,6 @@ angle_t			LocalViewAngle;
 int				LocalViewPitch;
 bool			LocalKeyboardTurner;
 
-float			LastFOV;
 int				WidescreenRatio;
 int				setblocks;
 int				extralight;
@@ -147,7 +146,7 @@ double			FocalTangent;
 
 unsigned int	R_OldBlend = ~0;
 int 			validcount = 1; 	// increment every time a check is made
-int				FieldOfView = 2048;		// Fineangles in the SCREENWIDTH wide window
+DAngle			FieldOfView = 90.;		// Angles in the SCREENWIDTH wide window
 
 FCanvasTextureInfo *FCanvasTextureInfo::List;
 
@@ -169,13 +168,6 @@ void R_InitTables (void)
 	int i;
 	const double pimul = M_PI*2/FINEANGLES;
 
-	// viewangle tangent table
-	finetangent[0] = (fixed_t)(FRACUNIT*g_tan ((0.5-FINEANGLES/4)*pimul)+0.5);
-	for (i = 1; i < FINEANGLES/2; i++)
-	{
-		finetangent[i] = (fixed_t)(FRACUNIT*g_tan ((i-FINEANGLES/4)*pimul)+0.5);
-	}
-	
 	// finesine table
 	for (i = 0; i < FINEANGLES/4; i++)
 	{
@@ -202,31 +194,16 @@ void R_InitTables (void)
 //
 //==========================================================================
 
-void R_SetFOV (float fov)
+void R_SetFOV (DAngle fov)
 {
-	if (fov < 5.f)
-		fov = 5.f;
-	else if (fov > 170.f)
-		fov = 170.f;
-	if (fov != LastFOV)
+
+	if (fov < 5.) fov = 5.;
+	else if (fov > 170.) fov = 170.;
+	if (fov != FieldOfView)
 	{
-		LastFOV = fov;
-		FieldOfView = (int)(fov * (float)FINEANGLES / 360.f);
+		FieldOfView = fov;
 		setsizeneeded = true;
 	}
-}
-
-//==========================================================================
-//
-// R_GetFOV
-//
-// Returns the current field of view in degrees
-//
-//==========================================================================
-
-float R_GetFOV ()
-{
-	return LastFOV;
 }
 
 //==========================================================================
@@ -292,18 +269,16 @@ void R_SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight)
 	}
 
 
-	int fov = FieldOfView;
+	DAngle fov = FieldOfView;
 
 	// For widescreen displays, increase the FOV so that the middle part of the
 	// screen that would be visible on a 4:3 display has the requested FOV.
 	if (centerxwide != centerx)
 	{ // centerxwide is what centerx would be if the display was not widescreen
-		fov = int(atan(double(centerx)*tan(double(fov)*M_PI/(FINEANGLES))/double(centerxwide))*(FINEANGLES)/M_PI);
-		if (fov > 170*FINEANGLES/360)
-			fov = 170*FINEANGLES/360;
+		fov = DAngle::ToDegrees(2 * atan(centerx * tan(fov.Radians()/2) / double(centerxwide)));
+		if (fov > 170.) fov = 170.;
 	}
-
-	FocalTangent = FIXED2FLOAT(finetangent[FINEANGLES/4+fov/2]);
+	FocalTangent = tan(fov.Radians() / 2);
 	Renderer->SetWindow(windowSize, fullWidth, fullHeight, stHeight, trueratio);
 }
 

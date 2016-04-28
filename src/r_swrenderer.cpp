@@ -50,8 +50,6 @@ void R_SetupColormap(player_t *);
 void R_SetupFreelook();
 void R_InitRenderer();
 
-extern float LastFOV;
-
 //==========================================================================
 //
 // DCanvas :: Init
@@ -272,8 +270,8 @@ void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoin
 	unsigned char *savecolormap = fixedcolormap;
 	FSpecialColormap *savecm = realfixedcolormap;
 
-	float savedfov = LastFOV;
-	R_SetFOV ((float)fov);
+	DAngle savedfov = FieldOfView;
+	R_SetFOV ((double)fov);
 	R_RenderViewToCanvas (viewpoint, Canvas, 0, 0, tex->GetWidth(), tex->GetHeight(), tex->bFirstUpdate);
 	R_SetFOV (savedfov);
 	if (Pixels == Canvas->GetBuffer())

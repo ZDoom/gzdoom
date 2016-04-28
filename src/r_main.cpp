@@ -179,7 +179,7 @@ static inline int viewangletox(int i)
 
 	// Don't waste time calculating the tangent of values outside the valid range.
 	// Checking the index where tan(i) becomes too large is a lot faster
-	if (i <= 604)	// 604 is the highest index with finetangent < -2*FRACUNIT
+	if (i <= 604)	// 604 is the highest index with tan < -2
 	{
 		return viewwidth + 1;
 	}
@@ -207,7 +207,7 @@ void R_InitTextureMapping ()
 	FocalLengthY = FocalLengthX * YaspectMul;
 
 	// This is 1/FocalTangent before the widescreen extension of FOV.
-	viewingrangerecip = DivScale32(1, finetangent[FINEANGLES/4+(FieldOfView/2)]);
+	viewingrangerecip = FLOAT2FIXED(1. / tan(FieldOfView.Radians() / 2));
 
 	// [RH] Do not generate viewangletox, because texture mapping is no
 	// longer done with trig, so it's not needed.

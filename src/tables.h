@@ -19,10 +19,6 @@
 //		Do not try to look them up :-).
 //		In the order of appearance: 
 //
-//		int finetangent[4096]	- Tangens LUT.
-//		 Should work with BAM fairly well (12 of 16bit,
-//		effectively, by shifting).
-//
 //		int finesine[10240] 			- Sine lookup.
 //		 Remarkable thing is, how to use BAMs with this? 
 //
@@ -45,9 +41,6 @@
 
 // Effective size is 10240.
 extern	fixed_t 		finesine[5*FINEANGLES/4];
-
-// Effective size is 4096.
-extern fixed_t			finetangent[FINEANGLES/2];
 
 // Binary Angle Measument, BAM.
 #define ANGLE_90		(0x40000000)

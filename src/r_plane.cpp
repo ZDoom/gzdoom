@@ -1500,7 +1500,7 @@ void R_DrawNormalPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t 
 	yscale = xs_ToFixed(32 - ds_ybits, _yscale);
 	if (planeang != 0)
 	{
-		double cosine = planeang.Cos(), sine = planeang.Sin();
+		double cosine = cos(planeang.Radians()), sine = sin(planeang.Radians());
 		pviewx = FLOAT2FIXED(pl->xform.xOffs + ViewPos.X * cosine - ViewPos.Y * sine);
 		pviewy = FLOAT2FIXED(pl->xform.yOffs - ViewPos.X * sine - ViewPos.Y * cosine);
 	}
@@ -1515,9 +1515,10 @@ void R_DrawNormalPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t 
 	
 	// left to right mapping
 	planeang = ViewAngle - 90 + planeang;
+
 	// Scale will be unit scale at FocalLengthX (normally SCREENWIDTH/2) distance
-	xstepscale = xs_RoundToInt(xscale * planeang.Cos() / FocalLengthX);
-	ystepscale = xs_RoundToInt(yscale * -planeang.Sin() / FocalLengthX);
+	xstepscale = xs_RoundToInt(xscale * cos(planeang.Radians()) / FocalLengthX);
+	ystepscale = xs_RoundToInt(yscale * -sin(planeang.Radians()) / FocalLengthX);
 
 	// [RH] flip for mirrors
 	if (MirrorFlags & RF_XFLIP)
@@ -1528,8 +1529,8 @@ void R_DrawNormalPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t 
 
 	int x = pl->right - centerx;
 	planeang += 90;
-	basexfrac = xs_RoundToInt(xscale * planeang.Cos()) + x*xstepscale;
-	baseyfrac = xs_RoundToInt(yscale * -planeang.Sin()) + x*ystepscale;
+	basexfrac = xs_RoundToInt(xscale * cos(planeang.Radians())) + x*xstepscale;
+	baseyfrac = xs_RoundToInt(yscale * -sin(planeang.Radians())) + x*ystepscale;
 
 	planeheight = fabs(pl->height.Zat0() - ViewPos.Z);
 
@@ -1638,15 +1639,15 @@ void R_DrawTiltedPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t 
 
 	// m is the v direction vector in view space
 	ang = DAngle(180.) - ViewAngle;
-	m[0] = yscale * ang.Cos();
-	m[2] = yscale * ang.Sin();
+	m[0] = yscale * cos(ang.Radians());
+	m[2] = yscale * sin(ang.Radians());
 //	m[1] = pl->height.ZatPointF (0, iyscale) - pl->height.ZatPointF (0,0));
 //	VectorScale2 (m, 64.f/VectorLength(m));
 
 	// n is the u direction vector in view space
 	ang += 90;
-	n[0] = -xscale * ang.Cos();
-	n[2] = -xscale * ang.Sin();
+	n[0] = -xscale * cos(ang.Radians());
+	n[2] = -xscale * sin(ang.Radians());
 //	n[1] = pl->height.ZatPointF (ixscale, 0) - pl->height.ZatPointF (0,0));
 //	VectorScale2 (n, 64.f/VectorLength(n));
 
@@ -1654,9 +1655,10 @@ void R_DrawTiltedPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t 
 	// how much you slope the surface. Use the commented-out code above instead to keep
 	// the textures a constant size across the surface's plane instead.
 	ang = pl->xform.Angle + pl->xform.baseAngle;
-	m[1] = pl->height.ZatPoint(ViewPos.X + yscale * ang.Sin(), ViewPos.Y + yscale * ang.Cos()) - zeroheight;
+	double cosine = cos(ang.Radians()), sine = sin(ang.Radians());
+	m[1] = pl->height.ZatPoint(ViewPos.X + yscale * sine, ViewPos.Y + yscale * cosine) - zeroheight;
 	ang += 90;
-	n[1] = pl->height.ZatPoint(ViewPos.X + xscale * ang.Sin(), ViewPos.Y + xscale * ang.Cos()) - zeroheight;
+	n[1] = pl->height.ZatPoint(ViewPos.X + xscale * sine, ViewPos.Y + xscale * cosine) - zeroheight;
 
 	plane_su = p ^ m;
 	plane_sv = p ^ n;

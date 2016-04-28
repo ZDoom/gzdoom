@@ -25,7 +25,6 @@
 
 #include <float.h>
 #include "doomtype.h"
-#include "tables.h"
 #include "vectors.h"
 
 const double NO_VALUE = FLT_MAX;

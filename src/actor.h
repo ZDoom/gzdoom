@@ -24,7 +24,6 @@
 #define __P_MOBJ_H__
 
 // Basics.
-#include "tables.h"
 #include "templates.h"
 
 // We need the thinker_t stuff.

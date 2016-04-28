@@ -175,7 +175,7 @@ static int lastcenteryfrac;
 
 static inline int viewangletox(int i)
 {
-	const double pimul = M_PI * 2 / FINEANGLES;
+	const double pimul = M_PI / 4096;
 
 	// Don't waste time calculating the tangent of values outside the valid range.
 	// Checking the index where tan(i) becomes too large is a lot faster
@@ -188,7 +188,7 @@ static inline int viewangletox(int i)
 		return -1;
 	}
 
-	double t = tan((i - FINEANGLES / 4)*pimul) * FocalLengthX;
+	double t = tan((i - 2048)*pimul) * FocalLengthX;
 	return clamp(xs_CeilToInt(CenterX - t), -1, viewwidth+1);
 }
 
@@ -230,7 +230,7 @@ void R_InitTextureMapping ()
 		{
 			++i;
 		}
-		xtoviewangle[x] = (i << ANGLETOFINESHIFT) - ANGLE_90;
+		xtoviewangle[x] = (i << 19) - ANGLE_90;
 	}
 	for (x = t2 + 1; x <= viewwidth; ++x)
 	{

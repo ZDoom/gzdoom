@@ -40,7 +40,6 @@
 #include "p_enemy.h"
 #include "g_level.h"
 #include "v_palette.h"
-#include "tables.h"
 #include "i_system.h"
 #include "a_sharedglobal.h"
 #include "a_lightning.h"

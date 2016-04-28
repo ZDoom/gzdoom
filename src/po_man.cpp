@@ -18,7 +18,6 @@
 #include "w_wad.h"
 #include "m_swap.h"
 #include "m_bbox.h"
-#include "tables.h"
 #include "s_sndseq.h"
 #include "a_sharedglobal.h"
 #include "p_3dmidtex.h"

@@ -159,35 +159,6 @@ static void R_Shutdown ();
 
 //==========================================================================
 //
-// R_InitTables
-//
-//==========================================================================
-
-void R_InitTables (void)
-{
-	int i;
-	const double pimul = M_PI*2/FINEANGLES;
-
-	// finesine table
-	for (i = 0; i < FINEANGLES/4; i++)
-	{
-		finesine[i] = (fixed_t)(FRACUNIT * g_sin (i*pimul));
-	}
-	for (i = 0; i < FINEANGLES/4; i++)
-	{
-		finesine[i+FINEANGLES/4] = finesine[FINEANGLES/4-1-i];
-	}
-	for (i = 0; i < FINEANGLES/2; i++)
-	{
-		finesine[i+FINEANGLES/2] = -finesine[i];
-	}
-	finesine[FINEANGLES/4] = FRACUNIT;
-	finesine[FINEANGLES*3/4] = -FRACUNIT;
-	memcpy (&finesine[FINEANGLES], &finesine[0], sizeof(angle_t)*FINEANGLES/4);
-}
-
-//==========================================================================
-//
 // R_SetFOV
 //
 // Changes the field of view in degrees
@@ -364,7 +335,6 @@ void R_Init ()
 	//R_InitColormaps ();
 	//StartScreen->Progress();
 
-	R_InitTables ();
 	R_InitTranslationTables ();
 	R_SetViewSize (screenblocks);
 	Renderer->Init();

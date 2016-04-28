@@ -3,7 +3,6 @@
 
 #include "sc_man.h"
 #include "m_fixed.h"
-#include "tables.h"
 
 class UDMFParserBase
 {

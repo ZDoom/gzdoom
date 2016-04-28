@@ -72,6 +72,10 @@ FTextureManager::FTextureManager ()
 {
 	memset (HashFirst, -1, sizeof(HashFirst));
 
+	for (int i = 0; i < 2048; ++i)
+	{
+		sintable[i] = short(sin(i*(M_PI / 1024)) * 16384);
+	}
 }
 
 //==========================================================================

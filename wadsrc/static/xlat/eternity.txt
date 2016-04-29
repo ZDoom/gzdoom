@@ -231,3 +231,6 @@ enum
 444 = 0, Teleport(0)
 445 = 0, Teleport_NoFog(0)
 446 = 0, Teleport_Line(0)
+447 = 0, Exit_Normal(0)
+448 = 0, Exit_Secret(0)
+449 = 0, Teleport_NewMap(0)

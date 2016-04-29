@@ -80,7 +80,7 @@ extern planefunction_t	ceilingfunc_t;
 extern short			floorclip[MAXWIDTH];
 extern short			ceilingclip[MAXWIDTH];
 
-extern fixed_t			yslope[MAXHEIGHT];
+extern float			yslope[MAXHEIGHT];
 
 void R_InitPlanes ();
 void R_DeinitPlanes ();

@@ -501,62 +501,60 @@ void R_SetupColormap(player_t *player)
 
 void R_SetupFreelook()
 {
-	{
-		double dy;
+	double dy;
 		
-		if (camera != NULL)
+	if (camera != NULL)
+	{
+		dy = FocalLengthY * (-ViewPitch).Tan();
+	}
+	else
+	{
+		dy = 0;
+	}
+
+	CenterY = (viewheight / 2.0) + dy;
+	centery = xs_ToInt(CenterY);
+	globaluclip = -CenterY / InvZtoScale;
+	globaldclip = (viewheight - CenterY) / InvZtoScale;
+
+	//centeryfrac &= 0xffff0000;
+	int e, i;
+
+	i = 0;
+	e = viewheight;
+	float focus = float(FocalLengthY);
+	float den;
+	float cy = float(CenterY);
+	if (i < centery)
+	{
+		den = cy - i - 0.5f;
+		if (e <= centery)
 		{
-			dy = FocalLengthY * (-ViewPitch).Tan();
+			do {
+				yslope[i] = focus / den;
+				den -= 1;
+			} while (++i < e);
 		}
 		else
 		{
-			dy = 0;
-		}
-
-		CenterY = (viewheight / 2.0) + dy;
-		centery = xs_ToInt(CenterY);
-		globaluclip = -CenterY / InvZtoScale;
-		globaldclip = (viewheight - CenterY) / InvZtoScale;
-
-		//centeryfrac &= 0xffff0000;
-		int e, i;
-
-		i = 0;
-		e = viewheight;
-		float focus = float(FocalLengthY);
-		float den;
-		float cy = float(CenterY);
-		if (i < centery)
-		{
-			den = cy - i - 0.5f;
-			if (e <= centery)
-			{
-				do {
-					yslope[i] = FLOAT2FIXED(focus / den);
-					den -= 1;
-				} while (++i < e);
-			}
-			else
-			{
-				do {
-					yslope[i] = FLOAT2FIXED(focus / den);
-					den -= 1;
-				} while (++i < centery);
-				den = i - cy + 0.5f;
-				do {
-					yslope[i] = FLOAT2FIXED(focus / den);
-					den += 1;
-				} while (++i < e);
-			}
-		}
-		else
-		{
+			do {
+				yslope[i] = focus / den;
+				den -= 1;
+			} while (++i < centery);
 			den = i - cy + 0.5f;
 			do {
-				yslope[i] = FLOAT2FIXED(focus / den);
+				yslope[i] = focus / den;
 				den += 1;
 			} while (++i < e);
 		}
+	}
+	else
+	{
+		den = i - cy + 0.5f;
+		do {
+			yslope[i] = focus / den;
+			den += 1;
+		} while (++i < e);
 	}
 }
 

@@ -141,10 +141,10 @@ fixed_t					pviewx, pviewy;
 void R_DrawTiltedPlane_ASM (int y, int x1);
 }
 
-fixed_t 				yslope[MAXHEIGHT];
+float 					yslope[MAXHEIGHT];
 static fixed_t			xscale, yscale;
-static DWORD			xstepscale, ystepscale;
-static DWORD			basexfrac, baseyfrac;
+static double			xstepscale, ystepscale;
+static double			basexfrac, baseyfrac;
 
 #ifdef X86_ASM
 extern "C" void R_SetSpanSource_ASM (const BYTE *flat);
@@ -205,7 +205,7 @@ void R_DeinitPlanes ()
 void R_MapPlane (int y, int x1)
 {
 	int x2 = spanend[y];
-	fixed_t distance;
+	double distance;
 
 #ifdef RANGECHECK
 	if (x2 < x1 || x1<0 || x2>=viewwidth || (unsigned)y>=(unsigned)viewheight)
@@ -217,12 +217,12 @@ void R_MapPlane (int y, int x1)
 	// [RH] Notice that I dumped the caching scheme used by Doom.
 	// It did not offer any appreciable speedup.
 
-	distance = xs_ToInt(planeheight * yslope[y]);
+	distance = planeheight * yslope[y];
 
-	ds_xstep = FixedMul (distance, xstepscale);
-	ds_ystep = FixedMul (distance, ystepscale);
-	ds_xfrac = FixedMul (distance, basexfrac) + pviewx;
-	ds_yfrac = FixedMul (distance, baseyfrac) + pviewy;
+	ds_xstep = xs_ToFixed(32-ds_xbits, distance * xstepscale);
+	ds_ystep = xs_ToFixed(32-ds_ybits, distance * ystepscale);
+	ds_xfrac = xs_ToFixed(32-ds_xbits, distance * basexfrac) + pviewx;
+	ds_yfrac = xs_ToFixed(32-ds_ybits, distance * baseyfrac) + pviewy;
 
 	if (plane_shade)
 	{
@@ -1495,12 +1495,15 @@ void R_DrawNormalPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t 
 		return;
 	}
 
-	DAngle planeang = pl->xform.Angle + pl->xform.baseAngle;
+	double planeang = (pl->xform.Angle + pl->xform.baseAngle).Radians();
+	double xstep, ystep, leftxfrac, leftyfrac, rightxfrac, rightyfrac;
+	double x;
+
 	xscale = xs_ToFixed(32 - ds_xbits, _xscale);
 	yscale = xs_ToFixed(32 - ds_ybits, _yscale);
 	if (planeang != 0)
 	{
-		double cosine = cos(planeang.Radians()), sine = sin(planeang.Radians());
+		double cosine = cos(planeang), sine = sin(planeang);
 		pviewx = FLOAT2FIXED(pl->xform.xOffs + ViewPos.X * cosine - ViewPos.Y * sine);
 		pviewy = FLOAT2FIXED(pl->xform.yOffs - ViewPos.X * sine - ViewPos.Y * cosine);
 	}
@@ -1514,23 +1517,32 @@ void R_DrawNormalPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t 
 	pviewy = FixedMul (yscale, pviewy);
 	
 	// left to right mapping
-	planeang = ViewAngle - 90 + planeang;
+	planeang += (ViewAngle - 90).Radians();
 
 	// Scale will be unit scale at FocalLengthX (normally SCREENWIDTH/2) distance
-	xstepscale = xs_RoundToInt(xscale * cos(planeang.Radians()) / FocalLengthX);
-	ystepscale = xs_RoundToInt(yscale * -sin(planeang.Radians()) / FocalLengthX);
+	xstep = cos(planeang) / FocalLengthX;
+	ystep = -sin(planeang) / FocalLengthX;
 
 	// [RH] flip for mirrors
 	if (MirrorFlags & RF_XFLIP)
 	{
-		xstepscale = (DWORD)(-(SDWORD)xstepscale);
-		ystepscale = (DWORD)(-(SDWORD)ystepscale);
+		xstep = -xstep;
+		ystep = -ystep;
 	}
 
-	int x = pl->right - centerx;
-	planeang += 90;
-	basexfrac = xs_RoundToInt(xscale * cos(planeang.Radians())) + x*xstepscale;
-	baseyfrac = xs_RoundToInt(yscale * -sin(planeang.Radians())) + x*ystepscale;
+	planeang += M_PI/2;
+	double cosine = cos(planeang), sine = -sin(planeang);
+	x = pl->right - centerx - 0.5;
+	rightxfrac = _xscale * (cosine + x * xstep);
+	rightyfrac = _yscale * (sine + x * ystep);
+	x = pl->left - centerx - 0.5;
+	leftxfrac = _xscale * (cosine + x * xstep);
+	leftyfrac = _yscale * (sine + x * ystep);
+
+	basexfrac = rightxfrac;
+	baseyfrac = rightyfrac;
+	xstepscale = (rightxfrac - leftxfrac) / (pl->right - pl->left);
+	ystepscale = (rightyfrac - leftyfrac) / (pl->right - pl->left);
 
 	planeheight = fabs(pl->height.Zat0() - ViewPos.Z);
 

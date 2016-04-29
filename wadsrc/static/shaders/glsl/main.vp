@@ -55,10 +55,14 @@ void main()
 	#endif
 	
 	
-	// clip planes used for reflective flats
-	if (uClipHeightDirection != 0.0)
+	
+	if (uClipHeightDirection != 0.0) // clip planes used for reflective flats
 	{
 		gl_ClipDistance[0] = (worldcoord.y - uClipHeight) * uClipHeightDirection;
+	}
+	else if (uClipLine.x > -1000000.0) // and for line portals - this will never be active at the same time as the reflective planes clipping so it can use the same hardware clip plane.
+	{
+		gl_ClipDistance[0] = -( (worldcoord.z - uClipLine.y) * uClipLine.z + (uClipLine.x - worldcoord.x) * uClipLine.w ) + 1.0/32768.0;	// allow a tiny bit of imprecisions for colinear linedefs.
 	}
 
 	// clip planes used for translucency splitting

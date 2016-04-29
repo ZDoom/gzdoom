@@ -225,6 +225,8 @@ struct GLLinePortal : public GLPortal
 	virtual int ClipSubsector(subsector_t *sub);
 	virtual int ClipPoint(const DVector2 &pos);
 	virtual bool NeedCap() { return false; }
+	virtual void PushState();
+	virtual void PopState();
 };
 
 

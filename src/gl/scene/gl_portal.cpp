@@ -825,7 +825,28 @@ void GLPlaneMirrorPortal::PopState()
 //
 //-----------------------------------------------------------------------------
 
+void GLLinePortal::PushState()
+{
+	FStateVec4 &v = gl_RenderState.GetClipLine();
+	planestack.Push(v.vec[0]);
+	planestack.Push(v.vec[1]);
+	planestack.Push(v.vec[2]);
+	planestack.Push(v.vec[3]);
+	planestack.Push(gl_RenderState.GetClipLineState());
+	gl_RenderState.EnableClipLine(false);
+}
 
+void GLLinePortal::PopState()
+{
+	FStateVec4 &v = gl_RenderState.GetClipLine();
+	float e;
+	planestack.Pop(e);
+	planestack.Pop(v.vec[3]);
+	planestack.Pop(v.vec[2]);
+	planestack.Pop(v.vec[1]);
+	planestack.Pop(v.vec[0]);
+	gl_RenderState.EnableClipLine(e != 0);
+}
 
 int GLLinePortal::ClipSeg(seg_t *seg) 
 { 
@@ -948,7 +969,10 @@ void GLMirrorPortal::DrawContents()
 	angle_t a1 = linedef->v2->GetClipAngle();
 	clipper.SafeAddClipRange(a1,a2);
 
+	gl_RenderState.SetClipLine(linedef);
+	gl_RenderState.EnableClipLine(true);
 	GLRenderer->DrawScene();
+	gl_RenderState.EnableClipLine(false);
 
 	MirrorFlag--;
 }
@@ -1018,7 +1042,10 @@ void GLLineToLinePortal::DrawContents()
 	GLRenderer->SetupView(ViewPos.X, ViewPos.Y, ViewPos.Z, ViewAngle, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
 
 	ClearClipper();
+	gl_RenderState.SetClipLine(glport->reference->mDestination);
+	gl_RenderState.EnableClipLine(true);
 	GLRenderer->DrawScene();
+	gl_RenderState.EnableClipLine(false);
 	RestoreMapSection();
 }
 

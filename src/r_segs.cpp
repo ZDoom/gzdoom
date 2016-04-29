@@ -1134,7 +1134,7 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *l
 		dc_count = y2ve[0] - y1ve[0];
 		iscale = swal[x] * yrepeat;
 		dc_iscale = xs_ToFixed(fracbits, iscale);
-		dc_texturefrac = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[0] - CenterY + 1));
+		dc_texturefrac = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[0] - CenterY + 0.5));
 
 		dovline1();
 	}
@@ -1153,7 +1153,7 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *l
 			bufplce[z] = getcol (rw_pic, (lwal[x+z] + xoffset) >> FRACBITS);
 			iscale = swal[x + z] * yrepeat;
 			vince[z] = xs_ToFixed(fracbits, iscale);
-			vplce[z] = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[z] - CenterY + 1));
+			vplce[z] = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[z] - CenterY + 0.5));
 		}
 		if (bad == 15)
 		{
@@ -1229,7 +1229,7 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *l
 		dc_count = y2ve[0] - y1ve[0];
 		iscale = swal[x] * yrepeat;
 		dc_iscale = xs_ToFixed(fracbits, iscale);
-		dc_texturefrac = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[0] - CenterY + 1));
+		dc_texturefrac = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[0] - CenterY + 0.5));
 
 		dovline1();
 	}
@@ -1484,7 +1484,7 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_
 		dc_count = y2ve[0] - y1ve[0];
 		iscale = swal[x] * yrepeat;
 		dc_iscale = xs_ToFixed(fracbits, iscale);
-		dc_texturefrac = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[0] - CenterY + 1));
+		dc_texturefrac = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[0] - CenterY + 0.5));
 
 		domvline1();
 	}
@@ -1501,7 +1501,7 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_
 			bufplce[z] = getcol (rw_pic, (lwal[dax] + xoffset) >> FRACBITS);
 			iscale = swal[dax] * yrepeat;
 			vince[z] = xs_ToFixed(fracbits, iscale);
-			vplce[z] = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[z] - CenterY + 1));
+			vplce[z] = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[z] - CenterY + 0.5));
 		}
 		if (bad == 15)
 		{
@@ -1575,7 +1575,7 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_
 		dc_count = y2ve[0] - y1ve[0];
 		iscale = swal[x] * yrepeat;
 		dc_iscale = xs_ToFixed(fracbits, iscale);
-		dc_texturefrac = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[0] - CenterY + 1));
+		dc_texturefrac = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[0] - CenterY + 0.5));
 
 		domvline1();
 	}
@@ -1660,7 +1660,7 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, f
 		dc_count = y2ve[0] - y1ve[0];
 		iscale = swal[x] * yrepeat;
 		dc_iscale = xs_ToFixed(fracbits, iscale);
-		dc_texturefrac = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[0] - CenterY + 1));
+		dc_texturefrac = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[0] - CenterY + 0.5));
 
 		tmvline1();
 	}
@@ -1677,7 +1677,7 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, f
 			bufplce[z] = getcol (rw_pic, (lwal[dax] + xoffset) >> FRACBITS);
 			iscale = swal[dax] * yrepeat;
 			vince[z] = xs_ToFixed(fracbits, iscale);
-			vplce[z] = xs_ToFixed(fracbits, dc_texturemid + vince[z] * (y1ve[z] - CenterY + 1));
+			vplce[z] = xs_ToFixed(fracbits, dc_texturemid + vince[z] * (y1ve[z] - CenterY + 0.5));
 		}
 		if (bad == 15)
 		{
@@ -1754,7 +1754,7 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, f
 		dc_count = y2ve[0] - y1ve[0];
 		iscale = swal[x] * yrepeat;
 		dc_iscale = xs_ToFixed(fracbits, iscale);
-		dc_texturefrac = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[0] - CenterY + 1));
+		dc_texturefrac = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[0] - CenterY + 0.5));
 
 		tmvline1();
 	}
@@ -2683,7 +2683,6 @@ int OWallMost (short *mostbuf, double z, const FWallCoords *wallc)
 	}
 	ix1 = wallc->sx1; iy1 = wallc->sz1;
 	ix2 = wallc->sx2; iy2 = wallc->sz2;
-#if 1
 	if (bad & 3)
 	{ // the line intersects the top of the screen
 		double t = (z-s1) / (s2-s1);
@@ -2728,40 +2727,8 @@ int OWallMost (short *mostbuf, double z, const FWallCoords *wallc)
 	else
 	{
 		fixed_t yinc = FLOAT2FIXED(((z * InvZtoScale / iy2) - y) / (ix2 - ix1));
-		qinterpolatedown16short (&mostbuf[ix1], ix2-ix1, FLOAT2FIXED(y + CenterY), yinc);
+		qinterpolatedown16short (&mostbuf[ix1], ix2-ix1, FLOAT2FIXED(y + CenterY) + FRACUNIT/2, yinc);
 	}
-#else
-	double max = viewheight;
-	double zz = z / 65536.0;
-#if 0
-	double z1 = zz * InvZtoScale / wallc->sz1;
-	double z2 = zz * InvZtoScale / wallc->sz2 - z1;
-	z2 /= (wallc->sx2 - wallc->sx1);
-	z1 += centeryfrac / 65536.0;
-
-	for (int x = wallc->sx1; x < wallc->sx2; ++x)
-	{
-		mostbuf[x] = xs_RoundToInt(clamp(z1, 0.0, max));
-		z1 += z2;
-	}
-#else
-	double top, bot, i;
-
-	i = wallc->sx1 - centerx;
-	top = WallT.UoverZorg + WallT.UoverZstep * i;
-	bot = WallT.InvZorg + WallT.InvZstep * i;
-	double cy = centeryfrac / 65536.0;
-
-	for (int x = wallc->sx1; x < wallc->sx2; x++)
-	{
-		double frac = top / bot;
-		double scale = frac * WallT.DepthScale + WallT.DepthOrg;
-		mostbuf[x] = xs_RoundToInt(clamp(zz / scale + cy, 0.0, max));
-		top += WallT.UoverZstep;
-		bot += WallT.InvZstep;
-	}
-#endif
-#endif
 	return bad;
 }
 
@@ -2914,7 +2881,7 @@ int WallMost (short *mostbuf, const secplane_t &plane, const FWallCoords *wallc)
 	else
 	{
 		fixed_t yinc = FLOAT2FIXED(((z2 * InvZtoScale / iy2) - y) / (ix2-ix1));
-		qinterpolatedown16short (&mostbuf[ix1], ix2-ix1, FLOAT2FIXED(y + CenterY), yinc);
+		qinterpolatedown16short (&mostbuf[ix1], ix2-ix1, FLOAT2FIXED(y + CenterY) + FRACUNIT/2, yinc);
 	}
 
 	return bad;

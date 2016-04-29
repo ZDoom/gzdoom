@@ -6446,7 +6446,7 @@ void AActor::UpdateRenderSectorList()
 		if (PortalBlockmap.containsLines && Pos().XY() != OldRenderPos.XY())
 		{
 			int bx = GetBlockX(X());
-			int by = GetBlockX(Y());
+			int by = GetBlockY(Y());
 			FBoundingBox bb(X(), Y(), MIN(radius*1.5, 128.));	// Don't go further than 128 map units, even for large actors
 			// Are there any portals near the actor's position?
 			if (bx >= 0 && by >= 0 && bx < bmapwidth && by < bmapheight && PortalBlockmap(bx, by).neighborContainsLines)

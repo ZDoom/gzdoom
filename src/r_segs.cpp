@@ -231,6 +231,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	double		texheight, texheightscale;
 	bool		notrelevant = false;
 	double		rowoffset;
+	bool		wrap = false;
 
 	const sector_t *sec;
 
@@ -334,8 +335,8 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 
 	rowoffset = curline->sidedef->GetTextureYOffset(side_t::mid);
 
-	if (!(curline->linedef->flags & ML_WRAP_MIDTEX) &&
-		!(curline->sidedef->Flags & WALLF_WRAP_MIDTEX))
+	wrap = (curline->linedef->flags & ML_WRAP_MIDTEX) || (curline->sidedef->Flags & WALLF_WRAP_MIDTEX);
+	if (!wrap)
 	{ // Texture does not wrap vertically.
 		double textop;
 
@@ -482,7 +483,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 		{
 			// rowoffset is added before the multiply so that the masked texture will
 			// still be positioned in world units rather than texels.
-			dc_texturemid = (dc_texturemid + rowoffset - ViewPos.Z) * MaskedScaleY;
+			dc_texturemid = (dc_texturemid - ViewPos.Z + rowoffset) * MaskedScaleY;
 		}
 		else
 		{
@@ -543,8 +544,11 @@ clearfog:
 	{
 		if (fake3D & FAKE3D_REFRESHCLIP)
 		{
-			assert(ds->bkup >= 0);
-			memcpy(openings + ds->sprtopclip, openings + ds->bkup, (ds->x2 - ds->x1) * 2);
+			if (!wrap)
+			{
+				assert(ds->bkup >= 0);
+				memcpy(openings + ds->sprtopclip, openings + ds->bkup, (ds->x2 - ds->x1) * 2);
+			}
 		}
 		else
 		{

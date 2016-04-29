@@ -71,7 +71,7 @@ void DEarthquake::Serialize (FArchive &arc)
 		<< m_TremorRadius << m_DamageRadius
 		<< m_QuakeSFX << m_Flags << m_CountdownStart
 		<< m_WaveSpeed
-		<< m_Falloff << m_Highpoint << m_MiniCount;
+		<< m_Falloff << m_Highpoint << m_MiniCount
 		<< m_RollIntensity << m_RollWave;
 }
 

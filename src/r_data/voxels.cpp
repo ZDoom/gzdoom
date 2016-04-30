@@ -501,25 +501,33 @@ static void VOX_ReadOptions(FScanner &sc, VoxelOptions &opts)
 		}
 		else if (sc.Compare("spin"))
 		{
+			int mul = 1;
 			sc.MustGetToken('=');
+			if (sc.CheckToken('-')) mul = -1;
 			sc.MustGetToken(TK_IntConst);
-			opts.DroppedSpin = opts.PlacedSpin = sc.Number;
+			opts.DroppedSpin = opts.PlacedSpin = sc.Number*mul;
 		}
 		else if (sc.Compare("placedspin"))
 		{
+			int mul = 1;
 			sc.MustGetToken('=');
+			if (sc.CheckToken('-')) mul = -1;
 			sc.MustGetToken(TK_IntConst);
-			opts.PlacedSpin = sc.Number;
+			opts.PlacedSpin = sc.Number*mul;
 		}
 		else if (sc.Compare("droppedspin"))
 		{
+			int mul = 1;
 			sc.MustGetToken('=');
+			if (sc.CheckToken('-')) mul = -1;
 			sc.MustGetToken(TK_IntConst);
-			opts.DroppedSpin = sc.Number;
+			opts.DroppedSpin = sc.Number*mul;
 		}
 		else if (sc.Compare("angleoffset"))
 		{
+			int mul = 1;
 			sc.MustGetToken('=');
+			if (sc.CheckToken('-')) mul = -1;
 			sc.MustGetAnyToken();
 			if (sc.TokenType == TK_IntConst)
 			{
@@ -529,7 +537,7 @@ static void VOX_ReadOptions(FScanner &sc, VoxelOptions &opts)
 			{
 				sc.TokenMustBe(TK_FloatConst);
 			}
-			opts.AngleOffset = sc.Float + 90.;
+			opts.AngleOffset = mul * sc.Float + 90.;
 		}
 		else if (sc.Compare("overridepalette"))
 		{

@@ -71,6 +71,7 @@ public:
 	int gl_spriteindex;
 	unsigned int mFBID;
 	unsigned int mVAOID;
+	int mOldFBID;
 
 	FTexture *gllight;
 	FTexture *glpart2;

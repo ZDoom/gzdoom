@@ -214,7 +214,15 @@ void GLWall::PutPortal(int ptype)
 
 	case PORTALTYPE_LINETOLINE:
 		portal=GLPortal::FindPortal(lineportal);
-		if (!portal) portal=new GLLineToLinePortal(lineportal);
+		if (!portal)
+		{
+			line_t *otherside = lineportal->lines[0]->mDestination;
+			if (otherside != NULL)
+			{
+				gl_RenderActorsInPortal(linePortalToGL[otherside->portalindex]);
+			}
+			portal = new GLLineToLinePortal(lineportal);
+		}
 		portal->AddLine(this);
 		break;
 

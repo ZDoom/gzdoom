@@ -1437,7 +1437,7 @@ CocoaOpenGLFrameBuffer::CocoaOpenGLFrameBuffer(void* hMonitor, int width, int he
 , m_renderTarget(width, height)
 {
 	SetSmoothPicture(gl_smooth_rendered);
-
+/*
 	// Setup uniform samplers for gamma correction shader
 
 	m_gammaProgram.Load("GammaCorrection", "shaders/glsl/main.vp",
@@ -1449,7 +1449,7 @@ CocoaOpenGLFrameBuffer::CocoaOpenGLFrameBuffer(void* hMonitor, int width, int he
 	glUniform1i(glGetUniformLocation(program, "backbuffer"), 0);
 	glUniform1i(glGetUniformLocation(program, "gammaTable"), 1);
 	glUseProgram(0);
-
+*/
 	// Fill render target with black color
 
 	m_renderTarget.Bind();
@@ -1519,7 +1519,7 @@ void CocoaOpenGLFrameBuffer::DrawRenderTarget()
 
 	glViewport(rbOpts.shiftX, rbOpts.shiftY, rbOpts.width, rbOpts.height);
 
-	m_gammaProgram.Bind();
+	//m_gammaProgram.Bind();
 	BoundTextureDraw2D(Width, Height);
 
 	glViewport(0, 0, Width, Height);

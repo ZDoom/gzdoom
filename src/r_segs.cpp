@@ -2016,9 +2016,9 @@ void R_NewWall (bool needlights)
 	midtexture = toptexture = bottomtexture = 0;
 
 	if (sidedef == linedef->sidedef[0] &&
-		(linedef->isVisualPortal() || (linedef->special == Line_Mirror && r_drawmirrors))) // [ZZ] compatibility with r_drawmirrors cvar that existed way before portals
+		(linedef->special == Line_Mirror && r_drawmirrors)) // [ZZ] compatibility with r_drawmirrors cvar that existed way before portals
 	{
-		markfloor = markceiling = true; // act like an one-sided wall here (todo: check how does this work with transparency)
+		markfloor = markceiling = true; // act like a one-sided wall here (todo: check how does this work with transparency)
 		rw_markportal = true;
 	}
 	else if (backsector == NULL)
@@ -2027,7 +2027,11 @@ void R_NewWall (bool needlights)
 		// a single sided line is terminal, so it must mark ends
 		markfloor = markceiling = true;
 		// [RH] Horizon lines do not need to be textured
-		if (linedef->special != Line_Horizon)
+		if (linedef->isVisualPortal())
+		{
+			rw_markportal = true;
+		}
+		else if (linedef->special != Line_Horizon)
 		{
 			midtexture = TexMan(sidedef->GetTexture(side_t::mid), true);
 			rw_offset_mid = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::mid));
@@ -2102,8 +2106,12 @@ void R_NewWall (bool needlights)
 			rw_frontlowertop = backsector->GetPlaneTexZ(sector_t::ceiling);
 		}
 
-		if ((rw_backcz1 <= rw_frontfz1 && rw_backcz2 <= rw_frontfz2) ||
-			(rw_backfz1 >= rw_frontcz1 && rw_backfz2 >= rw_frontcz2))
+		if (linedef->isVisualPortal())
+		{
+			markceiling = markfloor = true;
+		}
+		else if ((rw_backcz1 <= rw_frontfz1 && rw_backcz2 <= rw_frontfz2) ||
+				 (rw_backfz1 >= rw_frontcz1 && rw_backfz2 >= rw_frontcz2))
 		{
 			// closed door
 			markceiling = markfloor = true;
@@ -2260,6 +2268,7 @@ void R_NewWall (bool needlights)
 				rw_bottomtexturemid += rowoffset;
 			}
 		}
+		rw_markportal = linedef->isVisualPortal();
 	}
 
 	// if a floor / ceiling plane is on the wrong side of the view plane,

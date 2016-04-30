@@ -575,7 +575,6 @@ void R_AddLine (seg_t *line)
 		return;
 
 	vertex_t *v1, *v2;
-
 	v1 = line->linedef->v1;
 	v2 = line->linedef->v2;
 
@@ -605,7 +604,7 @@ void R_AddLine (seg_t *line)
 	rw_havehigh = rw_havelow = false;
 
 	// Single sided line?
-	if (backsector == NULL || (line->linedef->isVisualPortal() && line->sidedef == line->linedef->sidedef[0]))
+	if (backsector == NULL)
 	{
 		solid = true;
 	}
@@ -636,9 +635,14 @@ void R_AddLine (seg_t *line)
 			WallMost (walllower, backsector->floorplane, &WallC);
 		}
 
+		// Portal
+		if (line->linedef->isVisualPortal() && line->sidedef == line->linedef->sidedef[0])
+		{
+			solid = true;
+		}
 		// Closed door.
-		if ((rw_backcz1 <= rw_frontfz1 && rw_backcz2 <= rw_frontfz2) ||
-			(rw_backfz1 >= rw_frontcz1 && rw_backfz2 >= rw_frontcz2))
+		else if ((rw_backcz1 <= rw_frontfz1 && rw_backcz2 <= rw_frontfz2) ||
+				 (rw_backfz1 >= rw_frontcz1 && rw_backfz2 >= rw_frontcz2))
 		{
 			solid = true;
 		}

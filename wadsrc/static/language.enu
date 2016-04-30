@@ -2607,6 +2607,7 @@ GLPREFMNU_SPRCLIP 				= "Adjust sprite clipping";
 GLPREFMNU_SPRBLEND 				= "Smooth sprite edges";
 GLPREFMNU_FUZZSTYLE 			= "Fuzz Style";
 GLPREFMNU_SPRBILLBOARD 			= "Sprite billboard";
+GLPREFMNU_SPRBILLFACECAMERA 	= "Sprites face camera";
 GLPREFMNU_PARTICLESTYLE 		= "Particle style";
 GLPREFMNU_AMBLIGHT 				= "Ambient light level";
 GLPREFMNU_RENDERQUALITY 		= "Rendering quality";

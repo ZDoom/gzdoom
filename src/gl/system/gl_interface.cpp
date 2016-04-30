@@ -238,10 +238,14 @@ void gl_LoadExtensions()
 	int v;
 	glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS, &v);
 	gl.maxuniforms = v;
+
+#ifndef __APPLE__
+	// GL_ARB_uniform_buffer_object extention is not supported on OS X
 	glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &v);
 	gl.maxuniformblock = v;
 	glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &v);
 	gl.uniformblockalignment = v;
+#endif // !__APPLE__
 
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &gl.max_texturesize);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -293,17 +297,25 @@ void gl_PrintStartupLog()
 	Printf ("Max. fragment uniforms: %d\n", v);
 	glGetIntegerv(GL_MAX_VERTEX_UNIFORM_COMPONENTS, &v);
 	Printf ("Max. vertex uniforms: %d\n", v);
+
+#ifndef __APPLE__
+	// GL_ARB_uniform_buffer_object extention is not supported on OS X
 	glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &v);
 	Printf ("Max. uniform block size: %d\n", v);
 	glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &v);
 	Printf ("Uniform block alignment: %d\n", v);
+#endif // !__APPLE__
 
 	glGetIntegerv(GL_MAX_VARYING_FLOATS, &v);
 	Printf ("Max. varying: %d\n", v);
+
+#ifndef __APPLE__
+	// ARB_shader_storage_buffer_object extention is not supported on OS X
 	glGetIntegerv(GL_MAX_COMBINED_SHADER_STORAGE_BLOCKS, &v);
 	Printf("Max. combined shader storage blocks: %d\n", v);
 	glGetIntegerv(GL_MAX_VERTEX_SHADER_STORAGE_BLOCKS, &v);
 	Printf("Max. vertex shader storage blocks: %d\n", v);
+#endif // !__APPLE__
 
 	// For shader-less, the special alphatexture translation must be changed to actually set the alpha, because it won't get translated by a shader.
 	if (gl.glslversion == 0)

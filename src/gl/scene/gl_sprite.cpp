@@ -278,7 +278,6 @@ void GLSprite::Draw(int pass)
 				float xcenter = (x1 + x2)*0.5;
 				float ycenter = (y1 + y2)*0.5;
 				float zcenter = (z1 + z2)*0.5;
-				float angleRad = (270. - GLRenderer->mAngles.Yaw).Radians();
 
 				Matrix3x4 mat;
 				mat.MakeIdentity();
@@ -288,10 +287,10 @@ void GLSprite::Draw(int pass)
 				if (drawBillboardFacingCamera) {
 					// [CMB] Rotate relative to camera XY position, not just camera direction,
 					// which is nicer in VR
-					float xrel = xcenter - FIXED2FLOAT(GLRenderer->mViewActor->X());
-					float yrel = ycenter - FIXED2FLOAT(GLRenderer->mViewActor->Y());
+					float xrel = xcenter - GLRenderer->mViewActor->X();
+					float yrel = ycenter - GLRenderer->mViewActor->Y();
 					float absAngleDeg = RAD2DEG(atan2(-yrel, xrel));
-					float counterRotationDeg = 270. - float(GLRenderer->mAngles.Yaw); // counteracts existing sprite rotation
+					float counterRotationDeg = 270. - GLRenderer->mAngles.Yaw.Degrees; // counteracts existing sprite rotation
 					float relAngleDeg = counterRotationDeg + absAngleDeg;
 
 					mat.Rotate(0, 1, 0, relAngleDeg);
@@ -302,6 +301,8 @@ void GLSprite::Draw(int pass)
 					// Rotate the sprite about the vector starting at the center of the sprite
 					// triangle strip and with direction orthogonal to where the player is looking
 					// in the x/y plane.
+					float angleRad = (270. - GLRenderer->mAngles.Yaw).Radians();
+
 					mat.Rotate(-sin(angleRad), 0, cos(angleRad), -GLRenderer->mAngles.Pitch.Degrees);
 				}
 				mat.Translate(-xcenter, -zcenter, -ycenter); // retreat from sprite center

@@ -373,16 +373,7 @@ private:
 // ---------------------------------------------------------------------------
 
 
-struct CapabilityChecker
-{
-	CapabilityChecker();
-};
-
-
-// ---------------------------------------------------------------------------
-
-
-class CocoaOpenGLFrameBuffer : public OpenGLFrameBuffer, private CapabilityChecker, private NonCopyable
+class CocoaOpenGLFrameBuffer : public OpenGLFrameBuffer, private NonCopyable
 {
 	typedef OpenGLFrameBuffer Super;
 
@@ -1164,12 +1155,14 @@ SDLGLFB::SDLGLFB(void*, const int width, const int height, int, int, const bool 
 , m_lock(-1)
 , m_isUpdatePending(false)
 , m_supportsGamma(true)
-, m_gammaTexture(GAMMA_TABLE_SIZE, 1, false, false, true, true)
+, m_gammaProgram("gamma_correction")
+, m_gammaTexture(GAMMA_TABLE_SIZE, 1, true)
 {
 }
 
 SDLGLFB::SDLGLFB()
-: m_gammaTexture(0, 0, false, false, false, false)
+: m_gammaProgram(nullptr)
+, m_gammaTexture(0, 0, false)
 {
 }
 
@@ -1393,7 +1386,7 @@ bool BoundTextureSaveAsPNG(const GLenum target, const char* const path)
 RenderTarget::RenderTarget(const GLsizei width, const GLsizei height)
 : m_ID(0)
 , m_oldID(0)
-, m_texture(width, height, false, false, true, true)
+, m_texture(width, height, true)
 {
 	glGenFramebuffersEXT(1, &m_ID);
 
@@ -1439,26 +1432,12 @@ GLuint RenderTarget::GetBoundID()
 // ---------------------------------------------------------------------------
 
 
-CapabilityChecker::CapabilityChecker()
-{
-	if (!(gl.flags & RFL_FRAMEBUFFER))
-	{
-		I_FatalError(
-			"The graphics hardware in your system does not support Frame Buffer Object (FBO).\n"
-			"It is required to run this version of " GAMENAME ".\n");
-	}
-}
-
-
-// ---------------------------------------------------------------------------
-
-
 CocoaOpenGLFrameBuffer::CocoaOpenGLFrameBuffer(void* hMonitor, int width, int height, int bits, int refreshHz, bool fullscreen)
 : OpenGLFrameBuffer(hMonitor, width, height, bits, refreshHz, fullscreen)
 , m_renderTarget(width, height)
 {
 	SetSmoothPicture(gl_smooth_rendered);
-
+/*
 	// Setup uniform samplers for gamma correction shader
 
 	m_gammaProgram.Load("GammaCorrection", "shaders/glsl/main.vp",
@@ -1470,7 +1449,7 @@ CocoaOpenGLFrameBuffer::CocoaOpenGLFrameBuffer(void* hMonitor, int width, int he
 	glUniform1i(glGetUniformLocation(program, "backbuffer"), 0);
 	glUniform1i(glGetUniformLocation(program, "gammaTable"), 1);
 	glUseProgram(0);
-
+*/
 	// Fill render target with black color
 
 	m_renderTarget.Bind();
@@ -1525,8 +1504,8 @@ void CocoaOpenGLFrameBuffer::DrawRenderTarget()
 {
 	m_renderTarget.Unbind();
 
-	m_renderTarget.GetColorTexture().Bind(0, 0);
-	m_gammaTexture.Bind(1, 0);
+	m_renderTarget.GetColorTexture().Bind(0, 0, 0);
+	m_gammaTexture.Bind(1, 0, 0);
 
 	if (rbOpts.dirty)
 	{
@@ -1540,7 +1519,7 @@ void CocoaOpenGLFrameBuffer::DrawRenderTarget()
 
 	glViewport(rbOpts.shiftX, rbOpts.shiftY, rbOpts.width, rbOpts.height);
 
-	m_gammaProgram.Bind(0.0f);
+	//m_gammaProgram.Bind();
 	BoundTextureDraw2D(Width, Height);
 
 	glViewport(0, 0, Width, Height);
@@ -1550,7 +1529,7 @@ void CocoaOpenGLFrameBuffer::DrawRenderTarget()
 void CocoaOpenGLFrameBuffer::SetSmoothPicture(const bool smooth)
 {
 	FHardwareTexture& texture = m_renderTarget.GetColorTexture();
-	texture.Bind(0, 0);
+	texture.Bind(0, 0, 0);
 	BoundTextureSetFilter(GL_TEXTURE_2D, smooth ? GL_LINEAR : GL_NEAREST);
 }
 

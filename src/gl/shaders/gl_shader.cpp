@@ -75,6 +75,7 @@ void PatchCommon(FString &code)
 void PatchVertShader(FString &code)
 {
 	PatchCommon(code);
+	code.Substitute("in vec", "attribute vec");
 	code.Substitute("out vec", "varying vec");
 	code.Substitute("gl_ClipDistance", "//");
 }

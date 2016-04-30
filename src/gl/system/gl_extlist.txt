@@ -1,0 +1,14 @@
+-- List of OpenGL extensions for glLoadGen
+
+-- Generation of gl_load.c and gl_load.h files:
+-- > lua LoadGen.lua -style=pointer_c -spec=gl -version=3.3 -profile=compatibility -extfile=gl_extlist.txt load
+
+APPLE_client_storage
+ARB_buffer_storage
+ARB_shader_storage_buffer_object
+ARB_texture_compression
+ARB_texture_rectangle
+EXT_framebuffer_object
+EXT_texture_compression_s3tc
+EXT_texture_filter_anisotropic
+EXT_texture_sRGB

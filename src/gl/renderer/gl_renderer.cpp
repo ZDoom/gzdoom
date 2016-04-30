@@ -122,6 +122,7 @@ void FGLRenderer::Initialize()
 	else mLights = NULL;
 	gl_RenderState.SetVertexBuffer(mVBO);
 	mFBID = 0;
+	mOldFBID = 0;
 
 	SetupLevel();
 	mShaderManager = new FShaderManager;
@@ -237,6 +238,7 @@ void FGLRenderer::FlushTextures()
 bool FGLRenderer::StartOffscreen()
 {
 	if (mFBID == 0) glGenFramebuffers(1, &mFBID);
+	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &mOldFBID);
 	glBindFramebuffer(GL_FRAMEBUFFER, mFBID);
 	return true;
 }
@@ -249,7 +251,7 @@ bool FGLRenderer::StartOffscreen()
 
 void FGLRenderer::EndOffscreen()
 {
-	glBindFramebuffer(GL_FRAMEBUFFER, 0); 
+	glBindFramebuffer(GL_FRAMEBUFFER, mOldFBID); 
 }
 
 //===========================================================================

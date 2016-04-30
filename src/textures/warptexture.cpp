@@ -41,12 +41,12 @@
 #include "warpbuffer.h"
 
 
-FWarpTexture::FWarpTexture (FTexture *source)
+FWarpTexture::FWarpTexture (FTexture *source, int warptype)
 : GenTime (0), SourcePic (source), Pixels (0), Spans (0), Speed (1.f)
 {
 	CopyInfo(source);
 	SetupMultipliers(128, 128); // [mxd]
-	bWarped = 1;
+	bWarped = warptype;
 }
 
 FWarpTexture::~FWarpTexture ()
@@ -137,7 +137,7 @@ void FWarpTexture::MakeTexture(DWORD time)
 	}
 
 	GenTime = time;
-	WarpBufferType1(Pixels, otherpix, Width, Height, WidthOffsetMultiplier, HeightOffsetMultiplier, time, Speed);
+	WarpBuffer(Pixels, otherpix, Width, Height, WidthOffsetMultiplier, HeightOffsetMultiplier, time, Speed, bWarped);
 }
 
 // [mxd] Non power of 2 textures need different offset multipliers, otherwise warp animation won't sync across texture
@@ -160,32 +160,6 @@ int FWarpTexture::NextPo2 (int v)
 	v |= v >> 8;
 	v |= v >> 16;
 	return ++v;
-}
-
-// [GRB] Eternity-like warping
-FWarp2Texture::FWarp2Texture (FTexture *source)
-: FWarpTexture (source)
-{
-	SetupMultipliers(256, 128); // [mxd]
-	bWarped = 2;
-}
-
-void FWarp2Texture::MakeTexture (DWORD time)
-{
-	const BYTE *otherpix = SourcePic->GetPixels ();
-
-	if (Pixels == NULL)
-	{
-		Pixels = new BYTE[Width * Height];
-	}
-	if (Spans != NULL)
-	{
-		FreeSpans (Spans);
-		Spans = NULL;
-	}
-
-	GenTime = time;
-	WarpBufferType2(Pixels, otherpix, Width, Height, WidthOffsetMultiplier, HeightOffsetMultiplier, time, Speed);
 }
 
 //==========================================================================

@@ -282,39 +282,35 @@ void GLSprite::Draw(int pass)
 
 				Matrix3x4 mat;
 				mat.MakeIdentity();
+				mat.Translate(xcenter, zcenter, ycenter); // move to sprite center
+
+				// Order of rotations matters. Perform yaw rotation (Y, face camera) before pitch (X, tilt up/down).
+				if (drawBillboardFacingCamera) {
+					// [CMB] Rotate relative to camera XY position, not just camera direction,
+					// which is nicer in VR
+					float xrel = xcenter - FIXED2FLOAT(GLRenderer->mViewActor->X());
+					float yrel = ycenter - FIXED2FLOAT(GLRenderer->mViewActor->Y());
+					float absAngleDeg = RAD2DEG(atan2(-yrel, xrel));
+					float counterRotationDeg = 270. - float(GLRenderer->mAngles.Yaw); // counteracts existing sprite rotation
+					float relAngleDeg = counterRotationDeg + absAngleDeg;
+
+					mat.Rotate(0, 1, 0, relAngleDeg);
+				}
 
 				if (drawWithXYBillboard)
 				{
 					// Rotate the sprite about the vector starting at the center of the sprite
 					// triangle strip and with direction orthogonal to where the player is looking
 					// in the x/y plane.
-					mat.Translate(xcenter, zcenter, ycenter);
 					mat.Rotate(-sin(angleRad), 0, cos(angleRad), -GLRenderer->mAngles.Pitch.Degrees);
-					mat.Translate(-xcenter, -zcenter, -ycenter);
 				}
-
-				if (drawBillboardFacingCamera) {
-					// [CMB] Rotate relative to camera XY position, not just camera direction,
-					// which is nicer in VR
-					float xrel = xcenter - FIXED2FLOAT(GLRenderer->mViewActor->X());
-					float yrel = ycenter - FIXED2FLOAT(GLRenderer->mViewActor->Y());
-					float zrel = zcenter - FIXED2FLOAT(GLRenderer->mViewActor->Z());
-
-					float absAngleDeg = RAD2DEG(atan2(-yrel, xrel));
-					float counterRotationDeg = 270. - float(GLRenderer->mAngles.Yaw); // counteracts existing sprite rotation
-					float relAngleDeg = counterRotationDeg + absAngleDeg;
-
-					mat.Translate(xcenter, zcenter, ycenter);
-					mat.Rotate(0, 1, 0, relAngleDeg);
-					mat.Translate(-xcenter, -zcenter, -ycenter);
-				}
-
+				mat.Translate(-xcenter, -zcenter, -ycenter); // retreat from sprite center
 				v1 = mat * Vector(x1, z1, y1);
 				v2 = mat * Vector(x2, z1, y2);
 				v3 = mat * Vector(x1, z2, y1);
 				v4 = mat * Vector(x2, z2, y2);
 			}
-			else 
+			else // traditional "Y" billboard mode
 			{
 				v1 = Vector(x1, z1, y1);
 				v2 = Vector(x2, z1, y2);

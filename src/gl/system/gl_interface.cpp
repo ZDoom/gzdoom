@@ -236,12 +236,23 @@ void gl_LoadExtensions()
 	}
 
 	int v;
-	glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS, &v);
-	gl.maxuniforms = v;
-	glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &v);
-	gl.maxuniformblock = v;
-	glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &v);
-	gl.uniformblockalignment = v;
+	
+	if (gl.lightmethod != LM_SOFTWARE && !(gl.flags & RFL_SHADER_STORAGE_BUFFER))
+	{
+		glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS, &v);
+		gl.maxuniforms = v;
+		glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &v);
+		gl.maxuniformblock = v;
+		glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &v);
+		gl.uniformblockalignment = v;
+	}
+	else
+	{
+		gl.maxuniforms = 0;
+		gl.maxuniformblock = 0;
+		gl.uniformblockalignment = 0;
+	}
+	
 
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &gl.max_texturesize);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -289,21 +300,24 @@ void gl_PrintStartupLog()
 	Printf("\nMax. texture size: %d\n", v);
 	glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &v);
 	Printf ("Max. texture units: %d\n", v);
-	glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS, &v);
-	Printf ("Max. fragment uniforms: %d\n", v);
-	glGetIntegerv(GL_MAX_VERTEX_UNIFORM_COMPONENTS, &v);
-	Printf ("Max. vertex uniforms: %d\n", v);
-	glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &v);
-	Printf ("Max. uniform block size: %d\n", v);
-	glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &v);
-	Printf ("Uniform block alignment: %d\n", v);
-
 	glGetIntegerv(GL_MAX_VARYING_FLOATS, &v);
 	Printf ("Max. varying: %d\n", v);
-	glGetIntegerv(GL_MAX_COMBINED_SHADER_STORAGE_BLOCKS, &v);
-	Printf("Max. combined shader storage blocks: %d\n", v);
-	glGetIntegerv(GL_MAX_VERTEX_SHADER_STORAGE_BLOCKS, &v);
-	Printf("Max. vertex shader storage blocks: %d\n", v);
+	
+	if (gl.lightmethod != LM_SOFTWARE && !(gl.flags & RFL_SHADER_STORAGE_BUFFER))
+	{
+		glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &v);
+		Printf ("Max. uniform block size: %d\n", v);
+		glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &v);
+		Printf ("Uniform block alignment: %d\n", v);
+	}
+
+	if (gl.flags & RFL_SHADER_STORAGE_BUFFER)
+	{
+		glGetIntegerv(GL_MAX_COMBINED_SHADER_STORAGE_BLOCKS, &v);
+		Printf("Max. combined shader storage blocks: %d\n", v);
+		glGetIntegerv(GL_MAX_VERTEX_SHADER_STORAGE_BLOCKS, &v);
+		Printf("Max. vertex shader storage blocks: %d\n", v);
+	}
 
 	// For shader-less, the special alphatexture translation must be changed to actually set the alpha, because it won't get translated by a shader.
 	if (gl.glslversion == 0)

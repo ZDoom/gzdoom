@@ -2413,6 +2413,9 @@ static int ProcExtsFromExtList(void)
 {
 	GLint iLoop;
 	GLint iNumExtensions = 0;
+
+	if (_ptrc_glGetStringi == NULL) return 0;
+
 	_ptrc_glGetIntegerv(GL_NUM_EXTENSIONS, &iNumExtensions);
 
 	for(iLoop = 0; iLoop < iNumExtensions; iLoop++)
@@ -2432,8 +2435,7 @@ int ogl_LoadFunctions()
 	_ptrc_glGetIntegerv = (void (CODEGEN_FUNCPTR *)(GLenum, GLint *))IntGetProcAddress("glGetIntegerv");
 	if(!_ptrc_glGetIntegerv) return ogl_LOAD_FAILED;
 	_ptrc_glGetStringi = (const GLubyte * (CODEGEN_FUNCPTR *)(GLenum, GLuint))IntGetProcAddress("glGetStringi");
-	if(!_ptrc_glGetStringi) return ogl_LOAD_FAILED;
-
+	
 	if (0 == ProcExtsFromExtList())
 	{
 		_ptrc_glGetString = (const GLubyte * (CODEGEN_FUNCPTR *)(GLenum))IntGetProcAddress("glGetString");

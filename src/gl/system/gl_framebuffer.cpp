@@ -130,12 +130,9 @@ void OpenGLFrameBuffer::InitializeState()
 	if (first)
 	{
 		first=false;
-		// [BB] For some reason this crashes, if compiled with MinGW and optimization. Has to be investigated.
-#ifdef _MSC_VER
 		gl_PrintStartupLog();
-#endif
-
 	}
+
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClearDepth(1.0f);
 	glDepthFunc(GL_LESS);

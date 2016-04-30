@@ -2375,8 +2375,41 @@ static void LoadExtByName(const char *extensionName)
 	}
 }
 
+static void ProcExtsFromExtString(const char *strExtList)
+{
+	size_t iExtListLen = strlen(strExtList);
+	const char *strExtListEnd = strExtList + iExtListLen;
+	const char *strCurrPos = strExtList;
+	char strWorkBuff[256];
 
-static void ProcExtsFromExtList(void)
+	while(*strCurrPos)
+	{
+		/*Get the extension at our position.*/
+		int iStrLen = 0;
+		const char *strEndStr = strchr(strCurrPos, ' ');
+		int iStop = 0;
+		if(strEndStr == NULL)
+		{
+			strEndStr = strExtListEnd;
+			iStop = 1;
+		}
+
+		iStrLen = (int)((ptrdiff_t)strEndStr - (ptrdiff_t)strCurrPos);
+
+		if(iStrLen > 255)
+			return;
+
+		strncpy(strWorkBuff, strCurrPos, iStrLen);
+		strWorkBuff[iStrLen] = '\0';
+
+		LoadExtByName(strWorkBuff);
+
+		strCurrPos = strEndStr + 1;
+		if(iStop) break;
+	}
+}
+
+static int ProcExtsFromExtList(void)
 {
 	GLint iLoop;
 	GLint iNumExtensions = 0;
@@ -2387,6 +2420,8 @@ static void ProcExtsFromExtList(void)
 		const char *strExtensionName = (const char *)_ptrc_glGetStringi(GL_EXTENSIONS, iLoop);
 		LoadExtByName(strExtensionName);
 	}
+
+	return iNumExtensions;
 }
 
 int ogl_LoadFunctions()
@@ -2398,8 +2433,15 @@ int ogl_LoadFunctions()
 	if(!_ptrc_glGetIntegerv) return ogl_LOAD_FAILED;
 	_ptrc_glGetStringi = (const GLubyte * (CODEGEN_FUNCPTR *)(GLenum, GLuint))IntGetProcAddress("glGetStringi");
 	if(!_ptrc_glGetStringi) return ogl_LOAD_FAILED;
-	
-	ProcExtsFromExtList();
+
+	if (0 == ProcExtsFromExtList())
+	{
+		_ptrc_glGetString = (const GLubyte * (CODEGEN_FUNCPTR *)(GLenum))IntGetProcAddress("glGetString");
+		if(!_ptrc_glGetString) return ogl_LOAD_FAILED;
+
+		ProcExtsFromExtString((const char *)_ptrc_glGetString(GL_EXTENSIONS));
+	}
+
 	numFailed = Load_Version_3_3();
 	
 	if(numFailed == 0)

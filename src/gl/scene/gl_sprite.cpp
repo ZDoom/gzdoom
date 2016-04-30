@@ -521,7 +521,7 @@ void GLSprite::PerformSpriteClipAdjustment(AActor *thing, const DVector2 &thingp
 //
 //==========================================================================
 
-void GLSprite::Process(AActor* thing, sector_t * sector, bool thruportal)
+void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 {
 	sector_t rs;
 	sector_t * rendersector;
@@ -552,7 +552,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, bool thruportal)
 
 	// [RH] Interpolate the sprite's position to make it look smooth
 	DVector3 thingpos = thing->InterpolatedPosition(r_TicFracF);
-	if (thruportal) thingpos += Displacements.getOffset(thing->Sector->PortalGroup, sector->PortalGroup);
+	if (thruportal == 1) thingpos += Displacements.getOffset(thing->Sector->PortalGroup, sector->PortalGroup);
 
 	// Too close to the camera. This doesn't look good if it is a sprite.
 	if (fabs(thingpos.X - ViewPos.X) < 2 && fabs(thingpos.Y - ViewPos.Y) < 2)
@@ -581,7 +581,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, bool thruportal)
 		thing->flags7 |= MF7_FLYCHEAT;	// do this only once for the very first frame, but not if it gets into range again.
 	}
 
-	if (GLRenderer->mClipPortal)
+	if (thruportal != 2 && GLRenderer->mClipPortal)
 	{
 		int clipres = GLRenderer->mClipPortal->ClipPoint(thingpos);
 		if (clipres == GLPortal::PClip_InFront) return;
@@ -600,7 +600,6 @@ void GLSprite::Process(AActor* thing, sector_t * sector, bool thruportal)
 	}
 	topclip = rendersector->PortalBlocksMovement(sector_t::ceiling) ? LARGE_VALUE : rendersector->GetPortalPlaneZ(sector_t::ceiling);
 	bottomclip = rendersector->PortalBlocksMovement(sector_t::floor) ? -LARGE_VALUE : rendersector->GetPortalPlaneZ(sector_t::floor);
-
 
 	x = thingpos.X;
 	z = thingpos.Z - thing->Floorclip;
@@ -1019,5 +1018,56 @@ void GLSprite::ProcessParticle (particle_t *particle, sector_t *sector)//, int s
 	rendered_sprites++;
 }
 
+//==========================================================================
+//
+// 
+//
+//==========================================================================
 
+void gl_RenderActorsInPortal(FGLLinePortal *glport)
+{
+	TMap<AActor*, bool> processcheck;
+	if (glport->validcount == validcount) return;	// only process once per frame
+	glport->validcount = validcount;
+	for (auto port : glport->lines)
+	{
+		line_t *line = port->mOrigin;
+		if (line->isLinePortal())	// only crossable ones
+		{
+			FLinePortal *port2 = port->mDestination->getPortal();
+			// process only if the other side links back to this one.
+			if (port2 != nullptr && port->mDestination == port2->mOrigin && port->mOrigin == port2->mDestination)
+			{
 
+				for (portnode_t *node = port->render_thinglist; node != nullptr; node = node->m_snext)
+				{
+					AActor *th = node->m_thing;
+
+					// process each actor only once per portal.
+					bool *check = processcheck.CheckKey(th);
+					if (check && *check) continue;
+					processcheck[th] = true;
+
+					DAngle savedangle = th->Angles.Yaw;
+					DVector3 savedpos = th->Pos();
+					DVector3 newpos = savedpos;
+					sector_t fakesector;
+
+					P_TranslatePortalXY(line, newpos.X, newpos.Y);
+					P_TranslatePortalZ(line, newpos.Z);
+					P_TranslatePortalAngle(line, th->Angles.Yaw);
+					th->SetXYZ(newpos);
+					th->Prev += newpos - savedpos;
+
+					GLSprite spr;
+					th->fillcolor = 0xff0000ff;
+					spr.Process(th, gl_FakeFlat(th->Sector, &fakesector, false), 2);
+					th->fillcolor = 0xffffffff;
+					th->Angles.Yaw = savedangle;
+					th->SetXYZ(savedpos);
+					th->Prev -= newpos - savedpos;
+				}
+			}
+		}
+	}
+}

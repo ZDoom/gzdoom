@@ -102,7 +102,7 @@ UniqueList<GLHorizonInfo> UniqueHorizons;
 UniqueList<secplane_t> UniquePlaneMirrors;
 UniqueList<FGLLinePortal> UniqueLineToLines;
 
-
+void gl_RenderActorsInPortal(FGLLinePortal *glport);
 
 //==========================================================================
 //
@@ -1003,7 +1003,7 @@ void GLLineToLinePortal::DrawContents()
 
 	GLRenderer->mClipPortal = this;
 
-	line_t *origin = glport->reference->mOrigin;
+	line_t *origin = glport->lines[0]->mOrigin;
 	P_TranslatePortalXY(origin, ViewPos.X, ViewPos.Y);
 	P_TranslatePortalAngle(origin, ViewAngle);
 	P_TranslatePortalZ(origin, ViewPos.Z);
@@ -1038,15 +1038,20 @@ void GLLineToLinePortal::DrawContents()
 		currentmapsection[mapsection >> 3] |= 1 << (mapsection & 7);
 	}
 
-	GLRenderer->mViewActor = NULL;
+	GLRenderer->mViewActor = nullptr;
 	GLRenderer->SetupView(ViewPos.X, ViewPos.Y, ViewPos.Z, ViewAngle, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
 
 	ClearClipper();
-	gl_RenderState.SetClipLine(glport->reference->mDestination);
+	gl_RenderState.SetClipLine(glport->lines[0]->mDestination);
 	gl_RenderState.EnableClipLine(true);
 	GLRenderer->DrawScene();
 	gl_RenderState.EnableClipLine(false);
 	RestoreMapSection();
+}
+
+void GLLineToLinePortal::RenderAttached()
+{
+	gl_RenderActorsInPortal(glport);
 }
 
 //-----------------------------------------------------------------------------

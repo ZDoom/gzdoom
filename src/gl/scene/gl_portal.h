@@ -169,6 +169,7 @@ public:
 	virtual int ClipSubsector(subsector_t *sub) { return PClip_Inside; }
 	virtual int ClipPoint(const DVector2 &pos) { return PClip_Inside; }
 	virtual line_t *ClipLine() { return NULL; }
+	virtual void RenderAttached() {}
 
 	static void BeginScene();
 	static void StartFrame();
@@ -194,10 +195,10 @@ struct GLLinePortal : public GLPortal
 
 	GLLinePortal(FGLLinePortal *line)
 	{
-		if (line->reference->mType != PORTT_LINKED)
+		if (line->lines[0]->mType != PORTT_LINKED)
 		{
 			// For non-linked portals we must check the actual linedef.
-			line_t *lline = line->reference->mDestination;
+			line_t *lline = line->lines[0]->mDestination;
 			v1 = lline->v1;
 			v2 = lline->v2;
 		}
@@ -258,6 +259,7 @@ protected:
 	virtual void * GetSource() const { return glport; }
 	virtual const char *GetName();
 	virtual line_t *ClipLine() { return line(); }
+	virtual void RenderAttached();
 
 public:
 	

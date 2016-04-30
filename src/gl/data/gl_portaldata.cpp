@@ -443,7 +443,12 @@ void gl_InitPortals()
 			tempindex[i] = glLinePortals.Size();
 			line_t *pSrcLine = linePortals[i].mOrigin;
 			line_t *pLine = linePortals[i].mDestination;
-			FGLLinePortal glport = { pLine->v1, pLine->v2, {0, 0}, &linePortals[i] };
+			FGLLinePortal glport;
+			
+			glport.v1 = pLine->v1;
+			glport.v2 = pLine->v2;
+			glport.delta = { 0, 0 };
+			glport.lines.Push(&linePortals[i]);
 			glLinePortals.Push(glport);
 
 			// We cannot do this grouping for non-linked portals because they can be changed at run time.
@@ -474,6 +479,7 @@ void gl_InitPortals()
 								tempindex[j] = tempindex[i];
 								if (pLine->v1 == pLine2->v2) glLinePortals[tempindex[i]].v1 = pLine2->v1;
 								else glLinePortals[tempindex[i]].v2 = pLine2->v2;
+								glLinePortals[tempindex[i]].lines.Push(&linePortals[j]);
 							}
 						}
 					}

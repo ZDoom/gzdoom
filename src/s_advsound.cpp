@@ -500,6 +500,7 @@ int S_AddSoundLump (const char *logicalname, int lump)
 	sfxinfo_t newsfx;
 
 	newsfx.data.Clear();
+    newsfx.data3d.Clear();
 	newsfx.name = logicalname;
 	newsfx.lumpnum = lump;
 	newsfx.next = 0;

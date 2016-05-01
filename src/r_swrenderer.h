@@ -9,7 +9,8 @@ struct FSoftwareRenderer : public FRenderer
 	virtual bool UsesColormap() const;
 
 	// precache one texture
-	virtual void PrecacheTexture(FTexture *tex, int cache);
+	void PrecacheTexture(FTexture *tex, int cache);
+	virtual void Precache(BYTE *texhitlist, TMap<PClassActor*, bool> &actorhitlist);
 
 	// render 3D view
 	virtual void RenderView(player_t *player);

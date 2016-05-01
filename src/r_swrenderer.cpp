@@ -98,6 +98,55 @@ void FSoftwareRenderer::PrecacheTexture(FTexture *tex, int cache)
 	}
 }
 
+void FSoftwareRenderer::Precache(BYTE *texhitlist, TMap<PClassActor*, bool> &actorhitlist)
+{
+	BYTE *spritelist = new BYTE[sprites.Size()];
+	TMap<PClassActor*, bool>::Iterator it(actorhitlist);
+	TMap<PClassActor*, bool>::Pair *pair;
+
+	memset(spritelist, 0, sprites.Size());
+
+	while (it.NextPair(pair))
+	{
+		PClassActor *cls = pair->Key;
+
+		for (int i = 0; i < cls->NumOwnedStates; i++)
+		{
+			spritelist[cls->OwnedStates[i].sprite] = true;
+		}
+	}
+
+	// Precache textures (and sprites).
+
+	for (int i = (int)(sprites.Size() - 1); i >= 0; i--)
+	{
+		if (spritelist[i])
+		{
+			int j, k;
+			for (j = 0; j < sprites[i].numframes; j++)
+			{
+				const spriteframe_t *frame = &SpriteFrames[sprites[i].spriteframes + j];
+
+				for (k = 0; k < 16; k++)
+				{
+					FTextureID pic = frame->Texture[k];
+					if (pic.isValid())
+					{
+						texhitlist[pic.GetIndex()] = FTextureManager::HIT_Sprite;
+					}
+				}
+			}
+		}
+	}
+	delete[] spritelist;
+
+	int cnt = TexMan.NumTextures();
+	for (int i = cnt - 1; i >= 0; i--)
+	{
+		PrecacheTexture(TexMan.ByIndex(i), texhitlist[i]);
+	}
+}
+
 //===========================================================================
 //
 // Render the view 

@@ -53,6 +53,54 @@
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/scene/gl_drawinfo.h"
 
+
+//==========================================================================
+//
+// Do some tinkering with the menus so that certain options only appear
+// when they are actually valid.
+//
+//==========================================================================
+
+void gl_PatchMenu()
+{
+	if (gl.compatibility == CMPT_GL2)
+	{
+		// Radial fog and Doom lighting are not available in SM < 4 cards
+		// The way they are implemented does not work well on older hardware.
+
+		FOptionValues **opt = OptionValues.CheckKey("LightingModes");
+		if (opt != NULL) 
+		{
+			for(int i = (*opt)->mValues.Size()-1; i>=0; i--)
+			{
+				// Delete 'Doom' lighting mode
+				if ((*opt)->mValues[i].Value == 2.0 || (*opt)->mValues[i].Value == 8.0)
+				{
+					(*opt)->mValues.Delete(i);
+				}
+			}
+		}
+
+		opt = OptionValues.CheckKey("FogMode");
+		if (opt != NULL) 
+		{
+			for(int i = (*opt)->mValues.Size()-1; i>=0; i--)
+			{
+				// Delete 'Radial' fog mode
+				if ((*opt)->mValues[i].Value == 2.0)
+				{
+					(*opt)->mValues.Delete(i);
+				}
+			}
+		}
+
+		// disable features that don't work without shaders.
+		if (gl_lightmode == 2 || gl_lightmode == 8) gl_lightmode = 3;
+		if (gl_fogmode == 2) gl_fogmode = 1;
+	}
+}
+
+
 //==========================================================================
 //
 //
@@ -500,3 +548,4 @@ void FGLRenderer::RenderMultipassStuff()
 	}
 	else gl_lights = false;
 }
+

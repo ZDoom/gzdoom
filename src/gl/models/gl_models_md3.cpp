@@ -77,45 +77,45 @@ static void UnpackVector(unsigned short packed, float & nx, float & ny, float & 
 #pragma pack(4)
 struct md3_header_t
 {
-	DWORD Magic;
-	DWORD Version;
+	uint32_t Magic;
+	uint32_t Version;
 	char Name[MAX_QPATH];
-	DWORD Flags;
-	DWORD Num_Frames;
-	DWORD Num_Tags;
-	DWORD Num_Surfaces;
-	DWORD Num_Skins;
-	DWORD Ofs_Frames;
-	DWORD Ofs_Tags;
-	DWORD Ofs_Surfaces;
-	DWORD Ofs_Eof;
+	uint32_t Flags;
+	uint32_t Num_Frames;
+	uint32_t Num_Tags;
+	uint32_t Num_Surfaces;
+	uint32_t Num_Skins;
+	uint32_t Ofs_Frames;
+	uint32_t Ofs_Tags;
+	uint32_t Ofs_Surfaces;
+	uint32_t Ofs_Eof;
 };
 
 struct md3_surface_t
 {
-	DWORD Magic;
+	uint32_t Magic;
 	char Name[MAX_QPATH];
-	DWORD Flags;
-	DWORD Num_Frames;
-	DWORD Num_Shaders;
-	DWORD Num_Verts;
-	DWORD Num_Triangles;
-	DWORD Ofs_Triangles;
-	DWORD Ofs_Shaders;
-	DWORD Ofs_Texcoord;
-	DWORD Ofs_XYZNormal;
-	DWORD Ofs_End;
+	uint32_t Flags;
+	uint32_t Num_Frames;
+	uint32_t Num_Shaders;
+	uint32_t Num_Verts;
+	uint32_t Num_Triangles;
+	uint32_t Ofs_Triangles;
+	uint32_t Ofs_Shaders;
+	uint32_t Ofs_Texcoord;
+	uint32_t Ofs_XYZNormal;
+	uint32_t Ofs_End;
 };
 
 struct md3_triangle_t
 {
-	DWORD vt_index[3];
+	uint32_t vt_index[3];
 };
 
 struct md3_shader_t
 {
 	char Name[MAX_QPATH];
-	DWORD index;
+	uint32_t index;
 };
 
 struct md3_texcoord_t

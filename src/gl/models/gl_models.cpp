@@ -325,8 +325,8 @@ FTexture * LoadSkin(const char * path, const char * fn)
 
 static int ModelFrameHash(FSpriteModelFrame * smf)
 {
-	const DWORD *table = GetCRCTable ();
-	DWORD hash = 0xffffffff;
+	const uint32_t *table = GetCRCTable ();
+	uint32_t hash = 0xffffffff;
 
 	const char * s = (const char *)(&smf->type);	// this uses type, sprite and frame for hashing
 	const char * se= (const char *)(&smf->hashnext);

@@ -263,7 +263,7 @@ void AActor::Serialize(FArchive &arc)
 		<< Vel
 		<< tics
 		<< state;
-	if (SaveVersion >= 4545)
+	if (SaveVersion >= 4546)
 	{
 		arc << FlatAngle;
 	}

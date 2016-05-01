@@ -58,6 +58,8 @@
 #include "v_video.h"
 #include "version.h"
 
+#include "gl/system/gl_system.h"
+#include "gl/data/gl_vertexbuffer.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/system/gl_framebuffer.h"
 #include "gl/system/gl_interface.h"
@@ -1278,36 +1280,30 @@ void BoundTextureSetFilter(const GLenum target, const GLint filter)
 
 void BoundTextureDraw2D(const GLsizei width, const GLsizei height)
 {
-	const bool flipX = width  < 0;
-	const bool flipY = height < 0;
+	gl_RenderState.SetTextureMode(TM_OPAQUE);
+	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
+	gl_RenderState.ResetColor();
+	gl_RenderState.Apply();
 
-	const float u0 = flipX ? 1.0f : 0.0f;
-	const float v0 = flipY ? 1.0f : 0.0f;
-	const float u1 = flipX ? 0.0f : 1.0f;
-	const float v1 = flipY ? 0.0f : 1.0f;
+	static const float x  = 0.f;
+	static const float y  = 0.f;
+	const float w = float(width);
+	const float h = float(height);
 
-	const float x1 = 0.0f;
-	const float y1 = 0.0f;
-	const float x2 = abs(width );
-	const float y2 = abs(height);
+	static const float u1 = 0.f;
+	static const float v1 = 1.f;
+	static const float u2 = 1.f;
+	static const float v2 = 0.f;
 
-	glDisable(GL_BLEND);
-	glDisable(GL_ALPHA_TEST);
+	FFlatVertexBuffer* const vbo = GLRenderer->mVBO;
+	FFlatVertex* ptr = vbo->GetBuffer();
 
-	glBegin(GL_QUADS);
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	glTexCoord2f(u0, v1);
-	glVertex2f(x1, y1);
-	glTexCoord2f(u1, v1);
-	glVertex2f(x2, y1);
-	glTexCoord2f(u1, v0);
-	glVertex2f(x2, y2);
-	glTexCoord2f(u0, v0);
-	glVertex2f(x1, y2);
-	glEnd();
+	ptr->Set(x,     y,     0, u1, v1); ++ptr;
+	ptr->Set(x,     y + h, 0, u1, v2); ++ptr;
+	ptr->Set(x + w, y,     0, u2, v1); ++ptr;
+	ptr->Set(x + w, y + h, 0, u2, v2); ++ptr;
 
-	glEnable(GL_ALPHA_TEST);
-	glEnable(GL_BLEND);
+	vbo->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
 }
 
 bool BoundTextureSaveAsPNG(const GLenum target, const char* const path)
@@ -1504,8 +1500,8 @@ void CocoaOpenGLFrameBuffer::DrawRenderTarget()
 {
 	m_renderTarget.Unbind();
 
-	m_renderTarget.GetColorTexture().Bind(0, 0, 0);
-	m_gammaTexture.Bind(1, 0, 0);
+	m_renderTarget.GetColorTexture().Bind(0, 0, false);
+	m_gammaTexture.Bind(1, 0, false);
 
 	if (rbOpts.dirty)
 	{

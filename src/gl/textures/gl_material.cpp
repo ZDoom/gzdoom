@@ -315,10 +315,7 @@ const FHardwareTexture *FGLTexture::Bind(int texunit, int clampmode, int transla
 					// need to do software warping
 					FWarpTexture *wt = static_cast<FWarpTexture*>(tex);
 					unsigned char *warpbuffer = new unsigned char[w*h*4];
-					if (tex->bWarped != 2)
-						WarpBufferType1((DWORD*)warpbuffer, (const DWORD*)buffer, w, h, wt->WidthOffsetMultiplier, wt->HeightOffsetMultiplier, r_FrameTime, wt->Speed);
-					else
-						WarpBufferType2((DWORD*)warpbuffer, (const DWORD*)buffer, w, h, wt->WidthOffsetMultiplier, wt->HeightOffsetMultiplier, r_FrameTime, wt->Speed);
+					WarpBuffer((DWORD*)warpbuffer, (const DWORD*)buffer, w, h, wt->WidthOffsetMultiplier, wt->HeightOffsetMultiplier, r_FrameTime, wt->Speed, tex->bWarped);
 					delete[] buffer;
 					buffer = warpbuffer;
 					wt->GenTime = r_FrameTime;

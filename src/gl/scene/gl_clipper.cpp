@@ -396,27 +396,6 @@ void R_SetView()
 	viewy = FLOAT2FIXED(ViewPos.Y);
 }
 
-angle_t R_PointToPseudoAngle (fixed_t x, fixed_t y)
-{
-	double vecx = double(x-viewx);
-	double vecy = double(y-viewy);
-	
-	if (vecx == 0 && vecy == 0)
-	{
-		return 0;
-	}
-	else
-	{
-		double result = vecy / (fabs(vecx) + fabs(vecy));
-		if (vecx < 0)
-		{
-			result = 2.f - result;
-		}
-		return xs_Fix<30>::ToFix(result);
-	}
-}
-
-
 angle_t R_PointToPseudoAngle(double x, double y)
 {
 	double vecx = x - ViewPos.X;
@@ -447,7 +426,7 @@ angle_t R_PointToPseudoAngle(double x, double y)
 //  if some part of the bbox might be visible.
 //
 //-----------------------------------------------------------------------------
-	static const int checkcoord[12][4] = // killough -- static const
+	static const BYTE checkcoord[12][4] = // killough -- static const
 	{
 	  {3,0,2,1},
 	  {3,0,2,0},
@@ -462,17 +441,17 @@ angle_t R_PointToPseudoAngle(double x, double y)
 	  {2,1,3,0}
 	};
 
-bool Clipper::CheckBox(const fixed_t *bspcoord) 
+bool Clipper::CheckBox(const float *bspcoord) 
 {
 	angle_t angle1, angle2;
 
 	int        boxpos;
-	const int* check;
+	const BYTE* check;
 	
 	// Find the corners of the box
 	// that define the edges from current viewpoint.
-	boxpos = (viewx <= bspcoord[BOXLEFT] ? 0 : viewx < bspcoord[BOXRIGHT ] ? 1 : 2) +
-		(viewy >= bspcoord[BOXTOP ] ? 0 : viewy > bspcoord[BOXBOTTOM] ? 4 : 8);
+	boxpos = (ViewPos.X <= bspcoord[BOXLEFT] ? 0 : ViewPos.X < bspcoord[BOXRIGHT ] ? 1 : 2) +
+		(ViewPos.Y >= bspcoord[BOXTOP ] ? 0 : ViewPos.Y > bspcoord[BOXBOTTOM] ? 4 : 8);
 	
 	if (boxpos == 5) return true;
 	

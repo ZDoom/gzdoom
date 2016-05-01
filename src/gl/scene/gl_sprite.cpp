@@ -267,10 +267,10 @@ void GLSprite::Draw(int pass)
 
 			gl_RenderState.Apply();
 
-			Vector v1;
-			Vector v2;
-			Vector v3;
-			Vector v4;
+			FVector3 v1;
+			FVector3 v2;
+			FVector3 v3;
+			FVector3 v4;
 
 			if (drawWithXYBillboard || drawBillboardFacingCamera)
 			{
@@ -306,17 +306,17 @@ void GLSprite::Draw(int pass)
 					mat.Rotate(-sin(angleRad), 0, cos(angleRad), -GLRenderer->mAngles.Pitch.Degrees);
 				}
 				mat.Translate(-xcenter, -zcenter, -ycenter); // retreat from sprite center
-				v1 = mat * Vector(x1, z1, y1);
-				v2 = mat * Vector(x2, z1, y2);
-				v3 = mat * Vector(x1, z2, y1);
-				v4 = mat * Vector(x2, z2, y2);
+				v1 = mat * FVector3(x1, z1, y1);
+				v2 = mat * FVector3(x2, z1, y2);
+				v3 = mat * FVector3(x1, z2, y1);
+				v4 = mat * FVector3(x2, z2, y2);
 			}
 			else // traditional "Y" billboard mode
 			{
-				v1 = Vector(x1, z1, y1);
-				v2 = Vector(x2, z1, y2);
-				v3 = Vector(x1, z2, y1);
-				v4 = Vector(x2, z2, y2);
+				v1 = FVector3(x1, z1, y1);
+				v2 = FVector3(x2, z1, y2);
+				v3 = FVector3(x1, z2, y1);
+				v4 = FVector3(x2, z2, y2);
 			}
 
 			FFlatVertex *ptr;

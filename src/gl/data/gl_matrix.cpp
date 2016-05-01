@@ -121,22 +121,17 @@ VSMatrix::loadMatrix(const float *aMatrix)
 #endif
 
 
-// gl Translate implementation with matrix selection
+// gl Translate implementation
 void 
 VSMatrix::translate(FLOATTYPE x, FLOATTYPE y, FLOATTYPE z) 
 {
-	FLOATTYPE mat[16];
-
-	setIdentityMatrix(mat);
-	mat[12] = x;
-	mat[13] = y;
-	mat[14] = z;
-
-	multMatrix(mat);
+	mMatrix[12] = mMatrix[0] * x + mMatrix[4] * y + mMatrix[8] * z + mMatrix[12];
+	mMatrix[13] = mMatrix[1] * x + mMatrix[5] * y + mMatrix[9] * z + mMatrix[13];
+	mMatrix[14] = mMatrix[2] * x + mMatrix[6] * y + mMatrix[10] * z + mMatrix[14];
 }
 
 
-// gl Scale implementation with matrix selection
+// gl Scale implementation
 void 
 VSMatrix::scale(FLOATTYPE x, FLOATTYPE y, FLOATTYPE z) 
 {
@@ -146,7 +141,7 @@ VSMatrix::scale(FLOATTYPE x, FLOATTYPE y, FLOATTYPE z)
 }
 
 
-// gl Rotate implementation with matrix selection
+// gl Rotate implementation
 void 
 VSMatrix::rotate(FLOATTYPE angle, FLOATTYPE x, FLOATTYPE y, FLOATTYPE z)
 {

@@ -239,6 +239,16 @@ public:
 		return result;
 	}
 
+	FVector3 operator *(const FVector3 &vec)
+	{
+		FVector3 result;
+
+		result.X = vec.X*m[0][0] + vec.Y*m[0][1] + vec.Z*m[0][2] + m[0][3];
+		result.Y = vec.X*m[1][0] + vec.Y*m[1][1] + vec.Z*m[1][2] + m[1][3];
+		result.Z = vec.X*m[2][0] + vec.Y*m[2][1] + vec.Z*m[2][2] + m[2][3];
+		return result;
+	}
+
 	void MultiplyVector(float *f3 , float *f3o)
 	{
 		float x = f3[0] * m[0][0] + f3[1] * m[0][1] + f3[2] * m[0][2] + m[0][3];

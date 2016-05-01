@@ -262,8 +262,11 @@ void AActor::Serialize(FArchive &arc)
 		<< projectilepassheight
 		<< Vel
 		<< tics
-		<< state
-		<< FlatAngle;
+		<< state;
+	if (SaveVersion >= 4545)
+	{
+		arc << FlatAngle;
+	}
 	if (arc.IsStoring())
 	{
 		int dmg;

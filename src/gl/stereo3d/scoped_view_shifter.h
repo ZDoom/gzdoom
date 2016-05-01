@@ -1,6 +1,6 @@
 /*
 ** scoped_view_shifter.h
-** Stack-scoped class for temporarily changing player viewpoint global variables viewx, viewy, viewz.
+** Stack-scoped class for temporarily changing camera viewpoint
 ** Used for stereoscopic 3D.
 **
 **---------------------------------------------------------------------------
@@ -43,7 +43,7 @@
 namespace s3d {
 
 	/**
-	 * Temporarily shift viewx, viewy, viewz
+	 * Temporarily shift 
 	 */
 	class ScopedViewShifter
 	{

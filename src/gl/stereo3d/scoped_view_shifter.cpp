@@ -1,6 +1,6 @@
 /*
 ** scoped_view_shifter.cpp
-** Stack-scoped class for temporarily changing player viewpoint global variables viewx, viewy, viewz.
+** Stack-scoped class for temporarily changing camera viewpoint
 ** Used for stereoscopic 3D.
 **
 **---------------------------------------------------------------------------

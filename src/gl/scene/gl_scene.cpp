@@ -836,7 +836,7 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 		SetProjection( eye->GetProjection(fov, ratio, fovratio) );
 		// SetProjection(fov, ratio, fovratio);	// switch to perspective mode and set up clipper
 		SetViewAngle(ViewAngle);
-		// Stereo mode specific viewpoint adjustment - temporarily shifts global viewx, viewy, viewz
+		// Stereo mode specific viewpoint adjustment - temporarily shifts global ViewPos
 		eye->GetViewShift(GLRenderer->mAngles.Yaw.Degrees, viewShift);
 		s3d::ScopedViewShifter viewShifter(viewShift);
 		SetViewMatrix(ViewPos.X, ViewPos.Y, ViewPos.Z, false, false);

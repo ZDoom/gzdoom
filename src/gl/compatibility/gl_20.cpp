@@ -37,6 +37,7 @@
 **
 */
 #include "gl/system/gl_system.h"
+#include "menu/menu.h"
 #include "tarray.h"
 #include "doomtype.h"
 #include "m_argv.h"
@@ -63,7 +64,7 @@
 
 void gl_PatchMenu()
 {
-	if (gl.compatibility == CMPT_GL2)
+	if (gl.glslversion == 0)
 	{
 		// Radial fog and Doom lighting are not available in SM < 4 cards
 		// The way they are implemented does not work well on older hardware.

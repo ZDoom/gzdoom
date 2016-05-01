@@ -63,6 +63,7 @@
 #include "gl/renderer/gl_renderer.h"
 #include "gl/system/gl_framebuffer.h"
 #include "gl/system/gl_interface.h"
+#include "gl/textures/gl_samplers.h"
 #include "gl/utility/gl_clock.h"
 
 #undef Class
@@ -1156,15 +1157,12 @@ SDLGLFB::SDLGLFB(void*, const int width, const int height, int, int, const bool 
 : DFrameBuffer(width, height)
 , m_lock(-1)
 , m_isUpdatePending(false)
-, m_supportsGamma(true)
-, m_gammaProgram("gamma_correction")
 , m_gammaTexture(GAMMA_TABLE_SIZE, 1, true)
 {
 }
 
 SDLGLFB::SDLGLFB()
-: m_gammaProgram(nullptr)
-, m_gammaTexture(0, 0, false)
+: m_gammaTexture(0, 0, false)
 {
 }
 
@@ -1262,7 +1260,9 @@ void SDLGLFB::SetGammaTable(WORD* table)
 
 	m_gammaTexture.CreateTexture(
 		reinterpret_cast<unsigned char*>(m_gammaTable),
-		GAMMA_TABLE_SIZE, 1, false, 1, 0);
+		GAMMA_TABLE_SIZE, 1, 1, false, 0);
+
+	GLRenderer->mSamplerManager->Bind(1, CLAMP_NOFILTER, -1);
 }
 
 
@@ -1280,6 +1280,7 @@ void BoundTextureSetFilter(const GLenum target, const GLint filter)
 
 void BoundTextureDraw2D(const GLsizei width, const GLsizei height)
 {
+	gl_RenderState.SetEffect(EFF_GAMMACORRECTION);
 	gl_RenderState.SetTextureMode(TM_OPAQUE);
 	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 	gl_RenderState.ResetColor();
@@ -1304,6 +1305,8 @@ void BoundTextureDraw2D(const GLsizei width, const GLsizei height)
 	ptr->Set(x + w, y + h, 0, u2, v2); ++ptr;
 
 	vbo->RenderCurrent(ptr, GL_TRIANGLE_STRIP);
+
+	gl_RenderState.SetEffect(EFF_NONE);
 }
 
 bool BoundTextureSaveAsPNG(const GLenum target, const char* const path)
@@ -1387,7 +1390,7 @@ RenderTarget::RenderTarget(const GLsizei width, const GLsizei height)
 	glGenFramebuffersEXT(1, &m_ID);
 
 	Bind();
-	m_texture.CreateTexture(NULL, width, height, false, 0, 0);
+	m_texture.CreateTexture(NULL, width, height, 0, false, 0);
 	m_texture.BindToFrameBuffer();
 	Unbind();
 }
@@ -1433,19 +1436,7 @@ CocoaOpenGLFrameBuffer::CocoaOpenGLFrameBuffer(void* hMonitor, int width, int he
 , m_renderTarget(width, height)
 {
 	SetSmoothPicture(gl_smooth_rendered);
-/*
-	// Setup uniform samplers for gamma correction shader
 
-	m_gammaProgram.Load("GammaCorrection", "shaders/glsl/main.vp",
-		"shaders/glsl/gamma_correction.fp", NULL, "");
-
-	const GLuint program = m_gammaProgram.GetHandle();
-
-	glUseProgram(program);
-	glUniform1i(glGetUniformLocation(program, "backbuffer"), 0);
-	glUniform1i(glGetUniformLocation(program, "gammaTable"), 1);
-	glUseProgram(0);
-*/
 	// Fill render target with black color
 
 	m_renderTarget.Bind();
@@ -1515,7 +1506,6 @@ void CocoaOpenGLFrameBuffer::DrawRenderTarget()
 
 	glViewport(rbOpts.shiftX, rbOpts.shiftY, rbOpts.width, rbOpts.height);
 
-	//m_gammaProgram.Bind();
 	BoundTextureDraw2D(Width, Height);
 
 	glViewport(0, 0, Width, Height);
@@ -1525,7 +1515,7 @@ void CocoaOpenGLFrameBuffer::DrawRenderTarget()
 void CocoaOpenGLFrameBuffer::SetSmoothPicture(const bool smooth)
 {
 	FHardwareTexture& texture = m_renderTarget.GetColorTexture();
-	texture.Bind(0, 0, 0);
+	texture.Bind(0, 0, false);
 	BoundTextureSetFilter(GL_TEXTURE_2D, smooth ? GL_LINEAR : GL_NEAREST);
 }
 

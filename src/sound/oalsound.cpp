@@ -1019,11 +1019,11 @@ float OpenALSoundRenderer::GetOutputRate()
 }
 
 
-SoundHandle OpenALSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int length, int frequency, int channels, int bits, int loopstart, int loopend)
+std::pair<SoundHandle,bool> OpenALSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int length, int frequency, int channels, int bits, int loopstart, int loopend, bool monoize)
 {
     SoundHandle retval = { NULL };
 
-    if(length == 0) return retval;
+    if(length == 0) return std::make_pair(retval, true);
 
     if(bits == -8)
     {
@@ -1031,6 +1031,33 @@ SoundHandle OpenALSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int length, int fre
         for(int i = 0;i < length;i++)
             sfxdata[i] ^= 0x80;
         bits = -bits;
+    }
+
+    if(channels > 1 && monoize)
+    {
+        size_t frames = length / channels * 8 / bits;
+        if(bits == 16)
+        {
+            for(size_t i = 0;i < frames;i++)
+            {
+                int sum = 0;
+                for(int c = 0;c < channels;c++)
+                    sum = ((short*)sfxdata)[i*channels + c];
+                ((short*)sfxdata)[i] = sum / channels;
+            }
+        }
+        else if(bits == 8)
+        {
+            for(size_t i = 0;i < frames;i++)
+            {
+                int sum = 0;
+                for(int c = 0;c < channels;c++)
+                    sum = sfxdata[i*channels + c] - 128;
+                sfxdata[i] = (sum / channels) + 128;
+            }
+        }
+        length /= channels;
+        channels = 1;
     }
 
     ALenum format = AL_NONE;
@@ -1048,7 +1075,7 @@ SoundHandle OpenALSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int length, int fre
     if(format == AL_NONE || frequency <= 0)
     {
         Printf("Unhandled format: %d bit, %d channel, %d hz\n", bits, channels, frequency);
-        return retval;
+        return std::make_pair(retval, true);
     }
     length -= length%(channels*bits/8);
 
@@ -1061,7 +1088,7 @@ SoundHandle OpenALSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int length, int fre
         Printf("Failed to buffer data: %s\n", alGetString(err));
         alDeleteBuffers(1, &buffer);
         getALError();
-        return retval;
+        return std::make_pair(retval, true);
     }
 
     if((loopstart > 0 || loopend > 0) && AL.SOFT_loop_points)
@@ -1085,10 +1112,10 @@ SoundHandle OpenALSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int length, int fre
     }
 
     retval.data = MAKE_PTRID(buffer);
-    return retval;
+    return std::make_pair(retval, channels==1);
 }
 
-SoundHandle OpenALSoundRenderer::LoadSound(BYTE *sfxdata, int length)
+std::pair<SoundHandle,bool> OpenALSoundRenderer::LoadSound(BYTE *sfxdata, int length, bool monoize)
 {
     SoundHandle retval = { NULL };
     MemoryReader reader((const char*)sfxdata, length);
@@ -1098,15 +1125,15 @@ SoundHandle OpenALSoundRenderer::LoadSound(BYTE *sfxdata, int length)
     int srate;
 
     SoundDecoder *decoder = CreateDecoder(&reader);
-    if(!decoder) return retval;
+    if(!decoder) return std::make_pair(retval, true);
 
     decoder->getInfo(&srate, &chans, &type);
-    if(chans == ChannelConfig_Mono)
+    if(chans == ChannelConfig_Mono || monoize)
     {
         if(type == SampleType_UInt8) format = AL_FORMAT_MONO8;
         if(type == SampleType_Int16) format = AL_FORMAT_MONO16;
     }
-    if(chans == ChannelConfig_Stereo)
+    else if(chans == ChannelConfig_Stereo)
     {
         if(type == SampleType_UInt8) format = AL_FORMAT_STEREO8;
         if(type == SampleType_Int16) format = AL_FORMAT_STEREO16;
@@ -1117,10 +1144,28 @@ SoundHandle OpenALSoundRenderer::LoadSound(BYTE *sfxdata, int length)
         Printf("Unsupported audio format: %s, %s\n", GetChannelConfigName(chans),
                GetSampleTypeName(type));
         delete decoder;
-        return retval;
+        return std::make_pair(retval, true);
     }
 
     TArray<char> data = decoder->readAll();
+    if(chans != ChannelConfig_Mono && monoize)
+    {
+        // TODO: Handle this better if ChannelConfig ever gets more channel configurations.
+        size_t frames = data.Size() / 2 / (type == SampleType_Int16 ? 2 : 1);
+        if(type == SampleType_Int16)
+        {
+            short *sfxdata = (short*)&data[0];
+            for(size_t i = 0;i < frames;i++)
+                sfxdata[i] = (sfxdata[i*2 + 0]-0 + sfxdata[i*2 + 1]-0)/2;
+        }
+        else if(type == SampleType_UInt8)
+        {
+            BYTE *sfxdata = (BYTE*)&data[0];
+            for(size_t i = 0;i < frames;i++)
+                sfxdata[i] = (sfxdata[i*2 + 0]-128 + sfxdata[i*2 + 1]-128)/2 + 128;
+        }
+        data.Resize(data.Size()/2);
+    }
 
     ALuint buffer = 0;
     alGenBuffers(1, &buffer);
@@ -1133,12 +1178,12 @@ SoundHandle OpenALSoundRenderer::LoadSound(BYTE *sfxdata, int length)
         alDeleteBuffers(1, &buffer);
         getALError();
         delete decoder;
-        return retval;
+        return std::make_pair(retval, true);
     }
 
     retval.data = MAKE_PTRID(buffer);
     delete decoder;
-    return retval;
+    return std::make_pair(retval, (chans == ChannelConfig_Mono || monoize));
 }
 
 void OpenALSoundRenderer::UnloadSound(SoundHandle sfx)

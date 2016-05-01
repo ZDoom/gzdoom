@@ -2510,7 +2510,7 @@ void FMODSoundRenderer::UpdateSounds()
 //
 //==========================================================================
 
-SoundHandle FMODSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int length, int frequency, int channels, int bits, int loopstart, int loopend)
+std::pair<SoundHandle,bool> FMODSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int length, int frequency, int channels, int bits, int loopstart, int loopend, bool monoize)
 {
 	FMOD_CREATESOUNDEXINFO exinfo;
 	SoundHandle retval = { NULL };
@@ -2518,7 +2518,7 @@ SoundHandle FMODSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int length, int frequ
 
 	if (length <= 0)
 	{
-		return retval;
+		return std::make_pair(retval, true);
 	}
 
 	InitCreateSoundExInfo(&exinfo);
@@ -2550,7 +2550,7 @@ SoundHandle FMODSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int length, int frequ
 		break;
 
 	default:
-		return retval;
+		return std::make_pair(retval, true);
 	}
 
 	const FMOD_MODE samplemode = FMOD_3D | FMOD_OPENMEMORY | FMOD_SOFTWARE | FMOD_OPENRAW;
@@ -2561,7 +2561,7 @@ SoundHandle FMODSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int length, int frequ
 	if (result != FMOD_OK)
 	{
 		DPrintf("Failed to allocate sample: Error %d\n", result);
-		return retval;
+		return std::make_pair(retval, true);
 	}
 
 	if (loopstart >= 0)
@@ -2572,7 +2572,7 @@ SoundHandle FMODSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int length, int frequ
 	}
 
 	retval.data = sample;
-	return retval;
+	return std::make_pair(retval, true);
 }
 
 //==========================================================================
@@ -2581,12 +2581,12 @@ SoundHandle FMODSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int length, int frequ
 //
 //==========================================================================
 
-SoundHandle FMODSoundRenderer::LoadSound(BYTE *sfxdata, int length)
+std::pair<SoundHandle,bool> FMODSoundRenderer::LoadSound(BYTE *sfxdata, int length, bool monoize)
 {
 	FMOD_CREATESOUNDEXINFO exinfo;
 	SoundHandle retval = { NULL };
 
-	if (length == 0) return retval;
+	if (length == 0) return std::make_pair(retval, true);
 
 	InitCreateSoundExInfo(&exinfo);
 	exinfo.length = length;
@@ -2599,11 +2599,11 @@ SoundHandle FMODSoundRenderer::LoadSound(BYTE *sfxdata, int length)
 	if (result != FMOD_OK)
 	{
 		DPrintf("Failed to allocate sample: Error %d\n", result);
-		return retval;
+		return std::make_pair(retval, true);
 	}
 	SetCustomLoopPts(sample);
 	retval.data = sample;
-	return retval;
+	return std::make_pair(retval, true);
 }
 
 //==========================================================================

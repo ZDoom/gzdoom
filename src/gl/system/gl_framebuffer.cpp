@@ -322,36 +322,6 @@ int OpenGLFrameBuffer::GetPageCount()
 }
 
 
-void OpenGLFrameBuffer::GetHitlist(BYTE *hitlist)
-{
-	Super::GetHitlist(hitlist);
-
-	// check skybox textures and mark the separate faces as used
-	for(int i=0;i<TexMan.NumTextures(); i++)
-	{
-		// HIT_Wall must be checked for MBF-style sky transfers. 
-		if (hitlist[i] & (FTextureManager::HIT_Sky|FTextureManager::HIT_Wall))
-		{
-			FTexture *tex = TexMan.ByIndex(i);
-			if (tex->gl_info.bSkybox)
-			{
-				FSkyBox *sb = static_cast<FSkyBox*>(tex);
-				for(int i=0;i<6;i++) 
-				{
-					if (sb->faces[i]) 
-					{
-						int index = sb->faces[i]->id.GetIndex();
-						hitlist[index] |= FTextureManager::HIT_Flat;
-					}
-				}
-			}
-		}
-	}
-
-
-	// check model skins
-}
-
 //==========================================================================
 //
 // DFrameBuffer :: CreatePalette

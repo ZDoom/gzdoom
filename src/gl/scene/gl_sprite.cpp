@@ -307,14 +307,13 @@ void GLSprite::Draw(int pass)
 				}
 
 				// [fgsfds] calculate yaw vectors
-				float yawvecX = 0, yawvecY = 0, FlatAngle = 0, rollDegrees = 0;
+				float yawvecX = 0, yawvecY = 0, rollDegrees = 0;
 				float angleRad = (270. - GLRenderer->mAngles.Yaw).Radians();
 				if (actor)	rollDegrees = actor->Angles.Roll.Degrees;
 				if (isFlatSprite)
 				{
 					yawvecX = actor->Angles.Yaw.Cos();
 					yawvecY = actor->Angles.Yaw.Sin();
-					FlatAngle = actor->FlatAngle.Degrees;
 				}
 
 				// [MC] This is the only thing that I changed in Nash's submission which 
@@ -329,7 +328,7 @@ void GLSprite::Draw(int pass)
 				if (spritetype == RF_PITCHFLATSPRITE)
 				{
 					float pitchDegrees = actor->Angles.Pitch.Degrees;
-					mat.Rotate(0, 1, 0, -FlatAngle);
+					mat.Rotate(0, 1, 0, 0);
 					if (drawRollSpriteActor)
 					{
 						mat.Rotate(yawvecX, 0, yawvecY, rollDegrees);
@@ -345,7 +344,7 @@ void GLSprite::Draw(int pass)
 				// [fgsfds] Rotate the sprite about the sight vector (roll) 
 				else if (spritetype == RF_WALLSPRITE)
 				{
-					mat.Rotate(0, 1, 0, -FlatAngle);
+					mat.Rotate(0, 1, 0, 0);
 					if (drawRollSpriteActor)
 						mat.Rotate(yawvecX, 0, yawvecY, rollDegrees);
 				}

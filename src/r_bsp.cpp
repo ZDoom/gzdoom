@@ -575,7 +575,6 @@ void R_AddLine (seg_t *line)
 		return;
 
 	vertex_t *v1, *v2;
-
 	v1 = line->linedef->v1;
 	v2 = line->linedef->v2;
 
@@ -605,7 +604,7 @@ void R_AddLine (seg_t *line)
 	rw_havehigh = rw_havelow = false;
 
 	// Single sided line?
-	if (backsector == NULL || (line->linedef->isVisualPortal() && line->sidedef == line->linedef->sidedef[0]))
+	if (backsector == NULL)
 	{
 		solid = true;
 	}
@@ -636,9 +635,14 @@ void R_AddLine (seg_t *line)
 			WallMost (walllower, backsector->floorplane, &WallC);
 		}
 
+		// Portal
+		if (line->linedef->isVisualPortal() && line->sidedef == line->linedef->sidedef[0])
+		{
+			solid = true;
+		}
 		// Closed door.
-		if ((rw_backcz1 <= rw_frontfz1 && rw_backcz2 <= rw_frontfz2) ||
-			(rw_backfz1 >= rw_frontcz1 && rw_backfz2 >= rw_frontcz2))
+		else if ((rw_backcz1 <= rw_frontfz1 && rw_backcz2 <= rw_frontfz2) ||
+				 (rw_backfz1 >= rw_frontcz1 && rw_backfz2 >= rw_frontcz2))
 		{
 			solid = true;
 		}
@@ -873,7 +877,7 @@ extern "C" const int checkcoord[12][4] =
 };
 
 
-static bool R_CheckBBox (fixed_t *bspcoord)	// killough 1/28/98: static
+static bool R_CheckBBox (float *bspcoord)	// killough 1/28/98: static
 {
 	int 				boxx;
 	int 				boxy;
@@ -887,16 +891,16 @@ static bool R_CheckBBox (fixed_t *bspcoord)	// killough 1/28/98: static
 
 	// Find the corners of the box
 	// that define the edges from current viewpoint.
-	if (ViewPos.X <= FIXED2DBL(bspcoord[BOXLEFT]))
+	if (ViewPos.X <= bspcoord[BOXLEFT])
 		boxx = 0;
-	else if (ViewPos.X < FIXED2DBL(bspcoord[BOXRIGHT]))
+	else if (ViewPos.X < bspcoord[BOXRIGHT])
 		boxx = 1;
 	else
 		boxx = 2;
 
-	if (ViewPos.Y >= FIXED2DBL(bspcoord[BOXTOP]))
+	if (ViewPos.Y >= bspcoord[BOXTOP])
 		boxy = 0;
-	else if (ViewPos.Y > FIXED2DBL(bspcoord[BOXBOTTOM]))
+	else if (ViewPos.Y > bspcoord[BOXBOTTOM])
 		boxy = 1;
 	else
 		boxy = 2;
@@ -905,10 +909,10 @@ static bool R_CheckBBox (fixed_t *bspcoord)	// killough 1/28/98: static
 	if (boxpos == 5)
 		return true;
 
-	x1 = FIXED2DBL(bspcoord[checkcoord[boxpos][0]]) - ViewPos.X;
-	y1 = FIXED2DBL(bspcoord[checkcoord[boxpos][1]]) - ViewPos.Y;
-	x2 = FIXED2DBL(bspcoord[checkcoord[boxpos][2]]) - ViewPos.X;
-	y2 = FIXED2DBL(bspcoord[checkcoord[boxpos][3]]) - ViewPos.Y;
+	x1 = bspcoord[checkcoord[boxpos][0]] - ViewPos.X;
+	y1 = bspcoord[checkcoord[boxpos][1]] - ViewPos.Y;
+	x2 = bspcoord[checkcoord[boxpos][2]] - ViewPos.X;
+	y2 = bspcoord[checkcoord[boxpos][3]] - ViewPos.Y;
 
 	// check clip list for an open space
 

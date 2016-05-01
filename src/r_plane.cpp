@@ -1624,7 +1624,7 @@ void R_DrawTiltedPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t 
 	double lxscale, lyscale;
 	double xscale, yscale;
 	FVector3 p, m, n;
-	DAngle ang;
+	double ang, planeang, cosine, sine;
 	double zeroheight;
 
 	if (alpha <= 0)
@@ -1640,37 +1640,44 @@ void R_DrawTiltedPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t 
 
 	pviewx = xs_ToFixed(32 - ds_xbits, pl->xform.xOffs * pl->xform.xScale);
 	pviewy = xs_ToFixed(32 - ds_ybits, pl->xform.yOffs * pl->xform.yScale);
+	planeang = (pl->xform.Angle + pl->xform.baseAngle).Radians();
 
 	// p is the texture origin in view space
 	// Don't add in the offsets at this stage, because doing so can result in
 	// errors if the flat is rotated.
-	ang = DAngle(270.) - ViewAngle;
-	p[0] = ViewPos.X * ang.Cos() - ViewPos.Y * ang.Sin();
-	p[2] = ViewPos.X * ang.Sin() + ViewPos.Y * ang.Cos();
+	ang = M_PI*3/2 - ViewAngle.Radians();
+	cosine = cos(ang), sine = sin(ang);
+	p[0] = ViewPos.X * cosine - ViewPos.Y * sine;
+	p[2] = ViewPos.X * sine + ViewPos.Y * cosine;
 	p[1] = pl->height.ZatPoint(0.0, 0.0) - ViewPos.Z;
 
 	// m is the v direction vector in view space
-	ang = DAngle(180.) - ViewAngle;
-	m[0] = yscale * cos(ang.Radians());
-	m[2] = yscale * sin(ang.Radians());
+	ang = ang - M_PI / 2 - planeang;
+	cosine = cos(ang), sine = sin(ang);
+	m[0] = yscale * cosine;
+	m[2] = yscale * sine;
 //	m[1] = pl->height.ZatPointF (0, iyscale) - pl->height.ZatPointF (0,0));
 //	VectorScale2 (m, 64.f/VectorLength(m));
 
 	// n is the u direction vector in view space
-	ang += 90;
-	n[0] = -xscale * cos(ang.Radians());
-	n[2] = -xscale * sin(ang.Radians());
+#if 0
+	//let's use the sin/cosine we already know instead of computing new ones
+	ang += M_PI/2
+	n[0] = -xscale * cos(ang);
+	n[2] = -xscale * sin(ang);
+#else
+	n[0] = xscale * sine;
+	n[2] = -xscale * cosine;
+#endif
 //	n[1] = pl->height.ZatPointF (ixscale, 0) - pl->height.ZatPointF (0,0));
 //	VectorScale2 (n, 64.f/VectorLength(n));
 
 	// This code keeps the texture coordinates constant across the x,y plane no matter
 	// how much you slope the surface. Use the commented-out code above instead to keep
 	// the textures a constant size across the surface's plane instead.
-	ang = pl->xform.Angle + pl->xform.baseAngle;
-	double cosine = cos(ang.Radians()), sine = sin(ang.Radians());
+	cosine = cos(planeang), sine = sin(planeang);
 	m[1] = pl->height.ZatPoint(ViewPos.X + yscale * sine, ViewPos.Y + yscale * cosine) - zeroheight;
-	ang += 90;
-	n[1] = pl->height.ZatPoint(ViewPos.X + xscale * sine, ViewPos.Y + xscale * cosine) - zeroheight;
+	n[1] = pl->height.ZatPoint(ViewPos.X - xscale * cosine, ViewPos.Y + xscale * sine) - zeroheight;
 
 	plane_su = p ^ m;
 	plane_sv = p ^ n;

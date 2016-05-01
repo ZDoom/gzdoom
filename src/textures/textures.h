@@ -540,7 +540,7 @@ public:
 class FWarpTexture : public FTexture
 {
 public:
-	FWarpTexture (FTexture *source);
+	FWarpTexture (FTexture *source, int warptype);
 	~FWarpTexture ();
 
 	virtual int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate=0, FCopyInfo *inf = NULL);
@@ -565,16 +565,6 @@ protected:
 	virtual void MakeTexture (DWORD time);
 	int NextPo2 (int v); // [mxd]
 	void SetupMultipliers (int width, int height); // [mxd]
-};
-
-// [GRB] Eternity-like warping
-class FWarp2Texture : public FWarpTexture
-{
-public:
-	FWarp2Texture (FTexture *source);
-
-protected:
-	void MakeTexture (DWORD time);
 };
 
 // A texture that can be drawn to.

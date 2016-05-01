@@ -35,6 +35,7 @@ ACTOR Actor native //: Thinker
 	BloodType "Blood", "BloodSplatter", "AxeBlood"
 	ExplosionDamage 128
 	MissileHeight 32
+	FlatAngle 0
 	
 
 	// Functions

@@ -976,7 +976,6 @@ public:
 	DVector3		OldRenderPos;
 
 	DRotator		Angles;
-	DAngle			FlatAngle;
 	DVector3		Vel;
 	double			Speed;
 	double			FloatSpeed;

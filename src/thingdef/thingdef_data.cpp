@@ -627,7 +627,6 @@ void InitThingdef()
 	PType *array5 = NewArray(TypeSInt32, 5);
 	symt.AddSymbol(new PField(NAME_Alpha,		TypeFloat64,	VARF_Native, myoffsetof(AActor,Alpha)));
 	symt.AddSymbol(new PField(NAME_Angle,		TypeFloat64,	VARF_Native, myoffsetof(AActor,Angles.Yaw)));
-	symt.AddSymbol(new PField(NAME_FlatAngle,	TypeFloat64,	VARF_Native, myoffsetof(AActor,FlatAngle)));
 	symt.AddSymbol(new PField(NAME_Args,		array5,			VARF_Native, myoffsetof(AActor,args)));
 	symt.AddSymbol(new PField(NAME_CeilingZ,	TypeFloat64,	VARF_Native, myoffsetof(AActor,ceilingz)));
 	symt.AddSymbol(new PField(NAME_FloorZ,		TypeFloat64,	VARF_Native, myoffsetof(AActor,floorz)));

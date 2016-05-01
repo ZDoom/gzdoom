@@ -263,10 +263,6 @@ void AActor::Serialize(FArchive &arc)
 		<< Vel
 		<< tics
 		<< state;
-	if (SaveVersion >= 4546)
-	{
-		arc << FlatAngle;
-	}
 	if (arc.IsStoring())
 	{
 		int dmg;

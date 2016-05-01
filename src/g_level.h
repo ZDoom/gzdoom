@@ -338,6 +338,7 @@ struct level_info_t
 
 	TArray<FSoundID> PrecacheSounds;
 	TArray<FString> PrecacheTextures;
+	TArray<FName> PrecacheClasses;
 
 	level_info_t() 
 	{ 

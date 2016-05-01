@@ -1083,6 +1083,18 @@ DEFINE_MAP_OPTION(PrecacheTextures, true)
 	} while (parse.sc.CheckString(","));
 }
 
+DEFINE_MAP_OPTION(PrecacheClasses, true)
+{
+	parse.ParseAssign();
+
+	do
+	{
+		parse.sc.MustGetString();
+		//the class list is not initialized here so all we can do is store the class's name.
+		info->PrecacheClasses.Push(parse.sc.String);
+	} while (parse.sc.CheckString(","));
+}
+
 DEFINE_MAP_OPTION(redirect, true)
 {
 	parse.ParseAssign();

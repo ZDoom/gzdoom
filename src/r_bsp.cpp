@@ -877,7 +877,7 @@ extern "C" const int checkcoord[12][4] =
 };
 
 
-static bool R_CheckBBox (fixed_t *bspcoord)	// killough 1/28/98: static
+static bool R_CheckBBox (float *bspcoord)	// killough 1/28/98: static
 {
 	int 				boxx;
 	int 				boxy;
@@ -891,16 +891,16 @@ static bool R_CheckBBox (fixed_t *bspcoord)	// killough 1/28/98: static
 
 	// Find the corners of the box
 	// that define the edges from current viewpoint.
-	if (ViewPos.X <= FIXED2DBL(bspcoord[BOXLEFT]))
+	if (ViewPos.X <= bspcoord[BOXLEFT])
 		boxx = 0;
-	else if (ViewPos.X < FIXED2DBL(bspcoord[BOXRIGHT]))
+	else if (ViewPos.X < bspcoord[BOXRIGHT])
 		boxx = 1;
 	else
 		boxx = 2;
 
-	if (ViewPos.Y >= FIXED2DBL(bspcoord[BOXTOP]))
+	if (ViewPos.Y >= bspcoord[BOXTOP])
 		boxy = 0;
-	else if (ViewPos.Y > FIXED2DBL(bspcoord[BOXBOTTOM]))
+	else if (ViewPos.Y > bspcoord[BOXBOTTOM])
 		boxy = 1;
 	else
 		boxy = 2;
@@ -909,10 +909,10 @@ static bool R_CheckBBox (fixed_t *bspcoord)	// killough 1/28/98: static
 	if (boxpos == 5)
 		return true;
 
-	x1 = FIXED2DBL(bspcoord[checkcoord[boxpos][0]]) - ViewPos.X;
-	y1 = FIXED2DBL(bspcoord[checkcoord[boxpos][1]]) - ViewPos.Y;
-	x2 = FIXED2DBL(bspcoord[checkcoord[boxpos][2]]) - ViewPos.X;
-	y2 = FIXED2DBL(bspcoord[checkcoord[boxpos][3]]) - ViewPos.Y;
+	x1 = bspcoord[checkcoord[boxpos][0]] - ViewPos.X;
+	y1 = bspcoord[checkcoord[boxpos][1]] - ViewPos.Y;
+	x2 = bspcoord[checkcoord[boxpos][2]] - ViewPos.X;
+	y2 = bspcoord[checkcoord[boxpos][3]] - ViewPos.Y;
 
 	// check clip list for an open space
 

@@ -1364,7 +1364,11 @@ struct node_t
 	fixed_t		y;
 	fixed_t		dx;
 	fixed_t		dy;
-	fixed_t		bbox[2][4];		// Bounding box for each child.
+	union
+	{
+		float	bbox[2][4];		// Bounding box for each child.
+		fixed_t	nb_bbox[2][4];	// Used by nodebuilder.
+	};
 	float		len;
 	union
 	{

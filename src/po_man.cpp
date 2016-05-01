@@ -1919,7 +1919,7 @@ static double PartitionDistance(FPolyVertex *vt, node_t *node)
 //
 //==========================================================================
 
-static void AddToBBox(fixed_t child[4], fixed_t parent[4])
+static void AddToBBox(float child[4], float parent[4])
 {
 	if (child[BOXTOP] > parent[BOXTOP])
 	{
@@ -1945,10 +1945,10 @@ static void AddToBBox(fixed_t child[4], fixed_t parent[4])
 //
 //==========================================================================
 
-static void AddToBBox(FPolyVertex *v, fixed_t bbox[4])
+static void AddToBBox(FPolyVertex *v, float bbox[4])
 {
-	fixed_t x = FLOAT2FIXED(v->pos.X);
-	fixed_t y = FLOAT2FIXED(v->pos.Y);
+	float x = float(v->pos.X);
+	float y = float(v->pos.Y);
 	if (x < bbox[BOXLEFT])
 	{
 		bbox[BOXLEFT] = x;
@@ -1973,7 +1973,7 @@ static void AddToBBox(FPolyVertex *v, fixed_t bbox[4])
 //
 //==========================================================================
 
-static void SplitPoly(FPolyNode *pnode, void *node, fixed_t bbox[4])
+static void SplitPoly(FPolyNode *pnode, void *node, float bbox[4])
 {
 	static TArray<FPolySeg> lists[2];
 	static const double POLY_EPSILON = 0.3125;
@@ -2110,7 +2110,7 @@ static void SplitPoly(FPolyNode *pnode, void *node, fixed_t bbox[4])
 
 		// calculate bounding box for this polynode
 		assert(pnode->segs.Size() != 0);
-		fixed_t subbbox[4] = { FIXED_MIN, FIXED_MAX, FIXED_MAX, FIXED_MIN };
+		float subbbox[4] = { FLT_MIN, FLT_MAX, FLT_MAX, FLT_MIN };
 
 		for (unsigned i = 0; i < pnode->segs.Size(); ++i)
 		{
@@ -2134,7 +2134,7 @@ void FPolyObj::CreateSubsectorLinks()
 	// Even though we don't care about it, we need to initialize this
 	// bounding box to something so that Valgrind won't complain about it
 	// when SplitPoly modifies it.
-	fixed_t dummybbox[4] = { 0 };
+	float dummybbox[4] = { 0 };
 
 	node->poly = this;
 	node->segs.Resize(Sidedefs.Size());

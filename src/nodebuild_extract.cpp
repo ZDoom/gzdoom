@@ -94,6 +94,13 @@ void FNodeBuilder::Extract (node_t *&outNodes, int &nodeCount,
 				outNodes[i].children[j] = outNodes + outNodes[i].intchildren[j];
 			}
 		}
+		for (int j = 0; j < 2; ++j)
+		{
+			for (int k = 0; k < 4; ++k)
+			{
+				outNodes[i].bbox[j][k] = FIXED2FLOAT(outNodes[i].nb_bbox[j][k]);
+			}
+		}
 	}
 
 	if (GLNodes)
@@ -192,6 +199,13 @@ void FNodeBuilder::ExtractMini (FMiniBSP *bsp)
 			{
 				D(Printf(PRINT_LOG, "  node %d\n", bsp->Nodes[i].intchildren[j]));
 				bsp->Nodes[i].children[j] = &bsp->Nodes[bsp->Nodes[i].intchildren[j]];
+			}
+		}
+		for (int j = 0; j < 2; ++j)
+		{
+			for (int k = 0; k < 4; ++k)
+			{
+				bsp->Nodes[i].bbox[j][k] = FIXED2FLOAT(bsp->Nodes[i].nb_bbox[j][k]);
 			}
 		}
 	}

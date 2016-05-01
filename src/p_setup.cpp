@@ -1096,7 +1096,7 @@ void LoadZNodes(FileReaderBase &data, int glnodes)
 			{
 				SWORD coord;
 				data >> coord;
-				nodes[i].bbox[j][k] = coord << FRACBITS;
+				nodes[i].bbox[j][k] = coord;
 			}
 		}
 		for (int m = 0; m < 2; ++m)
@@ -1640,7 +1640,7 @@ void P_LoadNodes (MapData * map)
 			}
 			for (k = 0; k < 4; k++)
 			{
-				no->bbox[j][k] = LittleShort(mn->bbox[j][k])<<FRACBITS;
+				no->bbox[j][k] = (float)LittleShort(mn->bbox[j][k]);
 			}
 		}
 	}

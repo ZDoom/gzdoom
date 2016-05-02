@@ -58,6 +58,11 @@
 #define AL_FORMAT_71CHN32                        0x1212
 #endif
 
+#ifndef AL_EXT_SOURCE_RADIUS
+#define AL_EXT_SOURCE_RADIUS 1
+#define AL_SOURCE_RADIUS                         0x1031
+#endif
+
 #include "efx.h"
 
 
@@ -127,6 +132,7 @@ private:
     } ALC;
     struct {
         bool EXT_source_distance_model;
+        bool EXT_SOURCE_RADIUS;
         bool SOFT_deferred_updates;
         bool SOFT_loop_points;
     } AL;

@@ -40,6 +40,8 @@
 #include <dlfcn.h>
 #endif
 
+#include <chrono>
+
 #include "except.h"
 #include "doomstat.h"
 #include "templates.h"
@@ -1472,7 +1474,7 @@ FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener
     else
         alSourcef(source, AL_PITCH, PITCH(pitch));
 
-    if(!reuse_chan)
+    if(!reuse_chan || reuse_chan->StartTime.AsOne == 0)
         alSourcef(source, AL_SEC_OFFSET, 0.f);
     else
     {
@@ -1480,8 +1482,11 @@ FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener
             alSourcef(source, AL_SEC_OFFSET, reuse_chan->StartTime.Lo/1000.f);
         else
         {
-            // FIXME: set offset based on the current time and the StartTime
-            alSourcef(source, AL_SAMPLE_OFFSET, 0.f);
+            float offset = std::chrono::duration_cast<std::chrono::duration<float>>(
+                std::chrono::steady_clock::now().time_since_epoch() -
+                std::chrono::steady_clock::time_point::duration(reuse_chan->StartTime.AsOne)
+            ).count();
+            if(offset > 0.f) alSourcef(source, AL_SEC_OFFSET, offset);
         }
     }
     if(getALError() != AL_NO_ERROR)
@@ -1819,7 +1824,7 @@ void OpenALSoundRenderer::MarkStartTime(FISoundChannel *chan)
 {
     // FIXME: Get current time (preferably from the audio clock, but the system
     // time will have to do)
-    chan->StartTime.AsOne = 0;
+    chan->StartTime.AsOne = std::chrono::steady_clock::now().time_since_epoch().count();
 }
 
 float OpenALSoundRenderer::GetAudibility(FISoundChannel *chan)

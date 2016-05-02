@@ -1150,19 +1150,14 @@ void CocoaFrameBuffer::Flip()
 // ---------------------------------------------------------------------------
 
 
-static const uint32_t GAMMA_TABLE_ALPHA = 0xFF000000;
-
-
 SDLGLFB::SDLGLFB(void*, const int width, const int height, int, int, const bool fullscreen)
 : DFrameBuffer(width, height)
 , m_lock(-1)
 , m_isUpdatePending(false)
-, m_gammaTexture(GAMMA_TABLE_SIZE, 1, true)
 {
 }
 
 SDLGLFB::SDLGLFB()
-: m_gammaTexture(0, 0, false)
 {
 }
 
@@ -1243,26 +1238,6 @@ void SDLGLFB::SwapBuffers()
 
 void SDLGLFB::SetGammaTable(WORD* table)
 {
-	const WORD* const red   = &table[  0];
-	const WORD* const green = &table[256];
-	const WORD* const blue  = &table[512];
-
-	for (size_t i = 0; i < GAMMA_TABLE_SIZE; ++i)
-	{
-		// Convert 16 bits colors to 8 bits by dividing on 256
-
-		const uint32_t r =   red[i] >> 8;
-		const uint32_t g = green[i] >> 8;
-		const uint32_t b =  blue[i] >> 8;
-
-		m_gammaTable[i] = GAMMA_TABLE_ALPHA + (b << 16) + (g << 8) + r;
-	}
-
-	m_gammaTexture.CreateTexture(
-		reinterpret_cast<unsigned char*>(m_gammaTable),
-		GAMMA_TABLE_SIZE, 1, 1, false, 0);
-
-	GLRenderer->mSamplerManager->Bind(1, CLAMP_NOFILTER, -1);
 }
 
 
@@ -1278,12 +1253,15 @@ void BoundTextureSetFilter(const GLenum target, const GLint filter)
 	glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 }
 
+EXTERN_CVAR(Float, vid_brightness)
+EXTERN_CVAR(Float, vid_contrast)
+
 void BoundTextureDraw2D(const GLsizei width, const GLsizei height)
 {
 	gl_RenderState.SetEffect(EFF_GAMMACORRECTION);
 	gl_RenderState.SetTextureMode(TM_OPAQUE);
 	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
-	gl_RenderState.ResetColor();
+	gl_RenderState.SetColor(Gamma, vid_contrast, vid_brightness);
 	gl_RenderState.Apply();
 
 	static const float x  = 0.f;
@@ -1490,9 +1468,7 @@ void CocoaOpenGLFrameBuffer::GetScreenshotBuffer(const BYTE*& buffer, int& pitch
 void CocoaOpenGLFrameBuffer::DrawRenderTarget()
 {
 	m_renderTarget.Unbind();
-
 	m_renderTarget.GetColorTexture().Bind(0, 0, false);
-	m_gammaTexture.Bind(1, 0, false);
 
 	if (rbOpts.dirty)
 	{

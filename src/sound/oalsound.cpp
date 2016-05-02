@@ -1326,7 +1326,6 @@ FISoundChannel *OpenALSoundRenderer::StartSound(SoundHandle sfx, float vol, int 
     chan->Rolloff.RolloffType = ROLLOFF_Log;
     chan->Rolloff.RolloffFactor = 0.f;
     chan->Rolloff.MinDistance = 1.f;
-    chan->DistanceScale = 1.f;
     chan->DistanceSqr = 0.f;
     chan->ManualRolloff = false;
 
@@ -1510,7 +1509,6 @@ FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener
     else chan->SysChannel = MAKE_PTRID(source);
 
     chan->Rolloff = *rolloff;
-    chan->DistanceScale = distscale;
     chan->DistanceSqr = dist_sqr;
     chan->ManualRolloff = manualRolloff;
 

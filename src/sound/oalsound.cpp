@@ -690,7 +690,12 @@ template<typename T>
 static void LoadALFunc(const char *name, T *x)
 { *x = reinterpret_cast<T>(alGetProcAddress(name)); }
 
+template<typename T>
+static void LoadALCFunc(ALCdevice *device, const char *name, T *x)
+{ *x = reinterpret_cast<T>(alcGetProcAddress(device, name)); }
+
 #define LOAD_FUNC(x)  (LoadALFunc(#x, &x))
+#define LOAD_DEV_FUNC(d, x)  (LoadALCFunc(d, #x, &x))
 OpenALSoundRenderer::OpenALSoundRenderer()
     : Device(NULL), Context(NULL), SFXPaused(0), PrevEnvironment(NULL), EnvSlot(0)
 {
@@ -748,7 +753,8 @@ OpenALSoundRenderer::OpenALSoundRenderer()
     DPrintf("  Extensions: " TEXTCOLOR_ORANGE"%s\n", alGetString(AL_EXTENSIONS));
 
     ALC.EXT_EFX = !!alcIsExtensionPresent(Device, "ALC_EXT_EFX");
-    ALC.EXT_disconnect = !!alcIsExtensionPresent(Device, "ALC_EXT_disconnect");;
+    ALC.EXT_disconnect = !!alcIsExtensionPresent(Device, "ALC_EXT_disconnect");
+    ALC.SOFT_pause_device = !!alcIsExtensionPresent(Device, "ALC_SOFT_pause_device");
     AL.EXT_source_distance_model = !!alIsExtensionPresent("AL_EXT_source_distance_model");
     AL.EXT_SOURCE_RADIUS = !!alIsExtensionPresent("AL_EXT_SOURCE_RADIUS");
     AL.SOFT_deferred_updates = !!alIsExtensionPresent("AL_SOFT_deferred_updates");
@@ -769,6 +775,12 @@ OpenALSoundRenderer::OpenALSoundRenderer()
     {
         alDeferUpdatesSOFT = _wrap_DeferUpdatesSOFT;
         alProcessUpdatesSOFT = _wrap_ProcessUpdatesSOFT;
+    }
+
+    if(ALC.SOFT_pause_device)
+    {
+        LOAD_DEV_FUNC(Device, alcDevicePauseSOFT);
+        LOAD_DEV_FUNC(Device, alcDeviceResumeSOFT);
     }
 
     ALenum err = getALError();
@@ -910,6 +922,7 @@ OpenALSoundRenderer::OpenALSoundRenderer()
     if(EnvSlot)
         Printf("  EFX enabled\n");
 }
+#undef LOAD_DEV_FUNC
 #undef LOAD_FUNC
 
 OpenALSoundRenderer::~OpenALSoundRenderer()
@@ -1599,10 +1612,14 @@ void OpenALSoundRenderer::SetInactive(SoundRenderer::EInactiveState state)
     {
         case SoundRenderer::INACTIVE_Active:
             alListenerf(AL_GAIN, 1.0f);
+            if(ALC.SOFT_pause_device)
+                alcDeviceResumeSOFT(Device);
             break;
 
-        /* FIXME: This doesn't stop anything. */
         case SoundRenderer::INACTIVE_Complete:
+            if(ALC.SOFT_pause_device)
+                alcDevicePauseSOFT(Device);
+            /* fall-through */
         case SoundRenderer::INACTIVE_Mute:
             alListenerf(AL_GAIN, 0.0f);
             break;

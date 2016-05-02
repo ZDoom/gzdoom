@@ -129,6 +129,7 @@ private:
     struct {
         bool EXT_EFX;
         bool EXT_disconnect;
+        bool SOFT_pause_device;
     } ALC;
     struct {
         bool EXT_source_distance_model;
@@ -179,6 +180,9 @@ private:
 
     ALvoid (AL_APIENTRY*alDeferUpdatesSOFT)(void);
     ALvoid (AL_APIENTRY*alProcessUpdatesSOFT)(void);
+
+    void (ALC_APIENTRY*alcDevicePauseSOFT)(ALCdevice *device);
+    void (ALC_APIENTRY*alcDeviceResumeSOFT)(ALCdevice *device);
 
 	void LoadReverb(const ReverbContainer *env);
 	void PurgeStoppedSources();

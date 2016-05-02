@@ -69,7 +69,7 @@ static void* hmodOpenAL;
 #ifdef __APPLE__
 #define OPENALLIB "OpenAL.framework/OpenAL"
 #else
-#define OPENALLIB "libopenal.so"
+#define OPENALLIB "libopenal.so.1"
 #endif
 #define LoadLibrary(x) dlopen((x), RTLD_LAZY)
 #define GetProcAddress(a,b) dlsym((a),(b))

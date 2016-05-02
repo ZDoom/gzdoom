@@ -278,7 +278,7 @@ void GLSprite::Draw(int pass)
 			if (actor != NULL) spritetype = actor->renderflags & RF_SPRITETYPEMASK;
 			
 			// [Nash] is a flat sprite
-			const bool isFlatSprite = (actor != NULL) && (spritetype == RF_WALLSPRITE || spritetype == RF_FLATSPRITE || spritetype == RF_PITCHFLATSPRITE);
+			const bool isFlatSprite = (actor != NULL) && (spritetype == RF_WALLSPRITE || spritetype == RF_FLATSPRITE);
 			
 			// [Nash] check for special sprite drawing modes
 			if (drawWithXYBillboard || drawBillboardFacingCamera || drawRollSpriteActor || isFlatSprite)
@@ -684,7 +684,6 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 	switch (spritetype)
 	{
 	case RF_FLATSPRITE:
-	case RF_PITCHFLATSPRITE:
 		z = thingpos.Z;
 	default:
 		z = thingpos.Z - thing->Floorclip;
@@ -753,7 +752,6 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 			break;
 
 		case RF_FLATSPRITE:
-		case RF_PITCHFLATSPRITE:
 		case RF_WALLSPRITE:
 			viewvecX = thing->Angles.Yaw.Cos();
 			viewvecY = thing->Angles.Yaw.Sin();

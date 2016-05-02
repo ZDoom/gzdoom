@@ -13,6 +13,7 @@
 
 class FCanvasTexture;
 class AActor;
+typedef TMap<int, bool> SpriteHits;
 
 // For error catching while changing parameters.
 enum EInvalid
@@ -79,6 +80,7 @@ public:
 	unsigned int CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, int translation);
 
 	void Clean(bool all);
+	void CleanUnused(SpriteHits &usedtranslations);
 };
 
 #endif

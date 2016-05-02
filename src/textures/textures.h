@@ -310,7 +310,6 @@ public:
 		FloatRect *areas;
 		int areacount;
 		int shaderindex;
-		unsigned int precacheTime;
 		float shaderspeed;
 		int mIsTransparent:2;
 		bool bGlowing:1;						// Texture glows
@@ -328,8 +327,6 @@ public:
 	};
 	MiscGLInfo gl_info;
 
-	virtual void PrecacheGL(int cache);
-	virtual void UncacheGL();
 	void GetGlowColor(float *data);
 	PalEntry GetSkyCapColor(bool bottom);
 	bool isGlowing() { return gl_info.bGlowing; }
@@ -457,8 +454,6 @@ public:
 
 	FSwitchDef *FindSwitch (FTextureID texture);
 	FDoorAnimation *FindAnimatedDoor (FTextureID picnum);
-
-	unsigned int precacheTime;
 
 private:
 

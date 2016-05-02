@@ -91,6 +91,7 @@ FGLTexture::FGLTexture(FTexture * tx, bool expandpatches)
 	bIsTransparent = -1;
 	bExpandFlag = expandpatches;
 	lastSampler = 254;
+	lastTranslation = -1;
 	tex->gl_info.SystemTexture[expandpatches] = this;
 }
 
@@ -165,16 +166,28 @@ unsigned char *FGLTexture::LoadHiresTexture(FTexture *tex, int *width, int *heig
 
 void FGLTexture::Clean(bool all)
 {
-	if (mHwTexture) 
+	if (mHwTexture != nullptr) 
 	{
 		if (!all) mHwTexture->Clean(false);
 		else
 		{
 			delete mHwTexture;
-			mHwTexture = NULL;
+			mHwTexture = nullptr;
 		}
 
 		lastSampler = 253;
+		lastTranslation = -1;
+	}
+}
+
+
+void FGLTexture::CleanUnused(SpriteHits &usedtranslations)
+{
+	if (mHwTexture != nullptr)
+	{
+		mHwTexture->CleanUnused(usedtranslations);
+		lastSampler = 253;
+		lastTranslation = -1;
 	}
 }
 
@@ -334,8 +347,9 @@ const FHardwareTexture *FGLTexture::Bind(int texunit, int clampmode, int transla
 		}
 		if (!needmipmap) clampmode = CLAMP_XY_NOMIP;
 		if (tex->bHasCanvas) static_cast<FCanvasTexture*>(tex)->NeedUpdate();
-		if (lastSampler != clampmode)
+		if (lastSampler != clampmode || lastTranslation != translation)
 			lastSampler = GLRenderer->mSamplerManager->Bind(texunit, clampmode, lastSampler);
+		lastTranslation = translation;
 		return hwtex; 
 	}
 	return NULL;
@@ -708,6 +722,19 @@ void FMaterial::Bind(int clampmode, int translation)
 void FMaterial::Precache()
 {
 	Bind(0, 0);
+}
+
+//===========================================================================
+//
+//
+//
+//===========================================================================
+void FMaterial::PrecacheList(SpriteHits &translations)
+{
+	if (mBaseLayer != nullptr) mBaseLayer->CleanUnused(translations);
+	SpriteHits::Iterator it(translations);
+	SpriteHits::Pair *pair;
+	while(it.NextPair(pair)) Bind(0, pair->Key);
 }
 
 //===========================================================================

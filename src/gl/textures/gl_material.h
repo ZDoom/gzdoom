@@ -66,6 +66,7 @@ private:
 	bool bHasColorkey;		// only for hires
 	bool bExpandFlag;
 	BYTE lastSampler;
+	int lastTranslation;
 
 	unsigned char * LoadHiresTexture(FTexture *hirescheck, int *width, int *height);
 
@@ -80,6 +81,7 @@ public:
 	unsigned char * CreateTexBuffer(int translation, int & w, int & h, FTexture *hirescheck, bool createexpanded = true, bool alphatrans = false);
 
 	void Clean(bool all);
+	void CleanUnused(SpriteHits &usedtranslations);
 	int Dump(int i);
 
 };
@@ -127,6 +129,7 @@ public:
 	FMaterial(FTexture *tex, bool forceexpand);
 	~FMaterial();
 	void Precache();
+	void PrecacheList(SpriteHits &translations);
 	bool isMasked() const
 	{
 		return !!mBaseLayer->tex->bMasked;

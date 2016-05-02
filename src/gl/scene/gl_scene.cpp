@@ -73,6 +73,7 @@
 #include "gl/shaders/gl_shader.h"
 #include "gl/stereo3d/gl_stereo3d.h"
 #include "gl/stereo3d/scoped_view_shifter.h"
+#include "gl/textures/gl_translate.h"
 #include "gl/textures/gl_material.h"
 #include "gl/textures/gl_skyboxtexture.h"
 #include "gl/utility/gl_clock.h"
@@ -979,6 +980,7 @@ struct FGLInterface : public FRenderer
 {
 	bool UsesColormap() const;
 	void PrecacheTexture(FTexture *tex, int cache);
+	void PrecacheSprite(FTexture *tex, SpriteHits &hits);
 	void Precache(BYTE *texhitlist, TMap<PClassActor*, bool> &actorhitlist);
 	void RenderView(player_t *player);
 	void WriteSavePic (player_t *player, FILE *file, int width, int height);
@@ -1021,20 +1023,54 @@ void FGLInterface::PrecacheTexture(FTexture *tex, int cache)
 	{
 		if (cache)
 		{
-			tex->PrecacheGL(cache);
+			if (gl_precache)
+			{
+				if (cache & (FTextureManager::HIT_Wall | FTextureManager::HIT_Flat | FTextureManager::HIT_Sky))
+				{
+					FMaterial * gltex = FMaterial::ValidateTexture(tex, false);
+					if (gltex) gltex->Precache();
+				}
+			}
 		}
 		else
 		{
-			tex->UncacheGL();
+			if (tex->gl_info.Material[0]) tex->gl_info.Material[0]->Clean(true);
 		}
 	}
 }
 
+//==========================================================================
+//
+// DFrameBuffer :: PrecacheSprite
+//
+//==========================================================================
+
+void FGLInterface::PrecacheSprite(FTexture *tex, SpriteHits &hits)
+{
+	if (hits.CountUsed() == 0)
+	{
+		if (tex->gl_info.Material[1]) tex->gl_info.Material[1]->Clean(true);
+	}
+	else
+	{
+		FMaterial * gltex = FMaterial::ValidateTexture(tex, true);
+		if (gltex) gltex->PrecacheList(hits);
+	}
+}
+
+//==========================================================================
+//
+// DFrameBuffer :: Precache
+//
+//==========================================================================
+
 void FGLInterface::Precache(BYTE *texhitlist, TMap<PClassActor*, bool> &actorhitlist)
 {
-	BYTE *spritelist = new BYTE[sprites.Size()];
+	SpriteHits *spritelist = new SpriteHits[sprites.Size()];
+	SpriteHits **spritehitlist = new SpriteHits*[TexMan.NumTextures()];
 	TMap<PClassActor*, bool>::Iterator it(actorhitlist);
 	TMap<PClassActor*, bool>::Pair *pair;
+	memset(spritehitlist, 0, sizeof(SpriteHits**) * TexMan.NumTextures());
 
 	// this isn't done by the main code so it needs to be done here first:
 	// check skybox textures and mark the separate faces as used
@@ -1059,19 +1095,14 @@ void FGLInterface::Precache(BYTE *texhitlist, TMap<PClassActor*, bool> &actorhit
 		}
 	}
 
-
-
-
-
-	memset(spritelist, 0, sprites.Size());
-
 	while (it.NextPair(pair))
 	{
 		PClassActor *cls = pair->Key;
+		int gltrans = GLTranslationPalette::GetInternalTranslation(GetDefaultByType(cls)->Translation);
 
 		for (int i = 0; i < cls->NumOwnedStates; i++)
 		{
-			spritelist[cls->OwnedStates[i].sprite] = true;
+			spritelist[cls->OwnedStates[i].sprite].Insert(gltrans, true);
 		}
 	}
 
@@ -1079,7 +1110,7 @@ void FGLInterface::Precache(BYTE *texhitlist, TMap<PClassActor*, bool> &actorhit
 
 	for (int i = (int)(sprites.Size() - 1); i >= 0; i--)
 	{
-		if (spritelist[i])
+		if (spritelist[i].CountUsed())
 		{
 			int j, k;
 			for (j = 0; j < sprites[i].numframes; j++)
@@ -1091,21 +1122,21 @@ void FGLInterface::Precache(BYTE *texhitlist, TMap<PClassActor*, bool> &actorhit
 					FTextureID pic = frame->Texture[k];
 					if (pic.isValid())
 					{
-						texhitlist[pic.GetIndex()] = FTextureManager::HIT_Sprite;
+						spritehitlist[pic.GetIndex()] = &spritelist[i];
 					}
 				}
 			}
 		}
 	}
-	delete[] spritelist;
-
-	TexMan.precacheTime = I_FPSTime();
 
 	int cnt = TexMan.NumTextures();
 	for (int i = cnt - 1; i >= 0; i--)
 	{
 		PrecacheTexture(TexMan.ByIndex(i), texhitlist[i]);
+		if (spritehitlist[i] != nullptr) PrecacheSprite(TexMan.ByIndex(i), *spritehitlist[i]);
 	}
+	delete[] spritehitlist;
+	delete[] spritelist;
 }
 
 

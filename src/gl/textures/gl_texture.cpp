@@ -240,7 +240,6 @@ FTexture::MiscGLInfo::MiscGLInfo() throw()
 	mIsTransparent = -1;
 	shaderspeed = 1.f;
 	shaderindex = 0;
-	precacheTime = 0;
 
 	Material[1] = Material[0] = NULL;
 	SystemTexture[1] = SystemTexture[0] = NULL;
@@ -309,46 +308,6 @@ void FTexture::CreateDefaultBrightmap()
 	}
 }
 
-
-//==========================================================================
-//
-// Precaches a GL texture
-//
-//==========================================================================
-
-void FTexture::PrecacheGL(int cache)
-{
-	if (gl_precache)
-	{
-		if (cache & (FTextureManager::HIT_Wall | FTextureManager::HIT_Flat | FTextureManager::HIT_Sky))
-		{
-			FMaterial * gltex = FMaterial::ValidateTexture(this, false);
-			if (gltex) gltex->Precache();
-		}
-		if (cache & FTextureManager::HIT_Sprite)
-		{
-			FMaterial * gltex = FMaterial::ValidateTexture(this, true);
-			if (gltex) gltex->Precache();
-		}
-		gl_info.precacheTime = TexMan.precacheTime;
-	}
-}
-
-//==========================================================================
-//
-// Precaches a GL texture
-//
-//==========================================================================
-
-void FTexture::UncacheGL()
-{
-	if (gl_info.precacheTime != TexMan.precacheTime)
-	{
-		if (gl_info.Material[0]) gl_info.Material[0]->Clean(true);
-		if (gl_info.Material[1]) gl_info.Material[1]->Clean(true);
-		gl_info.precacheTime = 0;
-	}
-}
 
 //==========================================================================
 //

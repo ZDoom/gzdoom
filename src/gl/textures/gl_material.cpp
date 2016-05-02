@@ -173,6 +173,8 @@ void FGLTexture::Clean(bool all)
 			delete mHwTexture;
 			mHwTexture = NULL;
 		}
+
+		lastSampler = 253;
 	}
 }
 

@@ -1045,7 +1045,7 @@ std::pair<SoundHandle,bool> OpenALSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int
             {
                 int sum = 0;
                 for(int c = 0;c < channels;c++)
-                    sum = ((short*)sfxdata)[i*channels + c];
+                    sum += ((short*)sfxdata)[i*channels + c];
                 ((short*)sfxdata)[i] = sum / channels;
             }
         }
@@ -1055,7 +1055,7 @@ std::pair<SoundHandle,bool> OpenALSoundRenderer::LoadSoundRaw(BYTE *sfxdata, int
             {
                 int sum = 0;
                 for(int c = 0;c < channels;c++)
-                    sum = sfxdata[i*channels + c] - 128;
+                    sum += sfxdata[i*channels + c] - 128;
                 sfxdata[i] = (sum / channels) + 128;
             }
         }

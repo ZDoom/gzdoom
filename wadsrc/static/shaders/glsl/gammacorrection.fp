@@ -3,6 +3,8 @@ uniform sampler2D tex;
 in vec4 vTexCoord;
 in vec4 vColor;
 
+out vec4 FragColor;
+
 void main()
 {
 	vec3 color = texture(tex, vTexCoord.st).rgb;

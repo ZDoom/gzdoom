@@ -329,11 +329,11 @@ void GLSprite::Draw(int pass)
 				{
 					float pitchDegrees = actor->Angles.Pitch.Degrees;
 					mat.Rotate(0, 1, 0, 0);
+					mat.Rotate(-yawvecY, 0, yawvecX, pitchDegrees);
 					if (drawRollSpriteActor)
 					{
 						mat.Rotate(yawvecX, 0, yawvecY, rollDegrees);
 					}
-					mat.Rotate(-yawvecY, 0, yawvecX, pitchDegrees);
 				}
 				// [fgsfds] Rotate the sprite about the sight vector (roll) 
 				else if (spritetype == RF_WALLSPRITE)

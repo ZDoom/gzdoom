@@ -325,7 +325,7 @@ void GLSprite::Draw(int pass)
 				// 3D floors later... if possible.
 					
 				// Here we need some form of priority in order to work.
-				if (spritetype == RF_PITCHFLATSPRITE)
+				if (spritetype == RF_FLATSPRITE)
 				{
 					float pitchDegrees = actor->Angles.Pitch.Degrees;
 					mat.Rotate(0, 1, 0, 0);
@@ -334,12 +334,6 @@ void GLSprite::Draw(int pass)
 						mat.Rotate(yawvecX, 0, yawvecY, rollDegrees);
 					}
 					mat.Rotate(-yawvecY, 0, yawvecX, pitchDegrees);
-				}
-				else if (spritetype == RF_FLATSPRITE)
-				{ // [fgsfds] rotate the sprite so it faces upwards/downwards
-					mat.Rotate(-yawvecY, 0, yawvecX, -90.f);
-					if (drawRollSpriteActor)
-						mat.Rotate(yawvecX, 0, yawvecY, rollDegrees);
 				}
 				// [fgsfds] Rotate the sprite about the sight vector (roll) 
 				else if (spritetype == RF_WALLSPRITE)

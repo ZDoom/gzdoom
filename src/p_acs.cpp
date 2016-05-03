@@ -5567,6 +5567,11 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			if (argCount >= 2)
 			{
 				const char *a, *b;
+				// If the string indicies are the same, then they are the same string.
+				if (args[0] == args[1])
+				{
+					return 0;
+				}
 				a = FBehavior::StaticLookupString(args[0]);
 				b = FBehavior::StaticLookupString(args[1]);
 

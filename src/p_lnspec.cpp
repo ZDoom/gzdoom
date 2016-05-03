@@ -1132,7 +1132,7 @@ FUNC(LS_Teleport_Line)
 
 static void ThrustThingHelper(AActor *it, DAngle angle, double force, INTBOOL nolimit)
 {
-	it->VelFromAngle(angle, force);
+	it->Thrust(angle, force);
 	if (!nolimit)
 	{
 		it->Vel.X = clamp(it->Vel.X, -MAXMOVE, MAXMOVE);

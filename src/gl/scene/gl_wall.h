@@ -171,9 +171,12 @@ public:
 private:
 
 	void CheckGlowing();
+	bool PutWallCompat(int passflag);
 	void PutWall(bool translucent);
 	void PutPortal(int ptype);
 	void CheckTexturePosition();
+
+	void RenderFogBoundaryCompat();
 
 	void Put3DWall(lightlist_t * lightlist, bool translucent);
 	void SplitWallComplex(sector_t * frontsector, bool translucent, float maplightbottomleft, float maplightbottomright);

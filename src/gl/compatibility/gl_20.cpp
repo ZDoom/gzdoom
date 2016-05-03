@@ -49,6 +49,7 @@
 #include "gl/dynlights/gl_dynlight.h"
 #include "gl/utility/gl_geometric.h"
 #include "gl/renderer/gl_renderer.h"
+#include "gl/renderer/gl_lightdata.h"
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_cvars.h"
 #include "gl/renderer/gl_renderstate.h"
@@ -452,10 +453,99 @@ bool gl_SetupLight(int group, Plane & p, ADynamicLight * light, Vector & nearPt,
 
 bool gl_SetupLightTexture()
 {
-	if (GLRenderer->gllight == NULL) return false;
+	if (GLRenderer->gllight == nullptr) return false;
 	FMaterial * pat = FMaterial::ValidateTexture(GLRenderer->gllight, false);
 	pat->Bind(CLAMP_XY, 0);
 	return true;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+bool GLWall::PutWallCompat(int passflag)
+{
+	static int list_indices[2][2] =
+	{ { GLLDL_WALLS_PLAIN, GLLDL_WALLS_FOG },{ GLLDL_WALLS_MASKED, GLLDL_WALLS_FOGMASKED } };
+
+	// are lights possible?
+	if (gl_fixedcolormap != CM_DEFAULT || !gl_lights || seg->sidedef == nullptr || type == RENDERWALL_M2SNF || !gltexture) return false;
+
+	// multipassing these is problematic.
+	if ((flags&GLWF_SKYHACK && type == RENDERWALL_M2S)) return false;
+
+	// Any lights affecting this wall?
+	if (!(seg->sidedef->Flags & WALLF_POLYOBJ))
+	{
+		if (seg->sidedef->lighthead == nullptr) return false;
+	}
+	else if (sub)
+	{
+		if (sub->lighthead != nullptr) return false;
+	}
+
+	bool foggy = (!gl_isBlack(Colormap.FadeColor) || level.flags&LEVEL_HASFADETABLE);
+	bool masked = passflag == 2 && gltexture->isMasked();
+
+	int list = list_indices[masked][foggy];
+	if (list == GLLDL_WALLS_PLAIN)
+	{
+		if (gltexture->tex->gl_info.Brightmap && gl.glslversion >= 0.f) list = GLLDL_WALLS_BRIGHT;
+		//if (flags & GLWF_GLOW) list = GLLDL_WALLS_BRIGHT;
+	}
+	gl_drawinfo->dldrawlists[list].AddWall(this);
+	return true;
+
+}
+
+//==========================================================================
+//
+// Fog boundary without any shader support
+//
+//==========================================================================
+
+void GLWall::RenderFogBoundaryCompat()
+{
+	// without shaders some approximation is needed. This won't look as good
+	// as the shader version but it's an acceptable compromise.
+	float fogdensity = gl_GetFogDensity(lightlevel, Colormap.FadeColor);
+
+	float dist1 = Dist2(ViewPos.X, ViewPos.Y, glseg.x1, glseg.y1);
+	float dist2 = Dist2(ViewPos.X, ViewPos.Y, glseg.x2, glseg.y2);
+
+	// these values were determined by trial and error and are scale dependent!
+	float fogd1 = (0.95f - exp(-fogdensity*dist1 / 62500.f)) * 1.05f;
+	float fogd2 = (0.95f - exp(-fogdensity*dist2 / 62500.f)) * 1.05f;
+
+	float fc[4] = { Colormap.FadeColor.r / 255.0f,Colormap.FadeColor.g / 255.0f,Colormap.FadeColor.b / 255.0f,fogd2 };
+
+	gl_RenderState.EnableTexture(false);
+	gl_RenderState.EnableFog(false);
+	gl_RenderState.AlphaFunc(GL_GEQUAL, 0);
+	gl_RenderState.Apply();
+	glEnable(GL_POLYGON_OFFSET_FILL);
+	glPolygonOffset(-1.0f, -128.0f);
+	glDepthFunc(GL_LEQUAL);
+	glColor4f(fc[0], fc[1], fc[2], fogd1);
+	glBegin(GL_TRIANGLE_FAN);
+	glTexCoord2f(lolft.u, lolft.v);
+	glVertex3f(glseg.x1, zbottom[0], glseg.y1);
+	glTexCoord2f(uplft.u, uplft.v);
+	glVertex3f(glseg.x1, ztop[0], glseg.y1);
+	glColor4f(fc[0], fc[1], fc[2], fogd2);
+	glTexCoord2f(uprgt.u, uprgt.v);
+	glVertex3f(glseg.x2, ztop[1], glseg.y2);
+	glTexCoord2f(lorgt.u, lorgt.v);
+	glVertex3f(glseg.x2, zbottom[1], glseg.y2);
+	glEnd();
+	glDepthFunc(GL_LESS);
+	glPolygonOffset(0.0f, 0.0f);
+	glDisable(GL_POLYGON_OFFSET_FILL);
+	gl_RenderState.EnableFog(true);
+	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.5f);
+	gl_RenderState.EnableTexture(true);
 }
 
 //==========================================================================

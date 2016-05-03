@@ -228,16 +228,23 @@ void GLWall::RenderFogBoundary()
 {
 	if (gl_fogmode && gl_fixedcolormap == 0)
 	{
-		int rel = rellight + getExtraLight();
-		gl_SetFog(lightlevel, rel, &Colormap, false);
-		gl_RenderState.SetEffect(EFF_FOGBOUNDARY);
-		gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
-		glEnable(GL_POLYGON_OFFSET_FILL);
-		glPolygonOffset(-1.0f, -128.0f);
-		RenderWall(RWF_BLANK);
-		glPolygonOffset(0.0f, 0.0f);
-		glDisable(GL_POLYGON_OFFSET_FILL);
-		gl_RenderState.SetEffect(EFF_NONE);
+		if (gl.glslversion > 0.f)
+		{
+			int rel = rellight + getExtraLight();
+			gl_SetFog(lightlevel, rel, &Colormap, false);
+			gl_RenderState.SetEffect(EFF_FOGBOUNDARY);
+			gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
+			glEnable(GL_POLYGON_OFFSET_FILL);
+			glPolygonOffset(-1.0f, -128.0f);
+			RenderWall(RWF_BLANK);
+			glPolygonOffset(0.0f, 0.0f);
+			glDisable(GL_POLYGON_OFFSET_FILL);
+			gl_RenderState.SetEffect(EFF_NONE);
+		}
+		else
+		{
+			RenderFogBoundaryCompat();
+		}
 	}
 }
 
@@ -255,12 +262,19 @@ void GLWall::RenderMirrorSurface()
 	Vector v(glseg.y2-glseg.y1, 0 ,-glseg.x2+glseg.x1);
 	v.Normalize();
 
-	// we use texture coordinates and texture matrix to pass the normal stuff to the shader so that the default vertex buffer format can be used as is.
-	lolft.u = lorgt.u = uplft.u = uprgt.u = v.X();
-	lolft.v = lorgt.v = uplft.v = uprgt.v = v.Z();
+	if (gl.glslversion >= 0.f)
+	{
+		// we use texture coordinates and texture matrix to pass the normal stuff to the shader so that the default vertex buffer format can be used as is.
+		lolft.u = lorgt.u = uplft.u = uprgt.u = v.X();
+		lolft.v = lorgt.v = uplft.v = uprgt.v = v.Z();
 
-	gl_RenderState.EnableTextureMatrix(true);
-	gl_RenderState.mTextureMatrix.computeNormalMatrix(gl_RenderState.mViewMatrix);
+		gl_RenderState.EnableTextureMatrix(true);
+		gl_RenderState.mTextureMatrix.computeNormalMatrix(gl_RenderState.mViewMatrix);
+	}
+	else
+	{
+		glNormal3fv(&v[0]);
+	}
 
 	// Use sphere mapping for this
 	gl_RenderState.SetEffect(EFF_SPHEREMAP);

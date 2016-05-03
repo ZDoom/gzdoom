@@ -1019,23 +1019,10 @@ bool FGLInterface::UsesColormap() const
 
 void FGLInterface::PrecacheTexture(FTexture *tex, int cache)
 {
-	if (tex != NULL)
+	if (cache & (FTextureManager::HIT_Wall | FTextureManager::HIT_Flat | FTextureManager::HIT_Sky))
 	{
-		if (cache)
-		{
-			if (gl_precache)
-			{
-				if (cache & (FTextureManager::HIT_Wall | FTextureManager::HIT_Flat | FTextureManager::HIT_Sky))
-				{
-					FMaterial * gltex = FMaterial::ValidateTexture(tex, false);
-					if (gltex) gltex->Precache();
-				}
-			}
-		}
-		else
-		{
-			if (tex->gl_info.Material[0]) tex->gl_info.Material[0]->Clean(true);
-		}
+		FMaterial * gltex = FMaterial::ValidateTexture(tex, false);
+		if (gltex) gltex->Precache();
 	}
 }
 
@@ -1047,15 +1034,8 @@ void FGLInterface::PrecacheTexture(FTexture *tex, int cache)
 
 void FGLInterface::PrecacheSprite(FTexture *tex, SpriteHits &hits)
 {
-	if (hits.CountUsed() == 0)
-	{
-		if (tex->gl_info.Material[1]) tex->gl_info.Material[1]->Clean(true);
-	}
-	else
-	{
-		FMaterial * gltex = FMaterial::ValidateTexture(tex, true);
-		if (gltex) gltex->PrecacheList(hits);
-	}
+	FMaterial * gltex = FMaterial::ValidateTexture(tex, true);
+	if (gltex) gltex->PrecacheList(hits);
 }
 
 //==========================================================================
@@ -1070,6 +1050,8 @@ void FGLInterface::Precache(BYTE *texhitlist, TMap<PClassActor*, bool> &actorhit
 	SpriteHits **spritehitlist = new SpriteHits*[TexMan.NumTextures()];
 	TMap<PClassActor*, bool>::Iterator it(actorhitlist);
 	TMap<PClassActor*, bool>::Pair *pair;
+	BYTE *modellist = new BYTE[Models.Size()];
+	memset(modellist, 0, Models.Size());
 	memset(spritehitlist, 0, sizeof(SpriteHits**) * TexMan.NumTextures());
 
 	// this isn't done by the main code so it needs to be done here first:
@@ -1095,6 +1077,9 @@ void FGLInterface::Precache(BYTE *texhitlist, TMap<PClassActor*, bool> &actorhit
 		}
 	}
 
+	// Check all used actors.
+	// 1. mark all sprites associated with its states
+	// 2. mark all model data and skins associated with its states
 	while (it.NextPair(pair))
 	{
 		PClassActor *cls = pair->Key;
@@ -1103,11 +1088,29 @@ void FGLInterface::Precache(BYTE *texhitlist, TMap<PClassActor*, bool> &actorhit
 		for (int i = 0; i < cls->NumOwnedStates; i++)
 		{
 			spritelist[cls->OwnedStates[i].sprite].Insert(gltrans, true);
+			FSpriteModelFrame * smf = gl_FindModelFrame(cls, cls->OwnedStates[i].sprite, cls->OwnedStates[i].Frame, false);
+			if (smf != NULL)
+			{
+				for (int i = 0; i < MAX_MODELS_PER_FRAME; i++)
+				{
+					if (smf->skinIDs[i].isValid())
+					{
+						texhitlist[smf->skinIDs[i].GetIndex()] |= FTexture::TEX_Flat;
+					}
+					else if (smf->modelIDs[i] != -1)
+					{
+						Models[smf->modelIDs[i]]->AddSkins(texhitlist);
+					}
+					if (smf->modelIDs[i] != -1)
+					{
+						modellist[smf->modelIDs[i]] = 1;
+					}
+				}
+			}
 		}
 	}
 
-	// Precache textures (and sprites).
-
+	// mark all sprite textures belonging to the marked sprites.
 	for (int i = (int)(sprites.Size() - 1); i >= 0; i--)
 	{
 		if (spritelist[i].CountUsed())
@@ -1129,14 +1132,59 @@ void FGLInterface::Precache(BYTE *texhitlist, TMap<PClassActor*, bool> &actorhit
 		}
 	}
 
+	// delete everything unused before creating any new resources to avoid memory usage peaks.
+
+	// delete unused models
+	for (unsigned i = 0; i < Models.Size(); i++)
+	{
+		if (!modellist[i]) Models[i]->DestroyVertexBuffer();
+	}
+
+	// delete unused textures
 	int cnt = TexMan.NumTextures();
 	for (int i = cnt - 1; i >= 0; i--)
 	{
-		PrecacheTexture(TexMan.ByIndex(i), texhitlist[i]);
-		if (spritehitlist[i] != nullptr) PrecacheSprite(TexMan.ByIndex(i), *spritehitlist[i]);
+		FTexture *tex = TexMan.ByIndex(i);
+		if (tex != nullptr)
+		{
+			if (!texhitlist[i])
+			{
+				if (tex->gl_info.Material[0]) tex->gl_info.Material[0]->Clean(true);
+			}
+			if (spritehitlist[i] == nullptr || (*spritehitlist[i]).CountUsed() == 0)
+			{
+				if (tex->gl_info.Material[1]) tex->gl_info.Material[1]->Clean(true);
+			}
+		}
 	}
+
+	if (gl_precache)
+	{
+		// cache all used textures
+		for (int i = cnt - 1; i >= 0; i--)
+		{
+			FTexture *tex = TexMan.ByIndex(i);
+			if (tex != nullptr)
+			{
+				PrecacheTexture(tex, texhitlist[i]);
+				if (spritehitlist[i] != nullptr && (*spritehitlist[i]).CountUsed() > 0)
+				{
+					PrecacheSprite(tex, *spritehitlist[i]);
+				}
+			}
+		}
+
+		// cache all used models
+		for (unsigned i = 0; i < Models.Size(); i++)
+		{
+			if (modellist[i]) 
+				Models[i]->BuildVertexBuffer();
+		}
+	}
+
 	delete[] spritehitlist;
 	delete[] spritelist;
+	delete[] modellist;
 }
 
 

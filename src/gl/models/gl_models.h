@@ -34,6 +34,7 @@ public:
 	virtual int FindFrame(const char * name) = 0;
 	virtual void RenderFrame(FTexture * skin, int frame, int frame2, double inter, int translation=0) = 0;
 	virtual void BuildVertexBuffer() = 0;
+	virtual void AddSkins(BYTE *hitlist) = 0;
 	void DestroyVertexBuffer()
 	{
 		delete mVBuf;
@@ -155,6 +156,8 @@ public:
 	virtual int FindFrame(const char * name);
 	virtual void RenderFrame(FTexture * skin, int frame, int frame2, double inter, int translation=0);
 	virtual void LoadGeometry();
+	virtual void AddSkins(BYTE *hitlist);
+
 	void UnloadGeometry();
 	void BuildVertexBuffer();
 
@@ -260,6 +263,7 @@ public:
 	virtual void RenderFrame(FTexture * skin, int frame, int frame2, double inter, int translation=0);
 	void LoadGeometry();
 	void BuildVertexBuffer();
+	virtual void AddSkins(BYTE *hitlist);
 };
 
 struct FVoxelVertexHash
@@ -312,6 +316,7 @@ public:
 	void Initialize();
 	virtual int FindFrame(const char * name);
 	virtual void RenderFrame(FTexture * skin, int frame, int frame2, double inter, int translation=0);
+	virtual void AddSkins(BYTE *hitlist);
 	FTextureID GetPaletteTexture() const { return mPalette; }
 	void BuildVertexBuffer();
 	float getAspectFactor();

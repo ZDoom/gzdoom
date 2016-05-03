@@ -311,6 +311,27 @@ void FMD3Model::BuildVertexBuffer()
 
 //===========================================================================
 //
+// for skin precaching
+//
+//===========================================================================
+
+void FMD3Model::AddSkins(BYTE *hitlist)
+{
+	for (int i = 0; i < numSurfaces; i++)
+	{
+		MD3Surface * surf = &surfaces[i];
+		for (int j = 0; j < surf->numSkins; j++)
+		{
+			if (surf->skins[j].isValid())
+			{
+				hitlist[surf->skins[j].GetIndex()] |= FTexture::TEX_Flat;
+			}
+		}
+	}
+}
+
+//===========================================================================
+//
 //
 //
 //===========================================================================

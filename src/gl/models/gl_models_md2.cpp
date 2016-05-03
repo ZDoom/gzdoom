@@ -336,7 +336,22 @@ void FDMDModel::BuildVertexBuffer()
 	}
 }
 
+//===========================================================================
+//
+// for skin precaching
+//
+//===========================================================================
 
+void FDMDModel::AddSkins(BYTE *hitlist)
+{
+	for (int i = 0; i < info.numSkins; i++)
+	{
+		if (skins[i].isValid())
+		{
+			hitlist[skins[i].GetIndex()] |= FTexture::TEX_Flat;
+		}
+	}
+}
 
 //===========================================================================
 //

@@ -287,8 +287,8 @@ void GLSprite::Draw(int pass)
 				if (drawBillboardFacingCamera) {
 					// [CMB] Rotate relative to camera XY position, not just camera direction,
 					// which is nicer in VR
-					float xrel = xcenter - GLRenderer->mViewActor->X();
-					float yrel = ycenter - GLRenderer->mViewActor->Y();
+					float xrel = xcenter - ViewPos.X;
+					float yrel = ycenter - ViewPos.Y;
 					float absAngleDeg = RAD2DEG(atan2(-yrel, xrel));
 					float counterRotationDeg = 270. - GLRenderer->mAngles.Yaw.Degrees; // counteracts existing sprite rotation
 					float relAngleDeg = counterRotationDeg + absAngleDeg;

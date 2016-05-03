@@ -272,9 +272,9 @@ unsigned int FModelVertexBuffer::SetupFrame(unsigned int frame1, unsigned int fr
 		float frac = gl_RenderState.GetInterpolationFactor();
 		for (unsigned i = 0; i < size; i++)
 		{
-			iBuffer[i].x = vbo_ptr[frame1].x * (1.f - frac) + vbo_ptr[frame2].x * frac;
-			iBuffer[i].y = vbo_ptr[frame1].y * (1.f - frac) + vbo_ptr[frame2].y * frac;
-			iBuffer[i].z = vbo_ptr[frame1].z * (1.f - frac) + vbo_ptr[frame2].z * frac;
+			iBuffer[i].x = vbo_ptr[frame1 + i].x * (1.f - frac) + vbo_ptr[frame2 + i].x * frac;
+			iBuffer[i].y = vbo_ptr[frame1 + i].y * (1.f - frac) + vbo_ptr[frame2 + i].y * frac;
+			iBuffer[i].z = vbo_ptr[frame1 + i].z * (1.f - frac) + vbo_ptr[frame2 + i].z * frac;
 		}
 	}
 	return frame1;

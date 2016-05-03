@@ -197,11 +197,12 @@ struct FModelVertex
 class FModelVertexBuffer : public FVertexBuffer
 {
 	int mIndexFrame[2];
-	unsigned int ibo_id;
+	FModelVertex *vbo_ptr;
+	uint32_t ibo_id;
 
 public:
 
-	FModelVertexBuffer(bool needindex);
+	FModelVertexBuffer(bool needindex, bool singleframe);
 	~FModelVertexBuffer();
 
 	FModelVertex *LockVertexBuffer(unsigned int size);
@@ -210,7 +211,7 @@ public:
 	unsigned int *LockIndexBuffer(unsigned int size);
 	void UnlockIndexBuffer();
 
-	unsigned int SetupFrame(unsigned int frame1, unsigned int frame2);
+	unsigned int SetupFrame(unsigned int frame1, unsigned int frame2, unsigned int size);
 	void BindVBO();
 };
 

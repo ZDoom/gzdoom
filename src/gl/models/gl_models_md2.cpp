@@ -304,7 +304,7 @@ void FDMDModel::BuildVertexBuffer()
 		int VertexBufferSize = info.numFrames * lodInfo[0].numTriangles * 3;
 		unsigned int vindex = 0;
 
-		mVBuf = new FModelVertexBuffer(false);
+		mVBuf = new FModelVertexBuffer(false, info.numFrames == 1);
 		FModelVertex *vertptr = mVBuf->LockVertexBuffer(VertexBufferSize);
 
 		for (int i = 0; i < info.numFrames; i++)
@@ -375,7 +375,7 @@ void FDMDModel::RenderFrame(FTexture * skin, int frameno, int frameno2, double i
 	gl_RenderState.SetInterpolationFactor((float)inter);
 
 	gl_RenderState.Apply();
-	mVBuf->SetupFrame(frames[frameno].vindex, frames[frameno2].vindex);
+	mVBuf->SetupFrame(frames[frameno].vindex, frames[frameno2].vindex, lodInfo[0].numTriangles * 3);
 	glDrawArrays(GL_TRIANGLES, 0, lodInfo[0].numTriangles * 3);
 	gl_RenderState.SetInterpolationFactor(0.f);
 }

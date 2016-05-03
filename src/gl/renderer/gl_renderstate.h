@@ -439,6 +439,11 @@ public:
 		mInterpolationFactor = fac;
 	}
 
+	float GetInterpolationFactor()
+	{
+		return mInterpolationFactor;
+	}
+
 	// Backwards compatibility crap follows
 	void ApplyFixedFunction();
 	void DrawColormapOverlay();

@@ -378,7 +378,7 @@ void FVoxelModel::BuildVertexBuffer()
 	{
 		Initialize();
 
-		mVBuf = new FModelVertexBuffer(true);
+		mVBuf = new FModelVertexBuffer(true, true);
 		FModelVertex *vertptr = mVBuf->LockVertexBuffer(mVertices.Size());
 		unsigned int *indxptr = mVBuf->LockIndexBuffer(mIndices.Size());
 
@@ -443,7 +443,7 @@ void FVoxelModel::RenderFrame(FTexture * skin, int frame, int frame2, double int
 	gl_RenderState.SetMaterial(tex, CLAMP_NOFILTER, translation, -1, false);
 
 	gl_RenderState.Apply();
-	mVBuf->SetupFrame(0, 0);
+	mVBuf->SetupFrame(0, 0, 0);
 	glDrawElements(GL_TRIANGLES, mNumIndices, GL_UNSIGNED_INT, (void*)(intptr_t)0);
 }
 

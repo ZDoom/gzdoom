@@ -186,7 +186,7 @@ bool FMD3Model::Load(const char * path, int lumpnum, const char * buffer, int le
 			// [BB] According to the MD3 spec, Name is supposed to include the full path.
 			s->skins[i] = LoadSkin("", shader[i].Name);
 			// [BB] Fall back and check if Name is relative.
-			if (s->skins[i] == NULL)
+			if (s->skins[i] == nullptr)
 				s->skins[i] = LoadSkin(path, shader[i].Name);
 		}
 	}
@@ -255,7 +255,7 @@ void FMD3Model::LoadGeometry()
 
 void FMD3Model::BuildVertexBuffer()
 {
-	if (mVBuf == NULL)
+	if (mVBuf == nullptr)
 	{
 		LoadGeometry();
 
@@ -269,11 +269,11 @@ void FMD3Model::BuildVertexBuffer()
 			ibufsize += 3 * surf->numTriangles;
 		}
 
-		mVBuf = new FModelVertexBuffer(true);
+		mVBuf = new FModelVertexBuffer(true, numFrames == 1);
 		FModelVertex *vertptr = mVBuf->LockVertexBuffer(vbufsize);
 		unsigned int *indxptr = mVBuf->LockIndexBuffer(ibufsize);
 
-		assert(vertptr != NULL && indxptr != NULL);
+		assert(vertptr != nullptr && indxptr != nullptr);
 
 		unsigned int vindex = 0, iindex = 0;
 
@@ -354,7 +354,7 @@ void FMD3Model::RenderFrame(FTexture * skin, int frameno, int frameno2, double i
 		gl_RenderState.SetMaterial(tex, CLAMP_NONE, translation, -1, false);
 
 		gl_RenderState.Apply();
-		mVBuf->SetupFrame(surf->vindex + frameno * surf->numVertices, surf->vindex + frameno2 * surf->numVertices);
+		mVBuf->SetupFrame(surf->vindex + frameno * surf->numVertices, surf->vindex + frameno2 * surf->numVertices, surf->numVertices);
 		glDrawElements(GL_TRIANGLES, surf->numTriangles * 3, GL_UNSIGNED_INT, (void*)(intptr_t)(surf->iindex * sizeof(unsigned int)));
 	}
 	gl_RenderState.SetInterpolationFactor(0.f);
@@ -370,6 +370,6 @@ FMD3Model::~FMD3Model()
 {
 	if (frames) delete [] frames;
 	if (surfaces) delete [] surfaces;
-	frames = NULL;
-	surfaces = NULL;
+	frames = nullptr;
+	surfaces = nullptr;
 }

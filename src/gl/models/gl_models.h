@@ -1,6 +1,7 @@
 #ifndef __GL_MODELS_H_
 #define __GL_MODELS_H_
 
+#include "tarray.h"
 #include "gl/utility/gl_geometric.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "p_pspr.h"
@@ -16,7 +17,7 @@ enum { VX, VZ, VY };
 #define MD3_MAGIC			0x33504449
 #define NUMVERTEXNORMALS	162
 
-FTexture * LoadSkin(const char * path, const char * fn);
+FTextureID LoadSkin(const char * path, const char * fn);
 
 
 class FModel
@@ -124,7 +125,7 @@ protected:
 	int				mLumpNum;
 	DMDHeader	    header;
 	DMDInfo			info;
-	FTexture **		skins;
+	FTextureID *	skins;
 	ModelFrame  *	frames;
 	bool			allowTexComp;  // Allow texture compression with this.
 
@@ -201,7 +202,7 @@ class FMD3Model : public FModel
 		int numTriangles;
 		int numSkins;
 
-		FTexture ** skins;
+		FTextureID * skins;
 		MD3Triangle * tris;
 		MD3TexCoord * texcoords;
 		MD3Vertex * vertices;
@@ -295,7 +296,7 @@ class FVoxelModel : public FModel
 protected:
 	FVoxel *mVoxel;
 	bool mOwningVoxel;	// if created through MODELDEF deleting this object must also delete the voxel object
-	FTexture *mPalette;
+	FTextureID mPalette;
 	unsigned int mNumIndices;
 	TArray<FModelVertex> mVertices;
 	TArray<unsigned int> mIndices;
@@ -311,7 +312,7 @@ public:
 	void Initialize();
 	virtual int FindFrame(const char * name);
 	virtual void RenderFrame(FTexture * skin, int frame, int frame2, double inter, int translation=0);
-	FTexture *GetPaletteTexture() const { return mPalette; }
+	FTextureID GetPaletteTexture() const { return mPalette; }
 	void BuildVertexBuffer();
 	float getAspectFactor();
 };
@@ -338,8 +339,8 @@ enum
 
 struct FSpriteModelFrame
 {
-	FModel * models[MAX_MODELS_PER_FRAME];
-	FTexture * skins[MAX_MODELS_PER_FRAME];
+	int modelIDs[MAX_MODELS_PER_FRAME];
+	FTextureID skinIDs[MAX_MODELS_PER_FRAME];
 	int modelframes[MAX_MODELS_PER_FRAME];
 	float xscale, yscale, zscale;
 	// [BB] Added zoffset, rotation parameters and flags.
@@ -367,5 +368,22 @@ void gl_RenderModel(GLSprite * spr);
 // [BB] HUD weapon model rendering functions.
 void gl_RenderHUDModel(pspdef_t *psp, float ofsx, float ofsy);
 bool gl_IsHUDModelForPlayerAvailable (player_t * player);
+
+
+class DeletingModelArray : public TArray<FModel *>
+{
+public:
+
+	~DeletingModelArray()
+	{
+		for (unsigned i = 0; i<Size(); i++)
+		{
+			delete (*this)[i];
+		}
+
+	}
+};
+
+extern DeletingModelArray Models;
 
 #endif

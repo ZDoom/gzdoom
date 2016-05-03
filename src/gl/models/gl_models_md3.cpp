@@ -179,14 +179,14 @@ bool FMD3Model::Load(const char * path, int lumpnum, const char * buffer, int le
 
 		// copy shaders (skins)
 		md3_shader_t * shader = (md3_shader_t*)(((char*)ss) + LittleLong(ss->Ofs_Shaders));
-		s->skins = new FTexture *[s->numSkins];
+		s->skins = new FTextureID[s->numSkins];
 
 		for (int i = 0; i < s->numSkins; i++)
 		{
 			// [BB] According to the MD3 spec, Name is supposed to include the full path.
 			s->skins[i] = LoadSkin("", shader[i].Name);
 			// [BB] Fall back and check if Name is relative.
-			if (s->skins[i] == nullptr)
+			if (!s->skins[i].isValid())
 				s->skins[i] = LoadSkin(path, shader[i].Name);
 		}
 	}
@@ -344,8 +344,8 @@ void FMD3Model::RenderFrame(FTexture * skin, int frameno, int frameno2, double i
 		FTexture *surfaceSkin = skin;
 		if (!surfaceSkin)
 		{
-			if (surf->numSkins==0) return;
-			surfaceSkin = surf->skins[0];
+			if (surf->numSkins==0 || !surf->skins[0].isValid()) return;
+			surfaceSkin = TexMan(surf->skins[0]);
 			if (!surfaceSkin) return;
 		}
 

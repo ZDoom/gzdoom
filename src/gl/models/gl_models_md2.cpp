@@ -159,7 +159,7 @@ bool FDMDModel::Load(const char * path, int lumpnum, const char * buffer, int le
 	}
 
 	// Allocate and load in the data.
-	skins = new FTexture *[info.numSkins];
+	skins = new FTextureID[info.numSkins];
 
 	for (i = 0; i < info.numSkins; i++)
 	{
@@ -364,8 +364,8 @@ void FDMDModel::RenderFrame(FTexture * skin, int frameno, int frameno2, double i
 
 	if (!skin)
 	{
-		if (info.numSkins == 0) return;
-		skin = skins[0];
+		if (info.numSkins == 0 || !skins[0].isValid()) return;
+		skin = TexMan(skins[0]);
 		if (!skin) return;
 	}
 
@@ -469,7 +469,7 @@ bool FMD2Model::Load(const char * path, int lumpnum, const char * buffer, int le
 		return false;
 	}
 
-	skins = new FTexture *[info.numSkins];
+	skins = new FTextureID[info.numSkins];
 
 	for (i = 0; i < info.numSkins; i++)
 	{

@@ -73,32 +73,17 @@ EXTERN_CVAR(Int, gl_fogmode)
 extern TDeletingArray<FVoxel *> Voxels;
 extern TDeletingArray<FVoxelDef *> VoxelDefs;
 
-
-class DeletingModelArray : public TArray<FModel *>
-{
-public:
-
-#if 1
-	~DeletingModelArray()
-	{
-		for(unsigned i=0;i<Size();i++)
-		{
-			delete (*this)[i];
-		}
-
-	}
-#endif
-};
-
 DeletingModelArray Models;
 
 
 void gl_LoadModels()
 {
+	/*
 	for (int i = Models.Size() - 1; i >= 0; i--)
 	{
 		Models[i]->BuildVertexBuffer();
 	}
+	*/
 }
 
 void gl_FlushModels()
@@ -327,6 +312,9 @@ static void DeleteModelHash()
 
 static int FindGFXFile(FString & fn)
 {
+	int lump = Wads.CheckNumForFullName(fn);	// if we find something that matches the name plus the extension, return it and do not enter the substitution logic below.
+	if (lump != -1) return lump;
+
 	int best = -1;
 	int dot = fn.LastIndexOf('.');
 	int slash = fn.LastIndexOf('/');
@@ -349,7 +337,7 @@ static int FindGFXFile(FString & fn)
 //
 //===========================================================================
 
-FTexture * LoadSkin(const char * path, const char * fn)
+FTextureID LoadSkin(const char * path, const char * fn)
 {
 	FString buffer;
 
@@ -358,11 +346,11 @@ FTexture * LoadSkin(const char * path, const char * fn)
 	int texlump = FindGFXFile(buffer);
 	if (texlump>=0)
 	{
-		return TexMan.FindTexture(Wads.GetLumpFullName(texlump), FTexture::TEX_Any, FTextureManager::TEXMAN_TryAny);
+		return TexMan.CheckForTexture(Wads.GetLumpFullName(texlump), FTexture::TEX_Any, FTextureManager::TEXMAN_TryAny);
 	}
 	else 
 	{
-		return nullptr;
+		return FNullTextureID();
 	}
 }
 
@@ -393,7 +381,7 @@ static int ModelFrameHash(FSpriteModelFrame * smf)
 //
 //===========================================================================
 
-static FModel * FindModel(const char * path, const char * modelfile)
+static unsigned FindModel(const char * path, const char * modelfile)
 {
 	FModel * model = nullptr;
 	FString fullname;
@@ -404,12 +392,12 @@ static FModel * FindModel(const char * path, const char * modelfile)
 	if (lump<0)
 	{
 		Printf("FindModel: '%s' not found\n", fullname.GetChars());
-		return nullptr;
+		return -1;
 	}
 
-	for(int i = 0; i< (int)Models.Size(); i++)
+	for(unsigned i = 0; i< Models.Size(); i++)
 	{
-		if (!Models[i]->mFileName.CompareNoCase(fullname)) return Models[i];
+		if (!Models[i]->mFileName.CompareNoCase(fullname)) return i;
 	}
 
 	int len = Wads.LumpLength(lump);
@@ -434,7 +422,7 @@ static FModel * FindModel(const char * path, const char * modelfile)
 		if (!model->Load(path, lump, buffer, len))
 		{
 			delete model;
-			return nullptr;
+			return -1;
 		}
 	}
 	else
@@ -448,13 +436,12 @@ static FModel * FindModel(const char * path, const char * modelfile)
 		else
 		{
 			Printf("LoadModel: Unknown model format in '%s'\n", fullname.GetChars());
-			return nullptr;
+			return -1;
 		}
 	}
 	// The vertex buffer cannot be initialized here because this gets called before OpenGL is initialized
 	model->mFileName = fullname;
-	Models.Push(model);
-	return model;
+	return Models.Push(model);
 }
 
 //===========================================================================
@@ -493,8 +480,9 @@ void gl_InitModels()
 	{
 		FVoxelModel *md = (FVoxelModel*)Models[VoxelDefs[i]->Voxel->VoxelIndex];
 		memset(&smf, 0, sizeof(smf));
-		smf.models[0] = md;
-		smf.skins[0] = md->GetPaletteTexture();
+		smf.modelIDs[1] = smf.modelIDs[2] = smf.modelIDs[3] = -1;
+		smf.modelIDs[0] = VoxelDefs[i]->Voxel->VoxelIndex;
+		smf.skinIDs[0] = md->GetPaletteTexture();
 		smf.xscale = smf.yscale = smf.zscale = VoxelDefs[i]->Scale;
 		smf.angleoffset = VoxelDefs[i]->AngleOffset.Degrees;
 		if (VoxelDefs[i]->PlacedSpin != 0)
@@ -523,6 +511,7 @@ void gl_InitModels()
 	}
 
 	memset(&smf, 0, sizeof(smf));
+	smf.modelIDs[0] = smf.modelIDs[1] = smf.modelIDs[2] = smf.modelIDs[3] = -1;
 	while ((Lump = Wads.FindLump("MODELDEF", &lastLump)) != -1)
 	{
 		FScanner sc(Lump);
@@ -532,6 +521,7 @@ void gl_InitModels()
 			{
 				sc.MustGetString();
 				memset(&smf, 0, sizeof(smf));
+				smf.modelIDs[1] = smf.modelIDs[2] = smf.modelIDs[3] = -1;
 				smf.xscale=smf.yscale=smf.zscale=1.f;
 
 				smf.type = PClass::FindClass(sc.String);
@@ -554,15 +544,15 @@ void gl_InitModels()
 					else if (sc.Compare("model"))
 					{
 						sc.MustGetNumber();
-						index=sc.Number;
-						if (index<0 || index>=MAX_MODELS_PER_FRAME)
+						index = sc.Number;
+						if (index < 0 || index >= MAX_MODELS_PER_FRAME)
 						{
 							sc.ScriptError("Too many models in %s", smf.type->TypeName.GetChars());
 						}
 						sc.MustGetString();
 						FixPathSeperator(sc.String);
-						smf.models[index] = FindModel(path.GetChars(), sc.String);
-						if (!smf.models[index])
+						smf.modelIDs[index] = FindModel(path.GetChars(), sc.String);
+						if (smf.modelIDs[index] == -1)
 						{
 							Printf("%s: model not found in %s\n", sc.String, path.GetChars());
 						}
@@ -570,11 +560,11 @@ void gl_InitModels()
 					else if (sc.Compare("scale"))
 					{
 						sc.MustGetFloat();
-						smf.xscale=sc.Float;
+						smf.xscale = sc.Float;
 						sc.MustGetFloat();
-						smf.yscale=sc.Float;
+						smf.yscale = sc.Float;
 						sc.MustGetFloat();
-						smf.zscale=sc.Float;
+						smf.zscale = sc.Float;
 					}
 					// [BB] Added zoffset reading. 
 					// Now it must be considered deprecated.
@@ -680,12 +670,12 @@ void gl_InitModels()
 						FixPathSeperator(sc.String);
 						if (sc.Compare(""))
 						{
-							smf.skins[index]=nullptr;
+							smf.skinIDs[index]=FNullTextureID();
 						}
 						else
 						{
-							smf.skins[index]=LoadSkin(path.GetChars(), sc.String);
-							if (smf.skins[index] == nullptr)
+							smf.skinIDs[index] = LoadSkin(path.GetChars(), sc.String);
+							if (!smf.skinIDs[index].isValid())
 							{
 								Printf("Skin '%s' not found in '%s'\n",
 									sc.String, smf.type->TypeName.GetChars());
@@ -727,9 +717,10 @@ void gl_InitModels()
 						if (isframe)
 						{
 							sc.MustGetString();
-							if (smf.models[index]!=nullptr) 
+							if (smf.modelIDs[index] != -1)
 							{
-								smf.modelframes[index] = smf.models[index]->FindFrame(sc.String);
+								FModel *model = Models[smf.modelIDs[index]];
+								smf.modelframes[index] = model->FindFrame(sc.String);
 								if (smf.modelframes[index]==-1) sc.ScriptError("Unknown frame '%s' in %s", sc.String, smf.type->TypeName.GetChars());
 							}
 							else smf.modelframes[index] = -1;
@@ -888,17 +879,17 @@ void gl_RenderFrameModels( const FSpriteModelFrame *smf,
 
 	for(int i=0; i<MAX_MODELS_PER_FRAME; i++)
 	{
-		FModel * mdl = smf->models[i];
-
-		if (mdl!=nullptr)
+		if (smf->modelIDs[i] != -1)
 		{
+			FModel * mdl = Models[smf->modelIDs[i]];
+			FTexture *tex = smf->skinIDs[i].isValid()? TexMan(smf->skinIDs[i]) : nullptr;
 			mdl->BuildVertexBuffer();
 			gl_RenderState.SetVertexBuffer(mdl->mVBuf);
 
 			if ( smfNext && smf->modelframes[i] != smfNext->modelframes[i] )
-				mdl->RenderFrame(smf->skins[i], smf->modelframes[i], smfNext->modelframes[i], inter, translation);
+				mdl->RenderFrame(tex, smf->modelframes[i], smfNext->modelframes[i], inter, translation);
 			else
-				mdl->RenderFrame(smf->skins[i], smf->modelframes[i], smf->modelframes[i], 0.f, translation);
+				mdl->RenderFrame(tex, smf->modelframes[i], smf->modelframes[i], 0.f, translation);
 
 			gl_RenderState.SetVertexBuffer(GLRenderer->mVBO);
 		}
@@ -998,7 +989,7 @@ void gl_RenderModel(GLSprite * spr)
 	gl_RenderState.mModelMatrix.rotate(-smf->rolloffset, 1, 0, 0);
 
 	// consider the pixel stretching. For non-voxels this must be factored out here
-	float stretch = (smf->models[0] != nullptr ? smf->models[0]->getAspectFactor() : 1.f) / glset.pixelstretch;
+	float stretch = (smf->modelIDs[0] != -1 ? Models[smf->modelIDs[0]]->getAspectFactor() : 1.f) / glset.pixelstretch;
 	gl_RenderState.mModelMatrix.scale(1, stretch, 1);
 
 

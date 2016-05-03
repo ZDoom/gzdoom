@@ -213,7 +213,7 @@ FVoxelModel::FVoxelModel(FVoxel *voxel, bool owned)
 {
 	mVoxel = voxel;
 	mOwningVoxel = owned;
-	mPalette = new FVoxelTexture(voxel);
+	mPalette = TexMan.AddTexture(new FVoxelTexture(voxel));
 }
 
 //===========================================================================
@@ -224,7 +224,6 @@ FVoxelModel::FVoxelModel(FVoxel *voxel, bool owned)
 
 FVoxelModel::~FVoxelModel()
 {
-	delete mPalette;
 	if (mOwningVoxel) delete mVoxel;
 }
 

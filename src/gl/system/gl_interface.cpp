@@ -168,7 +168,7 @@ void gl_LoadExtensions()
 	gl.vendorstring = (char*)glGetString(GL_VENDOR);
 	gl.lightmethod = LM_SOFTWARE;
 
-	if (gl.version >= 3.3f || CheckExtension("GL_ARB_sampler_objects"))
+	if ((gl.version >= 3.3f || CheckExtension("GL_ARB_sampler_objects")) && !Args->CheckParm("-nosampler"))
 	{
 		gl.flags |= RFL_SAMPLER_OBJECTS;
 	}

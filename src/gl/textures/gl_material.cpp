@@ -346,7 +346,8 @@ const FHardwareTexture *FGLTexture::Bind(int texunit, int clampmode, int transla
 			delete[] buffer;
 		}
 		if (tex->bHasCanvas) static_cast<FCanvasTexture*>(tex)->NeedUpdate();
-		if (lastSampler != clampmode || lastTranslation != translation)
+		if (translation != lastTranslation) lastSampler = 254;
+		if (lastSampler != clampmode)
 			lastSampler = GLRenderer->mSamplerManager->Bind(texunit, clampmode, lastSampler);
 		lastTranslation = translation;
 		return hwtex; 

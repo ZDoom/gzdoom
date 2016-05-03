@@ -86,7 +86,6 @@ void FSamplerManager::UnbindAll()
 	{
 		for (int i = 0; i < FHardwareTexture::MAX_TEXTURES; i++)
 		{
-			mLastBound[i] = 0;
 			glBindSampler(i, 0);
 		}
 	}
@@ -97,12 +96,8 @@ BYTE FSamplerManager::Bind(int texunit, int num, int lastval)
 	if (gl.flags & RFL_SAMPLER_OBJECTS)
 	{
 		unsigned int samp = mSamplers[num];
-		//if (samp != mLastBound[texunit])
-		{
-			glBindSampler(texunit, samp);
-			mLastBound[texunit] = samp;
-			return 255;
-		}
+		glBindSampler(texunit, samp);
+		return 255;
 	}
 	else
 	{
@@ -112,7 +107,7 @@ BYTE FSamplerManager::Bind(int texunit, int num, int lastval)
 		case CLAMP_NONE:
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-			if (lastval > CLAMP_XY_NOMIP)
+			if (lastval >= CLAMP_XY_NOMIP)
 			{
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, TexFilter[gl_texture_filter].minfilter);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, TexFilter[gl_texture_filter].magfilter);
@@ -123,7 +118,7 @@ BYTE FSamplerManager::Bind(int texunit, int num, int lastval)
 		case CLAMP_X:
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-			if (lastval > CLAMP_XY_NOMIP)
+			if (lastval >= CLAMP_XY_NOMIP)
 			{
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, TexFilter[gl_texture_filter].minfilter);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, TexFilter[gl_texture_filter].magfilter);
@@ -134,7 +129,18 @@ BYTE FSamplerManager::Bind(int texunit, int num, int lastval)
 		case CLAMP_Y:
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-			if (lastval > CLAMP_XY_NOMIP)
+			if (lastval >= CLAMP_XY_NOMIP)
+			{
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, TexFilter[gl_texture_filter].minfilter);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, TexFilter[gl_texture_filter].magfilter);
+				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, gl_texture_filter_anisotropic);
+			}
+			break;
+
+		case CLAMP_XY:
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			if (lastval >= CLAMP_XY_NOMIP)
 			{
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, TexFilter[gl_texture_filter].minfilter);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, TexFilter[gl_texture_filter].magfilter);
@@ -143,15 +149,11 @@ BYTE FSamplerManager::Bind(int texunit, int num, int lastval)
 			break;
 
 		case CLAMP_XY_NOMIP:
-		case CLAMP_XY:
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-			if (lastval > CLAMP_XY_NOMIP)
-			{
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, TexFilter[gl_texture_filter].minfilter);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, TexFilter[gl_texture_filter].magfilter);
-				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, gl_texture_filter_anisotropic);
-			}
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, TexFilter[gl_texture_filter].magfilter);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, TexFilter[gl_texture_filter].magfilter);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 1);
 			break;
 
 		case CLAMP_NOFILTER:

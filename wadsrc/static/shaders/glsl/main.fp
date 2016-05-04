@@ -134,7 +134,7 @@ float R_DoomLightingEquation(float light, float dist)
 	/* L in the range 0 to 63 */
 	float L = light * 63.0/31.0;
 
-	float min_L = clamp(36.0/31.0 - L, 0.0, 1.0);
+	float min_L = clamp(36.0/31.0 - L, 0.03, 1.0);
 
 	// Fix objects getting totally black when close.
 	if (dist < 0.0001)

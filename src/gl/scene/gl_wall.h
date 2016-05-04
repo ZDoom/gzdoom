@@ -304,6 +304,7 @@ public:
 	void ProcessLights(bool istrans);
 
 	void PutFlat(bool fog = false);
+	bool PutFlatCompat(bool fog);
 	void Process(sector_t * model, int whichplane, bool notexture);
 	void SetFrom3DFloor(F3DFloor *rover, bool top, bool underside);
 	void ProcessSector(sector_t * frontsector);

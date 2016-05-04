@@ -463,6 +463,10 @@ inline void GLFlat::PutFlat(bool fog)
 	{
 		Colormap.Clear();
 	}
+	if (gl.lightmethod == LM_SOFTWARE)
+	{
+		if (PutFlatCompat(fog)) return;
+	}
 	if (renderstyle!=STYLE_Translucent || alpha < 1.f - FLT_EPSILON || fog || gltexture == NULL)
 	{
 		// translucent 3D floors go into the regular translucent list, translucent portals go into the translucent border list.

@@ -502,6 +502,33 @@ bool GLWall::PutWallCompat(int passflag)
 
 //==========================================================================
 //
+//
+//
+//==========================================================================
+
+bool GLFlat::PutFlatCompat(bool fog)
+{
+	// are lights possible?
+	if (gl_fixedcolormap != CM_DEFAULT || !gl_lights || !gltexture || renderstyle != STYLE_Translucent || alpha < 1.f - FLT_EPSILON || sector->lighthead == NULL) return false;
+
+	static int list_indices[2][2] =
+	{ { GLLDL_FLATS_PLAIN, GLLDL_FLATS_FOG },{ GLLDL_FLATS_MASKED, GLLDL_FLATS_FOGMASKED } };
+
+	bool masked = gltexture->isMasked() && ((renderflags&SSRF_RENDER3DPLANES) || stack);
+	bool foggy = gl_CheckFog(&Colormap, lightlevel) || level.flags&LEVEL_HASFADETABLE;
+
+	
+	int list = list_indices[masked][foggy];
+	if (list == GLLDL_FLATS_PLAIN)
+	{
+		if (gltexture->tex->gl_info.Brightmap && gl.glslversion >= 0.f) list = GLLDL_FLATS_BRIGHT;
+	}
+	gl_drawinfo->dldrawlists[list].AddFlat(this);
+}
+
+
+//==========================================================================
+//
 // Fog boundary without any shader support
 //
 //==========================================================================

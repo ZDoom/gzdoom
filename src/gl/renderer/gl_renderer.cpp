@@ -350,7 +350,7 @@ void FGLRenderer::DrawTexture(FTexture *img, DrawParms &parms)
 				if (pal) translation = -pal->GetIndex();
 			}
 		}
-		gl_RenderState.SetMaterial(gltex, CLAMP_XY_NOMIP, translation, 0, !!(parms.style.Flags & STYLEF_RedIsAlpha));
+		gl_RenderState.SetMaterial(gltex, CLAMP_XY_NOMIP, translation, -1, !!(parms.style.Flags & STYLEF_RedIsAlpha));
 
 		u1 = gltex->GetUL();
 		v1 = gltex->GetVT();

@@ -40,6 +40,7 @@
 #include <dlfcn.h>
 #endif
 
+#include <memory>
 #include <chrono>
 
 #include "except.h"
@@ -636,6 +637,15 @@ extern ReverbContainer *ForcedEnvironment;
 
 #define PITCH(pitch) (snd_pitched ? (pitch)/128.f : 1.f)
 
+static size_t GetChannelCount(ChannelConfig chans)
+{
+    switch(chans)
+    {
+        case ChannelConfig_Mono: return 1;
+        case ChannelConfig_Stereo: return 2;
+    }
+    return 0;
+}
 
 static float GetRolloff(const FRolloffInfo *rolloff, float distance)
 {
@@ -1142,7 +1152,7 @@ std::pair<SoundHandle,bool> OpenALSoundRenderer::LoadSound(BYTE *sfxdata, int le
     SampleType type;
     int srate;
 
-    SoundDecoder *decoder = CreateDecoder(&reader);
+    std::unique_ptr<SoundDecoder> decoder(CreateDecoder(&reader));
     if(!decoder) return std::make_pair(retval, true);
 
     decoder->getInfo(&srate, &chans, &type);
@@ -1161,46 +1171,53 @@ std::pair<SoundHandle,bool> OpenALSoundRenderer::LoadSound(BYTE *sfxdata, int le
     {
         Printf("Unsupported audio format: %s, %s\n", GetChannelConfigName(chans),
                GetSampleTypeName(type));
-        delete decoder;
         return std::make_pair(retval, true);
     }
 
     TArray<char> data = decoder->readAll();
     if(chans != ChannelConfig_Mono && monoize)
     {
-        // TODO: Handle this better if ChannelConfig ever gets more channel configurations.
-        size_t frames = data.Size() / 2 / (type == SampleType_Int16 ? 2 : 1);
+        size_t chancount = GetChannelCount(chans);
+        size_t frames = data.Size() / chancount /
+                        (type == SampleType_Int16 ? 2 : 1);
         if(type == SampleType_Int16)
         {
             short *sfxdata = (short*)&data[0];
             for(size_t i = 0;i < frames;i++)
-                sfxdata[i] = (sfxdata[i*2 + 0]-0 + sfxdata[i*2 + 1]-0)/2;
+            {
+                int sum = 0;
+                for(size_t c = 0;c < chancount;c++)
+                    sum += sfxdata[i*chancount + c];
+                sfxdata[i] = sum / chancount;
+            }
         }
         else if(type == SampleType_UInt8)
         {
             BYTE *sfxdata = (BYTE*)&data[0];
             for(size_t i = 0;i < frames;i++)
-                sfxdata[i] = (sfxdata[i*2 + 0]-128 + sfxdata[i*2 + 1]-128)/2 + 128;
+            {
+                int sum = 0;
+                for(size_t c = 0;c < chancount;c++)
+                    sum += sfxdata[i*chancount + c] - 128;
+                sfxdata[i] = (sum / chancount) + 128;
+            }
         }
-        data.Resize(data.Size()/2);
+        data.Resize(data.Size()/chancount);
     }
 
+    ALenum err;
     ALuint buffer = 0;
     alGenBuffers(1, &buffer);
     alBufferData(buffer, format, &data[0], data.Size(), srate);
-
-    ALenum err;
     if((err=getALError()) != AL_NO_ERROR)
     {
         Printf("Failed to buffer data: %s\n", alGetString(err));
         alDeleteBuffers(1, &buffer);
         getALError();
-        delete decoder;
         return std::make_pair(retval, true);
     }
 
     retval.data = MAKE_PTRID(buffer);
-    delete decoder;
     return std::make_pair(retval, (chans == ChannelConfig_Mono || monoize));
 }
 

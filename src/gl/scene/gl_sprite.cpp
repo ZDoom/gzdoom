@@ -596,8 +596,12 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 	{
 		if (!(thing->flags7 & MF7_FLYCHEAT) && thing->target == GLRenderer->mViewActor && GLRenderer->mViewActor != NULL)
 		{
-			double clipdist = clamp(thing->Speed, thing->target->radius, thing->target->radius * 2);
-			if ((thingpos - ViewPos).LengthSquared() < clipdist * clipdist) return;
+			double speed = thing->Vel.Length();
+			if (speed >= thing->target->radius / 2)
+			{
+				double clipdist = clamp(thing->Speed, thing->target->radius, thing->target->radius * 2);
+				if ((thingpos - ViewPos).LengthSquared() < clipdist * clipdist) return;
+			}
 		}
 		thing->flags7 |= MF7_FLYCHEAT;	// do this only once for the very first frame, but not if it gets into range again.
 	}

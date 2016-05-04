@@ -116,6 +116,7 @@ public:
 	bool owned;
 	bool halo;
 	BYTE color2[3];
+	bool visibletoplayer;
 	int bufferindex;
 
 	// intermediate texture coordinate data

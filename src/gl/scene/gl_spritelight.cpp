@@ -75,57 +75,52 @@ void gl_SetDynSpriteLight(AActor *self, float x, float y, float z, subsector_t *
 	while (node)
 	{
 		light=node->lightsource;
-		//if (!light->owned || light->target == NULL || light->target->IsVisibleToPlayer())
+		if (light->visibletoplayer && !(light->flags2&MF2_DORMANT) && (!(light->flags4&MF4_DONTLIGHTSELF) || light->target != self))
 		{
-			if (!(light->flags2&MF2_DORMANT) &&
-				(!(light->flags4&MF4_DONTLIGHTSELF) || light->target != self))
+			float dist;
+
+			// This is a performance critical section of code where we cannot afford to let the compiler decide whether to inline the function or not.
+			// This will do the calculations explicitly rather than calling one of AActor's utility functions.
+			if (Displacements.size > 0)
 			{
-				float dist;
+				int fromgroup = light->Sector->PortalGroup;
+				int togroup = subsec->sector->PortalGroup;
+				if (fromgroup == togroup || fromgroup == 0 || togroup == 0) goto direct;
 
-				// This is a performance critical section of code where we cannot afford to let the compiler decide whether to inline the function or not.
-				// This will do the calculations explicitly rather than calling one of AActor's utility functions.
-				if (Displacements.size > 0)
+				DVector2 offset = Displacements.getOffset(fromgroup, togroup);
+				dist = FVector3(x - light->X() - offset.X, y - light->Y() - offset.Y, z - light->Z()).LengthSquared();
+			}
+			else
+			{
+			direct:
+				dist = FVector3(x - light->X(), y - light->Y(), z - light->Z()).LengthSquared();
+			}
+
+			radius = light->GetRadius() * gl_lights_size;
+
+			if (dist < radius * radius)
+			{
+				dist = sqrtf(dist);	// only calculate the square root if we really need it.
+
+				frac = 1.0f - (dist / radius);
+
+				if (frac > 0)
 				{
-					int fromgroup = light->Sector->PortalGroup;
-					int togroup = subsec->sector->PortalGroup;
-					if (fromgroup == togroup || fromgroup == 0 || togroup == 0) goto direct;	
-
-					DVector2 offset = Displacements.getOffset(fromgroup, togroup);
-					dist = FVector3(x - light->X() - offset.X, y - light->Y() - offset.Y, z - light->Z()).LengthSquared();
-				}
-				else
-				{
-				direct:
-					dist = FVector3(x - light->X(), y - light->Y(), z - light->Z()).LengthSquared();
-				}
-				// This is to avoid calling the software-implemented sqrt function which gets used by FVector3::Length().
-				// With fast math on in this module this call will be mapped to a machine instruction on most platforms.
-				dist = sqrtf(dist);
-
-				radius = light->GetRadius() * gl_lights_size;
-
-				if (dist < radius)
-				{
-					frac = 1.0f - (dist / radius);
-
-					if (frac > 0)
+					lr = light->GetRed() / 255.0f * gl_lights_intensity;
+					lg = light->GetGreen() / 255.0f * gl_lights_intensity;
+					lb = light->GetBlue() / 255.0f * gl_lights_intensity;
+					if (light->IsSubtractive())
 					{
-						lr = light->GetRed() / 255.0f * gl_lights_intensity;
-						lg = light->GetGreen() / 255.0f * gl_lights_intensity;
-						lb = light->GetBlue() / 255.0f * gl_lights_intensity;
-						if (light->IsSubtractive())
-						{
-							float bright = FVector3(lr, lg, lb).Length();
-							FVector3 lightColor(lr, lg, lb);
-							lr = (bright - lr) * -1;
-							lg = (bright - lg) * -1;
-							lb = (bright - lb) * -1;
-						}
-
-						out[0] += lr * frac;
-						out[1] += lg * frac;
-						out[2] += lb * frac;
+						float bright = FVector3(lr, lg, lb).Length();
+						FVector3 lightColor(lr, lg, lb);
+						lr = (bright - lr) * -1;
+						lg = (bright - lg) * -1;
+						lb = (bright - lb) * -1;
 					}
+
+					out[0] += lr * frac;
+					out[1] += lg * frac;
+					out[2] += lb * frac;
 				}
 			}
 		}

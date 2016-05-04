@@ -392,7 +392,7 @@ bool gl_SetupLight(int group, Plane & p, ADynamicLight * light, Vector & nearPt,
 	{
 		return false;
 	}
-	if (light->owned && light->target != NULL && !light->target->IsVisibleToPlayer())
+	if (!light->visibletoplayer)
 	{
 		return false;
 	}

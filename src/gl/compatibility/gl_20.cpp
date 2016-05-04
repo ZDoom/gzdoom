@@ -54,6 +54,7 @@
 #include "gl/system/gl_cvars.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/scene/gl_drawinfo.h"
+#include "gl/data/gl_vertexbuffer.h"
 
 
 //==========================================================================
@@ -376,6 +377,7 @@ void FRenderState::DrawColormapOverlay()
 // Sets up the parameters to render one dynamic light onto one plane
 //
 //==========================================================================
+
 bool gl_SetupLight(int group, Plane & p, ADynamicLight * light, Vector & nearPt, Vector & up, Vector & right,
 	float & scale, int desaturation, bool checkside, bool forceadditive)
 {
@@ -573,6 +575,95 @@ void GLWall::RenderFogBoundaryCompat()
 	gl_RenderState.EnableFog(true);
 	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.5f);
 	gl_RenderState.EnableTexture(true);
+}
+
+//==========================================================================
+//
+// Flats 
+//
+//==========================================================================
+enum
+{
+	LIGHTPASS_MULT,
+	LIGHTPASS_ADD,
+	LIGHTPASS_FOG
+};
+
+void GLFlat::DrawSubsectorLights(subsector_t * sub, int pass)
+{
+	Plane p;
+	Vector nearPt, up, right, t1;
+	float scale;
+	unsigned int k;
+	seg_t *v;
+
+	FLightNode * node = sub->lighthead;
+	gl_RenderState.Apply();
+	while (node)
+	{
+		ADynamicLight * light = node->lightsource;
+
+		if (light->flags2&MF2_DORMANT)
+		{
+			node = node->nextLight;
+			continue;
+		}
+		switch (pass)
+		{
+		case LIGHTPASS_MULT:
+			if (light->IsAdditive())
+			{
+				node = node->nextLight;
+				continue;
+			}
+			break;
+
+		case LIGHTPASS_ADD:
+			if (!light->IsAdditive())
+			{
+				node = node->nextLight;
+				continue;
+			}
+			break;
+
+		default:
+			break;
+		}
+
+
+		// we must do the side check here because gl_SetupLight needs the correct plane orientation
+		// which we don't have for Legacy-style 3D-floors
+		double planeh = plane.plane.ZatPoint(light);
+		if (gl_lights_checkside && ((planeh<light->Z() && ceiling) || (planeh>light->Z() && !ceiling)))
+		{
+			node = node->nextLight;
+			continue;
+		}
+
+		p.Set(plane.plane);
+		if (!gl_SetupLight(sub->sector->PortalGroup, p, light, nearPt, up, right, scale, CM_DEFAULT, false, foggy))
+		{
+			node = node->nextLight;
+			continue;
+		}
+
+		FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
+		for (unsigned int k = 0; k < sub->numlines; k++)
+		{
+			vertex_t *vt = sub->firstline[k].v1;
+			ptr->x = vt->fX();
+			ptr->z = plane.plane.ZatPoint(vt) + dz;
+			ptr->y = vt->fY();
+			t1.Set(ptr->x, ptr->z, ptr->y);
+			Vector nearToVert = t1 - nearPt;
+
+			ptr->u = (nearToVert.Dot(right) * scale) + 0.5f;
+			ptr->v = (nearToVert.Dot(up) * scale) + 0.5f;
+			ptr++;
+		}
+		GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_FAN);
+		node = node->nextLight;
+	}
 }
 
 //==========================================================================

@@ -142,7 +142,7 @@ void GLWall::PutWall(bool translucent)
 		if (gl.lightmethod == LM_SOFTWARE && !translucent)
 		{
 			// This is not yet ready.
-			//if (PutWallCompat(passflag[type])) return;
+			if (PutWallCompat(passflag[type])) return;
 		}
 
 		bool masked;

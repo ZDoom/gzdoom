@@ -556,7 +556,6 @@ void GLWall::RenderFogBoundaryCompat()
 
 void FGLRenderer::RenderMultipassStuff()
 {
-	return;
 	// First pass: empty background with sector light only
 
 	// Part 1: solid geometry. This is set up so that there are no transparent parts
@@ -565,25 +564,28 @@ void FGLRenderer::RenderMultipassStuff()
 	gl_RenderState.EnableTexture(false);
 	gl_RenderState.EnableBrightmap(false);
 	gl_RenderState.Apply();
-	gl_drawinfo->dldrawlists[GLLDL_WALLS_PLAIN].DrawWalls(GLPASS_BASE);
-	gl_drawinfo->dldrawlists[GLLDL_FLATS_PLAIN].DrawFlats(GLPASS_BASE);
+	gl_drawinfo->dldrawlists[GLLDL_WALLS_PLAIN].DrawWalls(GLPASS_PLAIN);
+	gl_drawinfo->dldrawlists[GLLDL_FLATS_PLAIN].DrawFlats(GLPASS_PLAIN);
 
 	// Part 2: masked geometry. This is set up so that only pixels with alpha>0.5 will show
 	// This creates a blank surface that only fills the nontransparent parts of the texture
 	gl_RenderState.EnableTexture(true);
 	gl_RenderState.SetTextureMode(TM_MASK);
 	gl_RenderState.EnableBrightmap(true);
-	gl_drawinfo->dldrawlists[GLLDL_WALLS_BRIGHT].DrawWalls(GLPASS_BASE_MASKED);
-	gl_drawinfo->dldrawlists[GLLDL_WALLS_MASKED].DrawWalls(GLPASS_BASE_MASKED);
-	gl_drawinfo->dldrawlists[GLLDL_FLATS_BRIGHT].DrawFlats(GLPASS_BASE_MASKED);
-	gl_drawinfo->dldrawlists[GLLDL_FLATS_MASKED].DrawFlats(GLPASS_BASE_MASKED);
+	gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_threshold);
+	gl_drawinfo->dldrawlists[GLLDL_WALLS_BRIGHT].DrawWalls(GLPASS_PLAIN);
+	gl_drawinfo->dldrawlists[GLLDL_WALLS_MASKED].DrawWalls(GLPASS_PLAIN);
+	gl_drawinfo->dldrawlists[GLLDL_FLATS_BRIGHT].DrawFlats(GLPASS_PLAIN);
+	gl_drawinfo->dldrawlists[GLLDL_FLATS_MASKED].DrawFlats(GLPASS_PLAIN);
 
 	// Part 3: The base of fogged surfaces, including the texture
 	gl_RenderState.EnableBrightmap(false);
 	gl_RenderState.SetTextureMode(TM_MODULATE);
+	gl_RenderState.AlphaFunc(GL_GEQUAL, 0);
 	gl_drawinfo->dldrawlists[GLLDL_WALLS_FOG].DrawWalls(GLPASS_PLAIN);
-	gl_drawinfo->dldrawlists[GLLDL_WALLS_FOGMASKED].DrawWalls(GLPASS_PLAIN);
 	gl_drawinfo->dldrawlists[GLLDL_FLATS_FOG].DrawFlats(GLPASS_PLAIN);
+	gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_threshold);
+	gl_drawinfo->dldrawlists[GLLDL_WALLS_FOGMASKED].DrawWalls(GLPASS_PLAIN);
 	gl_drawinfo->dldrawlists[GLLDL_FLATS_FOGMASKED].DrawFlats(GLPASS_PLAIN);
 
 	// second pass: draw lights
@@ -638,5 +640,12 @@ void FGLRenderer::RenderMultipassStuff()
 		gl_drawinfo->dldrawlists[GLLDL_FLATS_FOGMASKED].DrawFlats(GLPASS_LIGHTTEX_ADDITIVE);
 	}
 	else gl_lights = false;
+
+	glDepthFunc(GL_LESS);
+	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
+	gl_RenderState.EnableFog(true);
+	gl_RenderState.BlendFunc(GL_ONE, GL_ZERO);
+	glDepthMask(true);
+
 }
 

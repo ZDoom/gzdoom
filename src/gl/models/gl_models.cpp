@@ -519,6 +519,7 @@ void gl_InitModels()
 		{
 			if (sc.Compare("model"))
 			{
+				path = "";
 				sc.MustGetString();
 				memset(&smf, 0, sizeof(smf));
 				smf.modelIDs[1] = smf.modelIDs[2] = smf.modelIDs[3] = -1;

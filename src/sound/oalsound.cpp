@@ -1431,7 +1431,8 @@ FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener
             /* Since the OpenAL distance is decoupled from the sound's distance, get the OpenAL
              * distance that corresponds to the area radius. */
             alSourcef(source, AL_SOURCE_RADIUS, (chanflags&SNDF_AREA) ?
-                1.f / GetRolloff(rolloff, AREA_SOUND_RADIUS) : 0.f
+                // Clamp in case the max distance is <= the area radius
+                1.f/MAX<float>(GetRolloff(rolloff, AREA_SOUND_RADIUS), 0.00001f) : 0.f
             );
         }
         else if((chanflags&SNDF_AREA) && dist_sqr < AREA_SOUND_RADIUS*AREA_SOUND_RADIUS)

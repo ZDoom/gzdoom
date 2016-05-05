@@ -183,7 +183,7 @@ private:
 	void SplitWall(sector_t * frontsector, bool translucent);
 
 	void SetupLights();
-	bool PrepareLight(texcoord * tcs, ADynamicLight * light);
+	bool PrepareLight(texcoord * tcs, ADynamicLight * light, int pass);
 	void RenderWall(int textured, unsigned int *store = NULL);
 	void RenderTextured(int rflags);
 
@@ -288,7 +288,6 @@ public:
 	GLSectorPlane plane;
 	int lightlevel;
 	bool stack;
-	bool foggy;
 	bool ceiling;
 	BYTE renderflags;
 	int vboindex;

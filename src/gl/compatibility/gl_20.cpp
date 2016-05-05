@@ -379,7 +379,7 @@ void FRenderState::DrawColormapOverlay()
 //==========================================================================
 
 bool gl_SetupLight(int group, Plane & p, ADynamicLight * light, Vector & nearPt, Vector & up, Vector & right,
-	float & scale, int desaturation, bool checkside, bool forceadditive)
+	float & scale, int desaturation, bool checkside, bool additive)
 {
 	Vector fn, pos;
 
@@ -416,7 +416,7 @@ bool gl_SetupLight(int group, Plane & p, ADynamicLight * light, Vector & nearPt,
 #endif
 
 	float cs = 1.0f - (dist / radius);
-	if (gl_lights_additive || light->flags4&MF4_ADDITIVE || forceadditive) cs *= 0.2f;	// otherwise the light gets too strong.
+	if (additive) cs *= 0.2f;	// otherwise the light gets too strong.
 	float r = light->GetRed() / 255.0f * cs * gl_lights_intensity;
 	float g = light->GetGreen() / 255.0f * cs * gl_lights_intensity;
 	float b = light->GetBlue() / 255.0f * cs * gl_lights_intensity;
@@ -613,7 +613,7 @@ void GLFlat::DrawSubsectorLights(subsector_t * sub, int pass)
 		}
 
 		p.Set(plane.plane);
-		if (!gl_SetupLight(sub->sector->PortalGroup, p, light, nearPt, up, right, scale, CM_DEFAULT, false, foggy))
+		if (!gl_SetupLight(sub->sector->PortalGroup, p, light, nearPt, up, right, scale, CM_DEFAULT, false, pass == GLPASS_LIGHTTEX_ADDITIVE))
 		{
 			node = node->nextLight;
 			continue;
@@ -678,6 +678,58 @@ void GLFlat::DrawLightsCompat(int pass)
 			}
 		}
 	}
+}
+
+
+//==========================================================================
+//
+// Sets up the texture coordinates for one light to be rendered
+//
+//==========================================================================
+bool GLWall::PrepareLight(texcoord * tcs, ADynamicLight * light, int pass)
+{
+	float vtx[] = { glseg.x1,zbottom[0],glseg.y1, glseg.x1,ztop[0],glseg.y1, glseg.x2,ztop[1],glseg.y2, glseg.x2,zbottom[1],glseg.y2 };
+	Plane p;
+	Vector nearPt, up, right;
+	float scale;
+
+	p.Init(vtx, 4);
+
+	if (!p.ValidNormal())
+	{
+		return false;
+	}
+
+	if (!gl_SetupLight(seg->frontsector->PortalGroup, p, light, nearPt, up, right, scale, CM_DEFAULT, true, pass == GLPASS_LIGHTTEX_ADDITIVE))
+	{
+		return false;
+	}
+
+	if (tcs != NULL)
+	{
+		Vector t1;
+		int outcnt[4] = { 0,0,0,0 };
+
+		for (int i = 0; i<4; i++)
+		{
+			t1.Set(&vtx[i * 3]);
+			Vector nearToVert = t1 - nearPt;
+			tcs[i].u = (nearToVert.Dot(right) * scale) + 0.5f;
+			tcs[i].v = (nearToVert.Dot(up) * scale) + 0.5f;
+
+			// quick check whether the light touches this polygon
+			if (tcs[i].u<0) outcnt[0]++;
+			if (tcs[i].u>1) outcnt[1]++;
+			if (tcs[i].v<0) outcnt[2]++;
+			if (tcs[i].v>1) outcnt[3]++;
+
+		}
+		// The light doesn't touch this polygon
+		if (outcnt[0] == 4 || outcnt[1] == 4 || outcnt[2] == 4 || outcnt[3] == 4) return false;
+	}
+
+	draw_dlight++;
+	return true;
 }
 
 

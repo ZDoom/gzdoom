@@ -61,14 +61,14 @@ EXTERN_CVAR(Bool, gl_seamless)
 //
 //==========================================================================
 
-void GLWall::SplitUpperEdge(texcoord * tcs, FFlatVertex *&ptr)
+void GLWall::SplitUpperEdge(FFlatVertex *&ptr)
 {
 	if (seg == NULL || seg->sidedef == NULL || (seg->sidedef->Flags & WALLF_POLYOBJ) || seg->sidedef->numsegs == 1) return;
 
 	side_t *sidedef = seg->sidedef;
 	float polyw = glseg.fracright - glseg.fracleft;
-	float facu = (tcs[2].u - tcs[1].u) / polyw;
-	float facv = (tcs[2].v - tcs[1].v) / polyw;
+	float facu = (tcs[UPRGT].u - tcs[UPLFT].u) / polyw;
+	float facv = (tcs[UPRGT].v - tcs[UPLFT].v) / polyw;
 	float fact = (ztop[1] - ztop[0]) / polyw;
 	float facc = (zceil[1] - zceil[0]) / polyw;
 	float facf = (zfloor[1] - zfloor[0]) / polyw;
@@ -85,8 +85,8 @@ void GLWall::SplitUpperEdge(texcoord * tcs, FFlatVertex *&ptr)
 		ptr->x = cseg->v2->fX();
 		ptr->y = cseg->v2->fY();
 		ptr->z = ztop[0] + fact * fracfac;
-		ptr->u = tcs[1].u + facu * fracfac;
-		ptr->v = tcs[1].v + facv * fracfac;
+		ptr->u = tcs[UPLFT].u + facu * fracfac;
+		ptr->v = tcs[UPLFT].v + facv * fracfac;
 		ptr++;
 	}
 }
@@ -97,14 +97,14 @@ void GLWall::SplitUpperEdge(texcoord * tcs, FFlatVertex *&ptr)
 //
 //==========================================================================
 
-void GLWall::SplitLowerEdge(texcoord * tcs, FFlatVertex *&ptr)
+void GLWall::SplitLowerEdge(FFlatVertex *&ptr)
 {
 	if (seg == NULL || seg->sidedef == NULL || (seg->sidedef->Flags & WALLF_POLYOBJ) || seg->sidedef->numsegs == 1) return;
 
 	side_t *sidedef = seg->sidedef;
 	float polyw = glseg.fracright - glseg.fracleft;
-	float facu = (tcs[3].u - tcs[0].u) / polyw;
-	float facv = (tcs[3].v - tcs[0].v) / polyw;
+	float facu = (tcs[LORGT].u - tcs[LOLFT].u) / polyw;
+	float facv = (tcs[LORGT].v - tcs[LOLFT].v) / polyw;
 	float facb = (zbottom[1] - zbottom[0]) / polyw;
 	float facc = (zceil[1] - zceil[0]) / polyw;
 	float facf = (zfloor[1] - zfloor[0]) / polyw;
@@ -121,8 +121,8 @@ void GLWall::SplitLowerEdge(texcoord * tcs, FFlatVertex *&ptr)
 		ptr->x = cseg->v2->fX();
 		ptr->y = cseg->v2->fY();
 		ptr->z = zbottom[0] + facb * fracfac;
-		ptr->u = tcs[0].u + facu * fracfac;
-		ptr->v = tcs[0].v + facv * fracfac;
+		ptr->u = tcs[LOLFT].u + facu * fracfac;
+		ptr->v = tcs[LOLFT].v + facv * fracfac;
 		ptr++;
 	}
 }
@@ -133,7 +133,7 @@ void GLWall::SplitLowerEdge(texcoord * tcs, FFlatVertex *&ptr)
 //
 //==========================================================================
 
-void GLWall::SplitLeftEdge(texcoord * tcs, FFlatVertex *&ptr)
+void GLWall::SplitLeftEdge(FFlatVertex *&ptr)
 {
 	if (vertexes[0] == NULL) return;
 
@@ -144,8 +144,8 @@ void GLWall::SplitLeftEdge(texcoord * tcs, FFlatVertex *&ptr)
 		int i = 0;
 
 		float polyh1 = ztop[0] - zbottom[0];
-		float factv1 = polyh1 ? (tcs[1].v - tcs[0].v) / polyh1 : 0;
-		float factu1 = polyh1 ? (tcs[1].u - tcs[0].u) / polyh1 : 0;
+		float factv1 = polyh1 ? (tcs[UPLFT].v - tcs[LOLFT].v) / polyh1 : 0;
+		float factu1 = polyh1 ? (tcs[UPLFT].u - tcs[LOLFT].u) / polyh1 : 0;
 
 		while (i<vi->numheights && vi->heightlist[i] <= zbottom[0]) i++;
 		while (i<vi->numheights && vi->heightlist[i] < ztop[0])
@@ -153,8 +153,8 @@ void GLWall::SplitLeftEdge(texcoord * tcs, FFlatVertex *&ptr)
 			ptr->x = glseg.x1;
 			ptr->y = glseg.y1;
 			ptr->z = vi->heightlist[i];
-			ptr->u = factu1*(vi->heightlist[i] - ztop[0]) + tcs[1].u;
-			ptr->v = factv1*(vi->heightlist[i] - ztop[0]) + tcs[1].v;
+			ptr->u = factu1*(vi->heightlist[i] - ztop[0]) + tcs[UPLFT].u;
+			ptr->v = factv1*(vi->heightlist[i] - ztop[0]) + tcs[UPLFT].v;
 			ptr++;
 			i++;
 		}
@@ -167,7 +167,7 @@ void GLWall::SplitLeftEdge(texcoord * tcs, FFlatVertex *&ptr)
 //
 //==========================================================================
 
-void GLWall::SplitRightEdge(texcoord * tcs, FFlatVertex *&ptr)
+void GLWall::SplitRightEdge(FFlatVertex *&ptr)
 {
 	if (vertexes[1] == NULL) return;
 
@@ -178,8 +178,8 @@ void GLWall::SplitRightEdge(texcoord * tcs, FFlatVertex *&ptr)
 		int i = vi->numheights - 1;
 
 		float polyh2 = ztop[1] - zbottom[1];
-		float factv2 = polyh2 ? (tcs[2].v - tcs[3].v) / polyh2 : 0;
-		float factu2 = polyh2 ? (tcs[2].u - tcs[3].u) / polyh2 : 0;
+		float factv2 = polyh2 ? (tcs[UPRGT].v - tcs[LORGT].v) / polyh2 : 0;
+		float factu2 = polyh2 ? (tcs[UPRGT].u - tcs[LORGT].u) / polyh2 : 0;
 
 		while (i>0 && vi->heightlist[i] >= ztop[1]) i--;
 		while (i>0 && vi->heightlist[i] > zbottom[1])
@@ -187,8 +187,8 @@ void GLWall::SplitRightEdge(texcoord * tcs, FFlatVertex *&ptr)
 			ptr->x = glseg.x2;
 			ptr->y = glseg.y2;
 			ptr->z = vi->heightlist[i];
-			ptr->u = factu2*(vi->heightlist[i] - ztop[1]) + tcs[2].u;
-			ptr->v = factv2*(vi->heightlist[i] - ztop[1]) + tcs[2].v;
+			ptr->u = factu2*(vi->heightlist[i] - ztop[1]) + tcs[UPRGT].u;
+			ptr->v = factv2*(vi->heightlist[i] - ztop[1]) + tcs[UPRGT].v;
 			ptr++;
 			i--;
 		}

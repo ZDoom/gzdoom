@@ -119,6 +119,13 @@ public:
 		RWF_NORENDER = 8,
 	};
 
+	enum
+	{
+		LOLFT,
+		UPLFT,
+		UPRGT,
+		LORGT,
+	};
 
 	friend struct GLDrawList;
 	friend class GLPortal;
@@ -126,7 +133,7 @@ public:
 	GLSeg glseg;
 	vertex_t * vertexes[2];				// required for polygon splitting
 	float ztop[2],zbottom[2];
-	texcoord uplft, uprgt, lolft, lorgt;
+	texcoord tcs[4];
 	float alpha;
 	FMaterial *gltexture;
 
@@ -236,10 +243,10 @@ private:
 	void RenderMirrorSurface();
 	void RenderTranslucentWall();
 
-	void SplitLeftEdge(texcoord * tcs, FFlatVertex *&ptr);
-	void SplitRightEdge(texcoord * tcs, FFlatVertex *&ptr);
-	void SplitUpperEdge(texcoord * tcs, FFlatVertex *&ptr);
-	void SplitLowerEdge(texcoord * tcs, FFlatVertex *&ptr);
+	void SplitLeftEdge (FFlatVertex *&ptr);
+	void SplitRightEdge(FFlatVertex *&ptr);
+	void SplitUpperEdge(FFlatVertex *&ptr);
+	void SplitLowerEdge(FFlatVertex *&ptr);
 
 public:
 

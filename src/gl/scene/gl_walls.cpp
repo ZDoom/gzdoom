@@ -297,10 +297,10 @@ void GLWall::SplitWallComplex(sector_t * frontsector, bool translucent, float ma
 			copyWall1.ztop[1] = copyWall2.ztop[0] = ztop[0] + coeff * (ztop[1] - ztop[0]);
 			copyWall1.zbottom[1] = copyWall2.zbottom[0] = zbottom[0] + coeff * (zbottom[1] - zbottom[0]);
 			copyWall1.glseg.fracright = copyWall2.glseg.fracleft = glseg.fracleft + coeff * (glseg.fracright - glseg.fracleft);
-			copyWall1.uprgt.u = copyWall2.uplft.u = uplft.u + coeff * (uprgt.u - uplft.u);
-			copyWall1.uprgt.v = copyWall2.uplft.v = uplft.v + coeff * (uprgt.v - uplft.v);
-			copyWall1.lorgt.u = copyWall2.lolft.u = lolft.u + coeff * (lorgt.u - lolft.u);
-			copyWall1.lorgt.v = copyWall2.lolft.v = lolft.v + coeff * (lorgt.v - lolft.v);
+			copyWall1.tcs[UPRGT].u = copyWall2.tcs[UPLFT].u = tcs[UPLFT].u + coeff * (tcs[UPRGT].u - tcs[UPLFT].u);
+			copyWall1.tcs[UPRGT].v = copyWall2.tcs[UPLFT].v = tcs[UPLFT].v + coeff * (tcs[UPRGT].v - tcs[UPLFT].v);
+			copyWall1.tcs[LORGT].u = copyWall2.tcs[LOLFT].u = tcs[LOLFT].u + coeff * (tcs[LORGT].u - tcs[LOLFT].u);
+			copyWall1.tcs[LORGT].v = copyWall2.tcs[LOLFT].v = tcs[LOLFT].v + coeff * (tcs[LORGT].v - tcs[LOLFT].v);
 
 			copyWall1.SplitWall(frontsector, translucent);
 			copyWall2.SplitWall(frontsector, translucent);
@@ -338,10 +338,10 @@ void GLWall::SplitWallComplex(sector_t * frontsector, bool translucent, float ma
 			copyWall1.ztop[1] = copyWall2.ztop[0] = ztop[0] + coeff * (ztop[1] - ztop[0]);
 			copyWall1.zbottom[1] = copyWall2.zbottom[0] = zbottom[0] + coeff * (zbottom[1] - zbottom[0]);
 			copyWall1.glseg.fracright = copyWall2.glseg.fracleft = glseg.fracleft + coeff * (glseg.fracright - glseg.fracleft);
-			copyWall1.uprgt.u = copyWall2.uplft.u = uplft.u + coeff * (uprgt.u - uplft.u);
-			copyWall1.uprgt.v = copyWall2.uplft.v = uplft.v + coeff * (uprgt.v - uplft.v);
-			copyWall1.lorgt.u = copyWall2.lolft.u = lolft.u + coeff * (lorgt.u - lolft.u);
-			copyWall1.lorgt.v = copyWall2.lolft.v = lolft.v + coeff * (lorgt.v - lolft.v);
+			copyWall1.tcs[UPRGT].u = copyWall2.tcs[UPLFT].u = tcs[UPLFT].u + coeff * (tcs[UPRGT].u - tcs[UPLFT].u);
+			copyWall1.tcs[UPRGT].v = copyWall2.tcs[UPLFT].v = tcs[UPLFT].v + coeff * (tcs[UPRGT].v - tcs[UPLFT].v);
+			copyWall1.tcs[LORGT].u = copyWall2.tcs[LOLFT].u = tcs[LOLFT].u + coeff * (tcs[LORGT].u - tcs[LOLFT].u);
+			copyWall1.tcs[LORGT].v = copyWall2.tcs[LOLFT].v = tcs[LOLFT].v + coeff * (tcs[LORGT].v - tcs[LOLFT].v);
 
 			copyWall1.SplitWall(frontsector, translucent);
 			copyWall2.SplitWall(frontsector, translucent);
@@ -432,10 +432,10 @@ void GLWall::SplitWall(sector_t * frontsector, bool translucent)
 				flags |= GLWF_NOSPLITUPPER;
 				ztop[0]=copyWall1.zbottom[0]=maplightbottomleft;
 				ztop[1]=copyWall1.zbottom[1]=maplightbottomright;
-				uplft.v=copyWall1.lolft.v=copyWall1.uplft.v+ 
-					(maplightbottomleft-copyWall1.ztop[0])*(copyWall1.lolft.v-copyWall1.uplft.v)/(zbottom[0]-copyWall1.ztop[0]);
-				uprgt.v=copyWall1.lorgt.v=copyWall1.uprgt.v+ 
-					(maplightbottomright-copyWall1.ztop[1])*(copyWall1.lorgt.v-copyWall1.uprgt.v)/(zbottom[1]-copyWall1.ztop[1]);
+				tcs[UPLFT].v=copyWall1.tcs[LOLFT].v=copyWall1.tcs[UPLFT].v+ 
+					(maplightbottomleft-copyWall1.ztop[0])*(copyWall1.tcs[LOLFT].v-copyWall1.tcs[UPLFT].v)/(zbottom[0]-copyWall1.ztop[0]);
+				tcs[UPRGT].v=copyWall1.tcs[LORGT].v=copyWall1.tcs[UPRGT].v+ 
+					(maplightbottomright-copyWall1.ztop[1])*(copyWall1.tcs[LORGT].v-copyWall1.tcs[UPRGT].v)/(zbottom[1]-copyWall1.ztop[1]);
 				copyWall1.Put3DWall(&lightlist[i], translucent);
 			}
 			if (ztop[0]==zbottom[0] && ztop[1]==zbottom[1]) 
@@ -574,8 +574,8 @@ bool GLWall::SetWallCoordinates(seg_t * seg, FTexCoordInfo *tci, float textureto
 
 		if (tci)
 		{
-			uplft.v = tci->FloatToTexV(-ztop[0] + texturetop);
-			lolft.v = tci->FloatToTexV(-zbottom[0] + texturetop);
+			tcs[UPLFT].v = tci->FloatToTexV(-ztop[0] + texturetop);
+			tcs[LOLFT].v = tci->FloatToTexV(-zbottom[0] + texturetop);
 		}
 	}
 	else
@@ -595,7 +595,7 @@ bool GLWall::SetWallCoordinates(seg_t * seg, FTexCoordInfo *tci, float textureto
 
 		if (tci)
 		{
-			lolft.v = uplft.v = tci->FloatToTexV(-ztop[0] + texturetop);
+			tcs[LOLFT].v = tcs[UPLFT].v = tci->FloatToTexV(-ztop[0] + texturetop);
 		}
 	}
 
@@ -612,8 +612,8 @@ bool GLWall::SetWallCoordinates(seg_t * seg, FTexCoordInfo *tci, float textureto
 
 		if (tci)
 		{
-			uprgt.v = tci->FloatToTexV(-ztop[1] + texturetop);
-			lorgt.v = tci->FloatToTexV(-zbottom[1] + texturetop);
+			tcs[UPRGT].v = tci->FloatToTexV(-ztop[1] + texturetop);
+			tcs[LORGT].v = tci->FloatToTexV(-zbottom[1] + texturetop);
 		}
 	}
 	else
@@ -632,12 +632,12 @@ bool GLWall::SetWallCoordinates(seg_t * seg, FTexCoordInfo *tci, float textureto
 		zbottom[1] = ztop[1] = inter_y;
 		if (tci)
 		{
-			lorgt.v = uprgt.v = tci->FloatToTexV(-ztop[1] + texturetop);
+			tcs[LORGT].v = tcs[UPRGT].v = tci->FloatToTexV(-ztop[1] + texturetop);
 		}
 	}
 
-	uplft.u = lolft.u = l_ul + texlength * glseg.fracleft;
-	uprgt.u = lorgt.u = l_ul + texlength * glseg.fracright;
+	tcs[UPLFT].u = tcs[LOLFT].u = l_ul + texlength * glseg.fracleft;
+	tcs[UPRGT].u = tcs[LORGT].u = l_ul + texlength * glseg.fracright;
 
 	if (gltexture != NULL)
 	{
@@ -646,15 +646,15 @@ bool GLWall::SetWallCoordinates(seg_t * seg, FTexCoordInfo *tci, float textureto
 		else if (flags & GLT_CLAMPY)
 		{
 			// for negative scales we can get negative coordinates here.
-			normalize = (uplft.v > lolft.v || uprgt.v > lorgt.v);
+			normalize = (tcs[UPLFT].v > tcs[LOLFT].v || tcs[UPRGT].v > tcs[LORGT].v);
 		}
 		if (normalize)
 		{
 			// we have to shift the y-coordinate from [-1..0] to [0..1] when using texture clamping with a negative scale
-			uplft.v += 1.f;
-			uprgt.v += 1.f;
-			lolft.v += 1.f;
-			lorgt.v += 1.f;
+			tcs[UPLFT].v += 1.f;
+			tcs[UPRGT].v += 1.f;
+			tcs[LOLFT].v += 1.f;
+			tcs[LORGT].v += 1.f;
 		}
 	}
 
@@ -675,21 +675,21 @@ void GLWall::CheckTexturePosition()
 
 	// clamp texture coordinates to a reasonable range.
 	// Extremely large values can cause visual problems
-	if (uplft.v < uprgt.v)
+	if (tcs[UPLFT].v < tcs[UPRGT].v)
 	{
-		sub = float(xs_FloorToInt(uplft.v));
+		sub = float(xs_FloorToInt(tcs[UPLFT].v));
 	}
 	else
 	{
-		sub = float(xs_FloorToInt(uprgt.v));
+		sub = float(xs_FloorToInt(tcs[UPRGT].v));
 	}
-	uplft.v -= sub;
-	uprgt.v -= sub;
-	lolft.v -= sub;
-	lorgt.v -= sub;
+	tcs[UPLFT].v -= sub;
+	tcs[UPRGT].v -= sub;
+	tcs[LOLFT].v -= sub;
+	tcs[LORGT].v -= sub;
 
-	if ((uplft.v == 0.f && uprgt.v == 0.f && lolft.v <= 1.f && lorgt.v <= 1.f) ||
-		(uplft.v >= 0.f && uprgt.v >= 0.f && lolft.v == 1.f && lorgt.v == 1.f))
+	if ((tcs[UPLFT].v == 0.f && tcs[UPRGT].v == 0.f && tcs[LOLFT].v <= 1.f && tcs[LORGT].v <= 1.f) ||
+		(tcs[UPLFT].v >= 0.f && tcs[UPRGT].v >= 0.f && tcs[LOLFT].v == 1.f && tcs[LORGT].v == 1.f))
 	{
 		flags |= GLT_CLAMPY;
 	}
@@ -698,13 +698,13 @@ void GLWall::CheckTexturePosition()
 	// This intentionally only tests the seg's frontsector.
 	if (seg->frontsector->special == GLSector_Skybox)
 	{
-		sub = (float)xs_FloorToInt(uplft.u);
-		uplft.u -= sub;
-		uprgt.u -= sub;
-		lolft.u -= sub;
-		lorgt.u -= sub;
-		if ((uplft.u == 0.f && lolft.u == 0.f && uprgt.u <= 1.f && lorgt.u <= 1.f) ||
-			(uplft.u >= 0.f && lolft.u >= 0.f && uprgt.u == 1.f && lorgt.u == 1.f))
+		sub = (float)xs_FloorToInt(tcs[UPLFT].u);
+		tcs[UPLFT].u -= sub;
+		tcs[UPRGT].u -= sub;
+		tcs[LOLFT].u -= sub;
+		tcs[LORGT].u -= sub;
+		if ((tcs[UPLFT].u == 0.f && tcs[LOLFT].u == 0.f && tcs[UPRGT].u <= 1.f && tcs[LORGT].u <= 1.f) ||
+			(tcs[UPLFT].u >= 0.f && tcs[LOLFT].u >= 0.f && tcs[UPRGT].u == 1.f && tcs[LORGT].u == 1.f))
 		{
 			flags |= GLT_CLAMPX;
 		}
@@ -1039,10 +1039,10 @@ void GLWall::DoMidTexture(seg_t * seg, bool drawfogboundary,
 			// split the poly!
 			GLWall split;
 			int i,t=0;
-			float v_factor=(zbottom[0]-ztop[0])/(lolft.v-uplft.v);
+			float v_factor=(zbottom[0]-ztop[0])/(tcs[LOLFT].v-tcs[UPLFT].v);
 			// only split the vertical area of the polygon that does not contain slopes.
-			float splittopv = MAX(uplft.v, uprgt.v);
-			float splitbotv = MIN(lolft.v, lorgt.v);
+			float splittopv = MAX(tcs[UPLFT].v, tcs[UPRGT].v);
+			float splitbotv = MIN(tcs[LOLFT].v, tcs[LORGT].v);
 
 			// this is split vertically into sections.
 			for(i=0;i<v;i++)
@@ -1063,16 +1063,16 @@ void GLWall::DoMidTexture(seg_t * seg, bool drawfogboundary,
 				// if not use the top of the remaining polygon
 				if (splitrect[i].top>splittopv)
 				{
-					split.ztop[0]=split.ztop[1]= ztop[0]+v_factor*(splitrect[i].top-uplft.v);
-					split.uplft.v=split.uprgt.v=splitrect[i].top;
+					split.ztop[0]=split.ztop[1]= ztop[0]+v_factor*(splitrect[i].top-tcs[UPLFT].v);
+					split.tcs[UPLFT].v=split.tcs[UPRGT].v=splitrect[i].top;
 				}
 				// the bottom line of the current segment is inside the splittable area
 				// use the splitrect's bottom as bottom of this segment
 				// if not use the bottom of the remaining polygon
 				if (splitbot<=splitbotv)
 				{
-					split.zbottom[0]=split.zbottom[1]=ztop[0]+v_factor*(splitbot-uplft.v);
-					split.lolft.v=split.lorgt.v=splitbot;
+					split.zbottom[0]=split.zbottom[1]=ztop[0]+v_factor*(splitbot-tcs[UPLFT].v);
+					split.tcs[LOLFT].v=split.tcs[LORGT].v=splitbot;
 				}
 				//
 				//
@@ -1166,8 +1166,8 @@ void GLWall::BuildFFBlock(seg_t * seg, F3DFloor * rover,
 
 		texlength = tci.FloatToTexU(seg->sidedef->TexelLength);
 
-		uplft.u = lolft.u = ul + texlength * glseg.fracleft;
-		uprgt.u = lorgt.u = ul + texlength * glseg.fracright;
+		tcs[UPLFT].u = tcs[LOLFT].u = ul + texlength * glseg.fracleft;
+		tcs[UPRGT].u = tcs[LORGT].u = ul + texlength * glseg.fracright;
 
 		float rowoffset = tci.RowOffset(seg->sidedef->GetTextureYOffset(side_t::mid));
 		to = (rover->flags&(FF_UPPERTEXTURE | FF_LOWERTEXTURE)) ?
@@ -1175,10 +1175,10 @@ void GLWall::BuildFFBlock(seg_t * seg, F3DFloor * rover,
 
 		to += rowoffset + rover->top.model->GetPlaneTexZ(rover->top.isceiling);
 
-		uplft.v = tci.FloatToTexV(to - ff_topleft);
-		uprgt.v = tci.FloatToTexV(to - ff_topright);
-		lolft.v = tci.FloatToTexV(to - ff_bottomleft);
-		lorgt.v = tci.FloatToTexV(to - ff_bottomright);
+		tcs[UPLFT].v = tci.FloatToTexV(to - ff_topleft);
+		tcs[UPRGT].v = tci.FloatToTexV(to - ff_topright);
+		tcs[LOLFT].v = tci.FloatToTexV(to - ff_bottomleft);
+		tcs[LORGT].v = tci.FloatToTexV(to - ff_bottomright);
 		type = RENDERWALL_FFBLOCK;
 		CheckTexturePosition();
 	}

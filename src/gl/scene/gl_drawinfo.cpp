@@ -326,7 +326,7 @@ void GLDrawList::SortWallIntoPlane(SortNode * head,SortNode * sort)
 			GLWall * ws1;
 			ws1=&walls[walls.Size()-1];
 			ws=&walls[drawitems[sort->itemindex].index];	// may have been reallocated!
-			float newtexv = ws->uplft.v + ((ws->lolft.v - ws->uplft.v) / (ws->zbottom[0] - ws->ztop[0])) * (fh->z - ws->ztop[0]);
+			float newtexv = ws->tcs[GLWall::UPLFT].v + ((ws->tcs[GLWall::LOLFT].v - ws->tcs[GLWall::UPLFT].v) / (ws->zbottom[0] - ws->ztop[0])) * (fh->z - ws->ztop[0]);
 
 			// I make the very big assumption here that translucent walls in sloped sectors
 			// and 3D-floors never coexist in the same level. If that were the case this
@@ -334,12 +334,12 @@ void GLDrawList::SortWallIntoPlane(SortNode * head,SortNode * sort)
 			if (!ceiling)
 			{
 				ws->ztop[1] = ws1->zbottom[1] = ws->ztop[0] = ws1->zbottom[0] = fh->z;
-				ws->uprgt.v = ws1->lorgt.v = ws->uplft.v = ws1->lolft.v = newtexv;
+				ws->tcs[GLWall::UPRGT].v = ws1->tcs[GLWall::LORGT].v = ws->tcs[GLWall::UPLFT].v = ws1->tcs[GLWall::LOLFT].v = newtexv;
 			}
 			else
 			{
 				ws1->ztop[1] = ws->zbottom[1] = ws1->ztop[0] = ws->zbottom[0] = fh->z;
-				ws1->uplft.v = ws->lolft.v = ws1->uprgt.v = ws->lorgt.v=newtexv;
+				ws1->tcs[GLWall::UPLFT].v = ws->tcs[GLWall::LOLFT].v = ws1->tcs[GLWall::UPRGT].v = ws->tcs[GLWall::LORGT].v=newtexv;
 			}
 		}
 
@@ -462,7 +462,7 @@ void GLDrawList::SortWallIntoWall(SortNode * head,SortNode * sort)
 
 		float ix=(float)(ws->glseg.x1+r*(ws->glseg.x2-ws->glseg.x1));
 		float iy=(float)(ws->glseg.y1+r*(ws->glseg.y2-ws->glseg.y1));
-		float iu=(float)(ws->uplft.u + r * (ws->uprgt.u - ws->uplft.u));
+		float iu=(float)(ws->tcs[GLWall::UPLFT].u + r * (ws->tcs[GLWall::UPRGT].u - ws->tcs[GLWall::UPLFT].u));
 		float izt=(float)(ws->ztop[0]+r*(ws->ztop[1]-ws->ztop[0]));
 		float izb=(float)(ws->zbottom[0]+r*(ws->zbottom[1]-ws->zbottom[0]));
 
@@ -475,7 +475,7 @@ void GLDrawList::SortWallIntoWall(SortNode * head,SortNode * sort)
 		ws1->glseg.y1=ws->glseg.y2=iy;
 		ws1->ztop[0]=ws->ztop[1]=izt;
 		ws1->zbottom[0]=ws->zbottom[1]=izb;
-		ws1->lolft.u = ws1->uplft.u = ws->lorgt.u = ws->uprgt.u = iu;
+		ws1->tcs[GLWall::LOLFT].u = ws1->tcs[GLWall::UPLFT].u = ws->tcs[GLWall::LORGT].u = ws->tcs[GLWall::UPRGT].u = iu;
 
 		SortNode * sort2=SortNodes.GetNew();
 		memset(sort2,0,sizeof(SortNode));

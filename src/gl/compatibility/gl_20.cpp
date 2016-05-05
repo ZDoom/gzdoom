@@ -526,6 +526,7 @@ bool GLFlat::PutFlatCompat(bool fog)
 		if (gltexture->tex->gl_info.Brightmap && gl.glslversion >= 0.f) list = GLLDL_FLATS_BRIGHT;
 	}
 	gl_drawinfo->dldrawlists[list].AddFlat(this);
+	return true;
 }
 
 
@@ -559,14 +560,14 @@ void GLWall::RenderFogBoundaryCompat()
 	glDepthFunc(GL_LEQUAL);
 	glColor4f(fc[0], fc[1], fc[2], fogd1);
 	glBegin(GL_TRIANGLE_FAN);
-	glTexCoord2f(lolft.u, lolft.v);
+	glTexCoord2f(tcs[LOLFT].u, tcs[LOLFT].v);
 	glVertex3f(glseg.x1, zbottom[0], glseg.y1);
-	glTexCoord2f(uplft.u, uplft.v);
+	glTexCoord2f(tcs[UPLFT].u, tcs[UPLFT].v);
 	glVertex3f(glseg.x1, ztop[0], glseg.y1);
 	glColor4f(fc[0], fc[1], fc[2], fogd2);
-	glTexCoord2f(uprgt.u, uprgt.v);
+	glTexCoord2f(tcs[UPRGT].u, tcs[UPRGT].v);
 	glVertex3f(glseg.x2, ztop[1], glseg.y2);
-	glTexCoord2f(lorgt.u, lorgt.v);
+	glTexCoord2f(tcs[LORGT].u, tcs[LORGT].v);
 	glVertex3f(glseg.x2, zbottom[1], glseg.y2);
 	glEnd();
 	glDepthFunc(GL_LESS);

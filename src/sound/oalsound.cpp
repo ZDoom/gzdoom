@@ -1634,12 +1634,18 @@ void OpenALSoundRenderer::SetInactive(SoundRenderer::EInactiveState state)
         case SoundRenderer::INACTIVE_Active:
             alListenerf(AL_GAIN, 1.0f);
             if(ALC.SOFT_pause_device)
+            {
                 alcDeviceResumeSOFT(Device);
+                getALCError(Device);
+            }
             break;
 
         case SoundRenderer::INACTIVE_Complete:
             if(ALC.SOFT_pause_device)
+            {
                 alcDevicePauseSOFT(Device);
+                getALCError(Device);
+            }
             /* fall-through */
         case SoundRenderer::INACTIVE_Mute:
             alListenerf(AL_GAIN, 0.0f);

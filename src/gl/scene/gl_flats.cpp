@@ -443,6 +443,11 @@ void GLFlat::Draw(int pass, bool trans)	// trans only has meaning for GLPASS_LIG
 		}
 		if (renderstyle==STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		break;
+
+	case GLPASS_LIGHTTEX:
+	case GLPASS_LIGHTTEX_ADDITIVE:
+		DrawLightsCompat(pass);
+		break;
 	}
 }
 

@@ -582,20 +582,12 @@ void GLWall::RenderFogBoundaryCompat()
 // Flats 
 //
 //==========================================================================
-enum
-{
-	LIGHTPASS_MULT,
-	LIGHTPASS_ADD,
-	LIGHTPASS_FOG
-};
 
 void GLFlat::DrawSubsectorLights(subsector_t * sub, int pass)
 {
 	Plane p;
 	Vector nearPt, up, right, t1;
 	float scale;
-	unsigned int k;
-	seg_t *v;
 
 	FLightNode * node = sub->lighthead;
 	gl_RenderState.Apply();
@@ -603,33 +595,13 @@ void GLFlat::DrawSubsectorLights(subsector_t * sub, int pass)
 	{
 		ADynamicLight * light = node->lightsource;
 
-		if (light->flags2&MF2_DORMANT)
+		if (light->flags2&MF2_DORMANT ||
+			(pass == GLPASS_LIGHTTEX && light->IsAdditive()) ||
+			(pass == GLPASS_LIGHTTEX_ADDITIVE && !light->IsAdditive()))
 		{
 			node = node->nextLight;
 			continue;
 		}
-		switch (pass)
-		{
-		case LIGHTPASS_MULT:
-			if (light->IsAdditive())
-			{
-				node = node->nextLight;
-				continue;
-			}
-			break;
-
-		case LIGHTPASS_ADD:
-			if (!light->IsAdditive())
-			{
-				node = node->nextLight;
-				continue;
-			}
-			break;
-
-		default:
-			break;
-		}
-
 
 		// we must do the side check here because gl_SetupLight needs the correct plane orientation
 		// which we don't have for Legacy-style 3D-floors
@@ -665,6 +637,49 @@ void GLFlat::DrawSubsectorLights(subsector_t * sub, int pass)
 		node = node->nextLight;
 	}
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void GLFlat::DrawLightsCompat(int pass)
+{
+	gl_RenderState.Apply();
+	if (sub)
+	{
+		// This represents a single subsector
+		DrawSubsectorLights(sub, pass);
+	}
+	else
+	{
+		// Draw the subsectors belonging to this sector
+		for (int i = 0; i<sector->subsectorcount; i++)
+		{
+			subsector_t * sub = sector->subsectors[i];
+			if (gl_drawinfo->ss_renderflags[sub - subsectors] & renderflags)
+			{
+				DrawSubsectorLights(sub, pass);
+			}
+		}
+
+		// Draw the subsectors assigned to it due to missing textures
+		if (!(renderflags&SSRF_RENDER3DPLANES))
+		{
+			gl_subsectorrendernode * node = (renderflags&SSRF_RENDERFLOOR) ?
+				gl_drawinfo->GetOtherFloorPlanes(sector->sectornum) :
+				gl_drawinfo->GetOtherCeilingPlanes(sector->sectornum);
+
+			while (node)
+			{
+				DrawSubsectorLights(sub, pass);
+				node = node->next;
+			}
+		}
+	}
+}
+
 
 //==========================================================================
 //

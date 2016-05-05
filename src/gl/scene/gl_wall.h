@@ -296,15 +296,18 @@ public:
 
 	int dynlightindex;
 
+	// compatibility fallback stuff.
+	void DrawSubsectorLights(subsector_t * sub, int pass);
+	void DrawLightsCompat(int pass);
+	bool PutFlatCompat(bool fog);
+
 	void SetupSubsectorLights(int pass, subsector_t * sub, int *dli = NULL);
 	void DrawSubsector(subsector_t * sub);
-	void DrawSubsectorLights(subsector_t * sub, int pass);
 	void DrawSkyboxSector(int pass, bool processlights);
 	void DrawSubsectors(int pass, bool processlights, bool istrans);
 	void ProcessLights(bool istrans);
 
 	void PutFlat(bool fog = false);
-	bool PutFlatCompat(bool fog);
 	void Process(sector_t * model, int whichplane, bool notexture);
 	void SetFrom3DFloor(F3DFloor *rover, bool top, bool underside);
 	void ProcessSector(sector_t * frontsector);

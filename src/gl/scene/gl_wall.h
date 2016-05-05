@@ -184,13 +184,14 @@ private:
 	void CheckTexturePosition();
 
 	void RenderFogBoundaryCompat();
+	void RenderLightsCompat(int pass);
 
 	void Put3DWall(lightlist_t * lightlist, bool translucent);
 	void SplitWallComplex(sector_t * frontsector, bool translucent, float maplightbottomleft, float maplightbottomright);
 	void SplitWall(sector_t * frontsector, bool translucent);
 
 	void SetupLights();
-	bool PrepareLight(texcoord * tcs, ADynamicLight * light, int pass);
+	bool PrepareLight(ADynamicLight * light, int pass);
 	void RenderWall(int textured, unsigned int *store = NULL);
 	void RenderTextured(int rflags);
 

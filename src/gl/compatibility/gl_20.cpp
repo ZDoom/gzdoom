@@ -68,8 +68,7 @@ void gl_PatchMenu()
 {
 	if (gl.glslversion == 0)
 	{
-		// Radial fog and Doom lighting are not available in SM < 4 cards
-		// The way they are implemented does not work well on older hardware.
+		// Radial fog and Doom lighting are not available without full shader support.
 
 		FOptionValues **opt = OptionValues.CheckKey("LightingModes");
 		if (opt != NULL) 
@@ -443,7 +442,7 @@ bool gl_SetupLight(int group, Plane & p, ADynamicLight * light, Vector & nearPt,
 		g = (g*(32 - desaturation) + gray*desaturation) / 32;
 		b = (b*(32 - desaturation) + gray*desaturation) / 32;
 	}
-	glColor3f(r, g, b);
+	gl_RenderState.SetColor(r, g, b);
 	return true;
 }
 
@@ -457,7 +456,7 @@ bool gl_SetupLightTexture()
 {
 	if (GLRenderer->gllight == nullptr) return false;
 	FMaterial * pat = FMaterial::ValidateTexture(GLRenderer->gllight, false);
-	pat->Bind(CLAMP_XY, 0);
+	pat->Bind(CLAMP_XY_NOMIP, 0);
 	return true;
 }
 
@@ -488,7 +487,7 @@ bool GLWall::PutWallCompat(int passflag)
 		if (sub->lighthead != nullptr) return false;
 	}
 
-	bool foggy = (!gl_isBlack(Colormap.FadeColor) || level.flags&LEVEL_HASFADETABLE);
+	bool foggy = !gl_isBlack(Colormap.FadeColor) || (level.flags&LEVEL_HASFADETABLE) || gl_lights_additive;
 	bool masked = passflag == 2 && gltexture->isMasked();
 
 	int list = list_indices[masked][foggy];
@@ -517,7 +516,7 @@ bool GLFlat::PutFlatCompat(bool fog)
 	{ { GLLDL_FLATS_PLAIN, GLLDL_FLATS_FOG },{ GLLDL_FLATS_MASKED, GLLDL_FLATS_FOGMASKED } };
 
 	bool masked = gltexture->isMasked() && ((renderflags&SSRF_RENDER3DPLANES) || stack);
-	bool foggy = gl_CheckFog(&Colormap, lightlevel) || level.flags&LEVEL_HASFADETABLE;
+	bool foggy = gl_CheckFog(&Colormap, lightlevel) || (level.flags&LEVEL_HASFADETABLE) || gl_lights_additive;
 
 	
 	int list = list_indices[masked][foggy];
@@ -591,7 +590,6 @@ void GLFlat::DrawSubsectorLights(subsector_t * sub, int pass)
 	float scale;
 
 	FLightNode * node = sub->lighthead;
-	gl_RenderState.Apply();
 	while (node)
 	{
 		ADynamicLight * light = node->lightsource;
@@ -614,11 +612,12 @@ void GLFlat::DrawSubsectorLights(subsector_t * sub, int pass)
 		}
 
 		p.Set(plane.plane);
-		if (!gl_SetupLight(sub->sector->PortalGroup, p, light, nearPt, up, right, scale, CM_DEFAULT, false, pass == GLPASS_LIGHTTEX_ADDITIVE))
+		if (!gl_SetupLight(sub->sector->PortalGroup, p, light, nearPt, up, right, scale, CM_DEFAULT, false, pass != GLPASS_LIGHTTEX))
 		{
 			node = node->nextLight;
 			continue;
 		}
+		gl_RenderState.Apply();
 
 		FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
 		for (unsigned int k = 0; k < sub->numlines; k++)
@@ -687,7 +686,7 @@ void GLFlat::DrawLightsCompat(int pass)
 // Sets up the texture coordinates for one light to be rendered
 //
 //==========================================================================
-bool GLWall::PrepareLight(texcoord * tcs, ADynamicLight * light, int pass)
+bool GLWall::PrepareLight(ADynamicLight * light, int pass)
 {
 	float vtx[] = { glseg.x1,zbottom[0],glseg.y1, glseg.x1,ztop[0],glseg.y1, glseg.x2,ztop[1],glseg.y2, glseg.x2,zbottom[1],glseg.y2 };
 	Plane p;
@@ -701,7 +700,7 @@ bool GLWall::PrepareLight(texcoord * tcs, ADynamicLight * light, int pass)
 		return false;
 	}
 
-	if (!gl_SetupLight(seg->frontsector->PortalGroup, p, light, nearPt, up, right, scale, CM_DEFAULT, true, pass == GLPASS_LIGHTTEX_ADDITIVE))
+	if (!gl_SetupLight(seg->frontsector->PortalGroup, p, light, nearPt, up, right, scale, CM_DEFAULT, true, pass != GLPASS_LIGHTTEX))
 	{
 		return false;
 	}
@@ -733,6 +732,55 @@ bool GLWall::PrepareLight(texcoord * tcs, ADynamicLight * light, int pass)
 	return true;
 }
 
+
+void GLWall::RenderLightsCompat(int pass)
+{
+	FLightNode * node;
+
+	// black fog is diminishing light and should affect lights less than the rest!
+	if (pass == GLPASS_LIGHTTEX) gl_SetFog((255 + lightlevel) >> 1, 0, NULL, false);
+	else gl_SetFog(lightlevel, 0, &Colormap, true);
+
+	if (seg->sidedef == NULL)
+	{
+		return;
+	}
+	else if (!(seg->sidedef->Flags & WALLF_POLYOBJ))
+	{
+		// Iterate through all dynamic lights which touch this wall and render them
+		node = seg->sidedef->lighthead;
+	}
+	else if (sub)
+	{
+		// To avoid constant rechecking for polyobjects use the subsector's lightlist instead
+		node = sub->lighthead;
+	}
+	else
+	{
+		return;
+	}
+
+	texcoord save[4];
+	memcpy(save, tcs, sizeof(tcs));
+	while (node)
+	{
+		ADynamicLight * light = node->lightsource;
+
+		if (light->flags2&MF2_DORMANT ||
+			(pass == GLPASS_LIGHTTEX && light->IsAdditive()) ||
+			(pass == GLPASS_LIGHTTEX_ADDITIVE && !light->IsAdditive()))
+		{
+			node = node->nextLight;
+			continue;
+		}
+		if (PrepareLight(light, pass))
+		{
+			RenderWall(RWF_TEXTURED, NULL);
+		}
+		node = node->nextLight;
+	}
+	memcpy(tcs, save, sizeof(tcs));
+}
 
 //==========================================================================
 //
@@ -820,10 +868,10 @@ void FGLRenderer::RenderMultipassStuff()
 		gl_drawinfo->dldrawlists[GLLDL_FLATS_PLAIN].DrawFlats(GLPASS_LIGHTTEX_ADDITIVE);
 		gl_drawinfo->dldrawlists[GLLDL_FLATS_BRIGHT].DrawFlats(GLPASS_LIGHTTEX_ADDITIVE);
 		gl_drawinfo->dldrawlists[GLLDL_FLATS_MASKED].DrawFlats(GLPASS_LIGHTTEX_ADDITIVE);
-		gl_drawinfo->dldrawlists[GLLDL_WALLS_FOG].DrawWalls(GLPASS_LIGHTTEX_ADDITIVE);
-		gl_drawinfo->dldrawlists[GLLDL_WALLS_FOGMASKED].DrawWalls(GLPASS_LIGHTTEX_ADDITIVE);
-		gl_drawinfo->dldrawlists[GLLDL_FLATS_FOG].DrawFlats(GLPASS_LIGHTTEX_ADDITIVE);
-		gl_drawinfo->dldrawlists[GLLDL_FLATS_FOGMASKED].DrawFlats(GLPASS_LIGHTTEX_ADDITIVE);
+		gl_drawinfo->dldrawlists[GLLDL_WALLS_FOG].DrawWalls(GLPASS_LIGHTTEX_FOGGY);
+		gl_drawinfo->dldrawlists[GLLDL_WALLS_FOGMASKED].DrawWalls(GLPASS_LIGHTTEX_FOGGY);
+		gl_drawinfo->dldrawlists[GLLDL_FLATS_FOG].DrawFlats(GLPASS_LIGHTTEX_FOGGY);
+		gl_drawinfo->dldrawlists[GLLDL_FLATS_FOGMASKED].DrawFlats(GLPASS_LIGHTTEX_FOGGY);
 	}
 	else gl_lights = false;
 

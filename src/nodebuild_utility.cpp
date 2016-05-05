@@ -609,25 +609,25 @@ void FNodeBuilder::AddSegToBBox (fixed_t bbox[4], const FPrivSeg *seg)
 	if (v2->y > bbox[BOXTOP])		bbox[BOXTOP] = v2->y;
 }
 
-void FNodeBuilder::FLevel::FindMapBounds ()
+void FNodeBuilder::FLevel::FindMapBounds()
 {
-	fixed_t minx, maxx, miny, maxy;
+	double minx, maxx, miny, maxy;
 
-	minx = maxx = Vertices[0].fixX();
-	miny = maxy = Vertices[0].fixY();
+	minx = maxx = Vertices[0].fX();
+	miny = maxy = Vertices[0].fY();
 
 	for (int i = 1; i < NumVertices; ++i)
 	{
-			 if (Vertices[i].fixX() < minx) minx = Vertices[i].fixX();
-		else if (Vertices[i].fixX() > maxx) maxx = Vertices[i].fixX();
-			 if (Vertices[i].fixY() < miny) miny = Vertices[i].fixY();
-		else if (Vertices[i].fixY() > maxy) maxy = Vertices[i].fixY();
+		if (Vertices[i].fX() < minx) minx = Vertices[i].fX();
+		else if (Vertices[i].fX() > maxx) maxx = Vertices[i].fX();
+		if (Vertices[i].fY() < miny) miny = Vertices[i].fY();
+		else if (Vertices[i].fY() > maxy) maxy = Vertices[i].fY();
 	}
 
-	MinX = minx;
-	MinY = miny;
-	MaxX = maxx;
-	MaxY = maxy;
+	MinX = FLOAT2FIXED(minx);
+	MinY = FLOAT2FIXED(miny);
+	MaxX = FLOAT2FIXED(maxx);
+	MaxY = FLOAT2FIXED(maxy);
 }
 
 FNodeBuilder::IVertexMap::~IVertexMap()

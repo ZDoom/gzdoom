@@ -28,7 +28,6 @@
 #include "s_sndseq.h"
 #include "doomstat.h"
 #include "r_state.h"
-#include "tables.h"
 #include "farchive.h"
 #include "p_3dmidtex.h"
 #include "p_spec.h"

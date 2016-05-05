@@ -638,20 +638,23 @@ bool AActor::GiveInventory(PClassInventory *type, int amount, bool givecheat)
 
 	// This shouldn't count for the item statistics!
 	item->ClearCounters();
-	if (type->IsDescendantOf (RUNTIME_CLASS(ABasicArmorPickup)))
+	if (!givecheat || amount > 0)
 	{
-		static_cast<ABasicArmorPickup*>(item)->SaveAmount *= amount;
-	}
-	else if (type->IsDescendantOf (RUNTIME_CLASS(ABasicArmorBonus)))
-	{
-		static_cast<ABasicArmorBonus*>(item)->SaveAmount *= amount;
-	}
-	else
-	{
-		if (!givecheat)
-			item->Amount = amount;
+		if (type->IsDescendantOf (RUNTIME_CLASS(ABasicArmorPickup)))
+		{
+			static_cast<ABasicArmorPickup*>(item)->SaveAmount *= amount;
+		}
+		else if (type->IsDescendantOf (RUNTIME_CLASS(ABasicArmorBonus)))
+		{
+			static_cast<ABasicArmorBonus*>(item)->SaveAmount *= amount;
+		}
 		else
-			item->Amount = MIN (amount, item->MaxAmount);
+		{
+			if (!givecheat)
+				item->Amount = amount;
+			else
+				item->Amount = MIN (amount, item->MaxAmount);
+		}
 	}
 	if (!item->CallTryPickup (this))
 	{

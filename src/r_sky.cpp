@@ -115,8 +115,8 @@ void R_InitSkyMap ()
 		skyiscale = float(r_Yaspect / freelookviewheight);
 		skyscale = freelookviewheight / r_Yaspect;
 
-		skyiscale *= FieldOfView / 2048.f;
-		skyscale *= 2048.0 / FieldOfView;
+		skyiscale *= float(FieldOfView.Degrees / 90.);
+		skyscale *= float(90. / FieldOfView.Degrees);
 	}
 
 	if (skystretch)

@@ -126,13 +126,16 @@ void ASkyPicker::PostBeginPlay ()
 	else
 	{
 		int boxindex = P_GetSkyboxPortal(box);
+		// Do not override special portal types, only regular skies.
 		if (0 == (args[1] & 2))
 		{
-			Sector->Portals[sector_t::ceiling] = boxindex;
+			if (Sector->GetPortalType(sector_t::ceiling) == PORTS_SKYVIEWPOINT)
+				Sector->Portals[sector_t::ceiling] = boxindex;
 		}
 		if (0 == (args[1] & 1))
 		{
-			Sector->Portals[sector_t::floor] = boxindex;
+			if (Sector->GetPortalType(sector_t::floor) == PORTS_SKYVIEWPOINT)
+				Sector->Portals[sector_t::floor] = boxindex;
 		}
 	}
 	Destroy ();

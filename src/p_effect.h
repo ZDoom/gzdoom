@@ -32,7 +32,6 @@
 */
 
 #include "vectors.h"
-#include "tables.h"
 
 #define FX_ROCKET			0x00000001
 #define FX_GRENADE			0x00000002

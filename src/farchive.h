@@ -216,6 +216,16 @@ inline	FArchive& operator<< (signed char *&str) { return operator<< ((char *&)st
 inline	FArchive& operator<< (bool &b) { return operator<< ((BYTE &)b); }
 inline  FArchive& operator<< (DObject* &object) { return ReadObject (object, RUNTIME_CLASS(DObject)); }
 
+	void EnableThinkers()
+	{
+		m_ThinkersAllowed = true;
+	}
+
+	bool ThinkersAllowed()
+	{
+		return m_ThinkersAllowed;
+	}
+
 protected:
 		enum { EObjectHashSize = 137 };
 
@@ -253,6 +263,7 @@ protected:
 
 		int *m_SpriteMap;
 		size_t m_NumSprites;
+		bool m_ThinkersAllowed = false;
 
 		FArchive ();
 		void AttachToFile (FFile &file);

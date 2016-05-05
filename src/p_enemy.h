@@ -2,7 +2,6 @@
 #define __P_ENEMY_H__
 
 #include "thingdef/thingdef.h"
-#include "tables.h"
 
 struct sector_t;
 class AActor;

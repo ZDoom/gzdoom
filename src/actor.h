@@ -24,7 +24,6 @@
 #define __P_MOBJ_H__
 
 // Basics.
-#include "tables.h"
 #include "templates.h"
 
 // We need the thinker_t stuff.
@@ -380,6 +379,7 @@ enum ActorFlag7
 	MF7_FORCEDECAL		= 0x00080000,	// [ZK] Forces puff's decal to override the weapon's.
 	MF7_LAXTELEFRAGDMG	= 0x00100000,	// [MC] Telefrag damage can be reduced.
 	MF7_ICESHATTER		= 0x00200000,	// [MC] Shatters ice corpses regardless of damagetype.
+	MF7_ALLOWTHRUFLAGS	= 0x00400000,	// [MC] Allow THRUACTORS and the likes on puffs to prevent mod breakage.
 };
 
 // --- mobj.renderflags ---

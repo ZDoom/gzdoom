@@ -153,8 +153,8 @@ struct FQuakeJiggers
 	DVector3 RelIntensity;
 	DVector3 Offset;
 	DVector3 RelOffset;
-	double Falloff;
-	double WFalloff;
+	double Falloff, WFalloff, RFalloff, RWFalloff;
+	double RollIntensity, RollWave;
 };
 
 class DEarthquake : public DThinker
@@ -164,7 +164,7 @@ class DEarthquake : public DThinker
 public:
 	DEarthquake(AActor *center, int intensityX, int intensityY, int intensityZ, int duration,
 		int damrad, int tremrad, FSoundID quakesfx, int flags, 
-		double waveSpeedX, double waveSpeedY, double waveSpeedZ, int falloff, int highpoint);
+		double waveSpeedX, double waveSpeedY, double waveSpeedZ, int falloff, int highpoint, double rollIntensity, double rollWave);
 
 	void Serialize (FArchive &arc);
 	void Tick ();
@@ -178,6 +178,8 @@ public:
 	DVector3 m_WaveSpeed;
 	double m_Falloff;
 	int m_Highpoint, m_MiniCount;
+	double m_RollIntensity, m_RollWave;
+
 
 	double GetModIntensity(double intensity) const;
 	double GetModWave(double waveMultiplier) const;

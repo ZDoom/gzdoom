@@ -1096,7 +1096,7 @@ void LoadZNodes(FileReaderBase &data, int glnodes)
 			{
 				SWORD coord;
 				data >> coord;
-				nodes[i].bbox[j][k] = coord << FRACBITS;
+				nodes[i].bbox[j][k] = coord;
 			}
 		}
 		for (int m = 0; m < 2; ++m)
@@ -1640,7 +1640,7 @@ void P_LoadNodes (MapData * map)
 			}
 			for (k = 0; k < 4; k++)
 			{
-				no->bbox[j][k] = LittleShort(mn->bbox[j][k])<<FRACBITS;
+				no->bbox[j][k] = (float)LittleShort(mn->bbox[j][k]);
 			}
 		}
 	}
@@ -3366,6 +3366,83 @@ void P_GetPolySpots (MapData * map, TArray<FNodeBuilder::FPolyStart> &spots, TAr
 	}
 }
 
+
+//===========================================================================
+//
+// P_PrecacheLevel
+//
+// Preloads all relevant graphics for the level.
+//
+//===========================================================================
+
+static void P_PrecacheLevel()
+{
+	int i;
+	BYTE *hitlist;
+	TMap<PClassActor *, bool> actorhitlist;
+	int cnt = TexMan.NumTextures();
+
+	if (demoplayback)
+		return;
+
+	hitlist = new BYTE[cnt];
+	memset(hitlist, 0, cnt);
+
+	AActor *actor;
+	TThinkerIterator<AActor> iterator;
+
+	while ((actor = iterator.Next()))
+	{
+		actorhitlist[actor->GetClass()] = true;
+	}
+
+	for (unsigned i = 0; i < level.info->PrecacheClasses.Size(); i++)
+	{
+		// level.info can only store names, no class pointers.
+		PClassActor *cls = PClass::FindActor(level.info->PrecacheClasses[i]);
+		if (cls != NULL) actorhitlist[cls] = true;
+	}
+
+	for (i = numsectors - 1; i >= 0; i--)
+	{
+		hitlist[sectors[i].GetTexture(sector_t::floor).GetIndex()] |= FTextureManager::HIT_Flat;
+		hitlist[sectors[i].GetTexture(sector_t::ceiling).GetIndex()] |= FTextureManager::HIT_Flat;
+	}
+
+	for (i = numsides - 1; i >= 0; i--)
+	{
+		hitlist[sides[i].GetTexture(side_t::top).GetIndex()] |= FTextureManager::HIT_Wall;
+		hitlist[sides[i].GetTexture(side_t::mid).GetIndex()] |= FTextureManager::HIT_Wall;
+		hitlist[sides[i].GetTexture(side_t::bottom).GetIndex()] |= FTextureManager::HIT_Wall;
+	}
+
+	// Sky texture is always present.
+	// Note that F_SKY1 is the name used to
+	//	indicate a sky floor/ceiling as a flat,
+	//	while the sky texture is stored like
+	//	a wall texture, with an episode dependant
+	//	name.
+
+	if (sky1texture.isValid())
+	{
+		hitlist[sky1texture.GetIndex()] |= FTextureManager::HIT_Sky;
+	}
+	if (sky2texture.isValid())
+	{
+		hitlist[sky2texture.GetIndex()] |= FTextureManager::HIT_Sky;
+	}
+
+	for (unsigned i = 0; i < level.info->PrecacheTextures.Size(); i++)
+	{
+		FTextureID tex = TexMan.CheckForTexture(level.info->PrecacheTextures[i], FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_ReturnFirst);
+		if (tex.Exists()) hitlist[tex.GetIndex()] |= FTextureManager::HIT_Wall;
+	}
+
+	Renderer->Precache(hitlist, actorhitlist);
+
+	delete[] hitlist;
+}
+
 extern polyblock_t **PolyBlockMap;
 
 void P_FreeLevelData ()
@@ -4094,7 +4171,7 @@ void P_SetupLevel (const char *lumpname, int position)
 	// preload graphics and sounds
 	if (precache)
 	{
-		TexMan.PrecacheLevel ();
+		P_PrecacheLevel ();
 		S_PrecacheLevel ();
 	}
 	times[17].Unclock();

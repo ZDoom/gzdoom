@@ -839,18 +839,26 @@ static void DrawCoordinates(player_t * CPlayer)
 	int xpos = vwidth - SmallFont->StringWidth("X: -00000")-6;
 	int ypos = 18;
 
+	screen->DrawText(SmallFont, hudcolor_titl, vwidth - 6 - SmallFont->StringWidth(level.MapName), ypos, level.MapName,
+		DTA_KeepRatio, true,
+		DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
+
+	screen->DrawText(SmallFont, hudcolor_titl, vwidth - 6 - SmallFont->StringWidth(level.LevelName), ypos + h, level.LevelName,
+		DTA_KeepRatio, true,
+		DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
+
 	mysnprintf(coordstr, countof(coordstr), "X: %d", int(pos.X));
-	screen->DrawText(SmallFont, hudcolor_xyco, xpos, ypos, coordstr,
+	screen->DrawText(SmallFont, hudcolor_xyco, xpos, ypos+2*h, coordstr,
 		DTA_KeepRatio, true,
 		DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
 
 	mysnprintf(coordstr, countof(coordstr), "Y: %d", int(pos.Y));
-	screen->DrawText(SmallFont, hudcolor_xyco, xpos, ypos+h, coordstr,
+	screen->DrawText(SmallFont, hudcolor_xyco, xpos, ypos+3*h, coordstr,
 		DTA_KeepRatio, true,
 		DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
 
 	mysnprintf(coordstr, countof(coordstr), "Z: %d", int(pos.Z));
-	screen->DrawText(SmallFont, hudcolor_xyco, xpos, ypos+2*h, coordstr,
+	screen->DrawText(SmallFont, hudcolor_xyco, xpos, ypos+4*h, coordstr,
 		DTA_KeepRatio, true,
 		DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
 }

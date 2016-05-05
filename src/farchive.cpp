@@ -1054,6 +1054,12 @@ FArchive &FArchive::SerializePointer (void *ptrbase, BYTE **ptr, DWORD elemSize)
 
 FArchive &FArchive::SerializeObject (DObject *&object, PClass *type)
 {
+	if (!m_ThinkersAllowed && type->IsDescendantOf(RUNTIME_CLASS(DThinker)))
+	{
+		assert(true);
+		I_Error("Tried to serialize a thinker before P_SerializeThinkers");
+	}
+
 	if (!type->IsDescendantOf(RUNTIME_CLASS(PClass)))
 	{ // a regular object
 		if (IsStoring())

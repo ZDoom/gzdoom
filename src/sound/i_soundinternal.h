@@ -91,6 +91,11 @@ struct SoundHandle
 
 	bool isValid() const { return data != NULL; }
 	void Clear() { data = NULL; }
+
+	bool operator==(const SoundHandle &rhs) const
+	{ return data == rhs.data; }
+	bool operator!=(const SoundHandle &rhs) const
+	{ return !(*this == rhs); }
 };
 
 struct FISoundChannel

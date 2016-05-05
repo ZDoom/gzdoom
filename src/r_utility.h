@@ -15,6 +15,7 @@ extern DCanvas			*RenderTarget;
 extern DVector3			ViewPos;
 extern DAngle			ViewAngle;
 extern DAngle			ViewPitch;
+extern DAngle			ViewRoll;
 extern DVector3			ViewPath[2];
 
 extern "C" int			centerx, centerxwide;
@@ -84,8 +85,7 @@ bool R_GetViewInterpolationStatus();
 void R_ClearInterpolationPath();
 void R_AddInterpolationPoint(const DVector3a &vec);
 void R_SetViewSize (int blocks);
-void R_SetFOV (float fov);
-float R_GetFOV ();
+void R_SetFOV (DAngle fov);
 void R_SetupFrame (AActor * camera);
 void R_SetViewAngle ();
 

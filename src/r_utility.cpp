@@ -108,6 +108,7 @@ int 			viewwindowy;
 DVector3		ViewPos;
 DAngle			ViewAngle;
 DAngle			ViewPitch;
+DAngle			ViewRoll;
 DVector3		ViewPath[2];
 
 extern "C" 
@@ -137,7 +138,6 @@ angle_t			LocalViewAngle;
 int				LocalViewPitch;
 bool			LocalKeyboardTurner;
 
-float			LastFOV;
 int				WidescreenRatio;
 int				setblocks;
 int				extralight;
@@ -146,7 +146,7 @@ double			FocalTangent;
 
 unsigned int	R_OldBlend = ~0;
 int 			validcount = 1; 	// increment every time a check is made
-int				FieldOfView = 2048;		// Fineangles in the SCREENWIDTH wide window
+DAngle			FieldOfView = 90.;		// Angles in the SCREENWIDTH wide window
 
 FCanvasTextureInfo *FCanvasTextureInfo::List;
 
@@ -159,94 +159,22 @@ static void R_Shutdown ();
 
 //==========================================================================
 //
-// R_InitPointToAngle
-//
-//==========================================================================
-
-void R_InitPointToAngle (void)
-{
-	double f;
-	int i;
-//
-// slope (tangent) to angle lookup
-//
-	for (i = 0; i <= SLOPERANGE; i++)
-	{
-		f = g_atan2 ((double)i, (double)SLOPERANGE) / (6.28318530718 /* 2*pi */);
-		tantoangle[i] = (angle_t)(0xffffffff*f);
-	}
-}
-
-
-//==========================================================================
-//
-// R_InitTables
-//
-//==========================================================================
-
-void R_InitTables (void)
-{
-	int i;
-	const double pimul = PI*2/FINEANGLES;
-
-	// viewangle tangent table
-	finetangent[0] = (fixed_t)(FRACUNIT*g_tan ((0.5-FINEANGLES/4)*pimul)+0.5);
-	for (i = 1; i < FINEANGLES/2; i++)
-	{
-		finetangent[i] = (fixed_t)(FRACUNIT*g_tan ((i-FINEANGLES/4)*pimul)+0.5);
-	}
-	
-	// finesine table
-	for (i = 0; i < FINEANGLES/4; i++)
-	{
-		finesine[i] = (fixed_t)(FRACUNIT * g_sin (i*pimul));
-	}
-	for (i = 0; i < FINEANGLES/4; i++)
-	{
-		finesine[i+FINEANGLES/4] = finesine[FINEANGLES/4-1-i];
-	}
-	for (i = 0; i < FINEANGLES/2; i++)
-	{
-		finesine[i+FINEANGLES/2] = -finesine[i];
-	}
-	finesine[FINEANGLES/4] = FRACUNIT;
-	finesine[FINEANGLES*3/4] = -FRACUNIT;
-	memcpy (&finesine[FINEANGLES], &finesine[0], sizeof(angle_t)*FINEANGLES/4);
-}
-
-//==========================================================================
-//
 // R_SetFOV
 //
 // Changes the field of view in degrees
 //
 //==========================================================================
 
-void R_SetFOV (float fov)
+void R_SetFOV (DAngle fov)
 {
-	if (fov < 5.f)
-		fov = 5.f;
-	else if (fov > 170.f)
-		fov = 170.f;
-	if (fov != LastFOV)
+
+	if (fov < 5.) fov = 5.;
+	else if (fov > 170.) fov = 170.;
+	if (fov != FieldOfView)
 	{
-		LastFOV = fov;
-		FieldOfView = (int)(fov * (float)FINEANGLES / 360.f);
+		FieldOfView = fov;
 		setsizeneeded = true;
 	}
-}
-
-//==========================================================================
-//
-// R_GetFOV
-//
-// Returns the current field of view in degrees
-//
-//==========================================================================
-
-float R_GetFOV ()
-{
-	return LastFOV;
 }
 
 //==========================================================================
@@ -312,18 +240,16 @@ void R_SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight)
 	}
 
 
-	int fov = FieldOfView;
+	DAngle fov = FieldOfView;
 
 	// For widescreen displays, increase the FOV so that the middle part of the
 	// screen that would be visible on a 4:3 display has the requested FOV.
 	if (centerxwide != centerx)
 	{ // centerxwide is what centerx would be if the display was not widescreen
-		fov = int(atan(double(centerx)*tan(double(fov)*M_PI/(FINEANGLES))/double(centerxwide))*(FINEANGLES)/M_PI);
-		if (fov > 170*FINEANGLES/360)
-			fov = 170*FINEANGLES/360;
+		fov = DAngle::ToDegrees(2 * atan(centerx * tan(fov.Radians()/2) / double(centerxwide)));
+		if (fov > 170.) fov = 170.;
 	}
-
-	FocalTangent = FIXED2FLOAT(finetangent[FINEANGLES/4+fov/2]);
+	FocalTangent = tan(fov.Radians() / 2);
 	Renderer->SetWindow(windowSize, fullWidth, fullHeight, stHeight, trueratio);
 }
 
@@ -409,8 +335,6 @@ void R_Init ()
 	//R_InitColormaps ();
 	//StartScreen->Progress();
 
-	R_InitPointToAngle ();
-	R_InitTables ();
 	R_InitTranslationTables ();
 	R_SetViewSize (screenblocks);
 	Renderer->Init();
@@ -542,11 +466,13 @@ void R_InterpolateView (player_t *player, double Frac, InterpolationViewer *ivie
 		ViewAngle = (nviewangle + AngleToFloat(LocalViewAngle & 0xFFFF0000)).Normalized180();
 		DAngle delta = player->centering ? DAngle(0.) : AngleToFloat(int(LocalViewPitch & 0xFFFF0000));
 		ViewPitch = clamp<DAngle>((iview->New.Angles.Pitch - delta).Normalized180(), player->MinPitch, player->MaxPitch);
+		ViewRoll = iview->New.Angles.Roll.Normalized180();
 	}
 	else
 	{
 		ViewPitch = (iview->Old.Angles.Pitch + deltaangle(iview->Old.Angles.Pitch, iview->New.Angles.Pitch) * Frac).Normalized180();
 		ViewAngle = (oviewangle + deltaangle(oviewangle, nviewangle) * Frac).Normalized180();
+		ViewRoll = (iview->Old.Angles.Roll + deltaangle(iview->Old.Angles.Roll, iview->New.Angles.Roll) * Frac).Normalized180();
 	}
 	
 	// Due to interpolation this is not necessarily the same as the sector the camera is in.
@@ -799,6 +725,7 @@ void R_SetupFrame (AActor *actor)
 		P_AimCamera (camera, campos, camangle, viewsector, unlinked);	// fixme: This needs to translate the angle, too.
 		iview->New.Pos = campos;
 		iview->New.Angles.Yaw = camangle;
+		
 		r_showviewer = true;
 		// Interpolating this is a very complicated thing because nothing keeps track of the aim camera's movement, so whenever we detect a portal transition
 		// it's probably best to just reset the interpolation for this move.
@@ -868,6 +795,10 @@ void R_SetupFrame (AActor *actor)
 			double quakefactor = r_quakeintensity;
 			DAngle an;
 
+			if (jiggers.RollIntensity != 0 || jiggers.RollWave != 0)
+			{
+				ViewRoll += QuakePower(quakefactor, jiggers.RollIntensity, jiggers.RollWave, jiggers.RFalloff, jiggers.RWFalloff);
+			}
 			if (jiggers.RelIntensity.X != 0 || jiggers.RelOffset.X != 0)
 			{
 				an = camera->Angles.Yaw;

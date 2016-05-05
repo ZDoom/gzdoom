@@ -167,77 +167,35 @@ static int lastcenteryfrac;
 
 //==========================================================================
 //
-// viewangletox
-//
-// Used solely for construction the xtoviewangle table.
-//
-//==========================================================================
-
-static inline int viewangletox(int i)
-{
-	if (finetangent[i] > FRACUNIT*2)
-	{
-		return -1;
-	}
-	else if (finetangent[i] < -FRACUNIT*2)
-	{
-		return viewwidth+1;
-	}
-	else
-	{
-		double t = FIXED2DBL(finetangent[i]) * FocalLengthX;
-		return clamp(xs_CeilToInt(CenterX - t), -1, viewwidth+1);
-	}
-}
-
-//==========================================================================
-//
 // R_InitTextureMapping
 //
 //==========================================================================
 
 void R_InitTextureMapping ()
 {
-	int i, x;
+	int i;
 
-	// Calc focallength so FieldOfView fineangles covers viewwidth.
+	// Calc focallength so FieldOfView angles cover viewwidth.
 	FocalLengthX = CenterX / FocalTangent;
 	FocalLengthY = FocalLengthX * YaspectMul;
 
 	// This is 1/FocalTangent before the widescreen extension of FOV.
-	viewingrangerecip = DivScale32(1, finetangent[FINEANGLES/4+(FieldOfView/2)]);
+	viewingrangerecip = FLOAT2FIXED(1. / tan(FieldOfView.Radians() / 2));
 
-	// [RH] Do not generate viewangletox, because texture mapping is no
-	// longer done with trig, so it's not needed.
 
 	// Now generate xtoviewangle for sky texture mapping.
-	// We do this with a hybrid approach: The center 90 degree span is
-	// constructed as per the original code:
-	//   Scan xtoviewangle to find the smallest view angle that maps to x.
-	//   (viewangletox is sorted in non-increasing order.)
-	//   This reduces the chances of "doubling-up" of texture columns in
-	//   the drawn sky texture.
-	// The remaining arcs are done with tantoangle instead.
+	// [RH] Do not generate viewangletox, because texture mapping is no
+	// longer done with trig, so it's not needed.
+	const double slopestep = FocalTangent / centerx;
+	double slope;
 
-	const int t1 = MAX(int(CenterX - FocalLengthX), 0);
-	const int t2 = MIN(int(CenterX + FocalLengthX), viewwidth);
-	const fixed_t dfocus = FLOAT2FIXED(FocalLengthX) >> DBITS;
-
-	for (i = 0, x = t2; x >= t1; --x)
+	for (i = centerx, slope = 0; i <= viewwidth; i++, slope += slopestep)
 	{
-		while (viewangletox(i) > x)
-		{
-			++i;
-		}
-		xtoviewangle[x] = (i << ANGLETOFINESHIFT) - ANGLE_90;
+		xtoviewangle[i] = angle_t((2 * M_PI - atan(slope)) * (ANGLE_180 / M_PI));
 	}
-	for (x = t2 + 1; x <= viewwidth; ++x)
+	for (i = 0; i < centerx; i++)
 	{
-		xtoviewangle[x] = ANGLE_270 + tantoangle[dfocus / (x - centerx)];
-	}
-	for (x = 0; x < t1; ++x)
-	{
-		xtoviewangle[x] = (angle_t)(-(signed)xtoviewangle[viewwidth - x]);
+		xtoviewangle[i] = 0 - xtoviewangle[viewwidth - i - 1];
 	}
 }
 
@@ -351,7 +309,6 @@ void R_SWRSetWindow(int windowSize, int fullWidth, int fullHeight, int stHeight,
 	}
 
 	fuzzviewheight = viewheight - 2;	// Maximum row the fuzzer can draw to
-	halfviewwidth = (viewwidth >> 1) - 1;
 
 	lastcenteryfrac = 1<<30;
 	CenterX = centerx;
@@ -544,62 +501,60 @@ void R_SetupColormap(player_t *player)
 
 void R_SetupFreelook()
 {
-	{
-		double dy;
+	double dy;
 		
-		if (camera != NULL)
+	if (camera != NULL)
+	{
+		dy = FocalLengthY * (-ViewPitch).Tan();
+	}
+	else
+	{
+		dy = 0;
+	}
+
+	CenterY = (viewheight / 2.0) + dy;
+	centery = xs_ToInt(CenterY);
+	globaluclip = -CenterY / InvZtoScale;
+	globaldclip = (viewheight - CenterY) / InvZtoScale;
+
+	//centeryfrac &= 0xffff0000;
+	int e, i;
+
+	i = 0;
+	e = viewheight;
+	float focus = float(FocalLengthY);
+	float den;
+	float cy = float(CenterY);
+	if (i < centery)
+	{
+		den = cy - i - 0.5f;
+		if (e <= centery)
 		{
-			dy = FocalLengthY * (-ViewPitch).Tan();
+			do {
+				yslope[i] = focus / den;
+				den -= 1;
+			} while (++i < e);
 		}
 		else
 		{
-			dy = 0;
-		}
-
-		CenterY = (viewheight / 2.0) + dy;
-		centery = xs_ToInt(CenterY);
-		globaluclip = -CenterY / InvZtoScale;
-		globaldclip = (viewheight - CenterY) / InvZtoScale;
-
-		//centeryfrac &= 0xffff0000;
-		int e, i;
-
-		i = 0;
-		e = viewheight;
-		float focus = float(FocalLengthY);
-		float den;
-		float cy = float(CenterY);
-		if (i < centery)
-		{
-			den = cy - i - 0.5f;
-			if (e <= centery)
-			{
-				do {
-					yslope[i] = FLOAT2FIXED(focus / den);
-					den -= 1;
-				} while (++i < e);
-			}
-			else
-			{
-				do {
-					yslope[i] = FLOAT2FIXED(focus / den);
-					den -= 1;
-				} while (++i < centery);
-				den = i - cy + 0.5f;
-				do {
-					yslope[i] = FLOAT2FIXED(focus / den);
-					den += 1;
-				} while (++i < e);
-			}
-		}
-		else
-		{
+			do {
+				yslope[i] = focus / den;
+				den -= 1;
+			} while (++i < centery);
 			den = i - cy + 0.5f;
 			do {
-				yslope[i] = FLOAT2FIXED(focus / den);
+				yslope[i] = focus / den;
 				den += 1;
 			} while (++i < e);
 		}
+	}
+	else
+	{
+		den = i - cy + 0.5f;
+		do {
+			yslope[i] = focus / den;
+			den += 1;
+		} while (++i < e);
 	}
 }
 

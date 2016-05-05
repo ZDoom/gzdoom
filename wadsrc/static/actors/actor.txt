@@ -42,6 +42,7 @@ ACTOR Actor native //: Thinker
 	native bool IsPointerEqual(int ptr_select1, int ptr_select2);
 	native int	CountInv(class<Inventory> itemtype, int ptr_select = AAPTR_DEFAULT);
 	native float GetDistance(bool checkz, int ptr = AAPTR_DEFAULT);
+	native float GetAngle(bool relative, int ptr = AAPTR_DEFAULT);
 	native int GetSpawnHealth();
 	native int GetGibHealth();
 
@@ -280,7 +281,7 @@ ACTOR Actor native //: Thinker
 	native void A_SetUserArrayFloat(name varname, int index, float value);
 	native void A_SetSpecial(int spec, int arg0 = 0, int arg1 = 0, int arg2 = 0, int arg3 = 0, int arg4 = 0);
 	native void A_Quake(int intensity, int duration, int damrad, int tremrad, sound sfx = "world/quake");
-	native void A_QuakeEx(int intensityX, int intensityY, int intensityZ, int duration, int damrad, int tremrad, sound sfx = "world/quake", int flags = 0, float mulWaveX = 1, float mulWaveY = 1, float mulWaveZ = 1, int falloff = 0, int highpoint = 0);
+	native void A_QuakeEx(int intensityX, int intensityY, int intensityZ, int duration, int damrad, int tremrad, sound sfx = "world/quake", int flags = 0, float mulWaveX = 1, float mulWaveY = 1, float mulWaveZ = 1, int falloff = 0, int highpoint = 0, float rollIntensity = 0, float rollWave = 0);
 	action native A_SetTics(int tics);
 	native void A_SetDamageType(name damagetype);
 	native void A_DropItem(class<Actor> item, int dropamount = -1, int chance = 256);

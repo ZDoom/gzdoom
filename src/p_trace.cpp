@@ -494,6 +494,17 @@ bool FTraceInfo::LineCheck(intercept_t *in, double dist, DVector3 hit)
 					// clip to the part of the sector we are in
 					if (hit.Z > ff_top)
 					{
+						// 3D floor height is the same as the floor height. We need to test a second spot to see if it is above or below
+						if (fabs(bf - ff_top) < EQUAL_EPSILON)
+						{
+							double cf = entersector->floorplane.ZatPoint(entersector->centerspot);
+							double ffc = rover->top.plane->ZatPoint(entersector->centerspot);
+							if (ffc > cf)
+							{
+								bf = ff_top - EQUAL_EPSILON;
+							}
+						}
+						
 						// above
 						if (bf < ff_top)
 						{
@@ -505,6 +516,17 @@ bool FTraceInfo::LineCheck(intercept_t *in, double dist, DVector3 hit)
 					}
 					else if (hit.Z < ff_bottom)
 					{
+						// 3D floor height is the same as the ceiling height. We need to test a second spot to see if it is above or below
+						if (fabs(bc - ff_bottom) < EQUAL_EPSILON)
+						{
+							double cc = entersector->ceilingplane.ZatPoint(entersector->centerspot);
+							double fcc = rover->bottom.plane->ZatPoint(entersector->centerspot);
+							if (fcc < cc)
+							{
+								bc = ff_bottom + EQUAL_EPSILON;
+							}
+						}
+
 						//below
 						if (bc > ff_bottom)
 						{

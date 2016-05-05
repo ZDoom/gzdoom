@@ -28,6 +28,7 @@ ACTOR ActorMover : PathFollower native
 
 ACTOR MovingCamera : PathFollower native
 {
+	CameraHeight 0
 }
 
 

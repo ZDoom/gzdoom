@@ -231,6 +231,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	double		texheight, texheightscale;
 	bool		notrelevant = false;
 	double		rowoffset;
+	bool		wrap = false;
 
 	const sector_t *sec;
 
@@ -334,8 +335,8 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 
 	rowoffset = curline->sidedef->GetTextureYOffset(side_t::mid);
 
-	if (!(curline->linedef->flags & ML_WRAP_MIDTEX) &&
-		!(curline->sidedef->Flags & WALLF_WRAP_MIDTEX))
+	wrap = (curline->linedef->flags & ML_WRAP_MIDTEX) || (curline->sidedef->Flags & WALLF_WRAP_MIDTEX);
+	if (!wrap)
 	{ // Texture does not wrap vertically.
 		double textop;
 
@@ -482,7 +483,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 		{
 			// rowoffset is added before the multiply so that the masked texture will
 			// still be positioned in world units rather than texels.
-			dc_texturemid = (dc_texturemid + rowoffset - ViewPos.Z) * MaskedScaleY;
+			dc_texturemid = (dc_texturemid - ViewPos.Z + rowoffset) * MaskedScaleY;
 		}
 		else
 		{
@@ -543,8 +544,11 @@ clearfog:
 	{
 		if (fake3D & FAKE3D_REFRESHCLIP)
 		{
-			assert(ds->bkup >= 0);
-			memcpy(openings + ds->sprtopclip, openings + ds->bkup, (ds->x2 - ds->x1) * 2);
+			if (!wrap)
+			{
+				assert(ds->bkup >= 0);
+				memcpy(openings + ds->sprtopclip, openings + ds->bkup, (ds->x2 - ds->x1) * 2);
+			}
 		}
 		else
 		{
@@ -558,7 +562,7 @@ clearfog:
 void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover)
 {
 	int i;
-	fixed_t xscale;
+	double xscale;
 	double yscale;
 
 	fixed_t Alpha = Scale(rover->alpha, OPAQUE, 255);
@@ -599,7 +603,7 @@ void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover)
 		scaledside = rover->master->sidedef[0];
 		scaledpart = side_t::mid;
 	}
-	xscale = FLOAT2FIXED(rw_pic->Scale.X * scaledside->GetTextureXScale(scaledpart));
+	xscale = rw_pic->Scale.X * scaledside->GetTextureXScale(scaledpart);
 	yscale = rw_pic->Scale.Y * scaledside->GetTextureYScale(scaledpart);
 
 	double rowoffset = curline->sidedef->GetTextureYOffset(side_t::mid) + rover->master->sidedef[0]->GetTextureYOffset(side_t::mid);
@@ -616,7 +620,7 @@ void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover)
 		// still be positioned in world units rather than texels.
 
 		dc_texturemid = dc_texturemid + rowoffset * yscale;
-		rw_offset = MulScale16 (rw_offset, xscale);
+		rw_offset = xs_RoundToInt(rw_offset * xscale);
 	}
 	else
 	{
@@ -666,8 +670,8 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 	int i,j;
 	F3DFloor *rover, *fover = NULL;
 	int passed, last;
-	fixed_t floorheight;
-	fixed_t ceilingheight;
+	double floorHeight;
+	double ceilingHeight;
 
 	sprflipvert = false;
 	curline = ds->curline;
@@ -686,16 +690,16 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 		frontsector = sec;
 	}
 
-	floorheight = FLOAT2FIXED(backsector->CenterFloor());
-	ceilingheight = FLOAT2FIXED(backsector->CenterCeiling());
+	floorHeight = backsector->CenterFloor();
+	ceilingHeight = backsector->CenterCeiling();
 
 	// maybe fix clipheights
-	if (!(fake3D & FAKE3D_CLIPBOTTOM)) sclipBottom = floorheight;
-	if (!(fake3D & FAKE3D_CLIPTOP))    sclipTop = ceilingheight;
+	if (!(fake3D & FAKE3D_CLIPBOTTOM)) sclipBottom = floorHeight;
+	if (!(fake3D & FAKE3D_CLIPTOP))    sclipTop = ceilingHeight;
 
 	// maybe not visible
-	if (sclipBottom >= FLOAT2FIXED(frontsector->CenterCeiling())) return;
-	if (sclipTop <= FLOAT2FIXED(frontsector->CenterFloor())) return;
+	if (sclipBottom >= frontsector->CenterCeiling()) return;
+	if (sclipTop <= frontsector->CenterFloor()) return;
 
 	if (fake3D & FAKE3D_DOWN2UP)
 	{ // bottom to viewz
@@ -709,8 +713,8 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 			passed = 0;
 			if (!(rover->flags & FF_RENDERSIDES) || rover->top.plane->isSlope() || rover->bottom.plane->isSlope() ||
 				rover->top.plane->Zat0() <= sclipBottom ||
-				rover->bottom.plane->Zat0() >= ceilingheight ||
-				rover->top.plane->Zat0() <= floorheight)
+				rover->bottom.plane->Zat0() >= ceilingHeight ||
+				rover->top.plane->Zat0() <= floorHeight)
 			{
 				if (!i)
 				{
@@ -892,8 +896,8 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 			if (!(rover->flags & FF_RENDERSIDES) ||
 				rover->top.plane->isSlope() || rover->bottom.plane->isSlope() ||
 				rover->bottom.plane->Zat0() >= sclipTop ||
-				rover->top.plane->Zat0() <= floorheight ||
-				rover->bottom.plane->Zat0() >= ceilingheight)
+				rover->top.plane->Zat0() <= floorHeight ||
+				rover->bottom.plane->Zat0() >= ceilingHeight)
 			{
 				if ((unsigned)i == backsector->e->XFloor.ffloors.Size() - 1)
 				{
@@ -1134,7 +1138,7 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *l
 		dc_count = y2ve[0] - y1ve[0];
 		iscale = swal[x] * yrepeat;
 		dc_iscale = xs_ToFixed(fracbits, iscale);
-		dc_texturefrac = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[0] - CenterY + 1));
+		dc_texturefrac = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[0] - CenterY + 0.5));
 
 		dovline1();
 	}
@@ -1153,7 +1157,7 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *l
 			bufplce[z] = getcol (rw_pic, (lwal[x+z] + xoffset) >> FRACBITS);
 			iscale = swal[x + z] * yrepeat;
 			vince[z] = xs_ToFixed(fracbits, iscale);
-			vplce[z] = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[z] - CenterY + 1));
+			vplce[z] = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[z] - CenterY + 0.5));
 		}
 		if (bad == 15)
 		{
@@ -1229,7 +1233,7 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *l
 		dc_count = y2ve[0] - y1ve[0];
 		iscale = swal[x] * yrepeat;
 		dc_iscale = xs_ToFixed(fracbits, iscale);
-		dc_texturefrac = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[0] - CenterY + 1));
+		dc_texturefrac = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[0] - CenterY + 0.5));
 
 		dovline1();
 	}
@@ -1484,7 +1488,7 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_
 		dc_count = y2ve[0] - y1ve[0];
 		iscale = swal[x] * yrepeat;
 		dc_iscale = xs_ToFixed(fracbits, iscale);
-		dc_texturefrac = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[0] - CenterY + 1));
+		dc_texturefrac = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[0] - CenterY + 0.5));
 
 		domvline1();
 	}
@@ -1501,7 +1505,7 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_
 			bufplce[z] = getcol (rw_pic, (lwal[dax] + xoffset) >> FRACBITS);
 			iscale = swal[dax] * yrepeat;
 			vince[z] = xs_ToFixed(fracbits, iscale);
-			vplce[z] = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[z] - CenterY + 1));
+			vplce[z] = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[z] - CenterY + 0.5));
 		}
 		if (bad == 15)
 		{
@@ -1575,7 +1579,7 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_
 		dc_count = y2ve[0] - y1ve[0];
 		iscale = swal[x] * yrepeat;
 		dc_iscale = xs_ToFixed(fracbits, iscale);
-		dc_texturefrac = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[0] - CenterY + 1));
+		dc_texturefrac = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[0] - CenterY + 0.5));
 
 		domvline1();
 	}
@@ -1660,7 +1664,7 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, f
 		dc_count = y2ve[0] - y1ve[0];
 		iscale = swal[x] * yrepeat;
 		dc_iscale = xs_ToFixed(fracbits, iscale);
-		dc_texturefrac = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[0] - CenterY + 1));
+		dc_texturefrac = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[0] - CenterY + 0.5));
 
 		tmvline1();
 	}
@@ -1677,7 +1681,7 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, f
 			bufplce[z] = getcol (rw_pic, (lwal[dax] + xoffset) >> FRACBITS);
 			iscale = swal[dax] * yrepeat;
 			vince[z] = xs_ToFixed(fracbits, iscale);
-			vplce[z] = xs_ToFixed(fracbits, dc_texturemid + vince[z] * (y1ve[z] - CenterY + 1));
+			vplce[z] = xs_ToFixed(fracbits, dc_texturemid + vince[z] * (y1ve[z] - CenterY + 0.5));
 		}
 		if (bad == 15)
 		{
@@ -1754,7 +1758,7 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, f
 		dc_count = y2ve[0] - y1ve[0];
 		iscale = swal[x] * yrepeat;
 		dc_iscale = xs_ToFixed(fracbits, iscale);
-		dc_texturefrac = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[0] - CenterY + 1));
+		dc_texturefrac = xs_ToFixed(fracbits, dc_texturemid + iscale * (y1ve[0] - CenterY + 0.5));
 
 		tmvline1();
 	}
@@ -2012,9 +2016,9 @@ void R_NewWall (bool needlights)
 	midtexture = toptexture = bottomtexture = 0;
 
 	if (sidedef == linedef->sidedef[0] &&
-		(linedef->isVisualPortal() || (linedef->special == Line_Mirror && r_drawmirrors))) // [ZZ] compatibility with r_drawmirrors cvar that existed way before portals
+		(linedef->special == Line_Mirror && r_drawmirrors)) // [ZZ] compatibility with r_drawmirrors cvar that existed way before portals
 	{
-		markfloor = markceiling = true; // act like an one-sided wall here (todo: check how does this work with transparency)
+		markfloor = markceiling = true; // act like a one-sided wall here (todo: check how does this work with transparency)
 		rw_markportal = true;
 	}
 	else if (backsector == NULL)
@@ -2023,7 +2027,11 @@ void R_NewWall (bool needlights)
 		// a single sided line is terminal, so it must mark ends
 		markfloor = markceiling = true;
 		// [RH] Horizon lines do not need to be textured
-		if (linedef->special != Line_Horizon)
+		if (linedef->isVisualPortal())
+		{
+			rw_markportal = true;
+		}
+		else if (linedef->special != Line_Horizon)
 		{
 			midtexture = TexMan(sidedef->GetTexture(side_t::mid), true);
 			rw_offset_mid = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::mid));
@@ -2098,8 +2106,12 @@ void R_NewWall (bool needlights)
 			rw_frontlowertop = backsector->GetPlaneTexZ(sector_t::ceiling);
 		}
 
-		if ((rw_backcz1 <= rw_frontfz1 && rw_backcz2 <= rw_frontfz2) ||
-			(rw_backfz1 >= rw_frontcz1 && rw_backfz2 >= rw_frontcz2))
+		if (linedef->isVisualPortal())
+		{
+			markceiling = markfloor = true;
+		}
+		else if ((rw_backcz1 <= rw_frontfz1 && rw_backcz2 <= rw_frontfz2) ||
+				 (rw_backfz1 >= rw_frontcz1 && rw_backfz2 >= rw_frontcz2))
 		{
 			// closed door
 			markceiling = markfloor = true;
@@ -2256,6 +2268,7 @@ void R_NewWall (bool needlights)
 				rw_bottomtexturemid += rowoffset;
 			}
 		}
+		rw_markportal = linedef->isVisualPortal();
 	}
 
 	// if a floor / ceiling plane is on the wrong side of the view plane,
@@ -2670,53 +2683,50 @@ int OWallMost (short *mostbuf, double z, const FWallCoords *wallc)
 	s3 = globaldclip * wallc->sz1; s4 = globaldclip * wallc->sz2;
 	bad = (z<s1)+((z<s2)<<1)+((z>s3)<<2)+((z>s4)<<3);
 
-#if 1
 	if ((bad&3) == 3)
-	{
+	{ // entire line is above the screen
 		memset (&mostbuf[wallc->sx1], 0, (wallc->sx2 - wallc->sx1)*sizeof(mostbuf[0]));
 		return bad;
 	}
 
 	if ((bad&12) == 12)
-	{
+	{ // entire line is below the screen
 		clearbufshort (&mostbuf[wallc->sx1], wallc->sx2 - wallc->sx1, viewheight);
 		return bad;
 	}
-#endif
 	ix1 = wallc->sx1; iy1 = wallc->sz1;
 	ix2 = wallc->sx2; iy2 = wallc->sz2;
-#if 1
 	if (bad & 3)
-	{
+	{ // the line intersects the top of the screen
 		double t = (z-s1) / (s2-s1);
 		double inty = wallc->sz1 + t * (wallc->sz2 - wallc->sz1);
 		int xcross = xs_RoundToInt(wallc->sx1 + (t * wallc->sz2 * (wallc->sx2 - wallc->sx1)) / inty);
 
 		if ((bad & 3) == 2)
-		{
+		{ // the right side is above the screen
 			if (wallc->sx1 <= xcross) { iy2 = inty; ix2 = xcross; }
 			if (wallc->sx2 > xcross) memset (&mostbuf[xcross], 0, (wallc->sx2-xcross)*sizeof(mostbuf[0]));
 		}
 		else
-		{
+		{ // the left side is above the screen
 			if (xcross <= wallc->sx2) { iy1 = inty; ix1 = xcross; }
 			if (xcross > wallc->sx1) memset (&mostbuf[wallc->sx1], 0, (xcross-wallc->sx1)*sizeof(mostbuf[0]));
 		}
 	}
 
 	if (bad & 12)
-	{
+	{ // the line intersects the bottom of the screen
 		double t = (z-s3) / (s4-s3);
 		double inty = wallc->sz1 + t * (wallc->sz2 - wallc->sz1);
 		int xcross = xs_RoundToInt(wallc->sx1 + (t * wallc->sz2 * (wallc->sx2 - wallc->sx1)) / inty);
 
 		if ((bad & 12) == 8)
-		{
+		{ // the right side is below the screen
 			if (wallc->sx1 <= xcross) { iy2 = inty; ix2 = xcross; }
 			if (wallc->sx2 > xcross) clearbufshort (&mostbuf[xcross], wallc->sx2 - xcross, viewheight);
 		}
 		else
-		{
+		{ // the left side is below the screen
 			if (xcross <= wallc->sx2) { iy1 = inty; ix1 = xcross; }
 			if (xcross > wallc->sx1) clearbufshort (&mostbuf[wallc->sx1], xcross - wallc->sx1, viewheight);
 		}
@@ -2730,40 +2740,8 @@ int OWallMost (short *mostbuf, double z, const FWallCoords *wallc)
 	else
 	{
 		fixed_t yinc = FLOAT2FIXED(((z * InvZtoScale / iy2) - y) / (ix2 - ix1));
-		qinterpolatedown16short (&mostbuf[ix1], ix2-ix1, FLOAT2FIXED(y + CenterY), yinc);
+		qinterpolatedown16short (&mostbuf[ix1], ix2-ix1, FLOAT2FIXED(y + CenterY) + FRACUNIT/2, yinc);
 	}
-#else
-	double max = viewheight;
-	double zz = z / 65536.0;
-#if 0
-	double z1 = zz * InvZtoScale / wallc->sz1;
-	double z2 = zz * InvZtoScale / wallc->sz2 - z1;
-	z2 /= (wallc->sx2 - wallc->sx1);
-	z1 += centeryfrac / 65536.0;
-
-	for (int x = wallc->sx1; x < wallc->sx2; ++x)
-	{
-		mostbuf[x] = xs_RoundToInt(clamp(z1, 0.0, max));
-		z1 += z2;
-	}
-#else
-	double top, bot, i;
-
-	i = wallc->sx1 - centerx;
-	top = WallT.UoverZorg + WallT.UoverZstep * i;
-	bot = WallT.InvZorg + WallT.InvZstep * i;
-	double cy = centeryfrac / 65536.0;
-
-	for (int x = wallc->sx1; x < wallc->sx2; x++)
-	{
-		double frac = top / bot;
-		double scale = frac * WallT.DepthScale + WallT.DepthOrg;
-		mostbuf[x] = xs_RoundToInt(clamp(zz / scale + cy, 0.0, max));
-		top += WallT.UoverZstep;
-		bot += WallT.InvZstep;
-	}
-#endif
-#endif
 	return bad;
 }
 
@@ -2779,6 +2757,7 @@ int WallMost (short *mostbuf, const secplane_t &plane, const FWallCoords *wallc)
 	int bad, ix1, ix2;
 	double iy1, iy2;
 
+	// Get Z coordinates at both ends of the line
 	if (MirrorFlags & RF_XFLIP)
 	{
 		x = curline->v2->fX();
@@ -2847,20 +2826,20 @@ int WallMost (short *mostbuf, const secplane_t &plane, const FWallCoords *wallc)
 	oz1 = z1; oz2 = z2;
 
 	if ((bad&3) == 3)
-	{
-		memset (&mostbuf[ix1], -1, (ix2-ix1)*sizeof(mostbuf[0]));
+	{ // The entire line is above the screen
+		memset (&mostbuf[ix1], 0, (ix2-ix1)*sizeof(mostbuf[0]));
 		return bad;
 	}
 
 	if ((bad&12) == 12)
-	{
+	{ // The entire line is below the screen
 		clearbufshort (&mostbuf[ix1], ix2-ix1, viewheight);
 		return bad;
 
 	}
 
 	if (bad&3)
-	{
+	{ // The line intersects the top of the screen
 			//inty = intz / (globaluclip>>16)
 		double t = (oz1-s1) / (s2-s1+oz1-oz2);
 		double inty = wallc->sz1 + t * (wallc->sz2-wallc->sz1);
@@ -2872,19 +2851,19 @@ int WallMost (short *mostbuf, const secplane_t &plane, const FWallCoords *wallc)
 		//intz = z1 + mulscale30(z2-z1,t);
 
 		if ((bad&3) == 2)
-		{
+		{ // The right side of the line is above the screen
 			if (wallc->sx1 <= xcross) { z2 = intz; iy2 = inty; ix2 = xcross; }
 			memset (&mostbuf[xcross], 0, (wallc->sx2-xcross)*sizeof(mostbuf[0]));
 		}
 		else
-		{
+		{ // The left side of the line is above the screen
 			if (xcross <= wallc->sx2) { z1 = intz; iy1 = inty; ix1 = xcross; }
 			memset (&mostbuf[wallc->sx1], 0, (xcross-wallc->sx1)*sizeof(mostbuf[0]));
 		}
 	}
 
 	if (bad&12)
-	{
+	{ // The line intersects the bottom of the screen
 			//inty = intz / (globaldclip>>16)
 		double t = (oz1-s3) / (s4-s3+oz1-oz2);
 		double inty = wallc->sz1 + t * (wallc->sz2-wallc->sz1);
@@ -2896,12 +2875,12 @@ int WallMost (short *mostbuf, const secplane_t &plane, const FWallCoords *wallc)
 		//intz = z1 + mulscale30(z2-z1,t);
 
 		if ((bad&12) == 8)
-		{
+		{ // The right side of the line is below the screen
 			if (wallc->sx1 <= xcross) { z2 = intz; iy2 = inty; ix2 = xcross; }
 			if (wallc->sx2 > xcross) clearbufshort (&mostbuf[xcross], wallc->sx2-xcross, viewheight);
 		}
 		else
-		{
+		{ // The left side of the line is below the screen
 			if (xcross <= wallc->sx2) { z1 = intz; iy1 = inty; ix1 = xcross; }
 			if (xcross > wallc->sx1) clearbufshort (&mostbuf[wallc->sx1], xcross-wallc->sx1, viewheight);
 		}
@@ -2910,12 +2889,12 @@ int WallMost (short *mostbuf, const secplane_t &plane, const FWallCoords *wallc)
 	y = z1 * InvZtoScale / iy1;
 	if (ix2 == ix1)
 	{
-		mostbuf[ix1] = (short)xs_RoundToInt(y/65536.0 + CenterY);
+		mostbuf[ix1] = (short)xs_RoundToInt(y + CenterY);
 	}
 	else
 	{
 		fixed_t yinc = FLOAT2FIXED(((z2 * InvZtoScale / iy2) - y) / (ix2-ix1));
-		qinterpolatedown16short (&mostbuf[ix1], ix2-ix1, FLOAT2FIXED(y/65536.0 + CenterY), yinc);
+		qinterpolatedown16short (&mostbuf[ix1], ix2-ix1, FLOAT2FIXED(y + CenterY) + FRACUNIT/2, yinc);
 	}
 
 	return bad;

@@ -45,6 +45,7 @@
 #include "p_checkposition.h"
 #include "r_utility.h"
 #include "p_blockmap.h"
+#include "p_3dmidtex.h"
 
 #include "s_sound.h"
 #include "decallib.h"
@@ -1514,7 +1515,47 @@ bool P_CheckPosition(AActor *thing, const DVector2 &pos, FCheckPosition &tm, boo
 	// Any contacted lines the step closer together will adjust them.
 	if (!thing->IsNoClip2())
 	{
-		P_GetFloorCeilingZ(tm, FFCF_SAMESECTOR);
+		if (!newsec->PortalBlocksMovement(sector_t::ceiling) || !newsec->PortalBlocksMovement(sector_t::floor))
+		{
+			// Use P_GetFloorCeilingZ only if there's portals to consider. Its logic is subtly different than what is needed here for 3D floors.
+			P_GetFloorCeilingZ(tm, FFCF_SAMESECTOR);
+		}
+		else
+		{
+			tm.floorz = tm.dropoffz = newsec->floorplane.ZatPoint(pos);
+			tm.floorpic = newsec->GetTexture(sector_t::floor);
+			tm.ceilingz = newsec->ceilingplane.ZatPoint(pos);
+			tm.ceilingpic = newsec->GetTexture(sector_t::ceiling);
+			tm.floorsector = tm.ceilingsector = newsec;
+			tm.floorterrain = newsec->GetTerrain(sector_t::floor);
+		}
+
+		F3DFloor*  rover;
+		double thingtop = thing->Height > 0 ? thing->Top() : thing->Z() + 1;
+
+		for (unsigned i = 0; i<newsec->e->XFloor.ffloors.Size(); i++)
+		{
+			rover = newsec->e->XFloor.ffloors[i];
+			if (!(rover->flags & FF_SOLID) || !(rover->flags & FF_EXISTS)) continue;
+
+			double ff_bottom = rover->bottom.plane->ZatPoint(pos);
+			double ff_top = rover->top.plane->ZatPoint(pos);
+
+			double delta1 = thing->Z() - (ff_bottom + ((ff_top - ff_bottom) / 2));
+			double delta2 = thingtop - (ff_bottom + ((ff_top - ff_bottom) / 2));
+
+			if (ff_top > tm.floorz && fabs(delta1) < fabs(delta2))
+			{
+				tm.floorz = tm.dropoffz = ff_top;
+				tm.floorpic = *rover->top.texture;
+				tm.floorterrain = rover->model->GetTerrain(rover->top.isceiling);
+			}
+			if (ff_bottom < tm.ceilingz && abs(delta1) >= abs(delta2))
+			{
+				tm.ceilingz = ff_bottom;
+				tm.ceilingpic = *rover->bottom.texture;
+			}
+		}
 	}
 	else
 	{
@@ -1865,6 +1906,15 @@ static void CheckForPushSpecial(line_t *line, int side, AActor *mobj, DVector2 *
 			if (fzt >= mobj->Top() && bzt >= mobj->Top() &&
 				fzb <= mobj->Z() && bzb <= mobj->Z())
 			{
+				if (line->flags & ML_3DMIDTEX)
+				{
+					double top, bot;
+					P_GetMidTexturePosition(line, side, &top, &bot);
+					if (bot < mobj->Top() && top > mobj->Z())
+					{
+						goto isblocking;
+					}
+				}
 				// we must also check if some 3D floor in the backsector may be blocking
 				for (auto rover : line->backsector->e->XFloor.ffloors)
 				{
@@ -3973,8 +4023,11 @@ DAngle P_AimLineAttack(AActor *t1, DAngle angle, double distance, FTranslatedLin
 struct Origin
 {
 	AActor *Caller;
+	FNameNoInit PuffSpecies;
 	bool hitGhosts;
-	bool hitSameSpecies;
+	bool MThruSpecies;
+	bool ThruSpecies;
+	bool ThruActors;
 };
 
 static ETraceStatus CheckForActor(FTraceResults &res, void *userdata)
@@ -3986,17 +4039,16 @@ static ETraceStatus CheckForActor(FTraceResults &res, void *userdata)
 
 	Origin *data = (Origin *)userdata;
 
-	// check for physical attacks on spectrals
-	if (res.Actor->flags4 & MF4_SPECTRAL)
-	{
-		return TRACE_Skip;
-	}
+	// Skip actors if the puff has:
+	// 1. THRUACTORS or SPECTRAL
+	// 2. MTHRUSPECIES on puff and the shooter has same species as the hit actor
+	// 3. THRUSPECIES on puff and the puff has same species as the hit actor
+	// 4. THRUGHOST on puff and the GHOST flag on the hit actor
 
-	if (data->hitSameSpecies && res.Actor->GetSpecies() == data->Caller->GetSpecies()) 
-	{
-		return TRACE_Skip;
-	}
-	if (data->hitGhosts && res.Actor->flags3 & MF3_GHOST)
+	if ((data->ThruActors) || (res.Actor->flags4 & MF4_SPECTRAL) ||
+		(data->MThruSpecies && res.Actor->GetSpecies() == data->Caller->GetSpecies()) ||
+		(data->ThruSpecies && res.Actor->GetSpecies() == data->PuffSpecies) ||
+		(data->hitGhosts && res.Actor->flags3 & MF3_GHOST))
 	{
 		return TRACE_Skip;
 	}
@@ -4058,14 +4110,41 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 
 	// We need to check the defaults of the replacement here
 	AActor *puffDefaults = GetDefaultByType(pufftype->GetReplacement());
-
+	
 	TData.hitGhosts = (t1->player != NULL &&
 		t1->player->ReadyWeapon != NULL &&
 		(t1->player->ReadyWeapon->flags2 & MF2_THRUGHOST)) ||
 		(puffDefaults && (puffDefaults->flags2 & MF2_THRUGHOST));
 
-	TData.hitSameSpecies = (puffDefaults && (puffDefaults->flags6 & MF6_MTHRUSPECIES));
+	TData.MThruSpecies = (puffDefaults && (puffDefaults->flags6 & MF6_MTHRUSPECIES));
+	TData.PuffSpecies = NAME_None;
 
+	// [MC] To prevent possible mod breakage, this flag is pretty much necessary.
+	// Somewhere, someone is relying on these to spawn on actors and move through them.
+
+	if ((puffDefaults->flags7 & MF7_ALLOWTHRUFLAGS))
+	{
+		TData.ThruSpecies = (puffDefaults && (puffDefaults->flags6 & MF6_THRUSPECIES));
+		TData.ThruActors = (puffDefaults && (puffDefaults->flags2 & MF2_THRUACTORS));
+
+		// [MC] Because this is a one-hit trace event, we need to spawn the puff, get the species
+		// and destroy it. Assume there is no species unless tempuff isn't NULL. We cannot get
+		// a proper species the same way as puffDefaults flags it appears...
+
+		AActor *tempuff = NULL;
+		if (pufftype != NULL)
+			tempuff = Spawn(pufftype, t1->Pos(), ALLOW_REPLACE);
+		if (tempuff != NULL)
+		{
+			TData.PuffSpecies = tempuff->GetSpecies();
+			tempuff->Destroy();
+		}
+	}
+	else
+	{
+		TData.ThruSpecies = false;
+		TData.ThruActors = false;
+	}
 	// if the puff uses a non-standard damage type, this will override default, hitscan and melee damage type.
 	// All other explicitly passed damage types (currenty only MDK) will be preserved.
 	if ((damageType == NAME_None || damageType == NAME_Melee || damageType == NAME_Hitscan) &&
@@ -4493,9 +4572,13 @@ struct RailData
 	AActor *Caller;
 	TArray<SRailHit> RailHits;
 	TArray<SPortalHit> PortalHits;
+	FNameNoInit PuffSpecies;
 	bool StopAtOne;
 	bool StopAtInvul;
+	bool ThruGhosts;
 	bool ThruSpecies;
+	bool MThruSpecies;
+	bool ThruActors;
 };
 
 static ETraceStatus ProcessRailHit(FTraceResults &res, void *userdata)
@@ -4522,8 +4605,16 @@ static ETraceStatus ProcessRailHit(FTraceResults &res, void *userdata)
 		return TRACE_Stop;
 	}
 
-	// Skip actors with the same species if the puff has MTHRUSPECIES.
-	if (data->ThruSpecies && res.Actor->GetSpecies() == data->Caller->GetSpecies())
+	// Skip actors if the puff has:
+	// 1. THRUACTORS (This one did NOT include a check for spectral)
+	// 2. MTHRUSPECIES on puff and the shooter has same species as the hit actor
+	// 3. THRUSPECIES on puff and the puff has same species as the hit actor
+	// 4. THRUGHOST on puff and the GHOST flag on the hit actor
+
+	if ((data->ThruActors) ||
+		(data->MThruSpecies && res.Actor->GetSpecies() == data->Caller->GetSpecies()) ||
+		(data->ThruSpecies && res.Actor->GetSpecies() == data->PuffSpecies) ||
+		(data->ThruGhosts && res.Actor->flags3 & MF3_GHOST))
 	{
 		return TRACE_Skip;
 	}
@@ -4598,18 +4689,33 @@ void P_RailAttack(FRailParams *p)
 	// disabled because not complete yet.
 	flags = (puffDefaults->flags6 & MF6_NOTRIGGER) ? TRACE_ReportPortals : TRACE_PCross | TRACE_Impact | TRACE_ReportPortals;
 	rail_data.StopAtInvul = (puffDefaults->flags3 & MF3_FOILINVUL) ? false : true;
-	rail_data.ThruSpecies = (puffDefaults->flags6 & MF6_MTHRUSPECIES) ? true : false;
+	rail_data.MThruSpecies = ((puffDefaults->flags6 & MF6_MTHRUSPECIES)) ? true : false;
+	
+	// Prevent mod breakage as somewhere, someone is relying on these to spawn on an actor 
+	// and move through them...
+	if ((puffDefaults->flags7 & MF7_ALLOWTHRUFLAGS))
+	{
+		rail_data.ThruGhosts = !!(puffDefaults->flags2 & MF2_THRUGHOST);
+		rail_data.ThruSpecies = !!(puffDefaults->flags6 & MF6_THRUSPECIES);
+		rail_data.ThruActors = !!(puffDefaults->flags2 & MF2_THRUACTORS);
+	}
+	else
+	{
+		rail_data.ThruGhosts = false;
+		rail_data.MThruSpecies = false;
+		rail_data.ThruActors = false;
+	}
+	// used as damage inflictor
+	AActor *thepuff = NULL;
+	
+	if (puffclass != NULL) thepuff = Spawn(puffclass, source->Pos(), ALLOW_REPLACE);
+		rail_data.PuffSpecies = (thepuff != NULL) ? thepuff->GetSpecies() : NAME_None;
 
 	Trace(start, source->Sector, vec, p->distance, MF_SHOOTABLE, ML_BLOCKEVERYTHING, source, trace,	flags, ProcessRailHit, &rail_data);
 
 	// Hurt anything the trace hit
 	unsigned int i;
 	FName damagetype = (puffDefaults == NULL || puffDefaults->DamageType == NAME_None) ? FName(NAME_Railgun) : puffDefaults->DamageType;
-
-	// used as damage inflictor
-	AActor *thepuff = NULL;
-
-	if (puffclass != NULL) thepuff = Spawn(puffclass, source->Pos(), ALLOW_REPLACE);
 
 	for (i = 0; i < rail_data.RailHits.Size(); i++)
 	{
@@ -6340,7 +6446,7 @@ void AActor::UpdateRenderSectorList()
 		if (PortalBlockmap.containsLines && Pos().XY() != OldRenderPos.XY())
 		{
 			int bx = GetBlockX(X());
-			int by = GetBlockX(Y());
+			int by = GetBlockY(Y());
 			FBoundingBox bb(X(), Y(), MIN(radius*1.5, 128.));	// Don't go further than 128 map units, even for large actors
 			// Are there any portals near the actor's position?
 			if (bx >= 0 && by >= 0 && bx < bmapwidth && by < bmapheight && PortalBlockmap(bx, by).neighborContainsLines)

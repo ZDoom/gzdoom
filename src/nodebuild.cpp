@@ -156,12 +156,12 @@ int FNodeBuilder::CreateNode (DWORD set, unsigned int count, fixed_t bbox[4])
 		D(PrintSet (1, set1));
 		D(Printf (PRINT_LOG, "(%d,%d) delta (%d,%d) from seg %d\n", node.x>>16, node.y>>16, node.dx>>16, node.dy>>16, splitseg));
 		D(PrintSet (2, set2));
-		node.intchildren[0] = CreateNode (set1, count1, node.bbox[0]);
-		node.intchildren[1] = CreateNode (set2, count2, node.bbox[1]);
-		bbox[BOXTOP] = MAX (node.bbox[0][BOXTOP], node.bbox[1][BOXTOP]);
-		bbox[BOXBOTTOM] = MIN (node.bbox[0][BOXBOTTOM], node.bbox[1][BOXBOTTOM]);
-		bbox[BOXLEFT] = MIN (node.bbox[0][BOXLEFT], node.bbox[1][BOXLEFT]);
-		bbox[BOXRIGHT] = MAX (node.bbox[0][BOXRIGHT], node.bbox[1][BOXRIGHT]);
+		node.intchildren[0] = CreateNode (set1, count1, node.nb_bbox[0]);
+		node.intchildren[1] = CreateNode (set2, count2, node.nb_bbox[1]);
+		bbox[BOXTOP] = MAX (node.nb_bbox[0][BOXTOP], node.nb_bbox[1][BOXTOP]);
+		bbox[BOXBOTTOM] = MIN (node.nb_bbox[0][BOXBOTTOM], node.nb_bbox[1][BOXBOTTOM]);
+		bbox[BOXLEFT] = MIN (node.nb_bbox[0][BOXLEFT], node.nb_bbox[1][BOXLEFT]);
+		bbox[BOXRIGHT] = MAX (node.nb_bbox[0][BOXRIGHT], node.nb_bbox[1][BOXRIGHT]);
 		return (int)Nodes.Push (node);
 	}
 	else

@@ -22,7 +22,7 @@ static oalloadentry oalfuncs[] = {
 { NULL, 0 }
 };
 
-
+#ifndef IN_IDE_PARSER
 #define alEnable p_alEnable
 #define alDisable p_alDisable
 #define alIsEnabled p_alIsEnabled
@@ -116,6 +116,7 @@ static oalloadentry oalfuncs[] = {
 #define alcCaptureStart p_alcCaptureStart
 #define alcCaptureStop p_alcCaptureStop
 #define alcCaptureSamples p_alcCaptureSamples
+#endif
 
 #endif
 #endif

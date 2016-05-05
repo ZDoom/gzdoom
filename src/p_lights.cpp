@@ -301,9 +301,9 @@ void DFlicker::Tick ()
 DFlicker::DFlicker (sector_t *sector, int upper, int lower)
 	: DLighting (sector)
 {
-	m_MaxLight = upper;
-	m_MinLight = lower;
-	sector->lightlevel = upper;
+	m_MaxLight = sector_t::ClampLight(upper);
+	m_MinLight = sector_t::ClampLight(lower);
+	sector->lightlevel = m_MaxLight;
 	m_Count = (pr_flicker()&64)+1;
 }
 

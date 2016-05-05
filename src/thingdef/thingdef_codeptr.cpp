@@ -386,6 +386,77 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetGibHealth)
 	return 0;
 }
 
+//==========================================================================
+//
+// GetZAt
+//
+// NON-ACTION function to get the floor or ceiling z at (x, y) with 
+// relativity being an option.
+//==========================================================================
+enum GZFlags
+{
+	GZF_ABSOLUTEPOS =			1,
+	GZF_ABSOLUTEANG =			1 << 1,
+	GZF_CEILING =				1 << 2,
+};
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetZAt)
+{
+	if (numret > 0)
+	{
+		assert(ret != NULL);
+		PARAM_SELF_PROLOGUE(AActor);
+		PARAM_FLOAT_OPT(px)			{ px = 0.; }
+		PARAM_FLOAT_OPT(py)			{ py = 0.; }
+		PARAM_ANGLE_OPT(angle)		{ angle = 0.; }
+		PARAM_INT_OPT(flags)		{ flags = 0; }
+		PARAM_INT_OPT(pick_pointer) { pick_pointer = AAPTR_DEFAULT; }
+
+		AActor *mobj = COPY_AAPTR(self, pick_pointer);
+		if (mobj == nullptr)
+		{
+			ret->SetFloat(0);
+		}
+		else
+		{
+			DVector2 pos = { px, py };
+			int secnum;
+			double z = 0.;
+
+			if (!(flags & GZF_ABSOLUTEPOS))
+			{
+				if (!(flags & GZF_ABSOLUTEANG))
+				{
+					angle += mobj->Angles.Yaw;
+				}
+
+				double s = angle.Sin();
+				double c = angle.Cos();
+				pos = mobj->Vec2Offset(pos.X * c + pos.Y * s, pos.X * s - pos.Y * c);
+			}
+
+			secnum = int(P_PointInSector(pos.X, pos.Y) - sectors);
+
+			if (secnum >= 0)
+			{
+				if (flags & GZF_CEILING)
+				{
+					//z = mobj->Sector->ceilingplane.ZatPoint(pos.X, pos.Y);
+					z = sectors[secnum].ceilingplane.ZatPoint(pos);
+				}
+				else
+				{
+					//z = mobj->Sector->floorplane.ZatPoint(pos.X, pos.Y);
+					z = sectors[secnum].floorplane.ZatPoint(pos);
+				}
+			}
+			ret->SetFloat(z);
+			return 1;
+		}
+	}
+	return 0;
+}
+
 //===========================================================================
 //
 // __decorate_internal_state__

@@ -550,3 +550,11 @@ enum
 	FMDF_INTERPOLATE =		1 << 1,
 	FMDF_NOANGLE =			1 << 2,
 };
+
+// Flags for GetZAt
+enum
+{
+	GZF_ABSOLUTEPOS =			1,
+	GZF_ABSOLUTEANG =			1 << 1,
+	GZF_CEILING =				1 << 2,
+};

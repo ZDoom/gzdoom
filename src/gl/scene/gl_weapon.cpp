@@ -353,6 +353,9 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 	// now draw the different layers of the weapon
 	gl_RenderState.EnableBrightmap(true);
 	gl_RenderState.SetObjectColor(ThingColor);
+	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_sprite_threshold);
+	gl_RenderState.BlendEquation(GL_FUNC_ADD);
 	if (statebright[0] || statebright[1])
 	{
 		// brighten the weapon to reduce the difference between

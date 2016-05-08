@@ -453,7 +453,7 @@ void GLFlat::Draw(int pass, bool trans)	// trans only has meaning for GLPASS_LIG
 		gl_RenderState.SetMaterial(gltexture, CLAMP_NONE, 0, -1, false);
 		gl_SetPlaneTextureRotation(&plane, gltexture);
 		DrawSubsectors(pass, false, false);
-
+		break;
 	}
 }
 

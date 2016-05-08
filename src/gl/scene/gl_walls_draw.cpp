@@ -442,6 +442,7 @@ void GLWall::Draw(int pass)
 			RenderTranslucentWall();
 			break;
 		}
+		break;
 
 	case GLPASS_LIGHTTEX:
 	case GLPASS_LIGHTTEX_ADDITIVE:

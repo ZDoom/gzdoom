@@ -48,6 +48,7 @@
 #include "doomdata.h"
 #include "r_utility.h"
 #include "portal.h"
+#include "doomstat.h"
 
 
 #include "gl/renderer/gl_renderer.h"
@@ -143,8 +144,13 @@ void ADynamicLight::Serialize(FArchive &arc)
 	arc << m_Radius[0] << m_Radius[1];
 
 	if (lighttype == PulseLight) arc << m_lastUpdate << m_cycler;
-	if (arc.IsLoading()) LinkLight();
-
+	if (arc.IsLoading())
+	{
+		// The default constructor which is used for creating objects before deserialization will not set this variable.
+		// It needs to be true for all placed lights.
+		visibletoplayer = true;
+		LinkLight();
+	}
 }
 
 

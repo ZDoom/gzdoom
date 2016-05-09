@@ -58,6 +58,7 @@
 #include "v_font.h"
 #include "r_data/colormaps.h"
 #include "farchive.h"
+#include "p_maputl.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -687,7 +688,7 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 		P_TranslatePortalXY(pds->src, ViewPath[0].X, ViewPath[0].Y);
 		P_TranslatePortalXY(pds->src, ViewPath[1].X, ViewPath[1].Y);
 
-		if (!r_showviewer && camera)
+		if (!r_showviewer && camera && P_PointOnLineSidePrecise(ViewPath[0], pds->dst) != P_PointOnLineSidePrecise(ViewPath[1], pds->dst))
 		{
 			double distp = (ViewPath[0] - ViewPath[1]).Length();
 			if (distp > EQUAL_EPSILON)

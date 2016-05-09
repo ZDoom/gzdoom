@@ -997,12 +997,12 @@ void AActor::ClearInventory()
 			invp = &inv->Inventory;
 		}
 	}
-	if (player != NULL)
+	if (player != nullptr)
 	{
-		player->ReadyWeapon = NULL;
+		player->ReadyWeapon = nullptr;
 		player->PendingWeapon = WP_NOCHANGE;
-		player->psprites[ps_weapon].state = NULL;
-		player->psprites[ps_flash].state = NULL;
+		player->GetPSprite(ps_weapon)->SetState(nullptr);
+		player->GetPSprite(ps_flash)->SetState(nullptr);
 	}
 }
 

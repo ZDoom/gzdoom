@@ -350,11 +350,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_ItBurnsItBurns)
 
 	S_Sound (self, CHAN_VOICE, "human/imonfire", 1, ATTN_NORM);
 
-	if (self->player != NULL && self->player->mo == self)
+	if (self->player != nullptr && self->player->mo == self)
 	{
-		P_SetPsprite (self->player, ps_weapon, self->FindState("FireHands"));
-		P_SetPsprite (self->player, ps_flash, NULL);
-		self->player->ReadyWeapon = NULL;
+		self->player->GetPSprite(ps_weapon)->SetState(self->FindState("FireHands"));
+		self->player->GetPSprite(ps_flash)->SetState(nullptr);
+		self->player->ReadyWeapon = nullptr;
 		self->player->PendingWeapon = WP_NOCHANGE;
 		self->player->playerstate = PST_LIVE;
 		self->player->extralight = 3;
@@ -376,12 +376,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_CrispyPlayer)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	if (self->player != NULL && self->player->mo == self)
+	if (self->player != nullptr && self->player->mo == self)
 	{
 		self->player->playerstate = PST_DEAD;
-		P_SetPsprite (self->player, ps_weapon,
-			self->player->psprites[ps_weapon].state +
-			(self->FindState("FireHandsLower") - self->FindState("FireHands")));
+
+		DPSprite *psp;
+		psp = self->player->GetPSprite(ps_weapon);
+		psp->SetState(psp->GetState() + (self->FindState("FireHandsLower") - self->FindState("FireHands")));
 	}
 	return 0;
 }
@@ -390,13 +391,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_HandLower)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	if (self->player != NULL)
+	if (self->player != nullptr)
 	{
-		pspdef_t *psp = &self->player->psprites[ps_weapon];
-		psp->sy += 9;
-		if (psp->sy > WEAPONBOTTOM*2)
+		DPSprite *psp = self->player->GetPSprite(ps_weapon);
+		psp->y += 9;
+		if (psp->y > WEAPONBOTTOM*2)
 		{
-			P_SetPsprite (self->player, ps_weapon, NULL);
+			psp->SetState(nullptr);
 		}
 		if (self->player->extralight > 0) self->player->extralight--;
 	}

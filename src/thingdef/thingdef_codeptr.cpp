@@ -5706,15 +5706,18 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetTics)
 	PARAM_ACTION_PROLOGUE;
 	PARAM_INT(tics_to_set);
 
-	if (stateowner != self && self->player != NULL && stateowner->IsKindOf(RUNTIME_CLASS(AWeapon)))
-	{ // Is this a weapon? Need to check psp states for a match, then. Blah.
-		for (int i = 0; i < NUMPSPRITES; ++i)
+	if (stateowner != self && self->player != nullptr && stateowner->IsKindOf(RUNTIME_CLASS(AInventory)))
+	{ // Need to check psp states for a match, then. Blah.
+		DPSprite *pspr = self->player->psprites;
+		while (pspr)
 		{
-			if (self->player->psprites[i].state == callingstate)
+			if (pspr->GetState() == callingstate)
 			{
-				self->player->psprites[i].tics = tics_to_set;
+				pspr->Tics = tics_to_set;
 				return 0;
 			}
+
+			pspr = pspr->GetNext();
 		}
 	}
 	// Just set tics for self.

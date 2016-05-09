@@ -130,7 +130,6 @@ void R_WallSpriteColumn (void (*drawfunc)(const BYTE *column, const FTexture::Sp
 void R_CacheSprite (spritedef_t *sprite);
 void R_SortVisSprites (int (*compare)(const void *, const void *), size_t first);
 void R_AddSprites (sector_t *sec, int lightlevel, int fakeside);
-void R_AddPSprites ();
 void R_DrawSprites ();
 void R_ClearSprites ();
 void R_DrawMasked ();

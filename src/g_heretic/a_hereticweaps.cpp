@@ -259,7 +259,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GauntletAttack)
 	FTranslatedLineTarget t;
 	int actualdamage = 0;
 
-	if (NULL == (player = self->player))
+	if (nullptr == (player = self->player))
 	{
 		return 0;
 	}
@@ -267,13 +267,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GauntletAttack)
 	PARAM_INT(power);
 
 	AWeapon *weapon = player->ReadyWeapon;
-	if (weapon != NULL)
+	if (weapon != nullptr)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return 0;
 	}
-	player->psprites[ps_weapon].sx = ((pr_gatk()&3)-2);
-	player->psprites[ps_weapon].sy = WEAPONTOP + (pr_gatk()&3);
+	player->GetPSprite(ps_weapon)->x = ((pr_gatk()&3)-2);
+	player->GetPSprite(ps_weapon)->y = WEAPONTOP + (pr_gatk()&3);
 	Angle = self->Angles.Yaw;
 	if (power)
 	{
@@ -425,7 +425,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMacePL1)
 	AActor *ball;
 	player_t *player;
 
-	if (NULL == (player = self->player))
+	if (nullptr == (player = self->player))
 	{
 		return 0;
 	}
@@ -436,13 +436,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMacePL1)
 		return 0;
 	}
 	AWeapon *weapon = player->ReadyWeapon;
-	if (weapon != NULL)
+	if (weapon != nullptr)
 	{
 		if (!weapon->DepleteAmmo(weapon->bAltFire))
 			return 0;
 	}
-	player->psprites[ps_weapon].sx = ((pr_maceatk() & 3) - 2);
-	player->psprites[ps_weapon].sy = WEAPONTOP + (pr_maceatk() & 3);
+	player->GetPSprite(ps_weapon)->x = ((pr_maceatk() & 3) - 2);
+	player->GetPSprite(ps_weapon)->y = WEAPONTOP + (pr_maceatk() & 3);
 	ball = P_SpawnPlayerMissile(self, PClass::FindActor("MaceFX1"), self->Angles.Yaw + (((pr_maceatk() & 7) - 4) * (360. / 256)));
 	if (ball)
 	{
@@ -1158,7 +1158,7 @@ IMPLEMENT_CLASS (APhoenixRodPowered)
 
 void APhoenixRodPowered::EndPowerup ()
 {
-	P_SetPsprite (Owner->player, ps_weapon, SisterWeapon->GetReadyState());
+	Owner->player->GetPSprite(ps_weapon)->SetState(SisterWeapon->GetReadyState());
 	DepleteAmmo (bAltFire);
 	Owner->player->refire = 0;
 	S_StopSound (Owner, CHAN_WEAPON);
@@ -1298,7 +1298,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePhoenixPL2)
 	player_t *player;
 	APhoenixRod *flamethrower;
 
-	if (NULL == (player = self->player))
+	if (nullptr == (player = self->player))
 	{
 		return 0;
 	}
@@ -1306,9 +1306,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePhoenixPL2)
 	soundid = "weapons/phoenixpowshoot";
 
 	flamethrower = static_cast<APhoenixRod *> (player->ReadyWeapon);
-	if (flamethrower == NULL || --flamethrower->FlameCount == 0)
+	if (flamethrower == nullptr || --flamethrower->FlameCount == 0)
 	{ // Out of flame
-		P_SetPsprite (player, ps_weapon, flamethrower->FindState("Powerdown"));
+		player->GetPSprite(ps_weapon)->SetState(flamethrower->FindState("Powerdown"));
 		player->refire = 0;
 		S_StopSound (self, CHAN_WEAPON);
 		return 0;

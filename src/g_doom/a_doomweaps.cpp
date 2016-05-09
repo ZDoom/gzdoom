@@ -73,16 +73,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePistol)
 
 	bool accurate;
 
-	if (self->player != NULL)
+	if (self->player != nullptr)
 	{
 		AWeapon *weapon = self->player->ReadyWeapon;
-		if (weapon != NULL && ACTION_CALL_FROM_WEAPON())
+		if (weapon != nullptr && ACTION_CALL_FROM_WEAPON())
 		{
 			if (!weapon->DepleteAmmo (weapon->bAltFire, true, 1))
 				return 0;
 
-			P_SetPsprite (self->player, ps_flash, weapon->FindState(NAME_Flash));
-			self->player->psprites[ps_flash].processPending = true;
+			self->player->GetPSprite(ps_flash)->SetState(weapon->FindState(NAME_Flash), true);
 		}
 		self->player->mo->PlayAttacking2 ();
 
@@ -263,19 +262,18 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireShotgun)
 	int i;
 	player_t *player;
 
-	if (NULL == (player = self->player))
+	if (nullptr == (player = self->player))
 	{
 		return 0;
 	}
 
 	S_Sound (self, CHAN_WEAPON,  "weapons/shotgf", 1, ATTN_NORM);
 	AWeapon *weapon = self->player->ReadyWeapon;
-	if (weapon != NULL && ACTION_CALL_FROM_WEAPON())
+	if (weapon != nullptr && ACTION_CALL_FROM_WEAPON())
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire, true, 1))
 			return 0;
-		P_SetPsprite (player, ps_flash, weapon->FindState(NAME_Flash));
-		self->player->psprites[ps_flash].processPending = true;
+		player->GetPSprite(ps_flash)->SetState(weapon->FindState(NAME_Flash), true);
 	}
 	player->mo->PlayAttacking2 ();
 
@@ -300,19 +298,18 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireShotgun2)
 	int 		damage;
 	player_t *player;
 
-	if (NULL == (player = self->player))
+	if (nullptr == (player = self->player))
 	{
 		return 0;
 	}
 
 	S_Sound (self, CHAN_WEAPON, "weapons/sshotf", 1, ATTN_NORM);
 	AWeapon *weapon = self->player->ReadyWeapon;
-	if (weapon != NULL && ACTION_CALL_FROM_WEAPON())
+	if (weapon != nullptr && ACTION_CALL_FROM_WEAPON())
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire, true, 2))
 			return 0;
-		P_SetPsprite (player, ps_flash, weapon->FindState(NAME_Flash));
-		self->player->psprites[ps_flash].processPending = true;
+		player->GetPSprite(ps_flash)->SetState(weapon->FindState(NAME_Flash), true);
 	}
 	player->mo->PlayAttacking2 ();
 
@@ -384,15 +381,13 @@ void P_SetSafeFlash(AWeapon *weapon, player_t *player, FState *flashstate, int i
 			if (flashstate + index < cls->OwnedStates + cls->NumOwnedStates)
 			{
 				// we're ok so set the state
-				P_SetPsprite (player, ps_flash, flashstate + index);
-				player->psprites[ps_flash].processPending = true;
+				player->GetPSprite(ps_flash)->SetState(flashstate + index, true);
 				return;
 			}
 			else
 			{
 				// oh, no! The state is beyond the end of the state table so use the original flash state.
-				P_SetPsprite (player, ps_flash, flashstate);
-				player->psprites[ps_flash].processPending = true;
+				player->GetPSprite(ps_flash)->SetState(flashstate, true);
 				return;
 			}
 		}
@@ -408,8 +403,7 @@ void P_SetSafeFlash(AWeapon *weapon, player_t *player, FState *flashstate, int i
 	{ // Invalid state. With no index offset, it should at least be valid.
 		index = 0;
 	}
-	P_SetPsprite (player, ps_flash, flashstate + index);
-	player->psprites[ps_flash].processPending = true;
+	player->GetPSprite(ps_flash)->SetState(flashstate + index, true);
 }
 
 //
@@ -421,13 +415,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireCGun)
 
 	player_t *player;
 
-	if (self == NULL || NULL == (player = self->player))
+	if (self == nullptr || nullptr == (player = self->player))
 	{
 		return 0;
 	}
 
 	AWeapon *weapon = player->ReadyWeapon;
-	if (weapon != NULL && ACTION_CALL_FROM_WEAPON())
+	if (weapon != nullptr && ACTION_CALL_FROM_WEAPON())
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire, true, 1))
 			return 0;
@@ -435,12 +429,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireCGun)
 		S_Sound (self, CHAN_WEAPON, "weapons/chngun", 1, ATTN_NORM);
 
 		FState *flash = weapon->FindState(NAME_Flash);
-		if (flash != NULL)
+		if (flash != nullptr)
 		{
 			// [RH] Fix for Sparky's messed-up Dehacked patch! Blargh!
 			FState * atk = weapon->FindState(NAME_Fire);
 
-			int theflash = clamp (int(player->psprites[ps_weapon].state - atk), 0, 1);
+			int theflash = clamp (int(player->GetPSprite(ps_weapon)->GetState() - atk), 0, 1);
 
 			if (flash[theflash].sprite != flash->sprite)
 			{

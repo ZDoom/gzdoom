@@ -87,7 +87,7 @@ void P_Ticker (void)
 	if (paused || P_CheckTickerPaused())
 		return;
 
-	P_NewPspriteTick();
+	DPSprite::NewTick();
 
 	// [RH] Frozen mode is only changed every 4 tics, to make it work with A_Tracer().
 	if ((level.time & 3) == 0)

@@ -270,6 +270,7 @@ player_t::player_t()
   WeaponState(0),
   ReadyWeapon(0),
   PendingWeapon(0),
+  psprites(0),
   cheats(0),
   timefreezer(0),
   refire(0),
@@ -315,7 +316,11 @@ player_t::player_t()
 {
 	memset (&cmd, 0, sizeof(cmd));
 	memset (frags, 0, sizeof(frags));
-	memset (psprites, 0, sizeof(psprites));
+}
+
+player_t::~player_t()
+{
+	DestroyPSprites();
 }
 
 player_t &player_t::operator=(const player_t &p)
@@ -371,7 +376,7 @@ player_t &player_t::operator=(const player_t &p)
 	extralight = p.extralight;
 	fixedcolormap = p.fixedcolormap;
 	fixedlightlevel = p.fixedlightlevel;
-	memcpy(psprites, &p.psprites, sizeof(psprites));
+	psprites = p.psprites;
 	morphTics = p.morphTics;
 	MorphedPlayerClass = p.MorphedPlayerClass;
 	MorphStyle = p.MorphStyle;
@@ -433,6 +438,7 @@ size_t player_t::FixPointers (const DObject *old, DObject *rep)
 	if (ReadyWeapon == old)			ReadyWeapon = static_cast<AWeapon *>(rep), changed++;
 	if (PendingWeapon == old)		PendingWeapon = static_cast<AWeapon *>(rep), changed++;
 	if (*&PremorphWeapon == old)	PremorphWeapon = static_cast<AWeapon *>(rep), changed++;
+	if (psprites == old)			psprites = static_cast<DPSprite *>(rep), changed++;
 	if (*&ConversationNPC == old)	ConversationNPC = replacement, changed++;
 	if (*&ConversationPC == old)	ConversationPC = replacement, changed++;
 	if (*&MUSINFOactor == old)		MUSINFOactor = replacement, changed++;
@@ -451,6 +457,7 @@ size_t player_t::PropagateMark()
 	GC::Mark(ConversationPC);
 	GC::Mark(MUSINFOactor);
 	GC::Mark(PremorphWeapon);
+	GC::Mark(psprites);
 	if (PendingWeapon != WP_NOCHANGE)
 	{
 		GC::Mark(PendingWeapon);
@@ -1369,35 +1376,36 @@ void APlayerPawn::MorphPlayerThink ()
 void APlayerPawn::ActivateMorphWeapon ()
 {
 	PClassActor *morphweapon = PClass::FindActor (MorphWeapon);
+	DPSprite *pspr = player->GetPSprite(ps_weapon);
 	player->PendingWeapon = WP_NOCHANGE;
-	player->psprites[ps_weapon].sy = WEAPONTOP;
+	pspr->y = WEAPONTOP;
 
-	if (morphweapon == NULL || !morphweapon->IsDescendantOf (RUNTIME_CLASS(AWeapon)))
+	if (morphweapon == nullptr || !morphweapon->IsDescendantOf (RUNTIME_CLASS(AWeapon)))
 	{ // No weapon at all while morphed!
-		player->ReadyWeapon = NULL;
-		P_SetPsprite (player, ps_weapon, NULL);
+		player->ReadyWeapon = nullptr;
+		pspr->SetState(nullptr);
 	}
 	else
 	{
 		player->ReadyWeapon = static_cast<AWeapon *>(player->mo->FindInventory (morphweapon));
-		if (player->ReadyWeapon == NULL)
+		if (player->ReadyWeapon == nullptr)
 		{
 			player->ReadyWeapon = static_cast<AWeapon *>(player->mo->GiveInventoryType (morphweapon));
-			if (player->ReadyWeapon != NULL)
+			if (player->ReadyWeapon != nullptr)
 			{
 				player->ReadyWeapon->GivenAsMorphWeapon = true; // flag is used only by new beastweap semantics in P_UndoPlayerMorph
 			}
 		}
-		if (player->ReadyWeapon != NULL)
+		if (player->ReadyWeapon != nullptr)
 		{
-			P_SetPsprite (player, ps_weapon, player->ReadyWeapon->GetReadyState());
+			pspr->SetState(player->ReadyWeapon->GetReadyState());
 		}
 		else
 		{
-			P_SetPsprite (player, ps_weapon, NULL);
+			pspr->SetState(nullptr);
 		}
 	}
-	P_SetPsprite (player, ps_flash, NULL);
+	player->GetPSprite(ps_flash)->SetState(nullptr);
 
 	player->PendingWeapon = WP_NOCHANGE;
 }
@@ -2114,7 +2122,7 @@ void P_DeathThink (player_t *player)
 	int dir;
 	DAngle delta;
 
-	P_MovePsprites (player);
+	player->TickPSprites();
 
 	player->onground = (player->mo->Z() <= player->mo->floorz);
 	if (player->mo->IsKindOf (RUNTIME_CLASS(APlayerChunk)))
@@ -2634,7 +2642,7 @@ void P_PlayerThink (player_t *player)
 			}
 		}
 		// Cycle psprites
-		P_MovePsprites (player);
+		player->TickPSprites();
 
 		// Other Counters
 		if (player->damagecount)
@@ -3064,8 +3072,37 @@ void player_t::Serialize (FArchive &arc)
 
 	for (i = 0; i < MAXPLAYERS; i++)
 		arc << frags[i];
-	for (i = 0; i < NUMPSPRITES; i++)
-		arc << psprites[i];
+
+	if (SaveVersion < 4547)
+	{
+		for (i = ps_weapon; i < NUMPSPRITES; i++)
+		{
+			FState *state;
+			int tics;
+			double sx, sy;
+			int sprite;
+			int frame;
+
+			arc << state << tics
+				<< sx << sy
+				<< sprite << frame;
+
+			if (state != nullptr)
+			{
+				DPSprite *pspr;
+				pspr = GetPSprite(psprnum_t(i));
+				pspr->State = state;
+				pspr->Tics = tics;
+				pspr->x = sx;
+				pspr->y = sy;
+				pspr->Sprite = sprite;
+				pspr->Frame = frame;
+				pspr->Owner = this;
+			}
+		}
+	}
+	else
+		arc << psprites;
 
 	arc << CurrentPlayerClass;
 

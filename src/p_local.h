@@ -26,6 +26,7 @@
 #include <float.h>
 #include "doomtype.h"
 #include "vectors.h"
+#include "dobject.h"
 
 const double NO_VALUE = FLT_MAX;
 
@@ -160,6 +161,24 @@ bool P_Thing_CanRaise(AActor *thing);
 PClassActor *P_GetSpawnableType(int spawnnum);
 void InitSpawnablesFromMapinfo();
 int P_Thing_Warp(AActor *caller, AActor *reference, double xofs, double yofs, double zofs, DAngle angle, int flags, double heightoffset, double radiusoffset, DAngle pitch);
+bool P_Thing_CheckProximity(AActor *self, PClass *classname, double distance, int count, int flags, int ptr);
+
+enum CPXF
+{
+	CPXF_ANCESTOR = 1 << 0,
+	CPXF_LESSOREQUAL = 1 << 1,
+	CPXF_NOZ = 1 << 2,
+	CPXF_COUNTDEAD = 1 << 3,
+	CPXF_DEADONLY = 1 << 4,
+	CPXF_EXACT = 1 << 5,
+	CPXF_SETTARGET = 1 << 6,
+	CPXF_SETMASTER = 1 << 7,
+	CPXF_SETTRACER = 1 << 8,
+	CPXF_FARTHEST = 1 << 9,
+	CPXF_CLOSEST = 1 << 10,
+	CPXF_SETONPTR = 1 << 11,
+	CPXF_CHECKSIGHT = 1 << 12,
+};
 
 enum WARPF
 {

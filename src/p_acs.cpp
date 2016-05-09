@@ -4464,7 +4464,8 @@ enum EACSFunctions
 	ACSF_SetSectorTerrain,
 	ACSF_SpawnParticle,
 	ACSF_SetMusicVolume,
-	// 2 more left...
+	ACSF_CheckProximity,
+	// 1 more left...
 	
 	/* Zandronum's - these must be skipped when we reach 99!
 	-100:ResetMap(0),
@@ -6063,7 +6064,19 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 		case ACSF_SetMusicVolume:
 			I_SetMusicVolume(ACSToFloat(args[0]));
 			break;
-		
+
+		case ACSF_CheckProximity:
+		{
+			// [zombie] ACS version of A_CheckProximity
+			actor = SingleActorFromTID(args[0], activator);
+			PClass *classname = PClass::FindClass(FBehavior::StaticLookupString(args[1]));
+			double distance = ACSToDouble(args[2]);
+			int count = argCount >= 4 ? args[3] : 1;
+			int flags = argCount >= 5 ? args[4] : 0;
+			int ptr = argCount >= 6 ? args[5] : AAPTR_DEFAULT;
+			return P_Thing_CheckProximity(actor, classname, distance, count, flags, ptr);
+		}
+
 		default:
 			break;
 	}

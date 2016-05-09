@@ -50,6 +50,7 @@
 #include "r_utility.h"
 #include "p_spec.h"
 #include "math/cmath.h"
+#include "actorptrselect.h"
 
 // Set of spawnable things for the Thing_Spawn and Thing_Projectile specials.
 FClassMap SpawnableThings;
@@ -666,6 +667,122 @@ void InitSpawnablesFromMapinfo()
 	InitClassMap(StrifeTypes, ConversationIDsFromMapinfo);
 }
 
+bool P_Thing_CheckProximity(AActor *self, PClass *classname, double distance, int count, int flags, int ptr)
+{
+	AActor *ref = COPY_AAPTR(self, ptr);
+
+	// We need these to check out.
+	if (!ref || !classname || distance <= 0)
+		return nullptr;
+	
+	int counter = 0;
+	bool result = false;
+	double closer = distance, farther = 0, current = distance;
+	const bool ptrWillChange = !!(flags & (CPXF_SETTARGET | CPXF_SETMASTER | CPXF_SETTRACER));
+	const bool ptrDistPref = !!(flags & (CPXF_CLOSEST | CPXF_FARTHEST));
+
+	TThinkerIterator<AActor> it;
+	AActor *mo, *dist = nullptr;
+
+	// [MC] Process of elimination, I think, will get through this as quickly and 
+	// efficiently as possible. 
+	while ((mo = it.Next()))
+	{
+		if (mo == ref) //Don't count self.
+			continue;
+
+		// no unmorphed versions of currently morphed players.
+		if (mo->flags & MF_UNMORPHED)
+			continue;
+
+		// Check inheritance for the classname. Taken partly from CheckClass DECORATE function.
+		if (flags & CPXF_ANCESTOR)
+		{
+			if (!(mo->IsKindOf(classname)))
+				continue;
+		}
+		// Otherwise, just check for the regular class name.
+		else if (classname != mo->GetClass())
+			continue;
+
+		// [MC]Make sure it's in range and respect the desire for Z or not. The function forces it to use
+		// Z later for ensuring CLOSEST and FARTHEST flags are respected perfectly.
+		// Ripped from sphere checking in A_RadiusGive (along with a number of things).
+		if ((ref->Distance2D(mo) < distance &&
+			((flags & CPXF_NOZ) ||
+			((ref->Z() > mo->Z() && ref->Z() - mo->Top() < distance) ||
+				(ref->Z() <= mo->Z() && mo->Z() - ref->Top() < distance)))))
+		{
+			if ((flags & CPXF_CHECKSIGHT) && !(P_CheckSight(mo, ref, SF_IGNOREVISIBILITY | SF_IGNOREWATERBOUNDARY)))
+				continue;
+
+			if (ptrWillChange)
+			{
+				current = ref->Distance2D(mo);
+
+				if ((flags & CPXF_CLOSEST) && (current < closer))
+				{
+					dist = mo;
+					closer = current; // This actor's closer. Set the new standard.
+				}
+				else if ((flags & CPXF_FARTHEST) && (current > farther))
+				{
+					dist = mo;
+					farther = current;
+				}
+				else if (!dist)
+					dist = mo; // Just get the first one and call it quits if there's nothing selected.
+			}
+			if (mo->flags6 & MF6_KILLED)
+			{
+				if (!(flags & (CPXF_COUNTDEAD | CPXF_DEADONLY)))
+					continue;
+				counter++;
+			}
+			else
+			{
+				if (flags & CPXF_DEADONLY)
+					continue;
+				counter++;
+			}
+
+			// Abort if the number of matching classes nearby is greater, we have obviously succeeded in our goal.
+			if (counter > count)
+			{
+				result = (flags & (CPXF_LESSOREQUAL | CPXF_EXACT)) ? false : true;
+
+				// However, if we have one SET* flag and either the closest or farthest flags, keep the function going.
+				if (ptrWillChange && ptrDistPref)
+					continue;
+				else
+					break;
+			}
+		}
+	}
+
+	if (ptrWillChange && dist != 0)
+	{
+		if (flags & CPXF_SETONPTR)
+		{
+			if (flags & CPXF_SETTARGET)		ref->target = dist;
+			if (flags & CPXF_SETMASTER)		ref->master = dist;
+			if (flags & CPXF_SETTRACER)		ref->tracer = dist;
+		}
+		else
+		{
+			if (flags & CPXF_SETTARGET)		self->target = dist;
+			if (flags & CPXF_SETMASTER)		self->master = dist;
+			if (flags & CPXF_SETTRACER)		self->tracer = dist;
+		}
+	}
+
+	if (counter == count)
+		result = true;
+	else if (counter < count)
+		result = !!((flags & CPXF_LESSOREQUAL) && !(flags & CPXF_EXACT));
+
+	return result;
+}
 
 int P_Thing_Warp(AActor *caller, AActor *reference, double xofs, double yofs, double zofs, DAngle angle, int flags, double heightoffset, double radiusoffset, DAngle pitch)
 {

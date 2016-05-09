@@ -6605,22 +6605,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetChaseThreshold)
 // Checks to see if a certain actor class is close to the 
 // actor/pointer within distance, in numbers.
 //==========================================================================
-enum CPXFflags
-{
-	CPXF_ANCESTOR =			1 << 0,
-	CPXF_LESSOREQUAL =		1 << 1,
-	CPXF_NOZ =				1 << 2,
-	CPXF_COUNTDEAD =		1 << 3,
-	CPXF_DEADONLY =			1 << 4,
-	CPXF_EXACT =			1 << 5,
-	CPXF_SETTARGET =		1 << 6,
-	CPXF_SETMASTER =		1 << 7,
-	CPXF_SETTRACER =		1 << 8,
-	CPXF_FARTHEST =			1 << 9,
-	CPXF_CLOSEST =			1 << 10,
-	CPXF_SETONPTR =			1 << 11,
-	CPXF_CHECKSIGHT =		1 << 12,
-};
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckProximity)
 {
 	PARAM_SELF_PROLOGUE(AActor);
@@ -6638,120 +6622,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CheckProximity)
 			ACTION_RETURN_STATE(NULL);
 		}
 	}
-	AActor *ref = COPY_AAPTR(self, ptr);
 
-	// We need these to check out.
-	if (!ref || !classname || distance <= 0)
-	{
-		ACTION_RETURN_STATE(NULL);
-	}
-	int counter = 0;
-	bool result = false;
-	double closer = distance, farther = 0, current = distance;
-	const bool ptrWillChange = !!(flags & (CPXF_SETTARGET | CPXF_SETMASTER | CPXF_SETTRACER));
-	const bool ptrDistPref = !!(flags & (CPXF_CLOSEST | CPXF_FARTHEST));
-
-	TThinkerIterator<AActor> it;
-	AActor *mo, *dist = NULL;
-
-	//[MC] Process of elimination, I think, will get through this as quickly and 
-	//efficiently as possible. 
-	while ((mo = it.Next()))
-	{
-		if (mo == ref) //Don't count self.
-			continue;
-
-		// no unmorphed versions of currently morphed players.
-		if (mo->flags & MF_UNMORPHED)
-			continue;
-
-		//Check inheritance for the classname. Taken partly from CheckClass DECORATE function.
-		if (flags & CPXF_ANCESTOR)
-		{
-			if (!(mo->IsKindOf(classname)))
-				continue;
-		}
-		//Otherwise, just check for the regular class name.
-		else if (classname != mo->GetClass())
-			continue;
-
-		//[MC]Make sure it's in range and respect the desire for Z or not. The function forces it to use
-		//Z later for ensuring CLOSEST and FARTHEST flags are respected perfectly.
-		//Ripped from sphere checking in A_RadiusGive (along with a number of things).
-		if ((ref->Distance2D(mo) < distance &&
-			((flags & CPXF_NOZ) ||
-			((ref->Z() > mo->Z() && ref->Z() - mo->Top() < distance) ||
-			(ref->Z() <= mo->Z() && mo->Z() - ref->Top() < distance)))))
-		{
-			if ((flags & CPXF_CHECKSIGHT) && !(P_CheckSight(mo, ref, SF_IGNOREVISIBILITY | SF_IGNOREWATERBOUNDARY)))
-				continue;
-
-			if (ptrWillChange)
-			{
-				current = ref->Distance2D(mo);
-
-				if ((flags & CPXF_CLOSEST) && (current < closer))
-				{
-					dist = mo;
-					closer = current;		//This actor's closer. Set the new standard.
-				}
-				else if ((flags & CPXF_FARTHEST) && (current > farther))
-				{
-					dist = mo;
-					farther = current;
-				}
-				else if (!dist)
-					dist = mo; //Just get the first one and call it quits if there's nothing selected.
-			}
-			if (mo->flags6 & MF6_KILLED)
-			{
-				if (!(flags & (CPXF_COUNTDEAD | CPXF_DEADONLY)))
-					continue;
-				counter++;
-			}
-			else
-			{
-				if (flags & CPXF_DEADONLY)
-					continue;
-				counter++;
-			}
-
-			//Abort if the number of matching classes nearby is greater, we have obviously succeeded in our goal.
-			if (counter > count)
-			{
-				result = (flags & (CPXF_LESSOREQUAL | CPXF_EXACT)) ? false : true;
-
-				//However, if we have one SET* flag and either the closest or farthest flags, keep the function going.
-				if (ptrWillChange && ptrDistPref)
-					continue;
-				else
-					break;
-			}
-		}
-	}
-
-	if (ptrWillChange && dist != NULL)
-	{
-		if (flags & CPXF_SETONPTR)
-		{
-			if (flags & CPXF_SETTARGET)		ref->target = dist;
-			if (flags & CPXF_SETMASTER)		ref->master = dist;
-			if (flags & CPXF_SETTRACER)		ref->tracer = dist;
-		}
-		else
-		{
-			if (flags & CPXF_SETTARGET)		self->target = dist;
-			if (flags & CPXF_SETMASTER)		self->master = dist;
-			if (flags & CPXF_SETTRACER)		self->tracer = dist;
-		}
-	}
-
-	if (counter == count)
-		result = true;
-	else if (counter < count)
-		result = !!((flags & CPXF_LESSOREQUAL) && !(flags & CPXF_EXACT));
-
-	if (result && jump)
+	if (P_Thing_CheckProximity(self, classname, distance, count, flags, ptr) && jump)
 	{
 		ACTION_RETURN_STATE(jump);
 	}

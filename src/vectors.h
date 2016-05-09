@@ -260,6 +260,16 @@ struct TVector2
 		return len;
 	}
 
+	// Resizes this vector to be the specified length (if it is not 0)
+	TVector2 &MakeResize(double len)
+	{
+		double scale = len / Length();
+		X = vec_t(X * scale);
+		Y = vec_t(Y * scale);
+		return *this;
+	}
+
+
 	// Dot product
 	double operator | (const TVector2 &other) const
 	{

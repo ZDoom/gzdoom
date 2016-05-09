@@ -433,14 +433,14 @@ void R_InterpolateView (player_t *player, double Frac, InterpolationViewer *ivie
 				}
 				InterpolationPath.Pop();
 				ViewPath[0] = iview->Old.Pos;
+				ViewPath[1] = ViewPath[0] + (InterpolationPath[0].pos - ViewPath[0]).XY().MakeResize(pathlen);
 			}
 		}
 		else
 		{
 			DVector2 disp = Displacements.getOffset(oldgroup, newgroup);
 			ViewPos = iview->Old.Pos + (iview->New.Pos - iview->Old.Pos - disp) * Frac;
-			ViewPath[1] = iview->New.Pos;
-			ViewPath[0] = iview->Old.Pos;
+			ViewPath[0] = ViewPath[1] = iview->New.Pos;
 		}
 	}
 	else

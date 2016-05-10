@@ -315,13 +315,13 @@ void FHardwareTexture::Clean(bool all)
 
 void FHardwareTexture::CleanUnused(SpriteHits &usedtranslations)
 {
-	if (usedtranslations.CheckKey(0) != nullptr)
+	if (usedtranslations.CheckKey(0) == nullptr)
 	{
 		glDefTex.Delete();
 	}
 	for (int i = glTex_Translated.Size()-1; i>= 0; i--)
 	{
-		if (usedtranslations.CheckKey(glTex_Translated[i].translation) != nullptr)
+		if (usedtranslations.CheckKey(glTex_Translated[i].translation) == nullptr)
 		{
 			glTex_Translated[i].Delete();
 			glTex_Translated.Delete(i);

@@ -178,7 +178,7 @@ const int XF_NOTMISSILE = 4;
 const int RTF_AFFECTSOURCE = 1;
 const int RTF_NOIMPACTDAMAGE = 2;
 const int RTF_NOTMISSILE = 4;
-const int RTF_THRUSTZ = 8;
+const int RTF_THRUSTZ = 16;
 
 // Flags for A_Blast
 const int BF_USEAMMO = 1;

@@ -1146,7 +1146,6 @@ enum
 	RTF_AFFECTSOURCE =			1,
 	RTF_NOIMPACTDAMAGE =		2,
 	RTF_NOTMISSILE =			4,
-	RTF_THRUSTZ =				8,
 };
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusThrust)
@@ -1168,7 +1167,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusThrust)
 		sourcenothrust = true;
 		self->target->flags2 &= ~MF2_NODMGTHRUST;
 	}
-	if (flags & RTF_THRUSTZ)	flags |= RADF_THRUSTZ;
 
 	P_RadiusAttack (self, self->target, force, distance, self->DamageType, flags | RADF_NODAMAGE, fullthrustdistance);
 	P_CheckSplash(self, distance);

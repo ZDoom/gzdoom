@@ -5321,7 +5321,7 @@ void P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bo
 									vz *= 0.8;
 								}
 								thing->Thrust(bombspot->AngleTo(thing), thrust);
-								if (!(flags & RADF_NODAMAGE))
+								if (!(flags & RADF_NODAMAGE) || (flags & RADF_THRUSTZ))
 									thing->Vel.Z += vz;	// this really doesn't work well
 							}
 						}

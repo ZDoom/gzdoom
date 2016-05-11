@@ -2352,6 +2352,7 @@ void R_CheckDrawSegs ()
 ptrdiff_t R_NewOpening (ptrdiff_t len)
 {
 	ptrdiff_t res = lastopening;
+	len = (len + 1) & ~1;	// only return DWORD aligned addresses because some code stores fixed_t's and floats in openings... 
 	lastopening += len;
 	if ((size_t)lastopening > maxopenings)
 	{
@@ -2512,6 +2513,7 @@ void R_StoreWallRange (int start, int stop)
 				if(sidedef->GetTexture(side_t::mid).isValid())
 					ds_p->bFakeBoundary |= 4; // it is also mid texture
 
+				// note: This should never have used the openings array to store its data!
 				ds_p->maskedtexturecol = R_NewOpening ((stop - start) * 2);
 				ds_p->swall = R_NewOpening ((stop - start) * 2);
 

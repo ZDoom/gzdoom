@@ -367,11 +367,11 @@ int FMugShot::UpdateState(player_t *player, StateFlags stateflags)
 					DAngle diffang = deltaangle(player->mo->Angles.Yaw, badguyangle);
 					if (diffang > 45.)
 					{ // turn face right
-						damage_angle = 0;
+						damage_angle = 2;
 					}
 					else if (diffang < -45.)
 					{ // turn face left
-						damage_angle = 2;
+						damage_angle = 0;
 					}
 				}
 			}

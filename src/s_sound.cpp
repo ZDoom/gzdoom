@@ -1396,8 +1396,6 @@ static void S_LoadSound3D(sfxinfo_t *sfx)
     if(sfx->data3d.isValid())
         return;
 
-    unsigned int i;
-
     DPrintf("Loading monoized sound \"%s\" (%td)\n", sfx->name.GetChars(), sfx - &S_sfx[0]);
 
     int size = Wads.LumpLength(sfx->lumpnum);

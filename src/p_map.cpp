@@ -2533,13 +2533,13 @@ bool P_CheckMove(AActor *thing, const DVector2 &pos, int flags)
 					return false;
 				}
 			}
-			else if (flags & PCM_DROPOFF)
+			else if ((flags & PCM_DROPOFF) && !(thing->flags & (MF_FLOAT|MF_DROPOFF)))
 			{
 				const DVector3 oldpos = thing->Pos();
 				thing->SetOrigin(pos.X, pos.Y, newz, true);
-				bool hcheck = (newz - thing->MaxDropOffHeight > thing->dropoffz);
+				bool hcheck = (newz - thing->dropoffz > thing->MaxDropOffHeight);
 				thing->SetOrigin(oldpos, true);
-				if (hcheck && !(thing->flags & MF_FLOAT) && !(i_compatflags & COMPATF_DROPOFF))
+				if (hcheck)
 				{
 					return false;
 				}

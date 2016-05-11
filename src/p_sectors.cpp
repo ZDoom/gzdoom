@@ -1126,11 +1126,9 @@ bool P_AlignFlat (int linenum, int side, int fc)
 	if (!sec)
 		return false;
 
-	DVector2 pos = line->v1->fPos();
-	DVector2 pos2 = line->v2->fPos();
-	DAngle angle = (pos2 - pos).Angle();
+	DAngle angle = line->Delta().Angle();
 	DAngle norm = angle - 90;
-	double dist = norm.Cos() * pos.X + norm.Sin() * pos.Y;
+	double dist = -(norm.Cos() * line->v1->fX() + norm.Sin() * line->v1->fY());
 
 	if (side)
 	{

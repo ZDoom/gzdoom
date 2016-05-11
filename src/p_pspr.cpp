@@ -251,6 +251,11 @@ void DPSprite::SetState(FState *newstate, bool pending)
 			FState *nextstate;
 			if (newstate->CallAction(Owner->mo, Caller, &nextstate))
 			{
+				// It's possible this call resulted in this very layer being replaced.
+				if (ObjectFlags & OF_EuthanizeMe)
+				{
+					return;
+				}
 				if (nextstate != nullptr)
 				{
 					newstate = nextstate;
@@ -1001,8 +1006,28 @@ DEFINE_ACTION_FUNCTION(AInventory, A_Raise)
 	return 0;
 }
 
+//---------------------------------------------------------------------------
+//
+// PROC A_Overlay
+//
+//---------------------------------------------------------------------------
 
+DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_Overlay)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_INT		(layer);
+	PARAM_STATE_OPT	(state) { state = nullptr; }
 
+	player_t *player = self->player;
+
+	if (player == nullptr)
+		return 0;
+
+	DPSprite *pspr;
+	pspr = new DPSprite(player, reinterpret_cast<AInventory *>(stateowner), layer);
+	pspr->SetState(state);
+	return 0;
+}
 
 //
 // A_GunFlash

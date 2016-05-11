@@ -322,6 +322,8 @@ void Net_ClearBuffers ()
 	memset (netcmds, 0, sizeof(netcmds));
 	memset (nettics, 0, sizeof(nettics));
 	memset (nodeingame, 0, sizeof(nodeingame));
+	memset (nodeforplayer, 0, sizeof(nodeforplayer));
+	memset (playerfornode, 0, sizeof(playerfornode));
 	memset (remoteresend, 0, sizeof(remoteresend));
 	memset (resendto, 0, sizeof(resendto));
 	memset (resendcount, 0, sizeof(resendcount));

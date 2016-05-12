@@ -164,8 +164,7 @@ void OpenGLFrameBuffer::InitializeState()
 //
 //==========================================================================
 
-// Testing only for now. 
-CVAR(Bool, gl_draw_sync, true, 0) //false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR(Bool, gl_draw_sync, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 void OpenGLFrameBuffer::Update()
 {

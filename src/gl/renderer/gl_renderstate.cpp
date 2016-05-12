@@ -342,21 +342,28 @@ void FRenderState::SetClipHeight(float height, float direction)
 {
 	mClipHeight = height;
 	mClipHeightDirection = direction;
+#if 1
+	// This still doesn't work... :(
+	if (gl.glslversion < 1.3f) return;
+#endif
 	if (direction != 0.f)
 	{
-		if (gl.glslversion >= 1.3f) glEnable(GL_CLIP_DISTANCE0);
-		else
+		/*
+		if (gl.glslversion < 1.3f) 
 		{
-			// This does not work. Need someone who understands how glClipPlane works...
-			//glEnable(GL_CLIP_PLANE0);
+			glMatrixMode(GL_MODELVIEW);
+			glPushMatrix();
+			glLoadMatrixf(mViewMatrix.get());
 			// Plane mirrors never are slopes.
-			//double d[4] = { 0, direction, 0, -direction * height };
-			//glClipPlane(GL_CLIP_PLANE0, d);
+			double d[4] = { 0, direction, 0, -direction * height };
+			glClipPlane(GL_CLIP_PLANE0, d);
+			glPopMatrix();
 		}
+		*/
+		glEnable(GL_CLIP_DISTANCE0);
 	}
 	else
 	{
-		if (gl.glslversion >= 1.3f) glDisable(GL_CLIP_DISTANCE0);
-		//else glDisable(GL_CLIP_PLANE0);
+		glDisable(GL_CLIP_DISTANCE0);	// GL_CLIP_PLANE0 is the same value so no need to make a distinction
 	}
 }

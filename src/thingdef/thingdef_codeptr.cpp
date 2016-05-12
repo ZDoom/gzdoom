@@ -395,9 +395,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetGibHealth)
 //==========================================================================
 enum GZFlags
 {
-	GZF_ABSOLUTEPOS =			1,
-	GZF_ABSOLUTEANG =			1 << 1,
-	GZF_CEILING =				1 << 2,
+	GZF_ABSOLUTEPOS =			1,			// Use the absolute position instead of an offsetted one.
+	GZF_ABSOLUTEANG =			1 << 1,		// Don't add the actor's angle to the parameter.
+	GZF_CEILING =				1 << 2,		// Check the ceiling instead of the floor.
+	GZF_3DRESTRICT =			1 << 3,		// Ignore midtextures and 3D floors above the pointer's z.
+	GZF_NOPORTALS =				1 << 4,		// Don't pass through any portals.
+	GZF_NO3DFLOOR =				1 << 5,		// Pass all 3D floors.
 };
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetZAt)
@@ -419,9 +422,13 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetZAt)
 		}
 		else
 		{
+			// [MC] At any time, the NextLowest/Highest functions could be changed to include
+			// more FFC flags to check. Don't risk it by just passing flags straight to it.
+
 			DVector2 pos = { px, py };
-			int secnum;
 			double z = 0.;
+			int pflags = (flags & GZF_3DRESTRICT) ? FFCF_3DRESTRICT : 0;
+			if (flags & GZF_NOPORTALS)			pflags |= FFCF_NOPORTALS;
 
 			if (!(flags & GZF_ABSOLUTEPOS))
 			{
@@ -435,19 +442,39 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetZAt)
 				pos = mobj->Vec2Offset(pos.X * c + pos.Y * s, pos.X * s - pos.Y * c);
 			}
 
-			secnum = int(P_PointInSector(pos.X, pos.Y) - sectors);
+			int secnum = int(P_PointInSector(pos) - sectors);
 
 			if (secnum >= 0)
 			{
 				if (flags & GZF_CEILING)
 				{
-					//z = mobj->Sector->ceilingplane.ZatPoint(pos.X, pos.Y);
-					z = sectors[secnum].ceilingplane.ZatPoint(pos);
+					if ((flags & GZF_NO3DFLOOR) && (flags & GZF_NOPORTALS))
+					{
+						z = sectors[secnum].ceilingplane.ZatPoint(pos);
+					}
+					else if (flags & GZF_NO3DFLOOR)
+					{
+						z = sectors[secnum].HighestCeilingAt(pos);
+					}
+					else
+					{	// [MC] Handle strict 3D floors and portal toggling via the flags passed to it.
+						z = sectors[secnum].NextHighestCeilingAt(pos.X, pos.Y, mobj->Z(), mobj->Top(), pflags);
+					}
 				}
 				else
 				{
-					//z = mobj->Sector->floorplane.ZatPoint(pos.X, pos.Y);
-					z = sectors[secnum].floorplane.ZatPoint(pos);
+					if ((flags & GZF_NO3DFLOOR) && (flags & GZF_NOPORTALS))
+					{
+						z = sectors[secnum].floorplane.ZatPoint(pos);
+					}
+					else if (flags & GZF_NO3DFLOOR)
+					{
+						z = sectors[secnum].LowestFloorAt(pos);
+					}
+					else
+					{
+						z = sectors[secnum].NextLowestFloorAt(pos.X, pos.Y, mobj->Z(), pflags, mobj->MaxStepHeight);
+					}
 				}
 			}
 			ret->SetFloat(z);

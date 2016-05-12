@@ -441,39 +441,38 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetZAt)
 				double c = angle.Cos();
 				pos = mobj->Vec2Offset(pos.X * c + pos.Y * s, pos.X * s - pos.Y * c);
 			}
+			sector_t *sec = P_PointInSector(pos);
 
-			int secnum = int(P_PointInSector(pos) - sectors);
-
-			if (secnum >= 0)
+			if (sec)
 			{
 				if (flags & GZF_CEILING)
 				{
 					if ((flags & GZF_NO3DFLOOR) && (flags & GZF_NOPORTALS))
 					{
-						z = sectors[secnum].ceilingplane.ZatPoint(pos);
+						z = sec->ceilingplane.ZatPoint(pos);
 					}
 					else if (flags & GZF_NO3DFLOOR)
 					{
-						z = sectors[secnum].HighestCeilingAt(pos);
+						z = sec->HighestCeilingAt(pos);
 					}
 					else
 					{	// [MC] Handle strict 3D floors and portal toggling via the flags passed to it.
-						z = sectors[secnum].NextHighestCeilingAt(pos.X, pos.Y, mobj->Z(), mobj->Top(), pflags);
+						z = sec->NextHighestCeilingAt(pos.X, pos.Y, mobj->Z(), mobj->Top(), pflags);
 					}
 				}
 				else
 				{
 					if ((flags & GZF_NO3DFLOOR) && (flags & GZF_NOPORTALS))
 					{
-						z = sectors[secnum].floorplane.ZatPoint(pos);
+						z = sec->floorplane.ZatPoint(pos);
 					}
 					else if (flags & GZF_NO3DFLOOR)
 					{
-						z = sectors[secnum].LowestFloorAt(pos);
+						z = sec->LowestFloorAt(pos);
 					}
 					else
 					{
-						z = sectors[secnum].NextLowestFloorAt(pos.X, pos.Y, mobj->Z(), pflags, mobj->MaxStepHeight);
+						z = sec->NextLowestFloorAt(pos.X, pos.Y, mobj->Z(), pflags, mobj->MaxStepHeight);
 					}
 				}
 			}

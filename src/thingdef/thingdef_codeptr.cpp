@@ -386,6 +386,103 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetGibHealth)
 	return 0;
 }
 
+//==========================================================================
+//
+// GetZAt
+//
+// NON-ACTION function to get the floor or ceiling z at (x, y) with 
+// relativity being an option.
+//==========================================================================
+enum GZFlags
+{
+	GZF_ABSOLUTEPOS =			1,			// Use the absolute position instead of an offsetted one.
+	GZF_ABSOLUTEANG =			1 << 1,		// Don't add the actor's angle to the parameter.
+	GZF_CEILING =				1 << 2,		// Check the ceiling instead of the floor.
+	GZF_3DRESTRICT =			1 << 3,		// Ignore midtextures and 3D floors above the pointer's z.
+	GZF_NOPORTALS =				1 << 4,		// Don't pass through any portals.
+	GZF_NO3DFLOOR =				1 << 5,		// Pass all 3D floors.
+};
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetZAt)
+{
+	if (numret > 0)
+	{
+		assert(ret != NULL);
+		PARAM_SELF_PROLOGUE(AActor);
+		PARAM_FLOAT_OPT(px)			{ px = 0.; }
+		PARAM_FLOAT_OPT(py)			{ py = 0.; }
+		PARAM_ANGLE_OPT(angle)		{ angle = 0.; }
+		PARAM_INT_OPT(flags)		{ flags = 0; }
+		PARAM_INT_OPT(pick_pointer) { pick_pointer = AAPTR_DEFAULT; }
+
+		AActor *mobj = COPY_AAPTR(self, pick_pointer);
+		if (mobj == nullptr)
+		{
+			ret->SetFloat(0);
+		}
+		else
+		{
+			// [MC] At any time, the NextLowest/Highest functions could be changed to include
+			// more FFC flags to check. Don't risk it by just passing flags straight to it.
+
+			DVector2 pos = { px, py };
+			double z = 0.;
+			int pflags = (flags & GZF_3DRESTRICT) ? FFCF_3DRESTRICT : 0;
+			if (flags & GZF_NOPORTALS)			pflags |= FFCF_NOPORTALS;
+
+			if (!(flags & GZF_ABSOLUTEPOS))
+			{
+				if (!(flags & GZF_ABSOLUTEANG))
+				{
+					angle += mobj->Angles.Yaw;
+				}
+
+				double s = angle.Sin();
+				double c = angle.Cos();
+				pos = mobj->Vec2Offset(pos.X * c + pos.Y * s, pos.X * s - pos.Y * c);
+			}
+			sector_t *sec = P_PointInSector(pos);
+
+			if (sec)
+			{
+				if (flags & GZF_CEILING)
+				{
+					if ((flags & GZF_NO3DFLOOR) && (flags & GZF_NOPORTALS))
+					{
+						z = sec->ceilingplane.ZatPoint(pos);
+					}
+					else if (flags & GZF_NO3DFLOOR)
+					{
+						z = sec->HighestCeilingAt(pos);
+					}
+					else
+					{	// [MC] Handle strict 3D floors and portal toggling via the flags passed to it.
+						z = sec->NextHighestCeilingAt(pos.X, pos.Y, mobj->Z(), mobj->Top(), pflags);
+					}
+				}
+				else
+				{
+					if ((flags & GZF_NO3DFLOOR) && (flags & GZF_NOPORTALS))
+					{
+						z = sec->floorplane.ZatPoint(pos);
+					}
+					else if (flags & GZF_NO3DFLOOR)
+					{
+						z = sec->LowestFloorAt(pos);
+					}
+					else
+					{
+						z = sec->NextLowestFloorAt(pos.X, pos.Y, mobj->Z(), pflags, mobj->MaxStepHeight);
+					}
+				}
+			}
+			ret->SetFloat(z);
+			return 1;
+		}
+	}
+	return 0;
+}
+
 //===========================================================================
 //
 // __decorate_internal_state__
@@ -1143,9 +1240,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Explode)
 
 enum
 {
-	RTF_AFFECTSOURCE = 1,
-	RTF_NOIMPACTDAMAGE = 2,
-	RTF_NOTMISSILE = 4,
+	RTF_AFFECTSOURCE =			1,
+	RTF_NOIMPACTDAMAGE =		2,
+	RTF_NOTMISSILE =			4,
 };
 
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusThrust)

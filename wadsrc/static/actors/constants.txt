@@ -178,6 +178,7 @@ const int XF_NOTMISSILE = 4;
 const int RTF_AFFECTSOURCE = 1;
 const int RTF_NOIMPACTDAMAGE = 2;
 const int RTF_NOTMISSILE = 4;
+const int RTF_THRUSTZ = 16;
 
 // Flags for A_Blast
 const int BF_USEAMMO = 1;
@@ -548,4 +549,15 @@ enum
 	FMDF_NOPITCH =			1 << 0,
 	FMDF_INTERPOLATE =		1 << 1,
 	FMDF_NOANGLE =			1 << 2,
+};
+
+// Flags for GetZAt
+enum
+{
+	GZF_ABSOLUTEPOS =			1,			// Use the absolute position instead of an offsetted one.
+	GZF_ABSOLUTEANG =			1 << 1,		// Don't add the actor's angle to the parameter.
+	GZF_CEILING =				1 << 2,		// Check the ceiling instead of the floor.
+	GZF_3DRESTRICT =			1 << 3,		// Ignore midtextures and 3D floors above the pointer's z.
+	GZF_NOPORTALS =				1 << 4,		// Don't pass through any portals.
+	GZF_NO3DFLOOR =				1 << 5,		// Pass all 3D floors.
 };

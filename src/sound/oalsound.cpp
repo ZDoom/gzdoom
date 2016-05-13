@@ -1188,7 +1188,7 @@ std::pair<SoundHandle,bool> OpenALSoundRenderer::LoadSound(BYTE *sfxdata, int le
                 int sum = 0;
                 for(size_t c = 0;c < chancount;c++)
                     sum += sfxdata[i*chancount + c];
-                sfxdata[i] = sum / chancount;
+                sfxdata[i] = short(sum / chancount);
             }
         }
         else if(type == SampleType_UInt8)
@@ -1199,10 +1199,10 @@ std::pair<SoundHandle,bool> OpenALSoundRenderer::LoadSound(BYTE *sfxdata, int le
                 int sum = 0;
                 for(size_t c = 0;c < chancount;c++)
                     sum += sfxdata[i*chancount + c] - 128;
-                sfxdata[i] = (sum / chancount) + 128;
+                sfxdata[i] = BYTE((sum / chancount) + 128);
             }
         }
-        data.Resize(data.Size()/chancount);
+        data.Resize(unsigned(data.Size()/chancount));
     }
 
     ALenum err;

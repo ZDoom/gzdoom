@@ -59,13 +59,6 @@ void ASkyViewpoint::BeginPlay ()
 void ASkyViewpoint::Destroy ()
 {
 	// remove all sector references to ourselves.
-	for (int i = 0; i < numsectors; i++)
-	{
-		if (sectors[i].GetPortal(sector_t::floor)->mSkybox == this)
-			sectors[i].ClearPortal(sector_t::floor);
-		if (sectors[i].GetPortal(sector_t::ceiling)->mSkybox == this)
-			sectors[i].ClearPortal(sector_t::ceiling);
-	}
 	for (auto &s : sectorPortals)
 	{
 		if (s.mSkybox == this) s.mSkybox = 0;

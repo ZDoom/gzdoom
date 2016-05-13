@@ -191,7 +191,6 @@ struct FLinePortal
 	double mSinRot;
 	double mCosRot;
 	portnode_t *render_thinglist;
-	void *mRenderData;
 };
 
 extern TArray<FLinePortal> linePortals;
@@ -229,7 +228,6 @@ struct FSectorPortal
 	DVector2 mDisplacement;
 	double mPlaneZ;
 	TObjPtr<AActor> mSkybox;
-	void *mRenderData;
 
 	bool MergeAllowed() const
 	{

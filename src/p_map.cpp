@@ -1140,7 +1140,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 			DVector3 oldpos = tm.thing->PosRelative(thing);
 			// Both actors already overlap. To prevent them from remaining stuck allow the move if it
 			// takes them further apart or the move does not change the position (when called from P_ChangeSector.)
-			if (oldpos.X == thing->X() && oldpos.Y == thing->Y())
+			if (tm.pos.X == tm.thing->X() && tm.pos.Y == tm.thing->Y())
 			{
 				unblocking = true;
 			}
@@ -5487,7 +5487,7 @@ void P_FindAboveIntersectors(AActor *actor)
 			// not what is wanted here.
 			continue;
 		}
-		if (thing->Z() >= actor->Z() &&
+		if (thing->Z() > actor->Z() &&
 			thing->Z() <= actor->Top())
 		{ // Thing intersects above the base
 			intersectors.Push(thing);

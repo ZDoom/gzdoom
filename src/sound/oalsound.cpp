@@ -1460,7 +1460,17 @@ FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener
         }
         dir += listener->position;
 
-        alSource3f(source, AL_POSITION, dir[0], dir[1], -dir[2]);
+        if(dist_sqr < (0.0004f*0.0004f))
+        {
+            // Head relative
+            alSourcei(source, AL_SOURCE_RELATIVE, AL_TRUE);
+            alSource3f(source, AL_POSITION, 0.f, 0.f, 0.f);
+        }
+        else
+        {
+            alSourcei(source, AL_SOURCE_RELATIVE, AL_FALSE);
+            alSource3f(source, AL_POSITION, dir[0], dir[1], -dir[2]);
+        }
     }
     else
     {
@@ -1478,12 +1488,21 @@ FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener
 
             dir += listener->position;
         }
-        alSource3f(source, AL_POSITION, dir[0], dir[1], -dir[2]);
+        if(dist_sqr < (0.0004f*0.0004f))
+        {
+            // Head relative
+            alSourcei(source, AL_SOURCE_RELATIVE, AL_TRUE);
+            alSource3f(source, AL_POSITION, 0.f, 0.f, 0.f);
+        }
+        else
+        {
+            alSourcei(source, AL_SOURCE_RELATIVE, AL_FALSE);
+            alSource3f(source, AL_POSITION, dir[0], dir[1], -dir[2]);
+        }
     }
     alSource3f(source, AL_VELOCITY, vel[0], vel[1], -vel[2]);
     alSource3f(source, AL_DIRECTION, 0.f, 0.f, 0.f);
 
-    alSourcei(source, AL_SOURCE_RELATIVE, AL_FALSE);
     alSourcei(source, AL_LOOPING, (chanflags&SNDF_LOOP) ? AL_TRUE : AL_FALSE);
 
     alSourcef(source, AL_MAX_GAIN, SfxVolume);
@@ -1724,9 +1743,18 @@ void OpenALSoundRenderer::UpdateSoundParams3D(SoundListener *listener, FISoundCh
     dir += listener->position;
 
     alDeferUpdatesSOFT();
-
     ALuint source = GET_PTRID(chan->SysChannel);
-    alSource3f(source, AL_POSITION, dir[0], dir[1], -dir[2]);
+
+    if(chan->DistanceSqr < (0.0004f*0.0004f))
+    {
+        alSourcei(source, AL_SOURCE_RELATIVE, AL_TRUE);
+        alSource3f(source, AL_POSITION, 0.f, 0.f, 0.f);
+    }
+    else
+    {
+        alSourcei(source, AL_SOURCE_RELATIVE, AL_FALSE);
+        alSource3f(source, AL_POSITION, dir[0], dir[1], -dir[2]);
+    }
     alSource3f(source, AL_VELOCITY, vel[0], vel[1], -vel[2]);
     getALError();
 }

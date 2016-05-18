@@ -120,6 +120,8 @@ void GLFlat::SetupSubsectorLights(int pass, subsector_t * sub, int *dli)
 {
 	Plane p;
 
+	if (renderstyle == STYLE_Add) return;	// no lights on additively blended surfaces.
+
 	if (dli != NULL && *dli != -1)
 	{
 		gl_RenderState.ApplyLightIndex(GLRenderer->mLights->GetIndex(*dli));

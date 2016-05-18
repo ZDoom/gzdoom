@@ -54,8 +54,9 @@ SndFileDecoder::~SndFileDecoder()
 
 bool SndFileDecoder::open(FileReader *reader)
 {
-	__try
-	{
+#ifdef _MSC_VER
+	__try {
+#endif
 		SF_VIRTUAL_IO sfio = { file_get_filelen, file_seek, file_read, file_write, file_tell };
 
 		Reader = reader;
@@ -68,11 +69,11 @@ bool SndFileDecoder::open(FileReader *reader)
 			sf_close(SndFile);
 			SndFile = 0;
 		}
-	}
-	__except (CheckException(GetExceptionCode()))
-	{
+#ifdef _MSC_VER
+	} __except (CheckException(GetExceptionCode())) {
 		// this means that the delay loaded decoder DLL was not found.
 	}
+#endif
     return false;
 }
 

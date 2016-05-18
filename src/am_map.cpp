@@ -2816,8 +2816,8 @@ void AM_drawThings ()
 
 					if (texture == NULL) goto drawTriangle;	// fall back to standard display if no sprite can be found.
 
-					const double spriteXScale = (t->Scale.X * 10 * scale_mtof);
-					const double spriteYScale = (t->Scale.Y * 10 * scale_mtof);
+					const double spriteXScale = (t->Scale.X * (10. / 16.) * scale_mtof);
+					const double spriteYScale = (t->Scale.Y * (10. / 16.) * scale_mtof);
 
 					DrawMarker (texture, p.x, p.y, 0, !!(frame->Flip & (1 << rotation)),
 						spriteXScale, spriteYScale, t->Translation, 1., 0, LegacyRenderStyles[STYLE_Normal]);
@@ -2917,8 +2917,8 @@ static void DrawMarker (FTexture *tex, double x, double y, int yadjust,
 		AM_rotatePoint (&x, &y);
 	}
 	screen->DrawTexture (tex, CXMTOF(x) + f_x, CYMTOF(y) + yadjust + f_y,
-		DTA_DestWidthF, tex->GetScaledWidthDouble() * CleanXfac * xscale / 16,
-		DTA_DestHeightF, tex->GetScaledHeightDouble() * CleanYfac * yscale / 16,
+		DTA_DestWidthF, tex->GetScaledWidthDouble() * CleanXfac * xscale,
+		DTA_DestHeightF, tex->GetScaledHeightDouble() * CleanYfac * yscale,
 		DTA_ClipTop, f_y,
 		DTA_ClipBottom, f_y + f_h,
 		DTA_ClipLeft, f_x,
@@ -3011,7 +3011,7 @@ void AM_drawAuthorMarkers ()
 				 marked->subsector->flags & SSECF_DRAWN :
 				 marked->Sector->MoreFlags & SECF_DRAWN)))
 			{
-				DrawMarker (tex, marked->X(), marked->Y(), 0, flip, mark->Scale.X*16, mark->Scale.Y*16, mark->Translation,
+				DrawMarker (tex, marked->X(), marked->Y(), 0, flip, mark->Scale.X, mark->Scale.Y, mark->Translation,
 					mark->Alpha, mark->fillcolor, mark->RenderStyle);
 			}
 			marked = mark->args[0] != 0 ? it.Next() : NULL;

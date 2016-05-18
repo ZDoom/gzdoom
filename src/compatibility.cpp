@@ -555,7 +555,14 @@ void SetCompatibilityParams()
 					if ((unsigned)CompatParams[i + 1] < (unsigned)numsectors)
 					{
 						// this assumes that the sector does not have any tags yet!
-						tagManager.AddSectorTag(CompatParams[i + 1],  CompatParams[i + 2]);
+						if (CompatParams[i + 2] == 0)
+						{
+							tagManager.RemoveSectorTags(CompatParams[i + 1]);
+						}
+						else
+						{
+							tagManager.AddSectorTag(CompatParams[i + 1], CompatParams[i + 2]);
+						}
 					}
 					i += 3;
 					break;

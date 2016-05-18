@@ -221,7 +221,7 @@ class OpenALSoundStream : public SoundStream
     ALuint Buffers[BufferCount];
     ALuint Source;
 
-    bool Playing;
+    std::atomic<bool> Playing;
     bool Looping;
     ALfloat Volume;
 
@@ -287,12 +287,14 @@ public:
     OpenALSoundStream(OpenALSoundRenderer *renderer)
       : Renderer(renderer), Source(0), Playing(false), Looping(false), Volume(1.0f), Reader(NULL), Decoder(NULL)
     {
-        Renderer->Streams.Push(this);
         memset(Buffers, 0, sizeof(Buffers));
+        Renderer->AddStream(this);
     }
 
     virtual ~OpenALSoundStream()
     {
+        Renderer->RemoveStream(this);
+
         if(Source)
         {
             alSourceRewind(Source);
@@ -309,9 +311,6 @@ public:
         }
         getALError();
 
-        Renderer->Streams.Delete(Renderer->Streams.Find(this));
-        Renderer = NULL;
-
         delete Decoder;
         delete Reader;
     }
@@ -321,7 +320,7 @@ public:
     {
         SetVolume(vol);
 
-        if(Playing)
+        if(Playing.load())
             return true;
 
         /* Clear the buffer queue, then fill and queue each buffer */
@@ -342,21 +341,24 @@ public:
             return false;
 
         alSourcePlay(Source);
-        Playing = (getALError()==AL_NO_ERROR);
+        if(getALError() != AL_NO_ERROR)
+            return false;
 
-        return Playing;
+        Playing.store(true);
+        return true;
     }
 
     virtual void Stop()
     {
-        if(!Playing)
+        if(!Playing.load())
             return;
 
+        std::unique_lock<std::mutex> lock(Renderer->StreamLock);
         alSourceStop(Source);
         alSourcei(Source, AL_BUFFER, 0);
         getALError();
 
-        Playing = false;
+        Playing.store(false);
     }
 
     virtual void SetVolume(float vol)
@@ -382,21 +384,25 @@ public:
 
     virtual bool SetPosition(unsigned int ms_pos)
     {
+        std::unique_lock<std::mutex> lock(Renderer->StreamLock);
         if(!Decoder->seek(ms_pos))
             return false;
 
-        if(!Playing)
+        if(!Playing.load())
             return true;
-        // Stop the source so that all buffers become processed, then call
-        // IsEnded() to refill and restart the source queue with the new
+        // Stop the source so that all buffers become processed, which will
+        // allow the next update to restart the source queue with the new
         // position.
         alSourceStop(Source);
         getALError();
-        return !IsEnded();
+        lock.unlock();
+        Renderer->StreamWake.notify_all();
+        return true;
     }
 
     virtual unsigned int GetPosition()
     {
+        std::unique_lock<std::mutex> lock(Renderer->StreamLock);
         ALint offset, queued, state;
         alGetSourcei(Source, AL_SAMPLE_OFFSET, &offset);
         alGetSourcei(Source, AL_BUFFERS_QUEUED, &queued);
@@ -405,6 +411,8 @@ public:
             return 0;
 
         size_t pos = Decoder->getSampleOffset();
+        lock.unlock();
+
         if(state != AL_STOPPED)
         {
             size_t rem = queued*(Data.Size()/FrameSize) - offset;
@@ -416,54 +424,10 @@ public:
 
     virtual bool IsEnded()
     {
-        if(!Playing)
-            return true;
-
-        ALint state, processed;
-        alGetSourcei(Source, AL_SOURCE_STATE, &state);
-        alGetSourcei(Source, AL_BUFFERS_PROCESSED, &processed);
-
-        Playing = (getALError()==AL_NO_ERROR);
-        if(!Playing)
-            return true;
-
-        // For each processed buffer in the queue...
-        while(processed > 0)
-        {
-            ALuint bufid;
-
-            // Unqueue the oldest buffer, fill it with more data, and queue it
-            // on the end
-            alSourceUnqueueBuffers(Source, 1, &bufid);
-            processed--;
-
-            if(Callback(this, &Data[0], Data.Size(), UserData))
-            {
-                alBufferData(bufid, Format, &Data[0], Data.Size(), SampleRate);
-                alSourceQueueBuffers(Source, 1, &bufid);
-            }
-        }
-
-        // If the source is not playing or paused, and there are buffers queued,
-        // then there was an underrun. Restart the source.
-        Playing = (getALError()==AL_NO_ERROR);
-        if(Playing && state != AL_PLAYING && state != AL_PAUSED)
-        {
-            ALint queued = 0;
-            alGetSourcei(Source, AL_BUFFERS_QUEUED, &queued);
-
-            Playing = (getALError() == AL_NO_ERROR) && (queued > 0);
-            if(Playing)
-            {
-                alSourcePlay(Source);
-                Playing = (getALError()==AL_NO_ERROR);
-            }
-        }
-
-        return !Playing;
+        return !Playing.load();
     }
 
-    FString GetStats()
+    virtual FString GetStats()
     {
         FString stats;
         size_t pos, len;
@@ -474,6 +438,7 @@ public:
         ALint state;
         ALenum err;
 
+        std::unique_lock<std::mutex> lock(Renderer->StreamLock);
         alGetSourcef(Source, AL_GAIN, &volume);
         alGetSourcei(Source, AL_SAMPLE_OFFSET, &offset);
         alGetSourcei(Source, AL_BUFFERS_PROCESSED, &processed);
@@ -481,16 +446,19 @@ public:
         alGetSourcei(Source, AL_SOURCE_STATE, &state);
         if((err=alGetError()) != AL_NO_ERROR)
         {
+            lock.unlock();
             stats = "Error getting stats: ";
             stats += alGetString(err);
             return stats;
         }
 
+        pos = Decoder->getSampleOffset();
+        len = Decoder->getSampleLength();
+        lock.unlock();
+
         stats = (state == AL_INITIAL) ? "Buffering" : (state == AL_STOPPED) ? "Underrun" :
                 (state == AL_PLAYING || state == AL_PAUSED) ? "Ready" : "Unknown state";
 
-        pos = Decoder->getSampleOffset();
-        len = Decoder->getSampleLength();
         if(state == AL_STOPPED)
             offset = BufferCount * (Data.Size()/FrameSize);
         else
@@ -514,6 +482,57 @@ public:
         if(!Playing)
             stats += " XX";
         return stats;
+    }
+
+    bool Process()
+    {
+        if(!Playing.load())
+            return false;
+
+        ALint state, processed;
+        alGetSourcei(Source, AL_SOURCE_STATE, &state);
+        alGetSourcei(Source, AL_BUFFERS_PROCESSED, &processed);
+        if(getALError() != AL_NO_ERROR)
+        {
+            Playing.store(false);
+            return false;
+        }
+
+        // For each processed buffer in the queue...
+        while(processed > 0)
+        {
+            ALuint bufid;
+
+            // Unqueue the oldest buffer, fill it with more data, and queue it
+            // on the end
+            alSourceUnqueueBuffers(Source, 1, &bufid);
+            processed--;
+
+            if(Callback(this, &Data[0], Data.Size(), UserData))
+            {
+                alBufferData(bufid, Format, &Data[0], Data.Size(), SampleRate);
+                alSourceQueueBuffers(Source, 1, &bufid);
+            }
+        }
+
+        // If the source is not playing or paused, and there are buffers queued,
+        // then there was an underrun. Restart the source.
+        bool ok = (getALError()==AL_NO_ERROR);
+        if(ok && state != AL_PLAYING && state != AL_PAUSED)
+        {
+            ALint queued = 0;
+            alGetSourcei(Source, AL_BUFFERS_QUEUED, &queued);
+
+            ok = (getALError() == AL_NO_ERROR) && (queued > 0);
+            if(ok)
+            {
+                alSourcePlay(Source);
+                ok = (getALError()==AL_NO_ERROR);
+            }
+        }
+
+        Playing.store(ok);
+        return ok;
     }
 
     bool Init(SoundStreamCallback callback, int buffbytes, int flags, int samplerate, void *userdata)
@@ -707,7 +726,7 @@ static void LoadALCFunc(ALCdevice *device, const char *name, T *x)
 #define LOAD_FUNC(x)  (LoadALFunc(#x, &x))
 #define LOAD_DEV_FUNC(d, x)  (LoadALCFunc(d, #x, &x))
 OpenALSoundRenderer::OpenALSoundRenderer()
-    : Device(NULL), Context(NULL), SFXPaused(0), PrevEnvironment(NULL), EnvSlot(0)
+    : QuitThread(false), Device(NULL), Context(NULL), SFXPaused(0), PrevEnvironment(NULL), EnvSlot(0)
 {
     EnvFilters[0] = EnvFilters[1] = 0;
 
@@ -940,6 +959,15 @@ OpenALSoundRenderer::~OpenALSoundRenderer()
     if(!Device)
         return;
 
+    if(StreamThread.joinable())
+    {
+        std::unique_lock<std::mutex> lock(StreamLock);
+        QuitThread.store(true);
+        lock.unlock();
+        StreamWake.notify_all();
+        StreamThread.join();
+    }
+
     while(Streams.Size() > 0)
         delete Streams[0];
 
@@ -972,6 +1000,43 @@ OpenALSoundRenderer::~OpenALSoundRenderer()
     Context = NULL;
     alcCloseDevice(Device);
     Device = NULL;
+}
+
+void OpenALSoundRenderer::BackgroundProc()
+{
+    std::unique_lock<std::mutex> lock(StreamLock);
+    while(!QuitThread.load())
+    {
+        if(Streams.Size() == 0)
+        {
+            // If there's nothing to play, wait indefinitely.
+            StreamWake.wait(lock);
+        }
+        else
+        {
+            // Else, process all active streams and sleep for 100ms
+            for(size_t i = 0;i < Streams.Size();i++)
+                Streams[i]->Process();
+            StreamWake.wait_for(lock, std::chrono::milliseconds(100));
+        }
+    }
+}
+
+void OpenALSoundRenderer::AddStream(OpenALSoundStream *stream)
+{
+    std::unique_lock<std::mutex> lock(StreamLock);
+    Streams.Push(stream);
+    lock.unlock();
+    // There's a stream to play, make sure the background thread is aware
+    StreamWake.notify_all();
+}
+
+void OpenALSoundRenderer::RemoveStream(OpenALSoundStream *stream)
+{
+    std::unique_lock<std::mutex> lock(StreamLock);
+    unsigned int idx = Streams.Find(stream);
+    if(idx < Streams.Size())
+        Streams.Delete(idx);
 }
 
 void OpenALSoundRenderer::SetSfxVolume(float volume)
@@ -1252,6 +1317,8 @@ void OpenALSoundRenderer::UnloadSound(SoundHandle sfx)
 
 SoundStream *OpenALSoundRenderer::CreateStream(SoundStreamCallback callback, int buffbytes, int flags, int samplerate, void *userdata)
 {
+    if(StreamThread.get_id() == std::thread::id())
+        StreamThread = std::thread(std::mem_fn(&OpenALSoundRenderer::BackgroundProc), this);
 	OpenALSoundStream *stream = new OpenALSoundStream(this);
 	if (!stream->Init(callback, buffbytes, flags, samplerate, userdata))
 	{
@@ -1263,6 +1330,8 @@ SoundStream *OpenALSoundRenderer::CreateStream(SoundStreamCallback callback, int
 
 SoundStream *OpenALSoundRenderer::OpenStream(FileReader *reader, int flags)
 {
+    if(StreamThread.get_id() == std::thread::id())
+        StreamThread = std::thread(std::mem_fn(&OpenALSoundRenderer::BackgroundProc), this);
 	OpenALSoundStream *stream = new OpenALSoundStream(this);
 	if (!stream->Init(reader, !!(flags&SoundStream::Loop)))
 	{
@@ -1460,7 +1529,17 @@ FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener
         }
         dir += listener->position;
 
-        alSource3f(source, AL_POSITION, dir[0], dir[1], -dir[2]);
+        if(dist_sqr < (0.0004f*0.0004f))
+        {
+            // Head relative
+            alSourcei(source, AL_SOURCE_RELATIVE, AL_TRUE);
+            alSource3f(source, AL_POSITION, 0.f, 0.f, 0.f);
+        }
+        else
+        {
+            alSourcei(source, AL_SOURCE_RELATIVE, AL_FALSE);
+            alSource3f(source, AL_POSITION, dir[0], dir[1], -dir[2]);
+        }
     }
     else
     {
@@ -1478,12 +1557,21 @@ FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener
 
             dir += listener->position;
         }
-        alSource3f(source, AL_POSITION, dir[0], dir[1], -dir[2]);
+        if(dist_sqr < (0.0004f*0.0004f))
+        {
+            // Head relative
+            alSourcei(source, AL_SOURCE_RELATIVE, AL_TRUE);
+            alSource3f(source, AL_POSITION, 0.f, 0.f, 0.f);
+        }
+        else
+        {
+            alSourcei(source, AL_SOURCE_RELATIVE, AL_FALSE);
+            alSource3f(source, AL_POSITION, dir[0], dir[1], -dir[2]);
+        }
     }
     alSource3f(source, AL_VELOCITY, vel[0], vel[1], -vel[2]);
     alSource3f(source, AL_DIRECTION, 0.f, 0.f, 0.f);
 
-    alSourcei(source, AL_SOURCE_RELATIVE, AL_FALSE);
     alSourcei(source, AL_LOOPING, (chanflags&SNDF_LOOP) ? AL_TRUE : AL_FALSE);
 
     alSourcef(source, AL_MAX_GAIN, SfxVolume);
@@ -1724,9 +1812,18 @@ void OpenALSoundRenderer::UpdateSoundParams3D(SoundListener *listener, FISoundCh
     dir += listener->position;
 
     alDeferUpdatesSOFT();
-
     ALuint source = GET_PTRID(chan->SysChannel);
-    alSource3f(source, AL_POSITION, dir[0], dir[1], -dir[2]);
+
+    if(chan->DistanceSqr < (0.0004f*0.0004f))
+    {
+        alSourcei(source, AL_SOURCE_RELATIVE, AL_TRUE);
+        alSource3f(source, AL_POSITION, 0.f, 0.f, 0.f);
+    }
+    else
+    {
+        alSourcei(source, AL_SOURCE_RELATIVE, AL_FALSE);
+        alSource3f(source, AL_POSITION, dir[0], dir[1], -dir[2]);
+    }
     alSource3f(source, AL_VELOCITY, vel[0], vel[1], -vel[2]);
     getALError();
 }
@@ -1850,13 +1947,6 @@ void OpenALSoundRenderer::UpdateSounds()
     }
 
     PurgeStoppedSources();
-}
-
-void OpenALSoundRenderer::UpdateMusic()
-{
-    // For some reason this isn't being called?
-    for(uint32 i = 0;i < Streams.Size();++i)
-        Streams[i]->IsEnded();
 }
 
 bool OpenALSoundRenderer::IsValid()

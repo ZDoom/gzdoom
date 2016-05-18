@@ -561,3 +561,11 @@ enum
 	GZF_NOPORTALS =				1 << 4,		// Don't pass through any portals.
 	GZF_NO3DFLOOR =				1 << 5,		// Pass all 3D floors.
 };
+
+// Flags for A_WeaponOffset
+enum
+{
+	WOF_KEEPX =		1,
+	WOF_KEEPY =		1 << 1,
+	WOF_ADD =		1 << 2,
+};

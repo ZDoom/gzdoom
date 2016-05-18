@@ -785,6 +785,63 @@ DEFINE_ACTION_FUNCTION(AInventory, A_CheckReload)
 
 //---------------------------------------------------------------------------
 //
+// PROC A_WeaponOffset
+//
+//---------------------------------------------------------------------------
+enum WOFFlags
+{
+	WOF_KEEPX =		1,
+	WOF_KEEPY =		1 << 1,
+	WOF_ADD =		1 << 2,
+};
+
+DEFINE_ACTION_FUNCTION(AInventory, A_WeaponOffset)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_FLOAT_OPT(wx)		{ wx = 0.; }
+	PARAM_FLOAT_OPT(wy)		{ wy = 32.; }
+	PARAM_INT_OPT(flags)	{ flags = 0; }
+
+	if ((flags & WOF_KEEPX) && (flags & WOF_KEEPY))
+	{
+		return 0;
+	}
+
+	player_t *player = self->player;
+	pspdef_t *psp;
+
+	if (player && (player->playerstate != PST_DEAD))
+	{
+		psp = &player->psprites[ps_weapon];
+		if (!(flags & WOF_KEEPX))
+		{
+			if (flags & WOF_ADD)
+			{
+				psp->sx += wx;
+			}
+			else
+			{
+				psp->sx = wx;
+			}
+		}
+		if (!(flags & WOF_KEEPY))
+		{
+			if (flags & WOF_ADD)
+			{
+				psp->sy += wy;
+			}
+			else
+			{
+				psp->sy = wy;
+			}
+		}
+	}
+	
+	return 0;
+}
+
+//---------------------------------------------------------------------------
+//
 // PROC A_Lower
 //
 //---------------------------------------------------------------------------

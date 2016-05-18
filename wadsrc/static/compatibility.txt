@@ -51,6 +51,15 @@ A80E7EE40E0D0C76A6FBD242BE29FE27 // map15
 	resetplayerspeed
 }
 
+5C594C67CF7721005DE71429F9811370 // Eternal Doom map03
+{
+	// fix broken staircase. The compatibility option is not sufficient
+	// to reliably handle this so clear the tags from the unwanted sectors.
+	setsectortag 212 0
+	setsectortag 213 0
+	setsectortag 214 0
+}
+
 6DA6FCBA8089161BDEC6A1D3F6C8D60F // Eternal Doom MAP25
 {
 	stairs

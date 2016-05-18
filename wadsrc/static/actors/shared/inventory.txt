@@ -48,6 +48,7 @@ ACTOR Inventory native
 	action native A_RestoreSpecialDoomThing();
 	action native A_RestoreSpecialThing1();
 	action native A_RestoreSpecialThing2();
+	action native A_WeaponOffset(float wx = 0, float wy = 32, int flags = 0);
 	
 	States
 	{

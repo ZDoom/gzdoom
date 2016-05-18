@@ -223,7 +223,7 @@ static void ParseLock(FScanner &sc)
 	}
 
 	ignorekey = true;
-	if (keynum > 0 && keynum < 255) 
+	if (keynum > 0 && keynum <= 255) 
 	{
 		lock = new Lock;
 		if (locks[keynum])

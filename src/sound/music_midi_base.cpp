@@ -74,8 +74,12 @@ CUSTOM_CVAR (Int, snd_mididevice, -1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 	if ((self >= (signed)nummididevices) || (self < -6))
 	{
-		Printf ("ID out of range. Using default device.\n");
-		self = 0;
+		// Don't do repeated message spam if there is no valid device.
+		if (self != 0)
+		{
+			Printf("ID out of range. Using default device.\n");
+			self = 0;
+		}
 		return;
 	}
 	mididevice = MAX<UINT>(0, self);

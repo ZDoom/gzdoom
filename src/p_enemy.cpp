@@ -538,15 +538,31 @@ bool P_Move (AActor *actor)
 
 	tm.FromPMove = true;
 
-	try_ok = true;
-	for(int i=1; i < steps; i++)
-	{
-		try_ok = P_TryMove(actor, DVector2(origx + deltax * i / steps, origy + deltay * i / steps), dropoff, NULL, tm);
-		if (!try_ok) break;
-	}
+	DVector2 start = { origx, origy };
+	DVector2 move = { deltax, deltay };
+	DAngle oldangle = actor->Angles.Yaw;
 
-	// killough 3/15/98: don't jump over dropoffs:
-	if (try_ok) try_ok = P_TryMove (actor, DVector2(tryx, tryy), dropoff, NULL, tm);
+	try_ok = true;
+	for (int i = 1; i <= steps; i++)
+	{
+		DVector2 ptry = start + move * i / steps;
+		// killough 3/15/98: don't jump over dropoffs:
+		try_ok = P_TryMove(actor, ptry, dropoff, NULL, tm);
+		if (!try_ok) break;
+
+		// Handle portal transitions just like P_XYMovement.
+		if (steps > 1 && actor->Pos().XY() != ptry)
+		{
+			DAngle anglediff = deltaangle(oldangle, actor->Angles.Yaw);
+
+			if (anglediff != 0)
+			{
+				move = move.Rotated(anglediff);
+				oldangle = actor->Angles.Yaw;
+			}
+			start = actor->Pos() - move * i / steps;
+		}
+	}
 
 	// [GrafZahl] Interpolating monster movement as it is done here just looks bad
 	// so make it switchable

@@ -33,8 +33,9 @@ struct FCheckPosition
 	AActor			*stepthing;
 	// [RH] These are used by PIT_CheckThing and P_XYMovement to apply
 	// ripping damage once per tic instead of once per move.
-	bool			DoRipping;
 	TMap<AActor*, bool> LastRipped;
+	bool			DoRipping;
+	bool			portalstep;
 
 	int				PushTime;
 

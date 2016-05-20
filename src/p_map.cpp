@@ -728,6 +728,22 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 			// Since a one-sided line does not have an opening there's nothing left to do about it.
 			return true;
 		}
+
+		// check if the actor can step through the ceiling portal. In this case one-sided lines in the current area should not block
+		if (!cres.line->frontsector->PortalBlocksMovement(sector_t::ceiling))
+		{
+			double portz = cres.line->frontsector->GetPortalPlaneZ(sector_t::ceiling);
+			if (tm.thing->Z() < portz && tm.thing->Z() + tm.thing->MaxStepHeight >= portz && tm.floorz < portz)
+			{
+				tm.floorz = portz;
+				tm.floorsector = cres.line->frontsector;
+				tm.floorpic = cres.line->sidedef[0]->GetTexture(side_t::mid);
+				tm.floorterrain = 0;
+				tm.portalstep = true;
+				return true;
+			}
+		}
+
 		if (tm.thing->flags2 & MF2_BLASTED)
 		{
 			P_DamageMobj(tm.thing, NULL, NULL, tm.thing->Mass >> 5, NAME_Melee);
@@ -1974,6 +1990,7 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 	sector_t*	newsec;
 
 	tm.floatok = false;
+	tm.portalstep = false;
 	oldz = thing->Z();
 	if (onfloor)
 	{
@@ -2246,6 +2263,7 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 				thing->LinkToWorld();
 				P_FindFloorCeiling(thing);
 				portalcrossed = true;
+				tm.portalstep = false;
 			}
 			else if (!portalcrossed)
 			{
@@ -2271,6 +2289,7 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 				P_FindFloorCeiling(thing);
 				thing->ClearInterpolation();
 				portalcrossed = true;
+				tm.portalstep = false;
 			}
 			// if this is the current camera we need to store the point where the portal was crossed and the exit
 			// so that the renderer can properly calculate an interpolated position along the movement path.
@@ -2408,6 +2427,20 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 				newsec->SecActTarget->TriggerAction(thing, SECSPAC_EyesBelowC);
 			}
 		}
+	}
+
+	// If the actor stepped through a ceiling portal we need to reacquire the actual position info after the transition
+	if (tm.portalstep)
+	{
+		DVector3 oldpos = thing->Pos();
+		thing->UnlinkFromWorld();
+		thing->SetXYZ(thing->PosRelative(thing->Sector->GetOppositePortalGroup(sector_t::ceiling)));
+		thing->Prev = thing->Pos() - oldpos;
+		thing->Sector = P_PointInSector(thing->Pos());
+		thing->PrevPortalGroup = thing->Sector->PortalGroup;
+		thing->LinkToWorld();
+
+		P_FindFloorCeiling(thing);
 	}
 
 	// [RH] If changing sectors, trigger transitions

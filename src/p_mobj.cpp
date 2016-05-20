@@ -2117,21 +2117,23 @@ explode:
 			if (mo->Pos().XY() != ptry)
 			{
 				// If the new position does not match the desired position, the player
-				// must have gone through a teleporter, so stop moving right now if it
-				// was a regular teleporter. If it was a line-to-line or fogless teleporter,
-				// the move should continue, but start and move need to change.
+				// must have gone through a teleporter or portal.
+				
 				if (mo->Vel.X == 0 && mo->Vel.Y == 0)
 				{
+					// Stop moving right now if it was a regular teleporter.
 					step = steps;
 				}
 				else
 				{
+					// It was a portal, line-to-line or fogless teleporter, so the move should continue.
+					// For that we need to adjust the start point, and the movement vector.
 					DAngle anglediff = deltaangle(oldangle, mo->Angles.Yaw);
 
 					if (anglediff != 0)
 					{
 						move = move.Rotated(anglediff);
-						oldangle = mo->Angles.Yaw;	// in case more moves are needed this needs to be updated.
+						oldangle = mo->Angles.Yaw;
 					}
 					start = mo->Pos() - move * step / steps;
 				}
@@ -3225,7 +3227,7 @@ DVector3 AActor::GetPortalTransition(double byoffset, sector_t **pSec)
 
 	while (!sec->PortalBlocksMovement(sector_t::ceiling))
 	{
-		if (testz > sec->GetPortalPlaneZ(sector_t::ceiling))
+		if (testz >= sec->GetPortalPlaneZ(sector_t::ceiling))
 		{
 			pos = PosRelative(sec->GetOppositePortalGroup(sector_t::ceiling));
 			sec = P_PointInSector(pos);
@@ -3237,7 +3239,7 @@ DVector3 AActor::GetPortalTransition(double byoffset, sector_t **pSec)
 	{
 		while (!sec->PortalBlocksMovement(sector_t::floor))
 		{
-			if (testz <= sec->GetPortalPlaneZ(sector_t::floor))
+			if (testz < sec->GetPortalPlaneZ(sector_t::floor))
 			{
 				pos = PosRelative(sec->GetOppositePortalGroup(sector_t::floor));
 				sec = P_PointInSector(pos);
@@ -3256,7 +3258,7 @@ void AActor::CheckPortalTransition(bool islinked)
 	bool moved = false;
 	while (!Sector->PortalBlocksMovement(sector_t::ceiling))
 	{
-		if (Z() > Sector->GetPortalPlaneZ(sector_t::ceiling))
+		if (Z() >= Sector->GetPortalPlaneZ(sector_t::ceiling))
 		{
 			DVector3 oldpos = Pos();
 			if (islinked && !moved) UnlinkFromWorld();

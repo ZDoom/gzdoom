@@ -1608,6 +1608,13 @@ TArray<FString> I_GetGogPaths()
 		result.Push(path + "/Plutonia");
 	}
 
+	// Look for Strife: Veteran Edition
+	gamepath = gogregistrypath + "\\1432899949";
+	if (QueryPathKey(HKEY_LOCAL_MACHINE, gamepath.GetChars(), "Path", path))
+	{
+		result.Push(path);	// directly in install folder
+	}
+
 	return result;
 }
 

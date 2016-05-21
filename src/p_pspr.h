@@ -66,8 +66,8 @@ public:
 	int					GetSprite()	const { return Sprite; }
 	int					GetFrame()	const { return Frame; }
 	FState*				GetState()	const { return State; }
-	DPSprite*			GetNext()	const { return Next; }
-	TObjPtr<AInventory>	GetCaller()	const { return Caller; }
+	DPSprite*			GetNext()	      { return Next; }
+	AInventory*			GetCaller()	      { return Caller; }
 
 	double x, y;
 	double oldx, oldy;
@@ -82,7 +82,7 @@ private:
 	void Destroy();
 
 	TObjPtr<AInventory> Caller;
-	DPSprite *Next;
+	TObjPtr<DPSprite> Next;
 	player_t *Owner;
 	FState *State;
 	int Sprite;

@@ -436,6 +436,7 @@ public:
 
 	AWeapon	   *ReadyWeapon;
 	AWeapon	   *PendingWeapon;			// WP_NOCHANGE if not changing
+	TObjPtr<DPSprite> psprites; // view sprites (gun, etc)
 
 	int			cheats;					// bit flags
 	int			timefreezer;			// Player has an active time freezer
@@ -528,7 +529,6 @@ public:
 	int GetSpawnClass();
 
 	// PSprite layers
-	DPSprite *psprites; // view sprites (gun, etc)
 	void TickPSprites();
 	void DestroyPSprites();
 	DPSprite *GetPSprite(psprnum_t layer); // Used ONLY for compatibility with the old hardcoded layers.

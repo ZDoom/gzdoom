@@ -113,12 +113,25 @@ END_POINTERS
 DPSprite::DPSprite(player_t *owner, AInventory *caller, int id)
 : processPending(true), firstTic(true), Owner(owner), Caller(caller), ID(id)
 {
-	DPSprite **prev = &Owner->psprites;
-	while (*prev && (*prev)->ID < ID)
-		prev = &(*prev)->Next;
-
-	Next = *prev;
-	*prev = this;
+	DPSprite *prev = nullptr;
+	DPSprite *next = Owner->psprites;
+	while (next != nullptr && next->ID < ID)
+	{
+		prev = next;
+		next = next->Next;
+	}
+	Next = next;
+	GC::WriteBarrier(this, next);
+	if (prev == NULL)
+	{
+		Owner->psprites = this;
+		GC::WriteBarrier(this);
+	}
+	else
+	{
+		prev->Next = this;
+		GC::WriteBarrier(prev, this);
+	}
 
 	if (Next && Next->ID == ID && ID != 0)
 		Next->Destroy(); // Replace it.
@@ -1349,10 +1362,13 @@ void DPSprite::Serialize(FArchive &arc)
 void player_t::DestroyPSprites()
 {
 	DPSprite *pspr = psprites;
+	psprites = nullptr;
 	while (pspr)
 	{
+		DPSprite *next = pspr->Next;
+		pspr->Next = nullptr;
 		pspr->Destroy();
-		pspr = pspr->Next;
+		pspr = next;
 	}
 }
 
@@ -1364,12 +1380,27 @@ void player_t::DestroyPSprites()
 
 void DPSprite::Destroy()
 {
-	DPSprite **prev = &Owner->psprites;
-	while (*prev != this)
-		prev = &(*prev)->Next;
+	// Do not crash if this gets called on partially initialized objects.
+	if (Owner != nullptr && Owner->psprites != nullptr)
+	{
+		if (Owner->psprites != this)
+		{
+			DPSprite *prev = Owner->psprites;
+			while (prev != nullptr && prev->Next != this)
+				prev = prev->Next;
 
-	*prev = Next;
-
+			if (prev != nullptr && prev->Next == this)
+			{
+				prev->Next = Next;
+				GC::WriteBarrier(prev, Next);
+			}
+		}
+		else
+		{
+			Owner->psprites = Next;
+			GC::WriteBarrier(Next);
+		}
+	}
 	Super::Destroy();
 }
 

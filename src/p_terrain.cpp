@@ -497,7 +497,7 @@ static void ParseFriction (FScanner &sc, int keyword, void *fields)
 	friction = (0x1EB8*(sc.Float*100))/0x80 + 0xD001;
 	friction = clamp<double> (friction, 0, 65536.);
 
-	if (friction > ORIG_FRICTION)	// ice
+	if (friction > ORIG_FRICTION * 65536.)	// ice
 		movefactor = ((0x10092 - friction) * 1024) / 4352 + 568;
 	else
 		movefactor = ((friction - 0xDB34)*(0xA))/0x80;

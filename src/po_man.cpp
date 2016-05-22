@@ -68,27 +68,6 @@ inline FArchive &operator<< (FArchive &arc, podoortype_t &type)
 	return arc;
 }
 
-class DPolyAction : public DThinker
-{
-	DECLARE_CLASS (DPolyAction, DThinker)
-	HAS_OBJECT_POINTERS
-public:
-	DPolyAction (int polyNum);
-	void Serialize (FArchive &arc);
-	void Destroy();
-	void Stop();
-	double GetSpeed() const { return m_Speed; }
-
-	void StopInterpolation ();
-protected:
-	DPolyAction ();
-	int m_PolyObj;
-	double m_Speed;
-	double m_Dist;
-	TObjPtr<DInterpolation> m_Interpolation;
-
-	void SetInterpolation ();
-};
 
 class DRotatePoly : public DPolyAction
 {
@@ -302,6 +281,10 @@ void DMovePoly::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << m_Angle << m_Speed;
+	if (SaveVersion >= 4548)
+	{
+		arc << m_Speedv;
+	}
 }
 
 DMovePoly::DMovePoly (int polyNum)

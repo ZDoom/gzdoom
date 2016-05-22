@@ -228,7 +228,7 @@ static const char *KeyName (int key)
 	if (KeyNames[key])
 		return KeyNames[key];
 
-	mysnprintf (name, countof(name), "#%d", key);
+	mysnprintf (name, countof(name), "Key_%d", key);
 	return name;
 }
 

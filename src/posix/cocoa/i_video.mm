@@ -790,7 +790,6 @@ void CocoaVideo::SetFullscreenMode(const int width, const int height)
 	}
 
 	[m_window setFrame:screenFrame display:YES];
-	[m_window setFrameOrigin:NSMakePoint(0.0f, 0.0f)];
 }
 
 void CocoaVideo::SetWindowedMode(const int width, const int height)

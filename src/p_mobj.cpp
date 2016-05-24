@@ -3560,10 +3560,10 @@ void AActor::Tick ()
 						scrolltype -= Carry_East5;
 						BYTE dir = HereticScrollDirs[scrolltype / 5];
 						double carryspeed = HereticSpeedMuls[scrolltype % 5] * (1. / (32 * CARRYFACTOR));
-						if (scrolltype<=Carry_East35 && !(i_compatflags&COMPATF_RAVENSCROLL)) 
+						if (scrolltype < 5 && !(i_compatflags&COMPATF_RAVENSCROLL)) 
 						{
 							// Use speeds that actually match the scrolling textures!
-							carryspeed = (1 << ((scrolltype%5) - 1));
+							carryspeed = (1 << ((scrolltype % 5) + 15)) / 65536.;
 						}
 						scrollv.X += carryspeed * ((dir & 3) - 1);
 						scrollv.Y += carryspeed * (((dir & 12) >> 2) - 1);

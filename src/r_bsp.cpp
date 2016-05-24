@@ -622,6 +622,18 @@ void R_AddLine (seg_t *line)
 		rw_backcz2 = backsector->ceilingplane.ZatPoint(line->v2);
 		rw_backfz2 = backsector->floorplane.ZatPoint(line->v2);
 
+		if (fake3D & FAKE3D_FAKEBACK)
+		{
+			if (rw_frontfz1 >= rw_backfz1 && rw_frontfz2 >= rw_backfz2)
+			{
+				fake3D |= FAKE3D_CLIPBOTFRONT;
+			}
+			if (rw_frontcz1 <= rw_backcz1 && rw_frontcz2 <= rw_backcz2)
+			{
+				fake3D |= FAKE3D_CLIPTOPFRONT;
+			}
+		}
+
 		// Cannot make these walls solid, because it can result in
 		// sprite clipping problems for sprites near the wall
 		if (rw_frontcz1 > rw_backcz1 || rw_frontcz2 > rw_backcz2)
@@ -1333,14 +1345,6 @@ void R_Subsector (subsector_t *sub)
 					{
 						fakeFloor->validcount = validcount;
 						R_3D_NewClip();
-					}
-					if (frontsector->CenterFloor() >= backsector->CenterFloor())
-					{
-						fake3D |= FAKE3D_CLIPBOTFRONT;
-					}
-					if (frontsector->CenterCeiling() <= backsector->CenterCeiling())
-					{
-						fake3D |= FAKE3D_CLIPTOPFRONT;
 					}
 					R_AddLine(line); // fake
 				}

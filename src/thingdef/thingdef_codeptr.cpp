@@ -3439,7 +3439,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Burst)
 
 		if (mo)
 		{
-			mo->Vel.Z = 4 * (mo->Z() - self->Z()) * self->Height;
+			mo->Vel.Z = 4 * (mo->Z() - self->Z()) / self->Height;
 			mo->Vel.X = pr_burst.Random2() / 128.;
 			mo->Vel.Y = pr_burst.Random2() / 128.;
 			mo->RenderStyle = self->RenderStyle;
@@ -5635,16 +5635,17 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusGive)
 	PARAM_FLOAT		(distance);
 	PARAM_INT		(flags);
 	PARAM_INT_OPT	(amount)	{ amount = 0; }
-	PARAM_CLASS_OPT	(filter, AActor)	{ filter = NULL; }
+	PARAM_CLASS_OPT	(filter, AActor)	{ filter = nullptr; }
 	PARAM_NAME_OPT	(species)	{ species = NAME_None; }
 	PARAM_FLOAT_OPT	(mindist)	{ mindist = 0; }
+	PARAM_INT_OPT	(limit)		{ limit = 0; }
 
 	// We need a valid item, valid targets, and a valid range
-	if (item == NULL || (flags & RGF_MASK) == 0 || !flags || distance <= 0 || mindist >= distance)
+	if (item == nullptr || (flags & RGF_MASK) == 0 || !flags || distance <= 0 || mindist >= distance)
 	{
 		ACTION_RETURN_INT(0);
 	}
-	
+	bool unlimited = (limit <= 0);
 	if (amount == 0)
 	{
 		amount = 1;
@@ -5654,7 +5655,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusGive)
 	if (flags & RGF_MISSILES)
 	{
 		TThinkerIterator<AActor> it;
-		while ((thing = it.Next()))
+		while ((thing = it.Next()) && ((unlimited) || (given < limit)))
 		{
 			given += DoRadiusGive(self, thing, item, amount, distance, flags, filter, species, mindist);
 		}
@@ -5666,7 +5667,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusGive)
 		FMultiBlockThingsIterator it(check, self->X(), self->Y(), mid-distance, mid+distance, distance, false, self->Sector);
 		FMultiBlockThingsIterator::CheckResult cres;
 
-		while ((it.Next(&cres)))
+		while ((it.Next(&cres)) && ((unlimited) || (given < limit)))
 		{
 			given += DoRadiusGive(self, cres.thing, item, amount, distance, flags, filter, species, mindist);
 		}

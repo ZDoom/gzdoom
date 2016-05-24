@@ -345,7 +345,7 @@ void cht_DoCheat (player_t *player, int cheat)
 				player->mo->DamageType = NAME_None;
 				if (player->ReadyWeapon != nullptr)
 				{
-					player->GetPSprite(ps_weapon)->SetState(player->ReadyWeapon->GetUpState());
+					P_SetPsprite(player, ps_weapon, player->ReadyWeapon->GetUpState());
 				}
 
 				if (player->morphTics > 0)
@@ -934,8 +934,8 @@ void cht_Take (player_t *player, const char *name, int amount)
 
 				player->ReadyWeapon = nullptr;
 				player->PendingWeapon = WP_NOCHANGE;
-				player->GetPSprite(ps_weapon)->SetState(nullptr);
-				player->GetPSprite(ps_flash)->SetState(nullptr);
+				P_SetPsprite(player, ps_weapon, nullptr);
+				P_SetPsprite(player, ps_flash, nullptr);
 			}
 		}
 

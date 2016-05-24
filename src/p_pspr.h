@@ -96,6 +96,7 @@ private:
 
 void P_NewPspriteTick();
 void P_CalcSwing (player_t *player);
+void P_SetPsprite(player_t *player, psprnum_t id, FState *state, bool pending = false);
 void P_BringUpWeapon (player_t *player);
 void P_FireWeapon (player_t *player);
 void P_DropWeapon (player_t *player);

@@ -1405,7 +1405,7 @@ void APlayerPawn::ActivateMorphWeapon ()
 			pspr->SetState(nullptr);
 		}
 	}
-	player->GetPSprite(ps_flash)->SetState(nullptr);
+	P_SetPsprite(player, ps_flash,  nullptr);
 
 	player->PendingWeapon = WP_NOCHANGE;
 }

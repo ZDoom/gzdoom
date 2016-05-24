@@ -219,7 +219,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ClearFlash)
 	if (player == nullptr)
 		return 0;
 
-	player->GetPSprite(ps_flash)->SetState(nullptr);
+	P_SetPsprite (player, ps_flash, nullptr);
 	return 0;
 }
 
@@ -235,7 +235,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ShowElectricFlash)
 
 	if (self->player != nullptr)
 	{
-		self->player->GetPSprite(ps_flash)->SetState(self->player->ReadyWeapon->FindState(NAME_Flash));
+		P_SetPsprite (self->player, ps_flash, self->player->ReadyWeapon->FindState(NAME_Flash));
 	}
 	return 0;
 }
@@ -707,7 +707,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireGrenade)
 	if (!weapon->DepleteAmmo (weapon->bAltFire))
 		return 0;
 
-	player->GetPSprite(ps_flash)->SetState(flash, true);
+	P_SetPsprite (player, ps_flash, flash, true);
 
 	if (grenadetype != nullptr)
 	{

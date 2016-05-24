@@ -92,7 +92,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffCheck)
 						if (weapon != nullptr)
 						{
 							FState * newstate = weapon->FindState("Drain");
-							if (newstate != nullptr) player->GetPSprite(ps_weapon)->SetState(newstate);
+							if (newstate != nullptr) P_SetPsprite(player, ps_weapon, newstate);
 						}
 					}
 					if (weapon != nullptr)
@@ -187,7 +187,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffCheckBlink)
 	{
 		if (!--self->weaponspecial)
 		{
-			self->player->GetPSprite(ps_weapon)->SetState(self->player->ReadyWeapon->FindState ("Blink"));
+			P_SetPsprite(self->player, ps_weapon, self->player->ReadyWeapon->FindState ("Blink"));
 			self->weaponspecial = (pr_blink()+50)>>2;
 		}
 		else 

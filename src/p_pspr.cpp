@@ -312,6 +312,12 @@ void DPSprite::SetState(FState *newstate, bool pending)
 	return;
 }
 
+void P_SetPsprite(player_t *player, psprnum_t id, FState *state, bool pending)
+{
+	if (player == nullptr) return;
+	player->GetPSprite(id)->SetState(state, pending);
+}
+
 //---------------------------------------------------------------------------
 //
 // PROC P_BringUpWeapon
@@ -369,7 +375,7 @@ void P_BringUpWeapon (player_t *player)
 	psweapon->SetState(newstate);
 	// make sure that the previous weapon's flash state is terminated.
 	// When coming here from a weapon drop it may still be active.
-	player->GetPSprite(ps_flash)->SetState(nullptr);
+	P_SetPsprite(player, ps_flash,  nullptr);
 	player->mo->weaponspecial = 0;
 }
 
@@ -402,7 +408,7 @@ void P_FireWeapon (player_t *player, FState *state)
 	{
 		state = weapon->GetAtkState(!!player->refire);
 	}
-	player->GetPSprite(ps_weapon)->SetState(state);
+	P_SetPsprite(player, ps_weapon, state);
 	if (!(weapon->WeaponFlags & WIF_NOALERT))
 	{
 		P_NoiseAlert (player->mo, player->mo, false);
@@ -440,7 +446,7 @@ void P_FireWeaponAlt (player_t *player, FState *state)
 		state = weapon->GetAltAtkState(!!player->refire);
 	}
 
-	player->GetPSprite(ps_weapon)->SetState(state);
+	P_SetPsprite(player, ps_weapon, state);
 	if (!(weapon->WeaponFlags & WIF_NOALERT))
 	{
 		P_NoiseAlert (player->mo, player->mo, false);
@@ -465,7 +471,7 @@ void P_DropWeapon (player_t *player)
 	player->WeaponState &= ~WF_DISABLESWITCH;
 	if (player->ReadyWeapon != nullptr)
 	{
-		player->GetPSprite(ps_weapon)->SetState(player->ReadyWeapon->GetDownState());
+		P_SetPsprite(player, ps_weapon, player->ReadyWeapon->GetDownState());
 	}
 }
 
@@ -809,7 +815,7 @@ static void P_CheckWeaponButtons (player_t *player)
 			// state, the weapon won't disappear. ;)
 			if (state != nullptr)
 			{
-				player->GetPSprite(ps_weapon)->SetState(state);
+				P_SetPsprite(player, ps_weapon, state);
 				return;
 			}
 		}
@@ -1011,7 +1017,7 @@ DEFINE_ACTION_FUNCTION(AInventory, A_Lower)
 		return 0;
 	}
 	// [RH] Clear the flash state. Only needed for Strife.
-	player->GetPSprite(ps_flash)->SetState(nullptr);
+	P_SetPsprite(player, ps_flash,  nullptr);
 	P_BringUpWeapon (player);
 	return 0;
 }
@@ -1118,7 +1124,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_GunFlash)
 			flash = player->ReadyWeapon->FindState(NAME_Flash);
 		}
 	}
-	player->GetPSprite(ps_flash)->SetState(flash);
+	P_SetPsprite(player, ps_flash,  flash);
 	return 0;
 }
 

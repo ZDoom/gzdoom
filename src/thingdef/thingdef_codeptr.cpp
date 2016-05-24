@@ -3439,7 +3439,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Burst)
 
 		if (mo)
 		{
-			mo->Vel.Z = 4 * (mo->Z() - self->Z()) * self->Height;
+			mo->Vel.Z = 4 * (mo->Z() - self->Z()) / self->Height;
 			mo->Vel.X = pr_burst.Random2() / 128.;
 			mo->Vel.Y = pr_burst.Random2() / 128.;
 			mo->RenderStyle = self->RenderStyle;

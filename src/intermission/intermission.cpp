@@ -109,7 +109,7 @@ void DIntermissionScreen::Init(FIntermissionAction *desc, bool first)
 	}
 	else if (*texname == '$')
 	{
-		texname = GStrings[texname+1];
+		texname = GStrings(texname+1);
 	}
 	if (texname[0] != 0)
 	{

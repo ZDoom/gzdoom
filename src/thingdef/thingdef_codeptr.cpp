@@ -1226,8 +1226,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Explode)
 	P_CheckSplash(self, distance);
 	if (alert && self->target != NULL && self->target->player != NULL)
 	{
-		validcount++;
-		P_RecursiveSound (self->Sector, self->target, false, 0);
+		P_NoiseAlert(self->target, self);
 	}
 	return 0;
 }

@@ -62,12 +62,12 @@ public:
 	static void NewTick();
 	void SetState(FState *newstate, bool pending = false);
 
-	int					GetID()		const { return ID; }
-	int					GetSprite()	const { return Sprite; }
-	int					GetFrame()	const { return Frame; }
-	FState*				GetState()	const { return State; }
-	DPSprite*			GetNext()	      { return Next; }
-	AInventory*			GetCaller()	      { return Caller; }
+	int			GetID()		const { return ID; }
+	int			GetSprite()	const { return Sprite; }
+	int			GetFrame()	const { return Frame; }
+	FState*		GetState()	const { return State; }
+	DPSprite*	GetNext()	      { return Next; }
+	AInventory*	GetCaller()	      { return Caller; }
 
 	double x, y;
 	double oldx, oldy;

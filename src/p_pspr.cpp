@@ -128,7 +128,7 @@ DPSprite::DPSprite(player_t *owner, AInventory *caller, int id)
 	}
 	Next = next;
 	GC::WriteBarrier(this, next);
-	if (prev == NULL)
+	if (prev == nullptr)
 	{
 		Owner->psprites = this;
 		GC::WriteBarrier(this);
@@ -141,6 +141,29 @@ DPSprite::DPSprite(player_t *owner, AInventory *caller, int id)
 
 	if (Next && Next->ID == ID && ID != 0)
 		Next->Destroy(); // Replace it.
+}
+
+//------------------------------------------------------------------------
+//
+//
+//
+//------------------------------------------------------------------------
+
+DPSprite *player_t::FindPSprite(int layer)
+{
+	if (layer == 0)
+		return nullptr;
+
+	DPSprite *pspr = psprites;
+	while (pspr)
+	{
+		if (pspr->ID == layer)
+			break;
+
+		pspr = pspr->Next;
+	}
+
+	return pspr;
 }
 
 //------------------------------------------------------------------------
@@ -172,29 +195,6 @@ DPSprite *player_t::GetPSprite(psprnum_t layer)
 	{
 		pspr->x = weapon->x;
 		pspr->y = weapon->y;
-	}
-
-	return pspr;
-}
-
-//------------------------------------------------------------------------
-//
-//
-//
-//------------------------------------------------------------------------
-
-DPSprite *player_t::FindPSprite(int layer)
-{
-	if (layer == 0)
-		return nullptr;
-
-	DPSprite *pspr = psprites;
-	while (pspr)
-	{
-		if (pspr->ID == layer)
-			break;
-
-		pspr = pspr->Next;
 	}
 
 	return pspr;

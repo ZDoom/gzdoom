@@ -52,6 +52,12 @@ enum psprnum_t // These are all called by the owner's ReadyWeapon.
 	NUMPSPRITES
 };
 
+enum PSPFlags
+{
+	PSPF_ADDWEAPON	= 1 << 0,
+	PSPF_ADDBOB		= 1 << 1,
+};
+
 class DPSprite : public DObject
 {
 	DECLARE_CLASS (DPSprite, DObject)
@@ -73,6 +79,7 @@ public:
 	double oldx, oldy;
 	bool firstTic;
 	int Tics;
+	int Flags;
 
 private:
 	DPSprite () {}

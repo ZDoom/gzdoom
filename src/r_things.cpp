@@ -1279,7 +1279,7 @@ void R_AddSprites (sector_t *sec, int lightlevel, int fakeside)
 //
 // R_DrawPSprite
 //
-void R_DrawPSprite(DPSprite *pspr, AActor *owner, double ofsx, double ofsy, double ticfrac)
+void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double wx, double wy, double ticfrac)
 {
 	double 				tx;
 	int 				x1;
@@ -1331,10 +1331,17 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, double ofsx, double ofsy, doub
 
 	sx = pspr->oldx + (pspr->x - pspr->oldx) * ticfrac;
 	sy = pspr->oldy + (pspr->y - pspr->oldy) * ticfrac;
-	if (isweapon)
-	{ // [RH] Don't bob the targeter/non-weapon layers.
-		sx += ofsx;
-		sy += ofsy;
+
+	if (pspr->Flags & PSPF_ADDBOB)
+	{
+		sx += bobx;
+		sy += boby;
+	}
+
+	if (pspr->Flags & PSPF_ADDWEAPON)
+	{
+		sx += wx;
+		sy += wy;
 	}
 
 	// calculate edges of the shape
@@ -1547,6 +1554,7 @@ void R_DrawPlayerSprites ()
 	int 		i;
 	int 		lightnum;
 	DPSprite*	psp;
+	DPSprite*	weapon;
 	sector_t*	sec = NULL;
 	static sector_t tempsec;
 	int			floorlight, ceilinglight;
@@ -1611,11 +1619,32 @@ void R_DrawPlayerSprites ()
 	if (camera->player != NULL)
 	{
 		double centerhack = CenterY;
-		float ofsx, ofsy;
+		double wx, wy;
+		float bobx, boby;
 
 		CenterY = viewheight / 2;
 
-		P_BobWeapon (camera->player, &ofsx, &ofsy, r_TicFracF);
+		P_BobWeapon (camera->player, &bobx, &boby, r_TicFracF);
+
+		// Interpolate the main weapon layer once so as to be able to add it to other layers.
+		if ((weapon = camera->player->FindPSprite(ps_weapon)) != nullptr)
+		{
+			if (weapon->firstTic)
+			{
+				wx = weapon->x;
+				wy = weapon->y;
+			}
+			else
+			{
+				wx = weapon->oldx + (weapon->x - weapon->oldx) * r_TicFracF;
+				wy = weapon->oldy + (weapon->y - weapon->oldy) * r_TicFracF;
+			}
+		}
+		else
+		{
+			wx = 0;
+			wy = 0;
+		}
 
 		// add all active psprites
 		psp = camera->player->psprites;
@@ -1624,7 +1653,7 @@ void R_DrawPlayerSprites ()
 			// [RH] Don't draw the targeter's crosshair if the player already has a crosshair set.
 			if (psp->GetID() != ps_targetcenter || CrosshairImage == nullptr)
 			{
-				R_DrawPSprite(psp, camera, ofsx, ofsy, r_TicFracF);
+				R_DrawPSprite(psp, camera, bobx, boby, wx, wy, r_TicFracF);
 			}
 
 			psp = psp->GetNext();

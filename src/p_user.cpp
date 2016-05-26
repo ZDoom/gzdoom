@@ -3093,11 +3093,28 @@ void player_t::Serialize (FArchive &arc)
 				pspr = GetPSprite(psprnum_t(i));
 				pspr->State = state;
 				pspr->Tics = tics;
-				pspr->x = sx;
-				pspr->y = sy;
 				pspr->Sprite = sprite;
 				pspr->Frame = frame;
 				pspr->Owner = this;
+
+				if (i == ps_flash)
+				{
+					pspr->x = 0;
+					pspr->y = 0;
+				}
+				else
+				{
+					pspr->x = sx;
+					pspr->y = sy;
+				}
+
+				pspr->Flags = 0;
+				if (i < ps_targetcenter)
+				{
+					pspr->Flags |= PSPF_ADDBOB;
+					if (i == ps_flash)
+						pspr->Flags |= PSPF_ADDWEAPON;
+				}
 			}
 		}
 	}

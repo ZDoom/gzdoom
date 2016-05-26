@@ -141,6 +141,13 @@ DPSprite::DPSprite(player_t *owner, AInventory *caller, int id)
 
 	if (Next && Next->ID == ID && ID != 0)
 		Next->Destroy(); // Replace it.
+
+	if (ID == ps_weapon || ID == ps_flash || (ID >= NUMPSPRITES && Caller->IsKindOf(RUNTIME_CLASS(AWeapon))))
+	{
+		Flags |= PSPF_ADDBOB;
+		if (ID != ps_weapon)
+			Flags |= PSPF_ADDWEAPON;
+	}
 }
 
 //------------------------------------------------------------------------
@@ -176,26 +183,9 @@ DPSprite *player_t::GetPSprite(psprnum_t layer)
 {
 	assert(layer > 0 && layer < NUMPSPRITES);
 
-	DPSprite *weapon = nullptr;
-	DPSprite *pspr = psprites;
-	while (pspr)
-	{
-		if (pspr->ID == layer)
-			return pspr;
-
-		if (pspr->ID == ps_weapon)
-			weapon = pspr;
-
-		pspr = pspr->Next;
-	}
-
-	pspr = new DPSprite(this, ReadyWeapon, layer);
-
-	if (layer == ps_flash && weapon)
-	{
-		pspr->x = weapon->x;
-		pspr->y = weapon->y;
-	}
+	DPSprite *pspr = FindPSprite(layer);
+	if (pspr == nullptr)
+		pspr = new DPSprite(this, ReadyWeapon, layer);
 
 	return pspr;
 }
@@ -281,13 +271,16 @@ void DPSprite::SetState(FState *newstate, bool pending)
 				Tics = 1;		// great for producing decals :)
 		}
 
-		if (newstate->GetMisc1())
-		{ // Set coordinates.
-			x = newstate->GetMisc1();
-		}
-		if (newstate->GetMisc2())
-		{
-			y = newstate->GetMisc2();
+		if (ID != ps_flash)
+		{ // It's still possible to set the flash layer's offsets with the action function.
+			if (newstate->GetMisc1())
+			{ // Set coordinates.
+				x = newstate->GetMisc1();
+			}
+			if (newstate->GetMisc2())
+			{
+				y = newstate->GetMisc2();
+			}
 		}
 
 		if (Owner->mo != nullptr)
@@ -988,6 +981,35 @@ DEFINE_ACTION_FUNCTION(AInventory, A_WeaponOffset)
 
 //---------------------------------------------------------------------------
 //
+// PROC A_OverlayFlags
+//
+//---------------------------------------------------------------------------
+
+DEFINE_ACTION_FUNCTION(AInventory, A_OverlayFlags)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_INT(layer);
+	PARAM_INT(flags);
+	PARAM_BOOL(set);
+
+	if (self->player == nullptr)
+		return 0;
+
+	DPSprite *pspr = self->player->FindPSprite(layer);
+
+	if (pspr == nullptr)
+		return 0;
+
+	if (set)
+		pspr->Flags |= flags;
+	else
+		pspr->Flags &= ~flags;
+
+	return 0;
+}
+
+//---------------------------------------------------------------------------
+//
 // PROC A_Lower
 //
 //---------------------------------------------------------------------------
@@ -1307,11 +1329,6 @@ void player_t::TickPSprites()
 	}
 	else
 	{
-		if (weapon && flash)
-		{
-			flash->x = weapon->x;
-			flash->y = weapon->y;
-		}
 		P_CheckWeaponSwitch(this);
 		if (WeaponState & (WF_WEAPONREADY | WF_WEAPONREADYALT))
 		{
@@ -1359,7 +1376,7 @@ void DPSprite::Serialize(FArchive &arc)
 {
 	Super::Serialize(arc);
 
-	arc << Next << Caller << Owner
+	arc << Next << Caller << Owner << Flags
 		<< State << Tics << Sprite << Frame
 		<< ID << x << y << oldx << oldy;
 }

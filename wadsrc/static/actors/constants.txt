@@ -569,3 +569,10 @@ enum
 	WOF_KEEPY =		1 << 1,
 	WOF_ADD =		1 << 2,
 };
+
+// Flags for psprite layers
+enum
+{
+	PSPF_ADDWEAPON	= 1 << 0,
+	PSPF_ADDBOB		= 1 << 1,
+};

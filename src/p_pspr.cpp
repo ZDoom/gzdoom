@@ -219,6 +219,8 @@ void DPSprite::NewTick()
 			while (pspr)
 			{
 				pspr->processPending = true;
+				pspr->oldx = pspr->x;
+				pspr->oldy = pspr->y;
 
 				pspr = pspr->Next;
 			}
@@ -1328,9 +1330,6 @@ void player_t::TickPSprites()
 
 void DPSprite::Tick()
 {
-	oldx = x;
-	oldy = y;
-
 	if (processPending)
 	{
 		// drop tic count and possibly change state

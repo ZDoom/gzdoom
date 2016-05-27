@@ -616,12 +616,16 @@ void FNodeBuilder::FLevel::FindMapBounds()
 	minx = maxx = Vertices[0].fX();
 	miny = maxy = Vertices[0].fY();
 
-	for (int i = 1; i < NumVertices; ++i)
+	for (int i = 1; i < NumLines; ++i)
 	{
-		if (Vertices[i].fX() < minx) minx = Vertices[i].fX();
-		else if (Vertices[i].fX() > maxx) maxx = Vertices[i].fX();
-		if (Vertices[i].fY() < miny) miny = Vertices[i].fY();
-		else if (Vertices[i].fY() > maxy) maxy = Vertices[i].fY();
+		for (int j = 0; j < 2; j++)
+		{
+			vertex_t *v = (j == 0 ? Lines[i].v1 : Lines[i].v2);
+			if (v->fX() < minx) minx = v->fX();
+			else if (v->fX() > maxx) maxx = v->fX();
+			if (v->fY() < miny) miny = v->fY();
+			else if (v->fY() > maxy) maxy = v->fY();
+		}
 	}
 
 	MinX = FLOAT2FIXED(minx);

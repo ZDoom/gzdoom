@@ -1376,7 +1376,7 @@ void APlayerPawn::MorphPlayerThink ()
 void APlayerPawn::ActivateMorphWeapon ()
 {
 	PClassActor *morphweapon = PClass::FindActor (MorphWeapon);
-	DPSprite *pspr = player->GetPSprite(ps_weapon);
+	DPSprite *pspr = player->GetPSprite(PSP_WEAPON);
 	player->PendingWeapon = WP_NOCHANGE;
 	pspr->y = WEAPONTOP;
 
@@ -1405,7 +1405,7 @@ void APlayerPawn::ActivateMorphWeapon ()
 			pspr->SetState(nullptr);
 		}
 	}
-	P_SetPsprite(player, ps_flash,  nullptr);
+	P_SetPsprite(player, PSP_FLASH, nullptr);
 
 	player->PendingWeapon = WP_NOCHANGE;
 }

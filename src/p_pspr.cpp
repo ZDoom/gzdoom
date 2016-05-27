@@ -330,7 +330,7 @@ void P_BringUpWeapon (player_t *player)
 {
 	FState *newstate;
 	AWeapon *weapon;
-	DPSprite *psweapon = player->GetPSprite(ps_weapon);
+	DPSprite *psweapon = player->GetPSprite(PSP_WEAPON);
 
 	if (player->PendingWeapon == WP_NOCHANGE)
 	{
@@ -373,7 +373,7 @@ void P_BringUpWeapon (player_t *player)
 		? WEAPONTOP : WEAPONBOTTOM;
 	// make sure that the previous weapon's flash state is terminated.
 	// When coming here from a weapon drop it may still be active.
-	P_SetPsprite(player, ps_flash,  nullptr);
+	P_SetPsprite(player, PSP_FLASH, nullptr);
 	psweapon->SetState(newstate);
 	player->mo->weaponspecial = 0;
 }
@@ -407,7 +407,7 @@ void P_FireWeapon (player_t *player, FState *state)
 	{
 		state = weapon->GetAtkState(!!player->refire);
 	}
-	P_SetPsprite(player, ps_weapon, state);
+	P_SetPsprite(player, PSP_WEAPON, state);
 	if (!(weapon->WeaponFlags & WIF_NOALERT))
 	{
 		P_NoiseAlert (player->mo, player->mo, false);
@@ -445,7 +445,7 @@ void P_FireWeaponAlt (player_t *player, FState *state)
 		state = weapon->GetAltAtkState(!!player->refire);
 	}
 
-	P_SetPsprite(player, ps_weapon, state);
+	P_SetPsprite(player, PSP_WEAPON, state);
 	if (!(weapon->WeaponFlags & WIF_NOALERT))
 	{
 		P_NoiseAlert (player->mo, player->mo, false);
@@ -470,7 +470,7 @@ void P_DropWeapon (player_t *player)
 	player->WeaponState &= ~WF_DISABLESWITCH;
 	if (player->ReadyWeapon != nullptr)
 	{
-		P_SetPsprite(player, ps_weapon, player->ReadyWeapon->GetDownState());
+		P_SetPsprite(player, PSP_WEAPON, player->ReadyWeapon->GetDownState());
 	}
 }
 
@@ -647,7 +647,7 @@ void DoReadyWeaponToFire (AActor *self, bool prim, bool alt)
 	}
 
 	// Play ready sound, if any.
-	if (weapon->ReadySound && player->GetPSprite(ps_weapon)->GetState() == weapon->FindState(NAME_Ready))
+	if (weapon->ReadySound && player->GetPSprite(PSP_WEAPON)->GetState() == weapon->FindState(NAME_Ready))
 	{
 		if (!(weapon->WeaponFlags & WIF_READYSNDHALF) || pr_wpnreadysnd() < 128)
 		{
@@ -666,8 +666,8 @@ void DoReadyWeaponToBob (AActor *self)
 	{
 		// Prepare for bobbing action.
 		self->player->WeaponState |= WF_WEAPONBOBBING;
-		self->player->GetPSprite(ps_weapon)->x = 0;
-		self->player->GetPSprite(ps_weapon)->y = WEAPONTOP;
+		self->player->GetPSprite(PSP_WEAPON)->x = 0;
+		self->player->GetPSprite(PSP_WEAPON)->y = WEAPONTOP;
 	}
 }
 
@@ -814,7 +814,7 @@ static void P_CheckWeaponButtons (player_t *player)
 			// state, the weapon won't disappear. ;)
 			if (state != nullptr)
 			{
-				P_SetPsprite(player, ps_weapon, state);
+				P_SetPsprite(player, PSP_WEAPON, state);
 				return;
 			}
 		}
@@ -1023,7 +1023,7 @@ DEFINE_ACTION_FUNCTION(AInventory, A_Lower)
 	{
 		return 0;
 	}
-	psp = player->GetPSprite(ps_weapon);
+	psp = player->GetPSprite(PSP_WEAPON);
 	if (player->morphTics || player->cheats & CF_INSTANTWEAPSWITCH)
 	{
 		psp->y = WEAPONBOTTOM;
@@ -1045,7 +1045,7 @@ DEFINE_ACTION_FUNCTION(AInventory, A_Lower)
 		return 0;
 	}
 	// [RH] Clear the flash state. Only needed for Strife.
-	P_SetPsprite(player, ps_flash,  nullptr);
+	P_SetPsprite(player, PSP_FLASH,  nullptr);
 	P_BringUpWeapon (player);
 	return 0;
 }
@@ -1076,7 +1076,7 @@ DEFINE_ACTION_FUNCTION(AInventory, A_Raise)
 		P_DropWeapon(player);
 		return 0;
 	}
-	psp = player->GetPSprite(ps_weapon);
+	psp = player->GetPSprite(PSP_WEAPON);
 	psp->y -= RAISESPEED;
 	if (psp->y > WEAPONTOP)
 	{ // Not raised all the way yet
@@ -1152,7 +1152,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_GunFlash)
 			flash = player->ReadyWeapon->FindState(NAME_Flash);
 		}
 	}
-	P_SetPsprite(player, ps_flash,  flash);
+	P_SetPsprite(player, PSP_FLASH,  flash);
 	return 0;
 }
 

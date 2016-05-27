@@ -125,7 +125,7 @@ void P_UpdateBeak (AActor *self)
 {
 	if (self->player != nullptr)
 	{
-		self->player->GetPSprite(ps_weapon)->y = WEAPONTOP + self->player->chickenPeck / 2;
+		self->player->GetPSprite(PSP_WEAPON)->y = WEAPONTOP + self->player->chickenPeck / 2;
 	}
 }
 
@@ -145,8 +145,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_BeakRaise)
 	{
 		return 0;
 	}
-	player->GetPSprite(ps_weapon)->y = WEAPONTOP;
-	P_SetPsprite(player, ps_weapon, player->ReadyWeapon->GetReadyState());
+	player->GetPSprite(PSP_WEAPON)->y = WEAPONTOP;
+	P_SetPsprite(player, PSP_WEAPON, player->ReadyWeapon->GetReadyState());
 	return 0;
 }
 
@@ -192,7 +192,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BeakAttackPL1)
 	}
 	P_PlayPeck (player->mo);
 	player->chickenPeck = 12;
-	player->GetPSprite(ps_weapon)->Tics -= pr_beakatkpl1() & 7;
+	player->GetPSprite(PSP_WEAPON)->Tics -= pr_beakatkpl1() & 7;
 	return 0;
 }
 
@@ -227,6 +227,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_BeakAttackPL2)
 	}
 	P_PlayPeck (player->mo);
 	player->chickenPeck = 12;
-	player->GetPSprite(ps_weapon)->Tics -= pr_beakatkpl2()&3;
+	player->GetPSprite(PSP_WEAPON)->Tics -= pr_beakatkpl2()&3;
 	return 0;
 }

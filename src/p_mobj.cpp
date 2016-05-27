@@ -1001,8 +1001,8 @@ void AActor::ClearInventory()
 	{
 		player->ReadyWeapon = nullptr;
 		player->PendingWeapon = WP_NOCHANGE;
-		P_SetPsprite(player, ps_weapon, nullptr);
-		P_SetPsprite(player, ps_flash,  nullptr);
+		P_SetPsprite(player, PSP_WEAPON, nullptr);
+		P_SetPsprite(player, PSP_FLASH, nullptr);
 	}
 }
 

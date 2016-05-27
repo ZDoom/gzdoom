@@ -617,7 +617,7 @@ void AWeapon::PostMorphWeapon ()
 	Owner->player->ReadyWeapon = this;
 	Owner->player->refire = 0;
 
-	pspr = Owner->player->GetPSprite(ps_weapon);
+	pspr = Owner->player->GetPSprite(PSP_WEAPON);
 	pspr->y = WEAPONBOTTOM;
 	pspr->SetState(GetUpState());
 }

@@ -1131,7 +1131,7 @@ void APowerWeaponLevel2::InitEffect ()
 
 	if (weapon->GetReadyState() != sister->GetReadyState())
 	{
-		P_SetPsprite(Owner->player, ps_weapon, sister->GetReadyState());
+		P_SetPsprite(Owner->player, PSP_WEAPON, sister->GetReadyState());
 	}
 }
 
@@ -1305,15 +1305,15 @@ void APowerTargeter::InitEffect ()
 
 	if (state != nullptr)
 	{
-		P_SetPsprite(player, ps_targetcenter,  state + 0);
-		P_SetPsprite(player, ps_targetleft,  state + 1);
-		P_SetPsprite(player, ps_targetright, state + 2);
+		P_SetPsprite(player, PSP_TARGETCENTER,  state + 0);
+		P_SetPsprite(player, PSP_TARGETLEFT,  state + 1);
+		P_SetPsprite(player, PSP_TARGETRIGHT, state + 2);
 	}
 
-	player->GetPSprite(ps_targetcenter)->x = (160-3);
-	player->GetPSprite(ps_targetcenter)->y =
-		player->GetPSprite(ps_targetleft)->y =
-		player->GetPSprite(ps_targetright)->y = (100-3);
+	player->GetPSprite(PSP_TARGETCENTER)->x = (160-3);
+	player->GetPSprite(PSP_TARGETCENTER)->y =
+		player->GetPSprite(PSP_TARGETLEFT)->y =
+		player->GetPSprite(PSP_TARGETRIGHT)->y = (100-3);
 	PositionAccuracy ();
 }
 
@@ -1346,13 +1346,13 @@ void APowerTargeter::DoEffect ()
 			{
 				if (EffectTics & 32)
 				{
-					P_SetPsprite(player, ps_targetright, nullptr);
-					P_SetPsprite(player, ps_targetleft,  state + 1);
+					P_SetPsprite(player, PSP_TARGETRIGHT, nullptr);
+					P_SetPsprite(player, PSP_TARGETLEFT,  state + 1);
 				}
 				else if (EffectTics & 16)
 				{
-					P_SetPsprite(player, ps_targetright, state + 2);
-					P_SetPsprite(player, ps_targetleft,  nullptr);
+					P_SetPsprite(player, PSP_TARGETRIGHT, state + 2);
+					P_SetPsprite(player, PSP_TARGETLEFT,  nullptr);
 				}
 			}
 		}
@@ -1364,9 +1364,9 @@ void APowerTargeter::EndEffect ()
 	Super::EndEffect();
 	if (Owner != nullptr && Owner->player != nullptr)
 	{
-		P_SetPsprite (Owner->player, ps_targetcenter, nullptr);
-		P_SetPsprite (Owner->player, ps_targetleft, nullptr);
-		P_SetPsprite (Owner->player, ps_targetright, nullptr);
+		P_SetPsprite (Owner->player, PSP_TARGETCENTER, nullptr);
+		P_SetPsprite (Owner->player, PSP_TARGETLEFT, nullptr);
+		P_SetPsprite (Owner->player, PSP_TARGETRIGHT, nullptr);
 	}
 }
 
@@ -1376,8 +1376,8 @@ void APowerTargeter::PositionAccuracy ()
 
 	if (player != nullptr)
 	{
-		player->GetPSprite(ps_targetleft)->x = (160-3) - ((100 - player->mo->accuracy));
-		player->GetPSprite(ps_targetright)->x = (160-3)+ ((100 - player->mo->accuracy));
+		player->GetPSprite(PSP_TARGETLEFT)->x = (160-3) - ((100 - player->mo->accuracy));
+		player->GetPSprite(PSP_TARGETRIGHT)->x = (160-3)+ ((100 - player->mo->accuracy));
 	}
 }
 

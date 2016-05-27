@@ -219,7 +219,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ClearFlash)
 	if (player == nullptr)
 		return 0;
 
-	P_SetPsprite (player, ps_flash, nullptr);
+	P_SetPsprite (player, PSP_FLASH, nullptr);
 	return 0;
 }
 
@@ -235,7 +235,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ShowElectricFlash)
 
 	if (self->player != nullptr)
 	{
-		P_SetPsprite (self->player, ps_flash, self->player->ReadyWeapon->FindState(NAME_Flash));
+		P_SetPsprite (self->player, PSP_FLASH, self->player->ReadyWeapon->FindState(NAME_Flash));
 	}
 	return 0;
 }
@@ -500,8 +500,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMauler2Pre)
 
 	if (self->player != nullptr)
 	{
-		self->player->GetPSprite(ps_weapon)->x += pr_mauler2.Random2() / 64.;
-		self->player->GetPSprite(ps_weapon)->y += pr_mauler2.Random2() / 64.;
+		self->player->GetPSprite(PSP_WEAPON)->x += pr_mauler2.Random2() / 64.;
+		self->player->GetPSprite(PSP_WEAPON)->y += pr_mauler2.Random2() / 64.;
 	}
 	return 0;
 }
@@ -707,7 +707,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireGrenade)
 	if (!weapon->DepleteAmmo (weapon->bAltFire))
 		return 0;
 
-	P_SetPsprite (player, ps_flash, flash, true);
+	P_SetPsprite (player, PSP_FLASH, flash, true);
 
 	if (grenadetype != nullptr)
 	{
@@ -856,7 +856,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SelectSigilView)
 		return 0;
 	}
 	pieces = static_cast<ASigil*>(self->player->ReadyWeapon)->NumPieces;
-	pspr = self->player->GetPSprite(ps_weapon);
+	pspr = self->player->GetPSprite(PSP_WEAPON);
 	pspr->SetState(pspr->GetState() + pieces);
 	return 0;
 }
@@ -888,7 +888,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SelectSigilDown)
 	{
 		pieces = static_cast<ASigil*>(self->player->ReadyWeapon)->NumPieces;
 	}
-	pspr = self->player->GetPSprite(ps_weapon);
+	pspr = self->player->GetPSprite(PSP_WEAPON);
 	pspr->SetState(pspr->GetState() + pieces);
 	return 0;
 }
@@ -913,7 +913,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SelectSigilAttack)
 		return 0;
 	}
 	pieces = static_cast<ASigil*>(self->player->ReadyWeapon)->NumPieces;
-	pspr = self->player->GetPSprite(ps_weapon);
+	pspr = self->player->GetPSprite(PSP_WEAPON);
 	pspr->SetState(pspr->GetState() + 4*pieces - 3);
 	return 0;
 }

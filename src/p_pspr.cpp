@@ -111,7 +111,13 @@ END_POINTERS
 //------------------------------------------------------------------------
 
 DPSprite::DPSprite(player_t *owner, AInventory *caller, int id)
-: processPending(true), firstTic(true), Owner(owner), Caller(caller), ID(id)
+: processPending(true),
+  firstTic(true),
+  x(.0), y(.0),
+  oldx(.0), oldy(.0),
+  Flags(0), ID(id),
+  Caller(caller),
+  Owner(owner)
 {
 	DPSprite *prev = nullptr;
 	DPSprite *next = Owner->psprites;

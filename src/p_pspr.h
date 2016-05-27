@@ -42,14 +42,13 @@ class FArchive;
 // drawn directly on the view screen,
 // coordinates are given for a 320*200 view screen.
 //
-enum psprnum_t // These are all called by the owner's ReadyWeapon.
+enum PSPLayers // These are all called by the owner's ReadyWeapon.
 {
-	ps_weapon = 1,
-	ps_flash,
-	ps_targetcenter,
-	ps_targetleft,
-	ps_targetright,
-	NUMPSPRITES
+	PSP_WEAPON = 1,
+	PSP_FLASH = 1000,
+	PSP_TARGETCENTER = INT_MAX - 2,
+	PSP_TARGETLEFT,
+	PSP_TARGETRIGHT,
 };
 
 enum PSPFlags
@@ -103,7 +102,7 @@ private:
 
 void P_NewPspriteTick();
 void P_CalcSwing (player_t *player);
-void P_SetPsprite(player_t *player, psprnum_t id, FState *state, bool pending = false);
+void P_SetPsprite(player_t *player, PSPLayers id, FState *state, bool pending = false);
 void P_BringUpWeapon (player_t *player);
 void P_FireWeapon (player_t *player);
 void P_DropWeapon (player_t *player);

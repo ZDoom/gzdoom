@@ -3075,7 +3075,8 @@ void player_t::Serialize (FArchive &arc)
 
 	if (SaveVersion < 4547)
 	{
-		for (i = ps_weapon; i < NUMPSPRITES; i++)
+		int layer = PSP_WEAPON;
+		for (i = 0; i < 5; i++)
 		{
 			FState *state;
 			int tics;
@@ -3090,14 +3091,14 @@ void player_t::Serialize (FArchive &arc)
 			if (state != nullptr)
 			{
 				DPSprite *pspr;
-				pspr = GetPSprite(psprnum_t(i));
+				pspr = GetPSprite(PSPLayers(layer));
 				pspr->State = state;
 				pspr->Tics = tics;
 				pspr->Sprite = sprite;
 				pspr->Frame = frame;
 				pspr->Owner = this;
 
-				if (i == ps_flash)
+				if (layer == PSP_FLASH)
 				{
 					pspr->x = 0;
 					pspr->y = 0;
@@ -3109,13 +3110,20 @@ void player_t::Serialize (FArchive &arc)
 				}
 
 				pspr->Flags = 0;
-				if (i < ps_targetcenter)
+				if (layer < PSP_TARGETCENTER)
 				{
 					pspr->Flags |= PSPF_ADDBOB;
-					if (i == ps_flash)
+					if (layer == PSP_FLASH)
 						pspr->Flags |= PSPF_ADDWEAPON;
 				}
 			}
+
+			if (layer == PSP_WEAPON)
+				layer = PSP_FLASH;
+			else if (layer == PSP_FLASH)
+				layer = PSP_TARGETCENTER;
+			else
+				layer++;
 		}
 	}
 	else

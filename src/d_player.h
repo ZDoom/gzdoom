@@ -532,7 +532,7 @@ public:
 	void TickPSprites();
 	void DestroyPSprites();
 	DPSprite *FindPSprite(int layer);
-	DPSprite *GetPSprite(psprnum_t layer); // Used ONLY for compatibility with the old hardcoded layers.
+	DPSprite *GetPSprite(PSPLayers layer); // Used ONLY for compatibility with the old hardcoded layers.
 };
 
 // Bookkeeping on players - state.

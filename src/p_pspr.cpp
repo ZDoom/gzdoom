@@ -142,10 +142,10 @@ DPSprite::DPSprite(player_t *owner, AInventory *caller, int id)
 	if (Next && Next->ID == ID && ID != 0)
 		Next->Destroy(); // Replace it.
 
-	if (ID == ps_weapon || ID == ps_flash || (ID >= NUMPSPRITES && Caller->IsKindOf(RUNTIME_CLASS(AWeapon))))
+	if (ID == PSP_WEAPON || ID == PSP_FLASH || (ID < PSP_TARGETCENTER && Caller->IsKindOf(RUNTIME_CLASS(AWeapon))))
 	{
 		Flags |= PSPF_ADDBOB;
-		if (ID != ps_weapon)
+		if (ID != PSP_WEAPON)
 			Flags |= PSPF_ADDWEAPON;
 	}
 }
@@ -179,10 +179,8 @@ DPSprite *player_t::FindPSprite(int layer)
 //
 //------------------------------------------------------------------------
 
-DPSprite *player_t::GetPSprite(psprnum_t layer)
+DPSprite *player_t::GetPSprite(PSPLayers layer)
 {
-	assert(layer > 0 && layer < NUMPSPRITES);
-
 	DPSprite *pspr = FindPSprite(layer);
 	if (pspr == nullptr)
 		pspr = new DPSprite(this, ReadyWeapon, layer);
@@ -226,14 +224,14 @@ void DPSprite::NewTick()
 
 void DPSprite::SetState(FState *newstate, bool pending)
 {
-	if (ID == ps_weapon)
+	if (ID == PSP_WEAPON)
 	{ // A_WeaponReady will re-set these as needed
 		Owner->WeaponState &= ~(WF_WEAPONREADY | WF_WEAPONREADYALT | WF_WEAPONBOBBING | WF_WEAPONSWITCHOK | WF_WEAPONRELOADOK | WF_WEAPONZOOMOK |
 								WF_USER1OK | WF_USER2OK | WF_USER3OK | WF_USER4OK);
 	}
 
 	// Special handling for the old hardcoded layers.
-	if (ID > 0 && ID < NUMPSPRITES)
+	if (ID == PSP_WEAPON || ID == PSP_FLASH || ID >= PSP_TARGETCENTER)
 		Caller = Owner->ReadyWeapon;
 
 	processPending = pending;
@@ -261,9 +259,9 @@ void DPSprite::SetState(FState *newstate, bool pending)
 
 		Tics = newstate->GetTics(); // could be 0
 
-		if ((ID > 0 && ID < NUMPSPRITES) || Caller->IsKindOf(RUNTIME_CLASS(AWeapon)))
+		if ((ID == PSP_WEAPON || ID == PSP_FLASH || ID >= PSP_TARGETCENTER) || Caller->IsKindOf(RUNTIME_CLASS(AWeapon)))
 		{ // The targeter layers are affected by this too.
-			if (sv_fastweapons == 2 && ID == ps_weapon)
+			if (sv_fastweapons == 2 && ID == PSP_WEAPON)
 				Tics = newstate->ActionFunc == nullptr ? 0 : 1;
 			else if (sv_fastweapons == 3)
 				Tics = (newstate->GetTics() != 0);
@@ -271,7 +269,7 @@ void DPSprite::SetState(FState *newstate, bool pending)
 				Tics = 1;		// great for producing decals :)
 		}
 
-		if (ID != ps_flash)
+		if (ID != PSP_FLASH)
 		{ // It's still possible to set the flash layer's offsets with the action function.
 			if (newstate->GetMisc1())
 			{ // Set coordinates.
@@ -313,7 +311,7 @@ void DPSprite::SetState(FState *newstate, bool pending)
 	return;
 }
 
-void P_SetPsprite(player_t *player, psprnum_t id, FState *state, bool pending)
+void P_SetPsprite(player_t *player, PSPLayers id, FState *state, bool pending)
 {
 	if (player == nullptr) return;
 	player->GetPSprite(id)->SetState(state, pending);
@@ -961,7 +959,7 @@ void A_OverlayOffset(AActor *self, int layer, double wx, double wy, int flags)
 DEFINE_ACTION_FUNCTION(AInventory, A_OverlayOffset)
 {
 	PARAM_ACTION_PROLOGUE;
-	PARAM_INT_OPT(layer)	{ layer = ps_weapon; }
+	PARAM_INT_OPT(layer)	{ layer = PSP_WEAPON; }
 	PARAM_FLOAT_OPT(wx)		{ wx = 0.; }
 	PARAM_FLOAT_OPT(wy)		{ wy = 32.; }
 	PARAM_INT_OPT(flags)	{ flags = 0; }
@@ -975,7 +973,7 @@ DEFINE_ACTION_FUNCTION(AInventory, A_WeaponOffset)
 	PARAM_FLOAT_OPT(wx) { wx = 0.; }
 	PARAM_FLOAT_OPT(wy) { wy = 32.; }
 	PARAM_INT_OPT(flags) { flags = 0; }
-	A_OverlayOffset(self, ps_weapon, wx, wy, flags);
+	A_OverlayOffset(self, PSP_WEAPON, wx, wy, flags);
 	return 0;
 }
 
@@ -1290,8 +1288,6 @@ void P_SetupPsprites(player_t *player, bool startweaponup)
 
 void player_t::TickPSprites()
 {
-	DPSprite *weapon = nullptr;
-	DPSprite *flash = nullptr;
 	bool noweapon = (ReadyWeapon == nullptr && (health > 0 || mo->DamageType != NAME_Fire));
 
 	DPSprite *pspr = psprites;
@@ -1299,31 +1295,29 @@ void player_t::TickPSprites()
 	{
 		// Destroy the psprite if it's from a weapon that isn't currently selected by the player
 		// or if it's from an inventory item that the player no longer owns. 
-		// (except for the old hardcoded layers)
-		if (!(pspr->ID > 0 && pspr->ID < NUMPSPRITES) &&
+		// Exclude the old hardcoded layers from this check.
+		if (!(pspr->ID == PSP_WEAPON || pspr->ID == PSP_FLASH || pspr->ID >= PSP_TARGETCENTER) &&
 			(pspr->Caller == nullptr ||
 			(pspr->Caller->IsKindOf(RUNTIME_CLASS(AWeapon)) && pspr->Caller != pspr->Owner->ReadyWeapon) ||
 			(pspr->Caller->Owner != pspr->Owner->mo)))
 		{
 			pspr->Destroy();
 		}
-		else if (!(pspr->ID > 0 && pspr->ID < NUMPSPRITES && noweapon))
+		else if (!((pspr->ID == PSP_WEAPON || pspr->ID == PSP_FLASH || pspr->ID >= PSP_TARGETCENTER) && noweapon))
 		{
 			pspr->Tick();
 		}
 
-		if (pspr->ID == ps_weapon)
-			weapon = pspr;
-		else if (pspr->ID == ps_flash)
-			flash = pspr;
+		if (noweapon && (pspr->ID == PSP_WEAPON || pspr->ID == PSP_FLASH))
+		{ // Special treatment to destroy both the flash and weapon layers.
+			pspr->Destroy();
+		}
 
 		pspr = pspr->Next;
 	}
 
 	if (noweapon)
 	{
-		if (weapon) weapon->SetState(nullptr);
-		if (flash) flash->SetState(nullptr);
 		if (PendingWeapon != WP_NOCHANGE)
 			P_BringUpWeapon(this);
 	}
@@ -1356,7 +1350,7 @@ void DPSprite::Tick()
 
 			// [BC] Apply double firing speed.
 			// This is applied to the targeter layers too.
-			if (((ID > 0 && ID < NUMPSPRITES) || (Caller->IsKindOf(RUNTIME_CLASS(AWeapon)))) &&
+			if (((ID == PSP_WEAPON || ID == PSP_FLASH || ID >= PSP_TARGETCENTER) || Caller->IsKindOf(RUNTIME_CLASS(AWeapon))) &&
 				(Tics && Owner->cheats & CF_DOUBLEFIRINGSPEED))
 				Tics--;
 

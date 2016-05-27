@@ -1319,8 +1319,8 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 	if (tex->UseType == FTexture::TEX_Null)
 		return;
 
-	isweapon = ((pspr->GetID() > 0 && pspr->GetID() < ps_targetcenter) ||
-				(pspr->GetID() >= NUMPSPRITES && pspr->GetCaller() && pspr->GetCaller()->IsKindOf(RUNTIME_CLASS(AWeapon))));
+	isweapon = ((pspr->GetID() == PSP_WEAPON || pspr->GetID() == PSP_FLASH) ||
+				(pspr->GetID() < PSP_TARGETCENTER && pspr->GetCaller()->IsKindOf(RUNTIME_CLASS(AWeapon))));
 
 	if (pspr->firstTic)
 	{ // Can't interpolate the first tic.
@@ -1627,7 +1627,7 @@ void R_DrawPlayerSprites ()
 		P_BobWeapon (camera->player, &bobx, &boby, r_TicFracF);
 
 		// Interpolate the main weapon layer once so as to be able to add it to other layers.
-		if ((weapon = camera->player->FindPSprite(ps_weapon)) != nullptr)
+		if ((weapon = camera->player->FindPSprite(PSP_WEAPON)) != nullptr)
 		{
 			if (weapon->firstTic)
 			{
@@ -1651,7 +1651,7 @@ void R_DrawPlayerSprites ()
 		while (psp)
 		{
 			// [RH] Don't draw the targeter's crosshair if the player already has a crosshair set.
-			if (psp->GetID() != ps_targetcenter || CrosshairImage == nullptr)
+			if (psp->GetID() != PSP_TARGETCENTER || CrosshairImage == nullptr)
 			{
 				R_DrawPSprite(psp, camera, bobx, boby, wx, wy, r_TicFracF);
 			}

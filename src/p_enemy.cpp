@@ -255,6 +255,7 @@ void P_NoiseAlert (AActor *target, AActor *emitter, bool splash, double maxdist)
 		return;
 
 	validcount++;
+	NoiseList.Clear();
 	NoiseMarkSector(emitter->Sector, target, splash, emitter, 0, maxdist);
 	for (unsigned i = 0; i < NoiseList.Size(); i++)
 	{

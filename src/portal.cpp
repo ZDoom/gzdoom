@@ -1111,7 +1111,7 @@ void P_CreateLinkedPortals()
 	}
 
 	// reject would just get in the way when checking sight through portals.
-	if (rejectmatrix != NULL)
+	if (Displacements.size > 1 && rejectmatrix != NULL)
 	{
 		delete[] rejectmatrix;
 		rejectmatrix = NULL;

@@ -681,7 +681,6 @@ void RestoreConView()
 	ConWindowHidden = false;
 	ShowWindow (GameTitleWindow, SW_SHOW);
 	I_ShutdownInput ();		// Make sure the mouse pointer is available.
-	I_FlushBufferedConsoleStuff();
 	// Make sure the progress bar isn't visible.
 	if (StartScreen != NULL)
 	{
@@ -1029,6 +1028,7 @@ void DoMain (HINSTANCE hInstance)
 	{
 		I_ShutdownGraphics ();
 		RestoreConView ();
+		I_FlushBufferedConsoleStuff();
 		if (error.GetMessage ())
 		{
 			if (!batchrun)

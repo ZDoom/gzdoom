@@ -483,6 +483,36 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetZAt)
 	return 0;
 }
 
+//==========================================================================
+//
+// GetCrouchFactor
+//
+// NON-ACTION function to retrieve a player's crouching factor.
+//
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetCrouchFactor)
+{
+	if (numret > 0)
+	{
+		assert(ret != NULL);
+		PARAM_SELF_PROLOGUE(AActor);
+		PARAM_INT_OPT(ptr) { ptr = AAPTR_PLAYER1; }
+		AActor *mobj = COPY_AAPTR(self, ptr);
+
+		if (!mobj || !mobj->player)
+		{
+			ret->SetFloat(0);
+		}
+		else
+		{
+			ret->SetFloat(mobj->player->crouchfactor);
+		}
+		return 1;
+	}
+	return 0;
+}
+
 //===========================================================================
 //
 // __decorate_internal_state__

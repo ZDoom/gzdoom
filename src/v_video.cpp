@@ -343,10 +343,8 @@ void DCanvas::Dim (PalEntry color, float damount, int x1, int y1, int w, int h)
 	if (damount == 0.f)
 		return;
 
-	DWORD *bg2rgb;
-	DWORD fg;
 	int gap;
-	BYTE *spot;
+	canvas_pixel_t *spot;
 	int x, y;
 
 	if (x1 >= Width || y1 >= Height)
@@ -366,6 +364,43 @@ void DCanvas::Dim (PalEntry color, float damount, int x1, int y1, int w, int h)
 		return;
 	}
 
+	spot = Buffer + x1 + y1*Pitch;
+	gap = Pitch - w;
+
+#ifndef PALETTEOUTPUT
+	uint32_t fg = color.d;
+	uint32_t fg_red = (fg >> 16) & 0xff;
+	uint32_t fg_green = (fg >> 8) & 0xff;
+	uint32_t fg_blue = fg & 0xff;
+
+	uint32_t alpha = (uint32_t)clamp(damount * 256 + 0.5f, 0.0f, 256.0f);
+	uint32_t inv_alpha = 256 - alpha;
+
+	fg_red *= alpha;
+	fg_green *= alpha;
+	fg_blue *= alpha;
+
+	for (y = h; y != 0; y--)
+	{
+		for (x = w; x != 0; x--)
+		{
+			uint32_t bg_red = (*spot >> 16) & 0xff;
+			uint32_t bg_green = (*spot >> 8) & 0xff;
+			uint32_t bg_blue = (*spot) & 0xff;
+
+			uint32_t red = (fg_red + bg_red * inv_alpha) / 256;
+			uint32_t green = (fg_green + bg_green * inv_alpha) / 256;
+			uint32_t blue = (fg_blue + bg_blue * inv_alpha) / 256;
+
+			*spot = 0xff000000 | (red << 16) | (green << 8) | blue;
+			spot++;
+		}
+		spot += gap;
+	}
+#else
+	DWORD *bg2rgb;
+	DWORD fg;
+
 	{
 		int amount;
 
@@ -377,8 +412,6 @@ void DCanvas::Dim (PalEntry color, float damount, int x1, int y1, int w, int h)
 			 (((color.b * amount) >> 4) << 10);
 	}
 
-	spot = Buffer + x1 + y1*Pitch;
-	gap = Pitch - w;
 	for (y = h; y != 0; y--)
 	{
 		for (x = w; x != 0; x--)
@@ -392,6 +425,7 @@ void DCanvas::Dim (PalEntry color, float damount, int x1, int y1, int w, int h)
 		}
 		spot += gap;
 	}
+#endif
 }
 
 //==========================================================================
@@ -403,7 +437,7 @@ void DCanvas::Dim (PalEntry color, float damount, int x1, int y1, int w, int h)
 //
 //==========================================================================
 
-void DCanvas::GetScreenshotBuffer(const BYTE *&buffer, int &pitch, ESSType &color_type)
+void DCanvas::GetScreenshotBuffer(const canvas_pixel_t *&buffer, int &pitch, ESSType &color_type)
 {
 	Lock(true);
 	buffer = GetBuffer();
@@ -759,8 +793,8 @@ DSimpleCanvas::DSimpleCanvas (int width, int height)
 			Pitch = width + MAX(0, CPU.DataL1LineSize - 8);
 		}
 	}
-	MemBuffer = new BYTE[Pitch * height];
-	memset (MemBuffer, 0, Pitch * height);
+	MemBuffer = new canvas_pixel_t[Pitch * height];
+	memset (MemBuffer, 0, Pitch * height * sizeof(canvas_pixel_t));
 }
 
 //==========================================================================
@@ -879,7 +913,7 @@ void DFrameBuffer::DrawRateStuff ()
 	{
 		int i = I_GetTime(false);
 		int tics = i - LastTic;
-		BYTE *buffer = GetBuffer();
+		canvas_pixel_t *buffer = GetBuffer();
 
 		LastTic = i;
 		if (tics > 20) tics = 20;

@@ -66,6 +66,12 @@ union QWORD_UNION
 typedef SDWORD							fixed_t;
 typedef DWORD							dsfixed_t;				// fixedpt used by span drawer
 
+#ifndef PALETTEOUTPUT
+typedef uint32_t						canvas_pixel_t;
+#else
+typedef BYTE							canvas_pixel_t;
+#endif
+
 #define FIXED_MAX						(signed)(0x7fffffff)
 #define FIXED_MIN						(signed)(0x80000000)
 

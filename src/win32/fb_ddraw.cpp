@@ -32,7 +32,6 @@
 **
 */
 
-
 // HEADER FILES ------------------------------------------------------------
 
 #define DIRECTDRAW_VERSION 0x0300
@@ -61,7 +60,9 @@
 
 // TYPES -------------------------------------------------------------------
 
+#ifdef USE_OBSOLETE_DDRAW
 IMPLEMENT_CLASS(DDrawFB)
+#endif
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -118,6 +119,8 @@ CUSTOM_CVAR (Float, bgamma, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 cycle_t BlitCycles;
 
 // CODE --------------------------------------------------------------------
+
+#ifdef USE_OBSOLETE_DDRAW
 
 DDrawFB::DDrawFB (int width, int height, bool fullscreen)
 	: BaseWinFB (width, height)
@@ -996,8 +999,8 @@ DDrawFB::LockSurfRes DDrawFB::LockSurf (LPRECT lockrect, LPDIRECTDRAWSURFACE toL
 		LOG1 ("Final result after restoration attempts: %08lx\n", hr);
 		return NoGood;
 	}
-	Buffer = (BYTE *)desc.lpSurface;
-	Pitch = desc.lPitch;
+	Buffer = (canvas_pixel_t *)desc.lpSurface;
+	Pitch = desc.lPitch / sizeof(canvas_pixel_t);
 	BufferingNow = false;
 	return wasLost ? GoodWasLost : Good;
 }
@@ -1327,6 +1330,7 @@ void DDrawFB::Blank ()
 		PrimarySurf->Blt (NULL, NULL, NULL, DDBLT_COLORFILL, &blitFX);
 	}
 }
+#endif
 
 ADD_STAT (blit)
 {

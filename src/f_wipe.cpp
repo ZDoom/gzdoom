@@ -77,8 +77,10 @@ bool wipe_initMelt (int ticks)
 {
 	int i, r;
 	
+#ifdef PALETTEOUTPUT
 	// copy start screen to main screen
 	screen->DrawBlock (0, 0, SCREENWIDTH, SCREENHEIGHT, (BYTE *)wipe_scr_start);
+#endif
 	
 	// makes this wipe faster (in theory)
 	// to have stuff in column-major format
@@ -271,7 +273,8 @@ bool wipe_doBurn (int ticks)
 	// Draw the screen
 	int xstep, ystep, firex, firey;
 	int x, y;
-	BYTE *to, *fromold, *fromnew;
+	canvas_pixel_t *to;
+	BYTE *fromold, *fromnew;
 	const int SHIFT = 16;
 
 	xstep = (FIREWIDTH << SHIFT) / SCREENWIDTH;
@@ -298,6 +301,9 @@ bool wipe_doBurn (int ticks)
 			}
 			else
 			{
+#ifndef PALETTEOUTPUT
+				// TO DO: RGB32k.All
+#else
 				int bglevel = 64-fglevel;
 				DWORD *fg2rgb = Col2RGB8[fglevel];
 				DWORD *bg2rgb = Col2RGB8[bglevel];
@@ -305,6 +311,7 @@ bool wipe_doBurn (int ticks)
 				DWORD bg = bg2rgb[fromold[x]];
 				fg = (fg+bg) | 0x1f07c1f;
 				to[x] = RGB32k.All[fg & (fg>>15)];
+#endif
 				done = false;
 			}
 		}
@@ -335,7 +342,9 @@ bool wipe_doFade (int ticks)
 	fade += ticks * 2;
 	if (fade > 64)
 	{
+#ifdef PALETTEOUTPUT
 		screen->DrawBlock (0, 0, SCREENWIDTH, SCREENHEIGHT, (BYTE *)wipe_scr_end);
+#endif
 		return true;
 	}
 	else
@@ -346,7 +355,7 @@ bool wipe_doFade (int ticks)
 		DWORD *bg2rgb = Col2RGB8[bglevel];
 		BYTE *fromnew = (BYTE *)wipe_scr_end;
 		BYTE *fromold = (BYTE *)wipe_scr_start;
-		BYTE *to = screen->GetBuffer();
+		canvas_pixel_t *to = screen->GetBuffer();
 
 		for (y = 0; y < SCREENHEIGHT; y++)
 		{
@@ -387,7 +396,9 @@ bool wipe_StartScreen (int type)
 	if (CurrentWipeType)
 	{
 		wipe_scr_start = new short[SCREENWIDTH * SCREENHEIGHT / 2];
+#ifdef PALETTEOUTPUT
 		screen->GetBlock (0, 0, SCREENWIDTH, SCREENHEIGHT, (BYTE *)wipe_scr_start);
+#endif
 		return true;
 	}
 	return false;
@@ -398,8 +409,10 @@ void wipe_EndScreen (void)
 	if (CurrentWipeType)
 	{
 		wipe_scr_end = new short[SCREENWIDTH * SCREENHEIGHT / 2];
+#ifdef PALETTEOUTPUT
 		screen->GetBlock (0, 0, SCREENWIDTH, SCREENHEIGHT, (BYTE *)wipe_scr_end);
 		screen->DrawBlock (0, 0, SCREENWIDTH, SCREENHEIGHT, (BYTE *)wipe_scr_start); // restore start scr.
+#endif
 		// Initialize the wipe
 		(*wipes[(CurrentWipeType-1)*3])(0);
 	}

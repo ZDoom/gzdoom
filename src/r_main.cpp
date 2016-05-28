@@ -578,7 +578,7 @@ void R_HighlightPortal (PortalDrawseg* pds)
 
 	BYTE color = (BYTE)BestColor((DWORD *)GPalette.BaseColors, 255, 0, 0, 0, 255);
 
-	BYTE* pixels = RenderTarget->GetBuffer();
+	canvas_pixel_t* pixels = RenderTarget->GetBuffer();
 	// top edge
 	for (int x = pds->x1; x < pds->x2; x++)
 	{
@@ -623,7 +623,7 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 			int Ytop = pds->ceilingclip[x-pds->x1];
 			int Ybottom = pds->floorclip[x-pds->x1];
 
-			BYTE *dest = RenderTarget->GetBuffer() + x + Ytop * spacing;
+			canvas_pixel_t *dest = RenderTarget->GetBuffer() + x + Ytop * spacing;
 
 			for (int y = Ytop; y <= Ybottom; y++)
 			{
@@ -794,10 +794,10 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 
 void R_SetupBuffer ()
 {
-	static BYTE *lastbuff = NULL;
+	static canvas_pixel_t *lastbuff = NULL;
 
 	int pitch = RenderTarget->GetPitch();
-	BYTE *lineptr = RenderTarget->GetBuffer() + viewwindowy*pitch + viewwindowx;
+	canvas_pixel_t *lineptr = RenderTarget->GetBuffer() + viewwindowy*pitch + viewwindowx;
 
 	if (dc_pitch != pitch || lineptr != lastbuff)
 	{

@@ -57,8 +57,8 @@
 // dc_ctspan is advanced while drawing into dc_temp.
 // horizspan is advanced up to dc_ctspan when drawing from dc_temp to the screen.
 
-BYTE dc_tempbuff[MAXHEIGHT*4];
-BYTE *dc_temp;
+canvas_pixel_t dc_tempbuff[MAXHEIGHT*4];
+canvas_pixel_t *dc_temp;
 unsigned int dc_tspans[4][MAXHEIGHT];
 unsigned int *dc_ctspan[4];
 unsigned int *horizspan[4];
@@ -73,8 +73,8 @@ extern "C" void R_SetupAddClampCol();
 // Copies one span at hx to the screen at sx.
 void rt_copy1col_c (int hx, int sx, int yl, int yh)
 {
-	BYTE *source;
-	BYTE *dest;
+	canvas_pixel_t *source;
+	canvas_pixel_t *dest;
 	int count;
 	int pitch;
 
@@ -114,6 +114,13 @@ void rt_copy1col_c (int hx, int sx, int yl, int yh)
 // Copies all four spans to the screen starting at sx.
 void rt_copy4cols_c (int sx, int yl, int yh)
 {
+#ifndef PALETTEOUTPUT
+	// To do: we could do this with SSE using __m128i
+	rt_copy1col_c(0, sx, yl, yh);
+	rt_copy1col_c(1, sx + 1, yl, yh);
+	rt_copy1col_c(2, sx + 2, yl, yh);
+	rt_copy1col_c(3, sx + 3, yl, yh);
+#else
 	int *source;
 	int *dest;
 	int count;
@@ -142,14 +149,15 @@ void rt_copy4cols_c (int sx, int yl, int yh)
 		source += 8/sizeof(int);
 		dest += pitch*2;
 	} while (--count);
+#endif
 }
 
 // Maps one span at hx to the screen at sx.
 void rt_map1col_c (int hx, int sx, int yl, int yh)
 {
 	BYTE *colormap;
-	BYTE *source;
-	BYTE *dest;
+	canvas_pixel_t *source;
+	canvas_pixel_t *dest;
 	int count;
 	int pitch;
 
@@ -158,13 +166,21 @@ void rt_map1col_c (int hx, int sx, int yl, int yh)
 		return;
 	count++;
 
+#ifndef PALETTEOUTPUT
+	uint32_t light = calc_light_multiplier(dc_light);
+#endif
+
 	colormap = dc_colormap;
 	dest = ylookup[yl] + sx + dc_destorg;
 	source = &dc_temp[yl*4 + hx];
 	pitch = dc_pitch;
 
 	if (count & 1) {
+#ifndef PALETTEOUTPUT
+		*dest = shade_pal_index(colormap[*source], light);
+#else
 		*dest = colormap[*source];
+#endif
 		source += 4;
 		dest += pitch;
 	}
@@ -172,8 +188,13 @@ void rt_map1col_c (int hx, int sx, int yl, int yh)
 		return;
 
 	do {
+#ifndef PALETTEOUTPUT
+		dest[0] = shade_pal_index(colormap[source[0]], light);
+		dest[pitch] = shade_pal_index(colormap[source[4]], light);
+#else
 		dest[0] = colormap[source[0]];
 		dest[pitch] = colormap[source[4]];
+#endif
 		source += 8;
 		dest += pitch*2;
 	} while (--count);
@@ -183,8 +204,8 @@ void rt_map1col_c (int hx, int sx, int yl, int yh)
 void rt_map4cols_c (int sx, int yl, int yh)
 {
 	BYTE *colormap;
-	BYTE *source;
-	BYTE *dest;
+	canvas_pixel_t *source;
+	canvas_pixel_t *dest;
 	int count;
 	int pitch;
 
@@ -193,16 +214,27 @@ void rt_map4cols_c (int sx, int yl, int yh)
 		return;
 	count++;
 
+#ifndef PALETTEOUTPUT
+	uint32_t light = calc_light_multiplier(dc_light);
+#endif
+
 	colormap = dc_colormap;
 	dest = ylookup[yl] + sx + dc_destorg;
 	source = &dc_temp[yl*4];
 	pitch = dc_pitch;
 	
 	if (count & 1) {
+#ifndef PALETTEOUTPUT
+		dest[0] = shade_pal_index(colormap[source[0]], light);
+		dest[1] = shade_pal_index(colormap[source[1]], light);
+		dest[2] = shade_pal_index(colormap[source[2]], light);
+		dest[3] = shade_pal_index(colormap[source[3]], light);
+#else
 		dest[0] = colormap[source[0]];
 		dest[1] = colormap[source[1]];
 		dest[2] = colormap[source[2]];
 		dest[3] = colormap[source[3]];
+#endif
 		source += 4;
 		dest += pitch;
 	}
@@ -210,6 +242,16 @@ void rt_map4cols_c (int sx, int yl, int yh)
 		return;
 
 	do {
+#ifndef PALETTEOUTPUT
+		dest[0] = shade_pal_index(colormap[source[0]], light);
+		dest[1] = shade_pal_index(colormap[source[1]], light);
+		dest[2] = shade_pal_index(colormap[source[2]], light);
+		dest[3] = shade_pal_index(colormap[source[3]], light);
+		dest[pitch] = shade_pal_index(colormap[source[4]], light);
+		dest[pitch + 1] = shade_pal_index(colormap[source[5]], light);
+		dest[pitch + 2] = shade_pal_index(colormap[source[6]], light);
+		dest[pitch + 3] = shade_pal_index(colormap[source[7]], light);
+#else
 		dest[0] = colormap[source[0]];
 		dest[1] = colormap[source[1]];
 		dest[2] = colormap[source[2]];
@@ -218,6 +260,7 @@ void rt_map4cols_c (int sx, int yl, int yh)
 		dest[pitch+1] = colormap[source[5]];
 		dest[pitch+2] = colormap[source[6]];
 		dest[pitch+3] = colormap[source[7]];
+#endif
 		source += 8;
 		dest += pitch*2;
 	} while (--count);
@@ -227,7 +270,7 @@ void rt_map4cols_c (int sx, int yl, int yh)
 void rt_Translate1col(const BYTE *translation, int hx, int yl, int yh)
 {
 	int count = yh - yl + 1;
-	BYTE *source = &dc_temp[yl*4 + hx];
+	canvas_pixel_t *source = &dc_temp[yl*4 + hx];
 
 	// Things we do to hit the compiler's optimizer with a clue bat:
 	// 1. Parallelism is explicitly spelled out by using a separate
@@ -274,7 +317,7 @@ void rt_Translate1col(const BYTE *translation, int hx, int yl, int yh)
 void rt_Translate4cols(const BYTE *translation, int yl, int yh)
 {
 	int count = yh - yl + 1;
-	BYTE *source = &dc_temp[yl*4];
+	canvas_pixel_t *source = &dc_temp[yl*4];
 	int c0, c1;
 	BYTE b0, b1;
 
@@ -330,8 +373,8 @@ void rt_tlate4cols (int sx, int yl, int yh)
 void rt_add1col (int hx, int sx, int yl, int yh)
 {
 	BYTE *colormap;
-	BYTE *source;
-	BYTE *dest;
+	canvas_pixel_t *source;
+	canvas_pixel_t *dest;
 	int count;
 	int pitch;
 
@@ -340,13 +383,36 @@ void rt_add1col (int hx, int sx, int yl, int yh)
 		return;
 	count++;
 
-	DWORD *fg2rgb = dc_srcblend;
-	DWORD *bg2rgb = dc_destblend;
 	dest = ylookup[yl] + sx + dc_destorg;
 	source = &dc_temp[yl*4 + hx];
 	pitch = dc_pitch;
 	colormap = dc_colormap;
 
+#ifndef PALETTEOUTPUT
+	uint32_t light = calc_light_multiplier(dc_light);
+
+	do {
+		uint32_t fg = shade_pal_index(colormap[*source], light);
+		uint32_t fg_red = (fg >> 16) & 0xff;
+		uint32_t fg_green = (fg >> 8) & 0xff;
+		uint32_t fg_blue = fg & 0xff;
+
+		uint32_t bg_red = (*dest >> 16) & 0xff;
+		uint32_t bg_green = (*dest >> 8) & 0xff;
+		uint32_t bg_blue = (*dest) & 0xff;
+
+		uint32_t red = clamp<uint32_t>(fg_red + bg_red, 0, 255);
+		uint32_t green = clamp<uint32_t>(fg_green + bg_green, 0, 255);
+		uint32_t blue = clamp<uint32_t>(fg_blue + bg_blue, 0, 255);
+
+		*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
+
+		source += 4;
+		dest += pitch;
+	} while (--count);
+#else
+	DWORD *fg2rgb = dc_srcblend;
+	DWORD *bg2rgb = dc_destblend;
 	do {
 		DWORD fg = colormap[*source];
 		DWORD bg = *dest;
@@ -358,14 +424,15 @@ void rt_add1col (int hx, int sx, int yl, int yh)
 		source += 4;
 		dest += pitch;
 	} while (--count);
+#endif
 }
 
 // Adds all four spans to the screen starting at sx without clamping.
 void rt_add4cols_c (int sx, int yl, int yh)
 {
 	BYTE *colormap;
-	BYTE *source;
-	BYTE *dest;
+	canvas_pixel_t *source;
+	canvas_pixel_t *dest;
 	int count;
 	int pitch;
 
@@ -374,12 +441,39 @@ void rt_add4cols_c (int sx, int yl, int yh)
 		return;
 	count++;
 
-	DWORD *fg2rgb = dc_srcblend;
-	DWORD *bg2rgb = dc_destblend;
 	dest = ylookup[yl] + sx + dc_destorg;
 	source = &dc_temp[yl*4];
 	pitch = dc_pitch;
 	colormap = dc_colormap;
+
+#ifndef PALETTEOUTPUT
+	uint32_t light = calc_light_multiplier(dc_light);
+
+	do {
+		for (int i = 0; i < 4; i++)
+		{
+			uint32_t fg = shade_pal_index(colormap[source[i]], light);
+			uint32_t fg_red = (fg >> 16) & 0xff;
+			uint32_t fg_green = (fg >> 8) & 0xff;
+			uint32_t fg_blue = fg & 0xff;
+
+			uint32_t bg_red = (dest[i] >> 16) & 0xff;
+			uint32_t bg_green = (dest[i] >> 8) & 0xff;
+			uint32_t bg_blue = (dest[i]) & 0xff;
+
+			uint32_t red = clamp<uint32_t>(fg_red + bg_red, 0, 255);
+			uint32_t green = clamp<uint32_t>(fg_green + bg_green, 0, 255);
+			uint32_t blue = clamp<uint32_t>(fg_blue + bg_blue, 0, 255);
+
+			dest[i] = 0xff000000 | (red << 16) | (green << 8) | blue;
+		}
+
+		source += 4;
+		dest += pitch;
+	} while (--count);
+#else
+	DWORD *fg2rgb = dc_srcblend;
+	DWORD *bg2rgb = dc_destblend;
 
 	do {
 		DWORD fg = colormap[source[0]];
@@ -414,6 +508,7 @@ void rt_add4cols_c (int sx, int yl, int yh)
 		source += 4;
 		dest += pitch;
 	} while (--count);
+#endif
 }
 
 // Translates and adds one span at hx to the screen at sx without clamping.
@@ -433,10 +528,9 @@ void rt_tlateadd4cols (int sx, int yl, int yh)
 // Shades one span at hx to the screen at sx.
 void rt_shaded1col (int hx, int sx, int yl, int yh)
 {
-	DWORD *fgstart;
 	BYTE *colormap;
-	BYTE *source;
-	BYTE *dest;
+	canvas_pixel_t *source;
+	canvas_pixel_t *dest;
 	int count;
 	int pitch;
 
@@ -445,11 +539,36 @@ void rt_shaded1col (int hx, int sx, int yl, int yh)
 		return;
 	count++;
 
-	fgstart = &Col2RGB8[0][dc_color];
 	colormap = dc_colormap;
 	dest = ylookup[yl] + sx + dc_destorg;
 	source = &dc_temp[yl*4 + hx];
 	pitch = dc_pitch;
+
+#ifndef PALETTEOUTPUT
+	uint32_t fg = shade_pal_index(dc_color, calc_light_multiplier(0));
+	uint32_t fg_red = (fg >> 16) & 0xff;
+	uint32_t fg_green = (fg >> 8) & 0xff;
+	uint32_t fg_blue = fg & 0xff;
+
+	do {
+		uint32_t alpha = colormap[*source];
+		uint32_t inv_alpha = 64 - alpha;
+
+		uint32_t bg_red = (*dest >> 16) & 0xff;
+		uint32_t bg_green = (*dest >> 8) & 0xff;
+		uint32_t bg_blue = (*dest) & 0xff;
+
+		uint32_t red = (fg_red * alpha + bg_red * inv_alpha) / 64;
+		uint32_t green = (fg_green * alpha + bg_green * inv_alpha) / 64;
+		uint32_t blue = (fg_blue * alpha + bg_blue * inv_alpha) / 64;
+
+		*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
+		source += 4;
+		dest += pitch;
+	} while (--count);
+#else
+	DWORD *fgstart;
+	fgstart = &Col2RGB8[0][dc_color];
 
 	do {
 		DWORD val = colormap[*source];
@@ -459,15 +578,15 @@ void rt_shaded1col (int hx, int sx, int yl, int yh)
 		source += 4;
 		dest += pitch;
 	} while (--count);
+#endif
 }
 
 // Shades all four spans to the screen starting at sx.
 void rt_shaded4cols_c (int sx, int yl, int yh)
 {
-	DWORD *fgstart;
 	BYTE *colormap;
-	BYTE *source;
-	BYTE *dest;
+	canvas_pixel_t *source;
+	canvas_pixel_t *dest;
 	int count;
 	int pitch;
 
@@ -476,11 +595,39 @@ void rt_shaded4cols_c (int sx, int yl, int yh)
 		return;
 	count++;
 
-	fgstart = &Col2RGB8[0][dc_color];
 	colormap = dc_colormap;
 	dest = ylookup[yl] + sx + dc_destorg;
 	source = &dc_temp[yl*4];
 	pitch = dc_pitch;
+
+#ifndef PALETTEOUTPUT
+	uint32_t fg = shade_pal_index(dc_color, calc_light_multiplier(0));
+	uint32_t fg_red = (fg >> 16) & 0xff;
+	uint32_t fg_green = (fg >> 8) & 0xff;
+	uint32_t fg_blue = fg & 0xff;
+
+	do {
+		for (int i = 0; i < 4; i++)
+		{
+			uint32_t alpha = colormap[source[i]];
+			uint32_t inv_alpha = 64 - alpha;
+
+			uint32_t bg_red = (dest[i] >> 16) & 0xff;
+			uint32_t bg_green = (dest[i] >> 8) & 0xff;
+			uint32_t bg_blue = (dest[i]) & 0xff;
+
+			uint32_t red = (fg_red * alpha + bg_red * inv_alpha) / 64;
+			uint32_t green = (fg_green * alpha + bg_green * inv_alpha) / 64;
+			uint32_t blue = (fg_blue * alpha + bg_blue * inv_alpha) / 64;
+
+			dest[i] = 0xff000000 | (red << 16) | (green << 8) | blue;
+		}
+		source += 4;
+		dest += pitch;
+	} while (--count);
+#else
+	DWORD *fgstart;
+	fgstart = &Col2RGB8[0][dc_color];
 
 	do {
 		DWORD val;
@@ -504,14 +651,15 @@ void rt_shaded4cols_c (int sx, int yl, int yh)
 		source += 4;
 		dest += pitch;
 	} while (--count);
+#endif
 }
 
 // Adds one span at hx to the screen at sx with clamping.
 void rt_addclamp1col (int hx, int sx, int yl, int yh)
 {
 	BYTE *colormap;
-	BYTE *source;
-	BYTE *dest;
+	canvas_pixel_t *source;
+	canvas_pixel_t *dest;
 	int count;
 	int pitch;
 
@@ -520,12 +668,35 @@ void rt_addclamp1col (int hx, int sx, int yl, int yh)
 		return;
 	count++;
 
-	DWORD *fg2rgb = dc_srcblend;
-	DWORD *bg2rgb = dc_destblend;
 	dest = ylookup[yl] + sx + dc_destorg;
 	source = &dc_temp[yl*4 + hx];
 	pitch = dc_pitch;
 	colormap = dc_colormap;
+
+#ifndef PALETTEOUTPUT
+	uint32_t light = calc_light_multiplier(dc_light);
+
+	do {
+		uint32_t fg = shade_pal_index(colormap[*source], light);
+		uint32_t fg_red = (fg >> 16) & 0xff;
+		uint32_t fg_green = (fg >> 8) & 0xff;
+		uint32_t fg_blue = fg & 0xff;
+
+		uint32_t bg_red = (*dest >> 16) & 0xff;
+		uint32_t bg_green = (*dest >> 8) & 0xff;
+		uint32_t bg_blue = (*dest) & 0xff;
+
+		uint32_t red = clamp<uint32_t>(fg_red + bg_red, 0, 255);
+		uint32_t green = clamp<uint32_t>(fg_green + bg_green, 0, 255);
+		uint32_t blue = clamp<uint32_t>(fg_blue + bg_blue, 0, 255);
+
+		*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
+		source += 4;
+		dest += pitch;
+	} while (--count);
+#else
+	DWORD *fg2rgb = dc_srcblend;
+	DWORD *bg2rgb = dc_destblend;
 
 	do {
 		DWORD a = fg2rgb[colormap[*source]] + bg2rgb[*dest];
@@ -540,14 +711,15 @@ void rt_addclamp1col (int hx, int sx, int yl, int yh)
 		source += 4;
 		dest += pitch;
 	} while (--count);
+#endif
 }
 
 // Adds all four spans to the screen starting at sx with clamping.
 void rt_addclamp4cols_c (int sx, int yl, int yh)
 {
 	BYTE *colormap;
-	BYTE *source;
-	BYTE *dest;
+	canvas_pixel_t *source;
+	canvas_pixel_t *dest;
 	int count;
 	int pitch;
 
@@ -556,12 +728,38 @@ void rt_addclamp4cols_c (int sx, int yl, int yh)
 		return;
 	count++;
 
-	DWORD *fg2rgb = dc_srcblend;
-	DWORD *bg2rgb = dc_destblend;
 	dest = ylookup[yl] + sx + dc_destorg;
 	source = &dc_temp[yl*4];
 	pitch = dc_pitch;
 	colormap = dc_colormap;
+
+#ifndef PALETTEOUTPUT
+	uint32_t light = calc_light_multiplier(dc_light);
+
+	do {
+		for (int i = 0; i < 4; i++)
+		{
+			uint32_t fg = shade_pal_index(colormap[source[i]], light);
+			uint32_t fg_red = (fg >> 16) & 0xff;
+			uint32_t fg_green = (fg >> 8) & 0xff;
+			uint32_t fg_blue = fg & 0xff;
+
+			uint32_t bg_red = (dest[i] >> 16) & 0xff;
+			uint32_t bg_green = (dest[i] >> 8) & 0xff;
+			uint32_t bg_blue = (dest[i]) & 0xff;
+
+			uint32_t red = clamp<uint32_t>(fg_red + bg_red, 0, 255);
+			uint32_t green = clamp<uint32_t>(fg_green + bg_green, 0, 255);
+			uint32_t blue = clamp<uint32_t>(fg_blue + bg_blue, 0, 255);
+
+			dest[i] = 0xff000000 | (red << 16) | (green << 8) | blue;
+		}
+		source += 4;
+		dest += pitch;
+	} while (--count);
+#else
+	DWORD *fg2rgb = dc_srcblend;
+	DWORD *bg2rgb = dc_destblend;
 
 	do {
 		DWORD a = fg2rgb[colormap[source[0]]] + bg2rgb[dest[0]];
@@ -604,6 +802,7 @@ void rt_addclamp4cols_c (int sx, int yl, int yh)
 		source += 4;
 		dest += pitch;
 	} while (--count);
+#endif
 }
 
 // Translates and adds one span at hx to the screen at sx with clamping.
@@ -624,8 +823,8 @@ void rt_tlateaddclamp4cols (int sx, int yl, int yh)
 void rt_subclamp1col (int hx, int sx, int yl, int yh)
 {
 	BYTE *colormap;
-	BYTE *source;
-	BYTE *dest;
+	canvas_pixel_t *source;
+	canvas_pixel_t *dest;
 	int count;
 	int pitch;
 
@@ -634,13 +833,35 @@ void rt_subclamp1col (int hx, int sx, int yl, int yh)
 		return;
 	count++;
 
-	DWORD *fg2rgb = dc_srcblend;
-	DWORD *bg2rgb = dc_destblend;
 	dest = ylookup[yl] + sx + dc_destorg;
 	source = &dc_temp[yl*4 + hx];
 	pitch = dc_pitch;
 	colormap = dc_colormap;
 
+#ifndef PALETTEOUTPUT
+	uint32_t light = calc_light_multiplier(dc_light);
+
+	do {
+		uint32_t fg = shade_pal_index(colormap[*source], light);
+		uint32_t fg_red = (fg >> 16) & 0xff;
+		uint32_t fg_green = (fg >> 8) & 0xff;
+		uint32_t fg_blue = fg & 0xff;
+
+		uint32_t bg_red = (*dest >> 16) & 0xff;
+		uint32_t bg_green = (*dest >> 8) & 0xff;
+		uint32_t bg_blue = (*dest) & 0xff;
+
+		uint32_t red = clamp<uint32_t>(256 - fg_red + bg_red, 256, 256 + 255) - 256;
+		uint32_t green = clamp<uint32_t>(256 - fg_green + bg_green, 256, 256 + 255) - 256;
+		uint32_t blue = clamp<uint32_t>(256 - fg_blue + bg_blue, 256, 256 + 255) - 256;
+
+		*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
+		source += 4;
+		dest += pitch;
+	} while (--count);
+#else
+	DWORD *fg2rgb = dc_srcblend;
+	DWORD *bg2rgb = dc_destblend;
 	do {
 		DWORD a = (fg2rgb[colormap[*source]] | 0x40100400) - bg2rgb[*dest];
 		DWORD b = a;
@@ -653,14 +874,15 @@ void rt_subclamp1col (int hx, int sx, int yl, int yh)
 		source += 4;
 		dest += pitch;
 	} while (--count);
+#endif
 }
 
 // Subtracts all four spans to the screen starting at sx with clamping.
 void rt_subclamp4cols (int sx, int yl, int yh)
 {
 	BYTE *colormap;
-	BYTE *source;
-	BYTE *dest;
+	canvas_pixel_t *source;
+	canvas_pixel_t *dest;
 	int count;
 	int pitch;
 
@@ -669,13 +891,39 @@ void rt_subclamp4cols (int sx, int yl, int yh)
 		return;
 	count++;
 
-	DWORD *fg2rgb = dc_srcblend;
-	DWORD *bg2rgb = dc_destblend;
 	dest = ylookup[yl] + sx + dc_destorg;
 	source = &dc_temp[yl*4];
 	pitch = dc_pitch;
 	colormap = dc_colormap;
 
+#ifndef PALETTEOUTPUT
+	uint32_t light = calc_light_multiplier(dc_light);
+
+	do {
+		for (int i = 0; i < 4; i++)
+		{
+			uint32_t fg = shade_pal_index(colormap[source[i]], light);
+			uint32_t fg_red = (fg >> 16) & 0xff;
+			uint32_t fg_green = (fg >> 8) & 0xff;
+			uint32_t fg_blue = fg & 0xff;
+
+			uint32_t bg_red = (dest[i] >> 16) & 0xff;
+			uint32_t bg_green = (dest[i] >> 8) & 0xff;
+			uint32_t bg_blue = (dest[i]) & 0xff;
+
+			uint32_t red = clamp<uint32_t>(256 - fg_red + bg_red, 256, 256 + 255) - 256;
+			uint32_t green = clamp<uint32_t>(256 - fg_green + bg_green, 256, 256 + 255) - 256;
+			uint32_t blue = clamp<uint32_t>(256 - fg_blue + bg_blue, 256, 256 + 255) - 256;
+
+			dest[i] = 0xff000000 | (red << 16) | (green << 8) | blue;
+		}
+
+		source += 4;
+		dest += pitch;
+	} while (--count);
+#else
+	DWORD *fg2rgb = dc_srcblend;
+	DWORD *bg2rgb = dc_destblend;
 	do {
 		DWORD a = (fg2rgb[colormap[source[0]]] | 0x40100400) - bg2rgb[dest[0]];
 		DWORD b = a;
@@ -713,6 +961,7 @@ void rt_subclamp4cols (int sx, int yl, int yh)
 		source += 4;
 		dest += pitch;
 	} while (--count);
+#endif
 }
 
 // Translates and subtracts one span at hx to the screen at sx with clamping.
@@ -733,8 +982,8 @@ void rt_tlatesubclamp4cols (int sx, int yl, int yh)
 void rt_revsubclamp1col (int hx, int sx, int yl, int yh)
 {
 	BYTE *colormap;
-	BYTE *source;
-	BYTE *dest;
+	canvas_pixel_t *source;
+	canvas_pixel_t *dest;
 	int count;
 	int pitch;
 
@@ -750,6 +999,28 @@ void rt_revsubclamp1col (int hx, int sx, int yl, int yh)
 	pitch = dc_pitch;
 	colormap = dc_colormap;
 
+#ifndef PALETTEOUTPUT
+	uint32_t light = calc_light_multiplier(dc_light);
+
+	do {
+		uint32_t fg = shade_pal_index(colormap[*source], light);
+		uint32_t fg_red = (fg >> 16) & 0xff;
+		uint32_t fg_green = (fg >> 8) & 0xff;
+		uint32_t fg_blue = fg & 0xff;
+
+		uint32_t bg_red = (*dest >> 16) & 0xff;
+		uint32_t bg_green = (*dest >> 8) & 0xff;
+		uint32_t bg_blue = (*dest) & 0xff;
+
+		uint32_t red = clamp<uint32_t>(256 + fg_red - bg_red, 256, 256 + 255) - 256;
+		uint32_t green = clamp<uint32_t>(256 + fg_green - bg_green, 256, 256 + 255) - 256;
+		uint32_t blue = clamp<uint32_t>(256 + fg_blue - bg_blue, 256, 256 + 255) - 256;
+
+		*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
+		source += 4;
+		dest += pitch;
+	} while (--count);
+#else
 	do {
 		DWORD a = (bg2rgb[*dest] | 0x40100400) - fg2rgb[colormap[*source]];
 		DWORD b = a;
@@ -762,14 +1033,15 @@ void rt_revsubclamp1col (int hx, int sx, int yl, int yh)
 		source += 4;
 		dest += pitch;
 	} while (--count);
+#endif
 }
 
 // Subtracts all four spans from the screen starting at sx with clamping.
 void rt_revsubclamp4cols (int sx, int yl, int yh)
 {
 	BYTE *colormap;
-	BYTE *source;
-	BYTE *dest;
+	canvas_pixel_t *source;
+	canvas_pixel_t *dest;
 	int count;
 	int pitch;
 
@@ -785,6 +1057,32 @@ void rt_revsubclamp4cols (int sx, int yl, int yh)
 	pitch = dc_pitch;
 	colormap = dc_colormap;
 
+#ifndef PALETTEOUTPUT
+	uint32_t light = calc_light_multiplier(dc_light);
+
+	do {
+		for (int i = 0; i < 4; i++)
+		{
+			uint32_t fg = shade_pal_index(colormap[source[i]], light);
+			uint32_t fg_red = (fg >> 16) & 0xff;
+			uint32_t fg_green = (fg >> 8) & 0xff;
+			uint32_t fg_blue = fg & 0xff;
+
+			uint32_t bg_red = (dest[i] >> 16) & 0xff;
+			uint32_t bg_green = (dest[i] >> 8) & 0xff;
+			uint32_t bg_blue = (dest[i]) & 0xff;
+
+			uint32_t red = clamp<uint32_t>(256 + fg_red - bg_red, 256, 256 + 255) - 256;
+			uint32_t green = clamp<uint32_t>(256 + fg_green - bg_green, 256, 256 + 255) - 256;
+			uint32_t blue = clamp<uint32_t>(256 + fg_blue - bg_blue, 256, 256 + 255) - 256;
+
+			dest[i] = 0xff000000 | (red << 16) | (green << 8) | blue;
+		}
+
+		source += 4;
+		dest += pitch;
+	} while (--count);
+#else
 	do {
 		DWORD a = (bg2rgb[dest[0]] | 0x40100400) - fg2rgb[colormap[source[0]]];
 		DWORD b = a;
@@ -822,6 +1120,7 @@ void rt_revsubclamp4cols (int sx, int yl, int yh)
 		source += 4;
 		dest += pitch;
 	} while (--count);
+#endif
 }
 
 // Translates and subtracts one span at hx from the screen at sx with clamping.
@@ -1002,7 +1301,7 @@ void rt_draw4cols (int sx)
 
 // Before each pass through a rendering loop that uses these routines,
 // call this function to set up the span pointers.
-void rt_initcols (BYTE *buff)
+void rt_initcols (canvas_pixel_t *buff)
 {
 	int y;
 
@@ -1016,7 +1315,7 @@ void rt_initcols (BYTE *buff)
 void R_DrawColumnHorizP_C (void)
 {
 	int count = dc_count;
-	BYTE *dest;
+	canvas_pixel_t *dest;
 	fixed_t fracstep;
 	fixed_t frac;
 
@@ -1077,7 +1376,7 @@ void R_FillColumnHorizP (void)
 {
 	int count = dc_count;
 	BYTE color = dc_color;
-	BYTE *dest;
+	canvas_pixel_t *dest;
 
 	if (count <= 0)
 		return;

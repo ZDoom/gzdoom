@@ -765,14 +765,20 @@ void D3DFB::KillNativeTexs()
 
 bool D3DFB::CreateFBTexture ()
 {
-	if (FAILED(D3DDevice->CreateTexture(Width, Height, 1, D3DUSAGE_DYNAMIC, D3DFMT_L8, D3DPOOL_DEFAULT, &FBTexture, NULL)))
+#ifndef PALETTEOUTPUT
+	D3DFORMAT FBFormat = D3DFMT_A8R8G8B8;
+#else
+	D3DFORMAT FBFormat = D3DFMT_L8;
+#endif
+
+	if (FAILED(D3DDevice->CreateTexture(Width, Height, 1, D3DUSAGE_DYNAMIC, FBFormat, D3DPOOL_DEFAULT, &FBTexture, NULL)))
 	{
 		int pow2width, pow2height, i;
 
 		for (i = 1; i < Width; i <<= 1) {} pow2width = i;
 		for (i = 1; i < Height; i <<= 1) {} pow2height = i;
 
-		if (FAILED(D3DDevice->CreateTexture(pow2width, pow2height, 1, D3DUSAGE_DYNAMIC, D3DFMT_L8, D3DPOOL_DEFAULT, &FBTexture, NULL)))
+		if (FAILED(D3DDevice->CreateTexture(pow2width, pow2height, 1, D3DUSAGE_DYNAMIC, FBFormat, D3DPOOL_DEFAULT, &FBTexture, NULL)))
 		{
 			return false;
 		}
@@ -1304,18 +1310,18 @@ void D3DFB::Draw3DPart(bool copy3d)
 			SUCCEEDED(FBTexture->LockRect (0, &lockrect, NULL, D3DLOCK_DISCARD))) ||
 			SUCCEEDED(FBTexture->LockRect (0, &lockrect, &texrect, 0)))
 		{
-			if (lockrect.Pitch == Pitch && Pitch == Width)
+			if (lockrect.Pitch == Pitch * sizeof(canvas_pixel_t) && Pitch == Width)
 			{
-				memcpy (lockrect.pBits, MemBuffer, Width * Height);
+				memcpy (lockrect.pBits, MemBuffer, Width * Height * sizeof(canvas_pixel_t));
 			}
 			else
 			{
-				BYTE *dest = (BYTE *)lockrect.pBits;
-				BYTE *src = MemBuffer;
+				canvas_pixel_t *dest = (canvas_pixel_t *)lockrect.pBits;
+				canvas_pixel_t *src = MemBuffer;
 				for (int y = 0; y < Height; y++)
 				{
-					memcpy (dest, src, Width);
-					dest += lockrect.Pitch;
+					memcpy (dest, src, Width * sizeof(canvas_pixel_t));
+					dest = reinterpret_cast<canvas_pixel_t*>(reinterpret_cast<uint8_t*>(dest) + lockrect.Pitch);
 					src += Pitch;
 				}
 			}
@@ -1349,7 +1355,11 @@ void D3DFB::Draw3DPart(bool copy3d)
 	memset(Constant, 0, sizeof(Constant));
 	SetAlphaBlend(D3DBLENDOP(0));
 	EnableAlphaTest(FALSE);
+#ifndef PALETTEOUTPUT
+	SetPixelShader(Shaders[SHADER_NormalColor]);
+#else
 	SetPixelShader(Shaders[SHADER_NormalColorPal]);
+#endif
 	if (copy3d)
 	{
 		FBVERTEX verts[4];
@@ -1367,7 +1377,11 @@ void D3DFB::Draw3DPart(bool copy3d)
 					realfixedcolormap->ColorizeStart[1]/2, realfixedcolormap->ColorizeStart[2]/2, 0);
 				color1 = D3DCOLOR_COLORVALUE(realfixedcolormap->ColorizeEnd[0]/2,
 					realfixedcolormap->ColorizeEnd[1]/2, realfixedcolormap->ColorizeEnd[2]/2, 1);
+#ifndef PALETTEOUTPUT
+				SetPixelShader(Shaders[SHADER_SpecialColormap]);
+#else
 				SetPixelShader(Shaders[SHADER_SpecialColormapPal]);
+#endif
 			}
 		}
 		else
@@ -1378,7 +1392,11 @@ void D3DFB::Draw3DPart(bool copy3d)
 		CalcFullscreenCoords(verts, Accel2D, false, color0, color1);
 		D3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 2, verts, sizeof(FBVERTEX));
 	}
+#ifndef PALETTEOUTPUT
+	SetPixelShader(Shaders[SHADER_NormalColor]);
+#else
 	SetPixelShader(Shaders[SHADER_NormalColorPal]);
+#endif
 }
 
 //==========================================================================
@@ -1707,7 +1725,7 @@ void D3DFB::SetBlendingRect(int x1, int y1, int x2, int y2)
 //
 //==========================================================================
 
-void D3DFB::GetScreenshotBuffer(const BYTE *&buffer, int &pitch, ESSType &color_type)
+void D3DFB::GetScreenshotBuffer(const canvas_pixel_t *&buffer, int &pitch, ESSType &color_type)
 {
 	D3DLOCKED_RECT lrect;
 
@@ -1733,7 +1751,7 @@ void D3DFB::GetScreenshotBuffer(const BYTE *&buffer, int &pitch, ESSType &color_
 		}
 		else
 		{
-			buffer = (const BYTE *)lrect.pBits;
+			buffer = (const canvas_pixel_t *)lrect.pBits;
 			pitch = lrect.Pitch;
 			color_type = SS_BGRA;
 		}

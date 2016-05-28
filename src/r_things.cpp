@@ -132,7 +132,7 @@ EXTERN_CVAR (Bool, r_drawvoxels)
 //
 
 int OffscreenBufferWidth, OffscreenBufferHeight;
-BYTE *OffscreenColorBuffer;
+canvas_pixel_t *OffscreenColorBuffer;
 FCoverageBuffer *OffscreenCoverageBuffer;
 
 //
@@ -408,6 +408,7 @@ void R_DrawVisSprite (vissprite_t *vis)
 
 	fixed_t centeryfrac = FLOAT2FIXED(CenterY);
 	dc_colormap = vis->Style.colormap;
+	dc_light = 0;
 
 	mode = R_SetPatchStyle (vis->Style.RenderStyle, vis->Style.Alpha, vis->Translation, vis->FillColor);
 
@@ -544,6 +545,7 @@ void R_DrawWallSprite(vissprite_t *spr)
 		dc_colormap = usecolormap->Maps;
 	else
 		calclighting = true;
+	dc_light = 0;
 
 	// Draw it
 	WallSpriteTile = spr->pic;
@@ -592,7 +594,13 @@ void R_DrawWallSprite(vissprite_t *spr)
 		{
 			if (calclighting)
 			{ // calculate lighting
+#ifndef PALETTEOUTPUT
+				dc_colormap = usecolormap->Maps;
+				dc_light = LIGHTSCALE(rw_light, shade);
+#else
 				dc_colormap = usecolormap->Maps + (GETPALOOKUP (rw_light, shade) << COLORMAPSHIFT);
+				dc_light = FLOAT2FIXED(MAXLIGHTVIS);
+#endif
 			}
 			if (!R_ClipSpriteColumnWithPortals(spr))
 				R_WallSpriteColumn(R_DrawMaskedColumn);
@@ -603,7 +611,13 @@ void R_DrawWallSprite(vissprite_t *spr)
 		{
 			if (calclighting)
 			{ // calculate lighting
+#ifndef PALETTEOUTPUT
+				dc_colormap = usecolormap->Maps;
+				dc_light = LIGHTSCALE(rw_light, shade);
+#else
 				dc_colormap = usecolormap->Maps + (GETPALOOKUP (rw_light, shade) << COLORMAPSHIFT);
+				dc_light = FLOAT2FIXED(MAXLIGHTVIS);
+#endif
 			}
 			rt_initcols();
 			for (int zz = 4; zz; --zz)
@@ -619,7 +633,13 @@ void R_DrawWallSprite(vissprite_t *spr)
 		{
 			if (calclighting)
 			{ // calculate lighting
+#ifndef PALETTEOUTPUT
+				dc_colormap = usecolormap->Maps;
+				dc_light = LIGHTSCALE(rw_light, shade);
+#else
 				dc_colormap = usecolormap->Maps + (GETPALOOKUP (rw_light, shade) << COLORMAPSHIFT);
+				dc_light = FLOAT2FIXED(MAXLIGHTVIS);
+#endif
 			}
 			if (!R_ClipSpriteColumnWithPortals(spr))
 				R_WallSpriteColumn(R_DrawMaskedColumn);
@@ -654,6 +674,7 @@ void R_DrawVisVoxel(vissprite_t *spr, int minslabz, int maxslabz, short *cliptop
 
 	// Do setup for blending.
 	dc_colormap = spr->Style.colormap;
+	dc_light = 0;
 	mode = R_SetPatchStyle(spr->Style.RenderStyle, spr->Style.Alpha, spr->Translation, spr->FillColor);
 
 	if (mode == DontDraw)
@@ -2598,10 +2619,8 @@ static void R_DrawMaskedSegsBehindParticle (const vissprite_t *vis)
 
 void R_DrawParticle (vissprite_t *vis)
 {
-	DWORD *bg2rgb;
 	int spacing;
-	BYTE *dest;
-	DWORD fg;
+	canvas_pixel_t *dest;
 	BYTE color = vis->Style.colormap[vis->startfrac];
 	int yl = vis->y1;
 	int ycount = vis->y2 - yl + 1;
@@ -2609,6 +2628,47 @@ void R_DrawParticle (vissprite_t *vis)
 	int countbase = vis->x2 - x1;
 
 	R_DrawMaskedSegsBehindParticle (vis);
+
+#ifndef PALETTEOUTPUT
+	uint32_t fg = shade_pal_index(color, calc_light_multiplier(0));
+	uint32_t fg_red = (fg >> 16) & 0xff;
+	uint32_t fg_green = (fg >> 8) & 0xff;
+	uint32_t fg_blue = fg & 0xff;
+
+	// vis->renderflags holds translucency level (0-255)
+	fixed_t fglevel = ((vis->renderflags + 1) << 8) & ~0x3ff;
+	uint32_t alpha = fglevel * 256 / FRACUNIT;
+	uint32_t inv_alpha = 256 - alpha;
+
+	fg_red *= alpha;
+	fg_green *= alpha;
+	fg_blue *= alpha;
+
+	spacing = RenderTarget->GetPitch();
+
+	for (int x = x1; x < (x1 + countbase); x++)
+	{
+		dc_x = x;
+		if (R_ClipSpriteColumnWithPortals(vis))
+			continue;
+		dest = ylookup[yl] + x + dc_destorg;
+		for (int y = 0; y < ycount; y++)
+		{
+			uint32_t bg_red = (*dest >> 16) & 0xff;
+			uint32_t bg_green = (*dest >> 8) & 0xff;
+			uint32_t bg_blue = (*dest) & 0xff;
+
+			uint32_t red = (fg_red + bg_red * alpha) / 256;
+			uint32_t green = (fg_green + bg_green * alpha) / 256;
+			uint32_t blue = (fg_blue + bg_blue * alpha) / 256;
+
+			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
+			dest += spacing;
+		}
+	}
+#else
+	DWORD *bg2rgb;
+	DWORD fg;
 
 	// vis->renderflags holds translucency level (0-255)
 	{
@@ -2659,6 +2719,7 @@ void R_DrawParticle (vissprite_t *vis)
 			dest += spacing;
 		}
 	}
+#endif
 }
 
 extern double BaseYaspectMul;;
@@ -3189,12 +3250,12 @@ void R_CheckOffscreenBuffer(int width, int height, bool spansonly)
 	{
 		if (OffscreenColorBuffer == NULL)
 		{
-			OffscreenColorBuffer = new BYTE[width * height];
+			OffscreenColorBuffer = new canvas_pixel_t[width * height];
 		}
 		else if (OffscreenBufferWidth != width || OffscreenBufferHeight != height)
 		{
 			delete[] OffscreenColorBuffer;
-			OffscreenColorBuffer = new BYTE[width * height];
+			OffscreenColorBuffer = new canvas_pixel_t[width * height];
 		}
 	}
 	OffscreenBufferWidth = width;

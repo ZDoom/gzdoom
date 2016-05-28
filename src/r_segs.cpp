@@ -178,6 +178,7 @@ static void BlastMaskedColumn (void (*blastfunc)(const BYTE *pixels, const FText
 	if (fixedcolormap == NULL && fixedlightlev < 0)
 	{
 		dc_colormap = basecolormap->Maps + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
+		dc_light = 0;
 	}
 
 	dc_iscale = xs_Fix<16>::ToFix(MaskedSWall[dc_x] * MaskedScaleY);
@@ -316,6 +317,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 		dc_colormap = basecolormap->Maps + fixedlightlev;
 	else if (fixedcolormap != NULL)
 		dc_colormap = fixedcolormap;
+	dc_light = 0;
 
 	// find positioning
 	texheight = tex->GetScaledHeightDouble();
@@ -633,6 +635,7 @@ void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover)
 		dc_colormap = basecolormap->Maps + fixedlightlev;
 	else if (fixedcolormap != NULL)
 		dc_colormap = fixedcolormap;
+	dc_light = 0;
 
 	WallC.sz1 = ds->sz1;
 	WallC.sz2 = ds->sz2;
@@ -1066,10 +1069,11 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 }
 
 // prevlineasm1 is like vlineasm1 but skips the loop if only drawing one pixel
-inline fixed_t prevline1 (fixed_t vince, BYTE *colormap, int count, fixed_t vplce, const BYTE *bufplce, BYTE *dest)
+inline fixed_t prevline1 (fixed_t vince, BYTE *colormap, fixed_t light, int count, fixed_t vplce, const BYTE *bufplce, canvas_pixel_t *dest)
 {
 	dc_iscale = vince;
 	dc_colormap = colormap;
+	dc_light = light;
 	dc_count = count;
 	dc_texturefrac = vplce;
 	dc_source = bufplce;
@@ -1117,6 +1121,10 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *l
 		palookupoffse[1] = dc_colormap;
 		palookupoffse[2] = dc_colormap;
 		palookupoffse[3] = dc_colormap;
+		palookuplight[0] = 0;
+		palookuplight[1] = 0;
+		palookuplight[2] = 0;
+		palookuplight[3] = 0;
 	}
 
 	for(; (x < x2) && (x & 3); ++x)
@@ -1130,7 +1138,13 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *l
 
 		if (!fixed)
 		{ // calculate lighting
+#ifndef PALETTEOUTPUT
+			dc_colormap = basecolormapdata;
+			dc_light = LIGHTSCALE(light, wallshade);
+#else
 			dc_colormap = basecolormapdata + (GETPALOOKUP (light, wallshade) << COLORMAPSHIFT);
+			dc_light = 0;
+#endif
 		}
 
 		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
@@ -1170,7 +1184,13 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *l
 			for (z = 0; z < 4; ++z)
 			{
 				light += rw_lightstep;
-				palookupoffse[z] = basecolormapdata + (GETPALOOKUP (light, wallshade) << COLORMAPSHIFT);
+#ifndef PALETTEOUTPUT
+				palookupoffse[z] = basecolormapdata;
+				palookuplight[z] = LIGHTSCALE(light, wallshade);
+#else
+				palookupoffse[z] = basecolormapdata + (GETPALOOKUP(12/*light*/, wallshade) << COLORMAPSHIFT);
+				palookuplight[z] = 0;
+#endif
 			}
 		}
 
@@ -1183,7 +1203,7 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *l
 			{
 				if (!(bad & 1))
 				{
-					prevline1(vince[z],palookupoffse[z],y2ve[z]-y1ve[z],vplce[z],bufplce[z],ylookup[y1ve[z]]+x+z+dc_destorg);
+					prevline1(vince[z],palookupoffse[z],palookuplight[z],y2ve[z]-y1ve[z],vplce[z],bufplce[z],ylookup[y1ve[z]]+x+z+dc_destorg);
 				}
 				bad >>= 1;
 			}
@@ -1194,7 +1214,7 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *l
 		{
 			if (u4 > y1ve[z])
 			{
-				vplce[z] = prevline1(vince[z],palookupoffse[z],u4-y1ve[z],vplce[z],bufplce[z],ylookup[y1ve[z]]+x+z+dc_destorg);
+				vplce[z] = prevline1(vince[z],palookupoffse[z], palookuplight[z],u4-y1ve[z],vplce[z],bufplce[z],ylookup[y1ve[z]]+x+z+dc_destorg);
 			}
 		}
 
@@ -1205,12 +1225,12 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *l
 			dovline4();
 		}
 
-		BYTE *i = x+ylookup[d4]+dc_destorg;
+		canvas_pixel_t *i = x+ylookup[d4]+dc_destorg;
 		for (z = 0; z < 4; ++z)
 		{
 			if (y2ve[z] > d4)
 			{
-				prevline1(vince[z],palookupoffse[0],y2ve[z]-d4,vplce[z],bufplce[z],i+z);
+				prevline1(vince[z],palookupoffse[0],palookuplight[0],y2ve[z]-d4,vplce[z],bufplce[z],i+z);
 			}
 		}
 	}
@@ -1225,7 +1245,13 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *l
 
 		if (!fixed)
 		{ // calculate lighting
+#ifndef PALETTEOUTPUT
+			dc_colormap = basecolormapdata;
+			dc_light = LIGHTSCALE(light, wallshade);
+#else
 			dc_colormap = basecolormapdata + (GETPALOOKUP (light, wallshade) << COLORMAPSHIFT);
+			dc_light = 0;
+#endif
 		}
 
 		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
@@ -1416,10 +1442,11 @@ static void wallscan_np2_ds(drawseg_t *ds, int x1, int x2, short *uwal, short *d
 	}
 }
 
-inline fixed_t mvline1 (fixed_t vince, BYTE *colormap, int count, fixed_t vplce, const BYTE *bufplce, BYTE *dest)
+inline fixed_t mvline1 (fixed_t vince, BYTE *colormap, int count, fixed_t vplce, const BYTE *bufplce, canvas_pixel_t *dest)
 {
 	dc_iscale = vince;
 	dc_colormap = colormap;
+	dc_light = 0;
 	dc_count = count;
 	dc_texturefrac = vplce;
 	dc_source = bufplce;
@@ -1431,7 +1458,7 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_
 	double yrepeat, const BYTE *(*getcol)(FTexture *tex, int x))
 {
 	int x, fracbits;
-	BYTE *p;
+	canvas_pixel_t *p;
 	int y1ve[4], y2ve[4], u4, d4, startx, dax, z;
 	char bad;
 	float light = rw_light - rw_lightstep;
@@ -1471,7 +1498,7 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_
 		palookupoffse[3] = dc_colormap;
 	}
 
-	for(; (x < x2) && ((size_t)p & 3); ++x, ++p)
+	for(; (x < x2) && (((size_t)p/sizeof(canvas_pixel_t)) & 3); ++x, ++p)
 	{
 		light += rw_lightstep;
 		y1ve[0] = uwal[x];//max(uwal[x],umost[x]);
@@ -1481,6 +1508,7 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_
 		if (!fixed)
 		{ // calculate lighting
 			dc_colormap = basecolormapdata + (GETPALOOKUP (light, wallshade) << COLORMAPSHIFT);
+			dc_light = 0;
 		}
 
 		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
@@ -1553,7 +1581,7 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_
 			domvline4();
 		}
 
-		BYTE *i = p+ylookup[d4];
+		canvas_pixel_t *i = p+ylookup[d4];
 		for (z = 0; z < 4; ++z)
 		{
 			if (y2ve[z] > d4)
@@ -1572,6 +1600,7 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_
 		if (!fixed)
 		{ // calculate lighting
 			dc_colormap = basecolormapdata + (GETPALOOKUP (light, wallshade) << COLORMAPSHIFT);
+			dc_light = 0;
 		}
 
 		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
@@ -1589,10 +1618,11 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_
 	NetUpdate ();
 }
 
-inline void preptmvline1 (fixed_t vince, BYTE *colormap, int count, fixed_t vplce, const BYTE *bufplce, BYTE *dest)
+inline void preptmvline1 (fixed_t vince, BYTE *colormap, fixed_t light, int count, fixed_t vplce, const BYTE *bufplce, canvas_pixel_t *dest)
 {
 	dc_iscale = vince;
 	dc_colormap = colormap;
+	dc_light = light;
 	dc_count = count;
 	dc_texturefrac = vplce;
 	dc_source = bufplce;
@@ -1605,7 +1635,7 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, f
 	fixed_t (*tmvline1)();
 	void (*tmvline4)();
 	int x, fracbits;
-	BYTE *p;
+	canvas_pixel_t *p;
 	int y1ve[4], y2ve[4], u4, d4, startx, dax, z;
 	char bad;
 	float light = rw_light - rw_lightstep;
@@ -1645,9 +1675,13 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, f
 		palookupoffse[1] = dc_colormap;
 		palookupoffse[2] = dc_colormap;
 		palookupoffse[3] = dc_colormap;
+		palookuplight[0] = 0;
+		palookuplight[1] = 0;
+		palookuplight[2] = 0;
+		palookuplight[3] = 0;
 	}
 
-	for(; (x < x2) && ((size_t)p & 3); ++x, ++p)
+	for(; (x < x2) && (((size_t)p / sizeof(canvas_pixel_t)) & 3); ++x, ++p)
 	{
 		light += rw_lightstep;
 		y1ve[0] = uwal[x];//max(uwal[x],umost[x]);
@@ -1656,7 +1690,13 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, f
 
 		if (!fixed)
 		{ // calculate lighting
+#ifndef PALETTEOUTPUT
+			dc_colormap = basecolormapdata;
+			dc_light = LIGHTSCALE(light, wallshade);
+#else
 			dc_colormap = basecolormapdata + (GETPALOOKUP (light, wallshade) << COLORMAPSHIFT);
+			dc_light = 0;
+#endif
 		}
 
 		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
@@ -1694,7 +1734,12 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, f
 			for (z = 0; z < 4; ++z)
 			{
 				light += rw_lightstep;
+#ifndef PALETTEOUTPUT
+				palookupoffse[z] = basecolormapdata;
+				palookuplight[z] = LIGHTSCALE(light, wallshade);
+#else
 				palookupoffse[z] = basecolormapdata + (GETPALOOKUP (light, wallshade) << COLORMAPSHIFT);
+#endif
 			}
 		}
 
@@ -1707,7 +1752,7 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, f
 			{
 				if (!(bad & 1))
 				{
-					preptmvline1(vince[z],palookupoffse[z],y2ve[z]-y1ve[z],vplce[z],bufplce[z],ylookup[y1ve[z]]+p+z);
+					preptmvline1(vince[z],palookupoffse[z],palookuplight[z],y2ve[z]-y1ve[z],vplce[z],bufplce[z],ylookup[y1ve[z]]+p+z);
 					tmvline1();
 				}
 				bad >>= 1;
@@ -1719,7 +1764,7 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, f
 		{
 			if (u4 > y1ve[z])
 			{
-				preptmvline1(vince[z],palookupoffse[z],u4-y1ve[z],vplce[z],bufplce[z],ylookup[y1ve[z]]+p+z);
+				preptmvline1(vince[z],palookupoffse[z],palookuplight[z],u4-y1ve[z],vplce[z],bufplce[z],ylookup[y1ve[z]]+p+z);
 				vplce[z] = tmvline1();
 			}
 		}
@@ -1731,12 +1776,12 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, f
 			tmvline4();
 		}
 
-		BYTE *i = p+ylookup[d4];
+		canvas_pixel_t *i = p+ylookup[d4];
 		for (z = 0; z < 4; ++z)
 		{
 			if (y2ve[z] > d4)
 			{
-				preptmvline1(vince[z],palookupoffse[0],y2ve[z]-d4,vplce[z],bufplce[z],i+z);
+				preptmvline1(vince[z],palookupoffse[0],palookuplight[0],y2ve[z]-d4,vplce[z],bufplce[z],i+z);
 				tmvline1();
 			}
 		}
@@ -1750,7 +1795,13 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, f
 
 		if (!fixed)
 		{ // calculate lighting
-			dc_colormap = basecolormapdata + (GETPALOOKUP (light, wallshade) << COLORMAPSHIFT);
+#ifndef PALETTEOUTPUT
+			dc_colormap = basecolormapdata;
+			dc_light = LIGHTSCALE(light, wallshade);
+#else
+			dc_colormap = basecolormapdata + (GETPALOOKUP(light, wallshade) << COLORMAPSHIFT);
+			dc_light = 0;
+#endif
 		}
 
 		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
@@ -1791,6 +1842,7 @@ void R_RenderSegLoop ()
 		dc_colormap = basecolormap->Maps + fixedlightlev;
 	else if (fixedcolormap != NULL)
 		dc_colormap = fixedcolormap;
+	dc_light = 0;
 
 	// clip wall to the floor and ceiling
 	for (x = x1; x < x2; ++x)
@@ -3194,6 +3246,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 		dc_colormap = usecolormap->Maps;
 	else
 		calclighting = true;
+	dc_light = 0;
 
 	// Draw it
 	if (decal->RenderFlags & RF_YFLIP)
@@ -3242,7 +3295,13 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 			{
 				if (calclighting)
 				{ // calculate lighting
+#ifndef PALETTEOUTPUT
+					dc_colormap = usecolormap->Maps;
+					dc_light = LIGHTSCALE(rw_light, wallshade);
+#else
 					dc_colormap = usecolormap->Maps + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
+					dc_light = 0;
+#endif
 				}
 				R_WallSpriteColumn (R_DrawMaskedColumn);
 				dc_x++;
@@ -3252,7 +3311,13 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 			{
 				if (calclighting)
 				{ // calculate lighting
+#ifndef PALETTEOUTPUT
+					dc_colormap = usecolormap->Maps;
+					dc_light = LIGHTSCALE(rw_light, wallshade);
+#else
 					dc_colormap = usecolormap->Maps + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
+					dc_light = 0;
+#endif
 				}
 				rt_initcols();
 				for (int zz = 4; zz; --zz)
@@ -3267,7 +3332,13 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 			{
 				if (calclighting)
 				{ // calculate lighting
+#ifndef PALETTEOUTPUT
+					dc_colormap = usecolormap->Maps;
+					dc_light = LIGHTSCALE(rw_light, wallshade);
+#else
 					dc_colormap = usecolormap->Maps + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
+					dc_light = 0;
+#endif
 				}
 				R_WallSpriteColumn (R_DrawMaskedColumn);
 				dc_x++;

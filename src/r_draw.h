@@ -30,6 +30,7 @@ extern "C" int			ylookup[MAXHEIGHT];
 extern "C" int			dc_pitch;		// [RH] Distance between rows
 
 extern "C" lighttable_t*dc_colormap;
+extern "C" fixed_t		dc_light;
 extern "C" int			dc_x;
 extern "C" int			dc_yl;
 extern "C" int			dc_yh;
@@ -44,16 +45,17 @@ extern "C" DWORD		*dc_destblend;
 // first pixel in a column
 extern "C" const BYTE*	dc_source;
 
-extern "C" BYTE			*dc_dest, *dc_destorg;
+extern "C" canvas_pixel_t *dc_dest, *dc_destorg;
 extern "C" int			dc_count;
 
 extern "C" DWORD		vplce[4];
 extern "C" DWORD		vince[4];
 extern "C" BYTE*		palookupoffse[4];
+extern "C" fixed_t		palookuplight[4];
 extern "C" const BYTE*	bufplce[4];
 
 // [RH] Temporary buffer for column drawing
-extern "C" BYTE			*dc_temp;
+extern "C" canvas_pixel_t *dc_temp;
 extern "C" unsigned int	dc_tspans[4][MAXHEIGHT];
 extern "C" unsigned int	*dc_ctspan[4];
 extern "C" unsigned int	horizspans[4];
@@ -184,7 +186,7 @@ extern void (*rt_map4cols)(int sx, int yl, int yh);
 void rt_draw4cols (int sx);
 
 // [RH] Preps the temporary horizontal buffer.
-void rt_initcols (BYTE *buffer=NULL);
+void rt_initcols (canvas_pixel_t *buffer=NULL);
 
 void R_DrawFogBoundary (int x1, int x2, short *uclip, short *dclip);
 
@@ -231,13 +233,15 @@ void	R_FillSpan (void);
 #endif
 
 extern "C" void			   R_SetupDrawSlab(const BYTE *colormap);
-extern "C" void R_DrawSlab(int dx, fixed_t v, int dy, fixed_t vi, const BYTE *vptr, BYTE *p);
+extern "C" void R_DrawSlab(int dx, fixed_t v, int dy, fixed_t vi, const BYTE *vptr, canvas_pixel_t *p);
 
 extern "C" int				ds_y;
 extern "C" int				ds_x1;
 extern "C" int				ds_x2;
 
 extern "C" lighttable_t*	ds_colormap;
+//extern "C" dsfixed_t		ds_light;
+#define ds_light dc_light
 
 extern "C" dsfixed_t		ds_xfrac;
 extern "C" dsfixed_t		ds_yfrac;

@@ -655,6 +655,7 @@ static bool FindFreeName (FString &fullname, const char *extension)
 
 void M_ScreenShot (const char *filename)
 {
+#ifdef PALETTEOUTPUT
 	FILE *file;
 	FString autoname;
 	bool writepcx = (stricmp (screenshot_type, "pcx") == 0);	// PNG is the default
@@ -743,6 +744,7 @@ void M_ScreenShot (const char *filename)
 			Printf ("Could not create screenshot.\n");
 		}
 	}
+#endif
 }
 
 CCMD (screenshot)

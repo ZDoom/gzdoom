@@ -76,7 +76,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckReady)
 	}
 	if (player->ReadyWeapon->Ammo1->Amount)
 	{
-		P_SetPsprite(player, PSP_WEAPON, player->ReadyWeapon->FindState ("ReadyGlow"));
+		player->GetPSprite(PSP_WEAPON)->SetState(player->ReadyWeapon->FindState ("ReadyGlow"));
 	}
 	else
 	{
@@ -103,7 +103,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckReadyG)
 	}
 	if (player->ReadyWeapon->Ammo1->Amount <= 0)
 	{
-		P_SetPsprite(player, PSP_WEAPON, player->ReadyWeapon->FindState ("Ready"));
+		player->GetPSprite(PSP_WEAPON)->SetState(player->ReadyWeapon->FindState ("Ready"));
 	}
 	else
 	{
@@ -130,7 +130,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckUp)
 	}
 	if (player->ReadyWeapon->Ammo1->Amount)
 	{
-		P_SetPsprite(player, PSP_WEAPON, player->ReadyWeapon->FindState ("SelectGlow"));
+		player->GetPSprite(PSP_WEAPON)->SetState(player->ReadyWeapon->FindState ("SelectGlow"));
 	}
 	else
 	{
@@ -157,7 +157,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckUpG)
 	}
 	if (player->ReadyWeapon->Ammo1->Amount <= 0)
 	{
-		P_SetPsprite(player, PSP_WEAPON, player->ReadyWeapon->FindState ("Select"));
+		player->GetPSprite(PSP_WEAPON)->SetState(player->ReadyWeapon->FindState ("Select"));
 	}
 	else
 	{
@@ -184,7 +184,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckAtk)
 	}
 	if (player->ReadyWeapon->Ammo1->Amount)
 	{
-		P_SetPsprite(player, PSP_WEAPON, player->ReadyWeapon->FindState ("FireGlow"));
+		player->GetPSprite(PSP_WEAPON)->SetState(player->ReadyWeapon->FindState ("FireGlow"));
 	}
 	return 0;
 }
@@ -273,7 +273,7 @@ axedone:
 				(!(weapon->WeaponFlags & WIF_PRIMARY_USES_BOTH) ||
 				  weapon->Ammo2 == nullptr || weapon->Ammo2->Amount == 0))
 			{
-				P_SetPsprite(player, PSP_WEAPON, player->ReadyWeapon->FindState ("Fire") + 5);
+				player->GetPSprite(PSP_WEAPON)->SetState(player->ReadyWeapon->FindState ("Fire") + 5);
 			}
 		}
 	}

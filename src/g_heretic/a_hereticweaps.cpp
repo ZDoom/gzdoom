@@ -1158,7 +1158,7 @@ IMPLEMENT_CLASS (APhoenixRodPowered)
 
 void APhoenixRodPowered::EndPowerup ()
 {
-	P_SetPsprite(Owner->player, PSP_WEAPON, SisterWeapon->GetReadyState());
+	Owner->player->GetPSprite(PSP_WEAPON)->SetState(SisterWeapon->GetReadyState());
 	DepleteAmmo (bAltFire);
 	Owner->player->refire = 0;
 	S_StopSound (Owner, CHAN_WEAPON);
@@ -1308,7 +1308,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePhoenixPL2)
 	flamethrower = static_cast<APhoenixRod *> (player->ReadyWeapon);
 	if (flamethrower == nullptr || --flamethrower->FlameCount == 0)
 	{ // Out of flame
-		P_SetPsprite(player, PSP_WEAPON, flamethrower->FindState("Powerdown"));
+		player->GetPSprite(PSP_WEAPON)->SetState(flamethrower->FindState("Powerdown"));
 		player->refire = 0;
 		S_StopSound (self, CHAN_WEAPON);
 		return 0;

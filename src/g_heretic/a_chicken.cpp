@@ -146,7 +146,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BeakRaise)
 		return 0;
 	}
 	player->GetPSprite(PSP_WEAPON)->y = WEAPONTOP;
-	P_SetPsprite(player, PSP_WEAPON, player->ReadyWeapon->GetReadyState());
+	player->GetPSprite(PSP_WEAPON)->SetState(player->ReadyWeapon->GetReadyState());
 	return 0;
 }
 

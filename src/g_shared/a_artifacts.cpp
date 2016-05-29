@@ -1131,7 +1131,7 @@ void APowerWeaponLevel2::InitEffect ()
 
 	if (weapon->GetReadyState() != sister->GetReadyState())
 	{
-		P_SetPsprite(Owner->player, PSP_WEAPON, sister->GetReadyState());
+		Owner->player->GetPSprite(PSP_WEAPON)->SetState(sister->GetReadyState());
 	}
 }
 
@@ -1305,9 +1305,9 @@ void APowerTargeter::InitEffect ()
 
 	if (state != nullptr)
 	{
-		P_SetPsprite(player, PSP_TARGETCENTER,  state + 0);
-		P_SetPsprite(player, PSP_TARGETLEFT,  state + 1);
-		P_SetPsprite(player, PSP_TARGETRIGHT, state + 2);
+		player->GetPSprite(PSP_TARGETCENTER)->SetState(state + 0);
+		player->GetPSprite(PSP_TARGETLEFT)->SetState(state + 1);
+		player->GetPSprite(PSP_TARGETRIGHT)->SetState(state + 2);
 	}
 
 	player->GetPSprite(PSP_TARGETCENTER)->x = (160-3);
@@ -1346,13 +1346,13 @@ void APowerTargeter::DoEffect ()
 			{
 				if (EffectTics & 32)
 				{
-					P_SetPsprite(player, PSP_TARGETRIGHT, nullptr);
-					P_SetPsprite(player, PSP_TARGETLEFT,  state + 1);
+					player->GetPSprite(PSP_TARGETRIGHT)->SetState(nullptr);
+					player->GetPSprite(PSP_TARGETLEFT)->SetState(state + 1);
 				}
 				else if (EffectTics & 16)
 				{
-					P_SetPsprite(player, PSP_TARGETRIGHT, state + 2);
-					P_SetPsprite(player, PSP_TARGETLEFT,  nullptr);
+					player->GetPSprite(PSP_TARGETRIGHT)->SetState(state + 2);
+					player->GetPSprite(PSP_TARGETLEFT)->SetState(nullptr);
 				}
 			}
 		}
@@ -1364,9 +1364,9 @@ void APowerTargeter::EndEffect ()
 	Super::EndEffect();
 	if (Owner != nullptr && Owner->player != nullptr)
 	{
-		P_SetPsprite (Owner->player, PSP_TARGETCENTER, nullptr);
-		P_SetPsprite (Owner->player, PSP_TARGETLEFT, nullptr);
-		P_SetPsprite (Owner->player, PSP_TARGETRIGHT, nullptr);
+		Owner->player->GetPSprite(PSP_TARGETCENTER)->SetState(nullptr);
+		Owner->player->GetPSprite(PSP_TARGETLEFT)->SetState(nullptr);
+		Owner->player->GetPSprite(PSP_TARGETRIGHT)->SetState(nullptr);
 	}
 }
 

@@ -502,7 +502,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetCrouchFactor)
 
 		if (!mobj || !mobj->player)
 		{
-			ret->SetFloat(0);
+			ret->SetFloat(1);
 		}
 		else
 		{

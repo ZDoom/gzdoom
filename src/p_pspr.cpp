@@ -142,12 +142,8 @@ DPSprite::DPSprite(player_t *owner, AInventory *caller, int id)
 	if (Next && Next->ID == ID && ID != 0)
 		Next->Destroy(); // Replace it.
 
-	if (ID == PSP_WEAPON || ID == PSP_FLASH || (ID < PSP_TARGETCENTER && Caller->IsKindOf(RUNTIME_CLASS(AWeapon))))
-	{
-		Flags |= PSPF_ADDBOB;
-		if (ID != PSP_WEAPON)
-			Flags |= PSPF_ADDWEAPON;
-	}
+	if (Caller->IsKindOf(RUNTIME_CLASS(AWeapon)))
+		Flags = (PSPF_ADDWEAPON|PSPF_ADDBOB);
 }
 
 //------------------------------------------------------------------------
@@ -181,9 +177,36 @@ DPSprite *player_t::FindPSprite(int layer)
 
 DPSprite *player_t::GetPSprite(PSPLayers layer)
 {
+	assert(ReadyWeapon != nullptr);
+
+	AInventory *oldcaller;
 	DPSprite *pspr = FindPSprite(layer);
 	if (pspr == nullptr)
+	{
 		pspr = new DPSprite(this, ReadyWeapon, layer);
+		oldcaller = nullptr;
+	}
+	else
+	{
+		oldcaller = pspr->Caller;
+	}
+
+	// Always update the caller here in case we switched weapon
+	// or if the layer was being used by an inventory item before.
+	pspr->Caller = ReadyWeapon;
+
+	if (ReadyWeapon != oldcaller)
+	{ // Only change the flags if this layer was created now or if we updated the caller.
+		if (layer != PSP_FLASH)
+		{ // Only the flash layer should follow the weapon.
+			pspr->Flags &= ~PSPF_ADDWEAPON;
+
+			if (layer != PSP_WEAPON)
+			{ // [RH] Don't bob the targeter.
+				pspr->Flags &= ~PSPF_ADDBOB;
+			}
+		}
+	}
 
 	return pspr;
 }
@@ -230,10 +253,6 @@ void DPSprite::SetState(FState *newstate, bool pending)
 								WF_USER1OK | WF_USER2OK | WF_USER3OK | WF_USER4OK);
 	}
 
-	// Special handling for the old hardcoded layers.
-	if (ID == PSP_WEAPON || ID == PSP_FLASH || ID >= PSP_TARGETCENTER)
-		Caller = Owner->ReadyWeapon;
-
 	processPending = pending;
 
 	do
@@ -259,7 +278,7 @@ void DPSprite::SetState(FState *newstate, bool pending)
 
 		Tics = newstate->GetTics(); // could be 0
 
-		if ((ID == PSP_WEAPON || ID == PSP_FLASH || ID >= PSP_TARGETCENTER) || Caller->IsKindOf(RUNTIME_CLASS(AWeapon)))
+		if (Caller->IsKindOf(RUNTIME_CLASS(AWeapon)))
 		{ // The targeter layers are affected by this too.
 			if (sv_fastweapons == 2 && ID == PSP_WEAPON)
 				Tics = newstate->ActionFunc == nullptr ? 0 : 1;
@@ -1282,35 +1301,26 @@ void P_SetupPsprites(player_t *player, bool startweaponup)
 
 void player_t::TickPSprites()
 {
-	bool noweapon = (ReadyWeapon == nullptr && (health > 0 || mo->DamageType != NAME_Fire));
-
 	DPSprite *pspr = psprites;
 	while (pspr)
 	{
 		// Destroy the psprite if it's from a weapon that isn't currently selected by the player
 		// or if it's from an inventory item that the player no longer owns. 
-		// Exclude the old hardcoded layers from this check.
-		if (!(pspr->ID == PSP_WEAPON || pspr->ID == PSP_FLASH || pspr->ID >= PSP_TARGETCENTER) &&
-			(pspr->Caller == nullptr ||
-			(pspr->Caller->IsKindOf(RUNTIME_CLASS(AWeapon)) && pspr->Caller != pspr->Owner->ReadyWeapon) ||
-			(pspr->Caller->Owner != pspr->Owner->mo)))
+		if ((pspr->Caller == nullptr ||
+			(pspr->Caller->Owner != pspr->Owner->mo) ||
+			(pspr->Caller->IsKindOf(RUNTIME_CLASS(AWeapon)) && pspr->Caller != pspr->Owner->ReadyWeapon)))
 		{
 			pspr->Destroy();
 		}
-		else if (!((pspr->ID == PSP_WEAPON || pspr->ID == PSP_FLASH || pspr->ID >= PSP_TARGETCENTER) && noweapon))
+		else
 		{
 			pspr->Tick();
-		}
-
-		if (noweapon && (pspr->ID == PSP_WEAPON || pspr->ID == PSP_FLASH))
-		{ // Special treatment to destroy both the flash and weapon layers.
-			pspr->Destroy();
 		}
 
 		pspr = pspr->Next;
 	}
 
-	if (noweapon)
+	if (ReadyWeapon == nullptr && (health > 0 || mo->DamageType != NAME_Fire))
 	{
 		if (PendingWeapon != WP_NOCHANGE)
 			P_BringUpWeapon(this);
@@ -1344,8 +1354,7 @@ void DPSprite::Tick()
 
 			// [BC] Apply double firing speed.
 			// This is applied to the targeter layers too.
-			if (((ID == PSP_WEAPON || ID == PSP_FLASH || ID >= PSP_TARGETCENTER) || Caller->IsKindOf(RUNTIME_CLASS(AWeapon))) &&
-				(Tics && Owner->cheats & CF_DOUBLEFIRINGSPEED))
+			if (Caller->IsKindOf(RUNTIME_CLASS(AWeapon)) && Tics && Owner->cheats & CF_DOUBLEFIRINGSPEED)
 				Tics--;
 
 			if (!Tics)

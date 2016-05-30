@@ -3088,7 +3088,7 @@ void player_t::Serialize (FArchive &arc)
 				<< sx << sy
 				<< sprite << frame;
 
-			if (state != nullptr)
+			if (state != nullptr && ReadyWeapon != nullptr)
 			{
 				DPSprite *pspr;
 				pspr = GetPSprite(PSPLayers(layer));
@@ -3107,14 +3107,6 @@ void player_t::Serialize (FArchive &arc)
 				{
 					pspr->x = sx;
 					pspr->y = sy;
-				}
-
-				pspr->Flags = 0;
-				if (layer < PSP_TARGETCENTER)
-				{
-					pspr->Flags |= PSPF_ADDBOB;
-					if (layer == PSP_FLASH)
-						pspr->Flags |= PSPF_ADDWEAPON;
 				}
 			}
 

@@ -93,6 +93,10 @@ void R_DrawNormalPlane (visplane_t *pl, double xscale, double yscale, fixed_t al
 void R_DrawTiltedPlane (visplane_t *pl, double xscale, double yscale, fixed_t alpha, bool additive, bool masked);
 void R_MapVisPlane (visplane_t *pl, void (*mapfunc)(int y, int x1));
 
+extern void(*R_MapColoredPlane)(int y, int x1);
+void R_MapColoredPlane_C(int y, int x1);
+void R_MapColoredPlane_RGBA(int y, int x1);
+
 visplane_t *R_FindPlane
 ( const secplane_t &height,
   FTextureID	picnum,

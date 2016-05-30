@@ -883,6 +883,7 @@ set( FASTMATH_PCH_SOURCES
 	r_bsp.cpp
 	r_draw.cpp
 	r_drawt.cpp
+	r_drawt_rgba.cpp
 	r_main.cpp
 	r_plane.cpp
 	r_segs.cpp

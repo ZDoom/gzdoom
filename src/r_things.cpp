@@ -470,7 +470,7 @@ void R_DrawVisSprite (vissprite_t *vis)
 
 			while (dc_x < stop4)
 			{
-				rt_initcols();
+				rt_initcols(nullptr);
 				for (int zz = 4; zz; --zz)
 				{
 					pixels = tex->GetColumn (frac >> FRACBITS, &spans);
@@ -619,7 +619,7 @@ void R_DrawWallSprite(vissprite_t *spr)
 				dc_light = FLOAT2FIXED(MAXLIGHTVIS);
 #endif
 			}
-			rt_initcols();
+			rt_initcols(nullptr);
 			for (int zz = 4; zz; --zz)
 			{
 				if (!R_ClipSpriteColumnWithPortals(spr))
@@ -681,7 +681,7 @@ void R_DrawVisVoxel(vissprite_t *spr, int minslabz, int maxslabz, short *cliptop
 	{
 		return;
 	}
-	if (colfunc == fuzzcolfunc || colfunc == R_FillColumnP)
+	if (colfunc == fuzzcolfunc || colfunc == R_FillColumn)
 	{
 		flags = DVF_OFFSCREEN | DVF_SPANSONLY;
 	}
@@ -2617,7 +2617,7 @@ static void R_DrawMaskedSegsBehindParticle (const vissprite_t *vis)
 	}
 }
 
-void R_DrawParticle (vissprite_t *vis)
+void R_DrawParticle_C (vissprite_t *vis)
 {
 	int spacing;
 	canvas_pixel_t *dest;
@@ -2629,44 +2629,6 @@ void R_DrawParticle (vissprite_t *vis)
 
 	R_DrawMaskedSegsBehindParticle (vis);
 
-#ifndef PALETTEOUTPUT
-	uint32_t fg = shade_pal_index(color, calc_light_multiplier(0));
-	uint32_t fg_red = (fg >> 16) & 0xff;
-	uint32_t fg_green = (fg >> 8) & 0xff;
-	uint32_t fg_blue = fg & 0xff;
-
-	// vis->renderflags holds translucency level (0-255)
-	fixed_t fglevel = ((vis->renderflags + 1) << 8) & ~0x3ff;
-	uint32_t alpha = fglevel * 256 / FRACUNIT;
-	uint32_t inv_alpha = 256 - alpha;
-
-	fg_red *= alpha;
-	fg_green *= alpha;
-	fg_blue *= alpha;
-
-	spacing = RenderTarget->GetPitch();
-
-	for (int x = x1; x < (x1 + countbase); x++)
-	{
-		dc_x = x;
-		if (R_ClipSpriteColumnWithPortals(vis))
-			continue;
-		dest = ylookup[yl] + x + dc_destorg;
-		for (int y = 0; y < ycount; y++)
-		{
-			uint32_t bg_red = (*dest >> 16) & 0xff;
-			uint32_t bg_green = (*dest >> 8) & 0xff;
-			uint32_t bg_blue = (*dest) & 0xff;
-
-			uint32_t red = (fg_red + bg_red * alpha) / 256;
-			uint32_t green = (fg_green + bg_green * alpha) / 256;
-			uint32_t blue = (fg_blue + bg_blue * alpha) / 256;
-
-			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-			dest += spacing;
-		}
-	}
-#else
 	DWORD *bg2rgb;
 	DWORD fg;
 
@@ -2719,7 +2681,56 @@ void R_DrawParticle (vissprite_t *vis)
 			dest += spacing;
 		}
 	}
-#endif
+}
+
+void R_DrawParticle_RGBA(vissprite_t *vis)
+{
+	int spacing;
+	canvas_pixel_t *dest;
+	BYTE color = vis->Style.colormap[vis->startfrac];
+	int yl = vis->y1;
+	int ycount = vis->y2 - yl + 1;
+	int x1 = vis->x1;
+	int countbase = vis->x2 - x1;
+
+	R_DrawMaskedSegsBehindParticle(vis);
+
+	uint32_t fg = shade_pal_index(color, calc_light_multiplier(0));
+	uint32_t fg_red = (fg >> 16) & 0xff;
+	uint32_t fg_green = (fg >> 8) & 0xff;
+	uint32_t fg_blue = fg & 0xff;
+
+	// vis->renderflags holds translucency level (0-255)
+	fixed_t fglevel = ((vis->renderflags + 1) << 8) & ~0x3ff;
+	uint32_t alpha = fglevel * 256 / FRACUNIT;
+	uint32_t inv_alpha = 256 - alpha;
+
+	fg_red *= alpha;
+	fg_green *= alpha;
+	fg_blue *= alpha;
+
+	spacing = RenderTarget->GetPitch();
+
+	for (int x = x1; x < (x1 + countbase); x++)
+	{
+		dc_x = x;
+		if (R_ClipSpriteColumnWithPortals(vis))
+			continue;
+		dest = ylookup[yl] + x + dc_destorg;
+		for (int y = 0; y < ycount; y++)
+		{
+			uint32_t bg_red = (*dest >> 16) & 0xff;
+			uint32_t bg_green = (*dest >> 8) & 0xff;
+			uint32_t bg_blue = (*dest) & 0xff;
+
+			uint32_t red = (fg_red + bg_red * alpha) / 256;
+			uint32_t green = (fg_green + bg_green * alpha) / 256;
+			uint32_t blue = (fg_blue + bg_blue * alpha) / 256;
+
+			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
+			dest += spacing;
+		}
+	}
 }
 
 extern double BaseYaspectMul;;

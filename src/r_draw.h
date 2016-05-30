@@ -127,33 +127,33 @@ extern "C"
 void rt_copy1col_c (int hx, int sx, int yl, int yh);
 void rt_copy4cols_c (int sx, int yl, int yh);
 
-void rt_shaded1col (int hx, int sx, int yl, int yh);
+void rt_shaded1col_c (int hx, int sx, int yl, int yh);
 void rt_shaded4cols_c (int sx, int yl, int yh);
 void rt_shaded4cols_asm (int sx, int yl, int yh);
 
 void rt_map1col_c (int hx, int sx, int yl, int yh);
-void rt_add1col (int hx, int sx, int yl, int yh);
-void rt_addclamp1col (int hx, int sx, int yl, int yh);
-void rt_subclamp1col (int hx, int sx, int yl, int yh);
-void rt_revsubclamp1col (int hx, int sx, int yl, int yh);
+void rt_add1col_c (int hx, int sx, int yl, int yh);
+void rt_addclamp1col_c (int hx, int sx, int yl, int yh);
+void rt_subclamp1col_c (int hx, int sx, int yl, int yh);
+void rt_revsubclamp1col_c (int hx, int sx, int yl, int yh);
 
-void rt_tlate1col (int hx, int sx, int yl, int yh);
-void rt_tlateadd1col (int hx, int sx, int yl, int yh);
-void rt_tlateaddclamp1col (int hx, int sx, int yl, int yh);
-void rt_tlatesubclamp1col (int hx, int sx, int yl, int yh);
-void rt_tlaterevsubclamp1col (int hx, int sx, int yl, int yh);
+void rt_tlate1col_c (int hx, int sx, int yl, int yh);
+void rt_tlateadd1col_c (int hx, int sx, int yl, int yh);
+void rt_tlateaddclamp1col_c (int hx, int sx, int yl, int yh);
+void rt_tlatesubclamp1col_c (int hx, int sx, int yl, int yh);
+void rt_tlaterevsubclamp1col_c (int hx, int sx, int yl, int yh);
 
 void rt_map4cols_c (int sx, int yl, int yh);
 void rt_add4cols_c (int sx, int yl, int yh);
 void rt_addclamp4cols_c (int sx, int yl, int yh);
-void rt_subclamp4cols (int sx, int yl, int yh);
-void rt_revsubclamp4cols (int sx, int yl, int yh);
+void rt_subclamp4cols_c (int sx, int yl, int yh);
+void rt_revsubclamp4cols_c (int sx, int yl, int yh);
 
-void rt_tlate4cols (int sx, int yl, int yh);
-void rt_tlateadd4cols (int sx, int yl, int yh);
-void rt_tlateaddclamp4cols (int sx, int yl, int yh);
-void rt_tlatesubclamp4cols (int sx, int yl, int yh);
-void rt_tlaterevsubclamp4cols (int sx, int yl, int yh);
+void rt_tlate4cols_c (int sx, int yl, int yh);
+void rt_tlateadd4cols_c (int sx, int yl, int yh);
+void rt_tlateaddclamp4cols_c (int sx, int yl, int yh);
+void rt_tlatesubclamp4cols_c (int sx, int yl, int yh);
+void rt_tlaterevsubclamp4cols_c (int sx, int yl, int yh);
 
 void rt_copy1col_asm (int hx, int sx, int yl, int yh);
 void rt_map1col_asm (int hx, int sx, int yl, int yh);
@@ -163,32 +163,83 @@ void rt_map4cols_asm1 (int sx, int yl, int yh);
 void rt_map4cols_asm2 (int sx, int yl, int yh);
 void rt_add4cols_asm (int sx, int yl, int yh);
 void rt_addclamp4cols_asm (int sx, int yl, int yh);
+
+///
+
+void rt_copy1col_RGBA_c (int hx, int sx, int yl, int yh);
+void rt_copy4cols_RGBA_c (int sx, int yl, int yh);
+
+void rt_shaded1col_RGBA_c (int hx, int sx, int yl, int yh);
+void rt_shaded4cols_RGBA_c (int sx, int yl, int yh);
+
+void rt_map1col_RGBA_c (int hx, int sx, int yl, int yh);
+void rt_add1col_RGBA_c (int hx, int sx, int yl, int yh);
+void rt_addclamp1col_RGBA_c (int hx, int sx, int yl, int yh);
+void rt_subclamp1col_RGBA_c (int hx, int sx, int yl, int yh);
+void rt_revsubclamp1col_RGBA_c (int hx, int sx, int yl, int yh);
+
+void rt_tlate1col_RGBA_c (int hx, int sx, int yl, int yh);
+void rt_tlateadd1col_RGBA_c (int hx, int sx, int yl, int yh);
+void rt_tlateaddclamp1col_RGBA_c (int hx, int sx, int yl, int yh);
+void rt_tlatesubclamp1col_RGBA_c (int hx, int sx, int yl, int yh);
+void rt_tlaterevsubclamp1col_RGBA_c (int hx, int sx, int yl, int yh);
+
+void rt_map4cols_RGBA_c (int sx, int yl, int yh);
+void rt_add4cols_RGBA_c (int sx, int yl, int yh);
+void rt_addclamp4cols_RGBA_c (int sx, int yl, int yh);
+void rt_subclamp4cols_RGBA_c (int sx, int yl, int yh);
+void rt_revsubclamp4cols_RGBA_c (int sx, int yl, int yh);
+
+void rt_tlate4cols_RGBA_c (int sx, int yl, int yh);
+void rt_tlateadd4cols_RGBA_c (int sx, int yl, int yh);
+void rt_tlateaddclamp4cols_RGBA_c (int sx, int yl, int yh);
+void rt_tlatesubclamp4cols_RGBA_c (int sx, int yl, int yh);
+void rt_tlaterevsubclamp4cols_RGBA_c (int sx, int yl, int yh);
+
 }
 
-extern void (*rt_map4cols)(int sx, int yl, int yh);
+extern void (*rt_copy1col)(int hx, int sx, int yl, int yh);
+extern void (*rt_copy4cols)(int sx, int yl, int yh);
 
-#ifdef X86_ASM
-#define rt_copy1col			rt_copy1col_asm
-#define rt_copy4cols		rt_copy4cols_asm
-#define rt_map1col			rt_map1col_asm
-#define rt_shaded4cols		rt_shaded4cols_asm
-#define rt_add4cols			rt_add4cols_asm
-#define rt_addclamp4cols	rt_addclamp4cols_asm
-#else
-#define rt_copy1col			rt_copy1col_c
-#define rt_copy4cols		rt_copy4cols_c
-#define rt_map1col			rt_map1col_c
-#define rt_shaded4cols		rt_shaded4cols_c
-#define rt_add4cols			rt_add4cols_c
-#define rt_addclamp4cols	rt_addclamp4cols_c
-#endif
+extern void (*rt_shaded1col)(int hx, int sx, int yl, int yh);
+extern void (*rt_shaded4cols)(int sx, int yl, int yh);
+
+extern void (*rt_map1col)(int hx, int sx, int yl, int yh);
+extern void (*rt_add1col)(int hx, int sx, int yl, int yh);
+extern void (*rt_addclamp1col)(int hx, int sx, int yl, int yh);
+extern void (*rt_subclamp1col)(int hx, int sx, int yl, int yh);
+extern void (*rt_revsubclamp1col)(int hx, int sx, int yl, int yh);
+
+extern void (*rt_tlate1col)(int hx, int sx, int yl, int yh);
+extern void (*rt_tlateadd1col)(int hx, int sx, int yl, int yh);
+extern void (*rt_tlateaddclamp1col)(int hx, int sx, int yl, int yh);
+extern void (*rt_tlatesubclamp1col)(int hx, int sx, int yl, int yh);
+extern void (*rt_tlaterevsubclamp1col)(int hx, int sx, int yl, int yh);
+
+extern void (*rt_map4cols)(int sx, int yl, int yh);
+extern void (*rt_add4cols)(int sx, int yl, int yh);
+extern void (*rt_addclamp4cols)(int sx, int yl, int yh);
+extern void (*rt_subclamp4cols)(int sx, int yl, int yh);
+extern void (*rt_revsubclamp4cols)(int sx, int yl, int yh);
+
+extern void (*rt_tlate4cols)(int sx, int yl, int yh);
+extern void (*rt_tlateadd4cols)(int sx, int yl, int yh);
+extern void (*rt_tlateaddclamp4cols)(int sx, int yl, int yh);
+extern void (*rt_tlatesubclamp4cols)(int sx, int yl, int yh);
+extern void (*rt_tlaterevsubclamp4cols)(int sx, int yl, int yh);
+
+extern void (*rt_initcols)(canvas_pixel_t *buffer);
 
 void rt_draw4cols (int sx);
 
 // [RH] Preps the temporary horizontal buffer.
-void rt_initcols (canvas_pixel_t *buffer=NULL);
+void rt_initcols_pal (canvas_pixel_t *buffer);
+void rt_initcols_rgba (canvas_pixel_t *buffer);
 
-void R_DrawFogBoundary (int x1, int x2, short *uclip, short *dclip);
+
+extern void (*R_DrawFogBoundary)(int x1, int x2, short *uclip, short *dclip);
+
+void R_DrawFogBoundary_C (int x1, int x2, short *uclip, short *dclip);
 
 
 #ifdef X86_ASM
@@ -212,6 +263,14 @@ void	R_DrawShadedColumnP_C (void);
 void	R_DrawSpanP_C (void);
 void	R_DrawSpanMaskedP_C (void);
 
+void	R_DrawColumnHorizP_RGBA_C (void);
+void	R_DrawColumnP_RGBA_C (void);
+void	R_DrawFuzzColumnP_RGBA_C (void);
+void	R_DrawTranslatedColumnP_RGBA_C (void);
+void	R_DrawShadedColumnP_RGBA_C (void);
+void	R_DrawSpanP_RGBA_C (void);
+void	R_DrawSpanMaskedP_RGBA_C (void);
+
 #endif
 
 void	R_DrawSpanTranslucentP_C (void);
@@ -220,9 +279,30 @@ void	R_DrawSpanMaskedTranslucentP_C (void);
 void	R_DrawTlatedLucentColumnP_C (void);
 #define R_DrawTlatedLucentColumn R_DrawTlatedLucentColumnP_C
 
-void	R_FillColumnP (void);
-void	R_FillColumnHorizP (void);
-void	R_FillSpan (void);
+extern void(*R_FillColumn)(void);
+extern void(*R_FillAddColumn)(void);
+extern void(*R_FillAddClampColumn)(void);
+extern void(*R_FillSubClampColumn)(void);
+extern void(*R_FillRevSubClampColumn)(void);
+extern void(*R_DrawAddColumn)(void);
+extern void(*R_DrawTlatedAddColumn)(void);
+extern void(*R_DrawAddClampColumn)(void);
+extern void(*R_DrawAddClampTranslatedColumn)(void);
+extern void(*R_DrawSubClampColumn)(void);
+extern void(*R_DrawSubClampTranslatedColumn)(void);
+extern void(*R_DrawRevSubClampColumn)(void);
+extern void(*R_DrawRevSubClampTranslatedColumn)(void);
+
+extern void(*R_FillSpan)(void);
+extern void(*R_FillColumnHoriz)(void);
+
+void	R_FillColumnP_C (void);
+
+void	R_FillColumnHorizP_C (void);
+void	R_FillSpan_C (void);
+
+void	R_FillColumnHorizP_RGBA_C(void);
+void	R_FillSpan_RGBA_C(void);
 
 #ifdef X86_ASM
 #define R_SetupDrawSlab R_SetupDrawSlabA
@@ -281,6 +361,15 @@ inline ESPSResult R_SetPatchStyle(FRenderStyle style, float alpha, int translati
 // Call this after finished drawing the current thing, in case its
 // style was STYLE_Shade
 void R_FinishSetPatchStyle ();
+
+extern fixed_t(*tmvline1_add)();
+extern void(*tmvline4_add)();
+extern fixed_t(*tmvline1_addclamp)();
+extern void(*tmvline4_addclamp)();
+extern fixed_t(*tmvline1_subclamp)();
+extern void(*tmvline4_subclamp)();
+extern fixed_t(*tmvline1_revsubclamp)();
+extern void(*tmvline4_revsubclamp)();
 
 // transmaskwallscan calls this to find out what column drawers to use
 bool R_GetTransMaskDrawers (fixed_t (**tmvline1)(), void (**tmvline4)());

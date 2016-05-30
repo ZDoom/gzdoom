@@ -300,7 +300,7 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 
 			while (dc_x < stop4)
 			{
-				rt_initcols();
+				rt_initcols(nullptr);
 				for (int zz = 4; zz; --zz)
 				{
 					pixels = img->GetColumn(frac >> FRACBITS, spanptr);

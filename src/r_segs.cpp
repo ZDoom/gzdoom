@@ -463,7 +463,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 
 			while (dc_x < stop)
 			{
-				rt_initcols();
+				rt_initcols(nullptr);
 				BlastMaskedColumn (R_DrawMaskedColumnHoriz, tex); dc_x++;
 				BlastMaskedColumn (R_DrawMaskedColumnHoriz, tex); dc_x++;
 				BlastMaskedColumn (R_DrawMaskedColumnHoriz, tex); dc_x++;
@@ -3319,7 +3319,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 					dc_light = 0;
 #endif
 				}
-				rt_initcols();
+				rt_initcols(nullptr);
 				for (int zz = 4; zz; --zz)
 				{
 					R_WallSpriteColumn (R_DrawMaskedColumnHoriz);

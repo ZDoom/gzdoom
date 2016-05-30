@@ -38,6 +38,7 @@
 #include "r_data/r_translate.h"
 #include "v_palette.h"
 #include "r_data/colormaps.h"
+#include "r_plane.h"
 
 #include "gi.h"
 #include "stats.h"
@@ -73,6 +74,19 @@ int 			scaledviewwidth;
 //		screen depth and asm/no asm.
 void (*R_DrawColumnHoriz)(void);
 void (*R_DrawColumn)(void);
+void (*R_FillColumn)(void);
+void (*R_FillAddColumn)(void);
+void (*R_FillAddClampColumn)(void);
+void (*R_FillSubClampColumn)(void);
+void (*R_FillRevSubClampColumn)(void);
+void (*R_DrawAddColumn)(void);
+void (*R_DrawTlatedAddColumn)(void);
+void (*R_DrawAddClampColumn)(void);
+void (*R_DrawAddClampTranslatedColumn)(void);
+void (*R_DrawSubClampColumn)(void);
+void (*R_DrawSubClampTranslatedColumn)(void);
+void (*R_DrawRevSubClampColumn)(void);
+void (*R_DrawRevSubClampTranslatedColumn)(void);
 void (*R_DrawFuzzColumn)(void);
 void (*R_DrawTranslatedColumn)(void);
 void (*R_DrawShadedColumn)(void);
@@ -82,7 +96,44 @@ void (*R_DrawSpanTranslucent)(void);
 void (*R_DrawSpanMaskedTranslucent)(void);
 void (*R_DrawSpanAddClamp)(void);
 void (*R_DrawSpanMaskedAddClamp)(void);
-void (*rt_map4cols)(int,int,int);
+void (*R_FillSpan)(void);
+void (*R_FillColumnHoriz)(void);
+void (*R_DrawFogBoundary)(int x1, int x2, short *uclip, short *dclip);
+void (*R_MapColoredPlane)(int y, int x1);
+void (*R_DrawParticle)(vissprite_t *);
+fixed_t (*tmvline1_add)();
+void (*tmvline4_add)();
+fixed_t (*tmvline1_addclamp)();
+void (*tmvline4_addclamp)();
+fixed_t (*tmvline1_subclamp)();
+void (*tmvline4_subclamp)();
+fixed_t (*tmvline1_revsubclamp)();
+void (*tmvline4_revsubclamp)();
+void (*rt_copy1col)(int hx, int sx, int yl, int yh);
+void (*rt_copy4cols)(int sx, int yl, int yh);
+void (*rt_shaded1col)(int hx, int sx, int yl, int yh);
+void (*rt_shaded4cols)(int sx, int yl, int yh);
+void (*rt_map1col)(int hx, int sx, int yl, int yh);
+void (*rt_add1col)(int hx, int sx, int yl, int yh);
+void (*rt_addclamp1col)(int hx, int sx, int yl, int yh);
+void (*rt_subclamp1col)(int hx, int sx, int yl, int yh);
+void (*rt_revsubclamp1col)(int hx, int sx, int yl, int yh);
+void (*rt_tlate1col)(int hx, int sx, int yl, int yh);
+void (*rt_tlateadd1col)(int hx, int sx, int yl, int yh);
+void (*rt_tlateaddclamp1col)(int hx, int sx, int yl, int yh);
+void (*rt_tlatesubclamp1col)(int hx, int sx, int yl, int yh);
+void (*rt_tlaterevsubclamp1col)(int hx, int sx, int yl, int yh);
+void (*rt_map4cols)(int sx, int yl, int yh);
+void (*rt_add4cols)(int sx, int yl, int yh);
+void (*rt_addclamp4cols)(int sx, int yl, int yh);
+void (*rt_subclamp4cols)(int sx, int yl, int yh);
+void (*rt_revsubclamp4cols)(int sx, int yl, int yh);
+void (*rt_tlate4cols)(int sx, int yl, int yh);
+void (*rt_tlateadd4cols)(int sx, int yl, int yh);
+void (*rt_tlateaddclamp4cols)(int sx, int yl, int yh);
+void (*rt_tlatesubclamp4cols)(int sx, int yl, int yh);
+void (*rt_tlaterevsubclamp4cols)(int sx, int yl, int yh);
+void (*rt_initcols)(canvas_pixel_t *buffer);
 
 //
 // R_DrawColumn
@@ -198,10 +249,6 @@ void R_DrawColumnP_C (void)
 	// Framebuffer destination address.
 	dest = dc_dest;
 
-#ifndef PALETTEOUTPUT
-	uint32_t light = calc_light_multiplier(dc_light);
-#endif
-
 	// Determine scaling,
 	//	which is the only mapping to be done.
 	fracstep = dc_iscale; 
@@ -221,11 +268,7 @@ void R_DrawColumnP_C (void)
 		{
 			// Re-map color indices from wall texture column
 			//	using a lighting/special effects LUT.
-#ifndef PALETTEOUTPUT
-			*dest = shade_pal_index(colormap[source[frac>>FRACBITS]], light);
-#else
 			*dest = colormap[source[frac >> FRACBITS]];
-#endif
 
 			dest += pitch;
 			frac += fracstep;
@@ -235,8 +278,54 @@ void R_DrawColumnP_C (void)
 } 
 #endif
 
+void R_DrawColumnP_RGBA_C()
+{
+	int 				count;
+	canvas_pixel_t*		dest;
+	fixed_t 			frac;
+	fixed_t 			fracstep;
+
+	count = dc_count;
+
+	// Zero length, column does not exceed a pixel.
+	if (count <= 0)
+		return;
+
+	// Framebuffer destination address.
+	dest = dc_dest;
+
+	uint32_t light = calc_light_multiplier(dc_light);
+
+	// Determine scaling,
+	//	which is the only mapping to be done.
+	fracstep = dc_iscale;
+	frac = dc_texturefrac;
+
+	{
+		// [RH] Get local copies of these variables so that the compiler
+		//		has a better chance of optimizing this well.
+		BYTE *colormap = dc_colormap;
+		const BYTE *source = dc_source;
+		int pitch = dc_pitch;
+
+		// Inner loop that does the actual texture mapping,
+		//	e.g. a DDA-lile scaling.
+		// This is as fast as it gets.
+		do
+		{
+			// Re-map color indices from wall texture column
+			//	using a lighting/special effects LUT.
+			*dest = shade_pal_index(colormap[source[frac >> FRACBITS]], light);
+
+			dest += pitch;
+			frac += fracstep;
+
+		} while (--count);
+	}
+}
+
 // [RH] Just fills a column with a color
-void R_FillColumnP (void)
+void R_FillColumnP_C (void)
 {
 	int 				count;
 	canvas_pixel_t*		dest;
@@ -248,9 +337,31 @@ void R_FillColumnP (void)
 
 	dest = dc_dest;
 
-#ifndef PALETTEOUTPUT
+	{
+		int pitch = dc_pitch;
+		BYTE color = dc_color;
+
+		do
+		{
+			*dest = color;
+			dest += pitch;
+		} while (--count);
+	}
+}
+
+void R_FillColumnP_RGBA()
+{
+	int 				count;
+	canvas_pixel_t*		dest;
+
+	count = dc_count;
+
+	if (count <= 0)
+		return;
+
+	dest = dc_dest;
+
 	uint32_t light = calc_light_multiplier(dc_light);
-#endif
 
 	{
 		int pitch = dc_pitch;
@@ -258,17 +369,13 @@ void R_FillColumnP (void)
 
 		do
 		{
-#ifndef PALETTEOUTPUT
 			*dest = shade_pal_index(color, light);
-#else
-			*dest = color;
-#endif
 			dest += pitch;
 		} while (--count);
 	}
 }
 
-void R_FillAddColumn (void)
+void R_FillAddColumn_C (void)
 {
 	int count;
 	canvas_pixel_t *dest;
@@ -280,7 +387,33 @@ void R_FillAddColumn (void)
 	dest = dc_dest;
 	int pitch = dc_pitch;
 
-#ifndef PALETTEOUTPUT
+	DWORD *bg2rgb;
+	DWORD fg;
+
+	bg2rgb = dc_destblend;
+	fg = dc_srccolor;
+
+	do
+	{
+		DWORD bg;
+		bg = (fg + bg2rgb[*dest]) | 0x1f07c1f;
+		*dest = RGB32k.All[bg & (bg>>15)];
+		dest += pitch; 
+	} while (--count);
+}
+
+void R_FillAddColumn_RGBA_C()
+{
+	int count;
+	canvas_pixel_t *dest;
+
+	count = dc_count;
+	if (count <= 0)
+		return;
+
+	dest = dc_dest;
+	int pitch = dc_pitch;
+
 	uint32_t fg_red = (dc_srccolor >> 12) & 0xf8;
 	uint32_t fg_green = (dc_srccolor >> 2) & 0xf8;
 	uint32_t fg_blue = (dc_srccolor << 3) & 0xf8;
@@ -298,24 +431,9 @@ void R_FillAddColumn (void)
 		*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
 		dest += pitch;
 	} while (--count);
-#else
-	DWORD *bg2rgb;
-	DWORD fg;
-
-	bg2rgb = dc_destblend;
-	fg = dc_srccolor;
-
-	do
-	{
-		DWORD bg;
-		bg = (fg + bg2rgb[*dest]) | 0x1f07c1f;
-		*dest = RGB32k.All[bg & (bg>>15)];
-		dest += pitch; 
-	} while (--count);
-#endif
 }
 
-void R_FillAddClampColumn (void)
+void R_FillAddClampColumn_C (void)
 {
 	int count;
 	canvas_pixel_t *dest;
@@ -327,25 +445,6 @@ void R_FillAddClampColumn (void)
 	dest = dc_dest;
 	int pitch = dc_pitch;
 
-#ifndef PALETTEOUTPUT
-	uint32_t fg_red = (dc_srccolor >> 12) & 0xf8;
-	uint32_t fg_green = (dc_srccolor >> 2) & 0xf8;
-	uint32_t fg_blue = (dc_srccolor << 3) & 0xf8;
-
-	do
-	{
-		uint32_t bg_red = (*dest >> 16) & 0xff;
-		uint32_t bg_green = (*dest >> 8) & 0xff;
-		uint32_t bg_blue = (*dest) & 0xff;
-
-		uint32_t red = clamp<uint32_t>(fg_red + bg_red, 0, 255);
-		uint32_t green = clamp<uint32_t>(fg_green + bg_green, 0, 255);
-		uint32_t blue = clamp<uint32_t>(fg_blue + bg_blue, 0, 255);
-
-		*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-		dest += pitch;
-	} while (--count);
-#else
 	DWORD *bg2rgb;
 	DWORD fg;
 
@@ -365,10 +464,9 @@ void R_FillAddClampColumn (void)
 		*dest = RGB32k.All[a & (a>>15)];
 		dest += pitch; 
 	} while (--count);
-#endif
 }
 
-void R_FillSubClampColumn (void)
+void R_FillAddClampColumn_RGBA()
 {
 	int count;
 	canvas_pixel_t *dest;
@@ -380,7 +478,6 @@ void R_FillSubClampColumn (void)
 	dest = dc_dest;
 	int pitch = dc_pitch;
 
-#ifndef PALETTEOUTPUT
 	uint32_t fg_red = (dc_srccolor >> 12) & 0xf8;
 	uint32_t fg_green = (dc_srccolor >> 2) & 0xf8;
 	uint32_t fg_blue = (dc_srccolor << 3) & 0xf8;
@@ -391,14 +488,27 @@ void R_FillSubClampColumn (void)
 		uint32_t bg_green = (*dest >> 8) & 0xff;
 		uint32_t bg_blue = (*dest) & 0xff;
 
-		uint32_t red = clamp<uint32_t>(256 - fg_red + bg_red, 256, 256 + 255) - 255;
-		uint32_t green = clamp<uint32_t>(256 - fg_green + bg_green, 256, 256 + 255) - 255;
-		uint32_t blue = clamp<uint32_t>(256 - fg_blue + bg_blue, 256, 256 + 255) - 255;
+		uint32_t red = clamp<uint32_t>(fg_red + bg_red, 0, 255);
+		uint32_t green = clamp<uint32_t>(fg_green + bg_green, 0, 255);
+		uint32_t blue = clamp<uint32_t>(fg_blue + bg_blue, 0, 255);
 
 		*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
 		dest += pitch;
 	} while (--count);
-#else
+}
+
+void R_FillSubClampColumn_C (void)
+{
+	int count;
+	canvas_pixel_t *dest;
+
+	count = dc_count;
+	if (count <= 0)
+		return;
+
+	dest = dc_dest;
+	int pitch = dc_pitch;
+
 	DWORD *bg2rgb;
 	DWORD fg;
 
@@ -417,10 +527,9 @@ void R_FillSubClampColumn (void)
 		*dest = RGB32k.All[a & (a>>15)];
 		dest += pitch; 
 	} while (--count);
-#endif
 }
 
-void R_FillRevSubClampColumn (void)
+void R_FillSubClampColumn_RGBA()
 {
 	int count;
 	canvas_pixel_t *dest;
@@ -432,7 +541,6 @@ void R_FillRevSubClampColumn (void)
 	dest = dc_dest;
 	int pitch = dc_pitch;
 
-#ifndef PALETTEOUTPUT
 	uint32_t fg_red = (dc_srccolor >> 12) & 0xf8;
 	uint32_t fg_green = (dc_srccolor >> 2) & 0xf8;
 	uint32_t fg_blue = (dc_srccolor << 3) & 0xf8;
@@ -443,14 +551,27 @@ void R_FillRevSubClampColumn (void)
 		uint32_t bg_green = (*dest >> 8) & 0xff;
 		uint32_t bg_blue = (*dest) & 0xff;
 
-		uint32_t red = clamp<uint32_t>(256 + fg_red - bg_red, 256, 256 + 255) - 255;
-		uint32_t green = clamp<uint32_t>(256 + fg_green - bg_green, 256, 256 + 255) - 255;
-		uint32_t blue = clamp<uint32_t>(256 + fg_blue - bg_blue, 256, 256 + 255) - 255;
+		uint32_t red = clamp<uint32_t>(256 - fg_red + bg_red, 256, 256 + 255) - 255;
+		uint32_t green = clamp<uint32_t>(256 - fg_green + bg_green, 256, 256 + 255) - 255;
+		uint32_t blue = clamp<uint32_t>(256 - fg_blue + bg_blue, 256, 256 + 255) - 255;
 
 		*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
 		dest += pitch;
 	} while (--count);
-#else
+}
+
+void R_FillRevSubClampColumn_C (void)
+{
+	int count;
+	canvas_pixel_t *dest;
+
+	count = dc_count;
+	if (count <= 0)
+		return;
+
+	dest = dc_dest;
+	int pitch = dc_pitch;
+
 	DWORD *bg2rgb;
 	DWORD fg;
 
@@ -469,7 +590,37 @@ void R_FillRevSubClampColumn (void)
 		*dest = RGB32k.All[a & (a>>15)];
 		dest += pitch; 
 	} while (--count);
-#endif
+}
+
+void R_FillRevSubClampColumn_RGBA()
+{
+	int count;
+	canvas_pixel_t *dest;
+
+	count = dc_count;
+	if (count <= 0)
+		return;
+
+	dest = dc_dest;
+	int pitch = dc_pitch;
+
+	uint32_t fg_red = (dc_srccolor >> 12) & 0xf8;
+	uint32_t fg_green = (dc_srccolor >> 2) & 0xf8;
+	uint32_t fg_blue = (dc_srccolor << 3) & 0xf8;
+
+	do
+	{
+		uint32_t bg_red = (*dest >> 16) & 0xff;
+		uint32_t bg_green = (*dest >> 8) & 0xff;
+		uint32_t bg_blue = (*dest) & 0xff;
+
+		uint32_t red = clamp<uint32_t>(256 + fg_red - bg_red, 256, 256 + 255) - 255;
+		uint32_t green = clamp<uint32_t>(256 + fg_green - bg_green, 256, 256 + 255) - 255;
+		uint32_t blue = clamp<uint32_t>(256 + fg_blue - bg_blue, 256, 256 + 255) - 255;
+
+		*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
+		dest += pitch;
+	} while (--count);
 }
 
 //
@@ -542,7 +693,77 @@ void R_DrawFuzzColumnP_C (void)
 
 	dest = ylookup[dc_yl] + dc_x + dc_destorg;
 
-#ifndef PALETTEOUTPUT
+	// colormap #6 is used for shading (of 0-31, a bit brighter than average)
+	{
+		// [RH] Make local copies of global vars to try and improve
+		//		the optimizations made by the compiler.
+		int pitch = dc_pitch;
+		int fuzz = fuzzpos;
+		int cnt;
+		BYTE *map = &NormalLight.Maps[6*256];
+
+		// [RH] Split this into three separate loops to minimize
+		// the number of times fuzzpos needs to be clamped.
+		if (fuzz)
+		{
+			cnt = MIN(FUZZTABLE-fuzz,count);
+			count -= cnt;
+			do
+			{
+				*dest = map[dest[fuzzoffset[fuzz++]]];
+				dest += pitch;
+			} while (--cnt);
+		}
+		if (fuzz == FUZZTABLE || count > 0)
+		{
+			while (count >= FUZZTABLE)
+			{
+				fuzz = 0;
+				cnt = FUZZTABLE;
+				count -= FUZZTABLE;
+				do
+				{
+					*dest = map[dest[fuzzoffset[fuzz++]]];
+					dest += pitch;
+				} while (--cnt);
+			}
+			fuzz = 0;
+			if (count > 0)
+			{
+				do
+				{
+					*dest = map[dest[fuzzoffset[fuzz++]]];
+					dest += pitch;
+				} while (--count);
+			}
+		}
+		fuzzpos = fuzz;
+	}
+} 
+#endif
+
+void R_DrawFuzzColumnP_RGBA_C()
+{
+	int count;
+	canvas_pixel_t *dest;
+
+	// Adjust borders. Low...
+	if (dc_yl == 0)
+		dc_yl = 1;
+
+	// .. and high.
+	if (dc_yh > fuzzviewheight)
+		dc_yh = fuzzviewheight;
+
+	count = dc_yh - dc_yl;
+
+	// Zero length.
+	if (count < 0)
+		return;
+
+	count++;
+
+	dest = ylookup[dc_yl] + dc_x + dc_destorg;
 
 	// Note: this implementation assumes this function is only used for the pinky shadow effect (i.e. no other fancy colormap than black)
 	// I'm not sure if this is really always the case or not.
@@ -618,58 +839,7 @@ void R_DrawFuzzColumnP_C (void)
 		}
 		fuzzpos = fuzz;
 	}
-
-#else
-
-	// colormap #6 is used for shading (of 0-31, a bit brighter than average)
-	{
-		// [RH] Make local copies of global vars to try and improve
-		//		the optimizations made by the compiler.
-		int pitch = dc_pitch;
-		int fuzz = fuzzpos;
-		int cnt;
-		BYTE *map = &NormalLight.Maps[6*256];
-
-		// [RH] Split this into three separate loops to minimize
-		// the number of times fuzzpos needs to be clamped.
-		if (fuzz)
-		{
-			cnt = MIN(FUZZTABLE-fuzz,count);
-			count -= cnt;
-			do
-			{
-				*dest = map[dest[fuzzoffset[fuzz++]]];
-				dest += pitch;
-			} while (--cnt);
-		}
-		if (fuzz == FUZZTABLE || count > 0)
-		{
-			while (count >= FUZZTABLE)
-			{
-				fuzz = 0;
-				cnt = FUZZTABLE;
-				count -= FUZZTABLE;
-				do
-				{
-					*dest = map[dest[fuzzoffset[fuzz++]]];
-					dest += pitch;
-				} while (--cnt);
-			}
-			fuzz = 0;
-			if (count > 0)
-			{
-				do
-				{
-					*dest = map[dest[fuzzoffset[fuzz++]]];
-					dest += pitch;
-				} while (--count);
-			}
-		}
-		fuzzpos = fuzz;
-	}
-#endif
-} 
-#endif
+}
 
 //
 // R_DrawTranlucentColumn
@@ -733,7 +903,44 @@ void R_DrawAddColumnP_C (void)
 	fracstep = dc_iscale;
 	frac = dc_texturefrac;
 
-#ifndef PALETTEOUTPUT
+	{
+		DWORD *fg2rgb = dc_srcblend;
+		DWORD *bg2rgb = dc_destblend;
+		BYTE *colormap = dc_colormap;
+		const BYTE *source = dc_source;
+		int pitch = dc_pitch;
+
+		do
+		{
+			DWORD fg = colormap[source[frac>>FRACBITS]];
+			DWORD bg = *dest;
+
+			fg = fg2rgb[fg];
+			bg = bg2rgb[bg];
+			fg = (fg+bg) | 0x1f07c1f;
+			*dest = RGB32k.All[fg & (fg>>15)];
+			dest += pitch;
+			frac += fracstep;
+		} while (--count);
+	}
+}
+
+void R_DrawAddColumnP_RGBA_C()
+{
+	int count;
+	canvas_pixel_t *dest;
+	fixed_t frac;
+	fixed_t fracstep;
+
+	count = dc_count;
+	if (count <= 0)
+		return;
+
+	dest = dc_dest;
+
+	fracstep = dc_iscale;
+	frac = dc_texturefrac;
+
 	{
 		const BYTE *source = dc_source;
 		int pitch = dc_pitch;
@@ -760,28 +967,6 @@ void R_DrawAddColumnP_C (void)
 			frac += fracstep;
 		} while (--count);
 	}
-#else
-	{
-		DWORD *fg2rgb = dc_srcblend;
-		DWORD *bg2rgb = dc_destblend;
-		BYTE *colormap = dc_colormap;
-		const BYTE *source = dc_source;
-		int pitch = dc_pitch;
-
-		do
-		{
-			DWORD fg = colormap[source[frac>>FRACBITS]];
-			DWORD bg = *dest;
-
-			fg = fg2rgb[fg];
-			bg = bg2rgb[bg];
-			fg = (fg+bg) | 0x1f07c1f;
-			*dest = RGB32k.All[fg & (fg>>15)];
-			dest += pitch;
-			frac += fracstep;
-		} while (--count);
-	}
-#endif
 }
 
 //
@@ -803,9 +988,39 @@ void R_DrawTranslatedColumnP_C (void)
 	if (count <= 0) 
 		return;
 
-#ifndef PALETTEOUTPUT
+	dest = dc_dest;
+
+	fracstep = dc_iscale;
+	frac = dc_texturefrac;
+
+	{
+		// [RH] Local copies of global vars to improve compiler optimizations
+		BYTE *colormap = dc_colormap;
+		BYTE *translation = dc_translation;
+		const BYTE *source = dc_source;
+		int pitch = dc_pitch;
+
+		do
+		{
+			*dest = colormap[translation[source[frac>>FRACBITS]]];
+			dest += pitch;
+			frac += fracstep;
+		} while (--count);
+	}
+}
+
+void R_DrawTranslatedColumnP_RGBA_C()
+{
+	int 				count;
+	canvas_pixel_t*		dest;
+	fixed_t 			frac;
+	fixed_t 			fracstep;
+
+	count = dc_count;
+	if (count <= 0)
+		return;
+
 	uint32_t light = calc_light_multiplier(dc_light);
-#endif
 
 	dest = dc_dest;
 
@@ -821,20 +1036,15 @@ void R_DrawTranslatedColumnP_C (void)
 
 		do
 		{
-#ifndef PALETTEOUTPUT
 			*dest = shade_pal_index(colormap[translation[source[frac >> FRACBITS]]], light);
-#else
-			*dest = colormap[translation[source[frac>>FRACBITS]]];
-#endif
 			dest += pitch;
-
 			frac += fracstep;
 		} while (--count);
 	}
 }
 
 // Draw a column that is both translated and translucent
-void R_DrawTlatedAddColumnP_C (void)
+void R_DrawTlatedAddColumnP_C()
 {
 	int count;
 	canvas_pixel_t *dest;
@@ -845,16 +1055,52 @@ void R_DrawTlatedAddColumnP_C (void)
 	if (count <= 0)
 		return;
 
-#ifndef PALETTEOUTPUT
+	dest = dc_dest;
+
+	fracstep = dc_iscale;
+	frac = dc_texturefrac;
+
+	{
+		DWORD *fg2rgb = dc_srcblend;
+		DWORD *bg2rgb = dc_destblend;
+		BYTE *translation = dc_translation;
+		BYTE *colormap = dc_colormap;
+		const BYTE *source = dc_source;
+		int pitch = dc_pitch;
+
+		do
+		{
+			DWORD fg = colormap[translation[source[frac>>FRACBITS]]];
+			DWORD bg = *dest;
+
+			fg = fg2rgb[fg];
+			bg = bg2rgb[bg];
+			fg = (fg + bg) | 0x1f07c1f;
+			*dest = RGB32k.All[fg & (fg >> 15)];
+			dest += pitch;
+			frac += fracstep;
+		} while (--count);
+	}
+}
+
+void R_DrawTlatedAddColumnP_RGBA_C()
+{
+	int count;
+	canvas_pixel_t *dest;
+	fixed_t frac;
+	fixed_t fracstep;
+
+	count = dc_count;
+	if (count <= 0)
+		return;
+
 	uint32_t light = calc_light_multiplier(dc_light);
-#endif
 
 	dest = dc_dest;
 
 	fracstep = dc_iscale;
 	frac = dc_texturefrac;
 
-#ifndef PALETTEOUTPUT
 	{
 		BYTE *translation = dc_translation;
 		BYTE *colormap = dc_colormap;
@@ -882,29 +1128,6 @@ void R_DrawTlatedAddColumnP_C (void)
 			frac += fracstep;
 		} while (--count);
 	}
-#else
-	{
-		DWORD *fg2rgb = dc_srcblend;
-		DWORD *bg2rgb = dc_destblend;
-		BYTE *translation = dc_translation;
-		BYTE *colormap = dc_colormap;
-		const BYTE *source = dc_source;
-		int pitch = dc_pitch;
-
-		do
-		{
-			DWORD fg = colormap[translation[source[frac>>FRACBITS]]];
-			DWORD bg = *dest;
-
-			fg = fg2rgb[fg];
-			bg = bg2rgb[bg];
-			fg = (fg + bg) | 0x1f07c1f;
-			*dest = RGB32k.All[fg & (fg >> 15)];
-			dest += pitch;
-			frac += fracstep;
-		} while (--count);
-	}
-#endif
 }
 
 // Draw a column whose "color" values are actually translucency
@@ -925,7 +1148,41 @@ void R_DrawShadedColumnP_C (void)
 	fracstep = dc_iscale; 
 	frac = dc_texturefrac;
 
-#ifndef PALETTEOUTPUT
+	{
+		const BYTE *source = dc_source;
+		BYTE *colormap = dc_colormap;
+		int pitch = dc_pitch;
+		DWORD *fgstart = &Col2RGB8[0][dc_color];
+
+		do
+		{
+			DWORD val = colormap[source[frac>>FRACBITS]];
+			DWORD fg = fgstart[val<<8];
+			val = (Col2RGB8[64-val][*dest] + fg) | 0x1f07c1f;
+			*dest = RGB32k.All[val & (val>>15)];
+
+			dest += pitch;
+			frac += fracstep;
+		} while (--count);
+	}
+} 
+
+void R_DrawShadedColumnP_RGBA_C()
+{
+	int  count;
+	canvas_pixel_t *dest;
+	fixed_t frac, fracstep;
+
+	count = dc_count;
+
+	if (count <= 0)
+		return;
+
+	dest = dc_dest;
+
+	fracstep = dc_iscale;
+	frac = dc_texturefrac;
+
 	uint32_t fg = shade_pal_index(dc_color, calc_light_multiplier(dc_light));
 	uint32_t fg_red = (fg >> 16) & 0xff;
 	uint32_t fg_green = (fg >> 8) & 0xff;
@@ -954,26 +1211,7 @@ void R_DrawShadedColumnP_C (void)
 			frac += fracstep;
 		} while (--count);
 	}
-#else
-	{
-		const BYTE *source = dc_source;
-		BYTE *colormap = dc_colormap;
-		int pitch = dc_pitch;
-		DWORD *fgstart = &Col2RGB8[0][dc_color];
-
-		do
-		{
-			DWORD val = colormap[source[frac>>FRACBITS]];
-			DWORD fg = fgstart[val<<8];
-			val = (Col2RGB8[64-val][*dest] + fg) | 0x1f07c1f;
-			*dest = RGB32k.All[val & (val>>15)];
-
-			dest += pitch;
-			frac += fracstep;
-		} while (--count);
-	}
-#endif
-} 
+}
 
 // Add source to destination, clamping it to white
 void R_DrawAddClampColumnP_C ()
@@ -992,7 +1230,6 @@ void R_DrawAddClampColumnP_C ()
 	fracstep = dc_iscale;
 	frac = dc_texturefrac;
 
-#ifndef PALETTEOUTPUT
 	{
 		const BYTE *source = dc_source;
 		BYTE *colormap = dc_colormap;
@@ -1019,30 +1256,50 @@ void R_DrawAddClampColumnP_C ()
 			frac += fracstep;
 		} while (--count);
 	}
-#else
+}
+
+void R_DrawAddClampColumnP_RGBA_C()
+{
+	int count;
+	canvas_pixel_t *dest;
+	fixed_t frac;
+	fixed_t fracstep;
+
+	count = dc_count;
+	if (count <= 0)
+		return;
+
+	dest = dc_dest;
+
+	fracstep = dc_iscale;
+	frac = dc_texturefrac;
+
 	{
-		BYTE *colormap = dc_colormap;
 		const BYTE *source = dc_source;
+		BYTE *colormap = dc_colormap;
 		int pitch = dc_pitch;
-		DWORD *fg2rgb = dc_srcblend;
-		DWORD *bg2rgb = dc_destblend;
+		uint32_t light = calc_light_multiplier(dc_light);
 
 		do
 		{
-			DWORD a = fg2rgb[colormap[source[frac>>FRACBITS]]] + bg2rgb[*dest];
-			DWORD b = a;
+			uint32_t fg = shade_pal_index(colormap[source[frac >> FRACBITS]], light);
+			uint32_t fg_red = (fg >> 16) & 0xff;
+			uint32_t fg_green = (fg >> 8) & 0xff;
+			uint32_t fg_blue = fg & 0xff;
 
-			a |= 0x01f07c1f;
-			b &= 0x40100400;
-			a &= 0x3fffffff;
-			b = b - (b >> 5);
-			a |= b;
-			*dest = RGB32k.All[a & (a>>15)];
+			uint32_t bg_red = (*dest >> 16) & 0xff;
+			uint32_t bg_green = (*dest >> 8) & 0xff;
+			uint32_t bg_blue = (*dest) & 0xff;
+
+			uint32_t red = clamp<uint32_t>(fg_red + bg_red, 0, 255);
+			uint32_t green = clamp<uint32_t>(fg_green + bg_green, 0, 255);
+			uint32_t blue = clamp<uint32_t>(fg_blue + bg_blue, 0, 255);
+
+			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
 			dest += pitch;
 			frac += fracstep;
 		} while (--count);
 	}
-#endif
 }
 
 // Add translated source to destination, clamping it to white
@@ -1062,35 +1319,6 @@ void R_DrawAddClampTranslatedColumnP_C ()
 	fracstep = dc_iscale;
 	frac = dc_texturefrac;
 
-#ifndef PALETTEOUTPUT
-	{
-		BYTE *translation = dc_translation;
-		BYTE *colormap = dc_colormap;
-		const BYTE *source = dc_source;
-		int pitch = dc_pitch;
-		uint32_t light = calc_light_multiplier(dc_light);
-
-		do
-		{
-			uint32_t fg = shade_pal_index(colormap[translation[source[frac >> FRACBITS]]], light);
-			uint32_t fg_red = (fg >> 16) & 0xff;
-			uint32_t fg_green = (fg >> 8) & 0xff;
-			uint32_t fg_blue = fg & 0xff;
-
-			uint32_t bg_red = (*dest >> 16) & 0xff;
-			uint32_t bg_green = (*dest >> 8) & 0xff;
-			uint32_t bg_blue = (*dest) & 0xff;
-
-			uint32_t red = clamp<uint32_t>(fg_red + bg_red, 0, 255);
-			uint32_t green = clamp<uint32_t>(fg_green + bg_green, 0, 255);
-			uint32_t blue = clamp<uint32_t>(fg_blue + bg_blue, 0, 255);
-
-			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-			dest += pitch;
-			frac += fracstep;
-		} while (--count);
-	}
-#else
 	{
 		BYTE *translation = dc_translation;
 		BYTE *colormap = dc_colormap;
@@ -1114,7 +1342,51 @@ void R_DrawAddClampTranslatedColumnP_C ()
 			frac += fracstep;
 		} while (--count);
 	}
-#endif
+}
+
+void R_DrawAddClampTranslatedColumnP_RGBA_C()
+{
+	int count;
+	canvas_pixel_t *dest;
+	fixed_t frac;
+	fixed_t fracstep;
+
+	count = dc_count;
+	if (count <= 0)
+		return;
+
+	dest = dc_dest;
+
+	fracstep = dc_iscale;
+	frac = dc_texturefrac;
+
+	{
+		BYTE *translation = dc_translation;
+		BYTE *colormap = dc_colormap;
+		const BYTE *source = dc_source;
+		int pitch = dc_pitch;
+		uint32_t light = calc_light_multiplier(dc_light);
+
+		do
+		{
+			uint32_t fg = shade_pal_index(colormap[translation[source[frac >> FRACBITS]]], light);
+			uint32_t fg_red = (fg >> 16) & 0xff;
+			uint32_t fg_green = (fg >> 8) & 0xff;
+			uint32_t fg_blue = fg & 0xff;
+
+			uint32_t bg_red = (*dest >> 16) & 0xff;
+			uint32_t bg_green = (*dest >> 8) & 0xff;
+			uint32_t bg_blue = (*dest) & 0xff;
+
+			uint32_t red = clamp<uint32_t>(fg_red + bg_red, 0, 255);
+			uint32_t green = clamp<uint32_t>(fg_green + bg_green, 0, 255);
+			uint32_t blue = clamp<uint32_t>(fg_blue + bg_blue, 0, 255);
+
+			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
+			dest += pitch;
+			frac += fracstep;
+		} while (--count);
+	}
 }
 
 // Subtract destination from source, clamping it to black
@@ -1134,7 +1406,45 @@ void R_DrawSubClampColumnP_C ()
 	fracstep = dc_iscale;
 	frac = dc_texturefrac;
 
-#ifndef PALETTEOUTPUT
+	{
+		BYTE *colormap = dc_colormap;
+		const BYTE *source = dc_source;
+		int pitch = dc_pitch;
+		DWORD *fg2rgb = dc_srcblend;
+		DWORD *bg2rgb = dc_destblend;
+
+		do
+		{
+			DWORD a = (fg2rgb[colormap[source[frac>>FRACBITS]]] | 0x40100400) - bg2rgb[*dest];
+			DWORD b = a;
+
+			b &= 0x40100400;
+			b = b - (b >> 5);
+			a &= b;
+			a |= 0x01f07c1f;
+			*dest = RGB32k.All[a & (a>>15)];
+			dest += pitch;
+			frac += fracstep;
+		} while (--count);
+	}
+}
+
+void R_DrawSubClampColumnP_RGBA_C()
+{
+	int count;
+	canvas_pixel_t *dest;
+	fixed_t frac;
+	fixed_t fracstep;
+
+	count = dc_count;
+	if (count <= 0)
+		return;
+
+	dest = dc_dest;
+
+	fracstep = dc_iscale;
+	frac = dc_texturefrac;
+
 	{
 		BYTE *colormap = dc_colormap;
 		const BYTE *source = dc_source;
@@ -1161,29 +1471,6 @@ void R_DrawSubClampColumnP_C ()
 			frac += fracstep;
 		} while (--count);
 	}
-#else
-	{
-		BYTE *colormap = dc_colormap;
-		const BYTE *source = dc_source;
-		int pitch = dc_pitch;
-		DWORD *fg2rgb = dc_srcblend;
-		DWORD *bg2rgb = dc_destblend;
-
-		do
-		{
-			DWORD a = (fg2rgb[colormap[source[frac>>FRACBITS]]] | 0x40100400) - bg2rgb[*dest];
-			DWORD b = a;
-
-			b &= 0x40100400;
-			b = b - (b >> 5);
-			a &= b;
-			a |= 0x01f07c1f;
-			*dest = RGB32k.All[a & (a>>15)];
-			dest += pitch;
-			frac += fracstep;
-		} while (--count);
-	}
-#endif
 }
 
 // Subtract destination from source, clamping it to black
@@ -1203,35 +1490,6 @@ void R_DrawSubClampTranslatedColumnP_C ()
 	fracstep = dc_iscale;
 	frac = dc_texturefrac;
 
-#ifndef PALETTEOUTPUT
-	{
-		BYTE *translation = dc_translation;
-		BYTE *colormap = dc_colormap;
-		const BYTE *source = dc_source;
-		int pitch = dc_pitch;
-		uint32_t light = calc_light_multiplier(dc_light);
-
-		do
-		{
-			uint32_t fg = shade_pal_index(colormap[translation[source[frac >> FRACBITS]]], light);
-			uint32_t fg_red = (fg >> 16) & 0xff;
-			uint32_t fg_green = (fg >> 8) & 0xff;
-			uint32_t fg_blue = fg & 0xff;
-
-			uint32_t bg_red = (*dest >> 16) & 0xff;
-			uint32_t bg_green = (*dest >> 8) & 0xff;
-			uint32_t bg_blue = (*dest) & 0xff;
-
-			uint32_t red = clamp<uint32_t>(256 - fg_red + bg_red, 256, 256 + 255) - 256;
-			uint32_t green = clamp<uint32_t>(256 - fg_green + bg_green, 256, 256 + 255) - 256;
-			uint32_t blue = clamp<uint32_t>(256 - fg_blue + bg_blue, 256, 256 + 255) - 256;
-
-			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-			dest += pitch;
-			frac += fracstep;
-		} while (--count);
-	}
-#else
 	{
 		BYTE *translation = dc_translation;
 		BYTE *colormap = dc_colormap;
@@ -1254,7 +1512,51 @@ void R_DrawSubClampTranslatedColumnP_C ()
 			frac += fracstep;
 		} while (--count);
 	}
-#endif
+}
+
+void R_DrawSubClampTranslatedColumnP_RGBA_C()
+{
+	int count;
+	canvas_pixel_t *dest;
+	fixed_t frac;
+	fixed_t fracstep;
+
+	count = dc_count;
+	if (count <= 0)
+		return;
+
+	dest = dc_dest;
+
+	fracstep = dc_iscale;
+	frac = dc_texturefrac;
+
+	{
+		BYTE *translation = dc_translation;
+		BYTE *colormap = dc_colormap;
+		const BYTE *source = dc_source;
+		int pitch = dc_pitch;
+		uint32_t light = calc_light_multiplier(dc_light);
+
+		do
+		{
+			uint32_t fg = shade_pal_index(colormap[translation[source[frac >> FRACBITS]]], light);
+			uint32_t fg_red = (fg >> 16) & 0xff;
+			uint32_t fg_green = (fg >> 8) & 0xff;
+			uint32_t fg_blue = fg & 0xff;
+
+			uint32_t bg_red = (*dest >> 16) & 0xff;
+			uint32_t bg_green = (*dest >> 8) & 0xff;
+			uint32_t bg_blue = (*dest) & 0xff;
+
+			uint32_t red = clamp<uint32_t>(256 - fg_red + bg_red, 256, 256 + 255) - 256;
+			uint32_t green = clamp<uint32_t>(256 - fg_green + bg_green, 256, 256 + 255) - 256;
+			uint32_t blue = clamp<uint32_t>(256 - fg_blue + bg_blue, 256, 256 + 255) - 256;
+
+			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
+			dest += pitch;
+			frac += fracstep;
+		} while (--count);
+	}
 }
 
 // Subtract source from destination, clamping it to black
@@ -1274,7 +1576,45 @@ void R_DrawRevSubClampColumnP_C ()
 	fracstep = dc_iscale;
 	frac = dc_texturefrac;
 
-#ifndef PALETTEOUTPUT
+	{
+		BYTE *colormap = dc_colormap;
+		const BYTE *source = dc_source;
+		int pitch = dc_pitch;
+		DWORD *fg2rgb = dc_srcblend;
+		DWORD *bg2rgb = dc_destblend;
+
+		do
+		{
+			DWORD a = (bg2rgb[*dest] | 0x40100400) - fg2rgb[colormap[source[frac>>FRACBITS]]];
+			DWORD b = a;
+
+			b &= 0x40100400;
+			b = b - (b >> 5);
+			a &= b;
+			a |= 0x01f07c1f;
+			*dest = RGB32k.All[a & (a>>15)];
+			dest += pitch;
+			frac += fracstep;
+		} while (--count);
+	}
+}
+
+void R_DrawRevSubClampColumnP_RGBA_C()
+{
+	int count;
+	canvas_pixel_t *dest;
+	fixed_t frac;
+	fixed_t fracstep;
+
+	count = dc_count;
+	if (count <= 0)
+		return;
+
+	dest = dc_dest;
+
+	fracstep = dc_iscale;
+	frac = dc_texturefrac;
+
 	{
 		BYTE *colormap = dc_colormap;
 		const BYTE *source = dc_source;
@@ -1301,29 +1641,6 @@ void R_DrawRevSubClampColumnP_C ()
 			frac += fracstep;
 		} while (--count);
 	}
-#else
-	{
-		BYTE *colormap = dc_colormap;
-		const BYTE *source = dc_source;
-		int pitch = dc_pitch;
-		DWORD *fg2rgb = dc_srcblend;
-		DWORD *bg2rgb = dc_destblend;
-
-		do
-		{
-			DWORD a = (bg2rgb[*dest] | 0x40100400) - fg2rgb[colormap[source[frac>>FRACBITS]]];
-			DWORD b = a;
-
-			b &= 0x40100400;
-			b = b - (b >> 5);
-			a &= b;
-			a |= 0x01f07c1f;
-			*dest = RGB32k.All[a & (a>>15)];
-			dest += pitch;
-			frac += fracstep;
-		} while (--count);
-	}
-#endif
 }
 
 // Subtract source from destination, clamping it to black
@@ -1343,7 +1660,46 @@ void R_DrawRevSubClampTranslatedColumnP_C ()
 	fracstep = dc_iscale;
 	frac = dc_texturefrac;
 
-#ifndef PALETTEOUTPUT
+	{
+		BYTE *translation = dc_translation;
+		BYTE *colormap = dc_colormap;
+		const BYTE *source = dc_source;
+		int pitch = dc_pitch;
+		DWORD *fg2rgb = dc_srcblend;
+		DWORD *bg2rgb = dc_destblend;
+
+		do
+		{
+			DWORD a = (bg2rgb[*dest] | 0x40100400) - fg2rgb[colormap[translation[source[frac>>FRACBITS]]]];
+			DWORD b = a;
+
+			b &= 0x40100400;
+			b = b - (b >> 5);
+			a &= b;
+			a |= 0x01f07c1f;
+			*dest = RGB32k.All[(a>>15) & a];
+			dest += pitch;
+			frac += fracstep;
+		} while (--count);
+	}
+}
+
+void R_DrawRevSubClampTranslatedColumnP_RGBA_C()
+{
+	int count;
+	canvas_pixel_t *dest;
+	fixed_t frac;
+	fixed_t fracstep;
+
+	count = dc_count;
+	if (count <= 0)
+		return;
+
+	dest = dc_dest;
+
+	fracstep = dc_iscale;
+	frac = dc_texturefrac;
+
 	{
 		BYTE *translation = dc_translation;
 		BYTE *colormap = dc_colormap;
@@ -1371,32 +1727,7 @@ void R_DrawRevSubClampTranslatedColumnP_C ()
 			frac += fracstep;
 		} while (--count);
 	}
-#else
-	{
-		BYTE *translation = dc_translation;
-		BYTE *colormap = dc_colormap;
-		const BYTE *source = dc_source;
-		int pitch = dc_pitch;
-		DWORD *fg2rgb = dc_srcblend;
-		DWORD *bg2rgb = dc_destblend;
-
-		do
-		{
-			DWORD a = (bg2rgb[*dest] | 0x40100400) - fg2rgb[colormap[translation[source[frac>>FRACBITS]]]];
-			DWORD b = a;
-
-			b &= 0x40100400;
-			b = b - (b >> 5);
-			a &= b;
-			a |= 0x01f07c1f;
-			*dest = RGB32k.All[(a>>15) & a];
-			dest += pitch;
-			frac += fracstep;
-		} while (--count);
-	}
-#endif
 }
-
 
 
 //
@@ -1549,15 +1880,84 @@ void R_DrawSpanP_C (void)
 	xstep = ds_xstep;
 	ystep = ds_ystep;
 
-#ifndef PALETTEOUTPUT
-	uint32_t light = calc_light_multiplier(ds_light);
+	if (ds_xbits == 6 && ds_ybits == 6)
+	{
+		// 64x64 is the most common case by far, so special case it.
+
+		do
+		{
+			// Current texture index in u,v.
+			spot = ((xfrac>>(32-6-6))&(63*64)) + (yfrac>>(32-6));
+
+			// Lookup pixel from flat texture tile,
+			//  re-index using light/colormap.
+			*dest++ = colormap[source[spot]];
+
+			// Next step in u,v.
+			xfrac += xstep;
+			yfrac += ystep;
+		} while (--count);
+	}
+	else
+	{
+		BYTE yshift = 32 - ds_ybits;
+		BYTE xshift = yshift - ds_xbits;
+		int xmask = ((1 << ds_xbits) - 1) << ds_ybits;
+
+		do
+		{
+			// Current texture index in u,v.
+			spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+
+			// Lookup pixel from flat texture tile,
+			//  re-index using light/colormap.
+			*dest++ = colormap[source[spot]];
+
+			// Next step in u,v.
+			xfrac += xstep;
+			yfrac += ystep;
+		} while (--count);
+	}
+}
 #endif
+
+void R_DrawSpanP_RGBA_C()
+{
+	dsfixed_t			xfrac;
+	dsfixed_t			yfrac;
+	dsfixed_t			xstep;
+	dsfixed_t			ystep;
+	canvas_pixel_t*		dest;
+	const BYTE*			source = ds_source;
+	const BYTE*			colormap = ds_colormap;
+	int 				count;
+	int 				spot;
+
+#ifdef RANGECHECK 
+	if (ds_x2 < ds_x1 || ds_x1 < 0
+		|| ds_x2 >= screen->width || ds_y > screen->height)
+	{
+		I_Error("R_DrawSpan: %i to %i at %i", ds_x1, ds_x2, ds_y);
+	}
+	//		dscount++;
+#endif
+
+	xfrac = ds_xfrac;
+	yfrac = ds_yfrac;
+
+	dest = ylookup[ds_y] + ds_x1 + dc_destorg;
+
+	count = ds_x2 - ds_x1 + 1;
+
+	xstep = ds_xstep;
+	ystep = ds_ystep;
+
+	uint32_t light = calc_light_multiplier(ds_light);
 
 	if (ds_xbits == 6 && ds_ybits == 6)
 	{
 		// 64x64 is the most common case by far, so special case it.
 
-#ifndef PALETTEOUTPUT
 #ifndef NO_SSE
 		__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
 		uint32_t *palette = (uint32_t*)GPalette.BaseColors;
@@ -1589,14 +1989,14 @@ void R_DrawSpanP_C (void)
 
 			// Lookup pixel from flat texture tile,
 			//  re-index using light/colormap.
-			__m128i fg = _mm_set_epi32(palette[p0], palette[p1], palette[p2], palette[p3]);
+			__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
 			__m128i fg_hi = _mm_unpackhi_epi8(fg, _mm_setzero_si128());
 			__m128i fg_lo = _mm_unpacklo_epi8(fg, _mm_setzero_si128());
 			fg_hi = _mm_mullo_epi16(fg_hi, mlight);
 			fg_hi = _mm_srli_epi16(fg_hi, 8);
 			fg_lo = _mm_mullo_epi16(fg_lo, mlight);
 			fg_lo = _mm_srli_epi16(fg_lo, 8);
-			fg = _mm_packus_epi16(fg_hi, fg_lo);
+			fg = _mm_packus_epi16(fg_lo, fg_hi);
 			_mm_storeu_si128((__m128i*)dest, fg);
 
 			// Next step in u,v.
@@ -1605,20 +2005,15 @@ void R_DrawSpanP_C (void)
 		if (count == 0)
 			return;
 #endif
-#endif
 
 		do
 		{
 			// Current texture index in u,v.
-			spot = ((xfrac>>(32-6-6))&(63*64)) + (yfrac>>(32-6));
+			spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
 
 			// Lookup pixel from flat texture tile,
 			//  re-index using light/colormap.
-#ifndef PALETTEOUTPUT
 			*dest++ = shade_pal_index(colormap[source[spot]], light);
-#else
-			*dest++ = colormap[source[spot]];
-#endif
 
 			// Next step in u,v.
 			xfrac += xstep;
@@ -1638,11 +2033,7 @@ void R_DrawSpanP_C (void)
 
 			// Lookup pixel from flat texture tile,
 			//  re-index using light/colormap.
-#ifndef PALETTEOUTPUT
 			*dest++ = shade_pal_index(colormap[source[spot]], light);
-#else
-			*dest++ = colormap[source[spot]];
-#endif
 
 			// Next step in u,v.
 			xfrac += xstep;
@@ -1650,6 +2041,8 @@ void R_DrawSpanP_C (void)
 		} while (--count);
 	}
 }
+
+#ifndef X86_ASM
 
 // [RH] Draw a span with holes
 void R_DrawSpanMaskedP_C (void)
@@ -1663,10 +2056,6 @@ void R_DrawSpanMaskedP_C (void)
 	const BYTE*			colormap = ds_colormap;
 	int 				count;
 	int 				spot;
-
-#ifndef PALETTEOUTPUT
-	uint32_t light = calc_light_multiplier(ds_light);
-#endif
 
 	xfrac = ds_xfrac;
 	yfrac = ds_yfrac;
@@ -1689,11 +2078,7 @@ void R_DrawSpanMaskedP_C (void)
 			texdata = source[spot];
 			if (texdata != 0)
 			{
-#ifndef PALETTEOUTPUT
-				*dest = shade_pal_index(colormap[texdata], light);
-#else
 				*dest = colormap[texdata];
-#endif
 			}
 			dest++;
 			xfrac += xstep;
@@ -1713,11 +2098,7 @@ void R_DrawSpanMaskedP_C (void)
 			texdata = source[spot];
 			if (texdata != 0)
 			{
-#ifndef PALETTEOUTPUT
-				*dest = shade_pal_index(colormap[texdata], light);
-#else
 				*dest = colormap[texdata];
-#endif
 			}
 			dest++;
 			xfrac += xstep;
@@ -1726,6 +2107,71 @@ void R_DrawSpanMaskedP_C (void)
 	}
 }
 #endif
+
+void R_DrawSpanMaskedP_RGBA_C()
+{
+	dsfixed_t			xfrac;
+	dsfixed_t			yfrac;
+	dsfixed_t			xstep;
+	dsfixed_t			ystep;
+	canvas_pixel_t*		dest;
+	const BYTE*			source = ds_source;
+	const BYTE*			colormap = ds_colormap;
+	int 				count;
+	int 				spot;
+
+	uint32_t light = calc_light_multiplier(ds_light);
+
+	xfrac = ds_xfrac;
+	yfrac = ds_yfrac;
+
+	dest = ylookup[ds_y] + ds_x1 + dc_destorg;
+
+	count = ds_x2 - ds_x1 + 1;
+
+	xstep = ds_xstep;
+	ystep = ds_ystep;
+
+	if (ds_xbits == 6 && ds_ybits == 6)
+	{
+		// 64x64 is the most common case by far, so special case it.
+		do
+		{
+			BYTE texdata;
+
+			spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
+			texdata = source[spot];
+			if (texdata != 0)
+			{
+				*dest = shade_pal_index(colormap[texdata], light);
+			}
+			dest++;
+			xfrac += xstep;
+			yfrac += ystep;
+		} while (--count);
+	}
+	else
+	{
+		BYTE yshift = 32 - ds_ybits;
+		BYTE xshift = yshift - ds_xbits;
+		int xmask = ((1 << ds_xbits) - 1) << ds_ybits;
+		do
+		{
+			BYTE texdata;
+
+			spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+			texdata = source[spot];
+			if (texdata != 0)
+			{
+				*dest = shade_pal_index(colormap[texdata], light);
+			}
+			dest++;
+			xfrac += xstep;
+			yfrac += ystep;
+		} while (--count);
+	}
+}
+
 
 void R_DrawSpanTranslucentP_C (void)
 {
@@ -1756,7 +2202,68 @@ void R_DrawSpanTranslucentP_C (void)
 	if (ds_xbits == 6 && ds_ybits == 6)
 	{
 		// 64x64 is the most common case by far, so special case it.
-#ifndef PALETTEOUTPUT
+		do
+		{
+			spot = ((xfrac>>(32-6-6))&(63*64)) + (yfrac>>(32-6));
+			DWORD fg = colormap[source[spot]];
+			DWORD bg = *dest;
+			fg = fg2rgb[fg];
+			bg = bg2rgb[bg];
+			fg = (fg+bg) | 0x1f07c1f;
+			*dest++ = RGB32k.All[fg & (fg>>15)];
+			xfrac += xstep;
+			yfrac += ystep;
+		} while (--count);
+	}
+	else
+	{
+		BYTE yshift = 32 - ds_ybits;
+		BYTE xshift = yshift - ds_xbits;
+		int xmask = ((1 << ds_xbits) - 1) << ds_ybits;
+		do
+		{
+			spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+			DWORD fg = colormap[source[spot]];
+			DWORD bg = *dest;
+			fg = fg2rgb[fg];
+			bg = bg2rgb[bg];
+			fg = (fg+bg) | 0x1f07c1f;
+			*dest++ = RGB32k.All[fg & (fg>>15)];
+			xfrac += xstep;
+			yfrac += ystep;
+		} while (--count);
+	}
+}
+
+void R_DrawSpanTranslucentP_RGBA_C()
+{
+	dsfixed_t			xfrac;
+	dsfixed_t			yfrac;
+	dsfixed_t			xstep;
+	dsfixed_t			ystep;
+	canvas_pixel_t*		dest;
+	const BYTE*			source = ds_source;
+	const BYTE*			colormap = ds_colormap;
+	int 				count;
+	int 				spot;
+	DWORD *fg2rgb = dc_srcblend;
+	DWORD *bg2rgb = dc_destblend;
+
+	xfrac = ds_xfrac;
+	yfrac = ds_yfrac;
+
+	dest = ylookup[ds_y] + ds_x1 + dc_destorg;
+
+	count = ds_x2 - ds_x1 + 1;
+
+	xstep = ds_xstep;
+	ystep = ds_ystep;
+
+	uint32_t light = calc_light_multiplier(ds_light);
+
+	if (ds_xbits == 6 && ds_ybits == 6)
+	{
+		// 64x64 is the most common case by far, so special case it.
 		do
 		{
 			spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
@@ -1779,24 +2286,9 @@ void R_DrawSpanTranslucentP_C (void)
 			xfrac += xstep;
 			yfrac += ystep;
 		} while (--count);
-#else
-		do
-		{
-			spot = ((xfrac>>(32-6-6))&(63*64)) + (yfrac>>(32-6));
-			DWORD fg = colormap[source[spot]];
-			DWORD bg = *dest;
-			fg = fg2rgb[fg];
-			bg = bg2rgb[bg];
-			fg = (fg+bg) | 0x1f07c1f;
-			*dest++ = RGB32k.All[fg & (fg>>15)];
-			xfrac += xstep;
-			yfrac += ystep;
-		} while (--count);
-#endif
 	}
 	else
 	{
-#ifndef PALETTEOUTPUT
 		BYTE yshift = 32 - ds_ybits;
 		BYTE xshift = yshift - ds_xbits;
 		int xmask = ((1 << ds_xbits) - 1) << ds_ybits;
@@ -1822,23 +2314,6 @@ void R_DrawSpanTranslucentP_C (void)
 			xfrac += xstep;
 			yfrac += ystep;
 		} while (--count);
-#else
-		BYTE yshift = 32 - ds_ybits;
-		BYTE xshift = yshift - ds_xbits;
-		int xmask = ((1 << ds_xbits) - 1) << ds_ybits;
-		do
-		{
-			spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-			DWORD fg = colormap[source[spot]];
-			DWORD bg = *dest;
-			fg = fg2rgb[fg];
-			bg = bg2rgb[bg];
-			fg = (fg+bg) | 0x1f07c1f;
-			*dest++ = RGB32k.All[fg & (fg>>15)];
-			xfrac += xstep;
-			yfrac += ystep;
-		} while (--count);
-#endif
 	}
 }
 
@@ -1879,29 +2354,12 @@ void R_DrawSpanMaskedTranslucentP_C (void)
 			texdata = source[spot];
 			if (texdata != 0)
 			{
-#ifndef PALETTEOUTPUT
-				uint32_t fg = shade_pal_index(colormap[texdata], light);
-				uint32_t fg_red = (fg >> 16) & 0xff;
-				uint32_t fg_green = (fg >> 8) & 0xff;
-				uint32_t fg_blue = (fg) & 0xff;
-
-				uint32_t bg_red = (*dest >> 16) & 0xff;
-				uint32_t bg_green = (*dest >> 8) & 0xff;
-				uint32_t bg_blue = (*dest) & 0xff;
-
-				uint32_t red = (fg_red + bg_red + 1) / 2;
-				uint32_t green = (fg_green + bg_green + 1) / 2;
-				uint32_t blue = (fg_blue + bg_blue + 1) / 2;
-
-				*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-#else
 				DWORD fg = colormap[texdata];
 				DWORD bg = *dest;
 				fg = fg2rgb[fg];
 				bg = bg2rgb[bg];
 				fg = (fg+bg) | 0x1f07c1f;
 				*dest = RGB32k.All[fg & (fg>>15)];
-#endif
 			}
 			dest++;
 			xfrac += xstep;
@@ -1921,29 +2379,12 @@ void R_DrawSpanMaskedTranslucentP_C (void)
 			texdata = source[spot];
 			if (texdata != 0)
 			{
-#ifndef PALETTEOUTPUT
-				uint32_t fg = shade_pal_index(colormap[texdata], light);
-				uint32_t fg_red = (fg >> 16) & 0xff;
-				uint32_t fg_green = (fg >> 8) & 0xff;
-				uint32_t fg_blue = (fg) & 0xff;
-
-				uint32_t bg_red = (*dest >> 16) & 0xff;
-				uint32_t bg_green = (*dest >> 8) & 0xff;
-				uint32_t bg_blue = (*dest) & 0xff;
-
-				uint32_t red = (fg_red + bg_red + 1) / 2;
-				uint32_t green = (fg_green + bg_green + 1) / 2;
-				uint32_t blue = (fg_blue + bg_blue + 1) / 2;
-
-				*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-#else
 				DWORD fg = colormap[texdata];
 				DWORD bg = *dest;
 				fg = fg2rgb[fg];
 				bg = bg2rgb[bg];
 				fg = (fg+bg) | 0x1f07c1f;
 				*dest = RGB32k.All[fg & (fg>>15)];
-#endif
 			}
 			dest++;
 			xfrac += xstep;
@@ -1952,7 +2393,7 @@ void R_DrawSpanMaskedTranslucentP_C (void)
 	}
 }
 
-void R_DrawSpanAddClampP_C (void)
+void R_DrawSpanMaskedTranslucentP_RGBA_C()
 {
 	dsfixed_t			xfrac;
 	dsfixed_t			yfrac;
@@ -1983,24 +2424,98 @@ void R_DrawSpanAddClampP_C (void)
 		// 64x64 is the most common case by far, so special case it.
 		do
 		{
+			BYTE texdata;
+
+			spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
+			texdata = source[spot];
+			if (texdata != 0)
+			{
+				uint32_t fg = shade_pal_index(colormap[texdata], light);
+				uint32_t fg_red = (fg >> 16) & 0xff;
+				uint32_t fg_green = (fg >> 8) & 0xff;
+				uint32_t fg_blue = (fg) & 0xff;
+
+				uint32_t bg_red = (*dest >> 16) & 0xff;
+				uint32_t bg_green = (*dest >> 8) & 0xff;
+				uint32_t bg_blue = (*dest) & 0xff;
+
+				uint32_t red = (fg_red + bg_red + 1) / 2;
+				uint32_t green = (fg_green + bg_green + 1) / 2;
+				uint32_t blue = (fg_blue + bg_blue + 1) / 2;
+
+				*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
+			}
+			dest++;
+			xfrac += xstep;
+			yfrac += ystep;
+		} while (--count);
+	}
+	else
+	{
+		BYTE yshift = 32 - ds_ybits;
+		BYTE xshift = yshift - ds_xbits;
+		int xmask = ((1 << ds_xbits) - 1) << ds_ybits;
+		do
+		{
+			BYTE texdata;
+
+			spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+			texdata = source[spot];
+			if (texdata != 0)
+			{
+				uint32_t fg = shade_pal_index(colormap[texdata], light);
+				uint32_t fg_red = (fg >> 16) & 0xff;
+				uint32_t fg_green = (fg >> 8) & 0xff;
+				uint32_t fg_blue = (fg) & 0xff;
+
+				uint32_t bg_red = (*dest >> 16) & 0xff;
+				uint32_t bg_green = (*dest >> 8) & 0xff;
+				uint32_t bg_blue = (*dest) & 0xff;
+
+				uint32_t red = (fg_red + bg_red + 1) / 2;
+				uint32_t green = (fg_green + bg_green + 1) / 2;
+				uint32_t blue = (fg_blue + bg_blue + 1) / 2;
+
+				*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
+			}
+			dest++;
+			xfrac += xstep;
+			yfrac += ystep;
+		} while (--count);
+	}
+}
+
+void R_DrawSpanAddClampP_C (void)
+{
+	dsfixed_t			xfrac;
+	dsfixed_t			yfrac;
+	dsfixed_t			xstep;
+	dsfixed_t			ystep;
+	canvas_pixel_t*		dest;
+	const BYTE*			source = ds_source;
+	const BYTE*			colormap = ds_colormap;
+	int 				count;
+	int 				spot;
+	DWORD *fg2rgb = dc_srcblend;
+	DWORD *bg2rgb = dc_destblend;
+
+	xfrac = ds_xfrac;
+	yfrac = ds_yfrac;
+
+	dest = ylookup[ds_y] + ds_x1 + dc_destorg;
+
+	count = ds_x2 - ds_x1 + 1;
+
+	xstep = ds_xstep;
+	ystep = ds_ystep;
+
+	if (ds_xbits == 6 && ds_ybits == 6)
+	{
+		// 64x64 is the most common case by far, so special case it.
+		do
+		{
 			spot = ((xfrac>>(32-6-6))&(63*64)) + (yfrac>>(32-6));
 
-#ifndef PALETTEOUTPUT
-			uint32_t fg = shade_pal_index(colormap[source[spot]], light);
-			uint32_t fg_red = (fg >> 16) & 0xff;
-			uint32_t fg_green = (fg >> 8) & 0xff;
-			uint32_t fg_blue = (fg) & 0xff;
-
-			uint32_t bg_red = (*dest >> 16) & 0xff;
-			uint32_t bg_green = (*dest >> 8) & 0xff;
-			uint32_t bg_blue = (*dest) & 0xff;
-
-			uint32_t red = clamp<uint32_t>(fg_red + bg_red, 0, 255);
-			uint32_t green = clamp<uint32_t>(fg_green + bg_green, 0, 255);
-			uint32_t blue = clamp<uint32_t>(fg_blue + bg_blue, 0, 255);
-
-			*dest++ = 0xff000000 | (red << 16) | (green << 8) | blue;
-#else
 			DWORD a = fg2rgb[colormap[source[spot]]] + bg2rgb[*dest];
 			DWORD b = a;
 
@@ -2010,7 +2525,6 @@ void R_DrawSpanAddClampP_C (void)
 			b = b - (b >> 5);
 			a |= b;
 			*dest++ = RGB32k.All[a & (a>>15)];
-#endif
 
 			xfrac += xstep;
 			yfrac += ystep;
@@ -2025,7 +2539,55 @@ void R_DrawSpanAddClampP_C (void)
 		{
 			spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
 
-#ifndef PALETTEOUTPUT
+			DWORD a = fg2rgb[colormap[source[spot]]] + bg2rgb[*dest];
+			DWORD b = a;
+
+			a |= 0x01f07c1f;
+			b &= 0x40100400;
+			a &= 0x3fffffff;
+			b = b - (b >> 5);
+			a |= b;
+			*dest++ = RGB32k.All[a & (a>>15)];
+
+			xfrac += xstep;
+			yfrac += ystep;
+		} while (--count);
+	}
+}
+
+void R_DrawSpanAddClampP_RGBA_C()
+{
+	dsfixed_t			xfrac;
+	dsfixed_t			yfrac;
+	dsfixed_t			xstep;
+	dsfixed_t			ystep;
+	canvas_pixel_t*		dest;
+	const BYTE*			source = ds_source;
+	const BYTE*			colormap = ds_colormap;
+	int 				count;
+	int 				spot;
+	DWORD *fg2rgb = dc_srcblend;
+	DWORD *bg2rgb = dc_destblend;
+
+	uint32_t light = calc_light_multiplier(ds_light);
+
+	xfrac = ds_xfrac;
+	yfrac = ds_yfrac;
+
+	dest = ylookup[ds_y] + ds_x1 + dc_destorg;
+
+	count = ds_x2 - ds_x1 + 1;
+
+	xstep = ds_xstep;
+	ystep = ds_ystep;
+
+	if (ds_xbits == 6 && ds_ybits == 6)
+	{
+		// 64x64 is the most common case by far, so special case it.
+		do
+		{
+			spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
+
 			uint32_t fg = shade_pal_index(colormap[source[spot]], light);
 			uint32_t fg_red = (fg >> 16) & 0xff;
 			uint32_t fg_green = (fg >> 8) & 0xff;
@@ -2040,17 +2602,34 @@ void R_DrawSpanAddClampP_C (void)
 			uint32_t blue = clamp<uint32_t>(fg_blue + bg_blue, 0, 255);
 
 			*dest++ = 0xff000000 | (red << 16) | (green << 8) | blue;
-#else
-			DWORD a = fg2rgb[colormap[source[spot]]] + bg2rgb[*dest];
-			DWORD b = a;
 
-			a |= 0x01f07c1f;
-			b &= 0x40100400;
-			a &= 0x3fffffff;
-			b = b - (b >> 5);
-			a |= b;
-			*dest++ = RGB32k.All[a & (a>>15)];
-#endif
+			xfrac += xstep;
+			yfrac += ystep;
+		} while (--count);
+	}
+	else
+	{
+		BYTE yshift = 32 - ds_ybits;
+		BYTE xshift = yshift - ds_xbits;
+		int xmask = ((1 << ds_xbits) - 1) << ds_ybits;
+		do
+		{
+			spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+
+			uint32_t fg = shade_pal_index(colormap[source[spot]], light);
+			uint32_t fg_red = (fg >> 16) & 0xff;
+			uint32_t fg_green = (fg >> 8) & 0xff;
+			uint32_t fg_blue = (fg) & 0xff;
+
+			uint32_t bg_red = (*dest >> 16) & 0xff;
+			uint32_t bg_green = (*dest >> 8) & 0xff;
+			uint32_t bg_blue = (*dest) & 0xff;
+
+			uint32_t red = clamp<uint32_t>(fg_red + bg_red, 0, 255);
+			uint32_t green = clamp<uint32_t>(fg_green + bg_green, 0, 255);
+			uint32_t blue = clamp<uint32_t>(fg_blue + bg_blue, 0, 255);
+
+			*dest++ = 0xff000000 | (red << 16) | (green << 8) | blue;
 
 			xfrac += xstep;
 			yfrac += ystep;
@@ -2095,22 +2674,6 @@ void R_DrawSpanMaskedAddClampP_C (void)
 			texdata = source[spot];
 			if (texdata != 0)
 			{
-#ifndef PALETTEOUTPUT
-				uint32_t fg = shade_pal_index(colormap[texdata], light);
-				uint32_t fg_red = (fg >> 16) & 0xff;
-				uint32_t fg_green = (fg >> 8) & 0xff;
-				uint32_t fg_blue = (fg) & 0xff;
-
-				uint32_t bg_red = (*dest >> 16) & 0xff;
-				uint32_t bg_green = (*dest >> 8) & 0xff;
-				uint32_t bg_blue = (*dest) & 0xff;
-
-				uint32_t red = (fg_red + bg_red + 1) / 2;
-				uint32_t green = (fg_green + bg_green + 1) / 2;
-				uint32_t blue = (fg_blue + bg_blue + 1) / 2;
-
-				*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-#else
 				DWORD a = fg2rgb[colormap[texdata]] + bg2rgb[*dest];
 				DWORD b = a;
 
@@ -2120,7 +2683,6 @@ void R_DrawSpanMaskedAddClampP_C (void)
 				b = b - (b >> 5);
 				a |= b;
 				*dest = RGB32k.All[a & (a>>15)];
-#endif
 			}
 			dest++;
 			xfrac += xstep;
@@ -2140,7 +2702,60 @@ void R_DrawSpanMaskedAddClampP_C (void)
 			texdata = source[spot];
 			if (texdata != 0)
 			{
-#ifndef PALETTEOUTPUT
+				DWORD a = fg2rgb[colormap[texdata]] + bg2rgb[*dest];
+				DWORD b = a;
+
+				a |= 0x01f07c1f;
+				b &= 0x40100400;
+				a &= 0x3fffffff;
+				b = b - (b >> 5);
+				a |= b;
+				*dest = RGB32k.All[a & (a>>15)];
+			}
+			dest++;
+			xfrac += xstep;
+			yfrac += ystep;
+		} while (--count);
+	}
+}
+
+void R_DrawSpanMaskedAddClampP_RGBA_C()
+{
+	dsfixed_t			xfrac;
+	dsfixed_t			yfrac;
+	dsfixed_t			xstep;
+	dsfixed_t			ystep;
+	canvas_pixel_t*		dest;
+	const BYTE*			source = ds_source;
+	const BYTE*			colormap = ds_colormap;
+	int 				count;
+	int 				spot;
+	DWORD *fg2rgb = dc_srcblend;
+	DWORD *bg2rgb = dc_destblend;
+
+	uint32_t light = calc_light_multiplier(ds_light);
+
+	xfrac = ds_xfrac;
+	yfrac = ds_yfrac;
+
+	dest = ylookup[ds_y] + ds_x1 + dc_destorg;
+
+	count = ds_x2 - ds_x1 + 1;
+
+	xstep = ds_xstep;
+	ystep = ds_ystep;
+
+	if (ds_xbits == 6 && ds_ybits == 6)
+	{
+		// 64x64 is the most common case by far, so special case it.
+		do
+		{
+			BYTE texdata;
+
+			spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
+			texdata = source[spot];
+			if (texdata != 0)
+			{
 				uint32_t fg = shade_pal_index(colormap[texdata], light);
 				uint32_t fg_red = (fg >> 16) & 0xff;
 				uint32_t fg_green = (fg >> 8) & 0xff;
@@ -2155,17 +2770,39 @@ void R_DrawSpanMaskedAddClampP_C (void)
 				uint32_t blue = (fg_blue + bg_blue + 1) / 2;
 
 				*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-#else
-				DWORD a = fg2rgb[colormap[texdata]] + bg2rgb[*dest];
-				DWORD b = a;
+			}
+			dest++;
+			xfrac += xstep;
+			yfrac += ystep;
+		} while (--count);
+	}
+	else
+	{
+		BYTE yshift = 32 - ds_ybits;
+		BYTE xshift = yshift - ds_xbits;
+		int xmask = ((1 << ds_xbits) - 1) << ds_ybits;
+		do
+		{
+			BYTE texdata;
 
-				a |= 0x01f07c1f;
-				b &= 0x40100400;
-				a &= 0x3fffffff;
-				b = b - (b >> 5);
-				a |= b;
-				*dest = RGB32k.All[a & (a>>15)];
-#endif
+			spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+			texdata = source[spot];
+			if (texdata != 0)
+			{
+				uint32_t fg = shade_pal_index(colormap[texdata], light);
+				uint32_t fg_red = (fg >> 16) & 0xff;
+				uint32_t fg_green = (fg >> 8) & 0xff;
+				uint32_t fg_blue = (fg) & 0xff;
+
+				uint32_t bg_red = (*dest >> 16) & 0xff;
+				uint32_t bg_green = (*dest >> 8) & 0xff;
+				uint32_t bg_blue = (*dest) & 0xff;
+
+				uint32_t red = (fg_red + bg_red + 1) / 2;
+				uint32_t green = (fg_green + bg_green + 1) / 2;
+				uint32_t blue = (fg_blue + bg_blue + 1) / 2;
+
+				*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
 			}
 			dest++;
 			xfrac += xstep;
@@ -2175,18 +2812,19 @@ void R_DrawSpanMaskedAddClampP_C (void)
 }
 
 // [RH] Just fill a span with a color
-void R_FillSpan (void)
+void R_FillSpan_C (void)
 {
-#ifndef PALETTEOUTPUT
+	memset (ylookup[ds_y] + ds_x1 + dc_destorg, ds_color, (ds_x2 - ds_x1 + 1));
+}
+
+void R_FillSpan_RGBA()
+{
 	canvas_pixel_t *dest = ylookup[ds_y] + ds_x1 + dc_destorg;
 	int count = (ds_x2 - ds_x1 + 1);
 	uint32_t light = calc_light_multiplier(ds_light);
 	uint32_t color = shade_pal_index(ds_color, light);
 	for (int i = 0; i < count; i++)
 		dest[i] = color;
-#else
-	memset (ylookup[ds_y] + ds_x1 + dc_destorg, ds_color, (ds_x2 - ds_x1 + 1) * sizeof(canvas_pixel_t));
-#endif
 }
 
 // Draw a voxel slab
@@ -2383,17 +3021,33 @@ DWORD vlinec1 ()
 	int bits = vlinebits;
 	int pitch = dc_pitch;
 
-#ifndef PALETTEOUTPUT
-	uint32_t light = calc_light_multiplier(dc_light);
+	do
+	{
+		*dest = colormap[source[frac >> bits]];
+		frac += fracstep;
+		dest += pitch;
+	} while (--count);
+
+	return frac;
+}
 #endif
+
+DWORD vlinec1_RGBA()
+{
+	DWORD fracstep = dc_iscale;
+	DWORD frac = dc_texturefrac;
+	BYTE *colormap = dc_colormap;
+	int count = dc_count;
+	const BYTE *source = dc_source;
+	canvas_pixel_t *dest = dc_dest;
+	int bits = vlinebits;
+	int pitch = dc_pitch;
+
+	uint32_t light = calc_light_multiplier(dc_light);
 
 	do
 	{
-#ifndef PALETTEOUTPUT
-		*dest = shade_pal_index(colormap[source[frac>>bits]], light);
-#else
-		*dest = colormap[source[frac >> bits]];
-#endif
+		*dest = shade_pal_index(colormap[source[frac >> bits]], light);
 		frac += fracstep;
 		dest += pitch;
 	} while (--count);
@@ -2401,6 +3055,7 @@ DWORD vlinec1 ()
 	return frac;
 }
 
+#if !defined(X86_ASM)
 void vlinec4 ()
 {
 	canvas_pixel_t *dest = dc_dest;
@@ -2408,23 +3063,37 @@ void vlinec4 ()
 	int bits = vlinebits;
 	DWORD place;
 
-#ifndef PALETTEOUTPUT
+	do
+	{
+		dest[0] = palookupoffse[0][bufplce[0][(place=vplce[0])>>bits]]; vplce[0] = place+vince[0];
+		dest[1] = palookupoffse[1][bufplce[1][(place=vplce[1])>>bits]]; vplce[1] = place+vince[1];
+		dest[2] = palookupoffse[2][bufplce[2][(place=vplce[2])>>bits]]; vplce[2] = place+vince[2];
+		dest[3] = palookupoffse[3][bufplce[3][(place=vplce[3])>>bits]]; vplce[3] = place+vince[3];
+		dest += dc_pitch;
+	} while (--count);
+}
+#endif
+
+void vlinec4_RGBA()
+{
+	canvas_pixel_t *dest = dc_dest;
+	int count = dc_count;
+	int bits = vlinebits;
+
 	uint32_t light0 = calc_light_multiplier(palookuplight[0]);
 	uint32_t light1 = calc_light_multiplier(palookuplight[1]);
 	uint32_t light2 = calc_light_multiplier(palookuplight[2]);
 	uint32_t light3 = calc_light_multiplier(palookuplight[3]);
 #ifndef NO_SSE
-	__m128i mlight_hi = _mm_set_epi16(256, light0, light0, light0, 256, light1, light1, light1);
-	__m128i mlight_lo = _mm_set_epi16(256, light2, light2, light2, 256, light3, light3, light3);
+	__m128i mlight_hi = _mm_set_epi16(256, light1, light1, light1, 256, light0, light0, light0);
+	__m128i mlight_lo = _mm_set_epi16(256, light3, light3, light3, 256, light2, light2, light2);
 	uint32_t *palette = (uint32_t*)GPalette.BaseColors;
 	DWORD local_vplce[4] = { vplce[0], vplce[1], vplce[2], vplce[3] };
 	DWORD local_vince[4] = { vince[0], vince[1], vince[2], vince[3] };
 #endif
-#endif
 
 	do
 	{
-#ifndef PALETTEOUTPUT
 #ifndef NO_SSE
 
 		DWORD place0 = local_vplce[0];
@@ -2442,14 +3111,14 @@ void vlinec4 ()
 		local_vplce[2] = place2 + local_vince[2];
 		local_vplce[3] = place3 + local_vince[3];
 
-		__m128i fg = _mm_set_epi32(palette[p0], palette[p1], palette[p2], palette[p3]);
+		__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
 		__m128i fg_hi = _mm_unpackhi_epi8(fg, _mm_setzero_si128());
 		__m128i fg_lo = _mm_unpacklo_epi8(fg, _mm_setzero_si128());
 		fg_hi = _mm_mullo_epi16(fg_hi, mlight_hi);
 		fg_hi = _mm_srli_epi16(fg_hi, 8);
 		fg_lo = _mm_mullo_epi16(fg_lo, mlight_lo);
 		fg_lo = _mm_srli_epi16(fg_lo, 8);
-		fg = _mm_packus_epi16(fg_hi, fg_lo);
+		fg = _mm_packus_epi16(fg_lo, fg_hi);
 		_mm_storeu_si128((__m128i*)dest, fg);
 
 #else
@@ -2458,16 +3127,9 @@ void vlinec4 ()
 		dest[2] = shade_pal_index(palookupoffse[2][bufplce[2][(place = vplce[2]) >> bits]], light2); vplce[2] = place + vince[2];
 		dest[3] = shade_pal_index(palookupoffse[3][bufplce[3][(place = vplce[3]) >> bits]], light3); vplce[3] = place + vince[3];
 #endif
-#else
-		dest[0] = palookupoffse[0][bufplce[0][(place=vplce[0])>>bits]]; vplce[0] = place+vince[0];
-		dest[1] = palookupoffse[1][bufplce[1][(place=vplce[1])>>bits]]; vplce[1] = place+vince[1];
-		dest[2] = palookupoffse[2][bufplce[2][(place=vplce[2])>>bits]]; vplce[2] = place+vince[2];
-		dest[3] = palookupoffse[3][bufplce[3][(place=vplce[3])>>bits]]; vplce[3] = place+vince[3];
-#endif
 		dest += dc_pitch;
 	} while (--count);
 
-#ifndef PALETTEOUTPUT
 #ifndef NO_SSE
 	// Is this needed? Global variables makes it tricky to know..
 	vplce[0] = local_vplce[0];
@@ -2479,9 +3141,7 @@ void vlinec4 ()
 	vince[2] = local_vince[2];
 	vince[3] = local_vince[3];
 #endif
-#endif
 }
-#endif
 
 void setupmvline (int fracbits)
 {
@@ -2506,20 +3166,40 @@ DWORD mvlinec1 ()
 	int bits = mvlinebits;
 	int pitch = dc_pitch;
 
-#ifndef PALETTEOUTPUT
-	uint32_t light = calc_light_multiplier(dc_light);
-#endif
-
 	do
 	{
 		BYTE pix = source[frac>>bits];
 		if (pix != 0)
 		{
-#ifndef PALETTEOUTPUT
-			*dest = shade_pal_index(colormap[pix], light);
-#else
 			*dest = colormap[pix];
+		}
+		frac += fracstep;
+		dest += pitch;
+	} while (--count);
+
+	return frac;
+}
 #endif
+
+DWORD mvlinec1_RGBA()
+{
+	DWORD fracstep = dc_iscale;
+	DWORD frac = dc_texturefrac;
+	BYTE *colormap = dc_colormap;
+	int count = dc_count;
+	const BYTE *source = dc_source;
+	canvas_pixel_t *dest = dc_dest;
+	int bits = mvlinebits;
+	int pitch = dc_pitch;
+
+	uint32_t light = calc_light_multiplier(dc_light);
+
+	do
+	{
+		BYTE pix = source[frac >> bits];
+		if (pix != 0)
+		{
+			*dest = shade_pal_index(colormap[pix], light);
 		}
 		frac += fracstep;
 		dest += pitch;
@@ -2528,6 +3208,7 @@ DWORD mvlinec1 ()
 	return frac;
 }
 
+#if !defined(X86_ASM)
 void mvlinec4 ()
 {
 	canvas_pixel_t *dest = dc_dest;
@@ -2535,32 +3216,41 @@ void mvlinec4 ()
 	int bits = mvlinebits;
 	DWORD place;
 
-#ifndef PALETTEOUTPUT
-	uint32_t light0 = calc_light_multiplier(palookuplight[0]);
-	uint32_t light1 = calc_light_multiplier(palookuplight[1]);
-	uint32_t light2 = calc_light_multiplier(palookuplight[2]);
-	uint32_t light3 = calc_light_multiplier(palookuplight[3]);
-#endif
-
 	do
 	{
 		BYTE pix;
-
-#ifndef PALETTEOUTPUT
-		pix = bufplce[0][(place = vplce[0]) >> bits]; if (pix) dest[0] = shade_pal_index(palookupoffse[0][pix], light0); vplce[0] = place + vince[0];
-		pix = bufplce[1][(place = vplce[1]) >> bits]; if (pix) dest[1] = shade_pal_index(palookupoffse[1][pix], light1); vplce[1] = place + vince[1];
-		pix = bufplce[2][(place = vplce[2]) >> bits]; if (pix) dest[2] = shade_pal_index(palookupoffse[2][pix], light2); vplce[2] = place + vince[2];
-		pix = bufplce[3][(place = vplce[3]) >> bits]; if (pix) dest[3] = shade_pal_index(palookupoffse[3][pix], light3); vplce[3] = place + vince[3];
-#else
 		pix = bufplce[0][(place=vplce[0])>>bits]; if(pix) dest[0] = palookupoffse[0][pix]; vplce[0] = place+vince[0];
 		pix = bufplce[1][(place=vplce[1])>>bits]; if(pix) dest[1] = palookupoffse[1][pix]; vplce[1] = place+vince[1];
 		pix = bufplce[2][(place=vplce[2])>>bits]; if(pix) dest[2] = palookupoffse[2][pix]; vplce[2] = place+vince[2];
 		pix = bufplce[3][(place=vplce[3])>>bits]; if(pix) dest[3] = palookupoffse[3][pix]; vplce[3] = place+vince[3];
-#endif
 		dest += dc_pitch;
 	} while (--count);
 }
 #endif
+
+void mvlinec4_RGBA()
+{
+	canvas_pixel_t *dest = dc_dest;
+	int count = dc_count;
+	int bits = mvlinebits;
+	DWORD place;
+
+	uint32_t light0 = calc_light_multiplier(palookuplight[0]);
+	uint32_t light1 = calc_light_multiplier(palookuplight[1]);
+	uint32_t light2 = calc_light_multiplier(palookuplight[2]);
+	uint32_t light3 = calc_light_multiplier(palookuplight[3]);
+
+	do
+	{
+		BYTE pix;
+		pix = bufplce[0][(place = vplce[0]) >> bits]; if (pix) dest[0] = shade_pal_index(palookupoffse[0][pix], light0); vplce[0] = place + vince[0];
+		pix = bufplce[1][(place = vplce[1]) >> bits]; if (pix) dest[1] = shade_pal_index(palookupoffse[1][pix], light1); vplce[1] = place + vince[1];
+		pix = bufplce[2][(place = vplce[2]) >> bits]; if (pix) dest[2] = shade_pal_index(palookupoffse[2][pix], light2); vplce[2] = place + vince[2];
+		pix = bufplce[3][(place = vplce[3]) >> bits]; if (pix) dest[3] = shade_pal_index(palookupoffse[3][pix], light3); vplce[3] = place + vince[3];
+		dest += dc_pitch;
+	} while (--count);
+}
+
 
 extern "C" short spanend[MAXHEIGHT];
 extern float rw_light;
@@ -2572,21 +3262,13 @@ static void R_DrawFogBoundarySection (int y, int y2, int x1)
 	BYTE *colormap = dc_colormap;
 	canvas_pixel_t *dest = ylookup[y] + dc_destorg;
 
-#ifndef PALETTEOUTPUT
-	uint32_t light = calc_light_multiplier(dc_light);
-#endif
-
 	for (; y < y2; ++y)
 	{
 		int x2 = spanend[y];
 		int x = x1;
 		do
 		{
-#ifndef PALETTEOUTPUT
-			dest[x] = shade_pal_index(colormap[dest[x]], light);
-#else
 			dest[x] = colormap[dest[x]];
-#endif
 		} while (++x <= x2);
 		dest += dc_pitch;
 	}
@@ -2598,21 +3280,13 @@ static void R_DrawFogBoundaryLine (int y, int x)
 	BYTE *colormap = dc_colormap;
 	canvas_pixel_t *dest = ylookup[y] + dc_destorg;
 
-#ifndef PALETTEOUTPUT
-	uint32_t light = calc_light_multiplier(dc_light);
-#endif
-
 	do
 	{
-#ifndef PALETTEOUTPUT
-		dest[x] = shade_pal_index(colormap[dest[x]], light);
-#else
 		dest[x] = colormap[dest[x]];
-#endif
 	} while (++x <= x2);
 }
 
-void R_DrawFogBoundary (int x1, int x2, short *uclip, short *dclip)
+void R_DrawFogBoundary_C (int x1, int x2, short *uclip, short *dclip)
 {
 	// This is essentially the same as R_MapVisPlane but with an extra step
 	// to create new horizontal spans whenever the light changes enough that
@@ -2703,6 +3377,133 @@ void R_DrawFogBoundary (int x1, int x2, short *uclip, short *dclip)
 	}
 }
 
+static void R_DrawFogBoundarySection_RGBA(int y, int y2, int x1)
+{
+	BYTE *colormap = dc_colormap;
+	canvas_pixel_t *dest = ylookup[y] + dc_destorg;
+
+	uint32_t light = calc_light_multiplier(dc_light);
+
+	for (; y < y2; ++y)
+	{
+		int x2 = spanend[y];
+		int x = x1;
+		do
+		{
+			dest[x] = shade_pal_index(colormap[dest[x]], light);
+		} while (++x <= x2);
+		dest += dc_pitch;
+	}
+}
+
+static void R_DrawFogBoundaryLine_RGBA(int y, int x)
+{
+	int x2 = spanend[y];
+	BYTE *colormap = dc_colormap;
+	canvas_pixel_t *dest = ylookup[y] + dc_destorg;
+
+	uint32_t light = calc_light_multiplier(dc_light);
+
+	do
+	{
+		dest[x] = shade_pal_index(colormap[dest[x]], light);
+	} while (++x <= x2);
+}
+
+void R_DrawFogBoundary_RGBA(int x1, int x2, short *uclip, short *dclip)
+{
+	// To do: we do not need to create new spans when using rgba output - instead we should calculate light on a per pixel basis
+
+	// This is essentially the same as R_MapVisPlane but with an extra step
+	// to create new horizontal spans whenever the light changes enough that
+	// we need to use a new colormap.
+
+	double lightstep = rw_lightstep;
+	double light = rw_light + rw_lightstep*(x2 - x1 - 1);
+	int x = x2 - 1;
+	int t2 = uclip[x];
+	int b2 = dclip[x];
+	int rcolormap = GETPALOOKUP(light, wallshade);
+	int lcolormap;
+	BYTE *basecolormapdata = basecolormap->Maps;
+
+	if (b2 > t2)
+	{
+		clearbufshort(spanend + t2, b2 - t2, x);
+	}
+
+	dc_colormap = basecolormapdata + (rcolormap << COLORMAPSHIFT);
+	dc_light = 0;
+
+	for (--x; x >= x1; --x)
+	{
+		int t1 = uclip[x];
+		int b1 = dclip[x];
+		const int xr = x + 1;
+		int stop;
+
+		light -= rw_lightstep;
+		lcolormap = GETPALOOKUP(light, wallshade);
+		if (lcolormap != rcolormap)
+		{
+			if (t2 < b2 && rcolormap != 0)
+			{ // Colormap 0 is always the identity map, so rendering it is
+			  // just a waste of time.
+				R_DrawFogBoundarySection_RGBA(t2, b2, xr);
+			}
+			if (t1 < t2) t2 = t1;
+			if (b1 > b2) b2 = b1;
+			if (t2 < b2)
+			{
+				clearbufshort(spanend + t2, b2 - t2, x);
+			}
+			rcolormap = lcolormap;
+			dc_colormap = basecolormapdata + (lcolormap << COLORMAPSHIFT);
+			dc_light = 0;
+		}
+		else
+		{
+			if (dc_colormap != basecolormapdata)
+			{
+				stop = MIN(t1, b2);
+				while (t2 < stop)
+				{
+					R_DrawFogBoundaryLine_RGBA(t2++, xr);
+				}
+				stop = MAX(b1, t2);
+				while (b2 > stop)
+				{
+					R_DrawFogBoundaryLine_RGBA(--b2, xr);
+				}
+			}
+			else
+			{
+				t2 = MAX(t2, MIN(t1, b2));
+				b2 = MIN(b2, MAX(b1, t2));
+			}
+
+			stop = MIN(t2, b1);
+			while (t1 < stop)
+			{
+				spanend[t1++] = x;
+			}
+			stop = MAX(b2, t2);
+			while (b1 > stop)
+			{
+				spanend[--b1] = x;
+			}
+		}
+
+		t2 = uclip[x];
+		b2 = dclip[x];
+	}
+	if (t2 < b2 && rcolormap != 0)
+	{
+		R_DrawFogBoundarySection_RGBA(t2, b2, x1);
+	}
+}
+
+
 int tmvlinebits;
 
 void setuptmvline (int bits)
@@ -2710,7 +3511,7 @@ void setuptmvline (int bits)
 	tmvlinebits = bits;
 }
 
-fixed_t tmvline1_add ()
+fixed_t tmvline1_add_C ()
 {
 	DWORD fracstep = dc_iscale;
 	DWORD frac = dc_texturefrac;
@@ -2728,7 +3529,39 @@ fixed_t tmvline1_add ()
 
 	do
 	{
-#ifndef PALETTEOUTPUT
+		BYTE pix = source[frac>>bits];
+		if (pix != 0)
+		{
+			DWORD fg = fg2rgb[colormap[pix]];
+			DWORD bg = bg2rgb[*dest];
+			fg = (fg+bg) | 0x1f07c1f;
+			*dest = RGB32k.All[fg & (fg>>15)];
+		}
+		frac += fracstep;
+		dest += pitch;
+	} while (--count);
+
+	return frac;
+}
+
+fixed_t tmvline1_add_RGBA()
+{
+	DWORD fracstep = dc_iscale;
+	DWORD frac = dc_texturefrac;
+	BYTE *colormap = dc_colormap;
+	int count = dc_count;
+	const BYTE *source = dc_source;
+	canvas_pixel_t *dest = dc_dest;
+	int bits = tmvlinebits;
+	int pitch = dc_pitch;
+
+	DWORD *fg2rgb = dc_srcblend;
+	DWORD *bg2rgb = dc_destblend;
+
+	uint32_t light = calc_light_multiplier(dc_light);
+
+	do
+	{
 		BYTE pix = source[frac >> bits];
 		if (pix != 0)
 		{
@@ -2747,16 +3580,6 @@ fixed_t tmvline1_add ()
 
 			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
 		}
-#else
-		BYTE pix = source[frac>>bits];
-		if (pix != 0)
-		{
-			DWORD fg = fg2rgb[colormap[pix]];
-			DWORD bg = bg2rgb[*dest];
-			fg = (fg+bg) | 0x1f07c1f;
-			*dest = RGB32k.All[fg & (fg>>15)];
-		}
-#endif
 		frac += fracstep;
 		dest += pitch;
 	} while (--count);
@@ -2764,7 +3587,7 @@ fixed_t tmvline1_add ()
 	return frac;
 }
 
-void tmvline4_add ()
+void tmvline4_add_C ()
 {
 	canvas_pixel_t *dest = dc_dest;
 	int count = dc_count;
@@ -2786,7 +3609,39 @@ void tmvline4_add ()
 			BYTE pix = bufplce[i][vplce[i] >> bits];
 			if (pix != 0)
 			{
-#ifndef PALETTEOUTPUT
+				DWORD fg = fg2rgb[palookupoffse[i][pix]];
+				DWORD bg = bg2rgb[dest[i]];
+				fg = (fg+bg) | 0x1f07c1f;
+				dest[i] = RGB32k.All[fg & (fg>>15)];
+			}
+			vplce[i] += vince[i];
+		}
+		dest += dc_pitch;
+	} while (--count);
+}
+
+void tmvline4_add_RGBA()
+{
+	canvas_pixel_t *dest = dc_dest;
+	int count = dc_count;
+	int bits = tmvlinebits;
+
+	DWORD *fg2rgb = dc_srcblend;
+	DWORD *bg2rgb = dc_destblend;
+
+	uint32_t light[4];
+	light[0] = calc_light_multiplier(palookuplight[0]);
+	light[1] = calc_light_multiplier(palookuplight[1]);
+	light[2] = calc_light_multiplier(palookuplight[2]);
+	light[3] = calc_light_multiplier(palookuplight[3]);
+
+	do
+	{
+		for (int i = 0; i < 4; ++i)
+		{
+			BYTE pix = bufplce[i][vplce[i] >> bits];
+			if (pix != 0)
+			{
 				uint32_t fg = shade_pal_index(palookupoffse[i][pix], light[i]);
 				uint32_t fg_red = (fg >> 16) & 0xff;
 				uint32_t fg_green = (fg >> 8) & 0xff;
@@ -2801,12 +3656,6 @@ void tmvline4_add ()
 				uint32_t blue = clamp<uint32_t>(fg_blue + bg_blue, 0, 255);
 
 				dest[i] = 0xff000000 | (red << 16) | (green << 8) | blue;
-#else
-				DWORD fg = fg2rgb[palookupoffse[i][pix]];
-				DWORD bg = bg2rgb[dest[i]];
-				fg = (fg+bg) | 0x1f07c1f;
-				dest[i] = RGB32k.All[fg & (fg>>15)];
-#endif
 			}
 			vplce[i] += vince[i];
 		}
@@ -2814,7 +3663,7 @@ void tmvline4_add ()
 	} while (--count);
 }
 
-fixed_t tmvline1_addclamp ()
+fixed_t tmvline1_addclamp_C ()
 {
 	DWORD fracstep = dc_iscale;
 	DWORD frac = dc_texturefrac;
@@ -2835,7 +3684,44 @@ fixed_t tmvline1_addclamp ()
 		BYTE pix = source[frac>>bits];
 		if (pix != 0)
 		{
-#ifndef PALETTEOUTPUT
+			DWORD a = fg2rgb[colormap[pix]] + bg2rgb[*dest];
+			DWORD b = a;
+
+			a |= 0x01f07c1f;
+			b &= 0x40100400;
+			a &= 0x3fffffff;
+			b = b - (b >> 5);
+			a |= b;
+			*dest = RGB32k.All[a & (a>>15)];
+		}
+		frac += fracstep;
+		dest += pitch;
+	} while (--count);
+
+	return frac;
+}
+
+fixed_t tmvline1_addclamp_RGBA()
+{
+	DWORD fracstep = dc_iscale;
+	DWORD frac = dc_texturefrac;
+	BYTE *colormap = dc_colormap;
+	int count = dc_count;
+	const BYTE *source = dc_source;
+	canvas_pixel_t *dest = dc_dest;
+	int bits = tmvlinebits;
+	int pitch = dc_pitch;
+
+	DWORD *fg2rgb = dc_srcblend;
+	DWORD *bg2rgb = dc_destblend;
+
+	uint32_t light = calc_light_multiplier(dc_light);
+
+	do
+	{
+		BYTE pix = source[frac >> bits];
+		if (pix != 0)
+		{
 			uint32_t fg = shade_pal_index(colormap[pix], light);
 			uint32_t fg_red = (fg >> 16) & 0xff;
 			uint32_t fg_green = (fg >> 8) & 0xff;
@@ -2850,17 +3736,6 @@ fixed_t tmvline1_addclamp ()
 			uint32_t blue = clamp<uint32_t>(fg_blue + bg_blue, 0, 255);
 
 			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-#else
-			DWORD a = fg2rgb[colormap[pix]] + bg2rgb[*dest];
-			DWORD b = a;
-
-			a |= 0x01f07c1f;
-			b &= 0x40100400;
-			a &= 0x3fffffff;
-			b = b - (b >> 5);
-			a |= b;
-			*dest = RGB32k.All[a & (a>>15)];
-#endif
 		}
 		frac += fracstep;
 		dest += pitch;
@@ -2869,7 +3744,7 @@ fixed_t tmvline1_addclamp ()
 	return frac;
 }
 
-void tmvline4_addclamp ()
+void tmvline4_addclamp_C ()
 {
 	canvas_pixel_t *dest = dc_dest;
 	int count = dc_count;
@@ -2877,6 +3752,35 @@ void tmvline4_addclamp ()
 
 	DWORD *fg2rgb = dc_srcblend;
 	DWORD *bg2rgb = dc_destblend;
+
+	do
+	{
+		for (int i = 0; i < 4; ++i)
+		{
+			BYTE pix = bufplce[i][vplce[i] >> bits];
+			if (pix != 0)
+			{
+				DWORD a = fg2rgb[palookupoffse[i][pix]] + bg2rgb[dest[i]];
+				DWORD b = a;
+
+				a |= 0x01f07c1f;
+				b &= 0x40100400;
+				a &= 0x3fffffff;
+				b = b - (b >> 5);
+				a |= b;
+				dest[i] = RGB32k.All[a & (a>>15)];
+			}
+			vplce[i] += vince[i];
+		}
+		dest += dc_pitch;
+	} while (--count);
+}
+
+void tmvline4_addclamp_RGBA()
+{
+	canvas_pixel_t *dest = dc_dest;
+	int count = dc_count;
+	int bits = tmvlinebits;
 
 	uint32_t light[4];
 	light[0] = calc_light_multiplier(palookuplight[0]);
@@ -2891,7 +3795,6 @@ void tmvline4_addclamp ()
 			BYTE pix = bufplce[i][vplce[i] >> bits];
 			if (pix != 0)
 			{
-#ifndef PALETTEOUTPUT
 				uint32_t fg = shade_pal_index(palookupoffse[i][pix], light[i]);
 				uint32_t fg_red = (fg >> 16) & 0xff;
 				uint32_t fg_green = (fg >> 8) & 0xff;
@@ -2906,17 +3809,6 @@ void tmvline4_addclamp ()
 				uint32_t blue = clamp<uint32_t>(fg_blue + bg_blue, 0, 255);
 
 				dest[i] = 0xff000000 | (red << 16) | (green << 8) | blue;
-#else
-				DWORD a = fg2rgb[palookupoffse[i][pix]] + bg2rgb[dest[i]];
-				DWORD b = a;
-
-				a |= 0x01f07c1f;
-				b &= 0x40100400;
-				a &= 0x3fffffff;
-				b = b - (b >> 5);
-				a |= b;
-				dest[i] = RGB32k.All[a & (a>>15)];
-#endif
 			}
 			vplce[i] += vince[i];
 		}
@@ -2924,7 +3816,7 @@ void tmvline4_addclamp ()
 	} while (--count);
 }
 
-fixed_t tmvline1_subclamp ()
+fixed_t tmvline1_subclamp_C ()
 {
 	DWORD fracstep = dc_iscale;
 	DWORD frac = dc_texturefrac;
@@ -2938,14 +3830,45 @@ fixed_t tmvline1_subclamp ()
 	DWORD *fg2rgb = dc_srcblend;
 	DWORD *bg2rgb = dc_destblend;
 
-	uint32_t light = calc_light_multiplier(dc_light);
-
 	do
 	{
 		BYTE pix = source[frac>>bits];
 		if (pix != 0)
 		{
-#ifndef PALETTEOUTPUT
+			DWORD a = (fg2rgb[colormap[pix]] | 0x40100400) - bg2rgb[*dest];
+			DWORD b = a;
+
+			b &= 0x40100400;
+			b = b - (b >> 5);
+			a &= b;
+			a |= 0x01f07c1f;
+			*dest = RGB32k.All[a & (a>>15)];
+		}
+		frac += fracstep;
+		dest += pitch;
+	} while (--count);
+
+	return frac;
+}
+
+fixed_t tmvline1_subclamp_RGBA()
+{
+	DWORD fracstep = dc_iscale;
+	DWORD frac = dc_texturefrac;
+	BYTE *colormap = dc_colormap;
+	int count = dc_count;
+	const BYTE *source = dc_source;
+	canvas_pixel_t *dest = dc_dest;
+	int bits = tmvlinebits;
+	int pitch = dc_pitch;
+
+	uint32_t light = calc_light_multiplier(dc_light);
+
+	do
+	{
+		BYTE pix = source[frac >> bits];
+		if (pix != 0)
+		{
 			uint32_t fg = shade_pal_index(colormap[pix], light);
 			uint32_t fg_red = (fg >> 16) & 0xff;
 			uint32_t fg_green = (fg >> 8) & 0xff;
@@ -2960,16 +3883,6 @@ fixed_t tmvline1_subclamp ()
 			uint32_t blue = clamp<uint32_t>(256 - fg_blue + bg_blue, 256, 256 + 255) - 256;
 
 			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-#else
-			DWORD a = (fg2rgb[colormap[pix]] | 0x40100400) - bg2rgb[*dest];
-			DWORD b = a;
-
-			b &= 0x40100400;
-			b = b - (b >> 5);
-			a &= b;
-			a |= 0x01f07c1f;
-			*dest = RGB32k.All[a & (a>>15)];
-#endif
 		}
 		frac += fracstep;
 		dest += pitch;
@@ -2978,7 +3891,7 @@ fixed_t tmvline1_subclamp ()
 	return frac;
 }
 
-void tmvline4_subclamp ()
+void tmvline4_subclamp_C ()
 {
 	canvas_pixel_t *dest = dc_dest;
 	int count = dc_count;
@@ -2986,6 +3899,34 @@ void tmvline4_subclamp ()
 
 	DWORD *fg2rgb = dc_srcblend;
 	DWORD *bg2rgb = dc_destblend;
+
+	do
+	{
+		for (int i = 0; i < 4; ++i)
+		{
+			BYTE pix = bufplce[i][vplce[i] >> bits];
+			if (pix != 0)
+			{
+				DWORD a = (fg2rgb[palookupoffse[i][pix]] | 0x40100400) - bg2rgb[dest[i]];
+				DWORD b = a;
+
+				b &= 0x40100400;
+				b = b - (b >> 5);
+				a &= b;
+				a |= 0x01f07c1f;
+				dest[i] = RGB32k.All[a & (a>>15)];
+			}
+			vplce[i] += vince[i];
+		}
+		dest += dc_pitch;
+	} while (--count);
+}
+
+void tmvline4_subclamp_RGBA()
+{
+	canvas_pixel_t *dest = dc_dest;
+	int count = dc_count;
+	int bits = tmvlinebits;
 
 	uint32_t light[4];
 	light[0] = calc_light_multiplier(palookuplight[0]);
@@ -3000,7 +3941,6 @@ void tmvline4_subclamp ()
 			BYTE pix = bufplce[i][vplce[i] >> bits];
 			if (pix != 0)
 			{
-#ifndef PALETTEOUTPUT
 				uint32_t fg = shade_pal_index(palookupoffse[i][pix], light[i]);
 				uint32_t fg_red = (fg >> 16) & 0xff;
 				uint32_t fg_green = (fg >> 8) & 0xff;
@@ -3015,16 +3955,6 @@ void tmvline4_subclamp ()
 				uint32_t blue = clamp<uint32_t>(256 - fg_blue + bg_blue, 256, 256 + 255) - 256;
 
 				dest[i] = 0xff000000 | (red << 16) | (green << 8) | blue;
-#else
-				DWORD a = (fg2rgb[palookupoffse[i][pix]] | 0x40100400) - bg2rgb[dest[i]];
-				DWORD b = a;
-
-				b &= 0x40100400;
-				b = b - (b >> 5);
-				a &= b;
-				a |= 0x01f07c1f;
-				dest[i] = RGB32k.All[a & (a>>15)];
-#endif
 			}
 			vplce[i] += vince[i];
 		}
@@ -3032,7 +3962,7 @@ void tmvline4_subclamp ()
 	} while (--count);
 }
 
-fixed_t tmvline1_revsubclamp ()
+fixed_t tmvline1_revsubclamp_C ()
 {
 	DWORD fracstep = dc_iscale;
 	DWORD frac = dc_texturefrac;
@@ -3046,14 +3976,45 @@ fixed_t tmvline1_revsubclamp ()
 	DWORD *fg2rgb = dc_srcblend;
 	DWORD *bg2rgb = dc_destblend;
 
-	uint32_t light = calc_light_multiplier(dc_light);
-
 	do
 	{
 		BYTE pix = source[frac>>bits];
 		if (pix != 0)
 		{
-#ifndef PALETTEOUTPUT
+			DWORD a = (bg2rgb[*dest] | 0x40100400) - fg2rgb[colormap[pix]];
+			DWORD b = a;
+
+			b &= 0x40100400;
+			b = b - (b >> 5);
+			a &= b;
+			a |= 0x01f07c1f;
+			*dest = RGB32k.All[a & (a>>15)];
+		}
+		frac += fracstep;
+		dest += pitch;
+	} while (--count);
+
+	return frac;
+}
+
+fixed_t tmvline1_revsubclamp_RGBA()
+{
+	DWORD fracstep = dc_iscale;
+	DWORD frac = dc_texturefrac;
+	BYTE *colormap = dc_colormap;
+	int count = dc_count;
+	const BYTE *source = dc_source;
+	canvas_pixel_t *dest = dc_dest;
+	int bits = tmvlinebits;
+	int pitch = dc_pitch;
+
+	uint32_t light = calc_light_multiplier(dc_light);
+
+	do
+	{
+		BYTE pix = source[frac >> bits];
+		if (pix != 0)
+		{
 			uint32_t fg = shade_pal_index(colormap[pix], light);
 			uint32_t fg_red = (fg >> 16) & 0xff;
 			uint32_t fg_green = (fg >> 8) & 0xff;
@@ -3068,16 +4029,6 @@ fixed_t tmvline1_revsubclamp ()
 			uint32_t blue = clamp<uint32_t>(256 + fg_blue - bg_blue, 256, 256 + 255) - 256;
 
 			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-#else
-			DWORD a = (bg2rgb[*dest] | 0x40100400) - fg2rgb[colormap[pix]];
-			DWORD b = a;
-
-			b &= 0x40100400;
-			b = b - (b >> 5);
-			a &= b;
-			a |= 0x01f07c1f;
-			*dest = RGB32k.All[a & (a>>15)];
-#endif
 		}
 		frac += fracstep;
 		dest += pitch;
@@ -3086,7 +4037,38 @@ fixed_t tmvline1_revsubclamp ()
 	return frac;
 }
 
-void tmvline4_revsubclamp ()
+void tmvline4_revsubclamp_C ()
+{
+	canvas_pixel_t *dest = dc_dest;
+	int count = dc_count;
+	int bits = tmvlinebits;
+
+	DWORD *fg2rgb = dc_srcblend;
+	DWORD *bg2rgb = dc_destblend;
+
+	do
+	{
+		for (int i = 0; i < 4; ++i)
+		{
+			BYTE pix = bufplce[i][vplce[i] >> bits];
+			if (pix != 0)
+			{
+				DWORD a = (bg2rgb[dest[i]] | 0x40100400) - fg2rgb[palookupoffse[i][pix]];
+				DWORD b = a;
+
+				b &= 0x40100400;
+				b = b - (b >> 5);
+				a &= b;
+				a |= 0x01f07c1f;
+				dest[i] = RGB32k.All[a & (a>>15)];
+			}
+			vplce[i] += vince[i];
+		}
+		dest += dc_pitch;
+	} while (--count);
+}
+
+void tmvline4_revsubclamp_RGBA()
 {
 	canvas_pixel_t *dest = dc_dest;
 	int count = dc_count;
@@ -3108,7 +4090,6 @@ void tmvline4_revsubclamp ()
 			BYTE pix = bufplce[i][vplce[i] >> bits];
 			if (pix != 0)
 			{
-#ifndef PALETTEOUTPUT
 				uint32_t fg = shade_pal_index(palookupoffse[i][pix], light[i]);
 				uint32_t fg_red = (fg >> 16) & 0xff;
 				uint32_t fg_green = (fg >> 8) & 0xff;
@@ -3123,16 +4104,6 @@ void tmvline4_revsubclamp ()
 				uint32_t blue = clamp<uint32_t>(256 + fg_blue - bg_blue, 256, 256 + 255) - 256;
 
 				dest[i] = 0xff000000 | (red << 16) | (green << 8) | blue;
-#else
-				DWORD a = (bg2rgb[dest[i]] | 0x40100400) - fg2rgb[palookupoffse[i][pix]];
-				DWORD b = a;
-
-				b &= 0x40100400;
-				b = b - (b >> 5);
-				a &= b;
-				a |= 0x01f07c1f;
-				dest[i] = RGB32k.All[a & (a>>15)];
-#endif
 			}
 			vplce[i] += vince[i];
 		}
@@ -3164,6 +4135,85 @@ const BYTE *R_GetColumn (FTexture *tex, int col)
 // [RH] Initialize the column drawer pointers
 void R_InitColumnDrawers ()
 {
+#ifndef PALETTEOUTPUT
+
+	R_DrawColumnHoriz			= R_DrawColumnHorizP_RGBA_C;
+	R_DrawColumn				= R_DrawColumnP_RGBA_C;
+	R_DrawFuzzColumn			= R_DrawFuzzColumnP_RGBA_C;
+	R_DrawTranslatedColumn		= R_DrawTranslatedColumnP_RGBA_C;
+	R_DrawShadedColumn			= R_DrawShadedColumnP_RGBA_C;
+	R_DrawSpan					= R_DrawSpanP_RGBA_C;
+	R_DrawSpanMasked			= R_DrawSpanMaskedP_RGBA_C;
+	rt_map4cols					= rt_map4cols_RGBA_c;
+
+	R_DrawSpanTranslucent		= R_DrawSpanTranslucentP_RGBA_C;
+	R_DrawSpanMaskedTranslucent = R_DrawSpanMaskedTranslucentP_RGBA_C;
+	R_DrawSpanAddClamp			= R_DrawSpanAddClampP_RGBA_C;
+	R_DrawSpanMaskedAddClamp	= R_DrawSpanMaskedAddClampP_RGBA_C;
+	R_FillColumn				= R_FillColumnP_RGBA;
+	R_FillAddColumn				= R_FillAddColumn_RGBA_C;
+	R_FillAddClampColumn		= R_FillAddClampColumn_RGBA;
+	R_FillSubClampColumn		= R_FillSubClampColumn_RGBA;
+	R_FillRevSubClampColumn		= R_FillRevSubClampColumn_RGBA;
+	R_DrawAddColumn				= R_DrawAddColumnP_RGBA_C;
+	R_DrawTlatedAddColumn		= R_DrawTlatedAddColumnP_RGBA_C;
+	R_DrawAddClampColumn		= R_DrawAddClampColumnP_RGBA_C;
+	R_DrawAddClampTranslatedColumn = R_DrawAddClampTranslatedColumnP_RGBA_C;
+	R_DrawSubClampColumn		= R_DrawSubClampColumnP_RGBA_C;
+	R_DrawSubClampTranslatedColumn = R_DrawSubClampTranslatedColumnP_RGBA_C;
+	R_DrawRevSubClampColumn		= R_DrawRevSubClampColumnP_RGBA_C;
+	R_DrawRevSubClampTranslatedColumn = R_DrawRevSubClampTranslatedColumnP_RGBA_C;
+	R_FillSpan					= R_FillSpan_RGBA;
+	R_DrawFogBoundary			= R_DrawFogBoundary_RGBA;
+	R_FillColumnHoriz			= R_FillColumnHorizP_RGBA_C;
+
+	R_DrawFogBoundary			= R_DrawFogBoundary_RGBA;
+	R_MapColoredPlane			= R_MapColoredPlane_RGBA;
+	R_DrawParticle				= R_DrawParticle_RGBA;
+
+	tmvline1_add				= tmvline1_add_RGBA;
+	tmvline4_add				= tmvline4_add_RGBA;
+	tmvline1_addclamp			= tmvline1_addclamp_RGBA;
+	tmvline4_addclamp			= tmvline4_addclamp_RGBA;
+	tmvline1_subclamp			= tmvline1_subclamp_RGBA;
+	tmvline4_subclamp			= tmvline4_subclamp_RGBA;
+	tmvline1_revsubclamp		= tmvline1_revsubclamp_RGBA;
+	tmvline4_revsubclamp		= tmvline4_revsubclamp_RGBA;
+
+	rt_copy1col					= rt_copy1col_RGBA_c;
+	rt_copy4cols				= rt_copy4cols_RGBA_c;
+	rt_map1col					= rt_map1col_RGBA_c;
+	rt_shaded4cols				= rt_shaded4cols_RGBA_c;
+	rt_add4cols					= rt_add4cols_RGBA_c;
+	rt_addclamp4cols			= rt_addclamp4cols_RGBA_c;
+	rt_shaded1col				= rt_shaded1col_RGBA_c;
+	rt_add1col					= rt_add1col_RGBA_c;
+	rt_addclamp1col				= rt_addclamp1col_RGBA_c;
+	rt_subclamp1col				= rt_subclamp1col_RGBA_c;
+	rt_revsubclamp1col			= rt_revsubclamp1col_RGBA_c;
+	rt_tlate1col				= rt_tlate1col_RGBA_c;
+	rt_tlateadd1col				= rt_tlateadd1col_RGBA_c;
+	rt_tlateaddclamp1col		= rt_tlateaddclamp1col_RGBA_c;
+	rt_tlatesubclamp1col		= rt_tlatesubclamp1col_RGBA_c;
+	rt_tlaterevsubclamp1col		= rt_tlaterevsubclamp1col_RGBA_c;
+	rt_map4cols					= rt_map4cols_RGBA_c;
+	rt_subclamp4cols			= rt_subclamp4cols_RGBA_c;
+	rt_revsubclamp4cols			= rt_revsubclamp4cols_RGBA_c;
+	rt_tlate4cols				= rt_tlate4cols_RGBA_c;
+	rt_tlateadd4cols			= rt_tlateadd4cols_RGBA_c;
+	rt_tlateaddclamp4cols		= rt_tlateaddclamp4cols_RGBA_c;
+	rt_tlatesubclamp4cols		= rt_tlatesubclamp4cols_RGBA_c;
+	rt_tlaterevsubclamp4cols	= rt_tlaterevsubclamp4cols_RGBA_c;
+	rt_initcols					= rt_initcols_rgba;
+
+	dovline1					= vlinec1_RGBA;
+	doprevline1					= vlinec1_RGBA;
+	dovline4					= vlinec4_RGBA;
+	domvline1					= mvlinec1_RGBA;
+	domvline4					= mvlinec4_RGBA;
+
+#else
+
 #ifdef X86_ASM
 	R_DrawColumn				= R_DrawColumnP_ASM;
 	R_DrawColumnHoriz			= R_DrawColumnHorizP_ASM;
@@ -3194,6 +4244,72 @@ void R_InitColumnDrawers ()
 	R_DrawSpanMaskedTranslucent = R_DrawSpanMaskedTranslucentP_C;
 	R_DrawSpanAddClamp			= R_DrawSpanAddClampP_C;
 	R_DrawSpanMaskedAddClamp	= R_DrawSpanMaskedAddClampP_C;
+	R_FillColumn				= R_FillColumnP_C;
+	R_FillAddColumn				= R_FillAddColumn_C;
+	R_FillAddClampColumn		= R_FillAddClampColumn_C;
+	R_FillSubClampColumn		= R_FillSubClampColumn_C;
+	R_FillRevSubClampColumn		= R_FillRevSubClampColumn_C;
+	R_DrawAddColumn				= R_DrawAddColumnP_C;
+	R_DrawTlatedAddColumn		= R_DrawTlatedAddColumnP_C;
+	R_DrawAddClampColumn		= R_DrawAddClampColumnP_C;
+	R_DrawAddClampTranslatedColumn = R_DrawAddClampTranslatedColumnP_C;
+	R_DrawSubClampColumn		= R_DrawSubClampColumnP_C;
+	R_DrawSubClampTranslatedColumn = R_DrawSubClampTranslatedColumnP_C;
+	R_DrawRevSubClampColumn		= R_DrawRevSubClampColumnP_C;
+	R_DrawRevSubClampTranslatedColumn = R_DrawRevSubClampTranslatedColumnP_C;
+	R_FillSpan					= R_FillSpan_C;
+	R_DrawFogBoundary			= R_DrawFogBoundary_C;
+	R_FillColumnHoriz			= R_FillColumnHorizP_C;
+
+	R_DrawFogBoundary			= R_DrawFogBoundary_C;
+	R_MapColoredPlane			= R_MapColoredPlane_C;
+	R_DrawParticle				= R_DrawParticle_C;
+
+	tmvline1_add				= tmvline1_add_C;
+	tmvline4_add				= tmvline4_add_C;
+	tmvline1_addclamp			= tmvline1_addclamp_C;
+	tmvline4_addclamp			= tmvline4_addclamp_C;
+	tmvline1_subclamp			= tmvline1_subclamp_C;
+	tmvline4_subclamp			= tmvline4_subclamp_C;
+	tmvline1_revsubclamp		= tmvline1_revsubclamp_C;
+	tmvline4_revsubclamp		= tmvline4_revsubclamp_C;
+
+#ifdef X86_ASM
+	rt_copy1col					= rt_copy1col_asm;
+	rt_copy4cols				= rt_copy4cols_asm;
+	rt_map1col					= rt_map1col_asm;
+	rt_shaded4cols				= rt_shaded4cols_asm;
+	rt_add4cols					= rt_add4cols_asm;
+	rt_addclamp4cols			= rt_addclamp4cols_asm;
+#else
+	rt_copy1col					= rt_copy1col_c;
+	rt_copy4cols				= rt_copy4cols_c;
+	rt_map1col					= rt_map1col_c;
+	rt_shaded4cols				= rt_shaded4cols_c;
+	rt_add4cols					= rt_add4cols_c;
+	rt_addclamp4cols			= rt_addclamp4cols_c;
+#endif
+	rt_shaded1col				= rt_shaded1col_c;
+	rt_add1col					= rt_add1col_c;
+	rt_addclamp1col				= rt_addclamp1col_c;
+	rt_subclamp1col				= rt_subclamp1col_c;
+	rt_revsubclamp1col			= rt_revsubclamp1col_c;
+	rt_tlate1col				= rt_tlate1col_c;
+	rt_tlateadd1col				= rt_tlateadd1col_c;
+	rt_tlateaddclamp1col		= rt_tlateaddclamp1col_c;
+	rt_tlatesubclamp1col		= rt_tlatesubclamp1col_c;
+	rt_tlaterevsubclamp1col		= rt_tlaterevsubclamp1col_c;
+	rt_map4cols					= rt_map4cols_c;
+	rt_subclamp4cols			= rt_subclamp4cols_c;
+	rt_revsubclamp4cols			= rt_revsubclamp4cols_c;
+	rt_tlate4cols				= rt_tlate4cols_c;
+	rt_tlateadd4cols			= rt_tlateadd4cols_c;
+	rt_tlateaddclamp4cols		= rt_tlateaddclamp4cols_c;
+	rt_tlatesubclamp4cols		= rt_tlatesubclamp4cols_c;
+	rt_tlaterevsubclamp4cols	= rt_tlaterevsubclamp4cols_c;
+	rt_initcols					= rt_initcols_pal;
+
+#endif
 }
 
 // [RH] Choose column drawers in a single place
@@ -3211,7 +4327,7 @@ static bool R_SetBlendFunc (int op, fixed_t fglevel, fixed_t bglevel, int flags)
 	{
 		if (flags & STYLEF_ColorIsFixed)
 		{
-			colfunc = R_FillColumnP;
+			colfunc = R_FillColumn;
 			hcolfunc_post1 = rt_copy1col;
 			hcolfunc_post4 = rt_copy4cols;
 		}
@@ -3261,13 +4377,13 @@ static bool R_SetBlendFunc (int op, fixed_t fglevel, fixed_t bglevel, int flags)
 			}
 			else if (dc_translation == NULL)
 			{
-				colfunc = R_DrawAddColumnP_C;
+				colfunc = R_DrawAddColumn;
 				hcolfunc_post1 = rt_add1col;
 				hcolfunc_post4 = rt_add4cols;
 			}
 			else
 			{
-				colfunc = R_DrawTlatedAddColumnP_C;
+				colfunc = R_DrawTlatedAddColumn;
 				hcolfunc_post1 = rt_tlateadd1col;
 				hcolfunc_post4 = rt_tlateadd4cols;
 			}
@@ -3282,13 +4398,13 @@ static bool R_SetBlendFunc (int op, fixed_t fglevel, fixed_t bglevel, int flags)
 			}
 			else if (dc_translation == NULL)
 			{
-				colfunc = R_DrawAddClampColumnP_C;
+				colfunc = R_DrawAddClampColumn;
 				hcolfunc_post1 = rt_addclamp1col;
 				hcolfunc_post4 = rt_addclamp4cols;
 			}
 			else
 			{
-				colfunc = R_DrawAddClampTranslatedColumnP_C;
+				colfunc = R_DrawAddClampTranslatedColumn;
 				hcolfunc_post1 = rt_tlateaddclamp1col;
 				hcolfunc_post4 = rt_tlateaddclamp4cols;
 			}
@@ -3304,13 +4420,13 @@ static bool R_SetBlendFunc (int op, fixed_t fglevel, fixed_t bglevel, int flags)
 		}
 		else if (dc_translation == NULL)
 		{
-			colfunc = R_DrawSubClampColumnP_C;
+			colfunc = R_DrawSubClampColumn;
 			hcolfunc_post1 = rt_subclamp1col;
 			hcolfunc_post4 = rt_subclamp4cols;
 		}
 		else
 		{
-			colfunc = R_DrawSubClampTranslatedColumnP_C;
+			colfunc = R_DrawSubClampTranslatedColumn;
 			hcolfunc_post1 = rt_tlatesubclamp1col;
 			hcolfunc_post4 = rt_tlatesubclamp4cols;
 		}
@@ -3329,13 +4445,13 @@ static bool R_SetBlendFunc (int op, fixed_t fglevel, fixed_t bglevel, int flags)
 		}
 		else if (dc_translation == NULL)
 		{
-			colfunc = R_DrawRevSubClampColumnP_C;
+			colfunc = R_DrawRevSubClampColumn;
 			hcolfunc_post1 = rt_revsubclamp1col;
 			hcolfunc_post4 = rt_revsubclamp4cols;
 		}
 		else
 		{
-			colfunc = R_DrawRevSubClampTranslatedColumnP_C;
+			colfunc = R_DrawRevSubClampTranslatedColumn;
 			hcolfunc_post1 = rt_tlaterevsubclamp1col;
 			hcolfunc_post4 = rt_tlaterevsubclamp4cols;
 		}
@@ -3440,7 +4556,7 @@ ESPSResult R_SetPatchStyle (FRenderStyle style, fixed_t alpha, int translation, 
 		// dc_srccolor is used by the R_Fill* routines. It is premultiplied
 		// with the alpha.
 		dc_srccolor = ((((r*x)>>4)<<20) | ((g*x)>>4) | ((((b)*x)>>4)<<10)) & 0x3feffbff;
-		hcolfunc_pre = R_FillColumnHorizP;
+		hcolfunc_pre = R_FillColumnHoriz;
 		dc_colormap = identitymap;
 		dc_light = 0;
 	}
@@ -3459,25 +4575,25 @@ void R_FinishSetPatchStyle ()
 
 bool R_GetTransMaskDrawers (fixed_t (**tmvline1)(), void (**tmvline4)())
 {
-	if (colfunc == R_DrawAddColumnP_C)
+	if (colfunc == R_DrawAddColumn)
 	{
 		*tmvline1 = tmvline1_add;
 		*tmvline4 = tmvline4_add;
 		return true;
 	}
-	if (colfunc == R_DrawAddClampColumnP_C)
+	if (colfunc == R_DrawAddClampColumn)
 	{
 		*tmvline1 = tmvline1_addclamp;
 		*tmvline4 = tmvline4_addclamp;
 		return true;
 	}
-	if (colfunc == R_DrawSubClampColumnP_C)
+	if (colfunc == R_DrawSubClampColumn)
 	{
 		*tmvline1 = tmvline1_subclamp;
 		*tmvline4 = tmvline4_subclamp;
 		return true;
 	}
-	if (colfunc == R_DrawRevSubClampColumnP_C)
+	if (colfunc == R_DrawRevSubClampColumn)
 	{
 		*tmvline1 = tmvline1_revsubclamp;
 		*tmvline4 = tmvline4_revsubclamp;

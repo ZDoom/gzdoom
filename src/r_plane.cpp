@@ -491,18 +491,19 @@ void R_MapTiltedPlane (int y, int x1)
 //
 //==========================================================================
 
-void R_MapColoredPlane (int y, int x1)
+void R_MapColoredPlane_C (int y, int x1)
 {
-#ifndef PALETTEOUTPUT
+	memset (ylookup[y] + x1 + dc_destorg, ds_color, (spanend[y] - x1 + 1));
+}
+
+void R_MapColoredPlane_RGBA(int y, int x1)
+{
 	canvas_pixel_t *dest = ylookup[y] + x1 + dc_destorg;
 	int count = (spanend[y] - x1 + 1);
 	uint32_t light = calc_light_multiplier(ds_light);
 	uint32_t color = shade_pal_index(ds_color, light);
 	for (int i = 0; i < count; i++)
 		dest[i] = color;
-#else
-	memset (ylookup[y] + x1 + dc_destorg, ds_color, (spanend[y] - x1 + 1) * sizeof(canvas_pixel_t));
-#endif
 }
 
 //==========================================================================

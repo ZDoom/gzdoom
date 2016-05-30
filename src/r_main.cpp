@@ -847,10 +847,10 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 	// [RH] Show off segs if r_drawflat is 1
 	if (r_drawflat)
 	{
-		hcolfunc_pre = R_FillColumnHorizP;
+		hcolfunc_pre = R_FillColumnHoriz;
 		hcolfunc_post1 = rt_copy1col;
 		hcolfunc_post4 = rt_copy4cols;
-		colfunc = R_FillColumnP;
+		colfunc = R_FillColumn;
 		spanfunc = R_FillSpan;
 	}
 	else

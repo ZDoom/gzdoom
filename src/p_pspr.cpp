@@ -341,16 +341,14 @@ void DPSprite::SetState(FState *newstate, bool pending)
 
 void P_BringUpWeapon (player_t *player)
 {
-	FState *newstate;
 	AWeapon *weapon;
-	DPSprite *psweapon = player->GetPSprite(PSP_WEAPON);
 
 	if (player->PendingWeapon == WP_NOCHANGE)
 	{
 		if (player->ReadyWeapon != nullptr)
 		{
-			psweapon->y = WEAPONTOP;
-			psweapon->SetState(player->ReadyWeapon->GetReadyState());
+			player->GetPSprite(PSP_WEAPON)->y = WEAPONTOP;
+			player->GetPSprite(PSP_WEAPON)->SetState(player->ReadyWeapon->GetReadyState());
 		}
 		return;
 	}
@@ -367,28 +365,25 @@ void P_BringUpWeapon (player_t *player)
 		weapon = weapon->SisterWeapon;
 	}
 
+	player->PendingWeapon = WP_NOCHANGE;
+	player->ReadyWeapon = weapon;
+	player->mo->weaponspecial = 0;
+
 	if (weapon != nullptr)
 	{
 		if (weapon->UpSound)
 		{
 			S_Sound (player->mo, CHAN_WEAPON, weapon->UpSound, 1, ATTN_NORM);
 		}
-		newstate = weapon->GetUpState ();
 		player->refire = 0;
+
+		player->GetPSprite(PSP_WEAPON)->y = player->cheats & CF_INSTANTWEAPSWITCH
+			? WEAPONTOP : WEAPONBOTTOM;
+		// make sure that the previous weapon's flash state is terminated.
+		// When coming here from a weapon drop it may still be active.
+		player->GetPSprite(PSP_FLASH)->SetState(nullptr);
+		player->GetPSprite(PSP_WEAPON)->SetState(weapon->GetUpState());
 	}
-	else
-	{
-		newstate = nullptr;
-	}
-	player->PendingWeapon = WP_NOCHANGE;
-	player->ReadyWeapon = weapon;
-	psweapon->y = player->cheats & CF_INSTANTWEAPSWITCH
-		? WEAPONTOP : WEAPONBOTTOM;
-	// make sure that the previous weapon's flash state is terminated.
-	// When coming here from a weapon drop it may still be active.
-	player->GetPSprite(PSP_FLASH)->SetState(nullptr);
-	psweapon->SetState(newstate);
-	player->mo->weaponspecial = 0;
 }
 
 //---------------------------------------------------------------------------

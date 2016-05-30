@@ -1832,8 +1832,6 @@ static void FireBulletMissile(AActor *self, PClassActor *missile, AActor *puff, 
 {
 	if (self && missile && puff)
 	{
-		double x = Spawnofs_xy * angle.Cos();
-		double y = Spawnofs_xy * angle.Sin();
 		DAngle ang = self->Angles.Yaw - 90;
 		DVector2 ofs = ang.ToVector(Spawnofs_xy);
 

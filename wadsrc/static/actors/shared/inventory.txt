@@ -9,7 +9,7 @@ ACTOR Inventory native
 	
 	action native state A_JumpIfNoAmmo(state label);
 	action native A_CustomPunch(int damage, bool norandom = false, int flags = CPF_USEAMMO, class<Actor> pufftype = "BulletPuff", float range = 0, float lifesteal = 0, int lifestealmax = 0, class<BasicArmorBonus> armorbonustype = "ArmorBonus", sound MeleeSound = "", sound MissSound = "");
-	action native A_FireBullets(float/*angle*/ spread_xy, float/*angle*/ spread_z, int numbullets, int damageperbullet, class<Actor> pufftype = "BulletPuff", int flags = 1, float range = 0);
+	action native A_FireBullets(float/*angle*/ spread_xy, float/*angle*/ spread_z, int numbullets, int damageperbullet, class<Actor> pufftype = "BulletPuff", int flags = 1, float range = 0, class<Actor> missile = "", float Spawnheight = 32, float Spawnofs_xy = 0);
 	action native A_FireCustomMissile(class<Actor> missiletype, float angle = 0, bool useammo = true, float spawnofs_xy = 0, float spawnheight = 0, int flags = 0, float pitch = 0);
 	action native A_RailAttack(int damage, int spawnofs_xy = 0, bool useammo = true, color color1 = "", color color2 = "", int flags = 0, float maxdiff = 0, class<Actor> pufftype = "BulletPuff", float/*angle*/ spread_xy = 0, float/*angle*/ spread_z = 0, float range = 0, int duration = 0, float sparsity = 1.0, float driftspeed = 1.0, class<Actor> spawnclass = "none", float spawnofs_z = 0, int spiraloffset = 270, int limit = 0);
 	action native A_Light(int extralight);

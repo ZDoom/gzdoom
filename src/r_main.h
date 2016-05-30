@@ -86,8 +86,6 @@ extern bool				r_dontmaplines;
 // This is used instead of GETPALOOKUP when ds_colormap+dc_colormap is set to the base colormap
 #define LIGHTSCALE(vis,shade) ((shade)-FLOAT2FIXED(MIN(MAXLIGHTVIS,double(vis))))
 
-#ifndef PALETTEOUTPUT
-
 // calculates the light constant passed to the shade_pal_index function
 inline uint32_t calc_light_multiplier(dsfixed_t light)
 {
@@ -107,8 +105,6 @@ inline uint32_t shade_pal_index(uint32_t index, uint32_t light)
 	blue = blue * light / 256;
 	return 0xff000000 | (red << 16) | (green << 8) | blue;
 }
-
-#endif
 
 extern double			GlobVis;
 

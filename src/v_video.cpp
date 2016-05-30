@@ -65,6 +65,7 @@
 #include "menu/menu.h"
 #include "r_data/voxels.h"
 
+EXTERN_CVAR(Bool, r_swtruecolor)
 
 FRenderer *Renderer;
 
@@ -367,65 +368,68 @@ void DCanvas::Dim (PalEntry color, float damount, int x1, int y1, int w, int h)
 	spot = Buffer + x1 + y1*Pitch;
 	gap = Pitch - w;
 
-#ifndef PALETTEOUTPUT
-	uint32_t fg = color.d;
-	uint32_t fg_red = (fg >> 16) & 0xff;
-	uint32_t fg_green = (fg >> 8) & 0xff;
-	uint32_t fg_blue = fg & 0xff;
-
-	uint32_t alpha = (uint32_t)clamp(damount * 256 + 0.5f, 0.0f, 256.0f);
-	uint32_t inv_alpha = 256 - alpha;
-
-	fg_red *= alpha;
-	fg_green *= alpha;
-	fg_blue *= alpha;
-
-	for (y = h; y != 0; y--)
+	if (r_swtruecolor)
 	{
-		for (x = w; x != 0; x--)
+		uint32_t fg = color.d;
+		uint32_t fg_red = (fg >> 16) & 0xff;
+		uint32_t fg_green = (fg >> 8) & 0xff;
+		uint32_t fg_blue = fg & 0xff;
+
+		uint32_t alpha = (uint32_t)clamp(damount * 256 + 0.5f, 0.0f, 256.0f);
+		uint32_t inv_alpha = 256 - alpha;
+
+		fg_red *= alpha;
+		fg_green *= alpha;
+		fg_blue *= alpha;
+
+		for (y = h; y != 0; y--)
 		{
-			uint32_t bg_red = (*spot >> 16) & 0xff;
-			uint32_t bg_green = (*spot >> 8) & 0xff;
-			uint32_t bg_blue = (*spot) & 0xff;
+			for (x = w; x != 0; x--)
+			{
+				uint32_t bg_red = (*spot >> 16) & 0xff;
+				uint32_t bg_green = (*spot >> 8) & 0xff;
+				uint32_t bg_blue = (*spot) & 0xff;
 
-			uint32_t red = (fg_red + bg_red * inv_alpha) / 256;
-			uint32_t green = (fg_green + bg_green * inv_alpha) / 256;
-			uint32_t blue = (fg_blue + bg_blue * inv_alpha) / 256;
+				uint32_t red = (fg_red + bg_red * inv_alpha) / 256;
+				uint32_t green = (fg_green + bg_green * inv_alpha) / 256;
+				uint32_t blue = (fg_blue + bg_blue * inv_alpha) / 256;
 
-			*spot = 0xff000000 | (red << 16) | (green << 8) | blue;
-			spot++;
+				*spot = 0xff000000 | (red << 16) | (green << 8) | blue;
+				spot++;
+			}
+			spot += gap;
 		}
-		spot += gap;
 	}
-#else
-	DWORD *bg2rgb;
-	DWORD fg;
-
+	else
 	{
-		int amount;
+		DWORD *bg2rgb;
+		DWORD fg;
 
-		amount = (int)(damount * 64);
-		bg2rgb = Col2RGB8[64-amount];
-
-		fg = (((color.r * amount) >> 4) << 20) |
-			  ((color.g * amount) >> 4) |
-			 (((color.b * amount) >> 4) << 10);
-	}
-
-	for (y = h; y != 0; y--)
-	{
-		for (x = w; x != 0; x--)
 		{
-			DWORD bg;
+			int amount;
 
-			bg = bg2rgb[(*spot)&0xff];
-			bg = (fg+bg) | 0x1f07c1f;
-			*spot = RGB32k.All[bg&(bg>>15)];
-			spot++;
+			amount = (int)(damount * 64);
+			bg2rgb = Col2RGB8[64-amount];
+
+			fg = (((color.r * amount) >> 4) << 20) |
+				  ((color.g * amount) >> 4) |
+				 (((color.b * amount) >> 4) << 10);
 		}
-		spot += gap;
+
+		for (y = h; y != 0; y--)
+		{
+			for (x = w; x != 0; x--)
+			{
+				DWORD bg;
+
+				bg = bg2rgb[(*spot)&0xff];
+				bg = (fg+bg) | 0x1f07c1f;
+				*spot = RGB32k.All[bg&(bg>>15)];
+				spot++;
+			}
+			spot += gap;
+		}
 	}
-#endif
 }
 
 //==========================================================================

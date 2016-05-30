@@ -4601,3 +4601,30 @@ bool R_GetTransMaskDrawers (fixed_t (**tmvline1)(), void (**tmvline4)())
 	return false;
 }
 
+void R_SetColorMapLight(BYTE *basecolormapdata, float light, int shade)
+{
+	if (r_swtruecolor)
+	{
+		dc_colormap = basecolormapdata;
+		dc_light = LIGHTSCALE(light, shade);
+	}
+	else
+	{
+		dc_colormap = basecolormapdata + (GETPALOOKUP(light, shade) << COLORMAPSHIFT);
+		dc_light = 0;
+	}
+}
+
+void R_SetDSColorMapLight(BYTE *basecolormapdata, float light, int shade)
+{
+	if (r_swtruecolor)
+	{
+		ds_colormap = basecolormapdata;
+		ds_light = LIGHTSCALE(light, shade);
+	}
+	else
+	{
+		ds_colormap = basecolormapdata + (GETPALOOKUP(light, shade) << COLORMAPSHIFT);
+		ds_light = 0;
+	}
+}

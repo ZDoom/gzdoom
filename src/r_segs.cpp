@@ -61,6 +61,8 @@ CVAR(Bool, r_np2, true, 0)
 //CVAR (Int, ty, 8, 0)
 //CVAR (Int, tx, 8, 0)
 
+EXTERN_CVAR(Bool, r_swtruecolor)
+
 #define HEIGHTBITS 12
 #define HEIGHTSHIFT (FRACBITS-HEIGHTBITS)
 
@@ -1138,13 +1140,7 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *l
 
 		if (!fixed)
 		{ // calculate lighting
-#ifndef PALETTEOUTPUT
-			dc_colormap = basecolormapdata;
-			dc_light = LIGHTSCALE(light, wallshade);
-#else
-			dc_colormap = basecolormapdata + (GETPALOOKUP (light, wallshade) << COLORMAPSHIFT);
-			dc_light = 0;
-#endif
+			R_SetColorMapLight(basecolormapdata, light, wallshade);
 		}
 
 		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
@@ -1184,13 +1180,16 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *l
 			for (z = 0; z < 4; ++z)
 			{
 				light += rw_lightstep;
-#ifndef PALETTEOUTPUT
-				palookupoffse[z] = basecolormapdata;
-				palookuplight[z] = LIGHTSCALE(light, wallshade);
-#else
-				palookupoffse[z] = basecolormapdata + (GETPALOOKUP(12/*light*/, wallshade) << COLORMAPSHIFT);
-				palookuplight[z] = 0;
-#endif
+				if (r_swtruecolor)
+				{
+					palookupoffse[z] = basecolormapdata;
+					palookuplight[z] = LIGHTSCALE(light, wallshade);
+				}
+				else
+				{
+					palookupoffse[z] = basecolormapdata + (GETPALOOKUP(light, wallshade) << COLORMAPSHIFT);
+					palookuplight[z] = 0;
+				}
 			}
 		}
 
@@ -1245,13 +1244,7 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *l
 
 		if (!fixed)
 		{ // calculate lighting
-#ifndef PALETTEOUTPUT
-			dc_colormap = basecolormapdata;
-			dc_light = LIGHTSCALE(light, wallshade);
-#else
-			dc_colormap = basecolormapdata + (GETPALOOKUP (light, wallshade) << COLORMAPSHIFT);
-			dc_light = 0;
-#endif
+			R_SetColorMapLight(basecolormapdata, light, wallshade);
 		}
 
 		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
@@ -1690,13 +1683,7 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, f
 
 		if (!fixed)
 		{ // calculate lighting
-#ifndef PALETTEOUTPUT
-			dc_colormap = basecolormapdata;
-			dc_light = LIGHTSCALE(light, wallshade);
-#else
-			dc_colormap = basecolormapdata + (GETPALOOKUP (light, wallshade) << COLORMAPSHIFT);
-			dc_light = 0;
-#endif
+			R_SetColorMapLight(basecolormapdata, light, wallshade);
 		}
 
 		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
@@ -1734,12 +1721,15 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, f
 			for (z = 0; z < 4; ++z)
 			{
 				light += rw_lightstep;
-#ifndef PALETTEOUTPUT
-				palookupoffse[z] = basecolormapdata;
-				palookuplight[z] = LIGHTSCALE(light, wallshade);
-#else
-				palookupoffse[z] = basecolormapdata + (GETPALOOKUP (light, wallshade) << COLORMAPSHIFT);
-#endif
+				if (r_swtruecolor)
+				{
+					palookupoffse[z] = basecolormapdata;
+					palookuplight[z] = LIGHTSCALE(light, wallshade);
+				}
+				else
+				{
+					palookupoffse[z] = basecolormapdata + (GETPALOOKUP(light, wallshade) << COLORMAPSHIFT);
+				}
 			}
 		}
 
@@ -1795,13 +1785,7 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, f
 
 		if (!fixed)
 		{ // calculate lighting
-#ifndef PALETTEOUTPUT
-			dc_colormap = basecolormapdata;
-			dc_light = LIGHTSCALE(light, wallshade);
-#else
-			dc_colormap = basecolormapdata + (GETPALOOKUP(light, wallshade) << COLORMAPSHIFT);
-			dc_light = 0;
-#endif
+			R_SetColorMapLight(basecolormapdata, light, wallshade);
 		}
 
 		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
@@ -3295,13 +3279,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 			{
 				if (calclighting)
 				{ // calculate lighting
-#ifndef PALETTEOUTPUT
-					dc_colormap = usecolormap->Maps;
-					dc_light = LIGHTSCALE(rw_light, wallshade);
-#else
-					dc_colormap = usecolormap->Maps + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
-					dc_light = 0;
-#endif
+					R_SetColorMapLight(usecolormap->Maps, rw_light, wallshade);
 				}
 				R_WallSpriteColumn (R_DrawMaskedColumn);
 				dc_x++;
@@ -3311,13 +3289,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 			{
 				if (calclighting)
 				{ // calculate lighting
-#ifndef PALETTEOUTPUT
-					dc_colormap = usecolormap->Maps;
-					dc_light = LIGHTSCALE(rw_light, wallshade);
-#else
-					dc_colormap = usecolormap->Maps + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
-					dc_light = 0;
-#endif
+					R_SetColorMapLight(usecolormap->Maps, rw_light, wallshade);
 				}
 				rt_initcols(nullptr);
 				for (int zz = 4; zz; --zz)
@@ -3332,13 +3304,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 			{
 				if (calclighting)
 				{ // calculate lighting
-#ifndef PALETTEOUTPUT
-					dc_colormap = usecolormap->Maps;
-					dc_light = LIGHTSCALE(rw_light, wallshade);
-#else
-					dc_colormap = usecolormap->Maps + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
-					dc_light = 0;
-#endif
+					R_SetColorMapLight(usecolormap->Maps, rw_light, wallshade);
 				}
 				R_WallSpriteColumn (R_DrawMaskedColumn);
 				dc_x++;

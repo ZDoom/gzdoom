@@ -594,13 +594,7 @@ void R_DrawWallSprite(vissprite_t *spr)
 		{
 			if (calclighting)
 			{ // calculate lighting
-#ifndef PALETTEOUTPUT
-				dc_colormap = usecolormap->Maps;
-				dc_light = LIGHTSCALE(rw_light, shade);
-#else
-				dc_colormap = usecolormap->Maps + (GETPALOOKUP (rw_light, shade) << COLORMAPSHIFT);
-				dc_light = FLOAT2FIXED(MAXLIGHTVIS);
-#endif
+				R_SetColorMapLight(usecolormap->Maps, rw_light, shade);
 			}
 			if (!R_ClipSpriteColumnWithPortals(spr))
 				R_WallSpriteColumn(R_DrawMaskedColumn);
@@ -611,13 +605,7 @@ void R_DrawWallSprite(vissprite_t *spr)
 		{
 			if (calclighting)
 			{ // calculate lighting
-#ifndef PALETTEOUTPUT
-				dc_colormap = usecolormap->Maps;
-				dc_light = LIGHTSCALE(rw_light, shade);
-#else
-				dc_colormap = usecolormap->Maps + (GETPALOOKUP (rw_light, shade) << COLORMAPSHIFT);
-				dc_light = FLOAT2FIXED(MAXLIGHTVIS);
-#endif
+				R_SetColorMapLight(usecolormap->Maps, rw_light, shade);
 			}
 			rt_initcols(nullptr);
 			for (int zz = 4; zz; --zz)
@@ -633,13 +621,7 @@ void R_DrawWallSprite(vissprite_t *spr)
 		{
 			if (calclighting)
 			{ // calculate lighting
-#ifndef PALETTEOUTPUT
-				dc_colormap = usecolormap->Maps;
-				dc_light = LIGHTSCALE(rw_light, shade);
-#else
-				dc_colormap = usecolormap->Maps + (GETPALOOKUP (rw_light, shade) << COLORMAPSHIFT);
-				dc_light = FLOAT2FIXED(MAXLIGHTVIS);
-#endif
+				R_SetColorMapLight(usecolormap->Maps, rw_light, shade);
 			}
 			if (!R_ClipSpriteColumnWithPortals(spr))
 				R_WallSpriteColumn(R_DrawMaskedColumn);

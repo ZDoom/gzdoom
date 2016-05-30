@@ -386,4 +386,10 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_
 // transmaskwallscan is like maskwallscan, but it can also blend to the background
 void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, const BYTE *(*getcol)(FTexture *tex, int col)=R_GetColumn);
 
+// Sets dc_colormap and dc_light to their appropriate values depending on the output format (pal vs true color)
+void R_SetColorMapLight(BYTE *base_colormap, float light, int shade);
+
+// Same as R_SetColorMapLight, but for ds_colormap and ds_light
+void R_SetDSColorMapLight(BYTE *base_colormap, float light, int shade);
+
 #endif

@@ -77,6 +77,8 @@ extern "C" short spanend[MAXHEIGHT];
 
 CVAR (Bool, hud_scale, false, CVAR_ARCHIVE);
 
+EXTERN_CVAR(Bool, r_swtruecolor)
+
 // For routines that take RGB colors, cache the previous lookup in case there
 // are several repetitions with the same color.
 static int LastPal = -1;
@@ -1017,32 +1019,35 @@ void DCanvas::PUTTRANSDOT (int xx, int yy, int basecolor, int level)
 		oldyyshifted = yy * GetPitch();
 	}
 
-#ifndef PALETTEOUTPUT
-	canvas_pixel_t *spot = GetBuffer() + oldyyshifted + xx;
+	if (r_swtruecolor)
+	{
+		canvas_pixel_t *spot = GetBuffer() + oldyyshifted + xx;
 
-	uint32_t fg = shade_pal_index(basecolor, calc_light_multiplier(0));
-	uint32_t fg_red = (fg >> 16) & 0xff;
-	uint32_t fg_green = (fg >> 8) & 0xff;
-	uint32_t fg_blue = fg & 0xff;
+		uint32_t fg = shade_pal_index(basecolor, calc_light_multiplier(0));
+		uint32_t fg_red = (fg >> 16) & 0xff;
+		uint32_t fg_green = (fg >> 8) & 0xff;
+		uint32_t fg_blue = fg & 0xff;
 
-	uint32_t bg_red = (*spot >> 16) & 0xff;
-	uint32_t bg_green = (*spot >> 8) & 0xff;
-	uint32_t bg_blue = (*spot) & 0xff;
+		uint32_t bg_red = (*spot >> 16) & 0xff;
+		uint32_t bg_green = (*spot >> 8) & 0xff;
+		uint32_t bg_blue = (*spot) & 0xff;
 
-	uint32_t red = (fg_red + bg_red + 1) / 2;
-	uint32_t green = (fg_green + bg_green + 1) / 2;
-	uint32_t blue = (fg_blue + bg_blue + 1) / 2;
+		uint32_t red = (fg_red + bg_red + 1) / 2;
+		uint32_t green = (fg_green + bg_green + 1) / 2;
+		uint32_t blue = (fg_blue + bg_blue + 1) / 2;
 
-	*spot = 0xff000000 | (red << 16) | (green << 8) | blue;
-#else
-	canvas_pixel_t *spot = GetBuffer() + oldyyshifted + xx;
-	DWORD *bg2rgb = Col2RGB8[1+level];
-	DWORD *fg2rgb = Col2RGB8[63-level];
-	DWORD fg = fg2rgb[basecolor];
-	DWORD bg = bg2rgb[*spot];
-	bg = (fg+bg) | 0x1f07c1f;
-	*spot = RGB32k.All[bg&(bg>>15)];
-#endif
+		*spot = 0xff000000 | (red << 16) | (green << 8) | blue;
+	}
+	else
+	{
+		canvas_pixel_t *spot = GetBuffer() + oldyyshifted + xx;
+		DWORD *bg2rgb = Col2RGB8[1+level];
+		DWORD *fg2rgb = Col2RGB8[63-level];
+		DWORD fg = fg2rgb[basecolor];
+		DWORD bg = bg2rgb[*spot];
+		bg = (fg+bg) | 0x1f07c1f;
+		*spot = RGB32k.All[bg&(bg>>15)];
+	}
 }
 
 void DCanvas::DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32 realcolor)

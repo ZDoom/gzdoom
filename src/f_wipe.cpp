@@ -33,6 +33,8 @@
 //		SCREEN WIPE PACKAGE
 //
 
+EXTERN_CVAR(Bool, r_swtruecolor)
+
 static int CurrentWipeType;
 
 static short *wipe_scr_start;
@@ -77,10 +79,8 @@ bool wipe_initMelt (int ticks)
 {
 	int i, r;
 	
-#ifdef PALETTEOUTPUT
 	// copy start screen to main screen
-	screen->DrawBlock (0, 0, SCREENWIDTH, SCREENHEIGHT, (BYTE *)wipe_scr_start);
-#endif
+	screen->DrawBlock(0, 0, SCREENWIDTH, SCREENHEIGHT, (canvas_pixel_t *)wipe_scr_start);
 	
 	// makes this wipe faster (in theory)
 	// to have stuff in column-major format
@@ -301,9 +301,6 @@ bool wipe_doBurn (int ticks)
 			}
 			else
 			{
-#ifndef PALETTEOUTPUT
-				// TO DO: RGB32k.All
-#else
 				int bglevel = 64-fglevel;
 				DWORD *fg2rgb = Col2RGB8[fglevel];
 				DWORD *bg2rgb = Col2RGB8[bglevel];
@@ -311,7 +308,6 @@ bool wipe_doBurn (int ticks)
 				DWORD bg = bg2rgb[fromold[x]];
 				fg = (fg+bg) | 0x1f07c1f;
 				to[x] = RGB32k.All[fg & (fg>>15)];
-#endif
 				done = false;
 			}
 		}
@@ -342,9 +338,7 @@ bool wipe_doFade (int ticks)
 	fade += ticks * 2;
 	if (fade > 64)
 	{
-#ifdef PALETTEOUTPUT
-		screen->DrawBlock (0, 0, SCREENWIDTH, SCREENHEIGHT, (BYTE *)wipe_scr_end);
-#endif
+		screen->DrawBlock (0, 0, SCREENWIDTH, SCREENHEIGHT, (canvas_pixel_t *)wipe_scr_end);
 		return true;
 	}
 	else
@@ -391,14 +385,15 @@ static bool (*wipes[])(int) =
 // Returns true if the wipe should be performed.
 bool wipe_StartScreen (int type)
 {
+	if (r_swtruecolor)
+		return false;
+
 	CurrentWipeType = clamp(type, 0, wipe_NUMWIPES - 1);
 
 	if (CurrentWipeType)
 	{
 		wipe_scr_start = new short[SCREENWIDTH * SCREENHEIGHT / 2];
-#ifdef PALETTEOUTPUT
-		screen->GetBlock (0, 0, SCREENWIDTH, SCREENHEIGHT, (BYTE *)wipe_scr_start);
-#endif
+		screen->GetBlock (0, 0, SCREENWIDTH, SCREENHEIGHT, (canvas_pixel_t *)wipe_scr_start);
 		return true;
 	}
 	return false;
@@ -406,13 +401,15 @@ bool wipe_StartScreen (int type)
 
 void wipe_EndScreen (void)
 {
+	if (r_swtruecolor)
+		return;
+
 	if (CurrentWipeType)
 	{
 		wipe_scr_end = new short[SCREENWIDTH * SCREENHEIGHT / 2];
-#ifdef PALETTEOUTPUT
-		screen->GetBlock (0, 0, SCREENWIDTH, SCREENHEIGHT, (BYTE *)wipe_scr_end);
-		screen->DrawBlock (0, 0, SCREENWIDTH, SCREENHEIGHT, (BYTE *)wipe_scr_start); // restore start scr.
-#endif
+		screen->GetBlock (0, 0, SCREENWIDTH, SCREENHEIGHT, (canvas_pixel_t *)wipe_scr_end);
+		screen->DrawBlock (0, 0, SCREENWIDTH, SCREENHEIGHT, (canvas_pixel_t *)wipe_scr_start); // restore start scr.
+
 		// Initialize the wipe
 		(*wipes[(CurrentWipeType-1)*3])(0);
 	}
@@ -422,6 +419,9 @@ void wipe_EndScreen (void)
 bool wipe_ScreenWipe (int ticks)
 {
 	bool rc;
+
+	if (r_swtruecolor)
+		return true;
 
 	if (CurrentWipeType == wipe_None)
 		return true;
@@ -436,6 +436,9 @@ bool wipe_ScreenWipe (int ticks)
 // Final things for the wipe
 void wipe_Cleanup()
 {
+	if (r_swtruecolor)
+		return;
+
 	if (wipe_scr_start != NULL)
 	{
 		delete[] wipe_scr_start;

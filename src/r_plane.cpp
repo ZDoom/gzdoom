@@ -227,14 +227,7 @@ void R_MapPlane (int y, int x1)
 	if (plane_shade)
 	{
 		// Determine lighting based on the span's distance from the viewer.
-#ifndef PALETTEOUTPUT
-		ds_colormap = basecolormap->Maps;
-		ds_light = LIGHTSCALE(GlobVis * fabs(CenterY - y), planeshade);
-#else
-		ds_colormap = basecolormap->Maps + (GETPALOOKUP (
-			GlobVis * fabs(CenterY - y), planeshade) << COLORMAPSHIFT);
-		ds_light = 0;
-#endif
+		R_SetDSColorMapLight(basecolormap->Maps, GlobVis * fabs(CenterY - y), planeshade);
 	}
 
 #ifdef X86_ASM

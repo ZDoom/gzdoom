@@ -661,6 +661,7 @@ OptionMenu "VideoOptions"
 	Option "$DSPLYMNU_VSYNC",					"vid_vsync", "OnOff"
 	Option "$DSPLYMNU_CAPFPS",					"cl_capfps", "OffOn"
 	Option "$DSPLYMNU_COLUMNMETHOD",			"r_columnmethod", "ColumnMethods"
+	Option "$DSPLYMNU_TRUECOLOR",				"r_swtruecolor", "OnOff"
 
 	StaticText " "
 	Option "$DSPLYMNU_WIPETYPE",				"wipetype", "Wipes"

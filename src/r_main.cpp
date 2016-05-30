@@ -103,6 +103,7 @@ bool r_dontmaplines;
 
 CVAR (String, r_viewsize, "", CVAR_NOSET)
 CVAR (Bool, r_shadercolormaps, true, CVAR_ARCHIVE)
+CVAR (Bool, r_swtruecolor, false, CVAR_ARCHIVE)
 
 double			r_BaseVisibility;
 double			r_WallVisibility;

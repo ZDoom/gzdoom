@@ -424,6 +424,7 @@ private:
 	bool NeedPalUpdate;
 	bool NeedGammaUpdate;
 	int FBWidth, FBHeight;
+	D3DFORMAT FBFormat;
 	bool VSync;
 	RECT BlendingRect;
 	int In2D;

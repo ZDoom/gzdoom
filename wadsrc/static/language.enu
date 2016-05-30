@@ -1780,6 +1780,7 @@ DSPLYMNU_BRIGHTNESS				= "Brightness";
 DSPLYMNU_VSYNC					= "Vertical Sync";
 DSPLYMNU_CAPFPS					= "Rendering Interpolation";
 DSPLYMNU_COLUMNMETHOD			= "Column render mode";
+DSPLYMNU_TRUECOLOR				= "True color output";
 DSPLYMNU_WIPETYPE				= "Screen wipe style";
 DSPLYMNU_SHOWENDOOM				= "Show ENDOOM screen";
 DSPLYMNU_PALLETEHACK			= "DirectDraw palette hack"; // Not used

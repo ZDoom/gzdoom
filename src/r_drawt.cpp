@@ -47,6 +47,8 @@
 #include "r_things.h"
 #include "v_video.h"
 
+EXTERN_CVAR(Bool, r_swtruecolor)
+
 // I should have commented this stuff better.
 //
 // dc_temp is the buffer R_DrawColumnHoriz writes into.
@@ -57,8 +59,8 @@
 // dc_ctspan is advanced while drawing into dc_temp.
 // horizspan is advanced up to dc_ctspan when drawing from dc_temp to the screen.
 
-canvas_pixel_t dc_tempbuff[MAXHEIGHT*4];
-canvas_pixel_t *dc_temp;
+BYTE dc_tempbuff[MAXHEIGHT*4];
+BYTE *dc_temp;
 unsigned int dc_tspans[4][MAXHEIGHT];
 unsigned int *dc_ctspan[4];
 unsigned int *horizspan[4];
@@ -73,8 +75,8 @@ extern "C" void R_SetupAddClampCol();
 // Copies one span at hx to the screen at sx.
 void rt_copy1col_c (int hx, int sx, int yl, int yh)
 {
-	canvas_pixel_t *source;
-	canvas_pixel_t *dest;
+	BYTE *source;
+	BYTE *dest;
 	int count;
 	int pitch;
 
@@ -148,8 +150,8 @@ void rt_copy4cols_c (int sx, int yl, int yh)
 void rt_map1col_c (int hx, int sx, int yl, int yh)
 {
 	BYTE *colormap;
-	canvas_pixel_t *source;
-	canvas_pixel_t *dest;
+	BYTE *source;
+	BYTE *dest;
 	int count;
 	int pitch;
 
@@ -183,8 +185,8 @@ void rt_map1col_c (int hx, int sx, int yl, int yh)
 void rt_map4cols_c (int sx, int yl, int yh)
 {
 	BYTE *colormap;
-	canvas_pixel_t *source;
-	canvas_pixel_t *dest;
+	BYTE *source;
+	BYTE *dest;
 	int count;
 	int pitch;
 
@@ -227,7 +229,7 @@ void rt_map4cols_c (int sx, int yl, int yh)
 void rt_Translate1col(const BYTE *translation, int hx, int yl, int yh)
 {
 	int count = yh - yl + 1;
-	canvas_pixel_t *source = &dc_temp[yl*4 + hx];
+	BYTE *source = &dc_temp[yl*4 + hx];
 
 	// Things we do to hit the compiler's optimizer with a clue bat:
 	// 1. Parallelism is explicitly spelled out by using a separate
@@ -274,7 +276,7 @@ void rt_Translate1col(const BYTE *translation, int hx, int yl, int yh)
 void rt_Translate4cols(const BYTE *translation, int yl, int yh)
 {
 	int count = yh - yl + 1;
-	canvas_pixel_t *source = &dc_temp[yl*4];
+	BYTE *source = &dc_temp[yl*4];
 	int c0, c1;
 	BYTE b0, b1;
 
@@ -330,8 +332,8 @@ void rt_tlate4cols_c (int sx, int yl, int yh)
 void rt_add1col_c (int hx, int sx, int yl, int yh)
 {
 	BYTE *colormap;
-	canvas_pixel_t *source;
-	canvas_pixel_t *dest;
+	BYTE *source;
+	BYTE *dest;
 	int count;
 	int pitch;
 
@@ -364,8 +366,8 @@ void rt_add1col_c (int hx, int sx, int yl, int yh)
 void rt_add4cols_c (int sx, int yl, int yh)
 {
 	BYTE *colormap;
-	canvas_pixel_t *source;
-	canvas_pixel_t *dest;
+	BYTE *source;
+	BYTE *dest;
 	int count;
 	int pitch;
 
@@ -435,8 +437,8 @@ void rt_tlateadd4cols_c (int sx, int yl, int yh)
 void rt_shaded1col_c (int hx, int sx, int yl, int yh)
 {
 	BYTE *colormap;
-	canvas_pixel_t *source;
-	canvas_pixel_t *dest;
+	BYTE *source;
+	BYTE *dest;
 	int count;
 	int pitch;
 
@@ -467,8 +469,8 @@ void rt_shaded1col_c (int hx, int sx, int yl, int yh)
 void rt_shaded4cols_c (int sx, int yl, int yh)
 {
 	BYTE *colormap;
-	canvas_pixel_t *source;
-	canvas_pixel_t *dest;
+	BYTE *source;
+	BYTE *dest;
 	int count;
 	int pitch;
 
@@ -513,8 +515,8 @@ void rt_shaded4cols_c (int sx, int yl, int yh)
 void rt_addclamp1col_c (int hx, int sx, int yl, int yh)
 {
 	BYTE *colormap;
-	canvas_pixel_t *source;
-	canvas_pixel_t *dest;
+	BYTE *source;
+	BYTE *dest;
 	int count;
 	int pitch;
 
@@ -550,8 +552,8 @@ void rt_addclamp1col_c (int hx, int sx, int yl, int yh)
 void rt_addclamp4cols_c (int sx, int yl, int yh)
 {
 	BYTE *colormap;
-	canvas_pixel_t *source;
-	canvas_pixel_t *dest;
+	BYTE *source;
+	BYTE *dest;
 	int count;
 	int pitch;
 
@@ -629,8 +631,8 @@ void rt_tlateaddclamp4cols_c (int sx, int yl, int yh)
 void rt_subclamp1col_c (int hx, int sx, int yl, int yh)
 {
 	BYTE *colormap;
-	canvas_pixel_t *source;
-	canvas_pixel_t *dest;
+	BYTE *source;
+	BYTE *dest;
 	int count;
 	int pitch;
 
@@ -664,8 +666,8 @@ void rt_subclamp1col_c (int hx, int sx, int yl, int yh)
 void rt_subclamp4cols_c (int sx, int yl, int yh)
 {
 	BYTE *colormap;
-	canvas_pixel_t *source;
-	canvas_pixel_t *dest;
+	BYTE *source;
+	BYTE *dest;
 	int count;
 	int pitch;
 
@@ -738,8 +740,8 @@ void rt_tlatesubclamp4cols_c (int sx, int yl, int yh)
 void rt_revsubclamp1col_c (int hx, int sx, int yl, int yh)
 {
 	BYTE *colormap;
-	canvas_pixel_t *source;
-	canvas_pixel_t *dest;
+	BYTE *source;
+	BYTE *dest;
 	int count;
 	int pitch;
 
@@ -773,8 +775,8 @@ void rt_revsubclamp1col_c (int hx, int sx, int yl, int yh)
 void rt_revsubclamp4cols_c (int sx, int yl, int yh)
 {
 	BYTE *colormap;
-	canvas_pixel_t *source;
-	canvas_pixel_t *dest;
+	BYTE *source;
+	BYTE *dest;
 	int count;
 	int pitch;
 
@@ -1007,7 +1009,7 @@ void rt_draw4cols (int sx)
 
 // Before each pass through a rendering loop that uses these routines,
 // call this function to set up the span pointers.
-void rt_initcols_pal (canvas_pixel_t *buff)
+void rt_initcols_pal (BYTE *buff)
 {
 	int y;
 
@@ -1021,7 +1023,7 @@ void rt_initcols_pal (canvas_pixel_t *buff)
 void R_DrawColumnHorizP_C (void)
 {
 	int count = dc_count;
-	canvas_pixel_t *dest;
+	BYTE *dest;
 	fixed_t fracstep;
 	fixed_t frac;
 
@@ -1082,7 +1084,7 @@ void R_FillColumnHorizP_C (void)
 {
 	int count = dc_count;
 	BYTE color = dc_color;
-	canvas_pixel_t *dest;
+	BYTE *dest;
 
 	if (count <= 0)
 		return;
@@ -1113,6 +1115,7 @@ void R_FillColumnHorizP_C (void)
 
 void R_DrawMaskedColumnHoriz (const BYTE *column, const FTexture::Span *span)
 {
+	int pixelsize = r_swtruecolor ? 4 : 1;
 	const fixed_t texturemid = FLOAT2FIXED(dc_texturemid);
 	while (span->Length != 0)
 	{
@@ -1182,7 +1185,7 @@ void R_DrawMaskedColumnHoriz (const BYTE *column, const FTexture::Span *span)
 				}
 			}
 			dc_source = column + top;
-			dc_dest = ylookup[dc_yl] + dc_x + dc_destorg;
+			dc_dest = (ylookup[dc_yl] + dc_x) * pixelsize + dc_destorg;
 			dc_count = dc_yh - dc_yl + 1;
 			hcolfunc_pre ();
 		}

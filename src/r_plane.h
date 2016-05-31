@@ -94,6 +94,10 @@ void R_DrawTiltedPlane (visplane_t *pl, double xscale, double yscale, fixed_t al
 void R_MapVisPlane (visplane_t *pl, void (*mapfunc)(int y, int x1));
 
 extern void(*R_MapColoredPlane)(int y, int x1);
+extern void(*R_MapTiltedPlane)(int y, int x1);
+
+void R_MapTiltedPlane_C(int y, int x1);
+void R_MapTiltedPlane_RGBA(int y, int x);
 void R_MapColoredPlane_C(int y, int x1);
 void R_MapColoredPlane_RGBA(int y, int x1);
 

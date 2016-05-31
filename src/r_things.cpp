@@ -98,6 +98,7 @@ EXTERN_CVAR (Bool, st_scale)
 EXTERN_CVAR(Bool, r_shadercolormaps)
 EXTERN_CVAR(Int, r_drawfuzz)
 EXTERN_CVAR(Bool, r_deathcamera);
+EXTERN_CVAR(Bool, r_swtruecolor)
 
 //
 // Sprite rotation 0 is facing the viewer,
@@ -132,7 +133,7 @@ EXTERN_CVAR (Bool, r_drawvoxels)
 //
 
 int OffscreenBufferWidth, OffscreenBufferHeight;
-canvas_pixel_t *OffscreenColorBuffer;
+BYTE *OffscreenColorBuffer;
 FCoverageBuffer *OffscreenCoverageBuffer;
 
 //
@@ -244,6 +245,7 @@ bool			sprflipvert;
 
 void R_DrawMaskedColumn (const BYTE *column, const FTexture::Span *span)
 {
+	int pixelsize = r_swtruecolor ? 4 : 1;
 	const fixed_t centeryfrac = FLOAT2FIXED(CenterY);
 	const fixed_t texturemid = FLOAT2FIXED(dc_texturemid);
 	while (span->Length != 0)
@@ -314,7 +316,7 @@ void R_DrawMaskedColumn (const BYTE *column, const FTexture::Span *span)
 				}
 			}
 			dc_source = column + top;
-			dc_dest = ylookup[dc_yl] + dc_x + dc_destorg;
+			dc_dest = (ylookup[dc_yl] + dc_x) * pixelsize + dc_destorg;
 			dc_count = dc_yh - dc_yl + 1;
 			colfunc ();
 		}
@@ -688,6 +690,7 @@ void R_DrawVisVoxel(vissprite_t *spr, int minslabz, int maxslabz, short *cliptop
 	// Blend the voxel, if that's what we need to do.
 	if ((flags & ~DVF_MIRRORED) != 0)
 	{
+		int pixelsize = r_swtruecolor ? 4 : 1;
 		for (int x = 0; x < viewwidth; ++x)
 		{
 			if (!(flags & DVF_SPANSONLY) && (x & 3) == 0)
@@ -702,7 +705,7 @@ void R_DrawVisVoxel(vissprite_t *spr, int minslabz, int maxslabz, short *cliptop
 					dc_yl = span->Start;
 					dc_yh = span->Stop - 1;
 					dc_count = span->Stop - span->Start;
-					dc_dest = ylookup[span->Start] + x + dc_destorg;
+					dc_dest = (ylookup[span->Start] + x) * pixelsize + dc_destorg;
 					colfunc();
 				}
 				else
@@ -2602,7 +2605,7 @@ static void R_DrawMaskedSegsBehindParticle (const vissprite_t *vis)
 void R_DrawParticle_C (vissprite_t *vis)
 {
 	int spacing;
-	canvas_pixel_t *dest;
+	BYTE *dest;
 	BYTE color = vis->Style.colormap[vis->startfrac];
 	int yl = vis->y1;
 	int ycount = vis->y2 - yl + 1;
@@ -2668,7 +2671,7 @@ void R_DrawParticle_C (vissprite_t *vis)
 void R_DrawParticle_RGBA(vissprite_t *vis)
 {
 	int spacing;
-	canvas_pixel_t *dest;
+	uint32_t *dest;
 	BYTE color = vis->Style.colormap[vis->startfrac];
 	int yl = vis->y1;
 	int ycount = vis->y2 - yl + 1;
@@ -2698,7 +2701,7 @@ void R_DrawParticle_RGBA(vissprite_t *vis)
 		dc_x = x;
 		if (R_ClipSpriteColumnWithPortals(vis))
 			continue;
-		dest = ylookup[yl] + x + dc_destorg;
+		dest = ylookup[yl] + x + (uint32_t*)dc_destorg;
 		for (int y = 0; y < ycount; y++)
 		{
 			uint32_t bg_red = (*dest >> 16) & 0xff;
@@ -2758,6 +2761,8 @@ void R_DrawVoxel(const FVector3 &globalpos, FAngle viewangle,
 	sprsinang = FLOAT2FIXED(-dasprang.Sin()) >> 2;
 
 	R_SetupDrawSlab(colormap);
+
+	int pixelsize = r_swtruecolor ? 4 : 1;
 
 	// Select mip level
 	i = abs(DMulScale6(dasprx - globalposx, cosang, daspry - globalposy, sinang));
@@ -3012,7 +3017,7 @@ void R_DrawVoxel(const FVector3 &globalpos, FAngle viewangle,
 							if (!(flags & DVF_OFFSCREEN))
 							{
 								// Draw directly to the screen.
-								R_DrawSlab(xxr - xxl, yplc[xxl], z2 - z1, yinc, col, ylookup[z1] + lxt + xxl + dc_destorg);
+								R_DrawSlab(xxr - xxl, yplc[xxl], z2 - z1, yinc, col, (ylookup[z1] + lxt + xxl) * pixelsize + dc_destorg);
 							}
 							else
 							{
@@ -3243,12 +3248,12 @@ void R_CheckOffscreenBuffer(int width, int height, bool spansonly)
 	{
 		if (OffscreenColorBuffer == NULL)
 		{
-			OffscreenColorBuffer = new canvas_pixel_t[width * height];
+			OffscreenColorBuffer = new BYTE[width * height * 4];
 		}
 		else if (OffscreenBufferWidth != width || OffscreenBufferHeight != height)
 		{
 			delete[] OffscreenColorBuffer;
-			OffscreenColorBuffer = new canvas_pixel_t[width * height];
+			OffscreenColorBuffer = new BYTE[width * height * 4];
 		}
 	}
 	OffscreenBufferWidth = width;

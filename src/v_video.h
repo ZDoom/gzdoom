@@ -189,7 +189,7 @@ public:
 	virtual ~DCanvas ();
 
 	// Member variable access
-	inline canvas_pixel_t *GetBuffer () const { return Buffer; }
+	inline BYTE *GetBuffer () const { return Buffer; }
 	inline int GetWidth () const { return Width; }
 	inline int GetHeight () const { return Height; }
 	inline int GetPitch () const { return Pitch; }
@@ -202,10 +202,10 @@ public:
 	virtual bool IsLocked () { return Buffer != NULL; }	// Returns true if the surface is locked
 
 	// Draw a linear block of pixels into the canvas
-	virtual void DrawBlock (int x, int y, int width, int height, const canvas_pixel_t *src) const;
+	virtual void DrawBlock (int x, int y, int width, int height, const BYTE *src) const;
 
 	// Reads a linear block of pixels into the view buffer.
-	virtual void GetBlock (int x, int y, int width, int height, canvas_pixel_t *dest) const;
+	virtual void GetBlock (int x, int y, int width, int height, BYTE *dest) const;
 
 	// Dim the entire canvas for the menus
 	virtual void Dim (PalEntry color = 0);
@@ -237,7 +237,7 @@ public:
 	// Retrieves a buffer containing image data for a screenshot.
 	// Hint: Pitch can be negative for upside-down images, in which case buffer
 	// points to the last row in the buffer, which will be the first row output.
-	virtual void GetScreenshotBuffer(const canvas_pixel_t *&buffer, int &pitch, ESSType &color_type);
+	virtual void GetScreenshotBuffer(const BYTE *&buffer, int &pitch, ESSType &color_type);
 
 	// Releases the screenshot buffer.
 	virtual void ReleaseScreenshotBuffer();
@@ -262,13 +262,13 @@ public:
 	void DrawChar (FFont *font, int normalcolor, int x, int y, BYTE character, int tag_first, ...);
 
 protected:
-	canvas_pixel_t *Buffer;
+	BYTE *Buffer;
 	int Width;
 	int Height;
 	int Pitch;
 	int LockCount;
 
-	bool ClipBox (int &left, int &top, int &width, int &height, const canvas_pixel_t *&src, const int srcpitch) const;
+	bool ClipBox (int &left, int &top, int &width, int &height, const BYTE *&src, const int srcpitch) const;
 	void DrawTextureV(FTexture *img, double x, double y, uint32 tag, va_list tags) = delete;
 	virtual void DrawTextureParms(FTexture *img, DrawParms &parms);
 	bool ParseDrawTextureTags (FTexture *img, double x, double y, uint32 tag, va_list tags, DrawParms *parms, bool fortext) const;
@@ -297,7 +297,7 @@ public:
 	void Unlock ();
 
 protected:
-	canvas_pixel_t *MemBuffer;
+	BYTE *MemBuffer;
 
 	DSimpleCanvas() {}
 };

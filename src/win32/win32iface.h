@@ -252,7 +252,7 @@ public:
 	bool PaintToWindow ();
 	void SetVSync (bool vsync);
 	void NewRefreshRate();
-	void GetScreenshotBuffer(const canvas_pixel_t *&buffer, int &pitch, ESSType &color_type);
+	void GetScreenshotBuffer(const BYTE *&buffer, int &pitch, ESSType &color_type);
 	void ReleaseScreenshotBuffer();
 	void SetBlendingRect (int x1, int y1, int x2, int y2);
 	bool Begin2D (bool copy3d);

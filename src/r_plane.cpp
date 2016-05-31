@@ -354,12 +354,12 @@ void R_CalcTiltedLighting (double lval, double lend, int width)
 //
 //==========================================================================
 
-void R_MapTiltedPlane (int y, int x1)
+void R_MapTiltedPlane_C (int y, int x1)
 {
 	int x2 = spanend[y];
 	int width = x2 - x1;
 	double iz, uz, vz;
-	canvas_pixel_t *fb;
+	BYTE *fb;
 	DWORD u, v;
 	int i;
 
@@ -478,6 +478,130 @@ void R_MapTiltedPlane (int y, int x1)
 #endif
 }
 
+void R_MapTiltedPlane_RGBA (int y, int x1)
+{
+	int x2 = spanend[y];
+	int width = x2 - x1;
+	double iz, uz, vz;
+	uint32_t *fb;
+	DWORD u, v;
+	int i;
+
+	iz = plane_sz[2] + plane_sz[1]*(centery-y) + plane_sz[0]*(x1-centerx);
+
+	// Lighting is simple. It's just linear interpolation from start to end
+	if (plane_shade)
+	{
+		uz = (iz + plane_sz[0]*width) * planelightfloat;
+		vz = iz * planelightfloat;
+		R_CalcTiltedLighting (vz, uz, width);
+	}
+
+	uz = plane_su[2] + plane_su[1]*(centery-y) + plane_su[0]*(x1-centerx);
+	vz = plane_sv[2] + plane_sv[1]*(centery-y) + plane_sv[0]*(x1-centerx);
+
+	fb = ylookup[y] + x1 + (uint32_t*)dc_destorg;
+
+	BYTE vshift = 32 - ds_ybits;
+	BYTE ushift = vshift - ds_xbits;
+	int umask = ((1 << ds_xbits) - 1) << ds_ybits;
+
+#if 0		// The "perfect" reference version of this routine. Pretty slow.
+			// Use it only to see how things are supposed to look.
+	i = 0;
+	do
+	{
+		double z = 1.f/iz;
+
+		u = SQWORD(uz*z) + pviewx;
+		v = SQWORD(vz*z) + pviewy;
+		ds_colormap = tiltlighting[i];
+		ds_light = 0;
+		fb[i++] = ds_colormap[ds_source[(v >> vshift) | ((u >> ushift) & umask)]];
+		iz += plane_sz[0];
+		uz += plane_su[0];
+		vz += plane_sv[0];
+	} while (--width >= 0);
+#else
+//#define SPANSIZE 32
+//#define INVSPAN 0.03125f
+//#define SPANSIZE 8
+//#define INVSPAN 0.125f
+#define SPANSIZE 16
+#define INVSPAN	0.0625f
+
+	double startz = 1.f/iz;
+	double startu = uz*startz;
+	double startv = vz*startz;
+	double izstep, uzstep, vzstep;
+
+	izstep = plane_sz[0] * SPANSIZE;
+	uzstep = plane_su[0] * SPANSIZE;
+	vzstep = plane_sv[0] * SPANSIZE;
+	x1 = 0;
+	width++;
+
+	while (width >= SPANSIZE)
+	{
+		iz += izstep;
+		uz += uzstep;
+		vz += vzstep;
+
+		double endz = 1.f/iz;
+		double endu = uz*endz;
+		double endv = vz*endz;
+		DWORD stepu = SQWORD((endu - startu) * INVSPAN);
+		DWORD stepv = SQWORD((endv - startv) * INVSPAN);
+		u = SQWORD(startu) + pviewx;
+		v = SQWORD(startv) + pviewy;
+
+		for (i = SPANSIZE-1; i >= 0; i--)
+		{
+			fb[x1] = *(tiltlighting[x1] + ds_source[(v >> vshift) | ((u >> ushift) & umask)]);
+			x1++;
+			u += stepu;
+			v += stepv;
+		}
+		startu = endu;
+		startv = endv;
+		width -= SPANSIZE;
+	}
+	if (width > 0)
+	{
+		if (width == 1)
+		{
+			u = SQWORD(startu);
+			v = SQWORD(startv);
+			fb[x1] = *(tiltlighting[x1] + ds_source[(v >> vshift) | ((u >> ushift) & umask)]);
+		}
+		else
+		{
+			double left = width;
+			iz += plane_sz[0] * left;
+			uz += plane_su[0] * left;
+			vz += plane_sv[0] * left;
+
+			double endz = 1.f/iz;
+			double endu = uz*endz;
+			double endv = vz*endz;
+			left = 1.f/left;
+			DWORD stepu = SQWORD((endu - startu) * left);
+			DWORD stepv = SQWORD((endv - startv) * left);
+			u = SQWORD(startu) + pviewx;
+			v = SQWORD(startv) + pviewy;
+
+			for (; width != 0; width--)
+			{
+				fb[x1] = *(tiltlighting[x1] + ds_source[(v >> vshift) | ((u >> ushift) & umask)]);
+				x1++;
+				u += stepu;
+				v += stepv;
+			}
+		}
+	}
+#endif
+}
+
 //==========================================================================
 //
 // R_MapColoredPlane
@@ -491,7 +615,7 @@ void R_MapColoredPlane_C (int y, int x1)
 
 void R_MapColoredPlane_RGBA(int y, int x1)
 {
-	canvas_pixel_t *dest = ylookup[y] + x1 + dc_destorg;
+	uint32_t *dest = ylookup[y] + x1 + (uint32_t*)dc_destorg;
 	int count = (spanend[y] - x1 + 1);
 	uint32_t light = calc_light_multiplier(ds_light);
 	uint32_t color = shade_pal_index(ds_color, light);

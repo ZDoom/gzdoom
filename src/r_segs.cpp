@@ -1071,7 +1071,7 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 }
 
 // prevlineasm1 is like vlineasm1 but skips the loop if only drawing one pixel
-inline fixed_t prevline1 (fixed_t vince, BYTE *colormap, fixed_t light, int count, fixed_t vplce, const BYTE *bufplce, canvas_pixel_t *dest)
+inline fixed_t prevline1 (fixed_t vince, BYTE *colormap, fixed_t light, int count, fixed_t vplce, const BYTE *bufplce, BYTE *dest)
 {
 	dc_iscale = vince;
 	dc_colormap = colormap;
@@ -1106,6 +1106,8 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *l
 
 //extern cycle_t WallScanCycles;
 //clock (WallScanCycles);
+
+	int pixelsize = r_swtruecolor ? 4 : 1;
 
 	rw_pic->GetHeight();	// Make sure texture size is loaded
 	fracbits = 32 - rw_pic->HeightBits;
@@ -1144,7 +1146,7 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *l
 		}
 
 		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
-		dc_dest = ylookup[y1ve[0]] + x + dc_destorg;
+		dc_dest = (ylookup[y1ve[0]] + x)*pixelsize + dc_destorg;
 		dc_count = y2ve[0] - y1ve[0];
 		iscale = swal[x] * yrepeat;
 		dc_iscale = xs_ToFixed(fracbits, iscale);
@@ -1202,7 +1204,7 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *l
 			{
 				if (!(bad & 1))
 				{
-					prevline1(vince[z],palookupoffse[z],palookuplight[z],y2ve[z]-y1ve[z],vplce[z],bufplce[z],ylookup[y1ve[z]]+x+z+dc_destorg);
+					prevline1(vince[z],palookupoffse[z],palookuplight[z],y2ve[z]-y1ve[z],vplce[z],bufplce[z],(ylookup[y1ve[z]]+x+z)*pixelsize+dc_destorg);
 				}
 				bad >>= 1;
 			}
@@ -1213,23 +1215,23 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *l
 		{
 			if (u4 > y1ve[z])
 			{
-				vplce[z] = prevline1(vince[z],palookupoffse[z], palookuplight[z],u4-y1ve[z],vplce[z],bufplce[z],ylookup[y1ve[z]]+x+z+dc_destorg);
+				vplce[z] = prevline1(vince[z],palookupoffse[z], palookuplight[z],u4-y1ve[z],vplce[z],bufplce[z],(ylookup[y1ve[z]]+x+z)*pixelsize+dc_destorg);
 			}
 		}
 
 		if (d4 > u4)
 		{
 			dc_count = d4-u4;
-			dc_dest = ylookup[u4]+x+dc_destorg;
+			dc_dest = (ylookup[u4]+x)*pixelsize+dc_destorg;
 			dovline4();
 		}
 
-		canvas_pixel_t *i = x+ylookup[d4]+dc_destorg;
+		BYTE *i = (x+ylookup[d4])*pixelsize+dc_destorg;
 		for (z = 0; z < 4; ++z)
 		{
 			if (y2ve[z] > d4)
 			{
-				prevline1(vince[z],palookupoffse[0],palookuplight[0],y2ve[z]-d4,vplce[z],bufplce[z],i+z);
+				prevline1(vince[z],palookupoffse[0],palookuplight[0],y2ve[z]-d4,vplce[z],bufplce[z],i+z*pixelsize);
 			}
 		}
 	}
@@ -1248,7 +1250,7 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *l
 		}
 
 		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
-		dc_dest = ylookup[y1ve[0]] + x + dc_destorg;
+		dc_dest = (ylookup[y1ve[0]] + x) * pixelsize + dc_destorg;
 		dc_count = y2ve[0] - y1ve[0];
 		iscale = swal[x] * yrepeat;
 		dc_iscale = xs_ToFixed(fracbits, iscale);
@@ -1435,7 +1437,7 @@ static void wallscan_np2_ds(drawseg_t *ds, int x1, int x2, short *uwal, short *d
 	}
 }
 
-inline fixed_t mvline1 (fixed_t vince, BYTE *colormap, int count, fixed_t vplce, const BYTE *bufplce, canvas_pixel_t *dest)
+inline fixed_t mvline1 (fixed_t vince, BYTE *colormap, int count, fixed_t vplce, const BYTE *bufplce, BYTE *dest)
 {
 	dc_iscale = vince;
 	dc_colormap = colormap;
@@ -1451,7 +1453,8 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_
 	double yrepeat, const BYTE *(*getcol)(FTexture *tex, int x))
 {
 	int x, fracbits;
-	canvas_pixel_t *p;
+	BYTE *pixel;
+	int pixelsize, pixelshift;
 	int y1ve[4], y2ve[4], u4, d4, startx, dax, z;
 	char bad;
 	float light = rw_light - rw_lightstep;
@@ -1473,6 +1476,9 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_
 //extern cycle_t WallScanCycles;
 //clock (WallScanCycles);
 
+	pixelsize = r_swtruecolor ? 4 : 1;
+	pixelshift = r_swtruecolor ? 2 : 0;
+
 	rw_pic->GetHeight();	// Make sure texture size is loaded
 	fracbits = 32- rw_pic->HeightBits;
 	setupmvline(fracbits);
@@ -1480,7 +1486,7 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_
 	basecolormapdata = basecolormap->Maps;
 
 	x = startx = x1;
-	p = x + dc_destorg;
+	pixel = x * pixelsize + dc_destorg;
 
 	bool fixed = (fixedcolormap != NULL || fixedlightlev >= 0);
 	if (fixed)
@@ -1489,9 +1495,13 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_
 		palookupoffse[1] = dc_colormap;
 		palookupoffse[2] = dc_colormap;
 		palookupoffse[3] = dc_colormap;
+		palookuplight[0] = 0;
+		palookuplight[1] = 0;
+		palookuplight[2] = 0;
+		palookuplight[3] = 0;
 	}
 
-	for(; (x < x2) && (((size_t)p/sizeof(canvas_pixel_t)) & 3); ++x, ++p)
+	for(; (x < x2) && (((size_t)pixel >> pixelshift) & 3); ++x, pixel += pixelsize)
 	{
 		light += rw_lightstep;
 		y1ve[0] = uwal[x];//max(uwal[x],umost[x]);
@@ -1505,7 +1515,7 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_
 		}
 
 		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
-		dc_dest = ylookup[y1ve[0]] + p;
+		dc_dest = ylookup[y1ve[0]] * pixelsize + pixel;
 		dc_count = y2ve[0] - y1ve[0];
 		iscale = swal[x] * yrepeat;
 		dc_iscale = xs_ToFixed(fracbits, iscale);
@@ -1514,7 +1524,7 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_
 		domvline1();
 	}
 
-	for(; x < x2-3; x += 4, p+= 4)
+	for(; x < x2-3; x += 4, pixel += 4 * pixelsize)
 	{
 		bad = 0;
 		for (z = 3, dax = x+3; z >= 0; --z, --dax)
@@ -1539,7 +1549,16 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_
 			for (z = 0; z < 4; ++z)
 			{
 				light += rw_lightstep;
-				palookupoffse[z] = basecolormapdata + (GETPALOOKUP (light, wallshade) << COLORMAPSHIFT);
+				if (r_swtruecolor)
+				{
+					palookupoffse[z] = basecolormapdata;
+					palookuplight[z] = LIGHTSCALE(light, wallshade);
+				}
+				else
+				{
+					palookupoffse[z] = basecolormapdata + (GETPALOOKUP(light, wallshade) << COLORMAPSHIFT);
+					palookuplight[z] = 0;
+				}
 			}
 		}
 
@@ -1552,7 +1571,7 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_
 			{
 				if (!(bad & 1))
 				{
-					mvline1(vince[z],palookupoffse[z],y2ve[z]-y1ve[z],vplce[z],bufplce[z],ylookup[y1ve[z]]+p+z);
+					mvline1(vince[z],palookupoffse[z],y2ve[z]-y1ve[z],vplce[z],bufplce[z],(ylookup[y1ve[z]]+z)*pixelsize+pixel);
 				}
 				bad >>= 1;
 			}
@@ -1563,27 +1582,27 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_
 		{
 			if (u4 > y1ve[z])
 			{
-				vplce[z] = mvline1(vince[z],palookupoffse[z],u4-y1ve[z],vplce[z],bufplce[z],ylookup[y1ve[z]]+p+z);
+				vplce[z] = mvline1(vince[z],palookupoffse[z],u4-y1ve[z],vplce[z],bufplce[z],(ylookup[y1ve[z]]+z)*pixelsize+pixel);
 			}
 		}
 
 		if (d4 > u4)
 		{
 			dc_count = d4-u4;
-			dc_dest = ylookup[u4]+p;
+			dc_dest = ylookup[u4]*pixelsize+pixel;
 			domvline4();
 		}
 
-		canvas_pixel_t *i = p+ylookup[d4];
+		BYTE *i = pixel+ylookup[d4]*pixelsize;
 		for (z = 0; z < 4; ++z)
 		{
 			if (y2ve[z] > d4)
 			{
-				mvline1(vince[z],palookupoffse[0],y2ve[z]-d4,vplce[z],bufplce[z],i+z);
+				mvline1(vince[z],palookupoffse[0],y2ve[z]-d4,vplce[z],bufplce[z],i+z*pixelsize);
 			}
 		}
 	}
-	for(; x < x2; ++x, ++p)
+	for(; x < x2; ++x, pixel += pixelsize)
 	{
 		light += rw_lightstep;
 		y1ve[0] = uwal[x];
@@ -1597,7 +1616,7 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_
 		}
 
 		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
-		dc_dest = ylookup[y1ve[0]] + p;
+		dc_dest = ylookup[y1ve[0]]*pixelsize + pixel;
 		dc_count = y2ve[0] - y1ve[0];
 		iscale = swal[x] * yrepeat;
 		dc_iscale = xs_ToFixed(fracbits, iscale);
@@ -1611,7 +1630,7 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_
 	NetUpdate ();
 }
 
-inline void preptmvline1 (fixed_t vince, BYTE *colormap, fixed_t light, int count, fixed_t vplce, const BYTE *bufplce, canvas_pixel_t *dest)
+inline void preptmvline1 (fixed_t vince, BYTE *colormap, fixed_t light, int count, fixed_t vplce, const BYTE *bufplce, BYTE *dest)
 {
 	dc_iscale = vince;
 	dc_colormap = colormap;
@@ -1628,7 +1647,8 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, f
 	fixed_t (*tmvline1)();
 	void (*tmvline4)();
 	int x, fracbits;
-	canvas_pixel_t *p;
+	BYTE *pixel;
+	int pixelsize, pixelshift;
 	int y1ve[4], y2ve[4], u4, d4, startx, dax, z;
 	char bad;
 	float light = rw_light - rw_lightstep;
@@ -1651,6 +1671,9 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, f
 //extern cycle_t WallScanCycles;
 //clock (WallScanCycles);
 
+	pixelsize = r_swtruecolor ? 4 : 1;
+	pixelshift = r_swtruecolor ? 2 : 0;
+
 	rw_pic->GetHeight();	// Make sure texture size is loaded
 	fracbits = 32 - rw_pic->HeightBits;
 	setuptmvline(fracbits);
@@ -1659,7 +1682,7 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, f
 	fixed_t centeryfrac = FLOAT2FIXED(CenterY);
 
 	x = startx = x1;
-	p = x + dc_destorg;
+	pixel = x * pixelsize + dc_destorg;
 
 	bool fixed = (fixedcolormap != NULL || fixedlightlev >= 0);
 	if (fixed)
@@ -1674,7 +1697,7 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, f
 		palookuplight[3] = 0;
 	}
 
-	for(; (x < x2) && (((size_t)p / sizeof(canvas_pixel_t)) & 3); ++x, ++p)
+	for(; (x < x2) && (((size_t)pixel >> pixelshift) & 3); ++x, pixel += pixelsize)
 	{
 		light += rw_lightstep;
 		y1ve[0] = uwal[x];//max(uwal[x],umost[x]);
@@ -1687,7 +1710,7 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, f
 		}
 
 		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
-		dc_dest = ylookup[y1ve[0]] + p;
+		dc_dest = ylookup[y1ve[0]] * pixelsize + pixel;
 		dc_count = y2ve[0] - y1ve[0];
 		iscale = swal[x] * yrepeat;
 		dc_iscale = xs_ToFixed(fracbits, iscale);
@@ -1696,7 +1719,7 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, f
 		tmvline1();
 	}
 
-	for(; x < x2-3; x += 4, p+= 4)
+	for(; x < x2-3; x += 4, pixel += 4 * pixelsize)
 	{
 		bad = 0;
 		for (z = 3, dax = x+3; z >= 0; --z, --dax)
@@ -1742,7 +1765,7 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, f
 			{
 				if (!(bad & 1))
 				{
-					preptmvline1(vince[z],palookupoffse[z],palookuplight[z],y2ve[z]-y1ve[z],vplce[z],bufplce[z],ylookup[y1ve[z]]+p+z);
+					preptmvline1(vince[z],palookupoffse[z],palookuplight[z],y2ve[z]-y1ve[z],vplce[z],bufplce[z],(ylookup[y1ve[z]]+z)*pixelsize+pixel);
 					tmvline1();
 				}
 				bad >>= 1;
@@ -1754,7 +1777,7 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, f
 		{
 			if (u4 > y1ve[z])
 			{
-				preptmvline1(vince[z],palookupoffse[z],palookuplight[z],u4-y1ve[z],vplce[z],bufplce[z],ylookup[y1ve[z]]+p+z);
+				preptmvline1(vince[z],palookupoffse[z],palookuplight[z],u4-y1ve[z],vplce[z],bufplce[z],(ylookup[y1ve[z]]+z)*pixelsize+pixel);
 				vplce[z] = tmvline1();
 			}
 		}
@@ -1762,21 +1785,21 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, f
 		if (d4 > u4)
 		{
 			dc_count = d4-u4;
-			dc_dest = ylookup[u4]+p;
+			dc_dest = ylookup[u4]*pixelsize+pixel;
 			tmvline4();
 		}
 
-		canvas_pixel_t *i = p+ylookup[d4];
+		BYTE *i = pixel+ylookup[d4]*pixelsize;
 		for (z = 0; z < 4; ++z)
 		{
 			if (y2ve[z] > d4)
 			{
-				preptmvline1(vince[z],palookupoffse[0],palookuplight[0],y2ve[z]-d4,vplce[z],bufplce[z],i+z);
+				preptmvline1(vince[z],palookupoffse[0],palookuplight[0],y2ve[z]-d4,vplce[z],bufplce[z],i+z*pixelsize);
 				tmvline1();
 			}
 		}
 	}
-	for(; x < x2; ++x, ++p)
+	for(; x < x2; ++x, pixel += pixelsize)
 	{
 		light += rw_lightstep;
 		y1ve[0] = uwal[x];
@@ -1789,7 +1812,7 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, f
 		}
 
 		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
-		dc_dest = ylookup[y1ve[0]] + p;
+		dc_dest = ylookup[y1ve[0]] * pixelsize + pixel;
 		dc_count = y2ve[0] - y1ve[0];
 		iscale = swal[x] * yrepeat;
 		dc_iscale = xs_ToFixed(fracbits, iscale);

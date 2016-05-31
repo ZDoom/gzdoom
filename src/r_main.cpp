@@ -577,9 +577,12 @@ void R_HighlightPortal (PortalDrawseg* pds)
 	// [ZZ] NO OVERFLOW CHECKS HERE
 	//      I believe it won't break. if it does, blame me. :(
 
+	if (r_swtruecolor) // Assuming this is just a debug function
+		return;
+
 	BYTE color = (BYTE)BestColor((DWORD *)GPalette.BaseColors, 255, 0, 0, 0, 255);
 
-	canvas_pixel_t* pixels = RenderTarget->GetBuffer();
+	BYTE* pixels = RenderTarget->GetBuffer();
 	// top edge
 	for (int x = pds->x1; x < pds->x2; x++)
 	{
@@ -624,12 +627,26 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 			int Ytop = pds->ceilingclip[x-pds->x1];
 			int Ybottom = pds->floorclip[x-pds->x1];
 
-			canvas_pixel_t *dest = RenderTarget->GetBuffer() + x + Ytop * spacing;
-
-			for (int y = Ytop; y <= Ybottom; y++)
+			if (r_swtruecolor)
 			{
-				*dest = color;
-				dest += spacing;
+				uint32_t *dest = (uint32_t*)RenderTarget->GetBuffer() + x + Ytop * spacing;
+
+				uint32_t c = GPalette.BaseColors[color].d;
+				for (int y = Ytop; y <= Ybottom; y++)
+				{
+					*dest = c;
+					dest += spacing;
+				}
+			}
+			else
+			{
+				BYTE *dest = RenderTarget->GetBuffer() + x + Ytop * spacing;
+
+				for (int y = Ytop; y <= Ybottom; y++)
+				{
+					*dest = color;
+					dest += spacing;
+				}
 			}
 		}
 
@@ -795,10 +812,11 @@ void R_EnterPortal (PortalDrawseg* pds, int depth)
 
 void R_SetupBuffer ()
 {
-	static canvas_pixel_t *lastbuff = NULL;
+	static BYTE *lastbuff = NULL;
 
 	int pitch = RenderTarget->GetPitch();
-	canvas_pixel_t *lineptr = RenderTarget->GetBuffer() + viewwindowy*pitch + viewwindowx;
+	int pixelsize = r_swtruecolor ? 4 : 1;
+	BYTE *lineptr = RenderTarget->GetBuffer() + (viewwindowy*pitch + viewwindowx) * pixelsize;
 
 	if (dc_pitch != pitch || lineptr != lastbuff)
 	{

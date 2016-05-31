@@ -999,8 +999,8 @@ DDrawFB::LockSurfRes DDrawFB::LockSurf (LPRECT lockrect, LPDIRECTDRAWSURFACE toL
 		LOG1 ("Final result after restoration attempts: %08lx\n", hr);
 		return NoGood;
 	}
-	Buffer = (canvas_pixel_t *)desc.lpSurface;
-	Pitch = desc.lPitch / sizeof(canvas_pixel_t);
+	Buffer = (BYTE *)desc.lpSurface;
+	Pitch = desc.lPitch;
 	BufferingNow = false;
 	return wasLost ? GoodWasLost : Good;
 }

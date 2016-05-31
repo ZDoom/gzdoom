@@ -80,7 +80,7 @@ bool wipe_initMelt (int ticks)
 	int i, r;
 	
 	// copy start screen to main screen
-	screen->DrawBlock(0, 0, SCREENWIDTH, SCREENHEIGHT, (canvas_pixel_t *)wipe_scr_start);
+	screen->DrawBlock(0, 0, SCREENWIDTH, SCREENHEIGHT, (BYTE *)wipe_scr_start);
 	
 	// makes this wipe faster (in theory)
 	// to have stuff in column-major format
@@ -273,7 +273,7 @@ bool wipe_doBurn (int ticks)
 	// Draw the screen
 	int xstep, ystep, firex, firey;
 	int x, y;
-	canvas_pixel_t *to;
+	BYTE *to;
 	BYTE *fromold, *fromnew;
 	const int SHIFT = 16;
 
@@ -338,7 +338,7 @@ bool wipe_doFade (int ticks)
 	fade += ticks * 2;
 	if (fade > 64)
 	{
-		screen->DrawBlock (0, 0, SCREENWIDTH, SCREENHEIGHT, (canvas_pixel_t *)wipe_scr_end);
+		screen->DrawBlock (0, 0, SCREENWIDTH, SCREENHEIGHT, (BYTE *)wipe_scr_end);
 		return true;
 	}
 	else
@@ -349,7 +349,7 @@ bool wipe_doFade (int ticks)
 		DWORD *bg2rgb = Col2RGB8[bglevel];
 		BYTE *fromnew = (BYTE *)wipe_scr_end;
 		BYTE *fromold = (BYTE *)wipe_scr_start;
-		canvas_pixel_t *to = screen->GetBuffer();
+		BYTE *to = screen->GetBuffer();
 
 		for (y = 0; y < SCREENHEIGHT; y++)
 		{
@@ -393,7 +393,7 @@ bool wipe_StartScreen (int type)
 	if (CurrentWipeType)
 	{
 		wipe_scr_start = new short[SCREENWIDTH * SCREENHEIGHT / 2];
-		screen->GetBlock (0, 0, SCREENWIDTH, SCREENHEIGHT, (canvas_pixel_t *)wipe_scr_start);
+		screen->GetBlock (0, 0, SCREENWIDTH, SCREENHEIGHT, (BYTE *)wipe_scr_start);
 		return true;
 	}
 	return false;
@@ -407,8 +407,8 @@ void wipe_EndScreen (void)
 	if (CurrentWipeType)
 	{
 		wipe_scr_end = new short[SCREENWIDTH * SCREENHEIGHT / 2];
-		screen->GetBlock (0, 0, SCREENWIDTH, SCREENHEIGHT, (canvas_pixel_t *)wipe_scr_end);
-		screen->DrawBlock (0, 0, SCREENWIDTH, SCREENHEIGHT, (canvas_pixel_t *)wipe_scr_start); // restore start scr.
+		screen->GetBlock (0, 0, SCREENWIDTH, SCREENHEIGHT, (BYTE *)wipe_scr_end);
+		screen->DrawBlock (0, 0, SCREENWIDTH, SCREENHEIGHT, (BYTE *)wipe_scr_start); // restore start scr.
 
 		// Initialize the wipe
 		(*wipes[(CurrentWipeType-1)*3])(0);

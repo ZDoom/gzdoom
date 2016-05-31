@@ -1316,7 +1316,7 @@ void D3DFB::Draw3DPart(bool copy3d)
 				else
 				{
 					uint32_t *dest = (uint32_t *)lockrect.pBits;
-					uint32_t *src = MemBuffer;
+					uint32_t *src = (uint32_t*)MemBuffer;
 					for (int y = 0; y < Height; y++)
 					{
 						memcpy(dest, src, Width * sizeof(uint32_t));
@@ -1744,7 +1744,7 @@ void D3DFB::SetBlendingRect(int x1, int y1, int x2, int y2)
 //
 //==========================================================================
 
-void D3DFB::GetScreenshotBuffer(const canvas_pixel_t *&buffer, int &pitch, ESSType &color_type)
+void D3DFB::GetScreenshotBuffer(const BYTE *&buffer, int &pitch, ESSType &color_type)
 {
 	D3DLOCKED_RECT lrect;
 
@@ -1770,7 +1770,7 @@ void D3DFB::GetScreenshotBuffer(const canvas_pixel_t *&buffer, int &pitch, ESSTy
 		}
 		else
 		{
-			buffer = (const canvas_pixel_t *)lrect.pBits;
+			buffer = (const BYTE *)lrect.pBits;
 			pitch = lrect.Pitch;
 			color_type = SS_BGRA;
 		}

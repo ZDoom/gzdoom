@@ -45,7 +45,7 @@ extern "C" DWORD		*dc_destblend;
 // first pixel in a column
 extern "C" const BYTE*	dc_source;
 
-extern "C" canvas_pixel_t *dc_dest, *dc_destorg;
+extern "C" BYTE*		dc_dest, *dc_destorg;
 extern "C" int			dc_count;
 
 extern "C" DWORD		vplce[4];
@@ -55,7 +55,7 @@ extern "C" fixed_t		palookuplight[4];
 extern "C" const BYTE*	bufplce[4];
 
 // [RH] Temporary buffer for column drawing
-extern "C" canvas_pixel_t *dc_temp;
+extern "C" BYTE *dc_temp;
 extern "C" unsigned int	dc_tspans[4][MAXHEIGHT];
 extern "C" unsigned int	*dc_ctspan[4];
 extern "C" unsigned int	horizspans[4];
@@ -228,13 +228,13 @@ extern void (*rt_tlateaddclamp4cols)(int sx, int yl, int yh);
 extern void (*rt_tlatesubclamp4cols)(int sx, int yl, int yh);
 extern void (*rt_tlaterevsubclamp4cols)(int sx, int yl, int yh);
 
-extern void (*rt_initcols)(canvas_pixel_t *buffer);
+extern void (*rt_initcols)(BYTE *buffer);
 
 void rt_draw4cols (int sx);
 
 // [RH] Preps the temporary horizontal buffer.
-void rt_initcols_pal (canvas_pixel_t *buffer);
-void rt_initcols_rgba (canvas_pixel_t *buffer);
+void rt_initcols_pal (BYTE *buffer);
+void rt_initcols_rgba (BYTE *buffer);
 
 
 extern void (*R_DrawFogBoundary)(int x1, int x2, short *uclip, short *dclip);
@@ -313,7 +313,7 @@ void	R_FillSpan_RGBA_C(void);
 #endif
 
 extern "C" void			   R_SetupDrawSlab(const BYTE *colormap);
-extern "C" void R_DrawSlab(int dx, fixed_t v, int dy, fixed_t vi, const BYTE *vptr, canvas_pixel_t *p);
+extern "C" void R_DrawSlab(int dx, fixed_t v, int dy, fixed_t vi, const BYTE *vptr, BYTE *p);
 
 extern "C" int				ds_y;
 extern "C" int				ds_x1;

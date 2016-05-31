@@ -43,8 +43,8 @@
 #include "r_things.h"
 #include "v_video.h"
 
-canvas_pixel_t dc_temp_rgbabuff_rgba[MAXHEIGHT*4];
-canvas_pixel_t *dc_temp_rgba;
+uint32_t dc_temp_rgbabuff_rgba[MAXHEIGHT*4];
+uint32_t *dc_temp_rgba;
 
 // Defined in r_draw_t.cpp:
 extern unsigned int dc_tspans[4][MAXHEIGHT];
@@ -54,8 +54,8 @@ extern unsigned int *horizspan[4];
 // Copies one span at hx to the screen at sx.
 void rt_copy1col_RGBA_c (int hx, int sx, int yl, int yh)
 {
-	canvas_pixel_t *source;
-	canvas_pixel_t *dest;
+	uint32_t *source;
+	uint32_t *dest;
 	int count;
 	int pitch;
 
@@ -64,7 +64,7 @@ void rt_copy1col_RGBA_c (int hx, int sx, int yl, int yh)
 		return;
 	count++;
 
-	dest = ylookup[yl] + sx + dc_destorg;
+	dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
 	source = &dc_temp_rgba[yl*4 + hx];
 	pitch = dc_pitch;
 
@@ -106,8 +106,8 @@ void rt_copy4cols_RGBA_c (int sx, int yl, int yh)
 void rt_map1col_RGBA_c (int hx, int sx, int yl, int yh)
 {
 	BYTE *colormap;
-	canvas_pixel_t *source;
-	canvas_pixel_t *dest;
+	uint32_t *source;
+	uint32_t *dest;
 	int count;
 	int pitch;
 
@@ -119,7 +119,7 @@ void rt_map1col_RGBA_c (int hx, int sx, int yl, int yh)
 	uint32_t light = calc_light_multiplier(dc_light);
 
 	colormap = dc_colormap;
-	dest = ylookup[yl] + sx + dc_destorg;
+	dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
 	source = &dc_temp_rgba[yl*4 + hx];
 	pitch = dc_pitch;
 
@@ -143,8 +143,8 @@ void rt_map1col_RGBA_c (int hx, int sx, int yl, int yh)
 void rt_map4cols_RGBA_c (int sx, int yl, int yh)
 {
 	BYTE *colormap;
-	canvas_pixel_t *source;
-	canvas_pixel_t *dest;
+	uint32_t *source;
+	uint32_t *dest;
 	int count;
 	int pitch;
 
@@ -156,7 +156,7 @@ void rt_map4cols_RGBA_c (int sx, int yl, int yh)
 	uint32_t light = calc_light_multiplier(dc_light);
 
 	colormap = dc_colormap;
-	dest = ylookup[yl] + sx + dc_destorg;
+	dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
 	source = &dc_temp_rgba[yl*4];
 	pitch = dc_pitch;
 	
@@ -188,7 +188,7 @@ void rt_map4cols_RGBA_c (int sx, int yl, int yh)
 void rt_Translate1col_RGBA_c(const BYTE *translation, int hx, int yl, int yh)
 {
 	int count = yh - yl + 1;
-	canvas_pixel_t *source = &dc_temp_rgba[yl*4 + hx];
+	uint32_t *source = &dc_temp_rgba[yl*4 + hx];
 
 	// Things we do to hit the compiler's optimizer with a clue bat:
 	// 1. Parallelism is explicitly spelled out by using a separate
@@ -235,7 +235,7 @@ void rt_Translate1col_RGBA_c(const BYTE *translation, int hx, int yl, int yh)
 void rt_Translate4cols_RGBA_c(const BYTE *translation, int yl, int yh)
 {
 	int count = yh - yl + 1;
-	canvas_pixel_t *source = &dc_temp_rgba[yl*4];
+	uint32_t *source = &dc_temp_rgba[yl*4];
 	int c0, c1;
 	BYTE b0, b1;
 
@@ -291,8 +291,8 @@ void rt_tlate4cols_RGBA_c (int sx, int yl, int yh)
 void rt_add1col_RGBA_c (int hx, int sx, int yl, int yh)
 {
 	BYTE *colormap;
-	canvas_pixel_t *source;
-	canvas_pixel_t *dest;
+	uint32_t *source;
+	uint32_t *dest;
 	int count;
 	int pitch;
 
@@ -301,7 +301,7 @@ void rt_add1col_RGBA_c (int hx, int sx, int yl, int yh)
 		return;
 	count++;
 
-	dest = ylookup[yl] + sx + dc_destorg;
+	dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
 	source = &dc_temp_rgba[yl*4 + hx];
 	pitch = dc_pitch;
 	colormap = dc_colormap;
@@ -333,8 +333,8 @@ void rt_add1col_RGBA_c (int hx, int sx, int yl, int yh)
 void rt_add4cols_RGBA_c (int sx, int yl, int yh)
 {
 	BYTE *colormap;
-	canvas_pixel_t *source;
-	canvas_pixel_t *dest;
+	uint32_t *source;
+	uint32_t *dest;
 	int count;
 	int pitch;
 
@@ -343,7 +343,7 @@ void rt_add4cols_RGBA_c (int sx, int yl, int yh)
 		return;
 	count++;
 
-	dest = ylookup[yl] + sx + dc_destorg;
+	dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
 	source = &dc_temp_rgba[yl*4];
 	pitch = dc_pitch;
 	colormap = dc_colormap;
@@ -392,8 +392,8 @@ void rt_tlateadd4cols_RGBA_c(int sx, int yl, int yh)
 void rt_shaded1col_RGBA_c (int hx, int sx, int yl, int yh)
 {
 	BYTE *colormap;
-	canvas_pixel_t *source;
-	canvas_pixel_t *dest;
+	uint32_t *source;
+	uint32_t *dest;
 	int count;
 	int pitch;
 
@@ -403,7 +403,7 @@ void rt_shaded1col_RGBA_c (int hx, int sx, int yl, int yh)
 	count++;
 
 	colormap = dc_colormap;
-	dest = ylookup[yl] + sx + dc_destorg;
+	dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
 	source = &dc_temp_rgba[yl*4 + hx];
 	pitch = dc_pitch;
 
@@ -434,8 +434,8 @@ void rt_shaded1col_RGBA_c (int hx, int sx, int yl, int yh)
 void rt_shaded4cols_RGBA_c (int sx, int yl, int yh)
 {
 	BYTE *colormap;
-	canvas_pixel_t *source;
-	canvas_pixel_t *dest;
+	uint32_t *source;
+	uint32_t *dest;
 	int count;
 	int pitch;
 
@@ -445,7 +445,7 @@ void rt_shaded4cols_RGBA_c (int sx, int yl, int yh)
 	count++;
 
 	colormap = dc_colormap;
-	dest = ylookup[yl] + sx + dc_destorg;
+	dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
 	source = &dc_temp_rgba[yl*4];
 	pitch = dc_pitch;
 
@@ -479,8 +479,8 @@ void rt_shaded4cols_RGBA_c (int sx, int yl, int yh)
 void rt_addclamp1col_RGBA_c (int hx, int sx, int yl, int yh)
 {
 	BYTE *colormap;
-	canvas_pixel_t *source;
-	canvas_pixel_t *dest;
+	uint32_t *source;
+	uint32_t *dest;
 	int count;
 	int pitch;
 
@@ -489,7 +489,7 @@ void rt_addclamp1col_RGBA_c (int hx, int sx, int yl, int yh)
 		return;
 	count++;
 
-	dest = ylookup[yl] + sx + dc_destorg;
+	dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
 	source = &dc_temp_rgba[yl*4 + hx];
 	pitch = dc_pitch;
 	colormap = dc_colormap;
@@ -520,8 +520,8 @@ void rt_addclamp1col_RGBA_c (int hx, int sx, int yl, int yh)
 void rt_addclamp4cols_RGBA_c (int sx, int yl, int yh)
 {
 	BYTE *colormap;
-	canvas_pixel_t *source;
-	canvas_pixel_t *dest;
+	uint32_t *source;
+	uint32_t *dest;
 	int count;
 	int pitch;
 
@@ -530,7 +530,7 @@ void rt_addclamp4cols_RGBA_c (int sx, int yl, int yh)
 		return;
 	count++;
 
-	dest = ylookup[yl] + sx + dc_destorg;
+	dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
 	source = &dc_temp_rgba[yl*4];
 	pitch = dc_pitch;
 	colormap = dc_colormap;
@@ -578,8 +578,8 @@ void rt_tlateaddclamp4cols_RGBA_c (int sx, int yl, int yh)
 void rt_subclamp1col_RGBA_c (int hx, int sx, int yl, int yh)
 {
 	BYTE *colormap;
-	canvas_pixel_t *source;
-	canvas_pixel_t *dest;
+	uint32_t *source;
+	uint32_t *dest;
 	int count;
 	int pitch;
 
@@ -588,7 +588,7 @@ void rt_subclamp1col_RGBA_c (int hx, int sx, int yl, int yh)
 		return;
 	count++;
 
-	dest = ylookup[yl] + sx + dc_destorg;
+	dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
 	source = &dc_temp_rgba[yl*4 + hx];
 	pitch = dc_pitch;
 	colormap = dc_colormap;
@@ -619,8 +619,8 @@ void rt_subclamp1col_RGBA_c (int hx, int sx, int yl, int yh)
 void rt_subclamp4cols_RGBA_c (int sx, int yl, int yh)
 {
 	BYTE *colormap;
-	canvas_pixel_t *source;
-	canvas_pixel_t *dest;
+	uint32_t *source;
+	uint32_t *dest;
 	int count;
 	int pitch;
 
@@ -629,7 +629,7 @@ void rt_subclamp4cols_RGBA_c (int sx, int yl, int yh)
 		return;
 	count++;
 
-	dest = ylookup[yl] + sx + dc_destorg;
+	dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
 	source = &dc_temp_rgba[yl*4];
 	pitch = dc_pitch;
 	colormap = dc_colormap;
@@ -678,8 +678,8 @@ void rt_tlatesubclamp4cols_RGBA_c (int sx, int yl, int yh)
 void rt_revsubclamp1col_RGBA_c (int hx, int sx, int yl, int yh)
 {
 	BYTE *colormap;
-	canvas_pixel_t *source;
-	canvas_pixel_t *dest;
+	uint32_t *source;
+	uint32_t *dest;
 	int count;
 	int pitch;
 
@@ -690,7 +690,7 @@ void rt_revsubclamp1col_RGBA_c (int hx, int sx, int yl, int yh)
 
 	DWORD *fg2rgb = dc_srcblend;
 	DWORD *bg2rgb = dc_destblend;
-	dest = ylookup[yl] + sx + dc_destorg;
+	dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
 	source = &dc_temp_rgba[yl*4 + hx];
 	pitch = dc_pitch;
 	colormap = dc_colormap;
@@ -721,8 +721,8 @@ void rt_revsubclamp1col_RGBA_c (int hx, int sx, int yl, int yh)
 void rt_revsubclamp4cols_RGBA_c (int sx, int yl, int yh)
 {
 	BYTE *colormap;
-	canvas_pixel_t *source;
-	canvas_pixel_t *dest;
+	uint32_t *source;
+	uint32_t *dest;
 	int count;
 	int pitch;
 
@@ -733,7 +733,7 @@ void rt_revsubclamp4cols_RGBA_c (int sx, int yl, int yh)
 
 	DWORD *fg2rgb = dc_srcblend;
 	DWORD *bg2rgb = dc_destblend;
-	dest = ylookup[yl] + sx + dc_destorg;
+	dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
 	source = &dc_temp_rgba[yl*4];
 	pitch = dc_pitch;
 	colormap = dc_colormap;
@@ -780,11 +780,11 @@ void rt_tlaterevsubclamp4cols_RGBA_c (int sx, int yl, int yh)
 
 // Before each pass through a rendering loop that uses these routines,
 // call this function to set up the span pointers.
-void rt_initcols_rgba (canvas_pixel_t *buff)
+void rt_initcols_rgba (BYTE *buff)
 {
 	int y;
 
-	dc_temp_rgba = buff == NULL ? dc_temp_rgbabuff_rgba : buff;
+	dc_temp_rgba = buff == NULL ? dc_temp_rgbabuff_rgba : (uint32_t*)buff;
 	for (y = 3; y >= 0; y--)
 		horizspan[y] = dc_ctspan[y] = &dc_tspans[y][0];
 }
@@ -794,7 +794,7 @@ void rt_initcols_rgba (canvas_pixel_t *buff)
 void R_DrawColumnHorizP_RGBA_C (void)
 {
 	int count = dc_count;
-	canvas_pixel_t *dest;
+	uint32_t *dest;
 	fixed_t fracstep;
 	fixed_t frac;
 
@@ -855,7 +855,7 @@ void R_FillColumnHorizP_RGBA_C (void)
 {
 	int count = dc_count;
 	BYTE color = dc_color;
-	canvas_pixel_t *dest;
+	uint32_t *dest;
 
 	if (count <= 0)
 		return;

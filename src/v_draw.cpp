@@ -179,7 +179,7 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 	fixedcolormap = dc_colormap;
 	ESPSResult mode = R_SetPatchStyle (parms.style, parms.Alpha, 0, parms.fillcolor);
 
-	canvas_pixel_t *destorgsave = dc_destorg;
+	BYTE *destorgsave = dc_destorg;
 	dc_destorg = screen->GetBuffer();
 	if (dc_destorg == NULL)
 	{
@@ -1021,7 +1021,7 @@ void DCanvas::PUTTRANSDOT (int xx, int yy, int basecolor, int level)
 
 	if (r_swtruecolor)
 	{
-		canvas_pixel_t *spot = GetBuffer() + oldyyshifted + xx;
+		uint32_t *spot = (uint32_t*)GetBuffer() + oldyyshifted + xx;
 
 		uint32_t fg = shade_pal_index(basecolor, calc_light_multiplier(0));
 		uint32_t fg_red = (fg >> 16) & 0xff;
@@ -1040,7 +1040,7 @@ void DCanvas::PUTTRANSDOT (int xx, int yy, int basecolor, int level)
 	}
 	else
 	{
-		canvas_pixel_t *spot = GetBuffer() + oldyyshifted + xx;
+		BYTE *spot = GetBuffer() + oldyyshifted + xx;
 		DWORD *bg2rgb = Col2RGB8[1+level];
 		DWORD *fg2rgb = Col2RGB8[63-level];
 		DWORD fg = fg2rgb[basecolor];
@@ -1091,27 +1091,62 @@ void DCanvas::DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32 real
 		{
 			swapvalues (x0, x1);
 		}
-		memset (GetBuffer() + y0*GetPitch() + x0, palColor, deltaX+1);
+		if (r_swtruecolor)
+		{
+			uint32_t *spot = (uint32_t*)GetBuffer() + y0*GetPitch() + x0;
+			for (int i = 0; i <= deltaX; i++)
+				spot[i] = palColor;
+		}
+		else
+		{
+			memset (GetBuffer() + y0*GetPitch() + x0, palColor, deltaX+1);
+		}
 	}
 	else if (deltaX == 0)
 	{ // vertical line
-		canvas_pixel_t *spot = GetBuffer() + y0*GetPitch() + x0;
-		int pitch = GetPitch ();
-		do
+		if (r_swtruecolor)
 		{
-			*spot = palColor;
-			spot += pitch;
-		} while (--deltaY != 0);
+			uint32_t *spot = (uint32_t*)GetBuffer() + y0*GetPitch() + x0;
+			int pitch = GetPitch();
+			do
+			{
+				*spot = palColor;
+				spot += pitch;
+			} while (--deltaY != 0);
+		}
+		else
+		{
+			BYTE *spot = GetBuffer() + y0*GetPitch() + x0;
+			int pitch = GetPitch();
+			do
+			{
+				*spot = palColor;
+				spot += pitch;
+			} while (--deltaY != 0);
+		}
 	}
 	else if (deltaX == deltaY)
 	{ // diagonal line.
-		canvas_pixel_t *spot = GetBuffer() + y0*GetPitch() + x0;
-		int advance = GetPitch() + xDir;
-		do
+		if (r_swtruecolor)
 		{
-			*spot = palColor;
-			spot += advance;
-		} while (--deltaY != 0);
+			uint32_t *spot = (uint32_t*)GetBuffer() + y0*GetPitch() + x0;
+			int advance = GetPitch() + xDir;
+			do
+			{
+				*spot = palColor;
+				spot += advance;
+			} while (--deltaY != 0);
+		}
+		else
+		{
+			BYTE *spot = GetBuffer() + y0*GetPitch() + x0;
+			int advance = GetPitch() + xDir;
+			do
+			{
+				*spot = palColor;
+				spot += advance;
+			} while (--deltaY != 0);
+		}
 	}
 	else
 	{
@@ -1231,7 +1266,6 @@ void DCanvas::DrawPixel(int x, int y, int palColor, uint32 realcolor)
 void DCanvas::Clear (int left, int top, int right, int bottom, int palcolor, uint32 color)
 {
 	int x, y;
-	canvas_pixel_t *dest;
 
 	if (left == right || top == bottom)
 	{
@@ -1261,12 +1295,26 @@ void DCanvas::Clear (int left, int top, int right, int bottom, int palcolor, uin
 		palcolor = PalFromRGB(color);
 	}
 
-	dest = Buffer + top * Pitch + left;
-	x = right - left;
-	for (y = top; y < bottom; y++)
+	if (r_swtruecolor)
 	{
-		memset(dest, palcolor, x);
-		dest += Pitch;
+		uint32_t *dest = (uint32_t*)Buffer + top * Pitch + left;
+		x = right - left;
+		for (y = top; y < bottom; y++)
+		{
+			for (int i = 0; i < x; i++)
+				dest[i] = palcolor;
+			dest += Pitch;
+		}
+	}
+	else
+	{
+		BYTE *dest = Buffer + top * Pitch + left;
+		x = right - left;
+		for (y = top; y < bottom; y++)
+		{
+			memset(dest, palcolor, x);
+			dest += Pitch;
+		}
 	}
 }
 
@@ -1452,11 +1500,14 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 // V_DrawBlock
 // Draw a linear block of pixels into the view buffer.
 //
-void DCanvas::DrawBlock (int x, int y, int _width, int _height, const canvas_pixel_t *src) const
+void DCanvas::DrawBlock (int x, int y, int _width, int _height, const BYTE *src) const
 {
+	if (r_swtruecolor)
+		return;
+
 	int srcpitch = _width;
 	int destpitch;
-	canvas_pixel_t *dest;
+	BYTE *dest;
 
 	if (ClipBox (x, y, _width, _height, src, srcpitch))
 	{
@@ -1468,7 +1519,7 @@ void DCanvas::DrawBlock (int x, int y, int _width, int _height, const canvas_pix
 
 	do
 	{
-		memcpy (dest, src, _width * sizeof(canvas_pixel_t));
+		memcpy (dest, src, _width);
 		src += srcpitch;
 		dest += destpitch;
 	} while (--_height);
@@ -1478,9 +1529,12 @@ void DCanvas::DrawBlock (int x, int y, int _width, int _height, const canvas_pix
 // V_GetBlock
 // Gets a linear block of pixels from the view buffer.
 //
-void DCanvas::GetBlock (int x, int y, int _width, int _height, canvas_pixel_t *dest) const
+void DCanvas::GetBlock (int x, int y, int _width, int _height, BYTE *dest) const
 {
-	const canvas_pixel_t *src;
+	if (r_swtruecolor)
+		return;
+
+	const BYTE *src;
 
 #ifdef RANGECHECK 
 	if (x<0
@@ -1496,14 +1550,14 @@ void DCanvas::GetBlock (int x, int y, int _width, int _height, canvas_pixel_t *d
 
 	while (_height--)
 	{
-		memcpy (dest, src, _width * sizeof(canvas_pixel_t));
+		memcpy (dest, src, _width);
 		src += Pitch;
 		dest += _width;
 	}
 }
 
 // Returns true if the box was completely clipped. False otherwise.
-bool DCanvas::ClipBox (int &x, int &y, int &w, int &h, const canvas_pixel_t *&src, const int srcpitch) const
+bool DCanvas::ClipBox (int &x, int &y, int &w, int &h, const BYTE *&src, const int srcpitch) const
 {
 	if (x >= Width || y >= Height || x+w <= 0 || y+h <= 0)
 	{ // Completely clipped off screen

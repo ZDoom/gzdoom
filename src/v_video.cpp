@@ -345,7 +345,6 @@ void DCanvas::Dim (PalEntry color, float damount, int x1, int y1, int w, int h)
 		return;
 
 	int gap;
-	canvas_pixel_t *spot;
 	int x, y;
 
 	if (x1 >= Width || y1 >= Height)
@@ -365,11 +364,12 @@ void DCanvas::Dim (PalEntry color, float damount, int x1, int y1, int w, int h)
 		return;
 	}
 
-	spot = Buffer + x1 + y1*Pitch;
 	gap = Pitch - w;
 
 	if (r_swtruecolor)
 	{
+		uint32_t *spot = (uint32_t*)Buffer + x1 + y1*Pitch;
+
 		uint32_t fg = color.d;
 		uint32_t fg_red = (fg >> 16) & 0xff;
 		uint32_t fg_green = (fg >> 8) & 0xff;
@@ -402,6 +402,8 @@ void DCanvas::Dim (PalEntry color, float damount, int x1, int y1, int w, int h)
 	}
 	else
 	{
+		BYTE *spot = Buffer + x1 + y1*Pitch;
+
 		DWORD *bg2rgb;
 		DWORD fg;
 
@@ -441,12 +443,12 @@ void DCanvas::Dim (PalEntry color, float damount, int x1, int y1, int w, int h)
 //
 //==========================================================================
 
-void DCanvas::GetScreenshotBuffer(const canvas_pixel_t *&buffer, int &pitch, ESSType &color_type)
+void DCanvas::GetScreenshotBuffer(const BYTE *&buffer, int &pitch, ESSType &color_type)
 {
 	Lock(true);
 	buffer = GetBuffer();
 	pitch = GetPitch();
-	color_type = SS_PAL;
+	color_type = r_swtruecolor ? SS_BGRA : SS_PAL;
 }
 
 //==========================================================================
@@ -797,8 +799,8 @@ DSimpleCanvas::DSimpleCanvas (int width, int height)
 			Pitch = width + MAX(0, CPU.DataL1LineSize - 8);
 		}
 	}
-	MemBuffer = new canvas_pixel_t[Pitch * height];
-	memset (MemBuffer, 0, Pitch * height * sizeof(canvas_pixel_t));
+	MemBuffer = new BYTE[Pitch * height * 4];
+	memset (MemBuffer, 0, Pitch * height * 4);
 }
 
 //==========================================================================
@@ -917,7 +919,7 @@ void DFrameBuffer::DrawRateStuff ()
 	{
 		int i = I_GetTime(false);
 		int tics = i - LastTic;
-		canvas_pixel_t *buffer = GetBuffer();
+		BYTE *buffer = GetBuffer();
 
 		LastTic = i;
 		if (tics > 20) tics = 20;
@@ -925,10 +927,21 @@ void DFrameBuffer::DrawRateStuff ()
 		// Buffer can be NULL if we're doing hardware accelerated 2D
 		if (buffer != NULL)
 		{
-			buffer += (GetHeight()-1) * GetPitch();
-			
-			for (i = 0; i < tics*2; i += 2)		buffer[i] = 0xff;
-			for ( ; i < 20*2; i += 2)			buffer[i] = 0x00;
+			if (r_swtruecolor)
+			{
+				uint32_t *buffer32 = (uint32_t*)buffer;
+				buffer32 += (GetHeight() - 1) * GetPitch();
+
+				for (i = 0; i < tics * 2; i += 2)	buffer32[i] = 0xffffffff;
+				for (; i < 20 * 2; i += 2)			buffer32[i] = 0xff000000;
+			}
+			else
+			{
+				buffer += (GetHeight() - 1) * GetPitch();
+
+				for (i = 0; i < tics * 2; i += 2)	buffer[i] = 0xff;
+				for (; i < 20 * 2; i += 2)			buffer[i] = 0x00;
+			}
 		}
 		else
 		{

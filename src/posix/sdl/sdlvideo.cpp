@@ -257,7 +257,7 @@ bool SDLVideo::NextMode (int *width, int *height, bool *letterbox)
 	return false;
 }
 
-DFrameBuffer *SDLVideo::CreateFrameBuffer (int width, int height, bool fullscreen, DFrameBuffer *old)
+DFrameBuffer *SDLVideo::CreateFrameBuffer (int width, int height, bool bgra, bool fullscreen, DFrameBuffer *old)
 {
 	static int retry = 0;
 	static int owidth, oheight;
@@ -335,7 +335,7 @@ DFrameBuffer *SDLVideo::CreateFrameBuffer (int width, int height, bool fullscree
 		}
 
 		++retry;
-		fb = static_cast<SDLFB *>(CreateFrameBuffer (width, height, fullscreen, NULL));
+		fb = static_cast<SDLFB *>(CreateFrameBuffer (width, height, bgra, fullscreen, NULL));
 	}
 	retry = 0;
 
@@ -351,7 +351,7 @@ void SDLVideo::SetWindowedScale (float scale)
 // FrameBuffer implementation -----------------------------------------------
 
 SDLFB::SDLFB (int width, int height, bool fullscreen, SDL_Window *oldwin)
-	: DFrameBuffer (width, height)
+	: DFrameBuffer (width, height, false)
 {
 	int i;
 	

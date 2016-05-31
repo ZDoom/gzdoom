@@ -77,8 +77,6 @@ extern "C" short spanend[MAXHEIGHT];
 
 CVAR (Bool, hud_scale, false, CVAR_ARCHIVE);
 
-EXTERN_CVAR(Bool, r_swtruecolor)
-
 // For routines that take RGB colors, cache the previous lookup in case there
 // are several repetitions with the same color.
 static int LastPal = -1;
@@ -1019,7 +1017,7 @@ void DCanvas::PUTTRANSDOT (int xx, int yy, int basecolor, int level)
 		oldyyshifted = yy * GetPitch();
 	}
 
-	if (r_swtruecolor)
+	if (IsBgra())
 	{
 		uint32_t *spot = (uint32_t*)GetBuffer() + oldyyshifted + xx;
 
@@ -1091,7 +1089,7 @@ void DCanvas::DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32 real
 		{
 			swapvalues (x0, x1);
 		}
-		if (r_swtruecolor)
+		if (IsBgra())
 		{
 			uint32_t *spot = (uint32_t*)GetBuffer() + y0*GetPitch() + x0;
 			for (int i = 0; i <= deltaX; i++)
@@ -1104,7 +1102,7 @@ void DCanvas::DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32 real
 	}
 	else if (deltaX == 0)
 	{ // vertical line
-		if (r_swtruecolor)
+		if (IsBgra())
 		{
 			uint32_t *spot = (uint32_t*)GetBuffer() + y0*GetPitch() + x0;
 			int pitch = GetPitch();
@@ -1127,7 +1125,7 @@ void DCanvas::DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32 real
 	}
 	else if (deltaX == deltaY)
 	{ // diagonal line.
-		if (r_swtruecolor)
+		if (IsBgra())
 		{
 			uint32_t *spot = (uint32_t*)GetBuffer() + y0*GetPitch() + x0;
 			int advance = GetPitch() + xDir;
@@ -1295,7 +1293,7 @@ void DCanvas::Clear (int left, int top, int right, int bottom, int palcolor, uin
 		palcolor = PalFromRGB(color);
 	}
 
-	if (r_swtruecolor)
+	if (IsBgra())
 	{
 		uint32_t *dest = (uint32_t*)Buffer + top * Pitch + left;
 		x = right - left;
@@ -1502,7 +1500,7 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 //
 void DCanvas::DrawBlock (int x, int y, int _width, int _height, const BYTE *src) const
 {
-	if (r_swtruecolor)
+	if (IsBgra())
 		return;
 
 	int srcpitch = _width;
@@ -1531,7 +1529,7 @@ void DCanvas::DrawBlock (int x, int y, int _width, int _height, const BYTE *src)
 //
 void DCanvas::GetBlock (int x, int y, int _width, int _height, BYTE *dest) const
 {
-	if (r_swtruecolor)
+	if (IsBgra())
 		return;
 
 	const BYTE *src;

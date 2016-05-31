@@ -106,6 +106,8 @@ inline uint32_t shade_pal_index(uint32_t index, uint32_t light)
 	return 0xff000000 | (red << 16) | (green << 8) | blue;
 }
 
+extern bool				r_swtruecolor;
+
 extern double			GlobVis;
 
 void R_SetVisibility(double visibility);

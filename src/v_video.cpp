@@ -65,8 +65,6 @@
 #include "menu/menu.h"
 #include "r_data/voxels.h"
 
-EXTERN_CVAR(Bool, r_swtruecolor)
-
 FRenderer *Renderer;
 
 IMPLEMENT_ABSTRACT_CLASS (DCanvas)
@@ -83,7 +81,7 @@ class DDummyFrameBuffer : public DFrameBuffer
 	DECLARE_CLASS (DDummyFrameBuffer, DFrameBuffer);
 public:
 	DDummyFrameBuffer (int width, int height)
-		: DFrameBuffer (0, 0)
+		: DFrameBuffer (0, 0, false)
 	{
 		Width = width;
 		Height = height;
@@ -208,13 +206,14 @@ DCanvas *DCanvas::CanvasChain = NULL;
 //
 //==========================================================================
 
-DCanvas::DCanvas (int _width, int _height)
+DCanvas::DCanvas (int _width, int _height, bool _bgra)
 {
 	// Init member vars
 	Buffer = NULL;
 	LockCount = 0;
 	Width = _width;
 	Height = _height;
+	Bgra = _bgra;
 
 	// Add to list of active canvases
 	Next = CanvasChain;
@@ -366,7 +365,7 @@ void DCanvas::Dim (PalEntry color, float damount, int x1, int y1, int w, int h)
 
 	gap = Pitch - w;
 
-	if (r_swtruecolor)
+	if (IsBgra())
 	{
 		uint32_t *spot = (uint32_t*)Buffer + x1 + y1*Pitch;
 
@@ -448,7 +447,7 @@ void DCanvas::GetScreenshotBuffer(const BYTE *&buffer, int &pitch, ESSType &colo
 	Lock(true);
 	buffer = GetBuffer();
 	pitch = GetPitch();
-	color_type = r_swtruecolor ? SS_BGRA : SS_PAL;
+	color_type = IsBgra() ? SS_BGRA : SS_PAL;
 }
 
 //==========================================================================
@@ -761,8 +760,8 @@ void DCanvas::CalcGamma (float gamma, BYTE gammalookup[256])
 //
 //==========================================================================
 
-DSimpleCanvas::DSimpleCanvas (int width, int height)
-	: DCanvas (width, height)
+DSimpleCanvas::DSimpleCanvas (int width, int height, bool bgra)
+	: DCanvas (width, height, bgra)
 {
 	// Making the pitch a power of 2 is very bad for performance
 	// Try to maximize the number of cache lines that can be filled
@@ -799,8 +798,9 @@ DSimpleCanvas::DSimpleCanvas (int width, int height)
 			Pitch = width + MAX(0, CPU.DataL1LineSize - 8);
 		}
 	}
-	MemBuffer = new BYTE[Pitch * height * 4];
-	memset (MemBuffer, 0, Pitch * height * 4);
+	int bytes_per_pixel = bgra ? 4 : 1;
+	MemBuffer = new BYTE[Pitch * height * bytes_per_pixel];
+	memset (MemBuffer, 0, Pitch * height * bytes_per_pixel);
 }
 
 //==========================================================================
@@ -869,8 +869,8 @@ void DSimpleCanvas::Unlock ()
 //
 //==========================================================================
 
-DFrameBuffer::DFrameBuffer (int width, int height)
-	: DSimpleCanvas (width, height)
+DFrameBuffer::DFrameBuffer (int width, int height, bool bgra)
+	: DSimpleCanvas (width, height, bgra)
 {
 	LastMS = LastSec = FrameCount = LastCount = LastTic = 0;
 	Accel2D = false;
@@ -927,7 +927,7 @@ void DFrameBuffer::DrawRateStuff ()
 		// Buffer can be NULL if we're doing hardware accelerated 2D
 		if (buffer != NULL)
 		{
-			if (r_swtruecolor)
+			if (IsBgra())
 			{
 				uint32_t *buffer32 = (uint32_t*)buffer;
 				buffer32 += (GetHeight() - 1) * GetPitch();

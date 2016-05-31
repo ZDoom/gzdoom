@@ -96,6 +96,8 @@ EXTERN_CVAR(Bool, ticker   )
 EXTERN_CVAR(Bool, vid_vsync)
 EXTERN_CVAR(Bool, vid_hidpi)
 
+CVAR(Bool, swtruecolor, false, CVAR_ARCHIVE)
+
 CUSTOM_CVAR(Bool, fullscreen, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	extern int NewWidth, NewHeight, NewBits, DisplayBits;
@@ -199,7 +201,7 @@ public:
 	virtual EDisplayType GetDisplayType() { return DISPLAY_Both; }
 	virtual void SetWindowedScale(float scale);
 
-	virtual DFrameBuffer* CreateFrameBuffer(int width, int height, bool fs, DFrameBuffer* old);
+	virtual DFrameBuffer* CreateFrameBuffer(int width, int height, bool bgra, bool fs, DFrameBuffer* old);
 
 	virtual void StartModeIterator(int bits, bool fullscreen);
 	virtual bool NextMode(int* width, int* height, bool* letterbox);
@@ -518,7 +520,7 @@ bool CocoaVideo::NextMode(int* const width, int* const height, bool* const lette
 	return false;
 }
 
-DFrameBuffer* CocoaVideo::CreateFrameBuffer(const int width, const int height, const bool fullscreen, DFrameBuffer* const old)
+DFrameBuffer* CocoaVideo::CreateFrameBuffer(const int width, const int height, const bool bgra, const bool fullscreen, DFrameBuffer* const old)
 {
 	PalEntry flashColor  = 0;
 	int      flashAmount = 0;
@@ -762,7 +764,7 @@ CocoaVideo* CocoaVideo::GetInstance()
 
 
 CocoaFrameBuffer::CocoaFrameBuffer(int width, int height, bool fullscreen)
-: DFrameBuffer(width, height)
+: DFrameBuffer(width, height, false)
 , m_needPaletteUpdate(false)
 , m_gamma(0.0f)
 , m_needGammaUpdate(false)
@@ -1064,7 +1066,7 @@ void I_CreateRenderer()
 
 DFrameBuffer* I_SetMode(int &width, int &height, DFrameBuffer* old)
 {
-	return Video->CreateFrameBuffer(width, height, fullscreen, old);
+	return Video->CreateFrameBuffer(width, height, swtruecolor, fullscreen, old);
 }
 
 bool I_CheckResolution(const int width, const int height, const int bits)

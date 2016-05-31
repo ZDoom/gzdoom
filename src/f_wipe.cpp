@@ -33,8 +33,6 @@
 //		SCREEN WIPE PACKAGE
 //
 
-EXTERN_CVAR(Bool, r_swtruecolor)
-
 static int CurrentWipeType;
 
 static short *wipe_scr_start;
@@ -385,7 +383,7 @@ static bool (*wipes[])(int) =
 // Returns true if the wipe should be performed.
 bool wipe_StartScreen (int type)
 {
-	if (r_swtruecolor)
+	if (screen->IsBgra())
 		return false;
 
 	CurrentWipeType = clamp(type, 0, wipe_NUMWIPES - 1);
@@ -401,7 +399,7 @@ bool wipe_StartScreen (int type)
 
 void wipe_EndScreen (void)
 {
-	if (r_swtruecolor)
+	if (screen->IsBgra())
 		return;
 
 	if (CurrentWipeType)
@@ -420,7 +418,7 @@ bool wipe_ScreenWipe (int ticks)
 {
 	bool rc;
 
-	if (r_swtruecolor)
+	if (screen->IsBgra())
 		return true;
 
 	if (CurrentWipeType == wipe_None)
@@ -436,7 +434,7 @@ bool wipe_ScreenWipe (int ticks)
 // Final things for the wipe
 void wipe_Cleanup()
 {
-	if (r_swtruecolor)
+	if (screen->IsBgra())
 		return;
 
 	if (wipe_scr_start != NULL)

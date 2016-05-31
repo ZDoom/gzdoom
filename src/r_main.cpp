@@ -103,7 +103,8 @@ bool r_dontmaplines;
 
 CVAR (String, r_viewsize, "", CVAR_NOSET)
 CVAR (Bool, r_shadercolormaps, true, CVAR_ARCHIVE)
-CVAR (Bool, r_swtruecolor, false, CVAR_ARCHIVE)
+
+bool			r_swtruecolor;
 
 double			r_BaseVisibility;
 double			r_WallVisibility;
@@ -398,16 +399,6 @@ void R_InitRenderer()
 	R_InitPlanes ();
 	R_InitShadeMaps();
 	R_InitColumnDrawers ();
-
-	colfunc = basecolfunc = R_DrawColumn;
-	fuzzcolfunc = R_DrawFuzzColumn;
-	transcolfunc = R_DrawTranslatedColumn;
-	spanfunc = R_DrawSpan;
-
-	// [RH] Horizontal column drawers
-	hcolfunc_pre = R_DrawColumnHoriz;
-	hcolfunc_post1 = rt_map1col;
-	hcolfunc_post4 = rt_map4cols;
 }
 
 //==========================================================================
@@ -962,6 +953,13 @@ void R_RenderViewToCanvas (AActor *actor, DCanvas *canvas,
 	int x, int y, int width, int height, bool dontmaplines)
 {
 	const bool savedviewactive = viewactive;
+	const bool savedoutputformat = r_swtruecolor;
+
+	if (r_swtruecolor != canvas->IsBgra())
+	{
+		r_swtruecolor = canvas->IsBgra();
+		R_InitColumnDrawers();
+	}
 
 	viewwidth = width;
 	RenderTarget = canvas;
@@ -980,7 +978,15 @@ void R_RenderViewToCanvas (AActor *actor, DCanvas *canvas,
 	screen->Lock (true);
 	R_SetupBuffer ();
 	screen->Unlock ();
+
 	viewactive = savedviewactive;
+	r_swtruecolor = savedoutputformat;
+
+	if (r_swtruecolor != canvas->IsBgra())
+	{
+		r_swtruecolor = canvas->IsBgra();
+		R_InitColumnDrawers();
+	}
 }
 
 //==========================================================================

@@ -187,7 +187,6 @@ EXTERN_CVAR (Float, Gamma)
 EXTERN_CVAR (Bool, vid_vsync)
 EXTERN_CVAR (Float, transsouls)
 EXTERN_CVAR (Int, vid_refreshrate)
-EXTERN_CVAR (Bool, r_swtruecolor)
 
 extern IDirect3D9 *D3D;
 
@@ -243,8 +242,8 @@ CVAR(Bool, vid_hwaalines, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 //
 //==========================================================================
 
-D3DFB::D3DFB (UINT adapter, int width, int height, bool fullscreen)
-	: BaseWinFB (width, height)
+D3DFB::D3DFB (UINT adapter, int width, int height, bool bgra, bool fullscreen)
+	: BaseWinFB (width, height, bgra)
 {
 	D3DPRESENT_PARAMETERS d3dpp;
 
@@ -766,7 +765,7 @@ void D3DFB::KillNativeTexs()
 
 bool D3DFB::CreateFBTexture ()
 {
-	FBFormat = r_swtruecolor ? D3DFMT_A8R8G8B8 : D3DFMT_L8;
+	FBFormat = IsBgra() ? D3DFMT_A8R8G8B8 : D3DFMT_L8;
 
 	if (FAILED(D3DDevice->CreateTexture(Width, Height, 1, D3DUSAGE_DYNAMIC, FBFormat, D3DPOOL_DEFAULT, &FBTexture, NULL)))
 	{
@@ -1307,7 +1306,7 @@ void D3DFB::Draw3DPart(bool copy3d)
 			SUCCEEDED(FBTexture->LockRect (0, &lockrect, NULL, D3DLOCK_DISCARD))) ||
 			SUCCEEDED(FBTexture->LockRect (0, &lockrect, &texrect, 0)))
 		{
-			if (r_swtruecolor && FBFormat == D3DFMT_A8R8G8B8)
+			if (IsBgra() && FBFormat == D3DFMT_A8R8G8B8)
 			{
 				if (lockrect.Pitch == Pitch * sizeof(uint32_t) && Pitch == Width)
 				{
@@ -1325,7 +1324,7 @@ void D3DFB::Draw3DPart(bool copy3d)
 					}
 				}
 			}
-			else if (!r_swtruecolor && FBFormat == D3DFMT_L8)
+			else if (!IsBgra() && FBFormat == D3DFMT_L8)
 			{
 				if (lockrect.Pitch == Pitch && Pitch == Width)
 				{
@@ -1377,7 +1376,7 @@ void D3DFB::Draw3DPart(bool copy3d)
 	memset(Constant, 0, sizeof(Constant));
 	SetAlphaBlend(D3DBLENDOP(0));
 	EnableAlphaTest(FALSE);
-	if (r_swtruecolor)
+	if (IsBgra())
 		SetPixelShader(Shaders[SHADER_NormalColor]);
 	else
 		SetPixelShader(Shaders[SHADER_NormalColorPal]);
@@ -1398,7 +1397,7 @@ void D3DFB::Draw3DPart(bool copy3d)
 					realfixedcolormap->ColorizeStart[1]/2, realfixedcolormap->ColorizeStart[2]/2, 0);
 				color1 = D3DCOLOR_COLORVALUE(realfixedcolormap->ColorizeEnd[0]/2,
 					realfixedcolormap->ColorizeEnd[1]/2, realfixedcolormap->ColorizeEnd[2]/2, 1);
-				if (r_swtruecolor)
+				if (IsBgra())
 					SetPixelShader(Shaders[SHADER_SpecialColormap]);
 				else
 					SetPixelShader(Shaders[SHADER_SpecialColormapPal]);
@@ -1412,7 +1411,7 @@ void D3DFB::Draw3DPart(bool copy3d)
 		CalcFullscreenCoords(verts, Accel2D, false, color0, color1);
 		D3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 2, verts, sizeof(FBVERTEX));
 	}
-	if (r_swtruecolor)
+	if (IsBgra())
 		SetPixelShader(Shaders[SHADER_NormalColor]);
 	else
 		SetPixelShader(Shaders[SHADER_NormalColorPal]);

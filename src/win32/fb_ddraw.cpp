@@ -60,9 +60,7 @@
 
 // TYPES -------------------------------------------------------------------
 
-#ifdef USE_OBSOLETE_DDRAW
 IMPLEMENT_CLASS(DDrawFB)
-#endif
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -120,10 +118,8 @@ cycle_t BlitCycles;
 
 // CODE --------------------------------------------------------------------
 
-#ifdef USE_OBSOLETE_DDRAW
-
 DDrawFB::DDrawFB (int width, int height, bool fullscreen)
-	: BaseWinFB (width, height)
+	: BaseWinFB (width, height, false)
 {
 	int i;
 
@@ -1330,7 +1326,6 @@ void DDrawFB::Blank ()
 		PrimarySurf->Blt (NULL, NULL, NULL, DDBLT_COLORFILL, &blitFX);
 	}
 }
-#endif
 
 ADD_STAT (blit)
 {

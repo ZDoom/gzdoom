@@ -222,6 +222,13 @@ bool Win32Video::InitD3D9 ()
 	// Enumerate available display modes.
 	FreeModes ();
 #ifndef PALETTEOUTPUT // To do: remove this again (AddD3DModes fails when there are too many modes available for videomenu to display)
+
+	AddMode(320, 200, 8, 200, 0);
+	AddMode(320, 240, 8, 240, 0);
+	AddMode(640, 480, 8, 480, 0);
+	AddMode(800, 600, 8, 600, 0);
+	AddMode(1024, 768, 8, 768, 0);
+
 	AddMode(1920, 1080, 8, 1440, 0); // 1080p
 	AddMode(1920*2, 1080*2, 8, 1440, 0); // 4k
 	AddMode(2560, 1440, 8, 1440, 0); // 27" classic
@@ -636,7 +643,7 @@ bool Win32Video::NextMode (int *width, int *height, bool *letterbox)
 	return false;
 }
 
-DFrameBuffer *Win32Video::CreateFrameBuffer (int width, int height, bool fullscreen, DFrameBuffer *old)
+DFrameBuffer *Win32Video::CreateFrameBuffer (int width, int height, bool bgra, bool fullscreen, DFrameBuffer *old)
 {
 	static int retry = 0;
 	static int owidth, oheight;
@@ -652,7 +659,8 @@ DFrameBuffer *Win32Video::CreateFrameBuffer (int width, int height, bool fullscr
 		BaseWinFB *fb = static_cast<BaseWinFB *> (old);
 		if (fb->Width == width &&
 			fb->Height == height &&
-			fb->Windowed == !fullscreen)
+			fb->Windowed == !fullscreen &&
+			fb->Bgra == bgra)
 		{
 			return old;
 		}
@@ -667,13 +675,9 @@ DFrameBuffer *Win32Video::CreateFrameBuffer (int width, int height, bool fullscr
 		flashAmount = 0;
 	}
 
-#ifndef USE_OBSOLETE_DDRAW
-	fb = new D3DFB(m_Adapter, width, height, fullscreen);
-	LOG1("New fb created @ %p\n", fb);
-#else
 	if (D3D != NULL)
 	{
-		fb = new D3DFB (m_Adapter, width, height, fullscreen);
+		fb = new D3DFB (m_Adapter, width, height, bgra, fullscreen);
 	}
 	else
 	{
@@ -738,10 +742,9 @@ DFrameBuffer *Win32Video::CreateFrameBuffer (int width, int height, bool fullscr
 		}
 
 		++retry;
-		fb = static_cast<DDrawFB *>(CreateFrameBuffer (width, height, fullscreen, NULL));
+		fb = static_cast<DDrawFB *>(CreateFrameBuffer (width, height, bgra, fullscreen, NULL));
 	}
 	retry = 0;
-#endif
 
 	fb->SetFlash (flashColor, flashAmount);
 	return fb;

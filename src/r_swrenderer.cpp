@@ -155,6 +155,12 @@ void FSoftwareRenderer::Precache(BYTE *texhitlist, TMap<PClassActor*, bool> &act
 
 void FSoftwareRenderer::RenderView(player_t *player)
 {
+	if (r_swtruecolor != screen->IsBgra())
+	{
+		r_swtruecolor = screen->IsBgra();
+		R_InitColumnDrawers();
+	}
+
 	R_RenderActorView (player->mo);
 	// [RH] Let cameras draw onto textures that were visible this frame.
 	FCanvasTextureInfo::UpdateAll ();
@@ -182,8 +188,7 @@ void FSoftwareRenderer::RemapVoxels()
 
 void FSoftwareRenderer::WriteSavePic (player_t *player, FILE *file, int width, int height)
 {
-#ifdef PALETTEOUTPUT
-	DCanvas *pic = new DSimpleCanvas (width, height);
+	DCanvas *pic = new DSimpleCanvas (width, height, false);
 	PalEntry palette[256];
 
 	// Take a snapshot of the player's view
@@ -196,7 +201,6 @@ void FSoftwareRenderer::WriteSavePic (player_t *player, FILE *file, int width, i
 	pic->Destroy();
 	pic->ObjectFlags |= OF_YesReallyDelete;
 	delete pic;
-#endif
 }
 
 //===========================================================================
@@ -313,7 +317,6 @@ void FSoftwareRenderer::CopyStackedViewParameters()
 
 void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoint, int fov)
 {
-#ifdef PALETTEOUTPUT
 	BYTE *Pixels = const_cast<BYTE*>(tex->GetPixels());
 	DSimpleCanvas *Canvas = tex->GetCanvas();
 
@@ -337,7 +340,6 @@ void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoin
 	tex->SetUpdated();
 	fixedcolormap = savecolormap;
 	realfixedcolormap = savecm;
-#endif
 }
 
 //==========================================================================

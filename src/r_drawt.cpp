@@ -47,8 +47,6 @@
 #include "r_things.h"
 #include "v_video.h"
 
-EXTERN_CVAR(Bool, r_swtruecolor)
-
 // I should have commented this stuff better.
 //
 // dc_temp is the buffer R_DrawColumnHoriz writes into.

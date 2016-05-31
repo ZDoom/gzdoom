@@ -61,8 +61,6 @@ CVAR(Bool, r_np2, true, 0)
 //CVAR (Int, ty, 8, 0)
 //CVAR (Int, tx, 8, 0)
 
-EXTERN_CVAR(Bool, r_swtruecolor)
-
 #define HEIGHTBITS 12
 #define HEIGHTSHIFT (FRACBITS-HEIGHTBITS)
 

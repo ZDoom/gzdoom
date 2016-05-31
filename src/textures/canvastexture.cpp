@@ -103,7 +103,7 @@ const BYTE *FCanvasTexture::GetPixels ()
 
 void FCanvasTexture::MakeTexture ()
 {
-	Canvas = new DSimpleCanvas (Width, Height);
+	Canvas = new DSimpleCanvas (Width, Height, false);
 	Canvas->Lock ();
 	GC::AddSoftRoot(Canvas);
 

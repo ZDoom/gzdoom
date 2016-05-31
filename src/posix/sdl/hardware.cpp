@@ -51,6 +51,7 @@
 
 EXTERN_CVAR (Bool, ticker)
 EXTERN_CVAR (Bool, fullscreen)
+EXTERN_CVAR (Bool, swtruecolor)
 EXTERN_CVAR (Float, vid_winscale)
 
 IVideo *Video;
@@ -128,7 +129,7 @@ DFrameBuffer *I_SetMode (int &width, int &height, DFrameBuffer *old)
 		fs = fullscreen;
 		break;
 	}
-	DFrameBuffer *res = Video->CreateFrameBuffer (width, height, fs, old);
+	DFrameBuffer *res = Video->CreateFrameBuffer (width, height, swtruecolor, fs, old);
 
 	/* Right now, CreateFrameBuffer cannot return NULL
 	if (res == NULL)
@@ -279,6 +280,8 @@ CUSTOM_CVAR (Int, vid_maxfps, 200, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 		I_SetFPSLimit(vid_maxfps);
 	}
 }
+
+CVAR (Bool, swtruecolor, false, CVAR_ARCHIVE)
 
 extern int NewWidth, NewHeight, NewBits, DisplayBits;
 

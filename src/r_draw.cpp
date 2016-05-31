@@ -179,7 +179,6 @@ FDynamicColormap ShadeFakeColormap[16];
 BYTE identitymap[256];
 
 EXTERN_CVAR (Int, r_columnmethod)
-EXTERN_CVAR (Bool, r_swtruecolor)
 
 void R_InitShadeMaps()
 {
@@ -4129,6 +4128,14 @@ const BYTE *R_GetColumn (FTexture *tex, int col)
 // [RH] Initialize the column drawer pointers
 void R_InitColumnDrawers ()
 {
+	// Save a copy when switching to true color mode as the assembly palette drawers might change them
+	static bool pointers_saved = false;
+	static DWORD(*dovline1_saved)();
+	static DWORD(*doprevline1_saved)();
+	static DWORD(*domvline1_saved)();
+	static void(*dovline4_saved)();
+	static void(*domvline4_saved)();
+
 	if (r_swtruecolor)
 	{
 		R_DrawColumnHoriz			= R_DrawColumnHorizP_RGBA_C;
@@ -4200,6 +4207,16 @@ void R_InitColumnDrawers ()
 		rt_tlatesubclamp4cols		= rt_tlatesubclamp4cols_RGBA_c;
 		rt_tlaterevsubclamp4cols	= rt_tlaterevsubclamp4cols_RGBA_c;
 		rt_initcols					= rt_initcols_rgba;
+
+		if (!pointers_saved)
+		{
+			pointers_saved = true;
+			dovline1_saved = dovline1;
+			doprevline1_saved = doprevline1;
+			domvline1_saved = domvline1;
+			dovline4_saved = dovline4;
+			domvline4_saved = domvline4;
+		}
 
 		dovline1					= vlinec1_RGBA;
 		doprevline1					= vlinec1_RGBA;
@@ -4304,7 +4321,27 @@ void R_InitColumnDrawers ()
 		rt_tlatesubclamp4cols		= rt_tlatesubclamp4cols_c;
 		rt_tlaterevsubclamp4cols	= rt_tlaterevsubclamp4cols_c;
 		rt_initcols					= rt_initcols_pal;
+
+		if (pointers_saved)
+		{
+			pointers_saved = false;
+			dovline1 = dovline1_saved;
+			doprevline1 = doprevline1_saved;
+			domvline1 = domvline1_saved;
+			dovline4 = dovline4_saved;
+			domvline4 = domvline4_saved;
+		}
 	}
+
+	colfunc = basecolfunc = R_DrawColumn;
+	fuzzcolfunc = R_DrawFuzzColumn;
+	transcolfunc = R_DrawTranslatedColumn;
+	spanfunc = R_DrawSpan;
+
+	// [RH] Horizontal column drawers
+	hcolfunc_pre = R_DrawColumnHoriz;
+	hcolfunc_post1 = rt_map1col;
+	hcolfunc_post4 = rt_map4cols;
 }
 
 // [RH] Choose column drawers in a single place

@@ -51,6 +51,7 @@
 
 EXTERN_CVAR (Bool, ticker)
 EXTERN_CVAR (Bool, fullscreen)
+EXTERN_CVAR (Bool, swtruecolor)
 EXTERN_CVAR (Float, vid_winscale)
 
 CVAR(Int, win_x, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
@@ -146,7 +147,7 @@ DFrameBuffer *I_SetMode (int &width, int &height, DFrameBuffer *old)
 		}
 		break;
 	}
-	DFrameBuffer *res = Video->CreateFrameBuffer (width, height, fs, old);
+	DFrameBuffer *res = Video->CreateFrameBuffer (width, height, swtruecolor, fs, old);
 
 	/* Right now, CreateFrameBuffer cannot return NULL
 	if (res == NULL)
@@ -309,6 +310,8 @@ void I_RestoreWindowedPos ()
 	}
 	MoveWindow (Window, winx, winy, winw, winh, TRUE);
 }
+
+CVAR (Bool, swtruecolor, false, CVAR_ARCHIVE)
 
 extern int NewWidth, NewHeight, NewBits, DisplayBits;
 

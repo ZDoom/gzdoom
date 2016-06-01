@@ -311,9 +311,17 @@ void I_RestoreWindowedPos ()
 	MoveWindow (Window, winx, winy, winw, winh, TRUE);
 }
 
-CVAR (Bool, swtruecolor, false, CVAR_ARCHIVE)
-
 extern int NewWidth, NewHeight, NewBits, DisplayBits;
+
+CUSTOM_CVAR(Bool, swtruecolor, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL)
+{
+	// Strictly speaking this doesn't require a mode switch, but it is the easiest
+	// way to force a CreateFramebuffer call without a lot of refactoring.
+	NewWidth = screen->GetWidth();
+	NewHeight = screen->GetHeight();
+	NewBits = DisplayBits;
+	setmodeneeded = true;
+}
 
 CUSTOM_CVAR (Bool, fullscreen, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL)
 {

@@ -221,22 +221,8 @@ bool Win32Video::InitD3D9 ()
 
 	// Enumerate available display modes.
 	FreeModes ();
-#ifndef PALETTEOUTPUT // To do: remove this again (AddD3DModes fails when there are too many modes available for videomenu to display)
-
-	AddMode(320, 200, 8, 200, 0);
-	AddMode(320, 240, 8, 240, 0);
-	AddMode(640, 480, 8, 480, 0);
-	AddMode(800, 600, 8, 600, 0);
-	AddMode(1024, 768, 8, 768, 0);
-
-	AddMode(1920, 1080, 8, 1080, 0); // 1080p
-	AddMode(1920*2, 1080*2, 8, 1080*2, 0); // 4k
-	AddMode(2560, 1440, 8, 1440, 0); // 27" classic
-	AddMode(2560*2, 1440*2, 8, 1440*2, 0); // 5k
-#else
 	AddD3DModes (m_Adapter, D3DFMT_X8R8G8B8);
 	AddD3DModes (m_Adapter, D3DFMT_R5G6B5);
-#endif
 	if (Args->CheckParm ("-2"))
 	{ // Force all modes to be pixel-doubled.
 		ScaleModes (1);

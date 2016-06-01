@@ -1480,6 +1480,7 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 	int i = level.totaltime;
 	
 	Renderer->StartSerialize(arc);
+	if (arc.IsLoading()) P_DestroyThinkers(hubLoad);
 	gl_SerializeGlobals(arc);
 
 	arc << level.flags

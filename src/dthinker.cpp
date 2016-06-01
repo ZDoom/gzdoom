@@ -152,11 +152,6 @@ void DThinker::SerializeAll(FArchive &arc, bool hubLoad)
 	}
 	else
 	{
-		if (hubLoad)
-			DestroyMostThinkers();
-		else
-			DestroyAllThinkers();
-
 		// Prevent the constructor from inserting thinkers into a list.
 		bSerialOverride = true;
 

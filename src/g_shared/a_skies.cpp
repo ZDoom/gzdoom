@@ -61,10 +61,13 @@ void ASkyViewpoint::Destroy ()
 	// remove all sector references to ourselves.
 	for (auto &s : sectorPortals)
 	{
-		if (s.mSkybox == this) s.mSkybox = 0;
-		// This is necessary to entirely disable EE-style skyboxes
-		// if their viewpoint gets deleted.
-		s.mFlags |= PORTSF_SKYFLATONLY;	
+		if (s.mSkybox == this)
+		{
+			s.mSkybox = 0;
+			// This is necessary to entirely disable EE-style skyboxes
+			// if their viewpoint gets deleted.
+			s.mFlags |= PORTSF_SKYFLATONLY;
+		}
 	}
 
 	Super::Destroy();

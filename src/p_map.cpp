@@ -4105,6 +4105,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 	AActor *puff = NULL;
 	int pflag = 0;
 	int puffFlags = (flags & LAF_ISMELEEATTACK) ? PF_MELEERANGE : 0;
+	bool spawnSky = false;
 	if (flags & LAF_NORANDOMPUFFZ)
 		puffFlags |= PF_NORANDOMZ;
 
@@ -4144,7 +4145,8 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 		t1->player->ReadyWeapon != NULL &&
 		(t1->player->ReadyWeapon->flags2 & MF2_THRUGHOST)) ||
 		(puffDefaults && (puffDefaults->flags2 & MF2_THRUGHOST));
-
+	
+	spawnSky = (puffDefaults && (puffDefaults->flags3 & MF3_SKYEXPLODE));
 	TData.MThruSpecies = (puffDefaults && (puffDefaults->flags6 & MF6_MTHRUSPECIES));
 	TData.PuffSpecies = NAME_None;
 
@@ -4210,7 +4212,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 		if (trace.HitType != TRACE_HitActor)
 		{
 			// position a bit closer for puffs
-			if (trace.HitType != TRACE_HitWall || trace.Line->special != Line_Horizon)
+			if (trace.HitType != TRACE_HitWall || ((trace.Line->special != Line_Horizon) || spawnSky))
 			{
 				DVector2 pos = P_GetOffsetPosition(trace.HitPos.X, trace.HitPos.Y, -trace.HitVector.X * 4, -trace.HitVector.Y * 4);
 				puff = P_SpawnPuff(t1, pufftype, DVector3(pos, trace.HitPos.Z - trace.HitVector.Z * 4), trace.SrcAngleFromTarget,

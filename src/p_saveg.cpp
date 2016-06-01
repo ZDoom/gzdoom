@@ -524,6 +524,14 @@ void P_SerializeThinkers (FArchive &arc, bool hubLoad)
 	DThinker::SerializeAll (arc, hubLoad);
 }
 
+void P_DestroyThinkers(bool hubLoad)
+{
+	if (hubLoad)
+		DThinker::DestroyMostThinkers();
+	else
+		DThinker::DestroyAllThinkers();
+}
+
 //==========================================================================
 //
 // ArchiveSounds

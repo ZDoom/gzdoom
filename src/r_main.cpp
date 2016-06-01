@@ -984,7 +984,6 @@ void R_RenderViewToCanvas (AActor *actor, DCanvas *canvas,
 
 	if (r_swtruecolor != canvas->IsBgra())
 	{
-		r_swtruecolor = canvas->IsBgra();
 		R_InitColumnDrawers();
 	}
 }

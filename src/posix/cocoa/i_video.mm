@@ -249,7 +249,7 @@ private:
 class CocoaFrameBuffer : public DFrameBuffer
 {
 public:
-	CocoaFrameBuffer(int width, int height, bool fullscreen);
+	CocoaFrameBuffer(int width, int height, bool bgra, bool fullscreen);
 	~CocoaFrameBuffer();
 
 	virtual bool Lock(bool buffer);
@@ -536,7 +536,7 @@ DFrameBuffer* CocoaVideo::CreateFrameBuffer(const int width, const int height, c
 
 	if (NULL != old)
 	{
-		if (width == m_width && height == m_height)
+		if (width == m_width && height == m_height && bgra == old->IsBgra())
 		{
 			SetMode(width, height, fullscreen, vid_hidpi);
 			return old;
@@ -553,7 +553,7 @@ DFrameBuffer* CocoaVideo::CreateFrameBuffer(const int width, const int height, c
 		delete old;
 	}
 
-	CocoaFrameBuffer* fb = new CocoaFrameBuffer(width, height, fullscreen);
+	CocoaFrameBuffer* fb = new CocoaFrameBuffer(width, height, bgra, fullscreen);
 	fb->SetFlash(flashColor, flashAmount);
 
 	SetMode(width, height, fullscreen, vid_hidpi);
@@ -772,8 +772,8 @@ CocoaVideo* CocoaVideo::GetInstance()
 }
 
 
-CocoaFrameBuffer::CocoaFrameBuffer(int width, int height, bool fullscreen)
-: DFrameBuffer(width, height, false)
+CocoaFrameBuffer::CocoaFrameBuffer(int width, int height, bool bgra, bool fullscreen)
+: DFrameBuffer(width, height, bgra)
 , m_needPaletteUpdate(false)
 , m_gamma(0.0f)
 , m_needGammaUpdate(false)
@@ -867,8 +867,18 @@ void CocoaFrameBuffer::Update()
 	FlipCycles.Reset();
 	BlitCycles.Clock();
 
-	GPfx.Convert(MemBuffer, Pitch, m_pixelBuffer, Width * BYTES_PER_PIXEL,
-		Width, Height, FRACUNIT, FRACUNIT, 0, 0);
+	if (IsBgra())
+	{
+		for (int y = 0; y < Height; y++)
+		{
+			memcpy((uint32_t*)m_pixelBuffer + y * Width, (uint32_t*)MemBuffer + y * Pitch, Width * BYTES_PER_PIXEL);
+		}
+	}
+	else
+	{
+		GPfx.Convert(MemBuffer, Pitch, m_pixelBuffer, Width * BYTES_PER_PIXEL,
+			Width, Height, FRACUNIT, FRACUNIT, 0, 0);
+	}
 
 	FlipCycles.Clock();
 	Flip();
@@ -1000,8 +1010,10 @@ void CocoaFrameBuffer::Flip()
 	static const GLenum format = GL_ABGR_EXT;
 #endif // __LITTLE_ENDIAN__
 
-	glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8,
-		Width, Height, 0, format, GL_UNSIGNED_BYTE, m_pixelBuffer);
+	if (IsBgra())
+		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, Width, Height, 0, GL_BGRA_EXT, GL_UNSIGNED_BYTE, m_pixelBuffer);
+	else
+		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, Width, Height, 0, format, GL_UNSIGNED_BYTE, m_pixelBuffer);
 
 	glBegin(GL_QUADS);
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);

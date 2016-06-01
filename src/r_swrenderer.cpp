@@ -58,6 +58,7 @@ void R_InitRenderer();
 
 void FSoftwareRenderer::Init()
 {
+	r_swtruecolor = screen->IsBgra();
 	R_InitRenderer();
 }
 

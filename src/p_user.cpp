@@ -1376,14 +1376,16 @@ void APlayerPawn::MorphPlayerThink ()
 void APlayerPawn::ActivateMorphWeapon ()
 {
 	PClassActor *morphweapon = PClass::FindActor (MorphWeapon);
-	DPSprite *pspr = player->GetPSprite(PSP_WEAPON);
 	player->PendingWeapon = WP_NOCHANGE;
-	pspr->y = WEAPONTOP;
+
+	if (player->ReadyWeapon != nullptr)
+	{
+		player->GetPSprite(PSP_WEAPON)->y = WEAPONTOP;
+	}
 
 	if (morphweapon == nullptr || !morphweapon->IsDescendantOf (RUNTIME_CLASS(AWeapon)))
 	{ // No weapon at all while morphed!
 		player->ReadyWeapon = nullptr;
-		pspr->SetState(nullptr);
 	}
 	else
 	{
@@ -1398,14 +1400,14 @@ void APlayerPawn::ActivateMorphWeapon ()
 		}
 		if (player->ReadyWeapon != nullptr)
 		{
-			pspr->SetState(player->ReadyWeapon->GetReadyState());
-		}
-		else
-		{
-			pspr->SetState(nullptr);
+			player->GetPSprite(PSP_WEAPON)->SetState(player->ReadyWeapon->GetReadyState());
 		}
 	}
-	player->GetPSprite(PSP_FLASH)->SetState(nullptr);
+
+	if (player->ReadyWeapon != nullptr)
+	{
+		player->GetPSprite(PSP_FLASH)->SetState(nullptr);
+	}
 
 	player->PendingWeapon = WP_NOCHANGE;
 }

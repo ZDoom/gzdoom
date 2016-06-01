@@ -1031,6 +1031,11 @@ DEFINE_ACTION_FUNCTION(AInventory, A_Lower)
 	{
 		return 0;
 	}
+	if (nullptr == player->ReadyWeapon)
+	{
+		P_BringUpWeapon(player);
+		return 0;
+	}
 	psp = player->GetPSprite(PSP_WEAPON);
 	if (player->morphTics || player->cheats & CF_INSTANTWEAPSWITCH)
 	{
@@ -1084,6 +1089,10 @@ DEFINE_ACTION_FUNCTION(AInventory, A_Raise)
 		P_DropWeapon(player);
 		return 0;
 	}
+	if (player->ReadyWeapon == nullptr)
+	{
+		return 0;
+	}
 	psp = player->GetPSprite(PSP_WEAPON);
 	psp->y -= RAISESPEED;
 	if (psp->y > WEAPONTOP)
@@ -1091,14 +1100,7 @@ DEFINE_ACTION_FUNCTION(AInventory, A_Raise)
 		return 0;
 	}
 	psp->y = WEAPONTOP;
-	if (player->ReadyWeapon != nullptr)
-	{
-		psp->SetState(player->ReadyWeapon->GetReadyState());
-	}
-	else
-	{
-		psp->SetState(nullptr);
-	}
+	psp->SetState(player->ReadyWeapon->GetReadyState());
 	return 0;
 }
 

@@ -271,9 +271,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_GauntletAttack)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return 0;
+
+		player->GetPSprite(PSP_WEAPON)->x = ((pr_gatk() & 3) - 2);
+		player->GetPSprite(PSP_WEAPON)->y = WEAPONTOP + (pr_gatk() & 3);
 	}
-	player->GetPSprite(PSP_WEAPON)->x = ((pr_gatk()&3)-2);
-	player->GetPSprite(PSP_WEAPON)->y = WEAPONTOP + (pr_gatk()&3);
 	Angle = self->Angles.Yaw;
 	if (power)
 	{
@@ -440,9 +441,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMacePL1)
 	{
 		if (!weapon->DepleteAmmo(weapon->bAltFire))
 			return 0;
+
+		player->GetPSprite(PSP_WEAPON)->x = ((pr_maceatk() & 3) - 2);
+		player->GetPSprite(PSP_WEAPON)->y = WEAPONTOP + (pr_maceatk() & 3);
 	}
-	player->GetPSprite(PSP_WEAPON)->x = ((pr_maceatk() & 3) - 2);
-	player->GetPSprite(PSP_WEAPON)->y = WEAPONTOP + (pr_maceatk() & 3);
 	ball = P_SpawnPlayerMissile(self, PClass::FindActor("MaceFX1"), self->Angles.Yaw + (((pr_maceatk() & 7) - 4) * (360. / 256)));
 	if (ball)
 	{
@@ -1158,11 +1160,11 @@ IMPLEMENT_CLASS (APhoenixRodPowered)
 
 void APhoenixRodPowered::EndPowerup ()
 {
-	Owner->player->GetPSprite(PSP_WEAPON)->SetState(SisterWeapon->GetReadyState());
 	DepleteAmmo (bAltFire);
 	Owner->player->refire = 0;
 	S_StopSound (Owner, CHAN_WEAPON);
 	Owner->player->ReadyWeapon = SisterWeapon;
+	Owner->player->GetPSprite(PSP_WEAPON)->SetState(SisterWeapon->GetReadyState());
 }
 
 class APhoenixFX1 : public AActor

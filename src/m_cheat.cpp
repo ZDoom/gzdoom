@@ -934,8 +934,6 @@ void cht_Take (player_t *player, const char *name, int amount)
 
 				player->ReadyWeapon = nullptr;
 				player->PendingWeapon = WP_NOCHANGE;
-				player->GetPSprite(PSP_WEAPON)->SetState(nullptr);
-				player->GetPSprite(PSP_FLASH)->SetState(nullptr);
 			}
 		}
 

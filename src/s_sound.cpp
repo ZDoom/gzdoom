@@ -684,9 +684,9 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 		{		
 			sector_t *sec = P_PointInSector(pt[0], pt[2]);
 			DVector2 disp = Displacements.getOffset(pgroup, sec->PortalGroup);
-			pos->X = pt[0] + (float)disp.X;
+			pos->X = pt[0] - (float)disp.X;
 			pos->Y = !(chanflags & CHAN_LISTENERZ) ? pt[1] : (float)listenpos.Z;
-			pos->Z = pt[2] + (float)disp.Y;
+			pos->Z = pt[2] - (float)disp.Y;
 		}
 		else
 		{
@@ -701,7 +701,7 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 				if (actor != NULL)
 				{
 					DVector2 disp = Displacements.getOffset(pgroup, actor->Sector->PortalGroup);
-					DVector3 posi = actor->Pos() + disp;
+					DVector3 posi = actor->Pos() - disp;
 					*pos = { (float)posi.X, (float)posi.Z, (float)posi.Y };
 				}
 				break;
@@ -714,15 +714,15 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 					if (chanflags & CHAN_AREA)
 					{
 						// listener must be reversely offset to calculate the proper sound origin.
-						CalcSectorSoundOrg(listenpos-disp, sector, channum, *pos);
+						CalcSectorSoundOrg(listenpos + disp, sector, channum, *pos);
 						pos->X += (float)disp.X;
 						pos->Z += (float)disp.Y;
 					}
 					else
 					{
 						
-						pos->X = (float)(sector->centerspot.X + disp.X);
-						pos->Z = (float)(sector->centerspot.Y + disp.Y);
+						pos->X = (float)(sector->centerspot.X - disp.X);
+						pos->Z = (float)(sector->centerspot.Y - disp.Y);
 						chanflags |= CHAN_LISTENERZ;
 					}
 				}
@@ -733,7 +733,7 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 				if (poly != NULL)
 				{
 					DVector2 disp = Displacements.getOffset(pgroup, poly->CenterSubsector->sector->PortalGroup);
-					CalcPolyobjSoundOrg(listenpos-disp, poly, *pos);
+					CalcPolyobjSoundOrg(listenpos + disp, poly, *pos);
 					pos->X += (float)disp.X;
 					pos->Z += (float)disp.Y;
 				}

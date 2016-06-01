@@ -1364,9 +1364,15 @@ void APowerTargeter::EndEffect ()
 	Super::EndEffect();
 	if (Owner != nullptr && Owner->player != nullptr)
 	{
-		Owner->player->GetPSprite(PSP_TARGETCENTER)->SetState(nullptr);
-		Owner->player->GetPSprite(PSP_TARGETLEFT)->SetState(nullptr);
-		Owner->player->GetPSprite(PSP_TARGETRIGHT)->SetState(nullptr);
+		// Calling GetPSprite here could crash if we're creating a new game.
+		// This is because P_SetupLevel nulls the player's mo before destroying
+		// every DThinker which in turn ends up calling this.
+		// However P_SetupLevel is only called after G_NewInit which calls
+		// every player's dtor which destroys all their psprites.
+		DPSprite *pspr;
+		if ((pspr = Owner->player->FindPSprite(PSP_TARGETCENTER)) != nullptr) pspr->SetState(nullptr);
+		if ((pspr = Owner->player->FindPSprite(PSP_TARGETLEFT)) != nullptr) pspr->SetState(nullptr);
+		if ((pspr = Owner->player->FindPSprite(PSP_TARGETRIGHT)) != nullptr) pspr->SetState(nullptr);
 	}
 }
 

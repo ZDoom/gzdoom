@@ -177,14 +177,27 @@ DPSprite *player_t::FindPSprite(int layer)
 
 DPSprite *player_t::GetPSprite(PSPLayers layer)
 {
-	assert(ReadyWeapon != nullptr);
+	AInventory *oldcaller = nullptr;
+	AInventory *newcaller = nullptr;
 
-	AInventory *oldcaller;
+	if (layer >= PSP_TARGETCENTER)
+	{
+		if (mo != nullptr)
+		{
+			newcaller = mo->FindInventory(RUNTIME_CLASS(APowerTargeter), true);
+		}
+	}
+	else
+	{
+		newcaller = ReadyWeapon;
+	}
+
+	assert(newcaller != nullptr);
+
 	DPSprite *pspr = FindPSprite(layer);
 	if (pspr == nullptr)
 	{
-		pspr = new DPSprite(this, ReadyWeapon, layer);
-		oldcaller = nullptr;
+		pspr = new DPSprite(this, newcaller, layer);
 	}
 	else
 	{
@@ -193,18 +206,13 @@ DPSprite *player_t::GetPSprite(PSPLayers layer)
 
 	// Always update the caller here in case we switched weapon
 	// or if the layer was being used by an inventory item before.
-	pspr->Caller = ReadyWeapon;
+	pspr->Caller = newcaller;
 
-	if (ReadyWeapon != oldcaller)
+	if (newcaller != oldcaller)
 	{ // Only change the flags if this layer was created now or if we updated the caller.
 		if (layer != PSP_FLASH)
 		{ // Only the flash layer should follow the weapon.
 			pspr->Flags &= ~PSPF_ADDWEAPON;
-
-			if (layer != PSP_WEAPON)
-			{ // [RH] Don't bob the targeter.
-				pspr->Flags &= ~PSPF_ADDBOB;
-			}
 		}
 	}
 
@@ -279,7 +287,7 @@ void DPSprite::SetState(FState *newstate, bool pending)
 		Tics = newstate->GetTics(); // could be 0
 
 		if (Caller->IsKindOf(RUNTIME_CLASS(AWeapon)))
-		{ // The targeter layers are affected by this too.
+		{
 			if (sv_fastweapons == 2 && ID == PSP_WEAPON)
 				Tics = newstate->ActionFunc == nullptr ? 0 : 1;
 			else if (sv_fastweapons == 3)
@@ -1350,7 +1358,6 @@ void DPSprite::Tick()
 			Tics--;
 
 			// [BC] Apply double firing speed.
-			// This is applied to the targeter layers too.
 			if (Caller->IsKindOf(RUNTIME_CLASS(AWeapon)) && Tics && Owner->cheats & CF_DOUBLEFIRINGSPEED)
 				Tics--;
 

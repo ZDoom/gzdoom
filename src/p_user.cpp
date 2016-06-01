@@ -3090,7 +3090,9 @@ void player_t::Serialize (FArchive &arc)
 				<< sx << sy
 				<< sprite << frame;
 
-			if (state != nullptr && ReadyWeapon != nullptr)
+			if (state != nullptr &&
+			   ((layer < PSP_TARGETCENTER && ReadyWeapon != nullptr) ||
+			   (layer >= PSP_TARGETCENTER && mo->FindInventory(RUNTIME_CLASS(APowerTargeter), true))))
 			{
 				DPSprite *pspr;
 				pspr = GetPSprite(PSPLayers(layer));

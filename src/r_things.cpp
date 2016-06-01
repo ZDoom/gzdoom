@@ -1319,8 +1319,7 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 	if (tex->UseType == FTexture::TEX_Null)
 		return;
 
-	// The targeters aren't weapons.
-	isweapon = (pspr->GetID() < PSP_TARGETCENTER && pspr->GetCaller()->IsKindOf(RUNTIME_CLASS(AWeapon)));
+	isweapon = pspr->GetCaller()->IsKindOf(RUNTIME_CLASS(AWeapon));
 
 	if (pspr->firstTic)
 	{ // Can't interpolate the first tic.

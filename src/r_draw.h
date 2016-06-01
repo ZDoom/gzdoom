@@ -269,6 +269,7 @@ void	R_DrawFuzzColumnP_RGBA_C (void);
 void	R_DrawTranslatedColumnP_RGBA_C (void);
 void	R_DrawShadedColumnP_RGBA_C (void);
 void	R_DrawSpanP_RGBA_C (void);
+void	R_DrawSpanP_RGBA_SSE (void);
 void	R_DrawSpanMaskedP_RGBA_C (void);
 
 #endif

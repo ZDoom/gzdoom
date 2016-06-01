@@ -860,18 +860,21 @@ void rt_draw4cols (int sx)
 	}
 
 #ifdef X86_ASM
-	// Setup assembly routines for changed colormaps or other parameters.
-	if (hcolfunc_post4 == rt_shaded4cols)
+	if (!r_swtruecolor)
 	{
-		R_SetupShadedCol();
-	}
-	else if (hcolfunc_post4 == rt_addclamp4cols || hcolfunc_post4 == rt_tlateaddclamp4cols)
-	{
-		R_SetupAddClampCol();
-	}
-	else if (hcolfunc_post4 == rt_add4cols || hcolfunc_post4 == rt_tlateadd4cols)
-	{
-		R_SetupAddCol();
+		// Setup assembly routines for changed colormaps or other parameters.
+		if (hcolfunc_post4 == rt_shaded4cols)
+		{
+			R_SetupShadedCol();
+		}
+		else if (hcolfunc_post4 == rt_addclamp4cols || hcolfunc_post4 == rt_tlateaddclamp4cols)
+		{
+			R_SetupAddClampCol();
+		}
+		else if (hcolfunc_post4 == rt_add4cols || hcolfunc_post4 == rt_tlateadd4cols)
+		{
+			R_SetupAddCol();
+		}
 	}
 #endif
 

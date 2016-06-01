@@ -1789,7 +1789,7 @@ void R_SetSpanSource(const BYTE *pixels)
 {
 	ds_source = pixels;
 #ifdef X86_ASM
-	if (ds_cursource != ds_source)
+	if (!r_swtruecolor && ds_cursource != ds_source)
 	{
 		R_SetSpanSource_ASM(pixels);
 	}
@@ -1809,7 +1809,7 @@ void R_SetSpanColormap(BYTE *colormap)
 	ds_colormap = colormap;
 	ds_light = 0;
 #ifdef X86_ASM
-	if (ds_colormap != ds_curcolormap)
+	if (!r_swtruecolor && ds_colormap != ds_curcolormap)
 	{
 		R_SetSpanColormap_ASM (ds_colormap);
 	}
@@ -1838,7 +1838,8 @@ void R_SetupSpanBits(FTexture *tex)
 		ds_ybits--;
 	}
 #ifdef X86_ASM
-	R_SetSpanSize_ASM (ds_xbits, ds_ybits);
+	if (!r_swtruecolor)
+		R_SetSpanSize_ASM (ds_xbits, ds_ybits);
 #endif
 }
 
@@ -1954,7 +1955,80 @@ void R_DrawSpanP_RGBA_C()
 	{
 		// 64x64 is the most common case by far, so special case it.
 
+		do
+		{
+			// Current texture index in u,v.
+			spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
+
+			// Lookup pixel from flat texture tile,
+			//  re-index using light/colormap.
+			*dest++ = shade_pal_index(colormap[source[spot]], light);
+
+			// Next step in u,v.
+			xfrac += xstep;
+			yfrac += ystep;
+		} while (--count);
+	}
+	else
+	{
+		BYTE yshift = 32 - ds_ybits;
+		BYTE xshift = yshift - ds_xbits;
+		int xmask = ((1 << ds_xbits) - 1) << ds_ybits;
+
+		do
+		{
+			// Current texture index in u,v.
+			spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+
+			// Lookup pixel from flat texture tile,
+			//  re-index using light/colormap.
+			*dest++ = shade_pal_index(colormap[source[spot]], light);
+
+			// Next step in u,v.
+			xfrac += xstep;
+			yfrac += ystep;
+		} while (--count);
+	}
+}
+
 #ifndef NO_SSE
+void R_DrawSpanP_RGBA_SSE()
+{
+	dsfixed_t			xfrac;
+	dsfixed_t			yfrac;
+	dsfixed_t			xstep;
+	dsfixed_t			ystep;
+	uint32_t*			dest;
+	const BYTE*			source = ds_source;
+	const BYTE*			colormap = ds_colormap;
+	int 				count;
+	int 				spot;
+
+#ifdef RANGECHECK 
+	if (ds_x2 < ds_x1 || ds_x1 < 0
+		|| ds_x2 >= screen->width || ds_y > screen->height)
+	{
+		I_Error("R_DrawSpan: %i to %i at %i", ds_x1, ds_x2, ds_y);
+	}
+	//		dscount++;
+#endif
+
+	xfrac = ds_xfrac;
+	yfrac = ds_yfrac;
+
+	dest = ylookup[ds_y] + ds_x1 + (uint32_t*)dc_destorg;
+
+	count = ds_x2 - ds_x1 + 1;
+
+	xstep = ds_xstep;
+	ystep = ds_ystep;
+
+	uint32_t light = calc_light_multiplier(ds_light);
+
+	if (ds_xbits == 6 && ds_ybits == 6)
+	{
+		// 64x64 is the most common case by far, so special case it.
+
 		__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
 		uint32_t *palette = (uint32_t*)GPalette.BaseColors;
 
@@ -2000,7 +2074,6 @@ void R_DrawSpanP_RGBA_C()
 		}
 		if (count == 0)
 			return;
-#endif
 
 		do
 		{
@@ -2037,6 +2110,7 @@ void R_DrawSpanP_RGBA_C()
 		} while (--count);
 	}
 }
+#endif
 
 #ifndef X86_ASM
 
@@ -2971,6 +3045,12 @@ void (*domvline4)() = mvlineasm4;
 
 void setupvline (int fracbits)
 {
+	if (r_swtruecolor)
+	{
+		vlinebits = fracbits;
+		return;
+	}
+
 #ifdef X86_ASM
 	if (CPU.Family <= 5)
 	{
@@ -3075,23 +3155,43 @@ void vlinec4_RGBA()
 	uint32_t *dest = (uint32_t*)dc_dest;
 	int count = dc_count;
 	int bits = vlinebits;
+	DWORD place;
 
 	uint32_t light0 = calc_light_multiplier(palookuplight[0]);
 	uint32_t light1 = calc_light_multiplier(palookuplight[1]);
 	uint32_t light2 = calc_light_multiplier(palookuplight[2]);
 	uint32_t light3 = calc_light_multiplier(palookuplight[3]);
+
+	do
+	{
+		dest[0] = shade_pal_index(palookupoffse[0][bufplce[0][(place = vplce[0]) >> bits]], light0); vplce[0] = place + vince[0];
+		dest[1] = shade_pal_index(palookupoffse[1][bufplce[1][(place = vplce[1]) >> bits]], light1); vplce[1] = place + vince[1];
+		dest[2] = shade_pal_index(palookupoffse[2][bufplce[2][(place = vplce[2]) >> bits]], light2); vplce[2] = place + vince[2];
+		dest[3] = shade_pal_index(palookupoffse[3][bufplce[3][(place = vplce[3]) >> bits]], light3); vplce[3] = place + vince[3];
+		dest += dc_pitch;
+	} while (--count);
+}
+
 #ifndef NO_SSE
+void vlinec4_RGBA_SSE()
+{
+	uint32_t *dest = (uint32_t*)dc_dest;
+	int count = dc_count;
+	int bits = vlinebits;
+
+	uint32_t light0 = calc_light_multiplier(palookuplight[0]);
+	uint32_t light1 = calc_light_multiplier(palookuplight[1]);
+	uint32_t light2 = calc_light_multiplier(palookuplight[2]);
+	uint32_t light3 = calc_light_multiplier(palookuplight[3]);
+
 	__m128i mlight_hi = _mm_set_epi16(256, light1, light1, light1, 256, light0, light0, light0);
 	__m128i mlight_lo = _mm_set_epi16(256, light3, light3, light3, 256, light2, light2, light2);
 	uint32_t *palette = (uint32_t*)GPalette.BaseColors;
 	DWORD local_vplce[4] = { vplce[0], vplce[1], vplce[2], vplce[3] };
 	DWORD local_vince[4] = { vince[0], vince[1], vince[2], vince[3] };
-#endif
 
 	do
 	{
-#ifndef NO_SSE
-
 		DWORD place0 = local_vplce[0];
 		DWORD place1 = local_vplce[1];
 		DWORD place2 = local_vplce[2];
@@ -3116,17 +3216,9 @@ void vlinec4_RGBA()
 		fg_lo = _mm_srli_epi16(fg_lo, 8);
 		fg = _mm_packus_epi16(fg_lo, fg_hi);
 		_mm_storeu_si128((__m128i*)dest, fg);
-
-#else
-		dest[0] = shade_pal_index(palookupoffse[0][bufplce[0][(place = vplce[0]) >> bits]], light0); vplce[0] = place + vince[0];
-		dest[1] = shade_pal_index(palookupoffse[1][bufplce[1][(place = vplce[1]) >> bits]], light1); vplce[1] = place + vince[1];
-		dest[2] = shade_pal_index(palookupoffse[2][bufplce[2][(place = vplce[2]) >> bits]], light2); vplce[2] = place + vince[2];
-		dest[3] = shade_pal_index(palookupoffse[3][bufplce[3][(place = vplce[3]) >> bits]], light3); vplce[3] = place + vince[3];
-#endif
 		dest += dc_pitch;
 	} while (--count);
 
-#ifndef NO_SSE
 	// Is this needed? Global variables makes it tricky to know..
 	vplce[0] = local_vplce[0];
 	vplce[1] = local_vplce[1];
@@ -3136,18 +3228,25 @@ void vlinec4_RGBA()
 	vince[1] = local_vince[1];
 	vince[2] = local_vince[2];
 	vince[3] = local_vince[3];
-#endif
 }
+#endif
 
 void setupmvline (int fracbits)
 {
+	if (!r_swtruecolor)
+	{
 #if defined(X86_ASM)
-	setupmvlineasm (fracbits);
-	domvline1 = mvlineasm1;
-	domvline4 = mvlineasm4;
+		setupmvlineasm(fracbits);
+		domvline1 = mvlineasm1;
+		domvline4 = mvlineasm4;
 #else
-	mvlinebits = fracbits;
+		mvlinebits = fracbits;
 #endif
+	}
+	else
+	{
+		mvlinebits = fracbits;
+	}
 }
 
 #if !defined(X86_ASM)
@@ -3246,6 +3345,73 @@ void mvlinec4_RGBA()
 		dest += dc_pitch;
 	} while (--count);
 }
+
+#ifndef NO_SSE
+void mvlinec4_RGBA_SSE()
+{
+	uint32_t *dest = (uint32_t*)dc_dest;
+	int count = dc_count;
+	int bits = vlinebits;
+
+	uint32_t light0 = calc_light_multiplier(palookuplight[0]);
+	uint32_t light1 = calc_light_multiplier(palookuplight[1]);
+	uint32_t light2 = calc_light_multiplier(palookuplight[2]);
+	uint32_t light3 = calc_light_multiplier(palookuplight[3]);
+
+	__m128i mlight_hi = _mm_set_epi16(256, light1, light1, light1, 256, light0, light0, light0);
+	__m128i mlight_lo = _mm_set_epi16(256, light3, light3, light3, 256, light2, light2, light2);
+	uint32_t *palette = (uint32_t*)GPalette.BaseColors;
+	DWORD local_vplce[4] = { vplce[0], vplce[1], vplce[2], vplce[3] };
+	DWORD local_vince[4] = { vince[0], vince[1], vince[2], vince[3] };
+
+	do
+	{
+		DWORD place0 = local_vplce[0];
+		DWORD place1 = local_vplce[1];
+		DWORD place2 = local_vplce[2];
+		DWORD place3 = local_vplce[3];
+
+		BYTE pix0 = bufplce[0][place0 >> bits];
+		BYTE pix1 = bufplce[1][place1 >> bits];
+		BYTE pix2 = bufplce[2][place2 >> bits];
+		BYTE pix3 = bufplce[3][place3 >> bits];
+
+		// movemask = !(pix == 0)
+		__m128i movemask = _mm_xor_si128(_mm_cmpeq_epi32(_mm_set_epi32(pix3, pix2, pix1, pix0), _mm_setzero_si128()), _mm_cmpeq_epi32(_mm_setzero_si128(), _mm_setzero_si128()));
+
+		BYTE p0 = palookupoffse[0][pix0];
+		BYTE p1 = palookupoffse[1][pix1];
+		BYTE p2 = palookupoffse[2][pix2];
+		BYTE p3 = palookupoffse[3][pix3];
+
+		local_vplce[0] = place0 + local_vince[0];
+		local_vplce[1] = place1 + local_vince[1];
+		local_vplce[2] = place2 + local_vince[2];
+		local_vplce[3] = place3 + local_vince[3];
+
+		__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
+		__m128i fg_hi = _mm_unpackhi_epi8(fg, _mm_setzero_si128());
+		__m128i fg_lo = _mm_unpacklo_epi8(fg, _mm_setzero_si128());
+		fg_hi = _mm_mullo_epi16(fg_hi, mlight_hi);
+		fg_hi = _mm_srli_epi16(fg_hi, 8);
+		fg_lo = _mm_mullo_epi16(fg_lo, mlight_lo);
+		fg_lo = _mm_srli_epi16(fg_lo, 8);
+		fg = _mm_packus_epi16(fg_lo, fg_hi);
+		_mm_maskmoveu_si128(fg, movemask, (char*)dest);
+		dest += dc_pitch;
+	} while (--count);
+
+	// Is this needed? Global variables makes it tricky to know..
+	vplce[0] = local_vplce[0];
+	vplce[1] = local_vplce[1];
+	vplce[2] = local_vplce[2];
+	vplce[3] = local_vplce[3];
+	vince[0] = local_vince[0];
+	vince[1] = local_vince[1];
+	vince[2] = local_vince[2];
+	vince[3] = local_vince[3];
+}
+#endif
 
 
 extern "C" short spanend[MAXHEIGHT];
@@ -4138,14 +4304,28 @@ void R_InitColumnDrawers ()
 
 	if (r_swtruecolor)
 	{
+		if (!pointers_saved)
+		{
+			pointers_saved = true;
+			dovline1_saved = dovline1;
+			doprevline1_saved = doprevline1;
+			domvline1_saved = domvline1;
+			dovline4_saved = dovline4;
+			domvline4_saved = domvline4;
+		}
+
 		R_DrawColumnHoriz			= R_DrawColumnHorizP_RGBA_C;
 		R_DrawColumn				= R_DrawColumnP_RGBA_C;
 		R_DrawFuzzColumn			= R_DrawFuzzColumnP_RGBA_C;
 		R_DrawTranslatedColumn		= R_DrawTranslatedColumnP_RGBA_C;
 		R_DrawShadedColumn			= R_DrawShadedColumnP_RGBA_C;
-		R_DrawSpan					= R_DrawSpanP_RGBA_C;
 		R_DrawSpanMasked			= R_DrawSpanMaskedP_RGBA_C;
 		rt_map4cols					= rt_map4cols_RGBA_c;
+#ifndef NO_SSE
+		R_DrawSpan = R_DrawSpanP_RGBA_SSE;
+#else
+		R_DrawSpan = R_DrawSpanP_RGBA_C;
+#endif
 
 		R_DrawSpanTranslucent		= R_DrawSpanTranslucentP_RGBA_C;
 		R_DrawSpanMaskedTranslucent = R_DrawSpanMaskedTranslucentP_RGBA_C;
@@ -4208,21 +4388,18 @@ void R_InitColumnDrawers ()
 		rt_tlaterevsubclamp4cols	= rt_tlaterevsubclamp4cols_RGBA_c;
 		rt_initcols					= rt_initcols_rgba;
 
-		if (!pointers_saved)
-		{
-			pointers_saved = true;
-			dovline1_saved = dovline1;
-			doprevline1_saved = doprevline1;
-			domvline1_saved = domvline1;
-			dovline4_saved = dovline4;
-			domvline4_saved = domvline4;
-		}
-
 		dovline1					= vlinec1_RGBA;
 		doprevline1					= vlinec1_RGBA;
-		dovline4					= vlinec4_RGBA;
 		domvline1					= mvlinec1_RGBA;
-		domvline4					= mvlinec4_RGBA;
+
+#ifndef NO_SSE
+		dovline4 = vlinec4_RGBA_SSE;
+		domvline4 = mvlinec4_RGBA_SSE;
+#else
+		dovline4 = vlinec4_RGBA;
+		domvline4 = mvlinec4_RGBA;
+#endif
+
 	}
 	else
 	{

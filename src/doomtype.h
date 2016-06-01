@@ -99,6 +99,11 @@ typedef TMap<int, PClassActor *> FClassMap;
 
 #endif
 
+// Only use SSE intrinsics on Intel architecture
+#if !defined(_M_IX86) && !defined(__i386__) && !defined(_M_X64) && !defined(__amd64__)
+#define NO_SSE
+#endif
+
 
 #if defined(_MSC_VER)
 #define NOVTABLE __declspec(novtable)

@@ -1337,7 +1337,7 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 		sy += boby;
 	}
 
-	if (pspr->Flags & PSPF_ADDWEAPON)
+	if (pspr->Flags & PSPF_ADDWEAPON && pspr->GetID() != PSP_WEAPON)
 	{
 		sx += wx;
 		sy += wy;

@@ -214,10 +214,6 @@ DPSprite *player_t::GetPSprite(PSPLayers layer)
 		{ // The targeter layers were affected by those.
 			pspr->Flags |= (PSPF_CVARFAST|PSPF_POWDOUBLE);
 		}
-		if (layer != PSP_FLASH)
-		{ // Only the flash layer should follow the weapon.
-			pspr->Flags &= ~PSPF_ADDWEAPON;
-		}
 	}
 
 	return pspr;

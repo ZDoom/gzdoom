@@ -1294,6 +1294,11 @@ void APowerTargeter::Travelled ()
 
 void APowerTargeter::InitEffect ()
 {
+	// Why is this called when the inventory isn't even attached yet
+	// in APowerup::CreateCopy?
+	if (!Owner->FindInventory(GetClass(), true))
+		return;
+
 	player_t *player;
 
 	Super::InitEffect();
@@ -1317,6 +1322,14 @@ void APowerTargeter::InitEffect ()
 	PositionAccuracy ();
 }
 
+void APowerTargeter::AttachToOwner(AActor *other)
+{
+	Super::AttachToOwner(other);
+
+	// Let's actually properly call this for the targeters.
+	InitEffect();
+}
+
 bool APowerTargeter::HandlePickup(AInventory *item)
 {
 	if (Super::HandlePickup(item))
@@ -1326,8 +1339,6 @@ bool APowerTargeter::HandlePickup(AInventory *item)
 	}
 	return false;
 }
-
-
 
 void APowerTargeter::DoEffect ()
 {

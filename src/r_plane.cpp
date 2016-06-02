@@ -391,8 +391,7 @@ void R_MapTiltedPlane_C (int y, int x1)
 
 		u = SQWORD(uz*z) + pviewx;
 		v = SQWORD(vz*z) + pviewy;
-		ds_colormap = tiltlighting[i];
-		ds_light = 0;
+		R_SetDSColorMapLight(tiltlighting[i], 0, 0);
 		fb[i++] = ds_colormap[ds_source[(v >> vshift) | ((u >> ushift) & umask)]];
 		iz += plane_sz[0];
 		uz += plane_su[0];
@@ -515,8 +514,7 @@ void R_MapTiltedPlane_RGBA (int y, int x1)
 
 		u = SQWORD(uz*z) + pviewx;
 		v = SQWORD(vz*z) + pviewy;
-		ds_colormap = tiltlighting[i];
-		ds_light = 0;
+		R_SetDSColorMapLight(tiltlighting[i], 0, 0);
 		fb[i++] = ds_colormap[ds_source[(v >> vshift) | ((u >> ushift) & umask)]];
 		iz += plane_sz[0];
 		uz += plane_su[0];
@@ -1595,14 +1593,13 @@ void R_DrawSkyPlane (visplane_t *pl)
 	bool fakefixed = false;
 	if (fixedcolormap)
 	{
-		dc_colormap = fixedcolormap;
-		dc_light = 0;
+		R_SetColorMapLight(fixedcolormap, 0, 0);
 	}
 	else
 	{
 		fakefixed = true;
-		fixedcolormap = dc_colormap = NormalLight.Maps;
-		dc_light = 0;
+		fixedcolormap = NormalLight.Maps;
+		R_SetColorMapLight(fixedcolormap, 0, 0);
 	}
 
 	R_DrawSky (pl);
@@ -1685,11 +1682,19 @@ void R_DrawNormalPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t 
 	GlobVis = r_FloorVisibility / planeheight;
 	ds_light = 0;
 	if (fixedlightlev >= 0)
-		ds_colormap = basecolormap->Maps + fixedlightlev, plane_shade = false;
+	{
+		R_SetDSColorMapLight(basecolormap->Maps, 0, FIXEDLIGHT2SHADE(fixedlightlev));
+		plane_shade = false;
+	}
 	else if (fixedcolormap)
-		ds_colormap = fixedcolormap, plane_shade = false;
+	{
+		R_SetDSColorMapLight(fixedcolormap, 0, 0);
+		plane_shade = false;
+	}
 	else
+	{
 		plane_shade = true;
+	}
 
 	if (spanfunc != R_FillSpan)
 	{
@@ -1702,12 +1707,16 @@ void R_DrawNormalPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t 
 					spanfunc = R_DrawSpanMaskedTranslucent;
 					dc_srcblend = Col2RGB8[alpha>>10];
 					dc_destblend = Col2RGB8[(OPAQUE-alpha)>>10];
+					dc_srcalpha = alpha;
+					dc_destalpha = OPAQUE - alpha;
 				}
 				else
 				{
 					spanfunc = R_DrawSpanMaskedAddClamp;
 					dc_srcblend = Col2RGB8_LessPrecision[alpha>>10];
 					dc_destblend = Col2RGB8_LessPrecision[FRACUNIT>>10];
+					dc_srcalpha = alpha;
+					dc_destalpha = OPAQUE - alpha;
 				}
 			}
 			else
@@ -1724,12 +1733,16 @@ void R_DrawNormalPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t 
 					spanfunc = R_DrawSpanTranslucent;
 					dc_srcblend = Col2RGB8[alpha>>10];
 					dc_destblend = Col2RGB8[(OPAQUE-alpha)>>10];
+					dc_srcalpha = alpha;
+					dc_destalpha = OPAQUE - alpha;
 				}
 				else
 				{
 					spanfunc = R_DrawSpanAddClamp;
 					dc_srcblend = Col2RGB8_LessPrecision[alpha>>10];
 					dc_destblend = Col2RGB8_LessPrecision[FRACUNIT>>10];
+					dc_srcalpha = alpha;
+					dc_destalpha = OPAQUE - alpha;
 				}
 			}
 			else
@@ -1846,11 +1859,20 @@ void R_DrawTiltedPlane(visplane_t *pl, double _xscale, double _yscale, fixed_t a
 
 	ds_light = 0;
 	if (fixedlightlev >= 0)
-		ds_colormap = basecolormap->Maps + fixedlightlev, plane_shade = false;
+	{
+		R_SetDSColorMapLight(basecolormap->Maps, 0, FIXEDLIGHT2SHADE(fixedlightlev));
+		plane_shade = false;
+	}
 	else if (fixedcolormap)
-		ds_colormap = fixedcolormap, plane_shade = false;
+	{
+		R_SetDSColorMapLight(fixedcolormap, 0, 0);
+		plane_shade = false;
+	}
 	else
-		ds_colormap = basecolormap->Maps, plane_shade = true;
+	{
+		R_SetDSColorMapLight(basecolormap->Maps, 0, 0);
+		plane_shade = true;
+	}
 
 	if (!plane_shade)
 	{

@@ -171,13 +171,11 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 
 	if (translation != NULL)
 	{
-		dc_colormap = (lighttable_t *)translation;
-		dc_light = 0;
+		R_SetColorMapLight((lighttable_t *)translation, 0, 0);
 	}
 	else
 	{
-		dc_colormap = identitymap;
-		dc_light = 0;
+		R_SetColorMapLight(identitymap, 0, 0);
 	}
 
 	fixedcolormap = dc_colormap;

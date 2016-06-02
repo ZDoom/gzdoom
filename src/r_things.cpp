@@ -408,8 +408,7 @@ void R_DrawVisSprite (vissprite_t *vis)
 	}
 
 	fixed_t centeryfrac = FLOAT2FIXED(CenterY);
-	dc_colormap = vis->Style.colormap;
-	dc_light = 0;
+	R_SetColorMapLight(vis->Style.colormap, 0, 0);
 
 	mode = R_SetPatchStyle (vis->Style.RenderStyle, vis->Style.Alpha, vis->Translation, vis->FillColor);
 
@@ -539,14 +538,13 @@ void R_DrawWallSprite(vissprite_t *spr)
 	rw_lightstep = float((GlobVis / spr->wallc.sz2 - rw_lightleft) / (spr->wallc.sx2 - spr->wallc.sx1));
 	rw_light = rw_lightleft + (x1 - spr->wallc.sx1) * rw_lightstep;
 	if (fixedlightlev >= 0)
-		dc_colormap = usecolormap->Maps + fixedlightlev;
+		R_SetColorMapLight(usecolormap->Maps, 0, FIXEDLIGHT2SHADE(fixedlightlev));
 	else if (fixedcolormap != NULL)
-		dc_colormap = fixedcolormap;
+		R_SetColorMapLight(fixedcolormap, 0, 0);
 	else if (!foggy && (spr->renderflags & RF_FULLBRIGHT))
-		dc_colormap = usecolormap->Maps;
+		R_SetColorMapLight(usecolormap->Maps, 0, 0);
 	else
 		calclighting = true;
-	dc_light = 0;
 
 	// Draw it
 	WallSpriteTile = spr->pic;
@@ -656,8 +654,7 @@ void R_DrawVisVoxel(vissprite_t *spr, int minslabz, int maxslabz, short *cliptop
 	int flags = 0;
 
 	// Do setup for blending.
-	dc_colormap = spr->Style.colormap;
-	dc_light = 0;
+	R_SetColorMapLight(spr->Style.colormap, 0, 0);
 	mode = R_SetPatchStyle(spr->Style.RenderStyle, spr->Style.Alpha, spr->Translation, spr->FillColor);
 
 	if (mode == DontDraw)

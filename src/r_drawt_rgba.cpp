@@ -308,6 +308,9 @@ void rt_add1col_RGBA_c (int hx, int sx, int yl, int yh)
 
 	uint32_t light = calc_light_multiplier(dc_light);
 
+	uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
+	uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+
 	do {
 		uint32_t fg = shade_pal_index(colormap[*source], light);
 		uint32_t fg_red = (fg >> 16) & 0xff;
@@ -318,9 +321,9 @@ void rt_add1col_RGBA_c (int hx, int sx, int yl, int yh)
 		uint32_t bg_green = (*dest >> 8) & 0xff;
 		uint32_t bg_blue = (*dest) & 0xff;
 
-		uint32_t red = clamp<uint32_t>(fg_red + bg_red, 0, 255);
-		uint32_t green = clamp<uint32_t>(fg_green + bg_green, 0, 255);
-		uint32_t blue = clamp<uint32_t>(fg_blue + bg_blue, 0, 255);
+		uint32_t red = clamp<uint32_t>((fg_red * fg_alpha + bg_red * bg_alpha) / 256, 0, 255);
+		uint32_t green = clamp<uint32_t>((fg_green * fg_alpha + bg_green * bg_alpha) / 256, 0, 255);
+		uint32_t blue = clamp<uint32_t>((fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 0, 255);
 
 		*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
 
@@ -350,6 +353,9 @@ void rt_add4cols_RGBA_c (int sx, int yl, int yh)
 
 	uint32_t light = calc_light_multiplier(dc_light);
 
+	uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
+	uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+
 	do {
 		for (int i = 0; i < 4; i++)
 		{
@@ -362,9 +368,9 @@ void rt_add4cols_RGBA_c (int sx, int yl, int yh)
 			uint32_t bg_green = (dest[i] >> 8) & 0xff;
 			uint32_t bg_blue = (dest[i]) & 0xff;
 
-			uint32_t red = clamp<uint32_t>(fg_red + bg_red, 0, 255);
-			uint32_t green = clamp<uint32_t>(fg_green + bg_green, 0, 255);
-			uint32_t blue = clamp<uint32_t>(fg_blue + bg_blue, 0, 255);
+			uint32_t red = clamp<uint32_t>((fg_red * fg_alpha + bg_red * bg_alpha) / 256, 0, 255);
+			uint32_t green = clamp<uint32_t>((fg_green * fg_alpha + bg_green * bg_alpha) / 256, 0, 255);
+			uint32_t blue = clamp<uint32_t>((fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 0, 255);
 
 			dest[i] = 0xff000000 | (red << 16) | (green << 8) | blue;
 		}
@@ -496,6 +502,9 @@ void rt_addclamp1col_RGBA_c (int hx, int sx, int yl, int yh)
 
 	uint32_t light = calc_light_multiplier(dc_light);
 
+	uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
+	uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+
 	do {
 		uint32_t fg = shade_pal_index(colormap[*source], light);
 		uint32_t fg_red = (fg >> 16) & 0xff;
@@ -506,9 +515,9 @@ void rt_addclamp1col_RGBA_c (int hx, int sx, int yl, int yh)
 		uint32_t bg_green = (*dest >> 8) & 0xff;
 		uint32_t bg_blue = (*dest) & 0xff;
 
-		uint32_t red = clamp<uint32_t>(fg_red + bg_red, 0, 255);
-		uint32_t green = clamp<uint32_t>(fg_green + bg_green, 0, 255);
-		uint32_t blue = clamp<uint32_t>(fg_blue + bg_blue, 0, 255);
+		uint32_t red = clamp<uint32_t>((fg_red * fg_alpha + bg_red * bg_alpha) / 256, 0, 255);
+		uint32_t green = clamp<uint32_t>((fg_green * fg_alpha + bg_green * bg_alpha) / 256, 0, 255);
+		uint32_t blue = clamp<uint32_t>((fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 0, 255);
 
 		*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
 		source += 4;
@@ -537,6 +546,9 @@ void rt_addclamp4cols_RGBA_c (int sx, int yl, int yh)
 
 	uint32_t light = calc_light_multiplier(dc_light);
 
+	uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
+	uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+
 	do {
 		for (int i = 0; i < 4; i++)
 		{
@@ -549,9 +561,9 @@ void rt_addclamp4cols_RGBA_c (int sx, int yl, int yh)
 			uint32_t bg_green = (dest[i] >> 8) & 0xff;
 			uint32_t bg_blue = (dest[i]) & 0xff;
 
-			uint32_t red = clamp<uint32_t>(fg_red + bg_red, 0, 255);
-			uint32_t green = clamp<uint32_t>(fg_green + bg_green, 0, 255);
-			uint32_t blue = clamp<uint32_t>(fg_blue + bg_blue, 0, 255);
+			uint32_t red = clamp<uint32_t>((fg_red * fg_alpha + bg_red * bg_alpha) / 256, 0, 255);
+			uint32_t green = clamp<uint32_t>((fg_green * fg_alpha + bg_green * bg_alpha) / 256, 0, 255);
+			uint32_t blue = clamp<uint32_t>((fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 0, 255);
 
 			dest[i] = 0xff000000 | (red << 16) | (green << 8) | blue;
 		}
@@ -595,6 +607,9 @@ void rt_subclamp1col_RGBA_c (int hx, int sx, int yl, int yh)
 
 	uint32_t light = calc_light_multiplier(dc_light);
 
+	uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
+	uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+
 	do {
 		uint32_t fg = shade_pal_index(colormap[*source], light);
 		uint32_t fg_red = (fg >> 16) & 0xff;
@@ -605,9 +620,9 @@ void rt_subclamp1col_RGBA_c (int hx, int sx, int yl, int yh)
 		uint32_t bg_green = (*dest >> 8) & 0xff;
 		uint32_t bg_blue = (*dest) & 0xff;
 
-		uint32_t red = clamp<uint32_t>(256 - fg_red + bg_red, 256, 256 + 255) - 256;
-		uint32_t green = clamp<uint32_t>(256 - fg_green + bg_green, 256, 256 + 255) - 256;
-		uint32_t blue = clamp<uint32_t>(256 - fg_blue + bg_blue, 256, 256 + 255) - 256;
+		uint32_t red = clamp<uint32_t>((0x10000 - fg_red * fg_alpha + bg_red * bg_alpha) / 256, 256, 256 + 255) - 256;
+		uint32_t green = clamp<uint32_t>((0x10000 - fg_green * fg_alpha + bg_green * bg_alpha) / 256, 256, 256 + 255) - 256;
+		uint32_t blue = clamp<uint32_t>((0x10000 - fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 256, 256 + 255) - 256;
 
 		*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
 		source += 4;
@@ -636,6 +651,9 @@ void rt_subclamp4cols_RGBA_c (int sx, int yl, int yh)
 
 	uint32_t light = calc_light_multiplier(dc_light);
 
+	uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
+	uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+
 	do {
 		for (int i = 0; i < 4; i++)
 		{
@@ -648,9 +666,9 @@ void rt_subclamp4cols_RGBA_c (int sx, int yl, int yh)
 			uint32_t bg_green = (dest[i] >> 8) & 0xff;
 			uint32_t bg_blue = (dest[i]) & 0xff;
 
-			uint32_t red = clamp<uint32_t>(256 - fg_red + bg_red, 256, 256 + 255) - 256;
-			uint32_t green = clamp<uint32_t>(256 - fg_green + bg_green, 256, 256 + 255) - 256;
-			uint32_t blue = clamp<uint32_t>(256 - fg_blue + bg_blue, 256, 256 + 255) - 256;
+			uint32_t red = clamp<uint32_t>((0x10000 - fg_red * fg_alpha + bg_red * bg_alpha) / 256, 256, 256 + 255) - 256;
+			uint32_t green = clamp<uint32_t>((0x10000 - fg_green * fg_alpha + bg_green * bg_alpha) / 256, 256, 256 + 255) - 256;
+			uint32_t blue = clamp<uint32_t>((0x10000 - fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 256, 256 + 255) - 256;
 
 			dest[i] = 0xff000000 | (red << 16) | (green << 8) | blue;
 		}
@@ -688,14 +706,15 @@ void rt_revsubclamp1col_RGBA_c (int hx, int sx, int yl, int yh)
 		return;
 	count++;
 
-	DWORD *fg2rgb = dc_srcblend;
-	DWORD *bg2rgb = dc_destblend;
 	dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
 	source = &dc_temp_rgba[yl*4 + hx];
 	pitch = dc_pitch;
 	colormap = dc_colormap;
 
 	uint32_t light = calc_light_multiplier(dc_light);
+
+	uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
+	uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
 
 	do {
 		uint32_t fg = shade_pal_index(colormap[*source], light);
@@ -707,9 +726,9 @@ void rt_revsubclamp1col_RGBA_c (int hx, int sx, int yl, int yh)
 		uint32_t bg_green = (*dest >> 8) & 0xff;
 		uint32_t bg_blue = (*dest) & 0xff;
 
-		uint32_t red = clamp<uint32_t>(256 + fg_red - bg_red, 256, 256 + 255) - 256;
-		uint32_t green = clamp<uint32_t>(256 + fg_green - bg_green, 256, 256 + 255) - 256;
-		uint32_t blue = clamp<uint32_t>(256 + fg_blue - bg_blue, 256, 256 + 255) - 256;
+		uint32_t red = clamp<uint32_t>((0x10000 + fg_red * fg_alpha - bg_red * bg_alpha) / 256, 256, 256 + 255) - 256;
+		uint32_t green = clamp<uint32_t>((0x10000 + fg_green * fg_alpha - bg_green * bg_alpha) / 256, 256, 256 + 255) - 256;
+		uint32_t blue = clamp<uint32_t>((0x10000 + fg_blue * fg_alpha - bg_blue * bg_alpha) / 256, 256, 256 + 255) - 256;
 
 		*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
 		source += 4;
@@ -731,14 +750,15 @@ void rt_revsubclamp4cols_RGBA_c (int sx, int yl, int yh)
 		return;
 	count++;
 
-	DWORD *fg2rgb = dc_srcblend;
-	DWORD *bg2rgb = dc_destblend;
 	dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
 	source = &dc_temp_rgba[yl*4];
 	pitch = dc_pitch;
 	colormap = dc_colormap;
 
 	uint32_t light = calc_light_multiplier(dc_light);
+
+	uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
+	uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
 
 	do {
 		for (int i = 0; i < 4; i++)
@@ -752,9 +772,9 @@ void rt_revsubclamp4cols_RGBA_c (int sx, int yl, int yh)
 			uint32_t bg_green = (dest[i] >> 8) & 0xff;
 			uint32_t bg_blue = (dest[i]) & 0xff;
 
-			uint32_t red = clamp<uint32_t>(256 + fg_red - bg_red, 256, 256 + 255) - 256;
-			uint32_t green = clamp<uint32_t>(256 + fg_green - bg_green, 256, 256 + 255) - 256;
-			uint32_t blue = clamp<uint32_t>(256 + fg_blue - bg_blue, 256, 256 + 255) - 256;
+			uint32_t red = clamp<uint32_t>((0x10000 + fg_red * fg_alpha - bg_red * bg_alpha) / 256, 256, 256 + 255) - 256;
+			uint32_t green = clamp<uint32_t>((0x10000 + fg_green * fg_alpha - bg_green * bg_alpha) / 256, 256, 256 + 255) - 256;
+			uint32_t blue = clamp<uint32_t>((0x10000 + fg_blue * fg_alpha - bg_blue * bg_alpha) / 256, 256, 256 + 255) - 256;
 
 			dest[i] = 0xff000000 | (red << 16) | (green << 8) | blue;
 		}

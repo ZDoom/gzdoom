@@ -82,15 +82,18 @@ extern bool				r_dontmaplines;
 // Change R_CalcTiltedLighting() when this changes.
 #define GETPALOOKUP(vis,shade)	(clamp<int> (((shade)-FLOAT2FIXED(MIN(MAXLIGHTVIS,double(vis))))>>FRACBITS, 0, NUMCOLORMAPS-1))
 
-// Calculate the light multiplier for ds_light
-// This is used instead of GETPALOOKUP when ds_colormap+dc_colormap is set to the base colormap
-#define LIGHTSCALE(vis,shade) ((shade)-FLOAT2FIXED(MIN(MAXLIGHTVIS,double(vis))))
+// Calculate the light multiplier for dc_light/ds_light
+// This is used instead of GETPALOOKUP when ds_colormap/dc_colormap is set to the base colormap
+// Returns a value between 0 and 1 in fixed point
+#define LIGHTSCALE(vis,shade) FLOAT2FIXED(clamp((FIXED2DBL(shade) - (MIN(MAXLIGHTVIS,double(vis)))) / NUMCOLORMAPS, 0.0, (NUMCOLORMAPS-1)/(double)NUMCOLORMAPS))
+
+// Converts fixedlightlev into a shade value
+#define FIXEDLIGHT2SHADE(lightlev) (((lightlev) >> COLORMAPSHIFT) << FRACBITS)
 
 // calculates the light constant passed to the shade_pal_index function
 inline uint32_t calc_light_multiplier(dsfixed_t light)
 {
-	// the 0.70 multiplier shouldn't be needed - maybe the palette shades in doom weren't linear?
-	return (uint32_t)clamp((1.0 - FIXED2DBL(light) / MAXLIGHTVIS * 0.70) * 256 + 0.5, 0.0, 256.0);
+	return 256 - (light >> (FRACBITS - 8));
 }
 
 // Calculates a ARGB8 color for the given palette index and light multiplier

@@ -177,8 +177,7 @@ static void BlastMaskedColumn (void (*blastfunc)(const BYTE *pixels, const FText
 	// calculate lighting
 	if (fixedcolormap == NULL && fixedlightlev < 0)
 	{
-		dc_colormap = basecolormap->Maps + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
-		dc_light = 0;
+		R_SetColorMapLight(basecolormap->Maps, rw_light, wallshade);
 	}
 
 	dc_iscale = xs_Fix<16>::ToFix(MaskedSWall[dc_x] * MaskedScaleY);
@@ -314,10 +313,9 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	rw_scalestep = ds->iscalestep;
 
 	if (fixedlightlev >= 0)
-		dc_colormap = basecolormap->Maps + fixedlightlev;
+		R_SetColorMapLight(basecolormap->Maps, 0, FIXEDLIGHT2SHADE(fixedlightlev));
 	else if (fixedcolormap != NULL)
-		dc_colormap = fixedcolormap;
-	dc_light = 0;
+		R_SetColorMapLight(fixedcolormap, 0, 0);
 
 	// find positioning
 	texheight = tex->GetScaledHeightDouble();
@@ -632,10 +630,9 @@ void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover)
 	}
 
 	if (fixedlightlev >= 0)
-		dc_colormap = basecolormap->Maps + fixedlightlev;
+		R_SetColorMapLight(basecolormap->Maps, 0, FIXEDLIGHT2SHADE(fixedlightlev));
 	else if (fixedcolormap != NULL)
-		dc_colormap = fixedcolormap;
-	dc_light = 0;
+		R_SetColorMapLight(fixedcolormap, 0, 0);
 
 	WallC.sz1 = ds->sz1;
 	WallC.sz2 = ds->sz2;
@@ -1435,11 +1432,11 @@ static void wallscan_np2_ds(drawseg_t *ds, int x1, int x2, short *uwal, short *d
 	}
 }
 
-inline fixed_t mvline1 (fixed_t vince, BYTE *colormap, int count, fixed_t vplce, const BYTE *bufplce, BYTE *dest)
+inline fixed_t mvline1 (fixed_t vince, BYTE *colormap, fixed_t light, int count, fixed_t vplce, const BYTE *bufplce, BYTE *dest)
 {
 	dc_iscale = vince;
 	dc_colormap = colormap;
-	dc_light = 0;
+	dc_light = light;
 	dc_count = count;
 	dc_texturefrac = vplce;
 	dc_source = bufplce;
@@ -1508,8 +1505,7 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_
 
 		if (!fixed)
 		{ // calculate lighting
-			dc_colormap = basecolormapdata + (GETPALOOKUP (light, wallshade) << COLORMAPSHIFT);
-			dc_light = 0;
+			R_SetColorMapLight(basecolormapdata, light, wallshade);
 		}
 
 		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
@@ -1569,7 +1565,7 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_
 			{
 				if (!(bad & 1))
 				{
-					mvline1(vince[z],palookupoffse[z],y2ve[z]-y1ve[z],vplce[z],bufplce[z],(ylookup[y1ve[z]]+z)*pixelsize+pixel);
+					mvline1(vince[z],palookupoffse[z],palookuplight[z],y2ve[z]-y1ve[z],vplce[z],bufplce[z],(ylookup[y1ve[z]]+z)*pixelsize+pixel);
 				}
 				bad >>= 1;
 			}
@@ -1580,7 +1576,7 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_
 		{
 			if (u4 > y1ve[z])
 			{
-				vplce[z] = mvline1(vince[z],palookupoffse[z],u4-y1ve[z],vplce[z],bufplce[z],(ylookup[y1ve[z]]+z)*pixelsize+pixel);
+				vplce[z] = mvline1(vince[z],palookupoffse[z],palookuplight[z],u4-y1ve[z],vplce[z],bufplce[z],(ylookup[y1ve[z]]+z)*pixelsize+pixel);
 			}
 		}
 
@@ -1596,7 +1592,7 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_
 		{
 			if (y2ve[z] > d4)
 			{
-				mvline1(vince[z],palookupoffse[0],y2ve[z]-d4,vplce[z],bufplce[z],i+z*pixelsize);
+				mvline1(vince[z],palookupoffse[0],palookuplight[0],y2ve[z]-d4,vplce[z],bufplce[z],i+z*pixelsize);
 			}
 		}
 	}
@@ -1609,8 +1605,7 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_
 
 		if (!fixed)
 		{ // calculate lighting
-			dc_colormap = basecolormapdata + (GETPALOOKUP (light, wallshade) << COLORMAPSHIFT);
-			dc_light = 0;
+			R_SetColorMapLight(basecolormapdata, light, wallshade);
 		}
 
 		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
@@ -1844,10 +1839,9 @@ void R_RenderSegLoop ()
 	fixed_t xoffset = rw_offset;
 
 	if (fixedlightlev >= 0)
-		dc_colormap = basecolormap->Maps + fixedlightlev;
+		R_SetColorMapLight(basecolormap->Maps, 0, FIXEDLIGHT2SHADE(fixedlightlev));
 	else if (fixedcolormap != NULL)
-		dc_colormap = fixedcolormap;
-	dc_light = 0;
+		R_SetColorMapLight(fixedcolormap, 0, 0);
 
 	// clip wall to the floor and ceiling
 	for (x = x1; x < x2; ++x)
@@ -3244,14 +3238,13 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 
 	rw_light = rw_lightleft + (x1 - WallC.sx1) * rw_lightstep;
 	if (fixedlightlev >= 0)
-		dc_colormap = usecolormap->Maps + fixedlightlev;
+		R_SetColorMapLight(usecolormap->Maps, 0, FIXEDLIGHT2SHADE(fixedlightlev));
 	else if (fixedcolormap != NULL)
-		dc_colormap = fixedcolormap;
+		R_SetColorMapLight(fixedcolormap, 0, 0);
 	else if (!foggy && (decal->RenderFlags & RF_FULLBRIGHT))
-		dc_colormap = usecolormap->Maps;
+		R_SetColorMapLight(usecolormap->Maps, 0, 0);
 	else
 		calclighting = true;
-	dc_light = 0;
 
 	// Draw it
 	if (decal->RenderFlags & RF_YFLIP)

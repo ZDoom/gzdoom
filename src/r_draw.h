@@ -41,6 +41,8 @@ extern "C" int			dc_color;		// [RH] For flat colors (no texturing)
 extern "C" DWORD		dc_srccolor;
 extern "C" DWORD		*dc_srcblend;
 extern "C" DWORD		*dc_destblend;
+extern "C" fixed_t		dc_srcalpha;
+extern "C" fixed_t		dc_destalpha;
 
 // first pixel in a column
 extern "C" const BYTE*	dc_source;

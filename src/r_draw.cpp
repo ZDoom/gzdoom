@@ -155,6 +155,8 @@ int				dc_color;				// [RH] Color for column filler
 DWORD			dc_srccolor;
 DWORD			*dc_srcblend;			// [RH] Source and destination
 DWORD			*dc_destblend;			// blending lookups
+fixed_t			dc_srcalpha;			// Alpha value used by dc_srcblend
+fixed_t			dc_destalpha;			// Alpha value used by dc_destblend
 
 // first pixel in a column (possibly virtual) 
 const BYTE*		dc_source;				
@@ -414,9 +416,10 @@ void R_FillAddColumn_RGBA_C()
 	dest = (uint32_t*)dc_dest;
 	int pitch = dc_pitch;
 
-	uint32_t fg_red = (dc_srccolor >> 12) & 0xf8;
-	uint32_t fg_green = (dc_srccolor >> 2) & 0xf8;
-	uint32_t fg_blue = (dc_srccolor << 3) & 0xf8;
+	uint32_t fg = shade_pal_index(dc_color, calc_light_multiplier(0));
+	uint32_t fg_red = (fg >> 24) & 0xff;
+	uint32_t fg_green = (fg >> 16) & 0xff;
+	uint32_t fg_blue = fg & 0xff;
 
 	do
 	{
@@ -478,9 +481,10 @@ void R_FillAddClampColumn_RGBA()
 	dest = (uint32_t*)dc_dest;
 	int pitch = dc_pitch;
 
-	uint32_t fg_red = (dc_srccolor >> 12) & 0xf8;
-	uint32_t fg_green = (dc_srccolor >> 2) & 0xf8;
-	uint32_t fg_blue = (dc_srccolor << 3) & 0xf8;
+	uint32_t fg = shade_pal_index(dc_color, calc_light_multiplier(0));
+	uint32_t fg_red = (fg >> 24) & 0xff;
+	uint32_t fg_green = (fg >> 16) & 0xff;
+	uint32_t fg_blue = fg & 0xff;
 
 	do
 	{
@@ -541,9 +545,10 @@ void R_FillSubClampColumn_RGBA()
 	dest = (uint32_t*)dc_dest;
 	int pitch = dc_pitch;
 
-	uint32_t fg_red = (dc_srccolor >> 12) & 0xf8;
-	uint32_t fg_green = (dc_srccolor >> 2) & 0xf8;
-	uint32_t fg_blue = (dc_srccolor << 3) & 0xf8;
+	uint32_t fg = shade_pal_index(dc_color, calc_light_multiplier(0));
+	uint32_t fg_red = (fg >> 24) & 0xff;
+	uint32_t fg_green = (fg >> 16) & 0xff;
+	uint32_t fg_blue = fg & 0xff;
 
 	do
 	{
@@ -604,9 +609,10 @@ void R_FillRevSubClampColumn_RGBA()
 	dest = (uint32_t*)dc_dest;
 	int pitch = dc_pitch;
 
-	uint32_t fg_red = (dc_srccolor >> 12) & 0xf8;
-	uint32_t fg_green = (dc_srccolor >> 2) & 0xf8;
-	uint32_t fg_blue = (dc_srccolor << 3) & 0xf8;
+	uint32_t fg = shade_pal_index(dc_color, calc_light_multiplier(0));
+	uint32_t fg_red = (fg >> 24) & 0xff;
+	uint32_t fg_green = (fg >> 16) & 0xff;
+	uint32_t fg_blue = fg & 0xff;
 
 	do
 	{
@@ -946,6 +952,9 @@ void R_DrawAddColumnP_RGBA_C()
 		int pitch = dc_pitch;
 		BYTE *colormap = dc_colormap;
 
+		uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
+		uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+
 		do
 		{
 			uint32_t fg = shade_pal_index(colormap[source[frac >> FRACBITS]], 0);
@@ -958,9 +967,9 @@ void R_DrawAddColumnP_RGBA_C()
 			uint32_t bg_green = (*dest >> 8) & 0xff;
 			uint32_t bg_blue = (*dest) & 0xff;
 
-			uint32_t red = clamp<uint32_t>(fg_red + bg_red, 0, 255);
-			uint32_t green = clamp<uint32_t>(fg_green + bg_green, 0, 255);
-			uint32_t blue = clamp<uint32_t>(fg_blue + bg_blue, 0, 255);
+			uint32_t red = clamp<uint32_t>((fg_red * fg_alpha + bg_red * bg_alpha) / 256, 0, 255);
+			uint32_t green = clamp<uint32_t>((fg_green * fg_alpha + bg_green * bg_alpha) / 256, 0, 255);
+			uint32_t blue = clamp<uint32_t>((fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 0, 255);
 
 			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
 			dest += pitch;
@@ -1107,6 +1116,9 @@ void R_DrawTlatedAddColumnP_RGBA_C()
 		const BYTE *source = dc_source;
 		int pitch = dc_pitch;
 
+		uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
+		uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+
 		do
 		{
 			uint32_t fg = shade_pal_index(colormap[translation[source[frac >> FRACBITS]]], light);
@@ -1119,9 +1131,9 @@ void R_DrawTlatedAddColumnP_RGBA_C()
 			uint32_t bg_green = (*dest >> 8) & 0xff;
 			uint32_t bg_blue = (*dest) & 0xff;
 
-			uint32_t red = clamp<uint32_t>(fg_red + bg_red, 0, 255);
-			uint32_t green = clamp<uint32_t>(fg_green + bg_green, 0, 255);
-			uint32_t blue = clamp<uint32_t>(fg_blue + bg_blue, 0, 255);
+			uint32_t red = clamp<uint32_t>((fg_red * fg_alpha + bg_red * bg_alpha) / 256, 0, 255);
+			uint32_t green = clamp<uint32_t>((fg_green * fg_alpha + bg_green * bg_alpha) / 256, 0, 255);
+			uint32_t blue = clamp<uint32_t>((fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 0, 255);
 
 			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
 			dest += pitch;
@@ -1276,6 +1288,9 @@ void R_DrawAddClampColumnP_RGBA_C()
 		int pitch = dc_pitch;
 		uint32_t light = calc_light_multiplier(dc_light);
 
+		uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
+		uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+
 		do
 		{
 			uint32_t fg = shade_pal_index(colormap[source[frac >> FRACBITS]], light);
@@ -1287,9 +1302,9 @@ void R_DrawAddClampColumnP_RGBA_C()
 			uint32_t bg_green = (*dest >> 8) & 0xff;
 			uint32_t bg_blue = (*dest) & 0xff;
 
-			uint32_t red = clamp<uint32_t>(fg_red + bg_red, 0, 255);
-			uint32_t green = clamp<uint32_t>(fg_green + bg_green, 0, 255);
-			uint32_t blue = clamp<uint32_t>(fg_blue + bg_blue, 0, 255);
+			uint32_t red = clamp<uint32_t>((fg_red * fg_alpha + bg_red * bg_alpha) / 256, 0, 255);
+			uint32_t green = clamp<uint32_t>((fg_green * fg_alpha + bg_green * bg_alpha) / 256, 0, 255);
+			uint32_t blue = clamp<uint32_t>((fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 0, 255);
 
 			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
 			dest += pitch;
@@ -1363,6 +1378,9 @@ void R_DrawAddClampTranslatedColumnP_RGBA_C()
 		int pitch = dc_pitch;
 		uint32_t light = calc_light_multiplier(dc_light);
 
+		uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
+		uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+
 		do
 		{
 			uint32_t fg = shade_pal_index(colormap[translation[source[frac >> FRACBITS]]], light);
@@ -1374,9 +1392,9 @@ void R_DrawAddClampTranslatedColumnP_RGBA_C()
 			uint32_t bg_green = (*dest >> 8) & 0xff;
 			uint32_t bg_blue = (*dest) & 0xff;
 
-			uint32_t red = clamp<uint32_t>(fg_red + bg_red, 0, 255);
-			uint32_t green = clamp<uint32_t>(fg_green + bg_green, 0, 255);
-			uint32_t blue = clamp<uint32_t>(fg_blue + bg_blue, 0, 255);
+			uint32_t red = clamp<uint32_t>((fg_red * fg_alpha + bg_red * bg_alpha) / 256, 0, 255);
+			uint32_t green = clamp<uint32_t>((fg_green * fg_alpha + bg_green * bg_alpha) / 256, 0, 255);
+			uint32_t blue = clamp<uint32_t>((fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 0, 255);
 
 			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
 			dest += pitch;
@@ -1447,6 +1465,9 @@ void R_DrawSubClampColumnP_RGBA_C()
 		int pitch = dc_pitch;
 		uint32_t light = calc_light_multiplier(dc_light);
 
+		uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
+		uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+
 		do
 		{
 			uint32_t fg = shade_pal_index(colormap[source[frac >> FRACBITS]], light);
@@ -1458,9 +1479,9 @@ void R_DrawSubClampColumnP_RGBA_C()
 			uint32_t bg_green = (*dest >> 8) & 0xff;
 			uint32_t bg_blue = (*dest) & 0xff;
 
-			uint32_t red = clamp<uint32_t>(256 - fg_red + bg_red, 256, 256 + 255) - 256;
-			uint32_t green = clamp<uint32_t>(256 - fg_green + bg_green, 256, 256 + 255) - 256;
-			uint32_t blue = clamp<uint32_t>(256 - fg_blue + bg_blue, 256, 256 + 255) - 256;
+			uint32_t red = clamp<uint32_t>((0x10000 - fg_red * fg_alpha + bg_red * bg_alpha) / 256, 256, 256 + 255) - 256;
+			uint32_t green = clamp<uint32_t>((0x10000 - fg_green * fg_alpha + bg_green * bg_alpha) / 256, 256, 256 + 255) - 256;
+			uint32_t blue = clamp<uint32_t>((0x10000 - fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 256, 256 + 255) - 256;
 
 			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
 			dest += pitch;
@@ -1533,6 +1554,9 @@ void R_DrawSubClampTranslatedColumnP_RGBA_C()
 		int pitch = dc_pitch;
 		uint32_t light = calc_light_multiplier(dc_light);
 
+		uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
+		uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+
 		do
 		{
 			uint32_t fg = shade_pal_index(colormap[translation[source[frac >> FRACBITS]]], light);
@@ -1544,9 +1568,9 @@ void R_DrawSubClampTranslatedColumnP_RGBA_C()
 			uint32_t bg_green = (*dest >> 8) & 0xff;
 			uint32_t bg_blue = (*dest) & 0xff;
 
-			uint32_t red = clamp<uint32_t>(256 - fg_red + bg_red, 256, 256 + 255) - 256;
-			uint32_t green = clamp<uint32_t>(256 - fg_green + bg_green, 256, 256 + 255) - 256;
-			uint32_t blue = clamp<uint32_t>(256 - fg_blue + bg_blue, 256, 256 + 255) - 256;
+			uint32_t red = clamp<uint32_t>((0x10000 - fg_red * fg_alpha + bg_red * bg_alpha) / 256, 256, 256 + 255) - 256;
+			uint32_t green = clamp<uint32_t>((0x10000 - fg_green * fg_alpha + bg_green * bg_alpha) / 256, 256, 256 + 255) - 256;
+			uint32_t blue = clamp<uint32_t>((0x10000 - fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 256, 256 + 255) - 256;
 
 			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
 			dest += pitch;
@@ -1616,6 +1640,8 @@ void R_DrawRevSubClampColumnP_RGBA_C()
 		const BYTE *source = dc_source;
 		int pitch = dc_pitch;
 		uint32_t light = calc_light_multiplier(dc_light);
+		uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
+		uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
 
 		do
 		{
@@ -1628,9 +1654,9 @@ void R_DrawRevSubClampColumnP_RGBA_C()
 			uint32_t bg_green = (*dest >> 8) & 0xff;
 			uint32_t bg_blue = (*dest) & 0xff;
 
-			uint32_t red = clamp<uint32_t>(256 + fg_red - bg_red, 256, 256 + 255) - 256;
-			uint32_t green = clamp<uint32_t>(256 + fg_green - bg_green, 256, 256 + 255) - 256;
-			uint32_t blue = clamp<uint32_t>(256 + fg_blue - bg_blue, 256, 256 + 255) - 256;
+			uint32_t red = clamp<uint32_t>((0x10000 + fg_red * fg_alpha - bg_red * bg_alpha) / 256, 256, 256 + 255) - 256;
+			uint32_t green = clamp<uint32_t>((0x10000 + fg_green * fg_alpha - bg_green * bg_alpha) / 256, 256, 256 + 255) - 256;
+			uint32_t blue = clamp<uint32_t>((0x10000 + fg_blue * fg_alpha - bg_blue * bg_alpha) / 256, 256, 256 + 255) - 256;
 
 			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
 			dest += pitch;
@@ -1703,6 +1729,9 @@ void R_DrawRevSubClampTranslatedColumnP_RGBA_C()
 		int pitch = dc_pitch;
 		uint32_t light = calc_light_multiplier(dc_light);
 
+		uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
+		uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+
 		do
 		{
 			uint32_t fg = shade_pal_index(colormap[translation[source[frac >> FRACBITS]]], light);
@@ -1714,9 +1743,9 @@ void R_DrawRevSubClampTranslatedColumnP_RGBA_C()
 			uint32_t bg_green = (*dest >> 8) & 0xff;
 			uint32_t bg_blue = (*dest) & 0xff;
 
-			uint32_t red = clamp<uint32_t>(256 + fg_red - bg_red, 256, 256 + 255) - 256;
-			uint32_t green = clamp<uint32_t>(256 + fg_green - bg_green, 256, 256 + 255) - 256;
-			uint32_t blue = clamp<uint32_t>(256 + fg_blue - bg_blue, 256, 256 + 255) - 256;
+			uint32_t red = clamp<uint32_t>((0x10000 + fg_red * fg_alpha - bg_red * bg_alpha) / 256, 256, 256 + 255) - 256;
+			uint32_t green = clamp<uint32_t>((0x10000 + fg_green * fg_alpha - bg_green * bg_alpha) / 256, 256, 256 + 255) - 256;
+			uint32_t blue = clamp<uint32_t>((0x10000 + fg_blue * fg_alpha - bg_blue * bg_alpha) / 256, 256, 256 + 255) - 256;
 
 			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
 			dest += pitch;
@@ -1806,8 +1835,7 @@ void R_SetSpanSource(const BYTE *pixels)
 
 void R_SetSpanColormap(BYTE *colormap)
 {
-	ds_colormap = colormap;
-	ds_light = 0;
+	R_SetDSColorMapLight(colormap, 0, 0);
 #ifdef X86_ASM
 	if (!r_swtruecolor && ds_colormap != ds_curcolormap)
 	{
@@ -2316,8 +2344,6 @@ void R_DrawSpanTranslucentP_RGBA_C()
 	const BYTE*			colormap = ds_colormap;
 	int 				count;
 	int 				spot;
-	DWORD *fg2rgb = dc_srcblend;
-	DWORD *bg2rgb = dc_destblend;
 
 	xfrac = ds_xfrac;
 	yfrac = ds_yfrac;
@@ -2330,6 +2356,9 @@ void R_DrawSpanTranslucentP_RGBA_C()
 	ystep = ds_ystep;
 
 	uint32_t light = calc_light_multiplier(ds_light);
+
+	uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
+	uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
 
 	if (ds_xbits == 6 && ds_ybits == 6)
 	{
@@ -2347,9 +2376,9 @@ void R_DrawSpanTranslucentP_RGBA_C()
 			uint32_t bg_green = (*dest >> 8) & 0xff;
 			uint32_t bg_blue = (*dest) & 0xff;
 
-			uint32_t red = (fg_red + bg_red + 1) / 2;
-			uint32_t green = (fg_green + bg_green + 1) / 2;
-			uint32_t blue = (fg_blue + bg_blue + 1) / 2;
+			uint32_t red = (fg_red * fg_alpha + bg_red * bg_alpha) / 256;
+			uint32_t green = (fg_green * fg_alpha + bg_green * bg_alpha) / 256;
+			uint32_t blue = (fg_blue * fg_alpha + bg_blue * bg_alpha) / 256;
 
 			*dest++ = 0xff000000 | (red << 16) | (green << 8) | blue;
 
@@ -2375,9 +2404,9 @@ void R_DrawSpanTranslucentP_RGBA_C()
 			uint32_t bg_green = (*dest >> 8) & 0xff;
 			uint32_t bg_blue = (*dest) & 0xff;
 
-			uint32_t red = (fg_red + bg_red + 1) / 2;
-			uint32_t green = (fg_green + bg_green + 1) / 2;
-			uint32_t blue = (fg_blue + bg_blue + 1) / 2;
+			uint32_t red = (fg_red * fg_alpha + bg_red * bg_alpha) / 256;
+			uint32_t green = (fg_green * fg_alpha + bg_green * bg_alpha) / 256;
+			uint32_t blue = (fg_blue * fg_alpha + bg_blue * bg_alpha) / 256;
 
 			*dest++ = 0xff000000 | (red << 16) | (green << 8) | blue;
 
@@ -2474,10 +2503,11 @@ void R_DrawSpanMaskedTranslucentP_RGBA_C()
 	const BYTE*			colormap = ds_colormap;
 	int 				count;
 	int 				spot;
-	DWORD *fg2rgb = dc_srcblend;
-	DWORD *bg2rgb = dc_destblend;
 
 	uint32_t light = calc_light_multiplier(ds_light);
+
+	uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
+	uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
 
 	xfrac = ds_xfrac;
 	yfrac = ds_yfrac;
@@ -2509,9 +2539,9 @@ void R_DrawSpanMaskedTranslucentP_RGBA_C()
 				uint32_t bg_green = (*dest >> 8) & 0xff;
 				uint32_t bg_blue = (*dest) & 0xff;
 
-				uint32_t red = (fg_red + bg_red + 1) / 2;
-				uint32_t green = (fg_green + bg_green + 1) / 2;
-				uint32_t blue = (fg_blue + bg_blue + 1) / 2;
+				uint32_t red = (fg_red * fg_alpha + bg_red * bg_alpha) / 256;
+				uint32_t green = (fg_green * fg_alpha + bg_green * bg_alpha) / 256;
+				uint32_t blue = (fg_blue * fg_alpha + bg_blue * bg_alpha) / 256;
 
 				*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
 			}
@@ -2542,9 +2572,9 @@ void R_DrawSpanMaskedTranslucentP_RGBA_C()
 				uint32_t bg_green = (*dest >> 8) & 0xff;
 				uint32_t bg_blue = (*dest) & 0xff;
 
-				uint32_t red = (fg_red + bg_red + 1) / 2;
-				uint32_t green = (fg_green + bg_green + 1) / 2;
-				uint32_t blue = (fg_blue + bg_blue + 1) / 2;
+				uint32_t red = (fg_red * fg_alpha + bg_red * bg_alpha) / 256;
+				uint32_t green = (fg_green * fg_alpha + bg_green * bg_alpha) / 256;
+				uint32_t blue = (fg_blue * fg_alpha + bg_blue * bg_alpha) / 256;
 
 				*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
 			}
@@ -2636,10 +2666,11 @@ void R_DrawSpanAddClampP_RGBA_C()
 	const BYTE*			colormap = ds_colormap;
 	int 				count;
 	int 				spot;
-	DWORD *fg2rgb = dc_srcblend;
-	DWORD *bg2rgb = dc_destblend;
 
 	uint32_t light = calc_light_multiplier(ds_light);
+
+	uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
+	uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
 
 	xfrac = ds_xfrac;
 	yfrac = ds_yfrac;
@@ -2667,9 +2698,9 @@ void R_DrawSpanAddClampP_RGBA_C()
 			uint32_t bg_green = (*dest >> 8) & 0xff;
 			uint32_t bg_blue = (*dest) & 0xff;
 
-			uint32_t red = clamp<uint32_t>(fg_red + bg_red, 0, 255);
-			uint32_t green = clamp<uint32_t>(fg_green + bg_green, 0, 255);
-			uint32_t blue = clamp<uint32_t>(fg_blue + bg_blue, 0, 255);
+			uint32_t red = clamp<uint32_t>((fg_red * fg_alpha + bg_red * bg_alpha) / 256, 0, 255);
+			uint32_t green = clamp<uint32_t>((fg_green * fg_alpha + bg_green * bg_alpha) / 256, 0, 255);
+			uint32_t blue = clamp<uint32_t>((fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 0, 255);
 
 			*dest++ = 0xff000000 | (red << 16) | (green << 8) | blue;
 
@@ -2695,9 +2726,9 @@ void R_DrawSpanAddClampP_RGBA_C()
 			uint32_t bg_green = (*dest >> 8) & 0xff;
 			uint32_t bg_blue = (*dest) & 0xff;
 
-			uint32_t red = clamp<uint32_t>(fg_red + bg_red, 0, 255);
-			uint32_t green = clamp<uint32_t>(fg_green + bg_green, 0, 255);
-			uint32_t blue = clamp<uint32_t>(fg_blue + bg_blue, 0, 255);
+			uint32_t red = clamp<uint32_t>((fg_red * fg_alpha + bg_red * bg_alpha) / 256, 0, 255);
+			uint32_t green = clamp<uint32_t>((fg_green * fg_alpha + bg_green * bg_alpha) / 256, 0, 255);
+			uint32_t blue = clamp<uint32_t>((fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 0, 255);
 
 			*dest++ = 0xff000000 | (red << 16) | (green << 8) | blue;
 
@@ -2800,10 +2831,11 @@ void R_DrawSpanMaskedAddClampP_RGBA_C()
 	const BYTE*			colormap = ds_colormap;
 	int 				count;
 	int 				spot;
-	DWORD *fg2rgb = dc_srcblend;
-	DWORD *bg2rgb = dc_destblend;
 
 	uint32_t light = calc_light_multiplier(ds_light);
+
+	uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
+	uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
 
 	xfrac = ds_xfrac;
 	yfrac = ds_yfrac;
@@ -2835,9 +2867,9 @@ void R_DrawSpanMaskedAddClampP_RGBA_C()
 				uint32_t bg_green = (*dest >> 8) & 0xff;
 				uint32_t bg_blue = (*dest) & 0xff;
 
-				uint32_t red = (fg_red + bg_red + 1) / 2;
-				uint32_t green = (fg_green + bg_green + 1) / 2;
-				uint32_t blue = (fg_blue + bg_blue + 1) / 2;
+				uint32_t red = (fg_red * fg_alpha + bg_red * bg_alpha) / 256;
+				uint32_t green = (fg_green * fg_alpha + bg_green * bg_alpha) / 256;
+				uint32_t blue = (fg_blue * fg_alpha + bg_blue * bg_alpha) / 256;
 
 				*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
 			}
@@ -2868,9 +2900,9 @@ void R_DrawSpanMaskedAddClampP_RGBA_C()
 				uint32_t bg_green = (*dest >> 8) & 0xff;
 				uint32_t bg_blue = (*dest) & 0xff;
 
-				uint32_t red = (fg_red + bg_red + 1) / 2;
-				uint32_t green = (fg_green + bg_green + 1) / 2;
-				uint32_t blue = (fg_blue + bg_blue + 1) / 2;
+				uint32_t red = (fg_red * fg_alpha + bg_red * bg_alpha) / 256;
+				uint32_t green = (fg_green * fg_alpha + bg_green * bg_alpha) / 256;
+				uint32_t blue = (fg_blue * fg_alpha + bg_blue * bg_alpha) / 256;
 
 				*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
 			}
@@ -3468,8 +3500,7 @@ void R_DrawFogBoundary_C (int x1, int x2, short *uclip, short *dclip)
 		clearbufshort (spanend+t2, b2-t2, x);
 	}
 
-	dc_colormap = basecolormapdata + (rcolormap << COLORMAPSHIFT);
-	dc_light = 0;
+	R_SetColorMapLight(basecolormapdata, (float)light, wallshade);
 
 	for (--x; x >= x1; --x)
 	{
@@ -3494,8 +3525,7 @@ void R_DrawFogBoundary_C (int x1, int x2, short *uclip, short *dclip)
 				clearbufshort (spanend+t2, b2-t2, x);
 			}
 			rcolormap = lcolormap;
-			dc_colormap = basecolormapdata + (lcolormap << COLORMAPSHIFT);
-			dc_light = 0;
+			R_SetColorMapLight(basecolormapdata, (float)light, wallshade);
 		}
 		else
 		{
@@ -3594,8 +3624,7 @@ void R_DrawFogBoundary_RGBA(int x1, int x2, short *uclip, short *dclip)
 		clearbufshort(spanend + t2, b2 - t2, x);
 	}
 
-	dc_colormap = basecolormapdata + (rcolormap << COLORMAPSHIFT);
-	dc_light = 0;
+	R_SetColorMapLight(basecolormapdata, (float)light, wallshade);
 
 	for (--x; x >= x1; --x)
 	{
@@ -3620,8 +3649,7 @@ void R_DrawFogBoundary_RGBA(int x1, int x2, short *uclip, short *dclip)
 				clearbufshort(spanend + t2, b2 - t2, x);
 			}
 			rcolormap = lcolormap;
-			dc_colormap = basecolormapdata + (lcolormap << COLORMAPSHIFT);
-			dc_light = 0;
+			R_SetColorMapLight(basecolormapdata, (float)light, wallshade);
 		}
 		else
 		{
@@ -3717,10 +3745,10 @@ fixed_t tmvline1_add_RGBA()
 	int bits = tmvlinebits;
 	int pitch = dc_pitch;
 
-	DWORD *fg2rgb = dc_srcblend;
-	DWORD *bg2rgb = dc_destblend;
-
 	uint32_t light = calc_light_multiplier(dc_light);
+
+	uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
+	uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
 
 	do
 	{
@@ -3736,9 +3764,9 @@ fixed_t tmvline1_add_RGBA()
 			uint32_t bg_green = (*dest >> 8) & 0xff;
 			uint32_t bg_blue = (*dest) & 0xff;
 
-			uint32_t red = clamp<uint32_t>(fg_red + bg_red, 0, 255);
-			uint32_t green = clamp<uint32_t>(fg_green + bg_green, 0, 255);
-			uint32_t blue = clamp<uint32_t>(fg_blue + bg_blue, 0, 255);
+			uint32_t red = clamp<uint32_t>((fg_red * fg_alpha + bg_red * bg_alpha) / 256, 0, 255);
+			uint32_t green = clamp<uint32_t>((fg_green * fg_alpha + bg_green * bg_alpha) / 256, 0, 255);
+			uint32_t blue = clamp<uint32_t>((fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 0, 255);
 
 			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
 		}
@@ -3794,6 +3822,9 @@ void tmvline4_add_RGBA()
 	light[2] = calc_light_multiplier(palookuplight[2]);
 	light[3] = calc_light_multiplier(palookuplight[3]);
 
+	uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
+	uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+
 	do
 	{
 		for (int i = 0; i < 4; ++i)
@@ -3810,9 +3841,9 @@ void tmvline4_add_RGBA()
 				uint32_t bg_green = (*dest >> 8) & 0xff;
 				uint32_t bg_blue = (*dest) & 0xff;
 
-				uint32_t red = clamp<uint32_t>(fg_red + bg_red, 0, 255);
-				uint32_t green = clamp<uint32_t>(fg_green + bg_green, 0, 255);
-				uint32_t blue = clamp<uint32_t>(fg_blue + bg_blue, 0, 255);
+				uint32_t red = clamp<uint32_t>((fg_red * fg_alpha + bg_red * bg_alpha) / 256, 0, 255);
+				uint32_t green = clamp<uint32_t>((fg_green * fg_alpha + bg_green * bg_alpha) / 256, 0, 255);
+				uint32_t blue = clamp<uint32_t>((fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 0, 255);
 
 				dest[i] = 0xff000000 | (red << 16) | (green << 8) | blue;
 			}
@@ -3871,10 +3902,10 @@ fixed_t tmvline1_addclamp_RGBA()
 	int bits = tmvlinebits;
 	int pitch = dc_pitch;
 
-	DWORD *fg2rgb = dc_srcblend;
-	DWORD *bg2rgb = dc_destblend;
-
 	uint32_t light = calc_light_multiplier(dc_light);
+
+	uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
+	uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
 
 	do
 	{
@@ -3890,9 +3921,9 @@ fixed_t tmvline1_addclamp_RGBA()
 			uint32_t bg_green = (*dest >> 8) & 0xff;
 			uint32_t bg_blue = (*dest) & 0xff;
 
-			uint32_t red = clamp<uint32_t>(fg_red + bg_red, 0, 255);
-			uint32_t green = clamp<uint32_t>(fg_green + bg_green, 0, 255);
-			uint32_t blue = clamp<uint32_t>(fg_blue + bg_blue, 0, 255);
+			uint32_t red = clamp<uint32_t>((fg_red * fg_alpha + bg_red * bg_alpha) / 256, 0, 255);
+			uint32_t green = clamp<uint32_t>((fg_green * fg_alpha + bg_green * bg_alpha) / 256, 0, 255);
+			uint32_t blue = clamp<uint32_t>((fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 0, 255);
 
 			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
 		}
@@ -3947,6 +3978,9 @@ void tmvline4_addclamp_RGBA()
 	light[2] = calc_light_multiplier(palookuplight[2]);
 	light[3] = calc_light_multiplier(palookuplight[3]);
 
+	uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
+	uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+
 	do
 	{
 		for (int i = 0; i < 4; ++i)
@@ -3963,9 +3997,9 @@ void tmvline4_addclamp_RGBA()
 				uint32_t bg_green = (dest[i] >> 8) & 0xff;
 				uint32_t bg_blue = (dest[i]) & 0xff;
 
-				uint32_t red = clamp<uint32_t>(fg_red + bg_red, 0, 255);
-				uint32_t green = clamp<uint32_t>(fg_green + bg_green, 0, 255);
-				uint32_t blue = clamp<uint32_t>(fg_blue + bg_blue, 0, 255);
+				uint32_t red = clamp<uint32_t>((fg_red * fg_alpha + bg_red * bg_alpha) / 256, 0, 255);
+				uint32_t green = clamp<uint32_t>((fg_green * fg_alpha + bg_green * bg_alpha) / 256, 0, 255);
+				uint32_t blue = clamp<uint32_t>((fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 0, 255);
 
 				dest[i] = 0xff000000 | (red << 16) | (green << 8) | blue;
 			}
@@ -4023,6 +4057,9 @@ fixed_t tmvline1_subclamp_RGBA()
 
 	uint32_t light = calc_light_multiplier(dc_light);
 
+	uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
+	uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+
 	do
 	{
 		BYTE pix = source[frac >> bits];
@@ -4037,9 +4074,9 @@ fixed_t tmvline1_subclamp_RGBA()
 			uint32_t bg_green = (*dest >> 8) & 0xff;
 			uint32_t bg_blue = (*dest) & 0xff;
 
-			uint32_t red = clamp<uint32_t>(256 - fg_red + bg_red, 256, 256 + 255) - 256;
-			uint32_t green = clamp<uint32_t>(256 - fg_green + bg_green, 256, 256 + 255) - 256;
-			uint32_t blue = clamp<uint32_t>(256 - fg_blue + bg_blue, 256, 256 + 255) - 256;
+			uint32_t red = clamp<uint32_t>((0x10000 - fg_red * fg_alpha + bg_red * bg_alpha) / 256, 256, 256 + 255) - 256;
+			uint32_t green = clamp<uint32_t>((0x10000 - fg_green * fg_alpha + bg_green * bg_alpha) / 256, 256, 256 + 255) - 256;
+			uint32_t blue = clamp<uint32_t>((0x10000 - fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 256, 256 + 255) - 256;
 
 			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
 		}
@@ -4093,6 +4130,9 @@ void tmvline4_subclamp_RGBA()
 	light[2] = calc_light_multiplier(palookuplight[2]);
 	light[3] = calc_light_multiplier(palookuplight[3]);
 
+	uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
+	uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+
 	do
 	{
 		for (int i = 0; i < 4; ++i)
@@ -4109,9 +4149,9 @@ void tmvline4_subclamp_RGBA()
 				uint32_t bg_green = (dest[i] >> 8) & 0xff;
 				uint32_t bg_blue = (dest[i]) & 0xff;
 
-				uint32_t red = clamp<uint32_t>(256 - fg_red + bg_red, 256, 256 + 255) - 256;
-				uint32_t green = clamp<uint32_t>(256 - fg_green + bg_green, 256, 256 + 255) - 256;
-				uint32_t blue = clamp<uint32_t>(256 - fg_blue + bg_blue, 256, 256 + 255) - 256;
+				uint32_t red = clamp<uint32_t>((0x10000 - fg_red * fg_alpha + bg_red * bg_alpha) / 256, 256, 256 + 255) - 256;
+				uint32_t green = clamp<uint32_t>((0x10000 - fg_green * fg_alpha + bg_green * bg_alpha) / 256, 256, 256 + 255) - 256;
+				uint32_t blue = clamp<uint32_t>((0x10000 - fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 256, 256 + 255) - 256;
 
 				dest[i] = 0xff000000 | (red << 16) | (green << 8) | blue;
 			}
@@ -4169,6 +4209,9 @@ fixed_t tmvline1_revsubclamp_RGBA()
 
 	uint32_t light = calc_light_multiplier(dc_light);
 
+	uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
+	uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+
 	do
 	{
 		BYTE pix = source[frac >> bits];
@@ -4183,9 +4226,9 @@ fixed_t tmvline1_revsubclamp_RGBA()
 			uint32_t bg_green = (*dest >> 8) & 0xff;
 			uint32_t bg_blue = (*dest) & 0xff;
 
-			uint32_t red = clamp<uint32_t>(256 + fg_red - bg_red, 256, 256 + 255) - 256;
-			uint32_t green = clamp<uint32_t>(256 + fg_green - bg_green, 256, 256 + 255) - 256;
-			uint32_t blue = clamp<uint32_t>(256 + fg_blue - bg_blue, 256, 256 + 255) - 256;
+			uint32_t red = clamp<uint32_t>((0x10000 + fg_red * fg_alpha - bg_red * bg_alpha) / 256, 256, 256 + 255) - 256;
+			uint32_t green = clamp<uint32_t>((0x10000 + fg_green * fg_alpha - bg_green * bg_alpha) / 256, 256, 256 + 255) - 256;
+			uint32_t blue = clamp<uint32_t>((0x10000 + fg_blue * fg_alpha - bg_blue * bg_alpha) / 256, 256, 256 + 255) - 256;
 
 			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
 		}
@@ -4233,14 +4276,14 @@ void tmvline4_revsubclamp_RGBA()
 	int count = dc_count;
 	int bits = tmvlinebits;
 
-	DWORD *fg2rgb = dc_srcblend;
-	DWORD *bg2rgb = dc_destblend;
-
 	uint32_t light[4];
 	light[0] = calc_light_multiplier(palookuplight[0]);
 	light[1] = calc_light_multiplier(palookuplight[1]);
 	light[2] = calc_light_multiplier(palookuplight[2]);
 	light[3] = calc_light_multiplier(palookuplight[3]);
+
+	uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
+	uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
 
 	do
 	{
@@ -4258,9 +4301,9 @@ void tmvline4_revsubclamp_RGBA()
 				uint32_t bg_green = (dest[i] >> 8) & 0xff;
 				uint32_t bg_blue = (dest[i]) & 0xff;
 
-				uint32_t red = clamp<uint32_t>(256 + fg_red - bg_red, 256, 256 + 255) - 256;
-				uint32_t green = clamp<uint32_t>(256 + fg_green - bg_green, 256, 256 + 255) - 256;
-				uint32_t blue = clamp<uint32_t>(256 + fg_blue - bg_blue, 256, 256 + 255) - 256;
+				uint32_t red = clamp<uint32_t>((0x10000 + fg_red * fg_alpha - bg_red * bg_alpha) / 256, 256, 256 + 255) - 256;
+				uint32_t green = clamp<uint32_t>((0x10000 + fg_green * fg_alpha - bg_green * bg_alpha) / 256, 256, 256 + 255) - 256;
+				uint32_t blue = clamp<uint32_t>((0x10000 + fg_blue * fg_alpha - bg_blue * bg_alpha) / 256, 256, 256 + 255) - 256;
 
 				dest[i] = 0xff000000 | (red << 16) | (green << 8) | blue;
 			}
@@ -4558,16 +4601,22 @@ static bool R_SetBlendFunc (int op, fixed_t fglevel, fixed_t bglevel, int flags)
 	{
 		dc_srcblend = Col2RGB8_Inverse[fglevel>>10];
 		dc_destblend = Col2RGB8_LessPrecision[bglevel>>10];
+		dc_srcalpha = fglevel;
+		dc_destalpha = bglevel;
 	}
 	else if (op == STYLEOP_Add && fglevel + bglevel <= FRACUNIT)
 	{
 		dc_srcblend = Col2RGB8[fglevel>>10];
 		dc_destblend = Col2RGB8[bglevel>>10];
+		dc_srcalpha = fglevel;
+		dc_destalpha = bglevel;
 	}
 	else
 	{
 		dc_srcblend = Col2RGB8_LessPrecision[fglevel>>10];
 		dc_destblend = Col2RGB8_LessPrecision[bglevel>>10];
+		dc_srcalpha = fglevel;
+		dc_destalpha = bglevel;
 	}
 	switch (op)
 	{
@@ -4736,12 +4785,15 @@ ESPSResult R_SetPatchStyle (FRenderStyle style, fixed_t alpha, int translation, 
 		hcolfunc_post1 = rt_shaded1col;
 		hcolfunc_post4 = rt_shaded4cols;
 		dc_color = fixedcolormap ? fixedcolormap[APART(color)] : basecolormap->Maps[APART(color)];
-		dc_colormap = (basecolormap = &ShadeFakeColormap[16-alpha])->Maps;
+		lighttable_t *colormap = (basecolormap = &ShadeFakeColormap[16-alpha])->Maps;
 		if (fixedlightlev >= 0 && fixedcolormap == NULL)
 		{
-			dc_colormap += fixedlightlev;
+			R_SetColorMapLight(colormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
 		}
-		dc_light = 0;
+		else
+		{
+			R_SetColorMapLight(colormap, 0, 0);
+		}
 		return r_columnmethod ? DoDraw1 : DoDraw0;
 	}
 
@@ -4766,8 +4818,7 @@ ESPSResult R_SetPatchStyle (FRenderStyle style, fixed_t alpha, int translation, 
 		// with the alpha.
 		dc_srccolor = ((((r*x)>>4)<<20) | ((g*x)>>4) | ((((b)*x)>>4)<<10)) & 0x3feffbff;
 		hcolfunc_pre = R_FillColumnHoriz;
-		dc_colormap = identitymap;
-		dc_light = 0;
+		R_SetColorMapLight(identitymap, 0, 0);
 	}
 
 	if (!R_SetBlendFunc (style.BlendOp, fglevel, bglevel, style.Flags))

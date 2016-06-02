@@ -2,6 +2,17 @@
 
 IWad
 {
+	Name = "Delaweare"
+	Autoname = "delaweare"
+	Game = "Doom"
+	Config = "Delaweare"
+	Mapinfo = "mapinfo/doom2.txt"
+	MustContain = "TITLEMAP", "ROVEA0", "GRLURD01", "SQOUI01"
+	BannerColors = "00 00 00", "ff ff ff"
+}
+
+IWad
+{
 	Name = "The Adventures of Square"
 	Autoname = "square.square"
 	Game = "Doom"
@@ -393,4 +404,5 @@ Names
 	"hacx.wad"
 	"hacx2.wad"
 	"square1.pk3"
+	"delaweare.wad"
 }

@@ -1651,7 +1651,10 @@ void R_DrawPlayerSprites ()
 		while (psp)
 		{
 			// [RH] Don't draw the targeter's crosshair if the player already has a crosshair set.
-			if (psp->GetID() != PSP_TARGETCENTER || CrosshairImage == nullptr)
+			// It's possible this psprite's caller is now null but the layer itself hasn't been destroyed
+			// because it didn't tick yet (if we typed 'take all' while in the console for example).
+			// In this case let's simply not draw it to avoid crashing.
+			if ((psp->GetID() != PSP_TARGETCENTER || CrosshairImage == nullptr) && psp->GetCaller() != nullptr)
 			{
 				R_DrawPSprite(psp, camera, bobx, boby, wx, wy, r_TicFracF);
 			}

@@ -265,6 +265,8 @@ void	R_DrawShadedColumnP_C (void);
 void	R_DrawSpanP_C (void);
 void	R_DrawSpanMaskedP_C (void);
 
+#endif
+
 void	R_DrawColumnHorizP_RGBA_C (void);
 void	R_DrawColumnP_RGBA_C (void);
 void	R_DrawFuzzColumnP_RGBA_C (void);
@@ -273,8 +275,6 @@ void	R_DrawShadedColumnP_RGBA_C (void);
 void	R_DrawSpanP_RGBA_C (void);
 void	R_DrawSpanP_RGBA_SSE (void);
 void	R_DrawSpanMaskedP_RGBA_C (void);
-
-#endif
 
 void	R_DrawSpanTranslucentP_C (void);
 void	R_DrawSpanMaskedTranslucentP_C (void);

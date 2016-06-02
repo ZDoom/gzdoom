@@ -3025,9 +3025,11 @@ extern "C" void R_DrawSlabC(int dx, fixed_t v, int dy, fixed_t vi, const BYTE *v
 
 // wallscan stuff, in C
 
+static int vlinebits;
+static int mvlinebits;
+
 #ifndef X86_ASM
 static DWORD vlinec1 ();
-static int vlinebits;
 
 DWORD (*dovline1)() = vlinec1;
 DWORD (*doprevline1)() = vlinec1;
@@ -3043,7 +3045,6 @@ void (*dovline4)() = vlinec4;
 
 static DWORD mvlinec1();
 static void mvlinec4();
-static int mvlinebits;
 
 DWORD (*domvline1)() = mvlinec1;
 void (*domvline4)() = mvlinec4;
@@ -4532,7 +4533,6 @@ void R_InitColumnDrawers ()
 		rt_tlateaddclamp1col		= rt_tlateaddclamp1col_c;
 		rt_tlatesubclamp1col		= rt_tlatesubclamp1col_c;
 		rt_tlaterevsubclamp1col		= rt_tlaterevsubclamp1col_c;
-		rt_map4cols					= rt_map4cols_c;
 		rt_subclamp4cols			= rt_subclamp4cols_c;
 		rt_revsubclamp4cols			= rt_revsubclamp4cols_c;
 		rt_tlate4cols				= rt_tlate4cols_c;

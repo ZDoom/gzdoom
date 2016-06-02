@@ -143,7 +143,7 @@ DPSprite::DPSprite(player_t *owner, AInventory *caller, int id)
 		Next->Destroy(); // Replace it.
 
 	if (Caller->IsKindOf(RUNTIME_CLASS(AWeapon)))
-		Flags = (PSPF_ADDWEAPON|PSPF_ADDBOB);
+		Flags = (PSPF_ADDWEAPON|PSPF_ADDBOB|PSPF_POWDOUBLE|PSPF_CVARFAST);
 }
 
 //------------------------------------------------------------------------
@@ -210,6 +210,10 @@ DPSprite *player_t::GetPSprite(PSPLayers layer)
 
 	if (newcaller != oldcaller)
 	{ // Only change the flags if this layer was created now or if we updated the caller.
+		if (layer >= PSP_TARGETCENTER)
+		{ // The targeter layers were affected by those.
+			pspr->Flags |= (PSPF_CVARFAST|PSPF_POWDOUBLE);
+		}
 		if (layer != PSP_FLASH)
 		{ // Only the flash layer should follow the weapon.
 			pspr->Flags &= ~PSPF_ADDWEAPON;
@@ -286,7 +290,7 @@ void DPSprite::SetState(FState *newstate, bool pending)
 
 		Tics = newstate->GetTics(); // could be 0
 
-		if (Caller->IsKindOf(RUNTIME_CLASS(AWeapon)))
+		if (Flags & PSPF_CVARFAST)
 		{
 			if (sv_fastweapons == 2 && ID == PSP_WEAPON)
 				Tics = newstate->ActionFunc == nullptr ? 0 : 1;
@@ -1358,7 +1362,7 @@ void DPSprite::Tick()
 			Tics--;
 
 			// [BC] Apply double firing speed.
-			if (Caller->IsKindOf(RUNTIME_CLASS(AWeapon)) && Tics && Owner->cheats & CF_DOUBLEFIRINGSPEED)
+			if ((Flags & PSPF_POWDOUBLE) && Tics && (Owner->cheats & CF_DOUBLEFIRINGSPEED))
 				Tics--;
 
 			if (!Tics)

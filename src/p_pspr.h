@@ -55,6 +55,8 @@ enum PSPFlags
 {
 	PSPF_ADDWEAPON	= 1 << 0,
 	PSPF_ADDBOB		= 1 << 1,
+	PSPF_POWDOUBLE	= 1 << 2,
+	PSPF_CVARFAST	= 1 << 3,
 };
 
 class DPSprite : public DObject

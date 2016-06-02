@@ -28,7 +28,7 @@ class SDLFB : public DFrameBuffer
 {
 	DECLARE_CLASS(SDLFB, DFrameBuffer)
 public:
-	SDLFB (int width, int height, bool fullscreen, SDL_Window *oldwin);
+	SDLFB (int width, int height, bool bgra, bool fullscreen, SDL_Window *oldwin);
 	~SDLFB ();
 
 	bool Lock (bool buffer);
@@ -271,7 +271,8 @@ DFrameBuffer *SDLVideo::CreateFrameBuffer (int width, int height, bool bgra, boo
 	{ // Reuse the old framebuffer if its attributes are the same
 		SDLFB *fb = static_cast<SDLFB *> (old);
 		if (fb->Width == width &&
-			fb->Height == height)
+			fb->Height == height &&
+			fb->Bgra == bgra)
 		{
 			bool fsnow = (SDL_GetWindowFlags (fb->Screen) & SDL_WINDOW_FULLSCREEN_DESKTOP) != 0;
 	
@@ -296,7 +297,7 @@ DFrameBuffer *SDLVideo::CreateFrameBuffer (int width, int height, bool bgra, boo
 		flashAmount = 0;
 	}
 	
-	SDLFB *fb = new SDLFB (width, height, fullscreen, oldwin);
+	SDLFB *fb = new SDLFB (width, height, bgra, fullscreen, oldwin);
 	
 	// If we could not create the framebuffer, try again with slightly
 	// different parameters in this order:
@@ -350,8 +351,8 @@ void SDLVideo::SetWindowedScale (float scale)
 
 // FrameBuffer implementation -----------------------------------------------
 
-SDLFB::SDLFB (int width, int height, bool fullscreen, SDL_Window *oldwin)
-	: DFrameBuffer (width, height, false)
+SDLFB::SDLFB (int width, int height, bool bgra, bool fullscreen, SDL_Window *oldwin)
+	: DFrameBuffer (width, height, bgra)
 {
 	int i;
 	
@@ -494,7 +495,21 @@ void SDLFB::Update ()
 		pitch = Surface->pitch;
 	}
 
-	if (NotPaletted)
+	if (Bgra)
+	{
+		if (pitch == Pitch * 4)
+		{
+			memcpy(pixels, MemBuffer, Width*Height*4);
+		}
+		else
+		{
+			for (int y = 0; y < Height; ++y)
+			{
+				memcpy((BYTE *)pixels + y*pitch, MemBuffer + y*Pitch*4, Width*4);
+			}
+		}
+	}
+	else if (NotPaletted)
 	{
 		GPfx.Convert (MemBuffer, Pitch,
 			pixels, pitch, Width, Height,
@@ -674,13 +689,20 @@ void SDLFB::ResetSDLRenderer ()
 		SDL_SetRenderDrawColor(Renderer, 0, 0, 0, 255);
 
 		Uint32 fmt;
-		switch(vid_displaybits)
+		if (Bgra)
 		{
-			default: fmt = SDL_PIXELFORMAT_ARGB8888; break;
-			case 30: fmt = SDL_PIXELFORMAT_ARGB2101010; break;
-			case 24: fmt = SDL_PIXELFORMAT_RGB888; break;
-			case 16: fmt = SDL_PIXELFORMAT_RGB565; break;
-			case 15: fmt = SDL_PIXELFORMAT_ARGB1555; break;
+			fmt = SDL_PIXELFORMAT_ARGB8888;
+		}
+		else
+		{
+			switch (vid_displaybits)
+			{
+				default: fmt = SDL_PIXELFORMAT_ARGB8888; break;
+				case 30: fmt = SDL_PIXELFORMAT_ARGB2101010; break;
+				case 24: fmt = SDL_PIXELFORMAT_RGB888; break;
+				case 16: fmt = SDL_PIXELFORMAT_RGB565; break;
+				case 15: fmt = SDL_PIXELFORMAT_ARGB1555; break;
+			}
 		}
 		Texture = SDL_CreateTexture (Renderer, fmt, SDL_TEXTUREACCESS_STREAMING, Width, Height);
 

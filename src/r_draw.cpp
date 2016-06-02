@@ -416,7 +416,7 @@ void R_FillAddColumn_RGBA_C()
 	dest = (uint32_t*)dc_dest;
 	int pitch = dc_pitch;
 
-	uint32_t fg = shade_pal_index(dc_color, calc_light_multiplier(0));
+	uint32_t fg = shade_pal_index(dc_color, calc_light_multiplier(dc_light));
 	uint32_t fg_red = (fg >> 24) & 0xff;
 	uint32_t fg_green = (fg >> 16) & 0xff;
 	uint32_t fg_blue = fg & 0xff;
@@ -481,7 +481,7 @@ void R_FillAddClampColumn_RGBA()
 	dest = (uint32_t*)dc_dest;
 	int pitch = dc_pitch;
 
-	uint32_t fg = shade_pal_index(dc_color, calc_light_multiplier(0));
+	uint32_t fg = shade_pal_index(dc_color, calc_light_multiplier(dc_light));
 	uint32_t fg_red = (fg >> 24) & 0xff;
 	uint32_t fg_green = (fg >> 16) & 0xff;
 	uint32_t fg_blue = fg & 0xff;
@@ -545,7 +545,7 @@ void R_FillSubClampColumn_RGBA()
 	dest = (uint32_t*)dc_dest;
 	int pitch = dc_pitch;
 
-	uint32_t fg = shade_pal_index(dc_color, calc_light_multiplier(0));
+	uint32_t fg = shade_pal_index(dc_color, calc_light_multiplier(dc_light));
 	uint32_t fg_red = (fg >> 24) & 0xff;
 	uint32_t fg_green = (fg >> 16) & 0xff;
 	uint32_t fg_blue = fg & 0xff;
@@ -609,7 +609,7 @@ void R_FillRevSubClampColumn_RGBA()
 	dest = (uint32_t*)dc_dest;
 	int pitch = dc_pitch;
 
-	uint32_t fg = shade_pal_index(dc_color, calc_light_multiplier(0));
+	uint32_t fg = shade_pal_index(dc_color, calc_light_multiplier(dc_light));
 	uint32_t fg_red = (fg >> 24) & 0xff;
 	uint32_t fg_green = (fg >> 16) & 0xff;
 	uint32_t fg_blue = fg & 0xff;

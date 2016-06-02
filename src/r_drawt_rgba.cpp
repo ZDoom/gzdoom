@@ -413,7 +413,7 @@ void rt_shaded1col_RGBA_c (int hx, int sx, int yl, int yh)
 	source = &dc_temp_rgba[yl*4 + hx];
 	pitch = dc_pitch;
 
-	uint32_t fg = shade_pal_index(dc_color, calc_light_multiplier(0));
+	uint32_t fg = shade_pal_index(dc_color, calc_light_multiplier(dc_light));
 	uint32_t fg_red = (fg >> 16) & 0xff;
 	uint32_t fg_green = (fg >> 8) & 0xff;
 	uint32_t fg_blue = fg & 0xff;
@@ -455,7 +455,7 @@ void rt_shaded4cols_RGBA_c (int sx, int yl, int yh)
 	source = &dc_temp_rgba[yl*4];
 	pitch = dc_pitch;
 
-	uint32_t fg = shade_pal_index(dc_color, calc_light_multiplier(0));
+	uint32_t fg = shade_pal_index(dc_color, calc_light_multiplier(dc_light));
 	uint32_t fg_red = (fg >> 16) & 0xff;
 	uint32_t fg_green = (fg >> 8) & 0xff;
 	uint32_t fg_blue = fg & 0xff;

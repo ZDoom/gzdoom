@@ -416,7 +416,7 @@ void R_DrawVisSprite (vissprite_t *vis)
 	{ // For shaded sprites, R_SetPatchStyle sets a dc_colormap to an alpha table, but
 	  // it is the brightest one. We need to get back to the proper light level for
 	  // this sprite.
-		dc_colormap += vis->ColormapNum << COLORMAPSHIFT;
+		R_SetColorMapLight(dc_colormap, 0, vis->ColormapNum << FRACBITS);
 	}
 
 	if (mode != DontDraw)
@@ -2704,9 +2704,9 @@ void R_DrawParticle_RGBA(vissprite_t *vis)
 			uint32_t bg_green = (*dest >> 8) & 0xff;
 			uint32_t bg_blue = (*dest) & 0xff;
 
-			uint32_t red = (fg_red + bg_red * alpha) / 256;
-			uint32_t green = (fg_green + bg_green * alpha) / 256;
-			uint32_t blue = (fg_blue + bg_blue * alpha) / 256;
+			uint32_t red = (fg_red + bg_red * inv_alpha) / 256;
+			uint32_t green = (fg_green + bg_green * inv_alpha) / 256;
+			uint32_t blue = (fg_blue + bg_blue * inv_alpha) / 256;
 
 			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
 			dest += spacing;

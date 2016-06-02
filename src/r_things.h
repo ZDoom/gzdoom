@@ -86,7 +86,6 @@ struct vissprite_t
 	BYTE			bSplitSprite:1;	// [RH] Sprite was split by a drawseg
 	BYTE			bInMirror:1;	// [RH] Sprite is "inside" a mirror
 	BYTE			FakeFlatStat;	// [RH] which side of fake/floor ceiling sprite is on
-	BYTE			ColormapNum;	// Which colormap is rendered (needed for shaded drawer)
 	short 			renderflags;
 	DWORD			Translation;	// [RH] for color translation
 	visstyle_t		Style;

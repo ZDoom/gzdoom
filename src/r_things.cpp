@@ -408,7 +408,7 @@ void R_DrawVisSprite (vissprite_t *vis)
 	}
 
 	fixed_t centeryfrac = FLOAT2FIXED(CenterY);
-	R_SetColorMapLight(vis->Style.colormap, 0, 0);
+	R_SetColorMapLight(vis->Style.BaseColormap, 0, vis->Style.ColormapNum << FRACBITS);
 
 	mode = R_SetPatchStyle (vis->Style.RenderStyle, vis->Style.Alpha, vis->Translation, vis->FillColor);
 
@@ -416,7 +416,7 @@ void R_DrawVisSprite (vissprite_t *vis)
 	{ // For shaded sprites, R_SetPatchStyle sets a dc_colormap to an alpha table, but
 	  // it is the brightest one. We need to get back to the proper light level for
 	  // this sprite.
-		R_SetColorMapLight(dc_colormap, 0, vis->ColormapNum << FRACBITS);
+		R_SetColorMapLight(dc_colormap, 0, vis->Style.ColormapNum << FRACBITS);
 	}
 
 	if (mode != DontDraw)
@@ -654,7 +654,7 @@ void R_DrawVisVoxel(vissprite_t *spr, int minslabz, int maxslabz, short *cliptop
 	int flags = 0;
 
 	// Do setup for blending.
-	R_SetColorMapLight(spr->Style.colormap, 0, 0);
+	R_SetColorMapLight(spr->Style.BaseColormap, 0, spr->Style.ColormapNum << FRACBITS);
 	mode = R_SetPatchStyle(spr->Style.RenderStyle, spr->Style.Alpha, spr->Translation, spr->FillColor);
 
 	if (mode == DontDraw)
@@ -680,7 +680,7 @@ void R_DrawVisVoxel(vissprite_t *spr, int minslabz, int maxslabz, short *cliptop
 
 	// Render the voxel, either directly to the screen or offscreen.
 	R_DrawVoxel(spr->pa.vpos, spr->pa.vang, spr->gpos, spr->Angle,
-		spr->xscale, FLOAT2FIXED(spr->yscale), spr->voxel, spr->Style.colormap, cliptop, clipbot,
+		spr->xscale, FLOAT2FIXED(spr->yscale), spr->voxel, spr->Style.BaseColormap + (spr->Style.ColormapNum << COLORMAPSHIFT), cliptop, clipbot,
 		minslabz, maxslabz, flags);
 
 	// Blend the voxel, if that's what we need to do.
@@ -1058,7 +1058,7 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	vis->Style.Alpha = float(thing->Alpha);
 	vis->fakefloor = fakefloor;
 	vis->fakeceiling = fakeceiling;
-	vis->ColormapNum = 0;
+	vis->Style.ColormapNum = 0;
 	vis->bInMirror = MirrorFlags & RF_XFLIP;
 	vis->bSplitSprite = false;
 
@@ -1110,7 +1110,8 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 	// get light level
 	if (fixedcolormap != NULL)
 	{ // fixed map
-		vis->Style.colormap = fixedcolormap;
+		vis->Style.BaseColormap = fixedcolormap;
+		vis->Style.ColormapNum = 0;
 	}
 	else
 	{
@@ -1120,17 +1121,19 @@ void R_ProjectSprite (AActor *thing, int fakeside, F3DFloor *fakefloor, F3DFloor
 		}
 		if (fixedlightlev >= 0)
 		{
-			vis->Style.colormap = mybasecolormap->Maps + fixedlightlev;
+			vis->Style.BaseColormap = mybasecolormap->Maps;
+			vis->Style.ColormapNum = fixedlightlev >> COLORMAPSHIFT;
 		}
 		else if (!foggy && ((renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT)))
 		{ // full bright
-			vis->Style.colormap = mybasecolormap->Maps;
+			vis->Style.BaseColormap = mybasecolormap->Maps;
+			vis->Style.ColormapNum = 0;
 		}
 		else
 		{ // diminished light
-			vis->ColormapNum = GETPALOOKUP(
+			vis->Style.ColormapNum = GETPALOOKUP(
 				r_SpriteVisibility / MAX(tz, MINZ), spriteshade);
-			vis->Style.colormap = mybasecolormap->Maps + (vis->ColormapNum << COLORMAPSHIFT);
+			vis->Style.BaseColormap = mybasecolormap->Maps;
 		}
 	}
 }
@@ -1199,14 +1202,13 @@ static void R_ProjectWallSprite(AActor *thing, const DVector3 &pos, FTextureID p
 	vis->Style.Alpha = float(thing->Alpha);
 	vis->fakefloor = NULL;
 	vis->fakeceiling = NULL;
-	vis->ColormapNum = 0;
 	vis->bInMirror = MirrorFlags & RF_XFLIP;
 	vis->pic = pic;
 	vis->bIsVoxel = false;
 	vis->bWallSprite = true;
-	vis->ColormapNum = GETPALOOKUP(
+	vis->Style.ColormapNum = GETPALOOKUP(
 		r_SpriteVisibility / MAX(tz, MINZ), spriteshade);
-	vis->Style.colormap = basecolormap->Maps + (vis->ColormapNum << COLORMAPSHIFT);
+	vis->Style.BaseColormap = basecolormap->Maps;
 	vis->wallc = wallc;
 }
 
@@ -1376,7 +1378,7 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, double sx, double 
 	vis->yscale = float(pspriteyscale / tex->Scale.Y);
 	vis->Translation = 0;		// [RH] Use default colors
 	vis->pic = tex;
-	vis->ColormapNum = 0;
+	vis->Style.ColormapNum = 0;
 
 	if (flip)
 	{
@@ -1426,7 +1428,8 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, double sx, double 
 
 		if (realfixedcolormap != NULL)
 		{ // fixed color
-			vis->Style.colormap = realfixedcolormap->Colormap;
+			vis->Style.BaseColormap = realfixedcolormap->Colormap;
+			vis->Style.ColormapNum = 0;
 		}
 		else
 		{
@@ -1436,35 +1439,39 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, double sx, double 
 			}
 			if (fixedlightlev >= 0)
 			{
-				vis->Style.colormap = mybasecolormap->Maps + fixedlightlev;
+				vis->Style.BaseColormap = mybasecolormap->Maps;
+				vis->Style.ColormapNum = fixedlightlev >> COLORMAPSHIFT;
 			}
 			else if (!foggy && psp->state->GetFullbright())
 			{ // full bright
-				vis->Style.colormap = mybasecolormap->Maps;	// [RH] use basecolormap
+				vis->Style.BaseColormap = mybasecolormap->Maps;	// [RH] use basecolormap
+				vis->Style.ColormapNum = 0;
 			}
 			else
 			{ // local light
-				vis->Style.colormap = mybasecolormap->Maps + (GETPALOOKUP (0, spriteshade) << COLORMAPSHIFT);
+				vis->Style.BaseColormap = mybasecolormap->Maps;
+				vis->Style.ColormapNum = GETPALOOKUP(0, spriteshade);
 			}
 		}
 		if (camera->Inventory != NULL)
 		{
-			lighttable_t *oldcolormap = vis->Style.colormap;
+			BYTE oldcolormapnum = vis->Style.ColormapNum;
+			lighttable_t *oldcolormap = vis->Style.BaseColormap;
 			camera->Inventory->AlterWeaponSprite (&vis->Style);
-			if (vis->Style.colormap != oldcolormap)
+			if (vis->Style.BaseColormap != oldcolormap || vis->Style.ColormapNum != oldcolormapnum)
 			{
 				// The colormap has changed. Is it one we can easily identify?
 				// If not, then don't bother trying to identify it for
 				// hardware accelerated drawing.
-				if (vis->Style.colormap < SpecialColormaps[0].Colormap || 
-					vis->Style.colormap > SpecialColormaps.Last().Colormap)
+				if (vis->Style.BaseColormap < SpecialColormaps[0].Colormap ||
+					vis->Style.BaseColormap > SpecialColormaps.Last().Colormap)
 				{
 					noaccel = true;
 				}
 				// Has the basecolormap changed? If so, we can't hardware accelerate it,
 				// since we don't know what it is anymore.
-				else if (vis->Style.colormap < mybasecolormap->Maps ||
-					vis->Style.colormap >= mybasecolormap->Maps + NUMCOLORMAPS*256)
+				else if (vis->Style.BaseColormap < mybasecolormap->Maps ||
+					vis->Style.BaseColormap >= mybasecolormap->Maps + NUMCOLORMAPS*256)
 				{
 					noaccel = true;
 				}
@@ -1472,8 +1479,8 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, double sx, double 
 		}
 		// If we're drawing with a special colormap, but shaders for them are disabled, do
 		// not accelerate.
-		if (!r_shadercolormaps && (vis->Style.colormap >= SpecialColormaps[0].Colormap &&
-			vis->Style.colormap <= SpecialColormaps.Last().Colormap))
+		if (!r_shadercolormaps && (vis->Style.BaseColormap >= SpecialColormaps[0].Colormap &&
+			vis->Style.BaseColormap <= SpecialColormaps.Last().Colormap))
 		{
 			noaccel = true;
 		}
@@ -1495,7 +1502,8 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, double sx, double 
 	else
 	{
 		colormap_to_use = basecolormap;
-		vis->Style.colormap = basecolormap->Maps;
+		vis->Style.BaseColormap = basecolormap->Maps;
+		vis->Style.ColormapNum = 0;
 		vis->Style.RenderStyle = STYLE_Normal;
 	}
 
@@ -1641,18 +1649,18 @@ void R_DrawRemainingPlayerSprites()
 			FColormapStyle colormapstyle;
 			bool usecolormapstyle = false;
 
-			if (vis->Style.colormap >= SpecialColormaps[0].Colormap && 
-				vis->Style.colormap < SpecialColormaps[SpecialColormaps.Size()].Colormap)
+			if (vis->Style.BaseColormap >= SpecialColormaps[0].Colormap && 
+				vis->Style.BaseColormap < SpecialColormaps[SpecialColormaps.Size()].Colormap)
 			{
 				// Yuck! There needs to be a better way to store colormaps in the vissprite... :(
-				ptrdiff_t specialmap = (vis->Style.colormap - SpecialColormaps[0].Colormap) / sizeof(FSpecialColormap);
+				ptrdiff_t specialmap = (vis->Style.BaseColormap - SpecialColormaps[0].Colormap) / sizeof(FSpecialColormap) + vis->Style.ColormapNum;
 				special = &SpecialColormaps[specialmap];
 			}
 			else if (colormap->Color == PalEntry(255,255,255) &&
 				colormap->Desaturate == 0)
 			{
 				overlay = colormap->Fade;
-				overlay.a = BYTE(((vis->Style.colormap - colormap->Maps) >> 8) * 255 / NUMCOLORMAPS);
+				overlay.a = BYTE(vis->Style.ColormapNum * 255 / NUMCOLORMAPS);
 			}
 			else
 			{
@@ -1660,7 +1668,7 @@ void R_DrawRemainingPlayerSprites()
 				colormapstyle.Color = colormap->Color;
 				colormapstyle.Fade = colormap->Fade;
 				colormapstyle.Desaturate = colormap->Desaturate;
-				colormapstyle.FadeLevel = ((vis->Style.colormap - colormap->Maps) >> 8) / float(NUMCOLORMAPS);
+				colormapstyle.FadeLevel = vis->Style.ColormapNum / float(NUMCOLORMAPS);
 			}
 			screen->DrawTexture(vis->pic,
 				viewwindowx + VisPSpritesX1[i],
@@ -1904,7 +1912,8 @@ void R_DrawSprite (vissprite_t *spr)
 	int r1, r2;
 	short topclip, botclip;
 	short *clip1, *clip2;
-	lighttable_t *colormap = spr->Style.colormap;
+	lighttable_t *colormap = spr->Style.BaseColormap;
+	int colormapnum = spr->Style.ColormapNum;
 	F3DFloor *rover;
 	FDynamicColormap *mybasecolormap;
 
@@ -2001,17 +2010,19 @@ void R_DrawSprite (vissprite_t *spr)
 			}
 			if (fixedlightlev >= 0)
 			{
-				spr->Style.colormap = mybasecolormap->Maps + fixedlightlev;
+				spr->Style.BaseColormap = mybasecolormap->Maps;
+				spr->Style.ColormapNum = fixedlightlev >> COLORMAPSHIFT;
 			}
 			else if (!foggy && (spr->renderflags & RF_FULLBRIGHT))
 			{ // full bright
-				spr->Style.colormap = mybasecolormap->Maps;
+				spr->Style.BaseColormap = mybasecolormap->Maps;
+				spr->Style.ColormapNum = 0;
 			}
 			else
 			{ // diminished light
 				spriteshade = LIGHT2SHADE(sec->lightlevel + r_actualextralight);
-				spr->Style.colormap = mybasecolormap->Maps + (GETPALOOKUP (
-					r_SpriteVisibility / MAX(MINZ, (double)spr->depth), spriteshade) << COLORMAPSHIFT);
+				spr->Style.BaseColormap = mybasecolormap->Maps;
+				spr->Style.ColormapNum = GETPALOOKUP(r_SpriteVisibility / MAX(MINZ, (double)spr->depth), spriteshade);
 			}
 		}
 	}
@@ -2159,7 +2170,8 @@ void R_DrawSprite (vissprite_t *spr)
 
 	if (topclip >= botclip)
 	{
-		spr->Style.colormap = colormap;
+		spr->Style.BaseColormap = colormap;
+		spr->Style.ColormapNum = colormapnum;
 		return;
 	}
 
@@ -2289,7 +2301,8 @@ void R_DrawSprite (vissprite_t *spr)
 			}
 			if (i == x2)
 			{
-				spr->Style.colormap = colormap;
+				spr->Style.BaseColormap = colormap;
+				spr->Style.ColormapNum = colormapnum;
 				return;
 			}
 		}
@@ -2307,7 +2320,8 @@ void R_DrawSprite (vissprite_t *spr)
 		int maxvoxely = spr->gzb > hzb ? INT_MAX : xs_RoundToInt((spr->gzt - hzb) / spr->yscale);
 		R_DrawVisVoxel(spr, minvoxely, maxvoxely, cliptop, clipbot);
 	}
-	spr->Style.colormap = colormap;
+	spr->Style.BaseColormap = colormap;
+	spr->Style.ColormapNum = colormapnum;
 }
 
 // kg3D:
@@ -2551,25 +2565,28 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 	vis->renderflags = particle->trans;
 	vis->FakeFlatStat = fakeside;
 	vis->floorclip = 0;
-	vis->ColormapNum = 0;
+	vis->Style.ColormapNum = 0;
 
 	if (fixedlightlev >= 0)
 	{
-		vis->Style.colormap = map + fixedlightlev;
+		vis->Style.BaseColormap = map;
+		vis->Style.ColormapNum = fixedlightlev >> COLORMAPSHIFT;
 	}
 	else if (fixedcolormap)
 	{
-		vis->Style.colormap = fixedcolormap;
+		vis->Style.BaseColormap = fixedcolormap;
+		vis->Style.ColormapNum = 0;
 	}
 	else if (particle->bright)
 	{
-		vis->Style.colormap = map;
+		vis->Style.BaseColormap = map;
+		vis->Style.ColormapNum = 0;
 	}
 	else
 	{
 		// Particles are slightly more visible than regular sprites.
-		vis->ColormapNum = GETPALOOKUP(tiz * r_SpriteVisibility * 0.5, shade);
-		vis->Style.colormap = map + (vis->ColormapNum << COLORMAPSHIFT);
+		vis->Style.ColormapNum = GETPALOOKUP(tiz * r_SpriteVisibility * 0.5, shade);
+		vis->Style.BaseColormap = map;
 	}
 }
 
@@ -2602,7 +2619,7 @@ void R_DrawParticle_C (vissprite_t *vis)
 {
 	int spacing;
 	BYTE *dest;
-	BYTE color = vis->Style.colormap[vis->startfrac];
+	BYTE color = vis->Style.BaseColormap[(vis->Style.ColormapNum << COLORMAPSHIFT) + vis->startfrac];
 	int yl = vis->y1;
 	int ycount = vis->y2 - yl + 1;
 	int x1 = vis->x1;
@@ -2668,7 +2685,7 @@ void R_DrawParticle_RGBA(vissprite_t *vis)
 {
 	int spacing;
 	uint32_t *dest;
-	BYTE color = vis->Style.colormap[vis->startfrac];
+	BYTE color = vis->Style.BaseColormap[vis->startfrac];
 	int yl = vis->y1;
 	int ycount = vis->y2 - yl + 1;
 	int x1 = vis->x1;
@@ -2676,7 +2693,7 @@ void R_DrawParticle_RGBA(vissprite_t *vis)
 
 	R_DrawMaskedSegsBehindParticle(vis);
 
-	uint32_t fg = shade_pal_index(color, calc_light_multiplier(0));
+	uint32_t fg = shade_pal_index(color, calc_light_multiplier(LIGHTSCALE(0, vis->Style.ColormapNum << FRACBITS)));
 	uint32_t fg_red = (fg >> 16) & 0xff;
 	uint32_t fg_green = (fg >> 8) & 0xff;
 	uint32_t fg_blue = fg & 0xff;

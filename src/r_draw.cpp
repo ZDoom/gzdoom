@@ -3036,8 +3036,8 @@ DWORD (*doprevline1)() = vlinec1;
 
 #ifdef X64_ASM
 extern "C" void vlinetallasm4();
-#define dovline4 vlinetallasm4
 extern "C" void setupvlinetallasm (int);
+void (*dovline4)() = vlinetallasm4;
 #else
 static void vlinec4 ();
 void (*dovline4)() = vlinec4;

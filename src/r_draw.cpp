@@ -952,12 +952,14 @@ void R_DrawAddColumnP_RGBA_C()
 		int pitch = dc_pitch;
 		BYTE *colormap = dc_colormap;
 
+		uint32_t light = calc_light_multiplier(dc_light);
+
 		uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
 		uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
 
 		do
 		{
-			uint32_t fg = shade_pal_index(colormap[source[frac >> FRACBITS]], 0);
+			uint32_t fg = shade_pal_index(colormap[source[frac >> FRACBITS]], light);
 
 			uint32_t fg_red = (fg >> 16) & 0xff;
 			uint32_t fg_green = (fg >> 8) & 0xff;

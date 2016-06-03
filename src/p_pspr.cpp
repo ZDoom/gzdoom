@@ -110,7 +110,7 @@ END_POINTERS
 //
 //------------------------------------------------------------------------
 
-DPSprite::DPSprite(player_t *owner, AInventory *caller, int id)
+DPSprite::DPSprite(player_t *owner, AActor *caller, int id)
 : processPending(true),
   firstTic(true),
   x(.0), y(.0),
@@ -142,7 +142,7 @@ DPSprite::DPSprite(player_t *owner, AInventory *caller, int id)
 	if (Next && Next->ID == ID && ID != 0)
 		Next->Destroy(); // Replace it.
 
-	if (Caller->IsKindOf(RUNTIME_CLASS(AWeapon)))
+	if (Caller->IsKindOf(RUNTIME_CLASS(AWeapon)) || Caller->IsKindOf(RUNTIME_CLASS(APlayerPawn)))
 		Flags = (PSPF_ADDWEAPON|PSPF_ADDBOB|PSPF_POWDOUBLE|PSPF_CVARFAST);
 }
 
@@ -177,8 +177,8 @@ DPSprite *player_t::FindPSprite(int layer)
 
 DPSprite *player_t::GetPSprite(PSPLayers layer)
 {
-	AInventory *oldcaller = nullptr;
-	AInventory *newcaller = nullptr;
+	AActor *oldcaller = nullptr;
+	AActor *newcaller = nullptr;
 
 	if (layer >= PSP_TARGETCENTER)
 	{
@@ -972,7 +972,7 @@ void A_OverlayOffset(AActor *self, int layer, double wx, double wy, int flags)
 	}
 }
 
-DEFINE_ACTION_FUNCTION(AInventory, A_OverlayOffset)
+DEFINE_ACTION_FUNCTION(AActor, A_OverlayOffset)
 {
 	PARAM_ACTION_PROLOGUE;
 	PARAM_INT_OPT(layer)	{ layer = PSP_WEAPON; }
@@ -983,7 +983,7 @@ DEFINE_ACTION_FUNCTION(AInventory, A_OverlayOffset)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(AInventory, A_WeaponOffset)
+DEFINE_ACTION_FUNCTION(AActor, A_WeaponOffset)
 {
 	PARAM_ACTION_PROLOGUE;
 	PARAM_FLOAT_OPT(wx) { wx = 0.; }
@@ -999,7 +999,7 @@ DEFINE_ACTION_FUNCTION(AInventory, A_WeaponOffset)
 //
 //---------------------------------------------------------------------------
 
-DEFINE_ACTION_FUNCTION(AInventory, A_OverlayFlags)
+DEFINE_ACTION_FUNCTION(AActor, A_OverlayFlags)
 {
 	PARAM_ACTION_PROLOGUE;
 	PARAM_INT(layer);
@@ -1118,7 +1118,7 @@ DEFINE_ACTION_FUNCTION(AInventory, A_Raise)
 //
 //---------------------------------------------------------------------------
 
-DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_Overlay)
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Overlay)
 {
 	PARAM_ACTION_PROLOGUE;
 	PARAM_INT		(layer);
@@ -1130,7 +1130,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AInventory, A_Overlay)
 		return 0;
 
 	DPSprite *pspr;
-	pspr = new DPSprite(player, reinterpret_cast<AInventory *>(stateowner), layer);
+	pspr = new DPSprite(player, stateowner, layer);
 	pspr->SetState(state);
 	return 0;
 }
@@ -1312,7 +1312,7 @@ void player_t::TickPSprites()
 		// Destroy the psprite if it's from a weapon that isn't currently selected by the player
 		// or if it's from an inventory item that the player no longer owns. 
 		if ((pspr->Caller == nullptr ||
-			(pspr->Caller->Owner != pspr->Owner->mo) ||
+			(pspr->Caller->IsKindOf(RUNTIME_CLASS(AInventory)) && barrier_cast<AInventory *>(pspr->Caller)->Owner != pspr->Owner->mo) ||
 			(pspr->Caller->IsKindOf(RUNTIME_CLASS(AWeapon)) && pspr->Caller != pspr->Owner->ReadyWeapon)))
 		{
 			pspr->Destroy();

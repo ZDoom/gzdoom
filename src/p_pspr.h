@@ -64,7 +64,7 @@ class DPSprite : public DObject
 	DECLARE_CLASS (DPSprite, DObject)
 	HAS_OBJECT_POINTERS
 public:
-	DPSprite(player_t *owner, AInventory *caller, int id);
+	DPSprite(player_t *owner, AActor *caller, int id);
 
 	static void NewTick();
 	void SetState(FState *newstate, bool pending = false);
@@ -74,7 +74,7 @@ public:
 	int			GetFrame()	const { return Frame; }
 	FState*		GetState()	const { return State; }
 	DPSprite*	GetNext()	      { return Next; }
-	AInventory*	GetCaller()	      { return Caller; }
+	AActor*		GetCaller()	      { return Caller; }
 
 	double x, y;
 	double oldx, oldy;
@@ -89,7 +89,7 @@ private:
 	void Tick();
 	void Destroy();
 
-	TObjPtr<AInventory> Caller;
+	TObjPtr<AActor> Caller;
 	TObjPtr<DPSprite> Next;
 	player_t *Owner;
 	FState *State;

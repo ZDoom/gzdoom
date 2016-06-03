@@ -352,8 +352,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ItBurnsItBurns)
 
 	if (self->player != nullptr && self->player->mo == self)
 	{
-		self->player->GetPSprite(PSP_WEAPON)->SetState(self->FindState("FireHands"));
-		self->player->GetPSprite(PSP_FLASH)->SetState(nullptr);
+		self->player->GetPSprite(PSP_STRIFEHANDS)->SetState(self->FindState("FireHands"));
 		self->player->ReadyWeapon = nullptr;
 		self->player->PendingWeapon = WP_NOCHANGE;
 		self->player->playerstate = PST_LIVE;
@@ -381,7 +380,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CrispyPlayer)
 		self->player->playerstate = PST_DEAD;
 
 		DPSprite *psp;
-		psp = self->player->GetPSprite(PSP_WEAPON);
+		psp = self->player->GetPSprite(PSP_STRIFEHANDS);
 		psp->SetState(psp->GetState() + (self->FindState("FireHandsLower") - self->FindState("FireHands")));
 	}
 	return 0;
@@ -393,7 +392,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_HandLower)
 
 	if (self->player != nullptr)
 	{
-		DPSprite *psp = self->player->GetPSprite(PSP_WEAPON);
+		DPSprite *psp = self->player->GetPSprite(PSP_STRIFEHANDS);
 		psp->y += 9;
 		if (psp->y > WEAPONBOTTOM*2)
 		{

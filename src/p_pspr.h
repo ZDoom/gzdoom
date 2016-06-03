@@ -44,6 +44,7 @@ class FArchive;
 //
 enum PSPLayers // These are all called by the owner's ReadyWeapon.
 {
+	PSP_STRIFEHANDS = -1,
 	PSP_WEAPON = 1,
 	PSP_FLASH = 1000,
 	PSP_TARGETCENTER = INT_MAX - 2,

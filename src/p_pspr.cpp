@@ -187,6 +187,10 @@ DPSprite *player_t::GetPSprite(PSPLayers layer)
 			newcaller = mo->FindInventory(RUNTIME_CLASS(APowerTargeter), true);
 		}
 	}
+	else if (layer == PSP_STRIFEHANDS)
+	{
+		newcaller = mo;
+	}
 	else
 	{
 		newcaller = ReadyWeapon;

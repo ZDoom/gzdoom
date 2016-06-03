@@ -4364,7 +4364,6 @@ void R_InitColumnDrawers ()
 		R_DrawTranslatedColumn		= R_DrawTranslatedColumnP_RGBA_C;
 		R_DrawShadedColumn			= R_DrawShadedColumnP_RGBA_C;
 		R_DrawSpanMasked			= R_DrawSpanMaskedP_RGBA_C;
-		rt_map4cols					= rt_map4cols_RGBA_c;
 #ifndef NO_SSE
 		R_DrawSpan = R_DrawSpanP_RGBA_SSE;
 #else
@@ -4409,9 +4408,6 @@ void R_InitColumnDrawers ()
 		rt_copy1col					= rt_copy1col_RGBA_c;
 		rt_copy4cols				= rt_copy4cols_RGBA_c;
 		rt_map1col					= rt_map1col_RGBA_c;
-		rt_shaded4cols				= rt_shaded4cols_RGBA_c;
-		rt_add4cols					= rt_add4cols_RGBA_c;
-		rt_addclamp4cols			= rt_addclamp4cols_RGBA_c;
 		rt_shaded1col				= rt_shaded1col_RGBA_c;
 		rt_add1col					= rt_add1col_RGBA_c;
 		rt_addclamp1col				= rt_addclamp1col_RGBA_c;
@@ -4422,7 +4418,6 @@ void R_InitColumnDrawers ()
 		rt_tlateaddclamp1col		= rt_tlateaddclamp1col_RGBA_c;
 		rt_tlatesubclamp1col		= rt_tlatesubclamp1col_RGBA_c;
 		rt_tlaterevsubclamp1col		= rt_tlaterevsubclamp1col_RGBA_c;
-		rt_map4cols					= rt_map4cols_RGBA_c;
 		rt_subclamp4cols			= rt_subclamp4cols_RGBA_c;
 		rt_revsubclamp4cols			= rt_revsubclamp4cols_RGBA_c;
 		rt_tlate4cols				= rt_tlate4cols_RGBA_c;
@@ -4431,6 +4426,18 @@ void R_InitColumnDrawers ()
 		rt_tlatesubclamp4cols		= rt_tlatesubclamp4cols_RGBA_c;
 		rt_tlaterevsubclamp4cols	= rt_tlaterevsubclamp4cols_RGBA_c;
 		rt_initcols					= rt_initcols_rgba;
+
+#ifndef NO_SSE
+		rt_map4cols = rt_map4cols_RGBA_SSE;
+		rt_add4cols = rt_add4cols_RGBA_SSE;
+		rt_addclamp4cols = rt_addclamp4cols_RGBA_SSE;
+		rt_shaded4cols = rt_shaded4cols_RGBA_SSE;
+#else
+		rt_map4cols = rt_map4cols_RGBA_c;
+		rt_add4cols = rt_add4cols_RGBA_c;
+		rt_addclamp4cols = rt_addclamp4cols_RGBA_c;
+		rt_shaded4cols = rt_shaded4cols_RGBA_c;
+#endif
 
 		dovline1					= vlinec1_RGBA;
 		doprevline1					= vlinec1_RGBA;

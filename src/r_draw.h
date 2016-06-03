@@ -173,6 +173,7 @@ void rt_copy4cols_RGBA_c (int sx, int yl, int yh);
 
 void rt_shaded1col_RGBA_c (int hx, int sx, int yl, int yh);
 void rt_shaded4cols_RGBA_c (int sx, int yl, int yh);
+void rt_shaded4cols_RGBA_SSE (int sx, int yl, int yh);
 
 void rt_map1col_RGBA_c (int hx, int sx, int yl, int yh);
 void rt_add1col_RGBA_c (int hx, int sx, int yl, int yh);
@@ -187,8 +188,11 @@ void rt_tlatesubclamp1col_RGBA_c (int hx, int sx, int yl, int yh);
 void rt_tlaterevsubclamp1col_RGBA_c (int hx, int sx, int yl, int yh);
 
 void rt_map4cols_RGBA_c (int sx, int yl, int yh);
+void rt_map4cols_RGBA_SSE (int sx, int yl, int yh);
 void rt_add4cols_RGBA_c (int sx, int yl, int yh);
+void rt_add4cols_RGBA_SSE (int sx, int yl, int yh);
 void rt_addclamp4cols_RGBA_c (int sx, int yl, int yh);
+void rt_addclamp4cols_RGBA_SSE (int sx, int yl, int yh);
 void rt_subclamp4cols_RGBA_c (int sx, int yl, int yh);
 void rt_revsubclamp4cols_RGBA_c (int sx, int yl, int yh);
 

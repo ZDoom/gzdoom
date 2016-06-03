@@ -42,6 +42,9 @@
 #include "r_main.h"
 #include "r_things.h"
 #include "v_video.h"
+#ifndef NO_SSE
+#include <emmintrin.h>
+#endif
 
 uint32_t dc_temp_rgbabuff_rgba[MAXHEIGHT*4];
 uint32_t *dc_temp_rgba;
@@ -182,6 +185,98 @@ void rt_map4cols_RGBA_c (int sx, int yl, int yh)
 		dest[pitch + 3] = shade_pal_index(colormap[source[7]], light);
 		source += 8;
 		dest += pitch*2;
+	} while (--count);
+}
+
+// Maps all four spans to the screen starting at sx.
+void rt_map4cols_RGBA_SSE(int sx, int yl, int yh)
+{
+	BYTE *colormap;
+	uint32_t *source;
+	uint32_t *dest;
+	int count;
+	int pitch;
+
+	count = yh - yl;
+	if (count < 0)
+		return;
+	count++;
+
+	uint32_t light = calc_light_multiplier(dc_light);
+	uint32_t *palette = (uint32_t*)GPalette.BaseColors;
+
+	colormap = dc_colormap;
+	dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
+	source = &dc_temp_rgba[yl * 4];
+	pitch = dc_pitch;
+
+	__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
+
+	if (count & 1) {
+		uint32_t p0 = colormap[source[0]];
+		uint32_t p1 = colormap[source[1]];
+		uint32_t p2 = colormap[source[2]];
+		uint32_t p3 = colormap[source[3]];
+
+		// shade_pal_index:
+		__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
+		__m128i fg_hi = _mm_unpackhi_epi8(fg, _mm_setzero_si128());
+		__m128i fg_lo = _mm_unpacklo_epi8(fg, _mm_setzero_si128());
+		fg_hi = _mm_mullo_epi16(fg_hi, mlight);
+		fg_hi = _mm_srli_epi16(fg_hi, 8);
+		fg_lo = _mm_mullo_epi16(fg_lo, mlight);
+		fg_lo = _mm_srli_epi16(fg_lo, 8);
+
+		fg = _mm_packus_epi16(fg_lo, fg_hi);
+		_mm_storeu_si128((__m128i*)dest, fg);
+
+		source += 4;
+		dest += pitch;
+	}
+	if (!(count >>= 1))
+		return;
+
+	do {
+		// shade_pal_index 0-3
+		{
+			uint32_t p0 = colormap[source[0]];
+			uint32_t p1 = colormap[source[1]];
+			uint32_t p2 = colormap[source[2]];
+			uint32_t p3 = colormap[source[3]];
+
+			__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
+			__m128i fg_hi = _mm_unpackhi_epi8(fg, _mm_setzero_si128());
+			__m128i fg_lo = _mm_unpacklo_epi8(fg, _mm_setzero_si128());
+			fg_hi = _mm_mullo_epi16(fg_hi, mlight);
+			fg_hi = _mm_srli_epi16(fg_hi, 8);
+			fg_lo = _mm_mullo_epi16(fg_lo, mlight);
+			fg_lo = _mm_srli_epi16(fg_lo, 8);
+
+			fg = _mm_packus_epi16(fg_lo, fg_hi);
+			_mm_storeu_si128((__m128i*)dest, fg);
+		}
+
+		// shade_pal_index 4-7 (pitch)
+		{
+			uint32_t p0 = colormap[source[4]];
+			uint32_t p1 = colormap[source[5]];
+			uint32_t p2 = colormap[source[6]];
+			uint32_t p3 = colormap[source[7]];
+
+			__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
+			__m128i fg_hi = _mm_unpackhi_epi8(fg, _mm_setzero_si128());
+			__m128i fg_lo = _mm_unpacklo_epi8(fg, _mm_setzero_si128());
+			fg_hi = _mm_mullo_epi16(fg_hi, mlight);
+			fg_hi = _mm_srli_epi16(fg_hi, 8);
+			fg_lo = _mm_mullo_epi16(fg_lo, mlight);
+			fg_lo = _mm_srli_epi16(fg_lo, 8);
+
+			fg = _mm_packus_epi16(fg_lo, fg_hi);
+			_mm_storeu_si128((__m128i*)(dest + pitch), fg);
+		}
+
+		source += 8;
+		dest += pitch * 2;
 	} while (--count);
 }
 
@@ -380,6 +475,69 @@ void rt_add4cols_RGBA_c (int sx, int yl, int yh)
 	} while (--count);
 }
 
+// Adds all four spans to the screen starting at sx without clamping.
+#ifndef NO_SSE
+void rt_add4cols_RGBA_SSE(int sx, int yl, int yh)
+{
+	BYTE *colormap;
+	uint32_t *source;
+	uint32_t *dest;
+	int count;
+	int pitch;
+
+	count = yh - yl;
+	if (count < 0)
+		return;
+	count++;
+
+	dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
+	source = &dc_temp_rgba[yl * 4];
+	pitch = dc_pitch;
+	colormap = dc_colormap;
+
+	uint32_t light = calc_light_multiplier(dc_light);
+	uint32_t *palette = (uint32_t*)GPalette.BaseColors;
+
+	uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
+	uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+
+	__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
+	__m128i mfg_alpha = _mm_set_epi16(256, fg_alpha, fg_alpha, fg_alpha, 256, fg_alpha, fg_alpha, fg_alpha);
+	__m128i mbg_alpha = _mm_set_epi16(256, bg_alpha, bg_alpha, bg_alpha, 256, bg_alpha, bg_alpha, bg_alpha);
+
+	do {
+		uint32_t p0 = colormap[source[0]];
+		uint32_t p1 = colormap[source[1]];
+		uint32_t p2 = colormap[source[2]];
+		uint32_t p3 = colormap[source[3]];
+
+		// shade_pal_index:
+		__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
+		__m128i fg_hi = _mm_unpackhi_epi8(fg, _mm_setzero_si128());
+		__m128i fg_lo = _mm_unpacklo_epi8(fg, _mm_setzero_si128());
+		fg_hi = _mm_mullo_epi16(fg_hi, mlight);
+		fg_hi = _mm_srli_epi16(fg_hi, 8);
+		fg_lo = _mm_mullo_epi16(fg_lo, mlight);
+		fg_lo = _mm_srli_epi16(fg_lo, 8);
+
+		// unpack bg:
+		__m128i bg = _mm_loadu_si128((const __m128i*)dest);
+		__m128i bg_hi = _mm_unpackhi_epi8(bg, _mm_setzero_si128());
+		__m128i bg_lo = _mm_unpacklo_epi8(bg, _mm_setzero_si128());
+
+		// (fg_red * fg_alpha + bg_red * bg_alpha) / 256:
+		__m128i color_hi = _mm_srli_epi16(_mm_adds_epu16(_mm_mullo_epi16(fg_hi, mfg_alpha), _mm_mullo_epi16(bg_hi, mbg_alpha)), 8);
+		__m128i color_lo = _mm_srli_epi16(_mm_adds_epu16(_mm_mullo_epi16(fg_lo, mfg_alpha), _mm_mullo_epi16(bg_lo, mbg_alpha)), 8);
+
+		__m128i color = _mm_packus_epi16(color_lo, color_hi);
+		_mm_storeu_si128((__m128i*)dest, color);
+
+		source += 4;
+		dest += pitch;
+	} while (--count);
+}
+#endif
+
 // Translates and adds one span at hx to the screen at sx without clamping.
 void rt_tlateadd1col_RGBA_c (int hx, int sx, int yl, int yh)
 {
@@ -481,6 +639,58 @@ void rt_shaded4cols_RGBA_c (int sx, int yl, int yh)
 	} while (--count);
 }
 
+// Shades all four spans to the screen starting at sx.
+#ifndef NO_SSE
+void rt_shaded4cols_RGBA_SSE(int sx, int yl, int yh)
+{
+	BYTE *colormap;
+	uint32_t *source;
+	uint32_t *dest;
+	int count;
+	int pitch;
+
+	count = yh - yl;
+	if (count < 0)
+		return;
+	count++;
+
+	colormap = dc_colormap;
+	dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
+	source = &dc_temp_rgba[yl * 4];
+	pitch = dc_pitch;
+
+	__m128i fg = _mm_unpackhi_epi8(_mm_set1_epi32(shade_pal_index(dc_color, calc_light_multiplier(dc_light))), _mm_setzero_si128());
+	__m128i alpha_one = _mm_set1_epi16(64);
+
+	do {
+		uint32_t p0 = colormap[source[0]];
+		uint32_t p1 = colormap[source[1]];
+		uint32_t p2 = colormap[source[2]];
+		uint32_t p3 = colormap[source[3]];
+
+		__m128i alpha_hi = _mm_set_epi16(64, p3, p3, p3, 64, p2, p2, p2);
+		__m128i alpha_lo = _mm_set_epi16(64, p1, p1, p1, 64, p0, p0, p0);
+		__m128i inv_alpha_hi = _mm_subs_epu16(alpha_one, alpha_hi);
+		__m128i inv_alpha_lo = _mm_subs_epu16(alpha_one, alpha_lo);
+
+		// unpack bg:
+		__m128i bg = _mm_loadu_si128((const __m128i*)dest);
+		__m128i bg_hi = _mm_unpackhi_epi8(bg, _mm_setzero_si128());
+		__m128i bg_lo = _mm_unpacklo_epi8(bg, _mm_setzero_si128());
+
+		// (fg_red * alpha + bg_red * inv_alpha) / 64:
+		__m128i color_hi = _mm_srli_epi16(_mm_adds_epu16(_mm_mullo_epi16(fg, alpha_hi), _mm_mullo_epi16(bg_hi, inv_alpha_hi)), 6);
+		__m128i color_lo = _mm_srli_epi16(_mm_adds_epu16(_mm_mullo_epi16(fg, alpha_lo), _mm_mullo_epi16(bg_lo, inv_alpha_lo)), 6);
+
+		__m128i color = _mm_packus_epi16(color_lo, color_hi);
+		_mm_storeu_si128((__m128i*)dest, color);
+
+		source += 4;
+		dest += pitch;
+	} while (--count);
+}
+#endif
+
 // Adds one span at hx to the screen at sx with clamping.
 void rt_addclamp1col_RGBA_c (int hx, int sx, int yl, int yh)
 {
@@ -571,6 +781,69 @@ void rt_addclamp4cols_RGBA_c (int sx, int yl, int yh)
 		dest += pitch;
 	} while (--count);
 }
+
+// Adds all four spans to the screen starting at sx with clamping.
+#ifndef NO_SSE
+void rt_addclamp4cols_RGBA_SSE(int sx, int yl, int yh)
+{
+	BYTE *colormap;
+	uint32_t *source;
+	uint32_t *dest;
+	int count;
+	int pitch;
+
+	count = yh - yl;
+	if (count < 0)
+		return;
+	count++;
+
+	dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
+	source = &dc_temp_rgba[yl * 4];
+	pitch = dc_pitch;
+	colormap = dc_colormap;
+
+	uint32_t light = calc_light_multiplier(dc_light);
+	uint32_t *palette = (uint32_t*)GPalette.BaseColors;
+
+	uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
+	uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+
+	__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
+	__m128i mfg_alpha = _mm_set_epi16(256, fg_alpha, fg_alpha, fg_alpha, 256, fg_alpha, fg_alpha, fg_alpha);
+	__m128i mbg_alpha = _mm_set_epi16(256, bg_alpha, bg_alpha, bg_alpha, 256, bg_alpha, bg_alpha, bg_alpha);
+
+	do {
+		uint32_t p0 = colormap[source[0]];
+		uint32_t p1 = colormap[source[1]];
+		uint32_t p2 = colormap[source[2]];
+		uint32_t p3 = colormap[source[3]];
+
+		// shade_pal_index:
+		__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
+		__m128i fg_hi = _mm_unpackhi_epi8(fg, _mm_setzero_si128());
+		__m128i fg_lo = _mm_unpacklo_epi8(fg, _mm_setzero_si128());
+		fg_hi = _mm_mullo_epi16(fg_hi, mlight);
+		fg_hi = _mm_srli_epi16(fg_hi, 8);
+		fg_lo = _mm_mullo_epi16(fg_lo, mlight);
+		fg_lo = _mm_srli_epi16(fg_lo, 8);
+
+		// unpack bg:
+		__m128i bg = _mm_loadu_si128((const __m128i*)dest);
+		__m128i bg_hi = _mm_unpackhi_epi8(bg, _mm_setzero_si128());
+		__m128i bg_lo = _mm_unpacklo_epi8(bg, _mm_setzero_si128());
+
+		// (fg_red * fg_alpha + bg_red * bg_alpha) / 256:
+		__m128i color_hi = _mm_srli_epi16(_mm_adds_epu16(_mm_mullo_epi16(fg_hi, mfg_alpha), _mm_mullo_epi16(bg_hi, mbg_alpha)), 8);
+		__m128i color_lo = _mm_srli_epi16(_mm_adds_epu16(_mm_mullo_epi16(fg_lo, mfg_alpha), _mm_mullo_epi16(bg_lo, mbg_alpha)), 8);
+
+		__m128i color = _mm_packus_epi16(color_lo, color_hi);
+		_mm_storeu_si128((__m128i*)dest, color);
+
+		source += 4;
+		dest += pitch;
+	} while (--count);
+}
+#endif
 
 // Translates and adds one span at hx to the screen at sx with clamping.
 void rt_tlateaddclamp1col_RGBA_c (int hx, int sx, int yl, int yh)

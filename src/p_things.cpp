@@ -673,7 +673,7 @@ bool P_Thing_CheckProximity(AActor *self, PClass *classname, double distance, in
 
 	// We need these to check out.
 	if (!ref || !classname || distance <= 0)
-		return nullptr;
+		return false;
 	
 	int counter = 0;
 	bool result = false;

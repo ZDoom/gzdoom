@@ -395,25 +395,25 @@ void GLWall::SplitWall(sector_t * frontsector, bool translucent)
 				continue;
 			}
 
-			if (gl.glslversion >= 1.3f)
+			// check for an intersection with the upper and lower planes of the wall segment
+			if ((maplightbottomleft<ztop[0] && maplightbottomright>ztop[1]) ||
+				(maplightbottomleft > ztop[0] && maplightbottomright < ztop[1]) ||
+				(maplightbottomleft<zbottom[0] && maplightbottomright>zbottom[1]) ||
+				(maplightbottomleft > zbottom[0] && maplightbottomright < zbottom[1]))
 			{
-				// check for an intersection with the upper and lower planes of the wall segment
-				if ((maplightbottomleft<ztop[0] && maplightbottomright>ztop[1]) ||
-					(maplightbottomleft > ztop[0] && maplightbottomright < ztop[1]) ||
-					(maplightbottomleft<zbottom[0] && maplightbottomright>zbottom[1]) ||
-					(maplightbottomleft > zbottom[0] && maplightbottomright < zbottom[1]))
+				if (gl.glslversion >= 1.3f)
 				{
 					// Use hardware clipping if this cannot be done cleanly.
 					this->lightlist = &lightlist;
 					PutWall(translucent);
-					goto out;
 				}
-			}
-			else
-			{
-				// crappy fallback if no clip planes available
-				SplitWallComplex(frontsector, translucent, maplightbottomleft, maplightbottomright);
-				return;
+				else
+				{
+					// crappy fallback if no clip planes available
+					SplitWallComplex(frontsector, translucent, maplightbottomleft, maplightbottomright);
+				}
+
+				goto out;
 			}
 
 			// 3D floor is completely within this light

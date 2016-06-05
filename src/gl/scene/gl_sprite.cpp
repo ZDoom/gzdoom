@@ -333,11 +333,12 @@ void GLSprite::Draw(int pass)
 					angto = deltaangle(actor->Angles.Yaw, angto);
 
 					float pitchDegrees = actor->Angles.Pitch.Degrees;
-					mat.Rotate(0, 1, 0, (!dontFlip || (fabs(angto) < 90.)) ? 0 : 180);
-					mat.Rotate(-yawvecY, 0, yawvecX, pitchDegrees);
+					bool noFlipSprite = (!dontFlip || (fabs(angto) < 90.));
+					mat.Rotate(0, 1, 0, (noFlipSprite) ? 0 : 180);
+					mat.Rotate(-yawvecY, 0, yawvecX, (noFlipSprite) ? -pitchDegrees : pitchDegrees);
 					if (drawRollSpriteActor)
 					{
-						mat.Rotate(yawvecX, 0, yawvecY, rollDegrees);
+						mat.Rotate(yawvecX, 0, yawvecY, (noFlipSprite) ? -rollDegrees : rollDegrees);
 					}
 				}
 				// [fgsfds] Rotate the sprite about the sight vector (roll) 

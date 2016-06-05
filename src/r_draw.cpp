@@ -5076,7 +5076,7 @@ void R_SetColorMapLight(FColormap *base_colormap, float light, int shade)
 	dc_shade_constants.fade_green = dc_fcolormap->Fade.g;
 	dc_shade_constants.fade_blue = dc_fcolormap->Fade.b;
 	dc_shade_constants.fade_alpha = dc_fcolormap->Fade.a;
-	dc_shade_constants.desaturate = MIN(std::abs(dc_fcolormap->Desaturate), 255) * 255 / 256;
+	dc_shade_constants.desaturate = MIN(abs(dc_fcolormap->Desaturate), 255) * 255 / 256;
 	dc_shade_constants.simple_shade = (dc_fcolormap->Color.d == 0x00ffffff && dc_fcolormap->Fade.d == 0x00000000 && dc_fcolormap->Desaturate == 0);
 	if (r_swtruecolor)
 	{
@@ -5101,7 +5101,7 @@ void R_SetDSColorMapLight(FColormap *base_colormap, float light, int shade)
 	ds_shade_constants.fade_green = ds_fcolormap->Fade.g;
 	ds_shade_constants.fade_blue = ds_fcolormap->Fade.b;
 	ds_shade_constants.fade_alpha = ds_fcolormap->Fade.a;
-	ds_shade_constants.desaturate = MIN(std::abs(ds_fcolormap->Desaturate), 255) * 255 / 256;
+	ds_shade_constants.desaturate = MIN(abs(ds_fcolormap->Desaturate), 255) * 255 / 256;
 	ds_shade_constants.simple_shade = (ds_fcolormap->Color.d == 0x00ffffff && ds_fcolormap->Fade.d == 0x00000000 && ds_fcolormap->Desaturate == 0);
 	if (r_swtruecolor)
 	{

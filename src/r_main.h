@@ -115,7 +115,7 @@ inline uint32_t calc_light_multiplier(dsfixed_t light)
 #if defined(_MSC_VER)
 #define FORCEINLINE __forceinline
 #elif defined(__GNUC__)
-#define FORCEINLINE __attribute__((always_inline))
+#define FORCEINLINE __attribute__((always_inline)) inline
 #else
 #define FORCEINLINE inline
 #endif

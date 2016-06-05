@@ -227,7 +227,7 @@ void R_MapPlane (int y, int x1)
 	if (plane_shade)
 	{
 		// Determine lighting based on the span's distance from the viewer.
-		R_SetDSColorMapLight(basecolormap->Maps, GlobVis * fabs(CenterY - y), planeshade);
+		R_SetDSColorMapLight(basecolormap, GlobVis * fabs(CenterY - y), planeshade);
 	}
 
 #ifdef X86_ASM
@@ -616,7 +616,7 @@ void R_MapColoredPlane_RGBA(int y, int x1)
 	uint32_t *dest = ylookup[y] + x1 + (uint32_t*)dc_destorg;
 	int count = (spanend[y] - x1 + 1);
 	uint32_t light = calc_light_multiplier(ds_light);
-	uint32_t color = shade_pal_index(ds_color, light);
+	uint32_t color = shade_pal_index_simple(ds_color, light);
 	for (int i = 0; i < count; i++)
 		dest[i] = color;
 }
@@ -1598,7 +1598,7 @@ void R_DrawSkyPlane (visplane_t *pl)
 	else
 	{
 		fakefixed = true;
-		fixedcolormap = NormalLight.Maps;
+		fixedcolormap = &NormalLight;
 		R_SetColorMapLight(fixedcolormap, 0, 0);
 	}
 
@@ -1683,7 +1683,7 @@ void R_DrawNormalPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t 
 	ds_light = 0;
 	if (fixedlightlev >= 0)
 	{
-		R_SetDSColorMapLight(basecolormap->Maps, 0, FIXEDLIGHT2SHADE(fixedlightlev));
+		R_SetDSColorMapLight(basecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
 		plane_shade = false;
 	}
 	else if (fixedcolormap)
@@ -1860,7 +1860,7 @@ void R_DrawTiltedPlane(visplane_t *pl, double _xscale, double _yscale, fixed_t a
 	ds_light = 0;
 	if (fixedlightlev >= 0)
 	{
-		R_SetDSColorMapLight(basecolormap->Maps, 0, FIXEDLIGHT2SHADE(fixedlightlev));
+		R_SetDSColorMapLight(basecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
 		plane_shade = false;
 	}
 	else if (fixedcolormap)
@@ -1870,7 +1870,7 @@ void R_DrawTiltedPlane(visplane_t *pl, double _xscale, double _yscale, fixed_t a
 	}
 	else
 	{
-		R_SetDSColorMapLight(basecolormap->Maps, 0, 0);
+		R_SetDSColorMapLight(basecolormap, 0, 0);
 		plane_shade = true;
 	}
 

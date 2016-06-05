@@ -177,7 +177,7 @@ static void BlastMaskedColumn (void (*blastfunc)(const BYTE *pixels, const FText
 	// calculate lighting
 	if (fixedcolormap == NULL && fixedlightlev < 0)
 	{
-		R_SetColorMapLight(basecolormap->Maps, rw_light, wallshade);
+		R_SetColorMapLight(basecolormap, rw_light, wallshade);
 	}
 
 	dc_iscale = xs_Fix<16>::ToFix(MaskedSWall[dc_x] * MaskedScaleY);
@@ -313,7 +313,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	rw_scalestep = ds->iscalestep;
 
 	if (fixedlightlev >= 0)
-		R_SetColorMapLight(basecolormap->Maps, 0, FIXEDLIGHT2SHADE(fixedlightlev));
+		R_SetColorMapLight(basecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
 	else if (fixedcolormap != NULL)
 		R_SetColorMapLight(fixedcolormap, 0, 0);
 
@@ -630,7 +630,7 @@ void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover)
 	}
 
 	if (fixedlightlev >= 0)
-		R_SetColorMapLight(basecolormap->Maps, 0, FIXEDLIGHT2SHADE(fixedlightlev));
+		R_SetColorMapLight(basecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
 	else if (fixedcolormap != NULL)
 		R_SetColorMapLight(fixedcolormap, 0, 0);
 
@@ -1126,6 +1126,11 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *l
 		palookuplight[3] = 0;
 	}
 
+	if (fixedcolormap)
+		R_SetColorMapLight(fixedcolormap, 0, 0);
+	else
+		R_SetColorMapLight(basecolormap, 0, 0);
+
 	for(; (x < x2) && (x & 3); ++x)
 	{
 		light += rw_lightstep;
@@ -1137,7 +1142,7 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *l
 
 		if (!fixed)
 		{ // calculate lighting
-			R_SetColorMapLight(basecolormapdata, light, wallshade);
+			R_SetColorMapLight(basecolormap, light, wallshade);
 		}
 
 		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
@@ -1241,7 +1246,7 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *l
 
 		if (!fixed)
 		{ // calculate lighting
-			R_SetColorMapLight(basecolormapdata, light, wallshade);
+			R_SetColorMapLight(basecolormap, light, wallshade);
 		}
 
 		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
@@ -1496,6 +1501,11 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_
 		palookuplight[3] = 0;
 	}
 
+	if (fixedcolormap)
+		R_SetColorMapLight(fixedcolormap, 0, 0);
+	else
+		R_SetColorMapLight(basecolormap, 0, 0);
+
 	for(; (x < x2) && (((size_t)pixel >> pixelshift) & 3); ++x, pixel += pixelsize)
 	{
 		light += rw_lightstep;
@@ -1505,7 +1515,7 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_
 
 		if (!fixed)
 		{ // calculate lighting
-			R_SetColorMapLight(basecolormapdata, light, wallshade);
+			R_SetColorMapLight(basecolormap, light, wallshade);
 		}
 
 		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
@@ -1605,7 +1615,7 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_
 
 		if (!fixed)
 		{ // calculate lighting
-			R_SetColorMapLight(basecolormapdata, light, wallshade);
+			R_SetColorMapLight(basecolormap, light, wallshade);
 		}
 
 		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
@@ -1690,6 +1700,11 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, f
 		palookuplight[3] = 0;
 	}
 
+	if (fixedcolormap)
+		R_SetColorMapLight(fixedcolormap, 0, 0);
+	else
+		R_SetColorMapLight(basecolormap, 0, 0);
+
 	for(; (x < x2) && (((size_t)pixel >> pixelshift) & 3); ++x, pixel += pixelsize)
 	{
 		light += rw_lightstep;
@@ -1699,7 +1714,7 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, f
 
 		if (!fixed)
 		{ // calculate lighting
-			R_SetColorMapLight(basecolormapdata, light, wallshade);
+			R_SetColorMapLight(basecolormap, light, wallshade);
 		}
 
 		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
@@ -1801,7 +1816,7 @@ void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, f
 
 		if (!fixed)
 		{ // calculate lighting
-			R_SetColorMapLight(basecolormapdata, light, wallshade);
+			R_SetColorMapLight(basecolormap, light, wallshade);
 		}
 
 		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
@@ -1839,7 +1854,7 @@ void R_RenderSegLoop ()
 	fixed_t xoffset = rw_offset;
 
 	if (fixedlightlev >= 0)
-		R_SetColorMapLight(basecolormap->Maps, 0, FIXEDLIGHT2SHADE(fixedlightlev));
+		R_SetColorMapLight(basecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
 	else if (fixedcolormap != NULL)
 		R_SetColorMapLight(fixedcolormap, 0, 0);
 
@@ -3238,11 +3253,11 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 
 	rw_light = rw_lightleft + (x1 - WallC.sx1) * rw_lightstep;
 	if (fixedlightlev >= 0)
-		R_SetColorMapLight(usecolormap->Maps, 0, FIXEDLIGHT2SHADE(fixedlightlev));
+		R_SetColorMapLight(usecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
 	else if (fixedcolormap != NULL)
 		R_SetColorMapLight(fixedcolormap, 0, 0);
 	else if (!foggy && (decal->RenderFlags & RF_FULLBRIGHT))
-		R_SetColorMapLight(usecolormap->Maps, 0, 0);
+		R_SetColorMapLight(usecolormap, 0, 0);
 	else
 		calclighting = true;
 
@@ -3293,7 +3308,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 			{
 				if (calclighting)
 				{ // calculate lighting
-					R_SetColorMapLight(usecolormap->Maps, rw_light, wallshade);
+					R_SetColorMapLight(usecolormap, rw_light, wallshade);
 				}
 				R_WallSpriteColumn (R_DrawMaskedColumn);
 				dc_x++;
@@ -3303,7 +3318,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 			{
 				if (calclighting)
 				{ // calculate lighting
-					R_SetColorMapLight(usecolormap->Maps, rw_light, wallshade);
+					R_SetColorMapLight(usecolormap, rw_light, wallshade);
 				}
 				rt_initcols(nullptr);
 				for (int zz = 4; zz; --zz)
@@ -3318,7 +3333,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 			{
 				if (calclighting)
 				{ // calculate lighting
-					R_SetColorMapLight(usecolormap->Maps, rw_light, wallshade);
+					R_SetColorMapLight(usecolormap, rw_light, wallshade);
 				}
 				R_WallSpriteColumn (R_DrawMaskedColumn);
 				dc_x++;

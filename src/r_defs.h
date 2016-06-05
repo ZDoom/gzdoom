@@ -1397,12 +1397,13 @@ struct FMiniBSP
 //
 
 typedef BYTE lighttable_t;	// This could be wider for >8 bit display.
+struct FColormap;
 
 // This encapsulates the fields of vissprite_t that can be altered by AlterWeaponSprite
 struct visstyle_t
 {
 	int				ColormapNum;	// Which colormap is rendered
-	lighttable_t	*BaseColormap;	// Base colormap used together with ColormapNum
+	FColormap		*BaseColormap;	// Base colormap used together with ColormapNum
 	float			Alpha;
 	FRenderStyle	RenderStyle;
 };

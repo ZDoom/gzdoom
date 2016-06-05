@@ -25,11 +25,16 @@
 
 #include "r_defs.h"
 
+struct FColormap;
+struct ShadeConstants;
+
 extern "C" int			ylookup[MAXHEIGHT];
 
 extern "C" int			dc_pitch;		// [RH] Distance between rows
 
 extern "C" lighttable_t*dc_colormap;
+extern "C" FColormap	*dc_fcolormap;
+extern "C" ShadeConstants dc_shade_constants;
 extern "C" fixed_t		dc_light;
 extern "C" int			dc_x;
 extern "C" int			dc_yl;
@@ -93,7 +98,7 @@ extern void (*R_DrawTranslatedColumn)(void);
 // Span drawing for rows, floor/ceiling. No Spectre effect needed.
 extern void (*R_DrawSpan)(void);
 void R_SetupSpanBits(FTexture *tex);
-void R_SetSpanColormap(BYTE *colormap);
+void R_SetSpanColormap(FDynamicColormap *colormap, int shade);
 void R_SetSpanSource(const BYTE *pixels);
 
 // Span drawing for masked textures.
@@ -321,9 +326,10 @@ extern "C" int				ds_y;
 extern "C" int				ds_x1;
 extern "C" int				ds_x2;
 
+extern "C" FColormap*		ds_fcolormap;
 extern "C" lighttable_t*	ds_colormap;
-//extern "C" dsfixed_t		ds_light;
-#define ds_light dc_light
+extern "C" ShadeConstants	ds_shade_constants;
+extern "C" dsfixed_t		ds_light;
 
 extern "C" dsfixed_t		ds_xfrac;
 extern "C" dsfixed_t		ds_yfrac;
@@ -341,6 +347,7 @@ extern "C" int				ds_color;		// [RH] For flat color (no texturing)
 extern BYTE shadetables[/*NUMCOLORMAPS*16*256*/];
 extern FDynamicColormap ShadeFakeColormap[16];
 extern BYTE identitymap[256];
+extern FDynamicColormap identitycolormap;
 extern BYTE *dc_translation;
 
 // [RH] Added for muliresolution support
@@ -389,9 +396,11 @@ void maskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_
 void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, const BYTE *(*getcol)(FTexture *tex, int col)=R_GetColumn);
 
 // Sets dc_colormap and dc_light to their appropriate values depending on the output format (pal vs true color)
-void R_SetColorMapLight(BYTE *base_colormap, float light, int shade);
+void R_SetColorMapLight(FColormap *base_colormap, float light, int shade);
 
 // Same as R_SetColorMapLight, but for ds_colormap and ds_light
-void R_SetDSColorMapLight(BYTE *base_colormap, float light, int shade);
+void R_SetDSColorMapLight(FColormap *base_colormap, float light, int shade);
+
+void R_SetTranslationMap(lighttable_t *translation);
 
 #endif

@@ -108,7 +108,6 @@ void rt_copy4cols_RGBA_c (int sx, int yl, int yh)
 // Maps one span at hx to the screen at sx.
 void rt_map1col_RGBA_c (int hx, int sx, int yl, int yh)
 {
-	BYTE *colormap;
 	uint32_t *source;
 	uint32_t *dest;
 	int count;
@@ -120,14 +119,14 @@ void rt_map1col_RGBA_c (int hx, int sx, int yl, int yh)
 	count++;
 
 	uint32_t light = calc_light_multiplier(dc_light);
+	ShadeConstants shade_constants = dc_shade_constants;
 
-	colormap = dc_colormap;
 	dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
 	source = &dc_temp_rgba[yl*4 + hx];
 	pitch = dc_pitch;
 
 	if (count & 1) {
-		*dest = shade_pal_index(colormap[*source], light);
+		*dest = shade_pal_index(*source, light, shade_constants);
 		source += 4;
 		dest += pitch;
 	}
@@ -135,8 +134,8 @@ void rt_map1col_RGBA_c (int hx, int sx, int yl, int yh)
 		return;
 
 	do {
-		dest[0] = shade_pal_index(colormap[source[0]], light);
-		dest[pitch] = shade_pal_index(colormap[source[4]], light);
+		dest[0] = shade_pal_index(source[0], light, shade_constants);
+		dest[pitch] = shade_pal_index(source[4], light, shade_constants);
 		source += 8;
 		dest += pitch*2;
 	} while (--count);
@@ -145,7 +144,6 @@ void rt_map1col_RGBA_c (int hx, int sx, int yl, int yh)
 // Maps all four spans to the screen starting at sx.
 void rt_map4cols_RGBA_c (int sx, int yl, int yh)
 {
-	BYTE *colormap;
 	uint32_t *source;
 	uint32_t *dest;
 	int count;
@@ -157,17 +155,17 @@ void rt_map4cols_RGBA_c (int sx, int yl, int yh)
 	count++;
 
 	uint32_t light = calc_light_multiplier(dc_light);
+	ShadeConstants shade_constants = dc_shade_constants;
 
-	colormap = dc_colormap;
 	dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
 	source = &dc_temp_rgba[yl*4];
 	pitch = dc_pitch;
 	
 	if (count & 1) {
-		dest[0] = shade_pal_index(colormap[source[0]], light);
-		dest[1] = shade_pal_index(colormap[source[1]], light);
-		dest[2] = shade_pal_index(colormap[source[2]], light);
-		dest[3] = shade_pal_index(colormap[source[3]], light);
+		dest[0] = shade_pal_index(source[0], light, shade_constants);
+		dest[1] = shade_pal_index(source[1], light, shade_constants);
+		dest[2] = shade_pal_index(source[2], light, shade_constants);
+		dest[3] = shade_pal_index(source[3], light, shade_constants);
 		source += 4;
 		dest += pitch;
 	}
@@ -175,14 +173,14 @@ void rt_map4cols_RGBA_c (int sx, int yl, int yh)
 		return;
 
 	do {
-		dest[0] = shade_pal_index(colormap[source[0]], light);
-		dest[1] = shade_pal_index(colormap[source[1]], light);
-		dest[2] = shade_pal_index(colormap[source[2]], light);
-		dest[3] = shade_pal_index(colormap[source[3]], light);
-		dest[pitch] = shade_pal_index(colormap[source[4]], light);
-		dest[pitch + 1] = shade_pal_index(colormap[source[5]], light);
-		dest[pitch + 2] = shade_pal_index(colormap[source[6]], light);
-		dest[pitch + 3] = shade_pal_index(colormap[source[7]], light);
+		dest[0] = shade_pal_index(source[0], light, shade_constants);
+		dest[1] = shade_pal_index(source[1], light, shade_constants);
+		dest[2] = shade_pal_index(source[2], light, shade_constants);
+		dest[3] = shade_pal_index(source[3], light, shade_constants);
+		dest[pitch] = shade_pal_index(source[4], light, shade_constants);
+		dest[pitch + 1] = shade_pal_index(source[5], light, shade_constants);
+		dest[pitch + 2] = shade_pal_index(source[6], light, shade_constants);
+		dest[pitch + 3] = shade_pal_index(source[7], light, shade_constants);
 		source += 8;
 		dest += pitch*2;
 	} while (--count);
@@ -191,7 +189,6 @@ void rt_map4cols_RGBA_c (int sx, int yl, int yh)
 // Maps all four spans to the screen starting at sx.
 void rt_map4cols_RGBA_SSE(int sx, int yl, int yh)
 {
-	BYTE *colormap;
 	uint32_t *source;
 	uint32_t *dest;
 	int count;
@@ -202,82 +199,114 @@ void rt_map4cols_RGBA_SSE(int sx, int yl, int yh)
 		return;
 	count++;
 
+	ShadeConstants shade_constants = dc_shade_constants;
 	uint32_t light = calc_light_multiplier(dc_light);
 	uint32_t *palette = (uint32_t*)GPalette.BaseColors;
 
-	colormap = dc_colormap;
 	dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
 	source = &dc_temp_rgba[yl * 4];
 	pitch = dc_pitch;
 
-	__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
+	if (shade_constants.simple_shade)
+	{
+		SSE_SHADE_SIMPLE_INIT(light);
 
-	if (count & 1) {
-		uint32_t p0 = colormap[source[0]];
-		uint32_t p1 = colormap[source[1]];
-		uint32_t p2 = colormap[source[2]];
-		uint32_t p3 = colormap[source[3]];
+		if (count & 1) {
+			uint32_t p0 = source[0];
+			uint32_t p1 = source[1];
+			uint32_t p2 = source[2];
+			uint32_t p3 = source[3];
 
-		// shade_pal_index:
-		__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
-		__m128i fg_hi = _mm_unpackhi_epi8(fg, _mm_setzero_si128());
-		__m128i fg_lo = _mm_unpacklo_epi8(fg, _mm_setzero_si128());
-		fg_hi = _mm_mullo_epi16(fg_hi, mlight);
-		fg_hi = _mm_srli_epi16(fg_hi, 8);
-		fg_lo = _mm_mullo_epi16(fg_lo, mlight);
-		fg_lo = _mm_srli_epi16(fg_lo, 8);
-
-		fg = _mm_packus_epi16(fg_lo, fg_hi);
-		_mm_storeu_si128((__m128i*)dest, fg);
-
-		source += 4;
-		dest += pitch;
-	}
-	if (!(count >>= 1))
-		return;
-
-	do {
-		// shade_pal_index 0-3
-		{
-			uint32_t p0 = colormap[source[0]];
-			uint32_t p1 = colormap[source[1]];
-			uint32_t p2 = colormap[source[2]];
-			uint32_t p3 = colormap[source[3]];
-
+			// shade_pal_index:
 			__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
-			__m128i fg_hi = _mm_unpackhi_epi8(fg, _mm_setzero_si128());
-			__m128i fg_lo = _mm_unpacklo_epi8(fg, _mm_setzero_si128());
-			fg_hi = _mm_mullo_epi16(fg_hi, mlight);
-			fg_hi = _mm_srli_epi16(fg_hi, 8);
-			fg_lo = _mm_mullo_epi16(fg_lo, mlight);
-			fg_lo = _mm_srli_epi16(fg_lo, 8);
-
-			fg = _mm_packus_epi16(fg_lo, fg_hi);
+			SSE_SHADE_SIMPLE(fg);
 			_mm_storeu_si128((__m128i*)dest, fg);
+
+			source += 4;
+			dest += pitch;
 		}
+		if (!(count >>= 1))
+			return;
 
-		// shade_pal_index 4-7 (pitch)
-		{
-			uint32_t p0 = colormap[source[4]];
-			uint32_t p1 = colormap[source[5]];
-			uint32_t p2 = colormap[source[6]];
-			uint32_t p3 = colormap[source[7]];
+		do {
+			// shade_pal_index 0-3
+			{
+				uint32_t p0 = source[0];
+				uint32_t p1 = source[1];
+				uint32_t p2 = source[2];
+				uint32_t p3 = source[3];
 
+				__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
+				SSE_SHADE_SIMPLE(fg);
+				_mm_storeu_si128((__m128i*)dest, fg);
+			}
+
+			// shade_pal_index 4-7 (pitch)
+			{
+				uint32_t p0 = source[4];
+				uint32_t p1 = source[5];
+				uint32_t p2 = source[6];
+				uint32_t p3 = source[7];
+
+				__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
+				SSE_SHADE_SIMPLE(fg);
+				_mm_storeu_si128((__m128i*)(dest + pitch), fg);
+			}
+
+			source += 8;
+			dest += pitch * 2;
+		} while (--count);
+	}
+	else
+	{
+		SSE_SHADE_INIT(light, shade_constants);
+
+		if (count & 1) {
+			uint32_t p0 = source[0];
+			uint32_t p1 = source[1];
+			uint32_t p2 = source[2];
+			uint32_t p3 = source[3];
+
+			// shade_pal_index:
 			__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
-			__m128i fg_hi = _mm_unpackhi_epi8(fg, _mm_setzero_si128());
-			__m128i fg_lo = _mm_unpacklo_epi8(fg, _mm_setzero_si128());
-			fg_hi = _mm_mullo_epi16(fg_hi, mlight);
-			fg_hi = _mm_srli_epi16(fg_hi, 8);
-			fg_lo = _mm_mullo_epi16(fg_lo, mlight);
-			fg_lo = _mm_srli_epi16(fg_lo, 8);
+			SSE_SHADE(fg, shade_constants);
+			_mm_storeu_si128((__m128i*)dest, fg);
 
-			fg = _mm_packus_epi16(fg_lo, fg_hi);
-			_mm_storeu_si128((__m128i*)(dest + pitch), fg);
+			source += 4;
+			dest += pitch;
 		}
+		if (!(count >>= 1))
+			return;
 
-		source += 8;
-		dest += pitch * 2;
-	} while (--count);
+		do {
+			// shade_pal_index 0-3
+			{
+				uint32_t p0 = source[0];
+				uint32_t p1 = source[1];
+				uint32_t p2 = source[2];
+				uint32_t p3 = source[3];
+
+				__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
+				SSE_SHADE(fg, shade_constants);
+				_mm_storeu_si128((__m128i*)dest, fg);
+			}
+
+			// shade_pal_index 4-7 (pitch)
+			{
+				uint32_t p0 = source[4];
+				uint32_t p1 = source[5];
+				uint32_t p2 = source[6];
+				uint32_t p3 = source[7];
+
+				__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
+				SSE_SHADE(fg, shade_constants);
+				_mm_storeu_si128((__m128i*)(dest + pitch), fg);
+			}
+
+			source += 8;
+			dest += pitch * 2;
+		} while (--count);
+	}
 }
 
 void rt_Translate1col_RGBA_c(const BYTE *translation, int hx, int yl, int yh)
@@ -385,7 +414,6 @@ void rt_tlate4cols_RGBA_c (int sx, int yl, int yh)
 // Adds one span at hx to the screen at sx without clamping.
 void rt_add1col_RGBA_c (int hx, int sx, int yl, int yh)
 {
-	BYTE *colormap;
 	uint32_t *source;
 	uint32_t *dest;
 	int count;
@@ -399,15 +427,15 @@ void rt_add1col_RGBA_c (int hx, int sx, int yl, int yh)
 	dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
 	source = &dc_temp_rgba[yl*4 + hx];
 	pitch = dc_pitch;
-	colormap = dc_colormap;
 
 	uint32_t light = calc_light_multiplier(dc_light);
+	ShadeConstants shade_constants = dc_shade_constants;
 
 	uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
 	uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
 
 	do {
-		uint32_t fg = shade_pal_index(colormap[*source], light);
+		uint32_t fg = shade_pal_index(*source, light, shade_constants);
 		uint32_t fg_red = (fg >> 16) & 0xff;
 		uint32_t fg_green = (fg >> 8) & 0xff;
 		uint32_t fg_blue = fg & 0xff;
@@ -430,7 +458,6 @@ void rt_add1col_RGBA_c (int hx, int sx, int yl, int yh)
 // Adds all four spans to the screen starting at sx without clamping.
 void rt_add4cols_RGBA_c (int sx, int yl, int yh)
 {
-	BYTE *colormap;
 	uint32_t *source;
 	uint32_t *dest;
 	int count;
@@ -444,9 +471,9 @@ void rt_add4cols_RGBA_c (int sx, int yl, int yh)
 	dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
 	source = &dc_temp_rgba[yl*4];
 	pitch = dc_pitch;
-	colormap = dc_colormap;
 
 	uint32_t light = calc_light_multiplier(dc_light);
+	ShadeConstants shade_constants = dc_shade_constants;
 
 	uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
 	uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
@@ -454,7 +481,7 @@ void rt_add4cols_RGBA_c (int sx, int yl, int yh)
 	do {
 		for (int i = 0; i < 4; i++)
 		{
-			uint32_t fg = shade_pal_index(colormap[source[i]], light);
+			uint32_t fg = shade_pal_index(source[i], light, shade_constants);
 			uint32_t fg_red = (fg >> 16) & 0xff;
 			uint32_t fg_green = (fg >> 8) & 0xff;
 			uint32_t fg_blue = fg & 0xff;
@@ -479,7 +506,6 @@ void rt_add4cols_RGBA_c (int sx, int yl, int yh)
 #ifndef NO_SSE
 void rt_add4cols_RGBA_SSE(int sx, int yl, int yh)
 {
-	BYTE *colormap;
 	uint32_t *source;
 	uint32_t *dest;
 	int count;
@@ -493,7 +519,6 @@ void rt_add4cols_RGBA_SSE(int sx, int yl, int yh)
 	dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
 	source = &dc_temp_rgba[yl * 4];
 	pitch = dc_pitch;
-	colormap = dc_colormap;
 
 	uint32_t light = calc_light_multiplier(dc_light);
 	uint32_t *palette = (uint32_t*)GPalette.BaseColors;
@@ -501,40 +526,80 @@ void rt_add4cols_RGBA_SSE(int sx, int yl, int yh)
 	uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
 	uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
 
-	__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
-	__m128i mfg_alpha = _mm_set_epi16(256, fg_alpha, fg_alpha, fg_alpha, 256, fg_alpha, fg_alpha, fg_alpha);
-	__m128i mbg_alpha = _mm_set_epi16(256, bg_alpha, bg_alpha, bg_alpha, 256, bg_alpha, bg_alpha, bg_alpha);
+	ShadeConstants shade_constants = dc_shade_constants;
 
-	do {
-		uint32_t p0 = colormap[source[0]];
-		uint32_t p1 = colormap[source[1]];
-		uint32_t p2 = colormap[source[2]];
-		uint32_t p3 = colormap[source[3]];
+	if (shade_constants.simple_shade)
+	{
+		SSE_SHADE_SIMPLE_INIT(light);
 
-		// shade_pal_index:
-		__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
-		__m128i fg_hi = _mm_unpackhi_epi8(fg, _mm_setzero_si128());
-		__m128i fg_lo = _mm_unpacklo_epi8(fg, _mm_setzero_si128());
-		fg_hi = _mm_mullo_epi16(fg_hi, mlight);
-		fg_hi = _mm_srli_epi16(fg_hi, 8);
-		fg_lo = _mm_mullo_epi16(fg_lo, mlight);
-		fg_lo = _mm_srli_epi16(fg_lo, 8);
+		__m128i mfg_alpha = _mm_set_epi16(256, fg_alpha, fg_alpha, fg_alpha, 256, fg_alpha, fg_alpha, fg_alpha);
+		__m128i mbg_alpha = _mm_set_epi16(256, bg_alpha, bg_alpha, bg_alpha, 256, bg_alpha, bg_alpha, bg_alpha);
 
-		// unpack bg:
-		__m128i bg = _mm_loadu_si128((const __m128i*)dest);
-		__m128i bg_hi = _mm_unpackhi_epi8(bg, _mm_setzero_si128());
-		__m128i bg_lo = _mm_unpacklo_epi8(bg, _mm_setzero_si128());
+		do {
+			uint32_t p0 = source[0];
+			uint32_t p1 = source[1];
+			uint32_t p2 = source[2];
+			uint32_t p3 = source[3];
 
-		// (fg_red * fg_alpha + bg_red * bg_alpha) / 256:
-		__m128i color_hi = _mm_srli_epi16(_mm_adds_epu16(_mm_mullo_epi16(fg_hi, mfg_alpha), _mm_mullo_epi16(bg_hi, mbg_alpha)), 8);
-		__m128i color_lo = _mm_srli_epi16(_mm_adds_epu16(_mm_mullo_epi16(fg_lo, mfg_alpha), _mm_mullo_epi16(bg_lo, mbg_alpha)), 8);
+			// shade_pal_index:
+			__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
+			SSE_SHADE_SIMPLE(fg);
 
-		__m128i color = _mm_packus_epi16(color_lo, color_hi);
-		_mm_storeu_si128((__m128i*)dest, color);
+			__m128i fg_hi = _mm_unpackhi_epi8(fg, _mm_setzero_si128());
+			__m128i fg_lo = _mm_unpacklo_epi8(fg, _mm_setzero_si128());
 
-		source += 4;
-		dest += pitch;
-	} while (--count);
+			// unpack bg:
+			__m128i bg = _mm_loadu_si128((const __m128i*)dest);
+			__m128i bg_hi = _mm_unpackhi_epi8(bg, _mm_setzero_si128());
+			__m128i bg_lo = _mm_unpacklo_epi8(bg, _mm_setzero_si128());
+
+			// (fg_red * fg_alpha + bg_red * bg_alpha) / 256:
+			__m128i color_hi = _mm_srli_epi16(_mm_adds_epu16(_mm_mullo_epi16(fg_hi, mfg_alpha), _mm_mullo_epi16(bg_hi, mbg_alpha)), 8);
+			__m128i color_lo = _mm_srli_epi16(_mm_adds_epu16(_mm_mullo_epi16(fg_lo, mfg_alpha), _mm_mullo_epi16(bg_lo, mbg_alpha)), 8);
+
+			__m128i color = _mm_packus_epi16(color_lo, color_hi);
+			_mm_storeu_si128((__m128i*)dest, color);
+
+			source += 4;
+			dest += pitch;
+		} while (--count);
+	}
+	else
+	{
+		SSE_SHADE_INIT(light, shade_constants);
+
+		__m128i mfg_alpha = _mm_set_epi16(256, fg_alpha, fg_alpha, fg_alpha, 256, fg_alpha, fg_alpha, fg_alpha);
+		__m128i mbg_alpha = _mm_set_epi16(256, bg_alpha, bg_alpha, bg_alpha, 256, bg_alpha, bg_alpha, bg_alpha);
+
+		do {
+			uint32_t p0 = source[0];
+			uint32_t p1 = source[1];
+			uint32_t p2 = source[2];
+			uint32_t p3 = source[3];
+
+			// shade_pal_index:
+			__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
+			SSE_SHADE(fg, shade_constants);
+
+			__m128i fg_hi = _mm_unpackhi_epi8(fg, _mm_setzero_si128());
+			__m128i fg_lo = _mm_unpacklo_epi8(fg, _mm_setzero_si128());
+
+			// unpack bg:
+			__m128i bg = _mm_loadu_si128((const __m128i*)dest);
+			__m128i bg_hi = _mm_unpackhi_epi8(bg, _mm_setzero_si128());
+			__m128i bg_lo = _mm_unpacklo_epi8(bg, _mm_setzero_si128());
+
+			// (fg_red * fg_alpha + bg_red * bg_alpha) / 256:
+			__m128i color_hi = _mm_srli_epi16(_mm_adds_epu16(_mm_mullo_epi16(fg_hi, mfg_alpha), _mm_mullo_epi16(bg_hi, mbg_alpha)), 8);
+			__m128i color_lo = _mm_srli_epi16(_mm_adds_epu16(_mm_mullo_epi16(fg_lo, mfg_alpha), _mm_mullo_epi16(bg_lo, mbg_alpha)), 8);
+
+			__m128i color = _mm_packus_epi16(color_lo, color_hi);
+			_mm_storeu_si128((__m128i*)dest, color);
+
+			source += 4;
+			dest += pitch;
+		} while (--count);
+	}
 }
 #endif
 
@@ -571,7 +636,7 @@ void rt_shaded1col_RGBA_c (int hx, int sx, int yl, int yh)
 	source = &dc_temp_rgba[yl*4 + hx];
 	pitch = dc_pitch;
 
-	uint32_t fg = shade_pal_index(dc_color, calc_light_multiplier(dc_light));
+	uint32_t fg = shade_pal_index_simple(dc_color, calc_light_multiplier(dc_light));
 	uint32_t fg_red = (fg >> 16) & 0xff;
 	uint32_t fg_green = (fg >> 8) & 0xff;
 	uint32_t fg_blue = fg & 0xff;
@@ -613,7 +678,7 @@ void rt_shaded4cols_RGBA_c (int sx, int yl, int yh)
 	source = &dc_temp_rgba[yl*4];
 	pitch = dc_pitch;
 
-	uint32_t fg = shade_pal_index(dc_color, calc_light_multiplier(dc_light));
+	uint32_t fg = shade_pal_index_simple(dc_color, calc_light_multiplier(dc_light));
 	uint32_t fg_red = (fg >> 16) & 0xff;
 	uint32_t fg_green = (fg >> 8) & 0xff;
 	uint32_t fg_blue = fg & 0xff;
@@ -659,7 +724,7 @@ void rt_shaded4cols_RGBA_SSE(int sx, int yl, int yh)
 	source = &dc_temp_rgba[yl * 4];
 	pitch = dc_pitch;
 
-	__m128i fg = _mm_unpackhi_epi8(_mm_set1_epi32(shade_pal_index(dc_color, calc_light_multiplier(dc_light))), _mm_setzero_si128());
+	__m128i fg = _mm_unpackhi_epi8(_mm_set1_epi32(shade_pal_index_simple(dc_color, calc_light_multiplier(dc_light))), _mm_setzero_si128());
 	__m128i alpha_one = _mm_set1_epi16(64);
 
 	do {
@@ -694,7 +759,6 @@ void rt_shaded4cols_RGBA_SSE(int sx, int yl, int yh)
 // Adds one span at hx to the screen at sx with clamping.
 void rt_addclamp1col_RGBA_c (int hx, int sx, int yl, int yh)
 {
-	BYTE *colormap;
 	uint32_t *source;
 	uint32_t *dest;
 	int count;
@@ -708,15 +772,15 @@ void rt_addclamp1col_RGBA_c (int hx, int sx, int yl, int yh)
 	dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
 	source = &dc_temp_rgba[yl*4 + hx];
 	pitch = dc_pitch;
-	colormap = dc_colormap;
 
 	uint32_t light = calc_light_multiplier(dc_light);
+	ShadeConstants shade_constants = dc_shade_constants;
 
 	uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
 	uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
 
 	do {
-		uint32_t fg = shade_pal_index(colormap[*source], light);
+		uint32_t fg = shade_pal_index(*source, light, shade_constants);
 		uint32_t fg_red = (fg >> 16) & 0xff;
 		uint32_t fg_green = (fg >> 8) & 0xff;
 		uint32_t fg_blue = fg & 0xff;
@@ -738,7 +802,6 @@ void rt_addclamp1col_RGBA_c (int hx, int sx, int yl, int yh)
 // Adds all four spans to the screen starting at sx with clamping.
 void rt_addclamp4cols_RGBA_c (int sx, int yl, int yh)
 {
-	BYTE *colormap;
 	uint32_t *source;
 	uint32_t *dest;
 	int count;
@@ -752,9 +815,9 @@ void rt_addclamp4cols_RGBA_c (int sx, int yl, int yh)
 	dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
 	source = &dc_temp_rgba[yl*4];
 	pitch = dc_pitch;
-	colormap = dc_colormap;
 
 	uint32_t light = calc_light_multiplier(dc_light);
+	ShadeConstants shade_constants = dc_shade_constants;
 
 	uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
 	uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
@@ -762,7 +825,7 @@ void rt_addclamp4cols_RGBA_c (int sx, int yl, int yh)
 	do {
 		for (int i = 0; i < 4; i++)
 		{
-			uint32_t fg = shade_pal_index(colormap[source[i]], light);
+			uint32_t fg = shade_pal_index(source[i], light, shade_constants);
 			uint32_t fg_red = (fg >> 16) & 0xff;
 			uint32_t fg_green = (fg >> 8) & 0xff;
 			uint32_t fg_blue = fg & 0xff;
@@ -786,7 +849,6 @@ void rt_addclamp4cols_RGBA_c (int sx, int yl, int yh)
 #ifndef NO_SSE
 void rt_addclamp4cols_RGBA_SSE(int sx, int yl, int yh)
 {
-	BYTE *colormap;
 	uint32_t *source;
 	uint32_t *dest;
 	int count;
@@ -800,7 +862,6 @@ void rt_addclamp4cols_RGBA_SSE(int sx, int yl, int yh)
 	dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
 	source = &dc_temp_rgba[yl * 4];
 	pitch = dc_pitch;
-	colormap = dc_colormap;
 
 	uint32_t light = calc_light_multiplier(dc_light);
 	uint32_t *palette = (uint32_t*)GPalette.BaseColors;
@@ -808,40 +869,80 @@ void rt_addclamp4cols_RGBA_SSE(int sx, int yl, int yh)
 	uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
 	uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
 
-	__m128i mlight = _mm_set_epi16(256, light, light, light, 256, light, light, light);
-	__m128i mfg_alpha = _mm_set_epi16(256, fg_alpha, fg_alpha, fg_alpha, 256, fg_alpha, fg_alpha, fg_alpha);
-	__m128i mbg_alpha = _mm_set_epi16(256, bg_alpha, bg_alpha, bg_alpha, 256, bg_alpha, bg_alpha, bg_alpha);
+	ShadeConstants shade_constants = dc_shade_constants;
 
-	do {
-		uint32_t p0 = colormap[source[0]];
-		uint32_t p1 = colormap[source[1]];
-		uint32_t p2 = colormap[source[2]];
-		uint32_t p3 = colormap[source[3]];
+	if (shade_constants.simple_shade)
+	{
+		SSE_SHADE_SIMPLE_INIT(light);
 
-		// shade_pal_index:
-		__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
-		__m128i fg_hi = _mm_unpackhi_epi8(fg, _mm_setzero_si128());
-		__m128i fg_lo = _mm_unpacklo_epi8(fg, _mm_setzero_si128());
-		fg_hi = _mm_mullo_epi16(fg_hi, mlight);
-		fg_hi = _mm_srli_epi16(fg_hi, 8);
-		fg_lo = _mm_mullo_epi16(fg_lo, mlight);
-		fg_lo = _mm_srli_epi16(fg_lo, 8);
+		__m128i mfg_alpha = _mm_set_epi16(256, fg_alpha, fg_alpha, fg_alpha, 256, fg_alpha, fg_alpha, fg_alpha);
+		__m128i mbg_alpha = _mm_set_epi16(256, bg_alpha, bg_alpha, bg_alpha, 256, bg_alpha, bg_alpha, bg_alpha);
 
-		// unpack bg:
-		__m128i bg = _mm_loadu_si128((const __m128i*)dest);
-		__m128i bg_hi = _mm_unpackhi_epi8(bg, _mm_setzero_si128());
-		__m128i bg_lo = _mm_unpacklo_epi8(bg, _mm_setzero_si128());
+		do {
+			uint32_t p0 = source[0];
+			uint32_t p1 = source[1];
+			uint32_t p2 = source[2];
+			uint32_t p3 = source[3];
 
-		// (fg_red * fg_alpha + bg_red * bg_alpha) / 256:
-		__m128i color_hi = _mm_srli_epi16(_mm_adds_epu16(_mm_mullo_epi16(fg_hi, mfg_alpha), _mm_mullo_epi16(bg_hi, mbg_alpha)), 8);
-		__m128i color_lo = _mm_srli_epi16(_mm_adds_epu16(_mm_mullo_epi16(fg_lo, mfg_alpha), _mm_mullo_epi16(bg_lo, mbg_alpha)), 8);
+			// shade_pal_index:
+			__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
+			SSE_SHADE_SIMPLE(fg);
 
-		__m128i color = _mm_packus_epi16(color_lo, color_hi);
-		_mm_storeu_si128((__m128i*)dest, color);
+			__m128i fg_hi = _mm_unpackhi_epi8(fg, _mm_setzero_si128());
+			__m128i fg_lo = _mm_unpacklo_epi8(fg, _mm_setzero_si128());
 
-		source += 4;
-		dest += pitch;
-	} while (--count);
+			// unpack bg:
+			__m128i bg = _mm_loadu_si128((const __m128i*)dest);
+			__m128i bg_hi = _mm_unpackhi_epi8(bg, _mm_setzero_si128());
+			__m128i bg_lo = _mm_unpacklo_epi8(bg, _mm_setzero_si128());
+
+			// (fg_red * fg_alpha + bg_red * bg_alpha) / 256:
+			__m128i color_hi = _mm_srli_epi16(_mm_adds_epu16(_mm_mullo_epi16(fg_hi, mfg_alpha), _mm_mullo_epi16(bg_hi, mbg_alpha)), 8);
+			__m128i color_lo = _mm_srli_epi16(_mm_adds_epu16(_mm_mullo_epi16(fg_lo, mfg_alpha), _mm_mullo_epi16(bg_lo, mbg_alpha)), 8);
+
+			__m128i color = _mm_packus_epi16(color_lo, color_hi);
+			_mm_storeu_si128((__m128i*)dest, color);
+
+			source += 4;
+			dest += pitch;
+		} while (--count);
+	}
+	else
+	{
+		SSE_SHADE_INIT(light, shade_constants);
+
+		__m128i mfg_alpha = _mm_set_epi16(256, fg_alpha, fg_alpha, fg_alpha, 256, fg_alpha, fg_alpha, fg_alpha);
+		__m128i mbg_alpha = _mm_set_epi16(256, bg_alpha, bg_alpha, bg_alpha, 256, bg_alpha, bg_alpha, bg_alpha);
+
+		do {
+			uint32_t p0 = source[0];
+			uint32_t p1 = source[1];
+			uint32_t p2 = source[2];
+			uint32_t p3 = source[3];
+
+			// shade_pal_index:
+			__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
+			SSE_SHADE(fg, shade_constants);
+
+			__m128i fg_hi = _mm_unpackhi_epi8(fg, _mm_setzero_si128());
+			__m128i fg_lo = _mm_unpacklo_epi8(fg, _mm_setzero_si128());
+
+			// unpack bg:
+			__m128i bg = _mm_loadu_si128((const __m128i*)dest);
+			__m128i bg_hi = _mm_unpackhi_epi8(bg, _mm_setzero_si128());
+			__m128i bg_lo = _mm_unpacklo_epi8(bg, _mm_setzero_si128());
+
+			// (fg_red * fg_alpha + bg_red * bg_alpha) / 256:
+			__m128i color_hi = _mm_srli_epi16(_mm_adds_epu16(_mm_mullo_epi16(fg_hi, mfg_alpha), _mm_mullo_epi16(bg_hi, mbg_alpha)), 8);
+			__m128i color_lo = _mm_srli_epi16(_mm_adds_epu16(_mm_mullo_epi16(fg_lo, mfg_alpha), _mm_mullo_epi16(bg_lo, mbg_alpha)), 8);
+
+			__m128i color = _mm_packus_epi16(color_lo, color_hi);
+			_mm_storeu_si128((__m128i*)dest, color);
+
+			source += 4;
+			dest += pitch;
+		} while (--count);
+	}
 }
 #endif
 
@@ -862,7 +963,6 @@ void rt_tlateaddclamp4cols_RGBA_c (int sx, int yl, int yh)
 // Subtracts one span at hx to the screen at sx with clamping.
 void rt_subclamp1col_RGBA_c (int hx, int sx, int yl, int yh)
 {
-	BYTE *colormap;
 	uint32_t *source;
 	uint32_t *dest;
 	int count;
@@ -876,15 +976,15 @@ void rt_subclamp1col_RGBA_c (int hx, int sx, int yl, int yh)
 	dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
 	source = &dc_temp_rgba[yl*4 + hx];
 	pitch = dc_pitch;
-	colormap = dc_colormap;
 
 	uint32_t light = calc_light_multiplier(dc_light);
+	ShadeConstants shade_constants = dc_shade_constants;
 
 	uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
 	uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
 
 	do {
-		uint32_t fg = shade_pal_index(colormap[*source], light);
+		uint32_t fg = shade_pal_index(*source, light, shade_constants);
 		uint32_t fg_red = (fg >> 16) & 0xff;
 		uint32_t fg_green = (fg >> 8) & 0xff;
 		uint32_t fg_blue = fg & 0xff;
@@ -906,7 +1006,6 @@ void rt_subclamp1col_RGBA_c (int hx, int sx, int yl, int yh)
 // Subtracts all four spans to the screen starting at sx with clamping.
 void rt_subclamp4cols_RGBA_c (int sx, int yl, int yh)
 {
-	BYTE *colormap;
 	uint32_t *source;
 	uint32_t *dest;
 	int count;
@@ -920,9 +1019,9 @@ void rt_subclamp4cols_RGBA_c (int sx, int yl, int yh)
 	dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
 	source = &dc_temp_rgba[yl*4];
 	pitch = dc_pitch;
-	colormap = dc_colormap;
 
 	uint32_t light = calc_light_multiplier(dc_light);
+	ShadeConstants shade_constants = dc_shade_constants;
 
 	uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
 	uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
@@ -930,7 +1029,7 @@ void rt_subclamp4cols_RGBA_c (int sx, int yl, int yh)
 	do {
 		for (int i = 0; i < 4; i++)
 		{
-			uint32_t fg = shade_pal_index(colormap[source[i]], light);
+			uint32_t fg = shade_pal_index(source[i], light, shade_constants);
 			uint32_t fg_red = (fg >> 16) & 0xff;
 			uint32_t fg_green = (fg >> 8) & 0xff;
 			uint32_t fg_blue = fg & 0xff;
@@ -968,7 +1067,6 @@ void rt_tlatesubclamp4cols_RGBA_c (int sx, int yl, int yh)
 // Subtracts one span at hx from the screen at sx with clamping.
 void rt_revsubclamp1col_RGBA_c (int hx, int sx, int yl, int yh)
 {
-	BYTE *colormap;
 	uint32_t *source;
 	uint32_t *dest;
 	int count;
@@ -982,15 +1080,15 @@ void rt_revsubclamp1col_RGBA_c (int hx, int sx, int yl, int yh)
 	dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
 	source = &dc_temp_rgba[yl*4 + hx];
 	pitch = dc_pitch;
-	colormap = dc_colormap;
 
 	uint32_t light = calc_light_multiplier(dc_light);
+	ShadeConstants shade_constants = dc_shade_constants;
 
 	uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
 	uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
 
 	do {
-		uint32_t fg = shade_pal_index(colormap[*source], light);
+		uint32_t fg = shade_pal_index(*source, light, shade_constants);
 		uint32_t fg_red = (fg >> 16) & 0xff;
 		uint32_t fg_green = (fg >> 8) & 0xff;
 		uint32_t fg_blue = fg & 0xff;
@@ -1012,7 +1110,6 @@ void rt_revsubclamp1col_RGBA_c (int hx, int sx, int yl, int yh)
 // Subtracts all four spans from the screen starting at sx with clamping.
 void rt_revsubclamp4cols_RGBA_c (int sx, int yl, int yh)
 {
-	BYTE *colormap;
 	uint32_t *source;
 	uint32_t *dest;
 	int count;
@@ -1026,9 +1123,9 @@ void rt_revsubclamp4cols_RGBA_c (int sx, int yl, int yh)
 	dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
 	source = &dc_temp_rgba[yl*4];
 	pitch = dc_pitch;
-	colormap = dc_colormap;
 
 	uint32_t light = calc_light_multiplier(dc_light);
+	ShadeConstants shade_constants = dc_shade_constants;
 
 	uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
 	uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
@@ -1036,7 +1133,7 @@ void rt_revsubclamp4cols_RGBA_c (int sx, int yl, int yh)
 	do {
 		for (int i = 0; i < 4; i++)
 		{
-			uint32_t fg = shade_pal_index(colormap[source[i]], light);
+			uint32_t fg = shade_pal_index(source[i], light, shade_constants);
 			uint32_t fg_red = (fg >> 16) & 0xff;
 			uint32_t fg_green = (fg >> 8) & 0xff;
 			uint32_t fg_blue = fg & 0xff;

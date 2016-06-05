@@ -71,7 +71,7 @@ struct FakeCmap
 };
 
 TArray<FakeCmap> fakecmaps;
-BYTE *realcolormaps;
+FColormap realcolormaps;
 size_t numfakecmaps;
 
 
@@ -408,7 +408,7 @@ void R_SetDefaultColormap (const char *name)
 
 			foo.Color = 0xFFFFFF;
 			foo.Fade = 0;
-			foo.Maps = realcolormaps;
+			foo.Maps = realcolormaps.Maps;
 			foo.Desaturate = 0;
 			foo.Next = NULL;
 			foo.BuildLights ();
@@ -430,7 +430,7 @@ void R_SetDefaultColormap (const char *name)
 			remap[0] = 0;
 			for (i = 0; i < NUMCOLORMAPS; ++i)
 			{
-				BYTE *map2 = &realcolormaps[i*256];
+				BYTE *map2 = &realcolormaps.Maps[i*256];
 				lumpr.Read (map, 256);
 				for (j = 0; j < 256; ++j)
 				{
@@ -454,11 +454,7 @@ void R_DeinitColormaps ()
 {
 	SpecialColormaps.Clear();
 	fakecmaps.Clear();
-	if (realcolormaps != NULL)
-	{
-		delete[] realcolormaps;
-		realcolormaps = NULL;
-	}
+	delete[] realcolormaps.Maps;
 	FreeSpecialLights();
 }
 
@@ -501,7 +497,7 @@ void R_InitColormaps ()
 			}
 		}
 	}
-	realcolormaps = new BYTE[256*NUMCOLORMAPS*fakecmaps.Size()];
+	realcolormaps.Maps = new BYTE[256*NUMCOLORMAPS*fakecmaps.Size()];
 	R_SetDefaultColormap ("COLORMAP");
 
 	if (fakecmaps.Size() > 1)
@@ -523,7 +519,7 @@ void R_InitColormaps ()
 			{
 				int k, r, g, b;
 				FWadLump lump = Wads.OpenLumpNum (fakecmaps[j].lump);
-				BYTE *const map = realcolormaps + NUMCOLORMAPS*256*j;
+				BYTE *const map = realcolormaps.Maps + NUMCOLORMAPS*256*j;
 
 				for (k = 0; k < NUMCOLORMAPS; ++k)
 				{
@@ -550,8 +546,8 @@ void R_InitColormaps ()
 	}
 	NormalLight.Color = PalEntry (255, 255, 255);
 	NormalLight.Fade = 0;
-	NormalLight.Maps = realcolormaps;
-	NormalLightHasFixedLights = R_CheckForFixedLights(realcolormaps);
+	NormalLight.Maps = realcolormaps.Maps;
+	NormalLightHasFixedLights = R_CheckForFixedLights(realcolormaps.Maps);
 	numfakecmaps = fakecmaps.Size();
 
 	// build default special maps (e.g. invulnerability)

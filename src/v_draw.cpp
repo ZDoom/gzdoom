@@ -171,14 +171,14 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 
 	if (translation != NULL)
 	{
-		R_SetColorMapLight((lighttable_t *)translation, 0, 0);
+		R_SetTranslationMap((lighttable_t *)translation);
 	}
 	else
 	{
-		R_SetColorMapLight(identitymap, 0, 0);
+		R_SetTranslationMap(identitymap);
 	}
 
-	fixedcolormap = dc_colormap;
+	fixedcolormap = dc_fcolormap;
 	ESPSResult mode = R_SetPatchStyle (parms.style, parms.Alpha, 0, parms.fillcolor);
 
 	BYTE *destorgsave = dc_destorg;
@@ -1025,7 +1025,7 @@ void DCanvas::PUTTRANSDOT (int xx, int yy, int basecolor, int level)
 	{
 		uint32_t *spot = (uint32_t*)GetBuffer() + oldyyshifted + xx;
 
-		uint32_t fg = shade_pal_index(basecolor, calc_light_multiplier(0));
+		uint32_t fg = shade_pal_index_simple(basecolor, calc_light_multiplier(0));
 		uint32_t fg_red = (fg >> 16) & 0xff;
 		uint32_t fg_green = (fg >> 8) & 0xff;
 		uint32_t fg_blue = fg & 0xff;
@@ -1394,7 +1394,10 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 
 	// Setup constant texture mapping parameters.
 	R_SetupSpanBits(tex);
-	R_SetSpanColormap(colormap != NULL ? &colormap->Maps[clamp(shade >> FRACBITS, 0, NUMCOLORMAPS-1) * 256] : identitymap);
+	if (colormap)
+		R_SetSpanColormap(colormap, clamp(shade >> FRACBITS, 0, NUMCOLORMAPS - 1));
+	else
+		R_SetSpanColormap(&identitycolormap, 0);
 	R_SetSpanSource(tex->GetPixels());
 	scalex = double(1u << (32 - ds_xbits)) / scalex;
 	scaley = double(1u << (32 - ds_ybits)) / scaley;

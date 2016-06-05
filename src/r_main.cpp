@@ -119,7 +119,7 @@ double			FocalLengthX;
 double			FocalLengthY;
 FDynamicColormap*basecolormap;		// [RH] colormap currently drawing with
 int				fixedlightlev;
-lighttable_t	*fixedcolormap;
+FColormap		*fixedcolormap;
 FSpecialColormap *realfixedcolormap;
 double			WallTMapScale2;
 
@@ -464,11 +464,11 @@ void R_SetupColormap(player_t *player)
 				// Render everything fullbright. The copy to video memory will
 				// apply the special colormap, so it won't be restricted to the
 				// palette.
-				fixedcolormap = realcolormaps;
+				fixedcolormap = &realcolormaps;
 			}
 			else
 			{
-				fixedcolormap = SpecialColormaps[player->fixedcolormap].Colormap;
+				fixedcolormap = &SpecialColormaps[player->fixedcolormap];
 			}
 		}
 		else if (player->fixedlightlevel >= 0 && player->fixedlightlevel < NUMCOLORMAPS)
@@ -479,7 +479,7 @@ void R_SetupColormap(player_t *player)
 	// [RH] Inverse light for shooting the Sigil
 	if (fixedcolormap == NULL && extralight == INT_MIN)
 	{
-		fixedcolormap = SpecialColormaps[INVERSECOLORMAP].Colormap;
+		fixedcolormap = &SpecialColormaps[INVERSECOLORMAP];
 		extralight = 0;
 	}
 }

@@ -279,6 +279,7 @@ void GLSprite::Draw(int pass)
 			
 			// [Nash] is a flat sprite
 			const bool isFlatSprite = (actor != NULL) && (spritetype == RF_WALLSPRITE || spritetype == RF_FLATSPRITE);
+			const bool dontFlip = (actor != nullptr) && (actor->renderflags & RF_DONTFLIP);
 			
 			// [Nash] check for special sprite drawing modes
 			if (drawWithXYBillboard || drawBillboardFacingCamera || drawRollSpriteActor || isFlatSprite)
@@ -327,8 +328,12 @@ void GLSprite::Draw(int pass)
 				// Here we need some form of priority in order to work.
 				if (spritetype == RF_FLATSPRITE)
 				{
+					DVector3 diff = actor->Vec3To(GLRenderer->mViewActor);
+					DAngle angto = diff.Angle();
+					angto = deltaangle(actor->Angles.Yaw, angto);
+
 					float pitchDegrees = actor->Angles.Pitch.Degrees;
-					mat.Rotate(0, 1, 0, 0);
+					mat.Rotate(0, 1, 0, (!dontFlip || (fabs(angto) < 90.)) ? 0 : 180);
 					mat.Rotate(-yawvecY, 0, yawvecX, pitchDegrees);
 					if (drawRollSpriteActor)
 					{

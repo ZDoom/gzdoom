@@ -1488,6 +1488,44 @@ FBaseCVar *FindCVarSub (const char *var_name, int namelen)
 	return var;
 }
 
+FBaseCVar *GetCVar(AActor *activator, const char *cvarname)
+{
+	FBaseCVar *cvar = FindCVar(cvarname, nullptr);
+	// Either the cvar doesn't exist, or it's for a mod that isn't loaded, so return nullptr.
+	if (cvar == nullptr || (cvar->GetFlags() & CVAR_IGNORE))
+	{
+		return nullptr;
+	}
+	else
+	{
+		// For userinfo cvars, redirect to GetUserCVar
+		if (cvar->GetFlags() & CVAR_USERINFO)
+		{
+			if (activator == nullptr || activator->player == nullptr)
+			{
+				return nullptr;
+			}
+			return GetUserCVar(int(activator->player - players), cvarname);
+		}
+		return cvar;
+	}
+}
+
+FBaseCVar *GetUserCVar(int playernum, const char *cvarname)
+{
+	if ((unsigned)playernum >= MAXPLAYERS || !playeringame[playernum])
+	{
+		return nullptr;
+	}
+	FBaseCVar **cvar_p = players[playernum].userinfo.CheckKey(FName(cvarname, true));
+	FBaseCVar *cvar;
+	if (cvar_p == nullptr || (cvar = *cvar_p) == nullptr || (cvar->GetFlags() & CVAR_IGNORE))
+	{
+		return nullptr;
+	}
+	return cvar;
+}
+
 //===========================================================================
 //
 // C_CreateCVar

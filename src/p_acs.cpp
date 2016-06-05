@@ -4657,7 +4657,11 @@ static int DoGetCVar(FBaseCVar *cvar, bool is_string)
 {
 	UCVarValue val;
 
-	if (is_string)
+	if (cvar == nullptr)
+	{
+		return 0;
+	}
+	else if (is_string)
 	{
 		val = cvar->GetGenericRep(CVAR_String);
 		return GlobalACSStrings.AddString(val.String);
@@ -4671,44 +4675,6 @@ static int DoGetCVar(FBaseCVar *cvar, bool is_string)
 	{
 		val = cvar->GetGenericRep(CVAR_Int);
 		return val.Int;
-	}
-}
-
-static int GetUserCVar(int playernum, const char *cvarname, bool is_string)
-{
-	if ((unsigned)playernum >= MAXPLAYERS || !playeringame[playernum])
-	{
-		return 0;
-	}
-	FBaseCVar **cvar_p = players[playernum].userinfo.CheckKey(FName(cvarname, true));
-	FBaseCVar *cvar;
-	if (cvar_p == NULL || (cvar = *cvar_p) == NULL || (cvar->GetFlags() & CVAR_IGNORE))
-	{
-		return 0;
-	}
-	return DoGetCVar(cvar, is_string);
-}
-
-static int GetCVar(AActor *activator, const char *cvarname, bool is_string)
-{
-	FBaseCVar *cvar = FindCVar(cvarname, NULL);
-	// Either the cvar doesn't exist, or it's for a mod that isn't loaded, so return 0.
-	if (cvar == NULL || (cvar->GetFlags() & CVAR_IGNORE))
-	{
-		return 0;
-	}
-	else
-	{
-		// For userinfo cvars, redirect to GetUserCVar
-		if (cvar->GetFlags() & CVAR_USERINFO)
-		{
-			if (activator == NULL || activator->player == NULL)
-			{
-				return 0;
-			}
-			return GetUserCVar(int(activator->player - players), cvarname, is_string);
-		}
-		return DoGetCVar(cvar, is_string);
 	}
 }
 
@@ -5396,7 +5362,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 		case ACSF_GetCVarString:
 			if (argCount == 1)
 			{
-				return GetCVar(activator, FBehavior::StaticLookupString(args[0]), true);
+				return DoGetCVar(GetCVar(activator, FBehavior::StaticLookupString(args[0])), true);
 			}
 			break;
 
@@ -5417,14 +5383,14 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 		case ACSF_GetUserCVar:
 			if (argCount == 2)
 			{
-				return GetUserCVar(args[0], FBehavior::StaticLookupString(args[1]), false);
+				return DoGetCVar(GetUserCVar(args[0], FBehavior::StaticLookupString(args[1])), false);
 			}
 			break;
 
 		case ACSF_GetUserCVarString:
 			if (argCount == 2)
 			{
-				return GetUserCVar(args[0], FBehavior::StaticLookupString(args[1]), true);
+				return DoGetCVar(GetUserCVar(args[0], FBehavior::StaticLookupString(args[1])), true);
 			}
 			break;
 
@@ -9132,7 +9098,7 @@ scriptwait:
 			break;
 
 		case PCD_GETCVAR:
-			STACK(1) = GetCVar(activator, FBehavior::StaticLookupString(STACK(1)), false);
+			STACK(1) = DoGetCVar(GetCVar(activator, FBehavior::StaticLookupString(STACK(1))), false);
 			break;
 
 		case PCD_SETHUDSIZE:

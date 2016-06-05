@@ -513,6 +513,36 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetCrouchFactor)
 	return 0;
 }
 
+//==========================================================================
+//
+// GetCVar
+//
+// NON-ACTION function that works like ACS's GetCVar.
+//
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetCVar)
+{
+	if (numret > 0)
+	{
+		assert(ret != nullptr);
+		PARAM_SELF_PROLOGUE(AActor);
+		PARAM_STRING(cvarname);
+
+		FBaseCVar *cvar = GetCVar(self, cvarname);
+		if (cvar == nullptr)
+		{
+			ret->SetFloat(0);
+		}
+		else
+		{
+			ret->SetFloat(cvar->GetGenericRep(CVAR_Float).Float);
+		}
+		return 1;
+	}
+	return 0;
+}
+
 //===========================================================================
 //
 // __decorate_internal_state__

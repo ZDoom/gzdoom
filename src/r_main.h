@@ -226,8 +226,8 @@ FORCEINLINE uint32_t shade_pal_index(uint32_t index, uint32_t light, const Shade
 	__m128i fg_lo = _mm_unpacklo_epi8(fg, _mm_setzero_si128()); \
 	 \
 	__m128i intensity_hi = _mm_mullo_epi16(fg_hi, _mm_set_epi16(0, 77, 143, 37, 0, 77, 143, 37)); \
-	uint16_t intensity_hi0 = ((intensity_hi.m128i_u16[2] + intensity_hi.m128i_u16[1] + intensity_hi.m128i_u16[0]) >> 8) * shade_constants.desaturate; \
-	uint16_t intensity_hi1 = ((intensity_hi.m128i_u16[6] + intensity_hi.m128i_u16[5] + intensity_hi.m128i_u16[4]) >> 8) * shade_constants.desaturate; \
+	uint16_t intensity_hi0 = ((_mm_extract_epi16(intensity_hi, 2) + _mm_extract_epi16(intensity_hi, 1) + _mm_extract_epi16(intensity_hi, 0)) >> 8) * shade_constants.desaturate; \
+	uint16_t intensity_hi1 = ((_mm_extract_epi16(intensity_hi, 6) + _mm_extract_epi16(intensity_hi, 5) + _mm_extract_epi16(intensity_hi, 4)) >> 8) * shade_constants.desaturate; \
 	intensity_hi = _mm_set_epi16(intensity_hi1, intensity_hi1, intensity_hi1, intensity_hi1, intensity_hi0, intensity_hi0, intensity_hi0, intensity_hi0); \
 	 \
 	fg_hi = _mm_srli_epi16(_mm_adds_epu16(_mm_mullo_epi16(fg_hi, inv_desaturate), intensity_hi), 8); \
@@ -235,8 +235,8 @@ FORCEINLINE uint32_t shade_pal_index(uint32_t index, uint32_t light, const Shade
 	fg_hi = _mm_srli_epi16(_mm_mullo_epi16(fg_hi, color), 8); \
 	 \
 	__m128i intensity_lo = _mm_mullo_epi16(fg_lo, _mm_set_epi16(0, 77, 143, 37, 0, 77, 143, 37)); \
-	uint16_t intensity_lo0 = ((intensity_lo.m128i_u16[2] + intensity_lo.m128i_u16[1] + intensity_lo.m128i_u16[0]) >> 8) * shade_constants.desaturate; \
-	uint16_t intensity_lo1 = ((intensity_lo.m128i_u16[6] + intensity_lo.m128i_u16[5] + intensity_lo.m128i_u16[4]) >> 8) * shade_constants.desaturate; \
+	uint16_t intensity_lo0 = ((_mm_extract_epi16(intensity_lo, 2) + _mm_extract_epi16(intensity_lo, 1) + _mm_extract_epi16(intensity_lo, 0)) >> 8) * shade_constants.desaturate; \
+	uint16_t intensity_lo1 = ((_mm_extract_epi16(intensity_lo, 6) + _mm_extract_epi16(intensity_lo, 5) + _mm_extract_epi16(intensity_lo, 4)) >> 8) * shade_constants.desaturate; \
 	intensity_lo = _mm_set_epi16(intensity_lo1, intensity_lo1, intensity_lo1, intensity_lo1, intensity_lo0, intensity_lo0, intensity_lo0, intensity_lo0); \
 	 \
 	fg_lo = _mm_srli_epi16(_mm_adds_epu16(_mm_mullo_epi16(fg_lo, inv_desaturate), intensity_lo), 8); \

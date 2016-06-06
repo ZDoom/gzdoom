@@ -706,10 +706,7 @@ void R_DrawVisVoxel(vissprite_t *spr, int minslabz, int maxslabz, short *cliptop
 				}
 				else
 				{
-					unsigned int **tspan = &dc_ctspan[x & 3];
-					(*tspan)[0] = span->Start;
-					(*tspan)[1] = span->Stop - 1;
-					*tspan += 2;
+					rt_span_coverage(x, span->Start, span->Stop - 1);
 				}
 			}
 			if (!(flags & DVF_SPANSONLY) && (x & 3) == 3)

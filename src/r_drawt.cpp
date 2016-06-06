@@ -1019,6 +1019,14 @@ void rt_initcols_pal (BYTE *buff)
 		horizspan[y] = dc_ctspan[y] = &dc_tspans[y][0];
 }
 
+void rt_span_coverage_pal(int x, int start, int stop)
+{
+	unsigned int **tspan = &dc_ctspan[x & 3];
+	(*tspan)[0] = start;
+	(*tspan)[1] = stop;
+	*tspan += 2;
+}
+
 // Stretches a column into a temporary buffer which is later
 // drawn to the screen along with up to three other columns.
 void R_DrawColumnHorizP_C (void)

@@ -24,6 +24,13 @@
 #define __R_DRAW__
 
 #include "r_defs.h"
+#include <vector>
+
+// Spectre/Invisibility.
+#define FUZZTABLE	50
+extern "C" int 	fuzzoffset[FUZZTABLE + 1];	// [RH] +1 for the assembly routine
+extern "C" int 	fuzzpos;
+extern "C" int	fuzzviewheight;
 
 struct FColormap;
 struct ShadeConstants;
@@ -173,7 +180,6 @@ void rt_copy4cols_RGBA_c (int sx, int yl, int yh);
 
 void rt_shaded1col_RGBA_c (int hx, int sx, int yl, int yh);
 void rt_shaded4cols_RGBA_c (int sx, int yl, int yh);
-void rt_shaded4cols_RGBA_SSE (int sx, int yl, int yh);
 
 void rt_map1col_RGBA_c (int hx, int sx, int yl, int yh);
 void rt_add1col_RGBA_c (int hx, int sx, int yl, int yh);
@@ -188,11 +194,8 @@ void rt_tlatesubclamp1col_RGBA_c (int hx, int sx, int yl, int yh);
 void rt_tlaterevsubclamp1col_RGBA_c (int hx, int sx, int yl, int yh);
 
 void rt_map4cols_RGBA_c (int sx, int yl, int yh);
-void rt_map4cols_RGBA_SSE (int sx, int yl, int yh);
 void rt_add4cols_RGBA_c (int sx, int yl, int yh);
-void rt_add4cols_RGBA_SSE (int sx, int yl, int yh);
 void rt_addclamp4cols_RGBA_c (int sx, int yl, int yh);
-void rt_addclamp4cols_RGBA_SSE (int sx, int yl, int yh);
 void rt_subclamp4cols_RGBA_c (int sx, int yl, int yh);
 void rt_revsubclamp4cols_RGBA_c (int sx, int yl, int yh);
 
@@ -235,6 +238,7 @@ extern void (*rt_tlatesubclamp4cols)(int sx, int yl, int yh);
 extern void (*rt_tlaterevsubclamp4cols)(int sx, int yl, int yh);
 
 extern void (*rt_initcols)(BYTE *buffer);
+extern void (*rt_span_coverage)(int x, int start, int stop);
 
 void rt_draw4cols (int sx);
 
@@ -242,6 +246,8 @@ void rt_draw4cols (int sx);
 void rt_initcols_pal (BYTE *buffer);
 void rt_initcols_rgba (BYTE *buffer);
 
+void rt_span_coverage_pal(int x, int start, int stop);
+void rt_span_coverage_rgba(int x, int start, int stop);
 
 extern void (*R_DrawFogBoundary)(int x1, int x2, short *uclip, short *dclip);
 
@@ -277,8 +283,39 @@ void	R_DrawFuzzColumnP_RGBA_C (void);
 void	R_DrawTranslatedColumnP_RGBA_C (void);
 void	R_DrawShadedColumnP_RGBA_C (void);
 void	R_DrawSpanP_RGBA_C (void);
-void	R_DrawSpanP_RGBA_SSE (void);
 void	R_DrawSpanMaskedP_RGBA_C (void);
+
+void	R_DrawSpanTranslucentP_RGBA_C();
+void	R_DrawSpanMaskedTranslucentP_RGBA_C();
+void	R_DrawSpanAddClampP_RGBA_C();
+void	R_DrawSpanMaskedAddClampP_RGBA_C();
+void	R_FillColumnP_RGBA();
+void	R_FillAddColumn_RGBA_C();
+void	R_FillAddClampColumn_RGBA();
+void	R_FillSubClampColumn_RGBA();
+void	R_FillRevSubClampColumn_RGBA();
+void	R_DrawAddColumnP_RGBA_C();
+void	R_DrawTlatedAddColumnP_RGBA_C();
+void	R_DrawAddClampColumnP_RGBA_C();
+void	R_DrawAddClampTranslatedColumnP_RGBA_C();
+void	R_DrawSubClampColumnP_RGBA_C();
+void	R_DrawSubClampTranslatedColumnP_RGBA_C();
+void	R_DrawRevSubClampColumnP_RGBA_C();
+void	R_DrawRevSubClampTranslatedColumnP_RGBA_C();
+void	R_FillSpan_RGBA();
+void	R_DrawFogBoundary_RGBA(int x1, int x2, short *uclip, short *dclip);
+fixed_t	tmvline1_add_RGBA();
+void	tmvline4_add_RGBA();
+fixed_t	tmvline1_addclamp_RGBA();
+void	tmvline4_addclamp_RGBA();
+fixed_t	tmvline1_subclamp_RGBA();
+void	tmvline4_subclamp_RGBA();
+fixed_t	tmvline1_revsubclamp_RGBA();
+void	tmvline4_revsubclamp_RGBA();
+DWORD	vlinec1_RGBA();
+void	vlinec4_RGBA();
+DWORD	mvlinec1_RGBA();
+void	mvlinec4_RGBA();
 
 void	R_DrawSpanTranslucentP_C (void);
 void	R_DrawSpanMaskedTranslucentP_C (void);
@@ -402,5 +439,53 @@ void R_SetColorMapLight(FColormap *base_colormap, float light, int shade);
 void R_SetDSColorMapLight(FColormap *base_colormap, float light, int shade);
 
 void R_SetTranslationMap(lighttable_t *translation);
+
+// Wait until all drawers finished executing
+void R_FinishDrawerCommands();
+
+class DrawerThread
+{
+public:
+	int core = 0;
+	int num_cores = 1;
+
+	uint32_t dc_temp_rgbabuff_rgba[MAXHEIGHT * 4];
+	uint32_t *dc_temp_rgba;
+};
+
+class DrawerCommand
+{
+public:
+	virtual void Execute(DrawerThread *thread) = 0;
+};
+
+class DrawerCommandQueue
+{
+	enum { memorypool_size = 4 * 1024 * 1024 };
+	char memorypool[memorypool_size];
+	size_t memorypool_pos = 0;
+
+	std::vector<DrawerCommand *> commands;
+
+	static DrawerCommandQueue *Instance();
+
+public:
+	// Allocate memory valid for the duration of a command execution
+	static void* AllocMemory(size_t size);
+
+	// Queue command to be executed by drawer worker threads
+	template<typename T, typename... Types>
+	static void QueueCommand(Types &&... args)
+	{
+		void *ptr = AllocMemory(sizeof(T));
+		T *command = new (ptr)T(std::forward<Types>(args)...);
+		if (!command)
+			return;
+		Instance()->commands.push_back(command);
+	}
+
+	// Wait until all worker threads finished executing commands
+	static void Finish();
+};
 
 #endif

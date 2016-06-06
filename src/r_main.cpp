@@ -979,6 +979,8 @@ void R_RenderViewToCanvas (AActor *actor, DCanvas *canvas,
 	R_SetupBuffer ();
 	screen->Unlock ();
 
+	R_FinishDrawerCommands();
+
 	viewactive = savedviewactive;
 	r_swtruecolor = savedoutputformat;
 

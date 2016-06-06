@@ -165,6 +165,7 @@ void FSoftwareRenderer::RenderView(player_t *player)
 	R_RenderActorView (player->mo);
 	// [RH] Let cameras draw onto textures that were visible this frame.
 	FCanvasTextureInfo::UpdateAll ();
+	R_FinishDrawerCommands();
 }
 
 //==========================================================================

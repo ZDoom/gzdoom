@@ -78,26 +78,26 @@ public:
 		uint32_t *source;
 		uint32_t *dest;
 		int count;
-		int pitch;
+		int pitch, sincr;
 
-		count = yh - yl;
-		if (count < 0)
+		count = thread->count_for_thread(yl, (yh - yl + 1));
+		if (count <= 0)
 			return;
-		count++;
 
-		dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
-		source = &thread->dc_temp_rgba[yl * 4 + hx];
-		pitch = dc_pitch;
+		dest = thread->dest_for_thread(yl, dc_pitch, ylookup[yl] + sx + (uint32_t*)dc_destorg);
+		source = &thread->dc_temp_rgba[yl * 4 + hx] + thread->skipped_by_thread(yl) * 4;
+		pitch = dc_pitch * thread->num_cores;
+		sincr = thread->num_cores * 4;
 
 		if (count & 1) {
 			*dest = *source;
-			source += 4;
+			source += sincr;
 			dest += pitch;
 		}
 		if (count & 2) {
 			dest[0] = source[0];
-			dest[pitch] = source[4];
-			source += 8;
+			dest[pitch] = source[sincr];
+			source += sincr * 2;
 			dest += pitch * 2;
 		}
 		if (!(count >>= 2))
@@ -105,10 +105,10 @@ public:
 
 		do {
 			dest[0] = source[0];
-			dest[pitch] = source[4];
-			dest[pitch * 2] = source[8];
-			dest[pitch * 3] = source[12];
-			source += 16;
+			dest[pitch] = source[sincr];
+			dest[pitch * 2] = source[sincr * 2];
+			dest[pitch * 3] = source[sincr * 3];
+			source += sincr * 4;
 			dest += pitch * 4;
 		} while (--count);
 	}
@@ -145,22 +145,23 @@ public:
 		uint32_t *dest;
 		int count;
 		int pitch;
+		int sincr;
 
-		count = yh - yl;
-		if (count < 0)
+		count = thread->count_for_thread(yl, yh - yl + 1);
+		if (count <= 0)
 			return;
-		count++;
 
 		uint32_t light = calc_light_multiplier(dc_light);
 		ShadeConstants shade_constants = dc_shade_constants;
 
-		dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
-		source = &thread->dc_temp_rgba[yl * 4 + hx];
-		pitch = dc_pitch;
+		dest = thread->dest_for_thread(yl, dc_pitch, ylookup[yl] + sx + (uint32_t*)dc_destorg);
+		source = &thread->dc_temp_rgba[yl * 4 + hx] + thread->skipped_by_thread(yl) * 4;
+		pitch = dc_pitch * thread->num_cores;
+		sincr = thread->num_cores * 4;
 
 		if (count & 1) {
 			*dest = shade_pal_index(*source, light, shade_constants);
-			source += 4;
+			source += sincr;
 			dest += pitch;
 		}
 		if (!(count >>= 1))
@@ -168,8 +169,8 @@ public:
 
 		do {
 			dest[0] = shade_pal_index(source[0], light, shade_constants);
-			dest[pitch] = shade_pal_index(source[4], light, shade_constants);
-			source += 8;
+			dest[pitch] = shade_pal_index(source[sincr], light, shade_constants);
+			source += sincr * 2;
 			dest += pitch * 2;
 		} while (--count);
 	}
@@ -205,25 +206,26 @@ public:
 		uint32_t *dest;
 		int count;
 		int pitch;
+		int sincr;
 
-		count = yh - yl;
-		if (count < 0)
+		count = thread->count_for_thread(yl, yh - yl + 1);
+		if (count <= 0)
 			return;
-		count++;
 
 		uint32_t light = calc_light_multiplier(dc_light);
 		ShadeConstants shade_constants = dc_shade_constants;
 
-		dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
-		source = &thread->dc_temp_rgba[yl * 4];
-		pitch = dc_pitch;
+		dest = thread->dest_for_thread(yl, dc_pitch, ylookup[yl] + sx + (uint32_t*)dc_destorg);
+		source = &thread->dc_temp_rgba[yl * 4] + thread->skipped_by_thread(yl) * 4;
+		pitch = dc_pitch * thread->num_cores;
+		sincr = thread->num_cores * 4;
 
 		if (count & 1) {
 			dest[0] = shade_pal_index(source[0], light, shade_constants);
 			dest[1] = shade_pal_index(source[1], light, shade_constants);
 			dest[2] = shade_pal_index(source[2], light, shade_constants);
 			dest[3] = shade_pal_index(source[3], light, shade_constants);
-			source += 4;
+			source += sincr;
 			dest += pitch;
 		}
 		if (!(count >>= 1))
@@ -234,11 +236,11 @@ public:
 			dest[1] = shade_pal_index(source[1], light, shade_constants);
 			dest[2] = shade_pal_index(source[2], light, shade_constants);
 			dest[3] = shade_pal_index(source[3], light, shade_constants);
-			dest[pitch] = shade_pal_index(source[4], light, shade_constants);
-			dest[pitch + 1] = shade_pal_index(source[5], light, shade_constants);
-			dest[pitch + 2] = shade_pal_index(source[6], light, shade_constants);
-			dest[pitch + 3] = shade_pal_index(source[7], light, shade_constants);
-			source += 8;
+			dest[pitch] = shade_pal_index(source[sincr], light, shade_constants);
+			dest[pitch + 1] = shade_pal_index(source[sincr + 1], light, shade_constants);
+			dest[pitch + 2] = shade_pal_index(source[sincr + 2], light, shade_constants);
+			dest[pitch + 3] = shade_pal_index(source[sincr + 3], light, shade_constants);
+			source += sincr * 2;
 			dest += pitch * 2;
 		} while (--count);
 	}
@@ -249,19 +251,20 @@ public:
 		uint32_t *dest;
 		int count;
 		int pitch;
+		int sincr;
 
-		count = yh - yl;
-		if (count < 0)
+		count = thread->count_for_thread(yl, yh - yl + 1);
+		if (count <= 0)
 			return;
-		count++;
 
 		ShadeConstants shade_constants = dc_shade_constants;
 		uint32_t light = calc_light_multiplier(dc_light);
 		uint32_t *palette = (uint32_t*)GPalette.BaseColors;
 
-		dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
-		source = &thread->dc_temp_rgba[yl * 4];
-		pitch = dc_pitch;
+		dest = thread->dest_for_thread(yl, dc_pitch, ylookup[yl] + sx + (uint32_t*)dc_destorg);
+		source = &thread->dc_temp_rgba[yl * 4] + thread->skipped_by_thread(yl) * 4;
+		pitch = dc_pitch * thread->num_cores;
+		sincr = thread->num_cores * 4;
 
 		if (shade_constants.simple_shade)
 		{
@@ -278,7 +281,7 @@ public:
 				SSE_SHADE_SIMPLE(fg);
 				_mm_storeu_si128((__m128i*)dest, fg);
 
-				source += 4;
+				source += sincr;
 				dest += pitch;
 			}
 			if (!(count >>= 1))
@@ -299,17 +302,17 @@ public:
 
 				// shade_pal_index 4-7 (pitch)
 				{
-					uint32_t p0 = source[4];
-					uint32_t p1 = source[5];
-					uint32_t p2 = source[6];
-					uint32_t p3 = source[7];
+					uint32_t p0 = source[sincr];
+					uint32_t p1 = source[sincr + 1];
+					uint32_t p2 = source[sincr + 2];
+					uint32_t p3 = source[sincr + 3];
 
 					__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
 					SSE_SHADE_SIMPLE(fg);
 					_mm_storeu_si128((__m128i*)(dest + pitch), fg);
 				}
 
-				source += 8;
+				source += sincr * 2;
 				dest += pitch * 2;
 			} while (--count);
 		}
@@ -328,7 +331,7 @@ public:
 				SSE_SHADE(fg, shade_constants);
 				_mm_storeu_si128((__m128i*)dest, fg);
 
-				source += 4;
+				source += sincr;
 				dest += pitch;
 			}
 			if (!(count >>= 1))
@@ -349,17 +352,17 @@ public:
 
 				// shade_pal_index 4-7 (pitch)
 				{
-					uint32_t p0 = source[4];
-					uint32_t p1 = source[5];
-					uint32_t p2 = source[6];
-					uint32_t p3 = source[7];
+					uint32_t p0 = source[sincr];
+					uint32_t p1 = source[sincr + 1];
+					uint32_t p2 = source[sincr + 2];
+					uint32_t p3 = source[sincr + 3];
 
 					__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
 					SSE_SHADE(fg, shade_constants);
 					_mm_storeu_si128((__m128i*)(dest + pitch), fg);
 				}
 
-				source += 8;
+				source += sincr * 2;
 				dest += pitch * 2;
 			} while (--count);
 		}
@@ -522,15 +525,16 @@ public:
 		uint32_t *dest;
 		int count;
 		int pitch;
+		int sincr;
 
-		count = yh - yl;
-		if (count < 0)
+		count = thread->count_for_thread(yl, yh - yl + 1);
+		if (count <= 0)
 			return;
-		count++;
 
-		dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
-		source = &thread->dc_temp_rgba[yl * 4 + hx];
-		pitch = dc_pitch;
+		dest = thread->dest_for_thread(yl, dc_pitch, ylookup[yl] + sx + (uint32_t*)dc_destorg);
+		source = &thread->dc_temp_rgba[yl * 4 + hx] + thread->skipped_by_thread(yl) * 4;
+		pitch = dc_pitch * thread->num_cores;
+		sincr = 4 * thread->num_cores;
 
 		uint32_t light = calc_light_multiplier(dc_light);
 		ShadeConstants shade_constants = dc_shade_constants;
@@ -554,7 +558,7 @@ public:
 
 			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
 
-			source += 4;
+			source += sincr;
 			dest += pitch;
 		} while (--count);
 	}
@@ -590,15 +594,16 @@ public:
 		uint32_t *dest;
 		int count;
 		int pitch;
+		int sincr;
 
-		count = yh - yl;
-		if (count < 0)
+		count = thread->count_for_thread(yl, yh - yl + 1);
+		if (count <= 0)
 			return;
-		count++;
 
-		dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
-		source = &thread->dc_temp_rgba[yl * 4];
-		pitch = dc_pitch;
+		dest = thread->dest_for_thread(yl, dc_pitch, ylookup[yl] + sx + (uint32_t*)dc_destorg);
+		source = &thread->dc_temp_rgba[yl * 4] + thread->skipped_by_thread(yl) * 4;
+		pitch = dc_pitch * thread->num_cores;
+		sincr = 4 * thread->num_cores;
 
 		uint32_t light = calc_light_multiplier(dc_light);
 		ShadeConstants shade_constants = dc_shade_constants;
@@ -625,7 +630,7 @@ public:
 				dest[i] = 0xff000000 | (red << 16) | (green << 8) | blue;
 			}
 
-			source += 4;
+			source += sincr;
 			dest += pitch;
 		} while (--count);
 	}
@@ -636,15 +641,16 @@ public:
 		uint32_t *dest;
 		int count;
 		int pitch;
+		int sincr;
 
-		count = yh - yl;
-		if (count < 0)
+		count = thread->count_for_thread(yl, yh - yl + 1);
+		if (count <= 0)
 			return;
-		count++;
 
-		dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
-		source = &thread->dc_temp_rgba[yl * 4];
-		pitch = dc_pitch;
+		dest = thread->dest_for_thread(yl, dc_pitch, ylookup[yl] + sx + (uint32_t*)dc_destorg);
+		source = &thread->dc_temp_rgba[yl * 4] + thread->skipped_by_thread(yl) * 4;
+		pitch = dc_pitch * thread->num_cores;
+		sincr = 4 * thread->num_cores;
 
 		uint32_t light = calc_light_multiplier(dc_light);
 		uint32_t *palette = (uint32_t*)GPalette.BaseColors;
@@ -686,7 +692,7 @@ public:
 				__m128i color = _mm_packus_epi16(color_lo, color_hi);
 				_mm_storeu_si128((__m128i*)dest, color);
 
-				source += 4;
+				source += sincr;
 				dest += pitch;
 			} while (--count);
 		}
@@ -722,7 +728,7 @@ public:
 				__m128i color = _mm_packus_epi16(color_lo, color_hi);
 				_mm_storeu_si128((__m128i*)dest, color);
 
-				source += 4;
+				source += sincr;
 				dest += pitch;
 			} while (--count);
 		}
@@ -764,16 +770,17 @@ public:
 		uint32_t *dest;
 		int count;
 		int pitch;
+		int sincr;
 
-		count = yh - yl;
-		if (count < 0)
+		count = thread->count_for_thread(yl, yh - yl + 1);
+		if (count <= 0)
 			return;
-		count++;
 
 		colormap = dc_colormap;
-		dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
-		source = &thread->dc_temp_rgba[yl * 4 + hx];
-		pitch = dc_pitch;
+		dest = thread->dest_for_thread(yl, dc_pitch, ylookup[yl] + sx + (uint32_t*)dc_destorg);
+		source = &thread->dc_temp_rgba[yl * 4 + hx] + thread->skipped_by_thread(yl) * 4;
+		pitch = dc_pitch * thread->num_cores;
+		sincr = 4 * thread->num_cores;
 
 		uint32_t fg = shade_pal_index_simple(dc_color, calc_light_multiplier(dc_light));
 		uint32_t fg_red = (fg >> 16) & 0xff;
@@ -793,7 +800,7 @@ public:
 			uint32_t blue = (fg_blue * alpha + bg_blue * inv_alpha) / 64;
 
 			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-			source += 4;
+			source += sincr;
 			dest += pitch;
 		} while (--count);
 	}
@@ -832,16 +839,17 @@ public:
 		uint32_t *dest;
 		int count;
 		int pitch;
+		int sincr;
 
-		count = yh - yl;
-		if (count < 0)
+		count = thread->count_for_thread(yl, yh - yl + 1);
+		if (count <= 0)
 			return;
-		count++;
 
 		colormap = dc_colormap;
-		dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
-		source = &thread->dc_temp_rgba[yl * 4];
-		pitch = dc_pitch;
+		dest = thread->dest_for_thread(yl, dc_pitch, ylookup[yl] + sx + (uint32_t*)dc_destorg);
+		source = &thread->dc_temp_rgba[yl * 4] + thread->skipped_by_thread(yl) * 4;
+		pitch = dc_pitch * thread->num_cores;
+		sincr = 4 * thread->num_cores;
 
 		uint32_t fg = shade_pal_index_simple(dc_color, calc_light_multiplier(dc_light));
 		uint32_t fg_red = (fg >> 16) & 0xff;
@@ -864,7 +872,7 @@ public:
 
 				dest[i] = 0xff000000 | (red << 16) | (green << 8) | blue;
 			}
-			source += 4;
+			source += sincr;
 			dest += pitch;
 		} while (--count);
 	}
@@ -876,16 +884,17 @@ public:
 		uint32_t *dest;
 		int count;
 		int pitch;
+		int sincr;
 
-		count = yh - yl;
-		if (count < 0)
+		count = thread->count_for_thread(yl, yh - yl + 1);
+		if (count <= 0)
 			return;
-		count++;
 
 		colormap = dc_colormap;
-		dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
-		source = &thread->dc_temp_rgba[yl * 4];
-		pitch = dc_pitch;
+		dest = thread->dest_for_thread(yl, dc_pitch, ylookup[yl] + sx + (uint32_t*)dc_destorg);
+		source = &thread->dc_temp_rgba[yl * 4] + thread->skipped_by_thread(yl) * 4;
+		pitch = dc_pitch * thread->num_cores;
+		sincr = 4 * thread->num_cores;
 
 		__m128i fg = _mm_unpackhi_epi8(_mm_set1_epi32(shade_pal_index_simple(dc_color, calc_light_multiplier(dc_light))), _mm_setzero_si128());
 		__m128i alpha_one = _mm_set1_epi16(64);
@@ -913,7 +922,7 @@ public:
 			__m128i color = _mm_packus_epi16(color_lo, color_hi);
 			_mm_storeu_si128((__m128i*)dest, color);
 
-			source += 4;
+			source += sincr;
 			dest += pitch;
 		} while (--count);
 	}
@@ -955,15 +964,16 @@ public:
 		uint32_t *dest;
 		int count;
 		int pitch;
+		int sincr;
 
-		count = yh - yl;
-		if (count < 0)
+		count = thread->count_for_thread(yl, yh - yl + 1);
+		if (count <= 0)
 			return;
-		count++;
 
-		dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
-		source = &thread->dc_temp_rgba[yl * 4 + hx];
-		pitch = dc_pitch;
+		dest = thread->dest_for_thread(yl, dc_pitch, ylookup[yl] + sx + (uint32_t*)dc_destorg);
+		source = &thread->dc_temp_rgba[yl * 4 + hx] + thread->skipped_by_thread(yl) * 4;
+		pitch = dc_pitch * thread->num_cores;
+		sincr = 4 * thread->num_cores;
 
 		uint32_t light = calc_light_multiplier(dc_light);
 		ShadeConstants shade_constants = dc_shade_constants;
@@ -986,7 +996,7 @@ public:
 			uint32_t blue = clamp<uint32_t>((fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 0, 255);
 
 			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-			source += 4;
+			source += sincr;
 			dest += pitch;
 		} while (--count);
 	}
@@ -1026,15 +1036,16 @@ public:
 		uint32_t *dest;
 		int count;
 		int pitch;
+		int sincr;
 
-		count = yh - yl;
-		if (count < 0)
+		count = thread->count_for_thread(yl, yh - yl + 1);
+		if (count <= 0)
 			return;
-		count++;
 
-		dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
-		source = &thread->dc_temp_rgba[yl * 4];
-		pitch = dc_pitch;
+		dest = thread->dest_for_thread(yl, dc_pitch, ylookup[yl] + sx + (uint32_t*)dc_destorg);
+		source = &thread->dc_temp_rgba[yl * 4] + thread->skipped_by_thread(yl) * 4;
+		pitch = dc_pitch * thread->num_cores;
+		sincr = 4 * thread->num_cores;
 
 		uint32_t light = calc_light_multiplier(dc_light);
 		ShadeConstants shade_constants = dc_shade_constants;
@@ -1060,7 +1071,7 @@ public:
 
 				dest[i] = 0xff000000 | (red << 16) | (green << 8) | blue;
 			}
-			source += 4;
+			source += sincr;
 			dest += pitch;
 		} while (--count);
 	}
@@ -1071,15 +1082,16 @@ public:
 		uint32_t *dest;
 		int count;
 		int pitch;
+		int sincr;
 
-		count = yh - yl;
-		if (count < 0)
+		count = thread->count_for_thread(yl, yh - yl + 1);
+		if (count <= 0)
 			return;
-		count++;
 
-		dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
-		source = &thread->dc_temp_rgba[yl * 4];
-		pitch = dc_pitch;
+		dest = thread->dest_for_thread(yl, dc_pitch, ylookup[yl] + sx + (uint32_t*)dc_destorg);
+		source = &thread->dc_temp_rgba[yl * 4] + thread->skipped_by_thread(yl) * 4;
+		pitch = dc_pitch * thread->num_cores;
+		sincr = 4 * thread->num_cores;
 
 		uint32_t light = calc_light_multiplier(dc_light);
 		uint32_t *palette = (uint32_t*)GPalette.BaseColors;
@@ -1121,7 +1133,7 @@ public:
 				__m128i color = _mm_packus_epi16(color_lo, color_hi);
 				_mm_storeu_si128((__m128i*)dest, color);
 
-				source += 4;
+				source += sincr;
 				dest += pitch;
 			} while (--count);
 		}
@@ -1157,7 +1169,7 @@ public:
 				__m128i color = _mm_packus_epi16(color_lo, color_hi);
 				_mm_storeu_si128((__m128i*)dest, color);
 
-				source += 4;
+				source += sincr;
 				dest += pitch;
 			} while (--count);
 		}
@@ -1200,15 +1212,16 @@ public:
 		uint32_t *dest;
 		int count;
 		int pitch;
+		int sincr;
 
-		count = yh - yl;
-		if (count < 0)
+		count = thread->count_for_thread(yl, yh - yl + 1);
+		if (count <= 0)
 			return;
-		count++;
 
-		dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
-		source = &thread->dc_temp_rgba[yl * 4 + hx];
-		pitch = dc_pitch;
+		dest = thread->dest_for_thread(yl, dc_pitch, ylookup[yl] + sx + (uint32_t*)dc_destorg);
+		source = &thread->dc_temp_rgba[yl * 4 + hx] + thread->skipped_by_thread(yl) * 4;
+		pitch = dc_pitch * thread->num_cores;
+		sincr = 4 * thread->num_cores;
 
 		uint32_t light = calc_light_multiplier(dc_light);
 		ShadeConstants shade_constants = dc_shade_constants;
@@ -1231,7 +1244,7 @@ public:
 			uint32_t blue = clamp<uint32_t>((0x10000 - fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 256, 256 + 255) - 256;
 
 			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-			source += 4;
+			source += sincr;
 			dest += pitch;
 		} while (--count);
 	}
@@ -1270,15 +1283,16 @@ public:
 		uint32_t *dest;
 		int count;
 		int pitch;
+		int sincr;
 
-		count = yh - yl;
-		if (count < 0)
+		count = thread->count_for_thread(yl, yh - yl + 1);
+		if (count <= 0)
 			return;
-		count++;
 
-		dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
-		source = &thread->dc_temp_rgba[yl * 4];
-		pitch = dc_pitch;
+		dest = thread->dest_for_thread(yl, dc_pitch, ylookup[yl] + sx + (uint32_t*)dc_destorg);
+		source = &thread->dc_temp_rgba[yl * 4] + thread->skipped_by_thread(yl) * 4;
+		pitch = dc_pitch * thread->num_cores;
+		sincr = 4 * thread->num_cores;
 
 		uint32_t light = calc_light_multiplier(dc_light);
 		ShadeConstants shade_constants = dc_shade_constants;
@@ -1305,7 +1319,7 @@ public:
 				dest[i] = 0xff000000 | (red << 16) | (green << 8) | blue;
 			}
 
-			source += 4;
+			source += sincr;
 			dest += pitch;
 		} while (--count);
 	}
@@ -1346,15 +1360,16 @@ public:
 		uint32_t *dest;
 		int count;
 		int pitch;
+		int sincr;
 
-		count = yh - yl;
-		if (count < 0)
+		count = thread->count_for_thread(yl, yh - yl + 1);
+		if (count <= 0)
 			return;
-		count++;
 
-		dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
-		source = &thread->dc_temp_rgba[yl * 4 + hx];
-		pitch = dc_pitch;
+		dest = thread->dest_for_thread(yl, dc_pitch, ylookup[yl] + sx + (uint32_t*)dc_destorg);
+		source = &thread->dc_temp_rgba[yl * 4 + hx] + thread->skipped_by_thread(yl) * 4;
+		pitch = dc_pitch * thread->num_cores;
+		sincr = 4 * thread->num_cores;
 
 		uint32_t light = calc_light_multiplier(dc_light);
 		ShadeConstants shade_constants = dc_shade_constants;
@@ -1377,7 +1392,7 @@ public:
 			uint32_t blue = clamp<uint32_t>((0x10000 + fg_blue * fg_alpha - bg_blue * bg_alpha) / 256, 256, 256 + 255) - 256;
 
 			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-			source += 4;
+			source += sincr;
 			dest += pitch;
 		} while (--count);
 	}
@@ -1416,15 +1431,16 @@ public:
 		uint32_t *dest;
 		int count;
 		int pitch;
+		int sincr;
 
-		count = yh - yl;
-		if (count < 0)
+		count = thread->count_for_thread(yl, yh - yl + 1);
+		if (count <= 0)
 			return;
-		count++;
 
-		dest = ylookup[yl] + sx + (uint32_t*)dc_destorg;
-		source = &thread->dc_temp_rgba[yl * 4];
-		pitch = dc_pitch;
+		dest = thread->dest_for_thread(yl, dc_pitch, ylookup[yl] + sx + (uint32_t*)dc_destorg);
+		source = &thread->dc_temp_rgba[yl * 4] + thread->skipped_by_thread(yl) * 4;
+		pitch = dc_pitch * thread->num_cores;
+		sincr = 4 * thread->num_cores;
 
 		uint32_t light = calc_light_multiplier(dc_light);
 		ShadeConstants shade_constants = dc_shade_constants;
@@ -1451,7 +1467,7 @@ public:
 				dest[i] = 0xff000000 | (red << 16) | (green << 8) | blue;
 			}
 
-			source += 4;
+			source += sincr;
 			dest += pitch;
 		} while (--count);
 	}

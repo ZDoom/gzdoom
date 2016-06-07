@@ -63,6 +63,11 @@ DrawerCommandQueue *DrawerCommandQueue::Instance()
 	return &queue;
 }
 
+DrawerCommandQueue::~DrawerCommandQueue()
+{
+	StopThreads();
+}
+
 void* DrawerCommandQueue::AllocMemory(size_t size)
 {
 	// Make sure allocations remain 16-byte aligned
@@ -81,19 +86,102 @@ void DrawerCommandQueue::Finish()
 {
 	auto queue = Instance();
 
-	DrawerThread thread;
+	// Give worker threads something to do:
 
-	size_t size = queue->commands.size();
+	std::unique_lock<std::mutex> start_lock(queue->start_mutex);
+	queue->active_commands.swap(queue->commands);
+	queue->run_id++;
+	start_lock.unlock();
+
+	queue->StartThreads();
+	queue->start_condition.notify_all();
+
+	// Do one thread ourselves:
+
+	DrawerThread thread;
+	thread.core = 0;
+	thread.num_cores = queue->threads.size() + 1;
+
+	size_t size = queue->active_commands.size();
 	for (size_t i = 0; i < size; i++)
 	{
-		auto &command = queue->commands[i];
+		auto &command = queue->active_commands[i];
 		command->Execute(&thread);
 	}
 
-	for (auto &command : queue->commands)
+	// Wait for everyone to finish:
+
+	std::unique_lock<std::mutex> end_lock(queue->end_mutex);
+	queue->end_condition.wait(end_lock, [&]() { return queue->finished_threads == queue->threads.size(); });
+
+	// Clean up batch:
+
+	for (auto &command : queue->active_commands)
 		command->~DrawerCommand();
-	queue->commands.clear();
+	queue->active_commands.clear();
 	queue->memorypool_pos = 0;
+	queue->finished_threads = 0;
+}
+
+void DrawerCommandQueue::StartThreads()
+{
+	if (!threads.empty())
+		return;
+
+	int num_threads = std::thread::hardware_concurrency();
+	if (num_threads == 0)
+		num_threads = 4;
+
+	threads.resize(num_threads - 1);
+
+	for (int i = 0; i < num_threads - 1; i++)
+	{
+		DrawerCommandQueue *queue = this;
+		DrawerThread *thread = &threads[i];
+		thread->core = i + 1;
+		thread->num_cores = num_threads;
+		thread->thread = std::thread([=]()
+		{
+			int run_id = 0;
+			while (true)
+			{
+				// Wait until we are signalled to run:
+				std::unique_lock<std::mutex> start_lock(queue->start_mutex);
+				queue->start_condition.wait(start_lock, [&]() { return queue->run_id != run_id || queue->shutdown_flag; });
+				if (queue->shutdown_flag)
+					break;
+				run_id = queue->run_id;
+				start_lock.unlock();
+
+				// Do the work:
+				size_t size = queue->active_commands.size();
+				for (size_t i = 0; i < size; i++)
+				{
+					auto &command = queue->active_commands[i];
+					command->Execute(thread);
+				}
+
+				// Notify main thread that we finished:
+				std::unique_lock<std::mutex> end_lock(queue->end_mutex);
+				queue->finished_threads++;
+				end_lock.unlock();
+				queue->end_condition.notify_all();
+			}
+		});
+	}
+}
+
+void DrawerCommandQueue::StopThreads()
+{
+	std::unique_lock<std::mutex> lock(start_mutex);
+	shutdown_flag = true;
+	lock.unlock();
+	start_condition.notify_all();
+	for (auto &thread : threads)
+		thread.thread.join();
+	threads.clear();
+	lock.lock();
+	shutdown_flag = false;
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -129,28 +217,28 @@ public:
 		fixed_t 			frac;
 		fixed_t 			fracstep;
 
-		count = dc_count;
+		count = thread->count_for_thread(dc_dest_y, dc_count);
 
 		// Zero length, column does not exceed a pixel.
 		if (count <= 0)
 			return;
 
 		// Framebuffer destination address.
-		dest = (uint32_t*)dc_dest;
+		dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
 
 		uint32_t light = calc_light_multiplier(dc_light);
 		ShadeConstants shade_constants = dc_shade_constants;
 
 		// Determine scaling,
 		//	which is the only mapping to be done.
-		fracstep = dc_iscale;
-		frac = dc_texturefrac;
+		fracstep = dc_iscale * thread->num_cores;
+		frac = dc_texturefrac + dc_iscale * thread->skipped_by_thread(dc_dest_y);
 
 		{
 			// [RH] Get local copies of these variables so that the compiler
 			//		has a better chance of optimizing this well.
 			const BYTE *source = dc_source;
-			int pitch = dc_pitch;
+			int pitch = dc_pitch * thread->num_cores;
 
 			// Inner loop that does the actual texture mapping,
 			//	e.g. a DDA-lile scaling.
@@ -190,17 +278,17 @@ public:
 		int 				count;
 		uint32_t*			dest;
 
-		count = dc_count;
+		count = thread->count_for_thread(dc_dest_y, dc_count);
 
 		if (count <= 0)
 			return;
 
-		dest = (uint32_t*)dc_dest;
+		dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
 
 		uint32_t light = calc_light_multiplier(dc_light);
 
 		{
-			int pitch = dc_pitch;
+			int pitch = dc_pitch * thread->num_cores;
 			BYTE color = dc_color;
 
 			do
@@ -235,12 +323,12 @@ public:
 		int count;
 		uint32_t *dest;
 
-		count = dc_count;
+		count = thread->count_for_thread(dc_dest_y, dc_count);
 		if (count <= 0)
 			return;
 
-		dest = (uint32_t*)dc_dest;
-		int pitch = dc_pitch;
+		dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
+		int pitch = dc_pitch * thread->num_cores;
 
 		uint32_t fg = shade_pal_index_simple(dc_color, calc_light_multiplier(dc_light));
 		uint32_t fg_red = (fg >> 24) & 0xff;
@@ -286,12 +374,12 @@ public:
 		int count;
 		uint32_t *dest;
 
-		count = dc_count;
+		count = thread->count_for_thread(dc_dest_y, dc_count);
 		if (count <= 0)
 			return;
 
-		dest = (uint32_t*)dc_dest;
-		int pitch = dc_pitch;
+		dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
+		int pitch = dc_pitch * thread->num_cores;
 
 		uint32_t fg = shade_pal_index_simple(dc_color, calc_light_multiplier(dc_light));
 		uint32_t fg_red = (fg >> 24) & 0xff;
@@ -337,12 +425,12 @@ public:
 		int count;
 		uint32_t *dest;
 
-		count = dc_count;
+		count = thread->count_for_thread(dc_dest_y, dc_count);
 		if (count <= 0)
 			return;
 
-		dest = (uint32_t*)dc_dest;
-		int pitch = dc_pitch;
+		dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
+		int pitch = dc_pitch * thread->num_cores;
 
 		uint32_t fg = shade_pal_index_simple(dc_color, calc_light_multiplier(dc_light));
 		uint32_t fg_red = (fg >> 24) & 0xff;
@@ -388,12 +476,12 @@ public:
 		int count;
 		uint32_t *dest;
 
-		count = dc_count;
+		count = thread->count_for_thread(dc_dest_y, dc_count);
 		if (count <= 0)
 			return;
 
-		dest = (uint32_t*)dc_dest;
-		int pitch = dc_pitch;
+		dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
+		int pitch = dc_pitch * thread->num_cores;
 
 		uint32_t fg = shade_pal_index_simple(dc_color, calc_light_multiplier(dc_light));
 		uint32_t fg_red = (fg >> 24) & 0xff;
@@ -451,15 +539,13 @@ public:
 		if (dc_yh > fuzzviewheight)
 			dc_yh = fuzzviewheight;
 
-		count = dc_yh - dc_yl;
+		count = thread->count_for_thread(dc_yl, dc_yh - dc_yl + 1);
 
 		// Zero length.
-		if (count < 0)
+		if (count <= 0)
 			return;
 
-		count++;
-
-		dest = ylookup[dc_yl] + dc_x + (uint32_t*)dc_destorg;
+		dest = thread->dest_for_thread(dc_yl, dc_pitch, ylookup[dc_yl] + dc_x + (uint32_t*)dc_destorg);
 
 		// Note: this implementation assumes this function is only used for the pinky shadow effect (i.e. no other fancy colormap than black)
 		// I'm not sure if this is really always the case or not.
@@ -467,7 +553,7 @@ public:
 		{
 			// [RH] Make local copies of global vars to try and improve
 			//		the optimizations made by the compiler.
-			int pitch = dc_pitch;
+			int pitch = dc_pitch * thread->num_cores;
 			int fuzz = fuzzpos;
 			int cnt;
 
@@ -573,18 +659,18 @@ public:
 		fixed_t frac;
 		fixed_t fracstep;
 
-		count = dc_count;
+		count = thread->count_for_thread(dc_dest_y, dc_count);
 		if (count <= 0)
 			return;
 
-		dest = (uint32_t*)dc_dest;
+		dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
 
-		fracstep = dc_iscale;
-		frac = dc_texturefrac;
+		fracstep = dc_iscale * thread->num_cores;
+		frac = dc_texturefrac + dc_iscale * thread->skipped_by_thread(dc_dest_y);
 
 		{
 			const BYTE *source = dc_source;
-			int pitch = dc_pitch;
+			int pitch = dc_pitch * thread->num_cores;
 
 			uint32_t light = calc_light_multiplier(dc_light);
 			ShadeConstants shade_constants = dc_shade_constants;
@@ -649,23 +735,23 @@ public:
 		fixed_t 			frac;
 		fixed_t 			fracstep;
 
-		count = dc_count;
+		count = thread->count_for_thread(dc_dest_y, dc_count);
 		if (count <= 0)
 			return;
 
 		uint32_t light = calc_light_multiplier(dc_light);
 		ShadeConstants shade_constants = dc_shade_constants;
 
-		dest = (uint32_t*)dc_dest;
+		dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
 
-		fracstep = dc_iscale;
-		frac = dc_texturefrac;
+		fracstep = dc_iscale * thread->num_cores;
+		frac = dc_texturefrac + dc_iscale * thread->skipped_by_thread(dc_dest_y);
 
 		{
 			// [RH] Local copies of global vars to improve compiler optimizations
 			BYTE *translation = dc_translation;
 			const BYTE *source = dc_source;
-			int pitch = dc_pitch;
+			int pitch = dc_pitch * thread->num_cores;
 
 			do
 			{
@@ -710,22 +796,22 @@ public:
 		fixed_t frac;
 		fixed_t fracstep;
 
-		count = dc_count;
+		count = thread->count_for_thread(dc_dest_y, dc_count);
 		if (count <= 0)
 			return;
 
 		uint32_t light = calc_light_multiplier(dc_light);
 		ShadeConstants shade_constants = dc_shade_constants;
 
-		dest = (uint32_t*)dc_dest;
+		dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
 
-		fracstep = dc_iscale;
-		frac = dc_texturefrac;
+		fracstep = dc_iscale * thread->num_cores;
+		frac = dc_texturefrac + dc_iscale * thread->skipped_by_thread(dc_dest_y);
 
 		{
 			BYTE *translation = dc_translation;
 			const BYTE *source = dc_source;
-			int pitch = dc_pitch;
+			int pitch = dc_pitch * thread->num_cores;
 
 			uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
 			uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
@@ -787,15 +873,15 @@ public:
 		uint32_t *dest;
 		fixed_t frac, fracstep;
 
-		count = dc_count;
+		count = thread->count_for_thread(dc_dest_y, dc_count);
 
 		if (count <= 0)
 			return;
 
-		dest = (uint32_t*)dc_dest;
+		dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
 
-		fracstep = dc_iscale;
-		frac = dc_texturefrac;
+		fracstep = dc_iscale * thread->num_cores;
+		frac = dc_texturefrac + dc_iscale * thread->skipped_by_thread(dc_dest_y);
 
 		uint32_t fg = shade_pal_index_simple(dc_color, calc_light_multiplier(dc_light));
 		uint32_t fg_red = (fg >> 16) & 0xff;
@@ -805,7 +891,7 @@ public:
 		{
 			const BYTE *source = dc_source;
 			BYTE *colormap = dc_colormap;
-			int pitch = dc_pitch;
+			int pitch = dc_pitch * thread->num_cores;
 
 			do
 			{
@@ -863,18 +949,18 @@ public:
 		fixed_t frac;
 		fixed_t fracstep;
 
-		count = dc_count;
+		count = thread->count_for_thread(dc_dest_y, dc_count);
 		if (count <= 0)
 			return;
 
-		dest = (uint32_t*)dc_dest;
+		dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
 
-		fracstep = dc_iscale;
-		frac = dc_texturefrac;
+		fracstep = dc_iscale * thread->num_cores;
+		frac = dc_texturefrac + dc_iscale * thread->skipped_by_thread(dc_dest_y);
 
 		{
 			const BYTE *source = dc_source;
-			int pitch = dc_pitch;
+			int pitch = dc_pitch * thread->num_cores;
 			uint32_t light = calc_light_multiplier(dc_light);
 			ShadeConstants shade_constants = dc_shade_constants;
 
@@ -941,19 +1027,19 @@ public:
 		fixed_t frac;
 		fixed_t fracstep;
 
-		count = dc_count;
+		count = thread->count_for_thread(dc_dest_y, dc_count);
 		if (count <= 0)
 			return;
 
-		dest = (uint32_t*)dc_dest;
+		dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
 
-		fracstep = dc_iscale;
-		frac = dc_texturefrac;
+		fracstep = dc_iscale * thread->num_cores;
+		frac = dc_texturefrac + dc_iscale * thread->skipped_by_thread(dc_dest_y);
 
 		{
 			BYTE *translation = dc_translation;
 			const BYTE *source = dc_source;
-			int pitch = dc_pitch;
+			int pitch = dc_pitch * thread->num_cores;
 			uint32_t light = calc_light_multiplier(dc_light);
 			ShadeConstants shade_constants = dc_shade_constants;
 
@@ -1018,18 +1104,18 @@ public:
 		fixed_t frac;
 		fixed_t fracstep;
 
-		count = dc_count;
+		count = thread->count_for_thread(dc_dest_y, dc_count);
 		if (count <= 0)
 			return;
 
-		dest = (uint32_t*)dc_dest;
+		dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
 
-		fracstep = dc_iscale;
-		frac = dc_texturefrac;
+		fracstep = dc_iscale * thread->num_cores;
+		frac = dc_texturefrac + dc_iscale * thread->skipped_by_thread(dc_dest_y);
 
 		{
 			const BYTE *source = dc_source;
-			int pitch = dc_pitch;
+			int pitch = dc_pitch * thread->num_cores;
 			uint32_t light = calc_light_multiplier(dc_light);
 			ShadeConstants shade_constants = dc_shade_constants;
 
@@ -1096,19 +1182,19 @@ public:
 		fixed_t frac;
 		fixed_t fracstep;
 
-		count = dc_count;
+		count = thread->count_for_thread(dc_dest_y, dc_count);
 		if (count <= 0)
 			return;
 
-		dest = (uint32_t*)dc_dest;
+		dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
 
-		fracstep = dc_iscale;
-		frac = dc_texturefrac;
+		fracstep = dc_iscale * thread->num_cores;
+		frac = dc_texturefrac + dc_iscale * thread->skipped_by_thread(dc_dest_y);
 
 		{
 			BYTE *translation = dc_translation;
 			const BYTE *source = dc_source;
-			int pitch = dc_pitch;
+			int pitch = dc_pitch * thread->num_cores;
 			uint32_t light = calc_light_multiplier(dc_light);
 			ShadeConstants shade_constants = dc_shade_constants;
 
@@ -1173,18 +1259,18 @@ public:
 		fixed_t frac;
 		fixed_t fracstep;
 
-		count = dc_count;
+		count = thread->count_for_thread(dc_dest_y, dc_count);
 		if (count <= 0)
 			return;
 
-		dest = (uint32_t*)dc_dest;
+		dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
 
-		fracstep = dc_iscale;
-		frac = dc_texturefrac;
+		fracstep = dc_iscale * thread->num_cores;
+		frac = dc_texturefrac + dc_iscale * thread->skipped_by_thread(dc_dest_y);
 
 		{
 			const BYTE *source = dc_source;
-			int pitch = dc_pitch;
+			int pitch = dc_pitch * thread->num_cores;
 			uint32_t light = calc_light_multiplier(dc_light);
 			ShadeConstants shade_constants = dc_shade_constants;
 			uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
@@ -1250,19 +1336,19 @@ public:
 		fixed_t frac;
 		fixed_t fracstep;
 
-		count = dc_count;
+		count = thread->count_for_thread(dc_dest_y, dc_count);
 		if (count <= 0)
 			return;
 
-		dest = (uint32_t*)dc_dest;
+		dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
 
-		fracstep = dc_iscale;
-		frac = dc_texturefrac;
+		fracstep = dc_iscale * thread->num_cores;
+		frac = dc_texturefrac + dc_iscale * thread->skipped_by_thread(dc_dest_y);
 
 		{
 			BYTE *translation = dc_translation;
 			const BYTE *source = dc_source;
-			int pitch = dc_pitch;
+			int pitch = dc_pitch * thread->num_cores;
 			uint32_t light = calc_light_multiplier(dc_light);
 			ShadeConstants shade_constants = dc_shade_constants;
 
@@ -1329,6 +1415,9 @@ public:
 #ifdef NO_SSE
 	void Execute(DrawerThread *thread) override
 	{
+		if (thread->line_skipped_by_thread(ds_y))
+			return;
+
 		dsfixed_t			xfrac;
 		dsfixed_t			yfrac;
 		dsfixed_t			xstep;
@@ -1391,6 +1480,9 @@ public:
 #else
 	void Execute(DrawerThread *thread) override
 	{
+		if (thread->line_skipped_by_thread(ds_y))
+			return;
+
 		dsfixed_t			xfrac;
 		dsfixed_t			yfrac;
 		dsfixed_t			xstep;
@@ -1572,6 +1664,9 @@ public:
 
 	void Execute(DrawerThread *thread) override
 	{
+		if (thread->line_skipped_by_thread(ds_y))
+			return;
+
 		dsfixed_t			xfrac;
 		dsfixed_t			yfrac;
 		dsfixed_t			xstep;
@@ -1671,6 +1766,9 @@ public:
 
 	void Execute(DrawerThread *thread) override
 	{
+		if (thread->line_skipped_by_thread(ds_y))
+			return;
+
 		dsfixed_t			xfrac;
 		dsfixed_t			yfrac;
 		dsfixed_t			xstep;
@@ -1789,6 +1887,9 @@ public:
 
 	void Execute(DrawerThread *thread) override
 	{
+		if (thread->line_skipped_by_thread(ds_y))
+			return;
+
 		dsfixed_t			xfrac;
 		dsfixed_t			yfrac;
 		dsfixed_t			xstep;
@@ -1917,6 +2018,9 @@ public:
 
 	void Execute(DrawerThread *thread) override
 	{
+		if (thread->line_skipped_by_thread(ds_y))
+			return;
+
 		dsfixed_t			xfrac;
 		dsfixed_t			yfrac;
 		dsfixed_t			xstep;
@@ -2035,6 +2139,9 @@ public:
 
 	void Execute(DrawerThread *thread) override
 	{
+		if (thread->line_skipped_by_thread(ds_y))
+			return;
+
 		dsfixed_t			xfrac;
 		dsfixed_t			yfrac;
 		dsfixed_t			xstep;
@@ -2149,6 +2256,9 @@ public:
 
 	void Execute(DrawerThread *thread) override
 	{
+		if (thread->line_skipped_by_thread(ds_y))
+			return;
+
 		uint32_t *dest = ylookup[ds_y] + ds_x1 + (uint32_t*)dc_destorg;
 		int count = (ds_x2 - ds_x1 + 1);
 		uint32_t light = calc_light_multiplier(ds_light);
@@ -2186,13 +2296,16 @@ public:
 
 	void Execute(DrawerThread *thread) override
 	{
-		DWORD fracstep = dc_iscale;
-		DWORD frac = dc_texturefrac;
-		int count = dc_count;
+		int count = thread->count_for_thread(dc_dest_y, dc_count);
+		if (count <= 0)
+			return;
+
+		DWORD fracstep = dc_iscale * thread->num_cores;
+		DWORD frac = dc_texturefrac + dc_iscale * thread->skipped_by_thread(dc_dest_y);
 		const BYTE *source = dc_source;
-		uint32_t *dest = (uint32_t*)dc_dest;
+		uint32_t *dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
 		int bits = vlinebits;
-		int pitch = dc_pitch;
+		int pitch = dc_pitch * thread->num_cores;
 
 		uint32_t light = calc_light_multiplier(dc_light);
 		ShadeConstants shade_constants = dc_shade_constants;
@@ -2238,8 +2351,12 @@ public:
 #ifdef NO_SSE
 	void Execute(DrawerThread *thread) override
 	{
-		uint32_t *dest = (uint32_t*)dc_dest;
-		int count = dc_count;
+		int count = thread->count_for_thread(dc_dest_y, dc_count);
+		if (count <= 0)
+			return;
+
+		uint32_t *dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
+		int pitch = dc_pitch * thread->num_cores;
 		int bits = vlinebits;
 		DWORD place;
 
@@ -2250,21 +2367,34 @@ public:
 
 		ShadeConstants shade_constants = dc_shade_constants;
 
+		DWORD local_vplce[4] = { vplce[0], vplce[1], vplce[2], vplce[3] };
+		DWORD local_vince[4] = { vince[0], vince[1], vince[2], vince[3] };
+		int skipped = thread->skipped_by_thread(dc_dest_y);
+		for (int i = 0; i < 4; i++)
+		{
+			local_vplce[i] += local_vince[i] * skipped;
+			local_vince[i] *= thread->num_cores;
+		}
+
 		do
 		{
-			dest[0] = shade_pal_index(bufplce[0][(place = vplce[0]) >> bits], light0, shade_constants); vplce[0] = place + vince[0];
-			dest[1] = shade_pal_index(bufplce[1][(place = vplce[1]) >> bits], light1, shade_constants); vplce[1] = place + vince[1];
-			dest[2] = shade_pal_index(bufplce[2][(place = vplce[2]) >> bits], light2, shade_constants); vplce[2] = place + vince[2];
-			dest[3] = shade_pal_index(bufplce[3][(place = vplce[3]) >> bits], light3, shade_constants); vplce[3] = place + vince[3];
-			dest += dc_pitch;
+			dest[0] = shade_pal_index(bufplce[0][(place = local_vplce[0]) >> bits], light0, shade_constants); local_vplce[0] = place + local_vince[0];
+			dest[1] = shade_pal_index(bufplce[1][(place = local_vplce[1]) >> bits], light1, shade_constants); local_vplce[1] = place + local_vince[1];
+			dest[2] = shade_pal_index(bufplce[2][(place = local_vplce[2]) >> bits], light2, shade_constants); local_vplce[2] = place + local_vince[2];
+			dest[3] = shade_pal_index(bufplce[3][(place = local_vplce[3]) >> bits], light3, shade_constants); local_vplce[3] = place + local_vince[3];
+			dest += pitch;
 		} while (--count);
 	}
 #else
 	void Execute(DrawerThread *thread) override
 	{
-		uint32_t *dest = (uint32_t*)dc_dest;
-		int count = dc_count;
+		int count = thread->count_for_thread(dc_dest_y, dc_count);
+		if (count <= 0)
+			return;
+
+		uint32_t *dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
 		int bits = vlinebits;
+		int pitch = dc_pitch * thread->num_cores;
 
 		uint32_t light0 = calc_light_multiplier(palookuplight[0]);
 		uint32_t light1 = calc_light_multiplier(palookuplight[1]);
@@ -2276,6 +2406,12 @@ public:
 		uint32_t *palette = (uint32_t*)GPalette.BaseColors;
 		DWORD local_vplce[4] = { vplce[0], vplce[1], vplce[2], vplce[3] };
 		DWORD local_vince[4] = { vince[0], vince[1], vince[2], vince[3] };
+		int skipped = thread->skipped_by_thread(dc_dest_y);
+		for (int i = 0; i < 4; i++)
+		{
+			local_vplce[i] += local_vince[i] * skipped;
+			local_vince[i] *= thread->num_cores;
+		}
 
 		if (shade_constants.simple_shade)
 		{
@@ -2300,7 +2436,7 @@ public:
 				__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
 				SSE_SHADE_SIMPLE(fg);
 				_mm_storeu_si128((__m128i*)dest, fg);
-				dest += dc_pitch;
+				dest += pitch;
 			} while (--count);
 		}
 		else
@@ -2326,7 +2462,7 @@ public:
 				__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
 				SSE_SHADE(fg, shade_constants);
 				_mm_storeu_si128((__m128i*)dest, fg);
-				dest += dc_pitch;
+				dest += pitch;
 			} while (--count);
 		}
 	}
@@ -2361,13 +2497,16 @@ public:
 
 	void Execute(DrawerThread *thread) override
 	{
-		DWORD fracstep = dc_iscale;
-		DWORD frac = dc_texturefrac;
-		int count = dc_count;
+		int count = thread->count_for_thread(dc_dest_y, dc_count);
+		if (count <= 0)
+			return;
+
+		DWORD fracstep = dc_iscale * thread->num_cores;
+		DWORD frac = dc_texturefrac + dc_iscale * thread->skipped_by_thread(dc_dest_y);
 		const BYTE *source = dc_source;
-		uint32_t *dest = (uint32_t*)dc_dest;
+		uint32_t *dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
 		int bits = mvlinebits;
-		int pitch = dc_pitch;
+		int pitch = dc_pitch * thread->num_cores;
 
 		uint32_t light = calc_light_multiplier(dc_light);
 		ShadeConstants shade_constants = dc_shade_constants;
@@ -2417,8 +2556,12 @@ public:
 #ifdef NO_SSE
 	void Execute(DrawerThread *thread) override
 	{
-		uint32_t *dest = (uint32_t*)dc_dest;
-		int count = dc_count;
+		int count = thread->count_for_thread(dc_dest_y, dc_count);
+		if (count <= 0)
+			return;
+
+		uint32_t *dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
+		int pitch = dc_pitch * thread->num_cores;
 		int bits = mvlinebits;
 		DWORD place;
 
@@ -2429,21 +2572,34 @@ public:
 
 		ShadeConstants shade_constants = dc_shade_constants;
 
+		DWORD local_vplce[4] = { vplce[0], vplce[1], vplce[2], vplce[3] };
+		DWORD local_vince[4] = { vince[0], vince[1], vince[2], vince[3] };
+		int skipped = thread->skipped_by_thread(dc_dest_y);
+		for (int i = 0; i < 4; i++)
+		{
+			local_vplce[i] += local_vince[i] * skipped;
+			local_vince[i] *= thread->num_cores;
+		}
+
 		do
 		{
 			BYTE pix;
-			pix = bufplce[0][(place = vplce[0]) >> bits]; if (pix) dest[0] = shade_pal_index(pix, light0, shade_constants); vplce[0] = place + vince[0];
-			pix = bufplce[1][(place = vplce[1]) >> bits]; if (pix) dest[1] = shade_pal_index(pix, light1, shade_constants); vplce[1] = place + vince[1];
-			pix = bufplce[2][(place = vplce[2]) >> bits]; if (pix) dest[2] = shade_pal_index(pix, light2, shade_constants); vplce[2] = place + vince[2];
-			pix = bufplce[3][(place = vplce[3]) >> bits]; if (pix) dest[3] = shade_pal_index(pix, light3, shade_constants); vplce[3] = place + vince[3];
-			dest += dc_pitch;
+			pix = bufplce[0][(place = local_vplce[0]) >> bits]; if (pix) dest[0] = shade_pal_index(pix, light0, shade_constants); local_vplce[0] = place + local_vince[0];
+			pix = bufplce[1][(place = local_vplce[1]) >> bits]; if (pix) dest[1] = shade_pal_index(pix, light1, shade_constants); local_vplce[1] = place + local_vince[1];
+			pix = bufplce[2][(place = local_vplce[2]) >> bits]; if (pix) dest[2] = shade_pal_index(pix, light2, shade_constants); local_vplce[2] = place + local_vince[2];
+			pix = bufplce[3][(place = local_vplce[3]) >> bits]; if (pix) dest[3] = shade_pal_index(pix, light3, shade_constants); local_vplce[3] = place + local_vince[3];
+			dest += pitch;
 		} while (--count);
 	}
 #else
 	void Execute(DrawerThread *thread) override
 	{
-		uint32_t *dest = (uint32_t*)dc_dest;
-		int count = dc_count;
+		int count = thread->count_for_thread(dc_dest_y, dc_count);
+		if (count <= 0)
+			return;
+
+		uint32_t *dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
+		int pitch = dc_pitch * thread->num_cores;
 		int bits = mvlinebits;
 
 		uint32_t light0 = calc_light_multiplier(palookuplight[0]);
@@ -2456,6 +2612,12 @@ public:
 		uint32_t *palette = (uint32_t*)GPalette.BaseColors;
 		DWORD local_vplce[4] = { vplce[0], vplce[1], vplce[2], vplce[3] };
 		DWORD local_vince[4] = { vince[0], vince[1], vince[2], vince[3] };
+		int skipped = thread->skipped_by_thread(dc_dest_y);
+		for (int i = 0; i < 4; i++)
+		{
+			local_vplce[i] += local_vince[i] * skipped;
+			local_vince[i] *= thread->num_cores;
+		}
 
 		if (shade_constants.simple_shade)
 		{
@@ -2483,7 +2645,7 @@ public:
 				__m128i fg = _mm_set_epi32(palette[pix3], palette[pix2], palette[pix1], palette[pix0]);
 				SSE_SHADE_SIMPLE(fg);
 				_mm_maskmoveu_si128(fg, movemask, (char*)dest);
-				dest += dc_pitch;
+				dest += pitch;
 			} while (--count);
 		}
 		else
@@ -2512,7 +2674,7 @@ public:
 				__m128i fg = _mm_set_epi32(palette[pix3], palette[pix2], palette[pix1], palette[pix0]);
 				SSE_SHADE(fg, shade_constants);
 				_mm_maskmoveu_si128(fg, movemask, (char*)dest);
-				dest += dc_pitch;
+				dest += pitch;
 			} while (--count);
 		}
 	}
@@ -2551,13 +2713,16 @@ public:
 
 	void Execute(DrawerThread *thread) override
 	{
-		DWORD fracstep = dc_iscale;
-		DWORD frac = dc_texturefrac;
-		int count = dc_count;
+		int count = thread->count_for_thread(dc_dest_y, dc_count);
+		if (count <= 0)
+			return;
+
+		DWORD fracstep = dc_iscale * thread->num_cores;
+		DWORD frac = dc_texturefrac + dc_iscale * thread->skipped_by_thread(dc_dest_y);
 		const BYTE *source = dc_source;
-		uint32_t *dest = (uint32_t*)dc_dest;
+		uint32_t *dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
 		int bits = tmvlinebits;
-		int pitch = dc_pitch;
+		int pitch = dc_pitch * thread->num_cores;
 
 		uint32_t light = calc_light_multiplier(dc_light);
 		ShadeConstants shade_constants = dc_shade_constants;
@@ -2626,8 +2791,12 @@ public:
 
 	void Execute(DrawerThread *thread) override
 	{
-		uint32_t *dest = (uint32_t*)dc_dest;
-		int count = dc_count;
+		int count = thread->count_for_thread(dc_dest_y, dc_count);
+		if (count <= 0)
+			return;
+
+		uint32_t *dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
+		int pitch = dc_pitch * thread->num_cores;
 		int bits = tmvlinebits;
 
 		uint32_t light[4];
@@ -2641,11 +2810,20 @@ public:
 		uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
 		uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
 
+		DWORD local_vplce[4] = { vplce[0], vplce[1], vplce[2], vplce[3] };
+		DWORD local_vince[4] = { vince[0], vince[1], vince[2], vince[3] };
+		int skipped = thread->skipped_by_thread(dc_dest_y);
+		for (int i = 0; i < 4; i++)
+		{
+			local_vplce[i] += local_vince[i] * skipped;
+			local_vince[i] *= thread->num_cores;
+		}
+
 		do
 		{
 			for (int i = 0; i < 4; ++i)
 			{
-				BYTE pix = bufplce[i][vplce[i] >> bits];
+				BYTE pix = bufplce[i][local_vplce[i] >> bits];
 				if (pix != 0)
 				{
 					uint32_t fg = shade_pal_index(pix, light[i], shade_constants);
@@ -2663,9 +2841,9 @@ public:
 
 					dest[i] = 0xff000000 | (red << 16) | (green << 8) | blue;
 				}
-				vplce[i] += vince[i];
+				local_vplce[i] += local_vince[i];
 			}
-			dest += dc_pitch;
+			dest += pitch;
 		} while (--count);
 	}
 };
@@ -2702,13 +2880,16 @@ public:
 
 	void Execute(DrawerThread *thread) override
 	{
-		DWORD fracstep = dc_iscale;
-		DWORD frac = dc_texturefrac;
-		int count = dc_count;
+		int count = thread->count_for_thread(dc_dest_y, dc_count);
+		if (count <= 0)
+			return;
+
+		DWORD fracstep = dc_iscale * thread->num_cores;
+		DWORD frac = dc_texturefrac + dc_iscale * thread->skipped_by_thread(dc_dest_y);
 		const BYTE *source = dc_source;
-		uint32_t *dest = (uint32_t*)dc_dest;
+		uint32_t *dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
 		int bits = tmvlinebits;
-		int pitch = dc_pitch;
+		int pitch = dc_pitch * thread->num_cores;
 
 		uint32_t light = calc_light_multiplier(dc_light);
 		ShadeConstants shade_constants = dc_shade_constants;
@@ -2777,8 +2958,12 @@ public:
 
 	void Execute(DrawerThread *thread) override
 	{
-		uint32_t *dest = (uint32_t*)dc_dest;
-		int count = dc_count;
+		int count = thread->count_for_thread(dc_dest_y, dc_count);
+		if (count <= 0)
+			return;
+
+		uint32_t *dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
+		int pitch = dc_pitch * thread->num_cores;
 		int bits = tmvlinebits;
 
 		uint32_t light[4];
@@ -2792,11 +2977,20 @@ public:
 		uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
 		uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
 
+		DWORD local_vplce[4] = { vplce[0], vplce[1], vplce[2], vplce[3] };
+		DWORD local_vince[4] = { vince[0], vince[1], vince[2], vince[3] };
+		int skipped = thread->skipped_by_thread(dc_dest_y);
+		for (int i = 0; i < 4; i++)
+		{
+			local_vplce[i] += local_vince[i] * skipped;
+			local_vince[i] *= thread->num_cores;
+		}
+
 		do
 		{
 			for (int i = 0; i < 4; ++i)
 			{
-				BYTE pix = bufplce[i][vplce[i] >> bits];
+				BYTE pix = bufplce[i][local_vplce[i] >> bits];
 				if (pix != 0)
 				{
 					uint32_t fg = shade_pal_index(pix, light[i], shade_constants);
@@ -2814,9 +3008,9 @@ public:
 
 					dest[i] = 0xff000000 | (red << 16) | (green << 8) | blue;
 				}
-				vplce[i] += vince[i];
+				local_vplce[i] += local_vince[i];
 			}
-			dest += dc_pitch;
+			dest += pitch;
 		} while (--count);
 	}
 };
@@ -2853,13 +3047,16 @@ public:
 
 	void Execute(DrawerThread *thread) override
 	{
-		DWORD fracstep = dc_iscale;
-		DWORD frac = dc_texturefrac;
-		int count = dc_count;
+		int count = thread->count_for_thread(dc_dest_y, dc_count);
+		if (count <= 0)
+			return;
+
+		DWORD fracstep = dc_iscale * thread->num_cores;
+		DWORD frac = dc_texturefrac + dc_iscale * thread->skipped_by_thread(dc_dest_y);
 		const BYTE *source = dc_source;
-		uint32_t *dest = (uint32_t*)dc_dest;
+		uint32_t *dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
 		int bits = tmvlinebits;
-		int pitch = dc_pitch;
+		int pitch = dc_pitch * thread->num_cores;
 
 		uint32_t light = calc_light_multiplier(dc_light);
 		ShadeConstants shade_constants = dc_shade_constants;
@@ -2928,8 +3125,12 @@ public:
 
 	void Execute(DrawerThread *thread) override
 	{
-		uint32_t *dest = (uint32_t*)dc_dest;
-		int count = dc_count;
+		int count = thread->count_for_thread(dc_dest_y, dc_count);
+		if (count <= 0)
+			return;
+
+		uint32_t *dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
+		int pitch = dc_pitch * thread->num_cores;
 		int bits = tmvlinebits;
 
 		uint32_t light[4];
@@ -2943,11 +3144,20 @@ public:
 		uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
 		uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
 
+		DWORD local_vplce[4] = { vplce[0], vplce[1], vplce[2], vplce[3] };
+		DWORD local_vince[4] = { vince[0], vince[1], vince[2], vince[3] };
+		int skipped = thread->skipped_by_thread(dc_dest_y);
+		for (int i = 0; i < 4; i++)
+		{
+			local_vplce[i] += local_vince[i] * skipped;
+			local_vince[i] *= thread->num_cores;
+		}
+
 		do
 		{
 			for (int i = 0; i < 4; ++i)
 			{
-				BYTE pix = bufplce[i][vplce[i] >> bits];
+				BYTE pix = bufplce[i][local_vplce[i] >> bits];
 				if (pix != 0)
 				{
 					uint32_t fg = shade_pal_index(pix, light[i], shade_constants);
@@ -2965,9 +3175,9 @@ public:
 
 					dest[i] = 0xff000000 | (red << 16) | (green << 8) | blue;
 				}
-				vplce[i] += vince[i];
+				local_vplce[i] += local_vince[i];
 			}
-			dest += dc_pitch;
+			dest += pitch;
 		} while (--count);
 	}
 };
@@ -3004,13 +3214,16 @@ public:
 
 	void Execute(DrawerThread *thread) override
 	{
-		DWORD fracstep = dc_iscale;
-		DWORD frac = dc_texturefrac;
-		int count = dc_count;
+		int count = thread->count_for_thread(dc_dest_y, dc_count);
+		if (count <= 0)
+			return;
+
+		DWORD fracstep = dc_iscale * thread->num_cores;
+		DWORD frac = dc_texturefrac + dc_iscale * thread->skipped_by_thread(dc_dest_y);
 		const BYTE *source = dc_source;
-		uint32_t *dest = (uint32_t*)dc_dest;
+		uint32_t *dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
 		int bits = tmvlinebits;
-		int pitch = dc_pitch;
+		int pitch = dc_pitch * thread->num_cores;
 
 		uint32_t light = calc_light_multiplier(dc_light);
 		ShadeConstants shade_constants = dc_shade_constants;
@@ -3079,8 +3292,12 @@ public:
 
 	void Execute(DrawerThread *thread) override
 	{
-		uint32_t *dest = (uint32_t*)dc_dest;
-		int count = dc_count;
+		int count = thread->count_for_thread(dc_dest_y, dc_count);
+		if (count <= 0)
+			return;
+
+		uint32_t *dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
+		int pitch = dc_pitch * thread->num_cores;
 		int bits = tmvlinebits;
 
 		uint32_t light[4];
@@ -3094,11 +3311,20 @@ public:
 		uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
 		uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
 
+		DWORD local_vplce[4] = { vplce[0], vplce[1], vplce[2], vplce[3] };
+		DWORD local_vince[4] = { vince[0], vince[1], vince[2], vince[3] };
+		int skipped = thread->skipped_by_thread(dc_dest_y);
+		for (int i = 0; i < 4; i++)
+		{
+			local_vplce[i] += local_vince[i] * skipped;
+			local_vince[i] *= thread->num_cores;
+		}
+
 		do
 		{
 			for (int i = 0; i < 4; ++i)
 			{
-				BYTE pix = bufplce[i][vplce[i] >> bits];
+				BYTE pix = bufplce[i][local_vplce[i] >> bits];
 				if (pix != 0)
 				{
 					uint32_t fg = shade_pal_index(pix, light[i], shade_constants);
@@ -3116,9 +3342,9 @@ public:
 
 					dest[i] = 0xff000000 | (red << 16) | (green << 8) | blue;
 				}
-				vplce[i] += vince[i];
+				local_vplce[i] += local_vince[i];
 			}
-			dest += dc_pitch;
+			dest += pitch;
 		} while (--count);
 	}
 };
@@ -3146,6 +3372,9 @@ public:
 
 	void Execute(DrawerThread *thread) override
 	{
+		if (thread->line_skipped_by_thread(_y))
+			return;
+
 		int y = _y;
 		int x = _x;
 		int x2 = _x2;

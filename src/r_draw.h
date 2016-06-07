@@ -25,6 +25,9 @@
 
 #include "r_defs.h"
 #include <vector>
+#include <memory>
+#include <thread>
+#include <mutex>
 
 // Spectre/Invisibility.
 #define FUZZTABLE	50
@@ -73,7 +76,6 @@ extern "C" BYTE *dc_temp;
 extern "C" unsigned int	dc_tspans[4][MAXHEIGHT];
 extern "C" unsigned int	*dc_ctspan[4];
 extern "C" unsigned int	horizspans[4];
-
 
 // [RH] Pointers to the different column and span drawers...
 
@@ -443,19 +445,58 @@ void R_SetTranslationMap(lighttable_t *translation);
 // Wait until all drawers finished executing
 void R_FinishDrawerCommands();
 
+class DrawerCommandQueue;
+
 class DrawerThread
 {
 public:
+	std::thread thread;
+
+	// Thread line index of this thread
 	int core = 0;
+
+	// Number of active threads
 	int num_cores = 1;
 
 	uint32_t dc_temp_rgbabuff_rgba[MAXHEIGHT * 4];
 	uint32_t *dc_temp_rgba;
+
+	// Checks if a line is rendered by this thread
+	bool line_skipped_by_thread(int line)
+	{
+		return line % num_cores != core;
+	}
+
+	// The number of lines to skip to reach the first line to be rendered by this thread
+	int skipped_by_thread(int first_line)
+	{
+		return (num_cores - (first_line - core) % num_cores) % num_cores;
+	}
+
+	// The number of lines to be rendered by this thread
+	int count_for_thread(int first_line, int count)
+	{
+		return (count - skipped_by_thread(first_line) + num_cores - 1) / num_cores;
+	}
+
+	// Calculate the dest address for the first line to be rendered by this thread
+	uint32_t *dest_for_thread(int first_line, int pitch, uint32_t *dest)
+	{
+		return dest + skipped_by_thread(first_line) * pitch;
+	}
 };
 
 class DrawerCommand
 {
+protected:
+	int dc_dest_y;
+
 public:
+	DrawerCommand()
+	{
+		dc_dest_y = static_cast<int>((dc_dest - dc_destorg) / (dc_pitch * 4));
+	}
+
 	virtual void Execute(DrawerThread *thread) = 0;
 };
 
@@ -467,7 +508,24 @@ class DrawerCommandQueue
 
 	std::vector<DrawerCommand *> commands;
 
+	std::vector<DrawerThread> threads;
+
+	std::mutex start_mutex;
+	std::condition_variable start_condition;
+	std::vector<DrawerCommand *> active_commands;
+	bool shutdown_flag = false;
+	int run_id = 0;
+
+	std::mutex end_mutex;
+	std::condition_variable end_condition;
+	int finished_threads = 0;
+
+	void StartThreads();
+	void StopThreads();
+
 	static DrawerCommandQueue *Instance();
+
+	~DrawerCommandQueue();
 
 public:
 	// Allocate memory valid for the duration of a command execution

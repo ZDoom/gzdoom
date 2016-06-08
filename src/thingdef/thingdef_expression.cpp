@@ -358,10 +358,22 @@ FxExpression *FxIntCast::Resolve(FCompileContext &ctx)
 
 	if (basex->ValueType->GetRegType() == REGT_INT)
 	{
-		FxExpression *x = basex;
-		basex = NULL;
-		delete this;
-		return x;
+		if (basex->ValueType != TypeName)
+		{
+			FxExpression *x = basex;
+			basex = NULL;
+			delete this;
+			return x;
+		}
+		else
+		{
+			// Ugh. This should abort, but too many mods fell into this logic hole somewhere, so this seroious error needs to be reduced to a warning. :(
+			if (!basex->isConstant())	ScriptPosition.Message(MSG_WARNING, "Numeric type expected, got a name");
+			else ScriptPosition.Message(MSG_WARNING, "Numeric type expected, got \"%s\"", static_cast<FxConstant*>(basex)->GetValue().GetName().GetChars());
+			FxExpression * x = new FxConstant(0, ScriptPosition);
+			delete this;
+			return x;
+		}
 	}
 	else if (basex->ValueType->GetRegType() == REGT_FLOAT)
 	{
@@ -374,12 +386,9 @@ FxExpression *FxIntCast::Resolve(FCompileContext &ctx)
 		}
 		return this;
 	}
-	else
-	{
-		ScriptPosition.Message(MSG_ERROR, "Numeric type expected");
-		delete this;
-		return NULL;
-	}
+	ScriptPosition.Message(MSG_ERROR, "Numeric type expected");
+	delete this;
+	return NULL;
 }
 
 //==========================================================================
@@ -443,14 +452,26 @@ FxExpression *FxFloatCast::Resolve(FCompileContext &ctx)
 	}
 	else if (basex->ValueType->GetRegType() == REGT_INT)
 	{
-		if (basex->isConstant())
+		if (basex->ValueType != TypeName)
 		{
-			ExpVal constval = static_cast<FxConstant *>(basex)->GetValue();
-			FxExpression *x = new FxConstant(constval.GetFloat(), ScriptPosition);
+			if (basex->isConstant())
+			{
+				ExpVal constval = static_cast<FxConstant *>(basex)->GetValue();
+				FxExpression *x = new FxConstant(constval.GetFloat(), ScriptPosition);
+				delete this;
+				return x;
+			}
+			return this;
+		}
+		else
+		{
+			// Ugh. This should abort, but too many mods fell into this logic hole somewhere, so this seroious error needs to be reduced to a warning. :(
+			if (!basex->isConstant()) ScriptPosition.Message(MSG_WARNING, "Numeric type expected, got a name");
+			else ScriptPosition.Message(MSG_WARNING, "Numeric type expected, got \"%s\"", static_cast<FxConstant*>(basex)->GetValue().GetName().GetChars());
+			FxExpression *x = new FxConstant(0.0, ScriptPosition);
 			delete this;
 			return x;
 		}
-		return this;
 	}
 	else
 	{

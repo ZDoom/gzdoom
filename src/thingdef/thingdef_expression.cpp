@@ -368,8 +368,8 @@ FxExpression *FxIntCast::Resolve(FCompileContext &ctx)
 		else
 		{
 			// Ugh. This should abort, but too many mods fell into this logic hole somewhere, so this seroious error needs to be reduced to a warning. :(
-			if (!basex->isConstant())	ScriptPosition.Message(MSG_WARNING, "Numeric type expected, got a name");
-			else ScriptPosition.Message(MSG_WARNING, "Numeric type expected, got \"%s\"", static_cast<FxConstant*>(basex)->GetValue().GetName().GetChars());
+			if (!basex->isConstant())	ScriptPosition.Message(MSG_OPTERROR, "Numeric type expected, got a name");
+			else ScriptPosition.Message(MSG_OPTERROR, "Numeric type expected, got \"%s\"", static_cast<FxConstant*>(basex)->GetValue().GetName().GetChars());
 			FxExpression * x = new FxConstant(0, ScriptPosition);
 			delete this;
 			return x;
@@ -466,8 +466,8 @@ FxExpression *FxFloatCast::Resolve(FCompileContext &ctx)
 		else
 		{
 			// Ugh. This should abort, but too many mods fell into this logic hole somewhere, so this seroious error needs to be reduced to a warning. :(
-			if (!basex->isConstant()) ScriptPosition.Message(MSG_WARNING, "Numeric type expected, got a name");
-			else ScriptPosition.Message(MSG_WARNING, "Numeric type expected, got \"%s\"", static_cast<FxConstant*>(basex)->GetValue().GetName().GetChars());
+			if (!basex->isConstant()) ScriptPosition.Message(MSG_OPTERROR, "Numeric type expected, got a name");
+			else ScriptPosition.Message(MSG_OPTERROR, "Numeric type expected, got \"%s\"", static_cast<FxConstant*>(basex)->GetValue().GetName().GetChars());
 			FxExpression *x = new FxConstant(0.0, ScriptPosition);
 			delete this;
 			return x;
@@ -3924,7 +3924,7 @@ FxExpression *FxClassTypeCast::Resolve(FCompileContext &ctx)
 			{
 				/* lax */
 				// Since this happens in released WADs it must pass without a terminal error... :(
-				ScriptPosition.Message(MSG_WARNING,
+				ScriptPosition.Message(MSG_OPTERROR,
 					"Unknown class name '%s'",
 					clsname.GetChars(), desttype->TypeName.GetChars());
 			}
@@ -4095,7 +4095,7 @@ FxExpression *FxMultiNameState::Resolve(FCompileContext &ctx)
 			destination = scope->FindState(names.Size()-1, &names[1], false);
 			if (destination == NULL)
 			{
-				ScriptPosition.Message(MSG_WARNING, "Unknown state jump destination");
+				ScriptPosition.Message(MSG_OPTERROR, "Unknown state jump destination");
 				/* lax */
 				return this;
 			}

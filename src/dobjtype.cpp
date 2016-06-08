@@ -60,6 +60,7 @@
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
+EXTERN_CVAR(Bool, strictdecorate);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -3067,7 +3068,8 @@ void PClass::InsertIntoHash ()
 	if (found != NULL)
 	{ // This type has already been inserted
 	  // ... but there is no need whatsoever to make it a fatal error!
-		Printf (TEXTCOLOR_RED"Tried to register class '%s' more than once.\n", TypeName.GetChars());
+		if (!strictdecorate) Printf (TEXTCOLOR_RED"Tried to register class '%s' more than once.\n", TypeName.GetChars());
+		else I_Error("Tried to register class '%s' more than once.\n", TypeName.GetChars());
 		TypeTable.ReplaceType(this, found, bucket);
 	}
 	else

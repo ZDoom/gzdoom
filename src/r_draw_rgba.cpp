@@ -3661,16 +3661,16 @@ void R_FillSpan_RGBA()
 	DrawerCommandQueue::QueueCommand<FillSpanRGBACommand>();
 }
 
-extern FTexture *rw_pic; // For the asserts below
+//extern FTexture *rw_pic; // For the asserts below
 
 DWORD vlinec1_RGBA()
 {
-	DWORD fracstep = dc_iscale;
+	/*DWORD fracstep = dc_iscale;
 	DWORD frac = dc_texturefrac;
 	DWORD height = rw_pic->GetHeight();
 	assert((frac >> vlinebits) < height);
-	frac += dc_count * fracstep;
-	assert((frac >> vlinebits) <= height);
+	frac += (dc_count-1) * fracstep;
+	assert((frac >> vlinebits) <= height);*/
 
 	DrawerCommandQueue::QueueCommand<Vlinec1RGBACommand>();
 	return dc_texturefrac + dc_count * dc_iscale;

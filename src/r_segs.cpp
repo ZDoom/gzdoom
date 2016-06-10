@@ -1087,23 +1087,21 @@ uint32_t wallscan_drawcol1(int x, int y1, int y2, uint32_t uv_start, uint32_t uv
 	{
 		uint32_t uv_pos = uv_start;
 
-		int left = y2 - y1;
+		uint32_t left = y2 - y1;
 		while (left > 0)
 		{
-			int next_uv_wrap = (uv_max - uv_pos + uv_step - 1) / uv_step;
-			int count = MIN(left, next_uv_wrap);
-			if (count <= 0)
-				break; // This should never happen, but it does..
+			uint32_t available = uv_max - uv_pos;
+			uint32_t next_uv_wrap = available / uv_step;
+			if (available % uv_step != 0)
+				next_uv_wrap++;
+			uint32_t count = MIN(left, next_uv_wrap);
 
-			if (count > 0)
-			{
-				dc_source = source;
-				dc_dest = (ylookup[y1] + x) * pixelsize + dc_destorg;
-				dc_count = count;
-				dc_iscale = uv_step;
-				dc_texturefrac = uv_pos;
-				draw1column();
-			}
+			dc_source = source;
+			dc_dest = (ylookup[y1] + x) * pixelsize + dc_destorg;
+			dc_count = count;
+			dc_iscale = uv_step;
+			dc_texturefrac = uv_pos;
+			draw1column();
 
 			left -= count;
 			uv_pos += uv_step * count;
@@ -1138,30 +1136,28 @@ void wallscan_drawcol4(int x, int y1, int y2, uint32_t *uv_pos, uint32_t *uv_ste
 		for (int i = 0; i < 4; i++)
 			bufplce[i] = source[i];
 
-		int left = y2 - y1;
+		uint32_t left = y2 - y1;
 		while (left > 0)
 		{
 			// Find which column wraps first
-			int count = left;
+			uint32_t count = left;
 			for (int i = 0; i < 4; i++)
 			{
-				int next_uv_wrap = (uv_max - uv_pos[i] + uv_step[i] - 1) / uv_step[i];
+				uint32_t available = uv_max - uv_pos[i];
+				uint32_t next_uv_wrap = available / uv_step[i];
+				if (available % uv_step[i] != 0)
+					next_uv_wrap++;
 				count = MIN(next_uv_wrap, count);
 			}
-			if (count <= 0)
-				break; // This should never happen, but it does..
 
 			// Draw until that column wraps
-			if (count > 0)
+			for (int i = 0; i < 4; i++)
 			{
-				for (int i = 0; i < 4; i++)
-				{
-					vplce[i] = uv_pos[i];
-					vince[i] = uv_step[i];
-				}
-				dc_count = count;
-				draw4columns();
+				vplce[i] = uv_pos[i];
+				vince[i] = uv_step[i];
 			}
+			dc_count = count;
+			draw4columns();
 
 			// Wrap the uv position
 			for (int i = 0; i < 4; i++)
@@ -1299,6 +1295,9 @@ void wallscan_any(
 		{
 			for (int i = 0; i < 4; i++)
 			{
+				if (y2[i] <= y1[i])
+					continue;
+
 				if (!fixed)
 					R_SetColorMapLight(basecolormap, lights[i], wallshade);
 				wallscan_drawcol1(x + i, y1[i], y2[i], uv_pos[i], uv_step[i], uv_max, source[i], draw1column);

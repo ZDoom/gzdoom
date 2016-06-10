@@ -3968,6 +3968,7 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 
 	case APROP_Friction:
 		actor->Friction = ACSToDouble(value);
+		break;
 
 	case APROP_MaxStepHeight:
 		actor->MaxStepHeight = ACSToDouble(value);

@@ -104,11 +104,19 @@ void DrawerCommandQueue::Finish()
 	thread.core = 0;
 	thread.num_cores = queue->threads.size() + 1;
 
-	size_t size = queue->active_commands.size();
-	for (size_t i = 0; i < size; i++)
+	for (int pass = 0; pass < queue->num_passes; pass++)
 	{
-		auto &command = queue->active_commands[i];
-		command->Execute(&thread);
+		thread.pass_start_y = pass * queue->rows_in_pass;
+		thread.pass_end_y = (pass + 1) * queue->rows_in_pass;
+		if (pass + 1 == queue->num_passes)
+			thread.pass_end_y = MAX(thread.pass_end_y, MAXHEIGHT);
+
+		size_t size = queue->active_commands.size();
+		for (size_t i = 0; i < size; i++)
+		{
+			auto &command = queue->active_commands[i];
+			command->Execute(&thread);
+		}
 	}
 
 	// Wait for everyone to finish:
@@ -156,11 +164,19 @@ void DrawerCommandQueue::StartThreads()
 				start_lock.unlock();
 
 				// Do the work:
-				size_t size = queue->active_commands.size();
-				for (size_t i = 0; i < size; i++)
+				for (int pass = 0; pass < queue->num_passes; pass++)
 				{
-					auto &command = queue->active_commands[i];
-					command->Execute(thread);
+					thread->pass_start_y = pass * queue->rows_in_pass;
+					thread->pass_end_y = (pass + 1) * queue->rows_in_pass;
+					if (pass + 1 == queue->num_passes)
+						thread->pass_end_y = MAX(thread->pass_end_y, MAXHEIGHT);
+
+					size_t size = queue->active_commands.size();
+					for (size_t i = 0; i < size; i++)
+					{
+						auto &command = queue->active_commands[i];
+						command->Execute(thread);
+					}
 				}
 
 				// Notify main thread that we finished:
@@ -1610,6 +1626,79 @@ public:
 			BYTE yshift = 32 - ds_ybits;
 			BYTE xshift = yshift - ds_xbits;
 			int xmask = ((1 << ds_xbits) - 1) << ds_ybits;
+
+			int sse_count = count / 4;
+			count -= sse_count * 4;
+
+			if (shade_constants.simple_shade)
+			{
+				SSE_SHADE_SIMPLE_INIT(light);
+
+				while (sse_count--)
+				{
+					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+					uint32_t p0 = source[spot];
+					xfrac += xstep;
+					yfrac += ystep;
+
+					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+					uint32_t p1 = source[spot];
+					xfrac += xstep;
+					yfrac += ystep;
+
+					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+					uint32_t p2 = source[spot];
+					xfrac += xstep;
+					yfrac += ystep;
+
+					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+					uint32_t p3 = source[spot];
+					xfrac += xstep;
+					yfrac += ystep;
+
+					// Lookup pixel from flat texture tile
+					__m128i fg = _mm_set_epi32(p3, p2, p1, p0);
+					SSE_SHADE_SIMPLE(fg);
+					_mm_storeu_si128((__m128i*)dest, fg);
+					dest += 4;
+				}
+			}
+			else
+			{
+				SSE_SHADE_INIT(light, shade_constants);
+
+				while (sse_count--)
+				{
+					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+					uint32_t p0 = source[spot];
+					xfrac += xstep;
+					yfrac += ystep;
+
+					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+					uint32_t p1 = source[spot];
+					xfrac += xstep;
+					yfrac += ystep;
+
+					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+					uint32_t p2 = source[spot];
+					xfrac += xstep;
+					yfrac += ystep;
+
+					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+					uint32_t p3 = source[spot];
+					xfrac += xstep;
+					yfrac += ystep;
+
+					// Lookup pixel from flat texture tile
+					__m128i fg = _mm_set_epi32(p3, p2, p1, p0);
+					SSE_SHADE(fg, shade_constants);
+					_mm_storeu_si128((__m128i*)dest, fg);
+					dest += 4;
+				}
+			}
+
+			if (count == 0)
+				return;
 
 			do
 			{

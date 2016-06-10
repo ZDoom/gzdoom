@@ -1528,40 +1528,38 @@ public:
 		fracstep = dc_iscale;
 		frac = dc_texturefrac;
 
-		{
-			const BYTE *source = dc_source;
+		const BYTE *source = dc_source;
 
-			if (count & 1) {
-				*dest = source[frac >> FRACBITS]; dest += 4; frac += fracstep;
-			}
-			if (count & 2) {
-				dest[0] = source[frac >> FRACBITS]; frac += fracstep;
-				dest[4] = source[frac >> FRACBITS]; frac += fracstep;
-				dest += 8;
-			}
-			if (count & 4) {
-				dest[0] = source[frac >> FRACBITS]; frac += fracstep;
-				dest[4] = source[frac >> FRACBITS]; frac += fracstep;
-				dest[8] = source[frac >> FRACBITS]; frac += fracstep;
-				dest[12] = source[frac >> FRACBITS]; frac += fracstep;
-				dest += 16;
-			}
-			count >>= 3;
-			if (!count) return;
-
-			do
-			{
-				dest[0] = source[frac >> FRACBITS]; frac += fracstep;
-				dest[4] = source[frac >> FRACBITS]; frac += fracstep;
-				dest[8] = source[frac >> FRACBITS]; frac += fracstep;
-				dest[12] = source[frac >> FRACBITS]; frac += fracstep;
-				dest[16] = source[frac >> FRACBITS]; frac += fracstep;
-				dest[20] = source[frac >> FRACBITS]; frac += fracstep;
-				dest[24] = source[frac >> FRACBITS]; frac += fracstep;
-				dest[28] = source[frac >> FRACBITS]; frac += fracstep;
-				dest += 32;
-			} while (--count);
+		if (count & 1) {
+			*dest = source[frac >> FRACBITS]; dest += 4; frac += fracstep;
 		}
+		if (count & 2) {
+			dest[0] = source[frac >> FRACBITS]; frac += fracstep;
+			dest[4] = source[frac >> FRACBITS]; frac += fracstep;
+			dest += 8;
+		}
+		if (count & 4) {
+			dest[0] = source[frac >> FRACBITS]; frac += fracstep;
+			dest[4] = source[frac >> FRACBITS]; frac += fracstep;
+			dest[8] = source[frac >> FRACBITS]; frac += fracstep;
+			dest[12] = source[frac >> FRACBITS]; frac += fracstep;
+			dest += 16;
+		}
+		count >>= 3;
+		if (!count) return;
+
+		do
+		{
+			dest[0] = source[frac >> FRACBITS]; frac += fracstep;
+			dest[4] = source[frac >> FRACBITS]; frac += fracstep;
+			dest[8] = source[frac >> FRACBITS]; frac += fracstep;
+			dest[12] = source[frac >> FRACBITS]; frac += fracstep;
+			dest[16] = source[frac >> FRACBITS]; frac += fracstep;
+			dest[20] = source[frac >> FRACBITS]; frac += fracstep;
+			dest[24] = source[frac >> FRACBITS]; frac += fracstep;
+			dest[28] = source[frac >> FRACBITS]; frac += fracstep;
+			dest += 32;
+		} while (--count);
 	}
 };
 

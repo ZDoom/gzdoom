@@ -458,25 +458,34 @@ public:
 	// Number of active threads
 	int num_cores = 1;
 
+	// Range of rows processed this pass
+	int pass_start_y = 0;
+	int pass_end_y = 300;
+
 	uint32_t dc_temp_rgbabuff_rgba[MAXHEIGHT * 4];
 	uint32_t *dc_temp_rgba;
 
 	// Checks if a line is rendered by this thread
 	bool line_skipped_by_thread(int line)
 	{
-		return line % num_cores != core;
+		return line < pass_start_y || line >= pass_end_y || line % num_cores != core;
 	}
 
 	// The number of lines to skip to reach the first line to be rendered by this thread
 	int skipped_by_thread(int first_line)
 	{
-		return (num_cores - (first_line - core) % num_cores) % num_cores;
+		int pass_skip = MAX(pass_start_y - first_line, 0);
+		int core_skip = (num_cores - (first_line + pass_skip - core) % num_cores) % num_cores;
+		return pass_skip + core_skip;
 	}
 
 	// The number of lines to be rendered by this thread
 	int count_for_thread(int first_line, int count)
 	{
-		return (count - skipped_by_thread(first_line) + num_cores - 1) / num_cores;
+		int lines_until_pass_end = MAX(pass_end_y - first_line, 0);
+		count = MIN(count, lines_until_pass_end);
+		int c = (count - skipped_by_thread(first_line) + num_cores - 1) / num_cores;
+		return MAX(c, 0);
 	}
 
 	// Calculate the dest address for the first line to be rendered by this thread
@@ -522,6 +531,8 @@ class DrawerCommandQueue
 
 	bool no_threading = false;
 	DrawerThread single_core_thread;
+	int num_passes = 2;
+	int rows_in_pass = 540;
 
 	void StartThreads();
 	void StopThreads();

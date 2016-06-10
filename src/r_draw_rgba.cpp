@@ -1726,6 +1726,7 @@ class DrawSpanMaskedRGBACommand : public DrawerCommand
 	fixed_t ds_yfrac;
 	BYTE *dc_destorg;
 	int ds_x1;
+	int ds_x2;
 	int ds_y1;
 	int ds_y;
 	fixed_t ds_xstep;
@@ -1828,6 +1829,7 @@ class DrawSpanTranslucentRGBACommand : public DrawerCommand
 	fixed_t ds_yfrac;
 	BYTE *dc_destorg;
 	int ds_x1;
+	int ds_x2;
 	int ds_y1;
 	int ds_y;
 	fixed_t ds_xstep;
@@ -1949,6 +1951,7 @@ class DrawSpanMaskedTranslucentRGBACommand : public DrawerCommand
 	fixed_t ds_yfrac;
 	BYTE *dc_destorg;
 	int ds_x1;
+	int ds_x2;
 	int ds_y1;
 	int ds_y;
 	fixed_t ds_xstep;
@@ -2080,6 +2083,7 @@ class DrawSpanAddClampRGBACommand : public DrawerCommand
 	fixed_t ds_yfrac;
 	BYTE *dc_destorg;
 	int ds_x1;
+	int ds_x2;
 	int ds_y1;
 	int ds_y;
 	fixed_t ds_xstep;
@@ -2201,6 +2205,7 @@ class DrawSpanMaskedAddClampRGBACommand : public DrawerCommand
 	fixed_t ds_yfrac;
 	BYTE *dc_destorg;
 	int ds_x1;
+	int ds_x2;
 	int ds_y1;
 	int ds_y;
 	fixed_t ds_xstep;

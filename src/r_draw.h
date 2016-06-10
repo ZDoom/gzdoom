@@ -28,6 +28,7 @@
 #include <memory>
 #include <thread>
 #include <mutex>
+#include <condition_variable>
 
 // Spectre/Invisibility.
 #define FUZZTABLE	50
@@ -460,7 +461,7 @@ public:
 
 	// Range of rows processed this pass
 	int pass_start_y = 0;
-	int pass_end_y = 300;
+	int pass_end_y = MAXHEIGHT;
 
 	uint32_t dc_temp_rgbabuff_rgba[MAXHEIGHT * 4];
 	uint32_t *dc_temp_rgba;
@@ -527,7 +528,7 @@ class DrawerCommandQueue
 
 	std::mutex end_mutex;
 	std::condition_variable end_condition;
-	int finished_threads = 0;
+	size_t finished_threads = 0;
 
 	bool no_threading = false;
 	DrawerThread single_core_thread;

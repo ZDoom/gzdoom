@@ -1184,7 +1184,7 @@ void calc_uv_start_and_step(int y1, float swal, double yrepeat, uint32_t uv_heig
 	// Find start uv in [0-uv_height[ range.
 	// Not using xs_ToFixed because it rounds the result and we need something that always rounds down to stay within the range.
 	double v = (dc_texturemid + uv_stepd * (y1 - CenterY + 0.5)) / uv_height;
-	v = v - std::floor(v);
+	v = v - floor(v);
 	v *= uv_height;
 	v *= (1 << fracbits);
 

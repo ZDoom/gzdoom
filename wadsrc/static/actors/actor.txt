@@ -214,7 +214,7 @@ ACTOR Actor native //: Thinker
 	native void A_SetScale(float scalex, float scaley = 0, int ptr = AAPTR_DEFAULT, bool usezero = false);
 	native void A_SetMass(int mass);
 	native void A_SpawnDebris(class<Actor> spawntype, bool transfer_translation = false, float mult_h = 1, float mult_v = 1);
-	native void A_SpawnParticle(color color1, int flags = 0, int lifetime = 35, int size = 1, float angle = 0, float xoff = 0, float yoff = 0, float zoff = 0, float velx = 0, float vely = 0, float velz = 0, float accelx = 0, float accely = 0, float accelz = 0, float startalphaf = 1, float fadestepf = -1);
+	native void A_SpawnParticle(color color1, int flags = 0, int lifetime = 35, float size = 1, float angle = 0, float xoff = 0, float yoff = 0, float zoff = 0, float velx = 0, float vely = 0, float velz = 0, float accelx = 0, float accely = 0, float accelz = 0, float startalphaf = 1, float fadestepf = -1, float endsize = -1);
 	native state A_CheckSight(state label);
 	native void A_ExtChase(bool usemelee, bool usemissile, bool playactive = true, bool nightmarefast = false);
 	native void A_DropInventory(class<Inventory> itemtype);

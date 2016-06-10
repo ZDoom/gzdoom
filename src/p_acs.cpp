@@ -6048,7 +6048,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			PalEntry color = args[0];
 			bool fullbright = argCount > 1 ? !!args[1] : false;
 			int lifetime = argCount > 2 ? args[2] : 35;
-			int size = argCount > 3 ? args[3] : 1;
+			double size = argCount > 3 ? args[3] : 1.;
 			int x = argCount > 4 ? args[4] : 0;
 			int y = argCount > 5 ? args[5] : 0;
 			int z = argCount > 6 ? args[6] : 0;
@@ -6060,17 +6060,18 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			int accelz = argCount > 12 ? args[12] : 0;
 			int startalpha = argCount > 13 ? args[13] : 0xFF; // Byte trans			
 			int fadestep = argCount > 14 ? args[14] : -1;
+			double endsize = argCount > 15 ? args[15] : -1.;
 
 			startalpha = clamp<int>(startalpha, 0, 255); // Clamp to byte
 			lifetime = clamp<int>(lifetime, 0, 255); // Clamp to byte
 			fadestep = clamp<int>(fadestep, -1, 255); // Clamp to byte inc. -1 (indicating automatic)
-			size = clamp<int>(size, 0, 65535); // Clamp to word
+			size = fabs(size);
 
 			if (lifetime != 0)
 				P_SpawnParticle(DVector3(ACSToDouble(x), ACSToDouble(y), ACSToDouble(z)), 
 								DVector3(ACSToDouble(xvel), ACSToDouble(yvel), ACSToDouble(zvel)),
 								DVector3(ACSToDouble(accelx), ACSToDouble(accely), ACSToDouble(accelz)),
-								color, fullbright, startalpha/255., lifetime, size, fadestep/255.);
+								color, startalpha/255., lifetime, size, endsize, fadestep/255., fullbright);
 		}
 		break;
 

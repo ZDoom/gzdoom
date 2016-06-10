@@ -181,8 +181,6 @@ const uint32_t *FTexture::GetColumnBgra(unsigned int column, const Span **spans_
 	const uint32_t *pixels = GetPixelsBgra();
 
 	column %= Width;
-	if (column < 0)
-		column += Width;
 
 	if (spans_out != nullptr)
 		GetColumn(column, spans_out);

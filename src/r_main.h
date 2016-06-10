@@ -217,6 +217,27 @@ FORCEINLINE uint32_t shade_bgra(uint32_t color, uint32_t light, const ShadeConst
 	return 0xff000000 | (red << 16) | (green << 8) | blue;
 }
 
+FORCEINLINE uint32_t alpha_blend(uint32_t fg, uint32_t bg)
+{
+	uint32_t fg_alpha = (fg >> 24) & 0xff;
+	uint32_t fg_red = (fg >> 16) & 0xff;
+	uint32_t fg_green = (fg >> 8) & 0xff;
+	uint32_t fg_blue = fg & 0xff;
+
+	uint32_t alpha = fg_alpha + (fg_alpha >> 7); // 255 -> 256
+	uint32_t inv_alpha = 256 - alpha;
+
+	uint32_t bg_red = (bg >> 16) & 0xff;
+	uint32_t bg_green = (bg >> 8) & 0xff;
+	uint32_t bg_blue = bg & 0xff;
+
+	uint32_t red = ((fg_red * alpha) + (bg_red * inv_alpha)) / 256;
+	uint32_t green = ((fg_green * alpha) + (bg_green * inv_alpha)) / 256;
+	uint32_t blue = ((fg_blue * alpha) + (bg_blue * inv_alpha)) / 256;
+
+	return 0xff000000 | (red << 16) | (green << 8) | blue;
+}
+
 // Calculate constants for a simple shade
 #define SSE_SHADE_SIMPLE_INIT(light) \
 	__m128i mlight_hi = _mm_set_epi16(256, light, light, light, 256, light, light, light); \

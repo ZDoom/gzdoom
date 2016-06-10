@@ -1511,8 +1511,6 @@ public:
 		{
 			// 64x64 is the most common case by far, so special case it.
 
-			uint32_t *palette = (uint32_t*)GPalette.BaseColors;
-
 			int sse_count = count / 4;
 			count -= sse_count * 4;
 
@@ -1545,7 +1543,7 @@ public:
 
 					// Lookup pixel from flat texture tile,
 					//  re-index using light/colormap.
-					__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
+					__m128i fg = _mm_set_epi32(p3, p2, p1, p0);
 					SSE_SHADE_SIMPLE(fg);
 					_mm_storeu_si128((__m128i*)dest, fg);
 
@@ -1582,7 +1580,7 @@ public:
 
 					// Lookup pixel from flat texture tile,
 					//  re-index using light/colormap.
-					__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
+					__m128i fg = _mm_set_epi32(p3, p2, p1, p0);
 					SSE_SHADE(fg, shade_constants);
 					_mm_storeu_si128((__m128i*)dest, fg);
 

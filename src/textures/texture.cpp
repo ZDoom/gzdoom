@@ -45,6 +45,7 @@
 #include "v_video.h"
 #include "m_fixed.h"
 #include "textures/textures.h"
+#include "v_palette.h"
 
 typedef bool (*CheckFunc)(FileReader & file);
 typedef FTexture * (*CreateFunc)(FileReader & file, int lumpnum);
@@ -173,6 +174,33 @@ FTexture::~FTexture ()
 	FTexture *link = Wads.GetLinkedTexture(SourceLump);
 	if (link == this) Wads.SetLinkedTexture(SourceLump, NULL);
 	KillNative();
+}
+
+const uint32_t *FTexture::GetColumnBgra(unsigned int column, const Span **spans_out)
+{
+	const uint32_t *pixels = GetPixelsBgra();
+
+	column %= Width;
+	if (column < 0)
+		column += Width;
+
+	if (spans_out != nullptr)
+		GetColumn(column, spans_out);
+	return pixels + column * Height;
+}
+
+const uint32_t *FTexture::GetPixelsBgra()
+{
+	if (BgraPixels.empty())
+	{
+		const BYTE *indices = GetPixels();
+		BgraPixels.resize(Width * Height);
+		for (int i = 0; i < Width * Height; i++)
+		{
+			BgraPixels[i] = GPalette.BaseColors[indices[i]].d;
+		}
+	}
+	return BgraPixels.data();
 }
 
 bool FTexture::CheckModified ()

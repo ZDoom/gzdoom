@@ -520,6 +520,9 @@ class DrawerCommandQueue
 	std::condition_variable end_condition;
 	int finished_threads = 0;
 
+	bool no_threading = false;
+	DrawerThread single_core_thread;
+
 	void StartThreads();
 	void StopThreads();
 
@@ -535,11 +538,20 @@ public:
 	template<typename T, typename... Types>
 	static void QueueCommand(Types &&... args)
 	{
-		void *ptr = AllocMemory(sizeof(T));
-		T *command = new (ptr)T(std::forward<Types>(args)...);
-		if (!command)
-			return;
-		Instance()->commands.push_back(command);
+		auto queue = Instance();
+		if (queue->no_threading)
+		{
+			T command(std::forward<Types>(args)...);
+			command.Execute(&queue->single_core_thread);
+		}
+		else
+		{
+			void *ptr = AllocMemory(sizeof(T));
+			if (!ptr)
+				return;
+			T *command = new (ptr)T(std::forward<Types>(args)...);
+			queue->commands.push_back(command);
+		}
 	}
 
 	// Wait until all worker threads finished executing commands

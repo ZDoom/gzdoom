@@ -1092,6 +1092,8 @@ uint32_t wallscan_drawcol1(int x, int y1, int y2, uint32_t uv_start, uint32_t uv
 		{
 			int next_uv_wrap = (uv_max - uv_pos + uv_step - 1) / uv_step;
 			int count = MIN(left, next_uv_wrap);
+			if (count <= 0)
+				break; // This should never happen, but it does..
 
 			if (count > 0)
 			{
@@ -1146,6 +1148,8 @@ void wallscan_drawcol4(int x, int y1, int y2, uint32_t *uv_pos, uint32_t *uv_ste
 				int next_uv_wrap = (uv_max - uv_pos[i] + uv_step[i] - 1) / uv_step[i];
 				count = MIN(next_uv_wrap, count);
 			}
+			if (count <= 0)
+				break; // This should never happen, but it does..
 
 			// Draw until that column wraps
 			if (count > 0)

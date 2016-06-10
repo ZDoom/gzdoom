@@ -973,15 +973,22 @@ extern FTexture *rw_pic;
 // Allow for layer skies up to 512 pixels tall. This is overkill,
 // since the most anyone can ever see of the sky is 500 pixels.
 // We need 4 skybufs because wallscan can draw up to 4 columns at a time.
+// Need two versions - one for true color and one for palette
 static BYTE skybuf[4][512];
+static uint32_t skybuf_bgra[4][512];
 static DWORD lastskycol[4];
+static DWORD lastskycol_bgra[4];
 static int skycolplace;
+static int skycolplace_bgra;
 
 // Get a column of sky when there is only one sky texture.
 static const BYTE *R_GetOneSkyColumn (FTexture *fronttex, int x)
 {
 	angle_t column = (skyangle + xtoviewangle[x]) ^ skyflip;
-	return fronttex->GetColumn((UMulScale16(column, frontcyl) + frontpos) >> FRACBITS, NULL);
+	if (!r_swtruecolor)
+		return fronttex->GetColumn((UMulScale16(column, frontcyl) + frontpos) >> FRACBITS, NULL);
+	else
+		return (const BYTE *)fronttex->GetColumnBgra((UMulScale16(column, frontcyl) + frontpos) >> FRACBITS, NULL);
 }
 
 // Get a column of sky when there are two overlapping sky textures
@@ -996,38 +1003,77 @@ static const BYTE *R_GetTwoSkyColumns (FTexture *fronttex, int x)
 	DWORD skycol = (angle1 << 16) | angle2;
 	int i;
 
-	for (i = 0; i < 4; ++i)
+	if (!r_swtruecolor)
 	{
-		if (lastskycol[i] == skycol)
+		for (i = 0; i < 4; ++i)
 		{
-			return skybuf[i];
+			if (lastskycol[i] == skycol)
+			{
+				return skybuf[i];
+			}
 		}
+
+		lastskycol[skycolplace] = skycol;
+		BYTE *composite = skybuf[skycolplace];
+		skycolplace = (skycolplace + 1) & 3;
+
+		// The ordering of the following code has been tuned to allow VC++ to optimize
+		// it well. In particular, this arrangement lets it keep count in a register
+		// instead of on the stack.
+		const BYTE *front = fronttex->GetColumn(angle1, NULL);
+		const BYTE *back = backskytex->GetColumn(angle2, NULL);
+
+		int count = MIN<int>(512, MIN(backskytex->GetHeight(), fronttex->GetHeight()));
+		i = 0;
+		do
+		{
+			if (front[i])
+			{
+				composite[i] = front[i];
+			}
+			else
+			{
+				composite[i] = back[i];
+			}
+		} while (++i, --count);
+		return composite;
 	}
-
-	lastskycol[skycolplace] = skycol;
-	BYTE *composite = skybuf[skycolplace];
-	skycolplace = (skycolplace + 1) & 3;
-
-	// The ordering of the following code has been tuned to allow VC++ to optimize
-	// it well. In particular, this arrangement lets it keep count in a register
-	// instead of on the stack.
-	const BYTE *front = fronttex->GetColumn (angle1, NULL);
-	const BYTE *back = backskytex->GetColumn (angle2, NULL);
-
-	int count = MIN<int> (512, MIN (backskytex->GetHeight(), fronttex->GetHeight()));
-	i = 0;
-	do
+	else
 	{
-		if (front[i])
+		return R_GetOneSkyColumn(fronttex, x);
+		for (i = 0; i < 4; ++i)
 		{
-			composite[i] = front[i];
+			if (lastskycol_bgra[i] == skycol)
+			{
+				return (BYTE*)(skybuf_bgra[i]);
+			}
 		}
-		else
+
+		lastskycol_bgra[skycolplace_bgra] = skycol;
+		uint32_t *composite = skybuf_bgra[skycolplace_bgra];
+		skycolplace_bgra = (skycolplace_bgra + 1) & 3;
+
+		// The ordering of the following code has been tuned to allow VC++ to optimize
+		// it well. In particular, this arrangement lets it keep count in a register
+		// instead of on the stack.
+		const uint32_t *front = (const uint32_t *)fronttex->GetColumnBgra(angle1, NULL);
+		const uint32_t *back = (const uint32_t *)backskytex->GetColumnBgra(angle2, NULL);
+
+		int count = MIN<int>(512, MIN(backskytex->GetHeight(), fronttex->GetHeight()));
+		i = 0;
+		do
 		{
-			composite[i] = back[i];
-		}
-	} while (++i, --count);
-	return composite;
+			if (front[i])
+			{
+				composite[i] = front[i];
+			}
+			else
+			{
+				composite[i] = back[i];
+			}
+		} while (++i, --count);
+		return (BYTE*)composite;
+	}
 }
 
 static void R_DrawSky (visplane_t *pl)
@@ -1062,6 +1108,7 @@ static void R_DrawSky (visplane_t *pl)
 	for (x = 0; x < 4; ++x)
 	{
 		lastskycol[x] = 0xffffffff;
+		lastskycol_bgra[x] = 0xffffffff;
 	}
 
 	rw_pic = frontskytex;
@@ -1075,6 +1122,7 @@ static void R_DrawSky (visplane_t *pl)
 		for (x = 0; x < 4; ++x)
 		{
 			lastskycol[x] = 0xffffffff;
+			lastskycol_bgra[x] = 0xffffffff;
 		}
 		wallscan (pl->left, pl->right, (short *)pl->top, (short *)pl->bottom, swall, lwall,
 			frontyScale, backskytex == NULL ? R_GetOneSkyColumn : R_GetTwoSkyColumns);
@@ -1112,6 +1160,7 @@ static void R_DrawSkyStriped (visplane_t *pl)
 		for (x = 0; x < 4; ++x)
 		{
 			lastskycol[x] = 0xffffffff;
+			lastskycol_bgra[x] = 0xffffffff;
 		}
 		wallscan (pl->left, pl->right, top, bot, swall, lwall, rw_pic->Scale.Y,
 			backskytex == NULL ? R_GetOneSkyColumn : R_GetTwoSkyColumns);
@@ -1230,7 +1279,10 @@ void R_DrawSinglePlane (visplane_t *pl, fixed_t alpha, bool additive, bool maske
 		R_SetupSpanBits(tex);
 		double xscale = pl->xform.xScale * tex->Scale.X;
 		double yscale = pl->xform.yScale * tex->Scale.Y;
-		ds_source = tex->GetPixels ();
+		if (r_swtruecolor)
+			ds_source = (const BYTE*)tex->GetPixelsBgra();
+		else
+			ds_source = tex->GetPixels();
 
 		basecolormap = pl->colormap;
 		planeshade = LIGHT2SHADE(pl->lightlevel);

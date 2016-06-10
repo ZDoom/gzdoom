@@ -136,6 +136,19 @@ FORCEINLINE uint32_t shade_pal_index_simple(uint32_t index, uint32_t light)
 	return 0xff000000 | (red << 16) | (green << 8) | blue;
 }
 
+FORCEINLINE uint32_t shade_bgra_simple(uint32_t color, uint32_t light)
+{
+	uint32_t red = (color >> 16) & 0xff;
+	uint32_t green = (color >> 8) & 0xff;
+	uint32_t blue = color & 0xff;
+
+	red = red * light / 256;
+	green = green * light / 256;
+	blue = blue * light / 256;
+
+	return 0xff000000 | (red << 16) | (green << 8) | blue;
+}
+
 // Calculates a ARGB8 color for the given palette index, light multiplier and dynamic colormap
 FORCEINLINE uint32_t shade_pal_index(uint32_t index, uint32_t light, const ShadeConstants &constants)
 {
@@ -143,6 +156,39 @@ FORCEINLINE uint32_t shade_pal_index(uint32_t index, uint32_t light, const Shade
 	uint32_t red = color.r;
 	uint32_t green = color.g;
 	uint32_t blue = color.b;
+	if (constants.simple_shade)
+	{
+		red = red * light / 256;
+		green = green * light / 256;
+		blue = blue * light / 256;
+	}
+	else
+	{
+		uint32_t inv_light = 256 - light;
+		uint32_t inv_desaturate = 256 - constants.desaturate;
+
+		uint32_t intensity = ((red * 77 + green * 143 + blue * 37) >> 8) * constants.desaturate;
+
+		red = (red * inv_desaturate + intensity) / 256;
+		green = (green * inv_desaturate + intensity) / 256;
+		blue = (blue * inv_desaturate + intensity) / 256;
+
+		red = (constants.fade_red * inv_light + red * light) / 256;
+		green = (constants.fade_green * inv_light + green * light) / 256;
+		blue = (constants.fade_blue * inv_light + blue * light) / 256;
+
+		red = (red * constants.light_red) / 256;
+		green = (green * constants.light_green) / 256;
+		blue = (blue * constants.light_blue) / 256;
+	}
+	return 0xff000000 | (red << 16) | (green << 8) | blue;
+}
+
+FORCEINLINE uint32_t shade_bgra(uint32_t color, uint32_t light, const ShadeConstants &constants)
+{
+	uint32_t red = (color >> 16) & 0xff;
+	uint32_t green = (color >> 8) & 0xff;
+	uint32_t blue = color & 0xff;
 	if (constants.simple_shade)
 	{
 		red = red * light / 256;

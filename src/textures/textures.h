@@ -3,6 +3,7 @@
 
 #include "doomtype.h"
 #include "vectors.h"
+#include <vector>
 
 class FBitmap;
 struct FRemapTable;
@@ -175,9 +176,15 @@ public:
 	// Returns a single column of the texture
 	virtual const BYTE *GetColumn (unsigned int column, const Span **spans_out) = 0;
 
+	// Returns a single column of the texture, in BGRA8 format
+	virtual const uint32_t *GetColumnBgra(unsigned int column, const Span **spans_out);
+
 	// Returns the whole texture, stored in column-major order
 	virtual const BYTE *GetPixels () = 0;
-	
+
+	// Returns the whole texture, stored in column-major order, in BGRA8 format
+	virtual const uint32_t *GetPixelsBgra();
+
 	virtual int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate=0, FCopyInfo *inf = NULL);
 	int CopyTrueColorTranslated(FBitmap *bmp, int x, int y, int rotate, FRemapTable *remap, FCopyInfo *inf = NULL);
 	virtual bool UseBasePalette();
@@ -261,6 +268,9 @@ protected:
 		bNoDecals = other->bNoDecals;
 		Rotations = other->Rotations;
 	}
+
+private:
+	std::vector<uint32_t> BgraPixels;
 
 public:
 	static void FlipSquareBlock (BYTE *block, int x, int y);

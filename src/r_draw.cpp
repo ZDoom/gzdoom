@@ -2265,9 +2265,12 @@ const BYTE *R_GetColumn (FTexture *tex, int col)
 	{
 		col = width + (col % width);
 	}
-	return tex->GetColumn (col, NULL);
-}
 
+	if (r_swtruecolor)
+		return (const BYTE *)tex->GetColumnBgra(col, NULL);
+	else
+		return tex->GetColumn(col, NULL);
+}
 
 // [RH] Initialize the column drawer pointers
 void R_InitColumnDrawers ()

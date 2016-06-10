@@ -85,6 +85,8 @@ void* DrawerCommandQueue::AllocMemory(size_t size)
 void DrawerCommandQueue::Finish()
 {
 	auto queue = Instance();
+	if (queue->commands.empty())
+		return;
 
 	// Give worker threads something to do:
 
@@ -190,8 +192,8 @@ class DrawColumnRGBACommand : public DrawerCommand
 {
 	int dc_count;
 	BYTE *dc_dest;
-	fixed_t dc_texturefrac;
-	fixed_t dc_iscale;
+	DWORD dc_texturefrac;
+	DWORD dc_iscale;
 	fixed_t dc_light;
 	const BYTE *dc_source;
 	int dc_pitch;
@@ -628,8 +630,8 @@ class DrawAddColumnRGBACommand : public DrawerCommand
 {
 	int dc_count;
 	BYTE *dc_dest;
-	fixed_t dc_iscale;
-	fixed_t dc_texturefrac;
+	DWORD dc_iscale;
+	DWORD dc_texturefrac;
 	const BYTE *dc_source;
 	int dc_pitch;
 	fixed_t dc_light;
@@ -708,8 +710,8 @@ class DrawTranslatedColumnRGBACommand : public DrawerCommand
 	fixed_t dc_light;
 	ShadeConstants dc_shade_constants;
 	BYTE *dc_dest;
-	fixed_t dc_iscale;
-	fixed_t dc_texturefrac;
+	DWORD dc_iscale;
+	DWORD dc_texturefrac;
 	BYTE *dc_translation;
 	const BYTE *dc_source;
 	int dc_pitch;
@@ -769,8 +771,8 @@ class DrawTlatedAddColumnRGBACommand : public DrawerCommand
 	fixed_t dc_light;
 	ShadeConstants dc_shade_constants;
 	BYTE *dc_dest;
-	fixed_t dc_iscale;
-	fixed_t dc_texturefrac;
+	DWORD dc_iscale;
+	DWORD dc_texturefrac;
 	BYTE *dc_translation;
 	const BYTE *dc_source;
 	int dc_pitch;
@@ -845,8 +847,8 @@ class DrawShadedColumnRGBACommand : public DrawerCommand
 private:
 	int dc_count;
 	BYTE *dc_dest;
-	fixed_t dc_iscale;
-	fixed_t dc_texturefrac;
+	DWORD dc_iscale;
+	DWORD dc_texturefrac;
 	fixed_t dc_light;
 	const BYTE *dc_source;
 	lighttable_t *dc_colormap;
@@ -918,8 +920,8 @@ class DrawAddClampColumnRGBACommand : public DrawerCommand
 {
 	int dc_count;
 	BYTE *dc_dest;
-	fixed_t dc_iscale;
-	fixed_t dc_texturefrac;
+	DWORD dc_iscale;
+	DWORD dc_texturefrac;
 	const BYTE *dc_source;
 	int dc_pitch;
 	fixed_t dc_light;
@@ -994,8 +996,8 @@ class DrawAddClampTranslatedColumnRGBACommand : public DrawerCommand
 {
 	int dc_count;
 	BYTE *dc_dest;
-	fixed_t dc_iscale;
-	fixed_t dc_texturefrac;
+	DWORD dc_iscale;
+	DWORD dc_texturefrac;
 	BYTE *dc_translation;
 	const BYTE *dc_source;
 	int dc_pitch;
@@ -1073,8 +1075,8 @@ class DrawSubClampColumnRGBACommand : public DrawerCommand
 {
 	int dc_count;
 	BYTE *dc_dest;
-	fixed_t dc_iscale;
-	fixed_t dc_texturefrac;
+	DWORD dc_iscale;
+	DWORD dc_texturefrac;
 	const BYTE *dc_source;
 	int dc_pitch;
 	fixed_t dc_light;
@@ -1149,8 +1151,8 @@ class DrawSubClampTranslatedColumnRGBACommand : public DrawerCommand
 {
 	int dc_count;
 	BYTE *dc_dest;
-	fixed_t dc_iscale;
-	fixed_t dc_texturefrac;
+	DWORD dc_iscale;
+	DWORD dc_texturefrac;
 	const BYTE *dc_source;
 	int dc_pitch;
 	fixed_t dc_light;
@@ -1228,8 +1230,8 @@ class DrawRevSubClampColumnRGBACommand : public DrawerCommand
 {
 	int dc_count;
 	BYTE *dc_dest;
-	fixed_t dc_iscale;
-	fixed_t dc_texturefrac;
+	DWORD dc_iscale;
+	DWORD dc_texturefrac;
 	const BYTE *dc_source;
 	int dc_pitch;
 	fixed_t dc_light;
@@ -1303,8 +1305,8 @@ class DrawRevSubClampTranslatedColumnRGBACommand : public DrawerCommand
 {
 	int dc_count;
 	BYTE *dc_dest;
-	fixed_t dc_iscale;
-	fixed_t dc_texturefrac;
+	DWORD dc_iscale;
+	DWORD dc_texturefrac;
 	const BYTE *dc_source;
 	int dc_pitch;
 	fixed_t dc_light;
@@ -1380,7 +1382,7 @@ public:
 
 class DrawSpanRGBACommand : public DrawerCommand
 {
-	const BYTE *ds_source;
+	const uint32_t *ds_source;
 	fixed_t ds_xfrac;
 	fixed_t ds_yfrac;
 	fixed_t ds_xstep;
@@ -1397,7 +1399,7 @@ class DrawSpanRGBACommand : public DrawerCommand
 public:
 	DrawSpanRGBACommand()
 	{
-		ds_source = ::ds_source;
+		ds_source = (const uint32_t*)::ds_source;
 		ds_xfrac = ::ds_xfrac;
 		ds_yfrac = ::ds_yfrac;
 		ds_xstep = ::ds_xstep;
@@ -1423,7 +1425,7 @@ public:
 		dsfixed_t			xstep;
 		dsfixed_t			ystep;
 		uint32_t*			dest;
-		const BYTE*			source = ds_source;
+		const uint32_t*		source = ds_source;
 		int 				count;
 		int 				spot;
 
@@ -1450,7 +1452,7 @@ public:
 				spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
 
 				// Lookup pixel from flat texture tile
-				*dest++ = shade_pal_index(source[spot], light, shade_constants);
+				*dest++ = shade_bgra(source[spot], light, shade_constants);
 
 				// Next step in u,v.
 				xfrac += xstep;
@@ -1469,7 +1471,7 @@ public:
 				spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
 
 				// Lookup pixel from flat texture tile
-				*dest++ = shade_pal_index(source[spot], light, shade_constants);
+				*dest++ = shade_bgra(source[spot], light, shade_constants);
 
 				// Next step in u,v.
 				xfrac += xstep;
@@ -1488,7 +1490,7 @@ public:
 		dsfixed_t			xstep;
 		dsfixed_t			ystep;
 		uint32_t*			dest;
-		const BYTE*			source = ds_source;
+		const uint32_t*		source = ds_source;
 		int 				count;
 		int 				spot;
 
@@ -1598,7 +1600,7 @@ public:
 				spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
 
 				// Lookup pixel from flat texture tile
-				*dest++ = shade_pal_index(source[spot], light, shade_constants);
+				*dest++ = shade_bgra(source[spot], light, shade_constants);
 
 				// Next step in u,v.
 				xfrac += xstep;
@@ -1617,7 +1619,7 @@ public:
 				spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
 
 				// Lookup pixel from flat texture tile
-				*dest++ = shade_pal_index(source[spot], light, shade_constants);
+				*dest++ = shade_bgra(source[spot], light, shade_constants);
 
 				// Next step in u,v.
 				xfrac += xstep;
@@ -1630,7 +1632,7 @@ public:
 
 class DrawSpanMaskedRGBACommand : public DrawerCommand
 {
-	const BYTE *ds_source;
+	const uint32_t *ds_source;
 	fixed_t ds_light;
 	ShadeConstants ds_shade_constants;
 	fixed_t ds_xfrac;
@@ -1647,7 +1649,7 @@ class DrawSpanMaskedRGBACommand : public DrawerCommand
 public:
 	DrawSpanMaskedRGBACommand()
 	{
-		ds_source = ::ds_source;
+		ds_source = (const uint32_t*)::ds_source;
 		ds_light = ::ds_light;
 		ds_shade_constants = ::ds_shade_constants;
 		ds_xfrac = ::ds_xfrac;
@@ -1672,7 +1674,7 @@ public:
 		dsfixed_t			xstep;
 		dsfixed_t			ystep;
 		uint32_t*			dest;
-		const BYTE*			source = ds_source;
+		const uint32_t*		source = ds_source;
 		int 				count;
 		int 				spot;
 
@@ -1694,13 +1696,13 @@ public:
 			// 64x64 is the most common case by far, so special case it.
 			do
 			{
-				BYTE texdata;
+				uint32_t texdata;
 
 				spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
 				texdata = source[spot];
 				if (texdata != 0)
 				{
-					*dest = shade_pal_index(texdata, light, shade_constants);
+					*dest = shade_bgra(texdata, light, shade_constants);
 				}
 				dest++;
 				xfrac += xstep;
@@ -1714,13 +1716,13 @@ public:
 			int xmask = ((1 << ds_xbits) - 1) << ds_ybits;
 			do
 			{
-				BYTE texdata;
+				uint32_t texdata;
 
 				spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
 				texdata = source[spot];
 				if (texdata != 0)
 				{
-					*dest = shade_pal_index(texdata, light, shade_constants);
+					*dest = shade_bgra(texdata, light, shade_constants);
 				}
 				dest++;
 				xfrac += xstep;
@@ -1732,7 +1734,7 @@ public:
 
 class DrawSpanTranslucentRGBACommand : public DrawerCommand
 {
-	const BYTE *ds_source;
+	const uint32_t *ds_source;
 	fixed_t ds_light;
 	ShadeConstants ds_shade_constants;
 	fixed_t ds_xfrac;
@@ -1749,7 +1751,7 @@ class DrawSpanTranslucentRGBACommand : public DrawerCommand
 public:
 	DrawSpanTranslucentRGBACommand()
 	{
-		ds_source = ::ds_source;
+		ds_source = (const uint32_t *)::ds_source;
 		ds_light = ::ds_light;
 		ds_shade_constants = ::ds_shade_constants;
 		ds_xfrac = ::ds_xfrac;
@@ -1774,7 +1776,7 @@ public:
 		dsfixed_t			xstep;
 		dsfixed_t			ystep;
 		uint32_t*			dest;
-		const BYTE*			source = ds_source;
+		const uint32_t*		source = ds_source;
 		int 				count;
 		int 				spot;
 
@@ -1801,7 +1803,7 @@ public:
 			{
 				spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
 
-				uint32_t fg = shade_pal_index(source[spot], light, shade_constants);
+				uint32_t fg = shade_bgra(source[spot], light, shade_constants);
 				uint32_t fg_red = (fg >> 16) & 0xff;
 				uint32_t fg_green = (fg >> 8) & 0xff;
 				uint32_t fg_blue = (fg) & 0xff;
@@ -1829,7 +1831,7 @@ public:
 			{
 				spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
 
-				uint32_t fg = shade_pal_index(source[spot], light, shade_constants);
+				uint32_t fg = shade_bgra(source[spot], light, shade_constants);
 				uint32_t fg_red = (fg >> 16) & 0xff;
 				uint32_t fg_green = (fg >> 8) & 0xff;
 				uint32_t fg_blue = (fg) & 0xff;
@@ -1853,7 +1855,7 @@ public:
 
 class DrawSpanMaskedTranslucentRGBACommand : public DrawerCommand
 {
-	const BYTE *ds_source;
+	const uint32_t *ds_source;
 	fixed_t ds_light;
 	ShadeConstants ds_shade_constants;
 	fixed_t ds_xfrac;
@@ -1870,7 +1872,7 @@ class DrawSpanMaskedTranslucentRGBACommand : public DrawerCommand
 public:
 	DrawSpanMaskedTranslucentRGBACommand()
 	{
-		ds_source = ::ds_source;
+		ds_source = (const uint32_t*)::ds_source;
 		ds_light = ::ds_light;
 		ds_shade_constants = ::ds_shade_constants;
 		ds_xfrac = ::ds_xfrac;
@@ -1895,7 +1897,7 @@ public:
 		dsfixed_t			xstep;
 		dsfixed_t			ystep;
 		uint32_t*			dest;
-		const BYTE*			source = ds_source;
+		const uint32_t*		source = ds_source;
 		int 				count;
 		int 				spot;
 
@@ -1920,13 +1922,13 @@ public:
 			// 64x64 is the most common case by far, so special case it.
 			do
 			{
-				BYTE texdata;
+				uint32_t texdata;
 
 				spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
 				texdata = source[spot];
 				if (texdata != 0)
 				{
-					uint32_t fg = shade_pal_index(texdata, light, shade_constants);
+					uint32_t fg = shade_bgra(texdata, light, shade_constants);
 					uint32_t fg_red = (fg >> 16) & 0xff;
 					uint32_t fg_green = (fg >> 8) & 0xff;
 					uint32_t fg_blue = (fg) & 0xff;
@@ -1953,13 +1955,13 @@ public:
 			int xmask = ((1 << ds_xbits) - 1) << ds_ybits;
 			do
 			{
-				BYTE texdata;
+				uint32_t texdata;
 
 				spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
 				texdata = source[spot];
 				if (texdata != 0)
 				{
-					uint32_t fg = shade_pal_index(texdata, light, shade_constants);
+					uint32_t fg = shade_bgra(texdata, light, shade_constants);
 					uint32_t fg_red = (fg >> 16) & 0xff;
 					uint32_t fg_green = (fg >> 8) & 0xff;
 					uint32_t fg_blue = (fg) & 0xff;
@@ -1984,7 +1986,7 @@ public:
 
 class DrawSpanAddClampRGBACommand : public DrawerCommand
 {
-	const BYTE *ds_source;
+	const uint32_t *ds_source;
 	fixed_t ds_light;
 	ShadeConstants ds_shade_constants;
 	fixed_t ds_xfrac;
@@ -2001,7 +2003,7 @@ class DrawSpanAddClampRGBACommand : public DrawerCommand
 public:
 	DrawSpanAddClampRGBACommand()
 	{
-		ds_source = ::ds_source;
+		ds_source = (const uint32_t*)::ds_source;
 		ds_light = ::ds_light;
 		ds_shade_constants = ::ds_shade_constants;
 		ds_xfrac = ::ds_xfrac;
@@ -2026,7 +2028,7 @@ public:
 		dsfixed_t			xstep;
 		dsfixed_t			ystep;
 		uint32_t*			dest;
-		const BYTE*			source = ds_source;
+		const uint32_t*		source = ds_source;
 		int 				count;
 		int 				spot;
 
@@ -2053,7 +2055,7 @@ public:
 			{
 				spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
 
-				uint32_t fg = shade_pal_index(source[spot], light, shade_constants);
+				uint32_t fg = shade_bgra(source[spot], light, shade_constants);
 				uint32_t fg_red = (fg >> 16) & 0xff;
 				uint32_t fg_green = (fg >> 8) & 0xff;
 				uint32_t fg_blue = (fg) & 0xff;
@@ -2081,7 +2083,7 @@ public:
 			{
 				spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
 
-				uint32_t fg = shade_pal_index(source[spot], light, shade_constants);
+				uint32_t fg = shade_bgra(source[spot], light, shade_constants);
 				uint32_t fg_red = (fg >> 16) & 0xff;
 				uint32_t fg_green = (fg >> 8) & 0xff;
 				uint32_t fg_blue = (fg) & 0xff;
@@ -2105,7 +2107,7 @@ public:
 
 class DrawSpanMaskedAddClampRGBACommand : public DrawerCommand
 {
-	const BYTE *ds_source;
+	const uint32_t *ds_source;
 	fixed_t ds_light;
 	ShadeConstants ds_shade_constants;
 	fixed_t ds_xfrac;
@@ -2122,7 +2124,7 @@ class DrawSpanMaskedAddClampRGBACommand : public DrawerCommand
 public:
 	DrawSpanMaskedAddClampRGBACommand()
 	{
-		ds_source = ::ds_source;
+		ds_source = (const uint32_t*)::ds_source;
 		ds_light = ::ds_light;
 		ds_shade_constants = ::ds_shade_constants;
 		ds_xfrac = ::ds_xfrac;
@@ -2147,7 +2149,7 @@ public:
 		dsfixed_t			xstep;
 		dsfixed_t			ystep;
 		uint32_t*			dest;
-		const BYTE*			source = ds_source;
+		const uint32_t*		source = ds_source;
 		int 				count;
 		int 				spot;
 
@@ -2172,13 +2174,13 @@ public:
 			// 64x64 is the most common case by far, so special case it.
 			do
 			{
-				BYTE texdata;
+				uint32_t texdata;
 
 				spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
 				texdata = source[spot];
 				if (texdata != 0)
 				{
-					uint32_t fg = shade_pal_index(texdata, light, shade_constants);
+					uint32_t fg = shade_bgra(texdata, light, shade_constants);
 					uint32_t fg_red = (fg >> 16) & 0xff;
 					uint32_t fg_green = (fg >> 8) & 0xff;
 					uint32_t fg_blue = (fg) & 0xff;
@@ -2205,13 +2207,13 @@ public:
 			int xmask = ((1 << ds_xbits) - 1) << ds_ybits;
 			do
 			{
-				BYTE texdata;
+				uint32_t texdata;
 
 				spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
 				texdata = source[spot];
 				if (texdata != 0)
 				{
-					uint32_t fg = shade_pal_index(texdata, light, shade_constants);
+					uint32_t fg = shade_bgra(texdata, light, shade_constants);
 					uint32_t fg_red = (fg >> 16) & 0xff;
 					uint32_t fg_green = (fg >> 8) & 0xff;
 					uint32_t fg_blue = (fg) & 0xff;
@@ -2270,8 +2272,8 @@ public:
 
 class Vlinec1RGBACommand : public DrawerCommand
 {
-	fixed_t dc_iscale;
-	fixed_t dc_texturefrac;
+	DWORD dc_iscale;
+	DWORD dc_texturefrac;
 	int dc_count;
 	const BYTE *dc_source;
 	BYTE *dc_dest;
@@ -2302,7 +2304,7 @@ public:
 
 		DWORD fracstep = dc_iscale * thread->num_cores;
 		DWORD frac = dc_texturefrac + dc_iscale * thread->skipped_by_thread(dc_dest_y);
-		const BYTE *source = dc_source;
+		const uint32 *source = (const uint32 *)dc_source;
 		uint32_t *dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
 		int bits = vlinebits;
 		int pitch = dc_pitch * thread->num_cores;
@@ -2312,7 +2314,7 @@ public:
 
 		do
 		{
-			*dest = shade_pal_index(source[frac >> bits], light, shade_constants);
+			*dest = shade_bgra(source[frac >> bits], light, shade_constants);
 			frac += fracstep;
 			dest += pitch;
 		} while (--count);
@@ -2329,7 +2331,7 @@ class Vlinec4RGBACommand : public DrawerCommand
 	fixed_t palookuplight[4];
 	DWORD vplce[4];
 	DWORD vince[4];
-	const BYTE *bufplce[4];
+	const uint32 *bufplce[4];
 
 public:
 	Vlinec4RGBACommand()
@@ -2344,7 +2346,7 @@ public:
 			palookuplight[i] = ::palookuplight[i];
 			vplce[i] = ::vplce[i];
 			vince[i] = ::vince[i];
-			bufplce[i] = ::bufplce[i];
+			bufplce[i] = (const uint32 *)::bufplce[i];
 		}
 	}
 
@@ -2378,10 +2380,10 @@ public:
 
 		do
 		{
-			dest[0] = shade_pal_index(bufplce[0][(place = local_vplce[0]) >> bits], light0, shade_constants); local_vplce[0] = place + local_vince[0];
-			dest[1] = shade_pal_index(bufplce[1][(place = local_vplce[1]) >> bits], light1, shade_constants); local_vplce[1] = place + local_vince[1];
-			dest[2] = shade_pal_index(bufplce[2][(place = local_vplce[2]) >> bits], light2, shade_constants); local_vplce[2] = place + local_vince[2];
-			dest[3] = shade_pal_index(bufplce[3][(place = local_vplce[3]) >> bits], light3, shade_constants); local_vplce[3] = place + local_vince[3];
+			dest[0] = shade_bgra(bufplce[0][(place = local_vplce[0]) >> bits], light0, shade_constants); local_vplce[0] = place + local_vince[0];
+			dest[1] = shade_bgra(bufplce[1][(place = local_vplce[1]) >> bits], light1, shade_constants); local_vplce[1] = place + local_vince[1];
+			dest[2] = shade_bgra(bufplce[2][(place = local_vplce[2]) >> bits], light2, shade_constants); local_vplce[2] = place + local_vince[2];
+			dest[3] = shade_bgra(bufplce[3][(place = local_vplce[3]) >> bits], light3, shade_constants); local_vplce[3] = place + local_vince[3];
 			dest += pitch;
 		} while (--count);
 	}
@@ -2403,7 +2405,6 @@ public:
 
 		ShadeConstants shade_constants = dc_shade_constants;
 
-		uint32_t *palette = (uint32_t*)GPalette.BaseColors;
 		DWORD local_vplce[4] = { vplce[0], vplce[1], vplce[2], vplce[3] };
 		DWORD local_vince[4] = { vince[0], vince[1], vince[2], vince[3] };
 		int skipped = thread->skipped_by_thread(dc_dest_y);
@@ -2423,17 +2424,17 @@ public:
 				DWORD place2 = local_vplce[2];
 				DWORD place3 = local_vplce[3];
 
-				BYTE p0 = bufplce[0][place0 >> bits];
-				BYTE p1 = bufplce[1][place1 >> bits];
-				BYTE p2 = bufplce[2][place2 >> bits];
-				BYTE p3 = bufplce[3][place3 >> bits];
+				uint32_t p0 = bufplce[0][place0 >> bits];
+				uint32_t p1 = bufplce[1][place1 >> bits];
+				uint32_t p2 = bufplce[2][place2 >> bits];
+				uint32_t p3 = bufplce[3][place3 >> bits];
 
 				local_vplce[0] = place0 + local_vince[0];
 				local_vplce[1] = place1 + local_vince[1];
 				local_vplce[2] = place2 + local_vince[2];
 				local_vplce[3] = place3 + local_vince[3];
 
-				__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
+				__m128i fg = _mm_set_epi32(p3, p2, p1, p0);
 				SSE_SHADE_SIMPLE(fg);
 				_mm_storeu_si128((__m128i*)dest, fg);
 				dest += pitch;
@@ -2449,17 +2450,17 @@ public:
 				DWORD place2 = local_vplce[2];
 				DWORD place3 = local_vplce[3];
 
-				BYTE p0 = bufplce[0][place0 >> bits];
-				BYTE p1 = bufplce[1][place1 >> bits];
-				BYTE p2 = bufplce[2][place2 >> bits];
-				BYTE p3 = bufplce[3][place3 >> bits];
+				uint32_t p0 = bufplce[0][place0 >> bits];
+				uint32_t p1 = bufplce[1][place1 >> bits];
+				uint32_t p2 = bufplce[2][place2 >> bits];
+				uint32_t p3 = bufplce[3][place3 >> bits];
 
 				local_vplce[0] = place0 + local_vince[0];
 				local_vplce[1] = place1 + local_vince[1];
 				local_vplce[2] = place2 + local_vince[2];
 				local_vplce[3] = place3 + local_vince[3];
 
-				__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
+				__m128i fg = _mm_set_epi32(p3, p2, p1, p0);
 				SSE_SHADE(fg, shade_constants);
 				_mm_storeu_si128((__m128i*)dest, fg);
 				dest += pitch;
@@ -2471,8 +2472,8 @@ public:
 
 class Mvlinec1RGBACommand : public DrawerCommand
 {
-	fixed_t dc_iscale;
-	fixed_t dc_texturefrac;
+	DWORD dc_iscale;
+	DWORD dc_texturefrac;
 	int dc_count;
 	const BYTE *dc_source;
 	BYTE *dc_dest;
@@ -2503,7 +2504,7 @@ public:
 
 		DWORD fracstep = dc_iscale * thread->num_cores;
 		DWORD frac = dc_texturefrac + dc_iscale * thread->skipped_by_thread(dc_dest_y);
-		const BYTE *source = dc_source;
+		const uint32 *source = (const uint32 *)dc_source;
 		uint32_t *dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
 		int bits = mvlinebits;
 		int pitch = dc_pitch * thread->num_cores;
@@ -2513,10 +2514,10 @@ public:
 
 		do
 		{
-			BYTE pix = source[frac >> bits];
+			uint32_t pix = source[frac >> bits];
 			if (pix != 0)
 			{
-				*dest = shade_pal_index(pix, light, shade_constants);
+				*dest = shade_bgra(pix, light, shade_constants);
 			}
 			frac += fracstep;
 			dest += pitch;
@@ -2534,7 +2535,7 @@ class Mvlinec4RGBACommand : public DrawerCommand
 	fixed_t palookuplight[4];
 	DWORD vplce[4];
 	DWORD vince[4];
-	const BYTE *bufplce[4];
+	const uint32 *bufplce[4];
 
 public:
 	Mvlinec4RGBACommand()
@@ -2549,7 +2550,7 @@ public:
 			palookuplight[i] = ::palookuplight[i];
 			vplce[i] = ::vplce[i];
 			vince[i] = ::vince[i];
-			bufplce[i] = ::bufplce[i];
+			bufplce[i] = (const uint32 *)::bufplce[i];
 		}
 	}
 
@@ -2583,11 +2584,11 @@ public:
 
 		do
 		{
-			BYTE pix;
-			pix = bufplce[0][(place = local_vplce[0]) >> bits]; if (pix) dest[0] = shade_pal_index(pix, light0, shade_constants); local_vplce[0] = place + local_vince[0];
-			pix = bufplce[1][(place = local_vplce[1]) >> bits]; if (pix) dest[1] = shade_pal_index(pix, light1, shade_constants); local_vplce[1] = place + local_vince[1];
-			pix = bufplce[2][(place = local_vplce[2]) >> bits]; if (pix) dest[2] = shade_pal_index(pix, light2, shade_constants); local_vplce[2] = place + local_vince[2];
-			pix = bufplce[3][(place = local_vplce[3]) >> bits]; if (pix) dest[3] = shade_pal_index(pix, light3, shade_constants); local_vplce[3] = place + local_vince[3];
+			uint32_t pix;
+			pix = bufplce[0][(place = local_vplce[0]) >> bits]; if (pix) dest[0] = shade_bgra(pix, light0, shade_constants); local_vplce[0] = place + local_vince[0];
+			pix = bufplce[1][(place = local_vplce[1]) >> bits]; if (pix) dest[1] = shade_bgra(pix, light1, shade_constants); local_vplce[1] = place + local_vince[1];
+			pix = bufplce[2][(place = local_vplce[2]) >> bits]; if (pix) dest[2] = shade_bgra(pix, light2, shade_constants); local_vplce[2] = place + local_vince[2];
+			pix = bufplce[3][(place = local_vplce[3]) >> bits]; if (pix) dest[3] = shade_bgra(pix, light3, shade_constants); local_vplce[3] = place + local_vince[3];
 			dest += pitch;
 		} while (--count);
 	}
@@ -2609,7 +2610,6 @@ public:
 
 		ShadeConstants shade_constants = dc_shade_constants;
 
-		uint32_t *palette = (uint32_t*)GPalette.BaseColors;
 		DWORD local_vplce[4] = { vplce[0], vplce[1], vplce[2], vplce[3] };
 		DWORD local_vince[4] = { vince[0], vince[1], vince[2], vince[3] };
 		int skipped = thread->skipped_by_thread(dc_dest_y);
@@ -2629,10 +2629,10 @@ public:
 				DWORD place2 = local_vplce[2];
 				DWORD place3 = local_vplce[3];
 
-				BYTE pix0 = bufplce[0][place0 >> bits];
-				BYTE pix1 = bufplce[1][place1 >> bits];
-				BYTE pix2 = bufplce[2][place2 >> bits];
-				BYTE pix3 = bufplce[3][place3 >> bits];
+				uint32_t pix0 = bufplce[0][place0 >> bits];
+				uint32_t pix1 = bufplce[1][place1 >> bits];
+				uint32_t pix2 = bufplce[2][place2 >> bits];
+				uint32_t pix3 = bufplce[3][place3 >> bits];
 
 				// movemask = !(pix == 0)
 				__m128i movemask = _mm_xor_si128(_mm_cmpeq_epi32(_mm_set_epi32(pix3, pix2, pix1, pix0), _mm_setzero_si128()), _mm_cmpeq_epi32(_mm_setzero_si128(), _mm_setzero_si128()));
@@ -2642,7 +2642,7 @@ public:
 				local_vplce[2] = place2 + local_vince[2];
 				local_vplce[3] = place3 + local_vince[3];
 
-				__m128i fg = _mm_set_epi32(palette[pix3], palette[pix2], palette[pix1], palette[pix0]);
+				__m128i fg = _mm_set_epi32(pix3, pix2, pix1, pix0);
 				SSE_SHADE_SIMPLE(fg);
 				_mm_maskmoveu_si128(fg, movemask, (char*)dest);
 				dest += pitch;
@@ -2658,10 +2658,10 @@ public:
 				DWORD place2 = local_vplce[2];
 				DWORD place3 = local_vplce[3];
 
-				BYTE pix0 = bufplce[0][place0 >> bits];
-				BYTE pix1 = bufplce[1][place1 >> bits];
-				BYTE pix2 = bufplce[2][place2 >> bits];
-				BYTE pix3 = bufplce[3][place3 >> bits];
+				uint32_t pix0 = bufplce[0][place0 >> bits];
+				uint32_t pix1 = bufplce[1][place1 >> bits];
+				uint32_t pix2 = bufplce[2][place2 >> bits];
+				uint32_t pix3 = bufplce[3][place3 >> bits];
 
 				// movemask = !(pix == 0)
 				__m128i movemask = _mm_xor_si128(_mm_cmpeq_epi32(_mm_set_epi32(pix3, pix2, pix1, pix0), _mm_setzero_si128()), _mm_cmpeq_epi32(_mm_setzero_si128(), _mm_setzero_si128()));
@@ -2671,7 +2671,7 @@ public:
 				local_vplce[2] = place2 + local_vince[2];
 				local_vplce[3] = place3 + local_vince[3];
 
-				__m128i fg = _mm_set_epi32(palette[pix3], palette[pix2], palette[pix1], palette[pix0]);
+				__m128i fg = _mm_set_epi32(pix3, pix2, pix1, pix0);
 				SSE_SHADE(fg, shade_constants);
 				_mm_maskmoveu_si128(fg, movemask, (char*)dest);
 				dest += pitch;
@@ -2683,8 +2683,8 @@ public:
 
 class Tmvline1AddRGBACommand : public DrawerCommand
 {
-	fixed_t dc_iscale;
-	fixed_t dc_texturefrac;
+	DWORD dc_iscale;
+	DWORD dc_texturefrac;
 	int dc_count;
 	const BYTE *dc_source;
 	BYTE *dc_dest;
@@ -2719,7 +2719,7 @@ public:
 
 		DWORD fracstep = dc_iscale * thread->num_cores;
 		DWORD frac = dc_texturefrac + dc_iscale * thread->skipped_by_thread(dc_dest_y);
-		const BYTE *source = dc_source;
+		const uint32 *source = (const uint32 *)dc_source;
 		uint32_t *dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
 		int bits = tmvlinebits;
 		int pitch = dc_pitch * thread->num_cores;
@@ -2732,10 +2732,10 @@ public:
 
 		do
 		{
-			BYTE pix = source[frac >> bits];
+			uint32_t pix = source[frac >> bits];
 			if (pix != 0)
 			{
-				uint32_t fg = shade_pal_index(pix, light, shade_constants);
+				uint32_t fg = shade_bgra(pix, light, shade_constants);
 				uint32_t fg_red = (fg >> 16) & 0xff;
 				uint32_t fg_green = (fg >> 8) & 0xff;
 				uint32_t fg_blue = fg & 0xff;
@@ -2768,7 +2768,7 @@ class Tmvline4AddRGBACommand : public DrawerCommand
 	fixed_t palookuplight[4];
 	DWORD vplce[4];
 	DWORD vince[4];
-	const BYTE *bufplce[4];
+	const uint32 *bufplce[4];
 
 public:
 	Tmvline4AddRGBACommand()
@@ -2785,7 +2785,7 @@ public:
 			palookuplight[i] = ::palookuplight[i];
 			vplce[i] = ::vplce[i];
 			vince[i] = ::vince[i];
-			bufplce[i] = ::bufplce[i];
+			bufplce[i] = (const uint32 *)::bufplce[i];
 		}
 	}
 
@@ -2823,10 +2823,10 @@ public:
 		{
 			for (int i = 0; i < 4; ++i)
 			{
-				BYTE pix = bufplce[i][local_vplce[i] >> bits];
+				uint32_t pix = bufplce[i][local_vplce[i] >> bits];
 				if (pix != 0)
 				{
-					uint32_t fg = shade_pal_index(pix, light[i], shade_constants);
+					uint32_t fg = shade_bgra(pix, light[i], shade_constants);
 					uint32_t fg_red = (fg >> 16) & 0xff;
 					uint32_t fg_green = (fg >> 8) & 0xff;
 					uint32_t fg_blue = fg & 0xff;
@@ -2850,8 +2850,8 @@ public:
 
 class Tmvline1AddClampRGBACommand : public DrawerCommand
 {
-	fixed_t dc_iscale;
-	fixed_t dc_texturefrac;
+	DWORD dc_iscale;
+	DWORD dc_texturefrac;
 	int dc_count;
 	const BYTE *dc_source;
 	BYTE *dc_dest;
@@ -2886,7 +2886,7 @@ public:
 
 		DWORD fracstep = dc_iscale * thread->num_cores;
 		DWORD frac = dc_texturefrac + dc_iscale * thread->skipped_by_thread(dc_dest_y);
-		const BYTE *source = dc_source;
+		const uint32 *source = (const uint32 *)dc_source;
 		uint32_t *dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
 		int bits = tmvlinebits;
 		int pitch = dc_pitch * thread->num_cores;
@@ -2899,10 +2899,10 @@ public:
 
 		do
 		{
-			BYTE pix = source[frac >> bits];
+			uint32_t pix = source[frac >> bits];
 			if (pix != 0)
 			{
-				uint32_t fg = shade_pal_index(pix, light, shade_constants);
+				uint32_t fg = shade_bgra(pix, light, shade_constants);
 				uint32_t fg_red = (fg >> 16) & 0xff;
 				uint32_t fg_green = (fg >> 8) & 0xff;
 				uint32_t fg_blue = fg & 0xff;
@@ -2935,7 +2935,7 @@ class Tmvline4AddClampRGBACommand : public DrawerCommand
 	fixed_t palookuplight[4];
 	DWORD vplce[4];
 	DWORD vince[4];
-	const BYTE *bufplce[4];
+	const uint32 *bufplce[4];
 
 public:
 	Tmvline4AddClampRGBACommand()
@@ -2952,7 +2952,7 @@ public:
 			palookuplight[i] = ::palookuplight[i];
 			vplce[i] = ::vplce[i];
 			vince[i] = ::vince[i];
-			bufplce[i] = ::bufplce[i];
+			bufplce[i] = (const uint32 *)::bufplce[i];
 		}
 	}
 
@@ -2990,10 +2990,10 @@ public:
 		{
 			for (int i = 0; i < 4; ++i)
 			{
-				BYTE pix = bufplce[i][local_vplce[i] >> bits];
+				uint32_t pix = bufplce[i][local_vplce[i] >> bits];
 				if (pix != 0)
 				{
-					uint32_t fg = shade_pal_index(pix, light[i], shade_constants);
+					uint32_t fg = shade_bgra(pix, light[i], shade_constants);
 					uint32_t fg_red = (fg >> 16) & 0xff;
 					uint32_t fg_green = (fg >> 8) & 0xff;
 					uint32_t fg_blue = fg & 0xff;
@@ -3017,8 +3017,8 @@ public:
 
 class Tmvline1SubClampRGBACommand : public DrawerCommand
 {
-	fixed_t dc_iscale;
-	fixed_t dc_texturefrac;
+	DWORD dc_iscale;
+	DWORD dc_texturefrac;
 	int dc_count;
 	const BYTE *dc_source;
 	BYTE *dc_dest;
@@ -3053,7 +3053,7 @@ public:
 
 		DWORD fracstep = dc_iscale * thread->num_cores;
 		DWORD frac = dc_texturefrac + dc_iscale * thread->skipped_by_thread(dc_dest_y);
-		const BYTE *source = dc_source;
+		const uint32 *source = (const uint32 *)dc_source;
 		uint32_t *dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
 		int bits = tmvlinebits;
 		int pitch = dc_pitch * thread->num_cores;
@@ -3066,10 +3066,10 @@ public:
 
 		do
 		{
-			BYTE pix = source[frac >> bits];
+			uint32_t pix = source[frac >> bits];
 			if (pix != 0)
 			{
-				uint32_t fg = shade_pal_index(pix, light, shade_constants);
+				uint32_t fg = shade_bgra(pix, light, shade_constants);
 				uint32_t fg_red = (fg >> 16) & 0xff;
 				uint32_t fg_green = (fg >> 8) & 0xff;
 				uint32_t fg_blue = fg & 0xff;
@@ -3102,7 +3102,7 @@ class Tmvline4SubClampRGBACommand : public DrawerCommand
 	fixed_t palookuplight[4];
 	DWORD vplce[4];
 	DWORD vince[4];
-	const BYTE *bufplce[4];
+	const uint32 *bufplce[4];
 
 public:
 	Tmvline4SubClampRGBACommand()
@@ -3119,7 +3119,7 @@ public:
 			palookuplight[i] = ::palookuplight[i];
 			vplce[i] = ::vplce[i];
 			vince[i] = ::vince[i];
-			bufplce[i] = ::bufplce[i];
+			bufplce[i] = (const uint32 *)::bufplce[i];
 		}
 	}
 
@@ -3157,10 +3157,10 @@ public:
 		{
 			for (int i = 0; i < 4; ++i)
 			{
-				BYTE pix = bufplce[i][local_vplce[i] >> bits];
+				uint32_t pix = bufplce[i][local_vplce[i] >> bits];
 				if (pix != 0)
 				{
-					uint32_t fg = shade_pal_index(pix, light[i], shade_constants);
+					uint32_t fg = shade_bgra(pix, light[i], shade_constants);
 					uint32_t fg_red = (fg >> 16) & 0xff;
 					uint32_t fg_green = (fg >> 8) & 0xff;
 					uint32_t fg_blue = fg & 0xff;
@@ -3184,8 +3184,8 @@ public:
 
 class Tmvline1RevSubClampRGBACommand : public DrawerCommand
 {
-	fixed_t dc_iscale;
-	fixed_t dc_texturefrac;
+	DWORD dc_iscale;
+	DWORD dc_texturefrac;
 	int dc_count;
 	const BYTE *dc_source;
 	BYTE *dc_dest;
@@ -3220,7 +3220,7 @@ public:
 
 		DWORD fracstep = dc_iscale * thread->num_cores;
 		DWORD frac = dc_texturefrac + dc_iscale * thread->skipped_by_thread(dc_dest_y);
-		const BYTE *source = dc_source;
+		const uint32 *source = (const uint32 *)dc_source;
 		uint32_t *dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
 		int bits = tmvlinebits;
 		int pitch = dc_pitch * thread->num_cores;
@@ -3233,10 +3233,10 @@ public:
 
 		do
 		{
-			BYTE pix = source[frac >> bits];
+			uint32_t pix = source[frac >> bits];
 			if (pix != 0)
 			{
-				uint32_t fg = shade_pal_index(pix, light, shade_constants);
+				uint32_t fg = shade_bgra(pix, light, shade_constants);
 				uint32_t fg_red = (fg >> 16) & 0xff;
 				uint32_t fg_green = (fg >> 8) & 0xff;
 				uint32_t fg_blue = fg & 0xff;
@@ -3269,7 +3269,7 @@ class Tmvline4RevSubClampRGBACommand : public DrawerCommand
 	fixed_t palookuplight[4];
 	DWORD vplce[4];
 	DWORD vince[4];
-	const BYTE *bufplce[4];
+	const uint32 *bufplce[4];
 
 public:
 	Tmvline4RevSubClampRGBACommand()
@@ -3286,7 +3286,7 @@ public:
 			palookuplight[i] = ::palookuplight[i];
 			vplce[i] = ::vplce[i];
 			vince[i] = ::vince[i];
-			bufplce[i] = ::bufplce[i];
+			bufplce[i] = (const uint32 *)::bufplce[i];
 		}
 	}
 
@@ -3324,10 +3324,10 @@ public:
 		{
 			for (int i = 0; i < 4; ++i)
 			{
-				BYTE pix = bufplce[i][local_vplce[i] >> bits];
+				uint32_t pix = bufplce[i][local_vplce[i] >> bits];
 				if (pix != 0)
 				{
-					uint32_t fg = shade_pal_index(pix, light[i], shade_constants);
+					uint32_t fg = shade_bgra(pix, light[i], shade_constants);
 					uint32_t fg_red = (fg >> 16) & 0xff;
 					uint32_t fg_green = (fg >> 8) & 0xff;
 					uint32_t fg_blue = fg & 0xff;
@@ -3549,8 +3549,17 @@ void R_FillSpan_RGBA()
 	DrawerCommandQueue::QueueCommand<FillSpanRGBACommand>();
 }
 
+extern FTexture *rw_pic; // For the asserts below
+
 DWORD vlinec1_RGBA()
 {
+	DWORD fracstep = dc_iscale;
+	DWORD frac = dc_texturefrac;
+	DWORD height = rw_pic->GetHeight();
+	assert((frac >> vlinebits) < height);
+	frac += dc_count * fracstep;
+	assert((frac >> vlinebits) <= height);
+
 	DrawerCommandQueue::QueueCommand<Vlinec1RGBACommand>();
 	return dc_texturefrac + dc_count * dc_iscale;
 }
@@ -3558,6 +3567,8 @@ DWORD vlinec1_RGBA()
 void vlinec4_RGBA()
 {
 	DrawerCommandQueue::QueueCommand<Vlinec4RGBACommand>();
+	for (int i = 0; i < 4; i++)
+		vplce[i] += vince[i] * dc_count;
 }
 
 DWORD mvlinec1_RGBA()
@@ -3569,6 +3580,8 @@ DWORD mvlinec1_RGBA()
 void mvlinec4_RGBA()
 {
 	DrawerCommandQueue::QueueCommand<Mvlinec4RGBACommand>();
+	for (int i = 0; i < 4; i++)
+		vplce[i] += vince[i] * dc_count;
 }
 
 fixed_t tmvline1_add_RGBA()
@@ -3580,6 +3593,8 @@ fixed_t tmvline1_add_RGBA()
 void tmvline4_add_RGBA()
 {
 	DrawerCommandQueue::QueueCommand<Tmvline4AddRGBACommand>();
+	for (int i = 0; i < 4; i++)
+		vplce[i] += vince[i] * dc_count;
 }
 
 fixed_t tmvline1_addclamp_RGBA()
@@ -3591,6 +3606,8 @@ fixed_t tmvline1_addclamp_RGBA()
 void tmvline4_addclamp_RGBA()
 {
 	DrawerCommandQueue::QueueCommand<Tmvline4AddClampRGBACommand>();
+	for (int i = 0; i < 4; i++)
+		vplce[i] += vince[i] * dc_count;
 }
 
 fixed_t tmvline1_subclamp_RGBA()
@@ -3602,6 +3619,8 @@ fixed_t tmvline1_subclamp_RGBA()
 void tmvline4_subclamp_RGBA()
 {
 	DrawerCommandQueue::QueueCommand<Tmvline4SubClampRGBACommand>();
+	for (int i = 0; i < 4; i++)
+		vplce[i] += vince[i] * dc_count;
 }
 
 fixed_t tmvline1_revsubclamp_RGBA()
@@ -3613,6 +3632,8 @@ fixed_t tmvline1_revsubclamp_RGBA()
 void tmvline4_revsubclamp_RGBA()
 {
 	DrawerCommandQueue::QueueCommand<Tmvline4RevSubClampRGBACommand>();
+	for (int i = 0; i < 4; i++)
+		vplce[i] += vince[i] * dc_count;
 }
 
 void R_DrawFogBoundarySection_RGBA(int y, int y2, int x1)

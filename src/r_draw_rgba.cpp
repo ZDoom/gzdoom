@@ -82,6 +82,21 @@ void* DrawerCommandQueue::AllocMemory(size_t size)
 	return data;
 }
 
+void DrawerCommandQueue::Begin()
+{
+	auto queue = Instance();
+	queue->Finish();
+	queue->threaded_render++;
+}
+
+void DrawerCommandQueue::End()
+{
+	auto queue = Instance();
+	queue->Finish();
+	if (queue->threaded_render > 0)
+		queue->threaded_render--;
+}
+
 void DrawerCommandQueue::Finish()
 {
 	auto queue = Instance();
@@ -3515,9 +3530,14 @@ public:
 
 /////////////////////////////////////////////////////////////////////////////
 
-void R_FinishDrawerCommands()
+void R_BeginDrawerCommands()
 {
-	DrawerCommandQueue::Finish();
+	DrawerCommandQueue::Begin();
+}
+
+void R_EndDrawerCommands()
+{
+	DrawerCommandQueue::End();
 }
 
 void R_DrawColumnP_RGBA_C()

@@ -960,6 +960,8 @@ void R_RenderViewToCanvas (AActor *actor, DCanvas *canvas,
 		r_swtruecolor = canvas->IsBgra();
 		R_InitColumnDrawers();
 	}
+	
+	R_BeginDrawerCommands();
 
 	viewwidth = width;
 	RenderTarget = canvas;
@@ -979,7 +981,7 @@ void R_RenderViewToCanvas (AActor *actor, DCanvas *canvas,
 	R_SetupBuffer ();
 	screen->Unlock ();
 
-	R_FinishDrawerCommands();
+	R_EndDrawerCommands();
 
 	viewactive = savedviewactive;
 	r_swtruecolor = savedoutputformat;

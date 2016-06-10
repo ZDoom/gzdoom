@@ -443,8 +443,11 @@ void R_SetDSColorMapLight(FColormap *base_colormap, float light, int shade);
 
 void R_SetTranslationMap(lighttable_t *translation);
 
+// Redirect drawer commands to worker threads
+void R_BeginDrawerCommands();
+
 // Wait until all drawers finished executing
-void R_FinishDrawerCommands();
+void R_EndDrawerCommands();
 
 class DrawerCommandQueue;
 
@@ -530,13 +533,14 @@ class DrawerCommandQueue
 	std::condition_variable end_condition;
 	size_t finished_threads = 0;
 
-	bool no_threading = false;
+	int threaded_render = 0;
 	DrawerThread single_core_thread;
 	int num_passes = 2;
 	int rows_in_pass = 540;
 
 	void StartThreads();
 	void StopThreads();
+	void Finish();
 
 	static DrawerCommandQueue *Instance();
 
@@ -551,7 +555,7 @@ public:
 	static void QueueCommand(Types &&... args)
 	{
 		auto queue = Instance();
-		if (queue->no_threading)
+		if (queue->threaded_render == 0)
 		{
 			T command(std::forward<Types>(args)...);
 			command.Execute(&queue->single_core_thread);
@@ -565,9 +569,13 @@ public:
 			queue->commands.push_back(command);
 		}
 	}
+	
+	// Redirects all drawing commands to worker threads until Finish is called
+	// Begin/End blocks can be nested.
+	static void Begin();
 
 	// Wait until all worker threads finished executing commands
-	static void Finish();
+	static void End();
 };
 
 #endif

@@ -115,7 +115,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Beacon)
 
 	rebel->SetState (rebel->SeeState);
 	rebel->Angles.Yaw = self->Angles.Yaw;
-	Spawn<ATeleportFog> (rebel->Vec3Angle(20., self->Angles.Yaw, TELEFOGHEIGHT), ALLOW_REPLACE);
+	P_SpawnTeleportFog(rebel, rebel->Vec3Angle(20., self->Angles.Yaw, 0), false, true);
 	if (--self->health < 0)
 	{
 		self->SetState(self->FindState(NAME_Death));

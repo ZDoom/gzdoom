@@ -1038,11 +1038,17 @@ FScriptPosition &FScriptPosition::operator=(const FScriptPosition &other)
 //
 //==========================================================================
 
+CVAR(Bool, strictdecorate, false, CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
+
 void FScriptPosition::Message (int severity, const char *message, ...) const
 {
 	FString composed;
 
 	if ((severity == MSG_DEBUG || severity == MSG_DEBUGLOG) && !developer) return;
+	if (severity == MSG_OPTERROR)
+	{
+		severity = strictdecorate ? MSG_ERROR : MSG_WARNING;
+	}
 
 	if (message == NULL)
 	{

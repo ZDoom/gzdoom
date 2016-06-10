@@ -1,7 +1,7 @@
 #ifndef OALDEF_H
 #define OALDEF_H
 
-#ifndef NO_OPENAL
+#if !defined NO_OPENAL && defined DYN_OPENAL
 
 #ifndef _WIN32
 typedef void* FARPROC;

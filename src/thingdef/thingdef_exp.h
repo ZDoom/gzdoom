@@ -208,7 +208,7 @@ public:
 	virtual bool isConstant() const;
 	virtual void RequestAddress();
 	virtual VMFunction *GetDirectFunction();
-	bool IsNumeric() const { return ValueType->GetRegType() == REGT_INT || ValueType->GetRegType() == REGT_FLOAT; }
+	bool IsNumeric() const { return ValueType != TypeName && (ValueType->GetRegType() == REGT_INT || ValueType->GetRegType() == REGT_FLOAT); }
 	bool IsPointer() const { return ValueType->GetRegType() == REGT_POINTER; }
 
 	virtual ExpEmit Emit(VMFunctionBuilder *build);

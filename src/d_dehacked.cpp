@@ -3123,22 +3123,29 @@ bool ADehackedPickup::TryPickup (AActor *&toucher)
 
 const char *ADehackedPickup::PickupMessage ()
 {
-	return RealPickup->PickupMessage ();
+	if (RealPickup != nullptr)
+		return RealPickup->PickupMessage ();
+	else return "";
 }
 
 bool ADehackedPickup::ShouldStay ()
 {
-	return RealPickup->ShouldStay ();
+	if (RealPickup != nullptr)
+		return RealPickup->ShouldStay ();
+	else return true;
 }
 
 bool ADehackedPickup::ShouldRespawn ()
 {
-	return RealPickup->ShouldRespawn ();
+	if (RealPickup != nullptr)
+		return RealPickup->ShouldRespawn ();
+	else return false;
 }
 
 void ADehackedPickup::PlayPickupSound (AActor *toucher)
 {
-	RealPickup->PlayPickupSound (toucher);
+	if (RealPickup != nullptr)
+		RealPickup->PlayPickupSound (toucher);
 }
 
 void ADehackedPickup::DoPickupSpecial (AActor *toucher)
@@ -3146,19 +3153,19 @@ void ADehackedPickup::DoPickupSpecial (AActor *toucher)
 	Super::DoPickupSpecial (toucher);
 	// If the real pickup hasn't joined the toucher's inventory, make sure it
 	// doesn't stick around.
-	if (RealPickup->Owner != toucher)
+	if (RealPickup != nullptr && RealPickup->Owner != toucher)
 	{
 		RealPickup->Destroy ();
 	}
-	RealPickup = NULL;
+	RealPickup = nullptr;
 }
 
 void ADehackedPickup::Destroy ()
 {
-	if (RealPickup != NULL)
+	if (RealPickup != nullptr)
 	{
 		RealPickup->Destroy ();
-		RealPickup = NULL;
+		RealPickup = nullptr;
 	}
 	Super::Destroy ();
 }

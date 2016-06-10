@@ -373,7 +373,8 @@ void FConsoleWindow::SetTitleText()
 	}
 
 	NSTextField* titleText = [[NSTextField alloc] initWithFrame:titleTextRect];
-	[titleText setStringValue:[NSString stringWithUTF8String:DoomStartupInfo.Name]];
+	[titleText setStringValue:[NSString stringWithCString:DoomStartupInfo.Name
+												 encoding:NSISOLatin1StringEncoding]];
 	[titleText setAlignment:NSCenterTextAlignment];
 	[titleText setTextColor:RGB(DoomStartupInfo.FgColor)];
 	[titleText setBackgroundColor:RGB(DoomStartupInfo.BkColor)];

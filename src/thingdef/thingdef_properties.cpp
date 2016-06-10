@@ -457,7 +457,7 @@ DEFINE_PROPERTY(skip_super, 0, Actor)
 	}
 	if (bag.StateSet)
 	{
-		bag.ScriptPosition.Message(MSG_WARNING,
+		bag.ScriptPosition.Message(MSG_OPTERROR,
 			"'skip_super' must appear before any state definitions.");
 		return;
 	}

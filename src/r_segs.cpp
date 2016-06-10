@@ -1072,16 +1072,17 @@ uint32_t wallscan_drawcol1(int x, int y1, int y2, uint32_t uv_start, uint32_t uv
 	if (uv_max == 0) // power of two
 	{
 		int count = y2 - y1;
-		if (count > 0)
-		{
-			dc_source = source;
-			dc_dest = (ylookup[y1] + x) * pixelsize + dc_destorg;
-			dc_count = y2 - y1;
-			dc_iscale = uv_step;
-			dc_texturefrac = uv_start;
-			draw1column();
-		}
-		return uv_start + uv_step * (uint32_t)count;
+
+		dc_source = source;
+		dc_dest = (ylookup[y1] + x) * pixelsize + dc_destorg;
+		dc_count = count;
+		dc_iscale = uv_step;
+		dc_texturefrac = uv_start;
+		draw1column();
+
+		uint64_t step64 = uv_step;
+		uint64_t pos64 = uv_start;
+		return (uint32_t)(pos64 + step64 * count);
 	}
 	else
 	{
@@ -1119,15 +1120,19 @@ void wallscan_drawcol4(int x, int y1, int y2, uint32_t *uv_pos, uint32_t *uv_ste
 	int pixelsize = r_swtruecolor ? 4 : 1;
 	if (uv_max == 0) // power of two, no wrap handling needed
 	{
+		int count = y2 - y1;
 		for (int i = 0; i < 4; i++)
 		{
 			bufplce[i] = source[i];
 			vplce[i] = uv_pos[i];
 			vince[i] = uv_step[i];
-			uv_pos[i] += uv_step[i] * (y2 - y1);
+
+			uint64_t step64 = uv_step[i];
+			uint64_t pos64 = uv_pos[i];
+			uv_pos[i] = (uint32_t)(pos64 + step64 * count);
 		}
 		dc_dest = (ylookup[y1] + x) * pixelsize + dc_destorg;
-		dc_count = y2 - y1;
+		dc_count = count;
 		draw4columns();
 	}
 	else
@@ -1481,16 +1486,110 @@ static void call_wallscan(int x1, int x2, short *uwal, short *dwal, float *swal,
 	}
 }
 
-// wallscan now tiles with non-power-of-two textures - this function is therefore not needed anymore..
+//=============================================================================
+//
+// wallscan_np2
+//
+// This is a wrapper around wallscan that helps it tile textures whose heights
+// are not powers of 2. It divides the wall into texture-sized strips and calls
+// wallscan for each of those. Since only one repetition of the texture fits
+// in each strip, wallscan will not tile.
+//
+//=============================================================================
+
 void wallscan_np2(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, double top, double bot, bool mask)
 {
-	call_wallscan(x1, x2, uwal, dwal, swal, lwal, yrepeat, mask);
+	if (!r_np2)
+	{
+		call_wallscan(x1, x2, uwal, dwal, swal, lwal, yrepeat, mask);
+	}
+	else
+	{
+		short most1[MAXWIDTH], most2[MAXWIDTH], most3[MAXWIDTH];
+		short *up, *down;
+		double texheight = rw_pic->GetHeight();
+		double partition;
+		double scaledtexheight = texheight / yrepeat;
+
+		if (yrepeat >= 0)
+		{ // normal orientation: draw strips from top to bottom
+			partition = top - fmod(top - dc_texturemid / yrepeat - ViewPos.Z, scaledtexheight);
+			if (partition == top)
+			{
+				partition -= scaledtexheight;
+			}
+			up = uwal;
+			down = most1;
+			dc_texturemid = (partition - ViewPos.Z) * yrepeat + texheight;
+			while (partition > bot)
+			{
+				int j = OWallMost(most3, partition - ViewPos.Z, &WallC);
+				if (j != 3)
+				{
+					for (int j = x1; j < x2; ++j)
+					{
+						down[j] = clamp(most3[j], up[j], dwal[j]);
+					}
+					call_wallscan(x1, x2, up, down, swal, lwal, yrepeat, mask);
+					up = down;
+					down = (down == most1) ? most2 : most1;
+				}
+				partition -= scaledtexheight;
+				dc_texturemid -= texheight;
+ 			}
+			call_wallscan(x1, x2, up, dwal, swal, lwal, yrepeat, mask);
+		}
+		else
+		{ // upside down: draw strips from bottom to top
+			partition = bot - fmod(bot - dc_texturemid / yrepeat - ViewPos.Z, scaledtexheight);
+			up = most1;
+			down = dwal;
+			dc_texturemid = (partition - ViewPos.Z) * yrepeat + texheight;
+			while (partition < top)
+			{
+				int j = OWallMost(most3, partition - ViewPos.Z, &WallC);
+				if (j != 12)
+				{
+					for (int j = x1; j < x2; ++j)
+					{
+						up[j] = clamp(most3[j], uwal[j], down[j]);
+					}
+					call_wallscan(x1, x2, up, down, swal, lwal, yrepeat, mask);
+					down = up;
+					up = (up == most1) ? most2 : most1;
+				}
+				partition -= scaledtexheight;
+				dc_texturemid -= texheight;
+ 			}
+			call_wallscan(x1, x2, uwal, down, swal, lwal, yrepeat, mask);
+		}
+	}
 }
 
-// wallscan now tiles with non-power-of-two textures - this function is therefore not needed anymore..
 static void wallscan_np2_ds(drawseg_t *ds, int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat)
 {
-	call_wallscan(x1, x2, uwal, dwal, swal, lwal, yrepeat, true);
+	if (rw_pic->GetHeight() != 1 << rw_pic->HeightBits)
+	{
+		double frontcz1 = ds->curline->frontsector->ceilingplane.ZatPoint(ds->curline->v1);
+		double frontfz1 = ds->curline->frontsector->floorplane.ZatPoint(ds->curline->v1);
+		double frontcz2 = ds->curline->frontsector->ceilingplane.ZatPoint(ds->curline->v2);
+		double frontfz2 = ds->curline->frontsector->floorplane.ZatPoint(ds->curline->v2);
+		double top = MAX(frontcz1, frontcz2);
+		double bot = MIN(frontfz1, frontfz2);
+		if (fake3D & FAKE3D_CLIPTOP)
+		{
+			top = MIN(top, sclipTop);
+		}
+		if (fake3D & FAKE3D_CLIPBOTTOM)
+		{
+			bot = MAX(bot, sclipBottom);
+		}
+		wallscan_np2(x1, x2, uwal, dwal, swal, lwal, yrepeat, top, bot, true);
+	}
+	else
+	{
+		call_wallscan(x1, x2, uwal, dwal, swal, lwal, yrepeat, true);
+	}
 }
 
 //

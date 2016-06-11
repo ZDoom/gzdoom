@@ -2473,7 +2473,7 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 		return;
 
 	yscale = xs_RoundToInt(YaspectMul * xscale);
-	ty = FLOAT2FIXED(particle->Pos.Z - ViewPos.Z);
+	ty = particle->Pos.Z - ViewPos.Z;
 	y1 = xs_RoundToInt(CenterY - (ty + psize) * yscale);
 	y2 = xs_RoundToInt(CenterY - (ty - psize) * yscale);
 

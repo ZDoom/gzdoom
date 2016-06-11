@@ -252,7 +252,6 @@ void P_InitEffects ()
 	blood2 = ParticleColor(RPART(kind)/3, GPART(kind)/3, BPART(kind)/3);
 }
 
-
 void P_ThinkParticles ()
 {
 	int i;
@@ -262,13 +261,19 @@ void P_ThinkParticles ()
 	prev = NULL;
 	while (i != NO_PARTICLE)
 	{
-		BYTE oldtrans;
-
 		particle = Particles + i;
 		i = particle->tnext;
+		if (!particle->notimefreeze && ((bglobal.freeze) || (level.flags2 & LEVEL2_FROZEN)))
+		{
+			prev = particle;
+			continue;
+		}
+		
+		BYTE oldtrans;
 		oldtrans = particle->trans;
 		particle->trans -= particle->fade;
-		if (oldtrans < particle->trans || --particle->ttl == 0)
+		particle->size += particle->sizestep;
+		if (oldtrans < particle->trans || --particle->ttl <= 0 || (particle->size <= 0))
 		{ // The particle has expired, so free it
 			memset (particle, 0, sizeof(particle_t));
 			if (prev)
@@ -309,8 +314,14 @@ void P_ThinkParticles ()
 	}
 }
 
+enum PSFlag
+{
+	PS_FULLBRIGHT =		1,
+	PS_NOTIMEFREEZE =	1 << 5,
+};
 
-void P_SpawnParticle(const DVector3 &pos, const DVector3 &vel, const DVector3 &accel, PalEntry color, bool fullbright, double startalpha, int lifetime, WORD size, double fadestep)
+void P_SpawnParticle(const DVector3 &pos, const DVector3 &vel, const DVector3 &accel, PalEntry color, double startalpha, int lifetime, double size, 
+	double fadestep, double sizestep, int flags)
 {
 	particle_t *particle = NewParticle();
 
@@ -324,8 +335,10 @@ void P_SpawnParticle(const DVector3 &pos, const DVector3 &vel, const DVector3 &a
 		if (fadestep < 0) particle->fade = FADEFROMTTL(lifetime);
 		else particle->fade = int(fadestep * 255);
 		particle->ttl = lifetime;
-		particle->bright = fullbright;
-		particle->size = (WORD)size;
+		particle->bright = !!(flags & PS_FULLBRIGHT);
+		particle->size = size;
+		particle->sizestep = sizestep;
+		particle->notimefreeze = !!(flags & PS_NOTIMEFREEZE);
 	}
 }
 
@@ -462,8 +475,8 @@ void P_RunEffect (AActor *actor, int effects)
 				speed = (M_Random () - 128) * (1./200);
 				particle->Vel.X += speed * an.Cos();
 				particle->Vel.Y += speed * an.Sin();
-				particle->Vel.Z -= 1. / 80;
-				particle->Acc.Z -= 1. / 40;
+				particle->Vel.Z += 1. / 80;
+				particle->Acc.Z += 1. / 40;
 				if (M_Random () & 7)
 					particle->color = grey2;
 				else

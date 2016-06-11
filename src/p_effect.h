@@ -59,13 +59,15 @@ struct particle_t
 	DVector3 Acc;
 	BYTE	ttl;
 	BYTE	trans;
-	WORD	size;
+	double	size;
+	double	sizestep;
 	BYTE	bright;
 	BYTE	fade;
 	int		color;
 	WORD	tnext;
 	WORD	snext;
 	subsector_t * subsector;
+	bool	notimefreeze;
 };
 
 extern particle_t *Particles;
@@ -83,7 +85,7 @@ particle_t *JitterParticle (int ttl);
 particle_t *JitterParticle (int ttl, double drift);
 
 void P_ThinkParticles (void);
-void P_SpawnParticle(const DVector3 &pos, const DVector3 &vel, const DVector3 &accel, PalEntry color, bool fullbright, double startalpha, int lifetime, WORD size, double fadestep);
+void P_SpawnParticle(const DVector3 &pos, const DVector3 &vel, const DVector3 &accel, PalEntry color, double startalpha, int lifetime, double size, double fadestep, double sizestep, int flags = 0);
 void P_InitEffects (void);
 void P_RunEffects (void);
 

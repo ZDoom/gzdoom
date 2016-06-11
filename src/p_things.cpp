@@ -98,7 +98,7 @@ bool P_Thing_Spawn (int tid, AActor *source, int type, DAngle angle, bool fog, i
 				mobj->Angles.Yaw = (angle != 1000000. ? angle : spot->Angles.Yaw);
 				if (fog)
 				{
-					P_SpawnTeleportFog(mobj, spot->PosPlusZ(TELEFOGHEIGHT), false, true);
+					P_SpawnTeleportFog(mobj, spot->Pos(), false, true);
 				}
 				if (mobj->flags & MF_SPECIAL)
 					mobj->flags |= MF_DROPPED;	// Don't respawn
@@ -673,7 +673,7 @@ bool P_Thing_CheckProximity(AActor *self, PClass *classname, double distance, in
 
 	// We need these to check out.
 	if (!ref || !classname || distance <= 0)
-		return nullptr;
+		return false;
 	
 	int counter = 0;
 	bool result = false;

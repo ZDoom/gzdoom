@@ -431,11 +431,11 @@ void LoadActors ()
 		FScanner sc(lump);
 		ParseDecorate (sc);
 	}
+	FinishThingdef();
 	if (FScriptPosition::ErrorCounter > 0)
 	{
 		I_Error("%d errors while parsing DECORATE scripts", FScriptPosition::ErrorCounter);
 	}
-	FinishThingdef();
 	timer.Unclock();
 	if (!batchrun) Printf("DECORATE parsing took %.2f ms\n", timer.TimeMS());
 	// Base time: ~52 ms

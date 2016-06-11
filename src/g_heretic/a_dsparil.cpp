@@ -287,8 +287,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_GenWizard)
 			self->SetState (self->FindState(NAME_Death));
 			self->flags &= ~MF_MISSILE;
 			mo->master = self->target;
-			// Heretic did not offset it by TELEFOGHEIGHT, so I won't either.
-			Spawn<ATeleportFog> (self->Pos(), ALLOW_REPLACE);
+			P_SpawnTeleportFog(self, self->Pos(), false, true);
 		}
 	}
 	return 0;

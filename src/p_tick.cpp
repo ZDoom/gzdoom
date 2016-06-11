@@ -117,10 +117,7 @@ void P_Ticker (void)
 	// Since things will be moving, it's okay to interpolate them in the renderer.
 	r_NoInterpolate = false;
 
-	if (!bglobal.freeze && !(level.flags2 & LEVEL2_FROZEN))
-	{
-		P_ThinkParticles ();	// [RH] make the particles think
-	}
+	P_ThinkParticles();	// [RH] make the particles think
 
 	for (i = 0; i<MAXPLAYERS; i++)
 		if (playeringame[i] &&

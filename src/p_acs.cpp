@@ -3968,6 +3968,7 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 
 	case APROP_Friction:
 		actor->Friction = ACSToDouble(value);
+		break;
 
 	case APROP_MaxStepHeight:
 		actor->MaxStepHeight = ACSToDouble(value);
@@ -4656,7 +4657,11 @@ static int DoGetCVar(FBaseCVar *cvar, bool is_string)
 {
 	UCVarValue val;
 
-	if (is_string)
+	if (cvar == nullptr)
+	{
+		return 0;
+	}
+	else if (is_string)
 	{
 		val = cvar->GetGenericRep(CVAR_String);
 		return GlobalACSStrings.AddString(val.String);
@@ -4670,44 +4675,6 @@ static int DoGetCVar(FBaseCVar *cvar, bool is_string)
 	{
 		val = cvar->GetGenericRep(CVAR_Int);
 		return val.Int;
-	}
-}
-
-static int GetUserCVar(int playernum, const char *cvarname, bool is_string)
-{
-	if ((unsigned)playernum >= MAXPLAYERS || !playeringame[playernum])
-	{
-		return 0;
-	}
-	FBaseCVar **cvar_p = players[playernum].userinfo.CheckKey(FName(cvarname, true));
-	FBaseCVar *cvar;
-	if (cvar_p == NULL || (cvar = *cvar_p) == NULL || (cvar->GetFlags() & CVAR_IGNORE))
-	{
-		return 0;
-	}
-	return DoGetCVar(cvar, is_string);
-}
-
-static int GetCVar(AActor *activator, const char *cvarname, bool is_string)
-{
-	FBaseCVar *cvar = FindCVar(cvarname, NULL);
-	// Either the cvar doesn't exist, or it's for a mod that isn't loaded, so return 0.
-	if (cvar == NULL || (cvar->GetFlags() & CVAR_IGNORE))
-	{
-		return 0;
-	}
-	else
-	{
-		// For userinfo cvars, redirect to GetUserCVar
-		if (cvar->GetFlags() & CVAR_USERINFO)
-		{
-			if (activator == NULL || activator->player == NULL)
-			{
-				return 0;
-			}
-			return GetUserCVar(int(activator->player - players), cvarname, is_string);
-		}
-		return DoGetCVar(cvar, is_string);
 	}
 }
 
@@ -5395,7 +5362,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 		case ACSF_GetCVarString:
 			if (argCount == 1)
 			{
-				return GetCVar(activator, FBehavior::StaticLookupString(args[0]), true);
+				return DoGetCVar(GetCVar(activator, FBehavior::StaticLookupString(args[0])), true);
 			}
 			break;
 
@@ -5416,14 +5383,14 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, SDWORD *args)
 		case ACSF_GetUserCVar:
 			if (argCount == 2)
 			{
-				return GetUserCVar(args[0], FBehavior::StaticLookupString(args[1]), false);
+				return DoGetCVar(GetUserCVar(args[0], FBehavior::StaticLookupString(args[1])), false);
 			}
 			break;
 
 		case ACSF_GetUserCVarString:
 			if (argCount == 2)
 			{
-				return GetUserCVar(args[0], FBehavior::StaticLookupString(args[1]), true);
+				return DoGetCVar(GetUserCVar(args[0], FBehavior::StaticLookupString(args[1])), true);
 			}
 			break;
 
@@ -6047,7 +6014,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			PalEntry color = args[0];
 			bool fullbright = argCount > 1 ? !!args[1] : false;
 			int lifetime = argCount > 2 ? args[2] : 35;
-			int size = argCount > 3 ? args[3] : 1;
+			double size = argCount > 3 ? args[3] : 1.;
 			int x = argCount > 4 ? args[4] : 0;
 			int y = argCount > 5 ? args[5] : 0;
 			int z = argCount > 6 ? args[6] : 0;
@@ -6059,17 +6026,18 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			int accelz = argCount > 12 ? args[12] : 0;
 			int startalpha = argCount > 13 ? args[13] : 0xFF; // Byte trans			
 			int fadestep = argCount > 14 ? args[14] : -1;
+			double endsize = argCount > 15 ? args[15] : -1.;
 
 			startalpha = clamp<int>(startalpha, 0, 255); // Clamp to byte
 			lifetime = clamp<int>(lifetime, 0, 255); // Clamp to byte
 			fadestep = clamp<int>(fadestep, -1, 255); // Clamp to byte inc. -1 (indicating automatic)
-			size = clamp<int>(size, 0, 65535); // Clamp to word
+			size = fabs(size);
 
 			if (lifetime != 0)
 				P_SpawnParticle(DVector3(ACSToDouble(x), ACSToDouble(y), ACSToDouble(z)), 
 								DVector3(ACSToDouble(xvel), ACSToDouble(yvel), ACSToDouble(zvel)),
 								DVector3(ACSToDouble(accelx), ACSToDouble(accely), ACSToDouble(accelz)),
-								color, fullbright, startalpha/255., lifetime, size, fadestep/255.);
+								color, startalpha/255., lifetime, size, endsize, fadestep/255., fullbright);
 		}
 		break;
 
@@ -9130,7 +9098,7 @@ scriptwait:
 			break;
 
 		case PCD_GETCVAR:
-			STACK(1) = GetCVar(activator, FBehavior::StaticLookupString(STACK(1)), false);
+			STACK(1) = DoGetCVar(GetCVar(activator, FBehavior::StaticLookupString(STACK(1))), false);
 			break;
 
 		case PCD_SETHUDSIZE:

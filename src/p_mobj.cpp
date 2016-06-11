@@ -2789,10 +2789,10 @@ void P_NightmareRespawn (AActor *mobj)
 	mo->Prev.Z = z;		// Do not interpolate Z position if we changed it since spawning.
 
 	// spawn a teleport fog at old spot because of removal of the body?
-	P_SpawnTeleportFog(mobj, mobj->PosPlusZ(TELEFOGHEIGHT), true, true);
+	P_SpawnTeleportFog(mobj, mobj->Pos(), true, true);
 
 	// spawn a teleport fog at the new spot
-	P_SpawnTeleportFog(mobj, DVector3(mobj->SpawnPoint, z + TELEFOGHEIGHT), false, true);
+	P_SpawnTeleportFog(mobj, DVector3(mobj->SpawnPoint, z), false, true);
 
 	// remove the old monster
 	mobj->Destroy ();
@@ -4685,7 +4685,7 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 
 	if (multiplayer)
 	{
-		Spawn ("TeleportFog", mobj->Vec3Angle(20., mobj->Angles.Yaw, TELEFOGHEIGHT), ALLOW_REPLACE);
+		P_SpawnTeleportFog(mobj, mobj->Vec3Angle(20., mobj->Angles.Yaw, 0.), false, true);
 	}
 
 	// "Fix" for one of the starts on exec.wad MAP01: If you start inside the ceiling,

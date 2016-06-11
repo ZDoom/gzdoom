@@ -420,6 +420,7 @@ public:
 protected:
 	void DrawRateStuff ();
 	void CopyFromBuff (BYTE *src, int srcPitch, int width, int height, BYTE *dest);
+	void CopyWithGammaBgra(void *output, int pitch, const BYTE *gammared, const BYTE *gammagreen, const BYTE *gammablue, PalEntry flash, int flash_amount);
 
 	DFrameBuffer () {}
 

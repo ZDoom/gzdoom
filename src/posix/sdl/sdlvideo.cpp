@@ -497,17 +497,7 @@ void SDLFB::Update ()
 
 	if (Bgra)
 	{
-		if (pitch == Pitch * 4)
-		{
-			memcpy(pixels, MemBuffer, Width*Height*4);
-		}
-		else
-		{
-			for (int y = 0; y < Height; ++y)
-			{
-				memcpy((BYTE *)pixels + y*pitch, MemBuffer + y*Pitch*4, Width*4);
-			}
-		}
+		CopyWithGammaBgra(pixels, pitch, GammaTable[0], GammaTable[1], GammaTable[2], Flash, FlashAmount);
 	}
 	else if (NotPaletted)
 	{

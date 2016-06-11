@@ -742,13 +742,12 @@ void DCanvas::CalcGamma (float gamma, BYTE gammalookup[256])
 	// I found this formula on the web at
 	// <http://panda.mostang.com/sane/sane-gamma.html>,
 	// but that page no longer exits.
-
 	double invgamma = 1.f / gamma;
 	int i;
 
 	for (i = 0; i < 256; i++)
 	{
-		gammalookup[i] = (BYTE)(255.0 * pow (i / 255.0, invgamma));
+		gammalookup[i] = (BYTE)(255.0 * pow (i / 255.0, invgamma) + 0.5);
 	}
 }
 
@@ -875,6 +874,70 @@ DFrameBuffer::DFrameBuffer (int width, int height, bool bgra)
 	LastMS = LastSec = FrameCount = LastCount = LastTic = 0;
 	Accel2D = false;
 }
+
+//==========================================================================
+//
+// DFrameBuffer :: PostprocessBgra
+//
+// Copies data to destination buffer while performing gamma and flash.
+// This is only needed if a target cannot do this with shaders.
+//
+//==========================================================================
+
+void DFrameBuffer::CopyWithGammaBgra(void *output, int pitch, const BYTE *gammared, const BYTE *gammagreen, const BYTE *gammablue, PalEntry flash, int flash_amount)
+{
+	const BYTE *gammatables[3] = { gammared, gammagreen, gammablue };
+
+	if (flash_amount > 0)
+	{
+		uint16_t inv_flash_amount = 256 - flash_amount;
+		uint16_t flash_red = flash.r * flash_amount;
+		uint16_t flash_green = flash.g * flash_amount;
+		uint16_t flash_blue = flash.b * flash_amount;
+		
+		for (int y = 0; y < Height; y++)
+		{
+			BYTE *dest = (BYTE*)output + y * pitch;
+			BYTE *src = MemBuffer + y * Pitch * 4;
+			for (int x = 0;  x < Width; x++)
+			{
+				uint16_t fg_red = src[2];
+				uint16_t fg_green = src[1];
+				uint16_t fg_blue = src[0];
+				uint16_t red = (fg_red * inv_flash_amount + flash_red) >> 8;
+				uint16_t green = (fg_green * inv_flash_amount + flash_green) >> 8;
+				uint16_t blue = (fg_blue * inv_flash_amount + flash_blue) >> 8;
+
+				dest[0] = gammatables[2][blue];
+				dest[1] = gammatables[1][green];
+				dest[2] = gammatables[0][red];
+				dest[3] = 0xff;
+
+				dest += 4;
+				src += 4;
+			}
+		}
+	}
+	else
+	{
+		for (int y = 0; y < Height; y++)
+		{
+			BYTE *dest = (BYTE*)output + y * pitch;
+			BYTE *src = MemBuffer + y * Pitch * 4;
+			for (int x = 0;  x < Width; x++)
+			{
+				dest[0] = gammatables[2][src[0]];
+				dest[1] = gammatables[1][src[1]];
+				dest[2] = gammatables[0][src[2]];
+				dest[3] = 0xff;
+
+				dest += 4;
+				src += 4;
+			}
+		}
+	}
+}
+
 
 //==========================================================================
 //

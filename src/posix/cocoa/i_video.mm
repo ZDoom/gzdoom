@@ -869,10 +869,7 @@ void CocoaFrameBuffer::Update()
 
 	if (IsBgra())
 	{
-		for (int y = 0; y < Height; y++)
-		{
-			memcpy((uint32_t*)m_pixelBuffer + y * Width, (uint32_t*)MemBuffer + y * Pitch, Width * BYTES_PER_PIXEL);
-		}
+		CopyWithGammaBgra(m_pixelBuffer, Width * BYTES_PER_PIXEL, m_gammaTable[0], m_gammaTable[1], m_gammaTable[2], m_flashColor, m_flashAmount);
 	}
 	else
 	{

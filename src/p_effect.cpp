@@ -263,12 +263,12 @@ void P_ThinkParticles ()
 	{
 		particle = Particles + i;
 		i = particle->tnext;
-
 		if (!particle->notimefreeze && ((bglobal.freeze) || (level.flags2 & LEVEL2_FROZEN)))
 		{
+			prev = particle;
 			continue;
 		}
-
+		
 		BYTE oldtrans;
 		oldtrans = particle->trans;
 		particle->trans -= particle->fade;

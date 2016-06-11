@@ -2686,6 +2686,8 @@ void R_DrawParticle_RGBA(vissprite_t *vis)
 	int countbase = vis->x2 - x1;
 
 	R_DrawMaskedSegsBehindParticle(vis);
+	
+	DrawerCommandQueue::WaitForWorkers();
 
 	uint32_t fg = shade_pal_index_simple(color, calc_light_multiplier(LIGHTSCALE(0, vis->Style.ColormapNum << FRACBITS)));
 	uint32_t fg_red = (fg >> 16) & 0xff;

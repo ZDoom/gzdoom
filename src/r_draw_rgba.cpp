@@ -97,6 +97,11 @@ void DrawerCommandQueue::End()
 		queue->threaded_render--;
 }
 
+void DrawerCommandQueue::WaitForWorkers()
+{
+	Instance()->Finish();
+}
+
 void DrawerCommandQueue::Finish()
 {
 	auto queue = Instance();

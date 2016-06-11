@@ -570,12 +570,15 @@ public:
 		}
 	}
 	
-	// Redirects all drawing commands to worker threads until Finish is called
+	// Redirects all drawing commands to worker threads until End is called
 	// Begin/End blocks can be nested.
 	static void Begin();
 
-	// Wait until all worker threads finished executing commands
+	// End redirection and wait until all worker threads finished executing
 	static void End();
+
+	// Waits until all worker threads finished executing
+	static void WaitForWorkers();
 };
 
 #endif

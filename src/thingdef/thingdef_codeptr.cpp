@@ -6931,10 +6931,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FaceMovementDirection)
 	{
 		DAngle current = mobj->Angles.Pitch;
 		const DVector2 velocity = mobj->Vel.XY();
-		DAngle pitch = VecToAngle(velocity.Length(), -mobj->Vel.Z);
+		DAngle pitch = VecToAngle(velocity.Length(), mobj->Vel.Z);
 		if (pitchlimit > 0)
 		{
-			DAngle pdelta = deltaangle(current, pitch);
+			DAngle pdelta = deltaangle(-current, pitch);
 
 			if (fabs(pdelta) > pitchlimit)
 			{

@@ -2793,24 +2793,19 @@ bool R_GetTransMaskDrawers (fixed_t (**tmvline1)(), void (**tmvline4)())
 void R_SetTranslationMap(lighttable_t *translation)
 {
 	dc_fcolormap = nullptr;
-	dc_shade_constants.light_red = 256;
-	dc_shade_constants.light_green = 256;
-	dc_shade_constants.light_blue = 256;
-	dc_shade_constants.light_alpha = 256;
-	dc_shade_constants.fade_red = 0;
-	dc_shade_constants.fade_green = 0;
-	dc_shade_constants.fade_blue = 0;
-	dc_shade_constants.fade_alpha = 256;
-	dc_shade_constants.desaturate = 0;
-	dc_shade_constants.simple_shade = true;
+	dc_colormap = translation;
 	if (r_swtruecolor)
 	{
-		dc_colormap = translation;
-		dc_light = 0;
-	}
-	else
-	{
-		dc_colormap = translation;
+		dc_shade_constants.light_red = 256;
+		dc_shade_constants.light_green = 256;
+		dc_shade_constants.light_blue = 256;
+		dc_shade_constants.light_alpha = 256;
+		dc_shade_constants.fade_red = 0;
+		dc_shade_constants.fade_green = 0;
+		dc_shade_constants.fade_blue = 0;
+		dc_shade_constants.fade_alpha = 256;
+		dc_shade_constants.desaturate = 0;
+		dc_shade_constants.simple_shade = true;
 		dc_light = 0;
 	}
 }
@@ -2818,49 +2813,47 @@ void R_SetTranslationMap(lighttable_t *translation)
 void R_SetColorMapLight(FColormap *base_colormap, float light, int shade)
 {
 	dc_fcolormap = base_colormap;
-	dc_shade_constants.light_red = dc_fcolormap->Color.r * 256 / 255;
-	dc_shade_constants.light_green = dc_fcolormap->Color.g * 256 / 255;
-	dc_shade_constants.light_blue = dc_fcolormap->Color.b * 256 / 255;
-	dc_shade_constants.light_alpha = dc_fcolormap->Color.a * 256 / 255;
-	dc_shade_constants.fade_red = dc_fcolormap->Fade.r;
-	dc_shade_constants.fade_green = dc_fcolormap->Fade.g;
-	dc_shade_constants.fade_blue = dc_fcolormap->Fade.b;
-	dc_shade_constants.fade_alpha = dc_fcolormap->Fade.a;
-	dc_shade_constants.desaturate = MIN(abs(dc_fcolormap->Desaturate), 255) * 255 / 256;
-	dc_shade_constants.simple_shade = (dc_fcolormap->Color.d == 0x00ffffff && dc_fcolormap->Fade.d == 0x00000000 && dc_fcolormap->Desaturate == 0);
 	if (r_swtruecolor)
 	{
+		dc_shade_constants.light_red = dc_fcolormap->Color.r * 256 / 255;
+		dc_shade_constants.light_green = dc_fcolormap->Color.g * 256 / 255;
+		dc_shade_constants.light_blue = dc_fcolormap->Color.b * 256 / 255;
+		dc_shade_constants.light_alpha = dc_fcolormap->Color.a * 256 / 255;
+		dc_shade_constants.fade_red = dc_fcolormap->Fade.r;
+		dc_shade_constants.fade_green = dc_fcolormap->Fade.g;
+		dc_shade_constants.fade_blue = dc_fcolormap->Fade.b;
+		dc_shade_constants.fade_alpha = dc_fcolormap->Fade.a;
+		dc_shade_constants.desaturate = MIN(abs(dc_fcolormap->Desaturate), 255) * 255 / 256;
+		dc_shade_constants.simple_shade = (dc_fcolormap->Color.d == 0x00ffffff && dc_fcolormap->Fade.d == 0x00000000 && dc_fcolormap->Desaturate == 0);
 		dc_colormap = base_colormap->Maps;
 		dc_light = LIGHTSCALE(light, shade);
 	}
 	else
 	{
 		dc_colormap = base_colormap->Maps + (GETPALOOKUP(light, shade) << COLORMAPSHIFT);
-		dc_light = 0;
 	}
 }
 
 void R_SetDSColorMapLight(FColormap *base_colormap, float light, int shade)
 {
 	ds_fcolormap = base_colormap;
-	ds_shade_constants.light_red = ds_fcolormap->Color.r * 256 / 255;
-	ds_shade_constants.light_green = ds_fcolormap->Color.g * 256 / 255;
-	ds_shade_constants.light_blue = ds_fcolormap->Color.b * 256 / 255;
-	ds_shade_constants.light_alpha = ds_fcolormap->Color.a * 256 / 255;
-	ds_shade_constants.fade_red = ds_fcolormap->Fade.r;
-	ds_shade_constants.fade_green = ds_fcolormap->Fade.g;
-	ds_shade_constants.fade_blue = ds_fcolormap->Fade.b;
-	ds_shade_constants.fade_alpha = ds_fcolormap->Fade.a;
-	ds_shade_constants.desaturate = MIN(abs(ds_fcolormap->Desaturate), 255) * 255 / 256;
-	ds_shade_constants.simple_shade = (ds_fcolormap->Color.d == 0x00ffffff && ds_fcolormap->Fade.d == 0x00000000 && ds_fcolormap->Desaturate == 0);
 	if (r_swtruecolor)
 	{
+		ds_shade_constants.light_red = ds_fcolormap->Color.r * 256 / 255;
+		ds_shade_constants.light_green = ds_fcolormap->Color.g * 256 / 255;
+		ds_shade_constants.light_blue = ds_fcolormap->Color.b * 256 / 255;
+		ds_shade_constants.light_alpha = ds_fcolormap->Color.a * 256 / 255;
+		ds_shade_constants.fade_red = ds_fcolormap->Fade.r;
+		ds_shade_constants.fade_green = ds_fcolormap->Fade.g;
+		ds_shade_constants.fade_blue = ds_fcolormap->Fade.b;
+		ds_shade_constants.fade_alpha = ds_fcolormap->Fade.a;
+		ds_shade_constants.desaturate = MIN(abs(ds_fcolormap->Desaturate), 255) * 255 / 256;
+		ds_shade_constants.simple_shade = (ds_fcolormap->Color.d == 0x00ffffff && ds_fcolormap->Fade.d == 0x00000000 && ds_fcolormap->Desaturate == 0);
 		ds_colormap = base_colormap->Maps;
 		ds_light = LIGHTSCALE(light, shade);
 	}
 	else
 	{
 		ds_colormap = base_colormap->Maps + (GETPALOOKUP(light, shade) << COLORMAPSHIFT);
-		ds_light = 0;
 	}
 }

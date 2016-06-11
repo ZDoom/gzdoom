@@ -90,13 +90,13 @@ public:
 		sincr = thread->num_cores * 4;
 
 		if (count & 1) {
-			*dest = *source;
+			*dest = GPalette.BaseColors[*source];
 			source += sincr;
 			dest += pitch;
 		}
 		if (count & 2) {
-			dest[0] = source[0];
-			dest[pitch] = source[sincr];
+			dest[0] = GPalette.BaseColors[source[0]];
+			dest[pitch] = GPalette.BaseColors[source[sincr]];
 			source += sincr * 2;
 			dest += pitch * 2;
 		}
@@ -104,10 +104,10 @@ public:
 			return;
 
 		do {
-			dest[0] = source[0];
-			dest[pitch] = source[sincr];
-			dest[pitch * 2] = source[sincr * 2];
-			dest[pitch * 3] = source[sincr * 3];
+			dest[0] = GPalette.BaseColors[source[0]];
+			dest[pitch] = GPalette.BaseColors[source[sincr]];
+			dest[pitch * 2] = GPalette.BaseColors[source[sincr * 2]];
+			dest[pitch * 3] = GPalette.BaseColors[source[sincr * 3]];
 			source += sincr * 4;
 			dest += pitch * 4;
 		} while (--count);
@@ -124,6 +124,7 @@ class RtMap1colRGBACommand : public DrawerCommand
 	ShadeConstants dc_shade_constants;
 	BYTE *dc_destorg;
 	int dc_pitch;
+	BYTE *dc_colormap;
 
 public:
 	RtMap1colRGBACommand(int hx, int sx, int yl, int yh)
@@ -137,6 +138,7 @@ public:
 		dc_shade_constants = ::dc_shade_constants;
 		dc_destorg = ::dc_destorg;
 		dc_pitch = ::dc_pitch;
+		dc_colormap = ::dc_colormap;
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -158,9 +160,11 @@ public:
 		source = &thread->dc_temp_rgba[yl * 4 + hx] + thread->skipped_by_thread(yl) * 4;
 		pitch = dc_pitch * thread->num_cores;
 		sincr = thread->num_cores * 4;
+		
+		BYTE *colormap = dc_colormap;
 
 		if (count & 1) {
-			*dest = shade_pal_index(*source, light, shade_constants);
+			*dest = shade_pal_index(colormap[*source], light, shade_constants);
 			source += sincr;
 			dest += pitch;
 		}
@@ -168,8 +172,8 @@ public:
 			return;
 
 		do {
-			dest[0] = shade_pal_index(source[0], light, shade_constants);
-			dest[pitch] = shade_pal_index(source[sincr], light, shade_constants);
+			dest[0] = shade_pal_index(colormap[source[0]], light, shade_constants);
+			dest[pitch] = shade_pal_index(colormap[source[sincr]], light, shade_constants);
 			source += sincr * 2;
 			dest += pitch * 2;
 		} while (--count);
@@ -185,6 +189,7 @@ class RtMap4colsRGBACommand : public DrawerCommand
 	ShadeConstants dc_shade_constants;
 	BYTE *dc_destorg;
 	int dc_pitch;
+	BYTE *colormap;
 
 public:
 	RtMap4colsRGBACommand(int sx, int yl, int yh)
@@ -197,6 +202,7 @@ public:
 		dc_shade_constants = ::dc_shade_constants;
 		dc_destorg = ::dc_destorg;
 		dc_pitch = ::dc_pitch;
+		dc_colormap = ::dc_colormap;
 	}
 
 #ifdef NO_SSE
@@ -219,12 +225,14 @@ public:
 		source = &thread->dc_temp_rgba[yl * 4] + thread->skipped_by_thread(yl) * 4;
 		pitch = dc_pitch * thread->num_cores;
 		sincr = thread->num_cores * 4;
+		
+		BYTE *colormap = dc_colormap;
 
 		if (count & 1) {
-			dest[0] = shade_pal_index(source[0], light, shade_constants);
-			dest[1] = shade_pal_index(source[1], light, shade_constants);
-			dest[2] = shade_pal_index(source[2], light, shade_constants);
-			dest[3] = shade_pal_index(source[3], light, shade_constants);
+			dest[0] = shade_pal_index(colormap[source[0]], light, shade_constants);
+			dest[1] = shade_pal_index(colormap[source[1]], light, shade_constants);
+			dest[2] = shade_pal_index(colormap[source[2]], light, shade_constants);
+			dest[3] = shade_pal_index(colormap[source[3]], light, shade_constants);
 			source += sincr;
 			dest += pitch;
 		}
@@ -232,14 +240,14 @@ public:
 			return;
 
 		do {
-			dest[0] = shade_pal_index(source[0], light, shade_constants);
-			dest[1] = shade_pal_index(source[1], light, shade_constants);
-			dest[2] = shade_pal_index(source[2], light, shade_constants);
-			dest[3] = shade_pal_index(source[3], light, shade_constants);
-			dest[pitch] = shade_pal_index(source[sincr], light, shade_constants);
-			dest[pitch + 1] = shade_pal_index(source[sincr + 1], light, shade_constants);
-			dest[pitch + 2] = shade_pal_index(source[sincr + 2], light, shade_constants);
-			dest[pitch + 3] = shade_pal_index(source[sincr + 3], light, shade_constants);
+			dest[0] = shade_pal_index(colormap[source[0]], light, shade_constants);
+			dest[1] = shade_pal_index(colormap[source[1]], light, shade_constants);
+			dest[2] = shade_pal_index(colormap[source[2]], light, shade_constants);
+			dest[3] = shade_pal_index(colormap[source[3]], light, shade_constants);
+			dest[pitch] = shade_pal_index(colormap[source[sincr]], light, shade_constants);
+			dest[pitch + 1] = shade_pal_index(colormap[source[sincr + 1]], light, shade_constants);
+			dest[pitch + 2] = shade_pal_index(colormap[source[sincr + 2]], light, shade_constants);
+			dest[pitch + 3] = shade_pal_index(colormap[source[sincr + 3]], light, shade_constants);
 			source += sincr * 2;
 			dest += pitch * 2;
 		} while (--count);
@@ -265,16 +273,18 @@ public:
 		source = &thread->dc_temp_rgba[yl * 4] + thread->skipped_by_thread(yl) * 4;
 		pitch = dc_pitch * thread->num_cores;
 		sincr = thread->num_cores * 4;
+		
+		BYTE *colormap = dc_colormap;
 
 		if (shade_constants.simple_shade)
 		{
 			SSE_SHADE_SIMPLE_INIT(light);
 
 			if (count & 1) {
-				uint32_t p0 = source[0];
-				uint32_t p1 = source[1];
-				uint32_t p2 = source[2];
-				uint32_t p3 = source[3];
+				uint32_t p0 = colormap[source[0]];
+				uint32_t p1 = colormap[source[1]];
+				uint32_t p2 = colormap[source[2]];
+				uint32_t p3 = colormap[source[3]];
 
 				// shade_pal_index:
 				__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
@@ -290,10 +300,10 @@ public:
 			do {
 				// shade_pal_index 0-3
 				{
-					uint32_t p0 = source[0];
-					uint32_t p1 = source[1];
-					uint32_t p2 = source[2];
-					uint32_t p3 = source[3];
+					uint32_t p0 = colormap[source[0]];
+					uint32_t p1 = colormap[source[1]];
+					uint32_t p2 = colormap[source[2]];
+					uint32_t p3 = colormap[source[3]];
 
 					__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
 					SSE_SHADE_SIMPLE(fg);
@@ -302,10 +312,10 @@ public:
 
 				// shade_pal_index 4-7 (pitch)
 				{
-					uint32_t p0 = source[sincr];
-					uint32_t p1 = source[sincr + 1];
-					uint32_t p2 = source[sincr + 2];
-					uint32_t p3 = source[sincr + 3];
+					uint32_t p0 = colormap[source[sincr]];
+					uint32_t p1 = colormap[source[sincr + 1]];
+					uint32_t p2 = colormap[source[sincr + 2]];
+					uint32_t p3 = colormap[source[sincr + 3]];
 
 					__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
 					SSE_SHADE_SIMPLE(fg);
@@ -321,10 +331,10 @@ public:
 			SSE_SHADE_INIT(light, shade_constants);
 
 			if (count & 1) {
-				uint32_t p0 = source[0];
-				uint32_t p1 = source[1];
-				uint32_t p2 = source[2];
-				uint32_t p3 = source[3];
+				uint32_t p0 = colormap[source[0]];
+				uint32_t p1 = colormap[source[1]];
+				uint32_t p2 = colormap[source[2]];
+				uint32_t p3 = colormap[source[3]];
 
 				// shade_pal_index:
 				__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
@@ -340,10 +350,10 @@ public:
 			do {
 				// shade_pal_index 0-3
 				{
-					uint32_t p0 = source[0];
-					uint32_t p1 = source[1];
-					uint32_t p2 = source[2];
-					uint32_t p3 = source[3];
+					uint32_t p0 = colormap[source[0]];
+					uint32_t p1 = colormap[source[1]];
+					uint32_t p2 = colormap[source[2]];
+					uint32_t p3 = colormap[source[3]];
 
 					__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
 					SSE_SHADE(fg, shade_constants);
@@ -352,10 +362,10 @@ public:
 
 				// shade_pal_index 4-7 (pitch)
 				{
-					uint32_t p0 = source[sincr];
-					uint32_t p1 = source[sincr + 1];
-					uint32_t p2 = source[sincr + 2];
-					uint32_t p3 = source[sincr + 3];
+					uint32_t p0 = colormap[source[sincr]];
+					uint32_t p1 = colormap[source[sincr + 1]];
+					uint32_t p2 = colormap[source[sincr + 2]];
+					uint32_t p3 = colormap[source[sincr + 3]];
 
 					__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
 					SSE_SHADE(fg, shade_constants);
@@ -1800,6 +1810,9 @@ void rt_span_coverage_rgba(int x, int start, int stop)
 // drawn to the screen along with up to three other columns.
 void R_DrawColumnHorizP_RGBA_C (void)
 {
+	if (dc_count <= 0)
+		return;
+
 	int x = dc_x & 3;
 	unsigned int **span = &dc_ctspan[x];
 	(*span)[0] = dc_yl;
@@ -1812,6 +1825,9 @@ void R_DrawColumnHorizP_RGBA_C (void)
 // [RH] Just fills a column with a given color
 void R_FillColumnHorizP_RGBA_C (void)
 {
+	if (dc_count <= 0)
+		return;
+
 	int x = dc_x & 3;
 	unsigned int **span = &dc_ctspan[x];
 	(*span)[0] = dc_yl;

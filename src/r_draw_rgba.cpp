@@ -229,6 +229,7 @@ class DrawColumnRGBACommand : public DrawerCommand
 	const BYTE *dc_source;
 	int dc_pitch;
 	ShadeConstants dc_shade_constants;
+	BYTE *dc_colormap;
 
 public:
 	DrawColumnRGBACommand()
@@ -241,6 +242,7 @@ public:
 		dc_source = ::dc_source;
 		dc_pitch = ::dc_pitch;
 		dc_shade_constants = ::dc_shade_constants;
+		dc_colormap = ::dc_colormap;
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -267,24 +269,20 @@ public:
 		fracstep = dc_iscale * thread->num_cores;
 		frac = dc_texturefrac + dc_iscale * thread->skipped_by_thread(dc_dest_y);
 
+		// [RH] Get local copies of these variables so that the compiler
+		//		has a better chance of optimizing this well.
+		const BYTE *source = dc_source;
+		int pitch = dc_pitch * thread->num_cores;
+		BYTE *colormap = dc_colormap;
+
+		do
 		{
-			// [RH] Get local copies of these variables so that the compiler
-			//		has a better chance of optimizing this well.
-			const BYTE *source = dc_source;
-			int pitch = dc_pitch * thread->num_cores;
+			*dest = shade_pal_index(colormap[source[frac >> FRACBITS]], light, shade_constants);
 
-			// Inner loop that does the actual texture mapping,
-			//	e.g. a DDA-lile scaling.
-			// This is as fast as it gets.
-			do
-			{
-				*dest = shade_pal_index(source[frac >> FRACBITS], light, shade_constants);
+			dest += pitch;
+			frac += fracstep;
 
-				dest += pitch;
-				frac += fracstep;
-
-			} while (--count);
-		}
+		} while (--count);
 	}
 };
 

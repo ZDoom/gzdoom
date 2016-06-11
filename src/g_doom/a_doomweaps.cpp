@@ -636,6 +636,12 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireBFG)
 // A_BFGSpray
 // Spawn a BFG explosion on every monster in view
 //
+enum BFG_Flags
+{
+	BFGF_HURTSOURCE = 1,
+	BFGF_MISSILEORIGIN = 2,
+};
+
 DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BFGSpray)
 {
 	PARAM_ACTION_PROLOGUE;
@@ -646,12 +652,14 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BFGSpray)
 	PARAM_FLOAT_OPT	(distance)				{ distance = 0; }
 	PARAM_ANGLE_OPT	(vrange)				{ vrange = 0.; }
 	PARAM_INT_OPT	(defdamage)				{ defdamage = 0; }
+	PARAM_INT_OPT	(flags)					{ flags = 0; }
 
 	int 				i;
 	int 				j;
 	int 				damage;
 	DAngle 				an;
 	FTranslatedLineTarget t;
+	AActor				*originator;
 
 	if (spraytype == NULL) spraytype = PClass::FindActor("BFGExtra");
 	if (numrays <= 0) numrays = 40;
@@ -664,13 +672,16 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BFGSpray)
 	if (!self->target)
 		return 0;
 
+	// [XA] Set the originator of the attack to the projectile (self) if
+	//      the new flag is set, else set it to the player (self->target)
+	originator = (flags & BFGF_MISSILEORIGIN) ? self : self->target;
+
 	// offset angles from its attack angle
 	for (i = 0; i < numrays; i++)
 	{
 		an = self->Angles.Yaw - angle / 2 + angle / numrays*i;
 
-		// self->target is the originator (player) of the missile
-		P_AimLineAttack(self->target, an, distance, &t, vrange);
+		P_AimLineAttack(originator, an, distance, &t, vrange);
 
 		if (t.linetarget != NULL)
 		{
@@ -681,7 +692,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BFGSpray)
 
 			if (spray != NULL)
 			{
-				if (spray->flags6 & MF6_MTHRUSPECIES && self->target->GetSpecies() == t.linetarget->GetSpecies())
+				if ((spray->flags6 & MF6_MTHRUSPECIES && self->target->GetSpecies() == t.linetarget->GetSpecies()) || 
+					(!(flags & BFGF_HURTSOURCE) && self->target == t.linetarget)) // [XA] Don't hit oneself unless we say so.
 				{
 					spray->Destroy(); // [MC] Remove it because technically, the spray isn't trying to "hit" them.
 					continue;
@@ -704,7 +716,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BFGSpray)
 				damage = defdamage;
 			}
 
-			int newdam = P_DamageMobj(t.linetarget, self->target, self->target, damage, dmgType, dmgFlags|DMG_USEANGLE, t.angleFromSource.Degrees);
+			int newdam = P_DamageMobj(t.linetarget, originator, self->target, damage, dmgType, dmgFlags|DMG_USEANGLE, t.angleFromSource.Degrees);
 			P_TraceBleed(newdam > 0 ? newdam : damage, &t, self);
 		}
 	}

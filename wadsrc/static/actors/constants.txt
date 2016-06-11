@@ -18,6 +18,10 @@ const int SF_NOPULLIN = 32;
 const int SF_NOTURN = 64;
 const int SF_STEALARMOR = 128;
 
+// Flags for A_BFGSpray
+const int BFGF_HURTSOURCE = 1;
+const int BFGF_MISSILEORIGIN = 2;
+
 // Flags for A_CustomMissile
 const int CMF_AIMOFFSET = 1;
 const int CMF_AIMDIRECTION = 2;

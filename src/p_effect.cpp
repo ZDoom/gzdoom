@@ -321,7 +321,7 @@ enum PSFlag
 };
 
 void P_SpawnParticle(const DVector3 &pos, const DVector3 &vel, const DVector3 &accel, PalEntry color, double startalpha, int lifetime, double size, 
-	double fadestep, double endsize, int flags)
+	double fadestep, double sizestep, int flags)
 {
 	particle_t *particle = NewParticle();
 
@@ -337,7 +337,7 @@ void P_SpawnParticle(const DVector3 &pos, const DVector3 &vel, const DVector3 &a
 		particle->ttl = lifetime;
 		particle->bright = !!(flags & PS_FULLBRIGHT);
 		particle->size = size;
-		particle->sizestep = (lifetime == 0) ? 0 : ((endsize - size) / lifetime);
+		particle->sizestep = sizestep;
 		particle->notimefreeze = !!(flags & PS_NOTIMEFREEZE);
 	}
 }

@@ -3199,7 +3199,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnParticle)
 	PARAM_FLOAT_OPT	(accelz)		{ accelz = 0; }
 	PARAM_FLOAT_OPT	(startalpha)	{ startalpha = 1.; }
 	PARAM_FLOAT_OPT	(fadestep)		{ fadestep = -1.; }
-	PARAM_FLOAT_OPT (endsize)		{ endsize = -1.; }
+	PARAM_FLOAT_OPT (sizestep)		{ sizestep = 0.; }
 
 	startalpha = clamp(startalpha, 0., 1.);
 	if (fadestep > 0) fadestep = clamp(fadestep, 0., 1.);
@@ -3230,7 +3230,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SpawnParticle)
 			acc.X = accelx * c + accely * s;
 			acc.Y = accelx * s - accely * c;
 		}
-		P_SpawnParticle(self->Vec3Offset(pos), vel, acc, color, startalpha, lifetime, size, fadestep, endsize, flags);
+		P_SpawnParticle(self->Vec3Offset(pos), vel, acc, color, startalpha, lifetime, size, fadestep, sizestep, flags);
 	}
 	return 0;
 }

@@ -3329,14 +3329,17 @@ void P_LoadReject (MapData * map, bool junk)
 //
 // [RH] P_LoadBehavior
 //
-void P_LoadBehavior (MapData * map)
+void P_LoadBehavior(MapData * map)
 {
-	map->Seek(ML_BEHAVIOR);
-	FBehavior::StaticLoadModule (-1, map->file, map->Size(ML_BEHAVIOR));
-	if (!FBehavior::StaticCheckAllGood ())
+	if (map->Size(ML_BEHAVIOR) > 0)
 	{
-		Printf ("ACS scripts unloaded.\n");
-		FBehavior::StaticUnloadModules ();
+		map->Seek(ML_BEHAVIOR);
+		FBehavior::StaticLoadModule(-1, map->file, map->Size(ML_BEHAVIOR));
+	}
+	if (!FBehavior::StaticCheckAllGood())
+	{
+		Printf("ACS scripts unloaded.\n");
+		FBehavior::StaticUnloadModules();
 	}
 }
 

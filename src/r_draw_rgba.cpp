@@ -583,79 +583,36 @@ public:
 
 		dest = thread->dest_for_thread(dc_yl, dc_pitch, ylookup[dc_yl] + dc_x + (uint32_t*)dc_destorg);
 
-		// Note: this implementation assumes this function is only used for the pinky shadow effect (i.e. no other fancy colormap than black)
-		// I'm not sure if this is really always the case or not.
+		int pitch = dc_pitch * thread->num_cores;
+		int fuzzstep = thread->num_cores;
+		int fuzz = (fuzzpos + thread->skipped_by_thread(dc_yl)) % FUZZTABLE;
 
+		while (count > 0)
 		{
-			// [RH] Make local copies of global vars to try and improve
-			//		the optimizations made by the compiler.
-			int pitch = dc_pitch * thread->num_cores;
-			int fuzz = fuzzpos;
-			int cnt;
+			int available = (FUZZTABLE - fuzz);
+			int next_wrap = available / fuzzstep;
+			if (available % fuzzstep != 0)
+				next_wrap++;
 
-			// [RH] Split this into three separate loops to minimize
-			// the number of times fuzzpos needs to be clamped.
-			if (fuzz)
+			int cnt = MIN(count, next_wrap);
+			count -= cnt;
+			do
 			{
-				cnt = MIN(FUZZTABLE - fuzz, count);
-				count -= cnt;
-				do
-				{
-					uint32_t bg = dest[fuzzoffset[fuzz++]];
-					uint32_t bg_red = (bg >> 16) & 0xff;
-					uint32_t bg_green = (bg >> 8) & 0xff;
-					uint32_t bg_blue = (bg) & 0xff;
+				uint32_t bg = dest[fuzzoffset[fuzz]];
+				uint32_t bg_red = (bg >> 16) & 0xff;
+				uint32_t bg_green = (bg >> 8) & 0xff;
+				uint32_t bg_blue = (bg) & 0xff;
 
-					uint32_t red = bg_red * 3 / 4;
-					uint32_t green = bg_green * 3 / 4;
-					uint32_t blue = bg_blue * 3 / 4;
+				uint32_t red = bg_red * 3 / 4;
+				uint32_t green = bg_green * 3 / 4;
+				uint32_t blue = bg_blue * 3 / 4;
 
-					*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-					dest += pitch;
-				} while (--cnt);
-			}
-			if (fuzz == FUZZTABLE || count > 0)
-			{
-				while (count >= FUZZTABLE)
-				{
-					fuzz = 0;
-					cnt = FUZZTABLE;
-					count -= FUZZTABLE;
-					do
-					{
-						uint32_t bg = dest[fuzzoffset[fuzz++]];
-						uint32_t bg_red = (bg >> 16) & 0xff;
-						uint32_t bg_green = (bg >> 8) & 0xff;
-						uint32_t bg_blue = (bg) & 0xff;
+				*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
+				dest += pitch;
+				fuzz += fuzzstep;
+			} while (--cnt);
 
-						uint32_t red = bg_red * 3 / 4;
-						uint32_t green = bg_green * 3 / 4;
-						uint32_t blue = bg_blue * 3 / 4;
-
-						*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-						dest += pitch;
-					} while (--cnt);
-				}
-				fuzz = 0;
-				if (count > 0)
-				{
-					do
-					{
-						uint32_t bg = dest[fuzzoffset[fuzz++]];
-						uint32_t bg_red = (bg >> 16) & 0xff;
-						uint32_t bg_green = (bg >> 8) & 0xff;
-						uint32_t bg_blue = (bg) & 0xff;
-
-						uint32_t red = bg_red * 3 / 4;
-						uint32_t green = bg_green * 3 / 4;
-						uint32_t blue = bg_blue * 3 / 4;
-
-						*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-						dest += pitch;
-					} while (--count);
-				}
-			}
-			fuzzpos = fuzz;
+			fuzz %= FUZZTABLE;
 		}
 	}
 };

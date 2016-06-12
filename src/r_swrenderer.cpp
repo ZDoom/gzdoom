@@ -43,6 +43,7 @@
 #include "textures/textures.h"
 #include "r_data/voxels.h"
 
+EXTERN_CVAR(Bool, r_shadercolormaps)
 
 class FArchive;
 void R_SWRSetWindow(int windowSize, int fullWidth, int fullHeight, int stHeight, int trueratio);
@@ -166,6 +167,13 @@ void FSoftwareRenderer::RenderView(player_t *player)
 	R_RenderActorView (player->mo);
 	// [RH] Let cameras draw onto textures that were visible this frame.
 	FCanvasTextureInfo::UpdateAll ();
+
+	// Apply special colormap if the target cannot do it
+	if (realfixedcolormap && r_swtruecolor && !(r_shadercolormaps && screen->Accel2D))
+	{
+		DrawerCommandQueue::QueueCommand<ApplySpecialColormapRGBACommand>(realfixedcolormap, screen);
+	}
+
 	R_EndDrawerCommands();
 }
 

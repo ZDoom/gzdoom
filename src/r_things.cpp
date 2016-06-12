@@ -1423,7 +1423,7 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, double sx, double 
 			}
 		}
 
-		if (realfixedcolormap != NULL)
+		if (realfixedcolormap != NULL && (!r_swtruecolor || (r_shadercolormaps && screen->Accel2D)))
 		{ // fixed color
 			vis->Style.BaseColormap = realfixedcolormap;
 			vis->Style.ColormapNum = 0;

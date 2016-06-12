@@ -459,7 +459,7 @@ void R_SetupColormap(player_t *player)
 		if (player->fixedcolormap >= 0 && player->fixedcolormap < (int)SpecialColormaps.Size())
 		{
 			realfixedcolormap = &SpecialColormaps[player->fixedcolormap];
-			if (RenderTarget == screen && (DFrameBuffer *)screen->Accel2D && r_shadercolormaps)
+			if (RenderTarget == screen && (r_swtruecolor || ((DFrameBuffer *)screen->Accel2D && r_shadercolormaps)))
 			{
 				// Render everything fullbright. The copy to video memory will
 				// apply the special colormap, so it won't be restricted to the
@@ -935,7 +935,7 @@ void R_RenderActorView (AActor *actor, bool dontmaplines)
 
 	// If we don't want shadered colormaps, NULL it now so that the
 	// copy to the screen does not use a special colormap shader.
-	if (!r_shadercolormaps)
+	if (!r_shadercolormaps && !r_swtruecolor)
 	{
 		realfixedcolormap = NULL;
 	}

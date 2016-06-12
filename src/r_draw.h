@@ -581,4 +581,22 @@ public:
 	static void WaitForWorkers();
 };
 
+class ApplySpecialColormapRGBACommand : public DrawerCommand
+{
+	BYTE *buffer;
+	int pitch;
+	int width;
+	int height;
+	int start_red;
+	int start_green;
+	int start_blue;
+	int end_red;
+	int end_green;
+	int end_blue;
+
+public:
+	ApplySpecialColormapRGBACommand(FSpecialColormap *colormap, DFrameBuffer *screen);
+	void Execute(DrawerThread *thread) override;
+};
+
 #endif

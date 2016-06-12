@@ -3488,6 +3488,158 @@ public:
 	}
 };
 
+ApplySpecialColormapRGBACommand::ApplySpecialColormapRGBACommand(FSpecialColormap *colormap, DFrameBuffer *screen)
+{
+	buffer = screen->GetBuffer();
+	pitch = screen->GetPitch();
+	width = screen->GetWidth();
+	height = screen->GetHeight();
+
+	start_red = (int)(colormap->ColorizeStart[0] * 255);
+	start_green = (int)(colormap->ColorizeStart[1] * 255);
+	start_blue = (int)(colormap->ColorizeStart[2] * 255);
+	end_red = (int)(colormap->ColorizeEnd[0] * 255);
+	end_green = (int)(colormap->ColorizeEnd[1] * 255);
+	end_blue = (int)(colormap->ColorizeEnd[2] * 255);
+}
+
+#ifdef NO_SSE
+void ApplySpecialColormapRGBACommand::Execute(DrawerThread *thread)
+{
+	int y = thread->skipped_by_thread(0);
+	int count = thread->count_for_thread(0, height);
+	while (count > 0)
+	{
+		BYTE *pixels = buffer + y * pitch * 4;
+		for (int x = 0; x < width; x++)
+		{
+			int fg_red = pixels[2];
+			int fg_green = pixels[1];
+			int fg_blue = pixels[0];
+
+			int gray = (fg_red * 77 + fg_green * 143 + fg_blue * 37) >> 8;
+			gray += (gray >> 7); // gray*=256/255
+			int inv_gray = 256 - gray;
+
+			int red = clamp((start_red * inv_gray + end_red * gray) >> 8, 0, 255);
+			int green = clamp((start_green * inv_gray + end_green * gray) >> 8, 0, 255);
+			int blue = clamp((start_blue * inv_gray + end_blue * gray) >> 8, 0, 255);
+
+			pixels[0] = (BYTE)blue;
+			pixels[1] = (BYTE)green;
+			pixels[2] = (BYTE)red;
+			pixels[3] = 0xff;
+
+			pixels += 4;
+		}
+		y += thread->num_cores;
+		count--;
+	}
+}
+#else
+void ApplySpecialColormapRGBACommand::Execute(DrawerThread *thread)
+{
+	int y = thread->skipped_by_thread(0);
+	int count = thread->count_for_thread(0, height);
+	__m128i gray_weight = _mm_set_epi16(256, 77, 143, 37, 256, 77, 143, 37);
+	__m128i start_end = _mm_set_epi16(255, start_red, start_green, start_blue, 255, end_red, end_green, end_blue);
+	while (count > 0)
+	{
+		BYTE *pixels = buffer + y * pitch * 4;
+		int sse_length = width / 4;
+		for (int x = 0; x < sse_length; x++)
+		{
+			// Unpack to integers:
+			__m128i p = _mm_loadu_si128((const __m128i*)pixels);
+
+			__m128i p16_0 = _mm_unpacklo_epi8(p, _mm_setzero_si128());
+			__m128i p16_1 = _mm_unpackhi_epi8(p, _mm_setzero_si128());
+
+			// Add gray weighting to colors
+			__m128i mullo0 = _mm_mullo_epi16(p16_0, gray_weight);
+			__m128i mullo1 = _mm_mullo_epi16(p16_1, gray_weight);
+			__m128i p32_0 = _mm_unpacklo_epi16(mullo0, _mm_setzero_si128());
+			__m128i p32_1 = _mm_unpackhi_epi16(mullo0, _mm_setzero_si128());
+			__m128i p32_2 = _mm_unpacklo_epi16(mullo1, _mm_setzero_si128());
+			__m128i p32_3 = _mm_unpackhi_epi16(mullo1, _mm_setzero_si128());
+
+			// Transpose to get color components in individual vectors:
+			__m128 tmpx = _mm_castsi128_ps(p32_0);
+			__m128 tmpy = _mm_castsi128_ps(p32_1);
+			__m128 tmpz = _mm_castsi128_ps(p32_2);
+			__m128 tmpw = _mm_castsi128_ps(p32_3);
+			_MM_TRANSPOSE4_PS(tmpx, tmpy, tmpz, tmpw);
+			__m128i blue = _mm_castps_si128(tmpx);
+			__m128i green = _mm_castps_si128(tmpy);
+			__m128i red = _mm_castps_si128(tmpz);
+			__m128i alpha = _mm_castps_si128(tmpw);
+
+			// Calculate gray and 256-gray values:
+			__m128i gray = _mm_srli_epi32(_mm_add_epi32(_mm_add_epi32(red, green), blue), 8);
+			__m128i inv_gray = _mm_sub_epi32(_mm_set1_epi32(256), gray);
+
+			// p32 = start * inv_gray + end * gray:
+			__m128i gray0 = _mm_shuffle_epi32(gray, _MM_SHUFFLE(0, 0, 0, 0));
+			__m128i gray1 = _mm_shuffle_epi32(gray, _MM_SHUFFLE(1, 1, 1, 1));
+			__m128i gray2 = _mm_shuffle_epi32(gray, _MM_SHUFFLE(2, 2, 2, 2));
+			__m128i gray3 = _mm_shuffle_epi32(gray, _MM_SHUFFLE(3, 3, 3, 3));
+			__m128i inv_gray0 = _mm_shuffle_epi32(inv_gray, _MM_SHUFFLE(0, 0, 0, 0));
+			__m128i inv_gray1 = _mm_shuffle_epi32(inv_gray, _MM_SHUFFLE(1, 1, 1, 1));
+			__m128i inv_gray2 = _mm_shuffle_epi32(inv_gray, _MM_SHUFFLE(2, 2, 2, 2));
+			__m128i inv_gray3 = _mm_shuffle_epi32(inv_gray, _MM_SHUFFLE(3, 3, 3, 3));
+			__m128i gray16_0 = _mm_packs_epi32(gray0, inv_gray0);
+			__m128i gray16_1 = _mm_packs_epi32(gray1, inv_gray1);
+			__m128i gray16_2 = _mm_packs_epi32(gray2, inv_gray2);
+			__m128i gray16_3 = _mm_packs_epi32(gray3, inv_gray3);
+			__m128i gray16_0_mullo = _mm_mullo_epi16(gray16_0, start_end);
+			__m128i gray16_1_mullo = _mm_mullo_epi16(gray16_1, start_end);
+			__m128i gray16_2_mullo = _mm_mullo_epi16(gray16_2, start_end);
+			__m128i gray16_3_mullo = _mm_mullo_epi16(gray16_3, start_end);
+			__m128i gray16_0_mulhi = _mm_mulhi_epi16(gray16_0, start_end);
+			__m128i gray16_1_mulhi = _mm_mulhi_epi16(gray16_1, start_end);
+			__m128i gray16_2_mulhi = _mm_mulhi_epi16(gray16_2, start_end);
+			__m128i gray16_3_mulhi = _mm_mulhi_epi16(gray16_3, start_end);
+			p32_0 = _mm_srli_epi32(_mm_add_epi32(_mm_unpacklo_epi16(gray16_0_mullo, gray16_0_mulhi), _mm_unpackhi_epi16(gray16_0_mullo, gray16_0_mulhi)), 8);
+			p32_1 = _mm_srli_epi32(_mm_add_epi32(_mm_unpacklo_epi16(gray16_1_mullo, gray16_1_mulhi), _mm_unpackhi_epi16(gray16_1_mullo, gray16_1_mulhi)), 8);
+			p32_2 = _mm_srli_epi32(_mm_add_epi32(_mm_unpacklo_epi16(gray16_2_mullo, gray16_2_mulhi), _mm_unpackhi_epi16(gray16_2_mullo, gray16_2_mulhi)), 8);
+			p32_3 = _mm_srli_epi32(_mm_add_epi32(_mm_unpacklo_epi16(gray16_3_mullo, gray16_3_mulhi), _mm_unpackhi_epi16(gray16_3_mullo, gray16_3_mulhi)), 8);
+
+			p16_0 = _mm_packs_epi32(p32_0, p32_1);
+			p16_1 = _mm_packs_epi32(p32_2, p32_3);
+			p = _mm_packus_epi16(p16_0, p16_1);
+
+			_mm_storeu_si128((__m128i*)pixels, p);
+			pixels += 16;
+		}
+
+		for (int x = sse_length * 4; x < width; x++)
+		{
+			int fg_red = pixels[2];
+			int fg_green = pixels[1];
+			int fg_blue = pixels[0];
+
+			int gray = (fg_red * 77 + fg_green * 143 + fg_blue * 37) >> 8;
+			gray += (gray >> 7); // gray*=256/255
+			int inv_gray = 256 - gray;
+
+			int red = clamp((start_red * inv_gray + end_red * gray) >> 8, 0, 255);
+			int green = clamp((start_green * inv_gray + end_green * gray) >> 8, 0, 255);
+			int blue = clamp((start_blue * inv_gray + end_blue * gray) >> 8, 0, 255);
+
+			pixels[0] = (BYTE)blue;
+			pixels[1] = (BYTE)green;
+			pixels[2] = (BYTE)red;
+			pixels[3] = 0xff;
+
+			pixels += 4;
+		}
+
+		y += thread->num_cores;
+		count--;
+	}
+}
+#endif
+
 /////////////////////////////////////////////////////////////////////////////
 
 void R_BeginDrawerCommands()

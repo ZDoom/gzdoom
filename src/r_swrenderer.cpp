@@ -42,6 +42,7 @@
 #include "r_3dfloors.h"
 #include "textures/textures.h"
 #include "r_data/voxels.h"
+#include "r_draw_rgba.h"
 
 EXTERN_CVAR(Bool, r_shadercolormaps)
 

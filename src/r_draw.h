@@ -24,11 +24,6 @@
 #define __R_DRAW__
 
 #include "r_defs.h"
-#include <vector>
-#include <memory>
-#include <thread>
-#include <mutex>
-#include <condition_variable>
 
 // Spectre/Invisibility.
 #define FUZZTABLE	50
@@ -175,39 +170,6 @@ void rt_map4cols_asm1 (int sx, int yl, int yh);
 void rt_map4cols_asm2 (int sx, int yl, int yh);
 void rt_add4cols_asm (int sx, int yl, int yh);
 void rt_addclamp4cols_asm (int sx, int yl, int yh);
-
-///
-
-void rt_copy1col_RGBA_c (int hx, int sx, int yl, int yh);
-void rt_copy4cols_RGBA_c (int sx, int yl, int yh);
-
-void rt_shaded1col_RGBA_c (int hx, int sx, int yl, int yh);
-void rt_shaded4cols_RGBA_c (int sx, int yl, int yh);
-
-void rt_map1col_RGBA_c (int hx, int sx, int yl, int yh);
-void rt_add1col_RGBA_c (int hx, int sx, int yl, int yh);
-void rt_addclamp1col_RGBA_c (int hx, int sx, int yl, int yh);
-void rt_subclamp1col_RGBA_c (int hx, int sx, int yl, int yh);
-void rt_revsubclamp1col_RGBA_c (int hx, int sx, int yl, int yh);
-
-void rt_tlate1col_RGBA_c (int hx, int sx, int yl, int yh);
-void rt_tlateadd1col_RGBA_c (int hx, int sx, int yl, int yh);
-void rt_tlateaddclamp1col_RGBA_c (int hx, int sx, int yl, int yh);
-void rt_tlatesubclamp1col_RGBA_c (int hx, int sx, int yl, int yh);
-void rt_tlaterevsubclamp1col_RGBA_c (int hx, int sx, int yl, int yh);
-
-void rt_map4cols_RGBA_c (int sx, int yl, int yh);
-void rt_add4cols_RGBA_c (int sx, int yl, int yh);
-void rt_addclamp4cols_RGBA_c (int sx, int yl, int yh);
-void rt_subclamp4cols_RGBA_c (int sx, int yl, int yh);
-void rt_revsubclamp4cols_RGBA_c (int sx, int yl, int yh);
-
-void rt_tlate4cols_RGBA_c (int sx, int yl, int yh);
-void rt_tlateadd4cols_RGBA_c (int sx, int yl, int yh);
-void rt_tlateaddclamp4cols_RGBA_c (int sx, int yl, int yh);
-void rt_tlatesubclamp4cols_RGBA_c (int sx, int yl, int yh);
-void rt_tlaterevsubclamp4cols_RGBA_c (int sx, int yl, int yh);
-
 }
 
 extern void (*rt_copy1col)(int hx, int sx, int yl, int yh);
@@ -247,10 +209,8 @@ void rt_draw4cols (int sx);
 
 // [RH] Preps the temporary horizontal buffer.
 void rt_initcols_pal (BYTE *buffer);
-void rt_initcols_rgba (BYTE *buffer);
 
 void rt_span_coverage_pal(int x, int start, int stop);
-void rt_span_coverage_rgba(int x, int start, int stop);
 
 extern void (*R_DrawFogBoundary)(int x1, int x2, short *uclip, short *dclip);
 
@@ -280,46 +240,6 @@ void	R_DrawSpanMaskedP_C (void);
 
 #endif
 
-void	R_DrawColumnHorizP_RGBA_C (void);
-void	R_DrawColumnP_RGBA_C (void);
-void	R_DrawFuzzColumnP_RGBA_C (void);
-void	R_DrawTranslatedColumnP_RGBA_C (void);
-void	R_DrawShadedColumnP_RGBA_C (void);
-void	R_DrawSpanP_RGBA_C (void);
-void	R_DrawSpanMaskedP_RGBA_C (void);
-
-void	R_DrawSpanTranslucentP_RGBA_C();
-void	R_DrawSpanMaskedTranslucentP_RGBA_C();
-void	R_DrawSpanAddClampP_RGBA_C();
-void	R_DrawSpanMaskedAddClampP_RGBA_C();
-void	R_FillColumnP_RGBA();
-void	R_FillAddColumn_RGBA_C();
-void	R_FillAddClampColumn_RGBA();
-void	R_FillSubClampColumn_RGBA();
-void	R_FillRevSubClampColumn_RGBA();
-void	R_DrawAddColumnP_RGBA_C();
-void	R_DrawTlatedAddColumnP_RGBA_C();
-void	R_DrawAddClampColumnP_RGBA_C();
-void	R_DrawAddClampTranslatedColumnP_RGBA_C();
-void	R_DrawSubClampColumnP_RGBA_C();
-void	R_DrawSubClampTranslatedColumnP_RGBA_C();
-void	R_DrawRevSubClampColumnP_RGBA_C();
-void	R_DrawRevSubClampTranslatedColumnP_RGBA_C();
-void	R_FillSpan_RGBA();
-void	R_DrawFogBoundary_RGBA(int x1, int x2, short *uclip, short *dclip);
-fixed_t	tmvline1_add_RGBA();
-void	tmvline4_add_RGBA();
-fixed_t	tmvline1_addclamp_RGBA();
-void	tmvline4_addclamp_RGBA();
-fixed_t	tmvline1_subclamp_RGBA();
-void	tmvline4_subclamp_RGBA();
-fixed_t	tmvline1_revsubclamp_RGBA();
-void	tmvline4_revsubclamp_RGBA();
-DWORD	vlinec1_RGBA();
-void	vlinec4_RGBA();
-DWORD	mvlinec1_RGBA();
-void	mvlinec4_RGBA();
-
 void	R_DrawSpanTranslucentP_C (void);
 void	R_DrawSpanMaskedTranslucentP_C (void);
 
@@ -347,9 +267,6 @@ void	R_FillColumnP_C (void);
 
 void	R_FillColumnHorizP_C (void);
 void	R_FillSpan_C (void);
-
-void	R_FillColumnHorizP_RGBA_C(void);
-void	R_FillSpan_RGBA_C(void);
 
 #ifdef X86_ASM
 #define R_SetupDrawSlab R_SetupDrawSlabA
@@ -442,161 +359,5 @@ void R_SetColorMapLight(FColormap *base_colormap, float light, int shade);
 void R_SetDSColorMapLight(FColormap *base_colormap, float light, int shade);
 
 void R_SetTranslationMap(lighttable_t *translation);
-
-// Redirect drawer commands to worker threads
-void R_BeginDrawerCommands();
-
-// Wait until all drawers finished executing
-void R_EndDrawerCommands();
-
-class DrawerCommandQueue;
-
-class DrawerThread
-{
-public:
-	std::thread thread;
-
-	// Thread line index of this thread
-	int core = 0;
-
-	// Number of active threads
-	int num_cores = 1;
-
-	// Range of rows processed this pass
-	int pass_start_y = 0;
-	int pass_end_y = MAXHEIGHT;
-
-	uint32_t dc_temp_rgbabuff_rgba[MAXHEIGHT * 4];
-	uint32_t *dc_temp_rgba;
-
-	// Checks if a line is rendered by this thread
-	bool line_skipped_by_thread(int line)
-	{
-		return line < pass_start_y || line >= pass_end_y || line % num_cores != core;
-	}
-
-	// The number of lines to skip to reach the first line to be rendered by this thread
-	int skipped_by_thread(int first_line)
-	{
-		int pass_skip = MAX(pass_start_y - first_line, 0);
-		int core_skip = (num_cores - (first_line + pass_skip - core) % num_cores) % num_cores;
-		return pass_skip + core_skip;
-	}
-
-	// The number of lines to be rendered by this thread
-	int count_for_thread(int first_line, int count)
-	{
-		int lines_until_pass_end = MAX(pass_end_y - first_line, 0);
-		count = MIN(count, lines_until_pass_end);
-		int c = (count - skipped_by_thread(first_line) + num_cores - 1) / num_cores;
-		return MAX(c, 0);
-	}
-
-	// Calculate the dest address for the first line to be rendered by this thread
-	uint32_t *dest_for_thread(int first_line, int pitch, uint32_t *dest)
-	{
-		return dest + skipped_by_thread(first_line) * pitch;
-	}
-};
-
-class DrawerCommand
-{
-protected:
-	int dc_dest_y;
-
-public:
-	DrawerCommand()
-	{
-		dc_dest_y = static_cast<int>((dc_dest - dc_destorg) / (dc_pitch * 4));
-	}
-
-	virtual void Execute(DrawerThread *thread) = 0;
-};
-
-class DrawerCommandQueue
-{
-	enum { memorypool_size = 4 * 1024 * 1024 };
-	char memorypool[memorypool_size];
-	size_t memorypool_pos = 0;
-
-	std::vector<DrawerCommand *> commands;
-
-	std::vector<DrawerThread> threads;
-
-	std::mutex start_mutex;
-	std::condition_variable start_condition;
-	std::vector<DrawerCommand *> active_commands;
-	bool shutdown_flag = false;
-	int run_id = 0;
-
-	std::mutex end_mutex;
-	std::condition_variable end_condition;
-	size_t finished_threads = 0;
-
-	int threaded_render = 0;
-	DrawerThread single_core_thread;
-	int num_passes = 2;
-	int rows_in_pass = 540;
-
-	void StartThreads();
-	void StopThreads();
-	void Finish();
-
-	static DrawerCommandQueue *Instance();
-
-	~DrawerCommandQueue();
-
-public:
-	// Allocate memory valid for the duration of a command execution
-	static void* AllocMemory(size_t size);
-
-	// Queue command to be executed by drawer worker threads
-	template<typename T, typename... Types>
-	static void QueueCommand(Types &&... args)
-	{
-		auto queue = Instance();
-		if (queue->threaded_render == 0)
-		{
-			T command(std::forward<Types>(args)...);
-			command.Execute(&queue->single_core_thread);
-		}
-		else
-		{
-			void *ptr = AllocMemory(sizeof(T));
-			if (!ptr)
-				return;
-			T *command = new (ptr)T(std::forward<Types>(args)...);
-			queue->commands.push_back(command);
-		}
-	}
-	
-	// Redirects all drawing commands to worker threads until End is called
-	// Begin/End blocks can be nested.
-	static void Begin();
-
-	// End redirection and wait until all worker threads finished executing
-	static void End();
-
-	// Waits until all worker threads finished executing
-	static void WaitForWorkers();
-};
-
-class ApplySpecialColormapRGBACommand : public DrawerCommand
-{
-	BYTE *buffer;
-	int pitch;
-	int width;
-	int height;
-	int start_red;
-	int start_green;
-	int start_blue;
-	int end_red;
-	int end_green;
-	int end_blue;
-
-public:
-	ApplySpecialColormapRGBACommand(FSpecialColormap *colormap, DFrameBuffer *screen);
-	void Execute(DrawerThread *thread) override;
-};
 
 #endif

@@ -39,6 +39,7 @@
 #include "v_palette.h"
 #include "r_data/colormaps.h"
 #include "r_plane.h"
+#include "r_draw_rgba.h"
 
 #include "gi.h"
 #include "stats.h"
@@ -2295,34 +2296,34 @@ void R_InitColumnDrawers ()
 			domvline4_saved = domvline4;
 		}
 
-		R_DrawColumnHoriz			= R_DrawColumnHorizP_RGBA_C;
-		R_DrawColumn				= R_DrawColumnP_RGBA_C;
-		R_DrawFuzzColumn			= R_DrawFuzzColumnP_RGBA_C;
-		R_DrawTranslatedColumn		= R_DrawTranslatedColumnP_RGBA_C;
-		R_DrawShadedColumn			= R_DrawShadedColumnP_RGBA_C;
-		R_DrawSpanMasked			= R_DrawSpanMaskedP_RGBA_C;
-		R_DrawSpan					= R_DrawSpanP_RGBA_C;
+		R_DrawColumnHoriz			= R_DrawColumnHorizP_RGBA;
+		R_DrawColumn				= R_DrawColumnP_RGBA;
+		R_DrawFuzzColumn			= R_DrawFuzzColumnP_RGBA;
+		R_DrawTranslatedColumn		= R_DrawTranslatedColumnP_RGBA;
+		R_DrawShadedColumn			= R_DrawShadedColumnP_RGBA;
+		R_DrawSpanMasked			= R_DrawSpanMaskedP_RGBA;
+		R_DrawSpan					= R_DrawSpanP_RGBA;
 
-		R_DrawSpanTranslucent		= R_DrawSpanTranslucentP_RGBA_C;
-		R_DrawSpanMaskedTranslucent = R_DrawSpanMaskedTranslucentP_RGBA_C;
-		R_DrawSpanAddClamp			= R_DrawSpanAddClampP_RGBA_C;
-		R_DrawSpanMaskedAddClamp	= R_DrawSpanMaskedAddClampP_RGBA_C;
+		R_DrawSpanTranslucent		= R_DrawSpanTranslucentP_RGBA;
+		R_DrawSpanMaskedTranslucent = R_DrawSpanMaskedTranslucentP_RGBA;
+		R_DrawSpanAddClamp			= R_DrawSpanAddClampP_RGBA;
+		R_DrawSpanMaskedAddClamp	= R_DrawSpanMaskedAddClampP_RGBA;
 		R_FillColumn				= R_FillColumnP_RGBA;
-		R_FillAddColumn				= R_FillAddColumn_RGBA_C;
+		R_FillAddColumn				= R_FillAddColumn_RGBA;
 		R_FillAddClampColumn		= R_FillAddClampColumn_RGBA;
 		R_FillSubClampColumn		= R_FillSubClampColumn_RGBA;
 		R_FillRevSubClampColumn		= R_FillRevSubClampColumn_RGBA;
-		R_DrawAddColumn				= R_DrawAddColumnP_RGBA_C;
-		R_DrawTlatedAddColumn		= R_DrawTlatedAddColumnP_RGBA_C;
-		R_DrawAddClampColumn		= R_DrawAddClampColumnP_RGBA_C;
-		R_DrawAddClampTranslatedColumn = R_DrawAddClampTranslatedColumnP_RGBA_C;
-		R_DrawSubClampColumn		= R_DrawSubClampColumnP_RGBA_C;
-		R_DrawSubClampTranslatedColumn = R_DrawSubClampTranslatedColumnP_RGBA_C;
-		R_DrawRevSubClampColumn		= R_DrawRevSubClampColumnP_RGBA_C;
-		R_DrawRevSubClampTranslatedColumn = R_DrawRevSubClampTranslatedColumnP_RGBA_C;
+		R_DrawAddColumn				= R_DrawAddColumnP_RGBA;
+		R_DrawTlatedAddColumn		= R_DrawTlatedAddColumnP_RGBA;
+		R_DrawAddClampColumn		= R_DrawAddClampColumnP_RGBA;
+		R_DrawAddClampTranslatedColumn = R_DrawAddClampTranslatedColumnP_RGBA;
+		R_DrawSubClampColumn		= R_DrawSubClampColumnP_RGBA;
+		R_DrawSubClampTranslatedColumn = R_DrawSubClampTranslatedColumnP_RGBA;
+		R_DrawRevSubClampColumn		= R_DrawRevSubClampColumnP_RGBA;
+		R_DrawRevSubClampTranslatedColumn = R_DrawRevSubClampTranslatedColumnP_RGBA;
 		R_FillSpan					= R_FillSpan_RGBA;
 		R_DrawFogBoundary			= R_DrawFogBoundary_RGBA;
-		R_FillColumnHoriz			= R_FillColumnHorizP_RGBA_C;
+		R_FillColumnHoriz			= R_FillColumnHorizP_RGBA;
 
 		R_DrawFogBoundary			= R_DrawFogBoundary_RGBA;
 		R_MapTiltedPlane			= R_MapTiltedPlane_RGBA;
@@ -2338,30 +2339,30 @@ void R_InitColumnDrawers ()
 		tmvline1_revsubclamp		= tmvline1_revsubclamp_RGBA;
 		tmvline4_revsubclamp		= tmvline4_revsubclamp_RGBA;
 
-		rt_copy1col					= rt_copy1col_RGBA_c;
-		rt_copy4cols				= rt_copy4cols_RGBA_c;
-		rt_map1col					= rt_map1col_RGBA_c;
-		rt_map4cols					= rt_map4cols_RGBA_c;
-		rt_shaded1col				= rt_shaded1col_RGBA_c;
-		rt_shaded4cols				= rt_shaded4cols_RGBA_c;
-		rt_add1col					= rt_add1col_RGBA_c;
-		rt_add4cols					= rt_add4cols_RGBA_c;
-		rt_addclamp1col				= rt_addclamp1col_RGBA_c;
-		rt_addclamp4cols			= rt_addclamp4cols_RGBA_c;
-		rt_subclamp1col				= rt_subclamp1col_RGBA_c;
-		rt_revsubclamp1col			= rt_revsubclamp1col_RGBA_c;
-		rt_tlate1col				= rt_tlate1col_RGBA_c;
-		rt_tlateadd1col				= rt_tlateadd1col_RGBA_c;
-		rt_tlateaddclamp1col		= rt_tlateaddclamp1col_RGBA_c;
-		rt_tlatesubclamp1col		= rt_tlatesubclamp1col_RGBA_c;
-		rt_tlaterevsubclamp1col		= rt_tlaterevsubclamp1col_RGBA_c;
-		rt_subclamp4cols			= rt_subclamp4cols_RGBA_c;
-		rt_revsubclamp4cols			= rt_revsubclamp4cols_RGBA_c;
-		rt_tlate4cols				= rt_tlate4cols_RGBA_c;
-		rt_tlateadd4cols			= rt_tlateadd4cols_RGBA_c;
-		rt_tlateaddclamp4cols		= rt_tlateaddclamp4cols_RGBA_c;
-		rt_tlatesubclamp4cols		= rt_tlatesubclamp4cols_RGBA_c;
-		rt_tlaterevsubclamp4cols	= rt_tlaterevsubclamp4cols_RGBA_c;
+		rt_copy1col					= rt_copy1col_RGBA;
+		rt_copy4cols				= rt_copy4cols_RGBA;
+		rt_map1col					= rt_map1col_RGBA;
+		rt_map4cols					= rt_map4cols_RGBA;
+		rt_shaded1col				= rt_shaded1col_RGBA;
+		rt_shaded4cols				= rt_shaded4cols_RGBA;
+		rt_add1col					= rt_add1col_RGBA;
+		rt_add4cols					= rt_add4cols_RGBA;
+		rt_addclamp1col				= rt_addclamp1col_RGBA;
+		rt_addclamp4cols			= rt_addclamp4cols_RGBA;
+		rt_subclamp1col				= rt_subclamp1col_RGBA;
+		rt_revsubclamp1col			= rt_revsubclamp1col_RGBA;
+		rt_tlate1col				= rt_tlate1col_RGBA;
+		rt_tlateadd1col				= rt_tlateadd1col_RGBA;
+		rt_tlateaddclamp1col		= rt_tlateaddclamp1col_RGBA;
+		rt_tlatesubclamp1col		= rt_tlatesubclamp1col_RGBA;
+		rt_tlaterevsubclamp1col		= rt_tlaterevsubclamp1col_RGBA;
+		rt_subclamp4cols			= rt_subclamp4cols_RGBA;
+		rt_revsubclamp4cols			= rt_revsubclamp4cols_RGBA;
+		rt_tlate4cols				= rt_tlate4cols_RGBA;
+		rt_tlateadd4cols			= rt_tlateadd4cols_RGBA;
+		rt_tlateaddclamp4cols		= rt_tlateaddclamp4cols_RGBA;
+		rt_tlatesubclamp4cols		= rt_tlatesubclamp4cols_RGBA;
+		rt_tlaterevsubclamp4cols	= rt_tlaterevsubclamp4cols_RGBA;
 		rt_initcols					= rt_initcols_rgba;
 		rt_span_coverage			= rt_span_coverage_rgba;
 

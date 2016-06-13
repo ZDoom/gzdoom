@@ -37,6 +37,7 @@
 #include "v_palette.h"
 #include "r_data/colormaps.h"
 #include "r_plane.h"
+#include "r_draw_rgba.h"
 
 #include "gi.h"
 #include "stats.h"
@@ -3655,7 +3656,7 @@ void R_EndDrawerCommands()
 	DrawerCommandQueue::End();
 }
 
-void R_DrawColumnP_RGBA_C()
+void R_DrawColumnP_RGBA()
 {
 	DrawerCommandQueue::QueueCommand<DrawColumnRGBACommand>();
 }
@@ -3665,7 +3666,7 @@ void R_FillColumnP_RGBA()
 	DrawerCommandQueue::QueueCommand<FillColumnRGBACommand>();
 }
 
-void R_FillAddColumn_RGBA_C()
+void R_FillAddColumn_RGBA()
 {
 	DrawerCommandQueue::QueueCommand<FillAddColumnRGBACommand>();
 }
@@ -3685,88 +3686,88 @@ void R_FillRevSubClampColumn_RGBA()
 	DrawerCommandQueue::QueueCommand<FillRevSubClampColumnRGBACommand>();
 }
 
-void R_DrawFuzzColumnP_RGBA_C()
+void R_DrawFuzzColumnP_RGBA()
 {
 	DrawerCommandQueue::QueueCommand<DrawFuzzColumnRGBACommand>();
 	fuzzpos = (fuzzpos + dc_yh - dc_yl) % FUZZTABLE;
 }
 
-void R_DrawAddColumnP_RGBA_C()
+void R_DrawAddColumnP_RGBA()
 {
 	DrawerCommandQueue::QueueCommand<DrawAddColumnRGBACommand>();
 }
 
-void R_DrawTranslatedColumnP_RGBA_C()
+void R_DrawTranslatedColumnP_RGBA()
 {
 	DrawerCommandQueue::QueueCommand<DrawTranslatedColumnRGBACommand>();
 }
 
-void R_DrawTlatedAddColumnP_RGBA_C()
+void R_DrawTlatedAddColumnP_RGBA()
 {
 	DrawerCommandQueue::QueueCommand<DrawTlatedAddColumnRGBACommand>();
 }
 
-void R_DrawShadedColumnP_RGBA_C()
+void R_DrawShadedColumnP_RGBA()
 {
 	DrawerCommandQueue::QueueCommand<DrawShadedColumnRGBACommand>();
 }
 
-void R_DrawAddClampColumnP_RGBA_C()
+void R_DrawAddClampColumnP_RGBA()
 {
 	DrawerCommandQueue::QueueCommand<DrawAddClampColumnRGBACommand>();
 }
 
-void R_DrawAddClampTranslatedColumnP_RGBA_C()
+void R_DrawAddClampTranslatedColumnP_RGBA()
 {
 	DrawerCommandQueue::QueueCommand<DrawAddClampTranslatedColumnRGBACommand>();
 }
 
-void R_DrawSubClampColumnP_RGBA_C()
+void R_DrawSubClampColumnP_RGBA()
 {
 	DrawerCommandQueue::QueueCommand<DrawSubClampColumnRGBACommand>();
 }
 
-void R_DrawSubClampTranslatedColumnP_RGBA_C()
+void R_DrawSubClampTranslatedColumnP_RGBA()
 {
 	DrawerCommandQueue::QueueCommand<DrawSubClampTranslatedColumnRGBACommand>();
 }
 
-void R_DrawRevSubClampColumnP_RGBA_C()
+void R_DrawRevSubClampColumnP_RGBA()
 {
 	DrawerCommandQueue::QueueCommand<DrawRevSubClampColumnRGBACommand>();
 }
 
-void R_DrawRevSubClampTranslatedColumnP_RGBA_C()
+void R_DrawRevSubClampTranslatedColumnP_RGBA()
 {
 	DrawerCommandQueue::QueueCommand<DrawRevSubClampTranslatedColumnRGBACommand>();
 }
 
-void R_DrawSpanP_RGBA_C()
+void R_DrawSpanP_RGBA()
 {
 	DrawerCommandQueue::QueueCommand<DrawSpanRGBACommand>();
 }
 
-void R_DrawSpanMaskedP_RGBA_C()
+void R_DrawSpanMaskedP_RGBA()
 {
 	DrawerCommandQueue::QueueCommand<DrawSpanMaskedRGBACommand>();
 }
 
-void R_DrawSpanTranslucentP_RGBA_C()
+void R_DrawSpanTranslucentP_RGBA()
 {
 	DrawerCommandQueue::QueueCommand<DrawSpanTranslucentRGBACommand>();
 }
 
-void R_DrawSpanMaskedTranslucentP_RGBA_C()
+void R_DrawSpanMaskedTranslucentP_RGBA()
 {
 	DrawerCommandQueue::QueueCommand<DrawSpanMaskedTranslucentRGBACommand>();
 }
 
-void R_DrawSpanAddClampP_RGBA_C()
+void R_DrawSpanAddClampP_RGBA()
 {
 	DrawerCommandQueue::QueueCommand<DrawSpanAddClampRGBACommand>();
 }
 
-void R_DrawSpanMaskedAddClampP_RGBA_C()
+void R_DrawSpanMaskedAddClampP_RGBA()
 {
 	DrawerCommandQueue::QueueCommand<DrawSpanMaskedAddClampRGBACommand>();
 }

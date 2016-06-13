@@ -40,6 +40,7 @@
 #include "r_segs.h"
 #include "r_3dfloors.h"
 #include "r_sky.h"
+#include "r_draw_rgba.h"
 #include "st_stuff.h"
 #include "c_cvars.h"
 #include "c_dispatch.h"

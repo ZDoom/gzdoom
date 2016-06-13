@@ -56,7 +56,6 @@ public:
 
 	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
 	const BYTE *GetPixels ();
-	void Unload ();
 
 protected:
 	const BYTE *Pixels;
@@ -95,17 +94,6 @@ FBuildTexture::~FBuildTexture ()
 		FreeSpans (Spans);
 		Spans = NULL;
 	}
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void FBuildTexture::Unload ()
-{
-	// Nothing to do, since the pixels are accessed from memory-mapped files directly
 }
 
 //==========================================================================

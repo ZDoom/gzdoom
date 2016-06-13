@@ -183,6 +183,8 @@ void FCanvasTexture::Unload ()
 		CanvasBgra->Destroy();
 		CanvasBgra = NULL;
 	}
+
+	FTexture::Unload();
 }
 
 bool FCanvasTexture::CheckModified ()

@@ -1403,7 +1403,7 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 		R_SetSpanColormap(colormap, clamp(shade >> FRACBITS, 0, NUMCOLORMAPS - 1));
 	else
 		R_SetSpanColormap(&identitycolormap, 0);
-	R_SetSpanSource(tex->GetPixels());
+	R_SetSpanSource(r_swtruecolor ? (const BYTE*)tex->GetPixelsBgra() : tex->GetPixels());
 	scalex = double(1u << (32 - ds_xbits)) / scalex;
 	scaley = double(1u << (32 - ds_ybits)) / scaley;
 	ds_xstep = xs_RoundToInt(cosrot * scalex);

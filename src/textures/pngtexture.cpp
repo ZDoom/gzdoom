@@ -67,7 +67,6 @@ protected:
 
 	FString SourceFile;
 	BYTE *Pixels;
-	std::vector<uint32_t> PixelsBgra;
 	Span **Spans;
 
 	BYTE BitDepth;
@@ -382,7 +381,7 @@ void FPNGTexture::Unload ()
 {
 	delete[] Pixels;
 	Pixels = NULL;
-	PixelsBgra.clear();
+	FTexture::Unload();
 }
 
 //==========================================================================

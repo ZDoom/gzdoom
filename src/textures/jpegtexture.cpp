@@ -196,7 +196,6 @@ public:
 protected:
 
 	BYTE *Pixels;
-	std::vector<uint32_t> PixelsBgra;
 	Span DummySpans[2];
 
 	void MakeTexture ();
@@ -300,7 +299,7 @@ void FJPEGTexture::Unload ()
 {
 	delete[] Pixels;
 	Pixels = NULL;
-	PixelsBgra.clear();
+	FTexture::Unload();
 }
 
 //==========================================================================

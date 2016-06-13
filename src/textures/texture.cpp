@@ -176,6 +176,11 @@ FTexture::~FTexture ()
 	KillNative();
 }
 
+void FTexture::Unload()
+{
+	PixelsBgra = std::vector<uint32_t>();
+}
+
 const uint32_t *FTexture::GetColumnBgra(unsigned int column, const Span **spans_out)
 {
 	const uint32_t *pixels = GetPixelsBgra();
@@ -189,16 +194,19 @@ const uint32_t *FTexture::GetColumnBgra(unsigned int column, const Span **spans_
 
 const uint32_t *FTexture::GetPixelsBgra()
 {
-	if (BgraPixels.empty())
+	if (PixelsBgra.empty())
 	{
+		GetColumn(0, nullptr);
 		const BYTE *indices = GetPixels();
-		BgraPixels.resize(Width * Height);
+		if (indices == nullptr)
+			return nullptr;
+		PixelsBgra.resize(Width * Height);
 		for (int i = 0; i < Width * Height; i++)
 		{
-			BgraPixels[i] = GPalette.BaseColors[indices[i]].d;
+			PixelsBgra[i] = GPalette.BaseColors[indices[i]].d;
 		}
 	}
-	return BgraPixels.data();
+	return PixelsBgra.data();
 }
 
 bool FTexture::CheckModified ()
@@ -640,10 +648,6 @@ FDummyTexture::FDummyTexture ()
 	WidthBits = 6;
 	WidthMask = 63;
 	UseType = TEX_Null;
-}
-
-void FDummyTexture::Unload ()
-{
 }
 
 void FDummyTexture::SetSize (int width, int height)

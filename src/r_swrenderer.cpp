@@ -87,9 +87,9 @@ void FSoftwareRenderer::PrecacheTexture(FTexture *tex, int cache)
 		if (cache & FTextureManager::HIT_Columnmode)
 		{
 			const FTexture::Span *spanp;
-			/*if (r_swtruecolor)
+			if (r_swtruecolor)
 				tex->GetColumnBgra(0, &spanp);
-			else*/
+			else
 				tex->GetColumn(0, &spanp);
 		}
 		else if (cache != 0)

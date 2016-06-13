@@ -117,7 +117,6 @@ public:
 
 	const BYTE *GetColumn(unsigned int column, const Span **spans_out);
 	const BYTE *GetPixels();
-	void Unload();
 	bool CheckModified();
 	void SetTranslation(int num);
 
@@ -1074,16 +1073,6 @@ void FPaletteTester::SetTranslation(int num)
 	{
 		WantTranslation = num;
 	}
-}
-
-//==========================================================================
-//
-// FPaletteTester :: Unload
-//
-//==========================================================================
-
-void FPaletteTester::Unload()
-{
 }
 
 //==========================================================================

@@ -192,7 +192,7 @@ public:
 	virtual FTexture *GetRedirect(bool wantwarped);
 	virtual FTexture *GetRawTexture();		// for FMultiPatchTexture to override
 
-	virtual void Unload () = 0;
+	virtual void Unload ();
 
 	// Returns the native pixel format for this image
 	virtual FTextureFormat GetFormat();
@@ -269,8 +269,7 @@ protected:
 		Rotations = other->Rotations;
 	}
 
-private:
-	std::vector<uint32_t> BgraPixels;
+	std::vector<uint32_t> PixelsBgra;
 
 public:
 	static void FlipSquareBlock (BYTE *block, int x, int y);
@@ -472,7 +471,6 @@ public:
 	FDummyTexture ();
 	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
 	const BYTE *GetPixels ();
-	void Unload ();
 	void SetSize (int width, int height);
 };
 

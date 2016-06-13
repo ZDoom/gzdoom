@@ -74,6 +74,7 @@ void FWarpTexture::Unload ()
 		Spans = NULL;
 	}
 	SourcePic->Unload ();
+	FTexture::Unload();
 }
 
 bool FWarpTexture::CheckModified ()

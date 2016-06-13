@@ -2325,7 +2325,7 @@ void R_InitColumnDrawers ()
 		R_FillColumnHoriz			= R_FillColumnHorizP_RGBA_C;
 
 		R_DrawFogBoundary			= R_DrawFogBoundary_RGBA;
-		R_MapTiltedPlane			= R_MapColoredPlane_RGBA;
+		R_MapTiltedPlane			= R_MapTiltedPlane_RGBA;
 		R_MapColoredPlane			= R_MapColoredPlane_RGBA;
 		R_DrawParticle				= R_DrawParticle_RGBA;
 
@@ -2422,7 +2422,7 @@ void R_InitColumnDrawers ()
 		R_FillColumnHoriz			= R_FillColumnHorizP_C;
 
 		R_DrawFogBoundary			= R_DrawFogBoundary_C;
-		R_MapTiltedPlane			= R_MapColoredPlane_C;
+		R_MapTiltedPlane			= R_MapTiltedPlane_C;
 		R_MapColoredPlane			= R_MapColoredPlane_C;
 		R_DrawParticle				= R_DrawParticle_C;
 

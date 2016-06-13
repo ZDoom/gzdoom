@@ -512,6 +512,7 @@ class RtAdd1colRGBACommand : public DrawerCommand
 	ShadeConstants dc_shade_constants;
 	fixed_t dc_srcalpha;
 	fixed_t dc_destalpha;
+	BYTE *dc_colormap;
 
 public:
 	RtAdd1colRGBACommand(int hx, int sx, int yl, int yh)
@@ -527,6 +528,7 @@ public:
 		dc_shade_constants = ::dc_shade_constants;
 		dc_srcalpha = ::dc_srcalpha;
 		dc_destalpha = ::dc_destalpha;
+		dc_colormap = ::dc_colormap;
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -548,12 +550,13 @@ public:
 
 		uint32_t light = calc_light_multiplier(dc_light);
 		ShadeConstants shade_constants = dc_shade_constants;
+		BYTE *colormap = dc_colormap;
 
 		uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
 		uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
 
 		do {
-			uint32_t fg = shade_pal_index(*source, light, shade_constants);
+			uint32_t fg = shade_pal_index(colormap[*source], light, shade_constants);
 			uint32_t fg_red = (fg >> 16) & 0xff;
 			uint32_t fg_green = (fg >> 8) & 0xff;
 			uint32_t fg_blue = fg & 0xff;
@@ -583,6 +586,7 @@ class RtAdd4colsRGBACommand : public DrawerCommand
 	int dc_pitch;
 	fixed_t dc_light;
 	ShadeConstants dc_shade_constants;
+	BYTE *dc_colormap;
 
 public:
 	RtAdd4colsRGBACommand(int sx, int yl, int yh)
@@ -595,6 +599,7 @@ public:
 		dc_pitch = ::dc_pitch;
 		dc_light = ::dc_light;
 		dc_shade_constants = ::dc_shade_constants;
+		dc_colormap = ::dc_colormap;
 	}
 
 #ifdef NO_SSE
@@ -617,6 +622,7 @@ public:
 
 		uint32_t light = calc_light_multiplier(dc_light);
 		ShadeConstants shade_constants = dc_shade_constants;
+		BYTE *colormap = dc_colormap;
 
 		uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
 		uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
@@ -624,7 +630,7 @@ public:
 		do {
 			for (int i = 0; i < 4; i++)
 			{
-				uint32_t fg = shade_pal_index(source[i], light, shade_constants);
+				uint32_t fg = shade_pal_index(colormap[source[i]], light, shade_constants);
 				uint32_t fg_red = (fg >> 16) & 0xff;
 				uint32_t fg_green = (fg >> 8) & 0xff;
 				uint32_t fg_blue = fg & 0xff;
@@ -664,6 +670,7 @@ public:
 
 		uint32_t light = calc_light_multiplier(dc_light);
 		uint32_t *palette = (uint32_t*)GPalette.BaseColors;
+		BYTE *colormap = dc_colormap;
 
 		uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
 		uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
@@ -678,10 +685,10 @@ public:
 			__m128i mbg_alpha = _mm_set_epi16(256, bg_alpha, bg_alpha, bg_alpha, 256, bg_alpha, bg_alpha, bg_alpha);
 
 			do {
-				uint32_t p0 = source[0];
-				uint32_t p1 = source[1];
-				uint32_t p2 = source[2];
-				uint32_t p3 = source[3];
+				uint32_t p0 = colormap[source[0]];
+				uint32_t p1 = colormap[source[1]];
+				uint32_t p2 = colormap[source[2]];
+				uint32_t p3 = colormap[source[3]];
 
 				// shade_pal_index:
 				__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);

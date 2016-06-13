@@ -325,11 +325,11 @@ public:
 
 		{
 			int pitch = dc_pitch * thread->num_cores;
-			BYTE color = dc_color;
+			uint32_t color = shade_pal_index_simple(dc_color, light);
 
 			do
 			{
-				*dest = shade_pal_index_simple(color, light);
+				*dest = color;
 				dest += pitch;
 			} while (--count);
 		}
@@ -629,6 +629,7 @@ class DrawAddColumnRGBACommand : public DrawerCommand
 	ShadeConstants dc_shade_constants;
 	fixed_t dc_srcalpha;
 	fixed_t dc_destalpha;
+	BYTE *dc_colormap;
 
 public:
 	DrawAddColumnRGBACommand()
@@ -643,6 +644,7 @@ public:
 		dc_shade_constants = ::dc_shade_constants;
 		dc_srcalpha = ::dc_srcalpha;
 		dc_destalpha = ::dc_destalpha;
+		dc_colormap = ::dc_colormap;
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -667,13 +669,14 @@ public:
 
 			uint32_t light = calc_light_multiplier(dc_light);
 			ShadeConstants shade_constants = dc_shade_constants;
+			BYTE *colormap = dc_colormap;
 
 			uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
 			uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
 
 			do
 			{
-				uint32_t fg = shade_pal_index(source[frac >> FRACBITS], light, shade_constants);
+				uint32_t fg = shade_pal_index(colormap[source[frac >> FRACBITS]], light, shade_constants);
 
 				uint32_t fg_red = (fg >> 16) & 0xff;
 				uint32_t fg_green = (fg >> 8) & 0xff;

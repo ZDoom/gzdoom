@@ -1095,9 +1095,10 @@ void DCanvas::DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32 real
 		}
 		if (IsBgra())
 		{
+			uint32_t fillColor = GPalette.BaseColors[palColor].d;
 			uint32_t *spot = (uint32_t*)GetBuffer() + y0*GetPitch() + x0;
 			for (int i = 0; i <= deltaX; i++)
-				spot[i] = palColor;
+				spot[i] = fillColor;
 		}
 		else
 		{
@@ -1108,11 +1109,12 @@ void DCanvas::DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32 real
 	{ // vertical line
 		if (IsBgra())
 		{
+			uint32_t fillColor = GPalette.BaseColors[palColor].d;
 			uint32_t *spot = (uint32_t*)GetBuffer() + y0*GetPitch() + x0;
 			int pitch = GetPitch();
 			do
 			{
-				*spot = palColor;
+				*spot = fillColor;
 				spot += pitch;
 			} while (--deltaY != 0);
 		}
@@ -1131,11 +1133,12 @@ void DCanvas::DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32 real
 	{ // diagonal line.
 		if (IsBgra())
 		{
+			uint32_t fillColor = GPalette.BaseColors[palColor].d;
 			uint32_t *spot = (uint32_t*)GetBuffer() + y0*GetPitch() + x0;
 			int advance = GetPitch() + xDir;
 			do
 			{
-				*spot = palColor;
+				*spot = fillColor;
 				spot += advance;
 			} while (--deltaY != 0);
 		}
@@ -1299,12 +1302,14 @@ void DCanvas::Clear (int left, int top, int right, int bottom, int palcolor, uin
 
 	if (IsBgra())
 	{
+		uint32_t fill_color = GPalette.BaseColors[palcolor];
+
 		uint32_t *dest = (uint32_t*)Buffer + top * Pitch + left;
 		x = right - left;
 		for (y = top; y < bottom; y++)
 		{
 			for (int i = 0; i < x; i++)
-				dest[i] = palcolor;
+				dest[i] = fill_color;
 			dest += Pitch;
 		}
 	}

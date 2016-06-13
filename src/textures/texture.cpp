@@ -410,6 +410,29 @@ void FTexture::FlipSquareBlock (BYTE *block, int x, int y)
 	}
 }
 
+void FTexture::FlipSquareBlockBgra(uint32_t *block, int x, int y)
+{
+	int i, j;
+
+	if (x != y) return;
+
+	for (i = 0; i < x; ++i)
+	{
+		uint32_t *corner = block + x*i + i;
+		int count = x - i;
+		if (count & 1)
+		{
+			count--;
+			swapvalues<uint32_t>(corner[count], corner[count*x]);
+		}
+		for (j = 0; j < count; j += 2)
+		{
+			swapvalues<uint32_t>(corner[j], corner[j*x]);
+			swapvalues<uint32_t>(corner[j + 1], corner[(j + 1)*x]);
+		}
+	}
+}
+
 void FTexture::FlipSquareBlockRemap (BYTE *block, int x, int y, const BYTE *remap)
 {
 	int i, j;
@@ -449,6 +472,19 @@ void FTexture::FlipNonSquareBlock (BYTE *dst, const BYTE *src, int x, int y, int
 		for (j = 0; j < y; ++j)
 		{
 			dst[i*y+j] = src[i+j*srcpitch];
+		}
+	}
+}
+
+void FTexture::FlipNonSquareBlockBgra(uint32_t *dst, const uint32_t *src, int x, int y, int srcpitch)
+{
+	int i, j;
+
+	for (i = 0; i < x; ++i)
+	{
+		for (j = 0; j < y; ++j)
+		{
+			dst[i*y + j] = src[i + j*srcpitch];
 		}
 	}
 }

@@ -974,14 +974,14 @@ void R_RenderViewToCanvas (AActor *actor, DCanvas *canvas,
 
 	R_RenderActorView (actor, dontmaplines);
 
+	R_EndDrawerCommands();
+
 	RenderTarget = screen;
 	bRenderingToCanvas = false;
 	R_ExecuteSetViewSize ();
 	screen->Lock (true);
 	R_SetupBuffer ();
 	screen->Unlock ();
-
-	R_EndDrawerCommands();
 
 	viewactive = savedviewactive;
 	r_swtruecolor = savedoutputformat;

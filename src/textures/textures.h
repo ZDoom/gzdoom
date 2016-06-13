@@ -274,8 +274,10 @@ private:
 
 public:
 	static void FlipSquareBlock (BYTE *block, int x, int y);
+	static void FlipSquareBlockBgra (uint32_t *block, int x, int y);
 	static void FlipSquareBlockRemap (BYTE *block, int x, int y, const BYTE *remap);
 	static void FlipNonSquareBlock (BYTE *blockto, const BYTE *blockfrom, int x, int y, int srcpitch);
+	static void FlipNonSquareBlockBgra (uint32_t *blockto, const uint32_t *blockfrom, int x, int y, int srcpitch);
 	static void FlipNonSquareBlockRemap (BYTE *blockto, const BYTE *blockfrom, int x, int y, int srcpitch, const BYTE *remap);
 
 	friend class D3DTex;
@@ -518,21 +520,27 @@ public:
 
 	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
 	const BYTE *GetPixels ();
+	const uint32_t *GetPixelsBgra() override;
 	void Unload ();
 	bool CheckModified ();
 	void NeedUpdate() { bNeedsUpdate=true; }
 	void SetUpdated() { bNeedsUpdate = false; bDidUpdate = true; bFirstUpdate = false; }
 	DSimpleCanvas *GetCanvas() { return Canvas; }
+	DSimpleCanvas *GetCanvasBgra() { return CanvasBgra; }
 	void MakeTexture ();
+	void MakeTextureBgra ();
 
 protected:
 
-	DSimpleCanvas *Canvas;
-	BYTE *Pixels;
+	DSimpleCanvas *Canvas = nullptr;
+	DSimpleCanvas *CanvasBgra = nullptr;
+	BYTE *Pixels = nullptr;
+	uint32_t *PixelsBgra = nullptr;
 	Span DummySpans[2];
-	bool bNeedsUpdate;
-	bool bDidUpdate;
-	bool bPixelsAllocated;
+	bool bNeedsUpdate = true;
+	bool bDidUpdate = false;
+	bool bPixelsAllocated = false;
+	bool bPixelsAllocatedBgra = false;
 public:
 	bool bFirstUpdate;
 

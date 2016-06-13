@@ -87,11 +87,17 @@ void FSoftwareRenderer::PrecacheTexture(FTexture *tex, int cache)
 		if (cache & FTextureManager::HIT_Columnmode)
 		{
 			const FTexture::Span *spanp;
-			tex->GetColumn(0, &spanp);
+			/*if (r_swtruecolor)
+				tex->GetColumnBgra(0, &spanp);
+			else*/
+				tex->GetColumn(0, &spanp);
 		}
 		else if (cache != 0)
 		{
-			tex->GetPixels ();
+			if (r_swtruecolor)
+				tex->GetPixels();
+			else
+				tex->GetPixels ();
 		}
 		else
 		{
@@ -328,8 +334,8 @@ void FSoftwareRenderer::CopyStackedViewParameters()
 
 void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoint, int fov)
 {
-	BYTE *Pixels = const_cast<BYTE*>(tex->GetPixels());
-	DSimpleCanvas *Canvas = tex->GetCanvas();
+	BYTE *Pixels = r_swtruecolor ? (BYTE*)tex->GetPixelsBgra() : (BYTE*)tex->GetPixels();
+	DSimpleCanvas *Canvas = r_swtruecolor ? tex->GetCanvasBgra() : tex->GetCanvas();
 
 	// curse Doom's overuse of global variables in the renderer.
 	// These get clobbered by rendering to a camera texture but they need to be preserved so the final rendering can be done with the correct palette.
@@ -340,13 +346,28 @@ void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoin
 	R_SetFOV ((double)fov);
 	R_RenderViewToCanvas (viewpoint, Canvas, 0, 0, tex->GetWidth(), tex->GetHeight(), tex->bFirstUpdate);
 	R_SetFOV (savedfov);
-	if (Pixels == Canvas->GetBuffer())
+
+	if (Canvas->IsBgra())
 	{
-		FTexture::FlipSquareBlockRemap (Pixels, tex->GetWidth(), tex->GetHeight(), GPalette.Remap);
+		if (Pixels == Canvas->GetBuffer())
+		{
+			FTexture::FlipSquareBlockBgra((uint32_t*)Pixels, tex->GetWidth(), tex->GetHeight());
+		}
+		else
+		{
+			FTexture::FlipNonSquareBlockBgra((uint32_t*)Pixels, (const uint32_t*)Canvas->GetBuffer(), tex->GetWidth(), tex->GetHeight(), Canvas->GetPitch());
+		}
 	}
 	else
 	{
-		FTexture::FlipNonSquareBlockRemap (Pixels, Canvas->GetBuffer(), tex->GetWidth(), tex->GetHeight(), Canvas->GetPitch(), GPalette.Remap);
+		if (Pixels == Canvas->GetBuffer())
+		{
+			FTexture::FlipSquareBlockRemap(Pixels, tex->GetWidth(), tex->GetHeight(), GPalette.Remap);
+		}
+		else
+		{
+			FTexture::FlipNonSquareBlockRemap(Pixels, Canvas->GetBuffer(), tex->GetWidth(), tex->GetHeight(), Canvas->GetPitch(), GPalette.Remap);
+		}
 	}
 	tex->SetUpdated();
 	fixedcolormap = savecolormap;

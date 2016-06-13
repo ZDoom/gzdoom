@@ -98,7 +98,7 @@ struct particle_t;
 
 extern void(*R_DrawParticle)(vissprite_t *);
 void R_DrawParticle_C (vissprite_t *);
-void R_DrawParticle_RGBA (vissprite_t *);
+void R_DrawParticle_rgba (vissprite_t *);
 
 void R_ProjectParticle (particle_t *, const sector_t *sector, int shade, int fakeside);
 

@@ -477,7 +477,7 @@ void R_MapTiltedPlane_C (int y, int x1)
 #endif
 }
 
-void R_MapTiltedPlane_RGBA (int y, int x1)
+void R_MapTiltedPlane_rgba (int y, int x1)
 {
 	int x2 = spanend[y];
 
@@ -509,7 +509,7 @@ void R_MapColoredPlane_C (int y, int x1)
 	memset (ylookup[y] + x1 + dc_destorg, ds_color, (spanend[y] - x1 + 1));
 }
 
-void R_MapColoredPlane_RGBA(int y, int x1)
+void R_MapColoredPlane_rgba(int y, int x1)
 {
 	uint32_t *dest = ylookup[y] + x1 + (uint32_t*)dc_destorg;
 	int count = (spanend[y] - x1 + 1);

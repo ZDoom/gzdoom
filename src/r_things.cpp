@@ -2676,7 +2676,7 @@ void R_DrawParticle_C (vissprite_t *vis)
 	}
 }
 
-void R_DrawParticle_RGBA(vissprite_t *vis)
+void R_DrawParticle_rgba(vissprite_t *vis)
 {
 	int spacing;
 	uint32_t *dest;

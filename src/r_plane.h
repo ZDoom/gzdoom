@@ -97,9 +97,9 @@ extern void(*R_MapColoredPlane)(int y, int x1);
 extern void(*R_MapTiltedPlane)(int y, int x1);
 
 void R_MapTiltedPlane_C(int y, int x1);
-void R_MapTiltedPlane_RGBA(int y, int x);
+void R_MapTiltedPlane_rgba(int y, int x);
 void R_MapColoredPlane_C(int y, int x1);
-void R_MapColoredPlane_RGBA(int y, int x1);
+void R_MapColoredPlane_rgba(int y, int x1);
 
 visplane_t *R_FindPlane
 ( const secplane_t &height,

@@ -3656,130 +3656,130 @@ void R_EndDrawerCommands()
 	DrawerCommandQueue::End();
 }
 
-void R_DrawColumnP_RGBA()
+void R_DrawColumn_rgba()
 {
 	DrawerCommandQueue::QueueCommand<DrawColumnRGBACommand>();
 }
 
-void R_FillColumnP_RGBA()
+void R_FillColumn_rgba()
 {
 	DrawerCommandQueue::QueueCommand<FillColumnRGBACommand>();
 }
 
-void R_FillAddColumn_RGBA()
+void R_FillAddColumn_rgba()
 {
 	DrawerCommandQueue::QueueCommand<FillAddColumnRGBACommand>();
 }
 
-void R_FillAddClampColumn_RGBA()
+void R_FillAddClampColumn_rgba()
 {
 	DrawerCommandQueue::QueueCommand<FillAddClampColumnRGBACommand>();
 }
 
-void R_FillSubClampColumn_RGBA()
+void R_FillSubClampColumn_rgba()
 {
 	DrawerCommandQueue::QueueCommand<FillSubClampColumnRGBACommand>();
 }
 
-void R_FillRevSubClampColumn_RGBA()
+void R_FillRevSubClampColumn_rgba()
 {
 	DrawerCommandQueue::QueueCommand<FillRevSubClampColumnRGBACommand>();
 }
 
-void R_DrawFuzzColumnP_RGBA()
+void R_DrawFuzzColumn_rgba()
 {
 	DrawerCommandQueue::QueueCommand<DrawFuzzColumnRGBACommand>();
 	fuzzpos = (fuzzpos + dc_yh - dc_yl) % FUZZTABLE;
 }
 
-void R_DrawAddColumnP_RGBA()
+void R_DrawAddColumn_rgba()
 {
 	DrawerCommandQueue::QueueCommand<DrawAddColumnRGBACommand>();
 }
 
-void R_DrawTranslatedColumnP_RGBA()
+void R_DrawTranslatedColumn_rgba()
 {
 	DrawerCommandQueue::QueueCommand<DrawTranslatedColumnRGBACommand>();
 }
 
-void R_DrawTlatedAddColumnP_RGBA()
+void R_DrawTlatedAddColumn_rgba()
 {
 	DrawerCommandQueue::QueueCommand<DrawTlatedAddColumnRGBACommand>();
 }
 
-void R_DrawShadedColumnP_RGBA()
+void R_DrawShadedColumn_rgba()
 {
 	DrawerCommandQueue::QueueCommand<DrawShadedColumnRGBACommand>();
 }
 
-void R_DrawAddClampColumnP_RGBA()
+void R_DrawAddClampColumn_rgba()
 {
 	DrawerCommandQueue::QueueCommand<DrawAddClampColumnRGBACommand>();
 }
 
-void R_DrawAddClampTranslatedColumnP_RGBA()
+void R_DrawAddClampTranslatedColumn_rgba()
 {
 	DrawerCommandQueue::QueueCommand<DrawAddClampTranslatedColumnRGBACommand>();
 }
 
-void R_DrawSubClampColumnP_RGBA()
+void R_DrawSubClampColumn_rgba()
 {
 	DrawerCommandQueue::QueueCommand<DrawSubClampColumnRGBACommand>();
 }
 
-void R_DrawSubClampTranslatedColumnP_RGBA()
+void R_DrawSubClampTranslatedColumn_rgba()
 {
 	DrawerCommandQueue::QueueCommand<DrawSubClampTranslatedColumnRGBACommand>();
 }
 
-void R_DrawRevSubClampColumnP_RGBA()
+void R_DrawRevSubClampColumn_rgba()
 {
 	DrawerCommandQueue::QueueCommand<DrawRevSubClampColumnRGBACommand>();
 }
 
-void R_DrawRevSubClampTranslatedColumnP_RGBA()
+void R_DrawRevSubClampTranslatedColumn_rgba()
 {
 	DrawerCommandQueue::QueueCommand<DrawRevSubClampTranslatedColumnRGBACommand>();
 }
 
-void R_DrawSpanP_RGBA()
+void R_DrawSpan_rgba()
 {
 	DrawerCommandQueue::QueueCommand<DrawSpanRGBACommand>();
 }
 
-void R_DrawSpanMaskedP_RGBA()
+void R_DrawSpanMasked_rgba()
 {
 	DrawerCommandQueue::QueueCommand<DrawSpanMaskedRGBACommand>();
 }
 
-void R_DrawSpanTranslucentP_RGBA()
+void R_DrawSpanTranslucent_rgba()
 {
 	DrawerCommandQueue::QueueCommand<DrawSpanTranslucentRGBACommand>();
 }
 
-void R_DrawSpanMaskedTranslucentP_RGBA()
+void R_DrawSpanMaskedTranslucent_rgba()
 {
 	DrawerCommandQueue::QueueCommand<DrawSpanMaskedTranslucentRGBACommand>();
 }
 
-void R_DrawSpanAddClampP_RGBA()
+void R_DrawSpanAddClamp_rgba()
 {
 	DrawerCommandQueue::QueueCommand<DrawSpanAddClampRGBACommand>();
 }
 
-void R_DrawSpanMaskedAddClampP_RGBA()
+void R_DrawSpanMaskedAddClamp_rgba()
 {
 	DrawerCommandQueue::QueueCommand<DrawSpanMaskedAddClampRGBACommand>();
 }
 
-void R_FillSpan_RGBA()
+void R_FillSpan_rgba()
 {
 	DrawerCommandQueue::QueueCommand<FillSpanRGBACommand>();
 }
 
 //extern FTexture *rw_pic; // For the asserts below
 
-DWORD vlinec1_RGBA()
+DWORD vlinec1_rgba()
 {
 	/*DWORD fracstep = dc_iscale;
 	DWORD frac = dc_texturefrac;
@@ -3792,79 +3792,79 @@ DWORD vlinec1_RGBA()
 	return dc_texturefrac + dc_count * dc_iscale;
 }
 
-void vlinec4_RGBA()
+void vlinec4_rgba()
 {
 	DrawerCommandQueue::QueueCommand<Vlinec4RGBACommand>();
 	for (int i = 0; i < 4; i++)
 		vplce[i] += vince[i] * dc_count;
 }
 
-DWORD mvlinec1_RGBA()
+DWORD mvlinec1_rgba()
 {
 	DrawerCommandQueue::QueueCommand<Mvlinec1RGBACommand>();
 	return dc_texturefrac + dc_count * dc_iscale;
 }
 
-void mvlinec4_RGBA()
+void mvlinec4_rgba()
 {
 	DrawerCommandQueue::QueueCommand<Mvlinec4RGBACommand>();
 	for (int i = 0; i < 4; i++)
 		vplce[i] += vince[i] * dc_count;
 }
 
-fixed_t tmvline1_add_RGBA()
+fixed_t tmvline1_add_rgba()
 {
 	DrawerCommandQueue::QueueCommand<Tmvline1AddRGBACommand>();
 	return dc_texturefrac + dc_count * dc_iscale;
 }
 
-void tmvline4_add_RGBA()
+void tmvline4_add_rgba()
 {
 	DrawerCommandQueue::QueueCommand<Tmvline4AddRGBACommand>();
 	for (int i = 0; i < 4; i++)
 		vplce[i] += vince[i] * dc_count;
 }
 
-fixed_t tmvline1_addclamp_RGBA()
+fixed_t tmvline1_addclamp_rgba()
 {
 	DrawerCommandQueue::QueueCommand<Tmvline1AddClampRGBACommand>();
 	return dc_texturefrac + dc_count * dc_iscale;
 }
 
-void tmvline4_addclamp_RGBA()
+void tmvline4_addclamp_rgba()
 {
 	DrawerCommandQueue::QueueCommand<Tmvline4AddClampRGBACommand>();
 	for (int i = 0; i < 4; i++)
 		vplce[i] += vince[i] * dc_count;
 }
 
-fixed_t tmvline1_subclamp_RGBA()
+fixed_t tmvline1_subclamp_rgba()
 {
 	DrawerCommandQueue::QueueCommand<Tmvline1SubClampRGBACommand>();
 	return dc_texturefrac + dc_count * dc_iscale;
 }
 
-void tmvline4_subclamp_RGBA()
+void tmvline4_subclamp_rgba()
 {
 	DrawerCommandQueue::QueueCommand<Tmvline4SubClampRGBACommand>();
 	for (int i = 0; i < 4; i++)
 		vplce[i] += vince[i] * dc_count;
 }
 
-fixed_t tmvline1_revsubclamp_RGBA()
+fixed_t tmvline1_revsubclamp_rgba()
 {
 	DrawerCommandQueue::QueueCommand<Tmvline1RevSubClampRGBACommand>();
 	return dc_texturefrac + dc_count * dc_iscale;
 }
 
-void tmvline4_revsubclamp_RGBA()
+void tmvline4_revsubclamp_rgba()
 {
 	DrawerCommandQueue::QueueCommand<Tmvline4RevSubClampRGBACommand>();
 	for (int i = 0; i < 4; i++)
 		vplce[i] += vince[i] * dc_count;
 }
 
-void R_DrawFogBoundarySection_RGBA(int y, int y2, int x1)
+void R_DrawFogBoundarySection_rgba(int y, int y2, int x1)
 {
 	for (; y < y2; ++y)
 	{
@@ -3873,7 +3873,7 @@ void R_DrawFogBoundarySection_RGBA(int y, int y2, int x1)
 	}
 }
 
-void R_DrawFogBoundary_RGBA(int x1, int x2, short *uclip, short *dclip)
+void R_DrawFogBoundary_rgba(int x1, int x2, short *uclip, short *dclip)
 {
 	// To do: we do not need to create new spans when using rgba output - instead we should calculate light on a per pixel basis
 
@@ -3913,7 +3913,7 @@ void R_DrawFogBoundary_RGBA(int x1, int x2, short *uclip, short *dclip)
 			if (t2 < b2 && rcolormap != 0)
 			{ // Colormap 0 is always the identity map, so rendering it is
 			  // just a waste of time.
-				R_DrawFogBoundarySection_RGBA(t2, b2, xr);
+				R_DrawFogBoundarySection_rgba(t2, b2, xr);
 			}
 			if (t1 < t2) t2 = t1;
 			if (b1 > b2) b2 = b1;
@@ -3965,6 +3965,6 @@ void R_DrawFogBoundary_RGBA(int x1, int x2, short *uclip, short *dclip)
 	}
 	if (t2 < b2 && rcolormap != 0)
 	{
-		R_DrawFogBoundarySection_RGBA(t2, b2, x1);
+		R_DrawFogBoundarySection_rgba(t2, b2, x1);
 	}
 }

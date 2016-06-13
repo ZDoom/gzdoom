@@ -1629,171 +1629,171 @@ public:
 /////////////////////////////////////////////////////////////////////////////
 
 // Copies one span at hx to the screen at sx.
-void rt_copy1col_RGBA (int hx, int sx, int yl, int yh)
+void rt_copy1col_rgba (int hx, int sx, int yl, int yh)
 {
 	DrawerCommandQueue::QueueCommand<RtCopy1colRGBACommand>(hx, sx, yl, yh);
 }
 
 // Copies all four spans to the screen starting at sx.
-void rt_copy4cols_RGBA (int sx, int yl, int yh)
+void rt_copy4cols_rgba (int sx, int yl, int yh)
 {
 	// To do: we could do this with SSE using __m128i
-	rt_copy1col_RGBA(0, sx, yl, yh);
-	rt_copy1col_RGBA(1, sx + 1, yl, yh);
-	rt_copy1col_RGBA(2, sx + 2, yl, yh);
-	rt_copy1col_RGBA(3, sx + 3, yl, yh);
+	rt_copy1col_rgba(0, sx, yl, yh);
+	rt_copy1col_rgba(1, sx + 1, yl, yh);
+	rt_copy1col_rgba(2, sx + 2, yl, yh);
+	rt_copy1col_rgba(3, sx + 3, yl, yh);
 }
 
 // Maps one span at hx to the screen at sx.
-void rt_map1col_RGBA (int hx, int sx, int yl, int yh)
+void rt_map1col_rgba (int hx, int sx, int yl, int yh)
 {
 	DrawerCommandQueue::QueueCommand<RtMap1colRGBACommand>(hx, sx, yl, yh);
 }
 
 // Maps all four spans to the screen starting at sx.
-void rt_map4cols_RGBA (int sx, int yl, int yh)
+void rt_map4cols_rgba (int sx, int yl, int yh)
 {
 	DrawerCommandQueue::QueueCommand<RtMap4colsRGBACommand>(sx, yl, yh);
 }
 
-void rt_Translate1col_RGBA(const BYTE *translation, int hx, int yl, int yh)
+void rt_Translate1col_rgba(const BYTE *translation, int hx, int yl, int yh)
 {
 	DrawerCommandQueue::QueueCommand<RtTranslate1colRGBACommand>(translation, hx, yl, yh);
 }
 
-void rt_Translate4cols_RGBA(const BYTE *translation, int yl, int yh)
+void rt_Translate4cols_rgba(const BYTE *translation, int yl, int yh)
 {
 	DrawerCommandQueue::QueueCommand<RtTranslate4colsRGBACommand>(translation, yl, yh);
 }
 
 // Translates one span at hx to the screen at sx.
-void rt_tlate1col_RGBA (int hx, int sx, int yl, int yh)
+void rt_tlate1col_rgba (int hx, int sx, int yl, int yh)
 {
-	rt_Translate1col_RGBA(dc_translation, hx, yl, yh);
+	rt_Translate1col_rgba(dc_translation, hx, yl, yh);
 	rt_map1col(hx, sx, yl, yh);
 }
 
 // Translates all four spans to the screen starting at sx.
-void rt_tlate4cols_RGBA (int sx, int yl, int yh)
+void rt_tlate4cols_rgba (int sx, int yl, int yh)
 {
-	rt_Translate4cols_RGBA(dc_translation, yl, yh);
+	rt_Translate4cols_rgba(dc_translation, yl, yh);
 	rt_map4cols(sx, yl, yh);
 }
 
 // Adds one span at hx to the screen at sx without clamping.
-void rt_add1col_RGBA (int hx, int sx, int yl, int yh)
+void rt_add1col_rgba (int hx, int sx, int yl, int yh)
 {
 	DrawerCommandQueue::QueueCommand<RtAdd1colRGBACommand>(hx, sx, yl, yh);
 }
 
 // Adds all four spans to the screen starting at sx without clamping.
-void rt_add4cols_RGBA (int sx, int yl, int yh)
+void rt_add4cols_rgba (int sx, int yl, int yh)
 {
 	DrawerCommandQueue::QueueCommand<RtAdd4colsRGBACommand>(sx, yl, yh);
 }
 
 // Translates and adds one span at hx to the screen at sx without clamping.
-void rt_tlateadd1col_RGBA (int hx, int sx, int yl, int yh)
+void rt_tlateadd1col_rgba (int hx, int sx, int yl, int yh)
 {
-	rt_Translate1col_RGBA(dc_translation, hx, yl, yh);
+	rt_Translate1col_rgba(dc_translation, hx, yl, yh);
 	rt_add1col(hx, sx, yl, yh);
 }
 
 // Translates and adds all four spans to the screen starting at sx without clamping.
-void rt_tlateadd4cols_RGBA(int sx, int yl, int yh)
+void rt_tlateadd4cols_rgba(int sx, int yl, int yh)
 {
-	rt_Translate4cols_RGBA(dc_translation, yl, yh);
+	rt_Translate4cols_rgba(dc_translation, yl, yh);
 	rt_add4cols(sx, yl, yh);
 }
 
 // Shades one span at hx to the screen at sx.
-void rt_shaded1col_RGBA (int hx, int sx, int yl, int yh)
+void rt_shaded1col_rgba (int hx, int sx, int yl, int yh)
 {
 	DrawerCommandQueue::QueueCommand<RtShaded1colRGBACommand>(hx, sx, yl, yh);
 }
 
 // Shades all four spans to the screen starting at sx.
-void rt_shaded4cols_RGBA (int sx, int yl, int yh)
+void rt_shaded4cols_rgba (int sx, int yl, int yh)
 {
 	DrawerCommandQueue::QueueCommand<RtShaded4colsRGBACommand>(sx, yl, yh);
 }
 
 // Adds one span at hx to the screen at sx with clamping.
-void rt_addclamp1col_RGBA (int hx, int sx, int yl, int yh)
+void rt_addclamp1col_rgba (int hx, int sx, int yl, int yh)
 {
 	DrawerCommandQueue::QueueCommand<RtAddClamp1colRGBACommand>(hx, sx, yl, yh);
 }
 
 // Adds all four spans to the screen starting at sx with clamping.
-void rt_addclamp4cols_RGBA (int sx, int yl, int yh)
+void rt_addclamp4cols_rgba (int sx, int yl, int yh)
 {
 	DrawerCommandQueue::QueueCommand<RtAddClamp4colsRGBACommand>(sx, yl, yh);
 }
 
 // Translates and adds one span at hx to the screen at sx with clamping.
-void rt_tlateaddclamp1col_RGBA (int hx, int sx, int yl, int yh)
+void rt_tlateaddclamp1col_rgba (int hx, int sx, int yl, int yh)
 {
-	rt_Translate1col_RGBA(dc_translation, hx, yl, yh);
-	rt_addclamp1col_RGBA(hx, sx, yl, yh);
+	rt_Translate1col_rgba(dc_translation, hx, yl, yh);
+	rt_addclamp1col_rgba(hx, sx, yl, yh);
 }
 
 // Translates and adds all four spans to the screen starting at sx with clamping.
-void rt_tlateaddclamp4cols_RGBA (int sx, int yl, int yh)
+void rt_tlateaddclamp4cols_rgba (int sx, int yl, int yh)
 {
-	rt_Translate4cols_RGBA(dc_translation, yl, yh);
+	rt_Translate4cols_rgba(dc_translation, yl, yh);
 	rt_addclamp4cols(sx, yl, yh);
 }
 
 // Subtracts one span at hx to the screen at sx with clamping.
-void rt_subclamp1col_RGBA (int hx, int sx, int yl, int yh)
+void rt_subclamp1col_rgba (int hx, int sx, int yl, int yh)
 {
 	DrawerCommandQueue::QueueCommand<RtSubClamp1colRGBACommand>(hx, sx, yl, yh);
 }
 
 // Subtracts all four spans to the screen starting at sx with clamping.
-void rt_subclamp4cols_RGBA (int sx, int yl, int yh)
+void rt_subclamp4cols_rgba (int sx, int yl, int yh)
 {
 	DrawerCommandQueue::QueueCommand<RtSubClamp4colsRGBACommand>(sx, yl, yh);
 }
 
 // Translates and subtracts one span at hx to the screen at sx with clamping.
-void rt_tlatesubclamp1col_RGBA (int hx, int sx, int yl, int yh)
+void rt_tlatesubclamp1col_rgba (int hx, int sx, int yl, int yh)
 {
-	rt_Translate1col_RGBA(dc_translation, hx, yl, yh);
-	rt_subclamp1col_RGBA(hx, sx, yl, yh);
+	rt_Translate1col_rgba(dc_translation, hx, yl, yh);
+	rt_subclamp1col_rgba(hx, sx, yl, yh);
 }
 
 // Translates and subtracts all four spans to the screen starting at sx with clamping.
-void rt_tlatesubclamp4cols_RGBA (int sx, int yl, int yh)
+void rt_tlatesubclamp4cols_rgba (int sx, int yl, int yh)
 {
-	rt_Translate4cols_RGBA(dc_translation, yl, yh);
-	rt_subclamp4cols_RGBA(sx, yl, yh);
+	rt_Translate4cols_rgba(dc_translation, yl, yh);
+	rt_subclamp4cols_rgba(sx, yl, yh);
 }
 
 // Subtracts one span at hx from the screen at sx with clamping.
-void rt_revsubclamp1col_RGBA (int hx, int sx, int yl, int yh)
+void rt_revsubclamp1col_rgba (int hx, int sx, int yl, int yh)
 {
 	DrawerCommandQueue::QueueCommand<RtRevSubClamp1colRGBACommand>(hx, sx, yl, yh);
 }
 
 // Subtracts all four spans from the screen starting at sx with clamping.
-void rt_revsubclamp4cols_RGBA (int sx, int yl, int yh)
+void rt_revsubclamp4cols_rgba (int sx, int yl, int yh)
 {
 	DrawerCommandQueue::QueueCommand<RtRevSubClamp4colsRGBACommand>(sx, yl, yh);
 }
 
 // Translates and subtracts one span at hx from the screen at sx with clamping.
-void rt_tlaterevsubclamp1col_RGBA (int hx, int sx, int yl, int yh)
+void rt_tlaterevsubclamp1col_rgba (int hx, int sx, int yl, int yh)
 {
-	rt_Translate1col_RGBA(dc_translation, hx, yl, yh);
-	rt_revsubclamp1col_RGBA(hx, sx, yl, yh);
+	rt_Translate1col_rgba(dc_translation, hx, yl, yh);
+	rt_revsubclamp1col_rgba(hx, sx, yl, yh);
 }
 
 // Translates and subtracts all four spans from the screen starting at sx with clamping.
-void rt_tlaterevsubclamp4cols_RGBA (int sx, int yl, int yh)
+void rt_tlaterevsubclamp4cols_rgba (int sx, int yl, int yh)
 {
-	rt_Translate4cols_RGBA(dc_translation, yl, yh);
-	rt_revsubclamp4cols_RGBA(sx, yl, yh);
+	rt_Translate4cols_rgba(dc_translation, yl, yh);
+	rt_revsubclamp4cols_rgba(sx, yl, yh);
 }
 
 // Before each pass through a rendering loop that uses these routines,
@@ -1816,7 +1816,7 @@ void rt_span_coverage_rgba(int x, int start, int stop)
 
 // Stretches a column into a temporary buffer which is later
 // drawn to the screen along with up to three other columns.
-void R_DrawColumnHorizP_RGBA (void)
+void R_DrawColumnHoriz_rgba (void)
 {
 	if (dc_count <= 0)
 		return;
@@ -1831,7 +1831,7 @@ void R_DrawColumnHorizP_RGBA (void)
 }
 
 // [RH] Just fills a column with a given color
-void R_FillColumnHorizP_RGBA (void)
+void R_FillColumnHoriz_rgba (void)
 {
 	if (dc_count <= 0)
 		return;

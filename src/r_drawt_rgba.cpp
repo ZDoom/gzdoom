@@ -588,6 +588,8 @@ class RtAdd4colsRGBACommand : public DrawerCommand
 	fixed_t dc_light;
 	ShadeConstants dc_shade_constants;
 	BYTE *dc_colormap;
+	fixed_t dc_srcalpha;
+	fixed_t dc_destalpha;
 
 public:
 	RtAdd4colsRGBACommand(int sx, int yl, int yh)
@@ -601,6 +603,8 @@ public:
 		dc_light = ::dc_light;
 		dc_shade_constants = ::dc_shade_constants;
 		dc_colormap = ::dc_colormap;
+		dc_srcalpha = ::dc_srcalpha;
+		dc_destalpha = ::dc_destalpha;
 	}
 
 #ifdef NO_SSE
@@ -722,10 +726,10 @@ public:
 			__m128i mbg_alpha = _mm_set_epi16(256, bg_alpha, bg_alpha, bg_alpha, 256, bg_alpha, bg_alpha, bg_alpha);
 
 			do {
-				uint32_t p0 = source[0];
-				uint32_t p1 = source[1];
-				uint32_t p2 = source[2];
-				uint32_t p3 = source[3];
+				uint32_t p0 = colormap[source[0]];
+				uint32_t p1 = colormap[source[1]];
+				uint32_t p2 = colormap[source[2]];
+				uint32_t p3 = colormap[source[3]];
 
 				// shade_pal_index:
 				__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);

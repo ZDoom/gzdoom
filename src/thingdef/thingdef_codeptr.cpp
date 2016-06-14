@@ -1996,6 +1996,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RailAttack)
 	PARAM_CLASS_OPT	(spawnclass, AActor){ spawnclass = NULL; }
 	PARAM_FLOAT_OPT	(spawnofs_z)		{ spawnofs_z = 0; }
 	PARAM_INT_OPT	(SpiralOffset)		{ SpiralOffset = 270; }
+	PARAM_INT_OPT	(limit)				{ limit = 0; }
 	
 	if (range == 0) range = 8192;
 	if (sparsity == 0) sparsity=1.0;
@@ -2036,6 +2037,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RailAttack)
 	p.drift = driftspeed;
 	p.spawnclass = spawnclass;
 	p.SpiralOffset = SpiralOffset;
+	p.limit = limit;
 	P_RailAttack(&p);
 	return 0;
 }
@@ -2073,6 +2075,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 	PARAM_CLASS_OPT	(spawnclass, AActor){ spawnclass = NULL; }
 	PARAM_FLOAT_OPT	(spawnofs_z)		{ spawnofs_z = 0; }
 	PARAM_INT_OPT	(SpiralOffset)		{ SpiralOffset = 270; }
+	PARAM_INT_OPT	(limit)				{ limit = 0; }
 
 	if (range == 0) range = 8192.;
 	if (sparsity == 0) sparsity = 1;
@@ -2155,6 +2158,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_CustomRailgun)
 	p.drift = driftspeed;
 	p.spawnclass = spawnclass;
 	p.SpiralOffset = SpiralOffset;
+	p.limit = 0;
 	P_RailAttack(&p);
 
 	self->SetXYZ(savedpos);

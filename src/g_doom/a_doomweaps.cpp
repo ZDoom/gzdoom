@@ -653,7 +653,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BFGSpray)
 	PARAM_ANGLE_OPT	(vrange)				{ vrange = 0.; }
 	PARAM_INT_OPT	(defdamage)				{ defdamage = 0; }
 	PARAM_INT_OPT	(flags)					{ flags = 0; }
-	PARAM_FLOAT_OPT	(damrad)				{ damrad = 0; }
 
 	int 				i;
 	int 				j;
@@ -661,7 +660,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BFGSpray)
 	DAngle 				an;
 	FTranslatedLineTarget t;
 	AActor				*originator;
-	double 				origdist;
 
 	if (spraytype == NULL) spraytype = PClass::FindActor("BFGExtra");
 	if (numrays <= 0) numrays = 40;
@@ -673,37 +671,6 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BFGSpray)
 	// [RH] Don't crash if no target
 	if (!self->target)
 		return 0;
-
-	// [XA] If damrad is set, check the originator and hurt them if too close.
-	//      adapted from SMMU's BFG11K code with fraggle's blessing.
-	origdist = self->Distance2D(self->target);
-	if (origdist < damrad)
-	{
-		// [XA] Decrease damage with distance. This uses SMMU's formula
-		//      and is included mainly for emulation's sake. For more
-		//      customization, seek out A_Explode rather than this.
-		damage = 0;
-		for (j = 0; j < (damrad / 2) - (origdist / 2); ++j)
-			damage += (pr_bfgspray() & 7) + 1;
-
-		// [XA] flash n' damage -- some slight copypasta here, but it works.
-		AActor *spray = Spawn(spraytype, self->target->PosPlusZ(self->target->Height / 4), ALLOW_REPLACE);
-
-		int dmgFlags = 0;
-		FName dmgType = NAME_BFGSplash;
-
-		if (spray != NULL)
-		{
-			// [XA] skip the species check since we've already decided to damage oneself.
-			if (spray->flags5 & MF5_PUFFGETSOWNER) spray->target = self->target;
-			if (spray->flags3 & MF3_FOILINVUL) dmgFlags |= DMG_FOILINVUL;
-			if (spray->flags7 & MF7_FOILBUDDHA) dmgFlags |= DMG_FOILBUDDHA;
-			dmgType = spray->DamageType;
-		}
-
-		int selfdam = P_DamageMobj(self->target, self, self->target, damage, dmgType, dmgFlags);
-		P_TraceBleed(selfdam > 0 ? selfdam : damage, self->target, self);
-	}
 
 	// [XA] Set the originator of the rays to the projectile (self) if
 	//      the new flag is set, else set it to the player (self->target)

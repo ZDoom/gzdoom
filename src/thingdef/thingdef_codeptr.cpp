@@ -95,6 +95,7 @@ static FRandom pr_spawnitemex ("SpawnItemEx");
 static FRandom pr_burst ("Burst");
 static FRandom pr_monsterrefire ("MonsterRefire");
 static FRandom pr_teleport("A_Teleport");
+static FRandom pr_bfgselfdamage("BFGSelfDamage");
 
 //==========================================================================
 //
@@ -1331,6 +1332,72 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusThrust)
 	{
 		self->target->flags2 |= MF2_NODMGTHRUST;
 	}
+	return 0;
+}
+
+//==========================================================================
+//
+// A_RadiusDamageSelf
+//
+//==========================================================================
+enum
+{
+	RDSF_BFGDAMAGE = 1,
+};
+
+DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_RadiusDamageSelf)
+{
+	PARAM_ACTION_PROLOGUE;
+	PARAM_INT_OPT(damage) { damage = 128; }
+	PARAM_FLOAT_OPT(distance) { distance = 128; }
+	PARAM_INT_OPT(flags) { flags = 0; }
+	PARAM_CLASS_OPT(flashtype, AActor) { flashtype = NULL; }
+
+	int 				i;
+	int 				damageSteps;
+	int 				actualDamage;
+	double 				actualDistance;
+
+	actualDistance = self->Distance3D(self->target);
+	if (actualDistance < distance)
+	{
+		// [XA] Decrease damage with distance. Use the BFG damage
+		//      calculation formula if the flag is set (essentially
+		//      a generalization of SMMU's BFG11K behavior, used
+		//      with fraggle's blessing.)
+		damageSteps = damage - int(damage * actualDistance / distance);
+		if (flags & RDSF_BFGDAMAGE)
+		{
+			actualDamage = 0;
+			for (i = 0; i < damageSteps; ++i)
+				actualDamage += (pr_bfgselfdamage() & 7) + 1;
+		}
+		else
+		{
+			actualDamage = damageSteps;
+		}
+
+		// optional "flash" effect -- spawn an actor on
+		// the player to indicate bad things happened.
+		AActor *flash = NULL;
+		if(flashtype != NULL)
+			flash = Spawn(flashtype, self->target->PosPlusZ(self->target->Height / 4), ALLOW_REPLACE);
+
+		int dmgFlags = 0;
+		FName dmgType = NAME_BFGSplash;
+
+		if (flash != NULL)
+		{
+			if (flash->flags5 & MF5_PUFFGETSOWNER) flash->target = self->target;
+			if (flash->flags3 & MF3_FOILINVUL) dmgFlags |= DMG_FOILINVUL;
+			if (flash->flags7 & MF7_FOILBUDDHA) dmgFlags |= DMG_FOILBUDDHA;
+			dmgType = flash->DamageType;
+		}
+
+		int newdam = P_DamageMobj(self->target, self, self->target, actualDamage, dmgType, dmgFlags);
+		P_TraceBleed(newdam > 0 ? newdam : actualDamage, self->target, self);
+	}
+
 	return 0;
 }
 

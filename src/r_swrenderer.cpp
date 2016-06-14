@@ -96,7 +96,7 @@ void FSoftwareRenderer::PrecacheTexture(FTexture *tex, int cache)
 		else if (cache != 0)
 		{
 			if (r_swtruecolor)
-				tex->GetPixels();
+				tex->GetPixelsBgra();
 			else
 				tex->GetPixels ();
 		}

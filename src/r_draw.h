@@ -32,7 +32,20 @@ extern "C" int 	fuzzpos;
 extern "C" int	fuzzviewheight;
 
 struct FColormap;
-struct ShadeConstants;
+
+struct ShadeConstants
+{
+	uint16_t light_alpha;
+	uint16_t light_red;
+	uint16_t light_green;
+	uint16_t light_blue;
+	uint16_t fade_alpha;
+	uint16_t fade_red;
+	uint16_t fade_green;
+	uint16_t fade_blue;
+	uint16_t desaturate;
+	bool simple_shade;
+};
 
 extern "C" int			ylookup[MAXHEIGHT];
 
@@ -58,7 +71,7 @@ extern "C" fixed_t		dc_destalpha;
 // first pixel in a column
 extern "C" const BYTE*	dc_source;
 
-extern "C" BYTE*		dc_dest, *dc_destorg;
+extern "C" BYTE			*dc_dest, *dc_destorg;
 extern "C" int			dc_count;
 
 extern "C" DWORD		vplce[4];
@@ -68,7 +81,7 @@ extern "C" fixed_t		palookuplight[4];
 extern "C" const BYTE*	bufplce[4];
 
 // [RH] Temporary buffer for column drawing
-extern "C" BYTE *dc_temp;
+extern "C" BYTE			*dc_temp;
 extern "C" unsigned int	dc_tspans[4][MAXHEIGHT];
 extern "C" unsigned int	*dc_ctspan[4];
 extern "C" unsigned int	horizspans[4];

@@ -2612,8 +2612,10 @@ static void R_DrawMaskedSegsBehindParticle (const vissprite_t *vis)
 
 void R_DrawParticle_C (vissprite_t *vis)
 {
+	DWORD *bg2rgb;
 	int spacing;
 	BYTE *dest;
+	DWORD fg;
 	BYTE color = vis->Style.BaseColormap->Maps[(vis->Style.ColormapNum << COLORMAPSHIFT) + vis->startfrac];
 	int yl = vis->y1;
 	int ycount = vis->y2 - yl + 1;
@@ -2621,9 +2623,6 @@ void R_DrawParticle_C (vissprite_t *vis)
 	int countbase = vis->x2 - x1;
 
 	R_DrawMaskedSegsBehindParticle (vis);
-
-	DWORD *bg2rgb;
-	DWORD fg;
 
 	// vis->renderflags holds translucency level (0-255)
 	{

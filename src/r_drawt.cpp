@@ -340,13 +340,13 @@ void rt_add1col_c (int hx, int sx, int yl, int yh)
 		return;
 	count++;
 
+	DWORD *fg2rgb = dc_srcblend;
+	DWORD *bg2rgb = dc_destblend;
 	dest = ylookup[yl] + sx + dc_destorg;
 	source = &dc_temp[yl*4 + hx];
 	pitch = dc_pitch;
 	colormap = dc_colormap;
 
-	DWORD *fg2rgb = dc_srcblend;
-	DWORD *bg2rgb = dc_destblend;
 	do {
 		DWORD fg = colormap[*source];
 		DWORD bg = *dest;
@@ -374,13 +374,12 @@ void rt_add4cols_c (int sx, int yl, int yh)
 		return;
 	count++;
 
+	DWORD *fg2rgb = dc_srcblend;
+	DWORD *bg2rgb = dc_destblend;
 	dest = ylookup[yl] + sx + dc_destorg;
 	source = &dc_temp[yl*4];
 	pitch = dc_pitch;
 	colormap = dc_colormap;
-
-	DWORD *fg2rgb = dc_srcblend;
-	DWORD *bg2rgb = dc_destblend;
 
 	do {
 		DWORD fg = colormap[source[0]];
@@ -434,6 +433,7 @@ void rt_tlateadd4cols_c (int sx, int yl, int yh)
 // Shades one span at hx to the screen at sx.
 void rt_shaded1col_c (int hx, int sx, int yl, int yh)
 {
+	DWORD *fgstart;
 	BYTE *colormap;
 	BYTE *source;
 	BYTE *dest;
@@ -445,13 +445,11 @@ void rt_shaded1col_c (int hx, int sx, int yl, int yh)
 		return;
 	count++;
 
+	fgstart = &Col2RGB8[0][dc_color];
 	colormap = dc_colormap;
 	dest = ylookup[yl] + sx + dc_destorg;
 	source = &dc_temp[yl*4 + hx];
 	pitch = dc_pitch;
-
-	DWORD *fgstart;
-	fgstart = &Col2RGB8[0][dc_color];
 
 	do {
 		DWORD val = colormap[*source];
@@ -466,6 +464,7 @@ void rt_shaded1col_c (int hx, int sx, int yl, int yh)
 // Shades all four spans to the screen starting at sx.
 void rt_shaded4cols_c (int sx, int yl, int yh)
 {
+	DWORD *fgstart;
 	BYTE *colormap;
 	BYTE *source;
 	BYTE *dest;
@@ -477,13 +476,11 @@ void rt_shaded4cols_c (int sx, int yl, int yh)
 		return;
 	count++;
 
+	fgstart = &Col2RGB8[0][dc_color];
 	colormap = dc_colormap;
 	dest = ylookup[yl] + sx + dc_destorg;
 	source = &dc_temp[yl*4];
 	pitch = dc_pitch;
-
-	DWORD *fgstart;
-	fgstart = &Col2RGB8[0][dc_color];
 
 	do {
 		DWORD val;
@@ -523,13 +520,12 @@ void rt_addclamp1col_c (int hx, int sx, int yl, int yh)
 		return;
 	count++;
 
+	DWORD *fg2rgb = dc_srcblend;
+	DWORD *bg2rgb = dc_destblend;
 	dest = ylookup[yl] + sx + dc_destorg;
 	source = &dc_temp[yl*4 + hx];
 	pitch = dc_pitch;
 	colormap = dc_colormap;
-
-	DWORD *fg2rgb = dc_srcblend;
-	DWORD *bg2rgb = dc_destblend;
 
 	do {
 		DWORD a = fg2rgb[colormap[*source]] + bg2rgb[*dest];
@@ -639,13 +635,13 @@ void rt_subclamp1col_c (int hx, int sx, int yl, int yh)
 		return;
 	count++;
 
+	DWORD *fg2rgb = dc_srcblend;
+	DWORD *bg2rgb = dc_destblend;
 	dest = ylookup[yl] + sx + dc_destorg;
 	source = &dc_temp[yl*4 + hx];
 	pitch = dc_pitch;
 	colormap = dc_colormap;
 
-	DWORD *fg2rgb = dc_srcblend;
-	DWORD *bg2rgb = dc_destblend;
 	do {
 		DWORD a = (fg2rgb[colormap[*source]] | 0x40100400) - bg2rgb[*dest];
 		DWORD b = a;
@@ -674,13 +670,13 @@ void rt_subclamp4cols_c (int sx, int yl, int yh)
 		return;
 	count++;
 
+	DWORD *fg2rgb = dc_srcblend;
+	DWORD *bg2rgb = dc_destblend;
 	dest = ylookup[yl] + sx + dc_destorg;
 	source = &dc_temp[yl*4];
 	pitch = dc_pitch;
 	colormap = dc_colormap;
 
-	DWORD *fg2rgb = dc_srcblend;
-	DWORD *bg2rgb = dc_destblend;
 	do {
 		DWORD a = (fg2rgb[colormap[source[0]]] | 0x40100400) - bg2rgb[dest[0]];
 		DWORD b = a;

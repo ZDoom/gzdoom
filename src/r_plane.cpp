@@ -58,6 +58,7 @@
 #include "r_3dfloors.h"
 #include "v_palette.h"
 #include "r_data/colormaps.h"
+#include "r_draw_rgba.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable:4244)
@@ -506,7 +507,7 @@ void R_MapTiltedPlane_rgba (int y, int x1)
 
 void R_MapColoredPlane_C (int y, int x1)
 {
-	memset (ylookup[y] + x1 + dc_destorg, ds_color, (spanend[y] - x1 + 1));
+	memset (ylookup[y] + x1 + dc_destorg, ds_color, spanend[y] - x1 + 1);
 }
 
 void R_MapColoredPlane_rgba(int y, int x1)
@@ -1710,7 +1711,7 @@ void R_DrawNormalPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t 
 //
 //==========================================================================
 
-void R_DrawTiltedPlane(visplane_t *pl, double _xscale, double _yscale, fixed_t alpha, bool additive, bool masked)
+void R_DrawTiltedPlane (visplane_t *pl, double _xscale, double _yscale, fixed_t alpha, bool additive, bool masked)
 {
 	static const float ifloatpow2[16] =
 	{
@@ -1745,7 +1746,7 @@ void R_DrawTiltedPlane(visplane_t *pl, double _xscale, double _yscale, fixed_t a
 	// p is the texture origin in view space
 	// Don't add in the offsets at this stage, because doing so can result in
 	// errors if the flat is rotated.
-	ang = M_PI * 3 / 2 - ViewAngle.Radians();
+	ang = M_PI*3/2 - ViewAngle.Radians();
 	cosine = cos(ang), sine = sin(ang);
 	p[0] = ViewPos.X * cosine - ViewPos.Y * sine;
 	p[2] = ViewPos.X * sine + ViewPos.Y * cosine;
@@ -1756,25 +1757,25 @@ void R_DrawTiltedPlane(visplane_t *pl, double _xscale, double _yscale, fixed_t a
 	cosine = cos(ang), sine = sin(ang);
 	m[0] = yscale * cosine;
 	m[2] = yscale * sine;
-	//	m[1] = pl->height.ZatPointF (0, iyscale) - pl->height.ZatPointF (0,0));
-	//	VectorScale2 (m, 64.f/VectorLength(m));
+//	m[1] = pl->height.ZatPointF (0, iyscale) - pl->height.ZatPointF (0,0));
+//	VectorScale2 (m, 64.f/VectorLength(m));
 
-		// n is the u direction vector in view space
+	// n is the u direction vector in view space
 #if 0
 	//let's use the sin/cosine we already know instead of computing new ones
-	ang += M_PI / 2
-		n[0] = -xscale * cos(ang);
+	ang += M_PI/2
+	n[0] = -xscale * cos(ang);
 	n[2] = -xscale * sin(ang);
 #else
 	n[0] = xscale * sine;
 	n[2] = -xscale * cosine;
 #endif
-	//	n[1] = pl->height.ZatPointF (ixscale, 0) - pl->height.ZatPointF (0,0));
-	//	VectorScale2 (n, 64.f/VectorLength(n));
+//	n[1] = pl->height.ZatPointF (ixscale, 0) - pl->height.ZatPointF (0,0));
+//	VectorScale2 (n, 64.f/VectorLength(n));
 
-		// This code keeps the texture coordinates constant across the x,y plane no matter
-		// how much you slope the surface. Use the commented-out code above instead to keep
-		// the textures a constant size across the surface's plane instead.
+	// This code keeps the texture coordinates constant across the x,y plane no matter
+	// how much you slope the surface. Use the commented-out code above instead to keep
+	// the textures a constant size across the surface's plane instead.
 	cosine = cos(planeang), sine = sin(planeang);
 	m[1] = pl->height.ZatPoint(ViewPos.X + yscale * sine, ViewPos.Y + yscale * cosine) - zeroheight;
 	n[1] = pl->height.ZatPoint(ViewPos.X - xscale * cosine, ViewPos.Y + xscale * sine) - zeroheight;
@@ -1807,7 +1808,6 @@ void R_DrawTiltedPlane(visplane_t *pl, double _xscale, double _yscale, fixed_t a
 	if (pl->height.fC() > 0)
 		planelightfloat = -planelightfloat;
 
-	ds_light = 0;
 	if (fixedlightlev >= 0)
 	{
 		R_SetDSColorMapLight(basecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));

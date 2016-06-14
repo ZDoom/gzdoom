@@ -63,7 +63,7 @@ extern	int		ST_Y;
 BYTE*			viewimage;
 extern "C" {
 int				ylookup[MAXHEIGHT];
-BYTE*			dc_destorg;
+BYTE			*dc_destorg;
 }
 int 			scaledviewwidth;
 
@@ -276,7 +276,7 @@ void R_DrawColumnP_C (void)
 		{
 			// Re-map color indices from wall texture column
 			//	using a lighting/special effects LUT.
-			*dest = colormap[source[frac >> FRACBITS]];
+			*dest = colormap[source[frac>>FRACBITS]];
 
 			dest += pitch;
 			frac += fracstep;
@@ -321,13 +321,12 @@ void R_FillAddColumn_C (void)
 		return;
 
 	dest = dc_dest;
-	int pitch = dc_pitch;
-
 	DWORD *bg2rgb;
 	DWORD fg;
 
 	bg2rgb = dc_destblend;
 	fg = dc_srccolor;
+	int pitch = dc_pitch;
 
 	do
 	{
@@ -348,13 +347,12 @@ void R_FillAddClampColumn_C (void)
 		return;
 
 	dest = dc_dest;
-	int pitch = dc_pitch;
-
 	DWORD *bg2rgb;
 	DWORD fg;
 
 	bg2rgb = dc_destblend;
 	fg = dc_srccolor;
+	int pitch = dc_pitch;
 
 	do
 	{
@@ -381,13 +379,12 @@ void R_FillSubClampColumn_C (void)
 		return;
 
 	dest = dc_dest;
-	int pitch = dc_pitch;
-
 	DWORD *bg2rgb;
 	DWORD fg;
 
 	bg2rgb = dc_destblend;
 	fg = dc_srccolor | 0x40100400;
+	int pitch = dc_pitch;
 
 	do
 	{
@@ -413,13 +410,12 @@ void R_FillRevSubClampColumn_C (void)
 		return;
 
 	dest = dc_dest;
-	int pitch = dc_pitch;
-
 	DWORD *bg2rgb;
 	DWORD fg;
 
 	bg2rgb = dc_destblend;
 	fg = dc_srccolor;
+	int pitch = dc_pitch;
 
 	do
 	{
@@ -672,13 +668,14 @@ void R_DrawTranslatedColumnP_C (void)
 		{
 			*dest = colormap[translation[source[frac>>FRACBITS]]];
 			dest += pitch;
+
 			frac += fracstep;
 		} while (--count);
 	}
 }
 
 // Draw a column that is both translated and translucent
-void R_DrawTlatedAddColumnP_C()
+void R_DrawTlatedAddColumnP_C (void)
 {
 	int count;
 	BYTE *dest;
@@ -772,15 +769,15 @@ void R_DrawAddClampColumnP_C ()
 	frac = dc_texturefrac;
 
 	{
-		const BYTE *source = dc_source;
 		BYTE *colormap = dc_colormap;
+		const BYTE *source = dc_source;
 		int pitch = dc_pitch;
 		DWORD *fg2rgb = dc_srcblend;
 		DWORD *bg2rgb = dc_destblend;
 
 		do
 		{
-			DWORD a = fg2rgb[colormap[source[frac >> FRACBITS]]] + bg2rgb[*dest];
+			DWORD a = fg2rgb[colormap[source[frac>>FRACBITS]]] + bg2rgb[*dest];
 			DWORD b = a;
 
 			a |= 0x01f07c1f;
@@ -788,7 +785,7 @@ void R_DrawAddClampColumnP_C ()
 			a &= 0x3fffffff;
 			b = b - (b >> 5);
 			a |= b;
-			*dest = RGB32k.All[a & (a >> 15)];
+			*dest = RGB32k.All[a & (a>>15)];
 			dest += pitch;
 			frac += fracstep;
 		} while (--count);
@@ -1190,9 +1187,6 @@ void R_DrawSpanP_C (void)
 		} while (--count);
 	}
 }
-#endif
-
-#ifndef X86_ASM
 
 // [RH] Draw a span with holes
 void R_DrawSpanMaskedP_C (void)
@@ -1282,8 +1276,6 @@ void R_DrawSpanTranslucentP_C (void)
 	xstep = ds_xstep;
 	ystep = ds_ystep;
 
-	uint32_t light = calc_light_multiplier(ds_light);
-
 	if (ds_xbits == 6 && ds_ybits == 6)
 	{
 		// 64x64 is the most common case by far, so special case it.
@@ -1333,8 +1325,6 @@ void R_DrawSpanMaskedTranslucentP_C (void)
 	int 				spot;
 	DWORD *fg2rgb = dc_srcblend;
 	DWORD *bg2rgb = dc_destblend;
-
-	uint32_t light = calc_light_multiplier(ds_light);
 
 	xfrac = ds_xfrac;
 	yfrac = ds_yfrac;
@@ -1426,7 +1416,6 @@ void R_DrawSpanAddClampP_C (void)
 		do
 		{
 			spot = ((xfrac>>(32-6-6))&(63*64)) + (yfrac>>(32-6));
-
 			DWORD a = fg2rgb[colormap[source[spot]]] + bg2rgb[*dest];
 			DWORD b = a;
 
@@ -1436,7 +1425,6 @@ void R_DrawSpanAddClampP_C (void)
 			b = b - (b >> 5);
 			a |= b;
 			*dest++ = RGB32k.All[a & (a>>15)];
-
 			xfrac += xstep;
 			yfrac += ystep;
 		} while (--count);
@@ -1449,7 +1437,6 @@ void R_DrawSpanAddClampP_C (void)
 		do
 		{
 			spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-
 			DWORD a = fg2rgb[colormap[source[spot]]] + bg2rgb[*dest];
 			DWORD b = a;
 
@@ -1459,13 +1446,11 @@ void R_DrawSpanAddClampP_C (void)
 			b = b - (b >> 5);
 			a |= b;
 			*dest++ = RGB32k.All[a & (a>>15)];
-
 			xfrac += xstep;
 			yfrac += ystep;
 		} while (--count);
 	}
 }
-
 
 void R_DrawSpanMaskedAddClampP_C (void)
 {
@@ -1480,8 +1465,6 @@ void R_DrawSpanMaskedAddClampP_C (void)
 	int 				spot;
 	DWORD *fg2rgb = dc_srcblend;
 	DWORD *bg2rgb = dc_destblend;
-
-	uint32_t light = calc_light_multiplier(ds_light);
 
 	xfrac = ds_xfrac;
 	yfrac = ds_yfrac;
@@ -1552,7 +1535,7 @@ void R_DrawSpanMaskedAddClampP_C (void)
 // [RH] Just fill a span with a color
 void R_FillSpan_C (void)
 {
-	memset (ylookup[ds_y] + ds_x1 + dc_destorg, ds_color, (ds_x2 - ds_x1 + 1));
+	memset (ylookup[ds_y] + ds_x1 + dc_destorg, ds_color, ds_x2 - ds_x1 + 1);
 }
 
 
@@ -1759,7 +1742,7 @@ DWORD vlinec1 ()
 
 	do
 	{
-		*dest = colormap[source[frac >> bits]];
+		*dest = colormap[source[frac>>bits]];
 		frac += fracstep;
 		dest += pitch;
 	} while (--count);
@@ -1830,9 +1813,7 @@ DWORD mvlinec1 ()
 
 	return frac;
 }
-#endif
 
-#if !defined(X86_ASM)
 void mvlinec4 ()
 {
 	BYTE *dest = dc_dest;
@@ -1843,6 +1824,7 @@ void mvlinec4 ()
 	do
 	{
 		BYTE pix;
+
 		pix = bufplce[0][(place=vplce[0])>>bits]; if(pix) dest[0] = palookupoffse[0][pix]; vplce[0] = place+vince[0];
 		pix = bufplce[1][(place=vplce[1])>>bits]; if(pix) dest[1] = palookupoffse[1][pix]; vplce[1] = place+vince[1];
 		pix = bufplce[2][(place=vplce[2])>>bits]; if(pix) dest[2] = palookupoffse[2][pix]; vplce[2] = place+vince[2];
@@ -1879,7 +1861,6 @@ static void R_DrawFogBoundaryLine (int y, int x)
 	int x2 = spanend[y];
 	BYTE *colormap = dc_colormap;
 	BYTE *dest = ylookup[y] + dc_destorg;
-
 	do
 	{
 		dest[x] = colormap[dest[x]];
@@ -1996,8 +1977,6 @@ fixed_t tmvline1_add_C ()
 	DWORD *fg2rgb = dc_srcblend;
 	DWORD *bg2rgb = dc_destblend;
 
-	uint32_t light = calc_light_multiplier(dc_light);
-
 	do
 	{
 		BYTE pix = source[frac>>bits];
@@ -2023,12 +2002,6 @@ void tmvline4_add_C ()
 
 	DWORD *fg2rgb = dc_srcblend;
 	DWORD *bg2rgb = dc_destblend;
-
-	uint32_t light[4];
-	light[0] = calc_light_multiplier(palookuplight[0]);
-	light[1] = calc_light_multiplier(palookuplight[1]);
-	light[2] = calc_light_multiplier(palookuplight[2]);
-	light[3] = calc_light_multiplier(palookuplight[3]);
 
 	do
 	{
@@ -2061,8 +2034,6 @@ fixed_t tmvline1_addclamp_C ()
 
 	DWORD *fg2rgb = dc_srcblend;
 	DWORD *bg2rgb = dc_destblend;
-
-	uint32_t light = calc_light_multiplier(dc_light);
 
 	do
 	{

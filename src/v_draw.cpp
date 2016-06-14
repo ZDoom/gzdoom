@@ -44,6 +44,7 @@
 #include "r_utility.h"
 #ifndef NO_SWRENDER
 #include "r_draw.h"
+#include "r_draw_rgba.h"
 #include "r_main.h"
 #include "r_things.h"
 #endif

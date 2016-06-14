@@ -78,7 +78,7 @@ bool wipe_initMelt (int ticks)
 	int i, r;
 	
 	// copy start screen to main screen
-	screen->DrawBlock(0, 0, SCREENWIDTH, SCREENHEIGHT, (BYTE *)wipe_scr_start);
+	screen->DrawBlock (0, 0, SCREENWIDTH, SCREENHEIGHT, (BYTE *)wipe_scr_start);
 	
 	// makes this wipe faster (in theory)
 	// to have stuff in column-major format
@@ -271,8 +271,7 @@ bool wipe_doBurn (int ticks)
 	// Draw the screen
 	int xstep, ystep, firex, firey;
 	int x, y;
-	BYTE *to;
-	BYTE *fromold, *fromnew;
+	BYTE *to, *fromold, *fromnew;
 	const int SHIFT = 16;
 
 	xstep = (FIREWIDTH << SHIFT) / SCREENWIDTH;

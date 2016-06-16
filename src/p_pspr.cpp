@@ -321,7 +321,8 @@ void DPSprite::SetState(FState *newstate, bool pending)
 		if (Owner->mo != nullptr)
 		{
 			FState *nextstate;
-			if (newstate->CallAction(Owner->mo, Caller, &nextstate))
+			FStateParamInfo stp = { newstate, STATE_Psprite, ID };
+			if (newstate->CallAction(Owner->mo, Caller, &stp, &nextstate))
 			{
 				// It's possible this call resulted in this very layer being replaced.
 				if (ObjectFlags & OF_EuthanizeMe)

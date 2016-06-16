@@ -152,6 +152,7 @@ enum
 	ATAG_AREGISTER,			// pointer to an address register
 
 	ATAG_STATE,				// pointer to FState
+	ATAG_STATEINFO,			// FState plus some info.
 	ATAG_RNG,				// pointer to FRandom
 };
 
@@ -914,6 +915,7 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 #define PARAM_ANGLE_OPT_AT(p,x)		DAngle x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_FLOAT); x = param[p].f; } else
 #define PARAM_STRING_OPT_AT(p,x)		FString x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_STRING); x = param[p].s(); } else
 #define PARAM_STATE_OPT_AT(p,x)			FState *x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_POINTER && (param[p].atag == ATAG_STATE || param[p].a == NULL)); x = (FState *)param[p].a; } else
+#define PARAM_STATEINFO_OPT_AT(p,x)		FStateParamInfo *x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_POINTER && (param[p].atag == ATAG_STATEINFO || param[p].a == NULL)); x = (FStateParamInfo *)param[p].a; } else
 #define PARAM_POINTER_OPT_AT(p,x,type)	type *x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_POINTER); x = (type *)param[p].a; } else
 #define PARAM_OBJECT_OPT_AT(p,x,type)	type *x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_POINTER && (param[p].atag == ATAG_OBJECT || param[p].a == NULL)); x = (type *)param[p].a; assert(x == NULL || x->IsKindOf(RUNTIME_CLASS(type))); } else
 #define PARAM_CLASS_OPT_AT(p,x,base)	base::MetaClass *x; if ((p) < numparam && param[p].Type != REGT_NIL) { assert(param[p].Type == REGT_POINTER && (param[p].atag == ATAG_OBJECT || param[p].a == NULL)); x = (base::MetaClass *)param[p].a; assert(x == NULL || x->IsDescendantOf(RUNTIME_CLASS(base))); } else
@@ -943,6 +945,7 @@ void VMDisasm(FILE *out, const VMOP *code, int codesize, const VMScriptFunction 
 #define PARAM_ANGLE_OPT(x)			++paramnum; PARAM_ANGLE_OPT_AT(paramnum,x)
 #define PARAM_STRING_OPT(x)			++paramnum; PARAM_STRING_OPT_AT(paramnum,x)
 #define PARAM_STATE_OPT(x)			++paramnum; PARAM_STATE_OPT_AT(paramnum,x)
+#define PARAM_STATEINFO_OPT(x)		++paramnum; PARAM_STATEINFO_OPT_AT(paramnum,x)
 #define PARAM_POINTER_OPT(x,type)	++paramnum; PARAM_POINTER_OPT_AT(paramnum,x,type)
 #define PARAM_OBJECT_OPT(x,type)	++paramnum; PARAM_OBJECT_OPT_AT(paramnum,x,type)
 #define PARAM_CLASS_OPT(x,base)		++paramnum; PARAM_CLASS_OPT_AT(paramnum,x,base)

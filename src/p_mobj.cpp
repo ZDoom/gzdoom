@@ -556,7 +556,8 @@ bool AActor::SetState (FState *newstate, bool nofunction)
 		if (!nofunction)
 		{
 			FState *returned_state;
-			if (newstate->CallAction(this, this, &returned_state))
+			FStateParamInfo stp = { newstate, STATE_Actor, PSP_WEAPON };
+			if (newstate->CallAction(this, this, &stp, &returned_state))
 			{
 				// Check whether the called action function resulted in destroying the actor
 				if (ObjectFlags & OF_EuthanizeMe)
@@ -3866,7 +3867,8 @@ bool AActor::CheckNoDelay()
 			// For immediately spawned objects with the NoDelay flag set for their
 			// Spawn state, explicitly call the current state's function.
 			FState *newstate;
-			if (state->CallAction(this, this, &newstate))
+			FStateParamInfo stp = { state, STATE_Actor, PSP_WEAPON };
+			if (state->CallAction(this, this, &stp, &newstate))
 			{
 				if (ObjectFlags & OF_EuthanizeMe)
 				{

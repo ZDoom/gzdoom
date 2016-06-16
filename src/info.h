@@ -55,6 +55,21 @@ struct FActorInfo;
 class FArchive;
 class FIntCVar;
 
+enum EStateType
+{
+	STATE_Actor,
+	STATE_Psprite,
+	STATE_StateChain,
+};
+
+struct FStateParamInfo
+{
+	FState *mCallingState;
+	EStateType mStateType;
+	int mPSPIndex;
+};
+
+
 // Sprites that are fixed in position because they can have special meanings.
 enum
 {
@@ -129,7 +144,7 @@ struct FState
 	void SetAction(VMFunction *func) { ActionFunc = func; }
 	void ClearAction() { ActionFunc = NULL; }
 	void SetAction(const char *name);
-	bool CallAction(AActor *self, AActor *stateowner, FState **stateret);
+	bool CallAction(AActor *self, AActor *stateowner, FStateParamInfo *stateinfo, FState **stateret);
 	static PClassActor *StaticFindStateOwner (const FState *state);
 	static PClassActor *StaticFindStateOwner (const FState *state, PClassActor *info);
 	static FRandom pr_statetics;
@@ -338,7 +353,7 @@ void AddStateLight(FState *state, const char *lname);
 	PARAM_PROLOGUE; \
 	PARAM_OBJECT	 (self, type); \
 	PARAM_OBJECT_OPT (stateowner, AActor) { stateowner = self; } \
-	PARAM_STATE_OPT  (callingstate) { callingstate = NULL; } \
+	PARAM_STATEINFO_OPT  (stateinfo) { stateinfo = nullptr; } \
 
 #define PARAM_ACTION_PROLOGUE	PARAM_ACTION_PROLOGUE_TYPE(AActor)
 

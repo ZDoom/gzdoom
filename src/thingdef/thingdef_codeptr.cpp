@@ -133,8 +133,9 @@ bool ACustomInventory::CallStateChain (AActor *actor, FState *state)
 			VMFrameStack stack;
 			PPrototype *proto = state->ActionFunc->Proto;
 			VMReturn *wantret;
+			FStateParamInfo stp = { state, STATE_StateChain, PSP_WEAPON };
 
-			params[2] = VMValue(state, ATAG_STATE);
+			params[2] = VMValue(&stp, ATAG_STATEINFO);
 			retval = true;		// assume success
 			wantret = NULL;		// assume no return value wanted
 			numret = 0;
@@ -5839,22 +5840,21 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_SetTics)
 	PARAM_ACTION_PROLOGUE;
 	PARAM_INT(tics_to_set);
 
-	if (self->player != nullptr)
-	{ // Need to check psp states for a match, then. Blah.
-		DPSprite *pspr = self->player->psprites;
-		while (pspr)
+	if (ACTION_CALL_FROM_WEAPON())
+	{
+		DPSprite *pspr = self->player->FindPSprite(stateinfo->mPSPIndex);
+		if (pspr != nullptr)
 		{
-			if (pspr->GetState() == callingstate)
-			{
-				pspr->Tics = tics_to_set;
-				return 0;
-			}
-
-			pspr = pspr->GetNext();
+			pspr->Tics = tics_to_set;
+			return 0;
 		}
 	}
-	// Just set tics for self.
-	self->tics = tics_to_set;
+	else if (ACTION_CALL_FROM_ACTOR())
+	{
+		// Just set tics for self.
+		self->tics = tics_to_set;
+	}
+	// for inventory state chains this needs to be ignored.
 	return 0;
 }
 

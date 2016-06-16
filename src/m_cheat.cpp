@@ -345,7 +345,7 @@ void cht_DoCheat (player_t *player, int cheat)
 				player->mo->DamageType = NAME_None;
 				if (player->ReadyWeapon != nullptr)
 				{
-					player->GetPSprite(PSP_WEAPON)->SetState(player->ReadyWeapon->GetUpState());
+					P_SetPsprite(player, PSP_WEAPON, player->ReadyWeapon->GetUpState());
 				}
 
 				if (player->morphTics > 0)

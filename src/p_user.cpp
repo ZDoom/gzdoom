@@ -1400,13 +1400,13 @@ void APlayerPawn::ActivateMorphWeapon ()
 		}
 		if (player->ReadyWeapon != nullptr)
 		{
-			player->GetPSprite(PSP_WEAPON)->SetState(player->ReadyWeapon->GetReadyState());
+			P_SetPsprite(player, PSP_WEAPON, player->ReadyWeapon->GetReadyState());
 		}
 	}
 
 	if (player->ReadyWeapon != nullptr)
 	{
-		player->GetPSprite(PSP_FLASH)->SetState(nullptr);
+		P_SetPsprite(player, PSP_FLASH, nullptr);
 	}
 
 	player->PendingWeapon = WP_NOCHANGE;

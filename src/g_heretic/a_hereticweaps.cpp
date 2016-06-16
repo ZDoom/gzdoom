@@ -1164,7 +1164,7 @@ void APhoenixRodPowered::EndPowerup ()
 	Owner->player->refire = 0;
 	S_StopSound (Owner, CHAN_WEAPON);
 	Owner->player->ReadyWeapon = SisterWeapon;
-	Owner->player->GetPSprite(PSP_WEAPON)->SetState(SisterWeapon->GetReadyState());
+	P_SetPsprite(Owner->player, PSP_WEAPON, SisterWeapon->GetReadyState());
 }
 
 class APhoenixFX1 : public AActor
@@ -1310,7 +1310,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePhoenixPL2)
 	flamethrower = static_cast<APhoenixRod *> (player->ReadyWeapon);
 	if (flamethrower == nullptr || --flamethrower->FlameCount == 0)
 	{ // Out of flame
-		player->GetPSprite(PSP_WEAPON)->SetState(flamethrower->FindState("Powerdown"));
+		P_SetPsprite(player, PSP_WEAPON, flamethrower->FindState("Powerdown"));
 		player->refire = 0;
 		S_StopSound (self, CHAN_WEAPON);
 		return 0;

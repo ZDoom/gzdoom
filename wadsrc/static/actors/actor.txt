@@ -334,6 +334,11 @@ ACTOR Actor native //: Thinker
 	native void A_TransferPointer(int ptr_source, int ptr_recepient, int sourcefield, int recepientfield=AAPTR_DEFAULT, int flags=0);
 	action native A_CopyFriendliness(int ptr_source = AAPTR_MASTER);
 
+	action native A_Overlay(int layer, state start = "");
+	action native A_WeaponOffset(float wx = 0, float wy = 32, int flags = 0);
+	action native A_OverlayOffset(int layer = PSP_WEAPON, float wx = 0, float wy = 32, int flags = 0);
+	action native A_OverlayFlags(int layer, int flags, bool set);
+
 	native int ACS_NamedExecute(name script, int mapnum=0, int arg1=0, int arg2=0, int arg3=0);
 	native int ACS_NamedSuspend(name script, int mapnum=0);
 	native int ACS_NamedTerminate(name script, int mapnum=0);

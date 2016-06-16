@@ -1109,17 +1109,17 @@ void APowerWeaponLevel2::InitEffect ()
 
 	Super::InitEffect();
 
-	if (Owner->player == NULL)
+	if (Owner->player == nullptr)
 		return;
 
 	weapon = Owner->player->ReadyWeapon;
 
-	if (weapon == NULL)
+	if (weapon == nullptr)
 		return;
 
 	sister = weapon->SisterWeapon;
 
-	if (sister == NULL)
+	if (sister == nullptr)
 		return;
 
 	if (!(sister->WeaponFlags & WIF_POWERED_UP))
@@ -1131,7 +1131,7 @@ void APowerWeaponLevel2::InitEffect ()
 
 	if (weapon->GetReadyState() != sister->GetReadyState())
 	{
-		P_SetPsprite (Owner->player, ps_weapon, sister->GetReadyState());
+		P_SetPsprite(Owner->player, PSP_WEAPON, sister->GetReadyState());
 	}
 }
 
@@ -1294,27 +1294,40 @@ void APowerTargeter::Travelled ()
 
 void APowerTargeter::InitEffect ()
 {
+	// Why is this called when the inventory isn't even attached yet
+	// in APowerup::CreateCopy?
+	if (!Owner->FindInventory(GetClass(), true))
+		return;
+
 	player_t *player;
 
 	Super::InitEffect();
 
-	if ((player = Owner->player) == NULL)
+	if ((player = Owner->player) == nullptr)
 		return;
 
 	FState *state = FindState("Targeter");
 
-	if (state != NULL)
+	if (state != nullptr)
 	{
-		P_SetPsprite (player, ps_targetcenter, state + 0);
-		P_SetPsprite (player, ps_targetleft, state + 1);
-		P_SetPsprite (player, ps_targetright, state + 2);
+		P_SetPsprite(player, PSP_TARGETCENTER,  state + 0);
+		P_SetPsprite(player, PSP_TARGETLEFT,  state + 1);
+		P_SetPsprite(player, PSP_TARGETRIGHT, state + 2);
 	}
 
-	player->psprites[ps_targetcenter].sx = (160-3);
-	player->psprites[ps_targetcenter].sy =
-		player->psprites[ps_targetleft].sy =
-		player->psprites[ps_targetright].sy = (100-3);
+	player->GetPSprite(PSP_TARGETCENTER)->x = (160-3);
+	player->GetPSprite(PSP_TARGETCENTER)->y =
+		player->GetPSprite(PSP_TARGETLEFT)->y =
+		player->GetPSprite(PSP_TARGETRIGHT)->y = (100-3);
 	PositionAccuracy ();
+}
+
+void APowerTargeter::AttachToOwner(AActor *other)
+{
+	Super::AttachToOwner(other);
+
+	// Let's actually properly call this for the targeters.
+	InitEffect();
 }
 
 bool APowerTargeter::HandlePickup(AInventory *item)
@@ -1327,13 +1340,11 @@ bool APowerTargeter::HandlePickup(AInventory *item)
 	return false;
 }
 
-
-
 void APowerTargeter::DoEffect ()
 {
 	Super::DoEffect ();
 
-	if (Owner != NULL && Owner->player != NULL)
+	if (Owner != nullptr && Owner->player != nullptr)
 	{
 		player_t *player = Owner->player;
 
@@ -1342,17 +1353,17 @@ void APowerTargeter::DoEffect ()
 		{
 			FState *state = FindState("Targeter");
 
-			if (state != NULL)
+			if (state != nullptr)
 			{
 				if (EffectTics & 32)
 				{
-					P_SetPsprite (player, ps_targetright, NULL);
-					P_SetPsprite (player, ps_targetleft, state+1);
+					P_SetPsprite(player, PSP_TARGETRIGHT, nullptr);
+					P_SetPsprite(player, PSP_TARGETLEFT,  state + 1);
 				}
 				else if (EffectTics & 16)
 				{
-					P_SetPsprite (player, ps_targetright, state+2);
-					P_SetPsprite (player, ps_targetleft, NULL);
+					P_SetPsprite(player, PSP_TARGETRIGHT, state + 2);
+					P_SetPsprite(player, PSP_TARGETLEFT,  nullptr);
 				}
 			}
 		}
@@ -1362,11 +1373,17 @@ void APowerTargeter::DoEffect ()
 void APowerTargeter::EndEffect ()
 {
 	Super::EndEffect();
-	if (Owner != NULL && Owner->player != NULL)
+	if (Owner != nullptr && Owner->player != nullptr)
 	{
-		P_SetPsprite (Owner->player, ps_targetcenter, NULL);
-		P_SetPsprite (Owner->player, ps_targetleft, NULL);
-		P_SetPsprite (Owner->player, ps_targetright, NULL);
+		// Calling GetPSprite here could crash if we're creating a new game.
+		// This is because P_SetupLevel nulls the player's mo before destroying
+		// every DThinker which in turn ends up calling this.
+		// However P_SetupLevel is only called after G_NewInit which calls
+		// every player's dtor which destroys all their psprites.
+		DPSprite *pspr;
+		if ((pspr = Owner->player->FindPSprite(PSP_TARGETCENTER)) != nullptr) pspr->SetState(nullptr);
+		if ((pspr = Owner->player->FindPSprite(PSP_TARGETLEFT)) != nullptr) pspr->SetState(nullptr);
+		if ((pspr = Owner->player->FindPSprite(PSP_TARGETRIGHT)) != nullptr) pspr->SetState(nullptr);
 	}
 }
 
@@ -1374,10 +1391,10 @@ void APowerTargeter::PositionAccuracy ()
 {
 	player_t *player = Owner->player;
 
-	if (player != NULL)
+	if (player != nullptr)
 	{
-		player->psprites[ps_targetleft].sx = (160-3) - ((100 - player->mo->accuracy));
-		player->psprites[ps_targetright].sx = (160-3)+ ((100 - player->mo->accuracy));
+		player->GetPSprite(PSP_TARGETLEFT)->x = (160-3) - ((100 - player->mo->accuracy));
+		player->GetPSprite(PSP_TARGETRIGHT)->x = (160-3)+ ((100 - player->mo->accuracy));
 	}
 }
 

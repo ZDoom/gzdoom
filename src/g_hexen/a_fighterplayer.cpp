@@ -105,7 +105,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FPunchAttack)
 	int i;
 	player_t *player;
 
-	if (NULL == (player = self->player))
+	if (nullptr == (player = self->player))
 	{
 		return 0;
 	}
@@ -120,7 +120,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FPunchAttack)
 			if (pmo->weaponspecial >= 3)
 			{
 				pmo->weaponspecial = 0;
-				P_SetPsprite (player, ps_weapon, player->ReadyWeapon->FindState("Fire2"));
+				P_SetPsprite(player, PSP_WEAPON, player->ReadyWeapon->FindState("Fire2"));
 				S_Sound (pmo, CHAN_VOICE, "*fistgrunt", 1, ATTN_NORM);
 			}
 			return 0;

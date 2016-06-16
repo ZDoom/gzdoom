@@ -1750,6 +1750,8 @@ void G_DoPlayerPop(int playernum)
 		players[playernum].mo = NULL;
 		players[playernum].camera = NULL;
 	}
+
+	players[playernum].DestroyPSprites();
 }
 
 void G_ScreenShot (char *filename)

@@ -23,6 +23,8 @@
 //
 //-----------------------------------------------------------------------------
 
+#define DRAWER_INTERNALS
+
 // HEADER FILES ------------------------------------------------------------
 
 #include <stdlib.h>
@@ -149,17 +151,6 @@ angle_t 		xtoviewangle[MAXWIDTH+1];
 
 bool			foggy;			// [RH] ignore extralight and fullbright?
 int				r_actualextralight;
-
-void (*colfunc) (void);
-void (*basecolfunc) (void);
-void (*fuzzcolfunc) (void);
-void (*transcolfunc) (void);
-void (*spanfunc) (void);
-
-void (*hcolfunc_pre) (void);
-void (*hcolfunc_post1) (int hx, int sx, int yl, int yh);
-void (*hcolfunc_post2) (int hx, int sx, int yl, int yh);
-void (*hcolfunc_post4) (int sx, int yl, int yh);
 
 cycle_t WallCycles, PlaneCycles, MaskedCycles, WallScanCycles;
 
@@ -820,6 +811,7 @@ void R_SetupBuffer ()
 			ASM_PatchPitch ();
 #endif
 		}
+		dc_canvas = RenderTarget;
 		dc_destorg = lineptr;
 		for (int i = 0; i < RenderTarget->GetHeight(); i++)
 		{

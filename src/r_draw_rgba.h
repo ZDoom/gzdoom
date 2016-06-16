@@ -23,6 +23,11 @@
 #ifndef __R_DRAW_RGBA__
 #define __R_DRAW_RGBA__
 
+// Prevents files outside the DrawerContext class getting good ideas about
+// accessing the private globals. Any drawer actions should be facilitated
+// via the DrawerContext class!
+#ifdef DRAWER_INTERNALS
+
 #include "r_draw.h"
 #include "v_palette.h"
 #include <vector>
@@ -485,5 +490,7 @@ FORCEINLINE uint32_t alpha_blend(uint32_t fg, uint32_t bg)
 	 \
 	fg = _mm_packus_epi16(fg_lo, fg_hi); \
 }
+
+#endif
 
 #endif

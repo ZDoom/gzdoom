@@ -58,7 +58,7 @@
 #include "r_plane.h"
 #include "r_segs.h"
 #include "r_3dfloors.h"
-#include "r_draw_rgba.h"
+#include "r_drawer_context.h"
 #include "v_palette.h"
 #include "r_data/r_translate.h"
 #include "r_data/colormaps.h"
@@ -229,12 +229,6 @@ vissprite_t *R_NewVisSprite (void)
 	return *(vissprite_p-1);
 }
 
-//
-// R_DrawMaskedColumn
-// Used for sprites and masked mid textures.
-// Masked means: partly transparent, i.e. stored
-//	in posts/runs of opaque pixels.
-//
 short*			mfloorclip;
 short*			mceilingclip;
 
@@ -242,88 +236,6 @@ double	 		spryscale;
 double	 		sprtopscreen;
 
 bool			sprflipvert;
-
-void R_DrawMaskedColumn (const BYTE *column, const FTexture::Span *span)
-{
-	int pixelsize = r_swtruecolor ? 4 : 1;
-	const fixed_t centeryfrac = FLOAT2FIXED(CenterY);
-	const fixed_t texturemid = FLOAT2FIXED(dc_texturemid);
-	while (span->Length != 0)
-	{
-		const int length = span->Length;
-		const int top = span->TopOffset;
-
-		// calculate unclipped screen coordinates for post
-		dc_yl = xs_RoundToInt(sprtopscreen + spryscale * top);
-		dc_yh = xs_RoundToInt(sprtopscreen + spryscale * (top + length)) - 1;
-
-		if (sprflipvert)
-		{
-			swapvalues (dc_yl, dc_yh);
-		}
-
-		if (dc_yh >= mfloorclip[dc_x])
-		{
-			dc_yh = mfloorclip[dc_x] - 1;
-		}
-		if (dc_yl < mceilingclip[dc_x])
-		{
-			dc_yl = mceilingclip[dc_x];
-		}
-
-		if (dc_yl <= dc_yh)
-		{
-			if (sprflipvert)
-			{
-				dc_texturefrac = (dc_yl*dc_iscale) - (top << FRACBITS)
-					- FixedMul (centeryfrac, dc_iscale) - texturemid;
-				const fixed_t maxfrac = length << FRACBITS;
-				while (dc_texturefrac >= maxfrac)
-				{
-					if (++dc_yl > dc_yh)
-						goto nextpost;
-					dc_texturefrac += dc_iscale;
-				}
-				fixed_t endfrac = dc_texturefrac + (dc_yh-dc_yl)*dc_iscale;
-				while (endfrac < 0)
-				{
-					if (--dc_yh < dc_yl)
-						goto nextpost;
-					endfrac -= dc_iscale;
-				}
-			}
-			else
-			{
-				dc_texturefrac = texturemid - (top << FRACBITS)
-					+ (dc_yl*dc_iscale) - FixedMul (centeryfrac-FRACUNIT, dc_iscale);
-				while (dc_texturefrac < 0)
-				{
-					if (++dc_yl > dc_yh)
-						goto nextpost;
-					dc_texturefrac += dc_iscale;
-				}
-				fixed_t endfrac = dc_texturefrac + (dc_yh-dc_yl)*dc_iscale;
-				const fixed_t maxfrac = length << FRACBITS;
-				if (dc_yh < mfloorclip[dc_x]-1 && endfrac < maxfrac - dc_iscale)
-				{
-					dc_yh++;
-				}
-				else while (endfrac >= maxfrac)
-				{
-					if (--dc_yh < dc_yl)
-						goto nextpost;
-					endfrac -= dc_iscale;
-				}
-			}
-			dc_source = column + top;
-			dc_dest = (ylookup[dc_yl] + dc_x) * pixelsize + dc_destorg;
-			dc_count = dc_yh - dc_yl + 1;
-			colfunc ();
-		}
-nextpost:
-		span++;
-	}
-}
 
 // [ZZ]
 // R_ClipSpriteColumnWithPortals
@@ -361,7 +273,7 @@ static inline void R_CollectPortals()
 	}
 }
 
-static inline bool R_ClipSpriteColumnWithPortals(vissprite_t* spr)
+bool R_ClipSpriteColumnWithPortals(int x, vissprite_t* spr)
 {
 	// [ZZ] 10.01.2016: don't clip sprites from the root of a skybox.
 	if (CurrentPortalInSkybox)
@@ -380,7 +292,7 @@ static inline bool R_ClipSpriteColumnWithPortals(vissprite_t* spr)
 			continue;
 
 		// now if current column is covered by this drawseg, we clip it away
-		if ((dc_x >= seg->x1) && (dc_x < seg->x2))
+		if ((x >= seg->x1) && (x < seg->x2))
 			return true;
 	}
 
@@ -409,15 +321,15 @@ void R_DrawVisSprite (vissprite_t *vis)
 	}
 
 	fixed_t centeryfrac = FLOAT2FIXED(CenterY);
-	R_SetColorMapLight(vis->Style.BaseColormap, 0, vis->Style.ColormapNum << FRACBITS);
+	DrawerContext::SetLight(vis->Style.BaseColormap, 0, vis->Style.ColormapNum << FRACBITS);
 
-	mode = R_SetPatchStyle (vis->Style.RenderStyle, vis->Style.Alpha, vis->Translation, vis->FillColor);
+	mode = DrawerContext::SetPatchStyle (vis->Style.RenderStyle, vis->Style.Alpha, vis->Translation, vis->FillColor);
 
 	if (vis->Style.RenderStyle == LegacyRenderStyles[STYLE_Shaded])
 	{ // For shaded sprites, R_SetPatchStyle sets a dc_colormap to an alpha table, but
 	  // it is the brightest one. We need to get back to the proper light level for
 	  // this sprite.
-		R_SetColorMapLight(dc_fcolormap, 0, vis->Style.ColormapNum << FRACBITS);
+		DrawerContext::SetLight(DrawerContext::LightColormap(), 0, vis->Style.ColormapNum << FRACBITS);
 	}
 
 	if (mode != DontDraw)
@@ -436,65 +348,67 @@ void R_DrawVisSprite (vissprite_t *vis)
 		tex = vis->pic;
 		spryscale = vis->yscale;
 		sprflipvert = false;
-		dc_iscale = FLOAT2FIXED(1 / vis->yscale);
+		DrawerContext::SetTextureStep(FLOAT2FIXED(1 / vis->yscale));
 		frac = vis->startfrac;
 		xiscale = vis->xiscale;
-		dc_texturemid = vis->texturemid;
+		DrawerContext::SetTextureMid(vis->texturemid);
 
 		if (vis->renderflags & RF_YFLIP)
 		{
 			sprflipvert = true;
 			spryscale = -spryscale;
-			dc_iscale = -dc_iscale;
-			dc_texturemid -= vis->pic->GetHeight();
-			sprtopscreen = CenterY + dc_texturemid * spryscale;
+			DrawerContext::SetTextureStep(-DrawerContext::TextureStep());
+			DrawerContext::SetTextureMid(DrawerContext::TextureMid() - vis->pic->GetHeight());
+			sprtopscreen = CenterY + DrawerContext::TextureMid() * spryscale;
 		}
 		else
 		{
 			sprflipvert = false;
-			sprtopscreen = CenterY - dc_texturemid * spryscale;
+			sprtopscreen = CenterY - DrawerContext::TextureMid() * spryscale;
 		}
 
-		dc_x = vis->x1;
+		int x = vis->x1;
 		x2 = vis->x2;
 
-		if (dc_x < x2)
+		if (x < x2)
 		{
-			while ((dc_x < stop4) && (dc_x & 3))
+			DrawerContext::SetMaskedColumnState(mfloorclip, mceilingclip, spryscale, sprtopscreen, sprflipvert);
+
+			while ((x < stop4) && (x & 3))
 			{
 				pixels = tex->GetColumn (frac >> FRACBITS, &spans);
-				if (ispsprite || !R_ClipSpriteColumnWithPortals(vis))
-					R_DrawMaskedColumn (pixels, spans);
-				dc_x++;
+				if (ispsprite || !R_ClipSpriteColumnWithPortals(x, vis))
+					DrawerContext::DrawMaskedColumn (x, pixels, spans);
+				x++;
 				frac += xiscale;
 			}
 
-			while (dc_x < stop4)
+			while (x < stop4)
 			{
-				rt_initcols(nullptr);
-				for (int zz = 4; zz; --zz)
+				DrawerContext::RtInitCols(nullptr);
+				for (int zz = 0; zz < 4; ++zz)
 				{
 					pixels = tex->GetColumn (frac >> FRACBITS, &spans);
-					if (ispsprite || !R_ClipSpriteColumnWithPortals(vis))
-						R_DrawMaskedColumnHoriz (pixels, spans);
-					dc_x++;
+					if (ispsprite || !R_ClipSpriteColumnWithPortals(x + zz, vis))
+						DrawerContext::DrawMaskedColumnHoriz (x + zz, pixels, spans);
 					frac += xiscale;
 				}
-				rt_draw4cols (dc_x - 4);
+				DrawerContext::DrawRt4cols(x);
+				x += 4;
 			}
 
-			while (dc_x < x2)
+			while (x < x2)
 			{
 				pixels = tex->GetColumn (frac >> FRACBITS, &spans);
-				if (ispsprite || !R_ClipSpriteColumnWithPortals(vis))
-					R_DrawMaskedColumn (pixels, spans);
-				dc_x++;
+				if (ispsprite || !R_ClipSpriteColumnWithPortals(x, vis))
+					DrawerContext::DrawMaskedColumn (x, pixels, spans);
+				x++;
 				frac += xiscale;
 			}
 		}
 	}
 
-	R_FinishSetPatchStyle ();
+	DrawerContext::FinishSetPatchStyle ();
 
 	NetUpdate ();
 }
@@ -511,7 +425,7 @@ void R_DrawWallSprite(vissprite_t *spr)
 	WallT.InitFromWallCoords(&spr->wallc);
 	PrepWall(swall, lwall, spr->pic->GetWidth() << FRACBITS, x1, x2);
 	iyscale = 1 / spr->yscale;
-	dc_texturemid = (spr->gzt - ViewPos.Z) * iyscale;
+	DrawerContext::SetTextureMid((spr->gzt - ViewPos.Z) * iyscale);
 	if (spr->renderflags & RF_XFLIP)
 	{
 		int right = (spr->pic->GetWidth() << FRACBITS) - 1;
@@ -539,11 +453,11 @@ void R_DrawWallSprite(vissprite_t *spr)
 	rw_lightstep = float((GlobVis / spr->wallc.sz2 - rw_lightleft) / (spr->wallc.sx2 - spr->wallc.sx1));
 	rw_light = rw_lightleft + (x1 - spr->wallc.sx1) * rw_lightstep;
 	if (fixedlightlev >= 0)
-		R_SetColorMapLight(usecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
+		DrawerContext::SetLight(usecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
 	else if (fixedcolormap != NULL)
-		R_SetColorMapLight(fixedcolormap, 0, 0);
+		DrawerContext::SetLight(fixedcolormap, 0, 0);
 	else if (!foggy && (spr->renderflags & RF_FULLBRIGHT))
-		R_SetColorMapLight(usecolormap, 0, 0);
+		DrawerContext::SetLight(usecolormap, 0, 0);
 	else
 		calclighting = true;
 
@@ -553,7 +467,7 @@ void R_DrawWallSprite(vissprite_t *spr)
 	{
 		sprflipvert = true;
 		iyscale = -iyscale;
-		dc_texturemid -= spr->pic->GetHeight();
+		DrawerContext::SetTextureMid(DrawerContext::TextureMid() - spr->pic->GetHeight());
 	}
 	else
 	{
@@ -562,10 +476,9 @@ void R_DrawWallSprite(vissprite_t *spr)
 
 	MaskedScaleY = (float)iyscale;
 
-	dc_x = x1;
 	ESPSResult mode;
 
-	mode = R_SetPatchStyle (spr->Style.RenderStyle, spr->Style.Alpha, spr->Translation, spr->FillColor);
+	mode = DrawerContext::SetPatchStyle (spr->Style.RenderStyle, spr->Style.Alpha, spr->Translation, spr->FillColor);
 
 	// R_SetPatchStyle can modify basecolormap.
 	if (rereadcolormap)
@@ -581,71 +494,74 @@ void R_DrawWallSprite(vissprite_t *spr)
 	{
 		int stop4;
 
+		int x = x1;
+
 		if (mode == DoDraw0)
 		{ // 1 column at a time
-			stop4 = dc_x;
+			stop4 = x;
 		}
 		else	 // DoDraw1
 		{ // up to 4 columns at a time
 			stop4 = x2 & ~3;
 		}
 
-		while ((dc_x < stop4) && (dc_x & 3))
+		while ((x < stop4) && (x & 3))
 		{
 			if (calclighting)
 			{ // calculate lighting
-				R_SetColorMapLight(usecolormap, rw_light, shade);
+				DrawerContext::SetLight(usecolormap, rw_light, shade);
 			}
-			if (!R_ClipSpriteColumnWithPortals(spr))
-				R_WallSpriteColumn(R_DrawMaskedColumn);
-			dc_x++;
+			if (!R_ClipSpriteColumnWithPortals(x, spr))
+				R_WallSpriteColumn(x, DrawerContext::DrawMaskedColumn);
+			x++;
 		}
 
-		while (dc_x < stop4)
+		while (x < stop4)
 		{
 			if (calclighting)
 			{ // calculate lighting
-				R_SetColorMapLight(usecolormap, rw_light, shade);
+				DrawerContext::SetLight(usecolormap, rw_light, shade);
 			}
-			rt_initcols(nullptr);
-			for (int zz = 4; zz; --zz)
+			DrawerContext::RtInitCols(nullptr);
+			for (int zz = 0; zz < 4; ++zz)
 			{
-				if (!R_ClipSpriteColumnWithPortals(spr))
-					R_WallSpriteColumn(R_DrawMaskedColumnHoriz);
-				dc_x++;
+				if (!R_ClipSpriteColumnWithPortals(x + zz, spr))
+					R_WallSpriteColumn(x + zz, DrawerContext::DrawMaskedColumnHoriz);
 			}
-			rt_draw4cols(dc_x - 4);
+			DrawerContext::DrawRt4cols(x);
+			x += 4;
 		}
 
-		while (dc_x < x2)
+		while (x < x2)
 		{
 			if (calclighting)
 			{ // calculate lighting
-				R_SetColorMapLight(usecolormap, rw_light, shade);
+				DrawerContext::SetLight(usecolormap, rw_light, shade);
 			}
-			if (!R_ClipSpriteColumnWithPortals(spr))
-				R_WallSpriteColumn(R_DrawMaskedColumn);
-			dc_x++;
+			if (!R_ClipSpriteColumnWithPortals(x, spr))
+				R_WallSpriteColumn(x, DrawerContext::DrawMaskedColumn);
+			x++;
 		}
 	}
-	R_FinishSetPatchStyle();
+	DrawerContext::FinishSetPatchStyle();
 }
 
-void R_WallSpriteColumn (void (*drawfunc)(const BYTE *column, const FTexture::Span *spans))
+void R_WallSpriteColumn (int x, void (*drawfunc)(int x, const BYTE *column, const FTexture::Span *spans))
 {
-	float iscale = swall[dc_x] * MaskedScaleY;
-	dc_iscale = FLOAT2FIXED(iscale);
+	float iscale = swall[x] * MaskedScaleY;
+	DrawerContext::SetTextureStep(FLOAT2FIXED(iscale));
 	spryscale = 1 / iscale;
 	if (sprflipvert)
-		sprtopscreen = CenterY + dc_texturemid * spryscale;
+		sprtopscreen = CenterY + DrawerContext::TextureMid() * spryscale;
 	else
-		sprtopscreen = CenterY - dc_texturemid * spryscale;
+		sprtopscreen = CenterY - DrawerContext::TextureMid() * spryscale;
 
 	const BYTE *column;
 	const FTexture::Span *spans;
-	column = WallSpriteTile->GetColumn (lwall[dc_x] >> FRACBITS, &spans);
-	dc_texturefrac = 0;
-	drawfunc (column, spans);
+	column = WallSpriteTile->GetColumn (lwall[x] >> FRACBITS, &spans);
+	DrawerContext::SetTextureFrac(0);
+	DrawerContext::SetMaskedColumnState(mfloorclip, mceilingclip, spryscale, sprtopscreen, sprflipvert);
+	drawfunc (x, column, spans);
 	rw_light += rw_lightstep;
 }
 
@@ -655,18 +571,18 @@ void R_DrawVisVoxel(vissprite_t *spr, int minslabz, int maxslabz, short *cliptop
 	int flags = 0;
 
 	// Do setup for blending.
-	R_SetColorMapLight(spr->Style.BaseColormap, 0, spr->Style.ColormapNum << FRACBITS);
-	mode = R_SetPatchStyle(spr->Style.RenderStyle, spr->Style.Alpha, spr->Translation, spr->FillColor);
+	DrawerContext::SetLight(spr->Style.BaseColormap, 0, spr->Style.ColormapNum << FRACBITS);
+	mode = DrawerContext::SetPatchStyle(spr->Style.RenderStyle, spr->Style.Alpha, spr->Translation, spr->FillColor);
 
 	if (mode == DontDraw)
 	{
 		return;
 	}
-	if (colfunc == fuzzcolfunc || colfunc == R_FillColumn)
+	if (DrawerContext::IsFuzzColumn() || DrawerContext::IsFillColumn())
 	{
 		flags = DVF_OFFSCREEN | DVF_SPANSONLY;
 	}
-	else if (colfunc != basecolfunc)
+	else if (!DrawerContext::IsBaseColumn())
 	{
 		flags = DVF_OFFSCREEN;
 	}
@@ -692,32 +608,32 @@ void R_DrawVisVoxel(vissprite_t *spr, int minslabz, int maxslabz, short *cliptop
 		{
 			if (!(flags & DVF_SPANSONLY) && (x & 3) == 0)
 			{
-				rt_initcols(OffscreenColorBuffer + x * OffscreenBufferHeight);
+				DrawerContext::RtInitCols(OffscreenColorBuffer + x * OffscreenBufferHeight);
 			}
 			for (FCoverageBuffer::Span *span = OffscreenCoverageBuffer->Spans[x]; span != NULL; span = span->NextSpan)
 			{
 				if (flags & DVF_SPANSONLY)
 				{
-					dc_x = x;
-					dc_yl = span->Start;
-					dc_yh = span->Stop - 1;
-					dc_count = span->Stop - span->Start;
-					dc_dest = (ylookup[span->Start] + x) * pixelsize + dc_destorg;
-					colfunc();
+					DrawerContext::SetX(x);
+					DrawerContext::SetY1(span->Start);
+					DrawerContext::SetY2(span->Stop - 1);
+					DrawerContext::SetDrawCount(span->Stop - span->Start);
+					DrawerContext::SetDest(x, span->Start);
+					DrawerContext::DrawColumn();
 				}
 				else
 				{
-					rt_span_coverage(x, span->Start, span->Stop - 1);
+					DrawerContext::RtSpanCoverage(x, span->Start, span->Stop - 1);
 				}
 			}
 			if (!(flags & DVF_SPANSONLY) && (x & 3) == 3)
 			{
-				rt_draw4cols(x - 3);
+				DrawerContext::DrawRt4cols(x - 3);
 			}
 		}
 	}
 
-	R_FinishSetPatchStyle();
+	DrawerContext::FinishSetPatchStyle();
 	NetUpdate();
 }
 
@@ -2585,7 +2501,7 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 	}
 }
 
-static void R_DrawMaskedSegsBehindParticle (const vissprite_t *vis)
+void R_DrawMaskedSegsBehindParticle (const vissprite_t *vis)
 {
 	const int x1 = vis->x1;
 	const int x2 = vis->x2;
@@ -2610,120 +2526,24 @@ static void R_DrawMaskedSegsBehindParticle (const vissprite_t *vis)
 	}
 }
 
-void R_DrawParticle_C (vissprite_t *vis)
+void R_DrawParticle(vissprite_t *vis)
 {
-	DWORD *bg2rgb;
-	int spacing;
-	BYTE *dest;
-	DWORD fg;
 	BYTE color = vis->Style.BaseColormap->Maps[(vis->Style.ColormapNum << COLORMAPSHIFT) + vis->startfrac];
 	int yl = vis->y1;
-	int ycount = vis->y2 - yl + 1;
-	int x1 = vis->x1;
-	int countbase = vis->x2 - x1;
-
-	R_DrawMaskedSegsBehindParticle (vis);
-
-	// vis->renderflags holds translucency level (0-255)
-	{
-		fixed_t fglevel, bglevel;
-		DWORD *fg2rgb;
-
-		fglevel = ((vis->renderflags + 1) << 8) & ~0x3ff;
-		bglevel = FRACUNIT-fglevel;
-		fg2rgb = Col2RGB8[fglevel>>10];
-		bg2rgb = Col2RGB8[bglevel>>10];
-		fg = fg2rgb[color];
-	}
-
-	/*
-
-	spacing = RenderTarget->GetPitch() - countbase;
-	dest = ylookup[yl] + x1 + dc_destorg;
-
-	do
-	{
-		int count = countbase;
-		do
-		{
-			DWORD bg = bg2rgb[*dest];
-			bg = (fg+bg) | 0x1f07c1f;
-			*dest++ = RGB32k.All[bg & (bg>>15)];
-		} while (--count);
-		dest += spacing;
-	} while (--ycount);*/
-
-	// original was row-wise
-	// width = countbase
-	// height = ycount
-
-	spacing = RenderTarget->GetPitch();
-
-	for (int x = x1; x < (x1+countbase); x++)
-	{
-		dc_x = x;
-		if (R_ClipSpriteColumnWithPortals(vis))
-			continue;
-		dest = ylookup[yl] + x + dc_destorg;
-		for (int y = 0; y < ycount; y++)
-		{
-			DWORD bg = bg2rgb[*dest];
-			bg = (fg+bg) | 0x1f07c1f;
-			*dest = RGB32k.All[bg & (bg>>15)];
-			dest += spacing;
-		}
-	}
-}
-
-void R_DrawParticle_rgba(vissprite_t *vis)
-{
-	int spacing;
-	uint32_t *dest;
-	BYTE color = vis->Style.BaseColormap->Maps[vis->startfrac];
-	int yl = vis->y1;
-	int ycount = vis->y2 - yl + 1;
+	int yh = vis->y2;
 	int x1 = vis->x1;
 	int countbase = vis->x2 - x1;
 
 	R_DrawMaskedSegsBehindParticle(vis);
-	
-	DrawerCommandQueue::WaitForWorkers();
-
-	uint32_t fg = shade_pal_index_simple(color, calc_light_multiplier(LIGHTSCALE(0, vis->Style.ColormapNum << FRACBITS)));
-	uint32_t fg_red = (fg >> 16) & 0xff;
-	uint32_t fg_green = (fg >> 8) & 0xff;
-	uint32_t fg_blue = fg & 0xff;
 
 	// vis->renderflags holds translucency level (0-255)
-	fixed_t fglevel = ((vis->renderflags + 1) << 8) & ~0x3ff;
-	uint32_t alpha = fglevel * 256 / FRACUNIT;
-	uint32_t inv_alpha = 256 - alpha;
-
-	fg_red *= alpha;
-	fg_green *= alpha;
-	fg_blue *= alpha;
-
-	spacing = RenderTarget->GetPitch();
+	int alpha = vis->renderflags;
 
 	for (int x = x1; x < (x1 + countbase); x++)
 	{
-		dc_x = x;
-		if (R_ClipSpriteColumnWithPortals(vis))
+		if (R_ClipSpriteColumnWithPortals(x, vis))
 			continue;
-		dest = ylookup[yl] + x + (uint32_t*)dc_destorg;
-		for (int y = 0; y < ycount; y++)
-		{
-			uint32_t bg_red = (*dest >> 16) & 0xff;
-			uint32_t bg_green = (*dest >> 8) & 0xff;
-			uint32_t bg_blue = (*dest) & 0xff;
-
-			uint32_t red = (fg_red + bg_red * inv_alpha) / 256;
-			uint32_t green = (fg_green + bg_green * inv_alpha) / 256;
-			uint32_t blue = (fg_blue + bg_blue * inv_alpha) / 256;
-
-			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-			dest += spacing;
-		}
+		DrawerContext::FillTransColumn(x, yl, yh, color, alpha);
 	}
 }
 
@@ -2769,9 +2589,7 @@ void R_DrawVoxel(const FVector3 &globalpos, FAngle viewangle,
 	sprcosang = FLOAT2FIXED(dasprang.Cos()) >> 2;
 	sprsinang = FLOAT2FIXED(-dasprang.Sin()) >> 2;
 
-	R_SetupDrawSlab(colormap);
-
-	int pixelsize = r_swtruecolor ? 4 : 1;
+	DrawerContext::SetSlabLight(colormap);
 
 	// Select mip level
 	i = abs(DMulScale6(dasprx - globalposx, cosang, daspry - globalposy, sinang));
@@ -3026,25 +2844,25 @@ void R_DrawVoxel(const FVector3 &globalpos, FAngle viewangle,
 							if (!(flags & DVF_OFFSCREEN))
 							{
 								// Draw directly to the screen.
-								R_DrawSlab(xxr - xxl, yplc[xxl], z2 - z1, yinc, col, (ylookup[z1] + lxt + xxl) * pixelsize + dc_destorg);
+								DrawerContext::DrawSlab(xxr - xxl, yplc[xxl], z2 - z1, yinc, col, lxt + xxl, z1);
 							}
 							else
 							{
 								// Record the area covered and possibly draw to an offscreen buffer.
-								dc_yl = z1;
-								dc_yh = z2 - 1;
-								dc_count = z2 - z1;
-								dc_iscale = yinc;
+								DrawerContext::SetY1(z1);
+								DrawerContext::SetY2(z2 - 1);
+								DrawerContext::SetDrawCount(z2 - z1);
+								DrawerContext::SetTextureStep(yinc);
 								for (int x = xxl; x < xxr; ++x)
 								{
 									OffscreenCoverageBuffer->InsertSpan(lxt + x, z1, z2);
 									if (!(flags & DVF_SPANSONLY))
 									{
-										dc_x = lxt + x;
-										rt_initcols(OffscreenColorBuffer + (dc_x & ~3) * OffscreenBufferHeight);
-										dc_source = col;
-										dc_texturefrac = yplc[xxl];
-										hcolfunc_pre();
+										DrawerContext::RtInitCols(OffscreenColorBuffer + ((lxt + x) & ~3) * OffscreenBufferHeight);
+										DrawerContext::SetX(lxt + x);
+										DrawerContext::SetSource(col);
+										DrawerContext::SetTextureFrac(yplc[xxl]);
+										DrawerContext::DrawHColumnPre();
 									}
 								}
 							}

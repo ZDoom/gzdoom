@@ -34,6 +34,8 @@
 ** Please see r_drawt.cpp for a description of the globals used.
 */
 
+#define DRAWER_INTERNALS
+
 #include "templates.h"
 #include "doomtype.h"
 #include "doomdef.h"

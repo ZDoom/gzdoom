@@ -43,8 +43,7 @@
 #include "r_defs.h"
 #include "r_utility.h"
 #ifndef NO_SWRENDER
-#include "r_draw.h"
-#include "r_draw_rgba.h"
+#include "r_drawer_context.h"
 #include "r_main.h"
 #include "r_things.h"
 #endif
@@ -130,11 +129,13 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 	static short bottomclipper[MAXWIDTH], topclipper[MAXWIDTH];
 	const BYTE *translation = NULL;
 
-	if (r_swtruecolor != IsBgra())
+	DCanvas *destorgsave = DrawerContext::Canvas();
+	if (screen->GetBuffer() == NULL)
 	{
-		r_swtruecolor = IsBgra();
-		R_InitColumnDrawers();
+		I_FatalError("Attempt to write to buffer of hardware canvas");
 	}
+
+	DrawerContext::SetCanvas(screen);
 
 	if (parms.masked)
 	{
@@ -172,22 +173,15 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 
 	if (translation != NULL)
 	{
-		R_SetTranslationMap((lighttable_t *)translation);
+		DrawerContext::SetTranslationMap((lighttable_t *)translation);
 	}
 	else
 	{
-		R_SetTranslationMap(identitymap);
+		DrawerContext::SetTranslationMap(nullptr);
 	}
 
-	fixedcolormap = dc_fcolormap;
-	ESPSResult mode = R_SetPatchStyle (parms.style, parms.Alpha, 0, parms.fillcolor);
-
-	BYTE *destorgsave = dc_destorg;
-	dc_destorg = screen->GetBuffer();
-	if (dc_destorg == NULL)
-	{
-		I_FatalError("Attempt to write to buffer of hardware canvas");
-	}
+	fixedcolormap = DrawerContext::LightColormap();
+	ESPSResult mode = DrawerContext::SetPatchStyle (parms.style, parms.Alpha, 0, parms.fillcolor);
 
 	double x0 = parms.x - parms.left * parms.destwidth / parms.texwidth;
 	double y0 = parms.y - parms.top * parms.destheight / parms.texheight;
@@ -220,11 +214,11 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 		assert(spryscale > 0);
 
 		sprflipvert = false;
-		//dc_iscale = FLOAT2FIXED(iyscale);
-		//dc_texturemid = (-y0) * iyscale;
-		//dc_iscale = 0xffffffffu / (unsigned)spryscale;
-		dc_iscale = FLOAT2FIXED(1 / spryscale);
-		dc_texturemid = (CenterY - 1 - sprtopscreen) * dc_iscale / 65536;
+		//DrawerContext::SetTextureStep(FLOAT2FIXED(iyscale));
+		//DrawerContext::SetTextureMid((-y0) * iyscale);
+		//DrawerContext::SetTextureStep(0xffffffffu / (unsigned)spryscale);
+		DrawerContext::SetTextureStep(FLOAT2FIXED(1 / spryscale));
+		DrawerContext::SetTextureMid((CenterY - 1 - sprtopscreen) * DrawerContext::TextureStep() / 65536);
 		fixed_t frac = 0;
 		double xiscale = img->GetWidth() / parms.destwidth;
 		double x2 = x0 + parms.destwidth;
@@ -278,14 +272,14 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 			mode = DoDraw0;
 		}
 
-		dc_x = int(x0);
+		int x = int(x0);
 		int x2_i = int(x2);
 		fixed_t xiscale_i = FLOAT2FIXED(xiscale);
 
 		if (mode == DoDraw0)
 		{
 			// One column at a time
-			stop4 = dc_x;
+			stop4 = x;
 		}
 		else	 // DoDraw1`
 		{
@@ -293,42 +287,44 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 			stop4 = x2_i & ~3;
 		}
 
-		if (dc_x < x2_i)
+		if (x < x2_i)
 		{
-			while ((dc_x < stop4) && (dc_x & 3))
+			DrawerContext::SetMaskedColumnState(mfloorclip, mceilingclip, spryscale, sprtopscreen, sprflipvert);
+
+			while ((x < stop4) && (x & 3))
 			{
 				pixels = img->GetColumn(frac >> FRACBITS, spanptr);
-				R_DrawMaskedColumn(pixels, spans);
-				dc_x++;
+				DrawerContext::DrawMaskedColumn(x, pixels, spans);
+				x++;
 				frac += xiscale_i;
 			}
 
-			while (dc_x < stop4)
+			while (x < stop4)
 			{
-				rt_initcols(nullptr);
-				for (int zz = 4; zz; --zz)
+				DrawerContext::RtInitCols(nullptr);
+				for (int zz = 0; zz < 4; ++zz)
 				{
 					pixels = img->GetColumn(frac >> FRACBITS, spanptr);
-					R_DrawMaskedColumnHoriz(pixels, spans);
-					dc_x++;
+					DrawerContext::DrawMaskedColumnHoriz(x + zz, pixels, spans);
 					frac += xiscale_i;
 				}
-				rt_draw4cols(dc_x - 4);
+				DrawerContext::DrawRt4cols(x);
+				x += 4;
 			}
 
-			while (dc_x < x2_i)
+			while (x < x2_i)
 			{
 				pixels = img->GetColumn(frac >> FRACBITS, spanptr);
-				R_DrawMaskedColumn(pixels, spans);
-				dc_x++;
+				DrawerContext::DrawMaskedColumn(x, pixels, spans);
+				x++;
 				frac += xiscale_i;
 			}
 		}
 		CenterY = centeryback;
 	}
-	R_FinishSetPatchStyle ();
+	DrawerContext::FinishSetPatchStyle ();
 
-	dc_destorg = destorgsave;
+	DrawerContext::SetCanvas(destorgsave);
 
 	if (ticdup != 0 && menuactive == MENU_Off)
 	{
@@ -1024,9 +1020,11 @@ void DCanvas::PUTTRANSDOT (int xx, int yy, int basecolor, int level)
 
 	if (IsBgra())
 	{
+		int inv_level = 64 - level;
+
 		uint32_t *spot = (uint32_t*)GetBuffer() + oldyyshifted + xx;
 
-		uint32_t fg = shade_pal_index_simple(basecolor, calc_light_multiplier(0));
+		uint32_t fg = GPalette.BaseColors[basecolor].d;
 		uint32_t fg_red = (fg >> 16) & 0xff;
 		uint32_t fg_green = (fg >> 8) & 0xff;
 		uint32_t fg_blue = fg & 0xff;
@@ -1035,9 +1033,9 @@ void DCanvas::PUTTRANSDOT (int xx, int yy, int basecolor, int level)
 		uint32_t bg_green = (*spot >> 8) & 0xff;
 		uint32_t bg_blue = (*spot) & 0xff;
 
-		uint32_t red = (fg_red + bg_red + 1) / 2;
-		uint32_t green = (fg_green + bg_green + 1) / 2;
-		uint32_t blue = (fg_blue + bg_blue + 1) / 2;
+		uint32_t red = (fg_red * level + bg_red * inv_level + 1) / 64;
+		uint32_t green = (fg_green * level + bg_green * inv_level + 1) / 64;
+		uint32_t blue = (fg_blue * level + bg_blue * inv_level + 1) / 64;
 
 		*spot = 0xff000000 | (red << 16) | (green << 8) | blue;
 	}
@@ -1399,16 +1397,15 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 	sinrot = sin(rotation.Radians());
 
 	// Setup constant texture mapping parameters.
-	R_SetupSpanBits(tex);
 	if (colormap)
-		R_SetSpanColormap(colormap, clamp(shade >> FRACBITS, 0, NUMCOLORMAPS - 1));
+		DrawerContext::SetSpanLight(colormap, 0, clamp(shade >> FRACBITS, 0, NUMCOLORMAPS - 1));
 	else
-		R_SetSpanColormap(&identitycolormap, 0);
-	R_SetSpanSource(r_swtruecolor ? (const BYTE*)tex->GetPixelsBgra() : tex->GetPixels());
-	scalex = double(1u << (32 - ds_xbits)) / scalex;
-	scaley = double(1u << (32 - ds_ybits)) / scaley;
-	ds_xstep = xs_RoundToInt(cosrot * scalex);
-	ds_ystep = xs_RoundToInt(sinrot * scaley);
+		DrawerContext::SetSpanLight(nullptr, 0, 0);
+	DrawerContext::SetSpanSource(tex);
+	scalex = double(1u << (32 - DrawerContext::SpanXBits())) / scalex;
+	scaley = double(1u << (32 - DrawerContext::SpanYBits())) / scaley;
+	DrawerContext::SetSpanXStep(xs_RoundToInt(cosrot * scalex));
+	DrawerContext::SetSpanYStep(xs_RoundToInt(sinrot * scaley));
 
 	// Travel down the right edge and create an outline of that edge.
 	pt1 = toppt;
@@ -1472,9 +1469,9 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 #if 0
 					memset(this->Buffer + y * this->Pitch + x1, (int)tex, x2 - x1);
 #else
-					ds_y = y;
-					ds_x1 = x1;
-					ds_x2 = x2 - 1;
+					DrawerContext::SetSpanY(y);
+					DrawerContext::SetSpanX1(x1);
+					DrawerContext::SetSpanX2(x2 - 1);
 
 					DVector2 tex(x1 - originx, y - originy);
 					if (dorotate)
@@ -1483,10 +1480,10 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 						tex.X = t * cosrot - tex.Y * sinrot;
 						tex.Y = tex.Y * cosrot + t * sinrot;
 					}
-					ds_xfrac = xs_RoundToInt(tex.X * scalex);
-					ds_yfrac = xs_RoundToInt(tex.Y * scaley);
+					DrawerContext::SetSpanXFrac(xs_RoundToInt(tex.X * scalex));
+					DrawerContext::SetSpanYFrac(xs_RoundToInt(tex.Y * scaley));
 
-					R_DrawSpan();
+					DrawerContext::DrawSimplePolySpan();
 #endif
 				}
 				x += xinc;

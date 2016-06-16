@@ -892,6 +892,7 @@ set( FASTMATH_PCH_SOURCES
 	r_swrenderer.cpp
 	r_3dfloors.cpp
 	r_bsp.cpp
+	r_drawer_context.cpp
 	r_draw.cpp
 	r_draw_rgba.cpp
 	r_drawt.cpp

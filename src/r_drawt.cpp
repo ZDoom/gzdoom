@@ -38,6 +38,8 @@
 ** Let's hope so. :-)
 */
 
+#define DRAWER_INTERNALS
+
 #include "templates.h"
 #include "doomtype.h"
 #include "doomdef.h"
@@ -1128,26 +1130,26 @@ void R_DrawMaskedColumnHoriz (const BYTE *column, const FTexture::Span *span)
 		const int top = span->TopOffset;
 
 		// calculate unclipped screen coordinates for post
-		dc_yl = xs_RoundToInt(sprtopscreen + spryscale * top);
-		dc_yh = xs_RoundToInt(sprtopscreen + spryscale * (top + length) - 1);
+		dc_yl = xs_RoundToInt(dc_sprtopscreen + dc_spryscale * top);
+		dc_yh = xs_RoundToInt(dc_sprtopscreen + dc_spryscale * (top + length) - 1);
 
-		if (sprflipvert)
+		if (dc_sprflipvert)
 		{
 			swapvalues (dc_yl, dc_yh);
 		}
 
-		if (dc_yh >= mfloorclip[dc_x])
+		if (dc_yh >= dc_mfloorclip[dc_x])
 		{
-			dc_yh = mfloorclip[dc_x] - 1;
+			dc_yh = dc_mfloorclip[dc_x] - 1;
 		}
-		if (dc_yl < mceilingclip[dc_x])
+		if (dc_yl < dc_mceilingclip[dc_x])
 		{
-			dc_yl = mceilingclip[dc_x];
+			dc_yl = dc_mceilingclip[dc_x];
 		}
 
 		if (dc_yl <= dc_yh)
 		{
-			if (sprflipvert)
+			if (dc_sprflipvert)
 			{
 				dc_texturefrac = (dc_yl*dc_iscale) - (top << FRACBITS)
 					- fixed_t(CenterY * dc_iscale) - texturemid;
@@ -1178,7 +1180,7 @@ void R_DrawMaskedColumnHoriz (const BYTE *column, const FTexture::Span *span)
 				}
 				fixed_t endfrac = dc_texturefrac + (dc_yh-dc_yl)*dc_iscale;
 				const fixed_t maxfrac = length << FRACBITS;
-				if (dc_yh < mfloorclip[dc_x]-1 && endfrac < maxfrac - dc_iscale)
+				if (dc_yh < dc_mfloorclip[dc_x]-1 && endfrac < maxfrac - dc_iscale)
 				{
 					dc_yh++;
 				}
@@ -1198,7 +1200,7 @@ nextpost:
 		span++;
 	}
 
-	if (sprflipvert)
+	if (dc_sprflipvert)
 	{
 		unsigned int *front = horizspan[dc_x&3];
 		unsigned int *back = dc_ctspan[dc_x&3] - 2;

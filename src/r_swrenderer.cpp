@@ -32,6 +32,7 @@
 **
 */
 
+#define DRAWER_INTERNALS
 
 #include "r_local.h"
 #include "v_palette.h"

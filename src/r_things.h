@@ -96,11 +96,8 @@ struct vissprite_t
 
 struct particle_t;
 
-extern void(*R_DrawParticle)(vissprite_t *);
-void R_DrawParticle_C (vissprite_t *);
-void R_DrawParticle_rgba (vissprite_t *);
-
 void R_ProjectParticle (particle_t *, const sector_t *sector, int shade, int fakeside);
+void R_DrawParticle (vissprite_t *vis);
 
 extern int MaxVisSprites;
 
@@ -112,7 +109,6 @@ extern vissprite_t		**vissprite_p;
 extern short			zeroarray[MAXWIDTH];
 extern short			screenheightarray[MAXWIDTH];
 
-// vars for R_DrawMaskedColumn
 extern short*			mfloorclip;
 extern short*			mceilingclip;
 extern double			spryscale;
@@ -126,8 +122,7 @@ extern double			pspriteyscale;
 extern FTexture			*WallSpriteTile;
 
 
-void R_DrawMaskedColumn (const BYTE *column, const FTexture::Span *spans);
-void R_WallSpriteColumn (void (*drawfunc)(const BYTE *column, const FTexture::Span *spans));
+void R_WallSpriteColumn (int x, void (*drawfunc)(int x, const BYTE *column, const FTexture::Span *spans));
 
 void R_CacheSprite (spritedef_t *sprite);
 void R_SortVisSprites (int (*compare)(const void *, const void *), size_t first);

@@ -52,6 +52,7 @@
 #include "r_3dfloors.h"
 #include "v_palette.h"
 #include "r_data/colormaps.h"
+#include "r_drawer_context.h"
 
 #define WALLYREPEAT 8
 
@@ -172,19 +173,19 @@ CVAR(Bool, r_drawmirrors, true, 0)
 float *MaskedSWall;
 float MaskedScaleY;
 
-static void BlastMaskedColumn (void (*blastfunc)(const BYTE *pixels, const FTexture::Span *spans), FTexture *tex)
+static void BlastMaskedColumn (int x, void (*blastfunc)(int x, const BYTE *pixels, const FTexture::Span *spans), FTexture *tex)
 {
 	// calculate lighting
 	if (fixedcolormap == NULL && fixedlightlev < 0)
 	{
-		R_SetColorMapLight(basecolormap, rw_light, wallshade);
+		DrawerContext::SetLight(basecolormap, rw_light, wallshade);
 	}
 
-	dc_iscale = xs_Fix<16>::ToFix(MaskedSWall[dc_x] * MaskedScaleY);
+	DrawerContext::SetTextureStep(xs_Fix<16>::ToFix(MaskedSWall[x] * MaskedScaleY));
  	if (sprflipvert)
-		sprtopscreen = CenterY + dc_texturemid * spryscale;
+		sprtopscreen = CenterY + DrawerContext::TextureMid() * spryscale;
 	else
-		sprtopscreen = CenterY - dc_texturemid * spryscale;
+		sprtopscreen = CenterY - DrawerContext::TextureMid() * spryscale;
 	
 	// killough 1/25/98: here's where Medusa came in, because
 	// it implicitly assumed that the column was all one patch.
@@ -194,10 +195,12 @@ static void BlastMaskedColumn (void (*blastfunc)(const BYTE *pixels, const FText
 	// the Medusa effect. The fix is to construct true columns
 	// when forming multipatched textures (see r_data.c).
 
+	DrawerContext::SetMaskedColumnState(mfloorclip, mceilingclip, spryscale, sprtopscreen, sprflipvert);
+
 	// draw the texture
 	const FTexture::Span *spans;
-	const BYTE *pixels = tex->GetColumn (maskedtexturecol[dc_x] >> FRACBITS, &spans);
-	blastfunc (pixels, spans);
+	const BYTE *pixels = tex->GetColumn (maskedtexturecol[x] >> FRACBITS, &spans);
+	blastfunc (x, pixels, spans);
 	rw_light += rw_lightstep;
 	spryscale += rw_scalestep;
 }
@@ -243,7 +246,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	// [RH] modified because we don't use user-definable translucency maps
 	ESPSResult drawmode;
 
-	drawmode = R_SetPatchStyle (LegacyRenderStyles[curline->linedef->flags & ML_ADDTRANS ? STYLE_Add : STYLE_Translucent],
+	drawmode = DrawerContext::SetPatchStyle (LegacyRenderStyles[curline->linedef->flags & ML_ADDTRANS ? STYLE_Add : STYLE_Translucent],
 		(float)MIN(curline->linedef->alpha, 1.),	0, 0);
 
 	if ((drawmode == DontDraw && !ds->bFogBoundary && !ds->bFakeBoundary))
@@ -295,7 +298,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	// [RH] Draw fog partition
 	if (ds->bFogBoundary)
 	{
-		R_DrawFogBoundary (x1, x2, mceilingclip, mfloorclip);
+		DrawerContext::DrawFogBoundary (x1, x2, mceilingclip, mfloorclip);
 		if (ds->maskedtexturecol == -1)
 		{
 			goto clearfog;
@@ -313,9 +316,9 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	rw_scalestep = ds->iscalestep;
 
 	if (fixedlightlev >= 0)
-		R_SetColorMapLight(basecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
+		DrawerContext::SetLight(basecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
 	else if (fixedcolormap != NULL)
-		R_SetColorMapLight(fixedcolormap, 0, 0);
+		DrawerContext::SetLight(fixedcolormap, 0, 0);
 
 	// find positioning
 	texheight = tex->GetScaledHeightDouble();
@@ -326,11 +329,11 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	}
 	if (curline->linedef->flags & ML_DONTPEGBOTTOM)
 	{
-		dc_texturemid = MAX(frontsector->GetPlaneTexZ(sector_t::floor), backsector->GetPlaneTexZ(sector_t::floor)) + texheight;
+		DrawerContext::SetTextureMid(MAX(frontsector->GetPlaneTexZ(sector_t::floor), backsector->GetPlaneTexZ(sector_t::floor)) + texheight);
 	}
 	else
 	{
-		dc_texturemid = MIN(frontsector->GetPlaneTexZ(sector_t::ceiling), backsector->GetPlaneTexZ(sector_t::ceiling));
+		DrawerContext::SetTextureMid(MIN(frontsector->GetPlaneTexZ(sector_t::ceiling), backsector->GetPlaneTexZ(sector_t::ceiling)));
 	}
 
 	rowoffset = curline->sidedef->GetTextureYOffset(side_t::mid);
@@ -349,21 +352,21 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 		{
 			// rowoffset is added before the multiply so that the masked texture will
 			// still be positioned in world units rather than texels.
-			dc_texturemid += rowoffset - ViewPos.Z;
-			textop = dc_texturemid;
-			dc_texturemid *= MaskedScaleY;
+			DrawerContext::SetTextureMid(DrawerContext::TextureMid() + rowoffset - ViewPos.Z);
+			textop = DrawerContext::TextureMid();
+			DrawerContext::SetTextureMid(DrawerContext::TextureMid() * MaskedScaleY);
 		}
 		else
 		{
 			// rowoffset is added outside the multiply so that it positions the texture
 			// by texels instead of world units.
-			textop = dc_texturemid + rowoffset / MaskedScaleY - ViewPos.Z;
-			dc_texturemid = (dc_texturemid - ViewPos.Z) * MaskedScaleY + rowoffset;
+			textop = DrawerContext::TextureMid() + rowoffset / MaskedScaleY - ViewPos.Z;
+			DrawerContext::SetTextureMid((DrawerContext::TextureMid() - ViewPos.Z) * MaskedScaleY + rowoffset);
 		}
 		if (sprflipvert)
 		{
 			MaskedScaleY = -MaskedScaleY;
-			dc_texturemid -= tex->GetHeight() << FRACBITS;
+			DrawerContext::SetTextureMid(DrawerContext::TextureMid() - tex->GetHeight());
 		}
 
 		// [RH] Don't bother drawing segs that are completely offscreen
@@ -438,9 +441,9 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 		// draw the columns one at a time
 		if (drawmode == DoDraw0)
 		{
-			for (dc_x = x1; dc_x < x2; ++dc_x)
+			for (int x = x1; x < x2; ++x)
 			{
-				BlastMaskedColumn (R_DrawMaskedColumn, tex);
+				BlastMaskedColumn (x, DrawerContext::DrawMaskedColumn, tex);
 			}
 		}
 		else
@@ -451,29 +454,29 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 			if (x1 >= x2)
 				goto clearfog;
 
-			dc_x = x1;
+			int x = x1;
 
-			while ((dc_x < stop) && (dc_x & 3))
+			while ((x < stop) && (x & 3))
 			{
-				BlastMaskedColumn (R_DrawMaskedColumn, tex);
-				dc_x++;
+				BlastMaskedColumn (x, DrawerContext::DrawMaskedColumn, tex);
+				x++;
 			}
 
-			while (dc_x < stop)
+			while (x < stop)
 			{
-				rt_initcols(nullptr);
-				BlastMaskedColumn (R_DrawMaskedColumnHoriz, tex); dc_x++;
-				BlastMaskedColumn (R_DrawMaskedColumnHoriz, tex); dc_x++;
-				BlastMaskedColumn (R_DrawMaskedColumnHoriz, tex); dc_x++;
-				BlastMaskedColumn (R_DrawMaskedColumnHoriz, tex);
-				rt_draw4cols (dc_x - 3);
-				dc_x++;
+				DrawerContext::RtInitCols(nullptr);
+				BlastMaskedColumn (x, DrawerContext::DrawMaskedColumnHoriz, tex);
+				BlastMaskedColumn (x + 1, DrawerContext::DrawMaskedColumnHoriz, tex);
+				BlastMaskedColumn (x + 2, DrawerContext::DrawMaskedColumnHoriz, tex);
+				BlastMaskedColumn (x + 3, DrawerContext::DrawMaskedColumnHoriz, tex);
+				DrawerContext::DrawRt4cols (x);
+				x += 4;
 			}
 
-			while (dc_x < x2)
+			while (x < x2)
 			{
-				BlastMaskedColumn (R_DrawMaskedColumn, tex);
-				dc_x++;
+				BlastMaskedColumn (x, DrawerContext::DrawMaskedColumn, tex);
+				x++;
 			}
 		}
 	}
@@ -483,13 +486,13 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 		{
 			// rowoffset is added before the multiply so that the masked texture will
 			// still be positioned in world units rather than texels.
-			dc_texturemid = (dc_texturemid - ViewPos.Z + rowoffset) * MaskedScaleY;
+			DrawerContext::SetTextureMid((DrawerContext::TextureMid() - ViewPos.Z + rowoffset) * MaskedScaleY);
 		}
 		else
 		{
 			// rowoffset is added outside the multiply so that it positions the texture
 			// by texels instead of world units.
-			dc_texturemid = (dc_texturemid - ViewPos.Z) * MaskedScaleY + rowoffset;
+			DrawerContext::SetTextureMid((DrawerContext::TextureMid() - ViewPos.Z) * MaskedScaleY + rowoffset);
 		}
 
 		WallC.sz1 = ds->sz1;
@@ -535,7 +538,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	}
 
 clearfog:
-	R_FinishSetPatchStyle ();
+	DrawerContext::FinishSetPatchStyle ();
 	if (ds->bFakeBoundary & 3)
 	{
 		R_RenderFakeWallRange(ds, x1, x2);
@@ -567,11 +570,11 @@ void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover)
 
 	fixed_t Alpha = Scale(rover->alpha, OPAQUE, 255);
 	ESPSResult drawmode;
-	drawmode = R_SetPatchStyle (LegacyRenderStyles[rover->flags & FF_ADDITIVETRANS ? STYLE_Add : STYLE_Translucent],
+	drawmode = DrawerContext::SetPatchStyle (LegacyRenderStyles[rover->flags & FF_ADDITIVETRANS ? STYLE_Add : STYLE_Translucent],
 		Alpha, 0, 0);
 
 	if(drawmode == DontDraw) {
-		R_FinishSetPatchStyle();
+		DrawerContext::FinishSetPatchStyle();
 		return;
 	}
 
@@ -613,26 +616,26 @@ void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover)
 	{
 		rowoffset += rw_pic->GetHeight();
 	}
-	dc_texturemid = (planez - ViewPos.Z) * yscale;
+	DrawerContext::SetTextureMid((planez - ViewPos.Z) * yscale);
 	if (rw_pic->bWorldPanning)
 	{
 		// rowoffset is added before the multiply so that the masked texture will
 		// still be positioned in world units rather than texels.
 
-		dc_texturemid = dc_texturemid + rowoffset * yscale;
+		DrawerContext::SetTextureMid(DrawerContext::TextureMid() + rowoffset * yscale);
 		rw_offset = xs_RoundToInt(rw_offset * xscale);
 	}
 	else
 	{
 		// rowoffset is added outside the multiply so that it positions the texture
 		// by texels instead of world units.
-		dc_texturemid += rowoffset;
+		DrawerContext::SetTextureMid(DrawerContext::TextureMid() + rowoffset);
 	}
 
 	if (fixedlightlev >= 0)
-		R_SetColorMapLight(basecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
+		DrawerContext::SetLight(basecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
 	else if (fixedcolormap != NULL)
-		R_SetColorMapLight(fixedcolormap, 0, 0);
+		DrawerContext::SetLight(fixedcolormap, 0, 0);
 
 	WallC.sz1 = ds->sz1;
 	WallC.sz2 = ds->sz2;
@@ -660,7 +663,7 @@ void R_RenderFakeWall(drawseg_t *ds, int x1, int x2, F3DFloor *rover)
 
 	PrepLWall (lwall, curline->sidedef->TexelLength*xscale, ds->sx1, ds->sx2);
 	wallscan_np2_ds(ds, x1, x2, wallupper, walllower, MaskedSWall, lwall, yscale);
-	R_FinishSetPatchStyle();
+	DrawerContext::FinishSetPatchStyle();
 }
 
 // kg3D - walls of fake floors
@@ -1065,360 +1068,6 @@ void R_RenderFakeWallRange (drawseg_t *ds, int x1, int x2)
 	return;
 }
 
-// Draw a column with support for non-power-of-two ranges
-uint32_t wallscan_drawcol1(int x, int y1, int y2, uint32_t uv_start, uint32_t uv_step, uint32_t uv_max, const BYTE *source, DWORD(*draw1column)())
-{
-	int pixelsize = r_swtruecolor ? 4 : 1;
-	if (uv_max == 0) // power of two
-	{
-		int count = y2 - y1;
-
-		dc_source = source;
-		dc_dest = (ylookup[y1] + x) * pixelsize + dc_destorg;
-		dc_count = count;
-		dc_iscale = uv_step;
-		dc_texturefrac = uv_start;
-		draw1column();
-
-		uint64_t step64 = uv_step;
-		uint64_t pos64 = uv_start;
-		return (uint32_t)(pos64 + step64 * count);
-	}
-	else
-	{
-		uint32_t uv_pos = uv_start;
-
-		uint32_t left = y2 - y1;
-		while (left > 0)
-		{
-			uint32_t available = uv_max - uv_pos;
-			uint32_t next_uv_wrap = available / uv_step;
-			if (available % uv_step != 0)
-				next_uv_wrap++;
-			uint32_t count = MIN(left, next_uv_wrap);
-
-			dc_source = source;
-			dc_dest = (ylookup[y1] + x) * pixelsize + dc_destorg;
-			dc_count = count;
-			dc_iscale = uv_step;
-			dc_texturefrac = uv_pos;
-			draw1column();
-
-			left -= count;
-			uv_pos += uv_step * count;
-			if (uv_pos >= uv_max)
-				uv_pos -= uv_max;
-		}
-
-		return uv_pos;
-	}
-}
-
-// Draw four columns with support for non-power-of-two ranges
-void wallscan_drawcol4(int x, int y1, int y2, uint32_t *uv_pos, uint32_t *uv_step, uint32_t uv_max, const BYTE **source, void(*draw4columns)())
-{
-	int pixelsize = r_swtruecolor ? 4 : 1;
-	if (uv_max == 0) // power of two, no wrap handling needed
-	{
-		int count = y2 - y1;
-		for (int i = 0; i < 4; i++)
-		{
-			bufplce[i] = source[i];
-			vplce[i] = uv_pos[i];
-			vince[i] = uv_step[i];
-
-			uint64_t step64 = uv_step[i];
-			uint64_t pos64 = uv_pos[i];
-			uv_pos[i] = (uint32_t)(pos64 + step64 * count);
-		}
-		dc_dest = (ylookup[y1] + x) * pixelsize + dc_destorg;
-		dc_count = count;
-		draw4columns();
-	}
-	else
-	{
-		dc_dest = (ylookup[y1] + x) * pixelsize + dc_destorg;
-		for (int i = 0; i < 4; i++)
-			bufplce[i] = source[i];
-
-		uint32_t left = y2 - y1;
-		while (left > 0)
-		{
-			// Find which column wraps first
-			uint32_t count = left;
-			for (int i = 0; i < 4; i++)
-			{
-				uint32_t available = uv_max - uv_pos[i];
-				uint32_t next_uv_wrap = available / uv_step[i];
-				if (available % uv_step[i] != 0)
-					next_uv_wrap++;
-				count = MIN(next_uv_wrap, count);
-			}
-
-			// Draw until that column wraps
-			for (int i = 0; i < 4; i++)
-			{
-				vplce[i] = uv_pos[i];
-				vince[i] = uv_step[i];
-			}
-			dc_count = count;
-			draw4columns();
-
-			// Wrap the uv position
-			for (int i = 0; i < 4; i++)
-			{
-				uv_pos[i] += uv_step[i] * count;
-				if (uv_pos[i] >= uv_max)
-					uv_pos[i] -= uv_max;
-			}
-
-			left -= count;
-		}
-	}
-}
-
-// Calculates a wrapped uv start position value for a column
-void calc_uv_start_and_step(int y1, float swal, double yrepeat, uint32_t uv_height, int fracbits, uint32_t &uv_start_out, uint32_t &uv_step_out)
-{
-	double uv_stepd = swal * yrepeat;
-
-	// Find start uv in [0-uv_height[ range.
-	// Not using xs_ToFixed because it rounds the result and we need something that always rounds down to stay within the range.
-	double v = (dc_texturemid + uv_stepd * (y1 - CenterY + 0.5)) / uv_height;
-	v = v - floor(v);
-	v *= uv_height;
-	v *= (1 << fracbits);
-
-	uv_start_out = (uint32_t)v;
-	uv_step_out = xs_ToFixed(fracbits, uv_stepd);
-}
-
-typedef DWORD(*Draw1ColumnFuncPtr)();
-typedef void(*Draw4ColumnsFuncPtr)();
-
-void wallscan_any(
-	int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat,
-	const BYTE *(*getcol)(FTexture *tex, int x),
-	void(setupwallscan(int bits,Draw1ColumnFuncPtr &draw1, Draw4ColumnsFuncPtr &draw2)))
-{
-	if (rw_pic->UseType == FTexture::TEX_Null)
-		return;
-
-	uint32_t uv_height = rw_pic->GetHeight();
-	uint32_t fracbits = 32 - rw_pic->HeightBits;
-	uint32_t uv_max = uv_height << fracbits;
-
-	DWORD(*draw1column)();
-	void(*draw4columns)();
-	setupwallscan(fracbits, draw1column, draw4columns);
-
-	fixed_t xoffset = rw_offset;
-
-	bool fixed = (fixedcolormap != NULL || fixedlightlev >= 0);
-	if (fixed)
-	{
-		palookupoffse[0] = dc_colormap;
-		palookupoffse[1] = dc_colormap;
-		palookupoffse[2] = dc_colormap;
-		palookupoffse[3] = dc_colormap;
-		palookuplight[0] = 0;
-		palookuplight[1] = 0;
-		palookuplight[2] = 0;
-		palookuplight[3] = 0;
-	}
-
-	if (fixedcolormap)
-		R_SetColorMapLight(fixedcolormap, 0, 0);
-	else
-		R_SetColorMapLight(basecolormap, 0, 0);
-
-	float light = rw_light;
-
-	// Calculate where 4 column alignment begins and ends:
-	int aligned_x1 = clamp((x1 + 3) / 4 * 4, x1, x2);
-	int aligned_x2 = clamp(x2 / 4 * 4, x1, x2);
-
-	// First unaligned columns:
-	for (int x = x1; x < aligned_x1; x++, light += rw_lightstep)
-	{
-		int y1 = uwal[x];
-		int y2 = dwal[x];
-		if (y2 <= y1)
-			continue;
-
-		if (!fixed)
-			R_SetColorMapLight(basecolormap, light, wallshade);
-
-		const BYTE *source = getcol(rw_pic, (lwal[x] + xoffset) >> FRACBITS);
-
-		uint32_t uv_start, uv_step;
-		calc_uv_start_and_step(y1, swal[x], yrepeat, uv_height, fracbits, uv_start, uv_step);
-
-		wallscan_drawcol1(x, y1, y2, uv_start, uv_step, uv_max, source, draw1column);
-	}
-
-	// The aligned columns
-	for (int x = aligned_x1; x < aligned_x2; x += 4)
-	{
-		// Find y1, y2, light and uv values for four columns:
-		int y1[4] = { uwal[x], uwal[x + 1], uwal[x + 2], uwal[x + 3] };
-		int y2[4] = { dwal[x], dwal[x + 1], dwal[x + 2], dwal[x + 3] };
-
-		const BYTE *source[4];
-		for (int i = 0; i < 4; i++)
-			source[i] = getcol(rw_pic, (lwal[x + i] + xoffset) >> FRACBITS);
-
-		float lights[4];
-		for (int i = 0; i < 4; i++)
-		{
-			lights[i] = light;
-			light += rw_lightstep;
-		}
-
-		uint32_t uv_pos[4], uv_step[4];
-		for (int i = 0; i < 4; i++)
-			calc_uv_start_and_step(y1[i], swal[x + i], yrepeat, uv_height, fracbits, uv_pos[i], uv_step[i]);
-
-		// Figure out where we vertically can start and stop drawing 4 columns in one go
-		int middle_y1 = y1[0];
-		int middle_y2 = y2[0];
-		for (int i = 1; i < 4; i++)
-		{
-			middle_y1 = MAX(y1[i], middle_y1);
-			middle_y2 = MIN(y2[i], middle_y2);
-		}
-
-		// If we got an empty column in our set we cannot draw 4 columns in one go:
-		bool empty_column_in_set = false;
-		for (int i = 0; i < 4; i++)
-		{
-			if (y2[i] <= y1[i])
-				empty_column_in_set = true;
-		}
-
-		if (empty_column_in_set || middle_y2 <= middle_y1)
-		{
-			for (int i = 0; i < 4; i++)
-			{
-				if (y2[i] <= y1[i])
-					continue;
-
-				if (!fixed)
-					R_SetColorMapLight(basecolormap, lights[i], wallshade);
-				wallscan_drawcol1(x + i, y1[i], y2[i], uv_pos[i], uv_step[i], uv_max, source[i], draw1column);
-			}
-			continue;
-		}
-
-		// Draw the first rows where not all 4 columns are active
-		for (int i = 0; i < 4; i++)
-		{
-			if (!fixed)
-				R_SetColorMapLight(basecolormap, lights[i], wallshade);
-
-			if (y1[i] < middle_y1)
-				uv_pos[i] = wallscan_drawcol1(x + i, y1[i], middle_y1, uv_pos[i], uv_step[i], uv_max, source[i], draw1column);
-		}
-
-		// Draw the area where all 4 columns are active
-		if (!fixed)
-		{
-			for (int i = 0; i < 4; i++)
-			{
-				if (r_swtruecolor)
-				{
-					palookupoffse[i] = basecolormap->Maps;
-					palookuplight[i] = LIGHTSCALE(lights[i], wallshade);
-				}
-				else
-				{
-					palookupoffse[i] = basecolormap->Maps + (GETPALOOKUP(lights[i], wallshade) << COLORMAPSHIFT);
-					palookuplight[i] = 0;
-				}
-			}
-		}
-		wallscan_drawcol4(x, middle_y1, middle_y2, uv_pos, uv_step, uv_max, source, draw4columns);
-
-		// Draw the last rows where not all 4 columns are active
-		for (int i = 0; i < 4; i++)
-		{
-			if (!fixed)
-				R_SetColorMapLight(basecolormap, lights[i], wallshade);
-
-			if (middle_y2 < y2[i])
-				uv_pos[i] = wallscan_drawcol1(x + i, middle_y2, y2[i], uv_pos[i], uv_step[i], uv_max, source[i], draw1column);
-		}
-	}
-
-	// The last unaligned columns:
-	for (int x = aligned_x2; x < x2; x++, light += rw_lightstep)
-	{
-		int y1 = uwal[x];
-		int y2 = dwal[x];
-		if (y2 <= y1)
-			continue;
-
-		if (!fixed)
-			R_SetColorMapLight(basecolormap, light, wallshade);
-
-		const BYTE *source = getcol(rw_pic, (lwal[x] + xoffset) >> FRACBITS);
-
-		uint32_t uv_start, uv_step;
-		calc_uv_start_and_step(y1, swal[x], yrepeat, uv_height, fracbits, uv_start, uv_step);
-
-		wallscan_drawcol1(x, y1, y2, uv_start, uv_step, uv_max, source, draw1column);
-	}
-
-	NetUpdate ();
-}
-
-void wallscan(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, const BYTE *(*getcol)(FTexture *tex, int x))
-{
-	wallscan_any(x1, x2, uwal, dwal, swal, lwal, yrepeat, getcol, [](int bits, Draw1ColumnFuncPtr &line1, Draw4ColumnsFuncPtr &line4)
-	{
-		setupvline(bits);
-		line1 = dovline1;
-		line4 = dovline4;
-	});
-}
-
-void maskwallscan(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, const BYTE *(*getcol)(FTexture *tex, int x))
-{
-	if (!rw_pic->bMasked) // Textures that aren't masked can use the faster wallscan.
-	{
-		wallscan(x1, x2, uwal, dwal, swal, lwal, yrepeat, getcol);
-	}
-	else
-	{
-		wallscan_any(x1, x2, uwal, dwal, swal, lwal, yrepeat, getcol, [](int bits, Draw1ColumnFuncPtr &line1, Draw4ColumnsFuncPtr &line4)
-		{
-			setupmvline(bits);
-			line1 = domvline1;
-			line4 = domvline4;
-		});
-	}
-}
-
-void transmaskwallscan(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, const BYTE *(*getcol)(FTexture *tex, int x))
-{
-	static fixed_t(*tmvline1)();
-	static void(*tmvline4)();
-	if (!R_GetTransMaskDrawers(&tmvline1, &tmvline4))
-	{
-		// The current translucency is unsupported, so draw with regular maskwallscan instead.
-		maskwallscan(x1, x2, uwal, dwal, swal, lwal, yrepeat, getcol);
-	}
-	else
-	{
-		wallscan_any(x1, x2, uwal, dwal, swal, lwal, yrepeat, getcol, [](int bits, Draw1ColumnFuncPtr &line1, Draw4ColumnsFuncPtr &line4)
-		{
-			setuptmvline(bits);
-			line1 = reinterpret_cast<DWORD(*)()>(tmvline1);
-			line4 = tmvline4;
-		});
-	}
-}
-
 void wallscan_striped (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat)
 {
 	FDynamicColormap *startcolormap = basecolormap;
@@ -1444,7 +1093,7 @@ void wallscan_striped (int x1, int x2, short *uwal, short *dwal, float *swal, fi
 			{
 				down[j] = clamp (most3[j], up[j], dwal[j]);
 			}
-			wallscan (x1, x2, up, down, swal, lwal, yrepeat);
+			DrawerContext::DrawWall (x1, x2, up, down, swal, lwal, yrepeat, rw_pic, rw_offset);
 			up = down;
 			down = (down == most1) ? most2 : most1;
 		}
@@ -1455,7 +1104,7 @@ void wallscan_striped (int x1, int x2, short *uwal, short *dwal, float *swal, fi
 			*lit->p_lightlevel, lit->lightsource != NULL) + r_actualextralight);
  	}
 
-	wallscan (x1, x2, up, dwal, swal, lwal, yrepeat);
+	DrawerContext::DrawWall (x1, x2, up, dwal, swal, lwal, yrepeat, rw_pic, rw_offset);
 	basecolormap = startcolormap;
 	wallshade = startshade;
 }
@@ -1464,20 +1113,20 @@ static void call_wallscan(int x1, int x2, short *uwal, short *dwal, float *swal,
 {
 	if (mask)
 	{
-		if (colfunc == basecolfunc)
+		if (DrawerContext::IsBaseColumn())
 		{
-			maskwallscan(x1, x2, uwal, dwal, swal, lwal, yrepeat);
+			DrawerContext::DrawMaskedWall(x1, x2, uwal, dwal, swal, lwal, yrepeat, rw_pic, rw_offset);
 		}
 		else
 		{
-			transmaskwallscan(x1, x2, uwal, dwal, swal, lwal, yrepeat);
+			DrawerContext::DrawTransMaskedWall(x1, x2, uwal, dwal, swal, lwal, yrepeat, rw_pic, rw_offset);
 		}
 	}
 	else
 	{
 		if (fixedcolormap != NULL || fixedlightlev >= 0 || !(frontsector->e && frontsector->e->XFloor.lightlist.Size()))
 		{
-			wallscan(x1, x2, uwal, dwal, swal, lwal, yrepeat);
+			DrawerContext::DrawWall(x1, x2, uwal, dwal, swal, lwal, yrepeat, rw_pic, rw_offset);
 		}
 		else
 		{
@@ -1513,14 +1162,14 @@ void wallscan_np2(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t
 
 		if (yrepeat >= 0)
 		{ // normal orientation: draw strips from top to bottom
-			partition = top - fmod(top - dc_texturemid / yrepeat - ViewPos.Z, scaledtexheight);
+			partition = top - fmod(top - DrawerContext::TextureMid() / yrepeat - ViewPos.Z, scaledtexheight);
 			if (partition == top)
 			{
 				partition -= scaledtexheight;
 			}
 			up = uwal;
 			down = most1;
-			dc_texturemid = (partition - ViewPos.Z) * yrepeat + texheight;
+			DrawerContext::SetTextureMid((partition - ViewPos.Z) * yrepeat + texheight);
 			while (partition > bot)
 			{
 				int j = OWallMost(most3, partition - ViewPos.Z, &WallC);
@@ -1535,16 +1184,16 @@ void wallscan_np2(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t
 					down = (down == most1) ? most2 : most1;
 				}
 				partition -= scaledtexheight;
-				dc_texturemid -= texheight;
+				DrawerContext::SetTextureMid(DrawerContext::TextureMid() - texheight);
  			}
 			call_wallscan(x1, x2, up, dwal, swal, lwal, yrepeat, mask);
 		}
 		else
 		{ // upside down: draw strips from bottom to top
-			partition = bot - fmod(bot - dc_texturemid / yrepeat - ViewPos.Z, scaledtexheight);
+			partition = bot - fmod(bot - DrawerContext::TextureMid() / yrepeat - ViewPos.Z, scaledtexheight);
 			up = most1;
 			down = dwal;
-			dc_texturemid = (partition - ViewPos.Z) * yrepeat + texheight;
+			DrawerContext::SetTextureMid((partition - ViewPos.Z) * yrepeat + texheight);
 			while (partition < top)
 			{
 				int j = OWallMost(most3, partition - ViewPos.Z, &WallC);
@@ -1559,7 +1208,7 @@ void wallscan_np2(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t
 					up = (up == most1) ? most2 : most1;
 				}
 				partition -= scaledtexheight;
-				dc_texturemid -= texheight;
+				DrawerContext::SetTextureMid(DrawerContext::TextureMid() - texheight);
  			}
 			call_wallscan(x1, x2, uwal, down, swal, lwal, yrepeat, mask);
 		}
@@ -1612,9 +1261,9 @@ void R_RenderSegLoop ()
 	fixed_t xoffset = rw_offset;
 
 	if (fixedlightlev >= 0)
-		R_SetColorMapLight(basecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
+		DrawerContext::SetLight(basecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
 	else if (fixedcolormap != NULL)
-		R_SetColorMapLight(fixedcolormap, 0, 0);
+		DrawerContext::SetLight(fixedcolormap, 0, 0);
 
 	// clip wall to the floor and ceiling
 	for (x = x1; x < x2; ++x)
@@ -1695,7 +1344,7 @@ void R_RenderSegLoop ()
 	{ // one sided line
 		if (midtexture->UseType != FTexture::TEX_Null && viewactive)
 		{
-			dc_texturemid = rw_midtexturemid;
+			DrawerContext::SetTextureMid(rw_midtexturemid);
 			rw_pic = midtexture;
 			xscale = rw_pic->Scale.X * rw_midtexturescalex;
 			yscale = rw_pic->Scale.Y * rw_midtexturescaley;
@@ -1738,7 +1387,7 @@ void R_RenderSegLoop ()
 			}
 			if (viewactive)
 			{
-				dc_texturemid = rw_toptexturemid;
+				DrawerContext::SetTextureMid(rw_toptexturemid);
 				rw_pic = toptexture;
 				xscale = rw_pic->Scale.X * rw_toptexturescalex;
 				yscale = rw_pic->Scale.Y * rw_toptexturescaley;
@@ -1784,7 +1433,7 @@ void R_RenderSegLoop ()
 			}
 			if (viewactive)
 			{
-				dc_texturemid = rw_bottomtexturemid;
+				DrawerContext::SetTextureMid(rw_bottomtexturemid);
 				rw_pic = bottomtexture;
 				xscale = rw_pic->Scale.X * rw_bottomtexturescalex;
 				yscale = rw_pic->Scale.Y * rw_bottomtexturescaley;
@@ -2974,7 +2623,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 	}
 
 	yscale = decal->ScaleY;
-	dc_texturemid = WallSpriteTile->TopOffset + (zpos - ViewPos.Z) / yscale;
+	DrawerContext::SetTextureMid(WallSpriteTile->TopOffset + (zpos - ViewPos.Z) / yscale);
 
 	// Clip sprite to drawseg
 	x1 = MAX<int>(clipper->x1, x1);
@@ -3011,11 +2660,11 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 
 	rw_light = rw_lightleft + (x1 - WallC.sx1) * rw_lightstep;
 	if (fixedlightlev >= 0)
-		R_SetColorMapLight(usecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
+		DrawerContext::SetLight(usecolormap, 0, FIXEDLIGHT2SHADE(fixedlightlev));
 	else if (fixedcolormap != NULL)
-		R_SetColorMapLight(fixedcolormap, 0, 0);
+		DrawerContext::SetLight(fixedcolormap, 0, 0);
 	else if (!foggy && (decal->RenderFlags & RF_FULLBRIGHT))
-		R_SetColorMapLight(usecolormap, 0, 0);
+		DrawerContext::SetLight(usecolormap, 0, 0);
 	else
 		calclighting = true;
 
@@ -3024,7 +2673,7 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 	{
 		sprflipvert = true;
 		yscale = -yscale;
-		dc_texturemid -= WallSpriteTile->GetHeight();
+		DrawerContext::SetTextureMid(DrawerContext::TextureMid() - WallSpriteTile->GetHeight());
 	}
 	else
 	{
@@ -3034,10 +2683,9 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 	MaskedScaleY = float(1 / yscale);
 	do
 	{
-		dc_x = x1;
 		ESPSResult mode;
 
-		mode = R_SetPatchStyle (decal->RenderStyle, (float)decal->Alpha, decal->Translation, decal->AlphaColor);
+		mode = DrawerContext::SetPatchStyle (decal->RenderStyle, (float)decal->Alpha, decal->Translation, decal->AlphaColor);
 
 		// R_SetPatchStyle can modify basecolormap.
 		if (rereadcolormap)
@@ -3053,48 +2701,50 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 		{
 			int stop4;
 
+			int x = x1;
+
 			if (mode == DoDraw0)
 			{ // 1 column at a time
-				stop4 = dc_x;
+				stop4 = x;
 			}
 			else	 // DoDraw1
 			{ // up to 4 columns at a time
 				stop4 = x2 & ~3;
 			}
 
-			while ((dc_x < stop4) && (dc_x & 3))
+			while ((x < stop4) && (x & 3))
 			{
 				if (calclighting)
 				{ // calculate lighting
-					R_SetColorMapLight(usecolormap, rw_light, wallshade);
+					DrawerContext::SetLight(usecolormap, rw_light, wallshade);
 				}
-				R_WallSpriteColumn (R_DrawMaskedColumn);
-				dc_x++;
+				R_WallSpriteColumn (x, DrawerContext::DrawMaskedColumn);
+				x++;
 			}
 
-			while (dc_x < stop4)
+			while (x < stop4)
 			{
 				if (calclighting)
 				{ // calculate lighting
-					R_SetColorMapLight(usecolormap, rw_light, wallshade);
+					DrawerContext::SetLight(usecolormap, rw_light, wallshade);
 				}
-				rt_initcols(nullptr);
-				for (int zz = 4; zz; --zz)
+				DrawerContext::RtInitCols(nullptr);
+				for (int zz = 0; zz < 4; ++zz)
 				{
-					R_WallSpriteColumn (R_DrawMaskedColumnHoriz);
-					dc_x++;
+					R_WallSpriteColumn (x + zz, DrawerContext::DrawMaskedColumnHoriz);
 				}
-				rt_draw4cols (dc_x - 4);
+				DrawerContext::DrawRt4cols (x);
+				x += 4;
 			}
 
-			while (dc_x < x2)
+			while (x < x2)
 			{
 				if (calclighting)
 				{ // calculate lighting
-					R_SetColorMapLight(usecolormap, rw_light, wallshade);
+					DrawerContext::SetLight(usecolormap, rw_light, wallshade);
 				}
-				R_WallSpriteColumn (R_DrawMaskedColumn);
-				dc_x++;
+				R_WallSpriteColumn (x, DrawerContext::DrawMaskedColumn);
+				x++;
 			}
 		}
 
@@ -3103,14 +2753,11 @@ static void R_RenderDecal (side_t *wall, DBaseDecal *decal, drawseg_t *clipper, 
 		// needrepeat will be 0, and the while will fail.
 		mceilingclip = floorclip;
 		mfloorclip = wallbottom;
-		R_FinishSetPatchStyle ();
+		DrawerContext::FinishSetPatchStyle ();
 	} while (needrepeat--);
 
-	colfunc = basecolfunc;
-	hcolfunc_post1 = rt_map1col;
-	hcolfunc_post4 = rt_map4cols;
-
-	R_FinishSetPatchStyle ();
+	DrawerContext::SetBaseStyle();
+	DrawerContext::FinishSetPatchStyle ();
 done:
 	WallC = savecoord;
 }

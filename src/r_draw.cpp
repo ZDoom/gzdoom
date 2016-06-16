@@ -23,6 +23,8 @@
 //
 //-----------------------------------------------------------------------------
 
+#define DRAWER_INTERNALS
+
 #include <stddef.h>
 
 #include "templates.h"
@@ -40,6 +42,8 @@
 #include "r_data/colormaps.h"
 #include "r_plane.h"
 #include "r_draw_rgba.h"
+#include "r_drawer_context.h"
+#include "d_net.h"
 
 #include "gi.h"
 #include "stats.h"
@@ -66,6 +70,7 @@ int				ylookup[MAXHEIGHT];
 BYTE			*dc_destorg;
 }
 int 			scaledviewwidth;
+DCanvas			*dc_canvas;
 
 // [RH] Pointers to the different column drawers.
 //		These get changed depending on the current
@@ -97,9 +102,9 @@ void (*R_DrawSpanMaskedAddClamp)(void);
 void (*R_FillSpan)(void);
 void (*R_FillColumnHoriz)(void);
 void (*R_DrawFogBoundary)(int x1, int x2, short *uclip, short *dclip);
-void (*R_MapTiltedPlane)(int y, int x1);
-void (*R_MapColoredPlane)(int y, int x1);
-void (*R_DrawParticle)(vissprite_t *);
+void (*R_DrawTiltedSpan)(int y, int x1, int x2);
+void (*R_DrawColoredSpan)(int y, int x1, int x2);
+void (*R_FillTransColumn)(int x, int y1, int y2, int color, int alpha);
 fixed_t (*tmvline1_add)();
 void (*tmvline4_add)();
 fixed_t (*tmvline1_addclamp)();
@@ -134,6 +139,24 @@ void (*rt_tlatesubclamp4cols)(int sx, int yl, int yh);
 void (*rt_tlaterevsubclamp4cols)(int sx, int yl, int yh);
 void (*rt_initcols)(BYTE *buffer);
 void (*rt_span_coverage)(int x, int start, int stop);
+void (*colfunc) (void);
+void (*basecolfunc) (void);
+void (*fuzzcolfunc) (void);
+void (*transcolfunc) (void);
+void (*spanfunc) (void);
+void (*hcolfunc_pre) (void);
+void (*hcolfunc_post1) (int hx, int sx, int yl, int yh);
+void (*hcolfunc_post2) (int hx, int sx, int yl, int yh);
+void (*hcolfunc_post4) (int sx, int yl, int yh);
+
+extern "C" void R_DrawTiltedPlane_ASM(int y, int x1);
+#ifdef X86_ASM
+extern "C" void R_SetSpanSource_ASM(const BYTE *flat);
+extern "C" void R_SetSpanSize_ASM(int xbits, int ybits);
+extern "C" void R_SetSpanColormap_ASM(BYTE *colormap);
+extern "C" void R_SetTiltedSpanSource_ASM(const BYTE *flat);
+extern "C" BYTE *ds_curcolormap, *ds_cursource, *ds_curtiltedsource;
+#endif
 
 //
 // R_DrawColumn
@@ -1040,13 +1063,6 @@ const BYTE*				ds_source;
 
 // just for profiling
 int 					dscount;
-
-#ifdef X86_ASM
-extern "C" void R_SetSpanSource_ASM (const BYTE *flat);
-extern "C" void R_SetSpanSize_ASM (int xbits, int ybits);
-extern "C" void R_SetSpanColormap_ASM (BYTE *colormap);
-extern "C" BYTE *ds_curcolormap, *ds_cursource, *ds_curtiltedsource;
-#endif
 }
 
 //==========================================================================
@@ -1076,9 +1092,8 @@ void R_SetSpanSource(const BYTE *pixels)
 //
 //==========================================================================
 
-void R_SetSpanColormap(FDynamicColormap *colormap, int shade)
+void R_SetSpanColormap()
 {
-	R_SetDSColorMapLight(colormap, 0, shade);
 #ifdef X86_ASM
 	if (!r_swtruecolor && ds_colormap != ds_curcolormap)
 	{
@@ -2297,9 +2312,9 @@ void R_InitColumnDrawers ()
 		R_FillColumnHoriz			= R_FillColumnHoriz_rgba;
 
 		R_DrawFogBoundary			= R_DrawFogBoundary_rgba;
-		R_MapTiltedPlane			= R_MapTiltedPlane_rgba;
-		R_MapColoredPlane			= R_MapColoredPlane_rgba;
-		R_DrawParticle				= R_DrawParticle_rgba;
+		R_DrawTiltedSpan			= R_DrawTiltedSpan_rgba;
+		R_DrawColoredSpan			= R_DrawColoredSpan_rgba;
+		R_FillTransColumn			= R_FillTransColumn_rgba;
 
 		tmvline1_add				= tmvline1_add_rgba;
 		tmvline4_add				= tmvline4_add_rgba;
@@ -2394,9 +2409,15 @@ void R_InitColumnDrawers ()
 		R_FillColumnHoriz			= R_FillColumnHorizP_C;
 
 		R_DrawFogBoundary			= R_DrawFogBoundary_C;
-		R_MapTiltedPlane			= R_MapTiltedPlane_C;
-		R_MapColoredPlane			= R_MapColoredPlane_C;
-		R_DrawParticle				= R_DrawParticle_C;
+		R_DrawColoredSpan			= R_DrawColoredSpan_C;
+		R_FillTransColumn			= R_FillTransColumn_C;
+
+#ifdef X86_ASM
+		// To do: update R_DrawTiltedPlane_ASM to use x2 rather than spanend[y]
+		R_DrawTiltedSpan			= [](int y, int x1, int x2) { R_DrawTiltedPlane_ASM(y, x1); };
+#else
+		R_DrawTiltedSpan			= R_DrawTiltedSpan_C;
+#endif
 
 		tmvline1_add				= tmvline1_add_C;
 		tmvline4_add				= tmvline4_add_C;
@@ -2827,5 +2848,746 @@ void R_SetDSColorMapLight(FColormap *base_colormap, float light, int shade)
 	else
 	{
 		ds_colormap = base_colormap->Maps + (GETPALOOKUP(light, shade) << COLORMAPSHIFT);
+	}
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+FVector3 ds_plane_sz, ds_plane_su, ds_plane_sv;
+bool ds_plane_shade;
+float ds_planelightfloat;
+fixed_t ds_pviewx, ds_pviewy;
+int ds_planeshade;
+extern "C" BYTE *tiltlighting[MAXWIDTH];
+
+extern "C" { void R_CalcTiltedLighting(double lval, double lend, int width); }
+
+#ifdef _MSC_VER
+#pragma warning(disable:4244) // warning C4244: conversion from 'SQWORD' to 'DWORD', possible loss of data
+#endif
+
+//==========================================================================
+//
+// R_CalcTiltedLighting
+//
+// Calculates the lighting for one row of a tilted plane. If the definition
+// of GETPALOOKUP changes, this needs to change, too.
+//
+//==========================================================================
+
+extern "C" {
+void R_CalcTiltedLighting (double lval, double lend, int width)
+{
+	double lstep;
+	BYTE *lightfiller;
+	BYTE *basecolormapdata = ds_fcolormap->Maps;
+	int i = 0;
+
+	if (width == 0 || lval == lend)
+	{ // Constant lighting
+		lightfiller = basecolormapdata + (GETPALOOKUP(lval, ds_planeshade) << COLORMAPSHIFT);
+	}
+	else
+	{
+		lstep = (lend - lval) / width;
+		if (lval >= MAXLIGHTVIS)
+		{ // lval starts "too bright".
+			lightfiller = basecolormapdata + (GETPALOOKUP(lval, ds_planeshade) << COLORMAPSHIFT);
+			for (; i <= width && lval >= MAXLIGHTVIS; ++i)
+			{
+				tiltlighting[i] = lightfiller;
+				lval += lstep;
+			}
+		}
+		if (lend >= MAXLIGHTVIS)
+		{ // lend ends "too bright".
+			lightfiller = basecolormapdata + (GETPALOOKUP(lend, ds_planeshade) << COLORMAPSHIFT);
+			for (; width > i && lend >= MAXLIGHTVIS; --width)
+			{
+				tiltlighting[width] = lightfiller;
+				lend -= lstep;
+			}
+		}
+		if (width > 0)
+		{
+			lval = FIXED2DBL(ds_planeshade) - lval;
+			lend = FIXED2DBL(ds_planeshade) - lend;
+			lstep = (lend - lval) / width;
+			if (lstep < 0)
+			{ // Going from dark to light
+				if (lval < 1.)
+				{ // All bright
+					lightfiller = basecolormapdata;
+				}
+				else
+				{
+					if (lval >= NUMCOLORMAPS)
+					{ // Starts beyond the dark end
+						BYTE *clight = basecolormapdata + ((NUMCOLORMAPS-1) << COLORMAPSHIFT);
+						while (lval >= NUMCOLORMAPS && i <= width)
+						{
+							tiltlighting[i++] = clight;
+							lval += lstep;
+						}
+						if (i > width)
+							return;
+					}
+					while (i <= width && lval >= 0)
+					{
+						tiltlighting[i++] = basecolormapdata + (xs_ToInt(lval) << COLORMAPSHIFT);
+						lval += lstep;
+					}
+					lightfiller = basecolormapdata;
+				}
+			}
+			else
+			{ // Going from light to dark
+				if (lval >= (NUMCOLORMAPS-1))
+				{ // All dark
+					lightfiller = basecolormapdata + ((NUMCOLORMAPS-1) << COLORMAPSHIFT);
+				}
+				else
+				{
+					while (lval < 0 && i <= width)
+					{
+						tiltlighting[i++] = basecolormapdata;
+						lval += lstep;
+					}
+					if (i > width)
+						return;
+					while (i <= width && lval < (NUMCOLORMAPS-1))
+					{
+						tiltlighting[i++] = basecolormapdata + (xs_ToInt(lval) << COLORMAPSHIFT);
+						lval += lstep;
+					}
+					lightfiller = basecolormapdata + ((NUMCOLORMAPS-1) << COLORMAPSHIFT);
+				}
+			}
+		}
+	}
+	for (; i <= width; i++)
+	{
+		tiltlighting[i] = lightfiller;
+	}
+}
+}	// extern "C"
+
+void R_DrawTiltedSpan_C (int y, int x1, int x2)
+{
+	int width = x2 - x1;
+	double iz, uz, vz;
+	BYTE *fb;
+	DWORD u, v;
+	int i;
+
+	iz = ds_plane_sz[2] + ds_plane_sz[1]*(centery-y) + ds_plane_sz[0]*(x1-centerx);
+
+	// Lighting is simple. It's just linear interpolation from start to end
+	if (ds_plane_shade)
+	{
+		uz = (iz + ds_plane_sz[0]*width) * ds_planelightfloat;
+		vz = iz * ds_planelightfloat;
+		R_CalcTiltedLighting (vz, uz, width);
+	}
+
+	uz = ds_plane_su[2] + ds_plane_su[1]*(centery-y) + ds_plane_su[0]*(x1-centerx);
+	vz = ds_plane_sv[2] + ds_plane_sv[1]*(centery-y) + ds_plane_sv[0]*(x1-centerx);
+
+	fb = ylookup[y] + x1 + dc_destorg;
+
+	BYTE vshift = 32 - ds_ybits;
+	BYTE ushift = vshift - ds_xbits;
+	int umask = ((1 << ds_xbits) - 1) << ds_ybits;
+
+#if 0		// The "perfect" reference version of this routine. Pretty slow.
+			// Use it only to see how things are supposed to look.
+	i = 0;
+	do
+	{
+		double z = 1.f/iz;
+
+		u = SQWORD(uz*z) + ds_pviewx;
+		v = SQWORD(vz*z) + ds_pviewy;
+		R_SetDSColorMapLight(tiltlighting[i], 0, 0);
+		fb[i++] = ds_colormap[ds_source[(v >> vshift) | ((u >> ushift) & umask)]];
+		iz += ds_plane_sz[0];
+		uz += ds_plane_su[0];
+		vz += ds_plane_sv[0];
+	} while (--width >= 0);
+#else
+//#define SPANSIZE 32
+//#define INVSPAN 0.03125f
+//#define SPANSIZE 8
+//#define INVSPAN 0.125f
+#define SPANSIZE 16
+#define INVSPAN	0.0625f
+
+	double startz = 1.f/iz;
+	double startu = uz*startz;
+	double startv = vz*startz;
+	double izstep, uzstep, vzstep;
+
+	izstep = ds_plane_sz[0] * SPANSIZE;
+	uzstep = ds_plane_su[0] * SPANSIZE;
+	vzstep = ds_plane_sv[0] * SPANSIZE;
+	x1 = 0;
+	width++;
+
+	while (width >= SPANSIZE)
+	{
+		iz += izstep;
+		uz += uzstep;
+		vz += vzstep;
+
+		double endz = 1.f/iz;
+		double endu = uz*endz;
+		double endv = vz*endz;
+		DWORD stepu = SQWORD((endu - startu) * INVSPAN);
+		DWORD stepv = SQWORD((endv - startv) * INVSPAN);
+		u = SQWORD(startu) + ds_pviewx;
+		v = SQWORD(startv) + ds_pviewy;
+
+		for (i = SPANSIZE-1; i >= 0; i--)
+		{
+			fb[x1] = *(tiltlighting[x1] + ds_source[(v >> vshift) | ((u >> ushift) & umask)]);
+			x1++;
+			u += stepu;
+			v += stepv;
+		}
+		startu = endu;
+		startv = endv;
+		width -= SPANSIZE;
+	}
+	if (width > 0)
+	{
+		if (width == 1)
+		{
+			u = SQWORD(startu);
+			v = SQWORD(startv);
+			fb[x1] = *(tiltlighting[x1] + ds_source[(v >> vshift) | ((u >> ushift) & umask)]);
+		}
+		else
+		{
+			double left = width;
+			iz += ds_plane_sz[0] * left;
+			uz += ds_plane_su[0] * left;
+			vz += ds_plane_sv[0] * left;
+
+			double endz = 1.f/iz;
+			double endu = uz*endz;
+			double endv = vz*endz;
+			left = 1.f/left;
+			DWORD stepu = SQWORD((endu - startu) * left);
+			DWORD stepv = SQWORD((endv - startv) * left);
+			u = SQWORD(startu) + ds_pviewx;
+			v = SQWORD(startv) + ds_pviewy;
+
+			for (; width != 0; width--)
+			{
+				fb[x1] = *(tiltlighting[x1] + ds_source[(v >> vshift) | ((u >> ushift) & umask)]);
+				x1++;
+				u += stepu;
+				v += stepv;
+			}
+		}
+	}
+#endif
+}
+
+void R_DrawColoredSpan_C (int y, int x1, int x2)
+{
+	memset (ylookup[y] + x1 + dc_destorg, ds_color, x2 - x1 + 1);
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+// Draw a column with support for non-power-of-two ranges
+uint32_t wallscan_drawcol1(int x, int y1, int y2, uint32_t uv_start, uint32_t uv_step, uint32_t uv_max, const BYTE *source, DWORD(*draw1column)())
+{
+	int pixelsize = r_swtruecolor ? 4 : 1;
+	if (uv_max == 0) // power of two
+	{
+		int count = y2 - y1;
+
+		dc_source = source;
+		dc_dest = (ylookup[y1] + x) * pixelsize + dc_destorg;
+		dc_count = count;
+		dc_iscale = uv_step;
+		dc_texturefrac = uv_start;
+		draw1column();
+
+		uint64_t step64 = uv_step;
+		uint64_t pos64 = uv_start;
+		return (uint32_t)(pos64 + step64 * count);
+	}
+	else
+	{
+		uint32_t uv_pos = uv_start;
+
+		uint32_t left = y2 - y1;
+		while (left > 0)
+		{
+			uint32_t available = uv_max - uv_pos;
+			uint32_t next_uv_wrap = available / uv_step;
+			if (available % uv_step != 0)
+				next_uv_wrap++;
+			uint32_t count = MIN(left, next_uv_wrap);
+
+			dc_source = source;
+			dc_dest = (ylookup[y1] + x) * pixelsize + dc_destorg;
+			dc_count = count;
+			dc_iscale = uv_step;
+			dc_texturefrac = uv_pos;
+			draw1column();
+
+			left -= count;
+			uv_pos += uv_step * count;
+			if (uv_pos >= uv_max)
+				uv_pos -= uv_max;
+		}
+
+		return uv_pos;
+	}
+}
+
+// Draw four columns with support for non-power-of-two ranges
+void wallscan_drawcol4(int x, int y1, int y2, uint32_t *uv_pos, uint32_t *uv_step, uint32_t uv_max, const BYTE **source, void(*draw4columns)())
+{
+	int pixelsize = r_swtruecolor ? 4 : 1;
+	if (uv_max == 0) // power of two, no wrap handling needed
+	{
+		int count = y2 - y1;
+		for (int i = 0; i < 4; i++)
+		{
+			bufplce[i] = source[i];
+			vplce[i] = uv_pos[i];
+			vince[i] = uv_step[i];
+
+			uint64_t step64 = uv_step[i];
+			uint64_t pos64 = uv_pos[i];
+			uv_pos[i] = (uint32_t)(pos64 + step64 * count);
+		}
+		dc_dest = (ylookup[y1] + x) * pixelsize + dc_destorg;
+		dc_count = count;
+		draw4columns();
+	}
+	else
+	{
+		dc_dest = (ylookup[y1] + x) * pixelsize + dc_destorg;
+		for (int i = 0; i < 4; i++)
+			bufplce[i] = source[i];
+
+		uint32_t left = y2 - y1;
+		while (left > 0)
+		{
+			// Find which column wraps first
+			uint32_t count = left;
+			for (int i = 0; i < 4; i++)
+			{
+				uint32_t available = uv_max - uv_pos[i];
+				uint32_t next_uv_wrap = available / uv_step[i];
+				if (available % uv_step[i] != 0)
+					next_uv_wrap++;
+				count = MIN(next_uv_wrap, count);
+			}
+
+			// Draw until that column wraps
+			for (int i = 0; i < 4; i++)
+			{
+				vplce[i] = uv_pos[i];
+				vince[i] = uv_step[i];
+			}
+			dc_count = count;
+			draw4columns();
+
+			// Wrap the uv position
+			for (int i = 0; i < 4; i++)
+			{
+				uv_pos[i] += uv_step[i] * count;
+				if (uv_pos[i] >= uv_max)
+					uv_pos[i] -= uv_max;
+			}
+
+			left -= count;
+		}
+	}
+}
+
+// Calculates a wrapped uv start position value for a column
+void calc_uv_start_and_step(int y1, float swal, double yrepeat, uint32_t uv_height, int fracbits, uint32_t &uv_start_out, uint32_t &uv_step_out)
+{
+	double uv_stepd = swal * yrepeat;
+
+	// Find start uv in [0-uv_height[ range.
+	// Not using xs_ToFixed because it rounds the result and we need something that always rounds down to stay within the range.
+	double v = (dc_texturemid + uv_stepd * (y1 - CenterY + 0.5)) / uv_height;
+	v = v - floor(v);
+	v *= uv_height;
+	v *= (1 << fracbits);
+
+	uv_start_out = (uint32_t)v;
+	uv_step_out = xs_ToFixed(fracbits, uv_stepd);
+}
+
+typedef DWORD(*Draw1ColumnFuncPtr)();
+typedef void(*Draw4ColumnsFuncPtr)();
+
+void wallscan_any(
+	int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat,
+	FTexture *rw_pic, fixed_t rw_offset, const BYTE *(*getcol)(FTexture *tex, int x),
+	void(setupwallscan(int bits, Draw1ColumnFuncPtr &draw1, Draw4ColumnsFuncPtr &draw2)))
+{
+	if (rw_pic->UseType == FTexture::TEX_Null)
+		return;
+
+	uint32_t uv_height = rw_pic->GetHeight();
+	uint32_t fracbits = 32 - rw_pic->HeightBits;
+	uint32_t uv_max = uv_height << fracbits;
+
+	DWORD(*draw1column)();
+	void(*draw4columns)();
+	setupwallscan(fracbits, draw1column, draw4columns);
+
+	fixed_t xoffset = rw_offset;
+
+	bool fixed = (fixedcolormap != NULL || fixedlightlev >= 0);
+	if (fixed)
+	{
+		palookupoffse[0] = dc_colormap;
+		palookupoffse[1] = dc_colormap;
+		palookupoffse[2] = dc_colormap;
+		palookupoffse[3] = dc_colormap;
+		palookuplight[0] = 0;
+		palookuplight[1] = 0;
+		palookuplight[2] = 0;
+		palookuplight[3] = 0;
+	}
+
+	if (fixedcolormap)
+		R_SetColorMapLight(fixedcolormap, 0, 0);
+	else
+		R_SetColorMapLight(basecolormap, 0, 0);
+
+	float light = rw_light;
+
+	// Calculate where 4 column alignment begins and ends:
+	int aligned_x1 = clamp((x1 + 3) / 4 * 4, x1, x2);
+	int aligned_x2 = clamp(x2 / 4 * 4, x1, x2);
+
+	// First unaligned columns:
+	for (int x = x1; x < aligned_x1; x++, light += rw_lightstep)
+	{
+		int y1 = uwal[x];
+		int y2 = dwal[x];
+		if (y2 <= y1)
+			continue;
+
+		if (!fixed)
+			R_SetColorMapLight(basecolormap, light, wallshade);
+
+		const BYTE *source = getcol(rw_pic, (lwal[x] + xoffset) >> FRACBITS);
+
+		uint32_t uv_start, uv_step;
+		calc_uv_start_and_step(y1, swal[x], yrepeat, uv_height, fracbits, uv_start, uv_step);
+
+		wallscan_drawcol1(x, y1, y2, uv_start, uv_step, uv_max, source, draw1column);
+	}
+
+	// The aligned columns
+	for (int x = aligned_x1; x < aligned_x2; x += 4)
+	{
+		// Find y1, y2, light and uv values for four columns:
+		int y1[4] = { uwal[x], uwal[x + 1], uwal[x + 2], uwal[x + 3] };
+		int y2[4] = { dwal[x], dwal[x + 1], dwal[x + 2], dwal[x + 3] };
+
+		const BYTE *source[4];
+		for (int i = 0; i < 4; i++)
+			source[i] = getcol(rw_pic, (lwal[x + i] + xoffset) >> FRACBITS);
+
+		float lights[4];
+		for (int i = 0; i < 4; i++)
+		{
+			lights[i] = light;
+			light += rw_lightstep;
+		}
+
+		uint32_t uv_pos[4], uv_step[4];
+		for (int i = 0; i < 4; i++)
+			calc_uv_start_and_step(y1[i], swal[x + i], yrepeat, uv_height, fracbits, uv_pos[i], uv_step[i]);
+
+		// Figure out where we vertically can start and stop drawing 4 columns in one go
+		int middle_y1 = y1[0];
+		int middle_y2 = y2[0];
+		for (int i = 1; i < 4; i++)
+		{
+			middle_y1 = MAX(y1[i], middle_y1);
+			middle_y2 = MIN(y2[i], middle_y2);
+		}
+
+		// If we got an empty column in our set we cannot draw 4 columns in one go:
+		bool empty_column_in_set = false;
+		for (int i = 0; i < 4; i++)
+		{
+			if (y2[i] <= y1[i])
+				empty_column_in_set = true;
+		}
+
+		if (empty_column_in_set || middle_y2 <= middle_y1)
+		{
+			for (int i = 0; i < 4; i++)
+			{
+				if (y2[i] <= y1[i])
+					continue;
+
+				if (!fixed)
+					R_SetColorMapLight(basecolormap, lights[i], wallshade);
+				wallscan_drawcol1(x + i, y1[i], y2[i], uv_pos[i], uv_step[i], uv_max, source[i], draw1column);
+			}
+			continue;
+		}
+
+		// Draw the first rows where not all 4 columns are active
+		for (int i = 0; i < 4; i++)
+		{
+			if (!fixed)
+				R_SetColorMapLight(basecolormap, lights[i], wallshade);
+
+			if (y1[i] < middle_y1)
+				uv_pos[i] = wallscan_drawcol1(x + i, y1[i], middle_y1, uv_pos[i], uv_step[i], uv_max, source[i], draw1column);
+		}
+
+		// Draw the area where all 4 columns are active
+		if (!fixed)
+		{
+			for (int i = 0; i < 4; i++)
+			{
+				if (r_swtruecolor)
+				{
+					palookupoffse[i] = basecolormap->Maps;
+					palookuplight[i] = LIGHTSCALE(lights[i], wallshade);
+				}
+				else
+				{
+					palookupoffse[i] = basecolormap->Maps + (GETPALOOKUP(lights[i], wallshade) << COLORMAPSHIFT);
+					palookuplight[i] = 0;
+				}
+			}
+		}
+		wallscan_drawcol4(x, middle_y1, middle_y2, uv_pos, uv_step, uv_max, source, draw4columns);
+
+		// Draw the last rows where not all 4 columns are active
+		for (int i = 0; i < 4; i++)
+		{
+			if (!fixed)
+				R_SetColorMapLight(basecolormap, lights[i], wallshade);
+
+			if (middle_y2 < y2[i])
+				uv_pos[i] = wallscan_drawcol1(x + i, middle_y2, y2[i], uv_pos[i], uv_step[i], uv_max, source[i], draw1column);
+		}
+	}
+
+	// The last unaligned columns:
+	for (int x = aligned_x2; x < x2; x++, light += rw_lightstep)
+	{
+		int y1 = uwal[x];
+		int y2 = dwal[x];
+		if (y2 <= y1)
+			continue;
+
+		if (!fixed)
+			R_SetColorMapLight(basecolormap, light, wallshade);
+
+		const BYTE *source = getcol(rw_pic, (lwal[x] + xoffset) >> FRACBITS);
+
+		uint32_t uv_start, uv_step;
+		calc_uv_start_and_step(y1, swal[x], yrepeat, uv_height, fracbits, uv_start, uv_step);
+
+		wallscan_drawcol1(x, y1, y2, uv_start, uv_step, uv_max, source, draw1column);
+	}
+
+	NetUpdate();
+}
+
+void wallscan(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, FTexture *rw_pic, fixed_t rw_offset, const BYTE *(*getcol)(FTexture *tex, int x))
+{
+	wallscan_any(x1, x2, uwal, dwal, swal, lwal, yrepeat, rw_pic, rw_offset, getcol, [](int bits, Draw1ColumnFuncPtr &line1, Draw4ColumnsFuncPtr &line4)
+	{
+		setupvline(bits);
+		line1 = dovline1;
+		line4 = dovline4;
+	});
+}
+
+void maskwallscan(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, FTexture *rw_pic, fixed_t rw_offset, const BYTE *(*getcol)(FTexture *tex, int x))
+{
+	if (!rw_pic->bMasked) // Textures that aren't masked can use the faster wallscan.
+	{
+		wallscan(x1, x2, uwal, dwal, swal, lwal, yrepeat, rw_pic, rw_offset, getcol);
+	}
+	else
+	{
+		wallscan_any(x1, x2, uwal, dwal, swal, lwal, yrepeat, rw_pic, rw_offset, getcol, [](int bits, Draw1ColumnFuncPtr &line1, Draw4ColumnsFuncPtr &line4)
+		{
+			setupmvline(bits);
+			line1 = domvline1;
+			line4 = domvline4;
+		});
+	}
+}
+
+void transmaskwallscan(int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, FTexture *rw_pic, fixed_t rw_offset, const BYTE *(*getcol)(FTexture *tex, int x))
+{
+	static fixed_t(*tmvline1)();
+	static void(*tmvline4)();
+	if (!R_GetTransMaskDrawers(&tmvline1, &tmvline4))
+	{
+		// The current translucency is unsupported, so draw with regular maskwallscan instead.
+		maskwallscan(x1, x2, uwal, dwal, swal, lwal, yrepeat, rw_pic, rw_offset, getcol);
+	}
+	else
+	{
+		wallscan_any(x1, x2, uwal, dwal, swal, lwal, yrepeat, rw_pic, rw_offset, getcol, [](int bits, Draw1ColumnFuncPtr &line1, Draw4ColumnsFuncPtr &line4)
+		{
+			setuptmvline(bits);
+			line1 = reinterpret_cast<DWORD(*)()>(tmvline1);
+			line4 = tmvline4;
+		});
+	}
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+void R_FillTransColumn_C(int x, int y1, int y2, int color, int alpha)
+{
+	fixed_t fglevel, bglevel;
+	DWORD *fg2rgb;
+	DWORD *bg2rgb;
+	int spacing;
+	BYTE *dest;
+	DWORD fg;
+
+	fglevel = ((alpha + 1) << 8) & ~0x3ff;
+	bglevel = FRACUNIT - fglevel;
+	fg2rgb = Col2RGB8[fglevel >> 10];
+	bg2rgb = Col2RGB8[bglevel >> 10];
+	fg = fg2rgb[color];
+
+	spacing = dc_pitch;
+
+	int ycount = y2 - y1 + 1;
+	dest = ylookup[y1] + x + dc_destorg;
+	for (int y = 0; y < ycount; y++)
+	{
+		DWORD bg = bg2rgb[*dest];
+		bg = (fg + bg) | 0x1f07c1f;
+		*dest = RGB32k.All[bg & (bg >> 15)];
+		dest += spacing;
+	}
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+//
+// R_DrawMaskedColumn
+// Used for sprites and masked mid textures.
+// Masked means: partly transparent, i.e. stored
+//	in posts/runs of opaque pixels.
+//
+short*			dc_mfloorclip;
+short*			dc_mceilingclip;
+
+double	 		dc_spryscale;
+double	 		dc_sprtopscreen;
+
+bool			dc_sprflipvert;
+
+void R_DrawMaskedColumn(int x, const BYTE *column, const FTexture::Span *span)
+{
+	int pixelsize = r_swtruecolor ? 4 : 1;
+	const fixed_t centeryfrac = FLOAT2FIXED(CenterY);
+	const fixed_t texturemid = FLOAT2FIXED(dc_texturemid);
+	while (span->Length != 0)
+	{
+		const int length = span->Length;
+		const int top = span->TopOffset;
+
+		fixed_t texturefrac = dc_texturefrac;
+		fixed_t iscale = dc_iscale;
+
+		// calculate unclipped screen coordinates for post
+		int yl = xs_RoundToInt(dc_sprtopscreen + dc_spryscale * top);
+		int yh = xs_RoundToInt(dc_sprtopscreen + dc_spryscale * (top + length)) - 1;
+
+		if (dc_sprflipvert)
+		{
+			swapvalues(yl, yh);
+		}
+
+		if (yh >= dc_mfloorclip[x])
+		{
+			yh = dc_mfloorclip[x] - 1;
+		}
+		if (yl < dc_mceilingclip[x])
+		{
+			yl = dc_mceilingclip[x];
+		}
+
+		if (yl <= yh)
+		{
+			if (dc_sprflipvert)
+			{
+				texturefrac = (yl*iscale) - (top << FRACBITS)
+					- FixedMul(centeryfrac, iscale) - texturemid;
+				const fixed_t maxfrac = length << FRACBITS;
+				while (texturefrac >= maxfrac)
+				{
+					if (++yl > yh)
+						goto nextpost;
+					texturefrac += iscale;
+				}
+				fixed_t endfrac = texturefrac + (yh - yl)*iscale;
+				while (endfrac < 0)
+				{
+					if (--yh < yl)
+						goto nextpost;
+					endfrac -= iscale;
+				}
+			}
+			else
+			{
+				texturefrac = texturemid - (top << FRACBITS)
+					+ (yl*iscale) - FixedMul(centeryfrac - FRACUNIT, iscale);
+				while (texturefrac < 0)
+				{
+					if (++yl > yh)
+						goto nextpost;
+					texturefrac += iscale;
+				}
+				fixed_t endfrac = texturefrac + (yh - yl)*iscale;
+				const fixed_t maxfrac = length << FRACBITS;
+				if (yh < dc_mfloorclip[x] - 1 && endfrac < maxfrac - iscale)
+				{
+					yh++;
+				}
+				else while (endfrac >= maxfrac)
+				{
+					if (--yh < yl)
+						goto nextpost;
+					endfrac -= iscale;
+				}
+			}
+
+			dc_yl = yl;
+			dc_yh = yh;
+			dc_x = x;
+			dc_texturefrac = texturefrac;
+			dc_iscale = iscale;
+			dc_source = column + top;
+			dc_count = yh - yl + 1;
+			dc_dest = (ylookup[yl] + x) * pixelsize + dc_destorg;
+			colfunc();
+		}
+	nextpost:
+		span++;
 	}
 }

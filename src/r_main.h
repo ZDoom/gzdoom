@@ -110,22 +110,6 @@ extern FColormap*		fixedcolormap;
 extern FSpecialColormap*realfixedcolormap;
 
 
-//
-// Function pointers to switch refresh/drawing functions.
-// Used to select shadow mode etc.
-//
-extern void 			(*colfunc) (void);
-extern void 			(*basecolfunc) (void);
-extern void 			(*fuzzcolfunc) (void);
-extern void				(*transcolfunc) (void);
-// No shadow effects on floors.
-extern void 			(*spanfunc) (void);
-
-// [RH] Function pointers for the horizontal column drawers.
-extern void (*hcolfunc_pre) (void);
-extern void (*hcolfunc_post1) (int hx, int sx, int yl, int yh);
-extern void (*hcolfunc_post2) (int hx, int sx, int yl, int yh);
-extern void (*hcolfunc_post4) (int sx, int yl, int yh);
 
 
 void R_InitTextureMapping ();

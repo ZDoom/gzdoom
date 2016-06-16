@@ -25,6 +25,11 @@
 
 #include "r_defs.h"
 
+// Prevents files outside the DrawerContext class getting good ideas about
+// accessing the private globals. Any drawer actions should be facilitated
+// via the DrawerContext class!
+#ifdef DRAWER_INTERNALS
+
 // Spectre/Invisibility.
 #define FUZZTABLE	50
 extern "C" int 	fuzzoffset[FUZZTABLE + 1];	// [RH] +1 for the assembly routine
@@ -71,6 +76,7 @@ extern "C" fixed_t		dc_destalpha;
 // first pixel in a column
 extern "C" const BYTE*	dc_source;
 
+extern DCanvas			*dc_canvas;
 extern "C" BYTE			*dc_dest, *dc_destorg;
 extern "C" int			dc_count;
 
@@ -85,6 +91,23 @@ extern "C" BYTE			*dc_temp;
 extern "C" unsigned int	dc_tspans[4][MAXHEIGHT];
 extern "C" unsigned int	*dc_ctspan[4];
 extern "C" unsigned int	horizspans[4];
+
+//
+// Function pointers to switch refresh/drawing functions.
+// Used to select shadow mode etc.
+//
+extern void 			(*colfunc) (void);
+extern void 			(*basecolfunc) (void);
+extern void 			(*fuzzcolfunc) (void);
+extern void				(*transcolfunc) (void);
+// No shadow effects on floors.
+extern void 			(*spanfunc) (void);
+
+// [RH] Function pointers for the horizontal column drawers.
+extern void (*hcolfunc_pre) (void);
+extern void (*hcolfunc_post1) (int hx, int sx, int yl, int yh);
+extern void (*hcolfunc_post2) (int hx, int sx, int yl, int yh);
+extern void (*hcolfunc_post4) (int sx, int yl, int yh);
 
 // [RH] Pointers to the different column and span drawers...
 
@@ -116,7 +139,7 @@ extern void (*R_DrawTranslatedColumn)(void);
 // Span drawing for rows, floor/ceiling. No Spectre effect needed.
 extern void (*R_DrawSpan)(void);
 void R_SetupSpanBits(FTexture *tex);
-void R_SetSpanColormap(FDynamicColormap *colormap, int shade);
+void R_SetSpanColormap();
 void R_SetSpanSource(const BYTE *pixels);
 
 // Span drawing for masked textures.
@@ -281,6 +304,15 @@ void	R_FillColumnP_C (void);
 void	R_FillColumnHorizP_C (void);
 void	R_FillSpan_C (void);
 
+// vars for R_DrawMaskedColumn
+extern short*			dc_mfloorclip;
+extern short*			dc_mceilingclip;
+extern double			dc_spryscale;
+extern double			dc_sprtopscreen;
+extern bool				dc_sprflipvert;
+
+void R_DrawMaskedColumn(int x, const BYTE *column, const FTexture::Span *spans);
+
 #ifdef X86_ASM
 #define R_SetupDrawSlab R_SetupDrawSlabA
 #define R_DrawSlab R_DrawSlabA
@@ -325,12 +357,7 @@ void R_InitShadeMaps();
 void R_InitFuzzTable (int fuzzoff);
 
 // [RH] Consolidate column drawer selection
-enum ESPSResult
-{
-	DontDraw,	// not useful to draw this
-	DoDraw0,	// draw this as if r_columnmethod is 0
-	DoDraw1,	// draw this as if r_columnmethod is 1
-};
+enum ESPSResult;
 ESPSResult R_SetPatchStyle (FRenderStyle style, fixed_t alpha, int translation, DWORD color);
 inline ESPSResult R_SetPatchStyle(FRenderStyle style, float alpha, int translation, DWORD color)
 {
@@ -353,18 +380,6 @@ extern void(*tmvline4_revsubclamp)();
 // transmaskwallscan calls this to find out what column drawers to use
 bool R_GetTransMaskDrawers (fixed_t (**tmvline1)(), void (**tmvline4)());
 
-// Retrieve column data for wallscan. Should probably be removed
-// to just use the texture's GetColumn() method. It just exists
-// for double-layer skies.
-const BYTE *R_GetColumn (FTexture *tex, int col);
-void wallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, const BYTE *(*getcol)(FTexture *tex, int col)=R_GetColumn);
-
-// maskwallscan is exactly like wallscan but does not draw anything where the texture is color 0.
-void maskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, const BYTE *(*getcol)(FTexture *tex, int col)=R_GetColumn);
-
-// transmaskwallscan is like maskwallscan, but it can also blend to the background
-void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, const BYTE *(*getcol)(FTexture *tex, int col)=R_GetColumn);
-
 // Sets dc_colormap and dc_light to their appropriate values depending on the output format (pal vs true color)
 void R_SetColorMapLight(FColormap *base_colormap, float light, int shade);
 
@@ -372,5 +387,41 @@ void R_SetColorMapLight(FColormap *base_colormap, float light, int shade);
 void R_SetDSColorMapLight(FColormap *base_colormap, float light, int shade);
 
 void R_SetTranslationMap(lighttable_t *translation);
+
+// Retrieve column data for wallscan. Should probably be removed
+// to just use the texture's GetColumn() method. It just exists
+// for double-layer skies.
+const BYTE *R_GetColumn (FTexture *tex, int col);
+void wallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, FTexture *rw_pic, fixed_t rw_offset, const BYTE *(*getcol)(FTexture *tex, int col)=R_GetColumn);
+
+// maskwallscan is exactly like wallscan but does not draw anything where the texture is color 0.
+void maskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, FTexture *rw_pic, fixed_t rw_offset, const BYTE *(*getcol)(FTexture *tex, int col)=R_GetColumn);
+
+// transmaskwallscan is like maskwallscan, but it can also blend to the background
+void transmaskwallscan (int x1, int x2, short *uwal, short *dwal, float *swal, fixed_t *lwal, double yrepeat, FTexture *rw_pic, fixed_t rw_offset, const BYTE *(*getcol)(FTexture *tex, int col)=R_GetColumn);
+
+extern void(*R_DrawColoredSpan)(int y, int x1, int x2);
+extern void(*R_DrawTiltedSpan)(int y, int x1, int x2);
+
+void R_DrawTiltedSpan_C(int y, int x1, int x2);
+void R_DrawTiltedSpan_rgba(int y, int x1, int x2);
+void R_DrawColoredSpan_C(int y, int x1, int x2);
+void R_DrawColoredSpan_rgba(int y, int x1, int x2);
+
+extern FVector3 ds_plane_sz, ds_plane_su, ds_plane_sv;
+extern bool ds_plane_shade;
+extern float ds_planelightfloat;
+extern fixed_t ds_pviewx, ds_pviewy;
+extern int ds_planeshade;
+
+extern "C" BYTE *tiltlighting[MAXWIDTH];
+extern "C" { void R_CalcTiltedLighting(double lval, double lend, int width); }
+
+struct vissprite_t;
+extern void(*R_FillTransColumn)(int x, int y1, int y2, int color, int alpha);
+void R_FillTransColumn_C(int x, int y1, int y2, int color, int alpha);
+void R_FillTransColumn_rgba(int x, int y1, int y2, int color, int alpha);
+
+#endif
 
 #endif

@@ -21,6 +21,8 @@
 //
 //-----------------------------------------------------------------------------
 
+#define DRAWER_INTERNALS
+
 #include <stddef.h>
 
 #include "templates.h"
@@ -3492,6 +3494,158 @@ public:
 	}
 };
 
+class DrawTiltedSpanRGBACommand : public DrawerCommand
+{
+	int _y;
+	int _x1;
+	int _x2;
+	BYTE *dc_destorg;
+	fixed_t dc_light;
+	ShadeConstants dc_shade_constants;
+	const BYTE *ds_source;
+
+public:
+	DrawTiltedSpanRGBACommand(int y, int x1, int x2)
+	{
+		_y = y;
+		_x1 = x1;
+		_x2 = x2;
+
+		dc_destorg = ::dc_destorg;
+		ds_source = ::ds_source;
+	}
+
+	void Execute(DrawerThread *thread) override
+	{
+		if (thread->line_skipped_by_thread(_y))
+			return;
+
+		int y = _y;
+		int x1 = _x1;
+		int x2 = _x2;
+
+		// Slopes are broken currently in master.
+		// Until R_DrawTiltedPlane is fixed we are just going to fill with a solid color.
+
+		uint32_t *source = (uint32_t*)ds_source;
+		uint32_t *dest = ylookup[y] + x1 + (uint32_t*)dc_destorg;
+
+		int count = x2 - x1 + 1;
+		while (count > 0)
+		{
+			*(dest++) = source[0];
+			count--;
+		}
+	}
+};
+
+class DrawColoredSpanRGBACommand : public DrawerCommand
+{
+	int _y;
+	int _x1;
+	int _x2;
+	BYTE *dc_destorg;
+	fixed_t ds_light;
+	int ds_color;
+
+public:
+	DrawColoredSpanRGBACommand(int y, int x1, int x2)
+	{
+		_y = y;
+		_x1 = x1;
+		_x2 = x2;
+
+		dc_destorg = ::dc_destorg;
+		ds_light = ::ds_light;
+		ds_color = ::ds_color;
+	}
+
+	void Execute(DrawerThread *thread) override
+	{
+		if (thread->line_skipped_by_thread(_y))
+			return;
+
+		int y = _y;
+		int x1 = _x1;
+		int x2 = _x2;
+
+		uint32_t *dest = ylookup[y] + x1 + (uint32_t*)dc_destorg;
+		int count = (x2 - x1 + 1);
+		uint32_t light = calc_light_multiplier(ds_light);
+		uint32_t color = shade_pal_index_simple(ds_color, light);
+		for (int i = 0; i < count; i++)
+			dest[i] = color;
+	}
+};
+
+class FillTransColumnRGBACommand : public DrawerCommand
+{
+	int _x;
+	int _y1;
+	int _y2;
+	int _color;
+	int _a;
+	BYTE *dc_destorg;
+	int dc_pitch;
+	fixed_t ds_light;
+	int ds_color;
+
+public:
+	FillTransColumnRGBACommand(int x, int y1, int y2, int color, int a)
+	{
+		_x = x;
+		_y1 = y1;
+		_y2 = y2;
+		_color = color;
+		_a = a;
+
+		dc_destorg = ::dc_destorg;
+		dc_pitch = ::dc_pitch;
+	}
+
+	void Execute(DrawerThread *thread) override
+	{
+		int x = _x;
+		int y1 = _y1;
+		int y2 = _y2;
+		int color = _color;
+		int a = _a;
+
+		int ycount = thread->count_for_thread(y1, y2 - y1 + 1);
+		if (ycount <= 0)
+			return;
+
+		uint32_t fg = GPalette.BaseColors[color].d;
+		uint32_t fg_red = (fg >> 16) & 0xff;
+		uint32_t fg_green = (fg >> 8) & 0xff;
+		uint32_t fg_blue = fg & 0xff;
+
+		uint32_t alpha = a + 1;
+		uint32_t inv_alpha = 256 - alpha;
+
+		fg_red *= alpha;
+		fg_green *= alpha;
+		fg_blue *= alpha;
+
+		int spacing = dc_pitch * thread->num_cores;
+		uint32_t *dest = thread->dest_for_thread(y1, dc_pitch, ylookup[y1] + x + (uint32_t*)dc_destorg);
+
+		for (int y = 0; y < ycount; y++)
+		{
+			uint32_t bg_red = (*dest >> 16) & 0xff;
+			uint32_t bg_green = (*dest >> 8) & 0xff;
+			uint32_t bg_blue = (*dest) & 0xff;
+
+			uint32_t red = (fg_red + bg_red * inv_alpha) / 256;
+			uint32_t green = (fg_green + bg_green * inv_alpha) / 256;
+			uint32_t blue = (fg_blue + bg_blue * inv_alpha) / 256;
+
+			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
+			dest += spacing;
+		}
+	}
+};
+
 ApplySpecialColormapRGBACommand::ApplySpecialColormapRGBACommand(FSpecialColormap *colormap, DFrameBuffer *screen)
 {
 	buffer = screen->GetBuffer();
@@ -3967,4 +4121,19 @@ void R_DrawFogBoundary_rgba(int x1, int x2, short *uclip, short *dclip)
 	{
 		R_DrawFogBoundarySection_rgba(t2, b2, x1);
 	}
+}
+
+void R_DrawTiltedSpan_rgba(int y, int x1, int x2)
+{
+	DrawerCommandQueue::QueueCommand<DrawTiltedSpanRGBACommand>(y, x1, x2);
+}
+
+void R_DrawColoredSpan_rgba(int y, int x1, int x2)
+{
+	DrawerCommandQueue::QueueCommand<DrawColoredSpanRGBACommand>(y, x1, x2);
+}
+
+void R_FillTransColumn_rgba(int x, int y1, int y2, int color, int a)
+{
+	DrawerCommandQueue::QueueCommand<FillTransColumnRGBACommand>(x, y1, y2, color, a);
 }

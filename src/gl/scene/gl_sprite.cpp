@@ -239,7 +239,9 @@ void GLSprite::Draw(int pass)
 			secplane_t *topplane = i == 0 ? &topp : &(*lightlist)[i].plane;
 			secplane_t *lowplane = i == (*lightlist).Size() - 1 ? &bottomp : &(*lightlist)[i + 1].plane;
 
-			int thisll = (*lightlist)[i].caster != NULL ? gl_ClampLight(*(*lightlist)[i].p_lightlevel) : lightlevel;
+			int thislight = (*lightlist)[i].caster != NULL ? gl_ClampLight(*(*lightlist)[i].p_lightlevel) : lightlevel;
+			int thisll = (byte)gl_CheckSpriteGlow(actor->Sector, thislight, actor->InterpolatedPosition(r_TicFracF));
+
 			FColormap thiscm;
 			thiscm.FadeColor = Colormap.FadeColor;
 			thiscm.CopyFrom3DLight(&(*lightlist)[i]);
@@ -249,6 +251,10 @@ void GLSprite::Draw(int pass)
 			}
 
 			gl_SetColor(thisll, rel, thiscm, trans);
+			if (!foglayer)
+			{
+				gl_SetFog(thislight, rel, &thiscm, additivefog);
+			}
 			gl_RenderState.SetSplitPlanes(*topplane, *lowplane);
 		}
 		else if (clipping)
@@ -930,7 +936,7 @@ void GLSprite::ProcessParticle (particle_t *particle, sector_t *sector)//, int s
 
 	lightlevel = gl_ClampLight(sector->GetTexture(sector_t::ceiling) == skyflatnum ? 
 		sector->GetCeilingLight() : sector->GetFloorLight());
-	foglevel = sector->lightlevel;
+	foglevel = (BYTE)clamp<short>(sector->lightlevel, 0, 255);
 
 	if (gl_fixedcolormap) 
 	{

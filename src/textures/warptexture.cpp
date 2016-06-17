@@ -93,6 +93,18 @@ const BYTE *FWarpTexture::GetPixels ()
 	return Pixels;
 }
 
+const uint32_t *FWarpTexture::GetPixelsBgra()
+{
+	DWORD time = r_FrameTime;
+
+	if (Pixels == NULL || time != GenTime)
+	{
+		MakeTexture(time);
+		PixelsBgra.clear();
+	}
+	return FTexture::GetPixelsBgra();
+}
+
 const BYTE *FWarpTexture::GetColumn (unsigned int column, const Span **spans_out)
 {
 	DWORD time = r_FrameTime;

@@ -484,6 +484,7 @@ public:
 	virtual int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate=0, FCopyInfo *inf = NULL);
 	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
 	const BYTE *GetPixels ();
+	const uint32_t *GetPixelsBgra() override;
 	void Unload ();
 	bool CheckModified ();
 

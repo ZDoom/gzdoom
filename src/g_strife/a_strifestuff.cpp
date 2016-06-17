@@ -352,7 +352,14 @@ DEFINE_ACTION_FUNCTION(AActor, A_ItBurnsItBurns)
 
 	if (self->player != nullptr && self->player->mo == self)
 	{
-		P_SetPsprite(self->player, PSP_STRIFEHANDS, self->FindState("FireHands"));
+		DPSprite *psp = self->player->GetPSprite(PSP_STRIFEHANDS);
+		if (psp != nullptr)
+		{
+			psp->SetState(self->FindState("FireHands"));
+			psp->Flags &= PSPF_ADDWEAPON | PSPF_ADDBOB;
+			psp->y = WEAPONTOP;
+		}
+
 		self->player->ReadyWeapon = nullptr;
 		self->player->PendingWeapon = WP_NOCHANGE;
 		self->player->playerstate = PST_LIVE;

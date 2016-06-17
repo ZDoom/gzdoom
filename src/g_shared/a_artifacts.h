@@ -182,6 +182,7 @@ protected:
 	void EndEffect ();
 	void PositionAccuracy ();
 	void Travelled ();
+	void AttachToOwner(AActor *other);
 	bool HandlePickup(AInventory *item);
 };
 

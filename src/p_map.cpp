@@ -4610,6 +4610,8 @@ struct RailData
 	bool ThruSpecies;
 	bool MThruSpecies;
 	bool ThruActors;
+	int limit;
+	int count;
 };
 
 static ETraceStatus ProcessRailHit(FTraceResults &res, void *userdata)
@@ -4664,7 +4666,11 @@ static ETraceStatus ProcessRailHit(FTraceResults &res, void *userdata)
 	}
 	data->RailHits.Push(newhit);
 
-	return data->StopAtOne ? TRACE_Stop : TRACE_Continue;
+	if (data->limit)
+	{
+		data->count++;
+	}
+	return (data->StopAtOne || (data->limit && (data->count >= data->limit))) ? TRACE_Stop : TRACE_Continue;
 }
 
 //==========================================================================
@@ -4706,7 +4712,8 @@ void P_RailAttack(FRailParams *p)
 
 	RailData rail_data;
 	rail_data.Caller = source;
-	
+	rail_data.limit = p->limit;
+	rail_data.count = 0;
 	rail_data.StopAtOne = !!(p->flags & RAF_NOPIERCE);
 	start.X = xy.X;
 	start.Y = xy.Y;

@@ -2916,7 +2916,7 @@ ExpEmit FxDamage::Emit(VMFunctionBuilder *build)
 	build->Emit(OP_LO, dmgfunc.RegNum, 0/*self*/, build->GetConstantInt(myoffsetof(AActor, Damage)));
 
 	// If it's non-null...
-	build->Emit(OP_EQA_K, 1, dmgfunc.RegNum, build->GetConstantAddress(0, ATAG_GENERIC));
+	build->Emit(OP_EQA_K, 1, dmgfunc.RegNum, build->GetConstantAddress(nullptr, ATAG_GENERIC));
 	size_t nulljump = build->Emit(OP_JMP, 0);
 
 	// ...call it

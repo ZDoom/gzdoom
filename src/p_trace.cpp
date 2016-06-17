@@ -434,7 +434,7 @@ bool FTraceInfo::LineCheck(intercept_t *in, double dist, DVector3 hit)
 	sector_t *hsec = CurSector->GetHeightSec();
 	if (Results->CrossedWater == NULL &&
 		hsec != NULL &&
-		//CurSector->heightsec->waterzone &&
+		Start.Z > hsec->floorplane.ZatPoint(Start) &&
 		hit.Z <= hsec->floorplane.ZatPoint(hit))
 	{
 		// hit crossed a water plane
@@ -846,6 +846,7 @@ bool FTraceInfo::TraceTraverse (int ptflags)
 
 	if (Results->CrossedWater == NULL &&
 		CurSector->heightsec != NULL &&
+		CurSector->heightsec->floorplane.ZatPoint(Start) < Start.Z &&
 		CurSector->heightsec->floorplane.ZatPoint(Results->HitPos) >= Results->HitPos.Z)
 	{
 		// Save the result so that the water check doesn't destroy it.

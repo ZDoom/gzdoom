@@ -216,10 +216,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_ClearFlash)
 
 	player_t *player = self->player;
 
-	if (player == NULL)
+	if (player == nullptr)
 		return 0;
 
-	P_SetPsprite (player, ps_flash, NULL);
+	P_SetPsprite (player, PSP_FLASH, nullptr);
 	return 0;
 }
 
@@ -233,9 +233,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_ShowElectricFlash)
 {
 	PARAM_ACTION_PROLOGUE;
 
-	if (self->player != NULL)
+	if (self->player != nullptr)
 	{
-		P_SetPsprite (self->player, ps_flash, self->player->ReadyWeapon->FindState(NAME_Flash));
+		P_SetPsprite (self->player, PSP_FLASH, self->player->ReadyWeapon->FindState(NAME_Flash));
 	}
 	return 0;
 }
@@ -498,10 +498,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMauler2Pre)
 
 	S_Sound (self, CHAN_WEAPON, "weapons/mauler2charge", 1, ATTN_NORM);
 
-	if (self->player != NULL)
+	if (self->player != nullptr)
 	{
-		self->player->psprites[ps_weapon].sx += pr_mauler2.Random2() / 64.;
-		self->player->psprites[ps_weapon].sy += pr_mauler2.Random2() / 64.;
+		self->player->GetPSprite(PSP_WEAPON)->x += pr_mauler2.Random2() / 64.;
+		self->player->GetPSprite(PSP_WEAPON)->y += pr_mauler2.Random2() / 64.;
 	}
 	return 0;
 }
@@ -698,24 +698,23 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireGrenade)
 	DAngle an;
 	AWeapon *weapon;
 
-	if (player == NULL || grenadetype == NULL)
+	if (player == nullptr || grenadetype == nullptr)
 		return 0;
 
-	if ((weapon = player->ReadyWeapon) == NULL)
+	if ((weapon = player->ReadyWeapon) == nullptr)
 		return 0;
 
 	if (!weapon->DepleteAmmo (weapon->bAltFire))
 		return 0;
 
-	P_SetPsprite (player, ps_flash, flash);
-	self->player->psprites[ps_flash].processPending = true;
+	P_SetPsprite (player, PSP_FLASH, flash, true);
 
-	if (grenadetype != NULL)
+	if (grenadetype != nullptr)
 	{
 		self->AddZ(32);
 		grenade = P_SpawnSubMissile (self, grenadetype, self);
 		self->AddZ(-32);
-		if (grenade == NULL)
+		if (grenade == nullptr)
 			return 0;
 
 		if (grenade->SeeSound != 0)
@@ -849,15 +848,16 @@ DEFINE_ACTION_FUNCTION(AActor, A_SelectSigilView)
 {
 	PARAM_ACTION_PROLOGUE;
 
+	DPSprite *pspr;
 	int pieces;
 
-	if (self->player == NULL)
+	if (self->player == nullptr)
 	{
 		return 0;
 	}
 	pieces = static_cast<ASigil*>(self->player->ReadyWeapon)->NumPieces;
-	P_SetPsprite (self->player, ps_weapon,
-		self->player->psprites[ps_weapon].state + pieces);
+	pspr = self->player->GetPSprite(PSP_WEAPON);
+	pspr->SetState(pspr->GetState() + pieces);
 	return 0;
 }
 
@@ -875,9 +875,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_SelectSigilDown)
 {
 	PARAM_ACTION_PROLOGUE;
 
+	DPSprite *pspr;
 	int pieces;
 
-	if (self->player == NULL)
+	if (self->player == nullptr)
 	{
 		return 0;
 	}
@@ -887,8 +888,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_SelectSigilDown)
 	{
 		pieces = static_cast<ASigil*>(self->player->ReadyWeapon)->NumPieces;
 	}
-	P_SetPsprite (self->player, ps_weapon,
-		self->player->psprites[ps_weapon].state + pieces);
+	pspr = self->player->GetPSprite(PSP_WEAPON);
+	pspr->SetState(pspr->GetState() + pieces);
 	return 0;
 }
 
@@ -904,15 +905,16 @@ DEFINE_ACTION_FUNCTION(AActor, A_SelectSigilAttack)
 {
 	PARAM_ACTION_PROLOGUE;
 
+	DPSprite *pspr;
 	int pieces;
 
-	if (self->player == NULL)
+	if (self->player == nullptr)
 	{
 		return 0;
 	}
 	pieces = static_cast<ASigil*>(self->player->ReadyWeapon)->NumPieces;
-	P_SetPsprite (self->player, ps_weapon,
-		self->player->psprites[ps_weapon].state + 4*pieces - 3);
+	pspr = self->player->GetPSprite(PSP_WEAPON);
+	pspr->SetState(pspr->GetState() + 4*pieces - 3);
 	return 0;
 }
 

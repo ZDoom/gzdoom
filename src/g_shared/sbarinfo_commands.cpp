@@ -2786,7 +2786,7 @@ class CommandDrawBar : public SBarInfoCommand
 				// [BL] Since we used a percentage (in order to get the most fluid animation)
 				//      we need to establish a cut off point so the last pixel won't hang as the animation slows
 				if(pixel == -1 && statusBar->Images[foreground])
-					pixel = MAX(1., 1./statusBar->Images[foreground]->GetWidth());
+					pixel = MAX(1 / 65536., 1./statusBar->Images[foreground]->GetWidth());
 
 				if(fabs(drawValue - value) < pixel)
 					drawValue = value;

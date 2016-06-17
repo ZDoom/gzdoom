@@ -70,13 +70,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckReady)
 
 	player_t *player;
 
-	if (NULL == (player = self->player))
+	if (nullptr == (player = self->player))
 	{
 		return 0;
 	}
 	if (player->ReadyWeapon->Ammo1->Amount)
 	{
-		P_SetPsprite (player, ps_weapon, player->ReadyWeapon->FindState ("ReadyGlow"));
+		P_SetPsprite(player, PSP_WEAPON, player->ReadyWeapon->FindState ("ReadyGlow"));
 	}
 	else
 	{
@@ -97,13 +97,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckReadyG)
 
 	player_t *player;
 
-	if (NULL == (player = self->player))
+	if (nullptr == (player = self->player))
 	{
 		return 0;
 	}
 	if (player->ReadyWeapon->Ammo1->Amount <= 0)
 	{
-		P_SetPsprite (player, ps_weapon, player->ReadyWeapon->FindState ("Ready"));
+		P_SetPsprite(player, PSP_WEAPON, player->ReadyWeapon->FindState ("Ready"));
 	}
 	else
 	{
@@ -124,13 +124,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckUp)
 
 	player_t *player;
 
-	if (NULL == (player = self->player))
+	if (nullptr == (player = self->player))
 	{
 		return 0;
 	}
 	if (player->ReadyWeapon->Ammo1->Amount)
 	{
-		P_SetPsprite (player, ps_weapon, player->ReadyWeapon->FindState ("SelectGlow"));
+		P_SetPsprite(player, PSP_WEAPON, player->ReadyWeapon->FindState ("SelectGlow"));
 	}
 	else
 	{
@@ -151,13 +151,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckUpG)
 
 	player_t *player;
 
-	if (NULL == (player = self->player))
+	if (nullptr == (player = self->player))
 	{
 		return 0;
 	}
 	if (player->ReadyWeapon->Ammo1->Amount <= 0)
 	{
-		P_SetPsprite (player, ps_weapon, player->ReadyWeapon->FindState ("Select"));
+		P_SetPsprite(player, PSP_WEAPON, player->ReadyWeapon->FindState ("Select"));
 	}
 	else
 	{
@@ -178,13 +178,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeCheckAtk)
 
 	player_t *player;
 
-	if (NULL == (player = self->player))
+	if (nullptr == (player = self->player))
 	{
 		return 0;
 	}
 	if (player->ReadyWeapon->Ammo1->Amount)
 	{
-		P_SetPsprite (player, ps_weapon, player->ReadyWeapon->FindState ("FireGlow"));
+		P_SetPsprite(player, PSP_WEAPON, player->ReadyWeapon->FindState ("FireGlow"));
 	}
 	return 0;
 }
@@ -210,7 +210,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeAttack)
 	PClassActor *pufftype;
 	FTranslatedLineTarget t;
 
-	if (NULL == (player = self->player))
+	if (nullptr == (player = self->player))
 	{
 		return 0;
 	}
@@ -241,7 +241,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FAxeAttack)
 			if (t.linetarget)
 			{
 				P_LineAttack(pmo, angle, AXERANGE, slope, damage, NAME_Melee, pufftype, true, &t);
-				if (t.linetarget != NULL)
+				if (t.linetarget != nullptr)
 				{
 					if (t.linetarget->flags3&MF3_ISMONSTER || t.linetarget->player)
 					{
@@ -265,15 +265,15 @@ axedone:
 	if (useMana == 2)
 	{
 		AWeapon *weapon = player->ReadyWeapon;
-		if (weapon != NULL)
+		if (weapon != nullptr)
 		{
 			weapon->DepleteAmmo (weapon->bAltFire, false);
 
-			if ((weapon->Ammo1 == NULL || weapon->Ammo1->Amount == 0) &&
+			if ((weapon->Ammo1 == nullptr || weapon->Ammo1->Amount == 0) &&
 				(!(weapon->WeaponFlags & WIF_PRIMARY_USES_BOTH) ||
-				  weapon->Ammo2 == NULL || weapon->Ammo2->Amount == 0))
+				  weapon->Ammo2 == nullptr || weapon->Ammo2->Amount == 0))
 			{
-				P_SetPsprite (player, ps_weapon, player->ReadyWeapon->FindState ("Fire") + 5);
+				P_SetPsprite(player, PSP_WEAPON, player->ReadyWeapon->FindState ("Fire") + 5);
 			}
 		}
 	}

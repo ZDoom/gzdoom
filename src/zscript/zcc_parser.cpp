@@ -153,7 +153,7 @@ static void InitTokenMap()
 	TOKENDEF (TK_NoDelay,		ZCC_NODELAY);
 	TOKENDEF (TK_Offset,		ZCC_OFFSET);
 	TOKENDEF (TK_CanRaise,		ZCC_CANRAISE);
-	TOKENDEF (TK_Light,			ZCC_CANRAISE);
+	TOKENDEF (TK_Light,			ZCC_LIGHT);
 
 	ZCC_InitOperators();
 	ZCC_InitConversions();

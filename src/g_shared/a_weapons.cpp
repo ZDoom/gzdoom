@@ -608,15 +608,18 @@ bool AWeapon::DepleteAmmo (bool altFire, bool checkEnough, int ammouse)
 
 void AWeapon::PostMorphWeapon ()
 {
-	if (Owner == NULL)
+	DPSprite *pspr;
+	if (Owner == nullptr)
 	{
 		return;
 	}
 	Owner->player->PendingWeapon = WP_NOCHANGE;
 	Owner->player->ReadyWeapon = this;
-	Owner->player->psprites[ps_weapon].sy = WEAPONBOTTOM;
 	Owner->player->refire = 0;
-	P_SetPsprite (Owner->player, ps_weapon, GetUpState());
+
+	pspr = Owner->player->GetPSprite(PSP_WEAPON);
+	pspr->y = WEAPONBOTTOM;
+	pspr->SetState(GetUpState());
 }
 
 //===========================================================================

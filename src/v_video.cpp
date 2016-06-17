@@ -445,7 +445,7 @@ void DCanvas::GetScreenshotBuffer(const BYTE *&buffer, int &pitch, ESSType &colo
 {
 	Lock(true);
 	buffer = GetBuffer();
-	pitch = GetPitch();
+	pitch = IsBgra() ? GetPitch() * 4 : GetPitch();
 	color_type = IsBgra() ? SS_BGRA : SS_PAL;
 }
 

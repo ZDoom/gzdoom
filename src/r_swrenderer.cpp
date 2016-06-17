@@ -394,6 +394,8 @@ void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoin
 		}
 	}
 
+	tex->SetUpdated();
+
 	fixedcolormap = savecolormap;
 	realfixedcolormap = savecm;
 }

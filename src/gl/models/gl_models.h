@@ -371,7 +371,7 @@ FSpriteModelFrame * gl_FindModelFrame(const PClass * ti, int sprite, int frame, 
 
 void gl_RenderModel(GLSprite * spr);
 // [BB] HUD weapon model rendering functions.
-void gl_RenderHUDModel(pspdef_t *psp, float ofsx, float ofsy);
+void gl_RenderHUDModel(DPSprite *psp, float ofsx, float ofsy);
 bool gl_IsHUDModelForPlayerAvailable (player_t * player);
 
 

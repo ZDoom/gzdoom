@@ -71,7 +71,7 @@ EXTERN_CVAR (Bool, r_deathcamera)
 //
 //==========================================================================
 
-void FGLRenderer::DrawPSprite (player_t * player,pspdef_t *psp, float sx, float sy, bool hudModelStep, int OverrideShader, bool alphatexture)
+void FGLRenderer::DrawPSprite (player_t * player,DPSprite *psp, float sx, float sy, bool hudModelStep, int OverrideShader, bool alphatexture)
 {
 	float			fU1,fV1;
 	float			fU2,fV2;
@@ -86,13 +86,13 @@ void FGLRenderer::DrawPSprite (player_t * player,pspdef_t *psp, float sx, float 
 	// [BB] In the HUD model step we just render the model and break out. 
 	if ( hudModelStep )
 	{
-		gl_RenderHUDModel( psp, sx, sy);
+		gl_RenderHUDModel(psp, sx, sy);
 		return;
 	}
 
 	// decide which patch to use
 	bool mirror;
-	FTextureID lump = gl_GetSpriteFrame(psp->sprite, psp->frame, 0, 0, &mirror);
+	FTextureID lump = gl_GetSpriteFrame(psp->GetSprite(), psp->GetFrame(), 0, 0, &mirror);
 	if (!lump.isValid()) return;
 
 	FMaterial * tex = FMaterial::ValidateTexture(lump, true, false);
@@ -176,6 +176,29 @@ void FGLRenderer::DrawPSprite (player_t * player,pspdef_t *psp, float sx, float 
 
 //==========================================================================
 //
+//
+//
+//==========================================================================
+
+static bool isBright(DPSprite *psp)
+{
+	if (psp != nullptr && psp->GetState() != nullptr)
+	{
+		bool disablefullbright = false;
+		FTextureID lump = gl_GetSpriteFrame(psp->GetSprite(), psp->GetFrame(), 0, 0, NULL);
+		if (lump.isValid())
+		{
+			FMaterial * tex = FMaterial::ValidateTexture(lump, false, false);
+			if (tex)
+				disablefullbright = tex->tex->gl_info.bDisableFullbright;
+		}
+		return psp->GetState()->GetFullbright() && !disablefullbright;
+	}
+	return false;
+}
+
+//==========================================================================
+//
 // R_DrawPlayerSprites
 //
 //==========================================================================
@@ -184,11 +207,9 @@ EXTERN_CVAR(Bool, gl_brightfog)
 
 void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 {
-	bool statebright[2] = {false, false};
+	bool brightflash = false;
 	unsigned int i;
-	pspdef_t *psp;
 	int lightlevel=0;
-	float ofsx, ofsy;
 	FColormap cm;
 	sector_t * fakesec, fs;
 	AActor * playermo=players[consoleplayer].camera;
@@ -202,33 +223,35 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 		(r_deathcamera && camera->health <= 0))
 		return;
 
-	P_BobWeapon (player, &player->psprites[ps_weapon], &ofsx, &ofsy, r_TicFracF);
+	float bobx, boby, wx, wy;
+	DPSprite *weapon;
 
-	// check for fullbright
-	if (player->fixedcolormap==NOFIXEDCOLORMAP)
+	P_BobWeapon(camera->player, &bobx, &boby, r_TicFracF);
+
+	// Interpolate the main weapon layer once so as to be able to add it to other layers.
+	if ((weapon = camera->player->FindPSprite(PSP_WEAPON)) != nullptr)
 	{
-		for (i = 0, psp = player->psprites; i <= ps_flash; i++, psp++)
+		if (weapon->firstTic)
 		{
-			if (psp->state != NULL)
-			{
-				bool disablefullbright = false;
-				FTextureID lump = gl_GetSpriteFrame(psp->sprite, psp->frame, 0, 0, NULL);
-				if (lump.isValid())
-				{
-					FMaterial * tex=FMaterial::ValidateTexture(lump, false, false);
-					if (tex)
-						disablefullbright = tex->tex->gl_info.bDisableFullbright;
-				}
-				statebright[i] = !!psp->state->GetFullbright() && !disablefullbright;
-			}
+			wx = weapon->x;
+			wy = weapon->y;
 		}
+		else
+		{
+			wx = weapon->oldx + (weapon->x - weapon->oldx) * r_TicFracF;
+			wy = weapon->oldy + (weapon->y - weapon->oldy) * r_TicFracF;
+		}
+	}
+	else
+	{
+		wx = 0;
+		wy = 0;
 	}
 
 	if (gl_fixedcolormap) 
 	{
 		lightlevel=255;
 		cm.Clear();
-		statebright[0] = statebright[1] = true;
 		fakesec = viewsector;
 	}
 	else
@@ -237,20 +260,6 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 
 		// calculate light level for weapon sprites
 		lightlevel = gl_ClampLight(fakesec->lightlevel);
-		if (glset.lightmode == 8)
-		{
-			lightlevel = gl_CalcLightLevel(lightlevel, getExtraLight(), true);
-
-			// Korshun: the way based on max possible light level for sector like in software renderer.
-			float min_L = 36.0/31.0 - ((lightlevel/255.0) * (63.0/31.0)); // Lightlevel in range 0-63
-			if (min_L < 0)
-				min_L = 0;
-			else if (min_L > 1.0)
-				min_L = 1.0;
-
-			lightlevel = (1.0 - min_L) * 255;
-		}
-		lightlevel = gl_CheckSpriteGlow(viewsector, lightlevel, playermo->Pos());
 
 		// calculate colormap for weapon sprites
 		if (viewsector->e->XFloor.ffloors.Size() && !glset.nocoloredspritelighting)
@@ -282,8 +291,27 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 			cm=fakesec->ColorMap;
 			if (glset.nocoloredspritelighting) cm.ClearColor();
 		}
-	}
 
+		lightlevel = gl_CalcLightLevel(lightlevel, getExtraLight(), true);
+
+		if (glset.lightmode == 8)
+		{
+			// Korshun: the way based on max possible light level for sector like in software renderer.
+			float min_L = 36.0 / 31.0 - ((lightlevel / 255.0) * (63.0 / 31.0)); // Lightlevel in range 0-63
+			if (min_L < 0)
+				min_L = 0;
+			else if (min_L > 1.0)
+				min_L = 1.0;
+
+			lightlevel = (1.0 - min_L) * 255;
+		}
+		else
+		{
+			lightlevel = (2 * lightlevel + 255) / 3;
+		}
+		lightlevel = gl_CheckSpriteGlow(viewsector, lightlevel, playermo->Pos());
+
+	}
 	
 	// Korshun: fullbright fog in opengl, render weapon sprites fullbright (but don't cancel out the light color!)
 	if (glset.brightfog && ((level.flags&LEVEL_HASFADETABLE) || cm.FadeColor != 0))
@@ -332,7 +360,6 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 				vis.RenderStyle.BlendOp = STYLEOP_Shadow;
 			}
 		}
-		statebright[0] = statebright[1] = false;
 	}
 
 	gl_SetRenderStyle(vis.RenderStyle, false, false);
@@ -356,24 +383,19 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_sprite_threshold);
 	gl_RenderState.BlendEquation(GL_FUNC_ADD);
-	if (statebright[0] || statebright[1])
-	{
-		// brighten the weapon to reduce the difference between
-		// normal sprite and fullbright flash.
-		if (glset.lightmode != 8) lightlevel = (2*lightlevel+255)/3;
-	}
-	
+
 	// hack alert! Rather than changing everything in the underlying lighting code let's just temporarily change
 	// light mode here to draw the weapon sprite.
 	int oldlightmode = glset.lightmode;
 	if (glset.lightmode == 8) glset.lightmode = 2;
-	
-	for (i=0, psp=player->psprites; i<=ps_flash; i++,psp++)
+
+	for(DPSprite *psp = player->psprites; psp != nullptr && psp->GetID() < PSP_TARGETCENTER; psp = psp->GetNext())
 	{
-		if (psp->state) 
+		if (psp->GetState() != nullptr) 
 		{
 			FColormap cmc = cm;
-			if (statebright[i]) 
+			int ll = lightlevel;
+			if (isBright(psp)) 
 			{
 				if (fakesec == viewsector || in_area != area_below)	
 				{
@@ -388,6 +410,7 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 					cmc.LightColor.g = (3*cmc.LightColor.g + 0xff)/4;
 					cmc.LightColor.b = (3*cmc.LightColor.b + 0xff)/4;
 				}
+				ll = 255;
 			}
 			// set the lighting parameters
 			if (vis.RenderStyle.BlendOp == STYLEOP_Shadow)
@@ -400,9 +423,33 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 				{
 					gl_SetDynSpriteLight(playermo, NULL);
 				}
-				gl_SetColor(statebright[i] ? 255 : lightlevel, 0, cmc, trans, true);
+				gl_SetColor(ll, 0, cmc, trans, true);
 			}
-			DrawPSprite(player, psp, psp->sx + ofsx, psp->sy + ofsy, hudModelStep, OverrideShader, !!(vis.RenderStyle.Flags & STYLEF_RedIsAlpha));
+
+			if (psp->firstTic)
+			{ // Can't interpolate the first tic.
+				psp->firstTic = false;
+				psp->oldx = psp->x;
+				psp->oldy = psp->y;
+			}
+
+			float sx = psp->oldx + (psp->x - psp->oldx) * r_TicFracF;
+			float sy = psp->oldy + (psp->y - psp->oldy) * r_TicFracF;
+
+			if (psp->Flags & PSPF_ADDBOB)
+			{
+				sx += bobx;
+				sy += boby;
+			}
+
+			if (psp->Flags & PSPF_ADDWEAPON && psp->GetID() != PSP_WEAPON)
+			{
+				sx += wx;
+				sy += wy;
+			}
+
+
+			DrawPSprite(player, psp, sx, sy, hudModelStep, OverrideShader, !!(vis.RenderStyle.Flags & STYLEF_RedIsAlpha));
 		}
 	}
 	gl_RenderState.SetObjectColor(0xffffffff);
@@ -419,8 +466,6 @@ void FGLRenderer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 
 void FGLRenderer::DrawTargeterSprites()
 {
-	int i;
-	pspdef_t *psp;
 	AActor * playermo=players[consoleplayer].camera;
 	player_t * player=playermo->player;
 	
@@ -435,6 +480,8 @@ void FGLRenderer::DrawTargeterSprites()
 	gl_RenderState.SetTextureMode(TM_MODULATE);
 
 	// The Targeter's sprites are always drawn normally.
-	for (i=ps_targetcenter, psp = &player->psprites[ps_targetcenter]; i<NUMPSPRITES; i++,psp++)
-		if (psp->state) DrawPSprite (player,psp,psp->sx, psp->sy, false, 0, false);
+	for (DPSprite *psp = player->FindPSprite(PSP_TARGETCENTER); psp != nullptr; psp = psp->GetNext())
+	{
+		if (psp->GetState() != nullptr) DrawPSprite(player, psp, psp->x, psp->y, false, 0, false);
+	}
 }

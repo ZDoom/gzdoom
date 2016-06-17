@@ -1019,10 +1019,10 @@ void gl_RenderModel(GLSprite * spr)
 //
 //===========================================================================
 
-void gl_RenderHUDModel(pspdef_t *psp, float ofsX, float ofsY)
+void gl_RenderHUDModel(DPSprite *psp, float ofsX, float ofsY)
 {
 	AActor * playermo=players[consoleplayer].camera;
-	FSpriteModelFrame *smf = gl_FindModelFrame(playermo->player->ReadyWeapon->GetClass(), psp->state->sprite, psp->state->GetFrame(), false);
+	FSpriteModelFrame *smf = gl_FindModelFrame(playermo->player->ReadyWeapon->GetClass(), psp->GetState()->sprite, psp->GetState()->GetFrame(), false);
 
 	// [BB] No model found for this sprite, so we can't render anything.
 	if ( smf == nullptr )
@@ -1062,7 +1062,7 @@ void gl_RenderHUDModel(pspdef_t *psp, float ofsX, float ofsY)
 	gl_RenderState.mViewMatrix.rotate(-smf->rolloffset, 1, 0, 0);
 	gl_RenderState.ApplyMatrices();
 
-	gl_RenderFrameModels( smf, psp->state, psp->tics, playermo->player->ReadyWeapon->GetClass(), nullptr, 0 );
+	gl_RenderFrameModels( smf, psp->GetState(), psp->GetTics(), playermo->player->ReadyWeapon->GetClass(), nullptr, 0 );
 
 	glDepthFunc(GL_LESS);
 	if (!( playermo->RenderStyle == LegacyRenderStyles[STYLE_Normal] ))
@@ -1077,10 +1077,11 @@ void gl_RenderHUDModel(pspdef_t *psp, float ofsX, float ofsY)
 
 bool gl_IsHUDModelForPlayerAvailable (player_t * player)
 {
-	if ( (player == nullptr) || (player->ReadyWeapon == nullptr) || (player->psprites[0].state == nullptr) )
+	DPSprite *psp = player->FindPSprite(PSP_WEAPON);
+	if ( (player == nullptr) || (player->ReadyWeapon == nullptr) || (psp->GetState() == nullptr) )
 		return false;
 
-	FState* state = player->psprites[0].state;
+	FState* state = psp->GetState();
 	FSpriteModelFrame *smf = gl_FindModelFrame(player->ReadyWeapon->GetClass(), state->sprite, state->GetFrame(), false);
 	return ( smf != nullptr );
 }

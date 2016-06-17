@@ -668,7 +668,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_BFGSpray)
 
 	// [XA] Set the originator of the rays to the projectile (self) if
 	//      the new flag is set, else set it to the player (self->target)
-	originator = (flags & BFGF_MISSILEORIGIN) ? self : self->target;
+	originator = (flags & BFGF_MISSILEORIGIN) ? self : (AActor *)(self->target);
 
 	// offset angles from its attack angle
 	for (i = 0; i < numrays; i++)

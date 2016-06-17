@@ -106,7 +106,7 @@ DEFINE_ACTION_FUNCTION_PARAMS (AActor, A_Blast)
 	AActor *mo;
 	TThinkerIterator<AActor> iterator;
 
-	if (self->player && (blastflags & BF_USEAMMO) && ACTION_CALL_FROM_WEAPON())
+	if (self->player && (blastflags & BF_USEAMMO) && ACTION_CALL_FROM_PSPRITE())
 	{
 		AWeapon *weapon = self->player->ReadyWeapon;
 		if (weapon != NULL && !weapon->DepleteAmmo(weapon->bAltFire))

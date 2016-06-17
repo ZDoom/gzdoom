@@ -370,7 +370,30 @@ void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoin
 			FTexture::FlipNonSquareBlockRemap(Pixels, Canvas->GetBuffer(), tex->GetWidth(), tex->GetHeight(), Canvas->GetPitch(), GPalette.Remap);
 		}
 	}
-	tex->SetUpdated();
+
+	if (r_swtruecolor)
+	{
+		// True color render still sometimes uses palette textures (for sprites, mostly).
+		// We need to make sure that both pixel buffers contain data:
+		int width = tex->GetWidth();
+		int height = tex->GetHeight();
+		BYTE *palbuffer = (BYTE *)tex->GetPixels();
+		uint32_t *bgrabuffer = (uint32_t*)tex->GetPixelsBgra();
+		for (int x = 0; x < width; x++)
+		{
+			for (int y = 0; y < height; y++)
+			{
+				uint32_t color = bgrabuffer[y];
+				int r = RPART(color);
+				int g = GPART(color);
+				int b = BPART(color);
+				palbuffer[y] = RGB32k.RGB[r >> 3][g >> 3][b >> 3];
+			}
+			palbuffer += height;
+			bgrabuffer += height;
+		}
+	}
+
 	fixedcolormap = savecolormap;
 	realfixedcolormap = savecm;
 }

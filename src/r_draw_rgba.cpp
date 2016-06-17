@@ -584,8 +584,8 @@ class DrawFuzzColumnRGBACommand : public DrawerCommand
 	int _yh;
 	BYTE *_destorg;
 	int _pitch;
-	int fuzzpos;
-	int fuzzviewheight;
+	int _fuzzpos;
+	int _fuzzviewheight;
 
 public:
 	DrawFuzzColumnRGBACommand()
@@ -595,8 +595,8 @@ public:
 		_yh = dc_yh;
 		_destorg = dc_destorg;
 		_pitch = dc_pitch;
-		fuzzpos = ::fuzzpos;
-		fuzzviewheight = ::fuzzviewheight;
+		_fuzzpos = fuzzpos;
+		_fuzzviewheight = fuzzviewheight;
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -609,8 +609,8 @@ public:
 			_yl = 1;
 
 		// .. and high.
-		if (_yh > fuzzviewheight)
-			_yh = fuzzviewheight;
+		if (_yh > _fuzzviewheight)
+			_yh = _fuzzviewheight;
 
 		count = thread->count_for_thread(_yl, _yh - _yl + 1);
 
@@ -622,7 +622,7 @@ public:
 
 		int pitch = _pitch * thread->num_cores;
 		int fuzzstep = thread->num_cores;
-		int fuzz = (fuzzpos + thread->skipped_by_thread(_yl)) % FUZZTABLE;
+		int fuzz = (_fuzzpos + thread->skipped_by_thread(_yl)) % FUZZTABLE;
 
 		while (count > 0)
 		{
@@ -640,9 +640,9 @@ public:
 				uint32_t bg_green = (bg >> 8) & 0xff;
 				uint32_t bg_blue = (bg) & 0xff;
 
-				uint32_t red = bg_red * 3 / 4;
-				uint32_t green = bg_green * 3 / 4;
-				uint32_t blue = bg_blue * 3 / 4;
+				uint32_t red = bg_red * 7 / 8;
+				uint32_t green = bg_green * 7 / 8;
+				uint32_t blue = bg_blue * 7 / 8;
 
 				*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
 				dest += pitch;
@@ -3896,7 +3896,13 @@ void R_FillRevSubClampColumn_rgba()
 void R_DrawFuzzColumn_rgba()
 {
 	DrawerCommandQueue::QueueCommand<DrawFuzzColumnRGBACommand>();
-	fuzzpos = (fuzzpos + dc_yh - dc_yl) % FUZZTABLE;
+
+	if (dc_yl == 0)
+		dc_yl = 1;
+	if (dc_yh > fuzzviewheight)
+		dc_yh = fuzzviewheight;
+
+	fuzzpos = (fuzzpos + dc_yh - dc_yl + 1) % FUZZTABLE;
 }
 
 void R_DrawAddColumn_rgba()

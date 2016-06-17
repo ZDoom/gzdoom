@@ -173,12 +173,12 @@ public:
 class DrawerCommand
 {
 protected:
-	int dc_dest_y;
+	int _dest_y;
 
 public:
 	DrawerCommand()
 	{
-		dc_dest_y = static_cast<int>((dc_dest - dc_destorg) / (dc_pitch * 4));
+		_dest_y = static_cast<int>((dc_dest - dc_destorg) / (dc_pitch * 4));
 	}
 
 	virtual void Execute(DrawerThread *thread) = 0;

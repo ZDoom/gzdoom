@@ -350,7 +350,7 @@ int MatchString (const char *in, const char **strings);
 //#define PUSH_PARAMINFO self, stateowner, CallingState, ParameterIndex, statecall
 
 #define CALL_ACTION(name,self) { /*AF_##name(self, self, NULL, 0, NULL)*/ \
-		VMValue params[3] = { self, self, VMValue(NULL, ATAG_STATE) }; \
+		VMValue params[3] = { self, self, VMValue(NULL, ATAG_STATEINFO) }; \
 		stack->Call(name##_VMPtr, params, countof(params), NULL, 0, NULL); \
 	}
 
@@ -360,7 +360,7 @@ int MatchString (const char *in, const char **strings);
 #define ACTION_RETURN_BOOL(v) ACTION_RETURN_INT(v)
 
 // Checks to see what called the current action function
-#define ACTION_CALL_FROM_ACTOR() (callingstate == self->state)
-#define ACTION_CALL_FROM_WEAPON() (self->player && callingstate != self->state && !(stateowner->flags5 & MF5_INSTATECALL))
-#define ACTION_CALL_FROM_INVENTORY() (!(stateowner->flags5 & MF5_INSTATECALL))
+#define ACTION_CALL_FROM_ACTOR() (stateinfo == nullptr || stateinfo->mStateType == STATE_Actor)
+#define ACTION_CALL_FROM_WEAPON() (self->player && stateinfo != nullptr && stateinfo->mStateType == STATE_Psprite)
+#define ACTION_CALL_FROM_INVENTORY() (stateinfo != nullptr && stateinfo->mStateType == STATE_StateChain)
 #endif

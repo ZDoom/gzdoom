@@ -92,6 +92,7 @@ extern double globaluclip, globaldclip;
 extern float MaskedScaleY;
 
 #define MINZ			double((2048*4) / double(1 << 20))
+#define BASEXCENTER		(160)
 #define BASEYCENTER 	(100)
 
 EXTERN_CVAR (Bool, st_scale)
@@ -111,9 +112,15 @@ double			pspriteyscale;
 fixed_t			sky1scale;			// [RH] Sky 1 scale factor
 fixed_t			sky2scale;			// [RH] Sky 2 scale factor
 
-vissprite_t		*VisPSprites[NUMPSPRITES];
-int				VisPSpritesX1[NUMPSPRITES];
-FDynamicColormap *VisPSpritesBaseColormap[NUMPSPRITES];
+// Used to store a psprite's drawing information if it needs to be drawn later.
+struct vispsp_t
+{
+	vissprite_t			*vis;
+	FDynamicColormap	*basecolormap;
+	int					x1;
+};
+TArray<vispsp_t>	vispsprites;
+unsigned int		vispspindex;
 
 static int		spriteshade;
 
@@ -1269,48 +1276,40 @@ void R_AddSprites (sector_t *sec, int lightlevel, int fakeside)
 	}
 }
 
-
 //
 // R_DrawPSprite
 //
-void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, double sx, double sy)
+void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double wx, double wy, double ticfrac)
 {
 	double 				tx;
 	int 				x1;
 	int 				x2;
+	double				sx, sy;
 	spritedef_t*		sprdef;
 	spriteframe_t*		sprframe;
 	FTextureID			picnum;
 	WORD				flip;
 	FTexture*			tex;
 	vissprite_t*		vis;
-	static vissprite_t	avis[NUMPSPRITES + 1];
-	static vissprite_t	*avisp[countof(avis)];
-	bool noaccel;
+	bool				noaccel;
+	static TArray<vissprite_t> avis;
 
-	assert(pspnum >= 0 && pspnum < NUMPSPRITES);
-
-	if (avisp[0] == NULL)
-	{
-		for (unsigned i = 0; i < countof(avis); ++i)
-		{
-			avisp[i] = &avis[i];
-		}
-	}
+	if (avis.Size() < vispspindex + 1)
+		avis.Reserve(avis.Size() - vispspindex + 1);
 
 	// decide which patch to use
-	if ( (unsigned)psp->sprite >= (unsigned)sprites.Size ())
+	if ((unsigned)pspr->GetSprite() >= (unsigned)sprites.Size())
 	{
-		DPrintf ("R_DrawPSprite: invalid sprite number %i\n", psp->sprite);
+		DPrintf("R_DrawPSprite: invalid sprite number %i\n", pspr->GetSprite());
 		return;
 	}
-	sprdef = &sprites[psp->sprite];
-	if (psp->frame >= sprdef->numframes)
+	sprdef = &sprites[pspr->GetSprite()];
+	if (pspr->GetFrame() >= sprdef->numframes)
 	{
-		DPrintf ("R_DrawPSprite: invalid sprite frame %i : %i\n", psp->sprite, psp->frame);
+		DPrintf("R_DrawPSprite: invalid sprite frame %i : %i\n", pspr->GetSprite(), pspr->GetFrame());
 		return;
 	}
-	sprframe = &SpriteFrames[sprdef->spriteframes + psp->frame];
+	sprframe = &SpriteFrames[sprdef->spriteframes + pspr->GetFrame()];
 
 	picnum = sprframe->Texture[0];
 	flip = sprframe->Flip & 1;
@@ -1319,15 +1318,37 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, double sx, double 
 	if (tex->UseType == FTexture::TEX_Null)
 		return;
 
+	if (pspr->firstTic)
+	{ // Can't interpolate the first tic.
+		pspr->firstTic = false;
+		pspr->oldx = pspr->x;
+		pspr->oldy = pspr->y;
+	}
+
+	sx = pspr->oldx + (pspr->x - pspr->oldx) * ticfrac;
+	sy = pspr->oldy + (pspr->y - pspr->oldy) * ticfrac;
+
+	if (pspr->Flags & PSPF_ADDBOB)
+	{
+		sx += bobx;
+		sy += boby;
+	}
+
+	if (pspr->Flags & PSPF_ADDWEAPON && pspr->GetID() != PSP_WEAPON)
+	{
+		sx += wx;
+		sy += wy;
+	}
+
 	// calculate edges of the shape
-	tx = sx - (320 / 2);
+	tx = sx - BASEXCENTER;
 
 	tx -= tex->GetScaledLeftOffset();
 	x1 = xs_RoundToInt(CenterX + tx * pspritexscale);
 
 	// off the right side
 	if (x1 > viewwidth)
-		return; 
+		return;
 
 	tx += tex->GetScaledWidth();
 	x2 = xs_RoundToInt(CenterX + tx * pspritexscale);
@@ -1335,9 +1356,9 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, double sx, double 
 	// off the left side
 	if (x2 <= 0)
 		return;
-	
+
 	// store information in a vissprite
-	vis = avisp[NUMPSPRITES];
+	vis = &avis[vispspindex];
 	vis->renderflags = owner->renderflags;
 	vis->floorclip = 0;
 
@@ -1345,14 +1366,10 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, double sx, double 
 
 	if (camera->player && (RenderTarget != screen ||
 		viewheight == RenderTarget->GetHeight() ||
-		(RenderTarget->GetWidth() > 320 && !st_scale)))
+		(RenderTarget->GetWidth() > (BASEXCENTER * 2) && !st_scale)))
 	{	// Adjust PSprite for fullscreen views
-		AWeapon *weapon = NULL;
-		if (camera->player != NULL)
-		{
-			weapon = camera->player->ReadyWeapon;
-		}
-		if (pspnum <= ps_flash && weapon != NULL && weapon->YAdjust != 0)
+		AWeapon *weapon = dyn_cast<AWeapon>(pspr->GetCaller());
+		if (weapon != nullptr && weapon->YAdjust != 0)
 		{
 			if (RenderTarget != screen || viewheight == RenderTarget->GetHeight())
 			{
@@ -1360,11 +1377,11 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, double sx, double 
 			}
 			else
 			{
-				vis->texturemid -= StatusBar->GetDisplacement () * weapon->YAdjust;
+				vis->texturemid -= StatusBar->GetDisplacement() * weapon->YAdjust;
 			}
 		}
 	}
-	if (pspnum <= ps_flash)
+	if (pspr->GetID() < PSP_TARGETCENTER)
 	{ // Move the weapon down for 1280x1024.
 		vis->texturemid -= BaseRatioSizes[WidescreenRatio][2];
 	}
@@ -1388,11 +1405,11 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, double sx, double 
 	}
 
 	if (vis->x1 > x1)
-		vis->startfrac += vis->xiscale*(vis->x1-x1);
+		vis->startfrac += vis->xiscale*(vis->x1 - x1);
 
 	noaccel = false;
-	FDynamicColormap *colormap_to_use = NULL;
-	if (pspnum <= ps_flash)
+	FDynamicColormap *colormap_to_use = nullptr;
+	if (pspr->GetID() < PSP_TARGETCENTER)
 	{
 		vis->Style.Alpha = float(owner->Alpha);
 		vis->Style.RenderStyle = owner->RenderStyle;
@@ -1413,16 +1430,16 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, double sx, double 
 		{
 			if (invertcolormap)
 			{ // Fade to white
-				mybasecolormap = GetSpecialLights(mybasecolormap->Color, MAKERGB(255,255,255), mybasecolormap->Desaturate);
+				mybasecolormap = GetSpecialLights(mybasecolormap->Color, MAKERGB(255, 255, 255), mybasecolormap->Desaturate);
 				invertcolormap = false;
 			}
 			else
 			{ // Fade to black
-				mybasecolormap = GetSpecialLights(mybasecolormap->Color, MAKERGB(0,0,0), mybasecolormap->Desaturate);
+				mybasecolormap = GetSpecialLights(mybasecolormap->Color, MAKERGB(0, 0, 0), mybasecolormap->Desaturate);
 			}
 		}
 
-		if (realfixedcolormap != NULL)
+		if (realfixedcolormap != nullptr)
 		{ // fixed color
 			vis->Style.colormap = realfixedcolormap->Colormap;
 		}
@@ -1436,25 +1453,25 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, double sx, double 
 			{
 				vis->Style.colormap = mybasecolormap->Maps + fixedlightlev;
 			}
-			else if (!foggy && psp->state->GetFullbright())
+			else if (!foggy && pspr->GetState()->GetFullbright())
 			{ // full bright
 				vis->Style.colormap = mybasecolormap->Maps;	// [RH] use basecolormap
 			}
 			else
 			{ // local light
-				vis->Style.colormap = mybasecolormap->Maps + (GETPALOOKUP (0, spriteshade) << COLORMAPSHIFT);
+				vis->Style.colormap = mybasecolormap->Maps + (GETPALOOKUP(0, spriteshade) << COLORMAPSHIFT);
 			}
 		}
-		if (camera->Inventory != NULL)
+		if (camera->Inventory != nullptr)
 		{
 			lighttable_t *oldcolormap = vis->Style.colormap;
-			camera->Inventory->AlterWeaponSprite (&vis->Style);
+			camera->Inventory->AlterWeaponSprite(&vis->Style);
 			if (vis->Style.colormap != oldcolormap)
 			{
 				// The colormap has changed. Is it one we can easily identify?
 				// If not, then don't bother trying to identify it for
 				// hardware accelerated drawing.
-				if (vis->Style.colormap < SpecialColormaps[0].Colormap || 
+				if (vis->Style.colormap < SpecialColormaps[0].Colormap ||
 					vis->Style.colormap > SpecialColormaps.Last().Colormap)
 				{
 					noaccel = true;
@@ -1462,7 +1479,7 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, double sx, double 
 				// Has the basecolormap changed? If so, we can't hardware accelerate it,
 				// since we don't know what it is anymore.
 				else if (vis->Style.colormap < mybasecolormap->Maps ||
-					vis->Style.colormap >= mybasecolormap->Maps + NUMCOLORMAPS*256)
+					vis->Style.colormap >= mybasecolormap->Maps + NUMCOLORMAPS * 256)
 				{
 					noaccel = true;
 				}
@@ -1482,7 +1499,7 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, double sx, double 
 		}
 		// If the main colormap has fixed lights, and this sprite is being drawn with that
 		// colormap, disable acceleration so that the lights can remain fixed.
-		if (!noaccel && realfixedcolormap == NULL &&
+		if (!noaccel && realfixedcolormap == nullptr &&
 			NormalLightHasFixedLights && mybasecolormap == &NormalLight &&
 			vis->pic->UseBasePalette())
 		{
@@ -1505,17 +1522,18 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, double sx, double 
 		style.CheckFuzz();
 		if (style.BlendOp != STYLEOP_Fuzz)
 		{
-			VisPSpritesX1[pspnum] = x1;
-			VisPSpritesBaseColormap[pspnum] = colormap_to_use;
-			VisPSprites[pspnum] = vis;
-			swapvalues(avisp[pspnum], avisp[NUMPSPRITES]);
+			if (vispsprites.Size() < vispspindex + 1)
+				vispsprites.Reserve(vispsprites.Size() - vispspindex + 1);
+
+			vispsprites[vispspindex].vis = vis;
+			vispsprites[vispspindex].basecolormap = colormap_to_use;
+			vispsprites[vispspindex].x1 = x1;
+			vispspindex++;
 			return;
 		}
 	}
-	R_DrawVisSprite (vis);
+	R_DrawVisSprite(vis);
 }
-
-
 
 //==========================================================================
 //
@@ -1527,7 +1545,8 @@ void R_DrawPlayerSprites ()
 {
 	int 		i;
 	int 		lightnum;
-	pspdef_t*	psp;
+	DPSprite*	psp;
+	DPSprite*	weapon;
 	sector_t*	sec = NULL;
 	static sector_t tempsec;
 	int			floorlight, ceilinglight;
@@ -1540,28 +1559,35 @@ void R_DrawPlayerSprites ()
 		(r_deathcamera && camera->health <= 0))
 		return;
 
-	if(fixedlightlev < 0 && viewsector->e && viewsector->e->XFloor.lightlist.Size()) {
-		for(i = viewsector->e->XFloor.lightlist.Size() - 1; i >= 0; i--)
-			if(ViewPos.Z <= viewsector->e->XFloor.lightlist[i].plane.Zat0()) {
+	if (fixedlightlev < 0 && viewsector->e && viewsector->e->XFloor.lightlist.Size())
+	{
+		for (i = viewsector->e->XFloor.lightlist.Size() - 1; i >= 0; i--)
+		{
+			if (ViewPos.Z <= viewsector->e->XFloor.lightlist[i].plane.Zat0())
+			{
 				rover = viewsector->e->XFloor.lightlist[i].caster;
-				if(rover) {
-					if(rover->flags & FF_DOUBLESHADOW && ViewPos.Z <= rover->bottom.plane->Zat0())
+				if (rover)
+				{
+					if (rover->flags & FF_DOUBLESHADOW && ViewPos.Z <= rover->bottom.plane->Zat0())
 						break;
 					sec = rover->model;
-					if(rover->flags & FF_FADEWALLS)
+					if (rover->flags & FF_FADEWALLS)
 						basecolormap = sec->ColorMap;
 					else
 						basecolormap = viewsector->e->XFloor.lightlist[i].extra_colormap;
 				}
 				break;
 			}
-		if(!sec) {
+		}
+		if(!sec)
+		{
 			sec = viewsector;
 			basecolormap = sec->ColorMap;
 		}
 		floorlight = ceilinglight = sec->lightlevel;
-	} else {
-		// This used to use camera->Sector but due to interpolation that can be incorrect
+	}
+	else
+	{	// This used to use camera->Sector but due to interpolation that can be incorrect
 		// when the interpolated viewpoint is in a different sector than the camera.
 		sec = R_FakeFlat (viewsector, &tempsec, &floorlight,
 			&ceilinglight, false);
@@ -1585,27 +1611,47 @@ void R_DrawPlayerSprites ()
 	if (camera->player != NULL)
 	{
 		double centerhack = CenterY;
-		float ofsx, ofsy;
+		double wx, wy;
+		float bobx, boby;
 
 		CenterY = viewheight / 2;
 
-		P_BobWeapon (camera->player, &camera->player->psprites[ps_weapon], &ofsx, &ofsy, r_TicFracF);
+		P_BobWeapon (camera->player, &bobx, &boby, r_TicFracF);
+
+		// Interpolate the main weapon layer once so as to be able to add it to other layers.
+		if ((weapon = camera->player->FindPSprite(PSP_WEAPON)) != nullptr)
+		{
+			if (weapon->firstTic)
+			{
+				wx = weapon->x;
+				wy = weapon->y;
+			}
+			else
+			{
+				wx = weapon->oldx + (weapon->x - weapon->oldx) * r_TicFracF;
+				wy = weapon->oldy + (weapon->y - weapon->oldy) * r_TicFracF;
+			}
+		}
+		else
+		{
+			wx = 0;
+			wy = 0;
+		}
 
 		// add all active psprites
-		for (i = 0, psp = camera->player->psprites;
-			 i < NUMPSPRITES;
-			 i++, psp++)
+		psp = camera->player->psprites;
+		while (psp)
 		{
 			// [RH] Don't draw the targeter's crosshair if the player already has a crosshair set.
-			if (psp->state && (i != ps_targetcenter || CrosshairImage == NULL))
+			// It's possible this psprite's caller is now null but the layer itself hasn't been destroyed
+			// because it didn't tick yet (if we typed 'take all' while in the console for example).
+			// In this case let's simply not draw it to avoid crashing.
+			if ((psp->GetID() != PSP_TARGETCENTER || CrosshairImage == nullptr) && psp->GetCaller() != nullptr)
 			{
-				R_DrawPSprite (psp, i, camera, psp->sx + ofsx, psp->sy + ofsy);
+				R_DrawPSprite(psp, camera, bobx, boby, wx, wy, r_TicFracF);
 			}
-			// [RH] Don't bob the targeter.
-			if (i == ps_flash)
-			{
-				ofsx = ofsy = 0;
-			}
+
+			psp = psp->GetNext();
 		}
 
 		CenterY = centerhack;
@@ -1623,65 +1669,62 @@ void R_DrawPlayerSprites ()
 
 void R_DrawRemainingPlayerSprites()
 {
-	for (int i = 0; i < NUMPSPRITES; ++i)
+	for (unsigned int i = 0; i < vispspindex; i++)
 	{
 		vissprite_t *vis;
 		
-		vis = VisPSprites[i];
-		VisPSprites[i] = NULL;
+		vis = vispsprites[i].vis;
+		FDynamicColormap *colormap = vispsprites[i].basecolormap;
+		bool flip = vis->xiscale < 0;
+		FSpecialColormap *special = NULL;
+		PalEntry overlay = 0;
+		FColormapStyle colormapstyle;
+		bool usecolormapstyle = false;
 
-		if (vis != NULL)
+		if (vis->Style.colormap >= SpecialColormaps[0].Colormap && 
+			vis->Style.colormap < SpecialColormaps[SpecialColormaps.Size()].Colormap)
 		{
-			FDynamicColormap *colormap = VisPSpritesBaseColormap[i];
-			bool flip = vis->xiscale < 0;
-			FSpecialColormap *special = NULL;
-			PalEntry overlay = 0;
-			FColormapStyle colormapstyle;
-			bool usecolormapstyle = false;
-
-			if (vis->Style.colormap >= SpecialColormaps[0].Colormap && 
-				vis->Style.colormap < SpecialColormaps[SpecialColormaps.Size()].Colormap)
-			{
-				// Yuck! There needs to be a better way to store colormaps in the vissprite... :(
-				ptrdiff_t specialmap = (vis->Style.colormap - SpecialColormaps[0].Colormap) / sizeof(FSpecialColormap);
-				special = &SpecialColormaps[specialmap];
-			}
-			else if (colormap->Color == PalEntry(255,255,255) &&
-				colormap->Desaturate == 0)
-			{
-				overlay = colormap->Fade;
-				overlay.a = BYTE(((vis->Style.colormap - colormap->Maps) >> 8) * 255 / NUMCOLORMAPS);
-			}
-			else
-			{
-				usecolormapstyle = true;
-				colormapstyle.Color = colormap->Color;
-				colormapstyle.Fade = colormap->Fade;
-				colormapstyle.Desaturate = colormap->Desaturate;
-				colormapstyle.FadeLevel = ((vis->Style.colormap - colormap->Maps) >> 8) / float(NUMCOLORMAPS);
-			}
-			screen->DrawTexture(vis->pic,
-				viewwindowx + VisPSpritesX1[i],
-				viewwindowy + viewheight/2 - vis->texturemid * vis->yscale - 0.5,
-				DTA_DestWidthF, FIXED2DBL(vis->pic->GetWidth() * vis->xscale),
-				DTA_DestHeightF, vis->pic->GetHeight() * vis->yscale,
-				DTA_Translation, TranslationToTable(vis->Translation),
-				DTA_FlipX, flip,
-				DTA_TopOffset, 0,
-				DTA_LeftOffset, 0,
-				DTA_ClipLeft, viewwindowx,
-				DTA_ClipTop, viewwindowy,
-				DTA_ClipRight, viewwindowx + viewwidth,
-				DTA_ClipBottom, viewwindowy + viewheight,
-				DTA_AlphaF, vis->Style.Alpha,
-				DTA_RenderStyle, vis->Style.RenderStyle,
-				DTA_FillColor, vis->FillColor,
-				DTA_SpecialColormap, special,
-				DTA_ColorOverlay, overlay.d,
-				DTA_ColormapStyle, usecolormapstyle ? &colormapstyle : NULL,
-				TAG_DONE);
+			// Yuck! There needs to be a better way to store colormaps in the vissprite... :(
+			ptrdiff_t specialmap = (vis->Style.colormap - SpecialColormaps[0].Colormap) / sizeof(FSpecialColormap);
+			special = &SpecialColormaps[specialmap];
 		}
+		else if (colormap->Color == PalEntry(255,255,255) &&
+			colormap->Desaturate == 0)
+		{
+			overlay = colormap->Fade;
+			overlay.a = BYTE(((vis->Style.colormap - colormap->Maps) >> 8) * 255 / NUMCOLORMAPS);
+		}
+		else
+		{
+			usecolormapstyle = true;
+			colormapstyle.Color = colormap->Color;
+			colormapstyle.Fade = colormap->Fade;
+			colormapstyle.Desaturate = colormap->Desaturate;
+			colormapstyle.FadeLevel = ((vis->Style.colormap - colormap->Maps) >> 8) / float(NUMCOLORMAPS);
+		}
+		screen->DrawTexture(vis->pic,
+			viewwindowx + vispsprites[i].x1,
+			viewwindowy + viewheight/2 - vis->texturemid * vis->yscale - 0.5,
+			DTA_DestWidthF, FIXED2DBL(vis->pic->GetWidth() * vis->xscale),
+			DTA_DestHeightF, vis->pic->GetHeight() * vis->yscale,
+			DTA_Translation, TranslationToTable(vis->Translation),
+			DTA_FlipX, flip,
+			DTA_TopOffset, 0,
+			DTA_LeftOffset, 0,
+			DTA_ClipLeft, viewwindowx,
+			DTA_ClipTop, viewwindowy,
+			DTA_ClipRight, viewwindowx + viewwidth,
+			DTA_ClipBottom, viewwindowy + viewheight,
+			DTA_AlphaF, vis->Style.Alpha,
+			DTA_RenderStyle, vis->Style.RenderStyle,
+			DTA_FillColor, vis->FillColor,
+			DTA_SpecialColormap, special,
+			DTA_ColorOverlay, overlay.d,
+			DTA_ColormapStyle, usecolormapstyle ? &colormapstyle : NULL,
+			TAG_DONE);
 	}
+
+	vispspindex = 0;
 }
 
 //
@@ -2463,7 +2506,7 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 		return;
 
 	yscale = xs_RoundToInt(YaspectMul * xscale);
-	ty = FLOAT2FIXED(particle->Pos.Z - ViewPos.Z);
+	ty = particle->Pos.Z - ViewPos.Z;
 	y1 = xs_RoundToInt(CenterY - (ty + psize) * yscale);
 	y2 = xs_RoundToInt(CenterY - (ty - psize) * yscale);
 

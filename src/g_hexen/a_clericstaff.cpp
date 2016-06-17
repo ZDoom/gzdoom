@@ -58,7 +58,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffCheck)
 	FTranslatedLineTarget t;
 	PClassActor *puff;
 
-	if (NULL == (player = self->player))
+	if (nullptr == (player = self->player))
 	{
 		return 0;
 	}
@@ -77,7 +77,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffCheck)
 			if (t.linetarget)
 			{
 				P_LineAttack(pmo, angle, 1.5 * MELEERANGE, slope, damage, NAME_Melee, puff, false, &t);
-				if (t.linetarget != NULL)
+				if (t.linetarget != nullptr)
 				{
 					pmo->Angles.Yaw = t.angleFromSource;
 					if (((t.linetarget->player && (!t.linetarget->IsTeammate(pmo) || level.teamdamage != 0)) || t.linetarget->flags3&MF3_ISMONSTER)
@@ -89,13 +89,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffCheck)
 						{
 							pmo->health = player->health = newLife;
 						}
-						if (weapon != NULL)
+						if (weapon != nullptr)
 						{
 							FState * newstate = weapon->FindState("Drain");
-							if (newstate != NULL) P_SetPsprite(player, ps_weapon, newstate);
+							if (newstate != nullptr) P_SetPsprite(player, PSP_WEAPON, newstate);
 						}
 					}
-					if (weapon != NULL)
+					if (weapon != nullptr)
 					{
 						weapon->DepleteAmmo(weapon->bAltFire, false);
 					}
@@ -187,7 +187,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CStaffCheckBlink)
 	{
 		if (!--self->weaponspecial)
 		{
-			P_SetPsprite (self->player, ps_weapon, self->player->ReadyWeapon->FindState ("Blink"));
+			P_SetPsprite(self->player, PSP_WEAPON, self->player->ReadyWeapon->FindState ("Blink"));
 			self->weaponspecial = (pr_blink()+50)>>2;
 		}
 		else 

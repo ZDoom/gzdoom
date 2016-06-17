@@ -475,8 +475,8 @@ void P_RunEffect (AActor *actor, int effects)
 				speed = (M_Random () - 128) * (1./200);
 				particle->Vel.X += speed * an.Cos();
 				particle->Vel.Y += speed * an.Sin();
-				particle->Vel.Z -= 1. / 80;
-				particle->Acc.Z -= 1. / 40;
+				particle->Vel.Z += 1. / 80;
+				particle->Acc.Z += 1. / 40;
 				if (M_Random () & 7)
 					particle->color = grey2;
 				else

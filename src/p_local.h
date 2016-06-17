@@ -76,7 +76,6 @@ extern int bmapnegy;
 // P_PSPR
 //
 void P_SetupPsprites (player_t* curplayer, bool startweaponup);
-void P_MovePsprites (player_t* curplayer);
 void P_DropWeapon (player_t* player);
 
 
@@ -334,6 +333,7 @@ struct FRailParams
 	double drift = 1.0;
 	PClassActor *spawnclass = nullptr;
 	int SpiralOffset = 270;
+	int limit = 0;
 };	// [RH] Shoot a railgun
 
 void P_RailAttack(FRailParams *params);

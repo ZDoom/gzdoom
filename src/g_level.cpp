@@ -372,9 +372,9 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 	bool wantFast;
 	int i;
 
-	G_ClearHubInfo();
 	if (!savegamerestore)
 	{
+		G_ClearHubInfo();
 		G_ClearSnapshots ();
 		P_RemoveDefereds ();
 

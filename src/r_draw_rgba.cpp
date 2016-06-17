@@ -604,26 +604,48 @@ public:
 		int count;
 		uint32_t *dest;
 
-		// Adjust borders. Low...
-		if (_yl == 0)
-			_yl = 1;
+		int yl = MAX(_yl, 1);
+		int yh = MIN(_yh, _fuzzviewheight);
 
-		// .. and high.
-		if (_yh > _fuzzviewheight)
-			_yh = _fuzzviewheight;
-
-		count = thread->count_for_thread(_yl, _yh - _yl + 1);
+		count = thread->count_for_thread(yl, yh - yl + 1);
 
 		// Zero length.
 		if (count <= 0)
 			return;
 
-		dest = thread->dest_for_thread(_yl, _pitch, ylookup[_yl] + _x + (uint32_t*)_destorg);
+		dest = thread->dest_for_thread(yl, _pitch, ylookup[yl] + _x + (uint32_t*)_destorg);
 
 		int pitch = _pitch * thread->num_cores;
 		int fuzzstep = thread->num_cores;
-		int fuzz = (_fuzzpos + thread->skipped_by_thread(_yl)) % FUZZTABLE;
+		int fuzz = (_fuzzpos + thread->skipped_by_thread(yl)) % FUZZTABLE;
 
+		yl += thread->skipped_by_thread(yl);
+
+		// Handle the case where we would go out of bounds at the top:
+		if (yl < fuzzstep)
+		{
+			count--;
+
+			uint32_t bg = dest[fuzzoffset[fuzz] * fuzzstep + pitch];
+			uint32_t bg_red = (bg >> 16) & 0xff;
+			uint32_t bg_green = (bg >> 8) & 0xff;
+			uint32_t bg_blue = (bg) & 0xff;
+
+			uint32_t red = bg_red * 3 / 4;
+			uint32_t green = bg_green * 3 / 4;
+			uint32_t blue = bg_blue * 3 / 4;
+
+			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
+			dest += pitch;
+			fuzz += fuzzstep;
+			fuzz %= FUZZTABLE;
+		}
+
+		bool lowerbounds = (yl + count * fuzzstep > _fuzzviewheight);
+		if (lowerbounds)
+			count--;
+
+		// Fuzz where fuzzoffset stays within bounds
 		while (count > 0)
 		{
 			int available = (FUZZTABLE - fuzz);
@@ -635,14 +657,14 @@ public:
 			count -= cnt;
 			do
 			{
-				uint32_t bg = dest[fuzzoffset[fuzz]];
+				uint32_t bg = dest[fuzzoffset[fuzz] * fuzzstep];
 				uint32_t bg_red = (bg >> 16) & 0xff;
 				uint32_t bg_green = (bg >> 8) & 0xff;
 				uint32_t bg_blue = (bg) & 0xff;
 
-				uint32_t red = bg_red * 7 / 8;
-				uint32_t green = bg_green * 7 / 8;
-				uint32_t blue = bg_blue * 7 / 8;
+				uint32_t red = bg_red * 3 / 4;
+				uint32_t green = bg_green * 3 / 4;
+				uint32_t blue = bg_blue * 3 / 4;
 
 				*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
 				dest += pitch;
@@ -650,6 +672,21 @@ public:
 			} while (--cnt);
 
 			fuzz %= FUZZTABLE;
+		}
+
+		// Handle the case where we would go out of bounds at the bottom
+		if (lowerbounds)
+		{
+			uint32_t bg = dest[fuzzoffset[fuzz] * fuzzstep - pitch];
+			uint32_t bg_red = (bg >> 16) & 0xff;
+			uint32_t bg_green = (bg >> 8) & 0xff;
+			uint32_t bg_blue = (bg) & 0xff;
+
+			uint32_t red = bg_red * 3 / 4;
+			uint32_t green = bg_green * 3 / 4;
+			uint32_t blue = bg_blue * 3 / 4;
+
+			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
 		}
 	}
 };
@@ -3897,12 +3934,10 @@ void R_DrawFuzzColumn_rgba()
 {
 	DrawerCommandQueue::QueueCommand<DrawFuzzColumnRGBACommand>();
 
-	if (dc_yl == 0)
-		dc_yl = 1;
-	if (dc_yh > fuzzviewheight)
-		dc_yh = fuzzviewheight;
-
-	fuzzpos = (fuzzpos + dc_yh - dc_yl + 1) % FUZZTABLE;
+	dc_yl = MAX(dc_yl, 1);
+	dc_yh = MIN(dc_yh, fuzzviewheight);
+	if (dc_yl <= dc_yh)
+		fuzzpos = (fuzzpos + dc_yh - dc_yl + 1) % FUZZTABLE;
 }
 
 void R_DrawAddColumn_rgba()

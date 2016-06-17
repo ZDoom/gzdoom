@@ -58,6 +58,8 @@ extern float rw_light;
 extern float rw_lightstep;
 extern int wallshade;
 
+CVAR(Bool, r_multithreaded, true, 0)
+
 /////////////////////////////////////////////////////////////////////////////
 
 DrawerCommandQueue *DrawerCommandQueue::Instance()
@@ -229,28 +231,28 @@ void DrawerCommandQueue::StopThreads()
 
 class DrawColumnRGBACommand : public DrawerCommand
 {
-	int dc_count;
-	BYTE *dc_dest;
-	DWORD dc_texturefrac;
-	DWORD dc_iscale;
-	fixed_t dc_light;
-	const BYTE *dc_source;
-	int dc_pitch;
-	ShadeConstants dc_shade_constants;
-	BYTE *dc_colormap;
+	int _count;
+	BYTE *_dest;
+	DWORD _texturefrac;
+	DWORD _iscale;
+	fixed_t _light;
+	const BYTE *_source;
+	int _pitch;
+	ShadeConstants _shade_constants;
+	BYTE *_colormap;
 
 public:
 	DrawColumnRGBACommand()
 	{
-		dc_count = ::dc_count;
-		dc_dest = ::dc_dest;
-		dc_texturefrac = ::dc_texturefrac;
-		dc_iscale = ::dc_iscale;
-		dc_light = ::dc_light;
-		dc_source = ::dc_source;
-		dc_pitch = ::dc_pitch;
-		dc_shade_constants = ::dc_shade_constants;
-		dc_colormap = ::dc_colormap;
+		_count = dc_count;
+		_dest = dc_dest;
+		_texturefrac = dc_texturefrac;
+		_iscale = dc_iscale;
+		_light = dc_light;
+		_source = dc_source;
+		_pitch = dc_pitch;
+		_shade_constants = dc_shade_constants;
+		_colormap = dc_colormap;
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -260,28 +262,28 @@ public:
 		fixed_t 			frac;
 		fixed_t 			fracstep;
 
-		count = thread->count_for_thread(dc_dest_y, dc_count);
+		count = thread->count_for_thread(_dest_y, _count);
 
 		// Zero length, column does not exceed a pixel.
 		if (count <= 0)
 			return;
 
 		// Framebuffer destination address.
-		dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
+		dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
 
-		uint32_t light = calc_light_multiplier(dc_light);
-		ShadeConstants shade_constants = dc_shade_constants;
+		uint32_t light = calc_light_multiplier(_light);
+		ShadeConstants shade_constants = _shade_constants;
 
 		// Determine scaling,
 		//	which is the only mapping to be done.
-		fracstep = dc_iscale * thread->num_cores;
-		frac = dc_texturefrac + dc_iscale * thread->skipped_by_thread(dc_dest_y);
+		fracstep = _iscale * thread->num_cores;
+		frac = _texturefrac + _iscale * thread->skipped_by_thread(_dest_y);
 
 		// [RH] Get local copies of these variables so that the compiler
 		//		has a better chance of optimizing this well.
-		const BYTE *source = dc_source;
-		int pitch = dc_pitch * thread->num_cores;
-		BYTE *colormap = dc_colormap;
+		const BYTE *source = _source;
+		int pitch = _pitch * thread->num_cores;
+		BYTE *colormap = _colormap;
 
 		do
 		{
@@ -296,20 +298,20 @@ public:
 
 class FillColumnRGBACommand : public DrawerCommand
 {
-	int dc_count;
-	BYTE *dc_dest;
-	fixed_t dc_light;
-	int dc_pitch;
-	int dc_color;
+	int _count;
+	BYTE *_dest;
+	fixed_t _light;
+	int _pitch;
+	int _color;
 
 public:
 	FillColumnRGBACommand()
 	{
-		dc_count = ::dc_count;
-		dc_dest = ::dc_dest;
-		dc_light = ::dc_light;
-		dc_pitch = ::dc_pitch;
-		dc_color = ::dc_color;
+		_count = dc_count;
+		_dest = dc_dest;
+		_light = dc_light;
+		_pitch = dc_pitch;
+		_color = dc_color;
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -317,18 +319,18 @@ public:
 		int 				count;
 		uint32_t*			dest;
 
-		count = thread->count_for_thread(dc_dest_y, dc_count);
+		count = thread->count_for_thread(_dest_y, _count);
 
 		if (count <= 0)
 			return;
 
-		dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
+		dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
 
-		uint32_t light = calc_light_multiplier(dc_light);
+		uint32_t light = calc_light_multiplier(_light);
 
 		{
-			int pitch = dc_pitch * thread->num_cores;
-			uint32_t color = shade_pal_index_simple(dc_color, light);
+			int pitch = _pitch * thread->num_cores;
+			uint32_t color = shade_pal_index_simple(_color, light);
 
 			do
 			{
@@ -341,20 +343,20 @@ public:
 
 class FillAddColumnRGBACommand : public DrawerCommand
 {
-	int dc_count;
-	BYTE *dc_dest;
-	int dc_pitch;
-	fixed_t dc_light;
-	int dc_color;
+	int _count;
+	BYTE *_dest;
+	int _pitch;
+	fixed_t _light;
+	int _color;
 
 public:
 	FillAddColumnRGBACommand()
 	{
-		dc_count = ::dc_count;
-		dc_dest = ::dc_dest;
-		dc_pitch = ::dc_pitch;
-		dc_light = ::dc_light;
-		dc_color = ::dc_color;
+		_count = dc_count;
+		_dest = dc_dest;
+		_pitch = dc_pitch;
+		_light = dc_light;
+		_color = dc_color;
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -362,14 +364,14 @@ public:
 		int count;
 		uint32_t *dest;
 
-		count = thread->count_for_thread(dc_dest_y, dc_count);
+		count = thread->count_for_thread(_dest_y, _count);
 		if (count <= 0)
 			return;
 
-		dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
-		int pitch = dc_pitch * thread->num_cores;
+		dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
+		int pitch = _pitch * thread->num_cores;
 
-		uint32_t fg = shade_pal_index_simple(dc_color, calc_light_multiplier(dc_light));
+		uint32_t fg = shade_pal_index_simple(_color, calc_light_multiplier(_light));
 		uint32_t fg_red = (fg >> 24) & 0xff;
 		uint32_t fg_green = (fg >> 16) & 0xff;
 		uint32_t fg_blue = fg & 0xff;
@@ -392,20 +394,20 @@ public:
 
 class FillAddClampColumnRGBACommand : public DrawerCommand
 {
-	int dc_count;
-	BYTE *dc_dest;
-	int dc_pitch;
-	fixed_t dc_light;
-	int dc_color;
+	int _count;
+	BYTE *_dest;
+	int _pitch;
+	fixed_t _light;
+	int _color;
 
 public:
 	FillAddClampColumnRGBACommand()
 	{
-		dc_count = ::dc_count;
-		dc_dest = ::dc_dest;
-		dc_pitch = ::dc_pitch;
-		dc_light = ::dc_light;
-		dc_color = ::dc_color;
+		_count = dc_count;
+		_dest = dc_dest;
+		_pitch = dc_pitch;
+		_light = dc_light;
+		_color = dc_color;
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -413,14 +415,14 @@ public:
 		int count;
 		uint32_t *dest;
 
-		count = thread->count_for_thread(dc_dest_y, dc_count);
+		count = thread->count_for_thread(_dest_y, _count);
 		if (count <= 0)
 			return;
 
-		dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
-		int pitch = dc_pitch * thread->num_cores;
+		dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
+		int pitch = _pitch * thread->num_cores;
 
-		uint32_t fg = shade_pal_index_simple(dc_color, calc_light_multiplier(dc_light));
+		uint32_t fg = shade_pal_index_simple(_color, calc_light_multiplier(_light));
 		uint32_t fg_red = (fg >> 24) & 0xff;
 		uint32_t fg_green = (fg >> 16) & 0xff;
 		uint32_t fg_blue = fg & 0xff;
@@ -443,20 +445,20 @@ public:
 
 class FillSubClampColumnRGBACommand : public DrawerCommand
 {
-	int dc_count;
-	BYTE *dc_dest;
-	int dc_pitch;
-	int dc_color;
-	fixed_t dc_light;
+	int _count;
+	BYTE *_dest;
+	int _pitch;
+	int _color;
+	fixed_t _light;
 
 public:
 	FillSubClampColumnRGBACommand()
 	{
-		dc_count = ::dc_count;
-		dc_dest = ::dc_dest;
-		dc_pitch = ::dc_pitch;
-		dc_color = ::dc_color;
-		dc_light = ::dc_light;
+		_count = dc_count;
+		_dest = dc_dest;
+		_pitch = dc_pitch;
+		_color = dc_color;
+		_light = dc_light;
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -464,14 +466,14 @@ public:
 		int count;
 		uint32_t *dest;
 
-		count = thread->count_for_thread(dc_dest_y, dc_count);
+		count = thread->count_for_thread(_dest_y, _count);
 		if (count <= 0)
 			return;
 
-		dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
-		int pitch = dc_pitch * thread->num_cores;
+		dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
+		int pitch = _pitch * thread->num_cores;
 
-		uint32_t fg = shade_pal_index_simple(dc_color, calc_light_multiplier(dc_light));
+		uint32_t fg = shade_pal_index_simple(_color, calc_light_multiplier(_light));
 		uint32_t fg_red = (fg >> 24) & 0xff;
 		uint32_t fg_green = (fg >> 16) & 0xff;
 		uint32_t fg_blue = fg & 0xff;
@@ -494,20 +496,20 @@ public:
 
 class FillRevSubClampColumnRGBACommand : public DrawerCommand
 {
-	int dc_count;
-	BYTE *dc_dest;
-	int dc_pitch;
-	int dc_color;
-	fixed_t dc_light;
+	int _count;
+	BYTE *_dest;
+	int _pitch;
+	int _color;
+	fixed_t _light;
 
 public:
 	FillRevSubClampColumnRGBACommand()
 	{
-		dc_count = ::dc_count;
-		dc_dest = ::dc_dest;
-		dc_pitch = ::dc_pitch;
-		dc_color = ::dc_color;
-		dc_light = ::dc_light;
+		_count = dc_count;
+		_dest = dc_dest;
+		_pitch = dc_pitch;
+		_color = dc_color;
+		_light = dc_light;
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -515,14 +517,14 @@ public:
 		int count;
 		uint32_t *dest;
 
-		count = thread->count_for_thread(dc_dest_y, dc_count);
+		count = thread->count_for_thread(_dest_y, _count);
 		if (count <= 0)
 			return;
 
-		dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
-		int pitch = dc_pitch * thread->num_cores;
+		dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
+		int pitch = _pitch * thread->num_cores;
 
-		uint32_t fg = shade_pal_index_simple(dc_color, calc_light_multiplier(dc_light));
+		uint32_t fg = shade_pal_index_simple(_color, calc_light_multiplier(_light));
 		uint32_t fg_red = (fg >> 24) & 0xff;
 		uint32_t fg_green = (fg >> 16) & 0xff;
 		uint32_t fg_blue = fg & 0xff;
@@ -545,22 +547,22 @@ public:
 
 class DrawFuzzColumnRGBACommand : public DrawerCommand
 {
-	int dc_x;
-	int dc_yl;
-	int dc_yh;
-	BYTE *dc_destorg;
-	int dc_pitch;
+	int _x;
+	int _yl;
+	int _yh;
+	BYTE *_destorg;
+	int _pitch;
 	int fuzzpos;
 	int fuzzviewheight;
 
 public:
 	DrawFuzzColumnRGBACommand()
 	{
-		dc_x = ::dc_x;
-		dc_yl = ::dc_yl;
-		dc_yh = ::dc_yh;
-		dc_destorg = ::dc_destorg;
-		dc_pitch = ::dc_pitch;
+		_x = dc_x;
+		_yl = dc_yl;
+		_yh = dc_yh;
+		_destorg = dc_destorg;
+		_pitch = dc_pitch;
 		fuzzpos = ::fuzzpos;
 		fuzzviewheight = ::fuzzviewheight;
 	}
@@ -571,24 +573,24 @@ public:
 		uint32_t *dest;
 
 		// Adjust borders. Low...
-		if (dc_yl == 0)
-			dc_yl = 1;
+		if (_yl == 0)
+			_yl = 1;
 
 		// .. and high.
-		if (dc_yh > fuzzviewheight)
-			dc_yh = fuzzviewheight;
+		if (_yh > fuzzviewheight)
+			_yh = fuzzviewheight;
 
-		count = thread->count_for_thread(dc_yl, dc_yh - dc_yl + 1);
+		count = thread->count_for_thread(_yl, _yh - _yl + 1);
 
 		// Zero length.
 		if (count <= 0)
 			return;
 
-		dest = thread->dest_for_thread(dc_yl, dc_pitch, ylookup[dc_yl] + dc_x + (uint32_t*)dc_destorg);
+		dest = thread->dest_for_thread(_yl, _pitch, ylookup[_yl] + _x + (uint32_t*)_destorg);
 
-		int pitch = dc_pitch * thread->num_cores;
+		int pitch = _pitch * thread->num_cores;
 		int fuzzstep = thread->num_cores;
-		int fuzz = (fuzzpos + thread->skipped_by_thread(dc_yl)) % FUZZTABLE;
+		int fuzz = (fuzzpos + thread->skipped_by_thread(_yl)) % FUZZTABLE;
 
 		while (count > 0)
 		{
@@ -622,32 +624,32 @@ public:
 
 class DrawAddColumnRGBACommand : public DrawerCommand
 {
-	int dc_count;
-	BYTE *dc_dest;
-	DWORD dc_iscale;
-	DWORD dc_texturefrac;
-	const BYTE *dc_source;
-	int dc_pitch;
-	fixed_t dc_light;
-	ShadeConstants dc_shade_constants;
-	fixed_t dc_srcalpha;
-	fixed_t dc_destalpha;
-	BYTE *dc_colormap;
+	int _count;
+	BYTE *_dest;
+	DWORD _iscale;
+	DWORD _texturefrac;
+	const BYTE *_source;
+	int _pitch;
+	fixed_t _light;
+	ShadeConstants _shade_constants;
+	fixed_t _srcalpha;
+	fixed_t _destalpha;
+	BYTE *_colormap;
 
 public:
 	DrawAddColumnRGBACommand()
 	{
-		dc_count = ::dc_count;
-		dc_dest = ::dc_dest;
-		dc_iscale = ::dc_iscale;
-		dc_texturefrac = ::dc_texturefrac;
-		dc_source = ::dc_source;
-		dc_pitch = ::dc_pitch;
-		dc_light = ::dc_light;
-		dc_shade_constants = ::dc_shade_constants;
-		dc_srcalpha = ::dc_srcalpha;
-		dc_destalpha = ::dc_destalpha;
-		dc_colormap = ::dc_colormap;
+		_count = dc_count;
+		_dest = dc_dest;
+		_iscale = dc_iscale;
+		_texturefrac = dc_texturefrac;
+		_source = dc_source;
+		_pitch = dc_pitch;
+		_light = dc_light;
+		_shade_constants = dc_shade_constants;
+		_srcalpha = dc_srcalpha;
+		_destalpha = dc_destalpha;
+		_colormap = dc_colormap;
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -657,25 +659,25 @@ public:
 		fixed_t frac;
 		fixed_t fracstep;
 
-		count = thread->count_for_thread(dc_dest_y, dc_count);
+		count = thread->count_for_thread(_dest_y, _count);
 		if (count <= 0)
 			return;
 
-		dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
+		dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
 
-		fracstep = dc_iscale * thread->num_cores;
-		frac = dc_texturefrac + dc_iscale * thread->skipped_by_thread(dc_dest_y);
+		fracstep = _iscale * thread->num_cores;
+		frac = _texturefrac + _iscale * thread->skipped_by_thread(_dest_y);
 
 		{
-			const BYTE *source = dc_source;
-			int pitch = dc_pitch * thread->num_cores;
+			const BYTE *source = _source;
+			int pitch = _pitch * thread->num_cores;
 
-			uint32_t light = calc_light_multiplier(dc_light);
-			ShadeConstants shade_constants = dc_shade_constants;
-			BYTE *colormap = dc_colormap;
+			uint32_t light = calc_light_multiplier(_light);
+			ShadeConstants shade_constants = _shade_constants;
+			BYTE *colormap = _colormap;
 
-			uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
-			uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+			uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
+			uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
 
 			do
 			{
@@ -703,28 +705,28 @@ public:
 
 class DrawTranslatedColumnRGBACommand : public DrawerCommand
 {
-	int dc_count;
-	fixed_t dc_light;
-	ShadeConstants dc_shade_constants;
-	BYTE *dc_dest;
-	DWORD dc_iscale;
-	DWORD dc_texturefrac;
-	BYTE *dc_translation;
-	const BYTE *dc_source;
-	int dc_pitch;
+	int _count;
+	fixed_t _light;
+	ShadeConstants _shade_constants;
+	BYTE *_dest;
+	DWORD _iscale;
+	DWORD _texturefrac;
+	BYTE *_translation;
+	const BYTE *_source;
+	int _pitch;
 
 public:
 	DrawTranslatedColumnRGBACommand()
 	{
-		dc_count = ::dc_count;
-		dc_light = ::dc_light;
-		dc_shade_constants = ::dc_shade_constants;
-		dc_dest = ::dc_dest;
-		dc_iscale = ::dc_iscale;
-		dc_texturefrac = ::dc_texturefrac;
-		dc_translation = ::dc_translation;
-		dc_source = ::dc_source;
-		dc_pitch = ::dc_pitch;
+		_count = dc_count;
+		_light = dc_light;
+		_shade_constants = dc_shade_constants;
+		_dest = dc_dest;
+		_iscale = dc_iscale;
+		_texturefrac = dc_texturefrac;
+		_translation = dc_translation;
+		_source = dc_source;
+		_pitch = dc_pitch;
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -734,23 +736,23 @@ public:
 		fixed_t 			frac;
 		fixed_t 			fracstep;
 
-		count = thread->count_for_thread(dc_dest_y, dc_count);
+		count = thread->count_for_thread(_dest_y, _count);
 		if (count <= 0)
 			return;
 
-		uint32_t light = calc_light_multiplier(dc_light);
-		ShadeConstants shade_constants = dc_shade_constants;
+		uint32_t light = calc_light_multiplier(_light);
+		ShadeConstants shade_constants = _shade_constants;
 
-		dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
+		dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
 
-		fracstep = dc_iscale * thread->num_cores;
-		frac = dc_texturefrac + dc_iscale * thread->skipped_by_thread(dc_dest_y);
+		fracstep = _iscale * thread->num_cores;
+		frac = _texturefrac + _iscale * thread->skipped_by_thread(_dest_y);
 
 		{
 			// [RH] Local copies of global vars to improve compiler optimizations
-			BYTE *translation = dc_translation;
-			const BYTE *source = dc_source;
-			int pitch = dc_pitch * thread->num_cores;
+			BYTE *translation = _translation;
+			const BYTE *source = _source;
+			int pitch = _pitch * thread->num_cores;
 
 			do
 			{
@@ -764,28 +766,32 @@ public:
 
 class DrawTlatedAddColumnRGBACommand : public DrawerCommand
 {
-	int dc_count;
-	fixed_t dc_light;
-	ShadeConstants dc_shade_constants;
-	BYTE *dc_dest;
-	DWORD dc_iscale;
-	DWORD dc_texturefrac;
-	BYTE *dc_translation;
-	const BYTE *dc_source;
-	int dc_pitch;
+	int _count;
+	fixed_t _light;
+	ShadeConstants _shade_constants;
+	BYTE *_dest;
+	DWORD _iscale;
+	DWORD _texturefrac;
+	BYTE *_translation;
+	const BYTE *_source;
+	int _pitch;
+	fixed_t _srcalpha;
+	fixed_t _destalpha;
 
 public:
 	DrawTlatedAddColumnRGBACommand()
 	{
-		dc_count = ::dc_count;
-		dc_light = ::dc_light;
-		dc_shade_constants = ::dc_shade_constants;
-		dc_dest = ::dc_dest;
-		dc_iscale = ::dc_iscale;
-		dc_texturefrac = ::dc_texturefrac;
-		dc_translation = ::dc_translation;
-		dc_source = ::dc_source;
-		dc_pitch = ::dc_pitch;
+		_count = dc_count;
+		_light = dc_light;
+		_shade_constants = dc_shade_constants;
+		_dest = dc_dest;
+		_iscale = dc_iscale;
+		_texturefrac = dc_texturefrac;
+		_translation = dc_translation;
+		_source = dc_source;
+		_pitch = dc_pitch;
+		_srcalpha = dc_srcalpha;
+		_destalpha = dc_destalpha;
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -795,25 +801,25 @@ public:
 		fixed_t frac;
 		fixed_t fracstep;
 
-		count = thread->count_for_thread(dc_dest_y, dc_count);
+		count = thread->count_for_thread(_dest_y, _count);
 		if (count <= 0)
 			return;
 
-		uint32_t light = calc_light_multiplier(dc_light);
-		ShadeConstants shade_constants = dc_shade_constants;
+		uint32_t light = calc_light_multiplier(_light);
+		ShadeConstants shade_constants = _shade_constants;
 
-		dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
+		dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
 
-		fracstep = dc_iscale * thread->num_cores;
-		frac = dc_texturefrac + dc_iscale * thread->skipped_by_thread(dc_dest_y);
+		fracstep = _iscale * thread->num_cores;
+		frac = _texturefrac + _iscale * thread->skipped_by_thread(_dest_y);
 
 		{
-			BYTE *translation = dc_translation;
-			const BYTE *source = dc_source;
-			int pitch = dc_pitch * thread->num_cores;
+			BYTE *translation = _translation;
+			const BYTE *source = _source;
+			int pitch = _pitch * thread->num_cores;
 
-			uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
-			uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+			uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
+			uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
 
 			do
 			{
@@ -842,28 +848,28 @@ public:
 class DrawShadedColumnRGBACommand : public DrawerCommand
 {
 private:
-	int dc_count;
-	BYTE *dc_dest;
-	DWORD dc_iscale;
-	DWORD dc_texturefrac;
-	fixed_t dc_light;
-	const BYTE *dc_source;
-	lighttable_t *dc_colormap;
-	int dc_color;
-	int dc_pitch;
+	int _count;
+	BYTE *_dest;
+	DWORD _iscale;
+	DWORD _texturefrac;
+	fixed_t _light;
+	const BYTE *_source;
+	lighttable_t *_colormap;
+	int _color;
+	int _pitch;
 
 public:
 	DrawShadedColumnRGBACommand()
 	{
-		dc_count = ::dc_count;
-		dc_dest = ::dc_dest;
-		dc_iscale = ::dc_iscale;
-		dc_texturefrac = ::dc_texturefrac;
-		dc_light = ::dc_light;
-		dc_source = ::dc_source;
-		dc_colormap = ::dc_colormap;
-		dc_color = ::dc_color;
-		dc_pitch = ::dc_pitch;
+		_count = dc_count;
+		_dest = dc_dest;
+		_iscale = dc_iscale;
+		_texturefrac = dc_texturefrac;
+		_light = dc_light;
+		_source = dc_source;
+		_colormap = dc_colormap;
+		_color = dc_color;
+		_pitch = dc_pitch;
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -872,25 +878,25 @@ public:
 		uint32_t *dest;
 		fixed_t frac, fracstep;
 
-		count = thread->count_for_thread(dc_dest_y, dc_count);
+		count = thread->count_for_thread(_dest_y, _count);
 
 		if (count <= 0)
 			return;
 
-		dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
+		dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
 
-		fracstep = dc_iscale * thread->num_cores;
-		frac = dc_texturefrac + dc_iscale * thread->skipped_by_thread(dc_dest_y);
+		fracstep = _iscale * thread->num_cores;
+		frac = _texturefrac + _iscale * thread->skipped_by_thread(_dest_y);
 
-		uint32_t fg = shade_pal_index_simple(dc_color, calc_light_multiplier(dc_light));
+		uint32_t fg = shade_pal_index_simple(_color, calc_light_multiplier(_light));
 		uint32_t fg_red = (fg >> 16) & 0xff;
 		uint32_t fg_green = (fg >> 8) & 0xff;
 		uint32_t fg_blue = fg & 0xff;
 
 		{
-			const BYTE *source = dc_source;
-			BYTE *colormap = dc_colormap;
-			int pitch = dc_pitch * thread->num_cores;
+			const BYTE *source = _source;
+			BYTE *colormap = _colormap;
+			int pitch = _pitch * thread->num_cores;
 
 			do
 			{
@@ -915,30 +921,30 @@ public:
 
 class DrawAddClampColumnRGBACommand : public DrawerCommand
 {
-	int dc_count;
-	BYTE *dc_dest;
-	DWORD dc_iscale;
-	DWORD dc_texturefrac;
-	const BYTE *dc_source;
-	int dc_pitch;
-	fixed_t dc_light;
-	ShadeConstants dc_shade_constants;
-	fixed_t dc_srcalpha;
-	fixed_t dc_destalpha;
+	int _count;
+	BYTE *_dest;
+	DWORD _iscale;
+	DWORD _texturefrac;
+	const BYTE *_source;
+	int _pitch;
+	fixed_t _light;
+	ShadeConstants _shade_constants;
+	fixed_t _srcalpha;
+	fixed_t _destalpha;
 
 public:
 	DrawAddClampColumnRGBACommand()
 	{
-		dc_count = ::dc_count;
-		dc_dest = ::dc_dest;
-		dc_iscale = ::dc_iscale;
-		dc_texturefrac = ::dc_texturefrac;
-		dc_source = ::dc_source;
-		dc_pitch = ::dc_pitch;
-		dc_light = ::dc_light;
-		dc_shade_constants = ::dc_shade_constants;
-		dc_srcalpha = ::dc_srcalpha;
-		dc_destalpha = ::dc_destalpha;
+		_count = dc_count;
+		_dest = dc_dest;
+		_iscale = dc_iscale;
+		_texturefrac = dc_texturefrac;
+		_source = dc_source;
+		_pitch = dc_pitch;
+		_light = dc_light;
+		_shade_constants = dc_shade_constants;
+		_srcalpha = dc_srcalpha;
+		_destalpha = dc_destalpha;
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -948,23 +954,23 @@ public:
 		fixed_t frac;
 		fixed_t fracstep;
 
-		count = thread->count_for_thread(dc_dest_y, dc_count);
+		count = thread->count_for_thread(_dest_y, _count);
 		if (count <= 0)
 			return;
 
-		dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
+		dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
 
-		fracstep = dc_iscale * thread->num_cores;
-		frac = dc_texturefrac + dc_iscale * thread->skipped_by_thread(dc_dest_y);
+		fracstep = _iscale * thread->num_cores;
+		frac = _texturefrac + _iscale * thread->skipped_by_thread(_dest_y);
 
 		{
-			const BYTE *source = dc_source;
-			int pitch = dc_pitch * thread->num_cores;
-			uint32_t light = calc_light_multiplier(dc_light);
-			ShadeConstants shade_constants = dc_shade_constants;
+			const BYTE *source = _source;
+			int pitch = _pitch * thread->num_cores;
+			uint32_t light = calc_light_multiplier(_light);
+			ShadeConstants shade_constants = _shade_constants;
 
-			uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
-			uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+			uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
+			uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
 
 			do
 			{
@@ -991,32 +997,32 @@ public:
 
 class DrawAddClampTranslatedColumnRGBACommand : public DrawerCommand
 {
-	int dc_count;
-	BYTE *dc_dest;
-	DWORD dc_iscale;
-	DWORD dc_texturefrac;
-	BYTE *dc_translation;
-	const BYTE *dc_source;
-	int dc_pitch;
-	fixed_t dc_light;
-	ShadeConstants dc_shade_constants;
-	fixed_t dc_srcalpha;
-	fixed_t dc_destalpha;
+	int _count;
+	BYTE *_dest;
+	DWORD _iscale;
+	DWORD _texturefrac;
+	BYTE *_translation;
+	const BYTE *_source;
+	int _pitch;
+	fixed_t _light;
+	ShadeConstants _shade_constants;
+	fixed_t _srcalpha;
+	fixed_t _destalpha;
 
 public:
 	DrawAddClampTranslatedColumnRGBACommand()
 	{
-		dc_count = ::dc_count;
-		dc_dest = ::dc_dest;
-		dc_iscale = ::dc_iscale;
-		dc_texturefrac = ::dc_texturefrac;
-		dc_translation = ::dc_translation;
-		dc_source = ::dc_source;
-		dc_pitch = ::dc_pitch;
-		dc_light = ::dc_light;
-		dc_shade_constants = ::dc_shade_constants;
-		dc_srcalpha = ::dc_srcalpha;
-		dc_destalpha = ::dc_destalpha;
+		_count = dc_count;
+		_dest = dc_dest;
+		_iscale = dc_iscale;
+		_texturefrac = dc_texturefrac;
+		_translation = dc_translation;
+		_source = dc_source;
+		_pitch = dc_pitch;
+		_light = dc_light;
+		_shade_constants = dc_shade_constants;
+		_srcalpha = dc_srcalpha;
+		_destalpha = dc_destalpha;
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -1026,24 +1032,24 @@ public:
 		fixed_t frac;
 		fixed_t fracstep;
 
-		count = thread->count_for_thread(dc_dest_y, dc_count);
+		count = thread->count_for_thread(_dest_y, _count);
 		if (count <= 0)
 			return;
 
-		dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
+		dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
 
-		fracstep = dc_iscale * thread->num_cores;
-		frac = dc_texturefrac + dc_iscale * thread->skipped_by_thread(dc_dest_y);
+		fracstep = _iscale * thread->num_cores;
+		frac = _texturefrac + _iscale * thread->skipped_by_thread(_dest_y);
 
 		{
-			BYTE *translation = dc_translation;
-			const BYTE *source = dc_source;
-			int pitch = dc_pitch * thread->num_cores;
-			uint32_t light = calc_light_multiplier(dc_light);
-			ShadeConstants shade_constants = dc_shade_constants;
+			BYTE *translation = _translation;
+			const BYTE *source = _source;
+			int pitch = _pitch * thread->num_cores;
+			uint32_t light = calc_light_multiplier(_light);
+			ShadeConstants shade_constants = _shade_constants;
 
-			uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
-			uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+			uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
+			uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
 
 			do
 			{
@@ -1070,30 +1076,30 @@ public:
 
 class DrawSubClampColumnRGBACommand : public DrawerCommand
 {
-	int dc_count;
-	BYTE *dc_dest;
-	DWORD dc_iscale;
-	DWORD dc_texturefrac;
-	const BYTE *dc_source;
-	int dc_pitch;
-	fixed_t dc_light;
-	ShadeConstants dc_shade_constants;
-	fixed_t dc_srcalpha;
-	fixed_t dc_destalpha;
+	int _count;
+	BYTE *_dest;
+	DWORD _iscale;
+	DWORD _texturefrac;
+	const BYTE *_source;
+	int _pitch;
+	fixed_t _light;
+	ShadeConstants _shade_constants;
+	fixed_t _srcalpha;
+	fixed_t _destalpha;
 
 public:
 	DrawSubClampColumnRGBACommand()
 	{
-		dc_count = ::dc_count;
-		dc_dest = ::dc_dest;
-		dc_iscale = ::dc_iscale;
-		dc_texturefrac = ::dc_texturefrac;
-		dc_source = ::dc_source;
-		dc_pitch = ::dc_pitch;
-		dc_light = ::dc_light;
-		dc_shade_constants = ::dc_shade_constants;
-		dc_srcalpha = ::dc_srcalpha;
-		dc_destalpha = ::dc_destalpha;
+		_count = dc_count;
+		_dest = dc_dest;
+		_iscale = dc_iscale;
+		_texturefrac = dc_texturefrac;
+		_source = dc_source;
+		_pitch = dc_pitch;
+		_light = dc_light;
+		_shade_constants = dc_shade_constants;
+		_srcalpha = dc_srcalpha;
+		_destalpha = dc_destalpha;
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -1103,23 +1109,23 @@ public:
 		fixed_t frac;
 		fixed_t fracstep;
 
-		count = thread->count_for_thread(dc_dest_y, dc_count);
+		count = thread->count_for_thread(_dest_y, _count);
 		if (count <= 0)
 			return;
 
-		dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
+		dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
 
-		fracstep = dc_iscale * thread->num_cores;
-		frac = dc_texturefrac + dc_iscale * thread->skipped_by_thread(dc_dest_y);
+		fracstep = _iscale * thread->num_cores;
+		frac = _texturefrac + _iscale * thread->skipped_by_thread(_dest_y);
 
 		{
-			const BYTE *source = dc_source;
-			int pitch = dc_pitch * thread->num_cores;
-			uint32_t light = calc_light_multiplier(dc_light);
-			ShadeConstants shade_constants = dc_shade_constants;
+			const BYTE *source = _source;
+			int pitch = _pitch * thread->num_cores;
+			uint32_t light = calc_light_multiplier(_light);
+			ShadeConstants shade_constants = _shade_constants;
 
-			uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
-			uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+			uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
+			uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
 
 			do
 			{
@@ -1146,32 +1152,32 @@ public:
 
 class DrawSubClampTranslatedColumnRGBACommand : public DrawerCommand
 {
-	int dc_count;
-	BYTE *dc_dest;
-	DWORD dc_iscale;
-	DWORD dc_texturefrac;
-	const BYTE *dc_source;
-	int dc_pitch;
-	fixed_t dc_light;
-	ShadeConstants dc_shade_constants;
-	fixed_t dc_srcalpha;
-	fixed_t dc_destalpha;
-	BYTE *dc_translation;
+	int _count;
+	BYTE *_dest;
+	DWORD _iscale;
+	DWORD _texturefrac;
+	const BYTE *_source;
+	int _pitch;
+	fixed_t _light;
+	ShadeConstants _shade_constants;
+	fixed_t _srcalpha;
+	fixed_t _destalpha;
+	BYTE *_translation;
 
 public:
 	DrawSubClampTranslatedColumnRGBACommand()
 	{
-		dc_count = ::dc_count;
-		dc_dest = ::dc_dest;
-		dc_iscale = ::dc_iscale;
-		dc_texturefrac = ::dc_texturefrac;
-		dc_source = ::dc_source;
-		dc_pitch = ::dc_pitch;
-		dc_light = ::dc_light;
-		dc_shade_constants = ::dc_shade_constants;
-		dc_srcalpha = ::dc_srcalpha;
-		dc_destalpha = ::dc_destalpha;
-		dc_translation = ::dc_translation;
+		_count = dc_count;
+		_dest = dc_dest;
+		_iscale = dc_iscale;
+		_texturefrac = dc_texturefrac;
+		_source = dc_source;
+		_pitch = dc_pitch;
+		_light = dc_light;
+		_shade_constants = dc_shade_constants;
+		_srcalpha = dc_srcalpha;
+		_destalpha = dc_destalpha;
+		_translation = dc_translation;
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -1181,24 +1187,24 @@ public:
 		fixed_t frac;
 		fixed_t fracstep;
 
-		count = thread->count_for_thread(dc_dest_y, dc_count);
+		count = thread->count_for_thread(_dest_y, _count);
 		if (count <= 0)
 			return;
 
-		dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
+		dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
 
-		fracstep = dc_iscale * thread->num_cores;
-		frac = dc_texturefrac + dc_iscale * thread->skipped_by_thread(dc_dest_y);
+		fracstep = _iscale * thread->num_cores;
+		frac = _texturefrac + _iscale * thread->skipped_by_thread(_dest_y);
 
 		{
-			BYTE *translation = dc_translation;
-			const BYTE *source = dc_source;
-			int pitch = dc_pitch * thread->num_cores;
-			uint32_t light = calc_light_multiplier(dc_light);
-			ShadeConstants shade_constants = dc_shade_constants;
+			BYTE *translation = _translation;
+			const BYTE *source = _source;
+			int pitch = _pitch * thread->num_cores;
+			uint32_t light = calc_light_multiplier(_light);
+			ShadeConstants shade_constants = _shade_constants;
 
-			uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
-			uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+			uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
+			uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
 
 			do
 			{
@@ -1225,30 +1231,30 @@ public:
 
 class DrawRevSubClampColumnRGBACommand : public DrawerCommand
 {
-	int dc_count;
-	BYTE *dc_dest;
-	DWORD dc_iscale;
-	DWORD dc_texturefrac;
-	const BYTE *dc_source;
-	int dc_pitch;
-	fixed_t dc_light;
-	ShadeConstants dc_shade_constants;
-	fixed_t dc_srcalpha;
-	fixed_t dc_destalpha;
+	int _count;
+	BYTE *_dest;
+	DWORD _iscale;
+	DWORD _texturefrac;
+	const BYTE *_source;
+	int _pitch;
+	fixed_t _light;
+	ShadeConstants _shade_constants;
+	fixed_t _srcalpha;
+	fixed_t _destalpha;
 
 public:
 	DrawRevSubClampColumnRGBACommand()
 	{
-		dc_count = ::dc_count;
-		dc_dest = ::dc_dest;
-		dc_iscale = ::dc_iscale;
-		dc_texturefrac = ::dc_texturefrac;
-		dc_source = ::dc_source;
-		dc_pitch = ::dc_pitch;
-		dc_light = ::dc_light;
-		dc_shade_constants = ::dc_shade_constants;
-		dc_srcalpha = ::dc_srcalpha;
-		dc_destalpha = ::dc_destalpha;
+		_count = dc_count;
+		_dest = dc_dest;
+		_iscale = dc_iscale;
+		_texturefrac = dc_texturefrac;
+		_source = dc_source;
+		_pitch = dc_pitch;
+		_light = dc_light;
+		_shade_constants = dc_shade_constants;
+		_srcalpha = dc_srcalpha;
+		_destalpha = dc_destalpha;
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -1258,22 +1264,22 @@ public:
 		fixed_t frac;
 		fixed_t fracstep;
 
-		count = thread->count_for_thread(dc_dest_y, dc_count);
+		count = thread->count_for_thread(_dest_y, _count);
 		if (count <= 0)
 			return;
 
-		dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
+		dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
 
-		fracstep = dc_iscale * thread->num_cores;
-		frac = dc_texturefrac + dc_iscale * thread->skipped_by_thread(dc_dest_y);
+		fracstep = _iscale * thread->num_cores;
+		frac = _texturefrac + _iscale * thread->skipped_by_thread(_dest_y);
 
 		{
-			const BYTE *source = dc_source;
-			int pitch = dc_pitch * thread->num_cores;
-			uint32_t light = calc_light_multiplier(dc_light);
-			ShadeConstants shade_constants = dc_shade_constants;
-			uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
-			uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+			const BYTE *source = _source;
+			int pitch = _pitch * thread->num_cores;
+			uint32_t light = calc_light_multiplier(_light);
+			ShadeConstants shade_constants = _shade_constants;
+			uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
+			uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
 
 			do
 			{
@@ -1300,32 +1306,32 @@ public:
 
 class DrawRevSubClampTranslatedColumnRGBACommand : public DrawerCommand
 {
-	int dc_count;
-	BYTE *dc_dest;
-	DWORD dc_iscale;
-	DWORD dc_texturefrac;
-	const BYTE *dc_source;
-	int dc_pitch;
-	fixed_t dc_light;
-	ShadeConstants dc_shade_constants;
-	fixed_t dc_srcalpha;
-	fixed_t dc_destalpha;
-	BYTE *dc_translation;
+	int _count;
+	BYTE *_dest;
+	DWORD _iscale;
+	DWORD _texturefrac;
+	const BYTE *_source;
+	int _pitch;
+	fixed_t _light;
+	ShadeConstants _shade_constants;
+	fixed_t _srcalpha;
+	fixed_t _destalpha;
+	BYTE *_translation;
 
 public:
 	DrawRevSubClampTranslatedColumnRGBACommand()
 	{
-		dc_count = ::dc_count;
-		dc_dest = ::dc_dest;
-		dc_iscale = ::dc_iscale;
-		dc_texturefrac = ::dc_texturefrac;
-		dc_source = ::dc_source;
-		dc_pitch = ::dc_pitch;
-		dc_light = ::dc_light;
-		dc_shade_constants = ::dc_shade_constants;
-		dc_srcalpha = ::dc_srcalpha;
-		dc_destalpha = ::dc_destalpha;
-		dc_translation = ::dc_translation;
+		_count = dc_count;
+		_dest = dc_dest;
+		_iscale = dc_iscale;
+		_texturefrac = dc_texturefrac;
+		_source = dc_source;
+		_pitch = dc_pitch;
+		_light = dc_light;
+		_shade_constants = dc_shade_constants;
+		_srcalpha = dc_srcalpha;
+		_destalpha = dc_destalpha;
+		_translation = dc_translation;
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -1335,24 +1341,24 @@ public:
 		fixed_t frac;
 		fixed_t fracstep;
 
-		count = thread->count_for_thread(dc_dest_y, dc_count);
+		count = thread->count_for_thread(_dest_y, _count);
 		if (count <= 0)
 			return;
 
-		dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
+		dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
 
-		fracstep = dc_iscale * thread->num_cores;
-		frac = dc_texturefrac + dc_iscale * thread->skipped_by_thread(dc_dest_y);
+		fracstep = _iscale * thread->num_cores;
+		frac = _texturefrac + _iscale * thread->skipped_by_thread(_dest_y);
 
 		{
-			BYTE *translation = dc_translation;
-			const BYTE *source = dc_source;
-			int pitch = dc_pitch * thread->num_cores;
-			uint32_t light = calc_light_multiplier(dc_light);
-			ShadeConstants shade_constants = dc_shade_constants;
+			BYTE *translation = _translation;
+			const BYTE *source = _source;
+			int pitch = _pitch * thread->num_cores;
+			uint32_t light = calc_light_multiplier(_light);
+			ShadeConstants shade_constants = _shade_constants;
 
-			uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
-			uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+			uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
+			uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
 
 			do
 			{
@@ -1379,42 +1385,42 @@ public:
 
 class DrawSpanRGBACommand : public DrawerCommand
 {
-	const uint32_t *ds_source;
-	fixed_t ds_xfrac;
-	fixed_t ds_yfrac;
-	fixed_t ds_xstep;
-	fixed_t ds_ystep;
-	int ds_x1;
-	int ds_x2;
-	int ds_y;
-	int ds_xbits;
-	int ds_ybits;
-	BYTE *dc_destorg;
-	fixed_t ds_light;
-	ShadeConstants ds_shade_constants;
+	const uint32_t *_source;
+	fixed_t _xfrac;
+	fixed_t _yfrac;
+	fixed_t _xstep;
+	fixed_t _ystep;
+	int _x1;
+	int _x2;
+	int _y;
+	int _xbits;
+	int _ybits;
+	BYTE *_destorg;
+	fixed_t _light;
+	ShadeConstants _shade_constants;
 
 public:
 	DrawSpanRGBACommand()
 	{
-		ds_source = (const uint32_t*)::ds_source;
-		ds_xfrac = ::ds_xfrac;
-		ds_yfrac = ::ds_yfrac;
-		ds_xstep = ::ds_xstep;
-		ds_ystep = ::ds_ystep;
-		ds_x1 = ::ds_x1;
-		ds_x2 = ::ds_x2;
-		ds_y = ::ds_y;
-		ds_xbits = ::ds_xbits;
-		ds_ybits = ::ds_ybits;
-		dc_destorg = ::dc_destorg;
-		ds_light = ::ds_light;
-		ds_shade_constants = ::ds_shade_constants;
+		_source = (const uint32_t*)ds_source;
+		_xfrac = ds_xfrac;
+		_yfrac = ds_yfrac;
+		_xstep = ds_xstep;
+		_ystep = ds_ystep;
+		_x1 = ds_x1;
+		_x2 = ds_x2;
+		_y = ds_y;
+		_xbits = ds_xbits;
+		_ybits = ds_ybits;
+		_destorg = dc_destorg;
+		_light = ds_light;
+		_shade_constants = ds_shade_constants;
 	}
 
 #ifdef NO_SSE
 	void Execute(DrawerThread *thread) override
 	{
-		if (thread->line_skipped_by_thread(ds_y))
+		if (thread->line_skipped_by_thread(_y))
 			return;
 
 		dsfixed_t			xfrac;
@@ -1422,24 +1428,24 @@ public:
 		dsfixed_t			xstep;
 		dsfixed_t			ystep;
 		uint32_t*			dest;
-		const uint32_t*		source = ds_source;
+		const uint32_t*		source = _source;
 		int 				count;
 		int 				spot;
 
-		xfrac = ds_xfrac;
-		yfrac = ds_yfrac;
+		xfrac = _xfrac;
+		yfrac = _yfrac;
 
-		dest = ylookup[ds_y] + ds_x1 + (uint32_t*)dc_destorg;
+		dest = ylookup[_y] + _x1 + (uint32_t*)_destorg;
 
-		count = ds_x2 - ds_x1 + 1;
+		count = _x2 - _x1 + 1;
 
-		xstep = ds_xstep;
-		ystep = ds_ystep;
+		xstep = _xstep;
+		ystep = _ystep;
 
-		uint32_t light = calc_light_multiplier(ds_light);
-		ShadeConstants shade_constants = ds_shade_constants;
+		uint32_t light = calc_light_multiplier(_light);
+		ShadeConstants shade_constants = _shade_constants;
 
-		if (ds_xbits == 6 && ds_ybits == 6)
+		if (_xbits == 6 && _ybits == 6)
 		{
 			// 64x64 is the most common case by far, so special case it.
 
@@ -1458,9 +1464,9 @@ public:
 		}
 		else
 		{
-			BYTE yshift = 32 - ds_ybits;
-			BYTE xshift = yshift - ds_xbits;
-			int xmask = ((1 << ds_xbits) - 1) << ds_ybits;
+			BYTE yshift = 32 - _ybits;
+			BYTE xshift = yshift - _xbits;
+			int xmask = ((1 << _xbits) - 1) << _ybits;
 
 			do
 			{
@@ -1479,7 +1485,7 @@ public:
 #else
 	void Execute(DrawerThread *thread) override
 	{
-		if (thread->line_skipped_by_thread(ds_y))
+		if (thread->line_skipped_by_thread(_y))
 			return;
 
 		dsfixed_t			xfrac;
@@ -1487,24 +1493,24 @@ public:
 		dsfixed_t			xstep;
 		dsfixed_t			ystep;
 		uint32_t*			dest;
-		const uint32_t*		source = ds_source;
+		const uint32_t*		source = _source;
 		int 				count;
 		int 				spot;
 
-		xfrac = ds_xfrac;
-		yfrac = ds_yfrac;
+		xfrac = _xfrac;
+		yfrac = _yfrac;
 
-		dest = ylookup[ds_y] + ds_x1 + (uint32_t*)dc_destorg;
+		dest = ylookup[_y] + _x1 + (uint32_t*)_destorg;
 
-		count = ds_x2 - ds_x1 + 1;
+		count = _x2 - _x1 + 1;
 
-		xstep = ds_xstep;
-		ystep = ds_ystep;
+		xstep = _xstep;
+		ystep = _ystep;
 
-		uint32_t light = calc_light_multiplier(ds_light);
-		ShadeConstants shade_constants = ds_shade_constants;
+		uint32_t light = calc_light_multiplier(_light);
+		ShadeConstants shade_constants = _shade_constants;
 
-		if (ds_xbits == 6 && ds_ybits == 6)
+		if (_xbits == 6 && _ybits == 6)
 		{
 			// 64x64 is the most common case by far, so special case it.
 
@@ -1604,9 +1610,9 @@ public:
 		}
 		else
 		{
-			BYTE yshift = 32 - ds_ybits;
-			BYTE xshift = yshift - ds_xbits;
-			int xmask = ((1 << ds_xbits) - 1) << ds_ybits;
+			BYTE yshift = 32 - _ybits;
+			BYTE xshift = yshift - _xbits;
+			int xmask = ((1 << _xbits) - 1) << _ybits;
 
 			int sse_count = count / 4;
 			count -= sse_count * 4;
@@ -1700,42 +1706,42 @@ public:
 
 class DrawSpanMaskedRGBACommand : public DrawerCommand
 {
-	const uint32_t *ds_source;
-	fixed_t ds_light;
-	ShadeConstants ds_shade_constants;
-	fixed_t ds_xfrac;
-	fixed_t ds_yfrac;
-	BYTE *dc_destorg;
-	int ds_x1;
-	int ds_x2;
-	int ds_y1;
-	int ds_y;
-	fixed_t ds_xstep;
-	fixed_t ds_ystep;
-	int ds_xbits;
-	int ds_ybits;
+	const uint32_t *_source;
+	fixed_t _light;
+	ShadeConstants _shade_constants;
+	fixed_t _xfrac;
+	fixed_t _yfrac;
+	BYTE *_destorg;
+	int _x1;
+	int _x2;
+	int _y1;
+	int _y;
+	fixed_t _xstep;
+	fixed_t _ystep;
+	int _xbits;
+	int _ybits;
 
 public:
 	DrawSpanMaskedRGBACommand()
 	{
-		ds_source = (const uint32_t*)::ds_source;
-		ds_light = ::ds_light;
-		ds_shade_constants = ::ds_shade_constants;
-		ds_xfrac = ::ds_xfrac;
-		ds_yfrac = ::ds_yfrac;
-		dc_destorg = ::dc_destorg;
-		ds_x1 = ::ds_x1;
-		ds_x2 = ::ds_x2;
-		ds_y = ::ds_y;
-		ds_xstep = ::ds_xstep;
-		ds_ystep = ::ds_ystep;
-		ds_xbits = ::ds_xbits;
-		ds_ybits = ::ds_ybits;
+		_source = (const uint32_t*)ds_source;
+		_light = ds_light;
+		_shade_constants = ds_shade_constants;
+		_xfrac = ds_xfrac;
+		_yfrac = ds_yfrac;
+		_destorg = dc_destorg;
+		_x1 = ds_x1;
+		_x2 = ds_x2;
+		_y = ds_y;
+		_xstep = ds_xstep;
+		_ystep = ds_ystep;
+		_xbits = ds_xbits;
+		_ybits = ds_ybits;
 	}
 
 	void Execute(DrawerThread *thread) override
 	{
-		if (thread->line_skipped_by_thread(ds_y))
+		if (thread->line_skipped_by_thread(_y))
 			return;
 
 		dsfixed_t			xfrac;
@@ -1743,24 +1749,24 @@ public:
 		dsfixed_t			xstep;
 		dsfixed_t			ystep;
 		uint32_t*			dest;
-		const uint32_t*		source = ds_source;
+		const uint32_t*		source = _source;
 		int 				count;
 		int 				spot;
 
-		uint32_t light = calc_light_multiplier(ds_light);
-		ShadeConstants shade_constants = ds_shade_constants;
+		uint32_t light = calc_light_multiplier(_light);
+		ShadeConstants shade_constants = _shade_constants;
 
-		xfrac = ds_xfrac;
-		yfrac = ds_yfrac;
+		xfrac = _xfrac;
+		yfrac = _yfrac;
 
-		dest = ylookup[ds_y] + ds_x1 + (uint32_t*)dc_destorg;
+		dest = ylookup[_y] + _x1 + (uint32_t*)_destorg;
 
-		count = ds_x2 - ds_x1 + 1;
+		count = _x2 - _x1 + 1;
 
-		xstep = ds_xstep;
-		ystep = ds_ystep;
+		xstep = _xstep;
+		ystep = _ystep;
 
-		if (ds_xbits == 6 && ds_ybits == 6)
+		if (_xbits == 6 && _ybits == 6)
 		{
 			// 64x64 is the most common case by far, so special case it.
 			do
@@ -1780,9 +1786,9 @@ public:
 		}
 		else
 		{
-			BYTE yshift = 32 - ds_ybits;
-			BYTE xshift = yshift - ds_xbits;
-			int xmask = ((1 << ds_xbits) - 1) << ds_ybits;
+			BYTE yshift = 32 - _ybits;
+			BYTE xshift = yshift - _xbits;
+			int xmask = ((1 << _xbits) - 1) << _ybits;
 			do
 			{
 				uint32_t texdata;
@@ -1803,42 +1809,46 @@ public:
 
 class DrawSpanTranslucentRGBACommand : public DrawerCommand
 {
-	const uint32_t *ds_source;
-	fixed_t ds_light;
-	ShadeConstants ds_shade_constants;
-	fixed_t ds_xfrac;
-	fixed_t ds_yfrac;
-	BYTE *dc_destorg;
-	int ds_x1;
-	int ds_x2;
-	int ds_y1;
-	int ds_y;
-	fixed_t ds_xstep;
-	fixed_t ds_ystep;
-	int ds_xbits;
-	int ds_ybits;
+	const uint32_t *_source;
+	fixed_t _light;
+	ShadeConstants _shade_constants;
+	fixed_t _xfrac;
+	fixed_t _yfrac;
+	BYTE *_destorg;
+	int _x1;
+	int _x2;
+	int _y1;
+	int _y;
+	fixed_t _xstep;
+	fixed_t _ystep;
+	int _xbits;
+	int _ybits;
+	fixed_t _srcalpha;
+	fixed_t _destalpha;
 
 public:
 	DrawSpanTranslucentRGBACommand()
 	{
-		ds_source = (const uint32_t *)::ds_source;
-		ds_light = ::ds_light;
-		ds_shade_constants = ::ds_shade_constants;
-		ds_xfrac = ::ds_xfrac;
-		ds_yfrac = ::ds_yfrac;
-		dc_destorg = ::dc_destorg;
-		ds_x1 = ::ds_x1;
-		ds_x2 = ::ds_x2;
-		ds_y = ::ds_y;
-		ds_xstep = ::ds_xstep;
-		ds_ystep = ::ds_ystep;
-		ds_xbits = ::ds_xbits;
-		ds_ybits = ::ds_ybits;
+		_source = (const uint32_t *)ds_source;
+		_light = ds_light;
+		_shade_constants = ds_shade_constants;
+		_xfrac = ds_xfrac;
+		_yfrac = ds_yfrac;
+		_destorg = dc_destorg;
+		_x1 = ds_x1;
+		_x2 = ds_x2;
+		_y = ds_y;
+		_xstep = ds_xstep;
+		_ystep = ds_ystep;
+		_xbits = ds_xbits;
+		_ybits = ds_ybits;
+		_srcalpha = dc_srcalpha;
+		_destalpha = dc_destalpha;
 	}
 
 	void Execute(DrawerThread *thread) override
 	{
-		if (thread->line_skipped_by_thread(ds_y))
+		if (thread->line_skipped_by_thread(_y))
 			return;
 
 		dsfixed_t			xfrac;
@@ -1846,27 +1856,27 @@ public:
 		dsfixed_t			xstep;
 		dsfixed_t			ystep;
 		uint32_t*			dest;
-		const uint32_t*		source = ds_source;
+		const uint32_t*		source = _source;
 		int 				count;
 		int 				spot;
 
-		xfrac = ds_xfrac;
-		yfrac = ds_yfrac;
+		xfrac = _xfrac;
+		yfrac = _yfrac;
 
-		dest = ylookup[ds_y] + ds_x1 + (uint32_t*)dc_destorg;
+		dest = ylookup[_y] + _x1 + (uint32_t*)_destorg;
 
-		count = ds_x2 - ds_x1 + 1;
+		count = _x2 - _x1 + 1;
 
-		xstep = ds_xstep;
-		ystep = ds_ystep;
+		xstep = _xstep;
+		ystep = _ystep;
 
-		uint32_t light = calc_light_multiplier(ds_light);
-		ShadeConstants shade_constants = ds_shade_constants;
+		uint32_t light = calc_light_multiplier(_light);
+		ShadeConstants shade_constants = _shade_constants;
 
-		uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
+		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
 
-		if (ds_xbits == 6 && ds_ybits == 6)
+		if (_xbits == 6 && _ybits == 6)
 		{
 			// 64x64 is the most common case by far, so special case it.
 			do
@@ -1894,9 +1904,9 @@ public:
 		}
 		else
 		{
-			BYTE yshift = 32 - ds_ybits;
-			BYTE xshift = yshift - ds_xbits;
-			int xmask = ((1 << ds_xbits) - 1) << ds_ybits;
+			BYTE yshift = 32 - _ybits;
+			BYTE xshift = yshift - _xbits;
+			int xmask = ((1 << _xbits) - 1) << _ybits;
 			do
 			{
 				spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
@@ -1925,42 +1935,46 @@ public:
 
 class DrawSpanMaskedTranslucentRGBACommand : public DrawerCommand
 {
-	const uint32_t *ds_source;
-	fixed_t ds_light;
-	ShadeConstants ds_shade_constants;
-	fixed_t ds_xfrac;
-	fixed_t ds_yfrac;
-	BYTE *dc_destorg;
-	int ds_x1;
-	int ds_x2;
-	int ds_y1;
-	int ds_y;
-	fixed_t ds_xstep;
-	fixed_t ds_ystep;
-	int ds_xbits;
-	int ds_ybits;
+	const uint32_t *_source;
+	fixed_t _light;
+	ShadeConstants _shade_constants;
+	fixed_t _xfrac;
+	fixed_t _yfrac;
+	BYTE *_destorg;
+	int _x1;
+	int _x2;
+	int _y1;
+	int _y;
+	fixed_t _xstep;
+	fixed_t _ystep;
+	int _xbits;
+	int _ybits;
+	fixed_t _srcalpha;
+	fixed_t _destalpha;
 
 public:
 	DrawSpanMaskedTranslucentRGBACommand()
 	{
-		ds_source = (const uint32_t*)::ds_source;
-		ds_light = ::ds_light;
-		ds_shade_constants = ::ds_shade_constants;
-		ds_xfrac = ::ds_xfrac;
-		ds_yfrac = ::ds_yfrac;
-		dc_destorg = ::dc_destorg;
-		ds_x1 = ::ds_x1;
-		ds_x2 = ::ds_x2;
-		ds_y = ::ds_y;
-		ds_xstep = ::ds_xstep;
-		ds_ystep = ::ds_ystep;
-		ds_xbits = ::ds_xbits;
-		ds_ybits = ::ds_ybits;
+		_source = (const uint32_t*)ds_source;
+		_light = ds_light;
+		_shade_constants = ds_shade_constants;
+		_xfrac = ds_xfrac;
+		_yfrac = ds_yfrac;
+		_destorg = dc_destorg;
+		_x1 = ds_x1;
+		_x2 = ds_x2;
+		_y = ds_y;
+		_xstep = ds_xstep;
+		_ystep = ds_ystep;
+		_xbits = ds_xbits;
+		_ybits = ds_ybits;
+		_srcalpha = dc_srcalpha;
+		_destalpha = dc_destalpha;
 	}
 
 	void Execute(DrawerThread *thread) override
 	{
-		if (thread->line_skipped_by_thread(ds_y))
+		if (thread->line_skipped_by_thread(_y))
 			return;
 
 		dsfixed_t			xfrac;
@@ -1968,27 +1982,27 @@ public:
 		dsfixed_t			xstep;
 		dsfixed_t			ystep;
 		uint32_t*			dest;
-		const uint32_t*		source = ds_source;
+		const uint32_t*		source = _source;
 		int 				count;
 		int 				spot;
 
-		uint32_t light = calc_light_multiplier(ds_light);
-		ShadeConstants shade_constants = ds_shade_constants;
+		uint32_t light = calc_light_multiplier(_light);
+		ShadeConstants shade_constants = _shade_constants;
 
-		uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
+		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
 
-		xfrac = ds_xfrac;
-		yfrac = ds_yfrac;
+		xfrac = _xfrac;
+		yfrac = _yfrac;
 
-		dest = ylookup[ds_y] + ds_x1 + (uint32_t*)dc_destorg;
+		dest = ylookup[_y] + _x1 + (uint32_t*)_destorg;
 
-		count = ds_x2 - ds_x1 + 1;
+		count = _x2 - _x1 + 1;
 
-		xstep = ds_xstep;
-		ystep = ds_ystep;
+		xstep = _xstep;
+		ystep = _ystep;
 
-		if (ds_xbits == 6 && ds_ybits == 6)
+		if (_xbits == 6 && _ybits == 6)
 		{
 			// 64x64 is the most common case by far, so special case it.
 			do
@@ -2021,9 +2035,9 @@ public:
 		}
 		else
 		{
-			BYTE yshift = 32 - ds_ybits;
-			BYTE xshift = yshift - ds_xbits;
-			int xmask = ((1 << ds_xbits) - 1) << ds_ybits;
+			BYTE yshift = 32 - _ybits;
+			BYTE xshift = yshift - _xbits;
+			int xmask = ((1 << _xbits) - 1) << _ybits;
 			do
 			{
 				uint32_t texdata;
@@ -2057,42 +2071,46 @@ public:
 
 class DrawSpanAddClampRGBACommand : public DrawerCommand
 {
-	const uint32_t *ds_source;
-	fixed_t ds_light;
-	ShadeConstants ds_shade_constants;
-	fixed_t ds_xfrac;
-	fixed_t ds_yfrac;
-	BYTE *dc_destorg;
-	int ds_x1;
-	int ds_x2;
-	int ds_y1;
-	int ds_y;
-	fixed_t ds_xstep;
-	fixed_t ds_ystep;
-	int ds_xbits;
-	int ds_ybits;
+	const uint32_t *_source;
+	fixed_t _light;
+	ShadeConstants _shade_constants;
+	fixed_t _xfrac;
+	fixed_t _yfrac;
+	BYTE *_destorg;
+	int _x1;
+	int _x2;
+	int _y1;
+	int _y;
+	fixed_t _xstep;
+	fixed_t _ystep;
+	int _xbits;
+	int _ybits;
+	fixed_t _srcalpha;
+	fixed_t _destalpha;
 
 public:
 	DrawSpanAddClampRGBACommand()
 	{
-		ds_source = (const uint32_t*)::ds_source;
-		ds_light = ::ds_light;
-		ds_shade_constants = ::ds_shade_constants;
-		ds_xfrac = ::ds_xfrac;
-		ds_yfrac = ::ds_yfrac;
-		dc_destorg = ::dc_destorg;
-		ds_x1 = ::ds_x1;
-		ds_x2 = ::ds_x2;
-		ds_y = ::ds_y;
-		ds_xstep = ::ds_xstep;
-		ds_ystep = ::ds_ystep;
-		ds_xbits = ::ds_xbits;
-		ds_ybits = ::ds_ybits;
+		_source = (const uint32_t*)ds_source;
+		_light = ds_light;
+		_shade_constants = ds_shade_constants;
+		_xfrac = ds_xfrac;
+		_yfrac = ds_yfrac;
+		_destorg = dc_destorg;
+		_x1 = ds_x1;
+		_x2 = ds_x2;
+		_y = ds_y;
+		_xstep = ds_xstep;
+		_ystep = ds_ystep;
+		_xbits = ds_xbits;
+		_ybits = ds_ybits;
+		_srcalpha = dc_srcalpha;
+		_destalpha = dc_destalpha;
 	}
 
 	void Execute(DrawerThread *thread) override
 	{
-		if (thread->line_skipped_by_thread(ds_y))
+		if (thread->line_skipped_by_thread(_y))
 			return;
 
 		dsfixed_t			xfrac;
@@ -2100,27 +2118,27 @@ public:
 		dsfixed_t			xstep;
 		dsfixed_t			ystep;
 		uint32_t*			dest;
-		const uint32_t*		source = ds_source;
+		const uint32_t*		source = _source;
 		int 				count;
 		int 				spot;
 
-		uint32_t light = calc_light_multiplier(ds_light);
-		ShadeConstants shade_constants = ds_shade_constants;
+		uint32_t light = calc_light_multiplier(_light);
+		ShadeConstants shade_constants = _shade_constants;
 
-		uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
+		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
 
-		xfrac = ds_xfrac;
-		yfrac = ds_yfrac;
+		xfrac = _xfrac;
+		yfrac = _yfrac;
 
-		dest = ylookup[ds_y] + ds_x1 + (uint32_t*)dc_destorg;
+		dest = ylookup[_y] + _x1 + (uint32_t*)_destorg;
 
-		count = ds_x2 - ds_x1 + 1;
+		count = _x2 - _x1 + 1;
 
-		xstep = ds_xstep;
-		ystep = ds_ystep;
+		xstep = _xstep;
+		ystep = _ystep;
 
-		if (ds_xbits == 6 && ds_ybits == 6)
+		if (_xbits == 6 && _ybits == 6)
 		{
 			// 64x64 is the most common case by far, so special case it.
 			do
@@ -2148,9 +2166,9 @@ public:
 		}
 		else
 		{
-			BYTE yshift = 32 - ds_ybits;
-			BYTE xshift = yshift - ds_xbits;
-			int xmask = ((1 << ds_xbits) - 1) << ds_ybits;
+			BYTE yshift = 32 - _ybits;
+			BYTE xshift = yshift - _xbits;
+			int xmask = ((1 << _xbits) - 1) << _ybits;
 			do
 			{
 				spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
@@ -2179,42 +2197,46 @@ public:
 
 class DrawSpanMaskedAddClampRGBACommand : public DrawerCommand
 {
-	const uint32_t *ds_source;
-	fixed_t ds_light;
-	ShadeConstants ds_shade_constants;
-	fixed_t ds_xfrac;
-	fixed_t ds_yfrac;
-	BYTE *dc_destorg;
-	int ds_x1;
-	int ds_x2;
-	int ds_y1;
-	int ds_y;
-	fixed_t ds_xstep;
-	fixed_t ds_ystep;
-	int ds_xbits;
-	int ds_ybits;
+	const uint32_t *_source;
+	fixed_t _light;
+	ShadeConstants _shade_constants;
+	fixed_t _xfrac;
+	fixed_t _yfrac;
+	BYTE *_destorg;
+	int _x1;
+	int _x2;
+	int _y1;
+	int _y;
+	fixed_t _xstep;
+	fixed_t _ystep;
+	int _xbits;
+	int _ybits;
+	fixed_t _srcalpha;
+	fixed_t _destalpha;
 
 public:
 	DrawSpanMaskedAddClampRGBACommand()
 	{
-		ds_source = (const uint32_t*)::ds_source;
-		ds_light = ::ds_light;
-		ds_shade_constants = ::ds_shade_constants;
-		ds_xfrac = ::ds_xfrac;
-		ds_yfrac = ::ds_yfrac;
-		dc_destorg = ::dc_destorg;
-		ds_x1 = ::ds_x1;
-		ds_x2 = ::ds_x2;
-		ds_y = ::ds_y;
-		ds_xstep = ::ds_xstep;
-		ds_ystep = ::ds_ystep;
-		ds_xbits = ::ds_xbits;
-		ds_ybits = ::ds_ybits;
+		_source = (const uint32_t*)ds_source;
+		_light = ds_light;
+		_shade_constants = ds_shade_constants;
+		_xfrac = ds_xfrac;
+		_yfrac = ds_yfrac;
+		_destorg = dc_destorg;
+		_x1 = ds_x1;
+		_x2 = ds_x2;
+		_y = ds_y;
+		_xstep = ds_xstep;
+		_ystep = ds_ystep;
+		_xbits = ds_xbits;
+		_ybits = ds_ybits;
+		_srcalpha = dc_srcalpha;
+		_destalpha = dc_destalpha;
 	}
 
 	void Execute(DrawerThread *thread) override
 	{
-		if (thread->line_skipped_by_thread(ds_y))
+		if (thread->line_skipped_by_thread(_y))
 			return;
 
 		dsfixed_t			xfrac;
@@ -2222,27 +2244,27 @@ public:
 		dsfixed_t			xstep;
 		dsfixed_t			ystep;
 		uint32_t*			dest;
-		const uint32_t*		source = ds_source;
+		const uint32_t*		source = _source;
 		int 				count;
 		int 				spot;
 
-		uint32_t light = calc_light_multiplier(ds_light);
-		ShadeConstants shade_constants = ds_shade_constants;
+		uint32_t light = calc_light_multiplier(_light);
+		ShadeConstants shade_constants = _shade_constants;
 
-		uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
+		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
 
-		xfrac = ds_xfrac;
-		yfrac = ds_yfrac;
+		xfrac = _xfrac;
+		yfrac = _yfrac;
 
-		dest = ylookup[ds_y] + ds_x1 + (uint32_t*)dc_destorg;
+		dest = ylookup[_y] + _x1 + (uint32_t*)_destorg;
 
-		count = ds_x2 - ds_x1 + 1;
+		count = _x2 - _x1 + 1;
 
-		xstep = ds_xstep;
-		ystep = ds_ystep;
+		xstep = _xstep;
+		ystep = _ystep;
 
-		if (ds_xbits == 6 && ds_ybits == 6)
+		if (_xbits == 6 && _ybits == 6)
 		{
 			// 64x64 is the most common case by far, so special case it.
 			do
@@ -2275,9 +2297,9 @@ public:
 		}
 		else
 		{
-			BYTE yshift = 32 - ds_ybits;
-			BYTE xshift = yshift - ds_xbits;
-			int xmask = ((1 << ds_xbits) - 1) << ds_ybits;
+			BYTE yshift = 32 - _ybits;
+			BYTE xshift = yshift - _xbits;
+			int xmask = ((1 << _xbits) - 1) << _ybits;
 			do
 			{
 				uint32_t texdata;
@@ -2311,33 +2333,33 @@ public:
 
 class FillSpanRGBACommand : public DrawerCommand
 {
-	int ds_x1;
-	int ds_x2;
-	int ds_y;
-	BYTE *dc_destorg;
-	fixed_t ds_light;
-	int ds_color;
+	int _x1;
+	int _x2;
+	int _y;
+	BYTE *_destorg;
+	fixed_t _light;
+	int _color;
 
 public:
 	FillSpanRGBACommand()
 	{
-		ds_x1 = ::ds_x1;
-		ds_x2 = ::ds_x2;
-		ds_y = ::ds_y;
-		dc_destorg = ::dc_destorg;
-		ds_light = ::ds_light;
-		ds_color = ::ds_color;
+		_x1 = ds_x1;
+		_x2 = ds_x2;
+		_y = ds_y;
+		_destorg = dc_destorg;
+		_light = ds_light;
+		_color = ds_color;
 	}
 
 	void Execute(DrawerThread *thread) override
 	{
-		if (thread->line_skipped_by_thread(ds_y))
+		if (thread->line_skipped_by_thread(_y))
 			return;
 
-		uint32_t *dest = ylookup[ds_y] + ds_x1 + (uint32_t*)dc_destorg;
-		int count = (ds_x2 - ds_x1 + 1);
-		uint32_t light = calc_light_multiplier(ds_light);
-		uint32_t color = shade_pal_index_simple(ds_color, light);
+		uint32_t *dest = ylookup[_y] + _x1 + (uint32_t*)_destorg;
+		int count = (_x2 - _x1 + 1);
+		uint32_t light = calc_light_multiplier(_light);
+		uint32_t color = shade_pal_index_simple(_color, light);
 		for (int i = 0; i < count; i++)
 			dest[i] = color;
 	}
@@ -2345,45 +2367,45 @@ public:
 
 class Vlinec1RGBACommand : public DrawerCommand
 {
-	DWORD dc_iscale;
-	DWORD dc_texturefrac;
-	int dc_count;
-	const BYTE *dc_source;
-	BYTE *dc_dest;
+	DWORD _iscale;
+	DWORD _texturefrac;
+	int _count;
+	const BYTE *_source;
+	BYTE *_dest;
 	int vlinebits;
-	int dc_pitch;
-	fixed_t dc_light;
-	ShadeConstants dc_shade_constants;
+	int _pitch;
+	fixed_t _light;
+	ShadeConstants _shade_constants;
 
 public:
 	Vlinec1RGBACommand()
 	{
-		dc_iscale = ::dc_iscale;
-		dc_texturefrac = ::dc_texturefrac;
-		dc_count = ::dc_count;
-		dc_source = ::dc_source;
-		dc_dest = ::dc_dest;
+		_iscale = dc_iscale;
+		_texturefrac = dc_texturefrac;
+		_count = dc_count;
+		_source = dc_source;
+		_dest = dc_dest;
 		vlinebits = ::vlinebits;
-		dc_pitch = ::dc_pitch;
-		dc_light = ::dc_light;
-		dc_shade_constants = ::dc_shade_constants;
+		_pitch = dc_pitch;
+		_light = dc_light;
+		_shade_constants = dc_shade_constants;
 	}
 
 	void Execute(DrawerThread *thread) override
 	{
-		int count = thread->count_for_thread(dc_dest_y, dc_count);
+		int count = thread->count_for_thread(_dest_y, _count);
 		if (count <= 0)
 			return;
 
-		DWORD fracstep = dc_iscale * thread->num_cores;
-		DWORD frac = dc_texturefrac + dc_iscale * thread->skipped_by_thread(dc_dest_y);
-		const uint32 *source = (const uint32 *)dc_source;
-		uint32_t *dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
+		DWORD fracstep = _iscale * thread->num_cores;
+		DWORD frac = _texturefrac + _iscale * thread->skipped_by_thread(_dest_y);
+		const uint32 *source = (const uint32 *)_source;
+		uint32_t *dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
 		int bits = vlinebits;
-		int pitch = dc_pitch * thread->num_cores;
+		int pitch = _pitch * thread->num_cores;
 
-		uint32_t light = calc_light_multiplier(dc_light);
-		ShadeConstants shade_constants = dc_shade_constants;
+		uint32_t light = calc_light_multiplier(_light);
+		ShadeConstants shade_constants = _shade_constants;
 
 		do
 		{
@@ -2396,10 +2418,10 @@ public:
 
 class Vlinec4RGBACommand : public DrawerCommand
 {
-	BYTE *dc_dest;
-	int dc_count;
-	int dc_pitch;
-	ShadeConstants dc_shade_constants;
+	BYTE *_dest;
+	int _count;
+	int _pitch;
+	ShadeConstants _shade_constants;
 	int vlinebits;
 	fixed_t palookuplight[4];
 	DWORD vplce[4];
@@ -2409,10 +2431,10 @@ class Vlinec4RGBACommand : public DrawerCommand
 public:
 	Vlinec4RGBACommand()
 	{
-		dc_dest = ::dc_dest;
-		dc_count = ::dc_count;
-		dc_pitch = ::dc_pitch;
-		dc_shade_constants = ::dc_shade_constants;
+		_dest = dc_dest;
+		_count = dc_count;
+		_pitch = dc_pitch;
+		_shade_constants = dc_shade_constants;
 		vlinebits = ::vlinebits;
 		for (int i = 0; i < 4; i++)
 		{
@@ -2426,12 +2448,12 @@ public:
 #ifdef NO_SSE
 	void Execute(DrawerThread *thread) override
 	{
-		int count = thread->count_for_thread(dc_dest_y, dc_count);
+		int count = thread->count_for_thread(_dest_y, _count);
 		if (count <= 0)
 			return;
 
-		uint32_t *dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
-		int pitch = dc_pitch * thread->num_cores;
+		uint32_t *dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
+		int pitch = _pitch * thread->num_cores;
 		int bits = vlinebits;
 		DWORD place;
 
@@ -2440,11 +2462,11 @@ public:
 		uint32_t light2 = calc_light_multiplier(palookuplight[2]);
 		uint32_t light3 = calc_light_multiplier(palookuplight[3]);
 
-		ShadeConstants shade_constants = dc_shade_constants;
+		ShadeConstants shade_constants = _shade_constants;
 
 		DWORD local_vplce[4] = { vplce[0], vplce[1], vplce[2], vplce[3] };
 		DWORD local_vince[4] = { vince[0], vince[1], vince[2], vince[3] };
-		int skipped = thread->skipped_by_thread(dc_dest_y);
+		int skipped = thread->skipped_by_thread(_dest_y);
 		for (int i = 0; i < 4; i++)
 		{
 			local_vplce[i] += local_vince[i] * skipped;
@@ -2463,24 +2485,24 @@ public:
 #else
 	void Execute(DrawerThread *thread) override
 	{
-		int count = thread->count_for_thread(dc_dest_y, dc_count);
+		int count = thread->count_for_thread(_dest_y, _count);
 		if (count <= 0)
 			return;
 
-		uint32_t *dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
+		uint32_t *dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
 		int bits = vlinebits;
-		int pitch = dc_pitch * thread->num_cores;
+		int pitch = _pitch * thread->num_cores;
 
 		uint32_t light0 = calc_light_multiplier(palookuplight[0]);
 		uint32_t light1 = calc_light_multiplier(palookuplight[1]);
 		uint32_t light2 = calc_light_multiplier(palookuplight[2]);
 		uint32_t light3 = calc_light_multiplier(palookuplight[3]);
 
-		ShadeConstants shade_constants = dc_shade_constants;
+		ShadeConstants shade_constants = _shade_constants;
 
 		DWORD local_vplce[4] = { vplce[0], vplce[1], vplce[2], vplce[3] };
 		DWORD local_vince[4] = { vince[0], vince[1], vince[2], vince[3] };
-		int skipped = thread->skipped_by_thread(dc_dest_y);
+		int skipped = thread->skipped_by_thread(_dest_y);
 		for (int i = 0; i < 4; i++)
 		{
 			local_vplce[i] += local_vince[i] * skipped;
@@ -2545,45 +2567,45 @@ public:
 
 class Mvlinec1RGBACommand : public DrawerCommand
 {
-	DWORD dc_iscale;
-	DWORD dc_texturefrac;
-	int dc_count;
-	const BYTE *dc_source;
-	BYTE *dc_dest;
+	DWORD _iscale;
+	DWORD _texturefrac;
+	int _count;
+	const BYTE *_source;
+	BYTE *_dest;
 	int mvlinebits;
-	int dc_pitch;
-	fixed_t dc_light;
-	ShadeConstants dc_shade_constants;
+	int _pitch;
+	fixed_t _light;
+	ShadeConstants _shade_constants;
 
 public:
 	Mvlinec1RGBACommand()
 	{
-		dc_iscale = ::dc_iscale;
-		dc_texturefrac = ::dc_texturefrac;
-		dc_count = ::dc_count;
-		dc_source = ::dc_source;
-		dc_dest = ::dc_dest;
+		_iscale = dc_iscale;
+		_texturefrac = dc_texturefrac;
+		_count = dc_count;
+		_source = dc_source;
+		_dest = dc_dest;
 		mvlinebits = ::mvlinebits;
-		dc_pitch = ::dc_pitch;
-		dc_light = ::dc_light;
-		dc_shade_constants = ::dc_shade_constants;
+		_pitch = dc_pitch;
+		_light = dc_light;
+		_shade_constants = dc_shade_constants;
 	}
 
 	void Execute(DrawerThread *thread) override
 	{
-		int count = thread->count_for_thread(dc_dest_y, dc_count);
+		int count = thread->count_for_thread(_dest_y, _count);
 		if (count <= 0)
 			return;
 
-		DWORD fracstep = dc_iscale * thread->num_cores;
-		DWORD frac = dc_texturefrac + dc_iscale * thread->skipped_by_thread(dc_dest_y);
-		const uint32 *source = (const uint32 *)dc_source;
-		uint32_t *dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
+		DWORD fracstep = _iscale * thread->num_cores;
+		DWORD frac = _texturefrac + _iscale * thread->skipped_by_thread(_dest_y);
+		const uint32 *source = (const uint32 *)_source;
+		uint32_t *dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
 		int bits = mvlinebits;
-		int pitch = dc_pitch * thread->num_cores;
+		int pitch = _pitch * thread->num_cores;
 
-		uint32_t light = calc_light_multiplier(dc_light);
-		ShadeConstants shade_constants = dc_shade_constants;
+		uint32_t light = calc_light_multiplier(_light);
+		ShadeConstants shade_constants = _shade_constants;
 
 		do
 		{
@@ -2600,10 +2622,10 @@ public:
 
 class Mvlinec4RGBACommand : public DrawerCommand
 {
-	BYTE *dc_dest;
-	int dc_count;
-	int dc_pitch;
-	ShadeConstants dc_shade_constants;
+	BYTE *_dest;
+	int _count;
+	int _pitch;
+	ShadeConstants _shade_constants;
 	int mvlinebits;
 	fixed_t palookuplight[4];
 	DWORD vplce[4];
@@ -2613,10 +2635,10 @@ class Mvlinec4RGBACommand : public DrawerCommand
 public:
 	Mvlinec4RGBACommand()
 	{
-		dc_dest = ::dc_dest;
-		dc_count = ::dc_count;
-		dc_pitch = ::dc_pitch;
-		dc_shade_constants = ::dc_shade_constants;
+		_dest = dc_dest;
+		_count = dc_count;
+		_pitch = dc_pitch;
+		_shade_constants = dc_shade_constants;
 		mvlinebits = ::mvlinebits;
 		for (int i = 0; i < 4; i++)
 		{
@@ -2630,12 +2652,12 @@ public:
 #ifdef NO_SSE
 	void Execute(DrawerThread *thread) override
 	{
-		int count = thread->count_for_thread(dc_dest_y, dc_count);
+		int count = thread->count_for_thread(_dest_y, _count);
 		if (count <= 0)
 			return;
 
-		uint32_t *dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
-		int pitch = dc_pitch * thread->num_cores;
+		uint32_t *dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
+		int pitch = _pitch * thread->num_cores;
 		int bits = mvlinebits;
 		DWORD place;
 
@@ -2644,11 +2666,11 @@ public:
 		uint32_t light2 = calc_light_multiplier(palookuplight[2]);
 		uint32_t light3 = calc_light_multiplier(palookuplight[3]);
 
-		ShadeConstants shade_constants = dc_shade_constants;
+		ShadeConstants shade_constants = _shade_constants;
 
 		DWORD local_vplce[4] = { vplce[0], vplce[1], vplce[2], vplce[3] };
 		DWORD local_vince[4] = { vince[0], vince[1], vince[2], vince[3] };
-		int skipped = thread->skipped_by_thread(dc_dest_y);
+		int skipped = thread->skipped_by_thread(_dest_y);
 		for (int i = 0; i < 4; i++)
 		{
 			local_vplce[i] += local_vince[i] * skipped;
@@ -2668,12 +2690,12 @@ public:
 #else
 	void Execute(DrawerThread *thread) override
 	{
-		int count = thread->count_for_thread(dc_dest_y, dc_count);
+		int count = thread->count_for_thread(_dest_y, _count);
 		if (count <= 0)
 			return;
 
-		uint32_t *dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
-		int pitch = dc_pitch * thread->num_cores;
+		uint32_t *dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
+		int pitch = _pitch * thread->num_cores;
 		int bits = mvlinebits;
 
 		uint32_t light0 = calc_light_multiplier(palookuplight[0]);
@@ -2681,11 +2703,11 @@ public:
 		uint32_t light2 = calc_light_multiplier(palookuplight[2]);
 		uint32_t light3 = calc_light_multiplier(palookuplight[3]);
 
-		ShadeConstants shade_constants = dc_shade_constants;
+		ShadeConstants shade_constants = _shade_constants;
 
 		DWORD local_vplce[4] = { vplce[0], vplce[1], vplce[2], vplce[3] };
 		DWORD local_vince[4] = { vince[0], vince[1], vince[2], vince[3] };
-		int skipped = thread->skipped_by_thread(dc_dest_y);
+		int skipped = thread->skipped_by_thread(_dest_y);
 		for (int i = 0; i < 4; i++)
 		{
 			local_vplce[i] += local_vince[i] * skipped;
@@ -2756,52 +2778,52 @@ public:
 
 class Tmvline1AddRGBACommand : public DrawerCommand
 {
-	DWORD dc_iscale;
-	DWORD dc_texturefrac;
-	int dc_count;
-	const BYTE *dc_source;
-	BYTE *dc_dest;
+	DWORD _iscale;
+	DWORD _texturefrac;
+	int _count;
+	const BYTE *_source;
+	BYTE *_dest;
 	int tmvlinebits;
-	int dc_pitch;
-	fixed_t dc_light;
-	ShadeConstants dc_shade_constants;
-	fixed_t dc_srcalpha;
-	fixed_t dc_destalpha;
+	int _pitch;
+	fixed_t _light;
+	ShadeConstants _shade_constants;
+	fixed_t _srcalpha;
+	fixed_t _destalpha;
 
 public:
 	Tmvline1AddRGBACommand()
 	{
-		dc_iscale = ::dc_iscale;
-		dc_texturefrac = ::dc_texturefrac;
-		dc_count = ::dc_count;
-		dc_source = ::dc_source;
-		dc_dest = ::dc_dest;
+		_iscale = dc_iscale;
+		_texturefrac = dc_texturefrac;
+		_count = dc_count;
+		_source = dc_source;
+		_dest = dc_dest;
 		tmvlinebits = ::tmvlinebits;
-		dc_pitch = ::dc_pitch;
-		dc_light = ::dc_light;
-		dc_shade_constants = ::dc_shade_constants;
-		dc_srcalpha = ::dc_srcalpha;
-		dc_destalpha = ::dc_destalpha;
+		_pitch = dc_pitch;
+		_light = dc_light;
+		_shade_constants = dc_shade_constants;
+		_srcalpha = dc_srcalpha;
+		_destalpha = dc_destalpha;
 	}
 
 	void Execute(DrawerThread *thread) override
 	{
-		int count = thread->count_for_thread(dc_dest_y, dc_count);
+		int count = thread->count_for_thread(_dest_y, _count);
 		if (count <= 0)
 			return;
 
-		DWORD fracstep = dc_iscale * thread->num_cores;
-		DWORD frac = dc_texturefrac + dc_iscale * thread->skipped_by_thread(dc_dest_y);
-		const uint32 *source = (const uint32 *)dc_source;
-		uint32_t *dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
+		DWORD fracstep = _iscale * thread->num_cores;
+		DWORD frac = _texturefrac + _iscale * thread->skipped_by_thread(_dest_y);
+		const uint32 *source = (const uint32 *)_source;
+		uint32_t *dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
 		int bits = tmvlinebits;
-		int pitch = dc_pitch * thread->num_cores;
+		int pitch = _pitch * thread->num_cores;
 
-		uint32_t light = calc_light_multiplier(dc_light);
-		ShadeConstants shade_constants = dc_shade_constants;
+		uint32_t light = calc_light_multiplier(_light);
+		ShadeConstants shade_constants = _shade_constants;
 
-		uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
+		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
 
 		do
 		{
@@ -2831,12 +2853,12 @@ public:
 
 class Tmvline4AddRGBACommand : public DrawerCommand
 {
-	BYTE *dc_dest;
-	int dc_count;
-	int dc_pitch;
-	ShadeConstants dc_shade_constants;
-	fixed_t dc_srcalpha;
-	fixed_t dc_destalpha;
+	BYTE *_dest;
+	int _count;
+	int _pitch;
+	ShadeConstants _shade_constants;
+	fixed_t _srcalpha;
+	fixed_t _destalpha;
 	int tmvlinebits;
 	fixed_t palookuplight[4];
 	DWORD vplce[4];
@@ -2846,12 +2868,12 @@ class Tmvline4AddRGBACommand : public DrawerCommand
 public:
 	Tmvline4AddRGBACommand()
 	{
-		dc_dest = ::dc_dest;
-		dc_count = ::dc_count;
-		dc_pitch = ::dc_pitch;
-		dc_shade_constants = ::dc_shade_constants;
-		dc_srcalpha = ::dc_srcalpha;
-		dc_destalpha = ::dc_destalpha;
+		_dest = dc_dest;
+		_count = dc_count;
+		_pitch = dc_pitch;
+		_shade_constants = dc_shade_constants;
+		_srcalpha = dc_srcalpha;
+		_destalpha = dc_destalpha;
 		tmvlinebits = ::tmvlinebits;
 		for (int i = 0; i < 4; i++)
 		{
@@ -2864,12 +2886,12 @@ public:
 
 	void Execute(DrawerThread *thread) override
 	{
-		int count = thread->count_for_thread(dc_dest_y, dc_count);
+		int count = thread->count_for_thread(_dest_y, _count);
 		if (count <= 0)
 			return;
 
-		uint32_t *dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
-		int pitch = dc_pitch * thread->num_cores;
+		uint32_t *dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
+		int pitch = _pitch * thread->num_cores;
 		int bits = tmvlinebits;
 
 		uint32_t light[4];
@@ -2878,14 +2900,14 @@ public:
 		light[2] = calc_light_multiplier(palookuplight[2]);
 		light[3] = calc_light_multiplier(palookuplight[3]);
 
-		ShadeConstants shade_constants = dc_shade_constants;
+		ShadeConstants shade_constants = _shade_constants;
 
-		uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
+		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
 
 		DWORD local_vplce[4] = { vplce[0], vplce[1], vplce[2], vplce[3] };
 		DWORD local_vince[4] = { vince[0], vince[1], vince[2], vince[3] };
-		int skipped = thread->skipped_by_thread(dc_dest_y);
+		int skipped = thread->skipped_by_thread(_dest_y);
 		for (int i = 0; i < 4; i++)
 		{
 			local_vplce[i] += local_vince[i] * skipped;
@@ -2923,52 +2945,52 @@ public:
 
 class Tmvline1AddClampRGBACommand : public DrawerCommand
 {
-	DWORD dc_iscale;
-	DWORD dc_texturefrac;
-	int dc_count;
-	const BYTE *dc_source;
-	BYTE *dc_dest;
+	DWORD _iscale;
+	DWORD _texturefrac;
+	int _count;
+	const BYTE *_source;
+	BYTE *_dest;
 	int tmvlinebits;
-	int dc_pitch;
-	fixed_t dc_light;
-	ShadeConstants dc_shade_constants;
-	fixed_t dc_srcalpha;
-	fixed_t dc_destalpha;
+	int _pitch;
+	fixed_t _light;
+	ShadeConstants _shade_constants;
+	fixed_t _srcalpha;
+	fixed_t _destalpha;
 
 public:
 	Tmvline1AddClampRGBACommand()
 	{
-		dc_iscale = ::dc_iscale;
-		dc_texturefrac = ::dc_texturefrac;
-		dc_count = ::dc_count;
-		dc_source = ::dc_source;
-		dc_dest = ::dc_dest;
+		_iscale = dc_iscale;
+		_texturefrac = dc_texturefrac;
+		_count = dc_count;
+		_source = dc_source;
+		_dest = dc_dest;
 		tmvlinebits = ::tmvlinebits;
-		dc_pitch = ::dc_pitch;
-		dc_light = ::dc_light;
-		dc_shade_constants = ::dc_shade_constants;
-		dc_srcalpha = ::dc_srcalpha;
-		dc_destalpha = ::dc_destalpha;
+		_pitch = dc_pitch;
+		_light = dc_light;
+		_shade_constants = dc_shade_constants;
+		_srcalpha = dc_srcalpha;
+		_destalpha = dc_destalpha;
 	}
 
 	void Execute(DrawerThread *thread) override
 	{
-		int count = thread->count_for_thread(dc_dest_y, dc_count);
+		int count = thread->count_for_thread(_dest_y, _count);
 		if (count <= 0)
 			return;
 
-		DWORD fracstep = dc_iscale * thread->num_cores;
-		DWORD frac = dc_texturefrac + dc_iscale * thread->skipped_by_thread(dc_dest_y);
-		const uint32 *source = (const uint32 *)dc_source;
-		uint32_t *dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
+		DWORD fracstep = _iscale * thread->num_cores;
+		DWORD frac = _texturefrac + _iscale * thread->skipped_by_thread(_dest_y);
+		const uint32 *source = (const uint32 *)_source;
+		uint32_t *dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
 		int bits = tmvlinebits;
-		int pitch = dc_pitch * thread->num_cores;
+		int pitch = _pitch * thread->num_cores;
 
-		uint32_t light = calc_light_multiplier(dc_light);
-		ShadeConstants shade_constants = dc_shade_constants;
+		uint32_t light = calc_light_multiplier(_light);
+		ShadeConstants shade_constants = _shade_constants;
 
-		uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
+		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
 
 		do
 		{
@@ -2998,12 +3020,12 @@ public:
 
 class Tmvline4AddClampRGBACommand : public DrawerCommand
 {
-	BYTE *dc_dest;
-	int dc_count;
-	int dc_pitch;
-	ShadeConstants dc_shade_constants;
-	fixed_t dc_srcalpha;
-	fixed_t dc_destalpha;
+	BYTE *_dest;
+	int _count;
+	int _pitch;
+	ShadeConstants _shade_constants;
+	fixed_t _srcalpha;
+	fixed_t _destalpha;
 	int tmvlinebits;
 	fixed_t palookuplight[4];
 	DWORD vplce[4];
@@ -3013,12 +3035,12 @@ class Tmvline4AddClampRGBACommand : public DrawerCommand
 public:
 	Tmvline4AddClampRGBACommand()
 	{
-		dc_dest = ::dc_dest;
-		dc_count = ::dc_count;
-		dc_pitch = ::dc_pitch;
-		dc_shade_constants = ::dc_shade_constants;
-		dc_srcalpha = ::dc_srcalpha;
-		dc_destalpha = ::dc_destalpha;
+		_dest = dc_dest;
+		_count = dc_count;
+		_pitch = dc_pitch;
+		_shade_constants = dc_shade_constants;
+		_srcalpha = dc_srcalpha;
+		_destalpha = dc_destalpha;
 		tmvlinebits = ::tmvlinebits;
 		for (int i = 0; i < 4; i++)
 		{
@@ -3031,12 +3053,12 @@ public:
 
 	void Execute(DrawerThread *thread) override
 	{
-		int count = thread->count_for_thread(dc_dest_y, dc_count);
+		int count = thread->count_for_thread(_dest_y, _count);
 		if (count <= 0)
 			return;
 
-		uint32_t *dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
-		int pitch = dc_pitch * thread->num_cores;
+		uint32_t *dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
+		int pitch = _pitch * thread->num_cores;
 		int bits = tmvlinebits;
 
 		uint32_t light[4];
@@ -3045,14 +3067,14 @@ public:
 		light[2] = calc_light_multiplier(palookuplight[2]);
 		light[3] = calc_light_multiplier(palookuplight[3]);
 
-		ShadeConstants shade_constants = dc_shade_constants;
+		ShadeConstants shade_constants = _shade_constants;
 
-		uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
+		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
 
 		DWORD local_vplce[4] = { vplce[0], vplce[1], vplce[2], vplce[3] };
 		DWORD local_vince[4] = { vince[0], vince[1], vince[2], vince[3] };
-		int skipped = thread->skipped_by_thread(dc_dest_y);
+		int skipped = thread->skipped_by_thread(_dest_y);
 		for (int i = 0; i < 4; i++)
 		{
 			local_vplce[i] += local_vince[i] * skipped;
@@ -3090,52 +3112,52 @@ public:
 
 class Tmvline1SubClampRGBACommand : public DrawerCommand
 {
-	DWORD dc_iscale;
-	DWORD dc_texturefrac;
-	int dc_count;
-	const BYTE *dc_source;
-	BYTE *dc_dest;
+	DWORD _iscale;
+	DWORD _texturefrac;
+	int _count;
+	const BYTE *_source;
+	BYTE *_dest;
 	int tmvlinebits;
-	int dc_pitch;
-	fixed_t dc_light;
-	ShadeConstants dc_shade_constants;
-	fixed_t dc_srcalpha;
-	fixed_t dc_destalpha;
+	int _pitch;
+	fixed_t _light;
+	ShadeConstants _shade_constants;
+	fixed_t _srcalpha;
+	fixed_t _destalpha;
 
 public:
 	Tmvline1SubClampRGBACommand()
 	{
-		dc_iscale = ::dc_iscale;
-		dc_texturefrac = ::dc_texturefrac;
-		dc_count = ::dc_count;
-		dc_source = ::dc_source;
-		dc_dest = ::dc_dest;
+		_iscale = dc_iscale;
+		_texturefrac = dc_texturefrac;
+		_count = dc_count;
+		_source = dc_source;
+		_dest = dc_dest;
 		tmvlinebits = ::tmvlinebits;
-		dc_pitch = ::dc_pitch;
-		dc_light = ::dc_light;
-		dc_shade_constants = ::dc_shade_constants;
-		dc_srcalpha = ::dc_srcalpha;
-		dc_destalpha = ::dc_destalpha;
+		_pitch = dc_pitch;
+		_light = dc_light;
+		_shade_constants = dc_shade_constants;
+		_srcalpha = dc_srcalpha;
+		_destalpha = dc_destalpha;
 	}
 
 	void Execute(DrawerThread *thread) override
 	{
-		int count = thread->count_for_thread(dc_dest_y, dc_count);
+		int count = thread->count_for_thread(_dest_y, _count);
 		if (count <= 0)
 			return;
 
-		DWORD fracstep = dc_iscale * thread->num_cores;
-		DWORD frac = dc_texturefrac + dc_iscale * thread->skipped_by_thread(dc_dest_y);
-		const uint32 *source = (const uint32 *)dc_source;
-		uint32_t *dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
+		DWORD fracstep = _iscale * thread->num_cores;
+		DWORD frac = _texturefrac + _iscale * thread->skipped_by_thread(_dest_y);
+		const uint32 *source = (const uint32 *)_source;
+		uint32_t *dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
 		int bits = tmvlinebits;
-		int pitch = dc_pitch * thread->num_cores;
+		int pitch = _pitch * thread->num_cores;
 
-		uint32_t light = calc_light_multiplier(dc_light);
-		ShadeConstants shade_constants = dc_shade_constants;
+		uint32_t light = calc_light_multiplier(_light);
+		ShadeConstants shade_constants = _shade_constants;
 
-		uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
+		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
 
 		do
 		{
@@ -3165,12 +3187,12 @@ public:
 
 class Tmvline4SubClampRGBACommand : public DrawerCommand
 {
-	BYTE *dc_dest;
-	int dc_count;
-	int dc_pitch;
-	ShadeConstants dc_shade_constants;
-	fixed_t dc_srcalpha;
-	fixed_t dc_destalpha;
+	BYTE *_dest;
+	int _count;
+	int _pitch;
+	ShadeConstants _shade_constants;
+	fixed_t _srcalpha;
+	fixed_t _destalpha;
 	int tmvlinebits;
 	fixed_t palookuplight[4];
 	DWORD vplce[4];
@@ -3180,12 +3202,12 @@ class Tmvline4SubClampRGBACommand : public DrawerCommand
 public:
 	Tmvline4SubClampRGBACommand()
 	{
-		dc_dest = ::dc_dest;
-		dc_count = ::dc_count;
-		dc_pitch = ::dc_pitch;
-		dc_shade_constants = ::dc_shade_constants;
-		dc_srcalpha = ::dc_srcalpha;
-		dc_destalpha = ::dc_destalpha;
+		_dest = dc_dest;
+		_count = dc_count;
+		_pitch = dc_pitch;
+		_shade_constants = dc_shade_constants;
+		_srcalpha = dc_srcalpha;
+		_destalpha = dc_destalpha;
 		tmvlinebits = ::tmvlinebits;
 		for (int i = 0; i < 4; i++)
 		{
@@ -3198,12 +3220,12 @@ public:
 
 	void Execute(DrawerThread *thread) override
 	{
-		int count = thread->count_for_thread(dc_dest_y, dc_count);
+		int count = thread->count_for_thread(_dest_y, _count);
 		if (count <= 0)
 			return;
 
-		uint32_t *dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
-		int pitch = dc_pitch * thread->num_cores;
+		uint32_t *dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
+		int pitch = _pitch * thread->num_cores;
 		int bits = tmvlinebits;
 
 		uint32_t light[4];
@@ -3212,14 +3234,14 @@ public:
 		light[2] = calc_light_multiplier(palookuplight[2]);
 		light[3] = calc_light_multiplier(palookuplight[3]);
 
-		ShadeConstants shade_constants = dc_shade_constants;
+		ShadeConstants shade_constants = _shade_constants;
 
-		uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
+		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
 
 		DWORD local_vplce[4] = { vplce[0], vplce[1], vplce[2], vplce[3] };
 		DWORD local_vince[4] = { vince[0], vince[1], vince[2], vince[3] };
-		int skipped = thread->skipped_by_thread(dc_dest_y);
+		int skipped = thread->skipped_by_thread(_dest_y);
 		for (int i = 0; i < 4; i++)
 		{
 			local_vplce[i] += local_vince[i] * skipped;
@@ -3257,52 +3279,52 @@ public:
 
 class Tmvline1RevSubClampRGBACommand : public DrawerCommand
 {
-	DWORD dc_iscale;
-	DWORD dc_texturefrac;
-	int dc_count;
-	const BYTE *dc_source;
-	BYTE *dc_dest;
+	DWORD _iscale;
+	DWORD _texturefrac;
+	int _count;
+	const BYTE *_source;
+	BYTE *_dest;
 	int tmvlinebits;
-	int dc_pitch;
-	fixed_t dc_light;
-	ShadeConstants dc_shade_constants;
-	fixed_t dc_srcalpha;
-	fixed_t dc_destalpha;
+	int _pitch;
+	fixed_t _light;
+	ShadeConstants _shade_constants;
+	fixed_t _srcalpha;
+	fixed_t _destalpha;
 
 public:
 	Tmvline1RevSubClampRGBACommand()
 	{
-		dc_iscale = ::dc_iscale;
-		dc_texturefrac = ::dc_texturefrac;
-		dc_count = ::dc_count;
-		dc_source = ::dc_source;
-		dc_dest = ::dc_dest;
+		_iscale = dc_iscale;
+		_texturefrac = dc_texturefrac;
+		_count = dc_count;
+		_source = dc_source;
+		_dest = dc_dest;
 		tmvlinebits = ::tmvlinebits;
-		dc_pitch = ::dc_pitch;
-		dc_light = ::dc_light;
-		dc_shade_constants = ::dc_shade_constants;
-		dc_srcalpha = ::dc_srcalpha;
-		dc_destalpha = ::dc_destalpha;
+		_pitch = dc_pitch;
+		_light = dc_light;
+		_shade_constants = dc_shade_constants;
+		_srcalpha = dc_srcalpha;
+		_destalpha = dc_destalpha;
 	}
 
 	void Execute(DrawerThread *thread) override
 	{
-		int count = thread->count_for_thread(dc_dest_y, dc_count);
+		int count = thread->count_for_thread(_dest_y, _count);
 		if (count <= 0)
 			return;
 
-		DWORD fracstep = dc_iscale * thread->num_cores;
-		DWORD frac = dc_texturefrac + dc_iscale * thread->skipped_by_thread(dc_dest_y);
-		const uint32 *source = (const uint32 *)dc_source;
-		uint32_t *dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
+		DWORD fracstep = _iscale * thread->num_cores;
+		DWORD frac = _texturefrac + _iscale * thread->skipped_by_thread(_dest_y);
+		const uint32 *source = (const uint32 *)_source;
+		uint32_t *dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
 		int bits = tmvlinebits;
-		int pitch = dc_pitch * thread->num_cores;
+		int pitch = _pitch * thread->num_cores;
 
-		uint32_t light = calc_light_multiplier(dc_light);
-		ShadeConstants shade_constants = dc_shade_constants;
+		uint32_t light = calc_light_multiplier(_light);
+		ShadeConstants shade_constants = _shade_constants;
 
-		uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
+		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
 
 		do
 		{
@@ -3332,12 +3354,12 @@ public:
 
 class Tmvline4RevSubClampRGBACommand : public DrawerCommand
 {
-	BYTE *dc_dest;
-	int dc_count;
-	int dc_pitch;
-	ShadeConstants dc_shade_constants;
-	fixed_t dc_srcalpha;
-	fixed_t dc_destalpha;
+	BYTE *_dest;
+	int _count;
+	int _pitch;
+	ShadeConstants _shade_constants;
+	fixed_t _srcalpha;
+	fixed_t _destalpha;
 	int tmvlinebits;
 	fixed_t palookuplight[4];
 	DWORD vplce[4];
@@ -3347,12 +3369,12 @@ class Tmvline4RevSubClampRGBACommand : public DrawerCommand
 public:
 	Tmvline4RevSubClampRGBACommand()
 	{
-		dc_dest = ::dc_dest;
-		dc_count = ::dc_count;
-		dc_pitch = ::dc_pitch;
-		dc_shade_constants = ::dc_shade_constants;
-		dc_srcalpha = ::dc_srcalpha;
-		dc_destalpha = ::dc_destalpha;
+		_dest = dc_dest;
+		_count = dc_count;
+		_pitch = dc_pitch;
+		_shade_constants = dc_shade_constants;
+		_srcalpha = dc_srcalpha;
+		_destalpha = dc_destalpha;
 		tmvlinebits = ::tmvlinebits;
 		for (int i = 0; i < 4; i++)
 		{
@@ -3365,12 +3387,12 @@ public:
 
 	void Execute(DrawerThread *thread) override
 	{
-		int count = thread->count_for_thread(dc_dest_y, dc_count);
+		int count = thread->count_for_thread(_dest_y, _count);
 		if (count <= 0)
 			return;
 
-		uint32_t *dest = thread->dest_for_thread(dc_dest_y, dc_pitch, (uint32_t*)dc_dest);
-		int pitch = dc_pitch * thread->num_cores;
+		uint32_t *dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
+		int pitch = _pitch * thread->num_cores;
 		int bits = tmvlinebits;
 
 		uint32_t light[4];
@@ -3379,14 +3401,14 @@ public:
 		light[2] = calc_light_multiplier(palookuplight[2]);
 		light[3] = calc_light_multiplier(palookuplight[3]);
 
-		ShadeConstants shade_constants = dc_shade_constants;
+		ShadeConstants shade_constants = _shade_constants;
 
-		uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
+		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
 
 		DWORD local_vplce[4] = { vplce[0], vplce[1], vplce[2], vplce[3] };
 		DWORD local_vince[4] = { vince[0], vince[1], vince[2], vince[3] };
-		int skipped = thread->skipped_by_thread(dc_dest_y);
+		int skipped = thread->skipped_by_thread(_dest_y);
 		for (int i = 0; i < 4; i++)
 		{
 			local_vplce[i] += local_vince[i] * skipped;
@@ -3427,9 +3449,9 @@ class DrawFogBoundaryLineRGBACommand : public DrawerCommand
 	int _y;
 	int _x;
 	int _x2;
-	BYTE *dc_destorg;
-	fixed_t dc_light;
-	ShadeConstants dc_shade_constants;
+	BYTE *_destorg;
+	fixed_t _light;
+	ShadeConstants _shade_constants;
 
 public:
 	DrawFogBoundaryLineRGBACommand(int y, int x, int x2)
@@ -3438,9 +3460,9 @@ public:
 		_x = x;
 		_x2 = x2;
 
-		dc_destorg = ::dc_destorg;
-		dc_light = ::dc_light;
-		dc_shade_constants = ::dc_shade_constants;
+		_destorg = dc_destorg;
+		_light = dc_light;
+		_shade_constants = dc_shade_constants;
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -3452,10 +3474,10 @@ public:
 		int x = _x;
 		int x2 = _x2;
 
-		uint32_t *dest = ylookup[y] + (uint32_t*)dc_destorg;
+		uint32_t *dest = ylookup[y] + (uint32_t*)_destorg;
 
-		uint32_t light = calc_light_multiplier(dc_light);
-		ShadeConstants constants = dc_shade_constants;
+		uint32_t light = calc_light_multiplier(_light);
+		ShadeConstants constants = _shade_constants;
 
 		do
 		{
@@ -3499,10 +3521,10 @@ class DrawTiltedSpanRGBACommand : public DrawerCommand
 	int _y;
 	int _x1;
 	int _x2;
-	BYTE *dc_destorg;
-	fixed_t dc_light;
-	ShadeConstants dc_shade_constants;
-	const BYTE *ds_source;
+	BYTE *_destorg;
+	fixed_t _light;
+	ShadeConstants _shade_constants;
+	const BYTE *_source;
 
 public:
 	DrawTiltedSpanRGBACommand(int y, int x1, int x2)
@@ -3511,8 +3533,8 @@ public:
 		_x1 = x1;
 		_x2 = x2;
 
-		dc_destorg = ::dc_destorg;
-		ds_source = ::ds_source;
+		_destorg = dc_destorg;
+		_source = ds_source;
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -3527,8 +3549,8 @@ public:
 		// Slopes are broken currently in master.
 		// Until R_DrawTiltedPlane is fixed we are just going to fill with a solid color.
 
-		uint32_t *source = (uint32_t*)ds_source;
-		uint32_t *dest = ylookup[y] + x1 + (uint32_t*)dc_destorg;
+		uint32_t *source = (uint32_t*)_source;
+		uint32_t *dest = ylookup[y] + x1 + (uint32_t*)_destorg;
 
 		int count = x2 - x1 + 1;
 		while (count > 0)
@@ -3544,9 +3566,9 @@ class DrawColoredSpanRGBACommand : public DrawerCommand
 	int _y;
 	int _x1;
 	int _x2;
-	BYTE *dc_destorg;
-	fixed_t ds_light;
-	int ds_color;
+	BYTE *_destorg;
+	fixed_t _light;
+	int _color;
 
 public:
 	DrawColoredSpanRGBACommand(int y, int x1, int x2)
@@ -3555,9 +3577,9 @@ public:
 		_x1 = x1;
 		_x2 = x2;
 
-		dc_destorg = ::dc_destorg;
-		ds_light = ::ds_light;
-		ds_color = ::ds_color;
+		_destorg = dc_destorg;
+		_light = ds_light;
+		_color = ds_color;
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -3569,10 +3591,10 @@ public:
 		int x1 = _x1;
 		int x2 = _x2;
 
-		uint32_t *dest = ylookup[y] + x1 + (uint32_t*)dc_destorg;
+		uint32_t *dest = ylookup[y] + x1 + (uint32_t*)_destorg;
 		int count = (x2 - x1 + 1);
-		uint32_t light = calc_light_multiplier(ds_light);
-		uint32_t color = shade_pal_index_simple(ds_color, light);
+		uint32_t light = calc_light_multiplier(_light);
+		uint32_t color = shade_pal_index_simple(_color, light);
 		for (int i = 0; i < count; i++)
 			dest[i] = color;
 	}
@@ -3585,10 +3607,9 @@ class FillTransColumnRGBACommand : public DrawerCommand
 	int _y2;
 	int _color;
 	int _a;
-	BYTE *dc_destorg;
-	int dc_pitch;
-	fixed_t ds_light;
-	int ds_color;
+	BYTE *_destorg;
+	int _pitch;
+	fixed_t _light;
 
 public:
 	FillTransColumnRGBACommand(int x, int y1, int y2, int color, int a)
@@ -3599,8 +3620,8 @@ public:
 		_color = color;
 		_a = a;
 
-		dc_destorg = ::dc_destorg;
-		dc_pitch = ::dc_pitch;
+		_destorg = dc_destorg;
+		_pitch = dc_pitch;
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -3627,8 +3648,8 @@ public:
 		fg_green *= alpha;
 		fg_blue *= alpha;
 
-		int spacing = dc_pitch * thread->num_cores;
-		uint32_t *dest = thread->dest_for_thread(y1, dc_pitch, ylookup[y1] + x + (uint32_t*)dc_destorg);
+		int spacing = _pitch * thread->num_cores;
+		uint32_t *dest = thread->dest_for_thread(y1, _pitch, ylookup[y1] + x + (uint32_t*)_destorg);
 
 		for (int y = 0; y < ycount; y++)
 		{

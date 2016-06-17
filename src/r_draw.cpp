@@ -154,6 +154,7 @@ fixed_t 		dc_iscale;
 fixed_t			dc_texturefrac;
 int				dc_color;				// [RH] Color for column filler
 DWORD			dc_srccolor;
+uint32_t		dc_srccolor_bgra;
 DWORD			*dc_srcblend;			// [RH] Source and destination
 DWORD			*dc_destblend;			// blending lookups
 fixed_t			dc_srcalpha;			// Alpha value used by dc_srcblend
@@ -2702,10 +2703,10 @@ ESPSResult R_SetPatchStyle (FRenderStyle style, fixed_t alpha, int translation, 
 
 	if (style.Flags & STYLEF_ColorIsFixed)
 	{
-		int x = fglevel >> 10;
-		int r = RPART(color);
-		int g = GPART(color);
-		int b = BPART(color);
+		uint32_t x = fglevel >> 10;
+		uint32_t r = RPART(color);
+		uint32_t g = GPART(color);
+		uint32_t b = BPART(color);
 		// dc_color is used by the rt_* routines. It is indexed into dc_srcblend.
 		dc_color = RGB32k.RGB[r>>3][g>>3][b>>3];
 		if (style.Flags & STYLEF_InvertSource)
@@ -2714,6 +2715,8 @@ ESPSResult R_SetPatchStyle (FRenderStyle style, fixed_t alpha, int translation, 
 			g = 255 - g;
 			b = 255 - b;
 		}
+		uint32_t alpha = clamp(fglevel >> (FRACBITS - 8), 0, 255);
+		dc_srccolor_bgra = (alpha << 24) | (r << 16) | (g << 8) | b;
 		// dc_srccolor is used by the R_Fill* routines. It is premultiplied
 		// with the alpha.
 		dc_srccolor = ((((r*x)>>4)<<20) | ((g*x)>>4) | ((((b)*x)>>4)<<10)) & 0x3feffbff;

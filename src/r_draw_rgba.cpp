@@ -344,8 +344,7 @@ class FillAddColumnRGBACommand : public DrawerCommand
 	int _count;
 	BYTE *_dest;
 	int _pitch;
-	fixed_t _light;
-	int _color;
+	uint32_t _srccolor;
 
 public:
 	FillAddColumnRGBACommand()
@@ -353,8 +352,7 @@ public:
 		_count = dc_count;
 		_dest = dc_dest;
 		_pitch = dc_pitch;
-		_light = dc_light;
-		_color = dc_color;
+		_srccolor = dc_srccolor_bgra;
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -369,10 +367,18 @@ public:
 		dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
 		int pitch = _pitch * thread->num_cores;
 
-		uint32_t fg = shade_pal_index_simple(_color, calc_light_multiplier(_light));
-		uint32_t fg_red = (fg >> 24) & 0xff;
-		uint32_t fg_green = (fg >> 16) & 0xff;
+		uint32_t fg = _srccolor;
+		uint32_t fg_red = (fg >> 16) & 0xff;
+		uint32_t fg_green = (fg >> 8) & 0xff;
 		uint32_t fg_blue = fg & 0xff;
+		uint32_t fg_alpha = fg >> 24;
+		fg_alpha += fg_alpha >> 7;
+
+		fg_red *= fg_alpha;
+		fg_green *= fg_alpha;
+		fg_blue *= fg_alpha;
+
+		uint32_t inv_alpha = 256 - fg_alpha;
 
 		do
 		{
@@ -380,9 +386,9 @@ public:
 			uint32_t bg_green = (*dest >> 8) & 0xff;
 			uint32_t bg_blue = (*dest) & 0xff;
 
-			uint32_t red = (fg_red + bg_red + 1) / 2;
-			uint32_t green = (fg_green + bg_green + 1) / 2;
-			uint32_t blue = (fg_blue + bg_blue + 1) / 2;
+			uint32_t red = (fg_red + bg_red * inv_alpha) / 256;
+			uint32_t green = (fg_green + bg_green * inv_alpha) / 256;
+			uint32_t blue = (fg_blue + bg_blue * inv_alpha) / 256;
 
 			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
 			dest += pitch;
@@ -395,8 +401,10 @@ class FillAddClampColumnRGBACommand : public DrawerCommand
 	int _count;
 	BYTE *_dest;
 	int _pitch;
-	fixed_t _light;
 	int _color;
+	uint32_t _srccolor;
+	fixed_t _srcalpha;
+	fixed_t _destalpha;
 
 public:
 	FillAddClampColumnRGBACommand()
@@ -404,8 +412,10 @@ public:
 		_count = dc_count;
 		_dest = dc_dest;
 		_pitch = dc_pitch;
-		_light = dc_light;
 		_color = dc_color;
+		_srccolor = dc_srccolor_bgra;
+		_srcalpha = dc_srcalpha;
+		_destalpha = dc_destalpha;
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -420,20 +430,26 @@ public:
 		dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
 		int pitch = _pitch * thread->num_cores;
 
-		uint32_t fg = shade_pal_index_simple(_color, calc_light_multiplier(_light));
-		uint32_t fg_red = (fg >> 24) & 0xff;
-		uint32_t fg_green = (fg >> 16) & 0xff;
+		uint32_t fg = _srccolor;
+		uint32_t fg_red = (fg >> 16) & 0xff;
+		uint32_t fg_green = (fg >> 8) & 0xff;
 		uint32_t fg_blue = fg & 0xff;
+		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
+		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
 
-		do
-		{
+		fg_red *= fg_alpha;
+		fg_green *= fg_alpha;
+		fg_blue *= fg_alpha;
+
+		do {
+
 			uint32_t bg_red = (*dest >> 16) & 0xff;
 			uint32_t bg_green = (*dest >> 8) & 0xff;
 			uint32_t bg_blue = (*dest) & 0xff;
 
-			uint32_t red = clamp<uint32_t>(fg_red + bg_red, 0, 255);
-			uint32_t green = clamp<uint32_t>(fg_green + bg_green, 0, 255);
-			uint32_t blue = clamp<uint32_t>(fg_blue + bg_blue, 0, 255);
+			uint32_t red = clamp<uint32_t>((fg_red + bg_red * bg_alpha) / 256, 0, 255);
+			uint32_t green = clamp<uint32_t>((fg_green + bg_green * bg_alpha) / 256, 0, 255);
+			uint32_t blue = clamp<uint32_t>((fg_blue + bg_blue * bg_alpha) / 256, 0, 255);
 
 			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
 			dest += pitch;
@@ -447,7 +463,9 @@ class FillSubClampColumnRGBACommand : public DrawerCommand
 	BYTE *_dest;
 	int _pitch;
 	int _color;
-	fixed_t _light;
+	uint32_t _srccolor;
+	fixed_t _srcalpha;
+	fixed_t _destalpha;
 
 public:
 	FillSubClampColumnRGBACommand()
@@ -456,7 +474,9 @@ public:
 		_dest = dc_dest;
 		_pitch = dc_pitch;
 		_color = dc_color;
-		_light = dc_light;
+		_srccolor = dc_srccolor_bgra;
+		_srcalpha = dc_srcalpha;
+		_destalpha = dc_destalpha;
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -471,20 +491,25 @@ public:
 		dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
 		int pitch = _pitch * thread->num_cores;
 
-		uint32_t fg = shade_pal_index_simple(_color, calc_light_multiplier(_light));
-		uint32_t fg_red = (fg >> 24) & 0xff;
-		uint32_t fg_green = (fg >> 16) & 0xff;
+		uint32_t fg = _srccolor;
+		uint32_t fg_red = (fg >> 16) & 0xff;
+		uint32_t fg_green = (fg >> 8) & 0xff;
 		uint32_t fg_blue = fg & 0xff;
+		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
+		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
 
-		do
-		{
+		fg_red *= fg_alpha;
+		fg_green *= fg_alpha;
+		fg_blue *= fg_alpha;
+
+		do {
 			uint32_t bg_red = (*dest >> 16) & 0xff;
 			uint32_t bg_green = (*dest >> 8) & 0xff;
 			uint32_t bg_blue = (*dest) & 0xff;
 
-			uint32_t red = clamp<uint32_t>(256 - fg_red + bg_red, 256, 256 + 255) - 255;
-			uint32_t green = clamp<uint32_t>(256 - fg_green + bg_green, 256, 256 + 255) - 255;
-			uint32_t blue = clamp<uint32_t>(256 - fg_blue + bg_blue, 256, 256 + 255) - 255;
+			uint32_t red = clamp<uint32_t>((0x10000 - fg_red + bg_red * bg_alpha) / 256, 256, 256 + 255) - 256;
+			uint32_t green = clamp<uint32_t>((0x10000 - fg_green + bg_green * bg_alpha) / 256, 256, 256 + 255) - 256;
+			uint32_t blue = clamp<uint32_t>((0x10000 - fg_blue + bg_blue * bg_alpha) / 256, 256, 256 + 255) - 256;
 
 			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
 			dest += pitch;
@@ -498,7 +523,9 @@ class FillRevSubClampColumnRGBACommand : public DrawerCommand
 	BYTE *_dest;
 	int _pitch;
 	int _color;
-	fixed_t _light;
+	uint32_t _srccolor;
+	fixed_t _srcalpha;
+	fixed_t _destalpha;
 
 public:
 	FillRevSubClampColumnRGBACommand()
@@ -507,7 +534,9 @@ public:
 		_dest = dc_dest;
 		_pitch = dc_pitch;
 		_color = dc_color;
-		_light = dc_light;
+		_srccolor = dc_srccolor_bgra;
+		_srcalpha = dc_srcalpha;
+		_destalpha = dc_destalpha;
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -522,20 +551,25 @@ public:
 		dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
 		int pitch = _pitch * thread->num_cores;
 
-		uint32_t fg = shade_pal_index_simple(_color, calc_light_multiplier(_light));
-		uint32_t fg_red = (fg >> 24) & 0xff;
-		uint32_t fg_green = (fg >> 16) & 0xff;
+		uint32_t fg = _srccolor;
+		uint32_t fg_red = (fg >> 16) & 0xff;
+		uint32_t fg_green = (fg >> 8) & 0xff;
 		uint32_t fg_blue = fg & 0xff;
+		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
+		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
 
-		do
-		{
+		fg_red *= fg_alpha;
+		fg_green *= fg_alpha;
+		fg_blue *= fg_alpha;
+
+		do {
 			uint32_t bg_red = (*dest >> 16) & 0xff;
 			uint32_t bg_green = (*dest >> 8) & 0xff;
 			uint32_t bg_blue = (*dest) & 0xff;
 
-			uint32_t red = clamp<uint32_t>(256 + fg_red - bg_red, 256, 256 + 255) - 255;
-			uint32_t green = clamp<uint32_t>(256 + fg_green - bg_green, 256, 256 + 255) - 255;
-			uint32_t blue = clamp<uint32_t>(256 + fg_blue - bg_blue, 256, 256 + 255) - 255;
+			uint32_t red = clamp<uint32_t>((0x10000 + fg_red - bg_red * bg_alpha) / 256, 256, 256 + 255) - 256;
+			uint32_t green = clamp<uint32_t>((0x10000 + fg_green - bg_green * bg_alpha) / 256, 256, 256 + 255) - 256;
+			uint32_t blue = clamp<uint32_t>((0x10000 + fg_blue - bg_blue * bg_alpha) / 256, 256, 256 + 255) - 256;
 
 			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
 			dest += pitch;

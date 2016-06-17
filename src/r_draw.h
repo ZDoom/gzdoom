@@ -63,6 +63,7 @@ extern     double		dc_texturemid;
 extern "C" fixed_t		dc_texturefrac;
 extern "C" int			dc_color;		// [RH] For flat colors (no texturing)
 extern "C" DWORD		dc_srccolor;
+extern "C" uint32_t		dc_srccolor_bgra;
 extern "C" DWORD		*dc_srcblend;
 extern "C" DWORD		*dc_destblend;
 extern "C" fixed_t		dc_srcalpha;

@@ -120,7 +120,6 @@ bool ACustomInventory::CallStateChain (AActor *actor, FState *state)
 	ret[0].PointerAt((void **)&nextstate);
 	ret[1].IntAt(&retval);
 
-	this->flags5 |= MF5_INSTATECALL;
 	FState *savedstate = this->state;
 
 	while (state != NULL)
@@ -191,7 +190,6 @@ bool ACustomInventory::CallStateChain (AActor *actor, FState *state)
 		}
 		state = nextstate;
 	}
-	this->flags5 &= ~MF5_INSTATECALL;
 	this->state = savedstate;
 	return !!result;
 }

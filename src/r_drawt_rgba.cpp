@@ -59,8 +59,8 @@ class RtCopy1colRGBACommand : public DrawerCommand
 	int sx;
 	int yl;
 	int yh;
-	BYTE *dc_destorg;
-	int dc_pitch;
+	BYTE *_destorg;
+	int _pitch;
 
 public:
 	RtCopy1colRGBACommand(int hx, int sx, int yl, int yh)
@@ -70,8 +70,8 @@ public:
 		this->yl = yl;
 		this->yh = yh;
 
-		dc_destorg = ::dc_destorg;
-		dc_pitch = ::dc_pitch;
+		_destorg = dc_destorg;
+		_pitch = dc_pitch;
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -85,9 +85,9 @@ public:
 		if (count <= 0)
 			return;
 
-		dest = thread->dest_for_thread(yl, dc_pitch, ylookup[yl] + sx + (uint32_t*)dc_destorg);
+		dest = thread->dest_for_thread(yl, _pitch, ylookup[yl] + sx + (uint32_t*)_destorg);
 		source = &thread->dc_temp_rgba[yl * 4 + hx] + thread->skipped_by_thread(yl) * 4;
-		pitch = dc_pitch * thread->num_cores;
+		pitch = _pitch * thread->num_cores;
 		sincr = thread->num_cores * 4;
 
 		if (count & 1) {
@@ -121,11 +121,11 @@ class RtMap1colRGBACommand : public DrawerCommand
 	int sx;
 	int yl;
 	int yh;
-	fixed_t dc_light;
-	ShadeConstants dc_shade_constants;
-	BYTE *dc_destorg;
-	int dc_pitch;
-	BYTE *dc_colormap;
+	fixed_t _light;
+	ShadeConstants _shade_constants;
+	BYTE *_destorg;
+	int _pitch;
+	BYTE *_colormap;
 
 public:
 	RtMap1colRGBACommand(int hx, int sx, int yl, int yh)
@@ -135,11 +135,11 @@ public:
 		this->yl = yl;
 		this->yh = yh;
 
-		dc_light = ::dc_light;
-		dc_shade_constants = ::dc_shade_constants;
-		dc_destorg = ::dc_destorg;
-		dc_pitch = ::dc_pitch;
-		dc_colormap = ::dc_colormap;
+		_light = dc_light;
+		_shade_constants = dc_shade_constants;
+		_destorg = dc_destorg;
+		_pitch = dc_pitch;
+		_colormap = dc_colormap;
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -154,15 +154,15 @@ public:
 		if (count <= 0)
 			return;
 
-		uint32_t light = calc_light_multiplier(dc_light);
-		ShadeConstants shade_constants = dc_shade_constants;
+		uint32_t light = calc_light_multiplier(_light);
+		ShadeConstants shade_constants = _shade_constants;
 
-		dest = thread->dest_for_thread(yl, dc_pitch, ylookup[yl] + sx + (uint32_t*)dc_destorg);
+		dest = thread->dest_for_thread(yl, _pitch, ylookup[yl] + sx + (uint32_t*)_destorg);
 		source = &thread->dc_temp_rgba[yl * 4 + hx] + thread->skipped_by_thread(yl) * 4;
-		pitch = dc_pitch * thread->num_cores;
+		pitch = _pitch * thread->num_cores;
 		sincr = thread->num_cores * 4;
 		
-		BYTE *colormap = dc_colormap;
+		BYTE *colormap = _colormap;
 
 		if (count & 1) {
 			*dest = shade_pal_index(colormap[*source], light, shade_constants);
@@ -186,11 +186,11 @@ class RtMap4colsRGBACommand : public DrawerCommand
 	int sx;
 	int yl;
 	int yh;
-	fixed_t dc_light;
-	ShadeConstants dc_shade_constants;
-	BYTE *dc_destorg;
-	int dc_pitch;
-	BYTE *colormap;
+	fixed_t _light;
+	ShadeConstants _shade_constants;
+	BYTE *_destorg;
+	int _pitch;
+	BYTE *_colormap;
 
 public:
 	RtMap4colsRGBACommand(int sx, int yl, int yh)
@@ -199,11 +199,11 @@ public:
 		this->yl = yl;
 		this->yh = yh;
 
-		dc_light = ::dc_light;
-		dc_shade_constants = ::dc_shade_constants;
-		dc_destorg = ::dc_destorg;
-		dc_pitch = ::dc_pitch;
-		dc_colormap = ::dc_colormap;
+		_light = dc_light;
+		_shade_constants = dc_shade_constants;
+		_destorg = dc_destorg;
+		_pitch = dc_pitch;
+		_colormap = dc_colormap;
 	}
 
 #ifdef NO_SSE
@@ -219,15 +219,15 @@ public:
 		if (count <= 0)
 			return;
 
-		uint32_t light = calc_light_multiplier(dc_light);
-		ShadeConstants shade_constants = dc_shade_constants;
+		uint32_t light = calc_light_multiplier(_light);
+		ShadeConstants shade_constants = _shade_constants;
 
-		dest = thread->dest_for_thread(yl, dc_pitch, ylookup[yl] + sx + (uint32_t*)dc_destorg);
+		dest = thread->dest_for_thread(yl, _pitch, ylookup[yl] + sx + (uint32_t*)_destorg);
 		source = &thread->dc_temp_rgba[yl * 4] + thread->skipped_by_thread(yl) * 4;
-		pitch = dc_pitch * thread->num_cores;
+		pitch = _pitch * thread->num_cores;
 		sincr = thread->num_cores * 4;
 		
-		BYTE *colormap = dc_colormap;
+		BYTE *colormap = _colormap;
 
 		if (count & 1) {
 			dest[0] = shade_pal_index(colormap[source[0]], light, shade_constants);
@@ -266,16 +266,16 @@ public:
 		if (count <= 0)
 			return;
 
-		ShadeConstants shade_constants = dc_shade_constants;
-		uint32_t light = calc_light_multiplier(dc_light);
+		ShadeConstants shade_constants = _shade_constants;
+		uint32_t light = calc_light_multiplier(_light);
 		uint32_t *palette = (uint32_t*)GPalette.BaseColors;
 
-		dest = thread->dest_for_thread(yl, dc_pitch, ylookup[yl] + sx + (uint32_t*)dc_destorg);
+		dest = thread->dest_for_thread(yl, _pitch, ylookup[yl] + sx + (uint32_t*)_destorg);
 		source = &thread->dc_temp_rgba[yl * 4] + thread->skipped_by_thread(yl) * 4;
-		pitch = dc_pitch * thread->num_cores;
+		pitch = _pitch * thread->num_cores;
 		sincr = thread->num_cores * 4;
 		
-		BYTE *colormap = dc_colormap;
+		BYTE *colormap = _colormap;
 
 		if (shade_constants.simple_shade)
 		{
@@ -507,13 +507,13 @@ class RtAdd1colRGBACommand : public DrawerCommand
 	int sx;
 	int yl;
 	int yh;
-	BYTE *dc_destorg;
-	int dc_pitch;
-	fixed_t dc_light;
-	ShadeConstants dc_shade_constants;
-	fixed_t dc_srcalpha;
-	fixed_t dc_destalpha;
-	BYTE *dc_colormap;
+	BYTE *_destorg;
+	int _pitch;
+	fixed_t _light;
+	ShadeConstants _shade_constants;
+	fixed_t _srcalpha;
+	fixed_t _destalpha;
+	BYTE *_colormap;
 
 public:
 	RtAdd1colRGBACommand(int hx, int sx, int yl, int yh)
@@ -523,13 +523,13 @@ public:
 		this->yl = yl;
 		this->yh = yh;
 
-		dc_destorg = ::dc_destorg;
-		dc_pitch = ::dc_pitch;
-		dc_light = ::dc_light;
-		dc_shade_constants = ::dc_shade_constants;
-		dc_srcalpha = ::dc_srcalpha;
-		dc_destalpha = ::dc_destalpha;
-		dc_colormap = ::dc_colormap;
+		_destorg = dc_destorg;
+		_pitch = dc_pitch;
+		_light = dc_light;
+		_shade_constants = dc_shade_constants;
+		_srcalpha = dc_srcalpha;
+		_destalpha = dc_destalpha;
+		_colormap = dc_colormap;
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -544,17 +544,17 @@ public:
 		if (count <= 0)
 			return;
 
-		dest = thread->dest_for_thread(yl, dc_pitch, ylookup[yl] + sx + (uint32_t*)dc_destorg);
+		dest = thread->dest_for_thread(yl, _pitch, ylookup[yl] + sx + (uint32_t*)_destorg);
 		source = &thread->dc_temp_rgba[yl * 4 + hx] + thread->skipped_by_thread(yl) * 4;
-		pitch = dc_pitch * thread->num_cores;
+		pitch = _pitch * thread->num_cores;
 		sincr = 4 * thread->num_cores;
 
-		uint32_t light = calc_light_multiplier(dc_light);
-		ShadeConstants shade_constants = dc_shade_constants;
-		BYTE *colormap = dc_colormap;
+		uint32_t light = calc_light_multiplier(_light);
+		ShadeConstants shade_constants = _shade_constants;
+		BYTE *colormap = _colormap;
 
-		uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
+		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
 
 		do {
 			uint32_t fg = shade_pal_index(colormap[*source], light, shade_constants);
@@ -583,13 +583,13 @@ class RtAdd4colsRGBACommand : public DrawerCommand
 	int sx;
 	int yl;
 	int yh;
-	BYTE *dc_destorg;
-	int dc_pitch;
-	fixed_t dc_light;
-	ShadeConstants dc_shade_constants;
-	BYTE *dc_colormap;
-	fixed_t dc_srcalpha;
-	fixed_t dc_destalpha;
+	BYTE *_destorg;
+	int _pitch;
+	fixed_t _light;
+	ShadeConstants _shade_constants;
+	BYTE *_colormap;
+	fixed_t _srcalpha;
+	fixed_t _destalpha;
 
 public:
 	RtAdd4colsRGBACommand(int sx, int yl, int yh)
@@ -598,13 +598,13 @@ public:
 		this->yl = yl;
 		this->yh = yh;
 
-		dc_destorg = ::dc_destorg;
-		dc_pitch = ::dc_pitch;
-		dc_light = ::dc_light;
-		dc_shade_constants = ::dc_shade_constants;
-		dc_colormap = ::dc_colormap;
-		dc_srcalpha = ::dc_srcalpha;
-		dc_destalpha = ::dc_destalpha;
+		_destorg = dc_destorg;
+		_pitch = dc_pitch;
+		_light = dc_light;
+		_shade_constants = dc_shade_constants;
+		_colormap = dc_colormap;
+		_srcalpha = dc_srcalpha;
+		_destalpha = dc_destalpha;
 	}
 
 #ifdef NO_SSE
@@ -620,17 +620,17 @@ public:
 		if (count <= 0)
 			return;
 
-		dest = thread->dest_for_thread(yl, dc_pitch, ylookup[yl] + sx + (uint32_t*)dc_destorg);
+		dest = thread->dest_for_thread(yl, _pitch, ylookup[yl] + sx + (uint32_t*)_destorg);
 		source = &thread->dc_temp_rgba[yl * 4] + thread->skipped_by_thread(yl) * 4;
-		pitch = dc_pitch * thread->num_cores;
+		pitch = _pitch * thread->num_cores;
 		sincr = 4 * thread->num_cores;
 
-		uint32_t light = calc_light_multiplier(dc_light);
-		ShadeConstants shade_constants = dc_shade_constants;
-		BYTE *colormap = dc_colormap;
+		uint32_t light = calc_light_multiplier(_light);
+		ShadeConstants shade_constants = _shade_constants;
+		BYTE *colormap = _colormap;
 
-		uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
+		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
 
 		do {
 			for (int i = 0; i < 4; i++)
@@ -668,19 +668,19 @@ public:
 		if (count <= 0)
 			return;
 
-		dest = thread->dest_for_thread(yl, dc_pitch, ylookup[yl] + sx + (uint32_t*)dc_destorg);
+		dest = thread->dest_for_thread(yl, _pitch, ylookup[yl] + sx + (uint32_t*)_destorg);
 		source = &thread->dc_temp_rgba[yl * 4] + thread->skipped_by_thread(yl) * 4;
-		pitch = dc_pitch * thread->num_cores;
+		pitch = _pitch * thread->num_cores;
 		sincr = 4 * thread->num_cores;
 
-		uint32_t light = calc_light_multiplier(dc_light);
+		uint32_t light = calc_light_multiplier(_light);
 		uint32_t *palette = (uint32_t*)GPalette.BaseColors;
-		BYTE *colormap = dc_colormap;
+		BYTE *colormap = _colormap;
 
-		uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
+		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
 
-		ShadeConstants shade_constants = dc_shade_constants;
+		ShadeConstants shade_constants = _shade_constants;
 
 		if (shade_constants.simple_shade)
 		{
@@ -764,11 +764,11 @@ class RtShaded1colRGBACommand : public DrawerCommand
 	int sx;
 	int yl;
 	int yh;
-	lighttable_t *dc_colormap;
-	BYTE *dc_destorg;
-	int dc_pitch;
-	int dc_color;
-	fixed_t dc_light;
+	lighttable_t *_colormap;
+	BYTE *_destorg;
+	int _pitch;
+	int _color;
+	fixed_t _light;
 
 public:
 	RtShaded1colRGBACommand(int hx, int sx, int yl, int yh)
@@ -778,11 +778,11 @@ public:
 		this->yl = yl;
 		this->yh = yh;
 
-		dc_colormap = ::dc_colormap;
-		dc_destorg = ::dc_destorg;
-		dc_pitch = ::dc_pitch;
-		dc_color = ::dc_color;
-		dc_light = ::dc_light;
+		_colormap = dc_colormap;
+		_destorg = dc_destorg;
+		_pitch = dc_pitch;
+		_color = dc_color;
+		_light = dc_light;
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -798,13 +798,13 @@ public:
 		if (count <= 0)
 			return;
 
-		colormap = dc_colormap;
-		dest = thread->dest_for_thread(yl, dc_pitch, ylookup[yl] + sx + (uint32_t*)dc_destorg);
+		colormap = _colormap;
+		dest = thread->dest_for_thread(yl, _pitch, ylookup[yl] + sx + (uint32_t*)_destorg);
 		source = &thread->dc_temp_rgba[yl * 4 + hx] + thread->skipped_by_thread(yl) * 4;
-		pitch = dc_pitch * thread->num_cores;
+		pitch = _pitch * thread->num_cores;
 		sincr = 4 * thread->num_cores;
 
-		uint32_t fg = shade_pal_index_simple(dc_color, calc_light_multiplier(dc_light));
+		uint32_t fg = shade_pal_index_simple(_color, calc_light_multiplier(_light));
 		uint32_t fg_red = (fg >> 16) & 0xff;
 		uint32_t fg_green = (fg >> 8) & 0xff;
 		uint32_t fg_blue = fg & 0xff;
@@ -833,11 +833,11 @@ class RtShaded4colsRGBACommand : public DrawerCommand
 	int sx;
 	int yl;
 	int yh;
-	lighttable_t *dc_colormap;
-	int dc_color;
-	BYTE *dc_destorg;
-	int dc_pitch;
-	fixed_t dc_light;
+	lighttable_t *_colormap;
+	int _color;
+	BYTE *_destorg;
+	int _pitch;
+	fixed_t _light;
 
 public:
 	RtShaded4colsRGBACommand(int sx, int yl, int yh)
@@ -846,11 +846,11 @@ public:
 		this->yl = yl;
 		this->yh = yh;
 
-		dc_colormap = ::dc_colormap;
-		dc_color = ::dc_color;
-		dc_destorg = ::dc_destorg;
-		dc_pitch = ::dc_pitch;
-		dc_light = ::dc_light;
+		_colormap = dc_colormap;
+		_color = dc_color;
+		_destorg = dc_destorg;
+		_pitch = dc_pitch;
+		_light = dc_light;
 	}
 
 #ifdef NO_SSE
@@ -867,13 +867,13 @@ public:
 		if (count <= 0)
 			return;
 
-		colormap = dc_colormap;
-		dest = thread->dest_for_thread(yl, dc_pitch, ylookup[yl] + sx + (uint32_t*)dc_destorg);
+		colormap = _colormap;
+		dest = thread->dest_for_thread(yl, _pitch, ylookup[yl] + sx + (uint32_t*)_destorg);
 		source = &thread->dc_temp_rgba[yl * 4] + thread->skipped_by_thread(yl) * 4;
-		pitch = dc_pitch * thread->num_cores;
+		pitch = _pitch * thread->num_cores;
 		sincr = 4 * thread->num_cores;
 
-		uint32_t fg = shade_pal_index_simple(dc_color, calc_light_multiplier(dc_light));
+		uint32_t fg = shade_pal_index_simple(_color, calc_light_multiplier(_light));
 		uint32_t fg_red = (fg >> 16) & 0xff;
 		uint32_t fg_green = (fg >> 8) & 0xff;
 		uint32_t fg_blue = fg & 0xff;
@@ -912,13 +912,13 @@ public:
 		if (count <= 0)
 			return;
 
-		colormap = dc_colormap;
-		dest = thread->dest_for_thread(yl, dc_pitch, ylookup[yl] + sx + (uint32_t*)dc_destorg);
+		colormap = _colormap;
+		dest = thread->dest_for_thread(yl, _pitch, ylookup[yl] + sx + (uint32_t*)_destorg);
 		source = &thread->dc_temp_rgba[yl * 4] + thread->skipped_by_thread(yl) * 4;
-		pitch = dc_pitch * thread->num_cores;
+		pitch = _pitch * thread->num_cores;
 		sincr = 4 * thread->num_cores;
 
-		__m128i fg = _mm_unpackhi_epi8(_mm_set1_epi32(shade_pal_index_simple(dc_color, calc_light_multiplier(dc_light))), _mm_setzero_si128());
+		__m128i fg = _mm_unpackhi_epi8(_mm_set1_epi32(shade_pal_index_simple(_color, calc_light_multiplier(_light))), _mm_setzero_si128());
 		__m128i alpha_one = _mm_set1_epi16(64);
 
 		do {
@@ -957,12 +957,12 @@ class RtAddClamp1colRGBACommand : public DrawerCommand
 	int sx;
 	int yl;
 	int yh;
-	BYTE *dc_destorg;
-	int dc_pitch;
-	fixed_t dc_light;
-	ShadeConstants dc_shade_constants;
-	fixed_t dc_srcalpha;
-	fixed_t dc_destalpha;
+	BYTE *_destorg;
+	int _pitch;
+	fixed_t _light;
+	ShadeConstants _shade_constants;
+	fixed_t _srcalpha;
+	fixed_t _destalpha;
 
 public:
 	RtAddClamp1colRGBACommand(int hx, int sx, int yl, int yh)
@@ -972,12 +972,12 @@ public:
 		this->yl = yl;
 		this->yh = yh;
 
-		dc_destorg = ::dc_destorg;
-		dc_pitch = ::dc_pitch;
-		dc_light = ::dc_light;
-		dc_shade_constants = ::dc_shade_constants;
-		dc_srcalpha = ::dc_srcalpha;
-		dc_destalpha = ::dc_destalpha;
+		_destorg = dc_destorg;
+		_pitch = dc_pitch;
+		_light = dc_light;
+		_shade_constants = dc_shade_constants;
+		_srcalpha = dc_srcalpha;
+		_destalpha = dc_destalpha;
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -992,16 +992,16 @@ public:
 		if (count <= 0)
 			return;
 
-		dest = thread->dest_for_thread(yl, dc_pitch, ylookup[yl] + sx + (uint32_t*)dc_destorg);
+		dest = thread->dest_for_thread(yl, _pitch, ylookup[yl] + sx + (uint32_t*)_destorg);
 		source = &thread->dc_temp_rgba[yl * 4 + hx] + thread->skipped_by_thread(yl) * 4;
-		pitch = dc_pitch * thread->num_cores;
+		pitch = _pitch * thread->num_cores;
 		sincr = 4 * thread->num_cores;
 
-		uint32_t light = calc_light_multiplier(dc_light);
-		ShadeConstants shade_constants = dc_shade_constants;
+		uint32_t light = calc_light_multiplier(_light);
+		ShadeConstants shade_constants = _shade_constants;
 
-		uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
+		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
 
 		do {
 			uint32_t fg = shade_pal_index(*source, light, shade_constants);
@@ -1029,12 +1029,12 @@ class RtAddClamp4colsRGBACommand : public DrawerCommand
 	int sx;
 	int yl;
 	int yh;
-	BYTE *dc_destorg;
-	int dc_pitch;
-	fixed_t dc_light;
-	fixed_t dc_srcalpha;
-	fixed_t dc_destalpha;
-	ShadeConstants dc_shade_constants;
+	BYTE *_destorg;
+	int _pitch;
+	fixed_t _light;
+	fixed_t _srcalpha;
+	fixed_t _destalpha;
+	ShadeConstants _shade_constants;
 
 public:
 	RtAddClamp4colsRGBACommand(int sx, int yl, int yh)
@@ -1043,12 +1043,12 @@ public:
 		this->yl = yl;
 		this->yh = yh;
 
-		dc_destorg = ::dc_destorg;
-		dc_pitch = ::dc_pitch;
-		dc_light = ::dc_light;
-		dc_srcalpha = ::dc_srcalpha;
-		dc_destalpha = ::dc_destalpha;
-		dc_shade_constants = ::dc_shade_constants;
+		_destorg = dc_destorg;
+		_pitch = dc_pitch;
+		_light = dc_light;
+		_srcalpha = dc_srcalpha;
+		_destalpha = dc_destalpha;
+		_shade_constants = dc_shade_constants;
 	}
 
 #ifdef NO_SSE
@@ -1064,16 +1064,16 @@ public:
 		if (count <= 0)
 			return;
 
-		dest = thread->dest_for_thread(yl, dc_pitch, ylookup[yl] + sx + (uint32_t*)dc_destorg);
+		dest = thread->dest_for_thread(yl, _pitch, ylookup[yl] + sx + (uint32_t*)_destorg);
 		source = &thread->dc_temp_rgba[yl * 4] + thread->skipped_by_thread(yl) * 4;
-		pitch = dc_pitch * thread->num_cores;
+		pitch = _pitch * thread->num_cores;
 		sincr = 4 * thread->num_cores;
 
-		uint32_t light = calc_light_multiplier(dc_light);
-		ShadeConstants shade_constants = dc_shade_constants;
+		uint32_t light = calc_light_multiplier(_light);
+		ShadeConstants shade_constants = _shade_constants;
 
-		uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
+		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
 
 		do {
 			for (int i = 0; i < 4; i++)
@@ -1110,18 +1110,18 @@ public:
 		if (count <= 0)
 			return;
 
-		dest = thread->dest_for_thread(yl, dc_pitch, ylookup[yl] + sx + (uint32_t*)dc_destorg);
+		dest = thread->dest_for_thread(yl, _pitch, ylookup[yl] + sx + (uint32_t*)_destorg);
 		source = &thread->dc_temp_rgba[yl * 4] + thread->skipped_by_thread(yl) * 4;
-		pitch = dc_pitch * thread->num_cores;
+		pitch = _pitch * thread->num_cores;
 		sincr = 4 * thread->num_cores;
 
-		uint32_t light = calc_light_multiplier(dc_light);
+		uint32_t light = calc_light_multiplier(_light);
 		uint32_t *palette = (uint32_t*)GPalette.BaseColors;
 
-		uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
+		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
 
-		ShadeConstants shade_constants = dc_shade_constants;
+		ShadeConstants shade_constants = _shade_constants;
 
 		if (shade_constants.simple_shade)
 		{
@@ -1205,12 +1205,12 @@ class RtSubClamp1colRGBACommand : public DrawerCommand
 	int sx;
 	int yl;
 	int yh;
-	BYTE *dc_destorg;
-	int dc_pitch;
-	fixed_t dc_light;
-	fixed_t dc_srcalpha;
-	fixed_t dc_destalpha;
-	ShadeConstants dc_shade_constants;
+	BYTE *_destorg;
+	int _pitch;
+	fixed_t _light;
+	fixed_t _srcalpha;
+	fixed_t _destalpha;
+	ShadeConstants _shade_constants;
 
 public:
 	RtSubClamp1colRGBACommand(int hx, int sx, int yl, int yh)
@@ -1220,12 +1220,12 @@ public:
 		this->yl = yl;
 		this->yh = yh;
 
-		dc_destorg = ::dc_destorg;
-		dc_pitch = ::dc_pitch;
-		dc_light = ::dc_light;
-		dc_srcalpha = ::dc_srcalpha;
-		dc_destalpha = ::dc_destalpha;
-		dc_shade_constants = ::dc_shade_constants;
+		_destorg = dc_destorg;
+		_pitch = dc_pitch;
+		_light = dc_light;
+		_srcalpha = dc_srcalpha;
+		_destalpha = dc_destalpha;
+		_shade_constants = dc_shade_constants;
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -1240,16 +1240,16 @@ public:
 		if (count <= 0)
 			return;
 
-		dest = thread->dest_for_thread(yl, dc_pitch, ylookup[yl] + sx + (uint32_t*)dc_destorg);
+		dest = thread->dest_for_thread(yl, _pitch, ylookup[yl] + sx + (uint32_t*)_destorg);
 		source = &thread->dc_temp_rgba[yl * 4 + hx] + thread->skipped_by_thread(yl) * 4;
-		pitch = dc_pitch * thread->num_cores;
+		pitch = _pitch * thread->num_cores;
 		sincr = 4 * thread->num_cores;
 
-		uint32_t light = calc_light_multiplier(dc_light);
-		ShadeConstants shade_constants = dc_shade_constants;
+		uint32_t light = calc_light_multiplier(_light);
+		ShadeConstants shade_constants = _shade_constants;
 
-		uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
+		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
 
 		do {
 			uint32_t fg = shade_pal_index(*source, light, shade_constants);
@@ -1277,12 +1277,12 @@ class RtSubClamp4colsRGBACommand : public DrawerCommand
 	int sx;
 	int yl;
 	int yh;
-	BYTE *dc_destorg;
-	int dc_pitch;
-	fixed_t dc_light;
-	fixed_t dc_srcalpha;
-	fixed_t dc_destalpha;
-	ShadeConstants dc_shade_constants;
+	BYTE *_destorg;
+	int _pitch;
+	fixed_t _light;
+	fixed_t _srcalpha;
+	fixed_t _destalpha;
+	ShadeConstants _shade_constants;
 
 public:
 	RtSubClamp4colsRGBACommand(int sx, int yl, int yh)
@@ -1291,12 +1291,12 @@ public:
 		this->yl = yl;
 		this->yh = yh;
 
-		dc_destorg = ::dc_destorg;
-		dc_pitch = ::dc_pitch;
-		dc_light = ::dc_light;
-		dc_srcalpha = ::dc_srcalpha;
-		dc_destalpha = ::dc_destalpha;
-		dc_shade_constants = ::dc_shade_constants;
+		_destorg = dc_destorg;
+		_pitch = dc_pitch;
+		_light = dc_light;
+		_srcalpha = dc_srcalpha;
+		_destalpha = dc_destalpha;
+		_shade_constants = dc_shade_constants;
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -1311,16 +1311,16 @@ public:
 		if (count <= 0)
 			return;
 
-		dest = thread->dest_for_thread(yl, dc_pitch, ylookup[yl] + sx + (uint32_t*)dc_destorg);
+		dest = thread->dest_for_thread(yl, _pitch, ylookup[yl] + sx + (uint32_t*)_destorg);
 		source = &thread->dc_temp_rgba[yl * 4] + thread->skipped_by_thread(yl) * 4;
-		pitch = dc_pitch * thread->num_cores;
+		pitch = _pitch * thread->num_cores;
 		sincr = 4 * thread->num_cores;
 
-		uint32_t light = calc_light_multiplier(dc_light);
-		ShadeConstants shade_constants = dc_shade_constants;
+		uint32_t light = calc_light_multiplier(_light);
+		ShadeConstants shade_constants = _shade_constants;
 
-		uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
+		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
 
 		do {
 			for (int i = 0; i < 4; i++)
@@ -1353,12 +1353,12 @@ class RtRevSubClamp1colRGBACommand : public DrawerCommand
 	int sx;
 	int yl;
 	int yh;
-	BYTE *dc_destorg;
-	int dc_pitch;
-	fixed_t dc_light;
-	fixed_t dc_srcalpha;
-	fixed_t dc_destalpha;
-	ShadeConstants dc_shade_constants;
+	BYTE *_destorg;
+	int _pitch;
+	fixed_t _light;
+	fixed_t _srcalpha;
+	fixed_t _destalpha;
+	ShadeConstants _shade_constants;
 
 public:
 	RtRevSubClamp1colRGBACommand(int hx, int sx, int yl, int yh)
@@ -1368,12 +1368,12 @@ public:
 		this->yl = yl;
 		this->yh = yh;
 
-		dc_destorg = ::dc_destorg;
-		dc_pitch = ::dc_pitch;
-		dc_light = ::dc_light;
-		dc_srcalpha = ::dc_srcalpha;
-		dc_destalpha = ::dc_destalpha;
-		dc_shade_constants = ::dc_shade_constants;
+		_destorg = dc_destorg;
+		_pitch = dc_pitch;
+		_light = dc_light;
+		_srcalpha = dc_srcalpha;
+		_destalpha = dc_destalpha;
+		_shade_constants = dc_shade_constants;
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -1388,16 +1388,16 @@ public:
 		if (count <= 0)
 			return;
 
-		dest = thread->dest_for_thread(yl, dc_pitch, ylookup[yl] + sx + (uint32_t*)dc_destorg);
+		dest = thread->dest_for_thread(yl, _pitch, ylookup[yl] + sx + (uint32_t*)_destorg);
 		source = &thread->dc_temp_rgba[yl * 4 + hx] + thread->skipped_by_thread(yl) * 4;
-		pitch = dc_pitch * thread->num_cores;
+		pitch = _pitch * thread->num_cores;
 		sincr = 4 * thread->num_cores;
 
-		uint32_t light = calc_light_multiplier(dc_light);
-		ShadeConstants shade_constants = dc_shade_constants;
+		uint32_t light = calc_light_multiplier(_light);
+		ShadeConstants shade_constants = _shade_constants;
 
-		uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
+		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
 
 		do {
 			uint32_t fg = shade_pal_index(*source, light, shade_constants);
@@ -1425,12 +1425,12 @@ class RtRevSubClamp4colsRGBACommand : public DrawerCommand
 	int sx;
 	int yl;
 	int yh;
-	BYTE *dc_destorg;
-	int dc_pitch;
-	fixed_t dc_light;
-	fixed_t dc_srcalpha;
-	fixed_t dc_destalpha;
-	ShadeConstants dc_shade_constants;
+	BYTE *_destorg;
+	int _pitch;
+	fixed_t _light;
+	fixed_t _srcalpha;
+	fixed_t _destalpha;
+	ShadeConstants _shade_constants;
 
 public:
 	RtRevSubClamp4colsRGBACommand(int sx, int yl, int yh)
@@ -1439,12 +1439,12 @@ public:
 		this->yl = yl;
 		this->yh = yh;
 
-		dc_destorg = ::dc_destorg;
-		dc_pitch = ::dc_pitch;
-		dc_light = ::dc_light;
-		dc_srcalpha = ::dc_srcalpha;
-		dc_destalpha = ::dc_destalpha;
-		dc_shade_constants = ::dc_shade_constants;
+		_destorg = dc_destorg;
+		_pitch = dc_pitch;
+		_light = dc_light;
+		_srcalpha = dc_srcalpha;
+		_destalpha = dc_destalpha;
+		_shade_constants = dc_shade_constants;
 	}
 
 	void Execute(DrawerThread *thread) override
@@ -1459,16 +1459,16 @@ public:
 		if (count <= 0)
 			return;
 
-		dest = thread->dest_for_thread(yl, dc_pitch, ylookup[yl] + sx + (uint32_t*)dc_destorg);
+		dest = thread->dest_for_thread(yl, _pitch, ylookup[yl] + sx + (uint32_t*)_destorg);
 		source = &thread->dc_temp_rgba[yl * 4] + thread->skipped_by_thread(yl) * 4;
-		pitch = dc_pitch * thread->num_cores;
+		pitch = _pitch * thread->num_cores;
 		sincr = 4 * thread->num_cores;
 
-		uint32_t light = calc_light_multiplier(dc_light);
-		ShadeConstants shade_constants = dc_shade_constants;
+		uint32_t light = calc_light_multiplier(_light);
+		ShadeConstants shade_constants = _shade_constants;
 
-		uint32_t fg_alpha = dc_srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = dc_destalpha >> (FRACBITS - 8);
+		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
+		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
 
 		do {
 			for (int i = 0; i < 4; i++)
@@ -1513,29 +1513,29 @@ public:
 
 class DrawColumnHorizRGBACommand : public DrawerCommand
 {
-	int dc_count;
-	fixed_t dc_iscale;
-	fixed_t dc_texturefrac;
-	const BYTE *dc_source;
-	int dc_x;
-	int dc_yl;
-	int dc_yh;
+	int _count;
+	fixed_t _iscale;
+	fixed_t _texturefrac;
+	const BYTE *_source;
+	int _x;
+	int _yl;
+	int _yh;
 
 public:
 	DrawColumnHorizRGBACommand()
 	{
-		dc_count = ::dc_count;
-		dc_iscale = ::dc_iscale;
-		dc_texturefrac = ::dc_texturefrac;
-		dc_source = ::dc_source;
-		dc_x = ::dc_x;
-		dc_yl = ::dc_yl;
-		dc_yh = ::dc_yh;
+		_count = dc_count;
+		_iscale = dc_iscale;
+		_texturefrac = dc_texturefrac;
+		_source = dc_source;
+		_x = dc_x;
+		_yl = dc_yl;
+		_yh = dc_yh;
 	}
 
 	void Execute(DrawerThread *thread) override
 	{
-		int count = dc_count;
+		int count = _count;
 		uint32_t *dest;
 		fixed_t fracstep;
 		fixed_t frac;
@@ -1544,13 +1544,13 @@ public:
 			return;
 
 		{
-			int x = dc_x & 3;
-			dest = &thread->dc_temp_rgba[x + 4 * dc_yl];
+			int x = _x & 3;
+			dest = &thread->dc_temp_rgba[x + 4 * _yl];
 		}
-		fracstep = dc_iscale;
-		frac = dc_texturefrac;
+		fracstep = _iscale;
+		frac = _texturefrac;
 
-		const BYTE *source = dc_source;
+		const BYTE *source = _source;
 
 		if (count & 1) {
 			*dest = source[frac >> FRACBITS]; dest += 4; frac += fracstep;
@@ -1587,34 +1587,34 @@ public:
 
 class FillColumnHorizRGBACommand : public DrawerCommand
 {
-	int dc_x;
-	int dc_yl;
-	int dc_yh;
-	int dc_count;
-	int dc_color;
+	int _x;
+	int _yl;
+	int _yh;
+	int _count;
+	int _color;
 
 public:
 	FillColumnHorizRGBACommand()
 	{
-		dc_x = ::dc_x;
-		dc_count = ::dc_count;
-		dc_color = ::dc_color;
-		dc_yl = ::dc_yl;
-		dc_yh = ::dc_yh;
+		_x = dc_x;
+		_count = dc_count;
+		_color = dc_color;
+		_yl = dc_yl;
+		_yh = dc_yh;
 	}
 
 	void Execute(DrawerThread *thread) override
 	{
-		int count = dc_count;
-		int color = dc_color;
+		int count = _count;
+		int color = _color;
 		uint32_t *dest;
 
 		if (count <= 0)
 			return;
 
 		{
-			int x = dc_x & 3;
-			dest = &thread->dc_temp_rgba[x + 4 * dc_yl];
+			int x = _x & 3;
+			dest = &thread->dc_temp_rgba[x + 4 * _yl];
 		}
 
 		if (count & 1) {

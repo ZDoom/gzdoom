@@ -184,6 +184,8 @@ public:
 	virtual void Execute(DrawerThread *thread) = 0;
 };
 
+EXTERN_CVAR(Bool, r_multithreaded)
+
 // Manages queueing up commands and executing them on worker threads
 class DrawerCommandQueue
 {
@@ -227,7 +229,7 @@ public:
 	static void QueueCommand(Types &&... args)
 	{
 		auto queue = Instance();
-		if (queue->threaded_render == 0)
+		if (queue->threaded_render == 0 || !r_multithreaded)
 		{
 			T command(std::forward<Types>(args)...);
 			command.Execute(&queue->single_core_thread);

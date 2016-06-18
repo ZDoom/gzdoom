@@ -81,7 +81,6 @@ CUSTOM_CVAR(Int, gl_fuzztype, 0, CVAR_ARCHIVE)
 	if (self < 0 || self > 7) self = 0;
 }
 
-extern bool r_showviewer;
 EXTERN_CVAR (Float, transsouls)
 
 extern TArray<spritedef_t> sprites;
@@ -552,8 +551,6 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 {
 	sector_t rs;
 	sector_t * rendersector;
-	// don't draw the thing that's used as camera (for viewshifts during quakes!)
-	if (thing == GLRenderer->mViewActor || (thing == players[consoleplayer].camera && !r_showviewer)) return;
 
 	// Don't waste time projecting sprites that are definitely not visible.
 	if (thing == NULL || thing->sprite == 0 || !thing->IsVisibleToPlayer())
@@ -561,17 +558,17 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 		return;
 	}
 
+	if (thing->renderflags & RF_INVISIBLE || !thing->RenderStyle.IsVisible(thing->Alpha))
+	{
+		if (!(thing->flags & MF_STEALTH) || !gl_fixedcolormap || !gl_enhanced_nightvision || thing == camera)
+			return;
+	}
+
 	int spritenum = thing->sprite;
 	DVector2 sprscale = thing->Scale;
 	if (thing->player != NULL)
 	{
 		P_CheckPlayerSprite(thing, spritenum, sprscale);
-	}
-
-	if (thing->renderflags & RF_INVISIBLE || !thing->RenderStyle.IsVisible(thing->Alpha))
-	{
-		if (!(thing->flags & MF_STEALTH) || !gl_fixedcolormap || !gl_enhanced_nightvision)
-			return;
 	}
 
 	// If this thing is in a map section that's not in view it can't possibly be visible

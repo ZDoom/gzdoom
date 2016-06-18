@@ -306,9 +306,10 @@ bool GLPortal::Start(bool usestencil, bool doquery)
 	savedAngle = ViewAngle;
 	savedviewactor=GLRenderer->mViewActor;
 	savedviewarea=in_area;
-	savedshowviewer = r_showviewer;
 	savedviewpath[0] = ViewPath[0];
 	savedviewpath[1] = ViewPath[1];
+	savedvisibility = camera ? camera->renderflags & RF_INVISIBLE : ActorRenderFlags::FromInt(0);
+
 
 	PrevPortal = GLRenderer->mCurrentPortal;
 	PrevClipPortal = GLRenderer->mClipPortal;
@@ -375,7 +376,7 @@ void GLPortal::End(bool usestencil)
 		ViewAngle = savedAngle;
 		GLRenderer->mViewActor=savedviewactor;
 		in_area=savedviewarea;
-		r_showviewer = savedshowviewer;
+		if (camera != nullptr) camera->renderflags = (camera->renderflags & ~RF_INVISIBLE) | savedvisibility;
 		GLRenderer->SetupView(ViewPos.X, ViewPos.Y, ViewPos.Z, ViewAngle, !!(MirrorFlag & 1), !!(PlaneMirrorFlag & 1));
 
 		{
@@ -432,7 +433,7 @@ void GLPortal::End(bool usestencil)
 		ViewAngle = savedAngle;
 		GLRenderer->mViewActor=savedviewactor;
 		in_area=savedviewarea;
-		r_showviewer = savedshowviewer;
+		if (camera != nullptr) camera->renderflags |= savedvisibility;
 		GLRenderer->SetupView(ViewPos.X, ViewPos.Y, ViewPos.Z, ViewAngle, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
 
 		// This draws a valid z-buffer into the stencil's contents to ensure it
@@ -665,7 +666,7 @@ void GLSkyboxPortal::DrawContents()
 	SaveMapSection();
 	currentmapsection[mapsection >> 3] |= 1 << (mapsection & 7);
 
-	GLRenderer->DrawScene();
+	GLRenderer->DrawScene(DM_PORTAL);
 	portal->mFlags &= ~PORTSF_INSKYBOX;
 	inskybox = false;
 	gl_RenderState.SetDepthClamp(oldclamp);
@@ -755,7 +756,7 @@ void GLSectorStackPortal::DrawContents()
 	SaveMapSection();
 	SetupCoverage();
 	ClearClipper();
-	GLRenderer->DrawScene();
+	GLRenderer->DrawScene(DM_PORTAL);
 	RestoreMapSection();
 
 	if (origin->plane != -1) instack[origin->plane]--;
@@ -791,14 +792,13 @@ void GLPlaneMirrorPortal::DrawContents()
 	ViewPos.Z = 2 * planez - ViewPos.Z;
 	GLRenderer->mViewActor = NULL;
 	PlaneMirrorMode = origin->fC() < 0 ? -1 : 1;
-	r_showviewer = true;
-
+	
 	PlaneMirrorFlag++;
 	GLRenderer->SetupView(ViewPos.X, ViewPos.Y, ViewPos.Z, ViewAngle, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
 	ClearClipper();
 
 	gl_RenderState.SetClipHeight(planez, PlaneMirrorMode < 0? -1.f : 1.f);
-	GLRenderer->DrawScene();
+	GLRenderer->DrawScene(DM_PORTAL);
 	gl_RenderState.SetClipHeight(0.f, 0.f);
 	PlaneMirrorFlag--;
 	PlaneMirrorMode=old_pm;
@@ -955,7 +955,6 @@ void GLMirrorPortal::DrawContents()
 	ViewAngle = linedef->Delta().Angle() * 2. - StartAngle;
 
 	GLRenderer->mViewActor = NULL;
-	r_showviewer = true;
 
 	MirrorFlag++;
 	GLRenderer->SetupView(ViewPos.X, ViewPos.Y, ViewPos.Z, ViewAngle, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
@@ -971,7 +970,7 @@ void GLMirrorPortal::DrawContents()
 
 	gl_RenderState.SetClipLine(linedef);
 	gl_RenderState.EnableClipLine(true);
-	GLRenderer->DrawScene();
+	GLRenderer->DrawScene(DM_PORTAL);
 	gl_RenderState.EnableClipLine(false);
 
 	MirrorFlag--;
@@ -1009,7 +1008,7 @@ void GLLineToLinePortal::DrawContents()
 	P_TranslatePortalZ(origin, ViewPos.Z);
 	P_TranslatePortalXY(origin, ViewPath[0].X, ViewPath[0].Y);
 	P_TranslatePortalXY(origin, ViewPath[1].X, ViewPath[1].Y);
-	if (!r_showviewer)
+	if (!r_showviewer && camera != nullptr && P_PointOnLineSidePrecise(ViewPath[0], glport->lines[0]->mDestination) != P_PointOnLineSidePrecise(ViewPath[1], glport->lines[0]->mDestination))
 	{
 		double distp = (ViewPath[0] - ViewPath[1]).Length();
 		if (distp > EQUAL_EPSILON)
@@ -1017,9 +1016,9 @@ void GLLineToLinePortal::DrawContents()
 			double dist1 = (ViewPos - ViewPath[0]).Length();
 			double dist2 = (ViewPos - ViewPath[1]).Length();
 
-			if (dist1 + dist2 > distp + 1)
+			if (dist1 + dist2 < distp + 1)
 			{
-				r_showviewer = true;
+				camera->renderflags |= RF_INVISIBLE;
 			}
 		}
 	}
@@ -1044,7 +1043,7 @@ void GLLineToLinePortal::DrawContents()
 	ClearClipper();
 	gl_RenderState.SetClipLine(glport->lines[0]->mDestination);
 	gl_RenderState.EnableClipLine(true);
-	GLRenderer->DrawScene();
+	GLRenderer->DrawScene(DM_PORTAL);
 	gl_RenderState.EnableClipLine(false);
 	RestoreMapSection();
 }

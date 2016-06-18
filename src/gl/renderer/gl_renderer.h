@@ -53,6 +53,12 @@ struct GL_IRECT
 	}
 };
 
+enum
+{
+	DM_MAINVIEW,
+	DM_OFFSCREEN,
+	DM_PORTAL
+};
 
 class FGLRenderer
 {
@@ -106,7 +112,7 @@ public:
 	void RenderMultipassStuff();
 	void RenderScene(int recursion);
 	void RenderTranslucent();
-	void DrawScene(bool toscreen = false);
+	void DrawScene(int drawmode);
 	void DrawBlend(sector_t * viewsector);
 
 	void DrawPSprite (player_t * player,DPSprite *psp,float sx, float sy, bool hudModelStep, int OverrideShader, bool alphatexture);

@@ -105,7 +105,7 @@ private:
 	DAngle savedAngle;
 	AActor * savedviewactor;
 	area_t savedviewarea;
-	bool savedshowviewer;
+	ActorRenderFlags savedvisibility;
 	DVector3 savedviewpath[2];
 	GLPortal *PrevPortal;
 	GLPortal *PrevClipPortal;

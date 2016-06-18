@@ -98,6 +98,7 @@ EXTERN_CVAR (Bool, r_deathcamera)
 
 extern int viewpitch;
 extern bool NoInterpolateView;
+extern bool r_showviewer;
 
 DWORD			gl_fixedcolormap;
 area_t			in_area;
@@ -501,16 +502,29 @@ void FGLRenderer::RenderTranslucent()
 //-----------------------------------------------------------------------------
 EXTERN_CVAR(Bool, gl_draw_sync)
 
-void FGLRenderer::DrawScene(bool toscreen)
+void FGLRenderer::DrawScene(int drawmode)
 {
 	static int recursion=0;
 
-	CreateScene();
+	if (camera != nullptr)
+	{
+		ActorRenderFlags savedflags = camera->renderflags;
+		if (drawmode != DM_PORTAL && !r_showviewer)
+		{
+			camera->renderflags |= RF_INVISIBLE;
+		}
+		CreateScene();
+		camera->renderflags = savedflags;
+	}
+	else
+	{
+		CreateScene();
+	}
 	GLRenderer->mClipPortal = NULL;	// this must be reset before any portal recursion takes place.
 
 	// Up to this point in the main draw call no rendering is performed so we can wait
 	// with swapping the render buffer until now.
-	if (!gl_draw_sync && toscreen)
+	if (!gl_draw_sync && drawmode == DM_MAINVIEW)
 	{
 		All.Unclock();
 		static_cast<OpenGLFrameBuffer*>(screen)->Swap();
@@ -734,7 +748,7 @@ void FGLRenderer::ProcessScene(bool toscreen)
 	int mapsection = R_PointInSubsector(ViewPos)->mapsection;
 	memset(&currentmapsection[0], 0, currentmapsection.Size());
 	currentmapsection[mapsection>>3] |= 1 << (mapsection & 7);
-	DrawScene(toscreen);
+	DrawScene(toscreen ? DM_MAINVIEW : DM_OFFSCREEN);
 	FDrawInfo::EndDrawInfo();
 
 }

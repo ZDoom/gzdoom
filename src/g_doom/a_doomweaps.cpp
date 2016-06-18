@@ -38,7 +38,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Punch)
 	if (self->player != NULL)
 	{
 		AWeapon *weapon = self->player->ReadyWeapon;
-		if (weapon != NULL && !(weapon->WeaponFlags & WIF_DEHAMMO) && ACTION_CALL_FROM_WEAPON())
+		if (weapon != NULL && !(weapon->WeaponFlags & WIF_DEHAMMO) && ACTION_CALL_FROM_PSPRITE())
 		{
 			if (!weapon->DepleteAmmo (weapon->bAltFire))
 				return 0;
@@ -76,7 +76,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePistol)
 	if (self->player != nullptr)
 	{
 		AWeapon *weapon = self->player->ReadyWeapon;
-		if (weapon != nullptr && ACTION_CALL_FROM_WEAPON())
+		if (weapon != nullptr && ACTION_CALL_FROM_PSPRITE())
 		{
 			if (!weapon->DepleteAmmo (weapon->bAltFire, true, 1))
 				return 0;
@@ -160,7 +160,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Saw)
 	slope = P_AimLineAttack (self, angle, range, &t) + spread_z * (pr_saw.Random2() / 255.);
 
 	AWeapon *weapon = self->player->ReadyWeapon;
-	if ((weapon != NULL) && !(flags & SF_NOUSEAMMO) && !(!t.linetarget && (flags & SF_NOUSEAMMOMISS)) && !(weapon->WeaponFlags & WIF_DEHAMMO) && ACTION_CALL_FROM_WEAPON())
+	if ((weapon != NULL) && !(flags & SF_NOUSEAMMO) && !(!t.linetarget && (flags & SF_NOUSEAMMOMISS)) && !(weapon->WeaponFlags & WIF_DEHAMMO) && ACTION_CALL_FROM_PSPRITE())
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return 0;
@@ -269,7 +269,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireShotgun)
 
 	S_Sound (self, CHAN_WEAPON,  "weapons/shotgf", 1, ATTN_NORM);
 	AWeapon *weapon = self->player->ReadyWeapon;
-	if (weapon != nullptr && ACTION_CALL_FROM_WEAPON())
+	if (weapon != nullptr && ACTION_CALL_FROM_PSPRITE())
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire, true, 1))
 			return 0;
@@ -305,7 +305,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireShotgun2)
 
 	S_Sound (self, CHAN_WEAPON, "weapons/sshotf", 1, ATTN_NORM);
 	AWeapon *weapon = self->player->ReadyWeapon;
-	if (weapon != nullptr && ACTION_CALL_FROM_WEAPON())
+	if (weapon != nullptr && ACTION_CALL_FROM_PSPRITE())
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire, true, 2))
 			return 0;
@@ -421,7 +421,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireCGun)
 	}
 
 	AWeapon *weapon = player->ReadyWeapon;
-	if (weapon != nullptr && ACTION_CALL_FROM_WEAPON())
+	if (weapon != nullptr && ACTION_CALL_FROM_PSPRITE())
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire, true, 1))
 			return 0;
@@ -465,7 +465,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireMissile)
 		return 0;
 	}
 	AWeapon *weapon = self->player->ReadyWeapon;
-	if (weapon != NULL && ACTION_CALL_FROM_WEAPON())
+	if (weapon != NULL && ACTION_CALL_FROM_PSPRITE())
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire, true, 1))
 			return 0;
@@ -492,7 +492,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_FireSTGrenade)
 		return 0;
 	}
 	AWeapon *weapon = self->player->ReadyWeapon;
-	if (weapon != NULL && ACTION_CALL_FROM_WEAPON())
+	if (weapon != NULL && ACTION_CALL_FROM_PSPRITE())
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
 			return 0;
@@ -520,7 +520,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FirePlasma)
 		return 0;
 	}
 	AWeapon *weapon = self->player->ReadyWeapon;
-	if (weapon != NULL && ACTION_CALL_FROM_WEAPON())
+	if (weapon != NULL && ACTION_CALL_FROM_PSPRITE())
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire, true, 1))
 			return 0;
@@ -575,21 +575,21 @@ static void FireRailgun(AActor *self, int offset_xy, bool fromweapon)
 DEFINE_ACTION_FUNCTION(AActor, A_FireRailgun)
 {
 	PARAM_ACTION_PROLOGUE;
-	FireRailgun(self, 0, ACTION_CALL_FROM_WEAPON());
+	FireRailgun(self, 0, ACTION_CALL_FROM_PSPRITE());
 	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireRailgunRight)
 {
 	PARAM_ACTION_PROLOGUE;
-	FireRailgun(self, 10, ACTION_CALL_FROM_WEAPON());
+	FireRailgun(self, 10, ACTION_CALL_FROM_PSPRITE());
 	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, A_FireRailgunLeft)
 {
 	PARAM_ACTION_PROLOGUE;
-	FireRailgun(self, -10, ACTION_CALL_FROM_WEAPON());
+	FireRailgun(self, -10, ACTION_CALL_FROM_PSPRITE());
 	return 0;
 }
 
@@ -615,7 +615,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireBFG)
 	}
 
 	AWeapon *weapon = self->player->ReadyWeapon;
-	if (weapon != NULL && ACTION_CALL_FROM_WEAPON())
+	if (weapon != NULL && ACTION_CALL_FROM_PSPRITE())
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire, true, deh.BFGCells))
 			return 0;
@@ -751,7 +751,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_FireOldBFG)
 	}
 
 	AWeapon *weapon = self->player->ReadyWeapon;
-	if (!ACTION_CALL_FROM_WEAPON()) weapon = NULL;
+	if (!ACTION_CALL_FROM_PSPRITE()) weapon = NULL;
 	if (weapon != NULL)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire, true, 1))

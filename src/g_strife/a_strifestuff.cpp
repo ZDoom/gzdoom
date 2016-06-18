@@ -352,18 +352,22 @@ DEFINE_ACTION_FUNCTION(AActor, A_ItBurnsItBurns)
 
 	if (self->player != nullptr && self->player->mo == self)
 	{
-		DPSprite *psp = self->player->GetPSprite(PSP_STRIFEHANDS);
-		if (psp != nullptr)
+		FState *firehands = self->FindState("FireHands");
+		if (firehands != NULL)
 		{
-			psp->SetState(self->FindState("FireHands"));
-			psp->Flags &= PSPF_ADDWEAPON | PSPF_ADDBOB;
-			psp->y = WEAPONTOP;
-		}
+			DPSprite *psp = self->player->GetPSprite(PSP_STRIFEHANDS);
+			if (psp != nullptr)
+			{
+				psp->SetState(firehands);
+				psp->Flags &= PSPF_ADDWEAPON | PSPF_ADDBOB;
+				psp->y = WEAPONTOP;
+			}
 
-		self->player->ReadyWeapon = nullptr;
-		self->player->PendingWeapon = WP_NOCHANGE;
-		self->player->playerstate = PST_LIVE;
-		self->player->extralight = 3;
+			self->player->ReadyWeapon = nullptr;
+			self->player->PendingWeapon = WP_NOCHANGE;
+			self->player->playerstate = PST_LIVE;
+			self->player->extralight = 3;
+		}
 	}
 	return 0;
 }
@@ -388,7 +392,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_CrispyPlayer)
 
 		DPSprite *psp;
 		psp = self->player->GetPSprite(PSP_STRIFEHANDS);
-		psp->SetState(psp->GetState() + (self->FindState("FireHandsLower") - self->FindState("FireHands")));
+		FState *firehandslower = self->FindState("FireHandsLower");
+		FState *firehands = self->FindState("FireHands");
+		if (firehandslower != NULL && firehands != NULL && firehands < firehandslower)
+			psp->SetState(psp->GetState() + (firehandslower - firehands));
 	}
 	return 0;
 }

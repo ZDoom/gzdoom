@@ -361,6 +361,6 @@ int MatchString (const char *in, const char **strings);
 
 // Checks to see what called the current action function
 #define ACTION_CALL_FROM_ACTOR() (stateinfo == nullptr || stateinfo->mStateType == STATE_Actor)
-#define ACTION_CALL_FROM_WEAPON() (self->player && stateinfo != nullptr && stateinfo->mStateType == STATE_Psprite)
+#define ACTION_CALL_FROM_PSPRITE() (self->player && stateinfo != nullptr && stateinfo->mStateType == STATE_Psprite)
 #define ACTION_CALL_FROM_INVENTORY() (stateinfo != nullptr && stateinfo->mStateType == STATE_StateChain)
 #endif

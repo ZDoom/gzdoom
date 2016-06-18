@@ -1077,8 +1077,12 @@ void gl_RenderHUDModel(DPSprite *psp, float ofsX, float ofsY)
 
 bool gl_IsHUDModelForPlayerAvailable (player_t * player)
 {
+	if (player == nullptr || player->ReadyWeapon == nullptr)
+		return false;
+
 	DPSprite *psp = player->FindPSprite(PSP_WEAPON);
-	if ( (player == nullptr) || (player->ReadyWeapon == nullptr) || (psp->GetState() == nullptr) )
+
+	if (psp == nullptr || psp->GetState() == nullptr)
 		return false;
 
 	FState* state = psp->GetState();

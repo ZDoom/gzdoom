@@ -240,7 +240,7 @@ void GLSprite::Draw(int pass)
 			secplane_t *lowplane = i == (*lightlist).Size() - 1 ? &bottomp : &(*lightlist)[i + 1].plane;
 
 			int thislight = (*lightlist)[i].caster != NULL ? gl_ClampLight(*(*lightlist)[i].p_lightlevel) : lightlevel;
-			int thisll = (byte)gl_CheckSpriteGlow(actor->Sector, thislight, actor->InterpolatedPosition(r_TicFracF));
+			int thisll = actor == nullptr? thislight : (uint8_t)gl_CheckSpriteGlow(actor->Sector, thislight, actor->InterpolatedPosition(r_TicFracF));
 
 			FColormap thiscm;
 			thiscm.FadeColor = Colormap.FadeColor;

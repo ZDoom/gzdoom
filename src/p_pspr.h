@@ -42,7 +42,7 @@ class FArchive;
 // drawn directly on the view screen,
 // coordinates are given for a 320*200 view screen.
 //
-enum PSPLayers // These are all called by the owner's ReadyWeapon.
+enum PSPLayers
 {
 	PSP_STRIFEHANDS = -1,
 	PSP_WEAPON = 1,

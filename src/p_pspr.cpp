@@ -231,6 +231,9 @@ DPSprite *player_t::GetPSprite(PSPLayers layer)
 		}
 		if (layer == PSP_STRIFEHANDS)
 		{
+			// Some of the old hacks rely on this layer coming from the FireHands state.
+			// This is the ONLY time a psprite's state is actually null.
+			pspr->State = nullptr;
 			pspr->y = WEAPONTOP;
 		}
 

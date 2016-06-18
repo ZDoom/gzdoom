@@ -378,14 +378,22 @@ DEFINE_ACTION_FUNCTION(AActor, A_CrispyPlayer)
 
 	if (self->player != nullptr && self->player->mo == self)
 	{
-		self->player->playerstate = PST_DEAD;
-
 		DPSprite *psp;
 		psp = self->player->GetPSprite(PSP_STRIFEHANDS);
+
 		FState *firehandslower = self->FindState("FireHandsLower");
 		FState *firehands = self->FindState("FireHands");
-		if (firehandslower != NULL && firehands != NULL && firehands < firehandslower)
-			psp->SetState(psp->GetState() + (firehandslower - firehands));
+		FState *state = psp->GetState();
+
+		if (state != nullptr && firehandslower != nullptr && firehands != nullptr && firehands < firehandslower)
+		{
+			self->player->playerstate = PST_DEAD;
+			psp->SetState(state + (firehandslower - firehands));
+		}
+		else if (state == nullptr)
+		{
+			psp->SetState(nullptr);
+		}
 	}
 	return 0;
 }
@@ -397,13 +405,20 @@ DEFINE_ACTION_FUNCTION(AActor, A_HandLower)
 	if (self->player != nullptr)
 	{
 		DPSprite *psp = self->player->GetPSprite(PSP_STRIFEHANDS);
+
+		if (psp->GetState() == nullptr)
+		{
+			psp->SetState(nullptr);
+			return 0;
+		}
+
 		psp->y += 9;
 		if (psp->y > WEAPONBOTTOM*2)
 		{
 			psp->SetState(nullptr);
 		}
+
 		if (self->player->extralight > 0) self->player->extralight--;
 	}
 	return 0;
 }
-

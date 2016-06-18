@@ -1174,8 +1174,10 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ClearOverlays)
 		int id = pspr->GetID();
 
 		//Do not wipe out layer 0. Ever.
-		if (!id || id > stop || id < start)
+		if (!id || id < start)
 			continue;
+		if (id > stop)
+			break;
 
 		if (safety)
 		{

@@ -1139,14 +1139,12 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_Overlay)
 
 	player_t *player = self->player;
 
-	if (player == nullptr)
-		ACTION_RETURN_BOOL(false);
-
-	DPSprite *pspr;
-	if (dontoverride && (player->FindPSprite(layer) != nullptr))
+	if (player == nullptr || (dontoverride && (player->FindPSprite(layer) != nullptr)))
 	{
 		ACTION_RETURN_BOOL(false);
 	}
+
+	DPSprite *pspr;
 	pspr = new DPSprite(player, stateowner, layer);
 	pspr->SetState(state);
 	ACTION_RETURN_BOOL(true);
@@ -1159,10 +1157,9 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ClearOverlays)
 	PARAM_INT_OPT(stop) { stop = 0; }
 	PARAM_BOOL_OPT(safety) { safety = true; }
 
-	if (!ACTION_CALL_FROM_PSPRITE())
-	{
+	if (!self->player)
 		ACTION_RETURN_INT(0);
-	}
+
 	player_t *player = self->player;
 	if (!start && !stop)
 	{
@@ -1171,23 +1168,27 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ClearOverlays)
 	}
 
 	int count = 0;
-	for (int i = start; i <= stop; i++)
+	DPSprite *pspr = player->psprites;
+	while (pspr != nullptr)
 	{
+		int id = pspr->GetID();
+
+		//Do not wipe out layer 0. Ever.
+		if (!id || id > stop || id < start)
+			continue;
+
 		if (safety)
 		{
-			if (i >= PSP_TARGETCENTER)
+			if (id >= PSP_TARGETCENTER)
 				break;
-			else if ((i >= PSP_STRIFEHANDS && i <= PSP_WEAPON) || (i == PSP_FLASH))
+			else if ((id >= PSP_STRIFEHANDS && id <= PSP_WEAPON) || (id == PSP_FLASH))
 				continue;
 		}
-		// [MC]Don't affect non-hardcoded layers unless it's really desired.
-		DPSprite *pspr = player->FindPSprite(i);
-		if (pspr != nullptr)
-		{
-			pspr->SetState(nullptr);
-			count++;
-		}
 
+		// [MC]Don't affect non-hardcoded layers unless it's really desired.
+		pspr->SetState(nullptr);
+		count++;
+		pspr->GetNext();
 	}
 	ACTION_RETURN_INT(count);
 }

@@ -229,6 +229,10 @@ DPSprite *player_t::GetPSprite(PSPLayers layer)
 		{
 			pspr->Flags = (PSPF_ADDWEAPON|PSPF_ADDBOB|PSPF_CVARFAST|PSPF_POWDOUBLE);
 		}
+		if (layer == PSP_STRIFEHANDS)
+		{
+			pspr->y = WEAPONTOP;
+		}
 
 		pspr->oldx = pspr->x;
 		pspr->oldy = pspr->y;

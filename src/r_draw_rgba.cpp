@@ -44,8 +44,13 @@
 #include "x86.h"
 #ifndef NO_SSE
 #include <emmintrin.h>
+#include <immintrin.h>
 #endif
 #include <vector>
+
+#ifdef _MSC_VER
+#pragma warning(disable: 4752) // warning C4752: found Intel(R) Advanced Vector Extensions; consider using /arch:AVX
+#endif
 
 extern int vlinebits;
 extern int mvlinebits;
@@ -57,6 +62,8 @@ extern float rw_lightstep;
 extern int wallshade;
 
 CVAR(Bool, r_multithreaded, true, 0)
+
+//#define USE_AVX // Use AVX2 256 bit intrinsics (requires Haswell or newer)
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -230,14 +237,14 @@ void DrawerCommandQueue::StopThreads()
 class DrawColumnRGBACommand : public DrawerCommand
 {
 	int _count;
-	BYTE *_dest;
+	BYTE * RESTRICT _dest;
 	DWORD _texturefrac;
 	DWORD _iscale;
 	fixed_t _light;
-	const BYTE *_source;
+	const BYTE * RESTRICT _source;
 	int _pitch;
 	ShadeConstants _shade_constants;
-	BYTE *_colormap;
+	BYTE * RESTRICT _colormap;
 
 public:
 	DrawColumnRGBACommand()
@@ -297,7 +304,7 @@ public:
 class FillColumnRGBACommand : public DrawerCommand
 {
 	int _count;
-	BYTE *_dest;
+	BYTE * RESTRICT _dest;
 	fixed_t _light;
 	int _pitch;
 	int _color;
@@ -342,7 +349,7 @@ public:
 class FillAddColumnRGBACommand : public DrawerCommand
 {
 	int _count;
-	BYTE *_dest;
+	BYTE * RESTRICT _dest;
 	int _pitch;
 	uint32_t _srccolor;
 
@@ -399,7 +406,7 @@ public:
 class FillAddClampColumnRGBACommand : public DrawerCommand
 {
 	int _count;
-	BYTE *_dest;
+	BYTE * RESTRICT _dest;
 	int _pitch;
 	int _color;
 	uint32_t _srccolor;
@@ -460,7 +467,7 @@ public:
 class FillSubClampColumnRGBACommand : public DrawerCommand
 {
 	int _count;
-	BYTE *_dest;
+	BYTE * RESTRICT _dest;
 	int _pitch;
 	int _color;
 	uint32_t _srccolor;
@@ -520,7 +527,7 @@ public:
 class FillRevSubClampColumnRGBACommand : public DrawerCommand
 {
 	int _count;
-	BYTE *_dest;
+	BYTE * RESTRICT _dest;
 	int _pitch;
 	int _color;
 	uint32_t _srccolor;
@@ -582,7 +589,7 @@ class DrawFuzzColumnRGBACommand : public DrawerCommand
 	int _x;
 	int _yl;
 	int _yh;
-	BYTE *_destorg;
+	BYTE * RESTRICT _destorg;
 	int _pitch;
 	int _fuzzpos;
 	int _fuzzviewheight;
@@ -696,16 +703,16 @@ public:
 class DrawAddColumnRGBACommand : public DrawerCommand
 {
 	int _count;
-	BYTE *_dest;
+	BYTE * RESTRICT _dest;
 	DWORD _iscale;
 	DWORD _texturefrac;
-	const BYTE *_source;
+	const BYTE * RESTRICT _source;
 	int _pitch;
 	fixed_t _light;
 	ShadeConstants _shade_constants;
 	fixed_t _srcalpha;
 	fixed_t _destalpha;
-	BYTE *_colormap;
+	BYTE * RESTRICT _colormap;
 
 public:
 	DrawAddColumnRGBACommand()
@@ -779,11 +786,11 @@ class DrawTranslatedColumnRGBACommand : public DrawerCommand
 	int _count;
 	fixed_t _light;
 	ShadeConstants _shade_constants;
-	BYTE *_dest;
+	BYTE * RESTRICT _dest;
 	DWORD _iscale;
 	DWORD _texturefrac;
-	BYTE *_translation;
-	const BYTE *_source;
+	BYTE * RESTRICT _translation;
+	const BYTE * RESTRICT _source;
 	int _pitch;
 
 public:
@@ -840,11 +847,11 @@ class DrawTlatedAddColumnRGBACommand : public DrawerCommand
 	int _count;
 	fixed_t _light;
 	ShadeConstants _shade_constants;
-	BYTE *_dest;
+	BYTE * RESTRICT _dest;
 	DWORD _iscale;
 	DWORD _texturefrac;
-	BYTE *_translation;
-	const BYTE *_source;
+	BYTE * RESTRICT _translation;
+	const BYTE * RESTRICT _source;
 	int _pitch;
 	fixed_t _srcalpha;
 	fixed_t _destalpha;
@@ -920,12 +927,12 @@ class DrawShadedColumnRGBACommand : public DrawerCommand
 {
 private:
 	int _count;
-	BYTE *_dest;
+	BYTE * RESTRICT _dest;
 	DWORD _iscale;
 	DWORD _texturefrac;
 	fixed_t _light;
-	const BYTE *_source;
-	lighttable_t *_colormap;
+	const BYTE * RESTRICT _source;
+	lighttable_t * RESTRICT _colormap;
 	int _color;
 	int _pitch;
 
@@ -993,10 +1000,10 @@ public:
 class DrawAddClampColumnRGBACommand : public DrawerCommand
 {
 	int _count;
-	BYTE *_dest;
+	BYTE * RESTRICT _dest;
 	DWORD _iscale;
 	DWORD _texturefrac;
-	const BYTE *_source;
+	const BYTE * RESTRICT _source;
 	int _pitch;
 	fixed_t _light;
 	ShadeConstants _shade_constants;
@@ -1069,11 +1076,11 @@ public:
 class DrawAddClampTranslatedColumnRGBACommand : public DrawerCommand
 {
 	int _count;
-	BYTE *_dest;
+	BYTE * RESTRICT _dest;
 	DWORD _iscale;
 	DWORD _texturefrac;
-	BYTE *_translation;
-	const BYTE *_source;
+	BYTE * RESTRICT _translation;
+	const BYTE * RESTRICT _source;
 	int _pitch;
 	fixed_t _light;
 	ShadeConstants _shade_constants;
@@ -1148,10 +1155,10 @@ public:
 class DrawSubClampColumnRGBACommand : public DrawerCommand
 {
 	int _count;
-	BYTE *_dest;
+	BYTE * RESTRICT _dest;
 	DWORD _iscale;
 	DWORD _texturefrac;
-	const BYTE *_source;
+	const BYTE * RESTRICT _source;
 	int _pitch;
 	fixed_t _light;
 	ShadeConstants _shade_constants;
@@ -1224,16 +1231,16 @@ public:
 class DrawSubClampTranslatedColumnRGBACommand : public DrawerCommand
 {
 	int _count;
-	BYTE *_dest;
+	BYTE * RESTRICT _dest;
 	DWORD _iscale;
 	DWORD _texturefrac;
-	const BYTE *_source;
+	const BYTE * RESTRICT _source;
 	int _pitch;
 	fixed_t _light;
 	ShadeConstants _shade_constants;
 	fixed_t _srcalpha;
 	fixed_t _destalpha;
-	BYTE *_translation;
+	BYTE * RESTRICT _translation;
 
 public:
 	DrawSubClampTranslatedColumnRGBACommand()
@@ -1303,10 +1310,10 @@ public:
 class DrawRevSubClampColumnRGBACommand : public DrawerCommand
 {
 	int _count;
-	BYTE *_dest;
+	BYTE * RESTRICT _dest;
 	DWORD _iscale;
 	DWORD _texturefrac;
-	const BYTE *_source;
+	const BYTE * RESTRICT _source;
 	int _pitch;
 	fixed_t _light;
 	ShadeConstants _shade_constants;
@@ -1378,16 +1385,16 @@ public:
 class DrawRevSubClampTranslatedColumnRGBACommand : public DrawerCommand
 {
 	int _count;
-	BYTE *_dest;
+	BYTE * RESTRICT _dest;
 	DWORD _iscale;
 	DWORD _texturefrac;
-	const BYTE *_source;
+	const BYTE * RESTRICT _source;
 	int _pitch;
 	fixed_t _light;
 	ShadeConstants _shade_constants;
 	fixed_t _srcalpha;
 	fixed_t _destalpha;
-	BYTE *_translation;
+	BYTE * RESTRICT _translation;
 
 public:
 	DrawRevSubClampTranslatedColumnRGBACommand()
@@ -1422,8 +1429,8 @@ public:
 		frac = _texturefrac + _iscale * thread->skipped_by_thread(_dest_y);
 
 		{
-			BYTE *translation = _translation;
-			const BYTE *source = _source;
+			BYTE * RESTRICT translation = _translation;
+			const BYTE * RESTRICT source = _source;
 			int pitch = _pitch * thread->num_cores;
 			uint32_t light = calc_light_multiplier(_light);
 			ShadeConstants shade_constants = _shade_constants;
@@ -1456,7 +1463,7 @@ public:
 
 class DrawSpanRGBACommand : public DrawerCommand
 {
-	const uint32_t *_source;
+	const uint32_t * RESTRICT _source;
 	fixed_t _xfrac;
 	fixed_t _yfrac;
 	fixed_t _xstep;
@@ -1466,7 +1473,7 @@ class DrawSpanRGBACommand : public DrawerCommand
 	int _y;
 	int _xbits;
 	int _ybits;
-	BYTE *_destorg;
+	BYTE * RESTRICT _destorg;
 	fixed_t _light;
 	ShadeConstants _shade_constants;
 
@@ -1538,6 +1545,181 @@ public:
 			BYTE yshift = 32 - _ybits;
 			BYTE xshift = yshift - _xbits;
 			int xmask = ((1 << _xbits) - 1) << _ybits;
+
+			do
+			{
+				// Current texture index in u,v.
+				spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+
+				// Lookup pixel from flat texture tile
+				*dest++ = shade_bgra(source[spot], light, shade_constants);
+
+				// Next step in u,v.
+				xfrac += xstep;
+				yfrac += ystep;
+			} while (--count);
+		}
+	}
+#elif defined(USE_AVX)
+	void Execute(DrawerThread *thread) override
+	{
+		if (thread->line_skipped_by_thread(_y))
+			return;
+
+		dsfixed_t			xfrac;
+		dsfixed_t			yfrac;
+		dsfixed_t			xstep;
+		dsfixed_t			ystep;
+		uint32_t*			dest;
+		const uint32_t*		source = _source;
+		int 				count;
+		int 				spot;
+
+		xfrac = _xfrac;
+		yfrac = _yfrac;
+
+		dest = ylookup[_y] + _x1 + (uint32_t*)_destorg;
+
+		count = _x2 - _x1 + 1;
+
+		xstep = _xstep;
+		ystep = _ystep;
+
+		uint32_t light = calc_light_multiplier(_light);
+		ShadeConstants shade_constants = _shade_constants;
+
+		if (_xbits == 6 && _ybits == 6)
+		{
+			// 64x64 is the most common case by far, so special case it.
+
+			int sse_count = count / 8;
+			count -= sse_count * 8;
+
+			if (shade_constants.simple_shade)
+			{
+				AVX2_SHADE_SIMPLE_INIT(light);
+
+				while (sse_count--)
+				{
+					uint32_t fg_pixels[8];
+					for (int i = 0; i < 8; i++)
+					{
+						// Current texture index in u,v.
+						spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
+						fg_pixels[i] = source[spot];
+						xfrac += xstep;
+						yfrac += ystep;
+					}
+
+					// Lookup pixel from flat texture tile,
+					//  re-index using light/colormap.
+					__m256i fg = _mm256_loadu_si256((const __m256i*)fg_pixels);
+					AVX2_SHADE_SIMPLE(fg);
+					_mm256_storeu_si256((__m256i*)dest, fg);
+
+					// Next step in u,v.
+					dest += 8;
+				}
+			}
+			else
+			{
+				AVX2_SHADE_INIT(light, shade_constants);
+
+				while (sse_count--)
+				{
+					uint32_t fg_pixels[8];
+					for (int i = 0; i < 8; i++)
+					{
+						// Current texture index in u,v.
+						spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
+						fg_pixels[i] = source[spot];
+						xfrac += xstep;
+						yfrac += ystep;
+					}
+
+					// Lookup pixel from flat texture tile,
+					//  re-index using light/colormap.
+					__m256i fg = _mm256_loadu_si256((const __m256i*)fg_pixels);
+					AVX2_SHADE(fg, shade_constants);
+					_mm256_storeu_si256((__m256i*)dest, fg);
+
+					// Next step in u,v.
+					dest += 8;
+				}
+			}
+
+			if (count == 0)
+				return;
+
+			do
+			{
+				// Current texture index in u,v.
+				spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
+
+				// Lookup pixel from flat texture tile
+				*dest++ = shade_bgra(source[spot], light, shade_constants);
+
+				// Next step in u,v.
+				xfrac += xstep;
+				yfrac += ystep;
+			} while (--count);
+		}
+		else
+		{
+			BYTE yshift = 32 - _ybits;
+			BYTE xshift = yshift - _xbits;
+			int xmask = ((1 << _xbits) - 1) << _ybits;
+
+			int sse_count = count / 8;
+			count -= sse_count * 8;
+
+			if (shade_constants.simple_shade)
+			{
+				AVX2_SHADE_SIMPLE_INIT(light);
+
+				while (sse_count--)
+				{
+					uint32_t fg_pixels[8];
+					for (int i = 0; i < 8; i++)
+					{
+						spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+						fg_pixels[i] = source[spot];
+						xfrac += xstep;
+						yfrac += ystep;
+					}
+
+					// Lookup pixel from flat texture tile
+					__m256i fg = _mm256_loadu_si256((const __m256i*)fg_pixels);
+					AVX2_SHADE_SIMPLE(fg);
+					_mm256_storeu_si256((__m256i*)dest, fg);
+					dest += 8;
+				}
+			}
+			else
+			{
+				AVX2_SHADE_INIT(light, shade_constants);
+
+				while (sse_count--)
+				{
+					uint32_t fg_pixels[8];
+					for (int i = 0; i < 8; i++)
+					{
+						spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+						fg_pixels[i] = source[spot];
+						xfrac += xstep;
+						yfrac += ystep;
+					}
+
+					// Lookup pixel from flat texture tile
+					__m256i fg = _mm256_loadu_si256((const __m256i*)fg_pixels);
+					AVX2_SHADE_SIMPLE(fg);
+					_mm256_storeu_si256((__m256i*)dest, fg);
+					dest += 4;
+				}
+			}
+
+			if (count == 0)
+				return;
 
 			do
 			{
@@ -1777,12 +1959,12 @@ public:
 
 class DrawSpanMaskedRGBACommand : public DrawerCommand
 {
-	const uint32_t *_source;
+	const uint32_t * RESTRICT _source;
 	fixed_t _light;
 	ShadeConstants _shade_constants;
 	fixed_t _xfrac;
 	fixed_t _yfrac;
-	BYTE *_destorg;
+	BYTE * RESTRICT _destorg;
 	int _x1;
 	int _x2;
 	int _y1;
@@ -1880,12 +2062,12 @@ public:
 
 class DrawSpanTranslucentRGBACommand : public DrawerCommand
 {
-	const uint32_t *_source;
+	const uint32_t * RESTRICT _source;
 	fixed_t _light;
 	ShadeConstants _shade_constants;
 	fixed_t _xfrac;
 	fixed_t _yfrac;
-	BYTE *_destorg;
+	BYTE * RESTRICT _destorg;
 	int _x1;
 	int _x2;
 	int _y1;
@@ -2006,12 +2188,12 @@ public:
 
 class DrawSpanMaskedTranslucentRGBACommand : public DrawerCommand
 {
-	const uint32_t *_source;
+	const uint32_t * RESTRICT _source;
 	fixed_t _light;
 	ShadeConstants _shade_constants;
 	fixed_t _xfrac;
 	fixed_t _yfrac;
-	BYTE *_destorg;
+	BYTE * RESTRICT _destorg;
 	int _x1;
 	int _x2;
 	int _y1;
@@ -2142,12 +2324,12 @@ public:
 
 class DrawSpanAddClampRGBACommand : public DrawerCommand
 {
-	const uint32_t *_source;
+	const uint32_t * RESTRICT _source;
 	fixed_t _light;
 	ShadeConstants _shade_constants;
 	fixed_t _xfrac;
 	fixed_t _yfrac;
-	BYTE *_destorg;
+	BYTE * RESTRICT _destorg;
 	int _x1;
 	int _x2;
 	int _y1;
@@ -2268,12 +2450,12 @@ public:
 
 class DrawSpanMaskedAddClampRGBACommand : public DrawerCommand
 {
-	const uint32_t *_source;
+	const uint32_t * RESTRICT _source;
 	fixed_t _light;
 	ShadeConstants _shade_constants;
 	fixed_t _xfrac;
 	fixed_t _yfrac;
-	BYTE *_destorg;
+	BYTE * RESTRICT _destorg;
 	int _x1;
 	int _x2;
 	int _y1;
@@ -2407,7 +2589,7 @@ class FillSpanRGBACommand : public DrawerCommand
 	int _x1;
 	int _x2;
 	int _y;
-	BYTE *_destorg;
+	BYTE * RESTRICT _destorg;
 	fixed_t _light;
 	int _color;
 
@@ -2441,8 +2623,8 @@ class Vlinec1RGBACommand : public DrawerCommand
 	DWORD _iscale;
 	DWORD _texturefrac;
 	int _count;
-	const BYTE *_source;
-	BYTE *_dest;
+	const BYTE * RESTRICT _source;
+	BYTE * RESTRICT _dest;
 	int vlinebits;
 	int _pitch;
 	fixed_t _light;
@@ -2489,7 +2671,7 @@ public:
 
 class Vlinec4RGBACommand : public DrawerCommand
 {
-	BYTE *_dest;
+	BYTE * RESTRICT _dest;
 	int _count;
 	int _pitch;
 	ShadeConstants _shade_constants;
@@ -2497,7 +2679,7 @@ class Vlinec4RGBACommand : public DrawerCommand
 	fixed_t palookuplight[4];
 	DWORD vplce[4];
 	DWORD vince[4];
-	const uint32 *bufplce[4];
+	const uint32 * RESTRICT bufplce[4];
 
 public:
 	Vlinec4RGBACommand()
@@ -2552,6 +2734,84 @@ public:
 			dest[3] = shade_bgra(bufplce[3][(place = local_vplce[3]) >> bits], light3, shade_constants); local_vplce[3] = place + local_vince[3];
 			dest += pitch;
 		} while (--count);
+	}
+#elif defined(USE_AVX)
+	void Execute(DrawerThread *thread) override
+	{
+		int count = thread->count_for_thread(_dest_y, _count);
+		if (count <= 0)
+			return;
+
+		uint32_t *dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
+		int bits = vlinebits;
+		int pitch = _pitch * thread->num_cores;
+
+		uint32_t light0 = calc_light_multiplier(palookuplight[0]);
+		uint32_t light1 = calc_light_multiplier(palookuplight[1]);
+		uint32_t light2 = calc_light_multiplier(palookuplight[2]);
+		uint32_t light3 = calc_light_multiplier(palookuplight[3]);
+
+		ShadeConstants shade_constants = _shade_constants;
+
+		DWORD local_vplce[4] = { vplce[0], vplce[1], vplce[2], vplce[3] };
+		DWORD local_vince[4] = { vince[0], vince[1], vince[2], vince[3] };
+		int skipped = thread->skipped_by_thread(_dest_y);
+		for (int i = 0; i < 4; i++)
+		{
+			local_vplce[i] += local_vince[i] * skipped;
+			local_vince[i] *= thread->num_cores;
+		}
+
+		if (count & 1)
+		{
+			DWORD place;
+			dest[0] = shade_bgra(bufplce[0][(place = local_vplce[0]) >> bits], light0, shade_constants); local_vplce[0] = place + local_vince[0];
+			dest[1] = shade_bgra(bufplce[1][(place = local_vplce[1]) >> bits], light1, shade_constants); local_vplce[1] = place + local_vince[1];
+			dest[2] = shade_bgra(bufplce[2][(place = local_vplce[2]) >> bits], light2, shade_constants); local_vplce[2] = place + local_vince[2];
+			dest[3] = shade_bgra(bufplce[3][(place = local_vplce[3]) >> bits], light3, shade_constants); local_vplce[3] = place + local_vince[3];
+			dest += pitch;
+		}
+		count /= 2;
+
+		// Assume all columns come from the same texture (which they do):
+		const uint32_t *base_addr = MIN(MIN(MIN(bufplce[0], bufplce[1]), bufplce[2]), bufplce[3]);
+		__m256i column_offsets = _mm256_set_epi32(
+			bufplce[3] - base_addr, bufplce[2] - base_addr, bufplce[1] - base_addr, bufplce[0] - base_addr,
+			bufplce[3] - base_addr, bufplce[2] - base_addr, bufplce[1] - base_addr, bufplce[0] - base_addr);
+
+		__m256i place = _mm256_set_epi32(
+			local_vplce[3] + local_vince[3], local_vplce[2] + local_vince[2], local_vplce[1] + local_vince[1], local_vplce[0] + local_vince[0],
+			local_vplce[3], local_vplce[2], local_vplce[1], local_vplce[0]);
+
+		__m256i step = _mm256_set_epi32(
+			local_vince[3], local_vince[2], local_vince[1], local_vince[0],
+			local_vince[3], local_vince[2], local_vince[1], local_vince[0]);
+		step = _mm256_add_epi32(step, step);
+
+		if (shade_constants.simple_shade)
+		{
+			AVX2_SHADE_SIMPLE_INIT4(light3, light2, light1, light0);
+			while (count--)
+			{
+				__m256i fg = _mm256_i32gather_epi32((const int *)base_addr, _mm256_add_epi32(column_offsets, _mm256_srli_epi32(place, bits)), 4);
+				place = _mm256_add_epi32(place, step);
+				AVX2_SHADE_SIMPLE(fg);
+				_mm256_storeu2_m128i((__m128i*)(dest + pitch), (__m128i*)dest, fg);
+				dest += pitch * 2;
+			}
+		}
+		else
+		{
+			AVX2_SHADE_INIT4(light3, light2, light1, light0, shade_constants);
+			while (count--)
+			{
+				__m256i fg = _mm256_i32gather_epi32((const int *)base_addr, _mm256_add_epi32(column_offsets, _mm256_srai_epi32(place, bits)), 4);
+				place = _mm256_add_epi32(place, step);
+				AVX2_SHADE(fg, shade_constants);
+				_mm256_storeu2_m128i((__m128i*)(dest + pitch), (__m128i*)dest, fg);
+				dest += pitch * 2;
+			}
+		}
 	}
 #else
 	void Execute(DrawerThread *thread) override
@@ -2641,8 +2901,8 @@ class Mvlinec1RGBACommand : public DrawerCommand
 	DWORD _iscale;
 	DWORD _texturefrac;
 	int _count;
-	const BYTE *_source;
-	BYTE *_dest;
+	const BYTE * RESTRICT _source;
+	BYTE * RESTRICT _dest;
 	int mvlinebits;
 	int _pitch;
 	fixed_t _light;
@@ -2693,7 +2953,7 @@ public:
 
 class Mvlinec4RGBACommand : public DrawerCommand
 {
-	BYTE *_dest;
+	BYTE * RESTRICT _dest;
 	int _count;
 	int _pitch;
 	ShadeConstants _shade_constants;
@@ -2701,7 +2961,7 @@ class Mvlinec4RGBACommand : public DrawerCommand
 	fixed_t palookuplight[4];
 	DWORD vplce[4];
 	DWORD vince[4];
-	const uint32 *bufplce[4];
+	const uint32 * RESTRICT bufplce[4];
 
 public:
 	Mvlinec4RGBACommand()
@@ -2852,8 +3112,8 @@ class Tmvline1AddRGBACommand : public DrawerCommand
 	DWORD _iscale;
 	DWORD _texturefrac;
 	int _count;
-	const BYTE *_source;
-	BYTE *_dest;
+	const BYTE * RESTRICT _source;
+	BYTE * RESTRICT _dest;
 	int tmvlinebits;
 	int _pitch;
 	fixed_t _light;
@@ -2924,7 +3184,7 @@ public:
 
 class Tmvline4AddRGBACommand : public DrawerCommand
 {
-	BYTE *_dest;
+	BYTE * RESTRICT _dest;
 	int _count;
 	int _pitch;
 	ShadeConstants _shade_constants;
@@ -2934,7 +3194,7 @@ class Tmvline4AddRGBACommand : public DrawerCommand
 	fixed_t palookuplight[4];
 	DWORD vplce[4];
 	DWORD vince[4];
-	const uint32 *bufplce[4];
+	const uint32 * RESTRICT bufplce[4];
 
 public:
 	Tmvline4AddRGBACommand()
@@ -3019,8 +3279,8 @@ class Tmvline1AddClampRGBACommand : public DrawerCommand
 	DWORD _iscale;
 	DWORD _texturefrac;
 	int _count;
-	const BYTE *_source;
-	BYTE *_dest;
+	const BYTE * RESTRICT _source;
+	BYTE * RESTRICT _dest;
 	int tmvlinebits;
 	int _pitch;
 	fixed_t _light;
@@ -3091,7 +3351,7 @@ public:
 
 class Tmvline4AddClampRGBACommand : public DrawerCommand
 {
-	BYTE *_dest;
+	BYTE * RESTRICT _dest;
 	int _count;
 	int _pitch;
 	ShadeConstants _shade_constants;
@@ -3101,7 +3361,7 @@ class Tmvline4AddClampRGBACommand : public DrawerCommand
 	fixed_t palookuplight[4];
 	DWORD vplce[4];
 	DWORD vince[4];
-	const uint32 *bufplce[4];
+	const uint32 *RESTRICT bufplce[4];
 
 public:
 	Tmvline4AddClampRGBACommand()
@@ -3186,8 +3446,8 @@ class Tmvline1SubClampRGBACommand : public DrawerCommand
 	DWORD _iscale;
 	DWORD _texturefrac;
 	int _count;
-	const BYTE *_source;
-	BYTE *_dest;
+	const BYTE * RESTRICT _source;
+	BYTE * RESTRICT _dest;
 	int tmvlinebits;
 	int _pitch;
 	fixed_t _light;
@@ -3258,7 +3518,7 @@ public:
 
 class Tmvline4SubClampRGBACommand : public DrawerCommand
 {
-	BYTE *_dest;
+	BYTE * RESTRICT _dest;
 	int _count;
 	int _pitch;
 	ShadeConstants _shade_constants;
@@ -3268,7 +3528,7 @@ class Tmvline4SubClampRGBACommand : public DrawerCommand
 	fixed_t palookuplight[4];
 	DWORD vplce[4];
 	DWORD vince[4];
-	const uint32 *bufplce[4];
+	const uint32 *RESTRICT bufplce[4];
 
 public:
 	Tmvline4SubClampRGBACommand()
@@ -3353,8 +3613,8 @@ class Tmvline1RevSubClampRGBACommand : public DrawerCommand
 	DWORD _iscale;
 	DWORD _texturefrac;
 	int _count;
-	const BYTE *_source;
-	BYTE *_dest;
+	const BYTE * RESTRICT _source;
+	BYTE * RESTRICT _dest;
 	int tmvlinebits;
 	int _pitch;
 	fixed_t _light;
@@ -3425,7 +3685,7 @@ public:
 
 class Tmvline4RevSubClampRGBACommand : public DrawerCommand
 {
-	BYTE *_dest;
+	BYTE * RESTRICT _dest;
 	int _count;
 	int _pitch;
 	ShadeConstants _shade_constants;
@@ -3435,7 +3695,7 @@ class Tmvline4RevSubClampRGBACommand : public DrawerCommand
 	fixed_t palookuplight[4];
 	DWORD vplce[4];
 	DWORD vince[4];
-	const uint32 *bufplce[4];
+	const uint32 *RESTRICT bufplce[4];
 
 public:
 	Tmvline4RevSubClampRGBACommand()
@@ -3520,7 +3780,7 @@ class DrawFogBoundaryLineRGBACommand : public DrawerCommand
 	int _y;
 	int _x;
 	int _x2;
-	BYTE *_destorg;
+	BYTE * RESTRICT _destorg;
 	fixed_t _light;
 	ShadeConstants _shade_constants;
 
@@ -3592,10 +3852,10 @@ class DrawTiltedSpanRGBACommand : public DrawerCommand
 	int _y;
 	int _x1;
 	int _x2;
-	BYTE *_destorg;
+	BYTE * RESTRICT _destorg;
 	fixed_t _light;
 	ShadeConstants _shade_constants;
-	const BYTE *_source;
+	const BYTE * RESTRICT _source;
 
 public:
 	DrawTiltedSpanRGBACommand(int y, int x1, int x2)
@@ -3637,7 +3897,7 @@ class DrawColoredSpanRGBACommand : public DrawerCommand
 	int _y;
 	int _x1;
 	int _x2;
-	BYTE *_destorg;
+	BYTE * RESTRICT _destorg;
 	fixed_t _light;
 	int _color;
 
@@ -3678,7 +3938,7 @@ class FillTransColumnRGBACommand : public DrawerCommand
 	int _y2;
 	int _color;
 	int _a;
-	BYTE *_destorg;
+	BYTE * RESTRICT _destorg;
 	int _pitch;
 	fixed_t _light;
 

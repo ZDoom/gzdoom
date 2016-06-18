@@ -290,6 +290,17 @@ public:
 #endif
 #endif
 
+// Promise compiler we have no aliasing of this pointer
+#ifndef RESTRICT
+#if defined(_MSC_VER)
+#define RESTRICT __restrict
+#elif defined(__GNUC__)
+#define RESTRICT __restrict__
+#else
+#define RESTRICT
+#endif
+#endif
+
 // calculates the light constant passed to the shade_pal_index function
 FORCEINLINE uint32_t calc_light_multiplier(dsfixed_t light)
 {
@@ -412,6 +423,86 @@ FORCEINLINE uint32_t alpha_blend(uint32_t fg, uint32_t bg)
 
 	return 0xff000000 | (red << 16) | (green << 8) | blue;
 }
+
+// Calculate constants for a simple shade
+#define AVX2_SHADE_SIMPLE_INIT(light) \
+	__m256i mlight = _mm256_set_epi16(256, light, light, light, 256, light, light, light, 256, light, light, light, 256, light, light, light);
+
+// Calculate constants for a simple shade with different light levels for each pixel
+#define AVX2_SHADE_SIMPLE_INIT4(light3, light2, light1, light0) \
+	__m256i mlight = _mm256_set_epi16(256, light3, light3, light3, 256, light2, light2, light2, 256, light1, light1, light1, 256, light0, light0, light0);
+
+// Simple shade 8 pixels
+#define AVX2_SHADE_SIMPLE(fg) { \
+	__m256i fg_hi = _mm256_unpackhi_epi8(fg, _mm256_setzero_si256()); \
+	__m256i fg_lo = _mm256_unpacklo_epi8(fg, _mm256_setzero_si256()); \
+	fg_hi = _mm256_mullo_epi16(fg_hi, mlight); \
+	fg_hi = _mm256_srli_epi16(fg_hi, 8); \
+	fg_lo = _mm256_mullo_epi16(fg_lo, mlight); \
+	fg_lo = _mm256_srli_epi16(fg_lo, 8); \
+	fg = _mm256_packus_epi16(fg_lo, fg_hi); \
+}
+
+// Calculate constants for a complex shade
+#define AVX2_SHADE_INIT(light, shade_constants) \
+	__m256i mlight = _mm256_set_epi16(256, light, light, light, 256, light, light, light, 256, light, light, light, 256, light, light, light); \
+	__m256i color = _mm256_set_epi16( \
+		shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, \
+		shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, \
+		shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, \
+		shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue); \
+	__m256i fade = _mm256_set_epi16( \
+		shade_constants.fade_alpha, shade_constants.fade_red, shade_constants.fade_green, shade_constants.fade_blue, \
+		shade_constants.fade_alpha, shade_constants.fade_red, shade_constants.fade_green, shade_constants.fade_blue, \
+		shade_constants.fade_alpha, shade_constants.fade_red, shade_constants.fade_green, shade_constants.fade_blue, \
+		shade_constants.fade_alpha, shade_constants.fade_red, shade_constants.fade_green, shade_constants.fade_blue); \
+	__m256i fade_amount = _mm256_mullo_epi16(fade, _mm256_subs_epu16(_mm256_set1_epi16(256), mlight)); \
+	__m256i desaturate = _mm256_set1_epi16(shade_constants.desaturate); \
+	__m256i inv_desaturate = _mm256_set1_epi16(256 - shade_constants.desaturate);
+
+// Calculate constants for a complex shade with different light levels for each pixel
+#define AVX2_SHADE_INIT4(light3, light2, light1, light0, shade_constants) \
+	__m256i mlight = _mm256_set_epi16(256, light3, light3, light3, 256, light2, light2, light2, 256, light1, light1, light1, 256, light0, light0, light0); \
+	__m256i color = _mm256_set_epi16( \
+		shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, \
+		shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, \
+		shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, \
+		shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue); \
+	__m256i fade = _mm256_set_epi16( \
+		shade_constants.fade_alpha, shade_constants.fade_red, shade_constants.fade_green, shade_constants.fade_blue, \
+		shade_constants.fade_alpha, shade_constants.fade_red, shade_constants.fade_green, shade_constants.fade_blue, \
+		shade_constants.fade_alpha, shade_constants.fade_red, shade_constants.fade_green, shade_constants.fade_blue, \
+		shade_constants.fade_alpha, shade_constants.fade_red, shade_constants.fade_green, shade_constants.fade_blue); \
+	__m256i fade_amount = _mm256_mullo_epi16(fade, _mm256_subs_epu16(_mm256_set1_epi16(256), mlight)); \
+	__m256i desaturate = _mm256_set1_epi16(shade_constants.desaturate); \
+	__m256i inv_desaturate = _mm256_set1_epi16(256 - shade_constants.desaturate);
+
+// Complex shade 8 pixels
+#define AVX2_SHADE(fg, shade_constants) { \
+	__m256i fg_hi = _mm256_unpackhi_epi8(fg, _mm256_setzero_si256()); \
+	__m256i fg_lo = _mm256_unpacklo_epi8(fg, _mm256_setzero_si256()); \
+	 \
+	__m256i intensity_hi = _mm256_mullo_epi16(fg_hi, _mm256_set_epi16(0, 77, 143, 37, 0, 77, 143, 37, 0, 77, 143, 37, 0, 77, 143, 37)); \
+	__m256i intensity_lo = _mm256_mullo_epi16(fg_lo, _mm256_set_epi16(0, 77, 143, 37, 0, 77, 143, 37, 0, 77, 143, 37, 0, 77, 143, 37)); \
+	__m256i intensity = _mm256_mullo_epi16(_mm256_srli_epi16(_mm256_hadd_epi16(_mm256_hadd_epi16(intensity_lo, intensity_hi), _mm256_setzero_si256()), 8), desaturate); \
+	intensity = _mm256_unpacklo_epi16(intensity, intensity); \
+	intensity_hi = _mm256_unpackhi_epi32(intensity, intensity); \
+	intensity_lo = _mm256_unpacklo_epi32(intensity, intensity); \
+	 \
+	fg_hi = _mm256_srli_epi16(_mm256_adds_epu16(_mm256_mullo_epi16(fg_hi, inv_desaturate), intensity_hi), 8); \
+	fg_hi = _mm256_srli_epi16(_mm256_adds_epu16(_mm256_mullo_epi16(fg_hi, mlight), fade_amount), 8); \
+	fg_hi = _mm256_srli_epi16(_mm256_mullo_epi16(fg_hi, color), 8); \
+	 \
+	fg_lo = _mm256_srli_epi16(_mm256_adds_epu16(_mm256_mullo_epi16(fg_lo, inv_desaturate), intensity_lo), 8); \
+	fg_lo = _mm256_srli_epi16(_mm256_adds_epu16(_mm256_mullo_epi16(fg_lo, mlight), fade_amount), 8); \
+	fg_lo = _mm256_srli_epi16(_mm256_mullo_epi16(fg_lo, color), 8); \
+	 \
+	fg = _mm256_packus_epi16(fg_lo, fg_hi); \
+}
+
+
+
+
 
 // Calculate constants for a simple shade
 #define SSE_SHADE_SIMPLE_INIT(light) \

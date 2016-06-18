@@ -59,7 +59,7 @@ class RtCopy1colRGBACommand : public DrawerCommand
 	int sx;
 	int yl;
 	int yh;
-	BYTE *_destorg;
+	BYTE * RESTRICT _destorg;
 	int _pitch;
 
 public:
@@ -123,9 +123,9 @@ class RtMap1colRGBACommand : public DrawerCommand
 	int yh;
 	fixed_t _light;
 	ShadeConstants _shade_constants;
-	BYTE *_destorg;
+	BYTE * RESTRICT _destorg;
 	int _pitch;
-	BYTE *_colormap;
+	BYTE * RESTRICT _colormap;
 
 public:
 	RtMap1colRGBACommand(int hx, int sx, int yl, int yh)
@@ -188,9 +188,9 @@ class RtMap4colsRGBACommand : public DrawerCommand
 	int yh;
 	fixed_t _light;
 	ShadeConstants _shade_constants;
-	BYTE *_destorg;
+	BYTE * RESTRICT _destorg;
 	int _pitch;
-	BYTE *_colormap;
+	BYTE * RESTRICT _colormap;
 
 public:
 	RtMap4colsRGBACommand(int sx, int yl, int yh)
@@ -383,7 +383,7 @@ public:
 
 class RtTranslate1colRGBACommand : public DrawerCommand
 {
-	const BYTE *translation;
+	const BYTE * RESTRICT translation;
 	int hx;
 	int yl;
 	int yh;
@@ -447,7 +447,7 @@ public:
 
 class RtTranslate4colsRGBACommand : public DrawerCommand
 {
-	const BYTE *translation;
+	const BYTE * RESTRICT translation;
 	int yl;
 	int yh;
 
@@ -507,13 +507,13 @@ class RtAdd1colRGBACommand : public DrawerCommand
 	int sx;
 	int yl;
 	int yh;
-	BYTE *_destorg;
+	BYTE * RESTRICT _destorg;
 	int _pitch;
 	fixed_t _light;
 	ShadeConstants _shade_constants;
 	fixed_t _srcalpha;
 	fixed_t _destalpha;
-	BYTE *_colormap;
+	BYTE * RESTRICT _colormap;
 
 public:
 	RtAdd1colRGBACommand(int hx, int sx, int yl, int yh)
@@ -583,11 +583,11 @@ class RtAdd4colsRGBACommand : public DrawerCommand
 	int sx;
 	int yl;
 	int yh;
-	BYTE *_destorg;
+	BYTE * RESTRICT _destorg;
 	int _pitch;
 	fixed_t _light;
 	ShadeConstants _shade_constants;
-	BYTE *_colormap;
+	BYTE * RESTRICT _colormap;
 	fixed_t _srcalpha;
 	fixed_t _destalpha;
 
@@ -764,8 +764,8 @@ class RtShaded1colRGBACommand : public DrawerCommand
 	int sx;
 	int yl;
 	int yh;
-	lighttable_t *_colormap;
-	BYTE *_destorg;
+	lighttable_t * RESTRICT _colormap;
+	BYTE * RESTRICT _destorg;
 	int _pitch;
 	int _color;
 	fixed_t _light;
@@ -833,9 +833,9 @@ class RtShaded4colsRGBACommand : public DrawerCommand
 	int sx;
 	int yl;
 	int yh;
-	lighttable_t *_colormap;
+	lighttable_t * RESTRICT _colormap;
 	int _color;
-	BYTE *_destorg;
+	BYTE * RESTRICT _destorg;
 	int _pitch;
 	fixed_t _light;
 
@@ -957,7 +957,7 @@ class RtAddClamp1colRGBACommand : public DrawerCommand
 	int sx;
 	int yl;
 	int yh;
-	BYTE *_destorg;
+	BYTE * RESTRICT _destorg;
 	int _pitch;
 	fixed_t _light;
 	ShadeConstants _shade_constants;
@@ -1029,7 +1029,7 @@ class RtAddClamp4colsRGBACommand : public DrawerCommand
 	int sx;
 	int yl;
 	int yh;
-	BYTE *_destorg;
+	BYTE * RESTRICT _destorg;
 	int _pitch;
 	fixed_t _light;
 	fixed_t _srcalpha;
@@ -1205,7 +1205,7 @@ class RtSubClamp1colRGBACommand : public DrawerCommand
 	int sx;
 	int yl;
 	int yh;
-	BYTE *_destorg;
+	BYTE * RESTRICT _destorg;
 	int _pitch;
 	fixed_t _light;
 	fixed_t _srcalpha;
@@ -1277,7 +1277,7 @@ class RtSubClamp4colsRGBACommand : public DrawerCommand
 	int sx;
 	int yl;
 	int yh;
-	BYTE *_destorg;
+	BYTE * RESTRICT _destorg;
 	int _pitch;
 	fixed_t _light;
 	fixed_t _srcalpha;
@@ -1353,7 +1353,7 @@ class RtRevSubClamp1colRGBACommand : public DrawerCommand
 	int sx;
 	int yl;
 	int yh;
-	BYTE *_destorg;
+	BYTE * RESTRICT _destorg;
 	int _pitch;
 	fixed_t _light;
 	fixed_t _srcalpha;
@@ -1425,7 +1425,7 @@ class RtRevSubClamp4colsRGBACommand : public DrawerCommand
 	int sx;
 	int yl;
 	int yh;
-	BYTE *_destorg;
+	BYTE * RESTRICT _destorg;
 	int _pitch;
 	fixed_t _light;
 	fixed_t _srcalpha;
@@ -1497,7 +1497,7 @@ public:
 
 class RtInitColsRGBACommand : public DrawerCommand
 {
-	BYTE *buff;
+	BYTE * RESTRICT buff;
 
 public:
 	RtInitColsRGBACommand(BYTE *buff)
@@ -1516,7 +1516,7 @@ class DrawColumnHorizRGBACommand : public DrawerCommand
 	int _count;
 	fixed_t _iscale;
 	fixed_t _texturefrac;
-	const BYTE *_source;
+	const BYTE * RESTRICT _source;
 	int _x;
 	int _yl;
 	int _yh;

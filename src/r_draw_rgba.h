@@ -209,8 +209,8 @@ class DrawerCommandQueue
 
 	int threaded_render = 0;
 	DrawerThread single_core_thread;
-	int num_passes = 2;
-	int rows_in_pass = 540;
+	int num_passes = 1;
+	int rows_in_pass = MAXHEIGHT;
 
 	void StartThreads();
 	void StopThreads();

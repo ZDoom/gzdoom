@@ -624,8 +624,6 @@ public:
 		// Handle the case where we would go out of bounds at the top:
 		if (yl < fuzzstep)
 		{
-			count--;
-
 			uint32_t bg = dest[fuzzoffset[fuzz] * fuzzstep + pitch];
 			uint32_t bg_red = (bg >> 16) & 0xff;
 			uint32_t bg_green = (bg >> 8) & 0xff;
@@ -639,6 +637,10 @@ public:
 			dest += pitch;
 			fuzz += fuzzstep;
 			fuzz %= FUZZTABLE;
+
+			count--;
+			if (count == 0)
+				return;
 		}
 
 		bool lowerbounds = (yl + count * fuzzstep > _fuzzviewheight);

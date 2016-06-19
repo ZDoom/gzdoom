@@ -325,7 +325,8 @@ enum	// P_LineAttack flags
 {
 	LAF_ISMELEEATTACK = 1,
 	LAF_NORANDOMPUFFZ = 2,
-	LAF_NOIMPACTDECAL = 4
+	LAF_NOIMPACTDECAL = 4,
+	LAF_NOINTERACT =	8,
 };
 
 AActor *P_LineAttack(AActor *t1, DAngle angle, double distance, DAngle pitch, int damage, FName damageType, PClassActor *pufftype, int flags = 0, FTranslatedLineTarget *victim = NULL, int *actualdamage = NULL);

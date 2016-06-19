@@ -456,7 +456,7 @@ bool gl_SetupLightTexture()
 {
 	if (GLRenderer->gllight == nullptr) return false;
 	FMaterial * pat = FMaterial::ValidateTexture(GLRenderer->gllight, false);
-	pat->Bind(CLAMP_XY_NOMIP, 0);
+	gl_RenderState.SetMaterial(pat, CLAMP_XY_NOMIP, 0, -1, false);
 	return true;
 }
 

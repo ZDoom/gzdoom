@@ -1190,7 +1190,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ClearOverlays)
 		// [MC]Don't affect non-hardcoded layers unless it's really desired.
 		pspr->SetState(nullptr);
 		count++;
-		pspr->GetNext();
+		pspr = pspr->GetNext();
 	}
 	ACTION_RETURN_INT(count);
 }

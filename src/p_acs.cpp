@@ -8130,7 +8130,7 @@ scriptwait:
 			break;
 
 		case PCD_SINGLEPLAYER:
-			PushToStack (!netgame);
+			PushToStack (!multiplayer);
 			break;
 // [BC] End ST PCD's
 
@@ -9574,8 +9574,12 @@ scriptwait:
 			break;
 
 		case PCD_CONSOLECOMMAND:
+		case PCD_CONSOLECOMMANDDIRECT:
 			Printf (TEXTCOLOR_RED GAMENAME " doesn't support execution of console commands from scripts\n");
-			sp -= 3;
+			if (pcd == PCD_CONSOLECOMMAND)
+				sp -= 3;
+			else
+				pc += 3;
 			break;
  		}
  	}

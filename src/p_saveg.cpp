@@ -56,7 +56,7 @@
 #include "p_acs.h"
 #include "p_terrain.h"
 
-static void CopyPlayer (player_t *dst, player_t *src, const char *name);
+void CopyPlayer (player_t *dst, player_t *src, const char *name);
 static void ReadOnePlayer (FArchive &arc, bool skipload);
 static void ReadMultiplePlayers (FArchive &arc, int numPlayers, int numPlayersNow, bool skipload);
 static void SpawnExtraPlayers ();
@@ -255,7 +255,7 @@ static void ReadMultiplePlayers (FArchive &arc, int numPlayers, int numPlayersNo
 	delete[] nametemp;
 }
 
-static void CopyPlayer (player_t *dst, player_t *src, const char *name)
+void CopyPlayer (player_t *dst, player_t *src, const char *name)
 {
 	// The userinfo needs to be saved for real players, but it
 	// needs to come from the save for bots.

@@ -1294,7 +1294,6 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 	FTexture*			tex;
 	vissprite_t*		vis;
 	bool				noaccel;
-	bool				isweapon;
 	static TArray<vissprite_t> avis;
 
 	if (avis.Size() < vispspindex + 1)
@@ -1320,8 +1319,6 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 
 	if (tex->UseType == FTexture::TEX_Null)
 		return;
-
-	isweapon = pspr->GetCaller()->IsKindOf(RUNTIME_CLASS(AWeapon));
 
 	if (pspr->firstTic)
 	{ // Can't interpolate the first tic.
@@ -1373,12 +1370,8 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 		viewheight == RenderTarget->GetHeight() ||
 		(RenderTarget->GetWidth() > (BASEXCENTER * 2) && !st_scale)))
 	{	// Adjust PSprite for fullscreen views
-		AWeapon *weapon = nullptr;
-		if (camera->player != nullptr)
-		{
-			weapon = camera->player->ReadyWeapon;
-		}
-		if (isweapon && weapon != nullptr && weapon->YAdjust != 0)
+		AWeapon *weapon = dyn_cast<AWeapon>(pspr->GetCaller());
+		if (weapon != nullptr && weapon->YAdjust != 0)
 		{
 			if (RenderTarget != screen || viewheight == RenderTarget->GetHeight())
 			{
@@ -1390,7 +1383,7 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 			}
 		}
 	}
-	if (isweapon)
+	if (pspr->GetID() < PSP_TARGETCENTER)
 	{ // Move the weapon down for 1280x1024.
 		vis->texturemid -= BaseRatioSizes[WidescreenRatio][2];
 	}
@@ -1418,7 +1411,7 @@ void R_DrawPSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double
 
 	noaccel = false;
 	FDynamicColormap *colormap_to_use = nullptr;
-	if (isweapon)
+	if (pspr->GetID() < PSP_TARGETCENTER)
 	{
 		vis->Style.Alpha = float(owner->Alpha);
 		vis->Style.RenderStyle = owner->RenderStyle;

@@ -424,59 +424,124 @@ FORCEINLINE uint32_t alpha_blend(uint32_t fg, uint32_t bg)
 	return 0xff000000 | (red << 16) | (green << 8) | blue;
 }
 
-// Calculate constants for a simple shade
-#define AVX2_SHADE_SIMPLE_INIT(light) \
-	__m256i mlight = _mm256_set_epi16(256, light, light, light, 256, light, light, light, 256, light, light, light, 256, light, light, light);
+// Calculate constants for a simple shade with gamma correction
+#define AVX_LINEAR_SHADE_SIMPLE_INIT(light) \
+	__m256 mlight_hi = _mm256_set_ps(1.0f, light * (1.0f/256.0f), light * (1.0f/256.0f), light * (1.0f/256.0f), 1.0f, light * (1.0f/256.0f), light * (1.0f/256.0f), light * (1.0f/256.0f)); \
+	mlight_hi = _mm256_mul_ps(mlight_hi, mlight_hi); \
+	__m256 mlight_lo = mlight_hi; \
+	__m256 mrcp_255 = _mm256_set1_ps(1.0f/255.0f); \
+	__m256 m255 = _mm256_set1_ps(255.0f);
 
-// Calculate constants for a simple shade with different light levels for each pixel
-#define AVX2_SHADE_SIMPLE_INIT4(light3, light2, light1, light0) \
-	__m256i mlight = _mm256_set_epi16(256, light3, light3, light3, 256, light2, light2, light2, 256, light1, light1, light1, 256, light0, light0, light0);
+// Calculate constants for a simple shade with different light levels for each pixel and gamma correction
+#define AVX_LINEAR_SHADE_SIMPLE_INIT4(light3, light2, light1, light0) \
+	__m256 mlight_hi = _mm256_set_ps(1.0f, light1 * (1.0f/256.0f), light1 * (1.0f/256.0f), light1 * (1.0f/256.0f), 1.0f, light0 * (1.0f/256.0f), light0 * (1.0f/256.0f), light0 * (1.0f/256.0f)); \
+	__m256 mlight_lo = _mm256_set_ps(1.0f, light3 * (1.0f/256.0f), light3 * (1.0f/256.0f), light3 * (1.0f/256.0f), 1.0f, light2 * (1.0f/256.0f), light2 * (1.0f/256.0f), light2 * (1.0f/256.0f)); \
+	mlight_hi = _mm256_mul_ps(mlight_hi, mlight_hi); \
+	mlight_lo = _mm256_mul_ps(mlight_lo, mlight_lo); \
+	__m256 mrcp_255 = _mm256_set1_ps(1.0f/255.0f); \
+	__m256 m255 = _mm256_set1_ps(255.0f);
 
-// Simple shade 8 pixels
-#define AVX2_SHADE_SIMPLE(fg) { \
-	__m256i fg_hi = _mm256_unpackhi_epi8(fg, _mm256_setzero_si256()); \
-	__m256i fg_lo = _mm256_unpacklo_epi8(fg, _mm256_setzero_si256()); \
-	fg_hi = _mm256_mullo_epi16(fg_hi, mlight); \
-	fg_hi = _mm256_srli_epi16(fg_hi, 8); \
-	fg_lo = _mm256_mullo_epi16(fg_lo, mlight); \
-	fg_lo = _mm256_srli_epi16(fg_lo, 8); \
-	fg = _mm256_packus_epi16(fg_lo, fg_hi); \
+// Simple shade 4 pixels with gamma correction
+#define AVX_LINEAR_SHADE_SIMPLE(fg) { \
+	__m256i fg_16 = _mm256_set_m128i(_mm_unpackhi_epi8(fg, _mm_setzero_si128()), _mm_unpacklo_epi8(fg, _mm_setzero_si128())); \
+	__m256 fg_hi = _mm256_cvtepi32_ps(_mm256_unpackhi_epi16(fg_16, _mm256_setzero_si256())); \
+	__m256 fg_lo = _mm256_cvtepi32_ps(_mm256_unpacklo_epi16(fg_16, _mm256_setzero_si256())); \
+	fg_hi = _mm256_mul_ps(fg_hi, mrcp_255); \
+	fg_hi = _mm256_mul_ps(fg_hi, fg_hi); \
+	fg_hi = _mm256_mul_ps(fg_hi, mlight_hi); \
+	fg_hi = _mm256_sqrt_ps(fg_hi); \
+	fg_hi = _mm256_mul_ps(fg_hi, m255); \
+	fg_lo = _mm256_mul_ps(fg_lo, mrcp_255); \
+	fg_lo = _mm256_mul_ps(fg_lo, fg_lo); \
+	fg_lo = _mm256_mul_ps(fg_lo, mlight_lo); \
+	fg_lo = _mm256_sqrt_ps(fg_lo); \
+	fg_lo = _mm256_mul_ps(fg_lo, m255); \
+	fg_16 = _mm256_packus_epi32(_mm256_cvtps_epi32(fg_lo), _mm256_cvtps_epi32(fg_hi)); \
+	fg = _mm_packus_epi16(_mm256_extractf128_si256(fg_16, 0), _mm256_extractf128_si256(fg_16, 1)); \
 }
 
-// Calculate constants for a complex shade
-#define AVX2_SHADE_INIT(light, shade_constants) \
-	__m256i mlight = _mm256_set_epi16(256, light, light, light, 256, light, light, light, 256, light, light, light, 256, light, light, light); \
-	__m256i color = _mm256_set_epi16( \
-		shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, \
-		shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, \
-		shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, \
-		shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue); \
-	__m256i fade = _mm256_set_epi16( \
-		shade_constants.fade_alpha, shade_constants.fade_red, shade_constants.fade_green, shade_constants.fade_blue, \
-		shade_constants.fade_alpha, shade_constants.fade_red, shade_constants.fade_green, shade_constants.fade_blue, \
-		shade_constants.fade_alpha, shade_constants.fade_red, shade_constants.fade_green, shade_constants.fade_blue, \
-		shade_constants.fade_alpha, shade_constants.fade_red, shade_constants.fade_green, shade_constants.fade_blue); \
-	__m256i fade_amount = _mm256_mullo_epi16(fade, _mm256_subs_epu16(_mm256_set1_epi16(256), mlight)); \
-	__m256i desaturate = _mm256_set1_epi16(shade_constants.desaturate); \
-	__m256i inv_desaturate = _mm256_set1_epi16(256 - shade_constants.desaturate);
+// Calculate constants for a complex shade with gamma correction
+#define AVX_LINEAR_SHADE_INIT(light, shade_constants) \
+	__m256 mlight_hi = _mm256_set_ps(1.0f, light * (1.0f/256.0f), light * (1.0f/256.0f), light * (1.0f/256.0f), 1.0f, light * (1.0f/256.0f), light * (1.0f/256.0f), light * (1.0f/256.0f)); \
+	mlight_hi = _mm256_mul_ps(mlight_hi, mlight_hi); \
+	__m256 mlight_lo = mlight_hi; \
+	__m256 mrcp_255 = _mm256_set1_ps(1.0f/255.0f); \
+	__m256 m255 = _mm256_set1_ps(255.0f); \
+	__m256 color = _mm256_set_ps( \
+		shade_constants.light_alpha * (1.0f/256.0f), shade_constants.light_red * (1.0f/256.0f), shade_constants.light_green * (1.0f/256.0f), shade_constants.light_blue * (1.0f/256.0f), \
+		shade_constants.light_alpha * (1.0f/256.0f), shade_constants.light_red * (1.0f/256.0f), shade_constants.light_green * (1.0f/256.0f), shade_constants.light_blue * (1.0f/256.0f)); \
+	__m256 fade = _mm256_set_ps( \
+		shade_constants.fade_alpha * (1.0f/256.0f), shade_constants.fade_red * (1.0f/256.0f), shade_constants.fade_green * (1.0f/256.0f), shade_constants.fade_blue * (1.0f/256.0f), \
+		shade_constants.fade_alpha * (1.0f/256.0f), shade_constants.fade_red * (1.0f/256.0f), shade_constants.fade_green * (1.0f/256.0f), shade_constants.fade_blue * (1.0f/256.0f)); \
+	__m256 fade_amount_hi = _mm256_mul_ps(fade, _mm256_sub_ps(_mm256_set1_ps(1.0f), mlight_hi)); \
+	__m256 fade_amount_lo = _mm256_mul_ps(fade, _mm256_sub_ps(_mm256_set1_ps(1.0f), mlight_lo)); \
+	__m256 inv_desaturate = _mm256_set1_ps((256 - shade_constants.desaturate) * (1.0f/256.0f)); \
+	__m128 ss_desaturate = _mm_set_ss(shade_constants.desaturate * (1.0f/256.0f)); \
+	__m128 intensity_weight = _mm_set_ps(0.0f, 77.0f/256.0f, 143.0f/256.0f, 37.0f/256.0f);
 
-// Calculate constants for a complex shade with different light levels for each pixel
-#define AVX2_SHADE_INIT4(light3, light2, light1, light0, shade_constants) \
-	__m256i mlight = _mm256_set_epi16(256, light3, light3, light3, 256, light2, light2, light2, 256, light1, light1, light1, 256, light0, light0, light0); \
-	__m256i color = _mm256_set_epi16( \
-		shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, \
-		shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, \
-		shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, \
-		shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue); \
-	__m256i fade = _mm256_set_epi16( \
-		shade_constants.fade_alpha, shade_constants.fade_red, shade_constants.fade_green, shade_constants.fade_blue, \
-		shade_constants.fade_alpha, shade_constants.fade_red, shade_constants.fade_green, shade_constants.fade_blue, \
-		shade_constants.fade_alpha, shade_constants.fade_red, shade_constants.fade_green, shade_constants.fade_blue, \
-		shade_constants.fade_alpha, shade_constants.fade_red, shade_constants.fade_green, shade_constants.fade_blue); \
-	__m256i fade_amount = _mm256_mullo_epi16(fade, _mm256_subs_epu16(_mm256_set1_epi16(256), mlight)); \
-	__m256i desaturate = _mm256_set1_epi16(shade_constants.desaturate); \
-	__m256i inv_desaturate = _mm256_set1_epi16(256 - shade_constants.desaturate);
+// Calculate constants for a complex shade with different light levels for each pixel and gamma correction
+#define AVX_LINEAR_SHADE_INIT4(light3, light2, light1, light0, shade_constants) \
+	__m256 mlight_hi = _mm256_set_ps(1.0f, light1 * (1.0f/256.0f), light1 * (1.0f/256.0f), light1 * (1.0f/256.0f), 1.0f, light0 * (1.0f/256.0f), light0 * (1.0f/256.0f), light0 * (1.0f/256.0f)); \
+	__m256 mlight_lo = _mm256_set_ps(1.0f, light3 * (1.0f/256.0f), light3 * (1.0f/256.0f), light3 * (1.0f/256.0f), 1.0f, light2 * (1.0f/256.0f), light2 * (1.0f/256.0f), light2 * (1.0f/256.0f)); \
+	mlight_hi = _mm256_mul_ps(mlight_hi, mlight_hi); \
+	mlight_lo = _mm256_mul_ps(mlight_lo, mlight_lo); \
+	__m256 mrcp_255 = _mm256_set1_ps(1.0f/255.0f); \
+	__m256 m255 = _mm256_set1_ps(255.0f); \
+	__m256 color = _mm256_set_ps( \
+		shade_constants.light_alpha * (1.0f/256.0f), shade_constants.light_red * (1.0f/256.0f), shade_constants.light_green * (1.0f/256.0f), shade_constants.light_blue * (1.0f/256.0f), \
+		shade_constants.light_alpha * (1.0f/256.0f), shade_constants.light_red * (1.0f/256.0f), shade_constants.light_green * (1.0f/256.0f), shade_constants.light_blue * (1.0f/256.0f)); \
+	__m256 fade = _mm256_set_ps( \
+		shade_constants.fade_alpha * (1.0f/256.0f), shade_constants.fade_red * (1.0f/256.0f), shade_constants.fade_green * (1.0f/256.0f), shade_constants.fade_blue * (1.0f/256.0f), \
+		shade_constants.fade_alpha * (1.0f/256.0f), shade_constants.fade_red * (1.0f/256.0f), shade_constants.fade_green * (1.0f/256.0f), shade_constants.fade_blue * (1.0f/256.0f)); \
+	__m256 fade_amount_hi = _mm256_mul_ps(fade, _mm256_sub_ps(_mm256_set1_ps(1.0f), mlight_hi)); \
+	__m256 fade_amount_lo = _mm256_mul_ps(fade, _mm256_sub_ps(_mm256_set1_ps(1.0f), mlight_lo)); \
+	__m256 inv_desaturate = _mm256_set1_ps((256 - shade_constants.desaturate) * (1.0f/256.0f)); \
+	__m128 ss_desaturate = _mm_set_ss(shade_constants.desaturate * (1.0f/256.0f)); \
+	__m128 intensity_weight = _mm_set_ps(0.0f, 77.0f/256.0f, 143.0f/256.0f, 37.0f/256.0f);
 
+// Complex shade 4 pixels with gamma correction
+#define AVX_LINEAR_SHADE(fg, shade_constants) { \
+	__m256i fg_16 = _mm256_set_m128i(_mm_unpackhi_epi8(fg, _mm_setzero_si128()), _mm_unpacklo_epi8(fg, _mm_setzero_si128())); \
+	__m256 fg_hi = _mm256_cvtepi32_ps(_mm256_unpackhi_epi16(fg_16, _mm256_setzero_si256())); \
+	__m256 fg_lo = _mm256_cvtepi32_ps(_mm256_unpacklo_epi16(fg_16, _mm256_setzero_si256())); \
+	fg_hi = _mm256_mul_ps(fg_hi, mrcp_255); \
+	fg_hi = _mm256_mul_ps(fg_hi, fg_hi); \
+	fg_lo = _mm256_mul_ps(fg_lo, mrcp_255); \
+	fg_lo = _mm256_mul_ps(fg_lo, fg_lo); \
+	 \
+	__m128 intensity_hi0 = _mm_mul_ps(_mm256_extractf128_ps(fg_hi, 0), intensity_weight); \
+	__m128 intensity_hi1 = _mm_mul_ps(_mm256_extractf128_ps(fg_hi, 1), intensity_weight); \
+	intensity_hi0 = _mm_mul_ss(_mm_add_ss(_mm_add_ss(intensity_hi0, _mm_shuffle_ps(intensity_hi0, intensity_hi0, _MM_SHUFFLE(1,1,1,1))), _mm_shuffle_ps(intensity_hi0, intensity_hi0, _MM_SHUFFLE(2,2,2,2))), ss_desaturate); \
+	intensity_hi0 = _mm_shuffle_ps(intensity_hi0, intensity_hi0, _MM_SHUFFLE(0,0,0,0)); \
+	intensity_hi1 = _mm_mul_ss(_mm_add_ss(_mm_add_ss(intensity_hi1, _mm_shuffle_ps(intensity_hi1, intensity_hi1, _MM_SHUFFLE(1,1,1,1))), _mm_shuffle_ps(intensity_hi1, intensity_hi1, _MM_SHUFFLE(2,2,2,2))), ss_desaturate); \
+	intensity_hi1 = _mm_shuffle_ps(intensity_hi1, intensity_hi1, _MM_SHUFFLE(0,0,0,0)); \
+	__m256 intensity_hi = _mm256_set_m128(intensity_hi1, intensity_hi0); \
+	 \
+	fg_hi = _mm256_add_ps(_mm256_mul_ps(fg_hi, inv_desaturate), intensity_hi); \
+	fg_hi = _mm256_add_ps(_mm256_mul_ps(fg_hi, mlight_hi), fade_amount_hi); \
+	fg_hi = _mm256_mul_ps(fg_hi, color); \
+	 \
+	__m128 intensity_lo0 = _mm_mul_ps(_mm256_extractf128_ps(fg_lo, 0), intensity_weight); \
+	__m128 intensity_lo1 = _mm_mul_ps(_mm256_extractf128_ps(fg_lo, 1), intensity_weight); \
+	intensity_lo0 = _mm_mul_ss(_mm_add_ss(_mm_add_ss(intensity_lo0, _mm_shuffle_ps(intensity_lo0, intensity_lo0, _MM_SHUFFLE(1,1,1,1))), _mm_shuffle_ps(intensity_lo0, intensity_lo0, _MM_SHUFFLE(2,2,2,2))), ss_desaturate); \
+	intensity_lo0 = _mm_shuffle_ps(intensity_lo0, intensity_lo0, _MM_SHUFFLE(0,0,0,0)); \
+	intensity_lo1 = _mm_mul_ss(_mm_add_ss(_mm_add_ss(intensity_lo1, _mm_shuffle_ps(intensity_lo1, intensity_lo1, _MM_SHUFFLE(1,1,1,1))), _mm_shuffle_ps(intensity_lo1, intensity_lo1, _MM_SHUFFLE(2,2,2,2))), ss_desaturate); \
+	intensity_lo1 = _mm_shuffle_ps(intensity_lo1, intensity_lo1, _MM_SHUFFLE(0,0,0,0)); \
+	__m256 intensity_lo = _mm256_set_m128(intensity_lo1, intensity_lo0); \
+	 \
+	fg_lo = _mm256_add_ps(_mm256_mul_ps(fg_lo, inv_desaturate), intensity_lo); \
+	fg_lo = _mm256_add_ps(_mm256_mul_ps(fg_lo, mlight_lo), fade_amount_lo); \
+	fg_lo = _mm256_mul_ps(fg_lo, color); \
+	 \
+	fg_hi = _mm256_sqrt_ps(fg_hi); \
+	fg_hi = _mm256_mul_ps(fg_hi, m255); \
+	fg_lo = _mm256_sqrt_ps(fg_lo); \
+	fg_lo = _mm256_mul_ps(fg_lo, m255); \
+	fg_16 = _mm256_packus_epi32(_mm256_cvtps_epi32(fg_lo), _mm256_cvtps_epi32(fg_hi)); \
+	fg = _mm_packus_epi16(_mm256_extractf128_si256(fg_16, 0), _mm256_extractf128_si256(fg_16, 1)); \
+}
+
+/*
 // Complex shade 8 pixels
 #define AVX2_SHADE(fg, shade_constants) { \
 	__m256i fg_hi = _mm256_unpackhi_epi8(fg, _mm256_setzero_si256()); \
@@ -499,7 +564,7 @@ FORCEINLINE uint32_t alpha_blend(uint32_t fg, uint32_t bg)
 	 \
 	fg = _mm256_packus_epi16(fg_lo, fg_hi); \
 }
-
+*/
 
 
 

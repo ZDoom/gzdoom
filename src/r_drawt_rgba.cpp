@@ -51,6 +51,39 @@ extern unsigned int dc_tspans[4][MAXHEIGHT];
 extern unsigned int *dc_ctspan[4];
 extern unsigned int *horizspan[4];
 
+EXTERN_CVAR(Bool, r_linearlight)
+
+#ifndef NO_SSE
+
+// Generate SSE drawers:
+#define VecCommand(name) name##_SSE_Command
+#define VEC_SHADE_SIMPLE_INIT SSE_SHADE_SIMPLE_INIT
+#define VEC_SHADE_SIMPLE_INIT4 SSE_SHADE_SIMPLE_INIT4
+#define VEC_SHADE_SIMPLE SSE_SHADE_SIMPLE
+#define VEC_SHADE_INIT SSE_SHADE_INIT
+#define VEC_SHADE_INIT4 SSE_SHADE_INIT4
+#define VEC_SHADE SSE_SHADE
+#include "r_drawt_rgba_sse.h"
+
+// Generate AVX drawers:
+#undef VecCommand
+#undef VEC_SHADE_SIMPLE_INIT
+#undef VEC_SHADE_SIMPLE_INIT4
+#undef VEC_SHADE_SIMPLE
+#undef VEC_SHADE_INIT
+#undef VEC_SHADE_INIT4
+#undef VEC_SHADE
+#define VecCommand(name) name##_AVX_Command
+#define VEC_SHADE_SIMPLE_INIT AVX_LINEAR_SHADE_SIMPLE_INIT
+#define VEC_SHADE_SIMPLE_INIT4 AVX_LINEAR_SHADE_SIMPLE_INIT4
+#define VEC_SHADE_SIMPLE AVX_LINEAR_SHADE_SIMPLE
+#define VEC_SHADE_INIT AVX_LINEAR_SHADE_INIT
+#define VEC_SHADE_INIT4 AVX_LINEAR_SHADE_INIT4
+#define VEC_SHADE AVX_LINEAR_SHADE
+#include "r_drawt_rgba_sse.h"
+
+#endif
+
 /////////////////////////////////////////////////////////////////////////////
 
 class RtCopy1colRGBACommand : public DrawerCommand
@@ -206,7 +239,6 @@ public:
 		_colormap = dc_colormap;
 	}
 
-#ifdef NO_SSE
 	void Execute(DrawerThread *thread) override
 	{
 		uint32_t *source;
@@ -253,132 +285,6 @@ public:
 			dest += pitch * 2;
 		} while (--count);
 	}
-#else
-	void Execute(DrawerThread *thread) override
-	{
-		uint32_t *source;
-		uint32_t *dest;
-		int count;
-		int pitch;
-		int sincr;
-
-		count = thread->count_for_thread(yl, yh - yl + 1);
-		if (count <= 0)
-			return;
-
-		ShadeConstants shade_constants = _shade_constants;
-		uint32_t light = calc_light_multiplier(_light);
-		uint32_t *palette = (uint32_t*)GPalette.BaseColors;
-
-		dest = thread->dest_for_thread(yl, _pitch, ylookup[yl] + sx + (uint32_t*)_destorg);
-		source = &thread->dc_temp_rgba[yl * 4] + thread->skipped_by_thread(yl) * 4;
-		pitch = _pitch * thread->num_cores;
-		sincr = thread->num_cores * 4;
-		
-		BYTE *colormap = _colormap;
-
-		if (shade_constants.simple_shade)
-		{
-			SSE_SHADE_SIMPLE_INIT(light);
-
-			if (count & 1) {
-				uint32_t p0 = colormap[source[0]];
-				uint32_t p1 = colormap[source[1]];
-				uint32_t p2 = colormap[source[2]];
-				uint32_t p3 = colormap[source[3]];
-
-				// shade_pal_index:
-				__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
-				SSE_SHADE_SIMPLE(fg);
-				_mm_storeu_si128((__m128i*)dest, fg);
-
-				source += sincr;
-				dest += pitch;
-			}
-			if (!(count >>= 1))
-				return;
-
-			do {
-				// shade_pal_index 0-3
-				{
-					uint32_t p0 = colormap[source[0]];
-					uint32_t p1 = colormap[source[1]];
-					uint32_t p2 = colormap[source[2]];
-					uint32_t p3 = colormap[source[3]];
-
-					__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
-					SSE_SHADE_SIMPLE(fg);
-					_mm_storeu_si128((__m128i*)dest, fg);
-				}
-
-				// shade_pal_index 4-7 (pitch)
-				{
-					uint32_t p0 = colormap[source[sincr]];
-					uint32_t p1 = colormap[source[sincr + 1]];
-					uint32_t p2 = colormap[source[sincr + 2]];
-					uint32_t p3 = colormap[source[sincr + 3]];
-
-					__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
-					SSE_SHADE_SIMPLE(fg);
-					_mm_storeu_si128((__m128i*)(dest + pitch), fg);
-				}
-
-				source += sincr * 2;
-				dest += pitch * 2;
-			} while (--count);
-		}
-		else
-		{
-			SSE_SHADE_INIT(light, shade_constants);
-
-			if (count & 1) {
-				uint32_t p0 = colormap[source[0]];
-				uint32_t p1 = colormap[source[1]];
-				uint32_t p2 = colormap[source[2]];
-				uint32_t p3 = colormap[source[3]];
-
-				// shade_pal_index:
-				__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
-				SSE_SHADE(fg, shade_constants);
-				_mm_storeu_si128((__m128i*)dest, fg);
-
-				source += sincr;
-				dest += pitch;
-			}
-			if (!(count >>= 1))
-				return;
-
-			do {
-				// shade_pal_index 0-3
-				{
-					uint32_t p0 = colormap[source[0]];
-					uint32_t p1 = colormap[source[1]];
-					uint32_t p2 = colormap[source[2]];
-					uint32_t p3 = colormap[source[3]];
-
-					__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
-					SSE_SHADE(fg, shade_constants);
-					_mm_storeu_si128((__m128i*)dest, fg);
-				}
-
-				// shade_pal_index 4-7 (pitch)
-				{
-					uint32_t p0 = colormap[source[sincr]];
-					uint32_t p1 = colormap[source[sincr + 1]];
-					uint32_t p2 = colormap[source[sincr + 2]];
-					uint32_t p3 = colormap[source[sincr + 3]];
-
-					__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
-					SSE_SHADE(fg, shade_constants);
-					_mm_storeu_si128((__m128i*)(dest + pitch), fg);
-				}
-
-				source += sincr * 2;
-				dest += pitch * 2;
-			} while (--count);
-		}
-	}
-#endif
 };
 
 class RtTranslate1colRGBACommand : public DrawerCommand
@@ -607,7 +513,6 @@ public:
 		_destalpha = dc_destalpha;
 	}
 
-#ifdef NO_SSE
 	void Execute(DrawerThread *thread) override
 	{
 		uint32_t *source;
@@ -655,107 +560,6 @@ public:
 			dest += pitch;
 		} while (--count);
 	}
-#else
-	void Execute(DrawerThread *thread) override
-	{
-		uint32_t *source;
-		uint32_t *dest;
-		int count;
-		int pitch;
-		int sincr;
-
-		count = thread->count_for_thread(yl, yh - yl + 1);
-		if (count <= 0)
-			return;
-
-		dest = thread->dest_for_thread(yl, _pitch, ylookup[yl] + sx + (uint32_t*)_destorg);
-		source = &thread->dc_temp_rgba[yl * 4] + thread->skipped_by_thread(yl) * 4;
-		pitch = _pitch * thread->num_cores;
-		sincr = 4 * thread->num_cores;
-
-		uint32_t light = calc_light_multiplier(_light);
-		uint32_t *palette = (uint32_t*)GPalette.BaseColors;
-		BYTE *colormap = _colormap;
-
-		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
-
-		ShadeConstants shade_constants = _shade_constants;
-
-		if (shade_constants.simple_shade)
-		{
-			SSE_SHADE_SIMPLE_INIT(light);
-
-			__m128i mfg_alpha = _mm_set_epi16(256, fg_alpha, fg_alpha, fg_alpha, 256, fg_alpha, fg_alpha, fg_alpha);
-			__m128i mbg_alpha = _mm_set_epi16(256, bg_alpha, bg_alpha, bg_alpha, 256, bg_alpha, bg_alpha, bg_alpha);
-
-			do {
-				uint32_t p0 = colormap[source[0]];
-				uint32_t p1 = colormap[source[1]];
-				uint32_t p2 = colormap[source[2]];
-				uint32_t p3 = colormap[source[3]];
-
-				// shade_pal_index:
-				__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
-				SSE_SHADE_SIMPLE(fg);
-
-				__m128i fg_hi = _mm_unpackhi_epi8(fg, _mm_setzero_si128());
-				__m128i fg_lo = _mm_unpacklo_epi8(fg, _mm_setzero_si128());
-
-				// unpack bg:
-				__m128i bg = _mm_loadu_si128((const __m128i*)dest);
-				__m128i bg_hi = _mm_unpackhi_epi8(bg, _mm_setzero_si128());
-				__m128i bg_lo = _mm_unpacklo_epi8(bg, _mm_setzero_si128());
-
-				// (fg_red * fg_alpha + bg_red * bg_alpha) / 256:
-				__m128i color_hi = _mm_srli_epi16(_mm_adds_epu16(_mm_mullo_epi16(fg_hi, mfg_alpha), _mm_mullo_epi16(bg_hi, mbg_alpha)), 8);
-				__m128i color_lo = _mm_srli_epi16(_mm_adds_epu16(_mm_mullo_epi16(fg_lo, mfg_alpha), _mm_mullo_epi16(bg_lo, mbg_alpha)), 8);
-
-				__m128i color = _mm_packus_epi16(color_lo, color_hi);
-				_mm_storeu_si128((__m128i*)dest, color);
-
-				source += sincr;
-				dest += pitch;
-			} while (--count);
-		}
-		else
-		{
-			SSE_SHADE_INIT(light, shade_constants);
-
-			__m128i mfg_alpha = _mm_set_epi16(256, fg_alpha, fg_alpha, fg_alpha, 256, fg_alpha, fg_alpha, fg_alpha);
-			__m128i mbg_alpha = _mm_set_epi16(256, bg_alpha, bg_alpha, bg_alpha, 256, bg_alpha, bg_alpha, bg_alpha);
-
-			do {
-				uint32_t p0 = colormap[source[0]];
-				uint32_t p1 = colormap[source[1]];
-				uint32_t p2 = colormap[source[2]];
-				uint32_t p3 = colormap[source[3]];
-
-				// shade_pal_index:
-				__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
-				SSE_SHADE(fg, shade_constants);
-
-				__m128i fg_hi = _mm_unpackhi_epi8(fg, _mm_setzero_si128());
-				__m128i fg_lo = _mm_unpacklo_epi8(fg, _mm_setzero_si128());
-
-				// unpack bg:
-				__m128i bg = _mm_loadu_si128((const __m128i*)dest);
-				__m128i bg_hi = _mm_unpackhi_epi8(bg, _mm_setzero_si128());
-				__m128i bg_lo = _mm_unpacklo_epi8(bg, _mm_setzero_si128());
-
-				// (fg_red * fg_alpha + bg_red * bg_alpha) / 256:
-				__m128i color_hi = _mm_srli_epi16(_mm_adds_epu16(_mm_mullo_epi16(fg_hi, mfg_alpha), _mm_mullo_epi16(bg_hi, mbg_alpha)), 8);
-				__m128i color_lo = _mm_srli_epi16(_mm_adds_epu16(_mm_mullo_epi16(fg_lo, mfg_alpha), _mm_mullo_epi16(bg_lo, mbg_alpha)), 8);
-
-				__m128i color = _mm_packus_epi16(color_lo, color_hi);
-				_mm_storeu_si128((__m128i*)dest, color);
-
-				source += sincr;
-				dest += pitch;
-			} while (--count);
-		}
-	}
-#endif
 };
 
 class RtShaded1colRGBACommand : public DrawerCommand
@@ -853,7 +657,6 @@ public:
 		_light = dc_light;
 	}
 
-#ifdef NO_SSE
 	void Execute(DrawerThread *thread) override
 	{
 		BYTE *colormap;
@@ -898,57 +701,6 @@ public:
 			dest += pitch;
 		} while (--count);
 	}
-#else
-	void Execute(DrawerThread *thread) override
-	{
-		BYTE *colormap;
-		uint32_t *source;
-		uint32_t *dest;
-		int count;
-		int pitch;
-		int sincr;
-
-		count = thread->count_for_thread(yl, yh - yl + 1);
-		if (count <= 0)
-			return;
-
-		colormap = _colormap;
-		dest = thread->dest_for_thread(yl, _pitch, ylookup[yl] + sx + (uint32_t*)_destorg);
-		source = &thread->dc_temp_rgba[yl * 4] + thread->skipped_by_thread(yl) * 4;
-		pitch = _pitch * thread->num_cores;
-		sincr = 4 * thread->num_cores;
-
-		__m128i fg = _mm_unpackhi_epi8(_mm_set1_epi32(shade_pal_index_simple(_color, calc_light_multiplier(_light))), _mm_setzero_si128());
-		__m128i alpha_one = _mm_set1_epi16(64);
-
-		do {
-			uint32_t p0 = colormap[source[0]];
-			uint32_t p1 = colormap[source[1]];
-			uint32_t p2 = colormap[source[2]];
-			uint32_t p3 = colormap[source[3]];
-
-			__m128i alpha_hi = _mm_set_epi16(64, p3, p3, p3, 64, p2, p2, p2);
-			__m128i alpha_lo = _mm_set_epi16(64, p1, p1, p1, 64, p0, p0, p0);
-			__m128i inv_alpha_hi = _mm_subs_epu16(alpha_one, alpha_hi);
-			__m128i inv_alpha_lo = _mm_subs_epu16(alpha_one, alpha_lo);
-
-			// unpack bg:
-			__m128i bg = _mm_loadu_si128((const __m128i*)dest);
-			__m128i bg_hi = _mm_unpackhi_epi8(bg, _mm_setzero_si128());
-			__m128i bg_lo = _mm_unpacklo_epi8(bg, _mm_setzero_si128());
-
-			// (fg_red * alpha + bg_red * inv_alpha) / 64:
-			__m128i color_hi = _mm_srli_epi16(_mm_adds_epu16(_mm_mullo_epi16(fg, alpha_hi), _mm_mullo_epi16(bg_hi, inv_alpha_hi)), 6);
-			__m128i color_lo = _mm_srli_epi16(_mm_adds_epu16(_mm_mullo_epi16(fg, alpha_lo), _mm_mullo_epi16(bg_lo, inv_alpha_lo)), 6);
-
-			__m128i color = _mm_packus_epi16(color_lo, color_hi);
-			_mm_storeu_si128((__m128i*)dest, color);
-
-			source += sincr;
-			dest += pitch;
-		} while (--count);
-	}
-#endif
 };
 
 class RtAddClamp1colRGBACommand : public DrawerCommand
@@ -1051,7 +803,6 @@ public:
 		_shade_constants = dc_shade_constants;
 	}
 
-#ifdef NO_SSE
 	void Execute(DrawerThread *thread) override
 	{
 		uint32_t *source;
@@ -1097,106 +848,6 @@ public:
 			dest += pitch;
 		} while (--count);
 	}
-#else
-	void Execute(DrawerThread *thread) override
-	{
-		uint32_t *source;
-		uint32_t *dest;
-		int count;
-		int pitch;
-		int sincr;
-
-		count = thread->count_for_thread(yl, yh - yl + 1);
-		if (count <= 0)
-			return;
-
-		dest = thread->dest_for_thread(yl, _pitch, ylookup[yl] + sx + (uint32_t*)_destorg);
-		source = &thread->dc_temp_rgba[yl * 4] + thread->skipped_by_thread(yl) * 4;
-		pitch = _pitch * thread->num_cores;
-		sincr = 4 * thread->num_cores;
-
-		uint32_t light = calc_light_multiplier(_light);
-		uint32_t *palette = (uint32_t*)GPalette.BaseColors;
-
-		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
-
-		ShadeConstants shade_constants = _shade_constants;
-
-		if (shade_constants.simple_shade)
-		{
-			SSE_SHADE_SIMPLE_INIT(light);
-
-			__m128i mfg_alpha = _mm_set_epi16(256, fg_alpha, fg_alpha, fg_alpha, 256, fg_alpha, fg_alpha, fg_alpha);
-			__m128i mbg_alpha = _mm_set_epi16(256, bg_alpha, bg_alpha, bg_alpha, 256, bg_alpha, bg_alpha, bg_alpha);
-
-			do {
-				uint32_t p0 = source[0];
-				uint32_t p1 = source[1];
-				uint32_t p2 = source[2];
-				uint32_t p3 = source[3];
-
-				// shade_pal_index:
-				__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
-				SSE_SHADE_SIMPLE(fg);
-
-				__m128i fg_hi = _mm_unpackhi_epi8(fg, _mm_setzero_si128());
-				__m128i fg_lo = _mm_unpacklo_epi8(fg, _mm_setzero_si128());
-
-				// unpack bg:
-				__m128i bg = _mm_loadu_si128((const __m128i*)dest);
-				__m128i bg_hi = _mm_unpackhi_epi8(bg, _mm_setzero_si128());
-				__m128i bg_lo = _mm_unpacklo_epi8(bg, _mm_setzero_si128());
-
-				// (fg_red * fg_alpha + bg_red * bg_alpha) / 256:
-				__m128i color_hi = _mm_srli_epi16(_mm_adds_epu16(_mm_mullo_epi16(fg_hi, mfg_alpha), _mm_mullo_epi16(bg_hi, mbg_alpha)), 8);
-				__m128i color_lo = _mm_srli_epi16(_mm_adds_epu16(_mm_mullo_epi16(fg_lo, mfg_alpha), _mm_mullo_epi16(bg_lo, mbg_alpha)), 8);
-
-				__m128i color = _mm_packus_epi16(color_lo, color_hi);
-				_mm_storeu_si128((__m128i*)dest, color);
-
-				source += sincr;
-				dest += pitch;
-			} while (--count);
-		}
-		else
-		{
-			SSE_SHADE_INIT(light, shade_constants);
-
-			__m128i mfg_alpha = _mm_set_epi16(256, fg_alpha, fg_alpha, fg_alpha, 256, fg_alpha, fg_alpha, fg_alpha);
-			__m128i mbg_alpha = _mm_set_epi16(256, bg_alpha, bg_alpha, bg_alpha, 256, bg_alpha, bg_alpha, bg_alpha);
-
-			do {
-				uint32_t p0 = source[0];
-				uint32_t p1 = source[1];
-				uint32_t p2 = source[2];
-				uint32_t p3 = source[3];
-
-				// shade_pal_index:
-				__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
-				SSE_SHADE(fg, shade_constants);
-
-				__m128i fg_hi = _mm_unpackhi_epi8(fg, _mm_setzero_si128());
-				__m128i fg_lo = _mm_unpacklo_epi8(fg, _mm_setzero_si128());
-
-				// unpack bg:
-				__m128i bg = _mm_loadu_si128((const __m128i*)dest);
-				__m128i bg_hi = _mm_unpackhi_epi8(bg, _mm_setzero_si128());
-				__m128i bg_lo = _mm_unpacklo_epi8(bg, _mm_setzero_si128());
-
-				// (fg_red * fg_alpha + bg_red * bg_alpha) / 256:
-				__m128i color_hi = _mm_srli_epi16(_mm_adds_epu16(_mm_mullo_epi16(fg_hi, mfg_alpha), _mm_mullo_epi16(bg_hi, mbg_alpha)), 8);
-				__m128i color_lo = _mm_srli_epi16(_mm_adds_epu16(_mm_mullo_epi16(fg_lo, mfg_alpha), _mm_mullo_epi16(bg_lo, mbg_alpha)), 8);
-
-				__m128i color = _mm_packus_epi16(color_lo, color_hi);
-				_mm_storeu_si128((__m128i*)dest, color);
-
-				source += sincr;
-				dest += pitch;
-			} while (--count);
-		}
-	}
-#endif
 };
 
 class RtSubClamp1colRGBACommand : public DrawerCommand
@@ -1657,7 +1308,14 @@ void rt_map1col_rgba (int hx, int sx, int yl, int yh)
 // Maps all four spans to the screen starting at sx.
 void rt_map4cols_rgba (int sx, int yl, int yh)
 {
+#ifdef NO_SSE
 	DrawerCommandQueue::QueueCommand<RtMap4colsRGBACommand>(sx, yl, yh);
+#else
+	if (!r_linearlight)
+		DrawerCommandQueue::QueueCommand<RtMap4colsRGBA_SSE_Command>(sx, yl, yh);
+	else
+		DrawerCommandQueue::QueueCommand<RtMap4colsRGBA_AVX_Command>(sx, yl, yh);
+#endif
 }
 
 void rt_Translate1col_rgba(const BYTE *translation, int hx, int yl, int yh)
@@ -1693,7 +1351,14 @@ void rt_add1col_rgba (int hx, int sx, int yl, int yh)
 // Adds all four spans to the screen starting at sx without clamping.
 void rt_add4cols_rgba (int sx, int yl, int yh)
 {
+#ifdef NO_SSE
 	DrawerCommandQueue::QueueCommand<RtAdd4colsRGBACommand>(sx, yl, yh);
+#else
+	if (!r_linearlight)
+		DrawerCommandQueue::QueueCommand<RtAdd4colsRGBA_SSE_Command>(sx, yl, yh);
+	else
+		DrawerCommandQueue::QueueCommand<RtAdd4colsRGBA_AVX_Command>(sx, yl, yh);
+#endif
 }
 
 // Translates and adds one span at hx to the screen at sx without clamping.
@@ -1719,7 +1384,14 @@ void rt_shaded1col_rgba (int hx, int sx, int yl, int yh)
 // Shades all four spans to the screen starting at sx.
 void rt_shaded4cols_rgba (int sx, int yl, int yh)
 {
+#ifdef NO_SSE
 	DrawerCommandQueue::QueueCommand<RtShaded4colsRGBACommand>(sx, yl, yh);
+#else
+	if (!r_linearlight)
+		DrawerCommandQueue::QueueCommand<RtShaded4colsRGBA_SSE_Command>(sx, yl, yh);
+	else
+		DrawerCommandQueue::QueueCommand<RtShaded4colsRGBA_AVX_Command>(sx, yl, yh);
+#endif
 }
 
 // Adds one span at hx to the screen at sx with clamping.
@@ -1731,7 +1403,14 @@ void rt_addclamp1col_rgba (int hx, int sx, int yl, int yh)
 // Adds all four spans to the screen starting at sx with clamping.
 void rt_addclamp4cols_rgba (int sx, int yl, int yh)
 {
+#ifdef NO_SSE
 	DrawerCommandQueue::QueueCommand<RtAddClamp4colsRGBACommand>(sx, yl, yh);
+#else
+	if (!r_linearlight)
+		DrawerCommandQueue::QueueCommand<RtAddClamp4colsRGBA_SSE_Command>(sx, yl, yh);
+	else
+		DrawerCommandQueue::QueueCommand<RtAddClamp4colsRGBA_AVX_Command>(sx, yl, yh);
+#endif
 }
 
 // Translates and adds one span at hx to the screen at sx with clamping.

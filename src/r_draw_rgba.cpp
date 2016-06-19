@@ -48,10 +48,6 @@
 #endif
 #include <vector>
 
-#ifdef _MSC_VER
-#pragma warning(disable: 4752) // warning C4752: found Intel(R) Advanced Vector Extensions; consider using /arch:AVX
-#endif
-
 extern int vlinebits;
 extern int mvlinebits;
 extern int tmvlinebits;
@@ -62,8 +58,38 @@ extern float rw_lightstep;
 extern int wallshade;
 
 CVAR(Bool, r_multithreaded, true, 0)
+CVAR(Bool, r_linearlight, false, 0)
 
-//#define USE_AVX // Use AVX2 256 bit intrinsics (requires Haswell or newer)
+#ifndef NO_SSE
+
+// Generate SSE drawers:
+#define VecCommand(name) name##_SSE_Command
+#define VEC_SHADE_SIMPLE_INIT SSE_SHADE_SIMPLE_INIT
+#define VEC_SHADE_SIMPLE_INIT4 SSE_SHADE_SIMPLE_INIT4
+#define VEC_SHADE_SIMPLE SSE_SHADE_SIMPLE
+#define VEC_SHADE_INIT SSE_SHADE_INIT
+#define VEC_SHADE_INIT4 SSE_SHADE_INIT4
+#define VEC_SHADE SSE_SHADE
+#include "r_draw_rgba_sse.h"
+
+// Generate AVX drawers:
+#undef VecCommand
+#undef VEC_SHADE_SIMPLE_INIT
+#undef VEC_SHADE_SIMPLE_INIT4
+#undef VEC_SHADE_SIMPLE
+#undef VEC_SHADE_INIT
+#undef VEC_SHADE_INIT4
+#undef VEC_SHADE
+#define VecCommand(name) name##_AVX_Command
+#define VEC_SHADE_SIMPLE_INIT AVX_LINEAR_SHADE_SIMPLE_INIT
+#define VEC_SHADE_SIMPLE_INIT4 AVX_LINEAR_SHADE_SIMPLE_INIT4
+#define VEC_SHADE_SIMPLE AVX_LINEAR_SHADE_SIMPLE
+#define VEC_SHADE_INIT AVX_LINEAR_SHADE_INIT
+#define VEC_SHADE_INIT4 AVX_LINEAR_SHADE_INIT4
+#define VEC_SHADE AVX_LINEAR_SHADE
+#include "r_draw_rgba_sse.h"
+
+#endif
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -1495,7 +1521,6 @@ public:
 		_shade_constants = ds_shade_constants;
 	}
 
-#ifdef NO_SSE
 	void Execute(DrawerThread *thread) override
 	{
 		if (thread->line_skipped_by_thread(_y))
@@ -1560,401 +1585,6 @@ public:
 			} while (--count);
 		}
 	}
-#elif defined(USE_AVX)
-	void Execute(DrawerThread *thread) override
-	{
-		if (thread->line_skipped_by_thread(_y))
-			return;
-
-		dsfixed_t			xfrac;
-		dsfixed_t			yfrac;
-		dsfixed_t			xstep;
-		dsfixed_t			ystep;
-		uint32_t*			dest;
-		const uint32_t*		source = _source;
-		int 				count;
-		int 				spot;
-
-		xfrac = _xfrac;
-		yfrac = _yfrac;
-
-		dest = ylookup[_y] + _x1 + (uint32_t*)_destorg;
-
-		count = _x2 - _x1 + 1;
-
-		xstep = _xstep;
-		ystep = _ystep;
-
-		uint32_t light = calc_light_multiplier(_light);
-		ShadeConstants shade_constants = _shade_constants;
-
-		if (_xbits == 6 && _ybits == 6)
-		{
-			// 64x64 is the most common case by far, so special case it.
-
-			int sse_count = count / 8;
-			count -= sse_count * 8;
-
-			if (shade_constants.simple_shade)
-			{
-				AVX2_SHADE_SIMPLE_INIT(light);
-
-				while (sse_count--)
-				{
-					uint32_t fg_pixels[8];
-					for (int i = 0; i < 8; i++)
-					{
-						// Current texture index in u,v.
-						spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
-						fg_pixels[i] = source[spot];
-						xfrac += xstep;
-						yfrac += ystep;
-					}
-
-					// Lookup pixel from flat texture tile,
-					//  re-index using light/colormap.
-					__m256i fg = _mm256_loadu_si256((const __m256i*)fg_pixels);
-					AVX2_SHADE_SIMPLE(fg);
-					_mm256_storeu_si256((__m256i*)dest, fg);
-
-					// Next step in u,v.
-					dest += 8;
-				}
-			}
-			else
-			{
-				AVX2_SHADE_INIT(light, shade_constants);
-
-				while (sse_count--)
-				{
-					uint32_t fg_pixels[8];
-					for (int i = 0; i < 8; i++)
-					{
-						// Current texture index in u,v.
-						spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
-						fg_pixels[i] = source[spot];
-						xfrac += xstep;
-						yfrac += ystep;
-					}
-
-					// Lookup pixel from flat texture tile,
-					//  re-index using light/colormap.
-					__m256i fg = _mm256_loadu_si256((const __m256i*)fg_pixels);
-					AVX2_SHADE(fg, shade_constants);
-					_mm256_storeu_si256((__m256i*)dest, fg);
-
-					// Next step in u,v.
-					dest += 8;
-				}
-			}
-
-			if (count == 0)
-				return;
-
-			do
-			{
-				// Current texture index in u,v.
-				spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
-
-				// Lookup pixel from flat texture tile
-				*dest++ = shade_bgra(source[spot], light, shade_constants);
-
-				// Next step in u,v.
-				xfrac += xstep;
-				yfrac += ystep;
-			} while (--count);
-		}
-		else
-		{
-			BYTE yshift = 32 - _ybits;
-			BYTE xshift = yshift - _xbits;
-			int xmask = ((1 << _xbits) - 1) << _ybits;
-
-			int sse_count = count / 8;
-			count -= sse_count * 8;
-
-			if (shade_constants.simple_shade)
-			{
-				AVX2_SHADE_SIMPLE_INIT(light);
-
-				while (sse_count--)
-				{
-					uint32_t fg_pixels[8];
-					for (int i = 0; i < 8; i++)
-					{
-						spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-						fg_pixels[i] = source[spot];
-						xfrac += xstep;
-						yfrac += ystep;
-					}
-
-					// Lookup pixel from flat texture tile
-					__m256i fg = _mm256_loadu_si256((const __m256i*)fg_pixels);
-					AVX2_SHADE_SIMPLE(fg);
-					_mm256_storeu_si256((__m256i*)dest, fg);
-					dest += 8;
-				}
-			}
-			else
-			{
-				AVX2_SHADE_INIT(light, shade_constants);
-
-				while (sse_count--)
-				{
-					uint32_t fg_pixels[8];
-					for (int i = 0; i < 8; i++)
-					{
-						spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-						fg_pixels[i] = source[spot];
-						xfrac += xstep;
-						yfrac += ystep;
-					}
-
-					// Lookup pixel from flat texture tile
-					__m256i fg = _mm256_loadu_si256((const __m256i*)fg_pixels);
-					AVX2_SHADE_SIMPLE(fg);
-					_mm256_storeu_si256((__m256i*)dest, fg);
-					dest += 4;
-				}
-			}
-
-			if (count == 0)
-				return;
-
-			do
-			{
-				// Current texture index in u,v.
-				spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-
-				// Lookup pixel from flat texture tile
-				*dest++ = shade_bgra(source[spot], light, shade_constants);
-
-				// Next step in u,v.
-				xfrac += xstep;
-				yfrac += ystep;
-			} while (--count);
-		}
-	}
-#else
-	void Execute(DrawerThread *thread) override
-	{
-		if (thread->line_skipped_by_thread(_y))
-			return;
-
-		dsfixed_t			xfrac;
-		dsfixed_t			yfrac;
-		dsfixed_t			xstep;
-		dsfixed_t			ystep;
-		uint32_t*			dest;
-		const uint32_t*		source = _source;
-		int 				count;
-		int 				spot;
-
-		xfrac = _xfrac;
-		yfrac = _yfrac;
-
-		dest = ylookup[_y] + _x1 + (uint32_t*)_destorg;
-
-		count = _x2 - _x1 + 1;
-
-		xstep = _xstep;
-		ystep = _ystep;
-
-		uint32_t light = calc_light_multiplier(_light);
-		ShadeConstants shade_constants = _shade_constants;
-
-		if (_xbits == 6 && _ybits == 6)
-		{
-			// 64x64 is the most common case by far, so special case it.
-
-			int sse_count = count / 4;
-			count -= sse_count * 4;
-
-			if (shade_constants.simple_shade)
-			{
-				SSE_SHADE_SIMPLE_INIT(light);
-
-				while (sse_count--)
-				{
-					// Current texture index in u,v.
-					spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
-					uint32_t p0 = source[spot];
-					xfrac += xstep;
-					yfrac += ystep;
-
-					spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
-					uint32_t p1 = source[spot];
-					xfrac += xstep;
-					yfrac += ystep;
-
-					spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
-					uint32_t p2 = source[spot];
-					xfrac += xstep;
-					yfrac += ystep;
-
-					spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
-					uint32_t p3 = source[spot];
-					xfrac += xstep;
-					yfrac += ystep;
-
-					// Lookup pixel from flat texture tile,
-					//  re-index using light/colormap.
-					__m128i fg = _mm_set_epi32(p3, p2, p1, p0);
-					SSE_SHADE_SIMPLE(fg);
-					_mm_storeu_si128((__m128i*)dest, fg);
-
-					// Next step in u,v.
-					dest += 4;
-				}
-			}
-			else
-			{
-				SSE_SHADE_INIT(light, shade_constants);
-
-				while (sse_count--)
-				{
-					// Current texture index in u,v.
-					spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
-					uint32_t p0 = source[spot];
-					xfrac += xstep;
-					yfrac += ystep;
-
-					spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
-					uint32_t p1 = source[spot];
-					xfrac += xstep;
-					yfrac += ystep;
-
-					spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
-					uint32_t p2 = source[spot];
-					xfrac += xstep;
-					yfrac += ystep;
-
-					spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
-					uint32_t p3 = source[spot];
-					xfrac += xstep;
-					yfrac += ystep;
-
-					// Lookup pixel from flat texture tile,
-					//  re-index using light/colormap.
-					__m128i fg = _mm_set_epi32(p3, p2, p1, p0);
-					SSE_SHADE(fg, shade_constants);
-					_mm_storeu_si128((__m128i*)dest, fg);
-
-					// Next step in u,v.
-					dest += 4;
-				}
-			}
-
-			if (count == 0)
-				return;
-
-			do
-			{
-				// Current texture index in u,v.
-				spot = ((xfrac >> (32 - 6 - 6))&(63 * 64)) + (yfrac >> (32 - 6));
-
-				// Lookup pixel from flat texture tile
-				*dest++ = shade_bgra(source[spot], light, shade_constants);
-
-				// Next step in u,v.
-				xfrac += xstep;
-				yfrac += ystep;
-			} while (--count);
-		}
-		else
-		{
-			BYTE yshift = 32 - _ybits;
-			BYTE xshift = yshift - _xbits;
-			int xmask = ((1 << _xbits) - 1) << _ybits;
-
-			int sse_count = count / 4;
-			count -= sse_count * 4;
-
-			if (shade_constants.simple_shade)
-			{
-				SSE_SHADE_SIMPLE_INIT(light);
-
-				while (sse_count--)
-				{
-					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-					uint32_t p0 = source[spot];
-					xfrac += xstep;
-					yfrac += ystep;
-
-					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-					uint32_t p1 = source[spot];
-					xfrac += xstep;
-					yfrac += ystep;
-
-					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-					uint32_t p2 = source[spot];
-					xfrac += xstep;
-					yfrac += ystep;
-
-					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-					uint32_t p3 = source[spot];
-					xfrac += xstep;
-					yfrac += ystep;
-
-					// Lookup pixel from flat texture tile
-					__m128i fg = _mm_set_epi32(p3, p2, p1, p0);
-					SSE_SHADE_SIMPLE(fg);
-					_mm_storeu_si128((__m128i*)dest, fg);
-					dest += 4;
-				}
-			}
-			else
-			{
-				SSE_SHADE_INIT(light, shade_constants);
-
-				while (sse_count--)
-				{
-					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-					uint32_t p0 = source[spot];
-					xfrac += xstep;
-					yfrac += ystep;
-
-					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-					uint32_t p1 = source[spot];
-					xfrac += xstep;
-					yfrac += ystep;
-
-					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-					uint32_t p2 = source[spot];
-					xfrac += xstep;
-					yfrac += ystep;
-
-					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-					uint32_t p3 = source[spot];
-					xfrac += xstep;
-					yfrac += ystep;
-
-					// Lookup pixel from flat texture tile
-					__m128i fg = _mm_set_epi32(p3, p2, p1, p0);
-					SSE_SHADE(fg, shade_constants);
-					_mm_storeu_si128((__m128i*)dest, fg);
-					dest += 4;
-				}
-			}
-
-			if (count == 0)
-				return;
-
-			do
-			{
-				// Current texture index in u,v.
-				spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
-
-				// Lookup pixel from flat texture tile
-				*dest++ = shade_bgra(source[spot], light, shade_constants);
-
-				// Next step in u,v.
-				xfrac += xstep;
-				yfrac += ystep;
-			} while (--count);
-		}
-	}
-#endif
 };
 
 class DrawSpanMaskedRGBACommand : public DrawerCommand
@@ -2698,7 +2328,6 @@ public:
 		}
 	}
 
-#ifdef NO_SSE
 	void Execute(DrawerThread *thread) override
 	{
 		int count = thread->count_for_thread(_dest_y, _count);
@@ -2735,165 +2364,6 @@ public:
 			dest += pitch;
 		} while (--count);
 	}
-#elif defined(USE_AVX)
-	void Execute(DrawerThread *thread) override
-	{
-		int count = thread->count_for_thread(_dest_y, _count);
-		if (count <= 0)
-			return;
-
-		uint32_t *dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
-		int bits = vlinebits;
-		int pitch = _pitch * thread->num_cores;
-
-		uint32_t light0 = calc_light_multiplier(palookuplight[0]);
-		uint32_t light1 = calc_light_multiplier(palookuplight[1]);
-		uint32_t light2 = calc_light_multiplier(palookuplight[2]);
-		uint32_t light3 = calc_light_multiplier(palookuplight[3]);
-
-		ShadeConstants shade_constants = _shade_constants;
-
-		DWORD local_vplce[4] = { vplce[0], vplce[1], vplce[2], vplce[3] };
-		DWORD local_vince[4] = { vince[0], vince[1], vince[2], vince[3] };
-		int skipped = thread->skipped_by_thread(_dest_y);
-		for (int i = 0; i < 4; i++)
-		{
-			local_vplce[i] += local_vince[i] * skipped;
-			local_vince[i] *= thread->num_cores;
-		}
-
-		if (count & 1)
-		{
-			DWORD place;
-			dest[0] = shade_bgra(bufplce[0][(place = local_vplce[0]) >> bits], light0, shade_constants); local_vplce[0] = place + local_vince[0];
-			dest[1] = shade_bgra(bufplce[1][(place = local_vplce[1]) >> bits], light1, shade_constants); local_vplce[1] = place + local_vince[1];
-			dest[2] = shade_bgra(bufplce[2][(place = local_vplce[2]) >> bits], light2, shade_constants); local_vplce[2] = place + local_vince[2];
-			dest[3] = shade_bgra(bufplce[3][(place = local_vplce[3]) >> bits], light3, shade_constants); local_vplce[3] = place + local_vince[3];
-			dest += pitch;
-		}
-		count /= 2;
-
-		// Assume all columns come from the same texture (which they do):
-		const uint32_t *base_addr = MIN(MIN(MIN(bufplce[0], bufplce[1]), bufplce[2]), bufplce[3]);
-		__m256i column_offsets = _mm256_set_epi32(
-			bufplce[3] - base_addr, bufplce[2] - base_addr, bufplce[1] - base_addr, bufplce[0] - base_addr,
-			bufplce[3] - base_addr, bufplce[2] - base_addr, bufplce[1] - base_addr, bufplce[0] - base_addr);
-
-		__m256i place = _mm256_set_epi32(
-			local_vplce[3] + local_vince[3], local_vplce[2] + local_vince[2], local_vplce[1] + local_vince[1], local_vplce[0] + local_vince[0],
-			local_vplce[3], local_vplce[2], local_vplce[1], local_vplce[0]);
-
-		__m256i step = _mm256_set_epi32(
-			local_vince[3], local_vince[2], local_vince[1], local_vince[0],
-			local_vince[3], local_vince[2], local_vince[1], local_vince[0]);
-		step = _mm256_add_epi32(step, step);
-
-		if (shade_constants.simple_shade)
-		{
-			AVX2_SHADE_SIMPLE_INIT4(light3, light2, light1, light0);
-			while (count--)
-			{
-				__m256i fg = _mm256_i32gather_epi32((const int *)base_addr, _mm256_add_epi32(column_offsets, _mm256_srli_epi32(place, bits)), 4);
-				place = _mm256_add_epi32(place, step);
-				AVX2_SHADE_SIMPLE(fg);
-				_mm256_storeu2_m128i((__m128i*)(dest + pitch), (__m128i*)dest, fg);
-				dest += pitch * 2;
-			}
-		}
-		else
-		{
-			AVX2_SHADE_INIT4(light3, light2, light1, light0, shade_constants);
-			while (count--)
-			{
-				__m256i fg = _mm256_i32gather_epi32((const int *)base_addr, _mm256_add_epi32(column_offsets, _mm256_srai_epi32(place, bits)), 4);
-				place = _mm256_add_epi32(place, step);
-				AVX2_SHADE(fg, shade_constants);
-				_mm256_storeu2_m128i((__m128i*)(dest + pitch), (__m128i*)dest, fg);
-				dest += pitch * 2;
-			}
-		}
-	}
-#else
-	void Execute(DrawerThread *thread) override
-	{
-		int count = thread->count_for_thread(_dest_y, _count);
-		if (count <= 0)
-			return;
-
-		uint32_t *dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
-		int bits = vlinebits;
-		int pitch = _pitch * thread->num_cores;
-
-		uint32_t light0 = calc_light_multiplier(palookuplight[0]);
-		uint32_t light1 = calc_light_multiplier(palookuplight[1]);
-		uint32_t light2 = calc_light_multiplier(palookuplight[2]);
-		uint32_t light3 = calc_light_multiplier(palookuplight[3]);
-
-		ShadeConstants shade_constants = _shade_constants;
-
-		DWORD local_vplce[4] = { vplce[0], vplce[1], vplce[2], vplce[3] };
-		DWORD local_vince[4] = { vince[0], vince[1], vince[2], vince[3] };
-		int skipped = thread->skipped_by_thread(_dest_y);
-		for (int i = 0; i < 4; i++)
-		{
-			local_vplce[i] += local_vince[i] * skipped;
-			local_vince[i] *= thread->num_cores;
-		}
-
-		if (shade_constants.simple_shade)
-		{
-			SSE_SHADE_SIMPLE_INIT4(light3, light2, light1, light0);
-			do
-			{
-				DWORD place0 = local_vplce[0];
-				DWORD place1 = local_vplce[1];
-				DWORD place2 = local_vplce[2];
-				DWORD place3 = local_vplce[3];
-
-				uint32_t p0 = bufplce[0][place0 >> bits];
-				uint32_t p1 = bufplce[1][place1 >> bits];
-				uint32_t p2 = bufplce[2][place2 >> bits];
-				uint32_t p3 = bufplce[3][place3 >> bits];
-
-				local_vplce[0] = place0 + local_vince[0];
-				local_vplce[1] = place1 + local_vince[1];
-				local_vplce[2] = place2 + local_vince[2];
-				local_vplce[3] = place3 + local_vince[3];
-
-				__m128i fg = _mm_set_epi32(p3, p2, p1, p0);
-				SSE_SHADE_SIMPLE(fg);
-				_mm_storeu_si128((__m128i*)dest, fg);
-				dest += pitch;
-			} while (--count);
-		}
-		else
-		{
-			SSE_SHADE_INIT4(light3, light2, light1, light0, shade_constants);
-			do
-			{
-				DWORD place0 = local_vplce[0];
-				DWORD place1 = local_vplce[1];
-				DWORD place2 = local_vplce[2];
-				DWORD place3 = local_vplce[3];
-
-				uint32_t p0 = bufplce[0][place0 >> bits];
-				uint32_t p1 = bufplce[1][place1 >> bits];
-				uint32_t p2 = bufplce[2][place2 >> bits];
-				uint32_t p3 = bufplce[3][place3 >> bits];
-
-				local_vplce[0] = place0 + local_vince[0];
-				local_vplce[1] = place1 + local_vince[1];
-				local_vplce[2] = place2 + local_vince[2];
-				local_vplce[3] = place3 + local_vince[3];
-
-				__m128i fg = _mm_set_epi32(p3, p2, p1, p0);
-				SSE_SHADE(fg, shade_constants);
-				_mm_storeu_si128((__m128i*)dest, fg);
-				dest += pitch;
-			} while (--count);
-		}
-	}
-#endif
 };
 
 class Mvlinec1RGBACommand : public DrawerCommand
@@ -2980,7 +2450,6 @@ public:
 		}
 	}
 
-#ifdef NO_SSE
 	void Execute(DrawerThread *thread) override
 	{
 		int count = thread->count_for_thread(_dest_y, _count);
@@ -3018,93 +2487,6 @@ public:
 			dest += pitch;
 		} while (--count);
 	}
-#else
-	void Execute(DrawerThread *thread) override
-	{
-		int count = thread->count_for_thread(_dest_y, _count);
-		if (count <= 0)
-			return;
-
-		uint32_t *dest = thread->dest_for_thread(_dest_y, _pitch, (uint32_t*)_dest);
-		int pitch = _pitch * thread->num_cores;
-		int bits = mvlinebits;
-
-		uint32_t light0 = calc_light_multiplier(palookuplight[0]);
-		uint32_t light1 = calc_light_multiplier(palookuplight[1]);
-		uint32_t light2 = calc_light_multiplier(palookuplight[2]);
-		uint32_t light3 = calc_light_multiplier(palookuplight[3]);
-
-		ShadeConstants shade_constants = _shade_constants;
-
-		DWORD local_vplce[4] = { vplce[0], vplce[1], vplce[2], vplce[3] };
-		DWORD local_vince[4] = { vince[0], vince[1], vince[2], vince[3] };
-		int skipped = thread->skipped_by_thread(_dest_y);
-		for (int i = 0; i < 4; i++)
-		{
-			local_vplce[i] += local_vince[i] * skipped;
-			local_vince[i] *= thread->num_cores;
-		}
-
-		if (shade_constants.simple_shade)
-		{
-			SSE_SHADE_SIMPLE_INIT4(light3, light2, light1, light0);
-			do
-			{
-				DWORD place0 = local_vplce[0];
-				DWORD place1 = local_vplce[1];
-				DWORD place2 = local_vplce[2];
-				DWORD place3 = local_vplce[3];
-
-				uint32_t pix0 = bufplce[0][place0 >> bits];
-				uint32_t pix1 = bufplce[1][place1 >> bits];
-				uint32_t pix2 = bufplce[2][place2 >> bits];
-				uint32_t pix3 = bufplce[3][place3 >> bits];
-
-				// movemask = !(pix == 0)
-				__m128i movemask = _mm_xor_si128(_mm_cmpeq_epi32(_mm_set_epi32(pix3, pix2, pix1, pix0), _mm_setzero_si128()), _mm_cmpeq_epi32(_mm_setzero_si128(), _mm_setzero_si128()));
-
-				local_vplce[0] = place0 + local_vince[0];
-				local_vplce[1] = place1 + local_vince[1];
-				local_vplce[2] = place2 + local_vince[2];
-				local_vplce[3] = place3 + local_vince[3];
-
-				__m128i fg = _mm_set_epi32(pix3, pix2, pix1, pix0);
-				SSE_SHADE_SIMPLE(fg);
-				_mm_maskmoveu_si128(fg, movemask, (char*)dest);
-				dest += pitch;
-			} while (--count);
-		}
-		else
-		{
-			SSE_SHADE_INIT4(light3, light2, light1, light0, shade_constants);
-			do
-			{
-				DWORD place0 = local_vplce[0];
-				DWORD place1 = local_vplce[1];
-				DWORD place2 = local_vplce[2];
-				DWORD place3 = local_vplce[3];
-
-				uint32_t pix0 = bufplce[0][place0 >> bits];
-				uint32_t pix1 = bufplce[1][place1 >> bits];
-				uint32_t pix2 = bufplce[2][place2 >> bits];
-				uint32_t pix3 = bufplce[3][place3 >> bits];
-
-				// movemask = !(pix == 0)
-				__m128i movemask = _mm_xor_si128(_mm_cmpeq_epi32(_mm_set_epi32(pix3, pix2, pix1, pix0), _mm_setzero_si128()), _mm_cmpeq_epi32(_mm_setzero_si128(), _mm_setzero_si128()));
-
-				local_vplce[0] = place0 + local_vince[0];
-				local_vplce[1] = place1 + local_vince[1];
-				local_vplce[2] = place2 + local_vince[2];
-				local_vplce[3] = place3 + local_vince[3];
-
-				__m128i fg = _mm_set_epi32(pix3, pix2, pix1, pix0);
-				SSE_SHADE(fg, shade_constants);
-				_mm_maskmoveu_si128(fg, movemask, (char*)dest);
-				dest += pitch;
-			} while (--count);
-		}
-	}
-#endif
 };
 
 class Tmvline1AddRGBACommand : public DrawerCommand
@@ -4254,7 +3636,14 @@ void R_DrawRevSubClampTranslatedColumn_rgba()
 
 void R_DrawSpan_rgba()
 {
+#ifdef NO_SSE
 	DrawerCommandQueue::QueueCommand<DrawSpanRGBACommand>();
+#else
+	if (!r_linearlight)
+		DrawerCommandQueue::QueueCommand<DrawSpanRGBA_SSE_Command>();
+	else
+		DrawerCommandQueue::QueueCommand<DrawSpanRGBA_AVX_Command>();
+#endif
 }
 
 void R_DrawSpanMasked_rgba()
@@ -4304,7 +3693,14 @@ DWORD vlinec1_rgba()
 
 void vlinec4_rgba()
 {
+#ifdef NO_SSE
 	DrawerCommandQueue::QueueCommand<Vlinec4RGBACommand>();
+#else
+	if (!r_linearlight)
+		DrawerCommandQueue::QueueCommand<Vlinec4RGBA_SSE_Command>();
+	else
+		DrawerCommandQueue::QueueCommand<Vlinec4RGBA_AVX_Command>();
+#endif
 	for (int i = 0; i < 4; i++)
 		vplce[i] += vince[i] * dc_count;
 }
@@ -4317,7 +3713,14 @@ DWORD mvlinec1_rgba()
 
 void mvlinec4_rgba()
 {
+#ifdef NO_SSE
 	DrawerCommandQueue::QueueCommand<Mvlinec4RGBACommand>();
+#else
+	if (!r_linearlight)
+		DrawerCommandQueue::QueueCommand<Mvlinec4RGBA_SSE_Command>();
+	else
+		DrawerCommandQueue::QueueCommand<Mvlinec4RGBA_AVX_Command>();
+#endif
 	for (int i = 0; i < 4; i++)
 		vplce[i] += vince[i] * dc_count;
 }

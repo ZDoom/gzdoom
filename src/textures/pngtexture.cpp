@@ -724,8 +724,9 @@ void FPNGTexture::MakeTextureBgra ()
 				{
 					for (y = Height; y > 0; --y)
 					{
+						// output as premultiplied alpha
 						uint32_t alpha = in[1];
-						uint32_t gray = in[0];
+						uint32_t gray = (in[0] * alpha + 127) / 255;
 						*out++ = (alpha << 24) | (gray << 16) | (gray << 8) | gray;
 						in += pitch;
 					}
@@ -740,7 +741,12 @@ void FPNGTexture::MakeTextureBgra ()
 				{
 					for (y = Height; y > 0; --y)
 					{
-						*out++ = (((uint32_t)in[3]) << 24) | (((uint32_t)in[0]) << 16) | (((uint32_t)in[1]) << 8) | ((uint32_t)in[2]);
+						// output as premultiplied alpha
+						uint32_t alpha = in[3];
+						uint32_t red = (in[0] * alpha + 127) / 255;
+						uint32_t green = (in[1] * alpha + 127) / 255;
+						uint32_t blue = (in[2] * alpha + 127) / 255;
+						*out++ = (alpha << 24) | (red << 16) | (green << 8) | blue;
 						in += pitch;
 					}
 					in -= backstep;

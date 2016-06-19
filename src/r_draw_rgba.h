@@ -417,9 +417,9 @@ FORCEINLINE uint32_t alpha_blend(uint32_t fg, uint32_t bg)
 	uint32_t bg_green = (bg >> 8) & 0xff;
 	uint32_t bg_blue = bg & 0xff;
 
-	uint32_t red = ((fg_red * alpha) + (bg_red * inv_alpha)) / 256;
-	uint32_t green = ((fg_green * alpha) + (bg_green * inv_alpha)) / 256;
-	uint32_t blue = ((fg_blue * alpha) + (bg_blue * inv_alpha)) / 256;
+	uint32_t red = clamp<uint32_t>(fg_red + (bg_red * inv_alpha) / 256, 0, 255);
+	uint32_t green = clamp<uint32_t>(fg_green + (bg_green * inv_alpha) / 256, 0, 255);
+	uint32_t blue = clamp<uint32_t>(fg_blue + (bg_blue * inv_alpha) / 256, 0, 255);
 
 	return 0xff000000 | (red << 16) | (green << 8) | blue;
 }
@@ -543,7 +543,7 @@ FORCEINLINE uint32_t alpha_blend(uint32_t fg, uint32_t bg)
 
 /*
 // Complex shade 8 pixels
-#define AVX2_SHADE(fg, shade_constants) { \
+#define AVX_SHADE(fg, shade_constants) { \
 	__m256i fg_hi = _mm256_unpackhi_epi8(fg, _mm256_setzero_si256()); \
 	__m256i fg_lo = _mm256_unpacklo_epi8(fg, _mm256_setzero_si256()); \
 	 \
@@ -566,8 +566,58 @@ FORCEINLINE uint32_t alpha_blend(uint32_t fg, uint32_t bg)
 }
 */
 
+// Normal premultiplied alpha blend using the alpha from fg
+#define VEC_ALPHA_BLEND(fg,bg) { \
+	__m128i fg_hi = _mm_unpackhi_epi8(fg, _mm_setzero_si128()); \
+	__m128i fg_lo = _mm_unpacklo_epi8(fg, _mm_setzero_si128()); \
+	__m128i bg_hi = _mm_unpackhi_epi8(bg, _mm_setzero_si128()); \
+	__m128i bg_lo = _mm_unpacklo_epi8(bg, _mm_setzero_si128()); \
+	__m128i m255 = _mm_set1_epi16(255); \
+	__m128i inv_alpha_hi = _mm_sub_epi16(m255, _mm_shufflehi_epi16(_mm_shufflelo_epi16(fg_hi, _MM_SHUFFLE(3,3,3,3)), _MM_SHUFFLE(3,3,3,3))); \
+	__m128i inv_alpha_lo = _mm_sub_epi16(m255, _mm_shufflehi_epi16(_mm_shufflelo_epi16(fg_lo, _MM_SHUFFLE(3,3,3,3)), _MM_SHUFFLE(3,3,3,3))); \
+	inv_alpha_hi = _mm_add_epi16(inv_alpha_hi, _mm_srli_epi16(inv_alpha_hi, 7)); \
+	inv_alpha_lo = _mm_add_epi16(inv_alpha_lo, _mm_srli_epi16(inv_alpha_lo, 7)); \
+	bg_hi = _mm_mullo_epi16(bg_hi, inv_alpha_hi); \
+	bg_hi = _mm_srli_epi16(bg_hi, 8); \
+	bg_lo = _mm_mullo_epi16(bg_lo, inv_alpha_lo); \
+	bg_lo = _mm_srli_epi16(bg_lo, 8); \
+	bg = _mm_packus_epi16(bg_lo, bg_hi); \
+	fg = _mm_adds_epu8(fg, bg); \
+}
 
+/*
+FORCEINLINE void calc_blend_alpha(uint32_t fg, uint32_t src_alpha, uint32_t dest_alpha, uint32_t &fg_alpha, uint32_t &bg_alpha)
+{
+	fg_alpha = src_alpha;
+	bg_alpha = dest_alpha;
+}
 
+#define VEC_CALC_BLEND_ALPHA(fg, msrc_alpha, mdest_alpha) \
+	__m128i fg_alpha_hi = msrc_alpha; \
+	__m128i fg_alpha_lo = msrc_alpha; \
+	__m128i bg_alpha_hi = mdest_alpha; \
+	__m128i bg_alpha_lo = mdest_alpha;
+*/
+
+// Calculates the final alpha values to be used when combined with the source texture alpha channel
+FORCEINLINE void calc_blend_alpha(uint32_t fg, uint32_t src_alpha, uint32_t dest_alpha, uint32_t &fg_alpha, uint32_t &bg_alpha)
+{
+	fg_alpha = (fg >> 24) & 0xff;
+	fg_alpha += fg_alpha >> 7;
+	bg_alpha = (dest_alpha * (256 - fg_alpha)) >> 8;
+	fg_alpha = (src_alpha * fg_alpha) >> 8;
+}
+
+// Calculates the final alpha values to be used when combined with the source texture alpha channel
+#define VEC_CALC_BLEND_ALPHA(fg, msrc_alpha, mdest_alpha) \
+	__m128i fg_alpha_hi = _mm_shufflehi_epi16(_mm_shufflelo_epi16(_mm_unpackhi_epi8(fg, _mm_setzero_si128()), _MM_SHUFFLE(3, 3, 3, 3)), _MM_SHUFFLE(3, 3, 3, 3)); \
+	__m128i fg_alpha_lo = _mm_shufflehi_epi16(_mm_shufflelo_epi16(_mm_unpacklo_epi8(fg, _mm_setzero_si128()), _MM_SHUFFLE(3, 3, 3, 3)), _MM_SHUFFLE(3, 3, 3, 3)); \
+	fg_alpha_hi = _mm_add_epi16(fg_alpha_hi, _mm_srli_epi16(fg_alpha_hi, 7)); \
+	fg_alpha_lo = _mm_add_epi16(fg_alpha_lo, _mm_srli_epi16(fg_alpha_lo, 7)); \
+	__m128i bg_alpha_hi = _mm_srli_epi16(_mm_mullo_epi16(_mm_sub_epi16(_mm_set1_epi16(256), fg_alpha_hi), mdest_alpha), 8); \
+	__m128i bg_alpha_lo = _mm_srli_epi16(_mm_mullo_epi16(_mm_sub_epi16(_mm_set1_epi16(256), fg_alpha_lo), mdest_alpha), 8); \
+	fg_alpha_hi = _mm_srli_epi16(_mm_mullo_epi16(fg_alpha_hi, msrc_alpha), 8); \
+	fg_alpha_lo = _mm_srli_epi16(_mm_mullo_epi16(fg_alpha_lo, msrc_alpha), 8);
 
 // Calculate constants for a simple shade
 #define SSE_SHADE_SIMPLE_INIT(light) \

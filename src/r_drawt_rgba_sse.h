@@ -493,3 +493,255 @@ public:
 		}
 	}
 };
+
+class VecCommand(RtSubClamp4colsRGBA) : public DrawerCommand
+{
+	int sx;
+	int yl;
+	int yh;
+	BYTE * RESTRICT _destorg;
+	int _pitch;
+	fixed_t _light;
+	fixed_t _srcalpha;
+	fixed_t _destalpha;
+	ShadeConstants _shade_constants;
+
+public:
+	VecCommand(RtSubClamp4colsRGBA)(int sx, int yl, int yh)
+	{
+		this->sx = sx;
+		this->yl = yl;
+		this->yh = yh;
+
+		_destorg = dc_destorg;
+		_pitch = dc_pitch;
+		_light = dc_light;
+		_srcalpha = dc_srcalpha;
+		_destalpha = dc_destalpha;
+		_shade_constants = dc_shade_constants;
+	}
+
+	void Execute(DrawerThread *thread) override
+	{
+		uint32_t *source;
+		uint32_t *dest;
+		int count;
+		int pitch;
+		int sincr;
+
+		count = thread->count_for_thread(yl, yh - yl + 1);
+		if (count <= 0)
+			return;
+
+		dest = thread->dest_for_thread(yl, _pitch, ylookup[yl] + sx + (uint32_t*)_destorg);
+		source = &thread->dc_temp_rgba[yl * 4] + thread->skipped_by_thread(yl) * 4;
+		pitch = _pitch * thread->num_cores;
+		sincr = 4 * thread->num_cores;
+
+		uint32_t light = calc_light_multiplier(_light);
+		uint32_t *palette = (uint32_t*)GPalette.BaseColors;
+		ShadeConstants shade_constants = _shade_constants;
+
+		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
+		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
+
+		if (shade_constants.simple_shade)
+		{
+			VEC_SHADE_SIMPLE_INIT(light);
+
+			__m128i mfg_alpha = _mm_set_epi16(256, fg_alpha, fg_alpha, fg_alpha, 256, fg_alpha, fg_alpha, fg_alpha);
+			__m128i mbg_alpha = _mm_set_epi16(256, bg_alpha, bg_alpha, bg_alpha, 256, bg_alpha, bg_alpha, bg_alpha);
+
+			do {
+				uint32_t p0 = source[0];
+				uint32_t p1 = source[1];
+				uint32_t p2 = source[2];
+				uint32_t p3 = source[3];
+
+				// shade_pal_index:
+				__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
+				VEC_SHADE_SIMPLE(fg);
+
+				__m128i fg_hi = _mm_unpackhi_epi8(fg, _mm_setzero_si128());
+				__m128i fg_lo = _mm_unpacklo_epi8(fg, _mm_setzero_si128());
+
+				// unpack bg:
+				__m128i bg = _mm_loadu_si128((const __m128i*)dest);
+				__m128i bg_hi = _mm_unpackhi_epi8(bg, _mm_setzero_si128());
+				__m128i bg_lo = _mm_unpacklo_epi8(bg, _mm_setzero_si128());
+
+				// (bg_red * bg_alpha - fg_red * fg_alpha) / 256:
+				__m128i color_hi = _mm_srli_epi16(_mm_subs_epu16(_mm_mullo_epi16(bg_hi, mbg_alpha), _mm_mullo_epi16(fg_hi, mfg_alpha)), 8);
+				__m128i color_lo = _mm_srli_epi16(_mm_subs_epu16(_mm_mullo_epi16(bg_lo, mbg_alpha), _mm_mullo_epi16(fg_lo, mfg_alpha)), 8);
+
+				__m128i color = _mm_packus_epi16(color_lo, color_hi);
+				_mm_storeu_si128((__m128i*)dest, color);
+
+				source += sincr;
+				dest += pitch;
+			} while (--count);
+		}
+		else
+		{
+			VEC_SHADE_INIT(light, shade_constants);
+
+			__m128i mfg_alpha = _mm_set_epi16(256, fg_alpha, fg_alpha, fg_alpha, 256, fg_alpha, fg_alpha, fg_alpha);
+			__m128i mbg_alpha = _mm_set_epi16(256, bg_alpha, bg_alpha, bg_alpha, 256, bg_alpha, bg_alpha, bg_alpha);
+
+			do {
+				uint32_t p0 = source[0];
+				uint32_t p1 = source[1];
+				uint32_t p2 = source[2];
+				uint32_t p3 = source[3];
+
+				// shade_pal_index:
+				__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
+				VEC_SHADE(fg, shade_constants);
+
+				__m128i fg_hi = _mm_unpackhi_epi8(fg, _mm_setzero_si128());
+				__m128i fg_lo = _mm_unpacklo_epi8(fg, _mm_setzero_si128());
+
+				// unpack bg:
+				__m128i bg = _mm_loadu_si128((const __m128i*)dest);
+				__m128i bg_hi = _mm_unpackhi_epi8(bg, _mm_setzero_si128());
+				__m128i bg_lo = _mm_unpacklo_epi8(bg, _mm_setzero_si128());
+
+				// (bg_red * bg_alpha - fg_red * fg_alpha) / 256:
+				__m128i color_hi = _mm_srli_epi16(_mm_subs_epu16(_mm_mullo_epi16(bg_hi, mbg_alpha), _mm_mullo_epi16(fg_hi, mfg_alpha)), 8);
+				__m128i color_lo = _mm_srli_epi16(_mm_subs_epu16(_mm_mullo_epi16(bg_lo, mbg_alpha), _mm_mullo_epi16(fg_lo, mfg_alpha)), 8);
+
+				__m128i color = _mm_packus_epi16(color_lo, color_hi);
+				_mm_storeu_si128((__m128i*)dest, color);
+
+				source += sincr;
+				dest += pitch;
+			} while (--count);
+		}
+	}
+};
+
+class VecCommand(RtRevSubClamp4colsRGBA) : public DrawerCommand
+{
+	int sx;
+	int yl;
+	int yh;
+	BYTE * RESTRICT _destorg;
+	int _pitch;
+	fixed_t _light;
+	fixed_t _srcalpha;
+	fixed_t _destalpha;
+	ShadeConstants _shade_constants;
+
+public:
+	VecCommand(RtRevSubClamp4colsRGBA)(int sx, int yl, int yh)
+	{
+		this->sx = sx;
+		this->yl = yl;
+		this->yh = yh;
+
+		_destorg = dc_destorg;
+		_pitch = dc_pitch;
+		_light = dc_light;
+		_srcalpha = dc_srcalpha;
+		_destalpha = dc_destalpha;
+		_shade_constants = dc_shade_constants;
+	}
+
+	void Execute(DrawerThread *thread) override
+	{
+		uint32_t *source;
+		uint32_t *dest;
+		int count;
+		int pitch;
+		int sincr;
+
+		count = thread->count_for_thread(yl, yh - yl + 1);
+		if (count <= 0)
+			return;
+
+		dest = thread->dest_for_thread(yl, _pitch, ylookup[yl] + sx + (uint32_t*)_destorg);
+		source = &thread->dc_temp_rgba[yl * 4] + thread->skipped_by_thread(yl) * 4;
+		pitch = _pitch * thread->num_cores;
+		sincr = 4 * thread->num_cores;
+
+		uint32_t light = calc_light_multiplier(_light);
+		uint32_t *palette = (uint32_t*)GPalette.BaseColors;
+		ShadeConstants shade_constants = _shade_constants;
+
+		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
+		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
+
+		if (shade_constants.simple_shade)
+		{
+			VEC_SHADE_SIMPLE_INIT(light);
+
+			__m128i mfg_alpha = _mm_set_epi16(256, fg_alpha, fg_alpha, fg_alpha, 256, fg_alpha, fg_alpha, fg_alpha);
+			__m128i mbg_alpha = _mm_set_epi16(256, bg_alpha, bg_alpha, bg_alpha, 256, bg_alpha, bg_alpha, bg_alpha);
+
+			do {
+				uint32_t p0 = source[0];
+				uint32_t p1 = source[1];
+				uint32_t p2 = source[2];
+				uint32_t p3 = source[3];
+
+				// shade_pal_index:
+				__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
+				VEC_SHADE_SIMPLE(fg);
+
+				__m128i fg_hi = _mm_unpackhi_epi8(fg, _mm_setzero_si128());
+				__m128i fg_lo = _mm_unpacklo_epi8(fg, _mm_setzero_si128());
+
+				// unpack bg:
+				__m128i bg = _mm_loadu_si128((const __m128i*)dest);
+				__m128i bg_hi = _mm_unpackhi_epi8(bg, _mm_setzero_si128());
+				__m128i bg_lo = _mm_unpacklo_epi8(bg, _mm_setzero_si128());
+
+				// (fg_red * fg_alpha - bg_red * bg_alpha) / 256:
+				__m128i color_hi = _mm_srli_epi16(_mm_subs_epu16(_mm_mullo_epi16(fg_hi, mfg_alpha), _mm_mullo_epi16(bg_hi, mbg_alpha)), 8);
+				__m128i color_lo = _mm_srli_epi16(_mm_subs_epu16(_mm_mullo_epi16(fg_lo, mfg_alpha), _mm_mullo_epi16(bg_lo, mbg_alpha)), 8);
+
+				__m128i color = _mm_packus_epi16(color_lo, color_hi);
+				_mm_storeu_si128((__m128i*)dest, color);
+
+				source += sincr;
+				dest += pitch;
+			} while (--count);
+		}
+		else
+		{
+			VEC_SHADE_INIT(light, shade_constants);
+
+			__m128i mfg_alpha = _mm_set_epi16(256, fg_alpha, fg_alpha, fg_alpha, 256, fg_alpha, fg_alpha, fg_alpha);
+			__m128i mbg_alpha = _mm_set_epi16(256, bg_alpha, bg_alpha, bg_alpha, 256, bg_alpha, bg_alpha, bg_alpha);
+
+			do {
+				uint32_t p0 = source[0];
+				uint32_t p1 = source[1];
+				uint32_t p2 = source[2];
+				uint32_t p3 = source[3];
+
+				// shade_pal_index:
+				__m128i fg = _mm_set_epi32(palette[p3], palette[p2], palette[p1], palette[p0]);
+				VEC_SHADE(fg, shade_constants);
+
+				__m128i fg_hi = _mm_unpackhi_epi8(fg, _mm_setzero_si128());
+				__m128i fg_lo = _mm_unpacklo_epi8(fg, _mm_setzero_si128());
+
+				// unpack bg:
+				__m128i bg = _mm_loadu_si128((const __m128i*)dest);
+				__m128i bg_hi = _mm_unpackhi_epi8(bg, _mm_setzero_si128());
+				__m128i bg_lo = _mm_unpacklo_epi8(bg, _mm_setzero_si128());
+
+				// (fg_red * fg_alpha - bg_red * bg_alpha) / 256:
+				__m128i color_hi = _mm_srli_epi16(_mm_subs_epu16(_mm_mullo_epi16(fg_hi, mfg_alpha), _mm_mullo_epi16(bg_hi, mbg_alpha)), 8);
+				__m128i color_lo = _mm_srli_epi16(_mm_subs_epu16(_mm_mullo_epi16(fg_lo, mfg_alpha), _mm_mullo_epi16(bg_lo, mbg_alpha)), 8);
+
+				__m128i color = _mm_packus_epi16(color_lo, color_hi);
+				_mm_storeu_si128((__m128i*)dest, color);
+
+				source += sincr;
+				dest += pitch;
+			} while (--count);
+		}
+	}
+};

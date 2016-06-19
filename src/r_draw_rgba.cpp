@@ -2411,10 +2411,7 @@ public:
 		do
 		{
 			uint32_t pix = source[frac >> bits];
-			if (pix != 0)
-			{
-				*dest = shade_bgra(pix, light, shade_constants);
-			}
+			*dest = alpha_blend(shade_bgra(pix, light, shade_constants), *dest);
 			frac += fracstep;
 			dest += pitch;
 		} while (--count);
@@ -2480,10 +2477,10 @@ public:
 		do
 		{
 			uint32_t pix;
-			pix = bufplce[0][(place = local_vplce[0]) >> bits]; if (pix) dest[0] = shade_bgra(pix, light0, shade_constants); local_vplce[0] = place + local_vince[0];
-			pix = bufplce[1][(place = local_vplce[1]) >> bits]; if (pix) dest[1] = shade_bgra(pix, light1, shade_constants); local_vplce[1] = place + local_vince[1];
-			pix = bufplce[2][(place = local_vplce[2]) >> bits]; if (pix) dest[2] = shade_bgra(pix, light2, shade_constants); local_vplce[2] = place + local_vince[2];
-			pix = bufplce[3][(place = local_vplce[3]) >> bits]; if (pix) dest[3] = shade_bgra(pix, light3, shade_constants); local_vplce[3] = place + local_vince[3];
+			pix = bufplce[0][(place = local_vplce[0]) >> bits]; dest[0] = alpha_blend(shade_bgra(pix, light0, shade_constants), dest[0]); local_vplce[0] = place + local_vince[0];
+			pix = bufplce[1][(place = local_vplce[1]) >> bits]; dest[1] = alpha_blend(shade_bgra(pix, light1, shade_constants), dest[1]); local_vplce[1] = place + local_vince[1];
+			pix = bufplce[2][(place = local_vplce[2]) >> bits]; dest[2] = alpha_blend(shade_bgra(pix, light2, shade_constants), dest[2]); local_vplce[2] = place + local_vince[2];
+			pix = bufplce[3][(place = local_vplce[3]) >> bits]; dest[3] = alpha_blend(shade_bgra(pix, light3, shade_constants), dest[3]); local_vplce[3] = place + local_vince[3];
 			dest += pitch;
 		} while (--count);
 	}
@@ -2535,29 +2532,31 @@ public:
 		uint32_t light = calc_light_multiplier(_light);
 		ShadeConstants shade_constants = _shade_constants;
 
-		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
+		uint32_t src_alpha = _srcalpha >> (FRACBITS - 8);
+		uint32_t dest_alpha = _destalpha >> (FRACBITS - 8);
 
 		do
 		{
 			uint32_t pix = source[frac >> bits];
-			if (pix != 0)
-			{
-				uint32_t fg = shade_bgra(pix, light, shade_constants);
-				uint32_t fg_red = (fg >> 16) & 0xff;
-				uint32_t fg_green = (fg >> 8) & 0xff;
-				uint32_t fg_blue = fg & 0xff;
 
-				uint32_t bg_red = (*dest >> 16) & 0xff;
-				uint32_t bg_green = (*dest >> 8) & 0xff;
-				uint32_t bg_blue = (*dest) & 0xff;
+			uint32_t fg_alpha, bg_alpha;
+			calc_blend_alpha(pix, src_alpha, dest_alpha, fg_alpha, bg_alpha);
 
-				uint32_t red = clamp<uint32_t>((fg_red * fg_alpha + bg_red * bg_alpha) / 256, 0, 255);
-				uint32_t green = clamp<uint32_t>((fg_green * fg_alpha + bg_green * bg_alpha) / 256, 0, 255);
-				uint32_t blue = clamp<uint32_t>((fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 0, 255);
+			uint32_t fg = shade_bgra(pix, light, shade_constants);
+			uint32_t fg_red = (fg >> 16) & 0xff;
+			uint32_t fg_green = (fg >> 8) & 0xff;
+			uint32_t fg_blue = fg & 0xff;
 
-				*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-			}
+			uint32_t bg_red = (*dest >> 16) & 0xff;
+			uint32_t bg_green = (*dest >> 8) & 0xff;
+			uint32_t bg_blue = (*dest) & 0xff;
+
+			uint32_t red = clamp<uint32_t>((fg_red * fg_alpha + bg_red * bg_alpha) / 256, 0, 255);
+			uint32_t green = clamp<uint32_t>((fg_green * fg_alpha + bg_green * bg_alpha) / 256, 0, 255);
+			uint32_t blue = clamp<uint32_t>((fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 0, 255);
+
+			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
+
 			frac += fracstep;
 			dest += pitch;
 		} while (--count);
@@ -2615,8 +2614,8 @@ public:
 
 		ShadeConstants shade_constants = _shade_constants;
 
-		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
+		uint32_t src_alpha = _srcalpha >> (FRACBITS - 8);
+		uint32_t dest_alpha = _destalpha >> (FRACBITS - 8);
 
 		DWORD local_vplce[4] = { vplce[0], vplce[1], vplce[2], vplce[3] };
 		DWORD local_vince[4] = { vince[0], vince[1], vince[2], vince[3] };
@@ -2632,23 +2631,25 @@ public:
 			for (int i = 0; i < 4; ++i)
 			{
 				uint32_t pix = bufplce[i][local_vplce[i] >> bits];
-				if (pix != 0)
-				{
-					uint32_t fg = shade_bgra(pix, light[i], shade_constants);
-					uint32_t fg_red = (fg >> 16) & 0xff;
-					uint32_t fg_green = (fg >> 8) & 0xff;
-					uint32_t fg_blue = fg & 0xff;
 
-					uint32_t bg_red = (*dest >> 16) & 0xff;
-					uint32_t bg_green = (*dest >> 8) & 0xff;
-					uint32_t bg_blue = (*dest) & 0xff;
+				uint32_t fg_alpha, bg_alpha;
+				calc_blend_alpha(pix, src_alpha, dest_alpha, fg_alpha, bg_alpha);
 
-					uint32_t red = clamp<uint32_t>((fg_red * fg_alpha + bg_red * bg_alpha) / 256, 0, 255);
-					uint32_t green = clamp<uint32_t>((fg_green * fg_alpha + bg_green * bg_alpha) / 256, 0, 255);
-					uint32_t blue = clamp<uint32_t>((fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 0, 255);
+				uint32_t fg = shade_bgra(pix, light[i], shade_constants);
+				uint32_t fg_red = (fg >> 16) & 0xff;
+				uint32_t fg_green = (fg >> 8) & 0xff;
+				uint32_t fg_blue = fg & 0xff;
 
-					dest[i] = 0xff000000 | (red << 16) | (green << 8) | blue;
-				}
+				uint32_t bg_red = (*dest >> 16) & 0xff;
+				uint32_t bg_green = (*dest >> 8) & 0xff;
+				uint32_t bg_blue = (*dest) & 0xff;
+
+				uint32_t red = clamp<uint32_t>((fg_red * fg_alpha + bg_red * bg_alpha) / 256, 0, 255);
+				uint32_t green = clamp<uint32_t>((fg_green * fg_alpha + bg_green * bg_alpha) / 256, 0, 255);
+				uint32_t blue = clamp<uint32_t>((fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 0, 255);
+
+				dest[i] = 0xff000000 | (red << 16) | (green << 8) | blue;
+
 				local_vplce[i] += local_vince[i];
 			}
 			dest += pitch;
@@ -2702,29 +2703,31 @@ public:
 		uint32_t light = calc_light_multiplier(_light);
 		ShadeConstants shade_constants = _shade_constants;
 
-		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
+		uint32_t src_alpha = _srcalpha >> (FRACBITS - 8);
+		uint32_t dest_alpha = _destalpha >> (FRACBITS - 8);
 
 		do
 		{
 			uint32_t pix = source[frac >> bits];
-			if (pix != 0)
-			{
-				uint32_t fg = shade_bgra(pix, light, shade_constants);
-				uint32_t fg_red = (fg >> 16) & 0xff;
-				uint32_t fg_green = (fg >> 8) & 0xff;
-				uint32_t fg_blue = fg & 0xff;
 
-				uint32_t bg_red = (*dest >> 16) & 0xff;
-				uint32_t bg_green = (*dest >> 8) & 0xff;
-				uint32_t bg_blue = (*dest) & 0xff;
+			uint32_t fg_alpha, bg_alpha;
+			calc_blend_alpha(pix, src_alpha, dest_alpha, fg_alpha, bg_alpha);
 
-				uint32_t red = clamp<uint32_t>((fg_red * fg_alpha + bg_red * bg_alpha) / 256, 0, 255);
-				uint32_t green = clamp<uint32_t>((fg_green * fg_alpha + bg_green * bg_alpha) / 256, 0, 255);
-				uint32_t blue = clamp<uint32_t>((fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 0, 255);
+			uint32_t fg = shade_bgra(pix, light, shade_constants);
+			uint32_t fg_red = (fg >> 16) & 0xff;
+			uint32_t fg_green = (fg >> 8) & 0xff;
+			uint32_t fg_blue = fg & 0xff;
 
-				*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-			}
+			uint32_t bg_red = (*dest >> 16) & 0xff;
+			uint32_t bg_green = (*dest >> 8) & 0xff;
+			uint32_t bg_blue = (*dest) & 0xff;
+
+			uint32_t red = clamp<uint32_t>((fg_red * fg_alpha + bg_red * bg_alpha) / 256, 0, 255);
+			uint32_t green = clamp<uint32_t>((fg_green * fg_alpha + bg_green * bg_alpha) / 256, 0, 255);
+			uint32_t blue = clamp<uint32_t>((fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 0, 255);
+
+			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
+
 			frac += fracstep;
 			dest += pitch;
 		} while (--count);
@@ -2782,8 +2785,8 @@ public:
 
 		ShadeConstants shade_constants = _shade_constants;
 
-		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
+		uint32_t src_alpha = _srcalpha >> (FRACBITS - 8);
+		uint32_t dest_alpha = _destalpha >> (FRACBITS - 8);
 
 		DWORD local_vplce[4] = { vplce[0], vplce[1], vplce[2], vplce[3] };
 		DWORD local_vince[4] = { vince[0], vince[1], vince[2], vince[3] };
@@ -2799,23 +2802,25 @@ public:
 			for (int i = 0; i < 4; ++i)
 			{
 				uint32_t pix = bufplce[i][local_vplce[i] >> bits];
-				if (pix != 0)
-				{
-					uint32_t fg = shade_bgra(pix, light[i], shade_constants);
-					uint32_t fg_red = (fg >> 16) & 0xff;
-					uint32_t fg_green = (fg >> 8) & 0xff;
-					uint32_t fg_blue = fg & 0xff;
 
-					uint32_t bg_red = (dest[i] >> 16) & 0xff;
-					uint32_t bg_green = (dest[i] >> 8) & 0xff;
-					uint32_t bg_blue = (dest[i]) & 0xff;
+				uint32_t fg_alpha, bg_alpha;
+				calc_blend_alpha(pix, src_alpha, dest_alpha, fg_alpha, bg_alpha);
 
-					uint32_t red = clamp<uint32_t>((fg_red * fg_alpha + bg_red * bg_alpha) / 256, 0, 255);
-					uint32_t green = clamp<uint32_t>((fg_green * fg_alpha + bg_green * bg_alpha) / 256, 0, 255);
-					uint32_t blue = clamp<uint32_t>((fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 0, 255);
+				uint32_t fg = shade_bgra(pix, light[i], shade_constants);
+				uint32_t fg_red = (fg >> 16) & 0xff;
+				uint32_t fg_green = (fg >> 8) & 0xff;
+				uint32_t fg_blue = fg & 0xff;
 
-					dest[i] = 0xff000000 | (red << 16) | (green << 8) | blue;
-				}
+				uint32_t bg_red = (dest[i] >> 16) & 0xff;
+				uint32_t bg_green = (dest[i] >> 8) & 0xff;
+				uint32_t bg_blue = (dest[i]) & 0xff;
+
+				uint32_t red = clamp<uint32_t>((fg_red * fg_alpha + bg_red * bg_alpha) / 256, 0, 255);
+				uint32_t green = clamp<uint32_t>((fg_green * fg_alpha + bg_green * bg_alpha) / 256, 0, 255);
+				uint32_t blue = clamp<uint32_t>((fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 0, 255);
+
+				dest[i] = 0xff000000 | (red << 16) | (green << 8) | blue;
+
 				local_vplce[i] += local_vince[i];
 			}
 			dest += pitch;
@@ -2869,29 +2874,31 @@ public:
 		uint32_t light = calc_light_multiplier(_light);
 		ShadeConstants shade_constants = _shade_constants;
 
-		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
+		uint32_t src_alpha = _srcalpha >> (FRACBITS - 8);
+		uint32_t dest_alpha = _destalpha >> (FRACBITS - 8);
 
 		do
 		{
 			uint32_t pix = source[frac >> bits];
-			if (pix != 0)
-			{
-				uint32_t fg = shade_bgra(pix, light, shade_constants);
-				uint32_t fg_red = (fg >> 16) & 0xff;
-				uint32_t fg_green = (fg >> 8) & 0xff;
-				uint32_t fg_blue = fg & 0xff;
 
-				uint32_t bg_red = (*dest >> 16) & 0xff;
-				uint32_t bg_green = (*dest >> 8) & 0xff;
-				uint32_t bg_blue = (*dest) & 0xff;
+			uint32_t fg_alpha, bg_alpha;
+			calc_blend_alpha(pix, src_alpha, dest_alpha, fg_alpha, bg_alpha);
 
-				uint32_t red = clamp<uint32_t>((0x10000 - fg_red * fg_alpha + bg_red * bg_alpha) / 256, 256, 256 + 255) - 256;
-				uint32_t green = clamp<uint32_t>((0x10000 - fg_green * fg_alpha + bg_green * bg_alpha) / 256, 256, 256 + 255) - 256;
-				uint32_t blue = clamp<uint32_t>((0x10000 - fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 256, 256 + 255) - 256;
+			uint32_t fg = shade_bgra(pix, light, shade_constants);
+			uint32_t fg_red = (fg >> 16) & 0xff;
+			uint32_t fg_green = (fg >> 8) & 0xff;
+			uint32_t fg_blue = fg & 0xff;
 
-				*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-			}
+			uint32_t bg_red = (*dest >> 16) & 0xff;
+			uint32_t bg_green = (*dest >> 8) & 0xff;
+			uint32_t bg_blue = (*dest) & 0xff;
+
+			uint32_t red = clamp<uint32_t>((0x10000 - fg_red * fg_alpha + bg_red * bg_alpha) / 256, 256, 256 + 255) - 256;
+			uint32_t green = clamp<uint32_t>((0x10000 - fg_green * fg_alpha + bg_green * bg_alpha) / 256, 256, 256 + 255) - 256;
+			uint32_t blue = clamp<uint32_t>((0x10000 - fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 256, 256 + 255) - 256;
+
+			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
+
 			frac += fracstep;
 			dest += pitch;
 		} while (--count);
@@ -2949,8 +2956,8 @@ public:
 
 		ShadeConstants shade_constants = _shade_constants;
 
-		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
+		uint32_t src_alpha = _srcalpha >> (FRACBITS - 8);
+		uint32_t dest_alpha = _destalpha >> (FRACBITS - 8);
 
 		DWORD local_vplce[4] = { vplce[0], vplce[1], vplce[2], vplce[3] };
 		DWORD local_vince[4] = { vince[0], vince[1], vince[2], vince[3] };
@@ -2966,23 +2973,25 @@ public:
 			for (int i = 0; i < 4; ++i)
 			{
 				uint32_t pix = bufplce[i][local_vplce[i] >> bits];
-				if (pix != 0)
-				{
-					uint32_t fg = shade_bgra(pix, light[i], shade_constants);
-					uint32_t fg_red = (fg >> 16) & 0xff;
-					uint32_t fg_green = (fg >> 8) & 0xff;
-					uint32_t fg_blue = fg & 0xff;
 
-					uint32_t bg_red = (dest[i] >> 16) & 0xff;
-					uint32_t bg_green = (dest[i] >> 8) & 0xff;
-					uint32_t bg_blue = (dest[i]) & 0xff;
+				uint32_t fg_alpha, bg_alpha;
+				calc_blend_alpha(pix, src_alpha, dest_alpha, fg_alpha, bg_alpha);
 
-					uint32_t red = clamp<uint32_t>((0x10000 - fg_red * fg_alpha + bg_red * bg_alpha) / 256, 256, 256 + 255) - 256;
-					uint32_t green = clamp<uint32_t>((0x10000 - fg_green * fg_alpha + bg_green * bg_alpha) / 256, 256, 256 + 255) - 256;
-					uint32_t blue = clamp<uint32_t>((0x10000 - fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 256, 256 + 255) - 256;
+				uint32_t fg = shade_bgra(pix, light[i], shade_constants);
+				uint32_t fg_red = (fg >> 16) & 0xff;
+				uint32_t fg_green = (fg >> 8) & 0xff;
+				uint32_t fg_blue = fg & 0xff;
 
-					dest[i] = 0xff000000 | (red << 16) | (green << 8) | blue;
-				}
+				uint32_t bg_red = (dest[i] >> 16) & 0xff;
+				uint32_t bg_green = (dest[i] >> 8) & 0xff;
+				uint32_t bg_blue = (dest[i]) & 0xff;
+
+				uint32_t red = clamp<uint32_t>((0x10000 - fg_red * fg_alpha + bg_red * bg_alpha) / 256, 256, 256 + 255) - 256;
+				uint32_t green = clamp<uint32_t>((0x10000 - fg_green * fg_alpha + bg_green * bg_alpha) / 256, 256, 256 + 255) - 256;
+				uint32_t blue = clamp<uint32_t>((0x10000 - fg_blue * fg_alpha + bg_blue * bg_alpha) / 256, 256, 256 + 255) - 256;
+
+				dest[i] = 0xff000000 | (red << 16) | (green << 8) | blue;
+
 				local_vplce[i] += local_vince[i];
 			}
 			dest += pitch;
@@ -3036,29 +3045,31 @@ public:
 		uint32_t light = calc_light_multiplier(_light);
 		ShadeConstants shade_constants = _shade_constants;
 
-		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
+		uint32_t src_alpha = _srcalpha >> (FRACBITS - 8);
+		uint32_t dest_alpha = _destalpha >> (FRACBITS - 8);
 
 		do
 		{
 			uint32_t pix = source[frac >> bits];
-			if (pix != 0)
-			{
-				uint32_t fg = shade_bgra(pix, light, shade_constants);
-				uint32_t fg_red = (fg >> 16) & 0xff;
-				uint32_t fg_green = (fg >> 8) & 0xff;
-				uint32_t fg_blue = fg & 0xff;
 
-				uint32_t bg_red = (*dest >> 16) & 0xff;
-				uint32_t bg_green = (*dest >> 8) & 0xff;
-				uint32_t bg_blue = (*dest) & 0xff;
+			uint32_t fg_alpha, bg_alpha;
+			calc_blend_alpha(pix, src_alpha, dest_alpha, fg_alpha, bg_alpha);
 
-				uint32_t red = clamp<uint32_t>((0x10000 + fg_red * fg_alpha - bg_red * bg_alpha) / 256, 256, 256 + 255) - 256;
-				uint32_t green = clamp<uint32_t>((0x10000 + fg_green * fg_alpha - bg_green * bg_alpha) / 256, 256, 256 + 255) - 256;
-				uint32_t blue = clamp<uint32_t>((0x10000 + fg_blue * fg_alpha - bg_blue * bg_alpha) / 256, 256, 256 + 255) - 256;
+			uint32_t fg = shade_bgra(pix, light, shade_constants);
+			uint32_t fg_red = (fg >> 16) & 0xff;
+			uint32_t fg_green = (fg >> 8) & 0xff;
+			uint32_t fg_blue = fg & 0xff;
 
-				*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
-			}
+			uint32_t bg_red = (*dest >> 16) & 0xff;
+			uint32_t bg_green = (*dest >> 8) & 0xff;
+			uint32_t bg_blue = (*dest) & 0xff;
+
+			uint32_t red = clamp<uint32_t>((0x10000 + fg_red * fg_alpha - bg_red * bg_alpha) / 256, 256, 256 + 255) - 256;
+			uint32_t green = clamp<uint32_t>((0x10000 + fg_green * fg_alpha - bg_green * bg_alpha) / 256, 256, 256 + 255) - 256;
+			uint32_t blue = clamp<uint32_t>((0x10000 + fg_blue * fg_alpha - bg_blue * bg_alpha) / 256, 256, 256 + 255) - 256;
+
+			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
+
 			frac += fracstep;
 			dest += pitch;
 		} while (--count);
@@ -3116,8 +3127,8 @@ public:
 
 		ShadeConstants shade_constants = _shade_constants;
 
-		uint32_t fg_alpha = _srcalpha >> (FRACBITS - 8);
-		uint32_t bg_alpha = _destalpha >> (FRACBITS - 8);
+		uint32_t src_alpha = _srcalpha >> (FRACBITS - 8);
+		uint32_t dest_alpha = _destalpha >> (FRACBITS - 8);
 
 		DWORD local_vplce[4] = { vplce[0], vplce[1], vplce[2], vplce[3] };
 		DWORD local_vince[4] = { vince[0], vince[1], vince[2], vince[3] };
@@ -3133,23 +3144,25 @@ public:
 			for (int i = 0; i < 4; ++i)
 			{
 				uint32_t pix = bufplce[i][local_vplce[i] >> bits];
-				if (pix != 0)
-				{
-					uint32_t fg = shade_bgra(pix, light[i], shade_constants);
-					uint32_t fg_red = (fg >> 16) & 0xff;
-					uint32_t fg_green = (fg >> 8) & 0xff;
-					uint32_t fg_blue = fg & 0xff;
 
-					uint32_t bg_red = (dest[i] >> 16) & 0xff;
-					uint32_t bg_green = (dest[i] >> 8) & 0xff;
-					uint32_t bg_blue = (dest[i]) & 0xff;
+				uint32_t fg_alpha, bg_alpha;
+				calc_blend_alpha(pix, src_alpha, dest_alpha, fg_alpha, bg_alpha);
 
-					uint32_t red = clamp<uint32_t>((0x10000 + fg_red * fg_alpha - bg_red * bg_alpha) / 256, 256, 256 + 255) - 256;
-					uint32_t green = clamp<uint32_t>((0x10000 + fg_green * fg_alpha - bg_green * bg_alpha) / 256, 256, 256 + 255) - 256;
-					uint32_t blue = clamp<uint32_t>((0x10000 + fg_blue * fg_alpha - bg_blue * bg_alpha) / 256, 256, 256 + 255) - 256;
+				uint32_t fg = shade_bgra(pix, light[i], shade_constants);
+				uint32_t fg_red = (fg >> 16) & 0xff;
+				uint32_t fg_green = (fg >> 8) & 0xff;
+				uint32_t fg_blue = fg & 0xff;
 
-					dest[i] = 0xff000000 | (red << 16) | (green << 8) | blue;
-				}
+				uint32_t bg_red = (dest[i] >> 16) & 0xff;
+				uint32_t bg_green = (dest[i] >> 8) & 0xff;
+				uint32_t bg_blue = (dest[i]) & 0xff;
+
+				uint32_t red = clamp<uint32_t>((0x10000 + fg_red * fg_alpha - bg_red * bg_alpha) / 256, 256, 256 + 255) - 256;
+				uint32_t green = clamp<uint32_t>((0x10000 + fg_green * fg_alpha - bg_green * bg_alpha) / 256, 256, 256 + 255) - 256;
+				uint32_t blue = clamp<uint32_t>((0x10000 + fg_blue * fg_alpha - bg_blue * bg_alpha) / 256, 256, 256 + 255) - 256;
+
+				dest[i] = 0xff000000 | (red << 16) | (green << 8) | blue;
+
 				local_vplce[i] += local_vince[i];
 			}
 			dest += pitch;
@@ -3733,7 +3746,14 @@ fixed_t tmvline1_add_rgba()
 
 void tmvline4_add_rgba()
 {
+#ifdef NO_SSE
 	DrawerCommandQueue::QueueCommand<Tmvline4AddRGBACommand>();
+#else
+	if (!r_linearlight)
+		DrawerCommandQueue::QueueCommand<Tmvline4AddRGBA_SSE_Command>();
+	else
+		DrawerCommandQueue::QueueCommand<Tmvline4AddRGBA_AVX_Command>();
+#endif
 	for (int i = 0; i < 4; i++)
 		vplce[i] += vince[i] * dc_count;
 }
@@ -3746,7 +3766,14 @@ fixed_t tmvline1_addclamp_rgba()
 
 void tmvline4_addclamp_rgba()
 {
+#ifdef NO_SSE
 	DrawerCommandQueue::QueueCommand<Tmvline4AddClampRGBACommand>();
+#else
+	if (!r_linearlight)
+		DrawerCommandQueue::QueueCommand<Tmvline4AddClampRGBA_SSE_Command>();
+	else
+		DrawerCommandQueue::QueueCommand<Tmvline4AddClampRGBA_AVX_Command>();
+#endif
 	for (int i = 0; i < 4; i++)
 		vplce[i] += vince[i] * dc_count;
 }
@@ -3759,7 +3786,14 @@ fixed_t tmvline1_subclamp_rgba()
 
 void tmvline4_subclamp_rgba()
 {
+#ifdef NO_SSE
 	DrawerCommandQueue::QueueCommand<Tmvline4SubClampRGBACommand>();
+#else
+	if (!r_linearlight)
+		DrawerCommandQueue::QueueCommand<Tmvline4SubClampRGBA_SSE_Command>();
+	else
+		DrawerCommandQueue::QueueCommand<Tmvline4SubClampRGBA_AVX_Command>();
+#endif
 	for (int i = 0; i < 4; i++)
 		vplce[i] += vince[i] * dc_count;
 }
@@ -3772,7 +3806,14 @@ fixed_t tmvline1_revsubclamp_rgba()
 
 void tmvline4_revsubclamp_rgba()
 {
+#ifdef NO_SSE
 	DrawerCommandQueue::QueueCommand<Tmvline4RevSubClampRGBACommand>();
+#else
+	if (!r_linearlight)
+		DrawerCommandQueue::QueueCommand<Tmvline4RevSubClampRGBA_SSE_Command>();
+	else
+		DrawerCommandQueue::QueueCommand<Tmvline4RevSubClampRGBA_AVX_Command>();
+#endif
 	for (int i = 0; i < 4; i++)
 		vplce[i] += vince[i] * dc_count;
 }

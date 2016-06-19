@@ -1436,7 +1436,14 @@ void rt_subclamp1col_rgba (int hx, int sx, int yl, int yh)
 // Subtracts all four spans to the screen starting at sx with clamping.
 void rt_subclamp4cols_rgba (int sx, int yl, int yh)
 {
+#ifdef NO_SSE
 	DrawerCommandQueue::QueueCommand<RtSubClamp4colsRGBACommand>(sx, yl, yh);
+#else
+	if (!r_linearlight)
+		DrawerCommandQueue::QueueCommand<RtSubClamp4colsRGBA_SSE_Command>(sx, yl, yh);
+	else
+		DrawerCommandQueue::QueueCommand<RtSubClamp4colsRGBA_AVX_Command>(sx, yl, yh);
+#endif
 }
 
 // Translates and subtracts one span at hx to the screen at sx with clamping.
@@ -1462,7 +1469,14 @@ void rt_revsubclamp1col_rgba (int hx, int sx, int yl, int yh)
 // Subtracts all four spans from the screen starting at sx with clamping.
 void rt_revsubclamp4cols_rgba (int sx, int yl, int yh)
 {
+#ifdef NO_SSE
 	DrawerCommandQueue::QueueCommand<RtRevSubClamp4colsRGBACommand>(sx, yl, yh);
+#else
+	if (!r_linearlight)
+		DrawerCommandQueue::QueueCommand<RtRevSubClamp4colsRGBA_SSE_Command>(sx, yl, yh);
+	else
+		DrawerCommandQueue::QueueCommand<RtRevSubClamp4colsRGBA_AVX_Command>(sx, yl, yh);
+#endif
 }
 
 // Translates and subtracts one span at hx from the screen at sx with clamping.

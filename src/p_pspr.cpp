@@ -1163,8 +1163,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, A_ClearOverlays)
 	player_t *player = self->player;
 	if (!start && !stop)
 	{
-		start = -INT_MAX;
-		stop = PSP_TARGETCENTER - 1;
+		start = INT_MIN;
+		stop = safety ? PSP_TARGETCENTER - 1 : INT_MAX;
 	}
 
 	int count = 0;

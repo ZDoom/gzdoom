@@ -8094,6 +8094,10 @@ scriptwait:
 			break;
 
 // [BC] Start ST PCD's
+		case PCD_ISNETWORKGAME:
+			PushToStack(netgame);
+			break;
+
 		case PCD_PLAYERTEAM:
 			if ( activator && activator->player )
 				PushToStack( activator->player->userinfo.GetTeam() );

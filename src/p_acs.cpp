@@ -8130,7 +8130,7 @@ scriptwait:
 			break;
 
 		case PCD_SINGLEPLAYER:
-			PushToStack (!netgame);
+			PushToStack (!multiplayer);
 			break;
 // [BC] End ST PCD's
 

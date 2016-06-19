@@ -342,11 +342,6 @@ void P_SpawnLinePortal(line_t* line)
 		{
 			port->mDefFlags = port->mType == PORTT_VISUAL ? PORTF_VISIBLE : port->mType == PORTT_TELEPORT ? PORTF_TYPETELEPORT : PORTF_TYPEINTERACTIVE;
 		}
-
-		// Get the angle between the two linedefs, for rotating
-		// orientation and velocity. Rotate 180 degrees, and flip
-		// the position across the exit linedef, if reversed.
-		SetRotation(port);
 	}
 	else if (line->args[2] == PORTT_LINKEDEE && line->args[0] == 0)
 	{
@@ -367,7 +362,6 @@ void P_SpawnLinePortal(line_t* line)
 				port->mType = PORTT_LINKED;
 				port->mAlign = PORG_ABSOLUTE;
 				port->mDefFlags = PORTF_TYPEINTERACTIVE;
-				SetRotation(port);
 
 				// we need to create the backlink here, too.
 				lines[i].portalindex = linePortals.Reserve(1);
@@ -379,8 +373,6 @@ void P_SpawnLinePortal(line_t* line)
 				port->mType = PORTT_LINKED;
 				port->mAlign = PORG_ABSOLUTE;
 				port->mDefFlags = PORTF_TYPEINTERACTIVE;
-
-				SetRotation(port);
 			}
 		}
 	}
@@ -430,6 +422,9 @@ void P_UpdatePortal(FLinePortal *port)
 			}
 		}
  	}
+
+	// Cache the angle between the two linedefs, for rotating.
+	SetRotation(port);
 }
 
 //============================================================================

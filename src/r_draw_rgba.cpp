@@ -58,7 +58,6 @@ extern float rw_lightstep;
 extern int wallshade;
 
 CVAR(Bool, r_multithreaded, true, 0)
-CVAR(Bool, r_linearlight, false, 0)
 
 #ifndef NO_SSE
 
@@ -71,7 +70,7 @@ CVAR(Bool, r_linearlight, false, 0)
 #define VEC_SHADE_INIT4 SSE_SHADE_INIT4
 #define VEC_SHADE SSE_SHADE
 #include "r_draw_rgba_sse.h"
-
+/*
 // Generate AVX drawers:
 #undef VecCommand
 #undef VEC_SHADE_SIMPLE_INIT
@@ -88,7 +87,7 @@ CVAR(Bool, r_linearlight, false, 0)
 #define VEC_SHADE_INIT4 AVX_LINEAR_SHADE_INIT4
 #define VEC_SHADE AVX_LINEAR_SHADE
 #include "r_draw_rgba_sse.h"
-
+*/
 #endif
 
 /////////////////////////////////////////////////////////////////////////////
@@ -3652,10 +3651,7 @@ void R_DrawSpan_rgba()
 #ifdef NO_SSE
 	DrawerCommandQueue::QueueCommand<DrawSpanRGBACommand>();
 #else
-	if (!r_linearlight)
-		DrawerCommandQueue::QueueCommand<DrawSpanRGBA_SSE_Command>();
-	else
-		DrawerCommandQueue::QueueCommand<DrawSpanRGBA_AVX_Command>();
+	DrawerCommandQueue::QueueCommand<DrawSpanRGBA_SSE_Command>();
 #endif
 }
 
@@ -3709,10 +3705,7 @@ void vlinec4_rgba()
 #ifdef NO_SSE
 	DrawerCommandQueue::QueueCommand<Vlinec4RGBACommand>();
 #else
-	if (!r_linearlight)
-		DrawerCommandQueue::QueueCommand<Vlinec4RGBA_SSE_Command>();
-	else
-		DrawerCommandQueue::QueueCommand<Vlinec4RGBA_AVX_Command>();
+	DrawerCommandQueue::QueueCommand<Vlinec4RGBA_SSE_Command>();
 #endif
 	for (int i = 0; i < 4; i++)
 		vplce[i] += vince[i] * dc_count;
@@ -3729,10 +3722,7 @@ void mvlinec4_rgba()
 #ifdef NO_SSE
 	DrawerCommandQueue::QueueCommand<Mvlinec4RGBACommand>();
 #else
-	if (!r_linearlight)
-		DrawerCommandQueue::QueueCommand<Mvlinec4RGBA_SSE_Command>();
-	else
-		DrawerCommandQueue::QueueCommand<Mvlinec4RGBA_AVX_Command>();
+	DrawerCommandQueue::QueueCommand<Mvlinec4RGBA_SSE_Command>();
 #endif
 	for (int i = 0; i < 4; i++)
 		vplce[i] += vince[i] * dc_count;
@@ -3749,10 +3739,7 @@ void tmvline4_add_rgba()
 #ifdef NO_SSE
 	DrawerCommandQueue::QueueCommand<Tmvline4AddRGBACommand>();
 #else
-	if (!r_linearlight)
-		DrawerCommandQueue::QueueCommand<Tmvline4AddRGBA_SSE_Command>();
-	else
-		DrawerCommandQueue::QueueCommand<Tmvline4AddRGBA_AVX_Command>();
+	DrawerCommandQueue::QueueCommand<Tmvline4AddRGBA_SSE_Command>();
 #endif
 	for (int i = 0; i < 4; i++)
 		vplce[i] += vince[i] * dc_count;
@@ -3769,10 +3756,7 @@ void tmvline4_addclamp_rgba()
 #ifdef NO_SSE
 	DrawerCommandQueue::QueueCommand<Tmvline4AddClampRGBACommand>();
 #else
-	if (!r_linearlight)
-		DrawerCommandQueue::QueueCommand<Tmvline4AddClampRGBA_SSE_Command>();
-	else
-		DrawerCommandQueue::QueueCommand<Tmvline4AddClampRGBA_AVX_Command>();
+	DrawerCommandQueue::QueueCommand<Tmvline4AddClampRGBA_SSE_Command>();
 #endif
 	for (int i = 0; i < 4; i++)
 		vplce[i] += vince[i] * dc_count;
@@ -3789,10 +3773,7 @@ void tmvline4_subclamp_rgba()
 #ifdef NO_SSE
 	DrawerCommandQueue::QueueCommand<Tmvline4SubClampRGBACommand>();
 #else
-	if (!r_linearlight)
-		DrawerCommandQueue::QueueCommand<Tmvline4SubClampRGBA_SSE_Command>();
-	else
-		DrawerCommandQueue::QueueCommand<Tmvline4SubClampRGBA_AVX_Command>();
+	DrawerCommandQueue::QueueCommand<Tmvline4SubClampRGBA_SSE_Command>();
 #endif
 	for (int i = 0; i < 4; i++)
 		vplce[i] += vince[i] * dc_count;
@@ -3809,10 +3790,7 @@ void tmvline4_revsubclamp_rgba()
 #ifdef NO_SSE
 	DrawerCommandQueue::QueueCommand<Tmvline4RevSubClampRGBACommand>();
 #else
-	if (!r_linearlight)
-		DrawerCommandQueue::QueueCommand<Tmvline4RevSubClampRGBA_SSE_Command>();
-	else
-		DrawerCommandQueue::QueueCommand<Tmvline4RevSubClampRGBA_AVX_Command>();
+	DrawerCommandQueue::QueueCommand<Tmvline4RevSubClampRGBA_SSE_Command>();
 #endif
 	for (int i = 0; i < 4; i++)
 		vplce[i] += vince[i] * dc_count;

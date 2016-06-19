@@ -51,8 +51,6 @@ extern unsigned int dc_tspans[4][MAXHEIGHT];
 extern unsigned int *dc_ctspan[4];
 extern unsigned int *horizspan[4];
 
-EXTERN_CVAR(Bool, r_linearlight)
-
 #ifndef NO_SSE
 
 // Generate SSE drawers:
@@ -64,7 +62,7 @@ EXTERN_CVAR(Bool, r_linearlight)
 #define VEC_SHADE_INIT4 SSE_SHADE_INIT4
 #define VEC_SHADE SSE_SHADE
 #include "r_drawt_rgba_sse.h"
-
+/*
 // Generate AVX drawers:
 #undef VecCommand
 #undef VEC_SHADE_SIMPLE_INIT
@@ -81,7 +79,7 @@ EXTERN_CVAR(Bool, r_linearlight)
 #define VEC_SHADE_INIT4 AVX_LINEAR_SHADE_INIT4
 #define VEC_SHADE AVX_LINEAR_SHADE
 #include "r_drawt_rgba_sse.h"
-
+*/
 #endif
 
 /////////////////////////////////////////////////////////////////////////////
@@ -1311,10 +1309,7 @@ void rt_map4cols_rgba (int sx, int yl, int yh)
 #ifdef NO_SSE
 	DrawerCommandQueue::QueueCommand<RtMap4colsRGBACommand>(sx, yl, yh);
 #else
-	if (!r_linearlight)
-		DrawerCommandQueue::QueueCommand<RtMap4colsRGBA_SSE_Command>(sx, yl, yh);
-	else
-		DrawerCommandQueue::QueueCommand<RtMap4colsRGBA_AVX_Command>(sx, yl, yh);
+	DrawerCommandQueue::QueueCommand<RtMap4colsRGBA_SSE_Command>(sx, yl, yh);
 #endif
 }
 
@@ -1354,10 +1349,7 @@ void rt_add4cols_rgba (int sx, int yl, int yh)
 #ifdef NO_SSE
 	DrawerCommandQueue::QueueCommand<RtAdd4colsRGBACommand>(sx, yl, yh);
 #else
-	if (!r_linearlight)
-		DrawerCommandQueue::QueueCommand<RtAdd4colsRGBA_SSE_Command>(sx, yl, yh);
-	else
-		DrawerCommandQueue::QueueCommand<RtAdd4colsRGBA_AVX_Command>(sx, yl, yh);
+	DrawerCommandQueue::QueueCommand<RtAdd4colsRGBA_SSE_Command>(sx, yl, yh);
 #endif
 }
 
@@ -1387,10 +1379,7 @@ void rt_shaded4cols_rgba (int sx, int yl, int yh)
 #ifdef NO_SSE
 	DrawerCommandQueue::QueueCommand<RtShaded4colsRGBACommand>(sx, yl, yh);
 #else
-	if (!r_linearlight)
-		DrawerCommandQueue::QueueCommand<RtShaded4colsRGBA_SSE_Command>(sx, yl, yh);
-	else
-		DrawerCommandQueue::QueueCommand<RtShaded4colsRGBA_AVX_Command>(sx, yl, yh);
+	DrawerCommandQueue::QueueCommand<RtShaded4colsRGBA_SSE_Command>(sx, yl, yh);
 #endif
 }
 
@@ -1406,10 +1395,7 @@ void rt_addclamp4cols_rgba (int sx, int yl, int yh)
 #ifdef NO_SSE
 	DrawerCommandQueue::QueueCommand<RtAddClamp4colsRGBACommand>(sx, yl, yh);
 #else
-	if (!r_linearlight)
-		DrawerCommandQueue::QueueCommand<RtAddClamp4colsRGBA_SSE_Command>(sx, yl, yh);
-	else
-		DrawerCommandQueue::QueueCommand<RtAddClamp4colsRGBA_AVX_Command>(sx, yl, yh);
+	DrawerCommandQueue::QueueCommand<RtAddClamp4colsRGBA_SSE_Command>(sx, yl, yh);
 #endif
 }
 
@@ -1439,10 +1425,7 @@ void rt_subclamp4cols_rgba (int sx, int yl, int yh)
 #ifdef NO_SSE
 	DrawerCommandQueue::QueueCommand<RtSubClamp4colsRGBACommand>(sx, yl, yh);
 #else
-	if (!r_linearlight)
-		DrawerCommandQueue::QueueCommand<RtSubClamp4colsRGBA_SSE_Command>(sx, yl, yh);
-	else
-		DrawerCommandQueue::QueueCommand<RtSubClamp4colsRGBA_AVX_Command>(sx, yl, yh);
+	DrawerCommandQueue::QueueCommand<RtSubClamp4colsRGBA_SSE_Command>(sx, yl, yh);
 #endif
 }
 
@@ -1472,10 +1455,7 @@ void rt_revsubclamp4cols_rgba (int sx, int yl, int yh)
 #ifdef NO_SSE
 	DrawerCommandQueue::QueueCommand<RtRevSubClamp4colsRGBACommand>(sx, yl, yh);
 #else
-	if (!r_linearlight)
-		DrawerCommandQueue::QueueCommand<RtRevSubClamp4colsRGBA_SSE_Command>(sx, yl, yh);
-	else
-		DrawerCommandQueue::QueueCommand<RtRevSubClamp4colsRGBA_AVX_Command>(sx, yl, yh);
+	DrawerCommandQueue::QueueCommand<RtRevSubClamp4colsRGBA_SSE_Command>(sx, yl, yh);
 #endif
 }
 

@@ -3192,50 +3192,32 @@ static void P_GroupLines (bool buildmap)
 	{
 		if (linesDoneInEachSector[i] != sector->linecount)
 		{
-			I_Error ("P_GroupLines: miscounted");
+			I_Error("P_GroupLines: miscounted");
 		}
-		if (sector->linecount != 0)
+		if (sector->linecount > 3)
 		{
-			bbox.ClearBox ();
+			bbox.ClearBox();
 			for (j = 0; j < sector->linecount; ++j)
 			{
 				li = sector->lines[j];
-				bbox.AddToBox (li->v1->fPos());
-				bbox.AddToBox (li->v2->fPos());
+				bbox.AddToBox(li->v1->fPos());
+				bbox.AddToBox(li->v2->fPos());
 			}
+
+			// set the center to the middle of the bounding box
+			sector->centerspot.X = (bbox.Right() + bbox.Left()) / 2;
+			sector->centerspot.Y = (bbox.Top() + bbox.Bottom()) / 2;
 		}
-
-		// set the center to the middle of the bounding box
-		sector->centerspot.X = (bbox.Right() + bbox.Left()) / 2;
-		sector->centerspot.Y = (bbox.Top() + bbox.Bottom()) / 2;
-
-		// For triangular sectors the above does not calculate good points unless the longest of the triangle's lines is perfectly horizontal and vertical
-		if (sector->linecount == 3)
+		else if (sector->linecount > 0)
 		{
-			vertex_t *Triangle[2];
-			Triangle[0] = sector->lines[0]->v1;
-			Triangle[1] = sector->lines[0]->v2;
-			if (sector->linecount > 1)
+			// For triangular sectors the above does not calculate good points unless the longest of the triangle's lines is perfectly horizontal and vertical
+			DVector2 pos = { 0,0 };
+			for (int i = 0; i < sector->linecount; i++)
 			{
-				double dx = Triangle[1]->fX() - Triangle[0]->fX();
-				double dy = Triangle[1]->fY() - Triangle[0]->fY();
-				// Find another point in the sector that does not lie
-				// on the same line as the first two points.
-				for (j = 0; j < 2; ++j)
-				{
-					vertex_t *v;
-
-					v = (j == 1) ? sector->lines[1]->v1 : sector->lines[1]->v2;
-					if ( (v->fY() - Triangle[0]->fY()) * dx + (Triangle[0]->fX() - v->fX() * dy) != 0)
-					{
-						sector->centerspot.X = (Triangle[0]->fX() / 3 + Triangle[1]->fX() / 3 + v->fX() / 3);
-						sector->centerspot.Y = (Triangle[0]->fY() / 3 + Triangle[1]->fY() / 3 + v->fY() / 3);
-						break;
-					}
-				}
+				pos += sector->lines[i]->v1->fPos() + sector->lines[i]->v2->fPos();
 			}
+			sector->centerspot = pos / (2 * sector->linecount);
 		}
-
 	}
 	delete[] linesDoneInEachSector;
 	times[3].Unclock();

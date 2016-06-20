@@ -71,6 +71,8 @@ extern "C" fixed_t		dc_destalpha;
 
 // first pixel in a column
 extern "C" const BYTE*	dc_source;
+extern "C" const BYTE*	dc_source2;
+extern "C" uint32_t		dc_texturefracx;
 
 extern "C" BYTE			*dc_dest, *dc_destorg;
 extern "C" int			dc_count;
@@ -80,6 +82,8 @@ extern "C" DWORD		vince[4];
 extern "C" BYTE*		palookupoffse[4];
 extern "C" fixed_t		palookuplight[4];
 extern "C" const BYTE*	bufplce[4];
+extern "C" const BYTE*	bufplce2[4];
+extern "C" uint32_t		buftexturefracx[4];
 
 // [RH] Temporary buffer for column drawing
 extern "C" BYTE			*dc_temp;
@@ -373,5 +377,37 @@ void R_SetColorMapLight(FColormap *base_colormap, float light, int shade);
 void R_SetDSColorMapLight(FColormap *base_colormap, float light, int shade);
 
 void R_SetTranslationMap(lighttable_t *translation);
+
+extern bool r_swtruecolor;
+EXTERN_CVAR(Bool, r_bilinear);
+
+// Texture sampler state needed for bilinear filtering
+struct SamplerSetup
+{
+	SamplerSetup() { }
+	SamplerSetup(fixed_t xoffset, bool magnifying, FTexture *texture, const BYTE*(*getcol)(FTexture *texture, int x));
+
+	const BYTE *source;
+	const BYTE *source2;
+	uint32_t texturefracx;
+};
+
+inline SamplerSetup::SamplerSetup(fixed_t xoffset, bool magnifying, FTexture *texture, const BYTE*(*getcol)(FTexture *texture, int x))
+{
+	// Only do bilinear filtering if enabled and not a magnifying filter
+	if (!r_swtruecolor || !r_bilinear || magnifying)
+	{
+		source = getcol(texture, xoffset >> FRACBITS);
+		source2 = nullptr;
+		texturefracx = 0;
+	}
+	else
+	{
+		int tx = (xoffset - FRACUNIT / 2) >> FRACBITS;
+		source = getcol(texture, tx);
+		source2 = getcol(texture, tx + 1);
+		texturefracx = ((xoffset + FRACUNIT / 2) >> (FRACBITS - 4)) & 15;
+	}
+}
 
 #endif

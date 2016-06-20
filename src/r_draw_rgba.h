@@ -426,6 +426,58 @@ FORCEINLINE uint32_t alpha_blend(uint32_t fg, uint32_t bg)
 	return 0xff000000 | (red << 16) | (green << 8) | blue;
 }
 
+FORCEINLINE uint32_t sample_bilinear(const uint32_t *col0, const uint32_t *col1, uint32_t texturefracx, uint32_t texturefracy, int ybits)
+{
+	uint32_t half = 1 << (ybits - 1);
+	uint32_t y = (texturefracy - half) >> ybits;
+
+	uint32_t p00 = col0[y];
+	uint32_t p01 = col0[y + 1];
+	uint32_t p10 = col1[y];
+	uint32_t p11 = col1[y + 1];
+
+	uint32_t inv_b = texturefracx;
+	uint32_t inv_a = ((texturefracy + half) >> (ybits - 4)) & 15;
+	uint32_t a = 16 - inv_a;
+	uint32_t b = 16 - inv_b;
+
+	uint32_t red = (RPART(p00) * a * b + RPART(p01) * inv_a * b + RPART(p10) * a * inv_b + RPART(p11) * inv_a * inv_b + 127) >> 8;
+	uint32_t green = (GPART(p00) * a * b + GPART(p01) * inv_a * b + GPART(p10) * a * inv_b + GPART(p11) * inv_a * inv_b + 127) >> 8;
+	uint32_t blue = (BPART(p00) * a * b + BPART(p01) * inv_a * b + BPART(p10) * a * inv_b + BPART(p11) * inv_a * inv_b + 127) >> 8;
+	uint32_t alpha = (APART(p00) * a * b + APART(p01) * inv_a * b + APART(p10) * a * inv_b + APART(p11) * inv_a * inv_b + 127) >> 8;
+
+	return (alpha << 24) | (red << 16) | (green << 8) | blue;
+}
+
+FORCEINLINE uint32_t sample_bilinear(const uint32_t *texture, dsfixed_t xfrac, dsfixed_t yfrac, int xbits, int ybits)
+{
+	int xshift = (32 - xbits);
+	int yshift = (32 - ybits);
+	int xmask = (1 << xshift) - 1;
+	int ymask = (1 << yshift) - 1;
+	uint32_t xhalf = 1 << (xbits - 1);
+	uint32_t yhalf = 1 << (ybits - 1);
+	uint32_t x = (xfrac - xhalf) >> xbits;
+	uint32_t y = (yfrac - yhalf) >> ybits;
+
+	uint32_t p00 = texture[(y & ymask)     + ((x & xmask) << yshift)];
+	uint32_t p01 = texture[(y + 1 & ymask) + ((x & xmask) << yshift)];
+	uint32_t p10 = texture[(y & ymask)     + (((x + 1) & xmask) << yshift)];
+	uint32_t p11 = texture[(y + 1 & ymask) + (((x + 1) & xmask) << yshift)];
+
+	uint32_t inv_b = ((xfrac + xhalf) >> (xbits - 4)) & 15;
+	uint32_t inv_a = ((yfrac + yhalf) >> (ybits - 4)) & 15;
+	uint32_t a = 16 - inv_a;
+	uint32_t b = 16 - inv_b;
+
+	uint32_t red = (RPART(p00) * a * b + RPART(p01) * inv_a * b + RPART(p10) * a * inv_b + RPART(p11) * inv_a * inv_b + 127) >> 8;
+	uint32_t green = (GPART(p00) * a * b + GPART(p01) * inv_a * b + GPART(p10) * a * inv_b + GPART(p11) * inv_a * inv_b + 127) >> 8;
+	uint32_t blue = (BPART(p00) * a * b + BPART(p01) * inv_a * b + BPART(p10) * a * inv_b + BPART(p11) * inv_a * inv_b + 127) >> 8;
+	uint32_t alpha = (APART(p00) * a * b + APART(p01) * inv_a * b + APART(p10) * a * inv_b + APART(p11) * inv_a * inv_b + 127) >> 8;
+
+	return (alpha << 24) | (red << 16) | (green << 8) | blue;
+}
+
 // Calculate constants for a simple shade with gamma correction
 #define AVX_LINEAR_SHADE_SIMPLE_INIT(light) \
 	__m256 mlight_hi = _mm256_set_ps(1.0f, light * (1.0f/256.0f), light * (1.0f/256.0f), light * (1.0f/256.0f), 1.0f, light * (1.0f/256.0f), light * (1.0f/256.0f), light * (1.0f/256.0f)); \

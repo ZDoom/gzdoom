@@ -162,6 +162,8 @@ fixed_t			dc_destalpha;			// Alpha value used by dc_destblend
 
 // first pixel in a column (possibly virtual) 
 const BYTE*		dc_source;				
+const BYTE*		dc_source2;
+uint32_t		dc_texturefracx;
 
 BYTE*			dc_dest;
 int				dc_count;
@@ -171,6 +173,8 @@ DWORD			vince[4];
 BYTE*			palookupoffse[4];
 fixed_t			palookuplight[4];
 const BYTE*		bufplce[4];
+const BYTE*		bufplce2[4];
+uint32_t		buftexturefracx[4];
 
 // just for profiling 
 int 			dccount;

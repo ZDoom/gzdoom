@@ -558,7 +558,7 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetPlayerInput)
 		assert(ret != nullptr);
 		PARAM_SELF_PROLOGUE(AActor);
 		PARAM_INT		(inputnum);
-		PARAM_INT_OPT	(ptr)		{ ptr = AAPTR_PLAYER1; }
+		PARAM_INT_OPT	(ptr)		{ ptr = AAPTR_DEFAULT; }
 
 		AActor *mobj = COPY_AAPTR(self, ptr);
 

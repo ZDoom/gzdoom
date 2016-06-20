@@ -312,6 +312,8 @@ DEFINE_ACTION_FUNCTION_PARAMS(AActor, GetDistance)
 			DVector3 diff = self->Vec3To(target);
 			if (checkz)
 				diff.Z += (target->Height - self->Height) / 2;
+			else
+				diff.Z = 0.;
 
 			ret->SetFloat(diff.Length());
 		}

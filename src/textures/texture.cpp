@@ -203,7 +203,10 @@ const uint32_t *FTexture::GetPixelsBgra()
 		PixelsBgra.resize(Width * Height);
 		for (int i = 0; i < Width * Height; i++)
 		{
-			PixelsBgra[i] = 0xff000000 | GPalette.BaseColors[indices[i]].d;
+			if (indices[i] != 0)
+				PixelsBgra[i] = 0xff000000 | GPalette.BaseColors[indices[i]].d;
+			else
+				PixelsBgra[i] = 0;
 		}
 	}
 	return PixelsBgra.data();

@@ -339,6 +339,7 @@ FORCEINLINE uint32_t shade_bgra_simple(uint32_t color, uint32_t light)
 FORCEINLINE uint32_t shade_pal_index(uint32_t index, uint32_t light, const ShadeConstants &constants)
 {
 	const PalEntry &color = GPalette.BaseColors[index];
+	uint32_t alpha = color.d & 0xff000000;
 	uint32_t red = color.r;
 	uint32_t green = color.g;
 	uint32_t blue = color.b;
@@ -367,11 +368,12 @@ FORCEINLINE uint32_t shade_pal_index(uint32_t index, uint32_t light, const Shade
 		green = (green * constants.light_green) / 256;
 		blue = (blue * constants.light_blue) / 256;
 	}
-	return 0xff000000 | (red << 16) | (green << 8) | blue;
+	return alpha | (red << 16) | (green << 8) | blue;
 }
 
 FORCEINLINE uint32_t shade_bgra(uint32_t color, uint32_t light, const ShadeConstants &constants)
 {
+	uint32_t alpha = color & 0xff000000;
 	uint32_t red = (color >> 16) & 0xff;
 	uint32_t green = (color >> 8) & 0xff;
 	uint32_t blue = color & 0xff;
@@ -400,12 +402,12 @@ FORCEINLINE uint32_t shade_bgra(uint32_t color, uint32_t light, const ShadeConst
 		green = (green * constants.light_green) / 256;
 		blue = (blue * constants.light_blue) / 256;
 	}
-	return 0xff000000 | (red << 16) | (green << 8) | blue;
+	return alpha | (red << 16) | (green << 8) | blue;
 }
 
 FORCEINLINE uint32_t alpha_blend(uint32_t fg, uint32_t bg)
 {
-	uint32_t fg_alpha = (fg >> 24) & 0xff;
+	uint32_t fg_alpha = fg >> 24;
 	uint32_t fg_red = (fg >> 16) & 0xff;
 	uint32_t fg_green = (fg >> 8) & 0xff;
 	uint32_t fg_blue = fg & 0xff;
@@ -468,11 +470,11 @@ FORCEINLINE uint32_t alpha_blend(uint32_t fg, uint32_t bg)
 	__m256 mrcp_255 = _mm256_set1_ps(1.0f/255.0f); \
 	__m256 m255 = _mm256_set1_ps(255.0f); \
 	__m256 color = _mm256_set_ps( \
-		shade_constants.light_alpha * (1.0f/256.0f), shade_constants.light_red * (1.0f/256.0f), shade_constants.light_green * (1.0f/256.0f), shade_constants.light_blue * (1.0f/256.0f), \
-		shade_constants.light_alpha * (1.0f/256.0f), shade_constants.light_red * (1.0f/256.0f), shade_constants.light_green * (1.0f/256.0f), shade_constants.light_blue * (1.0f/256.0f)); \
+		1.0f, shade_constants.light_red * (1.0f/256.0f), shade_constants.light_green * (1.0f/256.0f), shade_constants.light_blue * (1.0f/256.0f), \
+		1.0f, shade_constants.light_red * (1.0f/256.0f), shade_constants.light_green * (1.0f/256.0f), shade_constants.light_blue * (1.0f/256.0f)); \
 	__m256 fade = _mm256_set_ps( \
-		shade_constants.fade_alpha * (1.0f/256.0f), shade_constants.fade_red * (1.0f/256.0f), shade_constants.fade_green * (1.0f/256.0f), shade_constants.fade_blue * (1.0f/256.0f), \
-		shade_constants.fade_alpha * (1.0f/256.0f), shade_constants.fade_red * (1.0f/256.0f), shade_constants.fade_green * (1.0f/256.0f), shade_constants.fade_blue * (1.0f/256.0f)); \
+		0.0f, shade_constants.fade_red * (1.0f/256.0f), shade_constants.fade_green * (1.0f/256.0f), shade_constants.fade_blue * (1.0f/256.0f), \
+		0.0f, shade_constants.fade_red * (1.0f/256.0f), shade_constants.fade_green * (1.0f/256.0f), shade_constants.fade_blue * (1.0f/256.0f)); \
 	__m256 fade_amount_hi = _mm256_mul_ps(fade, _mm256_sub_ps(_mm256_set1_ps(1.0f), mlight_hi)); \
 	__m256 fade_amount_lo = _mm256_mul_ps(fade, _mm256_sub_ps(_mm256_set1_ps(1.0f), mlight_lo)); \
 	__m256 inv_desaturate = _mm256_set1_ps((256 - shade_constants.desaturate) * (1.0f/256.0f)); \
@@ -488,11 +490,11 @@ FORCEINLINE uint32_t alpha_blend(uint32_t fg, uint32_t bg)
 	__m256 mrcp_255 = _mm256_set1_ps(1.0f/255.0f); \
 	__m256 m255 = _mm256_set1_ps(255.0f); \
 	__m256 color = _mm256_set_ps( \
-		shade_constants.light_alpha * (1.0f/256.0f), shade_constants.light_red * (1.0f/256.0f), shade_constants.light_green * (1.0f/256.0f), shade_constants.light_blue * (1.0f/256.0f), \
-		shade_constants.light_alpha * (1.0f/256.0f), shade_constants.light_red * (1.0f/256.0f), shade_constants.light_green * (1.0f/256.0f), shade_constants.light_blue * (1.0f/256.0f)); \
+		1.0f, shade_constants.light_red * (1.0f/256.0f), shade_constants.light_green * (1.0f/256.0f), shade_constants.light_blue * (1.0f/256.0f), \
+		1.0f, shade_constants.light_red * (1.0f/256.0f), shade_constants.light_green * (1.0f/256.0f), shade_constants.light_blue * (1.0f/256.0f)); \
 	__m256 fade = _mm256_set_ps( \
-		shade_constants.fade_alpha * (1.0f/256.0f), shade_constants.fade_red * (1.0f/256.0f), shade_constants.fade_green * (1.0f/256.0f), shade_constants.fade_blue * (1.0f/256.0f), \
-		shade_constants.fade_alpha * (1.0f/256.0f), shade_constants.fade_red * (1.0f/256.0f), shade_constants.fade_green * (1.0f/256.0f), shade_constants.fade_blue * (1.0f/256.0f)); \
+		0.0f, shade_constants.fade_red * (1.0f/256.0f), shade_constants.fade_green * (1.0f/256.0f), shade_constants.fade_blue * (1.0f/256.0f), \
+		0.0f, shade_constants.fade_red * (1.0f/256.0f), shade_constants.fade_green * (1.0f/256.0f), shade_constants.fade_blue * (1.0f/256.0f)); \
 	__m256 fade_amount_hi = _mm256_mul_ps(fade, _mm256_sub_ps(_mm256_set1_ps(1.0f), mlight_hi)); \
 	__m256 fade_amount_lo = _mm256_mul_ps(fade, _mm256_sub_ps(_mm256_set1_ps(1.0f), mlight_lo)); \
 	__m256 inv_desaturate = _mm256_set1_ps((256 - shade_constants.desaturate) * (1.0f/256.0f)); \
@@ -585,39 +587,30 @@ FORCEINLINE uint32_t alpha_blend(uint32_t fg, uint32_t bg)
 	fg = _mm_adds_epu8(fg, bg); \
 }
 
-/*
-FORCEINLINE void calc_blend_alpha(uint32_t fg, uint32_t src_alpha, uint32_t dest_alpha, uint32_t &fg_alpha, uint32_t &bg_alpha)
+// Calculates the final alpha values to be used when combined with the source texture alpha channel
+FORCEINLINE uint32_t calc_blend_bgalpha(uint32_t fg, uint32_t dest_alpha)
 {
-	fg_alpha = src_alpha;
-	bg_alpha = dest_alpha;
+	uint32_t alpha = fg >> 24;
+	alpha += alpha >> 7;
+	return 256 - alpha; // (dest_alpha * (256 - alpha)) >> 8;
 }
 
-#define VEC_CALC_BLEND_ALPHA(fg, msrc_alpha, mdest_alpha) \
-	__m128i fg_alpha_hi = msrc_alpha; \
-	__m128i fg_alpha_lo = msrc_alpha; \
-	__m128i bg_alpha_hi = mdest_alpha; \
-	__m128i bg_alpha_lo = mdest_alpha;
-*/
+#define VEC_CALC_BLEND_ALPHA_INIT(src_alpha, dest_alpha) \
+	__m128i msrc_alpha = _mm_set1_epi16(src_alpha); \
+	__m128i mdest_alpha = _mm_set1_epi16(dest_alpha);
 
 // Calculates the final alpha values to be used when combined with the source texture alpha channel
-FORCEINLINE void calc_blend_alpha(uint32_t fg, uint32_t src_alpha, uint32_t dest_alpha, uint32_t &fg_alpha, uint32_t &bg_alpha)
-{
-	fg_alpha = (fg >> 24) & 0xff;
-	fg_alpha += fg_alpha >> 7;
-	bg_alpha = (dest_alpha * (256 - fg_alpha)) >> 8;
-	fg_alpha = (src_alpha * fg_alpha) >> 8;
-}
-
-// Calculates the final alpha values to be used when combined with the source texture alpha channel
-#define VEC_CALC_BLEND_ALPHA(fg, msrc_alpha, mdest_alpha) \
-	__m128i fg_alpha_hi = _mm_shufflehi_epi16(_mm_shufflelo_epi16(_mm_unpackhi_epi8(fg, _mm_setzero_si128()), _MM_SHUFFLE(3, 3, 3, 3)), _MM_SHUFFLE(3, 3, 3, 3)); \
-	__m128i fg_alpha_lo = _mm_shufflehi_epi16(_mm_shufflelo_epi16(_mm_unpacklo_epi8(fg, _mm_setzero_si128()), _MM_SHUFFLE(3, 3, 3, 3)), _MM_SHUFFLE(3, 3, 3, 3)); \
-	fg_alpha_hi = _mm_add_epi16(fg_alpha_hi, _mm_srli_epi16(fg_alpha_hi, 7)); \
-	fg_alpha_lo = _mm_add_epi16(fg_alpha_lo, _mm_srli_epi16(fg_alpha_lo, 7)); \
-	__m128i bg_alpha_hi = _mm_srli_epi16(_mm_mullo_epi16(_mm_sub_epi16(_mm_set1_epi16(256), fg_alpha_hi), mdest_alpha), 8); \
-	__m128i bg_alpha_lo = _mm_srli_epi16(_mm_mullo_epi16(_mm_sub_epi16(_mm_set1_epi16(256), fg_alpha_lo), mdest_alpha), 8); \
-	fg_alpha_hi = _mm_srli_epi16(_mm_mullo_epi16(fg_alpha_hi, msrc_alpha), 8); \
-	fg_alpha_lo = _mm_srli_epi16(_mm_mullo_epi16(fg_alpha_lo, msrc_alpha), 8);
+#define VEC_CALC_BLEND_ALPHA(fg) \
+	__m128i fg_alpha_hi, fg_alpha_lo, bg_alpha_hi, bg_alpha_lo; { \
+		__m128i alpha_hi = _mm_shufflehi_epi16(_mm_shufflelo_epi16(_mm_unpackhi_epi8(fg, _mm_setzero_si128()), _MM_SHUFFLE(3, 3, 3, 3)), _MM_SHUFFLE(3, 3, 3, 3)); \
+		__m128i alpha_lo = _mm_shufflehi_epi16(_mm_shufflelo_epi16(_mm_unpacklo_epi8(fg, _mm_setzero_si128()), _MM_SHUFFLE(3, 3, 3, 3)), _MM_SHUFFLE(3, 3, 3, 3)); \
+		alpha_hi = _mm_add_epi16(alpha_hi, _mm_srli_epi16(alpha_hi, 7)); \
+		alpha_lo = _mm_add_epi16(alpha_lo, _mm_srli_epi16(alpha_lo, 7)); \
+		bg_alpha_hi = _mm_sub_epi16(_mm_set1_epi16(256), alpha_hi); /* _mm_srli_epi16(_mm_mullo_epi16(_mm_sub_epi16(_mm_set1_epi16(256), alpha_hi), mdest_alpha), 8);*/ \
+		bg_alpha_lo = _mm_sub_epi16(_mm_set1_epi16(256), alpha_lo); /* _mm_srli_epi16(_mm_mullo_epi16(_mm_sub_epi16(_mm_set1_epi16(256), alpha_lo), mdest_alpha), 8);*/ \
+		fg_alpha_hi = msrc_alpha; \
+		fg_alpha_lo = msrc_alpha; \
+	}
 
 // Calculate constants for a simple shade
 #define SSE_SHADE_SIMPLE_INIT(light) \
@@ -645,11 +638,11 @@ FORCEINLINE void calc_blend_alpha(uint32_t fg, uint32_t src_alpha, uint32_t dest
 	__m128i mlight_hi = _mm_set_epi16(256, light, light, light, 256, light, light, light); \
 	__m128i mlight_lo = mlight_hi; \
 	__m128i color = _mm_set_epi16( \
-		shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, \
-		shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue); \
+		256, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, \
+		256, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue); \
 	__m128i fade = _mm_set_epi16( \
-		shade_constants.fade_alpha, shade_constants.fade_red, shade_constants.fade_green, shade_constants.fade_blue, \
-		shade_constants.fade_alpha, shade_constants.fade_red, shade_constants.fade_green, shade_constants.fade_blue); \
+		0, shade_constants.fade_red, shade_constants.fade_green, shade_constants.fade_blue, \
+		0, shade_constants.fade_red, shade_constants.fade_green, shade_constants.fade_blue); \
 	__m128i fade_amount_hi = _mm_mullo_epi16(fade, _mm_subs_epu16(_mm_set1_epi16(256), mlight_hi)); \
 	__m128i fade_amount_lo = fade_amount_hi; \
 	__m128i inv_desaturate = _mm_set1_epi16(256 - shade_constants.desaturate); \
@@ -659,11 +652,11 @@ FORCEINLINE void calc_blend_alpha(uint32_t fg, uint32_t src_alpha, uint32_t dest
 	__m128i mlight_hi = _mm_set_epi16(256, light1, light1, light1, 256, light0, light0, light0); \
 	__m128i mlight_lo = _mm_set_epi16(256, light3, light3, light3, 256, light2, light2, light2); \
 	__m128i color = _mm_set_epi16( \
-		shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, \
-		shade_constants.light_alpha, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue); \
+		256, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue, \
+		256, shade_constants.light_red, shade_constants.light_green, shade_constants.light_blue); \
 	__m128i fade = _mm_set_epi16( \
-		shade_constants.fade_alpha, shade_constants.fade_red, shade_constants.fade_green, shade_constants.fade_blue, \
-		shade_constants.fade_alpha, shade_constants.fade_red, shade_constants.fade_green, shade_constants.fade_blue); \
+		0, shade_constants.fade_red, shade_constants.fade_green, shade_constants.fade_blue, \
+		0, shade_constants.fade_red, shade_constants.fade_green, shade_constants.fade_blue); \
 	__m128i fade_amount_hi = _mm_mullo_epi16(fade, _mm_subs_epu16(_mm_set1_epi16(256), mlight_hi)); \
 	__m128i fade_amount_lo = _mm_mullo_epi16(fade, _mm_subs_epu16(_mm_set1_epi16(256), mlight_lo)); \
 	__m128i inv_desaturate = _mm_set1_epi16(256 - shade_constants.desaturate); \

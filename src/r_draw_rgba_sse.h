@@ -554,9 +554,7 @@ public:
 		if (shade_constants.simple_shade)
 		{
 			VEC_SHADE_SIMPLE_INIT4(light[3], light[2], light[1], light[0]);
-
-			__m128i msrc_alpha = _mm_set1_epi16(src_alpha);
-			__m128i mdest_alpha = _mm_set1_epi16(dest_alpha);
+			VEC_CALC_BLEND_ALPHA_INIT(src_alpha, dest_alpha);
 
 			do
 			{
@@ -572,7 +570,7 @@ public:
 
 				__m128i fg = _mm_set_epi32(pix3, pix2, pix1, pix0);
 
-				VEC_CALC_BLEND_ALPHA(fg, msrc_alpha, mdest_alpha);
+				VEC_CALC_BLEND_ALPHA(fg);
 				VEC_SHADE_SIMPLE(fg);
 
 				__m128i bg = _mm_loadu_si128((const __m128i*)dest);
@@ -593,9 +591,7 @@ public:
 		else
 		{
 			VEC_SHADE_INIT4(light[3], light[2], light[1], light[0], shade_constants);
-
-			__m128i msrc_alpha = _mm_set1_epi16(src_alpha);
-			__m128i mdest_alpha = _mm_set1_epi16(dest_alpha);
+			VEC_CALC_BLEND_ALPHA_INIT(src_alpha, dest_alpha);
 
 			do
 			{
@@ -610,7 +606,7 @@ public:
 				local_vplce[3] = local_vplce[3] + local_vince[3];
 
 				__m128i fg = _mm_set_epi32(pix3, pix2, pix1, pix0);
-				VEC_CALC_BLEND_ALPHA(fg, msrc_alpha, mdest_alpha);
+				VEC_CALC_BLEND_ALPHA(fg);
 				VEC_SHADE(fg, shade_constants);
 
 				__m128i bg = _mm_loadu_si128((const __m128i*)dest);
@@ -697,9 +693,7 @@ public:
 		if (shade_constants.simple_shade)
 		{
 			VEC_SHADE_SIMPLE_INIT4(light[3], light[2], light[1], light[0]);
-
-			__m128i msrc_alpha = _mm_set1_epi16(src_alpha);
-			__m128i mdest_alpha = _mm_set1_epi16(dest_alpha);
+			VEC_CALC_BLEND_ALPHA_INIT(src_alpha, dest_alpha);
 
 			do
 			{
@@ -714,7 +708,7 @@ public:
 				local_vplce[3] = local_vplce[3] + local_vince[3];
 
 				__m128i fg = _mm_set_epi32(pix3, pix2, pix1, pix0);
-				VEC_CALC_BLEND_ALPHA(fg, msrc_alpha, mdest_alpha);
+				VEC_CALC_BLEND_ALPHA(fg);
 				VEC_SHADE_SIMPLE(fg);
 
 				__m128i bg = _mm_loadu_si128((const __m128i*)dest);
@@ -735,9 +729,7 @@ public:
 		else
 		{
 			VEC_SHADE_INIT4(light[3], light[2], light[1], light[0], shade_constants);
-
-			__m128i msrc_alpha = _mm_set1_epi16(src_alpha);
-			__m128i mdest_alpha = _mm_set1_epi16(dest_alpha);
+			VEC_CALC_BLEND_ALPHA_INIT(src_alpha, dest_alpha);
 
 			do
 			{
@@ -752,7 +744,7 @@ public:
 				local_vplce[3] = local_vplce[3] + local_vince[3];
 
 				__m128i fg = _mm_set_epi32(pix3, pix2, pix1, pix0);
-				VEC_CALC_BLEND_ALPHA(fg, msrc_alpha, mdest_alpha);
+				VEC_CALC_BLEND_ALPHA(fg);
 				VEC_SHADE(fg, shade_constants);
 
 				__m128i bg = _mm_loadu_si128((const __m128i*)dest);
@@ -839,9 +831,7 @@ public:
 		if (shade_constants.simple_shade)
 		{
 			VEC_SHADE_SIMPLE_INIT4(light[3], light[2], light[1], light[0]);
-
-			__m128i msrc_alpha = _mm_set1_epi16(src_alpha);
-			__m128i mdest_alpha = _mm_set1_epi16(dest_alpha);
+			VEC_CALC_BLEND_ALPHA_INIT(src_alpha, dest_alpha);
 
 			do
 			{
@@ -856,7 +846,7 @@ public:
 				local_vplce[3] = local_vplce[3] + local_vince[3];
 
 				__m128i fg = _mm_set_epi32(pix3, pix2, pix1, pix0);
-				VEC_CALC_BLEND_ALPHA(fg, msrc_alpha, mdest_alpha);
+				VEC_CALC_BLEND_ALPHA(fg);
 				VEC_SHADE_SIMPLE(fg);
 
 				__m128i bg = _mm_loadu_si128((const __m128i*)dest);
@@ -877,9 +867,7 @@ public:
 		else
 		{
 			VEC_SHADE_INIT4(light[3], light[2], light[1], light[0], shade_constants);
-
-			__m128i msrc_alpha = _mm_set1_epi16(src_alpha);
-			__m128i mdest_alpha = _mm_set1_epi16(dest_alpha);
+			VEC_CALC_BLEND_ALPHA_INIT(src_alpha, dest_alpha);
 
 			do
 			{
@@ -894,7 +882,7 @@ public:
 				local_vplce[3] = local_vplce[3] + local_vince[3];
 
 				__m128i fg = _mm_set_epi32(pix3, pix2, pix1, pix0);
-				VEC_CALC_BLEND_ALPHA(fg, msrc_alpha, mdest_alpha);
+				VEC_CALC_BLEND_ALPHA(fg);
 				VEC_SHADE(fg, shade_constants);
 
 				__m128i bg = _mm_loadu_si128((const __m128i*)dest);
@@ -981,9 +969,7 @@ public:
 		if (shade_constants.simple_shade)
 		{
 			VEC_SHADE_SIMPLE_INIT4(light[3], light[2], light[1], light[0]);
-
-			__m128i msrc_alpha = _mm_set1_epi16(src_alpha);
-			__m128i mdest_alpha = _mm_set1_epi16(dest_alpha);
+			VEC_CALC_BLEND_ALPHA_INIT(src_alpha, dest_alpha);
 
 			do
 			{
@@ -998,7 +984,7 @@ public:
 				local_vplce[3] = local_vplce[3] + local_vince[3];
 
 				__m128i fg = _mm_set_epi32(pix3, pix2, pix1, pix0);
-				VEC_CALC_BLEND_ALPHA(fg, msrc_alpha, mdest_alpha);
+				VEC_CALC_BLEND_ALPHA(fg);
 				VEC_SHADE_SIMPLE(fg);
 
 				__m128i bg = _mm_loadu_si128((const __m128i*)dest);
@@ -1019,9 +1005,7 @@ public:
 		else
 		{
 			VEC_SHADE_INIT4(light[3], light[2], light[1], light[0], shade_constants);
-
-			__m128i msrc_alpha = _mm_set1_epi16(src_alpha);
-			__m128i mdest_alpha = _mm_set1_epi16(dest_alpha);
+			VEC_CALC_BLEND_ALPHA_INIT(src_alpha, dest_alpha);
 
 			do
 			{
@@ -1036,7 +1020,7 @@ public:
 				local_vplce[3] = local_vplce[3] + local_vince[3];
 
 				__m128i fg = _mm_set_epi32(pix3, pix2, pix1, pix0);
-				VEC_CALC_BLEND_ALPHA(fg, msrc_alpha, mdest_alpha);
+				VEC_CALC_BLEND_ALPHA(fg);
 				VEC_SHADE(fg, shade_constants);
 
 				__m128i bg = _mm_loadu_si128((const __m128i*)dest);

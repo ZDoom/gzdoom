@@ -2538,8 +2538,8 @@ public:
 		{
 			uint32_t pix = source[frac >> bits];
 
-			uint32_t fg_alpha, bg_alpha;
-			calc_blend_alpha(pix, src_alpha, dest_alpha, fg_alpha, bg_alpha);
+			uint32_t fg_alpha = src_alpha;
+			uint32_t bg_alpha = calc_blend_bgalpha(pix, dest_alpha);
 
 			uint32_t fg = shade_bgra(pix, light, shade_constants);
 			uint32_t fg_red = (fg >> 16) & 0xff;
@@ -2631,8 +2631,8 @@ public:
 			{
 				uint32_t pix = bufplce[i][local_vplce[i] >> bits];
 
-				uint32_t fg_alpha, bg_alpha;
-				calc_blend_alpha(pix, src_alpha, dest_alpha, fg_alpha, bg_alpha);
+				uint32_t fg_alpha = src_alpha;
+				uint32_t bg_alpha = calc_blend_bgalpha(pix, dest_alpha);
 
 				uint32_t fg = shade_bgra(pix, light[i], shade_constants);
 				uint32_t fg_red = (fg >> 16) & 0xff;
@@ -2709,8 +2709,8 @@ public:
 		{
 			uint32_t pix = source[frac >> bits];
 
-			uint32_t fg_alpha, bg_alpha;
-			calc_blend_alpha(pix, src_alpha, dest_alpha, fg_alpha, bg_alpha);
+			uint32_t fg_alpha = src_alpha;
+			uint32_t bg_alpha = calc_blend_bgalpha(pix, dest_alpha);
 
 			uint32_t fg = shade_bgra(pix, light, shade_constants);
 			uint32_t fg_red = (fg >> 16) & 0xff;
@@ -2802,8 +2802,8 @@ public:
 			{
 				uint32_t pix = bufplce[i][local_vplce[i] >> bits];
 
-				uint32_t fg_alpha, bg_alpha;
-				calc_blend_alpha(pix, src_alpha, dest_alpha, fg_alpha, bg_alpha);
+				uint32_t fg_alpha = src_alpha;
+				uint32_t bg_alpha = calc_blend_bgalpha(pix, dest_alpha);
 
 				uint32_t fg = shade_bgra(pix, light[i], shade_constants);
 				uint32_t fg_red = (fg >> 16) & 0xff;
@@ -2880,8 +2880,8 @@ public:
 		{
 			uint32_t pix = source[frac >> bits];
 
-			uint32_t fg_alpha, bg_alpha;
-			calc_blend_alpha(pix, src_alpha, dest_alpha, fg_alpha, bg_alpha);
+			uint32_t fg_alpha = src_alpha;
+			uint32_t bg_alpha = calc_blend_bgalpha(pix, dest_alpha);
 
 			uint32_t fg = shade_bgra(pix, light, shade_constants);
 			uint32_t fg_red = (fg >> 16) & 0xff;
@@ -2973,8 +2973,8 @@ public:
 			{
 				uint32_t pix = bufplce[i][local_vplce[i] >> bits];
 
-				uint32_t fg_alpha, bg_alpha;
-				calc_blend_alpha(pix, src_alpha, dest_alpha, fg_alpha, bg_alpha);
+				uint32_t fg_alpha = src_alpha;
+				uint32_t bg_alpha = calc_blend_bgalpha(pix, dest_alpha);
 
 				uint32_t fg = shade_bgra(pix, light[i], shade_constants);
 				uint32_t fg_red = (fg >> 16) & 0xff;
@@ -3051,8 +3051,8 @@ public:
 		{
 			uint32_t pix = source[frac >> bits];
 
-			uint32_t fg_alpha, bg_alpha;
-			calc_blend_alpha(pix, src_alpha, dest_alpha, fg_alpha, bg_alpha);
+			uint32_t fg_alpha = src_alpha;
+			uint32_t bg_alpha = calc_blend_bgalpha(pix, dest_alpha);
 
 			uint32_t fg = shade_bgra(pix, light, shade_constants);
 			uint32_t fg_red = (fg >> 16) & 0xff;
@@ -3144,8 +3144,8 @@ public:
 			{
 				uint32_t pix = bufplce[i][local_vplce[i] >> bits];
 
-				uint32_t fg_alpha, bg_alpha;
-				calc_blend_alpha(pix, src_alpha, dest_alpha, fg_alpha, bg_alpha);
+				uint32_t fg_alpha = src_alpha;
+				uint32_t bg_alpha = calc_blend_bgalpha(pix, dest_alpha);
 
 				uint32_t fg = shade_bgra(pix, light[i], shade_constants);
 				uint32_t fg_red = (fg >> 16) & 0xff;

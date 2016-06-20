@@ -4190,31 +4190,6 @@ bool DLevelScript::DoCheckActorTexture(int tid, AActor *activator, int string, b
 	return tex == TexMan[secpic];
 }
 
-enum
-{
-	// These are the original inputs sent by the player.
-	INPUT_OLDBUTTONS,
-	INPUT_BUTTONS,
-	INPUT_PITCH,
-	INPUT_YAW,
-	INPUT_ROLL,
-	INPUT_FORWARDMOVE,
-	INPUT_SIDEMOVE,
-	INPUT_UPMOVE,
-
-	// These are the inputs, as modified by P_PlayerThink().
-	// Most of the time, these will match the original inputs, but
-	// they can be different if a player is frozen or using a
-	// chainsaw.
-	MODINPUT_OLDBUTTONS,
-	MODINPUT_BUTTONS,
-	MODINPUT_PITCH,
-	MODINPUT_YAW,
-	MODINPUT_ROLL,
-	MODINPUT_FORWARDMOVE,
-	MODINPUT_SIDEMOVE,
-	MODINPUT_UPMOVE
-};
 
 int DLevelScript::GetPlayerInput(int playernum, int inputnum)
 {

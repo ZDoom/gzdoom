@@ -159,6 +159,7 @@ bool P_Thing_Raise(AActor *thing, AActor *raiser);
 bool P_Thing_CanRaise(AActor *thing);
 PClassActor *P_GetSpawnableType(int spawnnum);
 void InitSpawnablesFromMapinfo();
+int P_Thing_CheckInputNum(player_t *p, int inputnum);
 int P_Thing_Warp(AActor *caller, AActor *reference, double xofs, double yofs, double zofs, DAngle angle, int flags, double heightoffset, double radiusoffset, DAngle pitch);
 bool P_Thing_CheckProximity(AActor *self, PClass *classname, double distance, int count, int flags, int ptr);
 
